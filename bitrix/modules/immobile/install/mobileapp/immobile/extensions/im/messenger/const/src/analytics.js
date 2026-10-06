@@ -15,6 +15,10 @@ jn.define('im/messenger/const/analytics', (require, exports, module) => {
 		createNewChat: 'create_new_chat',
 		clickCreateNew: 'click_create_new',
 		submitCreateNew: 'submit_create_new',
+		clickCreateFolder: 'click_create_folder',
+		addToFolder: 'add_to_folder',
+		openList: 'open_list',
+		openFolder: 'open_folder',
 		audioUse: 'audio_use',
 		record: 'record',
 		play: 'play',
@@ -90,6 +94,9 @@ jn.define('im/messenger/const/analytics', (require, exports, module) => {
 		clickShare: 'click_share',
 		askCopilot: 'ask_copilot',
 		addFeedback: 'add_feedback',
+
+		copyGuestLink: 'copy_guest_link',
+		viewJoinPopup: 'view_join_popup',
 	});
 
 	/**
@@ -129,6 +136,7 @@ jn.define('im/messenger/const/analytics', (require, exports, module) => {
 		videomessage: 'videomessage',
 		stickers: 'stickers',
 		project: 'project',
+		folders: 'folders',
 	});
 
 	const Type = Object.freeze({
@@ -247,6 +255,11 @@ jn.define('im/messenger/const/analytics', (require, exports, module) => {
 		deletedMessage: 'deleted_message',
 
 		think: 'think',
+
+		/* region folder type */
+		empty: 'empty',
+		nonEmpty: 'non_empty',
+		userFolder: 'user_folder',
 	});
 
 	const Section = Object.freeze({
@@ -276,6 +289,10 @@ jn.define('im/messenger/const/analytics', (require, exports, module) => {
 		messenger: 'messenger',
 		stickerPackPopup: 'stickerpack_popup',
 		chatList: 'chat_list',
+		search: 'search',
+		updateChatTab: 'updateChat_tab',
+		createChatTab: 'createChat_tab',
+		userFolder: 'user_folder',
 	});
 
 	const SubSection = Object.freeze({
@@ -285,6 +302,12 @@ jn.define('im/messenger/const/analytics', (require, exports, module) => {
 		chatList: 'chat_list',
 		chat: 'chat',
 		taskCard: 'task_card',
+		createBox: 'create_box',
+		folderList: 'folder_list',
+		folderContextMenu: 'folder_context_menu',
+		settings: 'settings',
+		recentContextMenu: 'recent_context_menu',
+		recentSwipeMenu: 'recent_swipe_menu',
 	});
 
 	const Element = Object.freeze({
@@ -330,6 +353,7 @@ jn.define('im/messenger/const/analytics', (require, exports, module) => {
 		user: 'user_intranet',
 		extranet: 'user_extranet',
 		collaber: 'user_collaber',
+		guest: 'user_guest',
 	});
 
 	const Status = Object.freeze({

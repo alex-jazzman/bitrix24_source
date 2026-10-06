@@ -23,12 +23,23 @@
 		this.postfix = typeof data.postfix === "string" ? data.postfix : "";
 		this.property = typeof data.property === "string" ? data.property : "";
 		this.multiple = typeof data.multiple === "boolean" ? data.multiple : false;
+		this.ariaLabels = typeof data.ariaLabels === "object" && data.ariaLabels ? data.ariaLabels : null;
+		this.ariaPressed = data.ariaPressed === true;
+		// Stable hooks for e2e tests. The owner of the field passes the root testId and, optionally,
+		// readable ids for the items; without them the field stays exactly as it was.
+		this.testId = typeof data.testId === "string" && data.testId ? data.testId : null;
+		this.itemTestIds = typeof data.itemTestIds === "object" && data.itemTestIds ? data.itemTestIds : null;
 		this.changeHandler = typeof data.onChange === "function" ? data.onChange : (function() {});
 		this.elements = [];
 		this.buttons = new BX.Landing.UI.Collection.ButtonCollection();
 		this.value = this.getValue();
 
 		this.onButtonClick = this.onButtonClick.bind(this);
+
+		if (this.testId)
+		{
+			this.layout.setAttribute("data-testid", this.testId);
+		}
 
 		this.input.innerHTML = "";
 
@@ -57,7 +68,20 @@
 
 		onFrameLoad: function()
 		{
-			this.elements = [].slice.call(this.frame.document.querySelectorAll(this.selector));
+			// this.selector is a persistence key and may not resolve the live content in the editor,
+			// so the owner of the field can pass an explicit selector for the live nodes and ask
+			// for the first of them with resolveSingleNode.
+			var elementsSelector = this.data.elementsSelector ? this.data.elementsSelector : this.selector;
+
+			if (this.data.resolveSingleNode === true)
+			{
+				var element = this.frame.document.querySelector(elementsSelector);
+				this.elements = element ? [element] : [];
+			}
+			else
+			{
+				this.elements = [].slice.call(this.frame.document.querySelectorAll(elementsSelector));
+			}
 
 			if (this.elements.length)
 			{
@@ -73,18 +97,32 @@
 		},
 
 		createButtonByItem: function (item) {
-			return new BX.Landing.UI.Button.BaseButton(
-				item.id || item.value,
-				{
-					html: item.name,
-					active: item.active,
-					attrs: {
-						value: item.value,
-						title: item.title ? BX.Landing.Utils.escapeText(item.title) : null,
-					},
-					onClick: this.onButtonClick,
-				}
-			);
+			var options = {
+				html: item.name,
+				active: item.active,
+				attrs: {
+					value: item.value,
+					title: item.title ? BX.Landing.Utils.escapeText(item.title) : null,
+				},
+				onClick: this.onButtonClick,
+			};
+
+			if (this.ariaPressed)
+			{
+				options.toggle = true;
+			}
+
+			if (this.ariaLabels && this.ariaLabels[item.value])
+			{
+				options.ariaLabel = this.ariaLabels[item.value];
+			}
+
+			if (this.itemTestIds && this.itemTestIds[item.value])
+			{
+				options.attrs["data-testid"] = this.itemTestIds[item.value];
+			}
+
+			return new BX.Landing.UI.Button.BaseButton(item.id || item.value, options);
 		},
 
 		onButtonClick: function(event)

@@ -1,0 +1,65 @@
+.bizproc-fields-string-row {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-xs);
+}
+
+.bizproc-fields-string {
+	flex: 1 1 auto;
+	display: flex;
+	align-items: center;
+	box-sizing: border-box;
+	/* 32px: mockup control height; DS has no control-height size token. */
+	height: 32px;
+	padding: 0 var(--ui-space-inset-xs2);
+	border: 1px solid var(--ui-color-base-6);
+	border-radius: var(--ui-border-radius-sm);
+	background: var(--ui-color-bg-content-primary);
+	transition: border-color .15s ease;
+}
+
+.bizproc-fields-string:focus-within {
+	border-color: var(--ui-color-accent-main-primary);
+}
+
+.bizproc-fields-string__input {
+	flex: 1 1 auto;
+	min-width: 0;
+	padding: 0;
+	border: none;
+	outline: none;
+	background: transparent;
+	/* N-1 exception: font-family is required to reset browser default for <input>;
+	   --ui-font-family-primary is not a standard DS token - inherit is the DS-compliant fallback. */
+	font-family: inherit;
+	font-size: var(--ui-font-size-sm);
+	font-weight: var(--ui-font-weight-normal);
+	/* 20px: --ui-font-line-height-* are unitless ratios, none of which yields 20px on a 13px font. */
+	line-height: 20px;
+	color: var(--ui-color-base-2);
+}
+
+.bizproc-fields-string__input::placeholder {
+	color: var(--ui-color-base-4);
+}
+
+.bizproc-fields-string--readonly {
+	background: var(--ui-color-design-disabled-bg);
+	border-color: var(--ui-color-design-disabled-stroke);
+}
+
+.bizproc-fields-string--readonly:focus-within {
+	border-color: var(--ui-color-design-disabled-stroke);
+}
+
+.bizproc-fields-string--readonly .bizproc-fields-string__input {
+	cursor: default;
+}
+
+/* The focus outline is only needed in read-only mode: the border keeps its color on focus
+   there, so the outline is the only focus indicator left (WCAG 2.4.7). A read-only input is
+   still reachable with Tab. An editable field shows focus through the border color change. */
+.bizproc-fields-string--readonly .bizproc-fields-string__input:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+}

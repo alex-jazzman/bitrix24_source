@@ -17,6 +17,8 @@ use Bitrix\Socialnetwork\V2\Internal\Repository\InMemoryFileRepository;
 use Bitrix\Socialnetwork\V2\Internal\Repository\InMemoryUserRepository;
 use Bitrix\Socialnetwork\V2\Internal\Repository\ProjectMemberRepository;
 use Bitrix\Socialnetwork\V2\Internal\Repository\ProjectMemberRepositoryInterface;
+use Bitrix\Socialnetwork\V2\Internal\Repository\ProjectOwnerRepository;
+use Bitrix\Socialnetwork\V2\Internal\Repository\ProjectOwnerRepositoryInterface;
 use Bitrix\Socialnetwork\V2\Internal\Repository\ProjectRepository;
 use Bitrix\Socialnetwork\V2\Internal\Repository\ProjectRepositoryInterface;
 use Bitrix\Socialnetwork\V2\Internal\Repository\ProjectTagRepository;
@@ -106,6 +108,9 @@ return [
 		],
 		ProjectMemberRepositoryInterface::class => [
 			'className' => ProjectMemberRepository::class,
+		],
+		ProjectOwnerRepositoryInterface::class => [
+			'className' => ProjectOwnerRepository::class,
 		],
 		ProjectRepositoryInterface::class => [
 			'className' => ProjectRepository::class,

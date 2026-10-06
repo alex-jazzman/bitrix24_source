@@ -92,11 +92,13 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 			if (!booking) {
 				return;
 			}
+			const notifications = this.$store.getters[`${booking_const.Model.Dictionary}/getNotifications`];
+			const isConfirmation = message.notificationType === notifications.Confirmation?.value;
 			void this.$store.dispatch(`${booking_const.Model.Bookings}/update`, {
 				id: booking.id,
 				booking: {
 					...booking,
-					messages: [...(booking.messages ?? []), message]
+					isConfirmationSent: booking.isConfirmationSent || isConfirmation
 				}
 			});
 		};

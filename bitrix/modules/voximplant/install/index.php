@@ -188,6 +188,10 @@ class voximplant extends \CModule
 		\CAgent::AddAgent('\\Bitrix\\Voximplant\\Agent\\VerificationChecker::checkInternodWarning();', 'voximplant', 'N', 86400);
 		/** @see \Bitrix\Voximplant\Agent\CallHistoryPuller::pull() */
 		\CAgent::AddAgent('\\Bitrix\\Voximplant\\Agent\\CallHistoryPuller::pull();', 'voximplant', 'N', 86400);
+		// The agent name must match ExternalLineCleaner::getAgentName() exactly (no leading slash),
+		// otherwise the updater cannot find it and would register a duplicate.
+		/** @see \Bitrix\Voximplant\Agent\ExternalLineCleaner::run() */
+		\CAgent::AddAgent('Bitrix\\Voximplant\\Agent\\ExternalLineCleaner::run();', 'voximplant', 'N', 86400);
 
 		$this->InstallDefaultData();
 		$this->InstallUserFields();

@@ -1,5 +1,5 @@
 import * as Type from "./types";
-import {Controller} from "./controller";
+import type {Controller} from "./controller";
 import {BaseField} from "../field/registry";
 import {Page} from "./pager";
 

@@ -107,6 +107,16 @@ jn.define('im/messenger/lib/converter/data/recent', (require, exports, module) =
 				newElement.message.status = element.message.status ?? '';
 				newElement.message.subTitleIcon = element.message.subTitleIcon ?? '';
 
+				// chat_id is the snake_case variant from the pull-event REST payload; chatId comes from the V2 init path.
+				if (Number.isInteger(element.message.chatId) && element.message.chatId > 0)
+				{
+					newElement.message.chatId = element.message.chatId;
+				}
+				else if (Number.isInteger(element.message.chat_id) && element.message.chat_id > 0)
+				{
+					newElement.message.chatId = element.message.chat_id;
+				}
+
 				if (!Type.isPlainObject(newElement.message.params))
 				{
 					newElement.message.params = {};

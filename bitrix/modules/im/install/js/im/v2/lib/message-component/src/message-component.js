@@ -117,11 +117,6 @@ export class MessageComponentManager
 
 	#isEmojiOnly(): boolean
 	{
-		if (this.#message.replyId > 0)
-		{
-			return false;
-		}
-
 		if (this.#isForward())
 		{
 			return false;
@@ -137,11 +132,6 @@ export class MessageComponentManager
 
 	#hasSmilesOnly(): boolean
 	{
-		if (this.#message.replyId > 0)
-		{
-			return false;
-		}
-
 		if (this.#isForward())
 		{
 			return false;

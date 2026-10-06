@@ -1,0 +1,4 @@
+<?php
+
+$MESS['TIMEMAN_REPORT_PERIOD_PHRASE_SINGLE'] = 'Отчёт за #DATE#';
+$MESS['TIMEMAN_REPORT_PERIOD_PHRASE_RANGE'] = 'Отчёт за период с #FROM# по #TO#';

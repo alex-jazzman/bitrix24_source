@@ -1,0 +1,11 @@
+/*
+ * The row stands where the quote appears, under the body and the signature row, and holds the same left
+ * edge as they do.
+ */
+.mail-compose-quote-toggle
+{
+	display: flex;
+	align-items: center;
+	min-width: 0;
+	padding: var(--ui-space-inset-xs) 0;
+}

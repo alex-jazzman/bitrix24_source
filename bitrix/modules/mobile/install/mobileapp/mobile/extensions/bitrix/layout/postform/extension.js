@@ -497,6 +497,12 @@
 					postData.post_id = this.postId;
 				}
 
+				const mailMessageId = BX.componentParameters.get('MAIL_MESSAGE_ID', 0);
+				if (mailMessageId)
+				{
+					postData.MAIL_MESSAGE_ID = mailMessageId;
+				}
+
 				resolve(postData);
 			});
 

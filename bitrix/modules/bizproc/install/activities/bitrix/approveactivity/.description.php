@@ -95,15 +95,15 @@ $arActivityDescription = (new ActivityDescription(
 		],
 	])
 	->setSort(100)
-	->setNodeType(ActivityNodeType::COMPLEX->value)
+	->setNodeType(ActivityNodeType::OPERATORS->value)
 	->setNodeSettings(new \Bitrix\Bizproc\Activity\Dto\NodeSettings(
 		ports: new \Bitrix\Bizproc\Activity\Dto\NodePorts(
 			input: new \Bitrix\Bizproc\Activity\Dto\PortCollection(
 				new \Bitrix\Bizproc\Activity\Dto\Port('i0'),
 			),
 			output: new \Bitrix\Bizproc\Activity\Dto\PortCollection(
-				new \Bitrix\Bizproc\Activity\Dto\Port('o0', 1, 'yes'),
-				new \Bitrix\Bizproc\Activity\Dto\Port('o1', 2, 'no'),
+				new \Bitrix\Bizproc\Activity\Dto\Port('o0', title: Loc::getMessage('BPAA_DESCR_PORT_YES') ?? 'yes'),
+				new \Bitrix\Bizproc\Activity\Dto\Port('o1', title: Loc::getMessage('BPAA_DESCR_PORT_NO') ?? 'no'),
 			),
 		)
 	))

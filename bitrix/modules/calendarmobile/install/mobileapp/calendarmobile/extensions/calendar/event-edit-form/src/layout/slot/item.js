@@ -22,19 +22,23 @@ jn.define('calendar/event-edit-form/layout/slot/item', (require, exports, module
 			borderColor: Color.accentMainPrimary.toHex(),
 		};
 		const onClickHandler = () => onSlotSelected(selected ? null : slot);
-		const onLayoutHandler = () => {
+		// Item height is dynamic (minHeight), so the scroll step cannot be derived
+		// from the constant. For the last slot we pass the actually measured height
+		// so the list can position the scroll correctly when the font is scaled up.
+		const onLayoutHandler = ({ height } = {}) => {
 			if (slot.from === lastSlot.from)
 			{
-				onLayout();
+				onLayout(height);
 			}
 		};
 
 		return View(
 			{
 				style: {
-					height: slotItemHeight,
+					minHeight: slotItemHeight,
 					justifyContent: 'center',
 				},
+				onLayout: onLayoutHandler,
 			},
 			Card(
 				{
@@ -54,7 +58,6 @@ jn.define('calendar/event-edit-form/layout/slot/item', (require, exports, module
 						'#FROM#': DateHelper.formatTime(new Date(slot.from)).toLocaleUpperCase(env.languageId),
 						'#TO#': DateHelper.formatTime(new Date(slot.to)).toLocaleUpperCase(env.languageId),
 					}),
-					onLayout: onLayoutHandler,
 				}),
 			),
 		);

@@ -8,6 +8,7 @@ declare namespace BX.Call.Lib {
 		static getInstance(): CallManager;
 		constructor();
 		sendBroadcastRequest(callId: string): Promise<boolean[]>;
+		setNextCallOptions(options: Object): void;
 		startCall(dialogId: string, withVideo?: boolean): void;
 		joinCall(callId: string, callUuid: string, dialogId: string, withVideo?: boolean): void;
 		leaveCurrentCall(): void;
@@ -26,6 +27,7 @@ declare namespace BX.Call.Lib {
 		chatCanBeCalled(dialogId: string): boolean;
 		hasActiveCurrentCall(dialogId: string): boolean;
 		hasActiveAnotherCall(dialogId: string): boolean;
+		hasActiveCallInDialog(dialogId: string): boolean;
 		getCallUserLimit(): any;
 		isChatUserLimitExceeded(dialogId: string): boolean;
 		updateRecentCallsList(activeCalls: any): void;
@@ -42,7 +44,7 @@ declare namespace BX.Call.Lib {
 		localVAD: SimpleVAD | null;
 		invitePeriod: any;
 		videoQuality: string;
-		BitrixCall: CallLegacy | null;
+		CallApi: CallLegacy | null;
 		signaling: Signaling;
 		peersWithBadConnection: Set<any>;
 		joinedElsewhere: boolean;
@@ -169,6 +171,7 @@ declare namespace BX.Call.Lib {
 		__onPullEvent(command: any, params: any, extra: any): void;
 		__onPullEventAnswerSelf(params: any): void;
 		sendTelemetryEvent(eventName: any): void;
+		testReconnect(): void;
 	}
 
 	/**
@@ -205,6 +208,8 @@ declare namespace BX.Call.Lib {
 		type: any;
 		roomType: any;
 		state: any;
+		isReconnecting: boolean;
+		reconnectHistory: BX.Call.Lib.ReconnectHistory;
 		ready: boolean;
 		userId: any;
 		userData: any;
@@ -241,6 +246,7 @@ declare namespace BX.Call.Lib {
 		runCallback(eventName: any, eventFields: any): void;
 		getLocalStream(tag: any): MediaStream | null;
 		setLocalStream(mediaStream: any, tag: any): void;
+		get reconnectionInfo(): readonly import("call.lib.reconnect-history").ReconnectHistoryEntry[];
 		isAnyoneParticipating(): void;
 		__onPullEvent(command: any, params: any): void;
 		inviteUsers(): void;

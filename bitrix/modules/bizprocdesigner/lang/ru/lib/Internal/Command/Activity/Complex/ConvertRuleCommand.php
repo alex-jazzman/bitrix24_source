@@ -1,0 +1,5 @@
+<?php
+$MESS['BIZPROCDESIGNER_CONVERT_RULE_FILTER_RESULT_FIRST'] = '#DOCUMENT# — первый найденный (#FILTER#)';
+$MESS['BIZPROCDESIGNER_CONVERT_RULE_FILTER_RESULT_ALL'] = '#DOCUMENT# — все найденные (#FILTER#)';
+$MESS['BIZPROCDESIGNER_COMMAND_CONVERT_RULE_BASE_SETTINGS_NODE_DUPLICATE'] = 'Блок «Общие настройки» может быть только один на узле';
+$MESS['BIZPROCDESIGNER_COMMAND_CONVERT_RULE_NODE_CONDITION_SECOND_GROUP'] = 'Условие этой ноды может состоять только из одной группы';

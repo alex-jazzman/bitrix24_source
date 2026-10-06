@@ -48,6 +48,7 @@ export class CopilotContextMenu extends EventEmitter
 	#extraResultMenuItems: CopilotMenuItem[];
 	#angle: boolean;
 	#initEngineOptions: InitEngineOptions;
+	#isBitrixGptV2Available: boolean;
 
 	constructor(options: CopilotContextMenuOptions)
 	{
@@ -61,6 +62,7 @@ export class CopilotContextMenu extends EventEmitter
 		this.#selectedText = options.selectedText || '';
 		this.#extraResultMenuItems = options.extraResultMenuItems ?? [];
 		this.#angle = options.angle === true;
+		this.#isBitrixGptV2Available = Extension.getSettings('ai.copilot').get('isBitrixGptV2Available') === true;
 
 		this.#initEngineOptions = {
 			moduleId: options.moduleId,
@@ -248,7 +250,19 @@ export class CopilotContextMenu extends EventEmitter
 			case 'LIMIT_IS_EXCEEDED_MONTHLY':
 			case 'LIMIT_IS_EXCEEDED_DAILY':
 			case 'SERVICE_IS_NOT_AVAILABLE_BY_TARIFF': {
-				this.hide();
+				// A technical limit opens no slider, so hiding the menu would leave the user without any
+				// explanation: show the message instead.
+				const technicalLimitMessage = AjaxErrorHandler.getVibePlusTechnicalLimitMessage(error?.customData);
+
+				if (technicalLimitMessage)
+				{
+					error.setMessage(technicalLimitMessage);
+					this.#showErrorPopup(error);
+				}
+				else
+				{
+					this.hide();
+				}
 
 				break;
 			}
@@ -274,6 +288,7 @@ export class CopilotContextMenu extends EventEmitter
 				errorCode: error.getCode(),
 				showSliderWithMsg: error?.customData?.showSliderWithMsg,
 				sliderCode: error?.customData?.sliderCode,
+				vibePlusLimitState: error?.customData?.vibePlusLimitState,
 				forceCodeRules: ['sliderCode', 'msgWithHtmlLink'],
 				forceOption: error?.customData,
 				bindElement: this.#bindElement,
@@ -433,6 +448,7 @@ export class CopilotContextMenu extends EventEmitter
 			additionalResultMenuItems: this.#extraResultMenuItems,
 			engine: this.#copilotTextControllerEngine,
 			analytics: this.#getAnalytics(),
+			isBitrixGptV2Available: this.#isBitrixGptV2Available,
 		});
 
 		this.#resultPopup.subscribe(CopilotContextMenuResultPopupEvents.SAVE, () => {
@@ -455,6 +471,7 @@ export class CopilotContextMenu extends EventEmitter
 	{
 		this.#loaderPopup = new CopilotContextMenuLoader({
 			bindElement: this.#bindElement,
+			isBitrixGptV2Available: this.#isBitrixGptV2Available,
 		});
 
 		this.#loaderPopup.subscribe(CopilotContextMenuLoaderEvents.CANCEL, () => {
@@ -561,6 +578,7 @@ export class CopilotContextMenu extends EventEmitter
 		this.#errorPopup = new CopilotContextMenuErrorPopup({
 			error,
 			bindElement: this.#bindElement,
+			isBitrixGptV2Available: this.#isBitrixGptV2Available,
 		});
 
 		this.#errorPopup.subscribe(CopilotContextMenuErrorPopupEvents.CANCEL, () => {

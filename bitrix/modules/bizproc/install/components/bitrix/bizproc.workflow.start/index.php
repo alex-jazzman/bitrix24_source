@@ -11,6 +11,7 @@ $params = [
 	'ENTITY' => $request->get('entity'),
 	'DOCUMENT_TYPE' => $request->get('documentType'),
 	'DOCUMENT_ID' => $request->get('documentId'),
+	'CATEGORY_ID' => $request->get('categoryId'),
 	'TEMPLATE_ID' => is_numeric($request->get('templateId')) ? $request->get('templateId') : null,
 	'TRIGGER_TYPE' => $request->get('triggerType') ?? null,
 	'AUTO_EXECUTE_TYPE' => is_numeric($request->get('autoExecuteType')) ? $request->get('autoExecuteType') : null,
@@ -26,6 +27,9 @@ $templateName = 'slider';
 
 if ($request->get('IFRAME') === 'Y' && $request->get('IFRAME_TYPE') === 'SIDE_SLIDER')
 {
+	// the slider takes its accessible name from the page title, and the wrapper shows no heading
+	$params['SET_TITLE'] = 'Y';
+
 	$APPLICATION->IncludeComponent(
 		'bitrix:ui.sidepanel.wrapper',
 		'',

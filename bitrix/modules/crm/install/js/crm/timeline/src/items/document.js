@@ -1,3 +1,6 @@
+import { Tag, Text } from 'main.core';
+import { alert } from 'crm.timeline.dialog';
+
 import HistoryActivity from "./history-activity";
 
 /** @memberof BX.Crm.Timeline.Items */
@@ -209,7 +212,8 @@ export default class Document extends HistoryActivity
 				this._detetionConfirmDlgId,
 				{
 					title: this.getMessage("removeConfirmTitle"),
-					content: this.getMessage('documentRemove')
+					content: this.getMessage('documentRemove'),
+					background: 'vibrant',
 				}
 			);
 		}
@@ -251,7 +255,10 @@ export default class Document extends HistoryActivity
 					this._isRequestRunning = false;
 					if(BX.type.isNotEmptyString(result.ERROR))
 					{
-						alert(result.ERROR);
+						// eslint-disable-next-line @bitrix24/bitrix24-rules/no-native-dialogs
+						alert({
+							content: Tag.render`<div>${Text.encode(result.ERROR)}</div>`,
+						});
 					}
 					else
 					{

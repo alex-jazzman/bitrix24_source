@@ -104,10 +104,10 @@ if (!$component->request('landing_mode')):
 			</a>
 		</div>
 		<div class="landing-ui-panel-top-devices">
-			<div class="landing-ui-panel-top-devices-inner">
-				<button class="landing-ui-button landing-ui-button-desktop active" data-id="desktop_button"></button>
-				<button class="landing-ui-button landing-ui-button-tablet" data-id="tablet_button"></button>
-				<button class="landing-ui-button landing-ui-button-mobile" data-id="mobile_button"></button>
+			<div class="landing-ui-panel-top-devices-inner" role="group" aria-label="<?=htmlspecialcharsbx(Loc::getMessage('LANDING_TPL_DEVICES_GROUP'))?>">
+				<button class="landing-ui-button landing-ui-button-desktop active" data-id="desktop_button" type="button" aria-label="<?=htmlspecialcharsbx(Loc::getMessage('LANDING_TPL_DEVICE_DESKTOP'))?>" aria-pressed="true"></button>
+				<button class="landing-ui-button landing-ui-button-tablet" data-id="tablet_button" type="button" aria-label="<?=htmlspecialcharsbx(Loc::getMessage('LANDING_TPL_DEVICE_TABLET'))?>" aria-pressed="false"></button>
+				<button class="landing-ui-button landing-ui-button-mobile" data-id="mobile_button" type="button" aria-label="<?=htmlspecialcharsbx(Loc::getMessage('LANDING_TPL_DEVICE_MOBILE'))?>" aria-pressed="false"></button>
 			</div>
 		</div>
 		<div class="landing-ui-panel-top-history">
@@ -121,19 +121,19 @@ if (!$component->request('landing_mode')):
 					])
 				);?>
 			</div>
-			<span class="landing-ui-panel-top-history-button landing-ui-panel-top-history-undo landing-ui-disabled"></span>
-			<span class="landing-ui-panel-top-history-button landing-ui-panel-top-history-redo landing-ui-disabled"></span>
-			<span onclick="BX.fireEvent(BX('landing-feedback-designblock-button'), 'click');" class="ui-btn ui-btn-light-border landing-ui-panel-top-menu-link landing-btn-menu">
+			<button class="landing-ui-panel-top-history-button landing-ui-panel-top-history-undo landing-ui-disabled" type="button" tabindex="-1" disabled aria-label="<?=htmlspecialcharsbx(Loc::getMessage('LANDING_TPL_HISTORY_UNDO'))?>"></button>
+			<button class="landing-ui-panel-top-history-button landing-ui-panel-top-history-redo landing-ui-disabled" type="button" tabindex="-1" disabled aria-label="<?=htmlspecialcharsbx(Loc::getMessage('LANDING_TPL_HISTORY_REDO'))?>"></button>
+			<button onclick="BX.fireEvent(BX('landing-feedback-designblock-button'), 'click');" type="button" class="ui-btn ui-btn-light-border landing-ui-panel-top-menu-link landing-btn-menu" data-testid="landing-designblock-feedback-btn">
 				<?= Loc::getMessage('LANDING_TPL_FEEDBACK');?>
-			</span>
-			<span id="landing-design-block-close" class="ui-btn ui-btn-light-border landing-ui-panel-top-menu-link landing-btn-menu">
+			</button>
+			<button id="landing-design-block-close" type="button" class="ui-btn ui-btn-light-border landing-ui-panel-top-menu-link landing-btn-menu">
 				<?= Loc::getMessage('LANDING_TPL_CLOSE');?>
-			</span>
-			<span id="landing-design-block-save" class="ui-btn ui-btn-primary">
+			</button>
+			<button id="landing-design-block-save" type="button" class="ui-btn ui-btn-primary">
 				<?= Loc::getMessage('LANDING_TPL_SAVE');?>
-			</span>
+			</button>
 			<?if ($helpUrl):?>
-			<a href="<?= $helpUrl;?>" class="ui-btn ui-btn-light ui-btn-round landing-ui-panel-top-menu-link landing-ui-panel-top-menu-link-help" target="_blank">
+			<a href="<?= htmlspecialcharsbx($helpUrl);?>" class="ui-btn ui-btn-light ui-btn-round landing-ui-panel-top-menu-link landing-ui-panel-top-menu-link-help" target="_blank" aria-label="<?=htmlspecialcharsbx(Loc::getMessage('LANDING_TPL_HELP'))?>">
 				<span class="landing-ui-panel-top-menu-link-help-icon">?</span>
 			</a>
 			<?endif;?>
@@ -194,15 +194,10 @@ else
 	</script>
 	<div class="landing-ui-view-wrapper">
 		<div class="landing-editor-loader-container"></div>
-			<div class="landing-editor-required-user-action">
-				<h3></h3>
-				<p></p>
-				<div>
-					<a href="" class="ui-btn"></a>
-				</div>
-			</div>
+			<?php // filled in and given its alert role by the script: an empty region announces nothing?>
+			<div class="landing-editor-required-user-action"></div>
 			<div class="landing-ui-view-iframe-wrapper">
-				<iframe src="<?= $frameUri;?>" class="landing-ui-view" id="landing-view-frame" allowfullscreen></iframe>
+				<iframe src="<?= htmlspecialcharsbx($frameUri);?>" class="landing-ui-view" id="landing-view-frame" title="<?=htmlspecialcharsbx(Loc::getMessage('LANDING_TPL_DESIGNBLOCK_FRAME_TITLE'))?>" allowfullscreen></iframe>
 			</div>
 		</div>
 	</div>

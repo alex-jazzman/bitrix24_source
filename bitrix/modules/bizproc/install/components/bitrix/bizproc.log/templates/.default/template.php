@@ -12,7 +12,9 @@ if (array_key_exists("COMPONENT_VERSION", $arParams) && $arParams["COMPONENT_VER
 		{
 			ShowError($arResult["ErrorMessage"]);
 		}
-
+		?>
+		<section aria-label="<?= htmlspecialcharsbx(GetMessage("BPABL_GRID_ARIA_LABEL")) ?>">
+		<?
 		$APPLICATION->IncludeComponent(
 			"bitrix:main.interface.grid",
 			"",
@@ -32,6 +34,9 @@ if (array_key_exists("COMPONENT_VERSION", $arParams) && $arParams["COMPONENT_VER
 			),
 			$component
 		);
+		?>
+		</section>
+		<?
 	}
 }
 else
@@ -40,7 +45,7 @@ else
 		ShowError($arResult["ERROR_MESSAGE"]);
 	endif;
 	?>
-	<div class="bizproc-page-log">
+	<div class="bizproc-page-log" role="region" aria-label="<?= htmlspecialcharsbx(GetMessage("BPABL_GRID_ARIA_LABEL")) ?>">
 		<div class="bizproc-item-title bizproc-workflow-state-template-name">
 			<?=htmlspecialcharsbx($arResult["arWorkflowState"]["TEMPLATE_NAME"]) ?>
 		</div>

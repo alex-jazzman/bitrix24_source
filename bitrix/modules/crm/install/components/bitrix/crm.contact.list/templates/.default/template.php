@@ -51,7 +51,7 @@ Bitrix\Main\UI\Extension::load(
 
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/activity.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/interface_grid.js');
-Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/dialog.js');
+\Bitrix\Main\UI\Extension::load('crm.dialog');
 
 ?><div id="crm-contact-list-progress-bar-container"></div><div id="batchDeletionWrapper"></div><?
 

@@ -86,6 +86,16 @@ $getIblocksTree = function()
 	}
 };
 
+// local function for the caption of a field printed for every site
+$getCaptionPrefix = function(string $phrase): string
+{
+	// the phrase naming the section is newer than the locales of the product, and until its translation
+	// arrives the caption is left with the site alone instead of starting with a bare separator
+	$label = Loc::getMessage($phrase);
+
+	return $label <> '' ? $label . ', ' : '';
+};
+
 if ($postRight >= 'R'):
 
 	// sites list
@@ -121,7 +131,7 @@ if ($postRight >= 'R'):
 	{
 		$allOptions[] = array(
 			'site_template_id_' . $row['LID'],
-			$row['NAME'] . ' [' . $row['LID'] . ']:',
+			$getCaptionPrefix('LANDING_OPT_SITE_TEMPLATE_ID') . $row['NAME'] . ' [' . $row['LID'] . ']:',
 			array('text', 32)
 		);
 	}
@@ -136,7 +146,7 @@ if ($postRight >= 'R'):
 	{
 		$allOptions[] = array(
 			'pub_path_' . $row['LID'],
-			$row['NAME'] . ' [' . $row['LID'] . ']:',
+			$getCaptionPrefix('LANDING_OPT_PUB_PATH') . $row['NAME'] . ' [' . $row['LID'] . ']:',
 			array('text', 32),
 			\Bitrix\Landing\Manager::getPublicationPathConst()
 		);
@@ -392,7 +402,9 @@ if ($postRight >= 'R'):
 		?>
 		<tr>
 			<td valign="top" width="40%"><?php
-				if ($type[0]=='checkbox')
+				// An allowlist, not a negation: `doubletext` and `text-list` print several fields per
+				// option, and one label cannot name more than one of them, so they keep a plain caption.
+				if (in_array($type[0], ['checkbox', 'text', 'textarea', 'selectbox', 'selectboxtree'], true))
 				{
 					echo '<label for="' . \htmlspecialcharsbx($Option[0]) . '">'.$Option[1].'</label>';
 				}
@@ -405,13 +417,13 @@ if ($postRight >= 'R'):
 			if ($type[0] == 'checkbox'):
 				?><input type="checkbox" name="<?= \htmlspecialcharsbx($Option[0])?>" id="<?= \htmlspecialcharsbx($Option[0])?>" value="Y"<?php if($val == 'Y') echo ' checked="checked"';?> /><?php
 			elseif ($type[0] == 'text'):
-				?><input type="text" size="<?= $type[1]?>" maxlength="255" value="<?= \htmlspecialcharsbx($val)?>" name="<?= \htmlspecialcharsbx($Option[0])?>" /><?php
+				?><input type="text" size="<?= $type[1]?>" maxlength="255" value="<?= \htmlspecialcharsbx($val)?>" name="<?= \htmlspecialcharsbx($Option[0])?>" id="<?= \htmlspecialcharsbx($Option[0])?>" /><?php
 			elseif ($type[0] == 'doubletext'):
 				list($val1, $val2) = explode('x', $val);
 				?><input type="text" size="<?= $type[1]?>" maxlength="255" value="<?= \htmlspecialcharsbx($val1)?>" name="<?= \htmlspecialcharsbx($Option[0].'_1')?>" /><?php
 				?><input type="text" size="<?= $type[1]?>" maxlength="255" value="<?= \htmlspecialcharsbx($val2)?>" name="<?= \htmlspecialcharsbx($Option[0].'_2')?>" /><?php
 			elseif ($type[0] == 'textarea'):
-				?><textarea rows="<?= $type[1]?>" cols="<?= $type[2]?>" name="<?= \htmlspecialcharsbx($Option[0])?>"><?= \htmlspecialcharsbx($val)?></textarea><?php
+				?><textarea rows="<?= $type[1]?>" cols="<?= $type[2]?>" name="<?= \htmlspecialcharsbx($Option[0])?>" id="<?= \htmlspecialcharsbx($Option[0])?>"><?= \htmlspecialcharsbx($val)?></textarea><?php
 			elseif ($type[0] == 'text-list'):
 				$aVal = explode(",", $val);
 				for($j=0; $j<count($aVal); $j++):
@@ -424,7 +436,7 @@ if ($postRight >= 'R'):
 				$arr = $type[1];
 				$arr_keys = array_keys($arr);
 				$currValue = explode(',', $val);
-				?><select name="<?= \htmlspecialcharsbx($Option[0])?>[]"<?= $type[2]?>><?php
+				?><select name="<?= \htmlspecialcharsbx($Option[0])?>[]" id="<?= \htmlspecialcharsbx($Option[0])?>"<?= $type[2]?>><?php
 					for($j = 0; $j < count($arr_keys); $j++):
 						?><option value="<?= $arr_keys[$j]?>"<?php if(in_array($arr_keys[$j], $currValue))echo ' selected="selected"'?>><?= \htmlspecialcharsbx($arr[$arr_keys[$j]])?></option><?php
 					endfor;
@@ -433,7 +445,8 @@ if ($postRight >= 'R'):
 				$arr = $type[1];
 				$currValue = explode(',', $val);
 
-				$output = '<select name="'.\htmlspecialcharsbx($Option[0]).'[]"'.$type[2].'>';
+				$output = '<select name="'.\htmlspecialcharsbx($Option[0]).'[]"'.
+						  ' id="'.\htmlspecialcharsbx($Option[0]).'"'.$type[2].'>';
 				$output .= '<option></option>';
 				foreach ($getIblocksTree() as $rowType)
 				{

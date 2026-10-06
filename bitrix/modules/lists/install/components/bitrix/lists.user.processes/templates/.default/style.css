@@ -82,7 +82,7 @@ input.bx-bizproc-btn.bx-bizproc-btn-medium {
 	display: block;
 	width: 16px;
 	height: 16px;
-	background: url(images/bp-sprite.png) no-repeat 0 -18px;
+	background: url(images/bp-sprite.webp) no-repeat 0 -18px;
 }
 
 .bp-object-name {
@@ -173,7 +173,7 @@ input.bx-bizproc-btn.bx-bizproc-btn-medium {
 }
 
 .bp-comments .bp-comments-icon {
-	background: url(images/bp-sprite.png) no-repeat 0 0;
+	background: url(images/bp-sprite.webp) no-repeat 0 0;
 	margin: 0 auto 5px;
 }
 
@@ -227,7 +227,7 @@ input.bx-bizproc-btn.bx-bizproc-btn-medium {
 	margin: auto;
 	width: 18px;
 	height: 18px;
-	background: url(images/bp-sprite.png) no-repeat -27px 0;
+	background: url(images/bp-sprite.webp) no-repeat -27px 0;
 }
 
 .bp-status-cancel, .bp-status-ready {
@@ -252,7 +252,7 @@ input.bx-bizproc-btn.bx-bizproc-btn-medium {
 	margin: auto;
 	width: 13px;
 	height: 13px;
-	background: url(images/bp-sprite.png) no-repeat -28px -79px;
+	background: url(images/bp-sprite.webp) no-repeat -28px -79px;
 }
 
 .bp-status-ready:after {

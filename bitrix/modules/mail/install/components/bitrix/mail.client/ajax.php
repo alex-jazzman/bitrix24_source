@@ -8,9 +8,13 @@ use Bitrix\Mail\Helper\MailboxAccess;
 use Bitrix\Mail\Helper\Message;
 use Bitrix\Mail\Integration\Calendar\ICal\ICalMailManager;
 use Bitrix\Mail\Integration\Intranet\Secretary;
+use Bitrix\Mail\Internal\Service\LargeAttachment\LargeAttachmentService;
+use Bitrix\Mail\Internal\Service\SourceGeneration\MigrationActionGuard;
 use Bitrix\Mail\Internals\MessageAccessTable;
 use Bitrix\Mail\MailboxTable;
 use Bitrix\Mail\MailMessageTable;
+use Bitrix\Mail\Public\Service\LargeAttachment\Dto\SendContractResult;
+use Bitrix\Mail\Public\Service\LargeAttachment\SendContractValidator;
 use Bitrix\Main;
 use Bitrix\Main\Context;
 use Bitrix\Main\Error;
@@ -33,6 +37,8 @@ class CMailClientAjaxController extends \Bitrix\Main\Engine\Controller
 		'company',
 		'lead',
 	];
+	public const ERROR_LARGE_ATTACHMENT_INVALID_SEND_CONTRACT = SendContractValidator::ERROR_INVALID_SEND_CONTRACT;
+	public const ERROR_LARGE_ATTACHMENT_LINK_MISSING = SendContractValidator::ERROR_LINK_MISSING;
 
 	/**
 	 * Initializes controller.
@@ -201,6 +207,21 @@ class CMailClientAjaxController extends \Bitrix\Main\Engine\Controller
 	 */
 	public function syncMailboxAction($id, $dir = null, $onlySyncCurrent = false)
 	{
+		if (!MailboxAccess::hasCurrentUserAnyAccessToMailbox((int)$id))
+		{
+			$this->addError(new Error('Access to the mailbox is denied', 403));
+
+			return [];
+		}
+
+		$guard = (new MigrationActionGuard())->check((int)$id);
+		if (!$guard->isSuccess())
+		{
+			$this->addErrors($guard->getErrors());
+
+			return [];
+		}
+
 		$result = \Bitrix\Mail\Helper\Mailbox::quickSync($id, $dir, $onlySyncCurrent);
 		$this->errorCollection = $result->getErrorCollection();
 
@@ -228,6 +249,18 @@ class CMailClientAjaxController extends \Bitrix\Main\Engine\Controller
 			return;
 		}
 
+		$contextMailboxId = (int)($data['MAILBOX_ID'] ?? 0);
+		if ($contextMailboxId > 0)
+		{
+			$guard = (new MigrationActionGuard())->check($contextMailboxId);
+			if (!$guard->isSuccess())
+			{
+				$this->addErrors($guard->getErrors());
+
+				return;
+			}
+		}
+
 		$rawData = (array) \Bitrix\Main\Application::getInstance()->getContext()->getRequest()->getPostList()->getRaw('data');
 
 		$decodedData = $rawData;
@@ -243,7 +276,8 @@ class CMailClientAjaxController extends \Bitrix\Main\Engine\Controller
 			$fromEmail = $fromAddress->getEmail();
 
 			\CBitrixComponent::includeComponentClass('bitrix:main.mail.confirm');
-			if (!in_array($fromEmail, array_column(\MainMailConfirmComponent::prepareMailboxes(), 'email')))
+			$availableSenders = \MainMailConfirmComponent::prepareMailboxes();
+			if (!in_array($fromEmail, array_column($availableSenders, 'email')))
 			{
 				$this->errorCollection[] = new \Bitrix\Main\Error(Loc::getMessage('MAIL_MESSAGE_BAD_SENDER'));
 
@@ -351,9 +385,16 @@ class CMailClientAjaxController extends \Bitrix\Main\Engine\Controller
 			return;
 		}
 
-		if (count($to) + count($cc) + count($bcc) > 10)
+		$recipientsTotalLimit = Helper\LicenseManager::getMessageRecipientsTotalLimit();
+		if (count($to) + count($cc) + count($bcc) > $recipientsTotalLimit)
 		{
-			$this->errorCollection[] = new \Bitrix\Main\Error(Loc::getMessage('MAIL_MESSAGE_TO_MANY_RECIPIENTS'));
+			$this->errorCollection[] = new \Bitrix\Main\Error(
+				Loc::getMessage(
+					'MAIL_MESSAGE_TO_MANY_RECIPIENTS',
+					['#COUNT#' => $recipientsTotalLimit],
+				),
+				'recipient_limit',
+			);
 			return;
 		}
 
@@ -364,8 +405,45 @@ class CMailClientAjaxController extends \Bitrix\Main\Engine\Controller
 		}
 
 		$totalRecipientsCount = count($to) + count($cc) + count($bcc);
+		$hasExactSenderSelection = array_key_exists('SENDER_ID', $data)
+			|| array_key_exists('SENDER_MAILBOX_ID', $data)
+		;
+		$exactAvailableSenders = $availableSenders;
+		// The identities API may be absent on an older main; without it the exact-selection
+		// refinement is skipped and the identity below resolves the guarded way.
+		if (
+			$hasExactSenderSelection
+			&& method_exists(Sender\UserSenderDataProvider::class, 'getUserAvailableSenderIdentities')
+		)
+		{
+			$normalizedFromEmail = mb_strtolower((string)$fromEmail);
+			$exactAvailableSenders = array_values(array_filter(
+				Sender\UserSenderDataProvider::getUserAvailableSenderIdentities($userId),
+				static fn(array $sender): bool =>
+					mb_strtolower((string)($sender['email'] ?? '')) === $normalizedFromEmail,
+			));
+		}
 
-		if ($this->isSenderLimitReached((string)$fromEmail, $totalRecipientsCount))
+		$senderIdentity = $this->resolveSenderIdentity(
+			(int)($data['MAILBOX_ID'] ?? 0),
+			array_key_exists('SENDER_ID', $data) ? (int)$data['SENDER_ID'] : null,
+			$exactAvailableSenders,
+			(string)$fromEmail,
+			$this->getAvailableMailboxSenders($userId, (string)$fromEmail),
+			array_key_exists('SENDER_MAILBOX_ID', $data) ? (int)$data['SENDER_MAILBOX_ID'] : null,
+		);
+		if (
+			class_exists(Sender\Identity::class)
+			&& $hasExactSenderSelection
+			&& $senderIdentity === null
+		)
+		{
+			$this->errorCollection[] = new \Bitrix\Main\Error(Loc::getMessage('MAIL_MESSAGE_BAD_SENDER'));
+
+			return;
+		}
+
+		if ($this->isSenderLimitReached((string)$fromEmail, $totalRecipientsCount, $senderIdentity))
 		{
 			$this->errorCollection[] = new \Bitrix\Main\Error(Loc::getMessage('MAIL_CLIENT_DAILY_SENDER_LIMIT_REACHED'));
 
@@ -416,6 +494,40 @@ class CMailClientAjaxController extends \Bitrix\Main\Engine\Controller
 		$totalSize = 0;
 		$attachments = array();
 		$attachmentIds = array();
+
+		$largeAttachmentResult = $this->resolveLargeAttachmentsForSend(
+			$userId,
+			(array)($data['__largeAttachments'] ?? []),
+			(array)($data['__diskfiles'] ?? []),
+			$outgoingBody,
+		);
+		if (!$largeAttachmentResult->isSuccess())
+		{
+			foreach ($largeAttachmentResult->getErrors() as $error)
+			{
+				$this->errorCollection[] = new Error(
+					(string)Loc::getMessage('MAIL_MESSAGE_SEND_ERROR'),
+					$error->getCode(),
+				);
+			}
+
+			return;
+		}
+
+		$sendContract = $largeAttachmentResult->getData()[SendContractValidator::RESULT_KEY] ?? null;
+		if (!$sendContract instanceof SendContractResult)
+		{
+			$this->errorCollection[] = new Error(
+				'Large attachment validator returned an invalid result.',
+				SendContractValidator::ERROR_INVALID_SEND_RESULT,
+			);
+
+			return;
+		}
+
+		$convertedFileIds = array_fill_keys($sendContract->fileIds, true);
+		$externalLinkIds = $sendContract->externalLinkIds;
+
 		if (!empty($data['__diskfiles']) && is_array($data['__diskfiles']) && Loader::includeModule('disk'))
 		{
 			foreach ($data['__diskfiles'] as $item)
@@ -426,6 +538,11 @@ class CMailClientAjaxController extends \Bitrix\Main\Engine\Controller
 				}
 
 				$id = ltrim($item, 'n');
+
+				if (isset($convertedFileIds[(int)$id]))
+				{
+					continue;
+				}
 
 				if (!($diskFile = \Bitrix\Disk\File::loadById($id)))
 				{
@@ -479,12 +596,38 @@ class CMailClientAjaxController extends \Bitrix\Main\Engine\Controller
 			return;
 		}
 
-		$mailboxHelper = Mail\Helper\Mailbox::findBy($data['MAILBOX_ID'], $fromEmail);
+		$outgoingMailboxId = $this->resolveOutgoingMailboxId(
+			$senderIdentity,
+			(int)($data['MAILBOX_ID'] ?? 0),
+			$hasExactSenderSelection,
+		);
+		if ($outgoingMailboxId !== null)
+		{
+			$guard = (new MigrationActionGuard())->check($outgoingMailboxId);
+			if (!$guard->isSuccess())
+			{
+				$this->addErrors($guard->getErrors());
+
+				return;
+			}
+		}
+		$mailboxHelper = $outgoingMailboxId !== null
+			? Mail\Helper\Mailbox::findBy($outgoingMailboxId, $fromEmail)
+			: null
+		;
 
 		$mailboxOwnerId = null;
 
 		if (!empty($mailboxHelper))
 		{
+			$guard = (new MigrationActionGuard())->check($mailboxHelper->getMailboxId());
+			if (!$guard->isSuccess())
+			{
+				$this->addErrors($guard->getErrors());
+
+				return;
+			}
+
 			$mailboxOwnerId = $mailboxHelper->getMailboxOwnerId();
 			if (!$mailboxHelper->isAuthenticated())
 			{
@@ -514,21 +657,57 @@ class CMailClientAjaxController extends \Bitrix\Main\Engine\Controller
 		}
 
 		$messageBindings = array();
+		$createdCrmActivityId = 0;
 
 		// crm activity
 		if ($this->isCrmEnable && count($crmCommunication) > 0)
 		{
+			$crmAttachmentIds = $attachmentIds;
+			$createdCrmAttachmentIds = [];
+			$crmAttachmentIdMap = [];
+			if ($this->canCopyDraftAttachmentsForCrmActivity(
+				$userId,
+				$attachmentIds,
+				$data['draftId'] ?? null,
+				$data['draftRevision'] ?? null,
+			))
+			{
+				$crmAttachmentIds = $this->copyDraftAttachmentsForCrmActivity(
+					$userId,
+					$attachmentIds,
+					$createdCrmAttachmentIds,
+					$crmAttachmentIdMap,
+				);
+				if ($crmAttachmentIds === null)
+				{
+					$this->errorCollection[] = new \Bitrix\Main\Error(
+						Loc::getMessage('MAIL_CLIENT_ACTIVITY_CREATE_ERROR'),
+					);
+
+					return;
+				}
+			}
+			$crmMessageBody = $messageBodyHtml;
+			foreach ($crmAttachmentIdMap as $sourceId => $copyId)
+			{
+				$crmMessageBody = preg_replace(
+					'/bxacid:n?' . preg_quote((string)$sourceId, '/') . '(?!\d)/i',
+					'bxacid:n' . $copyId,
+					$crmMessageBody,
+				);
+			}
+
 			$messageFields = array_merge(
 				$outgoingParams,
 				array(
-					'BODY' => $messageBodyHtml,
+					'BODY' => $crmMessageBody,
 					'FROM' => $fromEmail,
 					'TO' => $to,
 					'CC' => $cc,
 					'BCC' => $bcc,
 					'IMPORTANT' => !empty($data['important']),
 					'STORAGE_TYPE_ID' => \Bitrix\Crm\Integration\StorageType::Disk,
-					'STORAGE_ELEMENT_IDS' => $attachmentIds,
+					'STORAGE_ELEMENT_IDS' => $crmAttachmentIds,
 				)
 			);
 
@@ -541,6 +720,14 @@ class CMailClientAjaxController extends \Bitrix\Main\Engine\Controller
 
 			if (\CCrmEMail::createOutgoingMessageActivity($messageFields, $activityFields) !== true)
 			{
+				foreach ($createdCrmAttachmentIds as $attachmentId)
+				{
+					\Bitrix\Crm\Integration\StorageManager::deleteFile(
+						$attachmentId,
+						\Bitrix\Crm\Integration\StorageType::Disk,
+					);
+				}
+
 				if (!empty($activityFields['ERROR_TEXT']))
 				{
 					$this->errorCollection[] = new \Bitrix\Main\Error($activityFields['ERROR_TEXT']);
@@ -558,6 +745,7 @@ class CMailClientAjaxController extends \Bitrix\Main\Engine\Controller
 			}
 
 			$messageBindings[] = Mail\Internals\MessageAccessTable::ENTITY_TYPE_CRM_ACTIVITY;
+			$createdCrmActivityId = (int)($activityFields['ID'] ?? 0);
 
 			//$activityId = $activityFields['ID'];
 			//$urn = $messageFields['URN'];
@@ -579,17 +767,47 @@ class CMailClientAjaxController extends \Bitrix\Main\Engine\Controller
 				? Main\Mail\Context::PRIORITY_LOW
 				: Main\Mail\Context::PRIORITY_NORMAL
 			);
+			$this->applySenderIdentity($context, $senderIdentity);
 
-			$result = Main\Mail\Mail::send(array_merge(
+			$mailParams = array_merge(
 				$outgoingParams,
 				array(
 					'CONTEXT' => $context,
 				)
-			));
+			);
+			if (method_exists(Main\Mail\Mail::class, 'sendResult'))
+			{
+				$sendResult = Main\Mail\Mail::sendResult($mailParams);
+				$result = $sendResult->isSuccess();
+				if (!$result)
+				{
+					$this->errorCollection->add($sendResult->getErrors());
+					if (
+						$createdCrmActivityId > 0
+						&& $this->hasControlledSenderError($sendResult)
+					)
+					{
+						\CCrmActivity::delete(
+							$createdCrmActivityId,
+							false,
+							false,
+							[
+								'CURRENT_USER' => $userId,
+								'RECYCLE_BIN_FORCE_USER_ID' => $userId,
+							],
+						);
+					}
+				}
+			}
+			else
+			{
+				$result = Main\Mail\Mail::send($mailParams);
+			}
 		}
 		else
 		{
-			$eventKey = Main\EventManager::getInstance()->addEventHandler(
+			$eventManager = Main\EventManager::getInstance();
+			$eventKey = $eventManager->addEventHandler(
 				'mail',
 				'onBeforeUserFieldSave',
 				function (\Bitrix\Main\Event $event) use (&$messageBindings)
@@ -599,20 +817,75 @@ class CMailClientAjaxController extends \Bitrix\Main\Engine\Controller
 				}
 			);
 
-			$mailboxHelper->mail(array_merge(
-				$outgoingParams,
-				array(
-					'HEADER' => array_merge(
-						$outgoingParams['HEADER'],
-						array(
-							'To' => $outgoingParams['TO'],
-							'Subject' => $outgoingParams['SUBJECT'],
-						)
-					),
-				)
-			));
+			$markerEventKey = null;
+			if ($externalLinkIds)
+			{
+				$expectedMessageId = trim($messageId, '<>');
+				$markerEventKey = $eventManager->addEventHandler(
+					'mail',
+					'onMailMessageNew',
+					function (Main\Event $event) use ($expectedMessageId, $externalLinkIds)
+					{
+						$message = (array)$event->getParameter('message');
+						if ((string)($message['MSG_ID'] ?? '') !== $expectedMessageId)
+						{
+							return;
+						}
 
-			Main\EventManager::getInstance()->removeEventHandler('mail', 'onBeforeUserFieldSave', $eventKey);
+						$result = LargeAttachmentService::registerMessageMarkers(
+							(int)($message['ID'] ?? 0),
+							$externalLinkIds,
+						);
+						if (!$result->isSuccess())
+						{
+							(new Main\Diag\LoggerFactory())->createById(
+								'mail.large_attachment',
+								[],
+								false,
+							)?->error(
+								'Could not register outgoing message markers: {error}',
+								['error' => $result->getErrors()[0]->getMessage()],
+							);
+						}
+					},
+				);
+			}
+
+			try
+			{
+				$mailboxHelper->mail(array_merge(
+					$outgoingParams,
+					array(
+						'HEADER' => array_merge(
+							$outgoingParams['HEADER'],
+							array(
+								'To' => $outgoingParams['TO'],
+								'Subject' => $outgoingParams['SUBJECT'],
+							)
+						),
+					)
+				));
+			}
+			finally
+			{
+				$eventManager->removeEventHandler('mail', 'onBeforeUserFieldSave', $eventKey);
+				if ($markerEventKey !== null)
+				{
+					$eventManager->removeEventHandler('mail', 'onMailMessageNew', $markerEventKey);
+				}
+			}
+
+			$result = true;
+		}
+
+		if ($result === true)
+		{
+			\Bitrix\Mail\Internal\Service\Draft\DraftCompletion::afterSuccessfulSend(
+				userId: $userId,
+				draftId: $data['draftId'] ?? null,
+				contextType: \Bitrix\Mail\Internals\DraftTable::CONTEXT_MAIL,
+				expectedRevision: $data['draftRevision'] ?? null,
+			);
 		}
 
 		addEventToStatFile(
@@ -625,9 +898,153 @@ class CMailClientAjaxController extends \Bitrix\Main\Engine\Controller
 		return;
 	}
 
-	private function isSenderLimitReached(string $fromEmail, int $recipientsCount): bool
+	private function hasControlledSenderError(Main\Result $result): bool
 	{
-		$emailDailyLimit = Sender::getEmailLimit($fromEmail);
+		foreach ($result->getErrors() as $error)
+		{
+			if (in_array(
+				(string)$error->getCode(),
+				['MAIL_SENDER_ADDRESS_MISMATCH', 'MAIL_SENDER_UNAVAILABLE'],
+				true,
+			))
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * @param int[] $attachmentIds
+	 * @param int[] $createdAttachmentIds
+	 * @param array<int, int> $attachmentIdMap
+	 *
+	 * @return int[]|null
+	 */
+	private function copyDraftAttachmentsForCrmActivity(
+		int $userId,
+		array $attachmentIds,
+		array &$createdAttachmentIds,
+		array &$attachmentIdMap,
+	): ?array
+	{
+		$createdAttachmentIds = [];
+		$attachmentIdMap = [];
+		foreach ($attachmentIds as $attachmentId)
+		{
+			$file = \Bitrix\Crm\Integration\StorageManager::makeFileArray(
+				(int)$attachmentId,
+				\Bitrix\Crm\Integration\StorageType::Disk,
+			);
+			if (!is_array($file))
+			{
+				break;
+			}
+
+			$copyId = \Bitrix\Crm\Integration\StorageManager::saveEmailAttachment(
+				$file,
+				\Bitrix\Crm\Integration\StorageType::Disk,
+				'',
+				['USER_ID' => $userId],
+			);
+			if ((int)$copyId <= 0)
+			{
+				break;
+			}
+
+			$createdAttachmentIds[] = (int)$copyId;
+			$attachmentIdMap[(int)$attachmentId] = (int)$copyId;
+		}
+
+		if (count($createdAttachmentIds) === count($attachmentIds))
+		{
+			return $createdAttachmentIds;
+		}
+
+		foreach ($createdAttachmentIds as $attachmentId)
+		{
+			\Bitrix\Crm\Integration\StorageManager::deleteFile(
+				$attachmentId,
+				\Bitrix\Crm\Integration\StorageType::Disk,
+			);
+		}
+		$createdAttachmentIds = [];
+		$attachmentIdMap = [];
+
+		return null;
+	}
+
+	private function canCopyDraftAttachmentsForCrmActivity(
+		int $userId,
+		array $attachmentIds,
+		mixed $draftId,
+		mixed $draftRevision,
+	): bool
+	{
+		if (
+			!\Bitrix\Mail\Helper\Config\Feature::isInternalDraftsAvailable()
+			|| !is_numeric($draftId)
+			|| !is_numeric($draftRevision)
+			|| (int)$draftId <= 0
+			|| (int)$draftRevision <= 0
+		)
+		{
+			return false;
+		}
+
+		$draft = (new \Bitrix\Mail\Internal\Repository\DraftRepository())->findActiveById(
+			$userId,
+			(int)$draftId,
+			\Bitrix\Mail\Internals\DraftTable::CONTEXT_MAIL,
+		);
+		if ($draft === null || $draft->revision !== (int)$draftRevision)
+		{
+			return false;
+		}
+
+		$draftAttachmentIds = array_map(
+			static fn(array $attachment): int => (int)$attachment['id'],
+			$draft->attachments,
+		);
+
+		return array_diff(array_map('intval', $attachmentIds), $draftAttachmentIds) === [];
+	}
+
+	/**
+	 * @param array<int, array{token?: mixed, fileIds?: mixed}> $contracts
+	 * @param mixed[] $diskFileItems
+	 */
+	protected function resolveLargeAttachmentsForSend(
+		int $userId,
+		array $contracts,
+		array $diskFileItems,
+		string $messageBody,
+	): Main\Result
+	{
+		return $this
+			->createLargeAttachmentSendContractValidator()
+			->validate($userId, $contracts, $diskFileItems, $messageBody)
+		;
+	}
+
+	protected function createLargeAttachmentSendContractValidator(): SendContractValidator
+	{
+		return new SendContractValidator();
+	}
+
+	/**
+	 * The limit belongs to the sender record the message goes through, the way the kernel reads it on
+	 * send: an address-wide check would refuse the message because of the quota of another owner of
+	 * the same address.
+	 */
+	private function isSenderLimitReached(
+		string $fromEmail,
+		int $recipientsCount,
+		?Sender\Identity $identity,
+	): bool
+	{
+		$emailDailyLimit = Sender::getEmailLimit($fromEmail, $identity);
 		if ($emailDailyLimit <= 0)
 		{
 			return false;
@@ -637,6 +1054,145 @@ class CMailClientAjaxController extends \Bitrix\Main\Engine\Controller
 		$limit = $emailCounter->get($fromEmail);
 
 		return ($limit + $recipientsCount) > $emailDailyLimit;
+	}
+
+	/**
+	 * A sender selected by the new form is exact and takes priority over the mailbox carried by a
+	 * reply context. Calls without an exact coordinate keep the legacy mailbox/address fallback.
+	 *
+	 * @param array<int, array<string, mixed>> $availableSenders
+	 * @param array<int, array<string, mixed>> $availableMailboxSenders
+	 */
+	private function resolveSenderIdentity(
+		int $requestedMailboxId,
+		?int $requestedSenderId,
+		array $availableSenders,
+		string $fromEmail,
+		array $availableMailboxSenders = [],
+		?int $selectedMailboxId = null,
+	): ?Sender\Identity
+	{
+		if (!class_exists(Sender\Identity::class))
+		{
+			return null;
+		}
+
+		$email = mb_strtolower($fromEmail);
+		if ($selectedMailboxId !== null)
+		{
+			if ($selectedMailboxId <= 0)
+			{
+				return null;
+			}
+
+			foreach ($availableSenders as $sender)
+			{
+				if (
+					(int)($sender['mailboxId'] ?? 0) === $selectedMailboxId
+					&& mb_strtolower((string)($sender['email'] ?? '')) === $email
+				)
+				{
+					return Sender\Identity::fromMailbox($selectedMailboxId);
+				}
+			}
+
+			return null;
+		}
+
+		if ($requestedSenderId !== null)
+		{
+			if ($requestedSenderId <= 0)
+			{
+				return null;
+			}
+
+			foreach ($availableSenders as $sender)
+			{
+				if (
+					(int)($sender['id'] ?? 0) !== $requestedSenderId
+					|| (int)($sender['mailboxId'] ?? 0) > 0
+					|| mb_strtolower((string)($sender['email'] ?? '')) !== $email
+				)
+				{
+					continue;
+				}
+
+				return Sender\Identity::fromSender($requestedSenderId);
+			}
+
+			return null;
+		}
+
+		if ($requestedMailboxId > 0)
+		{
+			foreach ($availableMailboxSenders as $sender)
+			{
+				$mailboxId = (int)($sender['mailboxId'] ?? 0);
+				if (
+					$mailboxId === $requestedMailboxId
+					&& mb_strtolower((string)($sender['email'] ?? '')) === $email
+				)
+				{
+					return Sender\Identity::fromMailbox($mailboxId);
+				}
+			}
+		}
+
+		return null;
+	}
+
+	private function resolveOutgoingMailboxId(
+		?Sender\Identity $identity,
+		int $legacyMailboxId,
+		bool $hasExactSenderSelection,
+	): ?int
+	{
+		if (!$hasExactSenderSelection)
+		{
+			return $legacyMailboxId;
+		}
+
+		return $identity?->hasMailboxRef() ? $identity->mailboxParentId : null;
+	}
+
+	/**
+	 * The sender list used by the interface is deduplicated by formatted address. Mailbox access is
+	 * checked against the complete server-side list, so a repeated address does not make a requested
+	 * mailbox indistinguishable from its neighbour.
+	 *
+	 * @return array<int, array{mailboxId: int, email: string}>
+	 */
+	private function getAvailableMailboxSenders(int $userId, string $email): array
+	{
+		$normalizedEmail = mb_strtolower($email);
+		$senders = [];
+		foreach (MailboxTable::getUserMailboxes($userId) as $mailbox)
+		{
+			if (mb_strtolower((string)($mailbox['EMAIL'] ?? '')) !== $normalizedEmail)
+			{
+				continue;
+			}
+
+			$senders[] = [
+				'mailboxId' => (int)$mailbox['ID'],
+				'email' => (string)$mailbox['EMAIL'],
+			];
+		}
+
+		return $senders;
+	}
+
+	/**
+	 * Tells the kernel which sender the message goes through, so that the transport and the limit stay
+	 * within the same record the pre-check read. Older kernels have no identity and keep selecting by
+	 * the address.
+	 */
+	private function applySenderIdentity(Main\Mail\Context $context, ?Sender\Identity $identity): void
+	{
+		if ($identity !== null && method_exists($context, 'setSenderIdentity'))
+		{
+			$context->setSenderIdentity($identity);
+		}
 	}
 
 	private function isDailyPortalLimitReached(int $recipientsCount): bool

@@ -262,6 +262,7 @@ jn.define('tasks/layout/action-menu/actions', (require, exports, module) => {
 									category: 'task_operations',
 									event: 'task_complete',
 									type: 'task',
+									p1: `taskId_${task.id}`,
 									...analyticsLabel,
 								},
 							}),

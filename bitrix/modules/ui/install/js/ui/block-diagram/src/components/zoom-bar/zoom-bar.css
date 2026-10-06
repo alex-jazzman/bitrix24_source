@@ -11,6 +11,12 @@
     outline: none;
 }
 
+.ui-block-diagram-canvas-zoom-bar.--flat {
+	padding: 0;
+	background: transparent;
+	box-shadow: none;
+}
+
 .ui-block-diagram-canvas-zoom-bar__zoom {
     display: flex;
 	align-items: center;
@@ -74,8 +80,25 @@
 	justify-content: flex-end;
 }
 
+.ui-block-diagram-canvas-zoom-bar__map-close-button {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	width: 24px;
+	height: 24px;
+	padding: 0;
+	border: none;
+	margin: 0;
+	background-color: transparent;
+	cursor: pointer;
+}
+
+.ui-block-diagram-canvas-zoom-bar__map-close-button:focus-visible {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
+	outline-offset: var(--ui-focus-outline-offset);
+	border-radius: var(--ui-border-radius-2xs);
+}
+
 .ui-block-diagram-canvas-zoom-bar__map-close-icon {
 	font-size: 20px;
-	font-weight: bold;
-	cursor: pointer;
 }

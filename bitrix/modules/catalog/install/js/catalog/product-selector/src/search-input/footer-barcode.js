@@ -55,12 +55,12 @@ export class ProductSearchInputBarcodeFooter extends ProductSearchInputDefaultFo
 	{
 		return this.cache.remember('scannerLabel', () => {
 			return Tag.render`
-				<span onclick="${this.options.onScannerClick}">
+				<button type="button" class="catalog-footer-action" data-testid="catalog-selector-footer-scanner-btn" onclick="${this.options.onScannerClick}">
 					<span class="ui-selector-footer-link ui-selector-footer-link-add footer-link--warehouse-barcode-icon">
 						${Loc.getMessage('CATALOG_SELECTOR_SEARCH_POPUP_FOOTER_BARCODE_START_SCAN_LABEL')}
 					</span>
 					${this.#getScannerQueryContainer()}
-				</span>
+				</button>
 			`;
 		});
 	}

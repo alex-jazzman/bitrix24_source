@@ -1,0 +1,9 @@
+<?php
+
+$MESS['MSGSVC_CT_GRID_COL_TITLE'] = 'Название';
+$MESS['MSGSVC_CT_GRID_COL_SCENE'] = 'Где применяется';
+$MESS['MSGSVC_CT_GRID_COL_CONTEXT'] = 'Связь';
+$MESS['MSGSVC_CT_GRID_COL_AUTHOR'] = 'Создал';
+$MESS['MSGSVC_CT_GRID_COL_MODIFIED_BY'] = 'Изменил';
+$MESS['MSGSVC_CT_GRID_COL_DATE_CREATE'] = 'Создан';
+$MESS['MSGSVC_CT_GRID_COL_DATE_MODIFY'] = 'Изменён';

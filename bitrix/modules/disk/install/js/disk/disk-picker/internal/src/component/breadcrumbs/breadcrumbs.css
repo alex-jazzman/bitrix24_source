@@ -1,0 +1,61 @@
+.disk-picker-breadcrumbs {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	gap: var(--ui-space-inline-2xs);
+	min-width: 0;
+	overflow: hidden;
+}
+
+.disk-picker-breadcrumbs__link {
+	display: flex;
+	align-items: center;
+	min-width: 0;
+	padding: 0;
+	margin: 0;
+	border: none;
+	background: none;
+	cursor: pointer;
+	color: var(--ui-color-base-3);
+	white-space: nowrap;
+	transition: color 200ms ease;
+}
+
+.disk-picker-breadcrumbs__link:hover {
+	color: var(--ui-color-accent-main-link);
+}
+
+.disk-picker-breadcrumbs__link:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: -2px;
+	border-radius: var(--ui-border-radius-3xs);
+}
+
+/* The "…" grandparent crumb is a fixed glyph: never clip or shrink it. */
+.disk-picker-breadcrumbs__overflow {
+	flex-shrink: 0;
+	color: var(--ui-color-base-3);
+}
+
+/* Width-bounded, ellipsised name — full text lives in the title attribute. */
+.disk-picker-breadcrumbs__label {
+	display: block;
+	max-width: 140px;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.disk-picker-breadcrumbs__separator {
+	flex-shrink: 0;
+	color: var(--ui-color-base-3);
+}
+
+.disk-picker-breadcrumbs__current {
+	display: block;
+	max-width: 140px;
+	color: var(--ui-color-base-1);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}

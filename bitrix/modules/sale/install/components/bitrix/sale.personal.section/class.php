@@ -7,6 +7,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Sale;
+use Bitrix\Main\Web\Uri;
 
 class PersonalOrderSection extends CBitrixComponent
 {
@@ -338,16 +339,11 @@ class PersonalOrderSection extends CBitrixComponent
 					|| $order->isCanceled()
 				)
 				{
-					$this->arResult["PATH_TO_ORDERS"] = \CHTTP::urlAddParams(
-						CComponentEngine::makePathFromTemplate($this->arResult["PATH_TO_ORDERS"]),
-						['filter_history' => 'Y']
-					);
+					$path = CComponentEngine::makePathFromTemplate($this->arResult["PATH_TO_ORDERS"]);
+					$this->arResult["PATH_TO_ORDERS"] = (string)(new Uri($path))->addParams(['filter_history' => 'Y']);
 					if ($order->isCanceled())
 					{
-						$this->arResult["PATH_TO_ORDERS"] = \CHTTP::urlAddParams(
-							CComponentEngine::makePathFromTemplate($this->arResult["PATH_TO_ORDERS"]),
-							['show_canceled' => 'Y']
-						);
+						$this->arResult["PATH_TO_ORDERS"] = (string)(new Uri($path))->addParams(['show_canceled' => 'Y']);
 					}
 				}
 			}
@@ -386,11 +382,7 @@ class PersonalOrderSection extends CBitrixComponent
 				$this->arResult["AUTH_SUCCESS_URL"] = $backUrl;
 			}
 
-			$this->arResult["PATH_TO_AUTH_PAGE"] = \CHTTP::urlAddParams(
-				$this->arResult["PATH_TO_PRIVATE"],
-				['backurl' => urlencode($request->getRequestUri())],
-				true
-			);
+			$this->arResult["PATH_TO_AUTH_PAGE"] = (string)(new Uri($this->arResult["PATH_TO_PRIVATE"]))->addParams(['backurl' => $request->getRequestUri()]);
 		}
 
 		$this->arResult['VARIABLES']['ID'] ??= 0;

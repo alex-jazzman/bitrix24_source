@@ -3,6 +3,8 @@ export const ARRAY_COMMANDS = Object.freeze({
 	PUSH: 'push',
 	UPDATE_BY_INDEX: 'updateByIndex',
 	DELETE_BY_INDEX: 'deleteByIndex',
+	DELETE_BY_ID: 'deleteById',
+	DELETE_BY_IDS: 'deleteByIds',
 });
 
 export type CommandPayload = {
@@ -44,6 +46,14 @@ const commandExecMap = {
 
 		return result;
 	},
+	[ARRAY_COMMANDS.DELETE_BY_ID]: ({ source, payload }) => {
+		return source.filter((item) => item.id !== payload);
+	},
+	[ARRAY_COMMANDS.DELETE_BY_IDS]: ({ source, payload }) => {
+		const ids = payload instanceof Set ? payload : new Set(payload);
+
+		return source.filter((item) => !ids.has(item.id));
+	},
 };
 
 function command(
@@ -75,6 +85,16 @@ export function commandUpdateByIndex(index: number, payload: {...}): CommandPayl
 export function commandDeleteByIndex(index: number): CommandPayload
 {
 	return command(ARRAY_COMMANDS.DELETE_BY_INDEX, { index });
+}
+
+export function commandDeleteById(id: string | number): CommandPayload
+{
+	return command(ARRAY_COMMANDS.DELETE_BY_ID, { payload: id });
+}
+
+export function commandDeleteByIds(ids: Array<string | number> | Set<string | number>): CommandPayload
+{
+	return command(ARRAY_COMMANDS.DELETE_BY_IDS, { payload: ids });
 }
 
 export function runCommand(

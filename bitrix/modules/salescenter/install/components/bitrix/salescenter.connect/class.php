@@ -161,7 +161,7 @@ class CSalesCenterConnectComponent extends CBitrixComponent
 		$result[] = [
 			'title' => 'SALESCENTER_CONNECT_TEMPLATE_HOW',
 			'description' => 'SALESCENTER_CONNECT_BLOCK_PAYMENTS_SMS_HOW_DESCRIPTION',
-			'image' => 'sms.png',
+			'image' => 'sms.webp',
 		];
 
 		$result[] = [
@@ -225,7 +225,7 @@ class CSalesCenterConnectComponent extends CBitrixComponent
 		$result[] = [
 			'title' => 'SALESCENTER_CONNECT_TEMPLATE_HOW',
 			'description' => 'SALESCENTER_CONNECT_BLOCK_SERVICES_SMS_HOW_DESCRIPTION',
-			'image' => 'sms.png',
+			'image' => 'sms.webp',
 		];
 
 		return $result;

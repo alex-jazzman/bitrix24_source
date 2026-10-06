@@ -251,15 +251,8 @@ export class CopilotManager
 
 	getAIModelName(dialogId: string): string
 	{
-		const isAIModelChangeAllowed = FeatureManager.isFeatureAvailable(Feature.isAIModelChangeAllowed);
+		const currentAIModel = Core.getStore().getters['copilot/chats/getAIModel'](dialogId);
 
-		if (isAIModelChangeAllowed)
-		{
-			const currentAIModel = Core.getStore().getters['copilot/chats/getAIModel'](dialogId);
-
-			return currentAIModel.name;
-		}
-
-		return Core.getStore().getters['copilot/getProvider'];
+		return currentAIModel.name;
 	}
 }

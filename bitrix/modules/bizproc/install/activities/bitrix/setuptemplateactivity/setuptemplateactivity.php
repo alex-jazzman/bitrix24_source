@@ -1,10 +1,10 @@
 <?php
 
+use Bitrix\Bizproc\Public\Activity\Interface\ActivityContentBlockProviderInterface;
 use Bitrix\Bizproc\Activity\PropertiesDialog;
 use Bitrix\Bizproc\Api\Enum\ErrorMessage;
 use Bitrix\Bizproc\Api\Request\WorkflowTemplateService\SetConstantsRequest;
 use Bitrix\Bizproc\Api\Response\WorkflowTemplateService\SetConstantsResponse;
-use Bitrix\Bizproc\Api\Service\WorkflowTemplateService;
 use Bitrix\Bizproc\Error;
 use Bitrix\Bizproc\FieldType;
 use Bitrix\Bizproc\FileUploader\SetupTemplateUploaderController;
@@ -30,6 +30,8 @@ use Bitrix\Bizproc\Internal\Integration\Rag\DocumentFieldTypes\RagKnowledgeBaseT
 use Bitrix\Bizproc\Internal\Integration\Tasks\DocumentFieldTypes\ProjectType;
 use Bitrix\Bizproc\Internal\Integration\UI\UploaderHelper;
 use Bitrix\Bizproc\Internal\Service\DocumentField\AccessValidationService;
+use Bitrix\Bizproc\Internal\Service\Pilot\SettingsFreezeGate;
+use Bitrix\Bizproc\Internal\Service\SetupTemplate\SetupTemplateConstantsService;
 use Bitrix\Bizproc\Workflow\Template\Entity\EO_WorkflowTemplate;
 use Bitrix\Bizproc\WorkflowTemplateTable;
 use Bitrix\Main\DI\ServiceLocator;
@@ -45,7 +47,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
-class CBPSetupTemplateActivity extends CBPActivity implements IBPEventActivity, IBPActivityExternalEventListener
+class CBPSetupTemplateActivity extends CBPActivity implements IBPEventActivity, IBPActivityExternalEventListener, ActivityContentBlockProviderInterface
 {
 	private const PARAM_BLOCKS = 'blocks';
 	private const PARAM_BLOCK_ITEMS = 'items';
@@ -70,6 +72,72 @@ class CBPSetupTemplateActivity extends CBPActivity implements IBPEventActivity, 
 			'Title' => '',
 			self::PARAM_BLOCKS => null,
 		];
+	}
+
+	public static function getContentBlock(array $properties, ?\Bitrix\Bizproc\Activity\Dto\ContentBlockContext $context = null): ?\Bitrix\Bizproc\Activity\Dto\ContentBlock
+	{
+		$constantsCount = count(
+			self::extractBlockItemsByType($properties[self::PARAM_BLOCKS] ?? null, ItemType::Constant)
+		);
+		if ($constantsCount === 0)
+		{
+			return null;
+		}
+
+		return new \Bitrix\Bizproc\Activity\Dto\ContentBlock(
+			(string)Loc::getMessage(
+				'BIZPROC_SETUP_TEMPLATE_ACTIVITY_CONTENT_BLOCK_CONSTANTS',
+				['#count#' => $constantsCount],
+			),
+		);
+	}
+
+	/**
+	 * Leniently extracts raw block items of the given type from the blocks property value.
+	 *
+	 * Unlike validateAndParseBlocks(), performs no validation on purpose: the canvas label must
+	 * degrade gracefully on partially invalid data and stay cheap, since it runs per node on every
+	 * diagram render.
+	 *
+	 * @return list<array>
+	 */
+	private static function extractBlockItemsByType(mixed $rawBlocks, ItemType $type): array
+	{
+		try
+		{
+			$blocks = is_string($rawBlocks) ? Json::decode($rawBlocks) : $rawBlocks;
+		}
+		catch (\Bitrix\Main\ArgumentException)
+		{
+			return [];
+		}
+
+		if (!is_array($blocks))
+		{
+			return [];
+		}
+
+		$items = [];
+		foreach ($blocks as $block)
+		{
+			if (!is_array($block))
+			{
+				continue;
+			}
+
+			foreach ((array)($block[self::PARAM_BLOCK_ITEMS] ?? []) as $item)
+			{
+				if (
+					is_array($item)
+					&& ($item[self::PARAM_BLOCK_ITEMS_ITEM_TYPE] ?? null) === $type->value
+				)
+				{
+					$items[] = $item;
+				}
+			}
+		}
+
+		return $items;
 	}
 
 	public static function validateProperties($arTestProperties = [], CBPWorkflowTemplateUser $user = null): array
@@ -196,6 +264,13 @@ class CBPSetupTemplateActivity extends CBPActivity implements IBPEventActivity, 
 
 	public function execute(): int
 	{
+		// the values belong to the template and not to the employee, so a frozen template opens the form
+		// for nobody: the step runs on the values already saved, the same way for everyone
+		if ((new SettingsFreezeGate())->isFrozen($this->getWorkflowTemplateId()))
+		{
+			return CBPActivityExecutionStatus::Closed;
+		}
+
 		if (empty($this->{self::PARAM_BLOCKS}))
 		{
 			$this->trackError(Loc::getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_PROPERTY_BLOCKS_EMPTY'));
@@ -371,7 +446,7 @@ class CBPSetupTemplateActivity extends CBPActivity implements IBPEventActivity, 
 	{
 		[$preparedValues, $allTempFileIds] = $this->getFileConstantsFilesIds($constantValues, $blocks);
 
-		$result = (new WorkflowTemplateService())
+		$result = (new SetupTemplateConstantsService())
 			->setConstants(
 				new SetConstantsRequest(
 					templateId: $this->getWorkflowTemplateId(),
@@ -423,6 +498,163 @@ class CBPSetupTemplateActivity extends CBPActivity implements IBPEventActivity, 
 	private function getUserIdOnExecute(): int
 	{
 		return (int)$this->workflow->getStartedBy();
+	}
+
+	/**
+	 * Builds a setup-block subset that keeps only the constants with the given codes while
+	 * preserving the structural items (title/description/delimiter/... any non-Constant item)
+	 * of every block that retains at least one requested constant. Blocks without any requested
+	 * constant are dropped entirely, and item order inside a kept block is preserved.
+	 *
+	 * Used by the AI-agent upgrade fill scenario (P3.T2) to render only the NEW required
+	 * constants of the reference template in the existing setup-template UI, without
+	 * starting a setup workflow. Structural items are kept so the wizard shows section
+	 * headers and hints, not bare fields. Parsing is delegated to validateAndParseBlocks()
+	 * so the block/constant contract is not duplicated.
+	 *
+	 * @param string|array|null $inputBlocks Raw blocks (JSON string or array) from the
+	 *   reference SetupTemplateActivity 'blocks' property.
+	 * @param list<string> $constantCodes Constant codes to keep.
+	 * @return array Filtered blocks as an array (empty when nothing matches).
+	 */
+	public static function filterBlocksByConstantCodes(string|array|null $inputBlocks, array $constantCodes): array
+	{
+		$errors = [];
+		$collection = self::validateAndParseBlocks($inputBlocks, $errors);
+		if ($collection === null || !empty($errors))
+		{
+			return [];
+		}
+
+		$keep = array_fill_keys(array_map('strval', $constantCodes), true);
+
+		$filtered = new BlockCollection();
+		foreach ($collection as $block)
+		{
+			$items = new ItemCollection();
+			$hasRequestedConstant = false;
+			foreach ($block->items as $item)
+			{
+				if ($item instanceof Constant)
+				{
+					if (isset($keep[$item->id]))
+					{
+						$items->add($item);
+						$hasRequestedConstant = true;
+					}
+
+					continue;
+				}
+
+				// Keep structural items (title/description/delimiter/...) so kept blocks
+				// render with their headers and hints instead of bare constant fields.
+				$items->add($item);
+			}
+
+			if ($hasRequestedConstant)
+			{
+				$filtered->add(new Block($items));
+			}
+		}
+
+		return $filtered->toArray();
+	}
+
+	/**
+	 * @return list<string>|null
+	 */
+	public static function collectConstantCodes(string|array|null $inputBlocks): ?array
+	{
+		$errors = [];
+		$blocks = self::validateAndParseBlocks($inputBlocks, $errors);
+		if ($blocks === null || !empty($errors))
+		{
+			return null;
+		}
+
+		$constantCodes = [];
+		foreach ($blocks as $block)
+		{
+			foreach ($block->items as $item)
+			{
+				if ($item instanceof Constant)
+				{
+					$constantCodes[] = $item->id;
+				}
+			}
+		}
+
+		return array_values(array_unique($constantCodes));
+	}
+
+	/**
+	 * Instance-free field-definition validation of submitted constant values against setup blocks.
+	 *
+	 * Mirrors the field-type/format portion of validateConstants() but without the running-instance
+	 * concerns (file uploader, access checks): it only decides which submitted values are invalid
+	 * for their setup-block field definition. Used by the AI-agent upgrade pre-commit re-validation
+	 * (P3.T2) so an invalid value re-shows the review master instead of being written and only
+	 * caught by the post-apply best-effort fill(). Emptiness is not reported here — a missing
+	 * required value is the caller's separate "still missing required" check. When a field type
+	 * cannot be resolved without an instance (rare) the constant is left to that best-effort fill()
+	 * rather than false-blocking an otherwise valid upgrade.
+	 *
+	 * @param array $documentType Complex document type the constants belong to.
+	 * @param string|array|null $inputBlocks Raw setup blocks (JSON string or array).
+	 * @param array<string, mixed> $constantValues Submitted values keyed by constant code.
+	 * @return list<string> Codes of submitted values that fail their field-type validation.
+	 */
+	public static function collectInvalidConstantCodes(
+		array $documentType,
+		string|array|null $inputBlocks,
+		array $constantValues,
+	): array
+	{
+		if ($constantValues === [])
+		{
+			return [];
+		}
+
+		$errors = [];
+		$blocks = self::validateAndParseBlocks($inputBlocks, $errors);
+		if ($blocks === null || !empty($errors))
+		{
+			return [];
+		}
+
+		$documentService = CBPRuntime::getRuntime()->getDocumentService();
+
+		$invalid = [];
+		foreach ($blocks as $block)
+		{
+			foreach ($block->items as $item)
+			{
+				if (!$item instanceof Constant || !array_key_exists($item->id, $constantValues))
+				{
+					continue;
+				}
+
+				if (CBPHelper::isEmptyValue($constantValues[$item->id]))
+				{
+					continue;
+				}
+
+				$fieldType = $documentService->getFieldTypeObject($documentType, $item->toFieldTypeArray());
+				if ($fieldType === null)
+				{
+					continue;
+				}
+
+				$itemErrors = [];
+				$fieldType->extractValue(['Field' => $item->id], $constantValues, $itemErrors);
+				if (!empty($itemErrors))
+				{
+					$invalid[] = $item->id;
+				}
+			}
+		}
+
+		return $invalid;
 	}
 
 	protected static function validateAndParseBlocks(string|array|null $inputBlocks, array &$errors): ?BlockCollection
@@ -677,19 +909,35 @@ class CBPSetupTemplateActivity extends CBPActivity implements IBPEventActivity, 
 		if (
 			array_key_exists('options', $arrayItem)
 			&& !empty($arrayItem['options'])
-			&& !is_array($arrayItem['options'])
 		)
 		{
-			$errors[] = self::makeValidationError(
-				Loc::getMessage(
-					'BIZPROC_SETUP_TEMPLATE_ACTIVITY_VALIDATOR_IS_ARRAY',
-					[
-						'#name#' => Loc::getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_LABEL_CONSTANT_EDIT_OPTIONS'),
-						'#itemPosition#' => $itemPosition,
-						'#blockPosition#' => $blockPosition,
-					]
-				),
-			);
+			$options = $arrayItem['options'];
+			$isOptionsMap = is_array($options);
+			if ($isOptionsMap)
+			{
+				foreach ($options as $optionValue => $optionLabel)
+				{
+					if (!is_string($optionLabel) || trim((string)$optionValue) === '')
+					{
+						$isOptionsMap = false;
+						break;
+					}
+				}
+			}
+
+			if (!$isOptionsMap)
+			{
+				$errors[] = self::makeValidationError(
+					Loc::getMessage(
+						'BIZPROC_SETUP_TEMPLATE_ACTIVITY_VALIDATOR_IS_ARRAY',
+						[
+							'#name#' => Loc::getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_LABEL_CONSTANT_EDIT_OPTIONS'),
+							'#itemPosition#' => $itemPosition,
+							'#blockPosition#' => $blockPosition,
+						]
+					),
+				);
+			}
 		}
 
 		if (
@@ -747,8 +995,104 @@ class CBPSetupTemplateActivity extends CBPActivity implements IBPEventActivity, 
 			$arrayItem['required'] ?? false,
 			$arrayItem['options'] ?? [],
 			$arrayItem['settings'] ?? [],
-			(string)($arrayItem['default'] ?? ''),
+			self::normalizeConstantDefault($arrayItem['default'] ?? ''),
 		);
+	}
+
+	/**
+	 * Value the form is filled with: the value stored in the template constant wins, the default of
+	 * the setup wizard is the fallback for a constant that was never filled.
+	 *
+	 * A single bool reaches the form canonicalized: the storage may hold any synonym the server
+	 * recognises, so both the positive and the negative ones become Y or N and keep their meaning
+	 * against the wizard default. Only a value outside the known synonyms means nothing to a bool
+	 * and counts as never filled. A native bool is canonicalized whatever the multiplicity — for a
+	 * multiple value element by element — so a stored native value keeps its meaning instead of
+	 * being read as an empty one. Otherwise multiplicity decides which path is taken, not the
+	 * runtime form of the stored value: the synonyms of a multiple bool stay as they are.
+	 */
+	private static function resolveConstantDefault(
+		string $constantType,
+		bool $multiple,
+		mixed $storedValue,
+		string|array $wizardDefault,
+	): string|array
+	{
+		if ($constantType === FieldType::BOOL && is_bool($storedValue))
+		{
+			$storedValue = self::canonicalizeNativeBool($storedValue);
+		}
+		elseif ($constantType === FieldType::BOOL && is_array($storedValue))
+		{
+			$storedValue = array_map(
+				static fn(mixed $value): mixed => self::canonicalizeNativeBool($value),
+				$storedValue,
+			);
+		}
+		elseif (is_scalar($storedValue))
+		{
+			$storedValue = (string)$storedValue;
+		}
+
+		// the same definition of emptiness the apply path uses, so a legitimate zero is a value here too
+		if (CBPHelper::isEmptyValue($storedValue) || (!is_string($storedValue) && !is_array($storedValue)))
+		{
+			return $wizardDefault;
+		}
+
+		if ($constantType === FieldType::BOOL && !$multiple)
+		{
+			if (!is_string($storedValue))
+			{
+				return $wizardDefault;
+			}
+
+			// the synonyms of BoolType::extractValue; anything outside both sets is never filled
+			$synonym = mb_strtolower($storedValue);
+			if (in_array($synonym, ['y', 'yes', 'true', '1'], true))
+			{
+				return 'Y';
+			}
+
+			if (in_array($synonym, ['n', 'no', 'false', '0'], true))
+			{
+				return 'N';
+			}
+
+			return $wizardDefault;
+		}
+
+		return $storedValue;
+	}
+
+	/**
+	 * A native bool of a template built outside the wizard, cast the way BoolType::extractValue does:
+	 * a plain string cast would turn false into the empty string and lose the stored "no", and the
+	 * switcher of the form reads a value that is not a string as an empty one. Anything but a native
+	 * bool is left to the caller.
+	 */
+	private static function canonicalizeNativeBool(mixed $value): mixed
+	{
+		if (!is_bool($value))
+		{
+			return $value;
+		}
+
+		return $value ? 'Y' : 'N';
+	}
+
+	/**
+	 * Keeps a multiple constant default as an array (each element cast to string) and a single
+	 * default as a string. Casting the whole array to string would store the literal "Array".
+	 */
+	private static function normalizeConstantDefault(mixed $default): string|array
+	{
+		if (is_array($default))
+		{
+			return array_values(array_map(static fn($value): string => (string)$value, $default));
+		}
+
+		return (string)($default ?? '');
 	}
 
 	protected static function validateDelimiter(
@@ -886,12 +1230,49 @@ class CBPSetupTemplateActivity extends CBPActivity implements IBPEventActivity, 
 
 				if (!array_key_exists($item->id, $constantValues))
 				{
-					$constantValues[$item->id] = $item->default;
+					$constantValues[$item->id] = self::autoFilledConstantValue($item);
 				}
 			}
 		}
 
 		return $constantValues;
+	}
+
+	/**
+	 * An empty default of a required bool would fail the "required & empty" check, while the form itself
+	 * submits N for the same state (each row of a multiple bool publishes its own N), so N is what the
+	 * auto-fill path takes. An empty value of an optional bool is a legitimate "not set" and is left
+	 * alone, as is any constant outside the blocks of the wizard.
+	 */
+	private static function autoFilledConstantValue(Constant $item): mixed
+	{
+		if (
+			$item->constantType === FieldType::BOOL
+			&& $item->required
+			&& CBPHelper::isEmptyValue($item->default)
+		)
+		{
+			return $item->multiple ? ['N'] : 'N';
+		}
+
+		return self::normalizeConstantValueForApply($item->constantType, $item->multiple, $item->default);
+	}
+
+	/**
+	 * Multiple user constant default is stored as an array of tokens (["user_4", "group_hr1", ...]),
+	 * but the apply path (GetFieldInputValue -> User::extractValueMultiple -> CBPHelper::usersStringToArray)
+	 * expects a delimited string; a raw sequential array without Index is collapsed to its first element.
+	 * Join the tokens with ";" so every selected user/department survives. Only multiple user defaults are
+	 * touched; other types and single values are returned unchanged.
+	 */
+	private static function normalizeConstantValueForApply(string $constantType, bool $multiple, mixed $value): mixed
+	{
+		if ($constantType === FieldType::USER && $multiple && is_array($value))
+		{
+			return implode(';', array_map(static fn($token): string => (string)$token, $value));
+		}
+
+		return $value;
 	}
 
 	private function appendOtherTemplateConstantsDefaults(array $constantValues): array
@@ -906,7 +1287,11 @@ class CBPSetupTemplateActivity extends CBPActivity implements IBPEventActivity, 
 			}
 			else
 			{
-				$allConstantValues[$constantId] = $constant['Default'] ?? null;
+				$allConstantValues[$constantId] = self::normalizeConstantValueForApply(
+					(string)($constant['Type'] ?? ''),
+					\CBPHelper::getBool($constant['Multiple'] ?? false),
+					$constant['Default'] ?? null,
+				);
 			}
 		}
 
@@ -936,7 +1321,8 @@ class CBPSetupTemplateActivity extends CBPActivity implements IBPEventActivity, 
 				$constantValue = $constants[$item->id] ?? null;
 				$customDataError = [self::ERROR_CONSTANT => $item->id];
 
-				if ($item->required === true && empty($constantValue))
+				// the same definition of emptiness the prefill and apply paths use, so a zero is a value here too
+				if ($item->required === true && CBPHelper::isEmptyValue($constantValue))
 				{
 					$errors[] = new Error(
 						Loc::getMessage('BIZPROC_CONSTANT_EMPTY_PROP', ['#PROPERTY#' => $item->name]),
@@ -1038,6 +1424,9 @@ class CBPSetupTemplateActivity extends CBPActivity implements IBPEventActivity, 
 			ProjectType::getType(),
 			FieldType::FILE,
 			FieldType::TIME,
+			FieldType::BOOL,
+			FieldType::DATE,
+			FieldType::DATETIME,
 			BIDashboardType::getType(),
 		];
 
@@ -1106,16 +1495,12 @@ class CBPSetupTemplateActivity extends CBPActivity implements IBPEventActivity, 
 			return $item;
 		}
 
-		$defaultValue = $this->getConstant($item->id);
-		if (is_scalar($defaultValue))
-		{
-			$defaultValue = (string)$defaultValue;
-		}
-
-		if (empty($defaultValue) || (!is_string($defaultValue) && !is_array($defaultValue)))
-		{
-			$defaultValue = $item->default;
-		}
+		$defaultValue = self::resolveConstantDefault(
+			$item->constantType,
+			$item->multiple,
+			$this->getConstant($item->id),
+			$item->default,
+		);
 
 		$settings = $item->settings;
 		if (!is_array($settings))

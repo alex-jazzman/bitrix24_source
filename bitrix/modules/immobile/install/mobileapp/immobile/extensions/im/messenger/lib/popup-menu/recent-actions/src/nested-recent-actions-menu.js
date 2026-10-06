@@ -4,6 +4,7 @@
 jn.define('im/messenger/lib/popup-menu/recent-actions/nested-recent-actions-menu', (require, exports, module) => {
 	const { Icon } = require('assets/icons');
 	const { Type } = require('type');
+	const { Color } = require('tokens');
 	const { PopupMenu } = require('ui-system/popups/popup-menu');
 
 	const { Loc } = require('im/messenger/loc');
@@ -360,10 +361,7 @@ jn.define('im/messenger/lib/popup-menu/recent-actions/nested-recent-actions-menu
 			}
 		}
 
-		/**
-		 * @return {string|null}
-		 */
-		#getProjectId()
+		#getProjectDialog()
 		{
 			const recentManager = serviceLocator.get('recent-manager');
 			const parentChatId = recentManager.getActiveNestedRecent()?.getParentChatId();
@@ -373,14 +371,40 @@ jn.define('im/messenger/lib/popup-menu/recent-actions/nested-recent-actions-menu
 				return null;
 			}
 
-			const dialog = serviceLocator.get('core').getStore().getters['dialoguesModel/getByChatId'](parentChatId);
+			return serviceLocator.get('core').getStore().getters['dialoguesModel/getByChatId'](parentChatId);
+		}
 
-			return Type.isStringFilled(dialog?.entityId) ? dialog.entityId : null;
+		/**
+		 * @param {DialoguesModelState|null} dialog
+		 * @return {string|undefined}
+		 */
+		#getProjectAvatarBackgroundColor(dialog)
+		{
+			if (dialog?.containsCollaber === true)
+			{
+				return Color.collabAccentPrimary.toHex();
+			}
+
+			return Type.isStringFilled(dialog?.color) ? dialog.color : undefined;
+		}
+
+		/**
+		 * @return {{projectId: string|null, hasCollabers: boolean|undefined, color: string|undefined}}
+		 */
+		#getProjectOpenParams()
+		{
+			const dialog = this.#getProjectDialog();
+
+			return {
+				projectId: Type.isStringFilled(dialog?.entityId) ? dialog.entityId : null,
+				hasCollabers: Type.isBoolean(dialog?.containsCollaber) ? dialog.containsCollaber : undefined,
+				color: this.#getProjectAvatarBackgroundColor(dialog),
+			};
 		}
 
 		async #openProjectTasks()
 		{
-			const projectId = this.#getProjectId();
+			const { projectId, hasCollabers, color } = this.#getProjectOpenParams();
 			if (Type.isNull(projectId))
 			{
 				Notification.showErrorToast();
@@ -391,7 +415,7 @@ jn.define('im/messenger/lib/popup-menu/recent-actions/nested-recent-actions-menu
 			try
 			{
 				const { ProjectOpener } = await requireLazy('project/opener');
-				void ProjectOpener.openTasks({ projectId: projectId });
+				void ProjectOpener.openTasks({ projectId, hasCollabers, color });
 			}
 			catch (error)
 			{
@@ -402,7 +426,7 @@ jn.define('im/messenger/lib/popup-menu/recent-actions/nested-recent-actions-menu
 
 		async #openProjectFeed()
 		{
-			const projectId = this.#getProjectId();
+			const { projectId, hasCollabers, color } = this.#getProjectOpenParams();
 			if (Type.isNull(projectId))
 			{
 				Notification.showErrorToast();
@@ -413,7 +437,7 @@ jn.define('im/messenger/lib/popup-menu/recent-actions/nested-recent-actions-menu
 			try
 			{
 				const { ProjectOpener } = await requireLazy('project/opener');
-				void ProjectOpener.openNews({ projectId: projectId });
+				void ProjectOpener.openNews({ projectId, hasCollabers, color });
 			}
 			catch (error)
 			{
@@ -424,7 +448,7 @@ jn.define('im/messenger/lib/popup-menu/recent-actions/nested-recent-actions-menu
 
 		async #openProjectFiles()
 		{
-			const projectId = this.#getProjectId();
+			const { projectId, hasCollabers, color } = this.#getProjectOpenParams();
 			if (Type.isNull(projectId))
 			{
 				Notification.showErrorToast();
@@ -435,7 +459,7 @@ jn.define('im/messenger/lib/popup-menu/recent-actions/nested-recent-actions-menu
 			try
 			{
 				const { ProjectOpener } = await requireLazy('project/opener');
-				void ProjectOpener.openDisk({ projectId: projectId });
+				void ProjectOpener.openDisk({ projectId, hasCollabers, color });
 			}
 			catch (error)
 			{
@@ -446,7 +470,7 @@ jn.define('im/messenger/lib/popup-menu/recent-actions/nested-recent-actions-menu
 
 		async #openProjectCalendar()
 		{
-			const projectId = this.#getProjectId();
+			const { projectId, hasCollabers, color } = this.#getProjectOpenParams();
 			if (Type.isNull(projectId))
 			{
 				Notification.showErrorToast();
@@ -457,7 +481,7 @@ jn.define('im/messenger/lib/popup-menu/recent-actions/nested-recent-actions-menu
 			try
 			{
 				const { ProjectOpener } = await requireLazy('project/opener');
-				void ProjectOpener.openCalendar({ projectId: projectId });
+				void ProjectOpener.openCalendar({ projectId, hasCollabers, color });
 			}
 			catch (error)
 			{

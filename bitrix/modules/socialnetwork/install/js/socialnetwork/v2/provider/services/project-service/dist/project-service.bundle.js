@@ -147,7 +147,35 @@ this.BX.Socialnetwork.V2.Provider = this.BX.Socialnetwork.V2.Provider || {};
 				...project.avatar
 			};
 		}
+		if (project.notifications && isNotificationsDirty(project.notifications, project.notificationsInitial)) {
+			const notificationPayload = {
+				types: project.notifications.groups.flatMap(g => g.types).map(t => ({
+					id: t.id,
+					counterEnabled: t.counterEnabled
+				}))
+			};
+			dto.notifications = notificationPayload;
+		}
 		return dto;
+	}
+	function isNotificationsDirty(current, initial) {
+		if (!initial) {
+			return true;
+		}
+		const toFlagsMap = catalog => {
+			return new Map(catalog.groups.flatMap(g => g.types).map(t => [t.id, t.counterEnabled]));
+		};
+		const currentFlags = toFlagsMap(current);
+		const initialFlags = toFlagsMap(initial);
+		if (currentFlags.size !== initialFlags.size) {
+			return true;
+		}
+		for (const [id, counterEnabled] of currentFlags) {
+			if (!initialFlags.has(id) || initialFlags.get(id) !== counterEnabled) {
+				return true;
+			}
+		}
+		return false;
 	}
 	function mapValue$1(value, mappedValue, checkIsEmpty = main_core.Type.isNil) {
 		return checkIsEmpty(value) ? value : mappedValue;
@@ -228,7 +256,8 @@ this.BX.Socialnetwork.V2.Provider = this.BX.Socialnetwork.V2.Provider || {};
 			permissions: mapPermissionsFromDtoToModel(projectDto),
 			dates: mapDates(projectDto.dates),
 			tags: mapValue(projectDto.tags, [...projectDto.tags]),
-			publication: mapValue(projectDto.publication, projectDto.publication || false)
+			publication: mapValue(projectDto.publication, projectDto.publication || false),
+			notifications: projectDto.notificationCatalog ?? null
 		};
 	}
 	function mapPermissionsFromDtoToModel(dto) {

@@ -11,6 +11,28 @@
 	display: block !important;
 }
 
+/*
+ * The angle of the control takes the right `--ui-field-size` and stands on z-index 10, the caption
+ * over it is opaque and stands on z-index 1. So the warning goes to the left of the angle and above
+ * both of them — otherwise the caption paints right over it.
+ */
+.editor-chart-node-settings-edit-condition-expression-form__dropdown .editor-chart-unresolved-field-hint {
+	position: absolute;
+	top: 50%;
+	right: var(--ui-field-size);
+	z-index: 11;
+	transform: translateY(-50%);
+}
+
+/*
+ * Room for the warning by the caption: the angle, the 18px icon of the hint and a gap, so the ellipsis
+ * of the caption comes before the icon. `!important` is unavoidable — the framework reserves room for
+ * the angle alone and does it the same way (`.ui-ctl-after-icon .ui-ctl-element`).
+ */
+.editor-chart-node-settings-edit-condition-expression-form__dropdown.ui-ctl.--unresolved .ui-ctl-element {
+	padding-right: calc(var(--ui-field-size) + 18px + var(--ui-space-inline-2xs2)) !important;
+}
+
 .editor-chart-node-settings-edit-condition-expression-form__label {
 	font-size: 13px;
 	line-height: 17px;

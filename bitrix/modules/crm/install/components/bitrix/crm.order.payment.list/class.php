@@ -12,6 +12,7 @@ use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\WebForm\Manager as WebFormManager;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Web\Uri;
 
 Loc::loadMessages(__FILE__);
 
@@ -365,7 +366,7 @@ class CCrmOrderPaymentListComponent extends \CBitrixComponent
 		}
 
 		$this->arResult['ENABLE_SLIDER'] = \Bitrix\Crm\Settings\LayoutSettings::getCurrent()->isSliderEnabled();
-		$this->arResult['PATH_TO_ORDER_PAYMENT_DELETE'] =  CHTTP::urlAddParams($this->arParams['PATH_TO_ORDER_PAYMENT_LIST'], array('sessid' => bitrix_sessid()));
+		$this->arResult['PATH_TO_ORDER_PAYMENT_DELETE'] =  (string)(new Uri($this->arParams['PATH_TO_ORDER_PAYMENT_LIST']))->addParams(array('sessid' => bitrix_sessid()));
 		$this->arResult['TIME_FORMAT'] = CCrmDateTimeHelper::getDefaultDateTimeFormat();
 		$this->arResult['CALL_LIST_UPDATE_MODE'] = isset($_REQUEST['call_list_context'])
 			&& isset($_REQUEST['call_list_id'])
@@ -764,12 +765,9 @@ class CCrmOrderPaymentListComponent extends \CBitrixComponent
 				array('init_mode' => 'edit')
 			);
 
-			$payment['PATH_TO_ORDER_PAYMENT_DELETE'] =  CHTTP::urlAddParams(
-				$this->isInternal
+			$payment['PATH_TO_ORDER_PAYMENT_DELETE'] =  (string)(new Uri($this->isInternal
 					? $APPLICATION->GetCurPage()
-					: ($this->arParams['PATH_TO_ORDER_PAYMENT_LIST'] ?? ''),
-				array('action_'.$this->arResult['GRID_ID'] => 'delete', 'ID' => $entityID, 'sessid' => $this->arResult['SESSION_ID'])
-			);
+					: ($this->arParams['PATH_TO_ORDER_PAYMENT_LIST'] ?? '')))->addParams(array('action_'.$this->arResult['GRID_ID'] => 'delete', 'ID' => $entityID, 'sessid' => $this->arResult['SESSION_ID']));
 
 			$payment['PATH_TO_USER_PROFILE'] = CComponentEngine::MakePathFromTemplate(
 				$this->arParams['PATH_TO_USER_PROFILE'] ?? '',
@@ -836,10 +834,7 @@ class CCrmOrderPaymentListComponent extends \CBitrixComponent
 					Service\Sale\EntityLinkBuilder\Context::getShopAreaContext()
 				);
 
-			$this->arResult['PATH_TO_ORDER_PAYMENT_ADD'] = CHTTP::urlAddParams(
-				$this->arResult['PATH_TO_ORDER_PAYMENT_ADD'] ?? '',
-				array('order_id' => (int)$this->arParams['INTERNAL_FILTER']['ORDER_ID'])
-			);
+			$this->arResult['PATH_TO_ORDER_PAYMENT_ADD'] = (string)(new Uri($this->arResult['PATH_TO_ORDER_PAYMENT_ADD'] ?? ''))->addParams(array('order_id' => (int)$this->arParams['INTERNAL_FILTER']['ORDER_ID']));
 		}
 
 		$this->arResult['NEED_FOR_REBUILD_ORDER_PAYMENT_ATTRS'] =

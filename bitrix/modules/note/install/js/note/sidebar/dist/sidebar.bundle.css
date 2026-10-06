@@ -1,9 +1,30 @@
 .sidebar {
+	/* Row hover tint. Overridden for the dark context, where a black overlay is invisible. */
+	--note-sidebar-row-hover: var(--ui-color-bg-state-hover-default);
+	/* Tint of a row - reused by its highlight pill, the level hint and the mask under the row
+	   controls, so all three dissolve into one another instead of standing out separately.
+	   A selected row overrides it with its own colour. */
+	--note-sidebar-row-tint: var(--note-sidebar-row-hover);
 	background: var(--ui-color-bg-content-primary, #ffffff);
-	border-right: 1px solid var(--ui-color-divider-default);
+	/* The edge line is drawn inside the box rather than as a border, and that is what lets the resize
+	   handle reach the very edge: the panel clips its overflow to the padding box, so a border is one
+	   pixel no child of it can ever cover - the grab zone stopped a pixel short of the boundary it is
+	   the boundary of.
+	   The outer shadow keeps its own reason for being here: the content column comes later in DOM and
+	   would overdraw it without a stacking order of our own. */
+	box-shadow:
+		1px 0 4px 0 var(--ui-color-box-shadow-contrast-default-color),
+		inset -1px 0 0 0 var(--ui-color-divider-default);
+	z-index: 20;
 	width: var(--note-sidebar-width, 280px);
 	max-width: 540px;
 	min-width: 0;
+	/* Sizes here are declared, not suggested. Left to itself a mobile engine grows the text of a block
+	   by a factor of its own - in the app the names of the knowledge bases came out at 20px against the
+	   16px of the document rows below them, off the line the rest of the panel keeps, and wider than the
+	   width the title cap was measured against, which pushed the row past its own end. */
+	text-size-adjust: 100%;
+	-webkit-text-size-adjust: 100%;
 	overflow: hidden;
 	position: relative;
 	height: 100%;
@@ -17,25 +38,120 @@
 		max-width 220ms ease;
 }
 
+/* A black overlay is invisible on a dark background - the alt tint is the readable one. */
+.--ui-context-content-dark .sidebar {
+	--note-sidebar-row-hover: var(--ui-color-bg-state-hover-alt);
+}
+
 .sidebar:not(.is-collapsed) {
 	min-width: 280px;
 }
 
 .sidebar.is-collapsed {
-	min-width: 48px;
-	max-width: 48px;
+	min-width: 66px;
+	max-width: 66px;
 }
 
+/* Collapsed rail: top-level entries instead of an empty strip. */
+.sidebar-rail {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	flex: 1 1 auto;
+	min-height: 0;
+	padding-top: var(--ui-space-stack-xs);
+	overflow-y: auto;
+	overflow-x: hidden;
+	-ms-overflow-style: none;
+}
+
+.sidebar-rail::-webkit-scrollbar {
+	width: 0;
+	height: 0;
+}
+
+.sidebar-rail__group {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	flex: 0 0 auto;
+	gap: var(--ui-space-inline-2xs);
+	width: 100%;
+}
+
+.sidebar-rail__group--sections {
+	flex: 1 1 auto;
+}
+
+/* The archive and the recycle bin, one under the other: the rail is one button wide. */
+.sidebar-rail__pinned {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--ui-space-stack-2xs);
+	flex: 0 0 auto;
+	width: 100%;
+	padding: var(--ui-space-stack-2xs) 0;
+	border-top: 1px solid var(--ui-color-divider-default);
+}
+
+.sidebar-rail__divider {
+	flex: 0 0 auto;
+	width: 24px;
+	height: 1px;
+	margin: var(--ui-space-stack-xs) auto;
+	background: var(--ui-color-divider-default);
+}
+
+.sidebar-rail__btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex: 0 0 auto;
+	width: 44px;
+	height: 44px;
+	padding: 0;
+	border: 0;
+	border-radius: var(--ui-border-radius-md);
+	background: transparent;
+	cursor: pointer;
+	transition: background 0.15s ease;
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary);
+}
+
+.sidebar-rail__btn:hover {
+	background: var(--note-sidebar-row-hover);
+}
+
+.sidebar-rail__btn.is-active {
+	background: var(--ui-color-bg-state-click-default);
+}
+
+.sidebar-rail__glyph-collection {
+	display: inline-block;
+	width: 22px;
+	height: 22px;
+}
+
+/* Out of layout, not unmounted: the rail needs the height, and expanded branches must
+   survive the round trip. */
 .sidebar.is-collapsed .sidebar-layout,
+.sidebar.is-collapsed .sidebar-pinned,
 .sidebar.is-collapsed .sidebar-search-row {
-	opacity: 0;
-	transform: translateX(-8px);
-	pointer-events: none;
+	display: none;
 }
 
 .sidebar-search-row {
 	transition: opacity 150ms ease, transform 220ms ease;
 	will-change: opacity, transform;
+}
+
+/* Row pinned right above the footer - outside the scroll box, so it carries the
+   same side inset as `.sidebar-content`. */
+.sidebar-pinned {
+	flex: 0 0 auto;
+	padding: 0 var(--ui-space-inline-xs);
+	transition: opacity 150ms ease, transform 220ms ease;
 }
 
 .sidebar-layout {
@@ -49,13 +165,20 @@
 	will-change: opacity, transform;
 }
 
+/* The list area itself does not scroll on either axis: the section rows above it and "Archive"
+   below it stay put, and both trees inside absorb their own overflow. That is what keeps the
+   horizontal scrollbar of a tree on the tree's own bottom edge instead of parking it at the far
+   end of a panel-wide scroll, out of sight until the whole list is scrolled through. */
 .sidebar-content {
+	display: flex;
+	flex-direction: column;
 	flex: 1 1 auto;
 	min-height: 0;
-	overflow-y: auto;
-	overflow-x: hidden;
+	/* Any overflow here would let the browser scroll the whole panel when a control at a row's
+	   right edge takes focus. Wide rows are absorbed by `.tree-scroll`, not here. */
+	overflow: hidden;
 	-ms-overflow-style: none;
-	padding: 0 8px;
+	padding: 0 var(--ui-space-inline-xs) var(--ui-space-stack-xs2) var(--ui-space-inline-xs);
 }
 
 .sidebar-content::-webkit-scrollbar {
@@ -69,44 +192,466 @@
 	}
 }
 
+/* The way out of a short window: once every list has given way down to its floor, the sections
+   themselves scroll instead of squeezing the lists into single rows. "Archive" stays pinned over them. */
 .sidebar-sections {
-	display: grid;
+	display: flex;
+	flex-direction: column;
+	flex: 1 1 auto;
+	min-height: 0;
 	gap: 0;
+	overflow-y: auto;
+	overflow-x: hidden;
+	-ms-overflow-style: none;
 }
 
-.sidebar-section-header {
+/* The bar itself stays out of sight: the panel is narrow and a second vertical bar beside the one a
+   tree area already carries reads as two scrollbars on one list. The scrolling works all the same -
+   wheel, trackpad, keyboard - and it takes no width, so nothing is re-measured when it starts. */
+.sidebar-sections::-webkit-scrollbar {
+	width: 0;
+	height: 0;
+}
+
+@supports not selector(::-webkit-scrollbar) {
+	.sidebar-sections {
+		scrollbar-width: none;
+	}
+}
+
+/* Without this a section's automatic minimum size wins over the track and the whole section
+   sticks out of the panel - the tree area is meant to absorb wide rows by scrolling.
+   Section rows keep their height: only the tree lists below give way when space runs short. */
+.sidebar-sections > * {
+	flex: 0 0 auto;
+	min-width: 0;
+}
+
+/* Top-level navigation item: section headers and fixed rows share one visual. */
+.sidebar-section-header,
+.sidebar-fixed-row {
 	display: flex;
 	align-items: center;
-	gap: 6px;
-	min-height: 46px;
-	padding: 8px 16px 8px 12px;
+	gap: var(--ui-space-inline-2xs2);
+	min-height: 48px;
+	padding: var(--ui-space-stack-xs) var(--ui-space-inline-2xs2) var(--ui-space-stack-xs) 12px;
 	border: 0;
-	border-radius: 8px;
+	border-radius: var(--ui-border-radius-sm);
 	background: transparent;
 	color: var(--ui-color-base-1);
 	font: inherit;
-	font-weight: 400;
+	font-weight: 600;
 	text-align: left;
 	cursor: pointer;
 	transition: background 0.15s ease;
 	width: 100%;
 	max-width: 100%;
 	min-width: 0;
+	box-sizing: border-box;
 }
 
-.sidebar-section-header:hover {
-	background: var(--ui-color-bg-state-hover-default);
+.sidebar-section-header:hover,
+.sidebar-fixed-row:hover {
+	background: var(--note-sidebar-row-hover);
 }
 
+/* Separates top-level sections; inset matches the item's own left padding. */
+.sidebar-section-divider {
+	flex: 0 0 auto;
+	height: 1px;
+	margin: var(--ui-space-stack-xs) 12px;
+	background: var(--ui-color-divider-default);
+}
+
+/* The project glyph lives on a 16x15 canvas it fills edge to edge, while icon-set glyphs draw
+   only part of their box. Sizes below are measured, not guessed: the mask is scaled so the
+   glyph's drawn area matches its neighbours in the same place. In a 22px box (section headers,
+   rail) o-forward draws 15.9x13.4, here 15.3x13.9. */
+.note-collection-glyph {
+	-webkit-mask-image: url('/bitrix/js/note/ui/assets/images/collection.svg?v=2');
+	mask-image: url('/bitrix/js/note/ui/assets/images/collection.svg?v=2');
+	-webkit-mask-repeat: no-repeat;
+	mask-repeat: no-repeat;
+	-webkit-mask-position: center;
+	mask-position: center;
+	-webkit-mask-size: var(--note-collection-glyph-size, 15.5px) auto;
+	mask-size: var(--note-collection-glyph-size, 15.5px) auto;
+	background-color: var(--ui-icon-set__icon-color, var(--ui-color-base-3));
+}
+
+/* A row that stands for a knowledge base carries the glyph of one, in every section it appears in: the
+   favorites block, the accessible tree and the tree of bases. Same box and same measured glyph size as in
+   the favorites block, so the three read as one list. */
+.collection-row__icon {
+	display: inline-block;
+	flex: 0 0 auto;
+	width: 18px;
+	height: 18px;
+	--note-collection-glyph-size: 12.5px;
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary);
+}
+
+/* Collections keep their own glyph - masked so it takes the accent colour. */
 .sidebar-section-header__icon {
 	display: inline-block;
 	flex: 0 0 auto;
-	width: 30px;
-	height: 30px;
-	background-image: url('/bitrix/js/note/ui/assets/images/collection.svg?v=2');
-	background-repeat: no-repeat;
-	background-position: center;
-	background-size: 20px 20px;
+	width: 22px;
+	height: 22px;
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary);
+}
+
+.sidebar-section-header__glyph {
+	flex: 0 0 auto;
+}
+
+/* The disclosure of a header that shares its row with another control (the favorites block and its
+   notification filter). Everything that makes the row a row - its height, padding and hover - stays on
+   the row; this holds the glyph and the title in the same places they occupy in a header that is one
+   button all the way across. */
+.sidebar-section-header__toggle {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-2xs2);
+	flex: 1 1 auto;
+	min-width: 0;
+	padding: 0;
+	border: 0;
+	background: transparent;
+	color: inherit;
+	font: inherit;
+	font-weight: inherit;
+	text-align: left;
+	cursor: pointer;
+}
+
+.sidebar-section-header__filter {
+	display: inline-flex;
+	align-items: center;
+	flex: 0 0 auto;
+	/* On the same vertical line as the controls of the rows below, glyph over glyph. Two things stand in
+	   the way: the rows live inside a scrolling area whose bar takes the last pixels of the panel while
+	   the header runs the full width (--note-area-gutter, measured), and this button is 4px wider than a
+	   row control, so half of that difference comes back too. */
+	margin-right: calc(var(--note-area-gutter, 0px) - 2px);
+}
+
+/* An air button now: it brings its own size, radius and states, and the icon follows its text. */
+.favorites-filter {
+	--ui-icon-set__icon-color: currentcolor;
+}
+
+/* Nothing below scrolls the panel any more, so a long list of favourites has to give way and scroll
+   inside itself instead of pushing the sections under it out of the panel. The scrolling is the inner
+   area's job (.tree-scroll--favorites), exactly as it is in the other two sections: this element only
+   holds the block's share of the panel and is what the height animation animates. */
+.favorites-list {
+	min-height: 0;
+}
+
+/* Move-only transition of the rows that can be dragged into another place: knowledge bases, documents
+   of the tree at any depth, rows of the favorites block. Only `-move` is styled - a row appearing or
+   disappearing is the business of the section's own height animation (ExpandTransition), and the block
+   adds its own fade below. The transform is what the group measures and plays back, so the row that
+   was dragged and the rows it pushed aside all travel instead of jumping to their new places. */
+.sidebar-row-move {
+	transition: transform .12s ease-out;
+}
+
+/* Nothing is styled for the leave above, but the group still waits one out, and the transition it waits
+   for is `-move`'s own: the class stays on the row that is going. So a row dragged one level up was held
+   in the flow of the branch it left for those 120ms - and because it takes its whole subtree with it, the
+   list showed the same documents twice, a level apart, and grew a scrollbar around the surplus. Declared
+   explicitly here, the leave is over within a frame, which is what "no leave animation" was meant to be.
+   Rows are never removed from the tree with an animation of their own: a branch that opens or closes is
+   ExpandTransition's business, and a row that goes because it moved is already drawn in its new place. */
+.sidebar-row-leave-active,
+.sidebar-row-enter-active {
+	transition: none;
+}
+
+/* A row entering or leaving the block is smoothed over, no more than that: 120ms of opacity and two
+   pixels of travel. The leaving row deliberately keeps its place in the flow: taking it out of the
+   flow (the usual `position: absolute` of a transition group) sends it to the nearest positioned
+   ancestor - outside this list, which owns no coordinates of its own - and the list grows a scrollbar
+   around the runaway. The gap closes right after the fade instead, which is what a 120ms fade is for. */
+.favorite-row-enter-active,
+.favorite-row-leave-active,
+.favorite-row-move {
+	transition: opacity .12s ease-out, transform .12s ease-out;
+}
+
+.favorite-row-enter-from,
+.favorite-row-leave-to {
+	opacity: 0;
+	transform: translateY(-2px);
+}
+
+/* Out of the flow from the frame it starts leaving. Fading in place it held a row of height until the fade
+   was over, and only then did the rows under it close the gap - a step of a whole row in one frame, and the
+   knowledge bases below the block stepped with them. Out of the flow, the gap closes over the same 120ms
+   the group carries the rows in (.favorite-row-move above), and the row fades where it stood.
+   The width is the row's own: an absolutely positioned box shrinks to its content, and the fading row
+   would narrow as it went. */
+.favorite-row-leave-active {
+	position: absolute;
+	width: 100%;
+	pointer-events: none;
+}
+
+/* The containing block for the row above, and nothing else: the row keeps the place it had, because an
+   absolutely positioned box with no offsets stays at its static position. The sticky holders inside the
+   rows (the pill, the controls anchor) answer to the scrollport, not to this, so they are untouched. */
+.tree-scroll--favorites .tree-scroll__inner {
+	position: relative;
+}
+
+/* The message itself is a .sidebar-muted--flow, the same notice every other section shows when it has
+   nothing in it. Only the space under it belongs to the block, whose rows start right below. */
+.favorites-empty {
+	padding-bottom: 6px;
+}
+
+/* Retry of a failed block load: a link inside the block's own message, so the failure stays local. */
+.favorites-retry {
+	margin-left: 4px;
+	padding: 0;
+	border: 0;
+	background: none;
+	color: var(--ui-color-primary);
+	font-size: inherit;
+	cursor: pointer;
+}
+
+/* Row plus the branch it opens into. The row keeps its own height and states; the branch under it is
+   drawn by the tree's row component and is laid out by the tree's own rules. */
+.favorite-item {
+	display: block;
+	/* Inside the area's max-content box, exactly as the branches of the tree are. */
+	min-width: 100%;
+}
+
+.favorite-row {
+	display: flex;
+	align-items: center;
+	/* 4px, not the mockup's 6: with the enlarged glyph that puts the title in the same column as the
+	   section headers and "Archive"/"Recycle bin" instead of 2px to the right of it. */
+	gap: 4px;
+	height: 32px;
+	/* No padding on the left, and the 12px inset every row of the panel carries rides on the pill holder
+	   instead - the same arrangement the knowledge-base and document rows use. As row padding it offsets
+	   the fill and pushes it past the visible right edge. */
+	padding: 0 var(--ui-space-inline-2xs2) 0 0;
+	border-radius: var(--ui-border-radius-sm);
+	cursor: pointer;
+	position: relative;
+	/* Keeps the highlight pill (z-index -1) inside the row instead of behind the panel. */
+	isolation: isolate;
+	/* The floor of a tree row, for the one level a block row stands at: indent plus a fixed slot for
+	   the title. Rows of all three sections are then the same width for the same depth, and the area
+	   they live in overflows and pans by the same rule. */
+	--row-title-slot: 180px;
+	min-width: calc(32px + var(--row-title-slot));
+	width: 100%;
+	flex-shrink: 0;
+	box-sizing: border-box;
+}
+
+/* Hover and selection are painted on the pill, not on the row: the fill is glued to the visible left
+   edge and as wide as the visible area, so a row highlights the same way in all three sections however
+   far the list is panned sideways - and it carries no transition, so it is there in the frame the
+   pointer arrives instead of fading in over 150ms. */
+.favorite-row:hover .favorite-row__pill-fill {
+	background: var(--note-sidebar-row-tint);
+}
+
+.favorite-row.is-active {
+	/* The tint the mask under the row controls fades into, declared here exactly as the tree rows declare
+	   it. Left at the hover tint, the mask dissolved the title into a colour the row is not: a selected row
+	   wore a pale block from its buttons to its right edge, where the tree simply fades. */
+	--note-sidebar-row-tint: var(--ui-color-design-selection-bg);
+}
+
+.favorite-row.is-active .favorite-row__pill-fill {
+	background: var(--ui-color-design-selection-bg);
+	box-shadow: inset 0 0 0 1px var(--ui-color-design-selection-stroke);
+}
+
+.favorite-row.is-active .favorite-row__title {
+	font-weight: 500;
+}
+
+/* Disclosure of a block row. Same 16x16 footprint as the tree's, with the tap target spread over the
+   row height by negative margins, so the glyph itself stays put. */
+.favorite-row__disclosure {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 28px;
+	height: 32px;
+	margin: -8px -6px;
+	padding: 0;
+	border: 0;
+	background: transparent;
+	cursor: pointer;
+	flex: 0 0 auto;
+	position: relative;
+	z-index: 2;
+	transition: transform 0.15s ease;
+}
+
+.favorite-row__disclosure.is-expanded {
+	transform: rotate(90deg);
+}
+
+/* A row with nothing nested keeps the chevron column: giving it up lines the icon up with the section
+   above, but then every row starts at a different offset and the list reads as a wave. */
+.favorite-row__disclosure-spacer {
+	display: inline-block;
+	width: 16px;
+	height: 16px;
+	flex: 0 0 auto;
+}
+
+/* Both icons of the block are drawn in the accent tone, the document one included. The mockup drew the
+   document in the muted tone, where it all but vanished next to the title, and in the text tone it read as
+   part of the title instead. What tells the two kinds of row apart is the drawing, not the colour. */
+/* The two pixels the leading columns of the knowledge-bases block have and this row does not: there the
+   glyph and the title stand inside `.collection-link` with a 6px gap, here they stand in the row itself,
+   whose 4px gap also spaces the controls at the right edge - so the difference is given to the glyph
+   rather than to the gap. With it, the glyph and the title of one knowledge base land on the same column
+   in both blocks (chevron 20, glyph 42, title 66). */
+.favorite-row__icon {
+	flex: 0 0 auto;
+	margin: 0 2px;
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary);
+}
+
+.favorite-row__icon--collection {
+	display: inline-block;
+	width: 18px;
+	height: 18px;
+	/* Measured, not guessed: in an 18px box o-file draws 10.8x12.1, so the mask is scaled to match
+	   its drawn area rather than its nominal size. */
+	--note-collection-glyph-size: 12.5px;
+}
+
+.favorite-row__title {
+	flex: 1 1 auto;
+	min-width: 0;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	color: inherit;
+	text-decoration: none;
+	outline: none;
+}
+
+.favorite-row__title::after {
+	content: '';
+	position: absolute;
+	inset: 0;
+	z-index: 1;
+	border-radius: inherit;
+}
+
+.favorite-row__title:focus-visible::after {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: -2px;
+}
+
+/* Inside the sticky holder above, laid out exactly as .tree-actions is: out of the flow, so the
+   controls hold no width of their own and the title's room comes from the measure pass instead
+   (data-kb-name). The buttons take the pointer back - the box itself lets it through to the row. */
+.favorite-row__actions {
+	position: absolute;
+	right: 0;
+	top: 0;
+	bottom: 0;
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-2xs);
+	padding-left: 40px;
+	pointer-events: none;
+	z-index: 2;
+}
+
+.favorite-row__btn {
+	pointer-events: auto;
+	/* Above the fade of the row - the same reason .row-action-btn states it. */
+	position: relative;
+}
+
+.favorite-row__btn {
+	display: none;
+	align-items: center;
+	justify-content: center;
+	width: 24px;
+	height: 24px;
+	padding: 0;
+	border: 0;
+	border-radius: var(--ui-border-radius-sm);
+	background: transparent;
+	cursor: pointer;
+	transition: opacity 0.15s ease;
+	--ui-icon-set__icon-color: var(--ui-color-base-3);
+	/* The bell of a row with nested documents comes from the popover of the editor and brings no size
+	   of its own, so the row states it here for both variants of the control. */
+	--ui-icon-set__icon-size: 16px;
+}
+
+.favorite-row__btn:hover {
+	opacity: 0.8;
+}
+
+.favorite-row__btn.is-on {
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary);
+}
+
+/* [P4.T1] A bell with something to say - notifications arrive, or they are muted on this object -
+   stays on screen without hover, the same rule the lit star follows. */
+.favorite-row__btn--notify.is-on,
+.favorite-row__btn--notify.is-muted {
+	display: inline-flex;
+}
+
+/* Every row of the block is starred, so its star stays on screen instead of appearing on hover. */
+.favorite-row__btn--favorite {
+	display: inline-flex;
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary);
+}
+
+@media (hover: hover) {
+	.favorite-row:hover .favorite-row__btn {
+		display: inline-flex;
+	}
+}
+
+/* Added to the hover rule above, never in its place: hidden by `display` a control is out of the tab
+   order altogether, so the row shows its controls while the keyboard focus is inside it too - Tab reaches
+   the title link first and the controls right after it. A trigger holding an open popover keeps itself on
+   screen: the focus is inside the teleported popover then, not in the row, and Esc has to have
+   something to come back to. */
+.favorite-row__btn[aria-expanded='true'] {
+	display: inline-flex;
+}
+
+/* Keyboard focus only, and on the control rather than the row: a control pressed with the mouse keeps the
+   focus, and `:focus-within` left the row with its controls out after the pointer had gone. */
+.favorite-row__btn:focus-visible {
+	display: inline-flex;
+}
+
+@media (hover: none) {
+	.favorite-row__btn {
+		display: inline-flex;
+	}
+}
+
+/* "Shared with me" keeps its own forward glyph - not the collections icon. */
+.sidebar-section-header__icon--shared {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
 }
 
 .sidebar-section-header__title {
@@ -117,75 +662,222 @@
 	text-overflow: ellipsis;
 }
 
-.sidebar-section-header__chevron {
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	flex: 0 0 auto;
-	width: 16px;
-	height: 16px;
-	transition: transform 0.15s ease;
-}
 
-.sidebar-section-header__chevron.is-expanded {
-	transform: rotate(90deg);
-}
-
+/* A tree list takes the height of its content and gives way when the sections around it leave less
+   room. `flex-grow: 0` matters twice over: an empty panel does not stretch the list over the space
+   above "Archive", and the expand animation, which drives an inline height, is not overridden by the
+   flex layout.
+   `min-height: 0` is what lets it give way at all: with the automatic minimum size the wrapper held
+   the whole height of the tree, the tree never shrank and the panel scrolled instead - the very thing
+   the tree's own scroll area is here to prevent. Its floor is stated separately, below. */
 .collection-list {
-	display: grid;
-	gap: 0;
-	--tree-row-gap: 0px;
+	display: flex;
+	flex-direction: column;
+	flex: 0 1 auto;
+	min-height: 0;
 	width: 100%;
-	max-width: 100%;
 	min-width: 0;
-	grid-template-columns: minmax(0, 1fr);
+}
+
+/* No section holds more than its fair share and none is shrunk out of turn: the share is measured and
+   published as the floor below, and an outsized shrink factor here would only put the whole panel back
+   to winner-take-all. Beyond its share a section scrolls inside itself. */
+
+/* The floor every section keeps: five rows, or its own content if it holds less. Without a floor shrink
+   was shared out until a section was one row high and read as a hint that something is there rather
+   than as a way to get to it. Once the floors of the sections do not fit, the panel scrolls - that is
+   what `.sidebar-sections` is for, and "Archive" stays pinned over it.
+   The value comes from the measure pass (`refreshSectionFloors`): it depends on how much the section
+   holds, which CSS cannot ask. The fallback keeps a section that has not been measured yet from
+   collapsing to nothing. Wrapper and area both carry it - with the floor on the area alone the wrapper
+   went on giving way past its own contents and the rows were drawn over the section below. */
+.collection-list {
+	height: var(--note-section-floor, auto);
+	min-height: 0;
+	overflow: hidden;
+	flex: 0 0 auto;
+}
+
+/* Opening, closing, or standing still, every section is at the share above - so the moment anything in the
+   panel starts moving, all of them are already headed for the layout it ends in, and this carries them
+   there: one property, one length of time, all the values written by the same pass. None of them can lag
+   behind another, and because the shares are shared out of the panel's own height their sum fits it on
+   every frame in between - the panel does not gain a scrollbar half-way through and lose it at the end.
+   Only while something moves, and deliberately so: a share published because the window was resized has to
+   apply at once, or the panel trails the pointer. */
+.sidebar-sections.is-section-animating .collection-list {
+	transition: height 275ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* A row joins the list at its full height in one frame, while the section glides to the height that holds
+   it - so for the length of the glide the list is taller than the box around it and the vertical thumb
+   flashed on and off. Hidden the same way it is hidden while rows are in flight (is-row-traveling): the
+   thumb goes, the axis and the reserved gutter stay, so nothing in the area moves sideways. */
+.sidebar-sections.is-section-animating .tree-scroll::-webkit-scrollbar-thumb {
+	background-color: transparent;
+}
+
+@supports not selector(::-webkit-scrollbar) {
+	.sidebar-sections.is-section-animating .tree-scroll {
+		scrollbar-color: transparent transparent;
+	}
+}
+
+/* Tree area: both axes scroll here, never the panel. Because the box gives way to the sections
+   around it, its bottom edge stays in frame - and so does the horizontal scrollbar sitting on it.
+   The 2px block padding keeps the 1px insertion line of the first and last row in frame. */
+.tree-scroll {
+	flex: 1 1 auto;
+	min-height: 0;
+	overflow-x: auto;
+	/* Always scrollable down this axis, and measurably so: the sticky offset that holds the row controls
+	   at the visible edge is only in force while the box scrolls, so a tree short enough to fit stepped
+	   them sideways. Handing that duty to the horizontal axis instead is not the same thing - with
+	   `overflow-y: auto` the controls of a short list sat 8px from the edge against 12px for a long one. */
+	overflow-y: scroll;
+	/* The vertical gutter is reserved whether its bar is there or not: appearing, it takes 6px of width,
+	   the titles are re-capped against the narrower area and the horizontal bar flips on and off around a
+	   6px band of panel widths. Safari before 16.4 ignores the property: there the band comes back,
+	   nothing else breaks. */
+	/* @chef-ignore */
+	scrollbar-gutter: stable;
+	padding-block: 2px;
+	/* Panning across stays in the tree instead of turning into a browser back-swipe. Down the page the
+	   opposite is wanted: a section scrolled to its end hands the gesture on to the panel, which is the
+	   surface the rest of the sections are on. */
+	/* @chef-ignore */
+	overscroll-behavior-x: contain;
+	/* @chef-ignore */
+	overscroll-behavior-y: auto;
+}
+
+/* Thin auto-hiding scrollbar: no track, thumb only while the pointer is over the area. */
+.tree-scroll::-webkit-scrollbar {
+	width: 6px;
+	height: 6px;
+	background: transparent;
+}
+
+.tree-scroll::-webkit-scrollbar-track,
+.tree-scroll::-webkit-scrollbar-track-piece,
+.tree-scroll::-webkit-scrollbar-corner {
+	background: transparent;
+	border: 0;
+	box-shadow: none;
+}
+
+.tree-scroll::-webkit-scrollbar-thumb {
+	background-color: transparent;
+	border-radius: 999px;
+}
+
+/* The pointer state comes from a class, not `:hover`: leaving the area across its own scrollbar
+   left the thumb painted until something else forced a repaint, and moving on to the width handle
+   right next to it is exactly such a slow exit. Toggling the class repaints the bar. */
+.tree-scroll.is-pointer-inside::-webkit-scrollbar-thumb {
+	background-color: var(--ui-color-base-4);
+}
+
+/* A touch screen has no pointer to be inside anything: a finger reports where it is only while it is
+   down, so the rule above showed the bar under a finger resting on the list and took it away the moment
+   it lifted. Here the bar answers to the scrolling itself - up while the list moves, gone shortly after
+   it stops - which is how the platform's own overlay bars behave. */
+@media (hover: none) {
+	.tree-scroll.is-pointer-inside::-webkit-scrollbar-thumb {
+		background-color: transparent;
+	}
+
+	.tree-scroll.is-scrolling::-webkit-scrollbar-thumb {
+		background-color: var(--ui-color-base-4);
+	}
+}
+
+.tree-scroll::-webkit-scrollbar-button {
+	display: none;
+	width: 0;
+	height: 0;
+}
+
+@supports not selector(::-webkit-scrollbar) {
+	.tree-scroll {
+		scrollbar-width: thin;
+		scrollbar-color: transparent transparent;
+	}
+
+	.tree-scroll.is-pointer-inside {
+		scrollbar-color: var(--ui-color-base-4) transparent;
+	}
+
+	@media (hover: none) {
+		.tree-scroll.is-pointer-inside {
+			scrollbar-color: transparent transparent;
+		}
+
+		.tree-scroll.is-scrolling {
+			scrollbar-color: var(--ui-color-base-4) transparent;
+		}
+	}
+}
+
+/* Opening and closing a section animates the height of the box AROUND this area, so for the length of
+   the motion the rows overflow their share of it and the vertical thumb flashes on under a pointer that
+   happens to be inside. The overflow is the animation's, not the content's - the box goes on scrolling
+   (the sticky row controls are only held in place while it does), only the thumb waits. */
+.is-expand-animating .tree-scroll::-webkit-scrollbar-thumb {
+	background-color: transparent;
+}
+
+@supports not selector(::-webkit-scrollbar) {
+	.is-expand-animating .tree-scroll {
+		scrollbar-color: transparent transparent;
+	}
+}
+
+/* Same during a drop: the rows travel to their new places on a transform, and a transform counts towards
+   what the box has to scroll - for the length of the flight the area is a row or two longer than the list
+   it holds, which showed up as the vertical thumb appearing and going away again. The box keeps
+   scrolling; only the thumb waits, exactly as above. */
+.tree-scroll.is-row-traveling::-webkit-scrollbar-thumb {
+	background-color: transparent;
+}
+
+@supports not selector(::-webkit-scrollbar) {
+	.tree-scroll.is-row-traveling {
+		scrollbar-color: transparent transparent;
+	}
+}
+
+/* Rows fill the area when the tree is shallow and overflow it when it is deep. */
+.tree-scroll__inner {
+	width: max-content;
+	min-width: 100%;
 }
 
 .collection-row {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	gap: 6px;
-	min-height: 38px;
-	padding: 3px 16px;
-	border-radius: 8px;
+	gap: var(--ui-space-inline-2xs);
+	min-height: 30px;
+	/* No padding on the left: the leading inset is carried by the pill holder below, so the
+	   holder starts at the row's left edge and its viewport-wide fill ends exactly at the
+	   visible right edge. As row padding it would offset the fill and overflow the area. */
+	padding: 0 var(--ui-space-inline-2xs2) 0 0;
+	border-radius: var(--ui-border-radius-sm);
 	transition: background 0.15s ease;
 	cursor: pointer;
 	width: 100%;
-	max-width: 100%;
 	min-width: 0;
 	position: relative;
+	isolation: isolate;
 	font-weight: 400;
 }
 
-.sidebar-fixed-row {
-	display: flex;
-	align-items: center;
-	gap: 6px;
-	min-height: 46px;
-	padding: 8px 16px 8px 12px;
-	border: 0;
-	border-radius: 8px;
-	background: transparent;
-	color: var(--ui-color-base-1);
-	font: inherit;
-	font-weight: 400;
-	text-align: left;
-	cursor: pointer;
-	transition: background 0.15s ease;
-	width: 100%;
-	max-width: 100%;
-	min-width: 0;
-}
-
-.sidebar-fixed-row:hover {
-	background: var(--ui-color-bg-state-hover-default);
-}
-
+/* Selection reads as a tinted chip with its own stroke; the drop-inside target keeps
+   `design-tinted-bg`, so the two states stay distinguishable. */
 .sidebar-fixed-row.is-active {
-	background: color-mix(in srgb, var(--ui-color-accent-main-primary) 12%, transparent);
-	color: var(--ui-color-accent-main-primary);
-	font-weight: 500;
+	background: var(--ui-color-design-selection-bg);
+	box-shadow: inset 0 0 0 1px var(--ui-color-design-selection-stroke);
 }
 
 .sidebar-fixed-row__icon {
@@ -200,14 +892,34 @@
 	text-overflow: ellipsis;
 }
 
-.collection-row:hover {
-	background: var(--ui-color-bg-state-hover-default);
+/* Safety net for the leading inset. It rides on the pill holder, not on the row's padding - as
+   padding it offsets the fill and pushes it past the right edge. A row rendered without a holder
+   would silently stand 12px to the left of every other row, which is how the knowledge-base row in
+   "Shared with me" drifted; here it gets the inset back, and it has no fill to shift.
+   Firefox before 121 does not support the parent selector: there the net is simply absent, which is
+   the state we are guarding against anyway - every row in the current markup carries a holder. */
+/* @chef-ignore */
+.collection-row:not(:has(> .collection-row__pill)) {
+	padding-left: 12px;
+}
+
+/* @chef-ignore */
+.tree-row:not(:has(> .tree-row__pill)) {
+	padding-left: 12px;
+}
+
+.collection-row:hover .collection-row__pill-fill {
+	background: var(--note-sidebar-row-tint);
 }
 
 .collection-row.is-active {
-	background: color-mix(in srgb, var(--ui-color-accent-main-primary) 12%, transparent);
-	color: var(--ui-color-accent-main-primary);
+	--note-sidebar-row-tint: var(--ui-color-design-selection-bg);
 	font-weight: 500;
+}
+
+.collection-row.is-active .collection-row__pill-fill {
+	background: var(--ui-color-design-selection-bg);
+	box-shadow: inset 0 0 0 1px var(--ui-color-design-selection-stroke);
 }
 
 .collection-row.is-active .collection-title {
@@ -215,27 +927,35 @@
 }
 
 .collection-row.is-drag-source,
-.tree-row.is-drag-source {
+.tree-row.is-drag-source,
+.favorite-row.is-drag-source {
 	opacity: 0.4;
 }
 
-.collection-row.is-drop-inside,
-.tree-row.is-drop-inside {
-	background: var(--ui-color-design-tinted-bg);
+/* Drop target: soft fill plus a solid inner stroke, the same on a collection row as on a
+   document row. It is painted on the pill, so it spans the visible width and both of its
+   corners stay in frame however far the tree is panned. */
+.collection-row.is-drop-inside .collection-row__pill-fill {
+	background: var(--ui-color-accent-soft-blue-2);
+	box-shadow: inset 0 0 0 1.5px var(--ui-color-accent-main-primary);
 }
 
 .collection-row.is-drop-before,
 .collection-row.is-drop-after,
 .tree-row.is-drop-before,
 .tree-row.is-drop-after,
-.tree-branch > li.is-drop-after {
+.tree-branch > li.is-drop-after,
+.favorite-row.is-drop-before,
+.favorite-row.is-drop-after {
 	z-index: 10;
 }
 
 .collection-row.is-drop-before::before,
 .collection-row.is-drop-after::after,
 .tree-row.is-drop-before::before,
-.tree-row.is-drop-after::after {
+.tree-row.is-drop-after::after,
+.favorite-row.is-drop-before::before,
+.favorite-row.is-drop-after::after {
 	content: '';
 	position: absolute;
 	height: 2px;
@@ -247,21 +967,38 @@
 
 .collection-row.is-drop-before::before {
 	top: -1px;
-	left: 16px;
-	right: 16px;
+	left: 12px;
+	right: 8px;
 }
 
 .collection-row.is-drop-after::after {
 	bottom: -1px;
-	left: 16px;
-	right: 16px;
+	left: 12px;
+	right: 8px;
 }
 
-.is-collection-drop-after {
+/* The line of a row of the favorites block: same insertion mark as in the tree, inset to the
+   left edge of the row's own content. */
+.favorite-row.is-drop-before::before {
+	top: -1px;
+	left: 12px;
+	right: 8px;
+}
+
+.favorite-row.is-drop-after::after {
+	bottom: -1px;
+	left: 12px;
+	right: 8px;
+}
+
+/* A row with an open branch carries the line on its wrapper instead, under the branch. */
+.is-collection-drop-after,
+.is-favorite-drop-after {
 	position: relative;
 }
 
-.is-collection-drop-after::after {
+.is-collection-drop-after::after,
+.is-favorite-drop-after::after {
 	content: '';
 	position: absolute;
 	height: 2px;
@@ -296,6 +1033,14 @@
 	cursor: pointer;
 	flex: 0 0 auto;
 	transition: transform 0.15s ease;
+}
+
+/* Tap target spans the row height; negative margins keep the 16x16 footprint, so the
+   glyph itself does not move. */
+.tree-disclosure {
+	width: 28px;
+	height: 30px;
+	margin: -7px -6px;
 }
 
 .collection-disclosure.is-expanded,
@@ -349,64 +1094,343 @@
 	z-index: 2;
 }
 
-.collection-actions,
-.tree-actions {
-	display: inline-flex;
-	gap: 6px;
-	position: absolute;
-	right: 8px;
-	top: 50%;
-	transform: translateY(-50%);
-	opacity: 0;
-	visibility: hidden;
-	pointer-events: none;
-	transition: opacity 0.15s ease;
+.collection-actions-anchor {
+	position: sticky;
+	right: var(--ui-space-inline-2xs2);
+	width: 0;
+	margin-left: auto;
+	margin-right: calc(-1 * var(--ui-space-inline-2xs));
+	align-self: stretch;
+	flex: 0 0 auto;
 	z-index: 2;
 }
 
-.drop-overlay,
-.collection-drop-overlay {
+.collection-actions {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-2xs);
+	/* The tail of a long title runs under the buttons and dissolves into the row tint - reserving
+	   room for them instead would widen the row on hover and start a horizontal scroll. */
+	padding-left: 40px;
+	position: absolute;
+	right: 0;
+	top: 0;
+	bottom: 0;
+	pointer-events: none;
+}
+
+.collection-actions .row-action-btn {
+	display: none;
+	height: 26px;
+	pointer-events: auto;
+	--ui-icon-set__icon-color: var(--ui-color-base-3);
+}
+
+.collection-actions .row-action-btn--favorite.is-on,
+.collection-actions .row-action-btn--favorite.is-on:hover {
+	display: inline-flex;
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary);
+}
+
+/* Zero width so the controls never widen the row - otherwise showing them on hover would move
+   the layout and switch on the horizontal scrollbar. The flex gap in front of the anchor widens
+   it just the same, though: without cancelling the gap a row whose title is capped to the visible
+   edge still overflows by gap + padding, and the scrollbar is on permanently. */
+.tree-actions-anchor {
+	position: sticky;
+	right: var(--ui-space-inline-2xs2);
+	width: 0;
+	margin-left: auto;
+	margin-right: calc(-1 * var(--ui-space-inline-2xs));
+	align-self: stretch;
+	flex: 0 0 auto;
 	z-index: 2;
+}
+
+.tree-actions {
+	position: absolute;
+	right: 0;
+	top: 0;
+	bottom: 0;
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-2xs);
+	/* The tail of a long title runs under the buttons and dissolves into the row tint
+	   instead of being cut off. */
+	padding-left: 40px;
+	pointer-events: none;
+}
+
+/* Only while pointing at the row: that is when the buttons appear over the title tail. At rest
+   nothing is painted, so an active row keeps an even fill. The tint alone is not enough - most of
+   these tints are translucent and the title would still read through the buttons - so it lies on
+   the same page background the pill composites over, which makes the mask match the pill exactly.
+   The mask ends where the controls anchor does, which is the right edge of the pill. */
+.collection-actions,
+.favorite-row__actions,
+.tree-actions {
+	--note-sidebar-row-mask:
+		linear-gradient(to right, transparent, var(--note-sidebar-row-tint) 40px),
+		linear-gradient(to right, transparent, var(--ui-color-bg-content-primary) 40px);
+}
+
+/* The fade is painted here and not on the box itself, and stands one pixel off the top, the bottom and
+   the right of the pill: an active row draws a 1px stroke along its edge, and a fade flush with that edge
+   swallowed it over the whole stretch it covers. The box is where the buttons live, so insetting the box
+   would have moved them instead. `::before` and not `::after`, so the buttons - lifted out of the flow
+   further down - paint above the fade rather than under it. The corner is the pill's own, one pixel
+   smaller for the offset, which is what keeps the end of the fade concentric with the end of the pill. */
+.collection-actions::before,
+.favorite-row__actions::before,
+.tree-actions::before {
+	content: '';
+	position: absolute;
+	inset: 1px 1px 1px 0;
+	border-radius: 0 calc(var(--ui-border-radius-sm) - 1px) calc(var(--ui-border-radius-sm) - 1px) 0;
+	pointer-events: none;
 }
 
 @media (hover: hover) {
-	.collection-row:hover .collection-actions,
-	.tree-row:hover .tree-actions {
-		opacity: 1;
-		visibility: visible;
-		pointer-events: auto;
+	.collection-row:hover .collection-actions::before,
+	.favorite-row:hover .favorite-row__actions::before,
+	.tree-row:hover .tree-actions::before {
+		background: var(--note-sidebar-row-mask);
 	}
 
-	.collection-row.has-actions:hover .collection-link,
-	.tree-row.has-actions:hover .tree-item {
-		padding-right: 18px;
+	/* Keyboard focus, and only it: a click leaves the focus on the control it pressed, so under
+	   `:focus-within` the mask stayed over the title of a row the pointer had long left - a curtain that
+	   took a click somewhere else to draw back. The mask needs the row to answer for what is focused
+	   inside it, which nothing but `:has()` can do; a rule of its own, so a browser that does not know it
+	   loses the fade behind a keyboard-focused button and keeps the hover mask, which a shared selector
+	   list would have taken down with it. */
+	.collection-row:has(:focus-visible) .collection-actions::before,
+	.favorite-row:has(:focus-visible) .favorite-row__actions::before,
+	.tree-row:has(:focus-visible) .tree-actions::before {
+		background: var(--note-sidebar-row-mask);
+	}
+}
+
+.tree-actions .row-action-btn {
+	display: none;
+	pointer-events: auto;
+}
+
+/* An active star stays visible without hover - otherwise a starred row looks like any other. */
+.tree-actions .row-action-btn--favorite.is-on {
+	display: inline-flex;
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary);
+}
+
+/* [P4.T5] Bell of a row inside the favorites block: what it says about the row is visible without
+   hover, filled where notifications arrive and struck through where they are muted. */
+.tree-actions .row-action-btn--notify.is-on,
+.tree-actions .row-action-btn--notify.is-muted {
+	display: inline-flex;
+}
+
+.tree-actions .row-action-btn--notify.is-on {
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary);
+}
+
+/* Beside the hover rules below and not instead of them: a control hidden by `display` is not in the tab
+   order, so a row shows its controls while the keyboard focus is inside it as well. Where there is no
+   hover they are on screen anyway, so this changes nothing there. Written on the control itself and keyed
+   on `:focus-visible`: `:focus-within` on the row kept the buttons out after a mouse click, since the
+   click leaves the focus on what it pressed, and the row the pointer had left stood there with its
+   controls showing until something else was clicked. */
+.collection-actions .row-action-btn:focus-visible,
+.tree-actions .row-action-btn:focus-visible {
+	display: inline-flex;
+}
+
+@media (hover: hover) {
+	.collection-row:hover .collection-actions .row-action-btn,
+	.tree-row:hover .tree-actions .row-action-btn {
+		display: inline-flex;
 	}
 
-	.sidebar.is-dragging .collection-row:hover,
-	.sidebar.is-dragging .tree-row:hover {
+	/* Same variable the mask under the controls fades into, so the two always agree - and an
+	   active row keeps its selection colour under the pointer instead of flipping to grey. */
+	.tree-row:hover .tree-row__pill-fill {
+		background: var(--note-sidebar-row-tint);
+	}
+
+	.tree-row:hover .tree-row__peek {
+		display: flex;
+	}
+
+	.sidebar.is-dragging .collection-row:hover .collection-row__pill-fill,
+	.sidebar.is-dragging .tree-row:hover .tree-row__pill-fill {
 		background: transparent;
 	}
 
-	.sidebar.is-dragging .collection-row.is-active:hover,
-	.sidebar.is-dragging .tree-row.is-active:hover {
+	.sidebar.is-dragging .collection-row.is-active:hover .collection-row__pill-fill {
 		background: var(--ui-color-accent-soft-blue-1);
 	}
 
-	.sidebar.is-dragging .collection-row.is-drop-inside:hover,
-	.sidebar.is-dragging .tree-row.is-drop-inside:hover {
-		background: var(--ui-color-design-tinted-bg);
+	.sidebar.is-dragging .tree-row.is-active:hover .tree-row__pill-fill {
+		background: var(--ui-color-design-selection-bg);
 	}
 
-	.sidebar.is-dragging .collection-row:hover .collection-actions,
-	.sidebar.is-dragging .tree-row:hover .tree-actions {
-		opacity: 0;
-		visibility: hidden;
-		pointer-events: none;
+	.sidebar.is-dragging .collection-row.is-drop-inside:hover .collection-row__pill-fill,
+	.sidebar.is-dragging .tree-row.is-drop-inside:hover .tree-row__pill-fill {
+		background: var(--ui-color-accent-soft-blue-2);
+		box-shadow: inset 0 0 0 1.5px var(--ui-color-accent-main-primary);
 	}
 
-	.sidebar.is-dragging .collection-row.has-actions:hover .collection-link,
-	.sidebar.is-dragging .tree-row.has-actions:hover .tree-item {
+	.sidebar.is-dragging .collection-row:hover .collection-actions .row-action-btn:not(.is-on),
+	.sidebar.is-dragging .tree-row:hover .tree-actions .row-action-btn:not(.is-on) {
+		display: none;
+	}
+}
+
+/* Always-on selection highlight and level hint, hover or not. */
+.tree-row.is-active .tree-row__peek {
+	display: flex;
+}
+
+/* Without a pointer there is no hover to reveal the row buttons, so they stay out. Glued to the
+   visible edge they would sit on the title with no hover state to dissolve its tail, and capping
+   the title against them makes a long name unreadable however far the tree is panned. So the
+   controls ride with the row instead: panning reaches the whole title first, the buttons last. */
+@media (hover: none) {
+	.tree-actions .row-action-btn,
+	.collection-actions .row-action-btn {
+		display: inline-flex;
+	}
+
+	/* The vertical bar is an overlay here - painted over the content's own right edge, taking no width
+	   beside it - so a lane is kept clear for it by hand instead. The measure pass ends the pill, the fade
+	   and the row controls one lane short of the scrollport (it reads this var and takes it off --kb-vw),
+	   and the overlay bar is left that lane to sit in rather than lying across the last tile. `scrollbar-
+	   gutter` stays at auto: it reserves room beside the content, which an overlay bar does not use, so
+	   this lane is the only reserve. (The horizontal bar along the bottom is left alone: padding the area
+	   to clear it froze momentum scrolling in the iOS app WebView.) */
+	.tree-scroll {
+		scrollbar-gutter: auto;
+		--note-scroll-lane: 6px;
+	}
+
+	/* Sticky, exactly as on a hover device: the controls belong to the visible right edge, not to the end
+	   of a row that may be far past it. Riding with the row instead, they left the screen on the first
+	   long title or deep level and could only be reached by scrolling the list sideways.
+	   What they do not borrow from there is the zero width. Shown at all times, they are part of what the
+	   row holds, so the room for them is counted into it from the start - and scrolling to the end of a
+	   title brings it out from under them rather than stopping short of it. */
+	.tree-actions-anchor,
+	.collection-actions-anchor {
+		width: auto;
+		margin-right: 0;
+		/* One lane short of the scrollport - the same lane --kb-vw is measured to, so the fade and the
+		   buttons end exactly where the pill does and the three clear the overlay bar together. The offset
+		   has to match the lane the pill is inset by; any other value shows up as the fade and the buttons
+		   standing short of the pill, or past it. */
+		right: var(--note-scroll-lane, 0px);
+	}
+
+	/* The controls end at that edge, so the row must not hold them back from it: as row padding the offset
+	   moved the anchor of a row too short to scroll, while the longer rows stayed pinned where the sticky
+	   offset put them, and the column of buttons broke in two. The air the buttons keep from the edge is
+	   their own - a 26px control around a 16px glyph, the same as on a hover device. */
+	.collection-row,
+	.favorite-row {
 		padding-right: 0;
+	}
+
+	/* In the flow of the anchor, and 40px wider than the controls themselves - the distance the fade below
+	   needs. That width is part of the row, not an overhang over the title: scrolled to the end, a title
+	   has to come out from under the fade too, not stop at the point where it begins to dissolve.
+	   The height is the row's, not the glyphs': the fade is painted on this box, and a box the height of
+	   its buttons made it a stripe across the middle of the row - shorter than the pill it lies on and
+	   rounded on a radius of its own. Centring the glyphs inside it is the flex line's job (it is what
+	   the anchor did while the controls sat in the flow of the row itself). */
+	.tree-actions,
+	.collection-actions,
+	.favorite-row__actions {
+		position: relative;
+		height: 100%;
+		padding-left: 40px;
+	}
+
+	/* On a hover device the fade comes with the pointer, because so do the controls. Here they never
+	   leave, so neither does it: the tail of a title that reaches them dissolves into the row instead of
+	   running under the glyphs. It still ends with the pill and rounds with it - and the pill now takes
+	   the lane as well, so the fade follows it there: the buttons keep their distance from the edge, but
+	   the strip beside them is the tile's, and a title crossing it dissolves instead of showing through. */
+	.tree-actions::before,
+	.collection-actions::before,
+	.favorite-row__actions::before {
+		background: var(--note-sidebar-row-mask);
+		/* The pixel it stands off the stroke of a selected row, counted from the pill's new end. */
+		right: calc(1px - var(--note-scroll-lane, 0px));
+	}
+
+	/* The inset the fade carries is room left for a stroke, and a row that draws none has nothing to
+	   leave it for. Here the fade is painted at rest, so on such a row it is the only thing under the
+	   controls: a pixel short of the pill on three sides, it ended visibly nearer the star than a
+	   selected row does, and the two read as different sizes side by side. */
+	.tree-row:not(.is-active, .is-drop-inside) .tree-actions::before,
+	.collection-row:not(.is-active, .is-drop-inside) .collection-actions::before,
+	.favorite-row:not(.is-active) .favorite-row__actions::before {
+		inset: 0;
+		/* Flush with the pill on every side, the lane the pill took included - `inset` has just given the
+		   offset above back, and the strip beside the buttons is the one a long title crosses. */
+		right: calc(-1 * var(--note-scroll-lane, 0px));
+		border-radius: 0 var(--ui-border-radius-sm) var(--ui-border-radius-sm) 0;
+	}
+
+	/* Back in the flow of the row, where it must not give up its width to the title. */
+	.favorite-row__actions {
+		flex: 0 0 auto;
+	}
+
+	/* A fingertip is not a cursor: every control in a row gets a target it can be hit by without aiming.
+	   The negative margins keep the footprint each control had, so nothing in the row moves and the row
+	   does not grow - only the area that answers to a tap does. A chevron missed by a couple of pixels
+	   opens the document instead of the branch, which is the one mistake here that costs a whole screen. */
+	.collection-disclosure,
+	.tree-disclosure,
+	.favorite-row__disclosure {
+		width: 32px;
+		height: 36px;
+		margin: -10px -8px;
+	}
+
+	/* The controls of a row keep their box and grow the area that answers to a tap outside the layout:
+	   they sit in the flow here (the anchor above is static without a pointer), and a box made shorter
+	   by negative margins is placed at the top of the stretched anchor instead of at its middle - the
+	   glyphs left the centre of the row by as much as the margins took off. */
+	.row-action-btn,
+	.favorite-row__btn {
+		position: relative;
+	}
+
+	.row-action-btn::after,
+	.favorite-row__btn::after {
+		content: '';
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		width: 30px;
+		height: 34px;
+		transform: translate(-50%, -50%);
+	}
+
+	/* The last control of a row is the favourite star, and it stands at the row's very right edge. Its tap
+	   area is 3px wider than the button on either side, so on the right those 3px hung past the edge - and
+	   the scroll area counts anything past the edge as something to pan to, so every row could be dragged
+	   3px past its own end, out where the controls stop with the row while the highlight, held to the
+	   visible edge, runs on. That 3px was the gap the two stood apart by at the far end of the pan. Held to
+	   the button's right edge instead of centred, the target keeps its reach inward and downward and gives
+	   up only the sliver that overhung - which sat against the screen's own edge anyway. Cheaper than
+	   clipping the row for it: `overflow: clip` on a row (a positioned box carrying a sticky anchor and a
+	   masked fade) locks up layout in the iOS app WebView and takes the whole view down with it. */
+	.tree-actions .row-action-btn--favorite::after,
+	.collection-actions .row-action-btn--favorite::after,
+	.favorite-row__actions .favorite-row__btn--favorite::after {
+		left: auto;
+		right: 0;
+		transform: translateY(-50%);
 	}
 }
 
@@ -414,6 +1438,7 @@
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
+	flex: 0 0 auto;
 	width: 24px;
 	height: 24px;
 	padding: 0;
@@ -421,10 +1446,18 @@
 	background: transparent;
 	cursor: pointer;
 	transition: opacity 0.15s ease;
+	/* Above the fade the row draws under its controls - see .tree-actions::before, which is out of the
+	   flow and would otherwise paint over everything that stayed in it. */
+	position: relative;
 }
 
 .row-action-btn:hover {
 	opacity: 0.8;
+}
+
+.tree-actions .row-action-btn {
+	height: 26px;
+	--ui-icon-set__icon-color: var(--ui-color-base-3);
 }
 
 .collection-tree,
@@ -433,15 +1466,13 @@
 	padding-left: 0;
 	border-left: none;
 	width: 100%;
-	max-width: 100%;
 	min-width: 0;
 }
 
+/* Block, not grid: a grid track would clamp rows to the visible width and the deep-level
+   overflow that drives horizontal scrolling would never happen. */
 .tree-branch {
-	display: grid;
-	gap: 0;
-	--tree-row-gap: 6px;
-	grid-template-columns: minmax(0, 1fr);
+	display: block;
 	list-style: none;
 	margin: 0;
 	padding: 0;
@@ -454,39 +1485,208 @@
 }
 
 .tree-row {
-	--indent: 16px;
+	--indent: 32px;
 	display: flex;
 	align-items: center;
-	justify-content: space-between;
-	gap: 6px;
+	gap: var(--ui-space-inline-2xs);
 	cursor: pointer;
-	min-height: 38px;
-	border-radius: 8px;
-	transition: background 0.15s ease;
-	max-width: 100%;
-	min-width: 0;
+	height: 30px;
+	border-radius: var(--ui-border-radius-sm);
+	/* Width grows with depth: indent plus a fixed slot for the title. That is what makes
+	   deep levels reachable by scrolling instead of collapsing into an ellipsis. */
+	--row-title-slot: 180px;
+	min-width: calc(var(--indent, 32px) + var(--row-title-slot));
+	width: 100%;
+	flex-shrink: 0;
 	box-sizing: border-box;
-	padding: 3px 16px;
-	margin: 0 0 0 calc(var(--indent, 16px) - 16px);
+	padding: 0 var(--ui-space-inline-2xs2) 0 0;
+	margin: 0;
 	position: relative;
+	/* Keeps the highlight pill (z-index -1) inside the row instead of behind the panel. */
+	isolation: isolate;
 }
 
-.tree-row:hover {
-	background: var(--ui-color-bg-state-hover-default);
+/* Same rule the two block rows get up in the touch section, restated here because this row is declared
+   below it: at equal specificity the later declaration wins, and the padding above was putting the
+   controls of every document row six pixels inside the edge its pill ends at. */
+@media (hover: none) {
+	.tree-row {
+		padding-right: 0;
+	}
 }
+
+/* The slot is the title's own room and stays the same without hover, where the controls are on screen
+   at all times. Cut down to make room for them inside the floor, it was charged for them twice - the
+   measure pass takes their width off the slot as well - and a deep row was left with 46px, four letters
+   and an ellipsis, however far it was panned. They stand in the row's flow there, after the title, so
+   the row grows by their width on its own and the title keeps the whole slot. */
 
 .tree-row.is-active {
-	background: color-mix(in srgb, var(--ui-color-accent-main-primary) 12%, transparent);
+	--note-sidebar-row-tint: var(--ui-color-design-selection-bg);
 }
 
-.tree-row.is-active .tree-item {
-	color: var(--ui-color-accent-main-primary);
+/* Leading spacer carries the level indent. As padding it would shift the sticky controls
+   anchor right and push the buttons past the visible edge on deep levels. */
+.tree-row__indent {
+	display: inline-block;
+	flex: 0 0 auto;
+	width: calc(var(--indent, 32px) - var(--ui-space-inline-2xs));
+}
+
+/* Highlight cannot be painted on the row: the row is wider than the visible area and its
+   background would scroll out of view. A sticky zero-width holder keeps a viewport-wide
+   fill at the left edge instead, with both corners always in frame. */
+.tree-row__pill,
+.collection-row__pill,
+.favorite-row__pill {
+	position: sticky;
+	left: 0;
+	width: 0;
+	margin-right: calc(-1 * var(--ui-space-inline-2xs));
+	align-self: stretch;
+	flex: 0 0 auto;
+	z-index: -1;
+	pointer-events: none;
+}
+
+/* Doubles as the row's leading inset - see `.collection-row` padding. */
+.collection-row__pill {
+	width: 12px;
+}
+
+/* Same inset, and the row's own gap taken back off it: a block row spaces its children by 4px, so the
+   holder has to end where the row's padding used to, or the chevron of every row starts 4px further in. */
+.favorite-row__pill {
+	width: 12px;
+	margin-right: -4px;
+}
+
+/* The whole of the visible area, the lane kept for an overlay scroll bar included. The bar is left to
+   lie over the end of the tile rather than beside it, because the alternative is worse: a title deep
+   enough to run past the visible edge - which is what panning is for - showed its next letter in that
+   strip, on the panel's own background, outside any tile. Zero on a device whose bar takes its own
+   width beside the content, so there the two read the same. */
+.tree-row__pill-fill,
+.collection-row__pill-fill,
+.favorite-row__pill-fill {
+	position: absolute;
+	left: 0;
+	top: 0;
+	bottom: 0;
+	width: calc(var(--kb-vw, 100%) + var(--note-scroll-lane, 0px));
+	border-radius: var(--ui-border-radius-sm);
+}
+
+.tree-row.is-active .tree-row__pill-fill {
+	background: var(--ui-color-design-selection-bg);
+	box-shadow: inset 0 0 0 1px var(--ui-color-design-selection-stroke);
+}
+
+/* Drop target outranks selection, selection outranks hover. */
+.tree-row.is-drop-inside .tree-row__pill-fill {
+	background: var(--ui-color-accent-soft-blue-2);
+	box-shadow: inset 0 0 0 1.5px var(--ui-color-accent-main-primary);
+}
+
+/* Thin rails under every ancestor level. */
+.tree-row__guide {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	width: 1px;
+	background: var(--ui-color-divider-default);
+	pointer-events: none;
+}
+
+/* Travelling copy of chevron and title at the left edge of the visible area, up once the real ones
+   scroll out of view. */
+.tree-row__peek {
+	position: sticky;
+	left: 10px;
+	width: 0;
+	margin-right: calc(-1 * var(--ui-space-inline-2xs));
+	align-self: stretch;
+	flex: 0 0 auto;
+	z-index: 3;
+	display: none;
+	align-items: center;
+	pointer-events: none;
+}
+
+.tree-row__peek-inner {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-2xs);
+	white-space: nowrap;
+}
+
+.tree-row__peek-rest {
+	display: none;
+	align-items: center;
+	/* Stops short of the row controls: a lit star is on screen without hover, and there is no
+	   mask at rest to dissolve the text under it. Left offset of the holder plus both buttons -
+	   the copy now starts at the holder itself, the level badge in front of it is gone. */
+	max-width: calc(var(--kb-vw, 240px) - 44px);
+	gap: var(--ui-space-inline-2xs);
+	height: 22px;
+	padding: 0 var(--ui-space-inline-2xs2);
+	border-radius: var(--ui-border-radius-sm);
+	color: var(--ui-color-base-1);
+	background:
+		linear-gradient(var(--note-sidebar-row-tint), var(--note-sidebar-row-tint)),
+		var(--ui-color-bg-content-primary);
+}
+
+.tree-row__peek-title {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.tree-row__peek-chevron {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex: 0 0 auto;
+	width: 16px;
+	height: 16px;
+	padding: 0;
+	border: 0;
+	background: transparent;
+	color: inherit;
+	cursor: pointer;
+	pointer-events: auto;
+	transition: transform 0.15s ease;
+}
+
+.tree-row__peek-chevron.is-expanded {
+	transform: rotate(90deg);
+}
+
+.tree-row[data-kb-name-off="1"] .tree-row__peek-rest {
+	display: flex;
+}
+
+/* No duplicate title: while the travelling copy is up, the real one steps aside. Its text goes
+   transparent instead of hidden, because the link that carries it also carries the hit area of the
+   whole row (`.tree-title-link::after`) - and `visibility: hidden` took that with it, so a row deep
+   enough to send its name out of view could not be opened by mouse or keyboard at all. The copy is
+   painted over that area and lets clicks through to it (`pointer-events: none`), so pressing the
+   copy opens the document the same way pressing the row does. */
+.tree-row[data-kb-name-off="1"]:hover .tree-title,
+.tree-row[data-kb-name-off="1"].is-active .tree-title {
+	color: transparent;
+}
+
+.tree-row[data-kb-name-off="1"]:hover .tree-disclosure,
+.tree-row[data-kb-name-off="1"].is-active .tree-disclosure {
+	visibility: hidden;
 }
 
 .tree-row.is-drop-before::before,
 .tree-row.is-drop-after::after {
-	left: 0;
-	right: 0;
+	left: calc(var(--indent, 32px) - var(--ui-space-inline-2xs));
+	right: var(--ui-space-inline-xs);
 }
 
 .tree-row.is-drop-before::before {
@@ -510,24 +1710,8 @@
 	pointer-events: none;
 	z-index: 3;
 	bottom: -1px;
-	left: calc(var(--indent, 16px) - 16px);
-	right: 0;
-}
-
-.drop-overlay {
-	position: absolute;
-	inset: 0;
-	border: 1px dashed var(--ui-color-accent-main-primary-alt);
-	border-radius: var(--ui-border-radius-sm);
-	pointer-events: none;
-}
-
-.collection-drop-overlay {
-	position: absolute;
-	inset: 0;
-	border: 1px dashed var(--ui-color-accent-main-primary-alt);
-	border-radius: var(--ui-border-radius-md);
-	pointer-events: none;
+	left: calc(var(--indent, 32px) - var(--ui-space-inline-2xs));
+	right: var(--ui-space-inline-xs);
 }
 
 .tree-item {
@@ -555,6 +1739,15 @@
 .sidebar-muted {
 	color: var(--ui-color-base-3);
 	margin-left: 16px;
+	max-width: calc(var(--kb-vw, 240px) - 32px);
+	white-space: normal;
+}
+
+/* Sits beside the scrolling tree rather than inside it, so the area's own width bounds it and
+   the measured visible width never enters the picture. */
+.sidebar-muted--flow {
+	max-width: none;
+	padding-right: 16px;
 }
 
 .sidebar-loader {
@@ -570,43 +1763,39 @@
 	display: flex;
 	align-items: center;
 	justify-content: flex-end;
-	gap: 24px;
-	padding: 12px 16px;
+	gap: var(--ui-space-inline-2xs);
+	padding: var(--ui-space-stack-xs) var(--ui-space-inline-xs);
 	background: transparent;
-	min-height: 50px;
+	border-top: 1px solid var(--ui-color-divider-default);
 	transition: padding 220ms ease, gap 220ms ease;
 }
 
+/* Vertical stack in the rail, same buttons and same order. */
 .sidebar-footer.is-collapsed {
-	justify-content: center;
-	padding: 12px 0;
-	gap: 0;
-}
-
-.sidebar-footer.is-collapsed .sidebar-footer__btn:not(.sidebar-footer__btn--toggle) {
-	display: none;
+	flex-direction: column;
+	align-items: center;
+	justify-content: flex-start;
+	padding: var(--ui-space-stack-xs) 0;
 }
 
 .sidebar-footer__btn {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
-	width: 26px;
-	height: 26px;
+	flex: 0 0 auto;
+	width: 36px;
+	height: 36px;
 	padding: 0;
 	border: 0;
+	border-radius: var(--ui-border-radius-sm);
 	background: transparent;
 	cursor: pointer;
-	transition: opacity 0.15s ease;
+	transition: background 0.15s ease;
 	--ui-icon-set__icon-color: var(--ui-color-base-3);
 }
 
 .sidebar-footer__btn:hover {
-	opacity: 0.8;
-}
-
-.sidebar-footer__btn.is-active {
-	--ui-icon-set__icon-color: var(--ui-color-base-1);
+	background: var(--note-sidebar-row-hover);
 }
 
 .sidebar-footer__icon {
@@ -640,10 +1829,13 @@
 	overflow: hidden;
 }
 
+/* Flush with the edge, not straddling it: the panel clips its overflow, so the half of a straddling
+   handle that hangs outside was cut off along with its hit area - the grab zone began a few pixels
+   inside the panel and the very edge tracked nothing. */
 .sidebar-resizer {
 	position: absolute;
 	top: 0;
-	right: -4px;
+	right: 0;
 	width: 8px;
 	height: 100%;
 	cursor: col-resize;
@@ -651,10 +1843,12 @@
 	background: transparent;
 }
 
+/* At the outer end of the handle, so the line the pointer lights up stays on the boundary itself
+   rather than moving inwards with the zone above. */
 .sidebar-resizer::before {
 	content: '';
 	position: absolute;
-	left: 3px;
+	right: 0;
 	top: 0;
 	bottom: 0;
 	width: 2px;
@@ -713,31 +1907,8 @@
 	min-width: 0;
 }
 
+/* Box, states and focus ring come from the air button classes on the element itself. */
 .sidebar-search-row__create {
-	flex: 0 0 28px;
-	width: 28px;
-	height: 28px;
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	border: 0;
-	background: transparent;
-	color: var(--ui-color-accent-main-primary);
-	cursor: pointer;
-	padding: 0;
-	transition: opacity 0.15s ease;
-}
-
-.sidebar-search-row__create:hover {
-	opacity: 0.8;
-}
-
-.sidebar-search-row__create:focus-visible {
-	outline: 2px solid var(--ui-color-accent-main-primary);
-	outline-offset: 1px;
-}
-
-.sidebar-search-row__create-icon {
 	flex: 0 0 auto;
 }
 
@@ -1007,6 +2178,18 @@
 	.sidebar-layout {
 		transition: none;
 	}
+
+	/* The share a section glides to while another one opens or closes, and the travel of the rows that
+	   change places: both end where they ended before, only at once. The JS side of the same motions asks
+	   for the setting itself (prefersReducedMotion), so nothing is left waiting for a transition that
+	   never runs. */
+	.sidebar-sections.is-section-animating .collection-list,
+	.sidebar-row-move,
+	.favorite-row-enter-active,
+	.favorite-row-leave-active,
+	.favorite-row-move {
+		transition: none;
+	}
 }
 
 .note-sidebar-confirm-content {
@@ -1017,32 +2200,32 @@
 	padding: 8px 0;
 }
 
-.note-sidebar-pick-collection-popup-content {
+.note-sidebar-confirm-checkbox {
 	display: flex;
-	flex-direction: column;
-	gap: 16px;
-	padding: 8px 0;
-}
-
-.note-sidebar-pick-collection-popup-text {
-	font-weight: var(--ui-font-weight-normal);
-	font-size: var(--ui-font-size-lg, 15px);
+	align-items: center;
+	gap: 8px;
+	margin-top: 12px;
+	font-size: var(--ui-font-size-md, 14px);
 	color: var(--ui-color-base-1, #333333);
-	line-height: 1.4;
+	cursor: pointer;
 }
 
-.note-sidebar-pick-collection-popup-selector {
-	min-height: 40px;
+.note-sidebar-confirm-checkbox-input {
+	width: 18px;
+	height: 18px;
+	margin: 0;
+	flex-shrink: 0;
+	cursor: pointer;
 }
 
+/* Menu icon slot is a 24px box; the neighbouring o-document-sign draws 14.3x16.1 there. */
 .sidebar-search-row__menu-icon-collection {
-	-webkit-mask-image: url('/bitrix/js/note/ui/assets/images/collection.svg?v=2');
-	mask-image: url('/bitrix/js/note/ui/assets/images/collection.svg?v=2');
-	-webkit-mask-repeat: no-repeat;
-	mask-repeat: no-repeat;
-	-webkit-mask-position: center;
-	mask-position: center;
-	-webkit-mask-size: 18px 18px;
-	mask-size: 18px 18px;
-	background-color: var(--ui-icon-set__icon-color, var(--ui-color-base-3));
+	--note-collection-glyph-size: 16px;
+}
+
+/* The subscription-scope popover of a favorites row is teleported to <body> at the z-index it uses in
+ * the editor/history context (120). On mobile the sidebar is a drawer at --note-drawer-z (991), so the
+ * teleported popover lands behind it. Lift it above the drawer but below PopupWindow (1000+). */
+html.note-mobile .note-sidebar-notify-popover {
+	z-index: 992;
 }

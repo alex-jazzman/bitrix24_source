@@ -8,8 +8,13 @@ import { type ParserInlineSourceLinkSegments } from 'im.v2.lib.parser';
 
 import './list-slider.css';
 
-const SLIDER_ID = 'im:source-list-slider';
+export const SLIDER_ID_PREFIX = 'im:source-list-slider';
 const SLIDER_WIDTH = 546;
+
+// Slider id is derived from the message id. The sources button is rendered only for fully
+// received messages, so `messageId` is stable for the component lifetime (not a temporary
+// sending id) and yields a stable, per-message unique slider id.
+export const buildSliderId = (messageId): string => `${SLIDER_ID_PREFIX}:${messageId}`;
 
 // @vue/component
 export const SourceListSlider = {
@@ -17,6 +22,10 @@ export const SourceListSlider = {
 	props: {
 		messageBlocks: {
 			type: Array,
+			required: true,
+		},
+		messageId: {
+			type: [Number, String],
 			required: true,
 		},
 	},
@@ -44,6 +53,7 @@ export const SourceListSlider = {
 	},
 	created()
 	{
+		this.sliderId = buildSliderId(this.messageId);
 		this.contentContainer = Tag.render`<div></div>`;
 		this.openSlider();
 	},
@@ -54,7 +64,7 @@ export const SourceListSlider = {
 	methods: {
 		openSlider()
 		{
-			SidePanel.Instance.open(SLIDER_ID, {
+			SidePanel.Instance.open(this.sliderId, {
 				cacheable: false,
 				width: SLIDER_WIDTH,
 				contentCallback: () => {
@@ -69,7 +79,7 @@ export const SourceListSlider = {
 		},
 		closeSlider()
 		{
-			const slider = SidePanel.Instance.getSlider(SLIDER_ID);
+			const slider = SidePanel.Instance.getSlider(this.sliderId);
 			if (!slider)
 			{
 				return;
@@ -120,7 +130,7 @@ export const SourceListSlider = {
 					>
 						{{ source.description }}
 					</div>
-					<a :href="source.url" target="_blank" class="bx-im-message-source-list-slider__item-link">
+					<a :href="source.url" target="_blank" class="bx-im-message-source-list-slider__item-link --ellipsis">
 						{{ source.url }}
 					</a>
 				</div>

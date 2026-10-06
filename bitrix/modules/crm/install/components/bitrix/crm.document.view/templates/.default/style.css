@@ -1,16 +1,18 @@
 .crm__document-view--wrap {
-	height: calc(100vh - 80px);
 	display: flex;
+	height: calc(100vh - 94px);
+	min-height: 0;
 	justify-content: space-between;
 	flex-grow: 1;
 }
 
 .crm__document-view--inner {
+	display: flex;
 	position: relative;
 	width: 100%;
+	min-height: 0;
 	margin-right: 11px;
 	overflow: hidden;
-	display:flex;
 	flex-direction: column;
 }
 
@@ -35,12 +37,47 @@
 }
 
 .crm__document-view--sidebar {
-	width: 288px;
+	width: 100%;
 	margin-bottom: 16px;
 	border-radius: var(--ui-space-stack-xl);
 	box-sizing: border-box;
 	flex-shrink: 0;
 	background-color: var(--ui-color-bg-content-secondary);
+}
+
+.crm__document-view--sidebar-wrapper {
+	width: 288px;
+	max-height: 100%;
+	min-height: 0;
+	overflow-x: hidden;
+	overflow-y: auto;
+	box-sizing: border-box;
+	flex-shrink: 0;
+	scrollbar-width: thin;
+	scrollbar-color: var(--ui-color-palette-gray-20) transparent;
+}
+
+.crm__document-view--sidebar-wrapper::-webkit-scrollbar {
+	width: 6px;
+}
+
+.crm__document-view--sidebar-wrapper::-webkit-scrollbar-track {
+	background: transparent;
+}
+
+.crm__document-view--sidebar-wrapper::-webkit-scrollbar-thumb {
+	border-radius: 5px;
+	background: var(--ui-color-palette-gray-20);
+	cursor: pointer;
+	transition: background .2s;
+}
+
+.crm__document-view--sidebar-wrapper:hover::-webkit-scrollbar-thumb {
+	background: var(--ui-color-palette-gray-30);
+}
+
+.crm__document-view--sidebar-wrapper:hover::-webkit-scrollbar-thumb:hover {
+	background: var(--ui-color-palette-gray-35);
 }
 
 .crm__document-view--sidebar.--company-information {

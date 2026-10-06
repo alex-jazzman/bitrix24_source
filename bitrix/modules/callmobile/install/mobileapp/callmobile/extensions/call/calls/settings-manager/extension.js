@@ -16,6 +16,7 @@ jn.define('call/settings-manager', (require, exports, module) => {
 			this.mobileCallUIVisibilityTimer = BX.componentParameters.get('mobileCallUIVisibilityTimer');
 			this.callInvitePeriod = BX.componentParameters.get('callInvitePeriod');
 			this.isLargeMobileCallEnabled = BX.componentParameters.get('isLargeMobileCallEnabled');
+			this.syncCallInvitePeriod = BX.componentParameters.get('syncCallInvitePeriod');
 		}
 
 		/**
@@ -71,6 +72,11 @@ jn.define('call/settings-manager', (require, exports, module) => {
 			if (settings.isLargeMobileCallEnabled !== undefined)
 			{
 				this.isLargeMobileCallEnabled = settings.isLargeMobileCallEnabled;
+			}
+
+			if (settings.syncCallInvitePeriod !== undefined)
+			{
+				this.syncCallInvitePeriod = settings.syncCallInvitePeriod;
 			}
 		}
 
@@ -213,6 +219,16 @@ jn.define('call/settings-manager', (require, exports, module) => {
 			this._isLargeMobileCallEnabled = flag;
 		}
 
+		get syncCallInvitePeriod()
+		{
+			return this._syncCallInvitePeriod;
+		}
+
+		set syncCallInvitePeriod(value)
+		{
+			this._syncCallInvitePeriod = value;
+		}
+
 		/**
 		 * @return {boolean}
 		 */
@@ -226,7 +242,7 @@ jn.define('call/settings-manager', (require, exports, module) => {
 		 */
 		isJwtCallsEnabled()
 		{
-			return this.isJwtCallsSupported && this.jwtCallsEnabled;
+			return this.isJwtCallsSupported() && this.jwtCallsEnabled;
 		}
 
 		/**
@@ -234,7 +250,15 @@ jn.define('call/settings-manager', (require, exports, module) => {
 		 */
 		isJwtCallsSupported()
 		{
-			return 'startCall' in BXClient.getInstance();
+			// Old app builds have no JWT bridge: the global may be undeclared, empty or hold no instance.
+			if (typeof BXClient === 'undefined')
+			{
+				return false;
+			}
+
+			const client = BXClient?.getInstance?.();
+
+			return Boolean(client) && 'startCall' in client;
 		}
 	}
 

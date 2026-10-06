@@ -17,6 +17,11 @@ export const BlockComplexPortPlaceholder = {
 			type: Boolean,
 			default: false,
 		},
+		isNextDroppable:
+		{
+			type: Boolean,
+			default: false,
+		},
 	},
 	emits: ['addPort'],
 	setup(): { newConnection: Function }
@@ -31,17 +36,21 @@ export const BlockComplexPortPlaceholder = {
 	{
 		onMouseUp(): void
 		{
-			if (!this.newConnection || this.isOutput)
+			if (!this.isNextDroppable || !this.newConnection || this.isOutput)
 			{
 				return;
 			}
 
-			this.$emit('addPort', this.title);
+			// Snapshot the connection synchronously: the document-level mouseup
+			// handler nullifies newConnection before the input-ports watcher runs.
+			const connection = { ...this.newConnection };
+			this.$emit('addPort', { title: this.title, connection });
 		},
 	},
 	template: `
 		<div
 			class="ui-block-diagram-port"
+			:data-test-id="$testId('complexNodePortPlaceholder', title)"
 			@mouseup="onMouseUp"
 		></div>
 		<span

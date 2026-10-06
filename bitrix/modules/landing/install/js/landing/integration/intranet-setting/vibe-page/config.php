@@ -14,6 +14,8 @@ return [
 		'main.popup',
 		'ui.buttons',
 		'ui.icon.set',
+		'ui.dialogs.messagebox',
+		'ui.hint',
 		'ui.section',
 		'ui.form-elements.field',
 		'sidepanel',

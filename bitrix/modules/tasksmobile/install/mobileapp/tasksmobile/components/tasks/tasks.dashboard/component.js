@@ -3,6 +3,7 @@
 	const { downloadImages, makeLibraryImagePath } = require('asset-manager');
 	const { KanbanAdapter, ListAdapter } = require('tasks/layout/dashboard');
 	const { Loc } = require('loc');
+	const { triggerNewProjectsPromo } = require('new-projects-promo/trigger');
 	const { batchActions } = require('statemanager/redux/batched-actions');
 	const store = require('statemanager/redux/store');
 	const { usersUpserted, usersAdded, usersSelector } = require('statemanager/redux/slices/users');
@@ -193,6 +194,7 @@
 				cacheId: `my_tasks_${env.userId}`,
 				presetId: this.props.defaultPresetId,
 				searchDataAction: 'tasksmobile.Filter.getSearchBarPresets',
+				badgeCode: 'tasks_search',
 				searchDataActionParams: {
 					groupId: projectId,
 				},
@@ -292,6 +294,10 @@
 			this.refreshStages();
 			this.updateMoreMenuButton();
 			this.subscribe();
+			if (this.props.isRootComponent)
+			{
+				triggerNewProjectsPromo();
+			}
 
 			setTimeout(async () => {
 				this.prefetchAssets();

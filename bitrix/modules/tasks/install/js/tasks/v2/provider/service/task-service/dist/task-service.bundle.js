@@ -199,14 +199,15 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 		};
 		return Object.fromEntries(Object.entries(data).filter(([, value]) => !main_core.Type.isNil(value)));
 	}
-	function mapSliderDataToModel(data) {
+	function mapSliderDataToModel(data, options = {}) {
+		const decodeUriParams = options.decodeUriParams ?? true;
 		const task = {
-			title: data.TITLE ? decodeURIComponent(data.TITLE) : null,
+			title: data.TITLE ? mapSliderParam(data.TITLE, decodeUriParams) : null,
 			description: main_core.Text.decode(data.DESCRIPTION),
 			fileIds: data.UF_TASK_WEBDAV_FILES,
 			parentId: Number(data.PARENT_ID) || mapValue(data.BASE_TEMPLATE, tasks_v2_lib_idUtils.idUtils.boxTemplate(data.BASE_TEMPLATE)),
 			crmItemIds: data.UF_CRM_TASK ? data.UF_CRM_TASK.split(';').filter(id => id.trim()) : undefined,
-			email: data.UF_MAIL_MESSAGE ? mapEmail(data) : undefined,
+			email: data.UF_MAIL_MESSAGE ? mapEmail(data, decodeUriParams) : undefined,
 			tags: data.TAGS ? data.TAGS.split(',').map(tag => tag.trim()) : undefined,
 			groupId: Number(data.GROUP_ID) || undefined,
 			flowId: Number(data.FLOW_ID) || undefined,
@@ -220,6 +221,19 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 			context: data.context || undefined
 		};
 		return Object.fromEntries(Object.entries(task).filter(([, value]) => !main_core.Type.isNil(value)));
+	}
+	function mapSliderParam(value, decodeUriParams) {
+		return decodeUriParams ? decodeSliderParam(value) : value;
+	}
+	function decodeSliderParam(value) {
+		try {
+			return decodeURIComponent(value);
+		} catch (error) {
+			if (error instanceof URIError) {
+				return value;
+			}
+			throw error;
+		}
 	}
 	function mapValue(value, mappedValue) {
 		return main_core.Type.isNil(value) ? value : mappedValue;
@@ -238,10 +252,10 @@ this.BX.Tasks.V2.Provider = this.BX.Tasks.V2.Provider || {};
 			dependentId
 		}).type]));
 	}
-	function mapEmail(data) {
+	function mapEmail(data, decodeUriParams) {
 		const id = Number(data.UF_MAIL_MESSAGE);
-		const title = decodeURIComponent(data.MAIL_SUBJECT);
-		const from = decodeURIComponent(data.MAIL_FROM);
+		const title = mapSliderParam(data.MAIL_SUBJECT, decodeUriParams);
+		const from = mapSliderParam(data.MAIL_FROM, decodeUriParams);
 		const dateTs = data.MAIL_DATE ? parseInt(data.MAIL_DATE, 10) * 1000 : null;
 		return {
 			id,

@@ -92,6 +92,7 @@ export class ActionMenuService
 		const iconElement = item?.iconElement instanceof HTMLElement ? item.iconElement : null;
 		const danger = Boolean(item?.danger);
 		const onClick = Type.isFunction(item?.onClick) ? item.onClick : () => {};
+		const testId = Type.isStringFilled(item?.testId) ? String(item.testId) : '';
 
 		const baseClass = `${popupClass}-item`;
 		const className = danger
@@ -100,7 +101,7 @@ export class ActionMenuService
 		;
 
 		return {
-			html: this.#renderItem(text, iconModifier, iconColor, iconElement, popupClass),
+			html: this.#renderItem(text, iconModifier, iconColor, iconElement, popupClass, testId),
 			className,
 			onclick: () => {
 				this.destroy();
@@ -115,17 +116,26 @@ export class ActionMenuService
 		iconColor: string,
 		iconElement: HTMLElement | null,
 		popupClass: string,
+		testId: string,
 	): HTMLElement
 	{
 		const safeText = String(text || '');
 		const iconNode = iconElement ?? this.#renderIconSetIcon(iconModifier, iconColor, popupClass);
-
-		return Tag.render`
+		// Identity for tests: an item is otherwise reachable only by its icon modifier
+		// or its localised label, both of which drift.
+		const row = Tag.render`
 			<span class="${popupClass}-row">
 				<span class="${popupClass}-text">${safeText}</span>
 				${iconNode}
 			</span>
 		`;
+
+		if (testId !== '')
+		{
+			row.dataset.testid = testId;
+		}
+
+		return row;
 	}
 
 	#renderIconSetIcon(iconModifier: string, iconColor: string, popupClass: string): HTMLElement

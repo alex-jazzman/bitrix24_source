@@ -17,6 +17,7 @@ import { TextEditorComponent } from './text-editor-component';
 
 import { BasicEditor } from './presets/basic-editor';
 import { BasicEditorComponent } from './presets/basic-editor-component';
+import { RichText } from './presets/rich-text';
 
 import BasePlugin from './plugins/base-plugin';
 import Button from './toolbar/button';
@@ -104,6 +105,7 @@ const Debug = {
 export {
 	TextEditor,
 	BasicEditor,
+	RichText,
 	TextEditorComponent,
 	BasicEditorComponent,
 	BasePlugin,

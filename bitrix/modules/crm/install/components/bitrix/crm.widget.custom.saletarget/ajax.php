@@ -159,6 +159,20 @@ switch ($action)
 						$languageId,
 					)
 				;
+				$notifySubject = static fn (?string $languageId = null) =>
+					Loc::getMessage(
+						'CRM_WIDGET_SALETARGET_AJAX_NOTIFY_MESSAGE_SUBJECT',
+						[ '#URL#' => '/crm/start' ],
+						$languageId,
+					)
+				;
+				$notifyPlainText = static fn (?string $languageId = null) =>
+					Loc::getMessage(
+						'CRM_WIDGET_SALETARGET_AJAX_NOTIFY_MESSAGE_PLAIN_TEXT',
+						null,
+						$languageId,
+					)
+				;
 
 				\CIMNotify::Add(array(
 					'TO_USER_ID' => $userId,
@@ -168,6 +182,13 @@ switch ($action)
 					'NOTIFY_EVENT' => 'admin_notification',
 					'NOTIFY_TAG' => 'CRM|NOTIFY_ADMIN|'.$userId.'|'.$curUser->GetID(),
 					'NOTIFY_MESSAGE' => $notifyMessageCallback,
+					'PARAMS' => [
+						'COMPONENT_ID' => 'CrmEntity',
+						'COMPONENT_PARAMS' => [
+							'SUBJECT' => $notifySubject,
+							'PLAIN_TEXT' => $notifyPlainText,
+						],
+					],
 				));
 			}
 		}

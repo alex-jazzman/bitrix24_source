@@ -262,9 +262,16 @@ export const ViewEventSlider = {
 				this.backgroundPullEvent = event;
 			}
 		},
+		isPullOfCurrentEntry(fields): boolean
+		{
+			// A restricted card carries the id of the copy it shows instead of the parent one,
+			// so the own id of the pull entry answers where the parent no longer matches.
+			return parseInt(fields?.PARENT_ID, 10) === parseInt(this.params.parentId, 10)
+				|| parseInt(fields?.ID, 10) === parseInt(this.params.eventId, 10);
+		},
 		updateParams(event: BaseEvent)
 		{
-			if (parseInt(event.data[1]?.fields?.PARENT_ID, 10) !== parseInt(this.params.parentId, 10))
+			if (!this.isPullOfCurrentEntry(event.data[1]?.fields))
 			{
 				this.reloadPlanner();
 
@@ -273,7 +280,9 @@ export const ViewEventSlider = {
 
 			const pullData = event.data[1].fields;
 
-			if (pullData.NAME)
+			// The pull fields are not cut by the rights of their reader, so a restricted card
+			// takes the title from the answer of the server alone.
+			if (pullData.NAME && !this.params.isRestrictedEventView)
 			{
 				this.name = pullData.NAME;
 			}
@@ -292,6 +301,7 @@ export const ViewEventSlider = {
 			}).then((response) => {
 				const newData = response.data;
 
+				this.name = newData.name;
 				this.description = newData.description;
 				this.isMeeting = newData.isMeeting;
 				this.timezone = newData.userTimezone;

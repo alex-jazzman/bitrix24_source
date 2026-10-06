@@ -2,7 +2,8 @@
 
 $MESS['MAIL_PASSWORDLESS_ERROR_INVALID_EMAIL'] = 'Введите корректный e-mail';
 $MESS['MAIL_PASSWORDLESS_ERROR_LIMIT'] = 'Превышен лимит почтовых ящиков на одного сотрудника';
-$MESS['MAIL_PASSWORDLESS_ERROR_DUPLICATE'] = 'Ящик с таким адресом уже подключён или ожидает подключения';
+$MESS['MAIL_PASSWORDLESS_ERROR_DUPLICATE'] = 'Ящик с таким адресом уже подключён';
+$MESS['MAIL_PASSWORDLESS_ERROR_REQUEST_ALREADY_SENT'] = 'Этому сотруднику уже отправлен запрос на подключение ящика';
 $MESS['MAIL_PASSWORDLESS_ERROR_INVALID_HOST'] = 'Укажите корректный адрес почтового сервера';
 $MESS['MAIL_PASSWORDLESS_ERROR_NOT_FOUND'] = 'Запрос на подключение ящика не найден';
 $MESS['MAIL_PASSWORDLESS_ERROR_ACCESS_DENIED'] = 'Запрос недоступен';

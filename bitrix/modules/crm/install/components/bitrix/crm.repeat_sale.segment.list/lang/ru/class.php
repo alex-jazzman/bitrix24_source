@@ -18,7 +18,7 @@ $MESS['CRM_REPEAT_SALE_SEGMENT_LIST_COLUMN_CONVERSION'] = 'Конверсия, %
 $MESS['CRM_REPEAT_SALE_SEGMENT_LIST_COLUMN_MODIFIED_BY'] = 'Изменён';
 
 $MESS['CRM_REPEAT_SALE_SEGMENT_LIST_COLUMN_MINIMUM_DAYS_AFTER_LAST_CLOSED_ENTITY'] = 'Интервал между сделками';
-$MESS['CRM_REPEAT_SALE_SEGMENT_LIST_COLUMN_MINIMUM_DAYS_AFTER_LAST_CLOSED_ENTITY_HINT'] = 'Количество дней между между последней закрытой сделкой по клиенту и новой сделкой для повторных продаж';
+$MESS['CRM_REPEAT_SALE_SEGMENT_LIST_COLUMN_MINIMUM_DAYS_AFTER_LAST_CLOSED_ENTITY_HINT'] = 'Количество дней между последней закрытой сделкой по клиенту и новой сделкой для повторных продаж';
 
 $MESS['CRM_REPEAT_SALE_SEGMENT_LIST_FORMAT_DATE_NOW'] = 'только что';
 

@@ -211,7 +211,7 @@ jn.define('im/messenger/lib/chat-search/src/provider', (require, exports, module
 				}
 				const user = this.store.getters['usersModel/getById'](recentItem.id);
 
-				if (!user || user.bot || Number(user.id) === MessengerParams.getUserId())
+				if (!user || user.bot || user.active === false || Number(user.id) === MessengerParams.getUserId())
 				{
 					return;
 				}

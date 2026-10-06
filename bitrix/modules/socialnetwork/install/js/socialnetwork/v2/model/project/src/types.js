@@ -1,5 +1,21 @@
 import { type IPrivacyType } from 'socialnetwork.v2.const';
 
+export type NotificationType = {
+	id: string;
+	label: string;
+	counterEnabled: boolean;
+}
+
+export type NotificationGroup = {
+	id: string;
+	label: string;
+	types: NotificationType[];
+}
+
+export type NotificationCatalog = {
+	groups: NotificationGroup[];
+}
+
 export type ProjectFeatures = {
 	tasks: boolean,
 	chat: boolean,
@@ -35,6 +51,8 @@ export type ProjectModel = {
 	toggleableFeatures: string[];
 	defaultPermissions: ProjectPermissions | null;
 	permissions: ProjectPermissions;
+	notifications: NotificationCatalog | null;
+	notificationsInitial: NotificationCatalog | null;
 }
 
 type ProjectAvatar = {

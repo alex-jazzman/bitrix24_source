@@ -24,7 +24,9 @@
 
 	/*transition: max-height 150ms ease, min-height 150ms ease;*/
 	transition: height 150ms ease, min-height 150ms ease;
+	/* @chef-ignore */
 	scrollbar-color: initial;
+	/* @chef-ignore */
 	scrollbar-width: initial;
 }
 
@@ -32,7 +34,9 @@
 	min-height: 32px;
 }
 
-@supports not selector(::-webkit-scrollbar) {
+/* Firefox-only: since Firefox 153 selector(::-webkit-scrollbar) parses,
+   so "not selector(...)" no longer detects Firefox */
+@supports (-moz-appearance: none) {
 	.ui-tag-selector-container {
 		scrollbar-color: rgba(0, 0, 0, 0.21) transparent;
 		scrollbar-width: thin;
@@ -92,6 +96,12 @@
 	position: relative;
 	margin: 2px;
 	height: 30px;
+}
+
+.ui-tag-selector-item:has(.ui-tag-selector-tag-content:focus-visible), /* @chef-ignore */
+.ui-tag-selector-item:has(button:focus-visible) { /* @chef-ignore */
+	outline: 2px solid var(--ui-color-focus-outline);
+	border-radius: 4px;
 }
 
 .ui-tag-selector-outer-container.--air .ui-tag-selector-item {
@@ -155,6 +165,15 @@
 	align-items: center;
 	overflow: hidden;
 	text-decoration: none;
+	outline: none;
+
+	border: none;
+	padding: 0;
+	appearance: none;
+	font: inherit;
+	color: inherit;
+	line-height: inherit;
+	background: none;
 }
 
 .ui-tag-selector-tag-content--clickable {
@@ -257,6 +276,7 @@
 .ui-tag-selector-text-box {
 	min-width: 110px;
 	max-width: 100%;
+	/* @chef-ignore */
 	field-sizing: content;
 	padding: 0 5px;
 	box-sizing: border-box;
@@ -297,6 +317,11 @@
 	align-items: center;
 }
 
+.ui-tag-selector-create-button:has(button:focus-visible) { /* @chef-ignore */
+	outline: 2px solid var(--ui-color-focus-outline);
+	border-radius: 4px;
+}
+
 .ui-tag-selector-outer-container.--air .ui-tag-selector-add-button {
 	display: inline-flex;
 	align-items: center;
@@ -321,6 +346,8 @@
 	align-items: baseline;
 	appearance: none;
 	padding: 0;
+	outline: none;
+	line-height: inherit;
 	background-color: transparent;
 	font: var(--ui-font-weight-bold) 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica))
 }

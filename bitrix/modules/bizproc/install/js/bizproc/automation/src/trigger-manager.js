@@ -4,7 +4,14 @@ import { ViewMode } from './view-mode';
 import { Trigger } from './trigger';
 import { Helper } from './helper';
 import { Designer } from './designer';
-import { getGlobalContext, ConditionGroup, ConditionGroupSelector, UserOptions } from 'bizproc.automation';
+import {
+	getGlobalContext,
+	ConditionGroup,
+	ConditionGroupSelector,
+	UserOptions,
+	SelectorManager,
+	SelectorContext,
+} from 'bizproc.automation';
 import { Alert, AlertColor, AlertIcon } from 'ui.alerts';
 import { Popup, MenuManager } from 'main.popup';
 import { SaveButton, CancelButton } from 'ui.buttons';
@@ -952,6 +959,16 @@ export class TriggerManager extends EventEmitter
 			if (role === 'user-selector')
 			{
 				control = BX.Bizproc.UserSelector.decorateNode(controlNode);
+			}
+			else if (role === SelectorManager.SELECTOR_ROLE_ENTITY)
+			{
+				control = SelectorManager.createSelectorByRole(role, {
+					context: new SelectorContext({
+						fields: getGlobalContext().document.getFields(),
+						rootGroupTitle: getGlobalContext().document.title,
+					}),
+				});
+				control.renderTo(controlNode);
 			}
 
 			BX.UI.Hint.init(controlNode);

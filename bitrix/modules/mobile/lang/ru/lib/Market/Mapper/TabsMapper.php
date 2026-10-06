@@ -1,0 +1,4 @@
+<?php
+
+$MESS['MOBILE_MARKET_LIST_TAB_ALL'] = 'Все';
+$MESS['MOBILE_MARKET_INSTALLED_TAB_UPDATES'] = 'Требуют обновление';

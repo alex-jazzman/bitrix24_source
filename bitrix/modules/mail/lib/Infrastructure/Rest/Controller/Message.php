@@ -10,9 +10,11 @@ use Bitrix\Mail\Infrastructure\Rest\Dto\MessageDto;
 use Bitrix\Mail\Infrastructure\Rest\RequestParams;
 use Bitrix\Mail\Helper\Message\MessageSearch;
 use Bitrix\Mail\Helper\RecipientHelper;
+use Bitrix\Mail\Helper\Message\MailboxMigrationActionException;
 use Bitrix\Mail\Helper\Message\MessageSender;
 use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Error;
+use Bitrix\Main\LoaderException;
 use Bitrix\Main\SystemException;
 use Bitrix\Rest\V3\Attribute\DtoType;
 use Bitrix\Rest\V3\Controller\RestController;
@@ -75,8 +77,8 @@ class Message extends RestController
 	 * - filter:
 	 *   - int    mailboxId       Filter by mailbox ID
 	 *   - string searchQuery     Full-text search query
-	 *   - string dateFrom        Start date (Y/m/d H:i)
-	 *   - string dateTo          End date (Y/m/d H:i)
+	 *   - string dateFrom        Start date (ISO 8601)
+	 *   - string dateTo          End date (ISO 8601)
 	 *   - bool   isSeen          Read/unread filter
 	 *   - bool   hasAttachments  Has attachments filter
 	 *   - string folder          Folder name or path
@@ -84,7 +86,11 @@ class Message extends RestController
 	 *   - int limit   Results per page (1-100, default 25)
 	 *   - int offset  Offset from start
 	 *
+	 * @param ListRequest $request
 	 * @return ListResponse {result: MessageDto[]}
+	 * @throws RequestValidationException
+	 * @throws SystemException
+	 * @throws LoaderException
 	 */
 	public function listAction(ListRequest $request): ListResponse
 	{
@@ -94,20 +100,35 @@ class Message extends RestController
 		$limit = min($request->pagination?->getLimit() ?? SearchMessagesDto::DEFAULT_LIMIT, self::MAX_LIMIT);
 		$offset = $request->pagination?->getOffset() ?? 0;
 
-		$dto = SearchMessagesDto::fromArray([
-			'mailboxId' => $params->getInt('mailboxId'),
-			'searchQuery' => $params->getString('searchQuery'),
-			'dateFrom' => $this->convertIsoDateToInternal($params->getString('dateFrom'), 'dateFrom'),
-			'dateTo' => $this->convertIsoDateToInternal($params->getString('dateTo'), 'dateTo'),
-			'isSeen' => $params->getNullableBool('isSeen'),
-			'hasAttachments' => $params->getNullableBool('hasAttachments'),
-			'folder' => $params->getString('folder'),
-			'limit' => $limit,
-			'offset' => max(0, $offset),
-		]);
+		try
+		{
+			$dto = SearchMessagesDto::fromArray([
+				'mailboxId' => $params->getInt('mailboxId'),
+				'searchQuery' => $params->getString('searchQuery'),
+				'dateFrom' => $params->getString('dateFrom'),
+				'dateTo' => $params->getString('dateTo'),
+				'isSeen' => $params->getNullableBool('isSeen'),
+				'hasAttachments' => $params->getNullableBool('hasAttachments'),
+				'folder' => $params->getString('folder'),
+				'limit' => $limit,
+				'offset' => max(0, $offset),
+			]);
 
-		$provider = new MessageSearch();
-		$messages = $provider->search($dto, $userId);
+			$provider = new MessageSearch();
+			$messages = $provider->search($dto, $userId);
+		}
+		catch (MailboxMigrationActionException $e)
+		{
+			throw new RequestValidationException([
+				new Error($e->getMessage(), $e->errorCode),
+			]);
+		}
+		catch (SystemException $e)
+		{
+			throw new RequestValidationException([
+				new Error($e->getMessage(), 'MESSAGE_LIST_FAILED'),
+			]);
+		}
 
 		$collection = new DtoCollection(MessageDto::class);
 
@@ -133,6 +154,8 @@ class Message extends RestController
 	 * - string   body*     Email body content (plain text or basic HTML)
 	 * - string[] cc        CC recipients (optional)
 	 * - string[] bcc       BCC recipients (optional)
+	 * - int      senderId  Exact sender record identifier (optional)
+	 * - int      mailboxId Exact mailbox identifier; takes priority over senderId (optional)
 	 *
 	 * @return ArrayResponse {success: bool, to: string[]}
 	 */
@@ -144,6 +167,8 @@ class Message extends RestController
 		$from = $params->requireString('from');
 		$subject = $params->requireString('subject');
 		$body = $params->requireString('body');
+		$senderId = $params->getInt('senderId');
+		$mailboxId = $params->getInt('mailboxId');
 
 		[$recipients, $cc, $bcc] = $this->resolveAddressLists(
 			to: $params->requireArray('to'),
@@ -152,9 +177,8 @@ class Message extends RestController
 			userId: $userId,
 		);
 
-		try
-		{
-			$result = (new MessageSender())->send(
+		$result = $this->executeSendingAction(
+			static fn (): array => (new MessageSender())->send(
 				from: $from,
 				recipients: $recipients,
 				subject: $subject,
@@ -162,14 +186,11 @@ class Message extends RestController
 				userId: $userId,
 				cc: $cc,
 				bcc: $bcc,
-			);
-		}
-		catch (SystemException $e)
-		{
-			throw new RequestValidationException([
-				new Error($e->getMessage(), 'MESSAGE_SEND_FAILED'),
-			]);
-		}
+				senderId: $senderId,
+				mailboxId: $mailboxId,
+			),
+			'MESSAGE_SEND_FAILED',
+		);
 
 		return new ArrayResponse($result);
 	}
@@ -190,6 +211,8 @@ class Message extends RestController
 	 * - string   body*              Email body content (plain text or basic HTML)
 	 * - string[] cc                 CC recipients (optional)
 	 * - string[] bcc                BCC recipients (optional)
+	 * - int      senderId           Exact sender record identifier (optional)
+	 * - int      mailboxId          Exact mailbox identifier; takes priority over senderId (optional)
 	 *
 	 * @return ArrayResponse {success: bool, to: string[]}
 	 */
@@ -202,6 +225,8 @@ class Message extends RestController
 		$from = $params->requireString('from');
 		$subject = $params->requireString('subject');
 		$body = $params->requireString('body');
+		$senderId = $params->getInt('senderId');
+		$mailboxId = $params->getInt('mailboxId');
 
 		[$recipients, $cc, $bcc] = $this->resolveAddressLists(
 			to: $params->requireArray('to'),
@@ -210,9 +235,8 @@ class Message extends RestController
 			userId: $userId,
 		);
 
-		try
-		{
-			$result = (new MessageSender())->reply(
+		$result = $this->executeSendingAction(
+			static fn (): array => (new MessageSender())->reply(
 				messageId: $messageId,
 				from: $from,
 				recipients: $recipients,
@@ -221,14 +245,11 @@ class Message extends RestController
 				userId: $userId,
 				cc: $cc,
 				bcc: $bcc,
-			);
-		}
-		catch (SystemException $e)
-		{
-			throw new RequestValidationException([
-				new Error($e->getMessage(), 'MESSAGE_REPLY_FAILED'),
-			]);
-		}
+				senderId: $senderId,
+				mailboxId: $mailboxId,
+			),
+			'MESSAGE_REPLY_FAILED',
+		);
 
 		return new ArrayResponse($result);
 	}
@@ -249,6 +270,8 @@ class Message extends RestController
 	 * - string   body*              Email body content (plain text or basic HTML)
 	 * - string[] cc                 CC recipients (optional)
 	 * - string[] bcc                BCC recipients (optional)
+	 * - int      senderId           Exact sender record identifier (optional)
+	 * - int      mailboxId          Exact mailbox identifier; takes priority over senderId (optional)
 	 *
 	 * @return ArrayResponse {success: bool, to: string[]}
 	 */
@@ -261,6 +284,8 @@ class Message extends RestController
 		$from = $params->requireString('from');
 		$subject = $params->requireString('subject');
 		$body = $params->requireString('body');
+		$senderId = $params->getInt('senderId');
+		$mailboxId = $params->getInt('mailboxId');
 
 		[$recipients, $cc, $bcc] = $this->resolveAddressLists(
 			to: $params->requireArray('to'),
@@ -269,9 +294,8 @@ class Message extends RestController
 			userId: $userId,
 		);
 
-		try
-		{
-			$result = (new MessageSender())->forward(
+		$result = $this->executeSendingAction(
+			static fn (): array => (new MessageSender())->forward(
 				messageId: $messageId,
 				from: $from,
 				recipients: $recipients,
@@ -280,16 +304,33 @@ class Message extends RestController
 				userId: $userId,
 				cc: $cc,
 				bcc: $bcc,
-			);
-		}
-		catch (SystemException $e)
-		{
-			throw new RequestValidationException([
-				new Error($e->getMessage(), 'MESSAGE_FORWARD_FAILED'),
-			]);
-		}
+				senderId: $senderId,
+				mailboxId: $mailboxId,
+			),
+			'MESSAGE_FORWARD_FAILED',
+		);
 
 		return new ArrayResponse($result);
+	}
+
+	private function executeSendingAction(callable $action, string $fallbackCode): array
+	{
+		try
+		{
+			return $action();
+		}
+		catch (MailboxMigrationActionException $exception)
+		{
+			throw new RequestValidationException([
+				new Error($exception->getMessage(), $exception->errorCode),
+			]);
+		}
+		catch (SystemException $exception)
+		{
+			throw new RequestValidationException([
+				new Error($exception->getMessage(), $fallbackCode),
+			]);
+		}
 	}
 
 	/**
@@ -394,42 +435,54 @@ class Message extends RestController
 	}
 
 	/**
-	 * Get the email thread (conversation chain) for a message.
+	 * Get a page of the conversation branch a message belongs to, paged from the newest end.
+	 * Parallel branches (other replies to the same message) are not included.
 	 *
 	 * @restMethod mail.message.thread
 	 * Request params:
-	 * - int id*    Message identifier (any message in the thread)
-	 * - int limit  Max messages to return (default 20, max 50)
+	 * - int  id*         Message identifier the branch is assembled around
+	 * - int  limit       Messages per page (default 20; max 50 with bodies, 100 in headers mode)
+	 * - int  offset      Messages to skip, counted from the newest (default 0)
+	 * - bool withBodies  Include message bodies in response (default true)
+	 *
+	 * @return ArrayResponse {result: MessageData[] in chronological order, total: int, hasMore: bool}
 	 */
 	public function threadAction(GetRequest $request): ArrayResponse
 	{
 		$userId = (int)CurrentUser::get()->getId();
 		$messageId = (int)$request->id;
 		$params = new RequestParams($this->getRequest()->getJsonList());
-		$limit = $params->getInt('limit', 20);
 
-		if ($limit <= 0)
-		{
-			$limit = 20;
-		}
-
-		if ($limit > 50)
-		{
-			$limit = 50;
-		}
+		// limit and offset are clamped by the service
+		$limit = (int)$params->getInt('limit', MessageSearch::THREAD_PAGE_SIZE_DEFAULT);
+		$offset = (int)$params->getInt('offset', 0);
+		$withBodies = $params->getBool('withBodies', true);
 
 		$provider = new MessageSearch();
 
 		try
 		{
-			$result = $provider->getMessageThread($messageId, $userId, $limit);
+			$result = $provider->getMessageThread($messageId, $userId, $limit, $offset, $withBodies);
 		}
 		catch (SystemException)
 		{
 			throw new EntityNotFoundException($messageId);
 		}
 
-		return new ArrayResponse($result['messages'] ?? []);
+		return self::buildThreadEnvelope($result);
+	}
+
+	/**
+	 * Raw data keeps total and hasMore beside the message list: without the flag
+	 * RestApiServer::processResponse would wrap the whole envelope into 'result' again.
+	 */
+	protected static function buildThreadEnvelope(array $threadResult): ArrayResponse
+	{
+		return (new ArrayResponse([
+			'result' => $threadResult['messages'] ?? [],
+			'total' => (int)($threadResult['total'] ?? 0),
+			'hasMore' => (bool)($threadResult['hasMore'] ?? false),
+		]))->setShowRawData(true);
 	}
 
 	/**
@@ -655,32 +708,6 @@ class Message extends RestController
 			'postId' => $data['postId'],
 			'messageId' => $messageId,
 		]);
-	}
-
-	/**
-	 * Accepts ISO 8601 (DATE_ATOM) from REST client, converts to the internal
-	 * SearchMessagesDto format ('Y/m/d H:i'). Throws on malformed input instead
-	 * of silently dropping the filter.
-	 */
-	private function convertIsoDateToInternal(?string $iso, string $fieldName): ?string
-	{
-		if ($iso === null || $iso === '')
-		{
-			return null;
-		}
-
-		$dt = \DateTime::createFromFormat(DATE_ATOM, $iso);
-		if ($dt === false)
-		{
-			throw new RequestValidationException([
-				new Error(
-					"Parameter \"{$fieldName}\" must be in ISO 8601 (DATE_ATOM) format, e.g. \"2026-01-01T00:00:00+00:00\".",
-					'INVALID_' . strtoupper($fieldName),
-				),
-			]);
-		}
-
-		return $dt->format('Y/m/d H:i');
 	}
 
 	private function mapMessageToDto(array $message): MessageDto

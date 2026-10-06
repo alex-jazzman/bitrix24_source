@@ -440,10 +440,14 @@ JCClock.prototype = {
 		if (h >= 12)
 			h -= 12;
 		var cn = 'bxc-arrows-cont';
-		if (h * 5 == m)
+		var displayMin = Math.round(m / 5) * 5;
+		displayMin %= 60;
+		if (displayMin < 0)
+			displayMin += 60;
+		if (h * 5 == displayMin)
 			cn += ' hideh hm' + h;
 		else
-			cn += ' h' + h + ' m' + m;
+			cn += ' h' + h + ' m' + displayMin;
 		this.arrowsContDiv.className = cn;
 	},
 

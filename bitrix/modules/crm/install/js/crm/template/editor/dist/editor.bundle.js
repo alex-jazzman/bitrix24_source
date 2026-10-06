@@ -26,12 +26,12 @@ this.BX.Crm = this.BX.Crm || {};
 			const internalHandler = event => {
 				const [eventData] = event.getCompatData();
 				if (eventData.entityTypeId === this.#entityTypeId && eventData.entityId === this.#entityId) {
-					this.#previewCache.clear();
+					this.#previewCache = new main_core.Cache.MemoryCache();
 				}
 			};
 			main_core_events.EventEmitter.subscribe('onCrmEntityUpdate', internalHandler);
 			const unsubscribeExternal = BX.Crm.EntityEvent.subscribeToItem(this.#entityTypeId, this.#entityId, () => {
-				this.#previewCache.clear();
+				this.#previewCache = new main_core.Cache.MemoryCache();
 			});
 			this.#unsubscribe = () => {
 				main_core_events.EventEmitter.unsubscribe('onCrmEntityUpdate', internalHandler);
@@ -105,6 +105,8 @@ this.BX.Crm = this.BX.Crm || {};
 			}
 		}
 		destroy() {
+			this.#previewLoader?.destroy();
+			this.#previewLoader = null;
 			main_core.Runtime.destroy(this);
 		}
 		#assertValidParams(params) {
@@ -263,5 +265,5 @@ this.BX.Crm = this.BX.Crm || {};
 	exports.Editor = Editor;
 	exports.EventHandler = EventHandler;
 
-})(this.BX.Crm.Template = this.BX.Crm.Template || {}, BX.MessageService.Template.Editor, BX, BX.Event, BX, BX.Crm.EntitySelectorEx);
+})(this.BX.Crm.Template = this.BX.Crm.Template || {}, BX.MessageService.Template.Editor, BX, BX.Event, window, BX.Crm.EntitySelectorEx);
 //# sourceMappingURL=editor.bundle.js.map

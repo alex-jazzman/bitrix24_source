@@ -3,9 +3,28 @@
 }
 
 .ui-tile-uploader-drop-box {
+	position: relative;
 	display: flex;
 	align-items: center;
 	height: 41px;
+}
+
+/**
+ * Invisible but focusable: the file input keeps the native Tab stop and the system dialog.
+ * It covers the drop area instead of being clipped to a point - a screen reader draws its cursor
+ * around the focused element itself, and a clipped input showed up as a tiny box beside the area
+ * instead of framing it. Pointer events stay off, so clicks and drops keep going to the label.
+ */
+.ui-tile-uploader-drop-input {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	padding: 0;
+	margin: 0;
+	opacity: 0;
+	border: 0;
+	pointer-events: none;
 }
 
 .ui-tile-uploader-drop-label {
@@ -27,6 +46,12 @@
 
 .ui-tile-uploader-drop-label:hover {
 	border: 2px dashed rgba(82,92,105,.30);
+}
+
+/** the input itself is invisible, so its focus ring is drawn on the label */
+.ui-tile-uploader-drop-input:focus-visible + .ui-tile-uploader-drop-label {
+	outline: 2px solid var(--ui-color-accent-brand-blue);
+	outline-offset: 2px;
 }
 
 .ui-tile-uploader.--drag-over .ui-tile-uploader-drop-label {
@@ -60,9 +85,17 @@
 	transition: opacity .3s;
 	opacity: .4;
 	cursor: pointer;
+	padding: 0;
+	border: none;
 }
 
 .ui-tile-uploader-settings:hover,
 .ui-tile-uploader-settings.--selected {
 	opacity: 1;
+}
+
+.ui-tile-uploader-settings:focus-visible {
+	outline: 2px solid var(--ui-color-accent-brand-blue);
+	outline-offset: 2px;
+	border-radius: 4px;
 }

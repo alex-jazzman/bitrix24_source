@@ -11,6 +11,7 @@ return [
 		'mail.client.errorbox',
 		'mail.client.filtertoolbar',
 		'mail.client.mailboxselector',
+		'mail.migration-state',
 		'main.core',
 		'main.core.events',
 	],

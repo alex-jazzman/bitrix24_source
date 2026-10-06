@@ -11,6 +11,7 @@ use Bitrix\Bizproc\Api\Response\WorkflowTemplateService\GridTemplateResponse;
 use Bitrix\Bizproc\Api\Service\WorkflowTemplateService;
 use Bitrix\Bizproc\Internal\Grid\WorkflowTemplates\WorkflowTemplateGridHelper;
 use Bitrix\Bizproc\Internal\Service\AiAgentGrid\TemplateDeleteService;
+use Bitrix\Bizproc\Public\Service\TemplateAccessService;
 use Bitrix\Main\Engine\Contract\Controllerable;
 use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Error;
@@ -60,21 +61,7 @@ class BizprocTemplateProcesses extends CBitrixComponent implements Controllerabl
 	{
 		$this->checkModules();
 
-		if ($this->hasErrors())
-		{
-			return false;
-		}
-
-		$user = new CBPWorkflowTemplateUser(CBPWorkflowTemplateUser::CurrentUser);
-
-		if (!$user->isAdmin())
-		{
-			$this->setError(new Error(ErrorMessage::DELETE_TEMPLATE_UNAUTHORIZED->get()));
-
-			return false;
-		}
-
-		return true;
+		return !$this->hasErrors();
 	}
 
 	public function deleteTemplateAction(int $id): void
@@ -99,20 +86,24 @@ class BizprocTemplateProcesses extends CBitrixComponent implements Controllerabl
 
 	private function deleteTemplates(array $ids): void
 	{
-		$user = new CBPWorkflowTemplateUser(CBPWorkflowTemplateUser::CurrentUser);
+		$userId = $this->getCurrentUserId();
+		$accessService = new TemplateAccessService();
 
-		if (!$user->isAdmin())
+		foreach ($ids as $id)
 		{
-			$this->setError(new Error(ErrorMessage::DELETE_TEMPLATE_UNAUTHORIZED->get()));
+			if (!$accessService->canDelete((int)$id, $userId))
+			{
+				$this->setError(new Error(ErrorMessage::DELETE_TEMPLATE_UNAUTHORIZED->get()));
 
-			return;
+				return;
+			}
 		}
 
 		try
 		{
 			$currentUser = new CBPWorkflowTemplateUser(CBPWorkflowTemplateUser::CurrentUser);
 			$templateDeleteService = new TemplateDeleteService();
-			$result = $templateDeleteService->deleteTemplates($ids, $currentUser);
+			$result = $templateDeleteService->deleteTemplatesFromProcessesGrid($ids, $currentUser);
 
 			if (!$result->isSuccess())
 			{
@@ -149,21 +140,22 @@ class BizprocTemplateProcesses extends CBitrixComponent implements Controllerabl
 	private function init(): void
 	{
 		$this->checkModules();
-		$this->checkAdmin();
+		$this->checkListAccess();
 
 		$this->arResult['viewData'] = [];
 	}
 
-	private function checkAdmin(): void
+	private function checkListAccess(): void
 	{
-		$user = new CBPWorkflowTemplateUser(CBPWorkflowTemplateUser::CurrentUser);
-
-		if ($user->isAdmin())
+		if ($this->hasErrors())
 		{
 			return;
 		}
 
-		$this->setError(new Error(Loc::getMessage('BIZPROC_TEMPLATE_PROCESSES_UNAUTHORIZED')));
+		if (!(new TemplateAccessService())->canAccessTemplates($this->getCurrentUserId()))
+		{
+			$this->setError(new Error(Loc::getMessage('BIZPROC_TEMPLATE_PROCESSES_UNAUTHORIZED')));
+		}
 	}
 
 	private function checkModules(): void

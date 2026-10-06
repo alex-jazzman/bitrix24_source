@@ -2,8 +2,8 @@
 
 return [
 	'extensions' => [
-		'loc',
 		'asset-manager',
+		'loc',
 		'disk:file-grid/base',
 	],
 ];

@@ -12,3 +12,6 @@ $MESS['REST_INTEGRATION_GRID_ACTION_DELETE'] = 'Удалить';
 $MESS['REST_INTEGRATION_GRID_FILTER_ID'] = 'ID';
 $MESS['REST_INTEGRATION_GRID_FILTER_USER'] = 'Пользователь';
 $MESS["REST_INTEGRATION_GRID_ACTION_APP_OPEN"] = "Перейти к приложению";
+$MESS['REST_INTEGRATION_GRID_CONFIRM_DELETE_POPUP_TITLE'] = 'Удалить интеграцию?';
+$MESS['REST_INTEGRATION_GRID_CONFIRM_DELETE_POPUP_TEXT'] = 'Интеграция перестанет работать. Все вебхуки, связанные с этой интеграцией, тоже будут удалены';
+$MESS['REST_INTEGRATION_GRID_CONFIRM_DELETE_POPUP_OK_BUTTON_TEXT'] = 'Да, удалить';

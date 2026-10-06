@@ -34,6 +34,7 @@ return [
 	],
 	'bundle' => [
 		'./src/button',
+		'./src/text-button',
 		'./src/link-button',
 		'./src/description',
 		'./src/link',

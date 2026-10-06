@@ -17,7 +17,7 @@ export class FullNameField extends BaseField
 	render(params: FullNameFieldType): void
 	{
 		const fullNameContainer = Tag.render`
-			<div class="user-grid_full-name-container">${this.#getFullNameLink(params.fullName, params.profileLink)}</div>
+			<div class="user-grid_full-name-container">${this.#getFullNameLink(params.fullName, params.profileLink, params.userId)}</div>
 		`;
 
 		if (params.position)
@@ -58,10 +58,16 @@ export class FullNameField extends BaseField
 		this.appendToFieldNode(fullNameContainer);
 	}
 
-	#getFullNameLink(fullName: string, profileLink: string): HTMLElement
+	#getFullNameLink(fullName: string, profileLink: string, userId: number): HTMLElement
 	{
 		return Tag.render`
-			<a class="user-grid_full-name-label" href="${profileLink}">
+			<a 
+				class="user-grid_full-name-label" 
+				href="${profileLink}" 
+				bx-tooltip-user-id="${userId}" 
+				bx-tooltip-context="b24"
+				bx-tooltip-mini-profile-direction="viewport"
+			>
 				${fullName}
 			</a>
 		`;

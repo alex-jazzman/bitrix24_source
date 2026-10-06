@@ -3,7 +3,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
 }
-/* @var CMain $APPLICATION */
+/** @var CMain $APPLICATION */
 
 $APPLICATION->SetAdditionalCSS('/bitrix/gadgets/bitrix/bitrixcloud_monitoring/styles.css');
 $converter = CBXPunycode::GetConverter();
@@ -26,7 +26,7 @@ $intervalLang = [
 
 $uptime = '';
 $testCount = 0;
-/** @var CBitrixCloudMonitoringTest $testAlert */
+/** @var CBitrixCloudMonitoringTest|null $testAlert */
 $testAlert = null;
 $testDomain = '';
 $monitoring = null;
@@ -71,7 +71,7 @@ if ($bAlert)
 		$uptime = explode('/', $uptime);
 		if ($uptime[0] > 0 && $uptime[1] > 0)
 		{
-			$uptimeRate = $uptime[0] / $uptime[1];
+			$uptimeRate = intval($uptime[0]) / intval($uptime[1]);
 		}
 	}
 

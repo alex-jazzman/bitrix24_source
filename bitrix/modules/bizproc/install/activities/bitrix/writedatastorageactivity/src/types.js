@@ -23,6 +23,7 @@ export type FieldProperty = {
 	FieldName: string;
 	Type: string;
 	Required: boolean;
+	RequiredMark?: boolean;
 	AllowSelection: boolean;
 	CustomType: string;
 	Options: PropertyOptions | WriteFieldsOptions;

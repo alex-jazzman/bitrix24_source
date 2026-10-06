@@ -83,6 +83,8 @@ export const EditorToolbarComponent = {
 		return {
 			openMenu: null,
 			moreSubMode: 'menu',
+			// True only while the link form was summoned by Mod+K (see setMoreSubMode).
+			linkAutofocus: false,
 			popoverSyncFrame: null,
 			toolbarId: `note-editor-toolbar-${++toolbarSequence}`,
 		};
@@ -163,6 +165,7 @@ export const EditorToolbarComponent = {
 			if (nextOpenMenu !== 'more')
 			{
 				this.moreSubMode = 'menu';
+				this.linkAutofocus = false;
 				// Auto-apply the link on close (no explicit "Apply" button); commit is a no-op if unchanged.
 				this.linkState.commit();
 				this.linkState.close();
@@ -196,6 +199,23 @@ export const EditorToolbarComponent = {
 				this.syncOpenPopoverPosition();
 			});
 		},
+		// The keymap extension can't open host-owned menus, so it emits `note:hotkey` on the editor;
+		// bind here (the toolbar owns openMenu/moreSubMode) and rebind if the editor instance swaps.
+		editor: {
+			immediate: true,
+			handler(nextEditor, prevEditor)
+			{
+				if (prevEditor && Type.isFunction(prevEditor.off))
+				{
+					prevEditor.off('note:hotkey', this.handleHotkeyIntent);
+				}
+
+				if (nextEditor && Type.isFunction(nextEditor.on))
+				{
+					nextEditor.on('note:hotkey', this.handleHotkeyIntent);
+				}
+			},
+		},
 	},
 	mounted()
 	{
@@ -211,6 +231,10 @@ export const EditorToolbarComponent = {
 		Event.unbind(document, 'keydown', this.handleDocumentKeydown, true);
 		Event.unbind(window, 'resize', this.handleWindowResize);
 		document.removeEventListener('scroll', this.handleWindowScroll, { capture: true });
+		if (this.editor && Type.isFunction(this.editor.off))
+		{
+			this.editor.off('note:hotkey', this.handleHotkeyIntent);
+		}
 		if (this.popoverSyncFrame !== null)
 		{
 			cancelAnimationFrame(this.popoverSyncFrame);
@@ -399,8 +423,11 @@ export const EditorToolbarComponent = {
 		{
 			this.openMenu = null;
 		},
-		setMoreSubMode(mode: string): void
+		// autofocus is opt-in per call: only the keyboard path asks for it, so a click on the link
+		// button keeps focus where the user put it.
+		setMoreSubMode(mode: string, autofocus: boolean = false): void
 		{
+			this.linkAutofocus = mode === 'link' && autofocus;
 			this.moreSubMode = mode;
 		},
 		handleDocumentClick(event: Event): void
@@ -432,6 +459,24 @@ export const EditorToolbarComponent = {
 			if (event.key === 'Escape')
 			{
 				this.openMenu = null;
+			}
+		},
+		// The link hotkey opens the same "more" popover the `+` button opens, in link sub-mode
+		// (a link needs a URL typed in). Attachments are handled in note-editor.js instead — that
+		// hotkey inserts a file tile directly rather than opening this menu.
+		handleHotkeyIntent(payload: Object): void
+		{
+			if (!this.editor?.isEditable)
+			{
+				return;
+			}
+
+			if (payload?.action === 'openLinkPopup')
+			{
+				this.openMenu = 'more';
+				// A URL has to be typed, so the field takes focus — otherwise the keystrokes after the
+				// shortcut keep editing the document.
+				this.setMoreSubMode('link', true);
 			}
 		},
 		undo(): void
@@ -540,6 +585,7 @@ export const EditorToolbarComponent = {
 				:insert-table-disabled="insertTableDisabled"
 				:link-value="linkValue"
 				:link-is-active="linkIsActive"
+				:link-autofocus="linkAutofocus"
 				:popover-owner-id="toolbarId"
 				:on-toggle-menu="toggleMenu"
 				:on-close-menu="closeMenu"

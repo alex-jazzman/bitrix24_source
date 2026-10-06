@@ -18,6 +18,7 @@ import {
 	TodoEditorBlocksClient,
 	TodoEditorBlocksFile,
 	TodoEditorBlocksLink,
+	prepareCalendarBlockForCopy,
 } from './components/block/index';
 import { Events, TodoEditor as TodoEditorComponent } from './components/todo-editor';
 import { TodoEditorBorderColor } from './enums/border-color';
@@ -270,6 +271,7 @@ export class TodoEditorV2
 			mode: this.#mode,
 			analytics: this.#getAnalyticsInstance(),
 			textEditor: this.getTextEditor(),
+			onEditStart: () => Dom.addClass(this.#container, '--is-edit'),
 			itemIdentifier: {
 				entityTypeId: this.#ownerTypeId,
 				entityId: this.#ownerId,
@@ -503,10 +505,12 @@ export class TodoEditorV2
 		;
 
 		entityData.deadline = this.#deadline;
+		// a copy is not linked to the source calendar event, so its deadline is always editable
+		entityData.canChangeDeadline = true;
 		const calendar = blocksData?.find((blockData) => blockData.id === 'calendar');
 		if (Type.isObject(calendar))
 		{
-			calendar.data.from = this.#deadline.getTime();
+			prepareCalendarBlockForCopy(calendar, this.#user.userId, this.#deadline.getTime());
 		}
 
 		await this.#showPrefilledComponent(entityData, blocksData, TodoEditorMode.COPY);

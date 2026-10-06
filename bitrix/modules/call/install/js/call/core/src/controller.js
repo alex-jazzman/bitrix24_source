@@ -1,14 +1,13 @@
-import { Loc, Browser, Dom, Type, Text, Reflection, ZIndexManager, Extension } from 'main.core';
+import { Loc, Browser, Dom, Type, Text, Tag, Reflection, ZIndexManager, Extension } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
+import { Center as NotificationCenter } from 'ui.notification';
 
 import { LocalStorage } from 'im.lib.localstorage';
 import { SoundType, DesktopBroadcastAction } from 'im.v2.const';
 import { DesktopBroadcastManager } from 'im.v2.lib.desktop';
 import { DesktopApi, DesktopFeature } from 'im.v2.lib.desktop-api';
-import { DesktopDownload } from 'intranet.desktop-download';
 
-import { getUnknownErrorType, accidentLogger } from 'call.lib.accident-logger';
 import { Analytics } from 'call.lib.analytics';
 import { CallTokenManager } from 'call.lib.call-token-manager';
 import { CallSettingsManager } from 'call.lib.settings-manager';
@@ -57,7 +56,8 @@ import { NotificationService } from './services/notification-service';
 import { PictureInPictureService } from './services/picture-in-picture-service';
 import { PromoService } from './services/promo-service';
 import { RecordingUiService } from './services/recording-ui-service';
-import Util from './util';
+import Util, { CALL_ALREADY_FINISHED_EVENT } from './util';
+import { getUnknownErrorType } from './utils/get-unknown-error-type';
 import { VideoStrategy } from './video_strategy';
 import { type CallView } from 'call.lib.view-contract';
 import { CopilotNotifyType } from './view/copilot-notify';
@@ -71,6 +71,8 @@ import {
 } from 'call.mapping';
 import { MediaRenderer } from './view/media-renderer';
 import { ParticipantsPermissionPopup } from './view/participants-permission-popup';
+// TODO: [call-vue] revisit lobby orchestration placement during the Vue call card iteration
+import { LobbyManager } from 'call.component.lobby';
 import { WebScreenSharePopup } from './web_screenshare_popup';
 
 import './css/call-overlay.css';
@@ -181,6 +183,48 @@ export class CallController extends EventEmitter
 	#onHardwareMicrophoneMutedChangeHandler;
 	#onHardwareCameraOnChangeHandler;
 
+	// Calls where the user explicitly picked a microphone; hot-plug must not override that choice.
+	#callsWithManualMicrophone = new WeakSet();
+
+	#loadAccidentLogger = () => BX.Runtime.loadExtension('call.lib.accident-logger');
+
+	#alreadyFinishedShownUuids = new Set();
+
+	#onCallAlreadyFinished = (event) => {
+		const { callUuid } = event.getData() || {};
+		if (!callUuid || this.#alreadyFinishedShownUuids.has(callUuid))
+		{
+			return;
+		}
+		this.#alreadyFinishedShownUuids.add(callUuid);
+		// Bound the dedup set so it cannot grow unbounded over a long session.
+		if (this.#alreadyFinishedShownUuids.size > 100)
+		{
+			const oldest = this.#alreadyFinishedShownUuids.values().next().value;
+			this.#alreadyFinishedShownUuids.delete(oldest);
+		}
+
+		// If the dead call is the one currently ringing, drop it synchronously:
+		// mark it answered/declined, close its card, tear down its connection and
+		// clear currentCall. Closing the card alone leaves currentCall set, which
+		// makes prepareIncomingCall reject the next incoming call until a deferred
+		// Pull finish clears it — or forever if the recovery request fails.
+		if (this.currentCall?.uuid === callUuid)
+		{
+			this.answeredOrDeclinedCalls.add(Util.getCallIdentifier(this.currentCall));
+			this.closeCallNotification();
+			this.#teardownCallConnection();
+			this.currentCall = null;
+		}
+
+		NotificationCenter.notify({
+			content: Text.encode(Loc.getMessage('CALL_ALREADY_FINISHED_NOTIFICATION')),
+			position: 'top-right',
+			autoHideDelay: 5000,
+			closeButton: true,
+		});
+	};
+
 	constructor(config)
 	{
 		super();
@@ -216,6 +260,7 @@ export class CallController extends EventEmitter
 
 		this.isHttps = window.location.protocol === 'https:';
 		this.callWithLegacyMobile = false;
+		this.cameraBlockedForLegacyMobile = false;
 
 		this.featureScreenSharing = FeatureState.Enabled;
 
@@ -259,6 +304,7 @@ export class CallController extends EventEmitter
 		{
 			this.init();
 			this.#subscribeEvents(config);
+			EventEmitter.subscribe(CALL_ALREADY_FINISHED_EVENT, this.#onCallAlreadyFinished);
 		}
 	}
 
@@ -1110,6 +1156,23 @@ export class CallController extends EventEmitter
 		}
 
 		return hiddenButtons;
+	}
+
+	/**
+	 * Starts local stream preparation without blocking the call start chain.
+	 * A denied permission rejects here and must not surface as an unhandled rejection.
+	 */
+	#prepareLocalStreamInBackground(provider)
+	{
+		this.layoutService?.prepareLocalStream({
+			provider,
+			Hardware,
+			CallStreamManager,
+			UnsupportedBrowserFeatures,
+			MediaRenderer,
+		}).catch((error) => {
+			console.error('Can\'t prepare local stream for a prepared call', error);
+		});
 	}
 
 	#getAnalyticsCallParams()
@@ -2040,6 +2103,7 @@ export class CallController extends EventEmitter
 		const callTokenPromise = isLegacyCall ? Promise.resolve() : CallTokenManager.getToken(chatInfo.chatId);
 
 		const isCallPrepared = this.preparedCall?.dialogId === dialogId;
+		let createdCall = null;
 
 		const debug1 = Date.now();
 		this.initCallPromise = this.messengerFacade
@@ -2050,13 +2114,7 @@ export class CallController extends EventEmitter
 			.then(async () => {
 				if (video && isCallPrepared)
 				{
-					this.layoutService?.prepareLocalStream({
-						provider,
-						Hardware,
-						CallStreamManager,
-						UnsupportedBrowserFeatures,
-						MediaRenderer,
-					});
+					this.#prepareLocalStreamInBackground(provider);
 				}
 
 				this.createContainer();
@@ -2157,6 +2215,7 @@ export class CallController extends EventEmitter
 				const debug2 = Date.now();
 				this.currentCall = e.call;
 				this.currentCallIsNew = e.isNew;
+				createdCall = e.call;
 
 				this.#clearPromotedAdminTimeout();
 
@@ -2183,6 +2242,7 @@ export class CallController extends EventEmitter
 
 				this.autoCloseCallView = true;
 				this.bindCallEvents();
+				this.#fetchAndSetGuestLink();
 				this.initSpeakerManager();
 				this.createVideoStrategy();
 
@@ -2290,15 +2350,20 @@ export class CallController extends EventEmitter
 				}
 				else
 				{
-					if (errorCode === 'UNKNOWN_ERROR' && error?.message)
+					if (errorCode === 'CLIENT_UNCLASSIFIED' && error?.message)
 					{
 						errorCode = getUnknownErrorType(error?.message);
 					}
 
-					await accidentLogger.addLog(error, errorCode);
+					this.#loadAccidentLogger()
+						.then(({ accidentLogger }) => accidentLogger?.addLog(error, errorCode))
+						.catch(() => {});
 
 					Analytics.getInstance().onStartCallError({
 						callType: this.getCallType(provider),
+						// The room of this attempt, not this.currentCall: a failure before the room
+						// exists sends no identifier rather than the one of a call still running.
+						callId: Util.getCallIdentifier(createdCall),
 						errorCode,
 						errorMessage,
 						isVpnActive: this.#isVpnConnected(),
@@ -2370,6 +2435,7 @@ export class CallController extends EventEmitter
 		const defaultProvider = isGroupCall ? Util.getConferenceProvider() : Provider.Plain;
 		const provider = call?.provider || defaultProvider;
 		const isLegacyCall = Util.isLegacyCall(provider, call?.scheme);
+		const joinAttempt = { provider, callId: isLegacyCall ? callId : callUuid };
 
 		this.log(`Joining call ${callUuid}`);
 
@@ -2409,11 +2475,41 @@ export class CallController extends EventEmitter
 				return Hardware.init();
 			})
 			.then(async () => {
+				let withVideo = Boolean(video);
+
+				if (this.#isGuestUser())
+				{
+					const lobbyResult = await this.#showCallLobby();
+					if (lobbyResult === null)
+					{
+						this.currentCall?.decline();
+
+						return;
+					}
+
+					// If the guest changed their display name in the lobby, persist it server-side
+					const currentUser = this.messengerFacade.getCurrentUser?.();
+					if (lobbyResult.userName && lobbyResult.userName !== currentUser?.name)
+					{
+						BX.ajax.runAction('im.v2.Guest.setName', { data: { name: lobbyResult.userName } }).catch(() => {});
+					}
+
+					withVideo = Boolean(lobbyResult.video);
+					Hardware.isMicrophoneMuted = !lobbyResult.audio;
+				}
+
+				if (!this.currentCall)
+				{
+					this.log('The call was destroyed while being answered');
+
+					return;
+				}
+
 				this.createContainer();
 
 				const hiddenButtons = this.#getHiddenCallButtons(this.currentCall.provider === Provider.Plain);
 
-				Hardware.isCameraOn = Boolean(video);
+				Hardware.isCameraOn = withVideo;
 
 				const isBitrixCall = this.currentCall.provider === Provider.Bitrix;
 				this.viewPort = await this.#buildCallViewPort({
@@ -2475,12 +2571,13 @@ export class CallController extends EventEmitter
 				this.#applyDefaultDevicesToCurrentCall();
 
 				this.bindCallEvents();
+				this.#fetchAndSetGuestLink();
 				this.createVideoStrategy();
 
-				if (video && !Hardware.hasCamera())
+				if (withVideo && !Hardware.hasCamera())
 				{
 					this.notificationService?.showNotification(BX.message('IM_CALL_ERROR_NO_CAMERA'));
-					video = false;
+					withVideo = false;
 				}
 
 				if (this.currentCall.associatedEntity.userCounter > this.getMaxActiveMicrophonesCount())
@@ -2519,7 +2616,7 @@ export class CallController extends EventEmitter
 			})
 			.catch(async (error) => {
 				this.initCallPromise = null;
-				await this.#handleJoinCallError(error);
+				await this.#handleJoinCallError(error, joinAttempt);
 			});
 	}
 
@@ -2671,7 +2768,10 @@ export class CallController extends EventEmitter
 			switch (deviceInfo.kind)
 			{
 				case 'audioinput':
-					if (deviceInfo.deviceId === 'default' || isForceUse)
+				{
+					// Pick up any plugged-in microphone, but never override an explicit manual choice.
+					const microphoneManuallySelected = this.#callsWithManualMicrophone.has(this.currentCall);
+					if (isForceUse || !microphoneManuallySelected)
 					{
 						const newDeviceId = Hardware.getDefaultDeviceIdByGroupId(deviceInfo.groupId, 'audioinput');
 						this.currentCall.setMicrophoneId(newDeviceId);
@@ -2679,6 +2779,7 @@ export class CallController extends EventEmitter
 					}
 
 					break;
+				}
 				case 'videoinput':
 					if (deviceInfo.deviceId === 'default' || isForceUse)
 					{
@@ -3222,6 +3323,11 @@ export class CallController extends EventEmitter
 		}
 
 		const isLegacyCall = callParams.scheme === CallScheme.classic;
+		const joinAttempt = {
+			provider: this.currentCall.provider,
+			callId: Util.getCallIdentifier(this.currentCall),
+		};
+
 		const currentCallPromise = isLegacyCall
 			? Promise.resolve()
 			: CallTokenManager.getToken(this.currentCall.associatedEntity.chatId);
@@ -3292,6 +3398,26 @@ export class CallController extends EventEmitter
 						return Hardware.init();
 					})
 					.then(async () => {
+						if (this.#isGuestUser())
+						{
+							const lobbyResult = await this.#showCallLobby();
+							if (lobbyResult === null)
+							{
+								this.currentCall?.decline();
+
+								return;
+							}
+
+							// If the guest changed their display name in the lobby, persist it server-side
+							const currentUser = this.messengerFacade.getCurrentUser?.();
+							if (lobbyResult.userName && lobbyResult.userName !== currentUser?.name)
+							{
+								BX.ajax.runAction('im.v2.Guest.setName', { data: { name: lobbyResult.userName } }).catch(() => {});
+							}
+
+							mediaParams = lobbyResult;
+						}
+
 						if (!this.currentCall)
 						{
 							this.log('The call was destroyed while being answered');
@@ -3400,11 +3526,11 @@ export class CallController extends EventEmitter
 						this._onUpdateLastUsedCameraId();
 					})
 					.catch(async (error) => {
-						await this.#handleJoinCallError(error);
+						await this.#handleJoinCallError(error, joinAttempt);
 					});
 			})
 			.catch(async (error) => {
-				await this.#handleJoinCallError(error);
+				await this.#handleJoinCallError(error, joinAttempt);
 			});
 	}
 
@@ -3793,7 +3919,9 @@ export class CallController extends EventEmitter
 
 	_onCallViewToggleMuteHandler(e)
 	{
-		if (!e.muted && !Hardware?.hasMicrophone())
+		// Skip the device getters while Hardware is not initialized (they throw),
+		// so the mute intent is still recorded via setIsMicrophoneMuted below.
+		if (!e.muted && Hardware?.initialized && !Hardware.hasMicrophone())
 		{
 			return;
 		}
@@ -4342,6 +4470,7 @@ export class CallController extends EventEmitter
 	{
 		if (this.currentCall)
 		{
+			this.#callsWithManualMicrophone.add(this.currentCall);
 			this.currentCall.setMicrophoneId(e.deviceId);
 			this.viewPort.setMicrophoneId(e.deviceId);
 		}
@@ -4581,6 +4710,63 @@ export class CallController extends EventEmitter
 		{
 			this.viewPort.updateUserData(e.userData);
 			this.viewPort.addUser(e.userId, UserState.Connected);
+		}
+	}
+
+	#isGuestUser()
+	{
+		return this.messengerFacade.getCurrentUser?.()?.externalAuthId === 'im_guest';
+	}
+
+	#createLobbyContainer()
+	{
+		this.lobbyContainer = Tag.render`<div class="call-lobby-overlay"></div>`;
+		Dom.append(this.lobbyContainer, this.getExternalContainer());
+	}
+
+	#destroyLobbyContainer()
+	{
+		if (this.lobbyContainer)
+		{
+			Dom.remove(this.lobbyContainer);
+			this.lobbyContainer = null;
+		}
+	}
+
+	async #showCallLobby()
+	{
+		this.#createLobbyContainer();
+
+		const currentUser = this.messengerFacade.getCurrentUser?.();
+		const userName = currentUser?.name || '';
+		const userAvatar = currentUser?.avatar || '';
+		const callerName = this.currentCall?.associatedEntity?.name || '';
+
+		this.lobbyManager = new LobbyManager();
+
+		try
+		{
+			const result = await this.lobbyManager.show({
+				container: this.lobbyContainer,
+				userName,
+				userAvatar,
+				callerName,
+			});
+
+			this.#destroyLobbyContainer();
+			this.lobbyManager?.destroy();
+			this.lobbyManager = null;
+
+			// decline resolves with accepted=false; only a real join returns the lobby params
+			return result.accepted ? result : null;
+		}
+		catch
+		{
+			this.#destroyLobbyContainer();
+			this.lobbyManager?.destroy();
+			this.lobbyManager = null;
+
+			return null;
 		}
 	}
 
@@ -4929,6 +5115,13 @@ export class CallController extends EventEmitter
 
 	_onCallDestroy()
 	{
+		if (this.lobbyManager && this.lobbyManager.isShown())
+		{
+			this.lobbyManager.destroy();
+			this.#destroyLobbyContainer();
+			this.lobbyManager = null;
+		}
+
 		let callDetails;
 		if (this.currentCall)
 		{
@@ -4949,6 +5142,7 @@ export class CallController extends EventEmitter
 		this.#clearSavedScreenStream();
 
 		this.callWithLegacyMobile = false;
+		this.cameraBlockedForLegacyMobile = false;
 
 		this.#closeCallPopups();
 
@@ -5013,6 +5207,7 @@ export class CallController extends EventEmitter
 			if (e.isLegacyMobile)
 			{
 				this.buttonStateService?.blockForLegacyMobile();
+				this.cameraBlockedForLegacyMobile = true;
 			}
 		}
 
@@ -5060,6 +5255,11 @@ export class CallController extends EventEmitter
 				isCopilotFeaturesEnabled,
 				isCommonRecordStateInactive: Util.isCommonRecordStateInactive(this.commonRecord.state),
 			});
+
+			if (!e.isLegacyMobile && isNeedUnblockCameraButton)
+			{
+				this.cameraBlockedForLegacyMobile = false;
+			}
 
 			if (this.currentCall.provider === Provider.Plain)
 			{
@@ -5182,7 +5382,9 @@ export class CallController extends EventEmitter
 		{
 			this.buttonStateService?.blockCameraButton();
 		}
-		else
+		// The view keeps one blocked flag per button, so releasing our hold must not lift a block another
+		// reason still holds: the right to broadcast video and a legacy mobile participant share this button.
+		else if (Util.havePermissionToBroadcast('cam') && !this.cameraBlockedForLegacyMobile)
 		{
 			this.buttonStateService?.unblockCameraButton();
 		}
@@ -5609,14 +5811,6 @@ export class CallController extends EventEmitter
 
 	_onParticipantReconnecting(e)
 	{
-		if (e?.participant?.userId && this.viewPort?.wrappedView?.users)
-		{
-			const callUser = this.viewPort.wrappedView.users[e.participant.userId];
-			if (callUser)
-			{
-				callUser.showLastVideoFrame();
-			}
-		}
 	}
 
 	_onParticipantReconnected(e)
@@ -5786,6 +5980,13 @@ export class CallController extends EventEmitter
 
 	_onCallLeave(e)
 	{
+		if (this.lobbyManager && this.lobbyManager.isShown())
+		{
+			this.lobbyManager.destroy();
+			this.#destroyLobbyContainer();
+			this.lobbyManager = null;
+		}
+
 		console.log('_onCallLeave', e);
 		if (!e.local && this.currentCall && this.currentCall.ready)
 		{
@@ -6199,24 +6400,73 @@ export class CallController extends EventEmitter
 		}
 	}
 
-	async #handleJoinCallError(error)
+	#fetchAndSetGuestLink()
+	{
+		const isGroupCall = this.currentCall.provider !== Provider.Plain;
+
+		if (!isGroupCall)
+		{
+			this.viewPort.setGuestLink(null);
+
+			return;
+		}
+
+		const numericChatId = this.currentCall.associatedEntity?.chatId;
+
+		if (!numericChatId)
+		{
+			this.viewPort.setGuestLink(null);
+
+			return;
+		}
+
+		BX.ajax.runAction('call.Call.getGuestLink', { data: { chatId: numericChatId } })
+			.then((response) =>
+			{
+				const guestLink = response.data?.guestLink ?? null;
+
+				if (this.viewPort)
+				{
+					this.viewPort.setGuestLink(guestLink);
+				}
+			})
+			.catch(() =>
+			{
+				if (this.viewPort)
+				{
+					this.viewPort.setGuestLink(null);
+				}
+			})
+		;
+	}
+
+	/**
+	 * @param {Error|Object|string} error
+	 * @param {{provider: ?string, callId: ?(string|number)}} attempt - what the entry was aiming at.
+	 *   The call instance does not exist yet when an entry fails, so the type and the identifier of
+	 *   the event come from the attempt and not from `currentCall`.
+	 */
+	async #handleJoinCallError(error, attempt = {})
 	{
 		let errorCode = Util.getCallConnectionErrorCode(error);
 		const errorMessage = Util.getCallConnectionErrorMessage(error);
 
-		if (errorCode === 'UNKNOWN_ERROR' && error?.message)
+		if (errorCode === 'CLIENT_UNCLASSIFIED' && error?.message)
 		{
 			errorCode = getUnknownErrorType(error?.message);
 		}
 
-		await accidentLogger.addLog(error, errorCode);
+		this.#loadAccidentLogger()
+			.then(({ accidentLogger }) => accidentLogger?.addLog(error, errorCode))
+			.catch(() => {});
 
 		Analytics.getInstance().onJoinCallError({
-			callType: this.getCallType(),
+			callType: this.getCallType(attempt.provider),
 			errorCode,
-			callId: Util.getCallIdentifier(this.currentCall),
+			callId: attempt.callId,
 			errorMessage,
 			isVpnActive: this.#isVpnConnected(),
+			isRoomClosed: error?.isRoomClosed === true,
 		});
 	}
 
@@ -6289,6 +6539,8 @@ export class CallController extends EventEmitter
 		Hardware.unsubscribe(Hardware.Events.onChangeMicrophonePermission, this.#onChangeMicrophonePermissionHandler);
 		Hardware.unsubscribe(Hardware.Events.onChangeMicrophoneMuted, this.#onHardwareMicrophoneMutedChangeHandler);
 		Hardware.unsubscribe(Hardware.Events.onChangeCameraOn, this.#onHardwareCameraOnChangeHandler);
+
+		EventEmitter.unsubscribe(CALL_ALREADY_FINISHED_EVENT, this.#onCallAlreadyFinished);
 	}
 
 	log()

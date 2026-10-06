@@ -162,6 +162,16 @@
 
 		handleConfigButton: function(event)
 		{
+			if (this.state.canEditSettings === false)
+			{
+				BX.UI.Notification.Center.notify({
+					content: BX.message('DISK_JS_EL_INPUT_SETTINGS_EDIT_DENIED'),
+					autoHideDelay: 5000,
+				});
+
+				return;
+			}
+
 			var configPlace = this.getEntity(this.getContainer(), 'external-link-config-place');
 
 			this.externalLinkSettings.render();

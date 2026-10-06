@@ -22,6 +22,8 @@ $agent->add('Bitrix\Crm\Agent\Activity\LightCounterAgent::run();', 60);
 
 \Bitrix\Crm\Update\RemoveDuplicatingMultifieldsStepper::bindOnCrmModuleInstall();
 
+\Bitrix\Crm\Update\Timeline\BindCreatedBackfillStepper::bindOnCrmModuleInstall();
+
 $agent->add("Bitrix\\Crm\\Agent\\Activity\\PingAgent::run();", 60);
 $agent->add('Bitrix\Crm\Agent\Badge\RemoveOldEntityBadgesAgent::run();', 60);
 $agent->add('Bitrix\Crm\Agent\Duplicate\DedupeCacheCleanerAgent::run();', 3600 * 24);
@@ -37,3 +39,30 @@ $agent->add('Bitrix\Crm\Agent\RepeatSale\JobExecutorAgent::run();', 60);
  * @see \Bitrix\Crm\Agent\Copilot\AiQueueBufferAgent
  */
 $agent->add('Bitrix\Crm\Agent\Copilot\AiQueueBufferAgent::run();', 60 * 10);
+/**
+ * @see \Bitrix\Crm\Agent\Copilot\CallScriptMaintenanceAgent
+ */
+$agent->add('Bitrix\Crm\Agent\Copilot\CallScriptMaintenanceAgent::run();', 604800);
+/**
+ * @see \Bitrix\Crm\Agent\Copilot\CallScoringV2BootstrapAgent
+ */
+$agent->add('Bitrix\Crm\Agent\Copilot\CallScoringV2BootstrapAgent::run();', 86400);
+/**
+ * @see \Bitrix\Crm\V2\Internal\Integration\AiAssistant\Trigger\Install\TriggerSyncAgent
+ */
+$agent->add([\Bitrix\Crm\V2\Internal\Integration\AiAssistant\Trigger\Install\TriggerSyncAgent::class, 'run'], 1200);
+
+// One-time rollout of the RepeatSale "subscription seen" marker: on portals that already have a
+// subscription, mark it as seen so the first onSubscriptionRenew does not misfire as a
+// "first appearance" and enable all AI scenarios on an already configured portal.
+if (\Bitrix\Main\Loader::includeModule('crm'))
+{
+	$seenMarker = new \Bitrix\Crm\RepeatSale\Segment\SubscriptionSeenMarker();
+	if (
+		!$seenMarker->isSet()
+		&& (new \Bitrix\Crm\Integration\Rest\Marketplace\Client())->isSubscriptionUsed()
+	)
+	{
+		$seenMarker->set();
+	}
+}

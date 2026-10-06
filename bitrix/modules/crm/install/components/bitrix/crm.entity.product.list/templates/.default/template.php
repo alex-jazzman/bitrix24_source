@@ -23,6 +23,7 @@ Extension::load([
 	'ui.notification',
 	'catalog.product-calculator',
 	'ui.design-tokens',
+	'ui.a11y',
 ]);
 
 /** @var array $grid */
@@ -52,17 +53,7 @@ foreach ($currency['FORMAT']['TEMPLATE']['PARTS'] as $index => $value)
 	}
 }
 
-$taxList = [];
-if (!empty($arResult['PRODUCT_VAT_LIST']) && is_array($arResult['PRODUCT_VAT_LIST']))
-{
-	foreach ($arResult['PRODUCT_VAT_LIST'] as $id => $value)
-	{
-		$taxList[] = [
-			'ID' => $id,
-			'VALUE' => $value,
-		];
-	}
-}
+$taxList = array_values($arResult['PRODUCT_VAT_LIST']);
 
 $calculatePricePrecision = $arResult['PRICE_CALCULATION_PRECISION'];
 $pricePrecision = $arResult['PRICE_PRECISION'];
@@ -122,6 +113,7 @@ $editorConfig = [
 	'allowTax' => $arResult['ALLOW_TAX'] ? 'Y' : 'N',
 	'enableTax' => $arResult['ENABLE_TAX'] ? 'Y' : 'N',
 	'taxUniform' => $arResult['PRODUCT_ROW_TAX_UNIFORM'],
+	'showTaxName' => $arResult['SHOW_TAX_NAME'],
 	'isLocationDependantTaxesEnabled' => $arResult['ALLOW_LD_TAX'] ? 'Y' : 'N',
 	'locationId' => $arResult['LOCATION_ID'],
 
@@ -178,7 +170,9 @@ $grid['ROWS']['template_0'] = [
 	'PRICE_NETTO' => 0,
 	'PRICE_BRUTTO' => 0,
 	'CURRENCY' => $arResult['CURRENCY']['ID'],
-	'TAX_RATE' => null,
+	'TAX_ID' => empty($taxList) ? 0 : reset($taxList)['ID'],
+	'TAX_NAME' => empty($taxList) ? '' : reset($taxList)['NAME'],
+	'TAX_RATE' => empty($taxList) ? null : reset($taxList)['VALUE'],
 	'TAX_INCLUDED' => 'N',
 	'TAX_SUM' => 0,
 	'SUM' => 0,
@@ -260,6 +254,8 @@ foreach ($grid['ROWS'] as $product)
 		'PRICE_NETTO' => $rawProduct['PRICE_NETTO'],
 		'PRICE_BRUTTO' => $rawProduct['PRICE_BRUTTO'],
 		'CURRENCY' => $rawProduct['CURRENCY'] ?? $arResult['CURRENCY']['ID'],
+		'TAX_ID' => $rawProduct['TAX_ID'] ?? 0,
+		'TAX_NAME' => $rawProduct['TAX_NAME'] ?? '',
 		'TAX_RATE' => $rawProduct['TAX_RATE'],
 		'TAX_INCLUDED' => $rawProduct['TAX_INCLUDED'],
 		'TAX_SUM' => $rawProduct['TAX_SUM'],
@@ -470,25 +466,38 @@ foreach ($grid['ROWS'] as $product)
 		// region TAX_RATE
 		if (in_array('TAX_RATE', $visibleColumnsIds, true))
 		{
+			$taxIdSelected = $rawProduct['TAX_ID'];
+			$taxNameSelected = $rawProduct['TAX_NAME'];
+			$taxRateSelected = null;
 			if (isset($rawProduct['TAX_RATE']))
 			{
 				$taxRateSelected = round((float)$rawProduct['TAX_RATE'], $commonPrecision);
-				$columns['TAX_RATE'] = htmlspecialcharsbx($taxRateSelected).' %';
-			}
-			else
-			{
-				$taxRateSelected = null;
-				$columns['TAX_RATE'] = \CCrmTax::GetVatRateNameByValue($rawProduct['TAX_RATE']);
 			}
 
 			$taxRates = $arResult['PRODUCT_VAT_LIST'];
 
-			if (!in_array($taxRateSelected, $taxRates, true))
+			if (!$taxIdSelected)
 			{
-				$taxRates['custom'] = $taxRateSelected;
+				$taxRates['custom'] = [
+					'ID' => 0,
+					'NAME' => $taxNameSelected,
+					'VALUE' => $taxRateSelected,
+				];
+				$taxRates = $component->sortProductVatList($taxRates);
 			}
 
-			asort($taxRates, SORT_NUMERIC);
+			if ($arResult['SHOW_TAX_NAME'] && $taxNameSelected !== '')
+			{
+				$columns['TAX_RATE'] = htmlspecialcharsbx($taxNameSelected);
+			}
+			else
+			{
+				$columns['TAX_RATE'] =
+					$taxRateSelected === null
+						? \CCrmTax::GetVatRateNameByValue($taxRateSelected)
+						: $taxRateSelected . ' %'
+				;
+			}
 
 			$taxRateHtml = '<select class="crm-entity-product-control-select-field"'
 				.' id="'.$rowId.'_TAX_RATE"'
@@ -498,19 +507,23 @@ foreach ($grid['ROWS'] as $product)
 
 			foreach ($taxRates as $taxId => $taxRate)
 			{
-				if (isset($taxRate))
+				$taxRateValue = $taxRate['VALUE'];
+				$taxRateId = $taxRate['ID'];
+				if ($arResult['SHOW_TAX_NAME'] && $taxRate['NAME'] !== '')
 				{
-					$taxRate = (float)$taxRate;
-					$name = $taxRate.' %';
+					$name = htmlspecialcharsbx($taxRate['NAME']);
 				}
 				else
 				{
-					$name = \CCrmTax::GetVatRateNameByValue($taxRate);
+					$name =
+						$taxRateValue === null
+							? \CCrmTax::GetVatRateNameByValue($taxRateValue)
+							: $taxRateValue . ' %'
+					;
 				}
 
-				$selected = ($taxRateSelected === $taxRate) ? 'selected' : '';
-				$taxRate = htmlspecialcharsbx($taxRate);
-				$taxRateHtml .= "<option value='{$taxRate}' data-tax-id='{$taxId}' {$selected}>{$name}</option>";
+				$selected = ($taxIdSelected === $taxRateId) ? ' selected' : '';
+				$taxRateHtml .= "<option value=\"{$taxRateId}\" data-tax-id=\"{$taxId}\"{$selected}>{$name}</option>";
 			}
 
 			$taxRateHtml .= '</select>';
@@ -533,6 +546,7 @@ foreach ($grid['ROWS'] as $product)
 					. ' id="' . $rowId . '_TAX_INCLUDED"'
 					. ' data-field-code="TAX_INCLUDED"'
 					. ' data-product-field="Y" data-parent-id="' . $rowId . '"'
+					. ' aria-label="' . htmlspecialcharsbx(Loc::getMessage('CRM_ENTITY_PRODUCT_LIST_COLUMN_TAX_INCLUDED')) . '"'
 					. ($rawProduct['TAX_INCLUDED'] === 'Y' ? ' checked' : '')
 					. '>'
 					. '</div>'
@@ -621,12 +635,21 @@ foreach ($grid['ROWS'] as $product)
 	// region STORE_AVAILABLE
 	if (in_array('STORE_AVAILABLE', $visibleColumnsIds, true))
 	{
-		$storeAvailable =
-			$rawProduct['STORE_AVAILABLE'] !== null && in_array((int)($rawProduct['STORE_ID'] ?? 0), $component->getAllowedStories(), true)
-				? $rawProduct['STORE_AVAILABLE'] . " " . $measureName
-				: ''
+		$hasStoreAvailable =
+			$rawProduct['STORE_AVAILABLE'] !== null
+			&& in_array((int)($rawProduct['STORE_ID'] ?? 0), $component->getAllowedStories(), true)
 		;
-		$columns['STORE_AVAILABLE'] = "<a href='#' data-name='STORE_AVAILABLE'>{$storeAvailable}</a>";
+		if ($hasStoreAvailable)
+		{
+			$storeAvailable = $rawProduct['STORE_AVAILABLE'] . " " . $measureName;
+			$columns['STORE_AVAILABLE'] = "<a href='#' data-name='STORE_AVAILABLE'>{$storeAvailable}</a>";
+		}
+		else
+		{
+			// Empty availability: keep the JS-addressable node, but not a focusable, named
+			// interactive anchor - no phantom tab stop, nothing for a screen reader to announce.
+			$columns['STORE_AVAILABLE'] = "<a data-name='STORE_AVAILABLE'></a>";
+		}
 	}
 	// endregion STORE_AVAILABLE
 
@@ -692,8 +715,7 @@ foreach ($rows as $key => $row)
 						'style' => \Bitrix\UI\Buttons\AirButtonStyle::FILLED,
 				])
 					->addAttribute('title', Loc::getMessage('CRM_ENTITY_PL_ADD_PRODUCT_TITLE'))
-					->addAttribute('data-role', 'product-list-add-button')
-					->addAttribute('tabindex', '-1');
+					->addAttribute('data-role', 'product-list-add-button');
 
 				if ($disabledAddRowButton)
 				{
@@ -714,8 +736,7 @@ foreach ($rows as $key => $row)
 						'style' => \Bitrix\UI\Buttons\AirButtonStyle::OUTLINE,
 					])
 						->addAttribute('title', Loc::getMessage('CRM_ENTITY_PL_SELECT_PRODUCT_TITLE'))
-						->addAttribute('data-role', 'product-list-select-button')
-						->addAttribute('tabindex', '-1');
+						->addAttribute('data-role', 'product-list-select-button');
 
 					if ($disabledSelectProductButton)
 					{
@@ -729,11 +750,13 @@ foreach ($rows as $key => $row)
 				}
 				?>
 			</div>
-			<div class="crm-entity-product-list-setting-button"
+			<button type="button" class="crm-entity-product-list-setting-button"
 				data-role="product-list-settings-button"
+				aria-haspopup="true"
+				aria-expanded="false"
 			>
 				<div class="ui-icon-set --more-l" style="margin: unset"></div>
-			</div>
+			</button>
 		</div>
 		<?php
 	}
@@ -803,8 +826,10 @@ foreach ($rows as $key => $row)
 					echo $selectButton->render(false);
 				}?>
 			</div>
-			<button class="ui-btn ui-btn-light-border ui-btn-icon-setting"
-					data-role="product-list-settings-button"></button>
+			<button type="button" class="ui-btn ui-btn-light-border ui-btn-icon-setting"
+					data-role="product-list-settings-button"
+					aria-haspopup="true"
+					aria-expanded="false"></button>
 		</div>
 		<?php
 	}

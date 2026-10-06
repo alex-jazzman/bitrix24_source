@@ -154,36 +154,108 @@ if ($arParams['USE_CHART'])
 }
 // </editor-fold>
 
+// Detect a fresh filter apply that carries an out-of-range period date. The period
+// is validated here (before the try) because its dates are dedicated fields, not
+// user filter fields, so no field-type context is needed; the user error itself is
+// raised below, inside the main try, so it reaches $arResult['ERROR']. Filter-field
+// dates are validated later, inside the type-aware filter loop.
+$invalidPeriodInput = isset($uriParams['set_filter'])
+	&& !empty($uriParams['F_DATE_TYPE'])
+	&& in_array($uriParams['F_DATE_TYPE'], $periodTypes, true)
+	&& CReport::periodInputHasInvalidDate(
+		$uriParams['F_DATE_TYPE'],
+		$uriParams['F_DATE_FROM'] ?? null,
+		$uriParams['F_DATE_TO'] ?? null
+	);
+
+// A fresh filter apply is persisted into the per-user view params only AFTER the
+// filter is validated, near the end of the main try below. Persisting here (before
+// validation) would need a field-blind date check that cannot tell a datetime
+// field from a text field holding a date-like string; deferring the save lets the
+// type-aware filter loop reject a broken date first, so a bad value never gets
+// stored and the report cannot get stuck.
+
 // get view params
 if (!$isStExport)
 {
 	$strReportViewParams = CReport::getViewParams($arParams['REPORT_ID'], $this->GetTemplateName());
-	if (isset($uriParams['set_filter']))
-	{
-		if (mb_substr($_SERVER['QUERY_STRING'], 0, 6) !== 'EXCEL=' || array_key_exists("publicSidePanel", $_REQUEST))
-		{
-			if ($_SERVER['QUERY_STRING'] !== $strReportViewParams)
-			{
-				CReport::setViewParams($arParams['REPORT_ID'], $this->GetTemplateName(), $_SERVER['QUERY_STRING']);
-			}
-		}
-	}
-	else
+	if (!isset($uriParams['set_filter']))
 	{
 		if (!empty($strReportViewParams))
 		{
 			if (!is_set($uriParams['sort_id']) && !array_key_exists("publicSidePanel", $_REQUEST))
 			{
-				$len = mb_strpos($arParams['PATH_TO_REPORT_VIEW'], '?');
+				// A stuck per-user view may hold an out-of-range date in the period that
+				// would re-apply and break the report on every open. Detect it and
+				// discard the view, falling back to the report definition (repaired
+				// below on read), instead of redirecting to the bad params. A bad date
+				// in a filter FIELD is not detected here (the field type is unknown
+				// before the report structure is loaded): the redirect proceeds and the
+				// type-aware filter loop below drops the field's stuck view for a
+				// datetime field, so a text field holding a date-like string is left
+				// untouched.
+				$savedViewInvalid = false;
+				parse_str($strReportViewParams, $savedViewParams);
+				if (!empty($savedViewParams['F_DATE_TYPE'])
+					&& in_array($savedViewParams['F_DATE_TYPE'], $periodTypes, true))
+				{
+					foreach (['F_DATE_FROM', 'F_DATE_TO'] as $savedDateKey)
+					{
+						if (empty($savedViewParams[$savedDateKey]))
+						{
+							continue;
+						}
 
-				if ($len === false) $redirectUrl = $arParams['PATH_TO_REPORT_VIEW'];
-				else $redirectUrl = mb_substr($arParams['PATH_TO_REPORT_VIEW'], 0, $len);
-				$redirectUrl = CComponentEngine::makePathFromTemplate(
-					$redirectUrl,
-					array('report_id' => $arParams['REPORT_ID'])
-				);
-				$redirectUrl .= '?'.$strReportViewParams;
-				LocalRedirect($redirectUrl);
+						// Saved period dates are absolute (no relative keywords), so both
+						// an unstorable date and an unrecognised string mean the view is
+						// stuck. A year beyond 32767 makes MakeTimeStamp return false, so
+						// isFilterDateInvalid alone (INVALID only) would miss it and the
+						// view would keep redirecting to the broken params on every open.
+						$savedDateType = CReport::classifyFilterDate(
+							(string)$savedViewParams[$savedDateKey]
+						)['type'];
+						if ($savedDateType === CReport::FILTER_DATE_INVALID
+							|| $savedDateType === CReport::FILTER_DATE_UNRESOLVED)
+						{
+							$savedViewInvalid = true;
+							break;
+						}
+					}
+					unset($savedDateKey);
+				}
+				unset($savedViewParams);
+
+				if ($savedViewInvalid)
+				{
+					// Only the current user's stuck view is discarded. clearViewParams()
+					// wipes view_params_* for every user of the report (NAME_MASK), so one
+					// user's broken personal view must not reset everyone else's saved
+					// filters - delete this user's option for the current template only.
+					$viewTemplateName = $this->GetTemplateName();
+					if (empty($viewTemplateName))
+					{
+						$viewTemplateName = '.default';
+					}
+					CUserOptions::DeleteOption(
+						'report',
+						'view_params_'.$arParams['REPORT_ID'].'_'.$viewTemplateName,
+						false,
+						$USER->GetID()
+					);
+				}
+				else
+				{
+					$len = mb_strpos($arParams['PATH_TO_REPORT_VIEW'], '?');
+
+					if ($len === false) $redirectUrl = $arParams['PATH_TO_REPORT_VIEW'];
+					else $redirectUrl = mb_substr($arParams['PATH_TO_REPORT_VIEW'], 0, $len);
+					$redirectUrl = CComponentEngine::makePathFromTemplate(
+						$redirectUrl,
+						array('report_id' => $arParams['REPORT_ID'])
+					);
+					$redirectUrl .= '?'.$strReportViewParams;
+					LocalRedirect($redirectUrl);
+				}
 			}
 			else
 			{
@@ -253,6 +325,41 @@ try
 	if (!is_array($settings['period']))
 	{
 		$settings['period'] = ['type' => 'days', 'value' => 1, 'hidden' => 'N'];
+	}
+
+	// Clean snapshot of the stored definition, taken before any runtime transforms
+	// below (prcnt stripping, select replacement, filter reference/EQUAL->BETWEEN
+	// rewrites, request-value injection). An on-read repair must persist from this
+	// copy so it changes only the broken date and never leaks runtime state into
+	// b_report.SETTINGS.
+	$originalSettings = $settings;
+
+	// Repair a saved report whose stored period holds an out-of-range date: reset the
+	// period to the current month, persist the fix and notify the user. Only applies
+	// when the period comes from the report definition (no period in the request); a
+	// stuck per-user view is discarded before the main try.
+	if (empty($uriParams['F_DATE_TYPE']) && CReport::periodHasUnstorableDate($settings['period']))
+	{
+		// Persisting the repair rewrites the shared report definition, so it needs the
+		// same authority as editing it through the constructor: only an editor may do
+		// it, and never on a default report. A read-only viewer gets a message pointing
+		// to the owner/editor (the bad date is in the stored definition, not something
+		// this user entered) instead of silently changing the definition for everyone.
+		if (!$rightsManager->canEdit($report['ID'])
+			|| (isset($report['MARK_DEFAULT']) && (int)$report['MARK_DEFAULT'] > 0))
+		{
+			throw new BXUserException(GetMessage('REPORT_ERR_FILTER_DATE_LOCKED'));
+		}
+
+		$settings['period'] = [
+			'type' => 'month',
+			'value' => null,
+			'hidden' => $settings['period']['hidden'] ?? 'N',
+		];
+		// Clear only the current user's saved views: repairing the shared definition
+		// must not wipe other users' personal views (they repair on their own read).
+		CReport::updateSettings($arParams['REPORT_ID'], $settings, $USER->GetID());
+		throw new BXUserException(GetMessage('REPORT_FILTER_DATE_FIXED'));
 	}
 
 	// prevent percent from percent
@@ -372,6 +479,24 @@ try
 			$form_date['to'] = ConvertTimeStamp($period['value'][1], 'SHORT');
 			break;
 	}
+
+	// Fresh user input with a bad period date (out-of-range year or an unrecognised
+	// string) is rejected from a single source of truth: $invalidPeriodInput,
+	// computed from the raw request above. A bad bound that still reaches here from
+	// saved settings or a non-fresh request is neutralised so it cannot degrade to
+	// an empty SQL date literal and fatal the report.
+	if ($invalidPeriodInput)
+	{
+		throw new BXUserException(GetMessage('REPORT_ERR_FILTER_DATE_INVALID'));
+	}
+	foreach ([&$date_from, &$date_to] as &$periodBound)
+	{
+		if ($periodBound !== null && !CReport::isTimestampStorable($periodBound))
+		{
+			$periodBound = null;
+		}
+	}
+	unset($periodBound);
 
 	$site_date_from = !is_null($date_from) ? ConvertTimeStamp($date_from, 'FULL') : null;
 	$site_date_to = !is_null($date_to) ? ConvertTimeStamp($date_to, 'FULL') : null;
@@ -992,6 +1117,13 @@ try
 	// </editor-fold>
 
 	// <editor-fold defaultstate="collapsed" desc="rewrite references to primary">
+	// Snapshot the stored filter before the runtime rewrites below: the loop mutates
+	// $settings['filter'] in place (reference rewrites, EQUAL->BETWEEN), so an on-read
+	// repair must persist from this clean copy, not from the transformed array. Taken
+	// from $originalSettings (captured right after normalization) so request-value
+	// injection performed above is excluded too.
+	$originalFilterSnapshot = $originalSettings['filter'];
+	$repairedStoredFilterKeys = [];
 	foreach ($settings['filter'] as $fId => &$fInfo)
 	{
 		foreach ($fInfo as $k => &$fElem)
@@ -1049,6 +1181,52 @@ try
 				if ($dataType === 'datetime')
 				{
 					$dateFormat = CSite::GetDateFormat('SHORT');
+
+					// An out-of-DB-range year (e.g. a 5-digit year) passes the
+					// CheckDateTime below but would degrade to an empty SQL date
+					// literal and fatal the report. Reject fresh input; drop the
+					// condition for a value coming from saved settings (and repair
+					// the stored definition after the loop).
+					if (CReport::isFilterDateInvalid($fElem['value'], $dateFormat))
+					{
+						if (isset($uriParams['set_filter']))
+						{
+							// A stored out-of-range date reaching here via the redirect to
+							// the saved view carries set_filter. Drop only THIS user's stuck
+							// view for the current template so the redirect loop is broken
+							// (the field type is known to be datetime here, so a text field
+							// with a date-like value is never touched). For genuine fresh
+							// input this is a no-op (nothing is persisted before validation).
+							// clearViewParams() would wipe the option for every user.
+							if (!$isStExport)
+							{
+								$viewTemplateName = $this->GetTemplateName();
+								if (empty($viewTemplateName))
+								{
+									$viewTemplateName = '.default';
+								}
+								CUserOptions::DeleteOption(
+									'report',
+									'view_params_'.$arParams['REPORT_ID'].'_'.$viewTemplateName,
+									false,
+									$USER->GetID()
+								);
+							}
+							throw new BXUserException(GetMessage('REPORT_ERR_FILTER_DATE_INVALID'));
+						}
+						unset($fInfo[$k]);
+						// The runtime value may come from the unconditional request-value
+						// injection above (it has no set_filter gate), so the repair is
+						// decided by the stored snapshot value: a crafted URL must not
+						// evict a valid saved condition from the report definition.
+						$storedFilterValue = $originalFilterSnapshot[$fId][$k]['value'] ?? '';
+						if (CReport::isFilterDateUnusable($storedFilterValue, $dateFormat))
+						{
+							$repairedStoredFilterKeys[] = [$fId, $k];
+						}
+						continue;
+					}
+
 					if (CheckDateTime($fElem['value'], $dateFormat))
 					{
 						$dateArray = ParseDateTime($fElem['value'], $dateFormat);
@@ -1059,12 +1237,69 @@ try
 					}
 					else
 					{
-						$fElem['value'] = ConvertTimeStamp(strtotime($fElem['value']), 'SHORT');
+						// The value is not an absolute date. The existing relative-date
+						// resolution decides whether it is a legal keyword (today/-1 week)
+						// or an unrecognised string; we react to that verdict instead of
+						// parsing the value ourselves.
+						$relativeTimestamp = strtotime($fElem['value']);
+						if ($relativeTimestamp === false)
+						{
+							// Neither absolute nor relative: this previously became the
+							// current date silently. Treat it as an invalid filter date -
+							// reject fresh input, drop and repair a stored value.
+							if (isset($uriParams['set_filter']))
+							{
+								// An unparseable stored date reaching here via the redirect to
+								// the saved view carries set_filter. Drop only THIS user's
+								// stuck view for the current template so the report stops
+								// re-applying the value and getting stuck on every open (the
+								// field type is known to be datetime, so text fields are never
+								// touched). clearViewParams() would wipe it for every user.
+								if (!$isStExport)
+								{
+									$viewTemplateName = $this->GetTemplateName();
+									if (empty($viewTemplateName))
+									{
+										$viewTemplateName = '.default';
+									}
+									CUserOptions::DeleteOption(
+										'report',
+										'view_params_'.$arParams['REPORT_ID'].'_'.$viewTemplateName,
+										false,
+										$USER->GetID()
+									);
+								}
+								throw new BXUserException(GetMessage('REPORT_ERR_FILTER_DATE_INVALID'));
+							}
+							unset($fInfo[$k]);
+							// Decided by the stored snapshot value, not by the possibly
+							// request-injected runtime value (see the invalid-date branch).
+							$storedFilterValue = $originalFilterSnapshot[$fId][$k]['value'] ?? '';
+							if (CReport::isFilterDateUnusable($storedFilterValue, $dateFormat))
+							{
+								$repairedStoredFilterKeys[] = [$fId, $k];
+							}
+							continue;
+						}
+
+						$fElem['value'] = ConvertTimeStamp($relativeTimestamp, 'SHORT');
 
 						// ignore datetime filter with incorrect value
 						if (!CheckDateTime($fElem['value'], CSite::GetDateFormat('SHORT')))
 						{
 							unset($fInfo[$k]);
+							// A stored value dropped here must also be scheduled for the
+							// single on-read repair below; otherwise the broken condition
+							// stays in b_report.SETTINGS and is silently re-dropped on every
+							// open (never cleaned, no notification). The repair is decided
+							// by the stored snapshot value, not by the possibly
+							// request-injected runtime value (see the invalid-date branch).
+							$storedFilterValue = $originalFilterSnapshot[$fId][$k]['value'] ?? '';
+							if (!isset($uriParams['set_filter'])
+								&& CReport::isFilterDateUnusable($storedFilterValue, $dateFormat))
+							{
+								$repairedStoredFilterKeys[] = [$fId, $k];
+							}
 							continue;
 						}
 					}
@@ -1119,7 +1354,61 @@ try
 	}
 	unset($fInfo);
 	unset($fElem);
+
+	// An out-of-range or unrecognised date stored in the report definition was
+	// dropped above. Persist the cleaned definition from the clean snapshot (so it
+	// stops re-applying on every open) and notify the user, mirroring the stored
+	// period repair. A fresh apply (set_filter) is rejected before this point, and
+	// values injected from a crafted request without set_filter cannot schedule a
+	// repair either: every scheduled key was checked against the stored snapshot
+	// value, so only a genuinely broken saved condition is repaired here.
+	if (!empty($repairedStoredFilterKeys) && !isset($uriParams['set_filter']))
+	{
+		// Same authority guard as the stored period repair above: rewriting the shared
+		// definition requires edit rights and must not touch a default report. A
+		// read-only viewer gets a message pointing to the owner/editor instead of
+		// persisting for everyone.
+		if (!$rightsManager->canEdit($report['ID'])
+			|| (isset($report['MARK_DEFAULT']) && (int)$report['MARK_DEFAULT'] > 0))
+		{
+			throw new BXUserException(GetMessage('REPORT_ERR_FILTER_DATE_LOCKED'));
+		}
+
+		foreach ($repairedStoredFilterKeys as [$repairFId, $repairKey])
+		{
+			unset($originalFilterSnapshot[$repairFId][$repairKey]);
+
+			// Drop a filter group left with only its LOGIC marker.
+			if (isset($originalFilterSnapshot[$repairFId])
+				&& is_array($originalFilterSnapshot[$repairFId])
+				&& count(array_diff_key($originalFilterSnapshot[$repairFId], ['LOGIC' => true])) === 0)
+			{
+				unset($originalFilterSnapshot[$repairFId]);
+			}
+		}
+		unset($repairFId, $repairKey);
+
+		$repairedSettings = $originalSettings;
+		$repairedSettings['filter'] = $originalFilterSnapshot;
+		// Clear only the current user's saved views (see the stored period repair).
+		CReport::updateSettings($arParams['REPORT_ID'], $repairedSettings, $USER->GetID());
+		throw new BXUserException(GetMessage('REPORT_FILTER_DATE_FIXED'));
+	}
 	// </editor-fold>
+
+	// Persist the fresh filter apply into the per-user view params now that both the
+	// period (checked before the try) and every filter date have passed validation -
+	// a broken date would have thrown above and never reached this point. Deferred
+	// from the early view-params block so an out-of-range value is never stored and
+	// the report cannot get stuck. The EXCEL= / publicSidePanel exclusion and the
+	// "changed since last save" guard mirror the original save condition.
+	if (!$isStExport
+		&& isset($uriParams['set_filter'])
+		&& (mb_substr($_SERVER['QUERY_STRING'], 0, 6) !== 'EXCEL=' || array_key_exists('publicSidePanel', $_REQUEST))
+		&& $_SERVER['QUERY_STRING'] !== $strReportViewParams)
+	{
+		CReport::setViewParams($arParams['REPORT_ID'], $this->GetTemplateName(), $_SERVER['QUERY_STRING']);
+	}
 
 	// <editor-fold defaultstate="collapsed" desc="rewrite 1:N relations to EXISTS expression">
 	call_user_func_array(
@@ -2050,7 +2339,11 @@ if ($isStExport && $stExportOptions['STEXPORT_TYPE'] === 'excel')
 		'TOTAL_ITEMS' => $stExportOptions['STEXPORT_TOTAL_ITEMS']
 	);
 }
-else if ($excelView)
+// A BXUserException raised after $excelView was set (e.g. an on-read filter-date
+// repair) is caught into $arResult['ERROR'] and execution continues to here. Do not
+// stream a file in that case, or the user downloads a "successful" empty report:
+// fall through to the normal template, which renders the error like the period path.
+else if ($excelView && empty($arResult['ERROR']))
 {
 	$APPLICATION->RestartBuffer();
 

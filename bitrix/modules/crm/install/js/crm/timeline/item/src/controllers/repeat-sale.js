@@ -54,7 +54,6 @@ export class RepeatSale extends CopilotBase
 	{
 		return {
 			actionEndpoint: 'crm.timeline.repeatsale.launchCopilot',
-			validEntityTypes: [BX.CrmEntityType.enumeration.deal],
 			agreementContext: 'audio', // @todo!
 			onPreLaunch: (...args) => this.#handlePreLaunch(...args),
 			onError: (...args) => this.#handleError(...args),

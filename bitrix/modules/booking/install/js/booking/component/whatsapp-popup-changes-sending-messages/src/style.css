@@ -25,7 +25,15 @@
 	width: var(--booking-whatsapp-csm__icon-size);
 	height: var(--booking-whatsapp-csm__icon-size);
 	margin-top: 12px;
-	background: url("../image/whatsapp-popup-icon.png") no-repeat center center;
+	background: url("../image/whatsapp-popup-icon.webp") no-repeat center center;
+	background-image: -webkit-image-set(
+		url("../image/whatsapp-popup-icon.webp") 1x,
+		url("../image/whatsapp-popup-icon-2x.webp") 2x
+	);
+	background-image: image-set(
+		url("../image/whatsapp-popup-icon.webp") 1x,
+		url("../image/whatsapp-popup-icon-2x.webp") 2x
+	);
 	background-size: contain;
 }
 

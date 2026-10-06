@@ -18,15 +18,6 @@ class FollowUpEvent extends Event
 	}
 
 	/**
-	 * Parameter st[tool].
-	 * @return string
-	 */
-	protected function getTool(): string
-	{
-		return 'im';
-	}
-
-	/**
 	 * Parameter st[category].
 	 * @param string $eventName
 	 * @return string

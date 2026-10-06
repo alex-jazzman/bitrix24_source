@@ -10,6 +10,7 @@ jn.define('bizproc/workflow/required-parameters', (require, exports, module) => 
 	const { PureComponent } = require('layout/pure-component');
 	const { WidgetHeaderButton } = require('layout/ui/widget-header-button');
 	const { EntityManager } = require('layout/ui/entity-editor/manager');
+	const { handleNetworkError } = require('bizproc/helper/network-error');
 	const { WorkflowRequiredParametersSkeleton } = require('bizproc/workflow/required-parameters/skeleton');
 
 	class WorkflowRequiredParameters extends PureComponent
@@ -31,6 +32,7 @@ jn.define('bizproc/workflow/required-parameters', (require, exports, module) => 
 					.setComponent((widget) => {
 						return new WorkflowRequiredParameters({
 							widget,
+							parentLayout: layout,
 							onSaveCallback: resolve,
 							onCancelCallback: reject,
 							signedDocument: props.signedDocument,
@@ -62,6 +64,7 @@ jn.define('bizproc/workflow/required-parameters', (require, exports, module) => 
 		/**
 		 * @param props
 		 * @param {LayoutWidget} props.widget
+		 * @param {LayoutWidget} [props.parentLayout]
 		 * @param {Function} props.onSaveCallback
 		 * @param {Function} props.onCancelCallback
 		 * @param {string} props.signedDocument
@@ -183,6 +186,13 @@ jn.define('bizproc/workflow/required-parameters', (require, exports, module) => 
 		showErrorsAndClose(errors)
 		{
 			console.error(errors);
+
+			if (handleNetworkError(errors, this.props.parentLayout))
+			{
+				this.close();
+
+				return;
+			}
 
 			const firstError = Array.isArray(errors) ? errors[0] : {};
 			if (firstError.message)

@@ -16,7 +16,6 @@ return [
 		'call.component.conference.conference-public',
 		'call.const',
 		'call.core',
-		'call.lib.accident-logger',
 		'call.lib.analytics',
 		'call.lib.call-token-manager',
 		'call.lib.settings-manager',

@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
-(function (exports, main_core, main_core_events, ui_notification, ui_vue3, crm_integration_ui_bannerDispatcher, crm_tourManager, ui_tour, ui_analytics, ui_sidepanel, ui_buttons, crm_clientSelector, crm_integration_analytics, crm_messagesender, main_loader, main_popup, ui_entitySelector, ui_iconSet_actions, ui_iconSet_main, ui_iconSet_social, ui_iconSet_api_core, calendar_sharing_interface, calendar_sharing_analytics, crm_activity_todoEditorV2, ui_designTokens, crm_zoom) {
+(function (exports, main_core, main_core_events, ui_notification, ui_vue3, crm_integration_ui_bannerDispatcher, crm_tourManager, ui_tour, ui_analytics, ui_sidepanel, crm_clientSelector, crm_integration_analytics, crm_messagesender, main_loader, main_popup, ui_buttons, ui_entitySelector, ui_system_dialog, ui_iconSet_actions, ui_iconSet_main, ui_iconSet_social, ui_iconSet_api_core, calendar_sharing_interface, calendar_sharing_analytics, crm_activity_todoEditorV2, ui_designTokens, crm_timeline_dialog, crm_zoom) {
 	'use strict';
 
 	class Context {
@@ -879,7 +879,7 @@ this.BX.Crm = this.BX.Crm || {};
 		connectLabel: main_core.Loc.getMessage('CRM_TIMELINE_GOTOCHAT_CONNECT_MAX'),
 		inviteLabel: main_core.Loc.getMessage('CRM_TIMELINE_GOTOCHAT_INVITE_MAX'),
 		title: main_core.Loc.getMessage('CRM_TIMELINE_GOTOCHAT_SERVICE_MAX'),
-		region: ['ru', 'by', 'az', 'am', 'kz', 'kg', 'md', 'tj', 'uz'],
+		region: ['ru', 'by', 'kz', 'kg', 'tj', 'uz'],
 		iconClass: ui_iconSet_api_core.Outline.MAX
 	}], ['ru-whatsapp', {
 		id: 'ru-whatsapp',
@@ -1526,7 +1526,10 @@ this.BX.Crm = this.BX.Crm || {};
 				return;
 			}
 			if (this.#isEntityInEditorMode()) {
-				await this.#showEditorInEditModePopup();
+				const shouldContinueToChat = await this.#showEditorInEditModePopup();
+				if (!shouldContinueToChat) {
+					return;
+				}
 			}
 			if (!this.selectedClient && !this.hasClients) {
 				this.#showNotSelectedClientNotify();
@@ -1580,24 +1583,46 @@ this.BX.Crm = this.BX.Crm || {};
 			const entityType = BX.CrmEntityType.resolveName(entityTypeId);
 			const dynamicKey = `CRM_TIMELINE_GOTOCHAT_EDITOR_HAVE_UNSAVED_CHANGES_TEXT_${entityType}`;
 			const message = main_core.Loc.hasMessage(dynamicKey) ? main_core.Loc.getMessage(dynamicKey) : main_core.Loc.getMessage('CRM_TIMELINE_GOTOCHAT_EDITOR_HAVE_UNSAVED_CHANGES_TEXT');
-			return new Promise(resolve => {
-				BX.UI.Dialogs.MessageBox.show({
-					modal: true,
-					message,
-					buttons: BX.UI.Dialogs.MessageBoxButtons.OK_CANCEL,
-					okCaption: main_core.Loc.getMessage('CRM_TIMELINE_GOTOCHAT_EDITOR_HAVE_UNSAVED_CHANGES_SAVE_AND_CONTINUE'),
-					onOk: messageBox => {
-						this.saveEntityEditor();
-						messageBox.close();
-						resolve();
-					},
-					cancelCaption: main_core.Loc.getMessage('CRM_TIMELINE_GOTOCHAT_EDITOR_HAVE_UNSAVED_CHANGES_FORCE_CONTINUE'),
-					onCancel: function (messageBox) {
-						messageBox.close();
-						resolve();
+			const outcome = await new Promise(resolve => {
+				const dialog = new ui_system_dialog.Dialog({
+					content: main_core.Tag.render`<div data-testid="crm-timeline-gotochat-unsaved-dialog">${message}</div>`,
+					hasOverlay: true,
+					background: ui_system_dialog.DialogBackground.vibrant,
+					centerButtons: [new ui_buttons.Button({
+						text: main_core.Loc.getMessage('CRM_TIMELINE_GOTOCHAT_EDITOR_HAVE_UNSAVED_CHANGES_SAVE_AND_CONTINUE'),
+						size: ui_buttons.Button.Size.LARGE,
+						useAirDesign: true,
+						style: ui_buttons.Button.AirStyle.FILLED,
+						dataset: {
+							testid: 'crm-timeline-gotochat-save-continue-btn'
+						},
+						onclick: () => {
+							resolve('saveAndLeave');
+							dialog.hide();
+						}
+					}), new ui_buttons.Button({
+						text: main_core.Loc.getMessage('CRM_TIMELINE_GOTOCHAT_EDITOR_HAVE_UNSAVED_CHANGES_FORCE_CONTINUE'),
+						size: ui_buttons.Button.Size.LARGE,
+						useAirDesign: true,
+						style: ui_buttons.Button.AirStyle.OUTLINE,
+						dataset: {
+							testid: 'crm-timeline-gotochat-leave-without-saving-btn'
+						},
+						onclick: () => {
+							resolve('leaveWithoutSaving');
+							dialog.hide();
+						}
+					})],
+					events: {
+						onHide: () => resolve('stay')
 					}
 				});
+				dialog.show();
 			});
+			if (outcome === 'saveAndLeave') {
+				this.saveEntityEditor();
+			}
+			return outcome !== 'stay';
 		}
 		saveEntityEditor() {
 			this.#getEntityEditor().saveChanged();
@@ -4324,10 +4349,32 @@ this.BX.Crm = this.BX.Crm || {};
 	class Task extends Item {
 		showSlider() {
 			BX.CrmActivityEditor.getDefault().addTask({
-				'ownerType': BX.CrmEntityType.resolveName(this.getEntityTypeId()),
-				'ownerID': this.getEntityId(),
-				'fromTimeline': true
+				ownerType: BX.CrmEntityType.resolveName(this.getEntityTypeId()),
+				ownerID: this.getEntityId(),
+				ownerTitle: this.getOwnerTitle(),
+				fromTimeline: true
 			});
+		}
+		getOwnerTitle() {
+			const ownerInfo = BX.CrmTimelineManager?.getDefault?.()?.getOwnerInfo?.();
+			const ownerTitle = ownerInfo?.TITLE;
+			if (BX.type.isNotEmptyString(ownerTitle)) {
+				return ownerTitle;
+			}
+			if (!BX.Crm || !BX.Crm.EntityEditor || !BX.Crm.EntityEditor.getDefault) {
+				return '';
+			}
+			const entityEditor = BX.Crm.EntityEditor.getDefault();
+			const model = entityEditor?.getModel?.();
+			if (!model) {
+				return '';
+			}
+			const entityId = parseInt(model.getEntityId(), 10);
+			if (model.getEntityTypeId() !== this.getEntityTypeId() || entityId !== this.getEntityId()) {
+				return '';
+			}
+			const title = model.getCaption?.();
+			return BX.type.isNotEmptyString(title) ? title : '';
 		}
 		supportsLayout() {
 			return false;
@@ -4578,40 +4625,40 @@ this.BX.Crm = this.BX.Crm || {};
 			return this.getType() === WaitingType.before;
 		}
 		open() {
-			this._popup = new BX.PopupWindow(this._id, null,
-			// this._configSelector,
-			{
-				autoHide: true,
-				draggable: false,
-				bindOptions: {
-					forceBindPosition: false
-				},
-				closeByEsc: true,
-				zIndex: 0,
+			this._popup = new ui_system_dialog.Dialog({
 				content: this.renderDialogContent(),
-				events: {
-					onPopupShow: this.onPopupShow.bind(this),
-					onPopupClose: this.onPopupClose.bind(this),
-					onPopupDestroy: this.onPopupDestroy.bind(this)
-				},
-				buttons: [new BX.PopupWindowButton({
+				background: 'vibrant',
+				closeByClickOutside: false,
+				centerButtons: [new ui_buttons.Button({
 					text: main_core.Loc.getMessage('CRM_TIMELINE_CHOOSE'),
-					className: 'popup-window-button-accept',
-					events: {
-						click: this.onSaveButtonClick.bind(this)
-					}
-				}), new BX.PopupWindowButtonLink({
+					size: ui_buttons.ButtonSize.LARGE,
+					useAirDesign: true,
+					style: ui_buttons.AirButtonStyle.FILLED,
+					dataset: {
+						testid: 'crm-timeline-wait-config-choose-btn'
+					},
+					onclick: this.onSaveButtonClick.bind(this)
+				}), new ui_buttons.CancelButton({
 					text: main_core.Loc.getMessage('JS_CORE_WINDOW_CANCEL'),
-					events: {
-						click: this.onCancelButtonClick.bind(this)
-					}
-				})]
+					size: ui_buttons.ButtonSize.LARGE,
+					useAirDesign: true,
+					style: ui_buttons.AirButtonStyle.OUTLINE,
+					dataset: {
+						testid: 'crm-timeline-wait-config-cancel-btn'
+					},
+					onclick: this.onCancelButtonClick.bind(this)
+				})],
+				events: {
+					onShow: this.onPopupShow.bind(this),
+					onHide: this.onPopupClose.bind(this),
+					onAfterHide: this.onPopupDestroy.bind(this)
+				}
 			});
 			this._popup.show();
 		}
 		close() {
 			if (this._popup) {
-				this._popup.close();
+				this._popup.hide();
 			}
 		}
 		renderDialogContent() {
@@ -4731,9 +4778,6 @@ this.BX.Crm = this.BX.Crm || {};
 		}
 		onPopupShow(e, item) {}
 		onPopupClose() {
-			if (this._popup) {
-				this._popup.destroy();
-			}
 			this.closeTargetMenu();
 		}
 		onPopupDestroy() {
@@ -5079,7 +5123,10 @@ this.BX.Crm = this.BX.Crm || {};
 			this._isRequestRunning = this._isLocked = false;
 			const error = BX.prop.getString(data, "ERROR", "");
 			if (error !== "") {
-				alert(error);
+				// eslint-disable-next-line @bitrix24/bitrix24-rules/no-native-dialogs
+				crm_timeline_dialog.alert({
+					content: main_core.Tag.render`<div>${main_core.Text.encode(error)}</div>`
+				});
 				return;
 			}
 			this._input.value = "";
@@ -5316,7 +5363,7 @@ this.BX.Crm = this.BX.Crm || {};
 			this.setActiveItemById(this.getFirstItemIdWithLayout());
 		}
 		getFirstItemIdWithLayout() {
-			if (this.#isReadonly) {
+			if (this.#isReadonly || !this.#menu) {
 				return null;
 			}
 			let firstId = null;
@@ -5348,6 +5395,9 @@ this.BX.Crm = this.BX.Crm || {};
 		static #defaultInstance = null;
 		static instances = {};
 		#selectMenuItem(id) {
+			if (!this.#menu) {
+				return;
+			}
 			const activeItem = this.#menu.getItemById(this.#selectedItemId);
 			const currentDiv = this.#menu.getItemById(id);
 			let wasActiveInMoreMenu = false;
@@ -5390,5 +5440,5 @@ this.BX.Crm = this.BX.Crm || {};
 	exports.Item = Item;
 	exports.MenuBar = MenuBar;
 
-})(this.BX.Crm.Timeline = this.BX.Crm.Timeline || {}, BX, BX.Event, BX.UI.Notification, BX.Vue3, BX.Crm.Integration.UI, BX.Crm, BX.UI.Tour, BX.UI.Analytics, BX, BX.UI, BX.Crm, BX.Crm.Integration.Analytics, BX.Crm.MessageSender, BX, BX.Main, BX.UI.EntitySelector, window, window, window, BX.UI.IconSet, BX.Calendar.Sharing, BX.Calendar.Sharing, BX.Crm.Activity, BX, BX.Crm);
+})(this.BX.Crm.Timeline = this.BX.Crm.Timeline || {}, BX, BX.Event, BX.UI.Notification, BX.Vue3, BX.Crm.Integration.UI, BX.Crm, BX.UI.Tour, BX.UI.Analytics, BX, BX.Crm, BX.Crm.Integration.Analytics, BX.Crm.MessageSender, BX, BX.Main, BX.UI, BX.UI.EntitySelector, BX.UI.System, window, window, window, BX.UI.IconSet, BX.Calendar.Sharing, BX.Calendar.Sharing, BX.Crm.Activity, window, BX.Crm.Timeline, BX.Crm);
 //# sourceMappingURL=toolbar.bundle.js.map

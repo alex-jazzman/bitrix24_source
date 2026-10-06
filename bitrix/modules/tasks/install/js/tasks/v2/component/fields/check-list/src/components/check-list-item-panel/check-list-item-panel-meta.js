@@ -1,8 +1,10 @@
 import { Outline } from 'ui.icon-set.api.vue';
+import 'ui.icon-set.outline';
 
 export const PanelSection = Object.freeze({
 	Important: 'important',
 	Attachments: 'attachments',
+	Formatting: 'formatting',
 	Movement: 'movement',
 	Accomplice: 'accomplice',
 	Auditor: 'auditor',
@@ -12,6 +14,11 @@ export const PanelSection = Object.freeze({
 });
 
 export const PanelAction = Object.freeze({
+	Bold: 'bold',
+	Italic: 'italic',
+	Underline: 'underline',
+	Strikethrough: 'strikethrough',
+	Link: 'link',
 	SetImportant: 'setImportant',
 	AttachFile: 'attachFile',
 	MoveRight: 'moveRight',
@@ -49,6 +56,42 @@ export const PanelMeta = Object.freeze({
 			],
 		},
 		{
+			name: PanelSection.Formatting,
+			items: [
+				{
+					icon: Outline.BOLD,
+					iconSize: 20,
+					action: PanelAction.Bold,
+					hint: 'TASKS_V2_CHECK_LIST_ITEM_FORMAT_BOLD_HINT',
+				},
+				{
+					icon: Outline.ITALIC,
+					iconSize: 20,
+					action: PanelAction.Italic,
+					hint: 'TASKS_V2_CHECK_LIST_ITEM_FORMAT_ITALIC_HINT',
+				},
+				{
+					icon: Outline.UNDERLINE,
+					iconSize: 20,
+					action: PanelAction.Underline,
+					hint: 'TASKS_V2_CHECK_LIST_ITEM_FORMAT_UNDERLINE_HINT',
+				},
+				{
+					icon: Outline.STRIKETHROUGH,
+					iconSize: 20,
+					action: PanelAction.Strikethrough,
+					hint: 'TASKS_V2_CHECK_LIST_ITEM_FORMAT_STRIKETHROUGH_HINT',
+				},
+				{
+					icon: Outline.LINK,
+					iconSize: 20,
+					action: PanelAction.Link,
+					hint: 'TASKS_V2_CHECK_LIST_ITEM_FORMAT_LINK_HINT',
+					separatorBefore: true,
+				},
+			],
+		},
+		{
 			name: PanelSection.Movement,
 			items: [
 				{
@@ -68,6 +111,7 @@ export const PanelMeta = Object.freeze({
 			items: [
 				{
 					icon: Outline.PERSON,
+					iconSize: 20,
 					action: PanelAction.AssignAccomplice,
 					hint: 'TASKS_V2_CHECK_LIST_ITEM_ACCOMPLICE_HINT',
 				},
@@ -78,6 +122,7 @@ export const PanelMeta = Object.freeze({
 			items: [
 				{
 					icon: Outline.OBSERVER,
+					iconSize: 20,
 					action: PanelAction.AssignAuditor,
 					hint: 'TASKS_V2_CHECK_LIST_ITEM_AUDITOR_HINT',
 				},
@@ -124,6 +169,7 @@ export type Section = {
 export type Item = {
 	icon: string,
 	activeIcon?: string,
+	iconSize?: number,
 	action: string,
 	label?: string,
 	hint?: string,
@@ -131,6 +177,7 @@ export type Item = {
 	hoverable?: boolean,
 	disabled?: boolean,
 	className?: string,
+	separatorBefore?: boolean,
 };
 
 export type VisibleSections = Section[];

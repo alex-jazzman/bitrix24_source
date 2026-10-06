@@ -14,9 +14,11 @@ jn.define('im/messenger/controller/selector/member', (require, exports, module) 
 		 * @param {Array<Number>} props.initSelectedIds
 		 * @param {Function} props.onSelectMembers
 		 * @param {Function} props.onSelectItem
+		 * @param {Function} [props.onWidgetClosed] called after the underlying widget close animation finishes
 		 * @param {Boolean} props.integrateSelectorToParentLayout
 		 * @param {Boolean} props.allowMultipleSelection
 		 * @param {Boolean} props.withCurrentUser
+		 * @param {Boolean} [props.excludeGuests=false] — exclude im-guest users from server search results
 		 */
 		constructor(props)
 		{
@@ -24,9 +26,12 @@ jn.define('im/messenger/controller/selector/member', (require, exports, module) 
 			this.initSelectedIds = props?.initSelectedIds || [];
 			this.onSelectMembers = props?.onSelectMembers;
 			this.onSelectItem = props?.onSelectItem;
+			this.onWidgetClosedCallback = props?.onWidgetClosed;
 			this.integrateSelectorToParentLayout = props?.integrateSelectorToParentLayout ?? false;
 			this.allowMultipleSelection = props?.allowMultipleSelection ?? true;
 			this.withCurrentUser = props?.withCurrentUser ?? false;
+			this.excludeGuests = props?.excludeGuests ?? false;
+			this.widget = null;
 		}
 
 		open(parentWidget = null)
@@ -37,15 +42,46 @@ jn.define('im/messenger/controller/selector/member', (require, exports, module) 
 					allowMultipleSelection: this.allowMultipleSelection,
 					onlyUsers: true,
 					withCurrentUser: this.withCurrentUser,
+					excludeGuests: this.excludeGuests,
 				},
 				allowMultipleSelection: this.allowMultipleSelection,
 				onClose: this.#onSelectMembers,
 				onItemSelected: this.#onItemSelected,
+				onWidgetClosed: this.#onWidgetClosed,
+				onWidgetReady: this.#onWidgetReady,
 				closeOnSelect: true,
 				integrateSelectorToParentLayout: this.integrateSelectorToParentLayout,
 				initSelectedIds: this.initSelectedIds,
 			}, parentWidget);
 		}
+
+		/**
+		 * @desc Closes the underlying selector widget and releases listeners.
+		 * @return {Promise<void>}
+		 */
+		close()
+		{
+			const widget = this.widget;
+			this.widget = null;
+			if (widget?.close)
+			{
+				return widget.close();
+			}
+
+			return Promise.resolve();
+		}
+
+		#onWidgetReady = (widget) => {
+			this.widget = widget;
+		};
+
+		#onWidgetClosed = (...args) => {
+			this.widget = null;
+			if (this.onWidgetClosedCallback)
+			{
+				this.onWidgetClosedCallback(...args);
+			}
+		};
 
 		#onSelectMembers = (members) => {
 			if (this.allowMultipleSelection)

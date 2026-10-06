@@ -1,4 +1,7 @@
 <?php
+$MESS["JS_UI_VIEWER_AUDIO_DOWNLOAD"] = "Download audio file";
+$MESS["JS_UI_VIEWER_AUDIO_PLAYBACK_ERROR"] = "The browser cannot play this audio file. You can download the file and play it in another application.";
+$MESS["JS_UI_VIEWER_AUDIO_PLAYER_LABEL"] = "Audio player";
 $MESS["JS_UI_VIEWER_DEFAULT_ERROR_TITLE"] = "That's an error.";
 $MESS["JS_UI_VIEWER_IMAGE_VIEW_FULL_SIZE_MSGVER_1"] = "View original file";
 $MESS["JS_UI_VIEWER_ITEM_ACTION_COPY_LINK"] = "Copy link";

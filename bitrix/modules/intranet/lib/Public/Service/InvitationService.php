@@ -7,6 +7,7 @@ use Bitrix\Intranet\Contract\Repository\UserRepository;
 use Bitrix\Intranet\CurrentUser;
 use Bitrix\Intranet\Entity\Collection\UserCollection;
 use Bitrix\Intranet\Internal\Entity\Invitation;
+use Bitrix\Intranet\Exception\ErrorCollectionException;
 use Bitrix\Intranet\Public\Type\BaseInvitation;
 use Bitrix\Intranet\Public\Type\Collection\InvitationCollection;
 use Bitrix\Intranet\Entity\Type\InvitationsContainer;
@@ -16,8 +17,10 @@ use Bitrix\Intranet\Exception\InvitationFailedException;
 use Bitrix\Intranet;
 use Bitrix\Intranet\Public\Facade\Invitation\CollabInvitationFacade;
 use Bitrix\Intranet\Internal\Integration\Socialnetwork\ExternalAuthType;
-use Bitrix\Intranet\Public\Service\RegistrationService;
+use Bitrix\Intranet\Public\Type\EmailInvitation;
 use Bitrix\Intranet\Service\ServiceContainer;
+use Bitrix\Bitrix24\License;
+use Bitrix\Bitrix24\LicenseScanner\Manager;
 use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\DB\SqlQueryException;
@@ -28,6 +31,7 @@ use Bitrix\Main\LoaderException;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\Result;
 use Bitrix\Main\SystemException;
+use Bitrix\Main\Type\Date;
 use Bitrix\Main\Error;
 use Bitrix\SocialNetwork\Collab\Analytics\CollabAnalytics;
 use Bitrix\Socialnetwork\Internals\Registry\GroupRegistry;
@@ -35,18 +39,21 @@ use Bitrix\Socialnetwork\Item\Workgroup\Type;
 
 class InvitationService
 {
+	private const INVITATION_DAILY_LIMIT_LOCK = 'intranet_invitation_daily_limit';
+
 	private bool $isMassInviteStarted = false;
 
 	public function __construct(
 		private readonly UserRepository $userRepository,
 		private readonly RegistrationService $registrationService,
+		private readonly ?\Closure $quotaSnapshotProvider = null,
 	)
 	{}
 
 	/**
 	 * @throws \Exception
 	 */
-	public function inviteByCollection(InvitationCollection $collection): UserCollection
+	public function inviteByCollection(InvitationCollection $collection, ?int $currentUserId = null): UserCollection
 	{
 		$userCollection = new UserCollection();
 		$errorCollection = new ErrorCollection();
@@ -55,8 +62,12 @@ class InvitationService
 		{
 			try
 			{
-				$user = $this->invite($invitation);
+				$user = $this->invite($invitation, $currentUserId);
 				$userCollection->add($user);
+			}
+			catch (ErrorCollectionException $exception)
+			{
+				$errorCollection->add($exception->getErrors()->getValues());
 			}
 			catch (\Exception $exception)
 			{
@@ -68,7 +79,7 @@ class InvitationService
 			'intranet',
 			'onUserInvited',
 			[
-				'originatorId' => CurrentUser::get()->getId(),
+				'originatorId' => $currentUserId ?? CurrentUser::get()->getId(),
 				'userId' =>$userCollection->getIds(), //is backward compatibility
 				'invitedUsers' => $userCollection,
 			],
@@ -86,12 +97,300 @@ class InvitationService
 	}
 
 	/**
+	 * @param array<int, array{clientId: string, invitation: BaseInvitation|null}> $items
+	 * @return array{items: array<int, array{clientId: string, status: string, reason: string|null}>, users: UserCollection, quota: array{period: string, limit: int|null, used: int|null, remaining: int|null}}
+	 */
+	public function inviteByCollectionWithDeliveryResult(array $items, ?int $currentUserId = null): array
+	{
+		$this->isMassInviteStarted = true;
+
+		try
+		{
+			$deliveryResult = $this->processDeliveryItems($items, $currentUserId);
+
+			if (!$deliveryResult['users']->empty())
+			{
+				$event = new Event(
+					'intranet',
+					'onUserInvited',
+					[
+						'originatorId' => $currentUserId ?? CurrentUser::get()->getId(),
+						'userId' => $deliveryResult['users']->getIds(), //is backward compatibility
+						'invitedUsers' => $deliveryResult['users'],
+					],
+				);
+				$event->send();
+			}
+		}
+		finally
+		{
+			$this->isMassInviteStarted = false;
+		}
+
+		$quota = $this->getInvitationQuotaSnapshot();
+
+		return [
+			'items' => $deliveryResult['items'],
+			'users' => $deliveryResult['users'],
+			'quota' => $quota,
+		];
+	}
+
+	/**
+	 * @param array<int, array{clientId: string, invitation: BaseInvitation|null}> $items
+	 * @return array{items: array<int, array{clientId: string, status: string, reason: string|null}>, users: UserCollection}
+	 */
+	private function processDeliveryItems(array $items, ?int $currentUserId): array
+	{
+		$userCollection = new UserCollection();
+		$deliveryResultItems = [];
+		$emailInvitationCount = 0;
+		$maxEmailInvitationCount = $this->getMaxEmailInvitationCount();
+
+		foreach ($items as $item)
+		{
+			$deliveryResult = $this->processDeliveryItemWithBatchLimit(
+				$item,
+				$currentUserId,
+				$maxEmailInvitationCount,
+				$emailInvitationCount,
+			);
+			$deliveryResultItems[] = $deliveryResult['item'];
+			$this->addDeliveryResultUser($userCollection, $deliveryResult['user']);
+		}
+
+		return [
+			'items' => $deliveryResultItems,
+			'users' => $userCollection,
+		];
+	}
+
+	/**
+	 * @param array{clientId: string, invitation: BaseInvitation|null} $item
+	 * @return array{item: array{clientId: string, status: string, reason: string|null}, user: User|null}
+	 */
+	private function processDeliveryItemWithBatchLimit(
+		array $item,
+		?int $currentUserId,
+		int $maxEmailInvitationCount,
+		int &$emailInvitationCount,
+	): array
+	{
+		if ($this->isEmailBatchLimitReached($item['invitation'], $emailInvitationCount, $maxEmailInvitationCount))
+		{
+			return [
+				'item' => [
+					'clientId' => $item['clientId'],
+					'status' => 'rejected',
+					'reason' => 'limit',
+				],
+				'user' => null,
+			];
+		}
+
+		return $this->processDeliveryItem($item, $currentUserId);
+	}
+
+	private function isEmailBatchLimitReached(
+		?BaseInvitation $invitation,
+		int &$emailInvitationCount,
+		int $maxEmailInvitationCount,
+	): bool
+	{
+		if (!$invitation instanceof EmailInvitation)
+		{
+			return false;
+		}
+
+		$emailInvitationCount++;
+
+		return $emailInvitationCount > $maxEmailInvitationCount;
+	}
+
+	private function addDeliveryResultUser(UserCollection $userCollection, ?User $user): void
+	{
+		if ($user !== null)
+		{
+			$userCollection->add($user);
+		}
+	}
+
+	/**
+	 * @param array{clientId: string, invitation: BaseInvitation|null} $item
+	 * @return array{item: array{clientId: string, status: string, reason: string|null}, user: User|null}
+	 */
+	private function processDeliveryItem(array $item, ?int $currentUserId): array
+	{
+		$invitation = $item['invitation'];
+		if ($invitation === null || !$invitation->isValid())
+		{
+			return [
+				'item' => [
+					'clientId' => $item['clientId'],
+					'status' => 'rejected',
+					'reason' => 'validation',
+				],
+				'user' => null,
+			];
+		}
+
+		if ($this->hasActiveUser($invitation))
+		{
+			return [
+				'item' => [
+					'clientId' => $item['clientId'],
+					'status' => 'skipped',
+					'reason' => 'already_active',
+				],
+				'user' => null,
+			];
+		}
+
+		try
+		{
+			$user = $this->inviteWithQuotaControl($invitation, $currentUserId);
+			if ($user === null)
+			{
+				return [
+					'item' => [
+						'clientId' => $item['clientId'],
+						'status' => 'rejected',
+						'reason' => 'limit',
+					],
+					'user' => null,
+				];
+			}
+
+			return [
+				'item' => [
+					'clientId' => $item['clientId'],
+					'status' => 'sent',
+					'reason' => null,
+				],
+				'user' => $user,
+			];
+		}
+		catch (ErrorCollectionException)
+		{
+			return [
+				'item' => [
+					'clientId' => $item['clientId'],
+					'status' => 'rejected',
+					'reason' => 'delivery_unavailable',
+				],
+				'user' => null,
+			];
+		}
+		catch (\Exception)
+		{
+			return [
+				'item' => [
+					'clientId' => $item['clientId'],
+					'status' => 'rejected',
+					'reason' => 'unknown',
+				],
+				'user' => null,
+			];
+		}
+	}
+
+	private function hasActiveUser(BaseInvitation $invitation): bool
+	{
+		$users = $invitation->getType() === InvitationType::EMAIL
+			? $this->userRepository->findUsersByLoginsAndEmails([$invitation->getLogin()])
+			: $this->userRepository->findUsersByLoginsAndPhoneNumbers([$invitation->getLogin()]);
+
+		return !$users->filter(
+			static fn(User $user) => !$user->isEmail()
+				&& !$user->isShop()
+				&& $user->getInviteStatus() === Intranet\Enum\InvitationStatus::ACTIVE,
+		)->empty();
+	}
+
+	protected function getMaxEmailInvitationCount(): int
+	{
+		if (!Loader::includeModule('bitrix24'))
+		{
+			return 100;
+		}
+
+		$limiter = Manager::getInstance()->getInvitationDailyLimiter();
+
+		return $limiter->getTargetValue(License::getCurrent()->getCode()) ?? 100;
+	}
+
+	private function inviteWithQuotaControl(BaseInvitation $invitation, ?int $currentUserId): ?User
+	{
+		$connection = Application::getConnection();
+		if (!$connection->lock(self::INVITATION_DAILY_LIMIT_LOCK, 5))
+		{
+			throw new SystemException('Could not lock invitation daily limit.');
+		}
+
+		try
+		{
+			if ($this->getInvitationQuotaSnapshot()['remaining'] === 0)
+			{
+				return null;
+			}
+
+			return $this->invite($invitation, $currentUserId);
+		}
+		finally
+		{
+			$connection->unlock(self::INVITATION_DAILY_LIMIT_LOCK);
+		}
+	}
+
+	/**
+	 * @return array{period: string, limit: int|null, used: int|null, remaining: int|null}
+	 */
+	private function getInvitationQuotaSnapshot(): array
+	{
+		if ($this->quotaSnapshotProvider !== null)
+		{
+			return ($this->quotaSnapshotProvider)();
+		}
+
+		if (!Loader::includeModule('bitrix24'))
+		{
+			return [
+				'period' => (new Date())->format('Y-m-d'),
+				'limit' => null,
+				'used' => null,
+				'remaining' => null,
+			];
+		}
+
+		$limiter = Manager::getInstance()->getInvitationDailyLimiter();
+		$limit = $limiter->getTargetValue(License::getCurrent()->getCode());
+		if ($limit === null)
+		{
+			return [
+				'period' => (new Date())->format('Y-m-d'),
+				'limit' => null,
+				'used' => null,
+				'remaining' => null,
+			];
+		}
+
+		$used = $limiter->getCurrentValue();
+
+		return [
+			'period' => (new Date())->format('Y-m-d'),
+			'limit' => $limit,
+			'used' => $used,
+			'remaining' => max(0, $limit - $used),
+		];
+	}
+
+	/**
 	 * @throws ArgumentException
 	 * @throws SqlQueryException
 	 * @throws ObjectPropertyException
 	 * @throws SystemException
 	 */
-	public function invite(BaseInvitation $invitation): User
+	public function invite(BaseInvitation $invitation, ?int $currentUserId = null): User
 	{
 		try
 		{
@@ -120,7 +419,7 @@ class InvitationService
 						isIntegrator: $invitation->getFormType() === 'integrator',
 						isRegister: $invitation->getFormType() === 'register',
 						id: null,
-						originatorId: CurrentUser::get()->getId(),
+						originatorId: $currentUserId ?? CurrentUser::get()->getId(),
 						type: $invitation->getType(),
 					)
 				);
@@ -132,7 +431,7 @@ class InvitationService
 					'intranet',
 					'onUserInvited',
 					[
-						'originatorId' => CurrentUser::get()->getId(),
+						'originatorId' =>  $currentUserId ?? CurrentUser::get()->getId(),
 						'userId' => [$user->getId()], //is backward compatibility
 						'invitedUsers' => new UserCollection($user),
 					],
@@ -208,7 +507,7 @@ class InvitationService
 	 * @throws ObjectPropertyException
 	 * @throws SystemException
 	 */
-	public static function inviteUsersToGroup(int $groupId, InvitationsContainer $inviteData): Result
+	public static function inviteUsersToGroup(int $groupId, InvitationsContainer $inviteData, ?int $currentUserId = null): Result
 	{
 		$result = new Result();
 
@@ -235,8 +534,7 @@ class InvitationService
 		try
 		{
 			$collabInvitation = new CollabInvitationFacade($group);
-			$userCollection = $collabInvitation->inviteByCollection($inviteData->getInvitationCollection());
-
+			$userCollection = $collabInvitation->inviteByCollection($inviteData->getInvitationCollection(), $currentUserId);
 		}
 		catch (InvitationFailedException $exception)
 		{
@@ -251,6 +549,7 @@ class InvitationService
 		$inviteCommand = new Command\Invitation\InviteUserCollectionToGroupCommand(
 			groupId: $groupId,
 			userCollection: $userCollection,
+			currentUserId: $currentUserId,
 		);
 		$inviteToGroupResult = $inviteCommand->execute();
 

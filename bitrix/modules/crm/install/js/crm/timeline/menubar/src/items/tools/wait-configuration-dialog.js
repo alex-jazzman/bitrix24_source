@@ -1,5 +1,7 @@
 /* eslint-disable no-underscore-dangle, @bitrix24/bitrix24-rules/no-pseudo-private */
 import { Dom, Loc, Runtime, Tag, Text } from 'main.core';
+import { AirButtonStyle, Button, ButtonSize, CancelButton } from 'ui.buttons';
+import { Dialog } from 'ui.system.dialog';
 
 import WaitingType from './waiting-type';
 
@@ -101,40 +103,40 @@ export default class WaitConfigurationDialog
 
 	open()
 	{
-		this._popup = new BX.PopupWindow(
-			this._id,
-			null, // this._configSelector,
-			{
-				autoHide: true,
-				draggable: false,
-				bindOptions: { forceBindPosition: false },
-				closeByEsc: true,
-				zIndex: 0,
-				content: this.renderDialogContent(),
-				events:
-					{
-						onPopupShow: this.onPopupShow.bind(this),
-						onPopupClose: this.onPopupClose.bind(this),
-						onPopupDestroy: this.onPopupDestroy.bind(this),
-					},
-				buttons:
-					[
-						new BX.PopupWindowButton(
-							{
-								text: Loc.getMessage('CRM_TIMELINE_CHOOSE'),
-								className: 'popup-window-button-accept',
-								events: { click: this.onSaveButtonClick.bind(this) },
-							},
-						),
-						new BX.PopupWindowButtonLink(
-							{
-								text: Loc.getMessage('JS_CORE_WINDOW_CANCEL'),
-								events: { click: this.onCancelButtonClick.bind(this) },
-							},
-						),
-					],
-			},
-		);
+		this._popup = new Dialog({
+			content: this.renderDialogContent(),
+			background: 'vibrant',
+			closeByClickOutside: false,
+			centerButtons:
+				[
+					new Button(
+						{
+							text: Loc.getMessage('CRM_TIMELINE_CHOOSE'),
+							size: ButtonSize.LARGE,
+							useAirDesign: true,
+							style: AirButtonStyle.FILLED,
+							dataset: { testid: 'crm-timeline-wait-config-choose-btn' },
+							onclick: this.onSaveButtonClick.bind(this),
+						},
+					),
+					new CancelButton(
+						{
+							text: Loc.getMessage('JS_CORE_WINDOW_CANCEL'),
+							size: ButtonSize.LARGE,
+							useAirDesign: true,
+							style: AirButtonStyle.OUTLINE,
+							dataset: { testid: 'crm-timeline-wait-config-cancel-btn' },
+							onclick: this.onCancelButtonClick.bind(this),
+						},
+					),
+				],
+			events:
+				{
+					onShow: this.onPopupShow.bind(this),
+					onHide: this.onPopupClose.bind(this),
+					onAfterHide: this.onPopupDestroy.bind(this),
+				},
+		});
 
 		this._popup.show();
 	}
@@ -143,7 +145,7 @@ export default class WaitConfigurationDialog
 	{
 		if (this._popup)
 		{
-			this._popup.close();
+			this._popup.hide();
 		}
 	}
 
@@ -331,11 +333,6 @@ export default class WaitConfigurationDialog
 
 	onPopupClose(): void
 	{
-		if (this._popup)
-		{
-			this._popup.destroy();
-		}
-
 		this.closeTargetMenu();
 	}
 

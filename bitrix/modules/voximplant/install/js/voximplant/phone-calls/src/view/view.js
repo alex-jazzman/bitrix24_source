@@ -120,7 +120,6 @@ export const desktopEvents = {
 	onCancelTransfer: 'phoneCallViewOnCancelTransfer',
 	onBeforeUnload: 'phoneCallViewOnBeforeUnload',
 	onSwitchDevice: 'phoneCallViewOnSwitchDevice',
-	onQualityGraded: 'phoneCallViewOnQualityGraded',
 	onDialpadButtonClicked: 'phoneCallViewOnDialpadButtonClicked',
 	onCommentShown: 'phoneCallViewOnCommentShown',
 	onSaveComment: 'phoneCallViewOnSaveComment',
@@ -197,7 +196,6 @@ type EventHandlers = {
 	completeTransfer: () => void,
 	cancelTransfer: () => void,
 	switchDevice: () => void,
-	qualityGraded: () => void,
 	dialpadButtonClicked: () => void,
 	saveComment: () => void,
 	notifyAdmin: () => void
@@ -267,8 +265,6 @@ export class PhoneCallView
 		this.statusText = params.statusText || '';
 		this.progress = '';
 		this.quality = 0;
-		this.qualityPopup = null;
-		this.qualityGrade = 0;
 		this.comment = '';
 		this.commentShown = false;
 
@@ -307,7 +303,6 @@ export class PhoneCallView
 			completeTransfer: Type.isFunction(params.events.completeTransfer) ? params.events.completeTransfer : nop,
 			cancelTransfer: Type.isFunction(params.events.cancelTransfer) ? params.events.cancelTransfer : nop,
 			switchDevice: Type.isFunction(params.events.switchDevice) ? params.events.switchDevice : nop,
-			qualityGraded: Type.isFunction(params.events.qualityGraded) ? params.events.qualityGraded : nop,
 			dialpadButtonClicked: Type.isFunction(params.events.dialpadButtonClicked) ? params.events.dialpadButtonClicked : nop,
 			saveComment: Type.isFunction(params.events.saveComment) ? params.events.saveComment : nop,
 			notifyAdmin: Type.isFunction(params.events.notifyAdmin) ? params.events.notifyAdmin : nop,
@@ -333,7 +328,6 @@ export class PhoneCallView
 		this._onAnswerButtonClickHandler = this._onAnswerButtonClick.bind(this);
 		this._onSkipButtonClickHandler = this._onSkipButtonClick.bind(this);
 		this._onSwitchDeviceButtonClickHandler = this._onSwitchDeviceButtonClick.bind(this);
-		this._onQualityMeterClickHandler = this._onQualityMeterClick.bind(this);
 		this._onPullEventCrmHandler = this._onPullEventCrm.bind(this);
 
 		// tabs
@@ -562,7 +556,7 @@ export class PhoneCallView
 
 	createPopup(): Popup
 	{
-		return new Popup({
+		const popup = new Popup({
 			id: this.getId(),
 			bindElement: null,
 			targetContainer: document.body,
@@ -570,6 +564,7 @@ export class PhoneCallView
 			closeIcon: false,
 			noAllPaddings: true,
 			zIndex: baseZIndex,
+			zIndexOptions: {alwaysOnTop: true},
 			offsetLeft: 0,
 			offsetTop: 0,
 			closeByEsc: false,
@@ -590,6 +585,12 @@ export class PhoneCallView
 				onPopupDestroy: () => this.popup = null
 			}
 		});
+
+		popup.getPopupContainer().setAttribute('data-a11y-ignore-inert', 'true');
+		popup.getPopupContainer().dataset.testid = 'vox-callview-window';
+		popup.overlay?.element?.setAttribute('data-a11y-ignore-inert', 'true');
+
+		return popup;
 	};
 
 	createLayout()
@@ -635,7 +636,7 @@ export class PhoneCallView
 										})
 									]
 								}),
-								this.elements.crmCard = Dom.create("div", {props: {className: 'im-phone-call-crm-card'}}),
+								this.elements.crmCard = Dom.create("div", {props: {className: 'im-phone-call-crm-card'}, attrs: {'data-testid': 'vox-callview-crm-card'}}),
 								this.elements.sections.status = Dom.create("div", {
 									props: {className: 'im-phone-call-section'},
 									style: this.sections.status.visible ? {} : {display: 'none'},
@@ -1126,6 +1127,7 @@ export class PhoneCallView
 	{
 		return Dom.create("div", {
 			props: {className: "im-phone-call-panel-mini"},
+			attrs: { 'data-a11y-ignore-inert': 'true' },
 			style: {zIndex: baseZIndex},
 			children: [
 				this.elements.sections.timer = this.elements.timer = Dom.create("div", {
@@ -1393,6 +1395,7 @@ export class PhoneCallView
 				offsetLeft: 0,
 				angle: {position: "top"},
 				zIndex: baseZIndex + 100,
+				zIndexOptions: {alwaysOnTop: true},
 				events: {
 					onPopupClose: () => this.moreTabsMenu.destroy(),
 					onPopupDestroy: () => this.moreTabsMenu = null
@@ -2455,7 +2458,6 @@ export class PhoneCallView
 				case 'qualityMeter':
 					buttonNode = Dom.create("span", {
 						props: {className: 'im-phone-call-btn-signal'},
-						events: {click: this._onQualityMeterClickHandler},
 						children: [
 							Dom.create("span", {
 								props: {className: 'im-phone-call-btn-signal-icon-container'}, children: [
@@ -2510,6 +2512,7 @@ export class PhoneCallView
 			if (buttonNode)
 			{
 				this.elements.buttons[buttonName] = buttonNode;
+				buttonNode.dataset.testid = `vox-callview-${buttonName}-btn`;
 			}
 		});
 		if (this.elements.buttonsContainer)
@@ -3292,26 +3295,6 @@ export class PhoneCallView
 		}
 	};
 
-	_onQualityMeterClick()
-	{
-		this.showQualityPopup({
-			onSelect: (qualityGrade) =>
-			{
-				this.backgroundWorker.emitEvent(backgroundWorkerEvents.qualityMeterClick, qualityGrade);
-				this.qualityGrade = qualityGrade;
-				this.closeQualityPopup();
-				if (this.isDesktop() && this.slave)
-				{
-					DesktopApi.emit(desktopEvents.onQualityGraded, [qualityGrade]);
-				}
-				else
-				{
-					this.callbacks.qualityGraded(qualityGrade);
-				}
-			}
-		});
-	};
-
 	#onExternalEvent = (params) =>
 	{
 		console.warn('#onExternalEvent', params)
@@ -3519,95 +3502,6 @@ export class PhoneCallView
 		this.timerInterval = null;
 	};
 
-	showQualityPopup(params)
-	{
-		if (!Type.isPlainObject(params))
-		{
-			params = {};
-		}
-
-		if (!Type.isFunction(params.onSelect))
-		{
-			params.onSelect = nop;
-		}
-
-		const elements = {
-			'1': null,
-			'2': null,
-			'3': null,
-			'4': null,
-			'5': null
-		};
-
-		this.qualityPopup = new Popup({
-			id: 'PhoneCallViewQualityGrade',
-			bindElement: this.elements.qualityMeter,
-			targetContainer: document.body,
-			darkMode: true,
-			closeByEsc: true,
-			autoHide: true,
-			zIndex: baseZIndex + 200,
-			noAllPaddings: true,
-			overlay: {
-				backgroundColor: 'white',
-				opacity: 0
-			},
-			bindOptions: {
-				position: 'top'
-			},
-			angle: {
-				position: 'bottom',
-				offset: 30
-			},
-			cacheable: false,
-			content: Dom.create("div", {
-				props: {className: 'im-phone-popup-rating'}, children: [
-					Dom.create("div", {
-						props: {className: 'im-phone-popup-rating-title'},
-						text: Loc.getMessage('IM_PHONE_CALL_VIEW_RATE_QUALITY')
-					}),
-					Dom.create("div", {
-						props: {className: 'im-phone-popup-rating-stars'}, children: [
-							elements['1'] = createStar(1, this.qualityGrade == '1', params.onSelect),
-							elements['2'] = createStar(2, this.qualityGrade == '2', params.onSelect),
-							elements['3'] = createStar(3, this.qualityGrade == '3', params.onSelect),
-							elements['4'] = createStar(4, this.qualityGrade == '4', params.onSelect),
-							elements['5'] = createStar(5, this.qualityGrade == '5', params.onSelect)
-						], events: {
-							mouseover: () =>
-							{
-								if (elements[this.qualityGrade])
-								{
-									Dom.removeClass(elements[this.qualityGrade], 'im-phone-popup-rating-stars-item-active');
-								}
-							},
-							mouseout: () =>
-							{
-								if (elements[this.qualityGrade])
-								{
-									Dom.addClass(elements[this.qualityGrade], 'im-phone-popup-rating-stars-item-active');
-								}
-							}
-						}
-					})
-				]
-			}),
-			events: {
-				onPopupClose: () => this.qualityPopup = null,
-			}
-		});
-
-		this.qualityPopup.show();
-	};
-
-	closeQualityPopup()
-	{
-		if (this.qualityPopup)
-		{
-			this.qualityPopup.close();
-		}
-	};
-
 	saveComment()
 	{
 		this.callbacks.saveComment({
@@ -3654,6 +3548,7 @@ export class PhoneCallView
 				offsetLeft: 40,
 				angle: {position: "top"},
 				zIndex: baseZIndex + 200,
+				zIndexOptions: {alwaysOnTop: true},
 				closeByEsc: true,
 				overlay: {
 					backgroundColor: 'white',
@@ -3831,7 +3726,6 @@ export class PhoneCallView
 			this.callbacks.hangup();
 			this.callbacks.close();
 		}); //slave window unload
-		DesktopApi.subscribe(desktopEvents.onQualityGraded, (grade) => this.callbacks.qualityGraded(grade));
 		DesktopApi.subscribe(desktopEvents.onDialpadButtonClicked, (grade) => this.callbacks.dialpadButtonClicked(grade));
 		DesktopApi.subscribe(desktopEvents.onCommentShown, (commentShown) => this.commentShown = commentShown);
 		DesktopApi.subscribe(desktopEvents.onSaveComment, (comment) =>
@@ -4097,11 +3991,6 @@ export class PhoneCallView
 			this.popup = null;
 		}
 
-		if (this.qualityPopup)
-		{
-			this.qualityPopup.close();
-		}
-
 		if (this.keypad)
 		{
 			this.keypad.close();
@@ -4214,6 +4103,7 @@ export class PhoneCallView
 			cacheable: false,
 			hideOnSelect: false,
 			enableSearch: true,
+			popupOptions: {zIndexOptions: {alwaysOnTop: true}},
 			entities: [
 				{
 					id: 'user',
@@ -4274,6 +4164,7 @@ export class PhoneCallView
 			cacheable: false,
 			hideOnSelect: false,
 			enableSearch: true,
+			popupOptions: {zIndexOptions: {alwaysOnTop: true}},
 			entities: [
 				{
 					id: 'user',
@@ -4412,6 +4303,7 @@ export class PhoneCallView
 			autoHide: true,
 			closeByEsc: true,
 			cacheable: false,
+			zIndexOptions: {alwaysOnTop: true},
 			overlay: {
 				backgroundColor: '#FFFFFF',
 				opacity: 0
@@ -4446,22 +4338,6 @@ function renderSimpleButton(text, className, clickCallback)
 	}
 
 	return Dom.create('span', params);
-}
-
-function createStar(grade, active, onSelect)
-{
-	return Dom.create("div", {
-		props: {className: 'im-phone-popup-rating-stars-item ' + (active ? 'im-phone-popup-rating-stars-item-active' : '')},
-		dataset: {grade: grade},
-		events: {
-			click: (e) =>
-			{
-				e.preventDefault();
-				const grade = e.currentTarget.dataset.grade;
-				onSelect(grade);
-			}
-		}
-	})
 }
 
 type TransferOptions = {

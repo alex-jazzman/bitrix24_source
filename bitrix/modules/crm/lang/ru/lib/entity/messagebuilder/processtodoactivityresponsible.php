@@ -25,3 +25,6 @@ $MESS["CRM_ACTIVITY_TODO_DEFAULT_NO_LONGER_RESPONSIBLE_EX"] = 'Вы перест
 
 $MESS["CRM_ACTIVITY_TODO_DEFAULT_BECOME_RESPONSIBLE_EMPTY_SUBJECT"] = 'Вы назначены ответственным за дело "<a href="#URL#" class="bx-notifier-item-action">##TODO_ID#</a>"';
 $MESS["CRM_ACTIVITY_TODO_DEFAULT_NO_LONGER_RESPONSIBLE_EMPTY_SUBJECT"] = 'Вы перестали быть ответственным за дело "<a href="#URL#" class="bx-notifier-item-action">##TODO_ID#</a>"';
+
+$MESS["CRM_ACTIVITY_TODO_RESPONSIBLE_SUBJECT"] = '#AUTHOR# назначил вас ответственным за дело <a href="#URL#" class="bx-notifier-item-action">#SUBJECT#</a>';
+$MESS["CRM_ACTIVITY_TODO_RESPONSIBLE_SUBJECT_EMPTY"] = '#AUTHOR# назначил вас ответственным за дело <a href="#URL#" class="bx-notifier-item-action">##TODO_ID#</a>';

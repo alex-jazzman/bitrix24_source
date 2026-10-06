@@ -2,6 +2,7 @@
  * @module vibecode/catalog/item
  */
 jn.define('vibecode/catalog/item', (require, exports, module) => {
+	const { Loc } = require('loc');
 	const { createTestIdGenerator } = require('utils/test');
 	const { withCurrentDomain } = require('utils/url');
 	const { Color, Component, Corner, Indent } = require('tokens');
@@ -9,7 +10,7 @@ jn.define('vibecode/catalog/item', (require, exports, module) => {
 	const { Avatar, AvatarShape } = require('ui-system/blocks/avatar');
 	const { BadgeCounter, BadgeCounterDesign, BadgeCounterSize } = require('ui-system/blocks/badges/counter');
 	const { IconView, Icon } = require('ui-system/blocks/icon');
-	const { Text4, Text5, Text6 } = require('ui-system/typography/text');
+	const { Capital, Text4, Text5, Text6 } = require('ui-system/typography/text');
 	const { getPressedColor, prepareHexColor } = require('utils/color');
 
 	const LIST_ITEM_VERTICAL_PADDING = Indent.XL.toNumber();
@@ -314,6 +315,27 @@ jn.define('vibecode/catalog/item', (require, exports, module) => {
 						flex: 1,
 					},
 				}),
+				item?.isNew === true
+					? View(
+						{
+							testId: this.getTestId('badge-new'),
+							style: {
+								marginLeft: Indent.S.toNumber(),
+								paddingVertical: Indent.XS2.toNumber(),
+								paddingHorizontal: Indent.S.toNumber(),
+								borderRadius: Corner.XS.toNumber(),
+								backgroundColor: Color.accentMainAlert.toHex(),
+								alignItems: 'center',
+								justifyContent: 'center',
+							},
+						},
+						Capital({
+							text: Loc.getMessage('MOBILE_VIBECODE_CATALOG_ITEM_BADGE_NEW').toUpperCase(),
+							accent: true,
+							color: Color.baseWhiteFixed,
+						}),
+					)
+					: null,
 				counter === null
 					? null
 					: View(

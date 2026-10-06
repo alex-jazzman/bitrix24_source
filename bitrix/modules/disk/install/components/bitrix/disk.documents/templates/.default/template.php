@@ -27,6 +27,8 @@ CJSCore::Init(array(
 	'disk.viewer.board-item',
 	'disk.viewer.actions',
 	'disk.document',
+	'disk.board-create',
+	'ui.banner-dispatcher',
 	'ui.tour',
 	'main.core',
 	'spotlight',
@@ -50,7 +52,8 @@ if ($arResult['GRID_VIEW']['MODE'] === Disk\Internals\Grid\FolderListOptions::VI
 	Main\Page\Asset::getInstance()->addJs('/bitrix/components/bitrix/disk.documents/templates/.default/grid-tile-item.js');
 }
 
-$title = $arResult['VARIANT'] == Disk\Type\DocumentGridVariant::FlipchartList
+$isBoardsPage = $arResult['VARIANT'] === Disk\Type\DocumentGridVariant::FlipchartList;
+$title = $isBoardsPage
 	? Loc::getMessage('DISK_DOCUMENTS_PAGE_TITLE_BOARDS')
 	: Loc::getMessage('DISK_DOCUMENTS_PAGE_TITLE');
 
@@ -60,6 +63,7 @@ $APPLICATION->setPageProperty('BodyClass', trim(sprintf('%s %s', $bodyClass, $bo
 ?>
 <script>
 	BX.Disk.Documents.Toolbar.documentHandlers = <?= Main\Web\Json::encode($arResult['DOCUMENT_HANDLERS'])?>;
+	BX.Disk.Documents.isBoardsPage = <?= Main\Web\Json::encode($isBoardsPage) ?>;
 	window.BX_ANALYTICS = <?= Main\Web\Json::encode($arResult['ANALYTICS'] ?? null) ?>;
 </script>
 <?php
@@ -147,7 +151,7 @@ $APPLICATION->IncludeComponent(
 		] : []) + (!$arResult['IS_FILTER_SET'] && empty($arResult['ITEMS']) ? [
 			'STUB' =>
 			(
-				$arResult['VARIANT'] === Disk\Type\DocumentGridVariant::FlipchartList
+				$isBoardsPage
 				?
 
 				'<div class="disk-documents-flipchart-empty-block">'.
@@ -161,7 +165,7 @@ $APPLICATION->IncludeComponent(
 				'<div class="disk-documents-grid-empty-block">'.
 					'<div class="ui-icon ui-icon-common-info disk-documents-grid-empty-icon"><i></i></div>'.
 					'<div class="main-grid-empty-block-title">'.
-						Loc::getMessage('DISK_DOCUMENTS_GRID_STUB_TITLE').'</div>'.
+						Loc::getMessage('DISK_DOCUMENTS_GRID_STUB_TITLE_MSGVER_1').'</div>'.
 					'<div class="main-grid-empty-block-description">'.
 						Loc::getMessage('DISK_DOCUMENTS_GRID_STUB_DESCRIPTION').'</div>'.
 				'</div>'

@@ -19,64 +19,74 @@ Loc::loadMessages(
 	Manager::getDocRoot() . '/bitrix/components/bitrix/landing.site_domain/templates/.default/template.php'
 );
 Extension::load(['ui.hint']);
+
+$domainName = $site['SUBDOMAIN_NAME'] ?: $site['DOMAIN_NAME'];
+$domainRules = (string)Loc::getMessage('LANDING_TPL_DOMAIN_RULES_B24');
+// accessible description is plain text: markup line breaks give no pause there
+$domainRulesText = trim(strip_tags(preg_replace('#\.?\s*<br\s*/?>\s*#i', '. ', $domainRules)));
 ?>
 
 <input type="hidden" name="SAVE_SITE" value="Y" />
-<table id="landing-sm-content-table" class="landing-sm-content-table">
+<table id="landing-sm-content-table" class="landing-sm-content-table" role="presentation">
 	<tr>
 		<td></td>
 		<td colspan="2">
 			<div class="ui-ctl-label-text">
-				<?= Loc::getMessage('LANDING_TPL_CURRENT_ADDRESS') ?>
-				<span data-hint="<?= Loc::getMessage('LANDING_TPL_DOMAIN_RULES_B24') ?>" data-hint-html></span>
+				<label for="domain-edit-name"><?= Loc::getMessage('LANDING_TPL_CURRENT_ADDRESS') ?></label>
+				<span data-hint="<?= $domainRules ?>" data-hint-html aria-hidden="true"></span>
+				<span class="landing-visually-hidden" id="landing-domain-rules"><?= \htmlspecialcharsbx($domainRulesText) ?></span>
 			</div>
 		</td>
 	</tr>
 	<tr>
-		<td>
+		<td aria-hidden="true">
 			<div class="landing-sm-content-table-num">1</div>
 		</td>
 		<td>
 			<div class="ui-ctl ui-ctl-textbox ui-ctl-w100">
-				<input autocomplete="off" type="text" name="SUBDOMAIN" class="ui-ctl-element" id="domain-edit-name" value="<?= $site['SUBDOMAIN_NAME'] ? $site['SUBDOMAIN_NAME'] : $site['DOMAIN_NAME'];?>" placeholder="<?= Loc::getMessage('LANDING_TPL_PLACEHOLDER_DOMAIN_NAME');?>">
+				<input autocomplete="off" type="text" name="SUBDOMAIN" class="ui-ctl-element" id="domain-edit-name" value="<?= \htmlspecialcharsbx($domainName);?>" placeholder="<?= Loc::getMessage('LANDING_TPL_PLACEHOLDER_DOMAIN_NAME');?>" aria-describedby="domain-edit-message landing-domain-postfix landing-domain-rules domain-edit-length" data-testid="landing-master-domain-input">
 				<div class="ui-ctl-ext-after ui-ctl-icon-loader" id="domain-edit-loader" hidden></div>
-				<div class="landing-domain-alert" id="domain-edit-message" hidden></div>
+				<div class="landing-domain-alert" id="domain-edit-message" data-testid="landing-master-domain-message"></div>
 				<div class="domain-edit-length" id="domain-edit-length" hidden></div>
 			</div>
 		</td>
 		<td>
-			<div class="landing-sm-content-table-domain"><?= $site['POSTFIX'];?></div>
+			<div class="landing-sm-content-table-domain" id="landing-domain-postfix"><?= $site['POSTFIX'];?></div>
 		</td>
 	</tr>
 	<tr>
 		<td></td>
 		<td colspan="2">
-			<div class="ui-ctl-label-text"><?= Loc::getMessage('LANDING_TPL_FORM_TITLE');?></div>
+			<div class="ui-ctl-label-text">
+				<label for="landing-master-company"><?= Loc::getMessage('LANDING_TPL_FORM_TITLE');?></label>
+			</div>
 		</td>
 	</tr>
 	<tr>
-		<td>
+		<td aria-hidden="true">
 			<div class="landing-sm-content-table-num">2</div>
 		</td>
 		<td colspan="2">
 			<div class="ui-ctl ui-ctl-textbox ui-ctl-w100">
-				<input autocomplete="off" type="text" name="COMPANY" class="ui-ctl-element" value="<?= \htmlspecialcharsbx($arResult['CRM_CONTACTS']['COMPANY'] ?? '');?>" placeholder="<?= Loc::getMessage('LANDING_TPL_PLACEHOLDER_COMPANY');?>">
+				<input autocomplete="organization" type="text" name="COMPANY" class="ui-ctl-element" id="landing-master-company" value="<?= \htmlspecialcharsbx($arResult['CRM_CONTACTS']['COMPANY'] ?? '');?>" placeholder="<?= Loc::getMessage('LANDING_TPL_PLACEHOLDER_COMPANY');?>" data-testid="landing-master-company-input">
 			</div>
 		</td>
 	</tr>
 	<tr>
 		<td></td>
 		<td colspan="2">
-			<div class="ui-ctl-label-text"><?= Loc::getMessage('LANDING_TPL_FORM_PHONE');?></div>
+			<div class="ui-ctl-label-text">
+				<label for="landing-master-phone"><?= Loc::getMessage('LANDING_TPL_FORM_PHONE');?></label>
+			</div>
 		</td>
 	</tr>
 	<tr>
-		<td>
+		<td aria-hidden="true">
 			<div class="landing-sm-content-table-num">3</div>
 		</td>
 		<td colspan=2>
 			<div class="ui-ctl ui-ctl-textbox ui-ctl-w100">
-				<input autocomplete="off" type="text" name="PHONE" class="ui-ctl-element" value="<?= \htmlspecialcharsbx($arResult['CRM_CONTACTS']['PHONE'] ?? '');?>" placeholder="<?= Loc::getMessage('LANDING_TPL_PLACEHOLDER_PHONE');?>">
+				<input autocomplete="tel" type="tel" name="PHONE" class="ui-ctl-element" id="landing-master-phone" value="<?= \htmlspecialcharsbx($arResult['CRM_CONTACTS']['PHONE'] ?? '');?>" placeholder="<?= Loc::getMessage('LANDING_TPL_PLACEHOLDER_PHONE');?>" data-testid="landing-master-phone-input">
 			</div>
 		</td>
 	</tr>
@@ -100,7 +110,12 @@ Extension::load(['ui.hint']);
 			LANDING_TPL_DOMAIN_AVAILABLE: '<?= \CUtil::jsEscape(Loc::getMessage('LANDING_TPL_DOMAIN_AVAILABLE'));?>',
 			LANDING_TPL_ERROR_DOMAIN_INCORRECT: '<?= \CUtil::jsEscape(Loc::getMessage('LANDING_TPL_ERROR_DOMAIN_INCORRECT'));?>',
 			LANDING_TPL_ERROR_DOMAIN_CHECK_DASH: '<?= \CUtil::jsEscape(Loc::getMessage('LANDING_TPL_ERROR_DOMAIN_CHECK_DASH'));?>',
-			LANDING_TPL_ERROR_DOMAIN_CHECK: '<?= \CUtil::jsEscape(Loc::getMessage('LANDING_TPL_ERROR_DOMAIN_CHECK', ['#TLD#' => strtolower($arResult['TLD'][0])]));?>'
+			LANDING_TPL_ERROR_DOMAIN_CHECK: '<?= \CUtil::jsEscape(Loc::getMessage('LANDING_TPL_ERROR_DOMAIN_CHECK', ['#TLD#' => strtolower($arResult['TLD'][0])]));?>',
+			LANDING_TPL_DOMAIN_CHECKING: '<?= \CUtil::jsEscape(Loc::getMessage('LANDING_TPL_DOMAIN_CHECKING'));?>',
+			LANDING_TPL_DOMAIN_CHECKING_SUBMIT: '<?= \CUtil::jsEscape(Loc::getMessage('LANDING_TPL_DOMAIN_CHECKING_SUBMIT'));?>',
+			LANDING_TPL_DOMAIN_MESSAGE_SUCCESS: '<?= \CUtil::jsEscape(Loc::getMessage('LANDING_TPL_DOMAIN_MESSAGE_SUCCESS'));?>',
+			LANDING_TPL_DOMAIN_MESSAGE_ERROR: '<?= \CUtil::jsEscape(Loc::getMessage('LANDING_TPL_DOMAIN_MESSAGE_ERROR'));?>',
+			LANDING_TPL_ERROR_DOMAIN_PROCESSING: '<?= \CUtil::jsEscape(Loc::getMessage('LANDING_TPL_ERROR_DOMAIN_PROCESSING'));?>'
 		});
 	});
 </script>

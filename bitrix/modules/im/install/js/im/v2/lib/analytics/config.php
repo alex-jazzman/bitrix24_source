@@ -16,6 +16,7 @@ return [
 		'im.v2.lib.message-component',
 		'main.core',
 		'ui.analytics',
+		'ui.page-context',
 	],
 	'skip_core' => false,
 ];

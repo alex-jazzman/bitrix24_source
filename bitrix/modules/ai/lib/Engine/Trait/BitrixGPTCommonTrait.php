@@ -146,27 +146,19 @@ trait BitrixGPTCommonTrait
 	public function isAvailable(): bool
 	{
 		$region = Application::getInstance()->getLicense()->getRegion();
-		$shouldUseB24 = Bitrix24::shouldUseB24();
-
 		$availableByRegion = $region === 'ru' || $region === 'by';
-		if (!$shouldUseB24)
+
+		if (!Bitrix24::shouldUseB24())
 		{
 			return $availableByRegion;
 		}
 
-		if ($region === 'by')
+		if ($availableByRegion)
 		{
 			return true;
 		}
 
-		$isBitrixGptEnabled = Config::getValue('bitrixgpt_enabled') === 'Y';
-
-		$moduleId = $this->getContext()->getModuleId();
-		$isAvailableByModuleId = $moduleId === 'fake' || in_array($moduleId, $this->availableForModules(), true);
-
-		return $isBitrixGptEnabled
-			&& $availableByRegion
-			&& $isAvailableByModuleId;
+		return Config::getValue('bitrixgpt_enabled_west') === 'Y';
 	}
 
 	/**
@@ -183,7 +175,59 @@ trait BitrixGPTCommonTrait
 			'enable_thinking' => $enableThinking,
 		];
 
+		$params = $this->addLiteLLMContextMetadata($params);
+
 		return $params;
+	}
+
+	private function addLiteLLMContextMetadata(array $params): array
+	{
+		$metadata = $this->getLiteLLMContextMetadata();
+		if (empty($metadata))
+		{
+			return $params;
+		}
+
+		$params['metadata'] = $metadata;
+		if (isset($metadata['user_id']))
+		{
+			$params['user'] = (string)$metadata['user_id'];
+		}
+
+		return $params;
+	}
+
+	private function getLiteLLMContextMetadata(): array
+	{
+		$metadata = [];
+
+		$metadata['user_id'] = $this->getContext()->getUserId();
+
+		$contextParameters = $this->getContext()->getParameters();
+		if (!is_array($contextParameters))
+		{
+			return $metadata;
+		}
+
+		$map = [
+			'chatId' => 'chat_id',
+			'messageId' => 'message_id',
+		];
+
+		foreach ($map as $contextParameterKey => $metadataKey)
+		{
+			$value = filter_var(
+				$contextParameters[$contextParameterKey] ?? null,
+				FILTER_VALIDATE_INT,
+				['options' => ['min_range' => 1]]
+			);
+			if ($value !== false)
+			{
+				$metadata[$metadataKey] = $value;
+			}
+		}
+
+		return $metadata;
 	}
 
 	protected function getTokenizer(): GPT

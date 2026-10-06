@@ -51,6 +51,8 @@ return [
 		'ui.info-helper',
 		'ui.notification',
 		'ui.sidepanel',
+		'ui.system.alert',
+		'ui.system.alert.vue',
 		'ui.text-editor',
 		'ui.uploader.tile-widget',
 		'ui.vue3',

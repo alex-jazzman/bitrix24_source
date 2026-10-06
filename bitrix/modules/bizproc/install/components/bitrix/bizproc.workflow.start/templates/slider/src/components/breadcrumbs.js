@@ -1,4 +1,4 @@
-import { Tag, Text, Type, Dom } from 'main.core';
+import { Tag, Text, Type, Dom, Loc } from 'main.core';
 
 import '../css/components/breadcrumbs.css';
 
@@ -46,8 +46,15 @@ export class Breadcrumbs
 
 	render(): HTMLElement
 	{
+		const label = Text.encode(Loc.getMessage('BIZPROC_CMP_WORKFLOW_START_TMP_SINGLE_START_STEPS_LABEL'));
+
 		return Tag.render`
-			<div class="bizproc__ws_start__breadcrumbs">
+			<div
+				class="bizproc__ws_start__breadcrumbs"
+				role="group"
+				aria-label="${label}"
+				data-testid="bizproc-ws-start-steps"
+			>
 				${[...this.#items.entries()]
 					.map(([key, item]) => this.#renderItem(item, key))
 				}
@@ -55,22 +62,35 @@ export class Breadcrumbs
 		`;
 	}
 
+	getCurrentStepTitle(): string
+	{
+		return this.#items.has(this.#currentStepId) ? this.#items.get(this.#currentStepId).text : '';
+	}
+
 	#renderItem(item: BreadcrumbsItemData, stepId: StepId): HTMLElement
 	{
 		if (!this.#itemsNode.has(stepId))
 		{
-			this.#itemsNode.set(
-				stepId,
-				Tag.render`
-					<div class="bizproc__ws_start__breadcrumbs-item${item.active ? ' --active' : ''}">
-						<span>${Text.encode(item.text)}</span>
-						<span class="ui-icon-set --chevron-right"></span>
-					</div>
-				`,
-			);
+			const node = Tag.render`
+				<div
+					class="bizproc__ws_start__breadcrumbs-item${item.active ? ' --active' : ''}"
+					data-testid="bizproc-ws-start-step-${stepId}"
+				>
+					<span>${Text.encode(item.text)}</span>
+					<span class="ui-icon-set --chevron-right" aria-hidden="true"></span>
+				</div>
+			`;
+			this.#markCurrent(node, item.active);
+
+			this.#itemsNode.set(stepId, node);
 		}
 
 		return this.#itemsNode.get(stepId);
+	}
+
+	#markCurrent(node: HTMLElement, isCurrent: boolean)
+	{
+		Dom.attr(node, 'aria-current', isCurrent ? 'step' : null);
 	}
 
 	next()
@@ -109,6 +129,7 @@ export class Breadcrumbs
 		{
 			this.#items.get(stepId).active = false;
 			Dom.removeClass(this.#itemsNode.get(stepId), '--active');
+			this.#markCurrent(this.#itemsNode.get(stepId), false);
 		}
 	}
 
@@ -118,6 +139,7 @@ export class Breadcrumbs
 		{
 			this.#items.get(stepId).active = true;
 			Dom.addClass(this.#itemsNode.get(stepId), '--active');
+			this.#markCurrent(this.#itemsNode.get(stepId), true);
 		}
 	}
 

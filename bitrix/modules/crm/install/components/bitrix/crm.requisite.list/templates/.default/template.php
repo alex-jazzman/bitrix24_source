@@ -3,6 +3,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 global $APPLICATION;
 
 use Bitrix\Main\UI;
+use Bitrix\Main\Web\Uri;
 
 UI\Extension::load("ui.tooltip");
 
@@ -98,17 +99,14 @@ foreach($data as $sKey =>  $arRequisite)
 	$nameContent = '<a href="'.$editUrl.'" onclick="'.htmlspecialcharsbx($onClickJSEdit.' return BX.PreventDefault(event);').'">'.$nameContent.'</a>';
 	if ($arResult['PERMS']['WRITE'])
 	{
-		$copyUrl = CHTTP::urlAddParams(
-			CComponentEngine::MakePathFromTemplate(
+		$copyUrl = (string)(new Uri(CComponentEngine::MakePathFromTemplate(
 				$arParams['PATH_TO_REQUISITE_EDIT'],
 				array('id' => $arRequisite['ID'])
-			),
-			array('copy' => 1)
-		);
+			)))->addParams(array('copy' => 1));
 		if (!empty($arResult['BACK_URL']))
 		{
-			$editUrl = CHTTP::urlAddParams($editUrl, array('back_url' => urlencode($arResult['BACK_URL'])));
-			$copyUrl = CHTTP::urlAddParams($copyUrl, array('back_url' => urlencode($arResult['BACK_URL'])));
+			$editUrl = (string)(new Uri($editUrl))->addParams(array('back_url' => $arResult['BACK_URL']));
+			$copyUrl = (string)(new Uri($copyUrl))->addParams(array('back_url' => $arResult['BACK_URL']));
 		}
 
 		$onClickJSCopy = 'BX.Crm["'.CUtil::JSEscape($requisiteGridEditorId).'"].onRequisiteEdit('.

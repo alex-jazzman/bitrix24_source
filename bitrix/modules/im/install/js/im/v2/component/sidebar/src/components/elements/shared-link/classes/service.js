@@ -4,17 +4,13 @@ import { runAction } from 'im.v2.lib.rest';
 
 import type { ImModelSidebarSharedLinkItem } from 'im.v2.model';
 
-type GetIndividualLinkResult = {
-	sharingLink: ImModelSidebarSharedLinkItem,
-};
-
 export class SharedLinkService
 {
-	async regenerate(code: string): Promise<GetIndividualLinkResult>
+	async regenerate(code: string): Promise<ImModelSidebarSharedLinkItem>
 	{
 		try
 		{
-			const { sharingLink }: ImModelSidebarSharedLinkItem = await runAction(
+			const { sharingLink }: { sharingLink: ImModelSidebarSharedLinkItem } = await runAction(
 				RestMethod.imV2ChatSharedLinkRegenerateIndividual,
 				{ data: { code } },
 			);
@@ -22,6 +18,8 @@ export class SharedLinkService
 			void Core.getStore().dispatch('sidebar/sharedLink/regenerate', {
 				newLink: sharingLink,
 			});
+
+			return sharingLink;
 		}
 		catch (error)
 		{

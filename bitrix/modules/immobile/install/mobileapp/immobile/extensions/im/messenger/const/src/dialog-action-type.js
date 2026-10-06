@@ -14,6 +14,7 @@ jn.define('im/messenger/const/dialog-action-type', (require, exports, module) =>
 		rename: 'rename',
 		send: 'send',
 		deleteOthersMessage: 'deleteOthersMessage',
+		deleteOwnMessage: 'deleteOwnMessage',
 		userList: 'userList',
 		changeOwner: 'changeOwner',
 		changeManagers: 'changeManagers',
@@ -35,6 +36,9 @@ jn.define('im/messenger/const/dialog-action-type', (require, exports, module) =>
 		openMessageMenu: 'openMessageMenu',
 		openSidebarMenu: 'openSidebarMenu',
 		changeMessagesAutoDeleteDelay: 'changeMessagesAutoDeleteDelay',
+		attachToParent: 'attachToParent',
+		detachFromParent: 'detachFromParent',
+		manageGuestLink: 'manageGuestLink',
 	});
 
 	module.exports = { DialogActionType };

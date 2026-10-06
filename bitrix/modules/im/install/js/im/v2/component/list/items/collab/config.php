@@ -14,6 +14,7 @@ return [
 		'im.v2.component.list.items.elements.empty-state',
 		'im.v2.const',
 		'im.v2.lib.collab',
+		'im.v2.lib.copilot',
 		'im.v2.lib.create-chat',
 		'im.v2.lib.draft',
 		'im.v2.lib.menu',

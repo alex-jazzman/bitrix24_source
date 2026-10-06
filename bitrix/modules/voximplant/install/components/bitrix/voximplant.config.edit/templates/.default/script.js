@@ -46,6 +46,7 @@
 
 		this.map = {
 			'welcome-melody': 'welcome-melody-settings',
+			'change-dtmf-type': 'change-dtmf-type-settings',
 			'enable-ivr': 'ivr-settings',
 			'enable-crm-forward': 'crm-forward-settings',
 			'enable-recording': 'recording-settings',
@@ -348,7 +349,7 @@
 				BX.show(BX(curId + 'default'));
 				BX.hide(BX(curId + 'notice'));
 				var player = BX.Fileman.PlayerManager.getPlayerById(curId + "player");
-				player.setSource(file["url"] + (file["url"].indexOf(".mp3") > 0 ? "" : "&/melody.mp3" ));
+				player.setSource({ src: file["url"], type: "audio/mp3" });
 			});
 		}
 		else
@@ -392,7 +393,7 @@
 						{
 							n.innerHTML = BX.message('VI_CONFIG_EDIT_UPLOAD_SUCCESS');
 							var player = BX.Fileman.PlayerManager.getPlayerById(curId + "player");
-							player.setSource(files[0]["fileURL"]);
+							player.setSource({ src: files[0]["fileURL"], type: "audio/mp3" });
 							BX(curId + 'default').style.display = '';
 						}
 					}

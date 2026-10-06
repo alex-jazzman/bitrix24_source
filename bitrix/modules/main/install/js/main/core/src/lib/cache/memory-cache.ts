@@ -1,10 +1,9 @@
 import BaseCache from './base-cache';
-import MemoryStorage from './storage/memory';
 
-export default class MemoryCache<T> extends BaseCache<T>
+/**
+ * In-memory cache. BaseCache already uses MemoryStorage by default, so this is a named
+ * alias kept for the public API (`BX.Cache.MemoryCache`).
+ */
+export default class MemoryCache<T = unknown> extends BaseCache<T>
 {
-	/**
-	 * @private
-	 */
-	storage: MemoryStorage<string, T> = new MemoryStorage();
 }

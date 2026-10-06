@@ -3,6 +3,7 @@ import { type PopupOptions } from 'main.popup';
 
 import { MessengerPopup } from 'im.v2.component.elements.popup';
 import { EventType } from 'im.v2.const';
+import { Analytics } from 'im.v2.lib.analytics';
 import { Notifier } from 'im.v2.lib.notifier';
 
 import { GuestService } from './classes/guest-service';
@@ -43,7 +44,11 @@ export const GuestNamePopup = {
 			};
 		},
 	},
-	beforeUnmount(): any
+	mounted()
+	{
+		Analytics.getInstance().guest.onShowGuestNamePopup(this.dialogId);
+	},
+	beforeUnmount()
 	{
 		EventEmitter.emit(EventType.guest.onAfterGuestNamePopupClose, {
 			dialogId: this.dialogId,

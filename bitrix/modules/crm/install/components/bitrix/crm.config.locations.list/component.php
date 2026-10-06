@@ -1,4 +1,8 @@
-<?if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
+<?php
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
+
+use Bitrix\Main\Web\Uri;
 
 if (!CModule::IncludeModule('crm'))
 {
@@ -204,13 +208,10 @@ while ($arLoc = $dbRecordsList->Fetch())
 		);
 
 	$arLoc['PATH_TO_LOCATIONS_DELETE'] =
-		CHTTP::urlAddParams(
-			CComponentEngine::MakePathFromTemplate(
+		(string)(new Uri(CComponentEngine::MakePathFromTemplate(
 				$arParams['PATH_TO_LOCATIONS_LIST'],
 				array('loc_id' => $arLoc['ID'])
-			),
-			array('action_'.$arResult['GRID_ID'] => 'delete', 'ID' => $arLoc['ID'], 'sessid' => bitrix_sessid())
-		);
+			)))->addParams(array('action_'.$arResult['GRID_ID'] => 'delete', 'ID' => $arLoc['ID'], 'sessid' => bitrix_sessid()));
 
 	$arResult['LOCS'][$arLoc['ID']] = $arLoc;
 }

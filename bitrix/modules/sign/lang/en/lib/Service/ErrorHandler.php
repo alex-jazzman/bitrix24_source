@@ -20,3 +20,4 @@ $MESS["SIGN_SERVICE_ERROR_PROTECTED_PDF"] = "File is password protected and cann
 $MESS["SIGN_SERVICE_ERROR_REQUIRED_FIELDS_VALIDATION"] = "One or more of the required fields are empty.";
 $MESS["SIGN_SERVICE_ERROR_SMS_LIMIT_EXCEEDED"] = "Maximum new SMS exceeded.";
 $MESS["SIGN_SERVICE_ERROR_TOO_MANY_FILES_COUNT"] = "You can submit for signing one PDF, DOC, DOCX, RTF or ODT document at a time, or up to %imageCountLimit% JPG / PNG images.";
+$MESS["SIGN_SERVICE_ERROR_UNKNOWN_ACTION"] = "This action is not available yet, please try again later.";

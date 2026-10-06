@@ -1,8 +1,8 @@
 import { createNamespacedHelpers } from 'ui.vue3.vuex';
 import { range } from 'booking.lib.range';
 import { Model } from 'booking.const';
-import type { Cell } from 'booking.model.interface';
-import type { ResourceModel } from 'booking.model.resources';
+import { type Cell } from 'booking.model.interface';
+import { type ResourceModel } from 'booking.model.resources';
 
 import { DayGridCell } from './cell/cell';
 import { OffHours } from './off-hours/off-hours';
@@ -16,6 +16,11 @@ export const Column = {
 	components: {
 		DayGridCell,
 		OffHours,
+	},
+	inject: {
+		gridContext: {
+			default: null,
+		},
 	},
 	props: {
 		resourceId: {
@@ -31,19 +36,29 @@ export const Column = {
 	},
 	computed: {
 		...mapInterfaceGetters({
-			resourcesIds: 'resourcesIds',
 			zoom: 'zoom',
 			scroll: 'scroll',
-			selectedDateTs: 'selectedDateTs',
-			offHoursHover: 'offHoursHover',
-			offHoursExpanded: 'offHoursExpanded',
+			offset: 'offset',
 			fromHour: 'fromHour',
 			toHour: 'toHour',
-			offset: 'offset',
+			selectedDateTs: 'selectedDateTs',
 		}),
 		resource(): ResourceModel
 		{
 			return this.$store.getters['resources/getById'](this.resourceId);
+		},
+		resourcesIds(): number[]
+		{
+			if (this.gridContext)
+			{
+				return this.gridContext.resourcesIds;
+			}
+
+			return this.$store.getters[`${Model.Interface}/resourcesIds`];
+		},
+		isOffHoursControlsEnabled(): boolean
+		{
+			return this.gridContext?.offHoursControlsEnabled ?? true;
 		},
 		fromMinutes(): number
 		{
@@ -132,7 +147,9 @@ export const Column = {
 			:data-id="resourceId"
 		>
 			<template v-if="visible">
-				<OffHours/>
+				<div class="booking-booking-grid-padding">
+					<OffHours v-if="isOffHoursControlsEnabled"/>
+				</div>
 				<div class="booking-booking-grid-off-hours-cells">
 					<DayGridCell v-for="cell of offHoursTopCells" :key="cell.id" :cell="cell"/>
 				</div>
@@ -140,7 +157,9 @@ export const Column = {
 				<div class="booking-booking-grid-off-hours-cells --bottom">
 					<DayGridCell v-for="cell of offHoursBottomCells" :key="cell.id" :cell="cell"/>
 				</div>
-				<OffHours :bottom="true"/>
+				<div class="booking-booking-grid-padding">
+					<OffHours v-if="isOffHoursControlsEnabled" :bottom="true"/>
+				</div>
 			</template>
 		</div>
 	`,

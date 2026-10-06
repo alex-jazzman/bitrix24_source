@@ -1,25 +1,40 @@
 import { Dom, Event, Loc, Type, Uri } from 'main.core';
-import { TemplateEntity, type TemplateEntityType } from 'sign.type';
-import { Analytics } from 'sign.v2.analytics';
-import { Api } from 'sign.v2.api';
+import { AirButtonStyle, ButtonSize } from 'ui.buttons';
 import { MessageBox } from 'ui.dialogs.messagebox';
 import { Switcher, SwitcherSize } from 'ui.switcher';
-import { toggleActionButton } from './action-panel';
-import { CreateFolderPopup } from './popup/create-folder';
-import { DeleteConfirmationPopup } from './popup/delete-confirmation';
-import './style.css';
-import { FolderSelectionPopup } from './popup/folder-selection';
-import type { GridRow } from './rows';
+
 import { FeatureStorage } from 'sign.feature-storage';
-import { extractMetadataFromRow } from './rows';
-import { sendBlockedParams } from './type';
+import { DocumentInitiated, TemplateEntity, type TemplateEntityType } from 'sign.type';
+import { Analytics } from 'sign.v2.analytics';
+import { Api } from 'sign.v2.api';
+import { ActionPanel } from 'sign.v2.grid.components.action-panel';
+import { type PreselectedSignerEntity } from 'sign.v2.b2e.user-party';
+import {
+	CreateFolderPopup,
+	DeleteConfirmationPopup,
+	FolderSelectionPopup,
+} from 'sign.v2.grid.components.folder';
+
+import { extractRowMetadata } from './rows';
+import { type sendBlockedParams } from './type';
+
+type GridRow = BX.Grid.Row;
 
 type TemplateSelectedEntity = {
 	id: number;
 	entityType: TemplateEntity.template | TemplateEntity.folder;
 };
 
+type DeleteConfirmationTexts = {
+	title: string;
+	message: string;
+	successNotification: string;
+	failNotification: string;
+};
+
 type Grid = BX.Main.grid;
+
+const SIGNERS_LIST_ENTITY_TYPE = 'signers-list';
 
 export class Templates
 {
@@ -36,6 +51,7 @@ export class Templates
 
 	#analytics = new Analytics();
 	#api = new Api();
+	#actionPanel = new ActionPanel();
 
 	#changeVisibilityForTemplate(templateId: number, visibility: string): Promise<any>
 	{
@@ -56,6 +72,7 @@ export class Templates
 		entityType: string,
 		templateIds: number[],
 		blockParams: sendBlockedParams,
+		preselectedSignersListId: number = 0,
 	): HTMLElement
 	{
 		if (entityId <= 0)
@@ -121,7 +138,9 @@ export class Templates
 						return top.BX.Runtime.loadExtension(['sign.v2.b2e.sign-settings-templates']).then((exports) => {
 							const { B2ETemplatesSignSettings } = exports;
 							const container = BX.Tag.render`<div id="sign-b2e-templates-settings-container-${entityId}-${entityType}"></div>`;
-							const templatesSignSettings = new B2ETemplatesSignSettings(templateIds, sliderUrl);
+							const templatesSignSettings = new B2ETemplatesSignSettings(templateIds, sliderUrl, {
+								preselectedSigners: this.#getPreselectedSigners(preselectedSignersListId),
+							});
 							templatesSignSettings.renderToContainer(container);
 
 							return container;
@@ -132,6 +151,21 @@ export class Templates
 		}
 
 		return buttonElement;
+	}
+
+	/**
+	 * Group the send flow was started for, as a signers list entity of the signers step.
+	 * The group is never expanded into its employees here: the server does that when the
+	 * signers are saved, so the set is fixed at the moment of sending.
+	 */
+	#getPreselectedSigners(signersListId: number): PreselectedSignerEntity[]
+	{
+		if (signersListId <= 0)
+		{
+			return [];
+		}
+
+		return [{ entityType: SIGNERS_LIST_ENTITY_TYPE, entityId: String(signersListId) }];
 	}
 
 	async renderSwitcher(
@@ -209,48 +243,66 @@ export class Templates
 		switcherNode.setAttribute('title', title);
 	}
 
-	async createFolder(): Promise<void>
+	#createFolderPopupTexts(): Object
 	{
-		try
-		{
-			const createFolderPopup = new CreateFolderPopup();
-			const title = await createFolderPopup.show();
-			const api = this.#api.templateFolder;
-			await api.create(title);
-			window.top.BX.UI.Notification.Center.notify({
-				content: Loc.getMessage('SIGN_TEMPLATE_GRID_CREATE_FOLDER_HINT_SUCCESS'),
-			});
-		}
-		catch
-		{
-			window.top.BX.UI.Notification.Center.notify({
-				content: Loc.getMessage('SIGN_TEMPLATE_GRID_CREATE_FOLDER_HINT_FAIL'),
-			});
-		}
-
-		await this.reload();
+		return {
+			placeholder: Loc.getMessage('SIGN_TEMPLATE_GRID_CREATE_FOLDER_POPUP_INPUT_PLACEHOLDER'),
+			createButtonText: Loc.getMessage('SIGN_TEMPLATE_GRID_CREATE_FOLDER_CREATE_BUTTON_TEXT'),
+			saveButtonText: Loc.getMessage('SIGN_TEMPLATE_GRID_CREATE_FOLDER_SAVE_BUTTON_TEXT'),
+			cancelButtonText: Loc.getMessage('SIGN_TEMPLATE_GRID_CREATE_FOLDER_CANCEL_BUTTON_TEXT'),
+			emptyTitleNotification: Loc.getMessage('SIGN_TEMPLATE_GRID_CREATE_FOLDER_HINT_TITLE_NOT_EMPTY'),
+		};
 	}
 
-	async renameFolder(entityId: number, oldTitle: string): Promise<void>
+	createFolder(): void
 	{
-		try
-		{
-			const createFolderPopup = new CreateFolderPopup();
-			const newTitle = await createFolderPopup.show(oldTitle);
-			const api = this.#api.templateFolder;
-			await api.rename(entityId, newTitle);
-			window.top.BX.UI.Notification.Center.notify({
-				content: Loc.getMessage('SIGN_TEMPLATE_GRID_CREATE_FOLDER_HINT_RENAME_SUCCESS'),
-			});
-		}
-		catch
-		{
-			window.top.BX.UI.Notification.Center.notify({
-				content: Loc.getMessage('SIGN_TEMPLATE_GRID_CREATE_FOLDER_HINT_RENAME_FAIL'),
-			});
-		}
+		const createFolderPopup = new CreateFolderPopup(this.#createFolderPopupTexts());
+		createFolderPopup.subscribe('submit', async (event) => {
+			const { title } = event.getData();
+			try
+			{
+				await this.#api.templateFolder.create(title);
+				window.top.BX.UI.Notification.Center.notify({
+					content: Loc.getMessage('SIGN_TEMPLATE_GRID_CREATE_FOLDER_HINT_SUCCESS'),
+				});
+			}
+			catch
+			{
+				window.top.BX.UI.Notification.Center.notify({
+					content: Loc.getMessage('SIGN_TEMPLATE_GRID_CREATE_FOLDER_HINT_FAIL'),
+				});
+			}
 
-		await this.reload();
+			await this.reload();
+		});
+		createFolderPopup.show();
+	}
+
+	renameFolder(entityId: number, oldTitle: string): void
+	{
+		const createFolderPopup = new CreateFolderPopup({
+			...this.#createFolderPopupTexts(),
+			initialTitle: oldTitle,
+		});
+		createFolderPopup.subscribe('submit', async (event) => {
+			const { title } = event.getData();
+			try
+			{
+				await this.#api.templateFolder.rename(entityId, title);
+				window.top.BX.UI.Notification.Center.notify({
+					content: Loc.getMessage('SIGN_TEMPLATE_GRID_CREATE_FOLDER_HINT_RENAME_SUCCESS'),
+				});
+			}
+			catch
+			{
+				window.top.BX.UI.Notification.Center.notify({
+					content: Loc.getMessage('SIGN_TEMPLATE_GRID_CREATE_FOLDER_HINT_RENAME_FAIL'),
+				});
+			}
+
+			await this.reload();
+		});
+		createFolderPopup.show();
 	}
 
 	#sendActionStateAnalytics(checked: boolean, templateId: number): void
@@ -402,10 +454,85 @@ export class Templates
 		return items;
 	}
 
+	#showDeleteConfirmationPopup(
+		entityType: TemplateEntityType,
+		deleteOperation: () => Promise<void>,
+	): void
+	{
+		const texts = this.#getDeleteConfirmationTexts(entityType);
+		const popup = new DeleteConfirmationPopup({
+			title: texts.title,
+			message: texts.message,
+			confirmButtonText: Loc.getMessage('SIGN_TEMPLATE_GRID_DELETE_POPUP_YES'),
+			cancelButtonText: Loc.getMessage('SIGN_TEMPLATE_GRID_DELETE_POPUP_NO'),
+			onConfirm: async () => {
+				try
+				{
+					await deleteOperation();
+					window.top.BX.UI.Notification.Center.notify({
+						content: texts.successNotification,
+					});
+				}
+				catch
+				{
+					if (entityType !== TemplateEntity.folder)
+					{
+						window.top.BX.UI.Notification.Center.notify({
+							content: texts.failNotification,
+						});
+					}
+				}
+
+				await this.reload();
+			},
+		});
+
+		popup.show();
+	}
+
+	#getDeleteConfirmationTexts(entityType: TemplateEntityType): DeleteConfirmationTexts
+	{
+		switch (entityType)
+		{
+			case TemplateEntity.template:
+				return {
+					title: Loc.getMessage('SIGN_TEMPLATE_DELETE_CONFIRMATION_TITLE'),
+					message: Loc.getMessage('SIGN_TEMPLATE_DELETE_CONFIRMATION_MESSAGE'),
+					successNotification: Loc.getMessage('SIGN_TEMPLATE_GRID_DELETE_HINT_SUCCESS'),
+					failNotification: Loc.getMessage('SIGN_TEMPLATE_GRID_DELETE_HINT_FAIL'),
+				};
+			case TemplateEntity.folder:
+				return {
+					title: Loc.getMessage('SIGN_FOLDER_DELETE_CONFIRMATION_TITLE'),
+					message: Loc.getMessage('SIGN_FOLDER_DELETE_CONFIRMATION_MESSAGE'),
+					successNotification: Loc.getMessage('SIGN_FOLDER_GRID_DELETE_HINT_SUCCESS'),
+					failNotification: Loc.getMessage('SIGN_FOLDER_GRID_DELETE_HINT_FAIL'),
+				};
+			case TemplateEntity.multiple:
+			{
+				const isFolderGroupingAllowed = FeatureStorage.isTemplateFolderGroupingAllowed();
+
+				return {
+					title: Loc.getMessage('SIGN_MULTIPLE_DELETE_CONFIRMATION_TITLE'),
+					message: Loc.getMessage(isFolderGroupingAllowed
+						? 'SIGN_MULTIPLE_DELETE_CONFIRMATION_MESSAGE'
+						: 'SIGN_MULTIPLE_DELETE_TEMPLATES_CONFIRMATION_MESSAGE'),
+					successNotification: Loc.getMessage(isFolderGroupingAllowed
+						? 'SIGN_MULTIPLE_GRID_DELETE_HINT_SUCCESS'
+						: 'SIGN_MULTIPLE_GRID_DELETE_HINT_TEMPLATES_SUCCESS'),
+					failNotification: Loc.getMessage(isFolderGroupingAllowed
+						? 'SIGN_MULTIPLE_GRID_DELETE_HINT_FAIL'
+						: 'SIGN_MULTIPLE_GRID_DELETE_HINT_TEMPLATES_FAIL'),
+				};
+			}
+			default:
+				throw new Error(`Unknown entity type: ${entityType}`);
+		}
+	}
+
 	async delete(entityId: number, entityType: TemplateEntityType)
 	{
-		const deleteConfirmationPopup = new DeleteConfirmationPopup();
-		await deleteConfirmationPopup.show(entityType, async () => {
+		this.#showDeleteConfirmationPopup(entityType, async () => {
 			const api = this.#api;
 			switch (entityType)
 			{
@@ -416,9 +543,8 @@ export class Templates
 					await api.templateFolder.delete(entityId);
 					break;
 				default:
-					await console.error(`Unknown entity type: ${entityType}`);
+					throw new Error(`Unknown entity type: ${entityType}`);
 			}
-			await this.reload();
 		});
 	}
 
@@ -427,17 +553,8 @@ export class Templates
 		const selectedItems = this.#getSelectedItems();
 		if (selectedItems.length > 0)
 		{
-			const deleteConfirmationPopup = new DeleteConfirmationPopup();
-			await deleteConfirmationPopup.show(TemplateEntity.multiple, async () => {
-				try
-				{
-					await this.#api.template.deleteEntities(selectedItems);
-					await this.reload();
-				}
-				catch (error)
-				{
-					await console.error('Error deleting template entities:', error);
-				}
+			this.#showDeleteConfirmationPopup(TemplateEntity.multiple, async () => {
+				await this.#api.template.deleteEntities(selectedItems);
 			});
 		}
 	}
@@ -447,9 +564,12 @@ export class Templates
 		const selectedItems = this.#getSelectedItems();
 		if (selectedItems.length > 0 || templateId !== null)
 		{
-			const folderSelectionPopup = new FolderSelectionPopup();
+			const folderSelectionPopup = new FolderSelectionPopup({
+				loadFolders: () => this.#api.templateFolder.getListByDepthLevel(0),
+				rootItemTitle: Loc.getMessage('SIGN_TEMPLATE_GRID_MOVE_TO_FOLDER_POPUP_ROOT_LEVEL_ITEM'),
+			});
 			folderSelectionPopup.subscribe('folderSelected', (event) => {
-				this.selectedFolder = event.getData();
+				this.selectedFolderId = event.getData().folderId;
 			});
 			const folderList = await folderSelectionPopup.show();
 
@@ -461,23 +581,26 @@ export class Templates
 				minHeight: 370,
 				buttons: [
 					new BX.UI.Button({
+						useAirDesign: true,
+						style: AirButtonStyle.FILLED_SUCCESS,
+						size: ButtonSize.LARGE,
 						text: Loc.getMessage('SIGN_TEMPLATE_GRID_MOVE_TO_FOLDER_POPUP_OK_BUTTON_TEXT'),
-						color: BX.UI.Button.Color.SUCCESS,
 						onclick: async (button) => {
-							if (this.selectedFolder)
+							if (this.selectedFolderId !== null && this.selectedFolderId !== undefined)
 							{
 								const selectedItem = { id: templateId, entityType: TemplateEntity.template };
 								const selectedTemplates = templateId === null ? selectedItems : [selectedItem];
-								await this.#api.template.moveToFolder(selectedTemplates, Number(this.selectedFolder.id));
+								await this.#api.template.moveToFolder(selectedTemplates, Number(this.selectedFolderId));
 								button.getContext().close();
 								await this.reload();
 							}
 						},
-						className: 'sign-b2e-grid-templates-popup__move-to-button',
 					}),
 					new BX.UI.Button({
+						useAirDesign: true,
+						style: AirButtonStyle.PLAIN,
+						size: ButtonSize.LARGE,
 						text: Loc.getMessage('SIGN_TEMPLATE_GRID_MOVE_TO_FOLDER_POPUP_CANCEL_BUTTON_TEXT'),
-						color: BX.UI.Button.Color.LINK,
 						onclick: (button) => {
 							button.getContext().close();
 						},
@@ -495,9 +618,19 @@ export class Templates
 			const basePath = folderId === 0 ? 'employee/templates/folder/' : 'templates/folder/';
 
 			const queryParams = new URLSearchParams(window.location.search);
+			const targetParams = new URLSearchParams({ folderId: String(folderId) });
+
+			// keep the group context of the send flow while navigating into a folder, otherwise
+			// a template chosen inside it would open the wizard without the preselected group
+			const signersListId = queryParams.get('signersListId');
+			if (signersListId !== null)
+			{
+				targetParams.set('signersListId', signersListId);
+			}
+
 			const url = (folderId !== 0 && queryParams.has('folderId'))
-				? `?folderId=${encodeURIComponent(folderId)}`
-				: `${basePath}?folderId=${encodeURIComponent(folderId)}`;
+				? `?${targetParams.toString()}`
+				: `${basePath}?${targetParams.toString()}`;
 
 			BX.SidePanel.Instance.open(url, {
 				width: 1650,
@@ -527,15 +660,15 @@ export class Templates
 	{
 		const rows: GridRow[] = grid.getRows().getRows();
 		const isRowUnmovable = (row: GridRow): boolean => {
-			const metadata = extractMetadataFromRow(row);
+			const metadata = extractRowMetadata(row);
 			if (Type.isNull(metadata))
 			{
 				return true;
 			}
 
 			const isChecked = row.getCheckbox()?.checked;
-			const isRestricted = metadata.isFolderEntityType()
-				|| metadata.isInitiatedByTypeisEmployee()
+			const isRestricted = metadata.entityType === TemplateEntity.folder
+				|| metadata.initiatedByType === DocumentInitiated.employee
 				|| !metadata.canEditAccess()
 			;
 
@@ -547,21 +680,18 @@ export class Templates
 			10,
 		);
 
-		const moveActionButton = {
-			id: 'sign-template-list-move-to-folder-button',
-			disabled: false,
-			title: Loc.getMessage('SIGN_TEMPLATE_GRID_MOVE_TO_FOLDER_GROUP_ACTION_BUTTON_DISABLED_HINT'),
-		};
+		const moveButtonId = 'sign-template-list-move-to-folder-button';
+		const moveButtonTitle = Loc.getMessage('SIGN_TEMPLATE_GRID_MOVE_TO_FOLDER_GROUP_ACTION_BUTTON_DISABLED_HINT');
 
 		const rowsWithoutHeaderAndHiddenRow = rows.slice(2);
 
-		moveActionButton.disabled = rowsWithoutHeaderAndHiddenRow
+		const isMoveDisabled = rowsWithoutHeaderAndHiddenRow
 			.some((row) => isRowUnmovable(row));
 
-		toggleActionButton(moveActionButton);
+		this.#actionPanel.toggleActionButton(moveButtonId, !isMoveDisabled, moveButtonTitle);
 
 		const isRowNonDeletable = (row: GridRow): boolean => {
-			const metadata = extractMetadataFromRow(row);
+			const metadata = extractRowMetadata(row);
 			if (Type.isNull(metadata))
 			{
 				return true;
@@ -572,24 +702,21 @@ export class Templates
 			return !metadata.canDeleteAccess() && isChecked;
 		};
 
-		const deleteActionButton = {
-			id: 'sign-template-list-delete-button',
-			disabled: false,
-			title: FeatureStorage.isTemplateFolderGroupingAllowed()
-				? Loc.getMessage('SIGN_TEMPLATE_GRID_DELETE_GROUP_ACTION_BUTTON_DISABLED_HINT')
-				: Loc.getMessage('SIGN_TEMPLATE_GRID_DELETE_TEMPLATES_GROUP_ACTION_BUTTON_DISABLED_HINT'),
-		};
+		const deleteButtonId = 'sign-template-list-delete-button';
+		const deleteButtonTitle = FeatureStorage.isTemplateFolderGroupingAllowed()
+			? Loc.getMessage('SIGN_TEMPLATE_GRID_DELETE_GROUP_ACTION_BUTTON_DISABLED_HINT')
+			: Loc.getMessage('SIGN_TEMPLATE_GRID_DELETE_TEMPLATES_GROUP_ACTION_BUTTON_DISABLED_HINT');
 
 		if (allSelectedCellsAmount <= 1)
 		{
-			toggleActionButton(moveActionButton);
+			this.#actionPanel.toggleActionButton(moveButtonId, !isMoveDisabled, moveButtonTitle);
 
 			return;
 		}
 
-		deleteActionButton.disabled = rowsWithoutHeaderAndHiddenRow
+		const isDeleteDisabled = rowsWithoutHeaderAndHiddenRow
 			.some((row) => isRowNonDeletable(row));
 
-		toggleActionButton(deleteActionButton);
+		this.#actionPanel.toggleActionButton(deleteButtonId, !isDeleteDisabled, deleteButtonTitle);
 	}
 }

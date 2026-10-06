@@ -8,6 +8,7 @@ jn.define('bizproc/workflow/starter/catalog-step/component', (require, exports, 
 	const { isNil } = require('utils/type');
 	const { Random } = require('utils/random');
 	const { PureComponent } = require('layout/pure-component');
+	const { handleNetworkError } = require('bizproc/helper/network-error');
 	const { CatalogStepView } = require('bizproc/workflow/starter/catalog-step/view');
 	const { formatRoundedTime, roundTimeInSeconds } = require('bizproc/helper/duration');
 
@@ -87,6 +88,11 @@ jn.define('bizproc/workflow/starter/catalog-step/component', (require, exports, 
 					templates = (response.data && response.data.templates) || [];
 				})
 				.catch((response) => {
+					if (handleNetworkError(response.errors, this.props.layout))
+					{
+						return;
+					}
+
 					if (Array.isArray(response.errors))
 					{
 						NotifyManager.showErrors(response.errors);

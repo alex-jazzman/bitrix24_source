@@ -19,6 +19,9 @@ jn.define('layout/socialnetwork/project-v2/create/src/manager/project-create-bas
 		normalizeSettings,
 	} = require('layout/socialnetwork/project-v2/create/src/helpers/project-create-settings');
 	const {
+		createProjectSettingsCloseGuard,
+	} = require('layout/socialnetwork/project-v2/create/src/helpers/project-settings-close-guard');
+	const {
 		hasInvalidDateRange,
 	} = require('layout/socialnetwork/project-v2/create/src/helpers/settings-normalizer');
 
@@ -184,7 +187,7 @@ jn.define('layout/socialnetwork/project-v2/create/src/manager/project-create-bas
 
 			layoutWidget.showComponent(instance);
 			layoutWidget.enableNavigationBarBorder?.(false);
-			this.setLeftButtons(layoutWidget);
+			this.setLeftButtons(layoutWidget, () => instance.requestClose());
 
 			return instance;
 		}
@@ -211,12 +214,19 @@ jn.define('layout/socialnetwork/project-v2/create/src/manager/project-create-bas
 			return getNormalizedSettings(props.settings, userId);
 		}
 
-		static setLeftButtons(layoutWidget)
+		static setLeftButtons(layoutWidget, onClose = null)
 		{
 			layoutWidget?.setLeftButtons([
 				{
 					type: 'back',
 					callback: () => {
+						if (onClose)
+						{
+							onClose();
+
+							return;
+						}
+
 						layoutWidget.close();
 					},
 				},
@@ -245,6 +255,24 @@ jn.define('layout/socialnetwork/project-v2/create/src/manager/project-create-bas
 			this.isSettingsLoaded = props.settingsLoaded === true;
 			this.settingsLoadPromise = null;
 			this.currentStepInstance = null;
+			this.closeGuard = null;
+		}
+
+		componentDidMount()
+		{
+			if (this.props.stage !== ProjectCreateStage.EDITING.getValue())
+			{
+				return;
+			}
+
+			this.closeGuard = createProjectSettingsCloseGuard({
+				layoutWidget: this.props.layoutWidget,
+				initialFields: this.initialSettings,
+				getCurrentFields: () => this.settings,
+				normalizeFields: normalizeSettings,
+				onSaveAndClose: () => this.submit(),
+				onDiscardAndClose: () => this.closeWidget(this.props.layoutWidget),
+			});
 		}
 
 		getMode()
@@ -271,6 +299,7 @@ jn.define('layout/socialnetwork/project-v2/create/src/manager/project-create-bas
 				projectId: this.props.projectId,
 				isLegacyProject: this.settings.isLegacyProject === true,
 				layoutWidget: this.props.layoutWidget,
+				rootLayoutWidget: this.props.layoutWidget,
 				autoDeleteEnabledInPortalSettings: this.settings.autoDeleteEnabledInPortalSettings,
 				showKnowledgeBasePermissions: this.isEditMode(),
 				selectorParentWidget: this.props.parentWidget === PageManager
@@ -309,6 +338,7 @@ jn.define('layout/socialnetwork/project-v2/create/src/manager/project-create-bas
 			});
 
 			this.syncWidgetTitle();
+			this.closeGuard?.update();
 		};
 
 		onSubmitButtonClick = async (disablePending) => {
@@ -377,20 +407,31 @@ jn.define('layout/socialnetwork/project-v2/create/src/manager/project-create-bas
 				return false;
 			}
 
+			let success = false;
+			this.closeGuard?.allowClose();
 			void Notify.showIndicatorLoading();
 
 			try
 			{
 				const response = await this.submitSettings();
 
-				return this.handleSubmitSuccess(response);
+				success = this.handleSubmitSuccess(response);
+
+				return success;
 			}
 			catch (response)
 			{
-				return this.handleSubmitError(response);
+				success = this.handleSubmitError(response);
+
+				return success;
 			}
 			finally
 			{
+				if (!success)
+				{
+					this.closeGuard?.update();
+				}
+
 				Notify.hideCurrentIndicator();
 			}
 		}
@@ -529,6 +570,17 @@ jn.define('layout/socialnetwork/project-v2/create/src/manager/project-create-bas
 				void callback?.();
 			});
 		}
+
+		requestClose = () => {
+			if (this.closeGuard)
+			{
+				this.closeGuard.handleCloseRequest();
+
+				return;
+			}
+
+			this.closeWidget(this.props.layoutWidget);
+		};
 	}
 
 	module.exports = { ProjectCreateBaseManager };

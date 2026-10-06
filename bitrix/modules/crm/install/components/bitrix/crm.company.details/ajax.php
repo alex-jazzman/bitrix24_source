@@ -106,6 +106,15 @@ if($action === 'SAVE')
 
 	$isNew = $ID === 0;
 	$isCopyMode = $isNew && $sourceEntityID > 0;
+
+	if (
+		$sourceEntityID > 0
+		&& !Container::getInstance()->getUserPermissions()->item()->canRead(\CCrmOwnerType::Company, $sourceEntityID)
+	)
+	{
+		__CrmCompanyDetailsEndJsonResonse(['ERROR' => \Bitrix\Main\Localization\Loc::getMessage('CRM_COMMON_ERROR_ACCESS_DENIED')]);
+	}
+
 	$isMyCompany = isset($params['IS_MY_COMPANY']) && $params['IS_MY_COMPANY'] == 'Y';
 
 	$fields = array();

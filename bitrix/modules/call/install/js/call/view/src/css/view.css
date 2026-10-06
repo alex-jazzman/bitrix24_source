@@ -1042,6 +1042,10 @@
 	height: 21px;
 }
 
+.bx-messenger-videocall-top-button-icon.link {
+	background-image: url('./images/call-view-top-button-link.svg');
+}
+
 .bx-messenger-videocall-top-separator {
 	width: 1px;
 	height: 13px;

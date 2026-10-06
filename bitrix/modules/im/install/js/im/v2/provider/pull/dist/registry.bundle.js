@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
-(function (exports, im_v2_application_core, im_v2_lib_user, im_v2_lib_logger, main_core, main_core_events, im_v2_const, im_v2_lib_copilot, im_v2_lib_inputAction, im_v2_provider_service_message, im_v2_lib_analytics, im_v2_lib_notifier, im_v2_lib_channel, im_public, im_v2_lib_call, im_v2_lib_roleManager, im_v2_lib_utils, im_v2_lib_desktop, im_v2_lib_counter, main_sidepanel, im_v2_lib_slider, im_v2_lib_layout, im_v2_lib_unreadMode, im_v2_lib_messageNotifier, im_v2_lib_localStorage, im_v2_lib_uuid, im_v2_lib_promo) {
+(function (exports, im_v2_application_core, im_v2_lib_user, im_v2_lib_logger, main_core, main_core_events, im_v2_const, im_v2_lib_copilot, im_v2_lib_inputAction, im_v2_provider_service_message, im_v2_lib_analytics, im_v2_lib_notifier, im_v2_lib_channel, im_public, im_v2_lib_call, im_v2_lib_roleManager, im_v2_lib_utils, im_v2_lib_desktop, im_v2_lib_counter, main_sidepanel, im_v2_lib_slider, im_v2_lib_layout, im_v2_lib_unreadMode, im_v2_lib_chat, im_v2_lib_folder, im_v2_lib_messageNotifier, im_v2_lib_localStorage, im_v2_lib_uuid, im_v2_lib_promo) {
 	'use strict';
 
 	class BotPullHandler {
@@ -182,14 +182,16 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 			}
 			// it's an opponent message or our own message from somewhere else
 			else if (!messageWithRealId && !messageWithTemplateId) {
-				const hasLoadingMessage = this.#store.getters['messages/hasLoadingMessageByMessageId'](params.message.templateId);
-				if (hasLoadingMessage) {
-					void this.#store.dispatch('messages/delete', {
-						id: params.message.templateId
-					});
-				}
 				im_v2_lib_logger.Logger.warn('New message pull handler: we dont have this message', params.message);
 				this.#handleAddingMessageToModel(params);
+			}
+
+			// the loading message has to be dropped no matter which branch handled the message
+			const hasLoadingMessage = this.#store.getters['messages/hasLoadingMessageByMessageId'](params.message.templateId);
+			if (hasLoadingMessage) {
+				void this.#store.dispatch('messages/delete', {
+					id: params.message.templateId
+				});
 			}
 			im_v2_lib_inputAction.InputActionListener.getInstance().stopAction({
 				userId: params.message.senderId,
@@ -286,18 +288,26 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 				chatId,
 				dialogId,
 				viewedMessages,
-				lastId
+				lastId,
+				exact
 			} = params;
 			void this.#store.dispatch('messages/readMessages', {
 				chatId,
-				messageIds: viewedMessages
+				messageIds: viewedMessages,
+				exact
 			});
-			void this.#store.dispatch('chats/update', {
-				dialogId,
-				fields: {
-					lastId
-				}
-			});
+
+			// Exact read: the server cursor didn't move, lastId here is the old value.
+			// Don't update lastReadId so the cursor isn't rolled back. Normal read (no flag) —
+			// prior behavior.
+			if (!exact) {
+				void this.#store.dispatch('chats/update', {
+					dialogId,
+					fields: {
+						lastId
+					}
+				});
+			}
 		}
 		handleReadMessageOpponent(params) {
 			if (params.userId === im_v2_application_core.Core.getUserId()) {
@@ -793,13 +803,25 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 			}
 		}
 		handleChatUpdate(params) {
+			const {
+				dialogId,
+				parent_chat_id: newParentChatId
+			} = params.chat;
+			const {
+				parentChatId: lastParentChatId
+			} = this.#store.getters['chats/get'](dialogId);
 			void this.#store.dispatch('chats/update', {
-				dialogId: params.chat.dialogId,
+				dialogId,
 				fields: {
 					role: im_v2_lib_roleManager.getChatRoleForUser(params.chat),
 					...params.chat
 				}
 			});
+			if (lastParentChatId !== newParentChatId) {
+				void this.#store.dispatch('recent/hide', {
+					dialogId
+				});
+			}
 		}
 		handleChatFieldsUpdate(params) {
 			void this.#store.dispatch('chats/update', {
@@ -895,7 +917,6 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 		}
 	}
 
-	const GUEST_INVITE_CODE_COOKIE = 'BITRIX_IM_GUEST_INVITE_CODE';
 	class UserPullHandler {
 		#store;
 		constructor() {
@@ -917,14 +938,10 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 			const userManager = new im_v2_lib_user.UserManager();
 			userManager.setUsersToModel(usersToStore);
 		}
-		handleUserLogout(params) {
-			const {
-				deactivatedCodes
-			} = params;
-			const inviteCode = main_core.Http.Cookie.get(GUEST_INVITE_CODE_COOKIE);
-			if (!main_core.Type.isArrayFilled(deactivatedCodes) || deactivatedCodes.includes(inviteCode)) {
-				im_v2_lib_utils.Utils.browser.redirectTo('/');
-			}
+		handleUserLogout() {
+			// Server targets UserLogout only at guests that must fully log out; per-chat loss
+			// arrives as the member-removed pull. Redirect unconditionally.
+			im_v2_lib_utils.Utils.browser.redirectTo('/');
 		}
 	}
 
@@ -1301,6 +1318,22 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 			const sections = this.#params.recentConfig?.sections || [im_v2_const.RecentType.default];
 			this.addItemToCollection(sections, newRecentItem, this.#getParentChatId());
 		}
+
+		// Metadata-only variant for RecentUpdateMeta (lastActivityDate=null): hydrates the payload and
+		// re-targets the preview messageId of an already existing recent item. Never adds the item to
+		// sections or touches its lastActivityDate, so a hidden row is not surfaced and sort order keeps.
+		updateExistingItem() {
+			if (!this.#params.message?.id) {
+				return;
+			}
+			this.#setLastMessageInfo();
+			void im_v2_application_core.Core.getStore().dispatch('recent/update', {
+				dialogId: this.#getDialogId(),
+				fields: {
+					messageId: this.#params.message.id
+				}
+			});
+		}
 		addItemToCollection(sections, recentItem, parentChatId) {
 			sections.forEach(recentSection => {
 				void im_v2_application_core.Core.getStore().dispatch('recent/setCollection', {
@@ -1315,6 +1348,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 		}
 		#setLastMessageInfo() {
 			this.#setMessageChat();
+			this.#setSourceChats();
 			this.#setUsers();
 			this.#setFiles();
 			this.#setMessage();
@@ -1326,6 +1360,9 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 			return this.#params.chat.id;
 		}
 		#getLastMessageId() {
+			if (this.#params.message?.id) {
+				return this.#params.message.id;
+			}
 			const chat = im_v2_application_core.Core.getStore().getters['chats/get'](this.#getDialogId());
 			const lastMessageId = im_v2_application_core.Core.getStore().getters['messages/getLastId'](chat.chatId);
 			return lastMessageId || this.#tempMessageId;
@@ -1344,8 +1381,24 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 			};
 			void im_v2_application_core.Core.getStore().dispatch('chats/set', chat);
 		}
+		#setSourceChats() {
+			if (!this.#params.chats) {
+				return;
+			}
+
+			// Source chats already carry their own dialogId, so no normalization is needed (unlike #setMessageChat).
+			Object.values(this.#params.chats).forEach(sourceChat => {
+				void im_v2_application_core.Core.getStore().dispatch('chats/set', sourceChat);
+			});
+		}
 		#setMessage() {
 			if (this.#params.message) {
+				if (this.#isNestedPreview()) {
+					// Nested collab preview is a message of a child chat: keep it in the collection only,
+					// without chatCollection membership, so the following messageAdd sets its read state.
+					void im_v2_application_core.Core.getStore().dispatch('messages/store', this.#params.message);
+					return;
+				}
 				void im_v2_application_core.Core.getStore().dispatch('messages/setChatCollection', {
 					messages: this.#params.message
 				});
@@ -1360,6 +1413,9 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 				}
 			});
 		}
+		#isNestedPreview() {
+			return Number(this.#params.message.chatId) !== Number(this.#getChatId());
+		}
 	}
 
 	function buildRecentItem(params) {
@@ -1368,6 +1424,9 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 			chatId: params.chatId,
 			messageId: params.message.id
 		};
+		if (params.message.chatId === params.chatId) {
+			newRecentItem.ownMessageId = params.message.id;
+		}
 		const recentItem = im_v2_application_core.Core.getStore().getters['recent/get'](params.dialogId);
 		if (recentItem) {
 			newRecentItem.isFakeElement = false;
@@ -1524,27 +1583,45 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 		handleRecentUpdate(params) {
 			im_v2_lib_logger.Logger.warn('RecentPullHandler: handleRecentUpdate', params);
 			const manager = new RecentUpdateManager(params);
+
+			// lastActivityDate=null marks an info-only RecentUpdateMeta: refresh the preview of an already
+			// listed item (e.g. a collab pointer recomputed after a source message delete or a muted child
+			// message) without adding the item to sections or moving it.
+			const isMetadataOnly = params.lastActivityDate === null;
+			if (isMetadataOnly) {
+				manager.updateExistingItem();
+				return;
+			}
 			manager.addToRecentCollection();
 		}
 		#deleteLastMessage(dialogId, newLastMessage) {
 			const lastMessageWasDeleted = Boolean(newLastMessage);
 			if (lastMessageWasDeleted) {
-				this.#updateRecentForMessageDelete(dialogId, newLastMessage.id);
+				this.#updateRecentForMessageDelete(dialogId, newLastMessage);
 			}
 		}
-		#updateRecentForMessageDelete(dialogId, newLastMessageId) {
+		#updateRecentForMessageDelete(dialogId, newLastMessage) {
+			const newLastMessageId = newLastMessage.id;
 			if (!newLastMessageId) {
 				void im_v2_application_core.Core.getStore().dispatch('recent/hide', {
 					dialogId
 				});
 				return;
 			}
+			const fields = {
+				messageId: newLastMessageId
+			};
+			if (this.#newLastMessageIsOwn(dialogId, newLastMessage)) {
+				fields.ownMessageId = newLastMessageId;
+			}
 			void im_v2_application_core.Core.getStore().dispatch('recent/update', {
 				dialogId,
-				fields: {
-					messageId: newLastMessageId
-				}
+				fields
 			});
+		}
+		#newLastMessageIsOwn(dialogId, newLastMessage) {
+			const dialog = im_v2_application_core.Core.getStore().getters['chats/get'](dialogId);
+			return Boolean(dialog?.chatId) && newLastMessage.chatId === dialog.chatId;
 		}
 	}
 
@@ -1571,13 +1648,15 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 			this.handleMessageAdd(params, extra);
 		}
 		handleReadAllChats() {
-			const recentSections = [im_v2_const.RecentType.default, im_v2_const.RecentType.taskComments];
-			recentSections.forEach(section => {
-				im_v2_lib_unreadMode.UnreadModeManager.removeClosedChats(section);
-			});
+			im_v2_lib_unreadMode.UnreadModeManager.removeClosedChats(im_v2_const.RecentType.default);
 		}
-		handleReadAllChatsByType(params) {
-			im_v2_lib_unreadMode.UnreadModeManager.removeClosedChats(params.type);
+		handleReadAllChatsByRecentSection(params) {
+			const {
+				recentSection,
+				parentChatId
+			} = params;
+			const preparedParentChatId = im_v2_lib_chat.ChatManager.prepareParentChatId(parentChatId);
+			im_v2_lib_unreadMode.UnreadModeManager.removeClosedChats(recentSection, preparedParentChatId);
 		}
 		handleReadMessageChat(params) {
 			const {
@@ -1733,6 +1812,39 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 		}
 	}
 
+	class FolderPullHandler {
+		getModuleId() {
+			return 'im';
+		}
+		handleFolderCreate(params) {
+			im_v2_lib_logger.Logger.warn('FolderPullHandler: handleFolderCreate', params);
+			void im_v2_application_core.Core.getStore().dispatch('recent/folders/add', params.folder);
+		}
+		handleFolderUpdate(params) {
+			im_v2_lib_logger.Logger.warn('FolderPullHandler: handleFolderUpdate', params);
+			void im_v2_application_core.Core.getStore().dispatch('recent/folders/update', params.folder);
+		}
+		handleFolderDelete(params) {
+			im_v2_lib_logger.Logger.warn('FolderPullHandler: handleFolderDelete', params);
+			im_v2_lib_folder.FolderManager.handleOpenedFolder(params.folderId);
+			void im_v2_application_core.Core.getStore().dispatch('recent/folders/delete', {
+				id: params.folderId
+			});
+		}
+		handleFolderSort(params) {
+			im_v2_lib_logger.Logger.warn('FolderPullHandler: handleFolderSort', params);
+			void im_v2_application_core.Core.getStore().dispatch('recent/folders/sort', params.folderIds);
+		}
+		handleFolderChatAdd(params) {
+			im_v2_lib_logger.Logger.warn('FolderPullHandler: handleFolderChatAdd', params);
+			void im_v2_application_core.Core.getStore().dispatch('recent/folders/update', params.folder);
+		}
+		handleFolderChatDelete(params) {
+			im_v2_lib_logger.Logger.warn('FolderPullHandler: handleFolderChatDelete', params);
+			void im_v2_application_core.Core.getStore().dispatch('recent/folders/update', params.folder);
+		}
+	}
+
 	class NotificationPullHandler {
 		constructor() {
 			this.store = im_v2_application_core.Core.getStore();
@@ -1816,6 +1928,17 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 			if (this.getMembersCountFromStore(params.chatId) === 0) {
 				return;
 			}
+
+			// For a collab chat the member order is grouped on the server (owner -> moderators ->
+			// guests -> rest). We cannot recompute the group position on the client, so instead of
+			// appending the new member to the end of the Set we drop the loaded members and let the
+			// panel re-request the grouped first page, placing the member into the right group.
+			if (this.isCollab(params.dialogId)) {
+				void this.store.dispatch('sidebar/members/reset', {
+					chatId: params.chatId
+				});
+				return;
+			}
 			const {
 				chatId,
 				users,
@@ -1838,10 +1961,23 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 			if (this.getMembersCountFromStore(params.chatId) === 0) {
 				return;
 			}
+
+			// See handleChatUserAdd: for collab we reset the loaded members and re-request the grouped
+			// first page instead of just removing one id, so the remaining order stays server-grouped.
+			if (this.isCollab(params.dialogId)) {
+				void this.store.dispatch('sidebar/members/reset', {
+					chatId: params.chatId
+				});
+				return;
+			}
 			void this.store.dispatch('sidebar/members/delete', {
 				chatId: params.chatId,
 				userId: params.userId
 			});
+		}
+		isCollab(dialogId) {
+			const chat = this.store.getters['chats/get'](dialogId, true);
+			return chat?.type === im_v2_const.ChatType.collab;
 		}
 		// endregion
 
@@ -2390,6 +2526,32 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 		handleRecentUpdate(params) {
 			const {
 				chat,
+				recentConfig,
+				lastActivityDate
+			} = params;
+			const needToUpdate = lastActivityDate !== null;
+			if (!needToUpdate) {
+				return;
+			}
+			const {
+				id: chatId,
+				parent_chat_id: parentChatId,
+				mute_list: muteList
+			} = chat;
+			const isMuted = muteList[im_v2_application_core.Core.getUserId()] === true;
+
+			// recentUpdate is emitted for parent chat, we add parent item for children counters to work properly
+			const counterItem = {
+				chatId,
+				parentChatId,
+				recentSections: recentConfig.sections,
+				isMuted
+			};
+			void im_v2_application_core.Core.getStore().dispatch('counters/setCounters', [counterItem]);
+		}
+		handleChatPin(params) {
+			const {
+				chat,
 				recentConfig
 			} = params;
 			const {
@@ -2399,7 +2561,10 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 			} = chat;
 			const isMuted = muteList[im_v2_application_core.Core.getUserId()] === true;
 
-			// recentUpdate is emitted for parent chat, we add parent item for children counters to work properly
+			// Pinning puts a chat (back) into the recent list. Its recentSections are emptied server-side
+			// while a chat is hidden from recent, and only handleRecentUpdate restores them - but pin emits
+			// its own event without a fresh activity date, so we restore them here too. Otherwise child
+			// counters can't bubble into the section badge through this (now visible) parent until reload.
 			const counterItem = {
 				chatId,
 				parentChatId,
@@ -2417,21 +2582,14 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 			});
 		}
 		handleReadAllChats() {
-			im_v2_lib_counter.CounterClearActions.forEach(actionHandler => {
-				void actionHandler();
-			});
+			im_v2_lib_counter.CounterManager.clearAllCounters();
 		}
-		handleReadAllChatsByType(params) {
+		handleReadAllChatsByRecentSection(params) {
 			const {
-				type
+				recentSection,
+				parentChatId
 			} = params;
-			const counterClearHandlers = im_v2_lib_counter.CounterClearHandlersByChatType[type];
-			if (!counterClearHandlers) {
-				return;
-			}
-			counterClearHandlers.forEach(handler => {
-				handler(type);
-			});
+			im_v2_lib_counter.CounterManager.clearCountersByRecentType(recentSection, parentChatId);
 		}
 		handleReadChildren(params) {
 			const {
@@ -2536,6 +2694,7 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	exports.AnchorPullHandler = AnchorPullHandler;
 	exports.BasePullHandler = BasePullHandler;
 	exports.CounterPullHandler = CounterPullHandler;
+	exports.FolderPullHandler = FolderPullHandler;
 	exports.NotificationPullHandler = NotificationPullHandler;
 	exports.NotifierPullHandler = NotifierPullHandler;
 	exports.OnlinePullHandler = OnlinePullHandler;
@@ -2545,5 +2704,5 @@ this.BX.Messenger.v2.Provider = this.BX.Messenger.v2.Provider || {};
 	exports.SidebarPullHandler = SidebarPullHandler;
 	exports.StickersPullHandler = StickersPullHandler;
 
-})(this.BX.Messenger.v2.Provider.Pull = this.BX.Messenger.v2.Provider.Pull || {}, BX.Messenger.v2.Application, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX, BX.Event, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Service, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.SidePanel, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib);
+})(this.BX.Messenger.v2.Provider.Pull = this.BX.Messenger.v2.Provider.Pull || {}, BX.Messenger.v2.Application, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX, BX.Event, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Service, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.SidePanel, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib);
 //# sourceMappingURL=registry.bundle.js.map

@@ -711,6 +711,7 @@ HTML;
 		$baseTypes = \Bitrix\Bizproc\FieldType::getBaseTypesMap();
 		unset($baseTypes[\Bitrix\Bizproc\FieldType::INTERNALSELECT]);
 		unset($baseTypes[\Bitrix\Bizproc\FieldType::FILE]);
+		unset($baseTypes[\Bitrix\Bizproc\FieldType::CONDITIONGROUP]);
 
 		$documentType = $this->arParams['DOCUMENT_TYPE'];
 		$documentTypes = $documentService->GetDocumentFieldTypes($documentType);

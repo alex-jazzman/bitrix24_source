@@ -33,6 +33,5 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	const CallManager = callInstalled && isCallManagerInstalled ? call_lib_callManager.CallManager : CallManagerStub;
 
 	exports.CallManager = CallManager;
-
-})(this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}, BX??{}, BX?.Call?.Lib??{});
+})(this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}, BX??{}, BX?.Call?.Lib??{});;
 //# sourceMappingURL=call.bundle.js.map

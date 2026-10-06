@@ -8,6 +8,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 use Bitrix\Crm;
 use Bitrix\Crm\Restriction\AvailabilityManager;
 use Bitrix\Crm\Service\Container;
+use Bitrix\Main\Web\Uri;
 
 if (!CModule::IncludeModule('crm'))
 {
@@ -204,11 +205,7 @@ if (isset($_GET['redirect_to']))
 
 	if (isset($arResult[$pathKey]))
 	{
-		$redirectUrl = CHTTP::urlAddParams(
-			$arResult[$pathKey],
-			array_diff_key($_GET, array_flip(array('redirect_to'))),
-			['encode' => true]
-		);
+		$redirectUrl = (string)(new Uri($arResult[$pathKey]))->addParams(array_diff_key($_GET, array_flip(array('redirect_to'))));
 
 		LocalRedirect($redirectUrl);
 	}
@@ -221,11 +218,6 @@ if ($componentPage === 'index')
 }
 
 $request = \Bitrix\Main\Application::getInstance()->getContext()->getRequest();
-
-\CCrmEntityHelper::setEnabledFactoryFlagByRequest(
-	Crm\Settings\QuoteSettings::getCurrent(),
-	$request,
-);
 
 if (
 		($componentPage === 'edit' || $componentPage === 'show' || $componentPage === 'details')

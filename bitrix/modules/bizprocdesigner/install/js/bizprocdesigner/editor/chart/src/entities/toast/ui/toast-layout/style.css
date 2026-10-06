@@ -2,15 +2,18 @@
 	display: flex;
 	align-items: center;
 	height: 28px;
-	color: var(--ui-color-base-8);
+	/* Content color is set by the toast scheme (--warning/--processing/--completed); default is white. */
+	color: var(--bizprocdesigner-editor-toast-content-color, var(--ui-color-base-8));
 	width: 700px;
-	--ui-icon-set__icon-color: var(--ui-color-base-8);
 }
 
 .editor-chart-toast-layout__divider {
+	display: flex;
 	width: 9px;
 	height: 20px;
 	margin: 0 9px;
+	/* Divider inherits the scheme color (semi-transparent white over the color). */
+	color: var(--bizprocdesigner-editor-toast-divider-color, #DFE0E3);
 }
 
 .editor-chart-toast-layout__left {

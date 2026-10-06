@@ -2,8 +2,10 @@ import { Type, Dom, Cache, Tag, Text, Runtime } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import { Env } from 'landing.env';
 import { Loc } from 'landing.loc';
+import { A11y } from 'landing.ui.a11y';
 import { Content } from 'landing.ui.panel.content';
 import { SaveBlock } from 'landing.ui.panel.saveblock';
+import 'landing.ui.panel.floatingnodepanel';
 import { SliderHacks } from 'landing.sliderhacks';
 import { PageObject } from 'landing.pageobject';
 import { Backend } from 'landing.backend';
@@ -14,6 +16,86 @@ import onAnimationEnd from './internal/on-animation-end';
 import isEmpty from './internal/is-empty';
 
 BX.Landing.getMode = () => 'edit';
+
+function getBlocksGridRows(grid: HTMLElement): Array<Array<HTMLElement>>
+{
+	const cells = [...grid.querySelectorAll('[role="gridcell"]')]
+		.filter((cell) => cell.offsetParent !== null);
+
+	const rows = [];
+	let currentTop = null;
+	let currentRow = null;
+
+	cells.forEach((cell) => {
+		const top = Math.round(cell.getBoundingClientRect().top);
+		if (currentRow === null || Math.abs(top - currentTop) > 2)
+		{
+			currentRow = [];
+			rows.push(currentRow);
+			currentTop = top;
+		}
+
+		currentRow.push(cell);
+	});
+
+	return rows;
+}
+
+// 2D roving for the blocks grid: ArrowUp/Down move by visual row keeping the
+// column; ArrowLeft/Right (and Home/End) fall back to FocusZone linear order.
+function createBlocksGridNavigator(grid: HTMLElement)
+{
+	// Cache the computed row layout to avoid re-measuring every gridcell on each
+	// arrow step. The set/order of cells changes on category switch, add/remove,
+	// reorder and DnD (all childList mutations); a resize can reflow the column
+	// count. Both drop the cache so the next step recomputes from live geometry.
+	let rowsCache = null;
+	const invalidateRowsCache = () => {
+		rowsCache = null;
+	};
+	new MutationObserver(invalidateRowsCache).observe(grid, {
+		childList: true,
+		subtree: true,
+	});
+	window.addEventListener('resize', invalidateRowsCache);
+
+	return (direction, from, event: KeyboardEvent): ?HTMLElement => {
+		if (!from || (event.key !== 'ArrowUp' && event.key !== 'ArrowDown'))
+		{
+			return null;
+		}
+
+		if (rowsCache === null)
+		{
+			rowsCache = getBlocksGridRows(grid);
+		}
+
+		const rows = rowsCache;
+		let rowIndex = -1;
+		let columnIndex = -1;
+		rows.forEach((row, index) => {
+			const position = row.indexOf(from);
+			if (position !== -1)
+			{
+				rowIndex = index;
+				columnIndex = position;
+			}
+		});
+
+		if (rowIndex === -1)
+		{
+			return null;
+		}
+
+		const targetRow = rows[rowIndex + (event.key === 'ArrowDown' ? 1 : -1)];
+		if (!targetRow)
+		{
+			return null;
+		}
+
+		return targetRow[Math.min(columnIndex, targetRow.length - 1)] || null;
+	};
+}
 
 /**
  * @memberOf BX.Landing
@@ -633,6 +715,12 @@ export class Main extends EventEmitter
 			scrollAnimation: true,
 		});
 
+		Dom.attr(panel.content, {
+			'role': 'grid',
+			'aria-label': Loc.getMessage('LANDING_BLOCKS_LIST_GRID_LABEL'),
+		});
+		this.setupBlocksGridFocusZone(panel.content);
+
 		panel.subscribe('onCancel', () => {
 			this.enableAddBlockButtons();
 		});
@@ -660,6 +748,39 @@ export class Main extends EventEmitter
 		);
 
 		return panel;
+	}
+
+	// Roving-tabindex composite over the block cards grid: a single Tab stop
+	// enters the grid, arrow keys move between gridcells. The FocusZone manages
+	// only the cards (role="gridcell"); nested badge/remove buttons stay outside
+	// the roving set and remain reachable within the focused cell. Card add/remove
+	// on category switch is tracked by the FocusZone MutationObserver.
+	setupBlocksGridFocusZone(grid: HTMLElement): Promise
+	{
+		if (this.blocksGridFocusZone)
+		{
+			return this.blocksGridFocusZone;
+		}
+
+		this.blocksGridFocusZone = A11y.load()
+			.then(({ FocusZone }) => {
+				const focusZone = new FocusZone(grid, {
+					focusInStrategy: 'first',
+					focusableElementFilter: (element) => element.getAttribute('role') === 'gridcell',
+					getNextFocusable: createBlocksGridNavigator(grid),
+				});
+				focusZone.activate();
+
+				return focusZone;
+			})
+			.catch((error) => {
+				this.blocksGridFocusZone = null;
+				console.warn('Failed to init blocks grid focus zone', error);
+
+				return null;
+			});
+
+		return this.blocksGridFocusZone;
 	}
 
 
@@ -1444,6 +1565,7 @@ export class Main extends EventEmitter
 			isNew: block.new === true,
 			onClick: this.onAddBlock.bind(this, blockKey),
 			currentCategory: block.currentCategory,
+			role: 'gridcell',
 			useFavouriteBadge: true,
 			isFavorite: Array.isArray(this.favouriteBlocks) && this.favouriteBlocks.includes(blockKey),
 		});
@@ -1455,7 +1577,7 @@ export class Main extends EventEmitter
 			<div class="landing-favourite-category-empty-state text-center">
 				<img 
 					class="landing-favourite-category-empty-state--image" 
-					src="/bitrix/images/landing/empty-favourite.png" 
+					src="/bitrix/images/landing/empty-favourite.webp"
 					style="margin-bottom: 14px;"
 				/>
 				<p 

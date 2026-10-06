@@ -104,20 +104,21 @@ if($arResult['APP_STATUS']['PAYMENT_ALLOW'] == 'Y' && isset($_REQUEST['action'])
 		case 'set_installed':
 			if($arResult['IS_ADMIN'])
 			{
-				\Bitrix\Rest\AppTable::setSkipRemoteUpdate(true);
-				$updateResult = \Bitrix\Rest\AppTable::update(
-					$arParams['ID'],
-					array(
-						'INSTALLED' => $_REQUEST['v'] == 'N'
-							? \Bitrix\Rest\AppTable::NOT_INSTALLED
-							: \Bitrix\Rest\AppTable::INSTALLED
+				$updateResult = (new \Bitrix\Rest\Internal\Service\Application\ApplicationInstallationFinalizer())
+					->finalize(
+						(int)$arParams['ID'],
+						$_REQUEST['v'] !== 'N',
 					)
-				);
-				\Bitrix\Rest\AppTable::setSkipRemoteUpdate(false);
+				;
 
-				\Bitrix\Rest\AppTable::install($arParams['ID']);
-
-				\Bitrix\Rest\AppLogTable::log($arParams['ID'], \Bitrix\Rest\AppLogTable::ACTION_TYPE_INSTALL);
+				if ($updateResult->isSuccess())
+				{
+					\Bitrix\Rest\AppTable::install($arParams['ID']);
+					\Bitrix\Rest\AppLogTable::log(
+						$arParams['ID'],
+						\Bitrix\Rest\AppLogTable::ACTION_TYPE_INSTALL,
+					);
+				}
 
 				echo '{"result":"'.($updateResult->isSuccess()  ? 'true' : 'false').'"}';
 			}

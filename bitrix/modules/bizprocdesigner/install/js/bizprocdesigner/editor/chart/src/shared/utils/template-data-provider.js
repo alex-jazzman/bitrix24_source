@@ -1,10 +1,12 @@
+import { Type } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 
-import { diagramStore } from '../../entities/blocks/index.js';
+import { diagramStore } from '../../entities/blocks/stores/diagram.js';
 import { COMPUTE_VALUE_PREFIXES, PROPERTY_TYPES, TEMPLATE_DATA_TEMPLATE_SOURCE_TYPE, TEMPLATE_DEFAULT_DATA_TYPE, BLOCK_TYPES } from '../constants';
-import { documentFieldsCache } from './document-fields-cache';
+import { documentFieldsCache, getDocumentTypeKey } from './document-fields-cache';
 
 import {
+	type ActivityData,
 	type Block,
 	type DiagramStore,
 	type DiagramTemplateGeneralData,
@@ -13,7 +15,24 @@ import {
 	type TemplateDataTemplateGroup,
 } from '../types';
 
-class TemplateDataProvider extends EventEmitter
+export type TemplateDataSnapshot = {
+	templateItems: Array<TemplateDataTemplateGroup>,
+	incomingItems: Array<TemplateDataNodeGroup>,
+	filterItems: Array<TemplateDataNodeGroup>,
+	outgoingItems: Array<TemplateDataNodeGroup> | null,
+};
+
+// The property a node saves its filter results under, mirroring
+// `\Bitrix\Bizproc\Public\Activity\Mixins\NodeFilterResultProperties::FILTER_RETURN_PROPERTIES_MAP`.
+const FILTER_RETURN_PROPERTIES_MAP = 'FilterReturnPropertiesMap';
+
+type DocumentTypeItem = {
+	type: string,
+	documentType?: string | Array<string>,
+	items?: Array<DocumentTypeItem>,
+};
+
+export class TemplateDataProvider extends EventEmitter
 {
 	static instance: TemplateDataProvider;
 
@@ -25,6 +44,35 @@ class TemplateDataProvider extends EventEmitter
 		this.#store = store;
 
 		this.setEventNamespace('BizprocDesigner.Editor.Chart.TemplateDataProvider');
+	}
+
+	async prepare(
+		block: Block,
+		activityData: ?ActivityData = null,
+		isCurrent: () => boolean = () => true,
+	): Promise<?TemplateDataSnapshot>
+	{
+		const draft = this.#buildSnapshot(block, activityData);
+		const documentTypes = this.#collectUniqueDocumentTypes(draft);
+		const missingDocumentTypes = [...documentTypes.values()].filter(
+			(documentType) => !documentFieldsCache.has(documentType),
+		);
+		if (missingDocumentTypes.length === 0)
+		{
+			return draft;
+		}
+
+		await Promise.all(
+			missingDocumentTypes.map(
+				(documentType) => documentFieldsCache.fetchFields(documentType),
+			),
+		);
+		if (!isCurrent())
+		{
+			return null;
+		}
+
+		return this.#buildSnapshot(block, activityData);
 	}
 
 	getTemplateItems(): Array<TemplateDataTemplateGroup>
@@ -122,6 +170,47 @@ class TemplateDataProvider extends EventEmitter
 		}, []);
 	}
 
+	/**
+	 * Fields produced by the filter construction of the node. Keyed neither by the block type nor by the
+	 * panel marker, but by the filter results the node really carries: `FilterReturnPropertiesMap` is the
+	 * property the server expands into `ReturnProperties` ({@see \CBPRuntime::getActivityReturnProperties()}),
+	 * so its keys - `<filterId>` and `<filterId>_all` - name exactly the entries the filter block produced.
+	 * A node whose filter is not set up has no such property at all: the save removes it. Everything else in
+	 * the package is the own output of the node and belongs to the outgoing group, not here.
+	 */
+	getNodeFilterProperties(block: Block): Array<TemplateDataNodeGroup>
+	{
+		const filterPropertyIds = this.#getFilterResultPropertyIds(block.activity);
+		if (filterPropertyIds.size === 0)
+		{
+			return [];
+		}
+
+		const returnProperties = block.activity?.ReturnProperties;
+		if (!Array.isArray(returnProperties))
+		{
+			return [];
+		}
+
+		const templateDataNodeGroup = this.#createTemplateDataNodeGroup(block, {
+			...block.activity,
+			ReturnProperties: returnProperties.filter((property) => filterPropertyIds.has(property?.Id)),
+		});
+		if (!templateDataNodeGroup)
+		{
+			return [];
+		}
+
+		return [templateDataNodeGroup];
+	}
+
+	#getFilterResultPropertyIds(activity: ?ActivityData): Set<string>
+	{
+		const propertiesMap = activity?.Properties?.[FILTER_RETURN_PROPERTIES_MAP];
+
+		return Type.isPlainObject(propertiesMap) ? new Set(Object.keys(propertiesMap)) : new Set();
+	}
+
 	#createTemplateDataNodeGroup(block: Block, activity): TemplateDataNodeGroup | null
 	{
 		const properties = activity?.ReturnProperties ?? [];
@@ -178,11 +267,6 @@ class TemplateDataProvider extends EventEmitter
 	{
 		const cachedFields = documentFieldsCache.get(property.Default);
 
-		if (!cachedFields)
-		{
-			this.#prefetchDocumentFields(property.Default);
-		}
-
 		return {
 			name: propertyName,
 			type: PROPERTY_TYPES.DOCUMENT,
@@ -200,18 +284,49 @@ class TemplateDataProvider extends EventEmitter
 		};
 	}
 
-	async #prefetchDocumentFields(documentType: string | Array<string>): Promise<void>
+	#buildSnapshot(block: Block, activityData: ?ActivityData): TemplateDataSnapshot
 	{
-		try
-		{
-			const fields = await documentFieldsCache.fetchFields(documentType);
-			if (fields.length > 0)
-			{
-				this.emit('onDocumentFieldsLoaded');
-			}
-		}
-		catch
-		{ /* empty */ }
+		return {
+			templateItems: this.getTemplateItems(),
+			incomingItems: this.getIncomingProperties(block),
+			filterItems: this.getNodeFilterProperties(block),
+			outgoingItems: this.getOutgoingProperties(block, { activityData }),
+		};
+	}
+
+	#collectUniqueDocumentTypes(snapshot: TemplateDataSnapshot): Map<string, string | Array<string>>
+	{
+		const documentTypes = new Map();
+		const nodeGroups = [
+			...(snapshot.incomingItems ?? []),
+			...(snapshot.filterItems ?? []),
+			...(snapshot.outgoingItems ?? []),
+		];
+
+		const collectDocumentTypes = (items: Array<DocumentTypeItem>): void => {
+			items.forEach((item) => {
+				if (item.type === PROPERTY_TYPES.DOCUMENT)
+				{
+					const documentType = item.documentType;
+					const key = getDocumentTypeKey(documentType);
+					if (!documentTypes.has(key))
+					{
+						documentTypes.set(key, documentType);
+					}
+				}
+
+				if (Array.isArray(item.items))
+				{
+					collectDocumentTypes(item.items);
+				}
+			});
+		};
+
+		nodeGroups.forEach((group) => {
+			collectDocumentTypes(group.items);
+		});
+
+		return documentTypes;
 	}
 
 	#makeTemplateItemGroup(

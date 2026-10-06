@@ -1,0 +1,37 @@
+<?php
+
+$MESS['CRM_AI_SETTINGS_SLIDER_HEADER'] = 'Настройки #COPILOT_NAME#';
+$MESS['CRM_AI_SETTINGS_SLIDER_SUBTITLE'] = 'Доверьте часть задач AI, чтобы упростить ежедневные действия';
+$MESS['CRM_AI_SETTINGS_SLIDER_CANCEL_BUTTON'] = 'Отмена';
+$MESS['CRM_AI_SETTINGS_SLIDER_SAVE_BUTTON'] = 'Сохранить';
+$MESS['CRM_AI_SETTINGS_SLIDER_LANGUAGE_BUTTON'] = 'Язык ответа';
+$MESS['CRM_AI_SETTINGS_SLIDER_LANGUAGE_BUTTON_SELECTED'] = 'Язык ответа: #LANGUAGE#';
+$MESS['CRM_AI_SETTINGS_SLIDER_CONFLICT_REAPPLIED'] = 'Настройки изменились в другой вкладке. Мы загрузили актуальные данные и сохранили ваши несохранённые правки — проверьте их и нажмите «Сохранить»';
+$MESS['CRM_AI_SETTINGS_SLIDER_BUSY_ERROR'] = 'Настройки сейчас сохраняет другой пользователь, попробуйте ещё раз';
+$MESS['CRM_AI_SETTINGS_SLIDER_GENERIC_ERROR'] = 'Не удалось сохранить настройки, попробуйте ещё раз немного позже';
+$MESS['CRM_AI_AUTOMATION_SLIDER_SCENARIOS_TITLE'] = 'Сценарии';
+$MESS['CRM_AI_SETTINGS_SLIDER_SCENARIOS_HELP'] = 'Как это работает?';
+$MESS['CRM_AI_AUTOMATION_SLIDER_EDIT_BUTTON'] = 'Изменить';
+$MESS['CRM_AI_AUTOMATION_SLIDER_COLLAPSE_BUTTON'] = 'Свернуть';
+$MESS['CRM_AI_AUTOMATION_SLIDER_ENABLE_BUTTON'] = 'Включить';
+$MESS['CRM_AI_AUTOMATION_SLIDER_CONFIGURE_BUTTON'] = 'Настроить';
+$MESS['CRM_AI_AUTOMATION_SLIDER_PICK_PACKAGE_BUTTON'] = 'Выбрать тариф';
+$MESS['CRM_AI_AUTOMATION_SLIDER_MODE_DISABLED'] = 'Не запускать';
+$MESS['CRM_AI_AUTOMATION_SLIDER_REASON_GLOBAL_DISABLED'] = 'Сценарий отключён';
+$MESS['CRM_AI_AUTOMATION_SLIDER_REASON_ENGINE_NOT_CONFIGURED'] = 'Выберите модель AI для этого сценария в настройках вашего Битрикс24';
+$MESS['CRM_AI_AUTOMATION_SLIDER_REASON_SUBSCRIPTION_REQUIRED'] = 'Чтобы сценарий запускался автоматически, подключите подписку #COPILOT_NAME# + Маркетплейс';
+$MESS['CRM_AI_AUTOMATION_SLIDER_REASON_AI_NOT_AVAILABLE'] = 'AI недоступен в вашем Битрикс24, обратитесь к администратору';
+$MESS['CRM_AI_AUTOMATION_SLIDER_REASON_INVALID_SCOPE'] = 'AI-сценарии пока недоступны в этом разделе';
+$MESS['CRM_AI_AUTOMATION_SLIDER_REASON_TRANSCRIPTION_DISABLED'] = 'Чтобы создавать резюме, включите расшифровку звонков';
+$MESS['CRM_AI_AUTOMATION_SLIDER_CHANNEL_CALL'] = 'Звонки';
+$MESS['CRM_AI_AUTOMATION_SLIDER_CHANNEL_CHAT'] = 'Чаты';
+$MESS['CRM_AI_AUTOMATION_SLIDER_CALL_MODE_FIRST_INCOMING'] = 'Первый входящий звонок';
+$MESS['CRM_AI_AUTOMATION_SLIDER_CALL_MODE_ALL_INCOMING'] = 'Все входящие';
+$MESS['CRM_AI_AUTOMATION_SLIDER_CALL_MODE_OUTGOING'] = 'Все исходящие';
+$MESS['CRM_AI_AUTOMATION_SLIDER_CALL_MODE_BOTH'] = 'Все звонки';
+$MESS['CRM_AI_AUTOMATION_SLIDER_CHAT_MODE_FIRST_CHAT'] = 'Только первый чат с клиентом';
+$MESS['CRM_AI_AUTOMATION_SLIDER_CHAT_MODE_ALL'] = 'Все чаты с клиентом';
+$MESS['CRM_AI_AUTOMATION_SLIDER_EMAIL_MODE_FIRST_INCOMING'] = 'Первое входящее письмо';
+$MESS['CRM_AI_AUTOMATION_SLIDER_EMAIL_MODE_ALL_INCOMING'] = 'Все входящие письма';
+$MESS['CRM_AI_AUTOMATION_SLIDER_EMAIL_MODE_ALL_OUTGOING'] = 'Все исходящие письма';
+$MESS['CRM_AI_AUTOMATION_SLIDER_EMAIL_MODE_ALL'] = 'Все письма';

@@ -9,10 +9,13 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Bizproc\Internal\Entity\Activity\Interface\FlowCompositeActivity;
 use Bitrix\Bizproc\Public\Activity\Structure\FlowDirectedActivity;
+use Bitrix\Bizproc\Public\Activity\Structure\FlowStateRouterTrait;
 use Bitrix\Main\Localization\Loc;
 
 final class CBPNodeWorkflowActivity extends FlowDirectedActivity implements IBPRootActivity
 {
+	use FlowStateRouterTrait;
+
 	private array $documentId = [];
 	private ?int $workflowTemplateId = null;
 	private ?int $templateUserId = null;
@@ -64,7 +67,10 @@ final class CBPNodeWorkflowActivity extends FlowDirectedActivity implements IBPR
 
 	public function initialize()
 	{
-		$this->removeUnusedActivities();
+		if (!$this->hasStates())
+		{
+			$this->removeUnusedActivities();
+		}
 
 		parent::initialize();
 	}
@@ -149,8 +155,12 @@ final class CBPNodeWorkflowActivity extends FlowDirectedActivity implements IBPR
 		return CBPActivityExecutionStatus::Closed;
 	}
 
-	protected function onDeadEndReached(CBPActivity $lastActivity): void
-	{}
+	protected function onDeadEndReached(CBPActivity $lastActivity): array
+	{
+		$nextState = $this->getNextStateName();
+
+		return $nextState ? [$nextState] : [];
+	}
 
 	protected function close(): void
 	{
@@ -183,15 +193,23 @@ final class CBPNodeWorkflowActivity extends FlowDirectedActivity implements IBPR
 	private function findTriggerNameByType(string $type): ?string
 	{
 		$className = 'CBP' . $type;
+		$subclassName = null;
 		foreach ($this->arActivities as $activity)
 		{
+			// exact generic trigger wins to keep existing templates stable
 			if (get_class($activity) === $className)
 			{
 				return $activity->getName();
 			}
+
+			// fall back to the first compatible subclass (e.g. CRM trigger) when no generic exists
+			if ($subclassName === null && $activity instanceof $className)
+			{
+				$subclassName = $activity->getName();
+			}
 		}
 
-		return null;
+		return $subclassName;
 	}
 
 	protected function executeActivity(CBPActivity $sender, CBPActivity $activity, int $inputPort): void
@@ -201,24 +219,42 @@ final class CBPNodeWorkflowActivity extends FlowDirectedActivity implements IBPR
 		parent::executeActivity($sender, $activity, $inputPort);
 	}
 
+	/**
+	 * A node of the process may own children of its own in two shapes, and in no other: a flow composite
+	 * activity, which owns them by its class, and a node served by the unified settings panel, whose container
+	 * of children the panel opens ({@see CBPActivity::isServedByUnifiedPanel()}) - the very verdict that opens
+	 * that container at runtime and keeps the white list of what may go into it. What is inside such a node is
+	 * answered by the node itself on this same pass of {@see CBPWorkflowTemplateLoader::validateTemplate()},
+	 * so relaxing the root opens no arbitrary child.
+	 *
+	 * The verdict is asked first because it costs a memoized read of the descriptor, while the shape below it
+	 * costs loading the class of the child and building an instance of it.
+	 */
 	public static function validateChild($childActivity, $bFirstChild = false, $childActivityData = [])
 	{
 		$errors = [];
 
-		if (!empty($childActivityData['Children']))
+		if (!empty($childActivityData['Children']) && !static::mayOwnChildren((string)$childActivity))
 		{
-			static::includeActivityFile($childActivity);
-			$child = static::createInstance($childActivity, 'XXX');
-			if (!($child instanceof FlowCompositeActivity))
-			{
-				$errors[] = [
-					'code' => 'WrongChildType',
-					'message' => Loc::getMessage('BPNWA_VALIDATE_CHILD_ERROR'),
-				];
-			}
+			$errors[] = [
+				'code' => 'WrongChildType',
+				'message' => Loc::getMessage('BPNWA_VALIDATE_CHILD_ERROR'),
+			];
 		}
 
 		return [...$errors, ...parent::validateChild($childActivity, $bFirstChild, $childActivityData)];
+	}
+
+	private static function mayOwnChildren(string $childActivity): bool
+	{
+		if (static::isServedByUnifiedPanel($childActivity))
+		{
+			return true;
+		}
+
+		static::includeActivityFile($childActivity);
+
+		return static::createInstance($childActivity, 'XXX') instanceof FlowCompositeActivity;
 	}
 
 	private function setStateTitle(?string $title = '', string $state = 'Completed'): void
@@ -328,5 +364,18 @@ final class CBPNodeWorkflowActivity extends FlowDirectedActivity implements IBPR
 		}
 
 		return [$parentName, $parentPort, $childName, $childPort];
+	}
+
+	private function hasStates(): bool
+	{
+		foreach ($this->arActivities as $activity)
+		{
+			if ($activity instanceof CBPStateNode)
+			{
+				return true;
+			}
+		}
+
+		return false;
 	}
 }

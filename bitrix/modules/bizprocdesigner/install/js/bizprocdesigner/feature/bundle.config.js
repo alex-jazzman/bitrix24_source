@@ -3,5 +3,4 @@ module.exports = {
 	output: 'dist/feature.bundle.js',
 	namespace: 'BX.Bizprocdesigner',
 	browserslist: true,
-	minification: true,
 };

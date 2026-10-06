@@ -8,6 +8,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 use Bitrix\Crm\Component\Base;
 use Bitrix\Crm\Copilot\CallAssessment\CallAssessmentItem;
 use Bitrix\Crm\Copilot\CallAssessment\Controller\CopilotCallAssessmentController;
+use Bitrix\Crm\Copilot\CallAssessment\V2ScriptDataLoader;
 use Bitrix\Crm\Integration\AI\AIManager;
 use Bitrix\Crm\Integration\AI\BaasManager;
 use Bitrix\Crm\Integration\AI\Enum\GlobalSetting;
@@ -27,8 +28,6 @@ class CCrmCopilotCallAssessmentDetailsComponent extends Base
 {
 	public function executeComponent(): void
 	{
-		global $APPLICATION;
-
 		if (
 			!AIManager::isAiCallProcessingEnabled()
 			|| !Container::getInstance()->getUserPermissions()->copilotCallAssessment()->canRead())
@@ -41,6 +40,9 @@ class CCrmCopilotCallAssessmentDetailsComponent extends Base
 			return;
 		}
 
+		$v2Data = null;
+		$isPendingGeneration = false;
+
 		$id = (int)($this->arParams['ID'] ?? 0);
 		if ($id)
 		{
@@ -52,10 +54,10 @@ class CCrmCopilotCallAssessmentDetailsComponent extends Base
 				return;
 			}
 
+			$this->setTitle($callAssessmentItem->getTitle());
+
 			$request = Application::getInstance()->getContext()->getRequest();
 			$this->arResult['isCopy'] = $request->get('copy') === 'Y';
-
-			$APPLICATION->setTitle(htmlspecialcharsbx($callAssessmentItem->getTitle()));
 			$this->arResult['data'] = CallAssessmentItem::createFromEntity($callAssessmentItem)->toArray();
 
 			$controlData = $this->arResult['data']['controlData'] ?? [];
@@ -77,18 +79,45 @@ class CCrmCopilotCallAssessmentDetailsComponent extends Base
 				static function (&$row) {
 					$row['startPoint'] = substr($row['startPoint']->toString(), 0, -3);
 					$row['endPoint'] = substr($row['endPoint']->toString(), 0, -3);
-				}
+				},
 			);
 			$this->arResult['data']['availabilityData'] = $availabilityData;
+
+			if ($this->isCallScoringV2Enabled())
+			{
+				$v2Data = (new V2ScriptDataLoader())->loadById($id);
+				$isPendingGeneration = $callAssessmentItem->getStatus() === CallAssessmentItem::STATUS_GENERATING_FROM_DIALOG;
+			}
 		}
 		else
 		{
-			$APPLICATION->setTitle(Loc::getMessage('CRM_COPILOT_CALL_ASSESSMENT_DETAILS_TITLE'));
-			$this->arResult['data'] = CallAssessmentItem::createFromArray([
-				'title' => Loc::getMessage('CRM_COPILOT_CALL_ASSESSMENT_DETAILS_TITLE'),
-			])->toArray();
+			$defaultTitle = (string)Loc::getMessage('CRM_COPILOT_CALL_ASSESSMENT_DETAILS_TITLE');
+			$this->setTitle($defaultTitle);
+
+			if ($this->isCallScoringV2Enabled())
+			{
+				$this->arResult['data'] = CallAssessmentItem::createFromArray([])->toArray();
+				$v2Data = (new V2ScriptDataLoader())->buildEmpty($defaultTitle);
+			}
+			else
+			{
+				$this->arResult['data'] = CallAssessmentItem::createFromArray([
+					'title' => $defaultTitle,
+				])->toArray();
+			}
 		}
 
+		if (is_array($v2Data))
+		{
+			$this->arResult['data']['criteria'] = $v2Data['criteria'];
+			$this->arResult['data']['filters'] = $v2Data['filters'];
+			$this->arResult['data']['isAiImprovementEnabled'] = $v2Data['isAiImprovementEnabled'];
+			$this->arResult['data']['updatedAt'] = $v2Data['updatedAt'] ?? null;
+			$this->arResult['data']['processedCallsCount'] = $v2Data['processedCallsCount'] ?? 0;
+			$this->arResult['data']['isGeneratedByCopilot'] = $v2Data['isGeneratedByCopilot'] ?? false;
+		}
+
+		$this->arResult['isPendingGeneration'] = $isPendingGeneration;
 		$this->arResult['copilotSettings'] = $this->getCopilotSettings();
 		$this->arResult['baasSettings'] = BaasManager::getSettings();
 		$this->arResult['readOnly'] =
@@ -97,7 +126,13 @@ class CCrmCopilotCallAssessmentDetailsComponent extends Base
 		;
 		$this->arResult['isEnabled'] = AIManager::isEnabledInGlobalSettings(GlobalSetting::CallAssessment);
 
-		$this->includeComponentTemplate();
+		$page = $this->isCallScoringV2Enabled() ? 'callscoringv2' : '';
+		$this->includeComponentTemplate($page);
+	}
+
+	private function setTitle(string $title): void
+	{
+		$this->getApplication()->setTitle(htmlspecialcharsbx($title));
 	}
 
 	private function showError(string $messageCode, string $descriptionCode = ''): void
@@ -108,7 +143,7 @@ class CCrmCopilotCallAssessmentDetailsComponent extends Base
 			[
 				'TITLE' => Loc::getMessage($messageCode),
 				'DESCRIPTION' => empty($descriptionCode) ? '' : Loc::getMessage($descriptionCode),
-			]
+			],
 		);
 	}
 
@@ -132,9 +167,18 @@ class CCrmCopilotCallAssessmentDetailsComponent extends Base
 		$parameters = parent::getToolbarParameters();
 
 		$parameters['isWithFavoriteStar'] = false;
-		$parameters['underTitleHtml'] = '<div class="copilot-call-assessment-pagetitle-description">' . Loc::getMessage('CRM_COPILOT_CALL_ASSESSMENT_DETAILS_SUBTITLE') . '</div>';
-		$parameters['isEditableTitle'] = true;
+
+		if (!$this->isCallScoringV2Enabled())
+		{
+			$parameters['underTitleHtml'] = '<div class="copilot-call-assessment-pagetitle-description">' . Loc::getMessage('CRM_COPILOT_CALL_ASSESSMENT_DETAILS_SUBTITLE') . '</div>';
+			$parameters['isEditableTitle'] = true;
+		}
 
 		return $parameters;
+	}
+
+	private function isCallScoringV2Enabled(): bool
+	{
+		return AIManager::isCallScoringV2Enabled();
 	}
 }

@@ -28,6 +28,7 @@ return [
 		'ui-system/form/inputs/input',
 		'ui-system/form/inputs/string',
 		'ui-system/blocks/link',
+		'ui-system/typography/bbcodetext',
 		'ui-system/typography/text',
 		'ui-system/layout/dialog-footer',
 		'ui-system/blocks/icon',

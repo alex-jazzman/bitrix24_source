@@ -23,7 +23,13 @@ export const YandexIntegrationWizardLayoutHeader = {
 			const languageId = this.loc('LANGUAGE_ID') ?? 'en';
 			const imageLanguageId = languageId === 'ru' ? 'ru' : 'en';
 
-			return `/bitrix/js/booking/application/yandex-integration-wizard/images/integrations-maps-${imageLanguageId}.png`;
+			return `/bitrix/js/booking/application/yandex-integration-wizard/images/integrations-maps-${imageLanguageId}.webp`;
+		},
+		integrationMapsImageSrcSet(): string
+		{
+			const imageUrl = this.integrationMapsImageUrl;
+
+			return `${imageUrl} 1x, ${imageUrl.replace('.webp', '-2x.webp')} 2x`;
 		},
 	},
 	template: `
@@ -85,6 +91,7 @@ export const YandexIntegrationWizardLayoutHeader = {
 			<img 
 				class="booking-yiw__info-map"
 				:src="integrationMapsImageUrl"
+				:srcset="integrationMapsImageSrcSet"
 				:alt="loc('YANDEX_WIZARD_TITLE')"
 				draggable="false"
 			/>

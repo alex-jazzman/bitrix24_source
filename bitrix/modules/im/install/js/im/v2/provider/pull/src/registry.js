@@ -1,6 +1,7 @@
 export { BasePullHandler } from './base/base';
 export { RecentPullHandler } from './recent/recent';
 export { RecentUnreadPullHandler } from './recent/recent-unread';
+export { FolderPullHandler } from './folder';
 export { NotificationPullHandler } from './notification';
 export { SidebarPullHandler } from './sidebar';
 export { NotifierPullHandler } from './notifier';

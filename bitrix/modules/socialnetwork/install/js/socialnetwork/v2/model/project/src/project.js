@@ -6,7 +6,7 @@ import {
 	AccessRightsBoolKind,
 	AccessRightsRoleKind,
 } from 'socialnetwork.v2.const';
-import { type ProjectModel, type ProjectFeatures } from './types';
+import { type ProjectModel, type ProjectFeatures, type NotificationCatalog } from './types';
 
 export const defaultProjectFeatures: ProjectFeatures = Object.freeze({
 	tasks: true,
@@ -84,6 +84,8 @@ export const useProjectStore = defineStore('project', {
 			startTs: 0,
 			finishTs: 0,
 		},
+		notifications: null,
+		notificationsInitial: null,
 	}),
 	getters: {
 		messagesAutoDeleteDelay: (state): number => {
@@ -91,14 +93,27 @@ export const useProjectStore = defineStore('project', {
 		},
 	},
 	actions: {
-		init({ projectId, publication }: { projectId: ?number, publication?: boolean }): void
+		init({ projectId, publication, notifications }: { projectId: ?number, publication?: boolean, notifications?: NotificationCatalog | null }): void
 		{
 			this.id = projectId;
 			this.publication = publication;
+			if (notifications !== undefined)
+			{
+				this.notifications = notifications ? structuredClone(notifications) : notifications;
+				this.notificationsInitial = notifications ? structuredClone(notifications) : notifications;
+			}
 		},
 		patchProject(patch: Partial<ProjectModel> = {}): void
 		{
-			this.$patch(patch);
+			this.$patch({
+				...patch,
+				...(patch.notifications !== undefined
+					? {
+						notifications: patch.notifications ? structuredClone(patch.notifications) : patch.notifications,
+						notificationsInitial: patch.notifications ? structuredClone(patch.notifications) : patch.notifications,
+					}
+					: {}),
+			});
 		},
 		updateMessagesAutoDeleteDelay(delay: number | string): void
 		{
@@ -125,6 +140,24 @@ export const useProjectStore = defineStore('project', {
 			}
 
 			this.features[featureId] = value;
+		},
+		setNotificationCounter(typeId: string, counterEnabled: boolean): void
+		{
+			if (!this.notifications)
+			{
+				return;
+			}
+
+			for (const group of this.notifications.groups)
+			{
+				const type = group.types.find((t) => t.id === typeId);
+				if (type)
+				{
+					type.counterEnabled = counterEnabled;
+
+					return;
+				}
+			}
 		},
 	},
 });

@@ -5,8 +5,8 @@ import { AhaMoment, IntegrationMapItemCode, IntegrationMapItemStatus, Model } fr
 import { ahaMoments } from 'booking.lib.aha-moments';
 
 import { OptionCard } from '../../../option-card/option-card';
-import imgLogoYa from '../../../../images/logo_ya_maps_square_rounded.png';
-import imgLogoTwoGis from '../../../../images/logo_two_gis_square_rounded.png';
+import imgLogoYa from '../../../../images/logo_ya_maps_square_rounded.svg';
+import imgLogoTwoGis from '../../../../images/logo_two_gis_square_rounded.webp';
 
 const OPTIONS_MAPS_STATUSES = [
 	{

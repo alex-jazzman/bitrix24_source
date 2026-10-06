@@ -50,6 +50,7 @@ jn.define('im/messenger/db/table/user', (require, exports, module) => {
 				{ name: 'isCompleteInfo', type: FieldType.boolean },
 				{ name: 'birthday', type: FieldType.text },
 				{ name: 'absent', type: FieldType.text },
+				{ name: 'active', type: FieldType.boolean, defaultValue: true },
 			];
 		}
 

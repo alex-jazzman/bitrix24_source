@@ -1,4 +1,5 @@
 <?
+$MESS["TIMEMAN_NS_GROUP"] = "Учёт рабочего времени";
 $MESS["TIMEMAN_NS_REPORT"] = "Новые записи в отчете по рабочему времени";
 $MESS["TIMEMAN_NS_REPORT_COMMENT"] = "Комментарии к отчету по рабочему времени";
 $MESS["TIMEMAN_NS_REPORT_APPROVE"] = "Подтверждение изменения записи в отчете по рабочему времени";

@@ -115,6 +115,7 @@ export const EditableDescription = {
 		{
 			switch (this.height)
 			{
+				case EditableDescriptionHeight.AUTO: return '--height-auto';
 				case EditableDescriptionHeight.LONG: return '--height-long';
 				case EditableDescriptionHeight.SHORT: return '--height-short';
 				default: return '--height-short';
@@ -340,6 +341,11 @@ export const EditableDescription = {
 
 		checkIsLongText(): boolean
 		{
+			if (this.height === EditableDescriptionHeight.AUTO)
+			{
+				return false;
+			}
+
 			const textBlock = this.$refs.text;
 			if (!textBlock)
 			{

@@ -1,6 +1,6 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports, main_core, call_adapter_utils, call_adapter_desktopApi, main_core_events, main_popup, im_v2_lib_desktopApi, call_lib_callTokenManager, call_lib_settingsManager, call_lib_stuckCallFinishTracker, im_v2_lib_utils, ui_dialogs_messagebox, im_lib_localstorage, im_v2_const, im_v2_lib_desktop, intranet_desktopDownload, call_lib_accidentLogger, call_lib_analytics, ui_vue3_pinia, call_store, call_lib_hardware, call_infrastructure_broadcastChannel, ui_buttons, ui_notification, call_mapping, im_v2_lib_promo, ui_switcher, call_component_userListPopup, call_component_userList, call_lib_mediaRegistry) {
+(function (exports, main_core, call_adapter_utils, call_adapter_desktopApi, main_core_events, main_popup, im_v2_lib_desktopApi, call_lib_callTokenManager, call_lib_settingsManager, call_lib_stuckCallFinishTracker, im_v2_lib_utils, ui_dialogs_messagebox, ui_notification, im_lib_localstorage, im_v2_const, im_v2_lib_desktop, call_lib_analytics, ui_vue3_pinia, call_store, call_lib_hardware, call_infrastructure_broadcastChannel, call_lib_reconnectHistory, ui_buttons, call_mapping, im_v2_lib_promo, ui_switcher, call_component_lobby, call_component_userListPopup, call_component_userList, call_lib_mediaRegistry) {
 	'use strict';
 
 	// screensharing workaround
@@ -294,6 +294,11 @@ this.BX = this.BX || {};
 		ENABLE: 'enable',
 		DISABLE: 'disable'
 	};
+	const AUDIO_QUEUE = {
+		INITIAL: '',
+		ENABLE: 'enable',
+		DISABLE: 'disable'
+	};
 	const MONITORING_METRICS = {
 		COUNT_TRACKS: 'COUNT_TRACKS',
 		COUNT_VIDEO_TRACKS: 'COUNT_VIDEO_TRACKS',
@@ -420,7 +425,6 @@ this.BX = this.BX || {};
 		SUBSCRIPTION_DELAY_MS: 'webrtc_subscription_delay_ms' // not implemented yet
 	};
 	const ReconnectionReason = {
-		NetworkError: 'NetworkError',
 		PingPongMissed: 'PingPongMissed',
 		PeerConnectionFailed: 'PeerConnectionFailed',
 		WsTransportClosed: 'WsTransportClosed',
@@ -447,6 +451,24 @@ this.BX = this.BX || {};
 				this.stack = error.stack;
 			}
 		}
+	}
+
+	/**
+	 * True only when a join response proves the room is already closed: a
+	 * mustCreate=false join-by-uuid answered with RoomNotFound / CanNotCreateRoom.
+	 * Transport/ambiguous codes are excluded on purpose — under overload the server
+	 * returns HTML-5xx (UnexpectedResponse / FailedRequest / ...), which may be
+	 * transient and must NOT be reported to the user as "call finished".
+	 *
+	 * @param {{ mustCreate: boolean, callUuid: ?string, errorCode: * }} params
+	 * @returns {boolean}
+	 */
+	function isRoomClosedJoinError({
+		mustCreate,
+		callUuid,
+		errorCode
+	}) {
+		return mustCreate === false && Boolean(callUuid) && (errorCode === JoinRequestFailedCodes.RoomNotFound || errorCode === JoinRequestFailedCodes.CanNotCreateRoom);
 	}
 
 	const CallCommonRecordState = {
@@ -501,6 +523,7 @@ this.BX = this.BX || {};
 		[MediaStreamsKinds.ScreenAudio]: 'sharingAudio'
 	};
 	const blankAvatar = '/bitrix/js/im/images/blank.gif';
+	const CALL_ALREADY_FINISHED_EVENT = 'BX.Call.Engine:callAlreadyFinished';
 	let userData = {};
 	let usersInProcess = {};
 	let abortController = null;
@@ -972,7 +995,7 @@ this.BX = this.BX || {};
 		}
 		return Provider$1.Plain;
 	}
-	const getRoomType = (provider, chatId) => {
+	const getRoomType = chatId => {
 		if (isLargeCallEnabled()) {
 			return RoomType.Large;
 		}
@@ -992,10 +1015,25 @@ this.BX = this.BX || {};
 			_primaryEngine = engine;
 		}
 	}
+
+	/**
+	 * Returns the first call; use for testing purposes only.
+	 * @returns The call that matches the provider, or null if no call is found.
+	 */
+	function getCurrentCall() {
+		for (const engine of _engines) {
+			for (const callId in engine.calls) {
+				if (engine.calls[callId].state === CallState.Connected) {
+					return engine.calls[callId];
+				}
+			}
+		}
+		return null;
+	}
 	function getCurrentBitrixCall() {
 		for (const engine of _engines) {
 			for (const callId in engine.calls) {
-				if (engine.calls[callId].BitrixCall) {
+				if (engine.calls[callId].provider === Provider$1.Bitrix) {
 					return engine.calls[callId];
 				}
 			}
@@ -1173,7 +1211,7 @@ this.BX = this.BX || {};
 	 * @returns {string}
 	 */
 	function getCallConnectionErrorCode(error) {
-		let errorCode = 'UNKNOWN_ERROR';
+		let errorCode = 'CLIENT_UNCLASSIFIED';
 		if (main_core.Type.isString(error) && error) {
 			errorCode = error;
 		} else if (main_core.Type.isObject(error) && error instanceof JoinResponseError) {
@@ -1181,7 +1219,10 @@ this.BX = this.BX || {};
 		} else if (main_core.Type.isObject(error) && error.code) {
 			errorCode = error.code === 'access_denied' ? 'ACCESS_DENIED' : error.code;
 		}
-		return errorCode;
+
+		// Whitespace in a server code is percent-encoded on the way to analytics and splits
+		// one status into several ('internal error' -> error_internal error / error_internalpct20error).
+		return main_core.Type.isString(errorCode) ? errorCode.replaceAll(/\s+/g, '_') : errorCode;
 	}
 
 	/**
@@ -1199,6 +1240,14 @@ this.BX = this.BX || {};
 	const getCallConnectionData = async (callOptions, chatId, mustCreate = true) => {
 		if (!main_core.Type.isPlainObject(callOptions)) {
 			return Promise.reject(new Error('Incorrect type of callOptions'));
+		}
+		if (mustCreate === false && callOptions.callUuid && call_lib_stuckCallFinishTracker.stuckCallFinishTracker.isRecentlyClosed(callOptions.callUuid)) {
+			main_core_events.EventEmitter.emit(CALL_ALREADY_FINISHED_EVENT, {
+				callUuid: callOptions.callUuid
+			});
+			const recentlyClosedError = new JoinResponseError('room recently closed', JoinRequestFailedCodes.CanNotCreateRoom);
+			recentlyClosedError.isRoomClosed = true;
+			return Promise.reject(recentlyClosedError);
 		}
 		return new Promise(async (resolve, reject) => {
 			try {
@@ -1271,6 +1320,9 @@ this.BX = this.BX || {};
 				}).then(response => {
 					if (!responseInfo?.ok) {
 						if (response?.error) {
+							const errorCode = response.error?.code;
+							const joinError = new JoinResponseError(response.error?.message, errorCode);
+
 							// Stuck call on join (mustCreate=false): the media room is gone,
 							// finish the DB record silently so it disappears from recent.
 							// On mustCreate=true the same codes mean "can not create" — skip.
@@ -1279,16 +1331,26 @@ this.BX = this.BX || {};
 							// path when the backend already closed the call) can cancel
 							// it before it hits the server. Engine pull handlers call
 							// stuckCallFinishTracker.cancelPending(id, uuid) on arrival.
-							const errorCode = response.error?.code;
-							if (mustCreate === false && callOptions.callUuid && (errorCode === JoinRequestFailedCodes.RoomNotFound || errorCode === JoinRequestFailedCodes.CanNotCreateRoom)) {
+							if (isRoomClosedJoinError({
+								mustCreate,
+								callUuid: callOptions.callUuid,
+								errorCode
+							})) {
+								call_lib_stuckCallFinishTracker.stuckCallFinishTracker.markClosed(callOptions.callUuid);
 								call_lib_stuckCallFinishTracker.stuckCallFinishTracker.scheduleFinish(null, callOptions.callUuid, () => BX.ajax.runAction('call.CallManager.finish', {
 									data: {
 										callUuid: callOptions.callUuid,
 										silent: true
 									}
 								}));
+								main_core_events.EventEmitter.emit(CALL_ALREADY_FINISHED_EVENT, {
+									callUuid: callOptions.callUuid
+								});
+								// The event above and this error travel different paths, so the outcome rides
+								// on the error itself: the analytics send point reads it, not the event.
+								joinError.isRoomClosed = true;
 							}
-							throw new JoinResponseError(response?.error?.message, response?.error?.code);
+							throw joinError;
 						} else {
 							const payload = main_core.Type.isString(response) ? response : JSON.stringify(response);
 							throw new JoinResponseError(payload, JoinRequestFailedCodes.UnexpectedResponse);
@@ -1323,7 +1385,7 @@ this.BX = this.BX || {};
 		try {
 			const call = await _primaryEngine.getCallWithId(callUuid);
 			const chatId = call.call.associatedEntity.chatId;
-			const roomType = getRoomType(call.call.provider, chatId);
+			const roomType = getRoomType(chatId);
 			return getCallConnectionData({
 				roomType,
 				callType: call.call.type,
@@ -1365,6 +1427,9 @@ this.BX = this.BX || {};
 	};
 	const canUseNewCallApi = roomType => {
 		return roomType === RoomType.Large || isLargeCallEnabled() && roomType !== RoomType.Small;
+	};
+	const getSyncCallInvitePeriod = () => {
+		return main_core.Extension.getSettings('call.core')?.call?.syncCallInvitePeriod;
 	};
 	const getCloudRecordSettings = () => {
 		return main_core.Extension.getSettings('call.core')?.cloudRecord || {};
@@ -1550,6 +1615,7 @@ this.BX = this.BX || {};
 		stopMediaStreamAudioTracks,
 		getConferenceProvider,
 		getRoomType,
+		getCurrentCall,
 		getCurrentBitrixCall,
 		registerEngine,
 		setCodecToReport,
@@ -1576,6 +1642,7 @@ this.BX = this.BX || {};
 		getAiSettings,
 		isLargeCallEnabled,
 		canUseNewCallApi,
+		getSyncCallInvitePeriod,
 		isStreamQualityFeatureEnabled,
 		getCloudRecordSettings,
 		isUserControlFeatureEnabled,
@@ -3116,6 +3183,13 @@ this.BX = this.BX || {};
 			if (!this.audioCtx) {
 				this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 				this.destination = this.audioCtx.createMediaStreamDestination();
+			} else if (!this.#isDestinationLive()) {
+				// The output track was stopped from the outside (a legacy engine tears its local stream down
+				// before recapturing). Rebuild the destination only - keeping the context keeps the sample rate
+				// the processed stream is clocked by.
+				this.inputSource?.disconnect();
+				this.noiseSuppressionNode?.disconnect();
+				this.destination = this.audioCtx.createMediaStreamDestination();
 			}
 			if (this.audioCtx.state === 'suspended') {
 				await this.audioCtx.resume();
@@ -3127,6 +3201,8 @@ this.BX = this.BX || {};
 						track.stop();
 					}
 				});
+				// The replaced source node stays wired into the graph until it is unplugged explicitly.
+				this.inputSource?.disconnect();
 				this.inputSource = this.audioCtx.createMediaStreamSource(stream);
 				this.inputStream = stream;
 			} else if (!stream && !this.inputSource) {
@@ -3146,6 +3222,9 @@ this.BX = this.BX || {};
 				this.inputSource.connect(this.destination);
 			}
 			this.previousEnable = this.enable;
+		}
+		#isDestinationLive() {
+			return Boolean(this.destination?.stream?.getAudioTracks()?.some(track => track.readyState === 'live'));
 		}
 		stop() {
 			if (this.audioCtx) {
@@ -3277,12 +3356,16 @@ this.BX = this.BX || {};
 		}
 		async getUserMedia(constraints) {
 			const stream = await super.getUserMedia(constraints);
-			if (!stream || stream.getAudioTracks?.()?.length === 0 || !call_lib_settingsManager.CallSettingsManager.noiseSuppressionEnabled) {
+			if (!stream || stream.getAudioTracks?.()?.length === 0) {
 				return stream;
 			}
 			return this.addNoiseSuppression(stream);
 		}
 		async addNoiseSuppression(stream) {
+			// A new capture gets a graph of its own: the outgoing audio recovers from a device change only when
+			// the pipeline and the stream carrying it are renewed together, exactly as joining a call does.
+			// Keeping the graph and restarting only the stream (or the other way round) leaves the remote side
+			// mute.
 			if (this.noiseSuppressionInputStream !== stream) {
 				this.stopNoiseSuppression();
 			}
@@ -3305,6 +3388,9 @@ this.BX = this.BX || {};
 		}
 		get noiseSuppressionInputStream() {
 			return this.#noiseSuppression.inputStream;
+		}
+		get noiseSuppressionOutputStream() {
+			return this.#noiseSuppression.destination?.stream ?? null;
 		}
 		async checkPermissions() {
 			const permissions = await super.checkPermissions();
@@ -3372,6 +3458,7 @@ this.BX = this.BX || {};
 			this.trackToUpdateEncodings = null;
 			this.sendersProcesses = {};
 			this.savedSenderEncodings = {};
+			this.senderKinds = new WeakMap();
 			this.callStatsInterval = null;
 			this.statsTimeout = 3000;
 		}
@@ -3415,7 +3502,7 @@ this.BX = this.BX || {};
 		addIceCandidate(data) {
 			this.#iceCandidateHandler(data);
 		}
-		async addTrack(mediaStreamKind, mediaStreamTrack, streamQualityOptions = {}) {
+		async addTrack(mediaStreamKind, mediaStreamTrack, streamQualityOptions = {}, hasKnownSid = true) {
 			return new Promise(async (resolve, reject) => {
 				try {
 					if (!this.publisherPeerConnection) {
@@ -3429,6 +3516,35 @@ this.BX = this.BX || {};
 					mediaStreamTrack.source = mediaStreamKind;
 					const sender = this.#getSender(mediaStreamKind);
 					if (sender) {
+						const senderWasEmpty = !sender.track;
+						if (mediaStreamKind === MediaStreamsKinds.Microphone && (!hasKnownSid || senderWasEmpty)) {
+							// Reuse the microphone transceiver and re-signal to obtain a fresh sid.
+							// - !hasKnownSid: sender still has a live track but its sid was lost.
+							// - senderWasEmpty: removeTrack() nulled the track and inactivated the transceiver, so a
+							//   plain replaceTrack would not re-publish (server removed the publication, m-line
+							//   inactive) and republishTrack would falsely report success while the mic is silent.
+							//   Reactivate the transceiver and renegotiate so the server actually re-publishes it.
+							if (senderWasEmpty) {
+								const transceiver = this.publisherPeerConnection.getTransceivers?.().find(t => t.sender === sender);
+								if (transceiver) {
+									transceiver.direction = 'sendonly';
+								}
+							}
+							await sender.replaceTrack(mediaStreamTrack);
+							this.#log(`Re-signaling microphone publication to restore a lost sid`);
+							this.#triggerEvents('addTrack', [this.id, {
+								cid: mediaStreamTrack.id,
+								source: mediaStreamKind
+							}, mediaStreamTrack.id, mediaStreamKind]);
+
+							// Renegotiate for both cases: the new cid must be mapped to an m-line via a fresh SDP,
+							// otherwise the server keeps the old msid and trackCreated never arrives (publish times
+							// out). Exactly one renegotiation happens here per re-signal.
+							this.offersStack++;
+							await this.#sendOffer();
+							resolve(false);
+							return;
+						}
 						await sender.replaceTrack(mediaStreamTrack);
 						if (mediaStreamKind === MediaStreamsKinds.Camera && this.publicationParams.videoSimulcast) {
 							await this.#updateVideoEncodings(sender, mediaStreamTrack);
@@ -3456,6 +3572,7 @@ this.BX = this.BX || {};
 							addTrackSignal.layers = this.#getLayersFromEncodings(width, height, encodings);
 						}
 						const transceiver = this.publisherPeerConnection.addTransceiver(mediaStreamTrack, transceiverOptions);
+						this.senderKinds.set(transceiver.sender, mediaStreamKind);
 						if (this.publicationParams.videoSimulcast) {
 							this.trackToUpdateEncodings = mediaStreamTrack;
 						} else {
@@ -3464,10 +3581,12 @@ this.BX = this.BX || {};
 						this.#setCodec(transceiver);
 						this.#triggerEvents('addTrack', [this.id, addTrackSignal, mediaStreamTrack.id, mediaStreamKind]);
 					} else if (mediaStreamKind === MediaStreamsKinds.Microphone || mediaStreamKind === MediaStreamsKinds.ScreenAudio) {
-						this.publisherPeerConnection.addTransceiver(mediaStreamTrack, transceiverOptions);
+						const transceiver = this.publisherPeerConnection.addTransceiver(mediaStreamTrack, transceiverOptions);
+						this.senderKinds.set(transceiver.sender, mediaStreamKind);
 						this.#triggerEvents('addTrack', [this.id, addTrackSignal, mediaStreamTrack.id, mediaStreamKind]);
 					} else if (mediaStreamKind === MediaStreamsKinds.Screen) {
-						this.publisherPeerConnection.addTransceiver(mediaStreamTrack, transceiverOptions);
+						const transceiver = this.publisherPeerConnection.addTransceiver(mediaStreamTrack, transceiverOptions);
+						this.senderKinds.set(transceiver.sender, mediaStreamKind);
 						const width = mediaStreamTrack.getSettings().width;
 						const height = mediaStreamTrack.getSettings().height;
 						addTrackSignal.type = 'VIDEO';
@@ -3491,6 +3610,10 @@ this.BX = this.BX || {};
 				if (mediaStreamKind === MediaStreamsKinds.Camera) {
 					await this.#updateVideoEncodings(sender, mediaStreamTrack);
 				}
+			} else {
+				// No sender yet (device switched before the first publish); the track stays in the local stream
+				// and is published on the next enable, so only surface the gap instead of dropping it silently.
+				this.#log(`No sender for a track with kind ${mediaStreamKind}, deferring replace to the next publication`, LOG_LEVEL.WARNING);
 			}
 		}
 		async removeTrack(mediaStreamKind) {
@@ -3702,6 +3825,15 @@ this.BX = this.BX || {};
 			if (senders?.length > 0) {
 				for (const sender of senders) {
 					if (sender.track?.source === kind) {
+						return sender;
+					}
+				}
+
+				// Reuse a sender whose track was nulled by removeTrack, avoiding a duplicate transceiver.
+				// Microphone only: for screen (video/audio) a re-share must go through addTrack so the server
+				// re-publishes it, otherwise replaceTrack on the stale sender leaves it invisible to others.
+				for (const sender of senders) {
+					if (kind === MediaStreamsKinds.Microphone && !sender.track && this.senderKinds.get(sender) === kind) {
 						return sender;
 					}
 				}
@@ -4142,15 +4274,22 @@ this.BX = this.BX || {};
 		}
 	}
 
+	// A request that was superseded by a newer one is rejected with this error name so clients can tell
+	// it apart from a genuine media-acquisition failure and skip the fallback capture.
+	const STREAM_MANAGER_SUPERSEDED = 'StreamManagerError_superseded';
 	class StreamManager {
 		#streams;
 		#tracks;
 		#trackRequests;
+		#requestSeq;
+		#micRequestChain;
 		#isLegacyDesktop;
 		constructor() {
 			this.#streams = {};
 			this.#tracks = {};
 			this.#trackRequests = {};
+			this.#requestSeq = {};
+			this.#micRequestChain = null;
 			this.#isLegacyDesktop = window?.BXDesktopSystem?.GetProperty('versionParts')?.[3] < 78;
 		}
 		getLocalStream(mediaStreamKind) {
@@ -4174,9 +4313,19 @@ this.BX = this.BX || {};
 			return this.#processGetUserMediaPromises(promises);
 		}
 		stopStream(mediaStreamKind) {
-			if (this.#trackRequests[mediaStreamKind]) {
-				this.#trackRequests[mediaStreamKind]?.then(() => {
-					this.stopStream(mediaStreamKind);
+			const trackRequest = this.#trackRequests[mediaStreamKind];
+			const hasLocalTrack = Boolean(this.#tracks[mediaStreamKind]);
+			if (trackRequest) {
+				const requestSeq = this.#requestSeq[mediaStreamKind];
+				trackRequest.promise?.then(() => {
+					// Skip a deferred stop if a newer request superseded the one it was
+					// scheduled for, so it can't kill a freshly requested track.
+					if (this.#requestSeq[mediaStreamKind] === requestSeq) {
+						this.stopStream(mediaStreamKind);
+					}
+				})?.catch(() => {
+					// The original request rejected (superseded/failed) - it produced no track to stop, and its
+					// own consumer already handled the rejection. Swallow it so it isn't an unhandled rejection.
 				});
 				delete this.#trackRequests[mediaStreamKind];
 			}
@@ -4186,6 +4335,27 @@ this.BX = this.BX || {};
 				}
 				this.#tracks[mediaStreamKind].track.stop();
 				delete this.#tracks[mediaStreamKind];
+			}
+			if (mediaStreamKind === MediaStreamsKinds.Microphone && !trackRequest && !hasLocalTrack && Hardware.noiseSuppressionInputStream) {
+				// What holds the device is the noise suppression graph, not the cache entry: #tracks keeps only the
+				// graph's processed output, while the raw mic lives in noiseSuppressionInputStream. A capture that
+				// fails erases its cache entry without touching the graph an earlier capture left behind, so the
+				// branch above finds nothing to reap and the raw mic stays captured with nobody consuming it. Here
+				// no capture is in flight to adopt that graph and no track is cached, so this teardown is its last
+				// owner. It cannot mute a live publication: every caller reaches this only after stopping its own
+				// stream. A raw-fallback mic (the graph failed to init) leaves no input stream, so it is untouched.
+				Hardware.stopNoiseSuppression();
+			}
+			if (mediaStreamKind === MediaStreamsKinds.Microphone && !trackRequest) {
+				// Drop the mic capture chain at this teardown boundary so the next session starts a fresh chain,
+				// but only when no mic capture is in flight (trackRequest was falsy on entry). Resetting while a
+				// capture is still running would let a new capture run in parallel against the shared
+				// NoiseSuppression graph, losing the serialization the chain provides (an old late getUserMedia
+				// could close the AudioContext / stop the new raw track). A truly hung in-flight capture is not
+				// force-broken here (needs NS-session cancellation). Mid device-switch this is reached only from
+				// CallApi.#releaseStream, and only for a call that leaves needToStopStreams on - the plain engine
+				// turns it off for the CallApi it creates, so its switch never passes through here.
+				this.#micRequestChain = null;
 			}
 		}
 		#processGetUserMediaPromises(promises) {
@@ -4229,49 +4399,160 @@ this.BX = this.BX || {};
 			if (promises.length === Number(Boolean(constraints.video)) + Number(Boolean(constraints.audio))) {
 				return promises;
 			}
+
+			// Seq captured per kind when this request is registered below. Every completion handler
+			// checks it so a late old request (divergent constraints run in parallel) can never mutate
+			// the current #tracks/#trackRequests - it only stops its own now-stale result.
+			const requestSeq = {};
+
+			// Microphone captures share one NoiseSuppressionService (a single AudioContext / input stream /
+			// destination). Running divergent-constraint captures truly in parallel lets a new capture tear
+			// down and recreate that graph via stopNoiseSuppression()/turn() while an older turn() is still
+			// mutating it - which can stop the new input or return a dead processed track. The seq-guard only
+			// protects state at settle time, not the NS graph mutation during the in-flight turn(). So chain
+			// each new mic capture on the previous one's settle: the NS reconfiguration is never concurrent,
+			// and last-request-wins still holds (the newest constraints run last, and older settled captures
+			// are seq-stale so they cannot mutate current state).
+			let mediaRequest;
+			if (newConstraints.audio) {
+				const previousMicRequest = this.#micRequestChain ?? Promise.resolve();
+				mediaRequest = previousMicRequest.then(() => {
+					// Skip a dead intermediate selection: if a newer mic request already superseded this one
+					// before its turn to run, don't capture/reconfigure NS at all - return a no-op so the
+					// newest request is not delayed behind a request nobody wants anymore.
+					const micSuperseded = !this.#isCurrentRequest(MediaStreamsKinds.Microphone, requestSeq);
+					const videoSuperseded = !newConstraints.video || !this.#isCurrentRequest(MediaStreamsKinds.Camera, requestSeq);
+					if (micSuperseded && videoSuperseded) {
+						return null;
+					}
+					return Hardware.getUserMedia(newConstraints);
+				});
+				this.#micRequestChain = mediaRequest.catch(() => {});
+			} else {
+				mediaRequest = Hardware.getUserMedia(newConstraints);
+			}
 			const streamPromise = new Promise((resolve, reject) => {
-				Hardware.getUserMedia(newConstraints).then(stream => {
+				mediaRequest.then(stream => {
+					if (!stream) {
+						// This mic capture was skipped as superseded-before-launch. Report it as a superseded
+						// no-op (not a media failure) so the client does not run a fallback.
+						reject({
+							name: STREAM_MANAGER_SUPERSEDED,
+							message: 'Media request superseded before capture'
+						});
+						return;
+					}
 					const videoTrack = stream.getVideoTracks()?.[0];
 					const audioTrack = stream.getAudioTracks()?.[0];
+
+					// FINAL partial-supersede contract: supersede-drop applies ONLY to a single-kind request (a
+					// standalone device switch) - a stale one is dropped so the switch's stale capture no-ops. A
+					// multi-kind (combined initial) request always resolves with every track it captured; a kind of it
+					// that a newer standalone switch superseded is left in the resolved stream (the switch replaces that
+					// kind at the consumer). Each current kind is committed to #tracks (the reuse cache reaped by
+					// stopStream); a superseded kind is not cached - its newer owner caches its own.
+					const capturedKindCount = (videoTrack ? 1 : 0) + (audioTrack ? 1 : 0);
+					const isDeviceSwitch = capturedKindCount === 1;
+					const videoSuperseded = Boolean(videoTrack) && !this.#isCurrentRequest(MediaStreamsKinds.Camera, requestSeq);
+					const audioSuperseded = Boolean(audioTrack) && !this.#isCurrentRequest(MediaStreamsKinds.Microphone, requestSeq);
 					if (videoTrack) {
-						this.#tracks[MediaStreamsKinds.Camera]?.track?.stop();
-						this.#tracks[MediaStreamsKinds.Camera] = {
-							track: videoTrack,
-							constraints: constraints.video
-						};
-						delete this.#trackRequests[MediaStreamsKinds.Camera];
+						if (!videoSuperseded) {
+							this.#tracks[MediaStreamsKinds.Camera]?.track?.stop();
+							this.#tracks[MediaStreamsKinds.Camera] = {
+								track: videoTrack,
+								constraints: constraints.video
+							};
+							delete this.#trackRequests[MediaStreamsKinds.Camera];
+						} else if (isDeviceSwitch) {
+							stream.removeTrack(videoTrack);
+							videoTrack.stop();
+						}
 					}
 					if (audioTrack) {
-						if (audioTrack.id !== this.#tracks[MediaStreamsKinds.Microphone]?.track.id) {
-							this.#tracks[MediaStreamsKinds.Microphone]?.track?.stop();
+						if (!audioSuperseded) {
+							if (audioTrack.id !== this.#tracks[MediaStreamsKinds.Microphone]?.track.id) {
+								this.#tracks[MediaStreamsKinds.Microphone]?.track?.stop();
+							}
+
+							// The cache entry is refreshed even when the track is the same object: with noise
+							// suppression the processed track survives a device switch, and its constraints are what
+							// the next request is deduplicated against - stale ones would hand back the old device.
 							this.#tracks[MediaStreamsKinds.Microphone] = {
 								track: audioTrack,
 								constraints: constraints.audio
 							};
+							delete this.#trackRequests[MediaStreamsKinds.Microphone];
+						} else if (isDeviceSwitch) {
+							stream.removeTrack(audioTrack);
+
+							// audioTrack is only the processed OUTPUT; the raw mic lives in noiseSuppressionInputStream.
+							// That output belongs to the noise suppression graph, not to this request: while the graph
+							// still hands it out, disposing of it is the next capture's job - it replaces the graph and
+							// releases the raw mic behind it. A raw-fallback track (the graph failed to init) has no
+							// graph behind it, so it is this request's to stop.
+							if (!Hardware.noiseSuppressionOutputStream?.getTrackById(audioTrack.id)) {
+								audioTrack.stop();
+							}
 						}
-						delete this.#trackRequests[MediaStreamsKinds.Microphone];
 					}
-					resolve(stream.getTracks());
+					const remainingTracks = stream.getTracks();
+					if (remainingTracks.length === 0) {
+						// A single-kind (device-switch) request whose only kind was superseded: report a superseded no-op
+						// (not a media failure) so the consumer does not run a fallback; the newer request owns that kind.
+						reject({
+							name: STREAM_MANAGER_SUPERSEDED,
+							message: 'Media request superseded'
+						});
+						return;
+					}
+					resolve(remainingTracks);
 				}).catch(error => {
+					let anyCurrent = false;
 					if (newConstraints.video) {
-						delete this.#tracks[MediaStreamsKinds.Camera];
-						delete this.#trackRequests[MediaStreamsKinds.Camera];
+						if (this.#isCurrentRequest(MediaStreamsKinds.Camera, requestSeq)) {
+							anyCurrent = true;
+							delete this.#tracks[MediaStreamsKinds.Camera];
+							delete this.#trackRequests[MediaStreamsKinds.Camera];
+						}
 					}
 					if (newConstraints.audio) {
-						delete this.#tracks[MediaStreamsKinds.Microphone];
-						delete this.#trackRequests[MediaStreamsKinds.Microphone];
+						if (this.#isCurrentRequest(MediaStreamsKinds.Microphone, requestSeq)) {
+							anyCurrent = true;
+							delete this.#tracks[MediaStreamsKinds.Microphone];
+							delete this.#trackRequests[MediaStreamsKinds.Microphone];
+						}
 					}
-					reject(error);
+
+					// getUserMedia is atomic: on failure no kind was captured. Report SUPERSEDED only when
+					// EVERY requested kind was already superseded (each is re-delivered by its newer owner, so
+					// the consumer must not fall back). If any requested kind is still current, its genuine
+					// failure must propagate so that kind's consumer can fall back / report it.
+					reject(anyCurrent ? error : {
+						name: STREAM_MANAGER_SUPERSEDED,
+						message: 'Media request superseded'
+					});
 				});
 			});
 			if (newConstraints.video) {
-				this.#trackRequests[MediaStreamsKinds.Camera] = streamPromise;
+				requestSeq[MediaStreamsKinds.Camera] = this.#setTrackRequest(MediaStreamsKinds.Camera, streamPromise, newConstraints.video);
 			}
 			if (newConstraints.audio) {
-				this.#trackRequests[MediaStreamsKinds.Microphone] = streamPromise;
+				requestSeq[MediaStreamsKinds.Microphone] = this.#setTrackRequest(MediaStreamsKinds.Microphone, streamPromise, newConstraints.audio);
 			}
 			promises.push(streamPromise);
 			return promises;
+		}
+		#setTrackRequest(kind, promise, constraints) {
+			this.#requestSeq[kind] = (this.#requestSeq[kind] || 0) + 1;
+			this.#trackRequests[kind] = {
+				promise,
+				constraints
+			};
+			return this.#requestSeq[kind];
+		}
+		#isCurrentRequest(kind, requestSeq) {
+			// A kind absent from the snapshot was not registered by this request, so it is not stale.
+			return requestSeq[kind] === undefined || this.#requestSeq[kind] === requestSeq[kind];
 		}
 		#getUserScreen() {
 			const promises = [];
@@ -4326,8 +4607,8 @@ this.BX = this.BX || {};
 					reject(error);
 				});
 			});
-			this.#trackRequests[MediaStreamsKinds.Screen] = streamPromise;
-			this.#trackRequests[MediaStreamsKinds.ScreenAudio] = streamPromise;
+			this.#setTrackRequest(MediaStreamsKinds.Screen, streamPromise, undefined);
+			this.#setTrackRequest(MediaStreamsKinds.ScreenAudio, streamPromise, undefined);
 			promises.push(streamPromise);
 			return promises;
 		}
@@ -4353,11 +4634,16 @@ this.BX = this.BX || {};
 		#getMediaPromise(constraints, kind) {
 			const trackRequest = this.#trackRequests[kind];
 			if (constraints && trackRequest) {
-				return trackRequest;
+				// Reuse an in-flight request only when its constraints match; a request
+				// for a different device must not receive the previous device's promise.
+				if (this.#isSameConstraints(constraints, trackRequest.constraints)) {
+					return trackRequest.promise;
+				}
+				return null;
 			}
 			const localTrack = this.#tracks[kind];
 			const isSameConstraints = this.#isSameConstraints(constraints, localTrack?.constraints);
-			const isInputTrackLived = !call_lib_settingsManager.CallSettingsManager.noiseSuppressionEnabled || kind !== MediaStreamsKinds.Microphone || Hardware.noiseSuppressionInputStream && Hardware.noiseSuppressionInputStream.getAudioTracks().length > 0 && Hardware.noiseSuppressionInputStream.getAudioTracks()[0].readyState === 'live';
+			const isInputTrackLived = kind !== MediaStreamsKinds.Microphone || Hardware.noiseSuppressionInputStream && Hardware.noiseSuppressionInputStream.getAudioTracks().length > 0 && Hardware.noiseSuppressionInputStream.getAudioTracks()[0].readyState === 'live';
 			if (localTrack?.track?.readyState === 'live' && isInputTrackLived && isSameConstraints) {
 				return Promise.resolve([localTrack.track]);
 			}
@@ -4473,7 +4759,7 @@ this.BX = this.BX || {};
 
 	// TODO: remove direct dependency on singletons, pass as parameters
 	const isNoiseSuppressionInputTrackOff = () => {
-		return call_lib_settingsManager.CallSettingsManager.noiseSuppressionEnabled && Hardware.noiseSuppressionInputStream && Hardware.noiseSuppressionInputStream.getAudioTracks().length > 0 && Hardware.noiseSuppressionInputStream.getAudioTracks()[0].readyState !== 'live';
+		return Hardware.noiseSuppressionInputStream && Hardware.noiseSuppressionInputStream.getAudioTracks().length > 0 && Hardware.noiseSuppressionInputStream.getAudioTracks()[0].readyState !== 'live';
 	};
 	const buildMediaConstraints = (options, fallbackMode, devices) => {
 		const constraints = {
@@ -4512,6 +4798,79 @@ this.BX = this.BX || {};
 		return constraints;
 	};
 
+	// Pick the reconciliation operation when draining the single-slot audio queue.
+	function selectAudioQueueOperation({
+		queue,
+		isTrackLive,
+		mutedBySystem
+	}) {
+		if (queue === AUDIO_QUEUE.ENABLE && !isTrackLive && !mutedBySystem) {
+			return AUDIO_QUEUE.ENABLE;
+		}
+		if (queue === AUDIO_QUEUE.DISABLE && isTrackLive) {
+			return AUDIO_QUEUE.DISABLE;
+		}
+		return AUDIO_QUEUE.INITIAL;
+	}
+
+	// A late trackCreated belongs to us when its cid is a known in-flight publication.
+	function isOwnInflightPublication(cid, pendingPublications, ownInflightCids) {
+		return Boolean(pendingPublications?.[cid]) || Boolean(ownInflightCids?.has?.(cid));
+	}
+
+	// Decide how disableAudio reconciles the single-slot queue when the local track cannot be paused
+	// directly: 'pause' when a published sid exists, 'defer' when a publication is still in flight (its
+	// trackCreated will pause it), 'reset' when nothing will ever drain the queue so it must be freed.
+	function selectDisableAudioReconciliation({
+		hasSid,
+		hasInflightPublication
+	}) {
+		if (hasSid) {
+			return 'pause';
+		}
+		if (hasInflightPublication) {
+			return 'defer';
+		}
+		return 'reset';
+	}
+
+	// A late trackCreated is current only when its cid is the latest publication started for the source;
+	// a cid superseded by a newer publication must be ignored so it can't overwrite localTracks with a
+	// stale sid that later mute/unmute would target. An untracked source (no recorded cid) counts as current.
+	function isCurrentPublication(cid, source, latestCidBySource) {
+		const latest = latestCidBySource?.[source];
+		return latest === undefined || latest === cid;
+	}
+
+	// Keep the in-flight publication correlation window bounded: a publish timeout keeps the cid in the
+	// set (to still match a late trackCreated), so repeated failures would grow it without limit. Evict the
+	// oldest cids (Set preserves insertion order) once the cap is exceeded. Delete-before-add refreshes
+	// recency so re-adding a still-current cid isn't the first to be evicted.
+	function addBoundedInflightCid(cids, cid, maxSize = 128) {
+		cids.delete(cid);
+		cids.add(cid);
+		while (cids.size > maxSize) {
+			const oldest = cids.values().next().value;
+			cids.delete(oldest);
+		}
+		return cids;
+	}
+
+	// True when a live track runs on a device different from the explicitly selected one.
+	function deviceMismatch(track, audioDeviceId) {
+		if (audioDeviceId === '' || audioDeviceId === 'default') {
+			return false;
+		}
+		const settings = track?.getSettings?.() ?? {};
+		return Boolean(settings.deviceId) && settings.deviceId !== audioDeviceId;
+	}
+
+	// Distinct result from getLocalAudio when the microphone capture was superseded by a newer request.
+	// Returned per-call so each caller reads the status of its own capture, never a shared instance field.
+	const GET_LOCAL_AUDIO_SUPERSEDED$1 = Symbol('GetLocalAudioSuperseded');
+
+	// How long an audio device switch may hold its lock before later switches are allowed to run again.
+	const SWITCH_AUDIO_DEVICE_LOCK_TIMEOUT$1 = 15000;
 	class Call {
 		#privateProperties = {
 			canReconnect: true,
@@ -4543,6 +4902,8 @@ this.BX = this.BX || {};
 			publishingMediaServerId: null,
 			socketConnection: null,
 			pendingPublications: {},
+			ownInflightPublicationCids: new Set(),
+			latestPublicationCidBySource: {},
 			pendingSubscriptions: {},
 			publicationTimeout: 10000,
 			republicationTries: 3,
@@ -4573,6 +4934,7 @@ this.BX = this.BX || {};
 			mediaMutedBySystem: false,
 			needToEnableAudioAfterSystemMuted: false,
 			needToDisableAudioAfterPublish: false,
+			microphonePausedOnServer: false,
 			localTracks: {},
 			localConnectionQuality: 0,
 			minimalConnectionQuality: 2,
@@ -4609,6 +4971,9 @@ this.BX = this.BX || {};
 			audioDeviceId: '',
 			switchActiveAudioDeviceInProgress: null,
 			switchActiveAudioDevicePending: null,
+			switchActiveAudioDeviceTimeout: null,
+			switchActiveAudioDeviceGeneration: 0,
+			switchActiveAudioDeviceStream: null,
 			videoDeviceId: '',
 			switchActiveVideoDeviceInProgress: null,
 			switchActiveVideoDevicePending: null,
@@ -4629,6 +4994,7 @@ this.BX = this.BX || {};
 			reportsForIncomingTracks: {},
 			stats: {},
 			videoQueue: VIDEO_QUEUE.INITIAL,
+			audioQueue: AUDIO_QUEUE.INITIAL,
 			videoStreamSetupErrorList: {}
 		};
 		constructor() {
@@ -4970,13 +5336,27 @@ this.BX = this.BX || {};
 		}
 		#reconnect(reconnectInfo) {
 			const data = main_core.Type.isObject(reconnectInfo) ? reconnectInfo : {};
+			const reason = data.reconnectionReason || null;
 			this.#privateProperties.isReconnecting = true;
+			this.#privateProperties.callState = CALL_STATE.PROGRESSING;
 			this.#privateProperties.videoQueue = VIDEO_QUEUE.INITIAL;
-			const reasonText = data.reconnectionReason ? `, reason: ${data.reconnectionReason}` : '';
+			this.#privateProperties.audioQueue = AUDIO_QUEUE.INITIAL;
+			// Cancel the previous media session's publication timers and clear correlation state before the
+			// new session starts. A surviving timer would later fire the publish-timeout handler and reset the
+			// new session's audioQueue/needToDisableAudioAfterPublish, discarding a fresh mute/unmute intent.
+			Object.values(this.#privateProperties.pendingPublications).forEach(timeout => clearTimeout(timeout));
+			this.#privateProperties.pendingPublications = {};
+			this.#privateProperties.ownInflightPublicationCids.clear();
+			this.#privateProperties.latestPublicationCidBySource = {};
+			this.#privateProperties.needToDisableAudioAfterPublish = false;
+			const reasonText = reason ? `, reason: ${reason}` : '';
 			const detailsText = data.reconnectionReasonInfo ? `, details: ${data.reconnectionReasonInfo}` : '';
 			const reconnectLog = `Starting reconnection attempt #${++this.#privateProperties.reconnectionAttempt}${reasonText}${detailsText}`;
 			this.setLog(reconnectLog, LOG_LEVEL.WARNING);
 			const reconnectionDelay = this.#privateProperties.lastReconnectionReason === ReconnectionReason.JoinResponseError ? this.#privateProperties.reconnectionDelay : this.#privateProperties.fastReconnectionDelay;
+			// Not every entry point into the reconnection is guarded by isReconnecting: a pending timer of the
+			// previous attempt would run connect() a second time, with its own join request and socket.
+			clearTimeout(this.#privateProperties.reconnectionTimeout);
 			this.#privateProperties.reconnectionTimeout = setTimeout(this.connect.bind(this), reconnectionDelay);
 			this.#privateProperties.previousMediaServers = this.#privateProperties.mediaServers;
 			this.#privateProperties.mediaServers = new Map();
@@ -5014,6 +5394,14 @@ this.BX = this.BX || {};
 					this.#privateProperties.socketConnection = null;
 				}
 			}
+		}
+		testReconnect() {
+			this.#beforeDisconnect({
+				initiatedByUser: true
+			});
+			this.#reconnect({
+				reconnectionReason: 'TEST_RECONNECTION'
+			});
 		}
 		#processMediaServers(mediaServersToProcess) {
 			for (const [id, iceServers] of mediaServersToProcess) {
@@ -5115,7 +5503,10 @@ this.BX = this.BX || {};
 							message: error?.message
 						});
 					} else {
-						this.#privateProperties.lastReconnectionReason = error.code ? ReconnectionReason.JoinResponseError : ReconnectionReason.NetworkError;
+						// Every failure of this request is a join failure: a transport failure of the request
+						// itself already arrives as a coded JoinResponseError. The fast reconnection delay
+						// belongs to a lost transport (closed socket, missed ping), not here.
+						this.#privateProperties.lastReconnectionReason = ReconnectionReason.JoinResponseError;
 
 						// don't write error.name and error.message to analytics now,
 						// because we don't watch failed reconnecting requests now
@@ -5136,8 +5527,17 @@ this.BX = this.BX || {};
 				this.#releaseStream(MediaStreamsKinds.Camera);
 				this.onPublishFailed(MediaStreamsKinds.Camera);
 			}
+			const microphoneTrack = this.#privateProperties.microphoneStream?.getAudioTracks()[0];
+			const deviceCheckTrack = Hardware.noiseSuppressionInputStream?.getAudioTracks?.()[0] ?? microphoneTrack;
+			const audioDeviceId = this.#privateProperties.audioDeviceId;
+			if (audioDeviceId && deviceMismatch(deviceCheckTrack, audioDeviceId)) {
+				// The same contract enableAudio follows: a device chosen while nothing was published only
+				// updated audioDeviceId, the live stream still runs on the old one. Release it, or getLocalAudio
+				// keeps the existing stream and the selected device is lost.
+				this.#releaseStream(MediaStreamsKinds.Microphone);
+			}
 			const audioTrack = await this.getLocalAudio();
-			if (audioTrack) {
+			if (audioTrack === GET_LOCAL_AUDIO_SUPERSEDED$1) ; else if (audioTrack) {
 				await this.publishTrack(MediaStreamsKinds.Microphone, audioTrack, this.#getStreamQualityOptions(MediaStreamsKinds.Microphone));
 			} else {
 				this.#releaseStream(MediaStreamsKinds.Microphone);
@@ -5181,6 +5581,14 @@ this.BX = this.BX || {};
 				this.#privateProperties.publishingMediaServerId = this.#privateProperties.roomType === RoomType.Large ? data.joinResponse.publishingMediaServerId : this.#privateProperties.publishingMediaServerIdForSmallRoom;
 				const mediaServersToProcess = this.#privateProperties.roomType === RoomType.Large ? Object.entries(data.joinResponse.iceServers) : [[this.#privateProperties.publishingMediaServerId, data.joinResponse.iceServer]];
 				this.#processMediaServers(mediaServersToProcess);
+
+				// reset audio-queue and publication-correlation state for the fresh media session (initial join
+				// / rejoin / reconnect): stale queue or correlation from a dropped connection would otherwise
+				// wedge audio publishing or accept a late trackCreated from the previous session.
+				this.#privateProperties.audioQueue = AUDIO_QUEUE.INITIAL;
+				this.#privateProperties.microphonePausedOnServer = false;
+				this.#privateProperties.ownInflightPublicationCids.clear();
+				this.#privateProperties.latestPublicationCidBySource = {};
 				const isReconnect = this.#privateProperties.isReconnecting && this.wasConnected;
 				const connectedEvent = isReconnect ? CallApiEvent.Reconnected : CallApiEvent.Connected;
 				this.#privateProperties.callState = CALL_STATE.CONNECTED;
@@ -5188,6 +5596,9 @@ this.BX = this.BX || {};
 				this.setLog(`${connectedEvent} to the call ${this.#privateProperties.roomId} (type: ${this.#privateProperties.roomType}) on the media server after ${this.#privateProperties.reconnectionAttempt} attempts`, LOG_LEVEL.INFO);
 				this.#privateProperties.isReconnecting = false;
 				this.#privateProperties.reconnectionAttempt = 0;
+				// The join succeeded, so the reason of the previous failure must not outlive it: kept here, it
+				// would hand the join delay to the next reconnection of a lost transport, which asks for the fast one.
+				this.#privateProperties.lastReconnectionReason = null;
 				if (data.joinResponse.oneToOneType) {
 					this.#triggerEvents('ConnectionTypeChanged', [{
 						type: data.joinResponse.oneToOneType
@@ -5271,15 +5682,37 @@ this.BX = this.BX || {};
 				track.userId = participantId;
 				if (participantId == this.#privateProperties.userId) {
 					const timeout = this.#privateProperties.pendingPublications[cid];
+					const isOwnPublication = isOwnInflightPublication(cid, this.#privateProperties.pendingPublications, this.#privateProperties.ownInflightPublicationCids);
 					clearTimeout(this.#privateProperties.pendingPublications[cid]);
 					delete this.#privateProperties.pendingPublications[cid];
 					if (!timeout) {
 						this.setLog(`Got trackCreated signal for local track with kind ${source} (sid: ${trackId}) without active timeout`, LOG_LEVEL.WARNING);
 					}
+					if (!isOwnPublication) {
+						// Not one of our current-session in-flight publications (e.g. a late trackCreated from a
+						// session that was reset on reconnect). Ignore it so a dead sid can't land in localTracks.
+						this.setLog(`Ignoring a trackCreated for an unknown publication (cid: ${cid}) for kind ${source} (sid: ${trackId})`, LOG_LEVEL.WARNING);
+						return;
+					}
+					this.#privateProperties.ownInflightPublicationCids.delete(cid);
+					if (!isCurrentPublication(cid, source, this.#privateProperties.latestPublicationCidBySource)) {
+						// A newer publication for this source already started; this is a late response from a
+						// superseded (timed-out) publication. Drop it without touching localTracks, otherwise
+						// mute/unmute would target the stale sid.
+						this.setLog(`Ignoring a superseded trackCreated (cid: ${cid}) for kind ${source} (sid: ${trackId})`, LOG_LEVEL.WARNING);
+						return;
+					}
 					this.setLog(`Publishing a local track with kind ${source} (sid: ${trackId}) succeeded`, LOG_LEVEL.INFO);
 					this.#privateProperties.localTracks[source] = track;
 					this.#triggerEvents('PublishSucceed', [source]);
+					// Re-arm the watchdog on confirmed success by clearing only isActive (so a later
+					// SubscriptionFailed can republish again). Keep the attempt budget (tries) so a persistent
+					// SubscriptionFailed->republish loop stays capped by republicationTries.
+					this.#privateProperties.republication[source].isActive = false;
 					this.#onTrackPublishResult(trackId, source, 'trackCreated');
+					if (source === MediaStreamsKinds.Microphone) {
+						this.#reconcilePublishedMicrophoneState();
+					}
 				} else {
 					this.#privateProperties.tracksDataFromSocket[trackId] = track;
 					const participant = this.#privateProperties.remoteParticipants[participantId];
@@ -5419,6 +5852,20 @@ this.BX = this.BX || {};
 				const mediaServer = this.#getMediaServer(data.reconnectMediaServer);
 				if (!mediaServer) {
 					return;
+				}
+				if (data.reconnectMediaServer == this.#privateProperties.publishingMediaServerId) {
+					// Reconnecting the PUBLISHING server recreates the peer connection without going through
+					// joinResponse, so the join-response audio-state reset never runs. The expected trackMuted is
+					// lost and audioQueue would stay occupied with no timeout, wedging later mute/unmute. Reset
+					// the publication state here, gated to the publishing server so a subscriber-only reconnect
+					// never wipes it.
+					Object.values(this.#privateProperties.pendingPublications).forEach(timeout => clearTimeout(timeout));
+					this.#privateProperties.pendingPublications = {};
+					this.#privateProperties.ownInflightPublicationCids.clear();
+					this.#privateProperties.latestPublicationCidBySource = {};
+					this.#privateProperties.audioQueue = AUDIO_QUEUE.INITIAL;
+					this.#privateProperties.needToDisableAudioAfterPublish = false;
+					this.#privateProperties.microphonePausedOnServer = false;
 				}
 				mediaServer.disconnect();
 				mediaServer.connect();
@@ -6082,14 +6529,56 @@ this.BX = this.BX || {};
 			// for the simplicity of logic we will immediately subscribe to all screen share streams
 			return track.source === MediaStreamsKinds.Microphone && processAudio && !participant.isMutedAudio || track.source === MediaStreamsKinds.Screen || track.source === MediaStreamsKinds.Camera && (!participant.isLocalVideoMute && !participant.isMutedVideo || this.#privateProperties.participantsToUpdateTrackAvailability[participant.userId]);
 		}
+		#reconcilePublishedMicrophoneState() {
+			// Make a late publish success robust even if the audio queue was already reset (e.g. by the
+			// publish-timeout reset when a publish/mute/unmute race times out). Sync the freshly published
+			// microphone's transmit/server state to the authoritative mute intent so it never transmits while
+			// muted (or stays silent/paused while unmuted). Guarded and idempotent - no redundant pause/unpause.
+			const localTrack = this.#privateProperties.localTracks[MediaStreamsKinds.Microphone];
+			if (!localTrack?.sid) {
+				return;
+			}
+			const audioTrack = this.#privateProperties.microphoneStream?.getAudioTracks()[0];
+
+			// Honour system mute too, not only user mute. Under system mute disableAudio() runs before
+			// mediaMutedBySystem is set and the publication may still lack a sid, so a late trackCreated would
+			// otherwise land here and re-enable/unpause the mic - transmitting despite the system mute.
+			if (Hardware.isMicrophoneMuted || this.#privateProperties.mediaMutedBySystem) {
+				if (audioTrack) {
+					audioTrack.enabled = false;
+				}
+				localTrack.muted = true;
+				if (!this.#privateProperties.microphonePausedOnServer) {
+					this.pauseTrack(MediaStreamsKinds.Microphone, true);
+				}
+			} else {
+				if (audioTrack) {
+					audioTrack.enabled = true;
+				}
+				localTrack.muted = false;
+				if (this.#privateProperties.microphonePausedOnServer) {
+					this.unpauseTrack(MediaStreamsKinds.Microphone);
+				}
+			}
+		}
 		#onTrackPublishResult(trackId, source, calledFrom) {
 			if (source === MediaStreamsKinds.Microphone) {
+				if (this.#privateProperties.audioQueue === AUDIO_QUEUE.ENABLE) {
+					// the latest intent is unmuted; a stale "disable after publish" must not override it
+					this.#privateProperties.needToDisableAudioAfterPublish = false;
+				}
+				if (this.#privateProperties.audioQueue !== AUDIO_QUEUE.INITIAL) {
+					this.#processAudioQueue();
+				}
 				if (this.#privateProperties.needToDisableAudioAfterPublish) {
 					this.#privateProperties.needToDisableAudioAfterPublish = false;
 					this.disableAudio({
 						calledFrom
 					});
-				} else {
+				} else if (!Hardware.isMicrophoneMuted && !this.#privateProperties.mediaMutedBySystem && this.#privateProperties.localTracks[MediaStreamsKinds.Microphone]?.sid && this.#privateProperties.microphonePausedOnServer) {
+					// Keep the server in sync when a freshly published track is meant to be live, but only when
+					// it is actually paused on the server (avoid a redundant unpause per publish). Also honour
+					// system mute - never unpause/transmit while mediaMutedBySystem.
 					this.unpauseTrack(MediaStreamsKinds.Microphone);
 				}
 			} else if (source === MediaStreamsKinds.Camera && this.#privateProperties.videoQueue) {
@@ -6100,10 +6589,31 @@ this.BX = this.BX || {};
 			}
 		}
 		#addPendingPublication(trackId, source) {
+			// Record this cid as one of our own in-flight publications so a trackCreated is only accepted for a
+			// publication that belongs to the current session (the set is cleared on every session reset).
+			addBoundedInflightCid(this.#privateProperties.ownInflightPublicationCids, trackId);
+			// Track the latest publication cid per source so a late signal from an earlier, superseded
+			// publication can be dropped instead of clobbering the current one.
+			this.#privateProperties.latestPublicationCidBySource[source] = trackId;
+			// Cancel any timer still armed for the same trackId before replacing it, so a stale one can't
+			// later fire and delete the new entry / reset shared state.
+			clearTimeout(this.#privateProperties.pendingPublications[trackId]);
 			this.#privateProperties.pendingPublications[trackId] = setTimeout(() => {
 				delete this.#privateProperties.pendingPublications[trackId];
+
+				// A newer publication for this source has superseded us: leave the shared state and the
+				// failure reporting to it, only clean up our own entry above.
+				if (!isCurrentPublication(trackId, source, this.#privateProperties.latestPublicationCidBySource)) {
+					return;
+				}
 				if (source === MediaStreamsKinds.Camera && this.#privateProperties.videoQueue) {
 					this.#onTrackPublishResult(trackId, source, '#addPendingPublication');
+				} else if (source === MediaStreamsKinds.Microphone) {
+					// On timeout no track was created, so no server signal will drain the audio queue. Reset
+					// both deferred states, otherwise a deferred disable re-arms audioQueue on DISABLE with no
+					// known sid and it stays stuck until reconnect.
+					this.#privateProperties.audioQueue = AUDIO_QUEUE.INITIAL;
+					this.#privateProperties.needToDisableAudioAfterPublish = false;
 				}
 				this.onPublishFailed(source);
 			}, this.#privateProperties.publicationTimeout);
@@ -6168,18 +6678,32 @@ this.BX = this.BX || {};
 		async publishTrack(mediaStreamKind, mediaStreamTrack, streamQualityOptions = {}) {
 			const mediaServer = this.#getPublishingMediaServer();
 			if (mediaServer) {
-				mediaServer.addTrack(mediaStreamKind, mediaStreamTrack, streamQualityOptions).then(publicationResult => {
+				const hasKnownSid = Boolean(this.#privateProperties.localTracks[mediaStreamKind]?.sid);
+				mediaServer.addTrack(mediaStreamKind, mediaStreamTrack, streamQualityOptions, hasKnownSid).then(publicationResult => {
 					if (publicationResult) {
 						this.#triggerEvents('PublishSucceed', [mediaStreamKind]);
 					}
 				}).catch(error => {
 					this.setLog(`Publishing a track with kind ${mediaStreamKind} failed: ${error}`, LOG_LEVEL.ERROR);
 					clearTimeout(this.#privateProperties.pendingPublications[mediaStreamTrack.id]);
+					delete this.#privateProperties.pendingPublications[mediaStreamTrack.id];
+					if (mediaStreamKind === MediaStreamsKinds.Microphone) {
+						// Immediate publish failure: no trackCreated will arrive and the timeout is
+						// cleared above, so free the audio queue. Otherwise it stays occupied and every
+						// later mute/unmute only overwrites it and early-returns via hasQueue.
+						this.#privateProperties.audioQueue = AUDIO_QUEUE.INITIAL;
+						this.#privateProperties.needToDisableAudioAfterPublish = false;
+					}
 					this.#releaseStream(mediaStreamKind);
 					this.#triggerEvents('PublishFailed', [mediaStreamKind]);
 				});
 			} else {
 				this.setLog(`Media server for publishing not found`, LOG_LEVEL.ERROR);
+				if (mediaStreamKind === MediaStreamsKinds.Microphone) {
+					// No media server: nothing will ever drain the audio queue for this publish, free it.
+					this.#privateProperties.audioQueue = AUDIO_QUEUE.INITIAL;
+					this.#privateProperties.needToDisableAudioAfterPublish = false;
+				}
 			}
 		}
 		async changeStreamQuality(streamQualityOptions) {
@@ -6236,7 +6760,12 @@ this.BX = this.BX || {};
 			this.setLog(`Start republishing a track with kind ${mediaStreamKind}`, LOG_LEVEL.INFO);
 			await this.unpublishTrack(mediaStreamKind);
 			const track = await this.getTrack(mediaStreamKind);
-			if (track) {
+			if (track === GET_LOCAL_AUDIO_SUPERSEDED$1) {
+				// A newer microphone capture superseded this republish; it owns the device now. Cancel
+				// neutrally - no release, no onPublishFailed - and free the republication slot.
+				this.setLog(`Republishing a track with kind ${mediaStreamKind} cancelled: capture superseded`, LOG_LEVEL.INFO);
+				this.#updateRepublicationState(mediaStreamKind);
+			} else if (track) {
 				await this.publishTrack(mediaStreamKind, track, this.#getStreamQualityOptions(mediaStreamKind));
 			} else {
 				this.setLog(`Republishing a track with kind ${mediaStreamKind} failed: track not found`, LOG_LEVEL.ERROR);
@@ -6496,6 +7025,7 @@ this.BX = this.BX || {};
 			}
 			this.#privateProperties.mediaServers.clear();
 			clearTimeout(this.#privateProperties.reconnectionTimeout);
+			this.#resetAudioDeviceSwitch();
 			for (let trackId in this.#privateProperties.pendingPublications) {
 				clearTimeout(this.#privateProperties.pendingPublications[trackId]);
 			}
@@ -6594,6 +7124,9 @@ this.BX = this.BX || {};
 				if (!keepTrack) {
 					delete this.#privateProperties.localTracks[mediaStreamKind];
 				}
+				if (mediaStreamKind === MediaStreamsKinds.Microphone) {
+					this.#privateProperties.microphonePausedOnServer = true;
+				}
 				this.#sendSignal({
 					mute: {
 						sid: trackSid,
@@ -6608,6 +7141,9 @@ this.BX = this.BX || {};
 			const trackSid = this.#privateProperties.localTracks[mediaStreamKind]?.sid;
 			if (trackSid) {
 				this.setLog(`Sending unpause signal for a track with kind ${mediaStreamKind} (sid: ${trackSid})`, LOG_LEVEL.INFO);
+				if (mediaStreamKind === MediaStreamsKinds.Microphone) {
+					this.#privateProperties.microphonePausedOnServer = false;
+				}
 				this.#sendSignal({
 					mute: {
 						sid: trackSid,
@@ -6621,21 +7157,66 @@ this.BX = this.BX || {};
 		disableAudio(options) {
 			const bySystem = options?.bySystem || false;
 			const calledFrom = options?.calledFrom || '';
+			const hasQueue = this.#privateProperties.audioQueue !== AUDIO_QUEUE.INITIAL;
 			this.#updateRepublicationState(MediaStreamsKinds.Microphone);
 			if (this.#privateProperties.mediaMutedBySystem) {
 				return;
 			}
-			this.setLog(`Start disabling audio - calledFrom: ${calledFrom}, isReconnecting: ${this.#privateProperties.isReconnecting}, bySystem: ${bySystem}`);
+			this.setLog(`Start disabling audio - calledFrom: ${calledFrom}, isReconnecting: ${this.#privateProperties.isReconnecting}, bySystem: ${bySystem}, hasQueue: ${hasQueue}, audioQueue: ${this.#privateProperties.audioQueue}`);
+			if (bySystem && this.#privateProperties.audioQueue === AUDIO_QUEUE.ENABLE) {
+				// A system mute is interrupting a pending unmute. Record the restore intent so the
+				// system-unmute handler re-enables audio; overwriting the queue to DISABLE would lose it.
+				this.#privateProperties.needToEnableAudioAfterSystemMuted = true;
+			}
+			this.#privateProperties.audioQueue = AUDIO_QUEUE.DISABLE;
+			if (hasQueue) {
+				// Security: a mute arriving during an in-flight enable must stop transmission immediately.
+				// Otherwise the still-running enableAudio() keeps the local track live (and unpaused) until
+				// the next server signal - or forever if it is lost - while the UI already shows the mic off.
+				const inflightTrack = this.#privateProperties.microphoneStream?.getAudioTracks()[0];
+				if (inflightTrack) {
+					inflightTrack.enabled = false;
+				}
+				const publishedTrack = this.#privateProperties.localTracks[MediaStreamsKinds.Microphone];
+				if (publishedTrack?.sid && !this.#privateProperties.microphonePausedOnServer) {
+					publishedTrack.muted = true;
+					this.pauseTrack(MediaStreamsKinds.Microphone, true);
+				} else if (!publishedTrack?.sid) {
+					// Publish in flight, sid not assigned yet - no track to pause. Arm the deferred disable so
+					// the eventual trackCreated pauses it on the server; otherwise #onTrackPublishResult clears
+					// the DISABLE queue with no pause and the server keeps the mic unmuted.
+					this.#privateProperties.needToDisableAudioAfterPublish = true;
+				}
+				return;
+			}
 			const track = this.#privateProperties.microphoneStream?.getAudioTracks()[0];
 			if (track) {
 				this.#privateProperties.needToEnableAudioAfterSystemMuted = bySystem ? track.enabled : false;
 				track.enabled = false;
-				if (this.#privateProperties.localTracks[MediaStreamsKinds.Microphone]) {
-					this.#privateProperties.localTracks[MediaStreamsKinds.Microphone].muted = true;
+				const publishedTrack = this.#privateProperties.localTracks[MediaStreamsKinds.Microphone];
+				if (publishedTrack) {
+					publishedTrack.muted = true;
 				}
-				this.pauseTrack(MediaStreamsKinds.Microphone, true);
+				const inflightCid = this.#privateProperties.latestPublicationCidBySource[MediaStreamsKinds.Microphone];
+				const reconciliation = selectDisableAudioReconciliation({
+					hasSid: Boolean(publishedTrack?.sid),
+					hasInflightPublication: Boolean(inflightCid && this.#privateProperties.pendingPublications[inflightCid])
+				});
+				if (reconciliation === 'pause') {
+					this.pauseTrack(MediaStreamsKinds.Microphone, true);
+				} else if (reconciliation === 'defer') {
+					// No sid to pause yet, but a publication is in flight: defer the disable so its
+					// trackCreated pauses it on the server.
+					this.#privateProperties.needToDisableAudioAfterPublish = true;
+				} else {
+					// No sid and nothing in flight to produce a draining signal - free the queue so a later
+					// enable/disable is not wedged with the mic off until reconnect.
+					this.#privateProperties.audioQueue = AUDIO_QUEUE.INITIAL;
+					this.#privateProperties.needToDisableAudioAfterPublish = false;
+				}
 			} else {
 				this.setLog('Disabling audio failed: has no track', LOG_LEVEL.ERROR);
+				this.#privateProperties.audioQueue = AUDIO_QUEUE.INITIAL;
 			}
 		}
 		async enableAudio(options) {
@@ -6644,8 +7225,13 @@ this.BX = this.BX || {};
 			if (!Util.havePermissionToBroadcast('mic')) {
 				return;
 			}
-			this.setLog(`Start enabling audio - calledFrom: ${calledFrom}, isReconnecting: ${this.#privateProperties.isReconnecting}, disabled: ${disabled}`);
+			const hasQueue = this.#privateProperties.audioQueue !== AUDIO_QUEUE.INITIAL;
+			this.setLog(`Start enabling audio - calledFrom: ${calledFrom}, isReconnecting: ${this.#privateProperties.isReconnecting}, disabled: ${disabled}, hasQueue: ${hasQueue}, audioQueue: ${this.#privateProperties.audioQueue}`);
 			this.#privateProperties.needToEnableAudioAfterSystemMuted = false;
+			this.#privateProperties.audioQueue = disabled ? AUDIO_QUEUE.DISABLE : AUDIO_QUEUE.ENABLE;
+			if (hasQueue) {
+				return;
+			}
 			if (this.#privateProperties.switchActiveAudioDeviceInProgress) {
 				try {
 					await this.#privateProperties.switchActiveAudioDeviceInProgress;
@@ -6654,32 +7240,88 @@ this.BX = this.BX || {};
 				}
 			}
 			let track = this.#privateProperties.microphoneStream?.getAudioTracks()[0];
-			const needToGetNewTrack = !track || track.readyState !== 'live' || isNoiseSuppressionInputTrackOff();
+			const audioDeviceId = this.#privateProperties.audioDeviceId;
+			// With noise suppression the published track is the WebAudio output, which usually has no
+			// deviceId; check the selected device against the capture source (the raw input feeding noise
+			// suppression), falling back to the track when there is no input.
+			const deviceCheckTrack = Hardware.noiseSuppressionInputStream?.getAudioTracks?.()[0] ?? track;
+			const hasDeviceMismatch = Boolean(audioDeviceId) && deviceMismatch(deviceCheckTrack, audioDeviceId);
+			const needToGetNewTrack = !track || track.readyState !== 'live' || isNoiseSuppressionInputTrackOff() || hasDeviceMismatch;
 			if (needToGetNewTrack) {
+				if (hasDeviceMismatch) {
+					// A device selected while muted only updates audioDeviceId; the live stream still runs
+					// on the old device. Release it so getLocalAudio performs a fresh getUserMedia with the
+					// selected deviceId, otherwise getTrack keeps the existing stream and the change is lost.
+					this.#releaseStream(MediaStreamsKinds.Microphone);
+				}
 				track = await this.getLocalAudio();
+				if (track === GET_LOCAL_AUDIO_SUPERSEDED$1) {
+					// A newer device selection superseded this capture. End as a neutral cancellation - no
+					// failure event, no stream release, no onPublishFailed - so the newer switch's success is
+					// not torn down. Free the single-slot queue so a later enable/disable is not wedged.
+					this.setLog('Enabling audio cancelled: microphone capture superseded by a newer request', LOG_LEVEL.INFO);
+					this.#privateProperties.audioQueue = AUDIO_QUEUE.INITIAL;
+					this.#privateProperties.needToDisableAudioAfterPublish = false;
+					return;
+				}
 			}
 			if (!track) {
 				this.setLog('Enabling audio failed: has no track', LOG_LEVEL.ERROR);
+				this.#privateProperties.needToDisableAudioAfterPublish = false;
+				this.#privateProperties.audioQueue = AUDIO_QUEUE.INITIAL;
 				this.#releaseStream(MediaStreamsKinds.Microphone);
 				this.onPublishFailed(MediaStreamsKinds.Microphone);
 				return;
 			}
+
+			// A mute may have superseded this enable while awaiting (see disableAudio's in-flight path).
+			// Consult the authoritative mute flags, not only audioQueue: a reconnect during the await resets
+			// audioQueue to INITIAL, losing the DISABLE a mute wrote, so relying on the queue alone would
+			// re-enable and publish while muted (audio leak). Both flags are false before a legitimate user or
+			// system-unmute restore reaches enableAudio, so this does not suppress a real unmute.
+			const isSupersededByMute = () => !disabled && (Hardware.isMicrophoneMuted || this.#privateProperties.mediaMutedBySystem || this.#privateProperties.audioQueue === AUDIO_QUEUE.DISABLE);
 			if (this.#privateProperties.localTracks[MediaStreamsKinds.Microphone]) {
-				this.setLog('Enabling audio via unpause signal', LOG_LEVEL.INFO);
-				track.enabled = true;
-				this.#privateProperties.localTracks[MediaStreamsKinds.Microphone].muted = false;
+				const superseded = isSupersededByMute();
+				this.setLog(`Enabling audio via unpause signal - supersededByMute: ${superseded}`, LOG_LEVEL.INFO);
+				track.enabled = !superseded;
+				this.#privateProperties.localTracks[MediaStreamsKinds.Microphone].muted = superseded;
 				await this.publishTrack(MediaStreamsKinds.Microphone, track, this.#getStreamQualityOptions(MediaStreamsKinds.Microphone));
-				this.unpauseTrack(MediaStreamsKinds.Microphone);
-			} else {
-				this.setLog('Enabling audio via publish', LOG_LEVEL.INFO);
-				track.enabled = !disabled;
-				if (disabled) {
-					this.#privateProperties.needToDisableAudioAfterPublish = true;
+				if (isSupersededByMute()) {
+					// Honour the newer mute: pause instead of unpausing so audio is not transmitted; the
+					// pause signal's trackMuted response drains the DISABLE queue. Guard against a redundant
+					// pause - the in-flight disableAudio (hasQueue branch) may have already paused this sid.
+					track.enabled = false;
+					this.#privateProperties.localTracks[MediaStreamsKinds.Microphone].muted = true;
+					if (!this.#privateProperties.microphonePausedOnServer) {
+						this.pauseTrack(MediaStreamsKinds.Microphone, true);
+					} else {
+						// Already paused on the server: no pause signal is sent, so no trackMuted will arrive to
+						// drain the DISABLE queue. Free the slot locally so a later mute/unmute is not wedged.
+						this.#privateProperties.audioQueue = AUDIO_QUEUE.INITIAL;
+						this.#privateProperties.needToDisableAudioAfterPublish = false;
+					}
+				} else {
+					this.unpauseTrack(MediaStreamsKinds.Microphone);
 				}
+			} else {
+				const effectiveDisabled = disabled || isSupersededByMute();
+				this.setLog(`Enabling audio via publish - effectiveDisabled: ${effectiveDisabled}`, LOG_LEVEL.INFO);
+				track.enabled = !effectiveDisabled;
+				this.#privateProperties.needToDisableAudioAfterPublish = effectiveDisabled;
 				if (this.#privateProperties.localTracks[MediaStreamsKinds.Microphone]) {
 					this.#privateProperties.localTracks[MediaStreamsKinds.Microphone].muted = false;
 				}
 				await this.publishTrack(MediaStreamsKinds.Microphone, track, this.#getStreamQualityOptions(MediaStreamsKinds.Microphone));
+				if (isSupersededByMute()) {
+					// A mute arrived during publication: keep the track off. Only defer the disable while the
+					// sid is still unknown - if trackCreated already processed during the await (sid obtained,
+					// pause already sent), re-arming would leave a stale flag that wrongly disables a later
+					// republication.
+					track.enabled = false;
+					if (!this.#privateProperties.localTracks[MediaStreamsKinds.Microphone]?.sid) {
+						this.#privateProperties.needToDisableAudioAfterPublish = true;
+					}
+				}
 			}
 		}
 		async disableVideo(options) {
@@ -6796,6 +7438,26 @@ this.BX = this.BX || {};
 			} else if (videoQueue === VIDEO_QUEUE.DISABLE && this.#privateProperties.cameraStream?.getVideoTracks()[0]?.readyState === 'live' && !this.#privateProperties.mediaMutedBySystem) {
 				this.disableVideo({
 					calledFrom: 'processVideoQueue'
+				});
+			}
+		}
+		#processAudioQueue() {
+			const queue = this.#privateProperties.audioQueue;
+			this.#privateProperties.audioQueue = AUDIO_QUEUE.INITIAL;
+			const track = this.#privateProperties.microphoneStream?.getAudioTracks()[0];
+			const isTrackLive = track?.readyState === 'live' && track?.enabled === true;
+			const operation = selectAudioQueueOperation({
+				queue,
+				isTrackLive,
+				mutedBySystem: this.#privateProperties.mediaMutedBySystem
+			});
+			if (operation === AUDIO_QUEUE.ENABLE) {
+				this.enableAudio({
+					calledFrom: 'processAudioQueue'
+				});
+			} else if (operation === AUDIO_QUEUE.DISABLE) {
+				this.disableAudio({
+					calledFrom: 'processAudioQueue'
 				});
 			}
 		}
@@ -7038,7 +7700,10 @@ this.BX = this.BX || {};
 		async getLocalAudio() {
 			const track = this.#privateProperties.microphoneStream?.getAudioTracks()[0];
 			if (!track || track.readyState !== 'live' || isNoiseSuppressionInputTrackOff()) {
-				await this.getTrack(MediaStreamsKinds.Microphone);
+				const result = await this.getTrack(MediaStreamsKinds.Microphone);
+				if (result === GET_LOCAL_AUDIO_SUPERSEDED$1) {
+					return GET_LOCAL_AUDIO_SUPERSEDED$1;
+				}
 			}
 			return this.#privateProperties.microphoneStream?.getAudioTracks()[0];
 		}
@@ -7089,6 +7754,15 @@ this.BX = this.BX || {};
 				this.#triggerEvents('GetUserMediaEnded', [options]);
 				return stream;
 			} catch (error) {
+				if (error?.name === STREAM_MANAGER_SUPERSEDED) {
+					// The request was superseded by a newer device selection - not a media failure. Don't fall
+					// back: a fallback capture would register after the newest request and unseat the selected
+					// device. Mark it so the caller can end as a neutral cancellation, and balance the
+					// GetUserMediaStarted emitted above so getUserMediaFulfilled state stays consistent.
+					this.setLog('Getting user media skipped: superseded by a newer request', LOG_LEVEL.INFO);
+					this.#triggerEvents('GetUserMediaEnded', [options]);
+					return options.audio ? GET_LOCAL_AUDIO_SUPERSEDED$1 : null;
+				}
 				this.setLog(`Getting user media with constraints: ${JSON.stringify(constraints)} failed (fallbackMode: ${fallbackMode}): ${error}`, LOG_LEVEL.ERROR);
 				if (!fallbackMode) {
 					let monitoringEvent = '';
@@ -7154,9 +7828,16 @@ this.BX = this.BX || {};
 					video: true
 				});
 			} else if (MediaStreamKind === MediaStreamsKinds.Microphone && !this.#privateProperties.microphoneStream) {
-				this.#privateProperties.microphoneStream = await this.#getUserMedia({
+				const media = await this.#getUserMedia({
 					audio: true
 				});
+				if (media === GET_LOCAL_AUDIO_SUPERSEDED$1) {
+					return GET_LOCAL_AUDIO_SUPERSEDED$1;
+				}
+				// The slot was free when this capture started, but the await is long enough for a switch to put
+				// its stream back into it, or for another capture to land there. Whoever holds the slot by now
+				// keeps it, and the stream that lost is stopped instead of being dropped on the floor.
+				this.#restoreMicrophoneStream(media);
 			} else if (MediaStreamKind === MediaStreamsKinds.Screen && !this.#privateProperties.screenStream) {
 				this.#privateProperties.screenStream = await this.#getDisplayMedia();
 			}
@@ -7186,7 +7867,7 @@ this.BX = this.BX || {};
 					this.#privateProperties.microphoneStream = null;
 					track = this.getLocalAudio();
 				}
-				const noInputTrackEndHandler = call_lib_settingsManager.CallSettingsManager.noiseSuppressionEnabled && Hardware.noiseSuppressionInputStream && Hardware.noiseSuppressionInputStream.getAudioTracks().length > 0 && !Hardware.noiseSuppressionInputStream.getAudioTracks()[0].onended;
+				const noInputTrackEndHandler = Hardware.noiseSuppressionInputStream && Hardware.noiseSuppressionInputStream.getAudioTracks().length > 0 && !Hardware.noiseSuppressionInputStream.getAudioTracks()[0].onended;
 				if (track && noInputTrackEndHandler) {
 					Hardware.noiseSuppressionInputStream.getAudioTracks()[0].onended = () => {
 						track.onended();
@@ -7225,6 +7906,157 @@ this.BX = this.BX || {};
 				};
 			}
 		}
+
+		// Is the microphone published at all - the question a switch asks before deciding whether a re-capture
+		// has anywhere to go. Two independent answers, because neither alone is enough: the publication record
+		// survives the window where republishTrack has emptied the sender, and the sender is there from the
+		// moment the track is handed to the peer connection, before the server confirms the publication.
+		#hasPublishedMicrophone() {
+			if (this.#hasTrackPublication(MediaStreamsKinds.Microphone)) {
+				return true;
+			}
+			const senders = this.#getPublishingMediaServer()?.publisherPeerConnection?.getSenders?.() ?? [];
+			return senders.some(sender => sender.track?.source === MediaStreamsKinds.Microphone);
+		}
+
+		// The single place that decides who owns the microphone slot: a stream goes in only while the slot is
+		// free, so neither a switch putting its previous stream back nor a capture landing late can overwrite
+		// the device somebody newer has already published. The stream that is not taken is released.
+		#restoreMicrophoneStream(stream) {
+			if (!stream || stream === this.#privateProperties.microphoneStream) {
+				return;
+			}
+			if (this.#privateProperties.microphoneStream) {
+				this.#releaseMicrophoneStream(stream);
+				return;
+			}
+			this.#privateProperties.microphoneStream = stream;
+		}
+
+		// A stream that stays out of the slot has to be stopped explicitly: it is a clone of its own (see
+		// #getUserMedia), so neither StreamManager nor #releaseStream can ever reach it and the device would
+		// stay captured until the tab is reloaded.
+		#releaseMicrophoneStream(stream) {
+			if (!stream || stream === this.#privateProperties.microphoneStream) {
+				return;
+			}
+			stream.getTracks?.().forEach(track => {
+				track.onended = null;
+				track.stop();
+			});
+		}
+
+		// A mute can arrive while a device is being switched, and disableAudio cannot act on it: microphoneStream
+		// is nulled for the duration of the capture, so it takes the "has no track" branch and neither disables
+		// the track nor pauses the publication. Re-apply the current intent to whatever is left publishing - on
+		// success, on a failed capture and on a superseded one alike - or the old device keeps transmitting while
+		// the UI, the other participants and the server all show the microphone off. The stream left publishing
+		// is not always the one in the slot: the watchdog leaves the slot free for a capture it stopped waiting
+		// for, and the device to silence is then the stream that switch took out of the call.
+		#applyMicrophoneMuteIntent(publishingStream = null) {
+			if (!Hardware.isMicrophoneMuted && !this.#privateProperties.mediaMutedBySystem) {
+				return;
+			}
+			const localTrack = this.#privateProperties.microphoneStream?.getAudioTracks()[0] ?? publishingStream?.getAudioTracks()[0];
+			if (localTrack) {
+				localTrack.enabled = false;
+			}
+			const publishedTrack = this.#privateProperties.localTracks[MediaStreamsKinds.Microphone];
+			if (publishedTrack?.sid && !this.#privateProperties.microphonePausedOnServer) {
+				publishedTrack.muted = true;
+				this.pauseTrack(MediaStreamsKinds.Microphone, true);
+			}
+		}
+		#releaseAudioDeviceSwitchLock(promise) {
+			if (this.#privateProperties.switchActiveAudioDeviceInProgress !== promise) {
+				return false;
+			}
+			this.#privateProperties.switchActiveAudioDeviceInProgress = null;
+			return true;
+		}
+
+		// A switch handed over to a newer one keeps running - its capture can still land much later. The id it
+		// took at the start stops matching from that moment on, which is how the late arrival learns that the
+		// microphone is no longer its to publish to, and that its stream is no longer the one to put back. Only
+		// a newer owner cancels: a capture the watchdog stopped waiting for with nobody behind it keeps its id
+		// and publishes itself when it lands.
+		#cancelAudioDeviceSwitch(switchId) {
+			if (this.#privateProperties.switchActiveAudioDeviceGeneration === switchId) {
+				this.#privateProperties.switchActiveAudioDeviceGeneration++;
+			}
+		}
+		#isAudioDeviceSwitchCancelled(switchId) {
+			return this.#privateProperties.switchActiveAudioDeviceGeneration !== switchId;
+		}
+
+		// Armed around the capture of every switch, including each link of a pending chain, so that what is given
+		// up on is a single capture that never settles and not a long but perfectly healthy chain of switches.
+		// Settling the switch is part of the job: a capture that never returns leaves the promise pending, and
+		// enableAudio awaits that very promise after it has already taken audioQueue - every later mute/unmute
+		// would then end on the "queue is busy" early return, and setMicrophoneId would never report its result.
+		#armAudioDeviceSwitchWatchdog(switchId, deviceId, prevStream, settle) {
+			const watchdog = setTimeout(() => {
+				this.#privateProperties.switchActiveAudioDeviceTimeout = null;
+				const message = `Switching an audio device to ${deviceId} did not finish in time, releasing the lock`;
+				this.setLog(message, LOG_LEVEL.WARNING);
+				this.#privateProperties.switchActiveAudioDeviceInProgress = null;
+				const pendingDeviceId = this.#privateProperties.switchActiveAudioDevicePending;
+				this.#privateProperties.switchActiveAudioDevicePending = null;
+				if (pendingDeviceId) {
+					// The parked switch takes the microphone out of the slot itself, so it has to be there for it
+					// to take - and the capture given up on is cancelled, because the device it was to publish is
+					// no longer the one chosen. The finally of a capture that never settles does neither, so the
+					// old device would keep transmitting while the UI, the other participants and the server all
+					// show the microphone off. This switch ends here rather than on the parked one: the device it
+					// was asked for is not the device that will be applied, so its caller is told it is over.
+					this.#cancelAudioDeviceSwitch(switchId);
+					this.#restoreMicrophoneStream(prevStream);
+					this.#applyMicrophoneMuteIntent();
+					settle();
+					this.switchActiveAudioDevice(pendingDeviceId).catch(() => {
+						// the switch reports its own failure
+					});
+					return;
+				}
+
+				// Nobody is waiting for the microphone, so the capture this switch stopped waiting for is still
+				// the only claim on it: leave the slot free and the switch uncancelled, and it publishes itself
+				// whenever it lands. Putting the previous stream back here would make getTrack throw that capture
+				// away as a loser of the slot, while the publication stays on a stream whose AudioContext noise
+				// suppression closes the moment the new raw input arrives - silence for the rest of the call,
+				// which no later enableAudio undoes: the device check then matches the new input.
+				this.#applyMicrophoneMuteIntent(prevStream);
+				settle();
+			}, SWITCH_AUDIO_DEVICE_LOCK_TIMEOUT$1);
+			this.#privateProperties.switchActiveAudioDeviceTimeout = watchdog;
+			return watchdog;
+		}
+		#disarmAudioDeviceSwitchWatchdog(watchdog) {
+			if (!watchdog) {
+				return;
+			}
+			clearTimeout(watchdog);
+			// A capture that lands after its own watchdog has fired must not disarm the watchdog of the switch
+			// running by then.
+			if (this.#privateProperties.switchActiveAudioDeviceTimeout === watchdog) {
+				this.#privateProperties.switchActiveAudioDeviceTimeout = null;
+			}
+		}
+		#resetAudioDeviceSwitch() {
+			clearTimeout(this.#privateProperties.switchActiveAudioDeviceTimeout);
+			this.#privateProperties.switchActiveAudioDeviceTimeout = null;
+			this.#privateProperties.switchActiveAudioDeviceInProgress = null;
+			this.#privateProperties.switchActiveAudioDevicePending = null;
+			this.#privateProperties.switchActiveAudioDeviceGeneration++;
+
+			// While a switch is capturing, the microphone it took out of the call is held by nothing else:
+			// microphoneStream is empty, so releaseStream finds nothing, and the stream is a clone of its own
+			// (see #getUserMedia), so StreamManager cannot reach it either. Left alone it keeps the device
+			// captured until the tab is reloaded, with the browser still showing the recording indicator.
+			const stream = this.#privateProperties.switchActiveAudioDeviceStream;
+			this.#privateProperties.switchActiveAudioDeviceStream = null;
+			this.#releaseMicrophoneStream(stream);
+		}
 		async switchActiveAudioDevice(deviceId, force) {
 			if (this.#privateProperties.switchActiveAudioDeviceInProgress && !force) {
 				this.setLog(`Got another request to switch an audio device to ${deviceId}, saving it`, LOG_LEVEL.INFO);
@@ -7233,48 +8065,131 @@ this.BX = this.BX || {};
 			}
 			let error = null;
 			let fulfilled = false;
+			const switchId = ++this.#privateProperties.switchActiveAudioDeviceGeneration;
 			this.setLog(`Start switching an audio device to ${deviceId}`, LOG_LEVEL.INFO);
 			const promise = new Promise(async (resolve, reject) => {
 				this.#privateProperties.audioDeviceId = deviceId;
-				const prevStream = this.#privateProperties.microphoneStream;
+				// The slot stands empty while a capture is in flight, and the watchdog leaves it empty for a
+				// capture it stopped waiting for. The stream that capture took out of the call is the one still
+				// publishing, so a switch starting on an empty slot takes it over: whoever publishes next is the
+				// one that has to stop it, or nothing but a hangup ever does and the device stays captured.
+				const prevStream = this.#privateProperties.microphoneStream ?? this.#privateProperties.switchActiveAudioDeviceStream;
+				let watchdog = null;
 				try {
-					const prevTrack = this.#privateProperties.microphoneStream?.getAudioTracks()[0];
+					if (!this.#hasPublishedMicrophone()) {
+						// Nothing is published yet (e.g. joined muted) - keep the recorded audioDeviceId and let the
+						// first publication apply it (see enableAudio / deviceMismatch). Re-capturing here would
+						// release the live microphone into a publication that does not exist.
+						this.setLog('Switching an audio device deferred - nothing published, will apply on first publication', LOG_LEVEL.INFO);
+						return;
+					}
+					watchdog = this.#armAudioDeviceSwitchWatchdog(switchId, deviceId, prevStream, resolve);
+					const prevTrack = prevStream?.getAudioTracks()[0];
+					// Releasing the stream reference is what makes getLocalAudio capture the new device. The
+					// previous track is not stopped until the new one is published, so a capture that delivers
+					// nothing leaves the call transmitting from the old device. With noise suppression on (the
+					// default) that guarantee ends the moment the new raw stream arrives: addNoiseSuppression
+					// closes the AudioContext the previous track is fed from, and keeping the track alive past
+					// that point no longer keeps it audible.
 					this.#privateProperties.microphoneStream = null;
+					// Out of the slot means out of reach of releaseStream - keep the stream where a hangup can
+					// still find it, or the device stays captured when the call ends mid-capture. A switch that
+					// starts on an empty slot has nothing of its own to put here, and must not erase what an
+					// earlier switch is still holding: the watchdog leaves the slot free exactly like that.
+					if (prevStream) {
+						this.#privateProperties.switchActiveAudioDeviceStream = prevStream;
+					}
 					let prevTrackEnabledState = true;
 					let prevTrackId = '';
 					if (prevTrack) {
 						prevTrackEnabledState = prevTrack.enabled;
 						prevTrackId = prevTrack.id;
-						prevTrack.stop();
 					}
 					const audioTrack = await this.getLocalAudio();
+					if (this.#isAudioDeviceSwitchCancelled(switchId)) {
+						// A newer switch owns the microphone by now - either one that started while this capture was
+						// running, or the one the watchdog took out of pending. Publishing here would take the
+						// sender away from the device chosen since, and putting prevStream back would overwrite a
+						// newer capture with a stale stream. The recorded audioDeviceId survives, so the next
+						// publication still applies the device (see enableAudio / deviceMismatch). A capture the
+						// watchdog stopped waiting for with nobody behind it is not cancelled and does not end here.
+						this.setLog('Switching an audio device cancelled: a newer switch owns the microphone', LOG_LEVEL.WARNING);
+						return;
+					}
+					if (audioTrack === GET_LOCAL_AUDIO_SUPERSEDED$1) {
+						// The microphone belongs to the capture that superseded this one, and that capture has not
+						// landed yet - the mic request chain rejects the loser before the winner starts. Putting the
+						// previous stream back into the free slot would make the winner lose to it and leave the call
+						// on a track the supersede has already silenced, so release it instead: the winner brings its
+						// own stream and the recorded audioDeviceId is applied by whoever publishes next.
+						this.setLog('Switching an audio device cancelled: superseded by a newer switch', LOG_LEVEL.INFO);
+						this.#releaseMicrophoneStream(prevStream);
+						return;
+					}
+					if (!audioTrack) {
+						throw new Error('capturing a new audio track failed');
+					}
 					audioTrack.source = MediaStreamsKinds.Microphone;
-					audioTrack.enabled = prevTrackEnabledState;
+					// Never hand the sender an enabled track while the UI shows mute: a mute that arrived
+					// during the capture wins over the stale enabled state. The intent is applied once more
+					// on the way out, for the exits that publish nothing.
+					const muteIntent = Boolean(Hardware.isMicrophoneMuted || this.#privateProperties.mediaMutedBySystem);
+					audioTrack.enabled = muteIntent ? false : prevTrackEnabledState;
 					const mediaServer = this.#getPublishingMediaServer();
-					if (mediaServer && (this.isAudioPublished() || audioTrack.id !== prevTrackId)) {
+					const isNewTrack = audioTrack.id !== prevTrackId;
+					if (mediaServer && (this.isAudioPublished() || isNewTrack)) {
 						await mediaServer.replaceTrack(MediaStreamsKinds.Microphone, audioTrack);
+					}
+					if (prevTrack) {
+						// The previous device is released once nothing is left for it to feed: either the new track
+						// has taken its place in the sender, or the media server went away during the capture and
+						// there is no publication at all. The capture can never hand the published track back -
+						// #getUserMedia returns a clone, so its track is a new object with an id of its own - and
+						// microphoneStream holds the new stream by now, so nothing can reach the previous track.
+						prevTrack.stop();
 					}
 					this.setLog('Switching an audio device succeeded', LOG_LEVEL.INFO);
 				} catch (e) {
 					error = e;
 					this.setLog(`Switching an audio device failed: ${e}`, LOG_LEVEL.ERROR);
-					if (!this.#privateProperties.microphoneStream) {
-						this.#privateProperties.microphoneStream = prevStream;
+					if (!this.#isAudioDeviceSwitchCancelled(switchId)) {
+						this.#restoreMicrophoneStream(prevStream);
 					}
 				} finally {
-					if (this.#privateProperties.switchActiveAudioDevicePending) {
-						const deviceId = this.#privateProperties.switchActiveAudioDevicePending;
+					this.#disarmAudioDeviceSwitchWatchdog(watchdog);
+					// Identity alone is not enough: the switch the watchdog started after this one takes the very
+					// same stream out of the slot and records it here, so a capture that lands after being given up
+					// on would clear a field that is no longer its own - and a hangup would then find nothing to
+					// stop, leaving the device captured until the tab is reloaded.
+					const ownsSwitchStream = !this.#isAudioDeviceSwitchCancelled(switchId) && this.#privateProperties.switchActiveAudioDeviceStream === prevStream;
+					if (ownsSwitchStream) {
+						this.#privateProperties.switchActiveAudioDeviceStream = null;
+					}
+					this.#applyMicrophoneMuteIntent();
+
+					// A switch a newer one has taken over does not take the queue over either: whoever holds the
+					// lock by now runs the parked device itself.
+					const pendingDeviceId = this.#isAudioDeviceSwitchCancelled(switchId) ? null : this.#privateProperties.switchActiveAudioDevicePending;
+					if (pendingDeviceId) {
 						this.#privateProperties.switchActiveAudioDevicePending = null;
-						resolve(this.switchActiveAudioDevice(deviceId, true));
+						resolve(this.switchActiveAudioDevice(pendingDeviceId, true));
 					} else {
 						fulfilled = true;
-						this.#privateProperties.switchActiveAudioDeviceInProgress = null;
 						return error ? reject(error) : resolve();
 					}
 				}
 			});
 			if (!force && !fulfilled) {
 				this.#privateProperties.switchActiveAudioDeviceInProgress = promise;
+
+				// The lock is released by whichever comes first: the switch settling, or the watchdog armed around
+				// its capture. Without the watchdog a capture that never settles holds the lock forever, and every
+				// later switch is only written into switchActiveAudioDevicePending and never run.
+				promise.finally(() => {
+					this.#releaseAudioDeviceSwitchLock(promise);
+				}).catch(() => {
+					// the rejection belongs to the caller of switchActiveAudioDevice
+				});
 			}
 			return promise;
 		}
@@ -7332,8 +8247,15 @@ this.BX = this.BX || {};
 		isScreenPublished() {
 			return this.#isTrackPublished(MediaStreamsKinds.Screen);
 		}
+
+		// Published and transmitting, which is what every caller of isAudioPublished / isVideoPublished asks
+		// about: a paused publication answers false here. Whether a publication exists at all is a different
+		// question - #hasTrackPublication - and the two must not be confused.
 		#isTrackPublished(kind) {
-			return this.#privateProperties.localTracks[kind] && this.#privateProperties.localTracks[kind]?.muted !== true;
+			return this.#hasTrackPublication(kind) && this.#privateProperties.localTracks[kind].muted !== true;
+		}
+		#hasTrackPublication(kind) {
+			return Boolean(this.#privateProperties.localTracks[kind]);
 		}
 		#addTrackMuteHandlers(track) {
 			track.onmute = event => {
@@ -7738,9 +8660,15 @@ this.BX = this.BX || {};
 						}
 					} else if (track.source === MediaStreamsKinds.Microphone) {
 						if (data?.muted && !Hardware.isMicrophoneMuted) {
-							return;
+							// Server reports the mic muted while the local intent is unmuted - log the mismatch;
+							// the actual unmute is applied below by draining the queue (enableAudio unpauses)
+							this.setLog(`Microphone mute state mismatch: server muted, local intent unmuted (trackId: ${trackId})`, LOG_LEVEL.WARNING);
+						} else {
+							this.#triggerEvents('PublishPaused', [track.source, data.muted]);
 						}
-						this.#triggerEvents('PublishPaused', [track.source, data.muted]);
+						if (this.#privateProperties.audioQueue !== AUDIO_QUEUE.INITIAL) {
+							this.#processAudioQueue();
+						}
 					}
 				} else {
 					this.setLog(`Mute self signal (${isMuted}) getting failed - trackId: ${trackId}`, LOG_LEVEL.INFO);
@@ -8318,6 +9246,8 @@ this.BX = this.BX || {};
 			this.type = BX.prop.getInteger(params, "type", CallType$1.Instant); // @see {BX.Call.Type}
 			this.roomType = BX.prop.getInteger(params, 'roomType', RoomType.Small);
 			this.state = BX.prop.getString(params, "state", CallState.Idle);
+			this.isReconnecting = false;
+			this.reconnectHistory = new call_lib_reconnectHistory.ReconnectHistory();
 			this.ready = false;
 			this.userId = getPrimary().getCurrentUserId();
 			this.userData = main_core.Type.isPlainObject(params.userData) ? params.userData : {};
@@ -8427,6 +9357,9 @@ this.BX = this.BX || {};
 		setLocalStream(mediaStream, tag) {
 			tag = tag || "main";
 			this.localStreams[tag] = mediaStream;
+		}
+		get reconnectionInfo() {
+			return this.reconnectHistory.getHistory();
 		}
 		isAnyoneParticipating() {
 			throw new Error("isAnyoneParticipating should be implemented");
@@ -8549,6 +9482,12 @@ this.BX = this.BX || {};
 		}
 	}
 
+	// Distinct result from getLocalAudio when the microphone capture was superseded by a newer request.
+	// Returned per-call so each caller reads the status of its own capture, never a shared instance field.
+	const GET_LOCAL_AUDIO_SUPERSEDED = Symbol('GetLocalAudioSuperseded');
+
+	// How long a single microphone capture may hold the device switch before the switch stops waiting for it.
+	const SWITCH_AUDIO_DEVICE_LOCK_TIMEOUT = 15000;
 	class CallLegacy {
 		sender = null;
 		recipient = null;
@@ -8590,6 +9529,8 @@ this.BX = this.BX || {};
 				sender: []
 			},
 			pendingPublications: {},
+			ownInflightPublicationCids: new Set(),
+			latestPublicationCidBySource: {},
 			pendingSubscriptions: {},
 			publicationTimeout: 10000,
 			republicationTries: 3,
@@ -8620,6 +9561,8 @@ this.BX = this.BX || {};
 			mediaMutedBySystem: false,
 			needToEnableAudioAfterSystemMuted: false,
 			needToDisableAudioAfterPublish: false,
+			microphonePausedOnServer: false,
+			microphoneDiscrepancyLogged: false,
 			localTracks: {},
 			localConnectionQuality: 0,
 			minimalConnectionQuality: 2,
@@ -8655,6 +9598,9 @@ this.BX = this.BX || {};
 			audioDeviceId: '',
 			switchActiveAudioDeviceInProgress: null,
 			switchActiveAudioDevicePending: null,
+			switchActiveAudioDeviceTimeout: null,
+			switchActiveAudioDeviceGeneration: 0,
+			switchActiveAudioDeviceStream: null,
 			videoDeviceId: '',
 			switchActiveVideoDeviceInProgress: null,
 			switchActiveVideoDevicePending: null,
@@ -8670,6 +9616,7 @@ this.BX = this.BX || {};
 			packetLostThreshold: 7,
 			statsTimeout: 3000,
 			videoQueue: VIDEO_QUEUE.INITIAL,
+			audioQueue: AUDIO_QUEUE.INITIAL,
 			videoStreamSetupErrorList: {}
 		};
 		constructor() {
@@ -8980,13 +9927,27 @@ this.BX = this.BX || {};
 		}
 		#reconnect(reconnectInfo) {
 			const data = main_core.Type.isObject(reconnectInfo) ? reconnectInfo : {};
+			const reason = data.reconnectionReason || null;
 			this.#privateProperties.isReconnecting = true;
+			this.#privateProperties.callState = CALL_STATE.PROGRESSING;
 			this.#privateProperties.videoQueue = VIDEO_QUEUE.INITIAL;
-			const reasonText = data.reconnectionReason ? `, reason: ${data.reconnectionReason}` : '';
+			this.#privateProperties.audioQueue = AUDIO_QUEUE.INITIAL;
+			// Cancel the previous media session's publication timers and clear correlation state before the
+			// new session starts. A surviving timer would later fire the publish-timeout handler and reset the
+			// new session's audioQueue/needToDisableAudioAfterPublish, discarding a fresh mute/unmute intent.
+			Object.values(this.#privateProperties.pendingPublications).forEach(timeout => clearTimeout(timeout));
+			this.#privateProperties.pendingPublications = {};
+			this.#privateProperties.ownInflightPublicationCids.clear();
+			this.#privateProperties.latestPublicationCidBySource = {};
+			this.#privateProperties.needToDisableAudioAfterPublish = false;
+			const reasonText = reason ? `, reason: ${reason}` : '';
 			const detailsText = data.reconnectionReasonInfo ? `, details: ${data.reconnectionReasonInfo}` : '';
 			const reconnectLog = `Starting reconnection attempt #${++this.#privateProperties.reconnectionAttempt}${reasonText}${detailsText}`;
 			this.setLog(reconnectLog, LOG_LEVEL.WARNING);
 			const reconnectionDelay = this.#privateProperties.lastReconnectionReason !== ReconnectionReason.JoinResponseError ? this.#privateProperties.fastReconnectionDelay : this.#privateProperties.reconnectionDelay;
+			// Not every entry point into the reconnection is guarded by isReconnecting: a pending timer of the
+			// previous attempt would run connect() a second time, with its own join request and socket.
+			clearTimeout(this.#privateProperties.reconnectionTimeout);
 			this.#privateProperties.reconnectionTimeout = setTimeout(this.connect.bind(this), reconnectionDelay);
 			checkMetricsFeatureAndExecutionCallback(() => {
 				this.addMonitoringEvents({
@@ -9014,6 +9975,7 @@ this.BX = this.BX || {};
 				sender: []
 			};
 			this.#privateProperties.localTracks = {};
+			this.#privateProperties.ownInflightPublicationCids.clear();
 			this.#privateProperties.isWaitAnswer = false;
 			if (this.#privateProperties.socketConnect) {
 				const closeCode = disconnectOptions.initiatedByUser ? CloseCode.Normal : CloseCode.Reconnect;
@@ -9026,6 +9988,14 @@ this.BX = this.BX || {};
 					this.#privateProperties.socketConnect = null;
 				}
 			}
+		}
+		testReconnect() {
+			this.#beforeDisconnect({
+				initiatedByUser: true
+			});
+			this.#reconnect({
+				reconnectionReason: 'TEST_RECONNECTION'
+			});
 		}
 		getMediaServerInfo() {
 			let request = null;
@@ -9107,7 +10077,10 @@ this.BX = this.BX || {};
 							message: error?.message
 						});
 					} else {
-						this.#privateProperties.lastReconnectionReason = error.code ? ReconnectionReason.JoinResponseError : ReconnectionReason.NetworkError;
+						// Every failure of this request is a join failure: a transport failure of the request
+						// itself already arrives as a coded JoinResponseError. The fast reconnection delay
+						// belongs to a lost transport (closed socket, missed ping), not here.
+						this.#privateProperties.lastReconnectionReason = ReconnectionReason.JoinResponseError;
 
 						// don't write error.name and error.message to analytics now,
 						// because we don't watch failed reconnecting requests now
@@ -9157,7 +10130,7 @@ this.BX = this.BX || {};
 				this.onPublishFailed(MediaStreamsKinds.Camera);
 			}
 			const audioTrack = await this.getLocalAudio();
-			if (audioTrack) {
+			if (audioTrack === GET_LOCAL_AUDIO_SUPERSEDED) ; else if (audioTrack) {
 				await this.publishTrack(MediaStreamsKinds.Microphone, audioTrack);
 			} else {
 				this.#releaseStream(MediaStreamsKinds.Microphone);
@@ -9195,26 +10168,30 @@ this.BX = this.BX || {};
 					});
 					return;
 				}
-				const connectedEvent = this.#privateProperties.isReconnecting && this.wasConnected ? CallApiEvent.Reconnected : CallApiEvent.Connected;
+				const isReconnect = this.#privateProperties.isReconnecting && this.wasConnected;
+				const connectedEvent = isReconnect ? CallApiEvent.Reconnected : CallApiEvent.Connected;
 				this.#privateProperties.callState = CALL_STATE.CONNECTED;
 				this.wasConnected = true;
 				this.setLog(`${connectedEvent} to the call ${this.#privateProperties.roomId} on the mediaserver after ${this.#privateProperties.reconnectionAttempt} attempts`, LOG_LEVEL.INFO);
 				this.#privateProperties.isReconnecting = false;
 				this.#privateProperties.reconnectionAttempt = 0;
+				// The join succeeded, so the reason of the previous failure must not outlive it: kept here, it
+				// would hand the join delay to the next reconnection of a lost transport, which asks for the fast one.
+				this.#privateProperties.lastReconnectionReason = null;
 				if (data.joinResponse.oneToOneType) {
 					this.triggerEvents('ConnectionTypeChanged', [{
 						type: data.joinResponse.oneToOneType
 					}]);
 				}
-				if (data.joinResponse.permissions && connectedEvent === CallApiEvent.Connected) {
+				if (data.joinResponse.permissions && !isReconnect) {
 					this.#setUserPermissions(data.joinResponse.permissions);
 				}
-				if (data.joinResponse.roomState && connectedEvent === CallApiEvent.Connected) {
+				if (data.joinResponse.roomState && !isReconnect) {
 					Util.setRoomPermissions(data.joinResponse.roomState);
 					Util.setUserPermissionsByRoomPermissions(data.joinResponse.roomState);
 				}
 				checkMetricsFeatureAndExecutionCallback(() => {
-					if (connectedEvent === CallApiEvent.Reconnected && this.monitoringEvents.length) {
+					if (isReconnect && this.monitoringEvents.length) {
 						this.sendMonitoringEvents();
 					}
 				});
@@ -9228,7 +10205,7 @@ this.BX = this.BX || {};
 					this.setLog(`Adding an early connected participant with id ${p.userId} (sid: ${p.sid})`, LOG_LEVEL.INFO);
 					this.#setRemoteParticipant(p);
 				});
-				if (connectedEvent === CallApiEvent.Reconnected) {
+				if (isReconnect) {
 					for (let userId in participantsToDelete) {
 						const participant = this.#privateProperties.remoteParticipants[userId];
 						this.setLog(`Deleting a missing participant with id ${participant.userId} (sid: ${participant.sid})`, LOG_LEVEL.INFO);
@@ -9298,17 +10275,30 @@ this.BX = this.BX || {};
 				track.userId = participantId;
 				if (participantId == this.#privateProperties.userId) {
 					const timeout = this.#privateProperties.pendingPublications[cid];
+					const isOwnPublication = isOwnInflightPublication(cid, this.#privateProperties.pendingPublications, this.#privateProperties.ownInflightPublicationCids);
 					if (timeout) {
-						clearTimeout(this.#privateProperties.pendingPublications[cid]);
+						clearTimeout(timeout);
 						delete this.#privateProperties.pendingPublications[cid];
+					}
+					if (isOwnPublication) {
+						this.#privateProperties.ownInflightPublicationCids.delete(cid);
+						if (!isCurrentPublication(cid, track.source, this.#privateProperties.latestPublicationCidBySource)) {
+							// A newer publication for this source already started; this is a late response from a
+							// superseded (timed-out) publication. Drop it without touching localTracks, otherwise
+							// mute/unmute would target the stale sid.
+							this.setLog(`Ignoring a superseded trackCreated (cid: ${cid}) for kind ${track.source} (sid: ${trackId})`, LOG_LEVEL.WARNING);
+							return;
+						}
 						this.setLog(`Publishing a local track with kind ${track.source} (sid: ${trackId}) succeeded`, LOG_LEVEL.INFO);
 						this.#privateProperties.localTracks[track.source] = track;
 						this.triggerEvents('PublishSucceed', [track.source]);
-						if (track.source === MediaStreamsKinds.Microphone && this.#privateProperties.needToDisableAudioAfterPublish) {
-							this.#privateProperties.needToDisableAudioAfterPublish = false;
-							this.disableAudio({
-								calledFrom: 'data.trackCreated'
-							});
+						// Re-arm the watchdog on confirmed success by clearing only isActive (so a later
+						// SubscriptionFailed can republish again). Keep the attempt budget (tries) so a persistent
+						// SubscriptionFailed->republish loop stays capped by republicationTries.
+						this.#privateProperties.republication[track.source].isActive = false;
+						if (track.source === MediaStreamsKinds.Microphone) {
+							this.#processTrackPublishedAudio();
+							this.#reconcilePublishedMicrophoneState();
 						} else if (track.source === MediaStreamsKinds.Camera && this.#privateProperties.videoQueue) {
 							this.#processVideoQueue();
 						}
@@ -9657,8 +10647,28 @@ this.BX = this.BX || {};
 			});
 		}
 		#addPendingPublication(trackId, source) {
+			addBoundedInflightCid(this.#privateProperties.ownInflightPublicationCids, trackId);
+			// Track the latest publication cid per source so a late signal from an earlier, superseded
+			// publication can be dropped instead of clobbering the current one.
+			this.#privateProperties.latestPublicationCidBySource[source] = trackId;
+			// Cancel any timer still armed for the same trackId before replacing it, so a stale one can't
+			// later fire and delete the new entry / reset shared state.
+			clearTimeout(this.#privateProperties.pendingPublications[trackId]);
 			this.#privateProperties.pendingPublications[trackId] = setTimeout(() => {
 				delete this.#privateProperties.pendingPublications[trackId];
+
+				// A newer publication for this source has superseded us: leave the shared audio state and the
+				// failure reporting to it, only clean up our own entry above.
+				if (!isCurrentPublication(trackId, source, this.#privateProperties.latestPublicationCidBySource)) {
+					return;
+				}
+				if (source === MediaStreamsKinds.Microphone) {
+					// On timeout no track was created, so no server signal will drain the audio queue. Reset
+					// both deferred states, otherwise a deferred disable re-arms audioQueue on DISABLE with no
+					// known sid and it stays stuck until reconnect.
+					this.#privateProperties.audioQueue = AUDIO_QUEUE.INITIAL;
+					this.#privateProperties.needToDisableAudioAfterPublish = false;
+				}
 				this.onPublishFailed(source);
 			}, this.#privateProperties.publicationTimeout);
 		}
@@ -9749,6 +10759,12 @@ this.BX = this.BX || {};
 		async publishTrack(MediaStreamKind, MediaStreamTrack, StreamQualityOptions = {}) {
 			if (!this.sender) {
 				this.setLog(`Publishing a track before a peer connection was created, ignoring`, LOG_LEVEL.WARNING);
+				if (MediaStreamKind === MediaStreamsKinds.Microphone) {
+					// No peer connection: no addTrack signal is sent and no timeout is armed, so nothing
+					// will drain the audio queue for this publish - free it to keep mute/unmute working.
+					this.#privateProperties.audioQueue = AUDIO_QUEUE.INITIAL;
+					this.#privateProperties.needToDisableAudioAfterPublish = false;
+				}
 				return;
 			}
 			this.setLog(`Start publishing a track with kind ${MediaStreamKind}`, LOG_LEVEL.INFO);
@@ -9819,27 +10835,49 @@ this.BX = this.BX || {};
 					}
 				} else if (source === MediaStreamsKinds.Microphone) {
 					const sender = this.#getSender(MediaStreamsKinds.Microphone);
-					if (sender) {
+					const hasKnownSid = Boolean(this.#privateProperties.localTracks[MediaStreamsKinds.Microphone]?.sid);
+					if (sender && hasKnownSid) {
 						await sender.replaceTrack(MediaStreamTrack);
 						this.setLog(`Publishing a track with kind ${MediaStreamKind} via replace track succeeded`, LOG_LEVEL.INFO);
 						this.triggerEvents('PublishSucceed', [MediaStreamsKinds.Microphone]);
 						return;
+					}
+					if (sender) {
+						// Sender alive but sid unknown - reuse transceiver and re-signal to obtain a fresh sid
+						await sender.replaceTrack(MediaStreamTrack);
+						this.setLog(`Re-signaling microphone publication to restore a lost sid`, LOG_LEVEL.INFO);
 					} else {
 						this.sender.addTransceiver(MediaStreamTrack, {
 							direction: 'sendonly'
 						});
-						this.#addPendingPublication(MediaStreamTrack.id, source);
-						this.#sendSignal({
-							"addTrack": {
-								"cid": MediaStreamTrack.id,
-								"source": source
-							}
+					}
+					this.#addPendingPublication(MediaStreamTrack.id, source);
+					this.#sendSignal({
+						"addTrack": {
+							"cid": MediaStreamTrack.id,
+							"source": source
+						}
+					});
+				} else if (source === MediaStreamsKinds.Screen) {
+					const sender = this.#getSender(source);
+					const hasKnownSid = Boolean(this.#privateProperties.localTracks[source]?.sid);
+					if (sender && hasKnownSid) {
+						await sender.replaceTrack(MediaStreamTrack);
+						this.setLog(`Publishing a track with kind ${MediaStreamKind} via replace track succeeded`, LOG_LEVEL.INFO);
+						// The sharing case of #onLocalMediaRendererAdded is subscribed to this event, so it is
+						// what rebuilds the local preview around the new track and clears waitingLocalScreenShare.
+						this.triggerEvents('PublishSucceed', [source]);
+						return;
+					}
+					if (sender) {
+						// Sender alive but sid unknown - reuse transceiver and re-signal to obtain a fresh sid
+						await sender.replaceTrack(MediaStreamTrack);
+						this.setLog(`Re-signaling screen publication to restore a lost sid`, LOG_LEVEL.INFO);
+					} else {
+						this.sender.addTransceiver(MediaStreamTrack, {
+							direction: 'sendonly'
 						});
 					}
-				} else if (source === MediaStreamsKinds.Screen) {
-					this.sender.addTransceiver(MediaStreamTrack, {
-						direction: 'sendonly'
-					});
 					const width = MediaStreamTrack.getSettings().width;
 					const height = MediaStreamTrack.getSettings().height;
 					this.#addPendingPublication(MediaStreamTrack.id, source);
@@ -9853,12 +10891,25 @@ this.BX = this.BX || {};
 						}
 					});
 				} else if (source === MediaStreamsKinds.ScreenAudio) {
-					this.sender.addTransceiver(MediaStreamTrack, {
-						direction: 'sendonly'
-					});
-					this.sender.addTransceiver(MediaStreamTrack, {
-						direction: 'sendonly'
-					});
+					const sender = this.#getSender(source);
+					const hasKnownSid = Boolean(this.#privateProperties.localTracks[source]?.sid);
+					if (sender && hasKnownSid) {
+						await sender.replaceTrack(MediaStreamTrack);
+						this.setLog(`Publishing a track with kind ${MediaStreamKind} via replace track succeeded`, LOG_LEVEL.INFO);
+						// No PublishSucceed for this kind: every subscriber of the event ignores sharing audio,
+						// only the sharing video track has a local renderer to rebuild.
+
+						return;
+					}
+					if (sender) {
+						// Sender alive but sid unknown - reuse transceiver and re-signal to obtain a fresh sid
+						await sender.replaceTrack(MediaStreamTrack);
+						this.setLog(`Re-signaling screen audio publication to restore a lost sid`, LOG_LEVEL.INFO);
+					} else {
+						this.sender.addTransceiver(MediaStreamTrack, {
+							direction: 'sendonly'
+						});
+					}
 					this.#addPendingPublication(MediaStreamTrack.id, source);
 					this.#sendSignal({
 						"addTrack": {
@@ -9871,6 +10922,12 @@ this.BX = this.BX || {};
 				await this.sendOffer();
 			} catch (e) {
 				if (MediaStreamKind === MediaStreamsKinds.Microphone) {
+					// Immediate publish failure: cancel any armed publication timeout and free the audio
+					// queue. No trackCreated/timeout will drain it otherwise, so a later mute/unmute would
+					// only overwrite the occupied queue and early-return via hasQueue.
+					clearTimeout(this.#privateProperties.pendingPublications[MediaStreamTrack.id]);
+					delete this.#privateProperties.pendingPublications[MediaStreamTrack.id];
+					this.#privateProperties.audioQueue = AUDIO_QUEUE.INITIAL;
 					this.#privateProperties.needToDisableAudioAfterPublish = false;
 				}
 				this.setLog(`Publishing a track with kind ${MediaStreamKind} failed: ${e}`, LOG_LEVEL.ERROR);
@@ -9961,16 +11018,27 @@ this.BX = this.BX || {};
 			}
 			this.#updateRepublicationState(MediaStreamKind, true);
 			this.setLog(`Start republishing a track with kind ${MediaStreamKind}`, LOG_LEVEL.INFO);
-			await this.unpublishTrack(MediaStreamKind);
-			const track = await this.getTrack(MediaStreamKind);
-			if (track) {
-				await this.publishTrack(MediaStreamKind, track);
-			} else {
+			try {
+				await this.unpublishTrack(MediaStreamKind);
+				const track = await this.getTrack(MediaStreamKind);
+				if (track === GET_LOCAL_AUDIO_SUPERSEDED) {
+					// A newer microphone capture superseded this republish; it owns the device now. Cancel
+					// neutrally - no release, no onPublishFailed - and free the republication slot.
+					this.setLog(`Republishing a track with kind ${MediaStreamKind} cancelled: capture superseded`, LOG_LEVEL.INFO);
+					this.#updateRepublicationState(MediaStreamKind);
+					return;
+				}
+				if (track) {
+					await this.publishTrack(MediaStreamKind, track);
+					return;
+				}
+				this.setLog(`Republishing a track with kind ${MediaStreamKind} failed: has no track`, LOG_LEVEL.ERROR);
+			} catch (error) {
 				this.setLog(`Republishing a track with kind ${MediaStreamKind} failed: ${error}`, LOG_LEVEL.ERROR);
-				this.#updateRepublicationState(MediaStreamKind);
-				this.#releaseStream(MediaStreamKind);
-				this.onPublishFailed(MediaStreamKind);
 			}
+			this.#updateRepublicationState(MediaStreamKind);
+			this.#releaseStream(MediaStreamKind);
+			this.onPublishFailed(MediaStreamKind);
 		}
 		#updateRepublicationState(mediaStreamKind, addTry) {
 			if (addTry) {
@@ -10162,6 +11230,7 @@ this.BX = this.BX || {};
 			});
 			this.#destroyPeerConnection();
 			clearTimeout(this.#privateProperties.reconnectionTimeout);
+			this.#resetAudioDeviceSwitch();
 			for (let trackId in this.#privateProperties.pendingPublications) {
 				clearTimeout(this.#privateProperties.pendingPublications[trackId]);
 			}
@@ -10276,6 +11345,9 @@ this.BX = this.BX || {};
 				if (!keepTrack) {
 					delete this.#privateProperties.localTracks[mediaStreamKind];
 				}
+				if (mediaStreamKind === MediaStreamsKinds.Microphone) {
+					this.#privateProperties.microphonePausedOnServer = true;
+				}
 				this.#sendSignal({
 					mute: {
 						sid: trackSid,
@@ -10290,6 +11362,9 @@ this.BX = this.BX || {};
 			const trackSid = this.#privateProperties.localTracks[mediaStreamKind]?.sid;
 			if (trackSid) {
 				this.setLog(`Sending unpause signal for a track with kind ${mediaStreamKind} (sid: ${trackSid})`, LOG_LEVEL.INFO);
+				if (mediaStreamKind === MediaStreamsKinds.Microphone) {
+					this.#privateProperties.microphonePausedOnServer = false;
+				}
 				this.#sendSignal({
 					mute: {
 						sid: trackSid,
@@ -10303,21 +11378,66 @@ this.BX = this.BX || {};
 		disableAudio(options) {
 			const bySystem = options?.bySystem || false;
 			const calledFrom = options?.calledFrom || '';
+			const hasQueue = this.#privateProperties.audioQueue !== AUDIO_QUEUE.INITIAL;
 			this.#updateRepublicationState(MediaStreamsKinds.Microphone);
 			if (this.#privateProperties.mediaMutedBySystem) {
 				return;
 			}
-			this.setLog(`Start disabling audio - calledFrom: ${calledFrom}, isReconnecting: ${this.#privateProperties.isReconnecting}, bySystem: ${bySystem}`);
+			this.setLog(`Start disabling audio - calledFrom: ${calledFrom}, isReconnecting: ${this.#privateProperties.isReconnecting}, bySystem: ${bySystem}, hasQueue: ${hasQueue}, audioQueue: ${this.#privateProperties.audioQueue}`);
+			if (bySystem && this.#privateProperties.audioQueue === AUDIO_QUEUE.ENABLE) {
+				// A system mute is interrupting a pending unmute. Record the restore intent so the
+				// system-unmute handler re-enables audio; overwriting the queue to DISABLE would lose it.
+				this.#privateProperties.needToEnableAudioAfterSystemMuted = true;
+			}
+			this.#privateProperties.audioQueue = AUDIO_QUEUE.DISABLE;
+			if (hasQueue) {
+				// Security: a mute arriving during an in-flight enable must stop transmission immediately.
+				// Otherwise the still-running enableAudio() keeps the local track live (and unpaused) until
+				// the next server signal - or forever if it is lost - while the UI already shows the mic off.
+				const inflightTrack = this.#privateProperties.microphoneStream?.getAudioTracks()[0];
+				if (inflightTrack) {
+					inflightTrack.enabled = false;
+				}
+				const publishedTrack = this.#privateProperties.localTracks[MediaStreamsKinds.Microphone];
+				if (publishedTrack?.sid && !this.#privateProperties.microphonePausedOnServer) {
+					publishedTrack.muted = true;
+					this.pauseTrack(MediaStreamsKinds.Microphone, true);
+				} else if (!publishedTrack?.sid) {
+					// Publish in flight, sid not assigned yet - no track to pause. Arm the deferred disable so
+					// the eventual trackCreated pauses it on the server; otherwise processTrackPublishedAudio
+					// clears the DISABLE queue with no pause and the server keeps the mic unmuted.
+					this.#privateProperties.needToDisableAudioAfterPublish = true;
+				}
+				return;
+			}
 			const track = this.#privateProperties.microphoneStream?.getAudioTracks()[0];
 			if (track) {
 				this.#privateProperties.needToEnableAudioAfterSystemMuted = bySystem ? track.enabled : false;
 				track.enabled = false;
-				if (this.#privateProperties.localTracks[MediaStreamsKinds.Microphone]) {
-					this.#privateProperties.localTracks[MediaStreamsKinds.Microphone].muted = true;
+				const publishedTrack = this.#privateProperties.localTracks[MediaStreamsKinds.Microphone];
+				if (publishedTrack) {
+					publishedTrack.muted = true;
 				}
-				this.pauseTrack(MediaStreamsKinds.Microphone, true);
+				const inflightCid = this.#privateProperties.latestPublicationCidBySource[MediaStreamsKinds.Microphone];
+				const reconciliation = selectDisableAudioReconciliation({
+					hasSid: Boolean(publishedTrack?.sid),
+					hasInflightPublication: Boolean(inflightCid && this.#privateProperties.pendingPublications[inflightCid])
+				});
+				if (reconciliation === 'pause') {
+					this.pauseTrack(MediaStreamsKinds.Microphone, true);
+				} else if (reconciliation === 'defer') {
+					// No sid to pause yet, but a publication is in flight: defer the disable so its
+					// trackCreated pauses it on the server.
+					this.#privateProperties.needToDisableAudioAfterPublish = true;
+				} else {
+					// No sid and nothing in flight to produce a draining signal - free the queue so a later
+					// enable/disable is not wedged with the mic off until reconnect.
+					this.#privateProperties.audioQueue = AUDIO_QUEUE.INITIAL;
+					this.#privateProperties.needToDisableAudioAfterPublish = false;
+				}
 			} else {
 				this.setLog('Disabling audio failed: has no track', LOG_LEVEL.ERROR);
+				this.#privateProperties.audioQueue = AUDIO_QUEUE.INITIAL;
 			}
 		}
 		async enableAudio(options) {
@@ -10326,8 +11446,13 @@ this.BX = this.BX || {};
 			if (!Util.havePermissionToBroadcast('mic')) {
 				return;
 			}
-			this.setLog(`Start enabling audio - calledFrom: ${calledFrom}, isReconnecting: ${this.#privateProperties.isReconnecting}, disabled: ${disabled}`);
+			const hasQueue = this.#privateProperties.audioQueue !== AUDIO_QUEUE.INITIAL;
+			this.setLog(`Start enabling audio - calledFrom: ${calledFrom}, isReconnecting: ${this.#privateProperties.isReconnecting}, disabled: ${disabled}, hasQueue: ${hasQueue}, audioQueue: ${this.#privateProperties.audioQueue}`);
 			this.#privateProperties.needToEnableAudioAfterSystemMuted = false;
+			this.#privateProperties.audioQueue = disabled ? AUDIO_QUEUE.DISABLE : AUDIO_QUEUE.ENABLE;
+			if (hasQueue) {
+				return;
+			}
 			if (this.#privateProperties.switchActiveAudioDeviceInProgress) {
 				try {
 					await this.#privateProperties.switchActiveAudioDeviceInProgress;
@@ -10336,32 +11461,88 @@ this.BX = this.BX || {};
 				}
 			}
 			let track = this.#privateProperties.microphoneStream?.getAudioTracks()[0];
-			const needToGetNewTrack = !track || track.readyState !== 'live' || isNoiseSuppressionInputTrackOff();
+			const audioDeviceId = this.#privateProperties.audioDeviceId;
+			// With noise suppression the published track is the WebAudio output, which usually has no
+			// deviceId; check the selected device against the capture source instead (the raw input feeding
+			// noise suppression), falling back to the track itself when there is no separate input stream.
+			const deviceCheckTrack = Hardware.noiseSuppressionInputStream?.getAudioTracks?.()[0] ?? track;
+			const hasDeviceMismatch = Boolean(audioDeviceId) && deviceMismatch(deviceCheckTrack, audioDeviceId);
+			const needToGetNewTrack = !track || track.readyState !== 'live' || isNoiseSuppressionInputTrackOff() || hasDeviceMismatch;
 			if (needToGetNewTrack) {
+				if (hasDeviceMismatch) {
+					// A device selected while muted only updates audioDeviceId; the live stream still runs
+					// on the old device. Release it so getLocalAudio performs a fresh getUserMedia with the
+					// selected deviceId, otherwise getTrack keeps the existing stream and the change is lost.
+					this.#releaseStream(MediaStreamsKinds.Microphone);
+				}
 				track = await this.getLocalAudio();
+				if (track === GET_LOCAL_AUDIO_SUPERSEDED) {
+					// A newer device selection superseded this capture. End as a neutral cancellation - no
+					// failure event, no stream release, no onPublishFailed - so the newer switch's success is
+					// not torn down. Free the single-slot queue so a later enable/disable is not wedged.
+					this.setLog('Enabling audio cancelled: microphone capture superseded by a newer request', LOG_LEVEL.INFO);
+					this.#privateProperties.audioQueue = AUDIO_QUEUE.INITIAL;
+					this.#privateProperties.needToDisableAudioAfterPublish = false;
+					return;
+				}
 			}
 			if (!track) {
 				this.setLog('Enabling audio failed: has no track', LOG_LEVEL.ERROR);
+				this.#privateProperties.needToDisableAudioAfterPublish = false;
+				this.#privateProperties.audioQueue = AUDIO_QUEUE.INITIAL;
 				this.#releaseStream(MediaStreamsKinds.Microphone);
 				this.onPublishFailed(MediaStreamsKinds.Microphone);
 				return;
 			}
+
+			// A mute may have superseded this enable while awaiting (see disableAudio's in-flight path).
+			// Consult the authoritative mute flags, not only audioQueue: a reconnect during the await resets
+			// audioQueue to INITIAL, losing the DISABLE a mute wrote, so relying on the queue alone would
+			// re-enable and publish while muted (audio leak). Both flags are false before a legitimate user or
+			// system-unmute restore reaches enableAudio, so this does not suppress a real unmute.
+			const isSupersededByMute = () => !disabled && (Hardware.isMicrophoneMuted || this.#privateProperties.mediaMutedBySystem || this.#privateProperties.audioQueue === AUDIO_QUEUE.DISABLE);
 			if (this.#privateProperties.localTracks[MediaStreamsKinds.Microphone]) {
-				this.setLog('Enabling audio via unpause signal', LOG_LEVEL.INFO);
-				track.enabled = true;
-				this.#privateProperties.localTracks[MediaStreamsKinds.Microphone].muted = false;
+				const superseded = isSupersededByMute();
+				this.setLog(`Enabling audio via unpause signal - supersededByMute: ${superseded}`, LOG_LEVEL.INFO);
+				track.enabled = !superseded;
+				this.#privateProperties.localTracks[MediaStreamsKinds.Microphone].muted = superseded;
 				await this.publishTrack(MediaStreamsKinds.Microphone, track);
-				this.unpauseTrack(MediaStreamsKinds.Microphone);
-			} else {
-				this.setLog('Enabling audio via publish', LOG_LEVEL.INFO);
-				track.enabled = !disabled;
-				if (disabled) {
-					this.#privateProperties.needToDisableAudioAfterPublish = true;
+				if (isSupersededByMute()) {
+					// Honour the newer mute: pause instead of unpausing so audio is not transmitted; the
+					// pause signal's trackMuted response drains the DISABLE queue. Guard against a redundant
+					// pause - the in-flight disableAudio (hasQueue branch) may have already paused this sid.
+					track.enabled = false;
+					this.#privateProperties.localTracks[MediaStreamsKinds.Microphone].muted = true;
+					if (!this.#privateProperties.microphonePausedOnServer) {
+						this.pauseTrack(MediaStreamsKinds.Microphone, true);
+					} else {
+						// Already paused on the server: no pause signal is sent, so no trackMuted will arrive to
+						// drain the DISABLE queue. Free the slot locally so a later mute/unmute is not wedged.
+						this.#privateProperties.audioQueue = AUDIO_QUEUE.INITIAL;
+						this.#privateProperties.needToDisableAudioAfterPublish = false;
+					}
+				} else {
+					this.unpauseTrack(MediaStreamsKinds.Microphone);
 				}
+			} else {
+				const effectiveDisabled = disabled || isSupersededByMute();
+				this.setLog(`Enabling audio via publish - effectiveDisabled: ${effectiveDisabled}`, LOG_LEVEL.INFO);
+				track.enabled = !effectiveDisabled;
+				this.#privateProperties.needToDisableAudioAfterPublish = effectiveDisabled;
 				if (this.#privateProperties.localTracks[MediaStreamsKinds.Microphone]) {
 					this.#privateProperties.localTracks[MediaStreamsKinds.Microphone].muted = false;
 				}
 				await this.publishTrack(MediaStreamsKinds.Microphone, track);
+				if (isSupersededByMute()) {
+					// A mute arrived during publication: keep the track off. Only defer the disable while the
+					// sid is still unknown - if trackCreated already processed during the await (sid obtained,
+					// pause already sent), re-arming would leave a stale flag that wrongly disables a later
+					// republication.
+					track.enabled = false;
+					if (!this.#privateProperties.localTracks[MediaStreamsKinds.Microphone]?.sid) {
+						this.#privateProperties.needToDisableAudioAfterPublish = true;
+					}
+				}
 			}
 		}
 		async disableVideo(options) {
@@ -10483,6 +11664,78 @@ this.BX = this.BX || {};
 				this.disableVideo({
 					calledFrom: 'processVideoQueue'
 				});
+			}
+		}
+		#processAudioQueue() {
+			const queue = this.#privateProperties.audioQueue;
+			this.#privateProperties.audioQueue = AUDIO_QUEUE.INITIAL;
+			const track = this.#privateProperties.microphoneStream?.getAudioTracks()[0];
+			const isTrackLive = track?.readyState === 'live' && track?.enabled === true;
+			const operation = selectAudioQueueOperation({
+				queue,
+				isTrackLive,
+				mutedBySystem: this.#privateProperties.mediaMutedBySystem
+			});
+			if (operation === AUDIO_QUEUE.ENABLE) {
+				this.enableAudio({
+					calledFrom: 'processAudioQueue'
+				});
+			} else if (operation === AUDIO_QUEUE.DISABLE) {
+				this.disableAudio({
+					calledFrom: 'processAudioQueue'
+				});
+			}
+		}
+		#reconcilePublishedMicrophoneState() {
+			// Make a late publish success robust even if the audio queue was already reset (e.g. by the
+			// publish-timeout reset when a publish/mute/unmute race times out). Sync the freshly published
+			// microphone's transmit/server state to the authoritative mute intent so it never transmits while
+			// muted (or stays silent/paused while unmuted). Guarded and idempotent - no redundant pause/unpause.
+			const localTrack = this.#privateProperties.localTracks[MediaStreamsKinds.Microphone];
+			if (!localTrack?.sid) {
+				return;
+			}
+			const audioTrack = this.#privateProperties.microphoneStream?.getAudioTracks()[0];
+
+			// Honour system mute too, not only user mute. Under system mute disableAudio() runs before
+			// mediaMutedBySystem is set and the publication may still lack a sid, so a late trackCreated would
+			// otherwise land here and re-enable/unpause the mic - transmitting despite the system mute.
+			if (Hardware.isMicrophoneMuted || this.#privateProperties.mediaMutedBySystem) {
+				if (audioTrack) {
+					audioTrack.enabled = false;
+				}
+				localTrack.muted = true;
+				if (!this.#privateProperties.microphonePausedOnServer) {
+					this.pauseTrack(MediaStreamsKinds.Microphone, true);
+				}
+			} else {
+				if (audioTrack) {
+					audioTrack.enabled = true;
+				}
+				localTrack.muted = false;
+				if (this.#privateProperties.microphonePausedOnServer) {
+					this.unpauseTrack(MediaStreamsKinds.Microphone);
+				}
+			}
+		}
+		#processTrackPublishedAudio() {
+			if (this.#privateProperties.audioQueue === AUDIO_QUEUE.ENABLE) {
+				// the latest intent is unmuted; a stale "disable after publish" must not override it
+				this.#privateProperties.needToDisableAudioAfterPublish = false;
+			}
+			if (this.#privateProperties.audioQueue !== AUDIO_QUEUE.INITIAL) {
+				this.#processAudioQueue();
+			}
+			if (this.#privateProperties.needToDisableAudioAfterPublish) {
+				this.#privateProperties.needToDisableAudioAfterPublish = false;
+				this.disableAudio({
+					calledFrom: 'data.trackCreated'
+				});
+			} else if (!Hardware.isMicrophoneMuted && !this.#privateProperties.mediaMutedBySystem && this.#privateProperties.localTracks[MediaStreamsKinds.Microphone]?.sid && this.#privateProperties.microphonePausedOnServer) {
+				// Keep the server in sync when a freshly published track is meant to be live, but only when it
+				// is actually paused on the server (avoid a redundant unpause per publish). Also honour system
+				// mute - never unpause/transmit while mediaMutedBySystem.
+				this.unpauseTrack(MediaStreamsKinds.Microphone);
 			}
 		}
 		async startScreenShare() {
@@ -10724,7 +11977,10 @@ this.BX = this.BX || {};
 		async getLocalAudio() {
 			const track = this.#privateProperties.microphoneStream?.getAudioTracks()[0];
 			if (!track || track.readyState !== 'live' || isNoiseSuppressionInputTrackOff()) {
-				await this.getTrack(MediaStreamsKinds.Microphone);
+				const result = await this.getTrack(MediaStreamsKinds.Microphone);
+				if (result === GET_LOCAL_AUDIO_SUPERSEDED) {
+					return GET_LOCAL_AUDIO_SUPERSEDED;
+				}
 			}
 			return this.#privateProperties.microphoneStream?.getAudioTracks()[0];
 		}
@@ -10764,6 +12020,15 @@ this.BX = this.BX || {};
 				this.triggerEvents('GetUserMediaEnded', [options]);
 				return stream;
 			} catch (error) {
+				if (error?.name === STREAM_MANAGER_SUPERSEDED) {
+					// The request was superseded by a newer device selection - not a media failure. Don't fall
+					// back: a fallback capture would register after the newest request and unseat the selected
+					// device. Mark it so the caller can end as a neutral cancellation, and balance the
+					// GetUserMediaStarted emitted above so getUserMediaFulfilled state stays consistent.
+					this.setLog('Getting user media skipped: superseded by a newer request', LOG_LEVEL.INFO);
+					this.triggerEvents('GetUserMediaEnded', [options]);
+					return options.audio ? GET_LOCAL_AUDIO_SUPERSEDED : null;
+				}
 				this.setLog(`Getting user media with constraints: ${JSON.stringify(constraints)} failed (fallbackMode: ${fallbackMode}): ${error}`, LOG_LEVEL.ERROR);
 				if (!fallbackMode) {
 					let monitoringEvent = '';
@@ -10829,9 +12094,16 @@ this.BX = this.BX || {};
 					video: true
 				});
 			} else if (MediaStreamKind === MediaStreamsKinds.Microphone && !this.#privateProperties.microphoneStream) {
-				this.#privateProperties.microphoneStream = await this.#getUserMedia({
+				const media = await this.#getUserMedia({
 					audio: true
 				});
+				if (media === GET_LOCAL_AUDIO_SUPERSEDED) {
+					return GET_LOCAL_AUDIO_SUPERSEDED;
+				}
+				// The slot was free when this capture started, but the await is long enough for a switch to put
+				// its stream back into it, or for another capture to land there. Whoever holds the slot by now
+				// keeps it, and the stream that lost is stopped instead of being dropped on the floor.
+				this.#restoreMicrophoneStream(media);
 			} else if (MediaStreamKind === MediaStreamsKinds.Screen && !this.#privateProperties.screenStream) {
 				this.#privateProperties.screenStream = await this.#getDisplayMedia();
 			}
@@ -10861,7 +12133,7 @@ this.BX = this.BX || {};
 					this.#privateProperties.microphoneStream = null;
 					track = this.getLocalAudio();
 				}
-				const noInputTrackEndHandler = call_lib_settingsManager.CallSettingsManager.noiseSuppressionEnabled && Hardware.noiseSuppressionInputStream && Hardware.noiseSuppressionInputStream.getAudioTracks().length > 0 && !Hardware.noiseSuppressionInputStream.getAudioTracks()[0].onended;
+				const noInputTrackEndHandler = Hardware.noiseSuppressionInputStream && Hardware.noiseSuppressionInputStream.getAudioTracks().length > 0 && !Hardware.noiseSuppressionInputStream.getAudioTracks()[0].onended;
 				if (track && noInputTrackEndHandler) {
 					Hardware.noiseSuppressionInputStream.getAudioTracks()[0].onended = () => {
 						track.onended();
@@ -10900,6 +12172,138 @@ this.BX = this.BX || {};
 				};
 			}
 		}
+		#releaseAudioDeviceSwitchLock(promise) {
+			if (this.#privateProperties.switchActiveAudioDeviceInProgress !== promise) {
+				return false;
+			}
+			this.#privateProperties.switchActiveAudioDeviceInProgress = null;
+			return true;
+		}
+
+		// A switch handed over to a newer one keeps running - its capture can still land much later. The id it
+		// took at the start stops matching from that moment on, which is how the late arrival learns that the
+		// microphone is no longer its to publish to, and that its stream is no longer the one to put back. Only
+		// a newer owner cancels: a capture the watchdog stopped waiting for with nobody behind it keeps its id
+		// and publishes itself when it lands.
+		#cancelAudioDeviceSwitch(switchId) {
+			if (this.#privateProperties.switchActiveAudioDeviceGeneration === switchId) {
+				this.#privateProperties.switchActiveAudioDeviceGeneration++;
+			}
+		}
+		#isAudioDeviceSwitchCancelled(switchId) {
+			return this.#privateProperties.switchActiveAudioDeviceGeneration !== switchId;
+		}
+
+		// Armed around the capture of every switch, including each link of a pending chain, so that what is given
+		// up on is a single capture that never settles and not a long but perfectly healthy chain of switches.
+		// Settling the switch is part of the job: a capture that never returns leaves the promise pending, and
+		// enableAudio awaits that very promise after it has already taken audioQueue - every later mute/unmute
+		// would then end on the "queue is busy" early return, and setMicrophoneId would never report its result.
+		#armAudioDeviceSwitchWatchdog(switchId, deviceId, prevStream, settle) {
+			const watchdog = setTimeout(() => {
+				this.#privateProperties.switchActiveAudioDeviceTimeout = null;
+				const message = `Switching an audio device to ${deviceId} did not finish in time, releasing the lock`;
+				this.setLog(message, LOG_LEVEL.WARNING);
+				this.#privateProperties.switchActiveAudioDeviceInProgress = null;
+				const pendingDeviceId = this.#privateProperties.switchActiveAudioDevicePending;
+				this.#privateProperties.switchActiveAudioDevicePending = null;
+				if (pendingDeviceId) {
+					// The parked switch takes the microphone out of the slot itself, so it has to be there for it
+					// to take - and the capture given up on is cancelled, because the device it was to publish is
+					// no longer the one chosen. This switch ends here rather than on the parked one: the device it
+					// was asked for is not the device that will be applied, so its caller is told it is over.
+					this.#cancelAudioDeviceSwitch(switchId);
+					this.#restoreMicrophoneStream(prevStream);
+					this.#applyMicrophoneMuteIntent();
+					settle();
+					this.switchActiveAudioDevice(pendingDeviceId).catch(() => {
+						// the switch reports its own failure
+					});
+					return;
+				}
+
+				// Nobody is waiting for the microphone, so the capture this switch stopped waiting for is still
+				// the only claim on it: leave the slot free and the switch uncancelled, and it publishes itself
+				// whenever it lands.
+				this.#applyMicrophoneMuteIntent(prevStream);
+				settle();
+			}, SWITCH_AUDIO_DEVICE_LOCK_TIMEOUT);
+			this.#privateProperties.switchActiveAudioDeviceTimeout = watchdog;
+			return watchdog;
+		}
+		#disarmAudioDeviceSwitchWatchdog(watchdog) {
+			if (!watchdog) {
+				return;
+			}
+			clearTimeout(watchdog);
+			// A capture that lands after its own watchdog has fired must not disarm the watchdog of the switch
+			// running by then.
+			if (this.#privateProperties.switchActiveAudioDeviceTimeout === watchdog) {
+				this.#privateProperties.switchActiveAudioDeviceTimeout = null;
+			}
+		}
+		#resetAudioDeviceSwitch() {
+			clearTimeout(this.#privateProperties.switchActiveAudioDeviceTimeout);
+			this.#privateProperties.switchActiveAudioDeviceTimeout = null;
+			this.#privateProperties.switchActiveAudioDeviceInProgress = null;
+			this.#privateProperties.switchActiveAudioDevicePending = null;
+			this.#privateProperties.switchActiveAudioDeviceGeneration++;
+
+			// While a switch is capturing, the microphone it took out of the call is held by nothing else:
+			// microphoneStream is empty, so releaseStream finds nothing, and the stream is a clone of its own
+			// (see #getUserMedia), so StreamManager cannot reach it either. Left alone it keeps the device
+			// captured until the tab is reloaded, with the browser still showing the recording indicator.
+			const stream = this.#privateProperties.switchActiveAudioDeviceStream;
+			this.#privateProperties.switchActiveAudioDeviceStream = null;
+			this.#releaseMicrophoneStream(stream);
+		}
+
+		// The single place that decides who owns the microphone slot: a stream goes in only while the slot is
+		// free, so neither a switch putting its previous stream back nor a capture landing late can overwrite
+		// the device somebody newer has already published. The stream that is not taken is released.
+		#restoreMicrophoneStream(stream) {
+			if (!stream || stream === this.#privateProperties.microphoneStream) {
+				return;
+			}
+			if (this.#privateProperties.microphoneStream) {
+				this.#releaseMicrophoneStream(stream);
+				return;
+			}
+			this.#privateProperties.microphoneStream = stream;
+		}
+
+		// A stream that stays out of the slot has to be stopped explicitly: it is a clone of its own (see
+		// #getUserMedia), so neither StreamManager nor #releaseStream can ever reach it and the device would
+		// stay captured until the tab is reloaded.
+		#releaseMicrophoneStream(stream) {
+			if (!stream || stream === this.#privateProperties.microphoneStream) {
+				return;
+			}
+			stream.getTracks?.().forEach(track => {
+				track.onended = null;
+				track.stop();
+			});
+		}
+
+		// A mute can arrive while a device is being switched, and disableAudio cannot act on it: microphoneStream
+		// is nulled for the duration of the capture, so it takes the "has no track" branch and neither disables
+		// the track nor pauses the publication. Re-apply the current intent to whatever is left publishing - on
+		// success, on a failed capture and on a superseded one alike - or the old device keeps transmitting while
+		// the UI, the other participants and the server all show the microphone off.
+		#applyMicrophoneMuteIntent(publishingStream = null) {
+			if (!Hardware.isMicrophoneMuted && !this.#privateProperties.mediaMutedBySystem) {
+				return;
+			}
+			const localTrack = this.#privateProperties.microphoneStream?.getAudioTracks()[0] ?? publishingStream?.getAudioTracks()[0];
+			if (localTrack) {
+				localTrack.enabled = false;
+			}
+			const publishedTrack = this.#privateProperties.localTracks[MediaStreamsKinds.Microphone];
+			if (publishedTrack?.sid && !this.#privateProperties.microphonePausedOnServer) {
+				publishedTrack.muted = true;
+				this.pauseTrack(MediaStreamsKinds.Microphone, true);
+			}
+		}
 		async switchActiveAudioDevice(deviceId, force) {
 			if (this.#privateProperties.switchActiveAudioDeviceInProgress && !force) {
 				this.setLog(`Got another request to switch an audio device to ${deviceId}, saving it`, LOG_LEVEL.INFO);
@@ -10908,54 +12312,124 @@ this.BX = this.BX || {};
 			}
 			let error = null;
 			let fulfilled = false;
+			const switchId = ++this.#privateProperties.switchActiveAudioDeviceGeneration;
 			this.setLog(`Start switching an audio device to ${deviceId}`, LOG_LEVEL.INFO);
 			const promise = new Promise(async (resolve, reject) => {
 				this.#privateProperties.audioDeviceId = deviceId;
-				const prevStream = this.#privateProperties.microphoneStream;
+				// The slot stands empty while a capture is in flight, and the watchdog leaves it empty for a
+				// capture it stopped waiting for. The stream that capture took out of the call is the one still
+				// publishing, so a switch starting on an empty slot takes it over: whoever publishes next is the
+				// one that has to stop it, or nothing but a hangup ever does and the device stays captured.
+				const prevStream = this.#privateProperties.microphoneStream ?? this.#privateProperties.switchActiveAudioDeviceStream;
+				let watchdog = null;
 				try {
 					const sender = this.#getSender(MediaStreamsKinds.Microphone);
 					if (!sender) {
-						this.setLog('Switching an audio device skipped - no sender', LOG_LEVEL.WARNING);
-						error = 'No sender for audio';
+						// No sender yet (e.g. joined muted) - keep the recorded audioDeviceId
+						// and apply it on the first publication (see enableAudio / deviceMismatch).
+						this.setLog('Switching an audio device deferred - no sender, will apply on first publication', LOG_LEVEL.INFO);
 						return;
 					}
-					const prevTrack = this.#privateProperties.microphoneStream?.getAudioTracks()[0];
+					watchdog = this.#armAudioDeviceSwitchWatchdog(switchId, deviceId, prevStream, resolve);
+					const prevTrack = prevStream?.getAudioTracks()[0];
+					// Releasing the stream reference is what makes getLocalAudio capture the new device. The
+					// previous track is not stopped until the new one is published, so a capture that delivers
+					// nothing leaves the call transmitting from the old device instead of silencing it.
 					this.#privateProperties.microphoneStream = null;
+					// Out of the slot means out of reach of releaseStream - keep the stream where a hangup can
+					// still find it, or the device stays captured when the call ends mid-capture. A switch that
+					// starts on an empty slot has nothing of its own to put here, and must not erase what an
+					// earlier switch is still holding: the watchdog leaves the slot free exactly like that.
+					if (prevStream) {
+						this.#privateProperties.switchActiveAudioDeviceStream = prevStream;
+					}
 					let prevTrackEnabledState = true;
 					let prevTrackId = '';
 					if (prevTrack) {
 						prevTrackEnabledState = prevTrack.enabled;
 						prevTrackId = prevTrack.id;
-						prevTrack.stop();
 					}
 					const audioTrack = await this.getLocalAudio();
+					if (this.#isAudioDeviceSwitchCancelled(switchId)) {
+						// A newer switch owns the microphone by now - either one that started while this capture
+						// was running, or the one the watchdog took out of pending. Publishing here would take the
+						// sender away from the device chosen since, and putting prevStream back would overwrite a
+						// newer capture with a stale stream. The recorded audioDeviceId survives, so the next
+						// publication still applies the device (see enableAudio / deviceMismatch).
+						this.setLog('Switching an audio device cancelled: a newer switch owns the microphone', LOG_LEVEL.WARNING);
+						return;
+					}
+					if (audioTrack === GET_LOCAL_AUDIO_SUPERSEDED) {
+						// A newer device switch superseded this capture; leave it to apply its own device. The
+						// previous stream is released rather than put back: the winner brings its own, and the
+						// supersede has already silenced the track this one would restore.
+						this.setLog('Switching an audio device cancelled: superseded by a newer switch', LOG_LEVEL.INFO);
+						this.#releaseMicrophoneStream(prevStream);
+						return;
+					}
+					if (!audioTrack) {
+						throw new Error('capturing a new audio track failed');
+					}
 					audioTrack.source = MediaStreamsKinds.Microphone;
-					audioTrack.enabled = prevTrackEnabledState;
-					if (this.isAudioPublished() || sender.track.id !== audioTrack.id || audioTrack.id !== prevTrackId) {
+					// A mute may have arrived while the new device was captured. disableAudio could not pause
+					// because microphoneStream was temporarily nulled above, so honour the current mute intent
+					// instead of restoring the stale enabled state - never hand the sender an enabled track
+					// while the UI shows mute.
+					const muteIntent = Boolean(Hardware.isMicrophoneMuted || this.#privateProperties.mediaMutedBySystem);
+					audioTrack.enabled = muteIntent ? false : prevTrackEnabledState;
+					if (this.isAudioPublished() || sender.track?.id !== audioTrack.id || audioTrack.id !== prevTrackId) {
 						this.setLog('Have sender for audio, start replacing track', LOG_LEVEL.INFO);
 						await sender.replaceTrack(audioTrack);
+					}
+					if (prevTrack) {
+						// The previous device is released only once the new track has taken its place in the
+						// sender. The capture can never hand the published track back - #getUserMedia returns a
+						// clone, so its track is a new object with an id of its own - and microphoneStream holds
+						// the new stream by now, so nothing can reach the previous track.
+						prevTrack.stop();
 					}
 					this.setLog('Switching an audio device succeeded', LOG_LEVEL.INFO);
 				} catch (e) {
 					error = e;
 					this.setLog(`Switching an audio device failed: ${e}`, LOG_LEVEL.ERROR);
-					if (!this.#privateProperties.microphoneStream) {
-						this.#privateProperties.microphoneStream = prevStream;
+					if (!this.#isAudioDeviceSwitchCancelled(switchId)) {
+						this.#restoreMicrophoneStream(prevStream);
 					}
 				} finally {
-					if (this.#privateProperties.switchActiveAudioDevicePending) {
-						const deviceId = this.#privateProperties.switchActiveAudioDevicePending;
+					this.#disarmAudioDeviceSwitchWatchdog(watchdog);
+					// Identity alone is not enough: the switch the watchdog started after this one takes the very
+					// same stream out of the slot and records it here, so a capture that lands after being handed
+					// over would clear a field that is no longer its own - and a hangup would then find nothing to
+					// stop, leaving the device captured until the tab is reloaded.
+					const ownsSwitchStream = !this.#isAudioDeviceSwitchCancelled(switchId) && this.#privateProperties.switchActiveAudioDeviceStream === prevStream;
+					if (ownsSwitchStream) {
+						this.#privateProperties.switchActiveAudioDeviceStream = null;
+					}
+					this.#applyMicrophoneMuteIntent();
+
+					// A switch a newer one has taken over does not take the queue over either: whoever holds the
+					// lock by now runs the parked device itself.
+					const pendingDeviceId = this.#isAudioDeviceSwitchCancelled(switchId) ? null : this.#privateProperties.switchActiveAudioDevicePending;
+					if (pendingDeviceId) {
 						this.#privateProperties.switchActiveAudioDevicePending = null;
-						resolve(this.switchActiveAudioDevice(deviceId, true));
+						resolve(this.switchActiveAudioDevice(pendingDeviceId, true));
 					} else {
 						fulfilled = true;
-						this.#privateProperties.switchActiveAudioDeviceInProgress = null;
 						return error ? reject(error) : resolve();
 					}
 				}
 			});
 			if (!force && !fulfilled) {
 				this.#privateProperties.switchActiveAudioDeviceInProgress = promise;
+
+				// The lock is released by whichever comes first: the switch settling, or the watchdog armed around
+				// its capture. Without the watchdog a capture that never settles holds the lock forever, and every
+				// later switch is only written into switchActiveAudioDevicePending and never run.
+				promise.finally(() => {
+					this.#releaseAudioDeviceSwitchLock(promise);
+				}).catch(() => {
+					// the rejection belongs to the caller of switchActiveAudioDevice
+				});
 			}
 			return promise;
 		}
@@ -11474,9 +12948,15 @@ this.BX = this.BX || {};
 						}
 					} else if (track.source === MediaStreamsKinds.Microphone) {
 						if (data?.muted && !Hardware.isMicrophoneMuted) {
-							return;
+							// Server reports the mic muted while the local intent is unmuted - log the mismatch;
+							// the actual unmute is applied below by draining the queue (enableAudio unpauses)
+							this.setLog(`Microphone mute state mismatch: server muted, local intent unmuted (trackId: ${trackId})`, LOG_LEVEL.WARNING);
+						} else {
+							this.triggerEvents('PublishPaused', [track.source, data.muted]);
 						}
-						this.triggerEvents('PublishPaused', [track.source, data.muted]);
+						if (this.#privateProperties.audioQueue !== AUDIO_QUEUE.INITIAL) {
+							this.#processAudioQueue();
+						}
 					}
 				} else {
 					this.setLog(`Mute self signal (${data.muted}) getting failed - trackId: ${trackId}`, LOG_LEVEL.INFO);
@@ -11739,6 +13219,12 @@ this.BX = this.BX || {};
 		}
 		#createPeerConnection() {
 			this.#destroyPeerConnection();
+
+			// reset audio-queue state for the fresh connection (initial join / rejoin / reconnect):
+			// stale queue or in-flight cids from a dropped connection would otherwise wedge audio publishing
+			this.#privateProperties.audioQueue = AUDIO_QUEUE.INITIAL;
+			this.#privateProperties.microphonePausedOnServer = false;
+			this.#privateProperties.ownInflightPublicationCids.clear();
 			this.#peerConnectionAbortController = new AbortController();
 			const config = {};
 			if (this.#privateProperties.iceServers) {
@@ -12153,8 +13639,27 @@ this.BX = this.BX || {};
 			getStatsHandle().finally(() => {
 				this.#privateProperties.callStatsInterval = setInterval(async () => {
 					await getStatsHandle();
+					this.#logMicrophoneStateDiscrepancy();
 				}, this.#privateProperties.statsTimeout);
 			});
+		}
+		#logMicrophoneStateDiscrepancy() {
+			const localTrack = this.#privateProperties.localTracks[MediaStreamsKinds.Microphone];
+			if (!localTrack?.sid) {
+				return;
+			}
+			const intentMuted = Boolean(Hardware.isMicrophoneMuted);
+			const stateMuted = Boolean(localTrack.muted);
+			const hasDiscrepancy = intentMuted !== stateMuted;
+			if (hasDiscrepancy && !this.#privateProperties.microphoneDiscrepancyLogged) {
+				// Edge-triggered: log only the transition into the discrepancy, not once per stats tick
+				// while it persists (that produced ~1200 identical warnings/hour).
+				this.#privateProperties.microphoneDiscrepancyLogged = true;
+				this.setLog(`Microphone state discrepancy metric - intentMuted: ${intentMuted}, publishedMuted: ${stateMuted}, sid: ${localTrack.sid}`, LOG_LEVEL.WARNING);
+			} else if (!hasDiscrepancy && this.#privateProperties.microphoneDiscrepancyLogged) {
+				this.#privateProperties.microphoneDiscrepancyLogged = false;
+				this.setLog(`Microphone state discrepancy resolved - sid: ${localTrack.sid}`, LOG_LEVEL.INFO);
+			}
 		}
 		#destroyPeerConnection() {
 			if (this.#peerConnectionAbortController) {
@@ -12424,6 +13929,14 @@ this.BX = this.BX || {};
 			}
 		}
 		destroy() {
+			if (this.inactivityTimeout) {
+				clearTimeout(this.inactivityTimeout);
+				this.inactivityTimeout = 0;
+			}
+			if (this.voiceState) {
+				this.voiceState = false;
+				this.callbacks.voiceStopped();
+			}
 			if (this.analyserNode) {
 				this.analyserNode.disconnect();
 			}
@@ -12499,6 +14012,7 @@ this.BX = this.BX || {};
 	const pingPeriod$2 = 5000;
 	const backendPingPeriod$2 = 25000;
 	const reinvitePeriod$3 = 5500;
+
 	// const MAX_USERS_WITHOUT_SIMULCAST = 6;
 
 	class BitrixCallLegacy extends AbstractCall {
@@ -12508,7 +14022,7 @@ this.BX = this.BX || {};
 			this.invitePeriod = config.invitePeriod > 0 ? config.invitePeriod : Util.getCallInvitePeriod();
 			this.videoQuality = Quality$1.VeryHigh; // initial video quality. will drop on new peers connecting
 
-			this.BitrixCall = null;
+			this.CallApi = null;
 			this.signaling = new Signaling$4({
 				call: this
 			});
@@ -12697,26 +14211,26 @@ this.BX = this.BX || {};
 			return Object.keys(this.peers).length;
 		}
 		canChangeMediaDevices() {
-			return !this.BitrixCall?.isMediaMutedBySystem;
+			return !this.CallApi?.isMediaMutedBySystem;
 		}
 		setMuted = event => {
 			if (this.muted === event.data.isMicrophoneMuted) {
 				return;
 			}
 			this.muted = event.data.isMicrophoneMuted;
-			if (this.BitrixCall) {
+			if (this.CallApi) {
 				if (!event.data.calledProgrammatically) {
 					this.signaling.sendMicrophoneState(!this.muted);
 				}
 				if (this.muted) {
-					this.BitrixCall.disableAudio({
+					this.CallApi.disableAudio({
 						calledFrom: 'setMuted'
 					});
 				} else {
-					if (!this.BitrixCall.isAudioPublished()) {
+					if (!this.CallApi.isAudioPublished()) {
 						this.#setPublishingState(MediaStreamsKinds.Microphone, true);
 					}
-					this.BitrixCall.enableAudio({
+					this.CallApi.enableAudio({
 						calledFrom: 'setMuted'
 					});
 				}
@@ -12727,20 +14241,20 @@ this.BX = this.BX || {};
 				return;
 			}
 			this.videoEnabled = event.data.isCameraOn;
-			if (this.BitrixCall) {
+			if (this.CallApi) {
 				if (!event.data.calledProgrammatically) {
 					this.signaling.sendCameraState(this.videoEnabled);
 				}
 				if (this.videoEnabled) {
-					if (!this.BitrixCall.isVideoPublished()) {
+					if (!this.CallApi.isVideoPublished()) {
 						this.#setPublishingState(MediaStreamsKinds.Camera, true);
 					}
 					this.localVideoShown = true;
-					this.BitrixCall.enableVideo();
+					this.CallApi.enableVideo();
 				} else {
 					if (this.localVideoShown) {
 						this.localVideoShown = false;
-						this.BitrixCall.disableVideo();
+						this.CallApi.disableVideo();
 					}
 				}
 			}
@@ -12750,18 +14264,18 @@ this.BX = this.BX || {};
 				return;
 			}
 			this.cameraId = cameraId;
-			if (this.BitrixCall) {
+			if (this.CallApi) {
 				if (!cameraId) {
 					this.#onBeforeLocalMediaRendererRemoved(MediaStreamsKinds.Camera);
 					return;
 				}
-				if (this.BitrixCall.isVideoPublished()) {
+				if (this.CallApi.isVideoPublished()) {
 					this.#setPublishingState(MediaStreamsKinds.Camera, true);
 				}
-				this.BitrixCall.switchActiveVideoDevice(this.cameraId).then(() => {
+				this.CallApi.switchActiveVideoDevice(this.cameraId).then(() => {
 					if (Hardware.isCameraOn) {
 						this.runCallback('onUpdateLastUsedCameraId');
-						if (this.BitrixCall.isVideoPublished() && this.canChangeMediaDevices()) {
+						if (this.CallApi.isVideoPublished() && this.canChangeMediaDevices()) {
 							const track = CallStreamManager.getLocalStream(MediaStreamsKinds.Camera);
 							const kind = Util.MediaKind[MediaStreamsKinds.Camera];
 							const mediaRenderer = new MediaRenderer({
@@ -12773,7 +14287,7 @@ this.BX = this.BX || {};
 								tag: 'main',
 								stream: mediaRenderer.stream
 							});
-							if (this.BitrixCall.isVideoPublished()) {
+							if (this.CallApi.isVideoPublished()) {
 								this.#setPublishingState(MediaStreamsKinds.Camera, false);
 							}
 						} else if (!this.canChangeMediaDevices()) {
@@ -12781,7 +14295,7 @@ this.BX = this.BX || {};
 						} else {
 							this.#setPublishingState(MediaStreamsKinds.Camera, true);
 							this.localVideoShown = true;
-							this.BitrixCall.enableVideo({
+							this.CallApi.enableVideo({
 								calledFrom: 'switchActiveVideoDevice',
 								skipUnpause: true
 							});
@@ -12801,7 +14315,7 @@ this.BX = this.BX || {};
 				return;
 			}
 			this.microphoneId = microphoneId;
-			if (this.BitrixCall) {
+			if (this.CallApi) {
 				if (!microphoneId) {
 					this.#onBeforeLocalMediaRendererRemoved(MediaStreamsKinds.Microphone);
 					return;
@@ -12810,7 +14324,7 @@ this.BX = this.BX || {};
 				this.#onEndpointVoiceEnd({
 					userId: this.userId
 				});
-				this.BitrixCall.switchActiveAudioDevice(this.microphoneId).then(() => {
+				this.CallApi.switchActiveAudioDevice(this.microphoneId).then(() => {
 					const track = CallStreamManager.getLocalStream(MediaStreamsKinds.Microphone);
 					this.#onMicAccessResult({
 						result: true,
@@ -12826,7 +14340,7 @@ this.BX = this.BX || {};
 				}).finally(() => {
 					this.#setPublishingState(MediaStreamsKinds.Microphone, false);
 					if (Hardware.isMicrophoneMuted && !this.canChangeMediaDevices()) {
-						this.BitrixCall.disableAudio({
+						this.CallApi.disableAudio({
 							calledFrom: 'setMicrophoneId'
 						});
 					}
@@ -12845,15 +14359,15 @@ this.BX = this.BX || {};
 			}
 		}
 		setMainStream(users) {
-			if (!this.BitrixCall) {
+			if (!this.CallApi) {
 				return;
 			}
 			if (users.userId && users.userId !== this.userId) {
 				const participant = this.peers[users.userId]?.participant;
 				const kind = participant?.screenSharingEnabled ? MediaStreamsKinds.Screen : MediaStreamsKinds.Camera;
-				this.BitrixCall.setMainStream(users, kind);
+				this.CallApi.setMainStream(users, kind);
 			} else {
-				this.BitrixCall.resetMainStream(users);
+				this.CallApi.resetMainStream(users);
 			}
 		}
 		requestFloor(requestActive) {
@@ -12861,19 +14375,19 @@ this.BX = this.BX || {};
 				return;
 			}
 			this.floorRequestActive = requestActive;
-			this.BitrixCall.raiseHand(requestActive);
+			this.CallApi.raiseHand(requestActive);
 		}
 		turnOffAllParticipansStream(options) {
-			this.BitrixCall.turnOffAllParticipansStream(options);
+			this.CallApi.turnOffAllParticipansStream(options);
 		}
 		turnOffParticipantStream(options) {
-			this.BitrixCall.turnOffParticipantStream(options);
+			this.CallApi.turnOffParticipantStream(options);
 		}
 		allowSpeakPermission(options) {
-			this.BitrixCall.allowSpeakPermission(options);
+			this.CallApi.allowSpeakPermission(options);
 		}
 		changeSettings(options) {
-			this.BitrixCall.changeSettings(options);
+			this.CallApi.changeSettings(options);
 		}
 		sendLocalRecordState(commonRecordState, force = false) {
 			if (!force && !this.updateCommonRecordState({
@@ -12920,7 +14434,7 @@ this.BX = this.BX || {};
 			}
 		}
 		startScreenSharing() {
-			if (!this.BitrixCall) {
+			if (!this.CallApi) {
 				return;
 			}
 			this.waitingLocalScreenShare = true;
@@ -12928,7 +14442,7 @@ this.BX = this.BX || {};
 				userId: this.userId,
 				screenState: true
 			});
-			this.BitrixCall.startScreenShare();
+			this.CallApi.startScreenShare();
 		}
 		stopScreenSharing() {
 			this.#onBeforeLocalMediaRendererRemoved(MediaStreamsKinds.Screen);
@@ -13086,13 +14600,13 @@ this.BX = this.BX || {};
 				// for future reconnections
 				this.reinitPeers();
 			}
-			if (this.BitrixCall) {
-				this.BitrixCall._replaceVideoSharing = false;
-				this.BitrixCall.hangup();
-				this.BitrixCall = null;
+			if (this.CallApi) {
+				this.CallApi._replaceVideoSharing = false;
+				this.CallApi.hangup();
+				this.CallApi = null;
 			} else {
-				this.log("Tried to hangup, but this.BitrixCall points nowhere");
-				console.error("Tried to hangup, but this.BitrixCall points nowhere");
+				this.log("Tried to hangup, but this.CallApi points nowhere");
+				console.error("Tried to hangup, but this.CallApi points nowhere");
 			}
 			this.screenShared = false;
 			this.localVideoShown = false;
@@ -13100,7 +14614,7 @@ this.BX = this.BX || {};
 		}
 		attachToConference(options = {}) {
 			const joinAsViewer = options.joinAsViewer === true;
-			if (this.BitrixCall && this.BitrixCall.getState() === CALL_STATE.CONNECTED) {
+			if (this.CallApi && this.CallApi.getState() === CALL_STATE.CONNECTED) {
 				if (this.joinedAsViewer === joinAsViewer) {
 					return Promise.resolve();
 				} else {
@@ -13112,7 +14626,7 @@ this.BX = this.BX || {};
 				this.sendTelemetryEvent("call");
 				try {
 					this.localUserState = UserState.Connecting;
-					this.BitrixCall = new CallLegacy(this.userId);
+					this.CallApi = new CallLegacy(this.userId);
 
 					/*if (Hardware.isCameraOn) // transfered to #onCallConnected
 					{
@@ -13120,7 +14634,7 @@ this.BX = this.BX || {};
 					}*/
 
 					this.joinedAsViewer = joinAsViewer;
-					if (!this.BitrixCall) {
+					if (!this.CallApi) {
 						this.log("Error: could not create Bitrix call");
 						return reject({
 							code: "BITRIX_NO_CALL"
@@ -13131,11 +14645,11 @@ this.BX = this.BX || {};
 					});
 					this.bindCallEvents();
 					this.subscribeHardwareChanges();
-					this.BitrixCall.on('Connected', () => {
+					this.CallApi.on('Connected', () => {
 						this.#onCallConnected();
 						resolve();
 					});
-					this.BitrixCall.on('Failed', e => {
+					this.CallApi.on('Failed', e => {
 						this.#onCallFailed(e);
 						reject(e);
 					});
@@ -13145,7 +14659,7 @@ this.BX = this.BX || {};
 							code: "BITRIX_NO_CALL"
 						});
 					}
-					this.BitrixCall.connect({
+					this.CallApi.connect({
 						roomId: this.id,
 						userId: this.userId,
 						isLegacy: true,
@@ -13167,27 +14681,27 @@ this.BX = this.BX || {};
 			this.sendTelemetryEvent("connect");
 			this.localUserState = UserState.Connected;
 			const MAX_USERS_WITH_VIDEO = Util.countDisableCameraNewJoinedUsersFeature();
-			if (Util.isDisableCameraNewJoinedUsersFeatureEnabled() && this.BitrixCall.remoteParticipantsCount >= MAX_USERS_WITH_VIDEO)
+			if (Util.isDisableCameraNewJoinedUsersFeatureEnabled() && this.CallApi.remoteParticipantsCount >= MAX_USERS_WITH_VIDEO)
 				// task-596223
 				{
 					Hardware.isCameraOn = false;
 				}
-			this.BitrixCall.on('Failed', this.#onCallDisconnected);
+			this.CallApi.on('Failed', this.#onCallDisconnected);
 			this.signaling.sendMicrophoneState(!Hardware.isMicrophoneMuted);
 			this.signaling.sendCameraState(Hardware.isCameraOn);
-			if (!this.BitrixCall.isAudioPublished()) {
+			if (!this.CallApi.isAudioPublished()) {
 				this.#setPublishingState(MediaStreamsKinds.Microphone, true);
 			}
-			this.BitrixCall.enableAudio({
+			this.CallApi.enableAudio({
 				calledFrom: 'onCallConnected',
 				disabled: Hardware.isMicrophoneMuted
 			});
 			if (Hardware.isCameraOn) {
 				this.localVideoShown = true;
-				if (!this.BitrixCall.isVideoPublished()) {
+				if (!this.CallApi.isVideoPublished()) {
 					this.#setPublishingState(MediaStreamsKinds.Camera, true);
 				}
-				this.BitrixCall.enableVideo({
+				this.CallApi.enableVideo({
 					calledFrom: 'onCallConnected'
 				});
 			}
@@ -13201,88 +14715,88 @@ this.BX = this.BX || {};
 			this.log("Could not attach to conference", e);
 			this.sendTelemetryEvent("connect_failure");
 			this.localUserState = UserState.Failed;
-			this.BitrixCall.enableSilentLogging(false);
-			this.BitrixCall.setLoggerCallback(null);
+			this.CallApi.enableSilentLogging(false);
+			this.CallApi.setLoggerCallback(null);
 		}
 		bindCallEvents() {
-			this.BitrixCall.on('PublishSucceed', this.#onLocalMediaRendererAdded);
-			this.BitrixCall.on('PublishPaused', this.#onLocalMediaRendererMuteToggled);
-			this.BitrixCall.on('MediaMutedBySystem', this.#onMediaMutedBySystem);
-			this.BitrixCall.on('PublishFailed', this.#onLocalMediaRendererEnded);
-			this.BitrixCall.on('PublishEnded', this.#onLocalMediaRendererEnded);
-			this.BitrixCall.on('GetUserMediaStarted', this.#onGetUserMediaStarted.bind(this));
-			this.BitrixCall.on('GetUserMediaEnded', this.#onGetUserMediaEnded);
-			this.BitrixCall.on('GetUserMediaSuccess', this.#onGetUserMediaSuccess.bind(this));
-			this.BitrixCall.on('GetUserMediaFailed', this.#onGetUserMediaFailed);
-			this.BitrixCall.on('RemoteMediaAvailable', this.#onRemoteMediaAvailable);
-			this.BitrixCall.on('RemoteMediaUnavailable', this.#onRemoteMediaUnavailable);
-			this.BitrixCall.on('RemoteMediaAdded', this.#onRemoteMediaAdded);
-			this.BitrixCall.on('RemoteMediaRemoved', this.#onRemoteMediaRemoved);
-			this.BitrixCall.on('RemoteMediaMuted', this.#onRemoteMediaMuteToggled);
-			this.BitrixCall.on('RemoteMediaUnmuted', this.#onRemoteMediaMuteToggled);
-			this.BitrixCall.on('ParticipantJoined', this.#onParticipantJoined);
-			this.BitrixCall.on('ParticipantStateUpdated', () => console.log('handleParticipantStateUpdated'));
-			this.BitrixCall.on('ParticipantLeaved', this.#onParticipantLeaved);
-			this.BitrixCall.on('MessageReceived', this.#onCallMessageReceived);
-			this.BitrixCall.on('HandRaised', this.#onCallHandRaised);
-			this.BitrixCall.on('VoiceStarted', this.#onEndpointVoiceStart);
-			this.BitrixCall.on('AllParticipantsAudioMuted', this.#onAllParticipantsAudioMuted);
-			this.BitrixCall.on('AllParticipantsVideoMuted', this.#onAllParticipantsVideoMuted);
-			this.BitrixCall.on('AllParticipantsScreenshareMuted', this.#onAllParticipantsScreenshareMuted);
-			this.BitrixCall.on('YouMuteAllParticipants', this.#onYouMuteAllParticipants);
-			this.BitrixCall.on('RoomSettingsChanged', this.#onRoomSettingsChanged);
-			this.BitrixCall.on('UserPermissionsChanged', this.#onUserPermissionsChanged);
-			this.BitrixCall.on('UserRoleChanged', this.#onUserRoleChanged);
-			this.BitrixCall.on('ParticipantMuted', this.#onParticipantMuted);
-			this.BitrixCall.on('VoiceEnded', this.#onEndpointVoiceEnd);
-			this.BitrixCall.on('Reconnecting', this.#onCallReconnecting);
-			this.BitrixCall.on('Reconnected', this.#onCallReconnected);
-			this.BitrixCall.on('Disconnected', this.#onCallDisconnected);
+			this.CallApi.on('PublishSucceed', this.#onLocalMediaRendererAdded);
+			this.CallApi.on('PublishPaused', this.#onLocalMediaRendererMuteToggled);
+			this.CallApi.on('MediaMutedBySystem', this.#onMediaMutedBySystem);
+			this.CallApi.on('PublishFailed', this.#onLocalMediaRendererEnded);
+			this.CallApi.on('PublishEnded', this.#onLocalMediaRendererEnded);
+			this.CallApi.on('GetUserMediaStarted', this.#onGetUserMediaStarted.bind(this));
+			this.CallApi.on('GetUserMediaEnded', this.#onGetUserMediaEnded);
+			this.CallApi.on('GetUserMediaSuccess', this.#onGetUserMediaSuccess.bind(this));
+			this.CallApi.on('GetUserMediaFailed', this.#onGetUserMediaFailed);
+			this.CallApi.on('RemoteMediaAvailable', this.#onRemoteMediaAvailable);
+			this.CallApi.on('RemoteMediaUnavailable', this.#onRemoteMediaUnavailable);
+			this.CallApi.on('RemoteMediaAdded', this.#onRemoteMediaAdded);
+			this.CallApi.on('RemoteMediaRemoved', this.#onRemoteMediaRemoved);
+			this.CallApi.on('RemoteMediaMuted', this.#onRemoteMediaMuteToggled);
+			this.CallApi.on('RemoteMediaUnmuted', this.#onRemoteMediaMuteToggled);
+			this.CallApi.on('ParticipantJoined', this.#onParticipantJoined);
+			this.CallApi.on('ParticipantStateUpdated', () => console.log('handleParticipantStateUpdated'));
+			this.CallApi.on('ParticipantLeaved', this.#onParticipantLeaved);
+			this.CallApi.on('MessageReceived', this.#onCallMessageReceived);
+			this.CallApi.on('HandRaised', this.#onCallHandRaised);
+			this.CallApi.on('VoiceStarted', this.#onEndpointVoiceStart);
+			this.CallApi.on('AllParticipantsAudioMuted', this.#onAllParticipantsAudioMuted);
+			this.CallApi.on('AllParticipantsVideoMuted', this.#onAllParticipantsVideoMuted);
+			this.CallApi.on('AllParticipantsScreenshareMuted', this.#onAllParticipantsScreenshareMuted);
+			this.CallApi.on('YouMuteAllParticipants', this.#onYouMuteAllParticipants);
+			this.CallApi.on('RoomSettingsChanged', this.#onRoomSettingsChanged);
+			this.CallApi.on('UserPermissionsChanged', this.#onUserPermissionsChanged);
+			this.CallApi.on('UserRoleChanged', this.#onUserRoleChanged);
+			this.CallApi.on('ParticipantMuted', this.#onParticipantMuted);
+			this.CallApi.on('VoiceEnded', this.#onEndpointVoiceEnd);
+			this.CallApi.on('Reconnecting', this.#onCallReconnecting);
+			this.CallApi.on('Reconnected', this.#onCallReconnected);
+			this.CallApi.on('Disconnected', this.#onCallDisconnected);
 			// if (Util.shouldCollectStats())
 			// {
-			this.BitrixCall.on('CallStatsReceived', this.#onCallStatsReceived);
+			this.CallApi.on('CallStatsReceived', this.#onCallStatsReceived);
 			// }
-			this.BitrixCall.on('UpdatePacketLoss', this.#onUpdatePacketLoss);
-			this.BitrixCall.on('ConnectionQualityChanged', this.#onConnectionQualityChanged);
-			this.BitrixCall.on('ToggleRemoteParticipantVideo', this.#onToggleRemoteParticipantVideo);
-			this.BitrixCall.on('TrackSubscriptionFailed', this.#onTrackSubscriptionFailed);
+			this.CallApi.on('UpdatePacketLoss', this.#onUpdatePacketLoss);
+			this.CallApi.on('ConnectionQualityChanged', this.#onConnectionQualityChanged);
+			this.CallApi.on('ToggleRemoteParticipantVideo', this.#onToggleRemoteParticipantVideo);
+			this.CallApi.on('TrackSubscriptionFailed', this.#onTrackSubscriptionFailed);
 		}
 		removeCallEvents() {
-			if (this.BitrixCall) {
-				this.BitrixCall.on('Failed', BX.DoNothing);
-				this.BitrixCall.on('PublishSucceed', BX.DoNothing);
-				this.BitrixCall.on('PublishFailed', BX.DoNothing);
-				this.BitrixCall.on('PublishEnded', BX.DoNothing);
-				this.BitrixCall.on('GetUserMediaEnded', BX.DoNothing);
-				this.BitrixCall.on('RemoteMediaAvailable', BX.DoNothing);
-				this.BitrixCall.on('RemoteMediaUnavailable', BX.DoNothing);
-				this.BitrixCall.on('RemoteMediaAdded', BX.DoNothing);
-				this.BitrixCall.on('RemoteMediaRemoved', BX.DoNothing);
-				this.BitrixCall.on('ParticipantJoined', BX.DoNothing);
-				this.BitrixCall.on('ParticipantStateUpdated', BX.DoNothing);
-				this.BitrixCall.on('ParticipantLeaved', BX.DoNothing);
-				this.BitrixCall.on('MessageReceived', BX.DoNothing);
-				this.BitrixCall.on('HandRaised', BX.DoNothing);
-				this.BitrixCall.on('AllParticipantsAudioMuted', BX.DoNothing);
-				this.BitrixCall.on('AllParticipantsVideoMuted', BX.DoNothing);
-				this.BitrixCall.on('AllParticipantsScreenshareMuted', BX.DoNothing);
-				this.BitrixCall.on('YouMuteAllParticipants', BX.DoNothing);
-				this.BitrixCall.on('RoomSettingsChanged', BX.DoNothing);
-				this.BitrixCall.on('UserPermissionsChanged', BX.DoNothing);
-				this.BitrixCall.on('ParticipantMuted', BX.DoNothing);
-				this.BitrixCall.on('VoiceStarted', BX.DoNothing);
-				this.BitrixCall.on('VoiceEnded', BX.DoNothing);
-				this.BitrixCall.on('Reconnecting', BX.DoNothing);
-				this.BitrixCall.on('Reconnected', BX.DoNothing);
-				this.BitrixCall.on('Disconnected', BX.DoNothing);
+			if (this.CallApi) {
+				this.CallApi.on('Failed', BX.DoNothing);
+				this.CallApi.on('PublishSucceed', BX.DoNothing);
+				this.CallApi.on('PublishFailed', BX.DoNothing);
+				this.CallApi.on('PublishEnded', BX.DoNothing);
+				this.CallApi.on('GetUserMediaEnded', BX.DoNothing);
+				this.CallApi.on('RemoteMediaAvailable', BX.DoNothing);
+				this.CallApi.on('RemoteMediaUnavailable', BX.DoNothing);
+				this.CallApi.on('RemoteMediaAdded', BX.DoNothing);
+				this.CallApi.on('RemoteMediaRemoved', BX.DoNothing);
+				this.CallApi.on('ParticipantJoined', BX.DoNothing);
+				this.CallApi.on('ParticipantStateUpdated', BX.DoNothing);
+				this.CallApi.on('ParticipantLeaved', BX.DoNothing);
+				this.CallApi.on('MessageReceived', BX.DoNothing);
+				this.CallApi.on('HandRaised', BX.DoNothing);
+				this.CallApi.on('AllParticipantsAudioMuted', BX.DoNothing);
+				this.CallApi.on('AllParticipantsVideoMuted', BX.DoNothing);
+				this.CallApi.on('AllParticipantsScreenshareMuted', BX.DoNothing);
+				this.CallApi.on('YouMuteAllParticipants', BX.DoNothing);
+				this.CallApi.on('RoomSettingsChanged', BX.DoNothing);
+				this.CallApi.on('UserPermissionsChanged', BX.DoNothing);
+				this.CallApi.on('ParticipantMuted', BX.DoNothing);
+				this.CallApi.on('VoiceStarted', BX.DoNothing);
+				this.CallApi.on('VoiceEnded', BX.DoNothing);
+				this.CallApi.on('Reconnecting', BX.DoNothing);
+				this.CallApi.on('Reconnected', BX.DoNothing);
+				this.CallApi.on('Disconnected', BX.DoNothing);
 				// if (Util.shouldCollectStats())
 				// {
-				this.BitrixCall.on('CallStatsReceived', BX.DoNothing);
+				this.CallApi.on('CallStatsReceived', BX.DoNothing);
 				// }
-				this.BitrixCall.on('UpdatePacketLoss', BX.DoNothing);
-				this.BitrixCall.on('ConnectionQualityChanged', BX.DoNothing);
-				this.BitrixCall.on('ToggleRemoteParticipantVideo', BX.DoNothing);
-				this.BitrixCall.on('TrackSubscriptionFailed', BX.DoNothing);
+				this.CallApi.on('UpdatePacketLoss', BX.DoNothing);
+				this.CallApi.on('ConnectionQualityChanged', BX.DoNothing);
+				this.CallApi.on('ToggleRemoteParticipantVideo', BX.DoNothing);
+				this.CallApi.on('TrackSubscriptionFailed', BX.DoNothing);
 			}
 		}
 		subscribeHardwareChanges() {
@@ -13337,8 +14851,8 @@ this.BX = this.BX || {};
 			}
 		}
 		toggleRemoteParticipantVideo(participants, showVideo, isPaginateToggle = false) {
-			if (this.BitrixCall) {
-				this.BitrixCall.toggleRemoteParticipantVideo(participants, showVideo, isPaginateToggle);
+			if (this.CallApi) {
+				this.CallApi.toggleRemoteParticipantVideo(participants, showVideo, isPaginateToggle);
 			}
 		}
 		isAnyoneParticipating() {
@@ -13582,7 +15096,7 @@ this.BX = this.BX || {};
 				this.log(`Wrong kind for mediaRenderer: ${e}`);
 				return;
 			}
-			if (!this.BitrixCall) {
+			if (!this.CallApi) {
 				return;
 			}
 			switch (e) {
@@ -13612,13 +15126,11 @@ this.BX = this.BX || {};
 				this.getUserMediaFulfilled.video = false;
 				this.signaling.sendCameraState(true);
 			}
-			if (options.audio && !Hardware.isMicrophoneMuted) {
-				this.getUserMediaFulfilled.audio = false;
-				this.signaling.sendMicrophoneState(true);
-			}
 			if (options.audio) {
 				this.getUserMediaFulfilled.audio = false;
-				this.signaling.sendMicrophoneState(true);
+				if (!Hardware.isMicrophoneMuted) {
+					this.signaling.sendMicrophoneState(true);
+				}
 			}
 		};
 		#onGetUserMediaEnded = options => {
@@ -13645,7 +15157,7 @@ this.BX = this.BX || {};
 				this.log(`Wrong kind for mediaRenderer: ${e}`);
 				return;
 			}
-			if (!this.BitrixCall) {
+			if (!this.CallApi) {
 				return;
 			}
 			this.log("__onBeforeLocalMediaRendererRemoved", kind);
@@ -13666,7 +15178,7 @@ this.BX = this.BX || {};
 					this.signaling.sendMicrophoneState(false);
 					break;
 				case MediaStreamsKinds.Screen:
-					this.BitrixCall.stopScreenShare();
+					this.CallApi.stopScreenShare();
 					this.log("Screen is no longer shared");
 					this.runCallback(CallEvent.onUserScreenState, {
 						userId: this.userId,
@@ -13880,7 +15392,10 @@ this.BX = this.BX || {};
 				}
 			}
 		};
-		#onCallReconnecting = () => {
+		#onCallReconnecting = params => {
+			this.isReconnecting = true;
+			const data = main_core.Type.isObject(params) ? params : {};
+			this.reconnectHistory.startEntry(data.reconnectionReason ?? null, call_lib_reconnectHistory.ReconnectTarget.Sdk);
 			if (this.reconnectionEventCount++) {
 				return;
 			}
@@ -13900,27 +15415,29 @@ this.BX = this.BX || {};
 			}
 		};
 		#onCallReconnected = () => {
+			this.isReconnecting = false;
 			this.reconnectionEventCount = 0;
+			this.reconnectHistory.updateLastEntry(call_lib_reconnectHistory.ReconnectTarget.Sdk, true);
 			this.log("Call reconnected");
 			this.sendTelemetryEvent("reconnect");
 			this.localUserState = UserState.Connected;
 			this.signaling.sendMicrophoneState(!Hardware.isMicrophoneMuted);
-			if (!this.BitrixCall.isAudioPublished()) {
+			if (!this.CallApi.isAudioPublished()) {
 				this.#setPublishingState(MediaStreamsKinds.Microphone, true);
 			}
-			this.BitrixCall.enableAudio({
+			this.CallApi.enableAudio({
 				calledFrom: 'onCallReconnected',
 				disabled: Hardware.isMicrophoneMuted
 			});
 			this.signaling.sendCameraState(Hardware.isCameraOn);
 			if (Hardware.isCameraOn) {
-				if (!this.BitrixCall.isVideoPublished()) {
+				if (!this.CallApi.isVideoPublished()) {
 					this.#setPublishingState(MediaStreamsKinds.Camera, true);
 				}
-				this.BitrixCall.enableVideo();
+				this.CallApi.enableVideo();
 			}
 			if (this.screenShared || this.waitingLocalScreenShare) {
-				this.BitrixCall.startScreenShare();
+				this.CallApi.startScreenShare();
 			}
 			if (this.videoAllowedFrom == UserMnemonic.none) {
 				this.signaling.sendHideAll();
@@ -13933,7 +15450,7 @@ this.BX = this.BX || {};
 					userId: this.userId
 				}, true);
 			}
-			this.BitrixCall.raiseHand(this.floorRequestActive);
+			this.CallApi.raiseHand(this.floorRequestActive);
 		};
 		#onCallDisconnected = e => {
 			let logData = {};
@@ -13972,7 +15489,7 @@ this.BX = this.BX || {};
 			});
 		};
 		#onWindowUnload = () => {
-			if (this.ready && this.BitrixCall) {
+			if (this.ready && this.CallApi) {
 				this.signaling.sendHangup({
 					userId: this.users
 				});
@@ -13987,11 +15504,11 @@ this.BX = this.BX || {};
 			this.localUserState = UserState.Failed;
 			this.reinitPeers();
 			this.localVideoShown = false;
-			if (this.BitrixCall) {
+			if (this.CallApi) {
 				this.removeCallEvents();
 				this.unsubscribeHardwareChanges();
 				try {
-					this.BitrixCall.hangup({
+					this.CallApi.hangup({
 						'X-Reason': 'Fatal error',
 						'X-Error': typeof error === 'string' ? error : error.code || error.name
 					});
@@ -13999,7 +15516,7 @@ this.BX = this.BX || {};
 					this.log("Bitrix hangup error: ", e);
 					console.error("Bitrix hangup error: ", e);
 				}
-				this.BitrixCall = null;
+				this.CallApi = null;
 			}
 			if (typeof error === "string") {
 				this.runCallback(CallEvent.onCallFailure, {
@@ -14058,7 +15575,7 @@ this.BX = this.BX || {};
 			// todo: need to correct stats format
 			// if (this.logger)
 			// {
-			// 	this.logger.sendStat(transformVoxStats(e.stats, this.BitrixCall));
+			// 	this.logger.sendStat(transformVoxStats(e.stats, this.CallApi));
 			// }
 		};
 		#onUpdatePacketLoss = participants => {
@@ -14218,6 +15735,12 @@ this.BX = this.BX || {};
 				event: eventName
 			});
 		}
+		testReconnect() {
+			if (!this.CallApi) {
+				return;
+			}
+			this.CallApi.testReconnect();
+		}
 		destroy() {
 			this.ready = false;
 			this.joinedAsViewer = false;
@@ -14234,11 +15757,11 @@ this.BX = this.BX || {};
 				}
 			}
 			clearInterval(this.microphoneLevelInterval);
-			if (this.BitrixCall) {
+			if (this.CallApi) {
 				this.removeCallEvents();
 				this.unsubscribeHardwareChanges();
-				this.BitrixCall.hangup();
-				this.BitrixCall = null;
+				this.CallApi.hangup();
+				this.CallApi = null;
 			}
 			for (let userId in this.peers) {
 				if (this.peers.hasOwnProperty(userId) && this.peers[userId]) {
@@ -14365,7 +15888,7 @@ this.BX = this.BX || {};
 			getLegacy().getPullClient().sendMessage(data.userId, 'im', eventName, data, expiry);
 		}
 		#sendMessage(eventName, data) {
-			if (!this.call.BitrixCall) {
+			if (!this.call.CallApi) {
 				return;
 			}
 			if (!main_core.Type.isPlainObject(data)) {
@@ -14374,7 +15897,7 @@ this.BX = this.BX || {};
 			data.eventName = eventName;
 			data.requestId = Util.getUuidv4();
 			data.senderId = this.call.userId;
-			this.call.BitrixCall.sendMessage(JSON.stringify(data));
+			this.call.CallApi.sendMessage(JSON.stringify(data));
 		}
 		#runRestAction(signalName, data) {
 			if (!main_core.Type.isPlainObject(data)) {
@@ -14634,6 +16157,22 @@ this.BX = this.BX || {};
 		#connectionType;
 		#keepStreams;
 		#screenShared;
+
+		// Set while this engine keeps the camera button held for its own publishing. The button block is a
+		// plain flag without a hold counter, so a release must be addressed: an unconditional one would also
+		// clear blocks set for other reasons (legacy mobile peer, no access to the camera).
+		#cameraPublishingHold;
+
+		// Number of camera captures started by replaceLocalMediaStream() that have not settled yet. The captures
+		// own the hold and give it up only when the last of them is over. They are not serialized - setCameraId()
+		// on a device list change and onLocalVideoTrackUnmute() start their own - so counting them keeps the one
+		// that finishes first from unblocking the button while another capture is still running.
+		#cameraCaptureCount;
+
+		// Per tag: the shared capture the published audio track was cloned from. A capture handing the same
+		// source back leaves the publication alone, so a request that changed nothing about audio costs neither
+		// a new track nor a swap in the sender.
+		#publishedAudioSource;
 		#onUnloadHandler;
 		#onOnlineHandler;
 		constructor(params) {
@@ -14665,6 +16204,7 @@ this.BX = this.BX || {};
 			this.CallApi = null;
 			this.#connectionType = ConnectionType.PeerToPeer;
 			this.#keepStreams = false;
+			this.#publishedAudioSource = {};
 			this._reconnectionEventCount = 0;
 			this.waitForAnswerTimeout = null;
 			this.iceConnectionStateTimer = null;
@@ -14675,6 +16215,8 @@ this.BX = this.BX || {};
 			this.#recorderStateHasChange = false;
 			this._isCopilotFeaturesEnabled = call_lib_settingsManager.CallSettingsManager.plainCallFollowUpEnabled;
 			this.#screenShared = false;
+			this.#cameraPublishingHold = false;
+			this.#cameraCaptureCount = 0;
 			main_core.Event.bind(window, 'unload', this.#onUnloadHandler);
 			main_core.Event.bind(window, 'online', this.#onOnlineHandler);
 		}
@@ -14905,11 +16447,23 @@ this.BX = this.BX || {};
 				for (const peer of Object.values(this.peers)) {
 					peer._destroyPeerConnection();
 				}
+
+				// The negotiation that would have released a pending camera hold dies with these connections:
+				// an answer to an already sent offer is dropped by the connection id guard.
+				this.#releaseCameraPublishingHold();
 			}
 			if (this.CallApi) {
 				this.CallApi.switchConnectionType(this.#connectionType);
 			}
 			this.#updateOutgoingTracks();
+			if (useMediaServer && this.CallApi && !Hardware.isMicrophoneMuted && this.CallApi.isAudioPublished()) {
+				// On P2P->MediaServer switch the microphone was already published to CallApi during the P2P phase,
+				// so isAudioPublished() stays true and #updateMediaServerTracks skips it. Republish it proactively;
+				// otherwise it recovers only reactively after the peer's ~7.5s subscription timeout, delaying audio.
+				// Gate on isAudioPublished(): if audio is not yet published, #updateMediaServerTracks->enableAudio()
+				// establishes it, and a parallel republish would race that publication over the same source/cid.
+				this.CallApi.republishTrack(MediaStreamsKinds.Microphone);
+			}
 			if (!useMediaServer) {
 				this.setRecorderState(RecorderStatus.PAUSED);
 			}
@@ -15007,6 +16561,9 @@ this.BX = this.BX || {};
 					}
 					this.bindCallEvents();
 					this.CallApi.on('Connected', () => {
+						if (this.isReconnecting && !this.#isAnyOneReconnecting()) {
+							this.isReconnecting = false;
+						}
 						this.CallApi.on('Failed', this.#onCallDisconnected);
 						this.state = CallState.Connected;
 						this.runCallback(CallEvent.onJoin, {
@@ -15162,6 +16719,12 @@ this.BX = this.BX || {};
 					error: lastError
 				};
 			} catch (error) {
+				if (error?.name === STREAM_MANAGER_SUPERSEDED) {
+					// Superseded by a newer device selection - not a media failure. Don't fall back through the
+					// remaining constraints; a fallback capture would register after the newest request and
+					// unseat the selected device. Rethrow: callers already handle a getUserMedia rejection.
+					throw error;
+				}
 				this.log('getUserMedia error: ', error);
 				this.log('Current constraints', currentConstraints);
 				if (constraintsArray.length > 1) {
@@ -15197,13 +16760,12 @@ this.BX = this.BX || {};
 					})];
 					this.getUserMedia(constraintsArray).then(result => {
 						this.log('Local media stream received');
-						const stream = result.stream.clone();
+						const stream = new MediaStream(result.stream.getVideoTracks().map(track => track.clone()));
 						this.localStreams[tag] = stream;
-						stream.getAudioTracks().forEach(track => {
-							track.addEventListener('ended', () => this.onLocalAudioTrackEnded(), {
-								once: true
-							});
-						});
+
+						// Audio goes through the single publication path: the call publishes a clone of its own, so a
+						// local teardown never reaches the shared capture.
+						result.stream.getAudioTracks().forEach(track => this.#publishAudioTrack(tag, track));
 						const track = CallStreamManager.getLocalStream(MediaStreamsKinds.Camera);
 						const kind = Util.MediaKind[MediaStreamsKinds.Camera];
 						const mediaRenderer = new MediaRenderer({
@@ -15264,6 +16826,10 @@ this.BX = this.BX || {};
 							stream: mediaRenderer.stream
 						});
 						resolve(mediaRenderer.stream);
+					}).finally(() => {
+						if (!this.isAnyoneParticipating()) {
+							this.setPublishingState(MediaStreamsKinds.Camera, false);
+						}
 					});
 					return;
 				}
@@ -15317,21 +16883,19 @@ this.BX = this.BX || {};
 					if (videoResult.stream) {
 						videoResult.stream.getVideoTracks().forEach(track => stream.addTrack(track.clone()));
 					}
-					if (audioResult.stream) {
-						audioResult.stream.getAudioTracks().forEach(track => stream.addTrack(track.clone()));
-					}
 					this.localStreams[tag] = stream;
+
+					// Audio goes through the single publication path: the call publishes a clone of its own, so a
+					// local teardown never reaches the shared capture.
+					if (audioResult.stream) {
+						audioResult.stream.getAudioTracks().forEach(track => this.#publishAudioTrack(tag, track));
+					}
 					stream.getVideoTracks().forEach(track => {
 						track.addEventListener('ended', () => this.onLocalVideoTrackEnded(), {
 							once: true
 						});
 						track.addEventListener('mute', () => this.onLocalVideoTrackMute());
 						track.addEventListener('unmute', () => this.onLocalVideoTrackUnmute());
-					});
-					stream.getAudioTracks().forEach(track => {
-						track.addEventListener('ended', () => this.onLocalAudioTrackEnded(), {
-							once: true
-						});
 					});
 					const track = CallStreamManager.getLocalStream(MediaStreamsKinds.Camera);
 					const kind = Util.MediaKind[MediaStreamsKinds.Camera];
@@ -15393,19 +16957,25 @@ this.BX = this.BX || {};
 						});
 					}
 					reject(error);
+				}).finally(() => {
+					if (!this.isAnyoneParticipating()) {
+						this.setPublishingState(MediaStreamsKinds.Camera, false);
+					}
 				});
 			});
 		}
-		getLocalAudioStream(tag, fallbackToAudio) {
+		getLocalAudioStream(tag, forceCapture = false) {
 			if (!main_core.Type.isStringFilled(tag)) {
 				tag = 'main';
 			}
-			const currentAudioTrack = this.localStreams[tag]?.getAudioTracks()?.[0];
-			if (currentAudioTrack?.readyState === 'live') {
-				return Promise.resolve(this.localStreams[tag]);
-			}
-			if (this.localStreams[tag] && this.localStreams[tag].getAudioTracks().length > 0) {
-				Util.stopMediaStreamAudioTracks(this.localStreams[tag]);
+			if (!forceCapture) {
+				const currentAudioTrack = this.localStreams[tag]?.getAudioTracks()?.[0];
+				if (currentAudioTrack?.readyState === 'live') {
+					return Promise.resolve(this.localStreams[tag]);
+				}
+				if (this.localStreams[tag] && this.localStreams[tag].getAudioTracks().length > 0) {
+					Util.stopMediaStreamAudioTracks(this.localStreams[tag]);
+				}
 			}
 			this.log("Requesting access to audio devices");
 			return new Promise((resolve, reject) => {
@@ -15419,17 +16989,11 @@ this.BX = this.BX || {};
 					if (!this.localStreams[tag]) {
 						this.localStreams[tag] = new MediaStream();
 					}
-					this.localStreams[tag].addTrack(stream.getAudioTracks()[0]);
-					stream.getAudioTracks().forEach(track => {
-						track.addEventListener("ended", () => this.onLocalAudioTrackEnded());
-					});
+					const publishedTrack = this.#publishAudioTrack(tag, stream.getAudioTracks()[0]);
 					if (tag === 'main') {
 						this.attachVoiceDetection();
 						if (this.muted) {
-							const audioTracks = stream.getAudioTracks();
-							if (audioTracks[0]) {
-								audioTracks[0].enabled = false;
-							}
+							publishedTrack.enabled = false;
 						}
 					}
 					if (this.deviceList.length === 0) {
@@ -15457,6 +17021,40 @@ this.BX = this.BX || {};
 					reject(error);
 				});
 			});
+		}
+
+		/**
+		 * Puts the capture into localStreams and returns the track the call publishes from it. The published
+		 * track belongs to the call, not to the capture: it is a clone, so tearing a local stream down never
+		 * reaches the shared track StreamManager and the noise suppression graph hand out.
+		 *
+		 * A capture that brings the same shared source back changes nothing - the clone already published stays.
+		 * A device change does rebuild the audio pipeline, so its capture is a different source: a new track is
+		 * published and the peer hands it to the sender it already has.
+		 */
+		#publishAudioTrack(tag, capturedTrack) {
+			const stream = this.localStreams[tag];
+			const publishedTrack = stream.getAudioTracks()[0];
+			if (publishedTrack?.readyState === 'live' && this.#publishesCapture(tag, publishedTrack, capturedTrack)) {
+				return publishedTrack;
+			}
+
+			// Only now, with the new capture in hand, is the previous track released: a stopped track cannot be
+			// revived, so tearing it down before the capture would leave the call mute on any failure.
+			stream.getAudioTracks().forEach(track => {
+				track.stop();
+				stream.removeTrack(track);
+			});
+			const trackToPublish = capturedTrack.clone();
+			stream.addTrack(trackToPublish);
+			this.#publishedAudioSource[tag] = capturedTrack;
+			trackToPublish.addEventListener('ended', () => this.onLocalAudioTrackEnded(), {
+				once: true
+			});
+			return trackToPublish;
+		}
+		#publishesCapture(tag, publishedTrack, capturedTrack) {
+			return publishedTrack === capturedTrack || this.#publishedAudioSource[tag] === capturedTrack;
 		}
 		setRecorderState(state) {
 			if (!this.CallApi || this.#recorderState === state) {
@@ -15487,6 +17085,7 @@ this.BX = this.BX || {};
 		}
 		setPublishingState(deviceType, publishing) {
 			if (deviceType === MediaStreamsKinds.Camera) {
+				this.#cameraPublishingHold = publishing;
 				this.runCallback(CallEvent.onCameraPublishing, {
 					publishing
 				});
@@ -15494,6 +17093,11 @@ this.BX = this.BX || {};
 				this.runCallback(CallEvent.onMicrophonePublishing, {
 					publishing
 				});
+			}
+		}
+		#releaseCameraPublishingHold() {
+			if (this.#cameraPublishingHold && this.#cameraCaptureCount === 0) {
+				this.setPublishingState(MediaStreamsKinds.Camera, false);
 			}
 		}
 		setMainStream(users) {
@@ -15865,6 +17469,7 @@ this.BX = this.BX || {};
 		getState() {}
 		replaceLocalMediaStream(tag = "main") {
 			this.setPublishingState(MediaStreamsKinds.Camera, true);
+			this.#cameraCaptureCount++;
 			if (this.localStreams[tag]) {
 				Util.stopMediaStream(this.localStreams[tag]);
 				this.localStreams[tag] = null;
@@ -15885,15 +17490,23 @@ this.BX = this.BX || {};
 				}).catch(error => {
 					console.error('Could not get access to hardware; don\'t really know what to do. error:', error);
 					reject(error);
+				}).finally(() => {
+					this.#cameraCaptureCount--;
+
+					// Publishing through the media server sends no offer, so no answer ever arrives to release
+					// the hold taken for this replacement - it would stay on the camera button until the call ends.
+					if (this.useMediaServer) {
+						this.#releaseCameraPublishingHold();
+					}
 				});
 			});
 		}
 		replaceLocalAudioStream(tag = "main") {
-			if (this.localStreams[tag]) {
-				Util.stopMediaStreamAudioTracks(this.localStreams[tag]);
-			}
 			return new Promise((resolve, reject) => {
-				this.getLocalAudioStream(tag).then(() => {
+				// Nothing is torn down up front: a stopped track cannot be revived, so a failed capture would
+				// leave the call without audio for good. getLocalAudioStream drops the previous track once the
+				// new one is in hand - and only when it is a different one.
+				this.getLocalAudioStream(tag, true).then(() => {
 					if (this.ready) {
 						for (let userId in this.peers) {
 							if (this.peers[userId].isReady()) {
@@ -15941,6 +17554,9 @@ this.BX = this.BX || {};
 				}
 			}
 			return false;
+		}
+		#isAnyOneReconnecting() {
+			return Object.values(this.peers).some(peer => peer.isReconnecting);
 		}
 		getParticipatingUsers() {
 			let result = [];
@@ -16244,6 +17860,11 @@ this.BX = this.BX || {};
 				this.signaling.sendMicrophoneState([e.userId], !Hardware.isMicrophoneMuted);
 				this.signaling.sendCameraState(e.userId, Hardware.isCameraOn);
 				this.wasConnected = true;
+
+				// media server publication is not a part of the P2P handshake, so it must not depend on isInitiator()
+				if (this.useMediaServer) {
+					this.peers[e.userId]?.sendMedia();
+				}
 			}
 		}
 		#onPeerInviteTimeout(e) {
@@ -16319,6 +17940,12 @@ this.BX = this.BX || {};
 			});
 			peer.setSignalingConnected(true);
 			peer.setReady(true);
+
+			// A peer of an incoming call is born ready, so in media server mode it is already Connected
+			// and setReady() produces no state transition - #onPeerStateChanged never fires for it.
+			if (this.useMediaServer && peer.calculatedState === UserState.Connected) {
+				peer.sendMedia();
+			}
 			if (this.ready && !peer.isInitiator()) {
 				this.log('waiting for the other side to send connection offer');
 				peer.sendNegotiationNeeded(false);
@@ -16356,6 +17983,9 @@ this.BX = this.BX || {};
 				peer.participant = participant;
 				peer.updateCalculatedState();
 			}
+			this.#onEndpointVoiceEnd({
+				userId: participant.userId
+			});
 			this.runCallback(CallEvent.onParticipantReconnected, {
 				participant
 			});
@@ -16637,8 +18267,16 @@ this.BX = this.BX || {};
 			}
 		};
 		#onCallReconnecting = event => {
+			this.isReconnecting = true;
 			this._reconnectionEventCount++;
 			const data = main_core.Type.isObject(event) ? event : {};
+			if (data.userId !== undefined) {
+				// Reconnecting from Provider (Peer)
+				this.reconnectHistory.startEntry(data.reconnectionReason ?? null, call_lib_reconnectHistory.ReconnectTarget.Provider, data.userId);
+			} else {
+				// Reconnecting from SDK
+				this.reconnectHistory.startEntry(data.reconnectionReason ?? null, call_lib_reconnectHistory.ReconnectTarget.Sdk);
+			}
 			this.runCallback(CallEvent.onReconnecting, {
 				reconnectionEventCount: this._reconnectionEventCount,
 				reconnectionReason: data.reconnectionReason,
@@ -16646,7 +18284,12 @@ this.BX = this.BX || {};
 			});
 		};
 		#onCallReconnected = () => {
+			if (this.CallApi.isConnected() || !this.#isAnyOneReconnecting()) {
+				this.isReconnecting = false;
+			}
 			this._reconnectionEventCount = 0;
+			this.reconnectHistory.updateLastEntry(call_lib_reconnectHistory.ReconnectTarget.Sdk, !this.isReconnecting);
+			this.reconnectHistory.updateLastEntry(call_lib_reconnectHistory.ReconnectTarget.Provider, !this.isReconnecting);
 			this.runCallback(CallEvent.onReconnected);
 			if (this.useMediaServer) {
 				this.#updateOutgoingTracks();
@@ -16734,7 +18377,18 @@ this.BX = this.BX || {};
 				return;
 			}
 			this.#connectionType = connectionType;
+
+			// A camera hold taken before the switch can no longer be released by the P2P negotiation it was
+			// waiting for, so drop it here as well.
+			this.#releaseCameraPublishingHold();
 			this.#updateOutgoingTracks();
+			if (connectionType === ConnectionType.MediaServer && this.CallApi && !Hardware.isMicrophoneMuted && this.CallApi.isAudioPublished()) {
+				// The receiving side transitions to MediaServer here (not via setUseMediaServer), so its microphone
+				// is not proactively republished either; do it so the peer hears it without the ~7.5s reactive delay.
+				// Gate on isAudioPublished(): #updateOutgoingTracks() above runs enableAudio() when audio is not yet
+				// published, so republishing here too would race that fresh publication over the same source/cid.
+				this.CallApi.republishTrack(MediaStreamsKinds.Microphone);
+			}
 			if (this.#recorderState === RecorderStatus.ENABLED && !this.useMediaServer) {
 				this.setRecorderState(RecorderStatus.PAUSED);
 			}
@@ -16791,6 +18445,12 @@ this.BX = this.BX || {};
 			clearTimeout(this.iceConnectionStateTimer);
 			clearInterval(this.statsInterval);
 			clearInterval(this.microphoneLevelInterval);
+		}
+		testReconnect() {
+			const peer = Object.values(this.peers)[0];
+			peer?.reconnect({
+				reconnectionReason: 'TEST_RECONNECTION'
+			});
 		}
 		destroy(finishCall) {
 			// Idempotent: hangup() also triggers destroy locally so that engine.calls
@@ -16917,6 +18577,7 @@ this.BX = this.BX || {};
 			this.pendingLocalOfferConfig = null;
 			this.signalingConnected = params.signalingConnected === true;
 			this.failureReason = '';
+			this.isReconnecting = false;
 			this.userAgent = '';
 			this.isFirefox = false;
 			this.isChrome = false;
@@ -17154,7 +18815,11 @@ this.BX = this.BX || {};
 			}
 		}
 		#updateMediaServerTracks() {
-			if (Hardware.isCameraOn && !this.call.CallApi.isVideoPublished()) {
+			// Without a media server the room publication is idle: the peer connection carries the media, while
+			// publishing here starts a second capture of the same devices and a publish/unpublish loop on every
+			// update. Only the disable branches stay unconditional - they take the publication down when the call
+			// falls back from the media server to a direct connection.
+			if (Hardware.isCameraOn && this.call.useMediaServer && !this.call.CallApi.isVideoPublished()) {
 				void this.call.CallApi.enableVideo({
 					calledFrom: 'updateOutgoingTracks'
 				});
@@ -17163,7 +18828,7 @@ this.BX = this.BX || {};
 					calledFrom: 'updateOutgoingTracks'
 				});
 			}
-			if (!Hardware.isMicrophoneMuted && !this.call.CallApi.isAudioPublished()) {
+			if (!Hardware.isMicrophoneMuted && this.call.useMediaServer && !this.call.CallApi.isAudioPublished()) {
 				void this.call.CallApi.enableAudio({
 					calledFrom: 'updateOutgoingTracks'
 				});
@@ -17602,6 +19267,7 @@ this.BX = this.BX || {};
 		#onPeerConnectionConnectionStateChange() {
 			this.log("User " + this.userId + ": peer connection state changed. New state: " + this.peerConnection.connectionState);
 			if (this.peerConnection.connectionState === "connected" || this.peerConnection.connectionState === "completed") {
+				this.isReconnecting = false;
 				this.connectionAttempt = 0;
 				this.callbacks.onReconnected();
 				clearTimeout(this.reconnectAfterDisconnectTimeout);
@@ -18049,6 +19715,7 @@ this.BX = this.BX || {};
 				return;
 			}
 			clearTimeout(this.reconnectAfterDisconnectTimeout);
+			this.isReconnecting = true;
 			this.connectionAttempt++;
 			const maxConnectionAttempt = 3;
 			const connectionAttempt = this.call.CallApi?.isConnected() ? 0 : this.connectionAttempt;
@@ -18060,7 +19727,10 @@ this.BX = this.BX || {};
 				this.updateCalculatedState();
 				return;
 			}
-			this.callbacks.onReconnecting(event);
+			this.callbacks.onReconnecting({
+				...event,
+				userId: this.userId
+			});
 			this.log(`Trying to restore ICE connection. Attempt ${this.connectionAttempt}`);
 			if (this.isInitiator()) {
 				this._destroyPeerConnection();
@@ -18115,6 +19785,7 @@ this.BX = this.BX || {};
 	}
 
 	/* eslint-disable max-classes-per-file */
+	const loadAccidentLogger = () => BX.Runtime.loadExtension('call.lib.accident-logger');
 	const SpeakerManagerEvent = {
 		onSpeakerConfirmed: 'onSpeakerConfirmed',
 		onSpeakerFallback: 'onSpeakerFallback'
@@ -18132,7 +19803,9 @@ this.BX = this.BX || {};
 			const tag = this.constructor.name.replace('SpeakerStrategy', '').replace('Default', '');
 			const tagPrefix = tag ? ` ${tag}` : '';
 			error.message = `[SpeakerManager]${tagPrefix} ${prefix}: ${error.message}`;
-			call_lib_accidentLogger.accidentLogger.addLog(error, 'speakerManager');
+			loadAccidentLogger().then(({
+				accidentLogger
+			}) => accidentLogger?.addLog(error, 'speakerManager')).catch(() => {});
 		}
 	}
 	class DefaultSpeakerStrategy extends SpeakerStrategy {
@@ -18401,7 +20074,7 @@ this.BX = this.BX || {};
 			this.invitePeriod = config.invitePeriod > 0 ? config.invitePeriod : Util.getCallInvitePeriod();
 			this.videoQuality = Quality$1.VeryHigh; // initial video quality. will drop on new peers connecting
 
-			this.BitrixCall = null;
+			this.CallApi = null;
 			this.signaling = new Signaling$2({
 				call: this
 			});
@@ -18525,7 +20198,7 @@ this.BX = this.BX || {};
 			return this._reconnectionEventCount;
 		}
 		set reconnectionEventCount(newValue) {
-			if (newValue === 0) {
+			if (newValue === 0 && this._reconnectionEventCount > 0) {
 				this.runCallback(CallEvent.onReconnected);
 			}
 			this._reconnectionEventCount = newValue;
@@ -18591,14 +20264,14 @@ this.BX = this.BX || {};
 			return Object.keys(this.peers).length;
 		}
 		canChangeMediaDevices() {
-			return !this.BitrixCall?.isMediaMutedBySystem;
+			return !this.CallApi?.isMediaMutedBySystem;
 		}
 		setMuted = event => {
 			if (this.muted === event.data.isMicrophoneMuted) {
 				return;
 			}
 			this.muted = event.data.isMicrophoneMuted;
-			if (this.BitrixCall) {
+			if (this.CallApi) {
 				// Safari: skip audio operations when call is inactive
 				// This prevents permission re-prompt after hangup
 				if (main_core.Browser.isSafari() && !this.ready) {
@@ -18608,14 +20281,14 @@ this.BX = this.BX || {};
 					this.signaling.sendMicrophoneState(!this.muted);
 				}
 				if (this.muted) {
-					this.BitrixCall.disableAudio({
+					this.CallApi.disableAudio({
 						calledFrom: 'setMuted'
 					});
 				} else {
-					if (!this.BitrixCall.isAudioPublished()) {
+					if (!this.CallApi.isAudioPublished()) {
 						this.#setPublishingState(MediaStreamsKinds.Microphone, true);
 					}
-					this.BitrixCall.enableAudio({
+					this.CallApi.enableAudio({
 						calledFrom: 'setMuted'
 					});
 				}
@@ -18626,7 +20299,7 @@ this.BX = this.BX || {};
 				return;
 			}
 			this.videoEnabled = event.data.isCameraOn;
-			if (this.BitrixCall) {
+			if (this.CallApi) {
 				// Safari: skip audio operations when call is inactive
 				// This prevents permission re-prompt after hangup
 				if (main_core.Browser.isSafari() && !this.ready) {
@@ -18636,17 +20309,17 @@ this.BX = this.BX || {};
 					this.signaling.sendCameraState(this.videoEnabled);
 				}
 				if (this.videoEnabled) {
-					if (!this.BitrixCall.isVideoPublished()) {
+					if (!this.CallApi.isVideoPublished()) {
 						this.#setPublishingState(MediaStreamsKinds.Camera, true);
 					}
 					this.localVideoShown = true;
-					this.BitrixCall.enableVideo({
+					this.CallApi.enableVideo({
 						calledFrom: 'setVideoEnabled'
 					});
 				} else {
 					if (this.localVideoShown) {
 						this.localVideoShown = false;
-						this.BitrixCall.disableVideo({
+						this.CallApi.disableVideo({
 							calledFrom: 'setVideoEnabled'
 						});
 					}
@@ -18659,7 +20332,7 @@ this.BX = this.BX || {};
 			}
 			const canSwitchDevice = Boolean(this.cameraId);
 			this.cameraId = cameraId;
-			if (this.BitrixCall) {
+			if (this.CallApi) {
 				if (!cameraId) {
 					this.#onBeforeLocalMediaRendererRemoved(MediaStreamsKinds.Camera);
 					return;
@@ -18667,13 +20340,13 @@ this.BX = this.BX || {};
 				if (!canSwitchDevice) {
 					return;
 				}
-				if (this.BitrixCall.isVideoPublished()) {
+				if (this.CallApi.isVideoPublished()) {
 					this.#setPublishingState(MediaStreamsKinds.Camera, true);
 				}
-				this.BitrixCall.switchActiveVideoDevice(this.cameraId).then(() => {
+				this.CallApi.switchActiveVideoDevice(this.cameraId).then(() => {
 					if (Hardware.isCameraOn) {
 						this.runCallback('onUpdateLastUsedCameraId');
-						if (this.BitrixCall.isVideoPublished() && this.canChangeMediaDevices()) {
+						if (this.CallApi.isVideoPublished() && this.canChangeMediaDevices()) {
 							const track = CallStreamManager.getLocalStream(MediaStreamsKinds.Camera);
 							const kind = Util.MediaKind[MediaStreamsKinds.Camera];
 							const mediaRenderer = new MediaRenderer({
@@ -18685,7 +20358,7 @@ this.BX = this.BX || {};
 								tag: 'main',
 								stream: mediaRenderer.stream
 							});
-							if (this.BitrixCall.isVideoPublished()) {
+							if (this.CallApi.isVideoPublished()) {
 								this.#setPublishingState(MediaStreamsKinds.Camera, false);
 							}
 						} else if (!this.canChangeMediaDevices()) {
@@ -18693,7 +20366,7 @@ this.BX = this.BX || {};
 						} else {
 							this.#setPublishingState(MediaStreamsKinds.Camera, true);
 							this.localVideoShown = true;
-							this.BitrixCall.enableVideo({
+							this.CallApi.enableVideo({
 								calledFrom: 'switchActiveVideoDevice',
 								skipUnpause: true
 							});
@@ -18712,22 +20385,36 @@ this.BX = this.BX || {};
 			if (this.microphoneId === microphoneId) {
 				return;
 			}
-			const canSwitchDevice = Boolean(this.microphoneId);
+			const hadMicrophoneId = Boolean(this.microphoneId);
 			this.microphoneId = microphoneId;
-			if (this.BitrixCall) {
+			if (this.CallApi) {
 				if (!microphoneId) {
 					this.#onBeforeLocalMediaRendererRemoved(MediaStreamsKinds.Microphone);
 					return;
 				}
-				if (!canSwitchDevice) {
+
+				// Until the call is connected the initial capture is done by CallApi.connect({ audioDeviceId }),
+				// so switching here would grab the microphone too early. Once the call is connected that capture
+				// has already happened, and every pick - including the very first one, when the call started
+				// without a microphone id - has to be applied to the live audio track.
+				if (!hadMicrophoneId && this.localUserState !== UserState.Connected) {
 					return;
 				}
 				this.#setPublishingState(MediaStreamsKinds.Microphone, true);
 				this.#onEndpointVoiceEnd({
 					userId: this.userId
 				});
-				this.BitrixCall.switchActiveAudioDevice(this.microphoneId).then(() => {
+				this.CallApi.switchActiveAudioDevice(this.microphoneId).then(() => {
 					const track = CallStreamManager.getLocalStream(MediaStreamsKinds.Microphone);
+					if (!track) {
+						// The switch only recorded the device and captured nothing (nothing is published yet),
+						// so there is no track to listen to. The microphone stays exactly as it was, and the
+						// first publication applies the device and reports its own track through
+						// onLocalMediaRendererAdded. Building a MediaStream out of null here would throw and
+						// the catch below would show the microphone as turned off.
+						this.log('setMicrophoneId: no local audio track, the device applies on the first publication');
+						return;
+					}
 					this.#onMicAccessResult({
 						result: true,
 						stream: new MediaStream([track])
@@ -18742,7 +20429,7 @@ this.BX = this.BX || {};
 				}).finally(() => {
 					this.#setPublishingState(MediaStreamsKinds.Microphone, false);
 					if (Hardware.isMicrophoneMuted && !this.canChangeMediaDevices()) {
-						this.BitrixCall.disableAudio({
+						this.CallApi.disableAudio({
 							calledFrom: 'setMicrophoneId'
 						});
 					}
@@ -18750,20 +20437,20 @@ this.BX = this.BX || {};
 			}
 		}
 		setRecorderState(state) {
-			if (!this.BitrixCall || this.#recorderState === state) {
+			if (!this.CallApi || this.#recorderState === state) {
 				return;
 			}
-			this.BitrixCall.setRecorderState(state);
+			this.CallApi.setRecorderState(state);
 		}
 
 		/**
 		 * @group CommonRecord
 		 */
 		setCloudRecordState(state, kind = null) {
-			if (!this.BitrixCall || this.#cloudRecordState === state) {
+			if (!this.CallApi || this.#cloudRecordState === state) {
 				return;
 			}
-			this.BitrixCall.setCloudRecordState(state, kind);
+			this.CallApi.setCloudRecordState(state, kind);
 		}
 		#setPublishingState(deviceType, publishing) {
 			if (deviceType === MediaStreamsKinds.Camera) {
@@ -18777,44 +20464,44 @@ this.BX = this.BX || {};
 			}
 		}
 		setMainStream(users) {
-			if (!this.BitrixCall) {
+			if (!this.CallApi) {
 				return;
 			}
 			if (users.userId && users.userId !== this.userId) {
 				const participant = this.peers[users.userId]?.participant;
 				const kind = participant?.screenSharingEnabled ? MediaStreamsKinds.Screen : MediaStreamsKinds.Camera;
-				this.BitrixCall.setMainStream(users, kind);
+				this.CallApi.setMainStream(users, kind);
 			} else {
-				this.BitrixCall.resetMainStream(users);
+				this.CallApi.resetMainStream(users);
 			}
 		}
 		setVideoQualityForStreams(params) {
-			if (!this.BitrixCall) {
+			if (!this.CallApi) {
 				return;
 			}
-			this.BitrixCall.setVideoQualityForStreams(params);
+			this.CallApi.setVideoQualityForStreams(params);
 		}
 		requestFloor(requestActive) {
 			if (this.floorRequestActive === requestActive) {
 				return;
 			}
 			this.floorRequestActive = requestActive;
-			this.BitrixCall.raiseHand(requestActive);
+			this.CallApi.raiseHand(requestActive);
 		}
 		updateUserData(userData) {
-			this.BitrixCall.updateUserData(userData);
+			this.CallApi.updateUserData(userData);
 		}
 		turnOffAllParticipansStream(options) {
-			this.BitrixCall.turnOffAllParticipansStream(options);
+			this.CallApi.turnOffAllParticipansStream(options);
 		}
 		turnOffParticipantStream(options) {
-			this.BitrixCall.turnOffParticipantStream(options);
+			this.CallApi.turnOffParticipantStream(options);
 		}
 		allowSpeakPermission(options) {
-			this.BitrixCall.allowSpeakPermission(options);
+			this.CallApi.allowSpeakPermission(options);
 		}
 		changeSettings(options) {
-			this.BitrixCall.changeSettings(options);
+			this.CallApi.changeSettings(options);
 		}
 		/**
 		 * @group CommonRecord
@@ -18882,7 +20569,7 @@ this.BX = this.BX || {};
 			this.#applyScreenSharing(stream);
 		}
 		#applyScreenSharing(stream = null) {
-			if (!this.BitrixCall) {
+			if (!this.CallApi) {
 				return;
 			}
 			this.waitingLocalScreenShare = true;
@@ -18891,9 +20578,9 @@ this.BX = this.BX || {};
 				screenState: true
 			});
 			if (stream) {
-				this.BitrixCall.startScreenShareWithStream(stream);
+				this.CallApi.startScreenShareWithStream(stream);
 			} else {
-				this.BitrixCall.startScreenShare();
+				this.CallApi.startScreenShare();
 			}
 		}
 		stopScreenSharing() {
@@ -19047,13 +20734,13 @@ this.BX = this.BX || {};
 				// for future reconnections
 				this.reinitPeers();
 			}
-			if (this.BitrixCall) {
-				this.BitrixCall._replaceVideoSharing = false;
-				this.BitrixCall.hangup(!!finishCall);
-				this.BitrixCall = null;
+			if (this.CallApi) {
+				this.CallApi._replaceVideoSharing = false;
+				this.CallApi.hangup(!!finishCall);
+				this.CallApi = null;
 			} else {
-				this.log("Tried to hangup, but this.BitrixCall points nowhere");
-				console.error("Tried to hangup, but this.BitrixCall points nowhere");
+				this.log("Tried to hangup, but this.CallApi points nowhere");
+				console.error("Tried to hangup, but this.CallApi points nowhere");
 			}
 
 			// Explicitly finish the call on the backend only when "finish for all"
@@ -19074,7 +20761,7 @@ this.BX = this.BX || {};
 		}
 		attachToConference(options = {}) {
 			const joinAsViewer = options.joinAsViewer === true;
-			if (this.BitrixCall && this.BitrixCall.getState() === CALL_STATE.CONNECTED) {
+			if (this.CallApi && this.CallApi.getState() === CALL_STATE.CONNECTED) {
 				if (this.joinedAsViewer === joinAsViewer) {
 					return Promise.resolve();
 				} else {
@@ -19087,9 +20774,9 @@ this.BX = this.BX || {};
 				try {
 					this.localUserState = UserState.Connecting;
 					if (Util.canUseNewCallApi(this.connectionData.roomType)) {
-						this.BitrixCall = new Call(this.userId);
+						this.CallApi = new Call(this.userId);
 					} else {
-						this.BitrixCall = new CallLegacy(this.userId);
+						this.CallApi = new CallLegacy(this.userId);
 					}
 
 					/*if (Hardware.isCameraOn) // transfered to #onCallConnected
@@ -19098,8 +20785,8 @@ this.BX = this.BX || {};
 					}*/
 
 					this.joinedAsViewer = joinAsViewer;
-					if (!this.BitrixCall) {
-						this.log("Error: could not create Bitrix call");
+					if (!this.CallApi) {
+						this.log("Error: could not create Call API instance");
 						return reject({
 							code: "BITRIX_NO_CALL"
 						});
@@ -19109,11 +20796,11 @@ this.BX = this.BX || {};
 					});
 					this.bindCallEvents();
 					this.subscribeHardwareChanges();
-					this.BitrixCall.on('Connected', () => {
+					this.CallApi.on('Connected', () => {
 						this.#onCallConnected();
 						resolve();
 					});
-					this.BitrixCall.on('Failed', e => {
+					this.CallApi.on('Failed', e => {
 						this.#onCallFailed(e);
 						reject(e);
 					});
@@ -19123,7 +20810,7 @@ this.BX = this.BX || {};
 							code: "BITRIX_NO_CALL"
 						});
 					}
-					this.BitrixCall.connect({
+					this.CallApi.connect({
 						roomId: this.uuid,
 						roomType: this.roomType,
 						userId: this.userId,
@@ -19145,7 +20832,7 @@ this.BX = this.BX || {};
 			this.sendTelemetryEvent("connect");
 			this.localUserState = UserState.Connected;
 			const MAX_USERS_WITH_VIDEO = Util.countDisableCameraNewJoinedUsersFeature();
-			if (Util.isDisableCameraNewJoinedUsersFeatureEnabled() && this.BitrixCall.remoteParticipantsCount >= MAX_USERS_WITH_VIDEO)
+			if (Util.isDisableCameraNewJoinedUsersFeatureEnabled() && this.CallApi.remoteParticipantsCount >= MAX_USERS_WITH_VIDEO)
 				// task-596223
 				{
 					Hardware.isCameraOn = false;
@@ -19156,23 +20843,23 @@ this.BX = this.BX || {};
 			if (!Util.havePermissionToBroadcast('mic')) {
 				Hardware.isMicrophoneMuted = true;
 			}
-			this.BitrixCall.on('Failed', this.#onCallDisconnected);
+			this.CallApi.on('Failed', this.#onCallDisconnected);
 
 			//this.signaling.sendCameraState(Hardware.isCameraOn);
 
-			if (!this.BitrixCall.isAudioPublished()) {
+			if (!this.CallApi.isAudioPublished()) {
 				this.#setPublishingState(MediaStreamsKinds.Microphone, true);
 			}
-			this.BitrixCall.enableAudio({
+			this.CallApi.enableAudio({
 				calledFrom: 'onCallConnected',
 				disabled: Hardware.isMicrophoneMuted
 			});
 			if (Hardware.isCameraOn) {
 				this.localVideoShown = true;
-				if (!this.BitrixCall.isVideoPublished()) {
+				if (!this.CallApi.isVideoPublished()) {
 					this.#setPublishingState(MediaStreamsKinds.Camera, true);
 				}
-				this.BitrixCall.enableVideo({
+				this.CallApi.enableVideo({
 					calledFrom: 'onCallConnected'
 				});
 			}
@@ -19186,95 +20873,95 @@ this.BX = this.BX || {};
 			this.log("Could not attach to conference", e);
 			this.sendTelemetryEvent("connect_failure");
 			this.localUserState = UserState.Failed;
-			this.BitrixCall.enableSilentLogging(false);
-			this.BitrixCall.setLoggerCallback(null);
+			this.CallApi.enableSilentLogging(false);
+			this.CallApi.setLoggerCallback(null);
 		}
 		bindCallEvents() {
-			this.BitrixCall.on('PublishSucceed', this.#onLocalMediaRendererAdded);
-			this.BitrixCall.on('PublishPaused', this.#onLocalMediaRendererMuteToggled);
-			this.BitrixCall.on('MediaMutedBySystem', this.#onMediaMutedBySystem);
-			this.BitrixCall.on('PublishFailed', this.#onLocalMediaRendererEnded);
-			this.BitrixCall.on('PublishEnded', this.#onLocalMediaRendererEnded);
-			this.BitrixCall.on('GetUserMediaStarted', this.#onGetUserMediaStarted.bind(this));
-			this.BitrixCall.on('GetUserMediaEnded', this.#onGetUserMediaEnded);
-			this.BitrixCall.on('GetUserMediaFailed', this.#onGetUserMediaFailed);
-			this.BitrixCall.on('GetUserMediaSuccess', this.#onGetUserMediaSuccess.bind(this));
-			this.BitrixCall.on('RemoteMediaAvailable', this.#onRemoteMediaAvailable);
-			this.BitrixCall.on('RemoteMediaUnavailable', this.#onRemoteMediaUnavailable);
-			this.BitrixCall.on('RemoteMediaAdded', this.#onRemoteMediaAdded);
-			this.BitrixCall.on('RemoteMediaRemoved', this.#onRemoteMediaRemoved);
-			this.BitrixCall.on('RemoteMediaMuted', this.#onRemoteMediaMuteToggled);
-			this.BitrixCall.on('RemoteMediaUnmuted', this.#onRemoteMediaMuteToggled);
-			this.BitrixCall.on('AwaitedRemoteMediaMuted', this.#onAwaitedRemoteMediaMuted);
-			this.BitrixCall.on('ParticipantJoined', this.#onParticipantJoined);
-			this.BitrixCall.on('ParticipantReconnecting', this.#onParticipantReconnecting);
-			this.BitrixCall.on('ParticipantReconnected', this.#onParticipantReconnected);
-			this.BitrixCall.on('ParticipantLeaved', this.#onParticipantLeaved);
-			this.BitrixCall.on('MessageReceived', this.#onCallMessageReceived);
-			this.BitrixCall.on('HandRaised', this.#onCallHandRaised);
-			this.BitrixCall.on('VoiceStarted', this.#onEndpointVoiceStart);
-			this.BitrixCall.on('TurnOnCamera', this.#onTurnOnCamera);
-			this.BitrixCall.on('AllParticipantsAudioMuted', this.#onAllParticipantsAudioMuted);
-			this.BitrixCall.on('AllParticipantsVideoMuted', this.#onAllParticipantsVideoMuted);
-			this.BitrixCall.on('AllParticipantsScreenshareMuted', this.#onAllParticipantsScreenshareMuted);
-			this.BitrixCall.on('YouMuteAllParticipants', this.#onYouMuteAllParticipants);
-			this.BitrixCall.on('RoomSettingsChanged', this.#onRoomSettingsChanged);
-			this.BitrixCall.on('UserPermissionsChanged', this.#onUserPermissionsChanged);
-			this.BitrixCall.on('UserRoleChanged', this.#onUserRoleChanged);
-			this.BitrixCall.on('ParticipantMuted', this.#onParticipantMuted);
-			this.BitrixCall.on('VoiceEnded', this.#onEndpointVoiceEnd);
-			this.BitrixCall.on('RecorderStatusChanged', this.#onRecorderStatusChanged);
-			this.BitrixCall.on('CloudRecordStatusChanged', this.#onCloudRecordStatusChanged);
-			this.BitrixCall.on('Reconnecting', this.#onCallReconnecting);
-			this.BitrixCall.on('Reconnected', this.#onCallReconnected);
-			this.BitrixCall.on('ReconnectingFailed', this.#onCallReconnectingFailed);
-			this.BitrixCall.on('Disconnected', this.#onCallDisconnected);
+			this.CallApi.on('PublishSucceed', this.#onLocalMediaRendererAdded);
+			this.CallApi.on('PublishPaused', this.#onLocalMediaRendererMuteToggled);
+			this.CallApi.on('MediaMutedBySystem', this.#onMediaMutedBySystem);
+			this.CallApi.on('PublishFailed', this.#onLocalMediaRendererEnded);
+			this.CallApi.on('PublishEnded', this.#onLocalMediaRendererEnded);
+			this.CallApi.on('GetUserMediaStarted', this.#onGetUserMediaStarted.bind(this));
+			this.CallApi.on('GetUserMediaEnded', this.#onGetUserMediaEnded);
+			this.CallApi.on('GetUserMediaFailed', this.#onGetUserMediaFailed);
+			this.CallApi.on('GetUserMediaSuccess', this.#onGetUserMediaSuccess.bind(this));
+			this.CallApi.on('RemoteMediaAvailable', this.#onRemoteMediaAvailable);
+			this.CallApi.on('RemoteMediaUnavailable', this.#onRemoteMediaUnavailable);
+			this.CallApi.on('RemoteMediaAdded', this.#onRemoteMediaAdded);
+			this.CallApi.on('RemoteMediaRemoved', this.#onRemoteMediaRemoved);
+			this.CallApi.on('RemoteMediaMuted', this.#onRemoteMediaMuteToggled);
+			this.CallApi.on('RemoteMediaUnmuted', this.#onRemoteMediaMuteToggled);
+			this.CallApi.on('AwaitedRemoteMediaMuted', this.#onAwaitedRemoteMediaMuted);
+			this.CallApi.on('ParticipantJoined', this.#onParticipantJoined);
+			this.CallApi.on('ParticipantReconnecting', this.#onParticipantReconnecting);
+			this.CallApi.on('ParticipantReconnected', this.#onParticipantReconnected);
+			this.CallApi.on('ParticipantLeaved', this.#onParticipantLeaved);
+			this.CallApi.on('MessageReceived', this.#onCallMessageReceived);
+			this.CallApi.on('HandRaised', this.#onCallHandRaised);
+			this.CallApi.on('VoiceStarted', this.#onEndpointVoiceStart);
+			this.CallApi.on('TurnOnCamera', this.#onTurnOnCamera);
+			this.CallApi.on('AllParticipantsAudioMuted', this.#onAllParticipantsAudioMuted);
+			this.CallApi.on('AllParticipantsVideoMuted', this.#onAllParticipantsVideoMuted);
+			this.CallApi.on('AllParticipantsScreenshareMuted', this.#onAllParticipantsScreenshareMuted);
+			this.CallApi.on('YouMuteAllParticipants', this.#onYouMuteAllParticipants);
+			this.CallApi.on('RoomSettingsChanged', this.#onRoomSettingsChanged);
+			this.CallApi.on('UserPermissionsChanged', this.#onUserPermissionsChanged);
+			this.CallApi.on('UserRoleChanged', this.#onUserRoleChanged);
+			this.CallApi.on('ParticipantMuted', this.#onParticipantMuted);
+			this.CallApi.on('VoiceEnded', this.#onEndpointVoiceEnd);
+			this.CallApi.on('RecorderStatusChanged', this.#onRecorderStatusChanged);
+			this.CallApi.on('CloudRecordStatusChanged', this.#onCloudRecordStatusChanged);
+			this.CallApi.on('Reconnecting', this.#onCallReconnecting);
+			this.CallApi.on('Reconnected', this.#onCallReconnected);
+			this.CallApi.on('ReconnectingFailed', this.#onCallReconnectingFailed);
+			this.CallApi.on('Disconnected', this.#onCallDisconnected);
 			// if (Util.shouldCollectStats())
 			// {
-			this.BitrixCall.on('CallStatsReceived', this.#onCallStatsReceived);
+			this.CallApi.on('CallStatsReceived', this.#onCallStatsReceived);
 			// }
-			this.BitrixCall.on('UpdatePacketLoss', this.#onUpdatePacketLoss);
-			this.BitrixCall.on('ConnectionQualityChanged', this.#onConnectionQualityChanged);
-			this.BitrixCall.on('ToggleRemoteParticipantVideo', this.#onToggleRemoteParticipantVideo);
-			this.BitrixCall.on('TrackSubscriptionFailed', this.#onTrackSubscriptionFailed);
+			this.CallApi.on('UpdatePacketLoss', this.#onUpdatePacketLoss);
+			this.CallApi.on('ConnectionQualityChanged', this.#onConnectionQualityChanged);
+			this.CallApi.on('ToggleRemoteParticipantVideo', this.#onToggleRemoteParticipantVideo);
+			this.CallApi.on('TrackSubscriptionFailed', this.#onTrackSubscriptionFailed);
 		}
 		removeCallEvents() {
-			if (this.BitrixCall) {
-				this.BitrixCall.on('Failed', BX.DoNothing);
-				this.BitrixCall.on('PublishSucceed', BX.DoNothing);
-				this.BitrixCall.on('PublishFailed', BX.DoNothing);
-				this.BitrixCall.on('PublishEnded', BX.DoNothing);
-				this.BitrixCall.on('GetUserMediaEnded', BX.DoNothing);
-				this.BitrixCall.on('RemoteMediaAvailable', BX.DoNothing);
-				this.BitrixCall.on('RemoteMediaUnavailable', BX.DoNothing);
-				this.BitrixCall.on('RemoteMediaAdded', BX.DoNothing);
-				this.BitrixCall.on('RemoteMediaRemoved', BX.DoNothing);
-				this.BitrixCall.on('ParticipantJoined', BX.DoNothing);
-				this.BitrixCall.on('ParticipantReconnecting', BX.DoNothing);
-				this.BitrixCall.on('ParticipantReconnected', BX.DoNothing);
-				this.BitrixCall.on('ParticipantLeaved', BX.DoNothing);
-				this.BitrixCall.on('MessageReceived', BX.DoNothing);
-				this.BitrixCall.on('HandRaised', BX.DoNothing);
-				this.BitrixCall.on('AllParticipantsAudioMuted', BX.DoNothing);
-				this.BitrixCall.on('AllParticipantsVideoMuted', BX.DoNothing);
-				this.BitrixCall.on('AllParticipantsScreenshareMuted', BX.DoNothing);
-				this.BitrixCall.on('YouMuteAllParticipants', BX.DoNothing);
-				this.BitrixCall.on('VoiceStarted', BX.DoNothing);
-				this.BitrixCall.on('VoiceEnded', BX.DoNothing);
-				this.BitrixCall.on('RecorderStatusChanged', BX.DoNothing);
-				this.BitrixCall.on('CloudRecordStatusChanged', BX.DoNothing);
-				this.BitrixCall.on('Reconnecting', BX.DoNothing);
-				this.BitrixCall.on('Reconnected', BX.DoNothing);
-				this.BitrixCall.on('ReconnectingFailed', BX.DoNothing);
-				this.BitrixCall.on('Disconnected', BX.DoNothing);
+			if (this.CallApi) {
+				this.CallApi.on('Failed', BX.DoNothing);
+				this.CallApi.on('PublishSucceed', BX.DoNothing);
+				this.CallApi.on('PublishFailed', BX.DoNothing);
+				this.CallApi.on('PublishEnded', BX.DoNothing);
+				this.CallApi.on('GetUserMediaEnded', BX.DoNothing);
+				this.CallApi.on('RemoteMediaAvailable', BX.DoNothing);
+				this.CallApi.on('RemoteMediaUnavailable', BX.DoNothing);
+				this.CallApi.on('RemoteMediaAdded', BX.DoNothing);
+				this.CallApi.on('RemoteMediaRemoved', BX.DoNothing);
+				this.CallApi.on('ParticipantJoined', BX.DoNothing);
+				this.CallApi.on('ParticipantReconnecting', BX.DoNothing);
+				this.CallApi.on('ParticipantReconnected', BX.DoNothing);
+				this.CallApi.on('ParticipantLeaved', BX.DoNothing);
+				this.CallApi.on('MessageReceived', BX.DoNothing);
+				this.CallApi.on('HandRaised', BX.DoNothing);
+				this.CallApi.on('AllParticipantsAudioMuted', BX.DoNothing);
+				this.CallApi.on('AllParticipantsVideoMuted', BX.DoNothing);
+				this.CallApi.on('AllParticipantsScreenshareMuted', BX.DoNothing);
+				this.CallApi.on('YouMuteAllParticipants', BX.DoNothing);
+				this.CallApi.on('VoiceStarted', BX.DoNothing);
+				this.CallApi.on('VoiceEnded', BX.DoNothing);
+				this.CallApi.on('RecorderStatusChanged', BX.DoNothing);
+				this.CallApi.on('CloudRecordStatusChanged', BX.DoNothing);
+				this.CallApi.on('Reconnecting', BX.DoNothing);
+				this.CallApi.on('Reconnected', BX.DoNothing);
+				this.CallApi.on('ReconnectingFailed', BX.DoNothing);
+				this.CallApi.on('Disconnected', BX.DoNothing);
 				// if (Util.shouldCollectStats())
 				// {
-				this.BitrixCall.on('CallStatsReceived', BX.DoNothing);
+				this.CallApi.on('CallStatsReceived', BX.DoNothing);
 				// }
-				this.BitrixCall.on('UpdatePacketLoss', BX.DoNothing);
-				this.BitrixCall.on('ConnectionQualityChanged', BX.DoNothing);
-				this.BitrixCall.on('ToggleRemoteParticipantVideo', BX.DoNothing);
-				this.BitrixCall.on('TrackSubscriptionFailed', BX.DoNothing);
+				this.CallApi.on('UpdatePacketLoss', BX.DoNothing);
+				this.CallApi.on('ConnectionQualityChanged', BX.DoNothing);
+				this.CallApi.on('ToggleRemoteParticipantVideo', BX.DoNothing);
+				this.CallApi.on('TrackSubscriptionFailed', BX.DoNothing);
 			}
 		}
 		subscribeHardwareChanges() {
@@ -19313,8 +21000,8 @@ this.BX = this.BX || {};
 			}
 		}
 		toggleRemoteParticipantVideo(participants, showVideo, isPaginateToggle = false) {
-			if (this.BitrixCall) {
-				this.BitrixCall.toggleRemoteParticipantVideo(participants, showVideo, isPaginateToggle);
+			if (this.CallApi) {
+				this.CallApi.toggleRemoteParticipantVideo(participants, showVideo, isPaginateToggle);
 			}
 		}
 		isAnyoneParticipating() {
@@ -19601,7 +21288,7 @@ this.BX = this.BX || {};
 					if (Hardware.isMicrophoneMuted)
 						// task-597518
 						{
-							this.BitrixCall?.disableAudio({
+							this.CallApi?.disableAudio({
 								calledFrom: 'onLocalMediaRendererAdded'
 							});
 						}
@@ -19628,7 +21315,7 @@ this.BX = this.BX || {};
 				this.log(`Wrong kind for mediaRenderer: ${e}`);
 				return;
 			}
-			if (!this.BitrixCall) {
+			if (!this.CallApi) {
 				return;
 			}
 			switch (e) {
@@ -19658,12 +21345,11 @@ this.BX = this.BX || {};
 				this.getUserMediaFulfilled.video = false;
 				this.signaling.sendCameraState(true);
 			}
-			if (options.audio && !Hardware.isMicrophoneMuted) {
-				this.signaling.sendMicrophoneState(true);
-			}
 			if (options.audio) {
 				this.getUserMediaFulfilled.audio = false;
-				this.signaling.sendMicrophoneState(true);
+				if (!Hardware.isMicrophoneMuted) {
+					this.signaling.sendMicrophoneState(true);
+				}
 			}
 		};
 		#onGetUserMediaEnded = options => {
@@ -19690,7 +21376,7 @@ this.BX = this.BX || {};
 				this.log(`Wrong kind for mediaRenderer: ${e}`);
 				return;
 			}
-			if (!this.BitrixCall) {
+			if (!this.CallApi) {
 				return;
 			}
 			this.log("__onBeforeLocalMediaRendererRemoved", kind);
@@ -19714,7 +21400,7 @@ this.BX = this.BX || {};
 					this.signaling.sendMicrophoneState(false);
 					break;
 				case MediaStreamsKinds.Screen:
-					this.BitrixCall.stopScreenShare();
+					this.CallApi.stopScreenShare();
 					this.log("Screen is no longer shared");
 					this.runCallback(CallEvent.onUserScreenState, {
 						userId: this.userId,
@@ -19969,6 +21655,9 @@ this.BX = this.BX || {};
 				peer.participant = participant;
 				peer.updateCalculatedState();
 			}
+			this.#onEndpointVoiceEnd({
+				userId: participant.userId
+			});
 			this.runCallback(CallEvent.onParticipantReconnected, {
 				participant
 			});
@@ -20024,36 +21713,42 @@ this.BX = this.BX || {};
 			}
 		};
 		#onCallReconnecting = params => {
+			this.isReconnecting = true;
+			const data = main_core.Type.isObject(params) ? params : {};
+			this.reconnectHistory.startEntry(data.reconnectionReason ?? null, call_lib_reconnectHistory.ReconnectTarget.Sdk);
 			if (this._reconnectionEventCount === 0) {
 				params.reconnectionEventCount = this.reconnectionEventCount + 1;
 				this.runCallback(CallEvent.onReconnecting, params);
 			}
-			if (this.reconnectionEventCount++) {
-				return;
-			}
+
+			// One event per incident, not per attempt: the counter is what closes the condition above and
+			// is reset to zero once the call is connected again.
+			this.reconnectionEventCount++;
 		};
 		#onCallReconnected = () => {
+			this.isReconnecting = false;
 			this.reconnectionEventCount = 0;
+			this.reconnectHistory.updateLastEntry(call_lib_reconnectHistory.ReconnectTarget.Sdk, true);
 			this.log("Call reconnected");
 			this.sendTelemetryEvent("reconnect");
 			this.localUserState = UserState.Connected;
 			if (this.screenShared || this.waitingLocalScreenShare) {
-				this.BitrixCall.startScreenShare();
+				this.CallApi.startScreenShare();
 			}
-			if (!this.BitrixCall.isAudioPublished()) {
+			if (!this.CallApi.isAudioPublished()) {
 				this.#setPublishingState(MediaStreamsKinds.Microphone, true);
 			}
-			this.BitrixCall.enableAudio({
+			this.CallApi.enableAudio({
 				calledFrom: 'onCallConnected',
 				disabled: Hardware.isMicrophoneMuted
 			});
 
 			//this.signaling.sendCameraState(Hardware.isCameraOn);
 			if (Hardware.isCameraOn) {
-				if (!this.BitrixCall.isVideoPublished()) {
+				if (!this.CallApi.isVideoPublished()) {
 					this.#setPublishingState(MediaStreamsKinds.Camera, true);
 				}
-				this.BitrixCall.enableVideo({
+				this.CallApi.enableVideo({
 					calledFrom: 'onCallReconnected'
 				});
 			}
@@ -20068,7 +21763,7 @@ this.BX = this.BX || {};
 					userId: this.userId
 				}, true);
 			}
-			this.BitrixCall.raiseHand(this.floorRequestActive);
+			this.CallApi.raiseHand(this.floorRequestActive);
 		};
 		#onCallReconnectingFailed = (e, error) => {
 			this.runCallback(CallEvent.onReconnectingFailed, {
@@ -20128,11 +21823,11 @@ this.BX = this.BX || {};
 			this.localUserState = UserState.Failed;
 			this.reinitPeers();
 			this.localVideoShown = false;
-			if (this.BitrixCall) {
+			if (this.CallApi) {
 				this.removeCallEvents();
 				this.unsubscribeHardwareChanges();
 				try {
-					this.BitrixCall.hangup({
+					this.CallApi.hangup({
 						'X-Reason': 'Fatal error',
 						'X-Error': typeof error === 'string' ? error : error.code || error.name
 					});
@@ -20140,7 +21835,7 @@ this.BX = this.BX || {};
 					this.log("Bitrix hangup error: ", e);
 					console.error("Bitrix hangup error: ", e);
 				}
-				this.BitrixCall = null;
+				this.CallApi = null;
 			}
 			if (typeof error === "string") {
 				this.runCallback(CallEvent.onCallFailure, {
@@ -20199,7 +21894,7 @@ this.BX = this.BX || {};
 			// todo: need to correct stats format
 			// if (this.logger)
 			// {
-			// 	this.logger.sendStat(transformVoxStats(e.stats, this.BitrixCall));
+			// 	this.logger.sendStat(transformVoxStats(e.stats, this.CallApi));
 			// }
 		};
 		#onUpdatePacketLoss = participants => {
@@ -20487,6 +22182,12 @@ this.BX = this.BX || {};
 				event: eventName
 			});
 		}
+		testReconnect() {
+			if (!this.CallApi) {
+				return;
+			}
+			this.CallApi.testReconnect();
+		}
 		destroy(finishCall = false) {
 			if (this.destroyed) {
 				return;
@@ -20510,11 +22211,11 @@ this.BX = this.BX || {};
 				}
 			}
 			clearInterval(this.microphoneLevelInterval);
-			if (this.BitrixCall) {
+			if (this.CallApi) {
 				this.removeCallEvents();
 				this.unsubscribeHardwareChanges();
-				this.BitrixCall.hangup(finishCall);
-				this.BitrixCall = null;
+				this.CallApi.hangup(finishCall);
+				this.CallApi = null;
 			}
 			for (let userId in this.peers) {
 				if (this.peers.hasOwnProperty(userId) && this.peers[userId]) {
@@ -20591,7 +22292,7 @@ this.BX = this.BX || {};
 			});
 		}
 		#sendMessage(eventName, data) {
-			if (!this.call.BitrixCall) {
+			if (!this.call.CallApi) {
 				return;
 			}
 			if (!main_core.Type.isPlainObject(data)) {
@@ -20600,7 +22301,7 @@ this.BX = this.BX || {};
 			data.eventName = eventName;
 			data.requestId = Util.getUuidv4();
 			data.senderId = this.call.userId;
-			this.call.BitrixCall.sendMessage(JSON.stringify(data));
+			this.call.CallApi.sendMessage(JSON.stringify(data));
 		}
 		#runRestAction(signalName, data) {
 			if (!main_core.Type.isPlainObject(data)) {
@@ -20923,7 +22624,7 @@ this.BX = this.BX || {};
 				const chatId = config.chatInfo.chatId;
 				const callProvider = config.provider || this.getDefaultProvider();
 				const callType = config.type || CallType$1.Instant;
-				const roomType = Util.getRoomType(callProvider, chatId);
+				const roomType = Util.getRoomType(chatId);
 				let data = null;
 				try {
 					data = await Util.getCallConnectionData({
@@ -21025,7 +22726,7 @@ this.BX = this.BX || {};
 					const callFactory = this.#getCallFactory(newProvider);
 					const instanceId = Util.getUuidv4();
 					const callType = CallType$1.Instant;
-					const roomType = Util.getRoomType(newProvider, chatId);
+					const roomType = Util.getRoomType(chatId);
 					call_lib_callTokenManager.CallTokenManager.setToken(chatId, token);
 					Util.getCallConnectionData({
 						instanceId,
@@ -21416,6 +23117,7 @@ this.BX = this.BX || {};
 	const pingPeriod$1 = 5000;
 	const backendPingPeriod$1 = 25000;
 	const reinvitePeriod$1 = 5500;
+
 	/**
 	 * Implements Call interface
 	 * Public methods:
@@ -21541,7 +23243,9 @@ this.BX = this.BX || {};
 					this.runCallback(CallEvent.onNetworkProblem, e);
 				},
 				onReconnecting: e => {
+					this.isReconnecting = true;
 					this._reconnectionEventCount++;
+					this.reconnectHistory.startEntry(e.reconnectionReason ?? null, call_lib_reconnectHistory.ReconnectTarget.Provider, e.userId);
 					this.runCallback(CallEvent.onReconnecting, {
 						reconnectionEventCount: this._reconnectionEventCount,
 						reconnectionReason: e.reconnectionReason,
@@ -21549,7 +23253,9 @@ this.BX = this.BX || {};
 					});
 				},
 				onReconnected: () => {
+					this.isReconnecting = false;
 					this._reconnectionEventCount = 0;
+					this.reconnectHistory.updateLastEntry(call_lib_reconnectHistory.ReconnectTarget.Provider, true);
 					this.runCallback(CallEvent.onReconnected);
 				},
 				onUpdateLastUsedCameraId: () => {
@@ -21793,6 +23499,12 @@ this.BX = this.BX || {};
 			try {
 				return await CallStreamManager.getUserMedia(currentConstraints);
 			} catch (error) {
+				if (error?.name === STREAM_MANAGER_SUPERSEDED) {
+					// Superseded by a newer device selection - not a media failure. Don't fall back through the
+					// remaining constraints; a fallback capture would register after the newest request and
+					// unseat the selected device. Rethrow: callers already handle a getUserMedia rejection.
+					throw error;
+				}
 				this.log('getUserMedia error: ', error);
 				this.log('Current constraints', currentConstraints);
 				if (constraintsArray.length > 1) {
@@ -21878,6 +23590,10 @@ this.BX = this.BX || {};
 						error: e
 					});
 					reject(e);
+				}).finally(() => {
+					if (!Object.values(this.peers).some(peer => peer.calculatedState === UserState.Connected)) {
+						this.setPublishingState(MediaStreamsKinds.Camera, false);
+					}
 				});
 			});
 		}
@@ -22692,6 +24408,12 @@ this.BX = this.BX || {};
 			clearInterval(this.pingBackendInterval);
 			clearInterval(this.microphoneLevelInterval);
 			clearTimeout(this.reinviteTimeout);
+		}
+		testReconnect() {
+			const peer = Object.values(this.peers)[0];
+			peer?.reconnect({
+				reconnectionReason: 'TEST_RECONNECTION'
+			});
 		}
 		destroy() {
 			this.ready = false;
@@ -23551,6 +25273,7 @@ this.BX = this.BX || {};
 		#onPeerConnectionConnectionStateChange() {
 			this.log("User " + this.userId + ": peer connection state changed. New state: " + this.peerConnection.connectionState);
 			if (this.peerConnection.connectionState === "connected" || this.peerConnection.connectionState === "completed") {
+				this.isReconnecting = false;
 				this.connectionAttempt = 0;
 				this.callbacks.onReconnected();
 				clearTimeout(this.reconnectAfterDisconnectTimeout);
@@ -23912,6 +25635,7 @@ this.BX = this.BX || {};
 		}
 		reconnect(reconnectInfoObject) {
 			clearTimeout(this.reconnectAfterDisconnectTimeout);
+			this.isReconnecting = true;
 			this.connectionAttempt++;
 			if (this.connectionAttempt > 3) {
 				this.log("Error: Too many reconnection attempts, giving up");
@@ -23919,9 +25643,11 @@ this.BX = this.BX || {};
 				this.updateCalculatedState();
 				return;
 			}
+			const reconnectionReason = reconnectInfoObject?.reconnectionReason || 'TRYING_RESTORE_ICE_CONNECTION';
 			this.callbacks.onReconnecting({
-				reconnectionReason: reconnectInfoObject?.reconnectionReason || 'TRYING_RESTORE_ICE_CONNECTION',
-				reconnectionReasonInfo: reconnectInfoObject?.reconnectionReasonInfo || ''
+				reconnectionReason,
+				reconnectionReasonInfo: reconnectInfoObject?.reconnectionReasonInfo || '',
+				userId: this.userId
 			});
 			if (reconnectInfoObject && reconnectInfoObject.reconnectionReasonInfo) {
 				this.log(reconnectInfoObject.reconnectionReasonInfo);
@@ -28803,6 +30529,12 @@ this.BX = this.BX || {};
 				}
 				return stream;
 			}).catch(error => {
+				if (error?.name === STREAM_MANAGER_SUPERSEDED) {
+					// Superseded by a newer device selection - not a media failure. Don't retry with fallback
+					// constraints; that capture would register after the newest request and unseat the selected
+					// device. Rethrow: callers already handle a prepareLocalStream rejection.
+					throw error;
+				}
 				if (!fallback) {
 					return this.prepareLocalStream({
 						provider,
@@ -28906,6 +30638,10 @@ this.BX = this.BX || {};
 	}
 
 	const BALLOON_OFFSET_CLASS_NAME = 'bx-call-control-notification-right-offset';
+
+	// Client-side fallback of Util.getCallConnectionErrorCode: an internal analytics label,
+	// never a code to show the user.
+	const CLIENT_UNCLASSIFIED_ERROR_CODE = 'CLIENT_UNCLASSIFIED';
 
 	/**
 	 * Manages in-call notification popups and hint overlays (mute, network, VPN, unsupported, etc.).
@@ -29124,8 +30860,11 @@ this.BX = this.BX || {};
 					buttons: ui_dialogs_messagebox.MessageBoxButtons.OK_CANCEL,
 					okCaption: BX.message('IM_M_CALL_BTN_UPDATE'),
 					cancelCaption: BX.message('IM_NOTIFY_CONFIRM_CLOSE'),
-					onOk: () => {
-						const url = intranet_desktopDownload.DesktopDownload.getLinkForCurrentUser();
+					onOk: async () => {
+						const {
+							DesktopDownload
+						} = await main_core.Runtime.loadExtension('intranet.desktop-download');
+						const url = DesktopDownload.getLinkForCurrentUser();
 						window.open(url, 'desktopApp');
 						return true;
 					}
@@ -29781,6 +31520,7 @@ this.BX = this.BX || {};
 				case StartCallErrorCode.NoWebrtc:
 					errorMessage = main_core.Loc.getMessage(isHttps ? 'IM_CALL_NO_WEBRT' : 'IM_CALL_ERROR_HTTPS_REQUIRED');
 					break;
+				case CLIENT_UNCLASSIFIED_ERROR_CODE:
 				case StartCallErrorCode.UnknownError:
 					isUnknownError = true;
 					errorMessage = main_core.Loc.getMessage('IM_CALL_ERROR_UNKNOWN');
@@ -30688,6 +32428,7 @@ this.BX = this.BX || {};
 		 * @param {boolean} recordingState.isCloudRecordFeaturesEnabled — whether cloud recording features tariff is enabled
 		 * @param {string|number} recordingState.callId — current call id
 		 * @param {boolean} recordingState.isServiceEnabled — whether cloud record service is globally enabled
+		 * @param {boolean} recordingState.canRecord — whether recording is actually available (local desktop or cloud); gates the record menu vs. the tariff helpdesk article
 		 */
 		onRecordButtonClick({
 			commonRecordState,
@@ -30702,6 +32443,10 @@ this.BX = this.BX || {};
 			}
 			if (isServiceEnabled) {
 				if (!CallCloudRecord.tariffAvailable) {
+					if (canRecord) {
+						this.viewPort.showCommonRecordMenuPopup(true);
+						return;
+					}
 					Util.openArticle(CallCloudRecord.tariffSlider);
 					return;
 				}
@@ -31159,6 +32904,60 @@ this.BX = this.BX || {};
 			this.viewPort = null;
 			this.notifyShowed = false;
 		}
+	}
+
+	function getUnknownErrorType(errorMsg) {
+		/**
+		 * A map of error types to patterns for matching.
+		 * Supports: strings (checked via .includes()), regular expressions (via .test()), and arrays of patterns.
+		 */
+		const ERROR_PATTERNS = {
+			NULL_PROPERTY_READING: ['Cannot read properties of null', /Cannot read property.*of null/i],
+			UNDEFINED_PROPERTY_READING: 'Cannot read properties of undefined',
+			EMPTY_CALLTOKEN: 'Empty callToken',
+			UNKNOWN_JS_FUNCTION: 'BX JS Extension: Unknown JS function!',
+			NOT_FUNCTION: 'is not a function',
+			NULL_NOT_OBJECT: 'null is not an object',
+			UNDEFINED_NOT_OBJECT: 'undefined is not an object',
+			NULL_PROPERTY_ACCESS: /can't access property.*is null/i,
+			UNDEFINED_PROPERTY_ACCESS: /can't access property.*is undefined/i,
+			CALL_NOT_FOUND: 'Call not found',
+			IS_NULL: 'is null',
+			IS_UNDEFINED: 'is undefined',
+			NOT_CONSTRUCTOR: 'is not a constructor'
+		};
+
+		/**
+		 * Checks if the error message matches the given pattern.
+		 * @param {string} msg - the error message to check
+		 * @param {string|RegExp|Array} pattern - the pattern to match against
+		 * @returns {boolean} true if a match is found
+		 */
+		function matchesPattern(msg, pattern) {
+			if (!main_core.Type.isString(msg)) {
+				return false;
+			}
+			if (main_core.Type.isString(pattern)) {
+				return msg.includes(pattern);
+			}
+			if (pattern instanceof RegExp) {
+				return pattern.test(msg);
+			}
+			if (Array.isArray(pattern)) {
+				return pattern.some(item => matchesPattern(msg, item));
+			}
+			return false;
+		}
+
+		// Iterate through all error types and check if the message matches any pattern
+		for (const [errorType, pattern] of Object.entries(ERROR_PATTERNS)) {
+			if (matchesPattern(errorMsg, pattern)) {
+				return errorType;
+			}
+		}
+
+		// If no pattern matches, return the default error type
+		return 'CLIENT_UNCLASSIFIED';
 	}
 
 	const StrategyType = {
@@ -32304,6 +34103,43 @@ this.BX = this.BX || {};
 		#onPiPViewBodyClickHandler;
 		#onHardwareMicrophoneMutedChangeHandler;
 		#onHardwareCameraOnChangeHandler;
+
+		// Calls where the user explicitly picked a microphone; hot-plug must not override that choice.
+		#callsWithManualMicrophone = new WeakSet();
+		#loadAccidentLogger = () => BX.Runtime.loadExtension('call.lib.accident-logger');
+		#alreadyFinishedShownUuids = new Set();
+		#onCallAlreadyFinished = event => {
+			const {
+				callUuid
+			} = event.getData() || {};
+			if (!callUuid || this.#alreadyFinishedShownUuids.has(callUuid)) {
+				return;
+			}
+			this.#alreadyFinishedShownUuids.add(callUuid);
+			// Bound the dedup set so it cannot grow unbounded over a long session.
+			if (this.#alreadyFinishedShownUuids.size > 100) {
+				const oldest = this.#alreadyFinishedShownUuids.values().next().value;
+				this.#alreadyFinishedShownUuids.delete(oldest);
+			}
+
+			// If the dead call is the one currently ringing, drop it synchronously:
+			// mark it answered/declined, close its card, tear down its connection and
+			// clear currentCall. Closing the card alone leaves currentCall set, which
+			// makes prepareIncomingCall reject the next incoming call until a deferred
+			// Pull finish clears it — or forever if the recovery request fails.
+			if (this.currentCall?.uuid === callUuid) {
+				this.answeredOrDeclinedCalls.add(Util.getCallIdentifier(this.currentCall));
+				this.closeCallNotification();
+				this.#teardownCallConnection();
+				this.currentCall = null;
+			}
+			ui_notification.Center.notify({
+				content: main_core.Text.encode(main_core.Loc.getMessage('CALL_ALREADY_FINISHED_NOTIFICATION')),
+				position: 'top-right',
+				autoHideDelay: 5000,
+				closeButton: true
+			});
+		};
 		constructor(config) {
 			super();
 			this.setEventNamespace('BX.Call.Controller');
@@ -32329,6 +34165,7 @@ this.BX = this.BX || {};
 			this.videoStrategy = null;
 			this.isHttps = window.location.protocol === 'https:';
 			this.callWithLegacyMobile = false;
+			this.cameraBlockedForLegacyMobile = false;
 			this.featureScreenSharing = FeatureState.Enabled;
 			this.screenShareStartTime = null;
 			this.commonRecord = this.#getDefaultCommonRecord();
@@ -32353,6 +34190,7 @@ this.BX = this.BX || {};
 			if (needInit) {
 				this.init();
 				this.#subscribeEvents(config);
+				main_core_events.EventEmitter.subscribe(CALL_ALREADY_FINISHED_EVENT, this.#onCallAlreadyFinished);
 			}
 		}
 		#initHandlers() {
@@ -32995,6 +34833,22 @@ this.BX = this.BX || {};
 				hiddenButtons.push('document');
 			}
 			return hiddenButtons;
+		}
+
+		/**
+		 * Starts local stream preparation without blocking the call start chain.
+		 * A denied permission rejects here and must not surface as an unhandled rejection.
+		 */
+		#prepareLocalStreamInBackground(provider) {
+			this.layoutService?.prepareLocalStream({
+				provider,
+				Hardware,
+				CallStreamManager,
+				UnsupportedBrowserFeatures,
+				MediaRenderer
+			}).catch(error => {
+				console.error('Can\'t prepare local stream for a prepared call', error);
+			});
 		}
 		#getAnalyticsCallParams() {
 			return {
@@ -33699,18 +35553,13 @@ this.BX = this.BX || {};
 			const isLegacyCall = Util.isLegacyCall(provider);
 			const callTokenPromise = isLegacyCall ? Promise.resolve() : call_lib_callTokenManager.CallTokenManager.getToken(chatInfo.chatId);
 			const isCallPrepared = this.preparedCall?.dialogId === dialogId;
+			let createdCall = null;
 			const debug1 = Date.now();
 			this.initCallPromise = this.messengerFacade.openMessenger(dialogId).then(() => {
 				return Hardware.init();
 			}).then(async () => {
 				if (video && isCallPrepared) {
-					this.layoutService?.prepareLocalStream({
-						provider,
-						Hardware,
-						CallStreamManager,
-						UnsupportedBrowserFeatures,
-						MediaRenderer
-					});
+					this.#prepareLocalStreamInBackground(provider);
 				}
 				this.createContainer();
 				const hiddenButtons = this.#getHiddenCallButtons(isPlainCall);
@@ -33781,6 +35630,7 @@ this.BX = this.BX || {};
 				const debug2 = Date.now();
 				this.currentCall = e.call;
 				this.currentCallIsNew = e.isNew;
+				createdCall = e.call;
 				this.#clearPromotedAdminTimeout();
 				if (!this.viewPort) {
 					this.leaveCurrentCall(true);
@@ -33798,6 +35648,7 @@ this.BX = this.BX || {};
 				this.#applyDefaultDevicesToCurrentCall();
 				this.autoCloseCallView = true;
 				this.bindCallEvents();
+				this.#fetchAndSetGuestLink();
 				this.initSpeakerManager();
 				this.createVideoStrategy();
 				if (isCallPrepared) {
@@ -33873,12 +35724,17 @@ this.BX = this.BX || {};
 				if (errorCode === 'user_is_busy') {
 					this.leaveCurrentCall();
 				} else {
-					if (errorCode === 'UNKNOWN_ERROR' && error?.message) {
-						errorCode = call_lib_accidentLogger.getUnknownErrorType(error?.message);
+					if (errorCode === 'CLIENT_UNCLASSIFIED' && error?.message) {
+						errorCode = getUnknownErrorType(error?.message);
 					}
-					await call_lib_accidentLogger.accidentLogger.addLog(error, errorCode);
+					this.#loadAccidentLogger().then(({
+						accidentLogger
+					}) => accidentLogger?.addLog(error, errorCode)).catch(() => {});
 					call_lib_analytics.Analytics.getInstance().onStartCallError({
 						callType: this.getCallType(provider),
+						// The room of this attempt, not this.currentCall: a failure before the room
+						// exists sends no identifier rather than the one of a call still running.
+						callId: Util.getCallIdentifier(createdCall),
 						errorCode,
 						errorMessage,
 						isVpnActive: this.#isVpnConnected()
@@ -33923,6 +35779,10 @@ this.BX = this.BX || {};
 			const defaultProvider = isGroupCall ? Util.getConferenceProvider() : Provider$1.Plain;
 			const provider = call?.provider || defaultProvider;
 			const isLegacyCall = Util.isLegacyCall(provider, call?.scheme);
+			const joinAttempt = {
+				provider,
+				callId: isLegacyCall ? callId : callUuid
+			};
 			this.log(`Joining call ${callUuid}`);
 			this.initCallPromise = isLegacyCall ? Promise.resolve() : call_lib_callTokenManager.CallTokenManager.getToken(options.chatInfo.chatId);
 			this.initCallPromise.then(callToken => {
@@ -33949,9 +35809,33 @@ this.BX = this.BX || {};
 			}).then(() => {
 				return Hardware.init();
 			}).then(async () => {
+				let withVideo = Boolean(video);
+				if (this.#isGuestUser()) {
+					const lobbyResult = await this.#showCallLobby();
+					if (lobbyResult === null) {
+						this.currentCall?.decline();
+						return;
+					}
+
+					// If the guest changed their display name in the lobby, persist it server-side
+					const currentUser = this.messengerFacade.getCurrentUser?.();
+					if (lobbyResult.userName && lobbyResult.userName !== currentUser?.name) {
+						BX.ajax.runAction('im.v2.Guest.setName', {
+							data: {
+								name: lobbyResult.userName
+							}
+						}).catch(() => {});
+					}
+					withVideo = Boolean(lobbyResult.video);
+					Hardware.isMicrophoneMuted = !lobbyResult.audio;
+				}
+				if (!this.currentCall) {
+					this.log('The call was destroyed while being answered');
+					return;
+				}
 				this.createContainer();
 				const hiddenButtons = this.#getHiddenCallButtons(this.currentCall.provider === Provider$1.Plain);
-				Hardware.isCameraOn = Boolean(video);
+				Hardware.isCameraOn = withVideo;
 				const isBitrixCall = this.currentCall.provider === Provider$1.Bitrix;
 				this.viewPort = await this.#buildCallViewPort({
 					layout: isGroupCall ? call_mapping.ViewLayout.Grid : call_mapping.ViewLayout.Centered,
@@ -33996,10 +35880,11 @@ this.BX = this.BX || {};
 				this.checkVpnStatus();
 				this.#applyDefaultDevicesToCurrentCall();
 				this.bindCallEvents();
+				this.#fetchAndSetGuestLink();
 				this.createVideoStrategy();
-				if (video && !Hardware.hasCamera()) {
+				if (withVideo && !Hardware.hasCamera()) {
 					this.notificationService?.showNotification(BX.message('IM_CALL_ERROR_NO_CAMERA'));
-					video = false;
+					withVideo = false;
 				}
 				if (this.currentCall.associatedEntity.userCounter > this.getMaxActiveMicrophonesCount()) {
 					Hardware.isMicrophoneMuted = true;
@@ -34027,7 +35912,7 @@ this.BX = this.BX || {};
 				this.initCallPromise = null;
 			}).catch(async error => {
 				this.initCallPromise = null;
-				await this.#handleJoinCallError(error);
+				await this.#handleJoinCallError(error, joinAttempt);
 			});
 		}
 		leaveCurrentCall(force, finishCall = false) {
@@ -34133,12 +36018,16 @@ this.BX = this.BX || {};
 			for (const deviceInfo of deviceList) {
 				switch (deviceInfo.kind) {
 					case 'audioinput':
-						if (deviceInfo.deviceId === 'default' || isForceUse) {
-							const newDeviceId = Hardware.getDefaultDeviceIdByGroupId(deviceInfo.groupId, 'audioinput');
-							this.currentCall.setMicrophoneId(newDeviceId);
-							this.viewPort.setMicrophoneId(newDeviceId);
+						{
+							// Pick up any plugged-in microphone, but never override an explicit manual choice.
+							const microphoneManuallySelected = this.#callsWithManualMicrophone.has(this.currentCall);
+							if (isForceUse || !microphoneManuallySelected) {
+								const newDeviceId = Hardware.getDefaultDeviceIdByGroupId(deviceInfo.groupId, 'audioinput');
+								this.currentCall.setMicrophoneId(newDeviceId);
+								this.viewPort.setMicrophoneId(newDeviceId);
+							}
+							break;
 						}
-						break;
 					case 'videoinput':
 						if (deviceInfo.deviceId === 'default' || isForceUse) {
 							this.currentCall.setCameraId(deviceInfo.deviceId);
@@ -34515,6 +36404,10 @@ this.BX = this.BX || {};
 				return;
 			}
 			const isLegacyCall = callParams.scheme === CallScheme$1.classic;
+			const joinAttempt = {
+				provider: this.currentCall.provider,
+				callId: Util.getCallIdentifier(this.currentCall)
+			};
 			const currentCallPromise = isLegacyCall ? Promise.resolve() : call_lib_callTokenManager.CallTokenManager.getToken(this.currentCall.associatedEntity.chatId);
 			currentCallPromise.then(callToken => {
 				const config = {
@@ -34562,6 +36455,24 @@ this.BX = this.BX || {};
 				}).then(() => {
 					return Hardware.init();
 				}).then(async () => {
+					if (this.#isGuestUser()) {
+						const lobbyResult = await this.#showCallLobby();
+						if (lobbyResult === null) {
+							this.currentCall?.decline();
+							return;
+						}
+
+						// If the guest changed their display name in the lobby, persist it server-side
+						const currentUser = this.messengerFacade.getCurrentUser?.();
+						if (lobbyResult.userName && lobbyResult.userName !== currentUser?.name) {
+							BX.ajax.runAction('im.v2.Guest.setName', {
+								data: {
+									name: lobbyResult.userName
+								}
+							}).catch(() => {});
+						}
+						mediaParams = lobbyResult;
+					}
 					if (!this.currentCall) {
 						this.log('The call was destroyed while being answered');
 						return;
@@ -34651,10 +36562,10 @@ this.BX = this.BX || {};
 					this.createVideoStrategy();
 					this._onUpdateLastUsedCameraId();
 				}).catch(async error => {
-					await this.#handleJoinCallError(error);
+					await this.#handleJoinCallError(error, joinAttempt);
 				});
 			}).catch(async error => {
-				await this.#handleJoinCallError(error);
+				await this.#handleJoinCallError(error, joinAttempt);
 			});
 		}
 		_onCallConferenceNotificationButtonClick(e) {
@@ -34951,7 +36862,9 @@ this.BX = this.BX || {};
 			});
 		}
 		_onCallViewToggleMuteHandler(e) {
-			if (!e.muted && !Hardware?.hasMicrophone()) {
+			// Skip the device getters while Hardware is not initialized (they throw),
+			// so the mute intent is still recorded via setIsMicrophoneMuted below.
+			if (!e.muted && Hardware?.initialized && !Hardware.hasMicrophone()) {
 				return;
 			}
 			const currentRoom = this.currentCall?.currentRoom?.();
@@ -35372,6 +37285,7 @@ this.BX = this.BX || {};
 		}
 		_onCallViewReplaceMicrophone(e) {
 			if (this.currentCall) {
+				this.#callsWithManualMicrophone.add(this.currentCall);
 				this.currentCall.setMicrophoneId(e.deviceId);
 				this.viewPort.setMicrophoneId(e.deviceId);
 			}
@@ -35540,6 +37454,46 @@ this.BX = this.BX || {};
 			if (this.viewPort) {
 				this.viewPort.updateUserData(e.userData);
 				this.viewPort.addUser(e.userId, UserState.Connected);
+			}
+		}
+		#isGuestUser() {
+			return this.messengerFacade.getCurrentUser?.()?.externalAuthId === 'im_guest';
+		}
+		#createLobbyContainer() {
+			this.lobbyContainer = main_core.Tag.render`<div class="call-lobby-overlay"></div>`;
+			main_core.Dom.append(this.lobbyContainer, this.getExternalContainer());
+		}
+		#destroyLobbyContainer() {
+			if (this.lobbyContainer) {
+				main_core.Dom.remove(this.lobbyContainer);
+				this.lobbyContainer = null;
+			}
+		}
+		async #showCallLobby() {
+			this.#createLobbyContainer();
+			const currentUser = this.messengerFacade.getCurrentUser?.();
+			const userName = currentUser?.name || '';
+			const userAvatar = currentUser?.avatar || '';
+			const callerName = this.currentCall?.associatedEntity?.name || '';
+			this.lobbyManager = new call_component_lobby.LobbyManager();
+			try {
+				const result = await this.lobbyManager.show({
+					container: this.lobbyContainer,
+					userName,
+					userAvatar,
+					callerName
+				});
+				this.#destroyLobbyContainer();
+				this.lobbyManager?.destroy();
+				this.lobbyManager = null;
+
+				// decline resolves with accepted=false; only a real join returns the lobby params
+				return result.accepted ? result : null;
+			} catch {
+				this.#destroyLobbyContainer();
+				this.lobbyManager?.destroy();
+				this.lobbyManager = null;
+				return null;
 			}
 		}
 		_onCallUserMicrophoneState(e) {
@@ -35790,6 +37744,11 @@ this.BX = this.BX || {};
 			}
 		}
 		_onCallDestroy() {
+			if (this.lobbyManager && this.lobbyManager.isShown()) {
+				this.lobbyManager.destroy();
+				this.#destroyLobbyContainer();
+				this.lobbyManager = null;
+			}
 			let callDetails;
 			if (this.currentCall) {
 				this.#teardownCallConnection();
@@ -35804,6 +37763,7 @@ this.BX = this.BX || {};
 			}
 			this.#clearSavedScreenStream();
 			this.callWithLegacyMobile = false;
+			this.cameraBlockedForLegacyMobile = false;
 			this.#closeCallPopups();
 			this.#stopCommonRecord();
 			if (this.viewPort && this.autoCloseCallView) {
@@ -35845,6 +37805,7 @@ this.BX = this.BX || {};
 				this.viewPort.setUserState(e.userId, e.state);
 				if (e.isLegacyMobile) {
 					this.buttonStateService?.blockForLegacyMobile();
+					this.cameraBlockedForLegacyMobile = true;
 				}
 			}
 			this.#syncUserStateToPinia(e.userId, e.state);
@@ -35875,6 +37836,9 @@ this.BX = this.BX || {};
 					isCopilotFeaturesEnabled,
 					isCommonRecordStateInactive: Util.isCommonRecordStateInactive(this.commonRecord.state)
 				});
+				if (!e.isLegacyMobile && isNeedUnblockCameraButton) {
+					this.cameraBlockedForLegacyMobile = false;
+				}
 				if (this.currentCall.provider === Provider$1.Plain) {
 					this.viewPort.unblockAddUser();
 				}
@@ -35940,7 +37904,10 @@ this.BX = this.BX || {};
 		_onCameraPublishing(e) {
 			if (e.publishing) {
 				this.buttonStateService?.blockCameraButton();
-			} else {
+			}
+			// The view keeps one blocked flag per button, so releasing our hold must not lift a block another
+			// reason still holds: the right to broadcast video and a legacy mobile participant share this button.
+			else if (Util.havePermissionToBroadcast('cam') && !this.cameraBlockedForLegacyMobile) {
 				this.buttonStateService?.unblockCameraButton();
 			}
 			if (this.viewPort) {
@@ -36238,14 +38205,7 @@ this.BX = this.BX || {};
 				isVpnActive: this.#isVpnConnected()
 			});
 		}
-		_onParticipantReconnecting(e) {
-			if (e?.participant?.userId && this.viewPort?.wrappedView?.users) {
-				const callUser = this.viewPort.wrappedView.users[e.participant.userId];
-				if (callUser) {
-					callUser.showLastVideoFrame();
-				}
-			}
-		}
+		_onParticipantReconnecting(e) {}
 		_onParticipantReconnected(e) {
 			if (e?.participant?.userId && this.viewPort?.wrappedView?.users) {
 				const callUser = this.viewPort.wrappedView.users[e.participant.userId];
@@ -36365,6 +38325,11 @@ this.BX = this.BX || {};
 			this.messengerFacade.stopRepeatSound(this.audioRingtone);
 		}
 		_onCallLeave(e) {
+			if (this.lobbyManager && this.lobbyManager.isShown()) {
+				this.lobbyManager.destroy();
+				this.#destroyLobbyContainer();
+				this.lobbyManager = null;
+			}
 			console.log('_onCallLeave', e);
 			if (!e.local && this.currentCall && this.currentCall.ready) {
 				this.log(new Error('received remote leave with active call!'));
@@ -36637,19 +38602,55 @@ this.BX = this.BX || {};
 				this.currentCall.setCameraId(Hardware.defaultCamera);
 			}
 		}
-		async #handleJoinCallError(error) {
+		#fetchAndSetGuestLink() {
+			const isGroupCall = this.currentCall.provider !== Provider$1.Plain;
+			if (!isGroupCall) {
+				this.viewPort.setGuestLink(null);
+				return;
+			}
+			const numericChatId = this.currentCall.associatedEntity?.chatId;
+			if (!numericChatId) {
+				this.viewPort.setGuestLink(null);
+				return;
+			}
+			BX.ajax.runAction('call.Call.getGuestLink', {
+				data: {
+					chatId: numericChatId
+				}
+			}).then(response => {
+				const guestLink = response.data?.guestLink ?? null;
+				if (this.viewPort) {
+					this.viewPort.setGuestLink(guestLink);
+				}
+			}).catch(() => {
+				if (this.viewPort) {
+					this.viewPort.setGuestLink(null);
+				}
+			});
+		}
+
+		/**
+		 * @param {Error|Object|string} error
+		 * @param {{provider: ?string, callId: ?(string|number)}} attempt - what the entry was aiming at.
+		 *   The call instance does not exist yet when an entry fails, so the type and the identifier of
+		 *   the event come from the attempt and not from `currentCall`.
+		 */
+		async #handleJoinCallError(error, attempt = {}) {
 			let errorCode = Util.getCallConnectionErrorCode(error);
 			const errorMessage = Util.getCallConnectionErrorMessage(error);
-			if (errorCode === 'UNKNOWN_ERROR' && error?.message) {
-				errorCode = call_lib_accidentLogger.getUnknownErrorType(error?.message);
+			if (errorCode === 'CLIENT_UNCLASSIFIED' && error?.message) {
+				errorCode = getUnknownErrorType(error?.message);
 			}
-			await call_lib_accidentLogger.accidentLogger.addLog(error, errorCode);
+			this.#loadAccidentLogger().then(({
+				accidentLogger
+			}) => accidentLogger?.addLog(error, errorCode)).catch(() => {});
 			call_lib_analytics.Analytics.getInstance().onJoinCallError({
-				callType: this.getCallType(),
+				callType: this.getCallType(attempt.provider),
 				errorCode,
-				callId: Util.getCallIdentifier(this.currentCall),
+				callId: attempt.callId,
 				errorMessage,
-				isVpnActive: this.#isVpnConnected()
+				isVpnActive: this.#isVpnConnected(),
+				isRoomClosed: error?.isRoomClosed === true
 			});
 		}
 		#clearPromotedAdminTimeout() {
@@ -36697,6 +38698,7 @@ this.BX = this.BX || {};
 			Hardware.unsubscribe(Hardware.Events.onChangeMicrophonePermission, this.#onChangeMicrophonePermissionHandler);
 			Hardware.unsubscribe(Hardware.Events.onChangeMicrophoneMuted, this.#onHardwareMicrophoneMutedChangeHandler);
 			Hardware.unsubscribe(Hardware.Events.onChangeCameraOn, this.#onHardwareCameraOnChangeHandler);
+			main_core_events.EventEmitter.unsubscribe(CALL_ALREADY_FINISHED_EVENT, this.#onCallAlreadyFinished);
 		}
 		log() {
 			if (this.currentCall) {
@@ -36766,7 +38768,64 @@ this.BX = this.BX || {};
 		static DocumentType = DocumentType;
 	}
 
+	const {
+		dbName,
+		storeName
+	} = call_lib_settingsManager.AccidentLogStorageKeys;
+	const countLogs = () => new Promise(resolve => {
+		const request = indexedDB.open(dbName);
+		request.onsuccess = () => {
+			const db = request.result;
+			if (!db.objectStoreNames.contains(storeName)) {
+				db.close();
+				resolve(0);
+				return;
+			}
+			const countRequest = db.transaction(storeName, 'readonly').objectStore(storeName).count();
+			countRequest.onsuccess = () => {
+				resolve(countRequest.result);
+				db.close();
+			};
+			countRequest.onerror = () => {
+				resolve(0);
+				db.close();
+			};
+		};
+		request.onerror = () => resolve(0);
+	});
+	const hasPendingLogs = async () => {
+		if (!main_core.Type.isObject(window.indexedDB)) {
+			return false;
+		}
+		if (main_core.Type.isFunction(indexedDB.databases)) {
+			const databases = await indexedDB.databases();
+			if (!databases.some(database => database.name === dbName)) {
+				return false;
+			}
+		}
+		return (await countLogs()) > 0;
+	};
+	const sendPendingAccidentLogs = () => {
+		const run = async () => {
+			try {
+				if (await hasPendingLogs()) {
+					await BX.Runtime.loadExtension('call.lib.accident-logger');
+				}
+			} catch {
+				//
+			}
+		};
+		if (main_core.Type.isFunction(window.requestIdleCallback)) {
+			requestIdleCallback(run, {
+				timeout: 5000
+			});
+		} else {
+			setTimeout(run, 2000);
+		}
+	};
+
 	applyHacks();
+	sendPendingAccidentLogs();
 	// compatibility
 	BX.CallEngine = CallEngine;
 
@@ -36822,6 +38881,7 @@ this.BX = this.BX || {};
 	exports.Util = Util;
 	exports.VideoStrategy = VideoStrategy;
 	exports.WebScreenSharePopup = WebScreenSharePopup;
+	exports.getUnknownErrorType = getUnknownErrorType;
 
-})(this.BX.Call = this.BX.Call || {}, BX, BX.Call.Adapter, BX.Call.Adapter, BX.Event, BX.Main, BX.Messenger.v2.Lib, BX.Call.Lib, BX.Call.Lib, BX.Call.Lib, BX.Messenger.v2.Lib, BX.UI.Dialogs, BX.Messenger.Lib, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Intranet, BX.Call.Lib, BX.Call.Lib, BX.Vue3.Pinia, BX.Call.Store, BX.Call.Lib, BX.Call.Infrastructure, BX.UI, BX.UI.Notification, BX.Call.Mapping, BX.Messenger.v2.Lib, BX.UI, BX.Call.Component, BX.Call.Component, BX.Call.Lib.MediaRegistry);
+})(this.BX.Call = this.BX.Call || {}, BX, BX.Call.Adapter, BX.Call.Adapter, BX.Event, BX.Main, BX.Messenger.v2.Lib, BX.Call.Lib, BX.Call.Lib, BX.Call.Lib, BX.Messenger.v2.Lib, BX.UI.Dialogs, BX.UI.Notification, BX.Messenger.Lib, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Call.Lib, BX.Vue3.Pinia, BX.Call.Store, BX.Call.Lib, BX.Call.Infrastructure, BX.Call.Lib, BX.UI, BX.Call.Mapping, BX.Messenger.v2.Lib, BX.UI, BX.Call.Lobby, BX.Call.Component, BX.Call.Component, BX.Call.Lib.MediaRegistry);
 //# sourceMappingURL=call.bundle.js.map

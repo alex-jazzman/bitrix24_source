@@ -219,3 +219,267 @@
 	top: 5px;
 	right: 0;
 }
+
+/* === BitrixGPT redesign overrides — every rule scoped to .--bitrixgpt-redesign === */
+
+/* The popup root carries both ai__copilot-menu-popup and --bitrixgpt-redesign on the same
+ * element, so the root override is a compound selector; inner items are descendants. */
+.ai__copilot-menu-popup.--bitrixgpt-redesign {
+	background-color: var(--ui-color-bg-content-primary, #fff);
+	border-radius: var(--ui-border-radius-3xl, 20px);
+	/* Clip the root by its radius so the scrollbar overhang at the rounded corners is cut off. */
+	overflow: hidden;
+	box-shadow:
+		var(--ui-box-shadow-popup-secondary-x, 0)
+		var(--ui-box-shadow-popup-secondary-y, 7px)
+		14px
+		var(--ui-box-shadow-popup-secondary-spread, 0)
+		var(--ui-box-shadow-popup-secondary-color, #0000001C);
+}
+
+/* Section divider color (Figma #f0f0f0 → --ui-color-divider-default) */
+.ai__copilot-menu-popup.--bitrixgpt-redesign .popup-window-delimiter {
+	--popup-window-delimiter-bg-color: var(--ui-color-divider-default, #F0F0F0);
+}
+
+/* "NEW" labels (item-level and section separator) are dropped in JS (copilot-menu.js) under the
+ * flag — not rendered into the DOM at all, so no CSS is needed for them. */
+
+/* Icon is moved to item-right in JS; give it correct spacing there. */
+.ai__copilot-menu-popup.--bitrixgpt-redesign .ai__copilot-menu_item-right .ai__copilot-menu_item-icon {
+	margin-left: 8px;
+	--ui-icon-set__icon-color: var(--ui-color-base-50, #a8adb4);
+}
+
+/* Paint the glyph itself (the icon lives directly in .ai__copilot-menu_item-icon, not
+ * always inside .ai__copilot-menu_item-right). The accent colour leaks in via an inherited
+ * variable, so override on the glyph with !important. Check/favourite icons are NOT inside
+ * .ai__copilot-menu_item-icon and stay untouched. */
+.ai__copilot-menu-popup.--bitrixgpt-redesign .ai__copilot-menu_item-icon .ui-icon-set {
+	--ui-icon-set__icon-color: var(--ui-color-base-50, #a8adb4) !important;
+}
+
+/* item-left no longer has an icon: remove its right margin when only text is inside */
+.ai__copilot-menu-popup.--bitrixgpt-redesign .ai__copilot-menu_item-left {
+	margin-right: 0;
+}
+
+/* Thin outline chevron. The AIR theme (.popup-window) hardcodes a large filled 24×25 chevron
+ * via top/bottom on ::after, so we set our own glyph and override the ::after geometry directly
+ * (not through variables). Reused via a custom property. */
+.ai__copilot-menu-popup.--bitrixgpt-redesign {
+	--ai-copilot-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='5' height='9' viewBox='0 0 5 9' fill='none'%3E%3Cpath d='M1 1L4 4.5L1 8' stroke='%23a8adb4' stroke-width='1.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+
+/* Submenu item chevron sits in the gap between the icon and the row edge (~8px from the edge);
+ * vertically centred via top/translateY instead of the AIR hardcoded top/bottom. */
+.ai__copilot-menu-popup.--bitrixgpt-redesign .menu-popup-item-submenu:not(.--role-item)::after {
+	right: 8px;
+	top: 50%;
+	bottom: auto;
+	transform: translateY(-50%);
+	width: 5px;
+	height: 9px;
+	-webkit-mask: none;
+	mask: none;
+	background-color: transparent;
+	background-image: var(--ai-copilot-chevron);
+	background-size: contain;
+	background-repeat: no-repeat;
+}
+
+/* === Role header === */
+
+/* Pull the header flush to the rounded top: .menu-popup has padding-top:10px, so a negative
+ * margin-top cancels it and lets the glow reach the top edge. Header only (--role-item). */
+.ai__copilot-menu-popup.--bitrixgpt-redesign .menu-popup-item.--role-item {
+	position: relative;
+	overflow: hidden;
+	margin-top: -10px;
+	border-bottom: 1px solid var(--ui-color-divider-vibrant-less, rgba(0, 0, 0, 0.03));
+}
+
+.ai__copilot-menu-popup.--bitrixgpt-redesign .ai__copilot-menu_role.--bitrixgpt-redesign {
+	position: relative;
+	overflow: hidden;
+}
+
+/* Soft multi-colour bloom from the top-right corner. The real glow is an inline SVG
+ * (conic-gradient inside a foreignObject) injected by JS; foreignObject is fragile in
+ * WebKit/Safari, so this CSS radial gradient renders underneath as a fallback and shows
+ * through if the SVG fails to paint. */
+.ai__copilot-menu-popup.--bitrixgpt-redesign .ai__copilot-menu_role-glow {
+	position: absolute;
+	inset: 0;
+	pointer-events: none;
+	z-index: 0;
+	overflow: hidden;
+	/* Fallback fades out within the top ~60% of the header, so the colour never reaches the
+	 * bottom border (matches Figma). Kept faint so it barely adds to the SVG glow where the
+	 * foreignObject renders (Chrome) but still shows a soft glow where it does not (Safari). */
+	background: radial-gradient(
+		125% 60% at 100% 0%,
+		rgba(249, 98, 105, 0.16) 0%,
+		rgba(239, 70, 183, 0.10) 32%,
+		rgba(157, 71, 255, 0.05) 60%,
+		rgba(255, 255, 255, 0) 100%
+	);
+}
+
+.ai__copilot-menu-popup.--bitrixgpt-redesign .ai__copilot-menu_role-glow svg {
+	display: block;
+	width: 100%;
+	height: 100%;
+}
+
+/* Keep header content above the glow */
+.ai__copilot-menu-popup.--bitrixgpt-redesign .ai__copilot-menu_role.--bitrixgpt-redesign {
+	z-index: 1;
+}
+
+/* Avatar: round 48px with BitrixGPT gradient circle (same asset as the input field).
+ * The role <img> stays on top; for the default role it is the logo glyph that sits on
+ * the gradient circle, for a custom role its own picture covers the background. */
+.ai__copilot-menu-popup.--bitrixgpt-redesign .ai__copilot-menu_role.--bitrixgpt-redesign .ai__copilot-menu_role-left {
+	width: 48px;
+	min-width: 48px;
+	height: 48px;
+	border-radius: 50%;
+	background-image: var(--ai-copilot-avatar);
+	background-size: contain;
+	background-repeat: no-repeat;
+	background-position: center;
+}
+
+.ai__copilot-menu-popup.--bitrixgpt-redesign .ai__copilot-menu_role.--bitrixgpt-redesign .ai__copilot-menu_role-avatar {
+	width: 48px;
+	min-width: 48px;
+	height: 48px;
+	background-color: transparent;
+}
+
+/* Default role: hide the <img> (it is the grey rounded logo png) so the gradient SVG
+ * background on .ai__copilot-menu_role-left shows through. Custom roles keep their <img>. */
+.ai__copilot-menu-popup.--bitrixgpt-redesign .ai__copilot-menu_role-left.--bitrixgpt-default-avatar .ai__copilot-menu_role-avatar {
+	display: none;
+}
+
+/* Text block: subtitle on top (grey 13px), name below (15px medium, gradient text) */
+.ai__copilot-menu-popup.--bitrixgpt-redesign .ai__copilot-menu_role.--bitrixgpt-redesign .ai__copilot-menu_role-subtitle {
+	font-size: 13px;
+	line-height: 17px;
+	color: var(--ui-color-base-5, #c9ccd0);
+}
+
+.ai__copilot-menu-popup.--bitrixgpt-redesign .ai__copilot-menu_role.--bitrixgpt-redesign .ai__copilot-menu_role-title {
+	margin-bottom: 0;
+	font-size: 15px;
+	line-height: 20px;
+	font-weight: var(--ui-font-weight-medium);
+	background: linear-gradient(
+		264.09deg,
+		var(--ui-color-design-outline-bitrix-gpt-content-gradient-5, #f96269) 1.67%,
+		var(--ui-color-design-outline-bitrix-gpt-content-gradient-4, #f046b7) 21.82%,
+		var(--ui-color-design-outline-bitrix-gpt-content-gradient-3, #9d48ff) 52.44%,
+		var(--ui-color-design-outline-bitrix-gpt-content-gradient-2, #3f68ff) 76.41%,
+		var(--ui-color-design-outline-bitrix-gpt-content-gradient-1, #0098ea) 97.21%
+	);
+	-webkit-background-clip: text;
+	background-clip: text;
+	color: transparent;
+}
+
+/* Row highlight spans the full row (edge-to-edge), no inset plate. Overrides the base #f7f7f7
+ * (items) and #fff (header). For the header it paints under the glow and content (higher
+ * z-index children), so the 3%-black reads as a light row highlight. */
+.ai__copilot-menu-popup.--bitrixgpt-redesign.--keyboard-control .menu-popup-item.--highlight,
+.ai__copilot-menu-popup.--bitrixgpt-redesign.--keyboard-control .menu-popup-item.--highlight:hover,
+.ai__copilot-menu-popup.--bitrixgpt-redesign.--keyboard-control .menu-popup-item.--role-item.--highlight,
+.ai__copilot-menu-popup.--bitrixgpt-redesign.--keyboard-control .menu-popup-item.--role-item.--highlight:hover {
+	background-color: var(--ui-color-bg-state-hover-default, rgba(0, 0, 0, 0.03));
+}
+
+/* Keep the role subtitle grey (base-5) on hover/highlight — base turns it purple via copilot-secondary. */
+.ai__copilot-menu-popup.--bitrixgpt-redesign.--keyboard-control .menu-popup-item-submenu.menu-popup-item.--role-item.--highlight .ai__copilot-menu_role-subtitle,
+.ai__copilot-menu-popup.--bitrixgpt-redesign.--keyboard-control .menu-popup-item-submenu.menu-popup-item.--role-item.--highlight:hover .ai__copilot-menu_role-subtitle {
+	color: var(--ui-color-base-5, #c9ccd0);
+}
+
+/* Header chevron: same thin outline glyph as items. Base draws it via mask + background-color
+ * (purple on hover); drop the mask, draw a background-image, keep the background transparent in
+ * every state so there is no purple. */
+.ai__copilot-menu-popup.--bitrixgpt-redesign .menu-popup-item.--role-item.menu-popup-item-submenu::after,
+.ai__copilot-menu-popup.--bitrixgpt-redesign.--keyboard-control .menu-popup-item.--role-item.menu-popup-item-submenu.--highlight::after,
+.ai__copilot-menu-popup.--bitrixgpt-redesign.--keyboard-control .menu-popup-item.--role-item.menu-popup-item-submenu.--highlight:hover::after {
+	right: 18px;
+	top: 50%;
+	bottom: auto;
+	transform: translateY(-50%);
+	width: 5px;
+	height: 9px;
+	-webkit-mask: none;
+	mask: none;
+	background-color: transparent;
+	background-image: var(--ai-copilot-chevron);
+	background-size: contain;
+	background-repeat: no-repeat;
+}
+
+/* Hide the scrollbar (Figma has none) so content and glow reach the card edge; wheel/trackpad
+ * scrolling still works (overflow-y stays auto). */
+.ai__copilot-menu-popup.--bitrixgpt-redesign .popup-window-content {
+	border-radius: var(--ui-border-radius-3xl, 20px);
+	overflow-x: hidden;
+	scrollbar-width: none;
+}
+
+.ai__copilot-menu-popup.--bitrixgpt-redesign .popup-window-content::-webkit-scrollbar {
+	display: none;
+}
+
+/* Prompt library keeps the regular menu-item treatment in the redesign. */
+.ai__copilot-menu-popup.--bitrixgpt-redesign .ai__copilot-menu_item.--highlight-text .ai__copilot-menu_item-text {
+	color: var(--ui-color-base-1, #333);
+	font-weight: var(--ui-font-weight-regular, 400);
+}
+
+/* Menu item horizontal padding 18px. The Bitrix default on .menu-popup-item-text is
+ * line-height:36px + 8/8 vertical padding, which bloats every row; reset it and set the
+ * vertical rhythm on the inner left column instead. */
+.ai__copilot-menu-popup.--bitrixgpt-redesign .menu-popup-item .menu-popup-item-text {
+	padding: 0 18px;
+	line-height: normal;
+}
+
+.ai__copilot-menu-popup.--bitrixgpt-redesign .ai__copilot-menu_item-left {
+	padding-top: 8px;
+	padding-bottom: 8px;
+}
+
+.ai__copilot-menu-popup.--bitrixgpt-redesign .ai__copilot-menu_item-text {
+	margin-left: 0;
+	line-height: 19px;
+}
+
+/* Role header: drop the wrapper padding (the .._role element sets pl 12 / pr 18); otherwise the
+ * avatar shifts and the row grows to 94px instead of 78px. */
+.ai__copilot-menu-popup.--bitrixgpt-redesign .menu-popup-item.--role-item .menu-popup-item-text {
+	padding: 0;
+}
+
+.ai__copilot-menu-popup.--bitrixgpt-redesign .ai__copilot-menu_role.--bitrixgpt-redesign {
+	height: 78px;
+	padding-left: 12px;
+	padding-right: 18px;
+	gap: 8px;
+}
+
+.ai__copilot-menu-popup.--bitrixgpt-redesign .ai__copilot-menu_role.--bitrixgpt-redesign .ai__copilot-menu_role-right {
+	margin-left: 0;
+	gap: 3px;
+}
+
+.ai__copilot-menu-popup.--bitrixgpt-redesign .popup-window-delimiter-text {
+	font-size: 12px;
+	color: var(--ui-color-base-50, #a8adb4);
+}

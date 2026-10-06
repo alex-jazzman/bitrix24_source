@@ -3,7 +3,7 @@
  */
 jn.define('im/messenger/provider/pull/counter', (require, exports, module) => {
 	const { Type } = require('type');
-	const { DialogType, RecentTab } = require('im/messenger/const');
+	const { AppStatus, DialogType, RecentTab } = require('im/messenger/const');
 	const { UuidManager } = require('im/messenger/lib/uuid-manager');
 	const { BasePullHandler } = require('im/messenger/provider/pull/base');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
@@ -43,6 +43,11 @@ jn.define('im/messenger/provider/pull/counter', (require, exports, module) => {
 		{
 			logger.log('handleMessage', params, extra, command);
 
+			if (this.interceptEvent(extra))
+			{
+				return;
+			}
+
 			const {
 				chatId,
 				counter,
@@ -64,7 +69,11 @@ jn.define('im/messenger/provider/pull/counter', (require, exports, module) => {
 			const currentUserId = serviceLocator.get('core').getUserId();
 
 			const action = message.senderId === currentUserId
-				? new NewOwnPullMessageAction({ chatId, counterState })
+				? new NewOwnPullMessageAction({
+					chatId,
+					counterState,
+					messageId: message?.id,
+				})
 				: new NewParticipantPullMessageAction({
 					chatId,
 					incomingCounterState: counterState,
@@ -87,6 +96,11 @@ jn.define('im/messenger/provider/pull/counter', (require, exports, module) => {
 		handleMessageChat(params, extra, command)
 		{
 			logger.log('handleMessageChat', params, extra, command);
+
+			if (this.interceptEvent(extra))
+			{
+				return;
+			}
 
 			if (this.#isSharedEvent(extra))
 			{
@@ -116,7 +130,11 @@ jn.define('im/messenger/provider/pull/counter', (require, exports, module) => {
 			const currentUserId = serviceLocator.get('core').getUserId();
 
 			const action = message.senderId === currentUserId
-				? new NewOwnPullMessageAction({ chatId, counterState })
+				? new NewOwnPullMessageAction({
+					chatId,
+					counterState,
+					messageId: message?.id,
+				})
 				: new NewParticipantPullMessageAction({
 					chatId,
 					incomingCounterState: counterState,
@@ -139,6 +157,11 @@ jn.define('im/messenger/provider/pull/counter', (require, exports, module) => {
 		{
 			logger.log('handleMessageDeleteV2', params, extra, command);
 
+			if (this.interceptEvent(extra))
+			{
+				return;
+			}
+
 			if (this.#isSharedEvent(extra))
 			{
 				return;
@@ -152,6 +175,7 @@ jn.define('im/messenger/provider/pull/counter', (require, exports, module) => {
 				muted,
 				unread,
 				messages,
+				newLastMessage,
 			} = params;
 
 			const action = new DeleteMessagePullAction({
@@ -165,6 +189,7 @@ jn.define('im/messenger/provider/pull/counter', (require, exports, module) => {
 					isMarkedAsUnread: unread,
 				},
 				deletedMessageIds: messages.map((message) => message.id),
+				newLastMessageId: newLastMessage?.id ?? null,
 			});
 
 			serviceLocator.get('counters-update-system').dispatch(action)
@@ -173,13 +198,19 @@ jn.define('im/messenger/provider/pull/counter', (require, exports, module) => {
 				});
 		}
 
-		async handleReadMessage(params, extra, command)
+		handleReadMessage(params, extra, command)
 		{
+			logger.log('handleReadMessage', params, extra, command);
+
+			if (this.interceptEvent(extra))
+			{
+				return;
+			}
+
 			if (this.#isSharedEvent(extra))
 			{
 				return;
 			}
-			logger.log('handleReadMessage', params, extra, command);
 
 			const {
 				chatId,
@@ -211,45 +242,38 @@ jn.define('im/messenger/provider/pull/counter', (require, exports, module) => {
 				return;
 			}
 
-			const counterState = {
+			const action = new ReadMessagePullAction({
 				chatId,
-				counter,
-				parentChatId,
-				recentSections: recentConfig.sections,
-				isMuted: muted,
-				isMarkedAsUnread: unread,
-			};
-
-			const repository = serviceLocator.get('counters-update-system').getChatCounterRepository();
-			if (repository.hasPendingOperations(chatId))
-			{
-				const action = new ReadMessagePullAction({
+				incomingCounterState: {
 					chatId,
-					incomingCounterState: counterState,
-					lastReadId: lastId,
-				});
+					counter,
+					parentChatId,
+					recentSections: recentConfig.sections,
+					isMuted: muted,
+					isMarkedAsUnread: unread,
+				},
+				lastReadId: lastId,
+			});
 
-				serviceLocator.get('counters-update-system').dispatch(action)
-					.catch((error) => {
-						logger.error('handleReadMessage: dispatch pull action error', error);
-					});
-
-				return;
-			}
-
-			this.#setCounter(counterState)
+			serviceLocator.get('counters-update-system').dispatch(action)
 				.catch((error) => {
-					logger.error('handleReadMessage: setCounter error', error);
+					logger.error('handleReadMessage: dispatch pull action error', error);
 				});
 		}
 
 		handleReadMessageChat(params, extra, command)
 		{
+			logger.log('handleReadMessageChat', params, extra, command);
+
+			if (this.interceptEvent(extra))
+			{
+				return;
+			}
+
 			if (this.#isSharedEvent(extra))
 			{
 				return;
 			}
-			logger.log('handleReadMessageChat', params, extra, command);
 
 			const {
 				chatId,
@@ -259,6 +283,7 @@ jn.define('im/messenger/provider/pull/counter', (require, exports, module) => {
 				muted,
 				unread,
 				parentChatId,
+				exact,
 			} = params;
 
 			// If actionUuid is registered, this is confirmation of our local action
@@ -291,9 +316,13 @@ jn.define('im/messenger/provider/pull/counter', (require, exports, module) => {
 				isMarkedAsUnread: unread,
 			};
 
-			// Check if we have pending operations - if yes, resolve conflict
+			// Check if we have pending operations - if yes, resolve conflict.
+			// Exact read (exact, Feed->IM): the server lastId intentionally does NOT move, so
+			// threshold filtering of pending ops by lastReadId in ReadMessagePullStrategy is
+			// unreliable and may undercount. Trust the authoritative server counter and skip the
+			// conflict strategy (apply the counter directly via #setCounter below).
 			const repository = serviceLocator.get('counters-update-system').getChatCounterRepository();
-			if (repository.hasPendingOperations(chatId))
+			if (!exact && repository.hasPendingOperations(chatId))
 			{
 				const action = new ReadMessagePullAction({
 					chatId,
@@ -320,6 +349,11 @@ jn.define('im/messenger/provider/pull/counter', (require, exports, module) => {
 		{
 			logger.info('handleReadAllChats', params, extra, command);
 
+			if (this.interceptEvent(extra))
+			{
+				return;
+			}
+
 			// Use system to clear counters (Vuex + database, except openlines)
 			await serviceLocator.get('counters-update-system').readAllChats()
 				.catch((error) => {
@@ -342,6 +376,11 @@ jn.define('im/messenger/provider/pull/counter', (require, exports, module) => {
 		{
 			logger.info('handleReadAllChatsByType', params);
 
+			if (this.interceptEvent(extra))
+			{
+				return;
+			}
+
 			const { type } = params;
 
 			if (type !== DialogType.tasksTask)
@@ -359,12 +398,17 @@ jn.define('im/messenger/provider/pull/counter', (require, exports, module) => {
 
 		handleReadChildren(params, extra, command)
 		{
-			if (this.#isSharedEvent(extra))
+			logger.log(`${this.constructor.name}.handleReadAllChannelComments`, params, extra, command);
+
+			if (this.interceptEvent(extra))
 			{
 				return;
 			}
 
-			logger.log(`${this.constructor.name}.handleReadAllChannelComments`, params, extra, command);
+			if (this.#isSharedEvent(extra))
+			{
+				return;
+			}
 
 			const { chatId } = params;
 			serviceLocator.get('counters-update-system').readChildren(chatId)
@@ -377,6 +421,11 @@ jn.define('im/messenger/provider/pull/counter', (require, exports, module) => {
 		handleUnreadMessage(params, extra, command)
 		{
 			logger.log(`${this.constructor.name}.handleUnreadMessage`, params, extra, command);
+
+			if (this.interceptEvent(extra))
+			{
+				return;
+			}
 
 			if (this.#isLocalActionUuid(extra))
 			{
@@ -404,6 +453,11 @@ jn.define('im/messenger/provider/pull/counter', (require, exports, module) => {
 		handleUnreadMessageChat(params, extra, command)
 		{
 			logger.log(`${this.constructor.name}.handleUnreadMessageChat`, params, extra, command);
+
+			if (this.interceptEvent(extra))
+			{
+				return;
+			}
 
 			if (this.#isLocalActionUuid(extra))
 			{
@@ -435,11 +489,17 @@ jn.define('im/messenger/provider/pull/counter', (require, exports, module) => {
 		 */
 		handleChatUnread(params, extra)
 		{
+			logger.log(`${this.constructor.name}.handleChatUnread`, params, extra);
+
+			if (this.interceptEvent(extra))
+			{
+				return;
+			}
+
 			if (this.#isSharedEvent(extra))
 			{
 				return;
 			}
-			logger.log(`${this.constructor.name}.handleChatUnread`, params, extra);
 
 			const {
 				active: isMarkedAsUnread,
@@ -467,6 +527,11 @@ jn.define('im/messenger/provider/pull/counter', (require, exports, module) => {
 		{
 			logger.log(`${this.constructor.name}.handleChatDelete`, params, extra, command);
 
+			if (this.interceptEvent(extra))
+			{
+				return;
+			}
+
 			if (this.#isSharedEvent(extra))
 			{
 				return;
@@ -478,6 +543,11 @@ jn.define('im/messenger/provider/pull/counter', (require, exports, module) => {
 		async handleChatHide(params, extra, command)
 		{
 			logger.log(`${this.constructor.name}.handleChatHide`, params, extra, command);
+
+			if (this.interceptEvent(extra))
+			{
+				return;
+			}
 
 			if (this.#isSharedEvent(extra))
 			{
@@ -528,6 +598,11 @@ jn.define('im/messenger/provider/pull/counter', (require, exports, module) => {
 		{
 			logger.log(`${this.constructor.name}.handleChatUserLeave`, params, extra, command);
 
+			if (this.interceptEvent(extra))
+			{
+				return;
+			}
+
 			if (this.#isSharedEvent(extra))
 			{
 				return;
@@ -575,6 +650,11 @@ jn.define('im/messenger/provider/pull/counter', (require, exports, module) => {
 		{
 			logger.log(`${this.constructor.name}.handleChatMuteNotify`, params, extra, command);
 
+			if (this.interceptEvent(extra))
+			{
+				return;
+			}
+
 			const {
 				chatId,
 				counter,
@@ -604,6 +684,11 @@ jn.define('im/messenger/provider/pull/counter', (require, exports, module) => {
 		handleRecentUpdate(params, extra, command)
 		{
 			logger.log(`${this.constructor.name}.handleRecentUpdate`, params, extra, command);
+
+			if (this.interceptEvent(extra))
+			{
+				return;
+			}
 
 			const {
 				chat,
@@ -643,6 +728,19 @@ jn.define('im/messenger/provider/pull/counter', (require, exports, module) => {
 			logger.log(`${this.constructor.name}.setCounter`, counterState);
 
 			return serviceLocator.get('counters-update-system').updateCounterState(counterState);
+		}
+
+		/**
+		 * @desc Intercept counter pull events when the app status is not in {sync, backgroundSync, running}.
+		 * @override
+		 * @param {PullExtraParams} extra
+		 * @return {boolean}
+		 */
+		interceptEvent(extra)
+		{
+			const appStatus = serviceLocator.get('core').getAppStatus();
+
+			return [AppStatus.connection, AppStatus.networkWaiting].includes(appStatus);
 		}
 
 		/**

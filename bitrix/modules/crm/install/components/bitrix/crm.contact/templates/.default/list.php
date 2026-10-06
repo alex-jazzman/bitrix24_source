@@ -142,3 +142,8 @@ else
 		$component
 	);
 }
+
+if ($categoryId === 0)
+{
+	echo (\Bitrix\Crm\Tour\EInvoicePromo::getInstance()->build($analytics));
+}

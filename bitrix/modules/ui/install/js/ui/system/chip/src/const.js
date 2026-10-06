@@ -15,6 +15,7 @@ export const ChipDesign = Object.freeze({
 	TintedAlert: 'tinted-alert',
 	TintedWarning: 'tinted-warning',
 	TintedNoAccent: 'tinted-no-accent',
+	TintedBitrixGpt: 'tinted-bitrix-gpt',
 	OutlineAccent: 'outline-accent',
 	OutlineAccent2: 'outline-accent-2',
 	OutlineSuccess: 'outline-success',

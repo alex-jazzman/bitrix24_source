@@ -8,17 +8,20 @@ export const bookingStatesMixin = {
 	computed: {
 		...mapGetters({
 			isBookingCreatedFromEmbed: `${Model.Interface}/isBookingCreatedFromEmbed`,
-			editingBookingId: `${Model.Interface}/editingBookingId`,
-			isEditingBookingMode: `${Model.Interface}/isEditingBookingMode`,
-			offHoursExpanded: `${Model.Interface}/offHoursExpanded`,
+			selectedDateTs: `${Model.Interface}/selectedDateTs`,
 			fromHour: `${Model.Interface}/fromHour`,
 			toHour: `${Model.Interface}/toHour`,
-			selectedDateTs: `${Model.Interface}/selectedDateTs`,
+			editingBookingId: `${Model.Interface}/editingBookingId`,
+			isEditingBookingMode: `${Model.Interface}/isEditingBookingMode`,
 			getResourceById: `${Model.Resources}/getById`,
 			isDeletingResourceFilterMode: `${Model.Filter}/isDeletingResourceFilterMode`,
 			deletingResource: `${Model.Filter}/deletingResource`,
 			isMenuOpenedForBooking: `${Model.Interface}/isMenuOpenedForBooking`,
 		}),
+		offHoursExpanded(): boolean
+		{
+			return this.gridContext?.offHoursExpanded ?? this.$store.getters[`${Model.Interface}/offHoursExpanded`];
+		},
 		isReal(): boolean
 		{
 			return isRealId(this.bookingId);

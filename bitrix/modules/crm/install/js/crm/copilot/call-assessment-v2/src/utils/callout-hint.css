@@ -1,0 +1,96 @@
+.crm-call-assessment-v2-callout-hint.popup-window {
+	background-color: var(--ui-color-accent-soft-element-blue);
+	border-radius: var(--ui-border-radius-2xl);
+	padding: var(--ui-space-inset-md) var(--ui-space-inset-sm);
+	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+	max-width: 479px;
+	width: 479px;
+}
+
+.crm-call-assessment-v2-callout-hint.popup-window::before {
+	content: '';
+	position: absolute;
+	inset: 0;
+	background-repeat: no-repeat;
+	background-position: top left;
+	border-radius: inherit;
+	overflow: hidden;
+	pointer-events: none;
+}
+
+.crm-call-assessment-v2-callout-hint .ui-hint-content {
+	position: relative;
+	display: block;
+	max-width: none;
+}
+
+.crm-call-assessment-v2-callout-hint.popup-window .popup-window-angly--arrow {
+	background-color: var(--ui-color-accent-soft-element-blue);
+}
+
+.crm-call-assessment-v2-callout-hint__body {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-lg2);
+	padding: 0 var(--ui-space-inset-md2) var(--ui-space-stack-2xs) var(--ui-space-inset-xs2);
+}
+
+.crm-call-assessment-v2-callout-hint__icon {
+	flex: 0 0 78px;
+	width: 78px;
+	height: 78px;
+	background-position: center;
+	background-size: contain;
+	background-repeat: no-repeat;
+}
+
+.crm-call-assessment-v2-callout-hint__text {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-2xs2);
+	flex: 1 1 0;
+	min-width: 0;
+}
+
+.crm-call-assessment-v2-callout-hint__title {
+	color: var(--ui-color-base-white-fixed);
+	font-size: 17px;
+	font-weight: var(--ui-font-weight-medium);
+	line-height: 23px;
+	letter-spacing: -0.1px;
+}
+
+.crm-call-assessment-v2-callout-hint__desc {
+	color: rgba(255, 255, 255, 0.8);
+	font-size: var(--ui-font-size-lg);
+	font-weight: var(--ui-font-weight-regular);
+	line-height: 20px;
+	letter-spacing: -0.05px;
+}
+
+.crm-call-assessment-v2-callout-hint.--variant-ai-update.popup-window::before {
+	background-image: url('../../images/ai-tooltip-flash.svg');
+	background-size: 123px 145px;
+}
+
+.crm-call-assessment-v2-callout-hint.--variant-ai-update .crm-call-assessment-v2-callout-hint__icon {
+	background-image: url('../../images/ai-update-tooltip-icon.png');
+}
+
+.crm-call-assessment-v2-callout-hint.--variant-attribution.popup-window::before {
+	background-image: url('../../images/ai-created-tooltip-flash.svg');
+	background-size: 157px 179px;
+}
+
+.crm-call-assessment-v2-callout-hint.--variant-attribution .crm-call-assessment-v2-callout-hint__icon {
+	background-image: url('../../images/ai-created-tooltip-icon.png');
+}
+
+.crm-call-assessment-v2-callout-hint.--variant-step.popup-window::before {
+	background-image: url('../../images/step-tooltip-flash.svg');
+	background-size: 123px 155px;
+}
+
+.crm-call-assessment-v2-callout-hint.--variant-step .crm-call-assessment-v2-callout-hint__icon {
+	background-image: url('../../images/step-tooltip-icon.png');
+}

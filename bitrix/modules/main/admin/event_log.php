@@ -242,6 +242,7 @@ while($db_res = $rsData->Fetch())
 		case "USER_BLOCKED":
 		case "USER_PERMISSIONS_FAIL":
 		case "SECURITY_OTP":
+		case "SECURITY_OTP_SENDING":
 			if(!array_key_exists($db_res["ITEM_ID"], $arUsersCache))
 			{
 				$rsUser = CUser::GetByID($db_res["ITEM_ID"]);

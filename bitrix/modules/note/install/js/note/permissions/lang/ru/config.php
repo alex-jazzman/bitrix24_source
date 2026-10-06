@@ -33,3 +33,9 @@ $MESS['NOTE_PERMISSIONS_POPUP_SAVE_ERROR_DOCUMENT'] = 'Не удалось со�
 $MESS['NOTE_PERMISSIONS_POPUP_LOAD_ERROR_DOCUMENT'] = 'Не удалось загрузить права на документ, попробуйте ещё раз немного позже';
 
 $MESS['NOTE_PERMISSIONS_POPUP_ALL_EMPLOYEES'] = 'Все сотрудники';
+
+$MESS['NOTE_PERMISSIONS_POPUP_SCOPE_TITLE'] = 'Распространить на вложенные документы';
+$MESS['NOTE_PERMISSIONS_POPUP_SCOPE_HINT'] = 'Права будут действовать на этот документ и все вложенные документы';
+
+$MESS['NOTE_PERMISSIONS_POPUP_INHERITED_HINT'] = 'Унаследовано от родительского документа';
+$MESS['NOTE_PERMISSIONS_POPUP_INHERITED_HINT_FROM'] = 'Унаследовано от документа «#DOCUMENT#». Изменить можно только в правах этого документа';

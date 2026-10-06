@@ -14,7 +14,7 @@ import { EntitySearchType, EntitySearchConfig } from '../../const/const';
 import { getFirstItemFromSearchResults } from '../../helpers/get-first-search-item';
 import { getMinTokenSize } from '../../helpers/get-min-token-size';
 import { mergeSearchItems } from '../../helpers/merge-search-items';
-import { EmptyState } from '../elements/empty-state';
+import { SearchEmptyState } from '../elements/empty-state/search';
 import { SearchItem } from '../elements/search-item';
 
 import '../css/chat-search.css';
@@ -22,7 +22,7 @@ import '../css/chat-search.css';
 // @vue/component
 export const AddToChatSearch = {
 	name: 'AddToChat',
-	components: { ScrollWithGradient, SearchItem, EmptyState },
+	components: { ScrollWithGradient, SearchItem, SearchEmptyState },
 	props: {
 		query: {
 			type: String,
@@ -73,7 +73,7 @@ export const AddToChatSearch = {
 	{
 		this.searchService = new SearchService(EntitySearchConfig[EntitySearchType.addToChat]);
 		this.searchOnServerDelayed = Runtime.debounce(this.searchOnServer, 400, this);
-		this.recentSearchItems = getUsersFromRecentItems({ withFakeUsers: true });
+		this.recentSearchItems = getUsersFromRecentItems({ withFakeUsers: true, withGuests: false });
 
 		this.getEmitter().subscribe(EventType.search.keyPressed, this.onKeyPressed);
 	},
@@ -213,7 +213,7 @@ export const AddToChatSearch = {
 						:selfChatReplace="false"
 						@clickItem="onClickItem($event, index)"
 					/>
-					<EmptyState v-if="isEmptyState" />
+					<SearchEmptyState v-if="isEmptyState" />
 				</template>
 			</div>
 		</ScrollWithGradient> 

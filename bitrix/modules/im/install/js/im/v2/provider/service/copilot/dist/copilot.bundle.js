@@ -7,16 +7,21 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	class CopilotChatService {
 		async createChat({
-			roleCode
+			roleCode,
+			parentChatId
 		}) {
 			const chatService = new im_v2_provider_service_chat.ChatService();
 			try {
-				const {
-					newDialogId
-				} = await chatService.createChat({
+				const config = {
 					type: im_v2_const.ChatType.copilot,
 					copilotMainRole: roleCode
-				});
+				};
+				if (parentChatId) {
+					config.parentChatId = parentChatId;
+				}
+				const {
+					newDialogId
+				} = await chatService.createChat(config);
 				await chatService.loadChatWithMessages(newDialogId);
 				return newDialogId;
 			} catch (error) {
@@ -24,9 +29,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				throw error;
 			}
 		}
-		createDefaultChat() {
+		createDefaultChat(parentChatId) {
 			return this.createChat({
-				roleCode: im_v2_const.CopilotRole.universalCode
+				roleCode: im_v2_const.CopilotRole.universalCode,
+				parentChatId
 			});
 		}
 		async fetchDraftChat() {

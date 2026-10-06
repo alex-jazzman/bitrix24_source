@@ -15,14 +15,23 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		computed: {
 			OutlineIcons: () => ui_iconSet_api_vue.Outline
 		},
+		methods: {
+			loc(phraseCode) {
+				return this.$Bitrix.Loc.getMessage(phraseCode);
+			}
+		},
 		template: `
-		<div class="bx-im-list-container-slider__close-container">
+		<button
+			type="button"
+			class="bx-im-list-container-slider__close-container"
+			:aria-label="loc('IM_LIST_SLIDER_CLOSE_BUTTON_ARIA_LABEL')"
+		>
 			<BIcon
 				:name="OutlineIcons.CHEVRON_LEFT_L"
-				:hoverable="true"
 				class="bx-im-list-container-slider__close-icon"
+				aria-hidden="true"
 			/>
-		</div>
+		</button>
 	`
 	};
 

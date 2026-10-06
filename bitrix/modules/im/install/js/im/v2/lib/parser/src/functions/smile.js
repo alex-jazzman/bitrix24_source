@@ -53,7 +53,10 @@ const lookBehind = function(text, match, offset): string
 {
 	const substring = text.slice(0, offset + match.length);
 	const escaped = getUtils().text.escapeRegex(match);
-	const regExp = new RegExp(`(?:^|&quot;|>|(?:${this.pattern})|\\s|<)(?:${escaped})$`);
+	// A BBCode tag close "]" bounds a smile just like an HTML ">" — decodeSmile runs while
+	// [list]/[*]/[b]… tags are still present, so a smile right after one (e.g. "[*]:)") must
+	// be recognised.
+	const regExp = new RegExp(`(?:^|&quot;|>|]|(?:${this.pattern})|\\s|<)(?:${escaped})$`);
 
 	return substring.match(regExp);
 };
@@ -109,7 +112,10 @@ export const ParserSmile = {
 		const ratioConfig = Type.isObjectLike(options.ratioConfig) ? options.ratioConfig : RatioConfig;
 		const ratio = enableBigSmile ? getSmileRatio(text, this.pattern, ratioConfig) : ratioConfig.Default;
 
-		const pattern = `(?:(?:${this.pattern})(?=(?:(?:${this.pattern})|\\s|&quot;|<|$)))`;
+		// "[" (BBCode tag open) bounds a smile just like "<" (HTML tag open): decodeSmile runs
+		// before decodeList, so a smile ending an item — "...:D[*]" / "...:D[/list]" — sits right
+		// before a "[" and would otherwise be missed.
+		const pattern = `(?:(?:${this.pattern})(?=(?:(?:${this.pattern})|\\s|&quot;|<|\\[|$)))`;
 		const regExp = new RegExp(pattern, 'g');
 		const replacedText = text.replaceAll(regExp, (match, offset) => {
 			const behindMatching = lookBehind.call(this, text, match, offset);

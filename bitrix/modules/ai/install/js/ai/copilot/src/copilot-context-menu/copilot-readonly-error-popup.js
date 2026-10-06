@@ -14,6 +14,7 @@ import './css/copilot-context-menu-error-popup.css';
 type CopilotContextMenuErrorPopupOptions = {
 	bindElement: HTMLElement;
 	error: BaseError;
+	isBitrixGptV2Available?: boolean;
 }
 
 export const CopilotContextMenuErrorPopupEvents = {
@@ -29,6 +30,7 @@ export class CopilotContextMenuErrorPopup extends EventEmitter
 	#popup: Popup;
 	#menu: CopilotMenu;
 	#errorField: CopilotInputError;
+	#isBitrixGptV2Available: boolean;
 
 	constructor(options: CopilotContextMenuErrorPopupOptions)
 	{
@@ -40,6 +42,7 @@ export class CopilotContextMenuErrorPopup extends EventEmitter
 		this.#errorField = new CopilotInputError({
 			errors: [this.#error],
 		});
+		this.#isBitrixGptV2Available = options.isBitrixGptV2Available === true;
 	}
 
 	setError(error: BaseError): void
@@ -91,7 +94,7 @@ export class CopilotContextMenuErrorPopup extends EventEmitter
 		this.#popup = new Popup({
 			bindElement: this.#bindElement,
 			content: this.#getPopupContent(),
-			className: 'ai__copilot-scope ai__copilot-context-menu_error-popup',
+			className: `ai__copilot-scope${this.#isBitrixGptV2Available ? ' --bitrixgpt-redesign' : ''} ai__copilot-context-menu_error-popup`,
 			maxWidth: 600,
 			minHeight: 42,
 			padding: 6,

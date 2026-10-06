@@ -14,3 +14,4 @@ $MESS["CRM_AI_FORM_FILL_MERGER_TRANSCRIPTION"] = "Transcript";
 $MESS["CRM_AI_FORM_FILL_TOOLBAR_BUTTON_APPLY_ALL"] = "Apply all suggestions";
 $MESS["CRM_AI_FORM_FILL_TOOLBAR_BUTTON_ROLLBACK"] = "Restore previous values";
 $MESS["CRM_AI_FORM_FILL_TOOLBAR_CONFLICT_COUNT_TITLE"] = "Suggested new field values:";
+$MESS["CRM_AI_FORM_FILL_MERGER_LOAD_ERROR"] = "Failed to load fields.";

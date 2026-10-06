@@ -1,13 +1,14 @@
 import { type JsonObject } from 'main.core';
 
-import { ChatHeader } from 'im.v2.component.content.elements';
 import { Feature, FeatureManager } from 'im.v2.lib.feature';
-import { GroupChatTitle, EntityButton } from 'im.v2.component.content.elements';
+import { GroupChatTitle, ChatHeader } from 'im.v2.component.content.elements';
+
+import { TaskHeaderButton } from './header-button';
 
 // @vue/component
 export const TaskCommentsHeader = {
 	name: 'TaskCommentsHeader',
-	components: { ChatHeader, GroupChatTitle, EntityButton },
+	components: { ChatHeader, GroupChatTitle, TaskHeaderButton },
 	props: {
 		dialogId: {
 			type: String,
@@ -16,6 +17,10 @@ export const TaskCommentsHeader = {
 		isTaskCardOpened: {
 			type: Boolean,
 			required: true,
+		},
+		withEmbeddedTaskCard: {
+			type: Boolean,
+			default: false,
 		},
 	},
 	emits: ['toggleTaskCard'],
@@ -36,9 +41,9 @@ export const TaskCommentsHeader = {
 		},
 		entityText(): string
 		{
-			return this.isTaskCardOpened ?
-				this.loc('IM_CONTENT_TASK_ENTITY_CONTROL_CLOSE_CARD_TEXT') :
-				this.loc('IM_CONTENT_TASK_ENTITY_CONTROL_OPEN_CARD_TEXT');
+			return this.isTaskCardOpened
+				? this.loc('IM_CONTENT_TASK_ENTITY_CONTROL_CLOSE_CARD_TEXT_MSGVER_1')
+				: this.loc('IM_CONTENT_TASK_ENTITY_CONTROL_OPEN_CARD_TEXT');
 		},
 	},
 	methods: {
@@ -52,7 +57,7 @@ export const TaskCommentsHeader = {
 		},
 	},
 	template: `
-		<ChatHeader 
+		<ChatHeader
 			:dialogId="dialogId"
 			@compactModeChange="onCompactModeChange"
 		>
@@ -63,7 +68,12 @@ export const TaskCommentsHeader = {
 					@newTitle="onNewTitleHandler"
 				>
 					<template #after-user-counter>
-						<EntityButton :text="entityText" :compactMode="compactMode" @click="$emit('toggleTaskCard')"/>
+						<TaskHeaderButton
+							:text="entityText"
+							:compactMode="compactMode"
+							:withEmbeddedTaskCard="withEmbeddedTaskCard"
+							@click="$emit('toggleTaskCard')"
+						/>
 					</template>
 				</GroupChatTitle>
 			</template>

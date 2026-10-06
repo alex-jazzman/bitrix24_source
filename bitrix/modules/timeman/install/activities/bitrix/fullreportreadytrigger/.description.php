@@ -47,6 +47,10 @@ $arActivityDescription =
 				'Name' => (string)Loc::getMessage('FULL_REPORT_READY_TRIGGER_RETURN_FIELD_USER'),
 				'Type' => FieldType::USER,
 			],
+			'MANAGER' => [
+				'Name' => (string)Loc::getMessage('FULL_REPORT_READY_TRIGGER_RETURN_FIELD_MANAGER'),
+				'Type' => FieldType::USER,
+			],
 		])
 		->setIcon(Outline::FILE_WITH_CLOCK->name)
 		->setColorIndex(ActivityColorIndex::ORANGE->value)

@@ -438,6 +438,39 @@ export class ItemDetailsComponent
 		return null;
 	}
 
+	getCurrentCategoryId(): ?number
+	{
+		const editor = this.getEditor();
+		if (!editor || !Type.isFunction(editor.getModel))
+		{
+			return this.categoryId;
+		}
+
+		const model = editor.getModel();
+		if (!model || !Type.isFunction(model.getField))
+		{
+			return this.categoryId;
+		}
+
+		return this.resolveCategoryId(model.getField('CATEGORY_ID', this.categoryId));
+	}
+
+	resolveCategoryId(value: mixed): ?number
+	{
+		if (
+			Type.isNil(value)
+			|| (Type.isString(value) && !Type.isStringFilled(value))
+			|| (!Type.isNumber(value) && !Type.isString(value))
+		)
+		{
+			return null;
+		}
+
+		const categoryId = parseInt(value, 10);
+
+		return Number.isNaN(categoryId) ? null : categoryId;
+	}
+
 	bindPartialEntityEditorEvents()
 	{
 		EventEmitter.subscribe('Crm.PartialEditorDialog.Close', this.handleClosePartialEntityEditor);
@@ -694,7 +727,10 @@ export class ItemDetailsComponent
 			return;
 		}
 
-		const starter = new BX.Bizproc.Starter(this.bizprocStarterConfig);
+		const starter = new BX.Bizproc.Starter({
+			...this.bizprocStarterConfig,
+			categoryId: this.getCurrentCategoryId(),
+		});
 		starter.showTemplatesMenu(event.data.button.button);
 	}
 

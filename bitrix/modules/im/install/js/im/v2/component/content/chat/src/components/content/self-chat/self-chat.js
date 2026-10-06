@@ -20,7 +20,7 @@ export const SelfChatContent = {
 		},
 	},
 	template: `
-		<BaseChatContent :dialogId="dialogId" :withChatContentDisclaimer="false">
+		<BaseChatContent :dialogId="dialogId">
 			<template #header>
 				<ChatHeader :dialogId="dialogId" :withCallButton="false" :withAddToChatButton="false">
 					<template #title>

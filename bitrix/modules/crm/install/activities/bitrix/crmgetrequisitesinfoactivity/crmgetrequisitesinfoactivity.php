@@ -5,14 +5,17 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
-use \Bitrix\Crm\EntityPreset;
-use \Bitrix\Crm\EntityRequisite;
-use \Bitrix\Crm\EntityBankDetail;
-use \Bitrix\Crm\EntityAddress;
-use \Bitrix\Crm\EntityAddressType;
+use Bitrix\Bizproc\Activity\Mixins\TargetDocumentResolverTrait;
+use Bitrix\Crm\EntityAddress;
+use Bitrix\Crm\EntityAddressType;
+use Bitrix\Crm\EntityBankDetail;
+use Bitrix\Crm\EntityPreset;
+use Bitrix\Crm\EntityRequisite;
 
 class CBPCrmGetRequisitesInfoActivity extends CBPActivity
 {
+	use TargetDocumentResolverTrait;
+
 	protected ?int $requisitePresetId = null;
 	public function __construct($name)
 	{
@@ -85,7 +88,7 @@ class CBPCrmGetRequisitesInfoActivity extends CBPActivity
 
 	protected function defineCrmEntityWithRequisites(): array
 	{
-		[$entityTypeId, $entityId] = CCrmBizProcHelper::resolveEntityId($this->getDocumentId());
+		[$entityTypeId, $entityId] = CCrmBizProcHelper::resolveEntityId($this->resolveTargetDocumentId());
 
 		if ($entityTypeId === CCrmOwnerType::Company || $entityTypeId === CCrmOwnerType::Contact)
 		{
@@ -508,6 +511,12 @@ class CBPCrmGetRequisitesInfoActivity extends CBPActivity
 
 		foreach ($requisite->getRqListFields() as $fieldName)
 		{
+			// combineFieldsMap() drops fields untitled for the country, writing here would recreate them unnamed
+			if (!isset($map[$fieldName]))
+			{
+				continue;
+			}
+
 			$map[$fieldName]['Type'] = \Bitrix\Bizproc\FieldType::SELECT;
 			$map[$fieldName]['Options'] = array_column(
 				$requisite->getRqListFieldItems($fieldName, $countryId),

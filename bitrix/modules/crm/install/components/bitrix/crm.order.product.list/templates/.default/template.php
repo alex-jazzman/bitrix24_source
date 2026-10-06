@@ -7,6 +7,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Main\Grid\Panel\Actions;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Web\Uri;
 
 \Bitrix\Main\UI\Extension::load([
 	"ui.design-tokens",
@@ -254,14 +255,12 @@ foreach ($arResult['PRODUCTS'] as $product)
 	}
 	elseif(empty($product['MODULE']))
 	{
-		$editPageUrl = CHTTP::urlAddParams('/bitrix/components/bitrix/crm.order.product.details/slider.ajax.php?'.bitrix_sessid_get(),
-			array(
+		$editPageUrl = (string)(new Uri('/bitrix/components/bitrix/crm.order.product.details/slider.ajax.php?'.bitrix_sessid_get()))->addParams(array(
 				'siteID' => $arResult['ORDER_SITE_ID'],
 				'order_id' => $arResult['ORDER_ID'],
 				'basket_id' => $product['BASKET_CODE'],
 				'currency' => $arResult['CURRENCY']
-			)
-		);
+			));
 		$actionEditScript = "BX.Crm.Page.openSlider('{$editPageUrl}', { width: 500 }); return;";
 		$name = '<a href="#" onclick="'.$actionEditScript.'" class="crm-order-product-info-name-text">'.$name.'</a>';
 	}
@@ -471,14 +470,12 @@ if (!$isSetItems)
 
 ?><div><?
 
-$productCreateLink = CHTTP::urlAddParams('/bitrix/components/bitrix/crm.order.product.details/slider.ajax.php?'.bitrix_sessid_get(),
-	array(
+$productCreateLink = (string)(new Uri('/bitrix/components/bitrix/crm.order.product.details/slider.ajax.php?'.bitrix_sessid_get()))->addParams(array(
 		'siteID' => $arResult['ORDER_SITE_ID'],
 		'order_id' => $arResult['ORDER_ID'],
 		'product_id' => 0,
 		'currency' => $arResult['CURRENCY']
-	)
-);
+	));
 if (!$isReadOnly)
 {
 	$buttons = [

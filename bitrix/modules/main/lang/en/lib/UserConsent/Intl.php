@@ -1,7 +1,9 @@
-<?
+<?php
 $MESS["MAIN_USER_CONSENT_INTL_DESCRIPTION"] = "-";
 $MESS["MAIN_USER_CONSENT_INTL_DESCRIPTION_BY"] = "-";
 $MESS["MAIN_USER_CONSENT_INTL_DESCRIPTION_KZ"] = "-";
+$MESS["MAIN_USER_CONSENT_INTL_DESCRIPTION_MSGVER_1"] = "If you use user consent, it must comply with 152-FZ. <a target=\"_blank\" href=\"https://www.consultant.ru/document/cons_doc_LAW_61801/6c94959bc017ac80140621762d2ac59f6006b08c/\">Learn more</a>";
+$MESS["MAIN_USER_CONSENT_INTL_DESCRIPTION_MSGVER_1_BY"] = "As of November 15, 2021 LAW OF THE REPUBLIC OF BELARUS No. 99-Z \"On the protection of personal data\" is in effect. <a target=\"_blank\" href=\"https://pravo.by/upload/docs/op/H12100099_1620939600.pdf\">Learn more</a>";
 $MESS["MAIN_USER_CONSENT_INTL_FIELDS_HINT"] = "-";
 $MESS["MAIN_USER_CONSENT_INTL_FIELD_COMPANY_ADDRESS"] = "-";
 $MESS["MAIN_USER_CONSENT_INTL_FIELD_COMPANY_ADDRESS_HINT"] = "-";
@@ -36,4 +38,3 @@ $MESS["MAIN_USER_CONSENT_INTL_TEXT_BY"] = "-";
 $MESS["MAIN_USER_CONSENT_INTL_TEXT_KZ"] = "-";
 $MESS["MAIN_USER_CONSENT_INTL_TYPE_N"] = "Custom";
 $MESS["MAIN_USER_CONSENT_INTL_TYPE_S"] = "Standard";
-?>

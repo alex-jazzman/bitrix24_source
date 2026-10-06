@@ -30,6 +30,7 @@ export type CopilotPromptMessageParams = BaseMessageParams & { copilot: CopilotP
 
 export type FileMessageParams = BaseMessageParams & {
 	fileIds: string[],
+	replyId?: number,
 };
 
 export type PreparedMessage = {
@@ -67,4 +68,5 @@ type Sticker = {
 export type StickerMessageParams = {
 	dialogId: string,
 	stickerParams: Sticker,
+	replyId?: number,
 };

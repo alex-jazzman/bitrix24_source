@@ -3,8 +3,8 @@
 return [
 	'extensions' => [
 		'analytics',
-		'push/listener',
 		'background/notifications/base',
+		'push/listener',
 		'require-lazy',
 	],
 ];

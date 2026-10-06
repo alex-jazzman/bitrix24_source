@@ -1,4 +1,4 @@
-import {B24Options} from "../type";
+import type {B24Options} from "../type";
 import {Font, Type} from "./registry";
 import "./css/button.css";
 

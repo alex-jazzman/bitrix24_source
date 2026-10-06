@@ -1,20 +1,61 @@
 landingAccessExtendedSelected = {};
 
+/**
+ * Keeps the keyboard inside the block a row is dropped from: the delete control of the next row,
+ * the add control of the block when the last row is gone.
+ */
+function landingRolesFocusAfterRemove(removed, deleteSelector, block, addSelector)
+{
+	for (var sibling = removed.nextElementSibling; sibling; sibling = sibling.nextElementSibling)
+	{
+		var next = sibling.querySelector(deleteSelector);
+		if (next)
+		{
+			next.focus();
+			return;
+		}
+	}
+
+	var add = block ? block.querySelector(addSelector) : null;
+	if (add)
+	{
+		add.focus();
+	}
+}
+
 function deleteAccessRow(link)
 {
-	landingAccessSelected[BX.data(BX(link), 'id')] = false;
-	BX.remove(BX.findParent(BX(link), {tag: 'tr'}, true));
+	var button = BX(link);
+	var row = BX.findParent(button, {tag: 'tr'}, true);
+
+	landingAccessSelected[BX.data(button, 'id')] = false;
+	landingRolesFocusAfterRemove(
+		row,
+		'.table-blue-delete-landing-role',
+		BX('landing-rights-table'),
+		'#landing-rights-form'
+	);
+	BX.remove(row);
 }
 
 function deleteAccessRowExtended(link)
 {
-	var code = BX.data(BX(link), 'code');
+	var button = BX(link);
+	var code = BX.data(button, 'code');
 	if (typeof landingAccessExtendedSelected[code] !== 'undefined')
 	{
-		var id = BX.data(BX(link), 'id');
+		var id = BX.data(button, 'id');
 		landingAccessExtendedSelected[code][id] = false;
 	}
-	BX.remove(BX.findParent(BX(link), {tag: 'div'}, true));
+
+	var accessCodeBlock = BX.findParent(button, {tag: 'div'}, true);
+	landingRolesFocusAfterRemove(
+		accessCodeBlock,
+		'.table-blue-delete-landing-role',
+		BX.findParent(accessCodeBlock, {tag: 'tr'}, true),
+		'.landing-additional-rights-form'
+	);
+	BX.remove(accessCodeBlock);
 }
 
 (function() {
@@ -22,6 +63,30 @@ function deleteAccessRowExtended(link)
 	'use strict';
 
 	BX.namespace('BX.Landing');
+
+	var accessSettings = {select: '', messages: {}};
+	var accessExtendedSettings = {rights: {}, messages: {}};
+
+	/**
+	 * A placeholder is filled through a function to keep `$&` and its kin out of the replacement.
+	 */
+	function fillPlaceholder(template, placeholder, value)
+	{
+		return String(template).replace(placeholder, function()
+		{
+			return value;
+		});
+	}
+
+	/**
+	 * Provider and entity as one string, both escaped: `BX.Access` returns them as they are stored.
+	 */
+	function formatEntity(providerName, entityName)
+	{
+		return (providerName !== '')
+			? BX.Text.encode(providerName) + ': ' + BX.Text.encode(entityName)
+			: BX.Text.encode(entityName);
+	}
 
 	/**
 	 * Rights in role mode.
@@ -32,8 +97,12 @@ function deleteAccessRowExtended(link)
 		var selected = landingAccessSelected;
 		var name = 'rights';
 		var tbl = BX('landing-' + name + '-table');
-		var select = params.select;
 		var inc = params.inc;
+
+		accessSettings = {
+			select: params.select,
+			messages: params.messages
+		};
 
 		// access init
 		BX.Access.Init({
@@ -66,21 +135,12 @@ function deleteAccessRowExtended(link)
 									var row = tbl.insertRow(cnt-1);
 
 									selected[id] = true;
-									row.insertCell(-1);
-									row.insertCell(-1);
-									row.insertCell(-1);
-									row.insertCell(-1);
-
-									row.cells[0].classList.add('table-blue-td-name');
-									row.cells[1].classList.add('table-blue-td-param');
-									row.cells[2].classList.add('table-blue-td-select');
-									row.cells[3].classList.add('table-blue-td-action');
-
-									row.cells[0].innerHTML = BX.Access.GetProviderName(provider);
-									row.cells[1].textContent = obSelected[provider][id].name;
-									row.cells[2].innerHTML = '<input type="hidden" name="' + name + '[ACCESS_CODE][]" value="' + id + '">' +
-															select.replace('#inc#', inc++);
-									row.cells[3].innerHTML = '<span onclick="deleteAccessRow(this);" data-id="' + id + '" class="table-blue-delete table-blue-delete-landing-role bitrix24-metrika" data-metrika24="permission_delete"></span>';
+									row.innerHTML = BX.Landing.Access.renderRightCells(
+										BX.Access.GetProviderName(provider),
+										obSelected[provider][id].name,
+										id,
+										inc++
+									);
 								}
 							}
 						}
@@ -110,13 +170,19 @@ function deleteAccessRowExtended(link)
 				'click',
 				function()
 				{
-					BX.remove(
-						BX.findParent(
-							BX(this),
-							{tag: 'tr'},
-							true
-						)
+					var row = BX.findParent(
+						BX(this),
+						{tag: 'tr'},
+						true
 					);
+
+					landingRolesFocusAfterRemove(
+						row,
+						'.landing-role-delete',
+						BX('landing-roles'),
+						'.table-blue-link'
+					);
+					BX.remove(row);
 				}
 			);
 		});
@@ -133,10 +199,52 @@ function deleteAccessRowExtended(link)
 	};
 
 	/**
+	 * Cells of a rights row, the markup the server prints for the same row.
+	 */
+	BX.Landing.Access.renderRightCells = function(providerName, entityName, accessCode, index)
+	{
+		var code = BX.Text.encode(accessCode);
+		var entity = formatEntity(providerName, entityName);
+		var select = fillPlaceholder(
+			fillPlaceholder(accessSettings.select, '#inc#', index),
+			'#entity#',
+			entity
+		);
+
+		return '<th scope="row" class="table-blue-td-name">' + BX.Text.encode(providerName) + '</th>'
+			+ '<td class="table-blue-td-param">' + BX.Text.encode(entityName) + '</td>'
+			+ '<td class="table-blue-td-select">'
+				+ '<input type="hidden" name="rights[ACCESS_CODE][]" value="' + code + '">'
+				+ select
+			+ '</td>'
+			+ '<td class="table-blue-td-action">'
+				+ '<button type="button" '
+					+ 'class="table-blue-delete table-blue-delete-landing-role bitrix24-metrika" '
+					+ 'data-metrika24="permission_delete" '
+					+ 'data-id="' + code + '" '
+					+ 'onclick="deleteAccessRow(this);" '
+					+ 'title="' + BX.Text.encode(accessSettings.messages.deleteTitle) + '" '
+					+ 'aria-label="'
+						+ fillPlaceholder(
+							BX.Text.encode(accessSettings.messages.deleteRight),
+							'#ENTITY#',
+							entity
+						)
+					+ '" '
+					+ 'data-testid="roles-right-delete-btn"></button>'
+			+ '</td>';
+	};
+
+	/**
 	 * Rights in extended mode.
 	 */
-	BX.Landing.AccessExtended = function(id)
+	BX.Landing.AccessExtended = function(params)
 	{
+		accessExtendedSettings = {
+			rights: params.rights,
+			messages: params.messages
+		};
+
 		function showForm(rightId, selected)
 		{
 			var name = 'rights';
@@ -174,6 +282,9 @@ function deleteAccessRowExtended(link)
 				{
 					callback: function(obSelected)
 					{
+						// appending keeps the blocks drawn before, and the focus inside them, alive
+						var codes = BX('landing-additional-rights-fields-' + rightId);
+
 						for (var provider in obSelected)
 						{
 							if (obSelected.hasOwnProperty(provider))
@@ -183,16 +294,15 @@ function deleteAccessRowExtended(link)
 									if (obSelected[provider].hasOwnProperty(id))
 									{
 										landingAccessExtendedSelected[rightId][id] = true;
-										var html = '';
-										var providerType = BX.Access.GetProviderName(provider);
-
-										html = '<div class="landing-role-users">';
-										html += '<input type="hidden" name="' + name + '[' + rightId + '][]" value="' + id + '">';
-										html += (providerType !== '') ? providerType + ': ' : '';
-										html += obSelected[provider][id].name;
-										html += '<span onclick="deleteAccessRowExtended(this);" data-code="' + rightId + '" data-id="' + id + '" class="table-blue-delete table-blue-delete-landing-role bitrix24-metrika" data-metrika24="permission_delete"></span>';
-										html += '</div>';
-										BX('landing-additional-rights-fields-' + rightId).innerHTML += html;
+										codes.insertAdjacentHTML(
+											'beforeend',
+											BX.Landing.AccessExtended.renderAccessCodeBlock(
+												BX.Access.GetProviderName(provider),
+												obSelected[provider][id].name,
+												id,
+												rightId
+											)
+										);
 									}
 								}
 							}
@@ -230,6 +340,40 @@ function deleteAccessRowExtended(link)
 				}.bind(this)
 			);
 		});
+	};
+
+	/**
+	 * Block of one access code, the markup the server prints for the same block.
+	 */
+	BX.Landing.AccessExtended.renderAccessCodeBlock = function(providerName, entityName, accessCode, rightCode)
+	{
+		var code = BX.Text.encode(accessCode);
+		var right = BX.Text.encode(rightCode);
+		var entity = formatEntity(providerName, entityName);
+		var label = fillPlaceholder(
+			fillPlaceholder(
+				BX.Text.encode(accessExtendedSettings.messages.deleteAccessCode),
+				'#ENTITY#',
+				entity
+			),
+			'#RIGHT#',
+			// the fallback of the server: a right the portal ships no title for is named by its code
+			BX.Text.encode(accessExtendedSettings.rights[rightCode] || rightCode)
+		);
+
+		return '<div class="landing-role-users">'
+			+ '<input type="hidden" name="rights[' + right + '][]" value="' + code + '">'
+			+ entity
+			+ '<button type="button" '
+				+ 'class="table-blue-delete table-blue-delete-landing-role bitrix24-metrika" '
+				+ 'data-metrika24="permission_delete" '
+				+ 'data-code="' + right + '" '
+				+ 'data-id="' + code + '" '
+				+ 'onclick="deleteAccessRowExtended(this);" '
+				+ 'title="' + BX.Text.encode(accessExtendedSettings.messages.deleteTitle) + '" '
+				+ 'aria-label="' + label + '" '
+				+ 'data-testid="roles-access-code-delete-btn"></button>'
+			+ '</div>';
 	};
 
 })();

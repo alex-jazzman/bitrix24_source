@@ -3,19 +3,23 @@ this.BX = this.BX || {};
 this.BX.Socialnetwork = this.BX.Socialnetwork || {};
 this.BX.Socialnetwork.V2 = this.BX.Socialnetwork.V2 || {};
 this.BX.Socialnetwork.V2.Components = this.BX.Socialnetwork.V2.Components || {};
-(function (exports, socialnetwork_v2_const, socialnetwork_v2_components_elements_uiPopup, socialnetwork_v2_components_elements_uiRadio, ui_system_typography_vue, ui_system_menu_vue, ui_iconSet_api_vue) {
+(function (exports, ui_vue3_components_button, socialnetwork_v2_const, socialnetwork_v2_components_elements_uiPopup, ui_vue3, ui_system_radiobutton, ui_system_typography_vue, ui_system_menu_vue, ui_iconSet_api_vue) {
 	'use strict';
 
 	// @vue/component
-	const RadioGroupFieldset = {
+	const RadioGroupFieldset = ui_vue3.defineComponent({
 		name: 'RadioGroupFieldset',
 		components: {
-			UiRadio: socialnetwork_v2_components_elements_uiRadio.UiRadio
+			RadioButton: ui_system_radiobutton.Vue.RadioButton
 		},
 		props: {
 			items: {
 				type: Array,
 				required: true
+			},
+			ariaLabel: {
+				type: String,
+				default: ''
 			}
 		},
 		emits: ['change'],
@@ -24,20 +28,40 @@ this.BX.Socialnetwork.V2.Components = this.BX.Socialnetwork.V2.Components || {};
 				return this.items.find(option => option.selected)?.value;
 			}
 		},
+		methods: {
+			handleOptionClick(value, event) {
+				if (event.target instanceof HTMLElement && event.target.closest('label')) {
+					return;
+				}
+				this.$emit('change', value);
+			}
+		},
 		template: `
-		<div class="socialnetwork--auto-delete-popup-radio__container">
-			<label v-for="option in items" :key="option.value" class="socialnetwork--auto-delete-popup-radio__option">
-				<UiRadio
-					:modelValue="selectedValue"
-					:value="option.value"
-					inputClassName="socialnetwork--auto-delete-popup-radio__input"
-					@update:modelValue="this.$emit('change', option.value)"
+		<fieldset
+			class="socialnetwork--auto-delete-popup-radio__container"
+			role="radiogroup"
+			:aria-label="ariaLabel || null"
+			data-testid="auto-delete-popup-radio-group"
+		>
+			<div
+				v-for="option in items"
+				:key="option.value"
+				class="socialnetwork--auto-delete-popup-radio__option"
+				:data-testid="'auto-delete-popup-radio-option-' + option.value"
+				@click="handleOptionClick(option.value, $event)"
+			>
+				<RadioButton
+					group="socialnetwork-auto-delete-popup-radio"
+					:modelValue="selectedValue === option.value"
+					:aria-label="option.text"
+					:data-testid="'auto-delete-popup-radio-' + option.value"
+					@update:modelValue="$emit('change', option.value)"
 				/>
 				<span class="socialnetwork--auto-delete-popup-radio__label">{{ option.text }}</span>
-			</label>
-		</div>
+			</div>
+		</fieldset>
 	`
-	};
+	});
 
 	const delayMap = {
 		[socialnetwork_v2_const.AutoDeleteMessageDelay.Off]: 'SONET_AUTO_DELETE_MESSAGE_STATUS_OFF',
@@ -56,6 +80,7 @@ this.BX.Socialnetwork.V2.Components = this.BX.Socialnetwork.V2.Components || {};
 		name: 'AutoDeletePopup',
 		components: {
 			RadioGroupFieldset,
+			UiButton: ui_vue3_components_button.Button,
 			UiPopup: socialnetwork_v2_components_elements_uiPopup.UiPopup
 		},
 		props: {
@@ -65,6 +90,17 @@ this.BX.Socialnetwork.V2.Components = this.BX.Socialnetwork.V2.Components || {};
 			}
 		},
 		emits: ['close', 'change'],
+		setup() {
+			return {
+				AirButtonStyle: ui_vue3_components_button.AirButtonStyle,
+				ButtonSize: ui_vue3_components_button.ButtonSize
+			};
+		},
+		data() {
+			return {
+				selectedDelay: this.delay
+			};
+		},
 		computed: {
 			popupId() {
 				return 'socialnetwork--auto-delete-message-popup';
@@ -72,7 +108,7 @@ this.BX.Socialnetwork.V2.Components = this.BX.Socialnetwork.V2.Components || {};
 			options() {
 				return {
 					titleBar: this.loc('SONET_AUTO_DELETE_MESSAGE_POPUP_TITLE'),
-					height: 350,
+					height: 390,
 					width: 400,
 					closeIcon: true,
 					targetContainer: document.body,
@@ -89,13 +125,16 @@ this.BX.Socialnetwork.V2.Components = this.BX.Socialnetwork.V2.Components || {};
 				return Object.values(socialnetwork_v2_const.AutoDeleteMessageDelay).map(value => ({
 					value,
 					text: this.loc(getAutoDeleteStatusText(value)),
-					selected: value === this.delay
+					selected: value === this.selectedDelay
 				}));
 			}
 		},
 		methods: {
-			onDelayChange(value) {
-				this.$emit('change', value);
+			handleSelect(value) {
+				this.selectedDelay = value;
+			},
+			handleApply() {
+				this.$emit('change', this.selectedDelay);
 				this.$emit('close');
 			}
 		},
@@ -105,7 +144,16 @@ this.BX.Socialnetwork.V2.Components = this.BX.Socialnetwork.V2.Components || {};
 				<div class="socialnetwork--auto-delete-message-popup__info">
 					{{ this.loc('SONET_AUTO_DELETE_MESSAGE_POPUP_INFO_MSGVER_1') }}
 				</div>
-				<RadioGroupFieldset :items="items" @change="onDelayChange"/>
+				<RadioGroupFieldset :items="items" :ariaLabel="loc('SONET_AUTO_DELETE_MESSAGE_POPUP_TITLE')" @change="handleSelect"/>
+				<div class="socialnetwork--auto-delete-message-popup__footer">
+					<UiButton
+						:text="loc('SONET_AUTO_DELETE_MESSAGE_POPUP_APPLY')"
+						:size="ButtonSize.MEDIUM"
+						:style="AirButtonStyle.FILLED"
+						data-testid="auto-delete-popup-apply"
+						@click="handleApply"
+					/>
+				</div>
 			</div>
 		</UiPopup>
 	`
@@ -192,7 +240,14 @@ this.BX.Socialnetwork.V2.Components = this.BX.Socialnetwork.V2.Components || {};
 					'--enabled': isEnabled
 				}
 			]"
+			role="button"
+			aria-haspopup="menu"
+			:tabindex="isEnabled ? 0 : -1"
+			:aria-expanded="menuOpened ? 'true' : 'false'"
+			:aria-disabled="isEnabled ? null : 'true'"
 			@click.stop="toggleMenu"
+			@keydown.enter.prevent="toggleMenu"
+			@keydown.space.prevent="toggleMenu"
 		>
 			{{ autoDeleteText }}
 			<BIcon
@@ -207,5 +262,5 @@ this.BX.Socialnetwork.V2.Components = this.BX.Socialnetwork.V2.Components || {};
 	exports.AutoDeleteMessageDropdown = AutoDeleteMessageDropdown;
 	exports.AutoDeleteMessagePopup = AutoDeleteMessagePopup;
 
-})(this.BX.Socialnetwork.V2.Components.Popup = this.BX.Socialnetwork.V2.Components.Popup || {}, BX.Socialnetwork.V2, BX.Socialnetwork.V2.Components.Elements, BX.Socialnetwork.V2.Components.Elements, BX.UI.System.Typography.Vue, BX.UI.System.Menu, BX.UI.IconSet);
+})(this.BX.Socialnetwork.V2.Components.Popup = this.BX.Socialnetwork.V2.Components.Popup || {}, BX.Vue3.Components, BX.Socialnetwork.V2, BX.Socialnetwork.V2.Components.Elements, BX.Vue3, BX.UI.System.RadioButton, BX.UI.System.Typography.Vue, BX.UI.System.Menu, BX.UI.IconSet);
 //# sourceMappingURL=auto-delete-popup.bundle.js.map

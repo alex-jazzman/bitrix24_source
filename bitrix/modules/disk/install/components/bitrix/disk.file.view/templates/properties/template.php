@@ -21,6 +21,7 @@ $messages = Loc::loadLanguageFile(__FILE__);
 
 CJSCore::Init([
 	'ui.design-tokens',
+	'ui.icon-set.outline',
 	'ui.fonts.opensans',
 	'ui.avatar',
 	'disk',
@@ -100,8 +101,8 @@ foreach ($jsTemplates->getChildren() as $jsTemplate)
 			<div class="disk-detail-properties-section-title-text"><?= Loc::getMessage('DISK_FILE_VIEW_TAB_FILE_LINKS') ?></div>
 		</div>
 		<div class="disk-detail-properties-public-link">
-			<div class="disk-detail-properties-public-link-copy-link" id="disk-detail-sidebar-public-link-copy-link" for="bx-disk-sidebar-shared-inner-link-input" title="<?= Loc::getMessage('DISK_FILE_VIEW_INTERNAL_LINK_COPY_HINT') ?>"><?= Loc::getMessage('DISK_FILE_VIEW_INTERNAL_LINK') ?></div>
-			<input class="bx-disk-sidebar-shared-inner-link-input" type="text" value="<?= $arResult['FILE']['SHOW_FILE_ABSOLUTE_URL'] ?>" id="bx-disk-sidebar-shared-inner-link-input">
+			<div class="disk-detail-properties-public-link-copy-link" id="disk-detail-sidebar-public-link-copy-link" data-testid="disk-detail-copy-internal-link" for="bx-disk-sidebar-shared-inner-link-input" title="<?= Loc::getMessage('DISK_FILE_VIEW_INTERNAL_LINK_COPY_HINT') ?>"><span class="ui-icon-set --o-copy" aria-hidden="true"></span><?= Loc::getMessage('DISK_FILE_VIEW_INTERNAL_LINK') ?></div>
+			<input class="bx-disk-sidebar-shared-inner-link-input" type="text" value="<?= $arResult['FILE']['SHOW_FILE_ABSOLUTE_URL'] ?>" id="bx-disk-sidebar-shared-inner-link-input" data-testid="disk-detail-internal-link-input">
 		</div>
 		<div data-entity="external-link-place"></div>
 	</div>
@@ -229,6 +230,7 @@ BX(function () {
 				objectId: <?= $arResult['EXTERNAL_LINK']['OBJECT_ID']?>,
 				link: '<?= $arResult['EXTERNAL_LINK']['LINK']?>',
 				hasPassword: <?= $arResult['EXTERNAL_LINK']['HAS_PASSWORD']? 'true' : 'false'?>,
+				canEditSettings: <?= $arResult['EXTERNAL_LINK']['CAN_EDIT_SETTINGS'] ? 'true' : 'false' ?>,
 				hasDeathTime: <?= $arResult['EXTERNAL_LINK']['HAS_DEATH_TIME']? 'true' : 'false'?>,
 				deathTimeTimestamp: <?= $arResult['EXTERNAL_LINK']['DEATH_TIME_TIMESTAMP']?: 'null'?>,
 				<? if ($arResult['EXTERNAL_LINK']['DEATH_TIME']) { ?>

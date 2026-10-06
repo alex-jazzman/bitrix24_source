@@ -244,7 +244,8 @@
 	min-height: 24px;
 }
 
-.check-list-widget-parent-item.--preview.--editable .check-list-widget-parent-item-title .b24-growing-text-area-edit {
+.check-list-widget-parent-item.--preview.--editable .check-list-widget-parent-item-title .b24-growing-text-area-edit,
+.check-list-widget-parent-item.--preview.--editable .check-list-widget-parent-item-title .tasks-check-list-formatting-layer-display {
 	cursor: pointer;
 }
 
@@ -378,7 +379,8 @@
 	flex: 1;
 }
 
-.check-list-widget-child-item.--preview.--toggleable .check-list-widget-child-item-title .b24-growing-text-area-edit {
+.check-list-widget-child-item.--preview.--toggleable .check-list-widget-child-item-title .b24-growing-text-area-edit,
+.check-list-widget-child-item.--preview.--toggleable .check-list-widget-child-item-title .tasks-check-list-formatting-layer-display {
 	cursor: pointer;
 }
 

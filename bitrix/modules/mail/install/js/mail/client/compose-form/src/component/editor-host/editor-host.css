@@ -1,0 +1,60 @@
+.mail-compose-editor-host
+{
+	display: flex;
+	flex: 1 1 320px;
+	flex-direction: column;
+	min-width: 0;
+	min-height: 240px;
+}
+
+.mail-compose-editor-host__placeholder
+{
+	flex: 1 1 auto;
+	min-height: 240px;
+	border-radius: var(--ui-border-radius-md);
+	background: var(--ui-color-bg-content-secondary);
+}
+
+.mail-compose-editor-host__slot
+{
+	display: flex;
+	flex: 1 1 auto;
+	flex-direction: column;
+	min-width: 0;
+	min-height: 240px;
+}
+
+.mail-compose-editor-host__slot > .feed-add-post,
+.mail-compose-editor-host__slot .feed-add-post-form,
+.mail-compose-editor-host__slot .feed-add-post-text
+{
+	display: flex;
+	flex: 1 1 auto;
+	height: 100%;
+	flex-direction: column;
+	min-height: 0;
+}
+
+.mail-compose-editor-host__slot .bx-html-editor
+{
+	flex: 1 1 auto;
+	height: 100% !important;
+	min-height: 240px !important;
+}
+
+.mail-compose-editor-host__slot .bxhtmled-area-cnt
+{
+	height: calc(100% - 43px) !important;
+}
+
+.mail-compose-editor-host__slot .bxhtmled-iframe-cnt,
+.mail-compose-editor-host__slot .bx-editor-iframe
+{
+	height: 100% !important;
+}
+
+/* These actions are rendered by the compose footer; their legacy toolbar remains only as an action source. */
+.mail-compose-editor-host__slot .main-post-form-toolbar
+{
+	display: none;
+}

@@ -1,0 +1,9 @@
+<?php
+
+$MESS['DISK_FILE_PICKER_FILE_WITHOUT_NAME'] = 'Файл без названия';
+$MESS['DISK_FILE_PICKER_FOLDER_WITHOUT_NAME'] = 'Папка без названия';
+$MESS['DISK_FILE_PICKER_STORAGE_USER'] = 'Мой диск';
+$MESS['DISK_FILE_PICKER_STORAGE_COMMON'] = 'Общий диск';
+$MESS['DISK_FILE_PICKER_STORAGE_GROUP'] = 'Диск группы';
+$MESS['DISK_FILE_PICKER_STORAGE_PROJECT'] = 'Диск проекта';
+$MESS['DISK_FILE_PICKER_STORAGE_COLLAB'] = 'Диск коллабы';

@@ -1,0 +1,409 @@
+.crm-copilot-wrapper.crm-ai-settings-slider-surface {
+	--crm-copilot-slider-bg: var(--ui-color-bg-content-secondary);
+}
+
+.crm-ai-settings-slider {
+	--crm-ai-settings-slider-bg: var(--ui-color-bg-content-secondary);
+	--crm-ai-settings-slider-border: var(--ui-color-base-6);
+	--crm-ai-settings-slider-text: var(--ui-color-base-1);
+	--crm-ai-settings-slider-danger: var(--ui-color-accent-main-alert);
+	--crm-ai-settings-slider-accent: var(--ui-color-accent-main-primary);
+	min-height: 100%;
+	padding: 8px 12px 0;
+	box-sizing: border-box;
+	overflow-x: hidden;
+	color: var(--crm-ai-settings-slider-text);
+}
+
+.crm-ai-settings-slider__loader {
+	margin-bottom: 18px;
+}
+
+.crm-ai-settings-slider__loader-bar {
+	position: relative;
+	overflow: hidden;
+	height: 4px;
+	border-radius: var(--ui-border-radius-3xs);
+	background: var(--crm-ai-settings-slider-border);
+}
+
+.crm-ai-settings-slider__loader-bar::after {
+	content: '';
+	position: absolute;
+	inset: 0;
+	width: 42%;
+	animation: crm-ai-settings-slider-loader 1.2s ease-in-out infinite;
+	background: var(--crm-ai-settings-slider-accent);
+}
+
+.crm-ai-settings-slider__header {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: 16px;
+	margin-bottom: 24px;
+}
+
+.crm-ai-settings-slider__heading {
+	min-width: 0;
+}
+
+.crm-ai-settings-slider__title-row {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	min-width: 0;
+}
+
+.crm-ai-settings-slider__title {
+	flex-shrink: 0;
+	line-height: 29px;
+	letter-spacing: -0.35px;
+	color: var(--ui-color-base-0);
+	font-size: var(--ui-font-size-3xl);
+	font-weight: var(--ui-font-weight-medium);
+}
+
+.crm-ai-settings-slider__category {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	min-width: 0;
+	letter-spacing: -0.05px;
+	font-size: var(--ui-font-size-md);
+	color: var(--ui-color-palette-gray-90);
+}
+
+.crm-ai-settings-slider__category-icon {
+	flex-shrink: 0;
+	width: 20px;
+	height: 20px;
+	color: var(--ui-color-palette-gray-90);
+}
+
+.crm-ai-settings-slider__category-name {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.crm-ai-settings-slider__subtitle {
+	margin-top: 2px;
+	line-height: 19px;
+	letter-spacing: -0.05px;
+	font-size: var(--ui-font-size-md);
+	color: var(--ui-color-palette-gray-90);
+}
+
+.crm-ai-settings-slider__language-control {
+	display: flex;
+	align-items: center;
+	flex-shrink: 0;
+	gap: 8px;
+	padding-left: 30px;
+}
+
+.crm-ai-settings-slider__language {
+	flex-shrink: 0;
+}
+
+.crm-ai-settings-slider__error {
+	margin-bottom: 16px;
+	padding: 12px 14px;
+	border: var(--ui-border-width-thin) var(--ui-text-decoration-style-solid) var(--crm-ai-settings-slider-danger);
+	border-radius: var(--ui-border-radius-sm);
+	background: var(--crm-ai-settings-slider-bg);
+	color: var(--crm-ai-settings-slider-danger);
+	font-size: var(--ui-font-size-md);
+	line-height: var(--ui-font-line-height-md);
+}
+
+.crm-ai-settings-slider__scenarios {
+	display: flex;
+	flex-direction: column;
+	margin-bottom: 96px;
+}
+
+.crm-ai-settings-slider__card {
+	display: flex;
+	flex-direction: column;
+	padding: 18px 20px 20px;
+	box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.02), 0 5px 16px 0 rgba(0, 0, 0, 0.03);
+	border-radius: var(--ui-border-radius-2xl);
+	background: var(--ui-color-palette-white-base);
+}
+
+.crm-ai-settings-slider__card-head {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding-bottom: 10px;
+	border-bottom: var(--ui-border-width-thin) var(--ui-text-decoration-style-solid) var(--ui-color-base-7);
+}
+
+.crm-ai-settings-slider__card-icon {
+	flex-shrink: 0;
+	width: 28px;
+	height: 28px;
+	background: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADYAAAA8CAYAAAAt3km7AAAACXBIWXMAABYlAAAWJQFJUiTwAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAOdEVYdFNvZnR3YXJlAEZpZ21hnrGWYwAAEKdJREFUeAHtWnt0VdWZ/+19zn2He3NDQiAkEAFjxBeKCiIvKUVRp0tcZAZFa5fVoh26Os7gatFZa6h1XF3L1U4t08fKjMtZjtqqM6NiKbqwymCrwog8RAwPCQkhCSTkdd/nsfd8++xzA1reAds/2Cs759x9z9nn++3v+37f9+1zgfPtfDvfzre/kMZO8vlLaWfzoZy6nD17tlExtWFuzWVXTenvbt23/Y1Vr2xY8/wAfWdSd/AltbMBzAP0t088UVZx1cLGK667cMGbuwosQhhKYibKK0MwOtpfX3rp6K/hSwTHMbSm7hc/eX/vcnP6Q91vt4cWrPm4D9VmAVVBFyW2hcz+lOx24jf/xpFOw/d+FIMGd86bgaE19quP2pdsPBT6yd7mw6J89DBeW2oyU5IK6csQZ4hysBAD7+3IiWsXzn3k9ql1q1t2tRzq6OgQxTlwDtpQVs+YP39xbH9o+C/TXftFPhrmI+IGgqTDgAdIeuBcH2QwYJjde1KWNXHRhg/f3oxc9rbOrrbsxvc/2P1mTyG24bNdPS2bdqX61q1bdzxTVQsgT1G2oa3W8t/vebu1h81q7QYfMyGO+vIQgZIw2edNgTPmH+mBdG6ggAfMFcggjlBYgpsueDRMyxyGLIi85ci+dL/Tl88UOtv292/Zf0i+1nD/r9b506mp3ZPJdqbA+Pz58wNX/3RVfseGFpilMUyoiSLO9RPDNKtkenKO4pGBecAAm4VwCbZgTuAlghgfFIV5ClEXCe9cMgIMAR4izJVjcKC5tLG6btESuihA3T6hgDizJi++6+/u/WxnB0YNj6KsNOjZdMDQy1m0F1k8V8iYHFzGCMH5iF+DLreGhl3qkr7yXU5dR2JJpmYM0f3Er4UI8i2HRHlg133S3djig+LnBFjJRVcuKwsxEQgHYAZJS1xrI0jIiqwAX0PM16DndUyPD0cKL7EHEZa9Gnzxn9SdSeFrUBbXg0vBeL711epPP3jsKZzE384EGJs8tyFhRxLjKkpCPCMEYgHukYY3IR0NH4hqwpeAFZH6B8k4aVliIxYgILMakPC7AuZa/jn90TM0YDq6IdRfVXUfzgmwhsX3RKwMUlkSgFQVJbYwuSYH1QKmkkMOauxI07LYhJqUjNqwjfX8BhLWHdSU1500nPBU8tcYXMuBcAR10rcrtczMjlKGE8ZZBiam3fqVZYWMJfO0gBECFjGOzFQEEjT0idKc8HsRaE/KxddHS9xYzjE5mscmfgtMkdcaUUrLEbCyW4Dk7aS5Ac8kvemLGqXL6urq3LMJjC1aurRqQAZqhM2YRdxUQjZoGr7rsCM0a/p8z/x/yiSVRtMk2OUxiZzLkKWINTHiYmvgOphuRgtd6IIdvp5Chg0ZrgFXJimJTCD0XJ55GvnGxsazyopy+l3feaSjpVcU6HmBqNbW4CRHaUW1sPl5IlEXHi4Al8ZVWNB3JQMMNsWvvKBBx4UTXwCzdjFdUCDWt+FWLwcrdNO569OsQG9XYefJBD0dYJ644XEXPsjJrrL0KRbig2yoaJox+TnNqck1S0rtf4o0SL7qEoNIhuIWXaB8s0ItQK4L2arlFK9mkQulNReqi0NlEBNX0oVlnrZMg+PTzQefxkli8GkB+87Tr87d157mAxnGZQREGmSGPmMoMGoy7h8NBZh60GfJIuJRQRIuYPia5V5Arw3aCMcSCO58HFZfO5lC2Kd60jen80IvOBEKI4c1R43E06++8x8nE/Z0gInambMae7ozoiVHAscMlPh+JJhKi+hIVKcKr4Nkph3EBTmVWtF4hJApoH3kU9fEyfQY81IrLwuhkD7JaIFt0SJFQgg2PYzcZ5vATLrRLIHR9gyMpuWQjtIhPbB7LDrWx+kJJ6b7U02C2ZInfnZxe9684FCahC1V2qCHkH8MED3vOcixn7pN/p8gLVRQ/hejENBNgI1hEhMvFEi4HK0ZgSnVJhwPFB+0JRkfT+wXJAalkZIJCHX8J9zxU8Gtg2DdHxCJVKksCyijlXnuMsycOHPimj1rtpwI3KlqTF6wcNGze1v6RZYEHD3K8GZcvYXh5bUm8q0cU8g0vzpS4upKgeqERGlMIBmVGE6yHGg10UXX31NBmZ9vo5wiucG59jWKY6JmIZmbIgxOiXQKVqYPRs8GWvoEjUkvXrCeJGRbFebWT70ZQwzQHgcse3LlBTgcm1xRkLySqLp5k4H3/2hiHK3wgnESdUn9jJzDUCCncf1EQQUxk7TadshAPdlGfZmpUtojgIpdjVZOImYaS+ekyZIxiO/4Hnj77wlQyNdWDsaqOyCH96Cu6pLbTiL3CYF59c8zr/zfzPopD+x1d3fY5YLKCitBhBHATbUClaQlFYsKwgeDIokwslISl/qBtIEll7u4sdKAJbnHagpMERhXJklAmUVuc8W3wYKV4Pk8pFlBs0U1qKADY8u1FAQTdJ+BeKziUpykGScC9dzvdt6/1xn33/1dB51PrFjALh9GmbaLuqiLPGnGETpF1fk480Joyja8Y22C4YYa4BuTJSqHEfu5BhEJ95hSmSGDTyDQBYt34lBQrp4GGagAP9xEPtZPpkga48NhvH4vEO/zzJi5ITMa4f/21s516eMBOx558MZf/++Uzf1VjTLd7TalA+bhcAilh2xcTWaXdY/SEP03aOUP2wzzaiWuqXJRk9QasSm7sB3mAeHmUZrygXgV2GDMI/9T9kP7JHLEZXBGXwn0HySA6xF88msQIw57GYh3byqHa2uvaaCrn8IJNHNMbf37e1K8t6nZzTqGuSkfRrw0jDlEDhZJ4shiUC76E8OkchffvC4AsiKtjaL/KKIwmFdFe5ryozfz0xMvWfaPXhdHH2lc0X7ARvAXFGMOSl2NO0zmxhjbokuGTToesGP5mFz+2C9mHTjQx0aUGOYnAyQMJX7VxHAqmObon0VgLHV0tNZylLUVCg6cjOUJf/Ryeac+fw0WnUeNff7JxxggDbKChDMnAJ6RxTloe6/k8oaGBuN0gKHukitnZ9MpRGixlHZc0kicVr0nzzy/shVZ0OyqW2RuKm16bZeJ17dJ9PXmqT5zqZqW/u4Lpa9Sd0l5nqchqceP1lZxTNdfepwRoyJKoYWsIPCCA0m5qc6mqXe67Nb4nMk4Tmp1TB/r7z3YFQrXUgpjIUhBtkAC7aNacGRIZxIqFClw6ruwoRgQuKrawNudBn7TJClAu5g51sXseo6RZRx5x/RLaE0xXjUqi7scGoxQoIU2QZWACvJn/KEA8z0XZoruHeHrQPpZtpOjZ9zwXRpZfKoaY/vbtrw0cXwSwyKQCdpBClIFmyTejdDVMZUc0DFOu1FRQ5OHTbLkySxVzBpTyVGSCOCtdhMNLwBff0HljwUIFYRpHpeKRSHEEQ0JDUqQs0paKJmjgb/vg/ndNILrKb5RdS6T0EWmV477+3k0R23VhFtxnHZMH/vxihXdF5TmPgwZrpg2kjSTs+CQDWbJLqmyILbTVE9u5fmaklP5nUMPt2msM0daVpQ/ktIn2j2tXToMqZRNc2hwqhpWQIRQVZY+KkmcAw6yd6eRL1B6Vkq6VWAovKj603Nw19eY+qy0ljXiD05/MHmqwFQz17z41HUzrhlrTB3rOpWGhZ4Bi4QWlF344ISeX3g+J72NUQU2TcCytu+HnLRwOILF10pMfjQBo5DTYIrd9U1PHWkx8t/Kg6m0K63IiNNCUnlE8c9RW6ii2Iv7Jor2HcyYMHn66QBzVqxYge3vvj7moovHmEumSifXlUMfrbpNwJSmFM2rBypA6ry4bZG2tKUokKk81Ws2R3OG4xJKvZY8H4dh59R+kw9O+xWPMGQezUGW032qkC5IX0N6T8ERBnLUHckHN3h0VmDh6kumzjgdYB64O+64rWP9b1+smnLVePMfprlOui2LbtKcRVIrqnc9jTHdfYbL+dmImjnXRwIp9hSqKAXe2h5AX7/2F2WCiiVVESqbbOSJJFzSmiSbpsLZ66rOLHYu9LNsedT+Hu3Q5ox07ekC88AtWXJ3V00F41+dPabz+3NcGaJ67EBXnrQmPH9yvd0ItZBM+5u/36K0YmU5BXStSbUzNZo0suqTAAnteBcpbZnkg2/sDiDck4egACwsDQSuXgDvXBbHVCWgbjX1Q0xBW8LB7JkA88BRN0aVhWouvTjx4vdvjfHLWcrZ25pFjtTmySiK8eiorUH6bBWYD1p/TlJttubjEEKG41+vga12Anh10jCwA1m4zTROKaHatPKerAD6x+IOlXeuxg5TOdTatfZMgRXBmRePr7iDI73wvr+qMhtGD9j79mQwQOm942pwTnF3FJpUXHJ+t/hZrQ45/NYW0zNBjYyIhlyuYzfwzj1xNN5UjnSqD06rDdFN96h9VDJPT+1qT0p10ihXTFlwHcSCmPXTG5/HMYL06WwNKHB8zvXjX1n7u+fqbp5bF/j2lWmnd98AusjvXHFk19cnOs8nfPn1lqFiaMpeWg/BY0RFbHs7KXOhLYXIQaB1ehRP/usEvFYfRFvzAKytWYg21wNX9DXmaPtn40vNle+tnACdZPxJMna6L/48Gd9Z+9uBkOx9Ys4tdz8yIdguPmwSPEV1UihoeEmyyvaVWQ50mxgW1uWJTnJVIGeoH2FjQhUlGJQirdkSQGc/FZ8kCe3z0FtQum9GBFsWlWIrFXztbUIM7HJRW5K0LCksWV5o22Rv+eUP3/jRVx5f+zgZ7bFfKTGcefPeU21okulPt20PNW4Imy3hBObVh9BhGZTZS7TuCKOmzPCy/KIfpojKuzpdvPuDFEkUxgPPRlFecuSFRiSo9yPV/cGAcMI1hmmy7seWXVvxT1+QW3VxPOGGAkw172X5H3eIvt3bm2Ivbg6Y21gCsy8Ko4fM8LOPFTA+qEHVNJkR6B6OEZQz1CT1mNJYiBLnMG0ChYlQBG2ElFeb3Gr6Q/2KpTPICz23OekLv7MFbBDc6vdpR7B5d2zVJyFzM4GbdGEYTZtNjE4GBmsvne2TuQU0kRSLTaUd03vFK5GISEnMj4vGiubHFgTHQ1vGUbT05QEbBPfzl3tTptMVW7tTso+CSWT2RDFyRJA0wY5s4lOPm8J/ONevb7kOFSVBKbosxm+4aOC/fvA3yQYM4ecTQ/3VQLF5aWlJ6dXWylci8yprRiHdZWGgh0yQXgyqms5yVSpG+SDFhADZnvpsE5WqY7ag0jLX6SyYxqIrBpY90pB8CKf4rvlcA1ONjRk/creZnPdwnhnIiAiyvRnamAl6PK/o3VUJtK0jeMHWPZ1X8c+1s7QC88qbbllx/5hn4f9+BENoZ8sUB9s3H23r/KA5UxEZXs53t6SppowgkIiAGbpANMmPwkynYQWhjNFxQtGEee8F705+9KGZW/xphgRKtaH+MueLzQgM/M/8keEwT9DeaCQZhd3V5e2FuLQxwgo2uG1TkHaQo4zFTRecymTCvCnw81oCtRUovok4C4LgLLcPN67p+NY37k6k0rFp5Ymg2NfRzdQ+v0nvbxVJEC5V7kg7w+SlE5OF6+2Hk0/9+B97cQbMd6J21k0RvtP/rPGNuSVlk5/Z1F5a/czz22DQayIjNozKEibj5WVs+rjml3/9wwv/Gufoh2PnAlhxXi8zuPPOO5Mjx9++YMehyrsiJRUlsNrezXau/uc3X/6XHgyR+f7crQjyi2Pn2/l2vp1vf3nt/wFiKNpM8k3EegAAAABJRU5ErkJggg==") no-repeat center / contain;
+}
+
+.crm-ai-settings-slider__card-title {
+	margin-right: auto;
+	line-height: 23px;
+	letter-spacing: -0.1px;
+	font-size: var(--ui-font-size-xl);
+	font-weight: var(--ui-font-weight-medium);
+	color: var(--ui-color-palette-black-base);
+}
+
+.crm-ai-settings-slider__card-help {
+	flex-shrink: 0;
+}
+
+.crm-ai-settings-slider__card-body {
+	display: flex;
+	flex-direction: column;
+}
+
+.crm-ai-settings-slider__scenario-card {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	padding: 14px 0;
+	border-bottom: var(--ui-border-width-thin) var(--ui-text-decoration-style-solid) var(--ui-color-palette-gray-10);
+}
+
+.crm-ai-settings-slider__scenario-card:last-child {
+	border-bottom: none;
+	padding-bottom: 0;
+}
+
+.crm-ai-settings-slider__scenario-card-copy {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	min-width: 0;
+}
+
+.crm-ai-settings-slider__scenario-card-copy.--muted {
+	opacity: var(--ui-opacity-50);
+}
+
+.crm-ai-settings-slider__scenario-card-title {
+	letter-spacing: -0.1px;
+	font-size: var(--ui-font-size-xl);
+	font-weight: var(--ui-font-weight-medium);
+	line-height: var(--ui-font-line-height-xl);
+	color: var(--ui-color-palette-black-base);
+}
+
+.crm-ai-settings-slider__scenario-card-description {
+	line-height: 19px;
+	letter-spacing: -0.05px;
+	font-size: var(--ui-font-size-md);
+	color: var(--ui-color-palette-gray-90);
+}
+
+.crm-ai-settings-slider__scenario-card-meta {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 5px;
+	line-height: 17px;
+	letter-spacing: -0.05px;
+	font-size: var(--ui-font-size-sm);
+}
+
+.crm-ai-settings-slider__scenario-card-summary,
+.crm-ai-settings-slider__scenario-card-reason {
+	color: var(--ui-color-palette-black-base);
+}
+
+.crm-ai-settings-slider__scenario-card-action {
+	color: var(--ui-color-accent-main-link);
+	text-decoration: none;
+	cursor: pointer;
+}
+
+.crm-ai-settings-slider__scenario-card-action:hover {
+	-webkit-text-decoration: var(--ui-text-decoration-line-underline);
+	        text-decoration: var(--ui-text-decoration-line-underline);
+}
+
+.crm-ai-settings-slider__scenario-card-channels {
+	display: flex;
+	flex-direction: column;
+	padding-bottom: 8px;
+}
+
+.crm-ai-settings-slider__channel-mode {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 11px;
+	padding-top: 11px;
+}
+
+.crm-ai-settings-slider__channel-mode-title {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	flex-shrink: 0;
+	width: 137px;
+	min-height: 34px;
+	letter-spacing: -0.05px;
+	font-size: var(--ui-font-size-md);
+	font-weight: var(--ui-font-weight-regular);
+	line-height: var(--ui-font-line-height-md);
+	color: var(--ui-color-palette-gray-90);
+}
+
+.crm-ai-settings-slider__channel-mode-icon {
+	flex-shrink: 0;
+	width: 20px;
+	height: 20px;
+	color: var(--ui-color-palette-gray-90);
+}
+
+.crm-ai-settings-slider__mode-button {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	flex: 1 1 220px;
+	min-width: 0;
+	max-width: 320px;
+	height: 34px;
+	padding: 0 0 0 12px;
+	letter-spacing: -0.05px;
+	text-align: left;
+	cursor: pointer;
+	transition: border-color 0.15s ease;
+	border: var(--ui-border-width-thin) var(--ui-text-decoration-style-solid) var(--ui-color-palette-gray-10);
+	border-radius: var(--ui-border-radius-sm);
+	background: var(--ui-color-palette-white-base);
+	color: var(--ui-color-palette-gray-90);
+	font-size: var(--ui-font-size-md);
+	line-height: var(--ui-font-line-height-md);
+}
+
+.crm-ai-settings-slider__mode-button:hover {
+	border-color: var(--ui-color-base-5);
+}
+
+.crm-ai-settings-slider__mode-button.--open {
+	border-color: var(--crm-ai-settings-slider-accent);
+}
+
+.crm-ai-settings-slider__mode-button:disabled {
+	background: var(--ui-color-bg-content-secondary);
+	cursor: default;
+	color: var(--ui-color-palette-gray-50);
+}
+
+.crm-ai-settings-slider__mode-button-label {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.crm-ai-settings-slider__mode-button-right {
+	display: inline-flex;
+	align-items: center;
+	flex-shrink: 0;
+	gap: 10px;
+	height: 100%;
+	padding-right: 10px;
+}
+
+.crm-ai-settings-slider__mode-button-divider {
+	width: 1px;
+	height: 20px;
+	background: var(--ui-color-palette-gray-10);
+}
+
+.crm-ai-settings-slider__mode-button-chevron {
+	width: 7px;
+	height: 7px;
+	transform: rotate(45deg) translate(-1px, -1px);
+	transition: transform 0.15s ease;
+	border-right: var(--ui-border-width-thick) var(--ui-text-decoration-style-solid) var(--ui-color-palette-gray-90);;
+	border-bottom: var(--ui-border-width-thick) var(--ui-text-decoration-style-solid) var(--ui-color-palette-gray-90);;
+}
+
+.crm-ai-settings-slider__mode-button.--open .crm-ai-settings-slider__mode-button-chevron {
+	transform: rotate(-135deg) translate(-1px, -1px);
+}
+
+.crm-ai-settings-slider__channel-blocked {
+	width: 100%;
+	margin-top: 4px;
+	padding-left: 148px;
+}
+
+.crm-ai-settings-slider__footer.ui-button-panel-wrapper {
+	width: 100%;
+	background: var(--crm-ai-settings-slider-bg);
+	opacity: var(--ui-opacity-full);
+	margin-top: 24px;
+}
+
+.crm-ai-settings-slider__footer.ui-button-panel-wrapper.ui-button-panel-wrapper-hide {
+	opacity: 0;
+	pointer-events: none;
+}
+
+.crm-ai-settings-slider__footer .ui-button-panel {
+	gap: var(--ui-size-xs2);
+	display: flex;
+	justify-content: center;
+	padding: 13px 0;
+}
+
+@keyframes crm-ai-settings-slider-loader {
+	0% {
+		transform: translateX(-120%);
+	}
+
+	100% {
+		transform: translateX(260%);
+	}
+}
+
+@media (max-width: 720px) {
+	.crm-ai-settings-slider {
+		padding: 20px 18px 0;
+	}
+
+	.crm-ai-settings-slider__header {
+		flex-direction: column;
+		align-items: stretch;
+	}
+
+	.crm-ai-settings-slider__language {
+		align-self: flex-start;
+	}
+
+	.crm-ai-settings-slider__title {
+		font-size: var(--ui-font-size-4xl);
+	}
+
+	.crm-ai-settings-slider__channel-mode-title {
+		width: auto;
+		min-height: 0;
+	}
+
+	.crm-ai-settings-slider__mode-button {
+		flex-basis: 100%;
+		max-width: none;
+	}
+
+	.crm-ai-settings-slider__channel-blocked {
+		padding-left: 0;
+	}
+
+	.crm-ai-settings-slider__footer {
+		flex-direction: column-reverse;
+		align-items: stretch;
+	}
+}

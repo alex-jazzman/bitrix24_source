@@ -15,4 +15,5 @@ class Controller extends StringField.Controller
 	}
 }
 
-export {Controller, Options}
+export {Controller}
+export type {Options}

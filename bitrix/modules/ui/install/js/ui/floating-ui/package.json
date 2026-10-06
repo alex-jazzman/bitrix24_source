@@ -1,0 +1,12 @@
+{
+  "private": true,
+  "name": "ui-floating-ui",
+  "description": "Vendored @floating-ui/dom library for the BX.UI.FloatingUi extension",
+  "dependencies": {
+    "@floating-ui/dom": "1.8.0"
+  },
+  "overrides": {
+    "@floating-ui/core": "1.8.0",
+    "@floating-ui/utils": "0.2.12"
+  }
+}

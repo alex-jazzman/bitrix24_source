@@ -1,9 +1,9 @@
 import './bx';
 import './protobuf';
 import '../../../../../../../rest/install/js/rest/client/rest.client';
-import '../../../../../../../ui/install/js/ui/notification/ui.notification.balloon';
-import '../../../../../../../ui/install/js/ui/notification/ui.notification.stack';
-import '../../../../../../../ui/install/js/ui/notification/ui.notification.center';
+// ui.notification was consolidated from three sub-extensions (balloon/stack/center)
+// into a single extension; load it so the harness keeps the notification setup.
+import 'ui.notification';
 
 import { Loc } from 'main.core';
 

@@ -30,28 +30,55 @@ jn.define('im/messenger/controller/recent/service/floating-button/nested', (requ
 				: () => true
 			;
 
-			this.tapHandler = async () => {
-				if (this.isTapProcessing)
-				{
-					return;
-				}
-				this.isTapProcessing = true;
+			if (Type.isFunction(this.props.onDirectCreate))
+			{
+				this.tapHandler = async () => {
+					if (this.isTapProcessing)
+					{
+						return;
+					}
+					this.isTapProcessing = true;
 
-				try
-				{
-					const parentChatId = this.recentLocator.get('parentChatId');
-					const controller = new CollabEntityCreationController(parentChatId);
-					await controller.open();
-				}
-				catch (error)
-				{
-					this.logger.error('tapHandler: error', error);
-				}
-				finally
-				{
-					this.isTapProcessing = false;
-				}
-			};
+					try
+					{
+						const parentChatId = this.recentLocator.get('parentChatId');
+						await this.props.onDirectCreate(parentChatId);
+					}
+					catch (error)
+					{
+						this.logger.error('tapHandler: error in onDirectCreate', error);
+					}
+					finally
+					{
+						this.isTapProcessing = false;
+					}
+				};
+			}
+			else
+			{
+				this.tapHandler = async () => {
+					if (this.isTapProcessing)
+					{
+						return;
+					}
+					this.isTapProcessing = true;
+
+					try
+					{
+						const parentChatId = this.recentLocator.get('parentChatId');
+						const controller = new CollabEntityCreationController(parentChatId);
+						await controller.open();
+					}
+					catch (error)
+					{
+						this.logger.error('tapHandler: error', error);
+					}
+					finally
+					{
+						this.isTapProcessing = false;
+					}
+				};
+			}
 		}
 
 		async onUiReady(ui)

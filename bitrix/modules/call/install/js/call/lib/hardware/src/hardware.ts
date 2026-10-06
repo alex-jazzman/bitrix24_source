@@ -16,6 +16,17 @@ type CodedError = Error & { code: string };
 
 type CurrentDevices = { microphoneId: string; speakerId: string; cameraId: string };
 
+/**
+ * Device ids a caller can actually switch to.
+ * Until the user grants access, enumerateDevices() reports placeholders with an empty deviceId
+ * (an empty label is normal at that point and stays allowed). Such a placeholder is not a device,
+ * so it must never be resolved as the default one. A stored choice is matched against these ids
+ * rather than against the label, which is empty for every device until access is granted.
+ */
+const getSelectableDeviceIds = (deviceMap: Record<string, string>): string[] => {
+	return Object.keys(deviceMap).filter((deviceId) => deviceId !== '');
+};
+
 export class HardwareManager extends EventEmitter
 {
 	Events = Events;
@@ -190,13 +201,14 @@ export class HardwareManager extends EventEmitter
 	get defaultMicrophone()
 	{
 		let microphoneId = localStorage?.getItem(lsKey.defaultMicrophone) ?? '';
+		const selectableIds = getSelectableDeviceIds(this.microphoneList);
 
-		if ((!microphoneId || !this.microphoneList[microphoneId]) && Object.keys(this.microphoneList).length > 0)
+		if (!selectableIds.includes(microphoneId) && selectableIds.length > 0)
 		{
 			// previous solution with ternary operator
 			// has been replaced with two separate conditions
 			// because some systems / browsers don't create a duplicate for the default audio device
-			if (Object.keys(this.microphoneList).includes('default'))
+			if (selectableIds.includes('default'))
 			{
 				microphoneId = this.getDefaultDeviceIdByGroupId(
 					this.getDeviceGroupIdByDeviceId('default', 'audioinput'),
@@ -206,13 +218,13 @@ export class HardwareManager extends EventEmitter
 
 			if (!microphoneId)
 			{
-				microphoneId = Object.keys(this.microphoneList)[0];
+				microphoneId = selectableIds[0];
 			}
 
 			return microphoneId;
 		}
 
-		return this.microphoneList[microphoneId] ? microphoneId : '';
+		return selectableIds.includes(microphoneId) ? microphoneId : '';
 	}
 
 	set defaultMicrophone(microphoneId)
@@ -226,13 +238,14 @@ export class HardwareManager extends EventEmitter
 	get defaultCamera()
 	{
 		const cameraId = localStorage?.getItem(lsKey.defaultCamera) ?? '';
+		const selectableIds = getSelectableDeviceIds(this.cameraList);
 
-		if ((!cameraId || !this.cameraList[cameraId]) && Object.keys(this.cameraList).length > 0)
+		if (!selectableIds.includes(cameraId) && selectableIds.length > 0)
 		{
-			return Object.keys(this.cameraList)[0];
+			return selectableIds[0];
 		}
 
-		return this.cameraList[cameraId] ? cameraId : '';
+		return selectableIds.includes(cameraId) ? cameraId : '';
 	}
 
 	set defaultCamera(cameraId)
@@ -247,12 +260,9 @@ export class HardwareManager extends EventEmitter
 	{
 		let speakerId = localStorage?.getItem(lsKey.defaultSpeaker) ?? '';
 
-		const audioOutputList = this.audioOutputList;
-		const outputDeviceIds = Object.keys(audioOutputList);
+		const outputDeviceIds = getSelectableDeviceIds(this.audioOutputList);
 
-		const speakerNotFound = !speakerId || !(speakerId in audioOutputList);
-
-		if (speakerNotFound && outputDeviceIds.length > 0)
+		if (!outputDeviceIds.includes(speakerId) && outputDeviceIds.length > 0)
 		{
 			if (outputDeviceIds.includes('default'))
 			{
@@ -267,7 +277,7 @@ export class HardwareManager extends EventEmitter
 			return speakerId;
 		}
 
-		return speakerId in audioOutputList ? speakerId : '';
+		return outputDeviceIds.includes(speakerId) ? speakerId : '';
 	}
 
 	set defaultSpeaker(speakerId: string)

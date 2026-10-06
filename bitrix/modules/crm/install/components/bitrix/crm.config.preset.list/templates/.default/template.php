@@ -6,6 +6,7 @@ if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Web\Uri;
 
 /** @var array $arParams */
 /** @var array $arResult */
@@ -104,22 +105,16 @@ foreach($arResult['LIST_DATA'] as $key => &$listRow)
 		if (!((isset($row['~REQUISITE_DEF_FOR_COMPANY']) && $row['~REQUISITE_DEF_FOR_COMPANY'] === 'Y')
 				|| (isset($row['~REQUISITE_DEF_FOR_CONTACT']) && $row['~REQUISITE_DEF_FOR_CONTACT'] === 'Y')))
 		{
-			$presetSetDefForCompanyUrl = CHTTP::urlAddParams(
-				str_replace(
+			$presetSetDefForCompanyUrl = (string)(new Uri(str_replace(
 					array('#entity_type#'),
 					array($arResult['ENTITY_TYPE_ID']),
 					$arResult['PRESET_LIST_URL']
-				),
-				array('action_'.$arResult['GRID_ID'] => 'set_def_for_company', 'ID' => $key, 'sessid' => bitrix_sessid())
-			);
-			$presetSetDefForContactUrl = CHTTP::urlAddParams(
-				str_replace(
+				)))->addParams(array('action_'.$arResult['GRID_ID'] => 'set_def_for_company', 'ID' => $key, 'sessid' => bitrix_sessid()));
+			$presetSetDefForContactUrl = (string)(new Uri(str_replace(
 					array('#entity_type#'),
 					array($arResult['ENTITY_TYPE_ID']),
 					$arResult['PRESET_LIST_URL']
-				),
-				array('action_'.$arResult['GRID_ID'] => 'set_def_for_contact', 'ID' => $key, 'sessid' => bitrix_sessid())
-			);
+				)))->addParams(array('action_'.$arResult['GRID_ID'] => 'set_def_for_contact', 'ID' => $key, 'sessid' => bitrix_sessid()));
 			$itemActions[] =  array(
 				'ICONCLASS' => 'edit',
 				'TEXT' => GetMessage('CRM_PRESET_LIST_ACTION_MENU_SET_DEF_FOR_COMPANY'),

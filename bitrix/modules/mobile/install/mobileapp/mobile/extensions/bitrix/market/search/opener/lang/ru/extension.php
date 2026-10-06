@@ -1,0 +1,3 @@
+<?php
+
+$MESS['MOBILE_MARKET_SEARCH_OPENER_TITLE'] = 'Поиск';

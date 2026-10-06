@@ -4,8 +4,9 @@ import {
 	TextAlignMenuTopBtn,
 	diagramStore as useDiagramStore,
 	getContextMenuName,
+	FRAME_TEXT_ALIGN_OPTIONS,
 } from '../../../../entities/blocks';
-
+import { textEditorServices } from '../../../../shared/ui';
 import type { Block, BlockId } from '../../../../shared/types';
 
 type ChangeFrameTextAlignTopBtnSetup = {
@@ -25,13 +26,14 @@ export const ChangeFrameTextAlignTopBtn = {
 			required: true,
 		},
 	},
-	setup(): ChangeFrameTextAlignTopBtnSetup
+	setup(props): ChangeFrameTextAlignTopBtnSetup
 	{
 		const { updateBlock } = useBlockDiagram();
 
 		return {
 			getContextMenuName,
 			updateBlock,
+			textEditorService: textEditorServices.get(props.block.id),
 		};
 	},
 	computed: {
@@ -39,14 +41,34 @@ export const ChangeFrameTextAlignTopBtn = {
 		{
 			return this.block.node.frameTextAlign;
 		},
+		isEditFrameContent(): boolean
+		{
+			return this.textEditorService.isEdit.value;
+		},
 	},
 	methods: {
 		...mapActions(useDiagramStore, [
+			'beginSaveRun',
 			'publicDraft',
 			'updateStatus',
 		]),
 		async onUpdateFrameTextAlign(frameTextAlign: string): Promise<void>
 		{
+			if (this.isEditFrameContent && frameTextAlign === FRAME_TEXT_ALIGN_OPTIONS.NONE)
+			{
+				try
+				{
+					await this.textEditorService.onShowConfirmSave();
+				}
+				catch
+				{
+					return;
+				}
+			}
+
+			// Reserved after the confirm dialog and before the request: a save started after this
+			// one owns the status, so a late answer here must not overwrite it.
+			const runId = this.beginSaveRun();
 			try
 			{
 				this.updateBlock({
@@ -56,12 +78,11 @@ export const ChangeFrameTextAlignTopBtn = {
 						frameTextAlign,
 					},
 				});
-				await this.publicDraft();
-				this.updateStatus(true);
+				this.updateStatus(await this.publicDraft(), runId);
 			}
 			catch
 			{
-				this.updateStatus(false);
+				this.updateStatus(false, runId);
 			}
 		},
 	},

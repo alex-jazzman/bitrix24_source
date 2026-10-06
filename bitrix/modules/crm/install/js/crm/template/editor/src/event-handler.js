@@ -64,6 +64,9 @@ export class EventHandler
 
 	destroy(): void
 	{
+		this.#previewLoader?.destroy();
+		this.#previewLoader = null;
+
 		Runtime.destroy(this);
 	}
 

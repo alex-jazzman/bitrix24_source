@@ -31,7 +31,6 @@ jn.define('im/messenger/lib/params', (require, exports, module) => {
 		mentionAllAvailable: false,
 		isCopilotFileUploadAvailable: false,
 		isCopilotMentionAvailable: false,
-		isCopilotReasoningAvailable: false,
 		videoNoteTranscriptionAvailable: false,
 		isBitrixGptV2Available: false,
 		aiAssistantMcpSelectorAvailable: false,
@@ -39,14 +38,13 @@ jn.define('im/messenger/lib/params', (require, exports, module) => {
 		isCopilotForceSearchAvailable: false,
 		isCopilotWebSearchEnabledByAdmin: false,
 		isCopilotWebSearchAllowedByTariff: false,
-		isAddingUserByMentionAvailable: false,
-		isMessageBuilderAvailable: false,
 		isNestedChatAvailable: false,
-		isExternalChatMessageForwardingAvailable: false,
-		isChatFoldersAvailable: false,
+		isChatWithGuestsAvailable: false,
+		isReplyWithMediaAvailable: false,
 		chatSharingLinkAvailable: false,
 		isAiAssistantFeedbackAvailable: false,
 		isAiAssistantRegenerateAvailable: false,
+		collabPreviewSourceEnabled: false,
 		isCopilotDraftChatAvailable: false,
 	};
 
@@ -133,6 +131,16 @@ jn.define('im/messenger/lib/params', (require, exports, module) => {
 			return Number(this.get('USER_ID', 0));
 		}
 
+		/**
+		 * @return {?string}
+		 */
+		getGuestCode()
+		{
+			const code = this.get('GUEST_CODE', null);
+
+			return typeof code === 'string' && code !== '' ? code : null;
+		}
+
 		getGeneralChatId()
 		{
 			return Number(this.get('IM_GENERAL_CHAT_ID', 0));
@@ -200,22 +208,6 @@ jn.define('im/messenger/lib/params', (require, exports, module) => {
 		isOpenlinesInMessengerAvailable()
 		{
 			return this.get('IS_OPENLINES_IN_MESSENGER_V2_AVAILABLE', false);
-		}
-
-		/**
-		 * @return boolean
-		 */
-		isRecentFilterAvailable()
-		{
-			return this.get('IS_RECENT_FILTER_AVAILABLE', false);
-		}
-
-		/**
-		 * @return boolean
-		 */
-		isExternalChatMessageForwardingAvailable()
-		{
-			return this.get('IS_EXTERNAL_CHAT_MESSAGE_FORWARDING_AVAILABLE', false);
 		}
 
 		/**
@@ -299,6 +291,19 @@ jn.define('im/messenger/lib/params', (require, exports, module) => {
 		}
 
 		/**
+		 * @return {boolean}
+		 */
+		shouldRequestGuestName()
+		{
+			return this.get('REQUEST_GUEST_NAME', false);
+		}
+
+		disableRequestGuestName()
+		{
+			this.set('REQUEST_GUEST_NAME', false);
+		}
+
+		/**
 		 * @return UserInfo
 		 */
 		getUserInfo()
@@ -377,6 +382,14 @@ jn.define('im/messenger/lib/params', (require, exports, module) => {
 		getServiceHealthUrl()
 		{
 			return this.get('SERVICE_HEALTH_URL', '');
+		}
+
+		/**
+		 * @returns {string}
+		 */
+		getVideoCallsTermsUrl()
+		{
+			return this.get('VIDEO_CALLS_TERMS_URL', '');
 		}
 
 		/**

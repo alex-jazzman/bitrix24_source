@@ -131,6 +131,9 @@ else
 							case 5:
 								$strMessageTemplate = GetMessage("BPABL_TYPE_5_1");
 								break;
+							case CBPTrackingType::SkipActivity:
+								$strMessageTemplate = GetMessage("BPABL_TYPE_14_1");
+								break;
 							default:
 								$strMessageTemplate = GetMessage("BPABL_TYPE_6_1");
 						}

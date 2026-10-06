@@ -376,6 +376,11 @@ export class LegacyCallViewAdapter implements CallView
 		return this.wrappedView.buttons[buttonId]?.elements?.[elementType] ?? null;
 	}
 
+	setGuestLink(link: string | null): void
+	{
+		this.wrappedView.setGuestLink(link);
+	}
+
 	// endregion
 
 	// region UI State

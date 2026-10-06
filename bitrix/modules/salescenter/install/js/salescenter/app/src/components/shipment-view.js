@@ -1,5 +1,5 @@
 import 'ui.fonts.ruble';
-import 'currency';
+import { CurrencyCore } from 'currency.currency-core';
 import {ajax, Loc, Type} from 'main.core';
 
 export default {
@@ -44,12 +44,16 @@ export default {
 		).then((result) => {
 			this.shipment = result.data.shipment;
 			this.canUserPerformCalls = result.data.canUserPerformCalls;
+			if (this.shipment && this.shipment.currency)
+			{
+				CurrencyCore.loadCurrencyFormat(this.shipment.currency);
+			}
 		});
 	},
 	methods: {
 		getFormattedPrice(price)
 		{
-			return BX.Currency.currencyFormat(price, this.currency, true);
+			return CurrencyCore.currencyFormat(price, this.currency, true);
 		},
 		isPhoneRequestProperty(property)
 		{

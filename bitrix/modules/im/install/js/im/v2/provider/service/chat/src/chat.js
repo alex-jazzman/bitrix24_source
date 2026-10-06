@@ -1,4 +1,4 @@
-import { type ChatTypeItem } from 'im.v2.const';
+import { type RecentTypeItem, type ParentChatIdType } from 'im.v2.const';
 
 import { DeleteService } from './classes/delete';
 import { LoadService } from './classes/load';
@@ -130,6 +130,16 @@ export class ChatService
 	{
 		return this.#updateService.getMemberEntities(chatId);
 	}
+
+	detachToParent(dialogId: string)
+	{
+		return this.#updateService.detachToParent(dialogId);
+	}
+
+	attachToParent(dialogId: string, parentChatId: number)
+	{
+		return this.#updateService.attachToParent(dialogId, parentChatId);
+	}
 	// endregion 'update'
 
 	// region 'delete'
@@ -181,9 +191,9 @@ export class ChatService
 		this.#readService.readAll();
 	}
 
-	readAllByType(type: ChatTypeItem): void
+	readAllByRecentType(recentType: RecentTypeItem, parentChatId: ParentChatIdType): void
 	{
-		this.#readService.readAllByType(type);
+		this.#readService.readAllByRecentType(recentType, parentChatId);
 	}
 
 	readDialog(dialogId: string): void

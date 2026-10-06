@@ -74,7 +74,7 @@
 {
 	position:absolute !important;
 	height:20px !important;
-	background: scroll transparent url(../images/panel/top-panel-sprite-2.png) no-repeat -9px -1881px !important;
+	background: scroll transparent url(../images/panel/top-panel-sprite-2.webp) no-repeat -9px -1881px !important;
 	width:25px !important;
 	top: 0 !important;
 	right: 0 !important;
@@ -82,7 +82,7 @@
 	display:block !important;
 }
 
-.bx-panel-tooltip-close:hover { background: scroll transparent url(../images/panel/top-panel-sprite-2.png) no-repeat -32px -1881px !important; }
+.bx-panel-tooltip-close:hover { background: scroll transparent url(../images/panel/top-panel-sprite-2.webp) no-repeat -32px -1881px !important; }
 
 .bx-panel-tooltip-text a { font: normal normal normal 12px/normal var(--ui-font-family-primary, var(--ui-font-family-helvetica)) !important;}
 .bx-panel-tooltip-text a, .bx-panel-tooltip-text a:hover { color: #272b31 !important; text-decoration: underline !important;}

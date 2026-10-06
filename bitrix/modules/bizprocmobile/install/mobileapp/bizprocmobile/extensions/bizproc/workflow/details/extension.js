@@ -11,6 +11,7 @@ jn.define('bizproc/workflow/details', (require, exports, module) => {
 	const { Haptics } = require('haptics');
 	const { PureComponent } = require('layout/pure-component');
 	const { FocusManager } = require('layout/ui/fields/focus-manager');
+	const { handleNetworkError } = require('bizproc/helper/network-error');
 	const { WorkflowComments } = require('bizproc/workflow/comments');
 	const { WorkflowDetailsContent } = require('bizproc/workflow/details/content');
 	const { WorkflowDetailsSkeleton } = require('bizproc/skeleton');
@@ -248,7 +249,9 @@ jn.define('bizproc/workflow/details', (require, exports, module) => {
 				})
 				.catch((response) => {
 					console.error(response.errors);
-					if (Array.isArray(response.errors))
+
+					const isNetworkErrorHandled = handleNetworkError(response.errors, this.layout);
+					if (!isNetworkErrorHandled && Array.isArray(response.errors))
 					{
 						NotifyManager.showErrors(response.errors);
 					}

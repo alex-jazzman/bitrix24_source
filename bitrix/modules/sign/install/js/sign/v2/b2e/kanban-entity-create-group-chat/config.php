@@ -10,8 +10,8 @@ return [
 	'rel' => [
 		'main.polyfill.core',
 		'im.public',
-		'sign.v2.api',
 		'sign.feature-resolver',
+		'sign.v2.api',
 	],
 	'skip_core' => true,
 ];

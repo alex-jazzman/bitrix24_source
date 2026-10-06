@@ -1,4 +1,5 @@
 export * from './constants';
+export * from './lib';
 export * from './stores';
 export * from './utils';
 export * from './ui/block-diagram/block-diagram';
@@ -16,6 +17,7 @@ export * from './ui/block-status-not-published/block-status-not-published';
 export * from './ui/block-status-publish-error/block-status-publish-error';
 export * from './ui/block-complex/block-complex';
 export * from './ui/block-top-title/block-top-title';
+export * from './ui/node-title/node-title';
 export * from './ui/template-name-input/template-name-input';
 export * from './ui/autosave-status/autosave-status';
 export * from './ui/dropdown-menu-button/dropdown-menu-button';

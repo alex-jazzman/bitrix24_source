@@ -2239,5 +2239,5 @@ this.BX.Crm = this.BX.Crm || {};
 
 	exports.CallAssessment = CallAssessment;
 
-})(this.BX.Crm.Copilot = this.BX.Crm.Copilot || {}, BX.Crm.AI, BX, BX.UI.TextEditor, BX.Vue3, BX.Pull, BX, BX.UI, BX, BX.UI.BBCode, BX.Event, BX.UI.EntitySelector, BX.UI, BX, BX.Crm.Timeline, BX.Main, BX.UI.DatePicker);
+})(this.BX.Crm.Copilot = this.BX.Crm.Copilot || {}, BX.Crm.AI, BX, BX.UI.TextEditor, BX.Vue3, BX.Pull, BX.UI.Notification, BX.UI, window, BX.UI.BBCode, BX.Event, BX.UI.EntitySelector, BX.UI, BX, BX.Crm.Timeline, BX.Main, BX.UI.DatePicker);
 //# sourceMappingURL=call-assessment.bundle.js.map

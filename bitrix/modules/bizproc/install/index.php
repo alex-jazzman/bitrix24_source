@@ -44,6 +44,7 @@ class bizproc extends CModule
 		}
 
 		RegisterModule("bizproc");
+		\Bitrix\Bizproc\Internal\Access\Install\AccessInstaller::install();
 
 		COption::SetOptionString("bizproc", "SkipNonPublicCustomTypes", "Y");
 

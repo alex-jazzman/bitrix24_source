@@ -52,6 +52,7 @@ export class Image extends TextField
 		this.input2x.hidden = true;
 
 		this.layout.classList.add("landing-ui-field-image");
+		Dom.attr(this.layout, "data-testid", "landing-field-image");
 		this.compactMode = data.compactMode === true;
 		if (this.compactMode)
 		{
@@ -77,6 +78,7 @@ export class Image extends TextField
 		this.dropzone.addEventListener("dragover", this.onDragOver);
 		this.dropzone.addEventListener("dragleave", this.onDragLeave);
 		this.dropzone.addEventListener("drop", this.onDrop);
+		Event.bind(this.dropzone, "keydown", this.onDropzoneKeydown.bind(this));
 
 		this.clearButton = Image.createClearButton();
 		this.clearButton.on("click", this.onClearClick.bind(this));
@@ -303,6 +305,8 @@ export class Image extends TextField
 		});
 		field.enableTextOnly();
 		field.layout.hidden = true;
+		Dom.attr(field.layout, "data-testid", "landing-field-image-link");
+		Dom.attr(field.input, "data-testid", "landing-field-image-link-input");
 		return field;
 	}
 
@@ -326,7 +330,7 @@ export class Image extends TextField
 					),
 				}),
 			],
-			attrs: {"for": "file_" + id},
+			attrs: {"for": "file_" + id, "role": "button", "tabindex": "0", "data-testid": "landing-field-image-dropzone"},
 		});
 	}
 
@@ -338,6 +342,7 @@ export class Image extends TextField
 	{
 		return new BaseButton("clear", {
 			className: "landing-ui-field-image-action-button-clear",
+			attrs: {"aria-label": Loc.getMessage("LANDING_FIELD_IMAGE_CLEAR"), "data-testid": "landing-field-image-clear-btn"},
 		});
 	}
 
@@ -349,6 +354,7 @@ export class Image extends TextField
 	{
 		return Dom.create("div", {
 			props: {className: "landing-ui-field-image-preview-inner"},
+			attrs: {"data-testid": "landing-field-image-preview"},
 		});
 	}
 
@@ -385,6 +391,9 @@ export class Image extends TextField
 			className: "landing-ui-field-image-alt",
 			textOnly: true,
 		});
+		Dom.attr(field.layout, "data-testid", "landing-field-image-alt");
+		// the editable element is a contenteditable div, not an <input>
+		Dom.attr(field.input, "data-testid", "landing-field-image-alt-input");
 		return field;
 	}
 
@@ -408,6 +417,7 @@ export class Image extends TextField
 		return new AiImageButton("ai", {
 			text: BX.Landing.Main.getInstance()["options"]["copilot_name"],
 			className: "landing-ui-field-image-ai-button" + (compactMode ? ' --compact' : ''),
+			attrs: {"data-testid": "landing-field-image-ai-btn"},
 		});
 	}
 
@@ -420,6 +430,7 @@ export class Image extends TextField
 		return new BaseButton("upload", {
 			text: Loc.getMessage("LANDING_FIELD_IMAGE_UPLOAD_BUTTON"),
 			className: "landing-ui-field-image-action-button",
+			attrs: {"data-testid": "landing-field-image-upload-btn"},
 		});
 	}
 
@@ -432,6 +443,7 @@ export class Image extends TextField
 		var field = new BaseButton("edit", {
 			text: Loc.getMessage("LANDING_FIELD_IMAGE_EDIT_BUTTON"),
 			className: "landing-ui-field-image-action-button",
+			attrs: {"data-testid": "landing-field-image-edit-btn"},
 		});
 
 		return field;
@@ -512,12 +524,22 @@ export class Image extends TextField
 		this.imageHidden = false;
 	}
 
+	onDropzoneKeydown(event)
+	{
+		// <label role="button"> is not natively focusable/clickable, activate manually
+		if (event.key === "Enter" || event.key === " ")
+		{
+			event.preventDefault();
+			this.fileInput.click();
+		}
+	}
+
 	onFileChange(file)
 	{
 		this.showLoader();
 
 		this.upload(file)
-			.then(this.setValue.bind(this))
+			.then(this.applyUploadResult.bind(this))
 			.then(this.hideLoader.bind(this))
 			.catch(function (err)
 			{
@@ -596,7 +618,7 @@ export class Image extends TextField
 				return blob;
 			})
 			.then(this.upload.bind(this))
-			.then(this.setValue.bind(this))
+			.then(this.applyUploadResult.bind(this))
 			.then(this.hideLoader.bind(this))
 			.then(() => {
 				Dom.removeClass(this.preview, '--shown');
@@ -706,6 +728,7 @@ export class Image extends TextField
 					{
 						text: Loc.getMessage("LANDING_IMAGE_UPLOAD_MENU_UNSPLASH"),
 						onclick: this.onUnsplashShow.bind(this),
+						attrs: {"data-testid": "landing-field-image-menu-unsplash"},
 					},
 					...(
 						Env.getInstance().getOptions()['google_images_available']
@@ -713,6 +736,7 @@ export class Image extends TextField
 								{
 									text: Loc.getMessage("LANDING_IMAGE_UPLOAD_MENU_GOOGLE"),
 									onclick: this.onGoogleShow.bind(this),
+									attrs: {"data-testid": "landing-field-image-menu-google"},
 								},
 							]
 							: []
@@ -724,10 +748,12 @@ export class Image extends TextField
 					{
 						text: Loc.getMessage("LANDING_IMAGE_UPLOAD_MENU_UPLOAD"),
 						onclick: this.onUploadShow.bind(this),
+						attrs: {"data-testid": "landing-field-image-menu-upload"},
 					},
 					{
 						text: Loc.getMessage("LANDING_IMAGE_UPLOAD_MENU_LINK"),
 						onclick: this.onLinkShow.bind(this),
+						attrs: {"data-testid": "landing-field-image-menu-link"},
 					},
 				],
 				events: {
@@ -769,7 +795,7 @@ export class Image extends TextField
 		BX.Landing.UI.Panel.Image.getInstance()
 			.show("unsplash", this.dimensions, this.loader, this.uploadParams)
 			.then(this.upload.bind(this))
-			.then(this.setValue.bind(this))
+			.then(this.applyUploadResult.bind(this))
 			.then(this.hideLoader.bind(this))
 			.catch(function (err)
 			{
@@ -785,7 +811,7 @@ export class Image extends TextField
 		BX.Landing.UI.Panel.Image.getInstance()
 			.show("google", this.dimensions, this.loader, this.uploadParams)
 			.then(this.upload.bind(this))
-			.then(this.setValue.bind(this))
+			.then(this.applyUploadResult.bind(this))
 			.then(this.hideLoader.bind(this))
 			.catch(function (err)
 			{
@@ -830,6 +856,9 @@ export class Image extends TextField
 	onClearClick(event)
 	{
 		event.preventDefault();
+		// The alt described the image being removed: it must not stay behind
+		// and get saved on an empty node.
+		this.altField.setValue("");
 		this.setValue({src: ""});
 		this.fileInput.value = "";
 		this.showDropzone();
@@ -884,7 +913,9 @@ export class Image extends TextField
 		tmpImage.src = value;
 		tmpImage.onload = () => {
 			this.showPreview();
-			this.setValue({src: value, src2x: value});
+			// Pasting an image url replaces the file just like an upload does,
+			// so it goes through the same interceptor and drops the stale alt.
+			this.applyUploadResult({src: value, src2x: value});
 		};
 	}
 
@@ -1056,6 +1087,25 @@ export class Image extends TextField
 			src: "",
 			alt: "",
 		});
+	}
+
+	/**
+	 * Applies an upload result: routes every "user replaced the image file"
+	 * path (local upload and drag&drop, Copilot image saved from the panel,
+	 * Unsplash, Google, pasted url) through a single point so the inherited alt
+	 * gets reset. The previous alt described the previous file and must not
+	 * survive when the user picks a new image;
+	 * if the user wants an alt for the new file, they type it in the alt
+	 * field again. Explicitly cleared here in addition to alt: "" in the
+	 * setValue payload because setValue only refreshes the alt UI field
+	 * when value.type === "image", and upload results carry no type.
+	 * @param {{src: string, id: number}} value
+	 */
+	applyUploadResult(value)
+	{
+		this.altField.setValue("");
+
+		return this.setValue({...value, alt: ""});
 	}
 
 	/**

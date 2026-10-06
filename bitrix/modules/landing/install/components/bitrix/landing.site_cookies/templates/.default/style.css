@@ -72,6 +72,8 @@
 	font-weight: var(--ui-font-weight-regular, 400);
 	border-bottom: 1px solid #edeef0;
 	padding-bottom: 17px;
+	/* the section captions are headings now: their own top margin would drive the sections apart */
+	margin-top: 0;
 	margin-bottom: 17px;
 }
 
@@ -101,12 +103,31 @@
 	font-weight: var(--ui-font-weight-semi-bold, 600);
 }
 
+/* the two nodes were spans: the values a button carries by default are reset here */
 .landing-agreement-edit, .landing-agreement-delete {
+	position: relative;
 	width: 20px;
 	height: 20px;
+	padding: 0;
+	border: 0;
+	background: none;
+	font: inherit;
 	opacity: 0;
 	transition: opacity .2s linear;
 	cursor: pointer;
+}
+
+/* the icon box is 20 by 20, so the text the name is built from has no room to be shown */
+.landing-agreement-icon-text {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	border: 0;
+	margin: -1px;
+	overflow: hidden;
+	white-space: nowrap;
+	clip-path: inset(50%);
 }
 
 .landing-agreement-edit {
@@ -127,6 +148,27 @@
 .landing-agreement-cookies-name:hover .landing-agreement-edit:hover,
 .landing-agreement-cookies-name:hover .landing-agreement-delete:hover {
 	opacity: 1;
+}
+
+/* The buttons are drawn fully transparent and are raised by hovering the row alone, so a keyboard
+   focus on them had nothing to show. `:focus` and not `:focus-visible`: the component moves the
+   focus from its own code after a click (deleting an agreement, closing the warning), and
+   `:focus-visible` does not match a focus that came that way. */
+.landing-agreement-edit:focus,
+.landing-agreement-delete:focus,
+.landing-agreement-cookies-name:focus-within .landing-agreement-edit,
+.landing-agreement-cookies-name:focus-within .landing-agreement-delete {
+	opacity: 1;
+}
+
+/* Raising the opacity alone repeats what hovering the row already does, so the keyboard stop looks
+   exactly like a pointer passing by. The ring is the one telling sign, and the one the browser draws
+   is cut off: the folding container hides whatever leaves it and the row of the name stands at its
+   very top. Hence a ring of our own, drawn inside the box. */
+.landing-agreement-edit:focus-visible,
+.landing-agreement-delete:focus-visible {
+	outline: 2px solid var(--ui-color-primary, #2fc6f6);
+	outline-offset: -2px;
 }
 
 .landing-agreement-wrapper + .landing-agreement-wrapper {
@@ -163,11 +205,24 @@
 	height: 0;
 	overflow: hidden;
 	margin-bottom: 14px;
-	transition: all .2s linear;
+	/* the delay keeps the content visible for the whole folding: without it the block would vanish
+	   at once and the animation would be cut short */
+	transition: all .2s linear, visibility 0s .2s;
+}
+
+/* A folded agreement is drawn at no height, and its fields stayed reachable by the keyboard.
+   Stylistic on purpose: it holds for the agreements the request inserts, before any handler reaches
+   them. The custom agreements are spared: they are drawn at an auto height and have no checkbox to
+   fold them, so a shared rule would leave an inactive one visible and unreachable at once. */
+.landing-agreement-wrapper:not(.landing-agreement-wrapper-custom)
+	.landing-agreement-block-inner:not(.landing-agreement-block-inner-show) {
+	visibility: hidden;
 }
 
 .landing-agreement-block-inner-show {
 	opacity: 1;
+	/* unfolding returns the content at once: here the delay would hide it while the height grows */
+	transition: all .2s linear, visibility 0s 0s;
 }
 
 .landing-agreement-block:last-child .landing-agreement-block-inner {
@@ -183,9 +238,15 @@
 	height: auto;
 }
 
+/* the node was a span; the bottom border is left to ui-link-dashed, which draws the underline */
 .landing-agreement-add {
 	margin-left: 27px;
 	position: relative;
+	padding: 0;
+	border-top: 0;
+	border-right: 0;
+	border-left: 0;
+	background: none;
 	cursor: pointer;
 }
 
@@ -210,8 +271,19 @@
 	padding-bottom: 12px;
 }
 
+/* the cross is drawn by pseudo elements, so the button keeps no background of its own */
 .landing-agreement-warning .ui-alert-close-btn {
 	top: 10px;
+	padding: 0;
+	border: 0;
+	background: none;
+	font: inherit;
+}
+
+/* the ui module gives this button an opacity of .4 and no rule for the focus at all: the ring
+   of a control at .4 is a weak showing of where the keyboard is */
+.landing-agreement-warning .ui-alert-close-btn:focus {
+	opacity: 1;
 }
 
 .landing-agreement-custom {
@@ -221,7 +293,6 @@
 .landing-agreement-cookies-name-input {
 	display: none;
 	border: none;
-	outline: none;
 	border-bottom: 1px solid #edeef0;
 	width: 100%;
 	font: 14px/16px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
@@ -232,6 +303,32 @@
 
 .landing-agreement-cookies-name-value {
 	padding-left: 1px;
+}
+
+/* The field had its ring switched off outright, and the mode is entered from the keyboard: without
+   a ring there is nothing to tell that the caret is now in the name of the agreement. `:focus` and
+   not `:focus-visible`: the component moves the focus here from its own code. The ring is drawn
+   inside the box: the field spans the whole row and would be clipped on its edges. */
+.landing-agreement-cookies-name-input:focus {
+	outline: 2px solid var(--ui-color-primary, #2fc6f6);
+	outline-offset: -2px;
+}
+
+/* The checkbox tells whether the agreement is shown to the visitors of the site and folds its card;
+   walking the slider by keyboard was impossible to follow without a ring on it. */
+.landing-agreement-input:focus-visible {
+	outline: 2px solid var(--ui-color-primary, #2fc6f6);
+	outline-offset: 2px;
+}
+
+/* The editable area belongs to the editor of the main module and draws nothing on focus of its own.
+   Two carriers: the text is edited inside an iframe, a caret placed there leaves the host without
+   `:focus-within`, and the script sets the class for exactly that case. The ring goes inside the box
+   because the folding container around it clips whatever leaves its bounds. */
+.landing-agreement-editor:focus-within,
+.landing-agreement-editor-focus {
+	outline: 2px solid var(--ui-color-primary, #2fc6f6);
+	outline-offset: -2px;
 }
 
 .landing-agreement-cookies-name-edit .landing-agreement-cookies-name-input {

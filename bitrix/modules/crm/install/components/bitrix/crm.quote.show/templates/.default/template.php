@@ -7,8 +7,8 @@ if (!empty($arResult['ERROR_MESSAGE']))
 
 global $APPLICATION;
 
-use \Bitrix\Crm\Category\DealCategory;
-use \Bitrix\Crm\Conversion\EntityConverter;
+use Bitrix\Crm\Category\DealCategory;
+use Bitrix\Crm\Conversion\EntityConverter;
 use Bitrix\Crm\Restriction\RestrictionManager;
 
 \Bitrix\Main\UI\Extension::load([

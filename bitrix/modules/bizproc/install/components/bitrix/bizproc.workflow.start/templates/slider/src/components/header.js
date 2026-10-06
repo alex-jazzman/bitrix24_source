@@ -59,7 +59,7 @@ export class Header
 	#renderTitle(): HTMLElement
 	{
 		return Tag.render`
-			<div class="bizproc__ws_start__header__title">
+			<div class="bizproc__ws_start__header__title" role="heading" aria-level="1">
 				${Text.encode(this.#title)}
 			</div>
 		`;

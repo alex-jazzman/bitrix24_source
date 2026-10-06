@@ -14,7 +14,8 @@ type MessagesState = {
 }
 
 type CopilotMessage = {
-	role: string
+	role: string,
+	prompts: ImModelCopilotPrompt[],
 }
 
 /* eslint-disable no-param-reassign */
@@ -32,6 +33,7 @@ export class MessagesModel extends BuilderModel
 		return {
 			id: 0,
 			roleCode: '',
+			prompts: [],
 		};
 	}
 
@@ -54,6 +56,13 @@ export class MessagesModel extends BuilderModel
 				if (!message)
 				{
 					return [];
+				}
+
+				// снапшот, снятый на момент приёма (см. action add); фолбэк на живую
+				// роль, если снапшот пуст (роли ещё не подъехали к моменту add)
+				if (Type.isArrayFilled(message.prompts))
+				{
+					return message.prompts;
 				}
 
 				return Core.getStore().getters['copilot/roles/getPrompts'](message.roleCode);
@@ -85,6 +94,10 @@ export class MessagesModel extends BuilderModel
 						...this.getElementState(),
 						...this.formatFields(message),
 					};
+					// снапшот промптов роли на момент приёма: фиксируем набор из этого же
+					// ответа, чтобы позднейшая перезапись глобальной роли (при заходе в
+					// проектный чат) не протекала в баннер этого сообщения
+					preparedMessage.prompts = Core.getStore().getters['copilot/roles/getPrompts'](preparedMessage.roleCode);
 					store.commit('add', preparedMessage);
 				});
 			},

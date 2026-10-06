@@ -1,23 +1,26 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Bitrix\Landing\Copilot;
 
 use Bitrix\Landing;
 use Bitrix\Landing\Agent;
-use Bitrix\Landing\Copilot\Connector\Chat\ChatBotMessageDto;
 use Bitrix\Landing\Copilot\Generation\GenerationException;
+use Bitrix\Landing\Copilot\Generation\Scenario\CreateAiSite;
 use Bitrix\Landing\Copilot\Generation\Scenario\IScenario;
 use Bitrix\Landing\Copilot\Generation\Scenario\Scenarist;
 use Bitrix\Landing\Copilot\Generation\Timer;
 use Bitrix\Landing\Copilot\Generation\Type\GenerationErrors;
 use Bitrix\Landing\Copilot\Model\GenerationsTable;
 use Bitrix\Landing\Copilot\Services\FirstSiteGenerationService;
+use Bitrix\Landing\Copilot\Services\GenerationErrorStatusMapper;
 use Bitrix\Landing\Metrika;
 use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ORM\Query\Query;
 use Bitrix\Main\ORM\Query\Filter;
+use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\Web\Json;
 
 /**
@@ -33,21 +36,24 @@ class Generation
 	private const EVENT_GENERATION_FINISH = 'onGenerationFinish';
 
 	private const DATA_METRIKA_KEY = 'metrikaFields';
+	private const DATA_LAST_ERROR_KEY = 'lastError';
 
 	private int $id;
-	private ?int $chatId = null;
 	private IScenario $scenario;
 	private Data\Site $siteData;
 	private ?array $data = null;
+	/** @var list<Data\HtmlBlock> */
+	private array $htmlBlocks = [];
 	private int $step;
 	private int $authorId;
+	private ?DateTime $dateFinished = null;
 
 	private Scenarist $scenarist;
 	private Timer $timer;
 	private ?Generation\Event $event = null;
+	private bool $generationCreateEventSent = false;
 	private ?Metrika\FieldsDto $metrikaFields = null;
 	private Metrika\MetrikaProviderParamService $metrikaProviderParamService;
-
 
 	/**
 	 * Generation constructor.
@@ -74,30 +80,23 @@ class Generation
 	}
 
 	/**
-	 * Sets the chat ID if generation is started by chat.
+	 * Overrides the author id explicitly.
 	 *
-	 * @param int $chatId Chat ID.
+	 * Useful for runtimes where the effective tool caller user id
+	 * is passed separately from the current global Bitrix user.
+	 *
+	 * @param int $authorId
 	 *
 	 * @return Generation
 	 */
-	public function setChatId(int $chatId): self
+	public function setAuthorId(int $authorId): self
 	{
-		if ($chatId > 0)
+		if ($authorId > 0)
 		{
-			$this->chatId = $chatId;
+			$this->authorId = $authorId;
 		}
 
 		return $this;
-	}
-
-	/**
-	 * Gets the chat ID if generation is started by chat.
-	 *
-	 * @return int|null
-	 */
-	public function getChatId(): ?int
-	{
-		return $this->chatId;
 	}
 
 	/**
@@ -146,6 +145,30 @@ class Generation
 	public function getSiteData(): Data\Site
 	{
 		return $this->siteData;
+	}
+
+	/**
+	 * @return list<Data\HtmlBlock>
+	 */
+	public function getHtmlBlocks(): array
+	{
+		return $this->htmlBlocks;
+	}
+
+	/**
+	 * @param list<Data\HtmlBlock> $htmlBlocks
+	 */
+	public function setHtmlBlocks(array $htmlBlocks): void
+	{
+		foreach ($htmlBlocks as $htmlBlock)
+		{
+			if (!$htmlBlock instanceof Data\HtmlBlock)
+			{
+				throw new \InvalidArgumentException('Generation::setHtmlBlocks() accepts only HtmlBlock instances.');
+			}
+		}
+
+		$this->htmlBlocks = array_values($htmlBlocks);
 	}
 
 	/**
@@ -289,7 +312,7 @@ class Generation
 		$metrika = new Metrika\Metrika(
 			$this->scenario->getAnalyticCategory(),
 			$event,
-			Metrika\Tools::Ai
+			Metrika\Tools::Ai,
 		);
 
 		$this->metrikaProviderParamService->setParams($metrika, $event);
@@ -311,7 +334,7 @@ class Generation
 
 			if (isset($fields->subSection))
 			{
-				$metrika->setSubSection($this->metrikaFields->subSection);
+				$metrika->setSubSection($fields->subSection);
 			}
 		}
 
@@ -362,6 +385,33 @@ class Generation
 	}
 
 	/**
+	 * Tells if a generation of the scenario exists for the site, without loading its data.
+	 * Answers like initBySiteId(), but does not read the heavy fields of the generation.
+	 *
+	 * @param int $siteId Site ID.
+	 * @param IScenario $scenario Scenario instance.
+	 *
+	 * @return bool True if such a generation exists, false otherwise.
+	 */
+	public static function existsBySiteId(int $siteId, IScenario $scenario): bool
+	{
+		$generation = GenerationsTable::query()
+			->where('SCENARIO', '=', $scenario::class)
+			->where('SITE_ID', '=', $siteId)
+			// SITE_DATA is written as a serialized array when the generation is created, so NULL there
+			// marks a record the initialization path cannot use: initExists() leaves siteData unset and
+			// initScenarist() gives up on it. The predicate keeps the answer of this method equal to the
+			// answer of initBySiteId() without reading the heavy fields of the generation
+			->whereNotNull('SITE_DATA')
+			->setSelect(['ID'])
+			->setLimit(1)
+			->fetch()
+		;
+
+		return (bool)$generation;
+	}
+
+	/**
 	 * Initializes this instance with data from an existing generation matching the filter.
 	 * @param Filter\ConditionTree $filter ORM filter for the query.
 	 *
@@ -371,7 +421,7 @@ class Generation
 	{
 		$generation = GenerationsTable::query()
 			->where($filter)
-			->setSelect(['ID', 'SCENARIO', 'STEP', 'CHAT_ID', 'SITE_DATA', 'DATA', 'CREATED_BY_ID'])
+			->setSelect(['ID', 'SCENARIO', 'STEP', 'SITE_DATA', 'DATA', 'HTML_BLOCKS', 'CREATED_BY_ID', 'DATE_FINISHED'])
 			->fetch()
 		;
 
@@ -382,15 +432,14 @@ class Generation
 
 		$this->id = (int)$generation['ID'];
 		$this->authorId = (int)$generation['CREATED_BY_ID'];
+		$this->generationCreateEventSent = true;
+
+		$dateFinished = $generation['DATE_FINISHED'] ?? null;
+		$this->dateFinished = $dateFinished instanceof DateTime ? $dateFinished : null;
 
 		if (isset($generation['STEP']))
 		{
 			$this->step = (int)$generation['STEP'];
-		}
-
-		if (isset($generation['CHAT_ID']))
-		{
-			$this->setChatId((int)$generation['CHAT_ID']);
 		}
 
 		if (!class_exists($generation['SCENARIO']))
@@ -415,6 +464,9 @@ class Generation
 			$this->data = $generation['DATA'];
 		}
 
+		$storedHtmlBlocks = $generation['HTML_BLOCKS'] ?? null;
+		$this->hydrateHtmlBlocks(is_array($storedHtmlBlocks) ? $storedHtmlBlocks : null);
+
 		if (!$this->initScenarist())
 		{
 			return false;
@@ -430,6 +482,19 @@ class Generation
 	 */
 	public function execute(): bool
 	{
+		if (!$this->prepareExecution())
+		{
+			return false;
+		}
+
+		return $this->executePreparedScenario();
+	}
+
+	/**
+	 * Persist/initialize and validate prerequisites before execution.
+	 */
+	private function prepareExecution(): bool
+	{
 		if (!isset($this->id) && !$this->save())
 		{
 			return false;
@@ -437,59 +502,82 @@ class Generation
 
 		FirstSiteGenerationService::setCurrentGenerationId($this->id ?? null);
 
-		$connection = Application::getConnection();
-		if (!$connection->lock($this->getLockName()))
+		return $this->isExecutable() && $this->initScenarist();
+	}
+
+	/**
+	 * Execute scenario under lock after prepare step has succeeded.
+	 */
+	private function executePreparedScenario(): bool
+	{
+		return $this->runWithLock(function (): bool
 		{
-			$this->setAgent();
+			$isSuccess = true;
 
-			return false;
-		}
+			try
+			{
+				$this->runScenario();
+			}
+			catch (\Throwable $e)
+			{
+				$isSuccess = $this->handleExecutionException($e);
+			}
 
-		if (
-			!$this->isExecutable()
-			|| !$this->initScenarist()
-		)
-		{
-			return false;
-		}
+			return $isSuccess;
+		});
+	}
 
+	/**
+	 * Run scenarist and finalize generation when all steps are completed.
+	 */
+	private function runScenario(): void
+	{
 		$this->timer->start();
 		$this->deleteAgent();
 
-		try
-		{
-			$this->scenarist
-				->onStepChange(fn(int $newStep) => $this->step = $newStep)
-				->onSave(fn() => $this->save())
-				->execute()
-			;
+		$this->scenarist
+			->onStepChange(fn(int $newStep) => $this->step = $newStep)
+			->onSave(fn() => $this->save())
+			->execute()
+		;
 
-			if ($this->scenarist->isFinished())
-			{
-				$this->onFinish();
-			}
-		}
-		catch (GenerationException $e)
+		if ($this->scenarist->isFinished())
 		{
+			$this->onFinish();
+		}
+		elseif (!$this->scenarist->isError())
+		{
+			$this->setAgent();
+		}
+	}
+
+	/**
+	 * Map execution exceptions to side effects and final result status.
+	 */
+	private function handleExecutionException(\Throwable $e): bool
+	{
+		if ($e instanceof GenerationException)
+		{
+			$this->rememberLastError($e);
 			$this->sendMetrikaError($e);
-			$this->scenario->getChatbot()?->sendErrorMessage(new ChatBotMessageDto(
-				$this->getChatId() ?? 0,
-				$this->id,
-				$e->getCodeObject(),
-				$e->getParams(),
-			));
+			// the scenario hook may mark the generation data (analytics idempotency across resumes),
+			// so the data is persisted after it, not before
+			$this->scenario->onGenerationError($this, $e);
+			$this->save(false);
 			$this->getEvent()->send(self::EVENT_GENERATION_ERROR);
 
 			return false;
 		}
-		catch (\RuntimeException $e)
+
+		if ($e instanceof \RuntimeException)
 		{
 			$this->setAgent();
 			$this->getEvent()->send(self::EVENT_TIMER);
 
 			return false;
 		}
-		catch (\Exception $e)
+
+		if ($e instanceof \Exception)
 		{
 			$this->getEvent()->sendError(
 				self::EVENT_ERROR,
@@ -499,9 +587,30 @@ class Generation
 			return false;
 		}
 
-		$connection->unlock($this->getLockName());
+		throw $e;
+	}
 
-		return true;
+	/**
+	 * Acquire lock, run operation, and always release lock in finally.
+	 */
+	private function runWithLock(callable $operation): bool
+	{
+		$connection = Application::getConnection();
+		if (!$connection->lock($this->getLockName()))
+		{
+			$this->setAgent();
+
+			return false;
+		}
+
+		try
+		{
+			return (bool)$operation();
+		}
+		finally
+		{
+			$connection->unlock($this->getLockName());
+		}
 	}
 
 	/**
@@ -565,12 +674,17 @@ class Generation
 	}
 
 	/**
-	 * Checks if the scenario has executed all steps.
+	 * Checks if the generation is finished: by the persisted finish mark or by scenario steps.
 	 *
 	 * @return bool
 	 */
 	public function isFinished(): bool
 	{
+		if ($this->dateFinished !== null)
+		{
+			return true;
+		}
+
 		if (!$this->initScenarist())
 		{
 			return false;
@@ -580,13 +694,46 @@ class Generation
 	}
 
 	/**
+	 * Tells if the finish mark was already in the base when this instance was initialized.
+	 * The mark is persisted after the hooks of the scenario are called, so during them the answer
+	 * is "yes" only for a repeated run of an already finished generation.
+	 *
+	 * @return bool
+	 */
+	public function isFinishedPersisted(): bool
+	{
+		return $this->dateFinished !== null;
+	}
+
+	/**
 	 * Handles actions to perform when the generation is finished.
 	 *
 	 * @return void
 	 */
 	private function onFinish(): void
 	{
+		$this->persistDateFinished();
 		$this->getEvent()->send(self::EVENT_GENERATION_FINISH);
+	}
+
+	/**
+	 * Persists the finish mark once; repeated calls keep the first value.
+	 *
+	 * @return void
+	 */
+	private function persistDateFinished(): void
+	{
+		if ($this->dateFinished !== null || !isset($this->id))
+		{
+			return;
+		}
+
+		$dateFinished = new DateTime();
+		$result = GenerationsTable::update($this->id, ['DATE_FINISHED' => $dateFinished]);
+		if ($result->isSuccess())
+		{
+			$this->dateFinished = $dateFinished;
+		}
 	}
 
 	/**
@@ -615,8 +762,70 @@ class Generation
 		{
 			$this->scenarist->clearErrors();
 		}
+		$this->clearLastError();
+		if (isset($this->id))
+		{
+			$this->save(false);
+		}
 
 		return $this;
+	}
+
+	private function rememberLastError(GenerationException $exception): void
+	{
+		if ($exception->getErrorCode() !== GenerationErrors::requestQuotaExceeded)
+		{
+			$this->clearLastError();
+
+			return;
+		}
+
+		$errorText = trim((string)($exception->getParams()['errorText'] ?? ''));
+		if ($errorText === '')
+		{
+			$this->clearLastError();
+
+			return;
+		}
+
+		$this->setData(self::DATA_LAST_ERROR_KEY, [
+			'type' => 'limit',
+			'text' => $errorText,
+			'sliderCode' => $this->extractFeaturePromoterSliderCode($errorText),
+			'metrikaStatus' => $this->normalizeMetrikaStatus($exception->getParams()['metrikaStatus'] ?? null),
+		]);
+	}
+
+	private function clearLastError(): void
+	{
+		$this->deleteData(self::DATA_LAST_ERROR_KEY);
+	}
+
+	private function normalizeMetrikaStatus(mixed $status): ?string
+	{
+		if ($status instanceof Metrika\Statuses)
+		{
+			return $status->value;
+		}
+
+		if (!is_scalar($status))
+		{
+			return null;
+		}
+
+		$status = trim((string)$status);
+
+		return $status !== '' ? $status : null;
+	}
+
+	private function extractFeaturePromoterSliderCode(string $text): ?string
+	{
+		if (preg_match('/[?&]FEATURE_PROMOTER=([a-z0-9_\\-]+)/i', $text, $matches) !== 1)
+		{
+			return null;
+		}
+
+		return (string)$matches[1];
 	}
 
 	/**
@@ -629,7 +838,7 @@ class Generation
 		if (!isset(
 			$this->id,
 			$this->scenario,
-			$this->siteData
+			$this->siteData,
 		))
 		{
 			return false;
@@ -647,11 +856,54 @@ class Generation
 	}
 
 	/**
+	 * Persists the current generation state immediately.
+	 *
+	 * Useful for steps that create external entities and must checkpoint
+	 * their identifiers before the step fully completes.
+	 */
+	public function persistState(): bool
+	{
+		return $this->save();
+	}
+
+	public function persistBeforeStart(bool $sendCreateEvent = false): bool
+	{
+		return $this->save($sendCreateEvent);
+	}
+
+	public function sendGenerationCreateEvent(): void
+	{
+		if (isset($this->id) && !$this->generationCreateEventSent)
+		{
+			$this->getEvent()->send(self::EVENT_GENERATION_CREATE);
+			$this->generationCreateEventSent = true;
+		}
+	}
+
+	public function discardBeforeStart(): bool
+	{
+		if (!isset($this->id) || $this->generationCreateEventSent)
+		{
+			return false;
+		}
+
+		$res = GenerationsTable::delete($this->id);
+		if (!$res->isSuccess())
+		{
+			return false;
+		}
+
+		unset($this->id);
+
+		return true;
+	}
+
+	/**
 	 * Saves the current generation state to the database.
 	 *
 	 * @return bool True on success, false otherwise.
 	 */
-	private function save(): bool
+	private function save(bool $sendCreateEvent = true): bool
 	{
 		if (!isset(
 			$this->scenario,
@@ -661,13 +913,25 @@ class Generation
 			return false;
 		}
 
+		$siteData = $this->siteData->toArray();
+		if ($this->shouldStoreLeanSiteData())
+		{
+			unset(
+				$siteData['wishes'],
+				$siteData['blocks'],
+				$siteData['titleStyleClass'],
+				$siteData['colors'],
+				$siteData['fonts'],
+			);
+		}
+
 		$fields = [
 			'SCENARIO' => $this->scenario::class,
 			'STEP' => $this->step ?? null,
-			'CHAT_ID' => $this->getChatId(),
 			'SITE_ID' => $this->siteData->getSiteId(),
-			'SITE_DATA' => $this->siteData->toArray(),
+			'SITE_DATA' => $siteData,
 			'DATA' => $this->getData(),
+			'HTML_BLOCKS' => $this->serializeHtmlBlocks(),
 			'CREATED_BY_ID' => $this->getAuthorId(),
 		];
 
@@ -685,13 +949,21 @@ class Generation
 			if ($res->isSuccess())
 			{
 				$this->id = $res->getId();
-				$this->getEvent()->send(self::EVENT_GENERATION_CREATE);
+				if ($sendCreateEvent)
+				{
+					$this->sendGenerationCreateEvent();
+				}
 
 				return true;
 			}
 		}
 
 		return false;
+	}
+
+	private function shouldStoreLeanSiteData(): bool
+	{
+		return $this->scenario instanceof CreateAiSite;
 	}
 
 	/**
@@ -776,6 +1048,7 @@ class Generation
 
 	/**
 	 * Sends metrika analytics for an error during generation.
+	 * Steps without an analytic event are not covered by analytics, errors included.
 	 *
 	 * @param GenerationException $e
 	 *
@@ -783,25 +1056,48 @@ class Generation
 	 */
 	private function sendMetrikaError(GenerationException $e): void
 	{
-		$errorCode = $e->getErrorCode();
-		/**
-		 * @var Metrika\Statuses $status
-		 */
-		$status = match ($errorCode)
+		$analyticEvent = $this->scenarist->getCurrentStep()?->step->getAnalyticEvent();
+		if ($analyticEvent === null)
 		{
-			GenerationErrors::requestQuotaExceeded => $e->getParams()['metrikaStatus'] ?? Metrika\Statuses::ErrorB24,
-			GenerationErrors::restrictedRequest => Metrika\Statuses::ErrorContentPolicy,
-			GenerationErrors::notExistResponse,
-			GenerationErrors::notFullyResponse,
-			GenerationErrors::notCorrectResponse => Metrika\Statuses::ErrorProvider,
-			default => Metrika\Statuses::ErrorB24,
-		};
-
-		$step = $this->scenarist->getCurrentStep();
-		$analyticEvent = $step?->step->getAnalyticEvent() ?? Metrika\Events::unknown;
+			return;
+		}
 
 		$metrika = $this->getMetrika($analyticEvent);
-		$metrika->setStatus($status);
+		$metrika->setStatus(GenerationErrorStatusMapper::resolve($e));
 		$metrika->send();
+	}
+
+	/**
+	 * @param list<array<string, mixed>>|null $stored
+	 */
+	private function hydrateHtmlBlocks(?array $stored): void
+	{
+		if ($stored === null)
+		{
+			$this->htmlBlocks = [];
+
+			return;
+		}
+
+		$htmlBlocks = [];
+		foreach ($stored as $item)
+		{
+			$htmlBlocks[] = Data\HtmlBlock::fromArray($item);
+		}
+
+		$this->htmlBlocks = $htmlBlocks;
+	}
+
+	/**
+	 * @return list<array<string, mixed>>|null
+	 */
+	private function serializeHtmlBlocks(): ?array
+	{
+		if ($this->htmlBlocks === [])
+		{
+			return null;
+		}
+
+		return array_map(static fn(Data\HtmlBlock $htmlBlock): array => $htmlBlock->toArray(), $this->htmlBlocks);
 	}
 }

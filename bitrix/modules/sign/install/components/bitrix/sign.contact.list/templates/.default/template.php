@@ -17,5 +17,6 @@ $APPLICATION->IncludeComponent(
 	'',
 	[
 		'MENU_ITEMS' => $arResult['MENU_ITEMS'],
+		'PATH_TO' => $arResult['PATH_TO'],
 	]
 );

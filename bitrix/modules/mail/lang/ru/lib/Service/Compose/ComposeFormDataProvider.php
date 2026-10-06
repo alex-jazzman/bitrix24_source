@@ -1,0 +1,5 @@
+<?php
+
+$MESS["MAIL_COMPOSE_FORM_TITLE_NEW"] = "Новое письмо";
+$MESS["MAIL_COMPOSE_FORM_TITLE_REPLY"] = "Ответ";
+$MESS["MAIL_COMPOSE_FORM_TITLE_FORWARD"] = "Пересылка";

@@ -5,7 +5,7 @@ import { Underline } from '@tiptap/extension-underline';
 import { Code } from '@tiptap/extension-code';
 import { CodeBlock } from './code-block/code-block-extension';
 import { Blockquote } from '@tiptap/extension-blockquote';
-import { Callout } from './callout-extension';
+import { Callout, CalloutInputEnter } from './callout-extension';
 import { BulletList } from '@tiptap/extension-bullet-list';
 import { OrderedList } from '@tiptap/extension-ordered-list';
 import { ListItem } from '@tiptap/extension-list-item';
@@ -21,6 +21,7 @@ import { Link } from '@tiptap/extension-link';
 import { InputRule } from '@tiptap/core';
 import { sanitizeUrl } from '../utils/url';
 import { Lexer } from 'marked';
+import { escapeInlineText } from './shared-marked';
 
 // Single `[text](url)` markdown link, not the `[[image ...]]` asset syntax (double bracket) —
 // the lookbehind rejects a `[` immediately before ours without consuming it (range.from must stay
@@ -130,6 +131,10 @@ function ensureParagraphInlineTokens(tokens)
 }
 
 const SafeListItem = ListItem.extend({
+	renderMarkdown(node, h, ctx): string
+	{
+		return this.parent?.({ ...node, content: escapeInlineText(node.content) }, h, ctx) ?? '';
+	},
 	parseMarkdown: (token, helpers) => {
 		if (token.type !== 'list_item')
 		{
@@ -201,6 +206,13 @@ const SafeListItem = ListItem.extend({
 	},
 });
 
+const MarkdownBlockquote = Blockquote.extend({
+	renderMarkdown(node, h, ctx): string
+	{
+		return this.parent?.({ ...node, content: escapeInlineText(node.content) }, h, ctx) ?? '';
+	},
+});
+
 const CleanOrderedList = OrderedList.extend({
 	markdownTokenizer: null,
 	parseMarkdown: (token, helpers) => {
@@ -249,8 +261,9 @@ export function createFormattingExtensions(): Object[]
 			excludes: 'code link',
 		}),
 		CodeBlock,
-		Blockquote,
+		MarkdownBlockquote,
 		Callout,
+		CalloutInputEnter,
 		BulletList,
 		CleanOrderedList,
 		SafeListItem,

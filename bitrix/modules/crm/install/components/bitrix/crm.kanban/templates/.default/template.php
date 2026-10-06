@@ -62,7 +62,7 @@ $contactCenterUrl = Container::getInstance()->getRouter()->getContactCenterUrl()
 	'js' => array('/bitrix/js/crm/activity.js')
 ));
 \CJSCore::registerExt('crm_partial_entity_editor', array(
-	'js' => array('/bitrix/js/crm/partial_entity_editor.js', '/bitrix/js/crm/dialog.js')
+	'js' => array('/bitrix/js/crm/partial_entity_editor.js')
 ));
 \CJSCore::registerExt('popup_menu', array(
 	'js' => array('/bitrix/js/main/popup_menu.js')
@@ -75,6 +75,7 @@ Extension::load([
 	'crm_visit_tracker',
 	'crm_activity_type',
 	'crm_partial_entity_editor',
+	'crm.dialog',
 	'crm.entity-editor',
 	'popup_menu',
 	'currency',

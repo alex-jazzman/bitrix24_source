@@ -47,6 +47,10 @@ $arActivityDescription =
 				'Name' => (string)Loc::getMessage('FULL_REPORT_SENT_TRIGGER_RETURN_FIELD_USER'),
 				'Type' => FieldType::USER,
 			],
+			'MANAGER' => [
+				'Name' => (string)Loc::getMessage('FULL_REPORT_SENT_TRIGGER_RETURN_FIELD_MANAGER'),
+				'Type' => FieldType::USER,
+			],
 			'REPORT' => [
 				'Name' => (string)Loc::getMessage('FULL_REPORT_SENT_TRIGGER_RETURN_FIELD_REPORT'),
 				'Type' => FieldType::TEXT,
@@ -54,6 +58,18 @@ $arActivityDescription =
 			'REPORT_EXTENDED' => [
 				'Name' => (string)Loc::getMessage('FULL_REPORT_SENT_TRIGGER_RETURN_FIELD_REPORT_EXTENDED'),
 				'Type' => FieldType::TEXT,
+			],
+			'REPORT_ID' => [
+				'Name' => (string)Loc::getMessage('FULL_REPORT_SENT_TRIGGER_RETURN_FIELD_REPORT_ID'),
+				'Type' => FieldType::INT,
+			],
+			'PERIOD_PHRASE' => [
+				'Name' => (string)Loc::getMessage('FULL_REPORT_SENT_TRIGGER_RETURN_FIELD_PERIOD_PHRASE'),
+				'Type' => FieldType::TEXT,
+			],
+			'SOURCE_TYPE' => [
+				'Name' => (string)Loc::getMessage('FULL_REPORT_SENT_TRIGGER_RETURN_FIELD_SOURCE_TYPE'),
+				'Type' => FieldType::STRING,
 			],
 		])
 		->setIcon(Outline::FILE_WITH_CROWN->name)

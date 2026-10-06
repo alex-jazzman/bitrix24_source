@@ -393,6 +393,17 @@ class Storage
 		return in_array($regionCode, ['ru', 'by'], true);
 	}
 
+	/**
+	 * Bulk actions of the b2e documents grid run over the batch actions of the signing service. The
+	 * feature ships switched on, and the option is the switch that turns it off on a portal whose
+	 * deployment does not serve the batch actions yet. While the option is off, the bulk actions are
+	 * absent both in the grid and on the server.
+	 */
+	public function isB2eBulkActionAvailable(): bool
+	{
+		return Main\Config\Option::get('sign', '~b2e_bulk_action_available', 'Y') === 'Y';
+	}
+
 	public function getFieldsFillMembersLimit(): int
 	{
 		$option = (int)\Bitrix\Main\Config\Option::get('sign', 'FIELDS_FILL_MEMBER_LIMIT');
@@ -417,7 +428,7 @@ class Storage
 
 	public function getMaxB2bDocumentsSignedWithoutRestriction(): int
 	{
-		return (int)\Bitrix\Main\Config\Option::get('sign', '~sign_b2b_max_documents_without_restriction', 2);
+		return (int)\Bitrix\Main\Config\Option::get('sign', '~sign_b2b_max_documents_without_restriction', 0);
 	}
 
 	public function isDemoTemplateInstalled(): ?bool
@@ -428,5 +439,10 @@ class Storage
 	public function setDemoTemplateInstalled(bool $value): void
 	{
 		Main\Config\Option::set('sign', '~sign_b2e_onboarding_template_installed', $value ? 'Y' : 'N');
+	}
+
+	public function isPlaceholderVerifiedAliasFilterDisabled(): bool
+	{
+		return Main\Config\Option::get('sign', '~disable_placeholder_verified_alias_filter', 'N') === 'Y';
 	}
 }

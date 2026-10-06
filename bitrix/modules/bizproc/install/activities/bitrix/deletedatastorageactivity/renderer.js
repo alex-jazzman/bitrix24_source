@@ -1,80 +1,75 @@
 /* eslint-disable */
-(function (exports, main_core, bizproc_automation, main_core_events) {
+(function (exports, main_core, main_core_events) {
 	'use strict';
 
+	/**
+	 * The "filter by fields" control is a standard `conditiongroup` field now: it renders
+	 * itself server-side and mounts via the field pipeline (self-bootstrap → initControl →
+	 * decorateConditionGroupField). This renderer keeps only the activity-specific wiring
+	 * around it — the delete-mode dependency, per-storage dynamic fields (API-02 setFields)
+	 * and the value selector (API-02 setValueSelector). No robot global context anymore.
+	 */
 	class DeleteDataStorageActivityRenderer {
 		#form = null;
-		#options = null;
-		#documentType = [];
+		#settings = {};
 		#currentStorageId = '';
-		#deleteModeElement = null;
-		#deleteModeSelect = null;
 		#currentDeleteMode = '';
-		#document = null;
-		#conditionGroup = null;
-		#filterFieldsContainer = null;
-		#filteringFieldsPrefix = '';
-		#filterFieldsMap = new Map();
+		#deleteModeSelect = null;
 		#onDeleteModeChangeHandler;
-		#dialog;
-		#conditionGroupSelector = null;
+		#dialog = null;
+		#filterFieldRow = null;
+		#conditionGroupControl = null;
+		#filterFieldsMap = new Map();
 		#storageBlocks = [];
 		constructor() {
 			this.#onDeleteModeChangeHandler = this.#onDeleteModeChange.bind(this);
 		}
-		getControlRenderers() {
-			return {
-				filterFields: field => {
-					this.#options = field.property.Options || {};
-					this.#options.headCaption = field.property.Name;
-					return main_core.Tag.render`
-					<div data-role="bpa-sda-delete-mode-dependent">
-						<div data-role="bpa-sda-filter-fields-container"></div>
-					</div>
-				`;
-				}
-			};
-		}
-		async afterFormRender(form) {
+		async afterFormRender(form, activityFields) {
+			this.#form = form;
+			const field = main_core.Type.isPlainObject(activityFields) ? activityFields.filter_fields : null;
+			this.#settings = field && main_core.Type.isPlainObject(field.property?.Settings) ? field.property.Settings : {};
 			const {
 				StorageSelector,
 				mapStorageBlocksToFilterFields,
 				resolveCurrentStorageId
 			} = await main_core.Runtime.loadExtension('bizproc.storage-selector');
-			this.#form = form;
-			if (main_core.Type.isPlainObject(this.#options)) {
-				this.#documentType = this.#options.documentType;
-				if (!main_core.Type.isNil(this.#form)) {
-					this.#currentStorageId = resolveCurrentStorageId(this.#form);
-					this.#deleteModeElement = this.#form.querySelector('[data-role="bpa-sda-delete-mode-dependent"]');
-					this.#deleteModeSelect = this.#form.delete_mode;
-					this.#currentDeleteMode = this.#deleteModeSelect?.value || '';
-				}
-				this.#document = new bizproc_automation.Document({
-					rawDocumentType: this.#documentType,
-					documentFields: [],
-					title: 'document'
-				});
-				main_core_events.EventEmitter.subscribeOnce('BX.Bizproc.CommonNodeSettings:onBlocksReady', event => {
-					const {
-						blocks
-					} = event.getData();
-					this.#storageBlocks = (blocks || []).filter(block => block.activity?.Type === 'CreateStorageNode');
-					this.#initFilterFields(this.#options, mapStorageBlocksToFilterFields);
-					this.#render();
-				});
-				this.#initAutomationContext();
-				this.#initStorageSelector(StorageSelector);
-				if (this.#deleteModeSelect) {
-					main_core.Event.bind(this.#deleteModeSelect, 'change', this.#onDeleteModeChangeHandler);
-				}
-				this.#render();
+			const {
+				decorateConditionGroupField
+			} = await main_core.Runtime.loadExtension('bizproc.condition');
+			this.#currentStorageId = resolveCurrentStorageId(this.#form);
+			this.#deleteModeSelect = this.#form.delete_mode;
+			this.#currentDeleteMode = this.#deleteModeSelect?.value || '';
+
+			// The control is mounted by the field pipeline; decorate again is idempotent and
+			// returns the same instance, which also covers a mount/afterFormRender race.
+			this.#filterFieldRow = this.#form.querySelector('#row_filter_fields');
+			const controlNode = this.#form.querySelector('[data-role="bp-condition-group"]');
+			this.#conditionGroupControl = controlNode ? decorateConditionGroupField(controlNode) : null;
+			if (this.#conditionGroupControl && main_core.Type.isFunction(window.BPAShowSelector)) {
+				this.#conditionGroupControl.setValueSelector(targetInputId => window.BPAShowSelector(targetInputId, 'string', ''));
 			}
+
+			// Full per-storage field map arrives via the activity-private Settings channel;
+			// canvas storage nodes augment it once the blocks are ready.
+			this.#filterFieldsMap = new Map(Object.entries(main_core.Type.isPlainObject(this.#settings.filterFieldsMap) ? this.#settings.filterFieldsMap : {}).map(([storageId, fieldsMap]) => [String(storageId), fieldsMap]));
+			main_core_events.EventEmitter.subscribeOnce('BX.Bizproc.CommonNodeSettings:onBlocksReady', event => {
+				const {
+					blocks
+				} = event.getData();
+				this.#storageBlocks = (blocks || []).filter(block => block.activity?.Type === 'CreateStorageNode');
+				this.#filterFieldsMap = mapStorageBlocksToFilterFields(this.#storageBlocks, this.#filterFieldsMap);
+				this.#applyFields();
+			});
+			this.#initStorageSelector(StorageSelector);
+			if (this.#deleteModeSelect) {
+				main_core.Event.bind(this.#deleteModeSelect, 'change', this.#onDeleteModeChangeHandler);
+			}
+			this.#applyFields();
+			this.#render();
 		}
 		#initStorageSelector(StorageSelector) {
-			const dialogId = 'entityselector_storage_id';
 			this.#dialog = new StorageSelector({
-				dialogId,
+				dialogId: 'entityselector_storage_id',
 				onStateChange: this.#onStorageStateChange.bind(this),
 				initialValue: this.#currentStorageId,
 				storageCodeInput: this.#form?.querySelector('[name="storage_code"]')
@@ -84,8 +79,13 @@
 		#onStorageStateChange(newStorageId) {
 			if (this.#currentStorageId !== String(newStorageId)) {
 				this.#currentStorageId = String(newStorageId);
-				this.#conditionGroupSelector = null;
-				this.#conditionGroup = new bizproc_automation.ConditionGroup();
+				// Conditions built for the previous storage reference its fields; those fields are
+				// invalid for the new storage (backend drops them and the activity errors out), so
+				// reset the group before feeding the new field set.
+				if (this.#conditionGroupControl && main_core.Type.isFunction(this.#conditionGroupControl.clear)) {
+					this.#conditionGroupControl.clear();
+				}
+				this.#applyFields();
 			}
 			this.#render();
 		}
@@ -93,61 +93,30 @@
 			this.#currentDeleteMode = this.#deleteModeSelect.value;
 			this.#render();
 		}
-		#renderFilterFields() {
-			if (!main_core.Type.isNil(this.#conditionGroup) && main_core.Type.isNil(this.#conditionGroupSelector)) {
-				this.#conditionGroupSelector = new bizproc_automation.ConditionGroupSelector(this.#conditionGroup, {
-					fields: Object.values(this.#filterFieldsMap.get(this.#currentStorageId) || {}),
-					fieldPrefix: this.#filteringFieldsPrefix,
-					customSelector: main_core.Type.isFunction(window.BPAShowSelector) ? this.#showFieldSelector : null,
-					caption: {
-						head: this.#options.headCaption,
-						collapsed: this.#options.collapsedCaption
-					},
-					isExpanded: this.#getFilterExpandedState()
-				});
-				this.#conditionGroupSelector.subscribe('onToggleGroupViewClick', event => {
-					const data = event.getData();
-					this.#saveFilterExpandedState(data.isExpanded);
-				});
-				main_core.Dom.clean(this.#filterFieldsContainer);
-				main_core.Dom.append(this.#conditionGroupSelector.createNode(), this.#filterFieldsContainer);
+		#applyFields() {
+			if (!this.#conditionGroupControl) {
+				return;
 			}
-		}
-		#getFilterExpandedState() {
-			return this.#form.is_expanded?.value === 'Y';
-		}
-		#saveFilterExpandedState(isExpanded) {
-			if (this.#form.is_expanded) {
-				this.#form.is_expanded.value = isExpanded ? 'Y' : 'N';
+
+			// Editors that call afterFormRender without activityFields (edit-base-settings,
+			// edit-extended-action) leave the per-storage map empty. When there is no entry for
+			// the current storage, keep the server-rendered fields (DTO-01) instead of wiping them
+			// with an empty set. An explicit map entry (even an empty one) is still applied.
+			if (!this.#filterFieldsMap.has(this.#currentStorageId)) {
+				return;
 			}
-		}
-		#showFieldSelector(targetInputId) {
-			window.BPAShowSelector(targetInputId, 'string', '');
+			const storageFields = this.#filterFieldsMap.get(this.#currentStorageId) || {};
+			this.#conditionGroupControl.setFields(Object.values(storageFields));
 		}
 		#render() {
+			if (!this.#filterFieldRow) {
+				return;
+			}
 			if (this.#currentStorageId && this.#currentDeleteMode === 'multiple') {
-				main_core.Dom.show(this.#deleteModeElement);
-				this.#renderFilterFields();
+				main_core.Dom.show(this.#filterFieldRow);
 			} else {
-				main_core.Dom.hide(this.#deleteModeElement);
+				main_core.Dom.hide(this.#filterFieldRow);
 			}
-		}
-		#initAutomationContext() {
-			try {
-				bizproc_automation.getGlobalContext();
-			} catch {
-				bizproc_automation.setGlobalContext(new bizproc_automation.Context({
-					document: this.#document
-				}));
-			}
-		}
-		#initFilterFields(options, mapStorageBlocksToFilterFields) {
-			this.#filterFieldsContainer = this.#form.querySelector('[data-role="bpa-sda-filter-fields-container"]');
-			this.#filteringFieldsPrefix = options.filteringFieldsPrefix;
-			this.#filterFieldsMap = new Map(Object.entries(options.filterFieldsMap).map(([storageId, fieldsMap]) => [String(storageId), fieldsMap]));
-			this.#filterFieldsMap = mapStorageBlocksToFilterFields(this.#storageBlocks, this.#filterFieldsMap);
-			this.#conditionGroup = new bizproc_automation.ConditionGroup(options.conditions);
-			this.#conditionGroupSelector = null;
 		}
 		destroy() {
 			if (this.#deleteModeSelect) {
@@ -157,10 +126,14 @@
 				this.#dialog.destroy();
 				this.#dialog = null;
 			}
+			if (this.#conditionGroupControl && main_core.Type.isFunction(this.#conditionGroupControl.destroy)) {
+				this.#conditionGroupControl.destroy();
+				this.#conditionGroupControl = null;
+			}
 		}
 	}
 
 	exports.DeleteDataStorageActivityRenderer = DeleteDataStorageActivityRenderer;
 
-})(this.window = this.window || {}, BX, BX.Bizproc.Automation, BX.Event);
+})(this.window = this.window || {}, BX, BX.Event);
 //# sourceMappingURL=renderer.js.map

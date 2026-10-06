@@ -1,7 +1,17 @@
 import { Duration } from 'booking.lib.duration';
 
+import { type GridParamsProvider } from './params-provider/grid-params-provider';
+import { type GridRenderParams } from './types';
+
 export class GridBase
 {
+	#paramsProvider: GridParamsProvider;
+
+	constructor(paramsProvider: GridParamsProvider)
+	{
+		this.#paramsProvider = paramsProvider;
+	}
+
 	calculateLeft(...args)
 	{
 		throw new Error('Method calculateLeft must be implemented');
@@ -30,5 +40,10 @@ export class GridBase
 	getUnitDurations()
 	{
 		return Duration.getUnitDurations();
+	}
+
+	getParamValue(key: $Keys<GridRenderParams>): any
+	{
+		return this.#paramsProvider.get(key);
 	}
 }

@@ -1,5 +1,6 @@
 <?php
 $MESS["CRM_AUTOMATION_TRIGGER_EMAIL_DESCRIPTION"] = "Changes the stage when an incoming email arrives.";
+$MESS["CRM_AUTOMATION_TRIGGER_EMAIL_EVENT_DATE_TIME"] = "Email received date and time";
 $MESS["CRM_AUTOMATION_TRIGGER_EMAIL_NAME"] = "Incoming e-mail";
 $MESS["CRM_AUTOMATION_TRIGGER_EMAIL_NAME_1"] = "Incoming email received";
 $MESS["CRM_AUTOMATION_TRIGGER_EMAIL_NODE_DESCRIPTION"] = "Triggered after receving an incoming email.";

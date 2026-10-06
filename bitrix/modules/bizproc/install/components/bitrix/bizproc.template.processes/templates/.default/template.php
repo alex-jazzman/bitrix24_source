@@ -70,16 +70,33 @@ function createNameCell(array $data): string
 		? sprintf('<div class="%s">%s</div>', 'bizproc-template-processes-grid-description', htmlspecialcharsbx($data['description']))
 		: null;
 
+	$pilotHtml = !empty($data['pilotLabel'])
+		? sprintf(
+			'<span class="%1$s" data-testid="%1$s">%2$s</span>',
+			'bizproc-template-processes-grid-pilot',
+			$data['pilotLabel']
+		)
+		: null;
+
 	$html = <<< HTML
 		<div class="bizproc-template-processes-grid-document-name-wrapper">
-			<a class="ui-btn-link ui-typography-text-lg ui-typography-text-bold" href="/bizprocdesigner/editor/?ID=%s" target="_blank">
+			<div class="bizproc-template-processes-grid-document-title">
+				<a class="ui-btn-link ui-typography-text-lg ui-typography-text-bold" href="/bizprocdesigner/editor/?ID=%s" target="_blank">
+					%s
+				</a>
 				%s
-			</a>
+			</div>
 			%s
 		</div>
 	HTML;
 
-	return sprintf($html, htmlspecialcharsbx($data['templateId']), htmlspecialcharsbx($data['name']), $descriptionHtml);
+	return sprintf(
+		$html,
+		htmlspecialcharsbx($data['templateId']),
+		htmlspecialcharsbx($data['name']),
+		$pilotHtml,
+		$descriptionHtml
+	);
 }
 
 foreach ($templates as $row)

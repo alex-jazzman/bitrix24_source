@@ -14,6 +14,7 @@ use Bitrix\Landing\Manager;
 use Bitrix\Landing\Site;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Web\Json;
 use Bitrix\Socialservices\ApClient;
 
 Loc::loadMessages(__FILE__);
@@ -36,6 +37,7 @@ class Form
 	protected const STYLE_SETTING = 'crm-form';
 	protected const REGEXP_FORM_STYLE = '/data-b24form-design *= *[\'"](\{.+\})[\'"]/i';
 	protected const REGEXP_FORM_ID_INLINE = '/data-b24form=["\']#crmFormInline(?<id>[\d]+)["\']/i';
+	protected const DEFAULT_EMBED_CLASSES = 'bitrix24forms g-brd-white-opacity-0_6 u-form-alert-v3';
 
 	public const INLINE_MARKER_PREFIX = '#crmFormInline';
 	public const POPUP_MARKER_PREFIX = '#crmFormPopup';
@@ -50,6 +52,98 @@ class Form
 	];
 
 	private static array $errors = [];
+	private static array $formsSnapshot = [];
+	private static bool $formsSnapshotLoaded = false;
+	private static bool $formsSnapshotAvailable = true;
+
+	protected static function resetFormsRuntimeState(): void
+	{
+		self::$errors = [];
+		self::$formsSnapshot = [];
+		self::$formsSnapshotLoaded = false;
+		self::$formsSnapshotAvailable = true;
+	}
+
+	public static function getDefaultEmbedHtml(array $colors = []): string
+	{
+		$attrs = [
+			'class="' . self::DEFAULT_EMBED_CLASSES . '"',
+			self::ATTR_FORM_USE_STYLE . '="Y"',
+			self::ATTR_FORM_EMBED,
+			self::ATTR_FORM_STYLE . "='" . htmlspecialcharsbx(self::buildDefaultEmbedDesign($colors)) . "'",
+		];
+
+		$marker = self::getDefaultFormMarker();
+		if ($marker !== null)
+		{
+			$attrs[] = self::ATTR_FORM_PARAMS . '="' . htmlspecialcharsbx($marker) . '"';
+		}
+
+		if (!self::isCrm())
+		{
+			$attrs[] = self::ATTR_FORM_FROM_CONNECTOR . '="Y"';
+		}
+
+		return '<div ' . implode(' ', $attrs) . '></div>';
+	}
+
+	private static function buildDefaultEmbedDesign(array $colors): string
+	{
+		$design = [
+			'dark' => true,
+			'style' => 'classic',
+			'shadow' => false,
+			'compact' => false,
+			'color' => self::normalizeEmbedColors($colors),
+			'border' => [
+				'top' => false,
+				'bottom' => false,
+				'left' => false,
+				'right' => false,
+			],
+		];
+
+		return Json::encode($design, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+	}
+
+	private static function normalizeEmbedColors(array $colors): array
+	{
+		$normalized = self::getDefaultEmbedColors();
+		foreach ($normalized as $key => $defaultValue)
+		{
+			$value = $colors[$key] ?? null;
+			if (!is_string($value))
+			{
+				continue;
+			}
+
+			$value = trim($value);
+			if (self::isAllowedEmbedColorValue($value))
+			{
+				$normalized[$key] = $value;
+			}
+		}
+
+		return $normalized;
+	}
+
+	private static function getDefaultEmbedColors(): array
+	{
+		return [
+			'primary' => '#ffffff',
+			'primaryText' => '#333333',
+			'text' => '#ffffff',
+			'background' => '#ffffff00',
+			'fieldBorder' => '#ffffff00',
+			'fieldBackground' => '#00000011',
+			'fieldFocusBackground' => '#00000011',
+		];
+	}
+
+	private static function isAllowedEmbedColorValue(string $value): bool
+	{
+		return (bool)preg_match('/^#[0-9a-fA-F]{3,8}$/', $value);
+	}
 
 	// region replaces for view and public
 
@@ -216,22 +310,30 @@ class Form
 	 */
 	public static function getForms(bool $force = false): array
 	{
-		static $forms = [];
-		if ($forms && !$force)
+		if (self::$formsSnapshotLoaded && !$force)
 		{
-			return $forms;
+			return self::$formsSnapshot;
 		}
 
-		if (self::isCrm())
+		self::$formsSnapshotLoaded = true;
+		self::$formsSnapshotAvailable = true;
+
+		if (static::isCrm())
 		{
-			$forms = self::getFormsForPortal();
+			self::$formsSnapshot = static::getFormsForPortal();
 		}
-		elseif (Manager::isB24Connector())
+		elseif (static::isConnector())
 		{
-			$forms = self::getFormsViaConnector();
+			$forms = static::getFormsViaConnector();
+			self::$formsSnapshotAvailable = is_array($forms);
+			self::$formsSnapshot = $forms ?? [];
+		}
+		else
+		{
+			self::$formsSnapshot = [];
 		}
 
-		return $forms;
+		return self::$formsSnapshot;
 	}
 
 	/**
@@ -241,6 +343,11 @@ class Form
 	protected static function isCrm(): bool
 	{
 		return Loader::includeModule('crm');
+	}
+
+	protected static function isConnector(): bool
+	{
+		return Manager::isB24Connector();
 	}
 
 	protected static function getFormsForPortal(array $filter = []): array
@@ -266,20 +373,35 @@ class Form
 		return $forms;
 	}
 
-	protected static function getFormsViaConnector(): array
+	protected static function getFormsViaConnector(): ?array
 	{
 		$forms = [];
-		$client = ApClient::init();
-		if ($client)
+		$res = static::getConnectorFormsResponse();
+		if (is_array($res))
 		{
-			$res = $client->call('crm.webform.list', ['GET_INACTIVE' => 'Y']);
 			if (isset($res['result']) && is_array($res['result']))
 			{
 				foreach ($res['result'] as $form)
 				{
-					$form['ID'] = (int)$form['ID'];
+					if (!is_array($form))
+					{
+						self::addConnectorInvalidResponseError();
+
+						return null;
+					}
+
+					$form['ID'] = (int)($form['ID'] ?? 0);
+					if ($form['ID'] <= 0)
+					{
+						self::addConnectorInvalidResponseError();
+
+						return null;
+					}
+
 					$forms[$form['ID']] = $form;
 				}
+
+				return $forms;
 			}
 			elseif (isset($res['error']))
 			{
@@ -287,10 +409,47 @@ class Form
 					'code' => $res['error'],
 					'message' => $res['error_description'] ?? $res['error'],
 				];
+
+				return null;
 			}
+
+			self::addConnectorInvalidResponseError();
+
+			return null;
 		}
 
-		return $forms;
+		if ($res === null)
+		{
+			self::$errors[] = [
+				'code' => 'connector_client_init_failed',
+				'message' => 'crm.webform.list client initialization failed',
+			];
+
+			return null;
+		}
+
+		self::addConnectorInvalidResponseError();
+
+		return null;
+	}
+
+	private static function addConnectorInvalidResponseError(): void
+	{
+		self::$errors[] = [
+			'code' => 'connector_invalid_response',
+			'message' => 'crm.webform.list returned invalid response',
+		];
+	}
+
+	protected static function getConnectorFormsResponse(): mixed
+	{
+		$client = ApClient::init();
+		if (!$client)
+		{
+			return null;
+		}
+
+		return $client->call('crm.webform.list', ['GET_INACTIVE' => 'Y']);
 	}
 
 	/**
@@ -299,7 +458,7 @@ class Form
 	 */
 	public static function getFormById(int $id, bool $full = false): array
 	{
-		$forms = self::getFormsByFilter(['=ID' => $id]);
+		$forms = static::getFormsByFilter(['=ID' => $id]);
 		$form = !empty($forms) ? array_shift($forms) : null;
 		if (!$form)
 		{
@@ -321,6 +480,39 @@ class Form
 		}
 
 		return $form;
+	}
+
+	/**
+	 * Check that form exists on the portal and is active.
+	 * @param int $formId - from webform table
+	 * @return bool
+	 */
+	public static function isActiveFormId(int $formId): bool
+	{
+		return self::getFormActivityState($formId) ?? false;
+	}
+
+	public static function isFormsSnapshotAvailable(): bool
+	{
+		return self::$formsSnapshotAvailable;
+	}
+
+	/**
+	 * Check that form exists on the portal and is active.
+	 * Returns null when the snapshot could not be obtained and activity is therefore unknown.
+	 * @param int $formId - from webform table
+	 * @return bool|null
+	 */
+	public static function getFormActivityState(int $formId): ?bool
+	{
+		// answered from the portal form snapshot: one fetch per run, not a query per id
+		$form = static::getForms()[$formId] ?? null;
+		if (static::isConnector() && !self::$formsSnapshotAvailable)
+		{
+			return null;
+		}
+
+		return is_array($form) && ($form['ACTIVE'] ?? null) === 'Y';
 	}
 
 	/**
@@ -353,19 +545,19 @@ class Form
 		);
 		$forms = [];
 
-		if (self::isCrm())
+		if (static::isCrm())
 		{
-			$forms = self::getFormsForPortal($filter);
+			$forms = static::getFormsForPortal($filter);
 		}
-		elseif (Manager::isB24Connector())
+		elseif (static::isConnector())
 		{
-			foreach (self::getFormsViaConnector() as $form)
+			foreach (static::getFormsViaConnector() ?? [] as $form)
 			{
 				$filtred = true;
 				foreach ($filter as $key => $value)
 				{
-					$clearKey = preg_replace('/[^a-zA-Z0-9]/', '', $key);
-					if (!$form[$clearKey] || $form[$clearKey] !== $value)
+					$clearKey = preg_replace('/^[^A-Z]*/', '', $key);
+					if (!array_key_exists($clearKey, $form) || $form[$clearKey] !== $value)
 					{
 						$filtred = false;
 						break;
@@ -473,27 +665,12 @@ class Form
 				}
 				else
 				{
-					// try to get 1) default callback form 2) last added form 3) create new form
-					$forms = self::getFormsByFilter([
-						'=XML_ID' => 'crm_preset_fb',
-					], true);
-					$forms = self::prepareFormsToAttrs($forms);
-					if (empty($forms))
-					{
-						$forms = self::getForms(true);  // force to preserve cycle when create form landing block
-						$forms = self::prepareFormsToAttrs($forms);
-						if (empty($forms))
-						{
-							$forms = self::createDefaultForm();
-							$forms = self::prepareFormsToAttrs($forms);
-						}
-					}
-
-					if (!empty($forms))
+					$marker = self::getDefaultFormMarker();
+					if ($marker !== null)
 					{
 						self::setFormIdParam(
 							$block,
-							str_replace(self::INLINE_MARKER_PREFIX, '', $forms[0]['value'])
+							str_replace(self::INLINE_MARKER_PREFIX, '', $marker)
 						);
 					}
 				}
@@ -648,7 +825,126 @@ class Form
 			}
 		}
 
-		return $callback + $other;
+		return array_merge($other, $callback);
+	}
+
+	protected static function getDefaultFormMarker(): ?string
+	{
+		$forms = self::getExistingFormsToAttrs();
+		if (empty($forms))
+		{
+			$createdForms = static::createDefaultForm();
+			self::appendFormsToLoadedSnapshot($createdForms);
+			$forms = self::prepareFormsToAttrs($createdForms);
+		}
+
+		return self::getFirstFormMarker($forms);
+	}
+
+	private static function appendFormsToLoadedSnapshot(array $forms): void
+	{
+		if (!self::$formsSnapshotLoaded)
+		{
+			return;
+		}
+
+		foreach ($forms as $form)
+		{
+			if (!is_array($form))
+			{
+				continue;
+			}
+
+			$formId = (int)($form['ID'] ?? 0);
+			if ($formId <= 0)
+			{
+				continue;
+			}
+
+			$form['ID'] = $formId;
+			self::$formsSnapshot[$formId] = $form;
+		}
+	}
+
+	/**
+	 * ID of the portal form the import should bind blocks to: same choice as the default marker,
+	 * but never creates a form. Null means the portal has no active form to bind to.
+	 * @return int|null
+	 */
+	public static function resolveImportFormId(): ?int
+	{
+		$marker = self::getFirstFormMarker(self::getImportFormsToAttrs());
+		if ($marker === null)
+		{
+			return null;
+		}
+
+		$formId = (int)str_replace(self::INLINE_MARKER_PREFIX, '', $marker);
+
+		return $formId > 0 ? $formId : null;
+	}
+
+	/**
+	 * Attrs items of active portal forms in default choice order: preset form first, then the
+	 * whole form list. Nothing is created here.
+	 */
+	private static function getExistingFormsToAttrs(): array
+	{
+		$presetXmlId = 'crm_preset_fb';
+		$portalForms = null;
+
+		if (static::isCrm())
+		{
+			$presetForms = static::getFormsByFilter(['=XML_ID' => $presetXmlId], true);
+		}
+		else
+		{
+			// one connector snapshot per run: filtering it apart costs another crm.webform.list call
+			$portalForms = static::getForms(true);
+			$presetForms = array_filter(
+				$portalForms,
+				static fn(array $form): bool => ($form['XML_ID'] ?? null) === $presetXmlId
+			);
+		}
+
+		$forms = self::prepareFormsToAttrs($presetForms);
+		if (empty($forms))
+		{
+			$forms = self::prepareFormsToAttrs($portalForms ?? static::getForms(true));
+		}
+
+		return $forms;
+	}
+
+	/**
+	 * Import resolves its target form from the same full form snapshot that later answers
+	 * isActiveFormId(): on CRM portals this avoids a separate preset lookup before the inevitable
+	 * full-list fetch of the first source-id activity check.
+	 */
+	private static function getImportFormsToAttrs(): array
+	{
+		$portalForms = static::getForms(true);
+		$presetForms = array_filter(
+			$portalForms,
+			static fn(array $form): bool => ($form['XML_ID'] ?? null) === 'crm_preset_fb'
+		);
+
+		$forms = self::prepareFormsToAttrs($presetForms);
+		if (empty($forms))
+		{
+			$forms = self::prepareFormsToAttrs($portalForms);
+		}
+
+		return $forms;
+	}
+
+	private static function getFirstFormMarker(array $formsAttrs): ?string
+	{
+		$form = reset($formsAttrs);
+		$marker = is_array($form) ? ($form['value'] ?? null) : null;
+		$marker = is_string($marker) ? trim($marker) : '';
+
+		return $marker !== '' ? $marker : null;
 	}
 	// endregion
 

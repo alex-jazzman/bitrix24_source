@@ -1,6 +1,4 @@
 import { Starter } from './starter';
-import { Manager } from './manager';
-
-const managerInstance = new Manager();
+import { managerInstance } from './manager';
 
 export { Starter, managerInstance };

@@ -1,5 +1,5 @@
-import { Type, Loc } from 'main.core';
-import type { Menu } from 'main.popup';
+import { Type, Loc, Text } from 'main.core';
+import { MenuManager, type Menu } from 'main.popup';
 import type { BaseEvent } from 'main.core.events';
 
 import { VueUploaderComponent } from 'ui.uploader.vue';
@@ -13,7 +13,8 @@ import ItemMenu from './item-menu';
 import SettingsMenu from './settings-menu';
 import { ControlPanel } from './components/control-panel';
 import { DocumentPanel } from './components/document-panel';
-import type { UserFieldWidgetOptions } from './user-field-widget-options';
+import { FileList } from './components/file-list';
+import type { UserFieldWidgetOptions, UserFieldWidgetViewMode } from './user-field-widget-options';
 
 import './css/user-field-widget-component.css';
 
@@ -26,6 +27,7 @@ export const UserFieldWidgetComponent: BitrixVueComponentProps = {
 	components: {
 		TileWidgetComponent,
 		DocumentPanel,
+		FileList,
 	},
 	extends: VueUploaderComponent,
 	provide(): Object
@@ -61,6 +63,26 @@ export const UserFieldWidgetComponent: BitrixVueComponentProps = {
 		};
 	},
 	computed: {
+		viewMode(): UserFieldWidgetViewMode
+		{
+			return this.widgetOptions.viewMode === 'list' ? 'list' : 'tile';
+		},
+		insertIntoTextEnabled(): boolean
+		{
+			return (
+				Type.isBoolean(this.widgetOptions.insertIntoText)
+					? this.widgetOptions.insertIntoText
+					: this.userFieldControl.getMainPostForm() !== null
+			);
+		},
+		menuContext(): Object
+		{
+			return {
+				readonly: this.widgetOptions.readonly === true || this.widgetOptions.tileWidgetOptions?.readonly === true,
+				removeFromServer: this.widgetOptions.tileWidgetOptions?.removeFromServer !== false,
+				insertIntoText: this.insertIntoTextEnabled,
+			};
+		},
 		tileWidgetOptions(): TileWidgetOptions {
 			const widgetOptions: UserFieldWidgetOptions = this.widgetOptions;
 			const tileWidgetOptions: TileWidgetOptions = (
@@ -75,18 +97,14 @@ export const UserFieldWidgetComponent: BitrixVueComponentProps = {
 			{
 				tileWidgetOptions.slots[TileWidgetSlot.AFTER_TILE_LIST] = ControlPanel;
 			}
-			tileWidgetOptions.insertIntoText = (
-				Type.isBoolean(widgetOptions.insertIntoText)
-					? widgetOptions.insertIntoText
-					: this.userFieldControl.getMainPostForm() !== null
-			);
+			tileWidgetOptions.insertIntoText = this.insertIntoTextEnabled;
 
 			tileWidgetOptions.showItemMenuButton = true;
 
 			tileWidgetOptions.events = tileWidgetOptions.events || {};
 			tileWidgetOptions.events['TileItem:onMenuCreate'] = (event: BaseEvent): void => {
 				const { item, menu }: { item: TileWidgetItem, menu: Menu } = event.getData();
-				const itemMenu: ItemMenu = new ItemMenu(this.userFieldControl, item, menu);
+				const itemMenu: ItemMenu = new ItemMenu(this.userFieldControl, item, menu, this.menuContext);
 				itemMenu.build();
 			};
 
@@ -143,10 +161,16 @@ export const UserFieldWidgetComponent: BitrixVueComponentProps = {
 	beforeCreate(): void
 	{
 		this.userFieldControl = new UserFieldControl(this);
+		this.listMenu = null;
 	},
 	beforeUnmount(): void
 	{
 		this.userFieldControl.destroy();
+		if (this.listMenu)
+		{
+			this.listMenu.destroy();
+			this.listMenu = null;
+		}
 	},
 	methods: {
 		getMessage(code: string, replacements?: Object<string, string>): ?string
@@ -167,6 +191,57 @@ export const UserFieldWidgetComponent: BitrixVueComponentProps = {
 		{
 			return this.userFieldControl;
 		},
+
+		handleListMenuClick(payload: {
+			item: TileWidgetItem,
+			bindElement: HTMLElement,
+			onMenuShow?: () => void,
+			onMenuClose?: () => void,
+		}): void
+		{
+			const { item, bindElement, onMenuShow, onMenuClose } = payload;
+			if (!Type.isElementNode(bindElement))
+			{
+				return;
+			}
+
+			if (this.listMenu)
+			{
+				this.listMenu.destroy();
+			}
+
+			this.listMenu = MenuManager.create({
+				id: `disk-user-field-list-item-menu-${Text.getRandom().toLowerCase()}`,
+				bindElement,
+				targetContainer: document.body,
+				angle: true,
+				offsetLeft: 13,
+				cacheable: false,
+				items: [],
+				events: {
+					onShow: (): void => {
+						// The child owns aria-expanded reactively; toggle its flag instead
+						// of mutating the DOM, so a rerender cannot reset the attribute.
+						onMenuShow?.();
+					},
+					onClose: (): void => {
+						onMenuClose?.();
+						bindElement.focus();
+					},
+					onDestroy: (): void => {
+						// destroy() fires only onDestroy (not onClose), so reset the item's flag here too,
+						// otherwise switching to another file's menu leaves the previous "..." button visible.
+						onMenuClose?.();
+						this.listMenu = null;
+					},
+				},
+			});
+
+			const itemMenu: ItemMenu = new ItemMenu(this.userFieldControl, item, this.listMenu, this.menuContext);
+			itemMenu.buildAll();
+
+			this.listMenu.show();
+		},
 	},
 	template: `
 		<div
@@ -180,7 +255,13 @@ export const UserFieldWidgetComponent: BitrixVueComponentProps = {
 				:class="[{ '--hidden': finalVisibility !== 'uploader' && finalVisibility !== 'both' }]"
 				ref="uploader-container"
 			>
+				<FileList
+					v-if="viewMode === 'list'"
+					:items="items"
+					@menuClick="handleListMenuClick"
+				/>
 				<TileWidgetComponent
+					v-else
 					:widgetOptions="tileWidgetOptions"
 					:uploader-adapter="adapter"
 					ref="tileWidget"

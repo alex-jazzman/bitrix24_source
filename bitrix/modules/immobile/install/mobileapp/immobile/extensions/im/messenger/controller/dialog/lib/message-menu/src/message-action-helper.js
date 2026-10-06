@@ -6,6 +6,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/src/message-action-he
 	const { isModuleInstalled } = require('module');
 	const {
 		DialogType,
+		ActionByUserType,
 	} = require('im/messenger/const');
 
 	const { Feature, MobileFeature } = require('im/messenger/lib/feature');
@@ -83,6 +84,25 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/src/message-action-he
 			}
 
 			return ChatPermission.canReply(this.dialogModel);
+		}
+
+		/**
+		 * CAP-01: Public helper — gate for UI affordances that lead to reply-with-media scenarios
+		 * (e.g. file/image/video attach options shown while in reply mode).
+		 * Returns true only when both native build and server support media reply
+		 * (Feature.isReplyWithMediaAvailable = native chat_reply_with_media && server FEAT-01).
+		 * Regular text reply (isPossibleReply) is NOT affected — no regression on AC-022.
+		 *
+		 * Active protection: send-side degradation in sendFilesWithText already suppresses the
+		 * replyId when the flag is off. On mobile, reply is a unified action (enter reply mode,
+		 * then optionally attach) — there is no separate "reply-with-media" menu item to gate today.
+		 * This method is the designated hook point for that gate once native-side integration
+		 * exposes a dedicated reply-with-media affordance or menu entry (planned Q-3 native integration).
+		 * @returns {boolean}
+		 */
+		isPossibleReplyWithMedia()
+		{
+			return this.isPossibleReply() && Feature.isReplyWithMediaAvailable;
 		}
 
 		isPossibleCopy()
@@ -166,17 +186,29 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/src/message-action-he
 
 		isPossibleTaskCreate()
 		{
-			return this.isPossibleCreate() && Feature.isMultilevelMessageMenuSupported && isModuleInstalled('tasks');
+			return this.isPossibleCreate()
+				&& Feature.isMultilevelMessageMenuSupported
+				&& isModuleInstalled('tasks')
+				&& UserPermission.canPerformActionByUserType(ActionByUserType.createAnyTask);
 		}
 
 		isPossibleEventCreate()
 		{
-			return this.isPossibleCreate() && Feature.isMultilevelMessageMenuSupported && isModuleInstalled('calendar');
+			return this.isPossibleCreate()
+				&& Feature.isMultilevelMessageMenuSupported
+				&& isModuleInstalled('calendar')
+				&& UserPermission.canPerformActionByUserType(ActionByUserType.createCalendarEvent);
 		}
 
 		isPossibleSaveFile()
 		{
 			return this.#isWithFile() && !this.#isDeleted() && !this.#isVideoNote();
+		}
+
+		isPossibleSaveToDisk()
+		{
+			return this.isPossibleSaveFile()
+				&& UserPermission.canPerformActionByUserType(ActionByUserType.saveFileToDisk);
 		}
 
 		isPossibleDownloadToDevice()
@@ -207,7 +239,12 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/src/message-action-he
 
 		isPossibleShowProfile()
 		{
-			return !this.#isYour() && !this.#isSystem() && !this.isDialogCopilot() && !this.#isBot();
+			return !this.#isYour()
+				&& !this.#isSystem()
+				&& !this.isDialogCopilot()
+				&& !this.#isBot()
+				&& UserPermission.canPerformActionByUserType(ActionByUserType.openProfile)
+				&& UserPermission.canPerformActionByUserType(ActionByUserType.openProfile, this.userModel);
 		}
 
 		isPossibleCallFeedback()
@@ -251,12 +288,16 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/src/message-action-he
 
 		isPossibleDelete()
 		{
-			const hasPrivilegedRole = this.isAdmin() || this.isManager();
 			const canDeleteOtherMessage = ChatPermission.canDeleteOtherMessage(this.dialogModel);
 
 			if (this.#isYour())
 			{
-				return (hasPrivilegedRole && canDeleteOtherMessage) || !this.#isDeleted();
+				if (this.#isDeleted())
+				{
+					return false;
+				}
+
+				return ChatPermission.canDeleteOwnMessage(this.dialogModel);
 			}
 
 			return canDeleteOtherMessage;

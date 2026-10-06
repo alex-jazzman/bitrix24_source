@@ -11,6 +11,7 @@ return [
 		'main.core',
 		'main.core.events',
 		'ui.alerts',
+		'bizproc.a11y',
 		'bizproc.router',
 		'ui.design-tokens',
 	],

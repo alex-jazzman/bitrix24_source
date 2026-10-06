@@ -9,6 +9,10 @@ export const remoteNodeOutlinePluginKey = new PluginKey('note-remote-node-outlin
 
 const TABLE_ROLES = new Set(['cell', 'header_cell', 'row', 'table']);
 
+const supportsRemoteOutline = (node) => {
+	return (node.isAtom && node.isBlock) || node.type.name === 'codeBlock';
+};
+
 const toRelativePosition = (raw) => {
 	if (raw === null || raw === undefined)
 	{
@@ -92,7 +96,7 @@ const buildDecorations = (state, awareness) => {
 		}
 
 		const nodeAfter = $from.nodeAfter;
-		if (!nodeAfter || !nodeAfter.isAtom || !nodeAfter.isBlock)
+		if (!nodeAfter || !supportsRemoteOutline(nodeAfter))
 		{
 			return;
 		}

@@ -1,4 +1,4 @@
-import { Tag, Dom, Event } from 'main.core';
+import { Tag, Dom, Event, Type } from 'main.core';
 
 export class Item
 {
@@ -10,6 +10,7 @@ export class Item
 	#container: null;
 	#isActive: false;
 	#isExpanded = true;
+	#dragCollapsed = false;
 	#path : '';
 	#shiftWidthInPixels = 20;
 	#maxNestingLevel = 6;
@@ -150,6 +151,43 @@ export class Item
 		this.#menu.onToggleFolder(this.#path, this.#isExpanded);
 	}
 
+	// Collapse an expanded subtree just for the duration of a drag, without touching
+	// the persisted expand state: the source is measured at row height so neighbours
+	// shift by one row, not by the whole open subtree. Returns true when it collapsed.
+	collapseForDrag()
+	{
+		if (!this.#childrenContainer || !this.#isExpanded)
+		{
+			return false;
+		}
+
+		const container = this.#childrenContainer;
+		Dom.style(container, 'transition', 'none');
+		Dom.style(container, 'maxHeight', '0');
+		// Force a synchronous reflow so the collapsed height is committed before the
+		// drag mirror measures the source rect.
+		container.getBoundingClientRect();
+
+		this.#dragCollapsed = true;
+		Dom.attr(this.#itemElement, 'aria-expanded', 'false');
+
+		return true;
+	}
+
+	// Undo a collapseForDrag(): restore the transition and animate the subtree open
+	// again via the regular expand().
+	expandAfterDrag()
+	{
+		if (!this.#dragCollapsed)
+		{
+			return;
+		}
+
+		this.#dragCollapsed = false;
+		Dom.style(this.#childrenContainer, 'transition', '');
+		this.expand();
+	}
+
 	/**
 	 * So as not to break the menu with incorrectly synchronized directories.
 	 *
@@ -214,6 +252,10 @@ export class Item
 		this.#name = this.#nameOriginal.charAt(0).toUpperCase() + this.#nameOriginal.slice(1);
 
 		const itemContainer = Tag.render`<div title="${this.#name}" class="mail-menu-directory-item-container"></div>`;
+		if (Type.isNumber(directory.dirId))
+		{
+			Dom.attr(itemContainer, 'data-dir-id', directory.dirId);
+		}
 		const itemElement = Tag.render`
 			<li tabindex="0" class="ui-sidepanel-menu-item ui-sidepanel-menu-counter-white mail-menu-directory-item-${iconClass}">
 							<a class="ui-sidepanel-menu-link mail-menu-directory-link">
@@ -249,7 +291,7 @@ export class Item
 		Dom.append(itemElement, itemContainer);
 
 		Event.bind(itemElement, 'click', () => {
-			if (!this.isActive())
+			if (!this.isActive() || menu.hasDirectorySelectHandler())
 			{
 				menu.chooseFunction(directory.path);
 				this.enableActivity();
@@ -276,7 +318,16 @@ export class Item
 				case 'ArrowDown':
 				case 'ArrowUp': {
 					event.preventDefault();
-					menu.moveFocus(itemElement, event.key === 'ArrowDown' ? 1 : -1);
+					const direction = event.key === 'ArrowDown' ? 1 : -1;
+					// Alt+Arrow reorders the item within its block; plain Arrow moves focus.
+					if (event.altKey)
+					{
+						menu.moveItemInBlock(itemElement, direction);
+					}
+					else
+					{
+						menu.moveFocus(itemElement, direction);
+					}
 
 					break;
 				}
@@ -339,6 +390,6 @@ export class Item
 			}
 		}
 
-		menu.includeItem(this, this.#path);
+		menu.includeItem(this, this.#path, directory, nestingLevel);
 	}
 }

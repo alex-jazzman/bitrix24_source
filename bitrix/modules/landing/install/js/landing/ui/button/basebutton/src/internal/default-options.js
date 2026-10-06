@@ -8,6 +8,8 @@ const defaultOptions = {
 	attrs: {},
 	disabled: false,
 	className: null,
+	ariaLabel: null,
+	toggle: false,
 };
 
 export default defaultOptions;

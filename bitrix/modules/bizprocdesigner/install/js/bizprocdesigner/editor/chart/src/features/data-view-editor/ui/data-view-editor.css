@@ -1,0 +1,1116 @@
+.bizproc-dataview-panel,
+.bizproc-dataview-panel *,
+.bizproc-dataview-modal,
+.bizproc-dataview-modal * {
+	box-sizing: border-box;
+}
+
+/*
+ * Fills the app-layout settings-table-settings host section, which owns the geometry (same size and
+ * position as the data-inspector panel, left of the node settings) plus the white background, shadow
+ * and left rounded corners. This root only lays out the header and the scrollable form inside it.
+ */
+.bizproc-dataview-panel {
+	position: relative;
+	width: 100%;
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+	border-top-left-radius: var(--ui-border-radius-sm);
+	border-bottom-left-radius: var(--ui-border-radius-sm);
+	overflow: hidden;
+	font-size: var(--ui-font-size-md);
+	line-height: 1.45;
+	color: var(--ui-color-base-1);
+	background-color: var(--ui-color-bg-content-primary);
+	-webkit-font-smoothing: antialiased;
+}
+
+/* Form: fills the panel, its body scrolls, header and footer stay pinned. */
+.bizproc-dataview-window {
+	flex: 1 1 auto;
+	min-height: 0;
+	display: flex;
+	flex-direction: column;
+}
+
+.bizproc-dataview-window__body {
+	flex: 1 1 auto;
+	min-height: 0;
+	padding: var(--ui-space-inset-md) var(--ui-space-inset-xl) var(--ui-space-inset-lg);
+	overflow-y: auto;
+	background-color: var(--ui-color-bg-content-secondary);
+}
+
+.bizproc-dataview-window__footer {
+	flex: 0 0 auto;
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-xs2);
+	padding: var(--ui-space-inset-sm2) var(--ui-space-inset-xl);
+	border-top: 1px solid var(--ui-color-divider-default);
+	background-color: var(--ui-color-bg-content-primary);
+}
+
+/* Panel header: mode caption, inline title and the description of the table. */
+.bizproc-dataview-header {
+	flex: 0 0 auto;
+	padding: var(--ui-space-inset-sm2) var(--ui-space-inset-xl) var(--ui-space-inset-md);
+	border-bottom: 1px solid var(--ui-color-divider-default);
+	background-color: var(--ui-color-bg-content-primary);
+}
+
+.bizproc-dataview-header__top {
+	display: flex;
+	align-items: flex-start;
+	gap: var(--ui-space-inline-sm);
+}
+
+.bizproc-dataview-header__caption {
+	flex: 1 1 auto;
+	min-width: 0;
+	padding-top: var(--ui-space-inset-2xs);
+	font-size: var(--ui-font-size-3xs);
+	font-weight: var(--ui-font-weight-medium);
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: var(--ui-color-base-4);
+}
+
+.bizproc-dataview-header__title {
+	display: block;
+	width: 100%;
+	margin-top: var(--ui-space-stack-2xs);
+	padding: var(--ui-space-inset-2xs) 0;
+	border: none;
+	background: transparent;
+	font-family: inherit;
+	font-size: var(--ui-font-size-4xl);
+	font-weight: var(--ui-font-weight-bold);
+	line-height: 1.25;
+	color: var(--ui-color-base-1);
+}
+
+.bizproc-dataview-header__title::placeholder {
+	color: var(--ui-color-base-4);
+}
+
+.bizproc-dataview-header__title:focus {
+	outline: none;
+}
+
+.bizproc-dataview-header__description-link {
+	display: inline-block;
+	margin-top: var(--ui-space-stack-2xs);
+	padding: 0;
+	border: none;
+	background: transparent;
+	font-family: inherit;
+	font-size: var(--ui-font-size-md);
+	color: var(--ui-color-accent-main-link);
+	cursor: pointer;
+}
+
+.bizproc-dataview-header__description {
+	display: flex;
+	align-items: flex-start;
+	gap: var(--ui-space-inline-xs);
+	margin-top: var(--ui-space-stack-xs);
+}
+
+.bizproc-dataview-header__description-field {
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+.bizproc-dataview-header__description-reset {
+	flex: 0 0 auto;
+	width: 28px;
+	height: 28px;
+	margin-top: var(--ui-space-stack-2xs);
+	padding: 0;
+	border: none;
+	border-radius: var(--ui-border-radius-xs);
+	display: grid;
+	place-items: center;
+	background: transparent;
+	color: var(--ui-color-base-4);
+	font-size: var(--ui-font-size-xl);
+	line-height: 1;
+	cursor: pointer;
+}
+
+.bizproc-dataview-header__description-reset:hover {
+	background-color: var(--ui-color-bg-state-hover-default);
+	color: var(--ui-color-base-2);
+}
+
+/* Section heading: title, item counter and the section action on the right. */
+.bizproc-dataview-section {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-xs);
+	margin: var(--ui-space-stack-lg) 0 var(--ui-space-stack-xs);
+}
+
+.bizproc-dataview-section__title {
+	font-size: var(--ui-font-size-lg);
+	font-weight: var(--ui-font-weight-bold);
+	color: var(--ui-color-base-1);
+}
+
+.bizproc-dataview-section__counter {
+	flex: 1 1 auto;
+	min-width: 0;
+	font-size: var(--ui-font-size-sm);
+	color: var(--ui-color-base-4);
+}
+
+/* Buttons — the panel mimics the native node-settings footer (air accent + link-gray cancel). */
+.bizproc-dataview-btn {
+	border: 1px solid transparent;
+	border-radius: var(--ui-border-radius-md);
+	padding: var(--ui-space-inset-xs) var(--ui-space-inset-sm);
+	font-family: inherit;
+	font-size: var(--ui-font-size-sm);
+	font-weight: var(--ui-font-weight-medium);
+	line-height: normal;
+	background: transparent;
+	color: var(--ui-color-base-1);
+	cursor: pointer;
+	transition: background-color 0.14s, border-color 0.14s, color 0.14s;
+	white-space: nowrap;
+}
+
+.bizproc-dataview-btn.--primary {
+	border-radius: 10px;
+	padding: var(--ui-space-inset-xs) var(--ui-space-inset-lg);
+	background-color: var(--ui-color-accent-main-primary);
+	color: var(--ui-color-base-white-fixed);
+}
+
+.bizproc-dataview-btn.--primary:hover {
+	background-color: var(--ui-color-accent-soft-element-blue);
+}
+
+.bizproc-dataview-btn.--primary:disabled {
+	background-color: var(--ui-color-design-disabled-bg);
+	color: var(--ui-color-design-disabled-content);
+}
+
+.bizproc-dataview-btn.--ghost {
+	color: var(--ui-color-base-2);
+}
+
+.bizproc-dataview-btn.--ghost:hover {
+	background-color: var(--ui-color-bg-state-hover-default);
+}
+
+/* Accent pill used for "+ Параметр": filled next to a section title, outlined inside the empty state. */
+.bizproc-dataview-btn.--accent {
+	background-color: var(--ui-color-accent-main-primary);
+	color: var(--ui-color-base-white-fixed);
+	border-radius: 10px;
+	padding: var(--ui-space-inset-2xs2) var(--ui-space-inset-sm);
+}
+
+.bizproc-dataview-btn.--accent:hover {
+	background-color: var(--ui-color-accent-soft-element-blue);
+}
+
+.bizproc-dataview-btn.--accent-outline {
+	border-color: var(--ui-color-accent-soft-border-blue);
+	border-radius: 10px;
+	padding: var(--ui-space-inset-2xs2) var(--ui-space-inset-sm);
+	color: var(--ui-color-accent-main-link);
+}
+
+.bizproc-dataview-btn.--accent-outline:hover {
+	background-color: var(--ui-color-accent-soft-blue-3);
+}
+
+.bizproc-dataview-btn:disabled {
+	cursor: not-allowed;
+}
+
+/* Intro/helper text */
+.bizproc-dataview__intro {
+	margin: var(--ui-space-stack-2xs2) 0 var(--ui-space-stack-sm2);
+	font-size: var(--ui-font-size-xs);
+	line-height: 1.45;
+	color: var(--ui-color-base-3);
+}
+
+.bizproc-dataview__hint {
+	margin: var(--ui-space-stack-2xs2) 0 0;
+	font-size: var(--ui-font-size-xs);
+	line-height: 1.45;
+	color: var(--ui-color-base-4);
+}
+
+.bizproc-dataview-window__body.--load-error {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: var(--ui-space-stack-sm);
+	text-align: center;
+}
+
+.bizproc-dataview__load-error-text {
+	margin: 0;
+	font-size: var(--ui-font-size-sm);
+	line-height: 1.45;
+	color: var(--ui-color-accent-main-alert);
+}
+
+.bizproc-dataview__field-error {
+	margin: var(--ui-space-stack-2xs2) 0 0;
+	font-size: var(--ui-font-size-xs);
+	line-height: 1.45;
+	color: var(--ui-color-accent-main-alert);
+}
+
+/* Form fields */
+.bizproc-dataview__field {
+	margin-bottom: var(--ui-space-stack-sm2);
+}
+
+.bizproc-dataview__field-label {
+	display: block;
+	font-size: var(--ui-font-size-sm);
+	font-weight: var(--ui-font-weight-medium);
+	color: var(--ui-color-base-2);
+	margin-bottom: var(--ui-space-stack-2xs2);
+}
+
+.bizproc-dataview__field-label-opt {
+	color: var(--ui-color-base-4);
+	font-weight: var(--ui-font-weight-normal);
+}
+
+/* Caps caption above a block of the parameter dialog. */
+.bizproc-dataview__caption {
+	display: block;
+	margin-bottom: var(--ui-space-stack-xs);
+	font-size: var(--ui-font-size-3xs);
+	font-weight: var(--ui-font-weight-medium);
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: var(--ui-color-base-4);
+}
+
+.bizproc-dataview__input,
+.bizproc-dataview__textarea,
+.bizproc-dataview__select {
+	width: 100%;
+	border: 1px solid var(--ui-color-divider-default);
+	border-radius: var(--ui-border-radius-md);
+	padding: var(--ui-space-inset-xs) var(--ui-space-inset-sm);
+	font-family: inherit;
+	font-size: var(--ui-font-size-sm);
+	color: var(--ui-color-base-1);
+	background-color: var(--ui-color-bg-content-primary);
+	transition: border-color 0.14s, box-shadow 0.14s;
+	box-sizing: border-box;
+}
+
+.bizproc-dataview__input::placeholder,
+.bizproc-dataview__textarea::placeholder {
+	color: var(--ui-color-base-4);
+}
+
+.bizproc-dataview__input:focus,
+.bizproc-dataview__textarea:focus,
+.bizproc-dataview__select:focus {
+	outline: none;
+	border-color: var(--ui-color-accent-main-primary);
+	box-shadow: 0 0 0 3px var(--ui-color-accent-soft-blue-2);
+}
+
+.bizproc-dataview__input--picker {
+	cursor: pointer;
+}
+
+.bizproc-dataview__textarea {
+	resize: vertical;
+	min-height: 68px;
+}
+
+.bizproc-dataview__select {
+	appearance: none;
+	-webkit-appearance: none;
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='none' stroke='%23828B95' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round' d='M1 1.5l5 5 5-5'/%3E%3C/svg%3E");
+	background-repeat: no-repeat;
+	background-position: right var(--ui-space-inset-sm) center;
+	padding-right: var(--ui-space-inset-3xl);
+	cursor: pointer;
+}
+
+.bizproc-dataview__select:disabled {
+	background-color: var(--ui-color-bg-content-secondary);
+	color: var(--ui-color-base-4);
+	cursor: not-allowed;
+}
+
+/* Preview card: the table, its horizontal scroller and the pager line. */
+.bizproc-dataview-grid {
+	position: relative;
+	border: 1px solid var(--ui-color-divider-default);
+	border-radius: var(--ui-border-radius-lg);
+	background-color: var(--ui-color-bg-content-primary);
+	overflow: hidden;
+	margin-bottom: var(--ui-space-stack-2xs2);
+}
+
+.bizproc-dataview-grid__scroll {
+	overflow-x: auto;
+}
+
+.bizproc-dataview-grid__table {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: var(--ui-font-size-md);
+}
+
+.bizproc-dataview-grid__head th,
+.bizproc-dataview-grid__head td {
+	text-align: left;
+	padding: 2px 12px;
+	font-size: var(--ui-font-size-xs);
+	font-weight: var(--ui-font-weight-medium);
+	color: var(--ui-color-base-3);
+	background-color: transparent;
+	border-bottom: 1px solid var(--ui-color-divider-default);
+	border-right: 1px solid var(--ui-color-divider-default);
+	white-space: nowrap;
+	vertical-align: middle;
+}
+
+.bizproc-dataview-grid__id-cell {
+	width: 64px;
+}
+
+.bizproc-dataview-grid__fill-cell {
+	width: auto;
+}
+
+.bizproc-dataview-grid__cell {
+	padding: 9px 12px;
+	border-top: 1px solid var(--ui-color-divider-less);
+	border-bottom: 1px solid var(--ui-color-divider-default);
+	border-right: 1px solid var(--ui-color-divider-default);
+	color: var(--ui-color-base-1);
+	line-height: 19px;
+	white-space: nowrap;
+	text-align: left;
+}
+
+/* A table without columns renders no header, so its first row has nothing to be divided from. */
+.bizproc-dataview-grid__table tbody:first-child tr:first-child .bizproc-dataview-grid__cell {
+	border-top: none;
+}
+
+.bizproc-dataview-grid__state {
+	padding: var(--ui-space-inset-sm2);
+	text-align: center;
+	font-size: var(--ui-font-size-sm);
+	color: var(--ui-color-base-3);
+	white-space: normal;
+}
+
+.bizproc-dataview-grid__state.--error {
+	color: var(--ui-color-accent-main-alert);
+}
+
+.bizproc-dataview-grid__loader {
+	display: inline-flex;
+	justify-content: center;
+	line-height: 0;
+}
+
+/* Floating chevrons over a horizontally scrolled preview. */
+/* Floats over the scrolled preview; the selector outweighs the shared icon button's own box. */
+.bizproc-dataview-grid .bizproc-dataview-grid__nav {
+	position: absolute;
+	top: 50%;
+	z-index: 1;
+	transform: translateY(-50%);
+	display: grid;
+	place-items: center;
+	box-sizing: content-box;
+	padding: var(--ui-space-inset-2xs);
+	border-radius: var(--ui-border-radius-circle);
+	background-color: var(--ui-color-bg-content-primary);
+	box-shadow: var(--ui-shadow-bottom-s);
+}
+
+.bizproc-dataview-grid__nav.--prev {
+	left: var(--ui-space-inline-xs);
+}
+
+.bizproc-dataview-grid__nav.--next {
+	right: var(--ui-space-inline-xs);
+}
+
+/* Column header: the field name, the chip of its source and the column menu. */
+.bizproc-dataview-column {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-2xs2);
+	max-width: 240px;
+}
+
+.bizproc-dataview-column__name {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font-size: var(--ui-font-size-sm);
+	font-weight: var(--ui-font-weight-bold);
+	color: var(--ui-color-base-1);
+}
+
+.bizproc-dataview-column__source {
+	flex: 0 0 auto;
+	max-width: 96px;
+	overflow: hidden;
+	border: 1px solid var(--ui-color-divider-default);
+	background: var(--ui-color-bg-content-secondary);
+}
+
+.bizproc-dataview-column__menu {
+	flex: 0 0 auto;
+}
+
+/* Empty preview: the whole card offers the first parameter instead of a table. */
+.bizproc-dataview-empty {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--ui-space-stack-xs);
+	padding: var(--ui-space-inset-3xl) var(--ui-space-inset-lg);
+	text-align: center;
+}
+
+.bizproc-dataview-empty__icon {
+	display: grid;
+	place-items: center;
+	width: 48px;
+	height: 48px;
+	border-radius: var(--ui-border-radius-lg);
+	background-color: var(--ui-color-accent-soft-blue-2);
+	color: var(--ui-color-accent-main-primary);
+	font-size: var(--ui-font-size-3xl);
+	line-height: 1;
+}
+
+.bizproc-dataview-empty__title {
+	font-size: var(--ui-font-size-md);
+	font-weight: var(--ui-font-weight-bold);
+	color: var(--ui-color-base-1);
+}
+
+.bizproc-dataview-empty__text {
+	margin: 0;
+	max-width: 320px;
+	font-size: var(--ui-font-size-sm);
+	color: var(--ui-color-base-4);
+}
+
+.bizproc-dataview-empty__action {
+	margin-top: var(--ui-space-stack-2xs);
+}
+
+/* Overlay and the centered dialogs (teleported to body, dim the whole editor). */
+.bizproc-dataview-modal {
+	position: fixed;
+	inset: 0;
+	background-color: var(--ui-color-overlay-base);
+	display: grid;
+	place-items: center;
+	animation: bizproc-dataview-fade 0.16s ease;
+	font-size: var(--ui-font-size-md);
+	line-height: 1.45;
+	color: var(--ui-color-base-1);
+	-webkit-font-smoothing: antialiased;
+}
+
+@keyframes bizproc-dataview-fade {
+	from { opacity: 0; }
+	to { opacity: 1; }
+}
+
+.bizproc-dataview-modal__window {
+	background-color: var(--ui-color-bg-content-primary);
+	border-radius: var(--ui-border-radius-2xl);
+	box-shadow: var(--ui-shadow-bottom-3xl);
+	width: 560px;
+	max-width: calc(100vw - 40px);
+	max-height: calc(100vh - 60px);
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+	animation: bizproc-dataview-dialog-in 0.18s cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+
+.bizproc-dataview-modal__window.--wide {
+	width: 680px;
+}
+
+.bizproc-dataview-modal__window.--narrow {
+	width: 440px;
+}
+
+@keyframes bizproc-dataview-dialog-in {
+	from { opacity: 0; transform: translateY(10px) scale(0.985); }
+	to { opacity: 1; transform: none; }
+}
+
+.bizproc-dataview-modal__header {
+	display: flex;
+	align-items: center;
+	padding: var(--ui-space-inset-lg) var(--ui-space-inset-lg) var(--ui-space-inset-sm);
+}
+
+.bizproc-dataview-modal__title {
+	flex: 1;
+	font-size: var(--ui-font-size-2xl);
+	font-weight: var(--ui-font-weight-bold);
+	color: var(--ui-color-base-1);
+}
+
+.bizproc-dataview-modal__close {
+	width: 30px;
+	height: 30px;
+	border-radius: var(--ui-border-radius-sm);
+	border: none;
+	padding: 0;
+	background: transparent;
+	color: var(--ui-color-base-4);
+	font-size: var(--ui-font-size-2xl);
+	display: grid;
+	place-items: center;
+	cursor: pointer;
+}
+
+.bizproc-dataview-modal__close:hover {
+	background-color: var(--ui-color-bg-state-hover-default);
+	color: var(--ui-color-base-2);
+}
+
+.bizproc-dataview-modal__body {
+	padding: var(--ui-space-inset-2xs) var(--ui-space-inset-lg) var(--ui-space-inset-md);
+	overflow-y: auto;
+}
+
+.bizproc-dataview-modal__body .bizproc-dataview__intro.--tight {
+	margin-top: var(--ui-space-stack-3xs);
+}
+
+/* The builder is a popup elsewhere and takes its height from the room around its trigger; inside
+   the dialog it is an ordinary block, so the height comes from here and the dialog pads it. */
+.bizproc-dataview-modal__body .bizprocdesigner-expression-builder {
+	--eb-height: 320px;
+	padding: 0;
+}
+
+.bizproc-dataview__formula {
+	margin-top: var(--ui-space-stack-sm2);
+}
+
+.bizproc-dataview-modal__block {
+	margin-bottom: var(--ui-space-stack-lg);
+}
+
+.bizproc-dataview-modal__footer {
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+	gap: var(--ui-space-inline-xs2);
+	padding: var(--ui-space-inset-md) var(--ui-space-inset-lg);
+	border-top: 1px solid var(--ui-color-divider-default);
+}
+
+.bizproc-dataview-modal__footer-note {
+	flex: 1 1 auto;
+	min-width: 0;
+	font-size: var(--ui-font-size-sm);
+	color: var(--ui-color-base-4);
+}
+
+/* Parameter type cards: the kind of parameter the dialog builds. */
+.bizproc-dataview-types {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+	gap: var(--ui-space-inline-xs);
+}
+
+.bizproc-dataview-type {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-2xs);
+	text-align: left;
+	padding: var(--ui-space-inset-sm) var(--ui-space-inset-sm2);
+	border: 1px solid var(--ui-color-divider-default);
+	border-radius: var(--ui-border-radius-lg);
+	background-color: var(--ui-color-bg-content-primary);
+	font-family: inherit;
+	cursor: pointer;
+	transition: border-color 0.14s, background-color 0.14s;
+}
+
+.bizproc-dataview-type:hover {
+	border-color: var(--ui-color-accent-soft-border-blue);
+}
+
+.bizproc-dataview-type.--selected {
+	border-color: var(--ui-color-accent-main-primary);
+	background-color: var(--ui-color-accent-soft-blue-3);
+}
+
+.bizproc-dataview-type.--locked {
+	cursor: not-allowed;
+	opacity: 0.6;
+}
+
+.bizproc-dataview-type.--locked:hover {
+	border-color: var(--ui-color-divider-default);
+}
+
+.bizproc-dataview-type__title {
+	font-size: var(--ui-font-size-md);
+	font-weight: var(--ui-font-weight-medium);
+	color: var(--ui-color-base-1);
+}
+
+.bizproc-dataview-type__text {
+	font-size: var(--ui-font-size-xs);
+	line-height: 1.35;
+	color: var(--ui-color-base-4);
+}
+
+.bizproc-dataview-type__locked-note {
+	grid-column: 1 / -1;
+	margin: 0;
+	font-size: var(--ui-font-size-xs);
+	color: var(--ui-color-base-4);
+}
+
+/* Field list: the checkbox multi-select shared by the simple and the merge parameter. */
+.bizproc-dataview-fields {
+	border: 1px solid var(--ui-color-divider-default);
+	border-radius: var(--ui-border-radius-lg);
+	background-color: var(--ui-color-bg-content-primary);
+	overflow: hidden;
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+}
+
+.bizproc-dataview-fields__head {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-xs);
+	padding: var(--ui-space-inset-xs) var(--ui-space-inset-sm);
+	background-color: var(--ui-color-bg-content-secondary);
+	border-bottom: 1px solid var(--ui-color-divider-less);
+}
+
+.bizproc-dataview-fields__title {
+	flex: 1 1 auto;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font-size: var(--ui-font-size-sm);
+	font-weight: var(--ui-font-weight-medium);
+	color: var(--ui-color-base-1);
+}
+
+.bizproc-dataview-fields__all {
+	flex: 0 0 auto;
+	border: none;
+	padding: 0;
+	background: transparent;
+	font-family: inherit;
+	font-size: var(--ui-font-size-xs);
+	color: var(--ui-color-accent-main-link);
+	cursor: pointer;
+}
+
+.bizproc-dataview-fields__list {
+	padding: var(--ui-space-inset-2xs);
+	display: flex;
+	flex-direction: column;
+	gap: 1px;
+	max-height: 160px;
+	overflow-y: auto;
+}
+
+.bizproc-dataview-fields__row {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-xs);
+	padding: var(--ui-space-inset-2xs2) var(--ui-space-inset-xs);
+	border: 1px solid transparent;
+	border-radius: var(--ui-border-radius-sm);
+	font-size: var(--ui-font-size-sm);
+	cursor: pointer;
+}
+
+.bizproc-dataview-fields__row:hover {
+	background-color: var(--ui-color-bg-state-hover-default);
+}
+
+.bizproc-dataview-fields__row.--checked {
+	background-color: var(--ui-color-accent-soft-blue-3);
+}
+
+.bizproc-dataview-fields__row.--key {
+	background-color: var(--ui-color-accent-soft-blue-2);
+	border-color: var(--ui-color-accent-soft-border-blue);
+	cursor: default;
+}
+
+.bizproc-dataview-fields__row-name {
+	flex: 1 1 auto;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	color: var(--ui-color-base-1);
+}
+
+.bizproc-dataview-fields__row-type {
+	flex: 0 0 auto;
+	font-size: var(--ui-font-size-3xs);
+	color: var(--ui-color-base-4);
+}
+
+.bizproc-dataview-fields__key-tag {
+	flex: 0 0 auto;
+	font-size: var(--ui-font-size-4xs);
+	font-weight: var(--ui-font-weight-medium);
+	color: var(--ui-color-accent-soft-element-blue);
+	background-color: var(--ui-color-accent-soft-blue-1);
+	border-radius: var(--ui-border-radius-2xs);
+	padding: 1px var(--ui-space-inset-2xs2);
+}
+
+.bizproc-dataview-fields__more {
+	border: none;
+	padding: var(--ui-space-inset-2xs2) var(--ui-space-inset-xs);
+	background: transparent;
+	font-family: inherit;
+	font-size: var(--ui-font-size-xs);
+	color: var(--ui-color-accent-main-link);
+	text-align: left;
+	cursor: pointer;
+}
+
+.bizproc-dataview-fields__empty {
+	padding: var(--ui-space-inset-md);
+	text-align: center;
+	font-size: var(--ui-font-size-sm);
+	color: var(--ui-color-base-4);
+}
+
+/* Placeholder shown instead of the field lists while the sources are not both picked. */
+.bizproc-dataview-fields-stub {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--ui-space-stack-2xs);
+	padding: var(--ui-space-inset-3xl) var(--ui-space-inset-lg);
+	border: 1px solid var(--ui-color-divider-default);
+	border-radius: var(--ui-border-radius-lg);
+	background-color: var(--ui-color-bg-content-secondary);
+	text-align: center;
+}
+
+.bizproc-dataview-fields-stub__title {
+	font-size: var(--ui-font-size-md);
+	font-weight: var(--ui-font-weight-medium);
+	color: var(--ui-color-base-3);
+}
+
+.bizproc-dataview-fields-stub__text {
+	margin: 0;
+	font-size: var(--ui-font-size-sm);
+	color: var(--ui-color-base-4);
+}
+
+/* Search line above the field list. */
+.bizproc-dataview-search {
+	flex: 0 0 auto;
+	width: 180px;
+}
+
+.bizproc-dataview__caption-row {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-xs);
+	margin-bottom: var(--ui-space-stack-xs);
+}
+
+.bizproc-dataview__caption-row .bizproc-dataview__caption {
+	flex: 1 1 auto;
+	min-width: 0;
+	margin-bottom: 0;
+}
+
+/* Join builder (the "merge" parameter kind): two field lists side by side. */
+.bizproc-dataview-builder {
+	display: flex;
+	gap: var(--ui-space-inline-sm);
+	align-items: stretch;
+}
+
+.bizproc-dataview-builder__col {
+	flex: 1 1 0;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+}
+
+/* Join key card: the two fields the rows of the sources are matched on. */
+.bizproc-dataview-keycard {
+	border: 1px solid var(--ui-color-divider-default);
+	border-radius: var(--ui-border-radius-lg);
+	background-color: var(--ui-color-bg-content-primary);
+	padding: var(--ui-space-inset-sm2);
+}
+
+.bizproc-dataview-keycard__head {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-xs);
+	margin-bottom: var(--ui-space-stack-xs);
+}
+
+.bizproc-dataview-keycard__title {
+	font-size: var(--ui-font-size-md);
+	font-weight: var(--ui-font-weight-medium);
+	color: var(--ui-color-base-1);
+}
+
+.bizproc-dataview-keycard__badge {
+	font-size: var(--ui-font-size-3xs);
+	color: var(--ui-color-base-4);
+	background-color: var(--ui-color-bg-content-secondary);
+	border-radius: var(--ui-border-radius-pill);
+	padding: 1px var(--ui-space-inset-xs);
+}
+
+.bizproc-dataview-keycard__row {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-xs);
+}
+
+.bizproc-dataview-keycard__eq {
+	flex: 0 0 auto;
+	color: var(--ui-color-base-4);
+}
+
+.bizproc-dataview-keycard__hint {
+	margin: var(--ui-space-stack-xs) 0 0;
+	font-size: var(--ui-font-size-xs);
+	color: var(--ui-color-base-4);
+}
+
+/* Sources: one row per alias, picked from the source catalog (ui.entity-selector). */
+.bizproc-dataview-sources {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-xs);
+}
+
+.bizproc-dataview-sources__row {
+	flex: 1 1 0;
+	min-width: 0;
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-2xs);
+}
+
+.bizproc-dataview-sources__plus {
+	flex: 0 0 auto;
+	color: var(--ui-color-base-4);
+	font-size: var(--ui-font-size-xl);
+	line-height: 1;
+}
+
+.bizproc-dataview-sources__pick {
+	flex: 1 1 auto;
+	min-width: 0;
+	text-align: left;
+	border: 1px solid var(--ui-color-divider-default);
+	border-radius: var(--ui-border-radius-md);
+	background-color: var(--ui-color-bg-content-primary);
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='none' stroke='%23828B95' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round' d='M1 1.5l5 5 5-5'/%3E%3C/svg%3E");
+	background-repeat: no-repeat;
+	background-position: right var(--ui-space-inset-sm) center;
+	padding: var(--ui-space-inset-xs) var(--ui-space-inset-3xl) var(--ui-space-inset-xs) var(--ui-space-inset-sm);
+	font-family: inherit;
+	font-size: var(--ui-font-size-sm);
+	color: var(--ui-color-base-1);
+	cursor: pointer;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.bizproc-dataview-sources__pick:hover {
+	border-color: var(--ui-color-accent-main-primary);
+}
+
+.bizproc-dataview-sources__pick.--unavailable {
+	border-color: var(--ui-color-accent-main-alert);
+}
+
+.bizproc-dataview-sources__placeholder {
+	color: var(--ui-color-base-4);
+}
+
+.bizproc-dataview-sources__unavailable {
+	flex: 0 0 auto;
+	font-size: var(--ui-font-size-xs);
+	color: var(--ui-color-accent-main-alert);
+}
+
+.bizproc-dataview-sources__remove {
+	flex: 0 0 auto;
+	border: 0;
+	background: transparent;
+	color: var(--ui-color-base-4);
+	font-size: var(--ui-font-size-xl);
+	line-height: 1;
+	padding: var(--ui-space-inset-2xs) var(--ui-space-inset-2xs2);
+	cursor: pointer;
+	border-radius: var(--ui-border-radius-2xs);
+}
+
+.bizproc-dataview-sources__remove:hover {
+	color: var(--ui-color-accent-main-alert);
+}
+
+.bizproc-dataview-sources__suggestion {
+	margin: var(--ui-space-stack-2xs2) 0 0;
+	padding: var(--ui-space-inset-xs) var(--ui-space-inset-xs2);
+	border-radius: var(--ui-border-radius-xs);
+	background-color: var(--ui-color-accent-soft-blue-2);
+	color: var(--ui-color-accent-soft-element-blue);
+	font-size: var(--ui-font-size-xs);
+	line-height: 1.45;
+}
+
+/* Aggregate: grouping columns and the totals, hosted by the "modify value" dialog. */
+.bizproc-dataview-aggregate__group {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--ui-space-inline-2xs2) var(--ui-space-inline-sm);
+}
+
+.bizproc-dataview-aggregate__group-item {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--ui-space-inline-2xs2);
+	font-size: var(--ui-font-size-sm);
+	color: var(--ui-color-base-1);
+	cursor: pointer;
+}
+
+.bizproc-dataview-aggregate__group-item.--checked {
+	color: var(--ui-color-accent-soft-element-blue);
+	font-weight: var(--ui-font-weight-medium);
+}
+
+.bizproc-dataview-aggregate__fn {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-xs);
+	margin-bottom: var(--ui-space-stack-2xs2);
+}
+
+.bizproc-dataview-aggregate__fn-remove {
+	flex: 0 0 auto;
+	border: 0;
+	background: transparent;
+	color: var(--ui-color-base-4);
+	font-size: var(--ui-font-size-xl);
+	line-height: 1;
+	padding: var(--ui-space-inset-2xs) var(--ui-space-inset-2xs2);
+	cursor: pointer;
+	border-radius: var(--ui-border-radius-2xs);
+}
+
+.bizproc-dataview-aggregate__fn-remove:hover {
+	color: var(--ui-color-accent-main-alert);
+}
+
+/* Tab strip of the "modify value" dialog: the transformation the dialog applies. */
+.bizproc-dataview-tabs {
+	display: flex;
+	gap: var(--ui-space-inline-2xs);
+	margin-bottom: var(--ui-space-stack-xs);
+}
+
+.bizproc-dataview-tabs__item {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--ui-space-inline-2xs);
+	padding: var(--ui-space-inset-2xs2) var(--ui-space-inset-sm2);
+	border: none;
+	border-radius: 6px;
+	background-color: var(--ui-color-bg-content-secondary);
+	font-family: inherit;
+	font-size: var(--ui-font-size-sm);
+	color: var(--ui-color-base-2);
+	cursor: pointer;
+}
+
+.bizproc-dataview-tabs__item.--active {
+	background-color: var(--ui-color-accent-main-primary);
+	color: var(--ui-color-base-white-fixed);
+	--ui-icon-set__icon-color: var(--ui-color-base-white-fixed);
+}
+
+.bizproc-dataview__error {
+	margin: var(--ui-space-stack-2xs2) 0 0;
+	font-size: var(--ui-font-size-xs);
+	line-height: 1.45;
+	color: var(--ui-color-accent-main-alert);
+}
+
+.bizproc-dataview__retry {
+	margin-bottom: var(--ui-space-stack-xs2);
+}
+
+.bizproc-dataview__visually-hidden {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0 0 0 0);
+	white-space: nowrap;
+	border: 0;
+}
+
+.bizproc-dataview-btn:focus-visible,
+.bizproc-dataview-modal__close:focus-visible,
+.bizproc-dataview-type:focus-visible,
+.bizproc-dataview-fields__all:focus-visible,
+.bizproc-dataview-fields__more:focus-visible,
+.bizproc-dataview-fields__row:focus-visible,
+.bizproc-dataview-header__description-link:focus-visible,
+.bizproc-dataview-header__description-reset:focus-visible,
+.bizproc-dataview-tabs__item:focus-visible,
+.bizproc-dataview-sources__pick:focus-visible,
+.bizproc-dataview-sources__remove:focus-visible,
+.bizproc-dataview-aggregate__fn-remove:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: 2px;
+}

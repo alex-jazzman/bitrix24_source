@@ -82,6 +82,15 @@
 	margin: 0;
 	border: none;
 }
+
+/* keep the collapsed rows out of the tab order; both settings accordions open from the keyboard.
+   The two forms are named one by one: the shared .landing-form also covers the design and the
+   catalog forms, whose collapsed content no keyboard opens. */
+.landing-page-set-form:not(.landing-form-additional-open) .ui-form-row.landing-form-additional-row,
+.landing-site-set-form:not(.landing-form-additional-open) .ui-form-row.landing-form-additional-row {
+	visibility: hidden;
+}
+
 .ui-form-row.landing-form-additional-row
 {
 	transition: .2s linear;
@@ -696,8 +705,26 @@ a {
 	box-shadow: 0 2px 4px rgba(0, 0, 0, .11);
 }
 
+/* hidden visually instead of by `display: none`: the picture of the corner draws the switcher, but
+   the switcher itself has to keep its place in the keyboard path */
 .landing-form-cookies-position-input {
-	display: none;
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	border: 0;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	clip-path: inset(50%);
+}
+
+/* The switcher is out of sight, so the keyboard focus is shown on the corner it is bound to. The
+   pair is resolved by the script and marked with a class: CSS can pair a switcher with its own
+   corner only through the ids of the markup, and a global id catches any node of the page. */
+.landing-form-cookies-position-item.--focus {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: 2px;
 }
 
 .landing-form-row-robots .ui-ctl-textarea,

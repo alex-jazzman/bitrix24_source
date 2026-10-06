@@ -7,8 +7,8 @@ if (isset($_REQUEST['referer']) && $_REQUEST['referer'] === 'monitoring')
 require_once $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_before.php';
 IncludeModuleLangFile(__FILE__);
 
-/* @var CMain $APPLICATION */
-/* @var CUser $USER */
+/** @var CMain $APPLICATION */
+/** @var CUser $USER */
 
 if (!CModule::IncludeModule('bitrixcloud'))
 {
@@ -115,9 +115,10 @@ while ($arRes = $rsData->GetNext())
 	/** @var CBitrixCloudMonitoringDomainResult $domainResults */
 	$domainResults = $monitoringResults[$arRes['DOMAIN']];
 	$html = '<table width="100%">';
-	/** @var CBitrixCloudMonitoringTest $test_http_response_time */
-	$test_http_response_time = $domainResults['test_http_response_time'];
-	if ($test_http_response_time)
+
+	/** @var CBitrixCloudMonitoringTest|null $test_http_response_time */
+	$test_http_response_time = $domainResults['test_http_response_time'] ?? null;
+	if (isset($test_http_response_time))
 	{
 		if ($test_http_response_time->getStatus() === CBitrixCloudMonitoringResult::RED_LAMP)
 		{
@@ -132,7 +133,7 @@ while ($arRes = $rsData->GetNext())
 		$result = explode('/', $test_http_response_time->getUptime());
 		if ($result[0] > 0 && $result[1] > 0)
 		{
-			$resultText = round($result[0] / $result[1] * 100, 2) . '%';
+			$resultText = round(intval($result[0]) / intval($result[1]) * 100, 2) . '%';
 		}
 		else
 		{
@@ -146,7 +147,7 @@ while ($arRes = $rsData->GetNext())
 
 		if ($result[1] > 0)
 		{
-			$failTime = ($result[1] - $result[0]);
+			$failTime = intval($result[1]) - intval($result[0]);
 			$resultText = FormatDate([
 				's' => 'sdiff',
 				'i' => 'idiff',
@@ -169,16 +170,17 @@ while ($arRes = $rsData->GetNext())
 				'i' => 'idiff',
 				'H' => 'Hdiff',
 				'-' => 'ddiff',
-			], time() - $result[1]);
+			], time() - intval($result[1]));
 			$html .= '<tr>';
 			$html .= '<td width="50%" align="right">' . GetMessage('BCL_MONITORING_PERIOD') . '</td>';
 			$html .= '<td align="left">' . $resultText . '</td>';
 			$html .= '</tr>';
 		}
 	}
-	/** @var CBitrixCloudMonitoringTest $test_domain_registration */
-	$test_domain_registration = $domainResults['test_domain_registration'];
-	if ($test_domain_registration)
+
+	/** @var CBitrixCloudMonitoringTest|null $test_domain_registration */
+	$test_domain_registration = $domainResults['test_domain_registration'] ?? null;
+	if (isset($test_domain_registration))
 	{
 		if ($test_domain_registration->getStatus() === CBitrixCloudMonitoringResult::RED_LAMP)
 		{
@@ -215,9 +217,10 @@ while ($arRes = $rsData->GetNext())
 		$html .= '<td align="left" ' . $indicatorStyle . '>' . $resultText . '</td>';
 		$html .= '</tr>';
 	}
-	/** @var CBitrixCloudMonitoringTest $test_lic */
-	$test_lic = $domainResults['test_lic'];
-	if ($test_lic)
+
+	/** @var CBitrixCloudMonitoringTest|null $test_lic */
+	$test_lic = $domainResults['test_lic'] ?? null;
+	if (isset($test_lic))
 	{
 		if ($test_lic->getStatus() === CBitrixCloudMonitoringResult::RED_LAMP)
 		{
@@ -244,9 +247,10 @@ while ($arRes = $rsData->GetNext())
 		$html .= '<td align="left" ' . $indicatorStyle . '>' . $resultText . '</td>';
 		$html .= '</tr>';
 	}
-	/** @var CBitrixCloudMonitoringTest $test_ssl_cert_validity */
-	$test_ssl_cert_validity = $domainResults['test_ssl_cert_validity'];
-	if ($test_ssl_cert_validity)
+
+	/** @var CBitrixCloudMonitoringTest|null $test_ssl_cert_validity */
+	$test_ssl_cert_validity = $domainResults['test_ssl_cert_validity'] ?? null;
+	if (isset($test_ssl_cert_validity))
 	{
 		if ($test_ssl_cert_validity->getStatus() === CBitrixCloudMonitoringResult::RED_LAMP)
 		{

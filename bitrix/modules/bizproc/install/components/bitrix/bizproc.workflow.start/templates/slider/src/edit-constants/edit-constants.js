@@ -36,6 +36,7 @@ export class EditConstants
 	#templateName: string;
 
 	#form: HTMLFormElement;
+	#saveButton: Button;
 	#canExit: boolean = false;
 	#isExitInProcess: boolean = false;
 
@@ -56,16 +57,19 @@ export class EditConstants
 			}],
 		});
 
+		this.#saveButton = new Button({
+			id: 'save',
+			text: Text.encode(Loc.getMessage('BIZPROC_CMP_WORKFLOW_START_TMP_SINGLE_START_BUTTON_SAVE')),
+			onclick: this.#handleSaveClick.bind(this),
+			color: ButtonColor.PRIMARY,
+			dataset: { testid: 'bizproc-ws-edit-constants-save-btn' },
+		});
+
 		this.#buttons = new Buttons({
 			buttons: {
 				edit: [
 					Buttons.createBackButton(this.#exit.bind(this)),
-					new Button({
-						id: 'save',
-						text: Text.encode(Loc.getMessage('BIZPROC_CMP_WORKFLOW_START_TMP_SINGLE_START_BUTTON_SAVE')),
-						onclick: this.#handleSaveClick.bind(this),
-						color: ButtonColor.PRIMARY,
-					}),
+					this.#saveButton,
 				],
 			},
 			wrapper: document.getElementById(`${HTML_ELEMENT_ID}-buttons`).querySelector('.ui-button-panel'),
@@ -110,8 +114,7 @@ export class EditConstants
 			this.#templateName,
 			this.#constants,
 			this.#documentType,
-			null,
-			null,
+			{ onSubmit: () => this.#handleSaveClick(this.#saveButton) },
 		);
 		Dom.append(this.#renderErrors(), this.#form);
 
@@ -148,6 +151,11 @@ export class EditConstants
 
 	#handleSaveClick(button: Button)
 	{
+		if (button.isWaiting())
+		{
+			return;
+		}
+
 		button.setWaiting(true);
 		this.#errorNotifier.clean();
 

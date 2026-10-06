@@ -128,7 +128,7 @@ $tabControl->BeginNextTab();
 		<select name="EBAY_SETTINGS[POLICY][RETURN][DEFAULT]">
 			<?if($policy):?>
 				<?foreach($policy->getPoliciesNames(\Bitrix\Sale\TradingPlatform\Ebay\Policy::TYPE_RETURN) as $policyId => $policyName):?>
-					<option value="<?=htmlspecialcharsbx($policyId)?>"<?=isset($siteSettings["POLICY"]["RETURN"]["DEFAULT"]) && $siteSettings["POLICY"]["RETURN"]["DEFAULT"] == $policyId ? " selected" : ""?>><?=$policyName?></option>
+					<option value="<?=htmlspecialcharsbx($policyId)?>"<?=isset($siteSettings["POLICY"]["RETURN"]["DEFAULT"]) && $siteSettings["POLICY"]["RETURN"]["DEFAULT"] == $policyId ? " selected" : ""?>><?=htmlspecialcharsbx($policyName)?></option>
 					<?$hiddenPolicyFields .= ' <input type="hidden" name="EBAY_SETTINGS[POLICY][RETURN][LIST]['.$policyId.']" value="'.htmlspecialcharsbx($policyName).'">'?>
 				<?endforeach;?>
 			<?endif;?>
@@ -143,7 +143,7 @@ $tabControl->BeginNextTab();
 		<select name="EBAY_SETTINGS[POLICY][SHIPPING][DEFAULT]">
 			<?if($policy):?>
 				<?foreach($policy->getPoliciesNames(\Bitrix\Sale\TradingPlatform\Ebay\Policy::TYPE_SHIPPING) as $policyId => $policyName):?>
-					<option value="<?=htmlspecialcharsbx($policyId)?>"<?=isset($siteSettings["POLICY"]["SHIPPING"]["DEFAULT"]) && $siteSettings["POLICY"]["SHIPPING"]["DEFAULT"] == $policyId ? " selected" : ""?>><?=$policyName?></option>
+					<option value="<?=htmlspecialcharsbx($policyId)?>"<?=isset($siteSettings["POLICY"]["SHIPPING"]["DEFAULT"]) && $siteSettings["POLICY"]["SHIPPING"]["DEFAULT"] == $policyId ? " selected" : ""?>><?=htmlspecialcharsbx($policyName)?></option>
 					<?$hiddenPolicyFields .= ' <input type="hidden" name="EBAY_SETTINGS[POLICY][SHIPPING][LIST]['.$policyId.']" value="'.htmlspecialcharsbx($policyName).'">'?>
 				<?endforeach;?>
 			<?endif;?>
@@ -158,7 +158,7 @@ $tabControl->BeginNextTab();
 		<select name="EBAY_SETTINGS[POLICY][PAYMENT][DEFAULT]">
 			<?if($policy):?>
 				<?foreach($policy->getPoliciesNames(\Bitrix\Sale\TradingPlatform\Ebay\Policy::TYPE_PAYMENT) as $policyId => $policyName):?>
-					<option value="<?=htmlspecialcharsbx($policyId)?>"<?=isset($siteSettings["POLICY"]["PAYMENT"]["DEFAULT"]) && $siteSettings["POLICY"]["PAYMENT"]["DEFAULT"] == $policyId ? " selected" : ""?>><?=$policyName?></option>
+					<option value="<?=htmlspecialcharsbx($policyId)?>"<?=isset($siteSettings["POLICY"]["PAYMENT"]["DEFAULT"]) && $siteSettings["POLICY"]["PAYMENT"]["DEFAULT"] == $policyId ? " selected" : ""?>><?=htmlspecialcharsbx($policyName)?></option>
 					<?$hiddenPolicyFields .= ' <input type="hidden" name="EBAY_SETTINGS[POLICY][PAYMENT][LIST]['.$policyId.']" value="'.htmlspecialcharsbx($policyName).'">'?>
 				<?endforeach;?>
 			<?endif;?>
@@ -177,7 +177,7 @@ if($details)
 			$siteSettings["MAPS"]["PAYMENT"] = array();
 		?>
 		<tr>
-			<td width="40%"><?=$paymentDescription?>:</td>
+			<td width="40%"><?=htmlspecialcharsbx($paymentDescription)?>:</td>
 			<td width="60%"><?=
 				Helper::makeSelectorFromPaySystems(
 					"EBAY_SETTINGS[MAPS][PAYMENT][".$paymentOption."]",
@@ -197,7 +197,7 @@ $tabControl->BeginNextTab();
 		{
 			?>
 			<tr>
-				<td width="40%"><?=$serviceDescription?>:</td>
+				<td width="40%"><?=htmlspecialcharsbx($serviceDescription)?>:</td>
 				<td width="60%">
 					<select name="EBAY_SETTINGS[MAPS][SHIPMENT][<?=$service?>]">
 						<option value=""><?=Loc::getMessage("SALE_EBAY_NOT_MAPPED")?></option>
@@ -222,4 +222,3 @@ $tabControl->End();
 </form>
 <?
 require($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/epilog_admin.php");
-

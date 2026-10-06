@@ -2,9 +2,9 @@
 
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Web\Uri;
 use Bitrix\Bizproc\WorkflowTemplateTable;
-
-use Bitrix\Bizproc\Public\Provider\StorageTypeProvider;
+use Bitrix\Bizproc\Activity\Settings;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
@@ -20,13 +20,13 @@ Loc::loadMessages(__FILE__);
 
 class BizprocWorkflowEditComponent extends \CBitrixComponent
 {
-	private \Bitrix\Bizproc\Activity\Settings $activitySettings;
+	private Settings $activitySettings;
 
 	public function __construct($component = null)
 	{
 		parent::__construct($component);
 
-		$this->activitySettings = new \Bitrix\Bizproc\Activity\Settings('~bizprocdesigner');
+		$this->activitySettings = new Settings('~bizprocdesigner');
 	}
 
 	protected function listKeysSignedParameters()
@@ -105,8 +105,6 @@ class BizprocWorkflowEditComponent extends \CBitrixComponent
 		$this->arResult["EDIT_PAGE_TEMPLATE"] = $this->arParams["EDIT_PAGE_TEMPLATE"];
 		$backUrl = $this->arParams['BACK_URL'];
 
-		$this->arResult['DOCUMENT_TYPE'] = $this->arParams['DOCUMENT_TYPE'];
-
 		$documentType = $this->arResult['DOCUMENT_TYPE'];
 
 		$canWrite = false;
@@ -126,7 +124,7 @@ class BizprocWorkflowEditComponent extends \CBitrixComponent
 
 				$canWrite = CBPDocument::CanUserOperateDocumentType(
 					CBPCanUserOperateOperation::CreateWorkflow,
-					$GLOBALS["USER"]->GetID(),
+					$USER->GetID(),
 					$arTemplate["DOCUMENT_TYPE"]
 				);
 
@@ -169,7 +167,7 @@ class BizprocWorkflowEditComponent extends \CBitrixComponent
 
 			$canWrite = CBPDocument::CanUserOperateDocumentType(
 				CBPCanUserOperateOperation::CreateWorkflow,
-				$GLOBALS["USER"]->GetID(),
+				$USER->GetID(),
 				[MODULE_ID, ENTITY, $documentType]
 			);
 
@@ -214,12 +212,8 @@ class BizprocWorkflowEditComponent extends \CBitrixComponent
 			$APPLICATION->AuthForm(Loc::getMessage("ACCESS_DENIED"));
 		}
 
-		$saveUrl = $this->arResult["LIST_PAGE_URL"];
-		$applyUrl = str_replace("#ID#", $ID, $this->arResult["EDIT_PAGE_TEMPLATE"]);
 		if ($backUrl)
 		{
-			$saveUrl = $backUrl;
-			$applyUrl = CHTTP::urlAddParams($applyUrl, ['back_url' => $backUrl], ['encode' => true]);
 			$this->arResult['BACK_URL'] = $backUrl;
 		}
 
@@ -309,7 +303,7 @@ class BizprocWorkflowEditComponent extends \CBitrixComponent
 				$applyUrl = str_replace("#ID#", $ID, $this->arResult["EDIT_PAGE_TEMPLATE"]);
 				if ($backUrl)
 				{
-					$applyUrl = CHTTP::urlAddParams($applyUrl, ['back_url' => $backUrl], ['encode' => true]);
+					$applyUrl = (string)(new Uri($applyUrl))->addParams(['back_url' => $backUrl]);
 				}
 				?>
 				window.location = '<?=CUtil::JSEscape($applyUrl)?>';

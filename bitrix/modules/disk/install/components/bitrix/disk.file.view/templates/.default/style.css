@@ -436,7 +436,7 @@ table tr.bizproc-item-row-last td{padding-bottom: 25px;}
 	display: flex;
 	overflow: hidden;
 	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
-	font-size: 14px;
+	font-size: var(--ui-font-size-md, 14px);
 }
 
 .disk-detail-content {
@@ -505,8 +505,8 @@ table tr.bizproc-item-row-last td{padding-bottom: 25px;}
 	overflow: hidden;
 	margin-bottom: 14px;
 	padding-left: 5px;
-	font-size: 14px;
-	color: #828B95;
+	font-size: var(--ui-font-size-md, 14px);
+	color: #525c69;
 }
 
 .disk-file-info-item {
@@ -515,7 +515,7 @@ table tr.bizproc-item-row-last td{padding-bottom: 25px;}
 	padding: 15px 20px;
 	margin-bottom: 8px;
 	background: #f5f7f8;
-	color: #515c69;
+	color: #525c69;
 	border-radius: var(--ui-border-radius-sm);
 }
 
@@ -529,8 +529,8 @@ table tr.bizproc-item-row-last td{padding-bottom: 25px;}
 	display: block;
 	text-align: center;
 	line-height: 110px;
-	font-size: 14px;
-	color: #828b95;
+	font-size: var(--ui-font-size-md, 14px);
+	color: #525c69;
 }
 
 .disk-file-info-item-link {
@@ -552,7 +552,7 @@ table tr.bizproc-item-row-last td{padding-bottom: 25px;}
 	overflow: hidden;
 	padding-bottom: 5px;
 	margin-bottom: 13px;
-	font-size: 13px;
+	font-size: var(--ui-font-size-sm, 13px);
 	color: rgba(81,92,105,.6);
 	border-bottom: 1px solid rgba(81,92,105,.1);
 }
@@ -613,17 +613,17 @@ table tr.bizproc-item-row-last td{padding-bottom: 25px;}
 	display: inline-block;
 	text-decoration: none;
 	color: #525c69;
-	font-size: 16px;
+	font-size: var(--ui-font-size-xl, 16px);
 	margin-bottom: 8px;
 	word-break: break-word;
 }
 
 .disk-detail-sidebar-owner-title {
-	font-size: 14px;
+	font-size: var(--ui-font-size-md, 14px);
 }
 
 .disk-detail-file-name {
-	font-size: 22px;
+	font-size: var(--ui-font-size-3xl, 22px);
 }
 
 .disk-detail-sidebar-owner-title-double,
@@ -642,8 +642,8 @@ table tr.bizproc-item-row-last td{padding-bottom: 25px;}
 	padding-bottom: 1px;
 	margin: 2px 0 8px 0;
 	border-bottom: 1px dashed rgba(130,139,149,.7);
-	font-size: 13px;
-	color: #828b95;
+	font-size: var(--ui-font-size-sm, 13px);
+	color: #525c69;
 	transition: .1s;
 	cursor: pointer;
 }
@@ -656,7 +656,7 @@ table tr.bizproc-item-row-last td{padding-bottom: 25px;}
 
 .disk-detail-table {
 	position: relative;
-	font-size: 13px;
+	font-size: var(--ui-font-size-sm, 13px);
 	color: rgba(82,92,105,.5);
 	margin-bottom: 40px;
 	border-collapse: collapse;
@@ -807,8 +807,8 @@ table tr.bizproc-item-row-last td{padding-bottom: 25px;}
 	overflow: hidden;
 	white-space: nowrap;
 	text-overflow: ellipsis;
-	color: #a3a8ab;
-	font-size: 12px;
+	color: #525c69;
+	font-size: var(--ui-font-size-xs, 12px);
 }
 
 .disk-detail-sidebar-owner-access,
@@ -840,7 +840,7 @@ table tr.bizproc-item-row-last td{padding-bottom: 25px;}
 	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
 	font-weight: var(--ui-font-weight-bold, 700);
 	text-decoration: none;
-	font-size: 12px;
+	font-size: var(--ui-font-size-xs, 12px);
 	text-transform: uppercase;
 	line-height: 25px;
 	white-space: nowrap;
@@ -857,39 +857,13 @@ table tr.bizproc-item-row-last td{padding-bottom: 25px;}
 	opacity: 1;
 }
 
-.disk-detail-sidebar-editor-item:before {
-	content: '';
+.disk-detail-sidebar-editor-item .ui-icon-set {
 	position: absolute;
 	left: 0;
 	top: 50%;
 	transform: translateY(-50%);
-	width: 15px;
-	height: 15px;
-	background: center center no-repeat;
-}
-
-.disk-detail-sidebar-editor-item-show:before {
-	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2214px%22%20height%3D%229px%22%20viewBox%3D%220%200%2014%209%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%0A%20%20%20%20%3Cg%20stroke%3D%22none%22%20stroke-width%3D%221%22%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%20transform%3D%22translate%28-989.000000%2C%20-345.000000%29%22%3E%0A%20%20%20%20%20%20%20%20%3Cg%20transform%3D%22translate%28968.000000%2C%20132.000000%29%22%20fill%3D%22%23828B95%22%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%3Cg%20transform%3D%22translate%2821.000000%2C%20213.000000%29%22%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Cpath%20d%3D%22M6.81677143%2C6.90576821%20C8.33842655%2C6.90608393%209.58906501%2C5.68328377%209.58856177%2C4.19577134%20C9.58810428%2C2.67844553%208.35558239%2C1.4522626%206.82738518%2C1.44860922%20C5.30234464%2C1.44500094%204.04932723%2C2.66338097%204.04891549%2C4.15026194%20C4.04850375%2C5.68829026%205.27109812%2C6.90545248%206.81677143%2C6.90576821%20M6.83269288%2C0.000745020458%20C8.0079232%2C-0.0188919323%209.09470183%2C0.351156576%2010.11882%2C0.93335934%20C11.3659714%2C1.64230971%2012.4704923%2C2.56393109%2013.4148135%2C3.70395485%20C13.7082533%2C4.05817165%2013.715004%2C4.29771429%2013.4209584%2C4.64201866%20C12.2469398%2C6.01674629%2010.9075286%2C7.14206582%209.28610193%2C7.83198995%20C7.46604846%2C8.60642815%205.66442964%2C8.51984704%203.9011947%2C7.63120446%20C2.48666018%2C6.91835489%201.26837241%2C5.90620621%200.220843124%2C4.65240088%20C-0.0700434734%2C4.30424428%20-0.0748035933%2C4.05154771%200.213876039%2C3.70963923%20C1.47353357%2C2.2175127%202.93644823%2C1.04765768%204.71387698%2C0.379249633%20C5.08179097%2C0.240898375%205.46078306%2C0.150840867%205.84254467%2C0.0729507533%20C6.17017074%2C0.00610055302%206.50294639%2C0.0174223368%206.83269288%2C0.000745020458%22%3E%3C/path%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3Ccircle%20id%3D%22Oval%22%20cx%3D%226.85503705%22%20cy%3D%224.20035106%22%20r%3D%221.56680082%22%3E%3C/circle%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%3C/g%3E%0A%20%20%20%20%20%20%20%20%3C/g%3E%0A%20%20%20%20%3C/g%3E%0A%3C/svg%3E');
-}
-
-.disk-detail-sidebar-editor-item-edit:before {
-	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2211px%22%20height%3D%2212px%22%20viewBox%3D%220%200%2011%2012%22%20version%3D%221.1%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cg%20transform%3D%22translate%28-974.000000%2C%20-350.000000%29%22%3E%3Cg%20transform%3D%22translate%28951.000000%2C%20139.000000%29%22%20fill%3D%22%23828B95%22%3E%3Cpath%20d%3D%22M31.5512911%2C211.101355%20L34%2C213.572184%20L26.9013699%2C220.634571%20L24.4526609%2C218.163742%20L31.5512911%2C211.101355%20Z%20M23.0090453%2C221.760249%20C22.984488%2C221.854056%2023.0107994%2C221.953172%2023.0774548%2C222.022199%20C23.1458643%2C222.091227%2023.2440933%2C222.117776%2023.33706%2C222.091227%20L26.2400781%2C221.301836%20L23.7913692%2C218.831008%20L23.0090453%2C221.760249%20Z%22%3E%3C/path%3E%3C/g%3E%3C/g%3E%3C/svg%3E');
-}
-
-.disk-detail-sidebar-editor-item-download:before {
-	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2211px%22%20height%3D%2213px%22%20viewBox%3D%220%200%2011%2013%22%20version%3D%221.1%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cg%20transform%3D%22translate%28-972.000000%2C%20-385.000000%29%22%3E%3Cg%20transform%3D%22translate%28951.000000%2C%20139.000000%29%22%20fill%3D%22%23828B95%22%3E%3Cg%20transform%3D%22translate%2821.000000%2C%20246.000000%29%22%3E%3Crect%20x%3D%220%22%20y%3D%2211%22%20width%3D%2211%22%20height%3D%222%22%3E%3C/rect%3E%3Cpolygon%20points%3D%225.5%2010%200%205%2011%205%22%3E%3C/polygon%3E%3Crect%20x%3D%224%22%20y%3D%220%22%20width%3D%223%22%20height%3D%226%22%3E%3C/rect%3E%3C/g%3E%3C/g%3E%3C/g%3E%3C/svg%3E');
-}
-
-.disk-detail-sidebar-editor-item-update:before {
-	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2215px%22%20height%3D%2211px%22%20viewBox%3D%220%200%2015%2011%22%20version%3D%221.1%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cg%20transform%3D%22translate%28-972.000000%2C%20-424.000000%29%22%3E%3Cpath%20d%3D%22M980.628237%2C424.382679%20C979.435313%2C424.382679%20978.682042%2C425.059229%20978.167262%2C426.049218%20C978.01825%2C426.027129%20977.865871%2C426.015376%20977.710717%2C426.015376%20C976.00443%2C426.015376%20974.621268%2C427.398537%20974.621268%2C429.104706%20C973.172607%2C429.122306%20972%2C430.298635%20972%2C431.749067%20C972%2C433.203575%20973.179104%2C434.382679%20974.633671%2C434.382679%20L978%2C434.382679%20L978%2C432.02205%20L975.604465%2C432.02205%20L979.417476%2C428.20892%20L983.230428%2C432.02199%20L980.834953%2C432.02199%20L980.834953%2C434.382679%20L982.628769%2C434.382679%20C984.677554%2C434.382679%20986.338363%2C432.72181%20986.338363%2C430.673085%20C986.338363%2C429.104175%20985.363967%2C427.763774%20983.987715%2C427.221471%20C983.860024%2C425.632539%20982.250007%2C424.382679%20980.628237%2C424.382679%20Z%22%20id%3D%22Fill-1%22%20fill%3D%22%23828B95%22%3E%3C/path%3E%3C/g%3E%3C/svg%3E');
-}
-
-.disk-detail-sidebar-editor-item-remove:before {
-	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2210px%22%20height%3D%2214px%22%20viewBox%3D%220%200%2010%2014%22%20version%3D%221.1%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cg%20transform%3D%22translate%28-973.000000%2C%20-459.000000%29%22%3E%3Cg%20transform%3D%22translate%28951.000000%2C%20139.000000%29%22%20fill%3D%22%23828B95%22%3E%3Cpath%20d%3D%22M26%2C321.219646%20L26%2C320.219646%20L28%2C320.219646%20L28%2C321.219646%20L30.5%2C321.219646%20C31.3284271%2C321.219646%2032%2C321.891219%2032%2C322.719646%20L32%2C323.219646%20L22%2C323.219646%20L22%2C322.719646%20C22%2C321.891219%2022.6715729%2C321.219646%2023.5%2C321.219646%20L26%2C321.219646%20Z%20M23%2C324.219646%20L31%2C324.219646%20L30.2810187%2C332.308186%20C30.2351576%2C332.824124%2029.8029179%2C333.219646%2029.284946%2C333.219646%20L24.715054%2C333.219646%20C24.1970821%2C333.219646%2023.7648424%2C332.824124%2023.7189813%2C332.308186%20L23%2C324.219646%20Z%22%20id%3D%22Combined-Shape%22%3E%3C/path%3E%3C/g%3E%3C/g%3E%3C/svg%3E');
-}
-
-.disk-detail-sidebar-editor-item-restore:before {
-	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2212%22%20height%3D%2214%22%20viewBox%3D%220%200%2012%2014%22%3E%0A%20%20%3Cg%20fill%3D%22%23828B95%22%20%20transform%3D%22translate%28-.529%20-.897%29%22%3E%0A%20%20%20%20%3Cpath%20d%3D%22M8.52860681%2C3.89709868%20L10.5286068%2C3.89709868%20C11.6331763%2C3.89709868%2012.5286068%2C4.79252918%2012.5286068%2C5.89709868%20L12.5286068%2C12.8970987%20C12.5286068%2C14.0016682%2011.6331763%2C14.8970987%2010.5286068%2C14.8970987%20L2.52860681%2C14.8970987%20C1.42403731%2C14.8970987%200.528606811%2C14.0016682%200.528606811%2C12.8970987%20L0.528606811%2C10.8970987%20L2.52860681%2C10.8970987%20L2.52860681%2C12.8970987%20L10.5286068%2C12.8970987%20L10.5286068%2C5.89709868%20L8.52860681%2C5.89709868%20L8.52860681%2C3.89709868%20Z%22/%3E%0A%20%20%20%20%3Cpath%20d%3D%22M7.90139351%2C7.94273514%20C6.77986325%2C8.91680892%205.08572828%2C8.88236654%204.01909058%2C7.81572883%20C2.94599493%2C6.7437095%202.91693416%2C5.03665864%203.90607649%2C3.91512838%20L5.48181575%2C5.49624926%20L5.48719737%2C1.00151762%20L1%2C0.999364968%20L2.57466293%2C2.57940952%20C0.850390877%2C4.43929848%200.879451642%2C7.3378407%202.68767702%2C9.14606607%20C4.43993351%2C10.8993989%207.21146942%2C10.9704363%209.07351103%2C9.40546031%20L7.90139351%2C7.94273514%20Z%22/%3E%0A%20%20%3C/g%3E%0A%3C/svg%3E%0A');
+	--ui-icon-set__icon-size: 20px;
+	--ui-icon-set__icon-color: #525c69;
 }
 
 .disk-detail-sidebar-public-link-handler {
@@ -902,8 +876,8 @@ table tr.bizproc-item-row-last td{padding-bottom: 25px;}
 	flex: 1;
 	vertical-align: middle;
 	line-height: 22px;
-	font-size: 13px;
-	color: #828b95;
+	font-size: var(--ui-font-size-sm, 13px);
+	color: #525c69;
 }
 
 .disk-detail-sidebar-public-link-block {
@@ -965,7 +939,7 @@ table tr.bizproc-item-row-last td{padding-bottom: 25px;}
 	border-radius: var(--ui-field-border-radius, 1px);
 	border-top-left-radius: 0;
 	border-bottom-left-radius: 0;
-	font-size: 14px;
+	font-size: var(--ui-font-size-md, 14px);
 	color: rgba(163,168,171,.8);
 	box-sizing: border-box;
 	overflow: hidden;
@@ -978,7 +952,9 @@ table tr.bizproc-item-row-last td{padding-bottom: 25px;}
 }
 
 .disk-detail-sidebar-public-link-input-copy {
-	display: block;
+	display: flex;
+	align-items: center;
+	justify-content: center;
 	height: 30px;
 	width: 22px;
 	border: 1px solid rgba(163,168,171,.34);
@@ -987,7 +963,12 @@ table tr.bizproc-item-row-last td{padding-bottom: 25px;}
 	border-top-right-radius: 0;
 	border-bottom-right-radius: 0;
 	cursor: pointer;
-	background: #fff url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2213px%22%20height%3D%2215px%22%20viewBox%3D%220%200%2013%2015%22%20version%3D%221.1%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%0A%20%20%20%20%3Cg%20stroke-width%3D%221%22%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%20transform%3D%22translate%28-894.000000%2C%20-1091.000000%29%22%3E%0A%20%20%20%20%20%20%20%20%3Cg%20transform%3D%22translate%28894.000000%2C%201091.000000%29%22%20fill%3D%22%23a3a8ab%22%20opacity%3D%22.48%22%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%3Cpath%20d%3D%22M9.57894737%2C0%20L1.36842105%2C0%20C0.615789474%2C0%200%2C0.613636364%200%2C1.36363636%20L0%2C10.9090909%20L1.36842105%2C10.9090909%20L1.36842105%2C1.36363636%20L9.57894737%2C1.36363636%20L9.57894737%2C0%20Z%20M11.6315789%2C2.72727273%20L4.10526316%2C2.72727273%20C3.35263158%2C2.72727273%202.73684211%2C3.34090909%202.73684211%2C4.09090909%20L2.73684211%2C13.6363636%20C2.73684211%2C14.3863636%203.35263158%2C15%204.10526316%2C15%20L11.6315789%2C15%20C12.3842105%2C15%2013%2C14.3863636%2013%2C13.6363636%20L13%2C4.09090909%20C13%2C3.34090909%2012.3842105%2C2.72727273%2011.6315789%2C2.72727273%20Z%20M11.6315789%2C13.6363636%20L4.10526316%2C13.6363636%20L4.10526316%2C4.09090909%20L11.6315789%2C4.09090909%20L11.6315789%2C13.6363636%20Z%22%20id%3D%22Shape%22%3E%3C/path%3E%0A%20%20%20%20%20%20%20%20%3C/g%3E%0A%20%20%20%20%3C/g%3E%0A%3C/svg%3E') left 5px center no-repeat;
+	background: #fff;
+}
+
+.disk-detail-sidebar-public-link-input-copy .ui-icon-set {
+	--ui-icon-set__icon-size: 16px;
+	--ui-icon-set__icon-color: #525c69;
 }
 
 .disk-detail-sidebar-public-link-config {
@@ -1037,8 +1018,8 @@ table tr.bizproc-item-row-last td{padding-bottom: 25px;}
 	display: block;
 	overflow: hidden;
 	padding-left: 1px;
-	font-size: 12px;
-	color: #a3a8ab;
+	font-size: var(--ui-font-size-xs, 12px);
+	color: #525c69;
 }
 
 .disk-detail-sidebar-public-link-copy-link,
@@ -1049,8 +1030,8 @@ table tr.bizproc-item-row-last td{padding-bottom: 25px;}
 	padding-bottom: 1px;
 	margin: 0 0 19px 18px;
 	border-bottom: 1px dashed rgba(130,139,149,.7);
-	font-size: 13px;
-	color: #828b95;
+	font-size: var(--ui-font-size-sm, 13px);
+	color: #525c69;
 	transition: .1s;
 	cursor: pointer;
 }
@@ -1061,18 +1042,17 @@ table tr.bizproc-item-row-last td{padding-bottom: 25px;}
 	border-bottom: 1px dashed #5c6269;
 }
 
-.disk-detail-sidebar-public-link-copy-link:before {
-	content: '';
+.disk-detail-sidebar-public-link-copy-link .ui-icon-set {
 	position: absolute;
-	width: 13px;
-	height: 16px;
 	left: -18px;
-	top: 0;
+	top: 50%;
+	transform: translateY(-50%);
 	opacity: .8;
-	background: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2213px%22%20height%3D%2215px%22%20viewBox%3D%220%200%2013%2015%22%20version%3D%221.1%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%0A%20%20%20%20%3Cg%20stroke-width%3D%221%22%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%20transform%3D%22translate%28-894.000000%2C%20-1091.000000%29%22%3E%0A%20%20%20%20%20%20%20%20%3Cg%20transform%3D%22translate%28894.000000%2C%201091.000000%29%22%20fill%3D%22%23828B95%22%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%3Cpath%20d%3D%22M9.57894737%2C0%20L1.36842105%2C0%20C0.615789474%2C0%200%2C0.613636364%200%2C1.36363636%20L0%2C10.9090909%20L1.36842105%2C10.9090909%20L1.36842105%2C1.36363636%20L9.57894737%2C1.36363636%20L9.57894737%2C0%20Z%20M11.6315789%2C2.72727273%20L4.10526316%2C2.72727273%20C3.35263158%2C2.72727273%202.73684211%2C3.34090909%202.73684211%2C4.09090909%20L2.73684211%2C13.6363636%20C2.73684211%2C14.3863636%203.35263158%2C15%204.10526316%2C15%20L11.6315789%2C15%20C12.3842105%2C15%2013%2C14.3863636%2013%2C13.6363636%20L13%2C4.09090909%20C13%2C3.34090909%2012.3842105%2C2.72727273%2011.6315789%2C2.72727273%20Z%20M11.6315789%2C13.6363636%20L4.10526316%2C13.6363636%20L4.10526316%2C4.09090909%20L11.6315789%2C4.09090909%20L11.6315789%2C13.6363636%20Z%22%20id%3D%22Shape%22%3E%3C/path%3E%0A%20%20%20%20%20%20%20%20%3C/g%3E%0A%20%20%20%20%3C/g%3E%0A%3C/svg%3E') center center no-repeat;
+	--ui-icon-set__icon-size: 16px;
+	--ui-icon-set__icon-color: #525c69;
 }
 
-.disk-detail-sidebar-public-link-copy-link:hover:before {
+.disk-detail-sidebar-public-link-copy-link:hover .ui-icon-set {
 	opacity: 1;
 }
 
@@ -1211,7 +1191,7 @@ table tr.bizproc-item-row-last td{padding-bottom: 25px;}
 	display: inline-block;
 	vertical-align: middle;
 	margin-bottom: 5px;
-	font-size: 14px;
+	font-size: var(--ui-font-size-md, 14px);
 	color: #535c69;
 	cursor: pointer;
 }
@@ -1250,7 +1230,7 @@ table tr.bizproc-item-row-last td{padding-bottom: 25px;}
 	line-height: 30px;
 	padding: 0 12px;
 	color: #535c69;
-	font-size: 14px;
+	font-size: var(--ui-font-size-md, 14px);
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
@@ -1295,7 +1275,7 @@ table tr.bizproc-item-row-last td{padding-bottom: 25px;}
 	overflow: hidden;
 	margin-bottom: 20px;
 	padding-left: 20px;
-	font-size: 14px;
+	font-size: var(--ui-font-size-md, 14px);
 	color: #000;
 }
 
@@ -1334,8 +1314,8 @@ table tr.bizproc-item-row-last td{padding-bottom: 25px;}
 	padding-bottom: 1px;
 	margin: 10px 0 5px 0;
 	border-bottom: 1px dashed rgba(130,139,149,.7);
-	font-size: 13px;
-	color: #828b95;
+	font-size: var(--ui-font-size-sm, 13px);
+	color: #525c69;
 	transition: .1s;
 	cursor: pointer;
 }
@@ -1376,14 +1356,30 @@ table tr.bizproc-item-row-last td{padding-bottom: 25px;}
 	display: block;
 	margin-bottom: 4px;
 	line-height: 22px;
-	font-size: 13px;
-	color: #828b95;
+	font-size: var(--ui-font-size-sm, 13px);
+	color: #525c69;
 }
 
 .disk-detail-sidebar-user-custom-field-value {
 	display: block;
 	margin-bottom: 8px;
-	font-size: 14px;
+	font-size: var(--ui-font-size-md, 14px);
 	color: #000;
 
+}
+
+.disk-file-info-item-link:focus-visible,
+.disk-detail-sidebar-owner-link:focus-visible,
+.disk-detail-sidebar-user-access-link:focus-visible,
+.disk-detail-sidebar-owner-title-add:focus-visible,
+.disk-detail-sidebar-user-access-title-add:focus-visible,
+.disk-detail-sidebar-owner-access:focus-visible,
+.disk-detail-sidebar-user-access-type:focus-visible,
+.disk-detail-sidebar-editor-item:focus-visible,
+.disk-detail-sidebar-public-link-copy-link:focus-visible,
+.disk-detail-sidebar-public-link-config:focus-visible,
+.disk-detail-sidebar-user-access-more:focus-visible,
+.disk-detail-sidebar-link-more:focus-visible {
+	outline: 2px solid #0075ff;
+	outline-offset: 2px;
 }

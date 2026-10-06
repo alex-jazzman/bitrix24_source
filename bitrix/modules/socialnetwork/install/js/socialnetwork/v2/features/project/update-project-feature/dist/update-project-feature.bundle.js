@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Socialnetwork = this.BX.Socialnetwork || {};
 this.BX.Socialnetwork.V2 = this.BX.Socialnetwork.V2 || {};
 this.BX.Socialnetwork.V2.Features = this.BX.Socialnetwork.V2.Features || {};
-(function (exports, main_core, socialnetwork_v2_const, socialnetwork_v2_model_project, socialnetwork_v2_model_interface, socialnetwork_v2_provider_services_projectService) {
+(function (exports, main_core, ui_notificationManager, socialnetwork_v2_const, socialnetwork_v2_model_project, socialnetwork_v2_model_interface, socialnetwork_v2_provider_services_projectService) {
 	'use strict';
 
 	class UpdateProjectFeature {
@@ -13,7 +13,6 @@ this.BX.Socialnetwork.V2.Features = this.BX.Socialnetwork.V2.Features || {};
 				invalid
 			} = this.#validate(projectStore.$state);
 			if (invalid) {
-				this.#setInvalidState(error);
 				return null;
 			}
 			const [error] = await socialnetwork_v2_provider_services_projectService.projectService.update(projectStore.$state);
@@ -28,6 +27,13 @@ this.BX.Socialnetwork.V2.Features = this.BX.Socialnetwork.V2.Features || {};
 				const interfaceStore = socialnetwork_v2_model_interface.useInterfaceStore();
 				interfaceStore.setValidation('title', {
 					uniq: true
+				});
+				return;
+			}
+			if (main_core.Type.isPlainObject(error) && main_core.Type.isStringFilled(error?.message)) {
+				ui_notificationManager.Notifier.notifyViaBrowserProvider({
+					id: 'socialnetwork-project-wizard-update-error',
+					text: error.message
 				});
 			}
 		}
@@ -45,5 +51,5 @@ this.BX.Socialnetwork.V2.Features = this.BX.Socialnetwork.V2.Features || {};
 
 	exports.UpdateProjectFeature = UpdateProjectFeature;
 
-})(this.BX.Socialnetwork.V2.Features.Project = this.BX.Socialnetwork.V2.Features.Project || {}, BX, BX.Socialnetwork.V2, BX.Socialnetwork.V2.Model, BX.Socialnetwork.V2.Model, BX.Socialnetwork.V2.Provider.Services);
+})(this.BX.Socialnetwork.V2.Features.Project = this.BX.Socialnetwork.V2.Features.Project || {}, BX, BX.UI.NotificationManager, BX.Socialnetwork.V2, BX.Socialnetwork.V2.Model, BX.Socialnetwork.V2.Model, BX.Socialnetwork.V2.Provider.Services);
 //# sourceMappingURL=update-project-feature.bundle.js.map

@@ -441,6 +441,7 @@ jn.define('im/messenger/controller/dialog/lib/reply-manager', (require, exports,
 			if (this.isForwardInProcess)
 			{
 				this.#isForwardInProcess = false;
+				this.#isForwardInBackground = false; // explicit reset (LBS §7 п.28)
 				this.dialogView.enableAlwaysSendButtonMode(false);
 			}
 
@@ -498,6 +499,7 @@ jn.define('im/messenger/controller/dialog/lib/reply-manager', (require, exports,
 			if (this.isForwardInProcess)
 			{
 				this.#isForwardInProcess = false;
+				this.#isForwardInBackground = false; // explicit reset (LBS §7 п.28)
 				this.dialogView.enableAlwaysSendButtonMode(false);
 			}
 
@@ -578,15 +580,18 @@ jn.define('im/messenger/controller/dialog/lib/reply-manager', (require, exports,
 				this.#resetEditingMessageProcess();
 			}
 
-			if (this.isQuoteInBackground || this.isQuoteInProcess)
+			// Push active quote to background so it survives while attach is shown (AC-003/023/024).
+			// If quote is already in background (e.g. behind edit), keep it there.
+			if (this.isQuoteInProcess)
 			{
 				this.#isQuoteInProcess = false;
-				this.#isQuoteInBackground = false;
+				this.#isQuoteInBackground = true;
 			}
 
 			if (this.isForwardInProcess)
 			{
 				this.#isForwardInProcess = false;
+				this.#isForwardInBackground = false; // explicit reset (LBS §7 п.28)
 			}
 
 			this.#isAttachInProcess = true;
@@ -612,12 +617,32 @@ jn.define('im/messenger/controller/dialog/lib/reply-manager', (require, exports,
 			this.#isAttachInProcess = false;
 		}
 
-		finishAttachingFiles()
+		/**
+		 * @param {boolean} restoreQuote — when true (default), restores a background quote after attach
+		 *   completes (cancel-reply path). When false (send path), discards the background quote so the
+		 *   next message is NOT accidentally sent as a reply to the same original message.
+		 */
+		finishAttachingFiles(restoreQuote = true)
 		{
 			this.#resetAttachingFilesProcess();
 			this.dialogView.enableAlwaysSendButtonMode(false);
 
-			return this.dialogView.removeInputQuote();
+			return this.dialogView.removeInputQuote().then(() => {
+				// Restore quote from background after attach completes (mirrors finishEditingMessage pattern).
+				// When restoreQuote=false (send path), background quote is discarded instead of restored.
+				if (this.isQuoteInBackground)
+				{
+					if (restoreQuote)
+					{
+						this.startQuotingMessage(this.getQuoteMessage());
+					}
+					else
+					{
+						this.#isQuoteInBackground = false;
+						this.quoteMessage = null;
+					}
+				}
+			});
 		}
 
 		finishQuotingMessage()
@@ -668,6 +693,7 @@ jn.define('im/messenger/controller/dialog/lib/reply-manager', (require, exports,
 		finishForwardingMessage(shouldClearInputActions = true)
 		{
 			this.#isForwardInProcess = false;
+			this.#isForwardInBackground = false; // explicit reset (LBS §7 п.28)
 			if (this.isQuoteInBackground)
 			{
 				this.#isQuoteInBackground = false;

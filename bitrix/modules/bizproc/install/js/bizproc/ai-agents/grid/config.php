@@ -1,5 +1,6 @@
 <?php
 
+use Bitrix\Bizproc\Internal\Config\Storage;
 use Bitrix\Bizproc\Internal\Service\Feature\AiAgentsFeature;
 use Bitrix\Bizproc\Internal\Service\Tariff\TariffChecker;
 use Bitrix\Main\Loader;
@@ -12,6 +13,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 $isAiAgentsAvailable = false;
 $aiAgentsTariffSliderCode = null;
 $isBasicOrHigher = false;
+$filterHintState = null;
 
 if (Loader::includeModule('bizproc'))
 {
@@ -19,6 +21,7 @@ if (Loader::includeModule('bizproc'))
 	$isAiAgentsAvailable = $aiAgentsFeature->isAvailable();
 	$aiAgentsTariffSliderCode = $aiAgentsFeature->getTariffSliderCode();
 	$isBasicOrHigher = TariffChecker::isBasicOrHigher();
+	$filterHintState = (new Storage())->getAiAgentsFilterHintState();
 }
 
 return [
@@ -33,11 +36,13 @@ return [
 		'main.date',
 		'main.popup',
 		'main.sidepanel',
+		'ui.a11y',
 		'ui.avatar',
 		'ui.buttons',
 		'ui.dialogs.messagebox',
 		'ui.entity-selector',
 		'ui.info-helper',
+		'ui.notification',
 		'ui.system.typography',
 	],
 	'skip_core' => false,
@@ -47,5 +52,6 @@ return [
 			'aiAgentsTariffSliderCode' => $aiAgentsTariffSliderCode,
 			'isBasicOrHigher' => $isBasicOrHigher,
 		],
+		'filterHintState' => $filterHintState,
 	],
 ];

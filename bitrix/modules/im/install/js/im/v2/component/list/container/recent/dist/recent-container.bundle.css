@@ -28,6 +28,57 @@
 }
 
 .bx-im-list-container-recent__create-chat_icon {
+	flex-shrink: 0;
+	width: 44px;
+	height: 34px;
+	border-radius: 80px;
+	background-color: var(--im-list-container-recent__background-color_create-chat);
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.bx-im-list-container-recent__create-chat_icon:hover,
+.bx-im-list-container-recent__create-chat_icon.--active {
+	background-color: var(--im-list-container-recent__background-color_create-chat-hover);
+}
+
+.bx-im-list-container-recent__create-chat_icon_status {
+	background-position: center;
+	background-repeat: no-repeat;
+}
+
+.bx-im-list-container-recent__create-chat_icon_status.--default {
+	width: 22px;
+	height: 22px;
+	background-image: url(./images/create-chat.svg);
+}
+
+.bx-im-list-container-recent__create-chat_icon_status.--loading {
+	width: 34px;
+	height: 34px;
+	background-image: url('./images/spinner.svg');
+	animation: imRotate360 .8s linear infinite;
+}
+
+.bx-im-list-container-recent__elements_container {
+	flex: 1 0 auto;
+	position: relative;
+	padding-top: 1px;
+}
+
+.bx-im-list-container-recent__elements {
+	position: absolute;
+	width: 100%;
+	height: 100%;
+	background-color: var(--im-list-container-recent__background-color);
+}
+
+.bx-im-list-container-recent__create-chat_icon {
+	--im-list-container-recent__background-color_create-chat: rgba(var(--im-color-palette-blue-60-rgb), 0.12);
+	--im-list-container-recent__background-color_create-chat-hover: rgba(var(--im-color-palette-blue-60-rgb), 0.22);
+
 	width: 44px;
 	height: 34px;
 	border-radius: 80px;
@@ -60,20 +111,6 @@
 	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22' fill='none' viewBox='0 0 22 22'%3E%3Cpath fill='%2300ade3' fill-opacity='.08' fill-rule='evenodd' d='M11 2.828a8.172 8.172 0 1 0 0 16.344 8.172 8.172 0 0 0 0-16.344M.893 11C.893 5.418 5.418.892 11 .892S21.108 5.418 21.108 11 16.582 21.108 11 21.108.893 16.582.893 11' clip-rule='evenodd'/%3E%3Cpath fill='%2300ade3' fill-rule='evenodd' d='M1 10.893V11c0 5.523 4.477 10 10 10s10-4.477 10-10S16.523 1 11 1h-.107v1.938q.106-.003.214-.003a8.172 8.172 0 1 1-8.169 7.958z' clip-rule='evenodd'/%3E%3C/svg%3E");
 	animation: imRotate360 .8s linear infinite;
 }
-
-.bx-im-list-container-recent__elements_container {
-	flex: 1 0 auto;
-	position: relative;
-	padding-top: 1px;
-}
-
-.bx-im-list-container-recent__elements {
-	position: absolute;
-	width: 100%;
-	height: 100%;
-	background-color: var(--im-list-container-recent__background-color);
-}
-
 .bx-im-create-chat-menu-description-banner__container {
 	--im-create-chat-menu-description-banner__background-color_content: var(--im-color-collab-10);
 	--im-create-chat-menu-description-banner__font-color_highlight: var(--im-color-collab-70);

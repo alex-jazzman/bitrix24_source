@@ -289,8 +289,8 @@ export class Start extends Base
 	{
 		return (
 			this.#hasClients
-				? Dictionary.TYPE_REPEAT_SALE_BANNER_START_EMPTY
-				: Dictionary.TYPE_REPEAT_SALE_BANNER_START
+				? Dictionary.TYPE_REPEAT_SALE_BANNER_START
+				: Dictionary.TYPE_REPEAT_SALE_BANNER_START_EMPTY
 		);
 	}
 }

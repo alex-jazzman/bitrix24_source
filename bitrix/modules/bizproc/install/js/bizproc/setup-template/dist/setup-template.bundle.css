@@ -3,12 +3,8 @@
 	line-height: var(--ui-font-line-height-sm);
 	color: var(--ui-color-base-0);
 	font-weight: var(--ui-font-weight-medium);
-	display: -webkit-box;
-	text-overflow: ellipsis;
 	word-break: break-word;
-	overflow: hidden;
-	-webkit-line-clamp: 2;
-	-webkit-box-orient: vertical;
+	margin-top: 0;
 	margin-bottom: 6px;
 }
 
@@ -39,11 +35,13 @@
 	padding-right: 18px;
 }
 
-.bizproc-setup-template__form .ui-form-label.--required {
+.bizproc-setup-template__form .ui-form-label.--required,
+.bizproc-setup-template__form .bizproc-setup-template__switcher-label.--required {
 	position: relative;
 }
 
-.bizproc-setup-template__form .ui-form-label.--required:after {
+.bizproc-setup-template__form .ui-form-label.--required:after,
+.bizproc-setup-template__form .bizproc-setup-template__switcher-label.--required:after {
 	content: '*';
 	position: absolute;
 	right: -5px;
@@ -144,7 +142,21 @@
 	margin-top: 8px;
 }
 
+/* A date or bool row of a multiple constant takes the width left by the remove icon. */
+.bizproc-setup-template__field-item > .bizproc-setup-template__date-row,
+.bizproc-setup-template__field-item > .bizproc-setup-template__switcher-row {
+	flex: 1;
+	min-width: 0;
+}
+
+/*
+ * The icon lives in a child .ui-icon-set: -webkit-mask clips the focus outline,
+ * so the focusable element must stay unmasked. The icon custom properties are
+ * inherited by the child.
+ */
 .bizproc-setup-template__field-remove {
+	display: inline-flex;
+	align-items: center;
 	margin-left: 8px;
 	border: none;
 	cursor: pointer;
@@ -155,6 +167,12 @@
 
 .bizproc-setup-template__field-remove:hover {
 	--ui-icon-set__icon-color: var(--ui-color-base-70);
+}
+
+.bizproc-setup-template__field-remove:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: 2px;
+	border-radius: var(--ui-border-radius-2xs);
 }
 
 .bizproc-setup-template__form .ui-tag-selector-items .ui-tag-selector-add-button-caption {
@@ -172,6 +190,13 @@
 	background: url("data:image/svg+xml;charset=utf-8,%3Csvg width='8' height='8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M5 0H3v3H0v2h3v3h2V5h3V3H5V0z' fill='%230075FF'/%3E%3C/svg%3E") no-repeat center;
 }
 
+/* Focus is owned by ui.entity-selector; only ensure it stays visible in our scope. */
+.bizproc-setup-template__form .ui-tag-selector-add-button-caption:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: 2px;
+	border-radius: var(--ui-border-radius-2xs);
+}
+
 .bizproc-setup-template__form .ui-ctl + .ui-ctl.ui-ctl-checkbox,
 .bizproc-setup-template__form .ui-ctl + .ui-ctl.ui-ctl-radio {
 	margin-left: 0;
@@ -184,6 +209,13 @@
 	margin-bottom: 0;
 }
 
+.bizproc-setup-template__form .ui-ctl-checkbox .ui-ctl-element:focus-visible,
+.bizproc-setup-template__form .ui-ctl-radio .ui-ctl-element:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: 2px;
+	border-radius: var(--ui-border-radius-2xs);
+}
+
 .bizproc-setup-template__time-row {
 	display: flex;
 	gap: 8px;
@@ -193,6 +225,72 @@
 .bizproc-setup-template__time-row > .ui-ctl {
 	flex: 1;
 	min-width: 0;
+}
+
+.bizproc-setup-template__date-row {
+	display: flex;
+	gap: var(--ui-space-inline-xs);
+	align-items: center;
+}
+
+.bizproc-setup-template__date-row > .ui-ctl {
+	flex: 1;
+	min-width: 0;
+}
+
+/* The zone name is the longest text of the row, so it gets the widest column. */
+.bizproc-setup-template__date-row > .ui-ctl.--timezone {
+	flex: 2;
+}
+
+/*
+ * The switcher itself is a library node without keyboard support, so the wrapper
+ * carries the switch role, the tab stop and the focus ring.
+ */
+.bizproc-setup-template__switcher {
+	display: inline-flex;
+	border-radius: var(--ui-border-radius-2xs);
+}
+
+.bizproc-setup-template__switcher:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: 2px;
+}
+
+/*
+ * The link is the node the Switcher component renders around the library switcher, and that
+ * switcher is an inline-block: a line box around it reserves the descender space of the font
+ * below the switcher and makes the wrapper taller than it. The row centers the wrapper, not the
+ * switcher, so that space pushes the label below the switcher. Laying the link out as a flex
+ * container makes the switcher a flex item: no line box is created and the two centers meet.
+ */
+.bizproc-setup-template__switcher > a {
+	display: flex;
+}
+
+/* The name of a bool constant is the label of the switcher itself, so it shares the row with it. */
+.bizproc-setup-template__switcher-row {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-xs);
+	min-width: 0;
+}
+
+.bizproc-setup-template__switcher-row > .bizproc-setup-template__switcher {
+	flex: none;
+}
+
+/*
+ * The family is the one the top label of any other field gets from ui-ctl-label-text; the metric is
+ * the one of the name inside. Left inherited, the line box of this block would be sized by the font
+ * of the theme, and the row centers that box against the track of the switcher.
+ */
+.bizproc-setup-template__switcher-label {
+	min-width: 0;
+	word-break: break-word;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font-size: var(--ui-font-size-sm);
+	line-height: var(--ui-font-line-height-sm);
 }
 
 .bizproc-setup-template__form .ui-ctl-checkbox .ui-ctl-label-text,
@@ -288,7 +386,7 @@
 
 .bizproc-setup-template__heading.--icon {
 	display: flex;
-	align-items: center;
+	align-items: flex-start;
 }
 
 .bizproc-setup-template__heading.--icon .ui-icon-set {
@@ -297,12 +395,7 @@
 
 .bizproc-setup-template__heading-text {
 	margin-left: 4px;
-	display: -webkit-box;
-	text-overflow: ellipsis;
 	word-break: break-word;
-	overflow: hidden;
-	-webkit-line-clamp: 2;
-	-webkit-box-orient: vertical;
 }
 
 .bizproc-setup-template__form .ui-tile-uploader-drop-area {

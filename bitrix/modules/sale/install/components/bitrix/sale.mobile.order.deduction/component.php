@@ -1,4 +1,7 @@
 <?
+
+use Bitrix\Main\Web\Uri;
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)
 	die();
 
@@ -25,25 +28,9 @@ $arResult = array(
 	"AJAX_URL" => $componentPath."/ajax.php"
 );
 
-$arResult["STORE_PAGE"] = CHTTP::urlAddParams(
-	$arResult["CURRENT_PAGE_PARAMS"],
-	array(
-		"set_store" => 'Y'
-	),
-	array(
-		"encode" => true,
-	)
-);
+$arResult["STORE_PAGE"] = (string)(new Uri($arResult["CURRENT_PAGE_PARAMS"]))->addParams(["set_store" => 'Y']);
 
-$arResult["BARCODE_PAGE"] = CHTTP::urlAddParams(
-	$arResult["CURRENT_PAGE_PARAMS"],
-	array(
-		"set_barcode" => 'Y'
-	),
-	array(
-		"encode" => true,
-	)
-);
+$arResult["BARCODE_PAGE"] = (string)(new Uri($arResult["CURRENT_PAGE_PARAMS"]))->addParams(["set_barcode" => 'Y']);
 
 if(isset($_REQUEST["product_id"]))
 	$arResult["PRODUCT_ID"];

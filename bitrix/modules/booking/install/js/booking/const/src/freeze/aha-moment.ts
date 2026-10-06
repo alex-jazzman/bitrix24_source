@@ -1,0 +1,15 @@
+export enum AhaMoment {
+	Banner = 'banner',
+	TrialBanner = 'trial_banner',
+	AddResource = 'add_resource',
+	MessageTemplate = 'message_template',
+	AddClient = 'add_client',
+	ResourceWorkload = 'resource_workload',
+	ResourceIntersection = 'resource_intersection',
+	ExpandGrid = 'expand_grid',
+	SelectResources = 'select_resources',
+	CyclePopup = 'cycle_popup',
+	SearchNavigation = 'search_navigation',
+	IntegrationMapsYa = 'integration_maps_ya',
+	WeekView = 'week_view',
+}

@@ -12,6 +12,6 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "compressorjs": "^1.0.5"
+    "compressorjs": "1.0.5"
   }
 }

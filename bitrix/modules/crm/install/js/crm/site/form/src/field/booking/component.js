@@ -64,7 +64,11 @@ const BookingField = {
 		async runAction(action, options): Promise<any>
 		{
 			const formData = this.createFormData(options?.data ?? {});
-			const host = this.$root.form.identification.address;
+			const identification = this.$root.form.identification;
+			formData.set('formId', identification.id);
+			formData.set('sec', identification.sec);
+
+			const host = identification.address;
 			const url = `${host}/bitrix/services/main/ajax.php?action=${action}`;
 
 			const response = await window.b24form.App.post(url, formData);

@@ -4,6 +4,7 @@
 export default class AirButtonStyle
 {
 	static FILLED = '--style-filled';
+	static FILLED_WHITE = '--style-filled-white';
 	static FILLED_BITRIX_GPT = '--style-filled-bitrix-gpt';
 	static TINTED = '--style-tinted';
 	static TINTED_ALERT = '--style-tinted-alert';

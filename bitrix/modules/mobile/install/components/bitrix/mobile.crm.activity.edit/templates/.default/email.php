@@ -1,5 +1,9 @@
 <?php
+
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
+
+use Bitrix\Main\Web\Uri;
+
 global $APPLICATION;
 $APPLICATION->AddHeadString('<script src="' . CUtil::GetAdditionalFileURL(SITE_TEMPLATE_PATH . '/crm_mobile.js') . '"></script>', true, \Bitrix\Main\Page\AssetLocation::AFTER_JS_KERNEL);
 $APPLICATION->SetPageProperty('BodyClass', 'crm-page');
@@ -159,9 +163,7 @@ $canChangeOwner = $arResult['CAN_CHANGE_OWNER'];
 
 			<?
 			$onDealSelectEventName = 'onCrmDealSelectForEmailActivity_'.$arResult['ENTITY_ID'];
-			$dealSelectorUrl = CHTTP::urlAddParams($arResult['DEAL_SELECTOR_URL'], array(
-				"event" => $onDealSelectEventName
-			));
+			$dealSelectorUrl = (string)(new Uri($arResult['DEAL_SELECTOR_URL']))->addParams(["event" => $onDealSelectEventName]);
 			?>
 			var editor = BX.CrmEmailEditor.create(
 				"<?=CUtil::JSEscape($UID)?>",

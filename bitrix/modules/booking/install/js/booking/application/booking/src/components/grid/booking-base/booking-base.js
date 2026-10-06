@@ -1,12 +1,13 @@
 import { mapGetters } from 'ui.vue3.vuex';
 
 import { BookingCard } from 'booking.component.booking-card';
-import { Model } from 'booking.const';
+import { Grid, Model } from 'booking.const';
 import { bookingService } from 'booking.lib.booking';
 import { Duration } from 'booking.lib.duration';
-import { gridFactory } from 'booking.lib.grid';
+import { GridFactory, type GridBase } from 'booking.lib.grid';
 import { mousePosition } from 'booking.lib.mouse-position';
-import { DatePeriod } from 'booking.lib.date-period';
+import { DatePeriod, type DatePeriodTs } from 'booking.lib.date-period';
+import { type BookingModel } from 'booking.model.bookings';
 import { type EnabledFeatures } from 'booking.model.interface';
 
 import { Actions, type ActionsPopupOptions } from './components/actions/actions';
@@ -44,6 +45,11 @@ export const BookingBase = {
 		overbookingLayoutMixin,
 		bookingStatesMixin,
 	],
+	inject: {
+		gridContext: {
+			default: null,
+		},
+	},
 	props: {
 		bookingId: {
 			type: [Number, String],
@@ -75,17 +81,38 @@ export const BookingBase = {
 	},
 	computed: {
 		...mapGetters({
+			selectedFirstDayPeriodTs: `${Model.Interface}/selectedFirstDayPeriodTs`,
 			getBookingById: `${Model.Bookings}/getById`,
 			deletingBookingsMap: `${Model.Interface}/deletingBookings`,
 			animationPause: `${Model.Interface}/animationPause`,
-			zoom: `${Model.Interface}/zoom`,
 			scroll: `${Model.Interface}/scroll`,
 			resourcesIds: `${Model.Interface}/resourcesIds`,
-			isWeekMode: `${Model.Interface}/isWeekMode`,
 		}),
 		grid(): GridBase
 		{
-			return gridFactory.getGrid();
+			return GridFactory.getGrid(this.gridContext);
+		},
+		zoom(): number
+		{
+			if (this.gridContext)
+			{
+				return this.gridContext.zoom;
+			}
+
+			return this.$store.getters[`${Model.Interface}/zoom`];
+		},
+		isWeekMode(): boolean
+		{
+			if (this.gridContext)
+			{
+				return this.gridContext.gridMode === Grid.Mode.Week;
+			}
+
+			return this.$store.getters[`${Model.Interface}/isWeekMode`];
+		},
+		resizeEnabled(): boolean
+		{
+			return this.gridContext?.resizeEnabled ?? true;
 		},
 		booking(): BookingModel
 		{
@@ -141,21 +168,46 @@ export const BookingBase = {
 		{
 			return {
 				...this.cardDataService.buildDataAttributes('booking-booking-card-container'),
+				'data-booking-id': this.bookingId,
 				'data-resource-id': this.resourceId,
+				'data-from': this.dateFromTs,
+				'data-to': this.dateToTs,
 			};
 		},
 		bookingDurationMs(): number
 		{
 			return this.booking.dateToTs - this.booking.dateFromTs;
 		},
+		visiblePeriod(): DatePeriodTs
+		{
+			if (!this.gridContext)
+			{
+				const visiblePeriod = DatePeriod.createByCurrentGridMode();
+
+				return {
+					fromTs: visiblePeriod.fromTs * 1000,
+					toTs: visiblePeriod.toTs * 1000,
+				};
+			}
+
+			const fromTs = this.isWeekMode
+				? this.selectedFirstDayPeriodTs
+				: this.selectedDateTs
+			;
+
+			const durationMs = this.isWeekMode
+				? Grid.Duration.Week
+				: Grid.Duration.Day
+			;
+
+			return {
+				fromTs,
+				toTs: fromTs + durationMs,
+			};
+		},
 		visibleBookingDurationMs(): number
 		{
-			const visiblePeriod = DatePeriod.createByCurrentGridMode();
-
-			return bookingService.getVisibleDuration(this.booking, {
-				fromTs: visiblePeriod.fromTs * 1000,
-				toTs: visiblePeriod.toTs * 1000,
-			});
+			return bookingService.getVisibleDuration(this.booking, this.visiblePeriod);
 		},
 		isWeekGridDetailed(): Boolean
 		{
@@ -222,7 +274,7 @@ export const BookingBase = {
 	mounted(): void
 	{
 		setTimeout(() => {
-			if (!this.isReal && mousePosition.isMousePressed())
+			if (!this.isReal && this.resizeEnabled && this.$refs.resize && mousePosition.isMousePressed())
 			{
 				void this.$refs.resize.startResize();
 			}
@@ -320,7 +372,10 @@ export const BookingBase = {
 				/>
 			</template>
 			<template #add-client-button>
-				<BookingAddClient :cardDataService :expired="isExpiredBooking"/>
+				<BookingAddClient
+					:cardDataService
+					:expired="isExpiredBooking"
+				/>
 			</template>
 			<template #actions>
 				<Actions
@@ -329,7 +384,7 @@ export const BookingBase = {
 					:actionsPopupOptions
 				/>
 			</template>
-			<template #resize v-if="!isWeekMode">
+			<template #resize v-if="!isWeekMode && resizeEnabled">
 				<Resize
 					v-if="!disabled"
 					:bookingId="bookingId"

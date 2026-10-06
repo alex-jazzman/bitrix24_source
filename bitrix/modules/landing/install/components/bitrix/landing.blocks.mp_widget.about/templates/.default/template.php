@@ -8,6 +8,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 /** @var array $arParams */
 /** @var array $arResult */
 
+use Bitrix\Landing\Sanitizer;
 use \Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__FILE__);
@@ -40,7 +41,7 @@ $text = str_replace('#TAG_BR#', '<br>', $text);
 						<?php if ($personalPhotoSrc !== ''): ?>
 						<a
 							<?= $bossLinkHrefAttr ?>
-							style="background-image: url('<?= \htmlspecialcharsbx($personalPhotoSrc) ?>');"
+							style="background-image: url('<?= \htmlspecialcharsbx(Sanitizer::sanitizeCssUrl((string)$personalPhotoSrc)) ?>');"
 							class="landing-widget-about-person-icon"
 						></a>
 						<?php else: ?>
@@ -82,7 +83,7 @@ $text = str_replace('#TAG_BR#', '<br>', $text);
 				<?php if ($personalSidebarPhotoSrc !== ''): ?>
 					<a
 						<?= $bossLinkHrefAttr ?>
-						style="background-image: url('<?= \htmlspecialcharsbx($personalSidebarPhotoSrc) ?>');"
+						style="background-image: url('<?= \htmlspecialcharsbx(Sanitizer::sanitizeCssUrl((string)$personalSidebarPhotoSrc)) ?>');"
 						class="landing-widget-about-person-icon"
 					></a>
 				<?php else: ?>

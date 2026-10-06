@@ -916,7 +916,7 @@ namespace Bitrix\Sale\TradingPlatform\Ebay\Wizard
 
 			foreach($policy->getPoliciesNames(\Bitrix\Sale\TradingPlatform\Ebay\Policy::TYPE_RETURN) as $policyId => $policyName)
 			{
-				$result .='<option value="'.htmlspecialcharsbx($policyId).'"'.(isset($this->ebaySettings[$this->siteId]["POLICY"]["RETURN"]["DEFAULT"]) && $this->ebaySettings[$this->siteId]["POLICY"]["RETURN"]["DEFAULT"] == $policyId ? " selected" : "").'>'.$policyName.'</option>';
+				$result .='<option value="'.htmlspecialcharsbx($policyId).'"'.(isset($this->ebaySettings[$this->siteId]["POLICY"]["RETURN"]["DEFAULT"]) && $this->ebaySettings[$this->siteId]["POLICY"]["RETURN"]["DEFAULT"] == $policyId ? " selected" : "").'>'.htmlspecialcharsbx($policyName).'</option>';
 				$hiddenPolicyFields .= '<input type="hidden" name="EBAY_SETTINGS[POLICY][RETURN][LIST]['.$policyId.']" value="'.htmlspecialcharsbx($policyName).'">';
 			}
 
@@ -926,7 +926,7 @@ namespace Bitrix\Sale\TradingPlatform\Ebay\Wizard
 
 			foreach($policy->getPoliciesNames(\Bitrix\Sale\TradingPlatform\Ebay\Policy::TYPE_SHIPPING) as $policyId => $policyName)
 			{
-				$result .='<option value="'.htmlspecialcharsbx($policyId).'"'.(isset($this->ebaySettings[$this->siteId]["POLICY"]["SHIPPING"]["DEFAULT"]) && $this->ebaySettings[$this->siteId]["POLICY"]["SHIPPING"]["DEFAULT"] == $policyId ? " selected" : "").'>'.$policyName.'</option>';
+				$result .='<option value="'.htmlspecialcharsbx($policyId).'"'.(isset($this->ebaySettings[$this->siteId]["POLICY"]["SHIPPING"]["DEFAULT"]) && $this->ebaySettings[$this->siteId]["POLICY"]["SHIPPING"]["DEFAULT"] == $policyId ? " selected" : "").'>'.htmlspecialcharsbx($policyName).'</option>';
 				$hiddenPolicyFields .= '<input type="hidden" name="EBAY_SETTINGS[POLICY][SHIPPING][LIST]['.$policyId.']" value="'.htmlspecialcharsbx($policyName).'">';
 			}
 
@@ -936,7 +936,7 @@ namespace Bitrix\Sale\TradingPlatform\Ebay\Wizard
 
 			foreach($policy->getPoliciesNames(\Bitrix\Sale\TradingPlatform\Ebay\Policy::TYPE_PAYMENT) as $policyId => $policyName)
 			{
-				$result .='<option value="'.htmlspecialcharsbx($policyId).'"'.(isset($this->ebaySettings[$this->siteId]["POLICY"]["PAYMENT"]["DEFAULT"]) && $this->ebaySettings[$this->siteId]["POLICY"]["PAYMENT"]["DEFAULT"] == $policyId ? " selected" : "").'>'.$policyName.'</option>';
+				$result .='<option value="'.htmlspecialcharsbx($policyId).'"'.(isset($this->ebaySettings[$this->siteId]["POLICY"]["PAYMENT"]["DEFAULT"]) && $this->ebaySettings[$this->siteId]["POLICY"]["PAYMENT"]["DEFAULT"] == $policyId ? " selected" : "").'>'.htmlspecialcharsbx($policyName).'</option>';
 				$hiddenPolicyFields .= '<input type="hidden" name="EBAY_SETTINGS[POLICY][PAYMENT][LIST]['.$policyId.']" value="'.htmlspecialcharsbx($policyName).'">';
 			}
 
@@ -995,7 +995,7 @@ namespace Bitrix\Sale\TradingPlatform\Ebay\Wizard
 				{
 					$result .= '
 					<tr>
-						<td>'.Loc::getMessage('SALE_EBAY_W_STEP_PAY_LINK_SITE',array('#PAYMENT_DESCRIPTION#' => $paymentDescription)).':</td>
+						<td>'.Loc::getMessage('SALE_EBAY_W_STEP_PAY_LINK_SITE',array('#PAYMENT_DESCRIPTION#' => htmlspecialcharsbx($paymentDescription))).':</td>
 						<td>'.
 							Helper::makeSelectorFromPaySystems(
 								"EBAY_SETTINGS[MAPS][PAYMENT][".$paymentOption."]",
@@ -1041,7 +1041,7 @@ namespace Bitrix\Sale\TradingPlatform\Ebay\Wizard
 				{
 					$result .= '
 					<tr>
-						<td>'.$serviceDescription.':</td>
+						<td>'.htmlspecialcharsbx($serviceDescription).':</td>
 						<td>
 							<select name="EBAY_SETTINGS[MAPS][SHIPMENT]['.$service.']">
 								<option value="">'.Loc::getMessage('SALE_EBAY_W_STEP_SHP_LINK_NOT_SET').'</option>';

@@ -5,6 +5,8 @@ $MESS['MAIN_MAIL_CONFIRM_MESSAGE_SUBJECT'] = 'Подтверждение email-�
 $MESS['MAIN_MAIL_SENDER_INVALID_NAME'] = 'Имя отправителя может содержать буквы любого алфавита, цифры, пробелы и символы , \' . - ( )';
 $MESS['MAIN_MAIL_SENDER_EDIT_ERROR'] = 'Недостаточно прав для редактирования отправителя';
 $MESS['MAIN_MAIL_SENDER_UNKNOWN_SENDER_ERROR'] = 'Отправитель не найден';
+$MESS['MAIN_MAIL_SENDER_ADDRESS_MISMATCH_ERROR'] = 'Отправитель недоступен. Выберите актуального отправителя и повторите отправку.';
+$MESS['MAIN_MAIL_SENDER_UNAVAILABLE_ERROR'] = 'Отправитель недоступен. Выберите другого отправителя и повторите отправку.';
 
 $MESS['MAIN_SENDER_EMPTY_SMTP_SERVER'] = 'Введите адрес SMTP-сервера';
 $MESS['MAIN_SENDER_INVALID_SMTP_SERVER'] = 'Недопустимый адрес SMTP-сервера';

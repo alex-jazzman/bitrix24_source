@@ -1,4 +1,5 @@
 import { Type } from 'main.core';
+import { Notifier } from 'ui.notification-manager';
 
 import { ProjectErrorCode } from 'socialnetwork.v2.const';
 import { useProjectStore, type ProjectModel } from 'socialnetwork.v2.model.project';
@@ -13,8 +14,6 @@ export class UpdateProjectFeature
 		const { invalid } = this.#validate(projectStore.$state);
 		if (invalid)
 		{
-			this.#setInvalidState(error);
-
 			return null;
 		}
 
@@ -35,6 +34,16 @@ export class UpdateProjectFeature
 		{
 			const interfaceStore = useInterfaceStore();
 			interfaceStore.setValidation('title', { uniq: true });
+
+			return;
+		}
+
+		if (Type.isPlainObject(error) && Type.isStringFilled(error?.message))
+		{
+			Notifier.notifyViaBrowserProvider({
+				id: 'socialnetwork-project-wizard-update-error',
+				text: error.message,
+			});
 		}
 	}
 

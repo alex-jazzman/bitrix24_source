@@ -533,6 +533,7 @@ create table if not exists b_landing_copilot_generations
     SITE_ID int null,
     SITE_DATA mediumtext default null,
     DATA mediumtext default null,
+    HTML_BLOCKS mediumtext default null,
 	CREATED_BY_ID int not null,
     DATE_CREATE datetime not null,
 	DATE_FINISHED datetime default null,
@@ -597,6 +598,20 @@ create table if not exists b_landing_copilot_site_to_chat
 	USER_ID int not null,
 	PRIMARY KEY (SITE_ID, CHAT_ID, USER_ID),
 	INDEX IX_IX_LANDING_COPILOT_SITE_TO_CHAT_SITE_ID (SITE_ID)
+);
+
+create table if not exists b_landing_ai_site_binding
+(
+	ID int not null auto_increment,
+	USER_ID int not null,
+	SITE_ID int null,
+	GENERATION_ID int null,
+	DATE_CREATE timestamp null,
+	DATE_MODIFY timestamp null,
+	PRIMARY KEY (ID),
+	UNIQUE UX_LANDING_AI_SITE_BINDING_USER_SITE (USER_ID, SITE_ID),
+	INDEX IX_LANDING_AI_SITE_BINDING_USER_DRAFT (USER_ID, SITE_ID, GENERATION_ID),
+	UNIQUE UX_LANDING_AI_SITE_BINDING_GENERATION (GENERATION_ID)
 );
 
 create table if not exists b_landing_vibe

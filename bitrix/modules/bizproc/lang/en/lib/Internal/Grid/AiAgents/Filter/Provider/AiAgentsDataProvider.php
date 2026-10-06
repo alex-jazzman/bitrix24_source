@@ -1,0 +1,3 @@
+<?php
+$MESS["BIZPROC_AI_AGENTS_FILTER_AGENT_TEMPLATE"] = "Agent (template)";
+$MESS["BIZPROC_AI_AGENTS_FILTER_IS_ACTIVE"] = "Active agent";

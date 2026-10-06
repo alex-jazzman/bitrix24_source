@@ -25,7 +25,6 @@ const corporatePortalPageEvents = {
 	skipButtonClick: 'DesktopCallCardSkipButtonClick',
 	answerButtonClick: 'DesktopCallCardAnswerButtonClick',
 	entityChanged: 'DesktopCallCardEntityChanged',
-	qualityMeterClick: 'DesktopCallCardQualityMeterClick',
 	dialpadButtonClick: 'DesktopCallCardDialpadButtonClick',
 	makeCallButtonClick: 'DesktopCallCardMakeCallButtonClick',
 	notifyAdminButtonClick: 'DesktopCallCardNotifyAdminButtonClick',

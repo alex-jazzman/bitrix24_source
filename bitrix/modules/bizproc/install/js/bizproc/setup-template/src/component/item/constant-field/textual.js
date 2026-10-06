@@ -14,6 +14,22 @@ export const ConstantTextual = {
 			type: [String, Array],
 			default: '',
 		},
+		labelledbyId: {
+			type: String,
+			default: '',
+		},
+		describedbyId: {
+			type: String,
+			default: '',
+		},
+		invalid: {
+			type: Boolean,
+			default: false,
+		},
+		required: {
+			type: Boolean,
+			default: false,
+		},
 	},
 	emits: ['update:modelValue'],
 	computed:
@@ -57,11 +73,19 @@ export const ConstantTextual = {
 				lastInput.focus();
 			}
 		},
-		removeField(index): void
+		async removeField(index): void
 		{
 			const newValues = [...this.multipleValues];
 			newValues.splice(index, 1);
 			this.updateConstant(newValues);
+
+			await this.$nextTick();
+			const inputs = this.$refs.inputFields;
+			if (inputs && inputs.length > 0)
+			{
+				const focusIndex = Math.max(0, index - 1);
+				inputs[focusIndex]?.focus();
+			}
 		},
 	},
 	template: `
@@ -74,16 +98,25 @@ export const ConstantTextual = {
 							:value="val"
 							type="text"
 							class="ui-ctl-element"
+							:aria-labelledby="labelledbyId || null"
+							:aria-describedby="describedbyId || null"
+							:aria-invalid="invalid ? 'true' : null"
+							:aria-required="required ? 'true' : null"
 							@input="updateValueAtIndex(index, $event)"
 							data-test-id="bizproc-setup-template__form-text-multiple"
 						>
 					</div>
 					<span
 						v-if="showRemoveIcon"
+						role="button"
+						tabindex="0"
 						@click="removeField(index)"
+						@keydown.enter.prevent="!$event.repeat && removeField(index)"
+						@keydown.space.prevent="!$event.repeat && removeField(index)"
+						:aria-label="$Bitrix.Loc.getMessage('BIZPROC_JS_AI_AGENTS_ACTIVATOR_FORM_REMOVE_FIELD')"
 						data-test-id="bizproc-setup-template__form-text-delete-btn"
-						class="bizproc-setup-template__field-remove ui-icon-set --cross-m"
-					></span>
+						class="bizproc-setup-template__field-remove"
+					><i class="ui-icon-set --cross-m"></i></span>
 				</div>
 				<button
 					@click="addField"
@@ -100,6 +133,10 @@ export const ConstantTextual = {
 						:value="modelValue"
 						type="text"
 						class="ui-ctl-element"
+						:aria-labelledby="labelledbyId || null"
+						:aria-describedby="describedbyId || null"
+						:aria-invalid="invalid ? 'true' : null"
+						:aria-required="required ? 'true' : null"
 						@input="updateSingleValue"
 						data-test-id="bizproc-setup-template__form-text-single"
 					>

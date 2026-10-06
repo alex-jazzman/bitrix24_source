@@ -25,6 +25,7 @@ if (IsModuleInstalled('bizproc'))
 
 use Bitrix\Crm\ContactAddress;
 use Bitrix\Crm\Format\AddressFormatter;
+use Bitrix\Main\Web\Uri;
 
 global $USER_FIELD_MANAGER, $DB, $USER;
 $CCrmContact = new CCrmContact();
@@ -1108,9 +1109,7 @@ if (CCrmCompany::CheckReadPermission(0, $userPermissions))
 
 	$arResult["ON_SELECT_COMPANY_EVENT_NAME"] = "onCrmCompanySelectForContact_".$arParams['ELEMENT_ID'];
 
-	$companyPath = CHTTP::urlAddParams($arParams['COMPANY_SELECTOR_URL_TEMPLATE'], array(
-		"event" => $arResult["ON_SELECT_COMPANY_EVENT_NAME"]
-	));
+	$companyPath = (string)(new Uri($arParams['COMPANY_SELECTOR_URL_TEMPLATE']))->addParams(["event" => $arResult["ON_SELECT_COMPANY_EVENT_NAME"]]);
 
 	if (!$arParams["RESTRICTED_MODE"] || !empty($arResult["ELEMENT_COMPANIES"]))
 	{

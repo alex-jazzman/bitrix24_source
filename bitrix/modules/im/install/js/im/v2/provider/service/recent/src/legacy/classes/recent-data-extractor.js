@@ -56,8 +56,10 @@ export class RecentDataExtractor
 		items.forEach((item: RawLegacyRecentItem) => {
 			this.#extractUser(item);
 			this.#extractChat(item);
+			this.#extractNestedChat(item);
 			this.#extractMessage(item);
 			this.#extractRecentItem(item);
+			this.#extractOwnMessage(item);
 			this.#extractStickerMessage(item);
 		});
 
@@ -204,6 +206,36 @@ export class RecentDataExtractor
 		}
 
 		this.#stickerMessages[messageId] = { ...item.message.sticker, messageId };
+	}
+
+	#extractNestedChat(item: RawLegacyRecentItem)
+	{
+		const nestedChat = item.nestedChat;
+		if (nestedChat?.id && !this.#chats[nestedChat.id])
+		{
+			this.#chats[nestedChat.id] = { ...nestedChat };
+		}
+	}
+
+	#extractOwnMessage(item: RawLegacyRecentItem)
+	{
+		const ownMessageId = item.ownMessageId;
+		if (!Type.isNumber(ownMessageId) || ownMessageId <= 0)
+		{
+			return;
+		}
+
+		const ownMessage = item.ownMessage;
+		if (Type.isPlainObject(ownMessage) && ownMessage.id && !this.#messages[ownMessage.id])
+		{
+			this.#messages[ownMessage.id] = { ...ownMessage };
+		}
+
+		const recentItem = this.#recentItems[item.id];
+		if (recentItem)
+		{
+			recentItem.ownMessageId = ownMessageId;
+		}
 	}
 
 	#prepareGroupChat(item: RawLegacyRecentItem): RawChat

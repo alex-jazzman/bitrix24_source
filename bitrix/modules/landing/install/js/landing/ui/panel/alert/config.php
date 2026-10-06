@@ -8,9 +8,9 @@ return [
 	'css' => 'dist/alert.bundle.css',
 	'js' => 'dist/alert.bundle.js',
 	'rel' => [
-		'main.core',
 		'landing.loc',
 		'landing.ui.panel.base',
+		'main.core',
 	],
 	'skip_core' => false,
 ];

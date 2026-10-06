@@ -1,12 +1,25 @@
 .sign-b2e-dropdown {
 	border: 1px solid rgb(var(--ui-field-color-border-default));
 	border-radius: 2px;
+	box-sizing: border-box;
 	cursor: pointer;
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
+	min-height: 44px;
 	padding: 5px 7px;
 	margin-top: 7px;
+	transition: background-color .2s ease, border-color .2s ease;
+}
+
+.sign-b2e-dropdown:hover {
+	background-color: var(--ui-color-bg-state-hover-default);
+}
+
+.sign-b2e-dropdown:focus-visible {
+	border-color: var(--ui-color-design-outline-focused-stroke);
+	box-shadow: 0 0 0 2px var(--ui-color-design-outline-focused-stroke);
+	outline: none;
 }
 
 .sign-b2e-dropdown__text {

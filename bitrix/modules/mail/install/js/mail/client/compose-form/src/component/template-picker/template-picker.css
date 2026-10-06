@@ -1,0 +1,202 @@
+/*
+ * One stylesheet for the picker, the screen of all the templates and the apply dialog: nothing but this
+ * component opens them.
+ */
+
+/* the "new" label stands right by the control */
+.mail-compose-template-picker
+{
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-2xs);
+	min-width: 0;
+}
+
+/*
+ * Card of all the templates: a fixed search over a list that scrolls. The card holds no horizontal
+ * padding of its own, so a row spans it whole and keeps the inset of a menu cell by itself; everything
+ * that is not a row repeats that inset.
+ */
+.mail-compose-templates-all
+{
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-sm);
+	box-sizing: border-box;
+	width: 440px;
+	height: 480px;
+	max-width: calc(100vw - var(--ui-space-inset-sm) - var(--ui-space-inset-sm));
+	max-height: calc(100vh - var(--ui-space-inset-sm) - var(--ui-space-inset-sm));
+	padding: var(--ui-space-inset-sm) 0;
+}
+
+/* a state and a note of the list stand where a row stands */
+.mail-compose-templates-all__state,
+.mail-compose-templates-all__note
+{
+	padding: var(--ui-space-inset-xs) var(--ui-space-inset-md2);
+}
+
+.mail-compose-templates-all__state
+{
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: var(--ui-space-stack-xs);
+}
+
+/*
+ * The field takes the width of the card by the stretch of the column flex, so it is given no `stretched`:
+ * that property of the field means `flex: 1`, which in a column grows the field in height instead.
+ */
+.mail-compose-templates-all__search
+{
+	flex: 0 0 auto;
+	margin: 0 var(--ui-space-inset-md2);
+}
+
+/* the live region speaks the state of the list and takes no space in the card */
+.mail-compose-templates-all__status
+{
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	margin: -1px;
+	overflow: hidden;
+	clip-path: inset(50%);
+	white-space: nowrap;
+}
+
+.mail-compose-templates-all__list
+{
+	display: flex;
+	flex: 1 1 auto;
+	flex-direction: column;
+	min-height: 0;
+	overflow-y: auto;
+}
+
+/*
+ * Nothing inside the list gives up its height: the `min-height` of a row replaces the automatic minimum
+ * size of a flex item, so without this a full list squeezes the rows instead of scrolling.
+ */
+.mail-compose-templates-all__list > *
+{
+	flex: 0 0 auto;
+}
+
+.mail-compose-templates-all__more
+{
+	margin: var(--ui-space-stack-xs) var(--ui-space-inset-md2) 0;
+}
+
+/*
+ * The design system has no list that can live inside a card, so the row is a control of the form itself.
+ * Its rhythm is the one of a menu cell: 8px over 18px, 35px of height and no gap between the rows.
+ */
+.mail-compose-template-row
+{
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-3xs);
+	box-sizing: border-box;
+	width: 100%;
+	min-height: 35px;
+	padding: var(--ui-space-inset-xs) var(--ui-space-inset-md2);
+	border: none;
+	background: none;
+	text-align: start;
+	cursor: pointer;
+}
+
+.mail-compose-template-row:hover
+{
+	background: var(--ui-color-bg-state-hover-default);
+}
+
+/* Only the keyboard gets a ring: the pointer already has the hover of the row. */
+.mail-compose-template-row:focus-visible
+{
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
+	outline-offset: var(--ui-focus-outline-offset-inset);
+	border-radius: var(--ui-border-radius-sm);
+}
+
+/* a locked row stays in the list and reads as unavailable */
+.mail-compose-template-row.--locked
+{
+	color: var(--ui-color-base-3);
+	cursor: default;
+}
+
+.mail-compose-template-row.--locked:hover
+{
+	background: none;
+}
+
+.mail-compose-template-row.--empty
+{
+	color: var(--ui-color-base-4);
+}
+
+/*
+ * The lock stands by the name, so the title is a row of its own; the name keeps the ellipsis of the text
+ * itself, which a flex container has nowhere to put.
+ */
+.mail-compose-template-row__title
+{
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-2xs);
+	min-width: 0;
+}
+
+.mail-compose-template-row__lock
+{
+	flex: 0 0 auto;
+}
+
+.mail-compose-template-row__name
+{
+	min-width: 0;
+}
+
+/*
+ * The name is a Typography component and paints a colour of its own, so the colour of a locked row never
+ * reaches it by inheritance: the state names the element itself. The shade is the one the lock standing
+ * next to the name takes from the design system.
+ */
+.mail-compose-template-row.--locked .mail-compose-template-row__name
+{
+	color: var(--ui-color-base-2);
+}
+
+.mail-compose-template-row__text
+{
+	min-width: 0;
+	color: var(--ui-color-base-3);
+}
+
+/* apply dialog: the question over the row of buttons */
+.mail-compose-template-apply
+{
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-md);
+	min-width: 0;
+	max-width: 400px;
+}
+
+.mail-compose-template-apply__actions
+{
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+	gap: var(--ui-space-inline-xs);
+	min-width: 0;
+}
+
+.mail-compose-template-apply__error
+{
+	color: var(--ui-color-text-alert);
+}

@@ -229,4 +229,4 @@ $MESS['BOOKING_BOOKING_WEEK_STATS_CELL_FREE'] = 'Свободно';
 
 $MESS['BOOKING_BOOKING_DAY_CELL_RESTRICTION'] = 'В расписание на день можно добавлять записи длительностью до 12 часов';
 
-$MESS['BOOKING_COMPONENT_BANNER_AI_CALL_ENABLE_ERROR'] = 'Ошибка включения. Обратитесь к администратору вашего Битрикс24';
+$MESS['BOOKING_COMPONENT_BANNER_AI_CALL_ENABLE_ERROR'] = 'Не удалось включить AI-звонки, обратитесь к администратору вашего Битрикс24';

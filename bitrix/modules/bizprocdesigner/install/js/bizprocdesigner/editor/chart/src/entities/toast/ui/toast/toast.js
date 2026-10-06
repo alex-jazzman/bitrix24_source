@@ -2,6 +2,8 @@ import './style.css';
 
 export const ToastColorScheme: Record<string, string> = {
 	Warning: 'warning',
+	Processing: 'processing',
+	Completed: 'completed',
 };
 
 // @vue/component

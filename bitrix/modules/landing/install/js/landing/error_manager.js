@@ -19,6 +19,7 @@
 		"Site::getList": BX.Landing.Loc.getMessage("LANDING_ACTION_ERROR__SITE_GET_LIST"),
 		"Block::getList": BX.Landing.Loc.getMessage("LANDING_ACTION_ERROR__BLOCK_GET_LIST"),
 		"Utils::uploadFile": BX.Landing.Loc.getMessage("LANDING_ACTION_ERROR__UPLOAD_FILE"),
+		"UPLOAD_BAD_FORMAT": BX.Landing.Loc.getMessage("LANDING_ACTION_ERROR__UPLOAD_BAD_FORMAT"),
 		"UNKNOWN_ACTION": BX.Landing.Loc.getMessage("LANDING_ACTION_ERROR__UNKNOWN_ACTION"),
 		"BAD_IMAGE": BX.Landing.Loc.getMessage("LANDING_ACTION_ERROR__BAD_IMAGE")
 	};

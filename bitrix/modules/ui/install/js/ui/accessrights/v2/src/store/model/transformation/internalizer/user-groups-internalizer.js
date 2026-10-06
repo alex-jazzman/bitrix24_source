@@ -8,6 +8,7 @@ export type ExternalUserGroup = {
 	title: any,
 	accessRights: ExternalAccessRightValue[],
 	members: {[accessCode: string]: ExternalMember},
+	isReadOnly: ?any,
 }
 
 export type ExternalAccessRightValue = {
@@ -57,6 +58,7 @@ export class UserGroupsInternalizer implements Transformer<ExternalUserGroup[], 
 			title: String(externalGroup.title),
 			accessRights: new Map(),
 			members: new Map(),
+			isReadOnly: Type.isBoolean(externalGroup.isReadOnly) ? externalGroup.isReadOnly : false,
 		};
 
 		for (const externalValue: ExternalAccessRightValue of externalGroup.accessRights)

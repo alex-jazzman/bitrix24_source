@@ -1,5 +1,8 @@
 <?php
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
+
+use Bitrix\Main\Web\Uri;
 
 if (!CModule::IncludeModule('crm'))
 {
@@ -88,13 +91,12 @@ if ($currencyDelete && ($arParams['TYPE'] == 'edit' || $arParams['TYPE'] == 'sho
 	$arResult['BUTTONS'][] = array(
 		'TEXT' => GetMessage('CRM_CURRENCY_DELETE'),
 		'TITLE' => GetMessage('CRM_CURRENCY_DELETE_TITLE'),
-		'LINK' => "javascript:currency_delete('".GetMessage('CRM_CURRENCY_DELETE_DLG_TITLE')."', '".GetMessage('CRM_CURRENCY_DELETE_DLG_MESSAGE')."', '".GetMessage('CRM_CURRENCY_DELETE_DLG_BTNTITLE')."', '".CHTTP::urlAddParams(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_CURRENCY_EDIT'],
-				array('currency_id' => $currencyID)),
-			array('delete' => '', 'sessid' => bitrix_sessid())
-		)."')",
+		'LINK' => "javascript:currency_delete('".GetMessage('CRM_CURRENCY_DELETE_DLG_TITLE')."', '".GetMessage('CRM_CURRENCY_DELETE_DLG_MESSAGE')."', '".GetMessage('CRM_CURRENCY_DELETE_DLG_BTNTITLE')."', '"
+			. (new Uri(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_CURRENCY_EDIT'], array('currency_id' => $currencyID))))
+				->addParams(array('delete' => '', 'sessid' => bitrix_sessid()))
+			. "')",
 		'ICON' => 'btn-delete'
 	);
 }
 
 $this->IncludeComponentTemplate();
-?>

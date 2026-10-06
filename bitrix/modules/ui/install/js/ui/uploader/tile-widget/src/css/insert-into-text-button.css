@@ -1,6 +1,17 @@
 .ui-tile-uploader-insert-into-text-button {
 	--ui-icon-set__icon-color: var(--ui-color-base-2);
+	display: flex;
+	padding: 0;
+	border: none;
+	background: none;
+	cursor: pointer;
 	opacity: 0.5;
+}
+
+.ui-tile-uploader-insert-into-text-button:focus-visible {
+	outline: 2px solid var(--ui-color-accent-brand-blue);
+	outline-offset: -2px;
+	border-radius: 4px;
 }
 
 .ui-tile-uploader-insert-into-text-button:hover {

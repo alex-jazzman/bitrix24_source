@@ -1,0 +1,3 @@
+<?php
+
+$MESS['BIZPROC_ACCESS_RIGHTS_TEMPLATE_PLACEHOLDER'] = 'Шаблон ##ID#';

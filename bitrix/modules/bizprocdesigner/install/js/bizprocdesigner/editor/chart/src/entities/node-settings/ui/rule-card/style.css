@@ -1,18 +1,29 @@
+/* Group card per mockup page-node-settings: white rounded card with secondary shadow.
+   Body inset 0/18/18: the top inset belongs to the fixed-height header row below;
+   the outer rhythm comes from the rules-layout content gap, not from own margins */
 .editor-chart-node-settings-rule-card {
-	margin: 18px 0;
-	background: var(--ui-color-base-8);
-	border-radius: 12px;
-	padding: 12px 18px 18px 18px;
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-md2);
+	background: var(--ui-color-bg-content-primary);
+	border-radius: var(--ui-border-radius-lg);
+	padding: 0 var(--ui-space-inset-md2) var(--ui-space-inset-md2);
+	box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.13); /* box-shadow-area-secondary (Figma); no ready-made --ui-shadow variable */
 }
 
+/* 44px header row per mockup page-node-settings, off the token scale;
+   min-height instead of height: the title and the rename input keep their room when scaled up */
 .editor-chart-node-settings-rule-card__top {
+	flex: none;
 	display: flex;
-	gap: 10px;
+	align-items: center;
+	gap: var(--ui-space-inline-xs);
+	min-height: 44px;
 }
 
 .editor-chart-node-settings-rule-card__top_title {
 	font-size: 15px;
-	line-height: 19px;
+	line-height: 20px;
 	color: var(--ui-color-base-4);
 }
 
@@ -24,11 +35,15 @@
 	cursor: grabbing;
 }
 
+/* Type section per mockup page-node-settings: radius 12, 18px inset and the same 18px
+   gap between its rows - the constructions rely on this gap, they carry no own margin */
 .editor-chart-node-settings-rule-card__group {
-	padding: 18px;
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-md2);
+	padding: var(--ui-space-inset-md2);
 	border: 1px solid;
-	border-radius: 10px;
-	margin-top: 12px;
+	border-radius: var(--ui-border-radius-lg);
 }
 
 .editor-chart-node-settings-rule-card__group.--conditions {
@@ -37,18 +52,33 @@
 }
 
 .editor-chart-node-settings-rule-card__group.--actions {
-	border: 1px solid var(--ui-color-designer-bp-rules-green-stroke);
-	background: var(--ui-color-designer-bp-rules-green-bg);
+	border: 1px solid var(--designer-bp-rules-action-stroke);
+	background: var(--designer-bp-rules-action-bg);
 }
 
 .editor-chart-node-settings-rule-card__group.--outputs {
-	border: 1px solid var(--ui-color-palette-gray-30);
-	background: var(--ui-color-palette-gray-02);
+	border: 1px solid var(--ui-color-designer-bp-rules-grey-stroke);
+	background: var(--ui-color-designer-bp-rules-grey-bg);
 }
 
-.editor-chart-node-settings-rule-card__group.--filters {
-	border: 1px solid var(--ui-color-accent-main-warning);
-	background: var(--ui-color-accent-soft-orange-3);
+/* Native-button reset: rename trigger and group add-button are <button> for a11y,
+   the visual stays fully defined by the rules below */
+.editor-chart-node-settings-rule-card__rename-btn,
+.editor-chart-node-settings-rule-card__group_add-construction-btn {
+	appearance: none;
+	margin: 0;
+	padding: 0;
+	border: none;
+	background: none;
+	font: inherit;
+	color: inherit;
+	text-align: inherit;
+}
+
+.editor-chart-node-settings-rule-card__rename-btn:focus-visible,
+.editor-chart-node-settings-rule-card__group_add-construction-btn:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: 2px;
 }
 
 .editor-chart-node-settings-rule-card__group_add-construction-btn {
@@ -56,14 +86,60 @@
 	font-size: var(--ui-font-size-md);
 	display: flex;
 	align-items: center;
+	transition: opacity 0.15s ease;
+}
+
+.editor-chart-node-settings-rule-card__group_add-construction-btn:hover {
+	opacity: 0.7;
+}
+
+/* Pending addition (the base settings an action inherits are being resolved): the button stays
+   focusable (aria-disabled, not disabled) so focus is not thrown to the body mid-interaction. */
+.editor-chart-node-settings-rule-card__group_add-construction-btn.--pending {
+	cursor: default;
+	opacity: 0.4;
+	pointer-events: none;
 }
 
 .editor-chart-node-settings-rule-card__group.--conditions .editor-chart-node-settings-rule-card__group_add-construction-btn {
-	color: #3391ff;
-	--ui-icon-set__icon-color: #3391ff;
+	color: var(--ui-color-designer-bp-rules-blue-text);
+	--ui-icon-set__icon-color: var(--ui-color-designer-bp-rules-blue-text);
 }
 
 .editor-chart-node-settings-rule-card__group.--actions .editor-chart-node-settings-rule-card__group_add-construction-btn {
-	color: var(--ui-color-green-50);
-	--ui-icon-set__icon-color: var(--ui-color-green-50);
+	color: var(--designer-bp-rules-action-text);
+	--ui-icon-set__icon-color: var(--designer-bp-rules-action-text);
+}
+
+/* Pencil rename button — hidden until the header row is hovered or holds keyboard focus */
+.editor-chart-node-settings-rule-card__rename-btn {
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	opacity: 0;
+	transition: opacity 0.15s ease;
+}
+
+.editor-chart-node-settings-rule-card__top:hover .editor-chart-node-settings-rule-card__rename-btn,
+.editor-chart-node-settings-rule-card__top:focus-within .editor-chart-node-settings-rule-card__rename-btn {
+	opacity: 1;
+}
+
+/* Inline rename input — matches title font size */
+.editor-chart-node-settings-rule-card__top_title-input {
+	font-size: 15px;
+	line-height: 19px;
+	color: var(--ui-color-base-1);
+	border: none;
+	border-bottom: 1px solid var(--ui-color-palette-gray-30);
+	background: transparent;
+	outline: none;
+	padding: 0 2px;
+	flex: 1;
+	min-width: 80px;
+}
+
+/* Visible focus indicator replacing the removed outline */
+.editor-chart-node-settings-rule-card__top_title-input:focus {
+	border-bottom-color: var(--ui-color-accent-main-primary);
 }

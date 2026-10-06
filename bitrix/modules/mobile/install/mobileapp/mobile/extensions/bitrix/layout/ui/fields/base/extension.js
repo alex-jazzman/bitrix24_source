@@ -23,6 +23,8 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 	const { Logger, LogType } = require('utils/logger');
 	const { RestrictionType, hasRestriction } = require('layout/ui/fields/base/restriction-type');
 	const { Icon } = require('assets/icons');
+	const { IconView } = require('ui-system/blocks/icon');
+	const { Notify } = require('notify');
 	const { PlanRestriction } = require('layout/ui/plan-restriction');
 
 	const TitlePosition = {
@@ -1320,7 +1322,42 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 					svg: this.getIconAfterTitle(),
 					resizeMode: 'contain',
 				}),
+				this.shouldRenderTitleHintIcon() && this.renderHintIcon(),
 			);
+		}
+
+		/**
+		 * @returns {boolean}
+		 */
+		shouldRenderTitleHintIcon()
+		{
+			return this.hasHint();
+		}
+
+		/**
+		 * @returns {boolean}
+		 */
+		hasHint()
+		{
+			return this.getHint() !== '';
+		}
+
+		/**
+		 * @returns {string}
+		 */
+		getHint()
+		{
+			return BX.prop.getString(this.getConfig(), 'hint', '');
+		}
+
+		renderHintIcon()
+		{
+			return IconView({
+				testId: `${this.testId}_HINT`,
+				icon: Icon.QUESTION,
+				style: this.styles.iconAfterTitle,
+				onClick: () => Notify.showUniqueMessage(this.getHint(), this.getTitleText(), { time: 4 }),
+			});
 		}
 
 		/**

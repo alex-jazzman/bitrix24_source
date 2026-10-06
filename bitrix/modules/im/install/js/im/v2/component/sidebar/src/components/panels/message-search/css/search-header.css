@@ -38,3 +38,18 @@
 	margin-left: 11px;
 	width: 246px;
 }
+
+.bx-im-sidebar-search-header__ds-icon {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+	border: none;
+	background: none;
+	padding: 0;
+	--ui-icon-set__icon-color: var(--ui-color-base-4);
+}
+
+.bx-im-sidebar-search-header__ds-icon:hover {
+	--ui-icon-set__icon-color: var(--ui-color-base-3);
+}

@@ -370,12 +370,13 @@
 	left: 55px;
 	width: 274px;
 	height: 179px;
-	background-image: url(../../images/giga-chat.svg);
 	animation-delay: 3s, 1.8s;
 }
 
 .ai__copilot-banner_plate.--giga-chat {
-	background-image: url(../../images/giga-chat.svg);
+	background-image: url(../../images/giga-chat.webp);
+	background-repeat: no-repeat;
+	background-size: 100% 100%;
 }
 
 .ai__copilot-banner_plate.--meta {

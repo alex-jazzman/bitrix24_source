@@ -86,6 +86,19 @@ if (
 	];
 }
 
+if (Loader::includeModule('call') && \Bitrix\Call\Settings::isSyncPresetEnabled())
+{
+	$arMenu[] = [
+		Loc::getMessage('MENU_SYNC'),
+		'/extranet/sync/',
+		[],
+		[
+			'menu_item_id' => 'menu_sync',
+		],
+		'',
+	];
+}
+
 $arMenu[] = [
 	Loc::getMessage('MENU_TASKS'),
 	'/extranet/contacts/personal/user/' . $USER_ID . '/tasks/',

@@ -3,3 +3,4 @@ $MESS['CRM_SIGNDOCUMENT_VIEW_TITLE'] = 'Просмотр документа';
 $MESS['CRM_SIGNDOCUMENT_VIEW_DOCUMENT_NOT_FOUND'] = 'Документ не найден';
 $MESS['CRM_SIGNDOCUMENT_VIEW_DOCUMENT_INITIATOR_NOT_FOUND'] = 'Инициатор документа не найден';
 $MESS['CRM_SIGNDOCUMENT_VIEW_DOCUMENT_DOWNLOAD'] = 'Скачать документ';
+$MESS['CRM_SIGNDOCUMENT_VIEW_ACCESS_DENIED'] = 'Недостаточно прав для просмотра документа';

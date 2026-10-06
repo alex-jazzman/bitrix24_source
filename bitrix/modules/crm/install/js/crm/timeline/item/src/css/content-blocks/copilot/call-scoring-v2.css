@@ -7,7 +7,7 @@
 	box-sizing: border-box;
 	position: relative;
 	gap: var(--ui-space-inline-xs2);
-	padding-top: var(--ui-space-inset-sm);
+	padding-top: var(--ui-space-inset-xs);
 	border-top: var(--ui-border-width-thin) solid var(--border-color);
 	animation: crm-timeline__call-scoring-v2-fade-in 400ms ease forwards;
 }
@@ -25,6 +25,7 @@
 }
 
 .crm-timeline__call-scoring-v2-chart {
+	cursor: pointer;
 	flex-shrink: 0;
 	display: flex;
 	align-items: center;
@@ -51,7 +52,7 @@
 
 .script-layout .script-layout-header {
 	flex-shrink: 0;
-	font-size: var(--ui-font-size-sm);
+	font-size: var(--ui-font-size-md);
 	font-weight: var(--ui-font-weight-normal);
 	color: var(--ui-color-base-60);
 	line-height: var(--ui-font-line-height-md);
@@ -71,6 +72,10 @@
 	text-overflow: ellipsis;
 	white-space: nowrap;
 	min-width: 0;
+}
+
+.crm-timeline__call-scoring-v2-content .body .summary-text {
+	cursor: pointer;
 }
 
 .crm-timeline__call-scoring-v2-content .body .details-link {

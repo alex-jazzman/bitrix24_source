@@ -5,6 +5,21 @@
     align-items: center;
 }
 
+.disk-active-user-box {
+	padding: 0;
+	border: none;
+	background: none;
+	color: inherit;
+	font: inherit;
+	text-align: inherit;
+	cursor: pointer;
+}
+
+.disk-active-user-box:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+}
+
 .disk-active-user {
     display: inline-block;
     padding: 3px 6px;

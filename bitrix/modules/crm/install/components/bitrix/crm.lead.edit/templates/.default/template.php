@@ -4,9 +4,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 global $APPLICATION;
 $APPLICATION->SetAdditionalCSS("/bitrix/themes/.default/crm-entity-show.css");
 
-use \Bitrix\Crm\Conversion\LeadConversionScheme;
-use \Bitrix\Crm\Conversion\EntityConverter;
-use \Bitrix\Crm\Category\DealCategory;
+use Bitrix\Crm\Conversion\LeadConversionScheme;
+use Bitrix\Crm\Conversion\EntityConverter;
+use Bitrix\Crm\Category\DealCategory;
 
 $arTabs = array();
 $arTabs[] = array(

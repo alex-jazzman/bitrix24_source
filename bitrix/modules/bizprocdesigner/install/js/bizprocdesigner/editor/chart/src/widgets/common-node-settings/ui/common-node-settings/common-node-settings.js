@@ -51,7 +51,7 @@ export const CommonNodeSettings = {
 		},
 		defaultTitle(): string
 		{
-			return this.block ? this.getDefaultTitle(this.block.activity) : '';
+			return this.block ? this.getDefaultTitle(this.block.activity, this.block.node?.defaultTitle) : '';
 		},
 		moreMenuItems(): Array<MenuItemOptions>
 		{

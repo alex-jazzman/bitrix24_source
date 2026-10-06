@@ -155,6 +155,7 @@ this.BX = this.BX || {};
 					hasDeathTime: null,
 					availableEdit: null,
 					canEditDocument: null,
+					canEditSettings: null,
 					deathTime: null,
 					deathTimeTimestamp: null
 				};
@@ -206,7 +207,13 @@ this.BX = this.BX || {};
 			return Backend;
 		}
 		openSettingsPopup() {
+			if (!this.canEditSettings()) {
+				return null;
+			}
 			return this.constructor.showPopup(this.objectId, this.data);
+		}
+		canEditSettings() {
+			return this.data.canEditSettings !== false;
 		}
 		getContainer() {
 			return this.cache.remember('main', () => {
@@ -395,6 +402,9 @@ this.BX = this.BX || {};
 			});
 		}
 		showSettings() {
+			if (!this.canEditSettings()) {
+				return;
+			}
 			this.cache.set('settingsAreShown', 'Y');
 			if (this.cache.get('popup')) {
 				this.cache.get('popup').getPopupContainer().setAttribute('settingsAreShown', 'Y');
@@ -615,7 +625,7 @@ this.BX = this.BX || {};
 			});
 		}
 		saveSettings() {
-			if (!(this.data.id > 0)) {
+			if (!(this.data.id > 0) || !this.canEditSettings()) {
 				return;
 			}
 			const settings = this.getContainer();

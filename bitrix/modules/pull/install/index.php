@@ -69,7 +69,6 @@ class pull extends \CModule
 		$eventManager->registerEventHandlerCompatible("perfmon", "OnGetTableSchema", "pull", "CPullTableSchema", "OnGetTableSchema");
 		$eventManager->registerEventHandlerCompatible("main", "OnAfterRegisterModule", "pull", "CPullOptions", "ClearCheckCache");
 		$eventManager->registerEventHandlerCompatible("main", "OnAfterUnRegisterModule", "pull", "CPullOptions", "ClearCheckCache");
-		$eventManager->registerEventHandlerCompatible("socialnetwork", "OnSonetLogCounterClear", "pull", "\Bitrix\Pull\MobileCounter", "onSonetLogCounterClear");
 
 		$eventManager->registerEventHandler('rest', 'OnRestServiceBuildDescription', 'pull', '\Bitrix\Pull\Rest', 'onRestServiceBuildDescription');
 		$eventManager->registerEventHandler('rest', 'onRestCheckAuth', 'pull', '\Bitrix\Pull\Rest\GuestAuth', 'onRestCheckAuth');
@@ -140,7 +139,6 @@ class pull extends \CModule
 		$eventManager->unRegisterEventHandler("main", "OnAfterEpilog", "pull", "\Bitrix\Pull\Event", "onAfterEpilog");
 		$eventManager->unRegisterEventHandler("main", "OnAfterEpilog", "pull", "CPullWatch", "DeferredSql");
 		$eventManager->unRegisterEventHandler("main", "OnBeforeProlog", "main", "", "", "/modules/pull/ajax_hit_before.php");
-		$eventManager->unRegisterEventHandler("socialnetwork", "OnSonetLogCounterClear", "pull", "\Bitrix\Pull\MobileCounter", "onSonetLogCounterClear");
 
 		$eventManager->unRegisterEventHandler('rest', 'OnRestServiceBuildDescription', 'pull', '\Bitrix\Pull\Rest', 'onRestServiceBuildDescription');
 		$eventManager->unRegisterEventHandler('rest', 'onRestCheckAuth', 'pull', '\Bitrix\Pull\Rest\GuestAuth', 'onRestCheckAuth');

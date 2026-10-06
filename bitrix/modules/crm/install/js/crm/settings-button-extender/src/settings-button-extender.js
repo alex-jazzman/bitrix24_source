@@ -3,34 +3,21 @@ import { TodoPingSettingsMenu } from 'crm.activity.todo-ping-settings-menu';
 import { NameService } from 'crm.ai.name-service';
 import { Restriction } from 'crm.kanban.restriction';
 import { SettingsController, Type as SortType } from 'crm.kanban.sort';
-import { Extension, Loc, Reflection, Text, Type, userOptions as UserOptions } from 'main.core';
+import { Loc, Reflection, Runtime, Text, Type } from 'main.core';
 import { type BaseEvent, EventEmitter } from 'main.core.events';
 import { Menu, type MenuItem, type MenuItemOptions } from 'main.popup';
-import { Dialog } from 'ui.entity-selector';
-import { AISettingsService } from './ai-settings-service';
-import {
-	CHANNEL_TYPE_CALL,
-	CHANNEL_TYPE_CHAT,
-	CHECKED_CLASS,
-	COPILOT_LANGUAGE_ID_SAVE_REQUEST_DELAY,
-	COPILOT_LANGUAGE_SELECTOR_POPUP_WIDTH,
-	NOT_CHECKED_CLASS,
-} from './constants';
+import { CHECKED_CLASS, NOT_CHECKED_CLASS } from './constants';
 
 import { SortController as GridSortController } from './grid/sort-controller.js';
-import { BaseChannelHandler } from './handlers/base-channel-handler';
-import { ChannelHandlerFactory } from './handlers/channel-handler-factory';
 
 import { requireArrayOfString, requireClass, requireClassOrNull, requireStringOrNull } from './params-handling';
-import { SettingsMigrator } from './settings-migrator';
 
 const EntityType = Reflection.getClass('BX.CrmEntityType');
 
 export type SettingsButtonExtenderParams = {
 	entityTypeId: number,
 	categoryId: ?number,
-	aiAutostartSettings: ?string, // json
-	aiCopilotLanguageId: ?string,
+	isAutomationSliderAvailable: ?boolean,
 	pingSettings: Object,
 	rootMenu: Menu,
 	todoCreateNotificationSkipPeriod: ?string,
@@ -63,27 +50,17 @@ export class SettingsButtonExtender
 	#isSetSortRequestRunning: boolean = false;
 	#smartActivityNotificationSupported: boolean = false;
 
-	#aiAutostartSettings: null | Object = null;
-	#aiCopilotLanguageId: null | string = null;
-	#isSetAiSettingsRequestRunning: boolean = false;
-
-	#extensionSettings: Collections.SettingsCollection = Extension.getSettings('crm.settings-button-extender');
-	#channelHandlers = new Map();
-	#aiSettingsService: AISettingsService;
+	#isAutomationSliderAvailable: boolean = false;
 
 	constructor(params: SettingsButtonExtenderParams)
 	{
 		this.#initializeProperties(params);
 		this.#initializeMenus(params);
-		this.#parseAISettings(params.aiAutostartSettings);
-		this.#initializeChannelHandlers();
 		this.#bindEvents();
 	}
 
 	destroy(): void
 	{
-		this.#channelHandlers.clear();
-
 		EventEmitter.unsubscribeAll(EventEmitter.GLOBAL_TARGET, 'onPopupShow');
 	}
 
@@ -111,8 +88,7 @@ export class SettingsButtonExtender
 			this.#gridController = new GridSortController(this.#entityTypeId, params.grid);
 		}
 
-		this.#aiCopilotLanguageId = params.aiCopilotLanguageId;
-		this.#aiSettingsService = new AISettingsService(this.#entityTypeId, this.#categoryId);
+		this.#isAutomationSliderAvailable = params.isAutomationSliderAvailable === true;
 	}
 
 	#initializeMenus(params: SettingsButtonExtenderParams): void
@@ -129,50 +105,6 @@ export class SettingsButtonExtender
 				settings: this.#pingSettings,
 			});
 		}
-	}
-
-	#parseAISettings(aiSettingsJson: string | null): void
-	{
-		const settingsJson = requireStringOrNull(aiSettingsJson, 'params.aiAutostartSettings');
-		if (!Type.isStringFilled(settingsJson))
-		{
-			return;
-		}
-
-		try
-		{
-			const rawSettings = JSON.parse(settingsJson);
-			if (Type.isPlainObject(rawSettings))
-			{
-				this.#aiAutostartSettings = SettingsMigrator.migrateToChannelFormat(rawSettings);
-			}
-		}
-		catch (error)
-		{
-			throw new Error('Failed to parse AI settings:', error);
-		}
-	}
-
-	#initializeChannelHandlers(): void
-	{
-		this.#channelHandlers.clear();
-
-		if (!this.#aiAutostartSettings?.channels)
-		{
-			return;
-		}
-
-		Object.entries(this.#aiAutostartSettings.channels).forEach(([channelType, settings]) => {
-			const handler = ChannelHandlerFactory.create(channelType, settings, this.#extensionSettings);
-			if (handler)
-			{
-				handler.setActionClickHandler((event, menuItem, action) => {
-					this.#handleChannelAction(channelType, action, event, menuItem);
-				});
-
-				this.#channelHandlers.set(channelType, handler);
-			}
-		});
 	}
 
 	#bindEvents(): void
@@ -359,203 +291,31 @@ export class SettingsButtonExtender
 
 	#getCoPilotSettings(): ?MenuItemOptions
 	{
-		const showInfoHelper = this.#getInfoHelper();
-		const menuItems = [];
-
-		// call settings
-		const callHandler = this.#channelHandlers.get(CHANNEL_TYPE_CALL);
-		if (callHandler)
-		{
-			menuItems.push({
-				text: Loc.getMessage('CRM_SETTINGS_BUTTON_EXTENDER_COPILOT_AUTO_CALLS'),
-				disabled: this.#isSetAiSettingsRequestRunning,
-				items: callHandler.getMenuItems(showInfoHelper),
-			});
-		}
-
-		// chat settings
-		const chatHandler = this.#channelHandlers.get(CHANNEL_TYPE_CHAT);
-		if (chatHandler)
-		{
-			menuItems.push({
-				text: Loc.getMessage('CRM_SETTINGS_BUTTON_EXTENDER_COPILOT_AUTO_OPEN_LINES'),
-				disabled: this.#isSetAiSettingsRequestRunning,
-				items: chatHandler.getMenuItems(showInfoHelper),
-			});
-		}
-
-		if (Type.isStringFilled(this.#aiCopilotLanguageId))
-		{
-			menuItems.push({
-				text: Loc.getMessage('CRM_SETTINGS_BUTTON_EXTENDER_COPILOT_LANGUAGE_MSGVER_1'),
-				onclick: this.#getInfoHelper(true) ?? this.#handleCoPilotLanguageSelect.bind(this),
-			});
-		}
-
-		if (menuItems.length === 0)
+		if (!this.#isAutomationSliderAvailable)
 		{
 			return null;
 		}
 
 		return {
 			text: Loc.getMessage('CRM_SETTINGS_BUTTON_EXTENDER_COPILOT_IN_CRM', NameService.copilotNameReplacement()),
-			disabled: this.#isSetAiSettingsRequestRunning,
-			items: menuItems,
+			onclick: this.#openAutomationSlider.bind(this),
 		};
 	}
 
-	#handleChannelAction(channelType: string, action: string, event: PointerEvent, menuItem: MenuItem): void
+	async #openAutomationSlider(): Promise<void>
 	{
-		menuItem.getMenuWindow()?.getRootMenuWindow()?.close();
-		menuItem.getMenuWindow()?.getParentMenuItem()?.disable();
+		this.#rootMenu.close();
 
-		if (this.#isSetAiSettingsRequestRunning)
-		{
-			return;
-		}
-
-		this.#isSetAiSettingsRequestRunning = true;
-
-		setTimeout(() => {
-			this.#saveAISettings(menuItem);
-		}, 50);
-	}
-
-	async #saveAISettings(menuItem: MenuItem): void
-	{
 		try
 		{
-			this.#aiAutostartSettings = await this.#aiSettingsService.saveWithErrorHandling(this.#aiAutostartSettings);
-			this.#initializeChannelHandlers();
+			const { SettingsSliderApp } = await Runtime.loadExtension('crm.ai.settings-slider');
+
+			const slider = new SettingsSliderApp(this.#entityTypeId, this.#categoryId);
+			slider.open();
 		}
-		catch
+		catch (error)
 		{
-			// error already handled in service
-		}
-		finally
-		{
-			menuItem.getMenuWindow()?.getParentMenuItem()?.enable();
-
-			this.#isSetAiSettingsRequestRunning = false;
+			console.error(error);
 		}
 	}
-
-	#handleCoPilotLanguageSelect(event: PointerEvent): void
-	{
-		const languageSelector = new Dialog({
-			targetNode: event.target,
-			multiple: false,
-			showAvatars: false,
-			dropdownMode: true,
-			compactView: true,
-			enableSearch: true,
-			context: `COPILOT-LANGUAGE-SELECTOR-${this.#entityTypeId}-${this.#categoryId}`,
-			width: COPILOT_LANGUAGE_SELECTOR_POPUP_WIDTH,
-			tagSelectorOptions: {
-				textBoxWidth: '100%',
-			},
-			preselectedItems: [
-				['copilot_language', this.#aiCopilotLanguageId],
-			],
-			entities: [{
-				id: 'copilot_language',
-				options: {
-					entityTypeId: this.#entityTypeId,
-					categoryId: this.#categoryId,
-				},
-			}],
-			events: {
-				'Item:onSelect': (selectEvent: BaseEvent): void => {
-					const item = selectEvent.getData().item;
-					const languageId = item.id.toLowerCase();
-					if (!Type.isStringFilled(languageId))
-					{
-						throw new Error('Language ID is not defined');
-					}
-
-					setTimeout(() => {
-						let optionName = `ai_config_${this.#entityTypeId}`;
-						if (Type.isInteger(this.#categoryId))
-						{
-							optionName += `_${this.#categoryId}`;
-						}
-
-						UserOptions.save('crm', optionName, 'languageId', languageId);
-
-						this.#aiCopilotLanguageId = languageId;
-					}, COPILOT_LANGUAGE_ID_SAVE_REQUEST_DELAY);
-				},
-			},
-		});
-
-		languageSelector.show();
-	}
-
-	#getInfoHelper(skipPackagesCheck: boolean = false): ?Function
-	{
-		if (skipPackagesCheck)
-		{
-			if (this.#extensionSettings.get('isAIEnabledInGlobalSettings'))
-			{
-				return null;
-			}
-
-			return (): void => {
-				if (Reflection.getClass('BX.UI.InfoHelper.show'))
-				{
-					BX.UI.InfoHelper.show(this.#extensionSettings.get('aiDisabledSliderCode'));
-				}
-			};
-		}
-
-		if (
-			this.#extensionSettings.get('isAIEnabledInGlobalSettings')
-			&& this.#extensionSettings.get('isAIHasPackages')
-		)
-		{
-			return null;
-		}
-
-		return (): void => {
-			if (Reflection.getClass('BX.UI.InfoHelper.show'))
-			{
-				if (!this.#extensionSettings.get('isAIEnabledInGlobalSettings'))
-				{
-					BX.UI.InfoHelper.show(this.#extensionSettings.get('aiDisabledSliderCode'));
-				}
-				else if (!this.#extensionSettings.get('isAIHasPackages'))
-				{
-					BX.UI.InfoHelper.show(this.#extensionSettings.get('aiPackagesEmptySliderCode'));
-				}
-			}
-		};
-	}
-
-	// region Public methods
-	updateAISettings(settings: Object): void
-	{
-		if (!SettingsMigrator.isValidChannelFormat(settings))
-		{
-			throw new Error('Invalid settings format', settings);
-		}
-
-		this.#aiAutostartSettings = settings;
-		this.#initializeChannelHandlers();
-	}
-
-	getChannelHandler(channelType: string): BaseChannelHandler | null
-	{
-		return this.#channelHandlers.get(channelType);
-	}
-
-	isChannelAvailable(channelType: string): boolean
-	{
-		return this.#channelHandlers.has(channelType);
-	}
-
-	getAvailableChannels(): string[]
-	{
-		return [...this.#channelHandlers.keys()];
-	}
-	// endregion
 }

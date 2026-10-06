@@ -73,7 +73,7 @@ export const BlocksAppComponent = {
 	data(): { blocks: Block[] }
 	{
 		return {
-			blocks: [],
+			blocks: JSON.parse(this.serializedBlocks) ?? [],
 			isShowPreview: false,
 			initialConstantIds: new Set(),
 			editingConstant: null,
@@ -139,7 +139,6 @@ export const BlocksAppComponent = {
 	},
 	mounted(): void
 	{
-		this.blocks = JSON.parse(this.serializedBlocks) ?? [];
 		this.initialConstantIds = new Set(this.localConstantIds);
 
 		EventEmitter.subscribe(
@@ -474,6 +473,7 @@ export const BlocksAppComponent = {
 					<template #footer>
 						<AddElementBtn
 							:constantIds="allConstantIds"
+							:constantConfigurationList="constantConfigurationList"
 							@add:element="onAddItem(blockIndex, $event)"
 							@create:constant="onCreateConstant(blockIndex, $event)"
 						/>

@@ -4,6 +4,7 @@ export type InterfaceModel = {
 	isOldPortal: boolean;
 	isAccessRestricted: boolean;
 	loading: boolean;
+	scrollToStartupTool: boolean;
 	validation: {
 		title: {
 			invalid: boolean;

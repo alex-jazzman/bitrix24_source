@@ -2,7 +2,7 @@ import { Loc, Tag, Type } from 'main.core';
 import { MemoryCache } from 'main.core.cache';
 import { BaseEvent, EventEmitter } from 'main.core.events';
 import { Loader } from 'main.loader';
-import type { B2eCompanyList, Template, TemplateField } from 'sign.v2.api';
+import type { B2eCompanyList, Template, TemplateFieldsResponse } from 'sign.v2.api';
 import { Api } from 'sign.v2.api';
 import { CompanySelector } from 'sign.v2.b2e.company-selector';
 import { type ItemOptions, SignDropdown } from 'sign.v2.b2e.sign-dropdown';
@@ -65,7 +65,7 @@ export class StartProcess extends EventEmitter
 		return this.#templatesList;
 	}
 
-	getFields(templateUid: string): Promise<{ fields: TemplateField[] }>
+	getFields(templateUid: string): Promise<TemplateFieldsResponse>
 	{
 		return this.#api.template.getFields(templateUid);
 	}

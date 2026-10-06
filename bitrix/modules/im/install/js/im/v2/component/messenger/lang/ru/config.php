@@ -1,3 +1,18 @@
 <?php
 $MESS["IM_MESSENGER_NOT_AVAILABLE"] = "Скоро появится";
+$MESS["IM_MESSENGER_FOLDER_PANEL_MENU_CREATE"] = "Создать папку";
+$MESS["IM_MESSENGER_FOLDER_PANEL_MENU_LIST"] = "Список папок";
+$MESS["IM_MESSENGER_FOLDER_PANEL_ITEM_MENU_UPDATE"] = "Настроить";
+$MESS["IM_MESSENGER_FOLDER_PANEL_ITEM_MENU_DELETE"] = "Удалить";
+$MESS["IM_MESSENGER_FOLDER_LIST_PERSONAL_ITEM_SUBTITLE"] = "Ваша папка с чатами и каналами";
+$MESS['IM_MESSENGER_FOLDER_LIST_SUBTITLE_ALL'] = "Все ваши чаты, каналы и коллабы";
+$MESS['IM_MESSENGER_FOLDER_LIST_SUBTITLE_ALL_V2'] = "Все ваши чаты, каналы и проекты";
+$MESS['IM_MESSENGER_FOLDER_LIST_SUBTITLE_TASKS'] = "Чаты задач, в которых вы участвуете";
+$MESS['IM_MESSENGER_FOLDER_LIST_SUBTITLE_COPILOT'] = "Ваши чаты с AI";
+$MESS['IM_MESSENGER_FOLDER_LIST_SUBTITLE_CHANNELS'] = "Открытые каналы компании";
+$MESS['IM_MESSENGER_FOLDER_LIST_SUBTITLE_COLLAB'] = "Коллабы, в которых вы участвуете";
+$MESS['IM_MESSENGER_FOLDER_LIST_SUBTITLE_COLLAB_V2'] = "Проекты, в которых вы участвуете";
+$MESS['IM_MESSENGER_FOLDER_LIST_SUBTITLE_OPENLINES'] = "Ваши чаты с клиентами";
+$MESS["IM_MESSENGER_FOLDER_LIST_SAVE"] = "Сохранить";
+$MESS["IM_MESSENGER_FOLDER_LIST_CANCEL"] = "Отмена";
 

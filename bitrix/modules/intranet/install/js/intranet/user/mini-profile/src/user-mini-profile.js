@@ -5,7 +5,9 @@ import { Popup, PopupManager } from 'main.popup';
 import { BitrixVue, VueCreateAppResult } from 'ui.vue3';
 
 import { UserMiniProfileComponent } from './components/app';
+import { MiniProfileDirection } from './type';
 import type { UserMiniProfileOptions } from './type';
+import { resolveViewportDirection } from './lib/resolve-popup-direction';
 import { Tracking } from './utils/tracking';
 
 import 'ui.design-tokens';
@@ -89,7 +91,7 @@ export class UserMiniProfile
 	#getPopup(): Popup
 	{
 		return this.#cache.remember('popup', () => {
-			return new Popup({
+			const popup = new Popup({
 				className: 'intranet-user-mini-profile-popup',
 				content: this.#getContainer(),
 				targetContainer: document.body,
@@ -102,13 +104,51 @@ export class UserMiniProfile
 					offset: Dom.getPosition(this.#options.bindElement).width / 2 + FixedAngleOffset,
 				},
 				animation: 'fading',
-				bindOptions: {
-					forceBindPosition: true,
-					forceTop: true,
-					position: 'top',
-				},
+				bindOptions: this.#getBindOptions(),
 			});
+
+			this.#enforceViewportDirection(popup);
+
+			return popup;
 		});
+	}
+
+	// In viewport mode the popup is repositioned by the Vue component on data load
+	// and on right-side expand/collapse via popup.adjustPosition(). Override it so the
+	// direction is always recomputed from the current anchor position — this keeps the
+	// chosen side stable across those re-adjustments instead of falling back to content height.
+	#enforceViewportDirection(popup: Popup): void
+	{
+		if (this.#options.direction !== MiniProfileDirection.Viewport)
+		{
+			return;
+		}
+
+		const adjustPosition = popup.adjustPosition.bind(popup);
+		popup.adjustPosition = () => adjustPosition(this.#getBindOptions());
+	}
+
+	#getBindOptions(): Object
+	{
+		const defaultOptions = {
+			forceBindPosition: true,
+			forceTop: true,
+			position: 'top',
+		};
+
+		const { bindElement, direction } = this.#options;
+		if (direction !== MiniProfileDirection.Viewport || !bindElement)
+		{
+			return defaultOptions;
+		}
+
+		const rect = bindElement.getBoundingClientRect();
+		const anchorCenterY = rect.top + rect.height / 2;
+
+		return {
+			...defaultOptions,
+			position: resolveViewportDirection(anchorCenterY, window.innerHeight),
+		};
 	}
 
 	#getContainer(): HTMLElement

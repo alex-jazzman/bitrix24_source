@@ -1,6 +1,6 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports, main_core, main_core_events, main_popup, currency_currencyCore, ui_dialogs_messagebox, ui_label, catalog_toolAvailabilityManager) {
+(function (exports, main_core, main_core_events, main_popup, currency_currencyCore, ui_dialogs_messagebox, ui_label, catalog_toolAvailabilityManager, ui_a11y) {
 	'use strict';
 
 	class DocumentManager {
@@ -81,6 +81,7 @@ this.BX = this.BX || {};
 			this._callContext = options.CONTEXT;
 			this._rootNode = main_core.Tag.render`<div class="${this.constructor._rootNodeClass}"></div>`;
 			this._menus = [];
+			this._pendingFocus = null;
 			this._isUsedInventoryManagement = this._options.IS_USED_INVENTORY_MANAGEMENT;
 			this._salesOrderRights = this._options.SALES_ORDERS_RIGHTS;
 			this._isInventoryManagementRestricted = this._options.IS_INVENTORY_MANAGEMENT_RESTRICTED;
@@ -108,6 +109,7 @@ this.BX = this.BX || {};
 			}
 		}
 		render() {
+			const focusTarget = this._resolveFocusTargetBeforeRender();
 			this._menus.forEach(menu => menu.destroy());
 			this._rootNode.innerHTML = '';
 			this._setupCurrencyFormat();
@@ -123,7 +125,65 @@ this.BX = this.BX || {};
 				</div>
 			</div>
 		`);
+			if (focusTarget !== null) {
+				this._applyFocusAfterRender(focusTarget);
+			}
 			return this._rootNode;
+		}
+		_focusableControls() {
+			return [...this._rootNode.querySelectorAll(ui_a11y.FocusNavigator.FOCUSABLE_SELECTOR)];
+		}
+
+		/**
+		 * Works out which control should keep focus once the block is rebuilt. Called before the DOM is
+		 * wiped: an explicit `_pendingFocus` (set when a menu action triggers a rerender) wins; otherwise
+		 * focus is preserved only when it currently sits inside the block (a live rerender, not the first
+		 * render). Returns a descriptor consumed by `_applyFocusAfterRender`, or null to leave focus alone.
+		 */
+		_resolveFocusTargetBeforeRender() {
+			const pending = this._pendingFocus;
+			this._pendingFocus = null;
+			if (pending && pending.selector) {
+				return {
+					selector: pending.selector
+				};
+			}
+			let reference = null;
+			if (pending && pending.element) {
+				reference = pending.element;
+			} else {
+				const active = ui_a11y.FocusNavigator.getActiveElement();
+				if (active && this._rootNode.contains(active)) {
+					reference = active;
+				}
+			}
+			if (!reference || !this._rootNode.contains(reference)) {
+				return null;
+			}
+			const index = this._focusableControls().indexOf(reference);
+			return index >= 0 ? {
+				index
+			} : null;
+		}
+		_applyFocusAfterRender(target) {
+			let element = null;
+			if (target.selector) {
+				element = this._rootNode.querySelector(target.selector);
+			} else if (main_core.Type.isNumber(target.index)) {
+				const controls = this._focusableControls();
+				if (controls.length > 0) {
+					element = controls[Math.min(target.index, controls.length - 1)];
+				}
+			}
+			if (element) {
+				ui_a11y.FocusNavigator.focusTarget(element, {
+					preventScroll: true
+				});
+			} else {
+				ui_a11y.FocusNavigator.focusContainer(this._rootNode, {
+					preventScroll: true
+				});
+			}
 		}
 		setOptions(options) {
 			this._options = options;
@@ -286,12 +346,24 @@ this.BX = this.BX || {};
 			};
 			const openMenu = event => {
 				event.preventDefault();
+				const trigger = event.currentTarget;
 				popupMenu = main_popup.MenuManager.create({
 					id: `payment-documents-payment-action-${doc.ID}`,
-					bindElement: event.target,
-					items: menuItems
+					bindElement: trigger,
+					items: menuItems,
+					focusTrap: {
+						initialFocus: 'container'
+					}
+				});
+				popupMenu.subscribeOnce('onClose', () => {
+					trigger.setAttribute('aria-expanded', 'false');
+					this._pendingFocus = null;
 				});
 				popupMenu.show();
+				trigger.setAttribute('aria-expanded', 'true');
+				this._pendingFocus = {
+					element: trigger
+				};
 				const removeDocumentMenuItem = popupMenu.itemsContainer.querySelector('.crm-entity-widget-payment-menu-item-remove');
 				if (removeDocumentMenuItem) {
 					removeDocumentMenuItem.setAttribute('data-hint', main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_PAYMENT_REMOVE_TIP_MSGVER_1'));
@@ -302,11 +374,18 @@ this.BX = this.BX || {};
 			};
 			return main_core.Tag.render`
 			<div class="crm-entity-widget-payment-detail">
-				<a class="ui-link" onclick="${openSlider}">${title}</a>
+				<button type="button" class="ui-link" data-testid="payment-documents-payment-title-${doc.ID}" onclick="${openSlider}">${title}</button>
 				<div class="crm-entity-widget-payment-detail-inner">
-					<div class="ui-label ui-label-md ui-label-light crm-entity-widget-payment-action" onclick="${openMenu}">
+					<button
+						type="button"
+						class="ui-label ui-label-md ui-label-light crm-entity-widget-payment-action"
+						data-testid="payment-documents-payment-action-${doc.ID}"
+						aria-haspopup="true"
+						aria-expanded="false"
+						onclick="${openMenu}"
+					>
 						<span class="ui-label-inner">${main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_ACTIONS_MENU')}</span>
-					</div>
+					</button>
 					${new ui_label.Label(labelOptions).render()}
 				</div>
 			</div>
@@ -359,12 +438,24 @@ this.BX = this.BX || {};
 			const openSlider = () => this._viewDeliverySlider(doc.ORDER_ID, doc.ID);
 			const openMenu = event => {
 				event.preventDefault();
+				const trigger = event.currentTarget;
 				popupMenu = main_popup.MenuManager.create({
 					id: `payment-documents-delivery-action-${doc.ID}`,
-					bindElement: event.target,
-					items: menuItems
+					bindElement: trigger,
+					items: menuItems,
+					focusTrap: {
+						initialFocus: 'container'
+					}
+				});
+				popupMenu.subscribeOnce('onClose', () => {
+					trigger.setAttribute('aria-expanded', 'false');
+					this._pendingFocus = null;
 				});
 				popupMenu.show();
+				trigger.setAttribute('aria-expanded', 'true');
+				this._pendingFocus = {
+					element: trigger
+				};
 				const removeDocumentMenuItem = popupMenu.itemsContainer.querySelector('.crm-entity-widget-shipment-menu-item-remove');
 				if (removeDocumentMenuItem) {
 					removeDocumentMenuItem.setAttribute('data-hint', main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_SHIPMENT_REMOVE_TIP_MSGVER_1'));
@@ -375,13 +466,20 @@ this.BX = this.BX || {};
 			};
 			return main_core.Tag.render`
 			<div class="crm-entity-widget-payment-detail">
-				<a class="ui-link" onclick="${openSlider}">
+				<button type="button" class="ui-link" data-testid="payment-documents-delivery-title-${doc.ID}" onclick="${openSlider}">
 					${title}
-				</a>
+				</button>
 				<div class="crm-entity-widget-payment-detail-inner">
-					<div class="ui-label ui-label-md ui-label-light crm-entity-widget-payment-action" onclick="${openMenu}">
+					<button
+						type="button"
+						class="ui-label ui-label-md ui-label-light crm-entity-widget-payment-action"
+						data-testid="payment-documents-delivery-action-${doc.ID}"
+						aria-haspopup="true"
+						aria-expanded="false"
+						onclick="${openMenu}"
+					>
 						<span class="ui-label-inner">${main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_ACTIONS_MENU')}</span>
-					</div>
+					</button>
 					${new ui_label.Label(labelOptions).render()}
 				</div>
 			</div>
@@ -458,12 +556,24 @@ this.BX = this.BX || {};
 			const openSlider = () => this._viewRealizationSlider(doc.ID);
 			const openMenu = event => {
 				event.preventDefault();
+				const trigger = event.currentTarget;
 				popupMenu = main_popup.MenuManager.create({
 					id: `payment-documents-realization-action-${doc.ID}`,
-					bindElement: event.target,
-					items: menuItems
+					bindElement: trigger,
+					items: menuItems,
+					focusTrap: {
+						initialFocus: 'container'
+					}
+				});
+				popupMenu.subscribeOnce('onClose', () => {
+					trigger.setAttribute('aria-expanded', 'false');
+					this._pendingFocus = null;
 				});
 				popupMenu.show();
+				trigger.setAttribute('aria-expanded', 'true');
+				this._pendingFocus = {
+					element: trigger
+				};
 				const removeDocumentMenuItem = popupMenu.itemsContainer.querySelector('.crm-entity-widget-realization-menu-item-remove');
 				if (removeDocumentMenuItem) {
 					removeDocumentMenuItem.setAttribute('data-hint', main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_REALIZATION_REMOVE_TIP_MSGVER_1'));
@@ -473,15 +583,22 @@ this.BX = this.BX || {};
 				this._menus.push(popupMenu);
 			};
 			const actionMenu = menuItems.length > 0 ? main_core.Tag.render`
-				<div class="ui-label ui-label-md ui-label-light crm-entity-widget-payment-action" onclick="${openMenu}">
+				<button
+					type="button"
+					class="ui-label ui-label-md ui-label-light crm-entity-widget-payment-action"
+					data-testid="payment-documents-realization-action-${doc.ID}"
+					aria-haspopup="true"
+					aria-expanded="false"
+					onclick="${openMenu}"
+				>
 					<span class="ui-label-inner">${main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_ACTIONS_MENU')}</span>
-				</div>
+				</button>
 			` : '';
 			return main_core.Tag.render`
 			<div class="crm-entity-widget-payment-detail">
-				<a class="ui-link" onclick="${openSlider}">
+				<button type="button" class="ui-link" data-testid="payment-documents-realization-title-${doc.ID}" onclick="${openSlider}">
 					${title}
-				</a>
+				</button>
 				<div class="crm-entity-widget-payment-detail-inner">
 					${actionMenu}
 					${new ui_label.Label(labelOptions).render()}
@@ -491,6 +608,7 @@ this.BX = this.BX || {};
 		}
 		_renderAddDocument() {
 			const latestOrderId = this._latestOrderId();
+			let popupMenu;
 			const menuItems = [{
 				text: main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_DOCUMENT_TYPE_PAYMENT'),
 				onclick: () => this._createPaymentSlider(latestOrderId)
@@ -519,21 +637,56 @@ this.BX = this.BX || {};
 			if (realizationMenuItem) {
 				menuItems.push(realizationMenuItem);
 			}
+
+			// a11y (I1.B5): the add-menu items open a slider - unlike the action menu they never closed
+			// the popup, so it stayed open behind the slider and arrow keys scrolled it. Close the popup
+			// first and, since the rerender happens later (after the slider creates a document and fires
+			// reloadModel), remember the add control so focus lands back on it instead of the pay button.
+			const addControlSelector = '.crm-entity-widget-payment-add-box > .ui-entity-editor-content-add-lnk';
+			menuItems.forEach(menuItem => {
+				const runAction = menuItem.onclick;
+				menuItem.onclick = () => {
+					popupMenu.close();
+					this._pendingFocus = {
+						selector: addControlSelector
+					};
+					runAction();
+				};
+			});
 			const openMenu = event => {
 				event.preventDefault();
-				const popupMenu = main_popup.MenuManager.create({
+				const trigger = event.currentTarget;
+				popupMenu = main_popup.MenuManager.create({
 					id: 'payment-documents-create-document-action',
-					bindElement: event.target,
-					items: menuItems
+					bindElement: trigger,
+					items: menuItems,
+					focusTrap: {
+						initialFocus: 'container'
+					}
+				});
+				popupMenu.subscribeOnce('onClose', () => {
+					trigger.setAttribute('aria-expanded', 'false');
+					this._pendingFocus = null;
 				});
 				popupMenu.show();
+				trigger.setAttribute('aria-expanded', 'true');
+				this._pendingFocus = {
+					element: trigger
+				};
 				this._menus.push(popupMenu);
 			};
 			return main_core.Tag.render`
 			<div class="crm-entity-widget-payment-add-box">
-				<a href="#" class="ui-entity-editor-content-add-lnk" onclick="${openMenu}">
+				<button
+					type="button"
+					class="ui-entity-editor-content-add-lnk"
+					data-testid="payment-documents-create-btn"
+					aria-haspopup="true"
+					aria-expanded="false"
+					onclick="${openMenu}"
+				>
 					${main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_CREATE_DOCUMENT_MSGVER_2')}
-				</a>
+				</button>
 			</div>
 		`;
 		}
@@ -553,10 +706,10 @@ this.BX = this.BX || {};
 					menuItem.className = 'realization-document-tariff-lock';
 				} else if (!this._isInventoryManagementToolEnabled) {
 					menuItem.onclick = () => {
-						main_core.Runtime.loadExtension('catalog.tool-availability-manager').then(exports$1 => {
+						main_core.Runtime.loadExtension('catalog.tool-availability-manager').then(exports => {
 							const {
 								ToolAvailabilityManager
-							} = exports$1;
+							} = exports;
 							ToolAvailabilityManager.openInventoryManagementToolDisabledSlider();
 						});
 					};
@@ -662,10 +815,10 @@ this.BX = this.BX || {};
 		}
 		_createPaymentSlider(orderId) {
 			if (!this._isSalescenterToolEnabled) {
-				main_core.Runtime.loadExtension('salescenter.tool-availability-manager').then(exports$1 => {
+				main_core.Runtime.loadExtension('salescenter.tool-availability-manager').then(exports => {
 					const {
 						ToolAvailabilityManager
-					} = exports$1;
+					} = exports;
 					ToolAvailabilityManager.openSalescenterToolDisabledSlider();
 				});
 				return;
@@ -679,10 +832,10 @@ this.BX = this.BX || {};
 		}
 		_createDeliverySlider(orderId) {
 			if (!this._isSalescenterToolEnabled) {
-				main_core.Runtime.loadExtension('salescenter.tool-availability-manager').then(exports$1 => {
+				main_core.Runtime.loadExtension('salescenter.tool-availability-manager').then(exports => {
 					const {
 						ToolAvailabilityManager
-					} = exports$1;
+					} = exports;
 					ToolAvailabilityManager.openSalescenterToolDisabledSlider();
 				});
 				return;
@@ -695,10 +848,10 @@ this.BX = this.BX || {};
 		}
 		_createPaymentDeliverySlider(orderId) {
 			if (!this._isSalescenterToolEnabled) {
-				main_core.Runtime.loadExtension('salescenter.tool-availability-manager').then(exports$1 => {
+				main_core.Runtime.loadExtension('salescenter.tool-availability-manager').then(exports => {
 					const {
 						ToolAvailabilityManager
-					} = exports$1;
+					} = exports;
 					ToolAvailabilityManager.openSalescenterToolDisabledSlider();
 				});
 				return;
@@ -1229,7 +1382,7 @@ this.BX = this.BX || {};
 			return main_core.Tag.render`
 			<div class="crm-entity-stream-content-detail-table-row">
 				<div class="crm-entity-stream-content-document-description">
-					<a class="ui-link" onclick="${openSlider}">${title}</a>
+					<button type="button" class="ui-link" data-testid="payment-documents-summary-payment-title-${doc.ID}" onclick="${openSlider}">${title}</button>
 					<span class="crm-entity-stream-content-document-description__label">
 						${new ui_label.Label(labelOptions).render()}
 					</span>
@@ -1258,9 +1411,9 @@ this.BX = this.BX || {};
 			return main_core.Tag.render`
 			<div class="crm-entity-stream-content-detail-table-row">
 				<div class="crm-entity-stream-content-document-description">
-					<a class="ui-link" onclick="${openSlider}">
+					<button type="button" class="ui-link" data-testid="payment-documents-summary-delivery-title-${doc.ID}" onclick="${openSlider}">
 						${title}
-					</a>
+					</button>
 					<span class="crm-entity-stream-content-document-description__label">
 						${new ui_label.Label(labelOptions).render()}
 					</span>
@@ -1295,9 +1448,9 @@ this.BX = this.BX || {};
 			return main_core.Tag.render`
 			<div class="crm-entity-stream-content-detail-table-row">
 				<div class="crm-entity-stream-content-document-description">
-					<a class="ui-link" onclick="${openSlider}">
+					<button type="button" class="ui-link" data-testid="payment-documents-summary-realization-title-${doc.ID}" onclick="${openSlider}">
 						${title}
-					</a>
+					</button>
 					<span class="crm-entity-stream-content-document-description__label">
 						${new ui_label.Label(labelOptions).render()}
 					</span>
@@ -1379,5 +1532,5 @@ this.BX = this.BX || {};
 	exports.EntityEditorPaymentDocuments = EntityEditorPaymentDocuments;
 	exports.TimelineSummaryDocuments = TimelineSummaryDocuments;
 
-})(this.BX.Crm = this.BX.Crm || {}, BX, BX.Event, BX.Main, BX.Currency, BX.UI.Dialogs, BX.UI, BX.Catalog);
+})(this.BX.Crm = this.BX.Crm || {}, BX, BX.Event, BX.Main, BX.Currency, BX.UI.Dialogs, BX.UI, BX.Catalog, BX.UI.Accessibility);
 //# sourceMappingURL=payment-documents.bundle.js.map

@@ -2,8 +2,7 @@
 	font-family: var(--ui-font-family-primary,var(--ui-font-family-helvetica));
 	font-size: 15px;
 	color: #777777;
-	-webkit-transform: translateZ(0);
-	        transform: translateZ(0);
+	transform: translateZ(0);
 }
 
 
@@ -14,8 +13,6 @@
 	bottom: 0;
 	left: 0;
 	right: 0;
-	-webkit-transform: translate3d(0, 50%, 0);
-	-ms-transform: translate3d(0, 50%, 0);
 	transform: translate3d(0, 50%, 0);
 	z-index: 302;
 }
@@ -25,18 +22,12 @@
 	position: absolute!important;
 	border-radius: 20px;
 	-webkit-user-select: none;
-	-moz-user-select: none;
-	-ms-user-select: none;
 	user-select: none;
 	border: 1px #757D87 solid;
 	z-index: 321;
-	-webkit-transition: opacity 200ms ease;
-	-o-transition: opacity 200ms ease;
 	transition: opacity 200ms ease;
 	margin-top: 4px;
-	-webkit-transform: translateX(-47%);
-	    -ms-transform: translateX(-47%);
-	        transform: translateX(-47%);
+	transform: translateX(-47%);
 }
 
 .landing-ui-panel-link-editor-buttons .landing-ui-button {
@@ -85,18 +76,12 @@
 
 
 .landing-ui-panel .landing-ui-button {
-	-webkit-transition: background-color 200ms ease, opacity 400ms ease;
-	-o-transition: background-color 200ms ease, opacity 400ms ease;
 	transition: background-color 200ms ease, opacity 400ms ease;
 }
 
 .landing-ui-panel-block-action {
 	overflow: hidden;
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
-	-webkit-transition: width 200ms ease, right 200ms ease;
-	-o-transition: width 200ms ease, right 200ms ease;
 	transition: width 200ms ease, right 200ms ease;
 }
 
@@ -127,23 +112,13 @@
 	top: 0;
 	bottom: 0;
 	right: 0;
-	-webkit-transform: translateX(-15px);
-	    -ms-transform: translateX(-15px);
-	        transform: translateX(-15px);
-	-webkit-transform-origin: center;
-	    -ms-transform-origin: center;
-	        transform-origin: center;
-	-webkit-transition: -webkit-transform 200ms ease;
-	transition: -webkit-transform 200ms ease;
-	-o-transition: transform 200ms ease;
+	transform: translateX(-15px);
+	transform-origin: center;
 	transition: transform 200ms ease;
-	transition: transform 200ms ease, -webkit-transform 200ms ease;
 }
 
 .landing-ui-collapse .landing-ui-panel-block-action .landing-ui-button[data-id="collapse"] .landing-ui-button-text {
-	-webkit-transform: translateX(-15px) rotate(180deg);
-	    -ms-transform: translateX(-15px) rotate(180deg);
-	        transform: translateX(-15px) rotate(180deg);
+	transform: translateX(-15px) rotate(180deg);
 }
 
 .landing-ui-collapse .landing-ui-panel-block-action .landing-ui-button[data-id="collapse"] {
@@ -156,14 +131,8 @@
 
 .landing-ui-panel-content-action {
 	overflow: hidden;
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
-	-webkit-box-pack: end;
-	    -ms-flex-pack: end;
-	        justify-content: flex-end;
-	-webkit-transition: width 200ms ease, left 200ms ease;
-	-o-transition: width 200ms ease, left 200ms ease;
+	justify-content: flex-end;
 	transition: width 200ms ease, left 200ms ease;
 }
 
@@ -193,23 +162,13 @@
 	top: 0;
 	bottom: 0;
 	right: 0;
-	-webkit-transform: translateX(-15px) rotate(-180deg);
-	    -ms-transform: translateX(-15px) rotate(-180deg);
-	        transform: translateX(-15px) rotate(-180deg);
-	-webkit-transform-origin: center;
-	    -ms-transform-origin: center;
-	        transform-origin: center;
-	-webkit-transition: -webkit-transform 200ms ease;
-	transition: -webkit-transform 200ms ease;
-	-o-transition: transform 200ms ease;
+	transform: translateX(-15px) rotate(-180deg);
+	transform-origin: center;
 	transition: transform 200ms ease;
-	transition: transform 200ms ease, -webkit-transform 200ms ease;
 }
 
 .landing-ui-collapse .landing-ui-panel-content-action .landing-ui-button[data-id="collapse"] .landing-ui-button-text {
-	-webkit-transform: translateX(-16px) rotate(0deg);
-	    -ms-transform: translateX(-16px) rotate(0deg);
-	        transform: translateX(-16px) rotate(0deg);
+	transform: translateX(-16px) rotate(0deg);
 }
 
 .landing-ui-collapse .landing-ui-panel-content-action .landing-ui-button[data-id="collapse"] {

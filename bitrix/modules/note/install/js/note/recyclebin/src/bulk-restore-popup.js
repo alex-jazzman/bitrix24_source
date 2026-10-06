@@ -1,10 +1,8 @@
-import { Dom, Loc, Tag, Type } from 'main.core';
+import { Loc, Tag } from 'main.core';
 import { AirButtonStyle, Button, ButtonSize } from 'ui.buttons';
-import { TagSelector } from 'ui.entity-selector';
 import { Dialog } from 'ui.system.dialog';
 import { NoteThemeContext } from 'note.ui.theme-context';
-
-const ENTITY_ID = 'note-collection';
+import { createCollectionSelector } from 'note.ui.collection-picker';
 
 export type BulkRestorePopupResult = {
 	confirmed: boolean,
@@ -25,7 +23,6 @@ export function openBulkRestorePopup(options: BulkRestorePopupOptions): Promise<
 	return new Promise((resolve) => {
 		let isResolved = false;
 		let restoreButton = null;
-		let selector = null;
 
 		const finish = (value) => {
 			if (isResolved)
@@ -51,34 +48,10 @@ export function openBulkRestorePopup(options: BulkRestorePopupOptions): Promise<
 			orphanHintNode.textContent = buildOrphanHint(orphanCount);
 		}
 
-		const selectorContainer = hasOrphans
-			? Tag.render`<div class="note-recyclebin-bulk-popup-selector"></div>`
-			: null
-		;
-
-		const content = Tag.render`
-			<div class="note-recyclebin-bulk-popup-content">
-				${headlineNode}
-				${orphanHintNode}
-				${selectorContainer}
-			</div>
-		`;
-
 		const getSelectedCollectionId = (): number => {
-			if (!selector || !Type.isFunction(selector.getTags))
-			{
-				return 0;
-			}
+			const selected = picker ? picker.getSelectedCollection() : null;
 
-			const tags = selector.getTags();
-			if (!Array.isArray(tags) || tags.length !== 1)
-			{
-				return 0;
-			}
-
-			const tag = tags[0];
-			const id = Number(tag?.id ?? tag?.entityId ?? 0);
-			return Number.isInteger(id) && id > 0 ? id : 0;
+			return selected ? selected.id : 0;
 		};
 
 		const updateRestoreState = () => {
@@ -90,14 +63,34 @@ export function openBulkRestorePopup(options: BulkRestorePopupOptions): Promise<
 			if (!hasOrphans)
 			{
 				restoreButton.setDisabled(false);
+
 				return;
 			}
 
 			restoreButton.setDisabled(getSelectedCollectionId() <= 0);
 		};
 
+		// Selector is only shown when part of the selection has lost its source collection.
+		const picker = hasOrphans
+			? createCollectionSelector({
+				placeholder: Loc.getMessage('NOTE_RECYCLEBIN_ORPHAN_POPUP_PLACEHOLDER') || '',
+				mobileDropdownHeight: 240,
+				onSelectionChange: () => updateRestoreState(),
+			})
+			: null
+		;
+
+		const content = Tag.render`
+			<div class="note-recyclebin-bulk-popup-content">
+				${headlineNode}
+				${orphanHintNode}
+				${picker ? picker.node : ''}
+			</div>
+		`;
+
 		restoreButton = new Button({
 			text: Loc.getMessage('NOTE_RECYCLEBIN_PAGE_RESTORE_ALL') || '',
+			dataset: { testid: 'note-dialog-confirm' },
 			size: ButtonSize.LARGE,
 			style: AirButtonStyle.FILLED,
 			useAirDesign: true,
@@ -123,6 +116,7 @@ export function openBulkRestorePopup(options: BulkRestorePopupOptions): Promise<
 
 		const cancelButton = new Button({
 			text: Loc.getMessage('NOTE_RECYCLEBIN_PAGE_CONFIRM_CANCEL') || '',
+			dataset: { testid: 'note-dialog-cancel' },
 			size: ButtonSize.LARGE,
 			style: AirButtonStyle.PLAIN,
 			useAirDesign: true,
@@ -141,51 +135,18 @@ export function openBulkRestorePopup(options: BulkRestorePopupOptions): Promise<
 			centerButtons: [restoreButton, cancelButton],
 			events: {
 				onAfterShow: () => {
-					if (!hasOrphans || !selectorContainer)
+					if (picker)
 					{
-						return;
-					}
-
-					const isMobile = document.documentElement.classList.contains('note-mobile');
-					selector = new TagSelector({
-						multiple: false,
-						tagLimit: 1,
-						placeholder: Loc.getMessage('NOTE_RECYCLEBIN_ORPHAN_POPUP_PLACEHOLDER') || '',
-						dialogOptions: {
-							height: isMobile ? 240 : 340,
-							entities: [
-								{
-									id: ENTITY_ID,
-									dynamicLoad: true,
-									dynamicSearch: true,
-									options: {},
-								},
-							],
-						},
-						events: {
-							onAfterTagAdd: () => updateRestoreState(),
-							onAfterTagRemove: () => updateRestoreState(),
-							onAfterTagsClear: () => updateRestoreState(),
-						},
-					});
-					selector.renderTo(selectorContainer);
-					const outer = selector.getOuterContainer?.();
-					if (outer)
-					{
-						Dom.removeClass(outer, '--ui-context-content-light');
-						Dom.removeClass(outer, '--ui-context-content-dark');
-						Dom.addClass(outer, NoteThemeContext.getDesignSystemContext());
+						picker.applyTheme();
 					}
 					updateRestoreState();
 				},
 				onHide: () => {
-					finish({ confirmed: false, orphanTargetCollectionId: null });
-				},
-				onDestroy: () => {
-					if (selector && Type.isFunction(selector.destroy))
+					if (picker)
 					{
-						selector.destroy();
+						picker.destroy();
 					}
+					finish({ confirmed: false, orphanTargetCollectionId: null });
 				},
 			},
 		});

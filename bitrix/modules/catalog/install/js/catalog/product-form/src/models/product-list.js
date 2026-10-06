@@ -144,7 +144,7 @@ export class ProductList extends VuexBuilderModel
 					total.sum += basePrice * quantity;
 					total.result += Text.toNumber(item.sum);
 					total.discount += discount * quantity;
-					total.taxSum += taxSum * quantity;
+					total.taxSum += taxSum;
 				});
 
 				total.discount = (total.discount > total.sum) ? total.sum : total.discount;

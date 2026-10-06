@@ -13,6 +13,7 @@ jn.define('im/messenger/controller/chat-composer/lib/view/rules-list', (require,
 	const { DialogPermissions } = require('im/messenger/const');
 	const { DialogType } = require('im/messenger/const');
 	const { LoggerManager } = require('im/messenger/lib/logger');
+	const { Feature } = require('im/messenger/lib/feature');
 	const logger = LoggerManager.getInstance().getLogger('chat-composer--managers-rules-list');
 
 	/**
@@ -45,6 +46,7 @@ jn.define('im/messenger/controller/chat-composer/lib/view/rules-list', (require,
 					{ border: true, excludePaddingSide: { all: true } },
 					this.renderAddUserRuleSelector(),
 					this.renderDivider(),
+					...this.renderManageGuestInvitesRuleSelectorWithDivider(),
 					this.renderRemoveUserRuleSelector(),
 					this.renderDivider(),
 					...this.renderEntityRuleSelectors(),
@@ -171,6 +173,44 @@ jn.define('im/messenger/controller/chat-composer/lib/view/rules-list', (require,
 						DialogPermissions.manageMessages,
 						this.state.manageMessages,
 						this.selectorSendMessageRef,
+					),
+				}),
+			);
+		}
+
+		renderManageGuestInvitesRuleSelectorWithDivider()
+		{
+			if (!Feature.isChatWithGuestsAvailable || !this.isChatType())
+			{
+				return [];
+			}
+
+			return [
+				this.renderManageGuestInvitesRuleSelector(),
+				this.renderDivider(),
+			];
+		}
+
+		renderManageGuestInvitesRuleSelector()
+		{
+			return View(
+				{
+					ref: (ref) => {
+						if (ref)
+						{
+							this.selectorManageGuestInvitesRef = ref;
+						}
+					},
+				},
+				StageSelector({
+					title: Loc.getMessage('IMMOBILE_CHAT_COMPOSER_RULES_LIST_MANAGE_GUEST_INVITES_RULE_TITLE'),
+					subtitle: this.getLocByPermissions(this.state.manageGuestInvites),
+					leftIconColor: '',
+					rightIcon: Icon.CHEVRON_DOWN_SIZE_M,
+					onClick: () => this.onRuleClick(
+						DialogPermissions.manageGuestInvites,
+						this.state.manageGuestInvites,
+						this.selectorManageGuestInvitesRef,
 					),
 				}),
 			);

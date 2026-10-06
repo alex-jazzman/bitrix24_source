@@ -7,6 +7,14 @@ import { UndoRedo } from '@tiptap/extensions';
 import { NoteGapcursor } from './note-gapcursor';
 import { HeadingAnchor } from './heading-anchor-extension';
 import { HeadingCollapseEnter } from './heading-enter-command';
+import { escapeInlineText } from './shared-marked';
+
+const MarkdownParagraph = Paragraph.extend({
+	renderMarkdown(node, h, ctx): string
+	{
+		return this.parent?.({ ...node, content: escapeInlineText(node.content) }, h, ctx) ?? '';
+	},
+});
 
 export function createCoreExtensions({ hasCollaborationProvider, documentId = null }: {
 	hasCollaborationProvider: boolean,
@@ -15,7 +23,7 @@ export function createCoreExtensions({ hasCollaborationProvider, documentId = nu
 {
 	return [
 		Document,
-		Paragraph,
+		MarkdownParagraph,
 		Text,
 		HardBreak,
 		HeadingAnchor.configure({ levels: [1, 2, 3, 4], documentId }),

@@ -37,8 +37,12 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/participants/src/items/base',
 				title: this.createTitle(),
 				subtitle: this.createSubtitle(),
 				leftIcon: this.createAvatar(),
-				onClick: this.handleOnClick,
 			};
+
+			if (this.canHandleClick())
+			{
+				listItemProps.onClick = this.handleOnClick;
+			}
 
 			if (this.shouldShowMenu())
 			{
@@ -46,6 +50,11 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/participants/src/items/base',
 			}
 
 			return new ListItem(listItemProps);
+		}
+
+		canHandleClick()
+		{
+			return true;
 		}
 
 		/**
@@ -106,19 +115,19 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/participants/src/items/base',
 		 */
 		getStatusCrownIcon()
 		{
-			return this.isAdmin()
+			return this.isTargetAdmin()
 				? UserStatus.getStatusCrown()
 				: UserStatus.getStatusGreenCrown();
 		}
 
-		isAdmin()
+		isTargetAdmin()
 		{
 			const { isAdmin } = this.props;
 
 			return Boolean(isAdmin);
 		}
 
-		isYou()
+		isTargetCurrentUser()
 		{
 			const { isYou } = this.props;
 

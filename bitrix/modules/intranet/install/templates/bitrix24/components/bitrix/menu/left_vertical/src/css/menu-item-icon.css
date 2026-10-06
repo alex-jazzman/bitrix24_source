@@ -104,6 +104,11 @@
 	--menu-item-icon-active: url("../images/icons/menu-items/solid/collabs.svg");
 }
 
+.menu-sync .menu-item-icon {
+	--menu-item-icon-default: url("../images/icons/menu-items/outline/sync.svg");
+	--menu-item-icon-active: url("../images/icons/menu-items/solid/sync.svg");
+}
+
 .menu-all-groups .menu-item-icon {
 	--menu-item-icon-default: url("../images/icons/menu-items/outline/groups.svg");
 	--menu-item-icon-active: url("../images/icons/menu-items/solid/groups.svg");

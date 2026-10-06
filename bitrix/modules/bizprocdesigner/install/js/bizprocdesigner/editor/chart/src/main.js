@@ -1,24 +1,7 @@
 import { BitrixVue } from 'ui.vue3';
-import { createPinia } from 'ui.vue3.pinia';
 import { Chart } from './app';
-
-const TestId = {
-	install(app) {
-		// eslint-disable-next-line no-param-reassign
-		app.config.globalProperties.$testId = (id: string, ...args: Array<string>): string => {
-			if (!id)
-			{
-				throw new Error('bizprocdesiner: not found test id');
-			}
-
-			const preparedArgs = args.reduce((acc, arg) => {
-				return `${acc}-${arg}`;
-			}, '');
-
-			return `${id}${preparedArgs}`;
-		};
-	},
-};
+import { ensureChartPinia } from './shared/stores';
+import { TestId } from './shared/utils/test-id';
 
 export class App
 {
@@ -26,8 +9,11 @@ export class App
 	{
 		const container = document.getElementById(containerId);
 		const app = BitrixVue.createApp(Chart, rootProps);
-		const store = createPinia();
+		// Kept reachable for the windows the editor mounts as applications of their own.
+		const store = ensureChartPinia();
+		// @chef-ignore
 		app.use(store);
+		// @chef-ignore
 		app.use(TestId);
 		app.provide('debug', false);
 		app.mount(container);

@@ -26,7 +26,19 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 \Bitrix\Main\UI\Extension::load([
 	'ui.design-tokens',
 	'ui.fonts.opensans',
+	'ui.notification',
+	'pull.client',
+	'mail.migration-state',
 ]);
+if ($arResult['LARGE_ATTACHMENT_LOCAL_FEATURE_AVAILABLE'])
+{
+	\Bitrix\Main\UI\Extension::load('mail.client.large-attachment');
+}
+
+if ($arResult['DRAFT_AVAILABLE'])
+{
+	\Bitrix\Main\UI\Extension::load('mail.draft');
+}
 
 if ($arResult['TO_PLUG_EXTENSION_SALES_LETTER_TEMPLATE'])
 {
@@ -42,6 +54,33 @@ $APPLICATION->setTitle(Loc::getMessage('MAIL_NEW_MESSAGE_TITLE'));
 
 $emailsLimitToSendMessage = Helper\LicenseManager::getEmailsLimitToSendMessage();
 $message = $arResult['MESSAGE'];
+$mailboxId = (int)($message['MAILBOX_ID'] ?? 0);
+$migrationWatchMailboxIds = [];
+// SenderProvider survives a main without getUserAvailableSenderIdentities() by falling back
+// to the legacy sender list; a direct call here was a fatal on such portals.
+$currentUserId = (int)\Bitrix\Main\Engine\CurrentUser::get()->getId();
+foreach (\Bitrix\Mail\Integration\Main\SenderProvider::getAvailableSenders($currentUserId) as $sender)
+{
+	$senderMailboxId = (int)($sender['mailboxId'] ?? 0);
+	if ($senderMailboxId > 0)
+	{
+		$migrationWatchMailboxIds[$senderMailboxId] = $senderMailboxId;
+	}
+}
+
+if ($mailboxId > 0)
+{
+	$migrationWatchMailboxIds[$mailboxId] = $mailboxId;
+}
+
+if ($migrationWatchMailboxIds !== [] && \Bitrix\Main\Loader::includeModule('pull'))
+{
+	global $USER;
+	foreach ($migrationWatchMailboxIds as $watchMailboxId)
+	{
+		\CPullWatch::add((int)$USER->getId(), 'mail_mailbox_' . $watchMailboxId);
+	}
+}
 
 $analyticsElement = 'compose_button';
 if (isset($message['__type']))
@@ -62,11 +101,30 @@ if (isset($message['__type']))
 		<?
 
 		$formId = 'mail_msg_new_form';
+		// main.mail.form (included below) registers the disk uploader control under 'main_mail_form_' . FORM_ID.
+		$uploaderControlId = 'main_mail_form_' . $formId;
 		$actionUrl = '/bitrix/services/main/ajax.php?c=bitrix%3Amail.client&action=sendMessage&mode=ajax';
 
 		?>
-		<form action="<?=$actionUrl?>" method="POST" id="<?=htmlspecialcharsbx($formId)?>">
+		<form
+			id="<?=htmlspecialcharsbx($formId)?>"
+			action="<?=$actionUrl?>"
+			method="POST"
+			data-testid="mail-large-attachment-form"
+		>
 			<?=bitrix_sessid_post()?>
+			<input
+				type="hidden"
+				name="data[draftId]"
+				value="<?= (int)$arResult['DRAFT_ID'] ?>"
+				data-role="mail-draft-id"
+			>
+			<input
+				type="hidden"
+				name="data[draftRevision]"
+				value=""
+				data-role="mail-draft-revision"
+			>
 			<? if ('reply' == $message['__type'] && $message['__parent'] > 0): ?>
 				<input type="hidden" name="data[IN_REPLY_TO]" value="<?=htmlspecialcharsbx($message['MSG_ID'])?>">
 				<input type="hidden" name="data[MAILBOX_ID]" value="<?=$message['MAILBOX_ID']?>">
@@ -137,13 +195,20 @@ if (isset($message['__type']))
 					'USE_CALENDAR_SHARING' => true,
 					'COPILOT_PARAMS' => $arResult['COPILOT_PARAMS'],
 					'CONTEXT_NAME' => 'MAIL',
+					'DRAFT_CLIENT_ID' => $arResult['DRAFT_CLIENT_ID'],
+					'DRAFT_MODE' => $arResult['DRAFT_MODE'],
+					'DRAFT_PARENT_MESSAGE_ID' => $arResult['DRAFT_PARENT_MESSAGE_ID'],
+					'DRAFT_LOADING' => $arResult['DRAFT_ID'] > 0,
 					'SELECTED_RECIPIENTS_JSON' => Message::getSelectedRecipientsForDialog($message['__rcpt'], true)->toJsObject(),
 					'FIELDS' => [
 						[
 							'name' => 'data[from]',
+							'senderIdName' => 'data[SENDER_ID]',
+							'mailboxIdName' => 'data[SENDER_MAILBOX_ID]',
 							'title' => Loc::getMessage('MAIL_MESSAGE_NEW_FROM'),
 							'type' => 'from',
 							'value' => $message['__email'],
+							'mailboxId' => (int)($message['MAILBOX_ID'] ?? 0) ?: null,
 							'isFormatted' => true,
 							'required' => true,
 						],
@@ -246,6 +311,76 @@ if (isset($message['__type']))
 
 		var mailForm = BXMainMailForm.getForm('<?=\CUtil::jsEscape($formId) ?>');
 		mailForm.init();
+		var draftBootstrapPromise = Promise.resolve();
+
+		<?php if ($arResult['DRAFT_AVAILABLE']): ?>
+		var draftIdNode = mailForm.htmlForm
+			? mailForm.htmlForm.querySelector('[data-role="mail-draft-id"]')
+			: null;
+		var draftRevisionNode = mailForm.htmlForm
+			? mailForm.htmlForm.querySelector('[data-role="mail-draft-revision"]')
+			: null;
+		draftBootstrapPromise = BX.Mail.Draft.bootstrapMailDraft({
+			form: mailForm,
+			clientId: '<?= \CUtil::JSEscape($arResult['DRAFT_CLIENT_ID']) ?>',
+			draftId: <?= (int)$arResult['DRAFT_ID'] ?> || null,
+			onDraftIdChange: function(draftId, revision)
+			{
+				if (draftIdNode)
+				{
+					draftIdNode.value = draftId;
+				}
+				if (draftRevisionNode)
+				{
+					draftRevisionNode.value = revision;
+				}
+			},
+		}).then(function(coordinator)
+		{
+			mailForm.__draftCoordinator = coordinator;
+		}).catch(function()
+		{
+			var wasRestoring = draftIdNode && parseInt(draftIdNode.value, 10) > 0;
+			if (draftIdNode)
+			{
+				// keep submit from completing a draft whose content was never restored
+				draftIdNode.value = '';
+			}
+			if (draftRevisionNode)
+			{
+				draftRevisionNode.value = '';
+			}
+			mailForm.showError(BX.Loc.getMessage(wasRestoring ? 'MAIL_DRAFT_RESTORE_ERROR' : 'MAIL_DRAFT_SAVE_ERROR'));
+			if (wasRestoring)
+			{
+				mailForm.setDraftLoading(true);
+			}
+		});
+		<?php endif ?>
+
+		BX.message({
+			MAIL_LARGE_ATTACHMENT_LOCAL_FEATURE_AVAILABLE:
+				<?=$arResult['LARGE_ATTACHMENT_LOCAL_FEATURE_AVAILABLE'] ? 'true' : 'false' ?>,
+		});
+		<?php if ($arResult['LARGE_ATTACHMENT_LOCAL_FEATURE_AVAILABLE']): ?>
+		draftBootstrapPromise.then(function()
+		{
+			BX.Mail.Client.LargeAttachment.init({
+				formId: '<?=\CUtil::jsEscape($formId) ?>',
+				uploaderControlId: '<?=\CUtil::jsEscape($uploaderControlId) ?>',
+				messageId: <?=intval($message['ID']) ?>,
+				mailboxId: <?=(int)($message['MAILBOX_ID'] ?? 0) > 0 ? (int)$message['MAILBOX_ID'] : 'null' ?>,
+				featureAvailable: <?=$arResult['LARGE_ATTACHMENT_FEATURE_AVAILABLE'] ? 'true' : 'false' ?>,
+				folderName: '',
+				maxSize: Number(BX.message('MAIL_MESSAGE_MAX_SIZE')),
+				showAha: <?=$arResult['LARGE_ATTACHMENT_SHOW_AHA'] ? 'true' : 'false' ?>,
+				ahaOptionName: '<?=\CUtil::jsEscape($arResult['LARGE_ATTACHMENT_AHA_OPTION_NAME'] ?? '') ?>',
+				postSendPromptSuppressed: <?=$arResult['LARGE_ATTACHMENT_POST_SEND_SUPPRESSED'] ? 'true' : 'false' ?>,
+				postSendPromptOptionName: '<?=\CUtil::jsEscape($arResult['LARGE_ATTACHMENT_POST_SEND_OPTION_NAME'] ?? '') ?>',
+				draftLargeAttachments: mailForm.__draftLargeAttachments || [],
+			});
+		});
+		<?php endif ?>
 
 		(function() {
 			const formId = '<?= \CUtil::jsEscape($formId) ?>';
@@ -259,6 +394,87 @@ if (isset($message['__type']))
 
 			if (sendButton)
 			{
+				const initiallyDisabled = sendButton.disabled === true;
+				const initialTitle = sendButton.getAttribute('title');
+				let migrationActive = false;
+				let unsubscribeMigration = null;
+				let selectionRevision = 0;
+				const setMigrationActive = function(active)
+				{
+					migrationActive = active === true;
+					sendButton.disabled = migrationActive || initiallyDisabled;
+					if (migrationActive)
+					{
+						sendButton.setAttribute('title', BX.Loc.getMessage('MAIL_MIGRATION_SEND_UNAVAILABLE') || '');
+					}
+					else if (initialTitle === null)
+					{
+						sendButton.removeAttribute('title');
+					}
+					else
+					{
+						sendButton.setAttribute('title', initialTitle);
+					}
+				};
+
+				const subscribeToSelectedMailbox = function()
+				{
+					selectionRevision++;
+					const revision = selectionRevision;
+					if (unsubscribeMigration)
+					{
+						unsubscribeMigration();
+						unsubscribeMigration = null;
+					}
+
+					const mailboxInput = form.querySelector('[name="data[SENDER_MAILBOX_ID]"]');
+					const mailboxId = Number(mailboxInput && !mailboxInput.disabled ? mailboxInput.value : 0);
+					if (!Number.isInteger(mailboxId) || mailboxId <= 0)
+					{
+						setMigrationActive(false);
+
+						return;
+					}
+					if (!BX.Mail || !BX.Mail.getMigrationState)
+					{
+						setMigrationActive(true);
+
+						return;
+					}
+
+					// A local sender stays unavailable until its migration status is read successfully.
+					setMigrationActive(true);
+					const migrationState = BX.Mail.getMigrationState(mailboxId);
+					unsubscribeMigration = migrationState.subscribe(function(change) {
+						if (revision === selectionRevision)
+						{
+							setMigrationActive(change.active);
+						}
+					});
+					migrationState.initialize().then(function() {
+						if (revision === selectionRevision && migrationState.isInitialized())
+						{
+							setMigrationActive(migrationState.isActive());
+						}
+					});
+				};
+
+				BX.addCustomEvent(mailForm, 'MailForm::from::change', subscribeToSelectedMailbox);
+				subscribeToSelectedMailbox();
+
+				form.addEventListener('submit', function(event) {
+					if (!migrationActive)
+					{
+						return;
+					}
+
+					event.preventDefault();
+					event.stopImmediatePropagation();
+					BX.UI.Notification.Center.notify({
+						content: BX.Loc.getMessage('MAIL_MIGRATION_SEND_UNAVAILABLE'),
+					});
+				}, true);
+
 				BX.bind(sendButton, 'click', function() {
 					BX.UI.Analytics.sendData({
 						tool: 'mail',

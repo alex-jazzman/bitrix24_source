@@ -28,6 +28,19 @@
 		this.layout.classList.add("landing-ui-field-dropdown");
 		this.popup = null;
 		this.input.addEventListener("click", this.onInputClick.bind(this));
+		this.input.setAttribute("tabindex", "0");
+		this.input.setAttribute("role", "button");
+		this.input.setAttribute("aria-haspopup", "menu");
+		this.input.setAttribute("aria-expanded", "false");
+		this.input.addEventListener("keydown", this.onInputKeydown.bind(this));
+		// Stable hooks for e2e tests. The input is the visible control of the dropdown, so it gets
+		// the button suffix; the menu items are named in onInputClick.
+		this.testId = typeof options.testId === "string" && options.testId ? options.testId : null;
+		if (this.testId)
+		{
+			this.layout.setAttribute("data-testid", this.testId);
+			this.input.setAttribute("data-testid", this.testId + "-btn");
+		}
 		this.classForTextNode = options.classForTextNode;
 		document.addEventListener("click", this.onDocumentClick.bind(this));
 		var rootWindow = BX.Landing.PageObject.getRootWindow();
@@ -113,6 +126,7 @@
 							this.onItemClick(item)
 						}.bind(this),
 						className: item.className,
+						dataset: this.getItemDataset(item),
 					}
 				}, this);
 				this.popup = new BX.PopupMenuWindow({
@@ -125,9 +139,13 @@
 					maxHeight: mahHeight,
 					items: menuItems,
 					events: {
+						onPopupShow: function() {
+							this.input.setAttribute("aria-expanded", "true");
+						}.bind(this),
 						onPopupClose: function() {
 							this.input.classList.remove("landing-ui-active");
 							this.layout.classList.remove("landing-ui-active");
+							this.input.setAttribute("aria-expanded", "false");
 						}.bind(this)
 					},
 					className: this.options.className,
@@ -163,6 +181,31 @@
 				this.popup.popupWindow.popupContainer.style.left = left + "px";
 			}
 			this.popup.popupWindow.popupContainer.style.width = rect.width + "px";
+		},
+
+		/**
+		 * Gets dataset of the menu item with a stable test id
+		 * @param {object} item
+		 * @return {?object}
+		 */
+		getItemDataset: function(item)
+		{
+			if (!this.testId || typeof item.value !== "string" || !item.value)
+			{
+				return null;
+			}
+
+			return {testid: this.testId + "-item-" + item.value};
+		},
+
+
+		onInputKeydown: function(event)
+		{
+			if (event.key === "Enter" || event.key === " " || event.key === "ArrowDown")
+			{
+				event.preventDefault();
+				this.onInputClick(event);
+			}
 		},
 
 
@@ -216,7 +259,12 @@
 
 		onFrameLoad: function ()
 		{
-			const element = this.frame.document.querySelector(this.selector);
+			// this.selector is a persistence key and may not resolve the live content in the editor,
+			// so the owner of the field can pass an explicit selector for the live nodes. The field
+			// reads the value from a single node by contract, so it needs no resolveSingleNode:
+			// querySelector keeps that semantics for a multiple selector too.
+			const elementsSelector = this.data.elementsSelector ? this.data.elementsSelector : this.selector;
+			const element = this.frame.document.querySelector(elementsSelector);
 			if (element)
 			{
 				const value = this.items.find(item => element.classList.contains(item.value));

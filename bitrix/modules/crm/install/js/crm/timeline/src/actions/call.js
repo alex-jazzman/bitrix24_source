@@ -1,3 +1,6 @@
+import { Tag } from 'main.core';
+import { alert } from 'crm.timeline.dialog';
+
 import Activity from "./activity";
 
 /** @memberof BX.Crm.Timeline.Actions */
@@ -21,7 +24,10 @@ export class Call extends Activity
 	{
 		if(typeof(window.top['BXIM']) === 'undefined')
 		{
-			window.alert(this.getMessage("telephonyNotSupported"));
+			// eslint-disable-next-line @bitrix24/bitrix24-rules/no-native-dialogs
+			alert({
+				content: Tag.render`<div>${this.getMessage("telephonyNotSupported")}</div>`,
+			});
 			return;
 		}
 

@@ -2,6 +2,7 @@ import { Browser, Event, Type, Text } from 'main.core';
 
 import { FocusNavigator, type FocusNavigatorOptions } from '../focus-navigator/focus-navigator';
 import { FocusMonitor } from '../focus-monitor/focus-monitor';
+import { InteractivityChecker } from '../interactivity-checker/interactivity-checker';
 import { AccessibilityLogger } from '../accessibility-logger/accessibility-logger';
 
 import { FocusKeys } from './keys';
@@ -59,18 +60,6 @@ const KEY_TO_DIRECTION: Readonly<Record<string, FocusZoneDirection>> = {
 	PageDown: 'end',
 	Backspace: 'previous',
 };
-
-const NON_EDITABLE_INPUT_TYPES: Set<string> = new Set([
-	'button',
-	'checkbox',
-	'file',
-	'hidden',
-	'image',
-	'radio',
-	'range',
-	'reset',
-	'submit',
-]);
 
 /**
  * Manages arrow-key (and other configurable key) focus navigation among
@@ -713,7 +702,12 @@ export class FocusZone
 
 	#attachObserver(): void
 	{
-		this.#observer = new MutationObserver(() => {
+		this.#observer = new MutationObserver((mutations: MutationRecord[]) => {
+			if (this.#isOwnTabIndexWrite(mutations))
+			{
+				return;
+			}
+
 			this.#scheduleSyncFocusableElements();
 		});
 
@@ -722,6 +716,25 @@ export class FocusZone
 			subtree: true,
 			childList: true,
 			attributeFilter: ['hidden', 'disabled', 'tabindex', 'inert', 'contenteditable', 'aria-disabled'],
+		});
+	}
+
+	// The roving tabindex is written by the zone itself, so reacting to it would mean
+	// rebuilding the whole set on every arrow key. Only a set that does not depend on
+	// tabindex may ignore those records.
+	#isOwnTabIndexWrite(mutations: MutationRecord[]): boolean
+	{
+		if (this.#tabbableOnly)
+		{
+			return false;
+		}
+
+		return mutations.every((record: MutationRecord): boolean => {
+			return (
+				record.type === 'attributes'
+				&& record.attributeName === 'tabindex'
+				&& this.#elementSet.has(record.target as HTMLElement)
+			);
 		});
 	}
 
@@ -813,28 +826,6 @@ export class FocusZone
 		return direction;
 	}
 
-	static #isEditableElement(element: HTMLElement | null): boolean
-	{
-		if (!Type.isElementNode(element))
-		{
-			return false;
-		}
-
-		const el = element as HTMLElement;
-
-		if (el.tagName === 'INPUT')
-		{
-			return !NON_EDITABLE_INPUT_TYPES.has((element as HTMLInputElement).type);
-		}
-
-		if (el.tagName === 'TEXTAREA' || el.tagName === 'SELECT')
-		{
-			return true;
-		}
-
-		return el.isContentEditable;
-	}
-
 	/**
 	 * Determines whether the key event is intended for native input behavior
 	 * (text editing, cursor movement, dropdown opening) and should not be
@@ -852,7 +843,7 @@ export class FocusZone
 			|| (key.length === 2 && codePoint >= 0xD800 && codePoint <= 0xDBFF)
 		);
 
-		const isEditable = FocusZone.#isEditableElement(activeElement);
+		const isEditable = InteractivityChecker.isEditable(activeElement);
 		const isSelect = activeElement?.tagName === 'SELECT';
 
 		// Printable characters and Home/End should not affect focus in editable elements

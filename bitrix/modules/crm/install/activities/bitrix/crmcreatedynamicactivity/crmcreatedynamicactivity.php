@@ -1,6 +1,8 @@
 <?php
 
 use Bitrix\Bizproc\Activity\PropertiesDialog;
+use Bitrix\Bizproc\Activity\Mixins\ChecksResolvedTargetAccessTrait;
+use Bitrix\Bizproc\Activity\Mixins\TargetDocumentResolverTrait;
 use Bitrix\Bizproc\FieldType;
 use Bitrix\Bizproc\Result\ResultDto;
 use Bitrix\Crm;
@@ -23,6 +25,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
  */
 class CBPCrmCreateDynamicActivity extends \Bitrix\Bizproc\Activity\BaseActivity
 {
+	use TargetDocumentResolverTrait;
+	use ChecksResolvedTargetAccessTrait;
+
 	protected static $requiredModules = ['crm'];
 
 	public function __construct($name)
@@ -54,6 +59,8 @@ class CBPCrmCreateDynamicActivity extends \Bitrix\Bizproc\Activity\BaseActivity
 
 	protected function prepareProperties(): void
 	{
+		$this->resolveTargetDocumentId();
+
 		parent::prepareProperties();
 
 		$entityFieldsValues = [];
@@ -96,6 +103,7 @@ class CBPCrmCreateDynamicActivity extends \Bitrix\Bizproc\Activity\BaseActivity
 		$errorCollection = parent::internalExecute();
 
 		$fieldsValues = $this->externalizeDocumentFields();
+		$fieldsValues = $this->applyResponsibleFallbackIfNeeded($fieldsValues);
 		$this->logDocumentFields($fieldsValues);
 
 		$documentType = $this->getCreatedDocumentType();
@@ -107,11 +115,21 @@ class CBPCrmCreateDynamicActivity extends \Bitrix\Bizproc\Activity\BaseActivity
 				$moduleId = $this->getDocumentType()[0] ?? '';
 				if (is_int($creationResult) && $moduleId === 'crm')
 				{
-					[$currentEntityTypeId, $currentEntityId] = CCrmBizProcHelper::resolveEntityId($this->getDocumentId());
-					$this->bindElements(
-						new Crm\ItemIdentifier($currentEntityTypeId, $currentEntityId),
-						new Crm\ItemIdentifier($this->DynamicTypeId, $creationResult),
-					);
+					$currentDocumentId = $this->resolveTargetDocumentId();
+					if ($this->canUpdateResolvedTarget($currentDocumentId))
+					{
+						[$currentEntityTypeId, $currentEntityId] = CCrmBizProcHelper::resolveEntityId(
+							$currentDocumentId,
+						);
+						$this->bindElements(
+							new Crm\ItemIdentifier($currentEntityTypeId, $currentEntityId),
+							new Crm\ItemIdentifier($this->DynamicTypeId, $creationResult),
+						);
+					}
+					else
+					{
+						$this->logResolvedTargetAccessDenied();
+					}
 				}
 			}
 		}
@@ -190,22 +208,61 @@ class CBPCrmCreateDynamicActivity extends \Bitrix\Bizproc\Activity\BaseActivity
 				$fieldTypeObject = $documentService->getFieldTypeObject($documentType, $property);
 				if ($fieldTypeObject)
 				{
-					$fieldTypeObject->setDocumentId($this->getDocumentId());
+					$fieldTypeObject->setDocumentId($this->resolveTargetDocumentId());
 					$fieldTypeObject->setValue($value);
 					$value = $fieldTypeObject->externalizeValue(
 						\Bitrix\Bizproc\FieldType::VALUE_CONTEXT_DOCUMENT,
 						$fieldTypeObject->getValue()
 					);
+				}
 
-					if (isset($value))
-					{
-						$resultFields[$key] = $value;
-					}
+				if (isset($value))
+				{
+					$resultFields[$key] = $value;
 				}
 			}
 		}
 
 		return $resultFields;
+	}
+
+	protected function applyResponsibleFallbackIfNeeded(array $fieldsValues): array
+	{
+		$responsibleFieldName = Crm\Item::FIELD_NAME_ASSIGNED;
+		if (!\CBPHelper::isEmptyValue($fieldsValues[$responsibleFieldName] ?? null))
+		{
+			return $fieldsValues;
+		}
+
+		$resolvedTargetDocumentId = $this->resolveTargetDocumentId();
+		if (!$this->canReadResolvedTarget($resolvedTargetDocumentId))
+		{
+			return $fieldsValues;
+		}
+
+		return static::applyResponsibleFallback(
+			$fieldsValues,
+			$this->getSourceDocumentResponsibleId($resolvedTargetDocumentId),
+		);
+	}
+
+	private static function applyResponsibleFallback(array $fieldsValues, int $responsibleId): array
+	{
+		$responsibleFieldName = Crm\Item::FIELD_NAME_ASSIGNED;
+		if (
+			$responsibleId > 0
+			&& \CBPHelper::isEmptyValue($fieldsValues[$responsibleFieldName] ?? null)
+		)
+		{
+			$fieldsValues[$responsibleFieldName] = 'user_' . $responsibleId;
+		}
+
+		return $fieldsValues;
+	}
+
+	protected function getSourceDocumentResponsibleId(array $documentId): int
+	{
+		return CCrmBizProcHelper::getDocumentResponsibleId($documentId);
 	}
 
 	private function logDocumentFields(array $fields)

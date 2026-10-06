@@ -1,0 +1,9 @@
+{
+    "defaultTableName": "b_bitrixcloud_option",
+    "installDirectoriesMapping": {
+        "install/admin": "admin",
+        "install/components": "components",
+        "install/gadgets": "gadgets",
+        "install/js": "js"
+    }
+}

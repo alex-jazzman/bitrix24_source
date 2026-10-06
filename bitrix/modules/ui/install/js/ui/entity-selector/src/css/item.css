@@ -7,6 +7,18 @@
 	/*content-visibility: auto;*/
 }
 
+.ui-selector-item-box:focus-visible {
+	outline: none;
+}
+
+.ui-selector-item-box.--focus-visible > .ui-selector-item {
+	outline: 2px solid var(--ui-color-focus-outline);
+	outline-offset: -2px;
+	border-radius: 4px;
+	z-index: 1;
+	position: relative;
+}
+
 .ui-selector-dialog--compact-view .ui-selector-item-box {
 	height: 34px;
 }
@@ -168,9 +180,7 @@
 .ui-selector-item-link {
 	display: none;
 	position: absolute;
-	top: 0;
 	right: 45px;
-	bottom: 0;
 	align-items: center;
 	padding-left: 10px;
 	opacity: 0;
@@ -187,7 +197,7 @@
 }
 
 .ui-selector-item-box-focused .ui-selector-item-link--show {
-	display: flex;
+	display: inline-flex;
 }
 
 .ui-selector-item-box-focused .ui-selector-item-link--animate {
@@ -264,7 +274,7 @@
 	--ui-color: var(--ui-color-accent-soft-blue-3);
 }
 
-.ui-selector-item-box-focused > .ui-selector-item {
+.ui-selector-item-box-focused:not(.--focus-visible) > .ui-selector-item {
 	background-color: var(--ui-color-hover);
 	transition: background-color ease 100ms;
 }

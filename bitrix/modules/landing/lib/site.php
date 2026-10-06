@@ -1,16 +1,21 @@
 <?php
 namespace Bitrix\Landing;
 
-use \Bitrix\Landing\Copilot;
 use \Bitrix\Landing\Metrika;
 use \Bitrix\Main\Localization\Loc;
 use \Bitrix\Main\Event;
 use \Bitrix\Main\EventResult;
+use \Bitrix\Main\Security\Sign\Signer;
 
 Loc::loadMessages(__FILE__);
 
 class Site extends \Bitrix\Landing\Internals\BaseTable
 {
+	/**
+	 * Salt for the preview link hash, keeps the signature usable in this scenario only.
+	 */
+	private const PUBLIC_HASH_SALT = 'landing_public_hash';
+
 	/**
 	 * Internal class.
 	 * @var string
@@ -133,18 +138,28 @@ class Site extends \Bitrix\Landing\Internals\BaseTable
 				$row['DOMAIN_PROTOCOL'] = \Bitrix\Landing\Internals\DomainTable::PROTOCOL_HTTPS;
 			}
 
+			$previewRequested = $previewForNotActive && ($row['ACTIVE'] === 'N' || $row['DELETED'] === 'Y');
+
 			if ($row['DOMAIN_ID'])
 			{
-				$paths[$row['ID']] = ($hostInclude ? ($disableCloud ? $hostUrl : $row['DOMAIN_PROTOCOL'] . '://' . $row['DOMAIN_NAME']) : '') . $pubPath;
-				if ($full)
+				if (Site\PreviewUrl::isCloudPreview($isB24localVar, (bool)$row['DOMAIN_ID'], $disableCloud, $previewRequested))
 				{
-					if ($disableCloud && $isB24localVar)
+					// preview link of a cloud site lives on the portal host, see Site\PreviewUrl
+					$paths[$row['ID']] = Site\PreviewUrl::buildSiteBase($row['ID'], $hostInclude);
+				}
+				else
+				{
+					$paths[$row['ID']] = ($hostInclude ? ($disableCloud ? $hostUrl : $row['DOMAIN_PROTOCOL'] . '://' . $row['DOMAIN_NAME']) : '') . $pubPath;
+					if ($full)
 					{
-						$paths[$row['ID']] .= $row['CODE'];
-					}
-					else if (!$isB24localVar)
-					{
-						$paths[$row['ID']] .= '/';
+						if ($disableCloud && $isB24localVar)
+						{
+							$paths[$row['ID']] .= $row['CODE'];
+						}
+						else if (!$isB24localVar)
+						{
+							$paths[$row['ID']] .= '/';
+						}
 					}
 				}
 			}
@@ -152,9 +167,10 @@ class Site extends \Bitrix\Landing\Internals\BaseTable
 			{
 				$paths[$row['ID']] = ($hostInclude ? $hostUrl : '') . $defaultPubPath . ($full ? $row['CODE'] : '');
 			}
-			if ($previewForNotActive && ($row['ACTIVE'] === 'N' || $row['DELETED'] === 'Y'))
+			if ($previewRequested)
 			{
-				$paths[$row['ID']] .= 'preview/' . self::getPublicHash($row['ID'], $row['DOMAIN_NAME']) . '/';
+				$paths[$row['ID']] = rtrim($paths[$row['ID']], '/')
+					. '/preview/' . self::getPublicHash($row['ID'], $row['DOMAIN_NAME']) . '/';
 			}
 		}
 
@@ -979,7 +995,9 @@ class Site extends \Bitrix\Landing\Internals\BaseTable
 	}
 
 	/**
-	 * Get md5 hash for site, using http host.
+	 * Get hash for site, using http host.
+	 * The hash unlocks preview of unpublished content, so it is signed with the portal secret key:
+	 * public host and publication path alone must not be enough to compute it.
 	 * @param int $id Site id.
 	 * @param string $domain Domain name for this site.
 	 * @return string
@@ -1036,9 +1054,25 @@ class Site extends \Bitrix\Landing\Internals\BaseTable
 			$hash[] = LICENSE_KEY;
 		}
 
-		$hashes[$id] = md5(implode('', $hash));
+		$hashes[$id] = (new Signer())->getSignature(implode('', $hash), self::PUBLIC_HASH_SALT);
 
 		return $hashes[$id];
+	}
+
+	/**
+	 * Checks hash from the request against the site preview hash.
+	 * @param int|string $id Site id.
+	 * @param mixed $hash Hash from the request.
+	 * @return bool
+	 */
+	public static function isPublicHashValid($id, $hash): bool
+	{
+		if (!is_string($hash) || $hash === '')
+		{
+			return false;
+		}
+
+		return hash_equals(self::getPublicHash($id), $hash);
 	}
 
 	/**
@@ -1217,7 +1251,7 @@ class Site extends \Bitrix\Landing\Internals\BaseTable
 	}
 
 	/**
-	 * Updates folder of the site.
+	 * Updates folder of the site. Moving folder between sites is moveFolder().
 	 * @param int $siteId Site id.
 	 * @param int $folderId Folder id.
 	 * @param array $fields Folder's fields.
@@ -1225,19 +1259,116 @@ class Site extends \Bitrix\Landing\Internals\BaseTable
 	 */
 	public static function updateFolder(int $siteId, int $folderId, array $fields): \Bitrix\Main\Entity\UpdateResult
 	{
-		if (self::ping($siteId) && Rights::hasAccessForSite($siteId, Rights::ACCESS_TYPES['edit']))
+		if (!self::ping($siteId) || !Rights::hasAccessForSite($siteId, Rights::ACCESS_TYPES['edit']))
 		{
-			$fields['SITE_ID'] = $siteId;
-			$result = Folder::update($folderId, $fields);
+			return self::getFolderUpdateError('LANDING_COPY_ERROR_SITE_NOT_FOUND');
 		}
-		else
+
+		if (!self::isFolderOfSite($folderId, $siteId))
 		{
-			$result = new \Bitrix\Main\Entity\UpdateResult;
-			$result->addError(new \Bitrix\Main\Error(
-				Loc::getMessage('LANDING_COPY_ERROR_SITE_NOT_FOUND'),
-				'ACCESS_DENIED'
-			));
+			return self::getFolderUpdateError('LANDING_COPY_ERROR_FOLDER_NOT_FOUND');
 		}
+
+		$parentId = (int)($fields['PARENT_ID'] ?? 0);
+		if ($parentId > 0)
+		{
+			if (!self::isFolderOfSite($parentId, $siteId))
+			{
+				return self::getFolderUpdateError('LANDING_COPY_ERROR_FOLDER_NOT_FOUND');
+			}
+			if ($parentId === $folderId || in_array($parentId, Folder::getSubFolderIds($folderId)))
+			{
+				return self::getFolderUpdateError(
+					'LANDING_COPY_ERROR_MOVE_RESTRICTION',
+					'MOVE_RESTRICTION'
+				);
+			}
+		}
+
+		$indexId = (int)($fields['INDEX_ID'] ?? 0);
+		if ($indexId > 0 && !self::isLandingOfSite($indexId, $siteId))
+		{
+			return self::getFolderUpdateError(
+				'LANDING_UPDATE_FOLDER_ERROR_INDEX_OUT_OF_SITE',
+				'FOLDER_INDEX_OUT_OF_SITE'
+			);
+		}
+
+		$fields['SITE_ID'] = $siteId;
+
+		return Folder::update($folderId, $fields);
+	}
+
+	/**
+	 * Checks that folder exists within the site.
+	 * @param int $folderId Folder id.
+	 * @param int $siteId Site id.
+	 * @return bool
+	 */
+	private static function isFolderOfSite(int $folderId, int $siteId): bool
+	{
+		if ($folderId <= 0)
+		{
+			return false;
+		}
+
+		$row = Folder::getList([
+			'select' => [
+				'ID'
+			],
+			'filter' => [
+				'ID' => $folderId,
+				'SITE_ID' => $siteId
+			],
+			'limit' => 1
+		])->fetch();
+
+		return (bool)$row;
+	}
+
+	/**
+	 * Checks that landing exists within the site.
+	 * @param int $landingId Landing id.
+	 * @param int $siteId Site id.
+	 * @return bool
+	 */
+	private static function isLandingOfSite(int $landingId, int $siteId): bool
+	{
+		if ($landingId <= 0)
+		{
+			return false;
+		}
+
+		$row = Landing::getList([
+			'select' => [
+				'ID'
+			],
+			'filter' => [
+				'ID' => $landingId,
+				'SITE_ID' => $siteId
+			],
+			'limit' => 1
+		])->fetch();
+
+		return (bool)$row;
+	}
+
+	/**
+	 * Builds failed update result for folder methods.
+	 * @param string $phraseCode Message phrase code.
+	 * @param string $errorCode Error code.
+	 * @return \Bitrix\Main\Entity\UpdateResult
+	 */
+	private static function getFolderUpdateError(
+		string $phraseCode,
+		string $errorCode = 'ACCESS_DENIED'
+	): \Bitrix\Main\Entity\UpdateResult
+	{
+		$result = new \Bitrix\Main\Entity\UpdateResult;
+		$result->addError(new \Bitrix\Main\Error(
+			Loc::getMessage($phraseCode),
+			$errorCode
+		));
 
 		return $result;
 	}
@@ -1714,12 +1845,26 @@ class Site extends \Bitrix\Landing\Internals\BaseTable
 	{
 		$return = new \Bitrix\Main\Result;
 
+		$metrikaParams =
+			new Metrika\FieldsDto(
+				event: $mark ? Metrika\Events::publishSite : Metrika\Events::unpublishSite,
+				type: $metrikaFields?->type,
+				subSection: $metrikaFields?->subSection ?? 'from_list',
+				element: $metrikaFields?->element ?? 'manual',
+			)
+		;
+
 		if ($mark)
 		{
 			$verificationError = new Error();
 			if (!Mutator::checkSiteVerification($id, $verificationError))
 			{
-				$return->addError($verificationError->getFirstError());
+				$error = $verificationError->getFirstError();
+				$return->addError($error);
+
+				$metrikaParams->error = $error->getCode();
+				self::sendAnalytics($metrikaParams, $id);
+
 				return $return;
 			}
 		}
@@ -1738,21 +1883,6 @@ class Site extends \Bitrix\Landing\Internals\BaseTable
 				]
 			]
 		]);
-
-		$metrikaType = Metrika\Types::template;
-		if ((new Copilot\Generation())->initBySiteId($id, (new Copilot\Generation\Scenario\CreateSite())))
-		{
-			$metrikaType = Metrika\Types::ai;
-		}
-
-		$metrikaParams =
-			new Metrika\FieldsDto(
-				event: $mark ? Metrika\Events::publishSite : Metrika\Events::unpublishSite,
-				type: $metrikaType,
-				subSection: $metrikaFields?->subSection ?? 'from_list',
-				element: $metrikaFields?->element ?? 'manual',
-			)
-		;
 
 		while ($row = $res->fetch())
 		{
@@ -1788,14 +1918,12 @@ class Site extends \Bitrix\Landing\Internals\BaseTable
 				;
 				$return->addError($error);
 
-				$metrikaParams->error = $error;
+				$metrikaParams->error = $error->getCode();
 				self::sendAnalytics($metrikaParams, $id);
 
 				return $return;
 			}
 		}
-
-		self::sendAnalytics($metrikaParams, $id);
 
 		$res = Folder::getList([
 			'select' => [
@@ -1814,9 +1942,21 @@ class Site extends \Bitrix\Landing\Internals\BaseTable
 			]);
 		}
 
-		return parent::update($id, [
+		$result = parent::update($id, [
 			'ACTIVE' => $mark ? 'Y' : 'N'
 		]);
+
+		// the mark goes last: the limits of the publication (PUBLIC_SITE_REACHED and the like) are
+		// given out by this very update, so a mark sent before it would call a refused publication
+		// a success
+		$updateError = $result->getError();
+		if ($updateError)
+		{
+			$metrikaParams->error = $updateError->getCode();
+		}
+		self::sendAnalytics($metrikaParams, $id);
+
+		return $result;
 	}
 
 	/**
@@ -1851,13 +1991,15 @@ class Site extends \Bitrix\Landing\Internals\BaseTable
 				$params->event,
 				Metrika\Tools::getBySiteType($site['TYPE']),
 			);
-			$metrika->setType($params->type);
+			$metrika->setType(
+				$params->type ?? (new Metrika\SiteTypeResolver())->resolve($siteId, (string)$site['TYPE'])
+			);
 			$metrika->setSubSection($params->subSection);
 			$metrika->setElement($params->element);
 			$metrika->setParam(3, 'siteId', $siteId);
 			if ($params->error)
 			{
-				$metrika->setError($params->error);
+				$metrika->setError($params->error, Metrika\PublicationErrorStatusMapper::resolve($params->error));
 			}
 
 			$metrika->send();

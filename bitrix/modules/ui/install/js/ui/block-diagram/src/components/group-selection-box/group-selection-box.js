@@ -85,6 +85,7 @@ export const GroupSelectionBox = {
 			v-if="groupSelectionStyle"
 			:style="groupSelectionStyle"
 			class="ui-block-diagram-group-box"
+			data-testid="ui-block-diagram-group-box"
 			@mousedown.stop="onGroupMouseDown"
 		>
 			<div

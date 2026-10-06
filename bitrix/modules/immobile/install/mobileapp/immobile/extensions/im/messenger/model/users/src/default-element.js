@@ -20,6 +20,7 @@ jn.define('im/messenger/model/users/src/default-element', (require, exports, mod
 		bot: false,
 		botData: {},
 		connector: false,
+		active: true,
 		externalAuthId: 'default',
 		status: '',
 		idle: false,

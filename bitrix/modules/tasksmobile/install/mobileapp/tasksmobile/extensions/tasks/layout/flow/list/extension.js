@@ -5,7 +5,7 @@ jn.define('tasks/layout/flow/list', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { RunActionExecutor } = require('rest/run-action-executor');
 	const { StatusBlock } = require('ui-system/blocks/status-block');
-	const { UnsupportedFeature, UnsupportedFeatureType } = require('tasks/unsupported-feature');
+	const { UnsupportedFeature, UnsupportedFeaturePreset } = require('tasks/unsupported-feature');
 	const { StatefulList } = require('layout/ui/stateful-list');
 	const { TypeGenerator } = require('layout/ui/stateful-list/type-generator');
 	const { batchActions } = require('statemanager/redux/batched-actions');
@@ -688,7 +688,7 @@ jn.define('tasks/layout/flow/list', (require, exports, module) => {
 			{
 				return new UnsupportedFeature({
 					layout: this.layout,
-					type: UnsupportedFeatureType.FLOWS,
+					type: UnsupportedFeaturePreset.FLOWS,
 				});
 			}
 

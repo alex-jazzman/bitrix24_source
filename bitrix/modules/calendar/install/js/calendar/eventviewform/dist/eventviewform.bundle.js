@@ -277,13 +277,21 @@ this.BX = this.BX || {};
 					this.backgroundPullEvent = event;
 				}
 			},
+			isPullOfCurrentEntry(fields) {
+				// A restricted card carries the id of the copy it shows instead of the parent one,
+				// so the own id of the pull entry answers where the parent no longer matches.
+				return parseInt(fields?.PARENT_ID, 10) === parseInt(this.params.parentId, 10) || parseInt(fields?.ID, 10) === parseInt(this.params.eventId, 10);
+			},
 			updateParams(event) {
-				if (parseInt(event.data[1]?.fields?.PARENT_ID, 10) !== parseInt(this.params.parentId, 10)) {
+				if (!this.isPullOfCurrentEntry(event.data[1]?.fields)) {
 					this.reloadPlanner();
 					return;
 				}
 				const pullData = event.data[1].fields;
-				if (pullData.NAME) {
+
+				// The pull fields are not cut by the rights of their reader, so a restricted card
+				// takes the title from the answer of the server alone.
+				if (pullData.NAME && !this.params.isRestrictedEventView) {
 					this.name = pullData.NAME;
 				}
 				if (pullData.ACCESSIBILITY) {
@@ -297,6 +305,7 @@ this.BX = this.BX || {};
 					}
 				}).then(response => {
 					const newData = response.data;
+					this.name = newData.name;
 					this.description = newData.description;
 					this.isMeeting = newData.isMeeting;
 					this.timezone = newData.userTimezone;
@@ -1003,6 +1012,10 @@ this.BX = this.BX || {};
 				locked: !this.plannerFeatureEnabled,
 				alwaysBlue: true
 			});
+			if (main_core.Type.isDate(this.entry.from)) {
+				this.planner.currentFromDate = new Date(this.entry.from.getTime());
+				this.planner.currentToDate = this.entry.isLongWithTime() ? new Date(this.entry.from.getTime()) : new Date(this.entry.to.getTime());
+			}
 			this.planner.show();
 			this.planner.showLoader();
 			this.planner.setEntriesCount(this.attendees.length);
@@ -1130,7 +1143,7 @@ this.BX = this.BX || {};
 								main_core.Event.unbind(this.DOM.editButton, 'click', this.handleEditButtonClick.bind(this));
 							}
 							main_core_events.EventEmitter.emit(`MeetingStatusControl_${uid}:onSetStatus`, event);
-						});
+						}).catch(() => {});
 					}
 				});
 			}

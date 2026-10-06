@@ -21,6 +21,7 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 		BBCodeEntity,
 		DialogType,
 		RestMethod,
+		UserType,
 	} = require('im/messenger/const');
 	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
@@ -271,7 +272,7 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 			for (const participant of participants)
 			{
 				const isCopilot = participant === this.#store.getters['usersModel/getCopilotData']()?.id;
-				if (isCopilot)
+				if (isCopilot || this.#isGuestUser(participant))
 				{
 					continue;
 				}
@@ -517,7 +518,7 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 				const copilotId = this.#store.getters['usersModel/getCopilotData']()?.id;
 				const isNotCopilot = String(itemId) !== String(copilotId);
 
-				if (dialogHelper?.isDirect && isNotCopilot)
+				if (dialogHelper?.isDirect && isNotCopilot && !this.#isGuestUser(itemId))
 				{
 					this.view.mentionPanel.update(itemId, { actions: [this.#buildInviteActionButton(itemId)] });
 				}
@@ -731,6 +732,11 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 		 */
 		#onHideAddUserPopup(userId)
 		{
+			if (this.#isGuestUser(userId))
+			{
+				return;
+			}
+
 			this.view.mentionPanel.update(userId, { actions: [this.#buildInviteActionButton(userId)] });
 		}
 
@@ -867,6 +873,11 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 				return false;
 			}
 
+			if (this.#isGuestUser(dialogId))
+			{
+				return false;
+			}
+
 			const isNotGroupCurrentChat = !DialogHelper.isDialogId(this.dialogId);
 			const isDirect = DialogHelper.createByDialogId(dialogId)?.isDirect;
 			const isNotCurrentChat = Number(this.dialogId) !== Number(dialogId)
@@ -881,6 +892,17 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 			const isMembershipMapLoaded = this.provider.isMembershipMapLoaded;
 
 			return isNotParticipant && isDirect && isMembershipMapLoaded;
+		}
+
+		/**
+		 * @param {DialogId} dialogId
+		 * @return {boolean}
+		 */
+		#isGuestUser(dialogId)
+		{
+			const user = this.#store.getters['usersModel/getById'](dialogId);
+
+			return user?.type === UserType.guest;
 		}
 
 		/**

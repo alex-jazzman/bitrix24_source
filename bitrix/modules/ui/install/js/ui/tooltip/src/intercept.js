@@ -22,10 +22,13 @@ export class Interceptor
 
 		if (BX.Intranet?.User?.UserMiniProfileManager)
 		{
+			const direction = node.getAttribute('bx-tooltip-mini-profile-direction');
+
 			BX.Intranet.User.UserMiniProfileManager.create({
 				id: userId,
 				userId: Number(userId),
 				bindElement: node,
+				direction: direction === 'viewport' ? 'viewport' : null,
 			});
 
 			return true;

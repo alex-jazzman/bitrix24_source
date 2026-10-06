@@ -69,6 +69,13 @@ class CBPPropertyVariableCondition extends CBPActivityCondition
 
 	public function collectUsages(CBPActivity $ownerActivity)
 	{
+		if (!$this->isConditionGroupExist())
+		{
+			return [];
+		}
+
+		$this->conditionGroupToArray();
+
 		$usages = [];
 		$rootActivity = $ownerActivity->GetRootActivity();
 		foreach ($this->condition as $cond)

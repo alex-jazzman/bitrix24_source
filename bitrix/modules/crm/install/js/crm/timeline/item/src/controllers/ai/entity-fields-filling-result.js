@@ -115,6 +115,7 @@ export class EntityFieldsFillingResult extends Base
 		return item.getType() === 'AI:EntityFieldsFillingResult'
 			|| item.getType() === 'Activity:OpenLine'
 			|| item.getType() === 'Activity:Call'
+			|| item.getType() === 'Activity:Email'
 		;
 	}
 }

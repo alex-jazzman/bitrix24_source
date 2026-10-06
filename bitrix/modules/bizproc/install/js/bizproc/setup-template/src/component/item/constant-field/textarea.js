@@ -15,6 +15,22 @@ export const ConstantTextarea = {
 			type: [String, Array],
 			default: '',
 		},
+		labelledbyId: {
+			type: String,
+			default: '',
+		},
+		describedbyId: {
+			type: String,
+			default: '',
+		},
+		invalid: {
+			type: Boolean,
+			default: false,
+		},
+		required: {
+			type: Boolean,
+			default: false,
+		},
 	},
 	emits: ['update:modelValue'],
 	computed:
@@ -85,7 +101,7 @@ export const ConstantTextarea = {
 				lastField.focus();
 			}
 		},
-		removeField(index: number): void
+		async removeField(index: number): void
 		{
 			if (!this.showRemoveIcon)
 			{
@@ -94,6 +110,14 @@ export const ConstantTextarea = {
 			const newValues = [...this.multipleValues];
 			newValues.splice(index, 1);
 			this.$emit('update:modelValue', newValues);
+
+			await this.$nextTick();
+			const fields = this.$refs.textareaFields;
+			if (fields && fields.length > 0)
+			{
+				const focusIndex = Math.max(0, index - 1);
+				fields[focusIndex]?.focus();
+			}
 		},
 	},
 	template: `
@@ -105,6 +129,10 @@ export const ConstantTextarea = {
 							class="ui-ctl-element"
 							:value="modelValue"
 							:maxlength="maxTextLength"
+							:aria-labelledby="labelledbyId || null"
+							:aria-describedby="describedbyId || null"
+							:aria-invalid="invalid ? 'true' : null"
+							:aria-required="required ? 'true' : null"
 							@input="onSingleInput"
 							data-test-id="bizproc-setup-template__form-textarea-single"
 						></textarea>
@@ -127,6 +155,10 @@ export const ConstantTextarea = {
 								class="ui-ctl-element"
 								:value="value"
 								:maxlength="maxTextLength"
+								:aria-labelledby="labelledbyId || null"
+								:aria-describedby="describedbyId || null"
+								:aria-invalid="invalid ? 'true' : null"
+								:aria-required="required ? 'true' : null"
 								@input="onMultipleInput($event, index)"
 								data-test-id="bizproc-setup-template__form-textarea-multiple"
 							></textarea>
@@ -137,10 +169,15 @@ export const ConstantTextarea = {
 					</div>
 					<span
 						v-if="showRemoveIcon"
+						role="button"
+						tabindex="0"
 						@click="removeField(index)"
+						@keydown.enter.prevent="!$event.repeat && removeField(index)"
+						@keydown.space.prevent="!$event.repeat && removeField(index)"
+						:aria-label="$Bitrix.Loc.getMessage('BIZPROC_JS_AI_AGENTS_ACTIVATOR_FORM_REMOVE_FIELD')"
 						data-test-id="bizproc-setup-template__form-textarea-delete-btn"
-						class="bizproc-setup-template__field-remove ui-icon-set --cross-m"
-					></span>
+						class="bizproc-setup-template__field-remove"
+					><i class="ui-icon-set --cross-m"></i></span>
 				</div>
 				<button
 					@click="addField"

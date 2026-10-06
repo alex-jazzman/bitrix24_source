@@ -1,4 +1,4 @@
-import { Dom, Tag, Event } from 'main.core';
+import { Dom, Tag, Event, Text, Type, Uri } from 'main.core';
 import { Loc } from '../controls/controls.loc';
 
 import { Devices, DeviceItem } from './device.data';
@@ -16,6 +16,7 @@ export class Device
 	#frameUrl: string;
 	#editorFrameWrapper: HTMLElement;
 	#previewElement: HTMLDivElement;
+	#previewFrame: ?HTMLIFrameElement;
 	#previewWindow;// window object of iframe
 	#previewLoader: HTMLDivElement;
 	#currentDevice: ?DeviceItem = null;
@@ -41,6 +42,11 @@ export class Device
 		'Landing\\Block::saveForm', // fake-action
 	];
 	target: HTMLElement;
+
+	// PROTO-01 (owner): device-preview postMessage protocol. Envelope {action, payload}.
+	static #ACTION_SET_TOUCH = 'landing.device-preview:setTouch';
+	static #ACTION_SCROLL_TO_PERCENT = 'landing.device-preview:scrollToPercent';
+	static #ACTION_READY = 'landing.device-preview:ready';
 
 	/**
 	 * Device constructor.
@@ -76,6 +82,15 @@ export class Device
 		// listen messages from editor frame
 		window.addEventListener('message', event => {
 			const data = event.data || {};
+
+			// PROTO-01: the sandboxed preview reports it is ready — resend the current state.
+			// Accept ready only from the preview window; the editor channel uses event.source too.
+			if (event.source === this.#previewWindow && data.action === Device.#ACTION_READY)
+			{
+				this.#sendPreviewState();
+
+				return;
+			}
 
 			if (data.action === 'editorenable')
 			{
@@ -127,6 +142,12 @@ export class Device
 					blockId = payload.data?.updateNodes?.data?.block;
 				}
 
+				blockId = Text.toInteger(blockId);
+				if (blockId <= 0)
+				{
+					blockId = null;
+				}
+
 				this.#reloadPreviewWindow(blockId);
 			}
 		}
@@ -138,12 +159,21 @@ export class Device
 	 */
 	#reloadPreviewWindow(blockId: ?number)
 	{
-		if (this.#previewWindow)
+		if (this.#previewFrame)
 		{
-			const blockIdPrefix = 'editor';
-			const timestamp = Date.now();
+			const uri = new Uri(this.#frameUrl);
+			uri.setQueryParam('ts', Date.now());
 
-			this.#previewWindow.location.href = this.#frameUrl + '?ts=' + timestamp + '&scrollTo=' + blockIdPrefix + blockId;
+			if (Type.isNil(blockId))
+			{
+				uri.removeQueryParam('scrollTo');
+			}
+			else
+			{
+				uri.setQueryParam('scrollTo', `editor${blockId}`);
+			}
+
+			this.#previewFrame.src = uri.toString();
 		}
 	}
 
@@ -177,16 +207,32 @@ export class Device
 	 */
 	#scrollDevice(topInPercent: number)
 	{
+		// The sandboxed preview owns its height and converts the percent to pixels itself.
+		this.#postToPreview(Device.#ACTION_SCROLL_TO_PERCENT, { percent: topInPercent });
+	}
+
+	/**
+	 * Sends a PROTO-01 command to the sandboxed preview window.
+	 *
+	 * @param {string} action Namespaced action name.
+	 * @param {Object} payload Command payload.
+	 */
+	#postToPreview(action: string, payload: Object)
+	{
 		if (this.#previewWindow)
 		{
-			const metrics = this.#getDocumentMetrics(this.#previewWindow.document);
-			if (!metrics)
-			{
-				return;
-			}
-
-			this.#previewWindow.scroll(0, metrics.scrollHeight * topInPercent / 100);
+			// targetOrigin '*': the preview is opaque-origin and commands carry no privileged data.
+			this.#previewWindow.postMessage({ action, payload }, '*');
 		}
+	}
+
+	/**
+	 * Pushes the current touch and scroll state to the preview (e.g. after it reports ready).
+	 */
+	#sendPreviewState()
+	{
+		this.#postToPreview(Device.#ACTION_SET_TOUCH, { touch: true });
+		this.#adjustPreviewScroll();
 	}
 
 	/**
@@ -361,17 +407,12 @@ export class Device
 			const previewFrame = this.#previewElement.querySelector('iframe');
 			if (previewFrame)
 			{
+				this.#previewFrame = previewFrame;
 				Event.bind(previewFrame, 'load', () => {
 					this.#previewWindow = previewFrame.contentWindow;
-
-					const previewHtml = previewFrame.contentWindow?.document?.querySelector('html');
-					if (previewHtml)
-					{
-						Dom.removeClass(previewHtml, 'bx-no-touch');
-						Dom.addClass(previewHtml, 'bx-touch');
-					}
-
-					this.#adjustPreviewScroll();
+					// Under sandbox the preview document is opaque-origin: drive touch and scroll
+					// through PROTO-01 instead of reading contentWindow.document directly.
+					this.#sendPreviewState();
 				});
 
 				if (!this.#previewWindow)

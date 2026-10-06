@@ -28,9 +28,11 @@ return [
 		'statemanager/redux/store',
 
 		'disk:cache',
+		'disk:create-board',
 		'disk:enum',
 		'disk:pull',
 		'disk:uploader',
+		'disk:remove',
 		'disk:file-grid/navigation',
 		'disk:simple-list/items',
 		'disk:statemanager/redux/slices/files',

@@ -458,13 +458,20 @@
 	border-color: var(--ui-color-base-90);
 }
 
-.ui-checkbox-list__footer-link.--select-all input,
 .ui-checkbox-list__footer-link.--select-all label {
+	padding-left: 5px;
 	cursor: pointer;
 }
 
-.ui-checkbox-list__footer-link.--select-all label {
-	padding-left: 5px;
+/* A mouse click on the square falls through to the wrapper row (its @click), bypassing the native input activation (@click.prevent) and its checked/indeterminate rollback */
+.ui-checkbox-list__footer-link.--select-all input[type="checkbox"] {
+	pointer-events: none;
+}
+
+/* pointer-events: none drops the input from hit testing, so in narrow mode (no label) the square would
+   fall back to the wrapper's cursor: default; keep the pointer affordance on the clickable row */
+.ui-checkbox-list__footer-link.--select-all.--narrow {
+	cursor: pointer;
 }
 
 .ui-checkbox-list__footer-link.--default {
@@ -493,10 +500,6 @@
 .ui-checkbox-list__footer-link.--narrow {
 	margin-right: 0 !important;
 	cursor: default;
-}
-
-.ui-checkbox-list__footer-link.--narrow input{
-	cursor: pointer;
 }
 
 .ui-checkbox-list__empty {

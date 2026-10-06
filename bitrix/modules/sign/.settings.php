@@ -2,6 +2,7 @@
 
 use Bitrix\Sign\Access\Model\UserModelRepository;
 use Bitrix\Sign\Access\Service\AccessService;
+use Bitrix\Sign\Access\Service\SelectorSourceAccessService;
 use Bitrix\Sign\Serializer\ItemPropertyJsonSerializer;
 use Bitrix\Sign\Service;
 use Bitrix\Sign\Config;
@@ -295,6 +296,9 @@ return [
 			'sign.service.integration.disk' => [
 				'className' => Service\Integration\Disk\DiskService::class,
 			],
+			Service\Integration\Socialnetwork\FeedPostService::class => [
+				'className' => Service\Integration\Socialnetwork\FeedPostService::class,
+			],
 			'sign.container' => [
 				'className' => Service\Container::class,
 			],
@@ -328,6 +332,9 @@ return [
 				'className' => Service\UserService::class,
 			],
 			'sign.repository.document' => [
+				'className' => Repository\DocumentRepository::class,
+			],
+			Repository\DocumentRepository::class => [
 				'className' => Repository\DocumentRepository::class,
 			],
 			'sign.repository.entity.file' => [
@@ -586,6 +593,9 @@ return [
 			'sign.repository.signerslistuser' => [
 				'className' => Repository\SignersList\SignersListUserRepository::class,
 			],
+			'sign.repository.signerslistuseroption' => [
+				'className' => Repository\SignersList\SignersListUserOptionRepository::class,
+			],
 			Service\SignersListService::class => [
 				'className' => Service\SignersListService::class,
 			],
@@ -596,6 +606,18 @@ return [
 					return [
 						'signersListService' => $container->getSignersListService(),
 						'accessControllerFactory' => $container->getAccessControllerFactory(),
+					];
+				},
+			],
+			SelectorSourceAccessService::class => [
+				'className' => SelectorSourceAccessService::class,
+				'constructorParams' => static function() {
+					$container = Service\Container::instance();
+					return [
+						'signersListAccessService' => $container->getSignersListAccessService(),
+						'documentRepository' => $container->getDocumentRepository(),
+						'accessControllerFactory' => $container->getAccessControllerFactory(),
+						'feature' => Config\Feature::instance(),
 					];
 				},
 			],
@@ -665,6 +687,9 @@ return [
 			'sign.service.b2e.myDocumentsGrid.actionStatus' => [
 				'className' => Service\B2e\MyDocumentsGrid\ActionStatusService::class,
 			],
+			'sign.service.b2e.myDocumentsGrid.signedFile' => [
+				'className' => Service\B2e\MyDocumentsGrid\SignedFileService::class,
+			],
 			'sign.service.preset.templates' => [
 				'className' => Service\Sign\PresetTemplatesService::class,
 			],
@@ -694,6 +719,24 @@ return [
 			],
 			'sign.repository.document.templateFolderRelation' => [
 				'className' => Repository\Document\TemplateFolderRelationRepository::class,
+			],
+			'sign.repository.document.safeFolder' => [
+				'className' => Repository\Document\SafeFolderRepository::class,
+			],
+			'sign.repository.document.safeFolderRelation' => [
+				'className' => Repository\Document\SafeFolderRelationRepository::class,
+			],
+			'sign.service.document.safeFolder' => [
+				'className' => Service\Sign\Document\SafeFolderService::class,
+			],
+			'sign.service.document.safe.access' => [
+				'className' => Service\Sign\Document\Safe\AccessService::class,
+			],
+			'sign.service.document.safe.list' => [
+				'className' => Service\Sign\Document\Safe\ListService::class,
+			],
+			'sign.service.document.safe.folderAggregate' => [
+				'className' => Service\Sign\Document\Safe\SafeFolderAggregateService::class,
 			],
 			'sign.service.document.templateFolder' => [
 				'className' => Service\Sign\Document\TemplateFolderService::class,

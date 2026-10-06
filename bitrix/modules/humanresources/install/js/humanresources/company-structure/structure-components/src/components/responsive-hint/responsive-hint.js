@@ -1,13 +1,16 @@
-import { Reflection, Event } from 'main.core';
+import { Reflection, Event, Text } from 'main.core';
 import 'ui.hint';
 
 /**
  * ui.hint with reactive content
+ *
+ * `content` is plain text: the hint popup renders it via innerHTML, so it is encoded before show()
  */
 export const ResponsiveHint = {
 	name: 'ResponsiveHint',
 
 	props: {
+		/** Plain text only: the popup renders it via innerHTML, so it is encoded before show(). */
 		content: {
 			type: String,
 			required: true,
@@ -69,7 +72,7 @@ export const ResponsiveHint = {
 			this.hint = Reflection.getClass('BX.UI.Hint').createInstance({
 				popupParameters: { ...parameters }, // destruct parameters to recreate hint
 			});
-			this.hint.show(this.$refs['hint-container'], this.content);
+			this.hint.show(this.$refs['hint-container'], Text.encode(this.content));
 		});
 
 		Event.bind(this.$refs['hint-container'], 'mouseleave', () => {

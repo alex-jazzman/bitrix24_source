@@ -1,6 +1,7 @@
 import { type JsonObject } from 'main.core';
 import { CloseIconSize } from 'main.popup';
 import { Tooltip } from 'ui.dialogs.tooltip';
+import { BIcon, Outline } from 'ui.icon-set.api.vue';
 
 import { AddToCollab } from 'im.v2.component.entity-selector';
 import { PromoId } from 'im.v2.const';
@@ -11,6 +12,8 @@ import { type PromoParams } from 'im.v2.provider.pull';
 
 import { IconKey } from '../classes/tooltip-content/icon-key';
 import { CollabTooltipContent } from '../classes/tooltip-content/tooltip-content';
+
+const ICON_SIZE = 24;
 
 const PromoMessages = {
 	[PromoId.membersNotInvitedOneDayToCollab]: {
@@ -26,7 +29,7 @@ const PromoMessages = {
 // @vue/component
 export const AddToChatButton = {
 	name: 'AddToChatButton',
-	components: { AddToCollab },
+	components: { AddToCollab, BIcon },
 	props:
 	{
 		dialogId: {
@@ -43,6 +46,8 @@ export const AddToChatButton = {
 	},
 	computed:
 	{
+		Outline: () => Outline,
+		ICON_SIZE: () => ICON_SIZE,
 		dialog(): ImModelChat
 		{
 			return this.$store.getters['chats/get'](this.dialogId, true);
@@ -122,9 +127,12 @@ export const AddToChatButton = {
 			:title="loc('IM_CONTENT_CHAT_HEADER_OPEN_INVITE_POPUP_TITLE')"
 			:class="iconClasses"
 			class="bx-im-collab-header__add-people-icon"
+			data-testid="im-collab-header-add-btn"
 			@click="openAddToChatPopup"
 			ref="add-members"
-		></div>
+		>
+			<BIcon :name="Outline.ADD_PERSON" :size="ICON_SIZE" />
+		</div>
 		<AddToCollab
 			v-if="showAddToChatPopup"
 			:bindElement="$refs['add-members'] ?? {}"

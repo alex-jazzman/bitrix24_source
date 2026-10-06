@@ -500,6 +500,14 @@ class CrmCreateTodoActivity
 
 	#openDiskFileDialog()
 	{
+		const DiskPicker = Reflection.getClass('BX.Disk.DiskPicker');
+		if (Type.isFunction(DiskPicker?.isEnabled) && DiskPicker.isEnabled())
+		{
+			this.#openUniversalDiskPicker(DiskPicker);
+
+			return;
+		}
+
 		const urlSelect = `/bitrix/tools/disk/uf.php?action=selectFile&dialog2=Y&SITE_ID=${Loc.getMessage('SITE_ID')}`;
 		const dialogName = 'BPMA';
 		BX.ajax.get(
@@ -514,6 +522,23 @@ class CrmCreateTodoActivity
 				}, 10);
 			},
 		);
+	}
+
+	#openUniversalDiskPicker(DiskPicker): void
+	{
+		const picker = new DiskPicker();
+		picker.open({
+			selectionMode: 'multiple',
+			onSelect: (result) => {
+				const selected = result.items.map((item) => ({
+					id: `n${item.objectId}`,
+					name: item.name,
+					type: 'file',
+				}));
+
+				this.#onSaveButtonClickHandler(null, null, selected);
+			},
+		});
 	}
 
 	#onSaveButtonClickHandler(tab, path, selected)

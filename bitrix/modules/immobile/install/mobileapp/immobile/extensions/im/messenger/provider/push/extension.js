@@ -45,16 +45,34 @@ jn.define('im/messenger/provider/push', (require, exports, module) => {
 
 		async getRawPushEvents()
 		{
-			if (!Feature.isInstantPushEnabled)
+			if (!this.manager)
 			{
-				const pushEvents = this.manager.get();
-				logger.log('get push sync', pushEvents);
+				logger.warn('getRawPushEvents: notification history manager is not available');
 
-				return pushEvents;
+				return [];
 			}
 
-			const pushMessageEvents = await this.manager.getAsync();
-			const openlinePushEvents = await this.openlineManager.getAsync();
+			if (!Feature.isInstantPushEnabled)
+			{
+				try
+				{
+					const pushEvents = this.manager.get();
+					logger.log('get push sync', pushEvents);
+
+					return pushEvents ?? [];
+				}
+				catch (error)
+				{
+					logger.warn('getRawPushEvents: sync get failed', error);
+
+					return [];
+				}
+			}
+
+			const pushMessageEvents = await this.#safeGetAsync(this.manager, 'manager');
+			const openlinePushEvents = this.openlineManager
+				? await this.#safeGetAsync(this.openlineManager, 'openlineManager')
+				: null;
 
 			logger.log('get push async, pushMessageEvents: ', pushMessageEvents, ' openlinePushEvents: ', openlinePushEvents);
 			let eventList = [];
@@ -69,6 +87,22 @@ jn.define('im/messenger/provider/push', (require, exports, module) => {
 			}
 
 			return eventList;
+		}
+
+		async #safeGetAsync(manager, label)
+		{
+			try
+			{
+				const result = await manager.getAsync();
+
+				return result ?? null;
+			}
+			catch (error)
+			{
+				logger.warn(`getRawPushEvents: ${label}.getAsync rejected`, error);
+
+				return null;
+			}
 		}
 
 		/**
@@ -246,8 +280,8 @@ jn.define('im/messenger/provider/push', (require, exports, module) => {
 
 		clearHistory()
 		{
-			this.manager.clear();
-			this.openlineManager.clear();
+			this.manager?.clear();
+			this.openlineManager?.clear();
 		}
 
 		/**

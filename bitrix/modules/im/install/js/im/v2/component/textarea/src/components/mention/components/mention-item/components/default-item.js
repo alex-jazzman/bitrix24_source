@@ -1,10 +1,10 @@
 import { Text } from 'main.core';
 
+import { Core } from 'im.v2.application.core';
 import { ChatTitleWithHighlighting } from 'im.v2.component.elements.chat-title';
 import { ActionByRole, ActionByUserType, ChatType } from 'im.v2.const';
 import { highlightText } from 'im.v2.lib.text-highlighter';
 import { PermissionManager } from 'im.v2.lib.permission';
-import { Feature, FeatureManager } from 'im.v2.lib.feature';
 import { type ImModelChat } from 'im.v2.model';
 
 import { MentionItem } from './mention-item';
@@ -62,13 +62,22 @@ export const DefaultItem = {
 		{
 			return this.item;
 		},
-		isAddingUserByMentionAvailable(): boolean
+		isCurrentUserGuest(): boolean
 		{
-			return FeatureManager.isFeatureAvailable(Feature.isAddingUserByMentionAvailable);
+			return this.$store.getters['users/isGuest'](Core.getUserId());
+		},
+		isGuestItem(): boolean
+		{
+			if (!this.isItemUser)
+			{
+				return false;
+			}
+
+			return this.$store.getters['users/isGuest'](this.currentItem.id);
 		},
 		canAddToChat(): boolean
 		{
-			if (!this.isAddingUserByMentionAvailable)
+			if (this.isCurrentUserGuest || this.isGuestItem)
 			{
 				return false;
 			}

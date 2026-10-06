@@ -15,6 +15,7 @@ use Bitrix\Main\SystemException;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\Web\Json;
 use Bitrix\Rest\Internal\Integration\UI\CopilotService;
+use Bitrix\Rest\Internal\Service\VibePlus\IntegrationUpsellHelperCodeProvider;
 use Bitrix\Rest\Preset\Data\Placement;
 use Bitrix\Rest\Preset\Data\Webhook;
 use Bitrix\Rest\Preset\IntegrationTable;
@@ -104,6 +105,13 @@ class RestIntegrationGridComponent extends CBitrixComponent implements Controlle
 		$result = [];
 		$gridOption = new Grid\Options($this->arParams["GRID_ID"]);
 
+		$orderParamsFromRequest = $this->getOrderParamsFromRequest();
+		if ($orderParamsFromRequest !== null)
+		{
+			$gridOption->SetSorting($orderParamsFromRequest['by'], $orderParamsFromRequest['order']);
+			$gridOption->save();
+		}
+
 		if ($option = $gridOption->GetOptions())
 		{
 			if (!empty($option['views'][$option['current_view']]['last_sort_by']))
@@ -122,6 +130,34 @@ class RestIntegrationGridComponent extends CBitrixComponent implements Controlle
 				$result['limit'] = $option['views'][$option['current_view']]['page_size'];
 			}
 		}
+
+		return $result;
+	}
+
+	protected function getOrderParamsFromRequest(): ?array
+	{
+		$request = Application::getInstance()->getContext()->getRequest();
+		$sortBy = (string)$request->getQuery('by');
+		if (empty($sortBy))
+		{
+			return null;
+		}
+
+		$allowedSortFields = array_filter(array_column($this->getGridHeader(), 'sort'));
+
+		if (!in_array($sortBy, $allowedSortFields, true))
+		{
+			return null;
+		}
+
+		$result = [
+			'by' => $sortBy,
+		];
+
+		$order = mb_strtolower((string)$request->getQuery('order'));
+		$order = in_array($order, ['asc', 'desc'], true) ? $order : 'asc';
+
+		$result['order'] = $order;
 
 		return $result;
 	}
@@ -209,6 +245,7 @@ class RestIntegrationGridComponent extends CBitrixComponent implements Controlle
 				],
 			]
 		);
+
 		$paramsGetList = [
 			'order' => ['ID'],
 			'filter' => $this->getFilter(),
@@ -239,6 +276,7 @@ class RestIntegrationGridComponent extends CBitrixComponent implements Controlle
 		$widgetList = array_column(Placement::getList(), 'name', 'id');
 
 		$availabilityTool = \Bitrix\Rest\Infrastructure\IntegrationAvailabilityTool::createByDefault();
+		$upsellHelperCodeProvider = new IntegrationUpsellHelperCodeProvider();
 		$mapper = new Bitrix\Rest\Model\Mapper\Integration();
 		$items = [];
 
@@ -328,7 +366,10 @@ class RestIntegrationGridComponent extends CBitrixComponent implements Controlle
 			}
 			else
 			{
-				$click = 'top.BX.UI.InfoHelper.show("limit_subscription_market_access_buy_marketplus");';
+				$helperCode = $upsellHelperCodeProvider->getHelperCode(
+					'limit_subscription_market_access_buy_marketplus',
+				);
+				$click = 'top.BX.UI.InfoHelper.show(' . Json::encode($helperCode) . ');';
 			}
 			$actions[] = [
 				'TEXT' => Loc::getMessage('REST_INTEGRATION_GRID_ACTION_EDIT'),
@@ -354,7 +395,7 @@ class RestIntegrationGridComponent extends CBitrixComponent implements Controlle
 				}
 			}
 
-			if ($isAdmin || $userId == $item['ID'])
+			if ($isAdmin || $userId === $item['USER_ID'])
 			{
 				$actions[] = [
 					'TEXT' => Loc::getMessage('REST_INTEGRATION_GRID_ACTION_DELETE'),

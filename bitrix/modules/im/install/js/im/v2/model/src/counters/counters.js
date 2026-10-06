@@ -1,7 +1,7 @@
 import { Type } from 'main.core';
 import { BuilderModel, type GetterTree, type ActionTree, type MutationTree } from 'ui.vue3.vuex';
 
-import { RecentType, type RecentTypeItem } from 'im.v2.const';
+import { ParentChatScope, RecentType, type RecentTypeItem, type ParentChatIdType } from 'im.v2.const';
 import { formatFieldsWithConfig } from 'im.v2.model';
 import { RecentManager } from 'im.v2.lib.recent';
 
@@ -10,6 +10,13 @@ import { counterFieldsConfig } from './format/field-config';
 
 type CountersState = { collection: CountersCollection };
 type CountersCollection = { [chatId: string]: ImModelCounter };
+
+type RecentTypeMatchParams = {
+	collection: CountersCollection,
+	counterItem: ImModelCounter,
+	recentType: RecentTypeItem,
+	parentChatId?: ParentChatIdType,
+};
 
 // noinspection UnnecessaryLocalVariableJS
 export class CountersModel extends BuilderModel
@@ -81,7 +88,7 @@ export class CountersModel extends BuilderModel
 				const shouldCheckParentMute = !RecentManager.isTypeWithNestedChats(recentType);
 				for (const counterItem of Object.values(collection))
 				{
-					if (!this.#matchesRecentType(collection, counterItem, recentType))
+					if (!this.#shouldCountByRecentType({ collection, counterItem, recentType }))
 					{
 						continue;
 					}
@@ -122,39 +129,33 @@ export class CountersModel extends BuilderModel
 
 				return totalCount;
 			},
+			/** @function counters/getTotalCounterByIdsWithChildren */
+			getTotalCounterByIdsWithChildren: (state: CountersState) => (chatIds: number[]): number => {
+				let totalCount = 0;
+				for (const chatId of chatIds)
+				{
+					const counterItem = state.collection[chatId];
+					if (!counterItem)
+					{
+						continue;
+					}
+
+					if (this.#isMuted(counterItem) || this.#isParentMuted(state.collection, counterItem))
+					{
+						continue;
+					}
+
+					totalCount += this.#resolveCounter(counterItem) + this.#sumChildrenCounter(state.collection, chatId);
+				}
+
+				return totalCount;
+			},
 			/** @function counters/getChildrenTotalCounter */
 			getChildrenTotalCounter: (state: CountersState) => (
 				parentChatId: number,
 				recentType?: RecentTypeItem,
 			): number => {
-				if (parentChatId === 0)
-				{
-					return 0;
-				}
-
-				let totalCount = 0;
-				for (const counterItem of Object.values(state.collection))
-				{
-					if (recentType && !this.#hasRecentType(counterItem, recentType))
-					{
-						continue;
-					}
-
-					const hasRequiredParent = counterItem.parentChatId === parentChatId;
-					if (!hasRequiredParent)
-					{
-						continue;
-					}
-
-					if (this.#isMuted(counterItem))
-					{
-						continue;
-					}
-
-					totalCount += this.#resolveCounter(counterItem);
-				}
-
-				return totalCount;
+				return this.#sumChildrenCounter(state.collection, parentChatId, recentType);
 			},
 			/** @function counters/getChildrenIdsWithCounter */
 			getChildrenIdsWithCounter: (state: CountersState) => (parentChatId: number): number[] => {
@@ -264,14 +265,14 @@ export class CountersModel extends BuilderModel
 				store.commit('setMuteStatus', payload);
 			},
 			/** @function counters/clearByRecentType */
-			clearByRecentType: (store, payload: { recentType: RecentTypeItem }) => {
-				const { recentType } = payload;
+			clearByRecentType: (store, payload: { recentType: RecentTypeItem, parentChatId: number }) => {
+				const { recentType, parentChatId } = payload;
 				const collection = store.state.collection;
 
 				const idsToDelete = [];
 				for (const counterItem of Object.values(collection))
 				{
-					if (!this.#matchesRecentType(collection, counterItem, recentType))
+					if (!this.#shouldClearByRecentType({ collection, counterItem, recentType, parentChatId }))
 					{
 						continue;
 					}
@@ -360,14 +361,12 @@ export class CountersModel extends BuilderModel
 		};
 	}
 
-	#matchesRecentType(
-		collection: CountersCollection,
-		counterItem: ImModelCounter,
-		recentType: RecentTypeItem,
-	): boolean
+	#shouldCountByRecentType(params: RecentTypeMatchParams): boolean
 	{
+		const { collection, counterItem, recentType } = params;
+
 		// chat's parent has section
-		if (this.#hasParentRecentType(collection, counterItem, recentType))
+		if (this.#hasParentRecentType({ collection, counterItem, recentType }))
 		{
 			return true;
 		}
@@ -381,7 +380,26 @@ export class CountersModel extends BuilderModel
 			return shouldUseChildrenCounter && this.#hasRecentType(counterItem, recentType);
 		}
 
-		// root chat has section
+		return this.#hasRecentType(counterItem, recentType);
+	}
+
+	#shouldClearByRecentType(params: RecentTypeMatchParams): boolean
+	{
+		const { collection, counterItem, recentType, parentChatId } = params;
+
+		// chat's parent has section
+		if (this.#hasParentRecentType({ collection, counterItem, recentType }))
+		{
+			return true;
+		}
+
+		const isAllScope = parentChatId === ParentChatScope.all;
+		const matchesParentScope = isAllScope || parentChatId === counterItem.parentChatId;
+		if (!matchesParentScope)
+		{
+			return false;
+		}
+
 		return this.#hasRecentType(counterItem, recentType);
 	}
 
@@ -390,12 +408,10 @@ export class CountersModel extends BuilderModel
 		return counterItem.recentSections.includes(recentType);
 	}
 
-	#hasParentRecentType(
-		collection: CountersCollection,
-		counterItem: ImModelCounter,
-		recentType: RecentTypeItem,
-	): boolean
+	#hasParentRecentType(params: RecentTypeMatchParams): boolean
 	{
+		const { counterItem, collection, recentType } = params;
+
 		const parentChatId = counterItem.parentChatId;
 		const parentChat = collection[parentChatId];
 		if (parentChatId === 0 || !parentChat)
@@ -420,6 +436,37 @@ export class CountersModel extends BuilderModel
 		}
 
 		return parent.isMuted;
+	}
+
+	#sumChildrenCounter(collection: CountersCollection, parentChatId: number, recentType?: RecentTypeItem): number
+	{
+		if (parentChatId === 0)
+		{
+			return 0;
+		}
+
+		let totalCount = 0;
+		for (const counterItem of Object.values(collection))
+		{
+			if (recentType && !this.#hasRecentType(counterItem, recentType))
+			{
+				continue;
+			}
+
+			if (counterItem.parentChatId !== parentChatId)
+			{
+				continue;
+			}
+
+			if (this.#isMuted(counterItem))
+			{
+				continue;
+			}
+
+			totalCount += this.#resolveCounter(counterItem);
+		}
+
+		return totalCount;
 	}
 
 	#resolveCounter(counterItem: ImModelCounter): number

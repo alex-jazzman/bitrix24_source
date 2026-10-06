@@ -1,4 +1,4 @@
-import { Dom, Tag, Type, Event } from 'main.core';
+import { Dom, Tag, Type, Event, Loc } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import { Icon, Outline as OutlineIconSet } from 'ui.icon-set.api.core';
 import { Menu, type MenuItemOptions } from 'ui.system.menu';
@@ -49,14 +49,7 @@ export default class NavigationItem
 
 	getTitle(): string
 	{
-		if (!this.title)
-		{
-			this.title = Tag.render`
-				<div class="ui-nav-panel__item-title">${this.title}</div>	
-			`;
-		}
-
-		return this.title;
+		return this.title ?? '';
 	}
 
 	getContainer(): HTMLElement | null
@@ -68,17 +61,13 @@ export default class NavigationItem
 
 		if (!this.linkContainer)
 		{
-			const id = this.id ? `id="ui-nav-panel-item-${this.id}"` : '';
-			this.linkContainer = Tag.render`
-				<div ${id} class="ui-nav-panel__item">
-					<span>${this.title ? this.getTitle() : ''}</span>
-					${this.#isDropdown ? this.#renderDropdownIcon() : ''}
-				</div>
-			`;
+			this.linkContainer = this.#renderContainer();
 
 			if (this.#isDropdown)
 			{
 				Dom.addClass(this.linkContainer, '--dropdown');
+				this.linkContainer.setAttribute('aria-haspopup', 'menu');
+				this.#setExpanded(false);
 			}
 
 			this.setEvents();
@@ -105,6 +94,34 @@ export default class NavigationItem
 		return this.linkContainer;
 	}
 
+	#isLink(): boolean
+	{
+		// only a link with an href is a real anchor; an href-less <a> drops out of the focus zone (a[href])
+		return Type.isStringFilled(this.link?.href) && this.#isDropdown === false;
+	}
+
+	#renderContainer(): HTMLElement
+	{
+		const id = this.id ? `id="ui-nav-panel-item-${this.id}"` : '';
+		const title = Tag.render`
+			<span class="ui-nav-panel__item-title">${this.getTitle()}</span>
+		`;
+
+		if (this.#isLink())
+		{
+			return Tag.render`
+				<a ${id} class="ui-nav-panel__item">${title}</a>
+			`;
+		}
+
+		return Tag.render`
+			<button ${id} type="button" class="ui-nav-panel__item">
+				${title}
+				${this.#isDropdown ? this.#renderDropdownIcon() : ''}
+			</button>
+		`;
+	}
+
 	isLocked(): boolean
 	{
 		return this.locked;
@@ -113,13 +130,46 @@ export default class NavigationItem
 	lock()
 	{
 		this.locked = true;
-		Dom.addClass(this.getContainer(), '--locked');
+
+		const container = this.getContainer();
+		if (!container)
+		{
+			return;
+		}
+
+		// locked items stay operable (e.g. to surface an upsell), so no aria-disabled;
+		// the lock is conveyed to assistive tech through the accessible name instead
+		Dom.addClass(container, '--locked');
+
+		const lockedLabel = Loc.getMessage('UI_NAV_PANEL_ITEM_LOCKED_ARIA', { '#TITLE#': this.getTitle() });
+		if (Type.isStringFilled(lockedLabel))
+		{
+			container.setAttribute('aria-label', lockedLabel);
+		}
 	}
 
 	unLock()
 	{
 		this.locked = false;
-		Dom.removeClass(this.getContainer(), '--locked');
+
+		const container = this.getContainer();
+		if (!container)
+		{
+			return;
+		}
+
+		Dom.removeClass(container, '--locked');
+
+		// restore the consumer-provided accessible name (from the link option) instead of dropping it
+		const ariaLabel = this.link?.['aria-label'];
+		if (Type.isStringFilled(ariaLabel))
+		{
+			container.setAttribute('aria-label', ariaLabel);
+		}
+		else
+		{
+			container.removeAttribute('aria-label');
+		}
 	}
 
 	setEvents()
@@ -135,12 +185,6 @@ export default class NavigationItem
 
 		if (this.link)
 		{
-			this.linkContainer = Tag.render`
-				<a class="ui-nav-panel__item">
-					<span>${this.title ? this.getTitle() : ''}</span>
-				</a>
-			`;
-
 			Object.entries(this.link).forEach(([linkKey, linkValue]) => {
 				this.linkContainer.setAttribute(linkKey, linkValue);
 			});
@@ -159,10 +203,15 @@ export default class NavigationItem
 	activate()
 	{
 		this.active = true;
+		const container = this.getContainer();
+
 		if (this.#isDropdown === false)
 		{
-			Dom.addClass(this.getContainer(), '--active');
+			Dom.addClass(container, '--active');
 		}
+
+		// aria-current is independent of the visual class: a collapsed active item is a dropdown trigger too
+		container?.setAttribute('aria-current', this.#isLink() ? 'page' : 'true');
 
 		this.#onActivate?.(this);
 		EventEmitter.emit('BX.UI.NavigationPanel.Item:active', this);
@@ -171,11 +220,15 @@ export default class NavigationItem
 	inactivate()
 	{
 		this.active = false;
+		// getContainer() returns null for an inactive dropdown, so fall back to the rendered node
+		const container = this.linkContainer ?? this.getContainer();
 
 		if (this.#isDropdown === false)
 		{
-			Dom.removeClass(this.getContainer(), '--active');
+			Dom.removeClass(container, '--active');
 		}
+
+		container?.removeAttribute('aria-current');
 
 		EventEmitter.emit('BX.UI.NavigationPanel.Item:inactive', this);
 	}
@@ -188,8 +241,13 @@ export default class NavigationItem
 		})).render();
 
 		return Tag.render`
-			<span class="ui-nav-panel__item-dropdown-icon ui-icon-set__scope">${icon}</span>
+			<span class="ui-nav-panel__item-dropdown-icon ui-icon-set__scope" aria-hidden="true">${icon}</span>
 		`;
+	}
+
+	#setExpanded(isExpanded: boolean): void
+	{
+		this.linkContainer?.setAttribute('aria-expanded', isExpanded ? 'true' : 'false');
 	}
 
 	#showMenu(): void
@@ -223,9 +281,11 @@ export default class NavigationItem
 			events: {
 				onShow: () => {
 					Dom.addClass(this.linkContainer, '--active');
+					this.#setExpanded(true);
 				},
 				onClose: () => {
 					Dom.removeClass(this.linkContainer, '--active');
+					this.#setExpanded(false);
 				},
 			},
 		});

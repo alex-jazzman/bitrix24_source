@@ -8,6 +8,8 @@
 jn.define('im/messenger/lib/parser/functions/quote', (require, exports, module) => {
 
 	const { Loc } = require('im/messenger/loc');
+	const { Type } = require('type');
+	const { PerfPoint } = require('debug/prism');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { parsedElements, PLACEHOLDER } = require('im/messenger/lib/parser/utils/parsed-elements');
@@ -19,9 +21,125 @@ jn.define('im/messenger/lib/parser/functions/quote', (require, exports, module) 
 	const { parserImage } = require('im/messenger/lib/parser/functions/image');
 	const { getLogger } = require('im/messenger/lib/logger');
 	const { NEW_LINE } = require('im/messenger/lib/parser/const');
+	const { FileType } = require('im/messenger/const');
 	const logger = getLogger('parser');
 
 	const QUOTE_SIGN = '>>';
+
+	/**
+	 * Build a structured media preview object for the quote block.
+	 * The preview is additive — native renders it if supported; older native
+	 * falls back to the existing text field (no regression).
+	 *
+	 * Preview shape (QuotePreview):
+	 *   { type: string, urlPreview?: string, name?: string, count?: number }
+	 *
+	 * Possible type values:
+	 *   'image' | 'video' | 'videoNote' | 'audio' | 'file' | 'files' | 'sticker' | 'gallery' | 'deleted_sticker'
+	 *
+	 * @param {string|number} messageId — original message id (replyId)
+	 * @return {object|null} preview object or null if no structured preview is applicable
+	 */
+	function buildQuotePreview(messageId)
+	{
+		if (!messageId)
+		{
+			return null;
+		}
+
+		const point = new PerfPoint('IM Reply With Media', 'buildQuotePreview').start();
+		const store = serviceLocator.get('core').getStore();
+		const modelMessage = store.getters['messagesModel/getById'](Number(messageId));
+		if (!Type.isObject(modelMessage) || !('id' in modelMessage))
+		{
+			point.end();
+
+			return null;
+		}
+
+		const { stickerParams } = modelMessage;
+
+		// --- Sticker (must check before files) ---
+		if (Type.isPlainObject(stickerParams))
+		{
+			// Check if sticker data exists in the pack model (isDeletedSticker detection)
+			const stickerData = store.getters['stickerPackModel/getStickerData'](stickerParams);
+			point.end();
+			if (!Type.isPlainObject(stickerData))
+			{
+				// Deleted sticker — LBS п.16 [I]: use DELETED_STICKER phrase (p5.T2)
+				return {
+					type: 'deleted_sticker',
+				};
+			}
+
+			return {
+				type: 'sticker',
+				urlPreview: stickerData?.uri || null,
+			};
+		}
+
+		const files = store.getters['messagesModel/getMessageFiles'](modelMessage.id);
+		point.end();
+
+		if (Type.isArray(files) && files.length > 0)
+		{
+			if (files.length === 1)
+			{
+				const file = files[0];
+
+				// Priority: videoNote > video (LBS п.15 [!])
+				if (file.isVideoNote)
+				{
+					return {
+						type: 'videoNote',
+						urlPreview: file.urlPreview || null,
+					};
+				}
+
+				if (file.type === FileType.video)
+				{
+					return {
+						type: 'video',
+						urlPreview: file.urlPreview || null,
+					};
+				}
+
+				if (file.type === FileType.image)
+				{
+					return {
+						type: 'image',
+						urlPreview: file.urlPreview || null,
+					};
+				}
+
+				if (file.type === FileType.audio)
+				{
+					// duration is not available on the client-side file model; native fills it separately
+					return { type: 'audio' };
+				}
+
+				// Generic file: icon + name (AC-011 — only metadata, no full download)
+				return {
+					type: 'file',
+					name: file.name || null,
+				};
+			}
+
+			// Multiple files — gallery if all are media, else files (AC-009)
+			const media = files.filter((f) => f?.type === FileType.image || f?.type === FileType.video);
+			const isOnlyMedia = media.length === files.length;
+			const firstFile = files[0];
+
+			return {
+				type: isOnlyMedia ? 'gallery' : 'files',
+				count: files.length,
+				urlPreview: isOnlyMedia && firstFile ? (firstFile.urlPreview || null) : null,
+			};
+		}
+
+		return null;
+	}
 
 	const parserQuote = {
 		patterns: {
@@ -260,22 +378,36 @@ jn.define('im/messenger/lib/parser/functions/quote', (require, exports, module) 
 			restoredTagQuoteText = parserImage.decodeIcon(restoredTagQuoteText);
 			restoredTagQuoteText = parserImage.simplifyImage(restoredTagQuoteText);
 
+			// Build structured media preview for native layer (P5 / AC-007..010, AC-009).
+			// preview is additive — native renders it if CAP-01 is supported (Q-3 / P6 gate);
+			// older native ignores the unknown field and falls back to restoredTagQuoteText (degradation).
+			// We only build a preview when we know the original message id (contextMessageId).
+			const preview = contextMessageId ? buildQuotePreview(contextMessageId) : null;
+
+			// For deleted sticker: replace text with the reserved phrase (LBS п.16 [I], p5.T2).
+			let finalQuoteText = restoredTagQuoteText;
+			if (preview?.type === 'deleted_sticker')
+			{
+				finalQuoteText = Loc.getMessage('IMMOBILE_PARSER_EMOJI_TYPE_DELETED_STICKER');
+			}
+
 			let quoteMark = '';
 			if (isActiveQuote)
 			{
-				restoredTagQuoteText = parserUrl.simplify(restoredTagQuoteText);
+				finalQuoteText = parserUrl.simplify(finalQuoteText);
 				const activeQuote = new QuoteActive(
 					restoredTagTitle,
-					restoredTagQuoteText,
+					finalQuoteText,
 					contextDialogId,
 					contextMessageId,
+					preview,
 				);
 				const activeQuoteId = parsedElements.add(activeQuote);
 				quoteMark = `${PLACEHOLDER}${activeQuoteId}`;
 			}
 			else
 			{
-				const inactiveQuote = new QuoteInactive(restoredTagTitle, restoredTagQuoteText);
+				const inactiveQuote = new QuoteInactive(restoredTagTitle, finalQuoteText, preview);
 				const inactiveQuoteId = parsedElements.add(inactiveQuote);
 				quoteMark = `${PLACEHOLDER}${inactiveQuoteId}`;
 			}

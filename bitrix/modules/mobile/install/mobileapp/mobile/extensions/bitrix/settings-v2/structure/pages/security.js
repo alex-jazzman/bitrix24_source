@@ -8,6 +8,7 @@ jn.define('settings-v2/structure/pages/security', (require, exports, module) => 
 		createUserSelector,
 		createBanner,
 		createLinkButton,
+		createTextButton,
 	} = require('settings-v2/structure/helpers/item-create-helper');
 	const {
 		createSecurityInfo,
@@ -27,6 +28,8 @@ jn.define('settings-v2/structure/pages/security', (require, exports, module) => 
 	const { DialogOpener } = require('im/messenger/api/dialog-opener');
 	const { LoginHistoryList } = require('intranet/login-history-list');
 	const { Icon } = require('ui-system/blocks/icon');
+	const { Color } = require('tokens');
+	const { showLogoutOtherDevicesConfirm } = require('settings-v2/structure/helpers/security-logout-other-devices-helper');
 
 	const userSelectorSafeScreenshotsId = 'security-safe-users-screenshots';
 	const userSelectorSafeCopyTextId = 'security-safe-users-copy-text';
@@ -65,6 +68,7 @@ jn.define('settings-v2/structure/pages/security', (require, exports, module) => 
 			isBiometricAuthEnabled,
 			isHighPushOtpPromote: Boolean(securityData.isHighPushOtpPromote),
 			isLoginHistoryAvailable: Boolean(securityData.isLoginHistoryAvailable),
+			isLogoutOtherDeviceAvailable: Boolean(securityData.isLogoutOtherDeviceAvailable),
 		};
 	};
 
@@ -274,6 +278,17 @@ jn.define('settings-v2/structure/pages/security', (require, exports, module) => 
 						},
 						prefilter: (settingsData) => {
 							return settingsData.isLoginHistoryAvailable;
+						},
+						divider: false,
+					}),
+					createTextButton({
+						id: 'security-logout-other-devices',
+						title: Loc.getMessage('SETTINGS_V2_STRUCTURE_SECURITY_LOGOUT_OTHER_DEVICES'),
+						color: Color.accentMainAlert,
+						onClick: showLogoutOtherDevicesConfirm,
+						divider: false,
+						prefilter: (settingsData) => {
+							return settingsData.isLogoutOtherDeviceAvailable;
 						},
 					}),
 				],

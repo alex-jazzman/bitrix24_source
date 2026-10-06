@@ -1,0 +1,38 @@
+<?php
+
+return [
+	'extensions' => [
+		'asset-manager',
+		'in-app-url',
+		'layout/ui/info-helper',
+		'layout/ui/loading-screen',
+		'layout/pure-component',
+		'layout/ui/safe-image',
+		'layout/ui/scroll-view',
+		'loc',
+		'market/utils',
+		'notify-manager',
+		'require-lazy',
+		'selector/widget/factory',
+		'toast/error',
+		'tokens',
+		'ui-system/blocks/avatar',
+		'ui-system/blocks/icon',
+		'ui-system/blocks/switcher',
+		'ui-system/form/buttons/button',
+		'ui-system/form/checkbox',
+		'ui-system/layout/area',
+		'ui-system/layout/box',
+		'ui-system/layout/dialog-footer',
+		'ui-system/typography/bbcodetext',
+		'ui-system/typography/heading',
+		'ui-system/typography/text',
+		'utils/test',
+	],
+	'bundle' => [
+		'./src/steps/base-step',
+		'./src/steps/access-step',
+		'./src/steps/agreements-step',
+		'./src/steps/permissions-step',
+	],
+];

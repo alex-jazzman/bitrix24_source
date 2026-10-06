@@ -1,0 +1,4 @@
+<?php
+$MESS["CRM_FILTER_RELATED_ENTITIES_LABEL"] = "Связи с элементами CRM";
+$MESS["CRM_FILTER_RELATED_ENTITIES_HAS"] = "#ENTITY#: есть связь";
+$MESS["CRM_FILTER_RELATED_ENTITIES_NO"] = "#ENTITY#: нет связей";

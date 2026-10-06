@@ -2,6 +2,7 @@
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
 use Bitrix\Sale\Location;
+use Bitrix\Main\Web\Uri;
 
 if (!CModule::IncludeModule('crm'))
 {
@@ -195,13 +196,12 @@ if ($locDelete && ($arParams['TYPE'] == 'edit' || $arParams['TYPE'] == 'show') &
 	$arResult['BUTTONS'][] = array(
 		'TEXT' => GetMessage('CRM_LOC_DELETE'),
 		'TITLE' => GetMessage('CRM_LOC_DELETE_TITLE'),
-		'LINK' => "javascript:loc_delete('".GetMessage('CRM_LOC_DELETE_DLG_TITLE')."', '".GetMessage('CRM_LOC_DELETE_DLG_MESSAGE')."', '".GetMessage('CRM_LOC_DELETE_DLG_BTNTITLE')."', '".CHTTP::urlAddParams(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_LOCATIONS_EDIT'],
-				array('loc_id' => $locID)),
-			array('delete' => '', 'sessid' => bitrix_sessid())
-		)."')",
+		'LINK' => "javascript:loc_delete('".GetMessage('CRM_LOC_DELETE_DLG_TITLE')."', '".GetMessage('CRM_LOC_DELETE_DLG_MESSAGE')."', '".GetMessage('CRM_LOC_DELETE_DLG_BTNTITLE')."', '"
+			. (new Uri(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_LOCATIONS_EDIT'], array('loc_id' => $locID))))
+				->addParams(array('delete' => '', 'sessid' => bitrix_sessid()))
+			. "')",
 		'ICON' => 'btn-delete'
 	);
 }
 
 $this->IncludeComponentTemplate();
-?>

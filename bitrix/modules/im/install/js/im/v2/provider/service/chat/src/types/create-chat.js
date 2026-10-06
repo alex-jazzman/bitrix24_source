@@ -60,6 +60,7 @@ type CollabChatCreateConfig = BaseCreateConfig & {
 type CopilotCreateConfig = {
 	type: ChatType.copilot,
 	copilotMainRole: string,
+	parentChatId?: number,
 };
 
 type ExtendChatConfig = {

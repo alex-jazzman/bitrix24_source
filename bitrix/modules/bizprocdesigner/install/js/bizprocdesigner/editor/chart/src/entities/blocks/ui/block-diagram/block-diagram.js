@@ -75,6 +75,7 @@ export const BlockDiagram = {
 			:disabled="disabled"
 			:enableGrouping="enableGrouping"
 			:contextMenuItems="contextMenuItems"
+			:snapToGrid="true"
 			@update:blocks="$emit('update:blocks', $event)"
 			@update:connections="$emit('update:connections', $event)"
 			@blockTransitionEnd="$emit('blockTransitionEnd', $event)"

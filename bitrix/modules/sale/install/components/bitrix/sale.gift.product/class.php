@@ -1,7 +1,12 @@
 <?php
+
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\SystemException;
+use Bitrix\Main\Web\Uri;
 use Bitrix\Sale;
+use Bitrix\Sale\Discount\Gift\Manager;
+use Bitrix\Sale\Discount\Gift\RelatedDataTable;
+use Bitrix\Sale\Compatible\DiscountCompatibility;
 
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 
@@ -14,7 +19,7 @@ CBitrixComponent::includeComponentClass("bitrix:catalog.viewed.products");
  */
 class CSaleGiftProductComponent extends CCatalogViewedProductsComponent
 {
-	/** @var \Bitrix\Sale\Discount\Gift\Manager */
+	/** @var Manager */
 	protected $giftManager;
 	/** @var array */
 	private $productIds;
@@ -43,7 +48,7 @@ class CSaleGiftProductComponent extends CCatalogViewedProductsComponent
 	{
 		global $USER;
 		$userId = $USER instanceof CUser? $USER->getId() : null;
-		$this->giftManager = \Bitrix\Sale\Discount\Gift\Manager::getInstance()->setUserId($userId);
+		$this->giftManager = Manager::getInstance()->setUserId($userId);
 	}
 
 	/**
@@ -121,10 +126,7 @@ class CSaleGiftProductComponent extends CCatalogViewedProductsComponent
 
 	private function recreateUrlTemplate($keyTemplate, $urlTemplate)
 	{
-		$this->arParams[$keyTemplate] = CHTTP::urlDeleteParams(
-			$urlTemplate,
-			array($this->arParams['PRODUCT_ID_VARIABLE'], $this->arParams['ACTION_VARIABLE'], '')
-		);
+		$this->arParams[$keyTemplate] = (string)(new Uri($urlTemplate))->deleteParams([$this->arParams['PRODUCT_ID_VARIABLE'], $this->arParams['ACTION_VARIABLE']]);
 		$this->arParams[$keyTemplate] .= (mb_stripos($this->arParams[$keyTemplate], '?') === false ? '?' : '&');
 
 		$this->urlTemplates['~' . $keyTemplate] = $this->arParams[$keyTemplate].$this->arParams['ACTION_VARIABLE'].'='.self::ACTION_BUY.'&'.$this->arParams['PRODUCT_ID_VARIABLE'].'=';
@@ -172,7 +174,7 @@ class CSaleGiftProductComponent extends CCatalogViewedProductsComponent
 	}
 
 	/**
-	 * Returns list of product ids which will be showed.
+	 * Returns list of product ids which will be shown.
 	 * @return array
 	 */
 	protected function getProductIds()
@@ -187,9 +189,9 @@ class CSaleGiftProductComponent extends CCatalogViewedProductsComponent
 			return array();
 		}
 
-		\Bitrix\Sale\Compatible\DiscountCompatibility::stopUsageCompatible();
+		DiscountCompatibility::stopUsageCompatible();
 		$collections = $this->getGiftCollections();
-		\Bitrix\Sale\Compatible\DiscountCompatibility::revertUsageCompatible();
+		DiscountCompatibility::revertUsageCompatible();
 
 		$this->productIds = array();
 		foreach($collections as $collection)
@@ -247,7 +249,7 @@ class CSaleGiftProductComponent extends CCatalogViewedProductsComponent
 		if(!empty($this->items[$offerId]['OFFERS']))
 		{
 			//positive search
-			foreach($this->items[$offerId]['OFFERS'] as $i => $offer)
+			foreach($this->items[$offerId]['OFFERS'] as $offer)
 			{
 				if($offer['ID'] == $offerId)
 				{
@@ -416,7 +418,7 @@ class CSaleGiftProductComponent extends CCatalogViewedProductsComponent
 			$elementIds[] = $product['ELEMENT']['ID'];
 		}
 
-		return (bool)\Bitrix\Sale\Discount\Gift\RelatedDataTable::getRow(array(
+		return (bool)RelatedDataTable::getRow(array(
 			'select' => array('ID'),
 			'filter' => array(
 				array(

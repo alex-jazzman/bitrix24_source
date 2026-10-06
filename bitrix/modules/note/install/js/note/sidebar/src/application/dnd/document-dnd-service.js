@@ -1,5 +1,6 @@
 import { EventEmitter, BaseEvent } from 'main.core.events';
 import { NoteEvent } from '../../services/note-events';
+import { captureRowTravel, markSectionMotion } from '../../utils/drop-motion';
 import type { SidebarDocument, Collection } from '../../type';
 import type { SidebarApi } from '../../services/sidebar-api';
 
@@ -341,6 +342,11 @@ export class DocumentDndService
 			return;
 		}
 
+		// Read while the row still stands where it was picked up, before anything is awaited: the move is a
+		// request away and the branch it lands in may have to be loaded first, and both take frames the row
+		// spends where it was.
+		const travel = captureRowTravel(dragItem.id);
+
 		try
 		{
 			const position = this.#resolveDocumentPosition(dragItem, target);
@@ -351,7 +357,7 @@ export class DocumentDndService
 				await this.#guardPrefetchTarget(target.collectionId, nextParentId);
 			}
 
-			await this.#api.moveDocument(dragItem.id, target.collectionId, nextParentId, position);
+			const response = await this.#api.moveDocument(dragItem.id, target.collectionId, nextParentId, position);
 
 			this.#store.actions.moveDocumentLocal({
 				docId: dragItem.id,
@@ -370,6 +376,13 @@ export class DocumentDndService
 					position: dragItem.position,
 				},
 			});
+			this.#store.actions.applyDocumentPositions(response.affectedPositions);
+
+			// After the patch, before the reloads the events below set off: what the row has to travel is the
+			// distance to where the move itself put it, and what the sections have to move by is what the two
+			// branches now hold.
+			travel?.play();
+			markSectionMotion(document.querySelector('.sidebar'));
 
 			const changedParents = new Set();
 

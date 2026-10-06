@@ -1,4 +1,4 @@
-import { Tag, Dom, Loc, Extension, Text } from 'main.core';
+import { Tag, Dom, Loc, Extension } from 'main.core';
 import type { SetupMember } from 'sign.v2.api';
 import { RepresentativeSelector } from 'sign.v2.b2e.representative-selector';
 import { MemberRole } from 'sign.type';
@@ -45,11 +45,10 @@ export class DocumentValidation
 			return null;
 		}
 
-		const index = Text.getRandom();
 		const excludedEntityList = this.#getSelectedReviewerEntityList();
 		const selector = new RepresentativeSelector({
 			cacheable: false,
-			context: `sign_b2e_representative_selector_reviewer_${currentUserId}_${index}`,
+			context: `sign_b2e_representative_selector_reviewer_${currentUserId}`,
 			roleEnabled: this.#isTemplate,
 			isDescriptionVisible: false,
 			isMenuButtonVisible: Object.keys(this.#reviewerRepresentativeSelectorList).length > 0,

@@ -1,7 +1,9 @@
 import { Tag, Loc, Type, Dom, Text } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import { Button } from 'ui.buttons';
+import { FocusNavigator } from 'ui.a11y';
 import 'sidepanel';
+import { announce } from 'bizproc.a11y';
 
 import { Header } from '../components/header';
 import { Breadcrumbs } from '../components/breadcrumbs';
@@ -39,6 +41,7 @@ export class SingleStart
 
 	#canExit: boolean = false;
 	#isExitInProcess: boolean = false;
+	#isNextStepInProcess: boolean = false;
 
 	#templateId: number;
 	#signedDocumentType: string;
@@ -77,6 +80,7 @@ export class SingleStart
 					'onChangeStepAvailability',
 					this.#resolveButtonsEnableState.bind(this),
 				);
+				data.step.subscribe('onEnterSubmit', () => this.#next());
 			})
 		;
 		this.#sequenceSteps = Object.keys(composedData);
@@ -176,13 +180,20 @@ export class SingleStart
 
 	#next()
 	{
+		if (this.#isNextStepInProcess)
+		{
+			return;
+		}
+
 		this.#cleanErrors();
 		if (this.#isNextStepEnable())
 		{
+			this.#isNextStepInProcess = true;
 			this.#markButtonsOnBeforeNextStep();
 
 			this.#steps.get(this.#currentStepId).onBeforeNextStep()
 				.then(() => {
+					this.#isNextStepInProcess = false;
 					this.#breadcrumbs.next();
 
 					this.#currentStepId = (
@@ -192,8 +203,11 @@ export class SingleStart
 
 					this.#buttons.next();
 					this.#resolveButtonsEnableState();
+					this.#focusCurrentStep();
+					this.#announceCurrentStep();
 				})
 				.catch((error) => {
+					this.#isNextStepInProcess = false;
 					this.#resolveButtonsEnableState();
 					if (error)
 					{
@@ -217,6 +231,31 @@ export class SingleStart
 
 			this.#buttons.back();
 			this.#resolveButtonsEnableState();
+			this.#focusCurrentStep();
+			this.#announceCurrentStep();
+		}
+	}
+
+	// announced after the focus move on purpose: moving the focus makes the screen reader speak
+	// the newly focused element, and that speech drops a polite message queued right before it
+	#announceCurrentStep(): void
+	{
+		// the final step announces the start result itself, a step title would talk over it
+		if (this.#steps.get(this.#currentStepId)?.announcesOwnState())
+		{
+			return;
+		}
+
+		announce(this.#breadcrumbs.getCurrentStepTitle());
+	}
+
+	#focusCurrentStep(): void
+	{
+		if (this.#content)
+		{
+			// the action buttons live outside the content, so without this the focus would
+			// stay on them while the step behind has already changed
+			FocusNavigator.focusFirst(this.#content, { preventScroll: true });
 		}
 	}
 

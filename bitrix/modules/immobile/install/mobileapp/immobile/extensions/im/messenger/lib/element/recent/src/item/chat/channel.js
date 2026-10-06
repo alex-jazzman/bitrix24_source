@@ -141,8 +141,7 @@ jn.define('im/messenger/lib/element/recent/item/chat/channel', (require, exports
 		createCounterTestId()
 		{
 			const childrenCounter = this.getChildrenCounter();
-			const dialog = this.getDialogItem();
-			const dialogCounters = dialog.counter;
+			const dialogCounters = this.getCounter();
 
 			if (this.messageCount === 0 && !this.unread && childrenCounter === 0)
 			{
@@ -169,7 +168,7 @@ jn.define('im/messenger/lib/element/recent/item/chat/channel', (require, exports
 			}
 
 			const dialogId = this.getModelItem().id;
-			const suffix = (this.getChildrenCounter() > 0 && !dialog.counter)
+			const suffix = (this.getChildrenCounter() > 0 && !dialogCounters)
 				? CounterSuffix.comments
 				: CounterSuffix.posts;
 

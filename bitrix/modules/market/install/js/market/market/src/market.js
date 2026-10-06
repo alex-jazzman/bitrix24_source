@@ -3,9 +3,40 @@ import { BitrixVue, nextTick } from 'ui.vue3';
 import { Toolbar } from 'market.toolbar';
 import { Main } from 'market.main';
 import { ListApps } from 'market.list-apps';
+import { Runtime } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 
 import "./market.css";
+
+let vibePlusApplicationLimitPopupPromise = null;
+
+async function scheduleVibePlusApplicationLimitPopup(projection)
+{
+	if (!projection)
+	{
+		return;
+	}
+
+	try
+	{
+		vibePlusApplicationLimitPopupPromise ??= Runtime.loadExtension(
+			'market.vibe-plus-application-limit-popup',
+		).catch((error) => {
+			vibePlusApplicationLimitPopupPromise = null;
+			throw error;
+		});
+		const loadedExtension = await vibePlusApplicationLimitPopupPromise;
+		const extension = Array.isArray(loadedExtension)
+			? loadedExtension[0]
+			: loadedExtension;
+
+		extension.scheduleVibePlusApplicationLimitPopup(projection);
+	}
+	catch
+	{
+		return;
+	}
+}
 
 export class Market
 {
@@ -107,6 +138,7 @@ export class Market
 				this.$Bitrix.eventEmitter.subscribe('market:loadContent', this.loadContent);
 				EventEmitter.subscribe('market:refreshUri', this.refreshUri);
 				BX.addCustomEvent("SidePanel.Slider:onMessage", this.onMessageSlider);
+				void scheduleVibePlusApplicationLimitPopup(this.result.VIBE_PLUS_APPLICATION_LIMIT);
 			},
 			methods: {
 				emitLoadContent: function (event) {
@@ -194,6 +226,9 @@ export class Market
 									}
 
 									this.currentUri = uri;
+									void scheduleVibePlusApplicationLimitPopup(
+										this.result.VIBE_PLUS_APPLICATION_LIMIT,
+									);
 								}
 							}
 							nextTick(() => {

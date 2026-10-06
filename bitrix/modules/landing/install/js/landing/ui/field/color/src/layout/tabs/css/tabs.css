@@ -128,3 +128,9 @@
 .landing-ui-field-color-tabs-head--big > .landing-ui-field-color-tabs-tab-toggler:nth-child(2).show > .landing-ui-field-color-tabs-tab-toggler-icon {
 	background-image: url("data:image/svg+xml,%3Csvg width='13' height='13' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1.607.117h9.686c.823 0 1.49.667 1.49 1.49v9.686a1.49 1.49 0 01-1.49 1.49H1.607a1.49 1.49 0 01-1.49-1.49V1.607c0-.823.667-1.49 1.49-1.49zm.038 11.138h9.653v-.743l-2.574-2.97-1.287 1.485L4.22 5.314l-2.574 2.97v2.97zm7.462-6.223a1.245 1.245 0 100-2.49 1.245 1.245 0 000 2.49z' fill='%233BC8F5' fill-rule='evenodd'/%3E%3C/svg%3E");
 }
+
+.landing-ui-field-color-tabs-tab-toggler:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary, #0075ff);
+	outline-offset: 2px;
+	border-radius: 2px;
+}

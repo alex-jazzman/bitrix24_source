@@ -1,10 +1,13 @@
-import { Loc, Tag, Type, Dom } from 'main.core';
+import { Dom, Event, Loc, Tag, Type } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import { Dialog } from 'ui.entity-selector';
 import { Api } from 'sign.v2.api';
 import { CompanyConnectPage } from 'humanresources.hcmlink.company-connect-page';
 
+import { setIntegrationText } from './functions';
 import './style.css';
+
+const activationKeys = new Set(['Enter', ' ']);
 
 export class HcmLinkCompanySelector extends EventEmitter
 {
@@ -21,7 +24,7 @@ export class HcmLinkCompanySelector extends EventEmitter
 
 	#ui = {
 		container: HTMLDivElement = null,
-		active: HTMLButtonElement = null,
+		active: HTMLElement = null,
 		inactive: HTMLButtonElement = null,
 		unselect: HTMLButtonElement = null,
 		dropdownButton: HTMLSpanElement = null,
@@ -33,6 +36,7 @@ export class HcmLinkCompanySelector extends EventEmitter
 	};
 
 	#integrationList: Array<{ id: number, title: string, subtitle: string, availableSettings: Object }> = [];
+	#dialogTrigger: { setExpanded: (expanded: boolean) => void } | null = null;
 
 	constructor()
 	{
@@ -167,16 +171,14 @@ export class HcmLinkCompanySelector extends EventEmitter
 				<div class="sign-document-b2e-company__hcmlink-name-container">
 					<div class="sign-document-b2e-company__hcmlink-select-header">
 						${this.#ui.info.title}
-						<span class="sign-document-b2e-company-info-dropdown-btn"
-							onclick="${() => {
-			this.#showDialog();
-		}}"></span>
+						<span class="sign-document-b2e-company-info-dropdown-btn"></span>
 						${this.#ui.dropdownButton}
 					</div>
-					${this.#ui.info.subtitle}	
-				</div>		
+					${this.#ui.info.subtitle}
+				</div>
 			</div>
 		`;
+		this.#dialogTrigger = this.#setupDialogTrigger(this.#ui.active);
 
 		this.#ui.unselect = Tag.render`
 			<div class="sign-document-b2e-company__hcmlink-select --inactive">
@@ -261,6 +263,7 @@ export class HcmLinkCompanySelector extends EventEmitter
 
 	#showDialog(): void
 	{
+		this.#dialogTrigger?.setExpanded(true);
 		this.#getDialog()?.show();
 	}
 
@@ -294,6 +297,8 @@ export class HcmLinkCompanySelector extends EventEmitter
 			multiple: false,
 			enableSearch: true,
 			events: {
+				onShow: () => this.#dialogTrigger?.setExpanded(true),
+				onHide: () => this.#dialogTrigger?.setExpanded(false),
 				'Item:OnSelect': (event) => {
 					this.#select(event.data.item);
 				},
@@ -353,15 +358,42 @@ export class HcmLinkCompanySelector extends EventEmitter
 		if (Type.isNumber(itemId))
 		{
 			const item = this.#integrationList.find((integration) => integration.id === itemId);
-			if (
-				item
-				&& Type.isDomNode(this.#ui.info.title)
-				&& Type.isDomNode(this.#ui.info.subtitle)
-			)
+			if (item)
 			{
-				this.#ui.info.title.innerHTML = item?.title ?? '';
-				this.#ui.info.subtitle.innerHTML = item?.subtitle?.toUpperCase() ?? '';
+				setIntegrationText(this.#ui.info.title, item?.title);
+				setIntegrationText(this.#ui.info.subtitle, item?.subtitle?.toUpperCase());
 			}
 		}
+	}
+
+	#setupDialogTrigger(element: HTMLElement): { setExpanded: (expanded: boolean) => void }
+	{
+		// No aria-label: the row carries the active integration name, and a static label would
+		// override that accessible name.
+		Dom.attr(element, {
+			role: 'button',
+			tabindex: '0',
+			'aria-haspopup': 'dialog',
+			'aria-expanded': 'false',
+			'data-test-id': 'sign-b2e-hcm-company-selector-trigger',
+		});
+
+		const activate = (): void => this.#showDialog();
+		Event.bind(element, 'click', activate);
+		Event.bind(element, 'keydown', (event: KeyboardEvent) => {
+			if (!activationKeys.has(event.key))
+			{
+				return;
+			}
+
+			event.preventDefault();
+			activate();
+		});
+
+		return {
+			setExpanded: (expanded: boolean): void => {
+				Dom.attr(element, 'aria-expanded', expanded ? 'true' : 'false');
+			},
+		};
 	}
 }

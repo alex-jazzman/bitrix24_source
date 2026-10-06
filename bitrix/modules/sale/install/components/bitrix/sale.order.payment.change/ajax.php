@@ -20,18 +20,20 @@ use Bitrix\Main\Localization\Loc;
 Loc::loadMessages(__FILE__);
 $request = Bitrix\Main\Application::getInstance()->getContext()->getRequest();
 
-if (!check_bitrix_sessid() && !$request->isPost())
+if (!check_bitrix_sessid() || !$request->isPost())
 {
 	die();
 }
 
 $orderData = $request->getPostList()->toArray();
-$templateName = $request->get("templateName");
+$templateName = $request->getPost("templateName");
+$templateName = is_scalar($templateName) ? (string)$templateName : "";
 if(empty($templateName))
 {
 	$templateName = "";
 }
 
+$params = [];
 $params['ACCOUNT_NUMBER'] = (string)($orderData['accountNumber'] ?? '');
 $params['AJAX_DISPLAY'] = 'Y';
 $params['PAYMENT_NUMBER'] = (string)($orderData['paymentNumber'] ?? '');

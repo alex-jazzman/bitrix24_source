@@ -8,10 +8,10 @@ return [
 	'css' => 'dist/basefield.bundle.css',
 	'js' => 'dist/basefield.bundle.js',
 	'rel' => [
-		'ui.design-tokens',
+		'landing.ui.component.internal',
 		'main.core',
 		'main.core.events',
-		'landing.ui.component.internal',
+		'ui.design-tokens',
 	],
 	'skip_core' => false,
 ];

@@ -1,15 +1,16 @@
 import type { Role } from 'ai.engine';
-import { Tag, Type, Text, Dom, bind, Loc } from 'main.core';
+import { Tag, Type, Text, Dom, bind, Loc, Extension } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import { Menu, MenuItem, Popup } from 'main.popup';
 import type { MenuItemOptions } from 'main.popup';
-import { Icon, Main } from 'ui.icon-set.api.core';
+import { Icon, Main, Outline } from 'ui.icon-set.api.core';
 import { KeyboardMenu, KeyboardMenuEvents } from './keyboard-menu';
 import { CopilotMenuCommand } from './index';
 import 'ui.icon-set.actions';
 import 'ui.icon-set.main';
 import 'ui.icon-set.editor';
 import 'ui.icon-set.crm';
+import 'ui.icon-set.outline';
 import { Label, LabelColor, LabelSize } from 'ui.label';
 import { Loader } from 'main.loader';
 
@@ -91,6 +92,7 @@ export class CopilotMenu extends EventEmitter
 	#currentRole: Role;
 	#roleInfoContainer: HTMLElement;
 	#loader: Loader;
+	#isBitrixGptV2Available: boolean;
 
 	constructor(options: CopilotMenuOptions)
 	{
@@ -104,6 +106,7 @@ export class CopilotMenu extends EventEmitter
 		this.#autoHide = options.autoHide === true;
 		this.#angle = options.angle;
 		this.#bordered = options.bordered ?? this.#bordered;
+		this.#isBitrixGptV2Available = Extension.getSettings('ai.copilot').get('isBitrixGptV2Available') === true;
 
 		this.#initRoleInfoFromOptions(options.roleInfo);
 
@@ -389,7 +392,7 @@ export class CopilotMenu extends EventEmitter
 			items: this.#getMenuItems(this.#menuItems),
 			toFrontOnShow: true,
 			autoHide: this.#autoHide,
-			className: `ai__copilot-scope ai__copilot-menu-popup ${this.#bordered ? '--bordered' : ''}`,
+			className: `ai__copilot-scope ai__copilot-menu-popup${this.#isBitrixGptV2Available ? ' --bitrixgpt-redesign' : ''} ${this.#bordered ? '--bordered' : ''}`,
 			cacheable: this.#cacheable,
 			events: {
 				onPopupClose: (popup: Popup) => {
@@ -483,9 +486,18 @@ export class CopilotMenu extends EventEmitter
 	{
 		const iconElem = this.#renderAbilityMenuItemIcon(item);
 		const checkIcon = this.#getCheckIcon();
-		const menuIcon: HTMLElement | null = item.icon ? Tag.render`<div class="ai__copilot-menu_item-icon">${iconElem}</div>` : null;
+		const stableItemIdentifier = item.id || item.code;
+		const isBitrixGptProviderIcon = this.#isBitrixGptV2Available && item.code === 'provider';
+		const menuIcon: HTMLElement | null = item.icon
+			? (
+				isBitrixGptProviderIcon
+					? Tag.render`<div class="ai__copilot-menu_item-icon --bitrixgpt-provider" data-testid="copilot-provider-icon">${iconElem}</div>`
+					: Tag.render`<div class="ai__copilot-menu_item-icon">${iconElem}</div>`
+			)
+			: null
+		;
 
-		const label = item.labelText
+		const label = (item.labelText && this.#isBitrixGptV2Available === false)
 			? (new Label({
 				text: item.labelText,
 				color: LabelColor.PRIMARY,
@@ -494,31 +506,50 @@ export class CopilotMenu extends EventEmitter
 			})).render()
 			: null;
 
-		const labelWrapper = label ? Tag.render(`<div>${label}</div>`) : null;
+		const labelWrapper = label ? Tag.render`<div>${label}</div>` : null;
 		const favouriteLabel = Type.isBoolean(item.isFavourite)
 			? this.#renderFavouriteLabel(item.code, item.isFavourite)
 			: null
 		;
 
-		const html = Tag.render`
-			<div class="${this.#getMenuItemClassname(item, isSubmenuItem, item.selected)}">
-				<div class="ai__copilot-menu_item-left">
-					${menuIcon}
-					<div class="ai__copilot-menu_item-text">${Text.encode(item.text)}</div>
-				</div>
-				<div class="ai__copilot-menu_item-right">
-					${favouriteLabel}
-					<div class="ai__copilot-menu_item-check">
-						${checkIcon.render()}
+		const html = this.#isBitrixGptV2Available
+			? Tag.render`
+				<div class="${this.#getMenuItemClassname(item, isSubmenuItem, item.selected)}">
+					<div class="ai__copilot-menu_item-left">
+						<div class="ai__copilot-menu_item-text">${Text.encode(item.text)}</div>
 					</div>
-					${labelWrapper}
+					<div class="ai__copilot-menu_item-right">
+						${favouriteLabel}
+						<div class="ai__copilot-menu_item-check">
+							${checkIcon.render()}
+						</div>
+						${labelWrapper}
+						${menuIcon}
+					</div>
 				</div>
-			</div>
-		`;
+			`
+			: Tag.render`
+				<div class="${this.#getMenuItemClassname(item, isSubmenuItem, item.selected)}">
+					<div class="ai__copilot-menu_item-left">
+						${menuIcon}
+						<div class="ai__copilot-menu_item-text">${Text.encode(item.text)}</div>
+					</div>
+					<div class="ai__copilot-menu_item-right">
+						${favouriteLabel}
+						<div class="ai__copilot-menu_item-check">
+							${checkIcon.render()}
+						</div>
+						${labelWrapper}
+					</div>
+				</div>
+			`;
 
 		return {
 			html,
 			id: item.id || '',
+			...(this.#isBitrixGptV2Available && Type.isStringFilled(stableItemIdentifier)
+				? { dataset: { testid: `copilot-menu-item-${stableItemIdentifier}` } }
+				: {}),
 			text: item.text,
 			href: item.href,
 			className: `menu-popup-no-icon ${item.arrow ? 'menu-popup-item-submenu' : ''}`,
@@ -531,8 +562,15 @@ export class CopilotMenu extends EventEmitter
 
 	#renderFavouriteLabel(promptCode: string, isFavourite: boolean = false): HTMLElement
 	{
+		// Redesign flag: outline bookmark (Outline.BOOKMARK) for the not-favourite state;
+		// keep the filled icon (Main.BOOKMARK_1) for the favourite state.
+		const favouriteIconCode = (this.#isBitrixGptV2Available && isFavourite === false)
+			? Outline.BOOKMARK
+			: Main.BOOKMARK_1
+		;
+
 		const favouriteIcon = new Icon({
-			icon: Main.BOOKMARK_1,
+			icon: favouriteIconCode,
 			size: 24,
 		});
 
@@ -583,27 +621,106 @@ export class CopilotMenu extends EventEmitter
 		const { name, avatar } = this.#roleInfo.role;
 		const subtitle = this.#roleInfo.subtitle;
 
+		const roleClassName = this.#isBitrixGptV2Available
+			? 'ai__copilot-menu_role --bitrixgpt-redesign'
+			: 'ai__copilot-menu_role'
+		;
+
+		let glow = null;
+		if (this.#isBitrixGptV2Available)
+		{
+			glow = Tag.render`<div class="ai__copilot-menu_role-glow" data-testid="copilot-menu-role-glow"></div>`;
+			// Glow backdrop exported from Figma: a conic gradient softly clipped to a pill and
+			// blurred (stdDeviation 16). Inline SVG (not a background-image); a CSS radial-gradient
+			// fallback in copilot-menu.css covers WebKit/Safari, where this foreignObject is fragile.
+			glow.innerHTML = '<svg width="100%" height="100%" viewBox="0 0 314 78" preserveAspectRatio="none" fill="none" xmlns="http://www.w3.org/2000/svg">'
+				+ '<g opacity="0.4" clip-path="url(#ai-copilot-glow-clip)">'
+				+ '<g filter="url(#ai-copilot-glow-blur)">'
+				+ '<g clip-path="url(#ai-copilot-glow-shape)"><g transform="matrix(-5.79497e-09 -0.0559167 0.157 -2.45592e-09 157 61)">'
+				+ '<foreignObject x="-1090.91" y="-1090.91" width="2181.82" height="2181.82">'
+				+ '<div xmlns="http://www.w3.org/1999/xhtml" style="background:conic-gradient(from 90deg,rgba(255,255,255,0) 0deg,rgba(255,255,255,0) 0.539121deg,rgba(0,151,233,1) 18deg,rgba(63,104,255,1) 28.8deg,rgba(157,71,255,1) 39.6deg,rgba(239,70,183,1) 57.6deg,rgba(249,98,105,1) 75.6deg,rgba(255,255,255,0) 90.2231deg,rgba(255,255,255,0) 360deg);height:100%;width:100%"></div>'
+				+ '</foreignObject></g></g>'
+				+ '</g></g>'
+				+ '<defs>'
+				+ '<filter id="ai-copilot-glow-blur" x="-32" y="-32" width="378" height="186" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">'
+				+ '<feGaussianBlur stdDeviation="16" result="effect1_foregroundBlur"/></filter>'
+				+ '<clipPath id="ai-copilot-glow-shape"><path d="M314 70.835C313.911 42.7443 291.112 20 263.001 20H51.001C22.8345 20 0.000976562 42.8335 0.000976562 71C0.000976562 99.1665 22.8345 122 51.001 122H0V0H314V70.835ZM314 122H263.001C291.113 122 313.912 99.2551 314 71.1641V122Z"/></clipPath>'
+				+ '<clipPath id="ai-copilot-glow-clip"><rect width="314" height="122" fill="white"/></clipPath>'
+				+ '</defs></svg>';
+		}
+
+		const roleLeftClassName = (this.#isBitrixGptV2Available && this.#isDefaultRoleAvatar(avatar))
+			? 'ai__copilot-menu_role-left --bitrixgpt-default-avatar'
+			: 'ai__copilot-menu_role-left'
+		;
+		const roleTitle = Tag.render`
+			<span
+				class="ai__copilot-menu_role-title"
+				title="${name}"
+			>
+				${name}
+			</span>
+		`;
+		const roleSubtitle = Tag.render`<span class="ai__copilot-menu_role-subtitle">${subtitle}</span>`;
+		const roleTextContainer = Tag.render`<div class="ai__copilot-menu_role-right"></div>`;
+
+		if (this.#isBitrixGptV2Available)
+		{
+			Dom.append(roleSubtitle, roleTextContainer);
+			Dom.append(roleTitle, roleTextContainer);
+		}
+		else
+		{
+			Dom.append(roleTitle, roleTextContainer);
+			Dom.append(roleSubtitle, roleTextContainer);
+		}
+
 		this.#roleInfoContainer = Tag.render`
 			<div class="ai__copilot-menu_item">
-				<div class="ai__copilot-menu_role">
-					<div class="ai__copilot-menu_role-left">
+				${glow}
+				<div class="${roleClassName}">
+					<div class="${roleLeftClassName}">
 						<img class="ai__copilot-menu_role-avatar" src="${avatar.small}" alt="">
 					</div>
-					<div class="ai__copilot-menu_role-right">
-						<span
-							class="ai__copilot-menu_role-title"
-							title="${name}"
-						>
-							${name}
-						</span>
-						<span class="ai__copilot-menu_role-subtitle">${subtitle}</span>
-					</div>
+					${roleTextContainer}
 				</div>
 			</div>
 		`;
 
 		return this.#roleInfoContainer;
 	}
+
+	#isDefaultRoleAvatar(avatar: { small: string } | null): boolean
+	{
+		return !avatar?.small || /bitrixgpt-icon/.test(avatar.small);
+	}
+
+	// Map of filled icons → outline icons for the isBitrixGptV2Available flag
+	static #FILLED_TO_OUTLINE_MAP = {
+		'prompts-library': Outline.PROMPT_LIBRARY,
+		'cursor-click': Outline.CURSOR_CLICK,
+		'quote': Outline.QUOTE,
+		'filter-2': Outline.FILTER_2_LINES,
+		'pencil-draw': Outline.EDIT_M,
+		'magic-wand': Outline.MAGIC_WAND,
+		'brightness': Outline.SUN,
+		'insert-emoji': Outline.SMILE,
+		'idea-lamp': Outline.IDEA_LAMP,
+		'bulleted-list': Outline.BULLETED_LIST,
+		'list': Outline.BULLETED_LIST,
+		'translation': Outline.TRANSLATION,
+		'heart': Outline.HEART,
+		'suitcase': Outline.SUITCASE,
+		'pen': Outline.EDIT_M,
+		'gift': Outline.GIFT,
+		'distribution': Outline.DISTRIBUTION,
+		'notifications-on': Outline.NOTIFICATION,
+		'file-2': Outline.FILE,
+		'person-plus': Outline.ADD_PERSON,
+		'copilot-ai': Outline.BITRIX_GPT,
+		'info': Outline.INFO_CIRCLE,
+		'feedback': Outline.FEEDBACK,
+	};
 
 	#renderAbilityMenuItemIcon(item: CopilotMenuItemAbility): HTMLElement | null
 	{
@@ -612,9 +729,20 @@ export class CopilotMenu extends EventEmitter
 		{
 			try
 			{
+				let iconCode = item.icon;
+
+				if (this.#isBitrixGptV2Available)
+				{
+					const outlineCode = CopilotMenu.#FILLED_TO_OUTLINE_MAP[iconCode];
+					if (outlineCode !== undefined)
+					{
+						iconCode = outlineCode;
+					}
+				}
+
 				const icon = new Icon({
 					size: 24,
-					icon: item.icon || undefined,
+					icon: iconCode || undefined,
 				});
 
 				iconElem = icon.render();
@@ -738,7 +866,7 @@ export class CopilotMenu extends EventEmitter
 			html: item.title
 				? `
 					<span>${item.title}</span>
-					${item.isNew ? this.#renderSeparatorMenuItemNewLabel().outerHTML : ''}
+					${(item.isNew && this.#isBitrixGptV2Available === false) ? this.#renderSeparatorMenuItemNewLabel().outerHTML : ''}
 				`
 				: undefined,
 		};
@@ -781,6 +909,13 @@ export class CopilotMenu extends EventEmitter
 						const avatarImg: HTMLImageElement = this.#roleInfoContainer.querySelector('.ai__copilot-menu_role-avatar');
 
 						avatarImg.src = newValue.small;
+
+						if (this.#isBitrixGptV2Available)
+						{
+							const roleLeft = this.#roleInfoContainer.querySelector('.ai__copilot-menu_role-left');
+
+							Dom.toggleClass(roleLeft, '--bitrixgpt-default-avatar', this.#isDefaultRoleAvatar(newValue));
+						}
 					}
 
 					return Reflect.set(target, p, newValue);

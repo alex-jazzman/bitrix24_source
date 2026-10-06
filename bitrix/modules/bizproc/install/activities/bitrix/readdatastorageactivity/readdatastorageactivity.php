@@ -7,6 +7,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Bizproc\Public\Activity\Interface\ActivityContentBlockProviderInterface;
+use Bitrix\Bizproc\Public\Activity\Interface\ContentBlockScopeConsumerInterface;
+use Bitrix\Bizproc\Activity\Dto\ContentBlock;
 use Bitrix\Bizproc\Automation\Engine\ConditionGroup;
 use Bitrix\Bizproc\Activity\PropertiesDialog;
 use Bitrix\Bizproc\Public\Provider\StorageFieldProvider;
@@ -18,7 +21,10 @@ use Bitrix\Main\Error;
 use Bitrix\Main\Result;
 use Bitrix\Bizproc\Activity\BaseActivity;
 use Bitrix\Main\Web\Json;
+use Bitrix\Bizproc\Internal\Entity\StorageField\StorageFieldCollection;
 use Bitrix\Bizproc\Internal\Repository\Mapper\StorageItemMapper;
+use Bitrix\Bizproc\Internal\Container;
+use Bitrix\Bizproc\Internal\Service\Storage\StorageLimitsService;
 use Bitrix\Bizproc\Internal\Service\StorageActivity\StorageActivityService;
 use Bitrix\Bizproc\BaseType\Value\DateTime;
 
@@ -33,13 +39,15 @@ use Bitrix\Bizproc\BaseType\Value\DateTime;
  * @property-write ?array OutputFields
  * @property-write string IsExpanded
  */
-class CBPReadDataStorageActivity extends BaseActivity implements IBPConfigurableActivity
+class CBPReadDataStorageActivity extends BaseActivity implements IBPConfigurableActivity, ActivityContentBlockProviderInterface, ContentBlockScopeConsumerInterface
 {
 	use \Bitrix\Bizproc\Activity\Mixins\EntityFilter;
 
 	private const RETURN_MODE_SINGLE = 'single';
 	private const RETURN_MODE_COLLECTION = 'collection';
 	private const COLLECTION_LIMIT = 500;
+
+	private ?StorageItemProvider $storageItemProvider = null;
 
 	public function __construct($name)
 	{
@@ -58,6 +66,9 @@ class CBPReadDataStorageActivity extends BaseActivity implements IBPConfigurable
 			// return
 			'OutputFields' => null,
 			'CollectionJson' => '',
+
+			// runtime
+			'IsDiskLimitWarningLogged' => false,
 		];
 
 		$this->setPropertiesTypes([
@@ -67,6 +78,18 @@ class CBPReadDataStorageActivity extends BaseActivity implements IBPConfigurable
 			'ReturnMode' => ['Type' => FieldType::SELECT],
 			'CollectionJson' => ['Type' => FieldType::TEXT],
 		]);
+	}
+
+	public function execute()
+	{
+		try
+		{
+			return parent::execute();
+		}
+		finally
+		{
+			$this->storageItemProvider = null;
+		}
 	}
 
 	protected function prepareProperties(): void
@@ -99,7 +122,7 @@ class CBPReadDataStorageActivity extends BaseActivity implements IBPConfigurable
 		}
 
 		$conditionGroup = new ConditionGroup($this->DynamicFilterFields);
-		$provider = new StorageItemProvider($storageId);
+		$provider = $this->getStorageItemProvider();
 
 		$documentType = \Bitrix\Bizproc\Public\Entity\Document\Workflow::getComplexType();
 		$fieldsMap = StorageActivityService::getFilteringFieldsMap($storageId);
@@ -117,6 +140,11 @@ class CBPReadDataStorageActivity extends BaseActivity implements IBPConfigurable
 		])?->getFirstCollectionItem();
 
 		return $item ? $item->getId() : 0;
+	}
+
+	private function getStorageItemProvider(): StorageItemProvider
+	{
+		return $this->storageItemProvider ??= new StorageItemProvider($this->findStorageId());
 	}
 
 	private function findStorageId(): int
@@ -148,7 +176,10 @@ class CBPReadDataStorageActivity extends BaseActivity implements IBPConfigurable
 	protected function internalExecute(): \Bitrix\Main\ErrorCollection
 	{
 		$errors = parent::internalExecute();
-		$provider = new StorageItemProvider($this->findStorageId());
+
+		$this->logDiskLimitWarningOnce();
+
+		$provider = $this->getStorageItemProvider();
 
 		$this->arProperties['CollectionJson'] = '';
 		$this->preparedProperties['CollectionJson'] = '';
@@ -181,6 +212,53 @@ class CBPReadDataStorageActivity extends BaseActivity implements IBPConfigurable
 		}
 
 		return $errors;
+	}
+
+	private function logDiskLimitWarningOnce(): void
+	{
+		if ($this->getRawProperty('IsDiskLimitWarningLogged'))
+		{
+			return;
+		}
+
+		$messageId = static::getDiskLimitMessageId(Container::getStorageLimitsService()?->getBannerState());
+		if ($messageId === null)
+		{
+			return;
+		}
+
+		if ($this->isDiskLimitWarningLoggedInWorkflow())
+		{
+			$this->arProperties['IsDiskLimitWarningLogged'] = true;
+
+			return;
+		}
+
+		$this->log(Loc::getMessage($messageId) ?? '', 0, \CBPTrackingType::Custom);
+		$this->arProperties['IsDiskLimitWarningLogged'] = true;
+	}
+
+	private function isDiskLimitWarningLoggedInWorkflow(): bool
+	{
+		foreach ($this->getRootActivity()->walkRecursive() as $activity)
+		{
+			if ($activity instanceof self && $activity->getRawProperty('IsDiskLimitWarningLogged'))
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	private static function getDiskLimitMessageId(?string $bannerState): ?string
+	{
+		return match ($bannerState)
+		{
+			StorageLimitsService::BANNER_STATE_BLOCKED => 'BIZPROC_SRA_DISK_BLOCKED_WARNING',
+			StorageLimitsService::BANNER_STATE_WARNING => 'BIZPROC_SRA_DISK_LOW_WARNING',
+			default => null,
+		};
 	}
 
 	protected function executeSingleMode(StorageItemProvider $provider): void
@@ -475,6 +553,16 @@ class CBPReadDataStorageActivity extends BaseActivity implements IBPConfigurable
 		return $result;
 	}
 
+	public static function getContentBlock(array $properties, ?\Bitrix\Bizproc\Activity\Dto\ContentBlockContext $context = null): ?ContentBlock
+	{
+		return StorageActivityService::getContentBlock($properties, $context);
+	}
+
+	public static function getScopeConsumption(): array
+	{
+		return StorageActivityService::getScopeConsumption();
+	}
+
 	public static function validateProperties($testProperties = [], \CBPWorkflowTemplateUser $user = null)
 	{
 		$errors = [];
@@ -487,7 +575,7 @@ class CBPReadDataStorageActivity extends BaseActivity implements IBPConfigurable
 			$errors[] = [
 				'code' => 'NotExist',
 				'parameter' => 'FieldValue',
-				'message' => Loc::getMessage('BIZPROC_SRA_EMPTY_STORAGE_ID_OR_CODE'),
+				'message' => Loc::getMessage('BIZPROC_SRA_EMPTY_STORAGE_ID_OR_CODE_MSGVER_1'),
 			];
 		}
 
@@ -540,22 +628,7 @@ class CBPReadDataStorageActivity extends BaseActivity implements IBPConfigurable
 
 	protected static function getReturnFieldsMap(int $storageId): array
 	{
-		$fieldsMap = [];
-
-		try
-		{
-			$provider = new StorageFieldProvider;
-			$fieldCollection = $provider->getByStorageId($storageId);
-
-			foreach ($fieldCollection as $field)
-			{
-				$property = $field->toProperty();
-				$fieldsMap[$property['FieldName']] = $property;
-			}
-		}
-		catch (\Bitrix\Main\ArgumentException $exception) {}
-
-		return static::getSystemFields() + $fieldsMap;
+		return StorageActivityService::buildReturnFieldsMap(StorageActivityService::loadStorageFields($storageId));
 	}
 
 	private static function getSystemFields(): array
@@ -570,22 +643,26 @@ class CBPReadDataStorageActivity extends BaseActivity implements IBPConfigurable
 
 	public static function getPropertiesMap(array $documentType, array $context = []): array
 	{
-		$dynamicFilterFields = $context['Properties']['DynamicFilterFields'] ?? null;
-		$returnFields = $context['Properties']['ReturnFields'] ?? null;
+		$properties = is_array($context['Properties'] ?? null) ? $context['Properties'] : [];
+		$dynamicFilterFields = $properties['DynamicFilterFields'] ?? null;
+		$returnFields = $properties['ReturnFields'] ?? null;
 
-		$storages = StorageActivityService::getStorageTypes();
-		$storageIds = array_map('intval', array_keys($storages));
+		// Only the currently selected storage is preloaded, the rest is fetched by the dialog on demand.
+		$storageId = StorageActivityService::resolveStorageId(
+			isset($properties['StorageId']) ? (int)$properties['StorageId'] : null,
+			isset($properties['StorageCode']) ? (string)$properties['StorageCode'] : null,
+		);
 
-		$filteringFields = StorageActivityService::getFilteringFieldsMapByStorageIds($storageIds);
 		$filteringFieldsMap = [
-			0 => array_values(StorageActivityService::getFilteringFieldsMap(0)),
+			0 => array_values(StorageActivityService::getFilteringFieldsMap(0, new StorageFieldCollection())),
 		];
 		$returnFieldsMap = [];
 
-		foreach ($storages as $id => $title)
+		if ($storageId > 0)
 		{
-			$returnFieldsMap[$id] = static::getReturnFieldsMap($id);
-			$filteringFieldsMap[$id] = array_values($filteringFields[$id] ?? []);
+			$fieldsMaps = StorageActivityService::getActivityFieldsMaps($storageId);
+			$filteringFieldsMap[$storageId] = $fieldsMaps['filterFields'];
+			$returnFieldsMap[$storageId] = $fieldsMaps['returnFields'];
 		}
 
 		return [
@@ -601,6 +678,7 @@ class CBPReadDataStorageActivity extends BaseActivity implements IBPConfigurable
 					],
 				],
 				'Required' => false,
+				'RequiredMark' => true,
 				'AllowSelection' => false,
 			],
 			'StorageCode' => [
@@ -628,6 +706,7 @@ class CBPReadDataStorageActivity extends BaseActivity implements IBPConfigurable
 				'FieldName' => 'filter_fields',
 				'Type' => \Bitrix\Bizproc\FieldType::CUSTOM,
 				'Required' => false,
+				'RequiredMark' => true,
 				'AllowSelection' => true,
 				'CustomType' => 'filterFields',
 				'Options' => [
@@ -657,6 +736,7 @@ class CBPReadDataStorageActivity extends BaseActivity implements IBPConfigurable
 				'Options' => [],
 				'Multiple' => true,
 				'Required' => false,
+				'RequiredMark' => true,
 				'Map' => $returnFieldsMap,
 				'AllowSelection' => false,
 			],

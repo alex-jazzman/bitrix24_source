@@ -4,6 +4,7 @@
 jn.define('disk/dialogs/rename', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { Indent } = require('tokens');
+	const { confirmClosing } = require('alert');
 
 	const { StringInput, InputDesign, InputMode } = require('ui-system/form/inputs/string');
 	const { getNameWithoutExtension, getExtension } = require('utils/file');
@@ -26,6 +27,7 @@ jn.define('disk/dialogs/rename', (require, exports, module) => {
 			this.objectId = props.objectId ?? '';
 			this.object = selectById(store.getState(), Number(this.objectId)) ?? {};
 			this.startName = (this.object.isFolder ? this.object.name : getNameWithoutExtension(this.object.name)) ?? '';
+			this.isConfirmShown = false;
 
 			this.state = {
 				name: this.startName,
@@ -53,6 +55,22 @@ jn.define('disk/dialogs/rename', (require, exports, module) => {
 			this.#selectNameInField();
 		}
 
+		componentWillUnmount()
+		{
+			super.componentWillUnmount();
+
+			this.#disableCloseGuard();
+		}
+
+		setLayoutWidget(layoutWidget)
+		{
+			super.setLayoutWidget(layoutWidget);
+
+			this.layoutWidget?.on('preventDismiss', this.#handleCloseRequest);
+			this.layoutWidget?.on('onViewRemoved', this.#disableCloseGuard);
+			this.#updatePreventDismiss();
+		}
+
 		#focusOnNameField = () => {
 			void this.nameFieldRef?.focus();
 		};
@@ -66,17 +84,69 @@ jn.define('disk/dialogs/rename', (require, exports, module) => {
 		};
 
 		#onChangeName = (name) => {
-			this.setState({ name });
+			this.setState({ name }, this.#updatePreventDismiss);
 		};
 
 		#isValidName = () => {
 			return this.state.name.length > 0;
 		};
 
+		#hasChanges = () => {
+			return this.state.name !== this.startName;
+		};
+
+		#updatePreventDismiss = () => {
+			this.layoutWidget?.preventBottomSheetDismiss(this.#hasChanges());
+		};
+
+		#disableCloseGuard = () => {
+			this.isConfirmShown = false;
+			this.layoutWidget?.preventBottomSheetDismiss(false);
+		};
+
+		#closeWithoutConfirm = () => {
+			this.#disableCloseGuard();
+			this.layoutWidget?.close();
+		};
+
+		#showClosingConfirm = () => {
+			if (this.isConfirmShown)
+			{
+				return;
+			}
+
+			this.isConfirmShown = true;
+
+			confirmClosing({
+				hasSaveAndClose: this.#isValidName(),
+				onSave: this.save,
+				onClose: this.#closeWithoutConfirm,
+				onCancel: () => {
+					this.isConfirmShown = false;
+					this.#updatePreventDismiss();
+				},
+			});
+		};
+
+		#handleCloseRequest = () => {
+			if (!this.#hasChanges())
+			{
+				this.#closeWithoutConfirm();
+
+				return;
+			}
+
+			this.#showClosingConfirm();
+		};
+
+		close = () => {
+			this.#handleCloseRequest();
+		};
+
 		save = () => {
 			const { isFolder } = this.object;
 
-			if (!this.#isValidName)
+			if (!this.#isValidName())
 			{
 				return;
 			}
@@ -96,7 +166,7 @@ jn.define('disk/dialogs/rename', (require, exports, module) => {
 				}));
 			}
 
-			this.close();
+			this.#closeWithoutConfirm();
 		};
 
 		/**

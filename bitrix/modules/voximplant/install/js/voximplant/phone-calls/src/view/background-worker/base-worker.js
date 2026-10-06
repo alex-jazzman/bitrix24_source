@@ -13,7 +13,6 @@ export const callCardEvents = {
 	skipButtonClick: 'skipButtonClick',
 	answerButtonClick: 'answerButtonClick',
 	entityChanged: 'entityChanged',
-	qualityMeterClick: 'qualityMeterClick',
 	dialpadButtonClick: 'dialpadButtonClick',
 	makeCallButtonClick: 'makeCallButtonClick',
 	notifyAdminButtonClick: 'notifyAdminButtonClick',
@@ -98,7 +97,6 @@ export class BaseWorker
 		placement.prototype.events.push('BackgroundCallCard::skipButtonClick');
 		placement.prototype.events.push('BackgroundCallCard::answerButtonClick');
 		placement.prototype.events.push('BackgroundCallCard::entityChanged');
-		placement.prototype.events.push('BackgroundCallCard::qualityMeterClick');
 		placement.prototype.events.push('BackgroundCallCard::dialpadButtonClick');
 		placement.prototype.events.push('BackgroundCallCard::makeCallButtonClick');
 		placement.prototype.events.push('BackgroundCallCard::notifyAdminButtonClick');

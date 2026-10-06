@@ -24,6 +24,10 @@ this.BX.Socialnetwork.V2.Components = this.BX.Socialnetwork.V2.Components || {};
 			tag: {
 				type: String,
 				default: 'label'
+			},
+			inputId: {
+				type: String,
+				default: ''
 			}
 		},
 		emits: ['change', 'click'],
@@ -64,6 +68,7 @@ this.BX.Socialnetwork.V2.Components = this.BX.Socialnetwork.V2.Components || {};
 				v-model="isCheckedInner"
 				class="socnet-checkbox__native"
 				type="checkbox"
+				:id="inputId || null"
 				:disabled="isDisabled"
 			>
 			<span

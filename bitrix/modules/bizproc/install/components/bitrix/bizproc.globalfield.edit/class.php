@@ -130,7 +130,11 @@ HTML;
 	private function getFieldsTypes(): array
 	{
 		$baseTypes = Bizproc\FieldType::getBaseTypesMap();
-		unset($baseTypes[Bizproc\FieldType::INTERNALSELECT], $baseTypes[Bizproc\FieldType::FILE]);
+		unset(
+			$baseTypes[Bizproc\FieldType::INTERNALSELECT],
+			$baseTypes[Bizproc\FieldType::FILE],
+			$baseTypes[Bizproc\FieldType::CONDITIONGROUP],
+		);
 
 		$documentService = CBPRuntime::getRuntime()->getDocumentService();
 		$documentType = $this->arParams['DOCUMENT_TYPE'];

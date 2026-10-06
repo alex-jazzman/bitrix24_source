@@ -2,6 +2,7 @@ import { BLine, BCircle } from 'ui.system.skeleton.vue';
 import { HeadlineMd, TextLg } from 'ui.system.typography.vue';
 
 import { useLoc, type GetMessage } from '../../../../shared/composables';
+import { CircuitBackdrop } from '../../../../shared/ui';
 
 import './app-skeleton.css';
 
@@ -18,6 +19,7 @@ export const AppSkeleton = {
 	components: {
 		BLine,
 		BCircle,
+		CircuitBackdrop,
 		HeadlineMd,
 		TextLg,
 	},
@@ -42,7 +44,10 @@ export const AppSkeleton = {
 		},
 	},
 	template: `
-		<div class="editor-chart-app-skeleton">
+		<div
+			class="editor-chart-app-skeleton"
+			:data-test-id="$testId('appSkeleton')"
+		>
 			<div class="editor-chart-app-skeleton__header">
 				<div class="editor-chart-app-skeleton__header-company">
 					<BLine
@@ -221,7 +226,7 @@ export const AppSkeleton = {
 
 				<div class="editor-chart-app-skeleton__hero">
 					<div class="editor-chart-app-skeleton__hero-inner">
-						<div class="editor-chart-app-skeleton__hero-illustration"></div>
+						<CircuitBackdrop />
 						<div class="editor-chart-app-skeleton__hero-text">
 							<HeadlineMd
 								align="center"

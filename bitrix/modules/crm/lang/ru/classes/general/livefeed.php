@@ -148,3 +148,10 @@ $MESS["CRM_LF_NOTIFICATIONS_REACT_COMMENT_M"] = "Отреагировал на �
 $MESS["CRM_LF_NOTIFICATIONS_REACT_COMMENT_F"] = "Отреагировала на ваш комментарий в ленте CRM \"#LINK#\"
 \"#REACTION#\"";
 $MESS["CRM_LF_NOTIFICATIONS_DISLIKE_COMMENT"] = "Мне больше не нравится ваш комментарий в ленте CRM \"#LINK#\"";
+$MESS['CRM_PROCESS_ENTITY_LEAD_STAGE_CHANGE_SUBJECT'] = '#AUTHOR# изменил стадию лида';
+$MESS['CRM_PROCESS_ENTITY_DEAL_STAGE_CHANGE_SUBJECT'] = '#AUTHOR# изменил стадию сделки';
+$MESS['CRM_PROCESS_ENTITY_ORDER_STAGE_CHANGE_SUBJECT'] = '#AUTHOR# изменил стадию заказа';
+$MESS['CRM_PROCESS_ENTITY_SMART_INVOICE_STAGE_CHANGE_SUBJECT'] = '#AUTHOR# изменил стадию счёта';
+$MESS['CRM_PROCESS_ENTITY_QUOTE_STAGE_CHANGE_SUBJECT'] = '#AUTHOR# изменил стадию предложения';
+$MESS['CRM_PROCESS_ENTITY_DYNAMIC_STAGE_CHANGE_SUBJECT'] = '#AUTHOR# изменил стадию элемента смарт-процесса "#ENTITY_TYPE_CAPTION#"';
+$MESS['CRM_PROCESS_ENTITY_DEFAULT_STAGE_CHANGE_SUBJECT'] = '#AUTHOR# изменил стадию элемента типа "#ENTITY_TYPE_CAPTION#"';

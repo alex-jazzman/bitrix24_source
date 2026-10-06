@@ -158,6 +158,7 @@
 	--o-ui-icon-set__path_hourglass: url('images/hourglass.svg');
 	--o-ui-icon-set__path_idea-lamp: url('images/idea-lamp.svg');
 	--o-ui-icon-set__path_image: url('images/image.svg');
+	--o-ui-icon-set__path_image-plus: url('images/image-plus.svg');
 	--o-ui-icon-set__path_info-circle: url('images/info-circle.svg');
 	--o-ui-icon-set__path_interval: url('images/interval.svg');
 	--o-ui-icon-set__path_intranet: url('images/intranet.svg');
@@ -649,6 +650,7 @@
 	--o-ui-icon-set__path_file-with-calendar: url('images/file-with-calendar.svg');
 	--o-ui-icon-set__path_file-with-crown: url('images/file-with-crown.svg');
 	--o-ui-icon-set__path_file-with-person: url('images/file-with-person.svg');
+	--o-ui-icon-set__path_no-cloud-sync: url('images/no-cloud-sync.svg');
 }
 
 .ui-icon-set.--o-double-gis {
@@ -1285,6 +1287,10 @@
 
 .ui-icon-set.--o-image {
 	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_image);
+}
+
+.ui-icon-set.--o-image-plus {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_image-plus);
 }
 
 .ui-icon-set.--o-info-circle {
@@ -3245,4 +3251,8 @@
 
 .ui-icon-set.--o-file-with-person {
 	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_file-with-person);
+}
+
+.ui-icon-set.--o-no-cloud-sync {
+	--ui-icon-set__icon-path: var(--o-ui-icon-set__path_no-cloud-sync);
 }

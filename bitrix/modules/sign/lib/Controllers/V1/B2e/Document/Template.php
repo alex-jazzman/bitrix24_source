@@ -10,6 +10,7 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use Bitrix\Sign\Access\ActionDictionary;
+use Bitrix\Sign\Access\Service\SelectorSourceAccessService;
 use Bitrix\Sign\Attribute\Access\LogicAnd;
 use Bitrix\Sign\Attribute\ActionAccess;
 use Bitrix\Sign\Config\Feature;
@@ -36,6 +37,7 @@ use Bitrix\Sign\Serializer\MasterFieldSerializer;
 use Bitrix\Sign\Service\Container;
 use Bitrix\Sign\Service\Sign\Document\Template\AccessService;
 use Bitrix\Sign\Type\Access\AccessibleItemType;
+use Bitrix\Sign\Type\BlockCode;
 use Bitrix\Sign\Type\Document\InitiatedByType;
 use Bitrix\Sign\Type\DocumentScenario;
 use Bitrix\Sign\Type\ProviderCode;
@@ -124,6 +126,8 @@ class Template extends Controller
 		Main\Engine\CurrentUser $user,
 		array $fields = [],
 		bool $isOnboarding = false,
+		?string $externalId = null,
+		?string $externalDate = null,
 	): array
 	{
 		$template = Container::instance()->getDocumentTemplateRepository()->getByUid($uid);
@@ -211,6 +215,8 @@ class Template extends Controller
 			sendFromUserId: $createdById,
 			representativeUserId: $isOnboarding ? $createdById : null,
 			memberList: $isOnboarding ? $members : null,
+			externalId: $externalId,
+			externalDate: $externalDate,
 		))->launch();
 		if (!$result instanceof SendResult)
 		{
@@ -424,8 +430,18 @@ class Template extends Controller
 		$factory = new \Bitrix\Sign\Factory\Field();
 		$fields = $factory->createDocumentFutureSignerFields($document, CurrentUser::get()->getId());
 
+		// Each regional field is offered independently, only when its placeholder block really exists in
+		// the blank (matched by code). The authoring party/role is intentionally not filtered: only the
+		// presence of the block matters. In the employee placeholder flow the block is created on the
+		// SIGNER party (BlockParty::LAST_PARTY).
+		$regionalBlockCodes = Container::instance()->getBlockRepository()
+			->getExistingB2eRegionalBlockCodesByBlankId((int)$document->blankId)
+		;
+
 		return [
 			'fields' => (new MasterFieldSerializer())->serialize($fields),
+			'hasRegistrationNumberPlaceholder' => in_array(BlockCode::B2E_EXTERNAL_ID, $regionalBlockCodes, true),
+			'hasCreationDatePlaceholder' => in_array(BlockCode::B2E_EXTERNAL_DATE_CREATE, $regionalBlockCodes, true),
 		];
 	}
 
@@ -683,6 +699,7 @@ class Template extends Controller
 	public function setupSignersAction(
 		array $documentIds,
 		array $signers,
+		SelectorSourceAccessService $selectorSourceAccessService,
 		bool $excludeRejected = true,
 	): array
 	{
@@ -697,6 +714,16 @@ class Template extends Controller
 		if (!$entitiesResult instanceof ValidateEntitySelectorMembersResult)
 		{
 			$this->addErrorsFromResult($entitiesResult);
+
+			return [];
+		}
+
+		// Expansion sources come from the request, so the right to read each source must be
+		// checked before its composition is revealed.
+		$sourceAccessResult = $selectorSourceAccessService->checkSelectorEntities($entitiesResult->entities);
+		if (!$sourceAccessResult->isSuccess())
+		{
+			$this->addAccessDeniedError();
 
 			return [];
 		}

@@ -43,6 +43,11 @@
 	--crm-timeline__editable-text_max-height: 66px;
 }
 
+.crm-timeline__editable-text.--height-auto .crm-timeline__editable-text_inner {
+	max-height: none;
+	overflow: unset;
+}
+
 .crm-timeline__editable-text.--is-expanded .crm-timeline__editable-text_inner {
 	max-height: none;
 	overflow: unset;

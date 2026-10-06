@@ -1,0 +1,4 @@
+<?php
+
+$MESS['BIZPROC_PUBLIC_ACTIVITY_RETURN_DOCUMENT_TITLE'] = 'Документ';
+$MESS['BIZPROC_PUBLIC_ACTIVITY_DOCUMENT_REQUIRED'] = 'Не заполнено обязательное поле: #DOCUMENT#';

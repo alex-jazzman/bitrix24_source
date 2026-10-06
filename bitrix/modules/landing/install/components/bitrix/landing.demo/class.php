@@ -12,6 +12,7 @@ use Bitrix\Landing\Syspage;
 use Bitrix\Landing\Demos;
 use Bitrix\Landing\Template;
 use Bitrix\Landing\TemplateRef;
+use Bitrix\Landing\LocalTemplates;
 use Bitrix\Landing\Rights;
 use Bitrix\Landing\Landing\Cache;
 use Bitrix\Landing\Hook\Page\Settings;
@@ -798,23 +799,6 @@ class LandingSiteDemoComponent extends LandingBaseComponent
 								if ($count)
 								{
 									$updated = true;
-								}
-							}
-							if (isset($data['replace']) && is_array($data['replace']))
-							{
-								foreach ($data['replace'] as $find => $replace)
-								{
-									$count = 0;
-									$content = str_replace(
-										$find,
-										$replace,
-										$content,
-										$count
-									);
-									if ($count)
-									{
-										$updated = true;
-									}
 								}
 							}
 						}
@@ -1959,23 +1943,7 @@ class LandingSiteDemoComponent extends LandingBaseComponent
 				$pathLocal = '/bitrix/components/bitrix/landing.demo/data/' . $subDir;//@todo make better
 				$path = Manager::getDocRoot() . $pathLocal;
 				$localDirectories = [];
-				$localTemplates = [
-					'empty',
-					'empty-multipage',
-					'wiki-dark',
-					'wiki-light',
-					'store_v3',
-					'store-chats-dark',
-					'clothes',
-					'store-mini-catalog',
-					'store-mini-one-element',
-					'search-result',
-					'search-result2',
-					'search-result3-dark',
-					'news-detail',
-					'requisites',
-					'ent-en',
-				];
+				$localTemplates = LocalTemplates::getActiveList();
 				foreach ($localTemplates as $template)
 				{
 					$descPath = $path . '/' . $template . '/.description.php';
@@ -2174,33 +2142,6 @@ class LandingSiteDemoComponent extends LandingBaseComponent
 		if ($this->isRepo())
 		{
 			return $data;
-		}
-
-		// templates for PARTNERS
-		if (
-			Option::get('landing', 'b24partner', 'N') == 'Y' &&
-			$partnerId = Option::get('bitrix24', 'partner_id', 0)
-		)
-		{
-			if (isset($data['bitrix24']))
-			{
-				$data['bitrix24']['DATA']['replace']['#partner_id#'] = $partnerId;
-			}
-			if (isset($data['sydney']))
-			{
-				$data['sydney']['DATA']['replace']['#partner_id#'] = $partnerId;
-			}
-		}
-		else
-		{
-			if (isset($data['bitrix24']))
-			{
-				unset($data['bitrix24']);
-			}
-			if (isset($data['sydney']))
-			{
-				unset($data['sydney']);
-			}
 		}
 
 		// template for STORES IN CHAT

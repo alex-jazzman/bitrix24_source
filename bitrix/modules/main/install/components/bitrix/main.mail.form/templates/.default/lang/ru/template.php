@@ -52,3 +52,12 @@ $MESS['MAIN_MAIL_FORM_CRM_EMPTY_SEARCH_SUBTITLE'] = 'Проверьте опеч
 
 $MESS['MAIN_MAIL_FORM_FIELD_MENU'] = 'Дополнительно';
 $MESS['MAIN_MAIL_FORM_QUOTE_SHOW'] = 'Показать цитату';
+$MESS['MAIN_MAIL_FORM_EDITOR_SIGNATURE_SHARED_BADGE'] = 'общая';
+
+$MESS['MAIN_MAIL_FORM_ATTACHMENT_MENTION_PATTERNS'] = 'вложени|вложил|вложу|влажени|прикреп|прекреп|прекрип|в приложении|атач|аттач|attached|attaching|attachd|as an attachment|please find|pfa|herewith|enclosed|enclosing|enclose the|included the|have included|see attached';
+$MESS['MAIN_MAIL_FORM_ATTACHMENT_MENTION_VERBS'] = 'направля|высыл|вышл|высла|пересыл|перешл|пересла|отправля|отправил|отправлю|скидыва|скинул|скину|кида|кину|кинул|дублир|прикладыва|вкладыва|прилагаю|прилагает|прилагаем|прлага|приложенн|приложил|приложу|приложите|приложила|приложили|добавил в письм|добавила в письм|добавили в письм|добавил в это письм';
+$MESS['MAIN_MAIL_FORM_ATTACHMENT_MENTION_OBJECTS'] = 'файл|документ|договор|счет|смет|презентац|накладн|скан|фото|отчет|прайс|инструкц|анкет|шаблон|справк|чек|выписк|доверенност|график|протокол|резюме|таблиц|логотип|макет|скриншот|черновик|архив|паспорт|коммерческ|копи|запис|акт сверк|акт выполнен|pdf|excel|word';
+$MESS['MAIN_MAIL_FORM_ATTACHMENT_REMINDER_TITLE'] = 'Прикрепить файл?';
+$MESS['MAIN_MAIL_FORM_ATTACHMENT_REMINDER_TEXT'] = 'В письме упоминаются файлы, но во вложение ничего не добавлено';
+$MESS['MAIN_MAIL_FORM_ATTACHMENT_REMINDER_BTN_ATTACH'] = 'Прикрепить';
+$MESS['MAIN_MAIL_FORM_ATTACHMENT_REMINDER_BTN_SEND'] = 'Отправить без файлов';

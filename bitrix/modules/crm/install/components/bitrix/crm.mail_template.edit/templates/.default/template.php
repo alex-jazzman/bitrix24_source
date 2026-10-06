@@ -1,6 +1,7 @@
 <?php
 
 use Bitrix\UI\Toolbar\Facade\Toolbar;
+use Bitrix\Main\Web\Uri;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
@@ -51,13 +52,10 @@ if ($_REQUEST['IFRAME'] === 'Y')
 				for="crm_mail_template_<?=(int)$arResult['ELEMENT']['ID'] ?>_active"><?=getMessage('CRM_MAIL_TEMPLATE_IS_ACTIVE') ?></label>
 		</span>
 		<?php if (false && $arResult['ELEMENT']['ID'] > 0 && (\CCrmPerms::isAdmin() || $arResult['USER_ID'] == $arResult['ELEMENT']['OWNER_ID'])):
-			$deleteHref = \CHTTP::urlAddParams(
-				\CComponentEngine::makePathFromTemplate(
+			$deleteHref = (string)(new Uri(\CComponentEngine::makePathFromTemplate(
 					$arParams['PATH_TO_MAIL_TEMPLATE_EDIT'],
 					['element_id' => $arResult['ELEMENT']['ID']]
-				),
-				['delete' => '', 'sessid' => bitrix_sessid()]
-			);?>
+				)))->addParams(['delete' => '', 'sessid' => bitrix_sessid()]);?>
 			<span class="crm-mail-template-edit-form-switch">
 				<label class="crm-mail-template-edit-form-switch-label">
 					<a href="#" onclick="confirm('<?=\CUtil::jsEscape(getMessage('CRM_MAIL_TEMPLATE_DELETE_DLG_MESSAGE')) ?>') && (window.location = '<?=\CUtil::jsEscape($deleteHref); ?>'); return false; "><?=getMessage('CRM_MAIL_TEMPLATE_DELETE_BTN') ?></a>
@@ -209,6 +207,9 @@ BX.ready(function()
 
 	let formNode = BX('<?=\CUtil::jsEscape($formId) ?>');
 	let mailForm = BXMainMailForm.getForm('<?=\CUtil::jsEscape($formId) ?>');
+	// This form edits and saves a mail template, it does not send a message,
+	// so the "forgot attachment" reminder must not run here.
+	mailForm.__attachmentReminderEnabled = false;
 
 	BX.addCustomEvent(mailForm, 'MailForm:field:setMenuExt', function(form, field)
 	{

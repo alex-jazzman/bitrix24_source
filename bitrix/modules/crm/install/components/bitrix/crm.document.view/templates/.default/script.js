@@ -857,6 +857,10 @@
 			{
 				error += '<br />' + BX.message('CRM_DOCUMENT_VIEW_COMPONENT_EDIT_FIELD_ERROR').replace('\#FIELD\#', form.elements[i].previousSibling.innerText);
 			}
+			if(form.elements[i].getAttribute('bx-default') === form.elements[i].value)
+			{
+				continue;
+			}
 			var name = form.elements[i].name.slice(7, -1);
 			values[name] = form.elements[i].value;
 		}

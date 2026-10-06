@@ -37,17 +37,28 @@
 	display: flex;
 	-ms-flex-pack: center;
 	-ms-flex-align: center;
-	overflow: hidden;
+	overflow: visible;
 	margin: auto;
 	width: 270px;
-	height: 125px;
+	height: 165px;
 	-webkit-box-align: center;
 	align-items: center;
 	-webkit-box-pack: center;
 	justify-content: center;
-	-ms-flex-wrap: wrap;
-	flex-wrap: wrap;
-	/*cursor: pointer;*/
+	-ms-flex-direction: column;
+	flex-direction: column;
+	-ms-flex-wrap: nowrap;
+	flex-wrap: nowrap;
+}
+
+.disk-file-transform-file-loader-visual {
+	position: relative;
+	display: flex;
+	flex: 0 0 125px;
+	align-items: center;
+	justify-content: center;
+	width: 125px;
+	height: 125px;
 }
 
 .disk-file-transform-file-loader-button {
@@ -63,7 +74,7 @@
 }
 
 .disk-file-transform-file-loader-button-sad {
-	margin: 0 0 34px 0;
+	margin: 0;
 	width: 74px;
 	height: 74px;
 	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2275%22%20height%3D%2274%22%20viewBox%3D%220%200%2075%2074%22%3E%3Cg%20fill%3D%22none%22%20transform%3D%22translate%28.5%29%22%3E%3Ccircle%20cx%3D%2236.995%22%20cy%3D%2236.995%22%20r%3D%2236.995%22%20fill%3D%22%23E8EBED%22/%3E%3Cg%20fill%3D%22%23F5F7F8%22%20transform%3D%22translate%2819.203%2021.544%29%22%3E%3Cpath%20d%3D%22M.558%2032.286c-1.31%201.353.754%203.42%202.065%202.065%209.19-9.496%2020.98-9.554%2030.23-.11%201.32%201.35%203.385-.718%202.066-2.064-10.34-10.556-24.083-10.513-34.362.11z%22/%3E%3Ccircle%20cx%3D%226.547%22%20cy%3D%225.813%22%20r%3D%225.81%22/%3E%3Ccircle%20cx%3D%2228.518%22%20cy%3D%225.813%22%20r%3D%225.81%22/%3E%3C/g%3E%3C/g%3E%3C/svg%3E');
@@ -80,14 +91,35 @@
 
 .disk-file-transform-file-loader-link-conteiner { width: 100%; }
 
+.disk-file-transform-file-loader-actions {
+	position: relative;
+	z-index: 20;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 16px;
+	width: 100%;
+	min-height: 24px;
+}
+
 .disk-file-transform-file-loader-link {
 	display: inline-block;
+	padding: 0;
+	border: 0;
 	border-bottom: 1px solid #0f6bc9;
+	background: none;
 	color: #0f6bc9;
+	font: inherit;
+	cursor: pointer;
 	transition: border-bottom .3s;
 }
 
 .disk-file-transform-file-loader-link:hover { border-bottom: 1px solid transparent; }
+
+.disk-file-transform-file-loader-link:focus-visible {
+	outline: 2px solid #0f6bc9;
+	outline-offset: 3px;
+}
 
 .disk-file-transform-file-circular {
 	position: absolute;

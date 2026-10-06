@@ -113,19 +113,12 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			button() {
 				return this.config;
 			},
-			isAiAssistant() {
-				return this.button.bgColorToken === im_v2_const.ColorToken.aiAssistant;
-			},
 			commonAttributes() {
-				const attrs = {
+				return {
 					class: ['bx-im-keyboard-button__container', this.buttonClasses],
-					style: this.buttonStyles
+					style: this.buttonStyles,
+					title: this.button.text
 				};
-				if (this.isAiAssistant) {
-					attrs['data-text'] = this.button.text;
-					attrs.title = this.button.text;
-				}
-				return attrs;
 			},
 			buttonClasses() {
 				const {
@@ -206,14 +199,14 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			v-bind="commonAttributes"
 			@click="onClick"
 		>
-			{{ button.text }}
+			<span class="bx-im-keyboard-button__text --ellipsis">{{ button.text }}</span>
 		</a>
 		<div
 			v-else
 			v-bind="commonAttributes"
 			@click="onClick"
 		>
-			{{ button.text }}
+			<span class="bx-im-keyboard-button__text --ellipsis">{{ button.text }}</span>
 		</div>
 	`
 	};
@@ -270,9 +263,11 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		methods: {
 			onButtonActionClick(event) {
 				this.getActionManager().handleAction(event);
+				this.$emit('click', event);
 			},
 			onButtonCustomCommandClick(event) {
 				this.getBotService().sendCommand(event);
+				this.$emit('click', event);
 			},
 			getActionManager() {
 				if (!this.actionManager) {

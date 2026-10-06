@@ -75,6 +75,12 @@ if ($arResult['ENABLE_EMAIL_ADD'])
 if (empty($arResult['SHARED_CRM_EMAIL']))
 	$arResult['SHARED_CRM_EMAIL'] = trim(\COption::getOptionString('crm', 'mail', ''));
 
+$arResult['AVAILABLE_SENDERS'] = [];
+if ($arResult['ENABLE_EMAIL_ADD'] && is_object($USER) && $USER->isAuthorized())
+{
+	$arResult['AVAILABLE_SENDERS'] = \Bitrix\Main\Mail\Sender::prepareUserMailboxes((int)$USER->getId());
+}
+
 $arResult['EVENT_VIEW_TAB_ID'] = isset($arParams['~EVENT_VIEW_TAB_ID']) ? $arParams['~EVENT_VIEW_TAB_ID'] : 'tab_event';
 $arResult['FORM_ID'] = isset($arParams['~FORM_ID']) ? $arParams['~FORM_ID'] : '';
 

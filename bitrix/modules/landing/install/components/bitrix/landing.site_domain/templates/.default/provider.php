@@ -13,6 +13,7 @@ use Bitrix\Main\UI\Extension;
 Extension::load(['ui.fonts.opensans', 'ui.hint']);
 
 $requestDomainName = $this->getComponent()->request('param');
+$domainRules = (string)Loc::getMessage('LANDING_TPL_DOMAIN_RULES');
 
 if ($arResult['IS_FREE_DOMAIN'] != 'Y')
 {
@@ -21,41 +22,48 @@ if ($arResult['IS_FREE_DOMAIN'] != 'Y')
 }
 ?>
 
-<div class="landing-domain-block">
+<div class="landing-domain-block" id="landing-domain-block-free" data-testid="landing-domain-free-block">
 	<div class="landing-domain-block-title"><?= Loc::getMessage('LANDING_TPL_FREE_SUBTITLE');?></div>
 	<div class="landing-domain-block-content">
 		<div class="landing-domain-block-info" id="landing-domain-block-info">
 			<div class="landing-domain-block-info-title"><?= Loc::getMessage('LANDING_TPL_FREE_INFO_TITLE');?></div>
 			<div class="landing-domain-block-info-text"><?= Loc::getMessage('LANDING_TPL_FREE_INFO_TEXT');?></div>
-			<a href="#" class="ui-link ui-link-secondary ui-link-dashed" id="landing-domain-block-info-close-link"><?= Loc::getMessage('LANDING_TPL_LINK_HIDE');?></a>
-			<span class="landing-domain-block-info-close" id="landing-domain-block-info-close-icon"></span>
+			<button type="button" class="ui-link ui-link-secondary ui-link-dashed landing-domain-block-info-close-link" <?
+				?>id="landing-domain-block-info-close-link" data-testid="landing-domain-promo-hide-link"><?
+				?><?= Loc::getMessage('LANDING_TPL_LINK_HIDE');?></button>
+			<button type="button" class="landing-domain-block-info-close" id="landing-domain-block-info-close-icon" <?
+				?>aria-label="<?= \htmlspecialcharsbx(Loc::getMessage('LANDING_TPL_LINK_HIDE'));?>" <?
+				?>data-testid="landing-domain-promo-close-btn"></button>
 		</div>
 		<div class="landing-domain-block-select">
 			<div class="landing-domain-block-input">
 				<div class="landing-domain-block-input-inner">
 					<span class="landing-domain-block-label">
-					<?= Loc::getMessage('LANDING_TPL_FREE_TITLE_SELECT1', ['#TLD#' => '.' . mb_strtoupper(implode(', .', $arResult['TLD']))]);?>
-					<span data-hint="<?= Loc::getMessage('LANDING_TPL_DOMAIN_RULES') ?>" data-hint-html></span>
+					<label for="domain-edit-name"><?= Loc::getMessage('LANDING_TPL_FREE_TITLE_SELECT1', ['#TLD#' => '.' . mb_strtoupper(implode(', .', $arResult['TLD']))]);?></label>
+					<span data-hint="<?= $domainRules ?>" data-hint-html aria-hidden="true"></span>
+					<span class="landing-visually-hidden" id="landing-domain-rules"><?= \htmlspecialcharsbx($arResult['DOMAIN_RULES_TEXT']) ?></span>
 					</span>
 					<div class="ui-ctl ui-ctl-textbox ui-ctl-w100">
 						<div class="ui-ctl-ext-after ui-ctl-icon-loader" id="domain-edit-loader" hidden></div>
 						<div class="domain-edit-length" id="domain-edit-length" hidden></div>
 						<input type="text" name="param" value="<?= \htmlspecialcharsbx($requestDomainName ? $requestDomainName : $arResult['DOMAIN_NAME']);?>" <?
-							?>id="domain-edit-name" class="ui-ctl-element" placeholder="mysite.<?= $arResult['TLD'][0];?>">
+							?>id="domain-edit-name" class="ui-ctl-element" placeholder="mysite.<?= $arResult['TLD'][0];?>" <?
+							?>aria-describedby="domain-edit-message landing-domain-rules" <?
+							?>data-testid="landing-domain-name-input">
 					</div>
 				</div>
-				<button class="ui-btn ui-btn-light-border landing-domain-edit-check-btn" id="domain-edit-check">
+				<button type="button" class="ui-btn ui-btn-light-border landing-domain-edit-check-btn" id="domain-edit-check" data-testid="landing-domain-check-btn">
 					<?= Loc::getMessage('LANDING_TPL_CHECK');?>
 				</button>
 			</div>
-			<div class="landing-domain-alert" id="domain-edit-message" hidden></div>
-			<div class="landing-domain-block-available" style="display: none;">
-				<div class="landing-domain-block-available-title"><?= Loc::getMessage('LANDING_TPL_FREE_CHOOSE_ANOTHER_NAME');?></div>
-				<div id="domain-edit-another" class="landing-domain-block-available-list-wrap">
-					...domains...
-				</div>
-				<div class="landing-domain-block-available-btn-wrap">
-					<button class="ui-btn ui-btn-light-border landing-domain-block-available-btn" id="domain-edit-another-more" type="button" style="display: none;">
+			<div class="landing-domain-alert" id="domain-edit-message" data-testid="landing-domain-message"></div>
+			<div class="landing-domain-block-available" hidden>
+				<div class="landing-domain-block-available-title" id="landing-domain-suggest-title"><?= Loc::getMessage('LANDING_TPL_FREE_CHOOSE_ANOTHER_NAME');?></div>
+				<div id="domain-edit-another" class="landing-domain-block-available-list-wrap" <?
+					?>role="radiogroup" aria-labelledby="landing-domain-suggest-title" <?
+					?>data-testid="landing-domain-suggest-list"></div>
+				<div class="landing-domain-block-available-btn-wrap" hidden>
+					<button class="ui-btn ui-btn-light-border landing-domain-block-available-btn" id="domain-edit-another-more" type="button" data-testid="landing-domain-suggest-more-btn">
 						<?= Loc::getMessage('LANDING_TPL_FREE_CHOOSE_ANOTHER_NAME_MORE');?>
 					</button>
 				</div>
@@ -64,14 +72,14 @@ if ($arResult['IS_FREE_DOMAIN'] != 'Y')
 		<?if ($arResult['AGREEMENTS_URL']):?>
 		<div class="landing-domain-edit-agreement">
 			<?= Loc::getMessage('LANDING_TPL_AGREE_BY_SUBMIT', [
-				'#LINK1#' => '<a href="' . $arResult['AGREEMENTS_URL'] . '" target="_blank">',
+				'#LINK1#' => '<a href="' . $arResult['AGREEMENTS_URL'] . '" target="_blank" data-testid="landing-domain-agreement-link">',
 				'#LINK2#' => '</a>'
 			]);?>
 		</div>
 		<?endif;?>
 	</div>
 </div>
-<button type="submit" class="ui-btn ui-btn-primary" id="domain-edit-submit">
+<button type="submit" class="ui-btn ui-btn-primary" id="domain-edit-submit" data-testid="landing-domain-submit-btn">
 	<?= Loc::getMessage('LANDING_TPL_GET_FREE');?>
 </button>
 
@@ -98,5 +106,7 @@ if ($arResult['IS_FREE_DOMAIN'] != 'Y')
 			promoCloseIcon: BX('landing-domain-block-info-close-icon'),
 			promoCloseLink: BX('landing-domain-block-info-close-link')
 		});
+
+		BX.UI.Hint.init(BX('landing-domain-block-free'));
 	});
 </script>

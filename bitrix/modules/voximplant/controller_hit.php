@@ -408,7 +408,18 @@ if (is_array($params))
 			}
 			elseif ($params["COMMAND"] === "NotifyAdmins")
 			{
-				$message = (string)$params["MESSAGE"];
+				$message = [
+					'NOTIFY_MESSAGE' => (string)$params["MESSAGE"]
+				];
+				if (isset($params['SUBJECT']))
+				{
+					$message['SUBJECT'] = $params['SUBJECT'];
+				}
+				if (isset($params['TITLE']))
+				{
+					$message['NOTIFY_TITLE'] = $params['TITLE'];
+					$message['SUBJECT'] = $message['SUBJECT'] ?? $params['TITLE'];
+				}
 				$buttons = Json::decode($params["BUTTONS"]);
 				if (!is_array($buttons))
 				{

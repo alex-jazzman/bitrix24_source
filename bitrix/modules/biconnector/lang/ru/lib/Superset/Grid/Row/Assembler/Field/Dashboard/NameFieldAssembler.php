@@ -1,5 +1,6 @@
 <?php
 
+$MESS['BI_DASHBOARD_NAME_LOCKED'] = 'Недоступно';
 $MESS['BI_GROUP_SUBTITLE_PLURAL_0'] = '#COUNT# отчёт';
 $MESS['BI_GROUP_SUBTITLE_PLURAL_1'] = '#COUNT# отчёта';
 $MESS['BI_GROUP_SUBTITLE_PLURAL_2'] = '#COUNT# отчётов';

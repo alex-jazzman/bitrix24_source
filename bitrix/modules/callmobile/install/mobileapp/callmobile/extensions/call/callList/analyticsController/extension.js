@@ -33,16 +33,16 @@ jn.define('call/callList/analyticsController', (require, exports, module) => {
 
 	class CallListAnalyticsController
 	{
-		static sendOpenCallTab(fromMenu = false)
+		static sendOpenCallTab(source = null)
 		{
 			const analytics = new AnalyticsEvent();
 			analytics.setTool(Analytics.AnalyticsTool.im);
 			analytics.setCategory(Analytics.AnalyticsCategory.messenger);
 			analytics.setEvent(Analytics.AnalyticsEvent.openCallTab);
 
-			if (fromMenu)
+			if (source !== null)
 			{
-				analytics.setSubSection(Analytics.AnalyticsSubSection.menu);
+				analytics.setSection(source);
 			}
 
 			analytics.send();

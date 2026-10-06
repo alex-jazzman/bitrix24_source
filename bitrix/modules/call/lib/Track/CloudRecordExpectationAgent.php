@@ -29,8 +29,8 @@ use Bitrix\Im\V2\Service\Context;
  */
 class CloudRecordExpectationAgent
 {
-	/** Initial wait time before first check (3 hours) */
-	public const INITIAL_WAIT_TIME = 10800;
+	/** Initial wait time before first check (4 hours) */
+	public const INITIAL_WAIT_TIME = 14400;
 
 	/** Reschedule delay when downloads are still in progress (1 hour) */
 	public const RESCHEDULE_DELAY = 3600;
@@ -99,6 +99,16 @@ class CloudRecordExpectationAgent
 			{
 				$needsReschedule = true;
 			}
+		}
+
+		// A record may be downloaded (and thus "processed") while its preview is still being
+		// downloaded — delivery to chat waits for the preview. Keep the agent alive until the
+		// preview download resolves, otherwise nobody falls back to a default preview if the
+		// preview download later gives up.
+		if (!$needsReschedule && self::hasActiveDownloadAgentsForCall($callId))
+		{
+			$log && $logger->info("CloudRecordExpectationAgent: Preview still downloading. Rescheduling. CallId: {$callId}");
+			$needsReschedule = true;
 		}
 
 		if ($needsReschedule)
@@ -213,7 +223,7 @@ class CloudRecordExpectationAgent
 	 * @param int $trackId Track ID
 	 * @return bool
 	 */
-	private static function hasDownloadAgentForTrack(int $trackId): bool
+	public static function hasDownloadAgentForTrack(int $trackId): bool
 	{
 		$pattern = DownloadAgent::class . "::run({$trackId},%";
 		$agents = \CAgent::getList([], [
@@ -224,7 +234,38 @@ class CloudRecordExpectationAgent
 	}
 
 	/**
-	 * Send error notification to chat
+	 * Check if any download agent is active for any cloud recording track of the call
+	 *
+	 * @param int $callId Call ID
+	 * @return bool
+	 */
+	public static function hasActiveDownloadAgentsForCall(int $callId): bool
+	{
+		// Select only IDs — the full ORM objects aren't needed, just the agent check below.
+		$result = \Bitrix\Call\Model\CallTrackTable::query()
+			->setSelect(['ID'])
+			->where('CALL_ID', $callId)
+			->whereIn('TYPE', [Track::TYPE_VIDEO_RECORD, Track::TYPE_VIDEO_PREVIEW])
+			->exec()
+		;
+
+		while ($track = $result->fetch())
+		{
+			if (self::hasDownloadAgentForTrack((int)$track['ID']))
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * Send error notification to chat.
+	 *
+	 * If the call has tracks with a non-empty DOWNLOAD_URL but not yet downloaded,
+	 * a "Request again" button is attached so the user can restart the cloud download.
+	 * Otherwise a fallback "contact support" message is sent.
 	 *
 	 * @param int $callId Call ID
 	 */
@@ -247,10 +288,17 @@ class CloudRecordExpectationAgent
 			return;
 		}
 
-		self::sendTelemetry($call, 'error', 'failed', 'recording_download_failed');
-
-		$errorText = Loc::getMessage('CALL_RECORDING_DOWNLOAD_ERROR', ['#CALL_ID#' => $callId]);
-		$message = CallChatMessage::makeCloudRecordErrorMessage($call, $chat, $errorText);
+		if (self::hasRetryableTracks($callId))
+		{
+			self::sendTelemetry($call, 'error', 'failed_retryable', 'recording_download_failed');
+			$message = CallChatMessage::makeCloudRecordRetryableErrorMessage($call, $chat);
+		}
+		else
+		{
+			self::sendTelemetry($call, 'error', 'failed', 'recording_download_failed');
+			$errorText = Loc::getMessage('CALL_RECORDING_DOWNLOAD_ERROR', ['#CALL_ID#' => $callId]);
+			$message = CallChatMessage::makeCloudRecordErrorMessage($call, $chat, $errorText);
+		}
 
 		$sendingConfig = (new SendingConfig())
 			->enableSkipCounterIncrements()
@@ -261,6 +309,28 @@ class CloudRecordExpectationAgent
 		NotifyService::getInstance()->sendMessageDeferred($chat, $message, $sendingConfig, $context);
 
 		$log && $logger->info("CloudRecordExpectationAgent::sendErrorToChat: Sent. CallId: {$callId}");
+	}
+
+	/**
+	 * Check if call has at least one track with a download URL that has not been downloaded yet
+	 *
+	 * @param int $callId Call ID
+	 * @return bool
+	 */
+	public static function hasRetryableTracks(int $callId): bool
+	{
+		foreach ([Track::TYPE_VIDEO_RECORD, Track::TYPE_VIDEO_PREVIEW] as $type)
+		{
+			foreach (Track::getTracksForCall($callId, $type) as $track)
+			{
+				if ($track->getDownloadUrl() && !$track->getDownloaded())
+				{
+					return true;
+				}
+			}
+		}
+
+		return false;
 	}
 
 	/**

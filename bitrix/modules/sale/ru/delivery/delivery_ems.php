@@ -1,4 +1,4 @@
-<?
+<?php
 /*********************************************************************************
 Delivery services for EMS Russian Post Service (http://www.emspost.ru/)
 It uses on-line api. Delivery only from Russia.
@@ -6,6 +6,8 @@ Files:
 - ems/city.php - list of EMS city ids
 - ems/country.php - list of EMS country ids
 *********************************************************************************/
+
+use Bitrix\Main\Web\HttpClient;
 
 CModule::IncludeModule("sale");
 
@@ -112,24 +114,18 @@ class CDeliveryEMS
 		foreach ($arParams as $key => $value)
 			$arQuery[] = $key.'='.urlencode($value);
 
-		$error_number = 0;
-		$error_text = "";
-		$data = QueryGetData(
-			'www.emspost.ru',
-			80,
-			'/api/rest',
-			implode("&", $arQuery),
-			$error_number,
-			$error_text,
-			'GET'
-		);
+		$http = new HttpClient();
+		$data = $http->get('http://www.emspost.ru/api/rest?' . implode("&", $arQuery));
 
 		if (($pos = mb_strpos($data, "\n")) !== false)
 		{
 			$data = trim(mb_substr($data, 0, $pos));
 		}
 
-		CDeliveryEMS::__Write2Log($error_number.": ".$error_text);
+		foreach ($http->getError() as $error_number => $error_text)
+		{
+			CDeliveryEMS::__Write2Log($error_number . ": " . $error_text);
+		}
 		CDeliveryEMS::__Write2Log($data);
 
 		$arResult = CDeliveryEMS::JsObjectToPhp($data);

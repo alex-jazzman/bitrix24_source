@@ -1,5 +1,6 @@
-import { Loc, Type } from 'main.core';
+import { Loc } from 'main.core';
 import { normalizeFileSize } from '../../utils/file-size';
+import { buildViewerDataAttrs, sanitizeAttachmentUrl } from '../../utils/viewer-attrs';
 
 export const AttachmentNodeViewBaseComponent = {
 	props: {
@@ -65,13 +66,15 @@ export const AttachmentNodeViewBaseComponent = {
 		{
 			return normalizeFileSize(this.attrs.size);
 		},
+		// An url that fails the check degrades to '' — the same value these properties already
+		// return when the attribute is missing, so the existing "no url" branches take over.
 		downloadUrl(): string
 		{
-			return this.attrs.downloadUrl || '';
+			return sanitizeAttachmentUrl(this.attrs.downloadUrl) || '';
 		},
 		showUrl(): string
 		{
-			return this.attrs.showUrl || '';
+			return sanitizeAttachmentUrl(this.attrs.showUrl) || '';
 		},
 		fileId(): number | null
 		{
@@ -85,19 +88,18 @@ export const AttachmentNodeViewBaseComponent = {
 
 			return Number.isInteger(value) && value > 0 ? value : null;
 		},
-		viewerAttrs(): Object
+		// Single filtering point for viewer attributes: descendants must never read
+		// `attrs.viewerAttrs` directly, it is author-controlled document data.
+		viewerDataAttrs(): Object
 		{
-			return Type.isPlainObject(this.attrs.viewerAttrs)
-				? this.attrs.viewerAttrs
-				: {}
-			;
+			return buildViewerDataAttrs(this.attrs.viewerAttrs);
 		},
 		isUnavailable(): boolean
 		{
 			return Boolean(this.attrs.unavailable);
 		},
 		// fileId present but no URL yet and not flagged failed: the resolver is in flight.
-		// Render a skeleton instead of the "Без названия" name fallback during this window.
+		// Render a skeleton instead of the "Untitled" name fallback during this window.
 		isResolving(): boolean
 		{
 			return this.fileId !== null && !this.showUrl && !this.downloadUrl && !this.isUnavailable;

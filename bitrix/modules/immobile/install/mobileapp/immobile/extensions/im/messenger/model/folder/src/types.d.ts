@@ -3,7 +3,7 @@ import { MessengerModel, PayloadData } from '../../base';
 export type FolderType = 'system' | 'personal';
 
 export type FolderCode = 'default' | 'tasksTask' | 'copilot'
-	| 'openChannel' | 'collab' | 'openlines' | null;
+	| 'openChannel' | 'collab' | 'lines' | null;
 
 export interface FolderModelState {
 	id: number;
@@ -14,6 +14,33 @@ export interface FolderModelState {
 	sort: number;
 	chatIds: Array<number>;
 	recentSection: string | null;
+}
+
+/**
+ * A single folder member as delivered by REST inside `definition.chats`.
+ * `dialogId`: group chat → "chat" + chatId, private chat → companion userId (string).
+ */
+export interface FolderRestChatDto {
+	chatId: number;
+	dialogId: string;
+}
+
+export interface FolderRestDefinitionDto {
+	chats: Array<FolderRestChatDto>;
+	recentSection: string | null;
+}
+
+/**
+ * Raw folder payload as received from REST (before `normalize()` flattens it into
+ * FolderModelState). Membership lives under `definition.chats`, not on the top level.
+ */
+export interface FolderRestDto {
+	id: number;
+	parentChatId: number;
+	type: FolderType;
+	code: FolderCode;
+	title: string;
+	definition: FolderRestDefinitionDto;
 }
 
 declare type FolderModelCollection = {

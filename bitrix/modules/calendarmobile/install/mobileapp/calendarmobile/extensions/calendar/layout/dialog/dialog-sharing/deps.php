@@ -3,6 +3,7 @@
 return [
 	'extensions' => [
 		'layout/ui/loading-screen',
+		'ui-system/layout/box',
 		'calendar:layout/sharing-empty-state',
 		'calendar:layout/sharing-switcher',
 		'calendar:layout/sharing-panel',

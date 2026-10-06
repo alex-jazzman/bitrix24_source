@@ -139,6 +139,18 @@ export class SimpleVAD
 
 	destroy()
 	{
+		if (this.inactivityTimeout)
+		{
+			clearTimeout(this.inactivityTimeout);
+			this.inactivityTimeout = 0;
+		}
+
+		if (this.voiceState)
+		{
+			this.voiceState = false;
+			this.callbacks.voiceStopped();
+		}
+
 		if (this.analyserNode)
 		{
 			this.analyserNode.disconnect();

@@ -11,4 +11,4 @@ type B24Options = {
 	usedBySiteButton: boolean;
 };
 
-export {B24Options};
+export type {B24Options};

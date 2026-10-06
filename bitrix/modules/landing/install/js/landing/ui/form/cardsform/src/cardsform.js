@@ -1,6 +1,7 @@
 import {BaseForm} from 'landing.ui.form.baseform';
 import {FormCollection} from 'landing.ui.collection.formcollection';
 import {Loc} from 'landing.loc';
+import {A11y} from 'landing.ui.a11y';
 import {Content} from 'landing.ui.panel.content';
 import {Dom, Runtime, Text, Type, Event} from 'main.core';
 import {CardForm} from 'landing.ui.form.cardform';
@@ -34,6 +35,7 @@ export class CardsForm extends BaseForm
 		this.onAddCardClick = this.onAddCardClick.bind(this);
 		this.onMouseWheel = this.onMouseWheel.bind(this);
 		this.onDragEnd = this.onDragEnd.bind(this);
+		this.onDragHandleKeyDown = this.onDragHandleKeyDown.bind(this);
 
 		this.addButton = this.createAddButton();
 		this.draggable = new Draggable({
@@ -48,6 +50,7 @@ export class CardsForm extends BaseForm
 		});
 
 		this.draggable.subscribe('end', this.onDragEnd);
+		Event.bind(this.body, 'keydown', this.onDragHandleKeyDown);
 
 		setTimeout(() => {
 			this.value = this.serialize();
@@ -95,6 +98,91 @@ export class CardsForm extends BaseForm
 			const [code] = form.selector.split('@');
 			form.selector = `${code}@${index}`;
 		});
+	}
+
+	onDragHandleKeyDown(event: KeyboardEvent)
+	{
+		if (!event.altKey || (event.key !== 'ArrowUp' && event.key !== 'ArrowDown'))
+		{
+			return;
+		}
+
+		const handle = event.target.closest('.landing-ui-form-card-item-header-drag');
+		if (!handle)
+		{
+			return;
+		}
+
+		const wrapper = handle.closest('.landing-ui-form-cards-item');
+		const form = wrapper ? this.childForms.find((item) => item.wrapper === wrapper) : null;
+		if (!form)
+		{
+			return;
+		}
+
+		event.preventDefault();
+		this.moveCard(form, event.key === 'ArrowUp' ? 'up' : 'down');
+	}
+
+	moveCard(form: CardForm, direction: 'up' | 'down')
+	{
+		const items = this.getVisibleForms();
+		const sourceElement = form.wrapper;
+		const index = items.indexOf(sourceElement);
+		if (index === -1)
+		{
+			return;
+		}
+
+		const targetIndex = (direction === 'up') ? index - 1 : index + 1;
+		if (targetIndex < 0 || targetIndex >= items.length)
+		{
+			this.announceCardMove(form, direction, false);
+
+			return;
+		}
+
+		const targetElement = items[targetIndex];
+		if (direction === 'up')
+		{
+			Dom.insertBefore(sourceElement, targetElement);
+		}
+		else
+		{
+			Dom.insertAfter(sourceElement, targetElement);
+		}
+
+		this.sortForms();
+		this.draggable.invalidateCache();
+
+		const handle = sourceElement.querySelector('.landing-ui-form-card-item-header-drag');
+		if (handle)
+		{
+			handle.focus();
+		}
+
+		this.announceCardMove(form, direction, true);
+	}
+
+	// eslint-disable-next-line class-methods-use-this
+	announceCardMove(form: CardForm, direction: 'up' | 'down', moved: boolean)
+	{
+		const title = form.getTitleText();
+		let phraseCode;
+		if (moved)
+		{
+			phraseCode = (direction === 'up')
+				? 'LANDING_CARDS_FORM_MOVED_UP'
+				: 'LANDING_CARDS_FORM_MOVED_DOWN';
+		}
+		else
+		{
+			phraseCode = (direction === 'up')
+				? 'LANDING_CARDS_FORM_MOVE_BLOCKED_TOP'
+				: 'LANDING_CARDS_FORM_MOVE_BLOCKED_BOTTOM';
+		}
+
+		A11y.announce(Loc.getMessage(phraseCode).replace('#TITLE#', () => title));
 	}
 
 	addChildForm(form: CardForm)

@@ -200,6 +200,33 @@ elseif ($arResult['HAS_ACCESS_TO_EDIT_PERMISSIONS'])
 	$gearMenuItems[] = $permissionsItem;
 }
 
+if (!empty($arResult['HAS_ACCESS_TO_SHARED_SIGNATURES']))
+{
+	/*
+	 * Open the single signatures screen with its regular type filter applied. Resetting the filter
+	 * when the slider closes preserves the state the user had before following this entry point.
+	 */
+	$sharedSignaturesUrl = '/mail/signatures?TYPE=shared&apply_filter=Y';
+	$sharedSignaturesSliderData = Json::encode([
+		'cacheable' => false,
+		'data' => [
+			'resetFilterOnClose' => true,
+		],
+	]);
+
+	$gearMenuItems[] = [
+		'text' => Loc::getMessage('MAIL_MAILBOX_LIST_GEAR_SHARED_SIGNATURES'),
+		'onclick' => new JsCode(sprintf(
+			"this.close(); BX.SidePanel.Instance.open('%s', %s)",
+			$sharedSignaturesUrl,
+			$sharedSignaturesSliderData,
+		)),
+		'dataset' => [
+			'id' => 'mailbox-grid-gear-shared-signatures',
+		],
+	];
+}
+
 if (!empty($gearMenuItems))
 {
 	$gearButton = [
@@ -228,6 +255,10 @@ if (!empty($gearMenuItems))
 
 $gridContainerId = 'bx-mml-' . $arResult['GRID_ID'] . '-container';
 
+if (!empty($arResult['BULK_ACTIONS_AVAILABLE']))
+{
+	?><div class="mail-mailbox-list-actionpanel-container"></div><?php
+}
 ?><span class="mail-mailbox-list-grid-container --ui-context-content-light" id="<?= htmlspecialcharsbx($gridContainerId)?>"><?php
 	$APPLICATION->IncludeComponent(
 		'bitrix:main.ui.grid',

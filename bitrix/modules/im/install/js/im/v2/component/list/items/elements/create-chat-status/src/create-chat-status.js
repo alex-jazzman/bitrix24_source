@@ -2,7 +2,6 @@ import { Loc, type JsonObject } from 'main.core';
 import { type BaseEvent } from 'main.core.events';
 import { BIcon, Outline as OutlineIcons } from 'ui.icon-set.api.vue';
 
-import { Messenger } from 'im.public';
 import { CreateChatManager, CreatableChatType } from 'im.v2.lib.create-chat';
 import { EmptyAvatar, EmptyAvatarType, AvatarSize } from 'im.v2.component.elements.avatar';
 import { Layout } from 'im.v2.const';
@@ -148,14 +147,15 @@ export const CreateChatStatus = {
 		onCancel()
 		{
 			CreateChatManager.getInstance().clearPresetFields();
-			CreateChatManager.getInstance().setCreationStatus(false);
 
 			if (!this.chatCreationIsOpened)
 			{
+				CreateChatManager.getInstance().setCreationStatus(false);
+
 				return;
 			}
 
-			void Messenger.openChat();
+			void CreateChatManager.getInstance().cancelChatCreation();
 		},
 		loc(phraseCode: string): string
 		{

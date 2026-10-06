@@ -271,13 +271,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			}
 			return getOpener()?.openCopilot(dialogId, contextId);
 		}
-		async openCollab(dialogId = '') {
+		async openCollab(dialogId = '', options = {}) {
 			const DesktopManager = main_core.Reflection.getClass('BX.Messenger.v2.Lib.DesktopManager');
 			const isRedirectAllowed = await DesktopManager?.getInstance().checkForRedirect();
 			if (isRedirectAllowed) {
-				return DesktopManager?.getInstance().redirectToCollab(dialogId);
+				return DesktopManager?.getInstance().redirectToCollab(dialogId, options);
 			}
-			return getOpener()?.openCollab(dialogId);
+			return getOpener()?.openCollab(dialogId, options);
 		}
 		async openChannel(dialogId = '') {
 			const DesktopManager = main_core.Reflection.getClass('BX.Messenger.v2.Lib.DesktopManager');

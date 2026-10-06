@@ -11,6 +11,7 @@ $MESS['IM_SEARCH_ITEM_COLLAB_TYPE'] = "Коллаба";
 $MESS['IM_SEARCH_ITEM_COLLAB_V2_TYPE'] = "Проект";
 $MESS['IM_SEARCH_ITEM_TASK_COMMENTS_TYPE'] = "Чат задачи";
 $MESS['IM_SEARCH_RESULT_NOT_FOUND'] = "Ничего не найдено";
+$MESS['IM_SEARCH_RESULT_NO_RECENT'] = "Здесь будет ваша история поиска";
 $MESS['IM_SEARCH_RESULT_NOT_FOUND_DESCRIPTION'] = "Попробуйте изменить запрос";
 $MESS['IM_SEARCH_ITEM_FOUND_BY_USER'] = "Найдено по участникам чата";
 $MESS['IM_SEARCH_MY_NOTES'] = "Заметки";

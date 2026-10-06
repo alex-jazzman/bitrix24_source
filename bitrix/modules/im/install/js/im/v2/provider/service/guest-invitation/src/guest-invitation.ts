@@ -45,7 +45,7 @@ export class GuestInvitationService
 		});
 	}
 
-	updateLink(chatId: number): Promise<void>
+	updateLink(chatId: number): Promise<SharingLink>
 	{
 		const payload = {
 			data: { chatId },
@@ -54,9 +54,11 @@ export class GuestInvitationService
 		return runAction(RestMethod.imV2GuestLinkRegenerate, payload).then(({ sharingLink }: {
 			sharingLink: SharingLink
 		}) => {
-			return Core.getStore().dispatch('sidebar/sharedLink/regenerate', {
+			void Core.getStore().dispatch('sidebar/sharedLink/regenerate', {
 				newLink: sharingLink,
 			});
+
+			return sharingLink;
 		}).catch(([error]: RunActionError[]) => {
 			console.error('GuestInvitationService: regenerate invite link error', error);
 			throw error;

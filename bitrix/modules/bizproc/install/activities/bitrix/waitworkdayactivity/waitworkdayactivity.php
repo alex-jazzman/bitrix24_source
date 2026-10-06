@@ -6,6 +6,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\Bizproc\Activity\Enum\SchedulerTransport;
+use Bitrix\Bizproc\Activity\Enum\ResumeWorkflowQueue;
 
 class CBPWaitWorkDayActivity extends CBPActivity implements
 	IBPEventActivity,
@@ -79,6 +80,10 @@ class CBPWaitWorkDayActivity extends CBPActivity implements
 			? SchedulerTransport::Messenger->value
 			: null
 		;
+		$resumeWorkflowQueue = $schedulerService->useMessengerTransport()
+			? ResumeWorkflowQueue::WaitWorkDay
+			: null
+		;
 
 		$this->startEventId = $schedulerService->subscribeOnEvent(
 			$this->getWorkflowInstanceId(),
@@ -88,6 +93,7 @@ class CBPWaitWorkDayActivity extends CBPActivity implements
 			[self::FIELD_USER_ID => $userId],
 			sort: self::START_EVENT_SORT,
 			schedulerTransport: $this->getSchedulerTransport(),
+			resumeWorkflowQueue: $resumeWorkflowQueue,
 		);
 
 		$this->continueEventId = $schedulerService->subscribeOnEvent(
@@ -98,6 +104,7 @@ class CBPWaitWorkDayActivity extends CBPActivity implements
 			[self::FIELD_USER_ID => $userId],
 			sort: self::CONTINUE_EVENT_SORT,
 			schedulerTransport: $this->getSchedulerTransport(),
+			resumeWorkflowQueue: $resumeWorkflowQueue,
 		);
 
 		$this->writeToTrackingService(
@@ -117,7 +124,7 @@ class CBPWaitWorkDayActivity extends CBPActivity implements
 			$schedulerService->unSubscribeByEventId(
 				$this->startEventId,
 				self::FIELD_USER_ID,
-				$this->getSchedulerTransport()
+				$this->getSchedulerTransport(),
 			);
 		}
 		if (isset($this->continueEventId))
@@ -125,7 +132,7 @@ class CBPWaitWorkDayActivity extends CBPActivity implements
 			$schedulerService->unSubscribeByEventId(
 				$this->continueEventId,
 				self::FIELD_USER_ID,
-				$this->getSchedulerTransport()
+				$this->getSchedulerTransport(),
 			);
 		}
 

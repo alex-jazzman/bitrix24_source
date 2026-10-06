@@ -26,6 +26,7 @@ Extension::load([
 	'ui.forms',
 	'ui.buttons',
 	'ui.dialogs.messagebox',
+	'bizproc.a11y',
 ]);
 
 $templates = [];
@@ -50,6 +51,7 @@ foreach (($arResult['documents'] ?? []) as $document)
 	$documents[] = [
 		'documentType' => $document['documentType'] ?? [],
 		'documentId' => $document['documentId'] ?? null,
+		'categoryId' => $document['categoryId'] ?? null,
 	];
 }
 

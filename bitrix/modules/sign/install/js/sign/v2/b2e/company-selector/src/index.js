@@ -12,6 +12,7 @@ import { type Scheme, SchemeType } from 'sign.v2.b2e.scheme-selector';
 import { CompanyEditor, CompanyEditorMode, DocumentEntityTypeId, EditorTypeGuid } from 'sign.v2.company-editor';
 import { Alert, AlertColor, AlertSize } from 'ui.alerts';
 import { Dialog } from 'ui.entity-selector';
+import { setupAccessibleTrigger } from './accessibility';
 import { hide, show } from './functions';
 import type { ProviderSelectedEvent } from './provider-selector';
 import { allowedSignatureProviders, ProviderSelector } from './provider-selector';
@@ -22,6 +23,7 @@ export type CompanySelectedEvent = BaseEvent<{companyId: number, provider: Provi
 export type { ProviderCodeType, ProviderSelectedEvent };
 export const ProviderCode: Readonly<Record<string, ProviderCodeType>> = Object.freeze({
 	goskey: 'goskey',
+	goskeyLite: 'goskey-lite',
 	sesCom: 'ses-com',
 	sesRuExpress: 'ses-ru-express',
 	sesRu: 'ses-ru',
@@ -80,6 +82,9 @@ export class CompanySelector extends EventEmitter
 
 	#loader: Loader = null;
 	#dialog: Dialog = null;
+	#dialogTrigger: { setExpanded: (expanded: boolean) => void } | null = null;
+	#editMenuTrigger: { setExpanded: (expanded: boolean) => void } | null = null;
+	#editMenu: Menu | null = null;
 	#showTaxId: boolean = true;
 	#options: CompanySelectorOptions;
 	#loadPromise: Promise<void>;
@@ -219,12 +224,32 @@ export class CompanySelector extends EventEmitter
 		return this.#layoutCache.remember('infoLayout', () => {
 			return Tag.render`
 				<div class="sign-document-b2e-company-info">
-					<div class="sign-document-b2e-company-info-img"></div>
-					${this.#getInfoTitleLayout()}
+					${this.#getInfoSelectLayout()}
 					${this.#getInfoEditBtn()}
 					${this.#getInfoRqBtnLayout()}
 				</div>
 			`;
+		});
+	}
+
+	#getInfoSelectLayout(): HTMLElement
+	{
+		return this.#layoutCache.remember('infoSelectLayout', () => {
+			const layout = Tag.render`
+				<div class="sign-document-b2e-company-info-select --clickable">
+					<div class="sign-document-b2e-company-info-img"></div>
+					${this.#getInfoTitleLayout()}
+				</div>
+			`;
+			// No aria-label here: the row is only shown with a company inside, so its accessible name
+			// comes from the company title and tax id — a static label would hide the selected value.
+			this.#dialogTrigger = setupAccessibleTrigger(layout, {
+				hasPopup: 'dialog',
+				testId: 'sign-b2e-company-selector-trigger',
+				onActivate: () => this.#showDialog(),
+			});
+
+			return layout;
 		});
 	}
 
@@ -252,9 +277,18 @@ export class CompanySelector extends EventEmitter
 		}
 
 		return this.#layoutCache.remember('infoEditBtn', () => {
-			return Tag.render`
-				<div class="sign-document-b2e-company-info-edit" onclick="${() => this.#showEditMenu()}"></div>
+			const button = Tag.render`
+				<div class="sign-document-b2e-company-info-edit"></div>
 			`;
+			this.#editMenuTrigger = setupAccessibleTrigger(button, {
+				hasPopup: 'menu',
+				label: Loc.getMessage('SIGN_B2E_COMPANIES_EDIT'),
+				testId: 'sign-b2e-company-selector-menu',
+				stopPropagation: true,
+				onActivate: () => this.#showEditMenu(),
+			});
+
+			return button;
 		});
 	}
 
@@ -266,9 +300,7 @@ export class CompanySelector extends EventEmitter
 					<div class="sign-document-b2e-company-info-header">
 						${this.#getInfoHeaderTitleNameLayout()}
 						${this.#getCompanyInfoLabelLayout()}
-						<div class="sign-document-b2e-company-info-dropdown-btn"
-							onclick="${() => this.#onInfoDropDownBtnClick()}">
-						</div>
+						<div class="sign-document-b2e-company-info-dropdown-btn"></div>
 					</div>
 					${this.#getInfoRqInnLayout()}
 				</div>
@@ -426,6 +458,8 @@ export class CompanySelector extends EventEmitter
 			multiple: false,
 			enableSearch: true,
 			events: {
+				onShow: () => this.#dialogTrigger?.setExpanded(true),
+				onHide: () => this.#dialogTrigger?.setExpanded(false),
 				'Item:OnSelect': (event) => {
 					this.#onCompanySelectedHandler(event);
 					this.#dialog.hide();
@@ -518,6 +552,11 @@ export class CompanySelector extends EventEmitter
 			return;
 		}
 
+		this.#getDialog().getItems()
+			.find((item) => item.id === company.id)
+			?.select({ emitEvents: false })
+		;
+
 		this.#company.id = company.id;
 		this.#company.provider = null;
 		if (company?.providers?.length > 0)
@@ -534,13 +573,6 @@ export class CompanySelector extends EventEmitter
 		this.#providerSelector.setCompany(this.#company);
 
 		this.#refreshView();
-		this.#getDialog().getItems()
-			.find((item) => item.id === this.#company.id)
-			?.select()
-		;
-
-		this.emit(this.events.onSelect, { companyId: this.#company.id });
-
 		const event: CompanySelectedEvent = new BaseEvent({
 			data: {
 				companyId: this.#company.id,
@@ -610,10 +642,26 @@ export class CompanySelector extends EventEmitter
 
 	#showEditMenu()
 	{
+		// Repeated activation closes the open menu instead of building a second one: the old popup
+		// hides with a zero timeout, and its onPopupClose would reset ARIA of the already shown menu.
+		if (this.#editMenu)
+		{
+			this.#editMenu.close();
+
+			return;
+		}
+
 		const menu = new Menu({
 			bindElement: this.#getInfoEditBtn(),
 			cacheable: false,
+			events: {
+				onPopupClose: () => {
+					this.#editMenu = null;
+					this.#editMenuTrigger?.setExpanded(false);
+				},
+			},
 		});
+		this.#editMenu = menu;
 		menu.addMenuItem({
 			text: Loc.getMessage('SIGN_B2E_COMPANIES_EDIT'),
 			onclick: () => {
@@ -621,6 +669,7 @@ export class CompanySelector extends EventEmitter
 				menu.close();
 			},
 		});
+		this.#editMenuTrigger?.setExpanded(true);
 		menu.show();
 	}
 
@@ -797,9 +846,10 @@ export class CompanySelector extends EventEmitter
 		});
 	}
 
-	#onInfoDropDownBtnClick(): void
+	#showDialog(): void
 	{
 		this.#getDialog().setTargetNode(this.getLayout());
+		this.#dialogTrigger?.setExpanded(true);
 		this.#getDialog().show();
 	}
 

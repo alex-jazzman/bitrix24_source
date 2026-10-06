@@ -1,4 +1,5 @@
-import { Loc, Tag } from 'main.core';
+import { Loc, Tag, Text } from 'main.core';
+import { alert } from 'crm.timeline.dialog';
 import WaitConfigurationDialog from './tools/wait-configuration-dialog';
 import WaitingType from './tools/waiting-type';
 
@@ -419,7 +420,10 @@ export default class Wait extends WithEditor
 		const error = BX.prop.getString(data, "ERROR", "");
 		if(error !== "")
 		{
-			alert(error);
+			// eslint-disable-next-line @bitrix24/bitrix24-rules/no-native-dialogs
+			alert({
+				content: Tag.render`<div>${Text.encode(error)}</div>`,
+			});
 			return;
 		}
 

@@ -19,18 +19,56 @@ export type PathInfo = {
 	}
 };
 
-export function getLinePath(start: Point, end: Point): PathInfo
+export type LineRoutePrimitive = {
+	type: 'line';
+	start: Point;
+	end: Point;
+};
+
+export type QuadraticRoutePrimitive = {
+	type: 'quadratic';
+	start: Point;
+	control: Point;
+	end: Point;
+};
+
+export type CubicRoutePrimitive = {
+	type: 'cubic';
+	start: Point;
+	control1: Point;
+	control2: Point;
+	end: Point;
+};
+
+export type RoutePrimitive = LineRoutePrimitive | QuadraticRoutePrimitive | CubicRoutePrimitive;
+
+export type RoutePathInfo = PathInfo & {
+	primitives: RoutePrimitive[];
+};
+
+export type SmoothStepPathInfo = RoutePathInfo & {
+	points: Point[];
+};
+
+export function getLinePath(start: Point, end: Point): RoutePathInfo
 {
+	const startPoint = { x: start.x, y: start.y };
+	const endPoint = { x: end.x, y: end.y };
 	const [x, y] = getConnectionCenter({
-		sourceX: start.x,
-		sourceY: start.y,
-		targetX: end.x,
-		targetY: end.y,
+		sourceX: startPoint.x,
+		sourceY: startPoint.y,
+		targetX: endPoint.x,
+		targetY: endPoint.y,
 	});
 
 	return {
-		path: `M ${start.x} ${start.y} L ${end.x} ${end.y}`,
+		path: `M ${startPoint.x} ${startPoint.y} L ${endPoint.x} ${endPoint.y}`,
 		center: { x, y },
+		primitives: [{
+			type: 'line',
+			start: startPoint,
+			end: endPoint,
+		}],
 	};
 }
 
@@ -43,25 +81,45 @@ export function getBeziePath(
 	start: Point,
 	end: Point,
 	dir: 'vertical' | 'horizontal' = BEZIER_DIR.VERTICAL,
-): PathInfo
+): RoutePathInfo
 {
-	const midX: number = (start.x + end.x) / 2;
-	const midY: number = (start.y + end.y) / 2;
+	const startPoint = { x: start.x, y: start.y };
+	const endPoint = { x: end.x, y: end.y };
+	const midX: number = (startPoint.x + endPoint.x) / 2;
+	const midY: number = (startPoint.y + endPoint.y) / 2;
 	const [centerX, centerY] = getConnectionCenter({
-		sourceX: start.x,
-		sourceY: start.y,
-		targetX: end.x,
-		targetY: end.y,
+		sourceX: startPoint.x,
+		sourceY: startPoint.y,
+		targetX: endPoint.x,
+		targetY: endPoint.y,
 	});
 
+	const control1 = dir === BEZIER_DIR.HORIZONTAL
+		? { x: midX, y: startPoint.y }
+		: { x: startPoint.x, y: midY };
+	const control2 = dir === BEZIER_DIR.HORIZONTAL
+		? { x: midX, y: endPoint.y }
+		: { x: endPoint.x, y: midY };
+	const path = [
+		`M ${startPoint.x} ${startPoint.y}`,
+		`C ${control1.x} ${control1.y},`,
+		`${control2.x} ${control2.y},`,
+		`${endPoint.x} ${endPoint.y}`,
+	].join(' ');
+
 	return {
-		path: dir === BEZIER_DIR.HORIZONTAL
-			? `M ${start.x} ${start.y} C ${midX} ${start.y}, ${midX} ${end.y}, ${end.x} ${end.y}`
-			: `M ${start.x} ${start.y} C ${start.x} ${midY}, ${end.x} ${midY}, ${end.x} ${end.y}`,
+		path,
 		center: {
 			x: centerX,
 			y: centerY,
 		},
+		primitives: [{
+			type: 'cubic',
+			start: startPoint,
+			control1,
+			control2,
+			end: endPoint,
+		}],
 	};
 }
 
@@ -334,12 +392,19 @@ function getPoints({
 	};
 }
 
+type BendInfo = {
+	path: string;
+	primitives: RoutePrimitive[];
+	end: Point;
+};
+
 function getBend(
 	a: Point,
 	b: Point,
 	c: Point,
 	size: number,
-): string
+	start: Point,
+): BendInfo
 {
 	const bendSize = Math.min(
 		distance(a, b) / 2,
@@ -350,7 +415,13 @@ function getBend(
 
 	if ((a.x === x && x === c.x) || (a.y === y && y === c.y))
 	{
-		return `L${x} ${y}`;
+		const end = { x, y };
+
+		return {
+			path: `L${x} ${y}`,
+			primitives: [{ type: 'line', start, end }],
+			end,
+		};
 	}
 
 	if (a.y === y)
@@ -358,13 +429,33 @@ function getBend(
 		const xDir = a.x < c.x ? -1 : 1;
 		const yDir = a.y < c.y ? 1 : -1;
 
-		return `L ${x + bendSize * xDir},${y}Q ${x},${y} ${x},${y + bendSize * yDir}`;
+		const lineEnd = { x: x + bendSize * xDir, y };
+		const end = { x, y: y + bendSize * yDir };
+
+		return {
+			path: `L ${lineEnd.x},${lineEnd.y}Q ${x},${y} ${end.x},${end.y}`,
+			primitives: [
+				{ type: 'line', start, end: lineEnd },
+				{ type: 'quadratic', start: lineEnd, control: { x, y }, end },
+			],
+			end,
+		};
 	}
 
 	const xDir = a.x < c.x ? 1 : -1;
 	const yDir = a.y < c.y ? -1 : 1;
 
-	return `L ${x},${y + bendSize * yDir}Q ${x},${y} ${x + bendSize * xDir},${y}`;
+	const lineEnd = { x, y: y + bendSize * yDir };
+	const end = { x: x + bendSize * xDir, y };
+
+	return {
+		path: `L ${lineEnd.x},${lineEnd.y}Q ${x},${y} ${end.x},${end.y}`,
+		primitives: [
+			{ type: 'line', start, end: lineEnd },
+			{ type: 'quadratic', start: lineEnd, control: { x, y }, end },
+		],
+		end,
+	};
 }
 
 export type GetSmoothStepPathParams = {
@@ -380,7 +471,7 @@ export type GetSmoothStepPathParams = {
 	offset?: number;
 };
 
-export function getSmoothStepPath(params: GetSmoothStepPathParams): PathInfo
+export function getSmoothStepPath(params: GetSmoothStepPathParams): SmoothStepPathInfo
 {
 	const {
 		sourceX,
@@ -408,26 +499,47 @@ export function getSmoothStepPath(params: GetSmoothStepPathParams): PathInfo
 		offset,
 	});
 
-	const path = points.reduce((res, p, i) => {
-		let segment = '';
-
-		if (i > 0 && i < points.length - 1)
+	const route = points.reduce((result, point, index) => {
+		if (index === 0)
 		{
-			segment = getBend(points[i - 1], p, points[i + 1], borderRadius);
-		}
-		else
-		{
-			segment = `${i === 0 ? 'M' : 'L'}${p.x} ${p.y}`;
+			return {
+				path: `M${point.x} ${point.y}`,
+				primitives: [],
+				current: point,
+			};
 		}
 
-		res += segment;
+		if (index < points.length - 1)
+		{
+			const bend = getBend(
+				points[index - 1],
+				point,
+				points[index + 1],
+				borderRadius,
+				result.current,
+			);
 
-		return res;
-	}, '');
+			return {
+				path: result.path + bend.path,
+				primitives: [...result.primitives, ...bend.primitives],
+				current: bend.end,
+			};
+		}
+
+		return {
+			path: `${result.path}L${point.x} ${point.y}`,
+			primitives: [
+				...result.primitives,
+				{ type: 'line', start: result.current, end: point },
+			],
+			current: point,
+		};
+	}, { path: '', primitives: [], current: points[0] });
 
 	return {
-		path,
+		path: route.path,
 		points,
+		primitives: route.primitives,
 		center: {
 			x: pointsCenterX,
 			y: pointsCenterY,

@@ -13,3 +13,6 @@ $MESS["MAIL_SECRETARY_CALENDAR_EVENT_DESC"] = "
 $MESS["MAIL_SECRETARY_ACCESS_DENIED"] = "Это действие может совершить только владелец почтового ящика";
 $MESS["MAIL_SECRETARY_ACCESS_DENIED_CALENDAR"] = "Это действие может совершить только создатель события календаря";
 $MESS["MAIL_SECRETARY_MODULE_NOT_INSTALLED"] = "Установите модули, необходимые для работы почты";
+$MESS["MAIL_SECRETARY_BIND_FEED_POST_NO_ACCESS"] = "Нет доступа к письму";
+$MESS["MAIL_SECRETARY_BIND_FEED_POST_NO_EDIT_RIGHTS"] = "Недостаточно прав для редактирования сообщения Живой ленты";
+$MESS["MAIL_SECRETARY_BIND_FEED_POST_UPDATE_FAILED"] = "Не удалось привязать письмо к сообщению Живой ленты";

@@ -21,6 +21,7 @@
 		this.previewContainer = document.querySelector(".landing-template-preview");
 		this.closeButton = document.querySelector(".landing-template-preview-close");
 		this.createButton = document.querySelector(".landing-template-preview-create");
+		this.headerTitle = document.querySelector(".landing-template-demo-preview-header-title");
 		this.title = document.querySelector(".landing-template-preview-input-title");
 		this.description = document.querySelector(".landing-template-preview-input-description");
 		this.imageContainer = document.querySelector(".preview-desktop-body-image");
@@ -110,7 +111,7 @@
 			}
 
 			this.setBaseUrl();
-			this.showPreview();
+			this.showPreview().then(() => this.focusHeaderTitle());
 			this.buildHeader();
 
 			if (top.BX.SidePanel.Instance.isReload === true)
@@ -182,29 +183,32 @@
 			this.showPopupButton = document.querySelector(".mobile-view");
 			if (this.showPopupButton)
 			{
+				const popupContent = BX.create('div', {
+					props: {className: 'landing-popup-preview-content'},
+					attrs: {tabindex: '-1', 'data-testid': 'landing-demo-preview-qr-popup'},
+					children: [
+						BX.create('div', {
+							props: {className: 'landing-popup-preview-title'},
+							text: this.messages.LANDING_TPL_POPUP_TITLE
+						}),
+						BX.create('div', {
+							props: {className: 'landing-popup-preview-qr'},
+							children: [
+								qrContainer
+							],
+						}),
+						BX.create('div', {
+							props: {className: 'landing-popup-preview-text'},
+							text: this.messages.LANDING_TPL_POPUP_TEXT
+						}),
+					]
+				});
+
 				var popupPreview = BX.PopupWindowManager.create(
 					'landing-popup-preview',
 					this.showPopupButton,
 					{
-						content: BX.create('div', {
-							props: {className: 'landing-popup-preview-content'},
-							children: [
-								BX.create('div', {
-									props: {className: 'landing-popup-preview-title'},
-									text: this.messages.LANDING_TPL_POPUP_TITLE
-								}),
-								BX.create('div', {
-									props: {className: 'landing-popup-preview-qr'},
-									children: [
-										qrContainer
-									],
-								}),
-								BX.create('div', {
-									props: {className: 'landing-popup-preview-text'},
-									text: this.messages.LANDING_TPL_POPUP_TEXT
-								}),
-							]
-						}),
+						content: popupContent,
 						closeIcon: true,
 						closeByEsc: true,
 						noAllPaddings: true,
@@ -217,6 +221,11 @@
 						minWidth: 375,
 						maxWidth: 375,
 						contentBackground: "transparent",
+						ariaLabel: this.messages.LANDING_TPL_POPUP_TITLE,
+						events: {
+							onPopupShow: () => this.onPopupPreviewShow(popupContent),
+							onPopupClose: () => this.onPopupPreviewClose(popupContent),
+						},
 					}
 				);
 
@@ -226,6 +235,40 @@
 					{
 						popupPreview.toggle();
 					});
+			}
+		},
+
+		/**
+		 * Moves the focus onto the heading of the shown template.
+		 * The slider claims the focus for its own container while the frame is loading, so the heading
+		 * is only taken once the preview is ready and while nothing here has been focused yet.
+		 */
+		focusHeaderTitle: function ()
+		{
+			const active = document.activeElement;
+			if (this.headerTitle && (active === null || active === document.body))
+			{
+				this.headerTitle.focus({preventScroll: true});
+			}
+		},
+
+		/**
+		 * @param {HTMLElement} popupContent
+		 */
+		onPopupPreviewShow: function (popupContent)
+		{
+			popupContent.focus({preventScroll: true});
+		},
+
+		/**
+		 * @param {HTMLElement} popupContent
+		 */
+		onPopupPreviewClose: function (popupContent)
+		{
+			// the popup also closes on a click elsewhere: the focus is only taken back when it was inside
+			if (popupContent.contains(document.activeElement))
+			{
+				this.showPopupButton.focus();
 			}
 		},
 
@@ -246,6 +289,10 @@
 							this.previewFrame = BX.create('iframe', {
 								props: {
 									className: 'preview-desktop-body-preview-frame'
+								},
+								attrs: {
+									title: this.messages.LANDING_TPL_PREVIEW_FRAME_TITLE,
+									'data-testid': 'landing-demo-preview-frame'
 								}
 							});
 
@@ -384,7 +431,12 @@
 			const values = this.getValue();
 			values.newLanding = 'Y';
 
-			return addQueryParams(this.createButton.getAttribute("href"), values);
+			// the store branch is a button: it carries its target in data-href instead of href
+			const url = this.createButton.getAttribute("href")
+				|| this.createButton.getAttribute("data-href")
+				|| '';
+
+			return addQueryParams(url, values);
 		},
 
 		/**
@@ -479,6 +531,7 @@
 							buttons: BX.UI.Dialogs.MessageBoxButtons.OK_CANCEL,
 							okCaption: this.messages.LANDING_PREVIEW_MAINPAGE_BUTTON_OK_TEXT,
 							cancelCaption: this.messages.LANDING_PREVIEW_MAINPAGE_BUTTON_CANCEL_TEXT,
+							useAirDesign: true,
 							onOk: () => {
 								isClickOnButtonOk = true;
 								this.finalRedirectAjax(this.getCreateUrl());

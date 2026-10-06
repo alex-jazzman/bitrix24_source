@@ -1,7 +1,6 @@
 import { Dom, Loc } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import { Popup } from 'main.popup';
-import { VideoQualityRange } from 'call.component.video-quality-range';
 import { Hardware, BackgroundDialog, Util, STREAM_QUALITY, Provider } from 'call.core';
 import 'ui.switcher';
 
@@ -41,7 +40,6 @@ const DeviceSelectorEvents = {
  * @param {boolean} config.microphoneEnabled
  * @param {boolean} config.speakerEnabled
  * @param {boolean} config.allowNoiseSuppression
- * @param {boolean} config.noiseSuppressionVisible
  * @param {boolean} config.faceImproveEnabled
  * @constructor
  */
@@ -62,7 +60,6 @@ export class DeviceSelector
 		this.speakerEnabled = BX.prop.getBoolean(config, 'speakerEnabled', false);
 		this.speakerId = BX.prop.getString(config, 'speakerId', false);
 		this.allowNoiseSuppression = BX.prop.getBoolean(config, 'allowNoiseSuppression', false);
-		this.noiseSuppressionVisible = BX.prop.getBoolean(config, 'noiseSuppressionVisible', false);
 		this.faceImproveEnabled = BX.prop.getBoolean(config, 'faceImproveEnabled', false);
 		this.allowFaceImprove = BX.prop.getBoolean(config, 'allowFaceImprove', false);
 		this.allowBackground = BX.prop.getBoolean(config, 'allowBackground', true);
@@ -192,34 +189,32 @@ export class DeviceSelector
 				Dom.create("div", {
 					props: {className: "bx-call-view-device-selector-bottom"},
 					children: [
-						this.noiseSuppressionVisible
-							? Dom.create('div', {
-								props: { className: 'bx-call-view-device-selector-bottom-item' },
-								children: [
-									Dom.create('input', {
-										props: {
-											id: 'device-selector-noise-suppression',
-											className: 'bx-call-view-device-selector-bottom-item-checkbox'
-										},
-										attrs: {
-											type: 'checkbox',
-											checked: this.allowNoiseSuppression,
-										},
-										events: {
-											change: this.onAllowNoiseSuppression.bind(this)
-										},
-									}),
-									Dom.create('div', {
-										props: { className: 'bx-call-view-device-selector-bottom-item-checkbox-checked' },
-									}),
-									Dom.create('label', {
-										props: { className: 'bx-call-view-device-selector-bottom-item-label' },
-										attrs: { for: 'device-selector-noise-suppression' },
-										text: BX.message('CALL_NOISE_SUPPRESSION'),
-									}),
-								],
-							})
-							: null,
+						Dom.create('div', {
+							props: { className: 'bx-call-view-device-selector-bottom-item' },
+							children: [
+								Dom.create('input', {
+									props: {
+										id: 'device-selector-noise-suppression',
+										className: 'bx-call-view-device-selector-bottom-item-checkbox'
+									},
+									attrs: {
+										type: 'checkbox',
+										checked: this.allowNoiseSuppression,
+									},
+									events: {
+										change: this.onAllowNoiseSuppression.bind(this)
+									},
+								}),
+								Dom.create('div', {
+									props: { className: 'bx-call-view-device-selector-bottom-item-checkbox-checked' },
+								}),
+								Dom.create('label', {
+									props: { className: 'bx-call-view-device-selector-bottom-item-label' },
+									attrs: { for: 'device-selector-noise-suppression' },
+									text: BX.message('CALL_NOISE_SUPPRESSION'),
+								}),
+							],
+						}),
 						this.allowFaceImprove ?
 							Dom.create("div", {
 								props: {className: "bx-call-view-device-selector-bottom-item"},
@@ -635,6 +630,7 @@ class DeviceMenu
 	{
 		let instance = null;
 		let container = null;
+		let pendingDisabled = null;
 
 		return {
 			render: () => {
@@ -649,33 +645,56 @@ class DeviceMenu
 				}
 
 				container = Dom.create('div');
-				instance = new VideoQualityRange({
-					container,
-					title: Loc.getMessage('CALL_VIDEO_QUALITY_TITLE'),
-					videoQualityList: [
-						{
-							label: Loc.getMessage('CALL_VIDEO_QUALITY_WITHOUT_VIDEO'),
-							height: 0,
-							value: STREAM_QUALITY.NO_VIDEO,
-						},
-						{ label: '180p', height: 180, value: STREAM_QUALITY.LOW },
-						{ label: '360p', height: 360, value: STREAM_QUALITY.MEDIUM },
-						{ label: '720p', height: 720, value: STREAM_QUALITY.HIGH },
-					],
-					disabled: this.menuBlocked,
-					defaultHeight: Hardware.maxLocalStreamQualityHeight,
-					onVideoQualityChanged: (videoQuality) => {
-						this.eventEmitter.emit(DeviceMenuEvents.onChangeVideoQuality, { videoQuality });
-					},
-				});
 
-				instance.init();
+				BX.Runtime.loadExtension('call.component.video-quality-range').then(({ VideoQualityRange }) => {
+					if (container === null)
+					{
+						return;
+					}
+
+					instance = new VideoQualityRange({
+						container,
+						title: Loc.getMessage('CALL_VIDEO_QUALITY_TITLE'),
+						videoQualityList: [
+							{
+								label: Loc.getMessage('CALL_VIDEO_QUALITY_WITHOUT_VIDEO'),
+								height: 0,
+								value: STREAM_QUALITY.NO_VIDEO,
+							},
+							{ label: '180p', height: 180, value: STREAM_QUALITY.LOW },
+							{ label: '360p', height: 360, value: STREAM_QUALITY.MEDIUM },
+							{ label: '720p', height: 720, value: STREAM_QUALITY.HIGH },
+						],
+						disabled: this.menuBlocked,
+						defaultHeight: Hardware.maxLocalStreamQualityHeight,
+						onVideoQualityChanged: (videoQuality) => {
+							this.eventEmitter.emit(DeviceMenuEvents.onChangeVideoQuality, { videoQuality });
+						},
+					});
+
+					instance.init();
+
+					if (pendingDisabled !== null)
+					{
+						instance.setDisabled(pendingDisabled);
+						pendingDisabled = null;
+					}
+				}).catch(() => {
+					container = null;
+				});
 
 				return container;
 			},
 
 			setDisabled: (value) => {
-				instance?.setDisabled(value);
+				if (instance)
+				{
+					instance.setDisabled(value);
+				}
+				else
+				{
+					pendingDisabled = value;
+				}
 			},
 
 			destroy: () => {

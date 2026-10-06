@@ -1,0 +1,14 @@
+{
+	"defaultTableName": "b_im_chat",
+	"installDirectoriesMapping": {
+		"install/components": "components",
+		"install/js": "js",
+		"install/activities": "activities",
+		"install/admin": "admin",
+		"install/templates": "templates",
+		"install/images": "images/im"
+	},
+	"publicDirectoriesMapping": {
+		"install/public": ""
+	}
+}

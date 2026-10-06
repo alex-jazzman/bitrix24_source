@@ -68,7 +68,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		documentSign: 'document-sign',
 		b24: 'b24',
 		aiAssistant: 'ai-assistant',
-		lock: 'lock'
+		lock: 'lock',
+		folder: 'folder'
 	};
 
 	// @vue/component

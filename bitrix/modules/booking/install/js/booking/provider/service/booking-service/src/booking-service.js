@@ -411,7 +411,7 @@ class BookingService
 			withClientData: true,
 			withExternalData: true,
 			withSkus: true,
-		});
+		}, { navigation: { page: 'all' } });
 	}
 
 	async getBookingsByResourceId(

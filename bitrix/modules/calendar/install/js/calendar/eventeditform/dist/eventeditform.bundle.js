@@ -656,6 +656,7 @@ this.BX = this.BX || {};
 					});
 					this.setUserSettings(params.userSettings);
 					calendar_util.Util.setEventWithEmailGuestEnabled(params.eventWithEmailGuestEnabled);
+					calendar_util.Util.setTeamsAsAttendeeEnabled(params.teamsAsAttendeeEnabled);
 					calendar_util.Util.setTimezoneList(params.timezoneList);
 					calendar_util.Util.setAbsenceAvailable(params.absenceAvailable);
 					this.handleSections(params.sections, params.trackingUsersList);
@@ -1349,6 +1350,10 @@ this.BX = this.BX || {};
 			this.planner.subscribe('onDateChange', this.handlePlannerSelectorChanges.bind(this));
 			this.planner.subscribe('onExpandTimeline', this.handleExpandPlannerTimeline.bind(this));
 			this.planner.subscribe('onDisplayAttendees', this.checkLocationForm.bind(this));
+			if (main_core.Type.isDate(this.entry.from)) {
+				this.planner.currentFromDate = new Date(this.entry.from.getTime());
+				this.planner.currentToDate = new Date(this.entry.from.getTime());
+			}
 			this.planner.show();
 			this.planner.showLoader();
 		}
@@ -1939,7 +1944,7 @@ this.BX = this.BX || {};
 			}
 
 			// Location
-			if (!excludes.includes('location') && this.locationSelector.getTextLocation(calendar_controls.Location.parseStringValue(this.entry.getLocation())) !== this.locationSelector.getTextLocation(calendar_controls.Location.parseStringValue(this.locationSelector.getTextValue()))) {
+			if (!excludes.includes('location') && !calendar_controls.Location.isSameLocation(this.entry.getLocation(), this.locationSelector.getTextValue())) {
 				fields.push('location');
 			}
 
@@ -2125,6 +2130,28 @@ this.BX = this.BX || {};
 			if (this.isProjectFeatureEnabled) {
 				entityList.push({
 					id: 'project'
+				});
+			}
+			if (calendar_util.Util.isTeamsAsAttendeeEnabled()) {
+				// HR `structure-node` provider; backend maps structure-node <-> SNT<id>.
+				// useMultipleTabs enables the team-fetch branch (flat, no depthLevel), otherwise
+				// teams are queried at depthLevel 1 and the list comes back empty.
+				entityList.push({
+					id: 'structure-node',
+					options: {
+						includedNodeEntityTypes: ['team'],
+						useMultipleTabs: true,
+						// departmentsOnly gives a single selectable "Select team" item with the simple
+						// (flat) access code SNT<id> and a numeric id — matches calendar's backend
+						// mapping (strict ^SNT[0-9]+$). usersAndDepartments would also add the
+						// recursive "team + subteams" option (SNTR<id>, ignored by calendar backend),
+						// and allowFlatDepartments appends a ':F' postfix that the mapping can't parse.
+						selectMode: 'departmentsOnly',
+						visual: {
+							avatarMode: 'node',
+							tagStyle: 'none'
+						}
+					}
 				});
 			}
 			if (this.attendeesPreselectedItems) {

@@ -184,7 +184,7 @@ export class TimelineSummaryDocuments extends EntityEditorPaymentDocuments
 		return Tag.render`
 			<div class="crm-entity-stream-content-detail-table-row">
 				<div class="crm-entity-stream-content-document-description">
-					<a class="ui-link" onclick="${openSlider}">${title}</a>
+					<button type="button" class="ui-link" data-testid="payment-documents-summary-payment-title-${doc.ID}" onclick="${openSlider}">${title}</button>
 					<span class="crm-entity-stream-content-document-description__label">
 						${(new Label(labelOptions)).render()}
 					</span>
@@ -221,9 +221,9 @@ export class TimelineSummaryDocuments extends EntityEditorPaymentDocuments
 		return Tag.render`
 			<div class="crm-entity-stream-content-detail-table-row">
 				<div class="crm-entity-stream-content-document-description">
-					<a class="ui-link" onclick="${openSlider}">
+					<button type="button" class="ui-link" data-testid="payment-documents-summary-delivery-title-${doc.ID}" onclick="${openSlider}">
 						${title}
-					</a>
+					</button>
 					<span class="crm-entity-stream-content-document-description__label">
 						${(new Label(labelOptions)).render()}
 					</span>
@@ -272,9 +272,9 @@ export class TimelineSummaryDocuments extends EntityEditorPaymentDocuments
 		return Tag.render`
 			<div class="crm-entity-stream-content-detail-table-row">
 				<div class="crm-entity-stream-content-document-description">
-					<a class="ui-link" onclick="${openSlider}">
+					<button type="button" class="ui-link" data-testid="payment-documents-summary-realization-title-${doc.ID}" onclick="${openSlider}">
 						${title}
-					</a>
+					</button>
 					<span class="crm-entity-stream-content-document-description__label">
 						${(new Label(labelOptions)).render()}
 					</span>

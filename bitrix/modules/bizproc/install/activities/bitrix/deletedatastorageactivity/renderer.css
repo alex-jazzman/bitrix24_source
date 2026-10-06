@@ -60,14 +60,6 @@ input[type="text"][data-role="inline-selector-target"] {
 	overflow: visible;
 }
 
-.bizproc-automation-popup-settings .bizproc-automation-popup-select-dotted:before {
-	display: none;
-}
-
-.bizproc-automation-popup-settings img.calendar-icon {
-	display: none;
-}
-
 .bizproc-automation-popup-settings .bizproc-type-control-datetime {
 	width: 100% !important;
 	max-width: 85% !important;

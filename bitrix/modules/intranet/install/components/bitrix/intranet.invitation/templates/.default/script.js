@@ -2829,12 +2829,12 @@ this.BX.Intranet = this.BX.Intranet || {};
 			this.subscribeEvents();
 		}
 		initParams(params) {
-			this.menuContainer = params.menuContainerNode;
-			this.subMenuContainer = params.subMenuContainerNode;
+			this.menuContainer = main_core.Type.isDomNode(params.menuContainerNode) ? params.menuContainerNode : null;
+			this.subMenuContainer = main_core.Type.isDomNode(params.subMenuContainerNode) ? params.subMenuContainerNode : null;
 			this.leftMenuItems = params.leftMenuItems;
 			this.titleContainer = params.titleContainer;
-			this.contentContainer = params.contentContainerNode;
-			this.pageContainer = this.contentContainer.querySelector('.popup-window-tabs-content-invite');
+			this.contentContainer = main_core.Type.isDomNode(params.contentContainerNode) ? params.contentContainerNode : null;
+			this.pageContainer = main_core.Type.isDomNode(this.contentContainer) ? this.contentContainer.querySelector('.popup-window-tabs-content-invite') : null;
 			this.userOptions = params.userOptions;
 			this.isExtranetInstalled = params.isExtranetInstalled === 'Y';
 			this.isCloud = params.isCloud === 'Y';
@@ -2864,11 +2864,11 @@ this.BX.Intranet = this.BX.Intranet || {};
 			});
 		}
 		initUI() {
+			this.messageBar = new MessageBar({
+				errorContainer: main_core.Type.isDomNode(this.contentContainer) ? this.contentContainer.querySelector('[data-role=\'error-message\']') : null,
+				successContainer: main_core.Type.isDomNode(this.contentContainer) ? this.contentContainer.querySelector('[data-role=\'success-message\']') : null
+			});
 			if (main_core.Type.isDomNode(this.contentContainer)) {
-				this.messageBar = new MessageBar({
-					errorContainer: this.contentContainer.querySelector('[data-role=\'error-message\']'),
-					successContainer: this.contentContainer.querySelector('[data-role=\'success-message\']')
-				});
 				BX.UI.Hint.init(this.contentContainer);
 			}
 			if (main_core.Type.isDomNode(this.menuContainer)) {
@@ -2923,6 +2923,10 @@ this.BX.Intranet = this.BX.Intranet || {};
 			return null;
 		}
 		#initMenu() {
+			if (!main_core.Type.isDomNode(this.menuContainer)) {
+				this.menuItems = [];
+				return;
+			}
 			this.menuItems = Array.prototype.slice.call(this.menuContainer.querySelectorAll('a'));
 			if (main_core.Type.isDomNode(this.subMenuContainer)) {
 				const subMenuItem = Array.prototype.slice.call(this.subMenuContainer.querySelectorAll('a'));

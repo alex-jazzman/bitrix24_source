@@ -40,6 +40,18 @@
 	opacity: 1;
 }
 
+.landing-ai-link-wrap {
+	margin: 0 0 16px 0;
+	display: flex;
+	gap: 8px;
+	width: 100%;
+}
+
+.landing-ai-link-wrap .ui-btn {
+	flex: 1;
+	min-width: 0;
+}
+
 .grid-tile-inner {
 	overflow: hidden;
 	padding-bottom: 24px;
@@ -827,6 +839,27 @@ body > a[style*="background: highlight"] {
 	justify-content: flex-end;
 }
 
+.landing-sites-focus-visible-page .page__header .ui-toolbar-after-title-buttons .ui-btn:not(.ui-btn-disabled):focus-visible,
+.landing-sites-focus-visible-page .page__header .ui-toolbar-right-buttons .ui-btn:not(.ui-btn-disabled):focus-visible {
+	outline: 2px solid transparent;
+	outline-offset: -2px;
+	box-shadow: inset 0 0 0 2px var(--ui-color-accent-main-primary);
+}
+
+html[data-input-modality="pointer"] .landing-sites-focus-visible-page .page__header .ui-toolbar-after-title-buttons .ui-btn:focus-visible,
+html[data-input-modality="pointer"] .landing-sites-focus-visible-page .page__header .ui-toolbar-right-buttons .ui-btn:focus-visible {
+	box-shadow: none;
+}
+
+@media (forced-colors: active) {
+	.landing-sites-focus-visible-page .page__header .ui-toolbar-after-title-buttons .ui-btn:not(.ui-btn-disabled):focus-visible,
+	.landing-sites-focus-visible-page .page__header .ui-toolbar-right-buttons .ui-btn:not(.ui-btn-disabled):focus-visible {
+		outline: 2px solid Highlight;
+		outline-offset: -2px;
+		box-shadow: none;
+	}
+}
+
 .landing-item-add-icon-up {
 	background-image: url(data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2234%22%20height%3D%2230%22%20viewBox%3D%220%200%2034%2030%22%20fill%3D%22none%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%0A%3Cpath%20fill-rule%3D%22evenodd%22%20clip-rule%3D%22evenodd%22%20d%3D%22M0%200H19.636L24%205H0V0ZM0%207H34V30H0V7ZM18.032%2021.8918C19.7527%2021.8918%2021.1683%2020.4785%2021.1683%2018.7603H24C24%2022.0526%2021.3118%2024.7368%2018.0146%2024.7368C14.7349%2024.7368%2012.0642%2022.0526%2012.0642%2018.7603V16.6551H9L13.4803%2011L17.9607%2016.6551H14.8958V18.7603C14.8958%2020.4959%2016.3113%2021.8918%2018.032%2021.8918Z%22%20fill%3D%22%23CBCED2%22/%3E%0A%3C/svg%3E%0A);
 	background-repeat: no-repeat;
@@ -1164,3 +1197,137 @@ body > a[style*="background: highlight"] {
 .bitrix24-light-theme .landing-navigation.--themes .navigation-button {
 	color: #fff;
 }
+
+.landing-navigation.--themes .navigation-button:not(.navigation-disabled):focus-visible {
+	border-radius: 3px;
+	outline: 2px solid transparent;
+	outline-offset: -2px;
+	box-shadow: inset 0 0 0 2px var(--ui-color-accent-main-primary);
+}
+
+html[data-input-modality="pointer"] .landing-navigation.--themes .navigation-button:focus-visible {
+	box-shadow: none;
+}
+
+@media (forced-colors: active) {
+	.landing-navigation.--themes .navigation-button:not(.navigation-disabled):focus-visible {
+		outline: 2px solid Highlight;
+		outline-offset: -2px;
+		box-shadow: none;
+	}
+}
+
+/* ===================== a11y: semantic retrofit (WCAG 2.1 AA) ===================== */
+
+/* visually hidden accessible names (standard clip pattern) */
+.landing-visually-hidden {
+	position: absolute !important;
+	width: 1px;
+	height: 1px;
+	margin: -1px;
+	padding: 0;
+	border: 0;
+	overflow: hidden;
+	clip: rect(0 0 0 0);
+	clip-path: inset(50%);
+	white-space: nowrap;
+}
+
+/* native <button> triggers must keep the previous div/span geometry */
+button.landing-title-btn {
+	appearance: none;
+	-webkit-appearance: none;
+	margin: 0;
+	padding: 0 0 0 15px;
+	border: 0;
+	background: transparent;
+	font: inherit;
+	color: inherit;
+	text-align: inherit;
+}
+
+button.landing-item-folder-dropdown {
+	appearance: none;
+	-webkit-appearance: none;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	background: transparent;
+	font: inherit;
+	color: inherit;
+}
+
+button.landing-item-inner {
+	appearance: none;
+	-webkit-appearance: none;
+	margin: 0;
+	padding: 0;
+	font: inherit;
+	color: inherit;
+	text-align: inherit;
+	cursor: pointer;
+	width: 100%;
+}
+
+/* visible keyboard focus. Inset offset: tiles and grid use overflow:hidden, an outward ring gets clipped */
+.landing-title-btn:focus-visible,
+.landing-item-folder-dropdown:focus-visible,
+.landing-item-inner:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: -2px;
+}
+
+/* overlay link: reveal the existing hover overlay on keyboard focus + add a ring */
+.landing-item-link:focus-visible {
+	opacity: 1;
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: -2px;
+}
+
+/* region Trash empty state */
+.landing-trash-empty {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+	min-height: calc(100vh - 140px - 63px - 100px);
+	box-sizing: border-box;
+	padding: var(--ui-space-inset-3xl);
+}
+
+.landing-trash-empty__card {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--ui-space-stack-sm);
+	min-width: 280px;
+	padding: var(--ui-space-inset-6xl) var(--ui-space-inset-6xl) var(--ui-space-inset-5xl);
+	box-sizing: border-box;
+	border: 1px solid var(--ui-color-divider-vibrant-accent-more-alt);
+	border-radius: 24px;
+	background-color: var(--ui-color-bg-vibrant-default);
+	-webkit-backdrop-filter: blur(10px);
+	backdrop-filter: blur(10px);
+	box-shadow: var(--ui-shadow-bottom-m);
+}
+
+.landing-trash-empty__image {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.landing-trash-empty__image .ui-icon-set {
+	--ui-icon-set__icon-size: 88px;
+	--ui-icon-set__icon-color: var(--ui-color-base-4);
+}
+
+.landing-trash-empty__title {
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-size: var(--ui-font-size-3xl);
+	font-weight: var(--ui-font-weight-light);
+	line-height: var(--ui-font-line-height-md);
+	color: var(--ui-color-base-2);
+	text-align: center;
+}
+/* endregion */

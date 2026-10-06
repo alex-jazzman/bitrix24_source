@@ -3,6 +3,103 @@
 	align-items: center;
 }
 
+.crm-copilot-call-assessment-list--v2-title > a {
+	font-size: var(--ui-font-size-lg);
+	line-height: var(--ui-font-line-height-md);
+	font-weight: var(--ui-font-weight-regular);
+	color: var(--ui-color-accent-main-link);
+	text-decoration: none;
+}
+
+.crm-copilot-call-assessment-list--title-description {
+	font-size: var(--ui-font-size-xs);
+	line-height: var(--ui-font-line-height-2xs);
+	font-weight: var(--ui-font-weight-regular);
+	color: var(--ui-color-base-1);
+	margin-top: 4px;
+}
+
+.crm-copilot-call-assessment-list--field-wrapper:has(.crm-copilot-call-assessment-list--match-link),
+.crm-copilot-call-assessment-list--field-wrapper:has(.crm-copilot-call-assessment-list--match-badge) {
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 6px;
+}
+
+.crm-copilot-call-assessment-list--match-badge {
+	display: inline-flex;
+	align-items: center;
+	height: 28px;
+	padding: 0 10px;
+	border-radius: 512px;
+	font-size: var(--ui-font-size-md);
+	line-height: var(--ui-font-line-height-md);
+	font-weight: var(--ui-font-weight-regular);
+}
+
+.crm-copilot-call-assessment-list--match-badge.--high {
+	background: var(--ui-color-design-tinted-green-bg);
+	color: var(--ui-color-design-tinted-green-content);
+}
+
+.crm-copilot-call-assessment-list--match-badge.--default {
+	background: var(--ui-color-design-tinted-bg);
+	color: var(--ui-color-design-tinted-content);
+}
+
+.crm-copilot-call-assessment-list--match-badge.--low {
+	background: var(--ui-color-design-tinted-alert-bg);
+	color: var(--ui-color-design-tinted-alert-content);
+}
+
+.crm-copilot-call-assessment-list--match-link {
+	font-size: var(--ui-font-size-sm);
+	line-height: var(--ui-font-line-height-2xs);
+	font-weight: var(--ui-font-weight-regular);
+	color: var(--ui-color-accent-main-link);
+	text-decoration: none;
+}
+
+.crm-copilot-call-assessment-list--match-link:hover {
+	text-decoration: underline;
+}
+
+.crm-copilot-call-assessment-list--v2-modified .crm-copilot-call-assessment-list-modified-field-date {
+	font-size: var(--ui-font-size-lg);
+	line-height: var(--ui-font-line-height-md);
+	font-weight: var(--ui-font-weight-regular);
+	color: var(--ui-color-base-2);
+}
+
+/* @todo for BitrixGPT author */
+/*.crm-copilot-call-assessment-list--v2-modified .crm-copilot-call-assessment-list-modified-field-user {
+	font-size: var(--ui-font-size-xs);
+	line-height: var(--ui-font-line-height-2xs);
+	font-weight: var(--ui-font-weight-regular);
+	background: linear-gradient(90deg, #f96269 0%, #f046b7 25%, #9d48ff 50%, #3f68ff 75%, #0098ea 100%);
+	-webkit-background-clip: text;
+	background-clip: text;
+	color: transparent;
+}*/
+
+.crm-copilot-call-assessment-list--v2-edit-btn {
+	height: 24px;
+	min-height: 24px;
+	padding: 0 8px;
+	border-radius: 6px;
+	border: 1.5px solid var(--ui-color-design-outline-stroke-alt1);
+	font-size: var(--ui-font-size-xs);
+	line-height: var(--ui-font-line-height-2xs);
+	font-weight: var(--ui-font-weight-regular);
+	color: var(--ui-color-base-2);
+	text-transform: none;
+}
+
+.crm-copilot-call-assessment-list--v2-edit-btn .ui-btn-text,
+.crm-copilot-call-assessment-list--v2-edit-btn .ui-btn-text-inner {
+	font-weight: var(--ui-font-weight-regular);
+}
+
 .crm-copilot-call-assessment-list--field-wrapper .ui-switcher {
 	z-index: 1;
 }

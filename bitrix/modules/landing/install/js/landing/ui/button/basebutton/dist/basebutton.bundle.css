@@ -11,8 +11,6 @@
 	outline: none;
 	padding-left: 10px;
 	padding-right: 10px;
-	-webkit-transition: background 200ms ease;
-	-o-transition: background 200ms ease;
 	transition: background 200ms ease;
 	cursor: pointer;
 }
@@ -26,7 +24,10 @@
 	outline: none;
 }
 
-
+.landing-ui-button:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary, #0075ff);
+	outline-offset: 2px;
+}
 
 .landing-ui-button-content-save,
 .landing-ui-button-content-cancel {
@@ -49,8 +50,6 @@
 	text-shadow: none;
 	white-space: nowrap;
 	-webkit-font-smoothing: antialiased;
-	-webkit-transition: background-color 0.2s linear, color 0.2s linear;
-	-o-transition: background-color 0.2s linear, color 0.2s linear;
 	transition: background-color 0.2s linear, color 0.2s linear;
 	border: none;
 }
@@ -80,8 +79,7 @@
 .landing-ui-button-content-cancel {
 	border: none!important;
 	background: none!important;
-	-webkit-box-shadow: none!important;
-	        box-shadow: none!important;
+	box-shadow: none!important;
 }
 
 .landing-ui-button-desktop,
@@ -98,8 +96,6 @@
 .landing-ui-button-tablet:before,
 .landing-ui-button-mobile:before {
 	opacity: .3;
-	-webkit-transition: opacity 200ms ease;
-	-o-transition: opacity 200ms ease;
 	transition: opacity 200ms ease;
 }
 
@@ -109,10 +105,6 @@
 
 .landing-ui-button-mobile {
 	width: 35px;
-}
-
-.landing-ui-button-mobile .landing-ui-button-label {
-	top: 4px;
 }
 
 .landing-ui-button-desktop:hover:before,
@@ -135,9 +127,7 @@
 	position: absolute;
 	content: "";
 	left: 50%;
-	-webkit-transform: translateX(-50%);
-	    -ms-transform: translateX(-50%);
-	        transform: translateX(-50%);
+	transform: translateX(-50%);
 	top: 11px;
 }
 

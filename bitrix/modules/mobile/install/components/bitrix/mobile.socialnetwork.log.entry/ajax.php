@@ -307,7 +307,7 @@ if(CModule::IncludeModule("socialnetwork"))
 						"QUOTE" => "N",
 						"CODE" => "N",
 						"FONT" => "N",
-						"UPLOAD" => $arForum["ALLOW_UPLOAD"],
+						"UPLOAD" => "N",
 						"NL2BR" => "N",
 						"SMILES" => "N"
 					);
@@ -355,7 +355,7 @@ if(CModule::IncludeModule("socialnetwork"))
 							"=LOG_DATE" => $DB->CurrentTimeFunction(),
 							"MESSAGE" => $comment_text,
 							"TEXT_MESSAGE" => $comment_text,
-							"URL" => $source_url,
+							"URL" => null,
 							"MODULE_ID" => false,
 							"LOG_ID" => $arLog["ID"],
 							"USER_ID" => $USER->GetID(),
@@ -1321,6 +1321,7 @@ if(CModule::IncludeModule("socialnetwork"))
 
 		if ($log_id > 0)
 		{
+			$arRights = array();
 			$dbRight = CSocNetLogRights::GetList(array(), array("LOG_ID" => $log_id));
 			while ($arRight = $dbRight->Fetch())
 			{
@@ -1357,6 +1358,7 @@ if(CModule::IncludeModule("socialnetwork"))
 				\CCrmLiveFeed::OnBeforeSocNetLogEntryGetRights($logFields, $arRights);
 			}
 
+			$iMoreCount = 0;
 			$arDestinations = CSocNetLogTools::FormatDestinationFromRights($arRights, $arParams, $iMoreCount);
 			if (is_array($arDestinations))
 			{

@@ -64,6 +64,12 @@ export class EditEvent
 				return 'deal-semiannual';
 			case 'deal_every_month_year':
 				return 'deal-month-yr';
+			case 'ai_screening':
+				return 'deal-ai-screening';
+			case 'ai_approve':
+				return 'deal-ai-approve';
+			case 'remaining':
+				return 'deal-remaining';
 			default:
 				return null;
 		}

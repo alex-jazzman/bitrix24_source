@@ -168,15 +168,17 @@ type Options = {
 };
 
 export {
+	EventTypes,
+	ViewTypes,
+	ViewPositions,
+	ViewVerticals,
+}
+export type {
 	Provider,
 	DateOptions as Date,
 	Currency,
 	Options,
 	View,
-	EventTypes,
-	ViewTypes,
-	ViewPositions,
-	ViewVerticals,
 	Identification,
 	SubmitResponse,
 	Analytics,

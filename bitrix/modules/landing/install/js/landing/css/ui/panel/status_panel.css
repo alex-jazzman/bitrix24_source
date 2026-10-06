@@ -1,9 +1,13 @@
 .landing-ui-panel-status {
 	position: fixed;
+	display: flex;
+	align-items: center;
+	box-sizing: border-box;
 	cursor: default;
 	min-height: 30px;
 	min-width: 38px;
 	padding: 2px 20px;
+	line-height: 1.2;
 	left: 30px;
 	bottom: -27px;
 	border: 1px #fefefe solid;

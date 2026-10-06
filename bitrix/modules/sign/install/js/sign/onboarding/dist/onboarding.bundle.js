@@ -10,6 +10,7 @@ this.BX = this.BX || {};
 	const b2eTemplatesHelpdeskCode = 24354462;
 	const b2eWelcomeTourId = 'sign-b2e-onboarding-tour-id';
 	const b2eTestSigningWelcomeTourId = 'sign-b2e-onboarding-tour-id-test-signing';
+	const b2eTestSigningSettingsAhaTourId = 'sign-b2e-onboarding-test-signing-settings-aha';
 	class Onboarding {
 		#api = new sign_v2_api.Api();
 		#backend = new sign_tour.Backend();
@@ -83,8 +84,11 @@ this.BX = this.BX || {};
 								${main_core.Loc.getMessage('SIGN_ONBOARDING_B2E_BANNER_TITLE_SIGN_TEST_TEXT')}
 							</div>
 							<button
+									type="button"
 									class="sign__b2e-onboarding-signing-test-banner_close_btn"
-									onclick="${() => this.#showCloseOnboardingSigningWarningPopup()}">
+									data-test-id="sign-onboarding-test-banner__close"
+									aria-label="${main_core.Loc.getMessage('SIGN_ONBOARDING_B2E_BANNER_CLOSE_BTN_ARIA_LABEL')}"
+									onclick="${() => this.#closeBannerAndShowSettingsGuide()}">
 							</button>
 						</div>
 						<div class="sign__b2e-onboarding-signing-test-banner-title-description">
@@ -97,39 +101,32 @@ this.BX = this.BX || {};
 				header.insertAdjacentElement('afterend', onboardingBanner);
 			}
 		}
-		#showCloseOnboardingSigningWarningPopup() {
-			const popupContent = main_core.Tag.render`
-			<div class="sign__b2e-close-onboarding-signing-warning-popup-content">
-				${main_core.Loc.getMessage('SIGN_ONBOARDING_B2E_CLOSE_BANNER_WARNING_POPUP_CONTENT_MSGVER_1')}
-			</div>
-		`;
-			const popup = new main_popup.Popup({
-				id: 'sign__b2e-close-onboarding-signing-banner-warning-popup',
-				content: popupContent,
-				minHeigh: 180,
-				width: 400,
-				padding: 20,
-				contentColor: 'white',
-				overlay: true,
-				closeByEsc: true,
-				buttons: [new ui_buttons.Button({
-					id: 'sign__b2e-close-onboarding-signing-banner-warning-popup-confirm-button',
-					text: main_core.Loc.getMessage('SIGN_ONBOARDING_B2E_CLOSE_BANNER_WARNING_POPUP_CONFIRM_BUTTON_MSGVER_1'),
-					useAirDesign: true,
-					style: ui_buttons.Button.AirStyle.FILLED,
-					events: {
-						click: () => {
-							popup.close();
-							const banner = document.querySelector('.sign__b2e-onboarding-signing-test-banner');
-							if (banner) {
-								banner.remove();
-								this.#api.hideOnboardingSigningBanner();
-							}
-						}
-					}
-				})]
+		#closeBannerAndShowSettingsGuide() {
+			const settingsButton = document.querySelector('#crm-toolbar-settings-button');
+			const banner = document.querySelector('.sign__b2e-onboarding-signing-test-banner');
+			if (banner) {
+				banner.remove();
+				this.#api.hideOnboardingSigningBanner();
+			}
+			if (!settingsButton) {
+				return;
+			}
+
+			// Return focus to the settings button (the banner with its active close button is removed), then show the tour (WCAG 2.4.3)
+			settingsButton.focus();
+			this.#getTestSigningSettingsGuide(settingsButton).start();
+		}
+		#getTestSigningSettingsGuide(target) {
+			return new sign_tour.Guide({
+				id: b2eTestSigningSettingsAhaTourId,
+				autoSave: true,
+				simpleMode: true,
+				steps: [{
+					target,
+					title: main_core.Loc.getMessage('SIGN_ONBOARDING_B2E_TEST_SIGNING_SETTINGS_AHA_TITLE'),
+					text: main_core.Loc.getMessage('SIGN_ONBOARDING_B2E_TEST_SIGNING_SETTINGS_AHA_TEXT')
+				}]
 			});
-			popup.show();
 		}
 		#getB2eWelcomeGuide(tourId, options, onFinish) {
 			return new sign_tour.Guide({

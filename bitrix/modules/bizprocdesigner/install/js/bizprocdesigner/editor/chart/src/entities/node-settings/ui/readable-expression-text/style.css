@@ -1,0 +1,22 @@
+/* Token colors are kept here as well: the preview must not depend on the stylesheet of the veneer,
+   which lives in the features layer. */
+.editor-chart-readable-expression-text .bxr-tok {
+	padding: 0 6px;
+	border-radius: 6px;
+	background: var(--ui-color-base-7);
+	color: var(--ui-color-base-1);
+	white-space: nowrap;
+}
+
+.editor-chart-readable-expression-text .bxr-tok.bxr-node {
+	background: var(--ui-color-accent-soft-green-2);
+}
+
+.editor-chart-readable-expression-text .bxr-tok.bxr-global {
+	background: var(--ui-color-accent-soft-blue-2);
+}
+
+.editor-chart-readable-expression-text .bxr-tok.bxr-unknown {
+	background: var(--ui-color-accent-soft-red-2);
+	color: var(--ui-color-accent-soft-element-red);
+}

@@ -2,7 +2,7 @@ import { mapGetters } from 'ui.vue3.vuex';
 
 import { Grid, Model } from 'booking.const';
 import { checkBookingIntersection } from 'booking.lib.check-booking-intersection';
-import { gridFactory, gridTokens, GridTokenKey } from 'booking.lib.grid';
+import { GridFactory, gridTokens, GridTokenKey, type GridBase } from 'booking.lib.grid';
 
 import { BaseCell } from '../../../grid/base-cell/base-cell';
 import { MaxDurationMsCompactCell, MinSlotWidthPx, MaxOverflowPx } from '../../const';
@@ -37,7 +37,7 @@ export const WeekPlacementSlot = {
 		}),
 		grid(): GridBase
 		{
-			return gridFactory.getGrid();
+			return GridFactory.getGrid();
 		},
 		dayIndex(): number
 		{

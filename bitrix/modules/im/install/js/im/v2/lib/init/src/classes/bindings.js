@@ -1,4 +1,4 @@
-import { ChatType, GetParameter } from 'im.v2.const';
+import { ChatType, GetParameter, RecentType } from 'im.v2.const';
 import { Messenger } from 'im.public';
 
 import { BindingsCondition } from '../const/bindings';
@@ -86,7 +86,8 @@ export class BindingsManager
 	#openCollab(params: URLSearchParams)
 	{
 		const dialogId = params.get(GetParameter.openCollab);
-		void Messenger.openCollab(dialogId);
+		const recentType = params.get(GetParameter.recentType) ?? RecentType.collabDefault;
+		void Messenger.openCollab(dialogId, { compactMode: false, recentType });
 	}
 
 	#openTaskComments(params: URLSearchParams)

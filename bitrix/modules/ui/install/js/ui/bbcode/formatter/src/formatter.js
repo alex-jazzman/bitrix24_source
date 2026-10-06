@@ -15,9 +15,14 @@ export type UnknownNodeCallbackOptions = {
 	data: FormatterData,
 };
 
+export type ParserOptions = {
+	normalize?: boolean,
+};
+
 export type FormatterOptions = {
 	formatters: Array<NodeFormatter>,
 	onUnknown: (UnknownNodeCallbackOptions) => BBCodeNode | null,
+	normalize?: boolean,
 };
 
 export type FormatterFormatOptions = {
@@ -33,6 +38,7 @@ export interface FormatterElement
 const formattersSymbol: Symbol = Symbol('formatters');
 const onUnknownSymbol: Symbol = Symbol('onUnknown');
 const dataSymbol: Symbol = Symbol('data');
+const parserOptionsSymbol: Symbol = Symbol('parserOptions');
 
 /**
  * @memberOf BX.UI.BBCode
@@ -42,10 +48,16 @@ export class Formatter
 	[formattersSymbol]: Map<any, any> = new Map();
 	[onUnknownSymbol]: (UnknownNodeCallbackOptions) => NodeFormatter | null = null;
 	[dataSymbol]: FormatterData | null = null;
+	[parserOptionsSymbol]: ParserOptions = {};
 
 	constructor(options: FormatterOptions = {})
 	{
 		this.setNodeFormatters(options.formatters);
+		if (Type.isBoolean(options.normalize))
+		{
+			this[parserOptionsSymbol] = { normalize: options.normalize };
+		}
+
 		if (Type.isNil(options.onUnknown))
 		{
 			this.setOnUnknown(this.getDefaultUnknownNodeCallback());
@@ -56,12 +68,17 @@ export class Formatter
 		}
 	}
 
+	getParserOptions(): ParserOptions
+	{
+		return this[parserOptionsSymbol];
+	}
+
 	isElement(source): boolean
 	{
 		return Type.isObject(source) && Type.isFunction(source.appendChild);
 	}
 
-	static prepareSourceNode(source: BBCodeNode | string): BBCodeNode | null
+	static prepareSourceNode(source: BBCodeNode | string, parserOptions: ParserOptions = {}): BBCodeNode | null
 	{
 		if (source instanceof BBCodeNode)
 		{
@@ -70,7 +87,7 @@ export class Formatter
 
 		if (Type.isString(source))
 		{
-			return (new BBCodeParser()).parse(source);
+			return (new BBCodeParser(parserOptions)).parse(source);
 		}
 
 		return null;
@@ -167,7 +184,7 @@ export class Formatter
 
 		this.setData(data);
 
-		const sourceNode: ?BBCodeNode = Formatter.prepareSourceNode(source);
+		const sourceNode: ?BBCodeNode = Formatter.prepareSourceNode(source, this.getParserOptions());
 		if (Type.isNull(sourceNode))
 		{
 			throw new TypeError('options.source is not a BBCodeNode or string');

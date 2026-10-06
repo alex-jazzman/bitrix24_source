@@ -47,7 +47,16 @@ export type TemplateEditorMessages = {
 	selectField?: string,
 };
 
-export type Scene = { id: string };
+export type TemplateBinding = {
+	zoneId: string,
+	sceneId: string,
+	targetId: string,
+};
+
+export type Scene = {
+	id: string,
+	templateBinding: ?TemplateBinding,
+};
 
 export type Channel = {
 	id: string,
@@ -135,17 +144,21 @@ export type Layout = {
 	isMessageLengthCounterShown: boolean,
 	isToSelectorShown: boolean,
 	isChannelSelectorShown: boolean,
+	isCustomTemplateSelectorShown: boolean,
+	isCustomTemplateCreateInSelectorShown: boolean,
 	isMessageTextReadOnly: boolean,
 	padding: string,
 	paddingTop: ?string,
 	paddingBottom: ?string,
 	paddingLeft: ?string,
 	paddingRight: ?string,
+	contentMarginBottom: ?string,
 };
 
 export type Preferences = {
 	channelsSort: ChannelPosition[],
 	channelsLastUsedFrom: ChannelLastUsedFrom[],
+	saveFlowOptOut?: boolean,
 };
 
 export type Analytics = {
@@ -193,6 +206,13 @@ const SKELETON_SHOW_DELAY = 200;
  * @emits BX.MessageService.Message.Editor:onTemplateChange
  * @emits BX.MessageService.Message.Editor:onNotificationTemplateChange
  * @emits BX.MessageService.Message.Editor:onStateChange
+ * @emits BX.MessageService.Message.Editor:CustomTemplate:onFormRequested
+ * @emits BX.MessageService.Message.Editor:onTemplatePlaceholderInsert
+ *        Cancellable, once per placeholder of an inserted custom template. Data:
+ *        `{ placeholder, existingPlaceholders, binding }`, where `existingPlaceholders`
+ *        lists the placeholders already in the body plus the ones kept earlier in
+ *        the same insert. The editor supplies context only — it never interprets
+ *        placeholder origin; the zone decides keep/remove via `preventDefault()`.
  */
 export class Editor extends EventEmitter
 {
@@ -222,6 +242,24 @@ export class Editor extends EventEmitter
 	getState(): ?State
 	{
 		return this.#stateExporter?.getState() ?? null;
+	}
+
+	/**
+	 * Notify the editor that a real send attempt has started. Host scenes that
+	 * drive sending themselves (e.g. payment) call this in their send-attempt
+	 * point instead of using the editor footer. It does not emit `onSend`, so
+	 * host send-handlers are not triggered. Currently its only side effect is
+	 * the save-flow decision, but callers must not rely on that.
+	 * No-op until the editor is rendered.
+	 */
+	handleSendAttempt(): void
+	{
+		if (Type.isNil(this.#store))
+		{
+			return;
+		}
+
+		this.#locator?.getSaveFlowService().handleSendAttempt();
 	}
 
 	/**
@@ -496,6 +534,7 @@ export class Editor extends EventEmitter
 					.setLogger(this.#locator.getLogger())
 					.setVariables({
 						channelsSort: this.#options.preferences?.channelsSort,
+						saveFlowOptOut: this.#options.preferences?.saveFlowOptOut ?? false,
 					}),
 			)
 			.addModel(

@@ -1,5 +1,6 @@
 <?php
 $MESS["CRM_AUTOMATION_TRIGGER_ALLOW_DELIVERY_DESCRIPTION"] = "Changes the stage when delivery status changes to Allowed.";
+$MESS["CRM_AUTOMATION_TRIGGER_ALLOW_DELIVERY_EVENT_DATE_TIME"] = "Delivery allowed date and time";
 $MESS["CRM_AUTOMATION_TRIGGER_ALLOW_DELIVERY_NAME"] = "Shipment approved";
 $MESS["CRM_AUTOMATION_TRIGGER_ALLOW_DELIVERY_NAME_1"] = "Delivery status updated";
 $MESS["CRM_AUTOMATION_TRIGGER_ALLOW_DELIVERY_NODE_DESCRIPTION"] = "Triggered after Delivery status is changed to Allowed.";

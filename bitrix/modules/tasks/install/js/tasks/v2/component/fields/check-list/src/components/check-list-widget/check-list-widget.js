@@ -64,6 +64,7 @@ export const CheckListWidget = {
 		'focus',
 		'blur',
 		'emptyBlur',
+		'formattingSelectionChange',
 		'startGroupMode',
 		'toggleGroupModeSelected',
 		'openCheckList',
@@ -409,6 +410,7 @@ export const CheckListWidget = {
 							@focus="(id) => $emit('focus', id)"
 							@blur="(id) => $emit('blur', id)"
 							@emptyBlur="(id) => $emit('emptyBlur', id)"
+							@formattingSelectionChange="(itemId, actions) => $emit('formattingSelectionChange', itemId, actions)"
 							@startGroupMode="(id) => $emit('startGroupMode', id)"
 							@openCheckList="(id) => $emit('openCheckList', id)"
 						/>
@@ -445,6 +447,7 @@ export const CheckListWidget = {
 									@focus="(id) => $emit('focus', id)"
 									@blur="(id) => $emit('blur', id)"
 									@emptyBlur="(id) => $emit('emptyBlur', id)"
+									@formattingSelectionChange="(itemId, actions) => $emit('formattingSelectionChange', itemId, actions)"
 									@toggleGroupModeSelected="(id) => $emit('toggleGroupModeSelected', id)"
 									@openCheckList="(id) => $emit('openCheckList', id)"
 								/>

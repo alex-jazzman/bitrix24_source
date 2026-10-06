@@ -60,6 +60,8 @@ jn.define('im/messenger/const/rest', (require, exports, module) => {
 
 		imV2ChatDelete: 'im.v2.Chat.delete',
 		imV2ChatAdd: 'im.v2.Chat.add',
+		imV2ChatAttachToParent: 'im.v2.Chat.attachToParent',
+		imV2ChatDetachFromParent: 'im.v2.Chat.detachFromParent',
 		imV2ChatRead: 'im.v2.Chat.read',
 		imV2ChatReadAll: 'im.v2.Chat.readAll',
 		imV2ChatReadAllByType: 'im.v2.Chat.readByType',
@@ -147,6 +149,12 @@ jn.define('im/messenger/const/rest', (require, exports, module) => {
 		imV2ChatSharingLinkGetIndividual: 'im.v2.Chat.SharingLink.getIndividual',
 		imV2ChatSharingLinkRegenerateIndividual: 'im.v2.Chat.SharingLink.regenerateIndividual',
 		imV2ChatJoinByCode: 'im.v2.Chat.joinByCode',
+
+		imV2GuestLinkGenerate: 'im.v2.Guest.Link.generate',
+		imV2GuestLinkRegenerate: 'im.v2.Guest.Link.regenerate',
+		imV2GuestLinkInviteByEmail: 'im.v2.Guest.Link.inviteByEmail',
+		imV2GuestLinkInviteByPhoneNumber: 'im.v2.Guest.Link.inviteByPhoneNumber',
+		imV2GuestSetName: 'im.v2.Guest.setName',
 
 		imDialogGet: 'im.dialog.get',
 		imDialogMessagesGet: 'im.dialog.messages.get',

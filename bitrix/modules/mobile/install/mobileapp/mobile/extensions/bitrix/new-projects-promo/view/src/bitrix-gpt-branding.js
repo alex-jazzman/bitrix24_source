@@ -1,0 +1,88 @@
+/**
+ * @module new-projects-promo/view/src/bitrix-gpt-branding
+ */
+jn.define('new-projects-promo/view/src/bitrix-gpt-branding', (require, exports, module) => {
+	const { Color } = require('tokens');
+
+	const GRADIENT_ANGLE = 90;
+	const GRADIENT_STOP_OFFSETS = [0, 0.25, 0.5, 0.75, 1];
+	const SVG_GRADIENT_ID = 'bitrix-gpt-gradient';
+	const SMALL_STAR_PATH = [
+		'M6.35635 3.96582C6.68772 3.96582 6.95635 4.23445 6.95635 4.56582V5.35059H7.74126',
+		'C8.07263 5.35059 8.34126 5.61922 8.34126 5.95059C8.34126 6.28196 8.07263 6.55059',
+		'7.74126 6.55059H6.95635V7.33647C6.95635 7.66784 6.68772 7.93647 6.35635 7.93647',
+		'C6.02498 7.93647 5.75635 7.66784 5.75635 7.33647V6.55059H4.97061C4.63923 6.55059',
+		'4.37061 6.28196 4.37061 5.95059C4.37061 5.61922 4.63923 5.35059 4.97061 5.35059H5.75635',
+		'V4.56582C5.75635 4.23445 6.02498 3.96582 6.35635 3.96582Z',
+	].join(' ');
+	const LARGE_STAR_PATH = [
+		'M11.3563 4.93738C11.614 4.24093 12.5991 4.24093 12.8568 4.93738L14.3637 9.00916',
+		'C14.5055 9.39233 14.8076 9.69443 15.1908 9.83623L19.2626 11.3431C19.959 11.6009',
+		'19.959 12.5859 19.2626 12.8437L15.1908 14.3505C14.8076 14.4923 14.5055 14.7944',
+		'14.3637 15.1776L12.8568 19.2494C12.5991 19.9458 11.614 19.9458 11.3563 19.2494L9.84942',
+		'15.1776C9.70762 14.7944 9.40551 14.4923 9.02235 14.3505L4.95056 12.8437C4.25411',
+		'12.5859 4.25411 11.6009 4.95056 11.3431L9.02235 9.83623C9.40551 9.69443 9.70762 9.39233',
+		'9.84942 9.00916L11.3563 4.93738ZM12.1066 6.36753L10.9748 9.42565C10.7115 10.1372',
+		'10.1504 10.6983 9.43883 10.9616L6.38072 12.0934L9.43883 13.2251C10.1504 13.4885',
+		'10.7115 14.0495 10.9748 14.7611L12.1066 17.8192L13.2383 14.7611C13.5017 14.0495',
+		'14.0627 13.4885 14.7743 13.2251L17.8324 12.0934L14.7743 10.9616C14.0627 10.6983',
+		'13.5017 10.1372 13.2383 9.42565L12.1066 6.36753Z',
+	].join(' ');
+	const BOTTOM_STAR_PATH = [
+		'M17.9842 17.2338C17.9842 16.9024 17.7156 16.6338 17.3842 16.6338C17.0528 16.6338',
+		'16.7842 16.9024 16.7842 17.2338V18.0166H16.0014C15.67 18.0166 15.4014 18.2852 15.4014',
+		'18.6166C15.4014 18.948 15.67 19.2166 16.0014 19.2166H16.7842V19.998C16.7842 20.3294',
+		'17.0528 20.598 17.3842 20.598C17.7156 20.598 17.9842 20.3294 17.9842 19.998V19.2166',
+		'H18.7656C19.0969 19.2166 19.3656 18.948 19.3656 18.6166C19.3656 18.2852 19.0969',
+		'18.0166 18.7656 18.0166H17.9842V17.2338Z',
+	].join(' ');
+
+	const getGradientColors = () => [
+		Color.textBitrixGptGradient1,
+		Color.textBitrixGptGradient2,
+		Color.textBitrixGptGradient3,
+		Color.textBitrixGptGradient4,
+		Color.textBitrixGptGradient5,
+	];
+
+	/**
+	 * @return {InfoScreenColorGradient}
+	 */
+	const getBitrixGptTextGradient = () => ({
+		colors: getGradientColors(),
+		angle: GRADIENT_ANGLE,
+	});
+
+	const createGradientStops = () => getGradientColors()
+		.map((color, index) => (
+			`<stop offset="${GRADIENT_STOP_OFFSETS[index]}" stop-color="${color.toHex()}"/>`
+		))
+		.join('');
+
+	const createAiStarsSvg = () => [
+		'<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">',
+		'<defs>',
+		`<linearGradient id="${SVG_GRADIENT_ID}" x1="4" y1="12" x2="20" y2="12" gradientUnits="userSpaceOnUse">`,
+		createGradientStops(),
+		'</linearGradient>',
+		'</defs>',
+		`<path d="${SMALL_STAR_PATH}" fill="url(#${SVG_GRADIENT_ID})"/>`,
+		`<path fill-rule="evenodd" clip-rule="evenodd" d="${LARGE_STAR_PATH}" fill="url(#${SVG_GRADIENT_ID})"/>`,
+		`<path d="${BOTTOM_STAR_PATH}" fill="url(#${SVG_GRADIENT_ID})"/>`,
+		'</svg>',
+	].join('');
+
+	/**
+	 * @return {InfoScreenSvgIcon}
+	 */
+	const createAiStarsGradientIcon = () => ({
+		svg: {
+			content: createAiStarsSvg(),
+		},
+	});
+
+	module.exports = {
+		createAiStarsGradientIcon,
+		getBitrixGptTextGradient,
+	};
+});

@@ -1,12 +1,16 @@
 import { Type } from 'main.core';
+import { BIcon, Outline } from 'ui.icon-set.api.vue';
 
 import { EventType, SidebarDetailBlock } from 'im.v2.const';
 
 import type { EventEmitter } from 'main.core.events';
 
+const ICON_SIZE = 24;
+
 // @vue/component
 export const SidebarButton = {
 	name: 'SidebarButton',
+	components: { BIcon },
 	inject: ['currentSidebarPanel'],
 	props:
 	{
@@ -17,6 +21,8 @@ export const SidebarButton = {
 	},
 	computed:
 	{
+		Outline: () => Outline,
+		ICON_SIZE: () => ICON_SIZE,
 		isSidebarOpened(): boolean
 		{
 			return Type.isStringFilled(this.currentSidebarPanel);
@@ -49,10 +55,12 @@ export const SidebarButton = {
 	},
 	template: `
 		<div
-			class="bx-im-chat-header__icon --panel"
+			class="bx-im-chat-header__icon --ds-icon"
 			:title="loc('IM_CONTENT_CHAT_HEADER_OPEN_SIDEBAR')"
 			:class="{'--active': isSidebarOpened}"
 			@click="toggleRightPanel"
-		></div>
+		>
+			<BIcon :name="Outline.COLUMNS_SIDEBAR_PENDING" :size="ICON_SIZE" />
+		</div>
 	`,
 };

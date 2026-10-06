@@ -207,13 +207,15 @@ export const BaseMessage = {
 				@contextmenu="openContextMenu"
 				@mouseup="onMessageMouseUp(message, $event)"
 			>
-				<!-- Before content -->
-				<slot name="before-message"></slot>
 				<!-- Content + retry + context menu -->
 				<div class="bx-im-message-base__content">
-					<div class="bx-im-message-base__body" :class="bodyClasses">
-						<slot></slot>
-						<ReactionSelector v-if="withReactions" :messageId="message.id" />
+					<div class="bx-im-message-base__content-main">
+						<!-- Before content: outside the bubble, but inside the content column so the "..." menu spans it -->
+						<slot name="before-message"></slot>
+						<div class="bx-im-message-base__body" :class="bodyClasses">
+							<slot></slot>
+							<ReactionSelector v-if="withReactions" :messageId="message.id" />
+						</div>
 					</div>
 					<RetryButton v-if="showRetryButton" :message="message" :dialogId="dialogId"/>
 					<ContextMenu

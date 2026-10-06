@@ -20,6 +20,7 @@ this.BX.Crm = this.BX.Crm || {};
 		#adForms = null;
 		#adFormsErrors = null;
 		#adAccounts = null;
+		#adAccountsErrors = [];
 		#seoEventHandler;
 		constructor(options) {
 			super();
@@ -310,13 +311,17 @@ this.BX.Crm = this.BX.Crm || {};
 						};
 					});
 					this.#renderPageSelector();
+				}).catch(response => {
+					this.#adAccountsErrors = response.errors;
+					this.#adAccounts = [];
+					this.#renderPageSelector();
 				});
 				return this.#pagesContainer;
 			}
 			if (this.#adAccounts.length === 0) {
 				this.#pagesContainer.appendChild(new ui_alerts.Alert({
 					color: ui_alerts.Alert.Color.PRIMARY,
-					text: main_core.Loc.getMessage('CRM_FORM_INTEGRATION_JS_PAGE_EMPTY', {
+					text: this.#adAccountsErrors.length > 0 ? this.#adAccountsErrors[0].message : main_core.Loc.getMessage('CRM_FORM_INTEGRATION_JS_PAGE_EMPTY', {
 						'%providerName%': this.getTypeTitle()
 					})
 				}).render());

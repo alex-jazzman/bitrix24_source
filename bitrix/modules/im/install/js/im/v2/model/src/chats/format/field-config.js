@@ -189,6 +189,12 @@ export const chatFieldsConfig: FieldsConfig = [
 		targetFieldName: 'permissions',
 		checkFunction: Type.isPlainObject,
 	},
+	// Phase 0 (task 718250): superadmin project chat access. REST-only field (absent in pull).
+	{
+		fieldName: 'hasManageCapability',
+		targetFieldName: 'hasManageCapability',
+		checkFunction: Type.isBoolean,
+	},
 	{
 		fieldName: 'tariffRestrictions',
 		targetFieldName: 'tariffRestrictions',

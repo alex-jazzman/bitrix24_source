@@ -2,6 +2,7 @@
  * @module im/messenger/lib/counters/update-system/action/new-message/pull/src/participant-message
  */
 jn.define('im/messenger/lib/counters/update-system/action/new-message/pull/src/participant-message', (require, exports, module) => {
+	const { Type } = require('type');
 	const { UuidManager } = require('im/messenger/lib/uuid-manager');
 
 	const { PendingOperationType } = require('im/messenger/lib/counters/update-system/const');
@@ -47,6 +48,26 @@ jn.define('im/messenger/lib/counters/update-system/action/new-message/pull/src/p
 		 */
 		async execute(repository)
 		{
+			if (await this.isOutdatedByLastMessageId(this.chatId, this.messageId))
+			{
+				this.logger.warn('NewParticipantPullMessageAction: skip outdated message event', {
+					chatId: this.chatId,
+					messageId: this.messageId,
+				});
+
+				return;
+			}
+
+			if (this.#isAlreadyAppliedMessage(repository))
+			{
+				this.logger.warn('NewParticipantPullMessageAction: skip duplicate message event', {
+					chatId: this.chatId,
+					messageId: this.messageId,
+				});
+
+				return;
+			}
+
 			if (!repository.hasPendingOperations(this.chatId))
 			{
 				await repository.saveCounterStateList([this.incomingCounterState]);
@@ -66,6 +87,26 @@ jn.define('im/messenger/lib/counters/update-system/action/new-message/pull/src/p
 		getType()
 		{
 			return PendingOperationType.newParticipantPullMessage;
+		}
+
+		/**
+		 * @desc Drops a duplicate delivery: the strict staleness check
+		 * lets an equal-id repeat through.
+		 * @param {ChatCounterRepository} repository
+		 * @return {boolean}
+		 */
+		#isAlreadyAppliedMessage(repository)
+		{
+			if (!Type.isInteger(this.messageId))
+			{
+				return false;
+			}
+
+			return repository.getPendingOperationList(this.chatId)
+				.some((operation) => (
+					operation.type === PendingOperationType.newParticipantPullMessage
+					&& operation.data?.messageId >= this.messageId
+				));
 		}
 
 		/**

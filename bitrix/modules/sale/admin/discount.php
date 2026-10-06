@@ -10,6 +10,7 @@ use Bitrix\Main\Config\Option;
 use Bitrix\Sale;
 use Bitrix\Main\Result;
 use Bitrix\Main\Error;
+use Bitrix\Main\Web\Uri;
 
 require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/prolog_admin_before.php');
 require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/sale/prolog.php');
@@ -715,7 +716,7 @@ while ($discount = $discountIterator->Fetch())
 			$arActions[] = array(
 				'ICON' => 'copy',
 				'TEXT' => Loc::getMessage('BT_SALE_DISCOUNT_LIST_MESS_COPY_DISCOUNT_SHORT'),
-				'LINK' => CHTTP::urlAddParams($urlEdit, array("action" => "copy")),
+				'LINK' => (string)(new Uri($urlEdit))->addParams(["action" => "copy"]),
 				'DEFAULT' => false,
 			);
 		}

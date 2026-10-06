@@ -6,7 +6,7 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Filter;
 use Bitrix\Main\Grid;
 
-use \Bitrix\Crm\Integration\Report\Handler\SalesDynamics;
+use Bitrix\Crm\Integration\Report\Handler\SalesDynamics;
 
 class CrmReportSalesDynamicsGridComponent extends \CBitrixComponent
 {

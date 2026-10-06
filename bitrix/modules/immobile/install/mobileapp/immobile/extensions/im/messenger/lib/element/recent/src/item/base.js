@@ -16,13 +16,15 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 	const { ChatTitle } = require('im/messenger/lib/element/chat-title');
 	const { DateHelper } = require('im/messenger/lib/helper');
 	const { DateFormatter } = require('im/messenger/lib/date-formatter');
-	const { DialogHelper, MessageHelper } = require('im/messenger/lib/helper');
+	const { DialogHelper, UserHelper } = require('im/messenger/lib/helper');
 	const {
 		Path,
 		MessageStatus,
 		AnchorType,
 	} = require('im/messenger/const');
 	const {
+		ContextMenuSection,
+		ContextMenuActionOrder,
 		PinAction,
 		UnpinAction,
 		ReadAction,
@@ -46,11 +48,22 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 		general: 'general',
 	});
 
+	const ContextMenuSectionOrder = [
+		ContextMenuSection.main,
+		ContextMenuSection.bottom,
+	];
+
 	/**
 	 * @class RecentItem
 	 */
 	class RecentItem
 	{
+		/** @type {?boolean} */
+		#subtitleAvatarVisible = null;
+
+		/** @type {RecentWidgetItemContextMenu|null|undefined} */
+		#contextMenu;
+
 		/**
 		 * @param {RecentModelState} modelItem
 		 * @param {object} options
@@ -60,6 +73,7 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 			this.id = 0;
 			this.title = 'title';
 			this.subtitle = 'subtitle';
+			this.subtitleAvatar = null;
 			this.imageUrl = '';
 			this.color = '';
 			this.backgroundColor = '';
@@ -118,6 +132,7 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 				.createTitleStyle()
 				.createSubtitleStyle()
 				.createDraftRecent()
+				.createSubtitleAvatar()
 				.createAvatar()
 				.createAvatarStyle()
 				.createDateStyle()
@@ -141,6 +156,7 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 				id: this.id,
 				title: this.title,
 				subtitle: this.subtitle,
+				subtitleAvatar: this.subtitleAvatar,
 				avatar: this.avatar,
 				imageUrl: this.imageUrl,
 				color: this.color,
@@ -154,6 +170,7 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 				sortValues: this.sortValues,
 				menuMode: this.menuMode,
 				actions: this.actions,
+				contextMenu: this.buildContextMenu(),
 				params: paramsWithoutModel,
 				styles: this.styles,
 				isSuperEllipseIcon: this.isSuperEllipseIcon,
@@ -298,6 +315,97 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 		}
 
 		/**
+		 * @return {RecentItem}
+		 */
+		createSubtitleAvatar()
+		{
+			if (!this.shouldShowSubtitleAvatar())
+			{
+				return this;
+			}
+
+			const message = this.getItemMessage();
+			const dialog = this.getDialogItem();
+
+			this.subtitleAvatar = ChatAvatar
+				.createFromDialogId(message.senderId, { chatId: dialog?.chatId, messageId: message.id })
+				.getRecentItemSubtitleAvatarProps();
+
+			return this;
+		}
+
+		/**
+		 * @return {boolean}
+		 */
+		shouldShowSubtitleAvatar()
+		{
+			if (this.#subtitleAvatarVisible === null)
+			{
+				this.#subtitleAvatarVisible = this.computeShouldShowSubtitleAvatar();
+			}
+
+			return this.#subtitleAvatarVisible;
+		}
+
+		/**
+		 * @return {boolean}
+		 */
+		computeShouldShowSubtitleAvatar()
+		{
+			if (!Feature.isChatRecentSubtitleAvatarSupported)
+			{
+				return false;
+			}
+
+			if (this.hasDraft())
+			{
+				return false;
+			}
+
+			if (!DialogHelper.isDialogId(this.id))
+			{
+				return false;
+			}
+
+			const dialog = this.getDialogItem();
+			if (!Type.isPlainObject(dialog) || Type.isArrayFilled(dialog.inputActions))
+			{
+				return false;
+			}
+
+			if (DialogHelper.createByModel(dialog)?.isOpenlines)
+			{
+				return false;
+			}
+
+			const message = this.getItemMessage();
+			if (!Type.isPlainObject(message) || !message.id)
+			{
+				return false;
+			}
+
+			const { senderId } = message;
+			if (!senderId || senderId === serviceLocator.get('core').getUserId())
+			{
+				return false;
+			}
+
+			const sender = serviceLocator.get('core').getStore().getters['usersModel/getById'](senderId);
+			if (!sender)
+			{
+				return false;
+			}
+
+			const senderUserHelper = UserHelper.createByModel(sender);
+			if (senderUserHelper?.isCopilotBot && (dialog.userCounter ?? 0) <= 2)
+			{
+				return false;
+			}
+
+			return true;
+		}
+
+		/**
 		 * @deprecated use to AvatarDetail
 		 * @return RecentItem
 		 */
@@ -389,7 +497,14 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 		 */
 		createUnread()
 		{
-			this.unread = this.getModelItem().unread === true || this.getCounterState()?.isMarkedAsUnread === true;
+			const isManuallyUnread = this.getModelItem().unread === true
+				|| this.getCounterState()?.isMarkedAsUnread === true;
+
+			// Tabs that hide the counter (Channels) must not render an unread dot
+			// for a manual "read later" mark. Matches web behavior.
+			const showCounter = this.getRenderProperty('showCounter', true);
+
+			this.unread = showCounter && isManuallyUnread;
 
 			return this;
 		}
@@ -520,9 +635,13 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 			const hasInputAction = Type.isArrayFilled(dialog?.inputActions);
 			if (hasInputAction)
 			{
+				const typingAnimationColor = Feature.isChatRecentSubtitleAvatarSupported
+					? Color.accentMainPrimaryalt.toHex()
+					: '#777777';
+
 				subtitleStyle = {
 					animation: {
-						color: '#777777',
+						color: typingAnimationColor,
 						type: 'bubbles',
 					},
 				};
@@ -750,6 +869,76 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 		}
 
 		/**
+		 * Sorts a copy of `this.actions` by `ContextMenuActionOrder` for popup rendering.
+		 * Subclasses may override if popup order must differ (see OpenlineItem).
+		 * @return {Array<RecentWidgetItemAction>}
+		 */
+		createContextMenuActions()
+		{
+			return [...this.actions].sort(
+				(a, b) => this.#getContextMenuOrderIndex(a) - this.#getContextMenuOrderIndex(b),
+			);
+		}
+
+		/**
+		 * @param {RecentWidgetItemAction} action
+		 * @return {number}
+		 */
+		#getContextMenuOrderIndex(action)
+		{
+			const index = ContextMenuActionOrder.findIndex(
+				(orderedAction) => orderedAction.identifier === action.identifier,
+			);
+
+			return index === -1 ? ContextMenuActionOrder.length : index;
+		}
+
+		/**
+		 * @return {RecentWidgetItemContextMenu|null}
+		 */
+		buildContextMenu()
+		{
+			if (this.#contextMenu === undefined)
+			{
+				this.#contextMenu = this.#computeContextMenu();
+			}
+
+			return this.#contextMenu;
+		}
+
+		/**
+		 * @return {RecentWidgetItemContextMenu|null}
+		 */
+		#computeContextMenu()
+		{
+			if (!Feature.isRecentContextMenuSupported)
+			{
+				return null;
+			}
+
+			const actions = this.createContextMenuActions();
+			if (!actions || actions.length === 0)
+			{
+				return null;
+			}
+
+			const items = actions.map((action) => ({
+				id: action.identifier,
+				title: action.title,
+				iconName: action.iconName,
+				sectionCode: ContextMenuSection.main,
+				...action.contextMenu,
+			}));
+
+			const usedSections = new Set(items.map((item) => item.sectionCode));
+			const sections = ContextMenuSectionOrder
+				.filter((id) => usedSections.has(id))
+				.map((id) => ({ id, title: '' }));
+
+			return { sections, items };
+		}
+
+		/**
 		 * @return {?DialoguesModelState}
 		 */
 		getDialogById(dialogId)
@@ -936,9 +1125,23 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 		getReadAction()
 		{
 			const item = this.getModelItem();
-			const counter = this.getCounter();
+			const hasUnread = item.unread === true
+				|| this.unread === true
+				|| this.getCounter() > 0
+				|| this.getReadActionChildrenCounter() > 0;
 
-			return (item.unread === true || this.unread === true || counter > 0) ? ReadAction : UnreadAction;
+			return hasUnread ? ReadAction : UnreadAction;
+		}
+
+		/**
+		 * Aggregated unread counter of nested (child) chats taken into account when
+		 * choosing between the "mark as read" and "mark as unread" menu action.
+		 * Plain chats have no nested chats, so the base implementation returns 0.
+		 * @return {number}
+		 */
+		getReadActionChildrenCounter()
+		{
+			return 0;
 		}
 
 		/**

@@ -64,6 +64,8 @@ export class InitManager
 		this.#initGuestState();
 		this.#initBindings();
 
+		this.#initFolders();
+
 		CounterManager.init();
 		PermissionManager.init();
 		PromoManager.init();
@@ -78,7 +80,7 @@ export class InitManager
 		InitManager.#inited = true;
 	}
 
-	#initLogger(): void
+	#initLogger()
 	{
 		const { loggerConfig } = Core.getApplicationData();
 		if (!loggerConfig)
@@ -89,7 +91,7 @@ export class InitManager
 		Logger.setConfig(loggerConfig);
 	}
 
-	#initSettings(): void
+	#initSettings()
 	{
 		const { settings } = Core.getApplicationData();
 		if (!settings)
@@ -101,7 +103,7 @@ export class InitManager
 		void Core.getStore().dispatch('application/settings/set', settings);
 	}
 
-	#initTariffRestrictions(): void
+	#initTariffRestrictions()
 	{
 		const { tariffRestrictions } = Core.getApplicationData();
 		if (!tariffRestrictions)
@@ -113,13 +115,13 @@ export class InitManager
 		void Core.getStore().dispatch('application/tariffRestrictions/set', tariffRestrictions);
 	}
 
-	#initCallManager(): void
+	#initCallManager()
 	{
 		const { activeCalls } = Core.getApplicationData();
 		CallManager.getInstance().updateRecentCallsList(activeCalls);
 	}
 
-	#initAnchors(): void
+	#initAnchors()
 	{
 		const { anchors } = Core.getApplicationData();
 		if (!anchors)
@@ -130,7 +132,7 @@ export class InitManager
 		void Core.getStore().dispatch('messages/anchors/setAnchors', { anchors });
 	}
 
-	#initCopilot(): void
+	#initCopilot()
 	{
 		const { copilot } = Core.getApplicationData();
 		void Core.getStore().dispatch('copilot/setName', copilot.botName);
@@ -145,7 +147,7 @@ export class InitManager
 		void Core.getStore().dispatch('copilot/setAvailableAIModels', copilot.availableEngines);
 	}
 
-	#initPreloadedEntities(): void
+	#initPreloadedEntities()
 	{
 		const { preloadedEntities } = Core.getApplicationData();
 		if (!preloadedEntities)
@@ -165,7 +167,7 @@ export class InitManager
 		});
 	}
 
-	#initCurrentUserAdminStatus(): void
+	#initCurrentUserAdminStatus()
 	{
 		const { isCurrentUserAdmin } = Core.getApplicationData();
 		void Core.getStore().dispatch('users/setCurrentUserAdminStatus', isCurrentUserAdmin);
@@ -178,20 +180,25 @@ export class InitManager
 		GuestManager.getInstance().setTermsOfServiceUrl(videoCallsTermsUrl);
 	}
 
-	#initBindings(): void
+	#initBindings()
 	{
-		SidePanel.Instance.bindAnchors({
-			rules: [
-				{
-					condition: Object.values(BindingsCondition),
-					handler(event: PointerEvent, link: AnchorLink)
-					{
-						(new BindingsManager()).routeLink(link.url);
+		const rule = {
+			condition: Object.values(BindingsCondition),
+			handler(event: PointerEvent, link: AnchorLink)
+			{
+				(new BindingsManager()).routeLink(link.url);
 
-						event.preventDefault();
-					},
-				},
-			],
-		});
+				event.preventDefault();
+			},
+		};
+
+		SidePanel.Instance.bindAnchors({ rules: [rule] });
+	}
+
+	#initFolders()
+	{
+		const { folders } = Core.getApplicationData();
+
+		void Core.getStore().dispatch('recent/folders/set', folders);
 	}
 }

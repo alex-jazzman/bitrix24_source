@@ -41,7 +41,15 @@ class CMailUfMessageComponent extends CBitrixComponent
 				'MAILBOX_LOGIN' => 'MAILBOX.LOGIN',
 				'INTERNALDATE' => 'MESSAGE_UID.INTERNALDATE',
 			),
-			'filter' => array(
+			/*
+				The scope belongs here as it does on every screen: after a change of the source of the
+				mailbox the letter has a placement in the retained generation as well, and a date or a
+				flag taken from that row is the answer of a server the mailbox has left.
+			*/
+			'filter' => Mail\Helper\Message\Loader\QueryBuilder::generationScopeFilterOfMessages(
+				[(int)$this->arParams['MESSAGE_ID']],
+				'MESSAGE_UID.',
+			) + array(
 				'=ID' => (int) $this->arParams['MESSAGE_ID'],
 			),
 		))->fetch();
@@ -129,7 +137,15 @@ class CMailUfMessageComponent extends CBitrixComponent
 			'select' => array(
 				new Main\Entity\ExpressionField('NEW_COUNT', 'COUNT(DISTINCT %s)', 'ID'),
 			),
-			'filter' => array(
+			/*
+				Unread answers of the thread the user can actually open. Without the scope the badge
+				counts the answers left with the previous source of the mailbox as well - the screen
+				behind it shows fewer letters than the badge promises, or none at all.
+			*/
+			'filter' => Mail\Helper\Message\Loader\QueryBuilder::generationScopeFilter(
+				[(int)$message['MAILBOX_ID']],
+				'MESSAGE_UID.',
+			) + array(
 				'=MAILBOX_ID' => $message['MAILBOX_ID'],
 				'=CLOSURE.PARENT_ID' => $message['ID'],
 				'!@MESSAGE_UID.IS_SEEN' => array('Y', 'S'), // @TODO: index?

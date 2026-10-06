@@ -1,5 +1,5 @@
 <?php
-$MESS["DISK_DOCUMENTS_ACT_ACCESS_BY_LINK"] = "Share";
+$MESS["DISK_DOCUMENTS_ACT_ACCESS_BY_LINK"] = "More sharing options";
 $MESS["DISK_DOCUMENTS_ACT_COPIED_INTERNAL_LINK"] = "Link copied to the Clipboard";
 $MESS["DISK_DOCUMENTS_ACT_COPY_INTERNAL_LINK"] = "Copy internal link";
 $MESS["DISK_DOCUMENTS_ACT_COPY_LINK"] = "Copy link";

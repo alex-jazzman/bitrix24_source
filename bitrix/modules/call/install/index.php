@@ -26,10 +26,11 @@ class call extends \CModule
 		'im' => [
 			'OnChatUserDelete' => [[EventHandler::class, 'onChatUserLeave']],
 			'OnChatUserAdd' => [[EventHandler::class, 'onChatUserAdd']],
+			'OnAfterChatDelete' => [[EventHandler::class, 'onAfterChatDelete']],
 			'OnCallUserStateChange' => [[EventHandler::class, 'onCallUserStateChange']],
 			'OnChangeUserRoles' => [[EventHandler::class, 'onChangeUserRoles']],
 		],
-		'mobile' => [
+		'pull' => [
 			'onGetMobileCounterTypes' => [[\Bitrix\Call\Counter::class, 'onGetMobileCounterTypes']],
 			'onGetMobileCounter' => [[\Bitrix\Call\Counter::class, 'onGetMobileCounter']],
 		],

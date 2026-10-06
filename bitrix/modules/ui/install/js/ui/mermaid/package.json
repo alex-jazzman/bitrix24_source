@@ -1,0 +1,17 @@
+{
+  "name": "ui-mermaid",
+  "version": "1.0.0",
+  "description": "Vendored mermaid library for BX.UI.Mermaid extension",
+  "main": "bundle.config.js",
+  "scripts": {
+    "vendor": "esbuild node_modules/mermaid/dist/mermaid.core.mjs --bundle --format=esm --minify --legal-comments=eof --outfile=src/mermaid.bundle.mjs"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "mermaid": "^11.15.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.1"
+  }
+}

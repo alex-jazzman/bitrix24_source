@@ -7,13 +7,16 @@ import { BatchManager } from './batch-manager';
  */
 export class BatchSetStageManager extends BatchManager
 {
-	static messages = {
-		// default messages, you can override them via settings.messages
-		title: Loc.getMessage('CRM_AUTORUN_BATCH_SET_STAGE_TITLE'),
-		summaryCaption: Loc.getMessage('CRM_AUTORUN_BATCH_SET_STAGE_SUMMARY_CAPTION'),
-		summarySucceeded: Loc.getMessage('CRM_AUTORUN_BATCH_SET_STAGE_SUMMARY_SUCCEEDED'),
-		summaryFailed: Loc.getMessage('CRM_AUTORUN_BATCH_SET_STAGE_SUMMARY_FAILED'),
-	};
+	static get messages()
+	{
+		return {
+			// default messages, you can override them via settings.messages
+			title: Loc.getMessage('CRM_AUTORUN_BATCH_SET_STAGE_TITLE'),
+			summaryCaption: Loc.getMessage('CRM_AUTORUN_BATCH_SET_STAGE_SUMMARY_CAPTION'),
+			summarySucceeded: Loc.getMessage('CRM_AUTORUN_BATCH_SET_STAGE_SUMMARY_SUCCEEDED'),
+			summaryFailed: Loc.getMessage('CRM_AUTORUN_BATCH_SET_STAGE_SUMMARY_FAILED'),
+		};
+	}
 
 	static items = {};
 

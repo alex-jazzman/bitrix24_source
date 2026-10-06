@@ -9,6 +9,7 @@ export type StarterComplexDocumentTypeInput =
 		moduleId: string,
 		entity: string,
 		documentType: string,
+		categoryId?: ?number,
 	}
 ;
 
@@ -24,6 +25,7 @@ export type StarterComplexDocumentIdInput =
 export type StarterDocumentInit = {
 	documentType: StarterComplexDocumentTypeInput,
 	documentId: StarterComplexDocumentIdInput,
+	categoryId?: ?number,
 };
 
 export class StarterDocument
@@ -43,7 +45,10 @@ export class StarterDocument
 			return null;
 		}
 
-		const documentType = ComplexDocumentType.tryCreate(document.documentType);
+		const documentType = ComplexDocumentType
+			.tryCreate(document.documentType)
+			?.withCategoryId(document.categoryId ?? null)
+		;
 		const documentId = ComplexDocumentId.tryCreate(document.documentId);
 		if (!documentType || !documentId)
 		{
@@ -92,6 +97,12 @@ export class StarterDocument
 			this.documentType.entity,
 			this.documentType.documentType,
 			String(this.documentId.documentId),
+			String(this.categoryId),
 		].join('@');
+	}
+
+	get categoryId(): ?number
+	{
+		return this.#documentType.categoryId;
 	}
 }

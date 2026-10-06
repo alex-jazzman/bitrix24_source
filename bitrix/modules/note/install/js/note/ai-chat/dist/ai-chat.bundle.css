@@ -1,0 +1,173 @@
+/*
+ * Right-rail column for the BitrixGPT widget, built as a true sibling of `.note-page-main` — i.e. of
+ * the header AND the working area, so the column runs the full window height and squeezes both.
+ * Collapsed is `flex-basis: 0`, so opening and closing slide instead of jumping, and the document
+ * keeps its own scroll to the left.
+ *
+ * The width is an inline `--note-ai-chat-width` computed by ALG-02: the fixed panel width clamped
+ * against what is left after the document's guaranteed column.
+ *
+ * The column carries the design-system context class of the active module theme, so the surface below
+ * follows the knowledge base into light or dark. Everything needed to make the foreign widget follow
+ * it too is CSS in `note.ui.theme-context`, next to the module's other workarounds for upstream
+ * components — the only foreign selectors here are the two that set the widget's header height, which
+ * is geometry of this column rather than colour (the seam rules at the bottom).
+ */
+.note-ai-chat-panel {
+	--note-ai-chat-width: 360px;
+	/* The column starts at the top of the window, next to the page header, so the widget's own header
+	   has to end where ours does. Ours is 56px including its bottom divider (app.css); the widget
+	   assumes the portal's header and reads its height from this very knob
+	   (intranet wrapper.css: `--ai-chat-panel-header-height: var(--air-header-height, 58px)`), which is
+	   undefined on our bare template and falls back to 58 — a two-pixel step in the horizontal line
+	   running across the page. */
+	--air-header-height: 56px;
+
+	display: flex;
+	flex-direction: column;
+	flex: 0 0 0;
+	width: 0;
+	height: 100%;
+	overflow: hidden;
+	position: relative;
+	/* Width animates from zero, so the divider has to animate with it: a 1px border on a collapsed
+	   panel would stay as a hairline on the page. */
+	border-left: 0 solid var(--ui-color-divider-default);
+	background: var(--ui-color-bg-content-primary);
+	/* The context class only redefines variables — inherited text would still come from the page and
+	   land dark on a dark surface. The widget's own screens rely on inheritance (its history list
+	   sets no colour of its own), so the column declares it. */
+	color: var(--ui-color-base-1);
+	/* Closing does not unmount the widget, so `width: 0` alone would keep its inputs and buttons in
+	   the Tab order and in the accessibility tree — a keyboard user would walk into a panel nobody
+	   can see. `visibility` flips after the slide, so the panel is still visible while it collapses
+	   and only then leaves the tree. */
+	visibility: hidden;
+	transition:
+		flex-basis 0.3s cubic-bezier(.4, 0, .2, 1),
+		width 0.3s cubic-bezier(.4, 0, .2, 1),
+		visibility 0s linear 0.3s;
+}
+
+.note-ai-chat-panel.--open {
+	flex-basis: var(--note-ai-chat-width);
+	width: var(--note-ai-chat-width);
+	border-left-width: 1px;
+	visibility: visible;
+	transition:
+		flex-basis 0.3s cubic-bezier(.4, 0, .2, 1),
+		width 0.3s cubic-bezier(.4, 0, .2, 1),
+		visibility 0s linear;
+}
+
+/*
+ * [ALG-02] Narrow window: the remainder no longer covers the panel minimum, so instead of squeezing
+ * the document the panel goes over it. Deliberately NOT `position: fixed; inset: 0` — the panel keeps
+ * its width and the page stays usable to its left. Anchored to `.note-page` (which app.css gives
+ * `position: relative` for exactly this), so the column is full height here too; the widget's own
+ * collapse button stays the way out while the header button is behind the panel.
+ *
+ * z-index 140 sits above every layer that belongs to the document and is therefore covered by the
+ * panel — 90 hotkeys button, 100 pinned editor toolbar, 120 editor popover, 130 editor context menu
+ * — and below the navigation curtain (991) and PopupWindow (1000+), which must stay on top.
+ */
+.note-ai-chat-panel.--overlay {
+	position: absolute;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	z-index: 140;
+	max-width: 100%;
+}
+
+.note-ai-chat-panel.--overlay.--open {
+	box-shadow: -8px 0 24px rgba(0, 0, 0, .16);
+}
+
+/* The width follows the pointer, so the opening transition must be off for the gesture — otherwise
+   the panel lags 0.3s behind the cursor. `--instant` is the same need at the handover frame: the
+   shell's placeholder has already slid this exact width in. */
+.note-ai-chat-panel.--instant,
+.note-ai-chat-panel.--dragging {
+	transition: none;
+}
+
+/*
+ * Resize grip, built like the navigation resizer (sidebar.css `.sidebar-resizer`): a wide invisible
+ * catch zone with a thin bar inside it that only shows on hover and during the gesture. The bar is
+ * `--ui-color-divider-accent` — the same "slightly stronger divider" the left edge uses, not an
+ * accent colour: this is a divider that can be grabbed, not a control.
+ *
+ * Kept inside the column rather than straddling the border like the navigation one: the panel is
+ * `overflow: hidden`, so a grip with a negative offset would be clipped away.
+ */
+.note-ai-chat-panel__resizer {
+	position: absolute;
+	top: 0;
+	left: 0;
+	bottom: 0;
+	z-index: 5;
+	width: 8px;
+	background: transparent;
+	cursor: col-resize;
+}
+
+.note-ai-chat-panel__resizer::before {
+	content: '';
+	position: absolute;
+	left: 0;
+	top: 0;
+	bottom: 0;
+	width: 2px;
+	background: transparent;
+	transition: background 0.15s ease;
+}
+
+.note-ai-chat-panel__resizer:hover::before,
+.note-ai-chat-panel.--dragging .note-ai-chat-panel__resizer::before {
+	background: var(--ui-color-divider-accent);
+}
+
+/* Body class for the duration of the gesture, mirroring the navigation's own but under a separate name:
+   the highlight of THIS grip hangs off `.--dragging` on the column, so nothing here may match the
+   navigation's `.sidebar-resizer`. The cursor is already owned by the overlay below; this keeps it over
+   whatever sits above the overlay and stops the page from selecting text under the pointer. */
+.note-ai-chat-resizing {
+	cursor: col-resize;
+	-webkit-user-select: none;
+	        user-select: none;
+}
+
+/* Below PopupWindow (1000+) on purpose: the layer exists for the duration of a gesture and has no
+   business covering an open popup. */
+.note-ai-chat-panel__drag-overlay {
+	position: fixed;
+	inset: 0;
+	z-index: 999;
+	cursor: col-resize;
+}
+
+/*
+ * The other two edges of the same seam. The fill strip above follows `--air-header-height`, but im's
+ * own headers do not: the chat list keeps the height in a variable of its own (list.css:2, and the
+ * list body below is sized off it), and the open chat's header hardcodes it (header.css:5). Both
+ * brought to the module's height so the three bottom edges land on one line. The avatar inside the
+ * chat header is 42px and already overflows the padding box upstream — two pixels less change nothing
+ * for it, `align-items: center` keeps it centred.
+ */
+.note-ai-chat-panel .bx-im-ai-assistant-chat-recent-list {
+	--im-ai-assistant-widget-header-height: 56px;
+}
+
+.note-ai-chat-panel .bx-im-ai-assistant-chat-header__container {
+	height: 56px;
+}
+
+/* Fixed-width host for the wrapper node: keeps the widget from reflowing during the slide. */
+.note-ai-chat-panel__container {
+	display: flex;
+	flex-direction: column;
+	width: var(--note-ai-chat-width);
+	height: 100%;
+	overflow: hidden;
+}

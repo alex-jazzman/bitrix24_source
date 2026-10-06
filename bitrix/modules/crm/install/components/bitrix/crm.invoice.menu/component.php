@@ -3,6 +3,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
 use Bitrix\Crm\Recurring;;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Web\Uri;
 
 /**
  * @var array $arParams
@@ -301,7 +302,7 @@ if ($arParams['TYPE'] == 'show' && !empty($arParams['ELEMENT_ID']) && $arParams[
 			$params['mode'] = 'change';
 		}
 
-		$uri = new \Bitrix\Main\Web\Uri($componentPath);
+		$uri = new Uri($componentPath);
 		$href = $uri->addParams($params)->getLocator();
 
 		$menuItems[] = [
@@ -324,24 +325,20 @@ if ($arParams['TYPE'] == 'show' && !empty($arParams['ELEMENT_ID']) && $arParams[
 			'title' => GetMessage('INVOICE_PAYMENT_HTML_TITLE'),
 			'onclick' => "var menu = BX.PopupMenu.getCurrentMenu(); ".
 				"if(menu && menu.popupWindow) { menu.popupWindow.close(); } ".
-				"jsUtils.OpenWindow('".CHTTP::urlAddParams(
-					CComponentEngine::MakePathFromTemplate(
+				"jsUtils.OpenWindow('".(string)(new Uri(CComponentEngine::MakePathFromTemplate(
 						$arParams['PATH_TO_INVOICE_PAYMENT'],
 						array('invoice_id' => $arParams['ELEMENT_ID'])
-					),
-					array('PRINT' => 'Y', 'ncc' => '1'))."', 960, 600)"
+					)))->addParams(array('PRINT' => 'Y', 'ncc' => '1'))."', 960, 600)"
 		];
 		$menuItems[] = [
 			'text' => GetMessage('INVOICE_PAYMENT_HTML_BLANK'),
 			'title' => GetMessage('INVOICE_PAYMENT_HTML_BLANK_TITLE'),
 			'onclick' => "var menu = BX.PopupMenu.getCurrentMenu(); ".
 				"if(menu && menu.popupWindow) { menu.popupWindow.close(); } ".
-				"jsUtils.OpenWindow('".CHTTP::urlAddParams(
-					CComponentEngine::MakePathFromTemplate(
+				"jsUtils.OpenWindow('".(string)(new Uri(CComponentEngine::MakePathFromTemplate(
 						$arParams['PATH_TO_INVOICE_PAYMENT'],
 						array('invoice_id' => $arParams['ELEMENT_ID'])
-					),
-					array('PRINT' => 'Y', 'BLANK' => 'Y', 'ncc' => '1'))."', 960, 600)"
+					)))->addParams(array('PRINT' => 'Y', 'BLANK' => 'Y', 'ncc' => '1'))."', 960, 600)"
 		];
 
 		if (is_callable(array('CSalePdf', 'isPdfAvailable')) && CSalePdf::isPdfAvailable())
@@ -351,24 +348,20 @@ if ($arParams['TYPE'] == 'show' && !empty($arParams['ELEMENT_ID']) && $arParams[
 				'title' => GetMessage('INVOICE_PAYMENT_PDF_TITLE'),
 				'onclick' => "var menu = BX.PopupMenu.getCurrentMenu(); ".
 					"if(menu && menu.popupWindow) { menu.popupWindow.close(); } ".
-					"jsUtils.Redirect(null, '".CHTTP::urlAddParams(
-						CComponentEngine::MakePathFromTemplate(
+					"jsUtils.Redirect(null, '".(string)(new Uri(CComponentEngine::MakePathFromTemplate(
 							$arParams['PATH_TO_INVOICE_PAYMENT'],
 							array('invoice_id' => $arParams['ELEMENT_ID'])
-						),
-						array('pdf' => 1, 'DOWNLOAD' => 'Y', 'ncc' => '1'))."')"
+						)))->addParams(array('pdf' => 1, 'DOWNLOAD' => 'Y', 'ncc' => '1'))."')"
 			];
 			$menuItems[] = [
 				'text' => GetMessage('INVOICE_PAYMENT_PDF_BLANK'),
 				'title' => GetMessage('INVOICE_PAYMENT_PDF_BLANK_TITLE'),
 				'onclick' => "var menu = BX.PopupMenu.getCurrentMenu(); ".
 					"if(menu && menu.popupWindow) { menu.popupWindow.close(); } ".
-					"jsUtils.Redirect(null, '".CHTTP::urlAddParams(
-						CComponentEngine::MakePathFromTemplate(
+					"jsUtils.Redirect(null, '".(string)(new Uri(CComponentEngine::MakePathFromTemplate(
 							$arParams['PATH_TO_INVOICE_PAYMENT'],
 							array('invoice_id' => $arParams['ELEMENT_ID'])
-						),
-						array('pdf' => 1, 'DOWNLOAD' => 'Y', 'BLANK' => 'Y', 'ncc' => '1'))."')"
+						)))->addParams(array('pdf' => 1, 'DOWNLOAD' => 'Y', 'BLANK' => 'Y', 'ncc' => '1'))."')"
 			];
 			$menuItems[] = [
 				'text' => GetMessage('INVOICE_PAYMENT_EMAIL'),
@@ -462,12 +455,10 @@ if (($arParams['TYPE'] == 'edit' || $arParams['TYPE'] == 'show') && $bAdd
 	$arResult['BUTTONS'][] = array(
 		'TEXT' => GetMessage('INVOICE_COPY'),
 		'TITLE' => GetMessage('INVOICE_COPY_TITLE'),
-		'LINK' => CHTTP::urlAddParams(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_INVOICE_EDIT'],
+		'LINK' => (string)(new Uri(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_INVOICE_EDIT'],
 			array(
 				'invoice_id' => $arParams['ELEMENT_ID']
-			)),
-			array('copy' => 1)
-		),
+			))))->addParams(array('copy' => 1)),
 		'ICON' => 'btn-copy'
 	);
 }
@@ -494,12 +485,10 @@ if (($arParams['TYPE'] == 'edit' || $arParams['TYPE'] == 'show') && $bDelete && 
 		'TITLE' => GetMessage('INVOICE_DELETE_TITLE'),
 		'LINK' => "javascript:invoice_delete('".GetMessage('INVOICE_DELETE_DLG_TITLE')."', '".
 			GetMessage('INVOICE_DELETE_DLG_MESSAGE')."', '".GetMessage('INVOICE_DELETE_DLG_BTNTITLE').
-			"', '".CHTTP::urlAddParams(CComponentEngine::MakePathFromTemplate($path,
+			"', '".(string)(new Uri(CComponentEngine::MakePathFromTemplate($path,
 			array(
 				'invoice_id' => $arParams['ELEMENT_ID']
-			)),
-			array('delete' => '', 'sessid' => bitrix_sessid())
-		)."')",
+			))))->addParams(array('delete' => '', 'sessid' => bitrix_sessid()))."')",
 		'ICON' => 'btn-delete'
 	);
 }

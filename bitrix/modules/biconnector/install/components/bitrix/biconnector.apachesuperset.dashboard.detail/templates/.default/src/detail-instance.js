@@ -1,6 +1,6 @@
-import { Dom, Event, Loc, Text, Type } from 'main.core';
+import { Dom, Event, Loc, Text, Tag, Type } from 'main.core';
 import { EventEmitter } from 'main.core.events';
-import type { MenuItem, MenuItemOptions } from 'main.popup';
+import type { MenuItemOptions } from 'main.popup';
 import { Menu } from 'main.popup';
 import { Loader } from 'main.loader';
 import { DateTimeFormat } from 'main.date';
@@ -15,6 +15,7 @@ import { ChatSelector } from './chat-selector';
 import { AhaMoment } from 'biconnector.aha-moment';
 import { SharePopup } from 'biconnector.share-popup';
 import 'sidepanel';
+import 'ui.icon-set.outline';
 
 const COMPACT_HEADER_CLASS = 'dashboard-header--compact';
 const MEASURING_HEADER_CLASS = 'dashboard-header--measuring';
@@ -25,7 +26,6 @@ export class DetailInstance
 	#dashboardManager: DashboardManager;
 	#dashboardNode: HTMLElement;
 	#frameNode: HTMLElement;
-	#editBtn: HTMLElement;
 
 	#embeddedParams: DashboardEmbeddedParameters;
 	#embeddedLoader: ApacheSupersetEmbeddedLoader;
@@ -265,30 +265,8 @@ export class DetailInstance
 	#initHeaderButtons()
 	{
 		this.#initMoreMenu();
-		this.#initDownloadButton();
 		this.#initShareButton();
 		this.#initInfoButton();
-
-		this.#editBtn = this.#dashboardNode.querySelector('.dashboard-header-buttons-edit');
-		Event.unbindAll(this.#editBtn);
-
-		if (this.#canEdit)
-		{
-			this.#enableEditButton();
-			Event.bind(this.#editBtn, 'click', this.#onEditButtonClick.bind(this));
-		}
-		else
-		{
-			this.#disableEditButton();
-			Event.unbindAll(this.#editBtn);
-		}
-
-		if (BX.BIConnector.LimitLockPopup)
-		{
-			this.#disableEditButton();
-			Event.unbindAll(this.#editBtn);
-		}
-
 		this.#initAdaptiveHeader();
 		this.#initCompactHints();
 	}
@@ -457,8 +435,6 @@ export class DetailInstance
 
 	#onEditButtonClick()
 	{
-		this.#muteEditButton();
-
 		const dashboardInfo = {
 			id: this.#embeddedParams.id,
 			editLink: this.#embeddedParams.editUrl,
@@ -467,9 +443,7 @@ export class DetailInstance
 
 		this.#dashboardManager.processEditDashboard(
 			dashboardInfo,
-			() => {
-				this.#unmuteEditButton();
-			},
+			() => {},
 			(popupType) => {
 				ApacheSupersetAnalytics.sendAnalytics('edit', 'report_edit', {
 					c_sub_section: popupType,
@@ -516,150 +490,7 @@ export class DetailInstance
 		}
 	}
 
-	#muteEditButton()
-	{
-		this.#disableEditButton();
-		Dom.addClass(this.#editBtn, 'ui-btn-wait');
-	}
-
-	#unmuteEditButton()
-	{
-		this.#enableEditButton();
-		Dom.removeClass(this.#editBtn, 'ui-btn-wait');
-	}
-
-	#disableEditButton()
-	{
-		this.#editBtn.setAttribute('disabled', 'true');
-	}
-
-	#enableEditButton()
-	{
-		this.#editBtn.removeAttribute('disabled');
-	}
-
 	// eslint-disable-next-line max-lines-per-function
-	#initDownloadButton(): void
-	{
-		const downloadButton = this.#dashboardNode.querySelector('.dashboard-header-buttons-download');
-		Event.unbindAll(downloadButton);
-		const downloadMenu = new Menu({
-			closeByEsc: false,
-			closeIcon: false,
-			cacheable: true,
-			angle: {
-				position: 'top',
-			},
-			bindElement: downloadButton,
-			events: {
-				onShow: (event) => this.#alignMenuPopupToArrow(downloadButton, event.getTarget()),
-			},
-			autoHide: true,
-			items: [
-				{
-					id: 'download-screenshot',
-					text: Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_DOWNLOAD_IMAGE'),
-					title: Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_DOWNLOAD_IMAGE'),
-					onclick: (event, menuItem) => {
-						menuItem.disable();
-						const loader = new Loader({
-							target: menuItem.layout.item,
-							size: 30,
-						});
-						loader.show();
-						this.#embeddedLoader.getScreenshot()
-							.then((imageData: string) => {
-								const dashboardTitle = Text.decode(this.#embeddedParams.title);
-								const datetime = DateTimeFormat.format('Y-m-d H-i-s');
-								this.#downloadFile(
-									imageData.replace('data:image/jpeg;base64,', ''),
-									`${dashboardTitle} ${datetime}.jpeg`,
-									'image/jpeg',
-								);
-								menuItem.enable();
-								loader.hide();
-								ApacheSupersetAnalytics.sendAnalytics('download', 'dashboard_download', {
-									status: 'success',
-									type: this.#embeddedParams.type.toLowerCase(),
-									p1: ApacheSupersetAnalytics.buildAppIdForAnalyticRequest(this.#embeddedParams.appId),
-									p2: this.#embeddedParams.id,
-									p3: 'ext_jpeg',
-								});
-							})
-							.catch(() => {
-								menuItem.enable();
-								loader.hide();
-								BX.UI.Notification.Center.notify({
-									content: Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_DOWNLOAD_ERROR'),
-								});
-								ApacheSupersetAnalytics.sendAnalytics('download', 'dashboard_download', {
-									status: 'error',
-									type: this.#embeddedParams.type.toLowerCase(),
-									p1: ApacheSupersetAnalytics.buildAppIdForAnalyticRequest(this.#embeddedParams.appId),
-									p2: this.#embeddedParams.id,
-									p3: 'ext_jpeg',
-								});
-							})
-						;
-					},
-				},
-				{
-					id: 'download-pdf',
-					text: Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_DOWNLOAD_PDF'),
-					title: Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_DOWNLOAD_PDF'),
-					onclick: (event, menuItem) => {
-						menuItem.disable();
-						const loader = new Loader({
-							target: menuItem.layout.item,
-							size: 30,
-						});
-						loader.show();
-						this.#embeddedLoader.getPdf()
-							.then((imageData: string) => {
-								const dashboardTitle = Text.decode(this.#embeddedParams.title);
-								const datetime = DateTimeFormat.format('Y-m-d H-i-s');
-								this.#downloadFile(
-									imageData,
-									`${dashboardTitle} ${datetime}.pdf`,
-									'application/pdf',
-								);
-								menuItem.enable();
-								loader.hide();
-								ApacheSupersetAnalytics.sendAnalytics('download', 'dashboard_download', {
-									status: 'success',
-									type: this.#embeddedParams.type.toLowerCase(),
-									p1: ApacheSupersetAnalytics.buildAppIdForAnalyticRequest(this.#embeddedParams.appId),
-									p2: this.#embeddedParams.id,
-									p3: 'ext_pdf',
-								});
-							})
-							.catch(() => {
-								menuItem.enable();
-								loader.hide();
-								BX.UI.Notification.Center.notify({
-									content: Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_DOWNLOAD_ERROR'),
-								});
-								ApacheSupersetAnalytics.sendAnalytics('download', 'dashboard_download', {
-									status: 'error',
-									type: this.#embeddedParams.type.toLowerCase(),
-									p1: ApacheSupersetAnalytics.buildAppIdForAnalyticRequest(this.#embeddedParams.appId),
-									p2: this.#embeddedParams.id,
-									p3: 'ext_pdf',
-								});
-							})
-						;
-					},
-				},
-			],
-		});
-
-		Event.bind(downloadButton, 'click', () => {
-			downloadMenu.show();
-			ApacheSupersetAnalytics.sendAnalytics('download', 'click_download', {
-				type: this.#embeddedParams.type.toLowerCase(),
-			});
-		});
-	}
 
 	#initShareButton()
 	{
@@ -677,8 +508,21 @@ export class DetailInstance
 		{
 			menuItems.push({
 				id: 'share-link',
-				text: Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_SHARE_LINK'),
-				title: Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_SHARE_LINK'),
+				title: Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_SHARE_LINK_MSGVER_1'),
+				html: Tag.render`
+					<span class="dashboard-detail-menu-item">
+						<span class="dashboard-detail-menu-item-content">
+							<span class="dashboard-detail-menu-item-title">
+								${Text.encode(Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_SHARE_LINK_MSGVER_1'))}
+							</span>
+							<span class="dashboard-detail-menu-item-description">
+								${Text.encode(Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_SHARE_LINK_DESCRIPTION'))}
+							</span>
+						</span>
+			
+						<span class="ui-icon-set --o-link dashboard-detail-menu-item-icon"></span>
+					</span>`,
+				className: 'menu-popup-no-icon dashboard-detail-share-link-menu-item',
 				onclick: (event, menuItem: MenuItem) => {
 					menuItem.menuWindow.close();
 					this.#showSharePopup();
@@ -689,8 +533,21 @@ export class DetailInstance
 		menuItems.push(
 			{
 				id: 'share-screenshot',
-				text: Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_SHARE_TO_CHAT_IMAGE'),
-				title: Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_SHARE_TO_CHAT_IMAGE'),
+				title: Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_SHARE_TO_CHAT_IMAGE_MSGVER_1'),
+				html: Tag.render`
+					<span class="dashboard-detail-menu-item">
+						<span class="dashboard-detail-menu-item-content">
+							<span class="dashboard-detail-menu-item-title">
+								${Text.encode(Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_SHARE_TO_CHAT_IMAGE_MSGVER_1'))}
+							</span>
+							<span class="dashboard-detail-menu-item-description">
+								${Text.encode(Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_SHARE_TO_CHAT_IMAGE_DESCRIPTION'))}
+							</span>
+						</span>
+			
+						<span class="ui-icon-set --o-image dashboard-detail-menu-item-icon"></span>
+					</span>`,
+				className: 'menu-popup-no-icon dashboard-detail-share-link-menu-item',
 				onclick: (event, menuItem: MenuItem) => {
 					menuItem.menuWindow.close();
 					const moreButton = this.#dashboardNode.querySelector('.dashboard-header-buttons-more');
@@ -711,8 +568,21 @@ export class DetailInstance
 			},
 			{
 				id: 'share-pdf',
-				text: Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_SHARE_TO_CHAT_PDF'),
-				title: Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_SHARE_TO_CHAT_PDF'),
+				title: Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_SHARE_TO_CHAT_PDF_MSGVER_1'),
+				html: Tag.render`
+					<span class="dashboard-detail-menu-item">
+						<span class="dashboard-detail-menu-item-content">
+							<span class="dashboard-detail-menu-item-title">
+								${Text.encode(Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_SHARE_TO_CHAT_PDF_MSGVER_1'))}
+							</span>
+							<span class="dashboard-detail-menu-item-description">
+								${Text.encode(Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_SHARE_TO_CHAT_PDF_DESCRIPTION'))}
+							</span>
+						</span>
+			
+						<span class="ui-icon-set --o-file dashboard-detail-menu-item-icon"></span>
+					</span>`,
+				className: 'menu-popup-no-icon dashboard-detail-share-link-menu-item',
 				onclick: (event, menuItem: MenuItem) => {
 					menuItem.menuWindow.close();
 					const moreButton = this.#dashboardNode.querySelector('.dashboard-header-buttons-more');
@@ -819,41 +689,198 @@ export class DetailInstance
 		Event.bind(moreButton, 'click', () => this.#moreMenu.show());
 	}
 
+	#getDownloadMenuItems(): MenuItemOptions[]
+	{
+		return [
+			{
+				id: 'download-screenshot',
+				title: Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_DOWNLOAD_JPEG_MSGVER_1'),
+				html: Tag.render`<span class="dashboard-detail-menu-item">
+						<span>${Text.encode(Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_DOWNLOAD_JPEG_MSGVER_1'))}</span>
+						<span class="ui-icon-set --o-image dashboard-detail-menu-item-icon"></span>
+						</span>`,
+				className: 'menu-popup-no-icon',
+				onclick: (event, menuItem) => {
+					menuItem.disable();
+					const loader = new Loader({
+						target: menuItem.layout.item,
+						size: 30,
+					});
+					loader.show();
+					this.#embeddedLoader.getScreenshot()
+						.then((imageData: string) => {
+							const dashboardTitle = Text.decode(this.#embeddedParams.title);
+							const datetime = DateTimeFormat.format('Y-m-d H-i-s');
+							this.#downloadFile(
+								imageData.replace('data:image/jpeg;base64,', ''),
+								`${dashboardTitle} ${datetime}.jpeg`,
+								'image/jpeg',
+							);
+							menuItem.enable();
+							loader.hide();
+							ApacheSupersetAnalytics.sendAnalytics('download', 'dashboard_download', {
+								status: 'success',
+								type: this.#embeddedParams.type.toLowerCase(),
+								p1: ApacheSupersetAnalytics.buildAppIdForAnalyticRequest(this.#embeddedParams.appId),
+								p2: this.#embeddedParams.id,
+								p3: 'ext_jpeg',
+							});
+						})
+						.catch(() => {
+							menuItem.enable();
+							loader.hide();
+							BX.UI.Notification.Center.notify({
+								content: Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_DOWNLOAD_ERROR'),
+							});
+							ApacheSupersetAnalytics.sendAnalytics('download', 'dashboard_download', {
+								status: 'error',
+								type: this.#embeddedParams.type.toLowerCase(),
+								p1: ApacheSupersetAnalytics.buildAppIdForAnalyticRequest(this.#embeddedParams.appId),
+								p2: this.#embeddedParams.id,
+								p3: 'ext_jpeg',
+							});
+						})
+					;
+				},
+			},
+			{
+				id: 'download-pdf',
+				title: Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_DOWNLOAD_PDF'),
+				html: Tag.render`<span class="dashboard-detail-menu-item">
+						<span>${Text.encode(Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_DOWNLOAD_PDF'))}</span>
+						<span class="ui-icon-set --o-file dashboard-detail-menu-item-icon"></span>
+						</span>`,
+				className: 'menu-popup-no-icon',
+				onclick: (event, menuItem) => {
+					menuItem.disable();
+					const loader = new Loader({
+						target: menuItem.layout.item,
+						size: 30,
+					});
+					loader.show();
+					this.#embeddedLoader.getPdf()
+						.then((imageData: string) => {
+							const dashboardTitle = Text.decode(this.#embeddedParams.title);
+							const datetime = DateTimeFormat.format('Y-m-d H-i-s');
+							this.#downloadFile(
+								imageData,
+								`${dashboardTitle} ${datetime}.pdf`,
+								'application/pdf',
+							);
+							menuItem.enable();
+							loader.hide();
+							ApacheSupersetAnalytics.sendAnalytics('download', 'dashboard_download', {
+								status: 'success',
+								type: this.#embeddedParams.type.toLowerCase(),
+								p1: ApacheSupersetAnalytics.buildAppIdForAnalyticRequest(this.#embeddedParams.appId),
+								p2: this.#embeddedParams.id,
+								p3: 'ext_pdf',
+							});
+						})
+						.catch(() => {
+							menuItem.enable();
+							loader.hide();
+							BX.UI.Notification.Center.notify({
+								content: Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_DOWNLOAD_ERROR'),
+							});
+							ApacheSupersetAnalytics.sendAnalytics('download', 'dashboard_download', {
+								status: 'error',
+								type: this.#embeddedParams.type.toLowerCase(),
+								p1: ApacheSupersetAnalytics.buildAppIdForAnalyticRequest(this.#embeddedParams.appId),
+								p2: this.#embeddedParams.id,
+								p3: 'ext_pdf',
+							});
+						})
+					;
+				},
+			},
+		];
+	}
+
 	// eslint-disable-next-line max-lines-per-function
 	#getMoreMenuItems(): MenuItemOptions[]
 	{
-		const result = [
+		const result = [];
+
+		if (this.#canEdit && !BX.BIConnector.LimitLockPopup)
+		{
+			result.push(
+				{
+					id: 'edit_dashboard',
+					title: Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_HEADER_EDIT_MSGVER_1'),
+					html: Tag.render`<span class="dashboard-detail-menu-item">
+						<span>${Text.encode(Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_HEADER_EDIT_MSGVER_1'))}</span>
+						<span class="ui-icon-set --edit-l dashboard-detail-menu-item-icon"></span>
+						</span>`,
+					className: 'menu-popup-no-icon',
+					onclick: () => {
+						this.#onEditButtonClick();
+					},
+				},
+			);
+		}
+
+		result.push(
 			{
-				id: 'order_dashboard',
-				text: Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_MORE_MENU_ORDER_DASHBOARD'),
-				title: Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_MORE_MENU_ORDER_DASHBOARD'),
-				onclick: () => {
-					ApacheSupersetFeedbackForm.requestIntegrationFormOpen();
+				id: 'download',
+				title: Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_DOWNLOAD_IMAGE_MSGVER_1'),
+				html: Tag.render`
+					<span class="dashboard-detail-menu-item">
+					<span>${Text.encode(Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_DOWNLOAD_IMAGE_MSGVER_1'))}</span>
+					<span class="ui-icon-set --o-download dashboard-detail-menu-item-icon no-chevron"></span>
+					</span>`,
+				className: 'menu-popup-no-icon dashboard-detail-download-menu-item',
+				cacheable: true,
+				items: this.#getDownloadMenuItems(),
+
+				onclick: (event, menuItem) => {
+					menuItem.showSubMenu();
 				},
 			},
 			{
 				id: 'feedback',
-				text: Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_MORE_MENU_FEEDBACK'),
 				title: Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_MORE_MENU_FEEDBACK'),
+				html: Tag.render`<span class="dashboard-detail-menu-item">
+						<span>${Text.encode(Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_MORE_MENU_FEEDBACK'))}</span>
+						<span class="ui-icon-set --o-message dashboard-detail-menu-item-icon"></span>
+						</span>`,
+				className: 'menu-popup-no-icon',
 				onclick: () => {
 					ApacheSupersetFeedbackForm.feedbackFormOpen();
 				},
 			},
-		];
+			{
+				id: 'order_dashboard',
+				title: Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_MORE_MENU_ORDER_DASHBOARD'),
+				html: Tag.render`<span class="dashboard-detail-menu-item">
+						<span>${Text.encode(Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_MORE_MENU_ORDER_DASHBOARD'))}</span>
+						<span class="ui-icon-set --o-market dashboard-detail-menu-item-icon"></span>
+						</span>`,
+				className: 'menu-popup-no-icon',
+				onclick: () => {
+					ApacheSupersetFeedbackForm.requestIntegrationFormOpen();
+				},
+			},
+		);
 
 		if (this.#canExport)
 		{
 			result.push({
 				id: 'export',
-				text: Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_MORE_MENU_EXPORT'),
 				title: Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_MORE_MENU_EXPORT'),
+				html: Tag.render`<span class="dashboard-detail-menu-item">
+						<span>${Text.encode(Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_MORE_MENU_EXPORT'))}</span>
+						<span class="ui-icon-set --o-share dashboard-detail-menu-item-icon"></span>
+						</span>`,
+				className: 'menu-popup-no-icon',
 				onclick: () => {
 					this.#moreMenu.getMenuItem('export').disable();
 					this.#dashboardManager.exportDashboard(this.#embeddedParams.id, 'detail_button')
 						.finally(() => {
 							this.#moreMenu.getMenuItem('export').enable();
 						})
-						.catch(() => {})
+						.catch(() => {
+						})
 					;
 				},
 			});

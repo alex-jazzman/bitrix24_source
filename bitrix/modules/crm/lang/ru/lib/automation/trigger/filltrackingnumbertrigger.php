@@ -7,3 +7,4 @@ $MESS['CRM_AUTOMATION_TRIGGER_FILL_TRACKNUM_PROPERTY_SERVICE'] = 'Служба �
 $MESS['CRM_AUTOMATION_TRIGGER_FILL_TRACKNUM_DEFAULT'] = '[любая]';
 
 $MESS['CRM_AUTOMATION_TRIGGER_FILL_TRACKNUM_NODE_DESCRIPTION'] = 'Запускает процесс после того, как заполнен идентификатор отправления заказа';
+$MESS['CRM_AUTOMATION_TRIGGER_FILL_TRACKNUM_EVENT_DATE_TIME'] = 'Дата и время заполнения идентификатора отправления';

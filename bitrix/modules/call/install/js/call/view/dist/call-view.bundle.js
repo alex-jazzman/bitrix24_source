@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Call = this.BX.Call || {};
-(function (exports, main_core, main_core_events, main_popup, im_v2_lib_desktopApi, call_core, im_v2_lib_utils, call_component_videoQualityRange, ui_switcher, im_v2_lib_promo, call_lib_analytics, call_lib_settingsManager, call_mapping, call_feature_pip) {
+(function (exports, main_core, main_core_events, main_popup, im_v2_lib_desktopApi, call_core, im_v2_lib_utils, ui_switcher, im_v2_lib_promo, call_lib_analytics, call_mapping, call_feature_pip, call_adapter_clipboard) {
 	'use strict';
 
 	function logPlaybackError(error) {
@@ -15,6 +15,32 @@ this.BX.Call = this.BX.Call || {};
 		return decodeURI(uri) === uri ? encodeURI(uri) : uri;
 	}
 
+	const UserModelField = Object.freeze({
+		id: 'id',
+		name: 'name',
+		avatar: 'avatar',
+		gender: 'gender',
+		state: 'state',
+		talking: 'talking',
+		cameraState: 'cameraState',
+		prevCameraState: 'prevCameraState',
+		microphoneState: 'microphoneState',
+		screenState: 'screenState',
+		videoPaused: 'videoPaused',
+		floorRequestState: 'floorRequestState',
+		permissionToSpeak: 'permissionToSpeak',
+		localUser: 'localUser',
+		centralUser: 'centralUser',
+		pinned: 'pinned',
+		presenter: 'presenter',
+		order: 'order',
+		prevOrder: 'prevOrder',
+		allowRename: 'allowRename',
+		wasRenamed: 'wasRenamed',
+		renameRequested: 'renameRequested',
+		direction: 'direction',
+		prevScreenState: 'prevScreenState'
+	});
 	class UserModel {
 		constructor(config) {
 			this.data = {
@@ -3294,53 +3320,57 @@ this.BX.Call = this.BX.Call || {};
 	}
 
 	class FloorRequest extends main_core_events.EventEmitter {
+		#onUserModelChangedHandler;
 		constructor(config) {
 			super();
-			this.setEventNamespace("BX.Call.FloorRequest");
-			this.hideTime = BX.prop.getInteger(config, "hideTime", 10);
-			//this.isShowAllowPermissionButton = BX.prop.getBoolean(config, 'isShowAllowPermissionButton', false);
+			this.setEventNamespace('BX.Call.FloorRequest');
 			this.userModel = config.userModel;
-			this.isShowAllowPermissionButton = this._canChangeSpeakPermission();
+			this.isShowAllowPermissionButton = this.#canChangeSpeakPermission();
 			this.elements = {
 				root: null,
-				avatar: null
+				avatar: null,
+				button: null,
+				close: null
 			};
 			this.callbacks = {
-				onAllowSpeakPermissionClicked: BX.type.isFunction(config.onAllowSpeakPermissionClicked) ? config.onAllowSpeakPermissionClicked : BX.DoNothing,
-				onDisallowSpeakPermissionClicked: BX.type.isFunction(config.onDisallowSpeakPermissionClicked) ? config.onDisallowSpeakPermissionClicked : BX.DoNothing,
-				onDestroy: BX.type.isFunction(config.onDestroy) ? config.onDestroy : BX.DoNothing
+				onAllowSpeakPermissionClicked: main_core.Type.isFunction(config.onAllowSpeakPermissionClicked) ? config.onAllowSpeakPermissionClicked : BX.DoNothing,
+				onDisallowSpeakPermissionClicked: main_core.Type.isFunction(config.onDisallowSpeakPermissionClicked) ? config.onDisallowSpeakPermissionClicked : BX.DoNothing,
+				onDestroy: main_core.Type.isFunction(config.onDestroy) ? config.onDestroy : BX.DoNothing
 			};
-			this._hideTimeout = null;
 			this.container = null;
-			this._onUserModelChangedHandler = this._onUserModelChanged.bind(this);
-			this.userModel.subscribe("changed", this._onUserModelChangedHandler);
+			this.#onUserModelChangedHandler = this.#onUserModelChanged.bind(this);
+			this.userModel.subscribe('changed', this.#onUserModelChangedHandler);
 		}
 		static create(config) {
 			return new FloorRequest(config);
 		}
-		_canChangeSpeakPermission() {
-			return call_core.Util.isUserControlFeatureEnabled() && !this.userModel.permissionToSpeak && !call_core.Util.getRoomPermissions().AudioEnabled && call_core.Util.canControlGiveSpeakPermission();
+		#canChangeSpeakPermission() {
+			return call_core.Util.isUserControlFeatureEnabled() && !this.userModel.localUser && !this.userModel.permissionToSpeak && !call_core.Util.getRoomPermissions().AudioEnabled && call_core.Util.canControlGiveSpeakPermission();
 		}
 		mount(container) {
 			this.container = container;
-			this.container.appendChild(this.render());
-			this.scheduleDismount();
+			main_core.Dom.append(this.render(), this.container);
 		}
 		updatePermissionButtonState() {
-			this.isShowAllowPermissionButton = this._canChangeSpeakPermission();
-			if (this.elements) {
-				BX.remove(this.elements.root);
-				this.elements.root = null;
+			this.isShowAllowPermissionButton = this.#canChangeSpeakPermission();
+			if (!this.elements?.root) {
+				return;
 			}
-			this.container.appendChild(this.render());
+			if (this.isShowAllowPermissionButton && !this.elements.button) {
+				this.elements.button = this.createAllowPermissionButton();
+				main_core.Dom.insertBefore(this.elements.button, this.elements.close);
+			} else if (!this.isShowAllowPermissionButton && this.elements.button) {
+				main_core.Dom.remove(this.elements.button);
+				this.elements.button = null;
+			}
 		}
 		dismount() {
 			if (this.elements) {
-				BX.remove(this.elements.root);
+				main_core.Dom.remove(this.elements.root);
 			}
 			this.destroy();
 		}
-		onCloseClicked(event) {
+		#onCloseClicked(event) {
 			event.stopPropagation();
 			if (this.isShowAllowPermissionButton) {
 				this.callbacks.onDisallowSpeakPermissionClicked(this.userModel);
@@ -3351,129 +3381,133 @@ this.BX.Call = this.BX.Call || {};
 			if (!this.elements.root) {
 				return;
 			}
-			this.elements.root.classList.add("closing");
-			this.elements.root.addEventListener("animationend", () => this.dismount());
+			main_core.Dom.addClass(this.elements.root, 'closing');
+			main_core.Event.bind(this.elements.root, 'animationend', () => this.dismount());
 		}
 		render() {
 			if (this.elements.root) {
 				return this.elements.root;
 			}
-			this.elements.root = main_core.Dom.create("div", {
+			this.elements.button = this.isShowAllowPermissionButton ? this.createAllowPermissionButton() : null;
+			this.elements.close = main_core.Dom.create('div', {
 				props: {
-					className: "bx-call-view-floor-request-notification"
+					className: 'bx-call-view-floor-request-notification-close'
 				},
-				children: [main_core.Dom.create("div", {
+				events: {
+					click: this.#onCloseClicked.bind(this)
+				}
+			});
+			this.elements.root = main_core.Dom.create('div', {
+				props: {
+					className: 'bx-call-view-floor-request-notification'
+				},
+				children: [main_core.Dom.create('div', {
 					props: {
-						className: "bx-call-view-floor-request-notification-icon-container"
+						className: 'bx-call-view-floor-request-notification-icon-container'
 					},
-					children: [this.elements.avatar = main_core.Dom.create("div", {
+					children: [this.elements.avatar = main_core.Dom.create('div', {
 						props: {
-							className: "bx-call-view-floor-request-notification-avatar"
+							className: 'bx-call-view-floor-request-notification-avatar'
 						},
 						text: ''
-					}), main_core.Dom.create("div", {
+					}), main_core.Dom.create('div', {
 						props: {
-							className: "bx-call-view-floor-request-notification-icon bx-messenger-videocall-floor-request-icon"
+							className: 'bx-call-view-floor-request-notification-icon bx-messenger-videocall-floor-request-icon'
 						}
 					})]
-				}), this.elements.name = main_core.Dom.create("span", {
+				}), this.elements.name = main_core.Dom.create('span', {
 					props: {
-						className: "bx-call-view-floor-request-notification-text-container"
+						className: 'bx-call-view-floor-request-notification-text-container'
 					},
-					html: BX.message("IM_CALL_WANTS_TO_SAY_" + (this.userModel.gender == "F" ? "F" : "M")).replace("#NAME#", '<span class ="bx-call-view-floor-request-notification-text-name">' + BX.util.htmlspecialchars(this.userModel.name) + '</span>')
-				}), this.isShowAllowPermissionButton ? this.createAllowPermissionButton() : null, main_core.Dom.create("div", {
-					props: {
-						className: "bx-call-view-floor-request-notification-close"
-					},
-					events: {
-						click: this.onCloseClicked.bind(this)
-					}
-				})]
+					html: this.#buildNameHtml()
+				}), this.elements.button, this.elements.close]
 			});
 			if (this.userModel.avatar) {
-				this.elements.avatar.style.setProperty("--avatar", "url('" + this.userModel.avatar + "')");
+				main_core.Dom.style(this.elements.avatar, '--avatar', `url('${this.userModel.avatar}')`);
 				this.elements.avatar.innerText = '';
 			} else {
-				this.elements.avatar.style.setProperty("--avatar-background", "var(--call-view__floor-request-notification-avatar-background-color)");
+				main_core.Dom.style(this.elements.avatar, '--avatar-background', 'var(--call-view__floor-request-notification-avatar-background-color)');
 				this.elements.avatar.innerText = im_v2_lib_utils.Utils.text.getFirstLetters(this.userModel.name).toUpperCase();
 			}
 			return this.elements.root;
 		}
-		scheduleDismount() {
-			return;
+		#buildNameHtml() {
+			const messageKey = this.userModel.gender === 'F' ? 'IM_CALL_WANTS_TO_SAY_F' : 'IM_CALL_WANTS_TO_SAY_M';
+			const nameSpan = `<span class ="bx-call-view-floor-request-notification-text-name">${main_core.Text.encode(this.userModel.name)}</span>`;
+			return main_core.Loc.getMessage(messageKey).replace('#NAME#', nameSpan);
 		}
 		createAllowPermissionButton() {
 			return new BX.UI.Button({
-				baseClass: "ui-btn ui-btn-icon-mic",
-				text: BX.message("CALL_RAISE_HAND_NOTIFY_ALLOW"),
+				baseClass: 'ui-btn ui-btn-icon-mic',
+				text: main_core.Loc.getMessage('CALL_RAISE_HAND_NOTIFY_ALLOW'),
 				size: BX.UI.Button.Size.EXTRA_SMALL,
 				color: BX.UI.Button.Color.LIGHT_BORDER,
 				noCaps: true,
 				round: true,
 				events: {
 					click: () => {
-						this._allowPermissionHandler();
+						this.#allowPermissionHandler();
 					}
 				}
 			}).render();
 		}
-		_allowPermissionHandler() {
+		#allowPermissionHandler() {
 			this.callbacks.onAllowSpeakPermissionClicked(this.userModel);
-			this.dismount();
+			this.updatePermissionButtonState();
 		}
-		_onUserModelChanged(event) {
-			var eventData = event.data;
-			if (eventData.fieldName == "floorRequestState" && !this.userModel.floorRequestState) {
+		#onUserModelChanged(event) {
+			const {
+				fieldName
+			} = event.data;
+			if (fieldName === UserModelField.floorRequestState && !this.userModel.floorRequestState) {
 				this.dismountWithAnimation();
+			}
+			if (fieldName === UserModelField.permissionToSpeak) {
+				this.updatePermissionButtonState();
 			}
 			if (this.userModel.avatar === '' && this.elements.avatar) {
 				this.elements.avatar.innerText = im_v2_lib_utils.Utils.text.getFirstLetters(this.userModel.name).toUpperCase();
 			}
 			if (this.elements.name) {
-				this.elements.name.innerHtml = BX.message("IM_CALL_WANTS_TO_SAY_" + (this.userModel.gender == "F" ? "F" : "M")).replace("#NAME#", '<span class ="bx-call-view-floor-request-notification-text-name">' + BX.util.htmlspecialchars(this.userModel.name) + '</span>');
+				this.elements.name.innerHtml = this.#buildNameHtml();
 			}
 		}
 		destroy() {
 			this.callbacks.onDestroy();
-			clearTimeout(this._hideTimeout);
-			this._hideTimeout = null;
 			this.elements = null;
 			if (this.userModel) {
-				this.userModel.unsubscribe("changed", this._onUserModelChangedHandler);
+				this.userModel.unsubscribe('changed', this.#onUserModelChangedHandler);
 				this.userModel = null;
 			}
-			this.emit("onDestroy", {});
+			this.emit('onDestroy', {});
 		}
 	}
 
-	const maximumNotifications = 5;
-	let instance;
-	class NotificationManager {
+	const MAX_NOTIFICATION_COUNT = 5;
+	class FloorRequestNotificationManager {
 		constructor() {
-			this.maxNotification = maximumNotifications;
 			this.notifications = [];
 		}
-		static get Instance() {
-			if (!instance) {
-				instance = new NotificationManager();
-			}
-			return instance;
-		}
 		addNotification(notification) {
-			notification.subscribe("onDestroy", () => this.onNotificationDestroy(notification));
+			const onDestroy = () => {
+				notification.unsubscribe('onDestroy', onDestroy);
+				this.#onNotificationDestroy(notification);
+			};
+			notification.subscribe('onDestroy', onDestroy);
 			this.notifications.push(notification);
-			if (this.notifications.length > this.maxNotification) {
+			if (this.notifications.length > MAX_NOTIFICATION_COUNT) {
 				const firstNotification = this.notifications.shift();
 				firstNotification.dismount();
 			}
 		}
-		onNotificationDestroy(notification) {
+		#onNotificationDestroy(notification) {
 			const index = this.notifications.indexOf(notification);
-			if (index != -1) {
+			if (index !== -1) {
 				this.notifications.splice(index, 1);
 			}
 		}
 	}
+	const NotificationManager = new FloorRequestNotificationManager();
 
 	const DeviceSelectorEvents = {
 		onMicrophoneSelect: 'onMicrophoneSelect',
@@ -3511,7 +3545,6 @@ this.BX.Call = this.BX.Call || {};
 	 * @param {boolean} config.microphoneEnabled
 	 * @param {boolean} config.speakerEnabled
 	 * @param {boolean} config.allowNoiseSuppression
-	 * @param {boolean} config.noiseSuppressionVisible
 	 * @param {boolean} config.faceImproveEnabled
 	 * @constructor
 	 */
@@ -3528,7 +3561,6 @@ this.BX.Call = this.BX.Call || {};
 			this.speakerEnabled = BX.prop.getBoolean(config, 'speakerEnabled', false);
 			this.speakerId = BX.prop.getString(config, 'speakerId', false);
 			this.allowNoiseSuppression = BX.prop.getBoolean(config, 'allowNoiseSuppression', false);
-			this.noiseSuppressionVisible = BX.prop.getBoolean(config, 'noiseSuppressionVisible', false);
 			this.faceImproveEnabled = BX.prop.getBoolean(config, 'faceImproveEnabled', false);
 			this.allowFaceImprove = BX.prop.getBoolean(config, 'allowFaceImprove', false);
 			this.allowBackground = BX.prop.getBoolean(config, 'allowBackground', true);
@@ -3641,7 +3673,7 @@ this.BX.Call = this.BX.Call || {};
 					props: {
 						className: "bx-call-view-device-selector-bottom"
 					},
-					children: [this.noiseSuppressionVisible ? main_core.Dom.create('div', {
+					children: [main_core.Dom.create('div', {
 						props: {
 							className: 'bx-call-view-device-selector-bottom-item'
 						},
@@ -3670,7 +3702,7 @@ this.BX.Call = this.BX.Call || {};
 							},
 							text: BX.message('CALL_NOISE_SUPPRESSION')
 						})]
-					}) : null, this.allowFaceImprove ? main_core.Dom.create("div", {
+					}), this.allowFaceImprove ? main_core.Dom.create("div", {
 						props: {
 							className: "bx-call-view-device-selector-bottom-item"
 						},
@@ -3997,6 +4029,7 @@ this.BX.Call = this.BX.Call || {};
 		#createVideoQualityController() {
 			let instance = null;
 			let container = null;
+			let pendingDisabled = null;
 			return {
 				render: () => {
 					if (!this.isShowVideoQuality) {
@@ -4006,39 +4039,56 @@ this.BX.Call = this.BX.Call || {};
 						return container;
 					}
 					container = main_core.Dom.create('div');
-					instance = new call_component_videoQualityRange.VideoQualityRange({
-						container,
-						title: main_core.Loc.getMessage('CALL_VIDEO_QUALITY_TITLE'),
-						videoQualityList: [{
-							label: main_core.Loc.getMessage('CALL_VIDEO_QUALITY_WITHOUT_VIDEO'),
-							height: 0,
-							value: call_core.STREAM_QUALITY.NO_VIDEO
-						}, {
-							label: '180p',
-							height: 180,
-							value: call_core.STREAM_QUALITY.LOW
-						}, {
-							label: '360p',
-							height: 360,
-							value: call_core.STREAM_QUALITY.MEDIUM
-						}, {
-							label: '720p',
-							height: 720,
-							value: call_core.STREAM_QUALITY.HIGH
-						}],
-						disabled: this.menuBlocked,
-						defaultHeight: call_core.Hardware.maxLocalStreamQualityHeight,
-						onVideoQualityChanged: videoQuality => {
-							this.eventEmitter.emit(DeviceMenuEvents.onChangeVideoQuality, {
-								videoQuality
-							});
+					BX.Runtime.loadExtension('call.component.video-quality-range').then(({
+						VideoQualityRange
+					}) => {
+						if (container === null) {
+							return;
 						}
+						instance = new VideoQualityRange({
+							container,
+							title: main_core.Loc.getMessage('CALL_VIDEO_QUALITY_TITLE'),
+							videoQualityList: [{
+								label: main_core.Loc.getMessage('CALL_VIDEO_QUALITY_WITHOUT_VIDEO'),
+								height: 0,
+								value: call_core.STREAM_QUALITY.NO_VIDEO
+							}, {
+								label: '180p',
+								height: 180,
+								value: call_core.STREAM_QUALITY.LOW
+							}, {
+								label: '360p',
+								height: 360,
+								value: call_core.STREAM_QUALITY.MEDIUM
+							}, {
+								label: '720p',
+								height: 720,
+								value: call_core.STREAM_QUALITY.HIGH
+							}],
+							disabled: this.menuBlocked,
+							defaultHeight: call_core.Hardware.maxLocalStreamQualityHeight,
+							onVideoQualityChanged: videoQuality => {
+								this.eventEmitter.emit(DeviceMenuEvents.onChangeVideoQuality, {
+									videoQuality
+								});
+							}
+						});
+						instance.init();
+						if (pendingDisabled !== null) {
+							instance.setDisabled(pendingDisabled);
+							pendingDisabled = null;
+						}
+					}).catch(() => {
+						container = null;
 					});
-					instance.init();
 					return container;
 				},
 				setDisabled: value => {
-					instance?.setDisabled(value);
+					if (instance) {
+						instance.setDisabled(value);
+					} else {
+						pendingDisabled = value;
+					}
 				},
 				destroy: () => {
 					instance?.destroy();
@@ -5858,6 +5908,7 @@ this.BX.Call = this.BX.Call || {};
 	class View {
 		#commonRecord;
 		#confirmModal;
+		#guestLink = null;
 		constructor(config) {
 			this.destroyed = false;
 			this.title = config.title;
@@ -6765,6 +6816,13 @@ this.BX.Call = this.BX.Call || {};
 			this.microphoneLevel = level;
 			this.buttons.microphone?.setLevel(level);
 		}
+		setGuestLink(link) {
+			if (this.#guestLink === link) {
+				return;
+			}
+			this.#guestLink = link;
+			this.updateButtons();
+		}
 		setCameraState = event => {
 			if (this.isCameraOn == event.data.isCameraOn) {
 				return;
@@ -7152,7 +7210,7 @@ this.BX.Call = this.BX.Call || {};
 			if (!userModel) {
 				return;
 			}
-			let notification = FloorRequest.create({
+			const notification = FloorRequest.create({
 				userModel,
 				onAllowSpeakPermissionClicked: _userModel => {
 					this._onAllowSpeakPermissionClickedHandler(_userModel);
@@ -7162,13 +7220,13 @@ this.BX.Call = this.BX.Call || {};
 				}
 			});
 			notification.mount(this.elements.notificationPanel);
-			NotificationManager.Instance.addNotification(notification);
+			NotificationManager.addNotification(notification);
 		}
 		updateFloorRequestNotification() {
-			if (!NotificationManager?.Instance.notifications.length) {
+			if (!NotificationManager.notifications.length) {
 				return;
 			}
-			NotificationManager.Instance.notifications.forEach(notification => {
+			NotificationManager.notifications.forEach(notification => {
 				notification.updatePermissionButtonState();
 			});
 		}
@@ -7604,7 +7662,6 @@ this.BX.Call = this.BX.Call || {};
 				cameraId: this.cameraId,
 				speakerEnabled: !this.speakerMuted,
 				speakerId: this.speakerId,
-				noiseSuppressionVisible: call_lib_settingsManager.CallSettingsManager.noiseSuppressionEnabled ?? false,
 				allowNoiseSuppression: call_core.Hardware.enableNoiseSuppression,
 				faceImproveEnabled: call_core.Util.isDesktop() && im_v2_lib_desktopApi.DesktopApi.isDesktop() && im_v2_lib_desktopApi.DesktopApi.getCameraSmoothingStatus(),
 				allowFaceImprove: false,
@@ -8011,12 +8068,10 @@ this.BX.Call = this.BX.Call || {};
 			this.hideButtons([buttonCode]);
 		}
 		#isCameraButtonBlocked() {
-			const isUiBlocked = this.uiState !== UiState.Preparing && this.uiState !== UiState.Connected;
 			const isForceBlock = this.blockedButtons.camera === true;
 			const noCamPermission = !call_core.Util.havePermissionToBroadcast('cam');
 			const isUserConnecting = this.localUser.userModel.state === call_core.UserState.Connecting;
-			this.localUser.hasVideo() || this.localUser.hasAudio();
-			return isUiBlocked || isForceBlock || noCamPermission || isUserConnecting;
+			return isForceBlock || noCamPermission || isUserConnecting;
 		}
 
 		/**
@@ -8255,6 +8310,9 @@ this.BX.Call = this.BX.Call || {};
 			}
 			if (this.uiState === UiState.Connected && this.layout != Layouts.Mobile) {
 				result.push('feedback');
+			}
+			if (this.uiState === UiState.Connected && this.layout !== Layouts.Mobile && this.#guestLink !== null) {
+				result.push('link');
 			}
 			if (this.uiState === UiState.Connected && this.layout != Layouts.Mobile && call_core.Util.canControlChangeSettings() && call_core.Util.isUserControlFeatureEnabled()) {
 				result.push('callcontrol');
@@ -9471,6 +9529,18 @@ this.BX.Call = this.BX.Call || {};
 						}
 						if (rerender) {
 							main_core.Dom.append(this.buttons.feedback.render(), this.elements.topPanel);
+						}
+						break;
+					case 'link':
+						if (!this.buttons.link) {
+							this.buttons.link = new TopButton({
+								iconClass: 'link',
+								text: BX.message('CALL_VIEW_GUEST_LINK_BUTTON_LABEL'),
+								onClick: this._onLinkButtonClick.bind(this)
+							});
+						}
+						if (rerender) {
+							main_core.Dom.append(this.buttons.link.render(), this.elements.topPanel);
 						}
 						break;
 					case 'callcontrol':
@@ -10723,6 +10793,26 @@ this.BX.Call = this.BX.Call || {};
 				node: e.target
 			});
 		}
+		_onLinkButtonClick() {
+			if (!this.#guestLink) {
+				return;
+			}
+			const notifyCopied = () => {
+				BX.UI.Notification.Center.notify({
+					content: BX.message('CALL_VIEW_GUEST_LINK_COPIED'),
+					autoHideDelay: 5000,
+					useAirDesign: true
+				});
+			};
+			const notifyError = () => {
+				BX.UI.Notification.Center.notify({
+					content: BX.message('CALL_VIEW_GUEST_LINK_COPY_ERROR'),
+					autoHideDelay: 5000,
+					useAirDesign: true
+				});
+			};
+			call_adapter_clipboard.Clipboard.copy(this.#guestLink).then(notifyCopied).catch(notifyError);
+		}
 		_onCallcontrolButtonClick(e) {
 			e.stopPropagation();
 			this.eventEmitter.emit(EventName.onButtonClick, {
@@ -10992,7 +11082,6 @@ this.BX.Call = this.BX.Call || {};
 		static RoomState = call_mapping.ViewRoomState;
 		static RecordSource = call_mapping.ViewRecordSource;
 		static DeviceSelector = DeviceSelector;
-		static NotificationManager = NotificationManager;
 		static MIN_WIDTH = MIN_WIDTH;
 	}
 
@@ -11228,6 +11317,9 @@ this.BX.Call = this.BX.Call || {};
 		getButtonElement(buttonId, elementType = 'root') {
 			return this.wrappedView.buttons[buttonId]?.elements?.[elementType] ?? null;
 		}
+		setGuestLink(link) {
+			this.wrappedView.setGuestLink(link);
+		}
 
 		// endregion
 
@@ -11403,8 +11495,9 @@ this.BX.Call = this.BX.Call || {};
 		// endregion
 	}
 
+	exports.DeviceSelector = DeviceSelector;
 	exports.LegacyCallViewAdapter = LegacyCallViewAdapter;
 	exports.View = View;
 
-})(this.BX.Call.ViewExtension = this.BX.Call.ViewExtension || {}, BX, BX.Event, BX.Main, BX.Messenger.v2.Lib, BX.Call, BX.Messenger.v2.Lib, BX.Call.Component, BX.UI, BX.Messenger.v2.Lib, BX.Call.Lib, BX.Call.Lib, BX.Call.Mapping, BX.Call.Feature);
+})(this.BX.Call.ViewExtension = this.BX.Call.ViewExtension || {}, BX, BX.Event, BX.Main, BX.Messenger.v2.Lib, BX.Call, BX.Messenger.v2.Lib, BX.UI, BX.Messenger.v2.Lib, BX.Call.Lib, BX.Call.Mapping, BX.Call.Feature, BX.Call.Adapter);
 //# sourceMappingURL=call-view.bundle.js.map

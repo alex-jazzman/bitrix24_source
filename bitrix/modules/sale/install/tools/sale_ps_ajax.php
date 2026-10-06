@@ -1,11 +1,12 @@
 <?php
+
 define("STOP_STATISTICS", true);
 define('NO_AGENT_CHECK', true);
 define('NOT_CHECK_PERMISSIONS', true);
 define("DisableEventsCheck", true);
-require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_before.php");
+require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_before.php");
 
-Bitrix\Main\Localization\Loc::loadMessages($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/sale/install/tools/sale_ps_ajax.php');
+Bitrix\Main\Localization\Loc::loadMessages($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/sale/install/tools/sale_ps_ajax.php');
 
 $result = [];
 if (Bitrix\Main\Loader::includeModule("sale"))
@@ -18,26 +19,40 @@ if (Bitrix\Main\Loader::includeModule("sale"))
 	{
 		$result = [
 			'status' => 'error',
-			'errors' => [\Bitrix\Main\Localization\Loc::getMessage('SALE_PS_AJAX_PARAMS_ERROR')]
+			'errors' => [\Bitrix\Main\Localization\Loc::getMessage('SALE_PS_AJAX_PARAMS_ERROR')],
 		];
 	}
 	else
 	{
 		$service = Bitrix\Sale\PaySystem\Manager::getObjectById($paySystemId);
-		if ($service)
+		if (!$service)
 		{
-			list($orderId, $paymentId) = Bitrix\Sale\PaySystem\Manager::getIdsByPayment($paymentId, $service->getField('ENTITY_REGISTRY_TYPE'));
+			$result = [
+				'status' => 'error',
+				'errors' => [\Bitrix\Main\Localization\Loc::getMessage('SALE_PS_AJAX_PARAMS_ERROR')],
+			];
+		}
+		else
+		{
+			[$orderId, $paymentId] = Bitrix\Sale\PaySystem\Manager::getIdsByPayment($paymentId, $service->getField('ENTITY_REGISTRY_TYPE'));
 
 			$registry = Bitrix\Sale\Registry::getInstance($service->getField('ENTITY_REGISTRY_TYPE'));
 			/** @var Bitrix\Sale\Order $orderClassName */
 			$orderClassName = $registry->getOrderClassName();
 
-			$order = $orderClassName::load($orderId);
-			if (!Bitrix\Sale\OrderStatus::isAllowPay($order->getField('STATUS_ID')))
+			$order = $orderId > 0 ? $orderClassName::load($orderId) : null;
+			if (!$order)
 			{
 				$result = [
 					'status' => 'error',
-					'errors' => [\Bitrix\Main\Localization\Loc::getMessage('SALE_PS_AJAX_ORDER_PAID_ERROR')]
+					'errors' => [\Bitrix\Main\Localization\Loc::getMessage('SALE_PS_AJAX_PARAMS_ERROR')],
+				];
+			}
+			elseif (!Bitrix\Sale\OrderStatus::isAllowPay($order->getField('STATUS_ID')))
+			{
+				$result = [
+					'status' => 'error',
+					'errors' => [\Bitrix\Main\Localization\Loc::getMessage('SALE_PS_AJAX_ORDER_PAID_ERROR')],
 				];
 			}
 			else
@@ -46,27 +61,37 @@ if (Bitrix\Main\Loader::includeModule("sale"))
 				/** @var Bitrix\Sale\Payment $payment */
 				$payment = $paymentCollection->getItemById($paymentId);
 
-				if ($returnUrl = $request->get("RETURN_URL"))
-				{
-					$service->getContext()->setUrl($returnUrl);
-				}
-
-				$initResult = $service->initiatePay($payment, $request, Bitrix\Sale\PaySystem\BaseServiceHandler::STRING);
-				if ($initResult->isSuccess())
+				if (!$payment || $payment->getPaymentSystemId() !== $paySystemId)
 				{
 					$result = [
-						'status' => 'success',
-						'data' => $initResult->getData(),
-						'template' => $initResult->getTemplate(),
+						'status' => 'error',
+						'errors' => [\Bitrix\Main\Localization\Loc::getMessage('SALE_PS_AJAX_PARAMS_ERROR')],
 					];
 				}
 				else
 				{
-					$result = [
-						'status' => 'error',
-						'errors' => $initResult->getErrorMessages(),
-						'buyerErrors' => $initResult->getBuyerErrorMessages(),
-					];
+					if ($returnUrl = $request->get("RETURN_URL"))
+					{
+						$service->getContext()->setUrl($returnUrl);
+					}
+
+					$initResult = $service->initiatePay($payment, $request, Bitrix\Sale\PaySystem\BaseServiceHandler::STRING);
+					if ($initResult->isSuccess())
+					{
+						$result = [
+							'status' => 'success',
+							'data' => $initResult->getData(),
+							'template' => $initResult->getTemplate(),
+						];
+					}
+					else
+					{
+						$result = [
+							'status' => 'error',
+							'errors' => $initResult->getErrorMessages(),
+							'buyerErrors' => $initResult->getBuyerErrorMessages(),
+						];
+					}
 				}
 			}
 		}

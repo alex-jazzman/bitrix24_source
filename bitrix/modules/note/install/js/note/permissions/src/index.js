@@ -34,6 +34,10 @@ class NotePermissionsApp extends NotePermissionsPopup
 	canSavePermissions: boolean;
 	primaryButton: Object | null;
 	byLevel: { [PermissionLevel]: Map<string, Member> };
+	inheritedByLevel: { [PermissionLevel]: Map<string, Member> };
+	subtreeAvailable: boolean;
+	subtreeScopeEnabled: boolean;
+	scopeCheckbox: Object | null;
 	popupName: string;
 	popupNameInput: HTMLInputElement | null;
 	sectionsContainer: HTMLElement | null;
@@ -52,6 +56,10 @@ class NotePermissionsApp extends NotePermissionsPopup
 		this.canSavePermissions = false;
 		this.primaryButton = null;
 		this.byLevel = this.createEmptyByLevel();
+		this.inheritedByLevel = this.createEmptyByLevel();
+		this.subtreeAvailable = false;
+		this.subtreeScopeEnabled = false;
+		this.scopeCheckbox = null;
 		this.popupName = '';
 		this.popupNameInput = null;
 		this.sectionsContainer = null;
@@ -131,6 +139,10 @@ class NotePermissionsApp extends NotePermissionsPopup
 		this.popupConfig = config;
 		this.popupTheme = theme === NoteTheme.DARK ? NoteTheme.DARK : NoteTheme.LIGHT;
 		this.byLevel = this.createEmptyByLevel();
+		this.inheritedByLevel = this.createEmptyByLevel();
+		this.subtreeAvailable = false;
+		this.subtreeScopeEnabled = false;
+		this.scopeCheckbox = null;
 		this.popupName = String(config?.name?.initialValue || '');
 		const requestToken = ++this.popupLoadRequestToken;
 
@@ -212,6 +224,10 @@ class NotePermissionsApp extends NotePermissionsPopup
 		this.canSavePermissions = false;
 		this.primaryButton = null;
 		this.byLevel = this.createEmptyByLevel();
+		this.inheritedByLevel = this.createEmptyByLevel();
+		this.subtreeAvailable = false;
+		this.subtreeScopeEnabled = false;
+		this.scopeCheckbox = null;
 		this.popupName = '';
 		this.popupNameInput = null;
 		this.sectionsContainer = null;

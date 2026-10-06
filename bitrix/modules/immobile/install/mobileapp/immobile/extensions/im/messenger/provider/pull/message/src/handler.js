@@ -5,6 +5,7 @@ jn.define('im/messenger/provider/pull/message/handler', (require, exports, modul
 	const { Type } = require('type');
 	const { Loc } = require('im/messenger/loc');
 	const { clone } = require('utils/object');
+	const { PerfPoint } = require('debug/prism');
 	const {
 		UserRole,
 		DialogType,
@@ -851,6 +852,9 @@ jn.define('im/messenger/provider/pull/message/handler', (require, exports, modul
 			await this.store.dispatch('messagesModel/readMessages', {
 				chatId: params.chatId,
 				messageIds: params.viewedMessages,
+				// Exact read (Feed->IM): clear unread for exactly the given ids, no sweep up to max(ID).
+				// Without the flag (normal read) — prior behavior.
+				exact: params.exact,
 			});
 		}
 
@@ -1164,6 +1168,11 @@ jn.define('im/messenger/provider/pull/message/handler', (require, exports, modul
 				{
 					await this.#setFiles(additionalEntities);
 				}
+
+				if (Type.isArrayFilled(additionalEntities?.messages))
+				{
+					await this.#setAdditionalMessages(additionalEntities);
+				}
 			}
 		}
 
@@ -1188,6 +1197,55 @@ jn.define('im/messenger/provider/pull/message/handler', (require, exports, modul
 		async #setFiles(params)
 		{
 			return FileUtils.setFiles(params);
+		}
+
+		/**
+		 * Stores original message bodies from additionalEntities.messages (DTO-01 payload).
+		 * Used to pre-populate the quote/reply source so the quote block can be rendered
+		 * without waiting for a full dialog reload when the original arrives after the reply.
+		 *
+		 * Idempotent: if a message is already present in the store (e.g. loaded from a full
+		 * dialog load or a previous pull), it is left untouched — a short popup payload must
+		 * not overwrite a richer one (AC-031).
+		 *
+		 * Only one level of nesting is stored (the direct original); no recursion.
+		 *
+		 * @param {{ messages: Array<object> }} params
+		 * @return {Promise<void>}
+		 */
+		async #setAdditionalMessages(params)
+		{
+			if (!Type.isArrayFilled(params.messages))
+			{
+				return;
+			}
+
+			const messagesToStore = params.messages.filter((message) => {
+				const id = message?.id ?? message?.templateId;
+				if (!id)
+				{
+					return false;
+				}
+
+				const existing = this.store.getters['messagesModel/getById'](id);
+
+				return !('id' in existing);
+			});
+
+			if (!Type.isArrayFilled(messagesToStore))
+			{
+				return;
+			}
+
+			const point = new PerfPoint('IM Reply With Media', 'setAdditionalMessages').start();
+			try
+			{
+				await this.store.dispatch('messagesModel/store', messagesToStore);
+			}
+			finally
+			{
+				point.end();
+			}
 		}
 
 		/**

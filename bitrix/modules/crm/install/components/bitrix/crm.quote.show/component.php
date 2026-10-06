@@ -4,6 +4,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 use Bitrix\Crm\Integration\StorageType;
 use Bitrix\Crm\ItemMiniCard\Builder\MiniCardHtmlBuilder;
 use Bitrix\Crm\Restriction\RestrictionManager;
+use Bitrix\Main\Web\Uri;
 
 if (!CModule::IncludeModule('crm'))
 {
@@ -1116,21 +1117,15 @@ $arResult['FIELDS']['tab_event'][] = array(
 );
 
 
-$arResult['PRINT_URL'] = CHTTP::urlAddParams(
-	CComponentEngine::MakePathFromTemplate(
+$arResult['PRINT_URL'] = (string)(new Uri(CComponentEngine::MakePathFromTemplate(
 		$arParams['PATH_TO_QUOTE_PAYMENT'],
 		array('quote_id' => $arParams['ELEMENT_ID'])
-	),
-	array('PRINT' => 'Y', 'ncc' => '1')
-);
+	)))->addParams(array('PRINT' => 'Y', 'ncc' => '1'));
 
-$arResult['DOWNLOAD_PDF_URL'] = CHTTP::urlAddParams(
-	CComponentEngine::MakePathFromTemplate(
+$arResult['DOWNLOAD_PDF_URL'] = (string)(new Uri(CComponentEngine::MakePathFromTemplate(
 		$arParams['PATH_TO_QUOTE_PAYMENT'],
 		array('quote_id' => $arParams['ELEMENT_ID'])
-	),
-	array('pdf'=> '1', 'DOWNLOAD' => 'Y', 'ncc' => '1')
-);
+	)))->addParams(array('pdf'=> '1', 'DOWNLOAD' => 'Y', 'ncc' => '1'));
 
 $arResult['CREATE_PDF_FILE_URL'] = "{$componentPath}/ajax.php";
 $paySystems = CCrmPaySystem::GetPaySystems($arResult['ELEMENT']['PERSON_TYPE_ID']);

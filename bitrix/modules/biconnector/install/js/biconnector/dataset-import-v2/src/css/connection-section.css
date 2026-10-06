@@ -1,0 +1,172 @@
+.biconnector-dataset-import-v2-connection-section {
+	flex: 0 0 auto;
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	background: var(--ui-color-bg-content-primary, #fff);
+	border-radius: 20px;
+	box-sizing: border-box;
+	box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
+	overflow: hidden;
+}
+
+.biconnector-dataset-import-v2-connection-section--empty {
+	flex: 1 1 auto;
+	min-height: 0;
+}
+
+.biconnector-dataset-import-v2-connection-section__header {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 18px 20px;
+}
+
+.biconnector-dataset-import-v2-connection-section__header-icon {
+	flex: 0 0 auto;
+	--ui-icon-set__icon-size: 22px;
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary, #0075ff);
+}
+
+.biconnector-dataset-import-v2-connection-section__header-title {
+	flex: 0 0 auto;
+	font-weight: 500;
+	letter-spacing: -0.1px;
+	color: #000;
+}
+
+.biconnector-dataset-import-v2-connection-section__chip {
+	flex: 0 1 auto;
+	min-width: 0;
+	margin-left: auto;
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	max-width: 100%;
+	height: 36px;
+	padding: 0 12px;
+	background: var(--ui-color-bg-content-primary, #fff);
+	border: 1px solid var(--ui-color-design-outline-stroke-alt1, #dfe0e3);
+	border-radius: 10px;
+	box-sizing: border-box;
+	overflow: hidden;
+	cursor: pointer;
+	font: inherit;
+	transition: background-color 0.15s ease-in-out;
+}
+
+.biconnector-dataset-import-v2-connection-section__chip:hover {
+	background: var(--ui-color-bg-state-hover-default, rgba(0, 0, 0, 0.04));
+}
+
+.biconnector-dataset-import-v2-connection-section__chip-avatar {
+	flex: 0 0 auto;
+	width: 20px;
+	height: 20px;
+	background-repeat: no-repeat;
+	background-position: center;
+	background-size: contain;
+}
+
+.biconnector-dataset-import-v2-connection-section__chip-name {
+	flex: 0 1 auto;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	color: var(--ui-color-base-1, #333);
+}
+
+.biconnector-dataset-import-v2-connection-section__divider {
+	flex: 0 0 auto;
+	width: 1px;
+	height: 24px;
+	background: var(--ui-color-design-outline-stroke-alt1, #dfe0e3);
+}
+
+.biconnector-dataset-import-v2-connection-section__replace {
+	flex: 0 0 auto;
+	height: 32px;
+	padding: 0 16px;
+	border: 1px solid var(--ui-color-accent-main-primary, #0075ff);
+	border-radius: 8px;
+	background: transparent;
+	color: var(--ui-color-accent-main-primary, #0075ff);
+	font: inherit;
+	font-weight: 500;
+	cursor: pointer;
+	transition: background-color 0.15s ease-in-out;
+}
+
+.biconnector-dataset-import-v2-connection-section__replace:hover {
+	background: rgba(0, 117, 255, 0.06);
+}
+
+.biconnector-dataset-import-v2-connection-section__body {
+	flex: 1 1 auto;
+	min-height: 540px;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 24px;
+	padding: 40px 24px 60px;
+	text-align: center;
+}
+
+.biconnector-dataset-import-v2-connection-section__empty-text {
+	max-width: 470px;
+	margin: 0;
+	letter-spacing: -0.05px;
+	color: var(--ui-color-base-3, #828b95);
+}
+
+.biconnector-dataset-import-v2-connection-section__form {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	width: 100%;
+	max-width: 360px;
+	text-align: left;
+}
+
+.biconnector-dataset-import-v2-connection-section__field {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.biconnector-dataset-import-v2-connection-section__field-label {
+	color: var(--ui-color-base-2, #525c69);
+}
+
+.biconnector-dataset-import-v2-connection-section__continue {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	height: 40px;
+	padding: 0 28px;
+	border: 0;
+	border-radius: 10px;
+	background: var(--ui-color-accent-main-primary, #0075ff);
+	color: #fff;
+	font: inherit;
+	font-size: 14px;
+	font-weight: 500;
+	letter-spacing: -0.05px;
+	cursor: pointer;
+	transition: background-color 0.15s ease-in-out;
+}
+
+.biconnector-dataset-import-v2-connection-section__continue:hover {
+	background: #0066df;
+}
+
+.biconnector-dataset-import-v2-connection-section__continue:disabled {
+	background: var(--ui-color-base-6, #d5d7db);
+	cursor: default;
+}
+
+.biconnector-dataset-entity-selector-popup .ui-selector-tab-labels {
+	display: none;
+}

@@ -145,7 +145,7 @@ $getInitiatedByTypeTemplate = static function (?InitiatedByType $initiatedByType
 	};
 };
 
-$getUserInfoTemplate = static function (array $responsible): string
+$getResponsibleUserInfoTemplate = static function (array $responsible): string
 {
 	$userId = (int)$responsible['ID'] ?? 0;
 	$fullName = $responsible['FULL_NAME'] ?? '';
@@ -163,10 +163,63 @@ $getUserInfoTemplate = static function (array $responsible): string
 			<i style=" <?= $imagePath !== '' ? "background-image: url('" . Uri::urnEncode($imagePath) . "');" : '' ?>">
 			</i>
 		</span>
-		<span class="sign-personal-grid-user-name">
+			<span class="sign-personal-grid-user-name">
 				<?= $fullName ?>
 		</span>
 		</a>
+	</div>
+	<?php
+	return (string)ob_get_clean();
+};
+
+$getRepresentativeUserInfoTemplate = static function (array $representative): string
+{
+	$userId = (int)$representative['ID'] ?? 0;
+	$fullName = $representative['FULL_NAME'] ?? '';
+	$imagePath = $representative['AVATAR_PATH'] ?? '';
+	$isFolder = $representative['IS_FOLDER'] ?? false;
+	$roleName = $representative['ROLE_NAME'] ?? '';
+	$isChosen = $representative['IS_CHOSEN'] ?? false;
+
+	$structureNodeService = Container::instance()->getHumanResourcesStructureNodeService();
+
+	if ($roleName !== '')
+	{
+		$roleId = $structureNodeService->getRoleIdByName($roleName);
+	}
+
+	ob_start();
+	?>
+	<div class="sign-personal-grid-wrapper">
+	<?php if (!$isFolder && $isChosen): ?>
+			<?php if ($roleName !== ''): ?>
+				<div class="sign-personal-grid-role" data-test-id="sign-b2e-templates-signer-is-role-<?= $roleId ?? 0 ?>">
+					<span class="ui-icon ui-icon-common-user">
+						<?php if ($structureNodeService->isHead($roleName)): ?>
+							<span class="sign-head-icon"></span>
+						<?php elseif ($structureNodeService->isDeputy($roleName)): ?>
+							<span class="sign-deputy-head-icon"></span>
+						<?php endif; ?>
+					</span>
+					<span class="sign-personal-grid-user-name">
+						<?= htmlspecialcharsbx($fullName) ?>
+					</span>
+				</div>
+			<?php else: ?>
+				<a
+					class="sign-personal-grid-user"
+					target="_top"
+					onclick="event.stopPropagation();"
+					href="/company/personal/user/<?= $userId ?>/">
+					<span class="ui-icon ui-icon-common-user">
+						<i style=" <?= $imagePath !== '' ? "background-image: url('" . Uri::urnEncode($imagePath) . "');" : '' ?>"></i>
+					</span>
+					<span class="sign-personal-grid-user-name">
+						<?= htmlspecialcharsbx($fullName) ?>
+					</span>
+				</a>
+			<?php endif; ?>
+		<?php endif; ?>
 	</div>
 	<?php
 	return (string)ob_get_clean();
@@ -295,7 +348,7 @@ $getCompanyTemplate = static function (array $company): string
 	return (string)ob_get_clean();
 };
 
-$getActionButton = static function (array $templatesData): string
+$getActionButton = static function (array $templatesData, int $preselectedSignersListId): string
 {
 	$entityId = (int)$templatesData['id'] ?? 0;
 	$entityType = $templatesData['entityType'] ?? '';
@@ -317,6 +370,7 @@ $getActionButton = static function (array $templatesData): string
 					'<?= CUtil::JSEscape($entityType->value) ?>',
 					<?= Json::encode($templateIds) ?>,
 					<?= Json::encode($sendBlockedParams) ?>,
+					<?= $preselectedSignersListId ?>,
 				);
 				container.appendChild(buttonElement);
 			}
@@ -328,6 +382,8 @@ $getActionButton = static function (array $templatesData): string
 };
 
 $gridRows = [];
+// group context of the send flow, already validated by the component
+$preselectedSignersListId = (int)($arResult['PRESELECTED_SIGNERS_LIST_ID'] ?? 0);
 foreach ($arResult["DOCUMENT_TEMPLATES"] as $templatesData)
 {
 	$addMetadataToLayout = $getAddMetadataForFrontendFunction($templatesData);
@@ -341,19 +397,21 @@ foreach ($arResult["DOCUMENT_TEMPLATES"] as $templatesData)
 			'ID' => $entityId,
 			'TITLE' => $addMetadataToLayout($getLinkTemplate($templatesData, $showTariffSlider)),
 			'DATE_MODIFY' => $addMetadataToLayout($dateModify !== null ? $getDateTemplate($dateModify) : null),
-			'RESPONSIBLE' => $addMetadataToLayout($getUserInfoTemplate($templatesData['columns']['RESPONSIBLE'])),
+			'RESPONSIBLE' => $addMetadataToLayout($getResponsibleUserInfoTemplate($templatesData['columns']['RESPONSIBLE'])),
+			'REPRESENTATIVE' => $addMetadataToLayout($getRepresentativeUserInfoTemplate($templatesData['columns']['REPRESENTATIVE'])),
 			'VISIBILITY' => $addMetadataToLayout($getSwitcherTemplate($templatesData)),
 			'COMPANY' => $addMetadataToLayout($getCompanyTemplate($templatesData['columns']['COMPANY'])),
-			'ACTION' => $addMetadataToLayout($getActionButton($templatesData))
+			'ACTION' => $addMetadataToLayout($getActionButton($templatesData, $preselectedSignersListId))
 		],
 	];
 
 	if (($templatesData['access']['canEdit'] ?? false) && $templatesData['entityType']->isFolder())
 	{
+		$escapedFolderTitle = CUtil::JSEscape($templatesData['columns']['TITLE']);
 		$gridRow['actions'][] = [
 			'text' => (string)Loc::getMessage('SIGN_B2E_EMPLOYEE_TEMPLATE_LIST_ACTION_RENAME_FOLDER'),
 			'icon' => '/bitrix/js/ui/actionpanel/images/ui_icon_actionpanel_rename.svg',
-			'onclick' => "templateGrid.renameFolder({$entityId}, '{$templatesData['columns']['TITLE']}')",
+			'onclick' => "templateGrid.renameFolder({$entityId}, '{$escapedFolderTitle}')",
 		];
 	}
 

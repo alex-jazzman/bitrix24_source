@@ -54,23 +54,6 @@ if($action === 'INDEX')
 
 	Header('Content-Type: text/html; charset='.LANG_CHARSET);
 	$APPLICATION->ShowAjaxHead();
-	/*---bizproc---$APPLICATION->IncludeComponent('bitrix:bizproc.document',
-		'',
-		array(
-			'MODULE_ID' => 'crm',
-			'ENTITY' => 'CCrmDocumentQuote',
-			'DOCUMENT_TYPE' => 'QUOTE',
-			'DOCUMENT_ID' => "QUOTE_{$entityID}",
-			'TASK_EDIT_URL' => CHTTP::urlAddParams($showUrl, array('bizproc_task' => '#ID#', $tabKey => 'tab_bizproc')),
-			'WORKFLOW_LOG_URL' => CHTTP::urlAddParams($showUrl, array('bizproc_log' => '#ID#', $tabKey => 'tab_bizproc')),
-			'WORKFLOW_START_URL' => CHTTP::urlAddParams($showUrl, array('bizproc_start' => 1, $tabKey => 'tab_bizproc')),
-			'POST_FORM_URI' => isset($_REQUEST['post_form_uri']) ? CHTTP::urlAddParams($_REQUEST['post_form_uri'], array($tabKey => 'tab_bizproc')) : '',
-			'back_url' => CHTTP::urlAddParams($showUrl, array($tabKey => 'tab_bizproc')),
-			'SET_TITLE' => 'Y'
-		),
-		'',
-		array('HIDE_ICONS' => 'Y')
-	);*/
 
 	require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/epilog_after.php');
 	die();

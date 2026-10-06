@@ -8,6 +8,7 @@ jn.define('mail/message-grid/src/list-adapter', (require, exports, module) => {
 	const { ListItemType, ListItemsFactory } = require('mail/simple-list/items');
 	const { MessageGridListSync } = require('mail/message-grid/src/list-sync');
 	const { MessageGridCache } = require('mail/message-grid/src/cache');
+	const { MailDialog } = require('mail/dialog');
 	const { AjaxMethod } = require('mail/const');
 	const { StatusBlock, makeLibraryImagePath } = require('ui-system/blocks/status-block');
 	const { StatefulList } = require('layout/ui/stateful-list');
@@ -47,6 +48,17 @@ jn.define('mail/message-grid/src/list-adapter', (require, exports, module) => {
 				cache: new MessageGridCache(),
 				filterController: this.filterController,
 				onMailboxAvailable: () => this.setFloatingButtonVisibility(true),
+				onProviderRestriction: (provider, mailboxId) => this.showProviderRestrictionBanner(provider, mailboxId),
+			});
+		}
+
+		showProviderRestrictionBanner(provider, mailboxId)
+		{
+			MailDialog.show({
+				type: MailDialog.PROVIDER_RESTRICTION,
+				provider,
+				mailboxId,
+				parentWidget: this.parentWidget,
 			});
 		}
 

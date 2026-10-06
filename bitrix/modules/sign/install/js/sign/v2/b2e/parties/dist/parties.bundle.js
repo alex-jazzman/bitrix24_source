@@ -1,2 +1,251 @@
-this.BX=this.BX||{},this.BX.Sign=this.BX.Sign||{},this.BX.Sign.V2=this.BX.Sign.V2||{},function(e,t,i,r,n,a,s,l,o){"use strict";var c,u,d,p,b,v,h;function f(){/*! regenerator-runtime -- Copyright (c) 2014-present, Facebook, Inc. -- license (MIT): https://github.com/facebook/regenerator/blob/main/LICENSE */f=function(){return e};var e={},t=Object.prototype,i=t.hasOwnProperty,r=Object.defineProperty||function(e,t,i){e[t]=i.value},n="function"==typeof Symbol?Symbol:{},a=n.iterator||"@@iterator",s=n.asyncIterator||"@@asyncIterator",l=n.toStringTag||"@@toStringTag";function o(e,t,i){return Object.defineProperty(e,t,{value:i,enumerable:!0,configurable:!0,writable:!0}),e[t]}try{o({},"")}catch(e){o=function(e,t,i){return e[t]=i}}function c(e,t,i,n){var a=t&&t.prototype instanceof p?t:p,s=Object.create(a.prototype),l=new I(n||[]);return r(s,"_invoke",{value:T(e,i,l)}),s}function u(e,t,i){try{return{type:"normal",arg:e.call(t,i)}}catch(e){return{type:"throw",arg:e}}}e.wrap=c;var d={};function p(){}function b(){}function v(){}var h={};o(h,a,(function(){return this}));var g=Object.getPrototypeOf,y=g&&g(g(S([])));y&&y!==t&&i.call(y,a)&&(h=y);var m=v.prototype=p.prototype=Object.create(h);function _(e){["next","throw","return"].forEach((function(t){o(e,t,(function(e){return this._invoke(t,e)}))}))}function H(e,t){var n;r(this,"_invoke",{value:function(r,a){function s(){return new t((function(n,s){!function r(n,a,s,l){var o=u(e[n],e,a);if("throw"!==o.type){var c=o.arg,d=c.value;return d&&"object"==babelHelpers.typeof(d)&&i.call(d,"__await")?t.resolve(d.__await).then((function(e){r("next",e,s,l)}),(function(e){r("throw",e,s,l)})):t.resolve(d).then((function(e){c.value=e,s(c)}),(function(e){return r("throw",e,s,l)}))}l(o.arg)}(r,a,n,s)}))}return n=n?n.then(s,s):s()}})}function T(e,t,i){var r="suspendedStart";return function(n,a){if("executing"===r)throw new Error("Generator is already running");if("completed"===r){if("throw"===n)throw a;return G()}for(i.method=n,i.arg=a;;){var s=i.delegate;if(s){var l=w(s,i);if(l){if(l===d)continue;return l}}if("next"===i.method)i.sent=i._sent=i.arg;else if("throw"===i.method){if("suspendedStart"===r)throw r="completed",i.arg;i.dispatchException(i.arg)}else"return"===i.method&&i.abrupt("return",i.arg);r="executing";var o=u(e,t,i);if("normal"===o.type){if(r=i.done?"completed":"suspendedYield",o.arg===d)continue;return{value:o.arg,done:i.done}}"throw"===o.type&&(r="completed",i.method="throw",i.arg=o.arg)}}}function w(e,t){var i=t.method,r=e.iterator[i];if(void 0===r)return t.delegate=null,"throw"===i&&e.iterator.return&&(t.method="return",t.arg=void 0,w(e,t),"throw"===t.method)||"return"!==i&&(t.method="throw",t.arg=new TypeError("The iterator does not provide a '"+i+"' method")),d;var n=u(r,e.iterator,t.arg);if("throw"===n.type)return t.method="throw",t.arg=n.arg,t.delegate=null,d;var a=n.arg;return a?a.done?(t[e.resultName]=a.value,t.next=e.nextLoc,"return"!==t.method&&(t.method="next",t.arg=void 0),t.delegate=null,d):a:(t.method="throw",t.arg=new TypeError("iterator result is not an object"),t.delegate=null,d)}function P(e){var t={tryLoc:e[0]};1 in e&&(t.catchLoc=e[1]),2 in e&&(t.finallyLoc=e[2],t.afterLoc=e[3]),this.tryEntries.push(t)}function E(e){var t=e.completion||{};t.type="normal",delete t.arg,e.completion=t}function I(e){this.tryEntries=[{tryLoc:"root"}],e.forEach(P,this),this.reset(!0)}function S(e){if(e){var t=e[a];if(t)return t.call(e);if("function"==typeof e.next)return e;if(!isNaN(e.length)){var r=-1,n=function t(){for(;++r<e.length;)if(i.call(e,r))return t.value=e[r],t.done=!1,t;return t.value=void 0,t.done=!0,t};return n.next=n}}return{next:G}}function G(){return{value:void 0,done:!0}}return b.prototype=v,r(m,"constructor",{value:v,configurable:!0}),r(v,"constructor",{value:b,configurable:!0}),b.displayName=o(v,l,"GeneratorFunction"),e.isGeneratorFunction=function(e){var t="function"==typeof e&&e.constructor;return!!t&&(t===b||"GeneratorFunction"===(t.displayName||t.name))},e.mark=function(e){return Object.setPrototypeOf?Object.setPrototypeOf(e,v):(e.__proto__=v,o(e,l,"GeneratorFunction")),e.prototype=Object.create(m),e},e.awrap=function(e){return{__await:e}},_(H.prototype),o(H.prototype,s,(function(){return this})),e.AsyncIterator=H,e.async=function(t,i,r,n,a){void 0===a&&(a=Promise);var s=new H(c(t,i,r,n),a);return e.isGeneratorFunction(i)?s:s.next().then((function(e){return e.done?e.value:s.next()}))},_(m),o(m,l,"Generator"),o(m,a,(function(){return this})),o(m,"toString",(function(){return"[object Generator]"})),e.keys=function(e){var t=Object(e),i=[];for(var r in t)i.push(r);return i.reverse(),function e(){for(;i.length;){var r=i.pop();if(r in t)return e.value=r,e.done=!1,e}return e.done=!0,e}},e.values=S,I.prototype={constructor:I,reset:function(e){if(this.prev=0,this.next=0,this.sent=this._sent=void 0,this.done=!1,this.delegate=null,this.method="next",this.arg=void 0,this.tryEntries.forEach(E),!e)for(var t in this)"t"===t.charAt(0)&&i.call(this,t)&&!isNaN(+t.slice(1))&&(this[t]=void 0)},stop:function(){this.done=!0;var e=this.tryEntries[0].completion;if("throw"===e.type)throw e.arg;return this.rval},dispatchException:function(e){if(this.done)throw e;var t=this;function r(i,r){return s.type="throw",s.arg=e,t.next=i,r&&(t.method="next",t.arg=void 0),!!r}for(var n=this.tryEntries.length-1;n>=0;--n){var a=this.tryEntries[n],s=a.completion;if("root"===a.tryLoc)return r("end");if(a.tryLoc<=this.prev){var l=i.call(a,"catchLoc"),o=i.call(a,"finallyLoc");if(l&&o){if(this.prev<a.catchLoc)return r(a.catchLoc,!0);if(this.prev<a.finallyLoc)return r(a.finallyLoc)}else if(l){if(this.prev<a.catchLoc)return r(a.catchLoc,!0)}else{if(!o)throw new Error("try statement without catch or finally");if(this.prev<a.finallyLoc)return r(a.finallyLoc)}}}},abrupt:function(e,t){for(var r=this.tryEntries.length-1;r>=0;--r){var n=this.tryEntries[r];if(n.tryLoc<=this.prev&&i.call(n,"finallyLoc")&&this.prev<n.finallyLoc){var a=n;break}}a&&("break"===e||"continue"===e)&&a.tryLoc<=t&&t<=a.finallyLoc&&(a=null);var s=a?a.completion:{};return s.type=e,s.arg=t,a?(this.method="next",this.next=a.finallyLoc,d):this.complete(s)},complete:function(e,t){if("throw"===e.type)throw e.arg;return"break"===e.type||"continue"===e.type?this.next=e.arg:"return"===e.type?(this.rval=this.arg=e.arg,this.method="return",this.next="end"):"normal"===e.type&&t&&(this.next=t),d},finish:function(e){for(var t=this.tryEntries.length-1;t>=0;--t){var i=this.tryEntries[t];if(i.finallyLoc===e)return this.complete(i.completion,i.afterLoc),E(i),d}},catch:function(e){for(var t=this.tryEntries.length-1;t>=0;--t){var i=this.tryEntries[t];if(i.tryLoc===e){var r=i.completion;if("throw"===r.type){var n=r.arg;E(i)}return n}}throw new Error("illegal catch attempt")},delegateYield:function(e,t,i){return this.delegate={iterator:S(e),resultName:t,nextLoc:i},"next"===this.method&&(this.arg=void 0),d}},e}function g(e,t){m(e,t),t.add(e)}function y(e,t,i){m(e,t),t.set(e,i)}function m(e,t){if(t.has(e))throw new TypeError("Cannot initialize the same private elements twice on an object")}function _(e,t,i){if(!t.has(e))throw new TypeError("attempted to get private field on non-instance");return i}var H=t.Extension.getSettings("sign.v2.b2e.parties").get("currentUserId"),T=Object.freeze({ReviewerRoleDetails:"20801214"}),w=new WeakMap,P=new WeakMap,E=new WeakMap,I=new WeakMap,S=new WeakMap,G=new WeakSet,L=new WeakSet,F=new WeakSet,k=new WeakSet,R=new WeakSet,x=new WeakSet,C=new WeakSet,M=function(e){function i(e,t){var l;babelHelpers.classCallCheck(this,i),l=babelHelpers.possibleConstructorReturn(this,babelHelpers.getPrototypeOf(i).call(this)),g(babelHelpers.assertThisInitialized(l),C),g(babelHelpers.assertThisInitialized(l),x),g(babelHelpers.assertThisInitialized(l),R),g(babelHelpers.assertThisInitialized(l),k),g(babelHelpers.assertThisInitialized(l),F),g(babelHelpers.assertThisInitialized(l),L),g(babelHelpers.assertThisInitialized(l),G),y(babelHelpers.assertThisInitialized(l),w,{writable:!0,value:null}),y(babelHelpers.assertThisInitialized(l),P,{writable:!0,value:null}),y(babelHelpers.assertThisInitialized(l),E,{writable:!0,value:null}),y(babelHelpers.assertThisInitialized(l),I,{writable:!0,value:null}),y(babelHelpers.assertThisInitialized(l),S,{writable:!0,value:{container:HTMLDivElement=null,blocks:{companyContent:HTMLDivElement=null,representativeContent:HTMLDivElement=null,validationEditorLayout:HTMLDivElement=null}}}),l.setEventNamespace("BX.Sign.V2.B2e.Parties");var c=e.region,u=e.documentInitiatedType,d=e.documentMode,p=o.isTemplateMode(d||s.DocumentMode.document);return babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(l),P,new a.RepresentativeSelector({roleEnabled:p,context:"sign_b2e_representative_selector_assignee_".concat(H)})),babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(l),w,new r.CompanySelector({region:c,documentInitiatedType:u,isHcmLinkAvailable:t,needOpenCrmSaveAndEditCompanySliders:p})),babelHelpers.classPrivateFieldGet(babelHelpers.assertThisInitialized(l),w).subscribe("onSelect",(function(e){l.emit("onCompanySelect",e)})),babelHelpers.classPrivateFieldGet(babelHelpers.assertThisInitialized(l),w).subscribe("onProviderSelect",(function(e){l.emit("onProviderSelect",e)})),babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(l),E,new n.DocumentValidation(p,(function(){return _(babelHelpers.assertThisInitialized(l),L,N).call(babelHelpers.assertThisInitialized(l))}))),l}var h,m;return babelHelpers.inherits(i,e),babelHelpers.createClass(i,[{key:"setEntityId",value:function(e){babelHelpers.classPrivateFieldGet(this,w).setOptions({entityId:e})}},{key:"setInitiatedByType",value:function(e){babelHelpers.classPrivateFieldGet(this,w).setInitiatedByType(e)}},{key:"reloadCompanyProviders",value:(m=babelHelpers.asyncToGenerator(f().mark((function e(t){return f().wrap((function(e){for(;;)switch(e.prev=e.next){case 0:return e.next=2,babelHelpers.classPrivateFieldGet(this,w).reloadCompanyProviders(t);case 2:case"end":return e.stop()}}),e,this)}))),function(e){return m.apply(this,arguments)})},{key:"setEditorAvailability",value:function(e){e?_(this,x,z).call(this):(_(this,C,V).call(this),babelHelpers.classPrivateFieldGet(this,E).editorRepresentativeSelector.onSelectorItemDeselectedHandler())}},{key:"loadCompany",value:function(e,t){babelHelpers.classPrivateFieldGet(this,w).load(e,t)}},{key:"loadFirstCompany",value:function(){babelHelpers.classPrivateFieldGet(this,w).loadFirstCompany()}},{key:"loadRepresentative",value:function(e){var t=arguments.length>1&&void 0!==arguments[1]?arguments[1]:s.EntityType.USER;babelHelpers.classPrivateFieldGet(this,P).load(e,t)}},{key:"loadFirstRepresentative",value:function(){babelHelpers.classPrivateFieldGet(this,P).loadFistRepresentative()}},{key:"loadValidator",value:function(e){var t=e.filter((function(e){return e.role===s.MemberRole.reviewer}));babelHelpers.classPrivateFieldGet(this,E).loadReviewers(t);var i=e.filter((function(e){return e.role===s.MemberRole.editor}));babelHelpers.classPrivateFieldGet(this,E).loadEditors(i)}},{key:"getLayout",value:function(){babelHelpers.classPrivateFieldGet(this,S).blocks.companyContent=t.Tag.render(c||(c=babelHelpers.taggedTemplateLiteral(['\n\t\t\t<div class="sign-b2e-settings__item">\n\t\t\t\t<p class="sign-b2e-settings__item_title">\n\t\t\t\t\t<span>','</span>\n\t\t\t\t\t<span\n\t\t\t\t\t\tdata-hint="','"\n\t\t\t\t\t></span>\n\t\t\t\t</p>\n\t\t\t\t',"\n\t\t\t</div>\n\t\t"])),t.Loc.getMessage("SIGN_PARTIES_ITEM_COMPANY"),t.Loc.getMessage("SIGN_PARTIES_ITEM_COMPANY_HINT"),babelHelpers.classPrivateFieldGet(this,w).getLayout()),l.Hint.create(babelHelpers.classPrivateFieldGet(this,S).blocks.companyContent),babelHelpers.classPrivateFieldGet(this,S).blocks.representativeContent=t.Tag.render(u||(u=babelHelpers.taggedTemplateLiteral(['\n\t\t\t<div class="sign-b2e-settings__item --representative">\n\t\t\t\t<p class="sign-b2e-settings__item_title">\n\t\t\t\t\t',"\n\t\t\t\t</p>\n\t\t\t\t","\n\t\t\t</div>\n\t\t"])),t.Loc.getMessage("SIGN_PARTIES_ITEM_REPRESENTATIVE"),babelHelpers.classPrivateFieldGet(this,P).getLayout());var e=t.Tag.render(d||(d=babelHelpers.taggedTemplateLiteral(['\n\t\t\t<div class="sign-b2e-settings__item">\n\t\t\t\t<p class="sign-b2e-settings__item_title">\n\t\t\t\t\t',"\n\t\t\t\t</p>\n\t\t\t\t","\n\t\t\t</div>\n\t\t"])),t.Loc.getMessage("SIGN_PARTIES_ITEM_PROVIDER"),babelHelpers.classPrivateFieldGet(this,w).getProviderLayout()),i=t.Tag.render(p||(p=babelHelpers.taggedTemplateLiteral(['\n\t\t\t<div class="sign-b2e-settings__item --reviewer">\n\t\t\t\t<p class="sign-b2e-settings__item_title">\n\t\t\t\t\t','\n\t\t\t\t</p>\n\t\t\t\t<div id="','">\n\t\t\t\t\t',"\n\t\t\t\t</div>\n\t\t\t\t",'\n\t\t\t\t<p class="sign-wizard__notice">\n\t\t\t\t',"\n\t\t\t\t</p>\n\t\t\t</div>\n\t\t"])),t.Loc.getMessage("SIGN_PARTIES_ITEM_VALIDATION_REVIEWER"),"reviewer-selector-list-container",babelHelpers.classPrivateFieldGet(this,E).getReviewerLayoutList(),_(this,G,B).call(this),l.Helpdesk.replaceLink(t.Loc.getMessage("SIGN_PARTIES_ADD_REVIEWER_BUTTON_HINT",{"#LIMIT#":n.maxReviewersCount}),T.ReviewerRoleDetails));return babelHelpers.classPrivateFieldGet(this,S).blocks.validationEditorLayout=t.Tag.render(b||(b=babelHelpers.taggedTemplateLiteral(['\n\t\t\t<div class="sign-b2e-settings__item --editor">\n\t\t\t\t<p class="sign-b2e-settings__item_title">\n\t\t\t\t\t',"\n\t\t\t\t</p>\n\t\t\t\t","\n\t\t\t</div>\n\t\t"])),t.Loc.getMessage("SIGN_PARTIES_ITEM_VALIDATION_EDITOR"),babelHelpers.classPrivateFieldGet(this,E).getEditorLayout()),babelHelpers.classPrivateFieldGet(this,S).container=t.Tag.render(v||(v=babelHelpers.taggedTemplateLiteral(['\n\t\t\t<div>\n\t\t\t\t<h1 class="sign-b2e-settings__header">',"</h1>\n\t\t\t\t","\n\t\t\t\t","\n\t\t\t\t","\n\t\t\t\t","\n\t\t\t\t","\n\t\t\t</div>\n\t\t"])),t.Loc.getMessage("SIGN_PARTIES_HEADER"),babelHelpers.classPrivateFieldGet(this,S).blocks.companyContent,e,babelHelpers.classPrivateFieldGet(this,S).blocks.representativeContent,i,babelHelpers.classPrivateFieldGet(this,S).blocks.validationEditorLayout),babelHelpers.classPrivateFieldGet(this,S).container}},{key:"save",value:(h=babelHelpers.asyncToGenerator(f().mark((function e(t){return f().wrap((function(e){for(;;)switch(e.prev=e.next){case 0:if(_(this,R,O).call(this),_(this,F,A).call(this)){e.next=3;break}throw new Error("Validation failed");case 3:return e.prev=3,e.next=6,babelHelpers.classPrivateFieldGet(this,w).save(t);case 6:e.next=12;break;case 8:throw e.prev=8,e.t0=e.catch(3),_(this,k,D).call(this,babelHelpers.classPrivateFieldGet(this,S).blocks.companyContent),e.t0;case 12:case"end":return e.stop()}}),e,this,[[3,8]])}))),function(e){return h.apply(this,arguments)})},{key:"getSelectedProvider",value:function(){return babelHelpers.classPrivateFieldGet(this,w).getSelectedCompanyProvider()}},{key:"isProviderSelected",value:function(){return Boolean(babelHelpers.classPrivateFieldGet(this,w).getSelectedCompanyProvider())}},{key:"isRepresentativeSelected",value:function(){return Boolean(babelHelpers.classPrivateFieldGet(this,P).getRepresentativeId())}},{key:"getParties",value:function(){return{representative:{entityType:babelHelpers.classPrivateFieldGet(this,P).getRepresentativeItemType(),entityId:babelHelpers.classPrivateFieldGet(this,P).getRepresentativeId()},company:{entityType:"company",entityId:babelHelpers.classPrivateFieldGet(this,w).getCompanyId()},validation:babelHelpers.classPrivateFieldGet(this,E).getValidationData()}}},{key:"getSelectedCompanyId",value:function(){return babelHelpers.classPrivateFieldGet(this,w).getCompanyId()}}]),i}(i.EventEmitter);function B(){var e=this;return babelHelpers.classPrivateFieldSet(this,I,t.Tag.render(h||(h=babelHelpers.taggedTemplateLiteral(['\n\t\t\t<button type="button" class="sign-b2e-document-setup__add-button">\n\t\t\t\t<span class="sign-b2e-document-setup__add-button_text">\n\t\t\t\t\t','\n\t\t\t\t</span>\n\t\t\t\t<span class="sign-b2e-document-setup__add-button_disabled_hint" data-hint="','"></span>\n\t\t\t</button>\n\t\t'])),t.Loc.getMessage("SIGN_PARTIES_ADD_REVIEWER_BUTTON_TITLE"),t.Loc.getMessage("SIGN_PARTIES_ADD_REVIEWER_BUTTON_DISABLED_HINT",{"#LIMIT#":n.maxReviewersCount}))),l.Hint.create(babelHelpers.classPrivateFieldGet(this,I)),BX.bind(babelHelpers.classPrivateFieldGet(this,I),"click",(function(){var i=document.getElementById("reviewer-selector-list-container");if(null!==i){var r=babelHelpers.classPrivateFieldGet(e,E).addReviewerRepresentativeSelector();t.Dom.append(r,i),_(e,L,N).call(e)}})),_(this,L,N).call(this),babelHelpers.classPrivateFieldGet(this,I)}function N(){null!==babelHelpers.classPrivateFieldGet(this,I)&&(babelHelpers.classPrivateFieldGet(this,I).disabled=babelHelpers.classPrivateFieldGet(this,E).getReviewerRepresentativeSelectorCount()>=n.maxReviewersCount)}function A(){return babelHelpers.classPrivateFieldGet(this,w).validate()&&babelHelpers.classPrivateFieldGet(this,P).validate()}function D(e){t.Type.isNull(e)||t.Type.isUndefined(e)||t.Dom.addClass(e,"sign-document-b2e-parties__item_content--warning")}function O(){for(var e=0,i=Object.entries(babelHelpers.classPrivateFieldGet(this,S).blocks);e<i.length;e++){var r=babelHelpers.slicedToArray(i[e],2),n=(r[0],r[1]);if(t.Type.isNull(n))return;t.Dom.removeClass(n,"sign-document-b2e-parties__item_content--warning")}}function z(){t.Dom.append(babelHelpers.classPrivateFieldGet(this,S).blocks.validationEditorLayout,babelHelpers.classPrivateFieldGet(this,S).container)}function V(){t.Dom.remove(babelHelpers.classPrivateFieldGet(this,S).blocks.validationEditorLayout)}e.Parties=M}(this.BX.Sign.V2.B2e=this.BX.Sign.V2.B2e||{},BX,BX.Event,BX.Sign.V2.B2e,BX.Sign.V2.B2e,BX.Sign.V2.B2e,BX.Sign,BX.Sign.V2,BX.Sign.V2);
+/* eslint-disable */
+this.BX = this.BX || {};
+this.BX.Sign = this.BX.Sign || {};
+this.BX.Sign.V2 = this.BX.Sign.V2 || {};
+(function (exports, main_core, main_core_events, sign_v2_b2e_companySelector, sign_v2_b2e_documentValidation, sign_v2_b2e_representativeSelector, sign_type, sign_v2_helper, sign_v2_signSettings) {
+	'use strict';
+
+	const blockWarningClass = 'sign-document-b2e-parties__item_content--warning';
+	const currentUserId = main_core.Extension.getSettings('sign.v2.b2e.parties').get('currentUserId');
+	const reviewerSelectorContainerListId = 'reviewer-selector-list-container';
+	const HelpdeskCodes = Object.freeze({
+		ReviewerRoleDetails: '20801214'
+	});
+	class Parties extends main_core_events.EventEmitter {
+		#companySelector = null;
+		#representativeSelector = null;
+		#documentValidation = null;
+		#addReviewerButton = null;
+		#ui = {
+			container: HTMLDivElement = null,
+			blocks: {
+				companyContent: HTMLDivElement = null,
+				representativeContent: HTMLDivElement = null,
+				validationEditorLayout: HTMLDivElement = null
+			}
+		};
+		constructor(blankSelectorConfig, hcmLinkAvailable) {
+			super();
+			this.setEventNamespace('BX.Sign.V2.B2e.Parties');
+			const {
+				region,
+				documentInitiatedType,
+				documentMode
+			} = blankSelectorConfig;
+			const isTemplate = sign_v2_signSettings.isTemplateMode(documentMode || sign_type.DocumentMode.document);
+			this.#representativeSelector = new sign_v2_b2e_representativeSelector.RepresentativeSelector({
+				roleEnabled: isTemplate,
+				context: `sign_b2e_representative_selector_assignee_${currentUserId}`
+			});
+			this.#companySelector = new sign_v2_b2e_companySelector.CompanySelector({
+				region,
+				documentInitiatedType,
+				isHcmLinkAvailable: hcmLinkAvailable,
+				needOpenCrmSaveAndEditCompanySliders: isTemplate
+			});
+			this.#companySelector.subscribe('onSelect', event => {
+				this.emit('onCompanySelect', event);
+			});
+			this.#companySelector.subscribe('onProviderSelect', event => {
+				this.emit('onProviderSelect', event);
+			});
+			this.#documentValidation = new sign_v2_b2e_documentValidation.DocumentValidation(isTemplate, () => this.#checkAddReviewerLimit());
+		}
+		setEntityId(entityId) {
+			this.#companySelector.setOptions({
+				entityId
+			});
+		}
+		setInitiatedByType(initiatedByType) {
+			this.#companySelector.setInitiatedByType(initiatedByType);
+		}
+		async reloadCompanyProviders(selectFirst) {
+			await this.#companySelector.reloadCompanyProviders(selectFirst);
+		}
+		setEditorAvailability(isAvailable) {
+			if (isAvailable) {
+				this.#addEditorLayout();
+				return;
+			}
+			this.#removeEditorLayout();
+			this.#documentValidation.editorRepresentativeSelector.onSelectorItemDeselectedHandler();
+		}
+		loadCompany(companyUid, entityId) {
+			this.#companySelector.load(companyUid, entityId);
+		}
+		loadFirstCompany() {
+			this.#companySelector.loadFirstCompany();
+		}
+		loadRepresentative(representativeId, entityType = sign_type.EntityType.USER) {
+			this.#representativeSelector.load(representativeId, entityType);
+		}
+		loadFirstRepresentative() {
+			this.#representativeSelector.loadFistRepresentative();
+		}
+		loadValidator(members) {
+			const reviewers = members.filter(member => member.role === sign_type.MemberRole.reviewer);
+			this.#documentValidation.loadReviewers(reviewers);
+			const editors = members.filter(member => member.role === sign_type.MemberRole.editor);
+			this.#documentValidation.loadEditors(editors);
+		}
+		getLayout() {
+			this.#ui.blocks.companyContent = main_core.Tag.render`
+			<div class="sign-b2e-settings__item">
+				<p class="sign-b2e-settings__item_title">
+					<span>${main_core.Loc.getMessage('SIGN_PARTIES_ITEM_COMPANY')}</span>
+					<span
+						data-hint="${main_core.Loc.getMessage('SIGN_PARTIES_ITEM_COMPANY_HINT')}"
+					></span>
+				</p>
+				${this.#companySelector.getLayout()}
+			</div>
+		`;
+			sign_v2_helper.Hint.create(this.#ui.blocks.companyContent);
+			this.#ui.blocks.representativeContent = main_core.Tag.render`
+			<div class="sign-b2e-settings__item --representative">
+				<p class="sign-b2e-settings__item_title">
+					${main_core.Loc.getMessage('SIGN_PARTIES_ITEM_REPRESENTATIVE')}
+				</p>
+				${this.#representativeSelector.getLayout()}
+			</div>
+		`;
+			const providerLayout = main_core.Tag.render`
+			<div class="sign-b2e-settings__item">
+				<p class="sign-b2e-settings__item_title">
+					${main_core.Loc.getMessage('SIGN_PARTIES_ITEM_PROVIDER')}
+				</p>
+				${this.#companySelector.getProviderLayout()}
+			</div>
+		`;
+			const validationReviewerLayout = main_core.Tag.render`
+			<div class="sign-b2e-settings__item --reviewer">
+				<p class="sign-b2e-settings__item_title">
+					${main_core.Loc.getMessage('SIGN_PARTIES_ITEM_VALIDATION_REVIEWER')}
+				</p>
+				<div id="${reviewerSelectorContainerListId}">
+					${this.#documentValidation.getReviewerLayoutList()}
+				</div>
+				${this.#createAddReviewerButton()}
+				<p class="sign-wizard__notice">
+				${sign_v2_helper.Helpdesk.replaceLink(main_core.Loc.getMessage('SIGN_PARTIES_ADD_REVIEWER_BUTTON_HINT', {
+			'#LIMIT#': sign_v2_b2e_documentValidation.maxReviewersCount
+		}), HelpdeskCodes.ReviewerRoleDetails)}
+				</p>
+			</div>
+		`;
+			this.#ui.blocks.validationEditorLayout = main_core.Tag.render`
+			<div class="sign-b2e-settings__item --editor">
+				<p class="sign-b2e-settings__item_title">
+					${main_core.Loc.getMessage('SIGN_PARTIES_ITEM_VALIDATION_EDITOR')}
+				</p>
+				${this.#documentValidation.getEditorLayout()}
+			</div>
+		`;
+			this.#ui.container = main_core.Tag.render`
+			<div>
+				<h1 class="sign-b2e-settings__header">${main_core.Loc.getMessage('SIGN_PARTIES_HEADER')}</h1>
+				${this.#ui.blocks.companyContent}
+				${providerLayout}
+				${this.#ui.blocks.representativeContent}
+				${validationReviewerLayout}
+				${this.#ui.blocks.validationEditorLayout}
+			</div>
+		`;
+			return this.#ui.container;
+		}
+		#createAddReviewerButton() {
+			this.#addReviewerButton = main_core.Tag.render`
+			<button type="button" class="sign-b2e-document-setup__add-button">
+				<span class="sign-b2e-document-setup__add-button_text">
+					${main_core.Loc.getMessage('SIGN_PARTIES_ADD_REVIEWER_BUTTON_TITLE')}
+				</span>
+				<span class="sign-b2e-document-setup__add-button_disabled_hint" data-hint="${main_core.Loc.getMessage('SIGN_PARTIES_ADD_REVIEWER_BUTTON_DISABLED_HINT', {
+			'#LIMIT#': sign_v2_b2e_documentValidation.maxReviewersCount
+		})}"></span>
+			</button>
+		`;
+			sign_v2_helper.Hint.create(this.#addReviewerButton);
+			BX.bind(this.#addReviewerButton, 'click', () => {
+				const container = document.getElementById(reviewerSelectorContainerListId);
+				if (container === null) {
+					return;
+				}
+				const selector = this.#documentValidation.addReviewerRepresentativeSelector();
+				main_core.Dom.append(selector, container);
+				this.#checkAddReviewerLimit();
+			});
+			this.#checkAddReviewerLimit();
+			return this.#addReviewerButton;
+		}
+		#checkAddReviewerLimit() {
+			if (this.#addReviewerButton === null) {
+				return;
+			}
+			this.#addReviewerButton.disabled = this.#documentValidation.getReviewerRepresentativeSelectorCount() >= sign_v2_b2e_documentValidation.maxReviewersCount;
+		}
+		#validate() {
+			return this.#companySelector.validate() && this.#representativeSelector.validate();
+		}
+		async save(documentId) {
+			this.#removeWarningFromBlocks();
+			if (!this.#validate()) {
+				throw new Error('Validation failed');
+			}
+			try {
+				await this.#companySelector.save(documentId);
+			} catch (e) {
+				this.#setWarning(this.#ui.blocks.companyContent);
+				throw e;
+			}
+		}
+		getSelectedProvider() {
+			return this.#companySelector.getSelectedCompanyProvider();
+		}
+		isProviderSelected() {
+			return Boolean(this.#companySelector.getSelectedCompanyProvider());
+		}
+		isRepresentativeSelected() {
+			return Boolean(this.#representativeSelector.getRepresentativeId());
+		}
+		getParties() {
+			return {
+				representative: {
+					entityType: this.#representativeSelector.getRepresentativeItemType(),
+					entityId: this.#representativeSelector.getRepresentativeId()
+				},
+				company: {
+					entityType: 'company',
+					entityId: this.#companySelector.getCompanyId()
+				},
+				validation: this.#documentValidation.getValidationData()
+			};
+		}
+		getSelectedCompanyId() {
+			return this.#companySelector.getCompanyId();
+		}
+		#setWarning(block) {
+			if (main_core.Type.isNull(block) || main_core.Type.isUndefined(block)) {
+				return;
+			}
+			main_core.Dom.addClass(block, blockWarningClass);
+		}
+		#removeWarningFromBlocks() {
+			for (const [key, block] of Object.entries(this.#ui.blocks)) {
+				if (main_core.Type.isNull(block)) {
+					return;
+				}
+				main_core.Dom.removeClass(block, blockWarningClass);
+			}
+		}
+		#addEditorLayout() {
+			main_core.Dom.append(this.#ui.blocks.validationEditorLayout, this.#ui.container);
+		}
+		#removeEditorLayout() {
+			main_core.Dom.remove(this.#ui.blocks.validationEditorLayout);
+		}
+	}
+
+	exports.Parties = Parties;
+
+})(this.BX.Sign.V2.B2e = this.BX.Sign.V2.B2e || {}, BX, BX.Event, BX.Sign.V2.B2e, BX.Sign.V2.B2e, BX.Sign.V2.B2e, BX.Sign, BX.Sign.V2, BX.Sign.V2);
 //# sourceMappingURL=parties.bundle.js.map

@@ -183,10 +183,14 @@ class Add extends Operation
 
 		if ($viewMode === \Bitrix\Crm\Kanban\ViewMode::MODE_ACTIVITIES)
 		{
-			$factory = $this->getFactory();
-			$stageFieldName = $factory->getEntityFieldNameByMap(Item::FIELD_NAME_STAGE_ID);
-
-			$stageId = $context->getItemOption($stageFieldName);
+			$stageId = $context->getItemOption(\Bitrix\Crm\Kanban\Entity\EntityActivities::ACTIVITY_STAGE_ID);
+			if (!$stageId)
+			{
+				$factory = $this->getFactory();
+				$stageId = $factory
+					? $context->getItemOption($factory->getEntityFieldNameByMap(Item::FIELD_NAME_STAGE_ID))
+					: null;
+			}
 			if (!$stageId)
 			{
 				return;
@@ -267,6 +271,7 @@ class Add extends Operation
 			AddEvent::createDefault($this->getItem()->getEntityTypeId())
 				->setSection(Dictionary::SECTION_UNKNOWN)
 				->setStatus($result->isSuccess() ? Dictionary::STATUS_SUCCESS : Dictionary::STATUS_ERROR)
+				->setActorId($this->getAnalyticsActorId())
 				->buildEvent()
 				->send()
 			;
@@ -281,6 +286,7 @@ class Add extends Operation
 		$status = $result->isSuccess() ? Dictionary::STATUS_SUCCESS : Dictionary::STATUS_ERROR;
 		$event
 			->setStatus($status)
+			->setActorId($this->getAnalyticsActorId())
 			->buildEvent()
 			->send()
 		;

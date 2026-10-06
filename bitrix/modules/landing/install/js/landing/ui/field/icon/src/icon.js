@@ -9,26 +9,26 @@ import './css/style.css';
 /**
  * @memberOf BX.Landing.UI.Field
  */
-export class Icon extends Image
+export class Icon
 {
 	constructor(data)
 	{
-		super(data);
-		this.uploadButton.layout.innerText = BX.Landing.Loc.getMessage("LANDING_ICONS_FIELD_BUTTON_REPLACE");
-		this.editButton.layout.hidden = true;
-		this.clearButton.layout.hidden = true;
+		const self = Reflect.construct(Image, [data], new.target);
+		self.uploadButton.layout.innerText = BX.Landing.Loc.getMessage("LANDING_ICONS_FIELD_BUTTON_REPLACE");
+		self.editButton.layout.hidden = true;
+		self.clearButton.layout.hidden = true;
 
-		this.dropzone.removeEventListener("dragover", this.onDragOver);
-		this.dropzone.removeEventListener("dragleave", this.onDragLeave);
-		this.dropzone.removeEventListener("drop", this.onDrop);
-		this.preview.removeEventListener("dragenter", this.onImageDragEnter);
+		self.dropzone.removeEventListener("dragover", self.onDragOver);
+		self.dropzone.removeEventListener("dragleave", self.onDragLeave);
+		self.dropzone.removeEventListener("drop", self.onDrop);
+		self.preview.removeEventListener("dragenter", self.onImageDragEnter);
 
-		this.options = new IconOptionsCard();
-		Dom.append(this.options.getLayout(), this.right);
-		this.onOptionClick = this.onOptionClick.bind(this);
-		this.options.subscribe('onChange', this.onOptionClick);
+		self.options = new IconOptionsCard();
+		Dom.append(self.options.getLayout(), self.right);
+		self.onOptionClick = self.onOptionClick.bind(self);
+		self.options.subscribe('onChange', self.onOptionClick);
 
-		const sourceClassList = this.content.classList;
+		const sourceClassList = self.content.classList;
 		const newClassList = [];
 		IconPanel
 			.getLibraries()
@@ -71,7 +71,9 @@ export class Icon extends Image
 				}
 
 				this.options.setOptionsByItem(newClassList);
-			}.bind(this));
+			}.bind(self));
+
+		return self;
 	}
 
 	onUploadClick(event)
@@ -283,3 +285,6 @@ export class Icon extends Image
 		});
 	}
 }
+
+Object.setPrototypeOf(Icon, Image);
+Object.setPrototypeOf(Icon.prototype, Image.prototype);

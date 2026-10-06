@@ -1,9 +1,9 @@
 import { Type } from 'main.core';
 
 import { Core } from 'im.v2.application.core';
-import { SidebarDetailBlock } from 'im.v2.const';
+import { ChatType, SidebarDetailBlock } from 'im.v2.const';
 import { UserManager } from 'im.v2.lib.user';
-import { type ImModelSidebarMultidialogItem } from 'im.v2.model';
+import { type ImModelChat, type ImModelSidebarMultidialogItem } from 'im.v2.model';
 
 import { type ChatUnreadParams, type ChatUserAddParams, type ChatUserLeaveParams } from './types/chat';
 import { type MessageChatParams, type MessageParams, type ReadMessageChatParams, type ReadMessageParams } from './types/message';
@@ -34,6 +34,17 @@ export class SidebarPullHandler
 			return;
 		}
 
+		// For a collab chat the member order is grouped on the server (owner -> moderators ->
+		// guests -> rest). We cannot recompute the group position on the client, so instead of
+		// appending the new member to the end of the Set we drop the loaded members and let the
+		// panel re-request the grouped first page, placing the member into the right group.
+		if (this.isCollab(params.dialogId))
+		{
+			void this.store.dispatch('sidebar/members/reset', { chatId: params.chatId });
+
+			return;
+		}
+
 		const { chatId, users, newUsers, relations } = params;
 		void this.userManager.setUsersToModel(Object.values(users));
 
@@ -56,10 +67,26 @@ export class SidebarPullHandler
 			return;
 		}
 
+		// See handleChatUserAdd: for collab we reset the loaded members and re-request the grouped
+		// first page instead of just removing one id, so the remaining order stays server-grouped.
+		if (this.isCollab(params.dialogId))
+		{
+			void this.store.dispatch('sidebar/members/reset', { chatId: params.chatId });
+
+			return;
+		}
+
 		void this.store.dispatch('sidebar/members/delete', {
 			chatId: params.chatId,
 			userId: params.userId,
 		});
+	}
+
+	isCollab(dialogId: string): boolean
+	{
+		const chat: ImModelChat = this.store.getters['chats/get'](dialogId, true);
+
+		return chat?.type === ChatType.collab;
 	}
 	// endregion
 

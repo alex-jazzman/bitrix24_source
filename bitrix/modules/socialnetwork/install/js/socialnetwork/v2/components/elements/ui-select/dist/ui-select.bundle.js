@@ -3,16 +3,12 @@ this.BX = this.BX || {};
 this.BX.Socialnetwork = this.BX.Socialnetwork || {};
 this.BX.Socialnetwork.V2 = this.BX.Socialnetwork.V2 || {};
 this.BX.Socialnetwork.V2.Components = this.BX.Socialnetwork.V2.Components || {};
-(function (exports, ui_system_input_vue, ui_system_menu_vue) {
+(function (exports, ui_vue3, ui_select) {
 	'use strict';
 
 	// @vue/component
-	const UiSelect = {
+	const UiSelect = ui_vue3.defineComponent({
 		name: 'UiSelect',
-		components: {
-			BInput: ui_system_input_vue.BInput,
-			BMenu: ui_system_menu_vue.BMenu
-		},
 		props: {
 			modelValue: {
 				type: [String, Number, null],
@@ -41,56 +37,56 @@ this.BX.Socialnetwork.V2.Components = this.BX.Socialnetwork.V2.Components || {};
 			}
 		},
 		emits: ['update:modelValue'],
-		data() {
-			return {
-				isMenuShown: false
-			};
-		},
-		computed: {
-			inputValue() {
-				return this.items.find(item => this.isSelectedItem(item))?.title ?? '';
+		watch: {
+			modelValue(value) {
+				this.select.setValue(String(value ?? ''));
+			},
+			items() {
+				this.initSelect();
+			},
+			disabled() {
+				this.updateDisabled();
 			}
 		},
+		mounted() {
+			this.initSelect();
+		},
 		methods: {
-			selectItem(item) {
-				this.$emit('update:modelValue', item.id);
-			},
-			isSelectedItem(item) {
-				return item.id === this.modelValue;
-			},
-			getMenuOptions() {
-				return {
-					bindElement: this.$refs.selector.$el,
-					targetContainer: this.targetContainer || document.body,
-					items: this.items.map(item => {
+			initSelect() {
+				this.select = new ui_select.Select({
+					options: this.items.map(item => {
 						return {
-							title: item.title,
-							icon: item.icon,
-							isSelected: this.isSelectedItem(item),
-							design: item.disabled ? ui_system_menu_vue.MenuItemDesign.Disabled : ui_system_menu_vue.MenuItemDesign.Default,
-							onClick: () => this.selectItem(item)
+							value: String(item.id),
+							label: item.title
 						};
-					})
-				};
+					}),
+					value: String(this.modelValue ?? ''),
+					placeholder: this.label,
+					containerClassname: `socialnetwork--ui-select ${this.inputClassName}`,
+					popupParams: {
+						targetContainer: this.targetContainer || document.body
+					}
+				});
+				this.select.subscribe('update', this.handleUpdate);
+				this.select.renderTo(this.$refs.container);
+				this.updateDisabled();
+			},
+			handleUpdate(event) {
+				const selectedItem = this.items.find(item => String(item.id) === event.getData());
+				if (selectedItem && selectedItem.id !== this.modelValue) {
+					this.$emit('update:modelValue', selectedItem.id);
+				}
+			},
+			updateDisabled() {
+				this.select.getInput().disabled = this.disabled;
 			}
 		},
 		template: `
-		<BInput
-			:modelValue="inputValue"
-			:label
-			:disabled
-			dropdown
-			clickable
-			:class="inputClassName"
-			:active="isMenuShown"
-			ref="selector"
-			@click="isMenuShown = true"
-		/>
-		<BMenu v-if="isMenuShown" :options="getMenuOptions()" @close="isMenuShown = false"/>
+		<div ref="container"></div>
 	`
-	};
+	});
 
 	exports.UiSelect = UiSelect;
 
-})(this.BX.Socialnetwork.V2.Components.Elements = this.BX.Socialnetwork.V2.Components.Elements || {}, BX.UI.System.Input.Vue, BX.UI.System.Menu);
+})(this.BX.Socialnetwork.V2.Components.Elements = this.BX.Socialnetwork.V2.Components.Elements || {}, BX.Vue3, BX.Ui);
 //# sourceMappingURL=ui-select.bundle.js.map

@@ -900,7 +900,10 @@ else
 {
 	$actionBtn[] = [
 		'TYPE' => 'save',
-		'ONCLICK' => 'BX.rest.integration.edit.actionSaveBtnClick()'
+		'ONCLICK' => 'BX.rest.integration.edit.actionSaveBtnClick()',
+		'CAPTION' => ($arResult['IS_NEW_OPEN'] ?? false)
+			? Loc::getMessage('REST_INTEGRATION_EDIT_BTN_CREATE')
+			: null,
 	];
 }
 $actionBtn[] = 'close';
@@ -935,6 +938,7 @@ $actionBtn[] = 'close';
 			'REST_INTEGRATION_EDIT_CLOSE_SLIDER_CLOSE' => Loc::getMessage("REST_INTEGRATION_EDIT_CLOSE_SLIDER_CLOSE"),
 			'REST_INTEGRATION_EDIT_CLOSE_SLIDER_YES' => Loc::getMessage("REST_INTEGRATION_EDIT_CLOSE_SLIDER_YES"),
 			'REST_INTEGRATION_EDIT_CLOSE_SLIDER_CANCEL' => Loc::getMessage("REST_INTEGRATION_EDIT_CLOSE_SLIDER_CANCEL"),
+			'REST_INTEGRATION_EDIT_SAVE_SUCCESS' => Loc::getMessage("REST_INTEGRATION_EDIT_SAVE_SUCCESS"),
 		]
 	);?>);
 	var restIntegrationEditComponent = <?=Json::encode(

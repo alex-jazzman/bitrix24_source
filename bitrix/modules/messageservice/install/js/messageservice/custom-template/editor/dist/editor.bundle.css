@@ -1,0 +1,49 @@
+.msgsvc-ct-form {
+	display: flex;
+	flex-direction: column;
+	gap: 0;
+	min-width: 0;
+}
+
+.msgsvc-ct-form__slot {
+	margin-top: var(--ui-space-stack-sm);
+	min-width: 0;
+}
+
+.msgsvc-ct-form__body-error {
+	margin-top: var(--ui-space-stack-2xs2);
+	color: var(--ui-color-accent-main-alert);
+	font-size: var(--ui-font-size-xs);
+	line-height: var(--ui-font-line-height-sm);
+}
+
+.msgsvc-ct-form__body-error[hidden] {
+	display: none;
+}
+
+.msgsvc-ct-form__binding[hidden] {
+	display: none;
+}
+
+.msgsvc-ct-form__binding {
+	margin-top: var(--ui-space-stack-2xs);
+}
+
+.msgsvc-ct-form__binding-content {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	min-width: 0;
+}
+
+.msgsvc-ct-form__binding-chips {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: var(--ui-space-stack-2xs) var(--ui-space-inline-2xs);
+	margin-top: 0;
+}
+
+.msgsvc-ct-form__binding-chips .msgsvc-ct-form__binding-chip {
+	cursor: default;
+}

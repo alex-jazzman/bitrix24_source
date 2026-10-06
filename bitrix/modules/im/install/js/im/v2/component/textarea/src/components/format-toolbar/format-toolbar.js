@@ -58,6 +58,10 @@ export const FormatToolbar = {
 				return Type.isNumber(value.left) && Type.isNumber(value.top);
 			},
 		},
+		useMarkdown: {
+			type: Boolean,
+			default: false,
+		},
 	},
 	emits: ['close', 'updateText'],
 	data(): JsonObject {
@@ -152,12 +156,12 @@ export const FormatToolbar = {
 		},
 		applyDecoration(key: string)
 		{
-			const newText = Textarea.handleDecorationTag(this.textarea, key);
+			const newText = Textarea.handleDecorationTag(this.textarea, key, this.useMarkdown);
 			this.updateText(newText);
 		},
 		onInsertLink(linkUrl: string)
 		{
-			const newText = Textarea.addUrlTag(this.textarea, linkUrl);
+			const newText = Textarea.addUrlTag(this.textarea, linkUrl, this.useMarkdown);
 			this.updateText(newText);
 			this.$emit('close');
 		},

@@ -18,7 +18,6 @@ export class B2BSignSettings extends SignSettings
 		this.documentSetup = new DocumentSetup(blankSelectorConfig);
 		this.documentSend = new DocumentSend(documentSendConfig);
 		this.#requisites = new Requisites();
-		this.isB2bSignMaster = true;
 		this.subscribeOnEvents();
 	}
 

@@ -13,6 +13,7 @@ return [
 		'landing.loc',
 		'landing.main',
 		'landing.menu.menuitem',
+		'landing.ui.a11y',
 		'landing.ui.form.menuform',
 		'landing.ui.panel.stylepanel',
 		'main.core',

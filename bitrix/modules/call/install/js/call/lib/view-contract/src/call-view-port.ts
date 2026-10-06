@@ -85,6 +85,7 @@ export interface CallView
 	updateButtons(skippedElementsList?: string[]): void;
 	isButtonBlocked(buttonName: string): boolean;
 	getButtonElement(buttonId: string, elementType?: string): HTMLElement | null;
+	setGuestLink(link: string | null): void;
 
 	// endregion
 

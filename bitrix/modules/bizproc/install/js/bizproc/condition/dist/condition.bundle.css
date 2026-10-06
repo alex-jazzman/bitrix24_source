@@ -1,0 +1,437 @@
+.bizproc-automation-popup-settings {
+	clear: both;
+	display: block;
+	overflow: hidden;
+	margin: 0 0 11px 0;
+	position: relative;
+}
+
+.bizproc-automation-popup-settings-title {
+	display: inline-block;
+	font-size: 14px;
+	color: var(--ui-color-text-subtle);
+	line-height: var(--ui-font-line-height-lg);
+}
+
+.bizproc-automation-popup-settings-link-wrapper {
+	display: inline-block;
+	line-height: 26px;
+	margin: 0 10px 0 0;
+}
+
+.bizproc-automation-popup-settings-link,
+.bizproc-automation-popup-settings-button {
+	display: inline-block;
+	margin: 0 6px;
+	padding: 0 0 2px 0;
+	font-size: var(--ui-font-size-md);
+	font-weight: var(--ui-font-weight-normal);
+	color: var(--ui-color-link-primary-base);
+	border-bottom: var(--ui-border-width-thin) var(--ui-text-decoration-style-dashed) rgba(var(--ui-color-link-primary-base-rgb), .4);
+	line-height: normal;
+	text-decoration: none;
+	cursor: pointer;
+	transition: .1s;
+}
+
+.bizproc-automation-popup-settings-link:hover,
+.bizproc-automation-popup-settings-button:hover {
+	border-bottom-color: rgba(var(--ui-color-link-primary-base-rgb), 1);
+}
+
+.bizproc-automation-popup-select-block {
+	display: block;
+	overflow: hidden;
+}
+
+.bizproc-automation-popup-select {
+	display: flex;
+	align-items: center;
+}
+
+.bizproc-automation-popup-select-dotted {
+	flex: 1;
+	padding: 5px 0;
+	display: flex;
+	align-items: center;
+	min-width: 30px;
+	max-width: 30px;
+	cursor: pointer;
+}
+
+.bizproc-automation-popup-select-dotted:before {
+	content: ' ';
+	display: inline-block;
+	margin: 0 0 0 8px;
+	width: 4px;
+	height: 4px;
+	background: #82868c;
+	opacity: .6;
+	box-shadow: 6px 0 0 #82868c, 12px 0 0 #82868c;
+	border-radius:50%;
+	transition: .1s;
+}
+
+.bizproc-automation-popup-select-dotted:hover:before {
+	opacity: 1;
+}
+
+.bizproc-automation-popup-settings-dropdown {
+	display: inline-block;
+	min-width: 155px;
+	padding: 10px 30px 10px 10px;
+	height: 38px;
+	outline: none;
+	margin: 0 10px 0 0;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2010.97%206.86%22%3E%3Cpolygon%20points%3D%225.49%204.11%201.37%200%200%201.37%204.8%206.17%205.49%206.86%2010.97%201.37%209.6%200%205.49%204.11%22%20fill%3D%22%23535c69%22/%3E%3C/svg%3E');
+	background-position: right 10px center;
+	background-repeat: no-repeat;
+	background-size: 11px 22px;
+	background-color: #fff;
+	line-height: 14px;
+	color: #000000;
+	border: 1px solid #c6cdd3;
+	cursor: pointer;
+	border-radius: 2px;
+	box-sizing: border-box;
+	appearance: none !important;
+	vertical-align: middle;
+	text-align: left;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.bizproc-automation-popup-settings__condition-content {
+	min-height: 54px;
+	margin-bottom: 12px;
+}
+
+.bizproc-automation-popup-settings__condition-header {
+	display: flex;
+	justify-content: space-between;
+	margin-bottom: 5px;
+	border-bottom: var(--ui-border-width-thin) solid var(--ui-color-base-20);
+}
+
+.bizproc-automation-popup-settings__btn-toggle {
+	display: inline-flex;
+	gap: 5px;
+	align-items: center;
+	padding-bottom: 5px;
+	--ui-icon-set__icon-color: var(--ui-color-text-subtle);
+	cursor: pointer;
+	transition: .2s;
+}
+
+.bizproc-automation-popup-settings__btn-toggle.--disabled {
+	opacity: .4;
+	pointer-events: none;
+}
+
+.bizproc-automation-popup-settings__btn-toggle:hover .bizproc-automation-popup-settings-title {
+	color: var(--ui-color-palette-gray-90);
+}
+
+.bizproc-automation-popup-settings__btn-toggle:hover {
+	--ui-icon-set__icon-color: var(--ui-color-palette-gray-90);
+}
+
+.bizproc-automation-popup-settings__condition {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 5px;
+	padding: 3px 0;
+}
+
+.bizproc-automation-popup-settings__condition-content.--active .bizproc-automation-popup-settings__btn-toggle .ui-icon-set {
+	transform: rotate(180deg);
+}
+
+.bizproc-automation-popup-settings__condition-help {
+	color: var(--ui-color-base-40);
+	line-height: var(--ui-font-line-height-3xl);
+}
+
+.bizproc-automation-popup-settings__transition-height-wrapper {
+	display: grid;
+	grid-template-rows: 0fr;
+	transition: grid-template-rows .2s;
+}
+
+.bizproc-automation-popup-settings__transition-height-content {
+	overflow: hidden;
+}
+
+.bizproc-automation-popup-settings__transition-height-wrapper.--revert,
+.bizproc-automation-popup-settings__condition-content.--active .bizproc-automation-popup-settings__transition-height-wrapper {
+	grid-template-rows: 1fr;
+}
+
+.bizproc-automation-popup-settings__condition-content.--active .bizproc-automation-popup-settings__transition-height-wrapper.--revert {
+	grid-template-rows: 0fr;
+}
+
+.bizproc-automation-popup-settings__condition-selector {
+	display: flex;
+	align-items: baseline;
+	flex-direction: column;
+	width: 100%;
+	gap: 5px;
+}
+
+.bizproc-automation-popup-settings__condition-item {
+	display: flex;
+	align-items: center;
+	/*max-width: 100%;*/
+	width: 100%;
+	padding: 8px 0;
+	box-sizing: border-box;
+	border: var(--ui-border-width-thin) solid var(--ui-color-base-20);
+	border-radius: var(--ui-border-radius-2xs);
+	background: var(--ui-color-background-primary);
+	cursor: pointer;
+}
+
+.bizproc-automation-popup-settings__condition-item_draggable,
+.bizproc-automation-popup-settings__condition-item_close {
+	flex-shrink: 0;
+	--ui-icon-set__icon-color: var(--ui-color-base-80);
+}
+
+.bizproc-automation-popup-settings__condition-item_draggable:hover {
+	--ui-icon-set__icon-color: var(--ui-color-base-90);
+}
+
+.bizproc-automation-popup-settings__condition-item_close {
+	--ui-icon-set__icon-color: var(--ui-color-base-35);
+}
+
+.bizproc-automation-popup-settings__condition-text {
+	overflow: hidden;
+	padding: 0 3px;
+	border-radius: var(--ui-border-radius-2xs);
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	font-size: var(--ui-font-size-md);
+	line-height: var(--ui-font-line-height-md);
+	color: var(--ui-color-link-primary-base);
+	background: var(--ui-color-background-info);
+}
+
+.bizproc-automation-popup-settings__condition-item_close:hover {
+	--ui-icon-set__icon-color: var(--ui-color-base-80);
+}
+
+.bizproc-automation-popup-settings__condition-item_content {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px;
+	flex: 1;
+	margin: 0 3px;
+	overflow: hidden;
+}
+
+.bizproc-automation-popup-settings__condition-switcher {
+	position: relative;
+	padding: 2px;
+	border: var(--ui-border-width-thin) solid var(--ui-color-base-20);
+	border-radius: var(--ui-border-radius-xs);
+	background: var(--ui-color-background-primary);
+	cursor: pointer;
+}
+
+.bizproc-automation-popup-settings__condition-switcher_wrapper {
+	position: relative;
+	display: flex;
+	gap: 0 2px;
+}
+
+.bizproc-automation-popup-settings__condition-switcher_btn {
+	font-size: var(--ui-font-size-xs);
+	line-height: var(--ui-font-line-height-lg);
+	padding: 0 6px;
+	text-transform: uppercase;
+	color: var(--ui-color-base-30);
+	background: transparent;
+	border-radius: var(--ui-border-radius-2xs);
+	-webkit-user-select: none;
+	        user-select: none;
+	transition: .2s;
+}
+
+.bizproc-automation-popup-settings__condition-switcher_btn.--active {
+	color: var(--ui-color-on-primary);
+	background: var(--ui-color-primary);
+}
+
+.bizproc-automation-popup-settings__condition-selector:last-of-type .bizproc-automation-popup-settings__condition-switcher {
+	display: none;
+}
+
+.bizproc-automation-popup-select-item {
+	display: block;
+	overflow: hidden;
+	margin: 0 0 4px 0;
+}
+
+.bizproc-automation-popup-select-item:last-child {
+	margin: 0;
+}
+
+.bizproc-automation-popup-select-item .bizproc-automation-popup-settings-title {
+	min-width: 40px;
+	vertical-align: middle;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	margin: 0 13px 0 0;
+}
+
+.bizproc-automation-popup-select-item .bizproc-automation-popup-settings-title-auto-width {
+	min-width: auto;
+	margin: 0 9px;
+	flex-shrink: 0;
+}
+
+.bizproc-automation-delay-interval-basis {
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	vertical-align: middle;
+	position: relative;
+}
+
+.bizproc-automation-popup-select__wrapper {
+	position: relative;
+	display: flex;
+	flex-wrap: wrap;
+	min-height: 56px;
+	line-height: 56px;
+	margin-bottom: 0;
+	padding: 0 10px 0 17px;
+	background: var(--ui-color-base-02);
+	transition: .2s;
+}
+
+.bizproc-automation-popup-select__wrapper.--active {
+	background: var( --ui-color-palette-blue-20);
+}
+
+.bizproc-automation-popup-select__wrapper.--first {
+	border-top-left-radius: 6px;
+	border-top-right-radius: 6px;
+}
+
+.bizproc-automation-popup-select__wrapper.--last {
+	border-bottom-left-radius: 6px;
+	border-bottom-right-radius: 6px;
+}
+
+.bizproc-automation-popup-select__visible-row {
+	display: flex;
+	align-items: center;
+	max-width: 100%;
+	width: 100%;
+	min-height: 56px;
+}
+
+.bizproc-automation-popup-select__chevron {
+	order: 9;
+	margin-left: auto;
+	opacity: 0.6;
+	cursor: pointer;
+	transition: .2s;
+}
+
+.bizproc-automation-popup-select__chevron:hover {
+	opacity: 1;
+}
+
+.bizproc-automation-popup-select__chevron.--active {
+	transform: rotate(180deg);
+}
+
+.bizproc-automation-popup-select__chevron.--disabled {
+	opacity: 0.2;
+}
+
+.bizproc-automation-popup-select__hidden-row {
+	position: relative;
+	width: calc(100% - 21px);
+	height: 0;
+	margin-right: -10px;
+	margin-left: auto;
+	overflow: hidden;
+	transition: .2s;
+}
+
+.bizproc-automation-popup-select__hidden-row::before {
+	content: '';
+	position: absolute;
+	top: 0;
+	left: 0;
+	display: block;
+	width: 100%;
+	height: 1px;
+	background: var(--ui-color-base-20);
+}
+
+.bizproc-automation-popup-select__hidden-row.--visible {
+	height: 55px;
+}
+
+.ui-ctl-radio .ui-ctl-element.bizproc-automation-popup-select__input {
+	margin-right: 16px;
+}
+
+.bizproc-automation-popup-settings__input {
+	flex-shrink: 0;
+	box-sizing: border-box;
+	display: inline-block;
+	width: 43px;
+	height: 31px;
+	margin: 0 10px 0 0;
+	padding: 0 5px;
+	border: 1px solid #C9CCD0;
+	border-radius: 4px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	text-align: center;
+	font-family: var(--ui-font-family-primary);
+	font-size: var(--ui-font-size-md);
+	color: var(--ui-color-text-secondary);
+	background: var(--ui-color-background-primary);
+}
+
+.bizproc-automation-delay-interval-set-time {
+	width: 100px;
+	margin-right: 4px;
+	text-align: left;
+	padding-left: 10px;
+	padding-right: 0;
+}
+
+.bizproc-automation-popup-settings__text {
+	margin-right: 13px;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	font-size: var(--ui-font-size-md);
+	color: var(--ui-color-palette-gray-80);
+}
+
+.bizproc-automation-popup-settings__text.--first {
+	min-width: 48px;
+	flex-shrink: 0;
+}
+
+.bizproc-automation-inline-time-selector-chevron {
+	position: absolute;
+	right: 8px;
+	top: 0;
+	bottom: 0;
+	margin: auto 0;
+	--ui-icon-set__icon-size: 18px;
+}

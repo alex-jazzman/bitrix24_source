@@ -1,6 +1,6 @@
 import './style.css';
 
-import { Type, Dom, Event, Loc } from 'main.core';
+import { Type, Dom, Event } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import { markRaw } from 'ui.vue3';
 import { mapActions, mapState } from 'ui.vue3.pinia';
@@ -17,12 +17,21 @@ import { useLoc } from '../../../../shared/composables';
 import { editorAPI } from '../../../../shared/api';
 import { Loader } from '../../../../shared/ui';
 import { createUniqueId, deepEqual } from '../../../../shared/utils';
-import { PROPERTY_TYPES } from '../../../../shared/constants';
+import { PROPERTY_TYPES, EVALUATION_STAGE } from '../../../../shared/constants';
 import { EditExtendedAction } from '../edit-extended-action';
 import {
+	closeReadableExpressionPopover,
+	mountFormVeneers,
+	unmountFormVeneers,
+} from '../../utils/readable-expressions-veneer';
+import { diagramStore } from '../../../../entities/blocks';
+import { ValueSelector } from '../../../../entities/common-node-settings';
+import {
 	useNodeSettingsStore,
+	DEV_NODE_FILTER_BACKING_ACTIVITY_TYPES,
 	EVENT_NAMES,
 	NODE_FILTER_BACKING_ACTIVITY_TYPES,
+	getConnectedBlocksContextForConstruction,
 } from '../../../../entities/node-settings';
 const FILTER_DOCUMENT_PROPERTY_ID = 'Document';
 const CorrectDocumentTypeLength = 3;
@@ -108,6 +117,7 @@ export const EditFilterExpression = {
 		selectorInteractionHandler: Function | null,
 		selectorStateObserver: MutationObserver | null,
 		isSelectorStateSyncQueued: boolean,
+		isSelectorMarkupChanged: boolean,
 		onBeforeSubmitCallback: Function | null,
 	}
 	{
@@ -128,15 +138,41 @@ export const EditFilterExpression = {
 			selectorInteractionHandler: null,
 			selectorStateObserver: null,
 			isSelectorStateSyncQueued: false,
+			isSelectorMarkupChanged: false,
 			onBeforeSubmitCallback: null,
 		};
 	},
 	computed:
 	{
-		...mapState(useNodeSettingsStore, ['nodeSettings']),
+		...mapState(useNodeSettingsStore, ['nodeSettings', 'block', 'currentRule', 'currentSettingsItems']),
 		Status(): typeof Status
 		{
 			return Status;
+		},
+		/** Load failure without a fallback editor: shown as a message inside the live region. */
+		isUnsupportedDocument(): boolean
+		{
+			return this.status === Status.Error && !this.isFallbackActionAvailable;
+		},
+		/** Filter controls are rendered only once the settings have loaded. */
+		isFilterReady(): boolean
+		{
+			return this.status !== Status.Loading && this.status !== Status.Error;
+		},
+		connectedBlocks(): Array<Object>
+		{
+			if (!this.block || !this.currentRule)
+			{
+				return [];
+			}
+
+			return getConnectedBlocksContextForConstruction(
+				this.block,
+				this.currentRule?.id ?? null,
+				this.ruleCard,
+				this.construction,
+				this.currentSettingsItems,
+			).allBlocks;
 		},
 		fixedEntityTypeId(): number | null
 		{
@@ -150,7 +186,21 @@ export const EditFilterExpression = {
 			const documentType = this.getContextDocumentType();
 			const moduleId = Type.isArrayFilled(documentType) ? String(documentType[0]) : '';
 
-			return NODE_FILTER_BACKING_ACTIVITY_TYPES[moduleId] ?? '';
+			// The dev-only map is asked last: on a portal it never matches, on a developer stand it
+			// adds the virtual `bizproc` document.
+			return NODE_FILTER_BACKING_ACTIVITY_TYPES[moduleId]
+				?? DEV_NODE_FILTER_BACKING_ACTIVITY_TYPES[moduleId]
+				?? ''
+			;
+		},
+		/**
+		 * Whether the legacy settings dialog can be used as the fallback editor. It is keyed by the
+		 * activity type, so an empty backing type must never reach it: the dialog would answer with
+		 * "Bad activity type!" printed straight into the block.
+		 */
+		isFallbackActionAvailable(): boolean
+		{
+			return Type.isStringFilled(this.backingActivityType);
 		},
 		filterFields(): Array<Object>
 		{
@@ -169,7 +219,7 @@ export const EditFilterExpression = {
 		},
 		isEntitySelectorVisible(): boolean
 		{
-			return !this.fixedEntityTypeId && this.entityTypeOptions.length !== 1;
+			return this.entityTypeOptions.length >= 2;
 		},
 		hasSelectedEntityType(): boolean
 		{
@@ -234,6 +284,9 @@ export const EditFilterExpression = {
 		this.lastLoadId++;
 		this.unsubscribe();
 		this.destroyConditionSelector();
+		// The fields of the filter go away with the editor without a pass of their own, so the
+		// popover of a token would be left in `document.body` bound to an anchor no longer there.
+		closeReadableExpressionPopover();
 	},
 	methods:
 	{
@@ -246,7 +299,6 @@ export const EditFilterExpression = {
 
 			try
 			{
-				this.initWorkflowGlobals();
 				const metadata = await this.loadMetadata();
 				if (requestId !== this.lastLoadId)
 				{
@@ -286,6 +338,7 @@ export const EditFilterExpression = {
 				activityType: this.backingActivityType,
 				documentType,
 				onlyDynamicEntities: !this.fixedEntityTypeId,
+				includeRelatedEntityTypes: true,
 			});
 
 			if (!Type.isPlainObject(metadata))
@@ -343,15 +396,15 @@ export const EditFilterExpression = {
 
 		resolveCurrentEntityTypeId(): string
 		{
-			if (this.fixedEntityTypeId)
-			{
-				return String(this.fixedEntityTypeId);
-			}
-
 			const currentDynamicTypeId = this.getCurrentDynamicTypeId();
 			if (currentDynamicTypeId > 0)
 			{
 				return String(currentDynamicTypeId);
+			}
+
+			if (this.fixedEntityTypeId)
+			{
+				return String(this.fixedEntityTypeId);
 			}
 
 			if (this.entityTypeOptions.length === 1)
@@ -452,10 +505,7 @@ export const EditFilterExpression = {
 			this.conditionGroupSelector = markRaw(new ConditionGroupSelector(this.conditionGroup, {
 				fields: this.filterFields,
 				fieldPrefix: this.filteringFieldsPrefix,
-				onOpenMenu: this.onOpenFilterFieldsMenu,
-				customSelector: Type.isFunction(window.BPAShowSelector)
-					? this.showFieldSelector
-					: null,
+				customSelector: this.showFieldSelector.bind(this),
 				caption: {
 					head: this.getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_FILTER_FIELDS'),
 					collapsed: this.getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_FILTER_FIELDS_COLLAPSED'),
@@ -472,6 +522,7 @@ export const EditFilterExpression = {
 			Dom.append(this.conditionGroupSelector.createNode(), this.$refs.filterFieldsContainer);
 			this.bindSelectorStateTracking();
 			this.observeConditionSelectorState();
+			this.isSelectorMarkupChanged = true;
 			this.queueSelectorStateSync();
 		},
 
@@ -502,9 +553,11 @@ export const EditFilterExpression = {
 
 		destroyConditionSelector(): void
 		{
+			unmountFormVeneers(this.$refs.filterFieldsContainer);
 			this.unbindSelectorStateTracking();
 			this.disconnectConditionSelectorObserver();
 			this.isSelectorStateSyncQueued = false;
+			this.isSelectorMarkupChanged = false;
 
 			if (this.conditionGroupSelector)
 			{
@@ -553,6 +606,7 @@ export const EditFilterExpression = {
 
 			this.disconnectConditionSelectorObserver();
 			this.selectorStateObserver = new MutationObserver(() => {
+				this.isSelectorMarkupChanged = true;
 				this.queueSelectorStateSync();
 			});
 
@@ -588,136 +642,55 @@ export const EditFilterExpression = {
 				}
 
 				this.syncSelectorStateFromDom();
+
+				// Only new markup can hold a field left without a layer. Typing raises the same sync
+				// through `input`, and a pass over every keystroke would read the computed style of
+				// each selector button of the filter.
+				if (this.isSelectorMarkupChanged)
+				{
+					this.isSelectorMarkupChanged = false;
+					mountFormVeneers(this.$refs.filterFieldsContainer, this.connectedBlocks);
+				}
 			});
 		},
 
 		showFieldSelector(targetInputId: string): void
 		{
-			window.BPAShowSelector(targetInputId, 'string', '');
-		},
-
-		initWorkflowGlobals(): void
-		{
-			window.arWorkflowParameters = this.template?.PARAMETERS ?? {};
-			window.arWorkflowVariables = this.template?.VARIABLES ?? {};
-			window.arWorkflowConstants = this.template?.CONSTANTS ?? {};
-		},
-
-		onOpenFilterFieldsMenu(event: Object): void
-		{
-			this.addBPFields(event.getData().selector);
-		},
-
-		addBPFields(selector: Object): void
-		{
-			const getSelectorProperties = ({ properties, objectName, expressionPrefix }): Array<Object> => {
-				if (Type.isObject(properties))
-				{
-					return Object.entries(properties).map(([id, property]) => ({
-						id,
-						title: property.Name,
-						customData: {
-							field: {
-								Id: id,
-								Type: property.Type,
-								Name: property.Name,
-								ObjectName: objectName,
-								SystemExpression: `{=${objectName}:${id}}`,
-								Expression: expressionPrefix
-									? `{{${expressionPrefix}:${id}}}`
-									: `{=${objectName}:${id}}`,
-							},
-						},
-					}));
-				}
-
-				return [];
-			};
-			const getGlobalSelectorProperties = ({ properties, visibilityNames, objectName }): Array<Object> => {
-				if (Type.isObject(properties))
-				{
-					return Object.entries(properties).map(([id, property]) => {
-						const field = {
-							id,
-							Type: property.Type,
-							title: property.Name,
-							ObjectName: objectName,
-							SystemExpression: `{=${objectName}:${id}}`,
-							Expression: `{=${objectName}:${id}}`,
-						};
-
-						if (property.Visibility && visibilityNames[property.Visibility])
-						{
-							field.Expression = `{{${visibilityNames[property.Visibility]}: ${property.Name}}}`;
-						}
-
-						return {
-							id,
-							title: property.Name,
-							supertitle: visibilityNames[property.Visibility],
-							customData: { field },
-						};
-					});
-				}
-
-				return [];
-			};
-
-			selector.addGroup('workflowParameters', {
-				id: 'workflowParameters',
-				title: Loc.getMessage('BIZPROC_WFEDIT_MENU_PARAMS'),
-				children: [
-					{
-						id: 'parameters',
-						title: Loc.getMessage('BIZPROC_AUTOMATION_CMP_PARAMETERS_LIST'),
-						children: getSelectorProperties({
-							properties: window.arWorkflowParameters || {},
-							objectName: 'Template',
-							expressionPrefix: '~*',
-						}),
-					},
-					{
-						id: 'variables',
-						title: Loc.getMessage('BIZPROC_AUTOMATION_CMP_GLOB_VARIABLES_LIST_1'),
-						children: getSelectorProperties({
-							properties: window.arWorkflowVariables || {},
-							objectName: 'Variable',
-						}),
-					},
-					{
-						id: 'constants',
-						title: Loc.getMessage('BIZPROC_AUTOMATION_CMP_CONSTANTS_LIST'),
-						children: getSelectorProperties({
-							properties: window.arWorkflowConstants || {},
-							objectName: 'Constant',
-							expressionPrefix: '~&',
-						}),
-					},
-				],
-			});
-
-			if (window.arWorkflowGlobalVariables && window.wfGVarVisibilityNames)
+			const targetElement = document.getElementById(targetInputId);
+			if (!targetElement || !this.block)
 			{
-				selector.addGroup('globalVariables', {
-					id: 'globalVariables',
-					title: Loc.getMessage('BIZPROC_AUTOMATION_CMP_GLOB_VARIABLES_LIST'),
-					children: getGlobalSelectorProperties({
-						properties: window.arWorkflowGlobalVariables || {},
-						visibilityNames: window.wfGVarVisibilityNames || {},
-						objectName: 'GlobalVar',
-					}),
-				});
+				return;
 			}
 
-			selector.addGroup('globalConstants', {
-				id: 'globalConstants',
-				title: Loc.getMessage('BIZPROC_AUTOMATION_CMP_GLOB_CONSTANTS_LIST'),
-				children: getGlobalSelectorProperties({
-					properties: window.arWorkflowGlobalConstants || {},
-					visibilityNames: window.wfGConstVisibilityNames || {},
-					objectName: 'GlobalConst',
-				}),
-			});
+			const selector = new ValueSelector(
+				diagramStore(),
+				this.block,
+				this.currentRule?.id,
+				this.connectedBlocks,
+				// The results of a filter are published onto the activity of a running workflow, so its
+				// fields keep the full set of template sources even under a trigger.
+				EVALUATION_STAGE.IN_STARTED_WORKFLOW,
+			);
+
+			selector
+				.show(targetElement)
+				.then((value: string) => {
+					if (!Type.isStringFilled(value))
+					{
+						return;
+					}
+
+					const caretPosition = targetElement.selectionEnd ?? targetElement.value.length;
+					const beforePart = targetElement.value.slice(0, caretPosition);
+					const afterPart = targetElement.value.slice(caretPosition);
+
+					targetElement.value = beforePart + value + afterPart;
+					targetElement.selectionEnd = beforePart.length + value.length;
+					targetElement.focus();
+					targetElement.dispatchEvent(new window.Event('change'));
+				})
+				.catch((error) => console.error(error))
+			;
 		},
 
 		syncSelectorStateFromDom(force: boolean = false): void
@@ -901,14 +874,14 @@ export const EditFilterExpression = {
 				}
 			}
 
-			if (this.nodeSettings?.fixedDocumentType?.length === CorrectDocumentTypeLength)
-			{
-				return this.nodeSettings.fixedDocumentType;
-			}
-
 			if (this.documentTypeMap.has(String(dynamicTypeId)))
 			{
 				return this.documentTypeMap.get(String(dynamicTypeId));
+			}
+
+			if (this.nodeSettings?.fixedDocumentType?.length === CorrectDocumentTypeLength)
+			{
+				return this.nodeSettings.fixedDocumentType;
 			}
 
 			return Type.isArrayFilled(this.documentType) ? this.documentType : null;
@@ -930,15 +903,46 @@ export const EditFilterExpression = {
 		},
 	},
 	template: `
-		<div class="editor-chart-node-settings-edit-filter-expression">
+		<div
+			class="editor-chart-node-settings-edit-filter-expression"
+			data-testid="bizprocdesigner-filter-expression"
+		>
+			<!--
+				Live region: announces loading/error status changes to screen readers. Kept mounted
+				across the whole loading-to-error transition, and left out of the column gap once
+				there is no status left to show.
+			-->
 			<div
-				v-if="status === Status.Loading"
-				class="editor-chart-node-settings-edit-filter-expression__loader"
+				v-if="status === Status.Loading || isUnsupportedDocument"
+				class="editor-chart-node-settings-edit-filter-expression__status"
+				data-testid="bizprocdesigner-filter-expression-status"
+				aria-live="polite"
 			>
-				<Loader />
+				<div
+					v-if="status === Status.Loading"
+					class="editor-chart-node-settings-edit-filter-expression__loader"
+					data-testid="bizprocdesigner-filter-expression-loader"
+				>
+					<Loader />
+				</div>
+				<div
+					v-if="isUnsupportedDocument"
+					class="editor-chart-node-settings-edit-filter-expression__error"
+					data-testid="bizprocdesigner-filter-expression-error"
+				>
+					{{ getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_FILTER_UNSUPPORTED_DOCUMENT') }}
+				</div>
 			</div>
+			<!--
+				The legacy field layout of EditExtendedAction lives under .node-settings-panel: it is
+				what puts the selector button and the expression-builder trigger at the right edge of
+				the field and reserves the room for them. Same wrapper as the main path in
+				edit-action-expression.
+			-->
 			<div
-				v-else-if="status === Status.Error"
+				v-else-if="status === Status.Error && isFallbackActionAvailable"
+				class="node-settings-panel"
+				data-testid="bizprocdesigner-filter-expression-fallback"
 			>
 				<EditExtendedAction
 					:actionId="fallbackActionMeta.id"
@@ -950,7 +954,7 @@ export const EditFilterExpression = {
 					:template="template"
 				/>
 			</div>
-			<template v-else>
+			<template v-else-if="isFilterReady">
 				<div
 					v-if="isEntitySelectorVisible"
 					class="editor-chart-node-settings-edit-filter-expression__item"
@@ -963,6 +967,7 @@ export const EditFilterExpression = {
 						<select
 							v-model="currentEntityTypeId"
 							class="ui-ctl-element"
+							:data-test-id="$testId('filterEntityTypeSelect')"
 						>
 							<option value="">
 								{{ getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_EXPRESSION_ITEM_NOT_SELECTED') }}
@@ -981,7 +986,7 @@ export const EditFilterExpression = {
 					v-if="hasSelectedEntityType"
 					class="editor-chart-node-settings-edit-filter-expression__item"
 				>
-					<div ref="filterFieldsContainer"></div>
+					<div ref="filterFieldsContainer" :data-test-id="$testId('filterFieldsContainer')"></div>
 				</div>
 			</template>
 		</div>

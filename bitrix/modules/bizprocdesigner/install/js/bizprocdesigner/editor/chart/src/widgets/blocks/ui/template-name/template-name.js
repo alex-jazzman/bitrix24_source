@@ -1,7 +1,11 @@
 import { Outline } from 'ui.icon-set.api.core';
-import type { MenuOptions } from 'ui.vue3.components.menu';
+import { type MenuOptions } from 'ui.vue3.components.menu';
+import { mapState } from 'ui.vue3.pinia';
+
+import { diagramStore as useDiagramStore } from '../../../../entities/blocks';
 import { EditTemplateName } from '../../../../features/blocks';
 import { EditTemplateSettingsDialog } from '../../../../features/blocks/ui/edit-template-settings-dialog/edit-template-settings-dialog';
+
 const SECTION_CODE = 'space';
 
 // @vue/component
@@ -17,6 +21,20 @@ export const TemplateName = {
 		return {
 			isPopupShown: false,
 		};
+	},
+	computed:
+	{
+		...mapState(useDiagramStore, ['isWriteLocked']),
+	},
+	watch:
+	{
+		isWriteLocked(isWriteLocked: boolean): void
+		{
+			if (isWriteLocked)
+			{
+				this.isPopupShown = false;
+			}
+		},
 	},
 	methods:
 	{
@@ -55,6 +73,11 @@ export const TemplateName = {
 		},
 		onOpenSettingsPopup(): void
 		{
+			if (this.isWriteLocked)
+			{
+				return;
+			}
+
 			this.isPopupShown = true;
 		},
 		onCloseSettingsPopup(): void

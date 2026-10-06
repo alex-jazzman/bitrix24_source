@@ -1,0 +1,60 @@
+.bizprocdesigner-template-not-found-state {
+	position: absolute;
+	inset: 0;
+	z-index: 30;
+	display: flex;
+	box-sizing: border-box;
+	padding: var(--ui-space-inset-md);
+	overflow: auto;
+	background-color: var(--ui-color-designer-bp-background, #ecf0f2);
+	background-image:
+		linear-gradient(to right, rgba(161, 184, 217, 0.06) 1px, transparent 1px),
+		linear-gradient(to bottom, rgba(161, 184, 217, 0.06) 1px, transparent 1px);
+	background-size: 15px 15px, 15px 15px;
+}
+
+/* Clips the oversized CircuitBackdrop, so that only the content makes the state scrollable */
+.bizprocdesigner-template-not-found-state__backdrop {
+	position: absolute;
+	inset: 0;
+	overflow: hidden;
+	pointer-events: none;
+}
+
+/* Auto margins center the content and collapse to zero once the window becomes too short for it,
+   so the content is scrolled to instead of being clipped on both sides as align-items would do.
+   Positioned to stay above the absolutely placed backdrop. */
+.bizprocdesigner-template-not-found-state__content {
+	position: relative;
+	margin: auto;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--ui-space-stack-6xl);
+}
+
+.bizprocdesigner-template-not-found-state__text {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--ui-space-stack-sm);
+	/* Keeps the description line breaks of the mockup at TextLg metrics */
+	max-width: 270px;
+}
+
+.bizprocdesigner-template-not-found-state__title {
+	color: var(--ui-color-base-1);
+}
+
+.bizprocdesigner-template-not-found-state__description {
+	color: var(--ui-color-base-3);
+}
+
+.bizprocdesigner-template-not-found-state__actions {
+	display: flex;
+	/* Wraps instead of being clipped by the overflow of the state on narrow viewports */
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: center;
+	gap: var(--ui-space-inline-md2);
+}

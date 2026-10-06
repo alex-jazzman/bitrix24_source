@@ -12,34 +12,3 @@
 	min-width: 100%;
 	background: #F7F7F8;
 }
-
-.booking-booking-grid-left-panel-time {
-	position: relative;
-	height: calc(50px * var(--zoom));
-}
-
-.booking-booking-grid-left-panel-time.--off-hours {
-	height: var(--booking-off-hours-cell-height);
-	transition: var(--booking-animation-duration) opacity var(--booking-animation-function);
-}
-
-.--booking-booking-collapse .booking-booking-grid-left-panel-time.--off-hours {
-	opacity: 0;
-}
-
-.booking-booking-grid-left-panel-time-text {
-	position: relative;
-	z-index: 1;
-	line-height: 0;
-	margin-right: 5px;
-	color: var(--ui-color-base-90);
-	text-align: right;
-	transform: translateY(-50%);
-	font-size: var(--ui-font-size-xs);
-	white-space: nowrap;
-	pointer-events: none;
-}
-
-.booking-booking-grid-left-panel-time .booking-booking-grid-left-panel-time-text {
-	line-height: inherit;
-}

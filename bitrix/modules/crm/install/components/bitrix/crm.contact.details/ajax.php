@@ -109,6 +109,14 @@ elseif($action === 'SAVE')
 	$isNew = $ID === 0;
 	$isCopyMode = $isNew && $sourceEntityID > 0;
 
+	if (
+		$sourceEntityID > 0
+		&& !Container::getInstance()->getUserPermissions()->item()->canRead(\CCrmOwnerType::Contact, $sourceEntityID)
+	)
+	{
+		__CrmContactDetailsEndJsonResonse(['ERROR' => \Bitrix\Main\Localization\Loc::getMessage('CRM_COMMON_ERROR_ACCESS_DENIED')]);
+	}
+
 	$fields = array();
 	$fieldsInfo = \CCrmContact::GetFieldsInfo();
 	$userType = new \CCrmUserType($GLOBALS['USER_FIELD_MANAGER'], \CCrmContact::GetUserFieldEntityID());
@@ -626,7 +634,7 @@ elseif($action === 'LOAD')
 	{
 		__CrmContactDetailsEndJsonResonse(['ERROR'=>'ENTITY ID IS NOT FOUND!']);
 	}
-	if(!\CCrmCompany::CheckReadPermission($ID, $currentUserPermissions))
+	if(!\CCrmContact::CheckReadPermission($ID, $currentUserPermissions))
 	{
 		__CrmContactDetailsEndJsonResonse(['ERROR'=> \Bitrix\Main\Localization\Loc::getMessage('CRM_TYPE_ITEM_PERMISSIONS_UPDATE_DENIED')]);
 	}
@@ -909,7 +917,7 @@ elseif ($action === 'DETACH_OPEN_LINE')
 
 	if (!$item)
 	{
-		__CrmCompanyDetailsEndJsonResonse(['ERROR' => GetMessage('CRM_CONTACT_NOT_FOUND')]);
+		__CrmContactDetailsEndJsonResonse(['ERROR' => GetMessage('CRM_CONTACT_NOT_FOUND')]);
 	}
 
 	$multiField = $item->getFm();

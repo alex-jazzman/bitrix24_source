@@ -1,10 +1,10 @@
 <?php
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
-use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\PageNavigation;
 use Bitrix\Crm\Activity\CustomType;
+use Bitrix\Main\Web\Uri;
 
 Loc::loadMessages(__FILE__);
 
@@ -230,11 +230,9 @@ class CCrmActivityCustomTypeComponent extends CBitrixComponent
 			$ID = (int)$fields['ID'];
 			$fields['CAN_EDIT'] = $fields['CAN_DELETE'] = true;
 
-			$fields['PATH_TO_DELETE'] =
-				\CHTTP::urlAddParams(
-					\CComponentEngine::MakePathFromTemplate($this->arParams['PATH_TO_ACTIVITY_CUSTOM_TYPE_LIST']),
-					array_merge($urlParams, array('ID' => $ID))
-				);
+			$fields['PATH_TO_DELETE'] =	(string)(new Uri(\CComponentEngine::MakePathFromTemplate(
+					$this->arParams['PATH_TO_ACTIVITY_CUSTOM_TYPE_LIST']
+				)))->addParams(array_merge($urlParams, array('ID' => $ID)));
 
 			$fields['PATH_TO_USER_FIELD_EDIT'] =
 				\CComponentEngine::MakePathFromTemplate(

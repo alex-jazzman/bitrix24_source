@@ -1,6 +1,8 @@
 import { ajax, Loc, Text } from 'main.core';
 import { UI } from 'ui.notification';
 import { StubLinkType, StubNotAvailable, StubType } from 'ui.sidepanel-content';
+
+import { getErrorMessage } from './error/error-message';
 import { getSortedErrors } from './error/sorted-errors';
 
 const SIGN_CLIENT_CONNECTION_ERROR_CODE = 'SIGN_CLIENT_CONNECTION_ERROR';
@@ -118,7 +120,7 @@ export async function request(
 			throw ex;
 		}
 
-		const content = sortedErrors[0]?.message ?? message;
+		const content = getErrorMessage(sortedErrors, Loc.getMessage('SIGN_JS_V2_API_ERROR_COMMON'), message);
 		UI.Notification.Center.notify({
 			content: Text.encode(content),
 			autoHideDelay: 4000,

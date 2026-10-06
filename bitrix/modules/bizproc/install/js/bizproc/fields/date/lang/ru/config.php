@@ -1,0 +1,4 @@
+<?php
+$MESS['BIZPROC_FIELDS_DATE_PLACEHOLDER'] = 'Дата';
+$MESS['BIZPROC_FIELDS_DATE_TIMEZONE'] = 'Часовой пояс';
+$MESS['BIZPROC_FIELDS_DATE_OPEN_CALENDAR'] = 'Открыть календарь';

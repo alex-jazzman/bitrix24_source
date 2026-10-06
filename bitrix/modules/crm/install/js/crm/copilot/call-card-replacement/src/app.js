@@ -10,8 +10,10 @@ export type ReplacementOptions = {
 		id: number,
 		title: string,
 		prompt: string,
+		criteria?: Array<{ id: number, title: string, description: string, sort: number }>,
 	},
 	hasAvailableSelectorItems: boolean,
+	isCallScoringV2Enabled?: boolean,
 };
 
 export class CallCardReplacementApp

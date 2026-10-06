@@ -242,7 +242,15 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			} else if (command === im_v2_const.DesktopBxLink.copilot) {
 				void im_public.Messenger.openCopilot(params.dialogId);
 			} else if (command === im_v2_const.DesktopBxLink.collab) {
-				void im_public.Messenger.openCollab(params.dialogId);
+				const {
+					dialogId,
+					compactMode,
+					recentType
+				} = params;
+				void im_public.Messenger.openCollab(dialogId, {
+					compactMode: Encoder.decodeParamsJson(compactMode),
+					recentType
+				});
 			} else if (command === im_v2_const.DesktopBxLink.channel) {
 				void im_public.Messenger.openChannel(params.dialogId);
 			} else if (command === im_v2_const.DesktopBxLink.taskComments) {
@@ -824,9 +832,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			this.openBxLink(`bx://${im_v2_const.DesktopBxLink.copilot}/dialogId/${dialogId}`);
 			return Promise.resolve();
 		}
-		redirectToCollab(dialogId = '') {
+		redirectToCollab(dialogId = '', options = {}) {
+			const {
+				compactMode = true,
+				recentType = im_v2_const.RecentType.collabDefault
+			} = options;
 			im_v2_lib_logger.Logger.warn('Desktop: redirectToCollab', dialogId);
-			this.openBxLink(`bx://${im_v2_const.DesktopBxLink.collab}/dialogId/${dialogId}`);
+			this.openBxLink(`bx://${im_v2_const.DesktopBxLink.collab}/dialogId/${dialogId}/compactMode/${compactMode}/recentType/${recentType}`);
 			return Promise.resolve();
 		}
 		redirectToChannel(dialogId = '') {

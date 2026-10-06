@@ -76,27 +76,49 @@ class CDiskCommonStoragePageTemplate
 		}
 		$driver = \Bitrix\Disk\Driver::getInstance();
 		$title = $_POST['library_TITLE'];
-		$pieces = explode('/', rtrim($arParams['path'], '/'));
+		$mountPoint = \Bitrix\Disk\Integration\Fileman\CommonStoragePathNormalizer::normalizeCommonStorageMountPoint(
+			(string)$arParams['path'],
+			(string)($arParams['siteDir'] ?? '/'),
+			(bool)($arParams['allowLegacyDuplicateCollapse'] ?? false),
+		);
+		$pieces = explode('/', trim($mountPoint, '/'));
 		$entityId = array_pop($pieces);
-		$commonStorage = $driver->addCommonStorage(array(
+		$storageEntityId = mb_substr($entityId.'_'.$arParams['site'], 0, 32);
+		$commonStorageCreation = $driver->addCommonStorageWithCreationStatus(array(
 			'NAME' => $title,
-			'ENTITY_ID' => mb_substr($entityId.'_'.$arParams['site'], 0, 32),
+			'ENTITY_ID' => $storageEntityId,
 			'SITE_ID' => $arParams['site'],
 		), array());
-		if(!$commonStorage)
+		if(!$commonStorageCreation || !$commonStorageCreation['storage'])
 		{
 			return false;
 		}
-		$commonStorage->changeBaseUrl($arParams['path']);
+		$commonStorage = $commonStorageCreation['storage'];
+		if(!$commonStorage->changeBaseUrl($mountPoint))
+		{
+			if($commonStorageCreation['created'])
+			{
+				$commonStorage->delete(\Bitrix\Disk\SystemUser::SYSTEM_USER_ID);
+			}
+
+			return false;
+		}
+		if($commonStorageCreation['created'])
+		{
+			\Bitrix\Disk\Integration\Fileman\CommonStorageCreationContext::remember(
+				(int)$commonStorage->getId(),
+				$commonStorage->getProxyType()->getStorageBaseUrl(),
+			);
+		}
 
 		return '<?require($_SERVER["DOCUMENT_ROOT"]."/bitrix/header.php");
 IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/intranet/public/docs/shared/index.php");
 $APPLICATION->SetTitle("'.EscapePHPString($title).'");
-$APPLICATION->AddChainItem($APPLICATION->GetTitle(), "'.EscapePHPString($arParams["path"]).'");
+$APPLICATION->AddChainItem($APPLICATION->GetTitle(), "'.EscapePHPString($mountPoint).'");
 ?>
 <?$APPLICATION->IncludeComponent("bitrix:disk.common", ".default", Array(
 		"SEF_MODE" => "Y",
-		"SEF_FOLDER" => "'.EscapePHPString($arParams["path"]).'",
+		"SEF_FOLDER" => "'.EscapePHPString($mountPoint).'",
 		"STORAGE_ID" => "'.$commonStorage->getId().'",
 	)
 );?>

@@ -171,7 +171,7 @@ return static function (RoutingConfigurator $routes) {
 		})
 	;
 	$routes->prefix($sitePrefix . '{fileType}')
-		->where('fileType', '(picture|media|audio|board|doc|sheet|pres|file)')
+		->where('fileType', '(picture|media|audio|board|doc|sheet|pres|html|file)')
 		->where('uniqueCode', '[0-9a-zA-Z]{20}')
 		->group(function (RoutingConfigurator $routes) {
 			$routes->get('{uniqueCode}', [UnifiedLinkController::class, 'view']);
@@ -388,6 +388,9 @@ return static function (RoutingConfigurator $routes) {
 		->where('callId', '[0-9]+')
 	;
 	$routes->any($siteDir . 'conference/{any}', new PublicPageController($siteDir . 'conference/index.php'))
+		->where('any', '.*')
+	;
+	$routes->any('/sync/{any}', new PublicPageController('/sync/index.php'))
 		->where('any', '.*')
 	;
 

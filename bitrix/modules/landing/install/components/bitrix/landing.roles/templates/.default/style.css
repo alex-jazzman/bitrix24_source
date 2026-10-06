@@ -29,3 +29,78 @@
 .landing-additional-rights-table .table-blue-td-name {
 	vertical-align: top;
 }
+
+/* the icon keeps its background, only the box a browser draws around a button is dropped */
+button.table-blue-delete {
+	appearance: none;
+	-webkit-appearance: none;
+	padding: 0;
+	border: 0;
+	background-color: transparent;
+}
+
+/* the link colour is the one of the page template */
+button.table-blue-link,
+button.landing-additional-rights-form {
+	appearance: none;
+	-webkit-appearance: none;
+	margin: 0;
+	border: 0;
+	background: transparent;
+	font: inherit;
+	text-align: inherit;
+	color: var(--ui-color-link-primary-base);
+	cursor: pointer;
+}
+
+/* the padding of `table-blue-link` lives in main/table, this one has none of its own */
+button.landing-additional-rights-form {
+	padding: 0;
+}
+
+/* main/table drives these tables through `td`: a header cell repeats the geometry it lost there
+   and drops the centering a browser adds to `th`. Every rule below names the table it belongs to */
+#landing-rights-table th.table-blue-td-title,
+#landing-rights-table th.table-blue-td-name,
+#landing-roles th.table-blue-td-title,
+.landing-additional-rights-table th.table-blue-td-name {
+	text-align: inherit;
+}
+
+#landing-rights-table th.table-blue-td-title:first-child,
+#landing-rights-table th.table-blue-td-name:first-child,
+#landing-roles th.table-blue-td-title:first-child,
+.landing-additional-rights-table th.table-blue-td-name:first-child {
+	padding-left: 20px !important;
+}
+
+/* the row paddings main/table gives the second and the last row of a `.table-blue` through `td` */
+#landing-rights-table tbody tr:nth-child(2) th.table-blue-td-name,
+.landing-additional-rights-table tbody tr:first-child th.table-blue-td-name,
+.landing-additional-rights-table tbody tr:nth-child(2) th.table-blue-td-name {
+	padding-top: 20px;
+}
+
+.landing-additional-rights-table tbody tr:last-child th.table-blue-td-name {
+	padding-bottom: 20px;
+}
+
+/* the head of the additional rights table names its columns and draws nothing */
+.landing-additional-rights-table thead th {
+	height: 0;
+	padding: 0;
+}
+
+/* visually hidden accessible names (standard clip pattern) */
+.landing-roles-visually-hidden {
+	position: absolute !important;
+	width: 1px;
+	height: 1px;
+	margin: -1px;
+	padding: 0;
+	border: 0;
+	overflow: hidden;
+	clip: rect(0 0 0 0);
+	clip-path: inset(50%);
+	white-space: nowrap;
+}

@@ -13,6 +13,7 @@ import {
 	UpdatePublishedStatusLabel,
 } from '../../../features/blocks';
 import { BLOCK_TYPES } from '../../../shared/constants';
+import { FocusAnchor, setFocusAnchor, clearFocusAnchor } from '../../../shared/utils/focus-rescue';
 // eslint-disable-next-line no-unused-vars
 import { type Block, type BlockId } from '../../../shared/types';
 
@@ -52,6 +53,13 @@ export const NodeSettingsHeader = {
 		return { headerRef };
 	},
 	computed: {
+		// The header takes the rescued focus, so a screen reader reads it: the name comes from the
+		// title BlockHeader shows below, and names the node the panel is about. A plain container is
+		// not allowed to carry a name, hence the role, and both go away together with the title.
+		accessibleName(): string
+		{
+			return this.title || this.block.node?.title;
+		},
 		icon(): string
 		{
 			if (this.block.node?.type === BLOCK_TYPES.TOOL)
@@ -104,6 +112,15 @@ export const NodeSettingsHeader = {
 			return { 'background-image': `url('${this.block.node.icon}')` };
 		},
 	},
+	// The header receives the focus rescued from a subtree the panel destroys on its own.
+	mounted(): void
+	{
+		setFocusAnchor(FocusAnchor.settingsHeader, this.headerRef);
+	},
+	beforeUnmount(): void
+	{
+		clearFocusAnchor(FocusAnchor.settingsHeader, this.headerRef);
+	},
 	methods: {
 		onDeletedBlock(blockId: BlockId): void
 		{
@@ -111,7 +128,14 @@ export const NodeSettingsHeader = {
 		},
 	},
 	template: `
-		<div ref="headerRef" class="editor-chart-node-settings-header">
+		<div
+			ref="headerRef"
+			class="editor-chart-node-settings-header"
+			:data-testid="$testId('bizprocdesigner-node-settings-header', block.id)"
+			:role="accessibleName ? 'group' : null"
+			:aria-label="accessibleName || null"
+			tabindex="-1"
+		>
 			<BlockHeader
 				:block="block"
 				:title="title"

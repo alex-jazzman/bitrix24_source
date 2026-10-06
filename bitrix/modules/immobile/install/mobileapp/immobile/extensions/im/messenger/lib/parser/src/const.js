@@ -8,6 +8,7 @@ jn.define('im/messenger/lib/parser/const', (require, exports, module) => {
 	const MARKDOWN_CODE_PREFIX = '####MD_CODE_';
 	const MARKDOWN_ESCAPE_PREFIX = '####MD_ESC_';
 	const MARKDOWN_INLINE_CODE_PREFIX = '####MD_INLINE_';
+	const MARKDOWN_MENTION_PREFIX = '####MD_MENTION_';
 	const MARKDOWN_CODE_PATTERN = /(####MD_CODE_\d+####)/;
 	const MARKDOWN_TABLE_URL_PREFIX = '/immobile/in-app/message/markdown-table/';
 
@@ -17,6 +18,7 @@ jn.define('im/messenger/lib/parser/const', (require, exports, module) => {
 		MARKDOWN_CODE_PREFIX,
 		MARKDOWN_ESCAPE_PREFIX,
 		MARKDOWN_INLINE_CODE_PREFIX,
+		MARKDOWN_MENTION_PREFIX,
 		MARKDOWN_CODE_PATTERN,
 		MARKDOWN_TABLE_URL_PREFIX,
 	};

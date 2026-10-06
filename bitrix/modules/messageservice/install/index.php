@@ -25,36 +25,16 @@ class messageservice extends \CModule
 
 	public function InstallDB($install_wizard = true)
 	{
-		global $DB, $APPLICATION;
-		$connection = \Bitrix\Main\Application::getConnection();
-		$errors = null;
+		global $APPLICATION;
 
-		if (!$DB->TableExists('b_messageservice_message'))
+		$migrationResult = $this->installMigrations();
+		if (!$migrationResult->isSuccess())
 		{
-			$errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/messageservice/install/db/' . $connection->getType() . '/install.sql');
-		}
-
-		if (!empty($errors))
-		{
-			$APPLICATION->ThrowException(implode("", $errors));
+			$APPLICATION->ThrowException(implode("", $migrationResult->getErrorMessages()));
 			return false;
 		}
 
 		\Bitrix\Main\ModuleManager::registerModule('messageservice');
-
-		$eventManager = \Bitrix\Main\EventManager::getInstance();
-
-		/** @see \Bitrix\MessageService\Queue::run */
-		$eventManager->registerEventHandlerCompatible('main', 'OnAfterEpilog', 'messageservice', '\Bitrix\MessageService\Queue', 'run');
-		/** @see \Bitrix\MessageService\RestService::onRestServiceBuildDescription */
-		$eventManager->registerEventHandlerCompatible('rest', 'OnRestServiceBuildDescription', 'messageservice', '\Bitrix\MessageService\RestService', 'onRestServiceBuildDescription');
-		/** @see \Bitrix\MessageService\RestService::onRestAppDelete */
-		$eventManager->registerEventHandlerCompatible('rest', 'OnRestAppDelete', 'messageservice', '\Bitrix\MessageService\RestService', 'onRestAppDelete');
-		/** @see \Bitrix\MessageService\RestService::onRestAppUpdate */
-		$eventManager->registerEventHandlerCompatible('rest', 'OnRestAppUpdate', 'messageservice', '\Bitrix\MessageService\RestService', 'onRestAppUpdate');
-
-		$eventManager->registerEventHandler('imconnector', 'OnReceivedStatusReading', 'messageservice', '\Bitrix\MessageService\Sender\Sms\Wazzup', 'onReceivedStatusRead');
-		$eventManager->registerEventHandler('imconnector', 'onReceivedStatusDelivery', 'messageservice', '\Bitrix\MessageService\Sender\Sms\Wazzup', 'onReceivedStatusDelivered');
 
 		\Bitrix\Main\Config\Option::set('messageservice', 'clean_up_period', '14');
 
@@ -64,11 +44,6 @@ class messageservice extends \CModule
 		{
 			\Bitrix\Main\Config\Option::set('messageservice', 'disable_international', 'Y');
 		}
-
-		/** @see \Bitrix\MessageService\Queue::cleanUpAgent */
-		\CAgent::AddAgent('Bitrix\MessageService\Queue::cleanUpAgent();',"messageservice", "Y", 86400);
-		/** @see \Bitrix\MessageService\IncomingMessage::cleanUpAgent */
-		\CAgent::AddAgent('Bitrix\MessageService\IncomingMessage::cleanUpAgent();', 'messageservice', 'Y', 86400);
 
 		if (\Bitrix\Main\Loader::includeModule('messageservice'))
 		{
@@ -80,34 +55,21 @@ class messageservice extends \CModule
 
 	function UnInstallDB($arParams = Array())
 	{
-		global $DB, $APPLICATION;
-		$connection = \Bitrix\Main\Application::getConnection();
+		global $APPLICATION;
 
-		if (array_key_exists("savedata", $arParams) && $arParams["savedata"] != "Y")
+		$dropTables = array_key_exists("savedata", $arParams) && $arParams["savedata"] != "Y";
+
+		$migrationResult = $this->uninstallMigrations($dropTables);
+		if (!$migrationResult->isSuccess())
 		{
-			$errors = $DB->RunSQLBatch($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/messageservice/install/db/".$connection->getType()."/uninstall.sql");
-
-			if (!empty($errors))
-			{
-				$APPLICATION->ThrowException(implode("", $errors));
-				return false;
-			}
-			\Bitrix\Main\Config\Option::delete($this->MODULE_ID);
+			$APPLICATION->ThrowException(implode("", $migrationResult->getErrorMessages()));
+			return false;
 		}
 
-		$eventManager = \Bitrix\Main\EventManager::getInstance();
-
-		/** @see \Bitrix\MessageService\Queue::run */
-		$eventManager->unRegisterEventHandler('main', 'OnAfterEpilog', 'messageservice', '\Bitrix\MessageService\Queue', 'run');
-		/** @see \Bitrix\MessageService\RestService::onRestServiceBuildDescription */
-		$eventManager->unRegisterEventHandler('rest', 'OnRestServiceBuildDescription', 'messageservice', '\Bitrix\MessageService\RestService', 'onRestServiceBuildDescription');
-		/** @see \Bitrix\MessageService\RestService::onRestAppDelete */
-		$eventManager->unRegisterEventHandler('rest', 'OnRestAppDelete', 'messageservice', '\Bitrix\MessageService\RestService', 'onRestAppDelete');
-		/** @see \Bitrix\MessageService\RestService::onRestAppUpdate */
-		$eventManager->unRegisterEventHandler('rest', 'OnRestAppUpdate', 'messageservice', '\Bitrix\MessageService\RestService', 'onRestAppUpdate');
-
-		$eventManager->unRegisterEventHandler('imconnector', 'OnReceivedStatusReading', 'messageservice', '\Bitrix\MessageService\Sender\Sms\Wazzup', 'onReceivedStatusRead');
-		$eventManager->unRegisterEventHandler('imconnector', 'onReceivedStatusDelivery', 'messageservice', '\Bitrix\MessageService\Sender\Sms\Wazzup', 'onReceivedStatusDelivered');
+		if ($dropTables)
+		{
+			\Bitrix\Main\Config\Option::delete($this->MODULE_ID);
+		}
 
 		\Bitrix\Main\ModuleManager::unRegisterModule('messageservice');
 

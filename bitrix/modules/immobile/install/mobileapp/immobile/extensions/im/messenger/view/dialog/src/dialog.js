@@ -1542,31 +1542,39 @@ jn.define('im/messenger/view/dialog/dialog', (require, exports, module) => {
 					attachButton: {
 						items: [
 							{
-								id: AttachPickerId.camera,
-								name: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_VIEW_INPUT_ATTACH_CAMERA'),
-							},
-							{
 								id: AttachPickerId.mediateka,
 								name: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_VIEW_INPUT_ATTACH_GALLERY'),
-							},
-							{
-								id: AttachPickerId.disk,
-								name: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_VIEW_INPUT_ATTACH_DISK'),
-								dataSource: {
-									multiple: false,
-									url: `${MessengerParams.getSiteDir()}mobile/?mobile_action=disk_folder_list&type=user&path=%2F&entityId=${MessengerParams.getUserId()}`,
-									TABLE_SETTINGS: {
-										searchField: true,
-										showtitle: true,
-										modal: true,
-										name: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_VIEW_INPUT_ATTACH_DISK_FILES'),
-									},
-								},
 							},
 						],
 					},
 				},
 			};
+
+			if (this.visibleAttachItems.includes(AttachPickerId.camera))
+			{
+				imagePickerParams.settings.attachButton.items.unshift({
+					id: AttachPickerId.camera,
+					name: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_VIEW_INPUT_ATTACH_CAMERA'),
+				});
+			}
+
+			if (this.visibleAttachItems.includes(AttachPickerId.disk))
+			{
+				imagePickerParams.settings.attachButton.items.push({
+					id: AttachPickerId.disk,
+					name: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_VIEW_INPUT_ATTACH_DISK'),
+					dataSource: {
+						multiple: false,
+						url: `${MessengerParams.getSiteDir()}mobile/?mobile_action=disk_folder_list&type=user&path=%2F&entityId=${MessengerParams.getUserId()}`,
+						TABLE_SETTINGS: {
+							searchField: true,
+							showtitle: true,
+							modal: true,
+							name: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_VIEW_INPUT_ATTACH_DISK_FILES'),
+						},
+					},
+				});
+			}
 
 			const isShowTask = this.visibleAttachItems.includes(AttachPickerId.task) && isModuleInstalled('tasks');
 			if (isShowTask)

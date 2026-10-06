@@ -17,6 +17,7 @@ return [
 		'im.v2.const',
 		'im.v2.lib.counter',
 		'im.v2.lib.date-formatter',
+		'im.v2.lib.feature',
 		'im.v2.lib.layout',
 		'im.v2.lib.parser',
 		'im.v2.lib.recent',

@@ -1,0 +1,24 @@
+.mail-compose-sender-chip
+{
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-sm);
+	min-width: 0;
+	padding: var(--ui-space-inset-xs) 0;
+	min-height: 40px;
+	box-sizing: border-box;
+	border-bottom: 1px solid var(--ui-color-divider-default);
+}
+
+.mail-compose-sender-chip__label
+{
+	flex: 0 0 76px;
+	color: var(--ui-color-base-4);
+}
+
+.mail-compose-sender-chip__control
+{
+	/* the chip grows to fill its row by default; here it stays as wide as the sender */
+	flex: 0 1 auto;
+	min-width: 0;
+}

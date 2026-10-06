@@ -2,26 +2,23 @@
 
 return [
 	'components' => [
-		'tasks:tasks.dashboard',
-		'tasks:tasks.task.view-new',
+		'tasks:tasks.dashboard', // @keep
+		'tasks:tasks.task.view-new', // @keep
 	],
 	'extensions' => [
 		'layout/ui/info-helper',
 		'loc',
-		'notify-manager',
+		'notify',
 		'require-lazy',
 		'rest/run-action-executor',
 		'settings/disabled-tools',
 		'statemanager/redux/store',
 		'tariff-plan-restriction',
-		'tasks:enum',
 		'toast',
 		'tokens',
 		'type',
-		'ui-system/blocks/icon',
-
-		'tasks:layout/action-menu/actions',
+		'utils/guid',
+		'tasks:enum',
 		'tasks:statemanager/redux/slices/tasks',
-		'notify',
 	],
 ];

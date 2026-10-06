@@ -132,6 +132,140 @@
 }
 
 /* ---------------------------------------------------------------------------
+ * BitrixGPT side-chat widget (im.v2 ai-assistant-widget) in the note rail.
+ *
+ * im's messenger palette is fixed light, and the widget additionally pins
+ * `--ui-context-content-light` inside its own markup — on the chat-list panel
+ * (ai-assistant-widget copilot-widget/layout.js:84) and on the dialog context
+ * (copilot-widget/components/chat-content.js:70). That re-scopes every
+ * `--ui-color-*` token back to light for those subtrees, so a rule written
+ * inside them cannot read the module's dark surface from a token: it would
+ * resolve to white again.
+ *
+ * Custom properties are substituted where they are DECLARED, so the dark values
+ * are frozen into aliases and every paint rule below reads an alias. The aliases
+ * sit on the context class itself rather than on a node inside the widget: the
+ * widget's own root already carries the `edge` family (translucent whites meant
+ * for a blurred backdrop), and anything below it is inside one of im's light
+ * contexts. Declaring them there is inert for every other dark surface — only
+ * `bx-im-*` rules read them.
+ *
+ * Dark context only: im's palette is light by design, so in the light theme of
+ * the knowledge base the widget is already correct and must not be touched.
+ * ---------------------------------------------------------------------------*/
+.--ui-context-content-dark {
+	--note-im-surface: var(--ui-color-bg-content-primary);
+	/* Translucent, so it lifts the row above whatever surface it lands on. */
+	--note-im-surface-hover: var(--ui-color-bg-state-hover-alt);
+	--note-im-divider: var(--ui-color-divider-default);
+	--note-im-text: var(--ui-color-base-1);
+	--note-im-text-secondary: var(--ui-color-base-3);
+}
+
+/* The palette's font colour: `black-base` (#333) is what chat titles and the list
+ * header read. Safe to repaint wholesale, unlike `white-base`, which upstream
+ * also uses as a TEXT colour (dialog status, selected row) — repainting that one
+ * would turn those dark. Declared on the messenger scope, i.e. above im's own
+ * light context, so the value reaches the light subtrees already resolved. */
+.--ui-context-content-dark .bx-im-messenger__scope {
+	--im-color-palette-black-base: var(--note-im-text);
+}
+
+/* Chat-list panel that opens over the chat: `background-color` is
+ * `--ui-color-bg-content-primary` read under the light context it pins on itself
+ * (copilot-widget/css/chat-layout.css:22). */
+.--ui-context-content-dark .bx-im-ai-assistant-widget-layout__panel-container {
+	background-color: var(--note-im-surface);
+}
+
+/* List header: background is `--im-color-palette-white-base` with no token of its
+ * own to redirect, and the bottom border is `--ui-color-base-15` — a static
+ * light-grey token (copilot-widget/css/header.css:8-10). */
+.--ui-context-content-dark .bx-im-copilot-widget-header__container {
+	background-color: var(--note-im-surface);
+	border-bottom-color: var(--note-im-divider);
+}
+
+/* Scroll area of the list (base-list.css:6). */
+.--ui-context-content-dark .bx-im-list-base__container {
+	--im-list-base__background-color: var(--note-im-surface);
+}
+
+/* Rows of the chat list: background, hover and the hairline between rows —
+ * upstream `#f1f4f6` and `rgba(82,92,105,.08)` (recent-item.css:2-5). */
+.--ui-context-content-dark .bx-im-list-recent-item__wrap {
+	--im-list-recent-item__background-color: var(--note-im-surface);
+	--im-list-recent-item__background-color_hover: var(--note-im-surface-hover);
+	--im-list-recent-item__background-color_separator: var(--note-im-divider);
+}
+
+/* "New chat" pill in the list header. Two layers: a gradient border and an interior filled with
+ * `--ui-color-design-outline-bitrix-gpt-bg`, which is the surface colour
+ * (create-chat-button-ai-assistant.css:12-16). Read inside im's own light context it comes out white,
+ * so on a dark column the pill glowed while only its border followed the design. Redirected to the
+ * module's surface; the gradient border and the gradient plus are the widget's canon and stay.
+ * The hover overlay of the same pill is `--ui-color-bg-state-hover-default`, which under the light
+ * context is a dark wash — it would deepen the pill instead of lifting it. */
+.--ui-context-content-dark .bx-im-ai-assistant-create-chat-button__scope {
+	--ui-color-design-outline-bitrix-gpt-bg: var(--note-im-surface);
+	--ui-color-bg-state-hover-default: var(--note-im-surface-hover);
+}
+
+/* Loading skeleton of the list: an SVG background whose plates are literally
+ * `fill="white"` (im.v2.component.elements.list-loading-state — the class is
+ * `bx-im-list-loading-state__container`, taken off the live panel), so it has no
+ * token to redirect and glows white on a dark column. Inverted rather than
+ * recoloured: an inversion keeps the plate-to-placeholder contrast the image was
+ * drawn with, and 0.85 lands the white plate on the dark surface while lifting
+ * the grey placeholders above it — which is what a dark skeleton looks like. */
+.--ui-context-content-dark .bx-im-list-loading-state__container {
+	filter: invert(0.85);
+}
+
+/* The open chat's header is the one part of the widget that must NOT follow the
+ * module theme, and the only rule in this block that is NOT scoped to the dark
+ * context: the header stands on the widget's own custom fill, which is the same
+ * violet in both themes. Its title, subtitle, back arrow, collapse chevron and
+ * inner divider all read `--ui-color-base-0` (ai-assistant-widget
+ * components/header/header.css), and that token flips with the design-system
+ * context — dark text under the dark one, black text under the light one, both
+ * on an unchanged background. Pinned to the non-themed white, which is what the
+ * widget was drawn against. Scoped by our own column class instead: `base-0` is
+ * a live theme token everywhere else, including the portal's copy of this same
+ * widget outside the knowledge base. */
+.note-ai-chat-panel .bx-im-ai-assistant-chat-header__container {
+	--ui-color-base-0: var(--ui-color-base-white-fixed);
+	/* The "new chat" button stands on the same fill and reads the tinted pair instead
+	   (header.css:70-73). Under the edge context those resolve to `base-8` and
+	   `base-0`, i.e. a translucent white pill with a white plus — what the violet was
+	   drawn for; the light edge would make both black. The pill's colour has no
+	   non-themed token, so it is the edge-dark value of `base-8` written out. */
+	--ui-color-design-tinted-bg: rgba(255, 255, 255, 0.2);
+	--ui-color-design-tinted-content-icon: var(--ui-color-base-white-fixed);
+	/* The widget also draws its own left border, but only across the header's 58px — on the portal
+	   that is the whole divider between the panel and the page. Our column has a real one, running the
+	   full height on the panel itself, so the header's border lands next to it as a broken double
+	   hairline at the top. */
+	border-left: 0;
+}
+
+/* Message input: white textarea with `black-base` text (textarea.css:2, 6). */
+.--ui-context-content-dark .bx-im-send-panel__scope {
+	--im-textarea__background-color: var(--note-im-surface);
+	--im-textarea__font-color_primary: var(--note-im-text);
+}
+
+/* Empty state of the list reads `--ui-color-base-1/2` under im's own light
+ * context, i.e. near-black on a dark surface (list/items/elements/empty-state). */
+.--ui-context-content-dark .bx-im-list-recent-empty-state__title {
+	color: var(--note-im-text);
+}
+
+.--ui-context-content-dark .bx-im-list-recent-empty-state__subtitle {
+	color: var(--note-im-text-secondary);
+}
+
+/* ---------------------------------------------------------------------------
  * @tiptap/extension-highlight: user-picked hex stored inline as
  * `<mark style="background-color: …">`. Bright source colours stay readable
  * in light theme but clash with dark theme (the design system flips the

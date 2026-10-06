@@ -14,6 +14,7 @@ return [
 		'im.v2.lib.analytics',
 		'im.v2.lib.copilot',
 		'im.v2.lib.draft',
+		'im.v2.lib.feature',
 		'im.v2.lib.menu',
 		'im.v2.provider.service.copilot',
 		'main.core',

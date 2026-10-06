@@ -37,7 +37,7 @@
 	display: block;
 	width: 889px;
 	height: calc(100vh - 590px);
-	background: url(../teaser/image/landing-sm-teaser-bg.png) left top no-repeat;
+	background: url(../teaser/image/landing-sm-teaser-bg.webp) left top no-repeat;
 	background-size: 100%;
 	margin-top: -147px;
 	z-index: -9;
@@ -97,15 +97,19 @@
 	scrollbar-highlight-color: #fff;
 }
 
+/* a position nobody sees keeps a link of its own: opacity takes it out of neither the tab order nor
+   the reading tree, and visibility is transitioned along with the fade of the shown position */
 .landing-sm-phone-pic-item {
 	position: absolute;
 	width: inherit;
 	min-width: 100%;
 	opacity: 0;
+	visibility: hidden;
 }
 
 .landing-sm-phone-pic-item--show {
 	opacity: 1;
+	visibility: visible;
 	z-index: 9;
 	transition: .3s;
 }
@@ -128,7 +132,7 @@
 	right: 0;
 	bottom: 0;
 	left: 0;
-	background: url(image/landing-sm-iphone-2.png) center no-repeat;
+	background: url(image/landing-sm-iphone-2.webp) center no-repeat;
 	background-size: contain;
 	z-index: 99;
 	pointer-events: none;
@@ -263,7 +267,8 @@
 
 .landing-sm-content-bottom {
 	display: block;
-	overflow: hidden;
+	/* keep the explicit value: the focus ring of the buttons goes 4px outside the row */
+	overflow: visible;
 	padding: 20px 0 2px 0;
 	border-top: 1px solid rgba(82,92,105,.1);
 	text-align: center;
@@ -305,7 +310,6 @@
 }
 
 #domain-edit-loader[hidden],
-#domain-edit-message[hidden],
 #domain-edit-length[hidden]
 {
 	display: none !important;
@@ -490,16 +494,6 @@
 	margin-bottom: 0;
 }
 
-.landing-sm-content-page-link {
-	position: absolute;
-	top: 0;
-	right: 0;
-	bottom: 0;
-	left: 0;
-	z-index: 9;
-	cursor: pointer;
-}
-
 .landing-sm-content-page--check {
 	background: transparent;
 	border-color: #b9eb1c;
@@ -644,10 +638,6 @@
 	background: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2214%22%20height%3D%2214%22%20viewBox%3D%220%200%2014%2014%22%3E%0A%20%20%3Cpath%20fill%3D%22%23fff%22%20fill-rule%3D%22evenodd%22%20d%3D%22M16.4358633%2C5.03481936%20L18.9864331%2C7.61224176%20L9.00876666%2C17.563056%20L6.45819647%2C14.9856339%20L16.4358633%2C5.03481936%20Z%20M5.02558382%2C18.6726366%20C5.00146497%2C18.7639157%205.0273066%2C18.8603615%205.09277206%2C18.9275292%20C5.1599603%2C18.9946969%205.25643572%2C19.0205306%205.34774281%2C18.9946969%20L8.19893597%2C18.2265744%20L5.79394162%2C15.8223165%20L5.02558382%2C18.6726366%20Z%22%20transform%3D%22translate%28-5%20-5%29%22/%3E%0A%3C/svg%3E%0A') center no-repeat;
 }
 
-.landing-sm-content-page:not(.landing-sm-content-page--hover) .landing-sm-content-page-edit:hover {
-	color: #9b9b9b;
-}
-
 .landing-sm-content-page--check .landing-sm-content-page-edit {
 	color: #9b9b9b;
 }
@@ -671,7 +661,7 @@
 	top: -13px;
 	left: 0;
 	border-radius: 10px;
-	background: url(image/landing-sm-bg-qr.png) center no-repeat;
+	background: url(image/landing-sm-bg-qr.webp) center no-repeat;
 	background-size: cover;
 }
 
@@ -874,7 +864,7 @@
 	bottom: 0;
 	left: 50%;
 	margin-left: -534px;
-	background: url(../teaser/image/landing-sm-teaser-bg.png) center top 25px no-repeat;
+	background: url(../teaser/image/landing-sm-teaser-bg.webp) center top 25px no-repeat;
 	background-size: 100%;
 	opacity: 0;
 	transform: translateY(calc(100% - 300px));
@@ -907,7 +897,7 @@
 	top: 0;
 	bottom: 0;
 	transform: translate(-50%, calc(100% - 95px));
-	background: url(../teaser/image/landing-sm-shop-page-ru.png) center top no-repeat;
+	background: url(../teaser/image/landing-sm-shop-page-ru.webp) center top no-repeat;
 	opacity: 0;
 	background-size: 100%;
 	animation: landing-sm-teaser-bottom--position 1s linear forwards;
@@ -929,7 +919,7 @@
 }
 
 .landing-sm-teaser--en .landing-sm-teaser-bottom:after {
-	background-image: url(../teaser/image/landing-sm-shop-page-en.png);
+	background-image: url(../teaser/image/landing-sm-shop-page-en.webp);
 }
 
 .landing-sm-teaser-title {
@@ -997,4 +987,99 @@
 	height: 1px;
 	background: #3bc8f5;
 	opacity: .1;
+}
+
+/* visually hidden accessible names (standard clip pattern) */
+.landing-visually-hidden {
+	position: absolute !important;
+	width: 1px;
+	height: 1px;
+	margin: -1px;
+	padding: 0;
+	border: 0;
+	overflow: hidden;
+	clip: rect(0 0 0 0);
+	clip-path: inset(50%);
+	white-space: nowrap;
+}
+
+/* headings and the step list keep the geometry of the div markup they replaced */
+h1.landing-sm-head-title {
+	margin: 0;
+}
+
+h2.landing-sm-content-title {
+	margin-top: 0;
+}
+
+h1.landing-sm-teaser-title {
+	margin-top: 0;
+}
+
+/* a list without a marker loses its role in some screen readers: the template keeps role="list" */
+ol.landing-sm-steps {
+	margin: 0;
+	list-style: none;
+}
+
+ul.landing-sm-content-page-list {
+	margin: 0 0 20px;
+	padding: 0;
+	list-style: none;
+}
+
+/* the tick in the corner of a done card is a colour: the status repeats it as a word */
+.landing-sm-content-page-status {
+	display: block;
+	margin-top: 6px;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
+	font-size: 13px;
+	line-height: 18px;
+	color: var(--ui-color-base-2, #525c69);
+}
+
+.landing-sm-content-page--check .landing-sm-content-page-status {
+	color: var(--ui-color-base-1, #333);
+}
+
+/* the card under --hover is filled with #2fc6f6: white text on it stays below the AA ratio */
+.landing-sm-content-page--hover .landing-sm-content-page-status {
+	color: var(--ui-color-base-1, #333);
+}
+
+/* the address of the store used to live inside the picture of the code alone */
+.landing-sm-phone-qr-address-label {
+	display: block;
+	margin: 0 20px 6px;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font-size: 13px;
+	line-height: 18px;
+	color: #fff;
+	text-align: center;
+	opacity: .7;
+}
+
+.landing-sm-phone-qr-address {
+	display: block;
+	max-width: 250px;
+	margin-bottom: 12px;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font-size: 14px;
+	line-height: 20px;
+	color: #fff;
+	text-align: center;
+	text-decoration: underline;
+	word-break: break-all;
+}
+
+.landing-sm-phone-qr-address:hover {
+	color: #fff;
+}
+
+/* the wizard had no focus indicator at all */
+.landing-sm :focus-visible,
+.landing-sm-teaser :focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: 2px;
 }

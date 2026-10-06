@@ -27,6 +27,7 @@ export class ConstantsStep extends StepWithErrors
 
 	#body: HTMLElement;
 	#form: HTMLFormElement;
+	#saveButton: Button;
 
 	#isConstantsTuned: boolean = false;
 	#originalFormData: FormData = null;
@@ -84,7 +85,18 @@ export class ConstantsStep extends StepWithErrors
 
 	#renderConstants(): HTMLElement
 	{
-		this.#form = renderBpForm(FORM_NAME, this.name, this.#constants, this.#documentType, null, this.#signedDocumentId);
+		this.#form = renderBpForm(
+			FORM_NAME,
+			this.name,
+			this.#constants,
+			this.#documentType,
+			{
+				signedDocumentId: this.#signedDocumentId,
+				onSubmit: () => this.#handleSaveClick(this.#saveButton),
+				// the step head already renders this.name as a heading
+				titleLevel: null,
+			},
+		);
 		Dom.append(this.renderErrors(), this.#form);
 		Dom.append(this.#renderSaveButton(), this.#form);
 
@@ -116,21 +128,27 @@ export class ConstantsStep extends StepWithErrors
 
 	#renderSaveButton(): HTMLElement
 	{
-		return (
-			(new Button({
-				text: Text.encode(Loc.getMessage('BIZPROC_CMP_WORKFLOW_START_TMP_SINGLE_START_BUTTON_SAVE')),
-				size: ButtonSize.EXTRA_SMALL,
-				color: ButtonColor.SECONDARY,
-				onclick: this.#handleSaveClick.bind(this),
-			}))
-				.render()
-		);
+		this.#saveButton = new Button({
+			text: Text.encode(Loc.getMessage('BIZPROC_CMP_WORKFLOW_START_TMP_SINGLE_START_BUTTON_SAVE')),
+			size: ButtonSize.EXTRA_SMALL,
+			color: ButtonColor.SECONDARY,
+			props: { type: 'button' },
+			dataset: { testid: 'bizproc-ws-start-save-constants-btn' },
+			onclick: this.#handleSaveClick.bind(this),
+		});
+
+		return this.#saveButton.render();
 	}
 
 	#handleSaveClick(button: Button)
 	{
+		if (button.isWaiting())
+		{
+			return;
+		}
+
 		button.setWaiting(true);
-		this.cleanErrors();
+		this.cleanErrors(this.#form);
 
 		const data = new FormData(this.#form);
 		data.set('templateId', this.#templateId);
@@ -143,7 +161,7 @@ export class ConstantsStep extends StepWithErrors
 				button.setWaiting(false);
 			})
 			.catch((response) => {
-				this.showErrors(response.errors);
+				this.showErrors(response.errors, this.#form);
 				button.setWaiting(false);
 			})
 		;

@@ -41,7 +41,7 @@ h2 {
 }
 
 .adm-fav-link {
-	background: url("images/bx-admin-sprite-small-2.png") no-repeat 11px -2033px;
+	background: url("images/bx-admin-sprite-small-2.webp") no-repeat 11px -2033px;
 	display:inline-block;
 	height:20px;
 	cursor:pointer;
@@ -65,11 +65,11 @@ h2 {
 	width:18px;
 	height:17px;
 	margin:0 5px 0 10px;
-	background:url("images/bx-admin-sprite-small-2.png") no-repeat center -3803px;
+	background:url("images/bx-admin-sprite-small-2.webp") no-repeat center -3803px;
 }
 
 #navchain-link.navchain-link-visible:hover {
-	background:url("images/bx-admin-sprite-small-2.png") no-repeat center -3824px;
+	background:url("images/bx-admin-sprite-small-2.webp") no-repeat center -3824px;
 }
 
 .adm-title {
@@ -123,7 +123,7 @@ h2 {
 
 
 .adm-resizer-btn {
-	background:url("images/bx-admin-sprite-small-2.png") no-repeat  100px -3901px;
+	background:url("images/bx-admin-sprite-small-2.webp") no-repeat  100px -3901px;
 	cursor:pointer;
 	margin-left:-7px;
 	margin-right:-7px;
@@ -135,7 +135,7 @@ h2 {
 }
 
 .adm-resizer-btn:after{
-	background:url("images/bx-admin-sprite-small-2.png") no-repeat 100px -3991px;
+	background:url("images/bx-admin-sprite-small-2.webp") no-repeat 100px -3991px;
 	content:"";
 	height:13px;
 	left:9px;
@@ -195,7 +195,7 @@ h2 {
 }
 
 .adm-header-bottom {
-	background:url("images/bx-admin-sprite-small-2.png") repeat-x 0 0;
+	background:url("images/bx-admin-sprite-small-2.webp") repeat-x 0 0;
 	-webkit-box-shadow:0 1px 1px 0 rgba(0,0,0,0.4);
 	box-shadow:0 1px 1px 0 rgba(0,0,0,0.4);
 	height:12px;
@@ -345,7 +345,7 @@ h2 {
 
 .adm-header-language:after,
 .adm-header-site-select:after {
-	background:url("images/bx-admin-sprite-small-2.png") no-repeat 0 -3313px;
+	background:url("images/bx-admin-sprite-small-2.webp") no-repeat 0 -3313px;
 	content:"";
 	height:3px;
 	right:10px;
@@ -386,7 +386,7 @@ h2 {
 }
 
 .adm-header-notif-icon {
-	background:url("images/bx-admin-sprite-small-2.png") no-repeat 0 -52px;
+	background:url("images/bx-admin-sprite-small-2.webp") no-repeat 0 -52px;
 	display:inline-block;
 	height:14px;
 	margin-right:4px;
@@ -406,7 +406,7 @@ h2 {
 }
 
 .adm-header-setting-btn {
-	background:url("images/bx-admin-sprite-small-2.png") no-repeat 11px -18px;
+	background:url("images/bx-admin-sprite-small-2.webp") no-repeat 11px -18px;
 	color:#e3ecee;
 	cursor:pointer;
 	display:inline-block;
@@ -419,7 +419,7 @@ h2 {
 }
 
 .adm-header-setting-btn:hover {
-	background:url("images/bx-admin-sprite-small-2.png") no-repeat 12px -74px;
+	background:url("images/bx-admin-sprite-small-2.webp") no-repeat 12px -74px;
 	color:#fff;
 	text-decoration:none;
 }
@@ -567,7 +567,7 @@ input[type="text"].adm-header-search {
 
 .adm-header-search-block:after,
 .adm-header-search-block:before {
-	background:url("images/bx-admin-sprite-small-2.png") no-repeat 7px -103px;
+	background:url("images/bx-admin-sprite-small-2.webp") no-repeat 7px -103px;
 	content:"";
 	display:block;
 	height:26px;
@@ -578,7 +578,7 @@ input[type="text"].adm-header-search {
 }
 
 .adm-header-search-block-btn {
-	background:url("images/bx-admin-sprite-small-2.png") no-repeat 9px -3388px;
+	background:url("images/bx-admin-sprite-small-2.webp") no-repeat 9px -3388px;
 	height:26px;
 	-webkit-transition:opacity 0.25s ease-in;
 	-moz-transition:opacity 0.25s ease-in;
@@ -676,7 +676,7 @@ input.adm-header-search::-ms-clear {
 
 .adm-header-user-block:before {
 	content:"";
-	background:url("images/bx-admin-sprite-small-2.png") no-repeat 0 -155px;
+	background:url("images/bx-admin-sprite-small-2.webp") no-repeat 0 -155px;
 	left:10px;
 	top:7px;
 	height:11px;
@@ -739,7 +739,7 @@ input.adm-header-search::-ms-clear {
 }
 
 .adm-header-separate-right:before {
-	background: url("images/bx-admin-sprite-small-2.png") no-repeat -6px -4530px;
+	background: url("images/bx-admin-sprite-small-2.webp") no-repeat -6px -4530px;
 	content: '';
 	height: 4px;
 	position: absolute;
@@ -814,7 +814,7 @@ input.adm-header-search::-ms-clear {
 }
 
 .adm-header-pin {
-	background:url("images/bx-admin-sprite-small-2.png") no-repeat 6px -166px;
+	background:url("images/bx-admin-sprite-small-2.webp") no-repeat 6px -166px;
 	display:inline-block;
 	cursor:pointer;
 	height:25px;
@@ -998,7 +998,7 @@ input.adm-header-search::-ms-clear {
 }
 
 .adm-main-menu-item-icon {
-	background:url("images/bx-admin-sprite-big1.png?3") no-repeat -100px -100px;
+	background:url("images/bx-admin-sprite-big1.webp?3") no-repeat -100px -100px;
 	height:45px;
 	position:relative;
 	z-index:2;
@@ -1150,7 +1150,7 @@ input.adm-header-search::-ms-clear {
 	background-image:-ms-linear-gradient(top, #f7f8f8, #d7e3e7);
 	background-image:-webkit-linear-gradient(top, #f7f8f8, #d7e3e7);
 	background-image: linear-gradient(top, #f7f8f8, #d7e3e7);*/
-	background:url("images/bx-admin-sprite-small-2.png") repeat-x 0 -692px;
+	background:url("images/bx-admin-sprite-small-2.webp") repeat-x 0 -692px;
 	border-color:#d0d9db #bac3c4 #919798 #bcc5c6;
 	-webkit-box-shadow:0 1px 0 rgba(147,154,155, 0.4), inset 0 0 1px rgba(255,255,255,0.5), inset 0 1px 0 #fff;
 	box-shadow:0 1px 0 rgba(147,154,155, 0.4), inset 0 0 1px rgba(255,255,255,0.5), inset 0 1px 0 #fff;
@@ -1165,7 +1165,7 @@ input.adm-header-search::-ms-clear {
 }
 
 .adm-submenu-item-icon {
-	background:url(images/bx-admin-sprite-small-2.png) no-repeat 13px -273px;
+	background:url(images/bx-admin-sprite-small-2.webp) no-repeat 13px -273px;
 	float:left;
 	height:30px;
 	width:41px;
@@ -1183,7 +1183,7 @@ input.adm-header-search::-ms-clear {
 }
 
 .adm-submenu-title-desktop {
-	background:url("images/bx-admin-sprite-small-2.png") no-repeat 24px -3516px;
+	background:url("images/bx-admin-sprite-small-2.webp") no-repeat 24px -3516px;
 	padding-left:52px;
 	color:#586d7c;
 }
@@ -1223,7 +1223,7 @@ input.adm-header-search::-ms-clear {
 
 .adm-submenu-no-children .adm-submenu-item-arrow,
 .adm-submenu-no-children .adm-submenu-item-arrow:hover{
-	background:url("images/bx-admin-sprite-small-2.png") no-repeat right -1131px;
+	background:url("images/bx-admin-sprite-small-2.webp") no-repeat right -1131px;
 }
 .adm-submenu-no-children .adm-submenu-item-arrow-icon { background: none; }
 
@@ -1325,7 +1325,7 @@ input.adm-header-search::-ms-clear {
 }
 
 .adm-submenu-add-desktop-icon {
-	background:url("images/bx-admin-sprite-big1.png?2") no-repeat 9px -783px;
+	background:url("images/bx-admin-sprite-big1.webp?2") no-repeat 9px -783px;
 	display:inline-block;
 	cursor:pointer;
 	height:28px;
@@ -1466,7 +1466,7 @@ input.adm-header-search::-ms-clear {
 .adm-nav-page,
 .adm-nav-page-separator,
 .adm-nav-page-separator:before {
-	background:url("images/bx-admin-sprite-small-2.png") 0 -452px repeat-x #edf3f6;
+	background:url("images/bx-admin-sprite-small-2.webp") 0 -452px repeat-x #edf3f6;
 	display:inline-block;
 	border:1px solid;
 	border-color:#99acb5 #99acb5 #99acb5 #99acb5;
@@ -1542,7 +1542,7 @@ a.adm-nav-page:hover,
 .adm-nav-page-next:before,
 .adm-nav-page-first:before,
 .adm-nav-page-last:before {
-	background:url("images/bx-admin-sprite-small-2.png") no-repeat center -302px;
+	background:url("images/bx-admin-sprite-small-2.webp") no-repeat center -302px;
 	content:"";
 	position:absolute;
 	left:0;
@@ -1587,7 +1587,7 @@ a.adm-nav-page:hover,
 }
 
 .adm-list-table-top {
-	background:url("images/bx-admin-sprite-small-2.png") repeat-x 0 -551px;
+	background:url("images/bx-admin-sprite-small-2.webp") repeat-x 0 -551px;
 	border-radius:5px 5px 0 0;
 	-webkit-box-shadow:inset 0 1px 0 #fff/*, inset 0 0 2px -1px rgba(232,19,64, 1)*/;
 	box-shadow:inset 0 1px 0 #fff/*, inset 0 0 2px -1px rgba(232,19,64, 1)*/;
@@ -1609,7 +1609,7 @@ a.adm-nav-page:hover,
 
 
 .adm-table-setting:before {
-	background:url("images/bx-admin-sprite-small-2.png") repeat-y center -856px;
+	background:url("images/bx-admin-sprite-small-2.webp") repeat-y center -856px;
 	content:"";
 	height:15px;
 	left:13px;
@@ -1740,7 +1740,7 @@ a.adm-nav-page:hover,
 /*.adm-list-table-cell-sort .adm-list-table-cell-inner:after,*/
 .adm-list-table-cell-sort-up .adm-list-table-cell-inner:after,
 .adm-list-table-cell-sort-down .adm-list-table-cell-inner:after {
-	background:url("images/bx-admin-sprite-small-2.png") no-repeat 0 -1967px;
+	background:url("images/bx-admin-sprite-small-2.webp") no-repeat 0 -1967px;
 	content:"";
 	margin-top:-3px;
 	right:10px;
@@ -1838,7 +1838,7 @@ a.adm-nav-page:hover,
 
 
 .adm-list-table-popup {
-	background-image:url("images/bx-admin-sprite-small-2.png");
+	background-image:url("images/bx-admin-sprite-small-2.webp");
 	background-repeat:no-repeat;
 	background-position :center -1117px;
 	height:20px;
@@ -1876,7 +1876,7 @@ a.adm-nav-page:hover,
 .adm-list-table-row.adm-list-row-active .adm-list-table-cell a {color:#fff;}*/
 
 .adm-list-table-footer {
-	background:url("images/bx-admin-sprite-small-2.png") repeat-x 0 -1247px;
+	background:url("images/bx-admin-sprite-small-2.webp") repeat-x 0 -1247px;
 	border-top:1px solid #f1f1f1;
 	border-radius: 0 0 5px 5px;
 	-webkit-box-shadow:inset 0 1px 0 #fff, inset 0 0 0 1px rgba(255,255,255, 0.3);
@@ -1888,7 +1888,7 @@ a.adm-nav-page:hover,
 
 .adm-list-table-fixed:after,
 .adm-detail-tabs-block-fixed:after {
-	background: url("images/bx-admin-sprite-small-2.png") repeat-x 0 -1088px;
+	background: url("images/bx-admin-sprite-small-2.webp") repeat-x 0 -1088px;
 	bottom: -13px;
 	content: "";
 	height: 13px;
@@ -1906,7 +1906,7 @@ a.adm-nav-page:hover,
 
 .adm-list-table-footer-fixed:after,
 .adm-detail-content-btns-fixed:after {
-	background:url("images/bx-admin-sprite-small-2.png") repeat-x 0 -1071px;
+	background:url("images/bx-admin-sprite-small-2.webp") repeat-x 0 -1071px;
 	content:"";
 	height:13px;
 	left:0;
@@ -1934,7 +1934,7 @@ a.adm-nav-page:hover,
 .adm-table-item-edit-wrap {display:inline-block; vertical-align:middle; margin:0 0 0 16px;}
 .adm-table-btn-edit,
 .adm-table-btn-delete {
-	background:url("images/bx-admin-sprite-big1.png?2") no-repeat 0 -948px;
+	background:url("images/bx-admin-sprite-big1.webp?2") no-repeat 0 -948px;
 	cursor:pointer;
 	height:32px;
 	width:32px;
@@ -1963,7 +1963,7 @@ a.adm-nav-page:hover,
 
 .adm-table-item-edit-single .adm-table-btn-delete:before,
 .adm-table-item-edit-single .adm-table-btn-edit:before {
-	background:url("images/bx-admin-sprite-small-2.png") no-repeat 0 -1520px;
+	background:url("images/bx-admin-sprite-small-2.webp") no-repeat 0 -1520px;
 	content:"";
 	right:9px;
 	top:8px;
@@ -2005,7 +2005,7 @@ a.adm-nav-page:hover,
 
 .adm-filter-tabs-block {padding-right:70px; white-space:nowrap; position: relative; }
 .adm-filter-tab {
-	background:url("images/bx-admin-sprite-small-2.png") repeat-x 0 -1421px;
+	background:url("images/bx-admin-sprite-small-2.webp") repeat-x 0 -1421px;
 	display:inline-block;
 	border-radius:5px 5px 0 0;
 	border:1px solid #d0d9db;
@@ -2029,7 +2029,7 @@ a.adm-nav-page:hover,
 .adm-filter-add-tab {}
 
 .adm-filter-add-tab:after {
-	background:url("images/bx-admin-sprite-small-2.png") no-repeat 0 -1618px;
+	background:url("images/bx-admin-sprite-small-2.webp") no-repeat 0 -1618px;
 	content:"";
 	height:12px;
 	left:13px;
@@ -2253,7 +2253,7 @@ a.adm-nav-page:hover,
 }
 
 /*.adm-filter-setting {
-	background:url("images/bx-admin-sprite-small-2.png") no-repeat 6px -1643px;
+	background:url("images/bx-admin-sprite-small-2.webp") no-repeat 6px -1643px;
 	display:inline-block;
 	cursor:pointer;
 	height:32px;
@@ -2262,7 +2262,7 @@ a.adm-nav-page:hover,
 }
 
 .adm-filter-setting:before {
-	background:url("images/bx-admin-sprite-small-2.png") no-repeat 0 -1501px;
+	background:url("images/bx-admin-sprite-small-2.webp") no-repeat 0 -1501px;
 	content:"";
 	height:4px;
 	position:absolute;
@@ -2276,7 +2276,7 @@ a.adm-nav-page:hover,
 .adm-filter-add-button,
 .adm-filter-item-delete,
 .adm-filter-setting {
-	background:url("images/bx-admin-sprite-small-2.png") repeat-x 0 -1714px;
+	background:url("images/bx-admin-sprite-small-2.webp") repeat-x 0 -1714px;
 	border:1px solid rgba(139,153,157,0.72);
 	border-radius:4px;
 	-webkit-box-shadow:0 1px 0 0 rgba(255, 255, 255, 0.5);
@@ -2302,7 +2302,7 @@ a.adm-nav-page:hover,
 .adm-filter-add-button:after,
 .adm-filter-item-delete:after,
 .adm-filter-setting:after {
-	background:url("images/bx-admin-sprite-small-2.png") no-repeat 0 -1618px;
+	background:url("images/bx-admin-sprite-small-2.webp") no-repeat 0 -1618px;
 	content:"";
 	height:15px;
 	position:absolute;
@@ -2386,7 +2386,7 @@ a.adm-nav-page:hover,
 	display: block;
 	width: 22px;
 	height: 20px;
-	background: url(images/bx-admin-sprite-small-2.png) no-repeat 1px -4259px;
+	background: url(images/bx-admin-sprite-small-2.webp) no-repeat 1px -4259px;
 }
 
 .adm-filter-switcher-tab:hover {
@@ -2403,7 +2403,7 @@ a.adm-nav-page:hover,
 .adm-filter-switcher-tab:hover .adm-filter-switcher-tab-icon { background-position: 2px -4260px; }
 
 .adm-filter-folded .adm-filter-switcher-tab .adm-filter-switcher-tab-icon { background-position: 1px -4220px; }
-.adm-filter-folded .adm-filter-switcher-tab:hover .adm-filter-switcher-tab-icon { background: url(images/bx-admin-sprite-small-2.png) no-repeat 2px -4221px; }
+.adm-filter-folded .adm-filter-switcher-tab:hover .adm-filter-switcher-tab-icon { background: url(images/bx-admin-sprite-small-2.webp) no-repeat 2px -4221px; }
 
 .adm-filter-folded .adm-filter-content { display: none; }
 .adm-filter-folded .adm-filter-tab {
@@ -2417,7 +2417,7 @@ a.adm-nav-page:hover,
 
 .adm-filter-folded .adm-filter-tab-active {
 	/* Properties from .adm-filter-tab */
-	background: url("images/bx-admin-sprite-small-2.png") repeat-x 0 -1421px;
+	background: url("images/bx-admin-sprite-small-2.webp") repeat-x 0 -1421px;
 	color: #3F4B54;
 }
 
@@ -2457,7 +2457,7 @@ a.adm-nav-page:hover,
 
 .adm-filter-tabs-block-underlay {
 	opacity: 0;
-	background: url(images/bx-admin-sprite-small-2.png) repeat-x 0 -4167px;
+	background: url(images/bx-admin-sprite-small-2.webp) repeat-x 0 -4167px;
 	height: 42px;
 	border-radius: 5px;
 	position: absolute;
@@ -2553,7 +2553,7 @@ a.adm-navchain-item:hover {color:#0e3f82;}
 
 .adm-navchain-delimiter
 {
-	background: url("images/bx-admin-sprite-small-2.png") no-repeat 1px -1155px;
+	background: url("images/bx-admin-sprite-small-2.webp") no-repeat 1px -1155px;
 	display: inline-block;
 	vertical-align: top;
 	padding-right: 8px;
@@ -2613,7 +2613,7 @@ a.adm-navchain-item:hover {color:#0e3f82;}
 
 .adm-detail-tab
 {
-	background:url("images/bx-admin-sprite-small-2.png") repeat-x 0 -2525px;
+	background:url("images/bx-admin-sprite-small-2.webp") repeat-x 0 -2525px;
 	display:inline-block;
 	border-radius:4px 4px 0 0;
 	border:1px solid;
@@ -2662,7 +2662,7 @@ span.adm-detail-tab.adm-detail-tab-active {
 }
 
 span.adm-detail-tab.adm-detail-tab-active:after {
-	background: url("images/bx-admin-sprite-small-2.png") repeat-x scroll 0 -2511px;
+	background: url("images/bx-admin-sprite-small-2.webp") repeat-x scroll 0 -2511px;
 	left:0;
 	right:0;
 }
@@ -2777,7 +2777,7 @@ span.adm-detail-tab.adm-detail-tab-active:after {
 }
 
 .adm-detail-settings {
-	background:url("images/bx-admin-sprite-small-2.png") no-repeat 2px -855px;
+	background:url("images/bx-admin-sprite-small-2.webp") no-repeat 2px -855px;
 	display:block;
 	font-size:11px;
 	height:15px;
@@ -2793,7 +2793,7 @@ span.adm-detail-tab.adm-detail-tab-active:after {
 .adm-detail-settings-arrow {padding-right:10px;}
 
 .adm-detail-settings-arrow:after {
-	background:url("images/bx-admin-sprite-small-2.png") no-repeat 0 -3313px;
+	background:url("images/bx-admin-sprite-small-2.webp") no-repeat 0 -3313px;
 	content:"";
 	height:3px;
 	right:0;
@@ -2809,7 +2809,7 @@ span.adm-detail-tab.adm-detail-tab-active:after {
 .adm-detail-settings-arrow:hover:after {background-position:0 -3323px;}
 
 .adm-detail-tabs-footer {
-	background:url("images/bx-admin-sprite-small-2.png") repeat-x 0 -2612px;
+	background:url("images/bx-admin-sprite-small-2.webp") repeat-x 0 -2612px;
 	display:none;
 	height:6px;
 	left:0;
@@ -2853,7 +2853,7 @@ span.adm-detail-tab.adm-detail-tab-active:after {
 .adm-detail-tabs-block-fixed .adm-detail-title-setting {display: none;}
 
 .adm-detail-title-setting-btn {
-	background:url("images/bx-admin-sprite-small-2.png") no-repeat 0 -2630px;
+	background:url("images/bx-admin-sprite-small-2.webp") no-repeat 0 -2630px;
 	display:block;
 	height:9px;
 	margin: 21px auto 0;
@@ -2902,7 +2902,7 @@ span.adm-detail-tab.adm-detail-tab-active:after {
 .adm-detail-content-btns-fixed:after {border-bottom:1px solid #DCE7ED; left:0; right:0; top:-14px;}
 
 .adm-detail-pin-btn {
-	background:url("images/bx-admin-sprite-small-2.png") no-repeat center -3039px;
+	background:url("images/bx-admin-sprite-small-2.webp") no-repeat center -3039px;
 	cursor:pointer;
 	float:right;
 	margin-right:-6px;
@@ -2913,7 +2913,7 @@ span.adm-detail-tab.adm-detail-tab-active:after {
 .adm-detail-pin-btn:hover, .adm-detail-pin-btn-tabs:hover {background-position: center -3104px;}
 
 .adm-detail-pin-btn-tabs {
-	background:url("images/bx-admin-sprite-small-2.png") no-repeat center -3039px;
+	background:url("images/bx-admin-sprite-small-2.webp") no-repeat center -3039px;
 	cursor:pointer;
 	height:31px;
 	width:35px;
@@ -3158,7 +3158,7 @@ div.graph table.legend td.color-line div {
 }
 
 .adm-favorites-text:after {
-	background:url("images/bx-admin-sprite-small-2.png") no-repeat center -3855px;
+	background:url("images/bx-admin-sprite-small-2.webp") no-repeat center -3855px;
 	content:"";
 	display:inline-block;
 	height:17px;
@@ -3287,7 +3287,7 @@ div.graph table.legend td.color-line div {
 .adm-footer-wrap td.adm-resizer {border-top:1px solid #a4b9cc; padding:0;}
 
 .adm-main-support-link {
-	background:url("images/bx-admin-sprite-small-2.png") no-repeat 0 -1652px;
+	background:url("images/bx-admin-sprite-small-2.webp") no-repeat 0 -1652px;
 	color:#45484f;
 	font-size:13px;
 	float:right;
@@ -3323,7 +3323,7 @@ it's made to prevent appearing of artefacts from old admin button icons.
 /*======================================================MENU ICONS=========================================*/
 
 .adm-submenu-item-link-icon {
-	background:url("images/icons-sprite-14.png?3") no-repeat center -1512px;
+	background:url("images/icons-sprite-14.webp?3") no-repeat center -1512px;
 }
 .fav_menu_icon {background-position:center -1540px;}
 .iblock_menu_icon_iblocks {background-position:center -56px;}
@@ -3459,7 +3459,7 @@ it's made to prevent appearing of artefacts from old admin button icons.
 
 
 .adm-select-wrap {
-	background:url("images/bx-admin-sprite-small-2.png") repeat-x 0 -494px;
+	background:url("images/bx-admin-sprite-small-2.webp") repeat-x 0 -494px;
 	border-radius:4px;
 	-webkit-box-shadow:inset 0 0 1px rgba(255,255,255,0.3), 0 1px 1px -1px rgba(0,0,0,0.3);
 	box-shadow:inset 0 0 1px rgba(255,255,255,0.3), 0 1px 1px -1px rgba(0,0,0,0.3);
@@ -3471,7 +3471,7 @@ it's made to prevent appearing of artefacts from old admin button icons.
 }
 
 .adm-select-wrap:after {
-	background:url("images/bx-admin-sprite-small-2.png") no-repeat 0 -533px;
+	background:url("images/bx-admin-sprite-small-2.webp") no-repeat 0 -533px;
 	content:"";
 	height:10px;
 	right:8px;
@@ -3507,7 +3507,7 @@ it's made to prevent appearing of artefacts from old admin button icons.
 }
 
 .adm-small-button {
-	background:url("images/bx-admin-sprite-small-2.png") repeat-x 0 -879px;
+	background:url("images/bx-admin-sprite-small-2.webp") repeat-x 0 -879px;
 	border:1px solid;
 	border-color:#8d9a9e #7d8b8e #6f7d7f #7d8b8e;
 	border-radius:4px;
@@ -3628,7 +3628,7 @@ it's made to prevent appearing of artefacts from old admin button icons.
 
 .adm-detail-toolbar-btn-l,
 .adm-detail-toolbar-btn-text,
-.adm-detail-toolbar-btn-r {background:url("images/bx-admin-sprite-small-2.png") no-repeat 0 -2155px; display:inline-block; height:31px; vertical-align:top;}
+.adm-detail-toolbar-btn-r {background:url("images/bx-admin-sprite-small-2.webp") no-repeat 0 -2155px; display:inline-block; height:31px; vertical-align:top;}
 
 .adm-detail-toolbar-btn-l {width:11px;}
 .adm-detail-toolbar-btn-r {background-position:-13px -2357px; width:4px;}
@@ -3984,7 +3984,8 @@ it's made to prevent appearing of artefacts from old admin button icons.
 	overflow: hidden;
 }
 
-.adm-container-draggable.hidden .adm-bus-component-title-icon-turn{
+.adm-container-draggable.hidden .adm-bus-component-title-icon-turn,
+.adm-bus-component-container.close .adm-bus-component-title-icon-turn{
 	background:url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAFBAMAAACOSmBbAAAABGdBTUEAALGPC/xhBQAAACFQTFRFAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAbdFIwQAAAAp0Uk5Th45qcP53jIJ8ANZzCbQAAAAmSURBVAjXY+hatcprOcOMVatWVTLMjFq1YCbDzMlemUBypuLMmQDUxw2yp/UhOAAAAABJRU5ErkJggg==') no-repeat scroll center transparent;
 }
 
@@ -4006,10 +4007,6 @@ it's made to prevent appearing of artefacts from old admin button icons.
 	padding:0;
 }
 
-.adm-bus-component-container.close .adm-bus-component-title-icon-turn{
-	background:url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAFBAMAAACOSmBbAAAABGdBTUEAALGPC/xhBQAAACFQTFRFAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAbdFIwQAAAAp0Uk5Th45qcP53jIJ8ANZzCbQAAAAmSURBVAjXY+hatcprOcOMVatWVTLMjFq1YCbDzMlemUBypuLMmQDUxw2yp/UhOAAAAABJRU5ErkJggg==') no-repeat scroll center transparent;
-}
-
 .adm-bus-component-title-container{
 	position:relative;
 	padding:10px;
@@ -4029,20 +4026,6 @@ it's made to prevent appearing of artefacts from old admin button icons.
 	vertical-align:middle;
 	background:url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABEAAAAQCAYAAADwMZRfAAAApklEQVQ4y62TWxKAIAhFWV+5CfqR/W+g0kRe4ZfN3AFvCXYoOK96sMpFXd47h1dMlBy04cVFdWG95hxkk+0WRb9Fm+DecLWTLPV2fSPN+In92g4BYuDYiG497vMmv+5FPCR5XzsBD9cwyUabgsYIHPJO61Nob/d0SAGTfHpYDVwGzGBNIfuwTKH85LOIZUABbA5e7sH6U48ge0QHNo41/4eyZlum8wCk2+4DSY0a1QAAAABJRU5ErkJggg==) no-repeat center;
 }
-.adm-bus-component-title-icon-close{
-	position:absolute;
-	top:50%;
-	right:10px;
-	width:16px;
-	height:16px;
-	margin-top:-8px;
-	cursor:pointer;
-	-webkit-transition:opacity .5s ease 0s;
-	-moz-transition:opacity .5s ease 0s;
-	transition:opacity .5s ease 0s;
-	opacity:.3;
-	background:url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAyJpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuMy1jMDExIDY2LjE0NTY2MSwgMjAxMi8wMi8wNi0xNDo1NjoyNyAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvIiB4bWxuczp4bXBNTT0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL21tLyIgeG1sbnM6c3RSZWY9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZVJlZiMiIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIENTNiAoV2luZG93cykiIHhtcE1NOkluc3RhbmNlSUQ9InhtcC5paWQ6OUQ2NzExOTQ1Mzk0MTFFNDkyMDJDQTlERTU3RTUwQzAiIHhtcE1NOkRvY3VtZW50SUQ9InhtcC5kaWQ6OUQ2NzExOTU1Mzk0MTFFNDkyMDJDQTlERTU3RTUwQzAiPiA8eG1wTU06RGVyaXZlZEZyb20gc3RSZWY6aW5zdGFuY2VJRD0ieG1wLmlpZDo5RDY3MTE5MjUzOTQxMUU0OTIwMkNBOURFNTdFNTBDMCIgc3RSZWY6ZG9jdW1lbnRJRD0ieG1wLmRpZDo5RDY3MTE5MzUzOTQxMUU0OTIwMkNBOURFNTdFNTBDMCIvPiA8L3JkZjpEZXNjcmlwdGlvbj4gPC9yZGY6UkRGPiA8L3g6eG1wbWV0YT4gPD94cGFja2V0IGVuZD0iciI/Pp7uvk4AAABxSURBVHjadM87DoAgEEXRFxMtdDnWwybYgPu2NtoIjT0+kikmA5jcwuGEDwAc7GWC9hNdqwYXK+xzWHRW1GBn2eDgUFKDHu6iHm7QZODGZvO/sNXvFsxx2V1DRmjXksfP4OIW33UQ2dl7nc7qWvwFGADg0TAjoMm+PAAAAABJRU5ErkJggg==') no-repeat scroll center center transparent;
-}
 .adm-bus-component-title-icon-turn{
 	position:absolute;
 	top:50%;
@@ -4057,8 +4040,7 @@ it's made to prevent appearing of artefacts from old admin button icons.
 	opacity:.3;
 	background:url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAFBAMAAACOSmBbAAAABGdBTUEAALGPC/xhBQAAACFQTFRFAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAbdFIwQAAAAp0Uk5Th45qcP53jIJ8ANZzCbQAAAAlSURBVAjXY5g5U3HmTIaZk70ygWTUqgUzGWasWrWqkqELSC4HAMeDDhKiLcNqAAAAAElFTkSuQmCC') no-repeat scroll center transparent;
 }
-.adm-bus-component-title-icon-turn:hover,
-.adm-bus-component-title-icon-close:hover{
+.adm-bus-component-title-icon-turn:hover{
 	opacity:.6;
 }
 
@@ -4258,7 +4240,7 @@ it's made to prevent appearing of artefacts from old admin button icons.
 }
 
 .adm-security-popup_wrap.--warning .adm-security-popup_icon {
-	background-image: url(./images/adm-security-banner-warning-icon.png);
+	background-image: url(./images/adm-security-banner-warning-icon.webp);
 }
 
 .adm-security-popup_wrap.--success .adm-security-popup_icon {

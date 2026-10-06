@@ -14,6 +14,7 @@ export type TemplateData = {
 export type DocumentData = {
 	documentType: ComplexDocumentType,
 	documentId: ?ComplexDocumentId,
+	categoryId: ?number,
 };
 
 export type AutostartData = {

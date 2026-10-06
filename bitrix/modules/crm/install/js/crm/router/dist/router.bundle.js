@@ -5,9 +5,12 @@ this.BX = this.BX || {};
 
 	// eslint-disable-next-line max-classes-per-file
 	let instance = null;
+	const CALL_ASSESSMENT_SLIDER_WIDTH = 1045;
+	const LEGACY_CALL_ASSESSMENT_SLIDER_WIDTH = 700;
 	class ListViewTypes {
 		static KANBAN = 'KANBAN';
 		static LIST = 'LIST';
+		static ACTIVITY = 'ACTIVITY';
 	}
 	/**
 	 * @memberOf BX.Crm
@@ -146,6 +149,8 @@ this.BX = this.BX || {};
 			let template = null;
 			if (currentListView === ListViewTypes.KANBAN) {
 				template = this.getTemplate('bitrix:crm.item.kanban', entityTypeId);
+			} else if (currentListView === ListViewTypes.ACTIVITY) {
+				template = this.getTemplate('bitrix:crm.item.activities', entityTypeId);
 			} else {
 				template = this.getTemplate('bitrix:crm.item.list', entityTypeId);
 			}
@@ -222,6 +227,20 @@ this.BX = this.BX || {};
 				}
 			});
 		}
+		openCallAssessmentSlider(assessmentSettingId = null, options = {}) {
+			const {
+				legacyWidth,
+				...restOptions
+			} = main_core.Type.isPlainObject(options) ? options : {};
+			const route = main_core.Type.isInteger(assessmentSettingId) ? `/crm/copilot-call-assessment/details/${assessmentSettingId}/` : '/crm/copilot-call-assessment/';
+			const isV2Enabled = main_core.Extension.getSettings('crm.router').get('isCallScoringV2Enabled') === true;
+			const width = isV2Enabled ? CALL_ASSESSMENT_SLIDER_WIDTH : main_core.Type.isNumber(legacyWidth) ? legacyWidth : LEGACY_CALL_ASSESSMENT_SLIDER_WIDTH;
+			return Router.openSlider(route, {
+				width,
+				cacheable: false,
+				...restOptions
+			});
+		}
 		closeSettingsMenu(event, item) {
 			if (item && main_core.Type.isFunction(item.getMenuWindow)) {
 				const window = item.getMenuWindow();
@@ -257,6 +276,24 @@ this.BX = this.BX || {};
 			} else {
 				window.location.href = redirectTo;
 			}
+		}
+		getAiReportDrawerUrl(scenario, drawerRequest = {}) {
+			const isAvailableScenario = main_core.Type.isStringFilled(scenario) && ['call-assessment', 'summary-history'].includes(scenario);
+			if (!isAvailableScenario) {
+				return null;
+			}
+			const queryParams = this.#prepareAiReportDrawerQueryParams(drawerRequest);
+			if (queryParams === null) {
+				return null;
+			}
+			return new main_core.Uri(`/crm/ai-report-drawer/${scenario}/`).setQueryParams(queryParams);
+		}
+		openAiReportDrawer(scenario, drawerRequest = {}, options = {}) {
+			const uri = this.getAiReportDrawerUrl(scenario, drawerRequest);
+			if (uri) {
+				return this.#openAiReportDrawerSlider(uri, options);
+			}
+			return null;
 		}
 		getAutomatedSolutionListUrl() {
 			return new main_core.Uri('/automation/type/automated_solution/list/');
@@ -310,6 +347,44 @@ this.BX = this.BX || {};
 				[BX.CrmEntityType.enumeration.quote]: `/crm/type/${BX.CrmEntityType.enumeration.quote}/details/#entityId#/`,
 				[BX.CrmEntityType.enumeration.smartinvoice]: `/crm/type/${BX.CrmEntityType.enumeration.smartinvoice}/details/#entityId#/`
 			};
+		}
+		#prepareAiReportDrawerQueryParams(drawerRequest) {
+			if (!main_core.Type.isPlainObject(drawerRequest)) {
+				return null;
+			}
+			const activityId = main_core.Text.toInteger(drawerRequest.activityId);
+			const ownerTypeId = main_core.Text.toInteger(drawerRequest.ownerTypeId);
+			const ownerId = main_core.Text.toInteger(drawerRequest.ownerId);
+			if (activityId <= 0 || ownerTypeId <= 0 || ownerId <= 0) {
+				return null;
+			}
+			const queryParams = {
+				activityId,
+				ownerTypeId,
+				ownerId
+			};
+			const jobId = main_core.Text.toInteger(drawerRequest.jobId);
+			if (jobId > 0) {
+				queryParams.jobId = jobId;
+			}
+			const assessmentSettingsId = main_core.Text.toInteger(drawerRequest.assessmentSettingsId);
+			if (assessmentSettingsId > 0) {
+				queryParams.assessmentSettingsId = assessmentSettingsId;
+			}
+			return queryParams;
+		}
+		#openAiReportDrawerSlider(uri, options = {}) {
+			const preparedOptions = {
+				width: 800,
+				cacheable: false,
+				allowChangeHistory: false,
+				containerClassName: 'crm-ai-report-drawer-slider',
+				copyLinkLabel: true,
+				newWindowLabel: false,
+				newWindowUrl: uri.toString(),
+				...(main_core.Type.isPlainObject(options) ? options : {})
+			};
+			return Router.openSlider(uri, preparedOptions);
 		}
 		openMessageSenderConnectionsSlider(analytics = {}) {
 			const url = new main_core.Uri('/crm/messagesender/connections/').setQueryParams({

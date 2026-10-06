@@ -41,9 +41,31 @@
 	text-overflow: ellipsis;
 }
 
+.landing-site-selector-item[hidden] {
+	display: none;
+}
+
+.landing-site-selector-item:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary, #2066b0);
+	outline-offset: -2px;
+	border-radius: 2px;
+}
+
 .landing-site-selector-item-selected {
 	border-radius: 2px;
 	background: #d9dee1 !important;
+}
+
+.landing-explorer-status {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0 0 0 0);
+	white-space: nowrap;
+	border: 0;
 }
 
 .landing-explorer-loader {

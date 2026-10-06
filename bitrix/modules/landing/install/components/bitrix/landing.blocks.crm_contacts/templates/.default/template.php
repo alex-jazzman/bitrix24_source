@@ -42,7 +42,11 @@ if (!empty($arResult['ALERTS']))
 	$alerts .= '</div></div>';
 }
 
+// class.php reads the params raw (~), so this template owns the encoding of every value it prints
 $arResult['CONTACTS']['PHONE'] = HtmlFilter::encode($arResult['CONTACTS']['PHONE']);
+$arParams['TITLE'] = HtmlFilter::encode($arParams['TITLE']);
+$arParams['BUTTON_TITLE'] = HtmlFilter::encode($arParams['BUTTON_TITLE']);
+$arParams['BUTTON_CLASSES'] = HtmlFilter::encode($arParams['BUTTON_CLASSES']);
 $textAlign = $arParams['BUTTON_POSITION'] === 'right' ? 'text-left' : 'text-right';
 $titleBlock = $arParams['TITLE'] ? "<h6 class=\"crmcontacts-text-title h6\">{$arParams['TITLE']}</h6>" : '';
 $textBlock = <<<HTML

@@ -189,10 +189,10 @@ this.BX.Booking = this.BX.Booking || {};
 		},
 		mounted() {
 			this.adjustPosition();
-			main_core.Event.bind(document, 'scroll', this.adjustPosition, true);
+			main_core.Event.bind(document, 'scroll', this.handleScroll, true);
 		},
 		beforeUnmount() {
-			main_core.Event.unbind(document, 'scroll', this.adjustPosition, true);
+			main_core.Event.unbind(document, 'scroll', this.handleScroll, true);
 		},
 		computed: {
 			options() {
@@ -209,8 +209,20 @@ this.BX.Booking = this.BX.Booking || {};
 			}
 		},
 		methods: {
+			handleScroll(event) {
+				if (main_core.Type.isDomNode(event.target) && this.$refs.stickyContent.contains(event.target)) {
+					return;
+				}
+				this.adjustPosition();
+			},
 			contains(element) {
 				return this.$refs.popup.contains(element);
+			},
+			freeze() {
+				this.$refs.popup.freeze();
+			},
+			unfreeze() {
+				this.$refs.popup.unfreeze();
 			},
 			adjustPosition() {
 				this.$refs.popup.adjustPosition();

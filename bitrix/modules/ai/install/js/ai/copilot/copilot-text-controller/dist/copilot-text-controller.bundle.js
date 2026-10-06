@@ -1800,7 +1800,18 @@ this.BX = this.BX || {};
 					baasPopup?.setAutoHide(false);
 				}, 200);
 			} else if (firstErrorCode === 'LIMIT_IS_EXCEEDED_MONTHLY' || firstErrorCode === 'LIMIT_IS_EXCEEDED_DAILY' || firstErrorCode === 'SERVICE_IS_NOT_AVAILABLE_BY_TARIFF') {
-				this.emit('close');
+				// A technical limit opens no slider, so closing CoPilot would leave the user without any
+				// explanation: keep it open with the message instead.
+				const technicalLimitMessage = ai_ajaxErrorHandler.AjaxErrorHandler.getVibePlusTechnicalLimitMessage(res?.errors?.[0]?.customData);
+				if (technicalLimitMessage) {
+					this.#inputField.setErrors([{
+						code: firstErrorCode,
+						message: technicalLimitMessage,
+						customData: {}
+					}]);
+				} else {
+					this.emit('close');
+				}
 			} else {
 				this.#initErrorMenu();
 				this.#errorMenu.adjustPosition();
@@ -1817,6 +1828,7 @@ this.BX = this.BX || {};
 				errorCode: firstErrorCode,
 				showSliderWithMsg: firstError?.customData?.showSliderWithMsg,
 				sliderCode: firstError?.customData?.sliderCode,
+				vibePlusLimitState: firstError?.customData?.vibePlusLimitState,
 				forceCodeRules: ['sliderCode', 'msgWithHtmlLink'],
 				forceOption: firstError?.customData,
 				bindElement: this.#inputField

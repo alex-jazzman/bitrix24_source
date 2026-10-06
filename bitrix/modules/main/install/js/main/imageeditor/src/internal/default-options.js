@@ -1,3 +1,106 @@
+const assetsBaseUrl = '/bitrix/js/main/imageeditor/external/photoeditorsdk/assets';
+const webpAssetPaths = new Set([
+	'frames/imgly_frame_lowpoly_shadow/imgly_frame_lowpoly_shadow_bottom.png',
+	'frames/imgly_frame_lowpoly_shadow/imgly_frame_lowpoly_shadow_left.png',
+	'frames/imgly_frame_lowpoly_shadow/imgly_frame_lowpoly_shadow_right.png',
+	'frames/imgly_frame_lowpoly_shadow/imgly_frame_lowpoly_shadow_top.png',
+	'frames/imgly_frame_wood_passepartout/imgly_frame_wood_passepartout_bottom.png',
+	'frames/imgly_frame_wood_passepartout/imgly_frame_wood_passepartout_bottom_corner_left.png',
+	'frames/imgly_frame_wood_passepartout/imgly_frame_wood_passepartout_bottom_corner_right.png',
+	'frames/imgly_frame_wood_passepartout/imgly_frame_wood_passepartout_left.png',
+	'frames/imgly_frame_wood_passepartout/imgly_frame_wood_passepartout_right.png',
+	'frames/imgly_frame_wood_passepartout/imgly_frame_wood_passepartout_top.png',
+	'frames/imgly_frame_wood_passepartout/imgly_frame_wood_passepartout_top_corner_left.png',
+	'frames/imgly_frame_wood_passepartout/imgly_frame_wood_passepartout_top_corner_right.png',
+	'stickers/emoticons/background.png',
+	'stickers/emoticons/stickers/base/imgly_sticker_emoticons_alien.png',
+	'stickers/emoticons/stickers/base/imgly_sticker_emoticons_angel.png',
+	'stickers/emoticons/stickers/base/imgly_sticker_emoticons_angry.png',
+	'stickers/emoticons/stickers/base/imgly_sticker_emoticons_anxious.png',
+	'stickers/emoticons/stickers/base/imgly_sticker_emoticons_asleep.png',
+	'stickers/emoticons/stickers/base/imgly_sticker_emoticons_attention.png',
+	'stickers/emoticons/stickers/base/imgly_sticker_emoticons_baby_chicken.png',
+	'stickers/emoticons/stickers/base/imgly_sticker_emoticons_batman.png',
+	'stickers/emoticons/stickers/base/imgly_sticker_emoticons_beer.png',
+	'stickers/emoticons/stickers/base/imgly_sticker_emoticons_blush.png',
+	'stickers/emoticons/stickers/base/imgly_sticker_emoticons_boxer.png',
+	'stickers/emoticons/stickers/base/imgly_sticker_emoticons_business.png',
+	'stickers/emoticons/stickers/base/imgly_sticker_emoticons_chicken.png',
+	'stickers/emoticons/stickers/base/imgly_sticker_emoticons_cool.png',
+	'stickers/emoticons/stickers/base/imgly_sticker_emoticons_cry.png',
+	'stickers/emoticons/stickers/base/imgly_sticker_emoticons_deceased.png',
+	'stickers/emoticons/stickers/base/imgly_sticker_emoticons_devil.png',
+	'stickers/emoticons/stickers/base/imgly_sticker_emoticons_duckface.png',
+	'stickers/emoticons/stickers/base/imgly_sticker_emoticons_furious.png',
+	'stickers/emoticons/stickers/base/imgly_sticker_emoticons_grin.png',
+	'stickers/emoticons/stickers/base/imgly_sticker_emoticons_guitar.png',
+	'stickers/emoticons/stickers/base/imgly_sticker_emoticons_harry_potter.png',
+	'stickers/emoticons/stickers/base/imgly_sticker_emoticons_hippie.png',
+	'stickers/emoticons/stickers/base/imgly_sticker_emoticons_hitman.png',
+	'stickers/emoticons/stickers/base/imgly_sticker_emoticons_humourous.png',
+	'stickers/emoticons/stickers/base/imgly_sticker_emoticons_idea.png',
+	'stickers/emoticons/stickers/base/imgly_sticker_emoticons_impatient.png',
+	'stickers/emoticons/stickers/base/imgly_sticker_emoticons_kiss.png',
+	'stickers/emoticons/stickers/base/imgly_sticker_emoticons_kisses.png',
+	'stickers/emoticons/stickers/base/imgly_sticker_emoticons_laugh.png',
+	'stickers/emoticons/stickers/base/imgly_sticker_emoticons_loud_cry.png',
+	'stickers/emoticons/stickers/base/imgly_sticker_emoticons_loving.png',
+	'stickers/emoticons/stickers/base/imgly_sticker_emoticons_masked.png',
+	'stickers/emoticons/stickers/base/imgly_sticker_emoticons_music.png',
+	'stickers/emoticons/stickers/base/imgly_sticker_emoticons_nerd.png',
+	'stickers/emoticons/stickers/base/imgly_sticker_emoticons_ninja.png',
+	'stickers/emoticons/stickers/base/imgly_sticker_emoticons_not_speaking_to_you.png',
+	'stickers/emoticons/stickers/base/imgly_sticker_emoticons_pig.png',
+	'stickers/emoticons/stickers/base/imgly_sticker_emoticons_pumpkin.png',
+	'stickers/emoticons/stickers/base/imgly_sticker_emoticons_question.png',
+	'stickers/emoticons/stickers/base/imgly_sticker_emoticons_rabbit.png',
+	'stickers/emoticons/stickers/base/imgly_sticker_emoticons_sad.png',
+	'stickers/emoticons/stickers/base/imgly_sticker_emoticons_sick.png',
+	'stickers/emoticons/stickers/base/imgly_sticker_emoticons_skateboard.png',
+	'stickers/emoticons/stickers/base/imgly_sticker_emoticons_skull.png',
+	'stickers/emoticons/stickers/base/imgly_sticker_emoticons_sleepy.png',
+	'stickers/emoticons/stickers/base/imgly_sticker_emoticons_smile.png',
+	'stickers/emoticons/stickers/base/imgly_sticker_emoticons_smoking.png',
+	'stickers/emoticons/stickers/base/imgly_sticker_emoticons_sobbing.png',
+	'stickers/emoticons/stickers/base/imgly_sticker_emoticons_star.png',
+	'stickers/emoticons/stickers/base/imgly_sticker_emoticons_steaming_furious.png',
+	'stickers/emoticons/stickers/base/imgly_sticker_emoticons_sunbathing.png',
+	'stickers/emoticons/stickers/base/imgly_sticker_emoticons_tired.png',
+	'stickers/emoticons/stickers/base/imgly_sticker_emoticons_tongue_out_wink.png',
+	'stickers/emoticons/stickers/base/imgly_sticker_emoticons_wave.png',
+	'stickers/emoticons/stickers/base/imgly_sticker_emoticons_wide_grin.png',
+	'stickers/emoticons/stickers/base/imgly_sticker_emoticons_wink.png',
+	'stickers/emoticons/stickers/base/imgly_sticker_emoticons_wrestler.png',
+	'stickers/shapes/stickers/base/imgly_sticker_shapes_badge_11.png',
+	'stickers/shapes/stickers/base/imgly_sticker_shapes_badge_18.png',
+	'stickers/shapes/stickers/base/imgly_sticker_shapes_badge_20.png',
+	'stickers/shapes/stickers/base/imgly_sticker_shapes_badge_28.png',
+	'stickers/shapes/stickers/base/imgly_sticker_shapes_badge_32.png',
+	'stickers/shapes/stickers/base/imgly_sticker_shapes_badge_35.png',
+	'stickers/shapes/stickers/base/imgly_sticker_shapes_spray_01.png',
+	'stickers/shapes/stickers/base/imgly_sticker_shapes_spray_03.png',
+	'stickers/shapes/stickers/base/imgly_sticker_shapes_spray_04.png',
+	'text-design/images/imgly_text_design_asset_celebrate_03.png',
+	'text-design/images/imgly_text_design_asset_celebrate_04.png',
+	'text-design/images/imgly_text_design_asset_celebrate_05.png',
+	'text-design/images/imgly_text_design_asset_decorative_08.png',
+	'text-design/images/imgly_text_design_asset_watercolor_01.png',
+	'text-design/images/imgly_text_design_asset_watercolor_02.png',
+	'text-design/images/imgly_text_design_asset_watercolor_03.png',
+]);
+
+const resolveAsset = (path) => {
+	const prefix = `${assetsBaseUrl}/`;
+	if (!path.startsWith(prefix))
+	{
+		return path;
+	}
+
+	const relativePath = path.slice(prefix.length);
+
+	return webpAssetPaths.has(relativePath) ? path.replace(/\.png$/, '.webp') : path;
+};
+
 const defaultOptions = {
 	controlsOptions: {
 		library: false,
@@ -11,7 +114,8 @@ const defaultOptions = {
 	defaultControl: 'filter',
 	forceCrop: false,
 	assets: {
-		baseUrl: '/bitrix/js/main/imageeditor/external/photoeditorsdk/assets',
+		baseUrl: assetsBaseUrl,
+		resolver: resolveAsset,
 	},
 };
 

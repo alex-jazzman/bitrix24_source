@@ -32,6 +32,13 @@ if ($region !== 'ru' && $region !== 'by' && $region !== 'kz')
 	die();
 }
 
+if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !check_bitrix_sessid())
+{
+	echo GetMessage('WSL_LOADER_ERROR_ACCESS_DENIED');
+	require_once($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/epilog_after.php");
+	die();
+}
+
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/sale/general/location_import.php");
 
 $arLoadParams = [

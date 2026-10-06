@@ -791,7 +791,11 @@ export class FieldsPanel extends Content
 		)
 		{
 			const rootWindow = FieldsPanel.getRootWindow();
-			rootWindow.BX.UI.Dialogs.MessageBox.alert(Loc.getMessage('LANDING_FORM_ADD_USER_FIELD_PERMISSION_DENIED'));
+			rootWindow.BX.UI.Dialogs.MessageBox.show({
+				message: Loc.getMessage('LANDING_FORM_ADD_USER_FIELD_PERMISSION_DENIED'),
+				buttons: rootWindow.BX.UI.Dialogs.MessageBoxButtons.OK,
+				useAirDesign: true,
+			});
 			return;
 		}
 

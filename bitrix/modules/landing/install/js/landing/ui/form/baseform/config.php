@@ -13,6 +13,7 @@ return [
 		'main.core',
 		'main.core.events',
 		'landing.env',
+		'landing.loc',
 	],
 	'skip_core' => false,
 ];

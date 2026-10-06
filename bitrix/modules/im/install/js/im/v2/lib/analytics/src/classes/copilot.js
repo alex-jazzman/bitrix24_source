@@ -1,9 +1,11 @@
 import { Text, Type } from 'main.core';
 import { sendData } from 'ui.analytics';
+import { PageContext } from 'ui.page-context';
 
 import { Core } from 'im.v2.application.core';
 import { ChatType } from 'im.v2.const';
 import { Feature, FeatureManager } from 'im.v2.lib.feature';
+import { type ImModelCopilotMcpAuth } from 'im.v2.model';
 
 import {
 	AnalyticsCategory,
@@ -15,6 +17,7 @@ import {
 	AnalyticsType,
 } from '../const';
 import { getChatType } from '../helpers/get-chat-type';
+import { getCopilotContext } from '../helpers/get-copilot-context';
 
 const CopilotEntryPoint = Object.freeze({
 	create_menu: 'create_menu',
@@ -24,6 +27,7 @@ const CopilotEntryPoint = Object.freeze({
 export class Copilot
 {
 	#isBitrixGptV2Available = FeatureManager.isFeatureAvailable(Feature.isBitrixGptV2Available);
+	#shownSuggestsMessageIds: Set<number> = new Set();
 
 	onCreateChat(dialogId: string): void
 	{
@@ -156,6 +160,145 @@ export class Copilot
 		sendData(params);
 	}
 
+	onShowSuggestedPrompts(dialogId: string, messageId: number, suggestsCount: number): void
+	{
+		if (!this.#isBitrixGptV2Available)
+		{
+			return;
+		}
+
+		if (this.#shownSuggestsMessageIds.has(messageId))
+		{
+			return;
+		}
+		this.#shownSuggestsMessageIds.add(messageId);
+
+		const chat = Core.getStore().getters['chats/get'](dialogId);
+		const params = {
+			event: AnalyticsEvent.suggestsShow,
+			tool: AnalyticsTool.ai,
+			category: AnalyticsCategory.chatOperations,
+			p4: getCopilotContext(dialogId, suggestsCount),
+			p5: `chatId_${chat.chatId}`,
+			...this.#getModuleSection(),
+		};
+
+		sendData(params);
+	}
+
+	onClickSuggestedPrompt(dialogId: string, suggestsCount: number): void
+	{
+		if (!this.#isBitrixGptV2Available)
+		{
+			return;
+		}
+
+		const chat = Core.getStore().getters['chats/get'](dialogId);
+		const params = {
+			event: AnalyticsEvent.suggestsClick,
+			tool: AnalyticsTool.ai,
+			category: AnalyticsCategory.chatOperations,
+			p4: getCopilotContext(dialogId, suggestsCount),
+			p5: `chatId_${chat.chatId}`,
+			...this.#getModuleSection(),
+		};
+
+		sendData(params);
+	}
+
+	onChangeForceSearch(dialogId: string): void
+	{
+		if (!this.#isBitrixGptV2Available)
+		{
+			return;
+		}
+
+		const isEnabled = Core.getStore().getters['copilot/chats/isForceSearchEnabled'](dialogId);
+		const chat = Core.getStore().getters['chats/get'](dialogId);
+
+		const params = {
+			event: AnalyticsEvent.modeChange,
+			tool: AnalyticsTool.ai,
+			category: AnalyticsCategory.chatOperations,
+			p1: isEnabled ? 'webSearch_on' : 'webSearch_off',
+			p4: getCopilotContext(dialogId),
+			p5: `chatId_${chat.chatId}`,
+			...this.#getModuleSection(),
+		};
+
+		sendData(params);
+	}
+
+	onChangeMCP(dialogId: string): void
+	{
+		if (!this.#isBitrixGptV2Available)
+		{
+			return;
+		}
+
+		const chat = Core.getStore().getters['chats/get'](dialogId);
+		const mcpAuth: ?ImModelCopilotMcpAuth = Core.getStore().getters['copilot/chats/getMcpAuth'](dialogId);
+		const isEnabled = Boolean(mcpAuth);
+
+		const params = {
+			event: AnalyticsEvent.modeChange,
+			tool: AnalyticsTool.ai,
+			category: AnalyticsCategory.chatOperations,
+			p1: isEnabled ? 'mcp_on' : 'mcp_off',
+			p4: getCopilotContext(dialogId),
+			p5: `chatId_${chat.chatId}`,
+			...this.#getModuleSection(),
+		};
+
+		sendData(params);
+	}
+
+	onChangeReasoning(dialogId: string): void
+	{
+		if (!this.#isBitrixGptV2Available)
+		{
+			return;
+		}
+
+		const chat = Core.getStore().getters['chats/get'](dialogId);
+		const isEnabled = Core.getStore().getters['copilot/chats/isReasoningEnabled'](dialogId);
+
+		const params = {
+			event: AnalyticsEvent.modeChange,
+			tool: AnalyticsTool.ai,
+			category: AnalyticsCategory.chatOperations,
+			p1: isEnabled ? 'reasoning_on' : 'reasoning_off',
+			p4: getCopilotContext(dialogId),
+			p5: `chatId_${chat.chatId}`,
+			...this.#getModuleSection(),
+		};
+
+		sendData(params);
+	}
+
+	onChangeAgentMode(dialogId: string): void
+	{
+		if (!this.#isBitrixGptV2Available)
+		{
+			return;
+		}
+
+		const chat = Core.getStore().getters['chats/get'](dialogId);
+		const isEnabled = Core.getStore().getters['copilot/chats/isAgentModeEnabled'](dialogId);
+
+		const params = {
+			event: AnalyticsEvent.modeChange,
+			tool: AnalyticsTool.ai,
+			category: AnalyticsCategory.chatOperations,
+			p1: isEnabled ? 'agentMode_on' : 'agentMode_off',
+			p4: getCopilotContext(dialogId),
+			p5: `chatId_${chat.chatId}`,
+			...this.#getModuleSection(),
+		};
+
+		sendData(params);
+	}
+
 	onMcpIntegrationClick(dialogId: string): void
 	{
 		const dialog = Core.getStore().getters['chats/get'](dialogId);
@@ -173,6 +316,13 @@ export class Copilot
 			c_section: AnalyticsSection.chatTextarea,
 			p1: `chatType_${chatType}`,
 		});
+	}
+
+	#getModuleSection(): { c_section: string } | {}
+	{
+		const module = PageContext.getModule();
+
+		return module ? { c_section: module } : {};
 	}
 
 	#sendCreateChatData({ dialogId, context }: { dialogId: string, context: string }): void

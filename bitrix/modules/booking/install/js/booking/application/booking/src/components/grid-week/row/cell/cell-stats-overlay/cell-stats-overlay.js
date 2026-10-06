@@ -21,6 +21,7 @@ export const CellStatsOverlay = {
 			required: true,
 		},
 	},
+	emits: ['openDayColumnPopup'],
 	setup(): Object
 	{
 		return {
@@ -44,23 +45,30 @@ export const CellStatsOverlay = {
 		},
 	},
 	methods: {
-		goToDayMode(): void
+		openDayColumnPopup(): void
 		{
-			void this.$store.dispatch(`${Model.Interface}/goToDayMode`, {
-				selectedDateTs: this.cell.fromTs + this.offset,
+			this.$emit('openDayColumnPopup', {
+				dateTs: this.cell.fromTs + this.offset,
 				resourceId: this.cell.resourceId,
 			});
 		},
 	},
 	template: `
-		<div class="booking-booking__week-cell-stats-overlay">
+		<div
+			class="booking-booking__week-cell-stats-overlay"
+			data-element="booking-week-cell-stats-overlay"
+		>
 			<div class="booking-booking__week-cell-stats-overlay__content">
 				<div class="booking-booking__week-cell-stats-overlay__rows">
 					<div class="booking-booking__week-cell-stats-overlay__row">
 						<span class="booking-booking__week-cell-stats-overlay__row_label">
 							{{ loc('BOOKING_BOOKING_WEEK_STATS_CELL_BUSY') }}
 						</span>
-						<div class="booking-booking__week-cell-stats-overlay__row_counter">
+						<div
+							class="booking-booking__week-cell-stats-overlay__row_counter"
+							data-element="booking-week-cell-stats-overlay-busy-counter"
+							:data-value="busyCount"
+						>
 							<UiCounter
 								:value="busyCount"
 								:maxValue="999"
@@ -73,7 +81,11 @@ export const CellStatsOverlay = {
 						<span class="booking-booking__week-cell-stats-overlay__row_label">
 							{{ loc('BOOKING_BOOKING_WEEK_STATS_CELL_FREE') }}
 						</span>
-						<div class="booking-booking__week-cell-stats-overlay__row_counter">
+						<div
+							class="booking-booking__week-cell-stats-overlay__row_counter"
+							data-element="booking-week-cell-stats-overlay-free-counter"
+							:data-value="freeCount"
+						>
 							<UiCounter
 								:value="freeCount"
 								:maxValue="999"
@@ -86,10 +98,11 @@ export const CellStatsOverlay = {
 				<div class="booking-booking__week-cell-stats-overlay__button-container">
 					<UiButton
 						class="booking-booking__week-cell-stats-overlay__button-container_button"
+						:dataset="{ element: 'booking-week-cell-stats-overlay-create-button' }"
 						:text="loc('BOOKING_BOOKING_SELECT')"
 						:size="ButtonSize.EXTRA_EXTRA_SMALL"
 						:color="ButtonColor.PRIMARY"
-						@click="goToDayMode()"
+						@click="openDayColumnPopup"
 					/>
 				</div>
 			</div>

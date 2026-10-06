@@ -124,6 +124,7 @@ foreach($folder->getChildren($securityContext) as $item)
 			),
 			'IMAGE' => CComponentEngine::makePathFromTemplate('/bitrix/components/bitrix/mobile.disk.file.detail/images/' . $icon."?2"),
 			'TAGS' => CFile::FormatSize($item->getSize()) . ' ' . $item->getUpdateTime(),
+			'SIZE' => (int)$item->getSize(),
 		);
 
 		if (\Bitrix\Disk\TypeFile::isImage($item))

@@ -34,4 +34,24 @@ export class SignersListApi
 	{
 		return post('sign.api_v1.b2e.signers.addSignersToList', { listId, members, excludeRejected }, notifyError);
 	}
+
+	pinList(listId: number, notifyError: boolean = true): Promise<void>
+	{
+		return post('sign.api_v1.b2e.signers.pinList', { listId }, notifyError);
+	}
+
+	unpinList(listId: number, notifyError: boolean = true): Promise<void>
+	{
+		return post('sign.api_v1.b2e.signers.unpinList', { listId }, notifyError);
+	}
+
+	getFeedRecipients(listId: number, notifyError: boolean = true): Promise<Object>
+	{
+		return post('sign.api_v1.b2e.signers.getFeedRecipients', { listId }, notifyError);
+	}
+
+	createChat(listId: number, notifyError: boolean = true): Promise<void>
+	{
+		return post('sign.api_v1.integration.im.groupChat.createSignersListChat', { listId }, notifyError);
+	}
 }

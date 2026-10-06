@@ -87,21 +87,13 @@ $templateMessages = Loc::loadLanguageFile($_SERVER['DOCUMENT_ROOT'] . $templateF
 			<div class="dashboard-header-selector-text"><?= $dashboardTitle ?></div>
 		</div>
 		<div class="dashboard-header-buttons">
-			<button id="edit-btn" disabled="disabled" class="ui-btn --air ui-btn-md --style-tinted ui-btn-no-caps --with-left-icon dashboard-header-buttons-edit">
-				<div class="ui-icon-set --edit-l"></div>
-				<?= Loc::getMessage('SUPERSET_DASHBOARD_DETAIL_HEADER_EDIT') ?>
-			</button>
 			<button id="info-btn" disabled="disabled" class="ui-btn --air ui-btn-md --style-outline ui-btn-no-caps dashboard-header-buttons-info">
 				<div class="ui-icon-set --o-info-circle"></div>
 				<?= Loc::getMessage('SUPERSET_DASHBOARD_DETAIL_HEADER_INFO') ?>
 			</button>
-			<button id="download-btn" disabled="disabled" class="ui-btn --air ui-btn-md --style-outline ui-btn-no-caps ui-btn-dropdown dashboard-header-buttons-download">
-				<div class="ui-icon-set --o-download"></div>
-				<?= Loc::getMessage('SUPERSET_DASHBOARD_DETAIL_HEADER_DOWNLOAD') ?>
-			</button>
 			<button id="share-btn" disabled="disabled" class="ui-btn --air ui-btn-md --style-outline ui-btn-no-caps ui-btn-dropdown dashboard-header-buttons-share">
 				<div class="ui-icon-set --o-share"></div>
-				<?= Loc::getMessage('SUPERSET_DASHBOARD_DETAIL_HEADER_SHARE_LINK') ?>
+				<?= Loc::getMessage('SUPERSET_DASHBOARD_DETAIL_HEADER_SHARE_LINK_MSGVER_1') ?>
 			</button>
 			<div id="more-btn" disabled="disabled" class="ui-icon-set --more-l dashboard-header-buttons-more disabled"></div>
 		</div>

@@ -1,15 +1,13 @@
 import { Keyboard } from 'im.v2.component.elements.keyboard';
+import { type ImModelChat, type ImModelMessage, type ImModelUser } from 'im.v2.model';
 
 import './keyboard.css';
-
-import type { ImModelChat, ImModelMessage, ImModelUser } from 'im.v2.model';
 
 // @vue/component
 export const MessageKeyboard = {
 	name: 'MessageKeyboard',
 	components: { Keyboard },
-	props:
-	{
+	props: {
 		item: {
 			type: Object,
 			required: true,
@@ -19,8 +17,8 @@ export const MessageKeyboard = {
 			required: true,
 		},
 	},
-	computed:
-	{
+	emits: ['click'],
+	computed: {
 		message(): ImModelMessage
 		{
 			return this.item;
@@ -36,7 +34,12 @@ export const MessageKeyboard = {
 	},
 	template: `
 		<div class="bx-im-message-keyboard__container">
-			<Keyboard :buttons="message.keyboard" :dialogId="dialogId" :messageId="message.id" />
+			<Keyboard
+				:buttons="message.keyboard"
+				:dialogId="dialogId"
+				:messageId="message.id"
+				@click="$emit('click', $event)"
+			/>
 		</div>
 	`,
 };

@@ -35,7 +35,7 @@
 	color: #0B66C3;
 }
 
-.bp-workflow-info__tabs .ui-tabs__tab-header-container.--header-active div {
+.bp-workflow-info__tabs .ui-tabs__tab-header-container.--header-active > span {
 	border-bottom: 2px solid #0B66C3;
 }
 

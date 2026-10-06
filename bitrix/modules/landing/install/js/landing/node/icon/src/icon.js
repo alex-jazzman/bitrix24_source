@@ -1,4 +1,5 @@
 import { Dom } from 'main.core';
+import { Env } from 'landing.env';
 import { Img } from 'landing.node.img';
 
 const encodeDataValue = BX.Landing.Utils.encodeDataValue;
@@ -12,6 +13,17 @@ export class Icon extends Img
 	{
 		super(options);
 		this.type = 'icon';
+
+		if (getSelectionPicker())
+		{
+			// the inherited Img title promises image editing by click;
+			// a selection-only icon is not edited at all
+			this.node.removeAttribute('title');
+			// a mousedown bubbling into a host text node would turn it
+			// editable right under the selected icon; the click itself
+			// is stopped in onClick
+			this.node.addEventListener('mousedown', (event) => event.stopPropagation());
+		}
 	}
 
 	/**
@@ -95,14 +107,71 @@ export class Icon extends Img
 		};
 	}
 
+	/**
+	 * In the AI mode with the copilot element picker enabled the icon is
+	 * selection-only: no floating upload panel, and the click toggles the
+	 * icon selection (see onClick). With the picker disabled the icon
+	 * keeps the Img behavior untouched.
+	 */
+	initFloatingPanel()
+	{
+		if (!isElementPickerEnabled())
+		{
+			super.initFloatingPanel();
+		}
+	}
+
 	onClick(event)
 	{
 		BX.Event.EventEmitter.emit('BX.Landing.Node.Icon:onClick');
+
+		const picker = getSelectionPicker();
+		// the same activation guard as the Img branches: while a text node is
+		// being edited the click stays unhandled, reaches the editor document
+		// and closes the inline editor / compact panels first
+		if (picker && this.canActivateOnClick())
+		{
+			// selection-only: the click must not reach the host node (a link
+			// would navigate, a text node would open its editor) nor the
+			// picker document handler (it would toggle the selection twice)
+			event.preventDefault();
+			event.stopPropagation();
+			picker.toggleSelection(this);
+
+			return;
+		}
+
 		super.onClick(event);
 	}
 }
 
 BX.Landing.Node.Icon = Icon;
+
+/**
+ * Same soft reference as in img.js: no hard dependency on the extension.
+ * @return {boolean}
+ */
+function isElementPickerEnabled(): boolean
+{
+	const picker = BX.Landing.Copilot && BX.Landing.Copilot.ElementPicker;
+
+	return Boolean(picker && picker.isEnabled());
+}
+
+/**
+ * The picker instance when the icon must be selection-only: the element
+ * picker is enabled and the editor runs in the AI mode.
+ */
+// eslint-disable-next-line flowtype/require-return-type
+function getSelectionPicker()
+{
+	if (!isElementPickerEnabled() || Env.getInstance().isBlockControlsEnabled())
+	{
+		return null;
+	}
+
+	return BX.Landing.Copilot.ElementPicker.getInstance();
+}
 
 // eslint-disable-next-line flowtype/require-return-type
 function getPseudoUrl(node)

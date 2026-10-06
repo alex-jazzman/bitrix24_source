@@ -54,7 +54,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	class FullNameField extends BaseField {
 		render(params) {
 			const fullNameContainer = main_core.Tag.render`
-			<div class="user-grid_full-name-container">${this.#getFullNameLink(params.fullName, params.profileLink)}</div>
+			<div class="user-grid_full-name-container">${this.#getFullNameLink(params.fullName, params.profileLink, params.userId)}</div>
 		`;
 			if (params.position) {
 				main_core.Dom.append(this.#getPositionLabelContainer(main_core.Text.encode(params.position)), fullNameContainer);
@@ -83,9 +83,15 @@ this.BX.Intranet = this.BX.Intranet || {};
 			}
 			this.appendToFieldNode(fullNameContainer);
 		}
-		#getFullNameLink(fullName, profileLink) {
+		#getFullNameLink(fullName, profileLink, userId) {
 			return main_core.Tag.render`
-			<a class="user-grid_full-name-label" href="${profileLink}">
+			<a 
+				class="user-grid_full-name-label" 
+				href="${profileLink}" 
+				bx-tooltip-user-id="${userId}" 
+				bx-tooltip-context="b24"
+				bx-tooltip-mini-profile-direction="viewport"
+			>
 				${fullName}
 			</a>
 		`;

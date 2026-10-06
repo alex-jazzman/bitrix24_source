@@ -5,3 +5,4 @@ $MESS["CRM_CREATE_ADS_WRONG_ARM"] = "Количество дней автоуд�
 $MESS['CRM_CREATE_ADS_CLIENT_ID'] = 'Настроить рекламную аудиторию';
 $MESS['CRM_CREATE_ADS_ACCOUNT_ID'] = 'Выбрать рекламный кабинет';
 $MESS['CRM_CREATE_ADS_AUDIENCE_ID'] = 'Добавить в аудиторию';
+$MESS['CRM_CREATE_ADS_VK_REGION_UNAVAILABLE'] = 'Интеграция с ВКонтакте недоступна в регионе вашего Битрикс24';

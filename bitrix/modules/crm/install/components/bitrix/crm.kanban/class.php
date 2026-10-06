@@ -39,6 +39,7 @@ class CrmKanbanComponent extends CBitrixComponent
 	protected const OPTION_NAME_HIDE_CONTACT_CENTER = 'kanban_cc_hide';
 	protected const OPTION_NAME_HIDE_REST_DEMO = 'kanban_rest_hide';
 	protected const COLUMN_NAME_DELETED = 'DELETED';
+	private const MODE_NOT_AVAILABLE_ERROR_CODE = 'MODE_NOT_AVAILABLE';
 
 	/** @var Desktop */
 	protected Kanban $kanban;
@@ -222,6 +223,32 @@ class CrmKanbanComponent extends CBitrixComponent
 	}
 
 	/**
+	 * Returns error array if ACTIVITIES mode is no longer available for the current entity, null otherwise.
+	 * Used to protect AJAX calls when the admin disables counters after the user has opened the Activities view.
+	 */
+	private function checkActivitiesModeAvailability(): ?array
+	{
+		if (($this->arParams['VIEW_MODE'] ?? '') !== ViewMode::MODE_ACTIVITIES)
+		{
+			return null;
+		}
+
+		$factory = Container::getInstance()->getFactory($this->getEntityTypeId());
+		if (
+			!($factory instanceof \Bitrix\Crm\Service\Factory\Dynamic)
+			|| $factory->isCountersEnabled()
+		)
+		{
+			return null;
+		}
+
+		return [
+			'ERROR' => Loc::getMessage('CRM_KANBAN_MODE_NOT_AVAILABLE'),
+			'ERROR_CODE' => self::MODE_NOT_AVAILABLE_ERROR_CODE,
+		];
+	}
+
+	/**
 	 * Make some actions (set, update, etc.).
 	 * @return void
 	 */
@@ -341,7 +368,25 @@ class CrmKanbanComponent extends CBitrixComponent
 				];
 			}
 
+			$modeError = $this->checkActivitiesModeAvailability();
+			if ($modeError !== null)
+			{
+				return $modeError;
+			}
+
 			return $this->{'action' . $action}();
+		}
+
+		$modeError = $this->checkActivitiesModeAvailability();
+		if ($modeError !== null)
+		{
+			$this->arResult['ERROR'] = $modeError['ERROR'];
+			$this->arResult['ERROR_CODE'] = $modeError['ERROR_CODE'];
+
+			if ($this->arParams['IS_AJAX'] === 'Y')
+			{
+				return $this->arResult;
+			}
 		}
 
 		$this->processRequestActions();
@@ -724,6 +769,20 @@ class CrmKanbanComponent extends CBitrixComponent
 						$languageId,
 					)
 				;
+				$notifySubject = static fn (?string $languageId = null) =>
+					Loc::getMessage(
+						'CRM_ACCESS_NOTIFY_MESSAGE_SUBJECT',
+						[ '#URL#' => $pathColumnEdit ],
+						$languageId,
+					)
+				;
+				$notifyPlainText = static fn (?string $languageId = null) =>
+					Loc::getMessage(
+						'CRM_ACCESS_NOTIFY_MESSAGE_PLAIN_TEXT',
+						null,
+						$languageId,
+					)
+				;
 
 				CIMNotify::Add([
 					'TO_USER_ID' => $userId,
@@ -733,6 +792,13 @@ class CrmKanbanComponent extends CBitrixComponent
 					'NOTIFY_EVENT' => 'admin_notification',
 					'NOTIFY_TAG' => 'CRM|NOTIFY_ADMIN|' . $userId . '|' . $this->currentUserID,
 					'NOTIFY_MESSAGE' => $notifyMessageCallback,
+					'PARAMS' => [
+						'COMPONENT_ID' => 'CrmEntity',
+						'COMPONENT_PARAMS' => [
+							'SUBJECT' => $notifySubject,
+							'PLAIN_TEXT' => $notifyPlainText,
+						],
+					]
 				]);
 			}
 		}
@@ -1146,7 +1212,11 @@ class CrmKanbanComponent extends CBitrixComponent
 		$type = (string) $this->request('type');
 		$fields = $this->request('fields');
 
-		return $this->getEntity()->saveAdditionalFields($fields, $type, $this->getKanban()->canEditSettings());
+		$result = $this->getEntity()->saveAdditionalFields($fields, $type, $this->getKanban()->canEditSettings());
+
+		$this->invalidateTotalSumsForCurrentUser();
+
+		return $result;
 	}
 
 	protected function actionDelete(mixed $ids = null): array
@@ -1189,6 +1259,8 @@ class CrmKanbanComponent extends CBitrixComponent
 				'data' => $error->getCustomData(),
 			];
 		}
+
+		$this->invalidateTotalSumsForCurrentUser();
 
 		return $data;
 	}
@@ -1259,6 +1331,8 @@ class CrmKanbanComponent extends CBitrixComponent
 
 		$this->needPrepareColumns = true;
 
+		$this->invalidateTotalSumsForCurrentUser();
+
 		return $result;
 	}
 
@@ -1288,6 +1362,8 @@ class CrmKanbanComponent extends CBitrixComponent
 			CCrmDeal::refreshAccountingData($idForUpdate);
 		}
 
+		// Intentionally no cache invalidation here: this action handles pull events
+		// about changes by other users; staleness is bounded by TotalSumsCache TTL.
 		return [];
 	}
 
@@ -1302,6 +1378,8 @@ class CrmKanbanComponent extends CBitrixComponent
 		}
 
 		$this->getEntity()->setItemsAssigned($ids, $assignedId);
+
+		$this->invalidateTotalSumsForCurrentUser();
 
 		return [];
 	}
@@ -1318,6 +1396,8 @@ class CrmKanbanComponent extends CBitrixComponent
 		$isOpened = ($this->request('flag') === 'Y');
 
 		$this->getEntity()->updateItemsOpened($ids, $isOpened);
+
+		$this->invalidateTotalSumsForCurrentUser();
 
 		return [];
 	}
@@ -1342,6 +1422,8 @@ class CrmKanbanComponent extends CBitrixComponent
 				'ERROR' => reset($errorMessages),
 			];
 		}
+
+		$this->invalidateTotalSumsForCurrentUser();
 
 		return [];
 	}
@@ -1429,6 +1511,24 @@ class CrmKanbanComponent extends CBitrixComponent
 				$this->arResult['DEFAULT_HEADER_SECTION_ID'] = $section['id'];
 			}
 		}
+	}
+
+	private function invalidateTotalSumsForCurrentUser(): void
+	{
+		$userId = (int)\Bitrix\Crm\Service\Container::getInstance()->getContext()->getUserId();
+		if ($userId <= 0)
+		{
+			return;
+		}
+		$cache = \Bitrix\Main\DI\ServiceLocator::getInstance()->get(\Bitrix\Crm\Kanban\TotalSumsCache::class);
+		if (!$cache->isEnabled())
+		{
+			return;
+		}
+		// Invalidate the current user's cache across ALL categories of this entity
+		// type: a write action may affect sums in a category other than the one
+		// currently open. Cheap (per-user) and removes any cross-category staleness.
+		$cache->cleanDir($this->getEntityTypeId(), $userId);
 	}
 
 	private function getStub(): array

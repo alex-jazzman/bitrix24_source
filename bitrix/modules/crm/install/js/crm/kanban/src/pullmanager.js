@@ -170,6 +170,14 @@ export default class PullManager
 
 		if (item)
 		{
+			if (this.grid.getData().viewMode === ViewMode.MODE_ACTIVITIES)
+			{
+				event.preventDefault();
+				void this.grid.loadNew([params.item.id], false, true, true, true);
+
+				return;
+			}
+
 			promises.push(Promise.resolve({
 				data: this.#getPullData('updateItem', params),
 			}));

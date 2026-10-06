@@ -38,6 +38,10 @@ export const AiAssistantEmptyStateView = {
 			type: Object,
 			default: null,
 		},
+		isFileUploadEnabled: {
+			type: Boolean,
+			default: false,
+		},
 	},
 	emits: ['selectSuggestion'],
 	computed:
@@ -69,6 +73,7 @@ export const AiAssistantEmptyStateView = {
 					:disabled="disabled"
 					:withDraft="false"
 					:deferredDialogPromise="deferredDialogPromise"
+					:isFileUploadEnabled="isFileUploadEnabled"
 				/>
 			</div>
 			<div

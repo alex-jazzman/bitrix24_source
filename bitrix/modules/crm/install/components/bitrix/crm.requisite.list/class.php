@@ -2,8 +2,9 @@
 
 namespace Bitrix\Crm;
 
-use \Bitrix\Main\Application;
-use \Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Application;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Web\Uri;
 
 if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)
 	die();
@@ -855,30 +856,23 @@ class RequisiteListComponent extends \CBitrixComponent
 		$backUrl = '';
 		if ($this->entityTypeId === \CCrmOwnerType::Contact)
 		{
-			$backUrl = \CHTTP::urlAddParams(
-				\CComponentEngine::MakePathFromTemplate(
+			$backUrl = (string)(new Uri(\CComponentEngine::MakePathFromTemplate(
 					$this->arParams['PATH_TO_CONTACT_SHOW'],
 					array('contact_id' => $this->entityId)
-				),
-				array($this->formId.'_active_tab' => $this->tabId)
-			);
+				)))->addParams(array($this->formId.'_active_tab' => $this->tabId));
 		}
 		else if ($this->entityTypeId === \CCrmOwnerType::Company)
 		{
-			$backUrl = \CHTTP::urlAddParams(
-				\CComponentEngine::MakePathFromTemplate(
+			$backUrl = (string)(new Uri(\CComponentEngine::MakePathFromTemplate(
 					$this->arParams['PATH_TO_COMPANY_SHOW'],
 					array('company_id' => $this->entityId)
-				),
-				array($this->formId.'_active_tab' => $this->tabId)
-			);
+				)))->addParams(array($this->formId.'_active_tab' => $this->tabId));
 		}
 		$this->arResult['BACK_URL'] = $backUrl;
 
-		$this->arResult['PATH_TO_REQUISITE_ADD'] = \CHTTP::urlAddParams(
-			\CComponentEngine::MakePathFromTemplate($this->arParams['PATH_TO_REQUISITE_EDIT'], array('id' => 0)),
-			array('etype' => $this->entityTypeId, 'eid' => $this->entityId, 'back_url' => urlencode($backUrl))
-		);
+		$this->arResult['PATH_TO_REQUISITE_ADD'] = (string)(new Uri(\CComponentEngine::MakePathFromTemplate(
+			$this->arParams['PATH_TO_REQUISITE_EDIT'], array('id' => 0)
+		)))->addParams(array('etype' => $this->entityTypeId, 'eid' => $this->entityId, 'back_url' => $backUrl));
 
 		if ($this->entityTypeId === \CCrmOwnerType::Company)
 			$this->arResult['ENTITY_TYPE_MNEMO'] = 'COMPANY';

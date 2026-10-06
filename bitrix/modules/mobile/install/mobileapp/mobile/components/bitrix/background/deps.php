@@ -7,15 +7,18 @@ return [
 		'im:chat/background', // chat background processes (message, reaction, read, .etc)
 		'project/background', // project background processes (view, .etc)
 		'disk:background', // task background processes (view, .etc)
+		'push/notifications-register',
 		'rest',
 		'livefeed',
 		'livefeed/publicationqueue',
 		'comments/uploadqueue',
 		'catalog:background/barcodescanner',
 		'push/listener',
+		'push/listeners', // @deprecated temporary back-compat bridge: keeps legacy consumers' require('push/listeners') working; remove after they migrate to push/listener
 		'module',
 
 		'background/notifications',
+		'crm:background/crm-notifications', // @deprecated temporary back-compat bridge: static registration for legacy crmmobile (IIFE form); the lazy push/notifications-register handles the new form; remove after crmmobile migrates
 
 		'tasks:background/cache-warmup', // warmup dashboard components and cache for faster render
 		'tasks:task', // task background processes (view, .etc)
@@ -29,7 +32,6 @@ return [
 		'in-app-url/deeplink',
 		"sign:background",
 		"mail:background",
-		'crm:background/crm-notifications',
 
 		'files/background-manager', // files background processes (upload, .etc)
 		'ava-menu',
@@ -37,10 +39,6 @@ return [
 		'intranet:intranet-background',
 
 		'bizproc:background/opener',
-
-		'background/notifications/open-desktop',
-		'background/notifications/open-helpdesk',
-		'background/notifications/promotion',
 
 		'calendar:background',
 		'app-rating-background-client',
@@ -55,5 +53,6 @@ return [
 		'stafftrack:check-in-v2/background',
 
 		'bitrix-gpt-onboarding/background',
+		'new-projects-promo/background',
 	],
 ];

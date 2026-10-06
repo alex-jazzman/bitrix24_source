@@ -2,6 +2,12 @@ import { computed, toValue } from 'ui.vue3';
 import { useContextMenu } from 'ui.block-diagram';
 import { BLOCK_COLOR_NAMES } from '../../constants';
 import { BX_FLAG_NO } from '../../../../shared/constants';
+import {
+	AGENT_HIGHLIGHT_ANIMATED_MODIFIER_CLASS,
+	AGENT_HIGHLIGHT_MODIFIER_CLASS,
+} from '../../../ai-assistant/constants';
+import { useAgentHighlightStore } from '../../../ai-assistant/stores/agent-highlight-store';
+import { AgentGlow } from '../../../ai-assistant/ui/agent-glow/agent-glow';
 // eslint-disable-next-line no-unused-vars
 import type { MenuItemOptions } from 'ui.vue3.components.menu';
 
@@ -17,6 +23,8 @@ const BLOCK_CONTAINER_CLASS_NAMES = {
 	highlighted: '--highlighted',
 	deactivated: '--deactivated',
 	hoverable: '--hoverable',
+	aiHighlighted: AGENT_HIGHLIGHT_MODIFIER_CLASS,
+	aiHighlightAnimated: AGENT_HIGHLIGHT_ANIMATED_MODIFIER_CLASS,
 	[BLOCK_COLOR_NAMES.WHITE]: '--white',
 	[BLOCK_COLOR_NAMES.ORANGE]: '--orange',
 	[BLOCK_COLOR_NAMES.BLUE]: '--blue',
@@ -25,6 +33,9 @@ const BLOCK_CONTAINER_CLASS_NAMES = {
 // @vue/component
 export const BlockContainer = {
 	name: 'BlockContainer',
+	components: {
+		AgentGlow,
+	},
 	props: {
 		/** @type Block */
 		block: {
@@ -73,6 +84,16 @@ export const BlockContainer = {
 			closeContextMenu,
 		} = useContextMenu();
 
+		const agentHighlightStore = useAgentHighlightStore();
+
+		const isAgentHighlighted = computed((): boolean => {
+			return agentHighlightStore.isBlockHighlighted(props.block?.id);
+		});
+
+		const isAgentHighlightAnimated = computed((): boolean => {
+			return agentHighlightStore.isBlockHighlightAnimated(props.block?.id);
+		});
+
 		const isBlockActivated = computed((): boolean => {
 			if (!props.block?.activity?.Activated)
 			{
@@ -87,6 +108,8 @@ export const BlockContainer = {
 			[BLOCK_CONTAINER_CLASS_NAMES.highlighted]: props.highlighted,
 			[BLOCK_CONTAINER_CLASS_NAMES.deactivated]: !toValue(isBlockActivated),
 			[BLOCK_CONTAINER_CLASS_NAMES.hoverable]: props.hoverable,
+			[BLOCK_CONTAINER_CLASS_NAMES.aiHighlighted]: toValue(isAgentHighlighted),
+			[BLOCK_CONTAINER_CLASS_NAMES.aiHighlightAnimated]: toValue(isAgentHighlightAnimated),
 		}));
 
 		const blockContainerStyle = computed((): { [string]: string } => {
@@ -133,6 +156,7 @@ export const BlockContainer = {
 		return {
 			isOpenContextMenu,
 			isBlockActivated,
+			isAgentHighlighted,
 			blockContainerClassNames,
 			blockContainerStyle,
 			onShowContextMenu,
@@ -142,6 +166,7 @@ export const BlockContainer = {
 	template: `
 		<div
 			:class="blockContainerClassNames"
+			:data-testid="block ? 'bizprocdesigner-block-' + block.id : null"
 			:style="blockContainerStyle"
 			@mousedown="closeContextMenu"
 			@contextmenu.stop="onShowContextMenu"
@@ -150,6 +175,7 @@ export const BlockContainer = {
 				:isOpenContextMenu="isOpenContextMenu"
 				:isBlockActivated="isBlockActivated"
 			/>
+			<AgentGlow v-if="isAgentHighlighted"/>
 		</div>
 	`,
 };

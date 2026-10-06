@@ -1,22 +1,18 @@
-import type { DocumentInitiatedType, TemplateEntityType } from 'sign.type';
-import { DocumentInitiated, TemplateEntity } from 'sign.type';
-
 export type GridRow = BX.Grid.Row;
 
-type Metadata = {
+export type GridRowMetadata = {
 	id: number,
-	buttonId: string,
-	entityType: Exclude<TemplateEntity.multiple, TemplateEntityType>,
-	initiatedByType: DocumentInitiatedType,
-	canEdit: boolean,
-	canDelete: boolean,
-	isFolderEntityType(): boolean,
-	isInitiatedByTypeisEmployee(): boolean,
+	entityType: ?string,
+	initiatedByType: ?string,
+	canEdit: mixed,
+	canDelete: mixed,
 	canEditAccess(): boolean,
 	canDeleteAccess(): boolean,
 };
 
-function buildMetadataFromElement(element: HTMLElement): Metadata
+const DEFAULT_METADATA_SELECTOR = '.sign-grid-template__cell-metadata';
+
+function buildMetadataFromElement(element: HTMLElement): GridRowMetadata
 {
 	return {
 		id: Number(element.dataset.id),
@@ -24,29 +20,24 @@ function buildMetadataFromElement(element: HTMLElement): Metadata
 		initiatedByType: element.dataset.initiatedByType,
 		canEdit: element.dataset.canEdit,
 		canDelete: element.dataset.canDelete,
-		isFolderEntityType(): boolean
-		{
-			return this.entityType === TemplateEntity.folder;
-		},
-		isInitiatedByTypeisEmployee(): boolean
-		{
-			return this.initiatedByType === DocumentInitiated.employee;
-		},
 		canEditAccess(): boolean
 		{
-			return this.canEdit;
+			return Boolean(this.canEdit);
 		},
 		canDeleteAccess(): boolean
 		{
-			return this.canDelete;
+			return Boolean(this.canDelete);
 		},
 	};
 }
 
-export function extractMetadataFromRow(row: GridRow): Metadata | null
+export function extractRowMetadata(
+	row: GridRow,
+	metadataSelector: string = DEFAULT_METADATA_SELECTOR,
+): GridRowMetadata | null
 {
 	const cellWithMetadataElement = [...row.getCells()]
-		.map((cell: HTMLElement) => cell.querySelector('.sign-grid-template__cell-metadata'))
+		.map((cell: HTMLElement) => cell.querySelector(metadataSelector))
 		.find((element) => element)
 	;
 	if (!cellWithMetadataElement)

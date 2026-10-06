@@ -13,6 +13,7 @@ $MESS["BRCW_DEFAULT_RESOURCE_NAME"] = "New resource";
 $MESS["BRCW_DELETE_SUCCESS_MESSAGE"] = "Resource has been deleted.";
 $MESS["BRCW_MESSAGE_TEMPLATE_SOON_TEXT"] = "Your message text";
 $MESS["BRCW_METHODS_COMMUNICATION_AI_DESCRIPTION"] = "Voice";
+$MESS["BRCW_METHODS_COMMUNICATION_AI_SETTINGS_ACCESS_DENIED"] = "Insufficient permission to edit settings. Please contact your Bitrix24 administrator.";
 $MESS["BRCW_METHODS_COMMUNICATION_AI_SETTINGS_BTN"] = "Configure";
 $MESS["BRCW_METHODS_COMMUNICATION_AI_SETTINGS_DESCRIPTION"] = "Use AI to automate your customer calls to reduce call agent workload.";
 $MESS["BRCW_METHODS_COMMUNICATION_AI_SETTINGS_SUBTITLE"] = "Use AI to automate your customer calls";

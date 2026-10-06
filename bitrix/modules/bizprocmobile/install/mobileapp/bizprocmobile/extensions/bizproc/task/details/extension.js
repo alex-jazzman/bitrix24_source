@@ -2,8 +2,10 @@
  * @module bizproc/task/details
  */
 jn.define('bizproc/task/details', (require, exports, module) => {
-	const { Color } = require('tokens');
+	const { Color, Typography } = require('tokens');
 	const AppTheme = require('apptheme');
+	const { H4 } = require('ui-system/typography/heading');
+	const { Text5 } = require('ui-system/typography/text');
 	const { Alert, confirmClosing } = require('alert');
 	const { EventEmitter } = require('event-emitter');
 	const { Haptics } = require('haptics');
@@ -23,6 +25,7 @@ jn.define('bizproc/task/details', (require, exports, module) => {
 
 	const { EntitySelectorFactory } = require('selector/widget/factory');
 
+	const { handleNetworkError, isNetworkError } = require('bizproc/helper/network-error');
 	const { TaskUserStatus } = require('bizproc/task/task-constants');
 	const { TaskFields } = require('bizproc/task/fields');
 	const { WorkflowComments } = require('bizproc/workflow/comments');
@@ -47,8 +50,7 @@ jn.define('bizproc/task/details', (require, exports, module) => {
 			}
 			catch (error)
 			{
-				const isNetwork = (error?.errors ?? [error]).some((e) => e?.code === 'NETWORK_ERROR');
-				if (!isNetwork || attempt >= maxRetries)
+				if (!isNetworkError(error) || attempt >= maxRetries)
 				{
 					throw error;
 				}
@@ -276,9 +278,11 @@ jn.define('bizproc/task/details', (require, exports, module) => {
 										flexGrow: 1,
 									},
 								},
-								Text(
+								H4(
 									{
 										testId: 'TASK_DETAILS_NAME',
+										accent: true,
+										color: Color.base1,
 										style: styles.taskName,
 										text: jnComponent.convertHtmlEntities(this.task.name),
 									},
@@ -365,13 +369,19 @@ jn.define('bizproc/task/details', (require, exports, module) => {
 						[{ errors, taskId: this.props.taskId, workflowId: this.props.workflowId }],
 					);
 
+					if (handleNetworkError(errors, this.props.parentLayout))
+					{
+						if (this.layout)
+						{
+							this.layout.close();
+						}
+
+						return;
+					}
+
 					if (Array.isArray(errors) && errors.length > 0)
 					{
-						const isNetworkError = errors.some((e) => e?.code === 'NETWORK_ERROR');
-						const message = isNetworkError
-							? Loc.getMessage('BPMOBILE_TASK_DETAILS_NETWORK_ERROR')
-							: errors[0].message;
-						Alert.alert(message, '', () => {
+						Alert.alert(errors[0].message, '', () => {
 							if (this.layout)
 							{
 								this.layout.close();
@@ -434,13 +444,11 @@ jn.define('bizproc/task/details', (require, exports, module) => {
 						marginTop: 12,
 					},
 				},
-				Text({
+				Text5({
+					color: Color.base5,
 					style: {
 						marginHorizontal: 24,
 						marginVertical: 16,
-						color: AppTheme.colors.base5,
-						fontSize: 14,
-						fontWeight: '400',
 						textAlign: 'center',
 					},
 					text: this.state.taskResponsibleMessage,
@@ -613,8 +621,12 @@ jn.define('bizproc/task/details', (require, exports, module) => {
 								}
 							})
 							.catch(({ errors }) => {
-								const isNetworkError = Array.isArray(errors) && errors.some((e) => e?.code === 'NETWORK_ERROR');
-								Alert.alert(isNetworkError ? Loc.getMessage('BPMOBILE_TASK_DETAILS_NETWORK_ERROR') : errors.pop().message);
+								if (handleNetworkError(errors, this.layout))
+								{
+									return;
+								}
+
+								Alert.alert(errors.pop().message);
 							})
 						;
 					},
@@ -642,10 +654,7 @@ jn.define('bizproc/task/details', (require, exports, module) => {
 
 	const styles = {
 		taskName: {
-			fontWeight: '600',
-			fontSize: 18,
 			lineHeightMultiple: 1.1,
-			color: AppTheme.colors.base1,
 			marginHorizontal: 11,
 			marginTop: 7,
 			marginBottom: 12,
@@ -653,7 +662,7 @@ jn.define('bizproc/task/details', (require, exports, module) => {
 		taskDescription: {
 			marginHorizontal: 11,
 			marginBottom: 16,
-			fontSize: 14,
+			fontSize: Typography.text4.getValue().fontSize,
 			fontWeight: '400',
 			lineHeightMultiple: 1.15,
 			color: AppTheme.colors.base2,

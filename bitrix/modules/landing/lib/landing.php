@@ -74,6 +74,14 @@ class Landing extends \Bitrix\Landing\Internals\BaseTable
 	protected static $previewMode = false;
 
 	/**
+	 * Page is rendered under a sandbox with an opaque origin — the editor device preview frame
+	 * or the signed preview link of the cloud (CSP sandbox) — and is not visited for real.
+	 * Not the same as $previewMode: that one only tells that an unpublished page is shown.
+	 * @var boolean
+	 */
+	protected static $devicePreviewMode = false;
+
+	/**
 	 * External variables of Landing.
 	 * @var array
 	 */
@@ -156,6 +164,13 @@ class Landing extends \Bitrix\Landing\Internals\BaseTable
 	 * @var string
 	 */
 	protected $siteTitle = '';
+
+	/**
+	 * Site type of current landing. Unlike the static one, it is not overwritten by other landings
+	 * loaded later - in particular, by landings loaded inside publication event handlers.
+	 * @var string
+	 */
+	protected string $siteTypeCode = '';
 
 	/**
 	 * Domain id.
@@ -293,6 +308,7 @@ class Landing extends \Bitrix\Landing\Internals\BaseTable
 			 */
 			// get base data
 			self::$siteType = (string)$landing['SITE_TYPE'];
+			$this->siteTypeCode = (string)$landing['SITE_TYPE'];
 			$this->title = $landing['TITLE'];
 			$this->code = $landing['CODE'];
 			$this->xmlId = $landing['XML_ID'];
@@ -455,6 +471,25 @@ class Landing extends \Bitrix\Landing\Internals\BaseTable
 	public static function getPreviewMode()
 	{
 		return self::$previewMode;
+	}
+
+	/**
+	 * Set work mode to the sandboxed preview (editor device frame or signed preview link).
+	 * @param boolean $mode Device preview mode.
+	 * @return void
+	 */
+	public static function setDevicePreviewMode($mode = true)
+	{
+		self::$devicePreviewMode = (boolean)$mode;
+	}
+
+	/**
+	 * Get state of the sandboxed preview mode.
+	 * @return boolean
+	 */
+	public static function getDevicePreviewMode()
+	{
+		return self::$devicePreviewMode;
 	}
 
 	/**
@@ -912,6 +947,21 @@ class Landing extends \Bitrix\Landing\Internals\BaseTable
 	}
 
 	/**
+	 * May the preview url of a page of the given site carry the signed preview tail?
+	 *
+	 * The signed tail opens the whole draft of its site, so in preview mode this landing hands it
+	 * out only for its own site: a link marker (#landing<id>, #block<id>) pointing to a page of
+	 * another site is resolved to the plain public url of that page. A landing without a site
+	 * (createInstance(0)) is a bare url builder, its callers pass the pages of one site of their own.
+	 * @param int $siteId Site id of the page the url is built for.
+	 * @return bool
+	 */
+	protected function isPreviewSite(int $siteId): bool
+	{
+		return !$this->siteId || (int)$this->siteId === $siteId;
+	}
+
+	/**
 	 * Get full pubic URL for this landing.
 	 * @param int|array $id Landing id (id array), optional.
 	 * @param boolean $absolute Full url.
@@ -1022,17 +1072,22 @@ class Landing extends \Bitrix\Landing\Internals\BaseTable
 					$row['SITE_ID'] = '/' . $row['SITE_ID'] . '/';
 				}
 			}
+			// the signed preview tail unlocks the draft of a site, so it is put only on the urls of
+			// the site of this landing: a link to a page of any other site stays its plain public url
+			$rowPreviewMode = $previewMode && $this->isPreviewSite((int)$row['SITE_ID_ORIG']);
 			$publicHash = '';
-			if ($previewMode)
+			$siteKey = null;
+			if ($rowPreviewMode)
 			{
 				if ($siteKeyCode == 'CODE')
 				{
-					$publicHash = Site::getPublicHash(trim($row['SITE_CODE'], '/'), $row['SITE_DOMAIN']);
+					$siteKey = trim($row['SITE_CODE'], '/');
 				}
 				else
 				{
-					$publicHash = Site::getPublicHash($row['SITE_ID_ORIG'], $row['SITE_DOMAIN']);
+					$siteKey = $row['SITE_ID_ORIG'];
 				}
+				$publicHash = Site::getPublicHash($siteKey, $row['SITE_DOMAIN']);
 			}
 			if ($row['CODE'])
 			{
@@ -1044,7 +1099,7 @@ class Landing extends \Bitrix\Landing\Internals\BaseTable
 				$fullUrl[$row['ID']] = ($absolute ? $hostUrl : '') .
 									$pubPath .
 									($bitrix24 ? $row['SITE_ID'] : '/') .
-									($previewMode ? 'preview/' . $publicHash . '/' : '') .
+									($rowPreviewMode ? 'preview/' . $publicHash . '/' : '') .
 									($row['FOLDER_ID'] ? ltrim(Folder::getFullPath($row['FOLDER_ID'], $row['SITE_ID_ORIG'], $lastFolderItem), '/') : '');
 				$folderIndex = $row['ID'] == ($lastFolderItem['INDEX_ID'] ?? 0)
 												||
@@ -1063,18 +1118,25 @@ class Landing extends \Bitrix\Landing\Internals\BaseTable
 			else
 			{
 				$lastFolderItem = [];
+				$cloudPreview = $rowPreviewMode && Site\PreviewUrl::isCloudTarget($bitrix24, !$domainReplace, $disableCloud);
 				$fullUrl[$row['ID']] = (
-									$absolute
-										? (
-											$row['SITE_PROTOCOL'] . '://' .
-											$row['SITE_DOMAIN']
+									$cloudPreview
+										? Site\PreviewUrl::buildPreviewBase($siteKey, $publicHash, $absolute)
+										: (
+											(
+												$absolute
+													? (
+														$row['SITE_PROTOCOL'] . '://' .
+														$row['SITE_DOMAIN']
+													)
+													: ''
+											) .
+											(($domainReplace || !$bitrix24) ? $pubPath : '') .
+											(($rowPreviewMode && !$bitrix24) ? '/preview/' . $publicHash : '') .
+											(($domainReplace && $bitrix24) ? $row['SITE_ID'] : '/') .
+											(($rowPreviewMode && $bitrix24) ? 'preview/' . $publicHash . '/' : '')
 										)
-										: ''
 									) .
-									(($domainReplace || !$bitrix24) ? $pubPath : '') .
-									(($previewMode && !$bitrix24) ? '/preview/' . $publicHash : '') .
-									(($domainReplace && $bitrix24) ? $row['SITE_ID'] : '/') .
-									(($previewMode && $bitrix24) ? 'preview/' . $publicHash . '/' : '') .
 									($row['FOLDER_ID'] ? ltrim(Folder::getFullPath($row['FOLDER_ID'], $row['SITE_ID_ORIG'], $lastFolderItem), '/') : '');
 				$folderIndex = $row['ID'] == $lastFolderItem['INDEX_ID'] || !$lastFolderItem['INDEX_ID'] && trim($row['CODE'], '/') === $lastFolderItem['CODE'];
 				$data[$row['ID']] = $fullUrl[$row['ID']] .
@@ -1783,6 +1845,7 @@ class Landing extends \Bitrix\Landing\Internals\BaseTable
 		{
 			if ($hook->enabled())
 			{
+				$hook = $this->prepareHook($hook);
 				$hooksExec[$hook->getCode()] = $hook;
 			}
 		}
@@ -1801,9 +1864,13 @@ class Landing extends \Bitrix\Landing\Internals\BaseTable
 
 	protected function prepareHook($hook)
 	{
-		if ($hook->getCode() === 'GMAP')
+		if (method_exists($hook, 'setSiteId'))
 		{
 			$hook->setSiteId($this->siteId);
+		}
+		if (method_exists($hook, 'setLandingId'))
+		{
+			$hook->setLandingId($this->id);
 		}
 
 		return $hook;
@@ -1957,6 +2024,16 @@ class Landing extends \Bitrix\Landing\Internals\BaseTable
 	public static function getSiteType(): string
 	{
 		return self::$siteType;
+	}
+
+	/**
+	 * Get site type of this landing. Unlike the static getSiteType(), the answer does not depend on
+	 * the landings loaded after this one - by event handlers of other modules, for instance.
+	 * @return string
+	 */
+	public function getSiteTypeCode(): string
+	{
+		return $this->siteTypeCode;
 	}
 
 	public function getSpecialType(): ?string
@@ -2179,7 +2256,8 @@ class Landing extends \Bitrix\Landing\Internals\BaseTable
 	/**
 	 * Publication current landing.
 	 * @param null $blockId Publication only this block(s).
-	 * @param Metrika\FieldsDto|null $metrikaFields - params for analytic. If not set anything - analytic not sent
+	 * @param Metrika\FieldsDto|null $metrikaFields - params for analytic. The event is sent in any case,
+	 * these fields only specify its type, subsection and element; without them the type is resolved by the site
 	 * @return boolean
 	 */
 	public function publication($blockId = null, ?Metrika\FieldsDto $metrikaFields = null): bool
@@ -2210,7 +2288,7 @@ class Landing extends \Bitrix\Landing\Internals\BaseTable
 		}
 		else
 		{
-			$metrika->setError('access_denied');
+			$metrika->setError('access_denied', Metrika\PublicationErrorStatusMapper::resolve('access_denied'));
 		}
 
 		if (!$result && !empty($this->getError()->getErrors()))
@@ -2222,11 +2300,15 @@ class Landing extends \Bitrix\Landing\Internals\BaseTable
 			}
 			if (!empty($errors))
 			{
-				$metrika->setError(implode('|', $errors));
+				$errorCodes = implode('|', $errors);
+				$metrika->setError($errorCodes, Metrika\PublicationErrorStatusMapper::resolve($errorCodes));
 			}
 		}
 
-		$metrika->setType($metrikaFields?->type);
+		$metrika->setType(
+			$metrikaFields?->type
+			?? (new Metrika\SiteTypeResolver())->resolve((int)$this->getSiteId(), $this->siteTypeCode)
+		);
 		$metrika->setSubSection($metrikaFields?->subSection);
 		$metrika->setElement($metrikaFields?->element);
 		$metrika->setParam(3, 'siteId', $this->siteId);

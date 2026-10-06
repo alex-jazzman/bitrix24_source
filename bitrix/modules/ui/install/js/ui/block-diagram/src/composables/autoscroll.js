@@ -79,21 +79,15 @@ export function useAutoScroll(state: any, actions: any): UseAutoScroll
 		rafId = requestAnimationFrame(scrollLoop);
 	};
 
+	// The press only arms the autoscroll: the loop is left to the first move of the pointer.
+	// Started here it would pan the camera under a gesture that has not begun - a plain click on a
+	// block standing in the edge threshold carries the canvas away with the mouse never moving.
+	// When the gesture begins is for the gesture to say, and it says it by reporting the pointer:
+	// a drag reports it past its threshold, a selection frame or a resize from the first move.
 	const start = (event: MouseEvent, callback: AutoScrollCallback): void => {
-		const el = toValue(state.canvasRef);
-		if (el)
-		{
-			rect = el.getBoundingClientRect();
-		}
-
 		mouseX = event.clientX;
 		mouseY = event.clientY;
 		activeCallback = callback;
-
-		if (!rafId)
-		{
-			rafId = requestAnimationFrame(scrollLoop);
-		}
 	};
 
 	const stop = (): void => {
@@ -109,6 +103,25 @@ export function useAutoScroll(state: any, actions: any): UseAutoScroll
 	const updateMousePosition = (event: MouseEvent): void => {
 		mouseX = event.clientX;
 		mouseY = event.clientY;
+
+		if (!activeCallback || rafId)
+		{
+			return;
+		}
+
+		// The canvas is measured here rather than on the press: between the two the panel of the
+		// selected block opens and the canvas loses the width the press would have measured, so
+		// the edge threshold would be counted from a border that has moved.
+		const el = toValue(state.canvasRef);
+		if (!el)
+		{
+			// A frame without geometry would exit at once, leaving rafId set: every later move would
+			// then read the loop as running and the autoscroll would stay dead for the whole gesture.
+			return;
+		}
+
+		rect = el.getBoundingClientRect();
+		rafId = requestAnimationFrame(scrollLoop);
 	};
 
 	return {

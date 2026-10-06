@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports, main_core, main_core_events, ui_vue3, im_v2_component_list_items_recent, im_v2_component_search, im_v2_const, im_v2_lib_analytics, im_v2_lib_logger, im_v2_lib_permission, im_v2_component_list_container_elements_headerMenu, im_v2_component_list_container_elements_vibeCodeCatalogButton, ui_infoHelper, im_public, im_v2_component_elements_copilotRolesDialog, im_v2_component_elements_menu, im_v2_component_list_container_elements_createChatPromo, im_v2_lib_createChat, im_v2_lib_feature, im_v2_lib_promo, im_v2_provider_service_copilot, im_v2_lib_copilot, ui_iconSet_api_vue, im_v2_lib_helpdesk, im_v2_lib_invite) {
+(function (exports, main_core, main_core_events, ui_vue3, im_v2_component_list_items_recent, im_v2_component_search, im_v2_const, im_v2_lib_analytics, im_v2_lib_logger, im_v2_component_list_container_elements_headerMenu, im_v2_component_list_container_elements_vibeCodeCatalogButton, ui_infoHelper, im_public, im_v2_component_elements_copilotRolesDialog, im_v2_component_elements_menu, im_v2_component_list_container_elements_createChatPromo, im_v2_lib_createChat, im_v2_lib_feature, im_v2_lib_permission, im_v2_lib_promo, im_v2_provider_service_copilot, im_v2_lib_copilot, im_v2_lib_folder, ui_iconSet_api_vue, im_v2_lib_helpdesk, im_v2_lib_invite) {
 	'use strict';
 
 	// @vue/component
@@ -150,6 +150,10 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		computed: {
 			ChatType: () => im_v2_const.ChatType,
 			MenuItemIcon: () => im_v2_component_elements_menu.MenuItemIcon,
+			hasMenuAccess() {
+				const actions = [this.canCreateChat, this.canCreateChannel, this.canCreateConference, this.isCollabAvailable, this.isFolderAvailable];
+				return actions.includes(true);
+			},
 			menuConfig() {
 				return {
 					id: 'im-create-chat-menu',
@@ -161,6 +165,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			},
 			isCollabV2Available() {
 				return im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.isCollabV2Available);
+			},
+			isFolderAvailable() {
+				return im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.isChatFoldersWebAvailable);
 			},
 			isBitrixGptV2Available() {
 				return im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.isBitrixGptV2Available);
@@ -174,17 +181,11 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			isCollabV2AvailableByTariff() {
 				return im_v2_lib_feature.TariffManager.collabV2.isAvailable();
 			},
-			collabAvailable() {
+			isCollabAvailable() {
 				const hasAccess = im_v2_lib_permission.PermissionManager.getInstance().canPerformActionByUserType(im_v2_const.ActionByUserType.createCollab);
 				const creationAvailable = im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.collabCreationAvailable);
 				const featureAvailable = im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.collabAvailable);
 				return hasAccess && featureAvailable && creationAvailable;
-			},
-			canCreateChat() {
-				return im_v2_lib_permission.PermissionManager.getInstance().canPerformActionByUserType(im_v2_const.ActionByUserType.createChat);
-			},
-			canCreateCopilot() {
-				return im_v2_lib_permission.PermissionManager.getInstance().canPerformActionByUserType(im_v2_const.ActionByUserType.createCopilot);
 			},
 			isCopilotAvailable() {
 				return im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.copilotAvailable);
@@ -194,6 +195,12 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			},
 			isCopilotAvailableAndCreatable() {
 				return this.isCopilotAvailable && this.canCreateCopilot;
+			},
+			canCreateChat() {
+				return im_v2_lib_permission.PermissionManager.getInstance().canPerformActionByUserType(im_v2_const.ActionByUserType.createChat);
+			},
+			canCreateCopilot() {
+				return im_v2_lib_permission.PermissionManager.getInstance().canPerformActionByUserType(im_v2_const.ActionByUserType.createCopilot);
 			},
 			canCreateChannel() {
 				return im_v2_lib_permission.PermissionManager.getInstance().canPerformActionByUserType(im_v2_const.ActionByUserType.createChannel);
@@ -229,6 +236,10 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 					return;
 				}
 				this.startChatCreation();
+				this.showMenu = false;
+			},
+			onFolderCreateClick() {
+				im_v2_lib_folder.FolderManager.startCreation();
 				this.showMenu = false;
 			},
 			onCollabV2CreateClick() {
@@ -340,6 +351,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		},
 		template: `
 		<div
+			v-if="hasMenuAccess"
 			class="bx-im-list-container-recent__create-chat_icon"
 			:class="{'--active': showMenu}"
 			@click="handleShowPopup"
@@ -376,7 +388,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				:subtitle="loc('IM_RECENT_CREATE_CHANNEL_SUBTITLE_MSGVER_1')"
 				@click="onChatCreateClick(ChatType.channel)"
 			/>
-			<template v-if="collabAvailable">
+			<template v-if="isCollabAvailable">
 				<MenuItem
 					v-if="isCollabV2Available"
 					:disabled="!isCollabV2AvailableByTariff"
@@ -404,6 +416,13 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				:subtitle="loc('IM_RECENT_CREATE_CONFERENCE_SUBTITLE_MSGVER_1')"
 				:withBottomBorder="showInvitePromo"
 				@click="onChatCreateClick(ChatType.videoconf)"
+			/>
+			<MenuItem
+				v-if="isFolderAvailable"
+				:icon="MenuItemIcon.folder"
+				:title="loc('IM_RECENT_CREATE_FOLDER_TITLE')"
+				:subtitle="loc('IM_RECENT_CREATE_FOLDER_SUBTITLE')"
+				@click="onFolderCreateClick"
 			/>
 			<InvitePromo v-if="showInvitePromo" @close="showInvitePromo = false" />
 			<template #footer>
@@ -463,10 +482,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			},
 			layoutName() {
 				return this.layout.name;
-			},
-			canCreateChat() {
-				const actions = [im_v2_const.ActionByUserType.createChat, im_v2_const.ActionByUserType.createCollab, im_v2_const.ActionByUserType.createChannel, im_v2_const.ActionByUserType.createConference];
-				return actions.some(action => im_v2_lib_permission.PermissionManager.getInstance().canPerformActionByUserType(action));
 			}
 		},
 		created() {
@@ -541,7 +556,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 						@updateSearch="onUpdateSearch"
 					/>
 				</div>
-				<CreateChatMenu v-if="canCreateChat" />
+				<CreateChatMenu />
 			</div>
 			<div class="bx-im-list-container-recent__elements_container">
 				<div class="bx-im-list-container-recent__elements">
@@ -561,7 +576,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	`
 	};
 
+	exports.CreateChatMenu = CreateChatMenu;
 	exports.RecentListContainer = RecentListContainer;
 
-})(this.BX.Messenger.v2.Component.List = this.BX.Messenger.v2.Component.List || {}, BX, BX.Event, BX.Vue3, BX.Messenger.v2.Component.List, BX.Messenger.v2.Component, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Component.List, BX.Messenger.v2.Component.List, BX.UI, BX.Messenger.v2.Lib, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Component.List, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Service, BX.Messenger.v2.Lib, BX.UI.IconSet, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib);
+})(this.BX.Messenger.v2.Component.List = this.BX.Messenger.v2.Component.List || {}, BX, BX.Event, BX.Vue3, BX.Messenger.v2.Component.List, BX.Messenger.v2.Component, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Component.List, BX.Messenger.v2.Component.List, BX.UI, BX.Messenger.v2.Lib, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Component.List, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Service, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.UI.IconSet, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib);
 //# sourceMappingURL=recent-container.bundle.js.map

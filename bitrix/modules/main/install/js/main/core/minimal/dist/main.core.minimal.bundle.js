@@ -4995,8 +4995,33 @@ window._main_polyfill_core = true;
 		}
 	}
 
+	class MemoryStorage {
+		#map = new Map();
+		get(key) {
+			return this.#map.get(key);
+		}
+		set(key, value) {
+			this.#map.set(key, value);
+		}
+		has(key) {
+			return this.#map.has(key);
+		}
+		delete(key) {
+			this.#map.delete(key);
+		}
+		get size() {
+			return this.#map.size;
+		}
+		keys() {
+			return [...this.#map.keys()];
+		}
+		values() {
+			return [...this.#map.values()];
+		}
+	}
+
 	class BaseCache {
-		storage = new Map();
+		storage = new MemoryStorage();
 		get(key, defaultValue) {
 			if (!this.storage.has(key)) {
 				if (Type.isFunction(defaultValue)) {
@@ -5031,18 +5056,14 @@ window._main_polyfill_core = true;
 			return this.storage.size;
 		}
 		keys() {
-			return [...this.storage.keys()];
+			return this.storage.keys();
 		}
 		values() {
-			return [...this.storage.values()];
+			return this.storage.values();
 		}
 	}
 
-	var MemoryStorage = Map;
-
-	class MemoryCache extends BaseCache {
-		storage = new MemoryStorage();
-	}
+	class MemoryCache extends BaseCache {}
 
 	class LsStorage {
 		stackKey = 'BX.Cache.Storage.LsStorage.stack';

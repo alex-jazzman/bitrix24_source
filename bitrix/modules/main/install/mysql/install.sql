@@ -537,7 +537,7 @@ CREATE TABLE b_user_field_lang
 	PRIMARY KEY (USER_FIELD_ID, LANGUAGE_ID)
 );
 
-CREATE TABLE if not exists b_user_field_enum
+CREATE TABLE b_user_field_enum
 (
 	ID int not null auto_increment,
 	USER_FIELD_ID int,
@@ -546,7 +546,8 @@ CREATE TABLE if not exists b_user_field_enum
 	SORT int not null default 500,
 	XML_ID varchar(255) not null,
 	PRIMARY KEY (ID),
-	UNIQUE ux_user_field_enum(USER_FIELD_ID, XML_ID)
+	UNIQUE ux_user_field_enum(USER_FIELD_ID, XML_ID),
+	INDEX ix_b_user_field_enum_def (DEF)
 );
 
 CREATE TABLE b_user_field_permission
@@ -1423,7 +1424,8 @@ CREATE TABLE b_main_mail_sender
 	PARENT_ID INT(18) DEFAULT NULL,
 	PRIMARY KEY (ID),
 	INDEX IX_B_MAIN_MAIL_SENDER_USER_ID (USER_ID, IS_CONFIRMED, IS_PUBLIC),
-	INDEX IX_B_MAIN_MAIL_SENDER_EMAIL (EMAIL)
+	INDEX IX_B_MAIN_MAIL_SENDER_EMAIL (EMAIL),
+	INDEX IX_B_MAIN_MAIL_SENDER_PARENT_ID (PARENT_ID, PARENT_MODULE_ID)
 );
 
 CREATE TABLE b_main_mail_sender_send_counter
@@ -1673,4 +1675,26 @@ CREATE TABLE b_persistent_storage (
 	`EXPIRED_AT` datetime NOT NULL,
 	PRIMARY KEY (`KEY`),
 	INDEX `B_PERSISTENT_STORAGE_IX1` (`EXPIRED_AT`)
+);
+
+CREATE TABLE b_feature_flag (
+	`CODE` varchar(255) not null,
+	`MODULE_ID` varchar(50) not null,
+	`ENABLED` char(1) not null default 'N',
+	`MODIFIED_AT` datetime not null,
+	`MODIFIED_BY` int null,
+	PRIMARY KEY (`CODE`),
+	INDEX ix_b_feature_flag_module_id (`MODULE_ID`)
+);
+
+CREATE TABLE b_feature_flag_rule (
+	`ID` int not null auto_increment,
+	`FEATURE_CODE` varchar(255) not null,
+	`POLICY` varchar(10) not null,
+	`RULE_CODE` varchar(255) not null,
+	`RULE_ARGS` varchar(255) null,
+	`MODIFIED_AT` datetime not null,
+	`MODIFIED_BY` int null,
+	PRIMARY KEY (`ID`),
+	INDEX ix_b_feature_flag_rule_feature_code (`FEATURE_CODE`)
 );

@@ -227,3 +227,14 @@
 .mail_massconnect__connection-status_details-link:hover {
 	border-bottom-style: solid;
 }
+
+.mail_massconnect__connection-status_find-mailboxes-button {
+	margin-left: 4px;
+	vertical-align: middle;
+}
+
+.mail_massconnect__connection-status_find-mailboxes-limit {
+	color: var(--ui-color-base-8);
+	font-size: var(--ui-font-size-md, 14px);
+	text-align: center;
+}

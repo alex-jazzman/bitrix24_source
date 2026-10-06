@@ -69,7 +69,7 @@ jn.define('bizproc/workflow/list', (require, exports, module) => {
 			};
 		}
 
-		onTaskTouch({ task, isInline })
+		onTaskTouch({ task })
 		{
 			const item = this.listRef.getItem(task.workflowId);
 			if (item && item.data.authorId !== Number(env.userId))
@@ -80,11 +80,6 @@ jn.define('bizproc/workflow/list', (require, exports, module) => {
 			if (this.state.selectedTasks)
 			{
 				this.onTaskDeselected({ task });
-			}
-
-			if (isInline)
-			{
-				this.notifyAboutCompletedTask(task);
 			}
 		}
 

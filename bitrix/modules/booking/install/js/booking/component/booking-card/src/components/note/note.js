@@ -16,6 +16,9 @@ export const Note = {
 	inject: {
 		/** @type{ AbstractCardDataService } */
 		cardDataService: {},
+		autoHideContext: {
+			default: null,
+		},
 	},
 	props: {
 		bindElement: {
@@ -55,6 +58,14 @@ export const Note = {
 			return this.cardDataService.buildDataAttributes('booking-booking-card-note-button');
 		},
 	},
+	created(): void
+	{
+		this.unfreezeAutoHide = null;
+	},
+	beforeUnmount(): void
+	{
+		this.hidePopup();
+	},
 	methods: {
 		onNoteMouseEnter(): void
 		{
@@ -73,7 +84,7 @@ export const Note = {
 			}
 
 			this.isEditMode = false;
-			this.isPopupShown = true;
+			this.showPopup();
 		},
 		closeViewPopup(): void
 		{
@@ -82,12 +93,12 @@ export const Note = {
 				return;
 			}
 
-			this.isPopupShown = false;
+			this.hidePopup();
 		},
 		showEditPopup(): void
 		{
 			this.isEditMode = true;
-			this.isPopupShown = true;
+			this.showPopup();
 		},
 		closeEditPopup(): void
 		{
@@ -96,11 +107,44 @@ export const Note = {
 				return;
 			}
 
-			this.isPopupShown = false;
+			this.hidePopup();
 		},
 		async handleSave(payload): Promise<void>
 		{
 			await this.cardDataService.saveNote(payload.note);
+		},
+		showPopup(): void
+		{
+			if (!this.isPopupShown)
+			{
+				this.freezeParentAutoHide();
+			}
+
+			this.isPopupShown = true;
+		},
+		hidePopup(): void
+		{
+			if (!this.isPopupShown)
+			{
+				return;
+			}
+
+			this.isPopupShown = false;
+			this.unfreezeParentAutoHide();
+		},
+		freezeParentAutoHide(): void
+		{
+			if (this.unfreezeAutoHide)
+			{
+				return;
+			}
+
+			this.unfreezeAutoHide = this.autoHideContext?.freeze() ?? null;
+		},
+		unfreezeParentAutoHide(): void
+		{
+			this.unfreezeAutoHide?.();
+			this.unfreezeAutoHide = null;
 		},
 	},
 	template: `

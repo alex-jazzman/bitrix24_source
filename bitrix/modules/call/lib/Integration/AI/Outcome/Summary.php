@@ -22,8 +22,6 @@ class Summary extends AISenseContent
 	/** @var array<array{start: string, end: string, title: string, summary: string}> */
 	public array $summary = [];
 
-	public bool $isEmpty = true;
-
 	public function __construct(?Integration\AI\Outcome $outcome = null)
 	{
 		if ($outcome)

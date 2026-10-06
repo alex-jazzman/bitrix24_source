@@ -21,6 +21,7 @@ use Bitrix\Sale\Location\Admin\ExternalServiceHelper;
 
 use Bitrix\Sale\Location\Import;
 use Bitrix\Sale\Location\Search\Finder;
+use Bitrix\Main\Web\Uri;
 
 Loc::loadMessages(__FILE__);
 
@@ -49,12 +50,8 @@ class CBitrixSaleLocationImportComponent extends CBitrixComponent
 			isset($_REQUEST["publicSidePanel"]) && $_REQUEST["publicSidePanel"] === "Y"
 		)
 		{
-			$arParams['PATH_TO_IMPORT'] = \CHTTP::urlAddParams($arParams['PATH_TO_IMPORT'], array(
-				"IFRAME" => "Y", "IFRAME_TYPE" => "Y", "publicSidePanel" => "Y"
-			));
+			$arParams['PATH_TO_IMPORT'] = (string)(new Uri($arParams['PATH_TO_IMPORT']))->addParams(["IFRAME" => "Y", "IFRAME_TYPE" => "Y", "publicSidePanel" => "Y"]);
 		}
-
-
 
 		return $arParams;
 	}

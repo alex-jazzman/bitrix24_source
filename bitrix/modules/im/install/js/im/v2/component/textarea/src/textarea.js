@@ -152,6 +152,10 @@ export const ChatTextarea = {
 	{
 		OutlineIcons: () => OutlineIcons,
 		ICON_SIZE: () => ICON_SIZE,
+		isMarkdownInputAvailable(): boolean
+		{
+			return FeatureManager.isFeatureAvailable(Feature.isMarkdownAvailable);
+		},
 		dialog(): ImModelChat
 		{
 			return this.$store.getters['chats/get'](this.dialogId, true);
@@ -163,6 +167,16 @@ export const ChatTextarea = {
 		replyMode(): boolean
 		{
 			return this.panelType === PanelType.reply;
+		},
+		replyIdForContent(): number | void
+		{
+			// media/file replies bind to the original only when the server feature is enabled
+			if (!this.replyMode || !FeatureManager.isFeatureAvailable(Feature.isReplyWithMediaAvailable))
+			{
+				return undefined;
+			}
+
+			return this.panelContext.messageId;
 		},
 		forwardMode(): boolean
 		{
@@ -282,6 +296,7 @@ export const ChatTextarea = {
 		EventEmitter.subscribe(EventType.dialog.onMessageDeleted, this.onMessageDeleted);
 		EventEmitter.subscribe(EventType.textarea.insertText, this.onInsertText);
 		EventEmitter.subscribe(EventType.textarea.getText, this.onGetText);
+		EventEmitter.subscribe(EventType.textarea.closePanel, this.onClosePanelRequest);
 
 		this.getEmitter().subscribe(EventType.textarea.sendMessage, this.onSendMessage);
 		this.getEmitter().subscribe(EventType.textarea.insertText, this.onInsertText);
@@ -313,6 +328,7 @@ export const ChatTextarea = {
 		EventEmitter.unsubscribe(EventType.dialog.onMessageDeleted, this.onMessageDeleted);
 		EventEmitter.unsubscribe(EventType.textarea.insertText, this.onInsertText);
 		EventEmitter.unsubscribe(EventType.textarea.getText, this.onGetText);
+		EventEmitter.unsubscribe(EventType.textarea.closePanel, this.onClosePanelRequest);
 
 		this.getEmitter().unsubscribe(EventType.textarea.sendMessage, this.onSendMessage);
 		this.getEmitter().unsubscribe(EventType.textarea.insertMention, this.onInsertMention);
@@ -639,7 +655,7 @@ export const ChatTextarea = {
 			if (decorationCombination)
 			{
 				event.preventDefault();
-				this.text = Textarea.handleDecorationTag(this.$refs.textarea, event.code);
+				this.text = Textarea.handleDecorationTag(this.$refs.textarea, event.code, this.isMarkdownInputAvailable);
 
 				return;
 			}
@@ -711,7 +727,13 @@ export const ChatTextarea = {
 		},
 		onDiskFileSelect({ files })
 		{
-			this.getUploadingService().uploadFileFromDisk(files, this.dialogId);
+			const replyId = this.replyIdForContent;
+			this.getUploadingService().uploadFileFromDisk(files, this.dialogId, replyId);
+
+			if (replyId > 0)
+			{
+				this.closePanel();
+			}
 		},
 		onInsertMention(event: BaseEvent<InsertMentionEvent>)
 		{
@@ -760,6 +782,15 @@ export const ChatTextarea = {
 			}
 			this.openReplyPanel(messageId);
 		},
+		onClosePanelRequest(event: BaseEvent<{ dialogId: string }>)
+		{
+			const { dialogId } = event.getData();
+			if (this.dialogId !== dialogId)
+			{
+				return;
+			}
+			this.closePanel();
+		},
 		onInsertForward(event: BaseEvent<{ messagesIds: number[], dialogId: string }>)
 		{
 			const { messagesIds, dialogId } = event.getData();
@@ -772,9 +803,9 @@ export const ChatTextarea = {
 		},
 		async onPaste(event: ClipboardEvent)
 		{
-			this.text = Textarea.handlePasteUrl(this.$refs.textarea, event);
+			this.text = Textarea.handlePasteUrl(this.$refs.textarea, event, this.isMarkdownInputAvailable);
 
-			if (!this.withUploadMenu)
+			if (!this.withUploadMenu || !this.dialogReady)
 			{
 				return;
 			}
@@ -1019,6 +1050,8 @@ export const ChatTextarea = {
 		},
 		async onSendFilesFromPreviewPopup(event)
 		{
+			const replyId = this.replyIdForContent;
+
 			this.text = '';
 			const { text, files, sendAsFile } = event;
 			const textWithMentions = this.mentionManager.replaceMentions(text);
@@ -1036,8 +1069,14 @@ export const ChatTextarea = {
 				this.getUploadingService().sendMessageWithFiles({
 					uploaderId,
 					text: index === 0 ? textWithMentions : '',
+					replyId,
 				});
 			});
+
+			if (Type.isArrayFilled(multiUploadingResult.uploaderIds))
+			{
+				this.closePanel();
+			}
 
 			this.focus();
 		},
@@ -1094,12 +1133,18 @@ export const ChatTextarea = {
 				/>
 				<div class="bx-im-textarea__content" ref="textarea-content" @click="focus">
 					<div class="bx-im-textarea__top">
-						<UploadMenu
+						<div
+							:class="{'bx-im-textarea__upload-menu-wrapper': true, 'bx-im-textarea__upload-menu-wrapper--muted': !dialogReady }"
 							v-if="withUploadMenu"
-							:dialogId="dialogId" 
-							@fileSelect="onFileSelect" 
-							@diskFileSelect="onDiskFileSelect" 
-						/>
+							:aria-disabled="!dialogReady ? 'true' : undefined"
+							data-testid="im-textarea-upload-menu-wrapper"
+						>
+							<UploadMenu
+								:dialogId="dialogId"
+								@fileSelect="onFileSelect"
+								@diskFileSelect="onDiskFileSelect"
+							/>
+						</div>
 						<textarea
 							v-model="text"
 							:style="textareaStyle"
@@ -1166,11 +1211,12 @@ export const ChatTextarea = {
 				@close="closeMentionPopup"
 				@onFocusTextarea="focus"
 			/>
-			<FormatToolbar 
+			<FormatToolbar
 				v-if="showFormatToolbar"
-				:dialogId="dialogId" 
-				:textarea="$refs.textarea" 
+				:dialogId="dialogId"
+				:textarea="$refs.textarea"
 				:targetPosition="formatToolbarPosition"
+				:useMarkdown="isMarkdownInputAvailable"
 				@updateText="onFormatToolbarUpdateText"
 				@close="showFormatToolbar = false"
 			/>

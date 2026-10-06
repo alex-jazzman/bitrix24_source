@@ -1,5 +1,8 @@
 <?php
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
+
+use Bitrix\Main\Web\Uri;
 
 /** @var array $arParams */
 
@@ -104,10 +107,10 @@ if (
 	$arResult['BUTTONS'][] = array(
 		'TEXT' => GetMessage('CRM_VAT_DELETE'),
 		'TITLE' => GetMessage('CRM_VAT_DELETE_TITLE'),
-		'LINK' => "javascript:vat_delete('".GetMessage('CRM_VAT_DELETE_DLG_TITLE')."', '".GetMessage('CRM_VAT_DELETE_DLG_MESSAGE')."', '".GetMessage('CRM_VAT_DELETE_DLG_BTNTITLE')."', '".CHTTP::urlAddParams(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_VAT_EDIT'],
-				array('vat_id' => $vatID)),
-			array('delete' => '', 'sessid' => bitrix_sessid())
-		)."')",
+		'LINK' => "javascript:vat_delete('".GetMessage('CRM_VAT_DELETE_DLG_TITLE')."', '".GetMessage('CRM_VAT_DELETE_DLG_MESSAGE')."', '".GetMessage('CRM_VAT_DELETE_DLG_BTNTITLE')."', '"
+			. (new Uri(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_VAT_EDIT'], array('vat_id' => $vatID))))
+				->addParams(array('delete' => '', 'sessid' => bitrix_sessid()))
+			. "')",
 		'ICON' => 'btn-delete'
 	);
 }

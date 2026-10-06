@@ -165,6 +165,7 @@ if ($diskEnabled === "Y" && \Bitrix\Main\Config\Option::get('disk', 'boards_enab
 		[],
 		array(
 			"menu_item_id" => "menu_boards",
+			"sub_link_onclick" => "var t = window.open('', '_blank'); BX.Runtime.loadExtension('disk.board-create').then(function(exports){ exports.createBoard({ newTab: t, analyticsElement: 'left_menu' }); }).catch(function(){ if (t) { t.close(); } });",
 		),
 		""
 	);
@@ -382,6 +383,20 @@ if (
 		],
 		[
 			'menu_item_id' => 'menu_im_collab',
+			'can_be_first_item' => false
+		],
+		''
+	];
+}
+
+if (Loader::includeModule('call') && \Bitrix\Call\Settings::isSyncPresetEnabled())
+{
+	$arMenu[] = [
+		Loc::getMessage('MENU_SYNC'),
+		'/sync/',
+		[],
+		[
+			'menu_item_id' => 'menu_sync',
 			'can_be_first_item' => false
 		],
 		''

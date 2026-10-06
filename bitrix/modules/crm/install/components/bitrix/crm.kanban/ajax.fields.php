@@ -31,8 +31,8 @@ if (!in_array($entityType, ['lead', 'deal', 'order']))
 
 require_once($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_before.php');
 
-use \Bitrix\Main;
-use \Bitrix\Main\Localization\Loc;
+use Bitrix\Main;
+use Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__FILE__);
 

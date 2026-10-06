@@ -2,7 +2,7 @@
  * @module bizproc/workflow/result
  * */
 jn.define('bizproc/workflow/result', (require, exports, module) => {
-	const { Color, Indent } = require('tokens');
+	const { Color, Indent, Typography } = require('tokens');
 	const { Text4 } = require('ui-system/typography/text');
 	const { PureComponent } = require('layout/pure-component');
 	const { Loc } = require('loc');
@@ -76,7 +76,7 @@ jn.define('bizproc/workflow/result', (require, exports, module) => {
 				value: this.state.text,
 				style: {
 					color: Color.base4.toHex(),
-					fontSize: 14,
+					fontSize: Typography.text4.getValue().fontSize,
 					fontWeight: '400',
 				},
 				onLinkClick: ({ url }) => {

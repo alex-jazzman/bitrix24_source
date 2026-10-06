@@ -16,7 +16,7 @@ jn.define('disk/simple-list/items/file-redux/file-content', (require, exports, m
 	const { withPressed } = require('utils/color');
 	const { Haptics } = require('haptics');
 
-	const { resolveFolderIcon, resolveFileIcon } = require('assets/icons');
+	const { resolveFolderIcon, resolveFileIcon, FileType } = require('assets/icons');
 
 	const { Text5, Text6 } = require('ui-system/typography/text');
 	const { BBCodeText } = require('ui-system/typography/bbcodetext');
@@ -44,6 +44,8 @@ jn.define('disk/simple-list/items/file-redux/file-content', (require, exports, m
 	 * @property {number} [updatedBy] - The ID of the user who created the item.
 	 * @property {number} [updateTime] - The last update time of the item.
 	 * @property {object} parentWidget
+	 * @property {function} [itemDetailOpenHandler]
+	 * @property {object} [params]
 	 */
 
 	/**
@@ -85,7 +87,11 @@ jn.define('disk/simple-list/items/file-redux/file-content', (require, exports, m
 
 		get hasPreview()
 		{
-			return this.diskObject.hasPreview;
+			return this.diskObject.hasPreview
+				&& (
+					this.diskObject.typeFile === FileType.IMAGE
+					|| this.diskObject.typeFile === FileType.VIDEO
+				);
 		}
 
 		get previewUrl()
@@ -293,6 +299,7 @@ jn.define('disk/simple-list/items/file-redux/file-content', (require, exports, m
 						type: this.diskObject.typeFile,
 						previewUrl: this.previewUrl,
 						testId: this.getTestId('file-preview'),
+						onClick: this.openDiskObject,
 					}),
 				);
 			}
@@ -569,6 +576,15 @@ jn.define('disk/simple-list/items/file-redux/file-content', (require, exports, m
 				this.props.relativeFolderId,
 				this.parentWidget,
 			).show(this.containerRef);
+		};
+
+		openDiskObject = () => {
+			const { itemDetailOpenHandler, params = {} } = this.props;
+
+			if (itemDetailOpenHandler)
+			{
+				itemDetailOpenHandler(this.diskObject.id, this.diskObject, params);
+			}
 		};
 
 		openChat = () => {

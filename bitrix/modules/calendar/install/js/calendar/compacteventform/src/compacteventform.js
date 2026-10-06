@@ -37,6 +37,8 @@ export class CompactEventForm extends EventEmitter
 	CHECK_CHANGES_DELAY = 500;
 	RELOAD_DATA_DELAY = 500;
 	excludedUsers = [];
+	meetingStatusRequestInProgress = false;
+	meetingStatusRequestSeq = 0;
 
 	constructor(options = {})
 	{
@@ -66,6 +68,8 @@ export class CompactEventForm extends EventEmitter
 		this.setMode(mode);
 
 		this.state = this.STATE.READY;
+		this.meetingStatusRequestInProgress = false;
+		this.meetingStatusRequestSeq++;
 
 		this.popupId = `compact-event-form-${Math.round(Math.random() * 100_000)}`;
 
@@ -74,6 +78,7 @@ export class CompactEventForm extends EventEmitter
 			this.popup.destroy();
 		}
 		this.popup = this.getPopup(params);
+		Dom.attr(this.popup.popupContainer, 'data-testid', 'calendar-compact-form-popup');
 
 		// Small hack to use transparent titlebar to drag&drop popup
 		Dom.addClass(this.popup.titleBar, 'calendar-add-popup-titlebar');
@@ -97,7 +102,7 @@ export class CompactEventForm extends EventEmitter
 			this.sendOpenViewCardAnalytics();
 		}
 
-		this.prepareData()
+		return this.prepareData()
 			.then(() => {
 				if (this.isLocationMode())
 				{
@@ -141,6 +146,12 @@ export class CompactEventForm extends EventEmitter
 				{
 					this.userPlannerSelector.checkBusyTime();
 				}
+			})
+			.catch((error) => {
+				console.error('Calendar. CompactEventForm: the form could not be opened', error);
+				this.abortWithoutConfirm();
+
+				throw error;
 			});
 	}
 
@@ -199,9 +210,9 @@ export class CompactEventForm extends EventEmitter
 
 		if (
 			this.getMode() === CompactEventForm.EDIT_MODE
-			&& this.formDataChanged()
-			&& this.checkDataBeforeCloseMode
 			&& !fromPopup
+			&& this.checkDataBeforeCloseMode
+			&& this.formDataChanged()
 		)
 		{
 			if (this.checkTopSlider())
@@ -220,6 +231,8 @@ export class CompactEventForm extends EventEmitter
 
 			return;
 		}
+
+		const wasShown = this.isShown();
 
 		this.displayed = false;
 		this.emit('onClose');
@@ -242,12 +255,22 @@ export class CompactEventForm extends EventEmitter
 			Location.setCurrentCapacity(0);
 		}
 		Util.clearPlannerWatches();
-		Util.closeAllPopups();
+
+		if (wasShown)
+		{
+			Util.closeAllPopups();
+		}
+	}
+
+	// `fromPopup` skips the unsaved changes confirmation: a form that never opened has nothing to confirm
+	abortWithoutConfirm()
+	{
+		this.close(true, true);
 	}
 
 	getPopupContentCalendar()
 	{
-		this.DOM.wrap = Tag.render`<div class="calendar-add-popup-wrap">
+		this.DOM.wrap = Tag.render`<div class="calendar-add-popup-wrap" data-testid="calendar-compact-form">
 			${this.DOM.titleOuterWrap = Tag.render`
 			<div class="calendar-field-container calendar-field-container-string-select">
 				<div class="calendar-field-block">
@@ -283,7 +306,7 @@ export class CompactEventForm extends EventEmitter
 
 	getPopupContentLocation()
 	{
-		this.DOM.wrap = Tag.render`<div class="calendar-add-popup-wrap">
+		this.DOM.wrap = Tag.render`<div class="calendar-add-popup-wrap" data-testid="calendar-compact-form">
 			${this.DOM.titleOuterWrap = Tag.render`
 			<div class="calendar-field-container calendar-field-container-string-select">
 				<div class="calendar-field-block">
@@ -434,6 +457,7 @@ export class CompactEventForm extends EventEmitter
 		const openButton = new BX.UI.Button({
 			className: `ui-btn ${className}`,
 			text: Loc.getMessage('CALENDAR_EVENT_DO_OPEN'),
+			dataset: { testid: 'calendar-compact-form-open-btn' },
 			events: {
 				click: () => {
 					this.checkDataBeforeCloseMode = false;
@@ -459,6 +483,7 @@ export class CompactEventForm extends EventEmitter
 	{
 		return new BX.UI.Button({
 			text: Loc.getMessage('CALENDAR_EVENT_DO_EDIT'),
+			dataset: { testid: 'calendar-compact-form-edit-btn' },
 			className: 'ui-btn ui-btn-link',
 			events: {
 				click: this.editEntryInSlider.bind(this),
@@ -472,6 +497,7 @@ export class CompactEventForm extends EventEmitter
 		const saveButton = new BX.UI.Button({
 			name: 'save',
 			text: Loc.getMessage(messageCode),
+			dataset: { testid: 'calendar-compact-form-save-btn' },
 			className: 'ui-btn ui-btn-primary',
 			events: {
 				click: () => {
@@ -489,6 +515,7 @@ export class CompactEventForm extends EventEmitter
 	{
 		return new BX.UI.Button({
 			text: Loc.getMessage('CALENDAR_EVENT_DO_DELETE'),
+			dataset: { testid: 'calendar-compact-form-delete-btn' },
 			className: 'ui-btn ui-btn-link',
 			events: {
 				click: () => {
@@ -512,6 +539,7 @@ export class CompactEventForm extends EventEmitter
 	{
 		const closeButton = new BX.UI.Button({
 			text: Loc.getMessage('CALENDAR_EVENT_DO_CANCEL'),
+			dataset: { testid: 'calendar-compact-form-cancel-btn' },
 			className: 'ui-btn ui-btn-link',
 			events: {
 				click: () => {
@@ -544,6 +572,7 @@ export class CompactEventForm extends EventEmitter
 	{
 		const fullFormButton = new BX.UI.Button({
 			text: Loc.getMessage('CALENDAR_EVENT_FULL_FORM'),
+			dataset: { testid: 'calendar-compact-form-full-form-btn' },
 			className: 'ui-btn calendar-full-form-btn',
 			events: {
 				click: this.editEntryInSlider.bind(this),
@@ -558,6 +587,7 @@ export class CompactEventForm extends EventEmitter
 	{
 		return new BX.UI.Button({
 			text: Loc.getMessage('CALENDAR_EVENT_DO_DOWNLOAD_ICS'),
+			dataset: { testid: 'calendar-compact-form-download-ics-btn' },
 			className: 'ui-btn ui-btn-link',
 			events: {
 				click: () => EntryManager.downloadIcs(this.getCurrentEntry().id),
@@ -576,16 +606,19 @@ export class CompactEventForm extends EventEmitter
 		const acceptButton = new BX.UI.Button({
 			className: `ui-btn ${className}`,
 			text: Loc.getMessage('EC_DESIDE_BUT_Y'),
+			dataset: { testid: 'calendar-compact-form-accept-btn' },
 			events: {
 				click: () => {
-					if (!this.entry.isRecursive())
-					{
-						this.entry.setCurrentStatus('Y');
-						this.setFormValues();
-					}
-
-					EntryManager.setMeetingStatus(this.entry, 'Y')
-						.then(this.refreshMeetingStatus.bind(this));
+					this.changeMeetingStatus('Y', {
+						beforeRequest: () => {
+							if (!this.entry.isRecursive())
+							{
+								this.entry.setCurrentStatus('Y');
+								this.setFormValues();
+							}
+						},
+						onSuccess: () => this.refreshMeetingStatus(),
+					});
 				},
 			},
 		});
@@ -599,13 +632,16 @@ export class CompactEventForm extends EventEmitter
 		const declineButton = new BX.UI.Button({
 			className: 'ui-btn ui-btn-link',
 			text: Loc.getMessage('EC_DESIDE_BUT_N'),
+			dataset: { testid: 'calendar-compact-form-decline-btn' },
 			events: {
 				click: () => {
-					EntryManager.setMeetingStatus(this.entry, 'N').then(() => {
-						if (this.isShown())
-						{
-							this.close();
-						}
+					this.changeMeetingStatus('N', {
+						onSuccess: () => {
+							if (this.isShown())
+							{
+								this.close();
+							}
+						},
 					});
 				},
 			},
@@ -615,6 +651,37 @@ export class CompactEventForm extends EventEmitter
 		return declineButton;
 	}
 
+	changeMeetingStatus(status, { beforeRequest, onSuccess } = {})
+	{
+		if (this.meetingStatusRequestInProgress)
+		{
+			return;
+		}
+
+		this.meetingStatusRequestInProgress = true;
+		const requestId = this.meetingStatusRequestSeq;
+
+		if (Type.isFunction(beforeRequest))
+		{
+			beforeRequest();
+		}
+
+		EntryManager.setMeetingStatus(this.entry, status)
+			.then(() => {
+				if (requestId === this.meetingStatusRequestSeq && Type.isFunction(onSuccess))
+				{
+					onSuccess();
+				}
+			})
+			.catch(() => {})
+			.finally(() => {
+				if (requestId === this.meetingStatusRequestSeq)
+				{
+					this.meetingStatusRequestInProgress = false;
+				}
+			});
+	}
+
 	getOpenParentButton()
 	{
 		const className = this.entry.isInvited() ? 'ui-btn-link' : 'ui-btn-primary';
@@ -622,6 +689,7 @@ export class CompactEventForm extends EventEmitter
 		return new BX.UI.Button({
 			className: `ui-btn ${className}`,
 			text: Loc.getMessage('CALENDAR_EVENT_DO_OPEN_PARENT'),
+			dataset: { testid: 'calendar-compact-form-open-parent-btn' },
 			events: {
 				click: () => {
 					this.checkDataBeforeCloseMode = false;
@@ -644,6 +712,7 @@ export class CompactEventForm extends EventEmitter
 		return new BX.UI.Button({
 			name: 'release',
 			text: Loc.getMessage('CALENDAR_EVENT_DO_RELEASE'),
+			dataset: { testid: 'calendar-compact-form-release-location-btn' },
 			className: 'ui-btn ui-btn-light-border',
 			events: {
 				click: () => {
@@ -660,6 +729,7 @@ export class CompactEventForm extends EventEmitter
 
 		const moreButton = new BX.UI.Button({
 			text: Loc.getMessage('CALENDAR_EVENT_DO_MORE'),
+			dataset: { testid: 'calendar-compact-form-more-btn' },
 			className: 'ui-btn ui-btn-light-border ui-btn-dropdown',
 			events: {
 				click: () => {
@@ -757,14 +827,15 @@ export class CompactEventForm extends EventEmitter
 		}
 	}
 
+	// EntryManager opens the form and never reads the result, so the failure stops here after being logged
 	showInEditMode(params = {})
 	{
-		return this.show(CompactEventForm.EDIT_MODE, params);
+		return this.show(CompactEventForm.EDIT_MODE, params).catch(() => {});
 	}
 
 	showInViewMode(params = {})
 	{
-		return this.show(CompactEventForm.VIEW_MODE, params);
+		return this.show(CompactEventForm.VIEW_MODE, params).catch(() => {});
 	}
 
 	isLocationMode()
@@ -895,8 +966,10 @@ export class CompactEventForm extends EventEmitter
 		// Location
 		if (
 			!excludes.includes('location')
-			&& this.locationSelector.getTextLocation(Location.parseStringValue(entry.getLocation()))
-			!==	this.locationSelector.getTextLocation(Location.parseStringValue(this.locationSelector.getTextValue()))
+			&& !Location.isSameLocation(
+				entry.getLocation(),
+				this.locationSelector.getTextValue(),
+			)
 		)
 		{
 			fields.push('location');
@@ -1014,29 +1087,33 @@ export class CompactEventForm extends EventEmitter
 
 	prepareData(params = {})
 	{
-		return new Promise((resolve) => {
+		return new Promise((resolve, reject) => {
 			const section = this.getCurrentSection();
 			if (section && section.canDo)
 			{
 				resolve();
+
+				return;
 			}
-			else
-			{
-				this.BX.ajax.runAction('calendar.api.calendarajax.getCompactFormData', {
-					data: {
-						entryId: this.entry.id,
-						loadSectionId: this.entry.sectionId,
-					},
-				}).then((response) => {
-					if (response && response.data && response.data.section)
-					{
-						// todo: refactor this part to new Section entities
-						this.sections.push(new window.BXEventCalendar.Section(Util.getCalendarContext(), response.data.section));
-						this.setSections(this.sections);
-						resolve();
-					}
-				});
-			}
+
+			this.BX.ajax.runAction('calendar.api.calendarajax.getCompactFormData', {
+				data: {
+					entryId: this.entry.id,
+					loadSectionId: this.entry.sectionId,
+				},
+			}).then((response) => {
+				if (response && response.data && response.data.section)
+				{
+					// todo: refactor this part to new Section entities
+					this.sections.push(new window.BXEventCalendar.Section(Util.getCalendarContext(), response.data.section));
+					this.setSections(this.sections);
+					resolve();
+
+					return;
+				}
+
+				reject(new Error('CompactEventForm: no calendar section is available'));
+			}).catch(reject);
 		});
 	}
 
@@ -1068,6 +1145,7 @@ export class CompactEventForm extends EventEmitter
 				value=""
 				placeholder="${Loc.getMessage('EC_ENTRY_NAME')}"
 				type="text"
+				data-testid="calendar-compact-form-title-input"
 			/>
 		`;
 
@@ -1138,6 +1216,7 @@ export class CompactEventForm extends EventEmitter
 				placeholder="${Loc.getMessage('EC_ENTRY_NAME')}"
 				type="text"
 				readonly
+				data-testid="calendar-compact-form-title-input"
 			/>
 		`;
 
@@ -1199,7 +1278,12 @@ export class CompactEventForm extends EventEmitter
 
 	getColorControl()
 	{
-		this.DOM.colorSelect = Tag.render`<div class="calendar-field calendar-field-select calendar-field-tiny"></div>`;
+		this.DOM.colorSelect = Tag.render`
+			<div
+				class="calendar-field calendar-field-select calendar-field-tiny"
+				data-testid="calendar-compact-form-color-selector"
+			></div>
+		`;
 		this.colorSelector = new ColorSelector({
 			wrap: this.DOM.colorSelect,
 			mode: 'selector',
@@ -1234,7 +1318,12 @@ export class CompactEventForm extends EventEmitter
 
 	getColorControlsLocationView()
 	{
-		this.DOM.colorSelect = Tag.render`<div class="calendar-field calendar-field-select calendar-colorpicker-readonly calendar-field-tiny"></div>`;
+		this.DOM.colorSelect = Tag.render`
+			<div
+				class="calendar-field calendar-field-select calendar-colorpicker-readonly calendar-field-tiny"
+				data-testid="calendar-compact-form-color-selector"
+			></div>
+		`;
 		this.colorSelector = new ColorSelector({
 			wrap: this.DOM.colorSelect,
 			mode: 'view',
@@ -1245,7 +1334,11 @@ export class CompactEventForm extends EventEmitter
 
 	getSectionControl(mode)
 	{
-		this.DOM.sectionSelectWrap = Tag.render`<div class="calendar-field-choice-calendar"></div>`;
+		const currentSection = this.getCurrentSection();
+
+		this.DOM.sectionSelectWrap = Tag.render`
+			<div class="calendar-field-choice-calendar" data-testid="calendar-compact-form-section-selector"></div>
+		`;
 		this.sectionSelector = new SectionSelector({
 			outerWrap: this.DOM.sectionSelectWrap,
 			defaultCalendarType: this.type,
@@ -1261,7 +1354,7 @@ export class CompactEventForm extends EventEmitter
 				userId: this.userId,
 				trackingUsersList: this.trackingUsersList,
 				isCollabUser: this.isCollabUser,
-				isCollabContext: this.getCurrentSection().isCollab(),
+				isCollabContext: currentSection ? currentSection.isCollab() : false,
 				isNewProjectsOn: Util.getCalendarContext()?.util?.config?.isNewProjectsOn,
 			}),
 			mode,
@@ -1299,7 +1392,12 @@ export class CompactEventForm extends EventEmitter
 
 	getDateTimeControl()
 	{
-		this.DOM.dateTimeWrap = Tag.render`<div class="calendar-field-container calendar-field-container-datetime"></div>`;
+		this.DOM.dateTimeWrap = Tag.render`
+			<div
+				class="calendar-field-container calendar-field-container-datetime"
+				data-testid="calendar-compact-form-datetime"
+			></div>
+		`;
 
 		this.dateTimeControl = new DateTimeControl(null, {
 			showTimezone: false,
@@ -1367,14 +1465,14 @@ export class CompactEventForm extends EventEmitter
 				<div class="calendar-field-block">
 					<div class="calendar-members-selected">
 						<span class="calendar-attendees-label"></span>
-						<span class="calendar-attendees-list"></span>
+						<span class="calendar-attendees-list" data-testid="calendar-compact-form-attendees"></span>
 						<span class="calendar-members-more">${Loc.getMessage('EC_ATTENDEES_MORE')}</span>
-						<span class="calendar-members-change-link">${Loc.getMessage('EC_SEC_SLIDER_CHANGE')}</span>
+						<span class="calendar-members-change-link" data-testid="calendar-compact-form-attendees-change-link">${Loc.getMessage('EC_SEC_SLIDER_CHANGE')}</span>
 					</div>
 				</div>`}
 				<span class="calendar-videocall-wrap calendar-videocall-hidden"></span>
 				${this.DOM.informWrap = Tag.render`
-				<div class="calendar-field-container-inform">
+				<div class="calendar-field-container-inform" data-testid="calendar-compact-form-notify-toggle">
 					<span class="calendar-field-container-inform-text">${Loc.getMessage('EC_NOTIFY_OPTION')}</span>
 				</div>`}
 			</div>
@@ -1441,7 +1539,9 @@ export class CompactEventForm extends EventEmitter
 
 	getLocationControl()
 	{
-		this.DOM.locationWrap = Tag.render`<div class="calendar-field-place"></div>`;
+		this.DOM.locationWrap = Tag.render`
+			<div class="calendar-field-place" data-testid="calendar-compact-form-location"></div>
+		`;
 
 		this.locationSelector = new Location(
 			{
@@ -1472,7 +1572,7 @@ export class CompactEventForm extends EventEmitter
 
 		const locationName = this.locationSelector.getTextLocation(Location.parseStringValue(this.entry.getLocation()));
 		this.DOM.editLocationInFullForm = Tag.render`
-			<div class="calendar-field-place-link">
+			<div class="calendar-field-place-link" data-testid="calendar-compact-form-location-link">
 				<span class="calendar-text-link">
 					${BX.util.htmlspecialchars(locationName) || Loc.getMessage('EC_REMIND1_ADD')}
 				</span>
@@ -1501,7 +1601,9 @@ export class CompactEventForm extends EventEmitter
 	createRemindersControl()
 	{
 		this.reminderValues = [];
-		this.DOM.remindersWrap = Tag.render`<div class="calendar-text"></div>`;
+		this.DOM.remindersWrap = Tag.render`
+			<div class="calendar-text" data-testid="calendar-compact-form-reminders"></div>
+		`;
 		this.remindersControl = new Reminder({
 			wrap: this.DOM.remindersWrap,
 			zIndex: this.zIndex,
@@ -1580,6 +1682,7 @@ export class CompactEventForm extends EventEmitter
 	canDo(action)
 	{
 		const section = this.getCurrentSection();
+		const sectionCanDo = (operation) => Boolean(section) && section.canDo(operation);
 
 		if (action === 'edit' || action === 'delete')
 		{
@@ -1598,7 +1701,7 @@ export class CompactEventForm extends EventEmitter
 				return false;
 			}
 
-			return section.canDo('edit');
+			return sectionCanDo('edit');
 		}
 
 		if (action === 'view')
@@ -1608,7 +1711,7 @@ export class CompactEventForm extends EventEmitter
 				return this.entry.permissions.view_time === true;
 			}
 
-			return section.canDo('view_time');
+			return sectionCanDo('view_time');
 		}
 
 		if (action === 'viewFull')
@@ -1618,12 +1721,12 @@ export class CompactEventForm extends EventEmitter
 				return this.entry.permissions.view_full === true;
 			}
 
-			return section.canDo('view_full');
+			return sectionCanDo('view_full');
 		}
 
 		if (action === 'release')
 		{
-			return section.canDo('access');
+			return sectionCanDo('access');
 		}
 
 		const isInvitedOrRejected = ['Q', 'N'].includes(this.entry.getCurrentStatus());
@@ -1678,13 +1781,13 @@ export class CompactEventForm extends EventEmitter
 		}
 
 		// Color
-		this.colorSelector.setValue(entry.getColor() || section.color, false);
+		this.colorSelector.setValue(entry.getColor() || (section ? section.color : null), false);
 		this.colorSelector.setViewMode(readOnly && this.entry.getCurrentStatus() === false);
 
 		// Section
 		this.sectionValue = this.getCurrentSectionId();
 		this.sectionSelector.updateValue();
-		if ((this.isSyncSection(section) || entry.isSharingEvent()) && entry.id)
+		if (((section && this.isSyncSection(section)) || entry.isSharingEvent()) && entry.id)
 		{
 			this.sectionSelector.setViewMode(true);
 		}
@@ -1872,12 +1975,13 @@ export class CompactEventForm extends EventEmitter
 		}
 		else
 		{
-			name = `${section.name}: ${BX.util.htmlspecialchars(entry.getName())}`;
+			const sectionPrefix = section ? `${section.name}: ` : '';
+			name = `${sectionPrefix}${BX.util.htmlspecialchars(entry.getName())}`;
 		}
 		this.setEventNameInputValue(name);
 
 		// Color
-		this.colorSelector.setValue(entry.getColor() || section.color, false);
+		this.colorSelector.setValue(entry.getColor() || (section ? section.color : null), false);
 		this.colorSelector.setViewMode(!readOnly);
 
 		// Section
@@ -2038,9 +2142,11 @@ export class CompactEventForm extends EventEmitter
 			data.current_date_from = Util.formatDate(entry.from);
 		}
 
-		if (this.getCurrentSection().color.toLowerCase() !== this.colorSelector.getValue().toLowerCase())
+		const sectionColor = this.getCurrentSection()?.color;
+		const selectedColor = this.colorSelector.getValue();
+		if (selectedColor && selectedColor.toLowerCase() !== sectionColor?.toLowerCase())
 		{
-			data.color = this.colorSelector.getValue();
+			data.color = selectedColor;
 		}
 
 		if (this.analyticsSubSection)
@@ -2288,10 +2394,20 @@ export class CompactEventForm extends EventEmitter
 				sectionId = parseInt(entry.sectionId, 10);
 			}
 
-			// TODO: refactor - don't take first section
-			if (!sectionId && this.sections[0])
+			if (!sectionId)
 			{
-				sectionId = parseInt(this.sections[0].id, 10);
+				// `edit` is the section right the server checks to add an event: EventAddRule delegates
+				// `event_add` to `section_edit`, while `add` is the right to create a section of that type
+				const sectionToCreateIn = this.sections.find((section) => {
+					return Type.isFunction(section.canDo) && section.canDo('edit');
+				});
+				// TODO: refactor - don't fall back to the first section
+				const defaultSection = sectionToCreateIn ?? this.sections[0];
+
+				if (defaultSection)
+				{
+					sectionId = parseInt(defaultSection.id, 10);
+				}
 			}
 		}
 

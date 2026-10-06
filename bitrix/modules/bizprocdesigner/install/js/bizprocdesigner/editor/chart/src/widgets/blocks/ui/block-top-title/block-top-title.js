@@ -1,4 +1,4 @@
-import { BlockTopTitle } from '../../../../entities/blocks';
+import { BlockTopTitle, getBlockUserTitle } from '../../../../entities/blocks';
 
 // @vue/component
 export const BlockTopTitleWidget = {
@@ -14,12 +14,9 @@ export const BlockTopTitleWidget = {
 		},
 	},
 	computed: {
-		userTitle(): string | null
+		userTitle(): ?string
 		{
-			const activityTitle = this.block.activity?.Properties?.Title;
-			const defaultNodeTitle = this.block.node?.title;
-
-			return activityTitle === defaultNodeTitle ? null : activityTitle;
+			return getBlockUserTitle(this.block);
 		},
 	},
 	template: `

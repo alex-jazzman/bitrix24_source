@@ -8,11 +8,13 @@ return [
 	'css' => 'dist/signers.bundle.css',
 	'js' => 'dist/signers.bundle.js',
 	'rel' => [
-		'sign.v2.api',
-		'ui.dialogs.messagebox',
 		'main.core',
-		'ui.buttons',
 		'main.popup',
+		'sign.v2.api',
+		'ui.avatar',
+		'ui.buttons',
+		'ui.dialogs.messagebox',
+		'ui.notification',
 	],
 	'skip_core' => false,
 ];

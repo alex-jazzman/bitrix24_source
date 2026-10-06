@@ -266,6 +266,7 @@ jn.define('mail/mailbox/connector', (require, exports, module) => {
 				tool: 'mail',
 				category: 'mail_general_ops',
 				event: 'mailbox_connect',
+				type: this.getMailServiceKey() ?? 'other',
 				c_section: this.connectFrom,
 				status: 'error',
 			}).send();
@@ -277,6 +278,7 @@ jn.define('mail/mailbox/connector', (require, exports, module) => {
 				tool: 'mail',
 				category: 'mail_general_ops',
 				event: 'mailbox_connect',
+				type: this.getMailServiceKey() ?? 'other',
 				c_section: this.connectFrom,
 				status: 'success',
 			}).send();

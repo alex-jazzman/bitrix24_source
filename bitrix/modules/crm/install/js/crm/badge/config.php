@@ -10,6 +10,7 @@ return [
 	'rel' => [
 		'main.core',
 		'ui.design-tokens',
+		'ui.system.label',
 	],
 	'skip_core' => false,
 ];

@@ -1,4 +1,4 @@
-<?
+<?php
 /**********************************************************************
 Delivery services for CPCR delivery service (http://www.cpcr.ru/)
 It uses on-line calculator. Calculation only to Russia.
@@ -6,6 +6,9 @@ Files:
 cpcr/cities.php - cache of cpcr ids for cities
 cpcr/locations.php - list of cpcr ids for countries.
 **********************************************************************/
+
+use Bitrix\Main\Web\HttpClient;
+use Bitrix\Main\Text\Encoding;
 
 CModule::IncludeModule("sale");
 
@@ -315,7 +318,7 @@ class CDeliveryCPCR
 			if (is_set($arLocationFrom["CITY_ID"]))
 				$arQuery[] = DELIVERY_CPCR_SERVER_POST_FROM_CITY."=".urlencode($arLocationFrom["CITY_ID"]);
 			else
-				$arQuery[] = DELIVERY_CPCR_SERVER_POST_FROM_CITY_NAME."=".urlencode(\Bitrix\Main\Text\Encoding::convertEncoding($arLocationFrom["CITY"], LANG_CHARSET, 'windows-1251'));
+				$arQuery[] = DELIVERY_CPCR_SERVER_POST_FROM_CITY_NAME."=".urlencode(Encoding::convertEncoding($arLocationFrom["CITY"], LANG_CHARSET, 'windows-1251'));
 
 			$arQuery[] = DELIVERY_CPCR_SERVER_POST_WEIGHT."=".urlencode($arOrder["WEIGHT"]);
 			$arQuery[] = DELIVERY_CPCR_SERVER_POST_CATEGORY."="."1";//urlencode($arConfig["category"]["VALUE"]);
@@ -334,7 +337,7 @@ class CDeliveryCPCR
 			if (is_set($arLocationTo["CITY_ID"]))
 				$arQuery[] = DELIVERY_CPCR_SERVER_POST_TO_CITY."=".urlencode($arLocationTo["CITY_ID"]);
 			else
-				$arQuery[] = DELIVERY_CPCR_SERVER_POST_TO_CITY_NAME."=".urlencode(\Bitrix\Main\Text\Encoding::convertEncoding($arLocationTo["CITY"], LANG_CHARSET, 'windows-1251'));
+				$arQuery[] = DELIVERY_CPCR_SERVER_POST_TO_CITY_NAME."=".urlencode(Encoding::convertEncoding($arLocationTo["CITY"], LANG_CHARSET, 'windows-1251'));
 
 			CDeliveryCPCR::__Write2Log(print_r($arLocationTo, true));
 
@@ -342,28 +345,36 @@ class CDeliveryCPCR
 			$query_string = implode("&", $arQuery);
 
 			$query_page = DELIVERY_CPCR_SERVER_PAGE;
+			if (DELIVERY_CPCR_SERVER_METHOD == 'GET')
+			{
+				$query_page	.= (mb_strpos($query_page, '?') === false ? '?' : '&') . $query_string;
+			}
 
 			// get data from server
-			$ob = new CHTTP();
-			$ob->http_timeout = 50;
+			$ob = new HttpClient();
 
-			$data = $ob->Query(
-					DELIVERY_CPCR_SERVER_METHOD,
-					DELIVERY_CPCR_SERVER,
-					DELIVERY_CPCR_SERVER_PORT,
-					$query_page . (DELIVERY_CPCR_SERVER_METHOD == 'GET' ? ((mb_strpos($query_page, '?') === false ? '?' : '&') . $query_string) : ''),
-					DELIVERY_CPCR_SERVER_METHOD == 'POST' ? $query_string : false
-					//,
-					// "",
-					// "" // Empty content-type because of CPCR inner bugs
-				);
+			$ob->setTimeout(50);
 
-			if($data)
-				$data = \Bitrix\Main\Text\Encoding::convertEncoding($ob->result, 'windows-1251', LANG_CHARSET);
+			// Empty content-type because of CPCR inner bugs
+			$ob->setHeader('Content-Type', '');
+
+			$data = $ob->query(
+				DELIVERY_CPCR_SERVER_METHOD,
+				(DELIVERY_CPCR_SERVER_PORT == 80 ? 'http://' : 'https://') . DELIVERY_CPCR_SERVER . $query_page,
+				DELIVERY_CPCR_SERVER_METHOD == 'POST' ? $query_string : null
+			);
+
+			if ($data)
+			{
+				$data = Encoding::convertEncoding($data, 'windows-1251', LANG_CHARSET);
+			}
 
 			CDeliveryCPCR::__Write2Log($query_page);
 			CDeliveryCPCR::__Write2Log($query_string);
-			CDeliveryCPCR::__Write2Log($error_number.": ".$error_text);
+			foreach ($ob->getError() as $error_number => $error_text)
+			{
+				CDeliveryCPCR::__Write2Log($error_number . ": " . $error_text);
+			}
 			CDeliveryCPCR::__Write2Log($data);
 
 			if (mb_strpos($data, "<?xml") === false)

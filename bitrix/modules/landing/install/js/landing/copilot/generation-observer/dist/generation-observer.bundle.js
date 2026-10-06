@@ -4,61 +4,127 @@ this.BX.Landing = this.BX.Landing || {};
 (function (exports) {
 	'use strict';
 
-	var _intervalId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("intervalId");
+	const pullHandlers = new Set();
+	const landingIdResolvers = new Set();
+	const normalizeLandingId = landingId => Math.max(0, parseInt(landingId, 10) || 0);
 	class GenerationObserver {
-	  constructor(generationId) {
-	    Object.defineProperty(this, _intervalId, {
-	      writable: true,
-	      value: null
-	    });
-	    this.generationId = generationId;
-	    this.onGenerationRestart = this.onGenerationRestart.bind(this);
-	  }
-	  observe() {
-	    this.restartObserve();
-	    BX.PULL.subscribe({
-	      type: BX.PullClient.SubscriptionType.Server,
-	      moduleId: 'landing',
-	      callback: event => {
-	        if (event.params.generationId !== undefined && event.params.generationId !== this.generationId) {
-	          return;
-	        }
-	        const command = event.command;
-	        if (command === 'LandingCopilotGeneration:onStepExecute' || command === 'LandingCopilotGeneration:onPreviewImageCreate' || command === 'LandingCopilotGeneration:onCopilotImageCreate') {
-	          this.restartObserve();
-	        }
-	        if (command === 'LandingCopilotGeneration:onCopilotTimeIsOver') {
-	          this.onGenerationRestart();
-	        }
-	        if (command === 'LandingCopilotGeneration:onGenerationError' || command === 'LandingCopilotGeneration:onGenerationFinish') {
-	          this.stopObserve();
-	        }
-	      }
-	    });
-	  }
-	  restartObserve() {
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _intervalId)[_intervalId]) {
-	      clearInterval(babelHelpers.classPrivateFieldLooseBase(this, _intervalId)[_intervalId]);
-	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _intervalId)[_intervalId] = setInterval(this.onGenerationRestart, GenerationObserver.INTERVAL);
-	  }
-	  stopObserve() {
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _intervalId)[_intervalId]) {
-	      clearInterval(babelHelpers.classPrivateFieldLooseBase(this, _intervalId)[_intervalId]);
-	    }
-	  }
-	  onGenerationRestart() {
-	    BX.ajax.runAction('landing.api.copilot.executeGeneration', {
-	      data: {
-	        generationId: this.generationId
-	      }
-	    });
-	    this.restartObserve();
-	  }
+		static INTERVAL = 30000;
+		#intervalId = null;
+		#isSubscribed = false;
+		static registerPullHandler(handler) {
+			if (typeof handler !== 'function' && typeof handler?.handle !== 'function') {
+				return () => {};
+			}
+			pullHandlers.add(handler);
+			return () => {
+				pullHandlers.delete(handler);
+			};
+		}
+		static registerLandingIdResolver(resolver) {
+			if (typeof resolver !== 'function') {
+				return () => {};
+			}
+			landingIdResolvers.add(resolver);
+			return () => {
+				landingIdResolvers.delete(resolver);
+			};
+		}
+		static resolveLandingId() {
+			let landingId = 0;
+			landingIdResolvers.forEach(resolver => {
+				if (landingId > 0) {
+					return;
+				}
+				try {
+					landingId = normalizeLandingId(resolver());
+				} catch (error) {
+					landingId = 0;
+				}
+			});
+			return landingId;
+		}
+		constructor(generationId = null, options = {}) {
+			this.generationId = Math.max(0, parseInt(generationId, 10) || 0);
+			this.landingId = Math.max(0, parseInt(options.landingId, 10) || 0, GenerationObserver.resolveLandingId());
+			this.onGenerationRestart = this.onGenerationRestart.bind(this);
+		}
+		getGenerationId() {
+			return this.generationId;
+		}
+		getLandingId() {
+			return this.landingId || GenerationObserver.resolveLandingId();
+		}
+		observe() {
+			if (this.generationId > 0) {
+				this.restartObserve();
+			}
+			if (this.#isSubscribed) {
+				return;
+			}
+			this.#isSubscribed = true;
+			BX.PULL.subscribe({
+				type: BX.PullClient.SubscriptionType.Server,
+				moduleId: 'landing',
+				callback: event => {
+					const command = event.command;
+					for (const handler of pullHandlers) {
+						if (typeof handler?.handle === 'function') {
+							if (handler.handle(event, this) === true) {
+								return;
+							}
+						} else if (typeof handler === 'function') {
+							if (handler(event, this) === true) {
+								return;
+							}
+						}
+					}
+					if (this.generationId <= 0) {
+						return;
+					}
+					if (event.params.generationId !== undefined && event.params.generationId !== this.generationId) {
+						return;
+					}
+					if (command === 'LandingCopilotGeneration:onStepExecute' || command === 'LandingCopilotGeneration:onPreviewImageCreate' || command === 'LandingCopilotGeneration:onCopilotImageCreate') {
+						this.restartObserve();
+					}
+					if (command === 'LandingCopilotGeneration:onCopilotTimeIsOver') {
+						this.onGenerationRestart();
+					}
+					if (command === 'LandingCopilotGeneration:onGenerationError' || command === 'LandingCopilotGeneration:onGenerationFinish') {
+						this.stopObserve();
+					}
+				}
+			});
+		}
+		restartObserve() {
+			if (this.generationId <= 0) {
+				return;
+			}
+			if (this.#intervalId) {
+				clearInterval(this.#intervalId);
+			}
+			this.#intervalId = setInterval(this.onGenerationRestart, GenerationObserver.INTERVAL);
+		}
+		stopObserve() {
+			if (this.#intervalId) {
+				clearInterval(this.#intervalId);
+				this.#intervalId = null;
+			}
+		}
+		onGenerationRestart() {
+			if (this.generationId <= 0) {
+				return;
+			}
+			BX.ajax.runAction('landing.api.copilot.executeGeneration', {
+				data: {
+					generationId: this.generationId
+				}
+			});
+			this.restartObserve();
+		}
 	}
-	GenerationObserver.INTERVAL = 30000;
 
 	exports.GenerationObserver = GenerationObserver;
 
-}((this.BX.Landing.Copilot = this.BX.Landing.Copilot || {})));
+})(this.BX.Landing.Copilot = this.BX.Landing.Copilot || {});
 //# sourceMappingURL=generation-observer.bundle.js.map

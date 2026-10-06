@@ -10,6 +10,7 @@ return [
 	'rel' => [
 		'main.polyfill.core',
 		'landing.ui.button.basebutton',
+		'ui.design-tokens.air',
 		'ui.fonts.opensans',
 	],
 	'skip_core' => true,

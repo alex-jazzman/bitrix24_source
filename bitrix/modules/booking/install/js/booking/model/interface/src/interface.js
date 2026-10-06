@@ -4,14 +4,13 @@ import { Type } from 'main.core';
 import { BuilderModel, type GetterTree, type ActionTree, type MutationTree } from 'ui.vue3.vuex';
 
 import { BusySlot, DraggedElementKind, Grid, Model, type AiCallBannerMode } from 'booking.const';
-import { GridTokenKey, gridTokens } from 'booking.lib.grid';
 import { Timezone } from 'booking.lib.timezone';
 import { Utils } from 'booking.lib.utils';
 import { type BusySlotDto } from 'booking.lib.busy-slots';
 import { type BookingModel, type DealData } from 'booking.model.bookings';
 
 import { getOverbookingOccupancy } from './lib';
-import { type InterfaceModelState, type Intersections, type MousePosition, type MoneyStatistics, type Occupancy, type DraggedDataTransfer, type Cell, type CellStats, type HoveredPlacementSlot, type GoToDayPayload } from './types';
+import { type InterfaceModelState, type Intersections, type MousePosition, type MoneyStatistics, type Occupancy, type DraggedDataTransfer, type Cell, type CellStats, type HoveredPlacementSlot } from './types';
 
 export class Interface extends BuilderModel
 {
@@ -511,24 +510,6 @@ export class Interface extends BuilderModel
 			/** @function interface/setHoveredPlacementSlotStats */
 			setHoveredPlacementSlotStats: (store, stats: CellStats | null) => {
 				store.commit('setHoveredPlacementSlotStats', stats);
-			},
-			/** @function interface/goToDayMode */
-			goToDayMode: (store, payload: GoToDayPayload) => {
-				const { selectedDateTs, resourceId } = payload;
-
-				void store.dispatch('setGridMode', Grid.Mode.Day);
-				store.commit('setSelectedDateTs', selectedDateTs);
-				store.commit('setViewDateTs', Utils.time.getMonthStartTs(selectedDateTs));
-
-				if (resourceId)
-				{
-					const resourceIndex = store.getters.resourcesIds.indexOf(resourceId);
-					if (resourceIndex > 0)
-					{
-						const dayCellWidth = gridTokens.get(GridTokenKey.DayCellWidth);
-						store.commit('setScroll', resourceIndex * dayCellWidth);
-					}
-				}
 			},
 			/** @function interface/upsertBusySlotMany */
 			upsertBusySlotMany: (store: Store, busySlots: BusySlotDto[]): void => {

@@ -21,6 +21,7 @@ jn.define('tasks/dashboard/src/sorting', (require, exports, module) => {
 			return {
 				ACTIVITY: 'ACTIVITY',
 				DEADLINE: 'DEADLINE',
+				NAME: 'NAME',
 			};
 		}
 
@@ -73,6 +74,8 @@ jn.define('tasks/dashboard/src/sorting', (require, exports, module) => {
 					return 'activityDate';
 				case TasksDashboardSorting.types.DEADLINE:
 					return 'deadline';
+				case TasksDashboardSorting.types.NAME:
+					return 'name';
 				default:
 					return null;
 			}
@@ -85,6 +88,11 @@ jn.define('tasks/dashboard/src/sorting', (require, exports, module) => {
 		 */
 		getPropertyValue = (item) => {
 			const value = item[this.getConvertedType()];
+
+			if (this.getType() === TasksDashboardSorting.types.NAME)
+			{
+				return String(value ?? '').toLowerCase();
+			}
 
 			return value === null ? undefined : (new Date(value)).getTime();
 		};
@@ -122,6 +130,26 @@ jn.define('tasks/dashboard/src/sorting', (require, exports, module) => {
 		};
 
 		getSortItemsCallback = () => (a, b) => {
+			const compareByName = () => {
+				const aName = String(a.name ?? '').toLowerCase();
+				const bName = String(b.name ?? '').toLowerCase();
+
+				return aName.localeCompare(bName, 'en', { numeric: true });
+			};
+
+			const compareById = () => {
+				const sortDirection = this.isASC ? 1 : -1;
+				const aId = Number(a.id);
+				const bId = Number(b.id);
+
+				if (!Number.isNaN(aId) && !Number.isNaN(bId) && aId !== bId)
+				{
+					return (aId < bId ? -1 : 1) * sortDirection;
+				}
+
+				return String(a.id ?? '').localeCompare(String(b.id ?? ''), 'en', { numeric: true }) * sortDirection;
+			};
+
 			const aSection = this.getSortingSection(a) ?? 0;
 			const bSection = this.getSortingSection(b) ?? 0;
 
@@ -148,10 +176,22 @@ jn.define('tasks/dashboard/src/sorting', (require, exports, module) => {
 					}
 				}
 
+				if (this.getType() === TasksDashboardSorting.types.NAME)
+				{
+					return aSortProperty.localeCompare(bSortProperty, 'en', { numeric: true }) * (this.isASC ? 1 : -1);
+				}
+
 				return (aSortProperty < bSortProperty ? -1 : 1) * (this.isASC ? 1 : -1);
 			}
 
-			return 0;
+			if (this.getType() !== TasksDashboardSorting.types.NAME)
+			{
+				const nameComparison = compareByName();
+
+				return nameComparison === 0 ? compareById() : nameComparison;
+			}
+
+			return compareById();
 		};
 	}
 

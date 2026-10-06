@@ -192,6 +192,8 @@ export class SidebarHydrationActions
 				: 0,
 			canEditCollection: Boolean(rawCollection.canEditCollection),
 			canManagePermissions: Boolean(rawCollection.canManagePermissions),
+			hasDescription: Boolean(rawCollection.hasDescription),
+			mainDocumentId: Number(rawCollection.mainDocumentId) || 0,
 		};
 	}
 

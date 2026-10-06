@@ -1,3 +1,244 @@
+/* Onboarding popup: AI sites 2.0 */
+.landing-site-pages-onboarding-popup .popup-window-content {
+	overflow: visible;
+}
+
+/* close cross sits on the dark gradient — make it white */
+.landing-site-pages-onboarding-popup .popup-window-close-icon {
+	--ui-icon-set__icon-color: var(--ui-color-base-white-fixed, #fff);
+}
+
+.landing-site-pages-onboarding-popup-content {
+	display: flex;
+	align-items: stretch;
+	min-height: 280px;
+	box-sizing: border-box;
+	border-radius: 24px;
+	color: var(--ui-color-base-0);
+	background: url("images/landing-site-pages-onboarding-bg.jpg") center / cover no-repeat;
+	box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2);
+}
+
+/* Left column */
+.landing-site-pages-onboarding-left {
+	flex: 1 1 auto;
+	box-sizing: border-box;
+	padding: 40px 23px 40px 50px;
+}
+
+.landing-site-pages-onboarding-header {
+	min-height: 75px;
+	margin-bottom: 25px;
+}
+
+.landing-site-pages-onboarding-title {
+	/* no 30px token in the DS scale (tops out at --ui-font-size-5xl: 28px) — spec requires 30px */
+	font-size: 30px;
+	font-weight: var(--ui-font-weight-semi-bold);
+	line-height: 1.2;
+	color: var(--ui-color-base-0);
+	text-shadow: 0 0 8px rgba(255, 255, 255, 0.42);
+}
+
+.landing-site-pages-onboarding-subtitle {
+	font-size: var(--ui-font-size-3xl);
+	font-weight: var(--ui-font-weight-medium);
+	line-height: 1.2;
+	color: var(--ui-color-base-0);
+}
+
+.landing-site-pages-onboarding-list {
+	margin-bottom: 25px;
+}
+
+.landing-site-pages-onboarding-item {
+	display: flex;
+	align-items: flex-start;
+	margin-bottom: 18px;
+}
+
+.landing-site-pages-onboarding-item:last-child {
+	margin-bottom: 0;
+}
+
+.landing-site-pages-onboarding-item-icon {
+	flex: 0 0 24px;
+	margin-right: 8px;
+	--ui-icon-set__icon-color: var(--ui-color-base-0);
+}
+
+.landing-site-pages-onboarding-item-title {
+	margin-bottom: 2px;
+	font-size: var(--ui-font-size-lg);
+	font-weight: var(--ui-font-weight-semi-bold);
+	color: var(--ui-color-base-0);
+}
+
+.landing-site-pages-onboarding-item-desc {
+	font-size: var(--ui-font-size-md);
+	line-height: 1.35;
+	color: var(--ui-color-base-1);
+}
+
+.landing-site-pages-onboarding-btn.ui-btn.--air {
+	--ui-btn-background-gradient: linear-gradient(263.02deg, #FFB61A 2.92%, #F96269 16.76%, #F046B7 25.99%, #9D48FF 49.07%, #3F68FF 76.77%, #0098EA 86%, #6ECCF5 95.23%);
+	--ui-btn-background-gradient-hover: var(--ui-btn-background-gradient);
+	--ui-btn-background-gradient-active: var(--ui-btn-background-gradient);
+	--ui-btn-color: var(--ui-color-base-0);
+	--ui-btn-color-hover: var(--ui-color-base-0);
+	--ui-btn-color-active: var(--ui-color-base-0);
+	--ui-btn-border-color: transparent;
+	--ui-btn-border-color-hover: transparent;
+	--ui-btn-border-color-active: transparent;
+}
+
+/* Right column (first pass, positions to be refined against the mockup) */
+.landing-site-pages-onboarding-right {
+	position: relative;
+	flex: 0 0 400px;
+	align-self: stretch;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	/* video panel protrudes 86px beyond the popup right edge */
+	margin: 8px -86px 8px 0;
+}
+
+.landing-site-pages-onboarding-video {
+	display: block;
+	width: 400px;
+	height: 250px;
+	object-fit: cover;
+	border-radius: 20px;
+}
+
+.landing-site-pages-onboarding-marshmallow {
+	position: absolute;
+	left: 50%;
+	bottom: -6px;
+	margin-left: -34px;
+	transform: translateX(-50%);
+	width: 290px;
+	height: 219px;
+	pointer-events: none;
+}
+
+.landing-site-pages-onboarding-glow {
+	position: absolute;
+	bottom: 103px;
+	left: 50%;
+	margin-left: 43px;
+	width: 72px;
+	height: 72px;
+	/*cursor: pointer;*/
+	z-index: 2;
+}
+
+@keyframes landing-site-pages-onboarding-glow-spin {
+	from { transform: rotate(0deg); }
+	to { transform: rotate(360deg); }
+}
+
+.landing-site-pages-onboarding-glow.--spin {
+	animation: landing-site-pages-onboarding-glow-spin 1s ease-in-out 1;
+}
+
+.landing-site-pages-onboarding-star {
+	position: absolute;
+	pointer-events: none;
+}
+
+.landing-site-pages-onboarding-star-1 {
+	top: 38px;
+	left: 36px;
+	width: 19px;
+	height: 19px;
+}
+.landing-site-pages-onboarding-star-2 {
+	top: 89px;
+	left: 85px;
+	width: 13px;
+	height: 13px;
+}
+.landing-site-pages-onboarding-star-3 {
+	top: 79px;
+	left: 166px;
+	width: 13px;
+	height: 13px;
+}
+.landing-site-pages-onboarding-star-4 {
+	top: 55px;
+	left: 235px;
+	width: 13px;
+	height: 13px;
+}
+.landing-site-pages-onboarding-star-5 {
+	bottom: 100px;
+	left: 21px;
+	width: 20px;
+	height: 20px;
+}
+.landing-site-pages-onboarding-star-6 {
+	bottom: 28px;
+	left: 255px;
+	width: 21px;
+	height: 21px;
+}
+.landing-site-pages-onboarding-star-7 {
+	bottom: 78px;
+	left: 294px;
+	width: 13px;
+	height: 13px;
+}
+
+/* ≤1000px — stack columns: text on top, video below (no side protrusion) */
+@media (max-width: 1000px) {
+	.landing-site-pages-onboarding-popup-content {
+		flex-direction: column;
+		align-items: center;
+	}
+
+	.landing-site-pages-onboarding-left {
+		flex: 0 0 auto;
+		width: 100%;
+		box-sizing: border-box;
+		/* reduced paddings for the stacked layout */
+		padding: 24px 20px 16px;
+	}
+
+	/* center the CTA button */
+	.landing-site-pages-onboarding-btn.ui-btn.--air {
+		display: flex;
+		width: fit-content;
+		margin-left: auto;
+		margin-right: auto;
+	}
+
+	.landing-site-pages-onboarding-right {
+		flex: 0 0 auto;
+		align-self: center;
+		width: 400px;
+		max-width: 100%;
+		height: auto;
+		/* drop the desktop -86px protrusion */
+		margin: 0 auto 20px;
+	}
+
+	.landing-site-pages-onboarding-video {
+		width: 100%;
+		max-width: 400px;
+		height: auto;
+		aspect-ratio: 400 / 250;
+	}
+
+	/* decorations are hidden in the stacked layout */
+	.landing-site-pages-onboarding-star,
+	.landing-site-pages-onboarding-marshmallow,
+	.landing-site-pages-onboarding-glow {
+		display: none;
+	}
+}
+
 .landing-site-selector-item-lower {
 	padding-left: 30px;
 }
@@ -31,4 +272,87 @@
 	font: 14px/32px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #333;
 	box-sizing: border-box;
+}
+/* ===================== a11y: onboarding dialog (WCAG 2.1 AA) ===================== */
+
+/* video play/pause control. Colors are a neutral default — final visual to be confirmed by design */
+.landing-site-pages-onboarding-video-toggle {
+	position: absolute;
+	left: 12px;
+	bottom: 20px;
+	z-index: 3;
+	width: 36px;
+	height: 36px;
+	padding: 0;
+	border: 0;
+	border-radius: 50%;
+	background: rgba(0, 0, 0, 0.55);
+	cursor: pointer;
+}
+
+.landing-site-pages-onboarding-video-toggle:hover {
+	background: rgba(0, 0, 0, 0.7);
+}
+
+.landing-site-pages-onboarding-video-toggle:focus-visible {
+	outline: 2px solid var(--ui-color-base-white-fixed, #fff);
+	outline-offset: 2px;
+}
+
+/* pause glyph (video playing): two bars */
+.landing-site-pages-onboarding-video-toggle::before,
+.landing-site-pages-onboarding-video-toggle::after {
+	content: '';
+	position: absolute;
+	top: 50%;
+	width: 4px;
+	height: 14px;
+	background: var(--ui-color-base-white-fixed, #fff);
+	transform: translateY(-50%);
+}
+
+.landing-site-pages-onboarding-video-toggle::before {
+	left: 13px;
+}
+
+.landing-site-pages-onboarding-video-toggle::after {
+	right: 13px;
+}
+
+/* play glyph (video paused): single triangle */
+.landing-site-pages-onboarding-video-toggle.--paused::before {
+	left: 50%;
+	width: 0;
+	height: 0;
+	background: transparent;
+	border-style: solid;
+	border-width: 7px 0 7px 12px;
+	border-color: transparent transparent transparent var(--ui-color-base-white-fixed, #fff);
+	transform: translate(-40%, -50%);
+}
+
+.landing-site-pages-onboarding-video-toggle.--paused::after {
+	content: none;
+}
+
+/* respect reduced-motion: stop the one-shot glow spin (autoplay is gated in JS) */
+@media (prefers-reduced-motion: reduce) {
+	.landing-site-pages-onboarding-glow.--spin {
+		animation: none;
+	}
+}
+
+/* visible keyboard focus for page tiles. Inset offset: tiles and grid use overflow:hidden, an outward ring gets clipped */
+.landing-title-btn:focus-visible,
+.landing-item-folder-dropdown:focus-visible,
+.landing-item-inner:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: -2px;
+}
+
+/* overlay link: reveal the existing hover overlay on keyboard focus + add a ring */
+.landing-item-link:focus-visible {
+	opacity: 1;
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: -2px;
 }

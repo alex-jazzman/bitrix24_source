@@ -9,9 +9,14 @@
 	display: flex;
 	justify-content: space-between;
 	flex-direction: row;
-	gap: 4px;
+	/* gap: 4px; */
 	width: 100%;
 	height: 100%;
+}
+
+.chart-editor-content-separator__wrapper.--resizing {
+	display: block;
+	position: relative;
 }
 
 .chart-editor-content-separator__wrapper.--column {
@@ -29,6 +34,9 @@
 	cursor: ew-resize;
 }
 
+.chart-editor-content-separator__separator.--resizing {
+}
+
 .chart-editor-content-separator__separator:after {
 	content: '';
 	position: absolute;
@@ -40,6 +48,10 @@
 	width: 1px;
 	margin: auto;
 	background-color: var(--ui-color-divider-vibrant-accent);
+}
+
+.chart-editor-content-separator__separator.--resizing:after {
+	background-color: transparent;
 }
 
 .chart-editor-content-separator__separator.--column {
@@ -62,19 +74,157 @@
 	background-color: var(--ui-color-divider-vibrant-accent);
 }
 
+.chart-editor-content-separator__separator.--column.--resizing:after {
+	background-color: transparent;
+}
+
+.chart-editor-content-separator__first-part-separator-tmp, .chart-editor-content-separator__second-part-separator-tmp {
+	display: none;
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	width: 13px;
+	height: 100%;
+	background-color: transparent;
+	z-index: 999;
+}
+
+.chart-editor-content-separator__first-part-separator-tmp {
+	right: -13px;
+}
+
+.chart-editor-content-separator__first-part-separator-tmp.--column {
+	top: auto;
+	bottom: -13px;
+	left: 0;
+	right: 0;
+	width: 100%;
+	height: 13px;
+}
+
+.chart-editor-content-separator__first-part-separator-tmp:after {
+	content: '';
+	position: absolute;
+	top: 7px;
+	bottom: 7px;
+	left: 0;
+	right: 0;
+	display: block;
+	width: 1px;
+	margin: auto;
+	background-color: var(--ui-color-divider-vibrant-accent);
+}
+
+.chart-editor-content-separator__first-part-separator-tmp.--column:after {
+	content: '';
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	left: 7px;
+	right: 7px;
+	display: block;
+	height: 1px;
+	width: auto;
+	margin: auto;
+	background-color: var(--ui-color-divider-vibrant-accent);
+}
+
+.chart-editor-content-separator__second-part-separator-tmp {
+	left: -13px;
+}
+
+.chart-editor-content-separator__second-part-separator-tmp.--column {
+	top: -13px;
+	bottom: auto;
+	left: 0;
+	right: 0;
+	height: 13px;
+	width: 100%;
+}
+
+.chart-editor-content-separator__second-part-separator-tmp:after {
+	content: '';
+	position: absolute;
+	top: 7px;
+	bottom: 7px;
+	left: 0;
+	right: 0;
+	display: block;
+	width: 1px;
+	margin: auto;
+	background-color: var(--ui-color-divider-vibrant-accent);
+}
+
+.chart-editor-content-separator__second-part-separator-tmp.--column:after {
+	content: '';
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	left: 7px;
+	right: 7px;
+	display: block;
+	height: 1px;
+	width: auto;
+	margin: auto;
+	background-color: var(--ui-color-divider-vibrant-accent);
+}
+
+.chart-editor-content-separator__first-part-separator-tmp.--show {
+	display: block;
+}
+
+.chart-editor-content-separator__second-part-separator-tmp.--show {
+	display: block;
+}
+
 .chart-editor-content-separator__first-part {
 	flex-grow: 1;
-	padding: 7px;
 	overflow: auto;
 	box-sizing: border-box;
 	
 }
 
+.chart-editor-content-separator__first-part.--resizing {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	left: 0;
+	overflow: unset;
+}
+
+.chart-editor-content-separator__first-part.--resizing.--column {
+	position: absolute;
+	top: 0;
+	bottom: auto;
+	left: 0;
+	right: 0;
+}
+
 .chart-editor-content-separator__second-part {
 	flex-grow: 1;
-	padding: 7px;
+	/* padding: 7px; */
 	overflow: auto;
 	box-sizing: border-box;
+}
+
+.chart-editor-content-separator__second-part.--resizing {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	right: 0;
+	overflow: visible;
+	/* padding-top: 0; */
+	/* padding-left: 25px; */
+}
+
+.chart-editor-content-separator__second-part.--resizing.--column {
+	position: absolute;
+	top: auto;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	/* padding-top: 25px;
+	padding-left: 0; */
 }
 
 .chart-editor-content-separator__content {

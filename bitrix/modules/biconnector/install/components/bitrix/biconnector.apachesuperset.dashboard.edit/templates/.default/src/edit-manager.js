@@ -3,7 +3,7 @@ import { EventEmitter } from 'main.core.events';
 import { DashboardParametersSelector } from 'biconnector.dashboard-parameters-selector';
 import { ApacheSupersetAnalytics } from 'biconnector.apache-superset-analytics';
 import { AhaMoment } from 'biconnector.aha-moment';
-import { AirButtonStyle, Button, ButtonManager, ButtonSize } from 'ui.buttons';
+import { AirButtonStyle, Button, ButtonManager, ButtonSize, ButtonState } from 'ui.buttons';
 import { Dialog } from 'ui.entity-selector';
 import { MenuManager, Popup } from 'main.popup';
 import {
@@ -115,6 +115,7 @@ export class SupersetDashboardEditManager
 
 		this.#render();
 		this.#saveButton = ButtonManager.createFromNode(document.querySelector('#dashboard-button-save'));
+		this.#saveButton?.getContainer().setAttribute('data-testid', 'biconnector-dashboard-edit-save-button');
 		this.#saveButton?.setDisabled(true);
 
 		EventEmitter.subscribe('BIConnector.DashboardParamsSelector:initCompleted', this.#onParamSelectorInit.bind(this));
@@ -193,6 +194,9 @@ export class SupersetDashboardEditManager
 			items: [
 				{
 					text: Loc.getMessage('DASHBOARD_EDIT_ATTACH_MENU_ITEM'),
+					dataset: {
+						testid: 'biconnector-dashboard-edit-attach-menu-item',
+					},
 					onclick: () => {
 						menu.close();
 						this.#openAttachPopup();
@@ -210,6 +214,9 @@ export class SupersetDashboardEditManager
 
 		const attachButton = new Button({
 			text: Loc.getMessage('DASHBOARD_EDIT_ATTACH_CONFIRM'),
+			dataset: {
+				testid: 'biconnector-dashboard-edit-attach-confirm',
+			},
 			useAirDesign: true,
 			style: AirButtonStyle.FILLED,
 			size: ButtonSize.LARGE,
@@ -357,10 +364,13 @@ export class SupersetDashboardEditManager
 		});
 
 		this.#attachedCardNode = Tag.render`
-			<div class="dashboard-edit-attached-card">
+			<div class="dashboard-edit-attached-card" data-testid="biconnector-dashboard-edit-attached-card">
 				<div class="dashboard-edit-attached-card-text">
 					<div class="dashboard-edit-attached-card-title">${Loc.getMessage('DASHBOARD_EDIT_ATTACHED_CARD_TITLE')}</div>
-					<div class="dashboard-edit-attached-card-subtitle">${Text.encode(title ?? '')}</div>
+					<div
+						class="dashboard-edit-attached-card-subtitle"
+						data-testid="biconnector-dashboard-edit-attached-card-title"
+					>${Text.encode(title ?? '')}</div>
 				</div>
 			</div>
 		`;
@@ -545,6 +555,10 @@ export class SupersetDashboardEditManager
 			BX.UI.Notification.Center.notify({
 				content: Text.encode(Loc.getMessage('DASHBOARD_EDIT_GALLERY_UPLOAD_IN_PROGRESS') ?? ''),
 			});
+			setTimeout(() => {
+				const saveButtonContainer = this.#saveButton.getContainer();
+				Dom.removeClass(saveButtonContainer, ButtonState.WAITING);
+			}, 0);
 
 			return;
 		}

@@ -1,0 +1,35 @@
+.bx-im-list-container-folder__container {
+	width: 100%;
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+	background-color: var(--ui-color-white-base);
+}
+
+.bx-im-list-container-folder__header_container {
+	width: 100%;
+	height: var(--im-messenger__list-header_height);
+	display: flex;
+	justify-content: flex-end;
+	align-items: center;
+	padding: var(--im-messenger__list-header_padding);
+	border-bottom: 1px solid var(--ui-color-base-7);
+}
+
+.bx-im-list-container-folder__search-input_container {
+	flex-grow: 1;
+	margin-right: 8px;
+}
+
+.bx-im-list-container-folder__elements_container {
+	flex: 1 0 auto;
+	position: relative;
+	padding-top: 1px;
+}
+
+.bx-im-list-container-folder__elements {
+	position: absolute;
+	width: 100%;
+	height: 100%;
+	background-color: var(--ui-color-white-base);
+}

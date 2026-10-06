@@ -19,8 +19,12 @@ class CBPFullReportSentTrigger extends BaseTrigger
 {
 	private const PARAM_USER_IDS = 'USER_IDS';
 	private const RETURN_PARAM_USER = 'USER';
+	private const RETURN_PARAM_MANAGER = 'MANAGER';
 	private const RETURN_PARAM_REPORT = 'REPORT';
 	private const RETURN_PARAM_REPORT_EXTENDED = 'REPORT_EXTENDED';
+	private const RETURN_PARAM_REPORT_ID = 'REPORT_ID';
+	private const RETURN_PARAM_PERIOD_PHRASE = 'PERIOD_PHRASE';
+	private const RETURN_PARAM_SOURCE_TYPE = 'SOURCE_TYPE';
 
 	public function execute(): int
 	{
@@ -32,8 +36,17 @@ class CBPFullReportSentTrigger extends BaseTrigger
 			$this->{self::RETURN_PARAM_USER} = 'user_' . $userId;
 		}
 
+		$managerId = (int)($context[FullReportSentTrigger::FIELD_MANAGER_ID] ?? 0);
+		if (!empty($managerId))
+		{
+			$this->{self::RETURN_PARAM_MANAGER} = 'user_' . $managerId;
+		}
+
 		$this->{self::RETURN_PARAM_REPORT} = (string)($context[FullReportSentTrigger::FIELD_REPORT] ?? '');
 		$this->{self::RETURN_PARAM_REPORT_EXTENDED} = (string)($context[FullReportSentTrigger::FIELD_REPORT_EXTENDED] ?? '');
+		$this->{self::RETURN_PARAM_REPORT_ID} = (int)($context[FullReportSentTrigger::FIELD_REPORT_ID] ?? 0);
+		$this->{self::RETURN_PARAM_PERIOD_PHRASE} = (string)($context[FullReportSentTrigger::FIELD_PERIOD_PHRASE] ?? '');
+		$this->{self::RETURN_PARAM_SOURCE_TYPE} = (string)($context[FullReportSentTrigger::FIELD_SOURCE_TYPE] ?? '');
 
 		return CBPActivityExecutionStatus::Closed;
 	}
@@ -44,12 +57,19 @@ class CBPFullReportSentTrigger extends BaseTrigger
 		$this->arProperties = [
 			self::PARAM_USER_IDS => null,
 			self::RETURN_PARAM_USER => null,
+			self::RETURN_PARAM_MANAGER => null,
 			self::RETURN_PARAM_REPORT => null,
 			self::RETURN_PARAM_REPORT_EXTENDED => null,
+			self::RETURN_PARAM_REPORT_ID => null,
+			self::RETURN_PARAM_PERIOD_PHRASE => null,
+			self::RETURN_PARAM_SOURCE_TYPE => null,
 		];
 
 		$this->SetPropertiesTypes([
 			self::RETURN_PARAM_USER => [
+				'Type' => FieldType::USER,
+			],
+			self::RETURN_PARAM_MANAGER => [
 				'Type' => FieldType::USER,
 			],
 			self::RETURN_PARAM_REPORT => [
@@ -57,6 +77,15 @@ class CBPFullReportSentTrigger extends BaseTrigger
 			],
 			self::RETURN_PARAM_REPORT_EXTENDED => [
 				'Type' => FieldType::TEXT,
+			],
+			self::RETURN_PARAM_REPORT_ID => [
+				'Type' => FieldType::INT,
+			],
+			self::RETURN_PARAM_PERIOD_PHRASE => [
+				'Type' => FieldType::TEXT,
+			],
+			self::RETURN_PARAM_SOURCE_TYPE => [
+				'Type' => FieldType::STRING,
 			],
 		]);
 	}

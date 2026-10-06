@@ -60,6 +60,11 @@ export class SelectInput
 		if (this.currentValueIndex !== undefined && this.values[this.currentValueIndex])
 		{
 			this.input.value = this.values[this.currentValueIndex].label;
+			this.input.dataset.selectedValue = this.values[this.currentValueIndex].value;
+		}
+		else
+		{
+			delete this.input.dataset.selectedValue;
 		}
 	}
 
@@ -214,7 +219,7 @@ export class SelectInput
 							return () => {
 								this.input.value = label;
 								this.popupMenu.close();
-								this.onChange();
+								this.onChange(value);
 							};
 						})(this.values[i].value, this.values[i].labelRaw || this.values[i].label)
 					});
@@ -318,12 +323,17 @@ export class SelectInput
 
 	onKeydown()
 	{
+		delete this.input.dataset.selectedValue;
 		setTimeout(BX.delegate(this.closePopup, this), 50);
 	}
 
 	onChange(value)
 	{
 		const inputValue = this.input.value;
+		if (!Type.isNil(value))
+		{
+			this.input.dataset.selectedValue = value;
+		}
 		BX.onCustomEvent(this, 'onSelectInputChanged', [this, inputValue]);
 		this.onChangeCallback({value: inputValue, dataValue: value});
 	}

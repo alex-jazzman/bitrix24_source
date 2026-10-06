@@ -9,6 +9,7 @@ jn.define('im/messenger/model/recent/default-element', (require, exports, module
 		id: '',
 		message: {
 			id: 0,
+			chatId: 0,
 			senderId: 0,
 			date: new Date(),
 			status: MessageStatus.received,
@@ -20,6 +21,7 @@ jn.define('im/messenger/model/recent/default-element', (require, exports, module
 				withAttach: false,
 			},
 		},
+		ownMessage: null,
 		dateMessage: null,
 		lastActivityDate: new Date(),
 		unread: false,

@@ -24,19 +24,6 @@ export type SearchResults = {
 	items: Array<CatalogMenuItem>,
 }
 
-const REPLACE_TYPES_MAP = {
-	CreateStorageNode: 'services',
-	WriteDataStorageActivity: 'services',
-	ReadDataStorageActivity: 'services',
-	DeleteDataStorageActivity: 'services',
-	SetupTemplateActivity: 'services',
-	AiProcessingActivity: 'services',
-
-	IfElseBranchActivity: 'operators',
-	ForEachActivity: 'operators',
-	WhileActivity: 'operators',
-};
-
 export const useCatalogStore = defineStore('bizprocdesigner-editor-catalog', {
 	state: (): CatalogState => ({
 		groups: [],
@@ -51,6 +38,36 @@ export const useCatalogStore = defineStore('bizprocdesigner-editor-catalog', {
 		initPromise: null,
 	}),
 	getters: {
+		contentBlockProducers: (state: CatalogState): Map<string, Object> => {
+			const producers = new Map();
+			for (const group of state.groups)
+			{
+				for (const item of group.items)
+				{
+					if (item.contentBlockProducer)
+					{
+						producers.set(item.id, item.contentBlockProducer);
+					}
+				}
+			}
+
+			return producers;
+		},
+		contentBlockConsumers: (state: CatalogState): Map<string, Object> => {
+			const consumers = new Map();
+			for (const group of state.groups)
+			{
+				for (const item of group.items)
+				{
+					if (item.contentBlockConsumer)
+					{
+						consumers.set(item.id, item.contentBlockConsumer);
+					}
+				}
+			}
+
+			return consumers;
+		},
 		canSearch: (state: CatalogState): boolean => {
 			return state.searchText.length > 2;
 		},
@@ -95,17 +112,24 @@ export const useCatalogStore = defineStore('bizprocdesigner-editor-catalog', {
 
 			return groups.length + items.length;
 		},
-		getDefaultTitle: (state: CatalogState) => (activity: ?{ Type: string, PresetId?: ?string }): string => {
+		// An activity kept out of the palette (deprecated, groupless) has no card here at all, so its
+		// nodes get their title from the server instead - pass it as fallbackTitle.
+		getDefaultTitle: (state: CatalogState) => (
+			activity: ?{ Type: string, PresetId?: ?string },
+			fallbackTitle: ?string = '',
+		): string => {
 			if (!activity?.Type)
 			{
 				return '';
 			}
 
-			return state.groups
+			const cardTitle = state.groups
 				.flatMap((group) => group.items ?? [])
 				.find((item) => item.id === activity.Type
 					&& (item.presetId ?? null) === (activity.PresetId ?? null))
 				?.title ?? '';
+
+			return cardTitle || (fallbackTitle ?? '');
 		},
 	},
 	actions: {
@@ -122,7 +146,7 @@ export const useCatalogStore = defineStore('bizprocdesigner-editor-catalog', {
 		{
 			const { groups = [] } = await editorAPI.getCatalogData();
 
-			this.groups = this.replaceTypes(groups);
+			this.groups = groups;
 		},
 		toggleFixedCatalog(): void
 		{
@@ -180,55 +204,11 @@ export const useCatalogStore = defineStore('bizprocdesigner-editor-catalog', {
 		{
 			this.isShowFoundedGroupItems = false;
 		},
-		addDevGroup(): void
+		resetFoundedGroupView(): void
 		{
-			this.groups.push({
-				id: 'dev',
-				icon: '',
-				title: 'В разработке',
-				items: [
-					this.getFrameNode(),
-				],
-			});
-		},
-		getFrameNode(): {...}
-		{
-			return {
-				id: 'frame',
-				type: 'frame',
-				title: 'Подложка',
-				subtitle: 'Нода подложка',
-				iconPath: 'BOTTLENECK',
-				colorIndex: 1,
-				defaultSettings: {
-					width: 200,
-					height: 200,
-					ports: [],
-					frameColorName: 'grey',
-					frameTextAlign: 'right',
-					frameSeparatorPosition: 100,
-				},
-			};
-		},
-		replaceTypes(groups: Array<CatalogMenuGroup>): Array<CatalogMenuGroup>
-		{
-			return groups.map((group) => {
-				const newGroup = { ...group };
-
-				newGroup.items = group.items.map((item) => {
-					if (REPLACE_TYPES_MAP[item.id])
-					{
-						const newItem = { ...item };
-						newItem.type = REPLACE_TYPES_MAP[item.id];
-
-						return newItem;
-					}
-
-					return item;
-				});
-
-				return newGroup;
-			});
+			this.isShowFoundedGroupItems = false;
+			this.currentGroup = null;
+			this.highlightedItems = new Set();
 		},
 	},
 });

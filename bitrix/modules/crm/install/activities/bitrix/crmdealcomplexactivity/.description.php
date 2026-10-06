@@ -5,13 +5,38 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+if (!class_exists(\Bitrix\Bizproc\Activity\Dto\Complex\Settings::class))
+{
+	return;
+}
+
 use Bitrix\Bizproc\Activity\ActivityDescription;
+use Bitrix\Bizproc\Activity\Dto\Complex\BlockAvailability;
 use Bitrix\Bizproc\Activity\Enum\ActivityColorIndex;
 use Bitrix\Bizproc\Activity\Enum\ActivityGroup;
 use Bitrix\Bizproc\Activity\Enum\ActivityNodeType;
 use Bitrix\Bizproc\Activity\Enum\ActivityType;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Ui\Public\Enum\IconSet\Outline;
+
+// older bizproc versions have no $relationAction in Settings constructor
+$relationActionArgs = [];
+if (property_exists(Bitrix\Bizproc\Activity\Dto\Complex\Settings::class, 'relationAction'))
+{
+	$relationActionArgs['relationAction'] = new Bitrix\Bizproc\Activity\Dto\Complex\NodeAction(
+		activityCode: 'crmgetconversiondataactivity',
+	);
+}
+
+// Filter is offered because the node publishes FilterReturnPropertiesMap; relations is declared
+// because the node has a relationAction and stays subject to the complexNodeConnections
+// runtime gate. Everything else stays on the default.
+// Older bizproc versions have no BlockAvailability::legacyDefault().
+$availableBlocksArgs = [];
+if (method_exists(BlockAvailability::class, 'legacyDefault'))
+{
+	$availableBlocksArgs['availableBlocks'] = BlockAvailability::legacyDefault(filter: true, relations: true);
+}
 
 $arActivityDescription = (new ActivityDescription(
 	name: Loc::GetMessage('CRM_COMPLEX_ACTIVITY_DEAL_NAME') ?? '',
@@ -37,6 +62,8 @@ $arActivityDescription = (new ActivityDescription(
 	])
 	->setComplexActivitySettings(
 		new Bitrix\Bizproc\Activity\Dto\Complex\Settings(
+			...$relationActionArgs,
+			...$availableBlocksArgs,
 			actionDictionary: new Bitrix\Bizproc\Activity\Dto\Complex\NodeActionDictionary(
 				new Bitrix\Bizproc\Activity\Dto\Complex\NodeAction(
 					activityCode: 'createcrmdealdocumentactivity',
@@ -117,5 +144,6 @@ $arActivityDescription = (new ActivityDescription(
 			),
 		),
 	)
+	->setAdditionalResult(['FilterReturnPropertiesMap'])
 	->toArray()
 ;

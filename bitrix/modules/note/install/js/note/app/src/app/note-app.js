@@ -37,6 +37,8 @@ export class NoteApp
 	#hasInitialCollectionsHydration: boolean = false;
 	#initialSidebarContext: Object | null = null;
 	#hasInitialSidebarHydration: boolean = false;
+	// Bootstrap-level UI feature flags (server-fed, one per mount, not per-document). Default off.
+	#features: Object = { historyEnabled: false, notificationsEnabled: false, sharedTreeEnabled: false };
 	#isInitialRouteContextConsumed: boolean = false;
 	#basePageTitle: string = '';
 	#handleDocRenamed: Function | null = null;
@@ -51,6 +53,7 @@ export class NoteApp
 	#themeState: Object | null = null;
 	#themeActions: Object | null = null;
 	#themeRoot: Element | null = null;
+	#tariffBlocked: boolean = false;
 
 	mount(target: string, options?: Object): NoteApp
 	{
@@ -61,9 +64,15 @@ export class NoteApp
 
 		this.destroy();
 		this.#options = Type.isPlainObject(options) ? options : {};
+		this.#tariffBlocked = Boolean(this.#options.tariffBlocked);
 		this.#basePageTitle = this.#resolveCurrentPageTitle();
 		this.#initialCollections = this.#extractInitialCollections(this.#options.initialCollections);
 		this.#initialSidebarContext = this.#extractInitialSidebarContext(this.#options.initialSidebarContext);
+		this.#features = {
+			historyEnabled: Boolean(this.#options.historyEnabled),
+			notificationsEnabled: Boolean(this.#options.notificationsEnabled),
+			sharedTreeEnabled: Boolean(this.#options.sharedTreeEnabled),
+		};
 		const sidebarOptions = this.#extractSidebarOptions(this.#options.sidebarOptions);
 		this.#themeState = reactive({ theme: this.#extractTheme(this.#options.theme) });
 		this.#themeActions = {
@@ -91,7 +100,14 @@ export class NoteApp
 				workspace: ROUTE_NAME_WORKSPACE,
 			},
 			sidebarOptions,
+			// [TPL-02] First page of the favorites block, server-rendered with the collections. Handed to
+			// the feature rather than hydrated afterwards: the feature reads the first page itself the
+			// moment it is created, and a payload arriving later would come after that request.
+			initialFavorites: this.#extractInitialFavorites(this.#options.initialFavorites),
 			isMobile: Boolean(this.#options.isMobile),
+			historyEnabled: this.#features.historyEnabled,
+			notificationsEnabled: this.#features.notificationsEnabled,
+			sharedTreeEnabled: this.#features.sharedTreeEnabled,
 		});
 
 		this.#documentActions = this.#createDocumentActions();
@@ -107,7 +123,8 @@ export class NoteApp
 			}
 
 			const docId = Number(ctx.docId);
-			const collectionId = Number(ctx.document?.collectionId);
+			const shared = ctx.document?.sharedAccess === true;
+			const collectionId = this.#branchCollectionId(ctx.document);
 			if (!Number.isInteger(docId) || docId <= 0 || !Number.isInteger(collectionId) || collectionId <= 0)
 			{
 				ctx.children = [];
@@ -116,8 +133,16 @@ export class NoteApp
 				return;
 			}
 
-			ctx.children = this.#sidebarFeature.state.getChildren(collectionId, docId);
-			ctx.childrenHasMore = this.#sidebarFeature.hasNextChildren(collectionId, docId);
+			// A shared document keeps its children in the accessible-tree namespace: the collection
+			// branch is empty for this user by definition (no collection access).
+			ctx.children = shared
+				? this.#sidebarFeature.state.getSharedChildren(collectionId, docId)
+				: this.#sidebarFeature.state.getChildren(collectionId, docId)
+			;
+			ctx.childrenHasMore = shared
+				? this.#sidebarFeature.state.hasNextSharedChildren(collectionId, docId)
+				: this.#sidebarFeature.hasNextChildren(collectionId, docId)
+			;
 		});
 
 		this.#app = BitrixVue.createApp(NoteLayout, {
@@ -129,6 +154,16 @@ export class NoteApp
 			documentActions: this.#documentActions,
 			themeActions: this.#themeActions,
 		});
+		// Feature flag reaches the deep editor menu via provide/inject instead of threading a prop
+		// through every router level; the document page reads it to gate the download/upload .md items.
+		this.#app.provide('markdownIoEnabled', Boolean(this.#options.markdownIoEnabled));
+		// Same reason: the document page gates the shortcuts-help surfaces (button, `?`/`Cmd+/`
+		// listener, panel) on this flag. The editor keymap itself stays on regardless.
+		this.#app.provide('hotkeysEnabled', Boolean(this.#options.hotkeysEnabled));
+		// DTO-01. Static server values, so they go the short way like the flags above instead of
+		// into reactive state: the verdict and the region-aware product name for the phrases.
+		this.#app.provide('aiChatEnabled', Boolean(this.#options.aiChatEnabled));
+		this.#app.provide('aiChatName', String(this.#options.aiChatName ?? ''));
 		// @chef-ignore
 		this.#app.use(this.#router);
 		this.#app.mount(target);
@@ -306,6 +341,7 @@ export class NoteApp
 		this.#themeState = null;
 		this.#themeActions = null;
 		this.#themeRoot = null;
+		this.#tariffBlocked = false;
 	}
 
 	#extractTheme(theme: mixed): string
@@ -369,6 +405,21 @@ export class NoteApp
 		try
 		{
 			await this.#router.isReady();
+
+			// Tariff/tool block: the interface stays mounted behind the tariff slider
+			// (template opens it and redirects away on close). Hydrate the sidebar from
+			// server data (no AJAX) so it renders, but skip the welcome redirect, sidebar
+			// bootstrap and route auto-select — otherwise the HOME->WORKSPACE fallback fires
+			// a listByCollection bootstrap AJAX that the server tariff gate rejects, surfacing
+			// an error toast on top of the slider. The slider is the only UX under a block.
+			if (this.#tariffBlocked)
+			{
+				this.#hydrateFromInitialCollections();
+				this.#hydrateFromInitialSidebarContext();
+
+				return;
+			}
+
 			// After the router settled its initial navigation: scrubbing earlier races with
 			// vue-router rewriting history state from the URL it captured at boot (?source would return).
 			this.#scrubWelcomeSourceFromUrl();
@@ -887,6 +938,10 @@ export class NoteApp
 		return {
 			width: Math.trunc(width),
 			collapsed: Boolean(sidebarOptions.collapsed),
+			// Which blocks of the panel stand open. Passed through as they came: absent means "never set",
+			// which the sidebar answers with an open block - so a missing key must not become `false` here.
+			favoritesOpen: sidebarOptions.favoritesOpen,
+			collectionsOpen: sidebarOptions.collectionsOpen,
 		};
 	}
 
@@ -903,6 +958,16 @@ export class NoteApp
 		}
 
 		return initialCollections;
+	}
+
+	#extractInitialFavorites(initialFavorites: Object | null): Object | null
+	{
+		if (!Type.isPlainObject(initialFavorites) || !Array.isArray(initialFavorites.items))
+		{
+			return null;
+		}
+
+		return initialFavorites;
 	}
 
 	async #applyWelcomeRedirect(): Promise<void>
@@ -1039,6 +1104,19 @@ export class NoteApp
 		};
 	}
 
+	// Branch namespace key: a shared document is keyed by its container id, which the read payload
+	// reports separately from collectionId (that one stays absent so the breadcrumb container is
+	// not clickable).
+	#branchCollectionId(document: Object | null): number
+	{
+		const raw = document?.sharedAccess === true
+			? document?.sharedCollectionId
+			: document?.collectionId
+		;
+
+		return Number(raw);
+	}
+
 	async #loadChildDocuments(docId: number, document: Object): Promise<void>
 	{
 		if (!this.#sidebarFeature || !document)
@@ -1046,13 +1124,16 @@ export class NoteApp
 			return;
 		}
 
-		const collectionId = Number(document.collectionId);
+		const shared = document.sharedAccess === true;
+		const collectionId = this.#branchCollectionId(document);
 		if (!Number.isInteger(collectionId) || collectionId <= 0)
 		{
 			return;
 		}
 
-		const sidebarDoc = this.#sidebarFeature.findLoadedDocument(collectionId, docId);
+		// Shared documents are usually opened by URL, without the section ever being expanded, so
+		// there is no loaded node to read hasChildren from — the fetch itself decides.
+		const sidebarDoc = shared ? null : this.#sidebarFeature.findLoadedDocument(collectionId, docId);
 		if (sidebarDoc && !sidebarDoc.hasChildren)
 		{
 			// Nothing to fetch; the watchEffect already reflects the empty branch.
@@ -1068,7 +1149,9 @@ export class NoteApp
 
 		try
 		{
-			await this.#sidebarFeature.ensureChildrenLoaded(collectionId, docId);
+			await (shared
+				? this.#sidebarFeature.ensureSharedChildrenLoaded(collectionId, docId)
+				: this.#sidebarFeature.ensureChildrenLoaded(collectionId, docId));
 		}
 		catch
 		{
@@ -1109,7 +1192,11 @@ export class NoteApp
 			return;
 		}
 
-		const storeChildren = this.#sidebarFeature.state.getChildren(collectionId, docId);
+		const shared = this.#routeDocumentContext.document?.sharedAccess === true;
+		const storeChildren = shared
+			? this.#sidebarFeature.state.getSharedChildren(collectionId, docId)
+			: this.#sidebarFeature.state.getChildren(collectionId, docId)
+		;
 		if (storeChildren.length > this.#routeDocumentContext.children.length)
 		{
 			this.#syncChildDocumentsState(docId, collectionId);
@@ -1121,7 +1208,9 @@ export class NoteApp
 
 		try
 		{
-			await this.#sidebarFeature.loadMoreChildren(collectionId, docId);
+			await (shared
+				? this.#sidebarFeature.loadMoreSharedChildren(collectionId, docId)
+				: this.#sidebarFeature.loadMoreChildren(collectionId, docId));
 		}
 		catch
 		{
@@ -1160,24 +1249,14 @@ export class NoteApp
 	#createDocumentActions(): Object
 	{
 		return {
-			archive: async (documentId) => {
+			archive: (documentId) => {
+				// Confirm (with the optional "with nested" checkbox) lives in the sidebar
+				// archiveDocument use-case, mirroring the delete action below.
 				const doc = this.#resolveLoadedDocument(documentId);
-				if (!doc || !this.#sidebarFeature)
+				if (doc && this.#sidebarFeature)
 				{
-					return;
+					void this.#sidebarFeature.actions.archiveDocument(doc);
 				}
-
-				const confirmed = await this.#dialogService.confirm(
-					Loc.getMessage('NOTE_APP_CONFIRM_ARCHIVE_DOCUMENT') || '',
-					Loc.getMessage('NOTE_APP_CONFIRM_ARCHIVE_DOCUMENT_TITLE') || '',
-					Loc.getMessage('NOTE_APP_ARCHIVE') || '',
-				);
-				if (!confirmed)
-				{
-					return;
-				}
-
-				void this.#sidebarFeature.actions.archiveDocument(doc);
 			},
 			restore: (documentId) => {
 				const doc = this.#resolveLoadedDocument(documentId);
@@ -1330,6 +1409,7 @@ export class NoteApp
 						size: ButtonSize.LARGE,
 						style: AirButtonStyle.FILLED,
 						useAirDesign: true,
+						dataset: { testid: 'note-dialog-cancel' },
 						onclick: () => {
 							finish(false);
 							dialog.hide();
@@ -1340,6 +1420,7 @@ export class NoteApp
 						size: ButtonSize.LARGE,
 						style: AirButtonStyle.PLAIN,
 						useAirDesign: true,
+						dataset: { testid: 'note-dialog-confirm' },
 						onclick: () => {
 							finish(true);
 							dialog.hide();

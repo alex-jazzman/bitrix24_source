@@ -22,6 +22,8 @@ jn.define('im/messenger/controller/recent/service/database-load/common', (requir
 			this.store = serviceLocator.get('core').getStore();
 			/** @type {RecentRepository} */
 			this.recentRepository = this.core.getRepository().recent;
+			/** @type {DialogRepository} */
+			this.dialogRepository = this.core.getRepository().dialog;
 
 			this.hasMore = true;
 			this.setLastItem(null);
@@ -270,6 +272,35 @@ jn.define('im/messenger/controller/recent/service/database-load/common', (requir
 				saveList.push(this.store.dispatch('dialoguesModel/setCollectionFromLocalDatabase', chatList));
 			}
 
+			// On cold start the dialoguesModel is empty until server load completes, so collab source-chat
+			// names flash in late. Preload them via dialogRepository (source chats have no own recent-row).
+			const chatListChatIds = new Set(chatList.map((c) => c.chatId).filter(Boolean));
+			const sourceChatIds = [];
+			for (const item of page.items)
+			{
+				const sourceChatId = item.message?.chatId;
+				if (
+					Type.isNumber(sourceChatId)
+					&& sourceChatId > 0
+					&& !chatListChatIds.has(sourceChatId)
+				)
+				{
+					sourceChatIds.push(sourceChatId);
+				}
+			}
+
+			const uniqueSourceChatIds = [...new Set(sourceChatIds)];
+			if (Type.isArrayFilled(uniqueSourceChatIds) && this.dialogRepository)
+			{
+				const sourceDialogs = await this.dialogRepository.getByChatIds(uniqueSourceChatIds);
+				if (Type.isArrayFilled(sourceDialogs))
+				{
+					saveList.push(
+						this.store.dispatch('dialoguesModel/setCollectionFromLocalDatabase', sourceDialogs),
+					);
+				}
+			}
+
 			if (Type.isArrayFilled(page.users))
 			{
 				saveList.push(this.store.dispatch('usersModel/setFromLocalDatabase', page.users));
@@ -318,6 +349,7 @@ jn.define('im/messenger/controller/recent/service/database-load/common', (requir
 						recentSection: this.recentLocator.get('recentSection'),
 						itemList: page.items ?? [],
 						parentChatId: this.recentLocator.get('parentChatId'),
+						tabId: this.recentLocator.get('id'),
 					};
 					if (Type.isStringFilled(actionName))
 					{

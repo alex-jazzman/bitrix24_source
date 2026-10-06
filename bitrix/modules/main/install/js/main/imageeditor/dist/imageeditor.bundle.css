@@ -14,55 +14,22 @@
 }
 
 .main-image-editor-show {
-	-webkit-animation: uiImageEditorShow 250ms ease both;
-	        animation: uiImageEditorShow 250ms ease both;
+	animation: uiImageEditorShow 250ms ease both;
 }
 
 .main-image-editor-close {
-	-webkit-animation: uiImageEditorClose 250ms ease both;
-	        animation: uiImageEditorClose 250ms ease both;
-}
-
-@-webkit-keyframes uiImageEditorShow {
-	0% {
-		opacity: 0;
-		-webkit-transform: scale(.8);
-		        transform: scale(.8);
-	}
-
-	100% {
-		opacity: 100%;
-		-webkit-transform: scale(1);
-		        transform: scale(1);
-	}
+	animation: uiImageEditorClose 250ms ease both;
 }
 
 @keyframes uiImageEditorShow {
 	0% {
 		opacity: 0;
-		-webkit-transform: scale(.8);
-		        transform: scale(.8);
+		transform: scale(.8);
 	}
 
 	100% {
 		opacity: 100%;
-		-webkit-transform: scale(1);
-		        transform: scale(1);
-	}
-}
-
-
-@-webkit-keyframes uiImageEditorClose {
-	0% {
-		opacity: 100%;
-		-webkit-transform: scale(1);
-		        transform: scale(1);
-	}
-
-	100% {
-		opacity: 0;
-		-webkit-transform: scale(1);
-		        transform: scale(1);
+		transform: scale(1);
 	}
 }
 
@@ -70,14 +37,12 @@
 @keyframes uiImageEditorClose {
 	0% {
 		opacity: 100%;
-		-webkit-transform: scale(1);
-		        transform: scale(1);
+		transform: scale(1);
 	}
 
 	100% {
 		opacity: 0;
-		-webkit-transform: scale(1);
-		        transform: scale(1);
+		transform: scale(1);
 	}
 }
 
@@ -85,8 +50,7 @@
 	position: absolute;
 	top: 50%;
 	left: 50%;
-	-webkit-transform: translate3d(-50%, -50%, 0);
-	        transform: translate3d(-50%, -50%, 0);
+	transform: translate3d(-50%, -50%, 0);
 	max-width: 400px;
 	color: #fafafa;
 }

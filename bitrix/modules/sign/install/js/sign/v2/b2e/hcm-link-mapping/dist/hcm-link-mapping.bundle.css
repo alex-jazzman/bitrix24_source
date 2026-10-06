@@ -12,8 +12,7 @@
 
 .sign-b2e-hcm-link-mapping-sync-button {
 	color: var(--ui-color-link-primary-base);
-	-webkit-text-decoration-color: var(--ui-color-link-primary-base);
-	        text-decoration-color: var(--ui-color-link-primary-base);
+	text-decoration-color: var(--ui-color-link-primary-base);
 	text-decoration: underline;
 	text-underline-position: under;
 }

@@ -2,8 +2,9 @@
 
 return [
 	'extensions' => [
-		'background/notifications/base',
-		'tokens',
 		'analytics',
+		'background/notifications/base',
+		'navigator/more-tab/meta',
+		'tokens',
 	],
 ];

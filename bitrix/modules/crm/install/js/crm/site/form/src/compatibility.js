@@ -1,5 +1,5 @@
-import {B24Options} from './type';
-import {EventTypes, Options, Controller} from "./form/registry";
+import type {B24Options} from './type';
+import {EventTypes, Controller, type Options} from "./form/registry";
 import {BaseField} from './field/registry';
 
 export function performEventOfWidgetFormInit(b24options: B24Options, options: Options)

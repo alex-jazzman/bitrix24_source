@@ -15,6 +15,11 @@ export const AddClient = {
 	components: {
 		ClientPopup,
 	},
+	inject: {
+		autoHideContext: {
+			default: null,
+		},
+	},
 	props: {
 		expired: {
 			type: Boolean,
@@ -46,6 +51,14 @@ export const AddClient = {
 			isFeatureEnabled: `${Model.Interface}/isFeatureEnabled`,
 		}),
 	},
+	created(): void
+	{
+		this.unfreezeAutoHide = null;
+	},
+	beforeUnmount(): void
+	{
+		this.closePopup();
+	},
 	methods: {
 		clickHandler(): void
 		{
@@ -63,7 +76,32 @@ export const AddClient = {
 
 			PopupManager.getPopupById(CLIENT_POPUP_ID)?.destroy();
 
+			this.freezeParentAutoHide();
 			this.showPopup = true;
+		},
+		closePopup(): void
+		{
+			if (!this.showPopup)
+			{
+				return;
+			}
+
+			this.showPopup = false;
+			this.unfreezeParentAutoHide();
+		},
+		freezeParentAutoHide(): void
+		{
+			if (this.unfreezeAutoHide)
+			{
+				return;
+			}
+
+			this.unfreezeAutoHide = this.autoHideContext?.freeze() ?? null;
+		},
+		unfreezeParentAutoHide(): void
+		{
+			this.unfreezeAutoHide?.();
+			this.unfreezeAutoHide = null;
 		},
 		getOffsetLeft(): number
 		{
@@ -93,7 +131,7 @@ export const AddClient = {
 			:offset-top="-100"
 			:offset-left="getOffsetLeft()"
 			@create="$emit('add', $event)"
-			@close="showPopup = false"
+			@close="closePopup"
 		/>
 	`,
 };

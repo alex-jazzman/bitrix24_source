@@ -1359,6 +1359,7 @@ export class PhoneCallsController extends EventEmitter
 						autoHide: true,
 						closeByEsc: true,
 						cacheable: false,
+						zIndexOptions: {alwaysOnTop: true},
 						bindOptions: {
 							position: 'bottom'
 						},
@@ -1552,7 +1553,12 @@ export class PhoneCallsController extends EventEmitter
 
 		if (internationalNumber.length <= 0)
 		{
-			MessageBox.alert(Loc.getMessage('IM_PHONE_WRONG_NUMBER_DESC'), Loc.getMessage('IM_PHONE_WRONG_NUMBER'))
+			MessageBox.show({
+				message: Loc.getMessage('IM_PHONE_WRONG_NUMBER_DESC'),
+				title: Loc.getMessage('IM_PHONE_WRONG_NUMBER'),
+				buttons: MessageBoxButtons.OK,
+				popupOptions: {closeByEsc: true, zIndexOptions: {alwaysOnTop: true}},
+			});
 			return false;
 		}
 
@@ -1646,6 +1652,7 @@ export class PhoneCallsController extends EventEmitter
 				window.open(url, "desktopApp");
 				return true;
 			},
+			popupOptions: {zIndexOptions: {alwaysOnTop: true}},
 		})
 		messageBox.show();
 	}
@@ -2048,7 +2055,6 @@ export class PhoneCallsController extends EventEmitter
 		callView.setCallback('callListMakeCall', this.#onCallViewCallListMakeCall.bind(this));
 		callView.setCallback('close', this.#onCallViewClose.bind(this));
 		callView.setCallback('switchDevice', this.#onCallViewSwitchDevice.bind(this));
-		callView.setCallback('qualityGraded', this.#onCallViewQualityGraded.bind(this));
 		callView.setCallback('dialpadButtonClicked', this.#onCallViewDialpadButtonClicked.bind(this));
 		callView.setCallback('saveComment', this.#onCallViewSaveComment.bind(this));
 	}
@@ -2194,18 +2200,6 @@ export class PhoneCallsController extends EventEmitter
 		{
 			this.callView.close();
 			this.phoneCall(phoneNumber);
-		}
-	}
-
-	#onCallViewQualityGraded(grade)
-	{
-		var message = {
-			COMMAND: 'gradeQuality',
-			grade: grade
-		};
-		if (this.currentCall)
-		{
-			this.currentCall.sendMessage(JSON.stringify(message));
 		}
 	}
 

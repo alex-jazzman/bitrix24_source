@@ -129,7 +129,13 @@ jn.define('im/messenger/controller/recent/service/vuex/folder', (require, export
 				return;
 			}
 
-			const items = this.#getRecentItemsByChatIds(this.#extractChatIdsFromCounters(counterList));
+			const previousParentChatIdList = payload?.data?.previousParentChatIdList ?? [];
+			const chatIds = unique([
+				...this.#extractChatIdsFromCounters(counterList),
+				...previousParentChatIdList,
+			]);
+
+			const items = this.#getRecentItemsByChatIds(chatIds);
 			if (Type.isArrayFilled(items))
 			{
 				this.#updateRecentItems(items);

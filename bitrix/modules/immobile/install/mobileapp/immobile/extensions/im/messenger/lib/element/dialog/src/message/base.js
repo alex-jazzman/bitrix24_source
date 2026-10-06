@@ -24,7 +24,7 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 	const { Attach } = require('im/messenger/lib/element/dialog/message/element/attach/attach');
 	const { Keyboard } = require('im/messenger/lib/element/dialog/message/element/keyboard/keyboard');
 	const { CommentInfo } = require('im/messenger/lib/element/dialog/message/element/comment-info/comment-info');
-	const { MessageHelper, DialogHelper } = require('im/messenger/lib/helper');
+	const { MessageHelper } = require('im/messenger/lib/helper');
 	const { UserPermission } = require('im/messenger/lib/permission-manager');
 	const { ReactionAssetsManager } = require('im/messenger/lib/reaction-assets-manager');
 
@@ -750,14 +750,13 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 				return this;
 			}
 
-			const dialogHelper = DialogHelper.createByChatId(modelMessage.chatId);
-			if (dialogHelper?.isBot)
+			if (messageHelper?.isBot)
 			{
 				const userModel = serviceLocator.get('core')
 					.getStore()
 					.getters['usersModel/getById'](modelMessage.authorId);
 				const canBotSetReactions = !Type.isNull(userModel) && UserPermission.canBotSetReactions(userModel);
-				this.showReaction = messageHelper?.isBot && canBotSetReactions;
+				this.showReaction = canBotSetReactions;
 			}
 
 			return this;

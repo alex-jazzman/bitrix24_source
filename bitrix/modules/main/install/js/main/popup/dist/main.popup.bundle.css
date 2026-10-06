@@ -328,7 +328,10 @@
 	box-sizing: border-box;
 	flex: 1;
 	border-radius: var(--popup-window-content-border-radius);
+	/* @chef-ignore */
 	scrollbar-width: thin;
+
+	/* @chef-ignore */
 	scrollbar-color: var(--popup-window-scrollbar-thumb-background, rgba(82, 92, 105, 0.2));
 }
 

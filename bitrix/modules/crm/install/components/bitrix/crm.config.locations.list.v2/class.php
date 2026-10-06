@@ -1,4 +1,5 @@
-<?
+<?php
+
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 
 /**
@@ -8,12 +9,13 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
  * @copyright 2001-2014 Bitrix
  */
 
-//use Bitrix\Main\Config;
+use Bitrix\Main\Config;
 use Bitrix\Main;
 use Bitrix\Sale\Location;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Loader;
 use Bitrix\Sale\Location\Admin\LocationHelper as Helper;
+use Bitrix\Main\Web\Uri;
 
 Loc::loadMessages(__FILE__);
 
@@ -105,7 +107,7 @@ class CBitrixCrmConfigLocationList2Component extends CBitrixComponent
 
 	protected function checkIntegrity()
 	{
-		if(!\Bitrix\Sale\Location\LocationTable::checkIntegrity())
+		if(!Location\LocationTable::checkIntegrity())
 		{
 			$this->errors['FATAL'][] = Loc::getMessage('CRM_CLL2_IMPORT_ERROR');
 			return false;
@@ -297,13 +299,10 @@ class CBitrixCrmConfigLocationList2Component extends CBitrixComponent
 				);
 
 			$arLoc['PATH_TO_LOCATIONS_DELETE'] =
-				CHTTP::urlAddParams(
-					CComponentEngine::MakePathFromTemplate(
+				(string)(new Uri(CComponentEngine::MakePathFromTemplate(
 						$this->arParams['PATH_TO_LOCATIONS_LIST'],
 						array('loc_id' => $arLoc['ID'])
-					),
-					array('action_'.$this->dbResult['GRID_ID'] => 'delete', 'ID' => $arLoc['ID'], 'sessid' => bitrix_sessid())
-				);
+					)))->addParams(array('action_'.$this->dbResult['GRID_ID'] => 'delete', 'ID' => $arLoc['ID'], 'sessid' => bitrix_sessid()));
 
 			$arLoc['TYPE_ID'] = htmlspecialcharsbx($this->dbResult['TYPES'][$arLoc['TYPE_ID']]);
 
@@ -526,7 +525,7 @@ class CBitrixCrmConfigLocationList2Component extends CBitrixComponent
 		if(!$this->getCacheNeed())
 			return true;
 
-		$this->currentCache = Data\Cache::createInstance();
+		$this->currentCache = \Bitrix\Main\Data\Cache::createInstance();
 
 		return $this->currentCache->startDataCache(intval($this->arParams['CACHE_TIME']), $this->getCacheKey($cacheId));
 	}

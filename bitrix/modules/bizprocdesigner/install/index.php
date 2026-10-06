@@ -34,6 +34,16 @@ Class bizprocdesigner extends CModule
 
 	function InstallDB($install_wizard = true)
 	{
+		global $APPLICATION;
+
+		$migrationResult = $this->installMigrations();
+		if (!$migrationResult->isSuccess())
+		{
+			$APPLICATION->ThrowException(implode('', $migrationResult->getErrorMessages()));
+
+			return false;
+		}
+
 		RegisterModule("bizprocdesigner");
 
 		return true;
@@ -41,39 +51,19 @@ Class bizprocdesigner extends CModule
 
 	function UnInstallDB($arParams = Array())
 	{
+		global $APPLICATION;
+
+		$dropTables = !(isset($arParams['savedata']) && $arParams['savedata'] === 'Y');
+
+		$migrationResult = $this->uninstallMigrations($dropTables);
+		if (!$migrationResult->isSuccess())
+		{
+			$APPLICATION->ThrowException(implode('', $migrationResult->getErrorMessages()));
+
+			return false;
+		}
+
 		UnRegisterModule("bizprocdesigner");
-
-		\CAgent::RemoveModuleAgents('bizprocdesigner');
-
-		return true;
-	}
-
-	function InstallEvents()
-	{
-		RegisterModuleDependences("pull", "OnGetDependentModule", "bizprocdesigner", "\\Bitrix\\BizprocDesigner\\Internal\\Integration\\Pull\\BizprocDesignerPullManager", "OnGetDependentModule");
-		\Bitrix\Main\EventManager::getInstance()
-			 ->registerEventHandler(
-				 'main',
-				 'OnAfterRegisterModule',
-				 'bizprocdesigner',
-				 '\Bitrix\BizprocDesigner\Internal\Integration\Main\EventHandler',
-				 'onAfterRegisterModule',
-			 )
-		;
-	}
-
-	function UnInstallEvents()
-	{
-		UnRegisterModuleDependences("pull", "OnGetDependentModule", "bizprocdesigner", "\\Bitrix\\BizprocDesigner\\Internal\\Integration\\Pull\\BizprocDesignerPullManager", "OnGetDependentModule");
-		\Bitrix\Main\EventManager::getInstance()
-			 ->unRegisterEventHandler(
-				 'main',
-				 'OnAfterRegisterModule',
-				 'bizprocdesigner',
-				 '\Bitrix\BizprocDesigner\Internal\Integration\Main\EventHandler',
-				 'onAfterRegisterModule',
-			 )
-		;
 
 		return true;
 	}
@@ -126,6 +116,7 @@ Class bizprocdesigner extends CModule
 		{
 			$this->InstallDB(false);
 			$this->InstallFiles();
+			$this->InstallEvents();
 			CBXFeatures::SetFeatureEnabled("BizProc", true);
 		}
 
@@ -144,6 +135,7 @@ Class bizprocdesigner extends CModule
 		elseif($step==2)
 		{
 			$this->UnInstallFiles();
+			$this->UnInstallEvents();
 			$this->UnInstallDB(false);
 			CBXFeatures::SetFeatureEnabled("BizProc", false);
 			$GLOBALS["errors"] = $this->errors ?? null;

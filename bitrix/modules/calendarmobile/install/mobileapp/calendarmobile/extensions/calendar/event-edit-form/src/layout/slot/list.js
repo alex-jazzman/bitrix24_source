@@ -28,6 +28,8 @@ jn.define('calendar/event-edit-form/layout/slot/list', (require, exports, module
 				scrollRef: null,
 			};
 
+			this.measuredSlotHeight = null;
+
 			void State.loadAccessibility();
 		}
 
@@ -40,12 +42,16 @@ jn.define('calendar/event-edit-form/layout/slot/list', (require, exports, module
 		{
 			const dateChanged = this.props.selectedDate.getTime() !== props.selectedDate.getTime();
 			const loaderChanged = props.isLoading !== this.props.isLoading;
-			this.dontScroll = !dateChanged && !loaderChanged;
+			const slotSelected = this.isSlotSelected(this.props, props);
+			this.dontScroll = !dateChanged && !loaderChanged && !slotSelected;
 		}
 
 		componentDidUpdate(prevProps, prevState)
 		{
-			if (this.props.selectedDate !== prevProps.selectedDate)
+			const dateChanged = this.props.selectedDate !== prevProps.selectedDate;
+			const slotSelected = this.isSlotSelected(prevProps, this.props);
+
+			if (dateChanged || slotSelected)
 			{
 				if (isAndroid)
 				{
@@ -58,6 +64,13 @@ jn.define('calendar/event-edit-form/layout/slot/list', (require, exports, module
 					this.scrollToSlot();
 				}
 			}
+		}
+
+		isSlotSelected(prevProps, nextProps)
+		{
+			const nextSlotId = nextProps.selectedSlot?.id;
+
+			return Boolean(nextSlotId) && nextSlotId !== prevProps.selectedSlot?.id;
 		}
 
 		render()
@@ -110,7 +123,7 @@ jn.define('calendar/event-edit-form/layout/slot/list', (require, exports, module
 						selectedSlot,
 						lastSlot,
 						onSlotSelected: this.onSlotSelected,
-						onLayout: this.scrollToSlot,
+						onLayout: this.onLastSlotLayout,
 					})),
 				),
 			);
@@ -123,6 +136,15 @@ jn.define('calendar/event-edit-form/layout/slot/list', (require, exports, module
 
 		onSlotSelected = (slot) => {
 			State.setSelectedSlot(slot);
+		};
+
+		onLastSlotLayout = (height) => {
+			if (Number.isFinite(height) && height > 0)
+			{
+				this.measuredSlotHeight = height;
+			}
+
+			this.scrollToSlot();
 		};
 
 		scrollToSlot = () => {
@@ -140,9 +162,10 @@ jn.define('calendar/event-edit-form/layout/slot/list', (require, exports, module
 			const position = this.slots.map((slot) => slot.id).indexOf(slotToScroll.id);
 			if (position >= 0)
 			{
+				const itemHeight = this.measuredSlotHeight || slotItemHeight;
 				const borderOffset = isAndroid ? 1 : 0;
 				this.refs.scrollRef.scrollTo({
-					y: position * slotItemHeight - borderOffset,
+					y: position * itemHeight - borderOffset,
 					animated: isAndroid,
 				});
 			}

@@ -9,6 +9,7 @@ use Bitrix\Main\Error;
 use Bitrix\Main\ErrorCollection;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Bizproc\Activity\Mixins\ErrorHandling;
+use Bitrix\Bizproc\UI\Helpers\TaskTextDecoder;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Bizproc\Result\RenderedResult;
 use Bitrix\Bizproc\Result\ResultDto;
@@ -492,9 +493,14 @@ class CBPReviewActivity extends CBPActivity implements IBPEventActivity, IBPActi
 				$required = '<span style="color: red">*</span>';
 			}
 
+			$commentLabel = TaskTextDecoder::decode(
+				$arTask['PARAMETERS']['CommentLabelMessage'] ?? '',
+				(string)Loc::getMessage('BPAR_ACT_COMMENT_1'),
+			);
+
 			$form .=
 				'<tr><td valign="top" width="40%" align="right" class="bizproc-field-name">'
-					.($arTask["PARAMETERS"]["CommentLabelMessage"] <> '' ? $arTask["PARAMETERS"]["CommentLabelMessage"] : Loc::getMessage('BPAR_ACT_COMMENT_1'))
+					.htmlspecialcharsbx($commentLabel)
 					.$required
 				.':</td>'.
 				'<td valign="top" width="60%" class="bizproc-field-value">'.
@@ -534,7 +540,10 @@ class CBPReviewActivity extends CBPActivity implements IBPEventActivity, IBPActi
 				[
 					'Id' => 'task_comment',
 					'Type' => 'text',
-					'Name' => $task['PARAMETERS']['CommentLabelMessage'] ?: Loc::getMessage('BPAR_ACT_COMMENT_1'),
+					'Name' => TaskTextDecoder::decode(
+						$task['PARAMETERS']['CommentLabelMessage'] ?? '',
+						(string)Loc::getMessage('BPAR_ACT_COMMENT_1'),
+					),
 					'Required' => (($task['PARAMETERS']['CommentRequired'] ?? 'N') === 'Y'),
 					'Description' => $description,
 				],
@@ -574,10 +583,10 @@ class CBPReviewActivity extends CBPActivity implements IBPEventActivity, IBPActi
 				&& $arTask['PARAMETERS']['CommentRequired'] === 'Y'
 			)
 			{
-				$label =
-					$arTask['PARAMETERS']['CommentLabelMessage'] <> ''
-						? $arTask['PARAMETERS']['CommentLabelMessage']
-						: Loc::getMessage('BPAR_ACT_COMMENT_1');
+				$label = TaskTextDecoder::decode(
+					$arTask['PARAMETERS']['CommentLabelMessage'] ?? '',
+					(string)Loc::getMessage('BPAR_ACT_COMMENT_1'),
+				);
 				self::$errors->setError(
 					new Error(
 						Loc::getMessage('BPAA_ACT_COMMENT_ERROR', ['#COMMENT_LABEL#' => $label]),

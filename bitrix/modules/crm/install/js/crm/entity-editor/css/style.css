@@ -2648,6 +2648,13 @@ div.crm-entity-widget-content-block-radio-label {
 	margin-left: auto;
 }
 
+/* a11y (I1.B1): the air reset `.ui-btn.--air{margin-left:0}` (0,2,0) overrode the block rule
+   above (0,1,0) and pulled the pay button left; raise specificity for this exact button so it
+   stays pinned right. Only margin-left is elevated - padding keeps the air-controlled value. */
+.ui-btn.--air.crm-entity-widget-content-block-inner-pay-button {
+	margin-left: auto;
+}
+
 .crm-entity-widget-content-block-click-empty.crm-entity-widget-content-block-field-money .crm-entity-widget-content-block-inner {
 	opacity: 1;
 }
@@ -4243,13 +4250,13 @@ a.crm-widget-employee-position:hover {
 	display: block;
 	margin-bottom: 12px;
 	font: 12px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
-	color: #a3a9b1;
+	color: var(--ui-color-base-2, #525c69);
 }
 
 .crm-entity-widget-payment-detail-description {
 	display: block;
 	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
-	color: #a8adb4;
+	color: var(--ui-color-base-2, #525c69);
 }
 
 /*.crm-entity-widget-payment-detail .ui-link {*/
@@ -4263,6 +4270,24 @@ a.crm-widget-employee-position:hover {
 
 .crm-entity-widget-payment-add-box .ui-entity-editor-content-add-lnk {
 	color: #2066b0;
+}
+
+/* a11y: former <a>/<div> document actions are now native <button>; strip UA button chrome, keep the link/label look */
+.crm-entity-widget-payment-detail > .ui-link,
+.crm-entity-stream-content-document-description > .ui-link {
+	display: inline;
+	margin: 0;
+	padding: 0;
+	border: none;
+	background: none;
+	text-align: left;
+}
+
+.crm-entity-widget-payment-add-box > .ui-entity-editor-content-add-lnk {
+	padding: 0;
+	border: none;
+	background: none;
+	text-align: left;
 }
 
 .crm-entity-widget-payment-add {
@@ -4336,7 +4361,7 @@ a.crm-widget-employee-position:hover {
 
 .crm-entity-widget-inner--payment.is-empty .crm-entity-widget-payment-total,
 .crm-entity-widget-inner--payment.is-empty .crm-entity-widget-payment-text {
-	color: #bdc1c6;
+	color: var(--ui-color-base-2, #525c69);
 }
 
 .crm-entity-widget-payment-total .ui-hint {
@@ -4371,9 +4396,12 @@ a.crm-widget-employee-position:hover {
 }
 
 .crm-entity-widget-payment-total .crm-entity-widget-payment-rub,
-.crm-entity-widget-payment-total .crm-entity-widget-payment-currency,
 .ui-entity-editor-content-block > .crm-entity-widget-payment-block .crm-entity-widget-payment-rub {
 	color: #a7acb3;
+}
+
+.crm-entity-widget-payment-total .crm-entity-widget-payment-currency {
+	color: var(--ui-color-base-2, #525c69);
 }
 
 .crm-entity-widget-payment-label .ui-label-inner, .crm-entity-widget-payment-action .ui-label-inner {
@@ -4384,6 +4412,62 @@ a.crm-widget-employee-position:hover {
 
 .ui-label-light, .ui-label:not(.ui-label-fill) {
 	--ui-label-color: #a3a9b1;
+}
+/*endregion*/
+
+/*region a11y focus (TPL-01) */
+/* Visible focus for the new native controls of the documents block - air-outline on :focus-visible
+   of their own selectors, scoped to the block (no marker class). Values are air tokens with fallback. */
+.crm-entity-widget-payment-detail > .ui-link:focus-visible,
+.crm-entity-stream-content-document-description > .ui-link:focus-visible,
+.crm-entity-widget-payment-detail-inner > .crm-entity-widget-payment-action:focus-visible,
+.crm-entity-widget-payment-add-box > .ui-entity-editor-content-add-lnk:focus-visible,
+html[data-input-modality="keyboard"] .crm-entity-widget-payment-detail > .ui-link:focus:not(:focus-visible),
+html[data-input-modality="keyboard"] .crm-entity-stream-content-document-description > .ui-link:focus:not(:focus-visible),
+html[data-input-modality="keyboard"] .crm-entity-widget-payment-detail-inner > .crm-entity-widget-payment-action:focus:not(:focus-visible),
+html[data-input-modality="keyboard"] .crm-entity-widget-payment-add-box > .ui-entity-editor-content-add-lnk:focus:not(:focus-visible) {
+	outline-style: solid;
+	outline-color: var(--ui-color-focus-outline, #4A9DFF);
+	outline-width: var(--ui-focus-outline-width, 2px);
+	outline-offset: var(--ui-focus-outline-offset, 2px);
+}
+html[data-input-modality="pointer"] .crm-entity-widget-payment-detail > .ui-link:focus-visible,
+html[data-input-modality="pointer"] .crm-entity-stream-content-document-description > .ui-link:focus-visible,
+html[data-input-modality="pointer"] .crm-entity-widget-payment-detail-inner > .crm-entity-widget-payment-action:focus-visible,
+html[data-input-modality="pointer"] .crm-entity-widget-payment-add-box > .ui-entity-editor-content-add-lnk:focus-visible {
+	outline: none;
+}
+/*endregion*/
+
+/*region a11y focus overlap (I2.B2) */
+/* The document links and the action button sit next to status labels (`.ui-label` - paid/shipped)
+   that are painted later in the DOM, so the outer focus ring (outline-offset 2px) was covered on the
+   right (payment detail) or bottom (timeline description) by those labels. Lift only the focused
+   control into a higher paint layer so its ring draws above the non-positioned neighbours. z-index 1
+   beats the only positioned sibling descendant (`.ui-label-status`, z-index auto). Focus state only -
+   normal look unchanged. */
+.crm-entity-widget-payment-detail > .ui-link:focus-visible,
+.crm-entity-stream-content-document-description > .ui-link:focus-visible,
+.crm-entity-widget-payment-detail-inner > .crm-entity-widget-payment-action:focus-visible,
+html[data-input-modality="keyboard"] .crm-entity-widget-payment-detail > .ui-link:focus:not(:focus-visible),
+html[data-input-modality="keyboard"] .crm-entity-stream-content-document-description > .ui-link:focus:not(:focus-visible),
+html[data-input-modality="keyboard"] .crm-entity-widget-payment-detail-inner > .crm-entity-widget-payment-action:focus:not(:focus-visible) {
+	position: relative;
+	z-index: 1;
+}
+/*endregion*/
+
+/*region a11y focus transition (I1.B3) */
+/* The label (`.ui-label` - `transition: 250ms linear all`) and the add link
+   (`.ui-entity-editor-content-add-lnk` - `transition: 220ms all ease`) animate every property,
+   so the TPL-01 focus outline slid in/out with a delay. Re-declare the transition keeping the
+   original hover fades but with a trailing `outline`/`outline-offset` entry (last match wins) so
+   the focus ring appears and disappears instantly. */
+.crm-entity-widget-payment-detail-inner > .crm-entity-widget-payment-action {
+	transition: 250ms linear all, outline 0s, outline-offset 0s;
+}
+.crm-entity-widget-payment-add-box > .ui-entity-editor-content-add-lnk {
+	transition: 220ms all ease, outline 0s, outline-offset 0s;
 }
 /*endregion*/
 

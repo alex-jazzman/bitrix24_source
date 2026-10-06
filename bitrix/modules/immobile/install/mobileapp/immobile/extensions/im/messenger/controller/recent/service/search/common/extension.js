@@ -55,6 +55,7 @@ jn.define('im/messenger/controller/recent/service/search/common', (require, expo
 				serverStrategy: new DefaultServerSearchStrategy({
 					config: new ChatSearchConfig(this.#resolveParentChatId()),
 					recentTab: this.props.recentTab,
+					dynamicOptions: () => ({ excludeGuests: true }),
 				}),
 			});
 		}

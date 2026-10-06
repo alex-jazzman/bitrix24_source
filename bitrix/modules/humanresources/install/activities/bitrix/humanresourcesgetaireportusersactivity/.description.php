@@ -13,8 +13,16 @@ use Bitrix\Bizproc\Activity\Enum\ActivityGroup;
 use Bitrix\Bizproc\Activity\Enum\ActivityNodeType;
 use Bitrix\Bizproc\Activity\Enum\ActivityType;
 use Bitrix\Bizproc\FieldType;
+use Bitrix\Bizproc\Public\Service\AiAgent\NodeAvailabilityServiceInterface;
+use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Ui\Public\Enum\IconSet\Outline;
+
+$serviceLocator = ServiceLocator::getInstance();
+$isAiNodeAvailable =
+	$serviceLocator->has(NodeAvailabilityServiceInterface::class)
+	&& $serviceLocator->get(NodeAvailabilityServiceInterface::class)->isAvailable()
+;
 
 $arActivityDescription = (new ActivityDescription(
 	Loc::getMessage('HUMAN_RESOURCES_GET_AI_REPORT_USERS_ACTIVITY_NAME') ?? '',
@@ -24,6 +32,7 @@ $arActivityDescription = (new ActivityDescription(
 	->setClass('HumanResourcesGetAiReportUsersActivity')
 	->setJsClass('BizProcActivity')
 	->setNodeType(ActivityNodeType::SIMPLE->value)
+	->setExcluded(!$isAiNodeAvailable)
 	->setGroups([ActivityGroup::HR->value])
 	->setColorIndex(ActivityColorIndex::BLUE->value)
 	->setIcon(Outline::PERSON_SEARCH->name)

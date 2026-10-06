@@ -146,6 +146,7 @@ export class FoldedCallView extends EventEmitter
 					id: 'im-phone-folded-call-view',
 					className: 'im-phone-call-wrapper im-phone-call-wrapper-fixed im-phone-call-panel'
 				},
+				attrs: { 'data-a11y-ignore-inert': 'true' },
 				events: {
 					dblclick: this._onViewDblClick.bind(this)
 				}

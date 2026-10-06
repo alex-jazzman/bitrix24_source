@@ -26,7 +26,7 @@ BX.Lists.ListsEditClass = (function ()
 			BX.Loc.getMessage("CT_BLLE_COPY_POPUP_CONTENT"),
 			() =>
 			{
-				const actionPromise = BX.ajax.runAction("lists.controller.iblock.copy", {
+				const actionPromise = BX.ajax.runAction("lists.Iblock.copy", {
 					data: {
 						iblock_type_id: this.iblockTypeId,
 						iblock_id: this.iblockId,

@@ -123,6 +123,11 @@ if (
 		->build()
 	;
 
+	echo (\Bitrix\Crm\Tour\CopilotInEmail::getInstance())
+		->setEntityTypeId($entityTypeId)
+		->build()
+	;
+
 	$autostartSettings = FillFieldsSettings::get($entityTypeId, $categoryId);
 	if (
 		$autostartSettings->isAutostartTranscriptionOnlyOnFirstCallWithRecording()
@@ -581,3 +586,4 @@ if ($arResult['BIZPROC_AVAILABLE']): ?>
 <?php endif;
 
 echo \Bitrix\Crm\Tour\ImOpenLines\AiAgent\OpenLineActivityTour::getInstance()->build();
+echo \Bitrix\Crm\Tour\CallScoringV2Timeline::getInstance()->build();

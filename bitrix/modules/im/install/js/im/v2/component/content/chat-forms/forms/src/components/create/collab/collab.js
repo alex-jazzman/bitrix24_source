@@ -1,7 +1,6 @@
 import { type JsonObject } from 'main.core';
 import { type BaseEvent, EventEmitter } from 'main.core.events';
 
-import { Messenger } from 'im.public';
 import { Core } from 'im.v2.application.core';
 import { TitleInput, ChatAvatar, CreateChatHeading, TextareaInput, ButtonPanel, AutoDelete } from 'im.v2.component.content.chat-forms.elements';
 import { EmptyAvatarType } from 'im.v2.component.elements.avatar';
@@ -131,8 +130,7 @@ export const CollabCreation = {
 
 				this.isCreating = false;
 				this.exitByCreation = true;
-				CreateChatManager.getInstance().setCreationStatus(false);
-				await Messenger.openChat(newDialogId);
+				await CreateChatManager.getInstance().completeChatCreation(newDialogId);
 				this.getEmitter().emit(EventType.header.openAddToChatPopup);
 			}
 			catch
@@ -143,8 +141,7 @@ export const CollabCreation = {
 		onCancelClick()
 		{
 			this.exitByCancel = true;
-			CreateChatManager.getInstance().setCreationStatus(false);
-			Messenger.openChat();
+			void CreateChatManager.getInstance().cancelChatCreation();
 		},
 		onAvatarChange(newAvatarFile: File)
 		{

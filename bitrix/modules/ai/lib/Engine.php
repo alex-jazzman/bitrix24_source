@@ -8,18 +8,22 @@ use Bitrix\AI\Engine\Enum\Category;
 use Bitrix\AI\Engine\IEngine;
 use Bitrix\AI\Engine\IQueue;
 use Bitrix\AI\Engine\IQueueOptional;
+use Bitrix\AI\Enum\VibePlusLimitState;
 use Bitrix\AI\Image\ImageReference;
 use Bitrix\AI\Facade\Analytics;
 use Bitrix\AI\Facade\Bitrix24;
 use Bitrix\AI\Facade\Portal;
 use Bitrix\AI\Facade\User;
 use Bitrix\AI\Limiter\Enums\ErrorLimit;
+use Bitrix\AI\Limiter\Exception\SharedMonthlyPoolLimitExceededException;
 use Bitrix\AI\Limiter\LimitControlService;
 use Bitrix\AI\Limiter\ReserveRequest;
 use Bitrix\AI\Limiter\Usage;
 use Bitrix\AI\Payload\IPayload;
 use Bitrix\AI\Services\BitrixGptAgreementService;
 use Bitrix\AI\Services\CopilotAccessCheckerService;
+use Bitrix\AI\Services\VibePlusUpsellService;
+use Bitrix\Ui\Public\Services\Copilot\CopilotNameService;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Error;
@@ -27,7 +31,6 @@ use Bitrix\Main\Event;
 use Bitrix\Main\EventResult;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\DI\ServiceLocator;
-use Bitrix\Ui\Public\Services\Copilot\CopilotNameService;
 
 Loc::loadMessages(__FILE__);
 
@@ -36,11 +39,12 @@ class Engine
 	private const EVENT_NAME_ENGINE_ADDED = 'onEngineAddedInternal';
 
 	public const CATEGORIES = [
-		'text' => 'text',
-		'image' => 'image',
-		'audio' => 'audio',
-		'call' => 'call',
-		'vision' => 'vision',
+		'text'     => 'text',
+		'image'    => 'image',
+		'audio'    => 'audio',
+		'call'     => 'call',
+		'vision'   => 'vision',
+		'classify' => 'classify',
 	];
 
 	private const CONFIG_PREFIX = 'engine_';
@@ -863,7 +867,16 @@ class Engine
 				return;
 			}
 
-			$consumptionId = $limitControlService->commitRequest($reservedRequest);
+			try
+			{
+				$consumptionId = $limitControlService->commitRequest($reservedRequest);
+			}
+			catch (SharedMonthlyPoolLimitExceededException)
+			{
+				$this->throwErrorLimit($reservedRequest);
+
+				return;
+			}
 
 			$this->engine->setConsumptionId($consumptionId);
 		}
@@ -909,6 +922,7 @@ class Engine
 		Analytics::sendAiQueryLimitEvent(
 			$reservedRequest->getErrorLimit()->value . '-' . $reservedRequest->getPromoLimitCode(),
 			$this->getIEngine()->getContext()->getModuleId(),
+			$this->getIEngine()->getContext()->getUserId(),
 		);
 
 		if ($reservedRequest->getErrorLimit() === ErrorLimit::BAAS_LIMIT)
@@ -986,19 +1000,63 @@ class Engine
 		{
 			$rewriteErrorMessage = $customData['msgForIm'] = Loc::getMessage(
 				'AI_ENGINE_ERROR_RATE_LIMIT_BAAS_MARKET_MSGVER_1',
-				['#COPILOT_NAME#' => $this->getCopilotName()]
+				['#COPILOT_NAME#' => (new CopilotNameService())->getCopilotName()]
 			);
 			$customData['showSliderWithMsg'] = false;
 		}
 
 		if ($suffixErrorCode === '_BAAS' && Portal::isMarketAvailable())
 		{
+			$msgLimitBaasMarketErrorCode = (Portal::isBitrix24Portal()  && Portal::getRegion() === 'ru')
+				? 'AI_ENGINE_ERROR_LIMIT_BAAS_MARKET_MSGVER_3'
+				: 'AI_ENGINE_ERROR_LIMIT_BAAS_MARKET_MSGVER_2'
+			;
 			$customData['msgForIm'] = Loc::getMessage(
-				'AI_ENGINE_ERROR_LIMIT_BAAS_MARKET_MSGVER_2',
+				$msgLimitBaasMarketErrorCode,
 				[
 					'#LINK#' => '/online/?FEATURE_PROMOTER=limit_subscription_market_access_buy_marketplus',
-					'#COPILOT_NAME#' => $this->getCopilotName(),
+					'#COPILOT_NAME#' => (new CopilotNameService())->getCopilotName(),
 				]
+			);
+			$customData['showSliderWithMsg'] = false;
+		}
+
+		$isPlainLimitError =
+			$errorCode === self::ERRORS['LIMIT_IS_EXCEEDED']
+			&& empty($customData['msgForIm'])
+			&& $suffixErrorCode !== '_BAAS'
+			&& $suffixErrorCode !== '_BAAS_RATE_LIMIT'
+		;
+
+		// The Vibe+ states are west-only, and the zone is asked here rather than left to the gate:
+		// the monetization model is resolved from the controller group name, while isWestZone() reads
+		// the license region, and on a portal with an empty group name the two disagree - the model
+		// says Vibe+, the region falls back to 'ru'. Such a zone stays non-west, as it was before.
+		$isWestZoneLimit = $isPlainLimitError && $this->isWestZone();
+
+		// Vibe+ portals get one of the three limit states; the message and the promoter both come
+		// from the service, so this path and the cloud mapper cannot diverge.
+		$vibePlusMessage = $isWestZoneLimit ? $this->getVibePlusUpsellService()->resolveLimitMessage() : null;
+
+		if ($vibePlusMessage !== null)
+		{
+			$customData['msgForIm'] = $vibePlusMessage->msgForIm;
+			$customData['showSliderWithMsg'] = false;
+			$customData['vibePlusLimitState'] = $vibePlusMessage->state->name;
+
+			if (
+				$vibePlusMessage->state === VibePlusLimitState::BuyWithDemo
+				|| $vibePlusMessage->state === VibePlusLimitState::BuyWithoutDemo
+			)
+			{
+				$customData['sliderCode'] = $vibePlusMessage->sliderCode;
+			}
+		}
+		elseif ($isWestZoneLimit)
+		{
+			$customData['msgForIm'] = Loc::getMessage(
+				'AI_ENGINE_ERROR_LIMIT_IS_EXCEEDED_WITH_MORE',
+				['#LINK#' => '/online/?FEATURE_PROMOTER=limit_copilot']
 			);
 			$customData['showSliderWithMsg'] = false;
 		}
@@ -1006,19 +1064,21 @@ class Engine
 		call_user_func(
 			[$this, 'internalErrorCallback'],
 			new Error(
-				$rewriteErrorMessage ?? Loc::getMessage(
-					"AI_ENGINE_ERROR_$errorCode",
-					['#COPILOT_NAME#' => $this->getCopilotName()]
-				),
+				$rewriteErrorMessage ?? Loc::getMessage("AI_ENGINE_ERROR_$errorCode"),
 				$errorCode . $suffixErrorCode,
 				$customData
 			),
 		);
 	}
 
-	private function getCopilotName(): string
+	protected function getVibePlusUpsellService(): VibePlusUpsellService
 	{
-		return (new CopilotNameService())->getCopilotName();
+		return new VibePlusUpsellService();
+	}
+
+	protected function isWestZone(): bool
+	{
+		return Portal::isWestZone();
 	}
 
 	private function getLimitControlService(): LimitControlService

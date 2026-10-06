@@ -89,9 +89,14 @@ export const UserBaseInfo = {
 				],
 			};
 		},
+		shouldShowStatus(): boolean
+		{
+			return Boolean(this.info.status) && !this.info.isSystemUser;
+		},
 		shouldShowUserTime(): boolean
 		{
-			return [UserStatusDict.Online, UserStatusDict.DoNotDisturb].includes(this.info.status.code);
+			return this.shouldShowStatus
+				&& [UserStatusDict.Online, UserStatusDict.DoNotDisturb].includes(this.info.status.code);
 		},
 		shouldShowMessengerActionButtons(): boolean
 		{
@@ -100,6 +105,10 @@ export const UserBaseInfo = {
 		shouldShowFirstAdminBadge(): boolean
 		{
 			return this.info.role === UserRoleCode.FirstAdmin;
+		},
+		shouldShowCallAction(): boolean
+		{
+			return this.info.isSystemUser !== true;
 		},
 		currentUserId(): number
 		{
@@ -156,7 +165,7 @@ export const UserBaseInfo = {
 							}"
 						/>
 					</div>
-					<UserStatusIcon v-if="info.status" 
+					<UserStatusIcon v-if="shouldShowStatus"
 						:status="info.status.code"
 						data-test-id="usermp_status"
 					/>
@@ -177,7 +186,7 @@ export const UserBaseInfo = {
 					</div>
 					<FirstAdminBadge v-if="shouldShowFirstAdminBadge"/>
 					<div class="intranet-user-mini-profile__base-info__user-data__status">
-						<UserStatusDescription v-if="info.status"
+						<UserStatusDescription v-if="shouldShowStatus"
 							:personalGender="info.personalGender"
 							:status="info.status"
 							data-test-id="usermp_status-description"
@@ -217,7 +226,9 @@ export const UserBaseInfo = {
 							</span>
 						</button>
 					</div>
-					<div class="intranet-user-mini-profile__base-info__action">
+					<div v-if="shouldShowCallAction"
+						class="intranet-user-mini-profile__base-info__action"
+					>
 						<div class="ui-btn-split --air ui-btn-sm --style-filled ui-btn-no-caps">
 							<button
 								class="ui-btn-main --air"

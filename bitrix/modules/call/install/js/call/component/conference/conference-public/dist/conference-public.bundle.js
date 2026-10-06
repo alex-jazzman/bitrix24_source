@@ -2720,5 +2720,5 @@
 	`
 	});
 
-})(BX, BX, BX, BX, BX.Messenger.Lib, BX.Messenger.Const, BX.Call.Const, BX.Messenger.EventHandler, BX.Messenger.Lib, BX.Event, BX.Messenger, window, BX.UI, window, BX, BX.UI.Dialogs, BX, BX.Messenger.Lib, BX.Call, BX.Call.Component, BX.Messenger.Lib, BX.Messenger.v2.Lib, BX.Main, BX.Messenger.Lib);
+})(window, BX, BX, BX, BX.Messenger.Lib, BX.Messenger.Const, BX.Call.Const, BX.Messenger.EventHandler, BX.Messenger.Lib, BX.Event, BX.Messenger, window, BX.UI, window, BX, BX.UI.Dialogs, BX, BX.Messenger.Lib, BX.Call, BX.Call.Component, BX.Messenger.Lib, BX.Messenger.v2.Lib, BX.Main, BX.Messenger.Lib);
 //# sourceMappingURL=conference-public.bundle.js.map

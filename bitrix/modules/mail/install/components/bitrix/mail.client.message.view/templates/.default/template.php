@@ -3,6 +3,7 @@
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Mail\Helper;
 use Bitrix\UI\Toolbar\Facade\Toolbar;
+use Bitrix\Main\Web\Uri;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
@@ -18,10 +19,17 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	'ui.fonts.opensans',
 	'ui.icons.b24',
 	'ui.alerts',
+	'ui.notification',
 	'ui.sidepanel.page-swapper',
+	'pull.client',
 	'mail.message-body',
 	'mail.client.action.discuss-in-chat',
+	'mail.migration-state',
 ]);
+if (!empty($arResult['LABELS_ENABLED']))
+{
+	\Bitrix\Main\UI\Extension::load(['mail.label.view-button']);
+}
 \Bitrix\UI\Toolbar\Facade\Toolbar::deleteFavoriteStar();
 $bodyClass = $APPLICATION->getPageProperty('BodyClass', false);
 $APPLICATION->setPageProperty('BodyClass', trim(sprintf('%s %s', $bodyClass, 'pagetitle-toolbar-field-view pagetitle-mail-view')));
@@ -29,6 +37,15 @@ $APPLICATION->setPageProperty('BodyClass', trim(sprintf('%s %s', $bodyClass, 'pa
 $emailsLimitToSendMessage = Helper\LicenseManager::getEmailsLimitToSendMessage();
 
 $message = $arResult['MESSAGE'];
+$sendError = $arResult['SEND_ERROR'] ?? null;
+$renderLabelControl = !empty($arResult['LABELS_ENABLED']);
+
+$migrationWatchMailboxId = (int)($message['MAILBOX_ID'] ?? 0);
+if ($migrationWatchMailboxId > 0 && \Bitrix\Main\Loader::includeModule('pull'))
+{
+	global $USER;
+	\CPullWatch::add((int)$USER->getId(), 'mail_mailbox_' . $migrationWatchMailboxId);
+}
 
 $source = $_REQUEST['source'];
 $openedSource = null;
@@ -71,6 +88,12 @@ ob_start();
 
 <?php Toolbar::addRightCustomHtml(ob_get_clean()); ?>
 
+<?php if ($sendError instanceof \Bitrix\Main\Error): ?>
+	<div class="ui-alert ui-alert-warning">
+		<span class="ui-alert-message"><?= htmlspecialcharsbx($sendError->getMessage()) ?></span>
+	</div>
+<?php endif ?>
+
 <script>
 BX.ready(function ()
 {
@@ -81,10 +104,7 @@ BX.ready(function ()
 		<? if (isset($_REQUEST['mail_uf_message_token']) && is_string($_REQUEST['mail_uf_message_token'])): ?>
 			mail_uf_message_token: '<?=\CUtil::jsEscape($_REQUEST['mail_uf_message_token']) ?>',
 		<? endif ?>
-		pathNew: '<?=\CUtil::jsEscape(\CHTTP::urlAddParams(
-			$arParams['~PATH_TO_MAIL_MSG_NEW'],
-			$urlParams,
-		)) ?>',
+		pathNew: '<?=\CUtil::jsEscape((string)(new Uri($arParams['~PATH_TO_MAIL_MSG_NEW']))->addParams($urlParams)) ?>',
 		pathList: '<?=\CUtil::jsEscape(\CComponentEngine::makePathFromTemplate(
 			$arParams['~PATH_TO_MAIL_MSG_LIST'],
 			array(
@@ -92,6 +112,10 @@ BX.ready(function ()
 			)
 		)) ?>'
 	});
+
+	<?php if (!empty($arResult['LABELS_ENABLED'])): ?>
+	BX.Mail.Label.ViewButton.ViewLabelButton.init();
+	<?php endif; ?>
 
 	BX.bind(
 		BX('mail-msg-additional-switch'),
@@ -255,6 +279,9 @@ $renderBindLink = function ($item)
 
 BX.message({
 	EMAILS_LIMIT_TO_SEND_MESSAGE: '<?=$emailsLimitToSendMessage?>',
+	// Read by the three entry points into a reply: with the redesign on they open the compose panel
+	// instead of the form built into this screen.
+	MAIL_COMPOSE_REDESIGN_ENABLED: <?=Helper\Config\Feature::isComposeRedesignAvailable() ? 'true' : 'false' ?>,
 	MAIL_MESSAGE_AJAX_ERROR: '<?=\CUtil::jsEscape(Loc::getMessage('MAIL_MESSAGE_AJAX_ERROR')) ?>',
 	MAIL_MESSAGE_NEW_TARIFF_RESTRICTION: '<?=\CUtil::jsEscape(Loc::getMessage('MAIL_MESSAGE_NEW_TARIFF_RESTRICTION', ['#COUNT#'=> $emailsLimitToSendMessage])) ?>',
 	MAIL_MESSAGE_NEW_EMPTY_RCPT: '<?=\CUtil::jsEscape(Loc::getMessage('MAIL_MESSAGE_NEW_EMPTY_RCPT')) ?>',

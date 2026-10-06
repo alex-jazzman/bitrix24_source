@@ -44,7 +44,15 @@
 	display: inline-block;
 	width: 200px;
 	height: 300px;
-	background: url(../images/bg.png);
+	background-image: url(../images/bg.webp);
+	background-image: -webkit-image-set(
+		url(../images/bg.webp) 1x,
+		url(../images/bg@2x.webp) 2x
+	);
+	background-image: image-set(
+		url(../images/bg.webp) 1x,
+		url(../images/bg@2x.webp) 2x
+	);
 }
 .bx-timeman-timecontrol-content {
 	display: inline-block;
@@ -58,7 +66,15 @@
 
 .bx-timeman-timecontrol-message {}
 .bx-timeman-timecontrol-message-avatar {
-	background: url(../images/avatar-default.png);
+	background-image: url(../images/avatar-default.webp);
+	background-image: -webkit-image-set(
+		url(../images/avatar-default.webp) 1x,
+		url(../images/avatar-default@2x.webp) 2x
+	);
+	background-image: image-set(
+		url(../images/avatar-default.webp) 1x,
+		url(../images/avatar-default@2x.webp) 2x
+	);
 	background-color: #545D69;
 	background-size: cover;
 	width: 34px;
@@ -75,7 +91,15 @@
 
 .bx-timeman-timecontrol-message-marta {}
 .bx-timeman-timecontrol-message-marta .bx-timeman-timecontrol-message-avatar {
-	background-image: url(../images/avatar-marta.png);
+	background-image: url(../images/avatar-marta.webp);
+	background-image: -webkit-image-set(
+		url(../images/avatar-marta.webp) 1x,
+		url(../images/avatar-marta@2x.webp) 2x
+	);
+	background-image: image-set(
+		url(../images/avatar-marta.webp) 1x,
+		url(../images/avatar-marta@2x.webp) 2x
+	);
 	background-color: #e591a6;
 	margin-top: 2px;
 }

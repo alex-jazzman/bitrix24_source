@@ -4625,13 +4625,13 @@ jn.define('call/calls/layout', (require, exports, module) => {
 				userList: this.getParticipants(),
 			});
 
-			const bottomSheet = new BottomSheet({ component })
-				.setBackgroundColor(Color.bgContentPrimary.toHex())
-				.disableOnlyMediumPosition()
-				.setTopPosition(100)
-			;
+		const bottomSheet = new BottomSheet({ component })
+			.setBackgroundColor(Color.bgContentPrimary.toHex())
+			.disableOnlyMediumPosition()
+			.setTopPosition(100)
+		;
 
-			component.on('onUserMenuClick', async (userId) => {
+		component.on('onUserMenuClick', async (userId) => {
 				await bottomSheet.close();
 				this.showUserMenu(userId);
 			});

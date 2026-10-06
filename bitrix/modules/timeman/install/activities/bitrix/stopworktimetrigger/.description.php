@@ -46,6 +46,10 @@ $arActivityDescription
 				'Name' => (string)Loc::getMessage('STOP_WORK_TIME_TRIGGER_RETURN_FIELD_IS_FIRST_STOP'),
 				'Type' => FieldType::BOOL,
 			],
+			'WORKDAY_START' => [
+				'Name' => (string)Loc::getMessage('STOP_WORK_TIME_TRIGGER_RETURN_FIELD_WORKDAY_START'),
+				'Type' => FieldType::DATETIME,
+			],
 		])
 		->setIcon(Outline::TIMER->name)
 		->setColorIndex(ActivityColorIndex::ORANGE->value)

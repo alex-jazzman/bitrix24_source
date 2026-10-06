@@ -52,12 +52,25 @@ this.BX.Socialnetwork.V2.Components = this.BX.Socialnetwork.V2.Components || {};
 			},
 			onUncheck() {
 				this.$emit('update:modelValue', false);
+			},
+			onKeyboardToggle() {
+				this.$emit('update:modelValue', !this.modelValue);
+				this.$emit('click');
 			}
 		},
 		template: `
 		<div class="sonet-elements-switcher-field">
 			<div class="sonet-elements-switcher-field-toggle socialnetwork--project-wizard--ui-switcher-field--line">
-				<div class="socialnetwork--project-wizard--ui-switcher-field--left-col" @click="$emit('click')">
+				<div
+					class="socialnetwork--project-wizard--ui-switcher-field--left-col"
+					role="switch"
+					tabindex="0"
+					:aria-checked="modelValue ? 'true' : 'false'"
+					:aria-label="label"
+					@click="$emit('click')"
+					@keydown.space.prevent="onKeyboardToggle"
+					@keydown.enter.prevent="onKeyboardToggle"
+				>
 					<UiSwitcher
 						:isChecked="modelValue"
 						:options="switcherOptions"

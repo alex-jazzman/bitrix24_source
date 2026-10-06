@@ -7,6 +7,7 @@ jn.define('im/messenger/controller/collab-entity-creation-selector/src/selector'
 	const { Text2 } = require('ui-system/typography');
 
 	const { MessengerIcon } = require('im/messenger/assets/icon');
+	const { ITEM_HEIGHT } = require('im/messenger/controller/collab-entity-creation-selector/src/backdrop-height');
 
 	/**
 	 * @class CollabEntityCreationSelector
@@ -62,7 +63,7 @@ jn.define('im/messenger/controller/collab-entity-creation-selector/src/selector'
 				{
 					style: {
 						flexDirection: 'row',
-						height: 69,
+						height: ITEM_HEIGHT,
 						width: '100%',
 						justifyContent: 'center',
 					},

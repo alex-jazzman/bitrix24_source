@@ -1,12 +1,14 @@
-import { Event } from 'main.core';
 import { mapGetters } from 'ui.vue3.vuex';
+
+import { Event } from 'main.core';
+import { type PopupOptions } from 'main.popup';
 
 import { EventName, LimitFeatureId, Model } from 'booking.const';
 import { Popup } from 'booking.component.popup';
 import { TimeSelector } from 'booking.component.time-selector';
 import { Button as UiButton, ButtonSize, ButtonColor, ButtonIcon } from 'booking.component.button';
 import { bookingService } from 'booking.provider.service.booking-service';
-import type { BookingModel, OverbookingMapItem } from 'booking.model.bookings';
+import { type BookingModel, type OverbookingMapItem } from 'booking.model.bookings';
 
 import './change-time-popup.css';
 
@@ -17,6 +19,11 @@ export const ChangeTimePopup = {
 		Popup,
 		TimeSelector,
 		UiButton,
+	},
+	inject: {
+		autoHideContext: {
+			default: null,
+		},
 	},
 	props: {
 		bookingId: {
@@ -52,6 +59,8 @@ export const ChangeTimePopup = {
 	computed: {
 		...mapGetters({
 			selectedDateTs: `${Model.Interface}/selectedDateTs`,
+			getBookingById: `${Model.Bookings}/getById`,
+			overbookingMap: `${Model.Bookings}/overbookingMap`,
 		}),
 		popupId(): string
 		{
@@ -120,11 +129,7 @@ export const ChangeTimePopup = {
 		},
 		booking(): BookingModel
 		{
-			return this.$store.getters['bookings/getById'](this.bookingId);
-		},
-		overbookingMap(): Map<number, OverbookingMapItem[]>
-		{
-			return this.$store.getters[`${Model.Bookings}/overbookingMap`];
+			return this.getBookingById(this.bookingId);
 		},
 	},
 	watch: {
@@ -148,19 +153,36 @@ export const ChangeTimePopup = {
 	},
 	created(): void
 	{
+		this.unfreezeAutoHide = null;
 		this.fromTs = this.booking.dateFromTs;
 		this.toTs = this.booking.dateToTs;
 		this.duration = this.toTs - this.fromTs;
 	},
 	mounted(): void
 	{
+		this.freezeParentAutoHide();
 		Event.bind(document, 'scroll', this.adjustPosition, true);
 	},
 	beforeUnmount(): void
 	{
+		this.unfreezeParentAutoHide();
 		Event.unbind(document, 'scroll', this.adjustPosition, true);
 	},
 	methods: {
+		freezeParentAutoHide(): void
+		{
+			if (this.unfreezeAutoHide)
+			{
+				return;
+			}
+
+			this.unfreezeAutoHide = this.autoHideContext?.freeze() ?? null;
+		},
+		unfreezeParentAutoHide(): void
+		{
+			this.unfreezeAutoHide?.();
+			this.unfreezeAutoHide = null;
+		},
 		adjustPosition(): void
 		{
 			this.$refs.popup.adjustPosition();

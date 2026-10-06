@@ -1,0 +1,92 @@
+.bizprocdesigner-version-history
+{
+	min-height: 120px;
+	max-height: 420px;
+	overflow-y: auto;
+}
+
+.bizprocdesigner-version-history__skeleton
+{
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	padding-top: 8px;
+}
+
+.bizprocdesigner-version-history__error
+{
+	display: block;
+	padding: 24px 0;
+	color: var(--ui-color-text-alert);
+}
+
+.bizprocdesigner-version-history__empty
+{
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	padding: 32px 0;
+	color: var(--ui-color-text-secondary);
+}
+
+.bizprocdesigner-version-history__table
+{
+	width: 100%;
+	border-collapse: collapse;
+}
+
+.bizprocdesigner-version-history__table th,
+.bizprocdesigner-version-history__table td
+{
+	padding: 10px 12px 10px 0;
+	text-align: start;
+	vertical-align: middle;
+	border-bottom: 1px solid var(--ui-color-divider-less);
+}
+
+.bizprocdesigner-version-history__table th
+{
+	font-weight: inherit;
+}
+
+.bizprocdesigner-version-history__table thead th
+{
+	color: var(--ui-color-text-secondary);
+	border-bottom-color: var(--ui-color-divider-default);
+}
+
+.bizprocdesigner-version-history__table th:last-child,
+.bizprocdesigner-version-history__table td:last-child
+{
+	width: 1%;
+	padding-right: 0;
+}
+
+/* Auto layout keeps a column at least as wide as its content, and a truncated cell never
+   wraps: without this cap it widens the table instead of showing an ellipsis. */
+.bizprocdesigner-version-history__table tbody td:not(:last-child)
+{
+	max-width: 0;
+}
+
+.bizprocdesigner-version-history__table tbody tr:last-child td
+{
+	border-bottom: none;
+}
+
+.bizprocdesigner-version-history__number
+{
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	min-width: max-content;
+}
+
+.bizprocdesigner-version-history__actions
+{
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	justify-content: flex-end;
+	min-width: max-content;
+}

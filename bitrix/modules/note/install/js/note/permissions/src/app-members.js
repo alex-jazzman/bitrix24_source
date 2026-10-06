@@ -10,12 +10,15 @@ import {
 	LEVEL_MODERATE,
 	LEVEL_VIEW,
 	META_USER_ALL_USERS,
+	SCOPE_DOCUMENT,
+	SCOPE_SUBTREE,
 } from './constants';
 import type {
 	CollectionPermissionsPayload,
 	DecodedSubjectCode,
 	Member,
 	PermissionLevel,
+	PermissionScope,
 	PopupSaveState,
 } from './type';
 
@@ -37,6 +40,10 @@ export class NotePermissionsMembers
 	hydrateState(payload: CollectionPermissionsPayload): void
 	{
 		this.byLevel = this.createEmptyByLevel();
+		// Inherited rows are kept apart from byLevel: they are shown inside the selector as
+		// non-removable tags and never take part in the save payload.
+		this.inheritedByLevel = this.createEmptyByLevel();
+		this.subtreeAvailable = payload?.subtreeAvailable === true;
 
 		const permissions = Array.isArray(payload?.permissions) ? payload.permissions : [];
 		for (const permission of permissions)
@@ -54,7 +61,20 @@ export class NotePermissionsMembers
 			}
 
 			const titleHint = String(permission?.name || '');
-			this.byLevel[level].set(subjectCode, this.buildMember(subjectCode, titleHint));
+
+			if (permission?.inherited === true)
+			{
+				const sourceId = Number(permission?.sourceDocumentId) || null;
+				const sourceTitle = String(permission?.sourceDocumentTitle || '');
+				this.inheritedByLevel[level].set(
+					subjectCode,
+					this.buildMember(subjectCode, titleHint, SCOPE_DOCUMENT, true, sourceId, sourceTitle),
+				);
+				continue;
+			}
+
+			const scope = this.normalizeScope(permission?.scope);
+			this.byLevel[level].set(subjectCode, this.buildMember(subjectCode, titleHint, scope));
 		}
 
 		const policyLevel = this.normalizeLevel(payload?.policyLevel);
@@ -65,6 +85,10 @@ export class NotePermissionsMembers
 				title: this.getAllEmployeesTitle(),
 				entityId: ENTITY_TYPE_META_USER,
 				entityItemId: META_USER_ALL_USERS,
+				scope: SCOPE_DOCUMENT,
+				inherited: false,
+				sourceDocumentId: null,
+				sourceDocumentTitle: '',
 			});
 		}
 	}
@@ -74,7 +98,14 @@ export class NotePermissionsMembers
 		return Loc.getMessage('NOTE_PERMISSIONS_POPUP_ALL_EMPLOYEES') || '';
 	}
 
-	buildMember(subjectCode: string, titleHint: string = ''): Member
+	buildMember(
+		subjectCode: string,
+		titleHint: string = '',
+		scope: PermissionScope = SCOPE_DOCUMENT,
+		inherited: boolean = false,
+		sourceDocumentId: number | null = null,
+		sourceDocumentTitle: string = '',
+	): Member
 	{
 		const decoded = this.decodeSubjectCode(subjectCode);
 
@@ -83,6 +114,10 @@ export class NotePermissionsMembers
 			title: titleHint || subjectCode,
 			entityId: decoded?.entityId || '',
 			entityItemId: decoded?.entityItemId || '',
+			scope,
+			inherited,
+			sourceDocumentId,
+			sourceDocumentTitle,
 		};
 	}
 
@@ -148,6 +183,60 @@ export class NotePermissionsMembers
 		}
 
 		return '';
+	}
+
+	normalizeScope(scope: mixed): PermissionScope
+	{
+		return String(scope || '').toLowerCase().trim() === SCOPE_SUBTREE
+			? SCOPE_SUBTREE
+			: SCOPE_DOCUMENT;
+	}
+
+	// Single scope toggle drives every editable grant uniformly. Untouched hydrated
+	// scope is preserved (the toggle is only rewritten on an explicit flip), so a
+	// mixed initial state is never silently changed.
+	applyScopeToEditableMembers(scope: PermissionScope): void
+	{
+		for (const level of ALL_LEVELS)
+		{
+			const map = this.byLevel?.[level];
+			if (!map)
+			{
+				continue;
+			}
+
+			for (const member of map.values())
+			{
+				member.scope = scope;
+			}
+		}
+	}
+
+	hasSubtreeMember(): boolean
+	{
+		for (const level of ALL_LEVELS)
+		{
+			const map = this.byLevel?.[level];
+			if (!map)
+			{
+				continue;
+			}
+
+			for (const member of map.values())
+			{
+				if (member.scope === SCOPE_SUBTREE)
+				{
+					return true;
+				}
+			}
+		}
+
+		return false;
+	}
+
+	getInheritedMembers(level: PermissionLevel): Member[]
+	{
+		return Array.from(this.inheritedByLevel?.[level]?.values?.() || []);
 	}
 
 	decodeSubjectCode(subjectCode: string): DecodedSubjectCode | null

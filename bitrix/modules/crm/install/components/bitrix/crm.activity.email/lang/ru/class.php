@@ -71,3 +71,5 @@ $MESS["CRM_ACT_EMAIL_SPAM_CONFIRM"] = "Вы действительно хоти�
 
 $MESS["CRM_ACT_EMAIL_DISK_ACTION_SAVE_TO_OWN_FILES_MSGVER_1"] = "Сохранить на Битрикс24 Диск";
 $MESS["CRM_ACT_EMAIL_DISK_FILE_DOWNLOAD_ARCHIVE"] = "Скачать все файлы одним архивом";
+
+$MESS["CRM_ACT_EMAIL_DRAFT_LOAD_ERROR"] = "Не удалось загрузить черновик. Чтобы не потерять изменения, сохраните письмо вручную";

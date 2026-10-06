@@ -31,3 +31,9 @@
 	margin: 8px 0;
 	color: var(--sonet-auto-delete-message-popup__color_popup-info);
 }
+
+.socialnetwork--auto-delete-message-popup__footer {
+	display: flex;
+	justify-content: flex-end;
+	margin-top: 16px;
+}

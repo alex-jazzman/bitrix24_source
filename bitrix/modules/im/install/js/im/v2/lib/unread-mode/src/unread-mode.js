@@ -33,9 +33,9 @@ export const UnreadModeManager = {
 			});
 		});
 	},
-	removeClosedChats(recentType: RecentTypeItem)
+	removeClosedChats(recentType: RecentTypeItem, parentChatId?: number)
 	{
-		const collection = Core.getStore().getters['recent/getUnreadCollection']({ type: recentType });
+		const collection = Core.getStore().getters['recent/getUnreadCollection']({ type: recentType, parentChatId });
 		const dialogIds = collection.map(({ dialogId }) => dialogId);
 
 		const dialogIdsToRemove = dialogIds.filter((dialogId) => {
@@ -43,7 +43,7 @@ export const UnreadModeManager = {
 		});
 
 		dialogIdsToRemove.forEach((dialogId) => {
-			this.removeDialogIdBySections({ recentSections: [recentType], dialogId });
+			this.removeDialogIdBySections({ recentSections: [recentType], dialogId, parentChatId });
 		});
 	},
 };

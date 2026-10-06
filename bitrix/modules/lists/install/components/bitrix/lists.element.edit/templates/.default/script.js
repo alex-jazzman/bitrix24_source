@@ -145,7 +145,7 @@ BX.Lists.ListsElementEditClass = (function ()
 
 	ListsElementEditClass.prototype.unLock = function(onBeforeUnload)
 	{
-		BX.ajax.runAction('lists.controller.lock.unLock', {
+		BX.ajax.runAction('lists.Lock.unLock', {
 			data: {
 				element_id: this.elementId,
 				iblock_type_id: this.iblockTypeId,

@@ -1,0 +1,48 @@
+.crm-call-assessment-v2-toolbar {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-sm);
+	padding: 12px var(--ui-space-inset-xl) 0;
+	background: transparent;
+	min-height: 56px;
+}
+
+.crm-call-assessment-v2-toolbar__controls {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-sm);
+	position: relative;
+}
+
+.crm-call-assessment-v2-toolbar__ai-pill {
+	display: inline-flex;
+	align-items: center;
+	height: 28px;
+	border: 1.5px solid transparent;
+	border-radius: var(--ui-border-radius-sm);
+	background:
+		linear-gradient(var(--ui-color-bg-content-primary), var(--ui-color-bg-content-primary)) padding-box,
+		var(--cav2-bitrix-gpt-gradient) border-box;
+}
+
+.crm-call-assessment-v2-toolbar__ai-label {
+	padding: 0 10px;
+	background: var(--cav2-bitrix-gpt-gradient);
+	-webkit-background-clip: text;
+	background-clip: text;
+	-webkit-text-fill-color: transparent;
+	white-space: nowrap;
+}
+
+.crm-call-assessment-v2-toolbar__ai-divider {
+	width: 1px;
+	height: 14px;
+	background: var(--ui-color-design-outline-bitrix-gpt-content-divider);
+}
+
+.crm-call-assessment-v2-toolbar__ai-toggle {
+	display: inline-flex;
+	align-items: center;
+	padding: 0 6px;
+	line-height: 0;
+}

@@ -89,6 +89,14 @@ $jsConfig = [
 		],
 	],
 
+	// Framework-independent responder for the sandboxed editor device preview.
+	// No 'rel' on purpose: it must not pull main.core (runs in an opaque-origin frame).
+	'landing_device_preview_responder' => [
+		'js' => [
+			$pathJS . '/device_preview/responder.js',
+		],
+	],
+
 	'landing_event_tracker' => [
 		'js' => [
 			$pathJS . '/event-tracker/event-tracker.js',

@@ -718,8 +718,12 @@ return [
 						'bookingRepository' => \Bitrix\Booking\Internals\Container::getBookingRepository(),
 						'resourceAutoSelectionService' => \Bitrix\Booking\Internals\Container::getCrmFormResourceAutoSelectionService(),
 						'serviceSkuProvider' => \Bitrix\Booking\Internals\Container::getCatalogServiceSkuProvider(),
+						'resourceAccessProvider' => \Bitrix\Booking\Internals\Container::getCrmFormResourceAccessProvider(),
 					];
 				}
+			],
+			\Bitrix\Booking\Internals\Integration\Crm\WebForm\ResourceAccessProvider::class => [
+				'className' => \Bitrix\Booking\Internals\Integration\Crm\WebForm\ResourceAccessProvider::class,
 			],
 			\Bitrix\Booking\Internals\Service\CrmForm\ResourceAutoSelectionService::class => [
 				'className' => \Bitrix\Booking\Internals\Service\CrmForm\ResourceAutoSelectionService::class,
@@ -789,6 +793,9 @@ return [
 					];
 				},
 			],
+			\Bitrix\Booking\Internals\Service\Notifications\Analytics\AiCallAnalytics::class => [
+				'className' => \Bitrix\Booking\Internals\Service\Notifications\Analytics\AiCallAnalytics::class,
+			],
 			\Bitrix\Booking\Internals\Integration\Bizproc\AiCallMessageSender::class => [
 				'className' => \Bitrix\Booking\Internals\Integration\Bizproc\AiCallMessageSender::class,
 				'constructorParams' => static function() {
@@ -801,6 +808,7 @@ return [
 						\Bitrix\Booking\Internals\Container::getCrmBindingsBuilder(),
 						\Bitrix\Booking\Internals\Container::getAiCallAvailabilityService(),
 						\Bitrix\Booking\Internals\Container::getAiAgentProvider(),
+						\Bitrix\Booking\Internals\Container::getAiCallAnalytics(),
 					];
 				},
 			],

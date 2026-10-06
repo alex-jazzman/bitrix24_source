@@ -4,6 +4,7 @@ return [
 	'extensions' => [
 		'statemanager/redux/connect',
 		'statemanager/redux/store',
+		'tokens',
 		'ui-system/blocks/avatar',
 		'tasks:statemanager/redux/slices/groups',
 	],

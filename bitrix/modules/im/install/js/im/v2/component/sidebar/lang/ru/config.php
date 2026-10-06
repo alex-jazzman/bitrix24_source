@@ -5,6 +5,7 @@ $MESS['IM_SIDEBAR_ENABLE_NOTIFICATION_TITLE_2'] = "Звук";
 $MESS['IM_SIDEBAR_ENABLE_AUTODELETE_TITLE'] = "Автоудаление сообщений";
 $MESS['IM_SIDEBAR_AUTODELETE_NO_PERMISSION'] = "Недостаточно прав для работы с автоудалением. [helpdesklink]Подробнее[/helpdesklink]";
 $MESS['IM_SIDEBAR_SHARED_LINK_DESCRIPTION_MSGVER_1'] = "Ссылка на приглашение в чат";
+$MESS['IM_SIDEBAR_SHARED_LINK_DESCRIPTION_COLLAB'] = "Ссылка на приглашение в проект";
 $MESS['IM_SIDEBAR_SHARED_LINK_COPY_MENU_MSGVER_1'] = "Ссылка для сотрудников";
 $MESS['IM_SIDEBAR_SHARED_GUEST_LINK_COPY_MENU'] = "Ссылка для гостей";
 $MESS['IM_SIDEBAR_SHARED_LINK_CHANGE_MENU'] = "Сменить";
@@ -26,6 +27,9 @@ $MESS['IM_SIDEBAR_COLLAB_HELPDESK_DESCRIPTION'] = "Как работать с в
 $MESS['IM_SIDEBAR_MAIN_DETAIL_TITLE'] = "Участники: #NUMBER#";
 $MESS['IM_SIDEBAR_MEMBERS_DETAIL_TITLE'] = "Участники: #NUMBER#";
 $MESS['IM_SIDEBAR_MEMBERS_CHANNEL_DETAIL_TITLE'] = "Подписчики: #NUMBER#";
+$MESS['IM_SIDEBAR_MEMBERS_LOAD_ERROR'] = "Не удалось загрузить участников";
+$MESS['IM_SIDEBAR_MEMBERS_LOAD_ERROR_RETRY'] = "Повторить";
+$MESS['IM_SIDEBAR_MEMBERS_SEARCH_PLACEHOLDER'] = "Найти участника";
 $MESS['IM_SIDEBAR_FAVORITE_DETAIL_TITLE'] = "Избранное";
 $MESS['IM_SIDEBAR_LINK_DETAIL_TITLE'] = "Ссылки из сообщений";
 $MESS['IM_SIDEBAR_SHARED_CHATS_TITLE'] = "Общие чаты";
@@ -64,6 +68,13 @@ $MESS['IM_SIDEBAR_MENU_MANAGER_ADD'] = "Сделать администрато�
 $MESS['IM_SIDEBAR_MENU_MANAGER_REMOVE'] = "Исключить из администраторов";
 $MESS['IM_SIDEBAR_MENU_COPY_INVITE_LINK'] = "Копировать ссылку";
 $MESS['IM_SIDEBAR_MENU_COPY_DIALOG_ID'] = "Копировать ID чата";
+$MESS['IM_SIDEBAR_MENU_ATTACH_TO_COLLAB_V2'] = "Добавить чат в проект";
+$MESS['IM_SIDEBAR_MENU_DETACH_FROM_COLLAB_V2'] = "Убрать чат из проекта";
+$MESS['IM_SIDEBAR_MENU_ATTACH_TO_COLLAB_V2_POPUP_TITLE'] = "Выберите проект";
+$MESS['IM_SIDEBAR_MENU_DETACH_FROM_COLLAB_V2_POPUP_TITLE'] = "Убрать чат из проекта?";
+$MESS['IM_SIDEBAR_MENU_DETACH_FROM_COLLAB_V2_POPUP_TEXT'] = "Чат больше не будет отображаться в проекте и появится в общем списке чатов";
+$MESS['IM_SIDEBAR_MENU_DETACH_FROM_COLLAB_V2_POPUP_ACCESS_CONFIRM'] = "Да, убрать";
+$MESS['IM_SIDEBAR_MENU_DETACH_FROM_COLLAB_V2_POPUP_ACCESS_CANCEL'] = "Отмена";
 
 // empty states
 $MESS['IM_SIDEBAR_LINKS_EMPTY'] = "Нет ссылок";
@@ -80,6 +91,8 @@ $MESS['IM_SIDEBAR_MESSAGE_SEARCH_NOT_FOUND_DESCRIPTION'] = "Попробуйте
 $MESS['IM_SIDEBAR_CHATS_WITH_USER_EMPTY'] = "Нет чатов с сотрудником";
 $MESS['IM_SIDEBAR_MESSAGE_SEARCH_NOT_FOUND_DESCRIPTION_EXTENDED'] = "Попробуйте сформулировать иначе или измените ваш запрос";
 $MESS['IM_SIDEBAR_MESSAGE_SEARCH_NOT_FOUND_EXTENDED'] = "Ничего не нашлось";
+$MESS['IM_SIDEBAR_MEMBERS_SEARCH_NOT_FOUND_TITLE'] = "Ничего не нашли";
+$MESS['IM_SIDEBAR_MEMBERS_SEARCH_NOT_FOUND_SUBTITLE'] = "Попробуйте изменить запрос";
 
 //tabs
 $MESS['IM_SIDEBAR_FILES_MEDIA_TAB'] = "Медиа";

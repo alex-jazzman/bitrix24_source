@@ -1,10 +1,9 @@
-import { Type, Dom, Event, Loc, Runtime, Tag, Text } from 'main.core';
-import { DateTimeFormat } from 'main.date';
 import { AddingPopup } from 'crm.activity.adding-popup';
-import { Restriction } from 'crm.kanban.restriction';
 import { Badge } from 'crm.badge';
-import { Popup, PopupManager, Menu, MenuManager } from 'main.popup';
-import { Loader } from 'main.loader';
+import { Restriction } from 'crm.kanban.restriction';
+import { Dom, Event, Loc, Runtime, Tag, Text, Type } from 'main.core';
+import { DateTimeFormat } from 'main.date';
+import { Menu, MenuManager, Popup, PopupManager } from 'main.popup';
 import { SidePanel } from 'main.sidepanel';
 import { Label, LabelStyle } from 'ui.system.label';
 import 'ui.hint';
@@ -808,11 +807,11 @@ export class Item extends BX.Kanban.Item
 			this.addTextExpander(fieldsElement);
 		}
 
-		if (code === 'COMMENTS' && BX.Type.isStringFilled(this.getGrid().getData().copilotName))
+		if (code === 'COMMENTS' && Type.isStringFilled(this.getGrid().getData().copilotName))
 		{
 			const copilot = `${this.getGrid().getData().copilotName}`;
 			const escapedCopilot =
-				BX.Type.isFunction(RegExp.escape)
+				Type.isFunction(RegExp.escape)
 					? RegExp.escape(copilot)
 					: copilot.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 			;
@@ -843,7 +842,7 @@ export class Item extends BX.Kanban.Item
 
 	addTextExpander(fieldElement)
 	{
-		if (!BX.Type.isDomNode(fieldElement))
+		if (!Type.isDomNode(fieldElement))
 		{
 			return;
 		}
@@ -1103,15 +1102,13 @@ export class Item extends BX.Kanban.Item
 		{
 			const badgeData = badges[i];
 
-			const badgeValueClass = 'crm-kanban-item-badges-item-value crm-kanban-item-badges-status';
-			const badgeValueStyle = `
-				background-color: ${badgeData.backgroundColor};
-				border-color: ${badgeData.backgroundColor};
-				color: ${badgeData.textColor};
-			`;
+			const labelNode = (new Label({
+				value: badgeData.textValue,
+				style: badgeData.style,
+			})).render();
 
-			const badgeTextItem = Tag.render`
-				<div class="${badgeValueClass}" style="${badgeValueStyle}">${badgeData.textValue}</div>
+			const valueWrapper = Tag.render`
+				<div class="crm-kanban-item-badges-item-value">${labelNode}</div>
 			`;
 
 			const item = Tag.render`
@@ -1119,7 +1116,7 @@ export class Item extends BX.Kanban.Item
 					<div class="crm-kanban-item-badges-item-title">
 						<div class="crm-kanban-item-badges-item-title-text">${badgeData.fieldName}</div>
 					</div>
-					${badgeTextItem}
+					${valueWrapper}
 				</div>
 			`;
 
@@ -1127,7 +1124,7 @@ export class Item extends BX.Kanban.Item
 
 			if (Type.isStringFilled(badgeData?.hint))
 			{
-				const badge = new Badge(badgeTextItem);
+				const badge = new Badge(valueWrapper);
 				badge.init({
 					hint: badgeData.hint,
 				});
@@ -1718,6 +1715,15 @@ export class Item extends BX.Kanban.Item
 		}
 	}
 
+	// The default communication entity is the card owner: type and id must belong to the same CRM entity (Mantis 142500).
+	getDefaultCommunicationEntity()
+	{
+		const type = this.getContactType();
+		const id = (type === 'CRM_COMPANY') ? this.getCompanyId() : this.getContactId();
+
+		return { type, id };
+	}
+
 	clickContactItem(item)
 	{
 		const data = this.getData();
@@ -1725,10 +1731,14 @@ export class Item extends BX.Kanban.Item
 		// eslint-disable-next-line no-undef
 		if (item.type === 'phone' && !Type.isUndefined(BXIM))
 		{
+			const entity = item.clientType
+				? { type: item.clientType, id: item.clientId }
+				: this.getDefaultCommunicationEntity();
+
 			// eslint-disable-next-line no-undef
 			BXIM.phoneTo(item.value, {
-				ENTITY_TYPE: (item.clientType === undefined ? this.getContactType() : item.clientType),
-				ENTITY_ID: (item.clientId === undefined ? this.getContactId() : item.clientId),
+				ENTITY_TYPE: entity.type,
+				ENTITY_ID: entity.id,
 			});
 		}
 		// eslint-disable-next-line no-undef
@@ -1812,6 +1822,8 @@ export class Item extends BX.Kanban.Item
 					onclick: this.clickContactItem.bind(this, {
 						value: field.value,
 						type,
+						clientType,
+						clientId,
 					}),
 				});
 			});
@@ -1843,22 +1855,31 @@ export class Item extends BX.Kanban.Item
 
 	showSingleContact(contactInfo, type)
 	{
-		let fields = this.getSingleContactCategory(contactInfo);
+		const category = Type.isObjectLike(contactInfo) ? Object.keys(contactInfo)[0] : '';
+		let fields = Type.isObjectLike(contactInfo) ? contactInfo[category] : contactInfo;
 
 		if (!Array.isArray(fields))
 		{
 			fields = [fields];
 		}
 
-		this.clickContactItem({
+		const item = {
 			value: (Type.isUndefined(fields[0].value)) ? fields[0] : fields[0].value,
 			type,
-		});
-	}
+		};
 
-	getSingleContactCategory(contactInfo)
-	{
-		return (Type.isObjectLike(contactInfo) ? contactInfo[Object.keys(contactInfo)[0]] : contactInfo);
+		if (category === 'company')
+		{
+			item.clientType = 'CRM_COMPANY';
+			item.clientId = this.getCompanyId();
+		}
+		else if (category === 'contact')
+		{
+			item.clientType = 'CRM_CONTACT';
+			item.clientId = this.getContactId();
+		}
+
+		this.clickContactItem(item);
 	}
 
 	/**

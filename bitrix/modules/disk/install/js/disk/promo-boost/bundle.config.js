@@ -6,6 +6,6 @@ module.exports = {
 	},
 	namespace: 'BX.Disk.PromoBoost',
 	browserslist: true,
-	minification: true,
+	minification: false,
 	adjustConfigPhp: false,
 };

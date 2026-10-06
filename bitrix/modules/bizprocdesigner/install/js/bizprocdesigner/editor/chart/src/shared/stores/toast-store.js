@@ -38,9 +38,10 @@ export const useToastStore = defineStore('bizprocdesigner-toast-store', {
 				type: SHARED_TOAST_TYPES.WARNING,
 			});
 		},
-		addCustom(message: string, type: ToastType): void
+		addCustom(message: string, type: ToastType, extra: $Shape<ToastMessage> = {}): void
 		{
 			this.addToQueue({
+				...extra,
 				message,
 				type,
 			});

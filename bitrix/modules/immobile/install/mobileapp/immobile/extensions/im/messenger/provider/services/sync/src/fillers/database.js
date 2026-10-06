@@ -4,6 +4,7 @@
 jn.define('im/messenger/provider/services/sync/fillers/database', (require, exports, module) => {
 	const { Type } = require('type');
 	const { clone } = require('utils/object');
+	const { PerfPoint } = require('debug/prism');
 	const { EventType, ComponentCode, WaitingEntity } = require('im/messenger/const');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { getLoggerWithContext } = require('im/messenger/lib/logger');
@@ -95,7 +96,11 @@ jn.define('im/messenger/provider/services/sync/fillers/database', (require, expo
 		 */
 		async updateDatabase(syncListResult)
 		{
-			await this.fillUsers(syncListResult.users, syncListResult.usersShort);
+			await this.fillUsers(syncListResult.users);
+			// ORDER INVARIANT: fillUserLifecycle must run strictly AFTER fillUsers.
+			// A single sync batch can carry the same user in both sections; deletion must win.
+			// Do not reorder these calls.
+			await this.fillUserLifecycle(syncListResult.userSync);
 			await this.fillFiles(syncListResult.files, syncListResult.dialogIds);
 			await this.fillDialogues(syncListResult);
 			await this.fillReactions(syncListResult);
@@ -107,18 +112,44 @@ jn.define('im/messenger/provider/services/sync/fillers/database', (require, expo
 
 		/**
 		 * @param {Array<SyncRawUser>} users
-		 * @param {Array<SyncRawShortUser>} shortUsers
 		 * @return {Promise<void>}
 		 */
-		async fillUsers(users, shortUsers)
+		async fillUsers(users)
 		{
-			const allUsers = [...users, ...shortUsers];
-			if (!Type.isArrayFilled(allUsers))
+			if (!Type.isArrayFilled(users))
 			{
 				return;
 			}
 
-			await this.userRepository.saveFromRest(allUsers);
+			await this.userRepository.saveFromRest(users);
+		}
+
+		/**
+		 * @param {SyncListResult['userSync']} userSync
+		 * @return {Promise<void>}
+		 */
+		async fillUserLifecycle(userSync)
+		{
+			if (Type.isNil(userSync))
+			{
+				return;
+			}
+
+			const { deletedUsers } = userSync;
+			if (!Type.isArrayFilled(deletedUsers))
+			{
+				return;
+			}
+
+			const point = new PerfPoint('sync-fill-user-lifecycle', `deleted ${deletedUsers.length}`).start();
+			try
+			{
+				await this.userRepository.deleteByIdList(deletedUsers);
+			}
+			finally
+			{
+				point.end();
+			}
 		}
 
 		/**

@@ -3,8 +3,8 @@ declare(strict_types=1);
 
 namespace Bitrix\Landing\Copilot\Generation\Scenario;
 
-use Bitrix\Landing\Copilot\Connector\Chat\ICopilotChatBot;
-use Bitrix\Landing\Copilot\Generation\Step\IStep;
+use Bitrix\Landing\Copilot\Generation\GenerationException;
+use Bitrix\Landing\Copilot\Generation\Step\Base\IStep;
 use Bitrix\Landing\Copilot\Generation;
 use Bitrix\Landing\Metrika;
 
@@ -16,13 +16,19 @@ interface IScenario
 	 */
 	public function getMap(): array;
 
-	/**
-	 * Get Chatbot for chat side of scenario
-	 * @return ICopilotChatBot|null
-	 */
-	public function getChatbot(): ?ICopilotChatBot;
-
 	public function getAnalyticCategory(): Metrika\Categories;
+
+	/**
+	 * Should the scenario send the analytic event on its first step?
+	 * @return bool
+	 */
+	public function isAnalyticStartEnabled(): bool;
+
+	/**
+	 * Returns the scenario step at which to check request limits.
+	 * Null means the scenario does not use quota preflight.
+	 */
+	public function getQuotaCalculateStep(): ?int;
 
 	/**
 	 * If some steps must be run only after async step - need set relations
@@ -57,4 +63,13 @@ interface IScenario
 	 * @return void
 	 */
 	public function onFinish(Generation $generation): void;
+
+	/**
+	 * Call method when generation of the scenario has failed.
+	 * Does not replace the common error handling of the generation.
+	 * @param Generation $generation
+	 * @param GenerationException $e
+	 * @return void
+	 */
+	public function onGenerationError(Generation $generation, GenerationException $e): void;
 }

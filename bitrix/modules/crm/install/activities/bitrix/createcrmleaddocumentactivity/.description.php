@@ -5,12 +5,20 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+$isActivityTypeAvailable = enum_exists('\Bitrix\Bizproc\Activity\Enum\ActivityType');
+
 $arActivityDescription = [
 	'NAME' => GetMessage('CRM_ACTIVITY_CREATE_LEAD_NAME'),
 	'DESCRIPTION' => GetMessage('CRM_ACTIVITY_CREATE_LEAD_DESC'),
 	'TYPE' => [
-		\Bitrix\Bizproc\Activity\Enum\ActivityType::ACTIVITY->value,
-		\Bitrix\Bizproc\Activity\Enum\ActivityType::NODE_ACTION->value,
+		$isActivityTypeAvailable
+			? \Bitrix\Bizproc\Activity\Enum\ActivityType::ACTIVITY->value
+			: 'activity'
+		,
+		$isActivityTypeAvailable
+			? \Bitrix\Bizproc\Activity\Enum\ActivityType::NODE_ACTION->value
+			: 'node_action'
+		,
 	],
 	'CLASS' => 'CreateCrmLeadDocumentActivity',
 	'JSCLASS' => 'BizProcActivity',
@@ -30,3 +38,19 @@ $arActivityDescription = [
 		],
 	],
 ];
+
+if (
+	enum_exists('\Bitrix\Bizproc\Activity\Enum\ActionGroup')
+	&& enum_exists('\Bitrix\Bizproc\Activity\Enum\ActionArea')
+)
+{
+	$arActivityDescription['NODE_ACTION_SETTINGS'] = [
+		'HANDLES_DOCUMENT' => false,
+		'ACTION_GROUP' => \Bitrix\Bizproc\Activity\Enum\ActionGroup::CREATE->value,
+		'ACTION_AREA' => \Bitrix\Bizproc\Activity\Enum\ActionArea::CRM->value,
+		'ACTION_OBJECTS' => [
+			['id' => 'crm_lead', 'title' => GetMessage('CRM_ACTIVITY_OBJECT_LEAD')],
+		],
+		'CREATES_DOCUMENT' => true,
+	];
+}

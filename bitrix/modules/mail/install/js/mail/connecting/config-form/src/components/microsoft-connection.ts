@@ -20,6 +20,22 @@ export const MicrosoftConnection = defineComponent({
 		};
 	},
 
+	computed: {
+		// The field holds null while the profile of the account is unresolved. The input needs a
+		// string, and anything typed here - clearing the field included - is a statement of the user
+		// and replaces the unresolved state.
+		userPrincipalName: {
+			get(): string
+			{
+				return this.state.connection.userPrincipalName ?? '';
+			},
+			set(value: string): void
+			{
+				this.state.connection.userPrincipalName = value;
+			},
+		},
+	},
+
 	// language=Vue
 	template: `
 		<div v-if="state.connection.isOAuth" data-test-id="mail_config-form__microsoft-connection">
@@ -27,7 +43,8 @@ export const MicrosoftConnection = defineComponent({
 				:label="loc('MAIL_CONFIG_FORM_UPN_LABEL')"
 				:size="InputSize.Lg"
 				:design="InputDesign.DEFAULT"
-				v-model="state.connection.userPrincipalName"
+				v-model="userPrincipalName"
+				:disabled="state.migrationActive"
 				data-test-id="mail_config-form__microsoft-upn_field"
 			/>
 			<div

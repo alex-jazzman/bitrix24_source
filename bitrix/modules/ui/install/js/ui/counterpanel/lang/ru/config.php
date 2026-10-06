@@ -1,0 +1,3 @@
+<?php
+$MESS["UI_COUNTER_PANEL_MORE_BUTTON"] = "Ещё";
+$MESS["UI_COUNTER_PANEL_ITEM_RESTRICTED"] = "Недоступно";

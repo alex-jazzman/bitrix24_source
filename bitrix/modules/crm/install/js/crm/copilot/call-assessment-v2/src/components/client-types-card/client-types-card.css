@@ -1,0 +1,31 @@
+.crm-call-assessment-v2-client-types-card {
+	display: flex;
+	flex-direction: column;
+	padding: var(--ui-space-inset-xl);
+	background: var(--ui-color-bg-content-primary);
+	border-radius: var(--ui-border-radius-2xl);
+	box-shadow: 0 1px 2px var(--ui-color-area-box-shadow-secondary-color);
+}
+
+.crm-call-assessment-v2-client-types-card__heading {
+	color: var(--ui-color-base-0);
+	padding-bottom: var(--ui-space-stack-sm);
+}
+
+.crm-call-assessment-v2-client-types-card__row {
+	display: flex;
+	gap: 40px;
+	align-items: flex-start;
+}
+
+.crm-call-assessment-v2-client-types-card__field {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-2xs);
+	flex: 1 1 0;
+	min-width: 0;
+}
+
+.crm-call-assessment-v2-client-types-card__label {
+	color: var(--ui-color-design-outline-content-label);
+}

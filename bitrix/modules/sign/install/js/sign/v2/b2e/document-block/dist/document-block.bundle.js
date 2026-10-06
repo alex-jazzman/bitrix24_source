@@ -166,7 +166,14 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 			const documentIcon = main_core.Text.encode(this.#getIcon());
 			const documentType = main_core.Text.encode(this.#getDocumentType());
 			const menuButton = main_core.Tag.render`
-			<button class="ui-btn ui-btn-round ui-btn-sm ui-btn-light-border sign-b2e-document-setup__menu-btn" type="button" data-test-id="sign-document-block__menu-btn">
+			<button
+				class="ui-btn ui-btn-round ui-btn-sm ui-btn-light-border sign-b2e-document-setup__menu-btn"
+				type="button"
+				aria-haspopup="menu"
+				aria-expanded="false"
+				aria-label="${main_core.Text.encode(main_core.Loc.getMessage('SIGN_DOCUMENT_BLOCK_EDIT_BUTTON'))}"
+				data-test-id="sign-document-block__menu-btn"
+			>
 				<span class="sign-b2e-document-setup__menu-btn-icon"></span>
 			</button>
 		`;
@@ -347,10 +354,14 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 					id: menuId,
 					bindElement,
 					items: this.#getMenuItems(menuId, bindElement),
-					autoHide: true
+					autoHide: true,
+					events: {
+						onPopupClose: () => main_core.Dom.attr(bindElement, 'aria-expanded', 'false')
+					}
 				});
 			}
 			menu.getPopupWindow().setBindElement(bindElement);
+			main_core.Dom.attr(bindElement, 'aria-expanded', menu.getPopupWindow().isShown() ? 'false' : 'true');
 			menu.toggle();
 		}
 		#getMenuItems(menuId, bindElement) {

@@ -63,6 +63,9 @@ if (!$isEditMode && SupersetInitializer::isSupersetExist())
 			'size' => \Bitrix\UI\Buttons\Size::MEDIUM,
 			'icon' => \Bitrix\UI\Buttons\Icon::DOTS,
 			'className' => 'dashboard-edit-more-btn',
+			'dataset' => [
+				'testid' => 'biconnector-dashboard-edit-more-button',
+			],
 			'click' => new \Bitrix\UI\Buttons\JsCode('BX.BIConnector.SupersetDashboardEditManager.Instance.onMoreButtonClick();'),
 		])
 	);
@@ -73,7 +76,7 @@ $settings['emptyCoverIconPath'] = $templateFolder . '/images/icon_empty.png';
 
 ?>
 
-<div class="dashboard-edit-container">
+<div class="dashboard-edit-container" data-testid="biconnector-dashboard-edit-form">
 	<form id='dashboard-edit-form' name='dashboard-edit-form'></form>
 	<?php
 	$buttons = [

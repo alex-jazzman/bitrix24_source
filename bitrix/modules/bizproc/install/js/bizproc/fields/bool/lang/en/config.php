@@ -1,0 +1,2 @@
+<?php
+$MESS["BIZPROC_FIELDS_BOOL_LABEL"] = "Yes/No";

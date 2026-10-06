@@ -1,44 +1,37 @@
-const maximumNotifications = 5;
+const MAX_NOTIFICATION_COUNT = 5;
 
-let instance;
-
-export class NotificationManager
+export class FloorRequestNotificationManager
 {
 	constructor()
 	{
-		this.maxNotification = maximumNotifications;
 		this.notifications = [];
-	};
-
-	static get Instance()
-	{
-		if (!instance)
-		{
-			instance = new NotificationManager()
-		}
-
-		return instance;
 	}
 
 	addNotification(notification)
 	{
-		notification.subscribe("onDestroy", () => this.onNotificationDestroy(notification));
+		const onDestroy = () => {
+			notification.unsubscribe('onDestroy', onDestroy);
+			this.#onNotificationDestroy(notification);
+		};
+		notification.subscribe('onDestroy', onDestroy);
 		this.notifications.push(notification);
 
-		if (this.notifications.length > this.maxNotification)
+		if (this.notifications.length > MAX_NOTIFICATION_COUNT)
 		{
 			const firstNotification = this.notifications.shift();
 			firstNotification.dismount();
 		}
-	};
+	}
 
-	onNotificationDestroy(notification)
+	#onNotificationDestroy(notification)
 	{
 		const index = this.notifications.indexOf(notification);
 
-		if (index != -1)
+		if (index !== -1)
 		{
 			this.notifications.splice(index, 1);
 		}
-	};
+	}
 }
+
+export const NotificationManager = new FloorRequestNotificationManager();

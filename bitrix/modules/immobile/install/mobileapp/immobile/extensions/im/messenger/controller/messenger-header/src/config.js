@@ -94,6 +94,7 @@ jn.define('im/messenger/controller/messenger-header/src/config', (require, expor
 		[NavigationTabId.collabDefault]: nestedConfig,
 		[NavigationTabId.task]: nestedConfig,
 		[NavigationTabId.collabChat]: nestedConfig,
+		[NavigationTabId.collabCopilot]: nestedConfig,
 		[NavigationTabId.calendar]: nestedConfig,
 	};
 
@@ -102,7 +103,7 @@ jn.define('im/messenger/controller/messenger-header/src/config', (require, expor
 		copilot: copilotConfig,
 		openChannel: channelConfig,
 		collab: collabConfig,
-		openlines: openLinesConfig,
+		lines: openLinesConfig,
 		tasksTask: taskConfig,
 	};
 

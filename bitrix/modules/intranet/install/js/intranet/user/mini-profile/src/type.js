@@ -1,7 +1,12 @@
 export type UserMiniProfileOptions = {
 	userId: number,
 	bindElement: HTMLElement,
+	direction?: ?string,
 };
+
+export const MiniProfileDirection = Object.freeze({
+	Viewport: 'viewport',
+});
 
 export type UserRoleCodeType =
 	'firstAdmin'
@@ -35,9 +40,10 @@ export type UserMiniProfileData = {
 	},
 	baseInfo: UserData & {
 		time: string,
-		status: UserStatusType,
-		utcOffset: number,
+		status: UserStatusType | null,
+		utcOffset: number | null,
 		role: UserRoleCodeType | null,
+		isSystemUser: boolean,
 		access: {
 			canChat: boolean,
 		},

@@ -2,6 +2,7 @@
 
 return [
 	'extensions' => [
+		'alert',
 		'loc',
 		'tokens',
 		'ui-system/form/inputs/string',

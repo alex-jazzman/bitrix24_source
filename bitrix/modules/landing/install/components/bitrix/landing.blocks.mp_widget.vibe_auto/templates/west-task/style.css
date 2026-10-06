@@ -1,0 +1,32 @@
+.landing-block-link-task {
+	padding: 15px 60px 36px 60px;
+	align-items: center;
+	justify-content: center;
+	gap: 40px;
+}
+
+.landing-block-link-task-content {
+	max-width: 700px;
+	align-items: start;
+	justify-content: center;
+}
+
+.landing-block-link-btn-task {
+	position: relative;
+	max-width: 258px;
+	padding: 8px 18px;
+	color: var(--ui-color-base-white-fixed);
+	background-color: var(--ui-color-stage-bg-1);
+	line-height: 1.4;
+	cursor: pointer;
+	transition: 0.2s ease;
+}
+
+.landing-block-link-img-task {
+	width: 216px;
+	height: 216px;
+	align-self: center;
+	background-size: 216px 216px;
+	background-repeat: no-repeat;
+	background-image: url(https://cdn.bitrix24.site/bitrix/images/landing/vibe/ent-west-v2/link/task/1.png);
+}

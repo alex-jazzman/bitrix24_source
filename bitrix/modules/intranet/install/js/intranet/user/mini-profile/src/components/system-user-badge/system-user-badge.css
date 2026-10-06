@@ -1,0 +1,25 @@
+.intranet-user-mini-profile__system-user-badge {
+	position: absolute;
+	top: 12px;
+	right: 12px;
+	z-index: 1;
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	gap: 4px;
+	padding: 3px 6px 3px 10px;
+	border-radius: var(--ui-border-radius-pill);
+	background-color: var(--ui-color-bg-content-tertiary);
+	cursor: pointer;
+}
+
+.intranet-user-mini-profile__system-user-badge_title {
+	font-size: var(--ui-font-size-xs);
+	color: var(--ui-color-base-3);
+	white-space: nowrap;
+}
+
+.intranet-user-mini-profile__system-user-badge_icon {
+	display: flex;
+	--ui-icon-set__icon-color: var(--ui-color-base-4);
+}

@@ -189,7 +189,7 @@ class PanelItem extends BX.TileGrid.Item
 					if(Type.isPlainObject(data) && data.typeId && data.typeId > 0)
 					{
 						//this.gridTile.appendItem(data);
-						Ajax.runAction('rpa.type.delete', {
+						Ajax.runAction('rpa.Type.delete', {
 							data: {
 								id: data.typeId,
 							}
@@ -346,7 +346,7 @@ class PanelItem extends BX.TileGrid.Item
 				resolve();
 			}
 			this.gridTile.getLoader().show();
-			Ajax.runAction('rpa.type.delete', {
+			Ajax.runAction('rpa.Type.delete', {
 				analyticsLabel: 'rpaPanelDeleteType',
 				data: {
 					id: this.typeId,

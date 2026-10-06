@@ -7,11 +7,11 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 /**
 /**
- * @global \CMain $APPLICATION
- * @global \CUser $USER
- * @global \CDatabase $DB
- * @var \CUserTypeManager $USER_FIELD_MANAGER
- * @var \CBitrixComponent $this
+ * @global CMain $APPLICATION
+ * @global CUser $USER
+ * @global CDatabase $DB
+ * @var CUserTypeManager $USER_FIELD_MANAGER
+ * @var CBitrixComponent $this
  * @var array $arParams
  * @var array $arResult
  */
@@ -24,18 +24,26 @@ use Bitrix\Crm\Agent\Duplicate\Background\LeadMerge;
 use Bitrix\Crm\Agent\Duplicate\Volatile\IndexRebuild;
 use Bitrix\Crm\Component\EntityList\FieldRestrictionManager;
 use Bitrix\Crm\Component\EntityList\FieldRestrictionManagerTypes;
+use Bitrix\Crm\Component\EntityList\RowActionPermissions;
 use Bitrix\Crm\Component\EntityList\UserField\GridHeaders;
 use Bitrix\Crm\Context\GridContext;
 use Bitrix\Crm\Conversion\LeadConversionDispatcher;
 use Bitrix\Crm\EntityAddress;
+use Bitrix\Crm\Filter\RelatedEntity;
+use Bitrix\Crm\Filter\UiFilterOptions;
 use Bitrix\Crm\Format\AddressFormatter;
 use Bitrix\Crm\Integrity\Volatile;
 use Bitrix\Crm\LeadAddress;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Settings\HistorySettings;
+use Bitrix\Crm\Settings\LayoutSettings;
 use Bitrix\Crm\Tracking;
+use Bitrix\Crm\UtmTable;
 use Bitrix\Crm\WebForm\Manager as WebFormManager;
 use Bitrix\Main;
+use Bitrix\Main\Web\Uri;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Grid\Options;
 
 $isErrorOccurred = false;
 $errorMessage = '';
@@ -86,7 +94,7 @@ if (!$isErrorOccurred && !CModule::IncludeModule('sale'))
 }
 
 
-$userPermissionsService = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions();
+$userPermissionsService = Container::getInstance()->getUserPermissions();
 
 if (!$isErrorOccurred && !$userPermissionsService->entityType()->canReadItems(CCrmOwnerType::Lead))
 {
@@ -156,7 +164,7 @@ $fieldRestrictionManager = new FieldRestrictionManager(
 	CCrmOwnerType::Lead
 );
 
-$userID = \Bitrix\Crm\Service\Container::getInstance()->getContext()->getUserId();
+$userID = Container::getInstance()->getContext()->getUserId();
 $isAdmin = $userPermissionsService->isAdmin();
 
 $currentPage = $APPLICATION->GetCurPage();
@@ -231,7 +239,7 @@ $arResult['SESSION_ID'] = bitrix_sessid();
 $arResult['NAVIGATION_CONTEXT_ID'] = $arParams['NAVIGATION_CONTEXT_ID'] ?? '';
 $arResult['DISABLE_NAVIGATION_BAR'] = $arParams['DISABLE_NAVIGATION_BAR'] ?? 'N';
 $arResult['PRESERVE_HISTORY'] = $arParams['PRESERVE_HISTORY'] ?? false;
-$arResult['ENABLE_SLIDER'] = \Bitrix\Crm\Settings\LayoutSettings::getCurrent()->isSliderEnabled();
+$arResult['ENABLE_SLIDER'] = LayoutSettings::getCurrent()->isSliderEnabled();
 $arResult['TIME_FORMAT'] = CCrmDateTimeHelper::getDefaultDateTimeFormat();
 
 $addressLabels = EntityAddress::getShortLabels();
@@ -244,7 +252,7 @@ if($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['error']))
 	{
 		if(!isset($_SESSION[$errorID]))
 		{
-			LocalRedirect(CHTTP::urlDeleteParams($arParams['PATH_TO_LEAD_LIST'], array('error')));
+			LocalRedirect((string)(new Uri($arParams['PATH_TO_LEAD_LIST']))->deleteParams(['error']));
 		}
 
 		$arErrors = $_SESSION[$errorID];
@@ -277,11 +285,12 @@ $isInGadgetMode = $arResult['GADGET'] === 'Y';
 
 $arFilter = $arSort = array();
 $bInternal = false;
-$arResult['FORM_ID'] = isset($arParams['FORM_ID']) ? $arParams['FORM_ID'] : '';
-$arResult['TAB_ID'] = isset($arParams['TAB_ID']) ? $arParams['TAB_ID'] : '';
+$arResult['FORM_ID'] = $arParams['FORM_ID'] ?? '';
+$arResult['TAB_ID'] = $arParams['TAB_ID'] ?? '';
 if (!empty($arParams['INTERNAL_FILTER']) || $isInGadgetMode)
 	$bInternal = true;
 $arResult['INTERNAL'] = $bInternal;
+$isExtendedInternal = ($arParams['EXTENDED_INTERNAL_MODE'] ?? null) === true;
 if (!empty($arParams['INTERNAL_FILTER']) && is_array($arParams['INTERNAL_FILTER']))
 {
 	if(empty($arParams['GRID_ID_SUFFIX']))
@@ -298,7 +307,7 @@ if (!empty($arParams['INTERNAL_SORT']) && is_array($arParams['INTERNAL_SORT']))
 
 $enableWidgetFilter = false;
 $widgetFilter = null;
-if (isset($arParams['WIDGET_DATA_FILTER']) && isset($arParams['WIDGET_DATA_FILTER']['WG']) && $arParams['WIDGET_DATA_FILTER']['WG'] === 'Y')
+if (isset($arParams['WIDGET_DATA_FILTER']['WG']) && $arParams['WIDGET_DATA_FILTER']['WG'] === 'Y')
 {
 	$enableWidgetFilter = true;
 	$widgetFilter = $arParams['WIDGET_DATA_FILTER'];
@@ -312,7 +321,7 @@ if($enableWidgetFilter)
 {
 	$dataSourceFilter = null;
 
-	$dataSourceName = isset($widgetFilter['DS']) ? $widgetFilter['DS'] : '';
+	$dataSourceName = $widgetFilter['DS'] ?? '';
 	if($dataSourceName !== '')
 	{
 		$dataSource = null;
@@ -326,7 +335,7 @@ if($enableWidgetFilter)
 
 		try
 		{
-			$dataSourceFilter = $dataSource ? $dataSource->prepareEntityListFilter($widgetFilter) : null;
+			$dataSourceFilter = $dataSource?->prepareEntityListFilter($widgetFilter);
 		}
 		catch(Bitrix\Main\ArgumentException $e)
 		{
@@ -394,7 +403,7 @@ if ($enableReportFilter)
 	if($reportId != '')
 	{
 		$reportHandler = Crm\Integration\Report\ReportHandlerFactory::createWithReportId($reportId);
-		$reportFilter = $reportHandler ? $reportHandler->prepareEntityListFilter(Bitrix\Main\Context::getCurrent()->getRequest()) : null;
+		$reportFilter = $reportHandler?->prepareEntityListFilter(Bitrix\Main\Context::getCurrent()->getRequest());
 
 		if(is_array($reportFilter) && !empty($reportFilter))
 		{
@@ -435,12 +444,12 @@ $arResult['PERMS']['ADD'] = $userPermissionsService->entityType()->canAddItems(C
 $arResult['PERMS']['WRITE'] = $userPermissionsService->entityType()->canUpdateItems(CCrmOwnerType::Lead);
 $arResult['PERMS']['DELETE'] = $userPermissionsService->entityType()->canDeleteItems(CCrmOwnerType::Lead);
 
-[$callListId, $callListContext] = \CCrmViewHelper::getCallListIdAndContextFromRequest();
+[$callListId, $callListContext] = CCrmViewHelper::getCallListIdAndContextFromRequest();
 $arResult['CALL_LIST_ID'] = $callListId;
 $arResult['CALL_LIST_CONTEXT'] = $callListContext;
 unset($callListId, $callListContext);
 
-if (\CCrmViewHelper::isCallListUpdateMode(\CCrmOwnerType::Lead))
+if (CCrmViewHelper::isCallListUpdateMode(CCrmOwnerType::Lead))
 {
 	AddEventHandler('crm', 'onCrmLeadListItemBuildMenu', array('\Bitrix\Crm\CallList\CallList', 'handleOnCrmLeadListItemBuildMenu'));
 }
@@ -491,14 +500,14 @@ if (!empty($externalFilterId))
 {
 	Main\Loader::includeModule('report');
 	$arResult['GRID_ID'] = 'report_' . $boardId . '_grid';
-	$filterOptions = new \Bitrix\Crm\Filter\UiFilterOptions($arResult['GRID_ID'], []);
+	$filterOptions = new UiFilterOptions($arResult['GRID_ID'], []);
 }
 else
 {
-	$filterOptions = new \Bitrix\Crm\Filter\UiFilterOptions($arResult['GRID_ID'], $arResult['FILTER_PRESETS']);
+	$filterOptions = new UiFilterOptions($arResult['GRID_ID'], $arResult['FILTER_PRESETS']);
 }
 
-$gridOptions = new \Bitrix\Main\Grid\Options($arResult['GRID_ID'], $arResult['FILTER_PRESETS']);
+$gridOptions = new Options($arResult['GRID_ID'], $arResult['FILTER_PRESETS']);
 //region Navigation Params
 if ($arParams['LEAD_COUNT'] <= 0)
 {
@@ -576,6 +585,10 @@ if(!$arResult['IS_EXTERNAL_FILTER'])
 {
 	$arFilter += $filterOptions->getFilter($arResult['FILTER']);
 }
+
+$relatedEntitiesParameters = ['filter' => $arFilter];
+RelatedEntity\GridFilterApplier::getDefault()->apply($relatedEntitiesParameters, CCrmOwnerType::Lead);
+$arFilter = $relatedEntitiesParameters['filter'];
 
 // Headers initialization -->
 $arResult['HEADERS'] = array(
@@ -733,7 +746,7 @@ $arResult['HEADERS'] = array_merge($arResult['HEADERS'], array(
 
 Tracking\UI\Grid::appendColumns($arResult['HEADERS']);
 
-$utmList = \Bitrix\Crm\UtmTable::getCodeNames();
+$utmList = UtmTable::getCodeNames();
 foreach ($utmList as $utmCode => $utmName)
 {
 	$arResult['HEADERS'][] = array(
@@ -745,14 +758,14 @@ foreach ($utmList as $utmCode => $utmName)
 
 $CCrmUserType->appendGridHeaders($arResult['HEADERS']);
 
-Crm\Service\Container::getInstance()->getParentFieldManager()->prepareGridHeaders(
-	\CCrmOwnerType::Lead,
+Container::getInstance()->getParentFieldManager()->prepareGridHeaders(
+	CCrmOwnerType::Lead,
 	$arResult['HEADERS']
 );
 
-$factory = \Bitrix\Crm\Service\Container::getInstance()->getFactory(\CCrmOwnerType::Lead);
+$factory = Container::getInstance()->getFactory(CCrmOwnerType::Lead);
 if (
-	\Bitrix\Crm\Settings\Crm::isUniversalActivityScenarioEnabled()
+	Crm\Settings\Crm::isUniversalActivityScenarioEnabled()
 	&& $factory
 	&& $factory->isLastActivityEnabled()
 )
@@ -1118,7 +1131,7 @@ if($actionData['ACTIVE'])
 			{
 				$errorID = uniqid('crm_err_');
 				$_SESSION[$errorID] = $arErrors;
-				$redirectUrl = CHTTP::urlAddParams($redirectUrl, array('error' => $errorID));
+				$redirectUrl = (string)(new Uri($redirectUrl))->addParams(array('error' => $errorID));
 			}
 			LocalRedirect($redirectUrl);
 		}
@@ -1154,21 +1167,18 @@ $arResult['ENABLE_TASK'] = IsModuleInstalled('tasks');
 
 if($arResult['ENABLE_TASK'])
 {
-	$arResult['TASK_CREATE_URL'] = CHTTP::urlAddParams(
-		CComponentEngine::MakePathFromTemplate(
+	$arResult['TASK_CREATE_URL'] = str_replace('__ENTITY_KEYS__', '#ENTITY_KEYS#', (string)(new Uri(CComponentEngine::MakePathFromTemplate(
 			COption::GetOptionString('tasks', 'paths_task_user_edit', ''),
 			array(
 				'task_id' => 0,
 				'user_id' => $userID
 			)
-		),
-		array(
-			'UF_CRM_TASK' => '#ENTITY_KEYS#',
-			'TITLE' => urlencode(GetMessage('CRM_TASK_TITLE_PREFIX')),
-			'TAGS' => urlencode(GetMessage('CRM_TASK_TAG')),
-			'back_url' => urlencode($arParams['PATH_TO_LEAD_LIST'])
-		)
-	);
+		)))->addParams(array(
+			'UF_CRM_TASK' => '__ENTITY_KEYS__',
+			'TITLE' => GetMessage('CRM_TASK_TITLE_PREFIX'),
+			'TAGS' => GetMessage('CRM_TASK_TAG'),
+			'back_url' => $arParams['PATH_TO_LEAD_LIST'],
+		)));
 }
 
 // Export all fields
@@ -1400,7 +1410,7 @@ $arSort = $arResult['SORT'];
 if(isset($arSort['assigned_by']))
 {
 	$assignedBySort = $arSort['assigned_by'];
-	if(\Bitrix\Crm\Settings\LayoutSettings::getCurrent()->isUserNameSortingEnabled())
+	if(LayoutSettings::getCurrent()->isUserNameSortingEnabled())
 	{
 		$arSort['assigned_by_last_name'] = $assignedBySort;
 		$arSort['assigned_by_name'] = $assignedBySort;
@@ -1877,7 +1887,7 @@ if ($arResult['ENABLE_BIZPROC'] && !empty($arResult['LEAD']))
 $observersDataProvider->appendResult($arResult['LEAD']);
 $userDataProvider->appendResult($arResult['LEAD']);
 
-$parentFieldValues = Crm\Service\Container::getInstance()->getParentFieldManager()->loadParentElementsByChildren(
+$parentFieldValues = Container::getInstance()->getParentFieldManager()->loadParentElementsByChildren(
 	\CCrmOwnerType::Lead,
 	$arResult['LEAD']
 );
@@ -1904,16 +1914,14 @@ foreach($arResult['LEAD'] as &$arLead)
 	$statusID = $arLead['STATUS_ID'] ?? '';
 	$arLead['LEAD_STATUS_NAME'] = $arResult['STATUS_LIST'][$statusID] ?? htmlspecialcharsbx($statusID);
 
-	$arLead['DELETE'] = $arLead['EDIT'] = !$arResult['INTERNAL'];
-
-	if($arResult['INTERNAL'])
+	if (RowActionPermissions::shouldUseItemPermissions($arResult['INTERNAL'], $isExtendedInternal))
 	{
-		$arLead['DELETE'] = $arLead['EDIT'] = false;
+		$arLead['EDIT'] = $userPermissionsService->item()->canUpdate(CCrmOwnerType::Lead, $entityID);
+		$arLead['DELETE'] = $userPermissionsService->item()->canDelete(CCrmOwnerType::Lead, $entityID);
 	}
 	else
 	{
-		$arLead['EDIT'] = $userPermissionsService->item()->canUpdate(CCrmOwnerType::Lead, $entityID);
-		$arLead['DELETE'] = $userPermissionsService->item()->canDelete(CCrmOwnerType::Lead, $entityID);;
+		$arLead['DELETE'] = $arLead['EDIT'] = false;
 	}
 
 	$arLead['PATH_TO_LEAD_DETAILS'] = CComponentEngine::MakePathFromTemplate(
@@ -1969,26 +1977,20 @@ foreach($arResult['LEAD'] as &$arLead)
 
 	if($arLead['DELETE'])
 	{
-		$arLead['PATH_TO_LEAD_DELETE'] =  CHTTP::urlAddParams(
-			$bInternal ? $currentPage : $arParams['PATH_TO_LEAD_LIST'],
-			array(
+		$arLead['PATH_TO_LEAD_DELETE'] =  (string)(new Uri($bInternal ? $currentPage : $arParams['PATH_TO_LEAD_LIST']))->addParams(array(
 				'action_'.$arResult['GRID_ID'] => 'delete',
 				'ID' => $entityID,
 				'sessid' => $arResult['SESSION_ID']
-			)
-		);
+			));
 	}
 
 	if($arResult['CAN_EXCLUDE'])
 	{
-		$arLead['PATH_TO_LEAD_EXCLUDE'] =  CHTTP::urlAddParams(
-			$bInternal ? $currentPage : $arParams['PATH_TO_LEAD_LIST'],
-			array(
+		$arLead['PATH_TO_LEAD_EXCLUDE'] =  (string)(new Uri($bInternal ? $currentPage : $arParams['PATH_TO_LEAD_LIST']))->addParams(array(
 				'action_'.$arResult['GRID_ID'] => 'exclude',
 				'ID' => $entityID,
 				'sessid' => $arResult['SESSION_ID']
-			)
-		);
+			));
 	}
 
 	$arLead['PATH_TO_USER_PROFILE'] = CComponentEngine::MakePathFromTemplate(
@@ -2145,33 +2147,27 @@ foreach($arResult['LEAD'] as &$arLead)
 
 	if ($arResult['ENABLE_TASK'])
 	{
-		$arLead['PATH_TO_TASK_EDIT'] = CHTTP::urlAddParams(
-			CComponentEngine::MakePathFromTemplate(
+		$arLead['PATH_TO_TASK_EDIT'] = (string)(new Uri(CComponentEngine::MakePathFromTemplate(
 				COption::GetOptionString('tasks', 'paths_task_user_edit', ''),
 				array(
 					'task_id' => 0,
 					'user_id' => $userID
 				)
-			),
-			array(
+			)))->addParams(array(
 				'UF_CRM_TASK' => "L_{$entityID}",
-				'TITLE' => urlencode(GetMessage('CRM_TASK_TITLE_PREFIX').' '),
-				'TAGS' => urlencode(GetMessage('CRM_TASK_TAG')),
-				'back_url' => urlencode($arParams['PATH_TO_LEAD_LIST'])
-			)
-		);
+				'TITLE' => GetMessage('CRM_TASK_TITLE_PREFIX').' ',
+				'TAGS' => GetMessage('CRM_TASK_TAG'),
+				'back_url' => $arParams['PATH_TO_LEAD_LIST'],
+			));
 	}
 
 	if (IsModuleInstalled('sale'))
 	{
 		$arLead['PATH_TO_QUOTE_ADD'] =
-			CHTTP::urlAddParams(
-				CComponentEngine::makePathFromTemplate(
+			(string)(new Uri(CComponentEngine::makePathFromTemplate(
 					$arParams['PATH_TO_QUOTE_EDIT'],
 					array('quote_id' => 0)
-				),
-				array('lead_id' => $entityID)
-			);
+				)))->addParams(array('lead_id' => $entityID));
 	}
 
 	if ($arResult['ENABLE_BIZPROC'])
@@ -2182,13 +2178,10 @@ foreach($arResult['LEAD'] as &$arLead)
 		$arDocumentStates = is_array($allDocumentStates["LEAD_{$entityID}"]) ?
 			$allDocumentStates["LEAD_{$entityID}"] : [];
 
-		$arLead['PATH_TO_BIZPROC_LIST'] =  CHTTP::urlAddParams(
-			CComponentEngine::MakePathFromTemplate(
+		$arLead['PATH_TO_BIZPROC_LIST'] =  (string)(new Uri(CComponentEngine::MakePathFromTemplate(
 				$arParams['PATH_TO_LEAD_SHOW'],
 				array('lead_id' => $entityID)
-			),
-			array('CRM_LEAD_SHOW_V12_active_tab' => 'tab_bizproc')
-		);
+			)))->addParams(array('CRM_LEAD_SHOW_V12_active_tab' => 'tab_bizproc'));
 
 		$totalTaskQty = 0;
 		$docStatesQty = count($arDocumentStates);
@@ -2303,7 +2296,7 @@ if ($arResult['ENABLE_TOOLBAR'])
 		$parentEntityId = (int)$arParams['PARENT_ENTITY_ID'];
 		if (\CCrmOwnerType::IsDefined($parentEntityTypeId) && $parentEntityId > 0)
 		{
-			$arResult['PATH_TO_LEAD_ADD'] = Crm\Service\Container::getInstance()->getRouter()->getItemDetailUrl(
+			$arResult['PATH_TO_LEAD_ADD'] = Container::getInstance()->getRouter()->getItemDetailUrl(
 				\CCrmOwnerType::Lead,
 				0,
 				null,
@@ -2433,7 +2426,7 @@ if (!$isInExportMode)
 			}
 			if(COption::GetOptionString('crm', '~CRM_REBUILD_LEAD_ATTR', 'N') === 'Y')
 			{
-				$arResult['PATH_TO_PRM_LIST'] = (string)Crm\Service\Container::getInstance()->getRouter()->getPermissionsUrl();
+				$arResult['PATH_TO_PRM_LIST'] = (string)Container::getInstance()->getRouter()->getPermissionsUrl();
 				$arResult['NEED_FOR_REBUILD_LEAD_ATTRS'] = true;
 			}
 		}
@@ -2542,4 +2535,3 @@ else
 		die();
 	}
 }
-?>

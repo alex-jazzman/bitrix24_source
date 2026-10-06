@@ -1,7 +1,7 @@
 <?php
 $MESS["LANDING_CONNECTOR_AI_ALLOW_DESC_MSGVER_1"] = "#COPILOT_NAME# will create or edit text, headings and images inside the blocks you added to your website.";
 $MESS["LANDING_CONNECTOR_AI_ALLOW_SITE"] = "Websites and blocks";
-$MESS["LANDING_CONNECTOR_AI_ALLOW_SITE_DESC_MSGVER_1"] = "#COPILOT_NAME# will create a website according to your description, including layout, text and images. You can edit any block by sending your comments to the #COPILOT_NAME# web designer chat.";
+$MESS["LANDING_CONNECTOR_AI_ALLOW_SITE_DESC_MSGVER_1"] = "#COPILOT_NAME# will create a website according to your description, including layout, text and images. You can edit any block by sending your comments to the #COPILOT_NAME# AI assistant.";
 $MESS["LANDING_CONNECTOR_AI_ALLOW_TITLE"] = "Text and images for existing blocks";
 $MESS["LANDING_CONNECTOR_AI_GROUP_DESC_MSGVER_1"] = "Create and edit websites with #COPILOT_NAME#.";
 $MESS["LANDING_CONNECTOR_AI_GROUP_TITLE_MSGVER_1"] = "Websites";

@@ -1,0 +1,8 @@
+<?php
+$MESS["MSGSVC_CT_GRID_COL_AUTHOR"] = "Created by";
+$MESS["MSGSVC_CT_GRID_COL_CONTEXT"] = "Owning entity";
+$MESS["MSGSVC_CT_GRID_COL_DATE_CREATE"] = "Created on";
+$MESS["MSGSVC_CT_GRID_COL_DATE_MODIFY"] = "Modified on";
+$MESS["MSGSVC_CT_GRID_COL_MODIFIED_BY"] = "Modified by";
+$MESS["MSGSVC_CT_GRID_COL_SCENE"] = "Scope";
+$MESS["MSGSVC_CT_GRID_COL_TITLE"] = "Name";

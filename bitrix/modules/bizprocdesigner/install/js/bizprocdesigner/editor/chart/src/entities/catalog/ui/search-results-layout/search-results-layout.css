@@ -7,6 +7,18 @@
     overflow: hidden;
 }
 
+.editor-chart-catalog.--expanded .editor-chart-search-results-layout .editor-chart-catalog-item {
+	align-items: flex-start;
+	height: auto;
+	min-height: 54px;
+}
+
+.editor-chart-catalog.--expanded .editor-chart-search-results-layout .editor-chart-catalog-item__subtitle {
+	display: block;
+	-webkit-line-clamp: unset;
+	overflow: visible;
+}
+
 .editor-chart-search-results-layout__result-label {
     height: 26px;
     padding: 0 8px;

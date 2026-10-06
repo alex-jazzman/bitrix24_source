@@ -67,7 +67,7 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 			note: bookingDto.note,
 			visitStatus: bookingDto.visitStatus,
 			externalData: bookingDto.externalData,
-			messages: bookingDto.messages?.length ? bookingDto.messages : undefined,
+			isConfirmationSent: bookingDto.isConfirmationSent ?? false,
 			skus: bookingDto.skus,
 			payment: bookingDto.payment,
 			source: bookingDto.source
@@ -415,6 +415,10 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 				withClientData: true,
 				withExternalData: true,
 				withSkus: true
+			}, {
+				navigation: {
+					page: 'all'
+				}
 			});
 		}
 		async getBookingsByResourceId(resourceId, dateFromTs, dateToTs, excludeBookingId = null) {

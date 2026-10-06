@@ -47,3 +47,17 @@
 	font-size: 12px;
 	font-weight: 700;
 }
+
+.js-disk-promo-boost-button.ui-btn.--air {
+	--ui-btn-height: var(--ui-btn-size-sm);
+	--ui-btn-radius: var(--ui-border-radius-sm);
+	--ui-btn-padding-left: var(--ui-space-inset-xs2);
+	--ui-btn-padding-right: var(--ui-space-inset-xs2);
+	--ui-btn-font-size: var(--ui-font-size-sm);
+	--ui-btn-font-weight: var(--ui-font-weight-normal);
+}
+
+.js-disk-promo-boost-button.ui-btn.--air .ui-icon-set {
+	--ui-icon-set__icon-size: 24px;
+	--ui-icon-set__icon-color: var(--ui-color-design-filled-boost-content);
+}

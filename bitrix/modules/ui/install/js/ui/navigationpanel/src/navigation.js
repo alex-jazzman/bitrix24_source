@@ -1,4 +1,5 @@
 import { Dom, Tag, Text, Type, Extension } from 'main.core';
+import { FocusZone, FocusKeys } from 'ui.a11y';
 import { type MenuItemOptions } from 'ui.system.menu';
 import NavigationItem from './item';
 import 'ui.fonts.opensans';
@@ -8,6 +9,7 @@ export type NavigationPanelOptions = {
 	target: HTMLElement;
 	items: Object[];
 	collapsed?: boolean;
+	ariaLabel?: string;
 };
 
 const instanceMap: WeakMap<HTMLElement, NavigationPanel> = new WeakMap();
@@ -16,6 +18,8 @@ export default class NavigationPanel
 {
 	keys: string[];
 	#isCollapsed: boolean = false;
+	#ariaLabel: ?string = null;
+	#focusZone: ?FocusZone = null;
 
 	static getInstanceByNode(node: HTMLElement): ?NavigationPanel
 	{
@@ -36,6 +40,7 @@ export default class NavigationPanel
 		this.container = null;
 		this.keys = [];
 		this.#isCollapsed = options.collapsed === true;
+		this.#ariaLabel = Type.isStringFilled(options.ariaLabel) ? options.ariaLabel : null;
 	}
 
 	adjustItem()
@@ -83,10 +88,15 @@ export default class NavigationPanel
 		if (!this.container)
 		{
 			this.container = Tag.render`
-				<div class="ui-nav-panel ui-nav-panel__scope"></div>
+				<div class="ui-nav-panel ui-nav-panel__scope" role="toolbar" aria-orientation="horizontal"></div>
 			`;
 
 			instanceMap.set(this.container, this);
+
+			if (Type.isStringFilled(this.#ariaLabel))
+			{
+				this.container.setAttribute('aria-label', this.#ariaLabel);
+			}
 
 			if (this.hasAirDesign())
 			{
@@ -118,12 +128,28 @@ export default class NavigationPanel
 
 		Dom.clean(this.target);
 		Dom.append(this.getContainer(), this.target);
+
+		this.#setupFocusZone();
 	}
 
 	init()
 	{
 		this.adjustItem();
 		this.render();
+	}
+
+	// roving tabindex: the whole panel is a single tab stop, arrow keys move between items
+	#setupFocusZone(): void
+	{
+		if (!this.#focusZone)
+		{
+			this.#focusZone = new FocusZone(this.getContainer(), {
+				bindKeys: FocusKeys.ArrowHorizontal | FocusKeys.HomeAndEnd,
+				focusOutBehavior: 'stop',
+			});
+		}
+
+		this.#focusZone.activate();
 	}
 
 	isCollapsed(): boolean
@@ -163,6 +189,7 @@ export default class NavigationPanel
 		});
 
 		const currentActiveId = this.items.find((item) => item.active === true)?.id ?? null;
+		const focusedItemId = this.#getFocusedItemId();
 
 		this.#rawItems = this.#rawItems.map((item) => ({
 			...item,
@@ -174,6 +201,35 @@ export default class NavigationPanel
 
 		this.adjustItem();
 		this.#rerenderContent();
+		this.#focusZone?.refreshElements();
+		this.#restoreFocus(focusedItemId);
+	}
+
+	#getFocusedItemId(): ?string
+	{
+		const focusedElement = document.activeElement;
+		if (!Type.isDomNode(focusedElement) || !this.container?.contains(focusedElement))
+		{
+			return null;
+		}
+
+		const focusedItem = focusedElement.closest('.ui-nav-panel__item');
+
+		return this.items.find((item: NavigationItem) => item.linkContainer === focusedItem)?.id ?? null;
+	}
+
+	// a collapsed panel hides every inactive item: fall back to the active one, its menu holds the rest
+	#restoreFocus(itemId: ?string): void
+	{
+		if (itemId === null)
+		{
+			return;
+		}
+
+		const focusTarget = this.getItemById(itemId)?.linkContainer
+			?? this.items.find((item: NavigationItem) => item.active === true)?.linkContainer;
+
+		focusTarget?.focus({ preventScroll: true });
 	}
 
 	#rerenderContent(): void

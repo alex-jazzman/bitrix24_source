@@ -1,5 +1,3 @@
 <?php
 
-$MESS['BPMOBILE_WORKFLOW_SIMPLE_LIST_TASK_TOUCHED'] = 'Задание «#TASK_NAME#» выполнено';
 $MESS['BPMOBILE_WORKFLOW_SIMPLE_LIST_STATUS'] = 'Статус';
-$MESS['BPMOBILE_WORKFLOW_SIMPLE_LIST_NETWORK_ERROR'] = "Нет соединения — проверьте подключение к интернету";

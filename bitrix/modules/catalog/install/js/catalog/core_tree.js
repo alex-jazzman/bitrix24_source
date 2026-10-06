@@ -2037,6 +2037,28 @@ BX.TreeConditions.prototype.RenderTree = function()
 	return this.boolResult;
 };
 
+function prepareLogicParams(logicItem, tree, obTreeLevel)
+{
+	var params = {},
+		property;
+
+	for (property in logicItem)
+	{
+		if (Object.prototype.hasOwnProperty.call(logicItem, property))
+		{
+			Object.defineProperty(params, property, {
+				configurable: true,
+				enumerable: true,
+				value: logicItem[property],
+				writable: true
+			});
+		}
+	}
+	params.visual = BX.delegate(function(){ this.NextVisual(obTreeLevel); }, tree);
+
+	return params;
+}
+
 BX.TreeConditions.prototype.RenderLevel = function(parentContainer, obParent, obTreeLevel, obParams)
 {
 	var CurControl,
@@ -2268,13 +2290,16 @@ BX.TreeConditions.prototype.RenderLevel = function(parentContainer, obParent, ob
 						intCurrentIndex = this.SearchVisual(obTreeLevel);
 						if (-1 < intCurrentIndex)
 						{
-							obLogicParams = obTreeLevel.visual.logic[intCurrentIndex];
-							obLogicParams.visual = BX.delegate(function(){ this.NextVisual(obTreeLevel); }, this);
 							for (j = 0; j < obTreeLevel.children.length; j++)
 							{
 								this.RenderLevel(div, obTreeLevel, obTreeLevel.children[j]);
 								if (j < (obTreeLevel.children.length - 1))
 								{
+									obLogicParams = prepareLogicParams(
+										obTreeLevel.visual.logic[intCurrentIndex],
+										this,
+										obTreeLevel
+									);
 									this.CreateLogic(obTreeLevel.children[j], obTreeLevel, obLogicParams);
 								}
 							}
@@ -2331,8 +2356,7 @@ BX.TreeConditions.prototype.CreateLevel = function(obTreeLevel, controlId, num)
 				intCurrentIndex = this.SearchVisual(obTreeLevel);
 				if (-1 < intCurrentIndex)
 				{
-					obLogicParams = obTreeLevel.visual.logic[intCurrentIndex];
-					obLogicParams.visual = BX.delegate(function(){ this.NextVisual(obTreeLevel); }, this);
+					obLogicParams = prepareLogicParams(obTreeLevel.visual.logic[intCurrentIndex], this, obTreeLevel);
 					this.CreateLogic(obTreeLevel.children[indexPrev], obTreeLevel, obLogicParams);
 				}
 			}

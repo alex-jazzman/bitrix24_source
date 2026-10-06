@@ -1,8 +1,10 @@
+import { AjaxErrorHandler } from 'ai.ajax-error-handler';
 import { NameService } from 'crm.ai.name-service';
 import { Router } from 'crm.router';
-import { ajax as Ajax, Extension, Loc, Runtime, Text, Type } from 'main.core';
+import { confirm } from 'crm.timeline.dialog';
+import { ajax as Ajax, Dom, Event, Extension, Loc, Runtime, Tag, Text, Type } from 'main.core';
+import { LiveAnnouncer } from 'ui.a11y';
 import { Button as ButtonUI, ButtonState } from 'ui.buttons';
-import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
 import { FeaturePromotersRegistry } from 'ui.info-helper';
 import { UI } from 'ui.notification';
 
@@ -14,6 +16,7 @@ import 'ui.feedback.form';
 
 const COPILOT_BUTTON_DISABLE_DELAY = 5000;
 const COPILOT_HELPDESK_CODE = 18_799_442;
+const STICKY_WAITING_MS = 45_000;
 
 declare type CoPilotAdditionalInfoData =
 {
@@ -23,12 +26,14 @@ declare type CoPilotAdditionalInfoData =
 	msgPlainText: ?string,
 	msgHtml: ?string,
 	msgBBCode: ?string,
+	vibePlusLimitState: ?string,
+	showSliderWithMsg: ?boolean,
+	msgForIm: ?string,
 }
 
 export type CopilotConfig =
 {
 	actionEndpoint: string,
-	validEntityTypes: Array<number>,
 	agreementContext: string,
 	onPreLaunch?: (item: ConfigurableItem, actionData: Object) => void,
 	onPostLaunch?: (item: ConfigurableItem, actionData: Object, response: Object) => void,
@@ -38,6 +43,7 @@ export type CopilotConfig =
 export class CopilotBase extends Base
 {
 	#copilotConfig: CopilotConfig;
+	#waitingStickyReleaseList: Set<Function> = new Set();
 
 	constructor()
 	{
@@ -57,6 +63,16 @@ export class CopilotBase extends Base
 		return false;
 	}
 	// endregion
+
+	onAfterItemRefreshLayout(item: ConfigurableItem): void
+	{
+		for (const release of this.#waitingStickyReleaseList)
+		{
+			release();
+		}
+
+		this.#waitingStickyReleaseList.clear();
+	}
 
 	async handleCopilotLaunch(item: ConfigurableItem, actionData: Object): Promise<void>
 	{
@@ -147,6 +163,11 @@ export class CopilotBase extends Base
 
 		const previousButtonState = aiCopilotBtnUI?.getState();
 		aiCopilotBtnUI?.setState(ButtonState.AI_WAITING);
+		const releaseSticky = this.#keepWaitingSticky(aiCopilotBtnUI?.getContainer?.());
+		if (releaseSticky)
+		{
+			this.#waitingStickyReleaseList.add(releaseSticky);
+		}
 
 		try
 		{
@@ -155,16 +176,108 @@ export class CopilotBase extends Base
 		}
 		catch (response)
 		{
+			releaseSticky?.();
+			this.#waitingStickyReleaseList.delete(releaseSticky);
 			this.#handleCopilotError(item, actionData, response, aiCopilotBtnUI, previousButtonState);
 		}
 	}
 
+	#keepWaitingSticky(clickedElement: ?HTMLElement): ?() => void
+	{
+		if (!clickedElement)
+		{
+			return null;
+		}
+
+		const AI_WAITING_CLASS = 'ui-btn-ai-waiting';
+		const DISABLED_CLASS = 'ui-btn-disabled';
+
+		const buttonText = clickedElement.textContent.trim();
+		const activityId = clickedElement.dataset?.activityId ?? '';
+		if (activityId === '')
+		{
+			return null;
+		}
+
+		const ownerDoc = clickedElement.ownerDocument ?? document;
+		const root = ownerDoc.body ?? ownerDoc;
+
+		let stopped = false;
+		let observer = null;
+		let releaseTimer = null;
+
+		const findEl = (): ?HTMLElement => {
+			const selector = `button.ui-btn-icon-ai[data-activity-id="${activityId}"]`;
+			for (const btn of root.querySelectorAll(selector))
+			{
+				if (btn.textContent.trim() === buttonText)
+				{
+					return btn;
+				}
+			}
+
+			return null;
+		};
+
+		const stop = () => {
+			stopped = true;
+			observer?.disconnect();
+			observer = null;
+			if (releaseTimer)
+			{
+				clearTimeout(releaseTimer);
+				releaseTimer = null;
+			}
+		};
+
+		const ensureWaiting = () => {
+			if (stopped)
+			{
+				return;
+			}
+
+			const el = findEl();
+			if (!el)
+			{
+				return;
+			}
+
+			if (Dom.hasClass(el, DISABLED_CLASS))
+			{
+				stop();
+
+				return;
+			}
+
+			if (!Dom.hasClass(el, AI_WAITING_CLASS))
+			{
+				Dom.addClass(el, AI_WAITING_CLASS);
+			}
+		};
+
+		observer = new MutationObserver(ensureWaiting);
+		observer.observe(root, {
+			subtree: true,
+			childList: true,
+			attributes: true,
+			attributeFilter: ['class'],
+		});
+
+		ensureWaiting();
+		releaseTimer = setTimeout(stop, STICKY_WAITING_MS);
+
+		return stop;
+	}
+
 	#validateCopilotParams(actionData: Object): boolean
 	{
+		// Admissibility of the entity type is enforced by the backend
+		// (AIActivityService::isAIScope / AIManager::isEntityTypeSupported):
+		// the launch button is not rendered for unsupported entities, so no
+		// duplicating entity-type whitelist is kept on the frontend.
 		return Type.isNumber(actionData.activityId)
 			&& Type.isNumber(actionData.ownerId)
 			&& Type.isNumber(actionData.ownerTypeId)
-			&& this.#copilotConfig.validEntityTypes.includes(parseInt(actionData.ownerTypeId, 10))
 		;
 	}
 
@@ -230,6 +343,19 @@ export class CopilotBase extends Base
 
 	#showAdditionalInfo(data: CoPilotAdditionalInfoData, item: ConfigurableItem): void
 	{
+		const technicalLimitMessage = AjaxErrorHandler.getVibePlusTechnicalLimitMessage(data);
+		if (Type.isStringFilled(technicalLimitMessage))
+		{
+			LiveAnnouncer.announce(technicalLimitMessage, 'assertive');
+			UI.Notification.Center.notify({
+				content: Text.encode(technicalLimitMessage),
+				autoHideDelay: COPILOT_BUTTON_DISABLE_DELAY,
+				closeButton: false,
+			});
+
+			return;
+		}
+
 		if (this.#isSliderCodeExist(data))
 		{
 			this.#showInfoSlider(data.sliderCode);
@@ -287,17 +413,13 @@ export class CopilotBase extends Base
 
 	#showFeedbackMessageBox(): void
 	{
-		MessageBox.show({
+		// eslint-disable-next-line @bitrix24/bitrix24-rules/no-native-dialogs
+		confirm({
 			title: Loc.getMessage('CRM_TIMELINE_ITEM_NO_AI_PROVIDER_POPUP_TITLE', NameService.copilotNameReplacement()),
-			message: Loc.getMessage('CRM_TIMELINE_ITEM_NO_AI_PROVIDER_POPUP_TEXT', NameService.copilotNameReplacement()),
-			modal: true,
-			buttons: MessageBoxButtons.OK_CANCEL,
-			okCaption: Loc.getMessage('CRM_TIMELINE_ITEM_NO_AI_PROVIDER_POPUP_OK_TEXT', NameService.copilotNameReplacement()),
-			onOk: (messageBox) => {
-				messageBox.close();
-				this.#openFeedbackForm();
-			},
-			onCancel: (messageBox) => messageBox.close(),
+			content: Tag.render`<div>${Text.encode(Loc.getMessage('CRM_TIMELINE_ITEM_NO_AI_PROVIDER_POPUP_TEXT', NameService.copilotNameReplacement()))}</div>`,
+			preset: 'OK_CANCEL',
+			confirmText: Loc.getMessage('CRM_TIMELINE_ITEM_NO_AI_PROVIDER_POPUP_OK_TEXT', NameService.copilotNameReplacement()),
+			onConfirm: () => this.#openFeedbackForm(),
 		});
 	}
 
@@ -326,18 +448,44 @@ export class CopilotBase extends Base
 
 	#showMarketMessageBox(): void
 	{
-		MessageBox.show({
+		// eslint-disable-next-line @bitrix24/bitrix24-rules/no-native-dialogs
+		confirm({
 			title: Loc.getMessage('CRM_TIMELINE_ITEM_AI_PROVIDER_POPUP_TITLE', NameService.copilotNameReplacement()),
-			message: Loc.getMessage('CRM_TIMELINE_ITEM_AI_PROVIDER_POPUP_TEXT', {
-				'[helpdesklink]': `<br><br><a href="##" onclick="top.BX.Helper.show('redirect=detail&code=${COPILOT_HELPDESK_CODE}');">`,
-				'[/helpdesklink]': '</a>',
-				'#COPILOT_NAME#': NameService.copilotName(),
-			}),
-			modal: true,
-			buttons: MessageBoxButtons.OK_CANCEL,
-			okCaption: Loc.getMessage('CRM_TIMELINE_ITEM_AI_PROVIDER_POPUP_OK_TEXT'),
-			onOk: () => Router.openSlider(Loc.getMessage('AI_APP_COLLECTION_MARKET_LINK')),
-			onCancel: (messageBox) => messageBox.close(),
+			content: this.#buildMarketMessageBoxContent(),
+			preset: 'OK_CANCEL',
+			confirmText: Loc.getMessage('CRM_TIMELINE_ITEM_AI_PROVIDER_POPUP_OK_TEXT'),
+			onConfirm: () => Router.openSlider(Loc.getMessage('AI_APP_COLLECTION_MARKET_LINK')),
+		});
+	}
+
+	#buildMarketMessageBoxContent(): HTMLElement
+	{
+		const messageText = Loc.getMessage('CRM_TIMELINE_ITEM_AI_PROVIDER_POPUP_TEXT', {
+			'#COPILOT_NAME#': NameService.copilotName(),
+		});
+		const [beforeLink, linkAndAfter] = messageText.split('[helpdesklink]');
+		if (linkAndAfter === undefined)
+		{
+			return Dom.create('div', { text: messageText });
+		}
+
+		const [linkLabel, afterLink] = linkAndAfter.split('[/helpdesklink]');
+		if (afterLink === undefined)
+		{
+			return Dom.create('div', { text: messageText });
+		}
+
+		const helpdeskLink = Dom.create('a', {
+			attrs: { href: '##', 'data-testid': 'crm-timeline-copilot-market-helpdesk-link' },
+			text: linkLabel,
+		});
+		Event.bind(helpdeskLink, 'click', (e) => {
+			e.preventDefault();
+			top.BX.Helper.show(`redirect=detail&code=${COPILOT_HELPDESK_CODE}`);
+		});
+
+		return Dom.create('div', {
+			children: [beforeLink, Dom.create('br'), Dom.create('br'), helpdeskLink, afterLink],
 		});
 	}
 

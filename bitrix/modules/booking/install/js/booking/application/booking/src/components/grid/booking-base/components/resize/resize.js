@@ -7,9 +7,9 @@ import { Duration } from 'booking.lib.duration';
 import { bookingService } from 'booking.lib.booking';
 import { isRealId } from 'booking.lib.is-real-id';
 import { busySlots } from 'booking.lib.busy-slots';
-import { gridFactory } from 'booking.lib.grid';
+import { GridFactory, type GridBase } from 'booking.lib.grid';
 import { bookingService as bookingProviderService } from 'booking.provider.service.booking-service';
-import type { BookingModel, OverbookingMap } from 'booking.model.bookings';
+import { type BookingModel, type OverbookingMap } from 'booking.model.bookings';
 
 import './resize.css';
 
@@ -61,7 +61,7 @@ export const Resize = {
 		}),
 		grid(): GridBase
 		{
-			return gridFactory.getGrid();
+			return GridFactory.getGrid();
 		},
 		featureOverbookingEnabled(): boolean
 		{

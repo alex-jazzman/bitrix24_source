@@ -1,0 +1,47 @@
+<?php
+
+$MESS['CRM_CALL_ASSESSMENT_V2_PAGE_TITLE'] = 'Новый скрипт';
+$MESS['CRM_CALL_ASSESSMENT_V2_SCRIPT_SECTION_TITLE'] = 'Скрипт продаж от AI';
+$MESS['CRM_CALL_ASSESSMENT_V2_TOGGLE_AUTOFILL'] = 'Автообновление';
+$MESS['CRM_CALL_ASSESSMENT_V2_AI_HINT_TITLE'] = 'Автообновление скрипта';
+$MESS['CRM_CALL_ASSESSMENT_V2_AI_HINT_DESCRIPTION'] = '#COPILOT_NAME# проанализирует все звонки по этому скрипту и дополнит его, если найдёт новые важные этапы разговора. Прежние правила не меняются';
+$MESS['CRM_CALL_ASSESSMENT_V2_INFO_GENERATED'] = 'Скрипт от #COPILOT_NAME#';
+$MESS['CRM_CALL_ASSESSMENT_V2_INFO_GENERATED_HINT_TITLE'] = 'Скрипт от #COPILOT_NAME#';
+$MESS['CRM_CALL_ASSESSMENT_V2_INFO_GENERATED_HINT_DESCRIPTION'] = 'AI проанализировал ваши звонки, выделил важные этапы разговора и собрал из них скрипт, чтобы помочь вам улучшить качество общения с клиентами';
+$MESS['CRM_CALL_ASSESSMENT_V2_INFO_PROCESSED_CALLS_PLURAL_0'] = 'Применён к [link]#COUNT# звонку[/link]';
+$MESS['CRM_CALL_ASSESSMENT_V2_INFO_PROCESSED_CALLS_PLURAL_1'] = 'Применён к [link]#COUNT# звонкам[/link]';
+$MESS['CRM_CALL_ASSESSMENT_V2_INFO_PROCESSED_CALLS_PLURAL_2'] = 'Применён к [link]#COUNT# звонкам[/link]';
+$MESS['CRM_CALL_ASSESSMENT_V2_INFO_UPDATED'] = 'Обновлён #DATE#';
+$MESS['CRM_CALL_ASSESSMENT_V2_FIELD_TITLE'] = 'Название';
+$MESS['CRM_CALL_ASSESSMENT_V2_AUDIENCE_HEADING'] = 'Какие звонки проверять';
+$MESS['CRM_CALL_ASSESSMENT_V2_CLIENT_TYPES_LABEL'] = 'Тип клиентов';
+$MESS['CRM_CALL_ASSESSMENT_V2_CALL_TYPES_LABEL'] = 'Тип звонков';
+$MESS['CRM_CALL_ASSESSMENT_V2_FILTER_ADD_BUTTON'] = 'Добавить';
+$MESS['CRM_CALL_ASSESSMENT_V2_CLIENT_TYPES_REQUIRED'] = 'Выберите хотя бы один тип клиентов';
+$MESS['CRM_CALL_ASSESSMENT_V2_CRITERIA_HEADING'] = 'Как вести разговор';
+$MESS['CRM_CALL_ASSESSMENT_V2_CRITERIA_SUBTITLE'] = 'Правила, которые менеджер должен соблюдать в разговоре с клиентом';
+$MESS['CRM_CALL_ASSESSMENT_V2_CRITERIA_HINT_TITLE'] = 'Важные этапы разговора';
+$MESS['CRM_CALL_ASSESSMENT_V2_CRITERIA_HINT_DESCRIPTION'] = 'По этому списку #COPILOT_NAME# будет проверять звонки. Каждый пункт — определённое действие или фраза, которая должна прозвучать в разговоре';
+$MESS['CRM_CALL_ASSESSMENT_V2_STEP_TITLE_PLACEHOLDER'] = 'Новое правило';
+$MESS['CRM_CALL_ASSESSMENT_V2_STEP_DESCRIPTION_PLACEHOLDER'] = 'Опишите, что должен сделать менеджер';
+$MESS['CRM_CALL_ASSESSMENT_V2_DRAG_HINT'] = 'Перетащите правило, чтобы изменить порядок';
+$MESS['CRM_CALL_ASSESSMENT_V2_ADD_CRITERION'] = 'Добавить правило';
+$MESS['CRM_CALL_ASSESSMENT_V2_REMOVE_CRITERION'] = 'Удалить правило';
+$MESS['CRM_CALL_ASSESSMENT_V2_MIN_CRITERIA_NOTICE'] = 'В скрипте должно быть хотя бы одно правило';
+$MESS['CRM_CALL_ASSESSMENT_V2_BUTTON_SAVE'] = 'Сохранить';
+$MESS['CRM_CALL_ASSESSMENT_V2_BUTTON_CANCEL'] = 'Отмена';
+$MESS['CRM_CALL_ASSESSMENT_V2_BUTTON_EDIT'] = 'Редактировать';
+$MESS['CRM_CALL_ASSESSMENT_V2_AI_TOGGLE_ERROR'] = 'Не удалось сохранить настройки автообновления, попробуйте ещё раз немного позже.';
+$MESS['CRM_CALL_ASSESSMENT_V2_SAVE_ERROR'] = 'Не удалось сохранить скрипт, попробуйте ещё раз немного позже';
+$MESS['CRM_CALL_ASSESSMENT_V2_CREATE_DRAFT_HEADING'] = 'Правила разговора';
+$MESS['CRM_CALL_ASSESSMENT_V2_CREATE_DRAFT_PLACEHOLDER'] = 'Опишите, как должен проходить разговор, или добавьте черновик своего скрипта. Подойдёт любой текст: регламент, заметки или просто перечисление важных пунктов';
+$MESS['CRM_CALL_ASSESSMENT_V2_CREATE_PASTE_BUTTON'] = 'Вставить текст из буфера';
+$MESS['CRM_CALL_ASSESSMENT_V2_CREATE_PASTE_UNSUPPORTED'] = 'В вашем браузере недоступна работа с буфером обмена';
+$MESS['CRM_CALL_ASSESSMENT_V2_CREATE_PASTE_FAILED'] = 'Не удалось получить доступ к буферу обмена, разрешите доступ в настройках браузера и попробуйте ещё раз';
+$MESS['CRM_CALL_ASSESSMENT_V2_CREATE_GENERATE_BUTTON'] = 'Создать скрипт';
+$MESS['CRM_CALL_ASSESSMENT_V2_CREATE_GENERATE_ERROR'] = 'Не удалось сгенерировать скрипт, попробуйте ещё раз';
+$MESS['CRM_CALL_ASSESSMENT_V2_CREATE_VALIDATION_MIN_LENGTH'] = 'Опишите тему звонка подробнее — минимум #MIN# символов';
+$MESS['CRM_CALL_ASSESSMENT_V2_CREATE_LOADING_TEXT'] = '#COPILOT_NAME# создаёт скрипт';
+$MESS['CRM_CALL_ASSESSMENT_V2_CREATE_LOAD_GENERATED_ERROR'] = 'Не удалось загрузить скрипт, попробуйте обновить страницу';
+
+$MESS['CRM_CALL_ASSESSMENT_V2_EDITABLE_TITLE_EDIT'] = 'Изменить название';

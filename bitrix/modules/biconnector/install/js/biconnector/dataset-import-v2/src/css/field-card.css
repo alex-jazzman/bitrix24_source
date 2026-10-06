@@ -1,0 +1,144 @@
+.biconnector-dataset-import-v2-field-card {
+	position: relative;
+	padding: 16px;
+	background: var(--ui-color-bg-content-primary, #fff);
+	border: 1px solid var(--ui-color-design-outline-stroke-alt1, #dfe0e3);
+	border-radius: 12px;
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.biconnector-dataset-import-v2-field-card--active {
+	border-color: var(--ui-color-accent-main-primary, #0075ff);
+	box-shadow: 0 0 0 1px var(--ui-color-accent-main-primary, #0075ff);
+}
+
+.biconnector-dataset-import-v2-field-card__visibility {
+	position: absolute;
+	top: -12px;
+	right: -12px;
+	width: 28px;
+	height: 28px;
+	border: 0;
+	background: var(--ui-color-bg-content-primary, #fff);
+	border-radius: 50%;
+	cursor: pointer;
+	padding: 0;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	z-index: 1;
+}
+
+.biconnector-dataset-import-v2-field-card__visibility-icon {
+	--ui-icon-set__icon-size: 24px;
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary, #0075ff);
+}
+
+.biconnector-dataset-import-v2-field-card__visibility--hidden .biconnector-dataset-import-v2-field-card__visibility-icon {
+	--ui-icon-set__icon-color: var(--ui-color-base-3, #828b95);
+}
+
+.biconnector-dataset-import-v2-field-card--excluded .biconnector-dataset-import-v2-field-card__field--description,
+.biconnector-dataset-import-v2-field-card--excluded .biconnector-dataset-import-v2-field-card__field-label {
+	display: none;
+}
+
+.biconnector-dataset-import-v2-field-card__row {
+	display: grid;
+	grid-template-columns: 140px 1fr;
+	gap: 12px;
+}
+
+.biconnector-dataset-import-v2-field-card__field {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	min-width: 0;
+}
+
+.biconnector-dataset-import-v2-field-card__field-label {
+	font-size: 13px;
+	line-height: 18px;
+	color: var(--ui-color-base-2, #525c69);
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+}
+
+.biconnector-dataset-import-v2-field-card__control {
+	display: block;
+	min-width: 0;
+}
+
+.biconnector-dataset-import-v2-field-card__select--locked,
+.biconnector-dataset-import-v2-field-card__input--locked {
+	pointer-events: none;
+}
+
+.biconnector-dataset-import-v2-field-card__field-error {
+	font-size: 12px;
+	line-height: 16px;
+	color: var(--ui-color-accent-main-alert, #ff5752);
+}
+
+.biconnector-dataset-import-v2-field-card__select,
+.biconnector-dataset-import-v2-field-card__input,
+.biconnector-dataset-import-v2-field-card__textarea {
+	width: 100%;
+	padding: 9px 12px;
+	box-sizing: border-box;
+	border: 1px solid var(--ui-color-design-outline-stroke-alt1, #dfe0e3);
+	border-radius: 8px;
+	background: var(--ui-color-bg-content-primary, #fff);
+	color: var(--ui-color-base-1, #333);
+	font-family: inherit;
+	font-size: 14px;
+	line-height: 20px;
+	outline: 0;
+	transition: border-color 0.15s ease-in-out;
+}
+
+.biconnector-dataset-import-v2-field-card__select {
+	appearance: none;
+	padding-right: 32px;
+	background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none'><path d='M1 1L6 6L11 1' stroke='%23828b95' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+	background-repeat: no-repeat;
+	background-position: right 12px center;
+}
+
+.biconnector-dataset-import-v2-field-card__input:focus,
+.biconnector-dataset-import-v2-field-card__select:focus,
+.biconnector-dataset-import-v2-field-card__textarea:focus {
+	border-color: var(--ui-color-accent-main-primary, #0075ff);
+}
+
+.biconnector-dataset-import-v2-field-card__input--error,
+.biconnector-dataset-import-v2-field-card__input--error:focus {
+	border-color: var(--ui-color-accent-main-alert, #ff5752);
+}
+
+.biconnector-dataset-import-v2-field-card__textarea {
+	resize: vertical;
+	min-height: 56px;
+	padding: 9px 12px;
+}
+
+.biconnector-dataset-import-v2-field-card__select:disabled,
+.biconnector-dataset-import-v2-field-card__input:disabled,
+.biconnector-dataset-import-v2-field-card__textarea:disabled {
+	border-color: transparent;
+	background: #f7f7f7;
+	color: #525c69;
+	opacity: 1;
+	-webkit-text-fill-color: #525c69;
+	cursor: not-allowed;
+}
+
+.biconnector-dataset-import-v2-card__columns-list {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}

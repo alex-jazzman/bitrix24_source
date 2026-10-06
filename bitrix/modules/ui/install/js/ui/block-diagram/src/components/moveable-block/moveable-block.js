@@ -73,7 +73,6 @@ export const MoveableBlock = {
 		});
 
 		onUnmounted(() => {
-			highlightedBlocks.remove(props.block.id);
 			onUnmountedBlock();
 		});
 

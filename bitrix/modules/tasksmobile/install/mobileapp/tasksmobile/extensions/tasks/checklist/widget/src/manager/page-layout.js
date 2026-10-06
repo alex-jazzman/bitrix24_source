@@ -1,15 +1,11 @@
-/**
- * @module tasks/checklist/widget/src/manager/page-layout
- */
+/** @module tasks/checklist/widget/src/manager/page-layout */
 jn.define('tasks/checklist/widget/src/manager/page-layout', (require, exports, module) => {
 	const { PropTypes } = require('utils/validation');
 	const { ChecklistBaseLayout } = require('tasks/checklist/widget/src/manager/base-layout');
 
-	/**
-	 * @class ChecklistPageLayout
-	 */
 	class ChecklistPageLayout extends ChecklistBaseLayout
 	{
+		/** @return {Promise<Object>} */
 		async open()
 		{
 			const parentWidget = this.getParentWidget();
@@ -40,6 +36,7 @@ jn.define('tasks/checklist/widget/src/manager/page-layout', (require, exports, m
 
 		/**
 		 * @private
+		 * @return {void}
 		 */
 		updateLeftButtons()
 		{
@@ -47,12 +44,13 @@ jn.define('tasks/checklist/widget/src/manager/page-layout', (require, exports, m
 				{
 					type: 'back',
 					callback: () => {
-						this.handleOnClose();
+						void this.handleOnClose();
 					},
 				},
 			]);
 		}
 
+		/** @return {void} */
 		close()
 		{
 			this.layoutWidget.back();

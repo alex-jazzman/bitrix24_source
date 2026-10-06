@@ -1,4 +1,4 @@
-import type { Store } from 'ui.vue3.vuex';
+import { type Store } from 'ui.vue3.vuex';
 
 import { Model } from 'booking.const';
 import { Core } from 'booking.core';
@@ -27,11 +27,14 @@ class BookingActionsService
 
 		const booking = this.$store.getters[`${Model.Bookings}/getById`](bookingId);
 
+		const notifications = this.$store.getters[`${Model.Dictionary}/getNotifications`];
+		const isConfirmation = message.notificationType === notifications.Confirmation?.value;
+
 		void this.$store.dispatch(`${Model.Bookings}/update`, {
 			id: booking.id,
 			booking: {
 				...booking,
-				messages: [...(booking.messages ?? []), message],
+				isConfirmationSent: booking.isConfirmationSent || isConfirmation,
 			},
 		});
 	}

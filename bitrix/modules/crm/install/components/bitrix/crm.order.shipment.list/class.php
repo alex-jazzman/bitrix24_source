@@ -10,6 +10,7 @@ use Bitrix\Crm\Service;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Web\Uri;
 
 Loc::loadMessages(__FILE__);
 
@@ -372,7 +373,7 @@ class CCrmOrderShipmentListComponent extends \CBitrixComponent
 		}
 
 		$this->arResult['ENABLE_SLIDER'] = \Bitrix\Crm\Settings\LayoutSettings::getCurrent()->isSliderEnabled();
-		$this->arResult['PATH_TO_ORDER_SHIPMENT_DELETE'] =  CHTTP::urlAddParams($this->arParams['PATH_TO_ORDER_SHIPMENT_LIST'], array('sessid' => bitrix_sessid()));
+		$this->arResult['PATH_TO_ORDER_SHIPMENT_DELETE'] =  (string)(new Uri($this->arParams['PATH_TO_ORDER_SHIPMENT_LIST']))->addParams(array('sessid' => bitrix_sessid()));
 		$this->arResult['TIME_FORMAT'] = CCrmDateTimeHelper::getDefaultDateTimeFormat();
 
 		$this->arResult['CALL_LIST_UPDATE_MODE'] = isset($_REQUEST['call_list_context']) && isset($_REQUEST['call_list_id']) && IsModuleInstalled('voximplant');
@@ -794,10 +795,7 @@ class CCrmOrderShipmentListComponent extends \CBitrixComponent
 				Service\Sale\EntityLinkBuilder\Context::getShopAreaContext()
 			);
 
-			$arOrderShipment['PATH_TO_ORDER_SHIPMENT_DETAILS'] = CHTTP::urlAddParams(
-				$arOrderShipment['PATH_TO_ORDER_SHIPMENT_DETAILS'] ?? '',
-				['order_id' => (int)($this->arParams['INTERNAL_FILTER']['ORDER_ID'] ?? 0)]
-			);
+			$arOrderShipment['PATH_TO_ORDER_SHIPMENT_DETAILS'] = (string)(new Uri($arOrderShipment['PATH_TO_ORDER_SHIPMENT_DETAILS'] ?? ''))->addParams(['order_id' => (int)($this->arParams['INTERNAL_FILTER']['ORDER_ID'] ?? 0)]);
 
 			$arOrderShipment['PATH_TO_ORDER_SHIPMENT_SHOW'] = $arOrderShipment['PATH_TO_ORDER_SHIPMENT_DETAILS'] ?? '';
 			$arOrderShipment['PATH_TO_ORDER_SHIPMENT_EDIT'] = CCrmUrlUtil::AddUrlParams(
@@ -805,12 +803,9 @@ class CCrmOrderShipmentListComponent extends \CBitrixComponent
 				array('init_mode' => 'edit')
 			);
 
-			$arOrderShipment['PATH_TO_ORDER_SHIPMENT_DELETE'] =  CHTTP::urlAddParams(
-				$this->isInternal
+			$arOrderShipment['PATH_TO_ORDER_SHIPMENT_DELETE'] =  (string)(new Uri($this->isInternal
 					? $APPLICATION->GetCurPage()
-					: ($this->arParams['PATH_TO_ORDER_SHIPMENT_LIST'] ?? ''),
-				array('action_'.$this->arResult['GRID_ID'] => 'delete', 'ID' => $entityID, 'sessid' => $this->arResult['SESSION_ID'])
-			);
+					: ($this->arParams['PATH_TO_ORDER_SHIPMENT_LIST'] ?? '')))->addParams(array('action_'.$this->arResult['GRID_ID'] => 'delete', 'ID' => $entityID, 'sessid' => $this->arResult['SESSION_ID']));
 
 			$arOrderShipment['PATH_TO_USER_PROFILE'] = CComponentEngine::MakePathFromTemplate(
 				$this->arParams['PATH_TO_USER_PROFILE'] ?? '',
@@ -925,10 +920,7 @@ class CCrmOrderShipmentListComponent extends \CBitrixComponent
 				Service\Sale\EntityLinkBuilder\Context::getShopAreaContext()
 			);
 
-			$this->arResult['PATH_TO_ORDER_SHIPMENT_ADD'] = CHTTP::urlAddParams(
-				$this->arResult['PATH_TO_ORDER_SHIPMENT_ADD'] ?? '',
-				array('order_id' => (int)$this->arParams['INTERNAL_FILTER']['ORDER_ID'])
-			);
+			$this->arResult['PATH_TO_ORDER_SHIPMENT_ADD'] = (string)(new Uri($this->arResult['PATH_TO_ORDER_SHIPMENT_ADD'] ?? ''))->addParams(array('order_id' => (int)$this->arParams['INTERNAL_FILTER']['ORDER_ID']));
 		}
 
 		$this->arResult['NEED_FOR_REBUILD_ORDER_SHIPMENT_ATTRS'] =

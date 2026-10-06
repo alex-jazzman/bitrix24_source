@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Disk = this.BX.Disk || {};
-(function (exports, main_core, main_loader, disk_users, main_polyfill_intersectionobserver, disk_externalLink, main_core_events, main_popup, clipboard, ui_dialogs_messagebox, ui_ears, ui_tour, ui_navigationpanel) {
+(function (exports, main_core, main_loader, disk_users, main_polyfill_intersectionobserver, disk_externalLink, main_core_events, main_popup, clipboard, ui_dialogs_messagebox, ui_ears, ui_navigationpanel) {
 	'use strict';
 
 	let intersectionObserver;
@@ -22,6 +22,17 @@ this.BX.Disk = this.BX.Disk || {};
 		}
 		entity.observedCallback = callback;
 		intersectionObserver.observe(entity);
+	}
+	function keepFocusThroughMenuClose(focusFn) {
+		const onRestore = event => {
+			event.preventDefault();
+			document.removeEventListener('a11y:restore-focus', onRestore, true);
+		};
+		document.addEventListener('a11y:restore-focus', onRestore, true);
+		setTimeout(() => {
+			document.removeEventListener('a11y:restore-focus', onRestore, true);
+		}, 2000);
+		setTimeout(focusFn, 0);
 	}
 
 	class BackendInner {
@@ -494,24 +505,14 @@ this.BX.Disk = this.BX.Disk || {};
 		}
 		static createBoard(analyticsElement = null) {
 			const newTab = window.open('', '_blank');
-			const config = {};
-			if (analyticsElement) {
-				config.analytics = {
-					event: 'create',
-					tool: 'boards',
-					category: 'boards',
-					c_element: analyticsElement
-				};
-			}
-			BX.ajax.runAction('disk.integration.flipchart.createDocument', config).then(response => {
-				if (response.status === 'success' && response.data.file) {
+			BX.Disk.BoardCreate.createBoard({
+				newTab,
+				analyticsElement,
+				onSuccess: () => {
 					const manager = BX.Main.gridManager || BX.Main.tileGridManager;
 					const grid = manager.getById('diskDocumentsGrid')?.instance;
 					if (grid) {
 						grid.reload();
-					}
-					if (response.data.viewUrl) {
-						newTab.location.href = response.data.viewUrl;
 					}
 				}
 			});
@@ -814,7 +815,7 @@ this.BX.Disk = this.BX.Disk || {};
 					}
 				}.bind(this));
 				input.addEventListener('blur', onBlur);
-				BX.focus(input);
+				keepFocusThroughMenuClose(() => BX.focus(input));
 			}
 		}
 		static detect(itemData) {
@@ -1013,6 +1014,33 @@ this.BX.Disk = this.BX.Disk || {};
 		}
 	}
 
+	function generateTileEmptyBlock() {
+		if (BX.Disk.Documents.isBoardsPage === true) {
+			return generateBoardsEmptyBlock();
+		}
+		return generateDocumentsEmptyBlock();
+	}
+	function generateDocumentsEmptyBlock() {
+		return main_core.Tag.render`
+		<div class="disk-folder-list-no-data-inner">
+			<div class="disk-folder-list-no-data-inner-message">
+				${main_core.Loc.getMessage('DISK_DOCUMENTS_GRID_TILE_EMPTY_DOCUMENTS_TITLE')}
+			</div>
+		</div>`;
+	}
+	function generateBoardsEmptyBlock() {
+		return main_core.Tag.render`
+		<div class="disk-folder-list-no-data-inner">
+			<div class="disk-folder-list-no-data-inner-message">
+				${main_core.Loc.getMessage('DISK_DOCUMENTS_GRID_TILE_EMPTY_BOARDS_TITLE')}
+			</div>
+			<div class="disk-folder-list-no-data-inner-variable">
+				<div class="disk-folder-list-no-data-inner-create-file" onclick="BX.Disk.Documents.Toolbar.createBoard('boards_page');">
+					${main_core.Loc.getMessage('DISK_DOCUMENTS_GRID_TILE_EMPTY_BOARDS_CREATE')}</div>
+			</div>
+		</div>`;
+	}
+
 	class Tile {
 		#analytics;
 		constructor(analytics = null) {
@@ -1051,7 +1079,7 @@ this.BX.Disk = this.BX.Disk || {};
 							item['items'].forEach(prepareActionMenu);
 						}
 						if (item['id'] === 'rename') {
-							item['onclick'] = row.onRename.bind(row);
+							item['onclick'] = () => keepFocusThroughMenuClose(row.onRename.bind(row));
 						}
 						const menuItem = getMenuItem(objectId, item);
 						menuItem.subscribe('close', () => {
@@ -1077,16 +1105,13 @@ this.BX.Disk = this.BX.Disk || {};
 			}.bind(this));
 		}
 		static generateEmptyBlock() {
-			return main_core.Tag.render`
-		<div class="disk-folder-list-no-data-inner">
-			<div class="disk-folder-list-no-data-inner-message">
-				${main_core.Loc.getMessage('DISK_DOCUMENTS_GRID_TILE_EMPTY_BLOCK_TITLE')}
-			</div>
-			<div class="disk-folder-list-no-data-inner-variable">
-				<div class="disk-folder-list-no-data-inner-create-file" onmouseover="BX.onCustomEvent(window, 'onDiskUploadPopupShow', [this]);">
-					${main_core.Loc.getMessage('DISK_DOCUMENTS_GRID_TILE_EMPTY_BLOCK_UPLOAD')}</div>
-			</div>
-		</div>`;
+			return generateTileEmptyBlock();
+		}
+		static generateDocumentsEmptyBlock() {
+			return generateDocumentsEmptyBlock();
+		}
+		static generateBoardsEmptyBlock() {
+			return generateBoardsEmptyBlock();
 		}
 	}
 
@@ -1109,17 +1134,28 @@ this.BX.Disk = this.BX.Disk || {};
 				console.error('Unable to start guide');
 				return;
 			}
-			setTimeout(() => {
+			BX.UI.BannerDispatcher.low.toQueue(done => {
+				let isDone = false;
+				const complete = () => {
+					if (isDone) {
+						return;
+					}
+					isDone = true;
+					done();
+				};
+				this.guide.subscribe('UI.Tour.Guide:onFinish', complete);
 				this.guide.scrollToTarget(this.target);
 				this.guide.start();
-			}, 1000);
+			}, {
+				id: this.guide.getId()
+			});
 		}
 		#checkParams() {
 			return this.target !== null && this.targetSpotlight !== null;
 		}
 		#createGuide(id) {
 			const spotlight = this.#createSpotlight();
-			const guide = new ui_tour.Guide({
+			const guide = new BX.UI.Tour.Guide({
 				id,
 				simpleMode: true,
 				overlay: false,
@@ -1291,5 +1327,5 @@ this.BX.Disk = this.BX.Disk || {};
 	exports.showExternalLink = showExternalLink;
 	exports.showShared = showShared;
 
-})(this.BX.Disk.Documents = this.BX.Disk.Documents || {}, BX, BX, BX.Disk, BX, BX.Disk, BX.Event, BX.Main, BX, BX.UI.Dialogs, BX.UI, BX.UI.Tour, BX.UI);
+})(this.BX.Disk.Documents = this.BX.Disk.Documents || {}, BX, BX, BX.Disk, BX, BX.Disk, BX.Event, BX.Main, BX, BX.UI.Dialogs, BX.UI, BX.UI);
 //# sourceMappingURL=script.js.map

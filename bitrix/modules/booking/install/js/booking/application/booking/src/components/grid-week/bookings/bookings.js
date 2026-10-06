@@ -2,13 +2,13 @@ import { createNamespacedHelpers } from 'ui.vue3.vuex';
 
 import { Model } from 'booking.const';
 import { busySlots } from 'booking.lib.busy-slots';
-import { gridFactory } from 'booking.lib.grid';
+import { GridFactory, type GridBase } from 'booking.lib.grid';
 import { bookingService } from 'booking.lib.booking';
 import { Duration } from 'booking.lib.duration';
 
-import type { DatePeriodTs } from 'booking.lib.date-period';
-import type { BookingModel } from 'booking.model.bookings';
-import type { Cell } from 'booking.model.interface';
+import { type DatePeriodTs } from 'booking.lib.date-period';
+import { type BookingModel } from 'booking.model.bookings';
+import { type Cell } from 'booking.model.interface';
 
 import {
 	createBookingModelUi,
@@ -21,7 +21,7 @@ import { WeekBusySlot } from './busy-slot/busy-slot';
 import { BookingWeek } from './booking/booking';
 import { WeekPlacementSlot } from './placement-slot/placement-slot';
 
-import type { BookingUiGroup, BookingModelUi } from '../../grid/booking-base/types';
+import { type BookingUiGroup, type BookingModelUi } from '../../grid/booking-base/types';
 
 import './bookings.css';
 
@@ -61,7 +61,7 @@ export const Bookings = {
 		}),
 		grid(): GridBase
 		{
-			return gridFactory.getGrid();
+			return GridFactory.getGrid();
 		},
 		resourcesHash(): string
 		{

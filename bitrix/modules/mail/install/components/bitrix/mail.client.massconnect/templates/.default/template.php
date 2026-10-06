@@ -26,7 +26,7 @@ $massconnectContainerId = 'mail-massconnect-container';
 
 $permissions = [
 	'allowedLevels' => (int)MailAccess::getPermissionValue(PermissionDictionary::MAIL_MAILBOX_LIST_ITEM_EDIT),
-	'canEditCrmIntegration' => (bool)MailAccess::getPermissionValue(PermissionDictionary::MAIL_MAILBOX_CRM_INTEGRATION_EDIT),
+	'canViewMailboxList' => MailAccess::hasCurrentUserAccessToMailboxGrid(),
 ];
 
 $features = [

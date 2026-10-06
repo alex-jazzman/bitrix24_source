@@ -1,0 +1,1 @@
+.mail-label-menu{display:flex;flex-direction:column;margin:0 0 var(--ui-space-stack-lg,20px)}.mail-label-menu .mail-label-menu__list{margin-top:0;margin-bottom:0}.mail-label-menu .ui-sidepanel-menu-link.mail-menu-directory-link{margin-left:20px}.mail-label-menu__empty{display:flex;width:calc(100% - 15px);padding:var(--ui-space-inset-2xs,4px) 0}

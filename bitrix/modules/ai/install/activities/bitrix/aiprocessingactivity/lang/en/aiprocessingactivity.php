@@ -1,4 +1,5 @@
 <?php
+$MESS["AI_PROCESSING_ACTIVITY_CONTENT_BLOCK_EMPTY"] = "AI provider not selected";
 $MESS["AI_PROCESSING_ACTIVITY_DISABLED"] = "Maximum number of requests exceeded. Try again later.";
 $MESS["AI_PROCESSING_ACTIVITY_EMPTY_ENGINE"] = "AI provider is not selected.";
 $MESS["AI_PROCESSING_ACTIVITY_EMPTY_PROMPT"] = "AI prompt is not specified.";
@@ -17,7 +18,7 @@ $MESS["AI_PROCESSING_ACTIVITY_JSON_SCHEMA_STATUS_INVALID"] = "Error: invalid JSO
 $MESS["AI_PROCESSING_ACTIVITY_JSON_SCHEMA_STATUS_VALID"] = "Schema is valid.";
 $MESS["AI_PROCESSING_ACTIVITY_JSON_SCHEMA_TEMPLATE_BTN"] = "Apply template";
 $MESS["AI_PROCESSING_ACTIVITY_JSON_SCHEMA_TEMPLATE_CONFIRM_OVERWRITE"] = "Replace the current schema with the template?";
-$MESS["AI_PROCESSING_ACTIVITY_MODULE_NOT_INSTALLED"] = "The \"AI\" module is not installed.";
+$MESS["AI_PROCESSING_ACTIVITY_MODULE_NOT_INSTALLED"] = "The \"AI integration\" module is not installed.";
 $MESS["AI_PROCESSING_ACTIVITY_QUEUE_ERROR"] = "Could not enqueue task. Error: #ERROR#.";
 $MESS["AI_PROCESSING_ACTIVITY_QUEUE_FAIL"] = "Could not process enqueued task: #MESSAGE# (#CODE#).";
 $MESS["AI_PROCESSING_ACTIVITY_QUEUE_RESULT"] = "AI prompt has been processed. Result: #RESULT#.";

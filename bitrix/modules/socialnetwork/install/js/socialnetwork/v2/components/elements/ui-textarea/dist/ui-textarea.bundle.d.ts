@@ -1,6 +1,6 @@
 /* eslint-disable */
 declare namespace BX.Socialnetwork.V2.Components.Elements {
-	const UiTextarea: BX.DefineComponent<BX.ExtractPropTypes<{
+	const UiTextarea: BX.Vue3.DefineComponent<BX.Vue3.ExtractPropTypes<{
 		modelValue: {
 			type: StringConstructor;
 			default: string;
@@ -20,7 +20,7 @@ declare namespace BX.Socialnetwork.V2.Components.Elements {
 	}>, {}, {}, {}, {
 		onInput(event: Event): void;
 		adjustHeight(): void;
-	}, BX.ComponentOptionsMixin, BX.ComponentOptionsMixin, "update:modelValue"[], "update:modelValue", BX.PublicProps, Readonly<BX.ExtractPropTypes<{
+	}, BX.Vue3.ComponentOptionsMixin, BX.Vue3.ComponentOptionsMixin, "update:modelValue"[], "update:modelValue", BX.Vue3.PublicProps, Readonly<BX.Vue3.ExtractPropTypes<{
 		modelValue: {
 			type: StringConstructor;
 			default: string;
@@ -44,5 +44,5 @@ declare namespace BX.Socialnetwork.V2.Components.Elements {
 		placeholder: string;
 		modelValue: string;
 		disabled: boolean;
-	}, {}, {}, {}, string, BX.ComponentProvideOptions, true, {}, any>;
+	}, {}, {}, {}, string, BX.Vue3.ComponentProvideOptions, true, {}, any>;
 }

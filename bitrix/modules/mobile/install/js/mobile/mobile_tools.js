@@ -247,6 +247,19 @@
 					notRequireChanges: true,
 				},
 				{
+					// Knowledge base (note module) deep links open inside the app via /mobile/note,
+					// carrying the sub-path in the entryPath parameter (same server contract as the
+					// in-app-url note route). Needed for the WebView feed where in-app-url is not used.
+					exp: /^(?:https?:\/\/[^/?#]+)?\/note(\/[^?#]*)?(\?[^#]*)?(?:#.*)?$/i,
+					replace: '/mobile/note/?entryPath=$1$2',
+					useNewStyle: true,
+					params: {
+						titleParams: {
+							text: BX.message('MOBILE_NOTE_KB_TITLE'),
+						},
+					},
+				},
+				{
 					exp: /\/bitrix\/components\/bitrix\/voting\.attached\.result\/slider\.php\?signedattachid=(\d+\.\w+)/gi,
 					replace: '/bitrix/components/bitrix/voting.attached.result/slider.php?signedAttachId=$1',
 				},

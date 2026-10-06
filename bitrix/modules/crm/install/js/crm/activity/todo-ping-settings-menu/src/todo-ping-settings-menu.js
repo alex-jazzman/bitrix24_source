@@ -1,5 +1,5 @@
+/* eslint-disable no-undef -- Flow type aliases in JS source are reported by chef lint. */
 import { Dom, Loc, Type } from 'main.core';
-import { MenuItem } from 'main.popup';
 
 import 'ui.hint';
 
@@ -12,20 +12,27 @@ declare type TodoPingSettingsMenuParams = {
 	}
 }
 
+declare type MenuItemLike = {
+	getContainer: () => HTMLElement,
+};
+
+declare type HintLike = {
+	show: (bindElement: HTMLElement, text: string) => void,
+};
+
 const MENU_ITEM_CLASS_ACTIVE = 'menu-popup-item-accept';
 const MENU_ITEM_CLASS_INACTIVE = 'menu-popup-item-none';
 const SAVE_OFFSETS_REQUEST_DELAY = 750;
 
 export class TodoPingSettingsMenu
 {
-	#entityTypeId: number = null;
 	#settings: Object = null;
 	#selectedOffsets: ?Array<number> = null;
 	#isLoadingMenuItem: Boolean = false;
+	#hint: ?HintLike = null;
 
 	constructor(params: TodoPingSettingsMenuParams)
 	{
-		this.#entityTypeId = params.entityTypeId;
 		this.#settings = params.settings;
 		if (!Type.isStringFilled(this.#settings.optionName))
 		{
@@ -95,7 +102,7 @@ export class TodoPingSettingsMenu
 		return this.#isLoadingMenuItem;
 	}
 
-	#onMenuItemClick(offset: number, event: PointerEvent, item: MenuItem): void
+	#onMenuItemClick(offset: number, event: PointerEvent, item: MenuItemLike): void
 	{
 		this.#isLoadingMenuItem = true;
 
@@ -103,10 +110,8 @@ export class TodoPingSettingsMenu
 		{
 			if (this.#selectedOffsets.length === 1)
 			{
-				BX.UI.Hint.show(
-					item.getContainer(),
-					Loc.getMessage('CRM_ACTIVITY_TODO_PING_SETTINGS_MENU_ITEM_TOOLTIP'),
-				);
+				event.stopPropagation();
+				this.#showHint(item);
 
 				this.#isLoadingMenuItem = false;
 
@@ -136,5 +141,30 @@ export class TodoPingSettingsMenu
 
 			this.#isLoadingMenuItem = false;
 		}, SAVE_OFFSETS_REQUEST_DELAY);
+	}
+
+	#showHint(item: MenuItemLike): void
+	{
+		const hint = this.#getHint();
+
+		hint.show(
+			item.getContainer(),
+			Loc.getMessage('CRM_ACTIVITY_TODO_PING_SETTINGS_MENU_ITEM_TOOLTIP'),
+		);
+	}
+
+	#getHint(): HintLike
+	{
+		if (this.#hint === null)
+		{
+			this.#hint = BX.UI.Hint.createInstance({
+				id: 'crm-activity-todo-ping-settings-menu-hint',
+				popupParameters: {
+					autoHide: true,
+				},
+			});
+		}
+
+		return this.#hint;
 	}
 }

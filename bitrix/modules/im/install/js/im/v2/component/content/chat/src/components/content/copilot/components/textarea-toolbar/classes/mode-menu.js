@@ -52,12 +52,6 @@ export class ModeMenu extends BaseMenu
 
 	getReasoningItem(): MenuItemOptions | null
 	{
-		const isAvailable = FeatureManager.isFeatureAvailable(Feature.isCopilotReasoningAvailable);
-		if (!isAvailable)
-		{
-			return null;
-		}
-
 		const modelCode = this.store.getters['copilot/chats/getAIModel'](this.context.dialogId)?.code;
 		const isAvailableInModel = this.store.getters['copilot/isReasoningAvailableInModel'](modelCode);
 		const isReasoningEnabled = this.store.getters['copilot/chats/isReasoningEnabled'](this.context.dialogId);
@@ -76,6 +70,7 @@ export class ModeMenu extends BaseMenu
 
 				this.store.dispatch('copilot/chats/toggleReasoning', this.context.dialogId);
 				Analytics.getInstance().copilot.onToggleReasoning(this.context.dialogId);
+				Analytics.getInstance().copilot.onChangeReasoning(this.context.dialogId);
 				this.close();
 			},
 		};

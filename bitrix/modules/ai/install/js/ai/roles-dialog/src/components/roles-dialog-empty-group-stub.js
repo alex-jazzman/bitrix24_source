@@ -2,8 +2,7 @@ import { mapWritableState } from 'ui.vue3.pinia';
 
 import '../css/roles-dialog-empty-group-stub.css';
 import { type RolesDialogGroupDataEmptyStub } from '../roles-dialog';
-import { Loc, Event, Runtime, Extension } from 'main.core';
-import type { AnalyticsOptions } from 'ui.analytics';
+import { Loc, Extension } from 'main.core';
 import { UI } from 'ui.notification';
 
 const customDescription = Loc.getMessage('AI_COPILOT_ROLES_EMPTY_CUSTOM_GROUP', {
@@ -11,7 +10,7 @@ const customDescription = Loc.getMessage('AI_COPILOT_ROLES_EMPTY_CUSTOM_GROUP', 
 	'#/LINK#': '</a>',
 });
 
-export const getRolesDialogEmptyGroupStubWithStates = (States) => {
+export const getRolesDialogEmptyGroupStubWithStates = (States, onOpenRolesLibrary: () => void) => {
 	return {
 		computed: {
 			...mapWritableState(States.useGlobalState, {
@@ -31,28 +30,8 @@ export const getRolesDialogEmptyGroupStubWithStates = (States) => {
 			},
 		},
 		methods: {
-			async sendAnalytics(): void
+			openRolesLibrary(): void
 			{
-				try
-				{
-					const { sendData } = await Runtime.loadExtension('ui.analytics');
-
-					const sendDataOptions: AnalyticsOptions = {
-						event: 'open_list',
-						status: 'success',
-						tool: 'ai',
-						category: 'roles_saving',
-						c_section: 'roles_picker',
-					};
-
-					sendData(sendDataOptions);
-				}
-				catch (e)
-				{
-					console.error('AI: RolesDialog: Can\'t send analytics', e);
-				}
-			},
-			openRolesLibrary() {
 				if (!Extension.getSettings('ai.roles-dialog').get('isLibraryVisible'))
 				{
 					UI.Notification.Center.notify({
@@ -62,25 +41,7 @@ export const getRolesDialogEmptyGroupStubWithStates = (States) => {
 					return;
 				}
 
-				if (BX.SidePanel)
-				{
-					this.sendAnalytics();
-					BX.SidePanel.Instance.open(
-						'/bitrix/components/bitrix/ai.role.library.grid/slider.php',
-						{
-							cacheable: false,
-							events: {
-								onCloseStart: () => {
-									Event.EventEmitter.emit('update');
-								},
-							},
-						},
-					);
-				}
-				else
-				{
-					window.location.href = '/bitrix/components/bitrix/ai.prompt.library.grid/slider.php';
-				}
+				onOpenRolesLibrary();
 			},
 		},
 		template: `

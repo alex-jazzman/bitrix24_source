@@ -55,21 +55,6 @@ class documentgenerator extends CModule
 			$this->InstallDB();
 			$this->InstallFiles();
 
-			/**
-			 * @see \Bitrix\DocumentGenerator\Driver::installDefaultRoles()
-			 */
-			CAgent::AddAgent('\Bitrix\DocumentGenerator\Driver::installDefaultRoles();', 'documentgenerator', "N", 150, "", "Y", ConvertTimeStamp(time()+CTimeZone::GetOffset()+150, "FULL"));
-
-			/**
-			 * @see \Bitrix\DocumentGenerator\Service\ActualizeQueue::process()
-			 */
-			CAgent::AddAgent(
-				'\\Bitrix\\DocumentGenerator\\Service\\ActualizeQueue::process(5);',
-				'documentgenerator',
-				"N",
-				300,
-			);
-
 			$APPLICATION->IncludeAdminFile(GetMessage("DOCUMENTGENERATOR_INSTALL_TITLE"), $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/".$this->MODULE_ID."/install/step2.php");
 		}
 		return true;
@@ -77,38 +62,14 @@ class documentgenerator extends CModule
 
 	function InstallDB($params = [])
 	{
-		global $DB, $APPLICATION;
-		$connection = \Bitrix\Main\Application::getConnection();
-		$errors = false;
+		global $APPLICATION;
 
-		if (!$DB->TableExists('b_documentgenerator_template'))
+		$migrationResult = $this->installMigrations();
+		if (!$migrationResult->isSuccess())
 		{
-			$errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/documentgenerator/install/db/' . $connection->getType() . '/install.sql');
-		}
-
-		if($errors !== false)
-		{
-			$APPLICATION->ThrowException(implode("", $errors));
+			$APPLICATION->ThrowException(implode("", $migrationResult->getErrorMessages()));
 			return false;
 		}
-
-		RegisterModuleDependences('main', 'onNumberGeneratorsClassesCollect', $this->MODULE_ID, 'Bitrix\DocumentGenerator\Integration\Numerator\DocumentNumberGenerator', 'onGeneratorClassesCollect');
-		$eventManager = \Bitrix\Main\EventManager::getInstance();
-		$eventManager->registerEventHandler('rest', 'OnRestServiceBuildDescription', 'documentgenerator', '\Bitrix\DocumentGenerator\Driver', 'onRestServiceBuildDescription');
-		$eventManager->registerEventHandler('pull', 'OnGetDependentModule', 'documentgenerator', '\Bitrix\DocumentGenerator\Driver', 'onGetDependentModule', 800);
-
-		/**
-		 * @see \Bitrix\DocumentGenerator\Driver::installDefaultTemplatesForCurrentRegion()
-		 */
-		CAgent::AddAgent(
-			"\\Bitrix\\DocumentGenerator\\Driver::installDefaultTemplatesForCurrentRegion();",
-			"documentgenerator",
-			"N",
-			300,
-			'',
-			'Y',
-			ConvertTimeStamp(time() + CTimeZone::GetOffset() + 300, 'FULL')
-		);
 
 		RegisterModule($this->MODULE_ID);
 
@@ -158,25 +119,16 @@ class documentgenerator extends CModule
 
 	function UnInstallDB($params = [])
 	{
-		global $DB, $APPLICATION;
-		$connection = \Bitrix\Main\Application::getConnection();
-		$errors = false;
+		global $APPLICATION;
 
-		if (!isset($params['savedata']) || $params['savedata'] !== "Y")
-		{
-			$errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/' . $this->MODULE_ID . '/install/db/' . $connection->getType() . '/uninstall.sql');
-		}
+		$dropTables = !isset($params['savedata']) || $params['savedata'] !== "Y";
 
-		if($errors !== false)
+		$migrationResult = $this->uninstallMigrations($dropTables);
+		if (!$migrationResult->isSuccess())
 		{
-			$APPLICATION->ThrowException(implode("", $errors));
+			$APPLICATION->ThrowException(implode("", $migrationResult->getErrorMessages()));
 			return false;
 		}
-
-		UnRegisterModuleDependences('main', 'onNumberGeneratorsClassesCollect', $this->MODULE_ID, 'Bitrix\DocumentGenerator\Integration\Numerator\DocumentNumberGenerator', 'onGeneratorClassesCollect');
-		$eventManager = \Bitrix\Main\EventManager::getInstance();
-		$eventManager->unRegisterEventHandler('rest', 'OnRestServiceBuildDescription', 'documentgenerator', '\Bitrix\DocumentGenerator\Driver', 'onRestServiceBuildDescription');
-		$eventManager->unRegisterEventHandler('pull', 'OnGetDependentModule', 'documentgenerator', '\Bitrix\DocumentGenerator\Driver', 'onGetDependentModule');
 
 		UnRegisterModule($this->MODULE_ID);
 		return true;

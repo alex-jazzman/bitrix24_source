@@ -203,12 +203,9 @@ export default class SplitButton extends Button
 	/**
 	 * @protected
 	 */
-	handleMenuClick(event: MouseEvent): void
+	handleMenuShow(): void
 	{
-		this.getMenuWindow().show();
-
-		const isActive = this.getMenuWindow().getPopupWindow().isShown();
-		this.getMenuButton().setActive(isActive);
+		this.getMenuButton().setActive(true);
 	}
 
 	/**
@@ -216,7 +213,11 @@ export default class SplitButton extends Button
 	 */
 	handleMenuClose(): void
 	{
-		this.getMenuButton().setActive(false);
+		// a system menu resets only the state it has set itself, a legacy one resets it as it always did
+		if (!this.hasSystemMenu() || this.getMenuButton().isActive())
+		{
+			this.getMenuButton().setActive(false);
+		}
 	}
 
 	/**

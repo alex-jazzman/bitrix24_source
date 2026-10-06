@@ -13,26 +13,63 @@ if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
 /** @var CDiskExternalLinkComponent $component */
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
+use Bitrix\UI\Buttons\AirButtonStyle;
+use Bitrix\UI\Buttons\Button;
+use Bitrix\UI\Buttons\Tag;
 
-Extension::load([
+include $_SERVER['DOCUMENT_ROOT'] . '/bitrix/components/bitrix/disk.external.link/templates/.default/access-page.php';
+
+$fileInfo = $arResult['FILE'] ?? [];
+$showsFileCard = !$arResult['PROTECTED_BY_PASSWORD'] || $arResult['VALID_PASSWORD'];
+
+// Single source of the preview branch: both the extension list and the markup below rely on it.
+$previewMode = null;
+if ($showsFileCard)
+{
+	if (!empty($fileInfo['PREVIEW']))
+	{
+		$previewMode = 'document';
+	}
+	elseif (!empty($fileInfo['IS_IMAGE']))
+	{
+		$previewMode = 'image';
+	}
+	elseif (!empty($fileInfo['VIEWER']))
+	{
+		$previewMode = 'viewer';
+	}
+	else
+	{
+		$previewMode = 'icon';
+	}
+}
+
+$extensions = [
 	'ui.design-tokens',
 	'ui.fonts.opensans',
 	'ui.viewer',
 	'ui.notification',
-]);
+	'ui.buttons',
+];
+if ($showsFileCard)
+{
+	// stands in for the clipboard API outside a secure context
+	$extensions[] = 'clipboard';
+}
+if ($previewMode === 'icon')
+{
+	$extensions[] = 'ui.icon-set.disk';
+}
+
+Extension::load($extensions);
+if (isset($arResult['FILE']['VIEWER']) && str_contains((string)$arResult['FILE']['VIEWER'], 'disk.viewer.tiff-item'))
+{
+	Extension::load('disk.viewer.tiff-item');
+}
+
+$APPLICATION->SetAdditionalCSS($templateFolder . '/access-card.css');
 
 $langId = $component->getLangId();
-switch(mb_strtolower($langId))
-{
-	case 'en':
-	case 'de':
-	case 'ru':
-	case 'ua':
-	$langForBanner = mb_strtolower($langId);
-		break;
-	default:
-		$langForBanner = Loc::getDefaultLang($langId);
-}
 
 $unifiedLink = $arResult['UNIFIED_LINK'];
 ?>
@@ -40,6 +77,7 @@ $unifiedLink = $arResult['UNIFIED_LINK'];
 <html lang="<?= mb_strtolower($langId)?>">
 <head>
 	<meta charset="<?= LANG_CHARSET ?>">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<title><?= Loc::getMessage('DISK_EXT_LINK_TITLE') ?></title>
 
 	<? if(!$arResult['PROTECTED_BY_PASSWORD']){ ?>
@@ -59,7 +97,7 @@ $unifiedLink = $arResult['UNIFIED_LINK'];
 	$APPLICATION->ShowHeadScripts();
 	?>
 </head>
-<body style="background: none;">
+<body class="<?= $pageBodyClass ?>">
 <script>
 	BX.ready(function(){
 		let inlineController = new BX.UI.Viewer.InlineController({baseContainer: BX('test-content')});
@@ -80,88 +118,101 @@ $unifiedLink = $arResult['UNIFIED_LINK'];
 </script>
 	<div class="bx-shared-wrap">
 
-		<div class="bx-shared-header">
-			<div class="bx-shared-logo">
-				<?= $component->getMessage('DISK_EXT_LINK_B24') ?>
-			</div>
-		</div>
-<? if(!($arResult['PROTECTED_BY_PASSWORD']) || $arResult['VALID_PASSWORD']){ ?>
-		<div class="bx-shared-body">
-			<table class="bx-shared-body-container">
-				<tr>
-					<td class="bx-shared-body-previewblock">
-					<? if($arResult['FILE']['PREVIEW']) { ?>
-						<iframe src="<?= $arResult['FILE']['PREVIEW']['VIEW_URL'] ?>" frameborder="0" style="height: 520px;width: 720px;"></iframe>
-					<? } elseif($arResult['FILE']['IS_IMAGE']) { ?>
-						<div class="bx-shared-preview-images">
-							<a href="<?= $arResult['FILE']['SHOW_FILE_URL'] ?>" target="_blank"><img src="<?= $arResult['FILE']['SHOW_PREVIEW_URL'] ?>" alt="<?= htmlspecialcharsbx($arResult['FILE']['NAME']) ?>" title="<?= htmlspecialcharsbx($arResult['FILE']['NAME']) ?>"></a>
-						</div>
-					<? } elseif($arResult['FILE']['VIEWER']) {
-						echo $arResult['FILE']['VIEWER'];
-					  } else { ?>
-						<div class="bx-file-icon-container-big <?= $arResult['FILE']['ICON_CLASS'] ?>">
-							<div class="bx-file-icon-cover">
-								<div class="bx-file-icon-corner"></div>
-								<div class="bx-file-icon-corner-fix"></div>
-								<div class="bx-file-icon-images"></div>
-							</div>
-							<div class="bx-file-icon-label"></div>
-						</div>
-					<?  } ?>
-					</td>
-					<td class="bx-shared-body-fileinfoblock">
-						<h1 class="bx-shared-body-filename"><?= htmlspecialcharsbx($arResult['FILE']['NAME']) ?></h1>
-						<table>
-							<tbody>
-								<tr>
-									<td class="bx-shared-body-fileinfo-param"><?= $component->getMessage('DISK_EXT_LINK_FILE_SIZE') ?>:</td>
-									<td class="bx-shared-body-fileinfo-value"><?= CFile::formatSize($arResult['FILE']['SIZE']) ?></td>
-								</tr>
-								<tr>
-									<td class="bx-shared-body-fileinfo-param"><?= $component->getMessage('DISK_EXT_LINK_FILE_UPDATE_TIME') ?>:</td>
-									<td class="bx-shared-body-fileinfo-value"><?= $arResult['FILE']['UPDATE_TIME'] ?></td>
-								</tr>
-								<tr class="bx-shared-body-fileinfo-buttons first">
-									<td colspan="2">
-										<a class="bx-disk-btn bx-disk-btn-big bx-disk-btn-green" href="<?= $arResult['FILE']['DOWNLOAD_URL'] ?>"><?= $component->getMessage('DISK_EXT_LINK_FILE_DOWNLOAD') ?></a>
-									</td>
-								</tr>
-								<tr class="bx-shared-body-fileinfo-buttons ">
-									<td colspan="2">
+		<?php if ($showExternalHeader): ?>
+			<?php include $_SERVER['DOCUMENT_ROOT'] . '/bitrix/components/bitrix/disk.external.link/templates/.default/access-header.php'; ?>
+		<?php endif; ?>
+<?php if (!($arResult['PROTECTED_BY_PASSWORD']) || $arResult['VALID_PASSWORD']) {
+	/** @var callable $applyAirStyle */
+	include $_SERVER['DOCUMENT_ROOT']
+		. '/bitrix/components/bitrix/disk.external.link/templates/.default/access-button.php';
 
-										<div class="bx-disk-sidebar-shared-title"><?= $component->getMessage('DISK_EXT_LINK_FILE_COPY_LINK') ?></div>
-										<div class="bx-disk-sidebar-shared-inlink-container">
-											<div class="bx-disk-sidebar-shared-inlink-input-container">
-												<input id="external-link-copy" class="bx-disk-sidebar-shared-inlink-input" value="<?= $arResult['FILE']['VIEW_URL'] ?>" type="text">
-											</div>
-										</div>
-									</td>
-								</tr>
-							</tbody>
-						</table>
-					</td>
-				</tr>
-			</table>
-		</div>
+	$downloadButton = new Button([
+		'text' => $component->getMessage('DISK_EXT_LINK_FILE_DOWNLOAD'),
+		'tag' => Tag::LINK,
+		'link' => $arResult['FILE']['DOWNLOAD_URL'],
+	]);
+	$applyAirStyle($downloadButton, AirButtonStyle::FILLED);
+	$downloadButton
+		// Buttons\Size has no constant for the XL step of the air design (46px).
+		->addClass('ui-btn-xl')
+		// Media files are served inline by the fast download path, so the link has to ask for saving.
+		->addAttribute('download', $arResult['FILE']['NAME'])
+		->addAttribute('data-testid', 'disk-ext-file-download-btn')
+	;
+
+	$copyLinkButton = new Button([
+		'text' => $component->getMessage('DISK_EXT_LINK_COPY_LINK'),
+		'tag' => Tag::BUTTON,
+	]);
+	$applyAirStyle($copyLinkButton, AirButtonStyle::TINTED);
+	$copyLinkButton
+		->addClass('ui-btn-xl')
+		->addAttribute('id', 'disk-ext-file-copy-link')
+		->addAttribute('type', 'button')
+		->addAttribute('data-testid', 'disk-ext-file-copy-link-btn')
+	;
+
+	$downloadButtonHtml = $downloadButton->render(false);
+	$copyLinkButtonHtml = $copyLinkButton->render(false);
+	?>
+		<main class="disk-ext-content-layout --centered" data-testid="disk-ext-file-page">
+			<div class="disk-ext-file-card disk-ext-surface" data-testid="disk-ext-file-card">
+				<div class="disk-ext-file-card__preview" data-testid="disk-ext-file-preview">
+				<?php if ($previewMode === 'document'): ?>
+					<iframe
+						class="disk-ext-file-card__preview-frame"
+						src="<?= htmlspecialcharsbx($arResult['FILE']['PREVIEW']['VIEW_URL']) ?>"
+						title="<?= htmlspecialcharsbx($arResult['FILE']['NAME']) ?>"
+						data-testid="disk-ext-file-preview-frame"
+					></iframe>
+				<?php elseif ($previewMode === 'image'):
+					// The preview is a proportional resize, so the dimensions of the original give the
+					// browser the ratio to reserve place by; the CSS keeps the image itself responsive.
+					$previewWidth = (int)($arResult['FILE']['IMAGE_DIMENSIONS']['WIDTH'] ?? 0);
+					$previewHeight = (int)($arResult['FILE']['IMAGE_DIMENSIONS']['HEIGHT'] ?? 0);
+					$previewSizeAttributes = $previewWidth > 0 && $previewHeight > 0
+						? ' width="' . $previewWidth . '" height="' . $previewHeight . '"'
+						: ''
+					;
+					$openOriginalLabel = $component->getMessage('DISK_EXT_LINK_FILE_OPEN_ORIGINAL');
+					?>
+					<div class="bx-shared-preview-images">
+						<a
+							href="<?= htmlspecialcharsbx($arResult['FILE']['SHOW_FILE_URL']) ?>"
+							target="_blank"
+							rel="noopener"
+							aria-label="<?= htmlspecialcharsbx($openOriginalLabel) ?>"
+							data-testid="disk-ext-file-preview-link"
+						><img
+							src="<?= htmlspecialcharsbx($arResult['FILE']['SHOW_PREVIEW_URL']) ?>"<?= $previewSizeAttributes ?>
+							alt=""
+						></a>
+					</div>
+				<?php elseif ($previewMode === 'viewer'):
+					echo $arResult['FILE']['VIEWER'];
+				else:
+					$iconName = htmlspecialcharsbx($arResult['FILE']['ICON_NAME']);
+					?>
+					<div
+						class="disk-ext-file-card__type-icon ui-icon-set --<?= $iconName ?> --fixed-color"
+						data-testid="disk-ext-file-type-icon"
+					></div>
+				<?php endif; ?>
+				</div>
+				<?php include $_SERVER['DOCUMENT_ROOT']
+					. '/bitrix/components/bitrix/disk.external.link/templates/.default/file-header.php'; ?>
+			</div>
+		</main>
+		<?php
+		$copyLinkButtonId = 'disk-ext-file-copy-link';
+		$copyLinkUrl = $arResult['FILE']['VIEW_URL'];
+
+		include $_SERVER['DOCUMENT_ROOT']
+			. '/bitrix/components/bitrix/disk.external.link/templates/.default/copy-link-script.php';
+		?>
 <? } elseif($arResult['PROTECTED_BY_PASSWORD']){ ?>
 	<? $this->getComponent()->includeComponentTemplate('protected_by_password'); ?>
 <? } ?>
-
-		<?php if(isModuleInstalled('bitrix24') && \Bitrix\Main\Loader::includeModule('intranet')) { ?>
-			<div class="banner_b24" style="">
-				<a target="_blank" href="<?= CIntranetUtils::getB24Link('file') . '&utm_source=fileshare_button&utm_medium=referral&utm_campaign=fileshare_button'; ?>" class="banner-b24-link-container">
-					<span class="banner-b24-link-container-cyrcle-logo <?= $langForBanner ?>"></span>
-					<span class="banner-b24-link-container-cyrcle-desc"><?= $component->getMessage('DISK_EXT_LINK_B24_ADV_TEXT') ?></span>
-					<span class="banner-b24-link-container-cyrcle-title l1"><span><?= $component->getMessage('DISK_EXT_LINK_B24_ADV_1') ?></span></span>
-					<span class="banner-b24-link-container-cyrcle-title l2"><span><?= $component->getMessage('DISK_EXT_LINK_B24_ADV_2') ?></span></span>
-					<span class="banner-b24-link-container-cyrcle-title l3"><span><?= $component->getMessage('DISK_EXT_LINK_B24_ADV_3') ?></span></span>
-					<span class="banner-b24-link-container-cyrcle-title l4"><span><?= $component->getMessage('DISK_EXT_LINK_B24_ADV_4') ?></span></span>
-					<span class="banner-b24-link-container-cyrcle-title l5"><span><?= $component->getMessage('DISK_EXT_LINK_B24_ADV_5') ?></span></span>
-					<span class="banner-b24-link-container-cyrcle-title l6"><span><?= $component->getMessage('DISK_EXT_LINK_B24_ADV_6') ?></span></span>
-					<span class="banner-b24-link-container-cyrcle-button"><span><?= $component->getMessage('DISK_EXT_LINK_B24_ADV_CREATE_LINK_TEXT') ?></span></span>
-				</a>
-			</div>
-		<?php } ?>
 	</div>
 </body>
 </html>

@@ -212,20 +212,42 @@
 		#fieldsContainer;
 		#getStorageFields;
 		#onAddStaticField;
+		#createFieldCaption;
+		#canCreateField;
+		#onCreateField;
 		#fieldMenu = null;
 		constructor({
 			addFieldButton,
 			fieldsContainer,
 			getStorageFields,
-			onAddStaticField
+			onAddStaticField,
+			createFieldCaption,
+			canCreateField,
+			onCreateField
 		}) {
 			this.#addFieldButton = addFieldButton;
 			this.#fieldsContainer = fieldsContainer;
 			this.#getStorageFields = getStorageFields;
 			this.#onAddStaticField = onAddStaticField;
+			this.#createFieldCaption = createFieldCaption;
+			this.#canCreateField = canCreateField;
+			this.#onCreateField = onCreateField;
 		}
 		show() {
-			this.#showFieldSelectionMenu();
+			const menuItems = this.#buildMenuItems(this.#getAddedFieldIds());
+
+			// nothing left to pick from, so skip the menu holding the create footer alone
+			if (menuItems.length === 0) {
+				if (this.#canCreateField()) {
+					this.#onCreateField();
+				}
+				return;
+			}
+			this.#showFieldSelectionMenu(menuItems);
+		}
+		hasAvailableFields() {
+			const addedFieldIds = this.#getAddedFieldIds();
+			return this.#getStorageFields().some(field => this.#isFieldAvailable(field, addedFieldIds));
 		}
 		destroy() {
 			if (this.#fieldMenu && this.#fieldMenu.getId()) {
@@ -233,34 +255,34 @@
 				this.#fieldMenu = null;
 			}
 		}
-		#showFieldSelectionMenu() {
-			const addedFieldIds = this.#getAddedFieldIds();
-			const menuItems = this.#buildMenuItems(addedFieldIds);
+		#showFieldSelectionMenu(menuItems) {
 			this.destroy();
 			this.#fieldMenu = this.#createFieldMenu(menuItems);
+			if (this.#canCreateField()) {
+				main_core.Dom.append(this.#createFooter(), this.#fieldMenu.getLayout().menuContainer);
+			}
 			this.#fieldMenu.show();
 		}
+		#isFieldAvailable(field, addedFieldIds) {
+			return !addedFieldIds.has(String(field.Id)) && main_core.Type.isStringFilled(field.Name);
+		}
 		#buildMenuItems(addedFieldIds) {
-			const menuItems = [];
-			const storageFields = this.#getStorageFields();
-			for (const field of storageFields) {
-				const fieldId = String(field.Id);
-				if (!addedFieldIds.has(fieldId) && main_core.Type.isStringFilled(field.Name)) {
-					menuItems.push({
-						text: main_core.Text.encode(field.Name),
-						onclick: async (event, menuItem) => {
-							menuItem.getMenuWindow().close();
-							this.#onAddStaticField(field);
-						}
-					});
+			return this.#getStorageFields().filter(field => this.#isFieldAvailable(field, addedFieldIds)).map(field => ({
+				text: field.Name,
+				dataset: {
+					testid: 'bizproc-write-fields-menu-item'
+				},
+				onclick: async (event, menuItem) => {
+					menuItem.getMenuWindow().close();
+					this.#onAddStaticField(field);
 				}
-			}
-			return menuItems;
+			}));
 		}
 		#createFieldMenu(menuItems) {
 			return main_popup.PopupMenu.create({
 				id: `bp_wsa_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`,
 				bindElement: this.#addFieldButton,
+				className: 'bizproc-write-activity__field-menu',
 				autoHide: true,
 				items: menuItems,
 				events: {
@@ -269,6 +291,22 @@
 					}
 				}
 			});
+		}
+
+		// The menu footer sits next to the items container, as main.popup has no footer option.
+		#createFooter() {
+			const footer = main_core.Tag.render`
+			<div class="bizproc-write-activity__menu-footer" data-testid="bizproc-write-fields-create-footer">
+				<div class="ui-icon-set --circle-plus bizproc-write-activity__menu-footer-icon"></div>
+				<span class="bizproc-write-activity__menu-footer-text">${main_core.Text.encode(this.#createFieldCaption)}</span>
+			</div>
+		`;
+			main_core.Event.bind(footer, 'click', event => {
+				event.preventDefault();
+				this.#fieldMenu?.close();
+				this.#onCreateField();
+			});
+			return footer;
 		}
 		#getAddedFieldIds() {
 			const fieldRows = [...this.#fieldsContainer.querySelectorAll('[data-id]')];
@@ -285,7 +323,6 @@
 		#fieldsContainer = null;
 		#storageIdField = null;
 		#addFieldButton = null;
-		#createFieldButton = null;
 		#outerBlock = null;
 		#storageFields = [];
 		#currentValues = {};
@@ -294,7 +331,6 @@
 		#fieldRowRenderer = null;
 		#fieldMenu = null;
 		#onAddButtonClickHandler;
-		#onCreateButtonClickHandler;
 		#onAfterFieldRendererHandler;
 		#onStorageRemoveHandler;
 		constructor({
@@ -310,7 +346,6 @@
 			this.#currentStorageId = currentStorageId;
 			this.#storageBlocks = storageBlocks || [];
 			this.#onAddButtonClickHandler = this.#onAddButtonClick.bind(this);
-			this.#onCreateButtonClickHandler = this.#onCreateButtonClick.bind(this);
 			this.#onAfterFieldRendererHandler = this.#onAfterFieldRenderer.bind(this);
 			this.#onStorageRemoveHandler = this.#onStorageRemove.bind(this);
 		}
@@ -325,7 +360,6 @@
 			const block = this.#form.querySelector('[data-role="bpa-write-fields-block"]');
 			const fieldsContainer = block?.querySelector('#fieldsContainer');
 			const addFieldButton = block?.querySelector('#add_field');
-			const createFieldButton = block?.querySelector('#create_field');
 			const outerBlock = block?.querySelector('[data-role="bpa-write-fields-outer"]');
 			const storageIdField = this.#form.storage_id ?? this.#form.querySelector('[name="storage_id"]');
 			if (!fieldsContainer || !addFieldButton || !outerBlock || !storageIdField) {
@@ -334,7 +368,6 @@
 			this.#fieldsContainer = fieldsContainer;
 			this.#storageIdField = storageIdField;
 			this.#addFieldButton = addFieldButton;
-			this.#createFieldButton = createFieldButton;
 			this.#outerBlock = outerBlock;
 			this.#currentValues = this.#writeFieldsOptions.currentFieldValues || {};
 			this.#fieldRowRenderer = new FieldRowRenderer({
@@ -352,7 +385,7 @@
 					this.#fieldsCache.delete(this.#currentStorageId);
 				},
 				onRowRemoved: () => {
-					main_core.Dom.show(this.#addFieldButton);
+					this.#updateFieldsVisibility();
 				}
 			});
 			this.#fieldMenu = new FieldMenu({
@@ -362,6 +395,11 @@
 				onAddStaticField: field => {
 					this.#addStorageField(field);
 					this.#addField(field);
+				},
+				createFieldCaption: this.#writeFieldsOptions.newFieldCaption || '',
+				canCreateField: () => this.#canCreateStorageField(),
+				onCreateField: () => {
+					void this.#createStorageField();
 				}
 			});
 			this.#bindEvents();
@@ -376,20 +414,13 @@
 				return;
 			}
 			if (Number(newStorageId) > 0) {
-				if (this.#createFieldButton) {
-					main_core.Dom.show(this.#createFieldButton);
-				}
 				await this.#resetFieldContainer(newStorageId);
 			} else if (main_core.Type.isStringFilled(newStorageId)) {
 				const dynamicFields = this.#getDynamicStorageFields(newStorageId);
-				if (this.#createFieldButton) {
-					main_core.Dom.hide(this.#createFieldButton);
-				}
 				main_core.Dom.clean(this.#fieldsContainer);
 				this.#storageFields = [...dynamicFields];
 				this.#restoreSavedFieldValues();
-				main_core.Dom.show(this.#addFieldButton);
-				main_core.Dom.show(this.#outerBlock);
+				this.#updateFieldsVisibility();
 			} else {
 				this.#clearWriteFields();
 			}
@@ -397,9 +428,6 @@
 		destroy() {
 			if (this.#addFieldButton) {
 				main_core.Event.unbind(this.#addFieldButton, 'click', this.#onAddButtonClickHandler);
-			}
-			if (this.#createFieldButton) {
-				main_core.Event.unbind(this.#createFieldButton, 'click', this.#onCreateButtonClickHandler);
 			}
 			this.#fieldsCache.clear();
 			main_core_events.EventEmitter.unsubscribe('BX.Bizproc.FieldType.onDesignerRenderControlFinished', this.#onAfterFieldRendererHandler);
@@ -410,9 +438,6 @@
 		}
 		#bindEvents() {
 			main_core.Event.bind(this.#addFieldButton, 'click', this.#onAddButtonClickHandler);
-			if (this.#createFieldButton) {
-				main_core.Event.bind(this.#createFieldButton, 'click', this.#onCreateButtonClickHandler);
-			}
 			main_core_events.EventEmitter.subscribe('BX.Bizproc.FieldType.onDesignerRenderControlFinished', this.#onAfterFieldRendererHandler);
 			main_core_events.EventEmitter.subscribe('BX.Bizproc.Component.StorageItemList:onStorageRemove', this.#onStorageRemoveHandler);
 		}
@@ -422,14 +447,13 @@
 			} else if (main_core.Type.isStringFilled(this.#currentStorageId)) {
 				const dynamicFields = this.#getDynamicStorageFields(this.#currentStorageId);
 				const mergedFields = this.#mergeDynamicFieldsWithSavedValues(dynamicFields);
-				if (this.#createFieldButton) {
-					main_core.Dom.hide(this.#createFieldButton);
-				}
 				this.#initializeStaticStorageFields(mergedFields);
 			}
 			if (!this.#currentStorageId || this.#currentStorageId === '0') {
 				main_core.Dom.hide(this.#outerBlock);
+				return;
 			}
+			this.#updateFieldsVisibility();
 		}
 		#initializeStaticStorageFields(fields) {
 			if (!main_core.Type.isArrayFilled(fields)) {
@@ -456,8 +480,7 @@
 			}
 			this.#storageFields = [...fields];
 			main_core.Dom.clean(this.#fieldsContainer);
-			main_core.Dom.show(this.#addFieldButton);
-			main_core.Dom.show(this.#outerBlock);
+			this.#updateFieldsVisibility();
 		}
 		#clearWriteFields() {
 			main_core.Dom.clean(this.#fieldsContainer);
@@ -465,6 +488,34 @@
 		}
 		#getStorageId() {
 			return this.#storageIdField.value || null;
+		}
+
+		// Only a saved storage has a schema to add a field to; a dynamic one is declared by
+		// a neighbour CreateStorageNode and is addressed by code, not by id.
+		#canCreateStorageField() {
+			return Number(this.#currentStorageId) > 0;
+		}
+		#hasFieldsLeftToAdd() {
+			return this.#fieldMenu.hasAvailableFields();
+		}
+		#hasFieldRows() {
+			return this.#fieldsContainer.querySelector('[data-id]') !== null;
+		}
+
+		// With no field left to add and none to create, an empty block is a bare frame with a title:
+		// it goes away the same way it does with no storage bound.
+		#updateFieldsVisibility() {
+			const canAddField = this.#hasFieldsLeftToAdd() || this.#canCreateStorageField();
+			if (canAddField) {
+				main_core.Dom.show(this.#addFieldButton);
+			} else {
+				main_core.Dom.hide(this.#addFieldButton);
+			}
+			if (canAddField || this.#hasFieldRows()) {
+				main_core.Dom.show(this.#outerBlock);
+			} else {
+				main_core.Dom.hide(this.#outerBlock);
+			}
 		}
 		async #getFields(storageId) {
 			if (this.#fieldsCache.has(storageId)) {
@@ -545,11 +596,7 @@
 			const row = main_core.Tag.render`<div data-id="${field.Id}" class="bizproc-write-activity__field"></div>`;
 			main_core.Dom.append(row, this.#fieldsContainer);
 			this.#fieldRowRenderer.renderStaticFieldRow(row, field);
-			const addedFieldIds = new Set([...this.#fieldsContainer.querySelectorAll('[data-id]')].map(el => String(el.dataset.id)));
-			const notAddedFields = this.#storageFields.filter(f => !addedFieldIds.has(String(f.Id)));
-			if (notAddedFields.length === 0) {
-				main_core.Dom.hide(this.#addFieldButton);
-			}
+			this.#updateFieldsVisibility();
 		}
 		#editStorageField(field) {
 			const index = this.#storageFields.findIndex(f => f.Id === field.Id);
@@ -574,8 +621,7 @@
 			event.preventDefault();
 			this.#fieldMenu.show();
 		}
-		async #onCreateButtonClick(event) {
-			event.preventDefault();
+		async #createStorageField() {
 			const field = await this.#fieldRowRenderer.openFieldEdit();
 			if (field) {
 				this.#fieldsCache.delete(this.#currentStorageId);
@@ -648,13 +694,14 @@
 				writeFields: field => {
 					this.#writeFieldsOptions = field.property.Options || {};
 					const addFieldCaption = this.#writeFieldsOptions.addFieldCaption || '';
-					const newFieldCaption = this.#writeFieldsOptions.newFieldCaption || '';
+					const fieldsTitle = field.property.Name || '';
+					const requiredClass = field.property.Required || field.property.RequiredMark ? ' --required' : '';
 					return main_core.Tag.render`
 					<div data-role="bpa-write-fields-block">
 						<div data-role="bpa-write-fields-outer" class="bizproc-write-activity__outer-block">
+							<div class="bizproc-write-activity__fields-title${requiredClass}" data-testid="bizproc-write-fields-title">${main_core.Text.encode(fieldsTitle)}</div>
 							<div id="fieldsContainer" class="bizproc-write-activity__fields-container"></div>
-							<div id="add_field" class="node-settings-add-item-button"><div class="ui-icon-set --plus-m node-settings-add-item-button__plus bizproc-write-activity__icon-plus"></div><span>${addFieldCaption}</span></div>
-							<div id="create_field" class="add-construction-field create-field-card"><div class="ui-icon-set --plus-m bizproc-write-activity__icon-plus"></div><span>${newFieldCaption}</span></div>
+							<div id="add_field" class="node-settings-add-field-button" data-testid="bizproc-write-fields-add-btn"><div class="ui-icon-set --plus-l bizproc-write-activity__icon-plus"></div><span>${addFieldCaption}</span></div>
 						</div>
 					</div>
 				`;

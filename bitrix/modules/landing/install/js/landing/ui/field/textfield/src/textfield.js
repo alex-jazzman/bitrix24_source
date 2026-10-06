@@ -29,11 +29,15 @@ export class TextField extends BaseField
 		this.onDocumentClick = this.onDocumentClick.bind(this);
 		this.onDocumentKeydown = this.onDocumentKeydown.bind(this);
 		this.onInputKeydown = this.onInputKeydown.bind(this);
+		this.onInputFocus = this.onInputFocus.bind(this);
+
+		this.enableTextboxAccessibility({multiline: !this.isTextOnly()});
 
 		Event.bind(this.input, 'click', this.onInputClick);
 		Event.bind(this.input, 'mousedown', this.onInputMousedown);
 		Event.bind(this.input, 'input', this.onInputInput);
 		Event.bind(this.input, 'keydown', this.onInputKeydown);
+		Event.bind(this.input, 'focus', this.onInputFocus);
 
 		const editorPanel = BX.Landing.UI.Panel.EditorPanel.getInstance();
 		const editorPanelDocument = editorPanel && editorPanel.layout ? editorPanel.layout.ownerDocument : null;
@@ -85,15 +89,22 @@ export class TextField extends BaseField
 		}
 	}
 
+	onInputFocus()
+	{
+		this.enableEdit();
+	}
+
 	enableTextOnly()
 	{
 		this.textOnly = true;
 		this.input.innerHTML = `${this.input.innerText}`.trim();
+		Dom.attr(this.input, 'aria-multiline', null);
 	}
 
 	disableTextOnly()
 	{
 		this.textOnly = false;
+		Dom.attr(this.input, 'aria-multiline', 'true');
 	}
 
 	isTextOnly()

@@ -21,4 +21,5 @@ class Item extends BaseItem
 	}
 }
 
-export {Item, Options}
+export {Item}
+export type {Options}

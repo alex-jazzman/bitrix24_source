@@ -4,3 +4,4 @@ $MESS['CRM_AUTOMATION_TRIGGER_B2E_COORDINATION_DESCRIPTION'] = 'Меняет с�
 
 $MESS['CRM_AUTOMATION_TRIGGER_B2E_COORDINATION_NODE_NAME'] = 'Отследить согласование документа в КЭДО';
 $MESS['CRM_AUTOMATION_TRIGGER_B2E_COORDINATION_NODE_DESCRIPTION'] = 'Запускает процесс, когда документ переходит на согласование';
+$MESS['CRM_AUTOMATION_TRIGGER_B2E_COORDINATION_EVENT_DATE_TIME'] = 'Дата и время согласования документа';

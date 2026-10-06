@@ -1,18 +1,218 @@
 import { SectionSelector as CalendarSectionSelector } from 'calendar.controls';
 import { Planner } from 'calendar.planner';
 import { Util } from 'calendar.util';
-import 'ui.design-tokens';
-import { ajax as Ajax, Text, Type } from 'main.core';
-import type { BaseEvent } from 'main.core.events';
+import { ajax as Ajax, Loc, Text, Type } from 'main.core';
+import { type BaseEvent } from 'main.core.events';
 import { DateTimeFormat, Timezone } from 'main.date';
+import 'ui.design-tokens';
 import { Dialog } from 'ui.entity-selector';
-import type { BlockSettings } from '../../../todo-editor';
+import { UI } from 'ui.notification';
+import { AlertDesign } from 'ui.system.alert';
+import { Alert } from 'ui.system.alert.vue';
+
+import { type BlockSettings } from '../../../todo-editor';
 import { Events } from '../../events';
 import { LocationSelector } from './location-selector';
 import { SectionSelector } from './section-selector';
 
+export function invalidatePlannerRequests(context: Object): void
+{
+	context.destroyed = true;
+	context.plannerRequestId += 1;
+}
+
+function normalizeUserId(userId): number
+{
+	const normalizedUserId = Number(userId);
+
+	return Number.isInteger(normalizedUserId) && normalizedUserId > 0 ? normalizedUserId : 0;
+}
+
+export function createSelectedUserIds(userIds, hostId): Set<number>
+{
+	const selectedUserIds = new Set();
+	const normalizedHostId = normalizeUserId(hostId);
+	if (normalizedHostId > 0)
+	{
+		selectedUserIds.add(normalizedHostId);
+	}
+
+	if (userIds?.[Symbol.iterator])
+	{
+		for (const userId of userIds)
+		{
+			const normalizedUserId = normalizeUserId(userId);
+			if (normalizedUserId > 0)
+			{
+				selectedUserIds.add(normalizedUserId);
+			}
+		}
+	}
+
+	return selectedUserIds;
+}
+
+export function prepareCalendarBlockForCopy(calendarBlock: Object, hostId: number, from: number): void
+{
+	calendarBlock.data.calendarEventId = 0;
+	calendarBlock.data.hostId = normalizeUserId(hostId);
+	calendarBlock.data.from = from;
+}
+
+export function requestPlannerUpdate(context: Object, data: Object): Promise
+{
+	if (context.destroyed)
+	{
+		return Promise.resolve();
+	}
+
+	const requestId = ++context.plannerRequestId;
+	context.getPlanner().showLoader();
+
+	// wrap BX.Promise in native js promise
+	return new Promise((resolve, reject) => {
+		Ajax.runAction('calendar.api.calendarajax.updatePlanner', { data }).then(resolve).catch(reject);
+	})
+		.then(
+			(response) => {
+				if (requestId !== context.plannerRequestId)
+				{
+					return response;
+				}
+
+				context.plannerLoadError = false;
+				context.plannerLimitState = {
+					exceeded: response.data.plannerLimitExceeded === true,
+					maxPlannerUsers: parseInt(response.data.maxPlannerUsers, 10) || 0,
+					peopleCount: parseInt(
+						response.data.plannerLimitPeopleCount ?? response.data.plannerPeopleCount,
+						10,
+					) || 0,
+				};
+
+				context.getPlanner().update(
+					Type.isArray(response.data.entries) ? response.data.entries : [],
+					Type.isObject(response.data.accessibility) ? response.data.accessibility : {},
+				);
+
+				context.onDataUpdate();
+
+				return response;
+			},
+			(response) => {
+				if (requestId === context.plannerRequestId)
+				{
+					context.plannerLoadError = true;
+				}
+
+				return response;
+			},
+		)
+		.catch((errors) => {
+			if (requestId === context.plannerRequestId)
+			{
+				context.plannerLoadError = true;
+			}
+
+			return errors;
+		})
+		.finally(() => {
+			if (requestId === context.plannerRequestId)
+			{
+				context.plannerInstance?.hideLoader();
+			}
+		})
+	;
+}
+
+export function teardownCalendar(context: Object): void
+{
+	invalidatePlannerRequests(context);
+	context.$Bitrix.eventEmitter.unsubscribe(Events.EVENT_RESPONSIBLE_USER_CHANGE, context.onResponsibleUserChange);
+	context.$Bitrix.eventEmitter.unsubscribe(Events.EVENT_DEADLINE_CHANGE, context.onDeadlineChange);
+	context.plannerInstance?.selector?.unsubscribe('onChange', context.plannerSelectorChangeHandler);
+}
+
+export const calendarMethods = {
+	normalizeCalendarConfig(config: ?Object): Object
+	{
+		const normalizedConfig = Type.isObject(config) ? config : {};
+
+		return {
+			...normalizedConfig,
+			sections: Type.isArray(normalizedConfig.sections) ? normalizedConfig.sections : [],
+		};
+	},
+	loadConfig(data: Object): Promise
+	{
+		// wrap BX.Promise in native js promise
+		return new Promise((resolve, reject) => {
+			this.fetchConfig().then(resolve).catch(reject);
+		})
+			.then((response) => {
+				if (this.destroyed)
+				{
+					return;
+				}
+
+				this.config = this.normalizeCalendarConfig(response.data);
+				this.sectionSelectorReadOnly = this.config.readOnly ?? false;
+				this.applyCalendarUserSettings(this.config);
+
+				if (Type.isNil(data.sectionId))
+				{
+					const defaultSection = this.config.sections.find((section) => section.DEFAULT === true);
+					if (Type.isObject(defaultSection))
+					{
+						this.sectionId = defaultSection.ID;
+					}
+					else
+					{
+						const firstUserSection = this.config.sections.find((section) => section.OWNER_ID === data.ownerId);
+						this.sectionId = firstUserSection?.ID ?? 0;
+					}
+				}
+			})
+			.catch((error) => {
+				return error;
+			})
+			.finally(() => {
+				if (!this.destroyed)
+				{
+					void this.$nextTick(() => this.initPlanner());
+				}
+			})
+		;
+	},
+	updatePlannerForSelectedUsers(): Promise
+	{
+		const data = this.prepareUpdatePlannerData([...this.selectedUserIds]);
+
+		return this.updatePlanner(data);
+	},
+	onResponsibleUserChange(event: Object): void
+	{
+		const { responsibleUserId } = event.getData();
+
+		this.ownerId = responsibleUserId;
+		this.selectedUserIds.add(responsibleUserId);
+		void this.updatePlannerForSelectedUsers();
+	},
+	onDeadlineChange(event: Object): void
+	{
+		const data = event.getData();
+		if (data)
+		{
+			const deadline = data.deadline.getTime();
+			this.from = deadline;
+			this.to = this.from + this.duration;
+		}
+	},
+};
+
 export const TodoEditorBlocksCalendar = {
 	components: {
+		Alert,
 		LocationSelector,
 		SectionSelector,
 	},
@@ -54,9 +254,8 @@ export const TodoEditorBlocksCalendar = {
 	data(): Object
 	{
 		const ownerId = this.settings.ownerId || this.context.userId;
-
-		const selectedUserIds: Set<number> = new Set([this.settings.userId]);
-		selectedUserIds.add(ownerId);
+		const hostId = normalizeUserId(this.settings.hostId) || normalizeUserId(this.settings.userId);
+		const selectedUserIds = createSelectedUserIds([ownerId], hostId);
 
 		const timestamp = (this.settings.from || Timezone.UserTime.getTimestamp()) * 1000;
 		const millisecondsInFiveMinutes = 5 * 60 * 1000;
@@ -76,6 +275,8 @@ export const TodoEditorBlocksCalendar = {
 			locationId: null,
 			timezoneName: this.settings.timezoneName,
 			ownerId,
+			hostId,
+			calendarEventId: normalizeUserId(this.settings.calendarEventId),
 			sectionId: this.settings.sectionId || null,
 			config: {},
 			canUseCalendarSectionSelector: (
@@ -83,6 +284,12 @@ export const TodoEditorBlocksCalendar = {
 				&& CalendarSectionSelector.getModes().includes('inline')
 			),
 			sectionSelectorReadOnly: this.settings.sectionSelectorReadOnly ?? false,
+			plannerLimitState: {
+				exceeded: false,
+				maxPlannerUsers: 0,
+				peopleCount: 0,
+			},
+			plannerLoadError: false,
 		};
 
 		return this.getPreparedData(data);
@@ -101,118 +308,111 @@ export const TodoEditorBlocksCalendar = {
 
 	beforeUnmount()
 	{
-		this.$Bitrix.eventEmitter.unsubscribe(Events.EVENT_DEADLINE_CHANGE, this.onDeadlineChange);
+		teardownCalendar(this);
 	},
 
 	methods: {
-		/* eslint-disable no-param-reassign */
+		...calendarMethods,
 		getPreparedData(data: Object): Object
 		{
 			const { filledValues } = this;
-
-			if (Type.isObject(filledValues))
-			{
-				if (Type.isObject(filledValues.attendeesEntityList))
-				{
-					Object
-						.values(filledValues.attendeesEntityList)
-						.filter(({ entityId }) => entityId === 'user')
-						.forEach(({ id }) => data.selectedUserIds.add(id))
-					;
-				}
-
-				if (Type.isStringFilled(filledValues.location))
-				{
-					data.showLocation = true;
-					data.locationId = Number(filledValues.location.split('_')[1]); //calendar_7_123, need 7 as id
-				}
-
-				if (Type.isObject(filledValues.selectedUserIds))
-				{
-					data.selectedUserIds = filledValues.selectedUserIds;
-				}
-
-				data.from = Number(filledValues.from);
-				data.to = Number(filledValues.to);
-				data.duration = Number(filledValues.duration);
-				data.timezoneName = filledValues.timezoneFrom;
-				data.sectionId = filledValues.sectionId;
-				data.calendarEventId = filledValues.calendarEventId ?? 0;
-
-				if (!Type.isNil(filledValues.ownerId))
-				{
-					data.ownerId = filledValues.ownerId;
-				}
-
-				if (!Type.isNil(filledValues.sectionId))
-				{
-					data.sectionId = Number(filledValues.sectionId);
-				}
-			}
-
-			data.config = {};
-			data.sectionSelectorReadOnly = false;
+			let preparedData = {
+				...this.applyFilledValues(data, filledValues),
+				config: {},
+				sectionSelectorReadOnly: false,
+			};
 
 			if (Type.isObject(filledValues?.config))
 			{
-				data.config = filledValues.config;
+				const config = this.normalizeCalendarConfig(filledValues.config);
+				preparedData = {
+					...preparedData,
+					config,
+					sectionSelectorReadOnly: config.readOnly ?? false,
+				};
+				this.applyCalendarUserSettings(config);
 
 				void this.$nextTick(() => this.initPlanner());
 			}
-			else if (data.canUseCalendarSectionSelector)
+			else if (preparedData.canUseCalendarSectionSelector)
 			{
-				void this.fetchConfig().then((response) => {
-					this.config = response.data ?? {};
-					this.sectionSelectorReadOnly = data.config.readOnly ?? false;
-
-					Util.setUserSettings(this.config.userSettings);
-
-					const hasSelectedSection = this.config.sections.some((section) => section.ID === this.sectionId);
-					if (this.sectionSelectorReadOnly && !hasSelectedSection)
-					{
-						this.plannerInstance?.setReadonly();
-					}
-
-					if (Type.isNil(data.sectionId))
-					{
-						const defaultSection = data.config.sections.find((section) => section.DEFAULT === true);
-						if (Type.isObject(defaultSection))
-						{
-							this.sectionId = defaultSection.ID;
-						}
-						else
-						{
-							const firstUserSection = data.config.sections.find((section) => section.OWNER_ID === data.ownerId);
-							this.sectionId = firstUserSection?.ID ?? 0;
-						}
-					}
-
-					void this.$nextTick(() => this.initPlanner());
-				});
+				void this.loadConfig(preparedData);
 			}
 			else
 			{
 				void this.$nextTick(() => this.initPlanner());
 			}
 
-			return data;
+			return preparedData;
+		},
+		applyFilledValues(data: Object, filledValues: ?Object): Object
+		{
+			if (!Type.isObject(filledValues))
+			{
+				return data;
+			}
+
+			let selectedUsers = data.selectedUserIds;
+			if (Type.isObject(filledValues.selectedUserIds))
+			{
+				selectedUsers = filledValues.selectedUserIds;
+			}
+			else if (Type.isObject(filledValues.attendeesEntityList))
+			{
+				selectedUsers = Object
+					.values(filledValues.attendeesEntityList)
+					.filter(({ entityId }) => entityId === 'user')
+					.map(({ id }) => id)
+				;
+			}
+
+			const isExistingEvent = normalizeUserId(
+				filledValues.calendarEventId ?? data.calendarEventId,
+			) > 0;
+			const hostId = normalizeUserId(filledValues.hostId)
+				|| (isExistingEvent ? 0 : data.hostId)
+			;
+			const selectedUserIds = createSelectedUserIds(selectedUsers, hostId);
+
+			return {
+				...data,
+				selectedUserIds,
+				hostId,
+				from: Number(filledValues.from),
+				to: Number(filledValues.to),
+				duration: Number(filledValues.duration),
+				timezoneName: filledValues.timezoneFrom,
+				sectionId: Type.isNil(filledValues.sectionId) ? filledValues.sectionId : Number(filledValues.sectionId),
+				calendarEventId: filledValues.calendarEventId ?? 0,
+				...(Type.isStringFilled(filledValues.location) ? {
+					showLocation: true,
+					locationId: Number(filledValues.location.split('_')[1]), // calendar_7_123, need 7 as id
+				} : {}),
+				...(!Type.isNil(filledValues.ownerId) ? { ownerId: filledValues.ownerId } : {}),
+			};
+		},
+		applyCalendarUserSettings(config: Object): void
+		{
+			if (Type.isObject(config.userSettings))
+			{
+				Util.setUserSettings(config.userSettings);
+			}
 		},
 		initPlanner(): void
 		{
-			if (this.plannerInstance)
+			if (this.destroyed || this.plannerInstance)
 			{
 				return;
 			}
 
 			this.showPlanner();
 
-			this.getPlanner().selector.subscribe('onChange', this.handlePlannerSelectorChanges.bind(this));
+			this.getPlanner().selector.subscribe('onChange', this.plannerSelectorChangeHandler);
 
 			const userIds = [...this.selectedUserIds];
 			const data = this.prepareUpdatePlannerData(userIds);
-			this.updatePlanner(userIds, data);
+			void this.updatePlanner(data);
 		},
-		/* eslint-enable no-param-reassign */
 		getId(): string
 		{
 			return 'calendar';
@@ -234,19 +434,33 @@ export const TodoEditorBlocksCalendar = {
 					height: 104,
 					width: 770,
 					entryTimezone: this.config.userSettings?.timezoneName ?? this.timezoneName,
-					readonly: !this.selectedUserIds.has(this.context.userId) && this.sectionSelectorReadOnly,
+					readonly: this.isPlannerReadOnly(),
 				});
 			}
 
 			return this.plannerInstance;
 		},
-		prepareUpdatePlannerData(newUserIds: number[], oldUserIds: number[] = []): Object
+		isPlannerReadOnly(): boolean
+		{
+			if (!this.sectionSelectorReadOnly)
+			{
+				return false;
+			}
+
+			const hasSelectedSection = Type.isArray(this.config.sections)
+				&& this.config.sections.some((section) => section.ID === this.sectionId)
+			;
+
+			return !hasSelectedSection || !this.selectedUserIds.has(this.context.userId);
+		},
+		prepareUpdatePlannerData(newUserIds: number[]): Object
 		{
 			const location = (this.locationId ? this.location : '');
 
 			const data = {
 				entryId: this.calendarEventId ?? 0,
 				ownerId: this.ownerId,
+				hostId: this.hostId,
 				type: 'user',
 				entityList: [],
 				dateFrom: this.getFormattedDate('beforeOneWeek'),
@@ -254,7 +468,7 @@ export const TodoEditorBlocksCalendar = {
 				timezone: this.timezoneName,
 				location,
 				entries: false,
-				prevUserList: oldUserIds,
+				prevUserList: [],
 				skipFeatureCheck: 'Y',
 			};
 
@@ -268,45 +482,9 @@ export const TodoEditorBlocksCalendar = {
 
 			return data;
 		},
-		updatePlanner(userIds: number[], data: Object): void
+		updatePlanner(data: Object): Promise
 		{
-			this.getPlanner().showLoader();
-
-			Ajax
-				.runAction('calendar.api.calendarajax.updatePlanner', { data })
-				.then(
-					(response) => {
-						const accessibility = {};
-						userIds.forEach((userId) => {
-							if (response.data.accessibility[userId])
-							{
-								accessibility[userId] = response.data.accessibility[userId];
-							}
-							else
-							{
-								accessibility[userId] = [];
-							}
-						});
-
-						if (this.locationId)
-						{
-							const roomId = `room_${this.locationId}`;
-							accessibility[roomId] = response.data.accessibility[roomId];
-						}
-
-						this.getPlanner().hideLoader();
-						this.getPlanner().update(response.data.entries, accessibility);
-
-						this.onDataUpdate();
-					},
-					(response) => {
-						console.error(response);
-					},
-				)
-				.catch((errors) => {
-					console.error(errors);
-				})
-			;
+			return requestPlannerUpdate(this, data);
 		},
 		onDataUpdate(): void
 		{
@@ -322,7 +500,7 @@ export const TodoEditorBlocksCalendar = {
 		emitUpdateFilledValues(): void
 		{
 			let { filledValues } = this;
-			const { to, from, duration, location, selectedUserIds, ownerId, sectionId, config } = this;
+			const { to, from, duration, location, selectedUserIds, ownerId, hostId, sectionId, config } = this;
 
 			const newFilledValues = {
 				to,
@@ -331,6 +509,7 @@ export const TodoEditorBlocksCalendar = {
 				location,
 				selectedUserIds,
 				ownerId,
+				hostId,
 				sectionId,
 				config,
 			};
@@ -435,10 +614,7 @@ export const TodoEditorBlocksCalendar = {
 				preselectedItems.push(['user', id]);
 			});
 
-			const undeselectedItems = [
-				['user', this.context.userId],
-				['user', this.settings.userId],
-			];
+			const undeselectedItems = this.hostId > 0 ? [['user', this.hostId]] : [];
 
 			return new Dialog({
 				id: 'todo-editor-calendar-user-selector-dialog',
@@ -466,36 +642,36 @@ export const TodoEditorBlocksCalendar = {
 			if (this.sectionSelectorReadOnly)
 			{
 				event.preventDefault();
+
+				UI.Notification.Center.notify({
+					content: Loc.getMessage('CRM_ACTIVITY_TODO_CALENDAR_PARTICIPANTS_AUTHOR_ONLY'),
+					autoHideDelay: 5000,
+				});
 			}
 		},
 		onSelectUser({ data: { item } }): void
 		{
+			if (this.selectedUserIds.has(item.id))
+			{
+				return;
+			}
+
 			this.selectedUserIds.add(item.id);
+			void this.updatePlannerForSelectedUsers();
 		},
 		onDeselectUser({ data: { item } }): void
 		{
+			if (item.id === this.hostId || !this.selectedUserIds.has(item.id))
+			{
+				return;
+			}
+
 			this.selectedUserIds.delete(item.id);
+			void this.updatePlannerForSelectedUsers();
 		},
 		getSelectedUserIds(): Number[]
 		{
 			return this.selectedUserIds ?? [];
-		},
-		onResponsibleUserChange(event: BaseEvent): void
-		{
-			const { responsibleUserId } = event.getData();
-
-			this.ownerId = responsibleUserId;
-			this.selectedUserIds.add(responsibleUserId);
-		},
-		onDeadlineChange(event: BaseEvent): void
-		{
-			const data = event.getData();
-			if (data)
-			{
-				const deadline = data.deadline.getTime();
-				this.from = deadline;
-				this.to = this.from + deadline;
-			}
 		},
 		handlePlannerSelectorChanges({ data: { dateFrom, dateTo } }): void
 		{
@@ -527,9 +703,13 @@ export const TodoEditorBlocksCalendar = {
 			const { duration, from, location, sectionId } = this;
 			const microsecondsInSecond = 1000;
 
+			// `from`/`to` are absolute UTC timestamps and the server consumes them as such
+			// (DateTime::createFromTimestamp). Passing them through UserTime.toBrowser shifted the
+			// moment whenever the browser timezone differed from the user's Bitrix profile timezone,
+			// which silently moved the linked calendar event and tripped the deadline edit guard.
 			return {
-				from: Timezone.UserTime.toBrowser(from / microsecondsInSecond),
-				to: Timezone.UserTime.toBrowser((from + duration) / microsecondsInSecond),
+				from: from / microsecondsInSecond,
+				to: (from + duration) / microsecondsInSecond,
 				duration: duration / microsecondsInSecond,
 				selectedUserIds: [...this.getSelectedUserIds()],
 				sectionId,
@@ -546,6 +726,9 @@ export const TodoEditorBlocksCalendar = {
 
 			// eslint-disable-next-line no-param-reassign
 			data.settings.userId = params.userId;
+
+			// eslint-disable-next-line no-param-reassign
+			data.settings.hostId = params.userId;
 		},
 		fetchConfig(): Promise
 		{
@@ -555,13 +738,7 @@ export const TodoEditorBlocksCalendar = {
 				entityId: this.context.itemIdentifier?.entityId,
 			};
 
-			return new Promise((resolve) => {
-				void Ajax.runAction('crm.activity.todo.getCalendarConfig', { data })
-					.then((response) => {
-						resolve(response);
-					})
-				;
-			});
+			return Ajax.runAction('crm.activity.todo.getCalendarConfig', { data });
 		},
 		onChangeSection(sectionId: number): void
 		{
@@ -624,34 +801,30 @@ export const TodoEditorBlocksCalendar = {
 		{
 			return this.$Bitrix.Loc.getMessage('CRM_ACTIVITY_TODO_CALENDAR_BLOCK_CHANGE_ACTION');
 		},
+		plannerWarningText(): string
+		{
+			if (this.plannerLoadError)
+			{
+				return Loc.getMessage('CRM_ACTIVITY_TODO_CALENDAR_PLANNER_LOAD_ERROR');
+			}
+
+			return Loc.getMessage('CRM_ACTIVITY_TODO_CALENDAR_PLANNER_LIMIT_WARNING', {
+				'#COUNT#': this.plannerLimitState.peopleCount,
+				'#MAX#': this.plannerLimitState.maxPlannerUsers,
+			});
+		},
+		plannerWarningDesign(): string
+		{
+			return this.plannerLoadError ? AlertDesign.tintedAlert : AlertDesign.tintedWarning;
+		},
 	},
 
 	created()
 	{
 		this.plannerInstance = null;
-
-		this.$watch(
-			'ownerId',
-			(newOwnerId: number, oldOwnerId: number) => {
-				if (this.selectedUserIds.has(newOwnerId))
-				{
-					const userIds = this.selectedUsersIdsArray;
-					const data = this.prepareUpdatePlannerData(userIds);
-					this.updatePlanner(userIds, data);
-				}
-			},
-		);
-
-		this.$watch(
-			'selectedUserIds',
-			(newUserIds, oldUserIds) => {
-				const data = this.prepareUpdatePlannerData(newUserIds, oldUserIds);
-				this.updatePlanner(newUserIds, data);
-			},
-			{
-				deep: true,
-			},
-		);
+		this.plannerRequestId = 0;
+		this.destroyed = false;
+		this.plannerSelectorChangeHandler = this.handlePlannerSelectorChanges.bind(this);
 
 		this.$watch(
 			'settings',
@@ -689,7 +862,7 @@ export const TodoEditorBlocksCalendar = {
 
 			const data = this.prepareUpdatePlannerData(newUserIds);
 
-			this.updatePlanner(newUserIds, data);
+			void this.updatePlanner(data);
 		},
 	},
 
@@ -738,6 +911,17 @@ export const TodoEditorBlocksCalendar = {
 		</div>
 		<div class="crm-activity__todo-editor-v2_block-body">
 			<div class="crm-activity__settings_popup__calendar-container">
+				<div
+					v-if="plannerLimitState.exceeded || plannerLoadError"
+					class="crm-activity__todo-editor-v2_calendar-warning"
+					role="status"
+					aria-live="polite"
+					aria-atomic="true"
+				>
+					<Alert :design="plannerWarningDesign">
+						{{ plannerWarningText }}
+					</Alert>
+				</div>
 				<div ref="plannerContainer" class="crm-activity__settings_popup__calendar__planner-container"></div>
 			</div>
 		</div>

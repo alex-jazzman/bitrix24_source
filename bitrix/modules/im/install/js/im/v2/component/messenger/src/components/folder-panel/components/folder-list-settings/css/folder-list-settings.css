@@ -1,0 +1,23 @@
+.bx-im-folder-list__container {
+	margin: 18px 0;
+	padding: 20px 16px;
+	background-color: var(--ui-color-white-base);
+	border-radius: 20px;
+}
+
+.bx-im-folder-list__image {
+	width: 180px;
+	height: 120px;
+	margin: 0 auto 10px;
+	background: url('./images/folder-settings.webp') center / contain no-repeat;
+}
+
+.bx-im-folder-list__items {
+	display: flex;
+	flex-direction: column;
+}
+
+.bx-im-folder-list__footer {
+	display: flex;
+	gap: 12px;
+}

@@ -412,3 +412,68 @@
 	opacity: 0;
 	z-index: -1;
 }
+
+/* ======================================================
+ * BitrixGPT Redesign overrides (Phase 2)
+ * All rules MUST stay under .ai__copilot-scope.--bitrixgpt-redesign
+ * ====================================================== */
+
+/* P2.T1/T2 — Cancel button: replace hardcoded purple #A482D1 */
+.ai__copilot-scope.--bitrixgpt-redesign .ai__copilot_loader-cancel-btn {
+	color: var(--ui-color-base-2, #525c69);
+}
+
+.ai__copilot-scope.--bitrixgpt-redesign .ai__copilot_loader-cancel-btn:hover {
+	color: var(--ui-color-base-1, #333333);
+}
+
+.ai__copilot-scope.--bitrixgpt-redesign .ai__copilot_loader-cancel-btn:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary, #0075ff);
+	outline-offset: 2px;
+	border-radius: 2px;
+}
+
+/* P2.T2 — template text highlight (strong inside input) */
+.ai__copilot-scope.--bitrixgpt-redesign .ai__copilot_input strong {
+	color: var(--ui-color-accent-main-primary, #0075FF);
+}
+
+/* ======================================================
+ * P3/P5 — BitrixGPT avatar.
+ * Logo on a soft white→#E9F5FF gradient circle (per Figma), composed in
+ * bitrixgpt-avatar.svg. Idle is static; generating uses the local chat-style
+ * flower animation rendered by ui.lottie.
+ * ====================================================== */
+.ai__copilot-scope.--bitrixgpt-redesign .ai__copilot_static-icon {
+	width: 28px;
+	height: 28px;
+	mask-image: none;
+	-webkit-mask-image: none;
+	background-color: transparent;
+	background-image: var(--ai-copilot-avatar);
+	background-size: contain;
+	background-repeat: no-repeat;
+	background-position: center;
+}
+
+.ai__copilot-scope.--bitrixgpt-redesign .ai__copilot_input-field.--loading .ai__copilot_static-icon-wrapper {
+	opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.ai__copilot-scope.--bitrixgpt-redesign .ai__copilot_input-field.--loading .ai__copilot_static-icon-wrapper {
+		opacity: 1;
+	}
+
+	.ai__copilot-scope.--bitrixgpt-redesign .ai__copilot_input-field.--loading .ai__copilot_loading-icon-wrapper {
+		opacity: 0;
+	}
+}
+
+/* Input placeholder: base-50, 15px / line-height 20px, letter-spacing -0.05px (Inter Regular). */
+.ai__copilot-scope.--bitrixgpt-redesign .ai_copilot_placeholder {
+	color: var(--ui-color-base-50, #a8adb4);
+	font-size: 15px;
+	line-height: 20px;
+	letter-spacing: -0.05px;
+}

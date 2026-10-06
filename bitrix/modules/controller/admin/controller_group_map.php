@@ -4,7 +4,7 @@ require_once $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_ad
 /** @var CDatabase $DB */
 /** @var CUser $USER */
 use Bitrix\Main\Localization\Loc;
-use \Bitrix\Controller\GroupMapTable;
+use Bitrix\Controller\GroupMapTable;
 
 if (!$USER->CanDoOperation('controller_auth_view') || !\Bitrix\Main\Loader::includeModule('controller'))
 {

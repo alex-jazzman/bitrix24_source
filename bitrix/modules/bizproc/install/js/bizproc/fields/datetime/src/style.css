@@ -1,0 +1,94 @@
+.bizproc-fields-datetime-row {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-xs);
+}
+
+.bizproc-fields-datetime {
+	flex: 1 1 auto;
+	display: flex;
+	align-items: center;
+	box-sizing: border-box;
+	/* 32px: mockup control height; DS has no control-height size token. */
+	height: 32px;
+	padding: 0 10px;
+	border: 1px solid var(--ui-color-base-6);
+	border-radius: var(--ui-border-radius-sm);
+	background: var(--ui-color-bg-content-primary);
+	transition: border-color .15s ease;
+}
+
+.bizproc-fields-datetime:focus-within {
+	border-color: var(--ui-color-accent-main-primary);
+}
+
+.bizproc-fields-datetime__input {
+	flex: 1 1 auto;
+	min-width: 0;
+	padding: 0;
+	border: none;
+	outline: none;
+	background: transparent;
+	/* N-1 exception: font-family is required to reset browser default for <input>;
+	   --ui-font-family-primary is not a standard DS token - inherit is the DS-compliant fallback. */
+	font-family: inherit;
+	font-size: var(--ui-font-size-sm);
+	font-weight: var(--ui-font-weight-normal);
+	/* 20px: --ui-font-line-height-* are unitless ratios, none of which yields 20px on a 13px font. */
+	line-height: 20px;
+	color: var(--ui-color-base-2);
+	cursor: pointer;
+}
+
+.bizproc-fields-datetime__input::placeholder {
+	color: var(--ui-color-base-4);
+}
+
+.bizproc-fields-datetime__calendar {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+	margin-left: var(--ui-space-inline-2xs);
+	padding: 0;
+	border: none;
+	background: none;
+	--ui-icon-set__icon-color: var(--ui-color-design-outline-content-icon-secondary);
+	color: var(--ui-color-design-outline-content-icon-secondary);
+	cursor: pointer;
+}
+
+.bizproc-fields-datetime__calendar .ui-icon-set {
+	--ui-icon-set__icon-size: 20px;
+}
+
+.bizproc-fields-datetime--readonly .bizproc-fields-datetime__calendar {
+	cursor: default;
+}
+
+.bizproc-fields-datetime-row .bizproc-type-control-date-lc {
+	flex: 0 1 auto;
+	box-sizing: border-box;
+	max-width: 240px;
+	height: 32px;
+	padding: 0 10px;
+	border: 1px solid var(--ui-color-base-6);
+	border-radius: var(--ui-border-radius-sm);
+	background: var(--ui-color-bg-content-primary);
+	font-size: var(--ui-font-size-sm);
+	color: var(--ui-color-base-2);
+	cursor: pointer;
+}
+
+.bizproc-fields-datetime--readonly {
+	background: var(--ui-color-design-disabled-bg);
+	border-color: var(--ui-color-design-disabled-stroke);
+}
+
+.bizproc-fields-datetime--readonly:focus-within {
+	border-color: var(--ui-color-accent-main-primary);
+}
+
+.bizproc-fields-datetime--readonly .bizproc-fields-datetime__input {
+	cursor: default;
+}

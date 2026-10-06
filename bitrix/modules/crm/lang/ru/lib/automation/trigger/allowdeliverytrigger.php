@@ -4,3 +4,4 @@ $MESS['CRM_AUTOMATION_TRIGGER_ALLOW_DELIVERY_NAME'] = 'Доставка разр
 $MESS['CRM_AUTOMATION_TRIGGER_ALLOW_DELIVERY_NAME_1'] = 'Отследить изменение статуса доставки';
 $MESS['CRM_AUTOMATION_TRIGGER_ALLOW_DELIVERY_DESCRIPTION'] = 'Меняет стадию в момент, когда статус доставки изменится на Разрешена';
 $MESS['CRM_AUTOMATION_TRIGGER_ALLOW_DELIVERY_NODE_DESCRIPTION'] = 'Запускает процесс, когда статус доставки изменится на Разрешена';
+$MESS['CRM_AUTOMATION_TRIGGER_ALLOW_DELIVERY_EVENT_DATE_TIME'] = 'Дата и время разрешения доставки';

@@ -37,6 +37,10 @@ export const SmtpSettings = defineComponent({
 		{
 			return this.state.mode === 'edit';
 		},
+		credentialsReadOnly(): boolean
+		{
+			return this.state.migrationActive;
+		},
 		isOAuthService(): boolean
 		{
 			return Boolean(this.state.service?.oauth) || Boolean(this.state.connection.isOAuth);
@@ -90,6 +94,13 @@ export const SmtpSettings = defineComponent({
 	},
 
 	methods: {
+		toggleSmtp(): void
+		{
+			if (!this.credentialsReadOnly)
+			{
+				this.state.smtp.enabled = !this.state.smtp.enabled;
+			}
+		},
 		onSmtpLoginChange(value: string): void
 		{
 			this.state.smtp.login = value;
@@ -118,8 +129,9 @@ export const SmtpSettings = defineComponent({
 					<Switcher
 						v-if="isEditMode || !isOAuthService"
 						:isChecked="state.smtp.enabled"
+						:is-disabled="credentialsReadOnly"
 						:options="switcherOptions"
-						@click="state.smtp.enabled = !state.smtp.enabled"
+						@click="toggleSmtp"
 						data-test-id="mail_config-form__smtp-switcher"
 					/>
 				</div>
@@ -197,15 +209,19 @@ export const SmtpSettings = defineComponent({
 							:size="InputSize.Md"
 							:design="InputDesign.DEFAULT"
 							v-model="state.smtp.server"
+							:disabled="credentialsReadOnly"
 							data-test-id="mail_config-form__smtp-server_field"
 						/>
 						<BInput
 							class="mail-config-form__input-group_port"
 							:label="loc('MAIL_CONFIG_FORM_SMTP_PORT_LABEL')"
+							:aria-label="loc('MAIL_CONFIG_FORM_SMTP_PORT_LABEL')"
 							type="number"
 							:size="InputSize.Md"
 							:design="InputDesign.DEFAULT"
 							v-model="smtpPortModel"
+							:disabled="credentialsReadOnly"
+							placeholder="587"
 							data-test-id="mail_config-form__smtp-port_field"
 						/>
 					</div>
@@ -215,6 +231,7 @@ export const SmtpSettings = defineComponent({
 							id="mail-config-smtp-ssl"
 							class="mail-config-form__checkbox"
 							v-model="state.smtp.ssl"
+							:disabled="credentialsReadOnly"
 							data-test-id="mail_config-form__smtp-ssl_checkbox"
 						/>
 						<label class="mail-config-form__checkbox-label --smtp-settings" for="mail-config-smtp-ssl">
@@ -225,8 +242,9 @@ export const SmtpSettings = defineComponent({
 						v-if="showLoginField"
 						:label="loc('MAIL_CONFIG_FORM_SMTP_LOGIN_LABEL')"
 						:size="InputSize.Md"
-						:design="InputDesign.DEFAULT"
+						:design="credentialsReadOnly ? InputDesign.Disabled : InputDesign.DEFAULT"
 						:model-value="state.smtp.login"
+						:disabled="credentialsReadOnly"
 						data-test-id="mail_config-form__smtp-login_field"
 						@update:model-value="onSmtpLoginChange"
 					/>
@@ -235,8 +253,9 @@ export const SmtpSettings = defineComponent({
 						:label="loc('MAIL_CONFIG_FORM_SMTP_PASSWORD_LABEL')"
 						type="password"
 						:size="InputSize.Md"
-						:design="InputDesign.DEFAULT"
+						:design="credentialsReadOnly ? InputDesign.Disabled : InputDesign.DEFAULT"
 						:model-value="state.smtp.password"
+						:disabled="credentialsReadOnly"
 						:placeholder="isEditMode ? passwordPlaceholder : ''"
 						data-test-id="mail_config-form__smtp-password_field"
 						@update:model-value="onSmtpPasswordChange"

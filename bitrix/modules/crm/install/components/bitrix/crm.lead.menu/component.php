@@ -837,12 +837,10 @@ if ($bAdd && ($arParams['TYPE'] == 'edit' || $arParams['TYPE'] == 'show' || $arP
 	$arResult['BUTTONS'][] = array(
 		'TEXT' => GetMessage('LEAD_COPY'),
 		'TITLE' => GetMessage('LEAD_COPY_TITLE'),
-		'LINK' => CHTTP::urlAddParams(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_LEAD_EDIT'],
+		'LINK' => (string)(new Uri(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_LEAD_EDIT'],
 			array(
 				'lead_id' => $arParams['ELEMENT_ID']
-			)),
-			array('copy' => 1)
-		),
+			))))->addParams(array('copy' => 1)),
 		'ICON' => 'btn-copy'
 	);
 }
@@ -854,12 +852,10 @@ if ($bAdd && ($arParams['TYPE'] == 'edit' || $arParams['TYPE'] == 'show' || $arP
 		GetMessage('LEAD_DELETE_DLG_TITLE'),
 		GetMessage('LEAD_DELETE_DLG_MESSAGE'),
 		GetMessage('LEAD_DELETE_DLG_BTNTITLE'),
-		CHTTP::urlAddParams(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_LEAD_EDIT'],
+		(string)(new Uri(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_LEAD_EDIT'],
 			array(
 				'lead_id' => $arParams['ELEMENT_ID']
-			)),
-			array('delete' => '', 'sessid' => bitrix_sessid())
-		),
+			))))->addParams(array('delete' => '', 'sessid' => bitrix_sessid())),
 		[
 			'type' => $arParams['TYPE'],
 		],

@@ -9,12 +9,13 @@ return [
 	'css' => 'dist/summary.bundle.css',
 	'js' => 'dist/summary.bundle.js',
 	'rel' => [
+		'bizproc.a11y',
+		'bizproc.workflow.timeline',
 		'main.core',
 		'main.date',
-		'bizproc.workflow.timeline',
 		'ui.design-tokens',
-		'ui.icons',
 		'ui.icon-set.main',
+		'ui.icons',
 	],
 	'skip_core' => false,
 ];

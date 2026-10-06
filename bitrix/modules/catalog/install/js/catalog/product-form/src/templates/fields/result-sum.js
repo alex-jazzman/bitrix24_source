@@ -1,7 +1,8 @@
-import {Runtime, Text} from 'main.core';
+import {Text} from 'main.core';
 import {Vue} from "ui.vue";
 import {config} from "../../config";
 import type {BaseEvent} from "main.core.events";
+import {MoneyInput} from "./money-input";
 
 Vue.component(config.templateFieldResultSum,
 {
@@ -14,12 +15,31 @@ Vue.component(config.templateFieldResultSum,
 		editable: Boolean,
 		options: Object,
 	},
-	created()
+	data()
 	{
-		this.onInputSumHandler = Runtime.debounce(this.onInputSum, 500, this);
+		return {
+			isFocused: false,
+			isPointerFocus: false,
+			hasInputChanges: false,
+			inputValue: '',
+			publishTimer: null,
+			lastValidValue: Text.toNumber(this.sum),
+		};
+	},
+	beforeDestroy()
+	{
+		this.clearPublishTimer();
 	},
 	methods:
 	{
+		clearPublishTimer(): void
+		{
+			if (this.publishTimer)
+			{
+				clearTimeout(this.publishTimer);
+				this.publishTimer = null;
+			}
+		},
 		onInputSum(event: BaseEvent): void
 		{
 			if (!this.editable)
@@ -27,28 +47,97 @@ Vue.component(config.templateFieldResultSum,
 				return;
 			}
 
-			event.target.value = event.target.value.replace(/[^.,\d]/g,'');
-			if (event.target.value === '')
+			const input = event.target;
+			this.hasInputChanges = true;
+			const sanitized = MoneyInput.sanitizeDecimalInput(
+				input.value,
+				input.selectionStart,
+				input.selectionEnd,
+			);
+			this.inputValue = sanitized.value;
+			if (input.value !== sanitized.value)
 			{
-				event.target.value = 0;
+				input.value = sanitized.value;
+				MoneyInput.applySelection(input, sanitized.selectionStart, sanitized.selectionEnd);
 			}
-			const lastSymbol = event.target.value.substr(-1);
-			if (lastSymbol === ',')
+
+			const newSum = MoneyInput.getDecimalPublishValue(this.inputValue);
+			if (newSum === null)
 			{
-				event.target.value = event.target.value.replace(',', ".");
+				this.clearPublishTimer();
+
+				return;
 			}
-			let newSum = Text.toNumber(event.target.value);
-			if (lastSymbol === '.' || lastSymbol === ',')
+
+			this.lastValidValue = newSum;
+			this.clearPublishTimer();
+			this.publishTimer = setTimeout(() => {
+				this.publishSum(this.lastValidValue);
+			}, MoneyInput.PUBLISH_DELAY);
+		},
+		publishSum(newSum: number): void
+		{
+			this.clearPublishTimer();
+			this.hasInputChanges = false;
+			this.$emit('onChangeSum', newSum);
+		},
+		onFocus(event: BaseEvent): void
+		{
+			if (!this.editable)
 			{
 				return;
 			}
 
-			if (newSum < 0)
+			const wasFocused = this.isFocused;
+			this.isFocused = true;
+			if (!wasFocused)
 			{
-				newSum *= -1;
+				this.hasInputChanges = false;
+				this.lastValidValue = Text.toNumber(this.sum);
+				this.inputValue = this.isPointerFocus
+					? event.target.value
+					: MoneyInput.formatFocusedDecimal(this.sum)
+				;
 			}
 
-			this.$emit('onChangeSum', newSum);
+			const shouldSelectAll = !this.isPointerFocus && !wasFocused;
+			this.isPointerFocus = false;
+			if (shouldSelectAll)
+			{
+				this.$nextTick(() => MoneyInput.selectAll(event.target));
+			}
+		},
+		onBlur(): void
+		{
+			if (this.hasInputChanges)
+			{
+				const newSum = this.inputValue === ''
+					? 0
+					: MoneyInput.getDecimalPublishValue(this.inputValue, true)
+				;
+
+				this.publishSum(newSum ?? this.lastValidValue);
+			}
+			else
+			{
+				this.clearPublishTimer();
+			}
+
+			this.isFocused = false;
+			this.isPointerFocus = false;
+		},
+		onPointerDown(event): void
+		{
+			if (event.button !== undefined && event.button !== 0)
+			{
+				return;
+			}
+
+			this.isPointerFocus = true;
+		},
+		onPointerCancel(): void
+		{
+			this.isPointerFocus = false;
 		},
 	},
 	computed:
@@ -61,15 +150,29 @@ Vue.component(config.templateFieldResultSum,
 		{
 			return this.options.currencySymbol || '';
 		},
+		displaySum(): string
+		{
+			if (this.isFocused)
+			{
+				return this.inputValue;
+			}
+
+			return MoneyInput.formatDecimal(this.sum, this.options?.displayPrecision);
+		},
 	},
 	// language=Vue
 	template: `
 		<div class="catalog-pf-product-input-wrapper">
-			<input 	type="text" 
+			<input 	type="text"
 					class="catalog-pf-product-input catalog-pf-product-input--align-right"
 					:class="{ 'catalog-pf-product-input--disabled': !editable }"
-					:value="sum"
-					@input="onInputSumHandler"
+					:value="displaySum"
+					@input="onInputSum"
+					@pointerdown="onPointerDown"
+					@pointerup="onPointerCancel"
+					@pointercancel="onPointerCancel"
+					@focus="onFocus"
+					@blur="onBlur"
 					:disabled="!editable"
 					data-name="sum"
 					:data-value="sum"

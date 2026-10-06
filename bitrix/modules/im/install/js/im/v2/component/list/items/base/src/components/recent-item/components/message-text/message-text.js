@@ -5,7 +5,8 @@ import { ChatType, Settings } from 'im.v2.const';
 import { Utils } from 'im.v2.lib.utils';
 import { Parser } from 'im.v2.lib.parser';
 import { RecentManager } from 'im.v2.lib.recent';
-import { MessageAvatar, AvatarSize } from 'im.v2.component.elements.avatar';
+import { Feature, FeatureManager } from 'im.v2.lib.feature';
+import { MessageAvatar, ChatAvatar, AvatarSize } from 'im.v2.component.elements.avatar';
 import { type ImModelUser, type ImModelChat, type ImModelRecentItem, type ImModelMessage } from 'im.v2.model';
 
 import { MessageDraft } from './components/draft';
@@ -26,7 +27,14 @@ const HiddenTitleByChatType = {
 // @vue/component
 export const MessageText = {
 	name: 'MessageText',
-	components: { MessageAvatar, MessageDraft, InvitationPlaceholder, BirthdayPlaceholder, VacationPlaceholder },
+	components: {
+		MessageAvatar,
+		ChatAvatar,
+		MessageDraft,
+		InvitationPlaceholder,
+		BirthdayPlaceholder,
+		VacationPlaceholder,
+	},
 	props: {
 		item: {
 			type: Object,
@@ -36,12 +44,25 @@ export const MessageText = {
 			type: Boolean,
 			default: true,
 		},
+		forceOwnMessage: {
+			type: Boolean,
+			default: false,
+		},
 	},
 	computed: {
 		AvatarSize: () => AvatarSize,
 		recentItem(): ImModelRecentItem
 		{
 			return this.item;
+		},
+		recentItemForPreview(): ImModelRecentItem
+		{
+			if (this.message?.id && this.message.id !== this.recentItem.messageId)
+			{
+				return { ...this.recentItem, messageId: this.message.id };
+			}
+
+			return this.recentItem;
 		},
 		dialog(): ImModelChat
 		{
@@ -51,9 +72,42 @@ export const MessageText = {
 		{
 			return this.$store.getters['users/get'](this.recentItem.dialogId, true);
 		},
-		message(): ImModelMessage
+		message(): ?ImModelMessage
 		{
+			if (this.forceOwnMessage && this.recentItem.ownMessageId > 0)
+			{
+				const ownMessage = this.$store.getters['recent/getOwnMessage'](this.recentItem.dialogId);
+				if (ownMessage)
+				{
+					return ownMessage;
+				}
+			}
+
 			return this.$store.getters['recent/getMessage'](this.recentItem.dialogId);
+		},
+		isNestedPreviewSource(): boolean
+		{
+			if (this.forceOwnMessage || !this.isNestedPreviewAvailable)
+			{
+				return false;
+			}
+
+			const messageChatId = this.message?.chatId;
+			if (!messageChatId || !this.dialog.chatId)
+			{
+				return false;
+			}
+
+			return messageChatId !== this.dialog.chatId;
+		},
+		previewSourceChat(): ?ImModelChat
+		{
+			if (!this.isNestedPreviewSource)
+			{
+				return null;
+			}
+
+			return this.$store.getters['chats/getByChatId'](this.message?.chatId) ?? null;
 		},
 		needsInvitationPlaceholder(): boolean
 		{
@@ -85,18 +139,31 @@ export const MessageText = {
 
 			return HiddenTitleByChatType[this.dialog.type] ?? HiddenTitleByChatType.default;
 		},
+		isNestedPreviewAvailable(): boolean
+		{
+			return FeatureManager.isFeatureAvailable(Feature.isCollabPreviewSourceEnabled);
+		},
 		isLastMessageAuthor(): boolean
 		{
 			return this.showLastMessage && this.message.authorId === Core.getUserId();
 		},
+		canShowAuthorAvatar(): boolean
+		{
+			return Boolean(this.message);
+		},
 		messageText(): string
 		{
-			if (this.message.isDeleted)
+			if (!this.message)
+			{
+				return this.hiddenMessageText;
+			}
+
+			if (this.message?.isDeleted)
 			{
 				return this.loc('IM_LIST_RECENT_DELETED_MESSAGE');
 			}
 
-			const formattedText = Parser.purifyRecent(this.recentItem);
+			const formattedText = Parser.purifyRecent(this.recentItemForPreview);
 			if (!this.showLastMessage || !formattedText)
 			{
 				return this.hiddenMessageText;
@@ -141,14 +208,32 @@ export const MessageText = {
 				<BirthdayPlaceholder v-else-if="needsBirthdayPlaceholder" />
 				<VacationPlaceholder v-else-if="needsVacationPlaceholder" :vacationDate="user.absent" />
 				<template v-else>
-					<span v-if="isLastMessageAuthor" class="bx-im-list-recent-item__self_author-icon"></span>
-					<MessageAvatar
-						v-else-if="isChat && message.authorId"
-						:messageId="message.id"
-						:authorId="message.authorId"
-						:size="AvatarSize.XXS"
-						class="bx-im-list-recent-item__author-avatar"
-					/>
+					<template v-if="isNestedPreviewSource && previewSourceChat">
+						<ChatAvatar
+							:avatarDialogId="previewSourceChat.dialogId"
+							:contextDialogId="previewSourceChat.dialogId"
+							:size="AvatarSize.XXS"
+							:withTooltip="false"
+							class="bx-im-list-recent-item__author-avatar"
+							data-testid="recent-item-preview-source-avatar"
+						/>
+						<span
+							class="bx-im-list-recent-item__preview-source-name"
+							data-testid="recent-item-preview-source-name"
+						>
+							{{ previewSourceChat.name }}:
+						</span>
+					</template>
+					<template v-else-if="canShowAuthorAvatar">
+						<span v-if="isLastMessageAuthor" class="bx-im-list-recent-item__self_author-icon"></span>
+						<MessageAvatar
+							v-else-if="isChat && message.authorId"
+							:messageId="message.id"
+							:authorId="message.authorId"
+							:size="AvatarSize.XXS"
+							class="bx-im-list-recent-item__author-avatar"
+						/>
+					</template>
 					<span>{{ formattedMessageText }}</span>
 				</template>
 			</span>

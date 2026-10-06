@@ -115,7 +115,7 @@ export default {
 		if (
 			state.aiFeedback.feedbackWasSent
 			|| (source === FEEDBACK_TRIGGER_CONTROL && state.aiFeedback.isShownByReturnBtn)
-			|| state.activityProvider === ActivityProvider.openLine
+			|| state.activityProvider !== ActivityProvider.call
 		)
 		{
 			return;

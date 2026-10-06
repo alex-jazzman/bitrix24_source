@@ -8,6 +8,7 @@ $settings = [];
 if (CModule::IncludeModule('bizprocdesigner'))
 {
 	$settings['featureCodes'] = \Bitrix\BizprocDesigner\Internal\Config\Feature::instance()->getAvailableFeatureCodes();
+	$settings['lockedFeatureCodes'] = \Bitrix\BizprocDesigner\Internal\Config\Feature::instance()->getLockedFeatureCodes();
 }
 
 return [

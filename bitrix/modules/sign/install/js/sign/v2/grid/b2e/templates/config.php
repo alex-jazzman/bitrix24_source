@@ -6,17 +6,18 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 return [
-	'css' => 'dist/index.bundle.css',
 	'js' => 'dist/index.bundle.js',
 	'rel' => [
-		'sign.v2.analytics',
-		'ui.switcher',
-		'ui.dialogs.messagebox',
 		'main.core',
-		'main.core.events',
-		'sign.v2.api',
 		'sign.feature-storage',
 		'sign.type',
+		'sign.v2.analytics',
+		'sign.v2.api',
+		'sign.v2.grid.components.action-panel',
+		'sign.v2.grid.components.folder',
+		'ui.buttons',
+		'ui.dialogs.messagebox',
+		'ui.switcher',
 	],
 	'skip_core' => false,
 ];

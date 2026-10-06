@@ -1,0 +1,19 @@
+<?php
+
+$MESS['MAIL_CLIENT_CONFIG_LABELS_TITLE'] = 'Метки';
+$MESS['MAIL_CLIENT_CONFIG_LABELS_MODULE_ERROR'] = 'Модуль «Почта» не установлен';
+$MESS['MAIL_CLIENT_CONFIG_LABELS_DISABLED'] = 'Метки недоступны';
+$MESS['MAIL_LABEL_CONFIG_COLUMN_NAME'] = 'Метка';
+$MESS['MAIL_LABEL_CONFIG_COLUMN_MAILBOX'] = 'Ящик';
+$MESS['MAIL_LABEL_CONFIG_MAILBOX_ALL'] = 'Все ящики';
+$MESS['MAIL_LABEL_CONFIG_MAILBOX_UNKNOWN'] = 'Недоступный ящик';
+$MESS['MAIL_LABEL_CONFIG_FILTER_MAILBOX'] = 'Ящик';
+$MESS['MAIL_LABEL_CONFIG_FILTER_MAILBOX_GLOBAL'] = 'Общие (для всех ящиков)';
+$MESS['MAIL_LABEL_CONFIG_RENAME'] = 'Переименовать';
+$MESS['MAIL_LABEL_CONFIG_RENAME_ARIA'] = 'Переименовать метку «#name#»';
+$MESS['MAIL_LABEL_CONFIG_DELETE'] = 'Удалить';
+$MESS['MAIL_LABEL_CONFIG_DELETE_ARIA'] = 'Удалить метку «#name#»';
+$MESS['MAIL_LABEL_CONFIG_EMPTY'] = 'У вас пока нет меток';
+$MESS['MAIL_LABEL_CONFIG_EMPTY_FILTERED'] = 'Ничего не найдено';
+$MESS['MAIL_LABEL_CONFIG_FORM_TITLE_CREATE'] = 'Новая метка';
+$MESS['MAIL_LABEL_CONFIG_FORM_TITLE_EDIT'] = 'Изменение метки';

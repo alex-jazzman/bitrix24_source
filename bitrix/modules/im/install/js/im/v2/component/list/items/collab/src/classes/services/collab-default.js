@@ -3,6 +3,8 @@ import { RecentType, type RecentTypeItem } from 'im.v2.const';
 import { BaseRecentService, type RecentRestResult, type RecentFirstPageRestResult } from 'im.v2.provider.service.recent';
 import { type RawRecentItem } from 'im.v2.provider.service.types';
 
+import { saveCollabInfo } from './helpers/save-collab-info';
+
 type ExtractItemsResult = { collectionItems: RawRecentItem[], fixedItems: RawRecentItem[] };
 
 export class CollabDefaultService extends BaseRecentService
@@ -31,12 +33,7 @@ export class CollabDefaultService extends BaseRecentService
 
 	saveFirstPageData(restResult: RecentFirstPageRestResult): Promise
 	{
-		const { sectionMeta: { collabInfo } } = restResult;
-
-		return Core.getStore().dispatch('chats/collabs/set', {
-			chatId: this.getParentChatId(),
-			collabInfo,
-		});
+		return saveCollabInfo(restResult, this.getParentChatId());
 	}
 
 	#extractFixedItems(restResult: RecentRestResult): ExtractItemsResult

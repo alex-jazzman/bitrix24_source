@@ -1,0 +1,14 @@
+<?php
+
+$MESS['CRM_CALL_SCORING_V2_SUMMARY_BOT_NAME'] = 'Речевая аналитика';
+$MESS['CRM_CALL_SCORING_V2_SUMMARY_BOT_WORK_POSITION'] = 'Сводки и оповещения по звонкам';
+
+$MESS['CRM_CALL_SCORING_V2_SUMMARY_BOT_BTN_OPEN_DASHBOARD'] = 'Открыть дашборд';
+$MESS['CRM_CALL_SCORING_V2_SUMMARY_BOT_BTN_CONFIGURE'] = 'Настроить сводку';
+
+$MESS['CRM_CALL_SCORING_V2_SUMMARY_BOT_BTN_SITUATION_OPEN_CALLS'] = 'Открыть звонки';
+$MESS['CRM_CALL_SCORING_V2_SUMMARY_BOT_BTN_SITUATION_MANAGER_SUMMARY'] = 'Сводка по менеджеру';
+$MESS['CRM_CALL_SCORING_V2_SUMMARY_BOT_BTN_SITUATION_OPEN_CHAT'] = 'Написать лично';
+
+$MESS['CRM_CALL_SCORING_V2_SUMMARY_BOT_MANAGER_SUMMARY_PENDING'] = 'Сводка по менеджеру формируется…';
+$MESS['CRM_CALL_SCORING_V2_SUMMARY_BOT_MANAGER_SUMMARY_ERROR'] = 'Не удалось сформировать сводку по менеджеру. Попробуйте ещё раз';

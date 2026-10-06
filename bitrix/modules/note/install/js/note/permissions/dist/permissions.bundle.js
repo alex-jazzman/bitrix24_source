@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Note = this.BX.Note || {};
-(function (exports, main_core, main_sidepanel, ui_notification, ui_iconSet_outline, note_ui_themeContext, main_popup, ui_buttons, ui_entitySelector, ui_hint, ui_system_dialog, main_core_events, note_analytics) {
+(function (exports, main_core, main_sidepanel, ui_notification, ui_iconSet_outline, note_ui_themeContext, main_popup, ui_buttons, ui_entitySelector, ui_hint, ui_system_checkbox, ui_system_dialog, main_core_events, note_analytics) {
 	'use strict';
 
 	class PermissionsApi {
@@ -66,6 +66,12 @@ this.BX.Note = this.BX.Note || {};
 	const LEVEL_EDIT = 'edit';
 	const LEVEL_MANAGE = 'manage';
 	const LEVEL_MODERATE = 'moderate';
+
+	// Grant scope (mirrors backend DocumentAccessService): a grant applies to this
+	// document only, or to this document and its whole subtree. `subtree` is valid
+	// only with a positive level (view/edit) and gated by the availability flag.
+	const SCOPE_DOCUMENT = 'document';
+	const SCOPE_SUBTREE = 'subtree';
 	const ENTITY_TYPE_USER = 'user';
 	const ENTITY_TYPE_DEPARTMENT = 'department';
 	const ENTITY_TYPE_PROJECT = 'project';
@@ -84,6 +90,10 @@ this.BX.Note = this.BX.Note || {};
 		}
 		hydrateState(payload) {
 			this.byLevel = this.createEmptyByLevel();
+			// Inherited rows are kept apart from byLevel: they are shown inside the selector as
+			// non-removable tags and never take part in the save payload.
+			this.inheritedByLevel = this.createEmptyByLevel();
+			this.subtreeAvailable = payload?.subtreeAvailable === true;
 			const permissions = Array.isArray(payload?.permissions) ? payload.permissions : [];
 			for (const permission of permissions) {
 				const subjectCode = String(permission?.subjectCode || '').trim();
@@ -95,7 +105,14 @@ this.BX.Note = this.BX.Note || {};
 					continue;
 				}
 				const titleHint = String(permission?.name || '');
-				this.byLevel[level].set(subjectCode, this.buildMember(subjectCode, titleHint));
+				if (permission?.inherited === true) {
+					const sourceId = Number(permission?.sourceDocumentId) || null;
+					const sourceTitle = String(permission?.sourceDocumentTitle || '');
+					this.inheritedByLevel[level].set(subjectCode, this.buildMember(subjectCode, titleHint, SCOPE_DOCUMENT, true, sourceId, sourceTitle));
+					continue;
+				}
+				const scope = this.normalizeScope(permission?.scope);
+				this.byLevel[level].set(subjectCode, this.buildMember(subjectCode, titleHint, scope));
 			}
 			const policyLevel = this.normalizeLevel(payload?.policyLevel);
 			if (policyLevel) {
@@ -103,20 +120,28 @@ this.BX.Note = this.BX.Note || {};
 					subjectCode: ALL_USERS_SUBJECT_CODE,
 					title: this.getAllEmployeesTitle(),
 					entityId: ENTITY_TYPE_META_USER,
-					entityItemId: META_USER_ALL_USERS
+					entityItemId: META_USER_ALL_USERS,
+					scope: SCOPE_DOCUMENT,
+					inherited: false,
+					sourceDocumentId: null,
+					sourceDocumentTitle: ''
 				});
 			}
 		}
 		getAllEmployeesTitle() {
 			return main_core.Loc.getMessage('NOTE_PERMISSIONS_POPUP_ALL_EMPLOYEES') || '';
 		}
-		buildMember(subjectCode, titleHint = '') {
+		buildMember(subjectCode, titleHint = '', scope = SCOPE_DOCUMENT, inherited = false, sourceDocumentId = null, sourceDocumentTitle = '') {
 			const decoded = this.decodeSubjectCode(subjectCode);
 			return {
 				subjectCode,
 				title: titleHint || subjectCode,
 				entityId: decoded?.entityId || '',
-				entityItemId: decoded?.entityItemId || ''
+				entityItemId: decoded?.entityItemId || '',
+				scope,
+				inherited,
+				sourceDocumentId,
+				sourceDocumentTitle
 			};
 		}
 		moveMemberToLevel(targetLevel, member) {
@@ -159,6 +184,41 @@ this.BX.Note = this.BX.Note || {};
 				return value;
 			}
 			return '';
+		}
+		normalizeScope(scope) {
+			return String(scope || '').toLowerCase().trim() === SCOPE_SUBTREE ? SCOPE_SUBTREE : SCOPE_DOCUMENT;
+		}
+
+		// Single scope toggle drives every editable grant uniformly. Untouched hydrated
+		// scope is preserved (the toggle is only rewritten on an explicit flip), so a
+		// mixed initial state is never silently changed.
+		applyScopeToEditableMembers(scope) {
+			for (const level of ALL_LEVELS) {
+				const map = this.byLevel?.[level];
+				if (!map) {
+					continue;
+				}
+				for (const member of map.values()) {
+					member.scope = scope;
+				}
+			}
+		}
+		hasSubtreeMember() {
+			for (const level of ALL_LEVELS) {
+				const map = this.byLevel?.[level];
+				if (!map) {
+					continue;
+				}
+				for (const member of map.values()) {
+					if (member.scope === SCOPE_SUBTREE) {
+						return true;
+					}
+				}
+			}
+			return false;
+		}
+		getInheritedMembers(level) {
+			return Array.from(this.inheritedByLevel?.[level]?.values?.() || []);
 		}
 		decodeSubjectCode(subjectCode) {
 			const normalized = String(subjectCode || '');
@@ -228,6 +288,11 @@ this.BX.Note = this.BX.Note || {};
 				style: ui_buttons.AirButtonStyle.FILLED,
 				useAirDesign: true,
 				text: this.popupConfig.primaryButtonText || this.getMessage('NOTE_PERMISSIONS_POPUP_SAVE'),
+				// Identity for tests: the footer buttons are otherwise reachable only through
+				// ui.system.dialog internals (`.ui-system-dialog__footer button.--style-filled`).
+				dataset: {
+					testid: 'note-permissions-save'
+				},
 				onclick: () => {
 					if (!this.canSavePermissions) {
 						return;
@@ -243,6 +308,9 @@ this.BX.Note = this.BX.Note || {};
 				style: ui_buttons.AirButtonStyle.PLAIN,
 				useAirDesign: true,
 				text: this.getMessage('NOTE_PERMISSIONS_POPUP_CANCEL'),
+				dataset: {
+					testid: 'note-permissions-cancel'
+				},
 				onclick: () => this.popup?.hide()
 			});
 			this.popup = new ui_system_dialog.Dialog({
@@ -374,8 +442,59 @@ this.BX.Note = this.BX.Note || {};
 				this.popupName = '';
 				this.popupNameInput = null;
 			}
+			const scopeBlock = this.buildScopeBlock();
+			if (scopeBlock) {
+				// Scope control sits above the level sections, next to the document identity.
+				main_core.Dom.prepend(scopeBlock, container);
+			}
 			this.sectionsContainer = container.querySelector('.note-permissions-popup__sections');
 			return container;
+		}
+
+		// Subtree-scope checkbox: document mode only and only once the server confirms the
+		// feature is available. A single toggle drives every editable grant uniformly.
+		// `ui.system.checkbox` wraps a real <input type="checkbox">, so keyboard access and the
+		// accessible name come from the platform — no ARIA augmentation needed here.
+		buildScopeBlock() {
+			this.scopeCheckbox = null;
+			if (this.popupConfig?.kind !== 'document' || !this.subtreeAvailable) {
+				return null;
+			}
+
+			// Reflect an existing subtree grant so the initial state matches the data; a
+			// mixed hydrated state stays untouched until the user explicitly flips the toggle.
+			this.subtreeScopeEnabled = this.hasSubtreeMember();
+			const inputId = `note-permissions-scope-${Number(this.popupConfig?.targetId) || 0}`;
+			const titleText = this.getMessage('NOTE_PERMISSIONS_POPUP_SCOPE_TITLE');
+			const hintText = this.getMessage('NOTE_PERMISSIONS_POPUP_SCOPE_HINT');
+			const checkbox = new ui_system_checkbox.Checkbox({
+				checked: this.subtreeScopeEnabled,
+				size: ui_system_checkbox.CheckboxSize.Md,
+				attributes: {
+					id: inputId
+				},
+				onChange: ({
+					checked
+				}) => this.handleScopeToggle(checked === true)
+			});
+
+			// The checkbox renders its own <label> around the box, so the caption is a sibling
+			// <label for>, not a wrapper — nesting labels would be invalid markup.
+			const block = main_core.Tag.render`
+			<div class="note-permissions-popup__scope">
+				${checkbox.render()}
+				<label class="note-permissions-popup__scope-text" for="${inputId}">
+					<span class="note-permissions-popup__scope-title">${titleText}</span>
+					<span class="note-permissions-popup__scope-hint">${hintText}</span>
+				</label>
+			</div>
+		`;
+			this.scopeCheckbox = checkbox;
+			return block;
+		}
+		handleScopeToggle(enabled) {
+			this.subtreeScopeEnabled = enabled === true;
+			this.applyScopeToEditableMembers(this.subtreeScopeEnabled ? SCOPE_SUBTREE : SCOPE_DOCUMENT);
 		}
 		mountSections() {
 			if (!this.sectionsContainer || !this.popupConfig) {
@@ -417,6 +536,8 @@ this.BX.Note = this.BX.Note || {};
 			const selector = this.createSectionSelector(section);
 			selector.renderTo(selectorContainer);
 			this.applyThemeToSelector(selector);
+			// Covers tags that were already materialised before `onAfterTagAdd` was subscribed.
+			this.decorateInheritedTags(selector, section.level);
 			this.sectionSelectors[section.level] = selector;
 			return block;
 		}
@@ -433,6 +554,10 @@ this.BX.Note = this.BX.Note || {};
 		}
 		createSectionSelector(section) {
 			const preselectedItems = this.buildPreselectedItems(section.level);
+			// Inherited grants ride in as ordinary preselected items — that is what resolves their
+			// real names through the entity providers — but `undeselectedItems` makes the platform
+			// render them without a remove cross and refuse deselection.
+			const undeselectedItems = this.buildInheritedItems(section.level);
 			const entities = this.buildEntitiesForSection();
 			const isMobile = document.documentElement.classList.contains('note-mobile');
 			let scrollSyncHandler = null;
@@ -443,6 +568,7 @@ this.BX.Note = this.BX.Note || {};
 					context: `${this.popupConfig.tagSelectorContext}_${String(section.level).toUpperCase()}`,
 					entities,
 					preselectedItems,
+					undeselectedItems,
 					height: isMobile ? 280 : 420,
 					// Disable keyboard-focus on the first list item: after every ajax load and on tab change
 					// Dialog calls focusOnFirstNode() → itemNode.focus(), which blurs the textbox and
@@ -494,6 +620,13 @@ this.BX.Note = this.BX.Note || {};
 							}
 						}
 					}
+				},
+				events: {
+					// Preselected items resolve asynchronously through the providers, so inherited
+					// tags appear after construction — this is where their "inherited" hint is attached.
+					onAfterTagAdd: event => {
+						this.decorateInheritedTag(section.level, event?.getData?.()?.tag);
+					}
 				}
 			});
 			if (isMobile) {
@@ -510,15 +643,85 @@ this.BX.Note = this.BX.Note || {};
 		buildPreselectedItems(level) {
 			const items = [];
 			const map = this.byLevel?.[level];
-			if (!map) {
-				return items;
+			if (map) {
+				for (const member of map.values()) {
+					if (member.entityId && member.entityItemId) {
+						items.push([member.entityId, member.entityItemId]);
+					}
+				}
 			}
-			for (const member of map.values()) {
+
+			// Inherited grants are shown inside the selector rather than in a separate list, so they
+			// are preselected too. They stay out of `byLevel`, hence out of the save payload.
+			for (const item of this.buildInheritedItems(level)) {
+				items.push(item);
+			}
+			return items;
+		}
+
+		// A subject can hold both an inherited grant from an ancestor and an explicit grant of its own
+		// at the same level — different rows, same tag in the selector. The explicit one wins here: it
+		// is the row this popup owns, and listing the subject as inherited would preselect it twice and
+		// lock the tag through `undeselectedItems`, leaving the moderator unable to revoke their own
+		// grant. Revoking it uncovers the inherited grant, which reappears as read-only on reopen.
+		buildInheritedItems(level) {
+			const items = [];
+			for (const member of this.getInheritedMembers(level)) {
+				if (this.hasExplicitMember(level, member.subjectCode)) {
+					continue;
+				}
 				if (member.entityId && member.entityItemId) {
 					items.push([member.entityId, member.entityItemId]);
 				}
 			}
 			return items;
+		}
+
+		// Is this subject covered by a grant made ON this document (as opposed to an inherited one)?
+		hasExplicitMember(level, subjectCode) {
+			return this.byLevel?.[level]?.has(String(subjectCode || '')) === true;
+		}
+
+		// The hint names the document the grant comes from whenever the server reported it: the tag is
+		// read-only here, so without the source name a moderator has no way to find where to revoke.
+		buildInheritedHint(member) {
+			const sourceTitle = String(member?.sourceDocumentTitle || '').trim();
+			if (sourceTitle === '') {
+				return this.getMessage('NOTE_PERMISSIONS_POPUP_INHERITED_HINT');
+			}
+			return this.getMessage('NOTE_PERMISSIONS_POPUP_INHERITED_HINT_FROM').replace('#DOCUMENT#', main_core.Text.encode(sourceTitle));
+		}
+
+		// Marks a tag that stands for an inherited grant with the "inherited from the parent document"
+		// hint. Non-removability itself comes from `undeselectedItems`, not from here.
+		decorateInheritedTag(level, tag) {
+			if (!tag || typeof tag.getContainer !== 'function') {
+				return;
+			}
+			const subjectCode = this.encodeSubjectCode(String(tag.getEntityId?.() || ''), String(tag.getId?.() || ''));
+			const member = this.inheritedByLevel?.[level]?.get(subjectCode);
+			// An own grant on the same subject keeps the tag removable, so it must not be dressed up as
+			// read-only inherited either.
+			if (!subjectCode || !member || this.hasExplicitMember(level, subjectCode)) {
+				return;
+			}
+			const container = tag.getContainer();
+			if (!container) {
+				return;
+			}
+			main_core.Dom.addClass(container, 'note-permissions-popup__inherited-tag');
+			container.setAttribute('data-hint', this.buildInheritedHint(member));
+			container.setAttribute('data-hint-no-icon', 'Y');
+			ui_hint.Hint.initNode(container);
+		}
+		decorateInheritedTags(selector, level) {
+			const tags = selector?.getTags?.();
+			if (!Array.isArray(tags)) {
+				return;
+			}
+			for (const tag of tags) {
+				this.decorateInheritedTag(level, tag);
+			}
 		}
 		buildEntitiesForSection() {
 			// Suppress SN footer ("Invite employee" / "Create project" / "Create chat"):
@@ -581,6 +784,13 @@ this.BX.Note = this.BX.Note || {};
 			if (!subjectCode) {
 				return;
 			}
+
+			// Inherited grants live outside byLevel; `undeselectedItems` should already block this,
+			// so the guard only keeps a stray deselect from silently doing nothing meaningful. A subject
+			// that ALSO holds an own grant is not blocked — that grant is exactly what is being revoked.
+			if (!this.hasExplicitMember(level, subjectCode) && this.inheritedByLevel?.[level]?.has(subjectCode)) {
+				return;
+			}
 			this.removeMemberFromLevel(level, subjectCode);
 			this.updateValidationState();
 		}
@@ -613,7 +823,11 @@ this.BX.Note = this.BX.Note || {};
 				subjectCode,
 				title,
 				entityId,
-				entityItemId
+				entityItemId,
+				// A newly added grant follows the current scope toggle.
+				scope: this.subtreeScopeEnabled ? SCOPE_SUBTREE : SCOPE_DOCUMENT,
+				inherited: false,
+				sourceDocumentId: null
 			};
 		}
 		updateValidationState() {
@@ -718,9 +932,14 @@ this.BX.Note = this.BX.Note || {};
 				if (member.subjectCode === ALL_USERS_SUBJECT_CODE) {
 					continue;
 				}
+
+				// Subtree scope is valid only for positive levels; mirror the backend guard
+				// so a malformed level never ships an invalid scope pairing.
+				const scope = member.scope === SCOPE_SUBTREE && (level === LEVEL_VIEW || level === LEVEL_EDIT) ? SCOPE_SUBTREE : SCOPE_DOCUMENT;
 				permissions.push({
 					subjectCode: member.subjectCode,
-					level
+					level,
+					scope
 				});
 			}
 		}
@@ -906,6 +1125,10 @@ this.BX.Note = this.BX.Note || {};
 			this.canSavePermissions = false;
 			this.primaryButton = null;
 			this.byLevel = this.createEmptyByLevel();
+			this.inheritedByLevel = this.createEmptyByLevel();
+			this.subtreeAvailable = false;
+			this.subtreeScopeEnabled = false;
+			this.scopeCheckbox = null;
 			this.popupName = '';
 			this.popupNameInput = null;
 			this.sectionsContainer = null;
@@ -954,6 +1177,10 @@ this.BX.Note = this.BX.Note || {};
 			this.popupConfig = config;
 			this.popupTheme = theme === note_ui_themeContext.NoteTheme.DARK ? note_ui_themeContext.NoteTheme.DARK : note_ui_themeContext.NoteTheme.LIGHT;
 			this.byLevel = this.createEmptyByLevel();
+			this.inheritedByLevel = this.createEmptyByLevel();
+			this.subtreeAvailable = false;
+			this.subtreeScopeEnabled = false;
+			this.scopeCheckbox = null;
 			this.popupName = String(config?.name?.initialValue || '');
 			const requestToken = ++this.popupLoadRequestToken;
 			this.createPopup();
@@ -1009,6 +1236,10 @@ this.BX.Note = this.BX.Note || {};
 			this.canSavePermissions = false;
 			this.primaryButton = null;
 			this.byLevel = this.createEmptyByLevel();
+			this.inheritedByLevel = this.createEmptyByLevel();
+			this.subtreeAvailable = false;
+			this.subtreeScopeEnabled = false;
+			this.scopeCheckbox = null;
 			this.popupName = '';
 			this.popupNameInput = null;
 			this.sectionsContainer = null;
@@ -1021,5 +1252,5 @@ this.BX.Note = this.BX.Note || {};
 	exports.App = App;
 	exports.NotePermissionsApp = NotePermissionsApp;
 
-})(this.BX.Note.Permissions = this.BX.Note.Permissions || {}, BX, BX.SidePanel, BX.UI.Notification, window, BX.Note.Ui, BX.Main, BX.UI, BX.UI.EntitySelector, BX.UI, BX.UI.System, BX.Event, BX.Note);
+})(this.BX.Note.Permissions = this.BX.Note.Permissions || {}, BX, BX.SidePanel, BX.UI.Notification, window, BX.Note.Ui, BX.Main, BX.UI, BX.UI.EntitySelector, BX.UI, BX.UI.System.Checkbox, BX.UI.System, BX.Event, BX.Note);
 //# sourceMappingURL=permissions.bundle.js.map

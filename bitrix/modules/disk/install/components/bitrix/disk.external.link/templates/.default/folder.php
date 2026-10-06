@@ -13,11 +13,16 @@ if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
 /** @var CDiskExternalLinkComponent $component */
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
+use Bitrix\UI\Buttons\AirButtonStyle;
+use Bitrix\UI\Buttons\Button;
+use Bitrix\UI\Buttons\Tag;
 
 Loc::loadMessages(__DIR__ . '/template.php');
 Loc::loadMessages(__FILE__);
 
 global $APPLICATION;
+
+include $_SERVER['DOCUMENT_ROOT'] . '/bitrix/components/bitrix/disk.external.link/templates/.default/access-page.php';
 
 Extension::load([
 	'disk',
@@ -28,25 +33,24 @@ Extension::load([
 	'ui.dialogs.messagebox',
 	'ui.notification',
 	'ui.fonts.opensans',
+	'ui.design-tokens',
+	'ui.buttons',
+	// stands in for the clipboard API outside a secure context
+	'clipboard',
+	'ui.icon-set.disk',
+	'ui.icon-set.outline',
 ]);
 
+$APPLICATION->SetAdditionalCSS($templateFolder . '/access-card.css');
+$APPLICATION->SetAdditionalCSS($templateFolder . '/folder-list.css');
+
 $langId = $component->getLangId();
-switch(mb_strtolower($langId))
-{
-	case 'en':
-	case 'de':
-	case 'ru':
-	case 'ua':
-	$langForBanner = mb_strtolower($langId);
-		break;
-	default:
-		$langForBanner = Loc::getDefaultLang($langId);
-}
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="<?= mb_strtolower($langId) ?>">
 <head>
 	<meta charset="<?= LANG_CHARSET ?>">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<title><?= $component->getMessage('DISK_EXT_LINK_FOLDER_TITLE') ?></title>
 	<meta http-equiv="Content-Type" content="text/html; charset=<?=SITE_CHARSET?>" />
 	<? if(!$arResult['PROTECTED_BY_PASSWORD']){ ?>
@@ -62,108 +66,80 @@ switch(mb_strtolower($langId))
 	$APPLICATION->ShowHeadScripts();
 	?>
 </head>
-<body style="background: none;">
+<body class="<?= $pageBodyClass ?>">
 	<div class="bx-shared-wrap">
-		<div class="bx-shared-header">
-			<div class="bx-shared-logo">
-				<?= $component->getMessage('DISK_EXT_LINK_B24') ?>
-			</div>
-		</div>
-		<? if (!($arResult['PROTECTED_BY_PASSWORD']) || $arResult['VALID_PASSWORD']){ ?>
-		<div class="disk-object-container">
-			<div class="disk-object-header-container">
-				<h2 class="disk-object-header"><?= htmlspecialcharsbx($arResult['FOLDER']['NAME']) ?></h2>
-			</div>
-			<div class="disk-object-info-btn-wrap">
-				<div class="disk-object-info-container">
-					<div class="disk-object-size-container">
-						<span class="disk-object-size"><?= $component->getMessage('DISK_EXT_LINK_FILE_SIZE') ?>:</span>
-						<span class="disk-object-size-number"><?= CFile::formatSize($arResult['FOLDER']['SIZE']) ?></span>
-					</div>
-					<div class="disk-object-changed-container">
-						<span class="disk-object-changed"><?= $component->getMessage('DISK_EXT_LINK_FILE_UPDATE_TIME') ?>:</span>
-						<span class="disk-object-changed-number"><?= $arResult['FOLDER']['UPDATE_TIME'] ?></span>
-					</div>
-				</div>
-				<? if(!empty($arResult['ENABLED_MOD_ZIP']) && !empty($arResult['FOLDER']['CREATED_BY']) && !empty($arResult['FOLDER']['SIZE'])) { ?>
-					<? if($arResult['FILE_LIMIT_EXCEEDED'] === false) { ?>
-					<div class="disk-object-button-container">
-						<a href="<?= $arResult['FOLDER']['DOWNLOAD_URL'] ?>" class="bx-disk-btn bx-disk-btn-big bx-disk-btn-green disk-object-download-button"><?= $component->getMessage('DISK_EXT_LINK_FOLDER_DOWNLOAD') ?></a>
-					</div>
-					<? } ?>
-					<? if($arResult['FILE_LIMIT_EXCEEDED'] === true) { ?>
-						<div class="disk-object-button-container">
-							<a href="javascript:void(0);" id="download-error-btn" class="bx-disk-btn bx-disk-btn-big bx-disk-btn-green disk-object-download-button"><?= $component->getMessage('DISK_EXT_LINK_FOLDER_DOWNLOAD') ?></a>
-						</div>
-					<? } ?>
-				<? } ?>
-			</div>
+		<?php if ($showExternalHeader): ?>
+			<?php include $_SERVER['DOCUMENT_ROOT'] . '/bitrix/components/bitrix/disk.external.link/templates/.default/access-header.php'; ?>
+		<?php endif; ?>
+<?php if (!($arResult['PROTECTED_BY_PASSWORD']) || $arResult['VALID_PASSWORD']) {
+	/** @var callable $applyAirStyle */
+	include $_SERVER['DOCUMENT_ROOT']
+		. '/bitrix/components/bitrix/disk.external.link/templates/.default/access-button.php';
 
-			<div class="bx-shared-body">
-			<?
-			$APPLICATION->includeComponent('bitrix:disk.interface.toolbar', '', array(
-				'CLASS_NAME' => 'disk-fake-toolbar',
-				'TOOLBAR_ID' => 'fake_toolbar',
-				'BUTTONS' => array(),
-			));
+	$downloadAllowed =
+		!empty($arResult['ENABLED_MOD_ZIP'])
+		&& !empty($arResult['FOLDER']['CREATED_BY'])
+		&& !empty($arResult['FOLDER']['SIZE'])
+	;
 
-			$APPLICATION->IncludeComponent(
-				'bitrix:disk.breadcrumbs',
-				'',
-				array(
-					'STORAGE_ID' => $arResult['FOLDER']['STORAGE_ID'],
-					'CLASS_NAME' => 'disk-external-link-breadcrumbs',
-					'BREADCRUMBS_ROOT' => $arResult['BREADCRUMBS_ROOT'],
-					'BREADCRUMBS' => $arResult['BREADCRUMBS'],
-					'MAX_BREADCRUMBS_TO_SHOW' => 100,
-					'ENABLE_DROPDOWN' => false,
-				)
-			);
-			?>
+	$downloadButton = null;
+	if ($downloadAllowed && $arResult['FILE_LIMIT_EXCEEDED'] === false)
+	{
+		$downloadButton = new Button([
+			'text' => $component->getMessage('DISK_EXT_LINK_FOLDER_DOWNLOAD'),
+			'tag' => Tag::LINK,
+			'link' => $arResult['FOLDER']['DOWNLOAD_URL'],
+		]);
+		$downloadButton->addAttribute('data-testid', 'disk-ext-folder-download-btn');
+	}
+	elseif ($downloadAllowed && $arResult['FILE_LIMIT_EXCEEDED'] === true)
+	{
+		$downloadButton = new Button([
+			'text' => $component->getMessage('DISK_EXT_LINK_FOLDER_DOWNLOAD'),
+			'tag' => Tag::BUTTON,
+		]);
+		$downloadButton
+			->addAttribute('id', 'download-error-btn')
+			->addAttribute('type', 'button')
+			->addAttribute('data-testid', 'disk-ext-folder-download-limit-btn')
+		;
+	}
 
-				<div class="bx-disk-interface-filelist">
-				<?
-				$APPLICATION->IncludeComponent(
-					'bitrix:disk.interface.grid',
-					'',
-					array(
-						'DATA_FOR_PAGINATION' => $arResult['GRID']['DATA_FOR_PAGINATION'],
-						'GRID_ID' => $arResult['GRID']['ID'],
-						'HEADERS' => $arResult['GRID']['HEADERS'],
-						'SORT' => $arResult['GRID']['SORT'],
-						'SORT_VARS' => $arResult['GRID']['SORT_VARS'],
-						'ROWS' => $arResult['GRID']['ROWS'],
-						'FOOTER' => array(
-							array(
-								'title' => $component->getMessage('DISK_LABEL_GRID_TOTAL'),
-								'value' => $arResult['GRID']['ROWS_COUNT'],
-								'id' => 'bx-disk-total-grid-item',
-							),
-							array(
-								'place_for_pagination' => true,
-							),
-							array(
-								'custom_html' => '<td class="tar" style="width: 100%;">&nbsp;</td>',
-							),
-						),
-						'DISABLE_SETTINGS' => true,
-						'EDITABLE' => false,
-						'ALLOW_EDIT' => false,
-						'ALLOW_INLINE_EDIT' => false,
-						'ACTION_ALL_ROWS' => false,
-					),
-					$component
-				);
-				?>
-				</div>
+	if ($downloadButton !== null)
+	{
+		$applyAirStyle($downloadButton, AirButtonStyle::FILLED);
+		// Buttons\Size has no constant for the XL step of the air design (46px).
+		$downloadButton->addClass('ui-btn-xl');
+	}
+
+	$copyLinkButton = new Button([
+		'text' => $component->getMessage('DISK_EXT_LINK_COPY_LINK'),
+		'tag' => Tag::BUTTON,
+	]);
+	$applyAirStyle($copyLinkButton, AirButtonStyle::TINTED);
+	$copyLinkButton
+		->addClass('ui-btn-xl')
+		->addAttribute('id', 'disk-ext-folder-copy-link')
+		->addAttribute('type', 'button')
+		->addAttribute('data-testid', 'disk-ext-folder-copy-link-btn')
+	;
+
+	$copyLinkButtonHtml = $copyLinkButton->render(false);
+	$downloadButtonHtml = $downloadButton === null ? '' : $downloadButton->render(false);
+
+	?>
+		<main class="disk-ext-content-layout" data-testid="disk-ext-folder-page">
+			<div class="disk-object-container disk-ext-surface" data-testid="disk-ext-folder-card">
+				<?php include $_SERVER['DOCUMENT_ROOT']
+					. '/bitrix/components/bitrix/disk.external.link/templates/.default/folder-header.php'; ?>
+
+				<?php include $_SERVER['DOCUMENT_ROOT']
+					. '/bitrix/components/bitrix/disk.external.link/templates/.default/folder-list.php'; ?>
 			</div>
-		</div>
+		</main>
 		<script>
 		BX(function () {
 			BX.message({disk_document_service: 'gdrive'});
-
-			BX.remove(BX.findChildByClassName(BX('<?=$arResult['GRID']['ID']?>'), 'bx-disk-action'));
-			BX.remove(BX.findChildByClassName(BX('<?=$arResult['GRID']['ID']?>'), 'bx-head-advanced-more'));
 
 			<?php if($arResult['SESSION_EXPIRED']): ?>
 				BX.UI.Notification.Center.notify({
@@ -190,6 +166,13 @@ switch(mb_strtolower($langId))
 			});
 		}
 		</script>
+		<?php
+		$copyLinkButtonId = 'disk-ext-folder-copy-link';
+		$copyLinkUrl = $arResult['SHARE_URL'];
+
+		include $_SERVER['DOCUMENT_ROOT']
+			. '/bitrix/components/bitrix/disk.external.link/templates/.default/copy-link-script.php';
+		?>
 		<? } elseif($arResult['PROTECTED_BY_PASSWORD']){ ?>
 			<? $this->getComponent()->includeComponentTemplate('protected_by_password'); ?>
 		<? } ?>

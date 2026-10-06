@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Booking = this.BX.Booking || {};
-(function (exports, booking_lib_duration, main_core, main_popup, main_date, ui_draganddrop_draggable, booking_const, booking_core, booking_lib_busySlots, booking_component_nonDraggableBookingPopup, booking_lib_analytics, booking_provider_service_bookingService, booking_provider_service_waitListService, booking_lib_isRealId) {
+(function (exports, booking_lib_duration, main_core, main_popup, main_date, ui_draganddrop_draggable, booking_const, booking_core, booking_lib_busySlots, booking_component_nonDraggableBookingPopup, booking_lib_analytics, booking_lib_limit, booking_provider_service_bookingService, booking_provider_service_waitListService, booking_lib_isRealId) {
 	'use strict';
 
 	const MaxInteractionBookingDurationsMs = 12 * booking_lib_duration.Duration.getUnitDurations().H;
@@ -20,11 +20,17 @@ this.BX.Booking = this.BX.Booking || {};
 				return;
 			}
 			const resourceIds = booking.resourcesIds.includes(cell.resourceId) ? booking.resourcesIds : [cell.resourceId, ...booking.resourcesIds.filter(id => id !== resourceId)];
+			const uniqueResourceIds = [...new Set(resourceIds)];
+			const isMultiResourcesFeatureEnabled = this.#store.state[booking_const.Model.Interface].enabledFeature.bookingMulti;
+			if (uniqueResourceIds.length > 1 && !isMultiResourcesFeatureEnabled) {
+				void booking_lib_limit.limit.show(booking_const.LimitFeatureId.MultiResources);
+				return;
+			}
 			await booking_provider_service_bookingService.bookingService.update({
 				id: booking.id,
 				dateFromTs: cell.fromTs,
 				dateToTs: cell.toTs,
-				resourcesIds: [...new Set(resourceIds)],
+				resourcesIds: uniqueResourceIds,
 				timezoneFrom: booking.timezoneFrom,
 				timezoneTo: booking.timezoneTo
 			});
@@ -382,5 +388,5 @@ this.BX.Booking = this.BX.Booking || {};
 	exports.dragActions = dragActions;
 	exports.dragPolicy = dragPolicy;
 
-})(this.BX.Booking.Lib = this.BX.Booking.Lib || {}, BX.Booking.Lib, BX, BX.Main, BX.Main, BX.UI.DragAndDrop, BX.Booking.Const, BX.Booking, BX.Booking.Lib, BX.Booking.Component, BX.Booking.Lib, BX.Booking.Provider.Service, BX.Booking.Provider.Service, BX.Booking.Lib);
+})(this.BX.Booking.Lib = this.BX.Booking.Lib || {}, BX.Booking.Lib, BX, BX.Main, BX.Main, BX.UI.DragAndDrop, BX.Booking.Const, BX.Booking, BX.Booking.Lib, BX.Booking.Component, BX.Booking.Lib, BX.Booking.Lib, BX.Booking.Provider.Service, BX.Booking.Provider.Service, BX.Booking.Lib);
 //# sourceMappingURL=drag.bundle.js.map

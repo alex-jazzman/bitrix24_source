@@ -26,7 +26,8 @@ use Bitrix\Sale\Cashbox;
 use Bitrix\Sale\Internals\SiteCurrencyTable;
 use Bitrix\Sale\PaySystem;
 use Bitrix\Sale\PaySystem\ClientType;
-use Bitrix\Sale\Tax\VatCalculator;
+use Bitrix\Main\DI\ServiceLocator;
+use Bitrix\Salescenter\Internal\Service\DiscountFormatter;
 use Bitrix\SalesCenter;
 use Bitrix\SalesCenter\Component\PaymentSlip;
 use Bitrix\SalesCenter\Component\ReceivePaymentHelper;
@@ -436,7 +437,7 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 		$this->arResult['urlSettingsCompanyContacts'] = $this->getComponentSliderPath('bitrix:salescenter.company.contacts');
 		$this->fillSendersData($this->arResult);
 		$this->arResult['mostPopularProducts'] = $this->getMostPopularProducts();
-		$this->arResult['vatList'] = $this->getProductVatList();
+		$this->arResult['vatRateList'] = $this->getProductVatRateList();
 		$this->arResult['catalogIblockId'] = (int)Crm\Product\Catalog::getDefaultId();
 		$this->arResult['basePriceId'] = Catalog\GroupTable::getBasePriceTypeId();
 		$this->arResult['showCompilationModeSwitcher'] = 'Y';
@@ -476,6 +477,11 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 			}
 			$this->arResult['currencyCode'] = $baseCurrency;
 		}
+
+		$this->arResult = array_merge(
+			$this->arResult,
+			$this->getPrecisionOptions((string)$this->arResult['currencyCode']),
+		);
 
 		//@TODO get rid of it
 		$clientInfo = (new SalesCenter\Controller\Order())->getClientInfo([
@@ -848,6 +854,7 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 			'discount' => 0,
 			'result' => 0,
 			'sum' => 0,
+			'taxSum' => 0,
 		];
 
 		foreach ($products as $product)
@@ -855,6 +862,7 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 			$result['discount'] += $product['discount'] * $product['quantity'];
 			$result['result'] += $product['price'] * $product['quantity'];
 			$result['sum'] += $product['basePrice'] * $product['quantity'];
+			$result['taxSum'] += (float)($product['taxSum'] ?? 0);
 		}
 
 		return $result;
@@ -945,10 +953,18 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 			if ($product['DISCOUNT_PRICE'] > 0)
 			{
 				$discountRate = $product['DISCOUNT_PRICE'] / $product['BASE_PRICE'] * 100;
+				$discountNet = DiscountFormatter::grossToNet(
+					(float)$product['DISCOUNT_PRICE'],
+					(float)($product['VAT_RATE'] ?? 0) * 100,
+					($product['VAT_INCLUDED'] ?? 'N') === 'Y',
+				);
 				$item
 					->setDiscountType(Crm\Discount::MONETARY)
-					->setDiscountValue($product['DISCOUNT_PRICE'])
-					->setDiscountRate(round($discountRate, 2))
+					->setDiscountValue(ServiceLocator::getInstance()->get('sale.priceRounder')->roundByFormatCurrency(
+						$discountNet,
+						(string)$this->arResult['currencyCode'],
+					))
+					->setDiscountRate(round($discountRate, 4))
 				;
 			}
 
@@ -1316,6 +1332,16 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 				$originBasketCode = $product['BASKET_CODE'];
 			}
 
+			$discountNet = DiscountFormatter::grossToNet(
+				(float)$product['DISCOUNT_SUM'],
+				(float)($product['VAT_RATE'] ?? 0) * 100,
+				($product['VAT_INCLUDED'] ?? 'N') === 'Y',
+			);
+			$discountNet = ServiceLocator::getInstance()->get('sale.priceRounder')->roundByFormatCurrency(
+				$discountNet,
+				(string)$this->arResult['currencyCode'],
+			);
+
 			$item
 				->setDetailUrlManagerType(Crm\Product\Url\ProductBuilder::TYPE_ID)
 				->addAdditionalField('originProductId', $product['PRODUCT_ID'] ?? 0)
@@ -1328,7 +1354,7 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 				->setQuantity((float)$product['QUANTITY'])
 				->setDiscountType((int)$product['DISCOUNT_TYPE_ID'])
 				->setDiscountRate((float)$product['DISCOUNT_RATE'])
-				->setDiscountValue((float)$product['DISCOUNT_SUM'])
+				->setDiscountValue($discountNet)
 				->setMeasureCode((int)$product['MEASURE_CODE'])
 				->setMeasureName($product['MEASURE_NAME'])
 			;
@@ -1389,16 +1415,44 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 		$vatIncluded = $basketItemFields['VAT_INCLUDED'] ?? 'Y';
 		$basketItem->setTaxIncluded($vatIncluded);
 
+		if (isset($vatRate))
+		{
+			$basketItem->setTaxRate($vatRate * 100);
+		}
+
+		$inputFactory = ServiceLocator::getInstance()->get('sale.basketItemInputFactory');
+		$basketItemCalculator = ServiceLocator::getInstance()->get('sale.basketItemCalculator');
+
+		$taxSumInput = $inputFactory->createFromArray([
+			'basePrice' => (float)($basketItemFields['PRICE'] ?? 0),
+			'quantity' => (float)($basketItemFields['QUANTITY'] ?? 0),
+			'vatRate' => isset($vatRate) ? (float)$vatRate * 100 : 0,
+			'vatIncluded' => $vatIncluded === 'Y',
+		]);
+		$basketItem->setTaxSum(
+			$basketItemCalculator->calculate($taxSumInput)->totalCalculation->totalVatValue
+		);
+
 		if ($vatIncluded === 'N' && $vatRate > 0)
 		{
 			$price = (float)$basketItemFields['PRICE'];
 
-			$vatCalculator = new VatCalculator($vatRate);
-			$priceWithVat = $vatCalculator->accrue($price);
+			$input = $inputFactory->createFromArray([
+				'basePrice' => $price,
+				'vatRate' => $vatRate * 100,
+				'vatIncluded' => false,
+			]);
+			$vatCalculator = ServiceLocator::getInstance()->get('sale.vatCalculator');
+			$priceWithVat = $vatCalculator->accrueVat($input);
 
+			// `price` is the gross (with-tax) value shown to the user, but `priceExclusive`
+			// must stay in netto coordinates for taxIncluded='N': the builder converter
+			// (CatalogJSProductForm::resolvePriceInBaseCoords) treats priceExclusive as the
+			// tax-free base and accrues VAT once. Forwarding the gross value here applied VAT
+			// twice (100 -> 122 shown -> 148.84 charged).
 			$basketItem
 				->setPrice($priceWithVat)
-				->setPriceExclusive($priceWithVat)
+				->setPriceExclusive($price)
 			;
 		}
 	}
@@ -1501,6 +1555,7 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 				}
 
 				$img = '/bitrix/components/bitrix/salescenter.paysystem.panel/templates/.default/images/' . $systemHandler;
+				$imageExtension = ($systemHandler === 'platon') ? 'webp' : 'svg';
 				$queryParams['ACTION_FILE'] = $systemHandler;
 
 				[$handlerClass] = PaySystem\Manager::includeHandler($systemHandler);
@@ -1517,10 +1572,10 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 						$queryParams['PS_MODE'] = $psMode;
 						$paySystemPath->addParams($queryParams);
 
-						$psModeImage = $img . '_' . $psMode . '.svg';
+						$psModeImage = $img . '_' . $psMode . '.' . $imageExtension;
 						if (!Main\IO\File::isFileExists(Application::getDocumentRoot().$psModeImage))
 						{
-							$psModeImage = $img . '.svg';
+							$psModeImage = $img . '.' . $imageExtension;
 						}
 
 						$result['items'][] = [
@@ -1546,7 +1601,7 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 
 					$result['items'][] = [
 						'name' => $handlerDescription['NAME'] ?? $handlerList['SYSTEM'][$systemHandler],
-						'img' => $img.'.svg',
+						'img' => $img . '.' . $imageExtension,
 						'info' => Loc::getMessage(
 							'SALESCENTER_APP_PAYSYSTEM_INFO',
 							[
@@ -1859,7 +1914,7 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 										? ' (' . Loc::getMessage('SALESCENTER_APP_CASHBOX_FFD_12_SUPPORT') . ')'
 										: ''
 								),
-							'img' => '/bitrix/components/bitrix/salescenter.cashbox.panel/templates/.default/images/businessru_'.$kkm.'.svg',
+							'img' => '/bitrix/components/bitrix/salescenter.cashbox.panel/templates/.default/images/businessru_'.$kkm.'.webp',
 							'link' => $cashboxPath->getLocator(),
 							'info' => Loc::getMessage(
 								'SALESCENTER_APP_CASHBOX_INFO',
@@ -2214,17 +2269,72 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 	/**
 	 * @return array
 	 */
-	private function getProductVatList(): array
+	private function getProductVatRateList(): array
 	{
-		$productVatList = [];
-		$vatList = CCrmTax::GetVatRateInfos();
-		foreach ($vatList as $vatRow)
+		return static::prepareProductVatRateList(CCrmTax::GetVatRateInfos());
+	}
+
+	private static function prepareProductVatRateList(array $vatRows): array
+	{
+		$vatRates = [];
+		$position = 0;
+		foreach ($vatRows as $vatRow)
 		{
-			$productVatList[] = $vatRow['VALUE'];
+			$vatRates[] = [
+				'taxId' => (int)$vatRow['ID'],
+				'value' => $vatRow['VALUE'],
+				'position' => $position,
+			];
+			$position++;
 		}
-		unset($vatRow, $vatList);
-		sort($productVatList, SORT_NUMERIC);
-		return $productVatList;
+
+		usort($vatRates, static function (array $firstVatRate, array $secondVatRate): int {
+			$valueComparison = (float)$firstVatRate['value'] <=> (float)$secondVatRate['value'];
+
+			return $valueComparison !== 0
+				? $valueComparison
+				: $firstVatRate['position'] <=> $secondVatRate['position']
+			;
+		});
+
+		$vatRateList = [];
+		foreach ($vatRates as $vatRate)
+		{
+			$vatRateList[] = [
+				'taxId' => $vatRate['taxId'],
+				'value' => $vatRate['value'],
+			];
+		}
+
+		return $vatRateList;
+	}
+
+	/**
+	 * Resolve `pricePrecision` (compute), `displayPrecision` (render) and the
+	 * full currency format block for the currency used by this slider. Compute
+	 * precision comes from the `sale.priceRounder` service ({@see Sale\Public\Service\PriceRounder::getPrecision()});
+	 * display precision comes from CurrencyLang.DECIMALS.
+	 *
+	 * @param string $currencyCode Currency ISO code.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function getPrecisionOptions(string $currencyCode): array
+	{
+		$currencyFormat = \CCurrencyLang::GetFormatDescription($currencyCode);
+		$displayPrecision = (int)($currencyFormat['DECIMALS'] ?? 2);
+
+		return [
+			'pricePrecision' => ServiceLocator::getInstance()->get('sale.priceRounder')->getPrecision(),
+			'displayPrecision' => $displayPrecision,
+			'currencyFormat' => [
+				'FORMAT_STRING' => (string)($currencyFormat['FORMAT_STRING'] ?? '#'),
+				'DEC_POINT' => (string)($currencyFormat['DEC_POINT'] ?? '.'),
+				'THOUSANDS_SEP' => (string)($currencyFormat['THOUSANDS_SEP'] ?? ' '),
+				'DECIMALS' => $displayPrecision,
+				'HIDE_ZERO' => (string)($currencyFormat['HIDE_ZERO'] ?? 'N'),
+			],
+		];
 	}
 
 	/**
@@ -2384,9 +2494,19 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 			;
 		}
 
-		if (!Container::getInstance()->getUserPermissions()->isCrmAdmin())
+		$isCrmAdmin = Container::getInstance()->getUserPermissions()->isCrmAdmin();
+		if (!$isCrmAdmin)
 		{
 			$editorLayout->setMessageTextReadOnly(true);
+		}
+
+		// Both setters ship together in messageservice; older versions hide the selector by default.
+		if (!$isSmsContext && method_exists($editorLayout, 'setCustomTemplateSelectorShown'))
+		{
+			$editorLayout
+				->setCustomTemplateSelectorShown($isCrmAdmin)
+				->setCustomTemplateCreateInSelectorShown($isCrmAdmin)
+			;
 		}
 
 		return $editor;

@@ -194,7 +194,7 @@ export default class Column extends Kanban.Column
 			return;
 		}
 		this.getGrid().startProgress();
-		Ajax.runAction('rpa.item.getEditor', {
+		Ajax.runAction('rpa.Item.getEditor', {
 			analyticsLabel: 'rpaItemOpenQuickForm',
 			data: {
 				typeId: this.getGrid().getTypeId(),
@@ -539,7 +539,7 @@ export default class Column extends Kanban.Column
 
 	addTaskUserHandler(task, value, selector)
 	{
-		Ajax.runAction('rpa.task.addUser', {
+		Ajax.runAction('rpa.Task.addUser', {
 			analyticsLabel: 'rpaTaskAddUser',
 			data: {
 				typeId: this.getGrid().getData().typeId,
@@ -625,7 +625,7 @@ export default class Column extends Kanban.Column
 				}
 				this.getGrid().startProgress();
 				const promise = new BX.Promise();
-				Ajax.runAction('rpa.task.delete', {
+				Ajax.runAction('rpa.Task.delete', {
 					analyticsLabel: 'rpaKanbanTaskDelete',
 					data: {
 						typeId: this.getGrid().getData().typeId,
@@ -829,7 +829,7 @@ export default class Column extends Kanban.Column
 		return new Promise((resolve, reject) =>
 		{
 			this.getGrid().startProgress();
-			Ajax.runAction('rpa.stage.getTasks', {
+			Ajax.runAction('rpa.Stage.getTasks', {
 				data: {
 					id: this.getId(),
 				}

@@ -59,7 +59,8 @@ type CreateCallOptions = {
 	userIds?: number[],
 	videoEnabled?: boolean,
 	enableMicAutoParameters?: boolean,
-	debug?: boolean
+	debug?: boolean,
+	invitePeriod?: number,
 }
 
 const ajaxActions = {
@@ -203,7 +204,7 @@ class Engine
 			const chatId = config.chatInfo.chatId;
 			const callProvider = config.provider || this.getDefaultProvider();
 			const callType = config.type || CallType.Instant;
-			const roomType = Util.getRoomType(callProvider, chatId);
+			const roomType = Util.getRoomType(chatId);
 
 			let data = null;
 
@@ -332,7 +333,7 @@ class Engine
 					const callFactory = this.#getCallFactory(newProvider);
 					const instanceId = Util.getUuidv4();
 					const callType = CallType.Instant;
-					const roomType = Util.getRoomType(newProvider, chatId);
+					const roomType = Util.getRoomType(chatId);
 
 					CallTokenManager.setToken(chatId, token);
 

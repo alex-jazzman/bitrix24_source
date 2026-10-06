@@ -3,8 +3,8 @@ import { createNamespacedHelpers } from 'ui.vue3.vuex';
 import { Model } from 'booking.const';
 import { busySlots } from 'booking.lib.busy-slots';
 import { bookingService } from 'booking.lib.booking';
-import type { BookingModel } from 'booking.model.bookings';
-import type { Cell } from 'booking.model.interface';
+import { type BookingModel } from 'booking.model.bookings';
+import { type Cell } from 'booking.model.interface';
 
 import {
 	createBookingModelUi,
@@ -17,7 +17,7 @@ import { QuickFilterLine } from './quick-filter-line/quick-filter-line';
 import { BookingDay } from './booking/booking';
 import { CreateRestrictionOverlay } from './create-restriction-overlay/create-restriction-overlay';
 
-import type { BookingUiDuration, BookingModelUi } from '../../grid/booking-base/types';
+import { type BookingUiDuration, type BookingModelUi } from '../../grid/booking-base/types';
 
 import './bookings.css';
 
@@ -35,6 +35,11 @@ export const Bookings = {
 		BookingDay,
 		CreateRestrictionOverlay,
 	},
+	inject: {
+		gridContext: {
+			default: null,
+		},
+	},
 	data(): { nowTs: number }
 	{
 		return {
@@ -46,9 +51,8 @@ export const Bookings = {
 			overbookingMap: 'overbookingMap',
 		}),
 		...mapInterfaceGetters({
-			resourcesIds: 'resourcesIds',
-			selectedDateTs: 'selectedDateTs',
 			selectedPlacementSlots: 'selectedPlacementSlots',
+			selectedDateTs: 'selectedDateTs',
 			hoveredPlacementSlot: 'hoveredPlacementSlot',
 			busySlots: 'busySlots',
 			isFeatureEnabled: 'isFeatureEnabled',
@@ -117,13 +121,40 @@ export const Bookings = {
 			const dateFromTs = this.selectedDateTs;
 			const dateToTs = new Date(dateFromTs).setDate(new Date(dateFromTs).getDate() + 1);
 
-			return cells.filter((cell: Cell) => cell && cell.toTs > dateFromTs && dateToTs > cell.fromTs);
+			return cells.filter((cell: Cell) => {
+				return cell
+					&& this.resourcesIds.includes(cell.resourceId)
+					&& cell.toTs > dateFromTs
+					&& dateToTs > cell.fromTs
+				;
+			});
+		},
+		visibleBusySlots(): Object[]
+		{
+			const dateFromTs = this.selectedDateTs;
+			const dateToTs = new Date(dateFromTs).setDate(new Date(dateFromTs).getDate() + 1);
+
+			return this.busySlots.filter((busySlot) => {
+				return this.resourcesIds.includes(busySlot.resourceId)
+					&& busySlot.toTs > dateFromTs
+					&& dateToTs > busySlot.fromTs
+				;
+			});
 		},
 		quickFilterHours(): number[]
 		{
+			if (!this.quickFilterEnabled)
+			{
+				return [];
+			}
+
 			const activeHours = new Set(Object.values(this.quickFilter.active));
 
 			return Object.values(this.quickFilter.hovered).filter((hour) => !activeHours.has(hour));
+		},
+		quickFilterEnabled(): boolean
+		{
+			return this.gridContext?.quickFilterEnabled ?? true;
 		},
 		resourceBookings(): Map<number, BookingModelUi>
 		{
@@ -151,6 +182,15 @@ export const Bookings = {
 			}
 
 			return this.bookings.find(({ id }) => id === this.draggedBookingId) || null;
+		},
+		resourcesIds(): number[]
+		{
+			if (this.gridContext)
+			{
+				return this.gridContext.resourcesIds;
+			}
+
+			return this.$store.getters[`${Model.Interface}/resourcesIds`];
 		},
 	},
 	watch: {
@@ -195,7 +235,7 @@ export const Bookings = {
 			}"
 		>
 			<div class="booking-booking-bookings__busy-slots">
-				<template v-for="busySlot of busySlots" :key="busySlot.id">
+				<template v-for="busySlot of visibleBusySlots" :key="busySlot.id">
 					<BusySlot
 						:busySlot="busySlot"
 					/>

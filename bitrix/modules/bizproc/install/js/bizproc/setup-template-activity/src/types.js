@@ -3,8 +3,25 @@ export type Block = {
 	items: Array<Item>;
 };
 
-export type ItemType = 'delimiter' | 'title' | 'description' | 'constant';
-export type ConstantType = 'string' | 'int' | 'user' | 'file';
+export type ItemType =
+	| 'delimiter'
+	| 'title'
+	| 'titleWithIcon'
+	| 'iconTitle'
+	| 'description'
+	| 'constant';
+export type ConstantType =
+	| 'string'
+	| 'int'
+	| 'user'
+	| 'file'
+	| 'text'
+	| 'select'
+	| 'entityselector'
+	| 'rag_knowledge_base'
+	| 'bool'
+	| 'date'
+	| 'datetime';
 export type DelimiterType = 'line';
 
 export type Item = {
@@ -33,11 +50,20 @@ export type ConstantItem = Item & {
 	name: string;
 	constantType: string;
 	multiple: boolean;
-	default: string;
+	default: string | Array<string>;
 	description: string;
 	required: boolean;
 	options: Record<string, string>;
 	settings: Object,
+};
+
+export type ConstantPreset = {
+	code: string;
+	constantType: ConstantType;
+	multiple: boolean;
+	labelKey: string;
+	hintKey: string;
+	nameKey: string;
 };
 
 export type UpdateItemPropertyEventPayload = {
@@ -53,6 +79,8 @@ export type ConstantConvertedData = {
 	Multiple: boolean,
 	Options: Array,
 	Default: string,
+	Settings: Object,
+	Source: string,
 };
 
 export type ConstantConfiguration = {

@@ -1,5 +1,7 @@
 import { toValue } from 'ui.vue3';
 import { useBlockDiagram } from './block-diagram';
+import { useCanvas } from './canvas';
+import { useHistory } from './history';
 import type {
 	AnimationItem,
 } from '../types';
@@ -26,38 +28,96 @@ export function useAnimationQueue(): UseAnimatedQueue
 		isStopAnimation,
 		animationQueue,
 		currentAnimationItem,
+		isRenderOptimizationAvailable,
+		blockIntersections,
+		animationStep,
 		addConnection,
 		deleteConnectionById,
 		addBlock,
 		deleteBlockById,
 	} = useBlockDiagram();
+	const { goToBlock } = useCanvas();
+	const history = useHistory();
 
-	function animateItem(animatedItem: AnimationItem): void
+	// Единая точка продвижения очереди. Вызывается ровно один раз на каждый
+	// yield-шаг — либо совпавшим экранным переходом (переходом отрисованного
+	// элемента), либо резервным таймером (см. AnimationStepController). Гарантия
+	// «ровно один advance на шаг» лежит на контроллере; здесь — само действие
+	// продвижения генератора.
+	function advance(): void
+	{
+		const queue = animationQueue.value;
+		if (!queue)
+		{
+			return;
+		}
+
+		const { done = false } = queue.next() ?? {};
+		if (done)
+		{
+			animationQueue.value = null;
+			// Снимок истории делаем ОДИН раз при завершении очереди, а не на
+			// каждом шаге — иначе O(N^2) клонов и засорение undo.
+			history.makeSnapshot();
+		}
+	}
+
+	animationStep.setAdvanceHandler(advance);
+
+	// Отрисован ли блок сейчас. При выключенной оптимизации рендерятся все блоки;
+	// при включённой — только попавшие в видимый набор (видимая область).
+	function isBlockRendered(blockId: string): boolean
+	{
+		return !toValue(isRenderOptimizationAvailable)
+			|| toValue(blockIntersections.visibleBlockIds).has(blockId);
+	}
+
+	// Возвращает true, если элемент даст переход (enter/leave), которым очередь
+	// продвинется дальше через onAfter* в *-queue-transition. Если перехода не
+	// будет (удаление неотрисованного блока), очередь не должна его ждать.
+	function animateItem(animatedItem: AnimationItem): boolean
 	{
 		switch (animatedItem.type)
 		{
 			case ANIMATED_TYPES.BLOCK: {
+				// Доводим камеру до блока ДО его отрисовки. При включённой
+				// оптимизации рендерятся только блоки в видимой области: блок вне видимой
+				// области не смонтируется, его enter-переход не сработает и очередь
+				// встанет. Центрирование камеры синхронно обновляет transform, из-за
+				// чего selectVisibleBlocks включит блок в видимый набор и он
+				// отрисуется — очередь продолжится, а пользователь «доезжает» до
+				// каждого блока независимо от размера графа. (onEnter в
+				// blocks-queue-transition уточняет центрирование уже после монтажа.)
+				goToBlock(animatedItem.item);
 				addBlock(animatedItem.item);
-				break;
+
+				return true;
 			}
 
 			case ANIMATED_TYPES.CONNECTION: {
 				addConnection(animatedItem.item);
-				break;
+
+				return true;
 			}
 
 			case ANIMATED_TYPES.REMOVE_BLOCK: {
+				// Leave-переход возможен только для отрисованного блока. Блок вне экрана
+				// (при оптимизации не в DOM) удаляется без перехода — ждать его
+				// нельзя, иначе очередь встанет. Видимый удаляется с затуханием как обычно.
+				const willAnimate = isBlockRendered(animatedItem.item.id);
 				deleteBlockById(animatedItem.item.id);
-				break;
+
+				return willAnimate;
 			}
 
 			case ANIMATED_TYPES.REMOVE_CONNECTION: {
 				deleteConnectionById(animatedItem.item.id);
-				break;
+
+				return true;
 			}
 
 			default:
-				break;
+				return false;
 		}
 	}
 
@@ -79,9 +139,19 @@ export function useAnimationQueue(): UseAnimatedQueue
 
 			if (animatedItem.type && animatedItem.item)
 			{
-				animateItem(animatedItem);
+				const willAnimate: boolean = animateItem(animatedItem);
 
-				yield animatedItem;
+				// Ждём завершения перехода только если он будет. Иначе (удаление
+				// неотрисованного блока) сразу переходим к следующему элементу — так
+				// удаления блоков вне экрана проходят мгновенно и очередь не зависает.
+				if (willAnimate)
+				{
+					// Открываем шаг: вооружаем резервный таймер и получаем токен.
+					// Продвинет шаг первый из {совпавший переход, таймер}, второй —
+					// идемпотентно игнорируется контроллером.
+					animationStep.openStep();
+					yield animatedItem;
+				}
 			}
 		}
 
@@ -96,6 +166,7 @@ export function useAnimationQueue(): UseAnimatedQueue
 
 		zoom.value = 1;
 		isStopAnimation.value = false;
+		animationStep.stop();
 
 		animationQueue.value = animationQueueFn(shouldAnimatedItems);
 		if (shouldAnimatedItems.length > 0)
@@ -125,6 +196,8 @@ export function useAnimationQueue(): UseAnimatedQueue
 		isPauseAnimation.value = false;
 		currentAnimationItem.value = null;
 		animationQueue.value = null;
+		// Снимаем вооружённый резервный таймер и сбрасываем состояние шага.
+		animationStep.stop();
 	}
 
 	return {

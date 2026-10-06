@@ -1,22 +1,11 @@
-/**
- * @module tasks/checklist/utils/src/open
- */
+/** @module tasks/checklist/utils/src/open */
 jn.define('tasks/checklist/utils/src/open', (require, exports, module) => {
 	const { ChecklistController } = require('tasks/checklist/controller');
 	const { Loc } = require('loc');
 	const { showToast } = require('toast');
 
 	/**
-	 * @param params
-	 * @param {number} params.taskId
-	 * @param {number} params.userId
-	 * @param {Object} params.checklistTree
-	 * @param {number} params.checklistId
-	 * @param {Object} [params.parentWidget=PageManager]
-	 * @param {boolean} [params.inLayout=true]
-	 * @param {boolean} [params.hideCompleted=false]
-	 * @param {Function} [params.onChange=()=>{}]
-	 * @param {number|null} [params.groupId=null]
+	 * @param {ChecklistOpenPreparedParams} params
 	 * @returns {void}
 	 */
 	const openChecklistWithPreparedData = async (params) => {

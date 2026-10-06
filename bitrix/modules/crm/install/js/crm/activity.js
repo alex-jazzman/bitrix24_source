@@ -558,7 +558,10 @@ if(typeof(BX.CrmActivityEditor) == 'undefined')
 					serverTime: this.getSetting('serverTime', ''),
 					imagePath: this.getSetting('imagePath', ''),
 					defaultStorageTypeId: this.getDefaultStorageTypeId(),
-					mailTemplateData: this.getSetting('mailTemplateData', [])
+					mailTemplateData: this.getSetting('mailTemplateData', []),
+					largeAttachmentEnabled: this.getSetting('largeAttachmentEnabled', false),
+					largeAttachmentFeatureAvailable: this.getSetting('largeAttachmentFeatureAvailable', false),
+					largeAttachmentMaxSize: this.getSetting('largeAttachmentMaxSize', 0)
 				};
 
 				emailSettings['direction'] = parseInt(item.getSetting('direction', BX.CrmActivityDirection.outgoing));
@@ -1235,9 +1238,17 @@ if(typeof(BX.CrmActivityEditor) == 'undefined')
 				settings['ownerID'] = this.getSetting('ownerID', '');
 			}
 
+			if(typeof(settings['ownerTitle']) === 'undefined')
+			{
+				settings['ownerTitle'] = this.getSetting('ownerTitle', '');
+			}
+
+			const ownerTitle = BX.type.isNotEmptyString(settings['ownerTitle']) ? settings['ownerTitle'] : '';
+			const taskTitle = ownerTitle === '' ? 'CRM: ' : 'CRM: ' + ownerTitle;
+
 			const taskData = {
 				UF_CRM_TASK: [BX.CrmOwnerTypeAbbr.resolve(settings['ownerType']) + '_' + settings['ownerID']],
-				TITLE: "CRM: ",
+				TITLE: encodeURIComponent(taskTitle),
 				TAGS: "crm",
 				SCENARIO: "crm",
 				ta_sec: 'crm',
@@ -1268,6 +1279,15 @@ if(typeof(BX.CrmActivityEditor) == 'undefined')
 		},
 		getUserEmails: function()
 		{
+			var senders = this.getSetting('senders', []);
+			if (BX.type.isArray(senders) && senders.length > 0)
+			{
+				return senders.map(function(sender)
+				{
+					return sender.formated;
+				});
+			}
+
 			var result = [];
 			var emailTemplate = this.getSetting('emailTemplate', null);
 			if(emailTemplate && emailTemplate['from'])
@@ -1293,6 +1313,33 @@ if(typeof(BX.CrmActivityEditor) == 'undefined')
 				result.push(userName === '' ? userEmail : userName + ' <' + userEmail + '>');
 
 			return result;
+		},
+		getSenderId: function(value)
+		{
+			if (!BX.type.isNotEmptyString(value))
+			{
+				return null;
+			}
+
+			var normalizedValue = value.replace(/ +$/, '').toLowerCase();
+			var senders = this.getSetting('senders', []);
+			if (!BX.type.isArray(senders))
+			{
+				return null;
+			}
+
+			for (var i = 0; i < senders.length; i++)
+			{
+				if (
+					BX.type.isNotEmptyString(senders[i].formated)
+					&& senders[i].formated.replace(/ +$/, '').toLowerCase() === normalizedValue
+				)
+				{
+					return senders[i].id;
+				}
+			}
+
+			return null;
 		},
 		addCall: function(settings)
 		{
@@ -1500,6 +1547,9 @@ if(typeof(BX.CrmActivityEditor) == 'undefined')
 			settings['defaultStorageTypeId'] = this.getDefaultStorageTypeId();
 			//settings['emailTemplate'] = emailTemplate;
 			settings['mailTemplateData'] = this.getSetting('mailTemplateData', []);
+			settings['largeAttachmentEnabled'] = this.getSetting('largeAttachmentEnabled', false);
+			settings['largeAttachmentFeatureAvailable'] = this.getSetting('largeAttachmentFeatureAvailable', false);
+			settings['largeAttachmentMaxSize'] = this.getSetting('largeAttachmentMaxSize', 0);
 			settings['typeID'] = BX.CrmActivityType.email;
 
 			var activity = BX.CrmActivityEmail.create(settings, this);
@@ -6900,6 +6950,8 @@ if(typeof(BX.CrmActivityEditor) == 'undefined')
 		this._showAllCommunicationsButton = null;
 		this._requestIsRunning = false;
 		this._paginator = null;
+		this._largeAttachment = null;
+		this._largeAttachmentInitPromise = null;
 	};
 
 	BX.CrmActivityEmail.prototype =
@@ -7075,6 +7127,7 @@ if(typeof(BX.CrmActivityEditor) == 'undefined')
 						onPopupClose: BX.delegate(
 							function()
 							{
+								self._destroyLargeAttachment();
 								self._communicationSearch.closeDialog();
 								BX.CrmActivityEditor.hideUploader(self.getSetting('uploadID', ''), self.getSetting('uploadControlID', ''));
 								BX.CrmActivityEditor.hideLhe(self.getSetting('lheContainerID', ''));
@@ -7086,6 +7139,7 @@ if(typeof(BX.CrmActivityEditor) == 'undefined')
 						onPopupDestroy: BX.proxy(
 							function()
 							{
+								self._destroyLargeAttachment();
 								self._dlg = null;
 								self._wrapper = null;
 								self._ttlWrapper = null;
@@ -7285,6 +7339,87 @@ if(typeof(BX.CrmActivityEditor) == 'undefined')
 
 					lhe.SetContent(descr, true);
 				}
+			}
+
+			if (
+				this._dlgMode === BX.CrmDialogMode.edit
+				&& this.getSetting('largeAttachmentEnabled', false) === true
+			)
+			{
+				this._initializeLargeAttachment();
+			}
+		},
+		_initializeLargeAttachment: function()
+		{
+			if (this._largeAttachment || this._largeAttachmentInitPromise || !this._dlg)
+			{
+				return;
+			}
+
+			var self = this;
+			var initialize = function(extension)
+			{
+				var largeAttachment = extension && extension.LargeAttachment
+					? extension.LargeAttachment
+					: BX.Crm && BX.Crm.Mail
+						? BX.Crm.Mail.LargeAttachment
+						: null;
+
+				if (!largeAttachment || !self._dlg)
+				{
+					return;
+				}
+
+				self._largeAttachment = largeAttachment.initLegacy({
+					formId: 'crm-activity-email-' + self._salt,
+					uploaderControlId: self._uploaderName,
+					lheJsName: self.getSetting('lheJsName', ''),
+					messageId: self.getId(),
+					featureAvailable: self.getSetting('largeAttachmentFeatureAvailable', false) === true,
+					folderName: BX.Loc.getMessage('CRM_LARGE_ATTACHMENT_FOLDER_NAME') || '',
+					maxSize: parseInt(self.getSetting('largeAttachmentMaxSize', 0)),
+					getContainer: function()
+					{
+						return self._dlg ? self._dlg.popupContainer : null;
+					}
+				});
+			};
+
+			if (BX.Crm && BX.Crm.Mail && BX.Crm.Mail.LargeAttachment)
+			{
+				initialize({ LargeAttachment: BX.Crm.Mail.LargeAttachment });
+				return;
+			}
+
+			var loadTimeout = new Promise(function(_resolve, reject)
+			{
+				setTimeout(function()
+				{
+					reject(new Error('Large attachment extension loading timed out.'));
+				}, 10000);
+			});
+
+			this._largeAttachmentInitPromise = Promise
+				.race([
+					BX.Runtime.loadExtension('crm.mail.large-attachment'),
+					loadTimeout
+				])
+				.then(function(extension)
+				{
+					initialize(extension);
+					self._largeAttachmentInitPromise = null;
+				})
+				.catch(function()
+				{
+					self._largeAttachmentInitPromise = null;
+				});
+		},
+		_destroyLargeAttachment: function()
+		{
+			if (this._largeAttachment)
+			{
+				this._largeAttachment.destroy();
+				this._largeAttachment = null;
 			}
 		},
 		closeDialog: function()
@@ -8780,10 +8915,20 @@ if(typeof(BX.CrmActivityEditor) == 'undefined')
 				return;
 			}
 
+			if (this._largeAttachmentInitPromise)
+			{
+				return;
+			}
+
 			var srcData = {};
 
 			srcData['ID'] = this.getId();
 			srcData['from'] = this.getDialogValue('from', '');
+			var senderId = this._editor.getSenderId(srcData['from']);
+			if (senderId !== null)
+			{
+				srcData['senderId'] = senderId;
+			}
 
 			if(srcData['from'] !== '')
 			{
@@ -8893,6 +9038,16 @@ if(typeof(BX.CrmActivityEditor) == 'undefined')
 
 			srcData['templateID'] = this._templateId;
 
+			if (this._largeAttachment && !this._largeAttachment.beforeSubmit())
+			{
+				return;
+			}
+
+			if (this._largeAttachment)
+			{
+				srcData = this._largeAttachment.applySendContract(srcData);
+			}
+
 			this._buttonId = BX.CrmActivityDialogButton.save;
 			this._isChanged = true;
 
@@ -8920,10 +9075,17 @@ if(typeof(BX.CrmActivityEditor) == 'undefined')
 						if(typeof(data['ERROR']) != 'undefined')
 						{
 							self._clearError();
-							self._showError(data['ERROR']);
+							if (!self._largeAttachment || !self._largeAttachment.handleSendError(data))
+							{
+								self._showError(data['ERROR']);
+							}
 						}
 						else
 						{
+							if (self._largeAttachment)
+							{
+								self._largeAttachment.handleSendSuccess();
+							}
 							self._notifySave(data);
 							self.closeDialog();
 						}
@@ -8933,7 +9095,10 @@ if(typeof(BX.CrmActivityEditor) == 'undefined')
 					onfailure: function(data)
 					{
 						self._clearError();
-						self._showError(data);
+						if (!self._largeAttachment || !self._largeAttachment.handleSendError(data))
+						{
+							self._showError(data);
+						}
 
 						self._requestIsRunning = false;
 						self._unlockSaveButton();

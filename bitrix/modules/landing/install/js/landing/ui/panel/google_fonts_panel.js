@@ -112,7 +112,8 @@
 				props: {classList: 'landing-ui-panel-fonts-pagination'},
 				children: [
 					BX.Dom.create({
-						tag: 'span',
+						tag: 'button',
+						attrs: {type: 'button'},
 						props: {className: 'ui-btn ui-btn-lg ui-btn-light-border'},
 						text: BX.Landing.Loc.getMessage('LANDING_FONTS_PANEL_MORE_BUTTON_LABEL'),
 					}),
@@ -475,7 +476,7 @@
 				"<div class=\"landing-ui-font-preview\">" +
 					"<div class=\"landing-ui-font-preview-font-name\">"+options.family+"</div>" +
 					"<div class=\"landing-ui-font-preview-font-button\">" +
-						"<span class=\"ui-btn ui-btn-xs ui-btn-light-border ui-btn-round\">"+BX.Landing.Loc.getMessage("LANDING_GOOGLE_FONT_SELECT_BUTTON")+"</span>" +
+						"<button type=\"button\" class=\"ui-btn ui-btn-xs ui-btn-light-border ui-btn-round\">"+BX.Landing.Loc.getMessage("LANDING_GOOGLE_FONT_SELECT_BUTTON")+"</button>" +
 					"</div>" +
 					"<div style=\"font-family: "+options.family+"; direction: "+direction+"; text-align: "+align+";\" class=\"landing-ui-font-preview-pangram\" contenteditable=\"true\" onpaste=\"return false;\">" +
 						pangram +

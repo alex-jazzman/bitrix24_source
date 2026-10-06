@@ -52,30 +52,16 @@ class rpa extends CModule
 
 	function InstallDB($params = [])
 	{
-		global $DB, $APPLICATION;
-		$connection = \Bitrix\Main\Application::getConnection();
-		$errors = false;
+		global $APPLICATION;
 
-		if (!$DB->TableExists('b_rpa_type'))
+		$migrationResult = $this->installMigrations();
+		if (!$migrationResult->isSuccess())
 		{
-			$errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/rpa/install/db/' . $connection->getType() . '/install.sql');
-		}
-
-		if($errors !== false)
-		{
-			$APPLICATION->ThrowException(implode("", $errors));
+			$APPLICATION->ThrowException(implode("", $migrationResult->getErrorMessages()));
 			return false;
 		}
 
 		static::installUserFields();
-
-		$eventManager = \Bitrix\Main\EventManager::getInstance();
-		$eventManager->registerEventHandler('main', 'onGetUserFieldTypeFactory', $this->MODULE_ID, '\Bitrix\Rpa\Driver', 'onGetTypeDataClassList');
-		$eventManager->registerEventHandler('pull', 'OnGetDependentModule', $this->MODULE_ID, '\Bitrix\Rpa\Driver', 'onGetDependentModule', 800);
-		$eventManager->registerEventHandler('disk', 'onBuildAdditionalConnectorList', 'rpa', '\Bitrix\Rpa\Driver', 'onDiskBuildConnectorList');
-		$eventManager->registerEventHandler('rest', 'OnRestServiceBuildDescription', $this->MODULE_ID, '\Bitrix\Rpa\Driver', 'onRestServiceBuildDescription');
-		$eventManager->registerEventHandlerCompatible('im', 'OnGetNotifySchema', 'rpa', \Bitrix\Rpa\Integration\Im\NotifySchema::class, 'onGetNotifySchema');
-		RegisterModuleDependences("main", "OnAfterRegisterModule", "main", 'rpa', "installUserFields", 200, "/modules/rpa/install/index.php");
 
 		RegisterModule($this->MODULE_ID);
 
@@ -132,39 +118,26 @@ class rpa extends CModule
 
 	function UnInstallDB($params = [])
 	{
-		global $DB, $APPLICATION;
-		$connection = \Bitrix\Main\Application::getConnection();
-		$errors = false;
+		global $APPLICATION;
 
-		if (!isset($params['savedata']) || $params['savedata'] !== "Y")
+		$needDropTables = !isset($params['savedata']) || $params['savedata'] !== "Y";
+
+		if ($needDropTables && \Bitrix\Main\Loader::includeModule($this->MODULE_ID))
 		{
-			if(\Bitrix\Main\Loader::includeModule($this->MODULE_ID))
+			$result = \Bitrix\Rpa\Driver::getInstance()->deleteAllData();
+			if(!$result->isSuccess())
 			{
-				$result = \Bitrix\Rpa\Driver::getInstance()->deleteAllData();
-				if(!$result->isSuccess())
-				{
-					$errors = $result->getErrorMessages();
-				}
-				else
-				{
-					$errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/rpa/install/db/' . $connection->getType() . '/uninstall.sql');
-				}
+				$APPLICATION->ThrowException(implode("", $result->getErrorMessages()));
+				return false;
 			}
 		}
 
-		if($errors !== false)
+		$migrationResult = $this->uninstallMigrations($needDropTables);
+		if (!$migrationResult->isSuccess())
 		{
-			$APPLICATION->ThrowException(implode("", $errors));
+			$APPLICATION->ThrowException(implode("", $migrationResult->getErrorMessages()));
 			return false;
 		}
-
-		$eventManager = \Bitrix\Main\EventManager::getInstance();
-		$eventManager->unRegisterEventHandler('main', 'onGetUserFieldTypeFactory', $this->MODULE_ID, '\Bitrix\Rpa\Driver', 'onGetTypeDataClassList', 100);
-		$eventManager->unRegisterEventHandler('pull', 'OnGetDependentModule', $this->MODULE_ID, '\Bitrix\Rpa\Driver', 'onGetDependentModule');
-		$eventManager->unRegisterEventHandler('disk', 'onBuildAdditionalConnectorList', $this->MODULE_ID, '\Bitrix\Rpa\Driver', 'onDiskBuildConnectorList');
-		$eventManager->unRegisterEventHandler('rest', 'OnRestServiceBuildDescription', $this->MODULE_ID, '\Bitrix\Rpa\Driver', 'onRestServiceBuildDescription');
-		$eventManager->unRegisterEventHandler('im', 'OnGetNotifySchema', 'rpa', \Bitrix\Rpa\Integration\Im\NotifySchema::class, 'onGetNotifySchema');
-		UnRegisterModuleDependences("main", "OnAfterRegisterModule", "main", $this->MODULE_ID, "installUserFields", "/modules/rpa/install/index.php");
 
 		UnRegisterModule($this->MODULE_ID);
 		return true;

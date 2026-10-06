@@ -48,6 +48,12 @@ export const ToolbarMoreGroupComponent = {
 			type: Boolean,
 			default: false,
 		},
+		// Set when the link form was opened from the keyboard (Mod+K): the URL field takes focus so the
+		// next keystroke goes into it instead of the document. Opening by click leaves focus alone.
+		linkAutofocus: {
+			type: Boolean,
+			default: false,
+		},
 		popoverOwnerId: {
 			type: String,
 			default: '',
@@ -164,6 +170,7 @@ export const ToolbarMoreGroupComponent = {
 								:editor-tick="editorTick"
 								:link-value="linkValue"
 								:link-is-active="linkIsActive"
+								:autofocus="linkAutofocus"
 								:show-apply="false"
 								@update:link-value="setLinkValue"
 								@apply="onApplyLink?.()"

@@ -3,6 +3,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
 use Bitrix\Crm;
 use Bitrix\Crm\Agent\Search\InvoiceSearchContentRebuildAgent;
+use Bitrix\Main\Web\Uri;
 
 /**
  * @global \CMain $APPLICATION
@@ -1356,16 +1357,11 @@ while($arInvoice = $obRes->GetNext())
 			'user_id' => $arInvoice['RESPONSIBLE_ID']
 		)
 	);
-	$arInvoice['PATH_TO_INVOICE_COPY'] =  CHTTP::urlAddParams(CComponentEngine::makePathFromTemplate($arParams['PATH_TO_INVOICE_EDIT'],
+	$arInvoice['PATH_TO_INVOICE_COPY'] =  (string)(new Uri(CComponentEngine::makePathFromTemplate($arParams['PATH_TO_INVOICE_EDIT'],
 		array(
 			'invoice_id' => $entityID
-		)),
-		array('copy' => 1)
-	);
-	$arInvoice['PATH_TO_INVOICE_DELETE'] =  CHTTP::urlAddParams(
-		$bInternal ? $APPLICATION->GetCurPage() : $arResult['PATH_TO_CURRENT_LIST'],
-		array('action_'.$arResult['GRID_ID'] => 'delete', 'ID' => $entityID, 'sessid' => bitrix_sessid())
-	);
+		))))->addParams(array('copy' => 1));
+	$arInvoice['PATH_TO_INVOICE_DELETE'] =  (string)(new Uri($bInternal ? $APPLICATION->GetCurPage() : $arResult['PATH_TO_CURRENT_LIST']))->addParams(array('action_'.$arResult['GRID_ID'] => 'delete', 'ID' => $entityID, 'sessid' => bitrix_sessid()));
 
 	if (empty($arInvoice['~CURRENCY']))
 	{

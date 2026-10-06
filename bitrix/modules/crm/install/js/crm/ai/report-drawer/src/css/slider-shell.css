@@ -1,0 +1,70 @@
+.crm-ai-report-drawer-slider {
+	background-image: url("icons/bg/bg.png"), linear-gradient(135deg, #3248D7 0%, #154183 100%);
+	background-repeat: no-repeat;
+	background-size: cover;
+	background-clip: border-box;
+	background-origin: padding-box;
+	background-position-x: 100%;
+	background-position-y: 0;
+}
+
+.crm-ai-report-drawer-slider .side-panel-content-container {
+	overflow-y: hidden !important;
+}
+
+.crm-ai-report-drawer-slider .side-panel-loader,
+.crm-ai-report-drawer-slider .side-panel-loader.default-loader {
+	background-color: transparent;
+}
+
+html.crm-ai-report-drawer-frame,
+body.crm-ai-report-drawer-frame {
+	height: 100%;
+	overflow: hidden;
+}
+
+body.crm-ai-report-drawer-frame {
+	margin: 0;
+}
+
+body.ui-page-slider-wrapper.crm-ai-report-drawer-frame {
+	height: 100% !important;
+	min-height: 100% !important;
+	overflow: hidden !important;
+	background-color: transparent !important;
+	background-image: url("icons/bg/bg.png"), linear-gradient(135deg, #3248D7 0%, #154183 100%) !important;
+	background-repeat: no-repeat !important;
+	background-size: cover !important;
+	background-clip: border-box;
+	background-origin: padding-box;
+	background-position-x: 100%;
+	background-position-y: 0;
+}
+
+body.crm-ai-report-drawer-frame .ui-slider-page,
+body.crm-ai-report-drawer-frame .ui-side-panel-content,
+body.crm-ai-report-drawer-frame .ui-page-slider-workarea {
+	height: 100%;
+	min-height: 0;
+}
+
+body.crm-ai-report-drawer-frame .ui-slider-page,
+body.crm-ai-report-drawer-frame .ui-side-panel-content {
+	display: flex;
+	flex-direction: column;
+}
+
+body.crm-ai-report-drawer-frame #workarea-content.ui-side-panel-wrap-workarea {
+	height: 100%;
+	min-height: 0;
+	overflow: hidden;
+	background: transparent !important;
+	border-radius: 0;
+	display: flex;
+	flex-direction: column;
+}
+
+body.crm-ai-report-drawer-frame #workarea-content > .crm-ai-report-drawer__slider-wrapper {
+	flex: 1;
+	min-height: 0;
+}

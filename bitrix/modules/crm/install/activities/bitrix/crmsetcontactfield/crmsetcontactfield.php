@@ -19,12 +19,21 @@ class CBPCrmSetContactField extends CBPSetFieldActivity
 			return CBPActivityExecutionStatus::Closed;
 		}
 
+		$this->resolveTargetDocumentId();
+
 		$documentId = $this->getContactDocumentId();
 		$documentType = CCrmBizProcHelper::ResolveDocumentType(\CCrmOwnerType::Contact);
 
 		if (!$documentId)
 		{
 			$this->WriteToTrackingService(GetMessage('CRM_ACTIVITY_SET_CONTACT_ERROR'), 0, \CBPTrackingType::Error);
+
+			return CBPActivityExecutionStatus::Closed;
+		}
+
+		if (!$this->canUpdateResolvedTarget($documentId))
+		{
+			$this->logResolvedTargetAccessDenied();
 
 			return CBPActivityExecutionStatus::Closed;
 		}
@@ -54,7 +63,13 @@ class CBPCrmSetContactField extends CBPSetFieldActivity
 				$this->writeDebugInfo($map);
 			}
 
-			$documentService->UpdateDocument($documentId, $fieldValue, $this->ModifiedBy);
+			// Attribute to the workflow starter when no explicit
+			// ModifiedBy. method_exists guards bizproc being older than crm.
+			$modifiedBy = method_exists($this, 'getModifiedByOrStarter')
+				? $this->getModifiedByOrStarter()
+				: $this->ModifiedBy
+			;
+			$documentService->UpdateDocument($documentId, $fieldValue, $modifiedBy);
 
 			$documentTypeForAnalytics = $this->getDocumentType();
 			\CCrmBizProcHelper::sendOperationsAnalytics(
@@ -134,9 +149,13 @@ class CBPCrmSetContactField extends CBPSetFieldActivity
 	{
 		$id = null;
 
-		[$entityTypeId, $entityId] = CCrmBizProcHelper::resolveEntityId($this->getDocumentId());
+		[$entityTypeId, $entityId] = CCrmBizProcHelper::resolveEntityId($this->resolveTargetDocumentId());
 
-		if ($entityTypeId === \CCrmOwnerType::Lead)
+		if ($entityTypeId === \CCrmOwnerType::Contact)
+		{
+			$id = (int)$entityId;
+		}
+		elseif ($entityTypeId === \CCrmOwnerType::Lead)
 		{
 			$entity = \CCrmLead::GetByID($entityId, false);
 			if ($entity)

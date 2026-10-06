@@ -23,7 +23,7 @@ jn.define('im/messenger/controller/recent/config/src/global/folder', (require, e
 		copilot: CopilotConfig,
 		openChannel: ChannelConfig,
 		collab: CollabConfig,
-		openlines: OpenlinesConfig,
+		lines: OpenlinesConfig,
 		tasksTask: TaskConfig,
 	};
 

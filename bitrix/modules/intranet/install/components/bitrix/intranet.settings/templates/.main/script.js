@@ -4513,6 +4513,13 @@ this.BX = this.BX || {};
 				const allowAutoDeleteField = new ui_formElements_view.Checker(this.getValue('isWaterMarksEnabled'));
 				SecurityPage.addToSectionHelper(allowAutoDeleteField, settingsSection);
 			}
+			const sectionRows = settingsSection.getChildrenElements();
+			const lastRow = sectionRows[sectionRows.length - 1];
+			const lastRowChildren = lastRow ? lastRow.getChildrenElements() : [];
+			const lastChildRow = lastRowChildren[lastRowChildren.length - 1];
+			if (lastChildRow instanceof ui_formElements_field.SettingsRow && lastChildRow.getRowView() instanceof ui_section.SeparatorRow) {
+				lastRow.removeChild(lastChildRow);
+			}
 			return settingsSection;
 		}
 	}

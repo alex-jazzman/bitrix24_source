@@ -1,0 +1,6 @@
+<?php
+$MESS["SIGN_CONTROLLERS_V1_B2E_DOCUMENT_SAFE_FOLDER_ERROR_ACCESS_DENIED"] = "You don't have permission to perform this action.";
+$MESS["SIGN_CONTROLLERS_V1_B2E_DOCUMENT_SAFE_FOLDER_ERROR_ALREADY_DELETED"] = "This folder has already been deleted.";
+$MESS["SIGN_CONTROLLERS_V1_B2E_DOCUMENT_SAFE_FOLDER_ERROR_EMPTY_DOCUMENT_LIST"] = "No documents to move were provided.";
+$MESS["SIGN_CONTROLLERS_V1_B2E_DOCUMENT_SAFE_FOLDER_ERROR_EMPTY_TITLE"] = "Folder name cannot be empty.";
+$MESS["SIGN_CONTROLLERS_V1_B2E_DOCUMENT_SAFE_FOLDER_ERROR_FEATURE_DISABLED"] = "Grouping documents into folders is not available.";

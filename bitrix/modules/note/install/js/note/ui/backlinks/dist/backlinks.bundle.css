@@ -1,0 +1,164 @@
+/* [P2.T2] Backlinks chip — a slot of the activity line like the eye and the bell. Positioning
+ * context only, so the sources popover can anchor to it; the chip itself is drawn by the shared
+ * .note-activity-line__control rules above. */
+.note-backlinks-widget {
+	position: relative;
+	display: inline-flex;
+}
+
+/* [P4.T2] The chip is born the moment another document starts linking here — by push, while the
+ * reader is looking at the line. So it grows into the row instead of stepping in: both its own
+ * width and the slot gap it claims (the 8px of .note-activity-line__actions, cancelled by the
+ * negative margin below) are animated, and the star and the bell slide over rather than jump.
+ * The widget switches the transition off (`:css`) until its first count has rendered, so opening
+ * a document draws the chip at once. */
+.note-backlinks-chip-enter-active,
+.note-backlinks-chip-leave-active {
+	overflow: hidden;
+	transition: max-width .18s ease, margin-left .18s ease, opacity .18s ease;
+}
+
+.note-backlinks-chip-enter-from,
+.note-backlinks-chip-leave-to {
+	max-width: 0;
+	margin-left: -8px;
+	opacity: 0;
+}
+
+/* Past the widest chip ("99+" at 22px icon + count): max-width only has to end at a finite number
+ * for the growth to animate — the element itself stays content-sized once the class is gone. */
+.note-backlinks-chip-enter-to,
+.note-backlinks-chip-leave-from {
+	max-width: 100px;
+	margin-left: 0;
+	opacity: 1;
+}
+
+/* [P3.T1] Sources popover — same shell as the viewers list (fixed + JS-positioned, see
+ * popover-position.js), one row per document that links here. */
+/* --note-popup-radius: the module's own value, not a design-system token — ui.design-tokens has no
+ * radius for popups (main.popup sets --popup-window-border-radius from JS instead), and the 18px the
+ * module's popups are drawn with is not on the token scale. A host may override the variable; every
+ * popup of the module carries the same fallback. */
+.note-backlinks-widget__popover {
+	position: fixed;
+	z-index: 120;
+	min-width: 260px;
+	max-width: 320px;
+	padding: 6px;
+	border: 1px solid var(--ui-color-divider-default, #f0f0f0);
+	border-radius: var(--note-popup-radius, 18px);
+	background: var(--ui-color-bg-content-primary, #ffffff);
+	box-shadow: 0 8px 17px rgba(0, 0, 0, 0.105);
+}
+
+.note-backlinks-widget__popover-title {
+	padding: 9px 10px 7px;
+	color: var(--ui-color-base-2);
+	font-size: 12.5px;
+	font-weight: 600;
+}
+
+.note-backlinks-widget__state {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 6px;
+	padding: 12px 10px;
+	color: var(--ui-color-base-3);
+	font-size: 13.5px;
+	text-align: center;
+}
+
+.note-backlinks-widget__retry,
+.note-backlinks-widget__load-more {
+	padding: 0;
+	border: 0;
+	background: none;
+	color: var(--ui-color-link);
+	font-size: 13.5px;
+	cursor: pointer;
+}
+
+.note-backlinks-widget__list {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	/* Cap to ~6 rows (row ≈ 34px), then scroll — the title above stays put because only the list
+	 * scrolls, not the whole popover. */
+	max-height: 204px;
+	overflow-y: auto;
+}
+
+.note-backlinks-widget__row {
+	border-radius: var(--ui-border-radius-md, 8px);
+}
+
+/* [#14] See the note-views-widget__row:hover comment above — same token. */
+.note-backlinks-widget__row:hover {
+	background: var(--ui-color-bg-state-hover-default);
+}
+
+.note-backlinks-widget__source {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 7px 10px;
+	color: inherit;
+	text-decoration: none;
+}
+
+.note-backlinks-widget__source-icon {
+	--ui-icon-set__icon-size: 18px;
+	--ui-icon-set__icon-color: var(--ui-color-base-4);
+
+	flex: 0 0 auto;
+	color: var(--ui-color-base-4);
+}
+
+/* Knowledge base glyph — note's own asset rather than an icon-set name, drawn as a mask so it takes
+ * the colour of the row like the icon-set glyphs beside it. Same technique as the collection chip of
+ * note.ui.mention-chip; the mask URL itself is bound inline (CSS cannot import it). */
+.note-backlinks-widget__source-icon--collection {
+	width: 18px;
+	height: 18px;
+	background-color: var(--ui-color-base-4);
+	-webkit-mask-repeat: no-repeat;
+	mask-repeat: no-repeat;
+	-webkit-mask-position: center;
+	mask-position: center;
+	/* An icon-set glyph does not fill its box: the FILE art beside this one measures 12px tall inside
+	 * its 18px box, while our own asset is drawn edge to edge — at the same declared size it would
+	 * read as the bigger icon. 75% of the box brings the art to the same 12px. */
+	-webkit-mask-size: 75%;
+	mask-size: 75%;
+}
+
+/* Roving-tabindex focus ring on the row — same rationale as note-subscription-bell__option: the
+ * ring goes INSIDE, because the scrolling list clips whatever is drawn outside the row's own box
+ * and an outset ring would show up as a stray sliver along the edge. */
+.note-backlinks-widget__source:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: -2px;
+	border-radius: var(--ui-border-radius-md, 8px);
+}
+
+/* The row never grows a second line: a long name is cut, the whole one stays reachable through the
+ * row's own title. min-width:0 is what lets the ellipsis happen inside a flex row at all. */
+.note-backlinks-widget__source-title {
+	flex: 1 1 auto;
+	min-width: 0;
+	overflow: hidden;
+	color: var(--ui-color-base-1);
+	font-size: 14px;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+/* [P4.T1] Same viewport cap for the sources popover — the mobile form of the backlinks list is the
+ * desktop popover narrowed to the screen, the shape every other control of this line already takes.
+ * The chip needs no mobile rule of its own: it is the shared .note-activity-line__control (30px
+ * high, icon + count), so its tap target is by construction at least the eye's and the bell's. */
+html.note-mobile .note-backlinks-widget__popover {
+	max-width: calc(100vw - 24px);
+}

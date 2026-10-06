@@ -76,7 +76,7 @@ class CMailClientConfigComponent extends CBitrixComponent implements Main\Engine
 			\Bitrix\Mail\Internals\MailServiceInstaller::checkInstallComplete($site["LID"]);
 		}
 
-		switch ($this->arParams['VARIABLES']['act'])
+		switch ($this->arParams['VARIABLES']['act'] ?? null)
 		{
 			case 'new':
 				$this->editAction(true);
@@ -84,6 +84,10 @@ class CMailClientConfigComponent extends CBitrixComponent implements Main\Engine
 				break;
 			case 'edit':
 				$this->editAction(false);
+
+				break;
+			case 'crm-mass':
+				$this->crmMassAction();
 
 				break;
 			default:
@@ -121,6 +125,7 @@ class CMailClientConfigComponent extends CBitrixComponent implements Main\Engine
 		$APPLICATION->setTitle(Loc::getMessage($new ? 'MAIL_CLIENT_CONFIG_TITLE' : 'MAIL_CLIENT_CONFIG_EDIT_TITLE'));
 
 		$this->setIsSmtpAvailable();
+		$mailbox = [];
 
 		if ($new)
 		{
@@ -237,7 +242,7 @@ class CMailClientConfigComponent extends CBitrixComponent implements Main\Engine
 			);
 
 		$this->arParams['IS_CALENDAR_AVAILABLE'] = \Bitrix\Main\Loader::includeModule('calendar');
-		$this->arParams['IS_ICAL_CHECK'] = $mailbox['OPTIONS']['ical_access'] === self::POSITIVE_ANSWER;
+		$this->arParams['IS_ICAL_CHECK'] = ($mailbox['OPTIONS']['ical_access'] ?? null) === self::POSITIVE_ANSWER;
 
 
 		$res = Mail\MailServicesTable::getList([
@@ -287,9 +292,10 @@ class CMailClientConfigComponent extends CBitrixComponent implements Main\Engine
 
 		if (!$new)
 		{
+			// Only the helper, never the profile of the OAuth account: reading the profile goes to the
+			// provider, and this runs before the template is included. The form asks for the profile
+			// separately, once it is drawn.
 			$this->arParams['SERVICE']['oauth'] = Mail\Helper\OAuth::getInstanceByMeta($mailbox['PASSWORD']);
-			$this->arParams['SERVICE']['oauth_user'] = Mail\Helper\OAuth::getUserDataByMeta($mailbox['PASSWORD']);
-			$this->arParams['SERVICE']['oauth_user']['email'] = $mailbox['EMAIL'];
 		}
 
 		if (empty($this->arParams['SERVICE']['oauth']))
@@ -479,7 +485,7 @@ class CMailClientConfigComponent extends CBitrixComponent implements Main\Engine
 		{
 			$mailboxSyncManager = new Mail\Helper\Mailbox\MailboxSyncManager($mailbox['USER_ID']);
 			$this->arResult['LAST_MAIL_CHECK_DATE'] = $mailboxSyncManager->getLastMailboxSyncTime($mailbox['ID']);
-			$this->arResult['LAST_MAIL_CHECK_STATUS'] = $mailboxSyncManager->getCachedConnectionStatus($mailbox['ID']);
+			$this->arResult['LAST_MAIL_CHECK_STATUS'] = $mailboxSyncManager->getStoredConnectionStatus((int)$mailbox['ID']);
 		}
 
 		$this->arResult['MICROSOFT_SERVICE_NAMES'] = $this->getMicrosoftServiceNames();
@@ -491,7 +497,7 @@ class CMailClientConfigComponent extends CBitrixComponent implements Main\Engine
 
 		$this->arParams['SERVICE']['IS_SMTP_SWITCHER_CHECKED'] = $this->arResult['LOCK_SMTP'] === true || $this->isSmtpSwitcherChecked();
 		$this->arParams['SENDER_NAME'] = $this->getSenderName($mailbox['USERNAME'] ?? '', $mailbox['USER_ID'] ?? null);
-		$this->arParams['USE_SENDER_NAME'] = $mailbox['USE_SENDER_NAME'] === 'Y';
+		$this->arParams['USE_SENDER_NAME'] = ($mailbox['USE_SENDER_NAME'] ?? null) === 'Y';
 
 		$this->arParams['OWNER_ACCESS_CODE']
 			= !empty($mailbox['USER_ID'])
@@ -506,6 +512,50 @@ class CMailClientConfigComponent extends CBitrixComponent implements Main\Engine
 		}
 
 		$this->includeComponentTemplate('edit');
+	}
+
+	protected function crmMassAction(): void
+	{
+		if (!Feature::isMailboxGridBulkActionsAvailable())
+		{
+			$this->includeComponentTemplate('access_denied');
+
+			return;
+		}
+
+		global $APPLICATION;
+
+		if (!MailboxAccess::hasCurrentUserAccessToViewMailboxIntegrationCrm())
+		{
+			$this->includeComponentTemplate('access_denied');
+
+			return;
+		}
+
+		$APPLICATION->setTitle(Loc::getMessage('MAIL_CLIENT_CRM_MASS_TITLE'));
+
+		$rawIds = (string)($this->request->getQuery('ids') ?? '');
+		$mailboxIds = [];
+		if ($rawIds !== '')
+		{
+			foreach (explode(',', $rawIds) as $idStr)
+			{
+				$id = (int)trim($idStr);
+				if ($id > 0)
+				{
+					$mailboxIds[] = $id;
+				}
+			}
+		}
+
+		$settingsConfig = MailboxSettingsConfig::getClientConfig();
+
+		$this->arParams['CRM_MASS_MAILBOX_IDS'] = $mailboxIds;
+		$this->arParams['CRM_AVAILABLE'] = $settingsConfig['crmAvailable'];
+		$this->arParams['CAN_EDIT_CRM_INTEGRATION'] = $settingsConfig['canEditCrmIntegration'];
+		$this->arParams['CRM_SETTINGS_CONFIG'] = $settingsConfig;
+
+		$this->includeComponentTemplate('crm_mass_config');
 	}
 
 	public function checkAvailabilityEMailAction($serviceId,$email,$oauthUid)

@@ -23,7 +23,8 @@ class UI extends \CModule
 	protected $events = [
 		'main' => [
 			'OnUserDelete' => ['\Bitrix\UI\Integration\Main\User', 'onDelete'],
-			'OnFileDelete' => ['\Bitrix\UI\Avatar\Mask\Item', 'onFileDelete']
+			'OnFileDelete' => ['\Bitrix\UI\Avatar\Mask\Item', 'onFileDelete'],
+			'OnUserTypeBuildList' => ['\Bitrix\UI\UserField\Types\RichTextType', 'getUserTypeDescription'],
 		],
 		'rest' => [
 			'onRestAppDelete' => ['\Bitrix\UI\Integration\Rest\App', 'onRestAppDelete'],

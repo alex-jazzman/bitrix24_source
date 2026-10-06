@@ -1,0 +1,85 @@
+<?php
+$MESS['VIBECODECONNECTOR_OPT_TAB_SETTINGS_V2'] = 'Настройки';
+$MESS['VIBECODECONNECTOR_OPT_TAB_SETTINGS_V2_TITLE'] = 'Активное подключение, видимость, привязки к Битрикс24 Вайбкод';
+$MESS['VIBECODECONNECTOR_OPT_TAB_DIAGNOSTICS'] = 'Диагностика';
+$MESS['VIBECODECONNECTOR_OPT_TAB_DIAGNOSTICS_TITLE'] = 'Инструменты диагностики и страница каталога';
+
+$MESS['VIBECODECONNECTOR_OPT_IS_READY'] = 'Видимость на портале';
+$MESS['VIBECODECONNECTOR_OPT_IS_READY_HINT'] = 'Интеграция с Битрикс24 Вайбкод установлена и готова к работе';
+$MESS['VIBECODECONNECTOR_OPT_PERMISSION_SOURCE'] = 'Источник прав — Вайбкод-сервер';
+$MESS['VIBECODECONNECTOR_OPT_PERMISSION_SOURCE_HINT'] = 'Включено — права на создание ключей и приложений берутся у Вайбкод-сервера, и коннектор создаёт их в обход портального ограничения на REST-вебхуки. Выключено — создание подчиняется портальным правам. Предварительно настройте права на Вайбкод-сервере.';
+$MESS['VIBECODECONNECTOR_OPT_OPEN_APP_IN_IFRAME'] = 'Открывать приложения внутри Битрикс24';
+$MESS['VIBECODECONNECTOR_OPT_OPEN_APP_IN_IFRAME_HINT'] = 'Элементы каталога будут открываться в слайдере Битрикс24 через iframe.';
+$MESS['VIBECODECONNECTOR_OPT_ACTIVE_CONNECTION'] = 'Активное подключение к Битрикс24 Вайбкод';
+$MESS['VIBECODECONNECTOR_OPT_ACTIVE_CONNECTION_HINT'] = 'Куда портал отправляет данные: бот, каталог, статус. Адрес вводится вручную, список ниже только подставляет готовый. Ключ для входящих токенов берётся не отсюда, а из блока «Облачная схема».';
+$MESS['VIBECODECONNECTOR_OPT_ACTIVE_CONNECTION_KNOWN'] = 'Известные адреса';
+$MESS['VIBECODECONNECTOR_OPT_ACTIVE_CONNECTION_KNOWN_INSERT'] = 'Вставить';
+$MESS['VIBECODECONNECTOR_OPT_ACTIVE_CONNECTION_KNOWN_PAIRING'] = '#URL# — привязка #ISS#';
+$MESS['VIBECODECONNECTOR_OPT_ACTIVE_CONNECTION_KNOWN_CLOUD'] = '#URL# — облачная схема';
+$MESS['VIBECODECONNECTOR_OPT_ACTIVE_CONNECTION_KNOWN_DEFAULT'] = '#URL# — стандартный адрес';
+$MESS['VIBECODECONNECTOR_OPT_ACTIVE_CONNECTION_ERROR'] = 'Адрес не сохранён: #MESSAGE#';
+$MESS['VIBECODECONNECTOR_OPT_MAX_TTL'] = 'Максимальный TTL публичного ключа, сек';
+$MESS['VIBECODECONNECTOR_OPT_MAX_TTL_HINT'] = 'Верхний потолок локально. Если Битрикс24 Вайбкод рекомендует более короткий TTL — применяется его значение; более длинный — обрезается до этого потолка.';
+
+$MESS['VIBECODECONNECTOR_OPT_DIAGNOSTIC_TOOLS'] = 'Инструменты диагностики';
+$MESS['VIBECODECONNECTOR_OPT_DIAGNOSTIC_LINK'] = 'Проверить embedding-URL';
+$MESS['VIBECODECONNECTOR_OPT_DEVELOPER_KEYS_LINK'] = 'Ключи разработчика';
+$MESS['VIBECODECONNECTOR_OPT_INCOMING_LOG_LINK'] = 'Журнал входящих JWT';
+$MESS['VIBECODECONNECTOR_OPT_CLOUD_SHARED_KEY_LOG_LINK'] = 'Журнал получения ключа';
+$MESS['VIBECODECONNECTOR_OPT_CATALOG_PAGE'] = 'Каталог';
+$MESS['VIBECODECONNECTOR_OPT_CATALOG_PAGE_LINK'] = 'Открыть страницу каталога';
+
+$MESS['VIBECODECONNECTOR_OPT_CLOUD_SHARED_TITLE'] = 'Облачная схема';
+$MESS['VIBECODECONNECTOR_OPT_CLOUD_SHARED_ACTIVE_HINT'] = 'Активна: портал облачный, публичный ключ сохранён. Входящие токены Битрикс24 Вайбкод принимаются без регистрации, а после смены ключа на стороне сервиса портал обновит его сам. Привязки ниже нужны только для других серверов Вайбкода.';
+$MESS['VIBECODECONNECTOR_OPT_CLOUD_SHARED_NOT_CONFIGURED_HINT'] = 'Активна: портал облачный. Ключа пока нет — портал получит его сам при первом обращении сервиса. Кнопка «Обновить публичный ключ» сделает это сразу. Если ключ не приходит, проверьте адрес выше и его доступность с портала.';
+$MESS['VIBECODECONNECTOR_OPT_CLOUD_SHARED_AVAILABLE_SERVERS'] = 'Доступные сервера Битрикс24 Вайбкод:';
+$MESS['VIBECODECONNECTOR_OPT_CLOUD_SHARED_PUBLIC_KEY_EDIT'] = 'Изменить';
+$MESS['VIBECODECONNECTOR_OPT_CLOUD_SHARED_PUBLIC_KEY_REFRESH'] = 'Обновить публичный ключ';
+$MESS['VIBECODECONNECTOR_OPT_CLOUD_SHARED_PUBLIC_KEY_SAVE_AND_REFRESH'] = 'Сохранить и обновить публичный ключ';
+$MESS['VIBECODECONNECTOR_OPT_CLOUD_SHARED_REFRESH_SUCCESS'] = 'Публичный ключ Битрикс24 Вайбкод обновлён.';
+$MESS['VIBECODECONNECTOR_OPT_CLOUD_SHARED_REFRESH_ERROR'] = 'Ошибка обновления публичного ключа: #MESSAGE#';
+$MESS['VIBECODECONNECTOR_OPT_CLOUD_SHARED_SOURCE'] = 'Источник ключа';
+$MESS['VIBECODECONNECTOR_OPT_CLOUD_SHARED_URL'] = 'Адрес источника ключа';
+$MESS['VIBECODECONNECTOR_OPT_CLOUD_SHARED_NOT_APPLICABLE_HINT'] = 'Не применяется: нужен облачный портал с заполненным сетевым идентификатором (bitrix24net_id). Для связи с Вайбкодом зарегистрируйте привязку ниже.';
+$MESS['VIBECODECONNECTOR_OPT_CLOUD_SHARED_KEY_FETCHED_AT'] = 'Публичный ключ';
+$MESS['VIBECODECONNECTOR_OPT_CLOUD_SHARED_KEY_FETCHED'] = 'получен порталом #DATE#';
+$MESS['VIBECODECONNECTOR_OPT_CLOUD_SHARED_KEY_NOT_FETCHED'] = 'нет — появится при первом обращении сервиса';
+$MESS['VIBECODECONNECTOR_OPT_CLOUD_SHARED_KEY_DELIVERED'] = 'есть, но получен не порталом: доставлен обновлением или задан вручную';
+$MESS['VIBECODECONNECTOR_OPT_KEY_SOURCE_STATIC'] = 'Статичный файл';
+$MESS['VIBECODECONNECTOR_OPT_KEY_SOURCE_MICROSERVICE'] = 'Микросервис';
+$MESS['VIBECODECONNECTOR_OPT_KEY_SOURCE_HINT'] = 'Static — HTTP GET PEM-файла по пути /static/public-key.pem. Microservice — JSON-RPC action getPublicKey. Переключение применяется при следующем refresh.';
+$MESS['VIBECODECONNECTOR_OPT_PAIRING_BUTTON_SWITCH_STATIC'] = 'Переключить на static';
+$MESS['VIBECODECONNECTOR_OPT_PAIRING_BUTTON_SWITCH_MICROSERVICE'] = 'Переключить на microservice';
+$MESS['VIBECODECONNECTOR_OPT_PAIRING_SOURCE_SWITCHED'] = 'Источник ключа привязки обновлён.';
+
+$MESS['VIBECODECONNECTOR_OPT_PAIRINGS_TITLE'] = 'Привязки к Битрикс24 Вайбкод-серверам';
+$MESS['VIBECODECONNECTOR_OPT_PAIRINGS_TITLE_NEW'] = 'Добавление нового Битрикс24 Вайбкод-сервера';
+$MESS['VIBECODECONNECTOR_OPT_PAIRINGS_DESC'] = 'Каждая привязка — это отдельный публичный ключ Битрикс24 Вайбкод, проверяемый по issuer\'у входящего токена. Можно держать несколько привязок одновременно (например, prod + staging + частный инстанс) — портал выберет нужную автоматически по iss входящего токена.';
+$MESS['VIBECODECONNECTOR_OPT_PAIRINGS_EMPTY'] = 'Привязок нет. Облачный портал работает через общий ключ Битрикс24 Вайбкод; коробке нужна регистрация.';
+$MESS['VIBECODECONNECTOR_OPT_PAIRINGS_ADD_TITLE'] = 'Добавить Битрикс24 Вайбкод-сервер';
+$MESS['VIBECODECONNECTOR_OPT_PAIRINGS_ADD_URL'] = 'URL сервера';
+
+$MESS['VIBECODECONNECTOR_OPT_PAIRING_COL_ISS'] = 'Issuer (iss)';
+$MESS['VIBECODECONNECTOR_OPT_PAIRING_COL_PORTAL_ID'] = 'Portal ID';
+$MESS['VIBECODECONNECTOR_OPT_PAIRING_COL_ENDPOINT'] = 'Endpoint';
+$MESS['VIBECODECONNECTOR_OPT_PAIRING_COL_FETCHED_AT'] = 'Получен';
+$MESS['VIBECODECONNECTOR_OPT_PAIRING_COL_EXPIRES_AT'] = 'Действует до';
+$MESS['VIBECODECONNECTOR_OPT_PAIRING_COL_KEY_SOURCE'] = 'Источник ключа';
+$MESS['VIBECODECONNECTOR_OPT_PAIRING_EXPIRED'] = 'Просрочен';
+$MESS['VIBECODECONNECTOR_OPT_PAIRING_BUTTON_REFRESH'] = 'Обновить';
+$MESS['VIBECODECONNECTOR_OPT_PAIRING_BUTTON_UNREGISTER'] = 'Удалить';
+
+$MESS['VIBECODECONNECTOR_OPT_REGISTRATION_BUTTON'] = 'Зарегистрировать';
+$MESS['VIBECODECONNECTOR_OPT_REGISTRATION_SUCCESS'] = 'Привязка добавлена.';
+$MESS['VIBECODECONNECTOR_OPT_REGISTRATION_ERROR'] = 'Ошибка регистрации: #MESSAGE#';
+$MESS['VIBECODECONNECTOR_OPT_REGISTRATION_ERROR_LICENSE'] = 'Лицензия не подтвердилась — проверьте, что коробка не заблокирована на лицензионном сервисе.';
+$MESS['VIBECODECONNECTOR_OPT_REGISTRATION_ERROR_UPSTREAM'] = 'Лицензионный сервис временно недоступен. Попробуйте через минуту.';
+$MESS['VIBECODECONNECTOR_OPT_REGISTRATION_ERROR_PROTOCOL'] = 'Техническая ошибка протокола регистрации (#MESSAGE#).';
+$MESS['VIBECODECONNECTOR_OPT_REGISTRATION_ERROR_INCOMPATIBLE'] = 'Версия модуля несовместима с сервером Битрикс24 Вайбкод. Обновите модуль.';
+$MESS['VIBECODECONNECTOR_OPT_REGISTRATION_ERROR_INTERNAL'] = 'Временный сбой на стороне Битрикс24 Вайбкод. Попробуйте позже.';
+$MESS['VIBECODECONNECTOR_OPT_REGISTRATION_ERROR_INVALID_RESPONSE'] = 'Ответ Битрикс24 Вайбкод не содержит обязательные поля. Свяжитесь с поддержкой.';
+$MESS['VIBECODECONNECTOR_OPT_REGISTRATION_ERROR_URL'] = 'Адрес не подходит: должен быть указан полный URL со схемой http:// или https://.';
+$MESS['VIBECODECONNECTOR_OPT_UNREGISTRATION_SUCCESS'] = 'Привязка удалена.';
+$MESS['VIBECODECONNECTOR_OPT_UNREGISTRATION_ERROR'] = 'Ошибка удаления привязки: #MESSAGE#. Локальная строка не очищена — повторите попытку.';
+$MESS['VIBECODECONNECTOR_OPT_REFRESH_SUCCESS'] = 'Публичный ключ обновлён.';
+$MESS['VIBECODECONNECTOR_OPT_REFRESH_ERROR'] = 'Ошибка обновления ключа: #MESSAGE#';

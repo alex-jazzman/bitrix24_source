@@ -6,7 +6,8 @@ jn.define('tasks/layout/checklist/list/src/buttons/button-add-checklist', (requi
 	const { Color } = require('tokens');
 
 	/**
-	 * @function buttonAddCheckList
+	 * @param {ButtonAddCheckListProps} props
+	 * @returns {Object}
 	 */
 	const buttonAddCheckList = (props) => {
 		const { isDisabled, onClick } = props;

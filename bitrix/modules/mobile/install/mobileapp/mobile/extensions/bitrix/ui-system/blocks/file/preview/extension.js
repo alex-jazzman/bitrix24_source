@@ -13,11 +13,13 @@ jn.define('ui-system/blocks/file/preview', (require, exports, module) => {
 	 * @typedef {Object} FilePreviewProps
 	 * @property {string} previewUrl
 	 * @property {number} size
+	 * @property {function} [onClick]
 	 */
 	function FilePreview(props)
 	{
 		const size = props.size ?? 40;
 		const isVideo = props.type === FileType.VIDEO;
+		const onClick = props.onClick ?? null;
 
 		return View(
 			{
@@ -43,6 +45,8 @@ jn.define('ui-system/blocks/file/preview', (require, exports, module) => {
 				},
 				resizeMode: 'cover',
 				uri: withCurrentDomain(props.previewUrl),
+				clickable: Boolean(onClick),
+				onClick,
 			}),
 			isVideo && View(
 				{
@@ -51,6 +55,7 @@ jn.define('ui-system/blocks/file/preview', (require, exports, module) => {
 						right: 3,
 						position: 'absolute',
 					},
+					onClick,
 				},
 				IconView({
 					size: 8,

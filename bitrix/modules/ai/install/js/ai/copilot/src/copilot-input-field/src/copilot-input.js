@@ -10,6 +10,7 @@ import 'ui.icon-set.actions';
 import { CopilotInputFieldTextarea } from './copilot-input-field-textarea';
 
 import copilotLottieIcon from '../lottie/copilot-icon-1.json';
+import bitrixGptLottieIcon from '../lottie/bitrixgpt-animation.json';
 
 import { CopilotVoiceInputBtn } from './copilot-voice-input-btn';
 import { CopilotInputError } from './copilot-input-error';
@@ -63,6 +64,7 @@ export class CopilotInput extends EventEmitter
 	#submitBtn: CopilotSubmitBtn | null = null;
 	#voiceButton: CopilotVoiceInputBtn | null = null;
 	#readonly: boolean = false;
+	#isBitrixGptV2Available: boolean = false;
 	#useForImages: boolean = false;
 	#isGoOutFromBottomEnabled: boolean = true;
 	#usedVoiceRecord: boolean;
@@ -72,6 +74,7 @@ export class CopilotInput extends EventEmitter
 	{
 		super(options);
 		this.#readonly = options.readonly === true;
+		this.#isBitrixGptV2Available = Extension.getSettings('ai.copilot').get('isBitrixGptV2Available') === true;
 		this.#isLoading = false;
 		this.#errorContainer = null;
 		this.#inputError = null;
@@ -152,7 +155,11 @@ export class CopilotInput extends EventEmitter
 
 	startGenerating(): void
 	{
-		this.#copilotLottieAnimation.play();
+		if (this.#copilotLottieAnimation && this.#shouldPlayLoadingAnimation())
+		{
+			this.#copilotLottieAnimation.play();
+		}
+
 		this.clearErrors();
 		this.enable();
 		this.#textarea.disabled = true;
@@ -168,8 +175,18 @@ export class CopilotInput extends EventEmitter
 		this.#isLoading = false;
 		this.#setTextareaValue(this.#textareaOldValue, false);
 		Dom.removeClass(this.getContainer(), '--loading');
+		if (this.#isBitrixGptV2Available)
+		{
+			this.#copilotLottieAnimation?.stop();
+
+			return;
+		}
+
 		setTimeout(() => {
-			this.#copilotLottieAnimation.stop();
+			if (this.#copilotLottieAnimation)
+			{
+				this.#copilotLottieAnimation.stop();
+			}
 		}, 550);
 	}
 
@@ -487,6 +504,20 @@ export class CopilotInput extends EventEmitter
 
 	#renderInputIcon(): HTMLElement
 	{
+		if (this.#isBitrixGptV2Available)
+		{
+			return Tag.render`
+				<div style="width: 28px; height: 28px; position: relative;" data-testid="copilot-bar-avatar">
+					<div class="ai__copilot_static-icon-wrapper">
+						<div class="ai__copilot_static-icon"></div>
+					</div>
+					<div class="ai__copilot_loading-icon-wrapper" data-testid="copilot-bar-loading-avatar">
+						${this.#getLottieIconContainer()}
+					</div>
+				</div>
+			`;
+		}
+
 		return Tag.render`
 			<div class="" style="width: 24px; height: 24px; position: relative;">
 				<div class="ai__copilot_static-icon-wrapper">
@@ -503,7 +534,7 @@ export class CopilotInput extends EventEmitter
 	{
 		if (!this.#lottieIconContainer)
 		{
-			const size = 21;
+			const size = this.#isBitrixGptV2Available ? 20 : 21;
 
 			this.#lottieIconContainer = Tag.render`
 				<div class="" style="width: ${size}px; height: ${size}px;"></div>
@@ -512,12 +543,20 @@ export class CopilotInput extends EventEmitter
 			this.#copilotLottieAnimation = Lottie.loadAnimation({
 				container: this.#lottieIconContainer,
 				renderer: 'svg',
-				animationData: copilotLottieIcon,
+				animationData: this.#isBitrixGptV2Available ? bitrixGptLottieIcon : copilotLottieIcon,
 				autoplay: false,
+				...(this.#isBitrixGptV2Available ? { loop: true } : {}),
 			});
 		}
 
 		return this.#lottieIconContainer;
+	}
+
+	#shouldPlayLoadingAnimation(): boolean
+	{
+		return this.#isBitrixGptV2Available === false
+			|| window.matchMedia?.('(prefers-reduced-motion: reduce)').matches !== true
+		;
 	}
 
 	#renderErrorIcon(): HTMLElement

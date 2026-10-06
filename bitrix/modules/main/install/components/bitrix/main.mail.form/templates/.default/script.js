@@ -15,8 +15,19 @@
 		this.replyTo = replyTo;
 		this.replyCC = replyCC;
 		this.options = options;
+		this.__attachmentReminderEnabled = (this.options && this.options.attachmentReminderEnabled !== false);
 		this.fieldsData = {};
 		this.lastSearchText = '';
+		this.__composeApplying = false;
+		this.__composeDestroyed = false;
+		this.__composeClosePromise = null;
+		this.__composeDomHandlers = [];
+		this.__composeCustomHandlers = [];
+		this.__composeReady = false;
+		this.__allowSliderClose = false;
+		this.__draftLifecycleVersion = 0;
+		this.__draftBlocked = false;
+		this.__composeAttachmentSources = new Map();
 
 		this.helpDeskCalendarCode = 17198666;
 		this.helpDeskCRMCalendarCode = 17502612;
@@ -147,7 +158,477 @@
 		return this.fieldsData;
 	};
 
-	BXMainMailForm.prototype.setFieldData = function(key, dialog, items, nodeForRender, tagSelector)
+	BXMainMailForm.prototype.getComposeSnapshot = function()
+	{
+		const senderField = this.getFieldByName(['data[from]', 'DATA[from]']);
+		const subjectField = this.getFieldByName(['data[subject]', 'DATA[subject]']);
+		const editorField = this.getFieldByType('editor');
+		let body = '';
+		this.__composeSnapshotReading = true;
+		try
+		{
+			body = editorField && this.editor ? String(this.editor.GetContent() || '') : '';
+		}
+		finally
+		{
+			this.__composeSnapshotReading = false;
+		}
+
+		return {
+			clientId: this.options.composeClientId || '',
+			sender: this.normalizeComposeSender(senderField ? senderField.getValue() : ''),
+			to: this.getComposeRecipients(['data[to]', 'DATA[to]']),
+			cc: this.getComposeRecipients(['data[cc]', 'DATA[cc]']),
+			bcc: this.getComposeRecipients(['data[bcc]', 'DATA[bcc]']),
+			subject: subjectField ? String(subjectField.getValue() || '') : '',
+			body,
+			bodyFormat: 'html',
+			mode: this.options.composeMode || 'new',
+			parentMessageId: this.options.composeParentMessageId || null,
+			attachments: this.getCompletedComposeAttachments(),
+			largeAttachments: BX.Mail?.Client?.LargeAttachment?.getDraftState?.(this.id)
+				|| this.__draftLargeAttachments
+				|| [],
+		};
+	};
+
+	BXMainMailForm.prototype.applyComposeSnapshot = function(snapshot, attachments)
+	{
+		const apply = () => {
+			this.__composeApplying = true;
+			try
+			{
+				this.options.composeClientId = snapshot.clientId || this.options.composeClientId;
+				this.options.composeMode = snapshot.mode || this.options.composeMode;
+				this.options.composeParentMessageId = snapshot.parentMessageId ?? null;
+				this.__draftLargeAttachments = snapshot.largeAttachments || [];
+				this.applyComposeSender(snapshot.sender);
+				this.applyComposeRecipients(['data[to]', 'DATA[to]'], snapshot.to);
+				this.applyComposeRecipients(['data[cc]', 'DATA[cc]'], snapshot.cc);
+				this.applyComposeRecipients(['data[bcc]', 'DATA[bcc]'], snapshot.bcc);
+				const subjectField = this.getFieldByName(['data[subject]', 'DATA[subject]']);
+				subjectField?.setValue(snapshot.subject || '');
+				const editorField = this.getFieldByType('editor');
+				editorField?.setValue(snapshot.body || '', { quote: false, signature: false });
+				this.editor?.iframeView?.copilot?.update?.();
+				const filesField = this.getFieldByType('files');
+				const uiAttachments = attachments || snapshot.attachments || [];
+				this.syncDraftAttachmentSources(snapshot.attachments || [], attachments || []);
+				filesField?.setValue(uiAttachments.map((item) => ({
+					id: `n${String(item.id).replace(/^n/, '')}`,
+					serverFileId: `n${String(item.id).replace(/^n/, '')}`,
+				})));
+			}
+			finally
+			{
+				this.__composeApplying = false;
+			}
+		};
+
+		if (this.editorInited)
+		{
+			apply();
+
+			return Promise.resolve();
+		}
+
+		return new Promise((resolve, reject) => {
+			const cleanup = () => {
+				BX.removeCustomEvent(this, 'MailForm::editor::init', editorInitHandler);
+				BX.removeCustomEvent(this, 'MailForm:destroy', destroyHandler);
+			};
+			const editorInitHandler = () => {
+				cleanup();
+				try
+				{
+					if (!this.__composeDestroyed)
+					{
+						apply();
+					}
+					resolve();
+				}
+				catch (error)
+				{
+					reject(error);
+				}
+			};
+			const destroyHandler = () => {
+				cleanup();
+				resolve();
+			};
+			BX.addCustomEvent(this, 'MailForm::editor::init', editorInitHandler);
+			BX.addCustomEvent(this, 'MailForm:destroy', destroyHandler);
+		});
+	};
+
+	BXMainMailForm.prototype.requestClose = function(reason, closeCallback)
+	{
+		if (this.__composeClosePromise)
+		{
+			return this.__composeClosePromise;
+		}
+		this.__draftLifecycleVersion++;
+
+		this.__composeClosePromise = (async () => {
+			let prevented = false;
+			const promises = [];
+			const guard = {
+				reason,
+				waitUntil: (promise) => promises.push(Promise.resolve(promise)),
+				preventDefault: () => { prevented = true; },
+			};
+			BX.onCustomEvent(this, 'MailForm:beforeClose', [guard]);
+			try
+			{
+				await Promise.all(promises);
+			}
+			catch
+			{
+				prevented = true;
+			}
+
+			if (!prevented && BX.type.isFunction(closeCallback))
+			{
+				this.__composeCloseCallbackRunning = true;
+				try
+				{
+					closeCallback();
+				}
+				finally
+				{
+					this.__composeCloseCallbackRunning = false;
+				}
+			}
+
+			return !prevented;
+		})().finally(() => {
+			this.__composeClosePromise = null;
+		});
+
+		return this.__composeClosePromise;
+	};
+
+	BXMainMailForm.prototype.requestSubmit = function(event, button)
+	{
+		if (this.__composeSubmitReady)
+		{
+			this.__composeSubmitReady = false;
+
+			return false;
+		}
+
+		const promises = [];
+		BX.onCustomEvent(this, 'MailForm:beforeSubmit', [{
+			waitUntil: (promise) => promises.push(Promise.resolve(promise)),
+		}]);
+		if (promises.length === 0)
+		{
+			return false;
+		}
+
+		BX.PreventDefault(event);
+		button.disabled = true;
+		BX.addClass(button, 'ui-btn-wait');
+		Promise.all(promises).then(() => {
+			button.disabled = false;
+			BX.removeClass(button, 'ui-btn-wait');
+			this.__composeSubmitReady = true;
+			BX.submit(this.htmlForm);
+		}).catch(() => {
+			button.disabled = false;
+			BX.removeClass(button, 'ui-btn-wait');
+			this.showError(BX.Loc.getMessage('MAIL_DRAFT_SAVE_ERROR') || '');
+		});
+
+		return true;
+	};
+
+	// positionFooter moves the footer into document.body, so it is not always inside formWrapper
+	BXMainMailForm.prototype.getFooterNode = function()
+	{
+		return this.footerNode || BX.findChildByClassName(this.formWrapper, 'main-mail-form-footer', false) || null;
+	};
+
+	BXMainMailForm.prototype.setDraftLoading = function(loading)
+	{
+		this.__draftBlocked = loading;
+		BX[loading ? 'addClass' : 'removeClass'](this.formWrapper, 'main-mail-form-draft-loading');
+
+		const footer = this.getFooterNode();
+		[this.formWrapper, footer].forEach(function(node)
+		{
+			if (node)
+			{
+				node.toggleAttribute('inert', loading);
+				node.setAttribute('aria-busy', loading ? 'true' : 'false');
+			}
+		});
+		if (footer)
+		{
+			BX[loading ? 'addClass' : 'removeClass'](footer, 'main-mail-form-draft-loading-footer');
+		}
+
+		const button = footer && BX.findChildByClassName(footer, 'main-mail-form-submit-button', true);
+		if (button)
+		{
+			if (loading)
+			{
+				button.dataset.draftWasDisabled = button.disabled ? '1' : '0';
+				button.disabled = true;
+			}
+			else
+			{
+				button.disabled = button.dataset.draftWasDisabled === '1';
+				delete button.dataset.draftWasDisabled;
+			}
+		}
+	};
+
+	BXMainMailForm.prototype.getDraftLifecycleToken = function()
+	{
+		return this.__draftLifecycleVersion;
+	};
+
+	BXMainMailForm.prototype.isDraftLifecycleActive = function(token)
+	{
+		return !this.__composeDestroyed && token === this.__draftLifecycleVersion;
+	};
+
+	BXMainMailForm.prototype.destroy = function()
+	{
+		if (this.__composeDestroyed)
+		{
+			return;
+		}
+
+		this.__composeDestroyed = true;
+		this.__draftLifecycleVersion++;
+		this.__composeDomHandlers.forEach(({ target, eventName, handler }) => {
+			target.removeEventListener(eventName, handler);
+		});
+		this.__composeDomHandlers = [];
+		this.__composeCustomHandlers.forEach(({ target, eventName, handler }) => {
+			BX.removeCustomEvent(target, eventName, handler);
+		});
+		this.__composeCustomHandlers = [];
+		const topWindow = window.top || window.parent || window;
+		if (this.__composeSliderCloseHandler)
+		{
+			topWindow.BX.removeCustomEvent('SidePanel.Slider:onClose', this.__composeSliderCloseHandler);
+			topWindow.BX.removeCustomEvent(
+				'SidePanel.Slider:onCloseComplete',
+				this.__composeSliderCloseCompleteHandler,
+			);
+		}
+		if (this.__composeSliderBlurHandler)
+		{
+			topWindow.BX.removeCustomEvent('SidePanel.Slider:onClose', this.__composeSliderBlurHandler);
+			topWindow.BX.removeCustomEvent('SidePanel.Slider:onOpenComplete', this.__composeSliderFocusHandler);
+		}
+		BX.onCustomEvent(this, 'MailForm:destroy', [this]);
+		delete BXMainMailForm.__forms[this.id];
+	};
+
+	BXMainMailForm.prototype.getFieldByName = function(names)
+	{
+		return this.fields.find((field) => field?.params && names.includes(field.params.name)) || null;
+	};
+
+	BXMainMailForm.prototype.getFieldByType = function(type)
+	{
+		return this.fields.find((field) => field?.params?.type === type) || null;
+	};
+
+	BXMainMailForm.prototype.normalizeComposeSender = function(value)
+	{
+		const match = String(value || '').trim().match(/^(.*?)\s*<([^<>]+)>$/);
+		if (match)
+		{
+			return { name: match[1].trim(), email: match[2].trim() };
+		}
+		if (String(value || '').includes('@'))
+		{
+			return { name: '', email: String(value).trim() };
+		}
+
+		return null;
+	};
+
+	BXMainMailForm.prototype.getComposeRecipients = function(names)
+	{
+		const field = this.getFieldByName(names);
+		const fieldData = this.fieldsData[field?.params?.name];
+		const selectedItems = fieldData?.dialog?.getSelectedItems?.() || [];
+		return selectedItems.map((item) => {
+			const customData = item.getCustomData?.();
+			const data = customData instanceof Map ? Object.fromEntries(customData) : (customData || {});
+			return {
+				name: String(data.name || data.title || ''),
+				email: String(data.email || data.value || ''),
+				...(data.entityType ? { entityType: data.entityType } : {}),
+				...(data.entityId ? { entityId: Number(data.entityId) } : {}),
+			};
+		}).filter((item) => item.email !== '');
+	};
+
+	BXMainMailForm.prototype.getCompletedComposeAttachments = function()
+	{
+		const attachments = new Map();
+		const addAttachment = (id) => {
+			const stringId = String(id);
+			attachments.set(
+				stringId,
+				this.__composeAttachmentSources.get(stringId) || {
+					source: stringId.startsWith('n') ? 'upload' : 'disk',
+					id: stringId,
+				},
+			);
+		};
+		Object.values(this.postForm?.controllers || {}).forEach((controller) => {
+			if (controller.storage !== 'disk')
+			{
+				return;
+			}
+			Object.keys(controller.values || {}).forEach(addAttachment);
+			(controller.postForm?.currentTemplateFiles || this.postForm.currentTemplateFiles || [])
+				.forEach(addAttachment);
+		});
+
+		return [...attachments.values()];
+	};
+
+	BXMainMailForm.prototype.syncDraftAttachmentSources = function(
+		canonicalSources,
+		attachments,
+		submittedSources,
+	)
+	{
+		const previousSources = this.__composeAttachmentSources;
+		const uiIds = submittedSources
+			? submittedSources.map((source, index) => {
+				if (source.source !== 'draft')
+				{
+					return String(source.id);
+				}
+				for (const [uiId, canonicalSource] of previousSources)
+				{
+					if (canonicalSource.source === source.source && canonicalSource.id === source.id)
+					{
+						return uiId;
+					}
+				}
+
+				return String(attachments[index]?.id || '');
+			})
+			: attachments.map((attachment) => `n${String(attachment.id).replace(/^n/, '')}`);
+		this.__composeAttachmentSources = new Map();
+		canonicalSources.forEach((source, index) => {
+			if (uiIds[index])
+			{
+				this.__composeAttachmentSources.set(uiIds[index], { ...source });
+			}
+		});
+	};
+
+	BXMainMailForm.prototype.applyComposeSender = function(sender)
+	{
+		if (!sender)
+		{
+			return;
+		}
+		const senderField = this.getFieldByName(['data[from]', 'DATA[from]']);
+		senderField?.setValue(sender.name ? `${sender.name} <${sender.email}>` : sender.email);
+	};
+
+	BXMainMailForm.prototype.applyComposeRecipients = function(names, recipients)
+	{
+		const field = this.getFieldByName(names);
+		const dialog = field ? this.fieldsData[field.params.name]?.dialog : null;
+		if (!dialog)
+		{
+			return;
+		}
+		dialog.getSelectedItems?.().forEach((item) => item.deselect());
+		(recipients || []).forEach((recipient) => {
+			const item = dialog.addItem({
+				id: this.buildComposeRecipientItemId(recipient),
+				entityId: 'mail_recipient',
+				title: recipient.name || recipient.email,
+				subtitle: recipient.email,
+				customData: recipient,
+				tabs: ['recents'],
+			});
+			item?.select();
+		});
+	};
+
+	BXMainMailForm.prototype.buildComposeRecipientItemId = function(recipient)
+	{
+		const entityType = String(recipient.entityType || '').toLowerCase();
+		const emailOnlyEntityTypes = ['', 'address_book', 'email', 'mail_recipient', 'user'];
+		const providerType = !emailOnlyEntityTypes.includes(entityType) && Number(recipient.entityId) > 0
+			? entityType
+			: 'email';
+		const entityId = providerType === 'email' ? 0 : Number(recipient.entityId);
+
+		return `${providerType},${entityId},${String(recipient.email).trim().toLowerCase()}`;
+	};
+
+	BXMainMailForm.prototype.emitComposeChanged = function()
+	{
+		if (
+			this.__composeReady
+			&& !this.__composeApplying
+			&& !this.__composeSnapshotReading
+			&& !this.__composeDestroyed
+		)
+		{
+			BX.onCustomEvent(this, 'MailForm:compose:changed', [this]);
+		}
+	};
+
+	BXMainMailForm.prototype.initComposeContract = function()
+	{
+		const bind = (target, eventName, handler) => {
+			target.addEventListener(eventName, handler);
+			this.__composeDomHandlers.push({ target, eventName, handler });
+		};
+		const bindCustom = (target, eventName, handler) => {
+			BX.addCustomEvent(target, eventName, handler);
+			this.__composeCustomHandlers.push({ target, eventName, handler });
+		};
+		bind(this.formWrapper, 'input', () => this.emitComposeChanged());
+		bind(this.formWrapper, 'change', () => this.emitComposeChanged());
+		const emitAttachmentChanged = () => {
+			window.setTimeout(() => this.emitComposeChanged());
+		};
+		bindCustom(this.postForm.eventNode, 'OnFileUploadSuccess', emitAttachmentChanged);
+		bindCustom(this.postForm.eventNode, 'OnFileUploadRemove', emitAttachmentChanged);
+		bindCustom(this.postForm.eventNode, 'onUploadsHasBeenChanged', emitAttachmentChanged);
+		bindCustom(this, 'MailForm::from::change', () => this.emitComposeChanged());
+		this.__composeReady = true;
+	};
+
+	BXMainMailForm.prototype.bindComposeEditorChanges = function()
+	{
+		const customHandler = () => this.emitComposeChanged();
+		BX.addCustomEvent(this.editor, 'OnContentChanged', customHandler);
+		this.__composeCustomHandlers.push({
+			target: this.editor,
+			eventName: 'OnContentChanged',
+			handler: customHandler,
+		});
+
+		const editorDocument = this.editor?.GetIframeDoc();
+		if (editorDocument)
+		{
+			const handler = () => this.emitComposeChanged();
+			editorDocument.addEventListener('input', handler);
+			this.__composeDomHandlers.push({ target: editorDocument, eventName: 'input', handler });
+		}
+	};
+
+	BXMainMailForm.prototype.setFieldData = function(key, dialog, items, nodeForRender, tagSelector, silent)
 	{
 		if (BX.type.isUndefined(nodeForRender) && !BX.type.isUndefined(this.fieldsData[key]))
 		{
@@ -185,17 +666,31 @@
 				}));
 			}
 		}
+
+		if (!silent)
+		{
+			this.emitComposeChanged();
+		}
 	};
 
 	BXMainMailForm.prototype.onSubmit = function (event)
 	{
 		var form = this;
 
+		if (this.__draftBlocked)
+			return BX.PreventDefault(event);
+
 		var footer = BX.findChildByClassName(this.formWrapper, 'main-mail-form-footer', false) || this.footerNode;
 		var button = BX.findChildByClassName(footer, 'main-mail-form-submit-button', true);
 
 		if (button.disabled)
 			return BX.PreventDefault();
+
+		event = event || window.event;
+		if (this.requestSubmit(event, button))
+		{
+			return BX.PreventDefault(event);
+		}
 
 		this.fillFieldsFromDialogs();
 
@@ -213,7 +708,6 @@
 
 		BX(this.formId+'_dummy_footer').appendChild(footerClone);
 
-		event = event || window.event;
 		BX.onCustomEvent(this, 'MailForm:submit', [this, event]);
 
 		if (!event.defaultPrevented && event.returnValue !== false)
@@ -232,6 +726,10 @@
 					{
 						button.disabled = false;
 						BX.removeClass(button, 'ui-btn-wait');
+						if (!data.ERROR && !data.ERROR_HTML)
+						{
+							form.__draftCoordinator?.destroy();
+						}
 						BX.onCustomEvent(form, 'MailForm:submit:ajaxSuccess', [form, data]);
 					},
 					onfailure: function(data)
@@ -306,7 +804,7 @@
 							itemsData.push(selectedItem.getCustomData());
 						}
 					}
-					this.setFieldData(key, dialog, itemsData, field.nodeForRender, field.tagSelector);
+					this.setFieldData(key, dialog, itemsData, field.nodeForRender, field.tagSelector, true);
 				}
 			}
 		}
@@ -817,6 +1315,9 @@
 			});
 		}
 
+		dialogEvents['Item:onSelect'] = () => this.emitComposeChanged();
+		dialogEvents['Item:onDeselect'] = () => this.emitComposeChanged();
+
 		const tagSelector = new BX.UI.EntitySelector.TagSelector({
 			textBoxWidth: 220,
 			tagMaxWidth: 400,
@@ -973,25 +1474,24 @@
 		// insert signature on change 'from' field
 		BX.addCustomEvent(this, 'MailForm::from::change', BX.proxy(function(field, signature)
 		{
+			var currentSignatures = form.getSenderSignatures(field);
+
 			if(!BX.type.isString(signature))
 			{
-				signature = '';
-				var currentSignatures = form.getSenderSignatures(field);
-				var firstSignature = currentSignatures[0];
-				if (BX.type.isNotEmptyObject(firstSignature) && BX.type.isNotEmptyString(firstSignature.full))
-				{
-					signature = firstSignature.full;
-				}
+				signature = form.resolveDefaultSignature(field, currentSignatures);
 			}
-			this.rebuildSignatureMenu(currentSignatures, field.params);
+			this.rebuildSignatureMenu(currentSignatures, field.params, field);
 			this.insertSignature(signature);
 			this.appendCalendarLinkButton(field.params);
 		}, this));
 
 		this.initFields();
 		this.initFooter();
+		this.initComposeContract();
 
 		BX.bind(this.htmlForm, 'submit', this.onSubmit.bind(this));
+
+		BX.addCustomEvent(this, 'MailForm:submit', this.onAttachmentReminderSubmit);
 
 		this.__inited = true;
 
@@ -1003,6 +1503,8 @@
 				this.userSelection = this.editor.GetIframeDoc().body;
 			};
 			this.userSelection = this.editor.GetIframeDoc().body;
+			this.bindComposeEditorChanges();
+			BX.onCustomEvent(this, 'MailForm:compose:ready', [this]);
 		});
 
 		document.addEventListener('selectionchange', () => {
@@ -1019,8 +1521,47 @@
 	{
 		const topWindow = window.top || window.parent || window;
 		const editor = this.editor;
+		this.__composeSliderCloseHandler = (event) => {
+			const slider = event.getSlider();
+			if (
+				!slider
+				|| slider.getFrameWindow() !== window
+			)
+			{
+				return;
+			}
 
-		topWindow.BX.addCustomEvent('SidePanel.Slider:onClose', (event) => {
+			if (this.__allowSliderClose)
+			{
+				this.__allowSliderClose = false;
+				return;
+			}
+
+			if (this.__composeCloseCallbackRunning)
+			{
+				return;
+			}
+
+			event.preventDefault?.();
+			this.requestClose('slider', () => {
+				this.__allowSliderClose = true;
+				slider.close();
+			});
+		};
+		this.__composeSliderCloseCompleteHandler = (event) => {
+			const slider = event.getSlider();
+			if (slider?.getFrameWindow() === window)
+			{
+				this.destroy();
+			}
+		};
+		topWindow.BX.addCustomEvent('SidePanel.Slider:onClose', this.__composeSliderCloseHandler);
+		topWindow.BX.addCustomEvent(
+			'SidePanel.Slider:onCloseComplete',
+			this.__composeSliderCloseCompleteHandler,
+		);
+
+		this.__composeSliderBlurHandler = (event) => {
 			const slider = event.getSlider();
 			if (!slider || slider.getFrameWindow() !== window)
 			{
@@ -1031,9 +1572,9 @@
 			{
 				document.activeElement.blur();
 			}
-		});
+		};
 
-		topWindow.BX.addCustomEvent('SidePanel.Slider:onOpenComplete', (event) => {
+		this.__composeSliderFocusHandler = (event) => {
 			const slider = event.getSlider();
 			if (!slider || slider.getFrameWindow() !== window || !editor)
 			{
@@ -1054,7 +1595,9 @@
 					editor.selection.SetBefore(body.firstChild);
 				}
 			}, 0);
-		});
+		};
+		topWindow.BX.addCustomEvent('SidePanel.Slider:onClose', this.__composeSliderBlurHandler);
+		topWindow.BX.addCustomEvent('SidePanel.Slider:onOpenComplete', this.__composeSliderFocusHandler);
 	};
 
 	BXMainMailForm.prototype.initScrollable = function()
@@ -1129,7 +1672,20 @@
 			{
 				BX.bind(button, 'click', function ()
 				{
-					BX.onCustomEvent(form, 'MailForm:footer:buttonClick', [form, button]);
+					if (form.__draftBlocked && BX.hasClass(button, 'main-mail-form-submit-button'))
+					{
+						return;
+					}
+
+					const notify = () => BX.onCustomEvent(form, 'MailForm:footer:buttonClick', [form, button]);
+					if (BX.hasClass(button, 'main-mail-form-cancel-button'))
+					{
+						form.requestClose('cancel', notify);
+
+						return;
+					}
+
+					notify();
 					if (BX.hasClass(button, 'main-mail-form-submit-button'))
 						BX.submit(form.htmlForm);
 				});
@@ -1254,7 +1810,8 @@
 		if(this.editorInited)
 		{
 			this.editor.synchro.Sync();
-			var signatureNode = this.editor.GetIframeDoc().getElementById(this.signatureNodeId);
+			var signatureHtml = BX.type.isNotEmptyString(signature) ? '--<br />' + signature : '';
+			var signatureNode = this.findRestoredSignatureNode(signatureHtml, signature);
 			if(!BX.type.isNotEmptyString(signature))
 			{
 				if(signatureNode)
@@ -1270,7 +1827,6 @@
 
 				return;
 			}
-			var signatureHtml = '--<br />' + signature;
 			if(signatureNode)
 			{
 				signatureNode.innerHTML = signatureHtml;
@@ -1279,7 +1835,10 @@
 			{
 				signatureNode = BX.create('div', {
 					attrs: {
-						id: this.signatureNodeId
+						id: this.signatureNodeId,
+					},
+					props: {
+						className: 'main-mail-form-signature',
 					},
 					html: signatureHtml
 				});
@@ -1305,6 +1864,318 @@
 				this.insertSignature(signature);
 			}, this));
 		}
+	};
+
+	BXMainMailForm.prototype.findRestoredSignatureNode = function(signatureHtml, signature)
+	{
+		const editorDoc = this.editor.GetIframeDoc();
+		let signatureNode = editorDoc.getElementById(this.signatureNodeId)
+			|| editorDoc.querySelector('.main-mail-form-signature')
+		;
+		if (signatureNode)
+		{
+			signatureNode.id = this.signatureNodeId;
+			signatureNode.classList.add('main-mail-form-signature');
+
+			return signatureNode;
+		}
+		if (!BX.type.isNotEmptyString(signatureHtml))
+		{
+			return null;
+		}
+
+		const normalizeHtml = (html) => {
+			const container = editorDoc.createElement('div');
+			container.innerHTML = html;
+
+			return container.innerHTML
+				.replace(/\s+/g, ' ')
+				.replace(/>\s+/g, '>')
+				.replace(/\s+</g, '<')
+				.trim()
+			;
+		};
+		const expectedValues = new Set([normalizeHtml(signatureHtml), normalizeHtml(signature)]);
+		const candidates = Array.from(editorDoc.body.children).filter((node) => (
+			node.tagName === 'DIV'
+			&& expectedValues.has(normalizeHtml(node.innerHTML))
+		));
+		signatureNode = candidates.pop() || null;
+		for (const duplicate of candidates)
+		{
+			if (duplicate.previousSibling?.nodeName === 'BR')
+			{
+				duplicate.previousSibling.remove();
+			}
+			duplicate.remove();
+		}
+		if (signatureNode)
+		{
+			signatureNode.id = this.signatureNodeId;
+			signatureNode.classList.add('main-mail-form-signature');
+		}
+
+		return signatureNode;
+	};
+
+	BXMainMailForm.prototype.getNewMessageBody = function ()
+	{
+		if (!this.editor || !BX.type.isFunction(this.editor.GetIframeDoc))
+		{
+			return null;
+		}
+
+		var doc = this.editor.GetIframeDoc();
+		var body = doc ? doc.body : null;
+		if (!body)
+		{
+			return null;
+		}
+
+		var clone = body.cloneNode(true);
+		var excludedIds = [this.signatureNodeId, this.quoteNodeId];
+
+		Array.prototype.forEach.call(clone.querySelectorAll('[id]'), function (node)
+		{
+			if (excludedIds.indexOf(node.id) >= 0)
+			{
+				BX.remove(node);
+			}
+		});
+
+		return clone;
+	};
+
+	BXMainMailForm.prototype.getNewMessageText = function ()
+	{
+		var body = this.getNewMessageBody();
+
+		return body ? (body.textContent || '') : '';
+	};
+
+	BXMainMailForm.prototype.hasAttachment = function ()
+	{
+		var postForm = this.postForm;
+		if (postForm && BX.type.isArray(postForm.currentTemplateFiles) && postForm.currentTemplateFiles.length > 0)
+		{
+			return true;
+		}
+
+		if (this.hasAttachedFileInput())
+		{
+			return true;
+		}
+
+		// An inline image embedded in the new message body counts as an attachment. In the live editor its
+		// <img> src carries the disk-file marker (...&__bxacid=ID); the old textContent test never saw an
+		// attribute, so an inline-only image was missed.
+		var body = this.getNewMessageBody();
+
+		return !!(body && body.querySelector('img[src*="__bxacid="]'));
+	};
+
+	BXMainMailForm.prototype.hasAttachedFileInput = function ()
+	{
+		var filesField = null;
+		for (var i = 0; i < this.fields.length; i++)
+		{
+			if (this.fields[i] && this.fields[i].params && this.fields[i].params.type === 'files')
+			{
+				filesField = this.fields[i];
+				break;
+			}
+		}
+
+		if (!filesField || !filesField.params.name || !this.htmlForm)
+		{
+			return false;
+		}
+
+		var inputName = filesField.params.name + '[]';
+		var inputs = this.htmlForm.getElementsByTagName('input');
+		for (var j = 0; j < inputs.length; j++)
+		{
+			if (inputs[j].name === inputName && BX.type.isNotEmptyString(inputs[j].value))
+			{
+				return true;
+			}
+		}
+
+		return false;
+	};
+
+	BXMainMailForm.prototype.hasAttachmentMention = function (newText)
+	{
+		if (!BX.type.isNotEmptyString(newText))
+		{
+			return false;
+		}
+
+		// The reminder is a best-effort nudge and the new message text (quote and signature already
+		// excluded) is tiny in practice, so cap the analyzed length to bound normalization and the
+		// regex scans against a pathologically large paste.
+		var MAX_ANALYZED_LENGTH = 100000;
+		var source = newText.length > MAX_ANALYZED_LENGTH ? newText.substr(0, MAX_ANALYZED_LENGTH) : newText;
+
+		// Language-independent normalization: fold ё, join hyphenated line breaks, collapse whitespace.
+		var text = source.toLowerCase()
+			.replace(/ё/g, 'е')
+			.replace(/-\s*[\r\n]+\s*/g, '')
+			.replace(/\s+/g, ' ');
+
+		// Build a RegExp from a translatable "|"-separated word list. Every root is escaped, so a
+		// translator can never break the pattern with an unescaped metacharacter.
+		var toRegExp = function (messageId, flags)
+		{
+			var dictionary = BX.Loc.getMessage(messageId);
+			if (!BX.type.isNotEmptyString(dictionary))
+			{
+				return null;
+			}
+
+			var roots = dictionary.split('|')
+				.map(function (root) { return root.trim(); })
+				.filter(function (root) { return root.length > 0; })
+				.map(function (root) { return root.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); });
+
+			return roots.length > 0 ? new RegExp(roots.join('|'), flags) : null;
+		};
+
+		// Collect [start, end] spans of every match of a RegExp in the normalized text.
+		var spans = function (regExp)
+		{
+			var result = [];
+			if (!regExp)
+			{
+				return result;
+			}
+
+			var match;
+			while ((match = regExp.exec(text)) !== null)
+			{
+				result.push([match.index, match.index + match[0].length]);
+				if (match.index === regExp.lastIndex)
+				{
+					regExp.lastIndex++;
+				}
+			}
+
+			return result;
+		};
+
+		// Tier 1: a strong attachment marker warns on its own, except the English relational
+		// construction "attached to ..." / "attachment to ..." (emotionally attached), which is skipped.
+		var strong = toRegExp('MAIN_MAIL_FORM_ATTACHMENT_MENTION_PATTERNS', 'gi');
+		if (strong)
+		{
+			var hit;
+			while ((hit = strong.exec(text)) !== null)
+			{
+				var tail = text.substr(hit.index + hit[0].length, 5);
+				if (!/^\s+to(\s|$)/.test(tail))
+				{
+					return true;
+				}
+
+				if (hit.index === strong.lastIndex)
+				{
+					strong.lastIndex++;
+				}
+			}
+		}
+
+		// Tier 2: an ambiguous delivery verb warns only when a file object sits within PROXIMITY chars
+		// (either order). Keeps "приложил ЧЕК" / "направляю ДОГОВОР" while dropping "приложите усилия".
+		var verbs = spans(toRegExp('MAIN_MAIL_FORM_ATTACHMENT_MENTION_VERBS', 'gi'));
+		if (verbs.length === 0)
+		{
+			return false;
+		}
+
+		var objects = spans(toRegExp('MAIN_MAIL_FORM_ATTACHMENT_MENTION_OBJECTS', 'gi'));
+		if (objects.length === 0)
+		{
+			return false;
+		}
+
+		// verbs and objects are start-sorted (spans scans left-to-right), so a two-pointer sweep finds
+		// whether any verb sits within PROXIMITY chars of any object in O(V + O) instead of O(V * O).
+		var proximity = 50;
+		var v = 0, o = 0;
+		while (v < verbs.length && o < objects.length)
+		{
+			var gap = verbs[v][0] < objects[o][0]
+				? objects[o][0] - verbs[v][1]
+				: verbs[v][0] - objects[o][1];
+
+			if (gap <= proximity)
+			{
+				return true;
+			}
+
+			if (verbs[v][0] < objects[o][0])
+			{
+				v++;
+			}
+			else
+			{
+				o++;
+			}
+		}
+
+		return false;
+	};
+
+	BXMainMailForm.prototype.onAttachmentReminderSubmit = function (form, event)
+	{
+		if (event.defaultPrevented || event.returnValue === false)
+		{
+			return;
+		}
+
+		if (form.__attachmentReminderSkip)
+		{
+			form.__attachmentReminderSkip = false;
+			return;
+		}
+
+		// From server option (main / mail_form_attachment_reminder); only an explicit false disables the guard
+		if (form.__attachmentReminderEnabled === false)
+		{
+			return;
+		}
+
+		var newText = form.getNewMessageText();
+
+		if (form.hasAttachment())
+		{
+			return;
+		}
+
+		if (!form.hasAttachmentMention(newText))
+		{
+			return;
+		}
+
+		BX.PreventDefault(event);
+
+		BX.UI.Dialogs.MessageBox.confirm(
+			BX.Loc.getMessage('MAIN_MAIL_FORM_ATTACHMENT_REMINDER_TEXT'),
+			BX.Loc.getMessage('MAIN_MAIL_FORM_ATTACHMENT_REMINDER_TITLE'),
+			function ()
+			{
+				return true;
+			},
+			BX.Loc.getMessage('MAIN_MAIL_FORM_ATTACHMENT_REMINDER_BTN_ATTACH'),
+			function ()
+			{
+				form.__attachmentReminderSkip = true;
+				BX.submit(form.htmlForm);
+
+				return true;
+			},
+			BX.Loc.getMessage('MAIN_MAIL_FORM_ATTACHMENT_REMINDER_BTN_SEND')
+		);
 	};
 
 	var BXMainMailFormField = function(form, params)
@@ -1462,6 +2333,17 @@
 		this.__switch.setAttribute('aria-expanded', this.params.folded ? 'false' : 'true');
 	};
 
+	BXMainMailFormField.prototype.getValue = function()
+	{
+		if (this.params.type === 'editor')
+		{
+			return this.form.editor?.GetContent() || '';
+		}
+		const input = BX(this.fieldId + '_value');
+
+		return input ? input.value : this.params.value;
+	};
+
 	BXMainMailFormField.prototype.hide = function()
 	{
 		// @TODO: disable form fields
@@ -1583,6 +2465,62 @@
 
 	BXMainMailFormField.__types['from'].init = function(field)
 	{
+		var syncSenderId = function()
+		{
+			var senderIdInput = BX(field.fieldId + '_sender_id');
+			var mailboxIdInput = BX(field.fieldId + '_mailbox_id');
+			if (!senderIdInput && !mailboxIdInput)
+			{
+				return;
+			}
+
+			if (senderIdInput)
+			{
+				senderIdInput.value = '';
+				senderIdInput.disabled = true;
+			}
+			if (mailboxIdInput)
+			{
+				mailboxIdInput.value = '';
+				mailboxIdInput.disabled = true;
+			}
+			var senderInput = BX(field.fieldId + '_value');
+			if (mailboxIdInput && senderInput)
+			{
+				var selectedMailboxId = senderInput.dataset.mailboxId || '';
+				var selectedSenderId = senderInput.dataset.senderId || '';
+				mailboxIdInput.value = selectedMailboxId;
+				mailboxIdInput.disabled = !selectedMailboxId;
+				if (senderIdInput)
+				{
+					senderIdInput.value = selectedSenderId;
+					senderIdInput.disabled = !selectedSenderId;
+				}
+
+				return;
+			}
+			var selectedValue = senderInput ? field.form.normalizeSenderKey(senderInput.value) : '';
+			if (!selectedValue || !BX.type.isArray(field.params.mailboxes))
+			{
+				return;
+			}
+
+			for (var i = 0; i < field.params.mailboxes.length; i++)
+			{
+				var mailbox = field.params.mailboxes[i];
+				if (field.form.normalizeSenderKey(mailbox.formated) === selectedValue)
+				{
+					if (senderIdInput)
+					{
+						senderIdInput.value = mailbox.id || '';
+						senderIdInput.disabled = !senderIdInput.value;
+					}
+
+					return;
+				}
+			}
+		};
+
 		BX.addCustomEvent(field.form, 'MailForm::editor:click', function ()
 		{
 			var menu = BX.PopupMenu.getMenuById(field.fieldId+'-menu');
@@ -1592,6 +2530,7 @@
 		});
 
 		BX.onCustomEvent(field.form, 'MailForm::from::change', [field]);
+		syncSenderId();
 		const senderInputNode = BX(`${field.fieldId}_value`);
 		let senderButtonTextNode = null;
 
@@ -1603,6 +2542,7 @@
 		if (BX.UI.Mail?.SenderSelector && senderButtonTextNode)
 		{
 			const observer = new MutationObserver(() => {
+				syncSenderId();
 				BX.onCustomEvent(field.form, 'MailForm::from::change', [field]);
 			});
 
@@ -1630,6 +2570,7 @@
 					{
 						input.value = value;
 						BX.adjust(selector, {html: BX.util.strip_tags(text)});
+						syncSenderId();
 						BX.onCustomEvent(field.form, 'MailForm::from::change', [field]);
 					}
 				}
@@ -2018,7 +2959,7 @@
 							const slider = top.BX.SidePanel.Instance.getTopSlider();
 							if (slider && slider.canCloseByEsc())
 							{
-								slider.close();
+								field.form.requestClose('escape', () => slider.close());
 							}
 						}
 					});
@@ -2281,8 +3222,14 @@
 		}
 	};
 
-	BXMainMailForm.prototype.rebuildSignatureMenu = function(signatures, params)
+	BXMainMailForm.prototype.rebuildSignatureMenu = function(signatures, params, field)
 	{
+		if (BX.type.isNotEmptyObject(field))
+		{
+			// A pick is remembered for the sender the menu was built for
+			this.signatureField = field;
+		}
+
 		if (BX.type.isNotEmptyObject(params)
 			&& BX.type.isNotEmptyString(params.signatureSelectTitle)
 			&& BX.type.isNotEmptyString(params.signatureConfigureTitle)
@@ -2397,8 +3344,14 @@
 						&& form.fields[i].params.hasOwnProperty('allUserSignatures')) {
 						var field = form.fields[i];
 						field.params.allUserSignatures = response.data.signatures;
+						// Remembered choices travel with the refreshed list: editing a signature may
+						// have changed which of them still resolve.
+						if (response.data.hasOwnProperty('signatureChoices'))
+						{
+							field.params.signatureChoices = response.data.signatureChoices;
+						}
 						var currentSignatures = form.getSenderSignatures(field);
-						form.rebuildSignatureMenu(currentSignatures, field.params);
+						form.rebuildSignatureMenu(currentSignatures, field.params, field);
 						break;
 					}
 				}
@@ -2408,44 +3361,264 @@
 
 	BXMainMailForm.prototype.getSenderSignatures = function(field)
 	{
-		var currentSender;
-		var input = BX(field.fieldId+'_value');
 		var currentSignatures = [];
-		if (input)
+		var mailbox = this.getCurrentMailbox(field);
+
+		if (mailbox === null || !BX.type.isNotEmptyObject(field.params.allUserSignatures))
 		{
-			currentSender = input.value;
+			return currentSignatures;
 		}
-		if (currentSender
-			&& field.params
-			&& BX.type.isArray(field.params.mailboxes)
-			&& BX.type.isNotEmptyObject(field.params.allUserSignatures))
+
+		var allSignatures = field.params.allUserSignatures;
+		var signaturesByKey = {};
+		for (var key in allSignatures)
 		{
-			for (var i in field.params.mailboxes)
+			if (allSignatures.hasOwnProperty(key) && BX.type.isArrayFilled(allSignatures[key]))
 			{
-				if (field.params.mailboxes.hasOwnProperty(i))
-				{
-					if (field.params.mailboxes[i].formated === currentSender)
-					{
-						var mailbox = field.params.mailboxes[i];
-						var signatures = field.params.allUserSignatures;
-						if (BX.type.isArrayFilled(signatures[mailbox.formated]))
-						{
-							currentSignatures.push.apply(currentSignatures ,signatures[mailbox.formated]);
-						}
-						if (BX.type.isArrayFilled(signatures[mailbox.email]))
-						{
-							currentSignatures.push.apply(currentSignatures ,signatures[mailbox.email]);
-						}
-						if (BX.type.isArrayFilled(signatures['']))
-						{
-							currentSignatures.push.apply(currentSignatures , signatures['']);
-						}
-						break;
-					}
-				}
+				// Senders are compared by the normalized key, so a signature saved for the same
+				// sender written in another case still belongs to it
+				var normalizedKey = this.normalizeSenderKey(key);
+				signaturesByKey[normalizedKey] = BX.type.isArrayFilled(signaturesByKey[normalizedKey])
+					? signaturesByKey[normalizedKey].concat(allSignatures[key])
+					: allSignatures[key].slice();
 			}
 		}
+
+		// The order is the personal cascade of the server side: "name and address", then
+		// "address", then the signature bound to no sender at all
+		var lookupKeys = [
+			this.normalizeSenderKey(mailbox.formated),
+			this.normalizeSenderKey(mailbox.email),
+			'',
+		];
+		var usedKeys = {};
+		for (var i = 0; i < lookupKeys.length; i++)
+		{
+			var lookupKey = lookupKeys[i];
+			if (usedKeys[lookupKey] === true || !BX.type.isArrayFilled(signaturesByKey[lookupKey]))
+			{
+				continue;
+			}
+			usedKeys[lookupKey] = true;
+			currentSignatures.push.apply(currentSignatures, signaturesByKey[lookupKey]);
+		}
+
 		return currentSignatures;
+	}
+
+	/**
+	 * Mailbox of the sender selected in the 'from' field.
+	 *
+	 * @param {object} field
+	 * @returns {?object}
+	 */
+	BXMainMailForm.prototype.getCurrentMailbox = function(field)
+	{
+		var input = BX(field.fieldId+'_value');
+		var currentSender = input ? this.normalizeSenderKey(input.value) : '';
+
+		if (currentSender === '' || !field.params || !BX.type.isArray(field.params.mailboxes))
+		{
+			return null;
+		}
+
+		for (var i = 0; i < field.params.mailboxes.length; i++)
+		{
+			if (this.normalizeSenderKey(field.params.mailboxes[i].formated) === currentSender)
+			{
+				return field.params.mailboxes[i];
+			}
+		}
+
+		return null;
+	}
+
+	/**
+	 * The single rule for comparing senders, the same one the server applies
+	 * (Bitrix\Mail\Service\SharedSignature\AssignmentResolver::normalizeSenderKey): lower case,
+	 * trailing spaces stripped. Both sides have to agree, otherwise the default signature differs
+	 * between the first render and a later recalculation.
+	 *
+	 * @param {string} sender
+	 * @returns {string}
+	 */
+	BXMainMailForm.prototype.normalizeSenderKey = function(sender)
+	{
+		if (!BX.type.isNotEmptyString(sender))
+		{
+			return '';
+		}
+
+		return sender.replace(/ +$/, '').toLowerCase();
+	}
+
+	/**
+	 * Default signature for the current sender. The order is ALG-01 and belongs to the mail module
+	 * (Bitrix\Mail\Service\SharedSignature\SignatureResolver): the signature the person picked for
+	 * this sender, unless a shared one was assigned to the mailbox later; then the last assigned
+	 * shared one; then the personal default.
+	 *
+	 * @param {object} field
+	 * @param {Array} signatures Signatures of the current sender.
+	 * @returns {string} Signature body, empty string when the sender has none.
+	 */
+	BXMainMailForm.prototype.resolveDefaultSignature = function(field, signatures)
+	{
+		if (!BX.type.isArrayFilled(signatures))
+		{
+			return '';
+		}
+
+		var assigned = null;
+		var personal = null;
+		for (var i = 0; i < signatures.length; i++)
+		{
+			if (!BX.type.isNotEmptyObject(signatures[i]) || !BX.type.isNotEmptyString(signatures[i].full))
+			{
+				continue;
+			}
+
+			// The server hands assigned signatures over ordered by assignment date desc
+			if (signatures[i].isShared === true)
+			{
+				assigned = assigned === null ? signatures[i] : assigned;
+			}
+			else
+			{
+				personal = personal === null ? signatures[i] : personal;
+			}
+		}
+
+		var choice = this.getRememberedSignatureChoice(field);
+		if (choice !== null)
+		{
+			var chosen = null;
+			for (var k = 0; k < signatures.length; k++)
+			{
+				if (BX.type.isNotEmptyObject(signatures[k])
+					&& BX.type.isNotEmptyString(signatures[k].full)
+					&& parseInt(signatures[k].signatureId, 10) === choice.id)
+				{
+					chosen = signatures[k];
+					break;
+				}
+			}
+
+			// A reference to a signature that is gone counts as no choice at all. An assignment
+			// whose moment is unknown wins over the choice: there is nothing to compare the choice
+			// with, and the assigned signature is what the mailbox promises by default.
+			var assignedAt = assigned === null ? 0 : parseInt(assigned.assignedAt, 10);
+			if (chosen !== null && (assigned === null || (assignedAt > 0 && choice.time > assignedAt)))
+			{
+				return chosen.full;
+			}
+		}
+
+		if (assigned !== null)
+		{
+			return assigned.full;
+		}
+
+		return personal === null ? '' : personal.full;
+	}
+
+	/**
+	 * Choice remembered for the current sender, in the very shape the mail module stores it: a map
+	 * of sender key to "<signature id>:<unix time>", see
+	 * Bitrix\Mail\Service\SharedSignature\SignatureChoiceStorage.
+	 *
+	 * @param {object} field
+	 * @returns {?{id: number, time: number}}
+	 */
+	BXMainMailForm.prototype.getRememberedSignatureChoice = function(field)
+	{
+		if (!BX.type.isNotEmptyObject(field.params) || !BX.type.isNotEmptyObject(field.params.signatureChoices))
+		{
+			return null;
+		}
+
+		var senderKey = this.getSenderChoiceKey(field);
+		if (senderKey === '')
+		{
+			return null;
+		}
+
+		var raw = field.params.signatureChoices[senderKey];
+		if (!BX.type.isNotEmptyString(raw))
+		{
+			return null;
+		}
+
+		var parts = raw.split(':');
+		var id = parseInt(parts[0], 10);
+		var time = parseInt(parts[1], 10);
+
+		if (!(id > 0))
+		{
+			return null;
+		}
+
+		return {id: id, time: time > 0 ? time : 0};
+	}
+
+	/**
+	 * Storage key of a remembered choice, built exactly as
+	 * SignatureChoiceStorage::buildSenderKey() builds it.
+	 *
+	 * @param {object} field
+	 * @returns {string}
+	 */
+	BXMainMailForm.prototype.getSenderChoiceKey = function(field)
+	{
+		var mailbox = this.getCurrentMailbox(field);
+		if (mailbox === null)
+		{
+			return '';
+		}
+
+		var email = BX.type.isNotEmptyString(mailbox.email) ? mailbox.email.trim() : '';
+		var name = BX.type.isNotEmptyString(mailbox.name) ? mailbox.name.trim() : '';
+		var sender = (name !== '' && email !== '') ? name + ' <' + email + '>' : email;
+
+		return this.normalizeSenderKey(sender);
+	}
+
+	/**
+	 * Remembers the pick for the current sender in the platform user option the mail module reads:
+	 * category 'mail', name 'signature_choice', value "<signature id>:<unix time>" per sender key.
+	 * CUserOptions merges such an option key by key, so writing one sender leaves the choices made
+	 * for the other senders alone and no controller of our own is needed.
+	 *
+	 * @param {number} signatureId Identifier of the picked signature; there is nothing to remember
+	 *                             without it.
+	 */
+	BXMainMailForm.prototype.rememberSignatureChoice = function(signatureId)
+	{
+		var field = this.signatureField;
+		signatureId = parseInt(signatureId, 10);
+
+		if (!(signatureId > 0) || !BX.type.isNotEmptyObject(field) || !BX.type.isNotEmptyObject(field.params))
+		{
+			return;
+		}
+
+		var senderKey = this.getSenderChoiceKey(field);
+		if (senderKey === '')
+		{
+			return;
+		}
+
+		var choice = signatureId + ':' + Math.floor((new Date).getTime() / 1000);
+
+		if (!BX.type.isPlainObject(field.params.signatureChoices))
+		{
+			field.params.signatureChoices = {};
+		}
+		// Keeps the form in step with the option: switching the sender back and forth must apply
+		// the fresh choice, not the one the page was opened with
+		field.params.signatureChoices[senderKey] = choice;
+
+		BX.userOptions.save('mail', 'signature_choice', senderKey, choice);
 	}
 
 	BXMainMailForm.prototype.removeSignaturesFromMenu = function()
@@ -2489,15 +3662,24 @@
 					&& BX.type.isNotEmptyString(signatures[i].list)
 					&& BX.type.isNotEmptyString(signatures[i].full))
 				{
+					// P3.T2: Build menu item node; for shared signatures attach a Chip badge.
+					// AC-013: No edit option for shared signatures — the item has only insert action.
+					var isShared = signatures[i].isShared === true;
+					var itemHtml = this.buildSignatureMenuItemNode(signatures[i].list, isShared);
+
 					signatureSelectItems.push({
 						id: 'signature-' + i,
-						text: signatures[i].list,
+						html: itemHtml,
 						title: signatures[i].list,
 						fullSignature: signatures[i].full,
+						signatureId: parseInt(signatures[i].signatureId, 10) || 0,
 						onclick: function(event, item)
 						{
 							item.getMenuWindow().close();
 							form.insertSignature(item.fullSignature);
+							// AC-011: the pick becomes the default for this sender and holds until
+							// an administrator assigns a shared signature later
+							form.rememberSignatureChoice(item.signatureId);
 						},
 					})
 				}
@@ -2512,6 +3694,58 @@
 			}
 		}
 		return signatureSelectItems;
+	};
+
+	/**
+	 * Builds an HTMLElement for a signature popup menu item.
+	 * For shared signatures (isShared=true) appends a Chip badge labelled by
+	 * MAIN_MAIL_FORM_EDITOR_SIGNATURE_SHARED_BADGE.
+	 * Falls back to a plain text node if ui.system.chip is unavailable.
+	 *
+	 * @param {string} label     Signature display name (list field).
+	 * @param {boolean} isShared Whether the signature is a shared (assigned) one.
+	 * @returns {HTMLElement}
+	 */
+	BXMainMailForm.prototype.buildSignatureMenuItemNode = function(label, isShared)
+	{
+		var wrapper = BX.create('span', {
+			attrs: { style: 'display:flex;align-items:center;gap:6px;' },
+			text: label,
+		});
+
+		if (isShared)
+		{
+			try
+			{
+				var chipNs = BX.UI && BX.UI.System && BX.UI.System.Chip;
+				if (chipNs && chipNs.Chip && chipNs.ChipDesign && chipNs.ChipSize)
+				{
+					var chip = new chipNs.Chip({
+						size: chipNs.ChipSize.Sm,
+						rounded: true,
+						text: BX.Loc.getMessage('MAIN_MAIL_FORM_EDITOR_SIGNATURE_SHARED_BADGE') || 'shared',
+						design: chipNs.ChipDesign.Outline,
+					});
+					BX.append(chip.render(), wrapper);
+				}
+				else
+				{
+					// Fallback: plain text badge when chip library is not yet loaded
+					BX.append(BX.create('span', {
+						attrs: {
+							style: 'font-size:11px;color:var(--ui-color-text-secondary,#828282);white-space:nowrap;',
+						},
+						text: '(' + (BX.Loc.getMessage('MAIN_MAIL_FORM_EDITOR_SIGNATURE_SHARED_BADGE') || 'shared') + ')',
+					}), wrapper);
+				}
+			}
+			catch (e)
+			{
+				// Silent fallback — badge is cosmetic; item still functions
+			}
+		}
+
+		return wrapper;
 	};
 
 	BXMainMailForm.prototype.appendCalendarLinkButton = function(params)

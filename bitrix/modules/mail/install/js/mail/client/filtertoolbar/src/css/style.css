@@ -47,6 +47,15 @@
 	background: rgba(82,92,105,.1);
 }
 
+.mail-toolbar-counter-static {
+	cursor: default;
+}
+
+.mail-toolbar-counter-static:hover,
+.bitrix24-dark-theme .mail-toolbar-counter-static:hover {
+	background: transparent;
+}
+
 .mail-msg-counter-number-selected {
 	background: rgba(88, 158, 255, .45);
 }

@@ -10,11 +10,9 @@ jn.define('tasks/layout/checklist/list/src/checkbox/checkbox-counter', (require,
 
 	const CHECKBOX_LAYOUT_SIZE = 28;
 
-	/**
-	 * @class CheckBoxCounter
-	 */
 	class CheckBoxCounter extends PureComponent
 	{
+		/** @param {CheckBoxCounterProps} props */
 		constructor(props)
 		{
 			super(props);
@@ -39,7 +37,7 @@ jn.define('tasks/layout/checklist/list/src/checkbox/checkbox-counter', (require,
 
 		/**
 		 * @private
-		 * @returns {View}
+		 * @returns {Object}
 		 */
 		render()
 		{
@@ -79,7 +77,7 @@ jn.define('tasks/layout/checklist/list/src/checkbox/checkbox-counter', (require,
 
 		/**
 		 * @private
-		 * @returns {ChecklistCheckboxProgress|CheckBox}
+		 * @returns {Object}
 		 */
 		renderProgressCheckbox()
 		{
@@ -107,9 +105,7 @@ jn.define('tasks/layout/checklist/list/src/checkbox/checkbox-counter', (require,
 			);
 		}
 
-		/**
-		 * @private
-		 */
+		/** @private */
 		#handleOnClick = () => {
 			const { disabled, checked, onClick, showToastNoRights } = this.props;
 

@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports, im_v2_application_core, im_v2_lib_user, im_v2_const, im_v2_lib_search, im_v2_lib_utils) {
+(function (exports, im_v2_application_core, im_v2_lib_user, im_v2_const, im_v2_lib_utils, im_v2_lib_permission, im_v2_lib_chat) {
 	'use strict';
 
 	const EntityId = 'im-recent-v2';
@@ -70,6 +70,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		}
 	}
 
+	const EntitySearch = {
+		chats: 'chats',
+		users: 'users'
+	};
+	const MAX_ENTITIES_IN_SEARCH_LIST = 100;
+	const MAX_USERS_IN_SEARCH_LIST_DEFAULT = 50;
+
 	function getRecentItemDate(dialogId) {
 		const message = im_v2_application_core.Core.getStore().getters['recent/getMessage'](dialogId);
 		if (!message) {
@@ -80,26 +87,35 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	function getRecentListItems(params) {
 		const {
-			withFakeUsers,
 			searchRecentSection,
-			parentChatId
+			parentChatId,
+			onlyAttachableToCollab,
+			withFakeUsers
 		} = params;
-		const recentSection = searchRecentSection ?? im_v2_const.RecentType.default;
-		const preparedParentChatId = prepareParentChatId(parentChatId);
+		const recentType = searchRecentSection ?? im_v2_const.RecentType.default;
+		const preparedParentChatId = im_v2_lib_chat.ChatManager.prepareParentChatId(parentChatId);
 		const payload = {
-			type: recentSection,
+			type: recentType,
 			parentChatId: preparedParentChatId
 		};
 		const recentItems = im_v2_application_core.Core.getStore().getters['recent/getSortedCollection'](payload);
-		return recentItems.filter(item => filterRecentItem(item, withFakeUsers)).map(({
+		const filterRecentItem = onlyAttachableToCollab ? item => isAttachableToCollab(item.dialogId, recentType) : item => isSearchableRecentItem(item, withFakeUsers);
+		return recentItems.filter(item => filterRecentItem(item)).map(({
 			dialogId
 		}) => buildSearchResultItem(dialogId));
 	}
-	const filterRecentItem = (recentItem, withFakeUsers) => {
-		if (withFakeUsers && recentItem.isFakeElement) {
+	const isAttachableToCollab = (dialogId, recentType) => {
+		const handleByRecentType = {
+			[im_v2_const.RecentType.collab]: () => im_v2_lib_permission.PermissionManager.getInstance().canManageUsersAdd(dialogId),
+			[im_v2_const.RecentType.default]: () => canAttach(dialogId)
+		};
+		return handleByRecentType[recentType]();
+	};
+	const isSearchableRecentItem = (item, withFakeUsers) => {
+		if (withFakeUsers && item.isFakeElement) {
 			return true;
 		}
-		return !recentItem.isBirthdayPlaceholder && !recentItem.isFakeElement;
+		return !item.isBirthdayPlaceholder && !item.isFakeElement;
 	};
 	const buildSearchResultItem = dialogId => {
 		return {
@@ -107,12 +123,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			dateMessage: getRecentItemDate(dialogId)
 		};
 	};
-	const prepareParentChatId = parentChatId => {
-		const isAllScope = parentChatId === im_v2_const.ParentChatScope.all;
-		if (!parentChatId || isAllScope) {
-			return im_v2_const.ParentChatScope.topLevel;
-		}
-		return parentChatId;
+	const canAttach = dialogId => {
+		const permissionManager = im_v2_lib_permission.PermissionManager.getInstance();
+		return permissionManager.canPerformActionByRole(im_v2_const.ActionByRole.attachToParent, dialogId);
 	};
 
 	const collator = new Intl.Collator(undefined, {
@@ -147,7 +160,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			const recentListItems = getRecentListItems({
 				withFakeUsers: true,
 				searchRecentSection: this.#searchConfig.searchRecentSection,
-				parentChatId: this.#searchConfig.parentId
+				parentChatId: this.#searchConfig.parentId,
+				onlyAttachableToCollab: this.#searchConfig.onlyWithManageUsersAddRight || this.#searchConfig.onlyWithOwnerRight
 			});
 			return recentListItems.map(item => {
 				return this.#prepareRecentItem(item.dialogId, item.dateMessage);
@@ -228,22 +242,25 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			return [...itemsMap.values()];
 		}
 		#excludeByConfig(items) {
-			const exclude = this.#searchConfig?.exclude;
-			if (!exclude || exclude.length === 0) {
+			const {
+				exclude,
+				excludeGuests
+			} = this.#searchConfig;
+			const hasExcludeList = Array.isArray(exclude) && exclude.length > 0;
+			if (!hasExcludeList && !excludeGuests) {
 				return items;
 			}
 			return items.filter(item => {
 				const isUser = this.#isUser(item.dialogId);
 				const isChat = !isUser;
-				if (isChat && exclude.includes(im_v2_lib_search.EntitySearch.chats)) {
+				if (isChat && hasExcludeList && exclude.includes(EntitySearch.chats)) {
 					return false;
 				}
-
-				// eslint-disable-next-line sonarjs/prefer-single-boolean-return
-				if (isUser && exclude.includes(im_v2_lib_search.EntitySearch.users)) {
+				if (isUser && hasExcludeList && exclude.includes(EntitySearch.users)) {
 					return false;
 				}
-				return true;
+				const isGuestToExclude = excludeGuests && this.#store.getters['users/isGuest'](item.dialogId);
+				return !isGuestToExclude;
 			});
 		}
 		#getDialog(dialogId) {
@@ -257,15 +274,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		}
 	}
 
-	const EntitySearch = {
-		chats: 'chats',
-		users: 'users'
-	};
-	const MAX_ENTITIES_IN_SEARCH_LIST = 100;
-	const MAX_USERS_IN_SEARCH_LIST_DEFAULT = 50;
-
 	function getUsersFromRecentItems({
 		withFakeUsers,
+		withGuests = true,
 		userLimit = MAX_USERS_IN_SEARCH_LIST_DEFAULT
 	}) {
 		return getRecentListItems({
@@ -275,7 +286,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		}) => {
 			const chat = im_v2_application_core.Core.getStore().getters['chats/get'](dialogId, true);
 			const user = im_v2_application_core.Core.getStore().getters['users/get'](dialogId, true);
-			return chat.type === im_v2_const.ChatType.user && user.type !== im_v2_const.UserType.bot && user.id !== im_v2_application_core.Core.getUserId();
+			return chat.type === im_v2_const.ChatType.user && user.type !== im_v2_const.UserType.bot && user.id !== im_v2_application_core.Core.getUserId() && (withGuests || !im_v2_application_core.Core.getStore().getters['users/isGuest'](dialogId));
 		}).slice(0, userLimit);
 	}
 
@@ -331,5 +342,5 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	exports.mergeSearchItems = mergeSearchItems;
 	exports.sortByDate = sortByDate;
 
-})(this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}, BX.Messenger.v2.Application, BX.Messenger.v2.Lib, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib);
+})(this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}, BX.Messenger.v2.Application, BX.Messenger.v2.Lib, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib);
 //# sourceMappingURL=search.bundle.js.map

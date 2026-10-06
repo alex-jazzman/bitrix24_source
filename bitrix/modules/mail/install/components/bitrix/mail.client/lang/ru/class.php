@@ -1,6 +1,6 @@
 <?
 
-$MESS["MAIL_CLIENT_HOME_TITLE"] = "Почта";
+$MESS["MAIL_CLIENT_HOME_TITLE_MSGVER_1"] = "Почта";
 $MESS["BITRIX"] = "Битрикс";
 
 $MESS["MAIL_CLIENT_AJAX_ERROR"] = "Ошибка при обработке запроса";
@@ -13,7 +13,6 @@ $MESS["MAIL_CLIENT_DENIED"] = "Доступ запрещен";
 
 $MESS['MAIL_CLIENT_MAILBOX_SYNC_BAR'] = "Синхронизация";
 $MESS['MAIL_CLIENT_MAILBOX_SYNC_BAR_INTERRUPTED'] = "Мы не можем выполнить синхронизацию.";
-$MESS['MAIL_CLIENT_MAILBOX_INDEX_BAR'] = "Индексация";
 
 $MESS["MAIL_DISK_ACTION_SAVE_TO_OWN_FILES"] = "Сохранить на Битрикс24.Диск";
 $MESS["MAIL_DISK_FILE_DOWNLOAD_ARCHIVE"] = "Скачать все файлы одним архивом";
@@ -86,8 +85,10 @@ $MESS["MAIL_FOLDER_SORT_BTN_HINT"] = "Сортировка папок";
 $MESS["MAIL_FOLDER_SORT_DEFAULT"] = "По умолчанию";
 $MESS["MAIL_FOLDER_SORT_ALPHA_ASC"] = "По названию (А-Я)";
 $MESS["MAIL_FOLDER_SORT_ALPHA_DESC"] = "По названию (Я-А)";
+$MESS["MAIL_FOLDER_SORT_MANUAL"] = "Вручную";
 $MESS["MAIL_FOLDER_SORT_GUIDE_TITLE"] = "Выберите порядок папок";
 $MESS["MAIL_FOLDER_SORT_GUIDE_DESCRIPTION"] = "Отсортируйте папки по алфавиту или оставьте порядок из вашей почты";
+$MESS["MAIL_FOLDER_SORT_MODE_SAVE_ERROR"] = "Не удалось сохранить режим сортировки папок. Попробуйте ещё раз";
 $MESS["MAIL_MESSAGE_NEW_BTN"] = "Написать письмо";
 $MESS["MAIL_MESSAGE_MAILBOX_GRID_BTN"] = "Управление ящиками сотрудников";
 $MESS["MAIL_MESSAGE_MAILBOX_GRID_HINT_DESCRIPTION"] = "Вы можете посмотреть, какие ящики подключили <br> сотрудники, настроить или отключить их";
@@ -125,6 +126,7 @@ $MESS["MAIL_MESSAGE_LIST_COLUMN_TASK_BIND"] = "Задача";
 $MESS["MAIL_MESSAGE_LIST_COLUMN_CHAT_BIND"] = "Чат";
 $MESS["MAIL_MESSAGE_LIST_COLUMN_POST_BIND"] = "Новость";
 $MESS["MAIL_MESSAGE_LIST_COLUMN_MEETING_BIND"] = "Календарь";
+$MESS["MAIL_MESSAGE_LIST_COLUMN_FAVORITE"] = "Избранное";
 
 $MESS['MAIL_MESSAGE_LIST_BTN_VIEW'] = "Открыть";
 $MESS['MAIL_MESSAGE_LIST_BTN_MOVE'] = "Переместить в папку";
@@ -171,7 +173,7 @@ $MESS['MAIL_MESSAGE_LIST_FILTER_PRESET_BIND_CHAT'] = "Чат";
 $MESS['MAIL_MESSAGE_LIST_FILTER_PRESET_BIND_CALENDAR_EVENT'] = "Встреча";
 
 $MESS['MAIL_MESSAGE_LIST_SETTINGS_LINK'] = "Настройки ящика";
-$MESS['MAIL_MESSAGE_LIST_ADDRESSBOOK_LINK'] = "Адресная книга";
+$MESS['MAIL_MESSAGE_LIST_ADDRESSBOOK_LINK_MSGVER_1'] = "Адресная книга";
 $MESS['MAIL_MESSAGE_LIST_BLACKLIST_LINK'] = "Черный список";
 $MESS['MAIL_MESSAGE_LIST_CONFIG_PERMISSIONS_LINK'] = "Права доступа";
 $MESS['MAIL_MESSAGE_LIST_SIGNATURE_LINK'] = "Настроить подпись";
@@ -194,6 +196,33 @@ $MESS['MAIL_MESSAGE_LIST_CONFIRM_TRASH_ALL'] = "Вы действительно 
 $MESS['MAIL_MESSAGE_LIST_CONFIRM_DELETE_ALL'] = "Вы действительно хотите удалить все письма?<br>Они будут безвозвратно удалены. Вы никак не сможете их восстановить.";
 
 $MESS['MAIL_MESSAGE_LIST_ATTACH_ICON_HINT'] = "Письмо с вложениями";
+$MESS['MAIL_MESSAGE_LIST_UNSEEN_DOT_LABEL'] = "Непрочитанное";
+$MESS['MAIL_MESSAGE_LIST_FAVORITE_LABEL'] = "Избранное";
+$MESS['MAIL_MESSAGE_LIST_FAVORITES_FILTER'] = "Избранное";
+
+$MESS['MAIL_MESSAGE_LIST_ATTACHMENT_LOADING'] = "Вложение загружается";
+$MESS['MAIL_MESSAGE_LIST_ATTACHMENTS_STACK_TITLE'] = "Вложения: #COUNT#";
+$MESS['MAIL_MESSAGE_LIST_ATTACHMENTS_COUNT_LABEL_PLURAL_0'] = "#COUNT# файл";
+$MESS['MAIL_MESSAGE_LIST_ATTACHMENTS_COUNT_LABEL_PLURAL_1'] = "#COUNT# файла";
+$MESS['MAIL_MESSAGE_LIST_ATTACHMENTS_COUNT_LABEL_PLURAL_2'] = "#COUNT# файлов";
+$MESS['MAIL_MESSAGE_LIST_ATTACHMENTS_MORE'] = "ещё #COUNT#";
+$MESS['MAIL_MESSAGE_LIST_ATTACHMENTS_MORE_LABEL_PLURAL_0'] = "#MORE# из #COUNT# вложения";
+$MESS['MAIL_MESSAGE_LIST_ATTACHMENTS_MORE_LABEL_PLURAL_1'] = "#MORE# из #COUNT# вложений";
+$MESS['MAIL_MESSAGE_LIST_ATTACHMENTS_MORE_LABEL_PLURAL_2'] = "#MORE# из #COUNT# вложений";
+$MESS['MAIL_MESSAGE_LIST_ATTACHMENTS_DOWNLOAD'] = "Скачать";
+$MESS['MAIL_MESSAGE_LIST_ATTACHMENTS_DOWNLOAD_FILE'] = "Скачать: #NAME#";
+$MESS['MAIL_MESSAGE_LIST_ATTACHMENTS_LOADING'] = "Загружаем список файлов";
+$MESS['MAIL_MESSAGE_LIST_ATTACHMENTS_EMPTY'] = "Файлы недоступны";
+$MESS['MAIL_MESSAGE_LIST_ATTACHMENTS_ERROR'] = "Не удалось загрузить список файлов. Попробуйте ещё раз";
+$MESS['MAIL_MESSAGE_LIST_ARCHIVE_PREPARING'] = "Готовим архив для скачивания";
+$MESS['MAIL_MESSAGE_LIST_ARCHIVE_ERROR'] = "Не удалось скачать архив. Попробуйте ещё раз";
+$MESS['MAIL_MESSAGE_LIST_FAVORITES_SHOWN_PLURAL_0'] = "Показано #COUNT# избранное письмо";
+$MESS['MAIL_MESSAGE_LIST_FAVORITES_SHOWN_PLURAL_1'] = "Показано #COUNT# избранных письма";
+$MESS['MAIL_MESSAGE_LIST_FAVORITES_SHOWN_PLURAL_2'] = "Показано #COUNT# избранных писем";
+$MESS['MAIL_MESSAGE_LIST_FAVORITES_EMPTY'] = "Избранных писем нет";
+$MESS['MAIL_MESSAGE_LIST_FAVORITE_ADDED'] = "Добавлено в избранное";
+$MESS['MAIL_MESSAGE_LIST_FAVORITE_REMOVED'] = "Убрано из избранного";
+$MESS['MAIL_MESSAGE_LIST_FAVORITE_ERROR'] = "Не удалось обновить избранное";
 
 $MESS["MAIL_MAILBOX_LICENSE_CONNECTED_MAILBOXES_LIMIT_BODY"] = "Количество почтовых ящиков на сотрудника зависит от тарифного плана Битрикс24.
 <br><br>

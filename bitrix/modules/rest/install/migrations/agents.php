@@ -13,3 +13,4 @@ $agent->add('\Bitrix\Rest\Marketplace\Notification::checkAgent();', 86400, false
 $agent->add('\Bitrix\Rest\Marketplace\Immune::load();', 86400, false);
 $agent->add('\Bitrix\Rest\Configuration\Structure::clearContentAgent();', 86400, false);
 $agent->add('\Bitrix\Rest\Helper::recoveryAgents();', 604800, false);
+$agent->add([\Bitrix\Rest\Infrastructure\Agent\DeferredBatch\Cleanup::class, 'execute'], 86400, false);

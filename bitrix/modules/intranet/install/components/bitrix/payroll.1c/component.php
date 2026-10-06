@@ -1,6 +1,15 @@
-<?
+<?php
+
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
 	die();
+
+use Bitrix\Main\Web\HttpClient;
+use Bitrix\Main\Web\Uri;
+
+/**
+ * @global CMain $APPLICATION
+ * @global CUser $USER
+ */
 
 $APPLICATION->SetTitle(GetMessage("TITLE_PAYROLL"));
 
@@ -118,40 +127,54 @@ if (CModule::IncludeModule('webservice'))
 				);
 			$request_body=$arSoapRequest->payload();
 
-			$req=new CHTTP;
-			$arUrl=$req->ParseURL($arWebServiceUrl);
-			$arUrl["port"]= $arPort;
-			$req->SetAuthBasic($arLogin,$arPassword);
-			$req->user_agent = "BITRIX SOAP Client";
-			$req->http_timeout = $arTimeout;
-			$req->additional_headers['SOAPAction'] = $arParams["PR_NAMESPACE"].$arSoapMethod;
-			$result=$req->Query("POST",$arUrl["host"],$arUrl["port"],$arUrl["path"],$request_body,$arUrl["proto"],"text/xml; charset=utf-8");
+			$req = new HttpClient();
 
-			if (!$req->errstr)
+			$req->setTimeout($arTimeout);
+
+			$uri = new Uri($arWebServiceUrl);
+			$uri = $uri->withPort($arPort);
+
+			$req->setAuthorization($arLogin, $arPassword);
+			$req->setHeader('User-Agent', 'BITRIX SOAP Client');
+			$req->setHeader('SOAPAction', $arParams["PR_NAMESPACE"] . $arSoapMethod);
+			$req->setHeader('Content-Type', 'text/xml; charset=utf-8');
+
+			$result = $req->post((string)$uri, $request_body);
+
+			if ($result)
 			{
-				if ($req->status == 401)
+				if ($req->getStatus() == 401)
+				{
 					$arResult["RESULT"]['ERROR']=GetMessage("AUTH_ERROR");
+				}
 				else
 				{
-					preg_match("/^<soap:Envelope.*>/i",$req->result,$preg);
-					if (empty($preg) || $req->status <> "200")
+					preg_match("/^<soap:Envelope.*>/i", $result, $preg);
+					if (empty($preg) || $req->getStatus() != 200)
+					{
 						$arResult["RESULT"]['ERROR']=GetMessage("WRONG_RESPONSE");
+					}
 				}
 			}
 			else
-				$arResult["RESULT"]['ERROR']=$req->errstr;
+			{
+				$error = $req->getError();
+				$arResult["RESULT"]['ERROR'] = reset($error);
+			}
 
 			if (!$arResult["RESULT"]['ERROR'])
 			{
 				$response = new CSOAPResponse();
-				$response->decodeStream( $arSoapRequest, "\r\n\r\n".$req->result);
+				$response->decodeStream( $arSoapRequest, "\r\n\r\n". $result);
 
 				if ($response->Value["return"])
 				{
 					$resFormHtml=base64_decode($response->Value["return"]);
-						//removing BOM
-					if(mb_substr($resFormHtml, 0, 3) == pack("CCC", 0xef, 0xbb, 0xbf))
+					//removing BOM
+					if (mb_substr($resFormHtml, 0, 3) == pack("CCC", 0xef, 0xbb, 0xbf))
+					{
 						$resFormHtml = mb_substr($resFormHtml, 3);
+					}
 
 					if ($arActionType == "ACTIVATION")
 					{
@@ -169,10 +192,14 @@ if (CModule::IncludeModule('webservice'))
 						$arResult["RESULT"]['html_form'] = $resFormHtml;
 					}
 					else
+					{
 						$arResult["RESULT"]['html_form']=str_replace("<TITLE></TITLE>","<TITLE>".$arTitle."</TITLE>",$resFormHtml);
+					}
 				}
 				else
+				{
 					$arResult["RESULT"]['html_form']=GetMessage("WRONG_RESPONSE");
+				}
 			}
 		}
 	}
@@ -194,7 +221,10 @@ else
 	ShowError(GetMessage("WEBSERVICE_MODULE_NOT_INSTALLED"));
 	return;
 }
+
 if ($arResult["RESULT"] && !$arResult["IS_ACTIVATION"])
+{
 	$APPLICATION->RestartBuffer();
+}
+
 $this->IncludeComponentTemplate();
-?>

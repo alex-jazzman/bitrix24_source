@@ -20,6 +20,7 @@ return [
 		'ui.hint',
 		'ui.icon-set.outline',
 		'ui.notification',
+		'ui.system.checkbox',
 		'ui.system.dialog',
 	],
 	'skip_core' => false,

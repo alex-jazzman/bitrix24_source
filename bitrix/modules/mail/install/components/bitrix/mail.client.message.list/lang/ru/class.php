@@ -1,0 +1,7 @@
+<?php
+
+$MESS['MAIL_DRAFT_LIST_NO_RECIPIENTS'] = 'Без получателей';
+$MESS['MAIL_DRAFT_LIST_DELETE_PARTIAL_ERROR'] = 'Не удалось удалить черновики (#COUNT#)';
+$MESS['MAIL_MESSAGE_LIST_DRAFT_FILTER_TO'] = 'Кому';
+$MESS['MAIL_MESSAGE_LIST_FILTER_LABEL'] = 'Метка';
+$MESS['MAIL_MESSAGE_LIST_BTN_ASSIGN_LABEL'] = 'Изменить метку';

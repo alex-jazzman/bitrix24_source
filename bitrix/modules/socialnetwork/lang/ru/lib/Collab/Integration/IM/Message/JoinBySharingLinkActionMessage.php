@@ -1,0 +1,9 @@
+<?php
+
+$MESS['SOCIALNETWORK_COLLAB_CHAT_JOIN_BY_SHARING_LINK_M'] = '#RECIPIENT# вступил в коллабу по приглашению от #AUTHOR_NAME#';
+$MESS['SOCIALNETWORK_COLLAB_CHAT_JOIN_BY_SHARING_LINK_F'] = '#RECIPIENT# вступила в коллабу по приглашению от #AUTHOR_NAME#';
+$MESS['SOCIALNETWORK_COLLAB_CHAT_JOIN_BY_SHARING_LINK_N'] = '#RECIPIENT# вступил(а) в коллабу по приглашению от #AUTHOR_NAME#';
+
+$MESS['SOCIALNETWORK_V2_PROJECT_CHAT_JOIN_BY_SHARING_LINK_M'] = '#RECIPIENT# вступил в проект по приглашению от #AUTHOR_NAME#';
+$MESS['SOCIALNETWORK_V2_PROJECT_CHAT_JOIN_BY_SHARING_LINK_F'] = '#RECIPIENT# вступила в проект по приглашению от #AUTHOR_NAME#';
+$MESS['SOCIALNETWORK_V2_PROJECT_CHAT_JOIN_BY_SHARING_LINK_N'] = '#RECIPIENT# вступил(а) в проект по приглашению от #AUTHOR_NAME#';

@@ -1,5 +1,5 @@
-import { Loc, Tag, Type, Dom, Text as TextFormat, Text } from 'main.core';
-import { Menu, Popup } from 'main.popup';
+import { Dom, Event, Loc, Tag, Type, Text as TextFormat, Text } from 'main.core';
+import { Menu } from 'main.popup';
 import { UserSelector, UserSelectorEvent } from 'sign.v2.b2e.user-selector';
 import type { ItemOptions } from 'ui.entity-selector';
 import { Helpdesk } from 'sign.v2.helper';
@@ -12,6 +12,7 @@ const HelpdeskCodes = Object.freeze({
 	WhoCanBeRepresentative: '19740734',
 });
 const representativeSelectorMenuButtonId = 'sign-document-b2e-representative_selector_menu_button';
+const activationKeys = new Set(['Enter', ' ']);
 
 type UserInfo = {
 	id: ?Number,
@@ -40,7 +41,8 @@ export class RepresentativeSelector
 	#description: ?string;
 	#isDescriptionVisible: boolean = true;
 	#isMenuButtonVisible: boolean = false;
-	#isMenuVisible: boolean = false;
+	#menu: Menu | null = null;
+	#dialog: ?Object = null;
 	#uuid: ?string;
 	#itemType: ?string;
 	#onDelete: () => void;
@@ -174,11 +176,29 @@ export class RepresentativeSelector
 		`;
 
 		this.#ui.menuBtn.container = Tag.render`
-			<div id="${representativeSelectorMenuButtonId}" class="sign-document-b2e-company-info-edit" onclick="${(): void => this.#showMenu()}"></div>
+			<div
+				id="${representativeSelectorMenuButtonId}"
+				class="sign-document-b2e-company-info-edit"
+				role="button"
+				tabindex="0"
+				aria-haspopup="menu"
+				aria-expanded="false"
+				aria-label="${Loc.getMessage('SIGN_B2E_REPRESENTATIVE_SELECTOR_DELETE_BUTTON_TITLE')}"
+				data-test-id="sign-b2e-representative-selector-menu"
+			></div>
 		`;
 
+		// No aria-label on the row: it is shown only with a representative inside, so the accessible
+		// name comes from the name and position — a static label would hide the selected value.
 		this.#ui.info.container = Tag.render`
-			<div class="sign-document-b2e-representative-info">
+			<div
+				class="sign-document-b2e-representative-info --clickable"
+				role="button"
+				tabindex="0"
+				aria-haspopup="dialog"
+				aria-expanded="false"
+				data-test-id="sign-b2e-representative-selector-trigger"
+			>
 				<div class="sign-document-b2e-representative-info-user-photo">
 					${this.#ui.info.avatar}
 				</div>
@@ -243,24 +263,27 @@ export class RepresentativeSelector
 			return;
 		}
 
-		const menu = new Menu({
-			bindElement: menuButtonElement,
-			cacheable: false,
-			events: {
-				onPopupClose: (popup: Popup) => {
-					this.#isMenuVisible = false;
-				},
-			},
-		});
-
-		if (this.#isMenuVisible)
+		// Repeated activation closes the open menu instead of building a second one: closing a fresh
+		// instance leaves the shown popup alive and resets its ARIA state.
+		if (this.#menu)
 		{
-			menu.close();
+			this.#menu.close();
 
 			return;
 		}
 
-		this.#isMenuVisible = true;
+		const menu = new Menu({
+			bindElement: menuButtonElement,
+			cacheable: false,
+			events: {
+				onPopupClose: () => {
+					this.#menu = null;
+					Dom.attr(menuButtonElement, 'aria-expanded', 'false');
+				},
+			},
+		});
+		this.#menu = menu;
+		Dom.attr(menuButtonElement, 'aria-expanded', 'true');
 
 		menu.addMenuItem({
 			text: Loc.getMessage('SIGN_B2E_REPRESENTATIVE_SELECTOR_DELETE_BUTTON_TITLE'),
@@ -320,7 +343,13 @@ export class RepresentativeSelector
 		dialog.subscribeOnce('onLoad', () => {
 			const userItems = dialog.items.get(entityType);
 			const userItem = userItems.get(`${representativeId}`);
-			userItem.select();
+			userItem.select(true);
+			this.#userSelector.setPreselectedEntityList([
+				{
+					id: userItem.id,
+					type: userItem.entityId,
+				},
+			]);
 			this.#showItem(userItem);
 		});
 		dialog.load();
@@ -358,8 +387,31 @@ export class RepresentativeSelector
 
 	#bindEvents()
 	{
+		Event.bind(this.#ui.info.container, 'click', () => this.#onChangeButtonClickHandler());
+		Event.bind(this.#ui.info.container, 'keydown', (event: KeyboardEvent) => {
+			if (!activationKeys.has(event.key))
+			{
+				return;
+			}
+
+			event.preventDefault();
+			this.#onChangeButtonClickHandler();
+		});
 		BX.bind(this.#ui.changeBtn.element, 'click', () => this.#onChangeButtonClickHandler());
 		BX.bind(this.#ui.select.button, 'click', () => this.#onChangeButtonClickHandler());
+		if (this.#isMenuButtonVisible)
+		{
+			Event.bind(this.#ui.menuBtn.container, 'click', () => this.#showMenu());
+			Event.bind(this.#ui.menuBtn.container, 'keydown', (event: KeyboardEvent) => {
+				if (!activationKeys.has(event.key))
+				{
+					return;
+				}
+
+				event.preventDefault();
+				this.#showMenu();
+			});
+		}
 		this.#userSelector.subscribe(
 			UserSelectorEvent.onItemSelect,
 			(event) => this.#onSelectorItemSelectedHandler(event),
@@ -376,12 +428,34 @@ export class RepresentativeSelector
 
 	#onChangeButtonClickHandler(): void
 	{
-		this.#userSelector.getDialog().setTargetNode(this.#ui.container.firstElementChild);
-		this.#userSelector.toggle();
+		// Repeated activation closes the open dialog. Without this, cacheable: false would build
+		// a second dialog while the first one is still hiding asynchronously.
+		if (this.#dialog?.isOpen())
+		{
+			this.#dialog.hide();
+
+			return;
+		}
+
+		// One instance per activation: with cacheable: false every getDialog() call builds a new dialog,
+		// so the target node, the state and the shown popup would belong to different objects.
+		const dialog = this.#userSelector.getDialog();
+		this.#dialog = dialog;
+		dialog.setTargetNode(this.#ui.container.firstElementChild);
+		Dom.attr(this.#ui.info.container, 'aria-expanded', 'true');
+		dialog.show();
 	}
 
 	#onSelectorDialogHide(event): void
 	{
+		// A stale dialog hides after the current one is already shown — its event must not reset the state.
+		if (this.#dialog?.isOpen())
+		{
+			return;
+		}
+
+		this.#dialog = null;
+		Dom.attr(this.#ui.info.container, 'aria-expanded', 'false');
 		this.#onHide(this.getContainerId());
 	}
 

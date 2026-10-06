@@ -14,6 +14,7 @@ export class SidebarDocumentActions
 	#setBranchDocs: (collectionId: number, parentId: number | null, list: SidebarDocument[]) => void;
 	#removeBranch: (collectionId: number, parentId: number | null) => void;
 	#setError: (message: string) => void;
+	#patchFavoriteTitle: (entityType: string, entityId: number, title: mixed) => boolean;
 
 	constructor({
 		api,
@@ -24,6 +25,7 @@ export class SidebarDocumentActions
 		setBranchDocs,
 		removeBranch,
 		setError,
+		patchFavoriteTitle = () => false,
 	}: {
 		api: SidebarApi,
 		state: Object,
@@ -33,6 +35,7 @@ export class SidebarDocumentActions
 		setBranchDocs: (collectionId: number, parentId: number | null, list: SidebarDocument[]) => void,
 		removeBranch: (collectionId: number, parentId: number | null) => void,
 		setError: (message: string) => void,
+		patchFavoriteTitle?: (entityType: string, entityId: number, title: mixed) => boolean,
 	})
 	{
 		this.#api = api;
@@ -41,6 +44,7 @@ export class SidebarDocumentActions
 		this.#keyOf = keyOf;
 		this.#normalizeParentId = normalizeParentId;
 		this.#setBranchDocs = setBranchDocs;
+		this.#patchFavoriteTitle = patchFavoriteTitle;
 		this.#removeBranch = removeBranch;
 		this.#setError = setError;
 	}
@@ -538,7 +542,11 @@ export class SidebarDocumentActions
 			changed = true;
 		}
 
-		return changed;
+		// The favorites block reads its own list, so its copy of the title lives outside the branches
+		// above - and an object can be in the block while no loaded branch of the tree holds it.
+		const favoriteChanged = this.#patchFavoriteTitle('document', normalizedDocId, patch.title);
+
+		return changed || favoriteChanged;
 	}
 
 	removeDocumentLocal(collectionId: number, parentId: number | null, docId: number): boolean

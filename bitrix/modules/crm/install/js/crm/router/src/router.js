@@ -1,15 +1,19 @@
 // eslint-disable-next-line max-classes-per-file
-import { Reflection, Text, Type, Uri } from 'main.core';
-import { MenuItem } from 'main.popup';
+import { Extension, Reflection, Text, Type, Uri } from 'main.core';
+import { type MenuItem } from 'main.popup';
 
 import 'sidepanel';
 
 let instance = null;
 
+const CALL_ASSESSMENT_SLIDER_WIDTH = 1045;
+const LEGACY_CALL_ASSESSMENT_SLIDER_WIDTH = 700;
+
 class ListViewTypes
 {
 	static KANBAN = 'KANBAN';
 	static LIST = 'LIST';
+	static ACTIVITY = 'ACTIVITY';
 }
 
 declare type UrlTemplatesSettings = {
@@ -215,6 +219,10 @@ class Router
 		{
 			template = this.getTemplate('bitrix:crm.item.kanban', entityTypeId);
 		}
+		else if (currentListView === ListViewTypes.ACTIVITY)
+		{
+			template = this.getTemplate('bitrix:crm.item.activities', entityTypeId);
+		}
 		else
 		{
 			template = this.getTemplate('bitrix:crm.item.list', entityTypeId);
@@ -329,6 +337,26 @@ class Router
 		);
 	}
 
+	openCallAssessmentSlider(assessmentSettingId: ?number = null, options: ?Object = {}): Promise<?BX.SidePanel.Slider>
+	{
+		const { legacyWidth, ...restOptions } = Type.isPlainObject(options) ? options : {};
+
+		const route = Type.isInteger(assessmentSettingId)
+			? `/crm/copilot-call-assessment/details/${assessmentSettingId}/`
+			: '/crm/copilot-call-assessment/';
+
+		const isV2Enabled = Extension.getSettings('crm.router').get('isCallScoringV2Enabled') === true;
+		const width = isV2Enabled
+			? CALL_ASSESSMENT_SLIDER_WIDTH
+			: (Type.isNumber(legacyWidth) ? legacyWidth : LEGACY_CALL_ASSESSMENT_SLIDER_WIDTH);
+
+		return Router.openSlider(route, {
+			width,
+			cacheable: false,
+			...restOptions,
+		});
+	}
+
 	closeSettingsMenu(event, item)
 	{
 		if (item && Type.isFunction(item.getMenuWindow))
@@ -382,6 +410,41 @@ class Router
 		{
 			window.location.href = redirectTo;
 		}
+	}
+
+	getAiReportDrawerUrl(scenario: string, drawerRequest: Object = {}): ?Uri
+	{
+		const isAvailableScenario = (
+			Type.isStringFilled(scenario)
+			&& ['call-assessment', 'summary-history'].includes(scenario)
+		);
+		if (!isAvailableScenario)
+		{
+			return null;
+		}
+
+		const queryParams = this.#prepareAiReportDrawerQueryParams(drawerRequest);
+		if (queryParams === null)
+		{
+			return null;
+		}
+
+		return new Uri(`/crm/ai-report-drawer/${scenario}/`).setQueryParams(queryParams);
+	}
+
+	openAiReportDrawer(
+		scenario: string,
+		drawerRequest: Object = {},
+		options: ?Object = {},
+	): ?Promise<?BX.SidePanel.Slider>
+	{
+		const uri = this.getAiReportDrawerUrl(scenario, drawerRequest);
+		if (uri)
+		{
+			return this.#openAiReportDrawerSlider(uri, options);
+		}
+
+		return null;
 	}
 
 	getAutomatedSolutionListUrl(): ?Uri
@@ -461,6 +524,61 @@ class Router
 			[BX.CrmEntityType.enumeration.quote]: `/crm/type/${BX.CrmEntityType.enumeration.quote}/details/#entityId#/`,
 			[BX.CrmEntityType.enumeration.smartinvoice]: `/crm/type/${BX.CrmEntityType.enumeration.smartinvoice}/details/#entityId#/`,
 		};
+	}
+
+	#prepareAiReportDrawerQueryParams(drawerRequest: Object): ?Object
+	{
+		if (!Type.isPlainObject(drawerRequest))
+		{
+			return null;
+		}
+
+		const activityId = Text.toInteger(drawerRequest.activityId);
+		const ownerTypeId = Text.toInteger(drawerRequest.ownerTypeId);
+		const ownerId = Text.toInteger(drawerRequest.ownerId);
+		if (activityId <= 0 || ownerTypeId <= 0 || ownerId <= 0)
+		{
+			return null;
+		}
+
+		const queryParams = {
+			activityId,
+			ownerTypeId,
+			ownerId,
+		};
+
+		const jobId = Text.toInteger(drawerRequest.jobId);
+		if (jobId > 0)
+		{
+			queryParams.jobId = jobId;
+		}
+
+		const assessmentSettingsId = Text.toInteger(drawerRequest.assessmentSettingsId);
+		if (assessmentSettingsId > 0)
+		{
+			queryParams.assessmentSettingsId = assessmentSettingsId;
+		}
+
+		return queryParams;
+	}
+
+	#openAiReportDrawerSlider(
+		uri: Uri,
+		options: ?Object = {},
+	): Promise<?BX.SidePanel.Slider>
+	{
+		const preparedOptions = {
+			width: 800,
+			cacheable: false,
+			allowChangeHistory: false,
+			containerClassName: 'crm-ai-report-drawer-slider',
+			copyLinkLabel: true,
+			newWindowLabel: false,
+			newWindowUrl: uri.toString(),
+			...(Type.isPlainObject(options) ? options : {}),
+		};
+
+		return Router.openSlider(uri, preparedOptions);
 	}
 
 	openMessageSenderConnectionsSlider(analytics: Object = {}): Promise<?BX.SidePanel.Slider>

@@ -19,5 +19,7 @@ $MESS["CRM_ACTIVITY_TODO_ORDER_BECOME_RESPONSIBLE"] = "You are now responsible f
 $MESS["CRM_ACTIVITY_TODO_ORDER_NO_LONGER_RESPONSIBLE"] = "You are no longer responsible for activity \"#SUBJECT#\" in order \"<a href=\"#URL#\" class=\"bx-notifier-item-action\">#ENTITY_TITLE#</a>\".";
 $MESS["CRM_ACTIVITY_TODO_QUOTE_BECOME_RESPONSIBLE"] = "You are now responsible for activity \"#SUBJECT#\" in estimate \"<a href=\"#URL#\" class=\"bx-notifier-item-action\">#ENTITY_TITLE#</a>\".";
 $MESS["CRM_ACTIVITY_TODO_QUOTE_NO_LONGER_RESPONSIBLE"] = "You are no longer responsible for activity \"#SUBJECT#\" in estimate \"<a href=\"#URL#\" class=\"bx-notifier-item-action\">#ENTITY_TITLE#</a>\".";
+$MESS["CRM_ACTIVITY_TODO_RESPONSIBLE_SUBJECT"] = "#AUTHOR# made you a responsible person for the activity <a href=\"#URL#\" class=\"bx-notifier-item-action\">#SUBJECT#</a>.";
+$MESS["CRM_ACTIVITY_TODO_RESPONSIBLE_SUBJECT_EMPTY"] = "#AUTHOR# made you a responsible person for the activity <a href=\"#URL#\" class=\"bx-notifier-item-action\">##TODO_ID#</a>.";
 $MESS["CRM_ACTIVITY_TODO_SMART_INVOICE_BECOME_RESPONSIBLE"] = "You are now responsible for activity \"#SUBJECT#\" in invoice \"<a href=\"#URL#\" class=\"bx-notifier-item-action\">#ENTITY_TITLE#</a>\".";
 $MESS["CRM_ACTIVITY_TODO_SMART_INVOICE_NO_LONGER_RESPONSIBLE"] = "You are no longer responsible for activity \"#SUBJECT#\" in invoice \"<a href=\"#URL#\" class=\"bx-notifier-item-action\">#ENTITY_TITLE#</a>\".";

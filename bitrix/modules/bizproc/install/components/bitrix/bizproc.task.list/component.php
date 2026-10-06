@@ -11,6 +11,12 @@ if (!CModule::IncludeModule('bizproc'))
 }
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Web\Uri;
+use Bitrix\Main\UI\Filter\Options;
+use Bitrix\Bizproc\Api\Service\TaskService;
+use Bitrix\Bizproc\Api\Service\TaskAccessService;
+use Bitrix\Bizproc\Api\Request\TaskService\DelegateTasksRequest;
+use Bitrix\Bizproc\Workflow\WorkflowUserCounters;
 
 global $USER, $APPLICATION;
 
@@ -99,7 +105,7 @@ $arResult['TRACKING'] = [];
 if ($arResult['FatalErrorMessage'] == '' && !$arParams['COUNTERS_ONLY'])
 {
 	$arResult['ERRORS'] = [];
-	$arResult['USE_SUBORDINATION'] = (bool)CModule::IncludeModule('intranet');
+	$arResult['USE_SUBORDINATION'] = CModule::IncludeModule('intranet');
 	$arResult['GRID_ID'] = 'bizproc_task_list';
 	$arResult['FILTER_ID'] = 'bizproc_task_list_filter';
 
@@ -341,7 +347,7 @@ if ($arResult['FatalErrorMessage'] == '' && !$arParams['COUNTERS_ONLY'])
 	if (!empty($_REQUEST['USER_ID']) && !empty($_REQUEST['clear_filter']))
 		unset($_REQUEST['USER_ID']);
 
-	$filterOptions = new \Bitrix\Main\UI\Filter\Options($arResult['FILTER_ID']);
+	$filterOptions = new Options($arResult['FILTER_ID']);
 	$gridFilter = $filterOptions->getFilter();
 
 	if (isset($gridFilter['DOCUMENT_TYPE']))
@@ -461,10 +467,10 @@ if ($arResult['FatalErrorMessage'] == '' && !$arParams['COUNTERS_ONLY'])
 			{
 				$toUserId = is_numeric($_REQUEST['ACTION_DELEGATE_TO_ID']) ? (int)$_REQUEST['ACTION_DELEGATE_TO_ID'] : 0;
 
-				$taskService = new \Bitrix\Bizproc\Api\Service\TaskService(
-					new \Bitrix\Bizproc\Api\Service\TaskAccessService($currentUserId)
+				$taskService = new TaskService(
+					new TaskAccessService($currentUserId)
 				);
-				$request = new \Bitrix\Bizproc\Api\Request\TaskService\DelegateTasksRequest($ids, (int)$targetUserId, $toUserId, $currentUserId);
+				$request = new DelegateTasksRequest($ids, (int)$targetUserId, $toUserId, $currentUserId);
 				$delegateTaskResult = $taskService->delegateTasks($request);
 				if (!$delegateTaskResult->isSuccess())
 				{
@@ -487,7 +493,7 @@ if ($arResult['FatalErrorMessage'] == '' && !$arParams['COUNTERS_ONLY'])
 	$arResult['IS_MY_TASKS'] = $currentUserId == $targetUserId;
 	$arResult['TARGET_USER_ID'] = (int)$targetUserId;
 
-	$useComments = (bool)CModule::IncludeModule("forum");
+	$useComments = CModule::IncludeModule("forum");
 	$workflows = array();
 
 	while ($arRecord = $dbRecordsList->getNext())
@@ -550,7 +556,7 @@ if ($arResult['FatalErrorMessage'] == '' && !$arParams['COUNTERS_ONLY'])
 
 		if (!$arRecord["IS_MY"])
 		{
-			$arRecord["URL"]["TASK"] = CHTTP::urlAddParams($arRecord["URL"]["TASK"], array('USER_ID' => $targetUserId));
+			$arRecord["URL"]["TASK"] = (string)(new Uri($arRecord["URL"]["TASK"]))->addParams(['USER_ID' => $targetUserId]);
 			if (isset($arRecord['PARAMETERS']['AccessControl']) && $arRecord['PARAMETERS']['AccessControl'] == 'Y')
 			{
 				$arRecord["DESCRIPTION"] = '';
@@ -595,7 +601,7 @@ if ($arResult['FatalErrorMessage'] == '' && !$arParams['COUNTERS_ONLY'])
 	}
 
 	$arResult["ROWS_COUNT"] = $dbRecordsList->SelectedRowsCount();
-	$arResult["NAV_STRING"] = $dbRecordsList->GetPageNavStringEx($navComponentObject, Loc::getMessage("INTS_TASKS_NAV"), "", false);
+	$arResult["NAV_STRING"] = $dbRecordsList->GetPageNavStringEx($navComponentObject, Loc::getMessage("INTS_TASKS_NAV"));
 	$arResult["NAV_CACHED_DATA"] = $navComponentObject->GetTemplateCachedData();
 	$arResult["NAV_RESULT"] = $dbRecordsList;
 
@@ -658,7 +664,7 @@ if ($arParams["SHOW_TRACKING"] == "Y")
 	}
 
 	$arResult["H_ROWS_COUNT"] = $dbRecordsList->SelectedRowsCount();
-	$arResult["H_NAV_STRING"] = $dbRecordsList->GetPageNavStringEx($navComponentObject, Loc::getMessage("INTS_TASKS_NAV"), "", false);
+	$arResult["H_NAV_STRING"] = $dbRecordsList->GetPageNavStringEx($navComponentObject, Loc::getMessage("INTS_TASKS_NAV"));
 	$arResult["H_NAV_CACHED_DATA"] = $navComponentObject->GetTemplateCachedData();
 	$arResult["H_NAV_RESULT"] = $dbRecordsList;
 }
@@ -684,7 +690,7 @@ if ($arResult["FatalErrorMessage"] == '')
 	//counter autofixer
 	if (isset($arResult['COUNTERS']['*']))
 	{
-		$userCounters = new \Bitrix\Bizproc\Workflow\WorkflowUserCounters($targetUserId);
+		$userCounters = new WorkflowUserCounters($targetUserId);
 		$userCounters->setTask((int)($arResult['COUNTERS']['*']));
 	}
 }

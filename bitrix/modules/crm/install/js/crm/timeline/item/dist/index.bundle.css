@@ -588,19 +588,33 @@ a.crm-timeline__card-title:hover {
 	        mask-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' viewBox='0 0 24 24'%3E%3Cpath fill='%23525c69' fill-rule='evenodd' d='M14.258 5.905a.5.5 0 0 1 .354-.853h3.95a.5.5 0 0 1 .5.5v3.95a.5.5 0 0 1-.854.353L16.94 8.587l-3.303 3.304a.5.5 0 0 1-.707 0l-.708-.707a.5.5 0 0 1 0-.708l3.304-3.303zm3.669 10.376-1.957-1.466c-.695-.522-1.727-.27-2.234.446l-.58.822a.446.446 0 0 1-.561.12 13.8 13.8 0 0 1-4.393-4.67.434.434 0 0 1 .14-.565l.822-.548c.735-.49 1.038-1.492.559-2.227L8.354 6.192c-.414-.617-1.283-.7-1.828-.194-2.045 1.955-2.938 5.351 1.55 10.096 4.487 4.744 7.896 3.985 9.942 2.03a1.21 1.21 0 0 0-.091-1.843' clip-rule='evenodd'/%3E%3C/svg%3E");
 }
 
-.crm-timeline__card-logo_add-icon.--icon-arrow-incoming > i {
+.crm-timeline__card-logo_add-icon.--icon-mail-incoming > i {
+	margin-top: 2px;
+	margin-left: 2px;
 	background-color: var(--ui-color-background-primary, #ffffff);
-	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='30' fill='none' viewBox='0 -2 30 30'%3E%3Cpath fill='%232fc6f6' d='M16.71 23.35a.625.625 0 0 0 1.067-.441v-4.741h5.348c.345 0 .625-.28.625-.625v-6.25a.625.625 0 0 0-.625-.625h-5.348V6.48a.625.625 0 0 0-1.067-.442l-8.213 8.214a.625.625 0 0 0 0 .884z'/%3E%3C/svg%3E");
+	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='none' viewBox='0 0 29 29'%3E%3Cpath fill='%231f86ff' d='M16.238 6.019a5.6 5.6 0 0 0-.06 2.489h-7.66v8.714h2.987v3.237h5.976v-3.237h2.987V12.87c.39.085.793.133 1.207.133a5.7 5.7 0 0 0 1.284-.15v8.601c0 .825-.67 1.494-1.495 1.494H7.522a1.494 1.494 0 0 1-1.494-1.494V7.512c0-.825.669-1.493 1.494-1.493zm.093 7.343a.796.796 0 0 1 0 1.592h-4.69a.796.796 0 0 1 0-1.592zm-.13-2.776a.872.872 0 0 1 0 1.743h-4.538a.872.872 0 1 1 0-1.743zm5.474-7.018a3.826 3.826 0 1 1 0 7.653 3.826 3.826 0 0 1 0-7.653'/%3E%3C/svg%3E");
+}
+
+.crm-timeline__card-logo_add-icon.--icon-arrow-incoming > i {
+	transform: scale(1, -1) rotateZ(-180deg);
+	margin-top: 2px;
+	margin-left: 2px;
+	background-color: var(--ui-color-background-primary, #ffffff);
+	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='30' fill='none' viewBox='0 0 30 30'%3E%3Cpath fill='%231f86ff' fill-rule='evenodd' d='M25 15c0-5.523-4.477-10-10-10S5 9.477 5 15s4.477 10 10 10 10-4.477 10-10m-15 1.014c0 .26.232.472.517.472h4.427v3.23c0 .259.349.382.54.19l4.247-4.27a.886.886 0 0 0 0-1.272l-4.248-4.27c-.19-.192-.54-.069-.54.19v3.23h-4.426c-.285 0-.517.211-.517.473z' clip-rule='evenodd'/%3E%3C/svg%3E");
 }
 
 .crm-timeline__card-logo_add-icon.--icon-arrow-outgoing > i {
+	margin-top: 2px;
+	margin-left: 2px;
 	background-color: var(--ui-color-background-primary, #ffffff);
-	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='30' fill='none' viewBox='0 -2 30 30'%3E%3Cpath fill='%232fc6f6' d='M15.79 6.04a.625.625 0 0 0-1.067.441v4.741H9.375a.625.625 0 0 0-.625.625v6.25c0 .345.28.625.625.625h5.348v4.187c0 .557.673.836 1.067.442l8.214-8.214a.625.625 0 0 0 0-.884z'/%3E%3C/svg%3E");
+	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='30' fill='none' viewBox='0 0 30 30'%3E%3Cpath fill='%231f86ff' fill-rule='evenodd' d='M25 15c0-5.523-4.477-10-10-10S5 9.477 5 15s4.477 10 10 10 10-4.477 10-10m-15 1.014c0 .26.232.472.517.472h4.427v3.23c0 .259.349.382.54.19l4.247-4.27a.886.886 0 0 0 0-1.272l-4.248-4.27c-.19-.192-.54-.069-.54.19v3.23h-4.426c-.285 0-.517.211-.517.473z' clip-rule='evenodd'/%3E%3C/svg%3E");
 }
 
 .crm-timeline__card-logo_add-icon.--icon-done > i {
+	margin-top: 2px;
+	margin-left: 2px;
 	background-color: var(--ui-color-background-primary, #ffffff);
-	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='30' fill='none' viewBox='-1 -2 30 30'%3E%3Cpath fill='%239dcf00' fill-rule='evenodd' d='m13.796 16.203-2.235-2.235-1.58 1.58 3.73 3.729v-.002l.087.087 6.937-6.937-1.58-1.58zm1.13 8.757c-5.511 0-9.98-4.468-9.98-9.98S9.416 5 14.927 5s9.98 4.468 9.98 9.98-4.468 9.98-9.98 9.98' clip-rule='evenodd'/%3E%3C/svg%3E");
+	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='30' fill='none' viewBox='0 0 30 30'%3E%3Cpath fill='%231bce7b' fill-rule='evenodd' d='m13.796 16.203-2.235-2.235-1.58 1.58 3.73 3.73v-.002l.087.086 6.937-6.937-1.58-1.58zm1.13 8.757c-5.511 0-9.98-4.468-9.98-9.98S9.416 5 14.927 5s9.98 4.468 9.98 9.98-4.468 9.98-9.98 9.98' clip-rule='evenodd'/%3E%3C/svg%3E");
 }
 
 .crm-timeline__card-logo_add-icon.--icon-alert > i {
@@ -798,6 +812,11 @@ a.crm-timeline__card-title:hover {
 .crm-timeline__card-logo_add-icon.--icon-max > i {
 	-webkit-mask-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' fill='none' viewBox='0 0 28 28'%3E%3Cpath fill='%23fff' d='M14.184 2.667c6.25 0 11.149 5.093 11.149 11.366a11.22 11.22 0 0 1-3.23 7.921 11.13 11.13 0 0 1-7.86 3.315c-2.224 0-3.258-.327-5.055-1.631-1.136 1.467-4.735 2.614-4.892.652 0-1.473-.325-2.718-.693-4.077-.439-1.674-.936-3.54-.936-6.24 0-6.452 5.271-11.306 11.517-11.306m.152 5.577c-3.042-.158-5.413 1.957-5.938 5.273-.433 2.745.336 6.087.99 6.261.315.076 1.105-.565 1.597-1.06a5.6 5.6 0 0 0 2.75.984 5.78 5.78 0 0 0 4.13-1.467 5.83 5.83 0 0 0 1.926-3.952 5.83 5.83 0 0 0-1.499-4.137 5.78 5.78 0 0 0-3.956-1.897z'/%3E%3C/svg%3E");
 	        mask-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' fill='none' viewBox='0 0 28 28'%3E%3Cpath fill='%23fff' d='M14.184 2.667c6.25 0 11.149 5.093 11.149 11.366a11.22 11.22 0 0 1-3.23 7.921 11.13 11.13 0 0 1-7.86 3.315c-2.224 0-3.258-.327-5.055-1.631-1.136 1.467-4.735 2.614-4.892.652 0-1.473-.325-2.718-.693-4.077-.439-1.674-.936-3.54-.936-6.24 0-6.452 5.271-11.306 11.517-11.306m.152 5.577c-3.042-.158-5.413 1.957-5.938 5.273-.433 2.745.336 6.087.99 6.261.315.076 1.105-.565 1.597-1.06a5.6 5.6 0 0 0 2.75.984 5.78 5.78 0 0 0 4.13-1.467 5.83 5.83 0 0 0 1.926-3.952 5.83 5.83 0 0 0-1.499-4.137 5.78 5.78 0 0 0-3.956-1.897z'/%3E%3C/svg%3E");
+}
+
+.crm-timeline__card-logo_add-icon.--icon-microphone > i {
+	-webkit-mask-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' viewBox='0 0 24 24'%3E%3Cpath fill='%23c9ccd0' d='M6.017 10.955a.75.75 0 0 1 .731.69l.002.077c-.048 2.215 1.775 5.221 5.24 5.221 3.37 0 5.243-2.863 5.261-4.996l-.004-.203v-.077a.75.75 0 0 1 1.49-.072l.008.076.005.27c-.018 2.658-2.144 6.065-6.005 6.462v1.412h1.63a.75.75 0 0 1 0 1.5H9.616a.75.75 0 0 1 0-1.5h1.628v-1.41c-4.004-.403-6.053-4.024-5.995-6.717l.006-.076a.75.75 0 0 1 .76-.657'/%3E%3Cpath fill='%23c9ccd0' d='M12.163 2.887a3.34 3.34 0 0 1 3.17 3.336v5.359l-.006.17a3.34 3.34 0 0 1-3.335 3.17l-.172-.005a3.34 3.34 0 0 1-3.164-3.164l-.004-.171v-5.36a3.34 3.34 0 0 1 3.34-3.34z'/%3E%3C/svg%3E");
+	        mask-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' viewBox='0 0 24 24'%3E%3Cpath fill='%23c9ccd0' d='M6.017 10.955a.75.75 0 0 1 .731.69l.002.077c-.048 2.215 1.775 5.221 5.24 5.221 3.37 0 5.243-2.863 5.261-4.996l-.004-.203v-.077a.75.75 0 0 1 1.49-.072l.008.076.005.27c-.018 2.658-2.144 6.065-6.005 6.462v1.412h1.63a.75.75 0 0 1 0 1.5H9.616a.75.75 0 0 1 0-1.5h1.628v-1.41c-4.004-.403-6.053-4.024-5.995-6.717l.006-.076a.75.75 0 0 1 .76-.657'/%3E%3Cpath fill='%23c9ccd0' d='M12.163 2.887a3.34 3.34 0 0 1 3.17 3.336v5.359l-.006.17a3.34 3.34 0 0 1-3.335 3.17l-.172-.005a3.34 3.34 0 0 1-3.164-3.164l-.004-.171v-5.36a3.34 3.34 0 0 1 3.34-3.34z'/%3E%3C/svg%3E");
 }
 
 .crm-timeline__client-communication-wrapper {
@@ -1131,7 +1150,7 @@ a.crm-timeline__card-title:hover {
 	box-sizing: border-box;
 	position: relative;
 	gap: var(--ui-space-inline-xs2);
-	padding-top: var(--ui-space-inset-sm);
+	padding-top: var(--ui-space-inset-xs);
 	border-top: var(--ui-border-width-thin) solid var(--border-color);
 	animation: crm-timeline__call-scoring-v2-fade-in 400ms ease forwards;
 }
@@ -1149,6 +1168,7 @@ a.crm-timeline__card-title:hover {
 }
 
 .crm-timeline__call-scoring-v2-chart {
+	cursor: pointer;
 	flex-shrink: 0;
 	display: flex;
 	align-items: center;
@@ -1175,7 +1195,7 @@ a.crm-timeline__card-title:hover {
 
 .script-layout .script-layout-header {
 	flex-shrink: 0;
-	font-size: var(--ui-font-size-sm);
+	font-size: var(--ui-font-size-md);
 	font-weight: var(--ui-font-weight-normal);
 	color: var(--ui-color-base-60);
 	line-height: var(--ui-font-line-height-md);
@@ -1195,6 +1215,10 @@ a.crm-timeline__card-title:hover {
 	text-overflow: ellipsis;
 	white-space: nowrap;
 	min-width: 0;
+}
+
+.crm-timeline__call-scoring-v2-content .body .summary-text {
+	cursor: pointer;
 }
 
 .crm-timeline__call-scoring-v2-content .body .details-link {
@@ -1236,6 +1260,14 @@ a.crm-timeline__card-title:hover {
 	width: 20px;
 	height: 20px;
 	margin-right: 4px;
+}
+
+.ui-btn.ui-btn-icon-ai::before,
+.ui-btn.ui-btn-icon-ai .ui-btn-main::before,
+.ui-btn.ui-btn-icon-ai::after,
+.ui-btn.ui-btn-icon-ai .ui-btn-main::after {
+	animation-duration: 0s !important;
+	animation-delay: 0s !important;
 }
 
 .crm-timeline__card-note {
@@ -1347,6 +1379,7 @@ a.crm-timeline__card-title:hover {
 	background-color: transparent;
 	outline: none;
 	resize: none;
+	overflow: hidden;
 	word-break: break-word;
 	font-family: inherit;
 	font-size: var(--ui-font-size-md, 14px);
@@ -2298,6 +2331,11 @@ a.crm-timeline__card-title:hover {
 	--crm-timeline__editable-text_max-height: 66px;
 }
 
+.crm-timeline__editable-text.--height-auto .crm-timeline__editable-text_inner {
+	max-height: none;
+	overflow: unset;
+}
+
 .crm-timeline__editable-text.--is-expanded .crm-timeline__editable-text_inner {
 	max-height: none;
 	overflow: unset;
@@ -2995,7 +3033,7 @@ a.crm-timeline__card-title:hover {
 	padding: 0 5px;
 	background: none;
 	border: none;
-	color: var(--ui-color-primary, #2fc6f6);
+	color: #2066b0;
 	pointer-events: none;
 }
 
@@ -3014,15 +3052,32 @@ a.crm-timeline__card-title:hover {
 .crm-entity-stream-advice-link {
 	display: inline-block;
 	margin-top: 3px;
+	padding: 0;
+	border: 0;
 	border-bottom: 1px dashed rgba(130,139,149,.4);
 	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
-	color: #80868e;
+	color: var(--ui-color-base-2, #525c69);
+	background: none;
+	text-align: inherit;
+	cursor: pointer;
 	transition: border-bottom .3s;
 }
 
 .crm-entity-stream-advice-link:hover {
 	border-bottom: 1px dashed transparent;
-	color: #80868e;
+	color: var(--ui-color-base-1, #333333);
+}
+
+.crm-entity-stream-advice-link:focus-visible,
+html[data-input-modality="keyboard"] .crm-entity-stream-advice-link:focus:not(:focus-visible) {
+	outline-style: solid;
+	outline-color: var(--ui-color-focus-outline, #4A9DFF);
+	outline-width: var(--ui-focus-outline-width, 2px);
+	outline-offset: var(--ui-focus-outline-offset, 2px);
+}
+
+html[data-input-modality="pointer"] .crm-entity-stream-advice-link:focus-visible {
+	outline: none;
 }
 
 /*** Vue's built-in animation Demo ***/

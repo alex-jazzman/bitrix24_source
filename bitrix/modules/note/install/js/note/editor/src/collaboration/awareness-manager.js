@@ -15,6 +15,9 @@ export class AwarenessManager
 	#userId: number;
 	#userName: string;
 	#userColor: string;
+	#userAvatar: string | null;
+	#getMode: () => string;
+	#onParticipantsChange: (participants: Array) => void;
 	#hasPendingUpdates: () => boolean;
 
 	#heartbeatTimer: number | null;
@@ -32,6 +35,9 @@ export class AwarenessManager
 		userId,
 		userName,
 		userColor,
+		userAvatar = null,
+		getMode = () => 'view',
+		onParticipantsChange = () => {},
 		hasPendingUpdates = () => false,
 	}: {
 		awareness: Object,
@@ -39,6 +45,9 @@ export class AwarenessManager
 		userId: number,
 		userName: string,
 		userColor: string,
+		userAvatar?: string | null,
+		getMode?: () => string,
+		onParticipantsChange?: (participants: Array) => void,
 		hasPendingUpdates?: () => boolean,
 	})
 	{
@@ -47,6 +56,9 @@ export class AwarenessManager
 		this.#userId = userId;
 		this.#userName = userName;
 		this.#userColor = userColor;
+		this.#userAvatar = userAvatar;
+		this.#getMode = getMode;
+		this.#onParticipantsChange = onParticipantsChange;
 		this.#hasPendingUpdates = hasPendingUpdates;
 
 		this.#heartbeatTimer = null;
@@ -71,6 +83,8 @@ export class AwarenessManager
 			userId: this.#userId,
 			name: this.#userName,
 			color: this.#userColor,
+			avatar: this.#userAvatar,
+			mode: this.#getMode(),
 		});
 
 		this.#startHeartbeat();
@@ -90,6 +104,50 @@ export class AwarenessManager
 			userId: this.#userId,
 			position: null,
 		});
+	}
+
+	// Called when the local user toggles view/edit — re-broadcast so peers refresh the participant chip.
+	broadcastMode(): void
+	{
+		if (this.#isDestroyed)
+		{
+			return;
+		}
+
+		this.#sendAwarenessMessage({
+			type: 'heartbeat',
+			userId: this.#userId,
+			name: this.#userName,
+			color: this.#userColor,
+			avatar: this.#userAvatar,
+			mode: this.#getMode(),
+		});
+	}
+
+	getParticipants(): Array
+	{
+		const participants = [];
+		for (const userId of this.#remoteUsers.keys())
+		{
+			const syntheticClientId = this.#getSyntheticClientId(userId);
+			const state = this.#awareness?.states?.get(syntheticClientId);
+			const user = state?.user;
+			if (!user)
+			{
+				continue;
+			}
+
+			participants.push({
+				id: userId,
+				name: String(user.name || ''),
+				color: String(user.color || '#999999'),
+				avatar: typeof user.avatar === 'string' && user.avatar !== '' ? user.avatar : null,
+				mode: user.mode === 'edit' ? 'edit' : 'view',
+				hasCursor: Boolean(state?.cursor),
+			});
+		}
+
+		return participants;
 	}
 
 	leave(): void
@@ -160,19 +218,21 @@ export class AwarenessManager
 
 		const name = String(params.name || '');
 		const color = String(params.color || '#999999');
+		const avatar = typeof params.avatar === 'string' && params.avatar !== '' ? params.avatar : null;
+		const mode = params.mode === 'edit' ? 'edit' : 'view';
 
 		switch (params?.type)
 		{
 			case 'join':
-				this.#addOrRefreshRemoteUser(remoteUserId, name, color);
+				this.#addOrRefreshRemoteUser(remoteUserId, name, color, avatar, mode);
 				this.#sendPresenceResponse();
 				break;
 			case 'heartbeat':
-				this.#addOrRefreshRemoteUser(remoteUserId, name, color);
+				this.#addOrRefreshRemoteUser(remoteUserId, name, color, avatar, mode);
 				break;
 
 			case 'presence':
-				this.#addOrRefreshRemoteUser(remoteUserId, name, color);
+				this.#addOrRefreshRemoteUser(remoteUserId, name, color, avatar, mode);
 				if (params.position !== null && params.position !== undefined)
 				{
 					this.#updateRemoteCursor(remoteUserId, params.position);
@@ -192,7 +252,7 @@ export class AwarenessManager
 		}
 	}
 
-	#addOrRefreshRemoteUser(userId: number, name: string, color: string): void
+	#addOrRefreshRemoteUser(userId: number, name: string, color: string, avatar: string | null = null, mode: string = 'view'): void
 	{
 		const syntheticClientId = this.#getSyntheticClientId(userId);
 		const wasNew = !this.#remoteUsers.has(userId);
@@ -200,9 +260,17 @@ export class AwarenessManager
 		this.#remoteUsers.set(userId, this.#nowSeconds());
 
 		const existingState = this.#awareness.states.get(syntheticClientId) || {};
+		const existingUser = existingState.user || {};
 		const newState = {
 			...existingState,
-			user: { id: userId, name, color },
+			// Cursor-only messages don't carry name/avatar — keep the last known values on refresh.
+			user: {
+				id: userId,
+				name: name || existingUser.name || '',
+				color: color || existingUser.color || '#999999',
+				avatar: avatar ?? existingUser.avatar ?? null,
+				mode,
+			},
 		};
 
 		this.#awareness.states.set(syntheticClientId, newState);
@@ -403,6 +471,8 @@ export class AwarenessManager
 			userId: this.#userId,
 			name: this.#userName,
 			color: this.#userColor,
+			avatar: this.#userAvatar,
+			mode: this.#getMode(),
 			position: this.#awareness?.getLocalState()?.cursor ?? null,
 		});
 	}
@@ -416,6 +486,8 @@ export class AwarenessManager
 				userId: this.#userId,
 				name: this.#userName,
 				color: this.#userColor,
+				avatar: this.#userAvatar,
+				mode: this.#getMode(),
 			});
 		}, HEARTBEAT_INTERVAL_MS);
 	}
@@ -488,6 +560,19 @@ export class AwarenessManager
 		if (added.length > 0 || updated.length > 0 || removed.length > 0)
 		{
 			this.#awareness.emit('update', [{ added, updated, removed }, 'remote']);
+		}
+
+		if (added.length > 0 || updated.length > 0 || removed.length > 0)
+		{
+			this.#notifyParticipants();
+		}
+	}
+
+	#notifyParticipants(): void
+	{
+		if (typeof this.#onParticipantsChange === 'function')
+		{
+			this.#onParticipantsChange(this.getParticipants());
 		}
 	}
 

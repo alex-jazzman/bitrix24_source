@@ -23,5 +23,9 @@ $APPLICATION->IncludeComponent(
 $this->EndViewTarget();
 Bitrix\Main\UI\Extension::load(['crm.restriction.bitrix24']);
 
-print (\Bitrix\Crm\Tour\CopilotCallAssessment::getInstance())->build();
-echo Bitrix\Crm\Tour\RepeatSale\ConfigureSegment::getInstance()->build();
+// @todo Remove later, once version v2 becomes the default
+print Bitrix\Crm\Tour\CopilotCallAssessment::getInstance()->build();
+
+print Bitrix\Crm\Tour\RepeatSale\ConfigureSegment::getInstance()->build();
+print Bitrix\Crm\Tour\CallScoringV2::getInstance()->build();
+print Bitrix\Crm\Tour\CallScoringV2Promo::getInstance()->build();

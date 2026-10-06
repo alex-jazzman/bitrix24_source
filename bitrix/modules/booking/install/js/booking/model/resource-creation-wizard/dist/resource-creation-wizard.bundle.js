@@ -32,11 +32,11 @@ this.BX.Booking = this.BX.Booking || {};
 			isInfoNotificationOn: false,
 			isDelayedNotificationOn: false,
 			isReminderNotificationOn: false,
-			templateTypeConfirmation: 'animate',
-			templateTypeFeedback: 'animate',
-			templateTypeInfo: 'animate',
-			templateTypeDelayed: 'animate',
-			templateTypeReminder: 'base',
+			templateTypeConfirmation: booking_const.NotificationTemplateType.Animate,
+			templateTypeFeedback: booking_const.NotificationTemplateType.Animate,
+			templateTypeInfo: booking_const.NotificationTemplateType.Animate,
+			templateTypeDelayed: booking_const.NotificationTemplateType.Animate,
+			templateTypeReminder: booking_const.NotificationTemplateType.Base,
 			createdBy: 0,
 			createdAt: 0,
 			updatedAt: null,
@@ -56,6 +56,7 @@ this.BX.Booking = this.BX.Booking || {};
 				resourceName: '',
 				resourceAvatarFile: null,
 				resource: getEmptyResource(),
+				templateTypePreselectionContext: null,
 				advertisingResourceTypes: [],
 				companyScheduleSlots: [],
 				fetching: false,
@@ -81,6 +82,10 @@ this.BX.Booking = this.BX.Booking || {};
 				getResource: state => state.resource,
 				/** @function resource-creation-wizard/getResourceAvatarFile */
 				getResourceAvatarFile: state => state.resourceAvatarFile,
+				/** @function resource-creation-wizard/templateTypePreselectionContext */
+				templateTypePreselectionContext: state => {
+					return state.templateTypePreselectionContext;
+				},
 				/** @function resource-creation-wizard/isSaving */
 				isSaving: state => state.isSaving,
 				/** @function resource-creation-wizard/getCompanyScheduleSlots */
@@ -373,6 +378,9 @@ this.BX.Booking = this.BX.Booking || {};
 				},
 				setResourceAvatarFile(state, file) {
 					state.resourceAvatarFile = file;
+				},
+				setTemplateTypePreselectionContext(state, context) {
+					state.templateTypePreselectionContext = context;
 				},
 				setAdvertisingTypes(state, types) {
 					state.advertisingResourceTypes = types;

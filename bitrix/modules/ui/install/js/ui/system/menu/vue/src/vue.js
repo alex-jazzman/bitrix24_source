@@ -1,6 +1,8 @@
 import { Text } from 'main.core';
-import { Menu, type MenuOptions } from 'ui.system.menu';
-export * from 'ui.system.menu';
+import { Menu, type MenuOptions, type MenuItemOptions } from 'ui.system.menu';
+
+export { Menu, MenuItemDesign, MenuSectionDesign, MenuRichHeaderDesign } from 'ui.system.menu';
+export type { MenuOptions, MenuItemOptions, MenuSectionOptions } from 'ui.system.menu';
 
 export const BMenu = {
 	name: 'BMenu',
@@ -32,6 +34,18 @@ export const BMenu = {
 					onDestroy: this.handleClose,
 				},
 			};
+		},
+	},
+	watch: {
+		'options.items': {
+			deep: true,
+			handler(items: MenuItemOptions[]): void
+			{
+				// The rest of the options belongs to the instance and is read once, but the
+				// items are the menu's content: a consumer keeps them in its own state, so
+				// they follow it — in place, with the open submenu and the focus preserved.
+				this.menu?.updateItems(items);
+			},
 		},
 	},
 	mounted(): void

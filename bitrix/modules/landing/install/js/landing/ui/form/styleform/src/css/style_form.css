@@ -28,6 +28,11 @@
 	cursor: pointer;
 }
 
+.landing-ui-form-style .landing-ui-form-header:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary, #0075ff);
+	outline-offset: 2px;
+}
+
 .landing-ui-form-style .landing-ui-form-header .landing-ui-form-header-text {
 	display: inline-block;
 	border-bottom: 1px transparent dashed;

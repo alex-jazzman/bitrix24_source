@@ -12,12 +12,18 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 $description = (new \Bitrix\Bizproc\Activity\ActivityDescription(
 	Loc::getMessage('BPSCT_DESCR_NAME'),
 	Loc::getMessage('BPSCT_DESCR_DESCR'),
-	[\Bitrix\Bizproc\Activity\Enum\ActivityType::TRIGGER->value]
+	[\Bitrix\Bizproc\Activity\Enum\ActivityType::TRIGGER->value],
 ))
 	->setClass('ScheduledTrigger')
 	->setGroups([
 		\Bitrix\Bizproc\Activity\Enum\ActivityGroup::STARTER->value,
 		\Bitrix\Bizproc\Activity\Enum\ActivityGroup::WORKFLOW->value,
+	])
+	->setReturn([
+		'ScheduledAt' => [
+			'Name' => (string)Loc::getMessage('BPSCT_RETURN_SCHEDULED_AT'),
+			'Type' => \Bitrix\Bizproc\FieldType::DATETIME,
+		],
 	])
 	->setIcon(\Bitrix\Ui\Public\Enum\IconSet\Outline::CALENDAR_WITH_SLOTS->name)
 	->setColorIndex(\Bitrix\Bizproc\Activity\Enum\ActivityColorIndex::GREY->value)

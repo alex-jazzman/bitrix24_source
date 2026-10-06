@@ -63,3 +63,5 @@ export class Manager
 		);
 	}
 }
+
+export const managerInstance = new Manager();

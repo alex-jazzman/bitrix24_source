@@ -24,6 +24,9 @@ $MESS["CRM_ACTIVITY_TODO_CALENDAR_BLOCK_ROOMS_LIST"] = "выбрать";
 $MESS["CRM_ACTIVITY_TODO_CALENDAR_BLOCK_ROOMS_CAPACITY"] = "#CAPACITY_VALUE# мест";
 $MESS["CRM_ACTIVITY_TODO_CALENDAR_BLOCK_ROOMS_ENTITY_TITLE"] = "Место проведения";
 $MESS["CRM_ACTIVITY_TODO_CALENDAR_BLOCK_CHANGE_ACTION"] = "изменить";
+$MESS["CRM_ACTIVITY_TODO_CALENDAR_PLANNER_LIMIT_WARNING"] = "Выбрано слишком много участников — #COUNT# при максимуме #MAX#. Показываем занятость #MAX# участников";
+$MESS["CRM_ACTIVITY_TODO_CALENDAR_PLANNER_LOAD_ERROR"] = "Не удалось загрузить занятость участников, попробуйте ещё раз";
+$MESS["CRM_ACTIVITY_TODO_CALENDAR_PARTICIPANTS_AUTHOR_ONLY"] = "Изменять участников события может только автор дела";
 
 $MESS["CRM_ACTIVITY_TODO_CLIENT_BLOCK_TITLE"] = "Клиент";
 $MESS["CRM_ACTIVITY_TODO_CLIENT_BLOCK_CHANGE_ACTION"] = "изменить";
@@ -53,3 +56,5 @@ $MESS["CRM_ACTIVITY_TODO_CONFIRM_DIALOG_OK_BUTTON"] = "Перейти к ред�
 
 $MESS["CRM_ACTIVITY_TODO_PING_SELECTOR_HINT"] = "Напомнить";
 $MESS["CRM_ACTIVITY_TODO_COLOR_SELECTOR_HINT"] = "Сменить цвет";
+
+$MESS["CRM_ACTIVITY_TODO_EDITOR_V2_CALENDAR_EVENT_ACCESS_DENIED"] = "Недостаточно прав на изменение события календаря, привязанного к делу";

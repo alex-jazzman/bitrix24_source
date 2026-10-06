@@ -46,7 +46,7 @@ export class WorkTimeReportReview
 			maxHeight: 850,
 			closeByEsc: true,
 			closeIcon: true,
-			autoHide: false,
+			autoHide: true,
 			angle: false,
 			padding: 20,
 			overlay: true,

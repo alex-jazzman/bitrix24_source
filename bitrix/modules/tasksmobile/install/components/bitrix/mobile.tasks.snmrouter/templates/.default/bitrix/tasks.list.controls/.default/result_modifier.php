@@ -1,5 +1,10 @@
-<?if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
-use \Bitrix\Tasks\Internals\Counter;
+<?php
+
+if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
+	die();
+
+use Bitrix\Tasks\Internals\Counter;
+use Bitrix\Main\Web\Uri;
 
 /**
  * @var array $arParams
@@ -22,10 +27,12 @@ if (($arParams['SHOW_SECTIONS_BAR'] === 'Y') || ($arParams['SHOW_FILTER_BAR'] ==
 	{
 		foreach($arResult['VIEW_STATE']['ROLES'] as $roleCode => $item)
 		{
-			$parameters = array(
-				'F_STATE[0]' => 'sR'.base_convert($item['ID'], 10, 32),
-				'F_STATE[1]' => 'sC'.base_convert(CTaskListState::VIEW_TASK_CATEGORY_IN_PROGRESS, 10, 32),
-			);
+			$parameters = [
+				'F_STATE' => [
+					0 => 'sR'.base_convert($item['ID'], 10, 32),
+					1 => 'sC'.base_convert(CTaskListState::VIEW_TASK_CATEGORY_IN_PROGRESS, 10, 32),
+				]
+			];
 			if ($arResult['F_CREATED_BY'])
 				$parameters["F_CREATED_BY"] = (int) $arResult['F_CREATED_BY'];
 			if ($arResult['F_RESPONSIBLE_ID'])
@@ -35,7 +42,7 @@ if (($arParams['SHOW_SECTIONS_BAR'] === 'Y') || ($arParams['SHOW_FILTER_BAR'] ==
 				'ID' => $item['ID'],
 				'CODE' => $roleCode,
 				'TITLE' => $item['TITLE'],
-				'URL' => CHTTP::urlAddParams($arResult['PATH_TEMPLATE'], $parameters),
+				'URL' => (string)(new Uri($arResult['PATH_TEMPLATE']))->addParams($parameters),
 				'COUNTER' => (is_array($arResult['VIEW_COUNTERS']['ROLES'][$roleCode]['TOTAL']) ?
 						$arResult['VIEW_COUNTERS']['ROLES'][$roleCode] :
 						array(
@@ -116,7 +123,8 @@ if (($arParams['SHOW_SECTIONS_BAR'] === 'Y') || ($arParams['SHOW_FILTER_BAR'] ==
 					$c["VALUE"] = $c["COUNTER"];
 					unset($c["COUNTER"]);
 				}
-				$c["URL"] = CHTTP::urlAddParams($arResult['PATH_TEMPLATE'], array_merge($parameters, array("F_STATE[1]" => 'sC'.base_convert($c["ID"], 10, 32))));
+				$parameters['F_STATE'][1] = 'sC'.base_convert($c["ID"], 10, 32);
+				$c["URL"] = (string)(new Uri($arResult['PATH_TEMPLATE']))->addParams($parameters);
 			}
 		}
 	}
@@ -127,14 +135,14 @@ if (($arParams['SHOW_SECTIONS_BAR'] === 'Y') || ($arParams['SHOW_FILTER_BAR'] ==
 		{
 			$parameters = array(
 				'F_FILTER_SWITCH_PRESET' => $presetId,
-				'F_STATE[0]' => 'sC'.base_convert(CTaskListState::VIEW_TASK_CATEGORY_ALL, 10, 32),
+				'F_STATE' => [0 => 'sC'.base_convert(CTaskListState::VIEW_TASK_CATEGORY_ALL, 10, 32)],
 			);
 
 			$data['ITEMS'][$presetId] = array(
 				'ID' => $presetId,
 				'CODE' => $presetData["CODE"],
 				'TITLE' => $presetData['TITLE'],
-				'URL' => CHTTP::urlAddParams($arResult['PATH_TEMPLATE'], $parameters),
+				'URL' => (string)(new Uri($arResult['PATH_TEMPLATE']))->addParams($parameters),
 				'COUNTER' => array(
 					'TOTAL' => array(
 						'VALUE' => 0,
@@ -153,7 +161,7 @@ if (($arParams['SHOW_SECTIONS_BAR'] === 'Y') || ($arParams['SHOW_FILTER_BAR'] ==
 		'ID' => 'ALL',
 		'CODE' => 'ALL',
 		'TITLE' => GetMessage('MB_TASKS_PANEL_TAB_ALL'),
-		'URL' => CHTTP::urlAddParams($arResult['PATH_TEMPLATE'], $parameters),
+		'URL' => (string)(new Uri($arResult['PATH_TEMPLATE']))->addParams($parameters),
 		'COUNTER' => array(
 			'TOTAL' => array(
 				'VALUE' => 0,

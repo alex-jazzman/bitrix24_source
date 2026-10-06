@@ -2,54 +2,114 @@ import { Loc, Type } from 'main.core';
 import { Dialog, type EntityOptions, type Item, type ItemOptions, type TabOptions } from 'ui.entity-selector';
 
 import { diagramStore } from '../../../../entities/blocks';
-import { type ConditionExpressionField } from '../../../../entities/node-settings';
-import { type PortId, type Block } from '../../../../shared/types';
+import { FIELD_OBJECT_TYPES, type ConditionExpressionField } from '../../../../entities/node-settings';
+import { isTemplateSourceAvailableForBlockType } from '../../../../shared/constants';
+import { type PortId, type Block, type DocumentField } from '../../../../shared/types';
+import { documentFieldsCache } from '../../../../shared/utils';
 
 const CustomDataFieldKey = 'field';
+
+// Selectors whose dialog is still being assembled, keyed by the element they open over: `show()`
+// awaits the fields of the document, and on a cache miss a second click within that window would
+// open a second dialog over the same control. The key is the control and not the instance because
+// the caller builds a fresh FieldSelector on every click. The entry lives only until the dialog is
+// on screen — from there a repeated click is handled by the open dialog itself, as it was while
+// `show()` was synchronous.
+const pendingShows: WeakMap<Element, Promise<ConditionExpressionField>> = new WeakMap();
 
 export class FieldSelector
 {
 	store: diagramStore;
 	currentBlock: Block;
-	currentPortId: PortId;
+	// Null when the panel holds no current rule (it is being closed or reopened): the ancestors are
+	// then collected without filtering the incoming connections by a port.
+	currentPortId: PortId | null;
 	connectedBlocks: Array<Block> | null;
+	// Document the `Document` object of this condition is evaluated against, or null when the node
+	// addresses none. Decided by the caller (see EditConditionExpression.conditionDocumentType): the
+	// selector only offers what it is given.
+	documentType: Array<string> | null;
 
 	constructor(
 		currentBlock: Block,
-		currentPortId: PortId,
+		currentPortId: PortId | null = null,
 		connectedBlocks: Array<Block> | null = null,
+		documentType: Array<string> | null = null,
 	)
 	{
 		this.store = diagramStore();
 		this.currentBlock = currentBlock;
 		this.currentPortId = currentPortId;
 		this.connectedBlocks = connectedBlocks;
+		this.documentType = documentType;
 	}
 
+	/**
+	 * The dialog of the control, and the field picked in it. A click landing while the previous one
+	 * is still loading its items is swallowed into that call: both settle on the single dialog it
+	 * opens, instead of stacking a second one over the control.
+	 */
 	show(targetElement: Element): Promise<ConditionExpressionField>
 	{
-		return new Promise((resolve) => {
-			const dialog = new Dialog({
-				targetNode: targetElement,
-				width: 500,
-				height: 300,
-				multiple: false,
-				dropdownMode: true,
-				enableSearch: true,
-				items: this.#getItems(),
-				tabs: this.#getTabs(),
-				entities: this.#getEntities(),
-				cacheable: false,
-				showAvatars: false,
-				events: {
-					'Item:onSelect': (event) => {
-						resolve(this.#getValue(event.getData().item));
-					},
-				},
-				compactView: true,
-			});
+		const pending = pendingShows.get(targetElement);
+		if (pending)
+		{
+			return pending;
+		}
 
-			dialog.show();
+		const selection = this.#openDialog(targetElement);
+		pendingShows.set(targetElement, selection);
+
+		return selection;
+	}
+
+	async #openDialog(targetElement: Element): Promise<ConditionExpressionField>
+	{
+		let items;
+		try
+		{
+			items = await this.getItems();
+		}
+		catch (error)
+		{
+			pendingShows.delete(targetElement);
+
+			throw error;
+		}
+
+		return new Promise((resolve) => {
+			try
+			{
+				const dialog = new Dialog({
+					targetNode: targetElement,
+					width: 500,
+					height: 300,
+					multiple: false,
+					dropdownMode: true,
+					enableSearch: true,
+					items,
+					tabs: this.#getTabs(),
+					entities: this.#getEntities(),
+					cacheable: false,
+					showAvatars: false,
+					events: {
+						'Item:onSelect': (event) => {
+							resolve(this.#getValue(event.getData().item));
+						},
+					},
+					compactView: true,
+				});
+
+				dialog.show();
+			}
+			finally
+			{
+				// On screen: the window a second click could duplicate the dialog in is over, while
+				// the promise itself stays pending until an item is picked. Dropped on a throw of the
+				// dialog as well — a rejected promise left in the map would lock the control out of
+				// ever opening a selector again, while the next click may well succeed.
+				pendingShows.delete(targetElement);
+			}
 		});
 	}
 
@@ -98,12 +158,69 @@ export class FieldSelector
 		];
 	}
 
-	#getItems(): ItemOptions[]
+	async getItems(): Promise<ItemOptions[]>
 	{
-		const items = this.getReturnItems();
+		const items = await this.getDocumentItems();
+		items.push(...this.getReturnItems());
 		this.addTemplateItems(items);
 
 		return items;
+	}
+
+	/**
+	 * Fields of the document this condition is evaluated against, as a single root of the selector.
+	 * Empty for a node addressing no document (documentType is null) and for a document that answers
+	 * with no field at all.
+	 * The fields come through the shared cache, warmed by the panel on load (fetchNodeSettings), so
+	 * opening the menu normally costs no request.
+	 */
+	async getDocumentItems(): Promise<ItemOptions[]>
+	{
+		if (!Type.isArrayFilled(this.documentType))
+		{
+			return [];
+		}
+
+		const fields: Array<DocumentField> = await documentFieldsCache.fetchFields(this.documentType);
+		if (!Type.isArrayFilled(fields))
+		{
+			return [];
+		}
+
+		return [{
+			id: FIELD_OBJECT_TYPES.DOCUMENT,
+			entityId: 'document',
+			tabs: 'documents',
+			title: Loc.getMessage('BIZPROCDESIGNER_EDITOR_DOCUMENT'),
+			searchable: false,
+			children: fields.map((field: DocumentField) => ({
+				id: `${FIELD_OBJECT_TYPES.DOCUMENT}:${field.fieldKey}`,
+				entityId: 'document-field',
+				title: field.name,
+				customData: {
+					[CustomDataFieldKey]: this.#toDocumentConditionField(field),
+				},
+			})),
+		}];
+	}
+
+	/**
+	 * A document field as the condition addresses it: the very shape the server reads back
+	 * (object `Document` plus the field key), the rest types the value control. An empty option list
+	 * is no list at all: the same `?? null` the template sources use.
+	 */
+	#toDocumentConditionField(field: DocumentField): ConditionExpressionField
+	{
+		const hasOptions = Type.isPlainObject(field.options) && Object.keys(field.options).length > 0;
+
+		return {
+			object: FIELD_OBJECT_TYPES.DOCUMENT,
+			fieldId: field.fieldKey,
+			type: field.type,
+			multiple: field.multiple,
+			options: hasOptions ? field.options : null,
+			settings: field.property?.Settings ?? null,
+		};
 	}
 
 	addTemplateItems(items: ItemOptions[]): void
@@ -126,7 +243,9 @@ export class FieldSelector
 			},
 		];
 
-		map.forEach((elem) => {
+		map.filter(
+			(elem) => isTemplateSourceAvailableForBlockType(this.currentBlock?.type, elem.key),
+		).forEach((elem) => {
 			const collection = this.store.template[elem.key];
 			if (Type.isObject(collection) && Object.keys(collection).length > 0)
 			{

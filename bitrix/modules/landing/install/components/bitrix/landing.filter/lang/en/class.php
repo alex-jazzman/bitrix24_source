@@ -1,0 +1,3 @@
+<?php
+$MESS["LANDING_FILTER_EMPTY_PAGE_TITLE"] = "Empty page";
+$MESS["LANDING_FILTER_EMPTY_SITE_TITLE"] = "Empty template";

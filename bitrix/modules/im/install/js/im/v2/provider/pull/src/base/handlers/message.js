@@ -90,18 +90,19 @@ export class MessagePullHandler
 		// it's an opponent message or our own message from somewhere else
 		else if (!messageWithRealId && !messageWithTemplateId)
 		{
-			const hasLoadingMessage: boolean = this.#store.getters['messages/hasLoadingMessageByMessageId'](
-				params.message.templateId,
-			);
-			if (hasLoadingMessage)
-			{
-				void this.#store.dispatch('messages/delete', {
-					id: params.message.templateId,
-				});
-			}
-
 			Logger.warn('New message pull handler: we dont have this message', params.message);
 			this.#handleAddingMessageToModel(params);
+		}
+
+		// the loading message has to be dropped no matter which branch handled the message
+		const hasLoadingMessage: boolean = this.#store.getters['messages/hasLoadingMessageByMessageId'](
+			params.message.templateId,
+		);
+		if (hasLoadingMessage)
+		{
+			void this.#store.dispatch('messages/delete', {
+				id: params.message.templateId,
+			});
 		}
 
 		InputActionListener.getInstance().stopAction({
@@ -214,17 +215,24 @@ export class MessagePullHandler
 	handleReadMessage(params: ReadMessageParams)
 	{
 		Logger.warn('MessagePullHandler: handleReadMessage', params);
-		const { chatId, dialogId, viewedMessages, lastId } = params;
+		const { chatId, dialogId, viewedMessages, lastId, exact } = params;
 
 		void this.#store.dispatch('messages/readMessages', {
 			chatId,
 			messageIds: viewedMessages,
+			exact,
 		});
 
-		void this.#store.dispatch('chats/update', {
-			dialogId,
-			fields: { lastId },
-		});
+		// Exact read: the server cursor didn't move, lastId here is the old value.
+		// Don't update lastReadId so the cursor isn't rolled back. Normal read (no flag) —
+		// prior behavior.
+		if (!exact)
+		{
+			void this.#store.dispatch('chats/update', {
+				dialogId,
+				fields: { lastId },
+			});
+		}
 	}
 
 	handleReadMessageOpponent(params: ReadMessageOpponentParams)

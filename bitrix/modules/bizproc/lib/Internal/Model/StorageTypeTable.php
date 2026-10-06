@@ -51,7 +51,6 @@ use Bitrix\Main\Localization\Loc;
  */
 class StorageTypeTable  extends DataManager
 {
-	public const MAX_STORAGES = 300;
 	private const CODE_PATTERN = '/^[A-Za-z_][A-Za-z0-9_]*$/';
 
 	/**
@@ -113,17 +112,6 @@ class StorageTypeTable  extends DataManager
 	{
 		$fields = $event->getParameter('fields');
 		$result = new EventResult();
-
-		$currentCount = static::getCount();
-
-		if ($currentCount >= static::MAX_STORAGES)
-		{
-			$result->addError(new EntityError(
-				Loc::getMessage('BIZPROC_STORAGE_TYPE_MODEL_FIELD_LIMIT_EXCEEDED', [
-					'#LIMIT#' => static::MAX_STORAGES,
-				])
-			));
-		}
 
 		$code = trim($fields['CODE'] ?? '');
 		if ($code !== '' && !preg_match(self::CODE_PATTERN, $code))

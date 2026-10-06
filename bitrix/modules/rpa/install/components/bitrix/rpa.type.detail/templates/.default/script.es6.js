@@ -165,7 +165,7 @@ class TypeComponent extends Component
 			{
 				fieldNames.push(field.getName());
 			});
-			Ajax.runAction('rpa.fields.setVisibilitySettings', {
+			Ajax.runAction('rpa.Fields.setVisibilitySettings', {
 				data: {
 					typeId: this.params.type.typeId,
 					fields: fieldNames,

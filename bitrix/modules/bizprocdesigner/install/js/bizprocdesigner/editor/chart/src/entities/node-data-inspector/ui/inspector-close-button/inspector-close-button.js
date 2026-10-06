@@ -12,8 +12,13 @@ export const InspectorCloseButton = {
 		iconName: (): string => Outline.CROSS_L,
 	},
 	template: `
-		<div class="node-data-inspector-close-button">
-			<BIcon :name="iconName" :size="20"/>
-		</div>
+		<button
+			type="button"
+			class="node-data-inspector-close-button"
+			:data-test-id="$testId('nodeDataInspectorClose')"
+			:aria-label="$Bitrix.Loc.getMessage('BIZPROCDESIGNER_DEBUG_BAR_LAYOUT_CLOSE_TITLE')"
+		>
+			<BIcon :name="iconName" :size="20" aria-hidden="true"/>
+		</button>
 	`,
 };

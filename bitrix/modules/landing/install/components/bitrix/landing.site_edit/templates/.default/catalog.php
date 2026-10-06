@@ -30,7 +30,7 @@ if ($arResult['ERRORS'])
 	?><div class="landing-message-label error"><?
 	foreach ($arResult['ERRORS'] as $error)
 	{
-		echo $error . '<br/>';
+		echo \htmlspecialcharsbx($error) . '<br/>';
 	}
 	?></div><?
 }
@@ -101,7 +101,7 @@ else
 		<input type="hidden" name="fields[TPL_ID]" value="<?= $row['TPL_ID']['CURRENT'];?>" />
 		<input type="hidden" name="fields[LANDING_ID_404]" value="<?= $row['LANDING_ID_404']['CURRENT'];?>" />
 		<input type="hidden" name="fields[LANDING_ID_INDEX]" value="<?= $row['LANDING_ID_INDEX']['CURRENT'];?>" />
-		<input type="hidden" name="fields[DOMAIN_ID]" value="<?= $domainName;?>" />
+		<input type="hidden" name="fields[DOMAIN_ID]" value="<?= \htmlspecialcharsbx($domainName);?>" />
 		<?if (count($arResult['LANDINGS']) === 1):?>
 			<input name="fields[LANDING_ID_INDEX]" type="hidden" value="<?= array_pop($landingKeys);?>" />
 		<?endif;?>
@@ -295,9 +295,9 @@ else
 			top.window['landingSettingsSaved'] = false;
 		<?php endif;?>
 		BX.Landing.Env.createInstance({
-			site_id: '<?= $row['ID']['CURRENT'] ?>',
+			site_id: '<?= \CUtil::jsEscape((string)$row['ID']['CURRENT']) ?>',
 			params: {
-				type: '<?= $arParams['TYPE'] ?>',
+				type: '<?= \CUtil::jsEscape((string)$arParams['TYPE']) ?>',
 			},
 		});
 	});

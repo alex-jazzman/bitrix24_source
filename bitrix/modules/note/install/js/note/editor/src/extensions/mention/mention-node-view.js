@@ -39,6 +39,16 @@ export class MentionNodeView
 		this.dom.contentEditable = 'false';
 
 		this.#mountVue();
+		this.#syncDiffState();
+	}
+
+	// [version-diff] Reflect the diffState attr as a class on the chip wrapper. The attr is part of the
+	// model and the mention resolver preserves it (spreads node.attrs), so the paint survives resolve.
+	#syncDiffState()
+	{
+		const state = this.node.attrs.diffState;
+		this.dom.classList.toggle('note-version-diff-node--added', state === 'added');
+		this.dom.classList.toggle('note-version-diff-node--removed', state === 'removed');
 	}
 
 	#mountVue()
@@ -174,6 +184,7 @@ export class MentionNodeView
 		}
 
 		this.node = node;
+		this.#syncDiffState();
 		if (this.vm)
 		{
 			this.vm.attrs = { ...node.attrs };

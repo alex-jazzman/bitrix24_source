@@ -271,6 +271,29 @@ export type RawLegacyRecentItem = {
 	unread: boolean,
 	has_reminder: boolean,
 	options: {},
+	nestedChat?: {
+		id: number,
+		dialogId: string,
+		type: string,
+		name: string,
+		avatar?: string,
+		color?: string,
+		extranet?: boolean,
+		entityType?: string,
+		parentChatId?: number,
+	},
+	ownMessageId?: number,
+	ownMessage?: {
+		attach: boolean,
+		author_id: number,
+		date: string,
+		file: boolean | {},
+		id: number,
+		temporaryId?: string,
+		status: $Keys<typeof MessageStatus>,
+		text: string,
+		uuid: string,
+	},
 };
 
 export type RecentItemType = 'chat' | 'user';
@@ -291,6 +314,7 @@ export type RawRecentItem = {
 	options: JsonObject,
 	pinned: boolean,
 	unread: boolean,
+	ownMessageId?: number,
 };
 
 type RawPackType = 'vendor' | 'custom';

@@ -7,7 +7,6 @@ jn.define('im/messenger/lib/promotion/src/promotion', (require, exports, module)
 	const { BackgroundUI } = require('im/messenger/const');
 	const { PromotionRest } = require('im/messenger/provider/rest');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
-	const { VideoNotePromotion } = require('im/messenger/lib/promotion/src/entities/video-note');
 	const { CopilotPromotion } = require('im/messenger/lib/promotion/src/entities/copilot');
 	const { TasksPromotion } = require('im/messenger/lib/promotion/src/entities/tasks');
 	const { getLoggerWithContext } = require('im/messenger/lib/logger');
@@ -183,13 +182,6 @@ jn.define('im/messenger/lib/promotion/src/promotion', (require, exports, module)
 
 			this.#queueTickUp();
 		}
-
-		/**
-		 * @param {number} chatId
-		 */
-		showVideoNotePromotion = (chatId) => {
-			VideoNotePromotion.show(chatId, this.onShowPromoCallback);
-		};
 
 		/**
 		 * @param {LayoutComponent} targetRef

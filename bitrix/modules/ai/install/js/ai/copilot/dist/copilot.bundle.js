@@ -1,6 +1,6 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports, main_core, main_core_events, main_popup, ai_engine, ui_designTokens, ui_iconSet_api_core, ui_iconSet_actions, ui_iconSet_main, ui_iconSet_editor, ui_iconSet_crm, ui_label, main_loader, ui_lottie, ai_speechConverter, ui_hint, ai_copilot_copilotTextController, ui_feedback_form, ai_copilot, ai_ajaxErrorHandler) {
+(function (exports, main_core, main_core_events, main_popup, ai_engine, ui_designTokens, ui_iconSet_api_core, ui_iconSet_actions, ui_iconSet_main, ui_iconSet_editor, ui_iconSet_crm, ui_iconSet_outline, ui_label, main_loader, ui_lottie, ai_speechConverter, ui_hint, ai_copilot_copilotTextController, ui_feedback_form, ai_copilot, ai_ajaxErrorHandler) {
 	'use strict';
 
 	async function checkCopilotAgreement(options) {
@@ -585,6 +585,7 @@ this.BX = this.BX || {};
 		#currentRole;
 		#roleInfoContainer;
 		#loader;
+		#isBitrixGptV2Available;
 		constructor(options) {
 			super(options);
 			this.setEventNamespace('AI.Copilot.Menu');
@@ -594,6 +595,7 @@ this.BX = this.BX || {};
 			this.#autoHide = options.autoHide === true;
 			this.#angle = options.angle;
 			this.#bordered = options.bordered ?? this.#bordered;
+			this.#isBitrixGptV2Available = main_core.Extension.getSettings('ai.copilot').get('isBitrixGptV2Available') === true;
 			this.#initRoleInfoFromOptions(options.roleInfo);
 			if (options.keyboardControlOptions) {
 				this.#keyboardControlOptions = options.keyboardControlOptions;
@@ -784,7 +786,7 @@ this.BX = this.BX || {};
 				items: this.#getMenuItems(this.#menuItems),
 				toFrontOnShow: true,
 				autoHide: this.#autoHide,
-				className: `ai__copilot-scope ai__copilot-menu-popup ${this.#bordered ? '--bordered' : ''}`,
+				className: `ai__copilot-scope ai__copilot-menu-popup${this.#isBitrixGptV2Available ? ' --bitrixgpt-redesign' : ''} ${this.#bordered ? '--bordered' : ''}`,
 				cacheable: this.#cacheable,
 				events: {
 					onPopupClose: popup => {
@@ -850,33 +852,54 @@ this.BX = this.BX || {};
 		#getAbilityMenuItem(item, isSubmenuItem = false) {
 			const iconElem = this.#renderAbilityMenuItemIcon(item);
 			const checkIcon = this.#getCheckIcon();
-			const menuIcon = item.icon ? main_core.Tag.render`<div class="ai__copilot-menu_item-icon">${iconElem}</div>` : null;
-			const label = item.labelText ? new ui_label.Label({
+			const stableItemIdentifier = item.id || item.code;
+			const isBitrixGptProviderIcon = this.#isBitrixGptV2Available && item.code === 'provider';
+			const menuIcon = item.icon ? isBitrixGptProviderIcon ? main_core.Tag.render`<div class="ai__copilot-menu_item-icon --bitrixgpt-provider" data-testid="copilot-provider-icon">${iconElem}</div>` : main_core.Tag.render`<div class="ai__copilot-menu_item-icon">${iconElem}</div>` : null;
+			const label = item.labelText && this.#isBitrixGptV2Available === false ? new ui_label.Label({
 				text: item.labelText,
 				color: ui_label.LabelColor.PRIMARY,
 				fill: true,
 				size: ui_label.LabelSize.SM
 			}).render() : null;
-			const labelWrapper = label ? main_core.Tag.render(`<div>${label}</div>`) : null;
+			const labelWrapper = label ? main_core.Tag.render`<div>${label}</div>` : null;
 			const favouriteLabel = main_core.Type.isBoolean(item.isFavourite) ? this.#renderFavouriteLabel(item.code, item.isFavourite) : null;
-			const html = main_core.Tag.render`
-			<div class="${this.#getMenuItemClassname(item, isSubmenuItem, item.selected)}">
-				<div class="ai__copilot-menu_item-left">
-					${menuIcon}
-					<div class="ai__copilot-menu_item-text">${main_core.Text.encode(item.text)}</div>
-				</div>
-				<div class="ai__copilot-menu_item-right">
-					${favouriteLabel}
-					<div class="ai__copilot-menu_item-check">
-						${checkIcon.render()}
+			const html = this.#isBitrixGptV2Available ? main_core.Tag.render`
+				<div class="${this.#getMenuItemClassname(item, isSubmenuItem, item.selected)}">
+					<div class="ai__copilot-menu_item-left">
+						<div class="ai__copilot-menu_item-text">${main_core.Text.encode(item.text)}</div>
 					</div>
-					${labelWrapper}
+					<div class="ai__copilot-menu_item-right">
+						${favouriteLabel}
+						<div class="ai__copilot-menu_item-check">
+							${checkIcon.render()}
+						</div>
+						${labelWrapper}
+						${menuIcon}
+					</div>
 				</div>
-			</div>
-		`;
+			` : main_core.Tag.render`
+				<div class="${this.#getMenuItemClassname(item, isSubmenuItem, item.selected)}">
+					<div class="ai__copilot-menu_item-left">
+						${menuIcon}
+						<div class="ai__copilot-menu_item-text">${main_core.Text.encode(item.text)}</div>
+					</div>
+					<div class="ai__copilot-menu_item-right">
+						${favouriteLabel}
+						<div class="ai__copilot-menu_item-check">
+							${checkIcon.render()}
+						</div>
+						${labelWrapper}
+					</div>
+				</div>
+			`;
 			return {
 				html,
 				id: item.id || '',
+				...(this.#isBitrixGptV2Available && main_core.Type.isStringFilled(stableItemIdentifier) ? {
+					dataset: {
+						testid: `copilot-menu-item-${stableItemIdentifier}`
+					}
+				} : {}),
 				text: item.text,
 				href: item.href,
 				className: `menu-popup-no-icon ${item.arrow ? 'menu-popup-item-submenu' : ''}`,
@@ -887,8 +910,11 @@ this.BX = this.BX || {};
 			};
 		}
 		#renderFavouriteLabel(promptCode, isFavourite = false) {
+			// Redesign flag: outline bookmark (Outline.BOOKMARK) for the not-favourite state;
+			// keep the filled icon (Main.BOOKMARK_1) for the favourite state.
+			const favouriteIconCode = this.#isBitrixGptV2Available && isFavourite === false ? ui_iconSet_api_core.Outline.BOOKMARK : ui_iconSet_api_core.Main.BOOKMARK_1;
 			const favouriteIcon = new ui_iconSet_api_core.Icon({
-				icon: ui_iconSet_api_core.Main.BOOKMARK_1,
+				icon: favouriteIconCode,
 				size: 24
 			});
 			const iconWrapperClassname = `ai__copilot-menu_item-favourite ${isFavourite ? '--is-favourite' : ''}`;
@@ -926,33 +952,90 @@ this.BX = this.BX || {};
 				avatar
 			} = this.#roleInfo.role;
 			const subtitle = this.#roleInfo.subtitle;
+			const roleClassName = this.#isBitrixGptV2Available ? 'ai__copilot-menu_role --bitrixgpt-redesign' : 'ai__copilot-menu_role';
+			let glow = null;
+			if (this.#isBitrixGptV2Available) {
+				glow = main_core.Tag.render`<div class="ai__copilot-menu_role-glow" data-testid="copilot-menu-role-glow"></div>`;
+				// Glow backdrop exported from Figma: a conic gradient softly clipped to a pill and
+				// blurred (stdDeviation 16). Inline SVG (not a background-image); a CSS radial-gradient
+				// fallback in copilot-menu.css covers WebKit/Safari, where this foreignObject is fragile.
+				glow.innerHTML = '<svg width="100%" height="100%" viewBox="0 0 314 78" preserveAspectRatio="none" fill="none" xmlns="http://www.w3.org/2000/svg">' + '<g opacity="0.4" clip-path="url(#ai-copilot-glow-clip)">' + '<g filter="url(#ai-copilot-glow-blur)">' + '<g clip-path="url(#ai-copilot-glow-shape)"><g transform="matrix(-5.79497e-09 -0.0559167 0.157 -2.45592e-09 157 61)">' + '<foreignObject x="-1090.91" y="-1090.91" width="2181.82" height="2181.82">' + '<div xmlns="http://www.w3.org/1999/xhtml" style="background:conic-gradient(from 90deg,rgba(255,255,255,0) 0deg,rgba(255,255,255,0) 0.539121deg,rgba(0,151,233,1) 18deg,rgba(63,104,255,1) 28.8deg,rgba(157,71,255,1) 39.6deg,rgba(239,70,183,1) 57.6deg,rgba(249,98,105,1) 75.6deg,rgba(255,255,255,0) 90.2231deg,rgba(255,255,255,0) 360deg);height:100%;width:100%"></div>' + '</foreignObject></g></g>' + '</g></g>' + '<defs>' + '<filter id="ai-copilot-glow-blur" x="-32" y="-32" width="378" height="186" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">' + '<feGaussianBlur stdDeviation="16" result="effect1_foregroundBlur"/></filter>' + '<clipPath id="ai-copilot-glow-shape"><path d="M314 70.835C313.911 42.7443 291.112 20 263.001 20H51.001C22.8345 20 0.000976562 42.8335 0.000976562 71C0.000976562 99.1665 22.8345 122 51.001 122H0V0H314V70.835ZM314 122H263.001C291.113 122 313.912 99.2551 314 71.1641V122Z"/></clipPath>' + '<clipPath id="ai-copilot-glow-clip"><rect width="314" height="122" fill="white"/></clipPath>' + '</defs></svg>';
+			}
+			const roleLeftClassName = this.#isBitrixGptV2Available && this.#isDefaultRoleAvatar(avatar) ? 'ai__copilot-menu_role-left --bitrixgpt-default-avatar' : 'ai__copilot-menu_role-left';
+			const roleTitle = main_core.Tag.render`
+			<span
+				class="ai__copilot-menu_role-title"
+				title="${name}"
+			>
+				${name}
+			</span>
+		`;
+			const roleSubtitle = main_core.Tag.render`<span class="ai__copilot-menu_role-subtitle">${subtitle}</span>`;
+			const roleTextContainer = main_core.Tag.render`<div class="ai__copilot-menu_role-right"></div>`;
+			if (this.#isBitrixGptV2Available) {
+				main_core.Dom.append(roleSubtitle, roleTextContainer);
+				main_core.Dom.append(roleTitle, roleTextContainer);
+			} else {
+				main_core.Dom.append(roleTitle, roleTextContainer);
+				main_core.Dom.append(roleSubtitle, roleTextContainer);
+			}
 			this.#roleInfoContainer = main_core.Tag.render`
 			<div class="ai__copilot-menu_item">
-				<div class="ai__copilot-menu_role">
-					<div class="ai__copilot-menu_role-left">
+				${glow}
+				<div class="${roleClassName}">
+					<div class="${roleLeftClassName}">
 						<img class="ai__copilot-menu_role-avatar" src="${avatar.small}" alt="">
 					</div>
-					<div class="ai__copilot-menu_role-right">
-						<span
-							class="ai__copilot-menu_role-title"
-							title="${name}"
-						>
-							${name}
-						</span>
-						<span class="ai__copilot-menu_role-subtitle">${subtitle}</span>
-					</div>
+					${roleTextContainer}
 				</div>
 			</div>
 		`;
 			return this.#roleInfoContainer;
 		}
+		#isDefaultRoleAvatar(avatar) {
+			return !avatar?.small || /bitrixgpt-icon/.test(avatar.small);
+		}
+
+		// Map of filled icons → outline icons for the isBitrixGptV2Available flag
+		static #FILLED_TO_OUTLINE_MAP = {
+			'prompts-library': ui_iconSet_api_core.Outline.PROMPT_LIBRARY,
+			'cursor-click': ui_iconSet_api_core.Outline.CURSOR_CLICK,
+			'quote': ui_iconSet_api_core.Outline.QUOTE,
+			'filter-2': ui_iconSet_api_core.Outline.FILTER_2_LINES,
+			'pencil-draw': ui_iconSet_api_core.Outline.EDIT_M,
+			'magic-wand': ui_iconSet_api_core.Outline.MAGIC_WAND,
+			'brightness': ui_iconSet_api_core.Outline.SUN,
+			'insert-emoji': ui_iconSet_api_core.Outline.SMILE,
+			'idea-lamp': ui_iconSet_api_core.Outline.IDEA_LAMP,
+			'bulleted-list': ui_iconSet_api_core.Outline.BULLETED_LIST,
+			'list': ui_iconSet_api_core.Outline.BULLETED_LIST,
+			'translation': ui_iconSet_api_core.Outline.TRANSLATION,
+			'heart': ui_iconSet_api_core.Outline.HEART,
+			'suitcase': ui_iconSet_api_core.Outline.SUITCASE,
+			'pen': ui_iconSet_api_core.Outline.EDIT_M,
+			'gift': ui_iconSet_api_core.Outline.GIFT,
+			'distribution': ui_iconSet_api_core.Outline.DISTRIBUTION,
+			'notifications-on': ui_iconSet_api_core.Outline.NOTIFICATION,
+			'file-2': ui_iconSet_api_core.Outline.FILE,
+			'person-plus': ui_iconSet_api_core.Outline.ADD_PERSON,
+			'copilot-ai': ui_iconSet_api_core.Outline.BITRIX_GPT,
+			'info': ui_iconSet_api_core.Outline.INFO_CIRCLE,
+			'feedback': ui_iconSet_api_core.Outline.FEEDBACK
+		};
 		#renderAbilityMenuItemIcon(item) {
 			let iconElem = null;
 			if (item.icon) {
 				try {
+					let iconCode = item.icon;
+					if (this.#isBitrixGptV2Available) {
+						const outlineCode = CopilotMenu.#FILLED_TO_OUTLINE_MAP[iconCode];
+						if (outlineCode !== undefined) {
+							iconCode = outlineCode;
+						}
+					}
 					const icon = new ui_iconSet_api_core.Icon({
 						size: 24,
-						icon: item.icon || undefined
+						icon: iconCode || undefined
 					});
 					iconElem = icon.render();
 				} catch {
@@ -1033,7 +1116,7 @@ this.BX = this.BX || {};
 				delimiter: true,
 				html: item.title ? `
 					<span>${item.title}</span>
-					${item.isNew ? this.#renderSeparatorMenuItemNewLabel().outerHTML : ''}
+					${item.isNew && this.#isBitrixGptV2Available === false ? this.#renderSeparatorMenuItemNewLabel().outerHTML : ''}
 				` : undefined
 			};
 		}
@@ -1062,6 +1145,10 @@ this.BX = this.BX || {};
 						if (this.#roleInfoContainer && p === 'avatar') {
 							const avatarImg = this.#roleInfoContainer.querySelector('.ai__copilot-menu_role-avatar');
 							avatarImg.src = newValue.small;
+							if (this.#isBitrixGptV2Available) {
+								const roleLeft = this.#roleInfoContainer.querySelector('.ai__copilot-menu_role-left');
+								main_core.Dom.toggleClass(roleLeft, '--bitrixgpt-default-avatar', this.#isDefaultRoleAvatar(newValue));
+							}
 						}
 						return Reflect.set(target, p, newValue);
 					}
@@ -1113,19 +1200,23 @@ this.BX = this.BX || {};
 
 	class CopilotResult {
 		#container;
+		#contentContainer;
 		#rawResult;
 		render() {
-			this.#container = main_core.Tag.render`<div class="ai__copilot-result"></div>`;
+			this.#contentContainer = main_core.Tag.render`<div class="ai__copilot-result-content"></div>`;
+			this.#container = main_core.Tag.render`<div class="ai__copilot-result">${this.#contentContainer}</div>`;
 			this.#rawResult = '';
 			return this.#container;
 		}
 		addResult(result, resultPreview) {
 			this.#rawResult = result;
-			this.#container.innerHTML += resultPreview ?? result;
+			this.#contentContainer.innerHTML += resultPreview ?? result;
+			this.#container.classList.toggle('--has-content', this.#contentContainer.hasChildNodes());
 		}
 		clearResult() {
 			this.#rawResult = '';
-			this.#container.innerHTML = '';
+			this.#contentContainer.innerHTML = '';
+			this.#container.classList.remove('--has-content');
 		}
 		getResult() {
 			return this.#rawResult;
@@ -1359,17 +1450,17 @@ this.BX = this.BX || {};
 		}
 	}
 
-	var nm = "18";
-	var v = "5.9.6";
-	var fr = 60;
-	var ip = 0;
-	var op = 539;
-	var w = 210;
-	var h = 210;
-	var ddd = 0;
-	var markers = [
+	var nm$1 = "18";
+	var v$1 = "5.9.6";
+	var fr$1 = 60;
+	var ip$1 = 0;
+	var op$1 = 539;
+	var w$1 = 210;
+	var h$1 = 210;
+	var ddd$1 = 0;
+	var markers$1 = [
 	];
-	var assets = [
+	var assets$1 = [
 		{
 			nm: "[FRAME] 18 - Null / left-star - Null / left-star / right-star - Null / right-star / round - Null / round / Ellipse 2 - Null / Ellipse 2 - Stroke",
 			fr: 60,
@@ -5094,7 +5185,7 @@ this.BX = this.BX || {};
 			]
 		}
 	];
-	var layers = [
+	var layers$1 = [
 		{
 			ddd: 0,
 			ind: 1,
@@ -5151,20 +5242,2664 @@ this.BX = this.BX || {};
 			bm: 0
 		}
 	];
-	var meta = {
+	var meta$1 = {
 		a: "",
 		d: "",
 		tc: "",
 		g: "Aninix"
 	};
 	var copilotLottieIcon = {
-		nm: nm,
-		v: v,
+		nm: nm$1,
+		v: v$1,
+		fr: fr$1,
+		ip: ip$1,
+		op: op$1,
+		w: w$1,
+		h: h$1,
+		ddd: ddd$1,
+		markers: markers$1,
+		assets: assets$1,
+		layers: layers$1,
+		meta: meta$1
+	};
+
+	var fr = 60;
+	var v = "5.9.6";
+	var ip = 0;
+	var op = 119;
+	var w = 20;
+	var h = 20;
+	var nm = "bitrixgpt animation";
+	var ddd = 0;
+	var markers = [
+	];
+	var assets = [
+		{
+			nm: "[FRAME] bitrixgpt animation - Null / color - Null / Rectangle 240665030 - Null / Rectangle 240665030 / Rectangle 240665030 - Null / Rectangle 240665030 / Rectangle 240665030 - Null / Rectangle 240665030 / Rectangle 240665030 - Null / Rectangle 240665030 / Rectangle 240665030 - Null / Rectangle 240665030",
+			fr: 60,
+			id: "mn7jaykx8d3pzo8h",
+			layers: [
+				{
+					ty: 3,
+					ddd: 0,
+					ind: 8,
+					hd: false,
+					nm: "bitrixgpt animation - Null",
+					sr: 1,
+					ks: {
+						a: {
+							a: 0,
+							k: [
+								0,
+								0
+							]
+						},
+						o: {
+							a: 0,
+							k: 100
+						},
+						p: {
+							a: 0,
+							k: [
+								0,
+								0
+							]
+						},
+						r: {
+							a: 0,
+							k: 0
+						},
+						s: {
+							a: 0,
+							k: [
+								100,
+								100
+							]
+						},
+						sk: {
+							a: 0,
+							k: 0
+						},
+						sa: {
+							a: 0,
+							k: 0
+						}
+					},
+					ao: 0,
+					ip: 0,
+					op: 120,
+					st: 0,
+					bm: 0
+				},
+				{
+					ty: 3,
+					ddd: 0,
+					ind: 9,
+					hd: false,
+					nm: "color - Null",
+					sr: 1,
+					parent: 8,
+					ks: {
+						a: {
+							a: 0,
+							k: [
+								8,
+								8
+							]
+						},
+						o: {
+							a: 0,
+							k: 100
+						},
+						p: {
+							a: 0,
+							k: [
+								10,
+								10
+							]
+						},
+						r: {
+							a: 1,
+							k: [
+								{
+									t: 0.486,
+									s: [
+										0
+									],
+									o: {
+										x: [
+											0.5
+										],
+										y: [
+											0.25
+										]
+									},
+									i: {
+										x: [
+											0.5
+										],
+										y: [
+											0.75
+										]
+									}
+								},
+								{
+									t: 119.736,
+									s: [
+										360
+									]
+								}
+							]
+						},
+						s: {
+							a: 0,
+							k: [
+								100,
+								100
+							]
+						},
+						sk: {
+							a: 0,
+							k: 0
+						},
+						sa: {
+							a: 0,
+							k: 0
+						}
+					},
+					ao: 0,
+					ip: 0,
+					op: 120,
+					st: 0,
+					bm: 0
+				},
+				{
+					ty: 3,
+					ddd: 0,
+					ind: 10,
+					hd: false,
+					nm: "Rectangle 240665030 - Null",
+					sr: 1,
+					parent: 9,
+					ks: {
+						a: {
+							a: 0,
+							k: [
+								0,
+								0
+							]
+						},
+						o: {
+							a: 0,
+							k: 100
+						},
+						p: {
+							a: 0,
+							k: [
+								-0.4422,
+								6.9658
+							]
+						},
+						r: {
+							a: 0,
+							k: -9.7722
+						},
+						s: {
+							a: 0,
+							k: [
+								100,
+								100
+							]
+						},
+						sk: {
+							a: 0,
+							k: 0
+						},
+						sa: {
+							a: 0,
+							k: 0
+						}
+					},
+					ao: 0,
+					ip: 0,
+					op: 120,
+					st: 0,
+					bm: 0
+				},
+				{
+					ty: 4,
+					ddd: 0,
+					ind: 11,
+					hd: false,
+					nm: "Rectangle 240665030",
+					sr: 1,
+					parent: 10,
+					ks: {
+						a: {
+							a: 0,
+							k: [
+								0,
+								0
+							]
+						},
+						p: {
+							a: 0,
+							k: [
+								0,
+								0
+							]
+						},
+						s: {
+							a: 0,
+							k: [
+								100,
+								100
+							]
+						},
+						sk: {
+							a: 0,
+							k: 0
+						},
+						sa: {
+							a: 0,
+							k: 0
+						},
+						r: {
+							a: 0,
+							k: 0
+						},
+						o: {
+							a: 0,
+							k: 100
+						}
+					},
+					ao: 0,
+					ip: 0,
+					op: 120,
+					st: 0,
+					bm: 0,
+					shapes: [
+						{
+							ty: "gr",
+							nm: "Group",
+							hd: false,
+							np: 3,
+							it: [
+								{
+									ty: "sh",
+									nm: "Path",
+									hd: false,
+									ks: {
+										a: 0,
+										k: {
+											c: true,
+											v: [
+												[
+													1.0314,
+													0.9437
+												],
+												[
+													6.4632,
+													0.1242
+												],
+												[
+													6.8698,
+													4.0407
+												],
+												[
+													5.8091,
+													10.2505
+												],
+												[
+													4.3857,
+													8.2917
+												],
+												[
+													2.9919,
+													6.4803
+												],
+												[
+													1.3848,
+													4.7547
+												],
+												[
+													1.0313,
+													0.9436
+												],
+												[
+													1.0314,
+													0.9437
+												]
+											],
+											i: [
+												[
+													0,
+													0
+												],
+												[
+													0,
+													0
+												],
+												[
+													0.0002,
+													-2.9807
+												],
+												[
+													0,
+													0
+												],
+												[
+													0.7831,
+													1.0547
+												],
+												[
+													0.274,
+													0.3202
+												],
+												[
+													0.3591,
+													0.3654
+												],
+												[
+													-2.3462,
+													1.4146
+												],
+												[
+													0,
+													0
+												]
+											],
+											o: [
+												[
+													2.34621,
+													-1.41457
+												],
+												[
+													0,
+													0
+												],
+												[
+													-21000000000004349e-20,
+													2.98067
+												],
+												[
+													0,
+													0
+												],
+												[
+													-0.4820500000000001,
+													-0.6492199999999997
+												],
+												[
+													-0.7191000000000001,
+													-0.8402700000000003
+												],
+												[
+													-0.3591200000000001,
+													-0.3653599999999999
+												],
+												[
+													0,
+													0
+												],
+												[
+													0,
+													0
+												]
+											]
+										}
+									}
+								},
+								{
+									ty: "gf",
+									o: {
+										a: 0,
+										k: 100
+									},
+									g: {
+										p: 2,
+										k: {
+											a: 0,
+											k: [
+												0.2175,
+												0.26666666666666666,
+												0.6588235294117647,
+												1,
+												1,
+												0.26666666666666666,
+												0.48627450980392156,
+												1,
+												0.2175,
+												1,
+												1,
+												0.4
+											]
+										}
+									},
+									s: {
+										a: 0,
+										k: [
+											2.621579473192672,
+											0.3766901861601525
+										]
+									},
+									e: {
+										a: 0,
+										k: [
+											4.815379404212134,
+											9.99663191633054
+										]
+									},
+									t: 1,
+									nm: "Fill",
+									hd: false,
+									r: 1
+								},
+								{
+									ty: "tr",
+									a: {
+										a: 0,
+										k: [
+											0,
+											0
+										]
+									},
+									p: {
+										a: 0,
+										k: [
+											0,
+											0
+										]
+									},
+									s: {
+										a: 0,
+										k: [
+											100,
+											100
+										]
+									},
+									sk: {
+										a: 0,
+										k: 0
+									},
+									sa: {
+										a: 0,
+										k: 0
+									},
+									r: {
+										a: 0,
+										k: 0
+									},
+									o: {
+										a: 0,
+										k: 100
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					ty: 3,
+					ddd: 0,
+					ind: 12,
+					hd: false,
+					nm: "Rectangle 240665030 - Null",
+					sr: 1,
+					parent: 9,
+					ks: {
+						a: {
+							a: 0,
+							k: [
+								0,
+								0
+							]
+						},
+						o: {
+							a: 0,
+							k: 100
+						},
+						p: {
+							a: 0,
+							k: [
+								6.2525,
+								-0.61
+							]
+						},
+						r: {
+							a: 0,
+							k: 62.5152
+						},
+						s: {
+							a: 0,
+							k: [
+								100,
+								100
+							]
+						},
+						sk: {
+							a: 0,
+							k: 0
+						},
+						sa: {
+							a: 0,
+							k: 0
+						}
+					},
+					ao: 0,
+					ip: 0,
+					op: 120,
+					st: 0,
+					bm: 0
+				},
+				{
+					ty: 4,
+					ddd: 0,
+					ind: 13,
+					hd: false,
+					nm: "Rectangle 240665030",
+					sr: 1,
+					parent: 12,
+					ks: {
+						a: {
+							a: 0,
+							k: [
+								0,
+								0
+							]
+						},
+						p: {
+							a: 0,
+							k: [
+								0,
+								0
+							]
+						},
+						s: {
+							a: 0,
+							k: [
+								100,
+								100
+							]
+						},
+						sk: {
+							a: 0,
+							k: 0
+						},
+						sa: {
+							a: 0,
+							k: 0
+						},
+						r: {
+							a: 0,
+							k: 0
+						},
+						o: {
+							a: 0,
+							k: 100
+						}
+					},
+					ao: 0,
+					ip: 0,
+					op: 120,
+					st: 0,
+					bm: 0,
+					shapes: [
+						{
+							ty: "gr",
+							nm: "Group",
+							hd: false,
+							np: 3,
+							it: [
+								{
+									ty: "sh",
+									nm: "Path",
+									hd: false,
+									ks: {
+										a: 0,
+										k: {
+											c: true,
+											v: [
+												[
+													1.0314,
+													0.9437
+												],
+												[
+													6.4632,
+													0.1242
+												],
+												[
+													6.8698,
+													4.0407
+												],
+												[
+													5.8091,
+													10.2505
+												],
+												[
+													4.3857,
+													8.2917
+												],
+												[
+													2.9919,
+													6.4803
+												],
+												[
+													1.3848,
+													4.7547
+												],
+												[
+													1.0313,
+													0.9436
+												],
+												[
+													1.0314,
+													0.9437
+												]
+											],
+											i: [
+												[
+													0,
+													0
+												],
+												[
+													0,
+													0
+												],
+												[
+													0.0002,
+													-2.9807
+												],
+												[
+													0,
+													0
+												],
+												[
+													0.7831,
+													1.0547
+												],
+												[
+													0.274,
+													0.3202
+												],
+												[
+													0.3591,
+													0.3654
+												],
+												[
+													-2.3462,
+													1.4146
+												],
+												[
+													0,
+													0
+												]
+											],
+											o: [
+												[
+													2.34621,
+													-1.41457
+												],
+												[
+													0,
+													0
+												],
+												[
+													-21000000000004349e-20,
+													2.98067
+												],
+												[
+													0,
+													0
+												],
+												[
+													-0.4820500000000001,
+													-0.6492199999999997
+												],
+												[
+													-0.7191000000000001,
+													-0.8402700000000003
+												],
+												[
+													-0.3591200000000001,
+													-0.3653599999999999
+												],
+												[
+													0,
+													0
+												],
+												[
+													0,
+													0
+												]
+											]
+										}
+									}
+								},
+								{
+									ty: "gf",
+									o: {
+										a: 0,
+										k: 100
+									},
+									g: {
+										p: 2,
+										k: {
+											a: 0,
+											k: [
+												0.2175,
+												0.3843137254901961,
+												0.8431372549019608,
+												0.996078431372549,
+												1,
+												0.3843137254901961,
+												0.8431372549019608,
+												0.996078431372549,
+												0.2175,
+												1,
+												1,
+												0.4
+											]
+										}
+									},
+									s: {
+										a: 0,
+										k: [
+											3.104028036851783,
+											0.7722080398253591
+										]
+									},
+									e: {
+										a: 0,
+										k: [
+											5.976973099035836,
+											9.875584482622632
+										]
+									},
+									t: 1,
+									nm: "Fill",
+									hd: false,
+									r: 1
+								},
+								{
+									ty: "tr",
+									a: {
+										a: 0,
+										k: [
+											0,
+											0
+										]
+									},
+									p: {
+										a: 0,
+										k: [
+											0,
+											0
+										]
+									},
+									s: {
+										a: 0,
+										k: [
+											100,
+											100
+										]
+									},
+									sk: {
+										a: 0,
+										k: 0
+									},
+									sa: {
+										a: 0,
+										k: 0
+									},
+									r: {
+										a: 0,
+										k: 0
+									},
+									o: {
+										a: 0,
+										k: 100
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					ty: 3,
+					ddd: 0,
+					ind: 14,
+					hd: false,
+					nm: "Rectangle 240665030 - Null",
+					sr: 1,
+					parent: 9,
+					ks: {
+						a: {
+							a: 0,
+							k: [
+								0,
+								0
+							]
+						},
+						o: {
+							a: 0,
+							k: 100
+						},
+						p: {
+							a: 0,
+							k: [
+								15.414,
+								3.3644
+							]
+						},
+						r: {
+							a: 0,
+							k: 133.8219
+						},
+						s: {
+							a: 0,
+							k: [
+								100,
+								100
+							]
+						},
+						sk: {
+							a: 0,
+							k: 0
+						},
+						sa: {
+							a: 0,
+							k: 0
+						}
+					},
+					ao: 0,
+					ip: 0,
+					op: 120,
+					st: 0,
+					bm: 0
+				},
+				{
+					ty: 4,
+					ddd: 0,
+					ind: 15,
+					hd: false,
+					nm: "Rectangle 240665030",
+					sr: 1,
+					parent: 14,
+					ks: {
+						a: {
+							a: 0,
+							k: [
+								0,
+								0
+							]
+						},
+						p: {
+							a: 0,
+							k: [
+								0,
+								0
+							]
+						},
+						s: {
+							a: 0,
+							k: [
+								100,
+								100
+							]
+						},
+						sk: {
+							a: 0,
+							k: 0
+						},
+						sa: {
+							a: 0,
+							k: 0
+						},
+						r: {
+							a: 0,
+							k: 0
+						},
+						o: {
+							a: 0,
+							k: 100
+						}
+					},
+					ao: 0,
+					ip: 0,
+					op: 120,
+					st: 0,
+					bm: 0,
+					shapes: [
+						{
+							ty: "gr",
+							nm: "Group",
+							hd: false,
+							np: 3,
+							it: [
+								{
+									ty: "sh",
+									nm: "Path",
+									hd: false,
+									ks: {
+										a: 0,
+										k: {
+											c: true,
+											v: [
+												[
+													1.0314,
+													0.9437
+												],
+												[
+													6.4632,
+													0.1242
+												],
+												[
+													6.8698,
+													4.0407
+												],
+												[
+													5.8091,
+													10.2505
+												],
+												[
+													4.3857,
+													8.2917
+												],
+												[
+													2.9919,
+													6.4803
+												],
+												[
+													1.3848,
+													4.7547
+												],
+												[
+													1.0313,
+													0.9436
+												],
+												[
+													1.0314,
+													0.9437
+												]
+											],
+											i: [
+												[
+													0,
+													0
+												],
+												[
+													0,
+													0
+												],
+												[
+													0.0002,
+													-2.9807
+												],
+												[
+													0,
+													0
+												],
+												[
+													0.7831,
+													1.0547
+												],
+												[
+													0.274,
+													0.3202
+												],
+												[
+													0.3591,
+													0.3654
+												],
+												[
+													-2.3462,
+													1.4146
+												],
+												[
+													0,
+													0
+												]
+											],
+											o: [
+												[
+													2.34621,
+													-1.41457
+												],
+												[
+													0,
+													0
+												],
+												[
+													-21000000000004349e-20,
+													2.98067
+												],
+												[
+													0,
+													0
+												],
+												[
+													-0.4820500000000001,
+													-0.6492199999999997
+												],
+												[
+													-0.7191000000000001,
+													-0.8402700000000003
+												],
+												[
+													-0.3591200000000001,
+													-0.3653599999999999
+												],
+												[
+													0,
+													0
+												],
+												[
+													0,
+													0
+												]
+											]
+										}
+									}
+								},
+								{
+									ty: "gf",
+									o: {
+										a: 0,
+										k: 100
+									},
+									g: {
+										p: 2,
+										k: {
+											a: 0,
+											k: [
+												0.1621,
+												1,
+												0.6509803921568628,
+												0,
+												0.8136,
+												1,
+												0.6509803921568628,
+												0,
+												0.1621,
+												1,
+												0.8136,
+												0.3
+											]
+										}
+									},
+									s: {
+										a: 0,
+										k: [
+											3.3854617405731235,
+											0.4432974655054862
+										]
+									},
+									e: {
+										a: 0,
+										k: [
+											6.031566431255089,
+											9.33843307341526
+										]
+									},
+									t: 1,
+									nm: "Fill",
+									hd: false,
+									r: 1
+								},
+								{
+									ty: "tr",
+									a: {
+										a: 0,
+										k: [
+											0,
+											0
+										]
+									},
+									p: {
+										a: 0,
+										k: [
+											0,
+											0
+										]
+									},
+									s: {
+										a: 0,
+										k: [
+											100,
+											100
+										]
+									},
+									sk: {
+										a: 0,
+										k: 0
+									},
+									sa: {
+										a: 0,
+										k: 0
+									},
+									r: {
+										a: 0,
+										k: 0
+									},
+									o: {
+										a: 0,
+										k: 100
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					ty: 3,
+					ddd: 0,
+					ind: 16,
+					hd: false,
+					nm: "Rectangle 240665030 - Null",
+					sr: 1,
+					parent: 9,
+					ks: {
+						a: {
+							a: 0,
+							k: [
+								0,
+								0
+							]
+						},
+						o: {
+							a: 0,
+							k: 100
+						},
+						p: {
+							a: 0,
+							k: [
+								14.4785,
+								13.4146
+							]
+						},
+						r: {
+							a: 0,
+							k: -154.0824
+						},
+						s: {
+							a: 0,
+							k: [
+								100,
+								100
+							]
+						},
+						sk: {
+							a: 0,
+							k: 0
+						},
+						sa: {
+							a: 0,
+							k: 0
+						}
+					},
+					ao: 0,
+					ip: 0,
+					op: 120,
+					st: 0,
+					bm: 0
+				},
+				{
+					ty: 4,
+					ddd: 0,
+					ind: 17,
+					hd: false,
+					nm: "Rectangle 240665030",
+					sr: 1,
+					parent: 16,
+					ks: {
+						a: {
+							a: 0,
+							k: [
+								0,
+								0
+							]
+						},
+						p: {
+							a: 0,
+							k: [
+								0,
+								0
+							]
+						},
+						s: {
+							a: 0,
+							k: [
+								100,
+								100
+							]
+						},
+						sk: {
+							a: 0,
+							k: 0
+						},
+						sa: {
+							a: 0,
+							k: 0
+						},
+						r: {
+							a: 0,
+							k: 0
+						},
+						o: {
+							a: 0,
+							k: 100
+						}
+					},
+					ao: 0,
+					ip: 0,
+					op: 120,
+					st: 0,
+					bm: 0,
+					shapes: [
+						{
+							ty: "gr",
+							nm: "Group",
+							hd: false,
+							np: 3,
+							it: [
+								{
+									ty: "sh",
+									nm: "Path",
+									hd: false,
+									ks: {
+										a: 0,
+										k: {
+											c: true,
+											v: [
+												[
+													1.0314,
+													0.9437
+												],
+												[
+													6.4632,
+													0.1242
+												],
+												[
+													6.8698,
+													4.0407
+												],
+												[
+													5.8091,
+													10.2505
+												],
+												[
+													4.3857,
+													8.2917
+												],
+												[
+													2.9919,
+													6.4803
+												],
+												[
+													1.3848,
+													4.7547
+												],
+												[
+													1.0313,
+													0.9436
+												],
+												[
+													1.0314,
+													0.9437
+												]
+											],
+											i: [
+												[
+													0,
+													0
+												],
+												[
+													0,
+													0
+												],
+												[
+													0.0002,
+													-2.9807
+												],
+												[
+													0,
+													0
+												],
+												[
+													0.7831,
+													1.0547
+												],
+												[
+													0.274,
+													0.3202
+												],
+												[
+													0.3591,
+													0.3654
+												],
+												[
+													-2.3462,
+													1.4146
+												],
+												[
+													0,
+													0
+												]
+											],
+											o: [
+												[
+													2.34621,
+													-1.41457
+												],
+												[
+													0,
+													0
+												],
+												[
+													-21000000000004349e-20,
+													2.98067
+												],
+												[
+													0,
+													0
+												],
+												[
+													-0.4820500000000001,
+													-0.6492199999999997
+												],
+												[
+													-0.7191000000000001,
+													-0.8402700000000003
+												],
+												[
+													-0.3591200000000001,
+													-0.3653599999999999
+												],
+												[
+													0,
+													0
+												],
+												[
+													0,
+													0
+												]
+											]
+										}
+									}
+								},
+								{
+									ty: "gf",
+									o: {
+										a: 0,
+										k: 100
+									},
+									g: {
+										p: 2,
+										k: {
+											a: 0,
+											k: [
+												0.2272,
+												0.8549019607843137,
+												0.36470588235294116,
+												1,
+												1,
+												0.7803921568627451,
+												0.3254901960784314,
+												0.9137254901960784,
+												0.2272,
+												1,
+												1,
+												0
+											]
+										}
+									},
+									s: {
+										a: 0,
+										k: [
+											3.187980422349081,
+											-0.25433631245205346
+										]
+									},
+									e: {
+										a: 0,
+										k: [
+											5.419462905652353,
+											10.057472459776616
+										]
+									},
+									t: 1,
+									nm: "Fill",
+									hd: false,
+									r: 1
+								},
+								{
+									ty: "tr",
+									a: {
+										a: 0,
+										k: [
+											0,
+											0
+										]
+									},
+									p: {
+										a: 0,
+										k: [
+											0,
+											0
+										]
+									},
+									s: {
+										a: 0,
+										k: [
+											100,
+											100
+										]
+									},
+									sk: {
+										a: 0,
+										k: 0
+									},
+									sa: {
+										a: 0,
+										k: 0
+									},
+									r: {
+										a: 0,
+										k: 0
+									},
+									o: {
+										a: 0,
+										k: 100
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					ty: 3,
+					ddd: 0,
+					ind: 18,
+					hd: false,
+					nm: "Rectangle 240665030 - Null",
+					sr: 1,
+					parent: 9,
+					ks: {
+						a: {
+							a: 0,
+							k: [
+								0,
+								0
+							]
+						},
+						o: {
+							a: 0,
+							k: 100
+						},
+						p: {
+							a: 0,
+							k: [
+								4.6642,
+								15.6651
+							]
+						},
+						r: {
+							a: 0,
+							k: -81.7154
+						},
+						s: {
+							a: 0,
+							k: [
+								100,
+								100
+							]
+						},
+						sk: {
+							a: 0,
+							k: 0
+						},
+						sa: {
+							a: 0,
+							k: 0
+						}
+					},
+					ao: 0,
+					ip: 0,
+					op: 120,
+					st: 0,
+					bm: 0
+				},
+				{
+					ty: 4,
+					ddd: 0,
+					ind: 19,
+					hd: false,
+					nm: "Rectangle 240665030",
+					sr: 1,
+					parent: 18,
+					ks: {
+						a: {
+							a: 0,
+							k: [
+								0,
+								0
+							]
+						},
+						p: {
+							a: 0,
+							k: [
+								0,
+								0
+							]
+						},
+						s: {
+							a: 0,
+							k: [
+								100,
+								100
+							]
+						},
+						sk: {
+							a: 0,
+							k: 0
+						},
+						sa: {
+							a: 0,
+							k: 0
+						},
+						r: {
+							a: 0,
+							k: 0
+						},
+						o: {
+							a: 0,
+							k: 100
+						}
+					},
+					ao: 0,
+					ip: 0,
+					op: 120,
+					st: 0,
+					bm: 0,
+					shapes: [
+						{
+							ty: "gr",
+							nm: "Group",
+							hd: false,
+							np: 3,
+							it: [
+								{
+									ty: "sh",
+									nm: "Path",
+									hd: false,
+									ks: {
+										a: 0,
+										k: {
+											c: true,
+											v: [
+												[
+													1.0314,
+													0.9437
+												],
+												[
+													6.4632,
+													0.1242
+												],
+												[
+													6.8698,
+													4.0407
+												],
+												[
+													5.8091,
+													10.2505
+												],
+												[
+													4.3857,
+													8.2917
+												],
+												[
+													2.9919,
+													6.4803
+												],
+												[
+													1.3848,
+													4.7547
+												],
+												[
+													1.0313,
+													0.9436
+												],
+												[
+													1.0314,
+													0.9437
+												]
+											],
+											i: [
+												[
+													0,
+													0
+												],
+												[
+													0,
+													0
+												],
+												[
+													0.0002,
+													-2.9807
+												],
+												[
+													0,
+													0
+												],
+												[
+													0.7831,
+													1.0547
+												],
+												[
+													0.274,
+													0.3202
+												],
+												[
+													0.3591,
+													0.3654
+												],
+												[
+													-2.3462,
+													1.4146
+												],
+												[
+													0,
+													0
+												]
+											],
+											o: [
+												[
+													2.34621,
+													-1.41457
+												],
+												[
+													0,
+													0
+												],
+												[
+													-21000000000004349e-20,
+													2.98067
+												],
+												[
+													0,
+													0
+												],
+												[
+													-0.4820500000000001,
+													-0.6492199999999997
+												],
+												[
+													-0.7191000000000001,
+													-0.8402700000000003
+												],
+												[
+													-0.3591200000000001,
+													-0.3653599999999999
+												],
+												[
+													0,
+													0
+												],
+												[
+													0,
+													0
+												]
+											]
+										}
+									}
+								},
+								{
+									ty: "gf",
+									o: {
+										a: 0,
+										k: 100
+									},
+									g: {
+										p: 2,
+										k: {
+											a: 0,
+											k: [
+												0.226,
+												0.23137254901960785,
+												0.4627450980392157,
+												1,
+												1,
+												0.3058823529411765,
+												0.5019607843137255,
+												1,
+												0.226,
+												1,
+												1,
+												0.1
+											]
+										}
+									},
+									s: {
+										a: 0,
+										k: [
+											0.5311314392758093,
+											0.7672309962979321
+										]
+									},
+									e: {
+										a: 0,
+										k: [
+											7.366772246863869,
+											7.079478423523419
+										]
+									},
+									t: 1,
+									nm: "Fill",
+									hd: false,
+									r: 1
+								},
+								{
+									ty: "tr",
+									a: {
+										a: 0,
+										k: [
+											0,
+											0
+										]
+									},
+									p: {
+										a: 0,
+										k: [
+											0,
+											0
+										]
+									},
+									s: {
+										a: 0,
+										k: [
+											100,
+											100
+										]
+									},
+									sk: {
+										a: 0,
+										k: 0
+									},
+									sa: {
+										a: 0,
+										k: 0
+									},
+									r: {
+										a: 0,
+										k: 0
+									},
+									o: {
+										a: 0,
+										k: 100
+									}
+								}
+							]
+						}
+					]
+				}
+			]
+		},
+		{
+			nm: "bitrixgpt animation",
+			fr: 60,
+			id: "mn7jaykuz286myi4",
+			layers: [
+				{
+					ty: 3,
+					ddd: 0,
+					ind: 20,
+					hd: false,
+					nm: "bitrixgpt animation - Null",
+					sr: 1,
+					ks: {
+						a: {
+							a: 0,
+							k: [
+								0,
+								0
+							]
+						},
+						o: {
+							a: 0,
+							k: 100
+						},
+						p: {
+							a: 0,
+							k: [
+								0,
+								0
+							]
+						},
+						r: {
+							a: 0,
+							k: 0
+						},
+						s: {
+							a: 0,
+							k: [
+								100,
+								100
+							]
+						},
+						sk: {
+							a: 0,
+							k: 0
+						},
+						sa: {
+							a: 0,
+							k: 0
+						}
+					},
+					ao: 0,
+					ip: 0,
+					op: 120,
+					st: 0,
+					bm: 0
+				},
+				{
+					ty: 3,
+					ddd: 0,
+					ind: 21,
+					hd: false,
+					nm: "stars - Null",
+					sr: 1,
+					parent: 20,
+					ks: {
+						a: {
+							a: 0,
+							k: [
+								0,
+								0
+							]
+						},
+						o: {
+							a: 0,
+							k: 100
+						},
+						p: {
+							a: 0,
+							k: [
+								5.25,
+								4.5
+							]
+						},
+						r: {
+							a: 0,
+							k: 0
+						},
+						s: {
+							a: 0,
+							k: [
+								100,
+								100
+							]
+						},
+						sk: {
+							a: 0,
+							k: 0
+						},
+						sa: {
+							a: 0,
+							k: 0
+						}
+					},
+					ao: 0,
+					ip: 0,
+					op: 120,
+					st: 0,
+					bm: 0
+				},
+				{
+					ty: 4,
+					ddd: 0,
+					ind: 22,
+					hd: false,
+					nm: "stars",
+					sr: 1,
+					parent: 21,
+					ks: {
+						a: {
+							a: 0,
+							k: [
+								0,
+								0
+							]
+						},
+						p: {
+							a: 0,
+							k: [
+								0,
+								0
+							]
+						},
+						s: {
+							a: 0,
+							k: [
+								100,
+								100
+							]
+						},
+						sk: {
+							a: 0,
+							k: 0
+						},
+						sa: {
+							a: 0,
+							k: 0
+						},
+						r: {
+							a: 0,
+							k: 0
+						},
+						o: {
+							a: 0,
+							k: 100
+						}
+					},
+					ao: 0,
+					ip: 0,
+					op: 120,
+					st: 0,
+					bm: 0,
+					shapes: [
+						{
+							ty: "gr",
+							nm: "Group",
+							hd: false,
+							np: 4,
+							it: [
+								{
+									ty: "sh",
+									nm: "Path",
+									hd: false,
+									ks: {
+										a: 0,
+										k: {
+											c: true,
+											v: [
+												[
+													4.1551,
+													1.3058
+												],
+												[
+													5.1153,
+													1.3058
+												],
+												[
+													5.4979,
+													2.714
+												],
+												[
+													7.5434,
+													4.8244
+												],
+												[
+													8.9068,
+													5.2203
+												],
+												[
+													8.9068,
+													6.2105
+												],
+												[
+													7.5435,
+													6.6055
+												],
+												[
+													5.498,
+													8.7169
+												],
+												[
+													5.1154,
+													10.1251
+												],
+												[
+													4.1552,
+													10.1251
+												],
+												[
+													3.7726,
+													8.7169
+												],
+												[
+													1.7271,
+													6.6055
+												],
+												[
+													0.3638,
+													6.2105
+												],
+												[
+													0.3638,
+													5.2203
+												],
+												[
+													1.7272,
+													4.8244
+												],
+												[
+													3.7727,
+													2.714
+												],
+												[
+													4.1551,
+													1.3058
+												]
+											],
+											i: [
+												[
+													0,
+													0
+												],
+												[
+													-0.1362,
+													-0.5003
+												],
+												[
+													0,
+													0
+												],
+												[
+													-0.9917,
+													-0.2874
+												],
+												[
+													0,
+													0
+												],
+												[
+													0.4847,
+													-0.1406
+												],
+												[
+													0,
+													0
+												],
+												[
+													0.2785,
+													-1.0236
+												],
+												[
+													0,
+													0
+												],
+												[
+													0.1364,
+													0.5
+												],
+												[
+													0,
+													0
+												],
+												[
+													0.9918,
+													0.2874
+												],
+												[
+													0,
+													0
+												],
+												[
+													-0.4849,
+													0.1405
+												],
+												[
+													0,
+													0
+												],
+												[
+													-0.2785,
+													1.0236
+												],
+												[
+													0,
+													0
+												]
+											],
+											o: [
+												[
+													0.1362899999999998,
+													-0.50022
+												],
+												[
+													0,
+													0
+												],
+												[
+													0.27853999999999957,
+													1.02358
+												],
+												[
+													0,
+													0
+												],
+												[
+													0.4847199999999994,
+													0.1406200000000002
+												],
+												[
+													0,
+													0
+												],
+												[
+													-0.9917300000000004,
+													0.28739000000000026
+												],
+												[
+													0,
+													0
+												],
+												[
+													-0.1362899999999998,
+													0.5001099999999994
+												],
+												[
+													0,
+													0
+												],
+												[
+													-0.27848000000000006,
+													-1.0236799999999997
+												],
+												[
+													0,
+													0
+												],
+												[
+													-0.48492,
+													-0.14052000000000042
+												],
+												[
+													0,
+													0
+												],
+												[
+													0.9916600000000002,
+													-0.28742
+												],
+												[
+													0,
+													0
+												],
+												[
+													0,
+													0
+												]
+											]
+										}
+									}
+								},
+								{
+									ty: "sh",
+									nm: "Path",
+									hd: false,
+									ks: {
+										a: 0,
+										k: {
+											c: true,
+											v: [
+												[
+													7.9913,
+													0.2547
+												],
+												[
+													8.643,
+													0.2547
+												],
+												[
+													8.7154,
+													0.5195
+												],
+												[
+													9.4968,
+													1.326
+												],
+												[
+													9.7534,
+													1.4008
+												],
+												[
+													9.7534,
+													2.0735
+												],
+												[
+													9.4968,
+													2.1473
+												],
+												[
+													8.7154,
+													2.9538
+												],
+												[
+													8.643,
+													3.2186
+												],
+												[
+													7.9913,
+													3.2186
+												],
+												[
+													7.9198,
+													2.9538
+												],
+												[
+													7.1384,
+													2.1473
+												],
+												[
+													6.8818,
+													2.0735
+												],
+												[
+													6.8818,
+													1.4008
+												],
+												[
+													7.1384,
+													1.3261
+												],
+												[
+													7.9198,
+													0.5196
+												],
+												[
+													7.9913,
+													0.2547
+												]
+											],
+											i: [
+												[
+													0,
+													0
+												],
+												[
+													-0.0926,
+													-0.3396
+												],
+												[
+													0,
+													0
+												],
+												[
+													-0.3788,
+													-0.1098
+												],
+												[
+													0,
+													0
+												],
+												[
+													0.3289,
+													-0.0956
+												],
+												[
+													0,
+													0
+												],
+												[
+													0.1064,
+													-0.3909
+												],
+												[
+													0,
+													0
+												],
+												[
+													0.0925,
+													0.3399
+												],
+												[
+													0,
+													0
+												],
+												[
+													0.3787,
+													0.1098
+												],
+												[
+													0,
+													0
+												],
+												[
+													-0.3293,
+													0.0954
+												],
+												[
+													0,
+													0
+												],
+												[
+													-0.1063,
+													0.3909
+												],
+												[
+													0,
+													0
+												]
+											],
+											o: [
+												[
+													0.09255999999999975,
+													-0.3396
+												],
+												[
+													0,
+													0
+												],
+												[
+													0.10636000000000045,
+													0.39105
+												],
+												[
+													0,
+													0
+												],
+												[
+													0.3288100000000007,
+													0.09566999999999992
+												],
+												[
+													0,
+													0
+												],
+												[
+													-0.37875999999999976,
+													0.10976000000000008
+												],
+												[
+													0,
+													0
+												],
+												[
+													-0.09244999999999948,
+													0.33991000000000016
+												],
+												[
+													0,
+													0
+												],
+												[
+													-0.10635999999999957,
+													-0.39094000000000007
+												],
+												[
+													0,
+													0
+												],
+												[
+													-0.32930999999999955,
+													-0.0954299999999999
+												],
+												[
+													0,
+													0
+												],
+												[
+													0.37868999999999975,
+													-0.10986999999999991
+												],
+												[
+													0,
+													0
+												],
+												[
+													0,
+													0
+												]
+											]
+										}
+									}
+								},
+								{
+									ty: "fl",
+									o: {
+										a: 0,
+										k: 100
+									},
+									c: {
+										a: 0,
+										k: [
+											1,
+											1,
+											1,
+											1
+										]
+									},
+									nm: "Fill",
+									hd: false,
+									r: 1
+								},
+								{
+									ty: "tr",
+									a: {
+										a: 0,
+										k: [
+											0,
+											0
+										]
+									},
+									p: {
+										a: 0,
+										k: [
+											0,
+											0
+										]
+									},
+									s: {
+										a: 0,
+										k: [
+											100,
+											100
+										]
+									},
+									sk: {
+										a: 0,
+										k: 0
+									},
+									sa: {
+										a: 0,
+										k: 0
+									},
+									r: {
+										a: 0,
+										k: 0
+									},
+									o: {
+										a: 0,
+										k: 100
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					ddd: 0,
+					ind: 23,
+					ty: 0,
+					nm: "color",
+					refId: "mn7jaykx8d3pzo8h",
+					sr: 1,
+					ks: {
+						a: {
+							a: 0,
+							k: [
+								0,
+								0
+							]
+						},
+						p: {
+							a: 0,
+							k: [
+								0,
+								0
+							]
+						},
+						s: {
+							a: 0,
+							k: [
+								100,
+								100
+							]
+						},
+						sk: {
+							a: 0,
+							k: 0
+						},
+						sa: {
+							a: 0,
+							k: 0
+						},
+						r: {
+							a: 0,
+							k: 0
+						},
+						o: {
+							a: 0,
+							k: 100
+						}
+					},
+					ao: 0,
+					w: 20,
+					h: 20,
+					ip: 0,
+					op: 120,
+					st: 0,
+					hd: false,
+					bm: 0
+				}
+			]
+		}
+	];
+	var layers = [
+		{
+			ty: 3,
+			ddd: 0,
+			ind: 20,
+			hd: false,
+			nm: "bitrixgpt animation - Null",
+			sr: 1,
+			ks: {
+				a: {
+					a: 0,
+					k: [
+						0,
+						0
+					]
+				},
+				o: {
+					a: 0,
+					k: 100
+				},
+				p: {
+					a: 0,
+					k: [
+						0,
+						0
+					]
+				},
+				r: {
+					a: 0,
+					k: 0
+				},
+				s: {
+					a: 0,
+					k: [
+						100,
+						100
+					]
+				},
+				sk: {
+					a: 0,
+					k: 0
+				},
+				sa: {
+					a: 0,
+					k: 0
+				}
+			},
+			ao: 0,
+			ip: 0,
+			op: 120,
+			st: 0,
+			bm: 0
+		},
+		{
+			ddd: 0,
+			ind: 2,
+			ty: 0,
+			nm: "bitrixgpt animation",
+			refId: "mn7jaykuz286myi4",
+			sr: 1,
+			ks: {
+				a: {
+					a: 0,
+					k: [
+						0,
+						0
+					]
+				},
+				p: {
+					a: 0,
+					k: [
+						0,
+						0
+					]
+				},
+				s: {
+					a: 0,
+					k: [
+						100,
+						100
+					]
+				},
+				sk: {
+					a: 0,
+					k: 0
+				},
+				sa: {
+					a: 0,
+					k: 0
+				},
+				r: {
+					a: 0,
+					k: 0
+				},
+				o: {
+					a: 0,
+					k: 100
+				}
+			},
+			ao: 0,
+			w: 20,
+			h: 20,
+			ip: 0,
+			op: 120,
+			st: 0,
+			hd: false,
+			bm: 0
+		}
+	];
+	var meta = {
+		a: "",
+		d: "",
+		tc: "",
+		g: "Aninix"
+	};
+	var bitrixGptLottieIcon = {
 		fr: fr,
+		v: v,
 		ip: ip,
 		op: op,
 		w: w,
 		h: h,
+		nm: nm,
 		ddd: ddd,
 		markers: markers,
 		assets: assets,
@@ -5177,11 +7912,13 @@ this.BX = this.BX || {};
 		#stopRecordingButton;
 		#startRecordingButton;
 		#disabled;
+		#isBitrixGptV2Available = false;
 		constructor(options) {
 			super(options);
 			this.setEventNamespace('AI:Copilot:VoiceButton');
 			this.#disabled = false;
 			this.#container = null;
+			this.#isBitrixGptV2Available = main_core.Extension.getSettings('ai.copilot').get('isBitrixGptV2Available') === true;
 		}
 		start() {
 			main_core.Dom.addClass(this.#container, '--recording');
@@ -5220,8 +7957,10 @@ this.BX = this.BX || {};
 		`;
 		}
 		#renderStartRecordingButton() {
+			// Redesign flag: thin outline microphone (Outline.MICROPHONE_ON);
+			// base keeps the filled Main.MICROPHONE_ON.
 			const microphoneIcon = new ui_iconSet_api_core.Icon({
-				icon: ui_iconSet_api_core.Main.MICROPHONE_ON,
+				icon: this.#isBitrixGptV2Available ? ui_iconSet_api_core.Outline.MICROPHONE_ON : ui_iconSet_api_core.Main.MICROPHONE_ON,
 				size: 20
 			});
 			this.#startRecordingButton = main_core.Tag.render`
@@ -5486,6 +8225,7 @@ this.BX = this.BX || {};
 		#submitBtn = null;
 		#voiceButton = null;
 		#readonly = false;
+		#isBitrixGptV2Available = false;
 		#useForImages = false;
 		#isGoOutFromBottomEnabled = true;
 		#usedVoiceRecord;
@@ -5493,6 +8233,7 @@ this.BX = this.BX || {};
 		constructor(options = {}) {
 			super(options);
 			this.#readonly = options.readonly === true;
+			this.#isBitrixGptV2Available = main_core.Extension.getSettings('ai.copilot').get('isBitrixGptV2Available') === true;
 			this.#isLoading = false;
 			this.#errorContainer = null;
 			this.#inputError = null;
@@ -5550,7 +8291,9 @@ this.BX = this.BX || {};
 			this.#voiceButton?.enable();
 		}
 		startGenerating() {
-			this.#copilotLottieAnimation.play();
+			if (this.#copilotLottieAnimation && this.#shouldPlayLoadingAnimation()) {
+				this.#copilotLottieAnimation.play();
+			}
 			this.clearErrors();
 			this.enable();
 			this.#textarea.disabled = true;
@@ -5564,8 +8307,14 @@ this.BX = this.BX || {};
 			this.#isLoading = false;
 			this.#setTextareaValue(this.#textareaOldValue, false);
 			main_core.Dom.removeClass(this.getContainer(), '--loading');
+			if (this.#isBitrixGptV2Available) {
+				this.#copilotLottieAnimation?.stop();
+				return;
+			}
 			setTimeout(() => {
-				this.#copilotLottieAnimation.stop();
+				if (this.#copilotLottieAnimation) {
+					this.#copilotLottieAnimation.stop();
+				}
 			}, 550);
 		}
 		stopRecording() {
@@ -5771,6 +8520,18 @@ this.BX = this.BX || {};
 			}
 		}
 		#renderInputIcon() {
+			if (this.#isBitrixGptV2Available) {
+				return main_core.Tag.render`
+				<div style="width: 28px; height: 28px; position: relative;" data-testid="copilot-bar-avatar">
+					<div class="ai__copilot_static-icon-wrapper">
+						<div class="ai__copilot_static-icon"></div>
+					</div>
+					<div class="ai__copilot_loading-icon-wrapper" data-testid="copilot-bar-loading-avatar">
+						${this.#getLottieIconContainer()}
+					</div>
+				</div>
+			`;
+			}
 			return main_core.Tag.render`
 			<div class="" style="width: 24px; height: 24px; position: relative;">
 				<div class="ai__copilot_static-icon-wrapper">
@@ -5784,18 +8545,24 @@ this.BX = this.BX || {};
 		}
 		#getLottieIconContainer() {
 			if (!this.#lottieIconContainer) {
-				const size = 21;
+				const size = this.#isBitrixGptV2Available ? 20 : 21;
 				this.#lottieIconContainer = main_core.Tag.render`
 				<div class="" style="width: ${size}px; height: ${size}px;"></div>
 			`;
 				this.#copilotLottieAnimation = ui_lottie.Lottie.loadAnimation({
 					container: this.#lottieIconContainer,
 					renderer: 'svg',
-					animationData: copilotLottieIcon,
-					autoplay: false
+					animationData: this.#isBitrixGptV2Available ? bitrixGptLottieIcon : copilotLottieIcon,
+					autoplay: false,
+					...(this.#isBitrixGptV2Available ? {
+						loop: true
+					} : {})
 				});
 			}
 			return this.#lottieIconContainer;
+		}
+		#shouldPlayLoadingAnimation() {
+			return this.#isBitrixGptV2Available === false || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches !== true;
 		}
 		#renderErrorIcon() {
 			const icon = new ui_iconSet_api_core.Icon({
@@ -6053,6 +8820,7 @@ this.BX = this.BX || {};
 		#menuForceTop = true;
 		#responseFormat;
 		#windowResizeHandler;
+		#isBitrixGptV2Available;
 		static #staticEulaRestrictCallback = null;
 		static showBanner = null;
 
@@ -6113,10 +8881,11 @@ this.BX = this.BX || {};
 			this.#autoHide = options.autoHide ?? false;
 			this.#preventAutoHide = main_core.Type.isFunction(options.preventAutoHide) ? options.preventAutoHide : () => false;
 			this.#menuForceTop = options.menuForceTop ?? true;
+			this.#isBitrixGptV2Available = main_core.Extension.getSettings('ai.copilot').get('isBitrixGptV2Available') === true;
 		}
 		render() {
 			this.#container = main_core.Tag.render`
-			<div class="ai__copilot ai__copilot-scope">
+			<div class="ai__copilot ai__copilot-scope${this.#isBitrixGptV2Available ? ' --bitrixgpt-redesign' : ''}">
 				${this.#resultField.render()}
 				${this.#inputField.render()}
 				${this.#warningField.render()}
@@ -6322,7 +9091,8 @@ this.BX = this.BX || {};
 				copilotMenu: CopilotMenu,
 				popupWithoutBackBtn: this.#useImage && this.#useText === false,
 				useInsertAboveAndUnderMenuItems: this.#useText,
-				analytics: this.#getAnalytics(true)
+				analytics: this.#getAnalytics(true),
+				isBitrixGptV2Available: this.#isBitrixGptV2Available
 			});
 			await this.#copilotImageController.init();
 			this.#copilotImageController.subscribe('back', () => {
@@ -6605,11 +9375,13 @@ this.BX = this.BX || {};
 		#popup = null;
 		#bindElement;
 		#resultContainer;
+		#resultContent;
 		#resultText = '';
 		#resultMenu;
 		#additionalResultMenuItems = [];
 		#engine;
 		#analytics;
+		#isBitrixGptV2Available;
 		constructor(options) {
 			super();
 			this.setEventNamespace('AI.CopilotReadonly:ResultPopup');
@@ -6624,6 +9396,7 @@ this.BX = this.BX || {};
 			});
 			this.#analytics = options.analytics;
 			this.#engine = options.engine;
+			this.#isBitrixGptV2Available = options.isBitrixGptV2Available === true;
 		}
 		show() {
 			if (!this.#popup) {
@@ -6654,6 +9427,7 @@ this.BX = this.BX || {};
 			this.#resultMenu?.close();
 			this.#resultMenu = null;
 			this.#resultContainer = null;
+			this.#resultContent = null;
 		}
 		setBindElement(bindElement) {
 			this.#popup?.setBindElement(bindElement);
@@ -6664,8 +9438,8 @@ this.BX = this.BX || {};
 		}
 		setResult(text) {
 			this.#resultText = text;
-			if (this.#resultContainer) {
-				this.#resultContainer.innerText = text;
+			if (this.#resultContent) {
+				this.#resultContent.innerText = text;
 			}
 		}
 		#initPopup() {
@@ -6673,7 +9447,7 @@ this.BX = this.BX || {};
 				content: this.#renderPopupContent(),
 				bindElement: this.#bindElement,
 				cacheable: false,
-				className: 'ai__copilot-scope ai__copilot-context-menu__result-popup',
+				className: `ai__copilot-scope${this.#isBitrixGptV2Available ? ' --bitrixgpt-redesign' : ''} ai__copilot-context-menu__result-popup`,
 				width: 530,
 				closeIcon: true,
 				closeIconSize: 'large',
@@ -6732,8 +9506,11 @@ this.BX = this.BX || {};
 		`;
 		}
 		#renderResultContainer() {
+			this.#resultContent = main_core.Tag.render`
+			<div class="ai__copilot-context-menu__result-popup-text-content">${this.#resultText}</div>
+		`;
 			this.#resultContainer = main_core.Tag.render`
-			<div class="ai__copilot-context-menu__result-popup-text">${this.#resultText}</div>
+			<div class="ai__copilot-context-menu__result-popup-text">${this.#resultContent}</div>
 		`;
 			return this.#resultContainer;
 		}
@@ -6746,10 +9523,12 @@ this.BX = this.BX || {};
 		#popup = null;
 		#bindElement;
 		#lottieLoaderIcon;
+		#isBitrixGptV2Available;
 		constructor(options) {
 			super(options);
 			this.setEventNamespace('AI.CopilotContextMenu:Loader');
 			this.#bindElement = options.bindElement;
+			this.#isBitrixGptV2Available = options.isBitrixGptV2Available === true;
 		}
 		show() {
 			if (!this.#popup) {
@@ -6761,7 +9540,8 @@ this.BX = this.BX || {};
 			this.#popup.show();
 		}
 		destroy() {
-			this.#popup.destroy();
+			this.#cleanupLottieLoaderIcon(true);
+			this.#popup?.destroy();
 			this.#popup = null;
 		}
 		isShown() {
@@ -6782,13 +9562,15 @@ this.BX = this.BX || {};
 				minWidth: 282,
 				minHeight: 42,
 				padding: 6,
-				className: 'ai__copilot-scope ai__copilot-context-menu_loader-popup',
+				className: `ai__copilot-scope${this.#isBitrixGptV2Available ? ' --bitrixgpt-redesign' : ''} ai__copilot-context-menu_loader-popup`,
 				events: {
 					onPopupShow: () => {
-						this.#lottieLoaderIcon.play();
+						if (this.#shouldPlayLoadingAnimation()) {
+							this.#lottieLoaderIcon.play();
+						}
 					},
 					onPopupClose: () => {
-						this.#lottieLoaderIcon.stop();
+						this.#cleanupLottieLoaderIcon();
 					}
 				}
 			});
@@ -6801,8 +9583,11 @@ this.BX = this.BX || {};
 			this.#lottieLoaderIcon = ui_lottie.Lottie.loadAnimation({
 				container: loaderIcon,
 				renderer: 'svg',
-				animationData: copilotLottieIcon,
-				autoplay: false
+				animationData: this.#isBitrixGptV2Available ? bitrixGptLottieIcon : copilotLottieIcon,
+				autoplay: false,
+				...(this.#isBitrixGptV2Available ? {
+					loop: true
+				} : {})
 			});
 			const cancelBtn = main_core.Tag.render`
 			<button style="opacity: 1;" class="ai__copilot_loader-cancel-btn">
@@ -6831,6 +9616,16 @@ this.BX = this.BX || {};
 			</div>
 		`;
 		}
+		#shouldPlayLoadingAnimation() {
+			return this.#isBitrixGptV2Available === false || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches !== true;
+		}
+		#cleanupLottieLoaderIcon(destroy = false) {
+			this.#lottieLoaderIcon?.stop();
+			if (destroy) {
+				this.#lottieLoaderIcon?.destroy();
+				this.#lottieLoaderIcon = null;
+			}
+		}
 	}
 
 	const CopilotContextMenuErrorPopupEvents = {
@@ -6844,6 +9639,7 @@ this.BX = this.BX || {};
 		#popup;
 		#menu;
 		#errorField;
+		#isBitrixGptV2Available;
 		constructor(options) {
 			super(options);
 			this.setEventNamespace('AI.CopilotContextMenu:ErrorPopup');
@@ -6852,6 +9648,7 @@ this.BX = this.BX || {};
 			this.#errorField = new CopilotInputError({
 				errors: [this.#error]
 			});
+			this.#isBitrixGptV2Available = options.isBitrixGptV2Available === true;
 		}
 		setError(error) {
 			this.#error = error;
@@ -6885,7 +9682,7 @@ this.BX = this.BX || {};
 			this.#popup = new main_popup.Popup({
 				bindElement: this.#bindElement,
 				content: this.#getPopupContent(),
-				className: 'ai__copilot-scope ai__copilot-context-menu_error-popup',
+				className: `ai__copilot-scope${this.#isBitrixGptV2Available ? ' --bitrixgpt-redesign' : ''} ai__copilot-context-menu_error-popup`,
 				maxWidth: 600,
 				minHeight: 42,
 				padding: 6,
@@ -7013,6 +9810,7 @@ this.BX = this.BX || {};
 		#extraResultMenuItems;
 		#angle;
 		#initEngineOptions;
+		#isBitrixGptV2Available;
 		constructor(options) {
 			super(options);
 			this.setEventNamespace('AI.CopilotReadonly');
@@ -7022,6 +9820,7 @@ this.BX = this.BX || {};
 			this.#selectedText = options.selectedText || '';
 			this.#extraResultMenuItems = options.extraResultMenuItems ?? [];
 			this.#angle = options.angle === true;
+			this.#isBitrixGptV2Available = main_core.Extension.getSettings('ai.copilot').get('isBitrixGptV2Available') === true;
 			this.#initEngineOptions = {
 				moduleId: options.moduleId,
 				contextId: options.contextId,
@@ -7152,7 +9951,15 @@ this.BX = this.BX || {};
 				case 'LIMIT_IS_EXCEEDED_DAILY':
 				case 'SERVICE_IS_NOT_AVAILABLE_BY_TARIFF':
 					{
-						this.hide();
+						// A technical limit opens no slider, so hiding the menu would leave the user without any
+						// explanation: show the message instead.
+						const technicalLimitMessage = ai_ajaxErrorHandler.AjaxErrorHandler.getVibePlusTechnicalLimitMessage(error?.customData);
+						if (technicalLimitMessage) {
+							error.setMessage(technicalLimitMessage);
+							this.#showErrorPopup(error);
+						} else {
+							this.hide();
+						}
 						break;
 					}
 				default:
@@ -7173,6 +9980,7 @@ this.BX = this.BX || {};
 					errorCode: error.getCode(),
 					showSliderWithMsg: error?.customData?.showSliderWithMsg,
 					sliderCode: error?.customData?.sliderCode,
+					vibePlusLimitState: error?.customData?.vibePlusLimitState,
 					forceCodeRules: ['sliderCode', 'msgWithHtmlLink'],
 					forceOption: error?.customData,
 					bindElement: this.#bindElement
@@ -7284,7 +10092,8 @@ this.BX = this.BX || {};
 				bindElement: this.#bindElement,
 				additionalResultMenuItems: this.#extraResultMenuItems,
 				engine: this.#copilotTextControllerEngine,
-				analytics: this.#getAnalytics()
+				analytics: this.#getAnalytics(),
+				isBitrixGptV2Available: this.#isBitrixGptV2Available
 			});
 			this.#resultPopup.subscribe(CopilotContextMenuResultPopupEvents.SAVE, () => {
 				this.#resultPopup.destroy();
@@ -7301,7 +10110,8 @@ this.BX = this.BX || {};
 		}
 		#initLoaderPopup() {
 			this.#loaderPopup = new CopilotContextMenuLoader({
-				bindElement: this.#bindElement
+				bindElement: this.#bindElement,
+				isBitrixGptV2Available: this.#isBitrixGptV2Available
 			});
 			this.#loaderPopup.subscribe(CopilotContextMenuLoaderEvents.CANCEL, () => {
 				this.#copilotTextControllerEngine.cancelCompletion();
@@ -7374,7 +10184,8 @@ this.BX = this.BX || {};
 		#initErrorPopup(error) {
 			this.#errorPopup = new CopilotContextMenuErrorPopup({
 				error,
-				bindElement: this.#bindElement
+				bindElement: this.#bindElement,
+				isBitrixGptV2Available: this.#isBitrixGptV2Available
 			});
 			this.#errorPopup.subscribe(CopilotContextMenuErrorPopupEvents.CANCEL, () => {
 				this.hide();
@@ -7433,5 +10244,5 @@ this.BX = this.BX || {};
 	exports.CopilotMode = CopilotMode;
 	exports.CopilotResult = CopilotResult;
 
-})(this.BX.AI = this.BX.AI || {}, BX, BX.Event, BX.Main, BX.AI, BX, BX.UI.IconSet, window, window, window, window, BX.UI, BX, BX.UI, BX.AI, BX.UI, BX.AI, BX.UI.Feedback, BX.AI, BX.AI);
+})(this.BX.AI = this.BX.AI || {}, BX, BX.Event, BX.Main, BX.AI, window, BX.UI.IconSet, window, window, window, window, window, BX.UI, BX, BX.UI, BX.AI, BX.UI, BX.AI, BX.UI.Feedback, BX.AI, BX.AI);
 //# sourceMappingURL=copilot.bundle.js.map

@@ -3,8 +3,8 @@ import { sendData } from 'ui.analytics';
 
 import { Core } from 'im.v2.application.core';
 import { ChatType, Layout, UserRole } from 'im.v2.const';
-import { Feature, FeatureManager } from 'im.v2.lib.feature';
 import { type ImModelChat } from 'im.v2.model';
+import { Feature, FeatureManager } from 'im.v2.lib.feature';
 
 import { AiAssistant } from './classes/ai-assistant';
 import { AttachMenu } from './classes/attach-menu';
@@ -20,6 +20,7 @@ import { DesktopMode } from './classes/desktop-mode';
 import { FormatToolbar } from './classes/format-toolbar';
 import { HistoryLimit } from './classes/history-limit';
 import { Mention } from './classes/mention';
+import { Guest } from './classes/guest.js';
 import { MessageContextMenu } from './classes/message-context-menu';
 import { MessageDelete } from './classes/message-delete';
 import { MessageForward } from './classes/message-forward';
@@ -28,6 +29,7 @@ import { MessageSearch } from './classes/message-search';
 import { Notification } from './classes/notification';
 import { Player } from './classes/player';
 import { RecentContextMenu } from './classes/recent-context-menu';
+import { RecentHeaderMenu } from './classes/recent-header-menu';
 import { RecentSearch } from './classes/recent-search';
 import { SliderInvite } from './classes/slider-invite';
 import { Stickers } from './classes/stickers';
@@ -42,7 +44,6 @@ import { getCollabId } from './helpers/get-collab-id';
 import { getUserType } from './helpers/get-user-type';
 import { isAiAssistant } from './helpers/is-ai-assistant';
 import { isSelfChat } from './helpers/is-self-chat';
-import { RecentHeaderMenu } from './classes/recent-header-menu';
 import { BitrixGptAgentPromo } from './classes/bitrix-gpt-agent-promo';
 
 type DialogId = string;
@@ -50,6 +51,7 @@ type DialogId = string;
 export { CreateChatContext } from './const';
 export { getCollabId } from './helpers/get-collab-id';
 export { getUserType } from './helpers/get-user-type';
+export { getCopilotContext } from './helpers/get-copilot-context';
 
 export class Analytics
 {
@@ -87,8 +89,9 @@ export class Analytics
 	mention: Mention = new Mention();
 	taskComments: TaskComments = new TaskComments();
 	recentHeaderMenu: RecentHeaderMenu = new RecentHeaderMenu();
-	#isBitrixGptV2Available = FeatureManager.isFeatureAvailable(Feature.isBitrixGptV2Available);
+	guest: Guest = new Guest();
 	bitrixGptAgentPromo: BitrixGptAgentPromo = new BitrixGptAgentPromo();
+	#isBitrixGptV2Available = FeatureManager.isFeatureAvailable(Feature.isBitrixGptV2Available);
 
 	static #instance: Analytics;
 

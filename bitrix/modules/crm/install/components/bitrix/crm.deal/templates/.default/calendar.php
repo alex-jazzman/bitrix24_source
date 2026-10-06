@@ -6,6 +6,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\Crm\Integration\Calendar;
+use Bitrix\Crm\UserField\Visibility\VisibilityManager;
 use Bitrix\Main\Localization\Loc;
 
 $categoryID = isset($arResult['VARIABLES']['category_id'])
@@ -86,6 +87,8 @@ elseif (\Bitrix\Main\Loader::includeModule('calendar'))
 		]
 	);
 
+	$notAccessibleFields = VisibilityManager::getNotAccessibleFields(CCrmOwnerType::Deal);
+
 	foreach ($userFields as $userField)
 	{
 		if (
@@ -94,7 +97,10 @@ elseif (\Bitrix\Main\Loader::includeModule('calendar'))
 			|| $userField['USER_TYPE_ID'] === 'datetime' && $userField['MULTIPLE'] === 'N'
 		)
 		{
-			if (!$editorConfig->isFormFieldVisible($userField['FIELD_NAME']))
+			if (
+				in_array($userField['FIELD_NAME'], $notAccessibleFields, true)
+				|| !$editorConfig->isFormFieldVisible($userField['FIELD_NAME'])
+			)
 			{
 				continue;
 			}

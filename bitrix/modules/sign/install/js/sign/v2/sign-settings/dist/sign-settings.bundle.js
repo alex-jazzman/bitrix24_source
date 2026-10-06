@@ -27,6 +27,9 @@ this.BX.Sign = this.BX.Sign || {};
 	function getFilledStringOrUndefined(value) {
 		return main_core.Type.isStringFilled(value) ? value : undefined;
 	}
+	function setInitialNextButtonState(wizard, uid) {
+		wizard.toggleBtnActiveState('next', !main_core.Type.isStringFilled(uid));
+	}
 
 	class SignSettings {
 		#cache = new main_core_cache.MemoryCache();
@@ -40,7 +43,6 @@ this.BX.Sign = this.BX.Sign || {};
 		#currentOverlay = null;
 		#isEditMode = false;
 		#isSameBlankSelected = false;
-		isB2bSignMaster = false;
 		hasPreviewUrls = false;
 		constructor(containerId, signOptions = {}, wizardOptions = {}) {
 			this.#containerId = containerId;
@@ -444,10 +446,7 @@ this.BX.Sign = this.BX.Sign || {};
 			main_core.Dom.append(this.#getOverlayContainer(), container);
 			main_core.Dom.append(this.#getLayout(), container);
 			const step = this.#getInitialStepIndex();
-			if (!this.isB2bSignMaster) {
-				const isDraft = main_core.Type.isStringFilled(uid);
-				this.wizard.toggleBtnActiveState('next', !isDraft);
-			}
+			setInitialNextButtonState(this.wizard, uid);
 			this.wizard.moveOnStep(step);
 		}
 		#getInitialStepIndex() {

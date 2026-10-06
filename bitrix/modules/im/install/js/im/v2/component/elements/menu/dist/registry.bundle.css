@@ -221,3 +221,7 @@
 .bx-im-menu_item__icon.--lock {
 	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' fill='none' viewBox='0 0 20 20'%3E%3Cpath fill='%230075ff' d='M8.747 11.334c0 .482.273.9.672 1.109l-.002.057v1.25a.583.583 0 1 0 1.166 0V12.5l-.003-.06a1.25 1.25 0 1 0-1.833-1.106'/%3E%3Cpath fill='%230075ff' fill-rule='evenodd' d='M10 2.75a3.7 3.7 0 0 0-3.7 3.7v.674a2.25 2.25 0 0 0-2.054 2.241v5.051a2.25 2.25 0 0 0 2.25 2.25h7.007a2.25 2.25 0 0 0 2.25-2.25v-5.05a2.25 2.25 0 0 0-2.052-2.242V6.45a3.7 3.7 0 0 0-3.7-3.7m2.534 4.365V6.45a2.534 2.534 0 1 0-5.068 0v.665zm.97 1.167h-7.01c-.598 0-1.083.485-1.083 1.083v5.051c0 .599.485 1.084 1.083 1.084h7.007c.598 0 1.083-.485 1.083-1.084v-5.05c0-.6-.485-1.084-1.083-1.084' clip-rule='evenodd'/%3E%3C/svg%3E");
 }
+
+.bx-im-menu_item__icon.--folder {
+	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' fill='none' viewBox='0 0 20 20'%3E%3Cpath fill='%23559be6' d='M11.199 4.544a1.23 1.23 0 0 0-.884-.377H4.166a.847.847 0 0 0-.833.859v.624h8.83zm5.467 2.982a.847.847 0 0 0-.833-.86h-12.5v8.147c0 .475.373.86.833.86h11.667c.46 0 .833-.385.833-.86z'/%3E%3C/svg%3E");
+}

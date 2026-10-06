@@ -16,16 +16,21 @@ this.BX.Socialnetwork = this.BX.Socialnetwork || {};
 			const {
 				action,
 				projectId,
-				publication
+				publication,
+				scrollToStartupTool
 			} = params;
 			const settings = this.getSettings();
+			const isCreate = action === socialnetwork_v2_model_interface.TYPES_PROJECT_WIZARD_ACTION.CREATE || !action;
+			const notificationDefaults = isCreate && socialnetwork_v2_model_project.isValidNotificationCatalog(settings.notificationDefaults) ? settings.notificationDefaults : null;
 			const optionsStoreProject = {
 				projectId: projectId || null,
-				publication
+				publication,
+				notifications: notificationDefaults
 			};
 			const optionsStoreInterface = {
 				...settings,
-				action
+				action,
+				scrollToStartupTool: scrollToStartupTool === true
 			};
 			socialnetwork_v2_model_project.useProjectStore().init(optionsStoreProject);
 			socialnetwork_v2_model_interface.useInterfaceStore().init(optionsStoreInterface);

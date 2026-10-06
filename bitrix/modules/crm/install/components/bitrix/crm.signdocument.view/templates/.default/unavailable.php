@@ -22,7 +22,9 @@ if (\Bitrix\Main\Loader::includeModule('ui'))
 ?>
 <div class="ui-slider-no-access-inner">
 	<div class="ui-slider-no-access-title"><?php echo $arResult['ERRORS'][0] ?? '' ?></div>
-	<div class="ui-slider-no-access-subtitle"><?php echo Loc::getMessage('CRM_SIGN_DOCUMENT_VIEW_NOT_FOUND'); ?></div>
+	<?php if (empty($arResult['ACCESS_DENIED'])): ?>
+		<div class="ui-slider-no-access-subtitle"><?php echo Loc::getMessage('CRM_SIGN_DOCUMENT_VIEW_NOT_FOUND'); ?></div>
+	<?php endif; ?>
 	<div class="ui-slider-no-access-img">
 		<div class="ui-slider-no-access-img-inner"></div>
 	</div>

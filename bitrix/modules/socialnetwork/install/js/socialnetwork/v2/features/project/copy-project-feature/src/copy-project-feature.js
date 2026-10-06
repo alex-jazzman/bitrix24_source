@@ -1,4 +1,5 @@
 import { Type } from 'main.core';
+import { Notifier } from 'ui.notification-manager';
 
 import { ProjectErrorCode } from 'socialnetwork.v2.const';
 import { useProjectStore, type ProjectModel } from 'socialnetwork.v2.model.project';
@@ -42,6 +43,16 @@ export class CopyProjectFeature
 		{
 			const interfaceStore = useInterfaceStore();
 			interfaceStore.setValidation('title', { uniq: true });
+
+			return;
+		}
+
+		if (Type.isPlainObject(error) && Type.isStringFilled(error?.message))
+		{
+			Notifier.notifyViaBrowserProvider({
+				id: 'socialnetwork-project-wizard-copy-error',
+				text: error.message,
+			});
 		}
 	}
 

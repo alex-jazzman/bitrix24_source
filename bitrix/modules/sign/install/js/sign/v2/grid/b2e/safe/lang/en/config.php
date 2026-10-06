@@ -1,0 +1,23 @@
+<?php
+$MESS["SIGN_V2_GRID_SAFE_CREATE_FOLDER_FAIL"] = "Could not create the folder.";
+$MESS["SIGN_V2_GRID_SAFE_CREATE_FOLDER_SUCCESS"] = "Folder created.";
+$MESS["SIGN_V2_GRID_SAFE_DELETE_FOLDER_CANCEL"] = "Cancel";
+$MESS["SIGN_V2_GRID_SAFE_DELETE_FOLDER_CONFIRM"] = "Delete this folder?";
+$MESS["SIGN_V2_GRID_SAFE_DELETE_FOLDER_CONFIRM_TITLE"] = "Delete folder";
+$MESS["SIGN_V2_GRID_SAFE_DELETE_FOLDER_FAIL"] = "Could not delete the folder.";
+$MESS["SIGN_V2_GRID_SAFE_DELETE_FOLDER_MOVE_POPUP_CANCEL"] = "Cancel";
+$MESS["SIGN_V2_GRID_SAFE_DELETE_FOLDER_MOVE_POPUP_OK"] = "Move and delete empty folder";
+$MESS["SIGN_V2_GRID_SAFE_DELETE_FOLDER_MOVE_POPUP_TITLE"] = "Choose where to move the folder's documents";
+$MESS["SIGN_V2_GRID_SAFE_DELETE_FOLDER_OK"] = "Delete";
+$MESS["SIGN_V2_GRID_SAFE_DELETE_FOLDER_SUCCESS"] = "Folder deleted.";
+$MESS["SIGN_V2_GRID_SAFE_DELETE_FOLDER_SUCCESS_NAMED"] = "The folder \"#TITLE#\" was deleted.";
+$MESS["SIGN_V2_GRID_SAFE_MOVE_DISABLED_HINT"] = "Select documents to move.";
+$MESS["SIGN_V2_GRID_SAFE_MOVE_FAIL"] = "Could not move the documents.";
+$MESS["SIGN_V2_GRID_SAFE_MOVE_PARTIAL"] = "Documents moved: #MOVED#. Failed: #ERRORS#.";
+$MESS["SIGN_V2_GRID_SAFE_MOVE_POPUP_CANCEL"] = "Cancel";
+$MESS["SIGN_V2_GRID_SAFE_MOVE_POPUP_OK"] = "Move";
+$MESS["SIGN_V2_GRID_SAFE_MOVE_POPUP_TITLE"] = "Move to folder";
+$MESS["SIGN_V2_GRID_SAFE_MOVE_ROOT_ITEM"] = "No folder";
+$MESS["SIGN_V2_GRID_SAFE_MOVE_SUCCESS"] = "Documents moved.";
+$MESS["SIGN_V2_GRID_SAFE_RENAME_FOLDER_FAIL"] = "Could not rename the folder.";
+$MESS["SIGN_V2_GRID_SAFE_RENAME_FOLDER_SUCCESS"] = "Folder renamed.";

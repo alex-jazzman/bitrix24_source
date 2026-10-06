@@ -37,6 +37,30 @@ Extension::load([
 $APPLICATION->SetTitle($arResult['DOCUMENT_NAME']);
 
 $isMobile = $arResult['DISPLAY_VARIANT'] === 'mobile';
+$tasksEnabled = (bool)($arResult['TASKS_ENABLED'] ?? false);
+// Stage 3 (spec 2): the option gate does not check the module, but without
+// tasks the task-with-id entity config is empty and the pick dialog would
+// hang forever - so the pick capability requires the module on top of the gate.
+$tasksPickEnabled = $tasksEnabled && Loader::includeModule('tasks');
+// Stage 4 (spec 2): the same reinforced gate - without the tasks module the
+// action controllers and the tasks.v2.lib.* extension configs are absent.
+$tasksActionsEnabled = $tasksPickEnabled;
+$appOrigin = '';
+if ($tasksEnabled)
+{
+	Extension::load(['disk.board-tasks']);
+
+	// disk.board-tasks does not depend on the vendored SDK (it is overwritten wholesale on
+	// vendor updates) and pins its own trusted origin from APP_URL, the same source the SDK
+	// derives its origin from client-side.
+	$appUri = new \Bitrix\Main\Web\Uri((string)$arResult['APP_URL']);
+	$appOrigin = $appUri->getScheme() . '://' . $appUri->getHost();
+	$defaultPort = $appUri->getScheme() === 'https' ? 443 : 80;
+	if ($appUri->getPort() !== null && $appUri->getPort() !== $defaultPort)
+	{
+		$appOrigin .= ':' . $appUri->getPort();
+	}
+}
 
 $helpUrl = \Bitrix\UI\InfoHelper::getUrl('/widget2/', byLang: true);
 $frameOpenUrl = (new Bitrix\Main\Web\Uri($helpUrl))->addParams(['action' => 'open'])->getUri();
@@ -90,6 +114,9 @@ if (!$isMobile && $arResult['SHOULD_SHOW_SHARING_BUTTON'])
 			</div>
 			<div class="disk-fe-office-header-mode">
 				<span class="disk-fe-office-header-mode-text"><?= htmlspecialcharsbx($arResult['DOCUMENT_NAME']) ?></span>
+<?php if (isset($arResult['SERVICE_PROFILE'])): ?>
+				<span class="disk-fe-flipchart-service-profile"><?= htmlspecialcharsbx($arResult['SERVICE_PROFILE']) ?></span>
+<?php endif; ?>
 			</div>
 		</div>
 		<div class="disk-fe-office-header-right">
@@ -129,13 +156,6 @@ if (Configuration::isReloadBoardAfterInactivityEnabled())
 		lastActiveTime = Date.now();
 	});
 
-	window.addEventListener("message", e => {
-		if (e.data?.event === "boardChanged" && document.visibilityState === "visible")
-		{
-			lastActiveTime = Date.now();
-		}
-	})
-
 </script>
 <?php
 }
@@ -153,7 +173,7 @@ if ($isMobile)
 		m.name = 'viewport';
 		document.querySelector('head').append(m);
 	}
-	m.content = 'width=400px, initial-scale=0.8';
+	m.content = 'width=device-width, initial-scale=1';
 </script>
 <?php } ?>
 
@@ -181,8 +201,8 @@ if ($isMobile)
 	BX.ready(() => {
 		const sdk = new BX.Disk.Flipchart.SDK({
 			containerId: 'flipchart-editor',
-			appUrl: '<?= $arResult['APP_URL'] ?>',
-			token: '<?= $arResult['TOKEN'] ?>',
+			appUrl: '<?= \CUtil::JSEscape((string)$arResult['APP_URL']) ?>',
+			token: '<?= \CUtil::JSEscape((string)$arResult['TOKEN']) ?>',
 			lang: '<?= $arResult['LANGUAGE'] ?>',
 			boardUrl: window.location.origin + window.location.pathname,
 			ui: {
@@ -197,10 +217,11 @@ if ($isMobile)
 					elementLink: true,
 					shareInBitrix: true,
 					shareElementInSocials: true,
+					bitrixTasks: <?= Json::encode($tasksEnabled) ?>,
+					bitrixTasksPick: <?= Json::encode($tasksPickEnabled) ?>,
+					bitrixTasksActions: <?= Json::encode($tasksActionsEnabled) ?>,
 				},
-				shareElementInBitrix: [
-					'createTask',
-				],
+				shareElementInBitrix: <?= Json::encode($tasksEnabled ? [] : ['createTask']) ?>,
 			},
 			permissions: {
 				accessLevel: '<?= $arResult['ACCESS_LEVEL'] ?>',
@@ -242,7 +263,51 @@ if ($isMobile)
 				},
 			}
 		});
+
+<?php if ($tasksEnabled): ?>
+		// Task logic lives entirely in the extension (spec 2.2); this is wiring only.
+		// Attached before sdk.init() (spec 4.3): the extension must be listening
+		// before the SDK starts emitting/consuming task-related messages.
+		const detachTasks = BX.Disk.BoardTasks.attach({
+			containerId: 'flipchart-editor',
+			appOrigin: '<?= \CUtil::JSEscape($appOrigin) ?>',
+		});
+		const onTasksPageHide = (event) => {
+			if (event.persisted) return; // bfcache: the page will come back alive (spec 4.3)
+			detachTasks();
+			window.removeEventListener('pagehide', onTasksPageHide);
+		};
+		window.addEventListener('pagehide', onTasksPageHide);
+<?php endif; ?>
+
 		sdk.init();
+
+		// Both handlers reuse the SDK trust predicate: the expected origin is derived once, in the SDK.
+		window.addEventListener("message", e => {
+			if (!sdk.isTrustedMessage(e))
+			{
+				return;
+			}
+
+			if (e.data?.event === "waitSDKParams")
+			{
+				loader.hide();
+			}
+		});
+<?php if (Configuration::isReloadBoardAfterInactivityEnabled()) { ?>
+
+		window.addEventListener("message", e => {
+			if (!sdk.isTrustedMessage(e))
+			{
+				return;
+			}
+
+			if (e.data?.event === "boardChanged" && document.visibilityState === "visible")
+			{
+				lastActiveTime = Date.now();
+			}
+		});
+<?php } ?>
 
 		notifyMobileApp({boardName: '<?= CUtil::JSEscape($arResult['DOCUMENT_NAME_WITHOUT_EXTENSION']) ?>'});
 	})
@@ -258,13 +323,6 @@ if ($isMobile)
 	});
 
 	loader.show();
-
-	window.addEventListener("message", e => {
-		if (e.data?.event === "waitSDKParams")
-		{
-			loader.hide();
-		}
-	})
 
 </script>
 <script>

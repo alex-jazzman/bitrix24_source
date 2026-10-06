@@ -4,7 +4,11 @@ require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/tools/clock.php');
 
 global $APPLICATION, $USER;
 
-\Bitrix\Main\UI\Extension::load(['ui.design-tokens', 'ui.fonts.opensans', 'intranet.old-interface.intranet-common']);
+\Bitrix\Main\UI\Extension::load([
+	'ui.design-tokens',
+	'ui.fonts.opensans',
+	'intranet.old-interface.intranet-common',
+]);
 
 $APPLICATION->SetAdditionalCSS('/bitrix/js/crm/css/crm.css');
 $APPLICATION->SetAdditionalCSS("/bitrix/themes/.default/crm-entity-show.css");
@@ -97,6 +101,14 @@ if($curUser)
 }
 
 $mailTemplateData = array();
+$largeAttachmentFeatureAvailable = false;
+$largeAttachmentMaxSize = 0;
+$largeAttachmentEnabled = \Bitrix\Crm\Integration\Mail\LargeAttachment\SendPreparation::isAvailable();
+if ($largeAttachmentEnabled)
+{
+	$largeAttachmentFeatureAvailable = \Bitrix\Mail\Helper\LicenseManager::isLargeAttachmentAutoUploadEnabled();
+	$largeAttachmentMaxSize = \Bitrix\Mail\Helper\Message::getMaxAttachedFilesSize();
+}
 
 if($curUser && $arResult['OWNER_TYPE_ID'] !== CCrmOwnerType::Undefined)
 {
@@ -149,6 +161,7 @@ $editorCfg = array(
 	'userEmail' => $curUser->getEmail(),
 	'userEmail2' => ($arResult['USER_CRM_EMAIL'] ?? null),
 	'crmEmail' => $arResult['SHARED_CRM_EMAIL'],
+	'senders' => $arResult['AVAILABLE_SENDERS'],
 	'lastUsedEmail' => CUserOptions::GetOption('crm', 'activity_email_addresser', ''),
 	//'lastUsedMailTemplateID' => CCrmMailTemplate::GetLastUsedTemplateID($arResult['OWNER_TYPE_ID'], $curUser->GetID()),
 	'lastUsedMailTemplateID' => 0,
@@ -165,6 +178,9 @@ $editorCfg = array(
 	'userSearchJsName' => $prefixLower.'_USER_SEARCH',
 	'callToFormat' => CCrmCallToUrl::GetFormat(CCrmCallToUrl::Bitrix),
 	'mailTemplateData' => $mailTemplateData,
+	'largeAttachmentEnabled' => $largeAttachmentEnabled,
+	'largeAttachmentFeatureAvailable' => $largeAttachmentFeatureAvailable,
+	'largeAttachmentMaxSize' => $largeAttachmentMaxSize,
 	'disableStorageEdit' => $arResult['DISABLE_STORAGE_EDIT'],
 	'addEventUrl' => $arResult['CREATE_EVENT_URL'],
 	'formId' => $arResult['FORM_ID'],

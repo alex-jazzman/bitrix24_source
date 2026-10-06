@@ -293,15 +293,15 @@ this.BX = this.BX || {};
 			}
 		}
 		static setMeetingStatus(entry, status, params = {}) {
-			return new Promise(resolve => {
+			return new Promise((resolve, reject) => {
 				if (!main_core.Type.isPlainObject(params)) {
 					params = {};
 				}
 				params.recursionMode = params.recursionMode || false;
 				if (status === 'N' && !params.confirmed) {
 					if (entry.isRecursive() && !entry.isOpenEvent()) {
-						this.showConfirmStatusDialog(entry, resolve);
-						return false;
+						this.showConfirmStatusDialog(entry, resolve, reject);
+						return;
 					}
 				}
 				BX.ajax.runAction('calendar.api.calendarajax.setMeetingStatus', {
@@ -331,15 +331,18 @@ this.BX = this.BX || {};
 						recursionMode: params.recursionMode,
 						currentDateFrom: entry.from
 					});
+				}).catch(error => {
+					reject(error);
 				});
 			});
 		}
-		static showConfirmStatusDialog(entry, resolvePromiseCallback = null) {
+		static showConfirmStatusDialog(entry, resolvePromiseCallback = null, rejectPromiseCallback = null) {
 			if (!this.confirmDeclineDialog) {
 				this.confirmDeclineDialog = this.createConfirmStatusDialog();
 			}
 			this.confirmDeclineDialog.show();
 			this.confirmDeclineDialog.unsubscribeAll('onDecline');
+			this.confirmDeclineDialog.unsubscribeAll('onCancel');
 			this.confirmDeclineDialog.subscribe('onDecline', function (event) {
 				if (event && main_core.Type.isFunction(event.getData)) {
 					EntryManager.setMeetingStatus(entry, 'N', {
@@ -349,7 +352,16 @@ this.BX = this.BX || {};
 						if (main_core.Type.isFunction(resolvePromiseCallback)) {
 							resolvePromiseCallback();
 						}
+					}, error => {
+						if (main_core.Type.isFunction(rejectPromiseCallback)) {
+							rejectPromiseCallback(error);
+						}
 					});
+				}
+			});
+			this.confirmDeclineDialog.subscribe('onCancel', function () {
+				if (main_core.Type.isFunction(rejectPromiseCallback)) {
+					rejectPromiseCallback(new Error('cancelled'));
 				}
 			});
 		}

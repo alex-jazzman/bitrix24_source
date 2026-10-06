@@ -30,12 +30,16 @@ export const RecentSearch = {
 			default: true,
 		},
 		recentSectionType: {
-			type: String,
+			type: String || null,
 			default: RecentType.default,
 		},
 		parentChatId: {
 			type: Number || null,
 			default: 0,
+		},
+		additionalSearchParams: {
+			type: Object,
+			default: () => ({}),
 		},
 	},
 	emits: ['loading', 'openItem', 'closeSearch'],
@@ -90,6 +94,7 @@ export const RecentSearch = {
 		const searchParams = {
 			searchRecentSection: this.recentSectionType,
 			parentId: this.parentChatId,
+			...this.additionalSearchParams,
 		};
 
 		this.searchService = new SearchService(searchParams);

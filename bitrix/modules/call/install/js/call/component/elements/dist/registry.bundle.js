@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Call = this.BX.Call || {};
 this.BX.Call.Component = this.BX.Call.Component || {};
-(function (exports, main_popup, main_core, ui_loader, ui_vue3, ui_vue3_components_audioplayer) {
+(function (exports, main_popup, main_core, ui_vue3, ui_loader, ui_vue3_components_audioplayer) {
 	'use strict';
 
 	const POPUP_CONTAINER_PREFIX = '#popup-window-content-';
@@ -55,7 +55,11 @@ this.BX.Call.Component = this.BX.Call.Component || {};
 			getPopupInstance() {
 				if (!this.instance) {
 					main_popup.PopupManager.getPopupById(this.id)?.destroy();
-					this.instance = new main_popup.Popup(this.getPopupConfig());
+
+					// markRaw prevents Vue from wrapping the Popup instance in a reactive Proxy.
+					// The Popup class relies on private fields (#focusTrap, etc.) that are not
+					// accessible through a Proxy and throw "Private element is not present on this object".
+					this.instance = ui_vue3.markRaw(new main_popup.Popup(this.getPopupConfig()));
 				}
 				return this.instance;
 			},
@@ -522,5 +526,5 @@ this.BX.Call.Component = this.BX.Call.Component || {};
 	exports.CallLoader = CallLoader;
 	exports.CallPopupContainer = CallPopupContainer;
 
-})(this.BX.Call.Component.Elements = this.BX.Call.Component.Elements || {}, BX.Main, BX, BX.UI, BX.Vue3, BX.Vue3.Components);
+})(this.BX.Call.Component.Elements = this.BX.Call.Component.Elements || {}, BX.Main, BX, BX.Vue3, BX.UI, BX.Vue3.Components);
 //# sourceMappingURL=registry.bundle.js.map

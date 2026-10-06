@@ -1,0 +1,31 @@
+/* All items: uniform 18px left inset (Figma pmenu-cell-space-inset-L) */
+.disk-uf-file-menu .menu-popup-item-text {
+	padding-left: 18px;
+}
+
+/* Action items: icon on the right at 18px inset, muted grey */
+.disk-uf-file-menu-item .menu-popup-item-text {
+	padding-right: 0;
+}
+
+.disk-uf-file-menu-item .menu-popup-item-icon {
+	order: 2;
+	margin: 0 18px 0 12px;
+	width: 24px;
+	height: 24px;
+	--ui-icon-set__icon-color: #a8adb4;
+}
+
+/* Submenu chevron (rename) aligned to the same 18px inset */
+.disk-uf-file-menu .menu-popup-item-submenu:after {
+	right: 18px;
+}
+
+/* Destructive remove: red text + red icon */
+.disk-uf-file-menu-item--remove .menu-popup-item-text {
+	color: #ff5752;
+}
+
+.disk-uf-file-menu-item--remove .menu-popup-item-icon {
+	--ui-icon-set__icon-color: #ff5752;
+}

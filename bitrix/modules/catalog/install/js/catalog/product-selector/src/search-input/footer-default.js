@@ -92,9 +92,9 @@ export class ProductSearchInputDefaultFooter extends DefaultFooter
 			;
 
 			return Tag.render`
-				<span class="${className}" onclick="${this.#onClickSaveChanges.bind(this)}">
+				<button type="button" class="catalog-footer-action ${className}" data-testid="catalog-selector-footer-save-btn" onclick="${this.#onClickSaveChanges.bind(this)}">
 					${Loc.getMessage(messageId)}
-				</span>
+				</button>
 			`;
 		});
 	}
@@ -128,9 +128,11 @@ export class ProductSearchInputDefaultFooter extends DefaultFooter
 		return this.cache.remember('label', () => {
 			return Tag.render`
 				<span class="catalog-footers-label-container">
-					<span
+					<button
+						type="button"
+						data-testid="catalog-selector-footer-create-btn"
 						onclick="${this.#handleClick.bind(this)}"
-						class="ui-selector-footer-link  ui-selector-footer-link-add"
+						class="catalog-footer-action ui-selector-footer-link ui-selector-footer-link-add"
 					>
 						${
 							this.getOption(
@@ -138,7 +140,7 @@ export class ProductSearchInputDefaultFooter extends DefaultFooter
 								Loc.getMessage('CATALOG_SELECTOR_SEARCH_POPUP_FOOTER_CREATE'),
 							)
 						}
-					</span>
+					</button>
 					${this.getQueryContainer()}
 				</span>
 			`;

@@ -1,4 +1,5 @@
 import { Loc } from 'main.core';
+import { makeActivatable } from 'bizproc.a11y';
 
 type Counters = {
 	task: number,
@@ -62,6 +63,13 @@ export class CounterPanel
 		});
 
 		this.uiPanel.init();
+
+		// counter items are clickable divs; panel binds its own click handlers,
+		// so only role, tabindex and keyboard activation are added here
+		target.querySelectorAll('.ui-counter-panel__item').forEach((item) => {
+			makeActivatable(item, () => {});
+		});
+
 		this.#subscribeToPulls();
 	}
 

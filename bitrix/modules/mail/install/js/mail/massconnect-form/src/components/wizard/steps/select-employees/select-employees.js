@@ -8,11 +8,12 @@ import { BMenu, type MenuOptions } from 'ui.vue3.components.menu';
 import { SaveButton, CancelButton } from 'ui.buttons';
 import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
 import { sendData as analyticsSendData } from 'ui.analytics';
+
 import { Api } from '../../../../api';
 import { useWizardStore } from '../../../../store/wizard.js';
 import { LocalizationMixin } from '../../../../mixins/localization-mixin';
 import { EmployeeListTable } from './employee-list-table';
-import type { Employee } from '../../../../store/type';
+import { type Employee } from '../../../../store/type';
 import './select-employees.css';
 
 const LIMIT_BLOCKED_USERS = 3;
@@ -240,7 +241,29 @@ export const SelectEmployees = {
 				context: 'MAIL_MASSCONNECT_EMPLOYEES',
 				entities: [
 					{
+						id: 'user',
+						dynamicLoad: true,
+						dynamicSearch: true,
+						substituteEntityId: 'mail-massconnect-user',
+						options: {
+							activeUsers: true,
+							intranetUsersOnly: true,
+							extranetUsersOnly: false,
+							emailUsers: false,
+							emailUsersOnly: false,
+							myEmailUsers: false,
+							networkUsers: false,
+							networkUsersOnly: false,
+							collabers: false,
+							showInvitationFooter: false,
+							inviteEmployeeLink: false,
+							inviteExtranetLink: false,
+							inviteGuestLink: false,
+						},
+					},
+					{
 						id: 'structure-node',
+						dynamicSearch: true,
 						options: {
 							selectMode: 'usersAndDepartments',
 							forSearch: true,

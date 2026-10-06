@@ -160,7 +160,15 @@ jn.define('testing/test-case', (require, exports, module) => {
 			}
 			else
 			{
-				throw error;
+				// An unexpected runtime error (e.g. a call to a missing method) is a failure of
+				// this test, not of the harness. Record it and keep running so one broken test
+				// cannot hide every test that follows it.
+				this.report.fail(
+					`${this.prefix} ${this.title}`,
+					'no error thrown',
+					error instanceof Error ? error.message : String(error),
+					error instanceof Error ? error.stack : undefined,
+				);
 			}
 		}
 

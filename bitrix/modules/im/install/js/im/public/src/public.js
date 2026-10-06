@@ -3,6 +3,7 @@ import { Type, Extension, Reflection, type JsonObject } from 'main.core';
 import { type NavigationMenuItemParams } from 'im.v2.lib.navigation';
 import { type OpenChatCreationParams, type CreatableChatTypeItem } from 'im.v2.lib.create-chat';
 import { type ChatEmbeddedApplicationType, type ChatEmbeddedApplicationInstance } from 'im.v2.application.launch';
+import { type OpenCollabOptions} from 'im.v2.const';
 
 import { legacyMessenger, legacyDesktop } from './legacy';
 import { Desktop } from './classes/desktop';
@@ -16,7 +17,7 @@ type Opener = {
 	openChatWithBotContext: (dialogId: string, context: JsonObject) => Promise,
 	openLines: (dialogId?: string) => Promise,
 	openCopilot: (dialogId?: string) => Promise,
-	openCollab: (dialogId?: string) => Promise,
+	openCollab: (dialogId?: string, options: OpenCollabOptions) => Promise,
 	openChannel: (dialogId?: string) => Promise,
 	openTaskComments: (dialogId?: string) => Promise,
 	openLinesHistory: (dialogId?: string) => Promise,
@@ -124,16 +125,16 @@ class Messenger
 		return getOpener()?.openCopilot(dialogId, contextId);
 	}
 
-	async openCollab(dialogId: string = ''): Promise
+	async openCollab(dialogId: string = '', options: OpenCollabOptions = {}): Promise
 	{
 		const DesktopManager = Reflection.getClass('BX.Messenger.v2.Lib.DesktopManager');
 		const isRedirectAllowed = await DesktopManager?.getInstance().checkForRedirect();
 		if (isRedirectAllowed)
 		{
-			return DesktopManager?.getInstance().redirectToCollab(dialogId);
+			return DesktopManager?.getInstance().redirectToCollab(dialogId, options);
 		}
 
-		return getOpener()?.openCollab(dialogId);
+		return getOpener()?.openCollab(dialogId, options);
 	}
 
 	async openChannel(dialogId: string = ''): Promise

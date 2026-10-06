@@ -9,7 +9,12 @@ import type { Editor } from 'sign.v2.editor';
 import './style.css';
 import { Preview } from 'sign.v2.preview';
 import { type Metadata, Wizard, type WizardOptions } from 'ui.wizard';
-import { decorateResultBeforeCompletion, getFilledStringOrUndefined, isTemplateMode } from './functions';
+import {
+	decorateResultBeforeCompletion,
+	getFilledStringOrUndefined,
+	isTemplateMode,
+	setInitialNextButtonState,
+} from './functions';
 import type { SignOptions, SignOptionsConfig } from './types';
 
 export type { SignOptions, SignOptionsConfig };
@@ -36,7 +41,6 @@ export class SignSettings
 	#isEditMode: boolean = false;
 	#isSameBlankSelected: boolean = false;
 	editedDocument: DocumentDetails | null;
-	isB2bSignMaster: boolean = false;
 	hasPreviewUrls: boolean = false;
 
 	constructor(containerId: string, signOptions: SignOptions = {}, wizardOptions: WizardOptions = {})
@@ -533,11 +537,7 @@ export class SignSettings
 		Dom.append(this.#getLayout(), container);
 		const step = this.#getInitialStepIndex();
 
-		if (!this.isB2bSignMaster)
-		{
-			const isDraft = Type.isStringFilled(uid);
-			this.wizard.toggleBtnActiveState('next', !isDraft);
-		}
+		setInitialNextButtonState(this.wizard, uid);
 		this.wizard.moveOnStep(step);
 	}
 

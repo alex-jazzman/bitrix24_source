@@ -58,7 +58,7 @@ class StoreCartBlock extends \Bitrix\Landing\LandingBlock
 					{
 						$landing = Landing::createInstance(0);
 						$catalogUrl = $landing->getPublicUrl($sysPages['catalog']['LANDING_ID']);
-						$content = str_replace('#system_catalog', $catalogUrl, $content);
+						$content = str_replace('#system_catalog', \Bitrix\Landing\Security\SyspageUrl::sanitize($catalogUrl), $content);
 					}
 				}
 			}

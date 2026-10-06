@@ -141,10 +141,7 @@ foreach($arResult['INVOICE'] as $sKey =>  $arInvoice)
 		$arActions[] = array(
 			'TITLE' => GetMessage('CRM_INVOICE_PAYMENT_HTML_TITLE'),
 			'TEXT' => GetMessage('CRM_INVOICE_PAYMENT_HTML'),
-			'ONCLICK' => "jsUtils.OpenWindow('".CUtil::JSEscape(CHTTP::urlAddParams(
-					$arInvoice['PATH_TO_INVOICE_PAYMENT'],
-					array('PRINT' => 'Y', 'ncc' => '1')
-				))."', 960, 600);"
+			'ONCLICK' => "jsUtils.OpenWindow('".CUtil::JSEscape((string)(new Uri($arInvoice['PATH_TO_INVOICE_PAYMENT']))->addParams(array('PRINT' => 'Y', 'ncc' => '1')))."', 960, 600);"
 		);
 	}
 	else
@@ -152,10 +149,7 @@ foreach($arResult['INVOICE'] as $sKey =>  $arInvoice)
 		$arActions[] = array(
 			'TITLE' => GetMessage('CRM_INVOICE_INTERNAL_ADD_BTN_TITLE'),
 			'TEXT' => GetMessage('CRM_INVOICE_INTERNAL_ADD_BTN_TITLE'),
-			'ONCLICK' => "window.open('".CUtil::JSEscape(CHTTP::urlAddParams(
-					$arInvoice['PATH_TO_INVOICE_EDIT'],
-					array('expose' => 'Y')
-				))."');"
+			'ONCLICK' => "window.open('".CUtil::JSEscape((string)(new Uri($arInvoice['PATH_TO_INVOICE_EDIT']))->addParams(array('expose' => 'Y')))."');"
 		);
 	}
 
@@ -164,10 +158,7 @@ foreach($arResult['INVOICE'] as $sKey =>  $arInvoice)
 		$arActions[] = array(
 			'TITLE' => GetMessage('CRM_INVOICE_PAYMENT_PDF_TITLE'),
 			'TEXT' => GetMessage('CRM_INVOICE_PAYMENT_PDF'),
-			'ONCLICK' => "jsUtils.Redirect([], '".CUtil::JSEscape(CHTTP::urlAddParams(
-				$arInvoice['PATH_TO_INVOICE_PAYMENT'],
-				array('pdf' => 1, 'DOWNLOAD' => 'Y', 'ncc' => '1')
-			))."');"
+			'ONCLICK' => "jsUtils.Redirect([], '".CUtil::JSEscape((string)(new Uri($arInvoice['PATH_TO_INVOICE_PAYMENT']))->addParams(array('pdf' => 1, 'DOWNLOAD' => 'Y', 'ncc' => '1')))."');"
 		);
 	}
 

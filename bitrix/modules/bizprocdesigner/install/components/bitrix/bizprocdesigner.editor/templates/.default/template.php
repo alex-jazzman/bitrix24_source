@@ -67,6 +67,14 @@ if (\Bitrix\BizprocDesigner\Internal\Config\Feature::instance()->isAiAssistantAv
 	Extension::load(['aiassistant.marta']);
 }
 
+$messengerConfig = null;
+$isNewProjectsOn = \Bitrix\Main\Config\Option::get('socialnetwork', 'new_projects', 'N') === 'Y';
+if ($isNewProjectsOn && \Bitrix\Main\Loader::includeModule('im'))
+{
+	Extension::load(['im.v2.lib.opener']);
+	$messengerConfig = \Bitrix\Im\V2\Service\Locator::getMessenger()->getApplication()->getConfig();
+}
+
 if ($isLegacyPropertiesDialog)
 {
 	CUtil::InitJSCore(['window', 'ajax', 'bp_selector', 'clipboard', 'marketplace', 'bp_field_type']);
@@ -123,12 +131,14 @@ foreach ($allActivities as $description)
 
 	(() => {
 		BX.message(<?= Json::encode(Loc::loadLanguageFile(__FILE__)) ?>);
+<?php if ($messengerConfig !== null): ?>
+		BX.Messenger.v2.Application.Core.setApplicationData(<?= Json::encode($messengerConfig) ?>);
+<?php endif; ?>
 		const { App } = BX.Bizprocdesigner.Editor;
 		const rootProps = {
 			initTemplateId: <?= Json::encode($arResult['templateId'] ?? null) ?>,
 			initDocumentType: <?= Json::encode($arResult['documentType'] ?? null) ?>,
 			initStartTrigger: <?= Json::encode($arResult['startTrigger'] ?? null) ?>,
-			initEditBlock: <?= Json::encode($_GET['editBlock'] ?? null) ?>,
 		};
 
 		App.mount('bizprocdesigner-editor', rootProps);

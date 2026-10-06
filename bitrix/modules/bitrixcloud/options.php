@@ -1,6 +1,6 @@
 <?php
-/* @var CUser $USER */
-/* @var CMain $APPLICATION */
+/** @var CUser $USER */
+/** @var CMain $APPLICATION */
 $module_id = 'bitrixcloud';
 $RIGHT_W = $RIGHT_R = $USER->IsAdmin();
 if ($RIGHT_R || $RIGHT_W) :
@@ -62,10 +62,6 @@ if (
 		{
 			$name = $arOption[0];
 			$val = trim($_REQUEST[$name], " \t\n\r");
-			if ($arOption[2][0] === 'checkbox' && $val !== 'Y')
-			{
-				$val = 'N';
-			}
 			COption::SetOptionString($module_id, $name, $val, $arOption[1]);
 		}
 	}
@@ -106,22 +102,14 @@ $tabControl->BeginNextTab();
 		$type = $arOption[2];
 	?>
 	<tr>
-		<td width="40%" nowrap <?php echo $type[0] == 'textarea' ? 'class="adm-detail-valign-top"' : '';?>>
+		<td width="40%" nowrap>
 			<label for="<?php echo htmlspecialcharsbx($arOption[0])?>"><?php echo $arOption[1]?>:</label>
 		<td width="60%">
-			<?php if ($type[0] == 'checkbox'):?>
-				<input type="checkbox" name="<?php echo htmlspecialcharsbx($arOption[0])?>" id="<?php echo htmlspecialcharsbx($arOption[0])?>" value="Y" <?php echo $val == 'Y' ? 'checked' : '';?>>
-			<?php elseif ($type[0] == 'text'):?>
-				<input type="text" size="<?php echo $type[1]?>" maxlength="255" value="<?php echo htmlspecialcharsbx($val)?>" name="<?php echo htmlspecialcharsbx($arOption[0])?>" id="<?php echo htmlspecialcharsbx($arOption[0])?>">
-			<?php elseif ($type[0] == 'textarea'):?>
-				<textarea rows="<?php echo $type[1]?>" cols="<?php echo $type[2]?>" name="<?php echo htmlspecialcharsbx($arOption[0])?>" id="<?php echo htmlspecialcharsbx($arOption[0])?>"><?php echo htmlspecialcharsbx($val)?></textarea>
-			<?php elseif ($type[0] == 'selectbox'):
-				?><select name="<?php echo htmlspecialcharsbx($arOption[0])?>"><?php
-					foreach ($type[1] as $key => $value):
-						?><option value="<?php echo htmlspecialcharsbx($key)?>" <?php echo $key == $val ? 'selected="selected"' : '';?>><?php echo htmlspecialcharsEx($value)?></option><?php
-					endforeach;
-				?></select><?php
-			endif?>
+			<select name="<?php echo htmlspecialcharsbx($arOption[0])?>"><?php
+				foreach ($type[1] as $key => $value):
+					?><option value="<?php echo htmlspecialcharsbx($key)?>" <?php echo $key == $val ? 'selected="selected"' : '';?>><?php echo htmlspecialcharsEx($value)?></option><?php
+				endforeach;
+			?></select>
 		</td>
 	</tr>
 	<?php endforeach?>

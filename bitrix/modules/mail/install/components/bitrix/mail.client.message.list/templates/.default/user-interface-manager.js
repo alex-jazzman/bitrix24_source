@@ -4,6 +4,7 @@
 	BX.Mail.Client.Message.List.UserInterfaceManager = function (options)
 	{
 		this.gridId = options.gridId;
+		this.isDraftMode = options.isDraftMode === true;
 		this.filterId = options.filterId || options.gridId;
 		this.spamDir = options.spamDir;
 		this.outcomeDir = options.outcomeDir;
@@ -18,10 +19,16 @@
 		this.isCurrentFolderSpam = false;
 		this.isCurrentFolderTrash = false;
 		this.isCurrentFolderOutcome = false;
-		this.setLastDir();
-		this.setCurrentFolderFlags(this.getFilterInstance());
+		if (!this.isDraftMode)
+		{
+			this.setLastDir();
+			this.setCurrentFolderFlags(this.getFilterInstance());
+		}
 		this.addEventHandlers();
-		this.setDefaultBtnTitles();
+		if (!this.isDraftMode)
+		{
+			this.setDefaultBtnTitles();
+		}
 	};
 
 	BX.Mail.Client.Message.List.UserInterfaceManager.prototype = {
@@ -30,6 +37,11 @@
 			if (this.settingsToggle)
 			{
 				BX.bind(this.settingsToggle, 'click', BX.delegate(this.onSettingsToggleClick, this));
+			}
+
+			if (this.isDraftMode)
+			{
+				return;
 			}
 
 			BX.addCustomEvent('BX.Main.Filter:apply', this.onApplyFilter.bind(this));
@@ -49,6 +61,10 @@
 				{
 					var messageId = event['id'];
 					var row = BX.findParent(document.querySelector('.mail-msg-list-cell-' + messageId), {tagName: 'tr'});
+					if (row && BX.Mail.Home.MessageList?.shouldRefuseMigrationActionForMessageIds?.([row.dataset.id]) === true)
+					{
+						return;
+					}
 					if (row && row.dataset.id
 						&& row.getElementsByClassName('mail-msg-list-cell-unseen').length !== 0)
 					{
@@ -92,6 +108,14 @@
 				{
 					return;
 				}
+				var tableRow = BX.findParent(
+					popupWindow.bindElement.parentElement,
+					{className: 'main-grid-row'}
+				);
+				if (!tableRow || !this.getGridInstance().getRows().getById(tableRow.dataset.id))
+				{
+					return;
+				}
 				this.updateRowMenuSeenBtn(popupWindow);
 				this.updateRowMenuSpamBtn(popupWindow);
 				this.updateRowMenuCrmBtn(popupWindow);
@@ -109,15 +133,28 @@
 		},
 		trackActionPanelStyleChange: function ()
 		{
-			var targetNode = document.querySelector('.ui-action-panel');
-			if (!targetNode)
+			var actionPanel = BX.Mail.Home.GridActionPanels && BX.Mail.Home.GridActionPanels[this.gridId];
+			if (!actionPanel)
 			{
 				return;
 			}
 
 			var gridInstance = BX.Main.gridManager.getById(this.gridId).instance;
+			var checkbox = this.addCheckAllCheckbox(actionPanel, gridInstance);
+			BX.Mail.Home.Grid.setCheckboxNodeForCheckAll(checkbox);
+		},
+		addCheckAllCheckbox: function (actionPanel, gridInstance)
+		{
+			var targetNode = actionPanel.getPanelContainer();
+			var checkbox = targetNode.querySelector(
+				'[data-mail-grid-check-all="' + gridInstance.getId() + '"]'
+			);
+			if (checkbox)
+			{
+				return checkbox;
+			}
 
-			var checkbox = BX.create(
+			checkbox = BX.create(
 				'input',
 				{
 					'props': {
@@ -125,13 +162,14 @@
 						'disabled': gridInstance.getRows().getCountDisplayed() == 0,
 						title: BX.message('INTERFACE_MAIL_CHECK_ALL'),
 					},
+					'attrs': {
+						'data-mail-grid-check-all': gridInstance.getId(),
+					},
 					'style': {
 						'verticalAlign': 'middle'
 					}
 				}
 			);
-
-			BX.Mail.Home.Grid.setCheckboxNodeForCheckAll(checkbox);
 
 			var container = BX.create(
 				'span',
@@ -184,12 +222,17 @@
 
 			gridInstance.bindOnCheckAll();
 
-			targetNode.firstChild.onclick = function() {
-				BX.Mail.Home.Grid.resetGridSelection();
-			}
-
 			targetNode.insertBefore(container, targetNode.firstChild);
+			var resetNode = targetNode.querySelector('[data-role="action-panel-total"]');
+			resetNode.onclick = function()
+			{
+				gridInstance.getRows().unselectAll();
+				gridInstance.adjustCheckAllCheckboxes();
+				actionPanel.setTotalSelectedItems(0);
+				actionPanel.hidePanel(gridInstance);
+			};
 
+			return checkbox;
 		},
 		showElement: function (element, force)
 		{
@@ -371,9 +414,16 @@
 						if (!(oldMessage && oldMessage.length) )
 						{
 							row.node.setAttribute("unseen", "true");
-							row.node.cells[2].classList.add('mail-msg-list-cell-unseen');
-							row.node.cells[3].classList.add('mail-msg-list-cell-unseen');
-							row.node.cells[4].classList.add('mail-msg-list-cell-unseen');
+
+							var unseenColumnIds = ['FROM', 'SUBJECT', 'DATE'];
+							for (var j = 0; j < unseenColumnIds.length; j++)
+							{
+								var unseenCell = row.node.querySelector('[data-column-id="' + unseenColumnIds[j] + '"]');
+								if (unseenCell)
+								{
+									unseenCell.classList.add('mail-msg-list-cell-unseen');
+								}
+							}
 						}
 					}
 				}

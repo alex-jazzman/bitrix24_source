@@ -7,13 +7,8 @@ jn.define('tasks/layout/checklist/list/src/layout/item-view', (require, exports,
 	const BORDER_COLOR = Color.bgSeparatorSecondary.toHex();
 
 	/**
-	 * @function ChecklistItemView
-	 * @param {Object} [props]
-	 * @param {View[]} [props.children]
-	 * @param {Boolean} [props.divider]
-	 * @param {Number} [props.dividerShift]
-	 * @param {...*} props.restProps
-	 * @return View
+	 * @param {ChecklistItemViewProps} [props]
+	 * @returns {Object}
 	 */
 	const ChecklistItemView = (props = {}) => {
 		const { children, style, divider = false, dividerShift = 0, ...restProps } = props;

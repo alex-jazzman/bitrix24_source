@@ -1,0 +1,62 @@
+.bizproc-fields-text-row {
+	display: flex;
+	align-items: flex-start;
+	gap: var(--ui-space-inline-xs);
+}
+
+.bizproc-fields-text {
+	flex: 1 1 auto;
+	display: flex;
+}
+
+.bizproc-fields-text__input {
+	box-sizing: border-box;
+	width: 100%;
+	/* 72px: mockup height of the textarea before it is resized; DS has no control-height size token. */
+	min-height: 72px;
+	padding: 6px 10px;
+	border: 1px solid var(--ui-color-design-outline-stroke);
+	border-radius: var(--ui-border-radius-sm);
+	background: var(--ui-color-bg-content-primary);
+	outline: none;
+	transition: border-color .15s ease;
+	/* The frame, background, padding and the resize handle all live on the textarea itself,
+	   so the frame and the resizable control are one DOM node without a second inner box. */
+	resize: vertical;
+	/* N-1 exception: font-family is required to reset browser default for <textarea>;
+	   --ui-font-family-primary is not a standard DS token - inherit is the DS-compliant fallback. */
+	font-family: inherit;
+	font-size: var(--ui-font-size-sm);
+	font-weight: var(--ui-font-weight-normal);
+	/* 20px: --ui-font-line-height-* are unitless ratios, none of which yields 20px on a 13px font. */
+	line-height: 20px;
+	color: var(--ui-color-base-2);
+}
+
+.bizproc-fields-text__input::placeholder {
+	color: var(--ui-color-base-4);
+}
+
+.bizproc-fields-text__input:focus {
+	border-color: var(--ui-color-accent-main-primary);
+}
+
+.bizproc-fields-text--readonly .bizproc-fields-text__input {
+	background: var(--ui-color-design-disabled-bg);
+	border-color: var(--ui-color-design-disabled-stroke);
+	/* a read-only field is not resizable */
+	resize: none;
+	cursor: default;
+}
+
+.bizproc-fields-text--readonly .bizproc-fields-text__input:focus {
+	border-color: var(--ui-color-design-disabled-stroke);
+}
+
+/* The focus outline is only needed in read-only mode: the border keeps its color on focus
+   there, so the outline is the only focus indicator left (WCAG 2.4.7). An editable field
+   shows focus through the border color change and needs no outline. */
+.bizproc-fields-text--readonly .bizproc-fields-text__input:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+}

@@ -16,7 +16,13 @@ use Bitrix\UI\Toolbar\ButtonLocation;
 \Bitrix\Main\Loader::includeModule('ui');
 \CJSCore::init("sidepanel");
 
-$APPLICATION->SetTitle(Loc::getMessage('MAIL_ADDRESSBOOK_LIST_PAGE_TITLE'));
+$APPLICATION->SetTitle(Loc::getMessage('MAIL_ADDRESSBOOK_LIST_PAGE_TITLE_MSGVER_1'));
+
+$bodyClass = $APPLICATION->getPageProperty('BodyClass', false);
+$APPLICATION->setPageProperty(
+	'BodyClass',
+	trim(sprintf('%s %s', $bodyClass, 'pagetitle-toolbar-field-view pagetitle-mail-view'))
+);
 
 \Bitrix\UI\Toolbar\Facade\Toolbar::addFilter([
 	'GRID_ID' => $arResult['GRID_ID'],

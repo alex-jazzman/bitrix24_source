@@ -1,0 +1,45 @@
+.crm-ai-report-drawer .crm-ai-report-drawer__toolbar {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: space-between;
+	margin-bottom: var(--ui-space-stack-xs2, 10px);
+}
+
+.crm-ai-report-drawer__toolbar-left {
+	display: flex;
+	flex-direction: row;
+	gap: var(--ui-space-inline-2xs2, 6px);
+}
+
+.crm-ai-report-drawer__responsible-button {
+	padding: var(--ui-space-inset-2xs2, 6px) var(--ui-space-inset-xs, 8px) !important;
+}
+
+.crm-ai-report-drawer .crm-ai-report-drawer__toolbar .crm-ai-report-drawer__anchors {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: space-evenly;
+	gap: 8px;
+}
+
+.crm-ai-report-drawer__anchor-wrapper {
+	position: relative;
+}
+
+.crm-ai-report-drawer__arrow {
+	display: none;
+	background-image: url("icons/arrow.svg");
+	background-repeat: no-repeat;
+	width: 17px;
+	height: 9px;
+	position: absolute;
+	top: 100%;
+	left: 50%;
+	transform: translateX(-50%);
+}
+
+.crm-ai-report-drawer__anchor-wrapper.active .crm-ai-report-drawer__arrow {
+	display: block;
+}

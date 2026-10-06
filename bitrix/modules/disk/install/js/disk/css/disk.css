@@ -100,6 +100,14 @@
 	background:url(./images/disk-folder-shared-3.svg) no-repeat;
 }
 
+.bx-disk-folder-icon.icon-mail {
+	background: url(./images/disk-folder-mail.svg) no-repeat;
+}
+.bx-disk-folder-icon.icon-mail-shared {
+	background: url(./images/disk-folder-mail-shared.svg) no-repeat;
+}
+
+
 .bx-file-icon-container-small.bx-disk-file-icon.icon-pdf {
 	background: url(./images/disk-pdf.svg) -3px 0 no-repeat !important;
 }
@@ -1425,7 +1433,7 @@ table.bx-disk-popup-shared-people-list .bx-disk-filepage-used-people-link:hover{
 	display: inline-block;
 	margin: 0 5px;
 	padding: 0 15px 15px 15px;
-	min-width: 225px;
+	min-width: 190px;
 	border-radius: var(--ui-border-radius-xs, 2px);
 	background-color: #fff;
 	vertical-align: top;
@@ -2437,8 +2445,8 @@ table.bx-disk-popup-shared-people-list .bx-disk-filepage-used-people-link:hover{
 	position: relative;
 	width: 53px;
 	height: 22px;
-	background: #bbed22;
-	border-radius: 54px;
+	background: #0075ff;
+	border-radius: var(--ui-border-radius-pill, 999px);
 	transition: .2s;
 	cursor: pointer;
 }
@@ -2448,7 +2456,7 @@ table.bx-disk-popup-shared-people-list .bx-disk-filepage-used-people-link:hover{
 }
 
 .disk-switcher-on {
-	background: #bbed22;
+	background: #0075ff;
 }
 
 .disk-switcher-off {
@@ -2463,7 +2471,7 @@ table.bx-disk-popup-shared-people-list .bx-disk-filepage-used-people-link:hover{
 	left: 3px;
 	background: #fff;
 	box-shadow: 0 1px 1px 0 rgba(0,0,0,.09);
-	border-radius: 100px;
+	border-radius: var(--ui-border-radius-pill, 999px);
 	transition: .2s;
 }
 
@@ -2486,7 +2494,7 @@ table.bx-disk-popup-shared-people-list .bx-disk-filepage-used-people-link:hover{
 	line-height: 22px;
 	height: 22px;
 	font-size: 0;
-	color: #515c69;
+	color: #525c69;
 	text-align: center;
 	text-transform: uppercase;
 	background: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2214px%22%20height%3D%2211px%22%20viewBox%3D%220%200%2014%2011%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20xmlns%3Axlink%3D%22http%3A//www.w3.org/1999/xlink%22%3E%0A%20%20%20%20%3Cg%20stroke%3D%22none%22%20stroke-width%3D%221%22%3E%0A%20%20%20%20%20%20%20%20%3Cg%20transform%3D%22translate%28-809.000000%2C%20-376.000000%29%22%20fill%3D%22%23fff%22%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%3Cpath%20d%3D%22M811.157529%2C381.753455%20L822.672128%2C381.753455%20L822.672128%2C383.229949%20L811.157529%2C383.229949%20L809.681035%2C383.229949%20L809.681035%2C377.307382%20L811.157529%2C377.307382%20L811.157529%2C381.753455%20Z%22%20id%3D%22Combined-Shape%22%20transform%3D%22translate%28816.176581%2C%20380.268666%29%20rotate%28-45.000000%29%20translate%28-816.176581%2C%20-380.268666%29%20%22%3E%3C/path%3E%0A%20%20%20%20%20%20%20%20%3C/g%3E%0A%20%20%20%20%3C/g%3E%0A%3C/svg%3E') 10px 5px no-repeat;
@@ -2521,7 +2529,7 @@ table.bx-disk-popup-shared-people-list .bx-disk-filepage-used-people-link:hover{
 		background: #dcdfe3;
 	}
 	to {
-		background: #bbed22;
+		background: #0075ff;
 	}
 }
 
@@ -2558,7 +2566,7 @@ table.bx-disk-popup-shared-people-list .bx-disk-filepage-used-people-link:hover{
 
 @keyframes disk-switcher-animate-to-off-bg {
 	from {
-		background: #bbed22;
+		background: #0075ff;
 	}
 	to {
 		background: #dcdfe3;

@@ -1,0 +1,147 @@
+.disk-html-viewer-page__header {
+	display: flex;
+	align-items: center;
+	gap: 14px;
+	padding: 0 20px 0 22px;
+	width: 100%;
+	/* fixed, not derived from the content: the frame height below subtracts exactly this value */
+	height: 58px;
+	box-sizing: border-box;
+	background-color: var(--ui-color-bg-content-primary, #fff);
+	border-bottom: 1px solid var(--ui-color-separator-primary, #e6e7e9);
+	/* narrow viewports and deep zoom: the page wrapper clips its overflow, so without a scroll of
+	   its own the header would cut the actions off with no way to reach them (WCAG 1.4.10) */
+	overflow-x: auto;
+}
+
+/* Copy of the left menu logo (intranet menu-items-header__logo): the page carries no bitrix24 site
+   template, so neither its css nor its icon file is reachable here. The colour is the text base
+   token instead of the menu's fixed white, which would be invisible on this light header. */
+.disk-html-viewer-page__logo {
+	--disk-html-viewer-page-logo-color: var(--ui-color-base-1, #333);
+
+	display: flex;
+	flex: 0 0 auto;
+	text-decoration: none;
+	font-size: var(--ui-font-size-2xl, 18px);
+	font-weight: var(--ui-font-weight-medium, 500);
+	line-height: var(--ui-font-line-height-3xs, 1.2);
+	color: var(--disk-html-viewer-page-logo-color);
+}
+
+.disk-html-viewer-page__logo:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-link, #0154c8);
+	outline-offset: 2px;
+	border-radius: 4px;
+}
+
+.disk-html-viewer-page__logo::after {
+	content: '';
+	width: 9px;
+	height: 9px;
+	position: relative;
+	top: 4px;
+	left: 3px;
+	-webkit-mask-image: url("data:image/svg+xml,%3Csvg%20width='9'%20height='9'%20viewBox='0%200%209%209'%20fill='none'%20xmlns='http://www.w3.org/2000/svg'%3E%3Cpath%20d='M3.99833%205.00194H6.49822V4.00192H4.99822V2.25128H3.99833V5.00194Z'%20fill='white'/%3E%3Cpath%20fill-rule='evenodd'%20clip-rule='evenodd'%20d='M4.5%200C2.01473%200%200%202.01465%200%204.49994C0%206.98522%202.01473%209%204.5%209C6.98528%209%209%206.98522%209%204.49994C9%202.01465%206.98528%200%204.5%200ZM4.5%207.99996C2.56701%207.99996%201.00005%206.4329%201.00005%204.49994C1.00005%202.56696%202.56701%201.00003%204.5%201.00003C6.43315%201.00003%208.00011%202.56696%208.00011%204.49994C8.00011%206.4329%206.43315%207.99996%204.5%207.99996Z'%20fill='white'/%3E%3C/svg%3E");
+	mask-image: url("data:image/svg+xml,%3Csvg%20width='9'%20height='9'%20viewBox='0%200%209%209'%20fill='none'%20xmlns='http://www.w3.org/2000/svg'%3E%3Cpath%20d='M3.99833%205.00194H6.49822V4.00192H4.99822V2.25128H3.99833V5.00194Z'%20fill='white'/%3E%3Cpath%20fill-rule='evenodd'%20clip-rule='evenodd'%20d='M4.5%200C2.01473%200%200%202.01465%200%204.49994C0%206.98522%202.01473%209%204.5%209C6.98528%209%209%206.98522%209%204.49994C9%202.01465%206.98528%200%204.5%200ZM4.5%207.99996C2.56701%207.99996%201.00005%206.4329%201.00005%204.49994C1.00005%202.56696%202.56701%201.00003%204.5%201.00003C6.43315%201.00003%208.00011%202.56696%208.00011%204.49994C8.00011%206.4329%206.43315%207.99996%204.5%207.99996Z'%20fill='white'/%3E%3C/svg%3E");
+	-webkit-mask-repeat: no-repeat;
+	mask-repeat: no-repeat;
+	-webkit-mask-size: contain;
+	mask-size: contain;
+	background-color: var(--disk-html-viewer-page-logo-color);
+}
+
+/* Separates the portal logo from the document it hosts, as in the office editor header. */
+.disk-html-viewer-page__divider {
+	flex: 0 0 auto;
+	width: 1px;
+	height: 22px;
+	background-color: var(--ui-color-base-6, #e2e2e2);
+}
+
+/* The full row asks 390px, which a phone in portrait does not have. The logo is what goes, together
+   with the divider that only makes sense beside it: the name of the open document, the warning about
+   it and the three actions all have to stay in the window. */
+@media (max-width: 389px) {
+	.disk-html-viewer-page__logo,
+	.disk-html-viewer-page__divider {
+		display: none;
+	}
+}
+
+/* The document is user content the portal does not vet, and the header says so next to its name. */
+.disk-html-viewer-page__warning {
+	flex: 0 0 auto;
+	/* the hint keeps its node at 40% until hover, which a warning cannot afford */
+	opacity: 1;
+	/* Pulled out of the 14px rhythm of the header: the warning belongs to the file name beside it,
+	   not to the row of controls. */
+	margin-left: -8px;
+}
+
+/* Opened by keyboard as well, so the focus ring has to be visible on the icon itself. */
+.disk-html-viewer-page__warning:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-link, #0154c8);
+	outline-offset: 2px;
+	border-radius: 4px;
+}
+
+/* The icon the hint renders into the node above. It sets the colour variable on itself, so a value
+   inherited from the parent would never reach it — hence the child selector and the extra weight. */
+.disk-html-viewer-page .disk-html-viewer-page__warning > * {
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-warning, #f2a100);
+}
+
+/* an h1: the file name is the heading of the page that hosts the document. It gives way first when
+   the header runs out of room — the warning and the buttons next to it do not shrink — but not past
+   a few characters: it is the only thing on the page naming the open document, and the header has a
+   scroll of its own for what no longer fits. */
+.disk-html-viewer-page__name {
+	margin: 0;
+	flex: 0 1 auto;
+	min-width: 6ch;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font-size: var(--ui-font-size-xl, 16px);
+	font-weight: var(--ui-font-weight-regular, 400);
+	line-height: 21px;
+	letter-spacing: -0.1px;
+	color: var(--ui-color-base-2, #525c69);
+}
+
+/* Pushed to the right edge by the margin rather than by a stretched name, so the warning beside the
+   name stays beside the name however short it is. */
+.disk-html-viewer-page__actions {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	flex: 0 0 auto;
+	margin-left: auto;
+}
+
+/* Viewport-based height like the office editor shell: the site template keeps body at height auto,
+   so the frame cannot inherit a full-height chain from the wrapper. */
+.disk-html-viewer-page__frame {
+	display: block;
+	width: 100%;
+	height: calc(100vh - 58px);
+	height: calc(100dvh - 58px);
+	border: 0;
+}
+
+/* Takes the place of the frame when there is no document to show, so the page keeps its shape. */
+.disk-html-viewer-page__unavailable {
+	margin: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: calc(100vh - 58px);
+	height: calc(100dvh - 58px);
+	padding: 0 20px;
+	box-sizing: border-box;
+	text-align: center;
+	font-size: var(--ui-font-size-xl, 16px);
+	line-height: 21px;
+	color: var(--ui-color-base-3, #828b95);
+}

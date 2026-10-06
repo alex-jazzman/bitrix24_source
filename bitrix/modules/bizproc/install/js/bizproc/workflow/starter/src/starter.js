@@ -1,21 +1,21 @@
-import { Type, Loc, Text, Uri } from 'main.core';
+import { Router } from 'bizproc.router';
+import { ajax, Loc, Text, Type, Uri } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import 'sidepanel';
 import { Dialog } from 'ui.entity-selector';
 import 'ui.notification';
 
-import { Router } from 'bizproc.router';
-
-import { CallActionHelper, type Action } from './call-action-helper';
+import { type Action, CallActionHelper } from './call-action-helper';
 import { ComplexDocumentId } from './data/complex-document-id';
 import { ComplexDocumentType } from './data/complex-document-type';
 import {
-	StarterDocument,
 	type StarterComplexDocumentTypeInput,
+	StarterDocument,
 	type StarterDocumentInit,
 } from './data/starter-document';
 import { ErrorNotifier } from './error-notifier';
-import { managerInstance } from './index';
+import { managerInstance } from './manager';
+import { normalizeCategoryId } from './normalize-category-id';
 import { type StarterData } from './types/starter-data';
 
 export type SignedDocumentType = string;
@@ -28,6 +28,7 @@ export class Starter extends EventEmitter
 	#signedDocumentId: ?SignedDocumentId = null;
 	#complexDocumentType: ?ComplexDocumentType = null;
 	#complexDocumentId: ?ComplexDocumentId = null;
+	#categoryId: ?number = null;
 	#triggerType: ?string = null;
 
 	#templatesSelector: ?Dialog = null;
@@ -40,6 +41,7 @@ export class Starter extends EventEmitter
 		this.setEventNamespace('BX.Bizproc.Workflow.Starter');
 
 		this.#setDocumentType(data);
+		this.#categoryId = normalizeCategoryId(data.categoryId);
 		this.#triggerType = data.triggerType || null;
 
 		if (Type.isNil(this.#complexDocumentType) && Type.isNil(this.#signedDocumentType))
@@ -60,6 +62,7 @@ export class Starter extends EventEmitter
 			signedDocumentType: this.#signedDocumentType,
 			complexDocumentId: this.#complexDocumentId,
 			signedDocumentId: this.#signedDocumentId,
+			categoryId: this.#categoryId,
 			triggerType: data.triggerType || '',
 			customAjaxUrl: this.#hasCustomAjaxUrl ? data.ajaxUrl : null,
 		});
@@ -119,6 +122,7 @@ export class Starter extends EventEmitter
 				documentId: config.documentId,
 				signedDocumentType: config.signedDocumentType,
 				signedDocumentId: config.signedDocumentId,
+				categoryId: config.categoryId ?? null,
 				templates: config.templates || null,
 				triggerType: config.triggerType || null,
 				ajaxUrl: config.ajaxUrl || '',
@@ -244,6 +248,7 @@ export class Starter extends EventEmitter
 					normalizedDocumentType.moduleId,
 					normalizedDocumentType.entity,
 					normalizedDocumentType.documentType,
+					String(normalizedDocumentType.categoryId),
 				].join('@'),
 				normalizedDocumentType,
 			);
@@ -260,9 +265,10 @@ export class Starter extends EventEmitter
 	static #createDocumentPayload(document: StarterDocument): {
 		documentType: [string, string, string],
 		documentId: [string, string, string | number],
+		categoryId?: number,
 	}
 	{
-		return {
+		const payload = {
 			documentType: [
 				document.documentType.moduleId,
 				document.documentType.entity,
@@ -274,6 +280,13 @@ export class Starter extends EventEmitter
 				document.documentId.documentId,
 			],
 		};
+
+		if (!Type.isNil(document.categoryId))
+		{
+			payload.categoryId = document.categoryId;
+		}
+
+		return payload;
 	}
 
 	static #createDocumentTypePayload(documentType: ComplexDocumentType): [string, string, string]
@@ -299,6 +312,11 @@ export class Starter extends EventEmitter
 			payload.documentId.forEach((value, valueIndex) => {
 				requestParams[`documents[${documentIndex}][documentId][${valueIndex}]`] = value;
 			});
+
+			if (!Type.isNil(payload.categoryId))
+			{
+				requestParams[`documents[${documentIndex}][categoryId]`] = payload.categoryId;
+			}
 		});
 
 		return requestParams;
@@ -309,14 +327,23 @@ export class Starter extends EventEmitter
 		autoExecuteType: number,
 	): {
 		autoExecuteType: number,
-		documents: Array<{ documentType: [string, string, string] }>,
+		documents: Array<{ documentType: [string, string, string], categoryId?: number }>,
 	}
 	{
 		return {
 			autoExecuteType,
-			documents: documentTypes.map((documentType) => ({
-				documentType: this.#createDocumentTypePayload(documentType),
-			})),
+			documents: documentTypes.map((documentType) => {
+				const payload = {
+					documentType: this.#createDocumentTypePayload(documentType),
+				};
+
+				if (!Type.isNil(documentType.categoryId))
+				{
+					payload.categoryId = documentType.categoryId;
+				}
+
+				return payload;
+			}),
 		};
 	}
 
@@ -393,6 +420,7 @@ export class Starter extends EventEmitter
 			requestParams: {
 				signedDocumentType: this.#signedDocumentType,
 				signedDocumentId: this.#signedDocumentId,
+				categoryId: this.#categoryId,
 			},
 			events: {
 				onCloseComplete: Type.isFunction(callback) ? callback : () => {},
@@ -541,10 +569,15 @@ export class Starter extends EventEmitter
 	// compatibility
 	showAutoStartParametersPopup(
 		autoExecuteType: number,
-		config: { callback: Function } = {},
+		config: { callback: Function, categoryId?: ?number } = {},
 	)
 	{
-		this.#showStepByStepSlider({ templateId: null, autoExecuteType })
+		const categoryId = Object.hasOwn(config, 'categoryId')
+			? normalizeCategoryId(config.categoryId)
+			: this.#categoryId
+		;
+
+		this.#showStepByStepSlider({ templateId: null, autoExecuteType, categoryId })
 			.then((data: { signedParameters: string }) => {
 				if (Type.isFunction(config?.callback))
 				{
@@ -562,7 +595,50 @@ export class Starter extends EventEmitter
 		;
 	}
 
-	#showStepByStepSlider(componentParams: { templateId: ?number, autoExecuteType: ?number }): Promise
+	hasAutoStartParameters(autoExecuteType: number, config: { categoryId?: ?number } = {}): Promise<boolean>
+	{
+		const categoryId = Object.hasOwn(config, 'categoryId')
+			? normalizeCategoryId(config.categoryId)
+			: this.#categoryId
+		;
+
+		const data = {
+			autoExecuteType,
+			categoryId,
+		};
+
+		if (this.#signedDocumentType)
+		{
+			data.signedDocumentType = this.#signedDocumentType;
+		}
+		else if (this.#complexDocumentType)
+		{
+			data.documentType = [
+				this.#complexDocumentType.moduleId,
+				this.#complexDocumentType.entity,
+				this.#complexDocumentType.documentType,
+			];
+		}
+
+		if (this.#signedDocumentId)
+		{
+			data.signedDocumentId = this.#signedDocumentId;
+		}
+		else if (this.#complexDocumentId)
+		{
+			data.documentId = [
+				this.#complexDocumentId.moduleId,
+				this.#complexDocumentId.entity,
+				this.#complexDocumentId.documentId,
+			];
+		}
+
+		return ajax.runAction('bizproc.workflow.starter.hasAutoStartParameters', { data })
+			.then((response) => response.data?.hasParameters === true)
+		;
+	}
+
+	#showStepByStepSlider(componentParams: { templateId: ?number, autoExecuteType: ?number, categoryId?: ?number }): Promise
 	{
 		return new Promise((resolve) => {
 			BX.SidePanel.Instance.open(
@@ -593,7 +669,7 @@ export class Starter extends EventEmitter
 		});
 	}
 
-	#createStepByStepSliderUrl(componentParams: { templateId: ?number, autoExecuteType: ?number }): string
+	#createStepByStepSliderUrl(componentParams: { templateId: ?number, autoExecuteType: ?number, categoryId?: ?number }): string
 	{
 		let url = Uri.addParam(
 			'/bitrix/components/bitrix/bizproc.workflow.start/',
@@ -642,6 +718,15 @@ export class Starter extends EventEmitter
 		if (Type.isStringFilled(this.#triggerType))
 		{
 			url = Uri.addParam(url, { triggerType: this.#triggerType });
+		}
+
+		const categoryId = Object.hasOwn(componentParams, 'categoryId')
+			? componentParams.categoryId
+			: this.#categoryId
+		;
+		if (!Type.isNil(categoryId))
+		{
+			url = Uri.addParam(url, { categoryId });
 		}
 
 		return url;

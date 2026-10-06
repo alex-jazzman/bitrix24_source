@@ -1,5 +1,5 @@
 /* eslint-disable */
-(function (main_core, main_popup, main_date, biconnector_apacheSupersetDashboardManager, main_core_events, biconnector_apacheSupersetAnalytics, ui_entitySelector, ui_tour, biconnector_apacheSupersetMarketManager, biconnector_entitySelector, ui_buttons, ui_alerts, ui_forms, ui_system_dialog, biconnector_ahaMoment, ui_system_typography, biconnector_sharePopup) {
+(function (main_core, main_popup, main_date, biconnector_apacheSupersetDashboardManager, main_core_events, biconnector_apacheSupersetAnalytics, ui_entitySelector, ui_tour, biconnector_apacheSupersetMarketManager, biconnector_entitySelector, ui_buttons, ui_alerts, ui_forms, ui_system_dialog, ui_dialogs_messagebox, biconnector_ahaMoment, biconnector_sharePopup) {
 	'use strict';
 
 	/**
@@ -14,6 +14,11 @@
 		#publishAhaMoment;
 		#properties;
 		#sharePopups = new Map();
+		#isDashboardListChanged = false;
+		#dashboardListReloadTimeout = null;
+		#isDashboardListUpdatingLocally = false;
+		#dashboardListChangesDuringLocalUpdate = 0;
+		#lastDashboardListReloadScheduleAt = Date.now();
 		constructor(props) {
 			this.#dashboardManager = new biconnector_apacheSupersetDashboardManager.DashboardManager();
 			this.#properties = props;
@@ -22,6 +27,7 @@
 			this.#subscribeToEvents();
 			this.#colorPinnedRows();
 			this.#initHints();
+			this.#showSelfHostedLicensePopup();
 			this.#replaceHistoryState();
 		}
 		#subscribeToEvents() {
@@ -87,12 +93,20 @@
 			BX.PULL && BX.PULL.extendWatch('superset_dashboard', true);
 			main_core_events.EventEmitter.subscribe('onPullEvent-biconnector', event => {
 				const [eventName, eventData] = event.data;
-				if (eventName === 'onSupersetStatusUpdated') {
+				if (eventName === 'onDashboardListChanged') {
+					this.#onDashboardListChanged();
+				} else if (eventName === 'onSupersetStatusUpdated') {
 					const status = eventData?.status;
 					if (status) {
 						this.#onSupersetStatusChange(status);
 					}
 				}
+			});
+			main_core.Event.bind(document, 'visibilitychange', () => {
+				this.#reloadChangedDashboardList();
+			});
+			main_core.Event.bind(window, 'focus', () => {
+				this.#reloadChangedDashboardList();
 			});
 			main_core_events.EventEmitter.subscribe('BX.Rest.Configuration.Install:onFinish', () => {
 				this.#grid.reload();
@@ -104,9 +118,6 @@
 			});
 			main_core_events.EventEmitter.subscribe('BIConnector.ExportMaster:onDashboardDataLoaded', () => {
 				this.#grid.tableUnfade();
-			});
-			main_core_events.EventEmitter.subscribe('BIConnector.DashboardManager:onEmbeddedDataLoaded', () => {
-				this.#grid.reload();
 			});
 			main_core_events.EventEmitter.subscribe('BX.BIConnector.Settings:onAfterSave', event => {
 				const data = event.getData();
@@ -192,6 +203,76 @@
 					this.updateDashboardStatus(dashboardId, dashboardStatus);
 				}
 			}
+		}
+		#onDashboardListChanged() {
+			this.getGrid().reload();
+		}
+		#reloadChangedDashboardList() {
+			if (!this.#isDashboardListChanged || document.hidden) {
+				return;
+			}
+			this.#scheduleDashboardListReload();
+		}
+		#scheduleDashboardListReload() {
+			if (this.#dashboardListReloadTimeout !== null) {
+				return;
+			}
+			const delay = Math.max(0, this.#lastDashboardListReloadScheduleAt + 1000 - Date.now());
+			this.#lastDashboardListReloadScheduleAt = Date.now() + delay;
+			this.#dashboardListReloadTimeout = setTimeout(() => {
+				this.#dashboardListReloadTimeout = null;
+				if (!this.#isDashboardListChanged || document.hidden) {
+					return;
+				}
+				if (this.#isDashboardListUpdatingLocally || this.#hasActiveDashboardListInteraction()) {
+					this.#scheduleDashboardListReload();
+					return;
+				}
+				this.#isDashboardListChanged = false;
+				this.getGrid().reload();
+			}, delay);
+		}
+		#skipOwnDashboardListChange() {
+			if (this.#dashboardListChangesDuringLocalUpdate > 0) {
+				this.#dashboardListChangesDuringLocalUpdate--;
+				return;
+			}
+		}
+		#hasActiveDashboardListInteraction() {
+			const gridContainer = this.getGrid().getContainer();
+			const activeElement = document.activeElement;
+			return gridContainer.querySelector('.main-grid-editor') !== null || main_core.Type.isDomNode(activeElement) && (gridContainer.contains(activeElement) || activeElement.closest('.menu-popup') !== null);
+		}
+
+		/**
+		 * Warning about the term of the license running out, shown to an administrator of a boxed portal. The texts and
+		 * the decision to show it come resolved from the server; the only thing decided here is that a popup seen once
+		 * does not come back.
+		 */
+		#showSelfHostedLicensePopup() {
+			const popup = this.#properties.selfHostedLicensePopup;
+			if (!main_core.Type.isPlainObject(popup)) {
+				return;
+			}
+			this.#properties.selfHostedLicensePopup = null;
+			ui_dialogs_messagebox.MessageBox.create({
+				title: popup.title,
+				message: popup.text,
+				buttons: ui_dialogs_messagebox.MessageBoxButtons.OK,
+				onOk: messageBox => messageBox.close(),
+				popupOptions: {
+					// Named so that a test can find the window: the texts of the popup come from the server and change
+					// with the license.
+					id: 'biconnector-selfhost-license-popup',
+					events: {
+						// Written on any way out of the popup, the cross included: the term has been seen, and the next
+						// opening of the grid must not warn about it again.
+						onPopupClose: () => {
+							BX.userOptions.save('biconnector', 'selfhost_license_expiry_popup', popup.termKey, true);
+						}
+					}
+				}
+			}).show();
 		}
 		#showDraftGuide(node) {
 			if (!this.#properties.isNeedShowDraftGuide) {
@@ -504,6 +585,7 @@
 		duplicateDashboard(dashboardId, analyticInfo = null) {
 			const grid = this.getGrid();
 			grid.tableFade();
+			this.#isDashboardListUpdatingLocally = true;
 			return this.#dashboardManager.duplicateDashboard(dashboardId).then(response => {
 				const gridRealtime = grid.getRealtime();
 				const newDashboard = response.data.dashboard;
@@ -519,6 +601,7 @@
 					newRow.insertAfter = 0;
 				}
 				gridRealtime.addRow(newRow);
+				this.#skipOwnDashboardListChange();
 				const newRowNode = this.#grid.getRows().getById(newDashboard.id).node;
 				newRowNode.setAttribute('data-group-id', 'D');
 				const editableData = grid.getParam('EDITABLE_DATA');
@@ -557,6 +640,13 @@
 						c_element: analyticInfo.from
 					});
 				}
+			}).finally(() => {
+				this.#isDashboardListUpdatingLocally = false;
+				if (this.#dashboardListChangesDuringLocalUpdate > 0) {
+					this.#dashboardListChangesDuringLocalUpdate = 0;
+					this.#isDashboardListChanged = true;
+				}
+				this.#reloadChangedDashboardList();
 			});
 		}
 		#notifyErrors(errors) {
@@ -1008,7 +1098,9 @@
 				content: main_core.Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_ADD_TO_TOP_MENU_SUCCESS')
 			});
 			this.#switchTopMenuAction(dashboardId, true, url, restrictionCode);
-			return this.#dashboardManager.addToTopMenu(dashboardId).then(response => {}).catch(response => {
+			return this.#dashboardManager.addToTopMenu(dashboardId).then(response => {
+				this.#grid.updateRow(dashboardId);
+			}).catch(response => {
 				this.#grid.updateRow(dashboardId);
 				BX.UI.Notification.Center.notify({
 					content: main_core.Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_ADD_TO_TOP_MENU_ERROR')
@@ -1020,7 +1112,9 @@
 				content: main_core.Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_DELETE_FROM_TOP_MENU_SUCCESS')
 			});
 			this.#switchTopMenuAction(dashboardId, false, url, restrictionCode);
-			return this.#dashboardManager.deleteFromTopMenu(dashboardId).then(response => {}).catch(response => {
+			return this.#dashboardManager.deleteFromTopMenu(dashboardId).then(response => {
+				this.#grid.updateRow(dashboardId);
+			}).catch(response => {
 				this.#grid.updateRow(dashboardId);
 				BX.UI.Notification.Center.notify({
 					content: main_core.Loc.getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_DELETE_FROM_TOP_MENU_ERROR')
@@ -1111,5 +1205,5 @@
 	}
 	main_core.Reflection.namespace('BX.BIConnector').SupersetDashboardGridManager = SupersetDashboardGridManager;
 
-})(BX, BX.Main, BX.Main, BX.BIConnector, BX.Event, BX.BIConnector, BX.UI.EntitySelector, BX.UI.Tour, BX.BIConnector, BX.BIConnector.EntitySelector, BX.UI, BX.UI, BX, BX.UI.System, BX.BIConnector, BX.UI.System.Typography, BX.BIConnector);
+})(BX, BX.Main, BX.Main, BX.BIConnector, BX.Event, BX.BIConnector, BX.UI.EntitySelector, BX.UI.Tour, BX.BIConnector, BX.BIConnector.EntitySelector, BX.UI, BX.UI, BX, BX.UI.System, BX.UI.Dialogs, BX.BIConnector, BX.BIConnector);
 //# sourceMappingURL=script.js.map

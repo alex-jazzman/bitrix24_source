@@ -1,0 +1,7 @@
+/* Holds the box of the icon it stands in for (71x67 svg), so the row of the menu keeps its height. */
+.editor-chart-publish-user-dropdown-option__progress {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: 67px;
+}

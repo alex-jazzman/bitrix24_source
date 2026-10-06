@@ -1,0 +1,43 @@
+.bx-im-task-card-promo-popup__container {
+	background-color: var(--ui-color-accent-soft-element-blue);
+}
+
+.bx-im-task-card-promo-popup__container .popup-window-content {
+	display: flex;
+	align-items: center;
+}
+
+.bx-im-task-card-promo-popup__image {
+	width: 167px;
+	height: 113px;
+	background-image: url('./images/promo.png');
+	background-size: contain;
+	background-repeat: no-repeat;
+	background-position: left bottom;
+}
+
+.bx-im-task-card-promo-popup__container .popup-window-angly--arrow {
+	background-color: var(--ui-color-accent-soft-element-blue);
+}
+
+.bx-im-task-card-promo-popup__container .popup-window-close-icon {
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary-alt-2);
+}
+
+.bx-im-task-card-promo-popup__info {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	padding: 14px 18px;
+}
+
+.bx-im-task-card-promo-popup__title {
+	font: 17px/23px var(--im-font-family-system);
+	font-weight: var(--im-font-weight-medium);
+	color: var(--ui-color-base-0);
+}
+
+.bx-im-task-card-promo-popup__text {
+	font: var(--ui-font-size-md) / var(--ui-font-line-height-sm) var(--im-font-family-system);
+	color: var(--ui-color-base-0);
+}

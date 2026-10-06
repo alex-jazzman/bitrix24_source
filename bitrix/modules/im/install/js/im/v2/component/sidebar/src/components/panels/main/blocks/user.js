@@ -62,9 +62,13 @@ export const UserPreview = {
 
 			return canCreateChat && canExtendChat;
 		},
+		isGuest(): boolean
+		{
+			return this.$store.getters['users/isGuest'](this.dialogId);
+		},
 		showInviteButton(): boolean
 		{
-			if (this.isBot)
+			if (this.isBot || this.isGuest)
 			{
 				return false;
 			}

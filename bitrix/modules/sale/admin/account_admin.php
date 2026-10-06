@@ -1,4 +1,7 @@
 <?php
+
+use Bitrix\Main\Web\Uri;
+
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_before.php");
 
 /** @global CMain $APPLICATION */
@@ -236,13 +239,11 @@ while ($arAccount = $dbResultList->NavNext(false))
 			{
 				$urlToTransact = $selfFolderUrl."sale_transact_admin/";
 			}
-			$urlToTransact = CHTTP::urlAddParams($urlToTransact,
-				array(
-					"USER_ID" => $arAccount["USER_ID"],
-					"CURRENCY" => $arAccount["CURRENCY"],
-					"apply_filter" => "Y"
-				)
-			);
+			$urlToTransact = (string)(new Uri($urlToTransact))->addParams([
+				"USER_ID" => $arAccount["USER_ID"],
+				"CURRENCY" => $arAccount["CURRENCY"],
+				"apply_filter" => "Y",
+			]);
 			$fieldValue .= "<a href=\"".$urlToTransact."\" title=\"".GetMessage("SAA_TRANS_TITLE")."\">";
 			$fieldValue .= intval($numTrans);
 			$fieldValue .= "</a>";

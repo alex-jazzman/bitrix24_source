@@ -11,6 +11,7 @@ jn.define('vibecode/catalog/src/const', (require, exports, module) => {
 	const CATALOG_STATE = Object.freeze({
 		ACTIVE: 'active',
 		HIDDEN: 'hidden',
+		NEW: 'new',
 		ALL: 'all',
 	});
 	const VIBECODE_KIND = Object.freeze({

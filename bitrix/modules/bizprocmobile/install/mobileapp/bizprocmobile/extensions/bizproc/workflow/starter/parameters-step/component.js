@@ -5,6 +5,7 @@ jn.define('bizproc/workflow/starter/parameters-step/component', (require, export
 	const { EventEmitter } = require('event-emitter');
 	const { NotifyManager } = require('notify-manager');
 	const { PureComponent } = require('layout/pure-component');
+	const { handleNetworkError } = require('bizproc/helper/network-error');
 	const { ParametersStepView } = require('bizproc/workflow/starter/parameters-step/view');
 	const { Random } = require('utils/random');
 
@@ -89,10 +90,13 @@ jn.define('bizproc/workflow/starter/parameters-step/component', (require, export
 				})
 				.catch((response) => {
 					console.error(response.errors);
-					if (Array.isArray(response.errors))
+
+					const isNetworkErrorHandled = handleNetworkError(response.errors, this.props.layoutWidget);
+					if (!isNetworkErrorHandled && Array.isArray(response.errors))
 					{
 						NotifyManager.showErrors(response.errors);
 					}
+
 					hasErrors = true;
 				})
 				.finally(() => {

@@ -8,41 +8,41 @@ jn.define('tasks/layout/checklist/list/src/item/base-item', (require, exports, m
 	const { ChecklistItemView } = require('tasks/layout/checklist/list/src/layout/item-view');
 	const { confirmDestructiveAction } = require('alert');
 
-	/**
-	 * @class BaseChecklistItem
-	 */
 	class BaseChecklistItem extends LayoutComponent
 	{
-		/**
-		 * @param {Object} props
-		 * @param {CheckListFlatTreeItem} [props.item]
-		 * @param {boolean} [props.isFocused]
-		 */
+		/** @param {BaseChecklistItemProps} props */
 		constructor(props)
 		{
 			super(props);
 
-			/** @type {ItemTextField} */
+			/** @type {ItemTextField | null} */
 			this.textRef = null;
-			/** @type {ItemAttachments} */
+			/** @type {Object | null} */
 			this.attachmentsRef = null;
 
 			this.handleOnBlur = this.handleOnBlur.bind(this);
 			this.handleOnFocus = this.handleOnFocus.bind(this);
 			this.handleOnChange = this.handleOnChange.bind(this);
 			this.handleOnChangeTitle = this.handleOnChangeTitle.bind(this);
+			this.handleOnSelectionStylesChange = this.handleOnSelectionStylesChange.bind(this);
 			this.handleOnSubmit = this.handleOnSubmit.bind(this);
 		}
 
 		/**
 		 * @protected
 		 * @abstract
+		 * @return {Object | null}
 		 */
 		render()
 		{
 			return null;
 		}
 
+		/**
+		 * @protected
+		 * @param {Object} itemProps
+		 * @return {Object}
+		 */
 		renderContent(itemProps)
 		{
 			const { item } = this.props;
@@ -56,7 +56,7 @@ jn.define('tasks/layout/checklist/list/src/item/base-item', (require, exports, m
 
 		/**
 		 * @protected
-		 * @returns {ItemTextField}
+		 * @return {ItemTextField}
 		 */
 		renderTextField()
 		{
@@ -76,6 +76,7 @@ jn.define('tasks/layout/checklist/list/src/item/base-item', (require, exports, m
 				onFocus: this.handleOnFocus,
 				onSubmit: this.handleOnSubmit,
 				onChangeText: this.handleOnChangeTitle,
+				onSelectionStylesChange: this.handleOnSelectionStylesChange,
 				...this.getTextFieldStyle(),
 			});
 		}
@@ -83,6 +84,7 @@ jn.define('tasks/layout/checklist/list/src/item/base-item', (require, exports, m
 		/**
 		 * @protected
 		 * @abstract
+		 * @return {Object}
 		 */
 		getTextFieldStyle()
 		{
@@ -99,7 +101,12 @@ jn.define('tasks/layout/checklist/list/src/item/base-item', (require, exports, m
 			return '';
 		}
 
-		handleOnChangeTitle(title, isFocused)
+		/**
+		 * @param {string} title
+		 * @param {boolean} [isFocused]
+		 * @param {boolean} [shouldSave]
+		 */
+		handleOnChangeTitle(title, isFocused, shouldSave = true)
 		{
 			const { item } = this.props;
 
@@ -107,9 +114,10 @@ jn.define('tasks/layout/checklist/list/src/item/base-item', (require, exports, m
 			item.setIsNew(false);
 			const skipSaving = isFocused && !title;
 
-			this.handleOnChange(!skipSaving);
+			this.handleOnChange(shouldSave && !skipSaving);
 		}
 
+		/** @param {boolean} [shouldSave] */
 		handleOnChange(shouldSave)
 		{
 			const { onChange } = this.props;
@@ -120,6 +128,18 @@ jn.define('tasks/layout/checklist/list/src/item/base-item', (require, exports, m
 			}
 		}
 
+		/** @param {string[]} styles */
+		handleOnSelectionStylesChange(styles)
+		{
+			const { onSelectionStylesChange } = this.props;
+
+			if (onSelectionStylesChange)
+			{
+				onSelectionStylesChange(styles);
+			}
+		}
+
+		/** @param {Object} [blurProps] */
 		handleOnBlur(blurProps)
 		{
 			const { onBlur, item } = this.props;
@@ -130,6 +150,7 @@ jn.define('tasks/layout/checklist/list/src/item/base-item', (require, exports, m
 			}
 		}
 
+		/** @return {void} */
 		handleOnSubmit()
 		{
 			const { onSubmit, item } = this.props;
@@ -140,6 +161,7 @@ jn.define('tasks/layout/checklist/list/src/item/base-item', (require, exports, m
 			}
 		}
 
+		/** @return {void} */
 		handleOnFocus()
 		{
 			const { item, onFocus } = this.props;
@@ -177,6 +199,7 @@ jn.define('tasks/layout/checklist/list/src/item/base-item', (require, exports, m
 			remove(true);
 		};
 
+		/** @return {void} */
 		textInputFocus()
 		{
 			if (this.textRef)
@@ -185,6 +208,7 @@ jn.define('tasks/layout/checklist/list/src/item/base-item', (require, exports, m
 			}
 		}
 
+		/** @return {void} */
 		textInputBlur()
 		{
 			if (this.textRef)
@@ -193,11 +217,22 @@ jn.define('tasks/layout/checklist/list/src/item/base-item', (require, exports, m
 			}
 		}
 
+		/** @return {void} */
 		addFile()
 		{
 			this.attachmentsRef.addFile();
 		}
 
+		/** @param {'bold' | 'italic' | 'underline' | 'strikethrough'} type */
+		applyTextFormat(type)
+		{
+			this.textRef?.applyFormat(type);
+		}
+
+		/**
+		 * @param {string} [suffix]
+		 * @return {string}
+		 */
 		getTestId(suffix)
 		{
 			const { item } = this.props;
@@ -218,14 +253,23 @@ jn.define('tasks/layout/checklist/list/src/item/base-item', (require, exports, m
 			return (item.getDepth() * 18) + additionalShift;
 		}
 
-		/**
-		 * @returns {string}
-		 */
+		/** @return {string} */
 		getTextValue()
 		{
 			return this.textRef.getTextValue().trim();
 		}
 
+		/**
+		 * @param {boolean} [shouldSave]
+		 * @param {boolean} [force]
+		 * @return {boolean}
+		 */
+		syncTitleText(shouldSave = true, force = false)
+		{
+			return Boolean(this.textRef?.syncTextValue?.(shouldSave, force));
+		}
+
+		/** @return {void} */
 		toggleCompleteText()
 		{
 			if (this.textRef)
@@ -234,6 +278,7 @@ jn.define('tasks/layout/checklist/list/src/item/base-item', (require, exports, m
 			}
 		}
 
+		/** @return {void} */
 		reload()
 		{
 			this.setState({
@@ -241,6 +286,7 @@ jn.define('tasks/layout/checklist/list/src/item/base-item', (require, exports, m
 			});
 		}
 
+		/** @return {boolean} */
 		canUpdateItem()
 		{
 			const { item } = this.props;
@@ -248,6 +294,7 @@ jn.define('tasks/layout/checklist/list/src/item/base-item', (require, exports, m
 			return item.checkCanUpdate();
 		}
 
+		/** @return {boolean} */
 		canRemoveItem()
 		{
 			const { item } = this.props;

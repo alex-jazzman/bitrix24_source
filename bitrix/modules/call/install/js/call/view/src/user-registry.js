@@ -1,9 +1,34 @@
-import {Type} from 'main.core';
-import {EventEmitter} from 'main.core.events';
-import {EndpointDirection, UserState} from 'call.core';
+import { EventEmitter } from 'main.core.events';
+import { EndpointDirection, UserState } from 'call.core';
+
 import { checkAndEncodeURI } from './tools';
 
-type UserModelMap = Record<string, UserModel>;
+export const UserModelField = Object.freeze({
+	id: 'id',
+	name: 'name',
+	avatar: 'avatar',
+	gender: 'gender',
+	state: 'state',
+	talking: 'talking',
+	cameraState: 'cameraState',
+	prevCameraState: 'prevCameraState',
+	microphoneState: 'microphoneState',
+	screenState: 'screenState',
+	videoPaused: 'videoPaused',
+	floorRequestState: 'floorRequestState',
+	permissionToSpeak: 'permissionToSpeak',
+	localUser: 'localUser',
+	centralUser: 'centralUser',
+	pinned: 'pinned',
+	presenter: 'presenter',
+	order: 'order',
+	prevOrder: 'prevOrder',
+	allowRename: 'allowRename',
+	wasRenamed: 'wasRenamed',
+	renameRequested: 'renameRequested',
+	direction: 'direction',
+	prevScreenState: 'prevScreenState',
+});
 
 export class UserModel
 {
@@ -166,7 +191,7 @@ export class UserModel
 
 export class UserRegistry extends EventEmitter
 {
-	users: UserModelMap;
+	users;
 
 	constructor()
 	{

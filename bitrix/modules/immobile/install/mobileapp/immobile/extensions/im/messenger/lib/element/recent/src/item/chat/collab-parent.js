@@ -2,12 +2,14 @@
  * @module im/messenger/lib/element/recent/item/chat/collab-parent
  */
 jn.define('im/messenger/lib/element/recent/item/chat/collab-parent', (require, exports, module) => {
+	const { Type } = require('type');
 	const { Color } = require('tokens');
 	const { Loc } = require('im/messenger/loc');
 	const { Theme } = require('im/lib/theme');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { RecentTab } = require('im/messenger/const');
 
+	const { Feature } = require('im/messenger/lib/feature');
 	const { CollabItem } = require('im/messenger/lib/element/recent/item/chat/collab');
 	const {
 		CounterPrefix,
@@ -30,6 +32,36 @@ jn.define('im/messenger/lib/element/recent/item/chat/collab-parent', (require, e
 			super(modelItem, options);
 
 			this.createAccentStyles();
+		}
+
+		/**
+		 * Keep as a prototype method (not #private): getItemMessage() runs from the base
+		 * RecentItem constructor via super(), before subclass privates are installed.
+		 * @return {boolean}
+		 */
+		isOwnMode()
+		{
+			if (!Feature.isCollabPreviewSourceAvailable)
+			{
+				return false;
+			}
+
+			const item = this.getModelItem();
+
+			return Type.isPlainObject(item.ownMessage);
+		}
+
+		/**
+		 * @return {RecentMessage}
+		 */
+		getItemMessage()
+		{
+			if (this.isOwnMode())
+			{
+				return this.getModelItem().ownMessage;
+			}
+
+			return super.getItemMessage();
 		}
 
 		/**
@@ -102,6 +134,24 @@ jn.define('im/messenger/lib/element/recent/item/chat/collab-parent', (require, e
 			this.counterTestId = `${prefix}-${dialogId}-${suffix}-${value}-${postfix}`;
 
 			return this;
+		}
+
+		/**
+		 * @return {boolean}
+		 */
+		hasNestedSource()
+		{
+			return false;
+		}
+
+		/**
+		 * Primary project chat shows only its own counter (nested chats are separate
+		 * rows), so the read/unread action ignores children, same as a plain chat.
+		 * @return {number}
+		 */
+		getReadActionChildrenCounter()
+		{
+			return 0;
 		}
 
 		createCommentsStyle()

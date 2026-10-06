@@ -2,8 +2,12 @@
 
 declare(strict_types=1);
 
+use Bitrix\Bizproc\Public\Activity\Interface\ActivityContentBlockProviderInterface;
+use Bitrix\Bizproc\Public\Activity\Interface\ContentBlockScopeProducerInterface;
+use Bitrix\Bizproc\Internal\AiAgent\Lifecycle\Service\ManagedAgentResourceRegistry;
 use Bitrix\Bizproc\Internal\Exception\ErrorBuilder;
 use Bitrix\Bizproc\Internal\Exception\Exception;
+use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Bizproc\Activity\BaseActivity;
 use Bitrix\Bizproc\Activity\PropertiesDialog;
@@ -35,7 +39,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
  * @property-write string Mode
  * @property-write ?string CreateErrorText
  */
-class CBPCreateStorageNode extends BaseActivity implements IBPConfigurableActivity
+class CBPCreateStorageNode extends BaseActivity implements IBPConfigurableActivity, ActivityContentBlockProviderInterface, ContentBlockScopeProducerInterface
 {
 	public function __construct($name)
 	{
@@ -61,6 +65,22 @@ class CBPCreateStorageNode extends BaseActivity implements IBPConfigurableActivi
 		]);
 	}
 
+	public static function getContentBlock(array $properties, ?\Bitrix\Bizproc\Activity\Dto\ContentBlockContext $context = null): ?\Bitrix\Bizproc\Activity\Dto\ContentBlock
+	{
+		return StorageActivityService::makeStorageContentBlock((string)($properties['StorageTitle'] ?? ''));
+	}
+
+	public static function getScopeContribution(): array
+	{
+		// Publish the dynamic storage title (code => title) so read/write/delete nodes referencing it
+		// by code can render its name at design time, before the storage exists in the catalog.
+		return [
+			'namespace' => StorageActivityService::CONTENT_BLOCK_SCOPE_NAMESPACE,
+			'keyProperty' => 'StorageCode',
+			'labelProperty' => 'StorageTitle',
+		];
+	}
+
 	protected function internalExecute(): \Bitrix\Main\ErrorCollection
 	{
 		$errors = parent::internalExecute();
@@ -75,8 +95,7 @@ class CBPCreateStorageNode extends BaseActivity implements IBPConfigurableActivi
 			return $errors;
 		}
 
-		$currentUser =  new CBPWorkflowTemplateUser(CBPWorkflowTemplateUser::CurrentUser);
-		$userId = $currentUser->getId();
+		$userId = $this->resolveActingUserId();
 		$storageId = $this->findStorageId();
 		$storageType = $this->createStorageTypeEntity($storageId);
 		$command = $this->Mode && $storageId > 0
@@ -120,6 +139,52 @@ class CBPCreateStorageNode extends BaseActivity implements IBPConfigurableActivi
 		}
 
 		return $errors;
+	}
+
+	/**
+	 * Author of the storage type: the user who started the process for a template of the managed system AI
+	 * agent registry, the global current user for every other template.
+	 *
+	 * A managed agent may run in a background context (the cleanup agent of the lifecycle, a scenario
+	 * autostart) where there is no current user at all, so its storage would be created by user 0.
+	 */
+	private function resolveActingUserId(): int
+	{
+		return $this->resolveManagedStarterId()
+			?? (new CBPWorkflowTemplateUser(CBPWorkflowTemplateUser::CurrentUser))->getId()
+		;
+	}
+
+	/**
+	 * Starter of the process when its template is managed, null otherwise, including a registry that is not
+	 * available at all, so an unmanaged template keeps the previous behaviour unchanged.
+	 */
+	private function resolveManagedStarterId(): ?int
+	{
+		$workflow = $this->workflow;
+		if (!$workflow instanceof CBPWorkflow)
+		{
+			return null;
+		}
+
+		$templateId = $workflow->getTemplateId();
+		$locator = ServiceLocator::getInstance();
+		if ($templateId <= 0 || !$locator->has(ManagedAgentResourceRegistry::SERVICE_CODE))
+		{
+			return null;
+		}
+
+		try
+		{
+			/** @var ManagedAgentResourceRegistry $registry */
+			$registry = $locator->get(ManagedAgentResourceRegistry::SERVICE_CODE);
+
+			return $registry->isManagedTemplate($templateId) ? $workflow->getStartedBy() : null;
+		}
+		catch (\Throwable)
+		{
+			return null;
+		}
 	}
 
 	private function createStorageTypeEntity(int $storageId): StorageType
@@ -244,12 +309,13 @@ class CBPCreateStorageNode extends BaseActivity implements IBPConfigurableActivi
 				'Name' => Loc::getMessage('BPCSN_DESCRIPTION_SELECTED_FIELDS_NAME'),
 				'FieldName' => 'SelectedFields',
 				'Type' => \Bitrix\Bizproc\FieldType::CUSTOM,
-				'Required' => false,
+				'Required' => true,
 				'AllowSelection' => true,
 				'CustomType' => 'storageFieldSelector',
 				'Options' => [
 					'codeCaption' => Loc::getMessage('BPCSN_DESCRIPTION_FIELD_CODE_CAPTION') ?? '',
 					'copyNotification' => Loc::getMessage('BPCSN_DESCRIPTION_FIELD_COPY_NOTIFICATION') ?? '',
+					'addFieldButton' => Loc::getMessage('BPCSN_DESCRIPTION_ADD_FIELD_BUTTON') ?? '',
 				]
 			],
 		];

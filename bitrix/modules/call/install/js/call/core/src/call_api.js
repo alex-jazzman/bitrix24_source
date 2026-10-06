@@ -1,5 +1,4 @@
 // @flow
-import { CallSettingsManager } from 'call.lib.settings-manager';
 import { STREAM_QUALITY, LOCAL_STREAM_QUALITY_HEIGHT } from './stream_quality';
 import { Event, Type } from 'main.core';
 
@@ -7,7 +6,7 @@ import Util from './util';
 import { RoomType } from './engine/types';
 import { Hardware } from './call_hardware';
 import { MediaServer } from './media-server';
-import { CallStreamManager } from './media-stream-manager';
+import { CallStreamManager, STREAM_MANAGER_SUPERSEDED } from './media-stream-manager';
 
 import { type LayersAvailability, type SubscribedQuality } from 'call.const';
 
@@ -17,6 +16,7 @@ import {
 	MediaStreamsKinds,
 	CALL_STATE,
 	VIDEO_QUEUE,
+	AUDIO_QUEUE,
 	MONITORING_METRICS,
 	MONITORING_METRICS_PROMETHEUS,
 	RecorderStatus,
@@ -35,6 +35,15 @@ import { JoinResponseError } from './sdk/errors';
 import { Track } from './sdk/models';
 import { calcBitrateSumFromArray, fillDefaultValueMonitoringMetrics, checkMetricsFeatureAndExecutionCallback, sendMonitoringData } from './sdk/helpers/monitoring';
 import { buildMediaConstraints, isNoiseSuppressionInputTrackOff } from './sdk/helpers/media';
+import { selectAudioQueueOperation, isCurrentPublication, selectDisableAudioReconciliation, isOwnInflightPublication, addBoundedInflightCid } from './sdk/helpers/audio-queue';
+import { deviceMismatch } from './sdk/helpers/device';
+
+// Distinct result from getLocalAudio when the microphone capture was superseded by a newer request.
+// Returned per-call so each caller reads the status of its own capture, never a shared instance field.
+const GET_LOCAL_AUDIO_SUPERSEDED = Symbol('GetLocalAudioSuperseded');
+
+// How long an audio device switch may hold its lock before later switches are allowed to run again.
+const SWITCH_AUDIO_DEVICE_LOCK_TIMEOUT = 15000;
 
 export {
 	ClientPlatform,
@@ -82,6 +91,8 @@ export class Call
 		publishingMediaServerId: null,
 		socketConnection: null,
 		pendingPublications: {},
+		ownInflightPublicationCids: new Set(),
+		latestPublicationCidBySource: {},
 		pendingSubscriptions: {},
 		publicationTimeout: 10000,
 		republicationTries: 3,
@@ -112,6 +123,7 @@ export class Call
 		mediaMutedBySystem: false,
 		needToEnableAudioAfterSystemMuted: false,
 		needToDisableAudioAfterPublish: false,
+		microphonePausedOnServer: false,
 		localTracks: {},
 		localConnectionQuality: 0,
 		minimalConnectionQuality: 2,
@@ -148,6 +160,9 @@ export class Call
 		audioDeviceId: '',
 		switchActiveAudioDeviceInProgress: null,
 		switchActiveAudioDevicePending: null,
+		switchActiveAudioDeviceTimeout: null,
+		switchActiveAudioDeviceGeneration: 0,
+		switchActiveAudioDeviceStream: null,
 		videoDeviceId: '',
 		switchActiveVideoDeviceInProgress: null,
 		switchActiveVideoDevicePending: null,
@@ -168,6 +183,7 @@ export class Call
 		reportsForIncomingTracks: {},
 		stats: {},
 		videoQueue: VIDEO_QUEUE.INITIAL,
+		audioQueue: AUDIO_QUEUE.INITIAL,
 		videoStreamSetupErrorList: {},
 	};
 
@@ -649,11 +665,22 @@ export class Call
 	#reconnect(reconnectInfo): void
 	{
 		const data: any = Type.isObject(reconnectInfo) ? reconnectInfo : {};
+		const reason = data.reconnectionReason || null;
 
 		this.#privateProperties.isReconnecting = true;
+		this.#privateProperties.callState = CALL_STATE.PROGRESSING;
 		this.#privateProperties.videoQueue = VIDEO_QUEUE.INITIAL;
+		this.#privateProperties.audioQueue = AUDIO_QUEUE.INITIAL;
+		// Cancel the previous media session's publication timers and clear correlation state before the
+		// new session starts. A surviving timer would later fire the publish-timeout handler and reset the
+		// new session's audioQueue/needToDisableAudioAfterPublish, discarding a fresh mute/unmute intent.
+		Object.values(this.#privateProperties.pendingPublications).forEach((timeout) => clearTimeout(timeout));
+		this.#privateProperties.pendingPublications = {};
+		this.#privateProperties.ownInflightPublicationCids.clear();
+		this.#privateProperties.latestPublicationCidBySource = {};
+		this.#privateProperties.needToDisableAudioAfterPublish = false;
 
-		const reasonText = data.reconnectionReason ? `, reason: ${data.reconnectionReason}` : '';
+		const reasonText = reason ? `, reason: ${reason}` : '';
 		const detailsText = data.reconnectionReasonInfo ? `, details: ${data.reconnectionReasonInfo}` : '';
 		const reconnectLog = `Starting reconnection attempt #${++this.#privateProperties.reconnectionAttempt}${reasonText}${detailsText}`;
 		this.setLog(reconnectLog, LOG_LEVEL.WARNING);
@@ -661,6 +688,9 @@ export class Call
 		const reconnectionDelay = this.#privateProperties.lastReconnectionReason === ReconnectionReason.JoinResponseError
 			? this.#privateProperties.reconnectionDelay
 			: this.#privateProperties.fastReconnectionDelay;
+		// Not every entry point into the reconnection is guarded by isReconnecting: a pending timer of the
+		// previous attempt would run connect() a second time, with its own join request and socket.
+		clearTimeout(this.#privateProperties.reconnectionTimeout);
 		this.#privateProperties.reconnectionTimeout = setTimeout(this.connect.bind(this), reconnectionDelay);
 
 		this.#privateProperties.previousMediaServers = this.#privateProperties.mediaServers;
@@ -709,6 +739,12 @@ export class Call
 				this.#privateProperties.socketConnection = null;
 			}
 		}
+	}
+
+	testReconnect()
+	{
+		this.#beforeDisconnect({ initiatedByUser: true });
+		this.#reconnect({ reconnectionReason: 'TEST_RECONNECTION' });
 	}
 
 	#processMediaServers(mediaServersToProcess: Array<[number, any]>): void
@@ -846,9 +882,10 @@ export class Call
 					}
 					else
 					{
-						this.#privateProperties.lastReconnectionReason = error.code
-							? ReconnectionReason.JoinResponseError
-							: ReconnectionReason.NetworkError;
+						// Every failure of this request is a join failure: a transport failure of the request
+						// itself already arrives as a coded JoinResponseError. The fast reconnection delay
+						// belongs to a lost transport (closed socket, missed ping), not here.
+						this.#privateProperties.lastReconnectionReason = ReconnectionReason.JoinResponseError;
 
 						// don't write error.name and error.message to analytics now,
 						// because we don't watch failed reconnecting requests now
@@ -875,8 +912,23 @@ export class Call
 			this.onPublishFailed(MediaStreamsKinds.Camera);
 		}
 
+		const microphoneTrack = this.#privateProperties.microphoneStream?.getAudioTracks()[0];
+		const deviceCheckTrack = Hardware.noiseSuppressionInputStream?.getAudioTracks?.()[0] ?? microphoneTrack;
+		const audioDeviceId = this.#privateProperties.audioDeviceId;
+		if (audioDeviceId && deviceMismatch(deviceCheckTrack, audioDeviceId))
+		{
+			// The same contract enableAudio follows: a device chosen while nothing was published only
+			// updated audioDeviceId, the live stream still runs on the old one. Release it, or getLocalAudio
+			// keeps the existing stream and the selected device is lost.
+			this.#releaseStream(MediaStreamsKinds.Microphone);
+		}
+
 		const audioTrack = await this.getLocalAudio();
-		if (audioTrack)
+		if (audioTrack === GET_LOCAL_AUDIO_SUPERSEDED)
+		{
+			// A newer capture superseded this one; it will publish the microphone.
+		}
+		else if (audioTrack)
 		{
 			await this.publishTrack(MediaStreamsKinds.Microphone, audioTrack, this.#getStreamQualityOptions(MediaStreamsKinds.Microphone));
 		}
@@ -950,6 +1002,14 @@ export class Call
 
 			this.#processMediaServers(mediaServersToProcess);
 
+			// reset audio-queue and publication-correlation state for the fresh media session (initial join
+			// / rejoin / reconnect): stale queue or correlation from a dropped connection would otherwise
+			// wedge audio publishing or accept a late trackCreated from the previous session.
+			this.#privateProperties.audioQueue = AUDIO_QUEUE.INITIAL;
+			this.#privateProperties.microphonePausedOnServer = false;
+			this.#privateProperties.ownInflightPublicationCids.clear();
+			this.#privateProperties.latestPublicationCidBySource = {};
+
 			const isReconnect = this.#privateProperties.isReconnecting && this.wasConnected;
 			const connectedEvent = isReconnect ? CallApiEvent.Reconnected : CallApiEvent.Connected;
 
@@ -958,6 +1018,9 @@ export class Call
 			this.setLog(`${connectedEvent} to the call ${this.#privateProperties.roomId} (type: ${this.#privateProperties.roomType}) on the media server after ${this.#privateProperties.reconnectionAttempt} attempts`, LOG_LEVEL.INFO);
 			this.#privateProperties.isReconnecting = false;
 			this.#privateProperties.reconnectionAttempt = 0;
+			// The join succeeded, so the reason of the previous failure must not outlive it: kept here, it
+			// would hand the join delay to the next reconnection of a lost transport, which asks for the fast one.
+			this.#privateProperties.lastReconnectionReason = null;
 
 			if (data.joinResponse.oneToOneType)
 			{
@@ -1081,6 +1144,11 @@ export class Call
 			if (participantId == this.#privateProperties.userId)
 			{
 				const timeout = this.#privateProperties.pendingPublications[cid];
+				const isOwnPublication = isOwnInflightPublication(
+					cid,
+					this.#privateProperties.pendingPublications,
+					this.#privateProperties.ownInflightPublicationCids,
+				);
 				clearTimeout(this.#privateProperties.pendingPublications[cid]);
 				delete this.#privateProperties.pendingPublications[cid];
 
@@ -1089,10 +1157,40 @@ export class Call
 					this.setLog(`Got trackCreated signal for local track with kind ${source} (sid: ${trackId}) without active timeout`, LOG_LEVEL.WARNING);
 				}
 
+				if (!isOwnPublication)
+				{
+					// Not one of our current-session in-flight publications (e.g. a late trackCreated from a
+					// session that was reset on reconnect). Ignore it so a dead sid can't land in localTracks.
+					this.setLog(`Ignoring a trackCreated for an unknown publication (cid: ${cid}) for kind ${source} (sid: ${trackId})`, LOG_LEVEL.WARNING);
+
+					return;
+				}
+
+				this.#privateProperties.ownInflightPublicationCids.delete(cid);
+
+				if (!isCurrentPublication(cid, source, this.#privateProperties.latestPublicationCidBySource))
+				{
+					// A newer publication for this source already started; this is a late response from a
+					// superseded (timed-out) publication. Drop it without touching localTracks, otherwise
+					// mute/unmute would target the stale sid.
+					this.setLog(`Ignoring a superseded trackCreated (cid: ${cid}) for kind ${source} (sid: ${trackId})`, LOG_LEVEL.WARNING);
+
+					return;
+				}
+
 				this.setLog(`Publishing a local track with kind ${source} (sid: ${trackId}) succeeded`, LOG_LEVEL.INFO);
 				this.#privateProperties.localTracks[source] = track;
 				this.#triggerEvents('PublishSucceed', [source]);
+				// Re-arm the watchdog on confirmed success by clearing only isActive (so a later
+				// SubscriptionFailed can republish again). Keep the attempt budget (tries) so a persistent
+				// SubscriptionFailed->republish loop stays capped by republicationTries.
+				this.#privateProperties.republication[source].isActive = false;
 				this.#onTrackPublishResult(trackId, source, 'trackCreated');
+
+				if (source === MediaStreamsKinds.Microphone)
+				{
+					this.#reconcilePublishedMicrophoneState();
+				}
 			}
 			else
 			{
@@ -1319,6 +1417,22 @@ export class Call
 			if (!mediaServer)
 			{
 				return;
+			}
+
+			if (data.reconnectMediaServer == this.#privateProperties.publishingMediaServerId)
+			{
+				// Reconnecting the PUBLISHING server recreates the peer connection without going through
+				// joinResponse, so the join-response audio-state reset never runs. The expected trackMuted is
+				// lost and audioQueue would stay occupied with no timeout, wedging later mute/unmute. Reset
+				// the publication state here, gated to the publishing server so a subscriber-only reconnect
+				// never wipes it.
+				Object.values(this.#privateProperties.pendingPublications).forEach((timeout) => clearTimeout(timeout));
+				this.#privateProperties.pendingPublications = {};
+				this.#privateProperties.ownInflightPublicationCids.clear();
+				this.#privateProperties.latestPublicationCidBySource = {};
+				this.#privateProperties.audioQueue = AUDIO_QUEUE.INITIAL;
+				this.#privateProperties.needToDisableAudioAfterPublish = false;
+				this.#privateProperties.microphonePausedOnServer = false;
 			}
 
 			mediaServer.disconnect();
@@ -2176,17 +2290,79 @@ export class Call
 			|| (track.source === MediaStreamsKinds.Camera && ((!participant.isLocalVideoMute && !participant.isMutedVideo) || this.#privateProperties.participantsToUpdateTrackAvailability[participant.userId]));
 	}
 
+	#reconcilePublishedMicrophoneState()
+	{
+		// Make a late publish success robust even if the audio queue was already reset (e.g. by the
+		// publish-timeout reset when a publish/mute/unmute race times out). Sync the freshly published
+		// microphone's transmit/server state to the authoritative mute intent so it never transmits while
+		// muted (or stays silent/paused while unmuted). Guarded and idempotent - no redundant pause/unpause.
+		const localTrack = this.#privateProperties.localTracks[MediaStreamsKinds.Microphone];
+		if (!localTrack?.sid)
+		{
+			return;
+		}
+
+		const audioTrack = this.#privateProperties.microphoneStream?.getAudioTracks()[0];
+
+		// Honour system mute too, not only user mute. Under system mute disableAudio() runs before
+		// mediaMutedBySystem is set and the publication may still lack a sid, so a late trackCreated would
+		// otherwise land here and re-enable/unpause the mic - transmitting despite the system mute.
+		if (Hardware.isMicrophoneMuted || this.#privateProperties.mediaMutedBySystem)
+		{
+			if (audioTrack)
+			{
+				audioTrack.enabled = false;
+			}
+			localTrack.muted = true;
+			if (!this.#privateProperties.microphonePausedOnServer)
+			{
+				this.pauseTrack(MediaStreamsKinds.Microphone, true);
+			}
+		}
+		else
+		{
+			if (audioTrack)
+			{
+				audioTrack.enabled = true;
+			}
+			localTrack.muted = false;
+			if (this.#privateProperties.microphonePausedOnServer)
+			{
+				this.unpauseTrack(MediaStreamsKinds.Microphone);
+			}
+		}
+	}
+
 	#onTrackPublishResult(trackId: string, source: number, calledFrom: string): void
 	{
 		if (source === MediaStreamsKinds.Microphone)
 		{
+			if (this.#privateProperties.audioQueue === AUDIO_QUEUE.ENABLE)
+			{
+				// the latest intent is unmuted; a stale "disable after publish" must not override it
+				this.#privateProperties.needToDisableAudioAfterPublish = false;
+			}
+
+			if (this.#privateProperties.audioQueue !== AUDIO_QUEUE.INITIAL)
+			{
+				this.#processAudioQueue();
+			}
+
 			if (this.#privateProperties.needToDisableAudioAfterPublish)
 			{
 				this.#privateProperties.needToDisableAudioAfterPublish = false;
 				this.disableAudio({ calledFrom });
 			}
-			else
+			else if (
+				!Hardware.isMicrophoneMuted
+				&& !this.#privateProperties.mediaMutedBySystem
+				&& this.#privateProperties.localTracks[MediaStreamsKinds.Microphone]?.sid
+				&& this.#privateProperties.microphonePausedOnServer
+			)
 			{
+				// Keep the server in sync when a freshly published track is meant to be live, but only when
+				// it is actually paused on the server (avoid a redundant unpause per publish). Also honour
+				// system mute - never unpause/transmit while mediaMutedBySystem.
 				this.unpauseTrack(MediaStreamsKinds.Microphone);
 			}
 		}
@@ -2203,12 +2379,36 @@ export class Call
 
 	#addPendingPublication(trackId: string, source: number): void
 	{
+		// Record this cid as one of our own in-flight publications so a trackCreated is only accepted for a
+		// publication that belongs to the current session (the set is cleared on every session reset).
+		addBoundedInflightCid(this.#privateProperties.ownInflightPublicationCids, trackId);
+		// Track the latest publication cid per source so a late signal from an earlier, superseded
+		// publication can be dropped instead of clobbering the current one.
+		this.#privateProperties.latestPublicationCidBySource[source] = trackId;
+		// Cancel any timer still armed for the same trackId before replacing it, so a stale one can't
+		// later fire and delete the new entry / reset shared state.
+		clearTimeout(this.#privateProperties.pendingPublications[trackId]);
 		this.#privateProperties.pendingPublications[trackId] = setTimeout(() => {
 			delete this.#privateProperties.pendingPublications[trackId];
+
+			// A newer publication for this source has superseded us: leave the shared state and the
+			// failure reporting to it, only clean up our own entry above.
+			if (!isCurrentPublication(trackId, source, this.#privateProperties.latestPublicationCidBySource))
+			{
+				return;
+			}
 
 			if (source === MediaStreamsKinds.Camera && this.#privateProperties.videoQueue)
 			{
 				this.#onTrackPublishResult(trackId, source, '#addPendingPublication');
+			}
+			else if (source === MediaStreamsKinds.Microphone)
+			{
+				// On timeout no track was created, so no server signal will drain the audio queue. Reset
+				// both deferred states, otherwise a deferred disable re-arms audioQueue on DISABLE with no
+				// known sid and it stays stuck until reconnect.
+				this.#privateProperties.audioQueue = AUDIO_QUEUE.INITIAL;
+				this.#privateProperties.needToDisableAudioAfterPublish = false;
 			}
 
 			this.onPublishFailed(source);
@@ -2294,7 +2494,8 @@ export class Call
 		const mediaServer: MediaServer = this.#getPublishingMediaServer();
 		if (mediaServer)
 		{
-			mediaServer.addTrack(mediaStreamKind, mediaStreamTrack, streamQualityOptions)
+			const hasKnownSid = Boolean(this.#privateProperties.localTracks[mediaStreamKind]?.sid);
+			mediaServer.addTrack(mediaStreamKind, mediaStreamTrack, streamQualityOptions, hasKnownSid)
 				.then((publicationResult) => {
 					if (publicationResult)
 					{
@@ -2304,6 +2505,15 @@ export class Call
 				.catch((error) => {
 					this.setLog(`Publishing a track with kind ${mediaStreamKind} failed: ${error}`, LOG_LEVEL.ERROR);
 					clearTimeout(this.#privateProperties.pendingPublications[mediaStreamTrack.id]);
+					delete this.#privateProperties.pendingPublications[mediaStreamTrack.id];
+					if (mediaStreamKind === MediaStreamsKinds.Microphone)
+					{
+						// Immediate publish failure: no trackCreated will arrive and the timeout is
+						// cleared above, so free the audio queue. Otherwise it stays occupied and every
+						// later mute/unmute only overwrites it and early-returns via hasQueue.
+						this.#privateProperties.audioQueue = AUDIO_QUEUE.INITIAL;
+						this.#privateProperties.needToDisableAudioAfterPublish = false;
+					}
 					this.#releaseStream(mediaStreamKind);
 					this.#triggerEvents('PublishFailed', [mediaStreamKind]);
 				});
@@ -2311,6 +2521,12 @@ export class Call
 		else
 		{
 			this.setLog(`Media server for publishing not found`, LOG_LEVEL.ERROR);
+			if (mediaStreamKind === MediaStreamsKinds.Microphone)
+			{
+				// No media server: nothing will ever drain the audio queue for this publish, free it.
+				this.#privateProperties.audioQueue = AUDIO_QUEUE.INITIAL;
+				this.#privateProperties.needToDisableAudioAfterPublish = false;
+			}
 		}
 	}
 
@@ -2392,7 +2608,14 @@ export class Call
 		this.setLog(`Start republishing a track with kind ${mediaStreamKind}`, LOG_LEVEL.INFO);
 		await this.unpublishTrack(mediaStreamKind);
 		const track = await this.getTrack(mediaStreamKind);
-		if (track)
+		if (track === GET_LOCAL_AUDIO_SUPERSEDED)
+		{
+			// A newer microphone capture superseded this republish; it owns the device now. Cancel
+			// neutrally - no release, no onPublishFailed - and free the republication slot.
+			this.setLog(`Republishing a track with kind ${mediaStreamKind} cancelled: capture superseded`, LOG_LEVEL.INFO);
+			this.#updateRepublicationState(mediaStreamKind);
+		}
+		else if (track)
 		{
 			await this.publishTrack(mediaStreamKind, track, this.#getStreamQualityOptions(mediaStreamKind));
 		}
@@ -2778,6 +3001,7 @@ export class Call
 		this.#privateProperties.mediaServers.clear();
 
 		clearTimeout(this.#privateProperties.reconnectionTimeout);
+		this.#resetAudioDeviceSwitch();
 
 		for (let trackId in this.#privateProperties.pendingPublications)
 		{
@@ -2912,6 +3136,10 @@ export class Call
 			{
 				delete this.#privateProperties.localTracks[mediaStreamKind];
 			}
+			if (mediaStreamKind === MediaStreamsKinds.Microphone)
+			{
+				this.#privateProperties.microphonePausedOnServer = true;
+			}
 			this.#sendSignal({
 				mute: {
 					sid: trackSid,
@@ -2930,6 +3158,10 @@ export class Call
 		if (trackSid)
 		{
 			this.setLog(`Sending unpause signal for a track with kind ${mediaStreamKind} (sid: ${trackSid})`, LOG_LEVEL.INFO);
+			if (mediaStreamKind === MediaStreamsKinds.Microphone)
+			{
+				this.#privateProperties.microphonePausedOnServer = false;
+			}
 			this.#sendSignal({
 				mute: {
 					sid: trackSid,
@@ -2946,6 +3178,7 @@ export class Call
 	disableAudio(options) {
 		const bySystem = options?.bySystem || false;
 		const calledFrom = options?.calledFrom || '';
+		const hasQueue = this.#privateProperties.audioQueue !== AUDIO_QUEUE.INITIAL;
 
 		this.#updateRepublicationState(MediaStreamsKinds.Microphone);
 
@@ -2954,21 +3187,83 @@ export class Call
 			return;
 		}
 
-		this.setLog(`Start disabling audio - calledFrom: ${calledFrom}, isReconnecting: ${this.#privateProperties.isReconnecting}, bySystem: ${bySystem}`);
+		this.setLog(`Start disabling audio - calledFrom: ${calledFrom}, isReconnecting: ${this.#privateProperties.isReconnecting}, bySystem: ${bySystem}, hasQueue: ${hasQueue}, audioQueue: ${this.#privateProperties.audioQueue}`);
+
+		if (bySystem && this.#privateProperties.audioQueue === AUDIO_QUEUE.ENABLE)
+		{
+			// A system mute is interrupting a pending unmute. Record the restore intent so the
+			// system-unmute handler re-enables audio; overwriting the queue to DISABLE would lose it.
+			this.#privateProperties.needToEnableAudioAfterSystemMuted = true;
+		}
+
+		this.#privateProperties.audioQueue = AUDIO_QUEUE.DISABLE;
+		if (hasQueue)
+		{
+			// Security: a mute arriving during an in-flight enable must stop transmission immediately.
+			// Otherwise the still-running enableAudio() keeps the local track live (and unpaused) until
+			// the next server signal - or forever if it is lost - while the UI already shows the mic off.
+			const inflightTrack = this.#privateProperties.microphoneStream?.getAudioTracks()[0];
+			if (inflightTrack)
+			{
+				inflightTrack.enabled = false;
+			}
+
+			const publishedTrack = this.#privateProperties.localTracks[MediaStreamsKinds.Microphone];
+			if (publishedTrack?.sid && !this.#privateProperties.microphonePausedOnServer)
+			{
+				publishedTrack.muted = true;
+				this.pauseTrack(MediaStreamsKinds.Microphone, true);
+			}
+			else if (!publishedTrack?.sid)
+			{
+				// Publish in flight, sid not assigned yet - no track to pause. Arm the deferred disable so
+				// the eventual trackCreated pauses it on the server; otherwise #onTrackPublishResult clears
+				// the DISABLE queue with no pause and the server keeps the mic unmuted.
+				this.#privateProperties.needToDisableAudioAfterPublish = true;
+			}
+
+			return;
+		}
+
 		const track = this.#privateProperties.microphoneStream?.getAudioTracks()[0];
 		if (track)
 		{
 			this.#privateProperties.needToEnableAudioAfterSystemMuted = bySystem ? track.enabled : false;
 			track.enabled = false;
-			if (this.#privateProperties.localTracks[MediaStreamsKinds.Microphone])
+			const publishedTrack = this.#privateProperties.localTracks[MediaStreamsKinds.Microphone];
+			if (publishedTrack)
 			{
-				this.#privateProperties.localTracks[MediaStreamsKinds.Microphone].muted = true;
+				publishedTrack.muted = true;
 			}
-			this.pauseTrack(MediaStreamsKinds.Microphone, true);
+
+			const inflightCid = this.#privateProperties.latestPublicationCidBySource[MediaStreamsKinds.Microphone];
+			const reconciliation = selectDisableAudioReconciliation({
+				hasSid: Boolean(publishedTrack?.sid),
+				hasInflightPublication: Boolean(inflightCid && this.#privateProperties.pendingPublications[inflightCid]),
+			});
+
+			if (reconciliation === 'pause')
+			{
+				this.pauseTrack(MediaStreamsKinds.Microphone, true);
+			}
+			else if (reconciliation === 'defer')
+			{
+				// No sid to pause yet, but a publication is in flight: defer the disable so its
+				// trackCreated pauses it on the server.
+				this.#privateProperties.needToDisableAudioAfterPublish = true;
+			}
+			else
+			{
+				// No sid and nothing in flight to produce a draining signal - free the queue so a later
+				// enable/disable is not wedged with the mic off until reconnect.
+				this.#privateProperties.audioQueue = AUDIO_QUEUE.INITIAL;
+				this.#privateProperties.needToDisableAudioAfterPublish = false;
+			}
 		}
 		else
 		{
 			this.setLog('Disabling audio failed: has no track', LOG_LEVEL.ERROR);
+			this.#privateProperties.audioQueue = AUDIO_QUEUE.INITIAL;
 		}
 	}
 
@@ -2982,9 +3277,16 @@ export class Call
 			return;
 		}
 
-		this.setLog(`Start enabling audio - calledFrom: ${calledFrom}, isReconnecting: ${this.#privateProperties.isReconnecting}, disabled: ${disabled}`);
+		const hasQueue = this.#privateProperties.audioQueue !== AUDIO_QUEUE.INITIAL;
+		this.setLog(`Start enabling audio - calledFrom: ${calledFrom}, isReconnecting: ${this.#privateProperties.isReconnecting}, disabled: ${disabled}, hasQueue: ${hasQueue}, audioQueue: ${this.#privateProperties.audioQueue}`);
 
 		this.#privateProperties.needToEnableAudioAfterSystemMuted = false;
+		this.#privateProperties.audioQueue = disabled ? AUDIO_QUEUE.DISABLE : AUDIO_QUEUE.ENABLE;
+		if (hasQueue)
+		{
+			return;
+		}
+
 		if (this.#privateProperties.switchActiveAudioDeviceInProgress)
 		{
 			try
@@ -2997,40 +3299,100 @@ export class Call
 			}
 		}
 		let track = this.#privateProperties.microphoneStream?.getAudioTracks()[0];
+		const audioDeviceId = this.#privateProperties.audioDeviceId;
+		// With noise suppression the published track is the WebAudio output, which usually has no
+		// deviceId; check the selected device against the capture source (the raw input feeding noise
+		// suppression), falling back to the track when there is no input.
+		const deviceCheckTrack = Hardware.noiseSuppressionInputStream?.getAudioTracks?.()[0] ?? track;
+		const hasDeviceMismatch = Boolean(audioDeviceId) && deviceMismatch(deviceCheckTrack, audioDeviceId);
 		const needToGetNewTrack = !track
 			|| track.readyState !== 'live'
-			|| isNoiseSuppressionInputTrackOff();
+			|| isNoiseSuppressionInputTrackOff()
+			|| hasDeviceMismatch;
 
 		if (needToGetNewTrack)
 		{
+			if (hasDeviceMismatch)
+			{
+				// A device selected while muted only updates audioDeviceId; the live stream still runs
+				// on the old device. Release it so getLocalAudio performs a fresh getUserMedia with the
+				// selected deviceId, otherwise getTrack keeps the existing stream and the change is lost.
+				this.#releaseStream(MediaStreamsKinds.Microphone);
+			}
 			track = await this.getLocalAudio();
+
+			if (track === GET_LOCAL_AUDIO_SUPERSEDED)
+			{
+				// A newer device selection superseded this capture. End as a neutral cancellation - no
+				// failure event, no stream release, no onPublishFailed - so the newer switch's success is
+				// not torn down. Free the single-slot queue so a later enable/disable is not wedged.
+				this.setLog('Enabling audio cancelled: microphone capture superseded by a newer request', LOG_LEVEL.INFO);
+				this.#privateProperties.audioQueue = AUDIO_QUEUE.INITIAL;
+				this.#privateProperties.needToDisableAudioAfterPublish = false;
+
+				return;
+			}
 		}
 
 		if (!track)
 		{
 			this.setLog('Enabling audio failed: has no track', LOG_LEVEL.ERROR);
+			this.#privateProperties.needToDisableAudioAfterPublish = false;
+			this.#privateProperties.audioQueue = AUDIO_QUEUE.INITIAL;
 			this.#releaseStream(MediaStreamsKinds.Microphone);
 			this.onPublishFailed(MediaStreamsKinds.Microphone);
 
 			return;
 		}
 
+		// A mute may have superseded this enable while awaiting (see disableAudio's in-flight path).
+		// Consult the authoritative mute flags, not only audioQueue: a reconnect during the await resets
+		// audioQueue to INITIAL, losing the DISABLE a mute wrote, so relying on the queue alone would
+		// re-enable and publish while muted (audio leak). Both flags are false before a legitimate user or
+		// system-unmute restore reaches enableAudio, so this does not suppress a real unmute.
+		const isSupersededByMute = () => !disabled
+			&& (Hardware.isMicrophoneMuted
+				|| this.#privateProperties.mediaMutedBySystem
+				|| this.#privateProperties.audioQueue === AUDIO_QUEUE.DISABLE);
+
 		if (this.#privateProperties.localTracks[MediaStreamsKinds.Microphone])
 		{
-			this.setLog('Enabling audio via unpause signal', LOG_LEVEL.INFO);
-			track.enabled = true;
-			this.#privateProperties.localTracks[MediaStreamsKinds.Microphone].muted = false;
+			const superseded = isSupersededByMute();
+			this.setLog(`Enabling audio via unpause signal - supersededByMute: ${superseded}`, LOG_LEVEL.INFO);
+			track.enabled = !superseded;
+			this.#privateProperties.localTracks[MediaStreamsKinds.Microphone].muted = superseded;
 			await this.publishTrack(MediaStreamsKinds.Microphone, track, this.#getStreamQualityOptions(MediaStreamsKinds.Microphone));
-			this.unpauseTrack(MediaStreamsKinds.Microphone);
+
+			if (isSupersededByMute())
+			{
+				// Honour the newer mute: pause instead of unpausing so audio is not transmitted; the
+				// pause signal's trackMuted response drains the DISABLE queue. Guard against a redundant
+				// pause - the in-flight disableAudio (hasQueue branch) may have already paused this sid.
+				track.enabled = false;
+				this.#privateProperties.localTracks[MediaStreamsKinds.Microphone].muted = true;
+				if (!this.#privateProperties.microphonePausedOnServer)
+				{
+					this.pauseTrack(MediaStreamsKinds.Microphone, true);
+				}
+				else
+				{
+					// Already paused on the server: no pause signal is sent, so no trackMuted will arrive to
+					// drain the DISABLE queue. Free the slot locally so a later mute/unmute is not wedged.
+					this.#privateProperties.audioQueue = AUDIO_QUEUE.INITIAL;
+					this.#privateProperties.needToDisableAudioAfterPublish = false;
+				}
+			}
+			else
+			{
+				this.unpauseTrack(MediaStreamsKinds.Microphone);
+			}
 		}
 		else
 		{
-			this.setLog('Enabling audio via publish', LOG_LEVEL.INFO);
-			track.enabled = !disabled;
-			if (disabled)
-			{
-				this.#privateProperties.needToDisableAudioAfterPublish = true;
-			}
+			const effectiveDisabled = disabled || isSupersededByMute();
+			this.setLog(`Enabling audio via publish - effectiveDisabled: ${effectiveDisabled}`, LOG_LEVEL.INFO);
+			track.enabled = !effectiveDisabled;
+			this.#privateProperties.needToDisableAudioAfterPublish = effectiveDisabled;
 
 			if (this.#privateProperties.localTracks[MediaStreamsKinds.Microphone])
 			{
@@ -3038,6 +3400,19 @@ export class Call
 			}
 
 			await this.publishTrack(MediaStreamsKinds.Microphone, track, this.#getStreamQualityOptions(MediaStreamsKinds.Microphone));
+
+			if (isSupersededByMute())
+			{
+				// A mute arrived during publication: keep the track off. Only defer the disable while the
+				// sid is still unknown - if trackCreated already processed during the await (sid obtained,
+				// pause already sent), re-arming would leave a stale flag that wrongly disables a later
+				// republication.
+				track.enabled = false;
+				if (!this.#privateProperties.localTracks[MediaStreamsKinds.Microphone]?.sid)
+				{
+					this.#privateProperties.needToDisableAudioAfterPublish = true;
+				}
+			}
 		}
 	}
 
@@ -3205,6 +3580,29 @@ export class Call
 		else if (videoQueue === VIDEO_QUEUE.DISABLE && this.#privateProperties.cameraStream?.getVideoTracks()[0]?.readyState === 'live' && !this.#privateProperties.mediaMutedBySystem)
 		{
 			this.disableVideo({calledFrom: 'processVideoQueue'});
+		}
+	}
+
+	#processAudioQueue()
+	{
+		const queue = this.#privateProperties.audioQueue;
+		this.#privateProperties.audioQueue = AUDIO_QUEUE.INITIAL;
+
+		const track = this.#privateProperties.microphoneStream?.getAudioTracks()[0];
+		const isTrackLive = track?.readyState === 'live' && track?.enabled === true;
+		const operation = selectAudioQueueOperation({
+			queue,
+			isTrackLive,
+			mutedBySystem: this.#privateProperties.mediaMutedBySystem,
+		});
+
+		if (operation === AUDIO_QUEUE.ENABLE)
+		{
+			this.enableAudio({ calledFrom: 'processAudioQueue' });
+		}
+		else if (operation === AUDIO_QUEUE.DISABLE)
+		{
+			this.disableAudio({ calledFrom: 'processAudioQueue' });
 		}
 	}
 
@@ -3503,7 +3901,11 @@ export class Call
 		const track = this.#privateProperties.microphoneStream?.getAudioTracks()[0];
 		if (!track || track.readyState !== 'live' || isNoiseSuppressionInputTrackOff())
 		{
-			await this.getTrack(MediaStreamsKinds.Microphone);
+			const result = await this.getTrack(MediaStreamsKinds.Microphone);
+			if (result === GET_LOCAL_AUDIO_SUPERSEDED)
+			{
+				return GET_LOCAL_AUDIO_SUPERSEDED;
+			}
 		}
 
 		return this.#privateProperties.microphoneStream?.getAudioTracks()[0];
@@ -3577,6 +3979,18 @@ export class Call
 		}
 		catch (error)
 		{
+			if (error?.name === STREAM_MANAGER_SUPERSEDED)
+			{
+				// The request was superseded by a newer device selection - not a media failure. Don't fall
+				// back: a fallback capture would register after the newest request and unseat the selected
+				// device. Mark it so the caller can end as a neutral cancellation, and balance the
+				// GetUserMediaStarted emitted above so getUserMediaFulfilled state stays consistent.
+				this.setLog('Getting user media skipped: superseded by a newer request', LOG_LEVEL.INFO);
+				this.#triggerEvents('GetUserMediaEnded', [options]);
+
+				return options.audio ? GET_LOCAL_AUDIO_SUPERSEDED : null;
+			}
+
 			this.setLog(`Getting user media with constraints: ${JSON.stringify(constraints)} failed (fallbackMode: ${fallbackMode}): ${error}`, LOG_LEVEL.ERROR);
 
 			if (!fallbackMode)
@@ -3662,7 +4076,15 @@ export class Call
 		}
 		else if (MediaStreamKind === MediaStreamsKinds.Microphone && !this.#privateProperties.microphoneStream)
 		{
-			this.#privateProperties.microphoneStream = await this.#getUserMedia({audio: true});
+			const media = await this.#getUserMedia({audio: true});
+			if (media === GET_LOCAL_AUDIO_SUPERSEDED)
+			{
+				return GET_LOCAL_AUDIO_SUPERSEDED;
+			}
+			// The slot was free when this capture started, but the await is long enough for a switch to put
+			// its stream back into it, or for another capture to land there. Whoever holds the slot by now
+			// keeps it, and the stream that lost is stopped instead of being dropped on the floor.
+			this.#restoreMicrophoneStream(media);
 		}
 		else if (MediaStreamKind === MediaStreamsKinds.Screen && !this.#privateProperties.screenStream)
 		{
@@ -3707,8 +4129,7 @@ export class Call
 				track = this.getLocalAudio();
 			}
 
-			const noInputTrackEndHandler = CallSettingsManager.noiseSuppressionEnabled
-				&& Hardware.noiseSuppressionInputStream
+			const noInputTrackEndHandler = Hardware.noiseSuppressionInputStream
 				&& Hardware.noiseSuppressionInputStream.getAudioTracks().length > 0
 				&& !Hardware.noiseSuppressionInputStream.getAudioTracks()[0].onended;
 			if (track && noInputTrackEndHandler)
@@ -3769,6 +4190,206 @@ export class Call
 		}
 	}
 
+	// Is the microphone published at all - the question a switch asks before deciding whether a re-capture
+	// has anywhere to go. Two independent answers, because neither alone is enough: the publication record
+	// survives the window where republishTrack has emptied the sender, and the sender is there from the
+	// moment the track is handed to the peer connection, before the server confirms the publication.
+	#hasPublishedMicrophone(): boolean
+	{
+		if (this.#hasTrackPublication(MediaStreamsKinds.Microphone))
+		{
+			return true;
+		}
+
+		const senders = this.#getPublishingMediaServer()?.publisherPeerConnection?.getSenders?.() ?? [];
+
+		return senders.some((sender) => sender.track?.source === MediaStreamsKinds.Microphone);
+	}
+
+	// The single place that decides who owns the microphone slot: a stream goes in only while the slot is
+	// free, so neither a switch putting its previous stream back nor a capture landing late can overwrite
+	// the device somebody newer has already published. The stream that is not taken is released.
+	#restoreMicrophoneStream(stream): void
+	{
+		if (!stream || stream === this.#privateProperties.microphoneStream)
+		{
+			return;
+		}
+
+		if (this.#privateProperties.microphoneStream)
+		{
+			this.#releaseMicrophoneStream(stream);
+
+			return;
+		}
+
+		this.#privateProperties.microphoneStream = stream;
+	}
+
+	// A stream that stays out of the slot has to be stopped explicitly: it is a clone of its own (see
+	// #getUserMedia), so neither StreamManager nor #releaseStream can ever reach it and the device would
+	// stay captured until the tab is reloaded.
+	#releaseMicrophoneStream(stream): void
+	{
+		if (!stream || stream === this.#privateProperties.microphoneStream)
+		{
+			return;
+		}
+
+		stream.getTracks?.().forEach((track) => {
+			track.onended = null;
+			track.stop();
+		});
+	}
+
+	// A mute can arrive while a device is being switched, and disableAudio cannot act on it: microphoneStream
+	// is nulled for the duration of the capture, so it takes the "has no track" branch and neither disables
+	// the track nor pauses the publication. Re-apply the current intent to whatever is left publishing - on
+	// success, on a failed capture and on a superseded one alike - or the old device keeps transmitting while
+	// the UI, the other participants and the server all show the microphone off. The stream left publishing
+	// is not always the one in the slot: the watchdog leaves the slot free for a capture it stopped waiting
+	// for, and the device to silence is then the stream that switch took out of the call.
+	#applyMicrophoneMuteIntent(publishingStream: ?MediaStream = null): void
+	{
+		if (!Hardware.isMicrophoneMuted && !this.#privateProperties.mediaMutedBySystem)
+		{
+			return;
+		}
+
+		const localTrack = this.#privateProperties.microphoneStream?.getAudioTracks()[0]
+			?? publishingStream?.getAudioTracks()[0];
+		if (localTrack)
+		{
+			localTrack.enabled = false;
+		}
+
+		const publishedTrack = this.#privateProperties.localTracks[MediaStreamsKinds.Microphone];
+		if (publishedTrack?.sid && !this.#privateProperties.microphonePausedOnServer)
+		{
+			publishedTrack.muted = true;
+			this.pauseTrack(MediaStreamsKinds.Microphone, true);
+		}
+	}
+
+	#releaseAudioDeviceSwitchLock(promise): boolean
+	{
+		if (this.#privateProperties.switchActiveAudioDeviceInProgress !== promise)
+		{
+			return false;
+		}
+
+		this.#privateProperties.switchActiveAudioDeviceInProgress = null;
+
+		return true;
+	}
+
+	// A switch handed over to a newer one keeps running - its capture can still land much later. The id it
+	// took at the start stops matching from that moment on, which is how the late arrival learns that the
+	// microphone is no longer its to publish to, and that its stream is no longer the one to put back. Only
+	// a newer owner cancels: a capture the watchdog stopped waiting for with nobody behind it keeps its id
+	// and publishes itself when it lands.
+	#cancelAudioDeviceSwitch(switchId: number): void
+	{
+		if (this.#privateProperties.switchActiveAudioDeviceGeneration === switchId)
+		{
+			this.#privateProperties.switchActiveAudioDeviceGeneration++;
+		}
+	}
+
+	#isAudioDeviceSwitchCancelled(switchId: number): boolean
+	{
+		return this.#privateProperties.switchActiveAudioDeviceGeneration !== switchId;
+	}
+
+	// Armed around the capture of every switch, including each link of a pending chain, so that what is given
+	// up on is a single capture that never settles and not a long but perfectly healthy chain of switches.
+	// Settling the switch is part of the job: a capture that never returns leaves the promise pending, and
+	// enableAudio awaits that very promise after it has already taken audioQueue - every later mute/unmute
+	// would then end on the "queue is busy" early return, and setMicrophoneId would never report its result.
+	#armAudioDeviceSwitchWatchdog(
+		switchId: number,
+		deviceId: string,
+		prevStream: ?MediaStream,
+		settle: (value?: any) => void,
+	): number
+	{
+		const watchdog = setTimeout(() => {
+			this.#privateProperties.switchActiveAudioDeviceTimeout = null;
+			const message = `Switching an audio device to ${deviceId} did not finish in time, releasing the lock`;
+			this.setLog(message, LOG_LEVEL.WARNING);
+
+			this.#privateProperties.switchActiveAudioDeviceInProgress = null;
+
+			const pendingDeviceId = this.#privateProperties.switchActiveAudioDevicePending;
+			this.#privateProperties.switchActiveAudioDevicePending = null;
+
+			if (pendingDeviceId)
+			{
+				// The parked switch takes the microphone out of the slot itself, so it has to be there for it
+				// to take - and the capture given up on is cancelled, because the device it was to publish is
+				// no longer the one chosen. The finally of a capture that never settles does neither, so the
+				// old device would keep transmitting while the UI, the other participants and the server all
+				// show the microphone off. This switch ends here rather than on the parked one: the device it
+				// was asked for is not the device that will be applied, so its caller is told it is over.
+				this.#cancelAudioDeviceSwitch(switchId);
+				this.#restoreMicrophoneStream(prevStream);
+				this.#applyMicrophoneMuteIntent();
+				settle();
+				this.switchActiveAudioDevice(pendingDeviceId).catch(() => {
+					// the switch reports its own failure
+				});
+
+				return;
+			}
+
+			// Nobody is waiting for the microphone, so the capture this switch stopped waiting for is still
+			// the only claim on it: leave the slot free and the switch uncancelled, and it publishes itself
+			// whenever it lands. Putting the previous stream back here would make getTrack throw that capture
+			// away as a loser of the slot, while the publication stays on a stream whose AudioContext noise
+			// suppression closes the moment the new raw input arrives - silence for the rest of the call,
+			// which no later enableAudio undoes: the device check then matches the new input.
+			this.#applyMicrophoneMuteIntent(prevStream);
+			settle();
+		}, SWITCH_AUDIO_DEVICE_LOCK_TIMEOUT);
+
+		this.#privateProperties.switchActiveAudioDeviceTimeout = watchdog;
+
+		return watchdog;
+	}
+
+	#disarmAudioDeviceSwitchWatchdog(watchdog: ?number): void
+	{
+		if (!watchdog)
+		{
+			return;
+		}
+
+		clearTimeout(watchdog);
+		// A capture that lands after its own watchdog has fired must not disarm the watchdog of the switch
+		// running by then.
+		if (this.#privateProperties.switchActiveAudioDeviceTimeout === watchdog)
+		{
+			this.#privateProperties.switchActiveAudioDeviceTimeout = null;
+		}
+	}
+
+	#resetAudioDeviceSwitch(): void
+	{
+		clearTimeout(this.#privateProperties.switchActiveAudioDeviceTimeout);
+		this.#privateProperties.switchActiveAudioDeviceTimeout = null;
+		this.#privateProperties.switchActiveAudioDeviceInProgress = null;
+		this.#privateProperties.switchActiveAudioDevicePending = null;
+		this.#privateProperties.switchActiveAudioDeviceGeneration++;
+
+		// While a switch is capturing, the microphone it took out of the call is held by nothing else:
+		// microphoneStream is empty, so releaseStream finds nothing, and the stream is a clone of its own
+		// (see #getUserMedia), so StreamManager cannot reach it either. Left alone it keeps the device
+		// captured until the tab is reloaded, with the browser still showing the recording indicator.
+		const stream = this.#privateProperties.switchActiveAudioDeviceStream;
+		this.#privateProperties.switchActiveAudioDeviceStream = null;
+		this.#releaseMicrophoneStream(stream);
+	}
+
 	async switchActiveAudioDevice(deviceId, force)
 	{
 		if (this.#privateProperties.switchActiveAudioDeviceInProgress && !force)
@@ -3780,31 +4401,107 @@ export class Call
 
 		let error = null;
 		let fulfilled = false;
+		const switchId = ++this.#privateProperties.switchActiveAudioDeviceGeneration;
 		this.setLog(`Start switching an audio device to ${deviceId}`, LOG_LEVEL.INFO);
 
 		const promise = new Promise(async (resolve, reject) => {
 			this.#privateProperties.audioDeviceId = deviceId;
-			const prevStream = this.#privateProperties.microphoneStream;
+			// The slot stands empty while a capture is in flight, and the watchdog leaves it empty for a
+			// capture it stopped waiting for. The stream that capture took out of the call is the one still
+			// publishing, so a switch starting on an empty slot takes it over: whoever publishes next is the
+			// one that has to stop it, or nothing but a hangup ever does and the device stays captured.
+			const prevStream = this.#privateProperties.microphoneStream
+				?? this.#privateProperties.switchActiveAudioDeviceStream;
+			let watchdog = null;
 
 			try
 			{
-				const prevTrack = this.#privateProperties.microphoneStream?.getAudioTracks()[0];
+				if (!this.#hasPublishedMicrophone())
+				{
+					// Nothing is published yet (e.g. joined muted) - keep the recorded audioDeviceId and let the
+					// first publication apply it (see enableAudio / deviceMismatch). Re-capturing here would
+					// release the live microphone into a publication that does not exist.
+					this.setLog(
+						'Switching an audio device deferred - nothing published, will apply on first publication',
+						LOG_LEVEL.INFO,
+					);
+
+					return;
+				}
+
+				watchdog = this.#armAudioDeviceSwitchWatchdog(switchId, deviceId, prevStream, resolve);
+				const prevTrack = prevStream?.getAudioTracks()[0];
+				// Releasing the stream reference is what makes getLocalAudio capture the new device. The
+				// previous track is not stopped until the new one is published, so a capture that delivers
+				// nothing leaves the call transmitting from the old device. With noise suppression on (the
+				// default) that guarantee ends the moment the new raw stream arrives: addNoiseSuppression
+				// closes the AudioContext the previous track is fed from, and keeping the track alive past
+				// that point no longer keeps it audible.
 				this.#privateProperties.microphoneStream = null;
+				// Out of the slot means out of reach of releaseStream - keep the stream where a hangup can
+				// still find it, or the device stays captured when the call ends mid-capture. A switch that
+				// starts on an empty slot has nothing of its own to put here, and must not erase what an
+				// earlier switch is still holding: the watchdog leaves the slot free exactly like that.
+				if (prevStream)
+				{
+					this.#privateProperties.switchActiveAudioDeviceStream = prevStream;
+				}
 				let prevTrackEnabledState = true;
 				let prevTrackId = '';
 				if (prevTrack)
 				{
 					prevTrackEnabledState = prevTrack.enabled;
 					prevTrackId = prevTrack.id;
-					prevTrack.stop();
 				}
 				const audioTrack = await this.getLocalAudio();
+				if (this.#isAudioDeviceSwitchCancelled(switchId))
+				{
+					// A newer switch owns the microphone by now - either one that started while this capture was
+					// running, or the one the watchdog took out of pending. Publishing here would take the
+					// sender away from the device chosen since, and putting prevStream back would overwrite a
+					// newer capture with a stale stream. The recorded audioDeviceId survives, so the next
+					// publication still applies the device (see enableAudio / deviceMismatch). A capture the
+					// watchdog stopped waiting for with nobody behind it is not cancelled and does not end here.
+					this.setLog('Switching an audio device cancelled: a newer switch owns the microphone', LOG_LEVEL.WARNING);
+
+					return;
+				}
+				if (audioTrack === GET_LOCAL_AUDIO_SUPERSEDED)
+				{
+					// The microphone belongs to the capture that superseded this one, and that capture has not
+					// landed yet - the mic request chain rejects the loser before the winner starts. Putting the
+					// previous stream back into the free slot would make the winner lose to it and leave the call
+					// on a track the supersede has already silenced, so release it instead: the winner brings its
+					// own stream and the recorded audioDeviceId is applied by whoever publishes next.
+					this.setLog('Switching an audio device cancelled: superseded by a newer switch', LOG_LEVEL.INFO);
+					this.#releaseMicrophoneStream(prevStream);
+
+					return;
+				}
+				if (!audioTrack)
+				{
+					throw new Error('capturing a new audio track failed');
+				}
 				audioTrack.source = MediaStreamsKinds.Microphone;
-				audioTrack.enabled = prevTrackEnabledState;
+				// Never hand the sender an enabled track while the UI shows mute: a mute that arrived
+				// during the capture wins over the stale enabled state. The intent is applied once more
+				// on the way out, for the exits that publish nothing.
+				const muteIntent = Boolean(Hardware.isMicrophoneMuted || this.#privateProperties.mediaMutedBySystem);
+				audioTrack.enabled = muteIntent ? false : prevTrackEnabledState;
 				const mediaServer = this.#getPublishingMediaServer();
-				if (mediaServer && (this.isAudioPublished() || audioTrack.id !== prevTrackId))
+				const isNewTrack = audioTrack.id !== prevTrackId;
+				if (mediaServer && (this.isAudioPublished() || isNewTrack))
 				{
 					await mediaServer.replaceTrack(MediaStreamsKinds.Microphone, audioTrack);
+				}
+				if (prevTrack)
+				{
+					// The previous device is released once nothing is left for it to feed: either the new track
+					// has taken its place in the sender, or the media server went away during the capture and
+					// there is no publication at all. The capture can never hand the published track back -
+					// #getUserMedia returns a clone, so its track is a new object with an id of its own - and
+					// microphoneStream holds the new stream by now, so nothing can reach the previous track.
+					prevTrack.stop();
 				}
 				this.setLog('Switching an audio device succeeded', LOG_LEVEL.INFO);
 			}
@@ -3812,23 +4509,39 @@ export class Call
 			{
 				error = e;
 				this.setLog(`Switching an audio device failed: ${e}`, LOG_LEVEL.ERROR);
-				if (!this.#privateProperties.microphoneStream)
+				if (!this.#isAudioDeviceSwitchCancelled(switchId))
 				{
-					this.#privateProperties.microphoneStream = prevStream;
+					this.#restoreMicrophoneStream(prevStream);
 				}
 			}
 			finally
 			{
-				if (this.#privateProperties.switchActiveAudioDevicePending)
+				this.#disarmAudioDeviceSwitchWatchdog(watchdog);
+				// Identity alone is not enough: the switch the watchdog started after this one takes the very
+				// same stream out of the slot and records it here, so a capture that lands after being given up
+				// on would clear a field that is no longer its own - and a hangup would then find nothing to
+				// stop, leaving the device captured until the tab is reloaded.
+				const ownsSwitchStream = !this.#isAudioDeviceSwitchCancelled(switchId)
+					&& this.#privateProperties.switchActiveAudioDeviceStream === prevStream;
+				if (ownsSwitchStream)
 				{
-					const deviceId = this.#privateProperties.switchActiveAudioDevicePending;
+					this.#privateProperties.switchActiveAudioDeviceStream = null;
+				}
+				this.#applyMicrophoneMuteIntent();
+
+				// A switch a newer one has taken over does not take the queue over either: whoever holds the
+				// lock by now runs the parked device itself.
+				const pendingDeviceId = this.#isAudioDeviceSwitchCancelled(switchId)
+					? null
+					: this.#privateProperties.switchActiveAudioDevicePending;
+				if (pendingDeviceId)
+				{
 					this.#privateProperties.switchActiveAudioDevicePending = null;
-					resolve(this.switchActiveAudioDevice(deviceId , true));
+					resolve(this.switchActiveAudioDevice(pendingDeviceId, true));
 				}
 				else
 				{
 					fulfilled = true;
-					this.#privateProperties.switchActiveAudioDeviceInProgress = null;
 					return error ? reject(error) : resolve();
 				}
 			}
@@ -3837,6 +4550,17 @@ export class Call
 		if (!force && !fulfilled)
 		{
 			this.#privateProperties.switchActiveAudioDeviceInProgress = promise;
+
+			// The lock is released by whichever comes first: the switch settling, or the watchdog armed around
+			// its capture. Without the watchdog a capture that never settles holds the lock forever, and every
+			// later switch is only written into switchActiveAudioDevicePending and never run.
+			promise
+				.finally(() => {
+					this.#releaseAudioDeviceSwitchLock(promise);
+				})
+				.catch(() => {
+					// the rejection belongs to the caller of switchActiveAudioDevice
+				});
 		}
 
 		return promise;
@@ -3922,9 +4646,17 @@ export class Call
 		return this.#isTrackPublished(MediaStreamsKinds.Screen);
 	}
 
+	// Published and transmitting, which is what every caller of isAudioPublished / isVideoPublished asks
+	// about: a paused publication answers false here. Whether a publication exists at all is a different
+	// question - #hasTrackPublication - and the two must not be confused.
 	#isTrackPublished(kind: number): boolean
 	{
-		return this.#privateProperties.localTracks[kind] && this.#privateProperties.localTracks[kind]?.muted !== true;
+		return this.#hasTrackPublication(kind) && this.#privateProperties.localTracks[kind].muted !== true;
+	}
+
+	#hasTrackPublication(kind: number): boolean
+	{
+		return Boolean(this.#privateProperties.localTracks[kind]);
 	}
 
 	#addTrackMuteHandlers(track)
@@ -4478,9 +5210,19 @@ export class Call
 				{
 					if (data?.muted && !Hardware.isMicrophoneMuted)
 					{
-						return;
+						// Server reports the mic muted while the local intent is unmuted - log the mismatch;
+						// the actual unmute is applied below by draining the queue (enableAudio unpauses)
+						this.setLog(`Microphone mute state mismatch: server muted, local intent unmuted (trackId: ${trackId})`, LOG_LEVEL.WARNING);
 					}
-					this.#triggerEvents('PublishPaused', [track.source, data.muted]);
+					else
+					{
+						this.#triggerEvents('PublishPaused', [track.source, data.muted]);
+					}
+
+					if (this.#privateProperties.audioQueue !== AUDIO_QUEUE.INITIAL)
+					{
+						this.#processAudioQueue();
+					}
 				}
 			}
 			else

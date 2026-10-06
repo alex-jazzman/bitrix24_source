@@ -8,41 +8,39 @@ import { CompactNavigationItem } from './compact-navigation-item';
 
 import '../css/compact-navigation.css';
 
-type NavigationItem = {
-	id: string,
-	text: string,
-	entityId: number | null,
-}
-
 // @vue/component
 export const CompactNavigation = {
 	name: 'CompactNavigation',
 	components: { CompactNavigationItem },
 	computed: {
-		availableNavigationItems(): string[]
+		copilotAvailable(): boolean
+		{
+			return !FeatureManager.isFeatureAvailable(Feature.isBitrixGptV2Available)
+				&& FeatureManager.isFeatureAvailable(Feature.copilotAvailable);
+		},
+		openLinesAvailable(): boolean
 		{
 			const settings = Extension.getSettings('im.v2.component.list.items.recent-compact');
-			const items: NavigationItem[] = settings.get('navigationItems', []);
 
-			return items.map((item) => item.id);
+			return settings.get('openLinesAvailable', false);
 		},
-		preparedNavigationItems(): string[]
-		{
-			return this.compactNavigationItems.filter((item) => this.availableNavigationItems.includes(item));
-		},
-		compactNavigationItems(): $Values<typeof NavigationMenuItem>[]
+		preparedNavigationItems(): $Values<typeof NavigationMenuItem>[]
 		{
 			const items = [NavigationMenuItem.notification];
 
-			if (!FeatureManager.isFeatureAvailable(Feature.isBitrixGptV2Available))
+			if (this.copilotAvailable)
 			{
 				items.push(NavigationMenuItem.copilot);
 			}
 
-			items.push(
-				NavigationMenuItem.openlines,
-				NavigationMenuItem.openlinesV2,
-			);
+			if (this.openLinesAvailable)
+			{
+				items.push(
+					FeatureManager.isFeatureAvailable(Feature.openLinesV2)
+						? NavigationMenuItem.openlinesV2
+						: NavigationMenuItem.openlines,
+				);
+			}
 
 			return items;
 		},

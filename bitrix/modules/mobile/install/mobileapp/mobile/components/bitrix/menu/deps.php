@@ -3,12 +3,12 @@
 return [
 	'extensions' => [
 		'more-menu',
-		'more-menu/utils',
-		'more-menu/navigator',
-		'type',
 		'more-menu/aha-moment',
+		'more-menu/navigator',
+		'more-menu/utils',
+		'qrauth/utils',
+		'type',
 		'utils/function',
-        'qrauth/utils',
 		'more-menu/analytics',
 	],
 ];

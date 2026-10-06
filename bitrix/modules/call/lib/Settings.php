@@ -63,6 +63,7 @@ class Settings
 			'isCloudRecordTariffEnabled' => static::isCloudRecordingAvailable(),
 			'isCloudRecordCisRegion' => static::isCisRegion(),
 			'isCloudRecordLogEnabled' => static::isCloudRecordLogEnabled(),
+			'syncCallInvitePeriod' => static::getSyncCallInvitePeriod(),
 		], self::getAdditionalMobileOptions());
 	}
 
@@ -376,29 +377,6 @@ class Settings
 			else
 			{
 				$cached = (bool)\CUserOptions::GetOption('call', 'plain_call_cloud_recording_enabled', false);
-			}
-		}
-
-		return $cached;
-	}
-
-	/**
-	 * Whether noise suppression is enabled.
-	 *
-	 * @return bool
-	 */
-	public static function isNoiseSuppressionEnabled(): bool
-	{
-		static $cached = null;
-		if ($cached === null)
-		{
-			if ((bool)Option::get('call', 'noise_suppression_enabled', false))
-			{
-				$cached = true;
-			}
-			else
-			{
-				$cached = (bool)\CUserOptions::GetOption('call', 'noise_suppression_enabled', false);
 			}
 		}
 
@@ -1021,4 +999,38 @@ class Settings
 
 		return $cached;
 	}
+
+	public static function getSyncCallInvitePeriod(): int
+	{
+		return (int)Option::get('call', 'call_sync_invite_period', 300000);
+	}
+
+	/**
+	 * Sync preset feature is enabled for the portal.
+	 * @return bool
+	 */
+	public static function isSyncPresetEnabled(): bool
+	{
+		if (Option::get('call', 'call_sync_preset_enabled', false))
+		{
+			return true;
+		}
+
+		return (bool)\CUserOptions::GetOption('call', 'call_sync_preset_enabled', false);
+	}
+
+	/**
+	 * Returns current left menu preset code.
+	 * @return string
+	 */
+	public static function getActivePresetCode(): string
+	{
+		if (!\Bitrix\Main\Loader::includeModule('intranet'))
+		{
+			return '';
+		}
+
+		return \Bitrix\Intranet\UI\LeftMenu\Preset\Manager::getPreset()->getCode();
+	}
+
 }

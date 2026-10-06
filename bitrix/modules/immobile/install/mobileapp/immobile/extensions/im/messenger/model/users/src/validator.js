@@ -136,6 +136,11 @@ jn.define('im/messenger/model/users/src/validator', (require, exports, module) =
 			result.connector = fields.connector;
 		}
 
+		if (Type.isBoolean(fields.active))
+		{
+			result.active = fields.active;
+		}
+
 		if (Type.isStringFilled(fields.external_auth_id))
 		{
 			fields.externalAuthId = fields.external_auth_id;

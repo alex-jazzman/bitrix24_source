@@ -36,7 +36,7 @@ export default class OrderedArray<T>
 		return this.items.indexOf(item);
 	}
 
-	getByIndex(index: number): T | null | undefined
+	getByIndex(index: number): T | null
 	{
 		if (Type.isNumber(index) && index >= 0)
 		{
@@ -48,14 +48,14 @@ export default class OrderedArray<T>
 		return null;
 	}
 
-	getFirst(): T | null | undefined
+	getFirst(): T | null
 	{
 		const first = this.items[0];
 
 		return Type.isUndefined(first) ? null : first;
 	}
 
-	getLast(): T | null | undefined
+	getLast(): T | null
 	{
 		const last = this.items[this.count() - 1];
 
@@ -117,11 +117,11 @@ export default class OrderedArray<T>
 		}
 
 		/*
-    Simple implementation
-    this.items.sort((item1, item2) => {
-    	return comparator(item1, item2);
-    });
-    */
+			Simple implementation
+			this.items.sort((item1, item2) => {
+				return comparator(item1, item2);
+			});
+		*/
 
 		// For stable sorting https://v8.dev/features/stable-sort
 		const length = this.items.length;

@@ -56,6 +56,7 @@ export const FixedParentItem = {
 				:item="parentRecentItem"
 				:withPinStatus="false"
 				:withChildrenCounter="false"
+				:forceOwnMessage="true"
 				@click.right="onRightClick"
 			/>
 		</FixedItemContainer>

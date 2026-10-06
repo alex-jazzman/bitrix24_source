@@ -197,6 +197,10 @@
 	white-space: nowrap;
 }
 
+.intranet-user-profile-column-block.--with-secondary-badge .intranet-user-profile-userpic {
+	margin-top: 63px;
+}
+
 .intranet-user-profile-userpic.ui-icon {
 	display: block;
 	position: relative;
@@ -439,6 +443,63 @@
 
 .intranet-user-profile-rank-waiting {
 	background-color: #bdd36b;
+}
+
+.intranet-user-profile-rank .intranet-user-profile-rank-item.intranet-user-profile-rank-system-user {
+	margin-top: 8px;
+	max-width: none;
+	padding: 0 10px;
+	overflow: visible;
+	border-radius: 0 6px 6px 0;
+	background: var(--ui-color-gray-50, #a8adb4);
+	font-size: 12px;
+}
+
+.intranet-user-profile-rank-system-user::after {
+	content: none;
+}
+
+.intranet-user-profile-system-user-note {
+	padding-bottom: 20px;
+	margin-bottom: 20px;
+	border-bottom: 1px dashed var(--ui-color-divider-secondary, #d5d7db);
+}
+
+.intranet-user-profile-system-user-note__body {
+	display: flex;
+	flex-direction: row;
+	align-items: flex-start;
+	gap: 16px;
+	padding: 16px;
+	border-radius: var(--ui-border-radius-md, 12px);
+	background-color: var(--ui-color-accent-soft-blue-3, #edf7ff);
+}
+
+.intranet-user-profile-system-user-note__image {
+	flex: 0 0 auto;
+	width: 78px;
+	height: 72px;
+	object-fit: contain;
+}
+
+.intranet-user-profile-system-user-note__content {
+	display: flex;
+	flex-direction: column;
+}
+
+.intranet-user-profile-system-user-note__text {
+	font-size: 14px;
+	line-height: 18px;
+	color: var(--ui-color-base-1, #333333);
+}
+
+.intranet-user-profile-system-user-note__link {
+	align-self: flex-start;
+	margin-top: 8px;
+	padding-bottom: 2px;
+	color: var(--ui-color-accent-main-primary, #2067c2);
+	text-decoration: none;
+	border-bottom: 1px dashed currentColor;
 }
 
 .intranet-user-profile-rank-email,

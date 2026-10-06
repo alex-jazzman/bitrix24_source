@@ -6,8 +6,10 @@ jn.define('calendar/layout/sharing-switcher', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { confirmDestructiveAction } = require('alert');
 	const { settings } = require('assets/common');
-	const { lighten, withPressed } = require('utils/color');
+	const { lighten } = require('utils/color');
 	const { BooleanField } = require('layout/ui/fields/boolean');
+	const { Text5 } = require('ui-system/typography/text');
+	const { Color } = require('tokens');
 
 	const { ModelSharingStatus } = require('calendar/model/sharing');
 
@@ -162,19 +164,14 @@ jn.define('calendar/layout/sharing-switcher', (require, exports, module) => {
 				{
 					testId: 'sharingSwitcherDescription',
 				},
-				Text(
-					{
-						style: {
-							fontSize: 14,
-							fontWeight: '400',
-							color: AppTheme.colors.base1,
-						},
-						text: isCalendarContext
-							? Loc.getMessage('L_MS_DESCRIPTION')
-							: Loc.getMessage('L_MS_DESCRIPTION_CRM')
-						,
-					},
-				),
+				Text5({
+					testId: 'calendar-sharing-switcher-description-text',
+					text: isCalendarContext
+						? Loc.getMessage('L_MS_DESCRIPTION')
+						: Loc.getMessage('L_MS_DESCRIPTION_CRM')
+					,
+					color: Color.base1,
+				}),
 			);
 		}
 
@@ -190,15 +187,19 @@ jn.define('calendar/layout/sharing-switcher', (require, exports, module) => {
 						paddingBottom: 10,
 					},
 				},
-				Button({
-					onClick: this.onOpenLinkClickHandler,
-					text: Loc.getMessage('CALENDARMOBILE_SHARING_SWITCHER_OPEN_LINK'),
-					style: {
-						color: withPressed(AppTheme.colors.accentMainLinks),
-						height: 20,
-						...(isCalendarContext ? styles.openLinkBorder : {}),
+				View(
+					{
+						testId: 'calendar-sharing-switcher-open-link',
+						clickable: true,
+						onClick: this.onOpenLinkClickHandler,
+						style: isCalendarContext ? styles.openLinkBorder : {},
 					},
-				}),
+					Text5({
+						testId: 'calendar-sharing-switcher-open-link-text',
+						text: Loc.getMessage('CALENDARMOBILE_SHARING_SWITCHER_OPEN_LINK'),
+						color: Color.accentMainLinks,
+					}),
+				),
 			);
 		}
 
@@ -284,7 +285,7 @@ jn.define('calendar/layout/sharing-switcher', (require, exports, module) => {
 			paddingBottom: 10,
 		},
 		openLinkBorder: {
-			borderBottomColor: lighten(AppTheme.colors.accentMainLinks, 0.4),
+			borderBottomColor: lighten(Color.accentMainLinks.toHex(), 0.4),
 			borderBottomWidth: 2,
 			borderStyle: 'dash',
 		},

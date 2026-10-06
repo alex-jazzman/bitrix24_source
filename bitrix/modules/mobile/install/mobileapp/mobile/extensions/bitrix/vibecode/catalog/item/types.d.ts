@@ -16,6 +16,7 @@ declare type VibeCodeCatalogItemData = {
 	ownerId: number,
 	owner: VibeCodeCatalogOwner,
 	counter?: number | null,
+	isNew?: boolean,
 	isPinned: boolean,
 	isMine: boolean,
 	isHidden: boolean,

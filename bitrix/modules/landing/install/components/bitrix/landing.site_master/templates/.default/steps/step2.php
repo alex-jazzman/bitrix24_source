@@ -23,9 +23,10 @@ $productUrl = $component->getProductUrl(
 	</div>
 	<div class="landing-sm-content-text-br"></div>
 	<div class="landing-sm-content-text" style="margin-bottom: 32px;"><?= Loc::getMessage('LANDING_TPL_DEMO_PRODUCTS_IN_TRADE_CATALOG_LOOK');?></div>
-	<a href="<?= $productUrl;?>" data-role="landing-sm-content-demo-products"
-		onclick="BX.PreventDefault(); BX.SidePanel.Instance.open('<?= \htmlspecialcharsbx(\CUtil::jsEscape($productUrl));?>', {data: {rightBoundary: 0}});"
+	<a href="<?= \htmlspecialcharsbx($productUrl);?>" data-role="landing-sm-content-demo-products"
+		data-landing-master-slider
 		target="_blank" class="ui-btn ui-btn-lg ui-btn-success ui-btn-round"
+		data-testid="landing-master-demo-products-link"
 	><?= Loc::getMessage('LANDING_TPL_SHOW_DEMO_PRODUCTS');?></a>
 </div>
 
@@ -34,6 +35,11 @@ $productUrl = $component->getProductUrl(
 	{
 		var buttonShowStore = document.querySelector('[data-role="landing-sm-content-demo-products"]');
 		var buttonNextStep = document.getElementById('landing-master-next');
+		// without the module of accessibility the step keeps working, only silently
+		var a11y = BX.Reflection.getClass('BX.Landing.Component.siteMasterA11y') || {
+			announce: function() {},
+			endChange: function() {}
+		};
 
 		function adjustButtonStyle()
 		{
@@ -42,6 +48,10 @@ $productUrl = $component->getProductUrl(
 			buttonNextStep.classList.remove('ui-btn-light-border');
 			buttonNextStep.classList.add('ui-btn-success');
 			buttonShowStore.removeEventListener('click', adjustButtonStyle);
+
+			// the colour of the buttons is the whole message of the step so far, and colour is not read
+			a11y.endChange();
+			a11y.announce('<?= \CUtil::jsEscape(Loc::getMessage('LANDING_TPL_STEP2_NEXT_READY'));?>');
 		}
 
 		buttonShowStore.addEventListener('click', adjustButtonStyle);

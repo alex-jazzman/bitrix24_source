@@ -67,7 +67,14 @@ export class Text extends Base
 
 		if (!preventAdjustPosition)
 		{
-			BX.Landing.UI.Panel.EditorPanel.getInstance().adjustPosition(this.node);
+			if (BX.Landing.Env.getInstance().isBlockControlsEnabled())
+			{
+				BX.Landing.UI.Panel.EditorPanel.getInstance().adjustPosition(this.node);
+			}
+			else
+			{
+				BX.Landing.UI.Panel.CompactEditorPanel.getInstance().adjustPosition(this.node);
+			}
 		}
 	}
 
@@ -150,7 +157,15 @@ export class Text extends Base
 		{
 			if (this === this.currentNode)
 			{
-				BX.Landing.UI.Panel.EditorPanel.getInstance().hide();
+				if (BX.Landing.Env.getInstance().isBlockControlsEnabled())
+				{
+					BX.Landing.UI.Panel.EditorPanel.getInstance().hide();
+				}
+				// do not instantiate the compact panel just to hide it
+				else if (BX.Landing.UI.Panel.CompactEditorPanel.instance)
+				{
+					BX.Landing.UI.Panel.CompactEditorPanel.instance.hide();
+				}
 			}
 
 			this.disableEdit();
@@ -207,7 +222,15 @@ export class Text extends Base
 	{
 		if (this.isEditable() && !this.fromNode)
 		{
-			BX.Landing.UI.Panel.EditorPanel.getInstance().hide();
+			if (BX.Landing.Env.getInstance().isBlockControlsEnabled())
+			{
+				BX.Landing.UI.Panel.EditorPanel.getInstance().hide();
+			}
+			// do not instantiate the compact panel just to hide it
+			else if (BX.Landing.UI.Panel.CompactEditorPanel.instance)
+			{
+				BX.Landing.UI.Panel.CompactEditorPanel.instance.hide();
+			}
 			this.disableEdit();
 		}
 
@@ -254,7 +277,14 @@ export class Text extends Base
 				{
 					if (!this.manifest.textOnly && !BX.Landing.UI.Panel.StylePanel.getInstance().isShown())
 					{
-						BX.Landing.UI.Panel.EditorPanel.getInstance().show(this.node, null, this.buttons);
+						if (BX.Landing.Env.getInstance().isBlockControlsEnabled())
+						{
+							BX.Landing.UI.Panel.EditorPanel.getInstance().show(this.node, null, this.buttons);
+						}
+						else
+						{
+							BX.Landing.UI.Panel.CompactEditorPanel.getInstance().show(this.node);
+						}
 					}
 
 					if (this.nodeTableContainerList)
@@ -381,7 +411,15 @@ export class Text extends Base
 				html: BX.Landing.Loc.getMessage('LANDING_TITLE_OF_EDITOR_ACTION_DESIGN'),
 				attrs: { title: BX.Landing.Loc.getMessage('LANDING_TITLE_OF_EDITOR_ACTION_DESIGN') },
 				onClick: function() {
-					BX.Landing.UI.Panel.EditorPanel.getInstance().hide();
+					if (BX.Landing.Env.getInstance().isBlockControlsEnabled())
+					{
+						BX.Landing.UI.Panel.EditorPanel.getInstance().hide();
+					}
+					// do not instantiate the compact panel just to hide it
+					else if (BX.Landing.UI.Panel.CompactEditorPanel.instance)
+					{
+						BX.Landing.UI.Panel.CompactEditorPanel.instance.hide();
+					}
 					this.disableEdit();
 					this.onDesignShow(this.manifest.code);
 				}.bind(this),

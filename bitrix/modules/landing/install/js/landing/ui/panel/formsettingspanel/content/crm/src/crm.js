@@ -537,6 +537,7 @@ export default class CrmContent extends ContentWrapper
 			return new MessageBox({
 				title: Loc.getMessage('LANDING_FORM_SETTINGS_PANEL_CRM_SCHEME_CHANGE_CONFIRM_TITLE'),
 				buttons: MessageBoxButtons.OK_CANCEL,
+				useAirDesign: true,
 			});
 		});
 	}
@@ -547,6 +548,7 @@ export default class CrmContent extends ContentWrapper
 			return new MessageBox({
 				title: Loc.getMessage('LANDING_FORM_SETTINGS_PANEL_CRM_SCHEME_CHANGE_CONFIRM_TITLE'),
 				buttons: MessageBoxButtons.OK_CANCEL,
+				useAirDesign: true,
 			});
 		});
 	}
@@ -557,7 +559,8 @@ export default class CrmContent extends ContentWrapper
 			return new MessageBox({
 				title: Loc.getMessage('LANDING_FORM_SETTINGS_PANEL_CRM_SCHEME_CREATE_ORDER_CHANGE_CONFIRM_TITLE'),
 				buttons: MessageBoxButtons.OK_CANCEL,
-				message: Loc.getMessage('LANDING_FORM_SETTINGS_PANEL_CRM_CREATE_ORDER_MESSAGE_BOX_TITLE_1')
+				message: Loc.getMessage('LANDING_FORM_SETTINGS_PANEL_CRM_CREATE_ORDER_MESSAGE_BOX_TITLE_1'),
+				useAirDesign: true,
 			});
 		});
 	}

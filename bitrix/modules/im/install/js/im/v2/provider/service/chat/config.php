@@ -22,6 +22,7 @@ return [
 		'im.v2.lib.notifier',
 		'im.v2.lib.rest',
 		'im.v2.lib.role-manager',
+		'im.v2.lib.unread-mode',
 		'im.v2.lib.user',
 		'im.v2.lib.utils',
 		'im.v2.lib.uuid',

@@ -13,6 +13,10 @@ export const TitleInput = {
 			type: String,
 			required: true,
 		},
+		maxLength: {
+			type: [Number, null],
+			default: null,
+		},
 	},
 	emits: ['update:modelValue'],
 	mounted()
@@ -32,6 +36,7 @@ export const TitleInput = {
 				:value="modelValue"
 				:placeholder="placeholder"
 				@input="onInput"
+				:maxlength="maxLength"
 				class="bx-im-chat-forms-title-input__input"
 				ref="titleInput"
 			/>

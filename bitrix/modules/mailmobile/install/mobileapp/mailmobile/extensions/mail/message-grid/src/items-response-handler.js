@@ -23,11 +23,14 @@ jn.define('mail/message-grid/src/items-response-handler', (require, exports, mod
 			cache,
 			filterController,
 			onMailboxAvailable = () => {},
+			onProviderRestriction = () => {},
 		} = {})
 		{
 			this.cache = cache;
 			this.filterController = filterController;
 			this.onMailboxAvailable = onMailboxAvailable;
+			this.onProviderRestriction = onProviderRestriction;
+			this.providerRestrictionShownFor = null;
 		}
 
 		handle(responseData, context)
@@ -40,12 +43,15 @@ jn.define('mail/message-grid/src/items-response-handler', (require, exports, mod
 				currentFolderPath = '',
 				startEmailSender = null,
 				messageCounterInAllMailboxes = 0,
+				providerRestriction = null,
 			} = responseData || {};
 
 			if (!mailboxIsNotAvailable)
 			{
 				this.onMailboxAvailable();
 			}
+
+			this.#handleProviderRestriction(providerRestriction, Number(currentMailboxId), context);
 
 			const actions = this.#buildActions({
 				items,
@@ -101,6 +107,22 @@ jn.define('mail/message-grid/src/items-response-handler', (require, exports, mod
 			}
 
 			return actions;
+		}
+
+		#handleProviderRestriction(providerRestriction, currentMailboxId, context)
+		{
+			if (
+				context === 'cache'
+				|| !providerRestriction
+				|| currentMailboxId <= 0
+				|| this.providerRestrictionShownFor === currentMailboxId
+			)
+			{
+				return;
+			}
+
+			this.providerRestrictionShownFor = currentMailboxId;
+			this.onProviderRestriction(providerRestriction, currentMailboxId);
 		}
 
 		#syncMailboxIfNeeded(currentMailboxId)

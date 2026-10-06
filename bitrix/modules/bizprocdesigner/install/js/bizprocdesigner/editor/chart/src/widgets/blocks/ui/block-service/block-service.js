@@ -1,6 +1,7 @@
 import { MoveableBlock, PORT_POSITION } from 'ui.block-diagram';
 import { Outline } from 'ui.icon-set.api.vue';
 import { type MenuItemOptions } from 'ui.vue3.components.menu';
+import { mapState } from 'ui.vue3.pinia';
 
 import { IconDivider, IconButton } from '../../../../shared/ui';
 import { PORT_TYPES } from '../../../../shared/constants';
@@ -12,9 +13,11 @@ import {
 	PortInout,
 	BlockContent,
 	BLOCK_LAYOUT_SLOT_NAMES,
-	parseItemsFromBlocksJson,
 	shouldAnimateBlock,
+	diagramStore,
+	resolveConsumerContentBlock,
 } from '../../../../entities/blocks';
+import { useCatalogStore } from '../../../../entities/catalog/stores';
 import {
 	DeleteBlockIconBtn,
 	UpdatePublishedStatusLabel,
@@ -22,7 +25,6 @@ import {
 } from '../../../../features/blocks';
 import { BlockLayoutWidget } from '../block-layout/block-layout';
 import { BlockTopTitleWidget } from '../block-top-title/block-top-title';
-import { useLoc } from '../../../../shared/composables';
 import { type Block } from '../../../../shared/types';
 
 import { BlockMediator } from '../../lib';
@@ -34,7 +36,6 @@ const SETUP_TEMPLATE_ACTIVITY = 'SetupTemplateActivity';
 type BlockServiceSetup = {
 	iconSet: { [string]: string };
 	blockMediator: BlockMediator;
-	getMessage: Function;
 };
 
 type Props = {
@@ -69,19 +70,18 @@ export const BlockService = {
 	},
 	setup(props: Props): BlockServiceSetup
 	{
-		const { getMessage } = useLoc();
-
 		return {
 			iconSet: Outline,
 			portTypes: PORT_TYPES,
 			portPosition: PORT_POSITION,
 			blockMediator: new BlockMediator(),
 			blockLayoutSlotNames: BLOCK_LAYOUT_SLOT_NAMES,
-			getMessage,
 			shouldAnimateBlock,
 		};
 	},
 	computed: {
+		...mapState(diagramStore, ['contentBlockScope']),
+		...mapState(useCatalogStore, ['contentBlockConsumers']),
 		contextMenuItems(): Array<MenuItemOptions>
 		{
 			return this.blockMediator.getCommonBlockMenuOptions(this.block);
@@ -90,27 +90,15 @@ export const BlockService = {
 		{
 			return this.block.activity?.Type === SETUP_TEMPLATE_ACTIVITY;
 		},
-		constantsCount(): number
+		contentBlock(): ?{ text: string }
 		{
-			if (!this.isSetupTemplateActivity)
-			{
-				return 0;
-			}
-
-			const items = parseItemsFromBlocksJson(this.block.activity?.Properties?.blocks);
-
-			return items.filter((item) => item?.itemType === 'constant').length;
-		},
-		hasConstants(): boolean
-		{
-			return this.constantsCount > 0;
-		},
-		constantsLabel(): string
-		{
-			return this.getMessage(
-				'BIZPROCDESIGNER_EDITOR_BLOCK_SERVICE_CONSTANTS_COUNT',
-				{ '#count#': this.constantsCount },
+			const resolved = resolveConsumerContentBlock(
+				this.block,
+				this.contentBlockScope,
+				this.contentBlockConsumers,
 			);
+
+			return resolved ?? this.block.activity?.ContentBlock ?? null;
 		},
 	},
 	template: `
@@ -201,10 +189,10 @@ export const BlockService = {
 									:class="{ 'editor-chart-block-service__content--large': isSetupTemplateActivity }"
 								>
 									<span
-										v-if="hasConstants"
-										class="editor-chart-block-service__constants-label"
+										v-if="contentBlock"
+										class="editor-chart-block-service__content-label"
 									>
-										{{ constantsLabel }}
+										{{ contentBlock.text }}
 									</span>
 								</BlockContent>
 							</template>

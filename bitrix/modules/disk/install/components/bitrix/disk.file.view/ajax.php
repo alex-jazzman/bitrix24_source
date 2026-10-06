@@ -153,6 +153,7 @@ class DiskFileViewAjaxController extends \Bitrix\Disk\Internals\Controller
 				object: $file,
 				hash: $extLink->getHash(),
 			),
+			'canEditSettings' => $extLink->canEditSettings(),
 		));
 	}
 
@@ -180,6 +181,7 @@ class DiskFileViewAjaxController extends \Bitrix\Disk\Internals\Controller
 				object: $file,
 				hash: $extLink->getHash(),
 			),
+			'canEditSettings' => $extLink->canEditSettings(),
 		));
 	}
 

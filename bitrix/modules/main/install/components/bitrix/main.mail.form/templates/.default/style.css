@@ -3,11 +3,40 @@
 }
 
 .main-mail-form-wrapper {
+	position: relative;
 	clear: both;
 	background: #fff;
 	padding: 10px 50px;
 	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	border-radius: var(--main-mail-form-border-radius, var(--ui-border-radius-md));
+}
+
+.main-mail-form-wrapper.main-mail-form-draft-loading > * {
+	visibility: hidden;
+}
+
+.main-mail-form-wrapper.main-mail-form-draft-loading::after {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	width: 26px;
+	height: 26px;
+	margin: -16px 0 0 -16px;
+	border: 3px solid var(--ui-color-base-20, #dfe0e3);
+	border-top-color: var(--ui-color-primary, #2fc6f6);
+	border-radius: 50%;
+	content: '';
+	animation: main-mail-form-draft-loader 0.8s linear infinite;
+}
+
+.main-mail-form-draft-loading-footer {
+	visibility: hidden;
+}
+
+@keyframes main-mail-form-draft-loader {
+	to {
+		transform: rotate(360deg);
+	}
 }
 
 .ui-selector-footer .ui-selector-footer-link-add.hide-before:before {

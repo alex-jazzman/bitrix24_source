@@ -1,13 +1,15 @@
 import './common-node-settings-preview.css';
 
 import { useLoc } from '../../../../shared/composables';
+// Direct path, not the barrel of the layer: the barrel has already caught a cycle here.
+import { ReadableExpressionText } from '../../../node-settings/ui/readable-expression-text/readable-expression-text';
 
 import { BIcon } from 'ui.icon-set.api.vue';
 
 // @vue/component
 export const CommonNodeSettingsPreview = {
 	name: 'CommonNodeSettingsPreview',
-	components: { BIcon },
+	components: { BIcon, ReadableExpressionText },
 	props:
 	{
 		title:
@@ -40,13 +42,13 @@ export const CommonNodeSettingsPreview = {
 				class="editor-chart-common-node-settings-preview__construction"
 				:class="{ '--empty': !title }"
 			>
-				{{previewConstruction }}
+				<ReadableExpressionText :value="previewConstruction" />
 			</span>
 			<BIcon
 				:size="20"
 				class="editor-chart-common-node-settings-preview__edit-icon"
 				name="edit-m"
-				color="#c9ccd0"
+				color="currentColor"
 			/>
 		</div>
 	`,

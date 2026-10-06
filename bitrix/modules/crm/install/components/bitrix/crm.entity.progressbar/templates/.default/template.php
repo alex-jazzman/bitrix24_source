@@ -31,7 +31,7 @@ if($currentColor === '')
 //Render progress manager settings
 \Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/common.js');
 \Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/progress_control.js');
-\Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/dialog.js');
+\Bitrix\Main\UI\Extension::load('crm.dialog');
 \Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/partial_entity_editor.js');
 
 if($entityTypeID === CCrmOwnerType::Deal || $entityTypeID === CCrmOwnerType::DealRecurring)

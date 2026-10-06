@@ -23,7 +23,6 @@ endif;
 <form action="<?=$componentPath?>/box.php" target="loc_import" name="import_form" method="post" enctype="multipart/form-data">
 <?=bitrix_sessid_post()?>
 <input type="hidden" name="BACK_URL" value="<?=$arResult['BACK_URL']?>" id="BACK_URL"/>
-<input type="hidden" name="TMP_PATH" value="<?=$arResult['TMP_PATH']?>" id="TMP_PATH"/>
 
 <b><?=GetMessage('CRM_LOC_IMP_CHOOSE_FILE')?>:</b><br>
 <input type="radio" name="locations_csv" value="loc_ussr.csv" onchange="crmImportLocations.checkZIP()" id="loc_ussr" checked><label for="loc_ussr"><?=GetMessage('CRM_LOC_IMP_FILE_RS')?></label><br>

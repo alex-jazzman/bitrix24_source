@@ -1,9 +1,11 @@
-import { Loc } from 'main.core';
+import { Loc, Runtime } from 'main.core';
+import { EventEmitter } from 'main.core.events';
 import { Outline as OutlineIcons } from 'ui.icon-set.api.core';
 import { MenuItemDesign, type MenuItemOptions, type MenuOptions } from 'ui.system.menu';
 
 import { Core } from 'im.v2.application.core';
-import { PopupType } from 'im.v2.const';
+import { EventType, PopupType, TextareaPanelType } from 'im.v2.const';
+import { Feature, FeatureManager } from 'im.v2.lib.feature';
 import { type ImModelSticker, type ImModelStickerPack } from 'im.v2.model';
 import { SendingService } from 'im.v2.provider.service.sending';
 import { StickerService } from 'im.v2.provider.service.sticker';
@@ -47,8 +49,17 @@ export class StickerMenu extends BaseMenu
 		return {
 			title: Loc.getMessage('IM_LIB_MENU_SEND_STICKER'),
 			icon: OutlineIcons.SEND,
-			onClick: () => {
+			onClick: async () => {
 				this.emit(StickerMenu.events.closeParentPopup);
+
+				// draft is loaded lazily so the shared menu bundle does not pull it (and ui.dexie) eagerly
+				const { DraftManager } = await Runtime.loadExtension('im.v2.lib.draft');
+				const draft = DraftManager.getInstance().drafts[this.context.dialogId] ?? {};
+				const isReplyWithMediaAvailable = FeatureManager.isFeatureAvailable(Feature.isReplyWithMediaAvailable);
+				const replyId = (isReplyWithMediaAvailable && draft.panelType === TextareaPanelType.reply)
+					? draft.panelContext?.messageId
+					: undefined;
+
 				void SendingService.getInstance().sendMessageWithSticker({
 					dialogId: this.context.dialogId,
 					stickerParams: {
@@ -56,7 +67,13 @@ export class StickerMenu extends BaseMenu
 						packId: this.context.sticker.packId,
 						packType: this.context.sticker.packType,
 					},
+					replyId,
 				});
+
+				if (replyId > 0)
+				{
+					EventEmitter.emit(EventType.textarea.closePanel, { dialogId: this.context.dialogId });
+				}
 			},
 		};
 	}

@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Mail = this.BX.Mail || {};
-(function (exports, main_core, ui_avatar, ui_cnt, main_date, ui_notification, ui_system_chip, main_popup, ui_icons_b24, ui_icon, ui_analytics, ui_buttons) {
+(function (exports, main_core, ui_avatar, ui_cnt, main_date, mail_migrationState, ui_notification, ui_dialogs_messagebox, ui_system_chip, main_popup, ui_icons_b24, ui_icon, ui_analytics, ui_buttons) {
 	'use strict';
 
 	class BaseField {
@@ -391,7 +391,411 @@ this.BX.Mail = this.BX.Mail || {};
 		}
 	}
 
-	const actionMap = new Map([[SyncAction.getActionId(), SyncAction], [OpenSettingsAction.getActionId(), OpenSettingsAction], [RejectMailboxConnectionRequestAction.getActionId(), RejectMailboxConnectionRequestAction], [ConnectMailboxConnectionRequestAction.getActionId(), ConnectMailboxConnectionRequestAction]]);
+	function showActionReport(data, phrases) {
+		const applied = data.applied ?? [];
+		const skipped = data.skipped ?? [];
+		const failed = data.failed ?? [];
+		if (skipped.length === 0 && failed.length === 0) {
+			BX.UI.Notification.Center.notify({
+				content: main_core.Loc.getMessage(phrases.success),
+				position: 'top-right',
+				autoHideDelay: 5000
+			});
+			return;
+		}
+		const lines = [];
+		if (applied.length > 0) {
+			lines.push(main_core.Loc.getMessagePlural(phrases.applied, applied.length, {
+				'#COUNT#': applied.length
+			}));
+		}
+		if (skipped.length > 0 && phrases.skipped) {
+			lines.push(main_core.Loc.getMessagePlural(phrases.skipped, skipped.length, {
+				'#COUNT#': skipped.length
+			}));
+		}
+		if (failed.length > 0) {
+			lines.push(main_core.Loc.getMessagePlural(phrases.failed, failed.length, {
+				'#COUNT#': failed.length
+			}));
+		}
+		const container = document.createElement('span');
+		container.dataset.testid = 'mail-mailbox-bulk-report';
+		container.innerHTML = lines.join('<br>');
+		BX.UI.Notification.Center.notify({
+			content: container,
+			position: 'top-right',
+			autoHideDelay: 5000
+		});
+	}
+
+	class MassDisconnectAction extends BaseAction {
+		#mailboxIds = [];
+		static getActionId() {
+			return 'disconnectMailbox';
+		}
+		getActionConfig() {
+			return {
+				type: 'controller',
+				name: 'mail.mailboxconnecting.massDisconnectMailboxes'
+			};
+		}
+		getActionData() {
+			return {
+				mailboxIds: this.#mailboxIds
+			};
+		}
+		setActionParams(params) {
+			this.#mailboxIds = params.mailboxIds ?? [];
+		}
+		async execute() {
+			const count = this.#mailboxIds.length;
+			if (count === 0) {
+				return;
+			}
+			const confirmed = await new Promise(resolve => {
+				const messageBox = ui_dialogs_messagebox.MessageBox.create({
+					message: main_core.Loc.getMessagePlural('MAIL_MAILBOX_PANEL_DISCONNECT_CONFIRM_TEXT', count, {
+						'#COUNT#': count
+					}),
+					title: main_core.Loc.getMessage('MAIL_MAILBOX_PANEL_DISCONNECT_CONFIRM_TITLE'),
+					okCaption: main_core.Loc.getMessage('MAIL_MAILBOX_PANEL_DISCONNECT_CONFIRM_OK'),
+					cancelCaption: main_core.Loc.getMessage('MAIL_MAILBOX_PANEL_DISCONNECT_CONFIRM_CANCEL'),
+					buttons: ui_dialogs_messagebox.MessageBoxButtons.OK_CANCEL,
+					onOk: () => {
+						messageBox.close();
+						resolve(true);
+					},
+					onCancel: () => {
+						messageBox.close();
+						resolve(false);
+					}
+				});
+				messageBox.show();
+				const popup = messageBox.getPopupWindow();
+				if (popup) {
+					const container = popup.getPopupContainer();
+					if (container) {
+						container.dataset.testid = 'mail-mailbox-bulk-confirm-dialog';
+					}
+				}
+			});
+			if (!confirmed) {
+				return;
+			}
+			this.onBeforeActionRequest();
+			await this.sendActionRequest();
+		}
+		onBeforeActionRequest() {
+			this.grid.tableFade();
+		}
+		handleSuccess(result) {
+			this.grid.reload(() => {
+				this.grid.tableUnfade();
+			});
+			showActionReport(result?.data ?? {}, {
+				success: 'MAIL_MAILBOX_PANEL_DISCONNECT_SUCCESS',
+				applied: 'MAIL_MAILBOX_PANEL_DISCONNECT_REPORT_APPLIED',
+				skipped: 'MAIL_MAILBOX_PANEL_ACTION_REPORT_SKIPPED',
+				failed: 'MAIL_MAILBOX_PANEL_ACTION_REPORT_FAILED'
+			});
+		}
+		handleError(result) {
+			const errors = result?.errors ?? [];
+			const message = errors[0]?.message ?? main_core.Loc.getMessage('MAIL_MAILBOX_PANEL_ACTION_ERROR');
+			this.grid.tableUnfade();
+			BX.UI.Notification.Center.notify({
+				content: message,
+				position: 'top-right',
+				autoHideDelay: 5000
+			});
+		}
+	}
+
+	class MassCrmEnableAction extends BaseAction {
+		#mailboxIds = [];
+		static getActionId() {
+			return 'enableCrm';
+		}
+		getActionConfig() {
+			return {
+				type: 'controller',
+				name: 'mail.mailboxconnecting.massSetCrmIntegration'
+			};
+		}
+		getActionData() {
+			return {
+				mailboxIds: this.#mailboxIds,
+				enabled: 'Y'
+			};
+		}
+		setActionParams(params) {
+			this.#mailboxIds = params.mailboxIds ?? [];
+		}
+		onBeforeActionRequest() {
+			this.grid.tableFade();
+		}
+		handleSuccess(result) {
+			this.grid.reload(() => {
+				this.grid.tableUnfade();
+			});
+			showActionReport(result?.data ?? {}, {
+				success: 'MAIL_MAILBOX_PANEL_CRM_ENABLE_SUCCESS',
+				applied: 'MAIL_MAILBOX_PANEL_CRM_ENABLE_REPORT_APPLIED',
+				skipped: 'MAIL_MAILBOX_PANEL_ACTION_REPORT_SKIPPED',
+				failed: 'MAIL_MAILBOX_PANEL_ACTION_REPORT_FAILED'
+			});
+		}
+		handleError(result) {
+			const errors = result?.errors ?? [];
+			const message = errors[0]?.message ?? main_core.Loc.getMessage('MAIL_MAILBOX_PANEL_ACTION_ERROR');
+			this.grid.tableUnfade();
+			BX.UI.Notification.Center.notify({
+				content: message,
+				position: 'top-right',
+				autoHideDelay: 5000
+			});
+		}
+	}
+	class MassCrmDisableAction extends BaseAction {
+		#mailboxIds = [];
+		static getActionId() {
+			return 'disableCrm';
+		}
+		getActionConfig() {
+			return {
+				type: 'controller',
+				name: 'mail.mailboxconnecting.massSetCrmIntegration'
+			};
+		}
+		getActionData() {
+			return {
+				mailboxIds: this.#mailboxIds,
+				enabled: 'N'
+			};
+		}
+		setActionParams(params) {
+			this.#mailboxIds = params.mailboxIds ?? [];
+		}
+		onBeforeActionRequest() {
+			this.grid.tableFade();
+		}
+		handleSuccess(result) {
+			this.grid.reload(() => {
+				this.grid.tableUnfade();
+			});
+			showActionReport(result?.data ?? {}, {
+				success: 'MAIL_MAILBOX_PANEL_CRM_DISABLE_SUCCESS',
+				applied: 'MAIL_MAILBOX_PANEL_CRM_DISABLE_REPORT_APPLIED',
+				skipped: 'MAIL_MAILBOX_PANEL_ACTION_REPORT_SKIPPED',
+				failed: 'MAIL_MAILBOX_PANEL_ACTION_REPORT_FAILED'
+			});
+		}
+		handleError(result) {
+			const errors = result?.errors ?? [];
+			const message = errors[0]?.message ?? main_core.Loc.getMessage('MAIL_MAILBOX_PANEL_ACTION_ERROR');
+			this.grid.tableUnfade();
+			BX.UI.Notification.Center.notify({
+				content: message,
+				position: 'top-right',
+				autoHideDelay: 5000
+			});
+		}
+	}
+
+	class MassCalendarEnableAction extends BaseAction {
+		#mailboxIds = [];
+		static getActionId() {
+			return 'enableCalendar';
+		}
+		getActionConfig() {
+			return {
+				type: 'controller',
+				name: 'mail.mailboxconnecting.massSetCalendarIntegration'
+			};
+		}
+		getActionData() {
+			return {
+				mailboxIds: this.#mailboxIds,
+				enabled: 'Y'
+			};
+		}
+		setActionParams(params) {
+			this.#mailboxIds = params.mailboxIds ?? [];
+		}
+		onBeforeActionRequest() {
+			this.grid.tableFade();
+		}
+		handleSuccess(result) {
+			this.grid.reload(() => {
+				this.grid.tableUnfade();
+			});
+			showActionReport(result?.data ?? {}, {
+				success: 'MAIL_MAILBOX_PANEL_CALENDAR_ENABLE_SUCCESS',
+				applied: 'MAIL_MAILBOX_PANEL_CALENDAR_ENABLE_REPORT_APPLIED',
+				skipped: 'MAIL_MAILBOX_PANEL_ACTION_REPORT_SKIPPED',
+				failed: 'MAIL_MAILBOX_PANEL_ACTION_REPORT_FAILED'
+			});
+		}
+		handleError(result) {
+			const errors = result?.errors ?? [];
+			const message = errors[0]?.message ?? main_core.Loc.getMessage('MAIL_MAILBOX_PANEL_ACTION_ERROR');
+			this.grid.tableUnfade();
+			BX.UI.Notification.Center.notify({
+				content: message,
+				position: 'top-right',
+				autoHideDelay: 5000
+			});
+		}
+	}
+	class MassCalendarDisableAction extends BaseAction {
+		#mailboxIds = [];
+		static getActionId() {
+			return 'disableCalendar';
+		}
+		getActionConfig() {
+			return {
+				type: 'controller',
+				name: 'mail.mailboxconnecting.massSetCalendarIntegration'
+			};
+		}
+		getActionData() {
+			return {
+				mailboxIds: this.#mailboxIds,
+				enabled: 'N'
+			};
+		}
+		setActionParams(params) {
+			this.#mailboxIds = params.mailboxIds ?? [];
+		}
+		onBeforeActionRequest() {
+			this.grid.tableFade();
+		}
+		handleSuccess(result) {
+			this.grid.reload(() => {
+				this.grid.tableUnfade();
+			});
+			showActionReport(result?.data ?? {}, {
+				success: 'MAIL_MAILBOX_PANEL_CALENDAR_DISABLE_SUCCESS',
+				applied: 'MAIL_MAILBOX_PANEL_CALENDAR_DISABLE_REPORT_APPLIED',
+				skipped: 'MAIL_MAILBOX_PANEL_ACTION_REPORT_SKIPPED',
+				failed: 'MAIL_MAILBOX_PANEL_ACTION_REPORT_FAILED'
+			});
+		}
+		handleError(result) {
+			const errors = result?.errors ?? [];
+			const message = errors[0]?.message ?? main_core.Loc.getMessage('MAIL_MAILBOX_PANEL_ACTION_ERROR');
+			this.grid.tableUnfade();
+			BX.UI.Notification.Center.notify({
+				content: message,
+				position: 'top-right',
+				autoHideDelay: 5000
+			});
+		}
+	}
+
+	class MassCrmConfigureAction extends BaseAction {
+		#mailboxIds = [];
+		#onSliderMessage = null;
+		#onSliderCloseComplete = null;
+		static getActionId() {
+			return 'configureCrm';
+		}
+		setActionParams(params) {
+			this.#mailboxIds = params.mailboxIds ?? [];
+		}
+		#getTopBX() {
+			return (window.top ?? window).BX ?? BX;
+		}
+		async execute() {
+			if (!this.#mailboxIds || this.#mailboxIds.length === 0) {
+				return;
+			}
+			const idsParam = this.#mailboxIds.join(',');
+			const url = `/mail/config/crm-mass?ids=${encodeURIComponent(idsParam)}`;
+			this.#subscribeToSliderMessage();
+			BX.SidePanel.Instance.open(url, {
+				width: 600,
+				cacheable: false,
+				allowChangeHistory: false
+			});
+		}
+		#subscribeToSliderMessage() {
+			this.#unsubscribeFromSliderMessage();
+			const topBX = this.#getTopBX();
+			const messageHandler = event => {
+				if (!event || typeof event.getEventId !== 'function') {
+					return;
+				}
+				if (event.getEventId() !== 'mail-mass-crm-config-apply') {
+					return;
+				}
+				const data = event.data ?? null;
+				const mailboxIds = data && Array.isArray(data.mailboxIds) ? data.mailboxIds : this.#mailboxIds;
+				const crmOptions = data && data.crmOptions ? data.crmOptions : null;
+				this.#unsubscribeFromSliderMessage();
+				this.#sendCrmRequest(mailboxIds, crmOptions);
+			};
+			const closeCompleteHandler = event => {
+				const slider = event?.getSlider?.();
+				if (slider && slider.getUrl && slider.getUrl().includes('/mail/config/crm-mass')) {
+					this.#unsubscribeFromSliderMessage();
+				}
+			};
+			this.#onSliderMessage = messageHandler;
+			this.#onSliderCloseComplete = closeCompleteHandler;
+			topBX.addCustomEvent('SidePanel.Slider:onMessage', messageHandler);
+			topBX.addCustomEvent('SidePanel.Slider:onCloseComplete', closeCompleteHandler);
+		}
+		#unsubscribeFromSliderMessage() {
+			const topBX = this.#getTopBX();
+			if (this.#onSliderMessage) {
+				topBX.removeCustomEvent('SidePanel.Slider:onMessage', this.#onSliderMessage);
+				this.#onSliderMessage = null;
+			}
+			if (this.#onSliderCloseComplete) {
+				topBX.removeCustomEvent('SidePanel.Slider:onCloseComplete', this.#onSliderCloseComplete);
+				this.#onSliderCloseComplete = null;
+			}
+		}
+		#sendCrmRequest(mailboxIds, crmOptions) {
+			this.grid.tableFade();
+			BX.ajax.runAction('mail.mailboxconnecting.massSetCrmIntegration', {
+				data: {
+					mailboxIds,
+					enabled: 'Y',
+					crmOptions
+				}
+			}).then(result => {
+				this.handleSuccess(result);
+			}).catch(result => {
+				this.handleError(result);
+			});
+		}
+		handleSuccess(result) {
+			this.grid.reload(() => {
+				this.grid.tableUnfade();
+			});
+			showActionReport(result?.data ?? {}, {
+				success: 'MAIL_MAILBOX_PANEL_CRM_CONFIGURE_SUCCESS',
+				applied: 'MAIL_MAILBOX_PANEL_CRM_CONFIGURE_REPORT_APPLIED',
+				skipped: 'MAIL_MAILBOX_PANEL_ACTION_REPORT_SKIPPED',
+				failed: 'MAIL_MAILBOX_PANEL_ACTION_REPORT_FAILED'
+			});
+		}
+		handleError(result) {
+			const errors = result?.errors ?? [];
+			const message = errors[0]?.message ?? main_core.Loc.getMessage('MAIL_MAILBOX_PANEL_ACTION_ERROR');
+			this.grid.tableUnfade();
+			BX.UI.Notification.Center.notify({
+				content: message,
+				position: 'top-right',
+				autoHideDelay: 5000
+			});
+		}
+	}
+
+	const actionMap = new Map([[SyncAction.getActionId(), SyncAction], [OpenSettingsAction.getActionId(), OpenSettingsAction], [RejectMailboxConnectionRequestAction.getActionId(), RejectMailboxConnectionRequestAction], [ConnectMailboxConnectionRequestAction.getActionId(), ConnectMailboxConnectionRequestAction], [MassDisconnectAction.getActionId(), MassDisconnectAction], [MassCrmEnableAction.getActionId(), MassCrmEnableAction], [MassCrmDisableAction.getActionId(), MassCrmDisableAction], [MassCalendarEnableAction.getActionId(), MassCalendarEnableAction], [MassCalendarDisableAction.getActionId(), MassCalendarDisableAction], [MassCrmConfigureAction.getActionId(), MassCrmConfigureAction]]);
 	class ActionFactory {
 		static create(actionId, options) {
 			const ActionClass = actionMap.get(actionId);
@@ -402,11 +806,186 @@ this.BX.Mail = this.BX.Mail || {};
 		}
 	}
 
+	const createdActionPanels = new Map();
+	const migrationRestrictedActions = new Set(['disconnectMailbox']);
+	function isMigrationRestrictedAction(actionId) {
+		return migrationRestrictedActions.has(actionId);
+	}
+	BX.addCustomEvent('BX.UI.ActionPanel:created', panel => {
+		const gridId = panel?.params?.gridId;
+		if (gridId) {
+			createdActionPanels.set(gridId, panel);
+		}
+	});
 	class GridManager {
 		static instances = [];
 		#grid;
-		constructor(gridId) {
-			this.#grid = BX.Main.gridManager.getById(gridId)?.instance;
+		#gridId;
+		#migrationStateFactory;
+		#migrationStateSubscriptions = new Map();
+		#actionPanel = null;
+		#panelObserver = null;
+		#migrationDisconnectWasDisabled = null;
+		#handleSelectedRows;
+		#handleGridUpdated;
+		#handleActionPanelCreated;
+		#handlePageHide;
+		constructor(gridId, migrationStateFactory = mail_migrationState.getMigrationState) {
+			this.#gridId = gridId;
+			this.#migrationStateFactory = migrationStateFactory;
+			this.#handleSelectedRows = () => this.#syncMigrationRestrictions();
+			this.#handleGridUpdated = grid => {
+				if (grid && grid !== this.getGrid()) {
+					return;
+				}
+				this.#syncMigrationStateSubscriptions();
+				this.#syncMigrationRestrictions();
+			};
+			this.#handleActionPanelCreated = panel => {
+				if (panel?.params?.gridId === this.#gridId) {
+					this.#setupActionPanel(panel);
+				}
+			};
+			this.#handlePageHide = () => this.destroy();
+			BX.addCustomEvent('Grid::thereSelectedRows', this.#handleSelectedRows);
+			BX.addCustomEvent('Grid::allRowsSelected', this.#handleSelectedRows);
+			BX.addCustomEvent('Grid::allRowsUnselected', this.#handleSelectedRows);
+			BX.addCustomEvent('Grid::updated', this.#handleGridUpdated);
+			main_core.Event.bind(window, 'pagehide', this.#handlePageHide, {
+				once: true
+			});
+			this.#syncMigrationStateSubscriptions();
+			const existingPanel = createdActionPanels.get(gridId);
+			if (existingPanel) {
+				this.#setupActionPanel(existingPanel);
+				return;
+			}
+			BX.addCustomEvent('BX.UI.ActionPanel:created', this.#handleActionPanelCreated);
+		}
+		destroy() {
+			this.#migrationStateSubscriptions.forEach(({
+				unsubscribe
+			}) => unsubscribe());
+			this.#migrationStateSubscriptions.clear();
+			this.#panelObserver?.disconnect();
+			this.#panelObserver = null;
+			BX.removeCustomEvent('Grid::thereSelectedRows', this.#handleSelectedRows);
+			BX.removeCustomEvent('Grid::allRowsSelected', this.#handleSelectedRows);
+			BX.removeCustomEvent('Grid::allRowsUnselected', this.#handleSelectedRows);
+			BX.removeCustomEvent('Grid::updated', this.#handleGridUpdated);
+			BX.removeCustomEvent('BX.UI.ActionPanel:created', this.#handleActionPanelCreated);
+			main_core.Event.unbind(window, 'pagehide', this.#handlePageHide);
+			delete GridManager.instances[this.#gridId];
+		}
+		#syncMigrationStateSubscriptions() {
+			const mailboxIds = new Set((this.getGrid()?.getRows().getBodyChild() ?? []).map(row => Number(row.getId())).filter(mailboxId => Number.isInteger(mailboxId) && mailboxId > 0));
+			this.#migrationStateSubscriptions.forEach(({
+				unsubscribe
+			}, mailboxId) => {
+				if (!mailboxIds.has(mailboxId)) {
+					unsubscribe();
+					this.#migrationStateSubscriptions.delete(mailboxId);
+				}
+			});
+			mailboxIds.forEach(mailboxId => {
+				if (this.#migrationStateSubscriptions.has(mailboxId)) {
+					return;
+				}
+				const state = this.#migrationStateFactory(mailboxId);
+				const unsubscribe = state.subscribe(({
+					active
+				}) => {
+					this.#applyMailboxMigrationState(mailboxId, active);
+				});
+				this.#migrationStateSubscriptions.set(mailboxId, {
+					state,
+					unsubscribe
+				});
+				void state.initialize().then(() => {
+					if (this.#migrationStateSubscriptions.get(mailboxId)?.state === state && state.isInitialized()) {
+						this.#applyMailboxMigrationState(mailboxId, state.isActive());
+					}
+				});
+			});
+		}
+		#applyMailboxMigrationState(mailboxId, active) {
+			const rowNode = this.getGrid()?.getRows().getById(mailboxId)?.getNode?.();
+			if (rowNode) {
+				rowNode.dataset.mailboxMigrationActive = active ? 'Y' : 'N';
+			}
+			this.#syncMigrationRestrictions();
+		}
+		#setupActionPanel(panel) {
+			if (this.#actionPanel) {
+				return;
+			}
+			this.#actionPanel = panel;
+
+			// On single-row selection ActionPanel rebuilds from that row's actions,
+			// which are UPPERCASE (not understood by ActionPanel.Item) and carry no
+			// mass actions; this grid must always show the group (mass) actions.
+			panel.buildPanelByItem = () => panel.buildPanelByGroup();
+
+			// A click outside the panel and grid must not reset the selection,
+			// same as the message list panel.
+			panel.handleOuterClick = () => {};
+			const container = panel.getPanelContainer();
+			container.dataset.testid = 'mail-mailbox-grid-bulk-panel';
+			this.#panelObserver = new MutationObserver(() => this.#applyPanelTestIds());
+			this.#panelObserver.observe(container, {
+				childList: true,
+				subtree: true
+			});
+			this.#applyPanelTestIds();
+			this.#syncMigrationRestrictions();
+		}
+		#syncMigrationRestrictions() {
+			const item = this.#actionPanel?.getItemById?.('disconnectMailbox');
+			if (!item) {
+				return;
+			}
+			if (this.#hasSelectedActiveMigration()) {
+				this.#migrationDisconnectWasDisabled ??= item.isDisabled();
+				item.disable();
+				item.layout?.container?.setAttribute('title', main_core.Loc.getMessage('MAIL_MAILBOX_LIST_MIGRATION_ACTION_UNAVAILABLE') ?? '');
+				return;
+			}
+			if (this.#migrationDisconnectWasDisabled !== null) {
+				if (this.#migrationDisconnectWasDisabled) {
+					item.disable();
+				} else {
+					item.enable();
+				}
+				this.#migrationDisconnectWasDisabled = null;
+				item.layout?.container?.removeAttribute('title');
+			}
+		}
+		#hasSelectedActiveMigration() {
+			const grid = this.getGrid();
+			const selectedIds = grid?.getRows().getSelectedIds() ?? [];
+			return selectedIds.some(id => this.#isMailboxMigrationActive(id));
+		}
+		#isMailboxMigrationActive(mailboxId) {
+			const row = this.getGrid()?.getRows().getById(mailboxId);
+			return row?.getNode?.()?.dataset?.mailboxMigrationActive === 'Y';
+		}
+		#notifyMigrationRestriction() {
+			BX.UI.Notification.Center.notify({
+				content: main_core.Loc.getMessage('MAIL_MAILBOX_LIST_MIGRATION_ACTION_UNAVAILABLE'),
+				position: 'top-right',
+				autoHideDelay: 3000
+			});
+		}
+		#applyPanelTestIds() {
+			if (!this.#actionPanel) {
+				return;
+			}
+			const items = this.#actionPanel.getPanelContainer().querySelectorAll('[data-role="action-panel-item"]');
+			items.forEach(item => {
+				if (item.id) {
+					item.dataset.testid = `mail-mailbox-grid-bulk-action-${item.id}`;
+				}
+			});
 		}
 		static getInstance(gridId) {
 			if (!this.instances[gridId]) {
@@ -414,13 +993,46 @@ this.BX.Mail = this.BX.Mail || {};
 			}
 			return this.instances[gridId];
 		}
+		static executePanelAction(params) {
+			const {
+				actionId,
+				gridId
+			} = params;
+			const manager = GridManager.getInstance(gridId);
+			const grid = manager.getGrid();
+			if (!grid) {
+				return;
+			}
+			const selectedIds = grid.getRows().getSelectedIds();
+			if (!selectedIds || selectedIds.length === 0) {
+				return;
+			}
+			const mailboxIds = selectedIds.map(Number);
+			if (isMigrationRestrictedAction(actionId) && mailboxIds.some(mailboxId => manager.#isMailboxMigrationActive(mailboxId))) {
+				manager.#notifyMigrationRestriction();
+				return;
+			}
+			const action = ActionFactory.create(actionId, {
+				grid
+			});
+			if (action) {
+				action.setActionParams({
+					mailboxIds
+				});
+				action.execute();
+			}
+		}
 		getGrid() {
-			return this.#grid;
+			return this.#grid ??= BX.Main.gridManager.getById(this.#gridId)?.instance;
 		}
 		runAction(config) {
 			const actionId = config.actionId;
+			if (actionId === 'syncAction' && this.#isMailboxMigrationActive(config.params.mailboxId)) {
+				this.#notifyMigrationRestriction();
+				return;
+			}
 			const options = config.options;
-			options.grid = this.#grid;
+			options.grid = this.getGrid();
 			const action = ActionFactory.create(actionId, options);
 			if (action) {
 				const params = config.params;
@@ -435,7 +1047,9 @@ this.BX.Mail = this.BX.Mail || {};
 			const lastSyncContainer = main_core.Tag.render`
 			<div class="mailbox-grid_last-sync-container mailbox-grid_single-line_field"></div>
 		`;
-			if (params.hasError) {
+			if (params.migrationActive) {
+				main_core.Dom.append(this.#getMigrationStatus(), lastSyncContainer);
+			} else if (params.hasError) {
 				main_core.Dom.append(this.#getErrorMessage(), lastSyncContainer);
 			} else {
 				if (params.lastSync) {
@@ -448,6 +1062,14 @@ this.BX.Mail = this.BX.Mail || {};
 				}
 			}
 			this.appendToFieldNode(lastSyncContainer);
+		}
+		#getMigrationStatus() {
+			return new ui_system_chip.Chip({
+				size: ui_system_chip.ChipSize.Sm,
+				rounded: true,
+				text: main_core.Loc.getMessage('MAIL_MAILBOX_LIST_MIGRATION_IN_PROGRESS') ?? '',
+				design: ui_system_chip.ChipDesign.OutlineWarning
+			}).render();
 		}
 		#getLastSyncContainer(lastSync) {
 			let formattedTime = lastSync;
@@ -1032,5 +1654,5 @@ this.BX.Mail = this.BX.Mail || {};
 	exports.MonthlySentCountField = MonthlySentCountField;
 	exports.SenderNameField = SenderNameField;
 
-})(this.BX.Mail.MailboxList = this.BX.Mail.MailboxList || {}, BX, BX.UI, BX.UI, BX.Main, BX, BX.UI.System.Chip, BX.Main, BX, BX, BX.UI.Analytics, BX.UI);
+})(this.BX.Mail.MailboxList = this.BX.Mail.MailboxList || {}, BX, BX.UI, BX.UI, BX.Main, BX.Mail, BX.UI.Notification, BX.UI.Dialogs, BX.UI.System.Chip, BX.Main, BX, BX, BX.UI.Analytics, BX.UI);
 //# sourceMappingURL=grid.bundle.js.map

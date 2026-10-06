@@ -62,4 +62,7 @@ $arActivityDescription = [
 		],
 		'SORT' => 3100,
 	],
+	'NODE_ACTION_SETTINGS' => [
+		'CREATES_DOCUMENT' => true,
+	],
 ];

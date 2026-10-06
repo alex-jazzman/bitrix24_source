@@ -154,6 +154,13 @@ jn.define('tasks/dashboard/src/more-menu', (require, exports, module) => {
 					sectionCode: 'sorting',
 				}),
 				this.createMenuItem({
+					id: 'sortByName',
+					title: Loc.getMessage('TASKSMOBILE_TASK_VIEW_ROUTER_MORE_MENU_SORT_NAME'),
+					icon: orderIcon,
+					showIcon: this.selectedSorting === 'NAME',
+					sectionCode: 'sorting',
+				}),
+				this.createMenuItem({
 					id: 'readAll',
 					title: Loc.getMessage('TASKSMOBILE_TASK_VIEW_ROUTER_MORE_MENU_READ_ALL'),
 					icon: Icon.CHATS_WITH_CHECK,
@@ -255,6 +262,10 @@ jn.define('tasks/dashboard/src/more-menu', (require, exports, module) => {
 
 				case 'sortByDeadline':
 					this.onSortingClick(TasksDashboardSorting.types.DEADLINE);
+					break;
+
+				case 'sortByName':
+					this.onSortingClick(TasksDashboardSorting.types.NAME);
 					break;
 
 				case 'readAll':

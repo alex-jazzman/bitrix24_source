@@ -98,6 +98,14 @@ jn.define('im/messenger/lib/element/recent/item/openline', (require, exports, mo
 		}
 
 		/**
+		 * @return {Array<RecentWidgetItemAction>}
+		 */
+		createContextMenuActions()
+		{
+			return this.actions;
+		}
+
+		/**
 		 * @return RecentItem
 		 */
 		createSubtitle()

@@ -87,7 +87,7 @@ if ($test_http_response_time)
 
 	if ($result[0] > 0 && $result[1] > 0)
 	{
-		$resultText = round($result[0] / $result[1] * 100, 2) . '%';
+		$resultText = round(intval($result[0]) / intval($result[1]) * 100, 2) . '%';
 	}
 	else
 	{
@@ -98,7 +98,7 @@ if ($test_http_response_time)
 
 	if ($result[1] > 0)
 	{
-		$failTime = ($result[1] - $result[0]);
+		$failTime = intval($result[1]) - intval($result[0]);
 
 		if ($failTime > 0)
 		{
@@ -123,7 +123,7 @@ if ($test_http_response_time)
 			'i' => 'idiff',
 			'H' => 'Hdiff',
 			'-' => 'ddiff',
-		], time() - $result[1]);
+		], time() - intval($result[1]));
 
 		$arData['MONITORING_PERIOD']['DATA'] = $resultText;
 	}

@@ -226,7 +226,10 @@ jn.define('disk/simple-list/items/file-redux/action-menu', (require, exports, mo
 									: Loc.getMessage('M_DISK_FILE_ACTIONS_REMOVE_FILE_CONFIRM_DESCRIPTION'),
 								destructionText: Loc.getMessage('M_DISK_FILE_ACTIONS_REMOVE_CONFIRM_ACCEPT'),
 								onDestruct: () => {
-									removeObject(this.objectId);
+									removeObject(this.objectId, {
+										relativeFolderId: this.relativeFolderId,
+										parentWidget: this.parentWidget,
+									});
 								},
 							});
 						},

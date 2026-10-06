@@ -6,6 +6,7 @@ return [
 		'animation',
 		'assets/icons',
 		'assets/icons/types',
+		'bbcode-source-format',
 		'bbcode/formatter/plain-text-formatter',
 		'haptics',
 		'in-app-url',

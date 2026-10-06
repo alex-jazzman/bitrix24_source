@@ -1,4 +1,8 @@
-<?if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
+<?php
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
+
+use Bitrix\Main\Web\Uri;
 
 if (!CModule::IncludeModule('crm'))
 {
@@ -165,22 +169,16 @@ foreach($allTaxies as $k => $v)
 		);
 
 	$tax['PATH_TO_TAX_SHOW_RATES'] =
-		CHTTP::urlAddParams(
-			$tax['PATH_TO_TAX_EDIT'],
-			array(
+		(string)(new Uri($tax['PATH_TO_TAX_EDIT']))->addParams(array(
 				"FORM_ID" => $arResult['EDIT_FORM_ID'],
 				$arResult['EDIT_FORM_ID']."_active_tab" => 'tab_rateslist'
-				)
-		);
+				));
 
 	$tax['PATH_TO_TAX_DELETE'] =
-		CHTTP::urlAddParams(
-			CComponentEngine::MakePathFromTemplate(
+		(string)(new Uri(CComponentEngine::MakePathFromTemplate(
 				$arParams['PATH_TO_TAX_LIST'],
 				array('tax_id' => $k)
-			),
-			array('action_'.$arResult['GRID_ID'] => 'delete', 'ID' => $k, 'sessid' => bitrix_sessid())
-		);
+			)))->addParams(array('action_'.$arResult['GRID_ID'] => 'delete', 'ID' => $k, 'sessid' => bitrix_sessid()));
 
 	$rateNum = 0;
 	$dbRes = CSaleTaxRate::GetList(array(), array("TAX_ID" => $tax['ID']));

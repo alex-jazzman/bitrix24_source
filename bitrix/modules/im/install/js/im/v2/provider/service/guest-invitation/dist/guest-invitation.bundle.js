@@ -35,9 +35,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			return im_v2_lib_rest.runAction(im_v2_const.RestMethod.imV2GuestLinkRegenerate, payload).then(({
 				sharingLink
 			}) => {
-				return im_v2_application_core.Core.getStore().dispatch('sidebar/sharedLink/regenerate', {
+				void im_v2_application_core.Core.getStore().dispatch('sidebar/sharedLink/regenerate', {
 					newLink: sharingLink
 				});
+				return sharingLink;
 			}).catch(([error]) => {
 				console.error('GuestInvitationService: regenerate invite link error', error);
 				throw error;

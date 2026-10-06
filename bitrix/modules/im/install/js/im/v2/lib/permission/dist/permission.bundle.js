@@ -40,6 +40,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			im_v2_lib_logger.Logger.warn('PermissionManager: permission from server', permissions);
 			this.#init(permissions);
 		}
+		canManageUsersAdd(dialogId) {
+			const canPerformActionByRole = this.canPerformActionByRole(im_v2_const.ActionByRole.extend, dialogId);
+			const canPerformActionByUserType = this.canPerformActionByUserType(im_v2_const.ActionByUserType.extend);
+			return canPerformActionByRole && canPerformActionByUserType;
+		}
 		canPerformActionByRole(actionType, dialogId) {
 			return this.#canPerformActionByRole(actionType, dialogId) && this.#canPerformActionByChatType(actionType, dialogId) && this.#canPerformActionByChatSettings(actionType, dialogId);
 		}

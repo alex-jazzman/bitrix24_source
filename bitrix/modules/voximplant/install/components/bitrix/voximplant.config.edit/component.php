@@ -162,6 +162,20 @@ if ($request->isPost() && check_bitrix_sessid())
 	$post['IVR'] ??= null;
 	$post['DIRECT_CODE'] ??= null;
 	$post['DIRECT_CODE_RULE'] ??= null;
+	$post['DTMF_TYPE'] ??= null;
+	$post['CHANGE_DTMF_TYPE'] ??= null;
+	if (
+		!CVoxImplantConfig::isDtmfTypeEnabled()
+		|| $post['CHANGE_DTMF_TYPE'] !== 'Y'
+		|| !in_array($post['DTMF_TYPE'], [
+			CVoxImplantConfig::DTMF_TYPE_INBAND,
+			CVoxImplantConfig::DTMF_TYPE_RFC2833,
+			CVoxImplantConfig::DTMF_TYPE_SIP_INFO,
+		], true)
+	)
+	{
+		$post['DTMF_TYPE'] = CVoxImplantConfig::DTMF_TYPE_ALL;
+	}
 	$post['CRM'] ??= null;
 	$post['CRM_RULE'] ??= null;
 	$post['CRM_CREATE'] ??= null;
@@ -372,6 +386,7 @@ if ($request->isPost() && check_bitrix_sessid())
 	$arFields = Array(
 		"DIRECT_CODE" => $post["DIRECT_CODE"] == "Y" ? "Y" : "N",
 		"DIRECT_CODE_RULE" => $post["DIRECT_CODE_RULE"],
+		"DTMF_TYPE" => $post["DTMF_TYPE"],
 		"CRM" => $post["CRM"] == "Y" ? "Y" : "N",
 		"CRM_RULE" => $post["CRM_RULE"],
 		"CRM_CREATE" => $post["CRM_CREATE"],
@@ -484,13 +499,10 @@ $arResult["ITEM"]["MELODY_LANG"] = (empty($arResult["ITEM"]["MELODY_LANG"])? mb_
 $arResult["ITEM"]["MELODY_LANG"] = (in_array($arResult["ITEM"]["MELODY_LANG"], CVoxImplantConfig::GetMelodyLanguages()) ? $arResult["ITEM"]["MELODY_LANG"] : "EN");
 $arResult["DEFAULT_MELODIES"] = CVoxImplantConfig::getDefaultMelodies(false);
 
-if (IsModuleInstalled('bitrix24'))
+$arResult['LINK_TO_DOC'] = 'https://helpdesk.bitrix24.com/open/code_19420080/';
+if (\Bitrix\Main\Loader::includeModule('ui'))
 {
-	$arResult['LINK_TO_DOC'] = (in_array(LANGUAGE_ID, Array("ru", "kz", "ua", "by")) ? 'https://dev.1c-bitrix.ru/learning/course/index.php?COURSE_ID=52&CHAPTER_ID=02564' : 'https://www.bitrixsoft.com/support/training/course/index.php?COURSE_ID=55&LESSON_ID=6635');
-}
-else
-{
-	$arResult['LINK_TO_DOC'] = (in_array(LANGUAGE_ID, Array("ru", "kz", "ua", "by")) ? 'https://dev.1c-bitrix.ru/learning/course/index.php?COURSE_ID=48&CHAPTER_ID=02699' : 'https://www.bitrixsoft.com/support/training/course/index.php?COURSE_ID=26&LESSON_ID=6734');
+	$arResult['LINK_TO_DOC'] = \Bitrix\UI\Util::getArticleUrlByCode('19420080');
 }
 
 //for work time block

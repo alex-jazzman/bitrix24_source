@@ -7,6 +7,7 @@ jn.define('bizproc/workflow/starter/parameters-step', (require, exports, module)
 	const { NotifyManager } = require('notify-manager');
 	const { WizardStep } = require('layout/ui/wizard/step');
 	const { FocusManager } = require('layout/ui/fields/focus-manager');
+	const { handleNetworkError } = require('bizproc/helper/network-error');
 	const { ProgressBarNumber } = require('bizproc/wizard/progress-bar-number');
 	const { ParametersStepComponent } = require('bizproc/workflow/starter/parameters-step/component');
 	const { Random } = require('utils/random');
@@ -184,7 +185,9 @@ jn.define('bizproc/workflow/starter/parameters-step', (require, exports, module)
 					.catch((errors) => {
 						NotifyManager.hideLoadingIndicator(false);
 						console.error(errors);
-						if (Array.isArray(errors))
+
+						const isNetworkErrorHandled = handleNetworkError(errors, this.getLayoutWidget());
+						if (!isNetworkErrorHandled && Array.isArray(errors))
 						{
 							NotifyManager.showErrors(errors);
 						}
@@ -218,6 +221,8 @@ jn.define('bizproc/workflow/starter/parameters-step', (require, exports, module)
 		{
 			return new ParametersStepComponent({
 				layout: this.props.layout,
+				// the wizard renders this step in its own widget, while `layout` is the wizard root one
+				layoutWidget: this.getLayoutWidget(),
 				uid: this.uid,
 				templateId: this.templateId,
 				signedDocument: this.props.signedDocument,

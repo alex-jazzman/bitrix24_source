@@ -1,4 +1,7 @@
 <?
+
+use Bitrix\Main\Web\Uri;
+
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 	die();
 
@@ -29,7 +32,7 @@ if(!empty($arParams["FILTER"])):
 endif;?>
 
 <?if($arParams["SHOW_FORM_TAG"]):?>
-<form name="form_<?=$arParams["GRID_ID"]?>" action="<?=htmlspecialcharsbx(CHTTP::urlDeleteParams(htmlspecialcharsback(POST_FORM_ACTION_URI), array('bxajaxid')))?>" target="_self" method="POST">
+<form name="form_<?=$arParams["GRID_ID"]?>" action="<?=htmlspecialcharsbx((string)(new Uri(htmlspecialcharsback(POST_FORM_ACTION_URI)))->deleteParams(['bxajaxid']))?>" target="_self" method="POST">
 <?=bitrix_sessid_post();?>
 <?endif?>
 <div class="bx-crm-interface-list">

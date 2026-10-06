@@ -224,7 +224,7 @@ jn.define('ui-system/blocks/avatar-stack', (require, exports, module) => {
 		{
 			const { offset } = this.props;
 
-			return offset || 5;
+			return offset ?? 5;
 		}
 
 		getOutline()
@@ -292,7 +292,7 @@ jn.define('ui-system/blocks/avatar-stack', (require, exports, module) => {
 			]),
 		).isRequired,
 		style: PropTypes.object,
-		offset: PropTypes.instanceOf(Indent),
+		offset: PropTypes.oneOfType([PropTypes.number, PropTypes.instanceOf(Indent)]),
 		outline: PropTypes.instanceOf(Indent),
 		direction: PropTypes.instanceOf(ElementsStackDirection),
 		restView: PropTypes.func,

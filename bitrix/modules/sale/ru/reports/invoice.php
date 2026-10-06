@@ -263,7 +263,7 @@ $currency = preg_replace('/(^|[^&])#/', '${1}', $arCurFormat['FORMAT_STRING']);
 					<?echo $n++ ?>
 				</td>
 				<td bgcolor="#ffffff" style="border: 1pt solid #000000; border-right:none; border-top:none;">
-					<?echo $arBasket["NAME"]; ?>
+					<?echo htmlspecialcharsbx($arBasket["NAME"]); ?>
 					<?
 					if (is_array($arBasket["PROPS"]) && $_GET["PROPS_ENABLE"] == "Y")
 					{

@@ -5,3 +5,4 @@ $MESS['M_DISK_MOVE_FILE_TOAST_MESSAGE'] = 'Файл теперь в «#FOLDER#»
 $MESS['M_DISK_MOVE_FOLDER_TOAST_MESSAGE'] = 'Папка теперь в «#FOLDER#»';
 $MESS['M_DISK_MOVE_ACCESS_DENIED_TOAST_MESSAGE'] = 'Недостаточно прав для перемещения в «#FOLDER#»';
 $MESS['M_DISK_MOVE_MY_STORAGE_NAME'] = 'Мои файлы';
+$MESS['M_DISK_MOVE_FOLDER_TO_ITSELF_TOAST_MESSAGE'] = 'Нельзя переместить в эту же папку';

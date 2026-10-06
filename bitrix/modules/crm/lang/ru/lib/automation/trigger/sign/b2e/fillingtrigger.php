@@ -4,3 +4,4 @@ $MESS['CRM_AUTOMATION_TRIGGER_B2E_FILLING_DESCRIPTION'] = 'Меняет стад
 
 $MESS['CRM_AUTOMATION_TRIGGER_B2E_FILLING_NODE_NAME'] = 'Отследить заполнение документа в КЭДО';
 $MESS['CRM_AUTOMATION_TRIGGER_B2E_FILLING_NODE_DESCRIPTION'] = 'Запускает процесс после того, как началось заполнение документа';
+$MESS['CRM_AUTOMATION_TRIGGER_B2E_FILLING_EVENT_DATE_TIME'] = 'Дата и время заполнения документа';

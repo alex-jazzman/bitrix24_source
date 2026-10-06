@@ -1,6 +1,6 @@
 import { Type, Extension } from 'main.core';
 import { lpad, getDateForLog, getTimeForLog, getLogMessage, logToString, isConsoleLogsEnabled, setConsoleLogsEnabled } from './log-helpers';
-import { CallScheme, Provider, RoomType } from './engine/types';
+import { CallScheme, CallState, Provider, RoomType } from './engine/types';
 import {
 	ClientPlatform,
 	ClientVersion,
@@ -11,6 +11,8 @@ import { JoinResponseError } from './sdk/errors';
 import { CallTokenManager } from 'call.lib.call-token-manager';
 import { CallSettingsManager } from 'call.lib.settings-manager';
 import { stuckCallFinishTracker } from 'call.lib.stuck-call-finish-tracker';
+import { EventEmitter } from 'main.core.events';
+import { isRoomClosedJoinError } from './utils/is-room-closed-join-error';
 
 import { Event } from 'main.core';
 
@@ -23,6 +25,8 @@ const MediaKind = {
 import { CallCommonRecordState } from './call_common_record';
 
 const blankAvatar = '/bitrix/js/im/images/blank.gif';
+
+export const CALL_ALREADY_FINISHED_EVENT = 'BX.Call.Engine:callAlreadyFinished';
 
 let userData = {}
 let usersInProcess = {}
@@ -712,7 +716,7 @@ function getConferenceProvider(): string{
 	return Provider.Plain;
 }
 
-const getRoomType = (provider: string, chatId?: number): RoomType => {
+const getRoomType = (chatId?: number): RoomType => {
 	if (isLargeCallEnabled())
 	{
 		return RoomType.Large;
@@ -743,13 +747,33 @@ function registerEngine(engine, isPrimary = false)
 	}
 }
 
+/**
+ * Returns the first call; use for testing purposes only.
+ * @returns The call that matches the provider, or null if no call is found.
+ */
+function getCurrentCall()
+{
+	for (const engine of _engines)
+	{
+		for (const callId in engine.calls)
+		{
+			if (engine.calls[callId].state === CallState.Connected)
+			{
+				return engine.calls[callId];
+			}
+		}
+	}
+
+	return null;
+}
+
 function getCurrentBitrixCall()
 {
 	for (const engine of _engines)
 	{
 		for (const callId in engine.calls)
 		{
-			if (engine.calls[callId].BitrixCall)
+			if (engine.calls[callId].provider === Provider.Bitrix)
 			{
 				return engine.calls[callId];
 			}
@@ -1011,7 +1035,7 @@ const isConferenceChatEnabled = () =>
  */
 function getCallConnectionErrorCode(error)
 {
-	let errorCode = 'UNKNOWN_ERROR';
+	let errorCode = 'CLIENT_UNCLASSIFIED';
 	if (Type.isString(error) && error)
 	{
 		errorCode = error;
@@ -1025,7 +1049,9 @@ function getCallConnectionErrorCode(error)
 		errorCode = error.code === 'access_denied' ? 'ACCESS_DENIED' : error.code;
 	}
 
-	return errorCode;
+	// Whitespace in a server code is percent-encoded on the way to analytics and splits
+	// one status into several ('internal error' -> error_internal error / error_internalpct20error).
+	return Type.isString(errorCode) ? errorCode.replaceAll(/\s+/g, '_') : errorCode;
 }
 
 /**
@@ -1048,6 +1074,20 @@ const getCallConnectionData = async (callOptions, chatId, mustCreate = true) => 
 	if (!Type.isPlainObject(callOptions))
 	{
 		return Promise.reject(new Error('Incorrect type of callOptions'));
+	}
+
+	if (
+		mustCreate === false
+		&& callOptions.callUuid
+		&& stuckCallFinishTracker.isRecentlyClosed(callOptions.callUuid)
+	)
+	{
+		EventEmitter.emit(CALL_ALREADY_FINISHED_EVENT, { callUuid: callOptions.callUuid });
+
+		const recentlyClosedError = new JoinResponseError('room recently closed', JoinRequestFailedCodes.CanNotCreateRoom);
+		recentlyClosedError.isRoomClosed = true;
+
+		return Promise.reject(recentlyClosedError);
 	}
 
 	return new Promise(async (resolve, reject) =>
@@ -1153,6 +1193,9 @@ const getCallConnectionData = async (callOptions, chatId, mustCreate = true) => 
 					{
 						if (response?.error)
 						{
+							const errorCode = response.error?.code;
+							const joinError = new JoinResponseError(response.error?.message, errorCode);
+
 							// Stuck call on join (mustCreate=false): the media room is gone,
 							// finish the DB record silently so it disappears from recent.
 							// On mustCreate=true the same codes mean "can not create" — skip.
@@ -1161,25 +1204,26 @@ const getCallConnectionData = async (callOptions, chatId, mustCreate = true) => 
 							// path when the backend already closed the call) can cancel
 							// it before it hits the server. Engine pull handlers call
 							// stuckCallFinishTracker.cancelPending(id, uuid) on arrival.
-							const errorCode = response.error?.code;
-							if (
-								mustCreate === false
-								&& callOptions.callUuid
-								&& (
-									errorCode === JoinRequestFailedCodes.RoomNotFound
-									|| errorCode === JoinRequestFailedCodes.CanNotCreateRoom
-								)
-							)
+							if (isRoomClosedJoinError({
+								mustCreate,
+								callUuid: callOptions.callUuid,
+								errorCode,
+							}))
 							{
+								stuckCallFinishTracker.markClosed(callOptions.callUuid);
 								stuckCallFinishTracker.scheduleFinish(null, callOptions.callUuid, () => BX.ajax.runAction('call.CallManager.finish', {
 									data: {
 										callUuid: callOptions.callUuid,
 										silent: true,
 									},
 								}));
+								EventEmitter.emit(CALL_ALREADY_FINISHED_EVENT, { callUuid: callOptions.callUuid });
+								// The event above and this error travel different paths, so the outcome rides
+								// on the error itself: the analytics send point reads it, not the event.
+								joinError.isRoomClosed = true;
 							}
 
-							throw new JoinResponseError(response?.error?.message, response?.error?.code);
+							throw joinError;
 						}
 						else
 						{
@@ -1235,7 +1279,7 @@ const getCallConnectionDataById = async (callUuid) => {
 	{
 		const call = await _primaryEngine.getCallWithId(callUuid);
 		const chatId = call.call.associatedEntity.chatId;
-		const roomType = getRoomType(call.call.provider, chatId);
+		const roomType = getRoomType(chatId);
 
 		return getCallConnectionData({
 			roomType,
@@ -1298,6 +1342,11 @@ const canUseNewCallApi = (roomType) => {
 	return roomType === RoomType.Large
 		|| (isLargeCallEnabled() && roomType !== RoomType.Small);
 };
+
+const getSyncCallInvitePeriod = () =>
+{
+	return Extension.getSettings('call.core')?.call?.syncCallInvitePeriod;
+}
 
 const getCloudRecordSettings = () => {
 	return Extension.getSettings('call.core')?.cloudRecord || {}
@@ -1548,6 +1597,7 @@ export default {
 	stopMediaStreamAudioTracks,
 	getConferenceProvider,
 	getRoomType,
+	getCurrentCall,
 	getCurrentBitrixCall,
 	registerEngine,
 	setCodecToReport,
@@ -1574,6 +1624,7 @@ export default {
 	getAiSettings,
 	isLargeCallEnabled,
 	canUseNewCallApi,
+	getSyncCallInvitePeriod,
 	isStreamQualityFeatureEnabled,
 	getCloudRecordSettings,
 	isUserControlFeatureEnabled,

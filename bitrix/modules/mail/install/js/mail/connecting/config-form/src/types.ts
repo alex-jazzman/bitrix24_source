@@ -6,6 +6,8 @@ export type GeneralErrorItem = {
 	message: string;
 	customData: unknown | null;
 	expanded: boolean;
+	// Address reported as already connected on the portal; empty for every other error.
+	occupiedEmail: string;
 };
 
 export type FormErrors = {
@@ -73,7 +75,9 @@ export type ConnectionState = {
 	isOAuth: boolean;
 	oauthUid: string | null;
 	oauthUser: OauthUser | null;
-	userPrincipalName: string;
+	// Null while the profile of the OAuth account is unresolved: the form knows no value and must
+	// not state one. A string, empty included, is what the provider or the user said.
+	userPrincipalName: string | null;
 	oauthEmailNeedsConfirmation: boolean;
 	oauthEmailCheckStatus: OauthEmailCheckStatus;
 };
@@ -169,6 +173,7 @@ export type PermissionsInput = {
 	canEditCrm: boolean;
 	canEditAccess: boolean;
 	canChangeOwner: boolean;
+	canViewMailboxList: boolean;
 	isSmtpAvailable: boolean;
 	isCrmAvailable: boolean;
 	isCalendarAvailable: boolean;
@@ -204,6 +209,7 @@ export type FormState = {
 	mailboxId: number | null;
 	connectionRequestId: number | null;
 	lastMailCheck: LastMailCheck | null;
+	providerRestriction: string | null;
 	settingsConfig: RawSettingsConfig;
 	settingsOptions: SettingsOptions;
 	connection: ConnectionState;
@@ -215,6 +221,7 @@ export type FormState = {
 	service: ServiceState | null;
 	paths: InitialDataPaths;
 	changedDirs: boolean;
+	migrationActive: boolean;
 	permissions: PermissionsState;
 	loading: boolean;
 	isDataReady: boolean;

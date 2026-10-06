@@ -97,7 +97,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				:name="ICON_NAME"
 				:aria-hidden="true"
 			/>
-			<span
+			<span 
 				v-if="shouldShowCounter"
 				class="bx-im-list-container-vibe-code-catalog-button__counter"
 				:class="{'--overflowed': isCounterValueOverflowed}"

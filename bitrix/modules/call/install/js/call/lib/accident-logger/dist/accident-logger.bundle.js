@@ -354,8 +354,8 @@ this.BX.Call = this.BX.Call || {};
 		scanLimit;
 		openDBRetryTimeout;
 		constructor(maxAgeSecs) {
-			this.dbName = 'bx_call_accidentLogDB';
-			this.storeName = 'bx_call_accidentLogs';
+			this.dbName = call_lib_settingsManager.AccidentLogStorageKeys.dbName;
+			this.storeName = call_lib_settingsManager.AccidentLogStorageKeys.storeName;
 			this.getDBOpeningDelay = retryCount => 100 * (retryCount + 1) ** 2;
 			this.maxDBOpeningRetryCount = 5;
 			this.batchSize = 49;
@@ -739,45 +739,6 @@ this.BX.Call = this.BX.Call || {};
 		}
 	}
 
-	function getUnknownErrorType(errorMsg) {
-		const ERROR_PATTERNS = {
-			NULL_PROPERTY_READING: ['Cannot read properties of null', /Cannot read property.*of null/i],
-			UNDEFINED_PROPERTY_READING: 'Cannot read properties of undefined',
-			EMPTY_CALLTOKEN: 'Empty callToken',
-			UNKNOWN_JS_FUNCTION: 'BX JS Extension: Unknown JS function!',
-			NOT_FUNCTION: 'is not a function',
-			NULL_NOT_OBJECT: 'null is not an object',
-			UNDEFINED_NOT_OBJECT: 'undefined is not an object',
-			NULL_PROPERTY_ACCESS: /can't access property.*is null/i,
-			UNDEFINED_PROPERTY_ACCESS: /can't access property.*is undefined/i,
-			CALL_NOT_FOUND: 'Call not found',
-			IS_NULL: 'is null',
-			IS_UNDEFINED: 'is undefined',
-			NOT_CONSTRUCTOR: 'is not a constructor'
-		};
-		function matchesPattern(msg, pattern) {
-			if (!main_core.Type.isString(msg)) {
-				return false;
-			}
-			if (main_core.Type.isString(pattern)) {
-				return msg.includes(pattern);
-			}
-			if (pattern instanceof RegExp) {
-				return pattern.test(msg);
-			}
-			if (Array.isArray(pattern)) {
-				return pattern.some(item => matchesPattern(msg, item));
-			}
-			return false;
-		}
-		for (const [errorType, pattern] of Object.entries(ERROR_PATTERNS)) {
-			if (matchesPattern(errorMsg, pattern)) {
-				return errorType;
-			}
-		}
-		return 'UNKNOWN_ERROR';
-	}
-
 	const sendIntervalSecs = call_lib_settingsManager.CallSettingsManager.accidentLogSendIntervalSecs || 0;
 	const maxStorageAgeSecs = call_lib_settingsManager.CallSettingsManager.accidentLogGroupMaxAgeSecs || 0;
 	const userId = main_core.Loc.getMessage('USER_ID');
@@ -787,7 +748,6 @@ this.BX.Call = this.BX.Call || {};
 	window.accidentLogger = accidentLogger;
 
 	exports.accidentLogger = accidentLogger;
-	exports.getUnknownErrorType = getUnknownErrorType;
 
 })(this.BX.Call.Lib = this.BX.Call.Lib || {}, BX, BX.Call.Lib);
 //# sourceMappingURL=accident-logger.bundle.js.map

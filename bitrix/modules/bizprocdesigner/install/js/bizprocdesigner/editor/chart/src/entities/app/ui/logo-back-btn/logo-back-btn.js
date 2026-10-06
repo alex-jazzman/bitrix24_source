@@ -1,7 +1,7 @@
 import { Button as UiButton, AirButtonStyle } from 'ui.vue3.components.button';
 import { Outline } from 'ui.icon-set.api.core';
 
-const DEFAULT_BACK_URL = '/bizproc/templateprocesses/';
+import { TEMPLATE_LIST_URL } from '../../../../shared/utils/url';
 
 // @vue/component
 export const LogoBackBtn = {
@@ -12,7 +12,7 @@ export const LogoBackBtn = {
 	props: {
 		backUrl: {
 			type: String,
-			default: DEFAULT_BACK_URL,
+			default: TEMPLATE_LIST_URL,
 		},
 	},
 	setup(): Object

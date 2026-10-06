@@ -4,6 +4,7 @@ import { PopupManager } from 'main.popup';
 
 import { PullStatus } from 'pull.vue3.status';
 
+import { Core } from 'im.v2.application.core';
 import { GuestNamePopup } from 'im.v2.component.elements.guest-name-popup';
 import { ForwardPopup } from 'im.v2.component.entity-selector';
 import { MessageList } from 'im.v2.component.message-list';
@@ -137,6 +138,10 @@ export const ChatDialog = {
 		isGuest(): boolean
 		{
 			return this.dialog.role === UserRole.guest;
+		},
+		isCurrentUserGuest(): boolean
+		{
+			return this.$store.getters['users/isGuest'](Core.getUserId());
 		},
 		debouncedScrollHandler(): Function
 		{
@@ -468,6 +473,7 @@ export const ChatDialog = {
 			});
 
 			this.sendInitEvents();
+			this.sendGuestIdentifiedEvent();
 		},
 		async onScrollTriggerUp()
 		{
@@ -895,6 +901,18 @@ export const ChatDialog = {
 
 			EventEmitter.emit(EventType.dialog.onDialogInited, payload);
 			this.getEmitter().emit(EventType.dialog.onDialogInited, payload);
+		},
+		sendGuestIdentifiedEvent()
+		{
+			// The first-visit case is signalled by the guest-name popup itself
+			// via EventType.guest.onAfterGuestNamePopupClose; here we only handle
+			// an already identified guest, for whom the popup will not be shown.
+			if (!this.isCurrentUserGuest || GuestManager.getInstance().getGuestNamePopupState())
+			{
+				return;
+			}
+
+			EventEmitter.emit(EventType.guest.onInitialChatOpen, { dialogId: this.dialogId });
 		},
 		subscribeToEvents()
 		{

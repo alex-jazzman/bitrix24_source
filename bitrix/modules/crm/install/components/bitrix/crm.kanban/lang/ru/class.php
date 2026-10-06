@@ -52,3 +52,6 @@ $MESS['CRM_KANBAN_CONTACT'] = 'Контакт';
 $MESS['CRM_KANBAN_NOT_SUPPORTED'] = 'Тип сущности не поддерживает отображение в канбане';
 $MESS['CRM_KANBAN_AUTOMATED_SOLUTION_STUB_TITLE'] = 'Здесь будет ваш рабочий процесс';
 $MESS['CRM_KANBAN_AUTOMATED_SOLUTION_STUB_DESCRIPTION'] = 'Создайте первую карточку, чтобы начать работу';
+$MESS['CRM_KANBAN_MODE_NOT_AVAILABLE'] = 'Режим просмотра Дела отключён администратором вашего Битрикс24';
+$MESS['CRM_ACCESS_NOTIFY_MESSAGE_SUBJECT'] = '#AUTHOR# просит <a href="#URL#">настроить стадии</a> для работы в канбане CRM';
+$MESS['CRM_ACCESS_NOTIFY_MESSAGE_PLAIN_TEXT'] = 'Настройте стадии или делегируйте это другому сотруднику';

@@ -134,160 +134,196 @@ BX.Disk.InformationPopups = (function ()
 			})).show();
 		},
 		openWindowForSelectDocumentService: function (params) {
-			var viewInUf = params.viewInUf || false;
-			var currentSelection = BX.Disk.getDocumentService();
-			var newSelectedService = '';
-			var defaultOnSave = function (service) {
-				if (service === 'l' && !BX.Disk.Document.Local.Instance.isEnabled())
+			BX.Runtime.loadExtension('ui.dialogs.messagebox').then(function () {
+				var viewInUf = params.viewInUf || false;
+				var currentSelection = BX.Disk.getDocumentService();
+				var newSelectedService = '';
+
+				var currentServiceIsCloud = false;
+				if (currentSelection !== 'l' && currentSelection !== 'onlyoffice' && currentSelection)
 				{
-					this.getHelpDialogToUseLocalService().show();
-					return;
+					currentServiceIsCloud = true;
+				}
+				if (!currentSelection && BX.Disk.isAvailableOnlyOffice())
+				{
+					currentSelection = 'onlyoffice';
+				}
+				else if(!currentSelection)
+				{
+					currentSelection = 'l';
+				}
+				newSelectedService = currentSelection;
+
+				var suffix = viewInUf? '' : '2';
+				var lang = BX.message('LANGUAGE_ID');
+				var imageSrc = '/bitrix/images/disk/disk_description' + suffix + '_en.png';
+				if(lang == 'kz')
+					lang = 'ru';
+				switch(lang)
+				{
+					case 'ru':
+					case 'en':
+					case 'de':
+					case 'ua':
+					case 'br':
+					case 'la':
+					case 'sc':
+					case 'tc':
+						imageSrc = '/bitrix/images/disk/disk_description' + suffix + '_' + lang + '.png';
+						break;
 				}
 
-				BX.Disk.saveDocumentService(service);
-				BX.PopupWindowManager.getCurrentPopup().destroy();
-			}.bind(this);
-
-			var buttons = [
-				new BX.PopupWindowButton({
-					text: BX.message('DISK_JS_BTN_SAVE'),
-					className: "popup-window-button-accept",
-					events: {
-						click: function (e) {
-							defaultOnSave(newSelectedService);
-							if(BX.type.isFunction(params.onSave))
-							{
-								params.onSave(newSelectedService)
-							}
-
-							e.preventDefault();
-						}
-					}
-				}),
-				new BX.PopupWindowButton({
-					text: BX.message('DISK_JS_BTN_CLOSE'),
-					events: {
-						click: function (e) {
-							BX.PopupWindowManager.getCurrentPopup().destroy();
-							BX.PreventDefault(e);
-							return false;
-						}
-					}
-				})
-			];
-
-			var currentServiceIsCloud = false;
-			if (currentSelection !== 'l' && currentSelection !== 'onlyoffice' && currentSelection)
-			{
-				currentServiceIsCloud = true;
-			}
-			if (!currentSelection && BX.Disk.isAvailableOnlyOffice())
-			{
-				currentSelection = 'onlyoffice';
-			}
-			else if(!currentSelection)
-			{
-				currentSelection = 'l';
-			}
-			newSelectedService = currentSelection;
-
-			var suffix = viewInUf? '' : '2';
-			var lang = BX.message('LANGUAGE_ID');
-			var imageSrc = '/bitrix/images/disk/disk_description' + suffix + '_en.png';
-			if(lang == 'kz')
-				lang = 'ru';
-			switch(lang)
-			{
-				case 'ru':
-				case 'en':
-				case 'de':
-				case 'ua':
-				case 'br':
-				case 'la':
-				case 'sc':
-				case 'tc':
-					imageSrc = '/bitrix/images/disk/disk_description' + suffix + '_' + lang + '.png';
-					break;
-			}
-
-			var content =
-				'<div class="bx-disk-info-popup-cont-title">' +
-					BX.message('DISK_JS_SERVICE_CHOICE_TITLE') +
-				'</div>' +
-				'<div class="bx-disk-info-popup-btn-wrap">' +
-					'<span data-service="l" id="bx-disk-info-popup-btn-local" class="bx-disk-info-popup-btn bx-disk-info-popup-btn-local ' + (currentSelection === 'l' ? 'bx-disk-info-popup-btn-active' : '') + ' ">' +
+				var content =
+					'<div id="bx-disk-select-doc-service" data-testid="disk-doc-service-popup">' +
+					'<div class="bx-disk-info-popup-cont-title" id="bx-disk-service-choice-title">' +
+						BX.message('DISK_JS_SERVICE_CHOICE_TITLE') +
+					'</div>' +
+					'<div class="bx-disk-info-popup-btn-wrap" role="radiogroup" aria-labelledby="bx-disk-service-choice-title">' +
+						'<span data-service="l" id="bx-disk-info-popup-btn-local" data-testid="disk-doc-service-card-l" role="radio" tabindex="0" aria-checked="' + (currentSelection === 'l' ? 'true' : 'false') + '" aria-labelledby="bx-disk-doc-service-l-title" aria-describedby="bx-disk-doc-service-l-desc"' + (currentSelection === 'l' ? ' data-autofocus' : '') + ' class="bx-disk-info-popup-btn bx-disk-info-popup-btn-local ' + (currentSelection === 'l' ? 'bx-disk-info-popup-btn-active' : '') + ' ">' +
+							'<span class="bx-disk-info-popup-btn-text">' +
+								'<span id="bx-disk-doc-service-l-title">' + BX.message('DISK_JS_SERVICE_LOCAL_TITLE') + '</span>'+
+							'</span>' +
+							'<span class="bx-disk-info-popup-btn-descript" id="bx-disk-doc-service-l-desc">' +
+								BX.message('DISK_JS_SERVICE_LOCAL_TEXT') +
+							'</span>' +
+							'<span class="bx-disk-info-popup-btn-check"></span>' +
+						'</span>' +
+						'<span data-service="gdrive" id="bx-disk-info-popup-btn-cloud" data-testid="disk-doc-service-card-gdrive" role="radio" tabindex="0" aria-checked="' + (currentServiceIsCloud ? 'true' : 'false') + '" aria-labelledby="bx-disk-doc-service-cloud-title" aria-describedby="bx-disk-doc-service-cloud-desc"' + (currentServiceIsCloud ? ' data-autofocus' : '') + ' class="bx-disk-info-popup-btn bx-disk-info-popup-btn-cloud ' + (currentServiceIsCloud ? 'bx-disk-info-popup-btn-active' : '') + ' ">' +
+							'<span class="bx-disk-info-popup-btn-text">' +
+								'<span id="bx-disk-doc-service-cloud-title">'+ BX.message('DISK_JS_SERVICE_CLOUD_TITLE') + '</span>' +
+							'</span>' +
+							'<span class="bx-disk-info-popup-btn-descript" id="bx-disk-doc-service-cloud-desc">' +
+								BX.message('DISK_JS_SERVICE_CLOUD_TEXT') +
+							'</span>' +
+							'<span class="bx-disk-info-popup-btn-check"></span>' +
+						'</span>' +
+						'<span data-service="onlyoffice" ' + (BX.Disk.isAvailableOnlyOffice()? '' : 'style="display:none;"') +' id="bx-disk-info-popup-btn-b24" data-testid="disk-doc-service-card-onlyoffice" role="radio" tabindex="' + (BX.Disk.isAvailableOnlyOffice()? '0' : '-1') + '" aria-checked="' + (currentSelection === 'onlyoffice' ? 'true' : 'false') + '" aria-labelledby="bx-disk-doc-service-b24-title" aria-describedby="bx-disk-doc-service-b24-desc"' + (currentSelection === 'onlyoffice'? ' data-autofocus' : '') + ' class="bx-disk-info-popup-btn bx-disk-info-popup-btn-b24 ' + (currentSelection === 'onlyoffice'? 'bx-disk-info-popup-btn-active' : '') + ' ">' +
 						'<span class="bx-disk-info-popup-btn-text">' +
-							'<span>' + BX.message('DISK_JS_SERVICE_LOCAL_TITLE') + '</span>'+
+							'<span id="bx-disk-doc-service-b24-title">'+ BX.message('DISK_JS_SERVICE_B24_DOCS_TITLE') + '</span>' +
 						'</span>' +
-						'<span class="bx-disk-info-popup-btn-descript">' +
-							BX.message('DISK_JS_SERVICE_LOCAL_TEXT') +
+							'<span class="bx-disk-info-popup-btn-descript" id="bx-disk-doc-service-b24-desc">' +
+								BX.message('DISK_JS_SERVICE_B24_DOCS_TEXT') +
+							'</span>' +
+						'	<span class="bx-disk-info-popup-btn-check"></span>' +
 						'</span>' +
-						'<span class="bx-disk-info-popup-btn-check"></span>' +
-					'</span>' +
-					'<span data-service="gdrive" id="bx-disk-info-popup-btn-cloud" class="bx-disk-info-popup-btn bx-disk-info-popup-btn-cloud ' + (currentServiceIsCloud ? 'bx-disk-info-popup-btn-active' : '') + ' ">' +
-						'<span class="bx-disk-info-popup-btn-text">' +
-							'<span>'+ BX.message('DISK_JS_SERVICE_CLOUD_TITLE') + '</span>' +
-						'</span>' +
-						'<span class="bx-disk-info-popup-btn-descript">' +
-							BX.message('DISK_JS_SERVICE_CLOUD_TEXT') +
-						'</span>' +
-						'<span class="bx-disk-info-popup-btn-check"></span>' +
-					'</span>' +
-					'<span data-service="onlyoffice" ' + (BX.Disk.isAvailableOnlyOffice()? '' : 'style="display:none;"') +' id="bx-disk-info-popup-btn-b24" class="bx-disk-info-popup-btn bx-disk-info-popup-btn-b24 ' + (currentSelection === 'onlyoffice'? 'bx-disk-info-popup-btn-active' : '') + ' ">' +
-					'<span class="bx-disk-info-popup-btn-text">' +
-						'<span>'+ BX.message('DISK_JS_SERVICE_B24_DOCS_TITLE') + '</span>' +
-					'</span>' +
-						'<span class="bx-disk-info-popup-btn-descript">' +
-							BX.message('DISK_JS_SERVICE_B24_DOCS_TEXT') +
-						'</span>' +
-					'	<span class="bx-disk-info-popup-btn-check"></span>' +
-					'</span>' +
-				'</div>' +
-				'<div class="bx-disk-info-descript">' +
-					(viewInUf? BX.message('DISK_JS_SERVICE_HELP_TEXT') : BX.message('DISK_JS_SERVICE_HELP_TEXT_2')) +
-					'<img style="height: 182px;" class="bx-disk-info-descript-img" src="' + imageSrc + '" alt=""/>' +
-				'</div>' +
-				'<div style="margin-top: 10px">' +
-					'<a href="/" id="bx-disk-info-popup-helpdesk" style="font-size: 14px">' + BX.message('DISK_JS_HELP_WITH_BDISK') + '</a>' +
-				'</div>'
-				;
-			var contentNode = BX.create('div', {html: content});
+					'</div>' +
+					'<div class="bx-disk-info-descript">' +
+						(viewInUf? BX.message('DISK_JS_SERVICE_HELP_TEXT') : BX.message('DISK_JS_SERVICE_HELP_TEXT_2')) +
+						'<img style="height: 182px;" class="bx-disk-info-descript-img" src="' + imageSrc + '" alt="" aria-hidden="true"/>' +
+					'</div>' +
+					'<div style="margin-top: 10px">' +
+						'<a href="/" id="bx-disk-info-popup-helpdesk" data-testid="disk-doc-service-helpdesk" style="font-size: 14px">' + BX.message('DISK_JS_HELP_WITH_BDISK') + '</a>' +
+					'</div>' +
+					'</div>'
+					;
 
-			var popup = BX.Disk.modalWindow({
-				modalId: 'bx-disk-select-doc-service',
-				events: {
-					onAfterPopupShow: function () {
-						BX.bind(BX('bx-disk-info-popup-helpdesk'), 'click', function (e) {
-							if (top.BX.Helper)
-							{
-								top.BX.Helper.show("redirect=detail&code=8626407");
-							}
-							e.preventDefault();
-							popup.destroy();
-						});
+				var messageBox = BX.UI.Dialogs.MessageBox.create({
+					useAirDesign: true,
+					modal: true,
+					title: BX.message('DISK_JS_SERVICE_CHOICE_TITLE_SMALL'),
+					message: content,
+					maxWidth: 650,
+					popupOptions: {}
+				});
 
-						BX.bindDelegate(contentNode, 'click', {className: 'bx-disk-info-popup-btn'}, function(e) {
-							var targetNode = this;
-							newSelectedService = targetNode.dataset.service;
-
-							if (BX.hasClass(targetNode, 'bx-disk-info-popup-btn-active'))
-							{
-								return;
-							}
-
-							contentNode.querySelector('.bx-disk-info-popup-btn-active').classList.remove('bx-disk-info-popup-btn-active');
-							BX.toggleClass(targetNode, 'bx-disk-info-popup-btn-active');
-						});
-					},
-					onPopupClose: function () {
-						this.destroy();
+				var defaultOnSave = function (service) {
+					if (service === 'l' && !BX.Disk.Document.Local.Instance.isEnabled())
+					{
+						this.getHelpDialogToUseLocalService().show();
+						return;
 					}
-				},
-				title: BX.message('DISK_JS_SERVICE_CHOICE_TITLE_SMALL'),
-				content: [contentNode],
-				buttons: buttons
-			});
 
+					BX.Disk.saveDocumentService(service);
+					messageBox.close();
+				}.bind(this);
+
+				var saveAction = function () {
+					defaultOnSave(newSelectedService);
+					if (BX.type.isFunction(params.onSave))
+					{
+						params.onSave(newSelectedService);
+					}
+				};
+
+				var cancelButton = messageBox.getCancelButton();
+				cancelButton.setText(BX.message('DISK_JS_BTN_CLOSE'));
+				cancelButton.setDataSet({ testid: 'disk-doc-service-close' });
+
+				messageBox.setButtons([
+					new BX.UI.Button({
+						useAirDesign: true,
+						style: BX.UI.AirButtonStyle.FILLED,
+						wide: true,
+						text: BX.message('DISK_JS_BTN_SAVE'),
+						dataset: { testid: 'disk-doc-service-save' },
+						onclick: function () {
+							saveAction();
+						}
+					}),
+					cancelButton
+				]);
+
+				messageBox.show();
+
+				var contentNode = messageBox.getPopupWindow().getContentContainer();
+
+				var selectCard = function (targetNode) {
+					newSelectedService = targetNode.dataset.service;
+
+					if (BX.hasClass(targetNode, 'bx-disk-info-popup-btn-active'))
+					{
+						return;
+					}
+
+					var activeCard = contentNode.querySelector('.bx-disk-info-popup-btn-active');
+					if (activeCard)
+					{
+						activeCard.classList.remove('bx-disk-info-popup-btn-active');
+						activeCard.setAttribute('aria-checked', 'false');
+					}
+
+					BX.toggleClass(targetNode, 'bx-disk-info-popup-btn-active');
+					targetNode.setAttribute('aria-checked', 'true');
+				};
+
+				BX.bindDelegate(contentNode, 'click', {className: 'bx-disk-info-popup-btn'}, function (e) {
+					selectCard(this);
+				});
+
+				BX.bindDelegate(contentNode, 'keydown', {className: 'bx-disk-info-popup-btn'}, function (e) {
+					if (e.key !== ' ' && e.keyCode !== 32)
+					{
+						return;
+					}
+					e.preventDefault();
+					selectCard(this);
+				});
+
+				var helpdeskLink = contentNode.querySelector('#bx-disk-info-popup-helpdesk');
+				if (helpdeskLink)
+				{
+					BX.bind(helpdeskLink, 'click', function (e) {
+						e.preventDefault();
+						if (top.BX.Helper)
+						{
+							top.BX.Helper.show("redirect=detail&code=8626407");
+						}
+						messageBox.close();
+					});
+				}
+
+				BX.bind(contentNode, 'keydown', function (e) {
+					if (e.key !== 'Enter' && e.keyCode !== 13)
+					{
+						return;
+					}
+					if (e.target && e.target.closest && e.target.closest('button, a'))
+					{
+						return;
+					}
+					saveAction();
+				});
+			}.bind(this));
 		},
 		getHelpDialogToUseLocalService: function ()
 		{

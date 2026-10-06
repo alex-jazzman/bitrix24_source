@@ -3,6 +3,7 @@
 if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
 use Bitrix\Crm\Restriction\RestrictionManager;
+use Bitrix\Main\Web\Uri;
 
 if (!CModule::IncludeModule('crm'))
 {
@@ -364,8 +365,7 @@ $arUserInfo = array();
 $arEventDescr = array();
 while ($arEvent = $obRes->Fetch())
 {
-	$arEvent['PATH_TO_EVENT_DELETE'] =  CHTTP::urlAddParams($arParams['PATH_TO_EVENT_LIST'],
-		array('action_'.$arResult['GRID_ID'] => 'delete', 'ID' => $arEvent['ID'], 'sessid' => bitrix_sessid()));
+	$arEvent['PATH_TO_EVENT_DELETE'] =  (string)(new Uri($arParams['PATH_TO_EVENT_LIST']))->addParams(array('action_'.$arResult['GRID_ID'] => 'delete', 'ID' => $arEvent['ID'], 'sessid' => bitrix_sessid()));
 	$arEvent['~FILES'] = $arEvent['FILES'];
 	//$arEvent['~EVENT_NAME'] = $arEvent['EVENT_NAME'];
 	$arUserDistinct[intval($arEvent['USER_ID'])] = true;

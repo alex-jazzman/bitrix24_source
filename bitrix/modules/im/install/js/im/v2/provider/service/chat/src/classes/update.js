@@ -1,7 +1,7 @@
 import { isResizableImage, resizeImage } from 'ui.uploader.core';
 
 import { Core } from 'im.v2.application.core';
-import { RestMethod } from 'im.v2.const';
+import { ParentChatScope, RestMethod } from 'im.v2.const';
 import { Logger } from 'im.v2.lib.logger';
 import { Notifier } from 'im.v2.lib.notifier';
 import { runAction } from 'im.v2.lib.rest';
@@ -12,6 +12,28 @@ import { type ChatUpdateConfig, type GetMemberEntitiesConfig, type CollabUpdateC
 
 export class UpdateService
 {
+	detachToParent(dialogId: string): Promise
+	{
+		return runAction(RestMethod.imV2ChatDetachToParent, {
+			data: { dialogId },
+		}).then(() => {
+			this.#updateParentChatInModels(dialogId, ParentChatScope.topLevel);
+		}).catch(([error]) => {
+			console.error('ChatService: detachToParent error:', error);
+		});
+	}
+
+	attachToParent(dialogId: string, parentChatId: number): Promise
+	{
+		return runAction(RestMethod.imV2ChatAttachToParent, {
+			data: { dialogId, parentChatId },
+		}).then(() => {
+			this.#updateParentChatInModels(dialogId, parentChatId);
+		}).catch(([error]) => {
+			console.error('ChatService: attachToParent error:', error);
+		});
+	}
+
 	async prepareAvatar(avatarFile: File): Promise<File>
 	{
 		if (!isResizableImage(avatarFile))
@@ -158,5 +180,15 @@ export class UpdateService
 				permissions,
 			},
 		});
+	}
+
+	#updateParentChatInModels(dialogId: string, parentChatId: number): void
+	{
+		void Core.getStore().dispatch('chats/update', {
+			dialogId,
+			fields: { parentChatId },
+		});
+
+		void Core.getStore().dispatch('recent/hide', { dialogId });
 	}
 }

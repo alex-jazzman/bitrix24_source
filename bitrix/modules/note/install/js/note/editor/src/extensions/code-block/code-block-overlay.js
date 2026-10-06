@@ -25,8 +25,27 @@ export const NoteCodeBlockOverlay = {
 			type: Boolean,
 			default: true,
 		},
+		// Read mode with a diagram actually drawn. Then the block is a picture: the zoom controls
+		// appear and the language caption goes away, because it says nothing about a diagram. A
+		// diagram that failed to render keeps the caption - its source is what is on screen.
+		hasDiagram: {
+			type: Boolean,
+			default: false,
+		},
+		zoomLabel: {
+			type: String,
+			default: '',
+		},
+		canZoomIn: {
+			type: Boolean,
+			default: false,
+		},
+		canZoomOut: {
+			type: Boolean,
+			default: false,
+		},
 	},
-	emits: ['language-select', 'copy'],
+	emits: ['language-select', 'copy', 'zoom-in', 'zoom-out', 'zoom-reset', 'fullscreen'],
 	data(): Object
 	{
 		return {
@@ -41,6 +60,22 @@ export const NoteCodeBlockOverlay = {
 		copyTitle(): string
 		{
 			return Loc.getMessage('NOTE_EDITOR_DOCUMENT_MENU_COPY_MARKDOWN');
+		},
+		zoomInTitle(): string
+		{
+			return Loc.getMessage('NOTE_EDITOR_DIAGRAM_ZOOM_IN');
+		},
+		zoomOutTitle(): string
+		{
+			return Loc.getMessage('NOTE_EDITOR_DIAGRAM_ZOOM_OUT');
+		},
+		zoomResetTitle(): string
+		{
+			return Loc.getMessage('NOTE_EDITOR_DIAGRAM_ZOOM_RESET');
+		},
+		fullscreenTitle(): string
+		{
+			return Loc.getMessage('NOTE_EDITOR_DIAGRAM_FULLSCREEN');
 		},
 	},
 	created(): void
@@ -235,19 +270,65 @@ export const NoteCodeBlockOverlay = {
 				ref="languageButton"
 				type="button"
 				class="note-editor-code-block-language"
+				data-testid="note-code-block-language"
 				@click="toggleMenu"
 			>
 				<span class="note-editor-code-block-language-text">{{ languageLabel }}</span>
 			</button>
 			<span
-				v-else
+				v-else-if="!hasDiagram"
 				class="note-editor-code-block-language note-editor-code-block-language--readonly"
 			>
 				<span class="note-editor-code-block-language-text">{{ languageLabel }}</span>
 			</span>
+			<span v-if="hasDiagram" class="note-editor-code-block-zoom">
+				<button
+					type="button"
+					class="note-editor-code-block-zoom-button"
+					data-testid="note-diagram-zoom-out"
+					:disabled="!canZoomOut"
+					:title="zoomOutTitle"
+					:aria-label="zoomOutTitle"
+					@click="$emit('zoom-out')"
+				>
+					<BIcon name="o-zoom-out" :size="16" />
+				</button>
+				<button
+					type="button"
+					class="note-editor-code-block-zoom-value"
+					data-testid="note-diagram-zoom-reset"
+					:disabled="!canZoomOut"
+					:title="zoomResetTitle"
+					:aria-label="zoomResetTitle"
+					@click="$emit('zoom-reset')"
+				>{{ zoomLabel }}</button>
+				<button
+					type="button"
+					class="note-editor-code-block-zoom-button"
+					data-testid="note-diagram-zoom-in"
+					:disabled="!canZoomIn"
+					:title="zoomInTitle"
+					:aria-label="zoomInTitle"
+					@click="$emit('zoom-in')"
+				>
+					<BIcon name="o-zoom-in" :size="16" />
+				</button>
+				<button
+					type="button"
+					class="note-editor-code-block-zoom-button"
+					data-testid="note-diagram-fullscreen-open"
+					:title="fullscreenTitle"
+					:aria-label="fullscreenTitle"
+					@click="$emit('fullscreen', $event.currentTarget)"
+				>
+					<BIcon name="expand-l" :size="16" />
+				</button>
+			</span>
 			<button
+				v-if="!hasDiagram"
 				type="button"
 				class="note-editor-code-block-copy"
+				data-testid="note-code-block-copy"
 				:class="{ 'note-editor-code-block-copy--copied': copied }"
 				:title="copyTitle"
 				:aria-label="copyTitle"

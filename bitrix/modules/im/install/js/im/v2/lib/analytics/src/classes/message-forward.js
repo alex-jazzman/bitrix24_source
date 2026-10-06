@@ -5,8 +5,8 @@ import { type ImModelChat } from 'im.v2.model';
 
 import { AnalyticsEvent, AnalyticsSection, AnalyticsSubSection, AnalyticsTool } from '../const';
 import { getCategoryByChatType } from '../helpers/get-category-by-chat-type';
-import { getChatType } from '../helpers/get-chat-type';
 import { getUserType } from '../helpers/get-user-type.js';
+import { getChatType } from '../helpers/get-chat-type';
 import { isSelfChat } from '../helpers/is-self-chat';
 
 const SelectRecipientSource = Object.freeze({

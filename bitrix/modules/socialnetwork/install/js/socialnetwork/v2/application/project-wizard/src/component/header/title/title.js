@@ -1,4 +1,5 @@
 import { Dom, Event } from 'main.core';
+import { FocusMonitor } from 'ui.a11y';
 import { mapState, mapWritableState, mapActions } from 'ui.vue3.pinia';
 
 import { useInterfaceStore } from 'socialnetwork.v2.model.interface';
@@ -19,6 +20,7 @@ export const ProjectWizardTitle = {
 	{
 		return {
 			isPopupShown: false,
+			keyboardFocus: false,
 		};
 	},
 	computed: {
@@ -55,6 +57,14 @@ export const ProjectWizardTitle = {
 	},
 	methods: {
 		...mapActions(useInterfaceStore, ['setValidation']),
+		onFieldFocus(): void
+		{
+			this.keyboardFocus = FocusMonitor.Instance.getModalityTracker().getLastNavigationKey() === 'Tab';
+		},
+		onFieldBlur(): void
+		{
+			this.keyboardFocus = false;
+		},
 		async highlightTitle(): void
 		{
 			await this.delay();
@@ -106,7 +116,8 @@ export const ProjectWizardTitle = {
 			:class="[
 				'socialnetwork--project-title-wrapper',
 				{
-					'socialnetwork--project--field-highlight': validation.title.invalid,
+					'--keyboard-focus': keyboardFocus,
+						'socialnetwork--project--field-highlight': validation.title.invalid,
 					'socialnetwork--project--field-highlight__error': validation.title.uniq,
 				}
 			]"
@@ -117,6 +128,8 @@ export const ProjectWizardTitle = {
 				:fontSize="25"
 				class="socialnetwork--project-title"
 				:placeholder="loc('SONET_EXT_PROJECT_WIZARD_TITLE_PLACEHOLDER')"
+					@focus="onFieldFocus"
+					@blur="onFieldBlur"
 			/>
 		</div>
 		<UiHint

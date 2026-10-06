@@ -1,5 +1,8 @@
-<?
+<?php
 $MESS["CRM_COMPANY_MERGER_COLLISION_READ_PERMISSION"] = "#USER_NAME# has merged a company \"#SEED_TITLE#\" [#SEED_ID#] with \"#TARG_TITLE#\" [#TARG_ID#] which you cannot view due to access permission preferences.";
-$MESS["CRM_COMPANY_MERGER_COLLISION_UPDATE_PERMISSION"] = "#USER_NAME# has merged a company \"#SEED_TITLE#\" [#SEED_ID#] with \"#TARG_TITLE#\" [#TARG_ID#] which you cannot edit due to access permission preferences.";
+$MESS["CRM_COMPANY_MERGER_COLLISION_READ_PERMISSION_PLAIN_TEXT"] = "You don't have sufficient permissions to view this company.";
 $MESS["CRM_COMPANY_MERGER_COLLISION_READ_UPDATE_PERMISSION"] = "#USER_NAME# has merged a company \"#SEED_TITLE#\" [#SEED_ID#] with \"#TARG_TITLE#\" [#TARG_ID#] which you cannot view or edit due to access permission preferences.";
-?>
+$MESS["CRM_COMPANY_MERGER_COLLISION_READ_UPDATE_PERMISSION_PLAIN_TEXT"] = "You don't have sufficient permissions to view or edit this company.";
+$MESS["CRM_COMPANY_MERGER_COLLISION_SUBJECT"] = "#AUTHOR# merged company \"#SEED_TITLE#\" [#SEED_ID#] with \"#TARG_TITLE#\" [#TARG_ID#].";
+$MESS["CRM_COMPANY_MERGER_COLLISION_UPDATE_PERMISSION"] = "#USER_NAME# has merged a company \"#SEED_TITLE#\" [#SEED_ID#] with \"#TARG_TITLE#\" [#TARG_ID#] which you cannot edit due to access permission preferences.";
+$MESS["CRM_COMPANY_MERGER_COLLISION_UPDATE_PERMISSION_PLAIN_TEXT"] = "You don't have sufficient permissions to edit this company.";

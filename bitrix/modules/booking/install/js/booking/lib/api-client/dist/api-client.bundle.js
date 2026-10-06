@@ -18,11 +18,15 @@ this.BX.Booking = this.BX.Booking || {};
 			});
 			return this.handleResponse(response);
 		}
-		async post(endpoint, data = {}) {
+		async post(endpoint, data = {}, options = {}) {
 			const url = this.buildUrl(endpoint);
-			const response = await main_core.ajax.runAction(url, {
+			const config = {
 				json: data
-			});
+			};
+			if (options.navigation) {
+				config.navigation = options.navigation;
+			}
+			const response = await main_core.ajax.runAction(url, config);
 			return this.handleResponse(response);
 		}
 		async put(endpoint, data = {}) {

@@ -481,12 +481,12 @@
 	right: 0;
 	top: 0;
 	background-image:  -webkit-image-set(
-			url(../images/annual-summary-spiral.png) 1x,
-			url(../images/annual-summary-spiral@2x.png) 2x
+			url("images/annual-summary-spiral.png") 1x,
+			url("images/annual-summary-spiral@2x.png") 2x
 	);
 	background-image:  image-set(
-			url(../images/annual-summary-spiral.png) 1x,
-			url(../images/annual-summary-spiral@2x.png) 2x
+			url("images/annual-summary-spiral.png") 1x,
+			url("images/annual-summary-spiral@2x.png") 2x
 	);
 	transition: transform 0.7s;
 	transform-origin: top right;
@@ -504,12 +504,12 @@
 	left: -5px;
 	bottom: -19px;
 	background-image: -webkit-image-set(
-			url(../images/annual-summary-arrow.png) 1x,
-			url(../images/annual-summary-arrow@2x.png) 2x
+			url("images/annual-summary-arrow.png") 1x,
+			url("images/annual-summary-arrow@2x.png") 2x
 	);
 	background-image: image-set(
-			url(../images/annual-summary-arrow.png) 1x,
-			url(../images/annual-summary-arrow@2x.png) 2x
+			url("images/annual-summary-arrow.png") 1x,
+			url("images/annual-summary-arrow@2x.png") 2x
 	);
 	transition: transform 0.7s;
 }
@@ -526,12 +526,12 @@
 	right: 12px;
 	top: -25px;
 	background-image: -webkit-image-set(
-			url(../images/annual-summary-check.png) 1x,
-			url(../images/annual-summary-check@2x.png) 2x
+			url("images/annual-summary-check.png") 1x,
+			url("images/annual-summary-check@2x.png") 2x
 	);
 	background-image: image-set(
-			url(../images/annual-summary-check.png) 1x,
-			url(../images/annual-summary-check@2x.png) 2x
+			url("images/annual-summary-check.png") 1x,
+			url("images/annual-summary-check@2x.png") 2x
 	);
 	transition: transform 0.7s;
 }

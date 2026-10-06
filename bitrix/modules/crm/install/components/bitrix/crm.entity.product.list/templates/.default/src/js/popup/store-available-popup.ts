@@ -19,6 +19,7 @@ export default class StoreAvailablePopup
 	private readonly inventoryManagementMode: string | null | undefined;
 	private node!: HTMLElement;
 	private popup: Popup | null = null;
+	private readonly clickHandler = this.togglePopup.bind(this);
 
 	constructor(options: CrmEntityProductListStoreAvailablePopupOptions)
 	{
@@ -30,10 +31,16 @@ export default class StoreAvailablePopup
 
 	public setNode(node: HTMLElement): void
 	{
+		if (this.node)
+		{
+			EventBinder.unbind(this.node, 'click', this.clickHandler);
+			Dom.removeClass(this.node, 'store-available-popup-link');
+		}
+
 		this.node = node;
 		Dom.addClass(this.node, 'store-available-popup-link');
 
-		EventBinder.bind(this.node, 'click', this.togglePopup.bind(this));
+		EventBinder.bind(this.node, 'click', this.clickHandler);
 	}
 
 	private createPopup(): void
@@ -62,6 +69,13 @@ export default class StoreAvailablePopup
 					forceBindPosition: true
 				},
 				closeByEsc: true,
+				// Passing an object opts the popup's focus trap in regardless of the global
+				// AccessibilitySettings flag: initialFocus true moves focus to the first tabbable
+				// (the reserves link) or falls back to the container, and deactivate() on close
+				// restores focus to the trigger.
+				focusTrap: {
+					initialFocus: true,
+				},
 				content: this.getPopupContent(),
 			});
 			this.popup.setOffset({offsetLeft: -218, offsetTop: 0});
@@ -127,14 +141,18 @@ export default class StoreAvailablePopup
 
 		if (isReservedQuantityLink)
 		{
-			EventBinder.bind(
-				result.querySelector('.store-available-popup-reserves-slider-link'),
-				'click',
-				(e: Event) => {
-					e.preventDefault();
-					this.openDealsWithReservedProductSlider();
-				},
-			);
+			const reservesSliderLink = result.querySelector('.store-available-popup-reserves-slider-link');
+			if (reservesSliderLink)
+			{
+				EventBinder.bind(
+					reservesSliderLink,
+					'click',
+					(e: Event) => {
+						e.preventDefault();
+						this.openDealsWithReservedProductSlider();
+					},
+				);
+			}
 		}
 
 		return result;

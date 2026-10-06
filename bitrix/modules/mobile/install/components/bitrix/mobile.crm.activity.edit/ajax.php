@@ -494,11 +494,7 @@ if($action === 'SAVE_ENTITY')
 
 		if($successed)
 		{
-			$urn = CCrmActivity::PrepareUrn($arFields);
-			if($urn !== '')
-			{
-				CCrmActivity::Update($ID, array('URN' => $urn), false, false);
-			}
+			$urn = '';
 			CCrmActivity::SaveCommunications($ID, $comms, $fields, false, false);
 			CCrmActivity::SaveRecentlyUsedCommunication($comms[0]);
 			//Save user email in settings -->

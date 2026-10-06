@@ -1,21 +1,382 @@
 /* eslint-disable */
-this.BX = this.BX || {};
-this.BX.Lists = this.BX.Lists || {};
-(function (exports,main_core,main_date,ui_buttons,ui_dialogs_messagebox) {
+(function (main_core, main_date, ui_buttons, ui_dialogs_messagebox, ui_tooltip, ui_icons_b24, ui_a11y) {
 	'use strict';
 
-	let _ = t => t,
-	  _t,
-	  _t2,
-	  _t3,
-	  _t4,
-	  _t5,
-	  _t6,
-	  _t7,
-	  _t8,
-	  _t9,
-	  _t10,
-	  _t11;
+	const HELPERS_NAMESPACE = 'BX.Bizproc.A11y';
+	const SIDE_PANEL_NAMESPACE = 'BX.SidePanel';
+	const FORM_SELECTOR = 'form';
+	const ROW_SELECTOR = 'tr';
+	// a field row owns its cells directly: layout rows and rows of a multiple field table must not match
+	const LABEL_CELL_SELECTOR = ':scope > td.bx-field-name';
+	const VALUE_CELL_SELECTOR = ':scope > td.bx-field-value';
+	const REQUIRED_MARK_SELECTOR = 'span.required';
+	const CALENDAR_ICON_SELECTOR = '.ui-ctl-icon-calendar';
+	// the input of a date field: it shares the container of the field with the icon of the calendar
+	const CALENDAR_CONTROL_SELECTOR = ':scope > input.ui-ctl-element';
+	// the tag selector of ui.entity-selector holds the value of a field in a hidden input and keeps its
+	// search box out of sight: the button that opens the list of items is the only node of such a field
+	// the keyboard reaches
+	const TAG_SELECTOR_BUTTON_SELECTOR = '.ui-tag-selector-add-button-caption';
+	const GENERATED_ID_PREFIX = 'lists-element-creation-guide-a11y';
+	const STEP_HEADING_LEVEL = '2';
+	// the pass repeats on every mutation of the form, so an already processed node has to be skipped:
+	// a second binding would turn one keypress into two calendars
+	const KEYBOARD_READY_ATTR = 'data-a11y-keyboard-ready';
+	// a button-like input is out of the pass: it already has a name in its value attribute,
+	// and aria-required is not allowed on the button role
+	const CONTROL_SELECTOR = 'input:not([type="hidden"]):not([type="button"]):not([type="submit"])' + ':not([type="reset"]), select, textarea';
+	const OBSERVER_OPTIONS = Object.freeze({
+		childList: true,
+		subtree: true
+	});
+
+	// a control of an erroneous field, resolved to the form of the step it belongs to
+
+	/**
+	 * The component requires the lists module only, bizproc stays optional for it. Without that module
+	 * the helpers are absent and the a11y pass is skipped, so the wizard stays mouse-only. This is the
+	 * single place the absence is handled: the rest of the module works with a resolved value.
+	 */
+	function getA11yHelpers() {
+		return main_core.Reflection.getClass(HELPERS_NAMESPACE);
+	}
+	function getStepForms(stepNode) {
+		if (!main_core.Type.isDomNode(stepNode)) {
+			return [];
+		}
+		return [...stepNode.querySelectorAll(FORM_SELECTOR)];
+	}
+
+	/**
+	 * Whether an element of this document holds the focus. A document with nothing focused reports its
+	 * body as the active element, and Firefox reports the root element instead once the document has been
+	 * given the focus from the outside, so neither of the two counts as a focused element.
+	 */
+	function hasFocusedElement() {
+		const active = document.activeElement;
+		return active !== null && active !== document.body && active !== document.documentElement;
+	}
+
+	/**
+	 * Whether the focus of the document above this frame stands on a node the user has reached themselves.
+	 * Until the frame of the wizard takes the focus, the document above keeps it on the frame or on a
+	 * wrapper of it — the container of the slider takes the focus when it opens — while any other node is
+	 * one the user has gone to on their own, the close button of the slider for instance, and the focus of
+	 * such a node must not be taken away.
+	 */
+	function hasFocusAboveFrame() {
+		// absent for a document of its own, and for a frame of another origin: no document above to account for
+		const frame = window.frameElement;
+		if (!frame) {
+			return false;
+		}
+		const active = frame.ownerDocument.activeElement;
+
+		// contains() counts the node itself, so the frame and every wrapper of it are covered at once
+		return active !== null && !active.contains(frame);
+	}
+	function hasFocusInside(stepNode) {
+		return main_core.Type.isDomNode(stepNode) && hasFocusedElement() && stepNode.contains(document.activeElement);
+	}
+
+	/**
+	 * An id of its own for a node aria-labelledby has to point at.
+	 */
+	function ensureId(node) {
+		if (!main_core.Type.isStringFilled(node.id)) {
+			main_core.Dom.attr(node, 'id', `${GENERATED_ID_PREFIX}-${main_core.Text.getRandom().toLowerCase()}`);
+		}
+		return node.id;
+	}
+
+	/**
+	 * Text for a screen reader only, invisible on the screen.
+	 */
+	function visuallyHidden(text) {
+		const node = new ui_a11y.VisuallyHidden();
+		node.textContent = text;
+		return node;
+	}
+
+	/**
+	 * Names the slider dialog the wizard is opened in. The side panel names it after the title of the page
+	 * it loads, and the page of this component has none, so the dialog reaches a screen reader unnamed.
+	 * Outside a slider the wizard is a page of its own and there is no dialog to name.
+	 */
+	function nameSliderDialog(label) {
+		const slider = main_core.Reflection.getClass(SIDE_PANEL_NAMESPACE)?.Instance?.getSliderByWindow(window);
+		if (slider) {
+			main_core.Dom.attr(slider.getContainer(), 'aria-label', label);
+		}
+	}
+
+	/**
+	 * Binds the handler of a clickable node that is not a control, and gives the node the role, the Tab
+	 * stop and the keyboard activation of a button. Without the helpers the node stays mouse-only.
+	 */
+	function makeActivatable(node, handler) {
+		const helpers = getA11yHelpers();
+		if (helpers) {
+			helpers.makeActivatable(node, handler);
+			return;
+		}
+		main_core.Event.bind(node, 'click', handler);
+	}
+
+	/**
+	 * Gives the step a heading of its own, for a screen reader only: the visible title above the steps
+	 * names the process and stays the same on every step. The heading is the focus target of a step change.
+	 */
+	function addStepHeading(stepNode, title) {
+		const heading = visuallyHidden(title);
+		main_core.Dom.attr(heading, {
+			role: 'heading',
+			'aria-level': STEP_HEADING_LEVEL,
+			tabindex: '-1'
+		});
+		main_core.Dom.prepend(heading, stepNode);
+		return heading;
+	}
+
+	/**
+	 * The focus goes to the heading and not to the first control: a screen reader speaks the element
+	 * the focus lands on, so a live region announcing the step at the same moment would compete with it.
+	 * The navigation buttons live outside the step content, so without this move the focus stays on them.
+	 */
+	function focusStepHeading(heading) {
+		heading?.focus({
+			preventScroll: true
+		});
+	}
+
+	/**
+	 * The wizard closes its slider right after a successful start, so the message has to outlive this
+	 * document: it is spoken by the live region of the top window. A polite message would be dropped
+	 * along the way, hence the assertive one.
+	 */
+	function announceStartResult(message) {
+		getA11yHelpers()?.announce(message, {
+			assertive: true,
+			inTopWindow: true
+		});
+	}
+
+	/**
+	 * Takes the error mark off the controls of the step: cleaning the message container alone would
+	 * leave them with a description pointing at a node that no longer exists.
+	 */
+	function clearStepInvalidControls(stepNode) {
+		const helpers = getA11yHelpers();
+		getStepForms(stepNode).forEach(formRoot => helpers?.clearInvalidControls(formRoot));
+	}
+
+	/**
+	 * Marks the controls the errors point at and moves the focus to the first of them. An error without
+	 * a field key points at a required field left empty.
+	 *
+	 * Whenever no control of the step got the focus, it goes to the node of the error alert: the button
+	 * that has just been pressed is disabled while the step is being saved, so by this moment the focus
+	 * of the document is on its body. A control is not always reachable either — the value of a tag
+	 * selector lives in a hidden field, and focus() on it does nothing — hence the check of the result
+	 * and not of the target alone.
+	 *
+	 * The alert node and not the heading of the step: a screen reader speaks the element the focus lands
+	 * on, and the alert carries the very text its live region announces at that moment, while the heading
+	 * would name a step that has not changed — the same speech a successful step change gives. The heading
+	 * is left as the last resort, for a step whose errors went to no alert node.
+	 */
+	function focusStepError(stepNode, fields, errorRegion, stepHeading) {
+		const helpers = getA11yHelpers();
+		if (helpers) {
+			const forms = getStepForms(stepNode);
+			forms.forEach(formRoot => helpers.clearInvalidControls(formRoot));
+			let target = null;
+			fields.forEach(({
+				formRoot,
+				name,
+				messageId
+			}) => {
+				const marked = helpers.markInvalidControls(formRoot, [{
+					name,
+					messageId
+				}]);
+				target ??= marked;
+			});
+			forms.forEach(formRoot => {
+				target ??= helpers.findUnfilledRequiredControl(formRoot);
+			});
+			target?.focus();
+		}
+		if (hasFocusInside(stepNode)) {
+			return;
+		}
+
+		// the region has just been inserted into the document, so it is the node of the current error
+		errorRegion?.focus({
+			preventScroll: true
+		});
+		if (!hasFocusedElement()) {
+			focusStepHeading(stepHeading);
+		}
+	}
+
+	/**
+	 * Takes every step but the active one out of the Tab order and out of the accessibility tree.
+	 * The --hidden class only moves a step out of sight (position, transform and opacity), so without
+	 * this every step of the wizard stays reachable at once.
+	 */
+	function isolateInactiveSteps(stepNodes, activeNode) {
+		stepNodes.forEach(stepNode => {
+			main_core.Dom.attr(stepNode, 'inert', stepNode === activeNode ? null : 'true');
+		});
+	}
+
+	/**
+	 * Names and marks the controls of the main.interface.form markup a wizard step renders.
+	 * The pass is idempotent, so it is safe to repeat it on every mutation of the form.
+	 */
+	class StepFormsA11y {
+		#observers = new Map();
+		#calendarButtonLabel;
+		#calendarButtonTestIdPrefix;
+		constructor(options) {
+			this.#calendarButtonLabel = options.calendarButtonLabel;
+			this.#calendarButtonTestIdPrefix = options.calendarButtonTestIdPrefix;
+		}
+		observeStepForms(stepNode) {
+			this.leaveStep(stepNode);
+			const helpers = getA11yHelpers();
+			if (!helpers) {
+				return;
+			}
+			const observers = getStepForms(stepNode).map(formRoot => {
+				this.#applyFormA11y(formRoot, stepNode, helpers);
+
+				// fields arrive as ready HTML: a mutation is the only signal of a new or remounted control
+				const observer = new MutationObserver(() => {
+					this.#applyFormA11y(formRoot, stepNode, helpers);
+				});
+				observer.observe(formRoot, OBSERVER_OPTIONS);
+				return observer;
+			});
+			if (observers.length > 0) {
+				this.#observers.set(stepNode, observers);
+			}
+		}
+		leaveStep(stepNode) {
+			const observers = this.#observers.get(stepNode);
+			if (observers) {
+				observers.forEach(observer => observer.disconnect());
+				this.#observers.delete(stepNode);
+			}
+		}
+		#applyFormA11y(formRoot, stepNode, helpers) {
+			helpers.labelFormControls(formRoot, {
+				blockSelector: ROW_SELECTOR,
+				labelSelector: LABEL_CELL_SELECTOR,
+				contentSelector: VALUE_CELL_SELECTOR,
+				controlSelector: CONTROL_SELECTOR
+			});
+			this.#markRequiredControls(formRoot);
+			this.#nameTagSelectorButtons(formRoot);
+			this.#activateCalendarIcons(stepNode, helpers);
+		}
+
+		/**
+		 * The clickable icon of a date field comes from the iblock.property.field.public.edit component:
+		 * a bare div with a handler of its own, unreachable by keyboard. The helper adds the role, the
+		 * Tab stop and the Enter/Space activation; the activation dispatches a click, so the handler of
+		 * the owner opens the calendar exactly as it does for a mouse.
+		 *
+		 * The mark of an icon ends with its number in the step, because a step can render several date
+		 * fields and one mark for them all addresses none of them. The names of the fields are no source
+		 * for it: a field of an element is named PROPERTY_167[n0][VALUE], and that name differs from stand
+		 * to stand. The whole step is renumbered on every pass, so a field inserted into any of its forms
+		 * shifts the numbers of the icons after it instead of taking a number already given out.
+		 */
+		#activateCalendarIcons(stepNode, helpers) {
+			stepNode.querySelectorAll(CALENDAR_ICON_SELECTOR).forEach((icon, index) => {
+				main_core.Dom.attr(icon, 'data-testid', `${this.#calendarButtonTestIdPrefix}-${index}`);
+				this.#putCalendarIconAfterControl(icon);
+				if (icon.hasAttribute(KEYBOARD_READY_ATTR)) {
+					return;
+				}
+				main_core.Dom.attr(icon, KEYBOARD_READY_ATTR, 'true');
+				main_core.Dom.attr(icon, 'aria-label', this.#calendarButtonLabel);
+
+				// the node keeps the click handler of its owner: only the keyboard path is missing
+				helpers.makeActivatable(icon, () => {});
+			});
+		}
+
+		/**
+		 * Tab order of a date field: the field itself first, the button of its calendar next. The owner
+		 * renders the icon before the input, so with the icon being a Tab stop the keyboard used to reach
+		 * the calendar before the field it belongs to, and a screen reader named the calendar instead of
+		 * the field. The icon is positioned absolutely, so its place among the children of the field has
+		 * no effect on the layout.
+		 *
+		 * Unlike the keyboard binding, the move is not guarded by the readiness mark: the mark is given to
+		 * a node once, while the order of the markup comes back with every remount of the Vue application
+		 * of the field. An icon already standing after its input is left alone, so a pass over an ordered
+		 * form mutates nothing and the observer of the form is not woken up by the pass itself.
+		 */
+		#putCalendarIconAfterControl(icon) {
+			const control = icon.parentElement?.querySelector(CALENDAR_CONTROL_SELECTOR);
+			if (!control) {
+				return;
+			}
+			const positionOfControl = icon.compareDocumentPosition(control);
+			if ((positionOfControl & Node.DOCUMENT_POSITION_FOLLOWING) !== 0) {
+				main_core.Dom.insertAfter(icon, control);
+			}
+		}
+
+		/**
+		 * The list of required fields is not passed to the bundle: the form names an element field
+		 * as FIELD_ID[key][VALUE], while the server knows FIELD_ID only. The label cell of the row
+		 * is the single mark that works for element fields, process parameters and constants alike.
+		 */
+		#markRequiredControls(formRoot) {
+			formRoot.querySelectorAll(ROW_SELECTOR).forEach(row => {
+				const labelCell = row.querySelector(LABEL_CELL_SELECTOR);
+				if (!labelCell || !labelCell.querySelector(REQUIRED_MARK_SELECTOR)) {
+					return;
+				}
+				const valueCell = row.querySelector(VALUE_CELL_SELECTOR);
+				if (!valueCell) {
+					return;
+				}
+				valueCell.querySelectorAll(CONTROL_SELECTOR).forEach(control => {
+					main_core.Dom.attr(control, 'aria-required', 'true');
+				});
+			});
+		}
+
+		/**
+		 * Names the button of a tag selector by the label cell of its row. Alone the button says nothing
+		 * but its own caption ("select"), while the name of the field and its required mark land on the
+		 * hidden input the keyboard never reaches. The label goes as aria-labelledby together with the
+		 * button itself, so the caption stays part of the name and the required mark of the row comes
+		 * along: aria-required is not allowed on the button role.
+		 */
+		#nameTagSelectorButtons(formRoot) {
+			formRoot.querySelectorAll(ROW_SELECTOR).forEach(row => {
+				const labelCell = row.querySelector(LABEL_CELL_SELECTOR);
+				const valueCell = row.querySelector(VALUE_CELL_SELECTOR);
+				if (!labelCell || !valueCell) {
+					return;
+				}
+				valueCell.querySelectorAll(TAG_SELECTOR_BUTTON_SELECTOR).forEach(button => {
+					if (button.hasAttribute('aria-labelledby')) {
+						return;
+					}
+					main_core.Dom.attr(button, 'aria-labelledby', `${ensureId(labelCell)} ${ensureId(button)}`);
+				});
+			});
+		}
+	}
+
 	const namespace = main_core.Reflection.namespace('BX.Lists.Component');
 	const HTML_ELEMENT_ID = 'lists-element-creation-guide';
 	const BP_STATE_FORM_NAME = 'lists_element_creation_guide_bp';
@@ -23,639 +384,436 @@ this.BX.Lists = this.BX.Lists || {};
 	const AJAX_COMPONENT = 'bitrix:lists.element.creation_guide';
 	const CLOSE_SLIDER_AFTER_SECONDS = 1;
 	const MIN_STEPS_COUNT = 2;
+
+	// The focus takes the heading of the first step with a delay on purpose: the slider applies its own
+	// initial focus once the frame of the wizard has loaded and would take the focus straight back. The
+	// pause also keeps the heading out of the speech of the slider that has just opened.
+	const FIRST_STEP_FOCUS_DELAY = 1000;
+	// how long the wizard keeps waiting for the frame of the slider to get the focus after that pause
+	const FIRST_STEP_FOCUS_RETRY_DELAY = 200;
+	const FIRST_STEP_FOCUS_ATTEMPTS = 20;
 	const STEPS = Object.freeze({
-	  DESCRIPTION: 'description',
-	  CONSTANTS: 'constants',
-	  FIELDS: 'fields',
-	  STATUS: 'status'
+		DESCRIPTION: 'description',
+		CONSTANTS: 'constants',
+		FIELDS: 'fields',
+		STATUS: 'status'
+	});
+	const STEP_TITLE_MESSAGES = Object.freeze({
+		[STEPS.DESCRIPTION]: 'LISTS_ELEMENT_CREATION_GUIDE_CMP_STEP_RECOMMENDATION',
+		[STEPS.CONSTANTS]: 'LISTS_ELEMENT_CREATION_GUIDE_CMP_STEP_CONSTANTS',
+		[STEPS.FIELDS]: 'LISTS_ELEMENT_CREATION_GUIDE_CMP_STEP_FIELDS',
+		[STEPS.STATUS]: 'LISTS_ELEMENT_CREATION_GUIDE_CMP_STEP_STATUS'
 	});
 	const ERRORS = Object.freeze({
-	  NETWORK_ERROR: 'LISTS_ELEMENT_CREATION_GUIDE_CMP_NETWORK_ERROR'
+		NETWORK_ERROR: 'LISTS_ELEMENT_CREATION_GUIDE_CMP_NETWORK_ERROR'
 	});
-	var _steps = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("steps");
-	var _name = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("name");
-	var _description = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("description");
-	var _duration = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("duration");
-	var _signedParameters = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("signedParameters");
-	var _templateIds = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("templateIds");
-	var _iBlockId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("iBlockId");
-	var _currentStep = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("currentStep");
-	var _startTime = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("startTime");
-	var _descriptionNode = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("descriptionNode");
-	var _durationNode = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("durationNode");
-	var _difference = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("difference");
-	var _canUserTuningStates = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("canUserTuningStates");
-	var _isAdminLoaded = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isAdminLoaded");
-	var _isLoading = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isLoading");
-	var _stepsEnterTime = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("stepsEnterTime");
-	var _formData = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("formData");
-	var _messageBox = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("messageBox");
-	var _canClose = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("canClose");
-	var _setCurrentStep = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setCurrentStep");
-	var _getCurrentStep = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getCurrentStep");
-	var _currentStepIndex = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("currentStepIndex");
-	var _fillSteps = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("fillSteps");
-	var _toggleButtons = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("toggleButtons");
-	var _isFirstStep = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isFirstStep");
-	var _isLastStep = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isLastStep");
-	var _hideButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("hideButton");
-	var _disableButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("disableButton");
-	var _removeWaitFromButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("removeWaitFromButton");
-	var _setWaitToButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setWaitToButton");
-	var _showButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showButton");
-	var _enableButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("enableButton");
-	var _renderProgressBar = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderProgressBar");
-	var _renderFirstStep = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderFirstStep");
-	var _renderDescription = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderDescription");
-	var _hasDescription = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("hasDescription");
-	var _renderExpandDescriptionNode = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderExpandDescriptionNode");
-	var _toggleDescription = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("toggleDescription");
-	var _renderDuration = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderDuration");
-	var _handleDurationHintClick = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleDurationHintClick");
-	var _renderStatusStep = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderStatusStep");
-	var _changeStep = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("changeStep");
-	var _loadAdminList = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("loadAdminList");
-	var _renderAdminList = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderAdminList");
-	var _notifyAdmin = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("notifyAdmin");
-	var _setAllConstants = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setAllConstants");
-	var _setConstants = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setConstants");
-	var _createElement = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("createElement");
-	var _appendSectionFormData = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("appendSectionFormData");
-	var _appendBPFormData = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("appendBPFormData");
-	var _appendStateFormData = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("appendStateFormData");
-	var _showErrors = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showErrors");
-	var _getErrorByCode = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getErrorByCode");
-	var _cleanErrors = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("cleanErrors");
-	var _startLoading = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("startLoading");
-	var _disableAllButtons = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("disableAllButtons");
-	var _finishLoading = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("finishLoading");
-	var _enableAllButtons = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("enableAllButtons");
-	var _addNotTunedConstantsHint = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("addNotTunedConstantsHint");
-	var _removeNotTunedConstantsHint = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("removeNotTunedConstantsHint");
-	var _sendCreationAnalytics = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sendCreationAnalytics");
-	var _getAnalyticsSection = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getAnalyticsSection");
-	var _isChangedFormData = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isChangedFormData");
-	var _showConfirmDialog = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showConfirmDialog");
+	const ERROR_MESSAGE_ID_PREFIX = `${HTML_ELEMENT_ID}-error`;
+	const ERROR_REGION_TEST_ID = `${HTML_ELEMENT_ID}-error-alert`;
+
+	// ui.button.panel marks a button by its type, and two of the three buttons here share one type:
+	// the wizard puts its own marks on them, by the ids it passes to the panel
+	const NAVIGATION_BUTTON_TEST_IDS = Object.freeze({
+		[`${HTML_ELEMENT_ID}-back-button`]: `${HTML_ELEMENT_ID}-back-btn`,
+		[`${HTML_ELEMENT_ID}-next-button`]: `${HTML_ELEMENT_ID}-next-btn`,
+		[`${HTML_ELEMENT_ID}-create-button`]: `${HTML_ELEMENT_ID}-create-btn`
+	});
+	function getStepTitle(step) {
+		return main_core.Loc.getMessage(STEP_TITLE_MESSAGES[step]);
+	}
+
+	/**
+	 * The role lives on this node and not on the permanent container: a region that is always there
+	 * announces itself on every redraw of a step. The name of the region is a hidden text inside it
+	 * rather than an attribute on it, because some screen readers voice such a name instead of the content.
+	 * The node takes the focus of a rejected save when no control of the step can, hence the Tab-less stop.
+	 *
+	 * The mark comes from the outside: one region stands in every container that got a message, so a mark
+	 * of its own is the only way to address a single one of them.
+	 */
+	function renderErrorRegion(messageNodes, testId) {
+		return main_core.Tag.render`
+		<div role="alert" tabindex="-1" data-testid="${testId}">
+			${visuallyHidden(main_core.Loc.getMessage('LISTS_ELEMENT_CREATION_GUIDE_CMP_ERRORS_LABEL'))}
+			<div class="ui-alert ui-alert-danger">
+				<span class="ui-alert-message">${separateWithLineBreaks(messageNodes)}</span>
+			</div>
+		</div>
+	`;
+	}
+	function separateWithLineBreaks(nodes) {
+		return nodes.flatMap((node, index) => index === 0 ? [node] : [main_core.Tag.render`<br>`, node]);
+	}
+
+	// the container a message goes to, together with the mark of the alert region of that container
+
 	class ElementCreationGuide {
-	  constructor(_props) {
-	    Object.defineProperty(this, _showConfirmDialog, {
-	      value: _showConfirmDialog2
-	    });
-	    Object.defineProperty(this, _isChangedFormData, {
-	      value: _isChangedFormData2
-	    });
-	    Object.defineProperty(this, _getAnalyticsSection, {
-	      value: _getAnalyticsSection2
-	    });
-	    Object.defineProperty(this, _sendCreationAnalytics, {
-	      value: _sendCreationAnalytics2
-	    });
-	    Object.defineProperty(this, _removeNotTunedConstantsHint, {
-	      value: _removeNotTunedConstantsHint2
-	    });
-	    Object.defineProperty(this, _addNotTunedConstantsHint, {
-	      value: _addNotTunedConstantsHint2
-	    });
-	    Object.defineProperty(this, _enableAllButtons, {
-	      value: _enableAllButtons2
-	    });
-	    Object.defineProperty(this, _finishLoading, {
-	      value: _finishLoading2
-	    });
-	    Object.defineProperty(this, _disableAllButtons, {
-	      value: _disableAllButtons2
-	    });
-	    Object.defineProperty(this, _startLoading, {
-	      value: _startLoading2
-	    });
-	    Object.defineProperty(this, _cleanErrors, {
-	      value: _cleanErrors2
-	    });
-	    Object.defineProperty(this, _getErrorByCode, {
-	      value: _getErrorByCode2
-	    });
-	    Object.defineProperty(this, _showErrors, {
-	      value: _showErrors2
-	    });
-	    Object.defineProperty(this, _appendStateFormData, {
-	      value: _appendStateFormData2
-	    });
-	    Object.defineProperty(this, _appendBPFormData, {
-	      value: _appendBPFormData2
-	    });
-	    Object.defineProperty(this, _appendSectionFormData, {
-	      value: _appendSectionFormData2
-	    });
-	    Object.defineProperty(this, _createElement, {
-	      value: _createElement2
-	    });
-	    Object.defineProperty(this, _setConstants, {
-	      value: _setConstants2
-	    });
-	    Object.defineProperty(this, _setAllConstants, {
-	      value: _setAllConstants2
-	    });
-	    Object.defineProperty(this, _notifyAdmin, {
-	      value: _notifyAdmin2
-	    });
-	    Object.defineProperty(this, _renderAdminList, {
-	      value: _renderAdminList2
-	    });
-	    Object.defineProperty(this, _loadAdminList, {
-	      value: _loadAdminList2
-	    });
-	    Object.defineProperty(this, _changeStep, {
-	      value: _changeStep2
-	    });
-	    Object.defineProperty(this, _renderStatusStep, {
-	      value: _renderStatusStep2
-	    });
-	    Object.defineProperty(this, _handleDurationHintClick, {
-	      value: _handleDurationHintClick2
-	    });
-	    Object.defineProperty(this, _renderDuration, {
-	      value: _renderDuration2
-	    });
-	    Object.defineProperty(this, _toggleDescription, {
-	      value: _toggleDescription2
-	    });
-	    Object.defineProperty(this, _renderExpandDescriptionNode, {
-	      value: _renderExpandDescriptionNode2
-	    });
-	    Object.defineProperty(this, _hasDescription, {
-	      value: _hasDescription2
-	    });
-	    Object.defineProperty(this, _renderDescription, {
-	      value: _renderDescription2
-	    });
-	    Object.defineProperty(this, _renderFirstStep, {
-	      value: _renderFirstStep2
-	    });
-	    Object.defineProperty(this, _renderProgressBar, {
-	      value: _renderProgressBar2
-	    });
-	    Object.defineProperty(this, _enableButton, {
-	      value: _enableButton2
-	    });
-	    Object.defineProperty(this, _showButton, {
-	      value: _showButton2
-	    });
-	    Object.defineProperty(this, _setWaitToButton, {
-	      value: _setWaitToButton2
-	    });
-	    Object.defineProperty(this, _removeWaitFromButton, {
-	      value: _removeWaitFromButton2
-	    });
-	    Object.defineProperty(this, _disableButton, {
-	      value: _disableButton2
-	    });
-	    Object.defineProperty(this, _hideButton, {
-	      value: _hideButton2
-	    });
-	    Object.defineProperty(this, _isLastStep, {
-	      value: _isLastStep2
-	    });
-	    Object.defineProperty(this, _isFirstStep, {
-	      value: _isFirstStep2
-	    });
-	    Object.defineProperty(this, _toggleButtons, {
-	      value: _toggleButtons2
-	    });
-	    Object.defineProperty(this, _fillSteps, {
-	      value: _fillSteps2
-	    });
-	    Object.defineProperty(this, _currentStepIndex, {
-	      get: _get_currentStepIndex,
-	      set: void 0
-	    });
-	    Object.defineProperty(this, _getCurrentStep, {
-	      value: _getCurrentStep2
-	    });
-	    Object.defineProperty(this, _setCurrentStep, {
-	      value: _setCurrentStep2
-	    });
-	    Object.defineProperty(this, _steps, {
-	      writable: true,
-	      value: []
-	    });
-	    Object.defineProperty(this, _name, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _description, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _duration, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _signedParameters, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _templateIds, {
-	      writable: true,
-	      value: []
-	    });
-	    Object.defineProperty(this, _iBlockId, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _currentStep, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _startTime, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _descriptionNode, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _durationNode, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _difference, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _canUserTuningStates, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _isAdminLoaded, {
-	      writable: true,
-	      value: false
-	    });
-	    Object.defineProperty(this, _isLoading, {
-	      writable: true,
-	      value: false
-	    });
-	    Object.defineProperty(this, _stepsEnterTime, {
-	      writable: true,
-	      value: new Map()
-	    });
-	    Object.defineProperty(this, _formData, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _messageBox, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _canClose, {
-	      writable: true,
-	      value: false
-	    });
-	    if (!main_core.Type.isStringFilled(_props.signedParameters)) {
-	      throw new TypeError('signedParameters must be filled string');
-	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _signedParameters)[_signedParameters] = _props.signedParameters;
-	    babelHelpers.classPrivateFieldLooseBase(this, _iBlockId)[_iBlockId] = _props.iBlockId;
-	    babelHelpers.classPrivateFieldLooseBase(this, _name)[_name] = main_core.Type.isString(_props.name) ? _props.name : '';
-	    babelHelpers.classPrivateFieldLooseBase(this, _description)[_description] = main_core.Type.isString(_props.description) ? _props.description : '';
-	    if (main_core.Type.isInteger(_props.duration) && _props.duration >= 0) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _duration)[_duration] = _props.duration;
-	    }
-	    if (main_core.Type.isArrayFilled(_props.bpTemplateIds)) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _templateIds)[_templateIds] = _props.bpTemplateIds;
-	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _canUserTuningStates)[_canUserTuningStates] = main_core.Type.isBoolean(_props.canUserTuningStates) ? _props.canUserTuningStates : false;
-	    babelHelpers.classPrivateFieldLooseBase(this, _startTime)[_startTime] = Math.round(Date.now() / 1000);
-	    babelHelpers.classPrivateFieldLooseBase(this, _setCurrentStep)[_setCurrentStep](STEPS.DESCRIPTION);
-	    babelHelpers.classPrivateFieldLooseBase(this, _fillSteps)[_fillSteps](_props);
-	    babelHelpers.classPrivateFieldLooseBase(this, _toggleButtons)[_toggleButtons]();
-	    babelHelpers.classPrivateFieldLooseBase(this, _renderProgressBar)[_renderProgressBar]();
-	    babelHelpers.classPrivateFieldLooseBase(this, _renderFirstStep)[_renderFirstStep]();
-	    main_core.Event.EventEmitter.subscribe('SidePanel.Slider:onClose', event => {
-	      if (event.target.getWindow() === window && babelHelpers.classPrivateFieldLooseBase(this, _isChangedFormData)[_isChangedFormData]() && !babelHelpers.classPrivateFieldLooseBase(this, _canClose)[_canClose]) {
-	        var _babelHelpers$classPr;
-	        event.getCompatData()[0].denyAction();
-	        if (!((_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _messageBox)[_messageBox]) != null && _babelHelpers$classPr.getPopupWindow().isShown())) {
-	          babelHelpers.classPrivateFieldLooseBase(this, _showConfirmDialog)[_showConfirmDialog](event.target);
-	        }
-	      }
-	    });
-	  }
-	  next() {
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _isLoading)[_isLoading] || babelHelpers.classPrivateFieldLooseBase(this, _isLastStep)[_isLastStep]()) {
-	      return;
-	    }
-	    if (!babelHelpers.classPrivateFieldLooseBase(this, _formData)[_formData]) {
-	      const form = document.forms.form_lists_element_creation_guide_element;
-	      babelHelpers.classPrivateFieldLooseBase(this, _formData)[_formData] = form ? new FormData(form) : new FormData();
-	      babelHelpers.classPrivateFieldLooseBase(this, _appendSectionFormData)[_appendSectionFormData](babelHelpers.classPrivateFieldLooseBase(this, _formData)[_formData]);
-	      babelHelpers.classPrivateFieldLooseBase(this, _appendBPFormData)[_appendBPFormData](babelHelpers.classPrivateFieldLooseBase(this, _formData)[_formData]);
-	    }
-	    const currentStep = babelHelpers.classPrivateFieldLooseBase(this, _getCurrentStep)[_getCurrentStep]();
-	    const nextStep = babelHelpers.classPrivateFieldLooseBase(this, _steps)[_steps][babelHelpers.classPrivateFieldLooseBase(this, _currentStepIndex)[_currentStepIndex] + 1];
-	    if (currentStep.step === STEPS.CONSTANTS && babelHelpers.classPrivateFieldLooseBase(this, _canUserTuningStates)[_canUserTuningStates]) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _startLoading)[_startLoading]();
-	      babelHelpers.classPrivateFieldLooseBase(this, _setAllConstants)[_setAllConstants]().then(() => {
-	        babelHelpers.classPrivateFieldLooseBase(this, _changeStep)[_changeStep]();
-	      }).catch(() => {
-	        babelHelpers.classPrivateFieldLooseBase(this, _toggleButtons)[_toggleButtons]();
-	      }).finally(babelHelpers.classPrivateFieldLooseBase(this, _finishLoading)[_finishLoading].bind(this));
-	      return;
-	    }
-	    if (nextStep.step === STEPS.CONSTANTS && !babelHelpers.classPrivateFieldLooseBase(this, _canUserTuningStates)[_canUserTuningStates] && !babelHelpers.classPrivateFieldLooseBase(this, _isAdminLoaded)[_isAdminLoaded]) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _startLoading)[_startLoading]();
-	      babelHelpers.classPrivateFieldLooseBase(this, _loadAdminList)[_loadAdminList]().then(() => {}).catch(() => {}).finally(() => {
-	        babelHelpers.classPrivateFieldLooseBase(this, _isAdminLoaded)[_isAdminLoaded] = true;
-	        babelHelpers.classPrivateFieldLooseBase(this, _finishLoading)[_finishLoading]();
-	        babelHelpers.classPrivateFieldLooseBase(this, _changeStep)[_changeStep]();
-	      });
-	      return;
-	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _changeStep)[_changeStep]();
-	  }
-	  back() {
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _isFirstStep)[_isFirstStep]()) {
-	      if (main_core.Reflection.getClass('BX.SidePanel') && BX.SidePanel.Instance.getSliderByWindow(window)) {
-	        BX.SidePanel.Instance.getSliderByWindow(window).close(false);
-	        return;
-	      }
-	      babelHelpers.classPrivateFieldLooseBase(this, _setCurrentStep)[_setCurrentStep]();
-	      return;
-	    }
-	    const currentStepIndex = babelHelpers.classPrivateFieldLooseBase(this, _steps)[_steps].findIndex(step => step.step === babelHelpers.classPrivateFieldLooseBase(this, _currentStep)[_currentStep]);
-	    const currentStep = babelHelpers.classPrivateFieldLooseBase(this, _steps)[_steps][currentStepIndex];
-	    const previousStep = babelHelpers.classPrivateFieldLooseBase(this, _steps)[_steps][currentStepIndex - 1];
-	    main_core.Dom.removeClass(currentStep.progressBarNode, '--active');
-	    main_core.Dom.toggleClass(previousStep.progressBarNode, ['--active', '--complete']);
-	    babelHelpers.classPrivateFieldLooseBase(this, _cleanErrors)[_cleanErrors]();
-	    main_core.Dom.addClass(currentStep.contentNode, '--hidden');
-	    main_core.Dom.removeClass(previousStep.contentNode, '--hidden');
-	    if (previousStep.step === STEPS.DESCRIPTION) {
-	      main_core.Dom.removeClass(babelHelpers.classPrivateFieldLooseBase(this, _durationNode)[_durationNode], '--hidden');
-	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _setCurrentStep)[_setCurrentStep](previousStep.step);
-	    babelHelpers.classPrivateFieldLooseBase(this, _toggleButtons)[_toggleButtons]();
-	  }
-	  async create() {
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _isLoading)[_isLoading] || !babelHelpers.classPrivateFieldLooseBase(this, _isLastStep)[_isLastStep]() || babelHelpers.classPrivateFieldLooseBase(this, _currentStep)[_currentStep] === STEPS.CONSTANTS && !babelHelpers.classPrivateFieldLooseBase(this, _canUserTuningStates)[_canUserTuningStates]) {
-	      return;
-	    }
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _currentStep)[_currentStep] === STEPS.CONSTANTS) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _startLoading)[_startLoading]();
-	      let hasErrors = false;
-	      await babelHelpers.classPrivateFieldLooseBase(this, _setAllConstants)[_setAllConstants]().catch(() => {
-	        babelHelpers.classPrivateFieldLooseBase(this, _toggleButtons)[_toggleButtons]();
-	        hasErrors = true;
-	      });
-	      babelHelpers.classPrivateFieldLooseBase(this, _finishLoading)[_finishLoading]();
-	      if (hasErrors) {
-	        return;
-	      }
-	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _startLoading)[_startLoading]();
-	    babelHelpers.classPrivateFieldLooseBase(this, _createElement)[_createElement]().then(() => {
-	      babelHelpers.classPrivateFieldLooseBase(this, _sendCreationAnalytics)[_sendCreationAnalytics]();
-	      if (main_core.Reflection.getClass('BX.SidePanel') && BX.SidePanel.Instance.getSliderByWindow(window)) {
-	        babelHelpers.classPrivateFieldLooseBase(this, _canClose)[_canClose] = true;
-	        setTimeout(() => {
-	          BX.SidePanel.Instance.getSliderByWindow(window).close(false);
-	        }, CLOSE_SLIDER_AFTER_SECONDS * 1000);
-	        BX.SidePanel.Instance.getSliderByWindow(window).close(false);
-	        BX.SidePanel.Instance.postMessage(window, 'BX.Lists.Element.CreationGuide:onElementCreated', {
-	          iBlockId: babelHelpers.classPrivateFieldLooseBase(this, _iBlockId)[_iBlockId]
-	        });
-	      }
-	      babelHelpers.classPrivateFieldLooseBase(this, _changeStep)[_changeStep]();
-	    }).catch(error => {
-	      babelHelpers.classPrivateFieldLooseBase(this, _toggleButtons)[_toggleButtons]();
-	      babelHelpers.classPrivateFieldLooseBase(this, _sendCreationAnalytics)[_sendCreationAnalytics](error);
-	    }).finally(babelHelpers.classPrivateFieldLooseBase(this, _finishLoading)[_finishLoading].bind(this));
-	  }
-	  checkEqualFileField(fileFieldA, fileFieldB) {
-	    if (!fileFieldB) {
-	      return false;
-	    }
-	    return fileFieldA.name === fileFieldB.name;
-	  }
-	}
-	function _setCurrentStep2(step) {
-	  babelHelpers.classPrivateFieldLooseBase(this, _currentStep)[_currentStep] = step;
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _currentStep)[_currentStep] === STEPS.DESCRIPTION) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _stepsEnterTime)[_stepsEnterTime].set(STEPS.DESCRIPTION, Date.now());
-	  } else {
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _stepsEnterTime)[_stepsEnterTime].has(STEPS.DESCRIPTION)) {
-	      const diffTime = Date.now() - babelHelpers.classPrivateFieldLooseBase(this, _stepsEnterTime)[_stepsEnterTime].get(STEPS.DESCRIPTION);
-	      main_core.Runtime.loadExtension('ui.analytics').then(({
-	        sendData
-	      }) => {
-	        sendData({
-	          tool: 'automation',
-	          category: 'bizproc_operations',
-	          event: 'process_instructions_read',
-	          p1: babelHelpers.classPrivateFieldLooseBase(this, _name)[_name],
-	          p4: Math.round(diffTime / 1000)
-	        });
-	      }).catch(() => {});
-	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _stepsEnterTime)[_stepsEnterTime].delete(STEPS.DESCRIPTION);
-	  }
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _currentStep)[_currentStep] === STEPS.STATUS) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _renderStatusStep)[_renderStatusStep]();
-	  }
-	}
-	function _getCurrentStep2() {
-	  return babelHelpers.classPrivateFieldLooseBase(this, _steps)[_steps][babelHelpers.classPrivateFieldLooseBase(this, _currentStepIndex)[_currentStepIndex]];
-	}
-	function _get_currentStepIndex() {
-	  return babelHelpers.classPrivateFieldLooseBase(this, _steps)[_steps].findIndex(step => step.step === babelHelpers.classPrivateFieldLooseBase(this, _currentStep)[_currentStep]);
-	}
-	function _fillSteps2(props) {
-	  const contentNode = document.querySelectorAll('.list-el-cg__content >.list-el-cg__content-body');
-	  const showBPConstantsStep = main_core.Type.isBoolean(props.hasStatesToTuning) ? props.hasStatesToTuning : false;
-	  const showFieldsStep = main_core.Type.isBoolean(props.hasFieldsToShow) ? props.hasFieldsToShow : false;
-	  babelHelpers.classPrivateFieldLooseBase(this, _steps)[_steps].push({
-	    step: STEPS.DESCRIPTION,
-	    contentNode: contentNode.item(0),
-	    progressBarNode: null
-	  });
-	  if (showBPConstantsStep) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _steps)[_steps].push({
-	      step: STEPS.CONSTANTS,
-	      contentNode: contentNode.item(1),
-	      progressBarNode: null
-	    });
-	  }
-	  if (showFieldsStep) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _steps)[_steps].push({
-	      step: STEPS.FIELDS,
-	      contentNode: contentNode.item(2),
-	      progressBarNode: null
-	    });
-	  }
-	  babelHelpers.classPrivateFieldLooseBase(this, _steps)[_steps].push({
-	    step: STEPS.STATUS,
-	    contentNode: contentNode.item(3),
-	    progressBarNode: null
-	  });
-	}
-	function _toggleButtons2() {
-	  const backButton = document.getElementById(`${HTML_ELEMENT_ID}-back-button`);
-	  const nextButton = document.getElementById(`${HTML_ELEMENT_ID}-next-button`);
-	  const createButton = document.getElementById(`${HTML_ELEMENT_ID}-create-button`);
-	  babelHelpers.classPrivateFieldLooseBase(this, _removeNotTunedConstantsHint)[_removeNotTunedConstantsHint](createButton);
-	  babelHelpers.classPrivateFieldLooseBase(this, _removeNotTunedConstantsHint)[_removeNotTunedConstantsHint](nextButton);
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _isFirstStep)[_isFirstStep]()) {
-	    const showNextStep = babelHelpers.classPrivateFieldLooseBase(this, _steps)[_steps].length > MIN_STEPS_COUNT;
-	    babelHelpers.classPrivateFieldLooseBase(this, _hideButton)[_hideButton](showNextStep ? createButton : nextButton);
-	    babelHelpers.classPrivateFieldLooseBase(this, _showButton)[_showButton](showNextStep ? nextButton : createButton);
-	  } else if (babelHelpers.classPrivateFieldLooseBase(this, _isLastStep)[_isLastStep]()) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _hideButton)[_hideButton](nextButton);
-	    babelHelpers.classPrivateFieldLooseBase(this, _showButton)[_showButton](createButton);
-	  } else {
-	    babelHelpers.classPrivateFieldLooseBase(this, _hideButton)[_hideButton](createButton);
-	    babelHelpers.classPrivateFieldLooseBase(this, _showButton)[_showButton](nextButton);
-	  }
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _currentStep)[_currentStep] === STEPS.CONSTANTS && !babelHelpers.classPrivateFieldLooseBase(this, _canUserTuningStates)[_canUserTuningStates]) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _disableButton)[_disableButton](createButton);
-	    babelHelpers.classPrivateFieldLooseBase(this, _disableButton)[_disableButton](nextButton);
-	    babelHelpers.classPrivateFieldLooseBase(this, _addNotTunedConstantsHint)[_addNotTunedConstantsHint](createButton);
-	    babelHelpers.classPrivateFieldLooseBase(this, _addNotTunedConstantsHint)[_addNotTunedConstantsHint](nextButton);
-	  }
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _currentStep)[_currentStep] === STEPS.STATUS) {
-	    main_core.Dom.remove(backButton);
-	    main_core.Dom.remove(nextButton);
-	    main_core.Dom.remove(createButton);
-	  }
-	  setTimeout(() => {
-	    babelHelpers.classPrivateFieldLooseBase(this, _removeWaitFromButton)[_removeWaitFromButton](backButton);
-	    babelHelpers.classPrivateFieldLooseBase(this, _removeWaitFromButton)[_removeWaitFromButton](nextButton);
-	    babelHelpers.classPrivateFieldLooseBase(this, _removeWaitFromButton)[_removeWaitFromButton](createButton);
-	  }, 100);
-	}
-	function _isFirstStep2() {
-	  return babelHelpers.classPrivateFieldLooseBase(this, _currentStep)[_currentStep] === STEPS.DESCRIPTION;
-	}
-	function _isLastStep2() {
-	  return babelHelpers.classPrivateFieldLooseBase(this, _currentStep)[_currentStep] === STEPS.DESCRIPTION && babelHelpers.classPrivateFieldLooseBase(this, _steps)[_steps].length === MIN_STEPS_COUNT || babelHelpers.classPrivateFieldLooseBase(this, _currentStep)[_currentStep] === STEPS.CONSTANTS && babelHelpers.classPrivateFieldLooseBase(this, _steps)[_steps].length === MIN_STEPS_COUNT + 1 || babelHelpers.classPrivateFieldLooseBase(this, _currentStep)[_currentStep] === STEPS.FIELDS;
-	}
-	function _hideButton2(button) {
-	  if (main_core.Type.isDomNode(button)) {
-	    main_core.Dom.addClass(button, ['--hidden']);
-	    babelHelpers.classPrivateFieldLooseBase(this, _disableButton)[_disableButton](button);
-	  }
-	}
-	function _disableButton2(button) {
-	  if (main_core.Type.isDomNode(button)) {
-	    main_core.Dom.addClass(button, ['ui-btn-disabled']);
-	    main_core.Dom.attr(button, 'disabled', 'disabled');
-	  }
-	}
-	function _removeWaitFromButton2(button) {
-	  if (main_core.Type.isDomNode(button)) {
-	    main_core.Dom.removeClass(button, 'ui-btn-wait');
-	  }
-	}
-	function _setWaitToButton2(button) {
-	  if (main_core.Type.isDomNode(button)) {
-	    main_core.Dom.addClass(button, 'ui-btn-wait');
-	  }
-	}
-	function _showButton2(button) {
-	  if (main_core.Type.isDomNode(button)) {
-	    main_core.Dom.removeClass(button, ['--hidden']);
-	    babelHelpers.classPrivateFieldLooseBase(this, _enableButton)[_enableButton](button);
-	  }
-	}
-	function _enableButton2(button) {
-	  if (main_core.Type.isDomNode(button)) {
-	    main_core.Dom.removeClass(button, ['ui-btn-disabled']);
-	    main_core.Dom.attr(button, 'disabled', null);
-	  }
-	}
-	function _renderProgressBar2() {
-	  const container = document.getElementById(`${HTML_ELEMENT_ID}-breadcrumbs`);
-	  if (!container) {
-	    return;
-	  }
-	  const {
-	    step0,
-	    step1,
-	    step2,
-	    step3
-	  } = main_core.Tag.render(_t || (_t = _`
+		#steps = [];
+		// every step container the markup renders, including the ones the active configuration skips
+		#stepContainers = [];
+		#name;
+		#description;
+		#duration = null;
+		#signedParameters;
+		#templateIds = [];
+		#iBlockId = null;
+		#currentStep;
+		#startTime;
+		#descriptionNode;
+		#durationNode;
+		#difference;
+		#canUserTuningStates;
+		#isAdminLoaded = false;
+		#isLoading = false;
+		#stepsEnterTime = new Map();
+		#formData;
+		#messageBox;
+		#canClose = false;
+		#formsA11y = new StepFormsA11y({
+			calendarButtonLabel: main_core.Loc.getMessage('LISTS_ELEMENT_CREATION_GUIDE_CMP_CALENDAR_BUTTON'),
+			calendarButtonTestIdPrefix: `${HTML_ELEMENT_ID}-calendar-btn`
+		});
+		constructor(props) {
+			if (!main_core.Type.isStringFilled(props.signedParameters)) {
+				throw new TypeError('signedParameters must be filled string');
+			}
+			this.#signedParameters = props.signedParameters;
+			this.#iBlockId = props.iBlockId;
+			this.#name = main_core.Type.isString(props.name) ? props.name : '';
+			this.#description = main_core.Type.isString(props.description) ? props.description : '';
+			if (main_core.Type.isInteger(props.duration) && props.duration >= 0) {
+				this.#duration = props.duration;
+			}
+			if (main_core.Type.isArrayFilled(props.bpTemplateIds)) {
+				this.#templateIds = props.bpTemplateIds;
+			}
+			this.#canUserTuningStates = main_core.Type.isBoolean(props.canUserTuningStates) ? props.canUserTuningStates : false;
+			this.#startTime = Math.round(Date.now() / 1000);
+			this.#setCurrentStep(STEPS.DESCRIPTION);
+			this.#fillSteps(props);
+			this.#markNavigationButtons();
+			this.#toggleButtons();
+			this.#renderProgressBar();
+			this.#renderFirstStep();
+			this.#initStepA11y();
+			nameSliderDialog(main_core.Loc.getMessage('LISTS_ELEMENT_CREATION_GUIDE_CMP_DIALOG_LABEL'));
+			main_core.Event.EventEmitter.subscribe('SidePanel.Slider:onClose', event => {
+				if (event.target.getWindow() === window && this.#isChangedFormData() && !this.#canClose) {
+					event.getCompatData()[0].denyAction();
+					if (!this.#messageBox?.getPopupWindow().isShown()) {
+						this.#showConfirmDialog(event.target);
+					}
+				}
+			});
+		}
+		#setCurrentStep(step) {
+			this.#currentStep = step;
+			if (this.#currentStep === STEPS.DESCRIPTION) {
+				this.#stepsEnterTime.set(STEPS.DESCRIPTION, Date.now());
+			} else {
+				if (this.#stepsEnterTime.has(STEPS.DESCRIPTION)) {
+					const diffTime = Date.now() - this.#stepsEnterTime.get(STEPS.DESCRIPTION);
+					main_core.Runtime.loadExtension('ui.analytics').then(({
+						sendData
+					}) => {
+						sendData({
+							tool: 'automation',
+							category: 'bizproc_operations',
+							event: 'process_instructions_read',
+							p1: this.#name,
+							p4: Math.round(diffTime / 1000)
+						});
+					}).catch(() => {});
+				}
+				this.#stepsEnterTime.delete(STEPS.DESCRIPTION);
+			}
+			if (this.#currentStep === STEPS.STATUS) {
+				this.#renderStatusStep();
+			}
+		}
+		#getCurrentStep() {
+			return this.#steps[this.#currentStepIndex];
+		}
+		get #currentStepIndex() {
+			return this.#steps.findIndex(step => step.step === this.#currentStep);
+		}
+
+		/**
+		 * The step the wizard opens on gets its heading focused too: a change of step is not the only
+		 * moment a user of a screen reader needs to know where the wizard stands.
+		 */
+		#initStepA11y() {
+			const firstStep = this.#steps[0];
+			this.#steps.forEach(step => {
+				step.headingNode = addStepHeading(step.contentNode, this.#getStepHeadingTitle(step));
+			});
+			isolateInactiveSteps(this.#stepContainers, firstStep.contentNode);
+			this.#formsA11y.observeStepForms(firstStep.contentNode);
+			setTimeout(() => this.#focusFirstStepHeading(firstStep, FIRST_STEP_FOCUS_ATTEMPTS), FIRST_STEP_FOCUS_DELAY);
+		}
+
+		/**
+		 * A focus() call on a document that holds no focus of its own does nothing, and the frame of the
+		 * slider gets the focus later than the pause above (in Firefox by another half a second). So the
+		 * attempt is judged by its result and repeated until it takes, instead of being made once by a timer.
+		 */
+		#focusFirstStepHeading(firstStep, attemptsLeft) {
+			// a move to the next step takes over, and so does a user who has already put the focus on
+			// something in the wizard on their own: until then no element of this document holds the focus.
+			// The focus a user has taken above the frame of the wizard is left alone as well: the attempt is
+			// repeated for almost five seconds, and any of those repeats would pull such a focus into the frame
+			if (this.#currentStep !== firstStep.step || hasFocusedElement() || hasFocusAboveFrame()) {
+				return;
+			}
+			this.#focusStepHeading(firstStep);
+			if (document.activeElement !== firstStep.headingNode && attemptsLeft > 1) {
+				setTimeout(() => this.#focusFirstStepHeading(firstStep, attemptsLeft - 1), FIRST_STEP_FOCUS_RETRY_DELAY);
+			}
+		}
+
+		/**
+		 * Isolation goes together with the visibility switch, while the focus waits for the fade-in
+		 * (opacity transition, src/css/style.css). A cancelled fade means a newer step change took over.
+		 */
+		#switchStepA11y(previousStep, nextStep) {
+			this.#formsA11y.leaveStep(previousStep.contentNode);
+			this.#formsA11y.observeStepForms(nextStep.contentNode);
+			isolateInactiveSteps(this.#stepContainers, nextStep.contentNode);
+			const fadeIn = nextStep.contentNode.getAnimations().map(animation => animation.finished);
+			Promise.all(fadeIn).then(() => {
+				this.#focusStepHeading(nextStep);
+			}, () => {});
+		}
+		#focusStepHeading(step) {
+			// the status step closes the slider before any speech, and the start result is announced separately
+			if (step.step === STEPS.STATUS) {
+				return;
+			}
+			focusStepHeading(step.headingNode);
+		}
+
+		// the position of the step is part of its name: the step strip conveys it visually, and without it
+		// a user of a screen reader loses the only bearing on how far the wizard has gone
+		#getStepHeadingTitle(step) {
+			return main_core.Loc.getMessage('LISTS_ELEMENT_CREATION_GUIDE_CMP_STEP_ANNOUNCEMENT', {
+				'#CURRENT#': String(this.#steps.indexOf(step) + 1),
+				'#TOTAL#': String(this.#steps.length),
+				'#NAME#': getStepTitle(step.step)
+			});
+		}
+		#fillSteps(props) {
+			const contentNode = document.querySelectorAll('.list-el-cg__content >.list-el-cg__content-body');
+			this.#stepContainers = [...contentNode];
+			const showBPConstantsStep = main_core.Type.isBoolean(props.hasStatesToTuning) ? props.hasStatesToTuning : false;
+			const showFieldsStep = main_core.Type.isBoolean(props.hasFieldsToShow) ? props.hasFieldsToShow : false;
+			this.#steps.push({
+				step: STEPS.DESCRIPTION,
+				contentNode: contentNode.item(0),
+				progressBarNode: null,
+				headingNode: null
+			});
+			if (showBPConstantsStep) {
+				this.#steps.push({
+					step: STEPS.CONSTANTS,
+					contentNode: contentNode.item(1),
+					progressBarNode: null,
+					headingNode: null
+				});
+			}
+			if (showFieldsStep) {
+				this.#steps.push({
+					step: STEPS.FIELDS,
+					contentNode: contentNode.item(2),
+					progressBarNode: null,
+					headingNode: null
+				});
+			}
+			this.#steps.push({
+				step: STEPS.STATUS,
+				contentNode: contentNode.item(3),
+				progressBarNode: null,
+				headingNode: null
+			});
+		}
+		#markNavigationButtons() {
+			Object.entries(NAVIGATION_BUTTON_TEST_IDS).forEach(([buttonId, testId]) => {
+				main_core.Dom.attr(document.getElementById(buttonId), 'data-testid', testId);
+			});
+		}
+		#toggleButtons() {
+			const backButton = document.getElementById(`${HTML_ELEMENT_ID}-back-button`);
+			const nextButton = document.getElementById(`${HTML_ELEMENT_ID}-next-button`);
+			const createButton = document.getElementById(`${HTML_ELEMENT_ID}-create-button`);
+			this.#removeNotTunedConstantsHint(createButton);
+			this.#removeNotTunedConstantsHint(nextButton);
+			if (this.#isFirstStep()) {
+				const showNextStep = this.#steps.length > MIN_STEPS_COUNT;
+				this.#hideButton(showNextStep ? createButton : nextButton);
+				this.#showButton(showNextStep ? nextButton : createButton);
+			} else if (this.#isLastStep()) {
+				this.#hideButton(nextButton);
+				this.#showButton(createButton);
+			} else {
+				this.#hideButton(createButton);
+				this.#showButton(nextButton);
+			}
+			if (this.#currentStep === STEPS.CONSTANTS && !this.#canUserTuningStates) {
+				this.#disableButton(createButton);
+				this.#disableButton(nextButton);
+				this.#addNotTunedConstantsHint(createButton);
+				this.#addNotTunedConstantsHint(nextButton);
+			}
+			if (this.#currentStep === STEPS.STATUS) {
+				main_core.Dom.remove(backButton);
+				main_core.Dom.remove(nextButton);
+				main_core.Dom.remove(createButton);
+			}
+			setTimeout(() => {
+				this.#removeWaitFromButton(backButton);
+				this.#removeWaitFromButton(nextButton);
+				this.#removeWaitFromButton(createButton);
+			}, 100);
+		}
+		#isFirstStep() {
+			return this.#currentStep === STEPS.DESCRIPTION;
+		}
+		#isLastStep() {
+			return this.#currentStep === STEPS.DESCRIPTION && this.#steps.length === MIN_STEPS_COUNT || this.#currentStep === STEPS.CONSTANTS && this.#steps.length === MIN_STEPS_COUNT + 1 || this.#currentStep === STEPS.FIELDS;
+		}
+		#hideButton(button) {
+			if (main_core.Type.isDomNode(button)) {
+				main_core.Dom.addClass(button, ['--hidden']);
+				this.#disableButton(button);
+			}
+		}
+		#disableButton(button) {
+			if (main_core.Type.isDomNode(button)) {
+				main_core.Dom.addClass(button, ['ui-btn-disabled']);
+				main_core.Dom.attr(button, 'disabled', 'disabled');
+			}
+		}
+		#removeWaitFromButton(button) {
+			if (main_core.Type.isDomNode(button)) {
+				main_core.Dom.removeClass(button, 'ui-btn-wait');
+			}
+		}
+		#setWaitToButton(button) {
+			if (main_core.Type.isDomNode(button)) {
+				main_core.Dom.addClass(button, 'ui-btn-wait');
+			}
+		}
+		#showButton(button) {
+			if (main_core.Type.isDomNode(button)) {
+				main_core.Dom.removeClass(button, ['--hidden']);
+				this.#enableButton(button);
+			}
+		}
+		#enableButton(button) {
+			if (main_core.Type.isDomNode(button)) {
+				main_core.Dom.removeClass(button, ['ui-btn-disabled']);
+				main_core.Dom.attr(button, 'disabled', null);
+			}
+		}
+		#renderProgressBar() {
+			const container = document.getElementById(`${HTML_ELEMENT_ID}-breadcrumbs`);
+			if (!container) {
+				return;
+			}
+			const {
+				step0,
+				step1,
+				step2,
+				step3
+			} = main_core.Tag.render`
 			<div>
-				<div class="list-el-cg__breadcrumbs-item --active" ref="step0">
-					<span>${0}</span>
+				<div
+					class="list-el-cg__breadcrumbs-item --active"
+					ref="step0"
+					data-testid="${HTML_ELEMENT_ID}-steps-item-${STEPS.DESCRIPTION}"
+				>
+					<span>${main_core.Text.encode(getStepTitle(STEPS.DESCRIPTION))}</span>
 					<span class="ui-icon-set --chevron-right"></span>
 				</div>
-				<div class="list-el-cg__breadcrumbs-item" ref="step1">
-					<span>${0}</span>
+				<div
+					class="list-el-cg__breadcrumbs-item"
+					ref="step1"
+					data-testid="${HTML_ELEMENT_ID}-steps-item-${STEPS.CONSTANTS}"
+				>
+					<span>${main_core.Text.encode(getStepTitle(STEPS.CONSTANTS))}</span>
 					<span class="ui-icon-set --chevron-right"></span>
 				</div>
-				<div class="list-el-cg__breadcrumbs-item" ref="step2">
-					<span>${0}</span>
+				<div
+					class="list-el-cg__breadcrumbs-item"
+					ref="step2"
+					data-testid="${HTML_ELEMENT_ID}-steps-item-${STEPS.FIELDS}"
+				>
+					<span>${main_core.Text.encode(getStepTitle(STEPS.FIELDS))}</span>
 					<span class="ui-icon-set --chevron-right"></span>
 				</div>
-				<div class="list-el-cg__breadcrumbs-item" ref="step3">
-					<span>${0}</span>
+				<div
+					class="list-el-cg__breadcrumbs-item"
+					ref="step3"
+					data-testid="${HTML_ELEMENT_ID}-steps-item-${STEPS.STATUS}"
+				>
+					<span>${main_core.Text.encode(getStepTitle(STEPS.STATUS))}</span>
 					<span class="ui-icon-set --chevron-right"></span>
 				</div>
 			</div>
-		`), main_core.Text.encode(main_core.Loc.getMessage('LISTS_ELEMENT_CREATION_GUIDE_CMP_STEP_RECOMMENDATION')), main_core.Text.encode(main_core.Loc.getMessage('LISTS_ELEMENT_CREATION_GUIDE_CMP_STEP_CONSTANTS')), main_core.Text.encode(main_core.Loc.getMessage('LISTS_ELEMENT_CREATION_GUIDE_CMP_STEP_FIELDS')), main_core.Text.encode(main_core.Loc.getMessage('LISTS_ELEMENT_CREATION_GUIDE_CMP_STEP_STATUS')));
-	  babelHelpers.classPrivateFieldLooseBase(this, _steps)[_steps][0].progressBarNode = step0;
-	  main_core.Dom.append(step0, container);
-	  const constantsStep = babelHelpers.classPrivateFieldLooseBase(this, _steps)[_steps].find(step => step.step === STEPS.CONSTANTS);
-	  if (constantsStep) {
-	    constantsStep.progressBarNode = step1;
-	    main_core.Dom.append(step1, container);
-	  }
-	  const fieldsStep = babelHelpers.classPrivateFieldLooseBase(this, _steps)[_steps].find(step => step.step === STEPS.FIELDS);
-	  if (fieldsStep) {
-	    fieldsStep.progressBarNode = step2;
-	    main_core.Dom.append(step2, container);
-	  }
-	  const statusStep = babelHelpers.classPrivateFieldLooseBase(this, _steps)[_steps].find(step => step.step === STEPS.STATUS);
-	  if (statusStep) {
-	    statusStep.progressBarNode = step3;
-	    main_core.Dom.append(step3, container);
-	  }
-	}
-	function _renderFirstStep2() {
-	  const container = document.getElementById(`${HTML_ELEMENT_ID}-container`);
-	  const contentNode = babelHelpers.classPrivateFieldLooseBase(this, _steps)[_steps][0].contentNode;
-	  if (container && contentNode) {
-	    const description = babelHelpers.classPrivateFieldLooseBase(this, _renderDescription)[_renderDescription]();
-	    babelHelpers.classPrivateFieldLooseBase(this, _descriptionNode)[_descriptionNode] = description;
-	    main_core.Dom.append(description, contentNode);
-	    let expandNode = null;
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _hasDescription)[_hasDescription]()) {
-	      expandNode = babelHelpers.classPrivateFieldLooseBase(this, _renderExpandDescriptionNode)[_renderExpandDescriptionNode]();
-	      main_core.Dom.append(expandNode, contentNode);
-	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _durationNode)[_durationNode] = babelHelpers.classPrivateFieldLooseBase(this, _renderDuration)[_renderDuration]();
-	    main_core.Dom.append(babelHelpers.classPrivateFieldLooseBase(this, _durationNode)[_durationNode], container);
-	    if (expandNode) {
-	      const slider = document.querySelector('.ui-page-slider-workarea-content-padding');
-	      const difference = slider ? slider.offsetHeight - window.innerHeight : 0;
-	      babelHelpers.classPrivateFieldLooseBase(this, _difference)[_difference] = difference;
-	      if (difference > 0) {
-	        babelHelpers.classPrivateFieldLooseBase(this, _toggleDescription)[_toggleDescription]({
-	          target: expandNode
-	        });
-	      } else {
-	        main_core.Dom.remove(expandNode);
-	      }
-	    }
-	  }
-	}
-	function _renderDescription2() {
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _hasDescription)[_hasDescription]()) {
-	    return main_core.Tag.render(_t2 || (_t2 = _`
+		`;
+			this.#steps[0].progressBarNode = step0;
+			main_core.Dom.append(step0, container);
+			const constantsStep = this.#steps.find(step => step.step === STEPS.CONSTANTS);
+			if (constantsStep) {
+				constantsStep.progressBarNode = step1;
+				main_core.Dom.append(step1, container);
+			}
+			const fieldsStep = this.#steps.find(step => step.step === STEPS.FIELDS);
+			if (fieldsStep) {
+				fieldsStep.progressBarNode = step2;
+				main_core.Dom.append(step2, container);
+			}
+			const statusStep = this.#steps.find(step => step.step === STEPS.STATUS);
+			if (statusStep) {
+				statusStep.progressBarNode = step3;
+				main_core.Dom.append(step3, container);
+			}
+		}
+		#renderFirstStep() {
+			const container = document.getElementById(`${HTML_ELEMENT_ID}-container`);
+			const contentNode = this.#steps[0].contentNode;
+			if (container && contentNode) {
+				const description = this.#renderDescription();
+				this.#descriptionNode = description;
+				main_core.Dom.append(description, contentNode);
+				let expandNode = null;
+				if (this.#hasDescription()) {
+					expandNode = this.#renderExpandDescriptionNode();
+					main_core.Dom.append(expandNode, contentNode);
+				}
+				this.#durationNode = this.#renderDuration();
+				main_core.Dom.append(this.#durationNode, container);
+				if (expandNode) {
+					const slider = document.querySelector('.ui-page-slider-workarea-content-padding');
+					const difference = slider ? slider.offsetHeight - window.innerHeight : 0;
+					this.#difference = difference;
+					if (difference > 0) {
+						this.#toggleDescription({
+							target: expandNode
+						});
+					} else {
+						main_core.Dom.remove(expandNode);
+					}
+				}
+			}
+		}
+		#renderDescription() {
+			if (this.#hasDescription()) {
+				return main_core.Tag.render`
 				<div class="list-el-cg__content-wrapper">
-					${0}
+					${BX.util.nl2br(this.#description)}
 				</div>
-			`), BX.util.nl2br(babelHelpers.classPrivateFieldLooseBase(this, _description)[_description]));
-	  }
-	  return main_core.Tag.render(_t3 || (_t3 = _`
+			`;
+			}
+			return main_core.Tag.render`
 			<div class="list-el-cg__content-wrapper">
 				<div class="list-el-cg__content-wrapper__empty-recommendation">
 					<svg width="172" height="172" viewBox="0 0 172 172" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -727,90 +885,97 @@ this.BX.Lists = this.BX.Lists || {};
 						</linearGradient>
 					</defs>
 				</svg>
-					<span class="list-el-cg__text-empty">${0}</span>
+					<span class="list-el-cg__text-empty">${main_core.Loc.getMessage('LISTS_ELEMENT_CREATION_GUIDE_CMP_EMPTY_DESCRIPTION_1')}</span>
 				</div>
 			</div>
-		`), main_core.Loc.getMessage('LISTS_ELEMENT_CREATION_GUIDE_CMP_EMPTY_DESCRIPTION_1'));
-	}
-	function _hasDescription2() {
-	  return main_core.Type.isStringFilled(babelHelpers.classPrivateFieldLooseBase(this, _description)[_description]);
-	}
-	function _renderExpandDescriptionNode2() {
-	  return main_core.Tag.render(_t4 || (_t4 = _`
-			<div class="list-el-cg__content-open" onclick="${0}">
-				${0}
+		`;
+		}
+		#hasDescription() {
+			return main_core.Type.isStringFilled(this.#description);
+		}
+		#renderExpandDescriptionNode() {
+			const node = main_core.Tag.render`
+			<div
+				class="list-el-cg__content-open"
+				data-testid="${HTML_ELEMENT_ID}-description-toggle-btn"
+			>
+				${main_core.Loc.getMessage('LISTS_ELEMENT_CREATION_GUIDE_CMP_EXPAND_DESCRIPTION')}
 			</div>
-		`), babelHelpers.classPrivateFieldLooseBase(this, _toggleDescription)[_toggleDescription].bind(this), main_core.Loc.getMessage('LISTS_ELEMENT_CREATION_GUIDE_CMP_EXPAND_DESCRIPTION'));
-	}
-	function _toggleDescription2(event) {
-	  const target = event.target;
-	  if (target && babelHelpers.classPrivateFieldLooseBase(this, _difference)[_difference] > 0) {
-	    main_core.Dom.clean(target);
-	    if (main_core.Dom.hasClass(babelHelpers.classPrivateFieldLooseBase(this, _descriptionNode)[_descriptionNode], '--hide')) {
-	      target.innerText = main_core.Loc.getMessage('LISTS_ELEMENT_CREATION_GUIDE_CMP_COLLAPSE_DESCRIPTION');
-	      main_core.Dom.style(babelHelpers.classPrivateFieldLooseBase(this, _descriptionNode)[_descriptionNode], 'height', `${babelHelpers.classPrivateFieldLooseBase(this, _descriptionNode)[_descriptionNode].scrollHeight}px`);
-	    } else {
-	      target.innerText = main_core.Loc.getMessage('LISTS_ELEMENT_CREATION_GUIDE_CMP_EXPAND_DESCRIPTION');
-	      main_core.Dom.style(babelHelpers.classPrivateFieldLooseBase(this, _descriptionNode)[_descriptionNode], 'height', `${babelHelpers.classPrivateFieldLooseBase(this, _descriptionNode)[_descriptionNode].offsetHeight - babelHelpers.classPrivateFieldLooseBase(this, _difference)[_difference]}px`);
-	    }
-	    main_core.Dom.toggleClass(babelHelpers.classPrivateFieldLooseBase(this, _descriptionNode)[_descriptionNode], ['--hide']);
-	  }
-	}
-	function _renderDuration2() {
-	  if (main_core.Type.isNil(babelHelpers.classPrivateFieldLooseBase(this, _duration)[_duration])) {
-	    return main_core.Tag.render(_t5 || (_t5 = _`
-				<div class="list-el-cg__informer">
+		`;
+			makeActivatable(node, this.#toggleDescription.bind(this));
+			return node;
+		}
+		#toggleDescription(event) {
+			const target = event.target;
+			if (target && this.#difference > 0) {
+				main_core.Dom.clean(target);
+				if (main_core.Dom.hasClass(this.#descriptionNode, '--hide')) {
+					target.innerText = main_core.Loc.getMessage('LISTS_ELEMENT_CREATION_GUIDE_CMP_COLLAPSE_DESCRIPTION');
+					main_core.Dom.style(this.#descriptionNode, 'height', `${this.#descriptionNode.scrollHeight}px`);
+				} else {
+					target.innerText = main_core.Loc.getMessage('LISTS_ELEMENT_CREATION_GUIDE_CMP_EXPAND_DESCRIPTION');
+					main_core.Dom.style(this.#descriptionNode, 'height', `${this.#descriptionNode.offsetHeight - this.#difference}px`);
+				}
+				main_core.Dom.toggleClass(this.#descriptionNode, ['--hide']);
+				main_core.Dom.attr(target, 'aria-expanded', String(!main_core.Dom.hasClass(this.#descriptionNode, '--hide')));
+			}
+		}
+		#renderDuration() {
+			if (main_core.Type.isNil(this.#duration)) {
+				return main_core.Tag.render`
+				<div class="list-el-cg__informer" data-testid="${HTML_ELEMENT_ID}-duration">
 					<div class="list-el-cg__informer-header">
 						<div class="list-el-cg__informer-title">
-							${0}
+							${main_core.Text.encode(main_core.Loc.getMessage('LISTS_ELEMENT_CREATION_GUIDE_CMP_AVERAGE_DURATION_TITLE'))}
 						</div>
 						<div class="list-el-cg__informer-time">
-							<span class="list-el-cg__text-empty">${0}</span>
+							<span class="list-el-cg__text-empty">${main_core.Text.encode(main_core.Loc.getMessage('LISTS_ELEMENT_CREATION_GUIDE_CMP_EMPTY_DURATION'))}</span>
 						</div>
 					</div>
-					<div class="list-el-cg__informer-message">${0}</div>
+					<div class="list-el-cg__informer-message">${main_core.Loc.getMessage('LISTS_ELEMENT_CREATION_GUIDE_CMP_AVERAGE_DURATION_UNDEFINED_DESCRIPTION')}</div>
 					<div class="list-el-cg__informer-bottom"></div>
 				</div>
-			`), main_core.Text.encode(main_core.Loc.getMessage('LISTS_ELEMENT_CREATION_GUIDE_CMP_AVERAGE_DURATION_TITLE')), main_core.Text.encode(main_core.Loc.getMessage('LISTS_ELEMENT_CREATION_GUIDE_CMP_EMPTY_DURATION')), main_core.Loc.getMessage('LISTS_ELEMENT_CREATION_GUIDE_CMP_AVERAGE_DURATION_UNDEFINED_DESCRIPTION'));
-	  }
-	  let formattedDuration = main_core.Loc.getMessage('LISTS_ELEMENT_CREATION_GUIDE_CMP_ZERO_DURATION');
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _duration)[_duration] > 0) {
-	    formattedDuration = main_date.DateTimeFormat.format([['s', 'sdiff'], ['i', 'idiff'], ['H', 'Hdiff'], ['d', 'ddiff'], ['m', 'mdiff'], ['Y', 'Ydiff']], 0, babelHelpers.classPrivateFieldLooseBase(this, _duration)[_duration]);
-	  }
-	  return main_core.Tag.render(_t6 || (_t6 = _`
-			<div class="list-el-cg__informer">
+			`;
+			}
+			let formattedDuration = main_core.Loc.getMessage('LISTS_ELEMENT_CREATION_GUIDE_CMP_ZERO_DURATION');
+			if (this.#duration > 0) {
+				formattedDuration = main_date.DateTimeFormat.format([['s', 'sdiff'], ['i', 'idiff'], ['H', 'Hdiff'], ['d', 'ddiff'], ['m', 'mdiff'], ['Y', 'Ydiff']], 0, this.#duration);
+			}
+			return main_core.Tag.render`
+			<div class="list-el-cg__informer" data-testid="${HTML_ELEMENT_ID}-duration">
 				<div class="list-el-cg__informer-header">
 					<div class="list-el-cg__informer-title">
-						${0}
+						${main_core.Text.encode(main_core.Loc.getMessage('LISTS_ELEMENT_CREATION_GUIDE_CMP_AVERAGE_DURATION_TITLE'))}
 					</div>
 					<div class="list-el-cg__informer-time">
-						<span>${0}</span>
+						<span>${main_core.Text.encode(formattedDuration)}</span>
 						<div class="ui-icon-set --time-picker"></div>
 					</div>
 				</div>
-				<div class="list-el-cg__informer-message">${0}</div>
+				<div class="list-el-cg__informer-message">${main_core.Loc.getMessage('LISTS_ELEMENT_CREATION_GUIDE_CMP_AVERAGE_DURATION_DESCRIPTION')}</div>
 				<div class="list-el-cg__informer-bottom">
 					<a
 						class="list-el-cg__link" href="#"
-						onclick="${0}"
-					>${0}
+						onclick="${this.#handleDurationHintClick}"
+						data-testid="${HTML_ELEMENT_ID}-duration-hint-link"
+					>${main_core.Loc.getMessage('LISTS_ELEMENT_CREATION_GUIDE_CMP_AVERAGE_DURATION_HINT')}
 					</a>
 				</div>
 			</div>
-		`), main_core.Text.encode(main_core.Loc.getMessage('LISTS_ELEMENT_CREATION_GUIDE_CMP_AVERAGE_DURATION_TITLE')), main_core.Text.encode(formattedDuration), main_core.Loc.getMessage('LISTS_ELEMENT_CREATION_GUIDE_CMP_AVERAGE_DURATION_DESCRIPTION'), babelHelpers.classPrivateFieldLooseBase(this, _handleDurationHintClick)[_handleDurationHintClick], main_core.Loc.getMessage('LISTS_ELEMENT_CREATION_GUIDE_CMP_AVERAGE_DURATION_HINT'));
-	}
-	function _handleDurationHintClick2(event) {
-	  event.preventDefault();
-	  const ARTICLE_ID = '18783714';
-	  const helper = main_core.Reflection.getClass('top.BX.Helper');
-	  if (helper) {
-	    helper.show(`redirect=detail&code=${ARTICLE_ID}`);
-	  }
-	}
-	function _renderStatusStep2() {
-	  const currentStepIndex = babelHelpers.classPrivateFieldLooseBase(this, _steps)[_steps].findIndex(step => step.step === babelHelpers.classPrivateFieldLooseBase(this, _currentStep)[_currentStep]);
-	  const currentStep = babelHelpers.classPrivateFieldLooseBase(this, _steps)[_steps][currentStepIndex];
-	  main_core.Dom.append(main_core.Tag.render(_t7 || (_t7 = _`
+		`;
+		}
+		#handleDurationHintClick(event) {
+			event.preventDefault();
+			const ARTICLE_ID = '18783714';
+			const helper = main_core.Reflection.getClass('top.BX.Helper');
+			if (helper) {
+				helper.show(`redirect=detail&code=${ARTICLE_ID}`);
+			}
+		}
+		#renderStatusStep() {
+			const currentStepIndex = this.#steps.findIndex(step => step.step === this.#currentStep);
+			const currentStep = this.#steps[currentStepIndex];
+			main_core.Dom.append(main_core.Tag.render`
 				<div>
 					<div class="list-el-cg__status">
 						<div class="list-el-cg__status-logo">
@@ -818,292 +983,503 @@ this.BX.Lists = this.BX.Lists || {};
 						</div>
 						<div class="list-el-cg__status-content">
 							<div class="list-el-cg__status-text">
-								${0}
+								${main_core.Loc.getMessage('LISTS_ELEMENT_CREATION_GUIDE_CMP_SUCCESS_START')}
 							</div>
 						</div>
 					</div>
 				</div>
-			`), main_core.Loc.getMessage('LISTS_ELEMENT_CREATION_GUIDE_CMP_SUCCESS_START')), currentStep.contentNode);
-	}
-	function _changeStep2() {
-	  const currentStep = babelHelpers.classPrivateFieldLooseBase(this, _getCurrentStep)[_getCurrentStep]();
-	  const nextStep = babelHelpers.classPrivateFieldLooseBase(this, _steps)[_steps][babelHelpers.classPrivateFieldLooseBase(this, _currentStepIndex)[_currentStepIndex] + 1];
-	  main_core.Dom.toggleClass(currentStep.progressBarNode, ['--active', '--complete']);
-	  main_core.Dom.addClass(nextStep.progressBarNode, '--active');
-	  babelHelpers.classPrivateFieldLooseBase(this, _cleanErrors)[_cleanErrors]();
-	  main_core.Dom.addClass(currentStep.contentNode, '--hidden');
-	  main_core.Dom.removeClass(nextStep.contentNode, '--hidden');
-	  if (currentStep.step === STEPS.DESCRIPTION) {
-	    main_core.Dom.addClass(babelHelpers.classPrivateFieldLooseBase(this, _durationNode)[_durationNode], '--hidden');
-	  }
-	  if (nextStep.step === STEPS.STATUS) {
-	    main_core.Dom.addClass(document.querySelector('.list-el-cg__content-head'), '--hidden');
-	  }
-	  babelHelpers.classPrivateFieldLooseBase(this, _setCurrentStep)[_setCurrentStep](nextStep.step);
-	  babelHelpers.classPrivateFieldLooseBase(this, _toggleButtons)[_toggleButtons]();
-	}
-	function _loadAdminList2() {
-	  return new Promise((resolve, reject) => {
-	    const constantStep = babelHelpers.classPrivateFieldLooseBase(this, _steps)[_steps].find(step => step.step === STEPS.CONSTANTS);
-	    main_core.ajax.runComponentAction(AJAX_COMPONENT, 'getListAdmin', {
-	      json: {
-	        signedParameters: babelHelpers.classPrivateFieldLooseBase(this, _signedParameters)[_signedParameters]
-	      }
-	    }).then(({
-	      data
-	    }) => {
-	      if (main_core.Type.isArrayFilled(data == null ? void 0 : data.admins)) {
-	        main_core.Dom.append(babelHelpers.classPrivateFieldLooseBase(this, _renderAdminList)[_renderAdminList](data.admins, data.canNotify), constantStep.contentNode);
-	      }
-	      resolve();
-	    }).catch(reject);
-	  });
-	}
-	function _renderAdminList2(admins, canNotify = false) {
-	  return main_core.Tag.render(_t8 || (_t8 = _`
-			<div>
+			`, currentStep.contentNode);
+		}
+		next() {
+			if (this.#isLoading || this.#isLastStep()) {
+				return;
+			}
+			if (!this.#formData) {
+				const form = document.forms.form_lists_element_creation_guide_element;
+				this.#formData = form ? new FormData(form) : new FormData();
+				this.#appendSectionFormData(this.#formData);
+				this.#appendBPFormData(this.#formData);
+			}
+			const currentStep = this.#getCurrentStep();
+			const nextStep = this.#steps[this.#currentStepIndex + 1];
+			if (currentStep.step === STEPS.CONSTANTS && this.#canUserTuningStates) {
+				this.#startLoading();
+				this.#setAllConstants().then(() => {
+					this.#changeStep();
+				}).catch(() => {
+					this.#toggleButtons();
+				}).finally(this.#finishLoading.bind(this));
+				return;
+			}
+			if (nextStep.step === STEPS.CONSTANTS && !this.#canUserTuningStates && !this.#isAdminLoaded) {
+				this.#startLoading();
+				this.#loadAdminList().then(() => {}).catch(() => {}).finally(() => {
+					this.#isAdminLoaded = true;
+					this.#finishLoading();
+					this.#changeStep();
+				});
+				return;
+			}
+			this.#changeStep();
+		}
+		#changeStep() {
+			const currentStep = this.#getCurrentStep();
+			const nextStep = this.#steps[this.#currentStepIndex + 1];
+			main_core.Dom.toggleClass(currentStep.progressBarNode, ['--active', '--complete']);
+			main_core.Dom.addClass(nextStep.progressBarNode, '--active');
+			this.#cleanErrors();
+			main_core.Dom.addClass(currentStep.contentNode, '--hidden');
+			main_core.Dom.removeClass(nextStep.contentNode, '--hidden');
+			this.#switchStepA11y(currentStep, nextStep);
+			if (currentStep.step === STEPS.DESCRIPTION) {
+				main_core.Dom.addClass(this.#durationNode, '--hidden');
+			}
+			if (nextStep.step === STEPS.STATUS) {
+				main_core.Dom.addClass(document.querySelector('.list-el-cg__content-head'), '--hidden');
+			}
+			this.#setCurrentStep(nextStep.step);
+			this.#toggleButtons();
+		}
+		#loadAdminList() {
+			return new Promise((resolve, reject) => {
+				const constantStep = this.#steps.find(step => step.step === STEPS.CONSTANTS);
+				main_core.ajax.runComponentAction(AJAX_COMPONENT, 'getListAdmin', {
+					json: {
+						signedParameters: this.#signedParameters
+					}
+				}).then(({
+					data
+				}) => {
+					if (main_core.Type.isArrayFilled(data?.admins)) {
+						main_core.Dom.append(this.#renderAdminList(data.admins, data.canNotify), constantStep.contentNode);
+					}
+					resolve();
+				}).catch(reject);
+			});
+		}
+		#renderAdminList(admins, canNotify = false) {
+			return main_core.Tag.render`
+			<div data-testid="${HTML_ELEMENT_ID}-admin-list">
 				<div class="list-el-cg__const-desc">
-					${0}
+					${main_core.Text.encode(main_core.Loc.getMessage('LISTS_ELEMENT_CREATION_GUIDE_CMP_NOT_TUNING_CONSTANTS_NOTIFY_ADMIN'))}
 				</div>
 				<div class="list-el-cg__const-title">
-					${0}
+					${main_core.Text.encode(main_core.Loc.getMessage('LISTS_ELEMENT_CREATION_GUIDE_CMP_NOT_TUNING_CONSTANTS_NOTIFY'))}
 				</div>
-				${0}
-			</div>
-		`), main_core.Text.encode(main_core.Loc.getMessage('LISTS_ELEMENT_CREATION_GUIDE_CMP_NOT_TUNING_CONSTANTS_NOTIFY_ADMIN')), main_core.Text.encode(main_core.Loc.getMessage('LISTS_ELEMENT_CREATION_GUIDE_CMP_NOT_TUNING_CONSTANTS_NOTIFY')), admins.map(admin => {
-	    var _button;
-	    let button = null;
-	    if (canNotify) {
-	      button = new ui_buttons.Button({
-	        text: main_core.Loc.getMessage('LISTS_ELEMENT_CREATION_GUIDE_CMP_NOT_TUNING_CONSTANTS_NOTIFY_BUTTON'),
-	        size: ui_buttons.ButtonSize.MEDIUM,
-	        color: ui_buttons.ButtonColor.PRIMARY,
-	        onclick: babelHelpers.classPrivateFieldLooseBase(this, _notifyAdmin)[_notifyAdmin].bind(this, admin)
-	      });
-	    }
-	    return main_core.Tag.render(_t9 || (_t9 = _`
+				${admins.map(admin => {
+			let button = null;
+			if (canNotify) {
+				button = new ui_buttons.Button({
+					text: main_core.Loc.getMessage('LISTS_ELEMENT_CREATION_GUIDE_CMP_NOT_TUNING_CONSTANTS_NOTIFY_BUTTON'),
+					size: ui_buttons.ButtonSize.MEDIUM,
+					color: ui_buttons.ButtonColor.PRIMARY,
+					onclick: this.#notifyAdmin.bind(this, admin),
+					dataset: {
+						testid: `${HTML_ELEMENT_ID}-notify-admin-btn-${admin.id}`
+					}
+				});
+			}
+			return main_core.Tag.render`
 						<div class="list-el-cg__const-box">
 							<div class="list-el-cg__const-user">
 								<div
 									class="ui-icon ui-icon-common-user list-el-cg__const-icon"
-									bx-tooltip-user-id="${0}"
+									bx-tooltip-user-id="${admin.id}"
 								>
-									<i style="background-image: url('${0}');"></i>
+									<i style="background-image: url('${admin.img ? encodeURI(main_core.Text.encode(admin.img)) : '/bitrix/js/ui/icons/b24/images/ui-user.svg?v2'}');"></i>
 								</div>
-								<span class="list-el-cg__const-name">${0}</span>
+								<span class="list-el-cg__const-name">${main_core.Text.encode(admin.name)}</span>
 							</div>
 							<div>
-								${0}
+								${button?.render()}
 							</div>
 						</div>
-					`), admin.id, admin.img ? encodeURI(main_core.Text.encode(admin.img)) : '/bitrix/js/ui/icons/b24/images/ui-user.svg?v2', main_core.Text.encode(admin.name), (_button = button) == null ? void 0 : _button.render());
-	  }));
-	}
-	function _notifyAdmin2(admin, button) {
-	  button.setWaiting(true);
-	  main_core.ajax.runComponentAction(AJAX_COMPONENT, 'notifyAdmin', {
-	    json: {
-	      signedParameters: babelHelpers.classPrivateFieldLooseBase(this, _signedParameters)[_signedParameters],
-	      adminId: admin.id
-	    }
-	  }).then(({
-	    data
-	  }) => {
-	    if (data.success === true) {
-	      main_core.Dom.replace(button.getContainer(), main_core.Tag.render(_t10 || (_t10 = _`
+					`;
+		})}
+			</div>
+		`;
+		}
+		#notifyAdmin(admin, button) {
+			button.setWaiting(true);
+			main_core.ajax.runComponentAction(AJAX_COMPONENT, 'notifyAdmin', {
+				json: {
+					signedParameters: this.#signedParameters,
+					adminId: admin.id
+				}
+			}).then(({
+				data
+			}) => {
+				if (data.success === true) {
+					main_core.Dom.replace(button.getContainer(), main_core.Tag.render`
 							<span class="list-el-cg__const-success-text">
-								${0}
+								${main_core.Text.encode(main_core.Loc.getMessage('LISTS_ELEMENT_CREATION_GUIDE_CMP_NOT_TUNING_CONSTANTS_NOTIFY_SUCCESS'))}
 							</span>
-						`), main_core.Text.encode(main_core.Loc.getMessage('LISTS_ELEMENT_CREATION_GUIDE_CMP_NOT_TUNING_CONSTANTS_NOTIFY_SUCCESS'))));
-	    }
-	    button.setWaiting(false);
-	  }).catch(() => {
-	    button.setWaiting(false);
-	  });
-	}
-	function _setAllConstants2() {
-	  return new Promise((resolve, reject) => {
-	    const formData = new FormData();
-	    babelHelpers.classPrivateFieldLooseBase(this, _appendBPFormData)[_appendBPFormData](formData, true);
-	    babelHelpers.classPrivateFieldLooseBase(this, _setConstants)[_setConstants](formData).then(resolve).catch(({
-	      errors
-	    }) => {
-	      if (Array.isArray(errors)) {
-	        babelHelpers.classPrivateFieldLooseBase(this, _showErrors)[_showErrors](errors);
-	      }
-	      reject();
-	    });
-	  });
-	}
-	function _setConstants2(formData) {
-	  return new Promise((resolve, reject) => {
-	    formData.set('signedParameters', babelHelpers.classPrivateFieldLooseBase(this, _signedParameters)[_signedParameters]);
-	    main_core.ajax.runComponentAction(AJAX_COMPONENT, 'setConstants', {
-	      data: formData
-	    }).then(resolve).catch(reject);
-	  });
-	}
-	function _createElement2() {
-	  return new Promise((resolve, reject) => {
-	    const form = document.forms.form_lists_element_creation_guide_element;
-	    const formData = form ? new FormData(form) : new FormData();
-	    babelHelpers.classPrivateFieldLooseBase(this, _appendSectionFormData)[_appendSectionFormData](formData);
-	    babelHelpers.classPrivateFieldLooseBase(this, _appendBPFormData)[_appendBPFormData](formData);
-	    formData.set('signedParameters', babelHelpers.classPrivateFieldLooseBase(this, _signedParameters)[_signedParameters]);
-	    formData.set('time', Math.round(Date.now() / 1000) - babelHelpers.classPrivateFieldLooseBase(this, _startTime)[_startTime]);
-	    main_core.ajax.runComponentAction(AJAX_COMPONENT, 'create', {
-	      data: formData
-	    }).then(resolve).catch(({
-	      errors
-	    }) => {
-	      if (Array.isArray(errors)) {
-	        babelHelpers.classPrivateFieldLooseBase(this, _showErrors)[_showErrors](errors);
-	      }
-	      reject(new Error(errors[0].message));
-	    });
-	  });
-	}
-	function _appendSectionFormData2(formData) {
-	  const form = document.forms.form_lists_element_creation_guide_section;
-	  if (form) {
-	    formData.set('IBLOCK_SECTION_ID', new FormData(form).get('IBLOCK_SECTION_ID'));
-	  }
-	}
-	function _appendBPFormData2(formData, isConstantsForms = false) {
-	  babelHelpers.classPrivateFieldLooseBase(this, _templateIds)[_templateIds].forEach(id => {
-	    const formId = `form_${isConstantsForms ? BP_STATE_CONSTANTS_FORM_NAME : BP_STATE_FORM_NAME}_${id}`;
-	    if (document.forms[formId]) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _appendStateFormData)[_appendStateFormData](formData, formId);
-	      formData.append('templateIds[]', id);
-	    }
-	  });
-	}
-	function _appendStateFormData2(formData, formId) {
-	  const form = document.forms[formId];
-	  if (form) {
-	    for (const [key, value] of new FormData(form).entries()) {
-	      if (key !== 'sessid') {
-	        formData.append(key, value);
-	      }
-	    }
-	  }
-	}
-	function _showErrors2(errors, toNode = null) {
-	  babelHelpers.classPrivateFieldLooseBase(this, _cleanErrors)[_cleanErrors](toNode);
-	  const errorsNode = main_core.Type.isDomNode(toNode) ? toNode : document.getElementById(`${HTML_ELEMENT_ID}-errors`);
-	  if (errorsNode) {
-	    let message = '';
-	    errors.forEach(error => {
-	      var _babelHelpers$classPr2;
-	      const errorMessage = (_babelHelpers$classPr2 = babelHelpers.classPrivateFieldLooseBase(this, _getErrorByCode)[_getErrorByCode](error.code)) != null ? _babelHelpers$classPr2 : error.message;
-	      if (errorMessage) {
-	        message += main_core.Text.encode(errorMessage);
-	        message += '<br/>';
-	      }
-	    });
-	    main_core.Dom.append(main_core.Tag.render(_t11 || (_t11 = _`
-					<div class="ui-alert ui-alert-danger">
-						<span class="ui-alert-message">${0}</span>
-					</div>
-				`), message), errorsNode);
-	    BX.scrollToNode(errorsNode);
-	  }
-	}
-	function _getErrorByCode2(code) {
-	  return main_core.Loc.getMessage(ERRORS[code]);
-	}
-	function _cleanErrors2(fromNode = null) {
-	  if (main_core.Type.isDomNode(fromNode)) {
-	    main_core.Dom.clean(fromNode);
-	    return;
-	  }
-	  const errorsNode = document.getElementById(`${HTML_ELEMENT_ID}-errors`);
-	  if (errorsNode) {
-	    main_core.Dom.clean(errorsNode);
-	  }
-	  babelHelpers.classPrivateFieldLooseBase(this, _templateIds)[_templateIds].forEach(templateId => {
-	    const node = document.getElementById(`${HTML_ELEMENT_ID}-constants-${templateId}-errors`);
-	    if (node) {
-	      main_core.Dom.clean(node);
-	    }
-	  });
-	}
-	function _startLoading2() {
-	  babelHelpers.classPrivateFieldLooseBase(this, _isLoading)[_isLoading] = true;
-	  babelHelpers.classPrivateFieldLooseBase(this, _disableAllButtons)[_disableAllButtons]();
-	}
-	function _disableAllButtons2() {
-	  for (const button of document.getElementsByClassName('ui-btn')) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _disableButton)[_disableButton](button);
-	  }
-	}
-	function _finishLoading2() {
-	  babelHelpers.classPrivateFieldLooseBase(this, _isLoading)[_isLoading] = false;
-	  babelHelpers.classPrivateFieldLooseBase(this, _enableAllButtons)[_enableAllButtons]();
-	}
-	function _enableAllButtons2() {
-	  for (const button of document.getElementsByClassName('ui-btn')) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _enableButton)[_enableButton](button);
-	  }
-	}
-	function _addNotTunedConstantsHint2(button) {
-	  if (main_core.Type.isDomNode(button)) {
-	    main_core.Dom.attr(button, 'title', main_core.Loc.getMessage('LISTS_ELEMENT_CREATION_GUIDE_CMP_NOT_TUNING_CONSTANTS_HINT'));
-	  }
-	}
-	function _removeNotTunedConstantsHint2(button) {
-	  if (main_core.Type.isDomNode(button)) {
-	    main_core.Dom.attr(button, 'title', null);
-	  }
-	}
-	function _sendCreationAnalytics2(error) {
-	  main_core.Runtime.loadExtension('ui.analytics').then(({
-	    sendData
-	  }) => {
-	    sendData({
-	      tool: 'automation',
-	      category: 'bizproc_operations',
-	      event: 'process_run',
-	      type: 'run',
-	      c_section: babelHelpers.classPrivateFieldLooseBase(this, _getAnalyticsSection)[_getAnalyticsSection](),
-	      p1: babelHelpers.classPrivateFieldLooseBase(this, _name)[_name],
-	      status: error ? 'error' : 'success'
-	    });
-	  }).catch(() => {});
-	}
-	function _getAnalyticsSection2() {
-	  return new main_core.Uri(window.location.href).getQueryParam('analyticsSection') || 'bizproc';
-	}
-	function _isChangedFormData2() {
-	  if (!babelHelpers.classPrivateFieldLooseBase(this, _formData)[_formData]) {
-	    return false;
-	  }
-	  const form = document.forms.form_lists_element_creation_guide_element;
-	  const formData = form ? new FormData(form) : new FormData();
-	  babelHelpers.classPrivateFieldLooseBase(this, _appendSectionFormData)[_appendSectionFormData](formData);
-	  babelHelpers.classPrivateFieldLooseBase(this, _appendBPFormData)[_appendBPFormData](formData);
-	  const originFormData = Object.fromEntries(babelHelpers.classPrivateFieldLooseBase(this, _formData)[_formData].entries());
-	  for (const [key, value] of formData.entries()) {
-	    if (main_core.Type.isFile(value)) {
-	      if (!this.checkEqualFileField(value, originFormData[key])) {
-	        return true;
-	      }
-	    } else if (value !== originFormData[key]) {
-	      return true;
-	    }
-	  }
-	  return false;
-	}
-	function _showConfirmDialog2(slider) {
-	  babelHelpers.classPrivateFieldLooseBase(this, _messageBox)[_messageBox] = ui_dialogs_messagebox.MessageBox.confirm(main_core.Loc.getMessage('LISTS_ELEMENT_CREATION_GUIDE_CMP_EXIT_DIALOG_DESCRIPTION'), main_core.Loc.getMessage('LISTS_ELEMENT_CREATION_GUIDE_CMP_EXIT_DIALOG_TITLE'), () => {
-	    babelHelpers.classPrivateFieldLooseBase(this, _canClose)[_canClose] = true;
-	    slider.close();
-	  }, main_core.Loc.getMessage('LISTS_ELEMENT_CREATION_GUIDE_CMP_EXIT_DIALOG_CONFIRM'), () => {
-	    babelHelpers.classPrivateFieldLooseBase(this, _messageBox)[_messageBox].close();
-	    babelHelpers.classPrivateFieldLooseBase(this, _messageBox)[_messageBox] = null;
-	  }, main_core.Loc.getMessage('LISTS_ELEMENT_CREATION_GUIDE_CMP_EXIT_DIALOG_CANCEL'));
+						`);
+				}
+				button.setWaiting(false);
+			}).catch(() => {
+				button.setWaiting(false);
+			});
+		}
+		#setAllConstants() {
+			return new Promise((resolve, reject) => {
+				const formData = new FormData();
+				this.#appendBPFormData(formData, true);
+				this.#setConstants(formData).then(resolve).catch(({
+					errors
+				}) => {
+					if (Array.isArray(errors)) {
+						this.#showErrors(errors);
+					}
+					reject();
+				});
+			});
+		}
+		#setConstants(formData) {
+			return new Promise((resolve, reject) => {
+				formData.set('signedParameters', this.#signedParameters);
+				main_core.ajax.runComponentAction(AJAX_COMPONENT, 'setConstants', {
+					data: formData
+				}).then(resolve).catch(reject);
+			});
+		}
+		back() {
+			if (this.#isFirstStep()) {
+				if (main_core.Reflection.getClass('BX.SidePanel') && BX.SidePanel.Instance.getSliderByWindow(window)) {
+					BX.SidePanel.Instance.getSliderByWindow(window).close(false);
+					return;
+				}
+				this.#setCurrentStep();
+				return;
+			}
+			const currentStepIndex = this.#steps.findIndex(step => step.step === this.#currentStep);
+			const currentStep = this.#steps[currentStepIndex];
+			const previousStep = this.#steps[currentStepIndex - 1];
+			main_core.Dom.removeClass(currentStep.progressBarNode, '--active');
+			main_core.Dom.toggleClass(previousStep.progressBarNode, ['--active', '--complete']);
+			this.#cleanErrors();
+			main_core.Dom.addClass(currentStep.contentNode, '--hidden');
+			main_core.Dom.removeClass(previousStep.contentNode, '--hidden');
+			this.#switchStepA11y(currentStep, previousStep);
+			if (previousStep.step === STEPS.DESCRIPTION) {
+				main_core.Dom.removeClass(this.#durationNode, '--hidden');
+			}
+			this.#setCurrentStep(previousStep.step);
+			this.#toggleButtons();
+		}
+		async create() {
+			if (this.#isLoading || !this.#isLastStep() || this.#currentStep === STEPS.CONSTANTS && !this.#canUserTuningStates) {
+				return;
+			}
+			if (this.#currentStep === STEPS.CONSTANTS) {
+				this.#startLoading();
+				let hasErrors = false;
+				await this.#setAllConstants().catch(() => {
+					this.#toggleButtons();
+					hasErrors = true;
+				});
+				this.#finishLoading();
+				if (hasErrors) {
+					return;
+				}
+			}
+			this.#startLoading();
+			this.#createElement().then(() => {
+				this.#sendCreationAnalytics();
+				// the status step draws static text and the slider closes over it, so the result is
+				// announced before the closing and from the live region of the top window
+				announceStartResult(main_core.Loc.getMessage('LISTS_ELEMENT_CREATION_GUIDE_CMP_SUCCESS_START'));
+				if (main_core.Reflection.getClass('BX.SidePanel') && BX.SidePanel.Instance.getSliderByWindow(window)) {
+					this.#canClose = true;
+					// the focus is not touched here: the closing slider restores it to the element
+					// that owned it before the opening (focus trap, deactivate -> restoreFocus)
+					setTimeout(() => {
+						BX.SidePanel.Instance.getSliderByWindow(window).close(false);
+					}, CLOSE_SLIDER_AFTER_SECONDS * 1000);
+					BX.SidePanel.Instance.getSliderByWindow(window).close(false);
+					BX.SidePanel.Instance.postMessage(window, 'BX.Lists.Element.CreationGuide:onElementCreated', {
+						iBlockId: this.#iBlockId
+					});
+				}
+				this.#changeStep();
+			}).catch(error => {
+				this.#toggleButtons();
+				this.#sendCreationAnalytics(error);
+			}).finally(this.#finishLoading.bind(this));
+		}
+		#createElement() {
+			return new Promise((resolve, reject) => {
+				const form = document.forms.form_lists_element_creation_guide_element;
+				const formData = form ? new FormData(form) : new FormData();
+				this.#appendSectionFormData(formData);
+				this.#appendBPFormData(formData);
+				formData.set('signedParameters', this.#signedParameters);
+				formData.set('time', Math.round(Date.now() / 1000) - this.#startTime);
+				main_core.ajax.runComponentAction(AJAX_COMPONENT, 'create', {
+					data: formData
+				}).then(resolve).catch(({
+					errors
+				}) => {
+					if (Array.isArray(errors)) {
+						this.#showErrors(errors);
+					}
+					reject(new Error(errors[0].message));
+				});
+			});
+		}
+		#appendSectionFormData(formData) {
+			const form = document.forms.form_lists_element_creation_guide_section;
+			if (form) {
+				formData.set('IBLOCK_SECTION_ID', new FormData(form).get('IBLOCK_SECTION_ID'));
+			}
+		}
+		#appendBPFormData(formData, isConstantsForms = false) {
+			this.#templateIds.forEach(id => {
+				const formId = `form_${isConstantsForms ? BP_STATE_CONSTANTS_FORM_NAME : BP_STATE_FORM_NAME}_${id}`;
+				if (document.forms[formId]) {
+					this.#appendStateFormData(formData, formId);
+					formData.append('templateIds[]', id);
+				}
+			});
+		}
+		#appendStateFormData(formData, formId) {
+			const form = document.forms[formId];
+			if (form) {
+				for (const [key, value] of new FormData(form).entries()) {
+					if (key !== 'sessid') {
+						formData.append(key, value);
+					}
+				}
+			}
+		}
+		#showErrors(errors) {
+			this.#cleanErrors();
+			const {
+				shownErrors,
+				errorRegion
+			} = this.#renderErrors(errors);
+			if (errorRegion) {
+				this.#focusErrorControl(shownErrors, errorRegion);
+			}
+		}
+
+		/**
+		 * Each message gets a node of its own so that a control can be bound to the message about it.
+		 * An error of a process template goes to the container of that template, the rest to the common one.
+		 * The messages are grouped by the mark of the region they go to, one region per container.
+		 */
+		#renderErrors(errors) {
+			const shownErrors = [];
+			const groups = new Map();
+			let errorRegion = null;
+			errors.forEach((error, index) => {
+				const message = this.#getErrorByCode(error.code) ?? error.message;
+				const target = this.#getErrorTarget(error);
+				if (!message || !target) {
+					return;
+				}
+				const messageId = `${ERROR_MESSAGE_ID_PREFIX}-${index}`;
+				const messageNode = main_core.Tag.render`<span>${main_core.Text.encode(message)}</span>`;
+				main_core.Dom.attr(messageNode, {
+					id: messageId,
+					'data-testid': messageId
+				});
+				const group = groups.get(target.regionTestId) ?? {
+					container: target.container,
+					messageNodes: []
+				};
+				group.messageNodes.push(messageNode);
+				groups.set(target.regionTestId, group);
+				shownErrors.push({
+					error,
+					messageId
+				});
+			});
+			if (groups.size === 0 && errors.length > 0) {
+				this.#addUnknownErrorMessage(groups);
+			}
+			groups.forEach(({
+				container,
+				messageNodes
+			}, regionTestId) => {
+				const region = renderErrorRegion(messageNodes, regionTestId);
+				main_core.Dom.append(region, container);
+				errorRegion ??= region;
+			});
+			const [firstGroup] = groups.values();
+			if (firstGroup) {
+				BX.scrollToNode(firstGroup.container);
+			}
+			return {
+				shownErrors,
+				errorRegion
+			};
+		}
+
+		/**
+		 * A message of the wizard for a refusal that arrived without a text of its own: the server allows
+		 * such an error, and a refusal shown nowhere leaves the buttons switched back on as its only sign.
+		 */
+		#addUnknownErrorMessage(groups) {
+			const container = this.#getCommonErrorsContainer();
+			if (!container) {
+				return;
+			}
+			const messageNode = main_core.Tag.render`<span>${main_core.Text.encode(main_core.Loc.getMessage(ERRORS.NETWORK_ERROR))}</span>`;
+			// the mark alone, without an id: this message describes no control of the step
+			main_core.Dom.attr(messageNode, 'data-testid', `${ERROR_MESSAGE_ID_PREFIX}-unknown`);
+			groups.set(ERROR_REGION_TEST_ID, {
+				container,
+				messageNodes: [messageNode]
+			});
+		}
+
+		/**
+		 * A container of a process template belongs to the constants step, and an error of a launch parameter
+		 * carries the very same templateId: on the launch step that container is hidden and inert by then,
+		 * so a message routed there would be neither seen nor announced. Hence the container of the current
+		 * step and nothing else, the common container of the wizard otherwise.
+		 */
+		#getErrorTarget(error) {
+			const templateId = error.customData?.templateId;
+			const templateContainer = templateId ? document.getElementById(`${HTML_ELEMENT_ID}-constants-${templateId}-errors`) : null;
+			if (templateContainer && this.#getCurrentStep()?.contentNode?.contains(templateContainer)) {
+				return {
+					container: templateContainer,
+					regionTestId: `${ERROR_REGION_TEST_ID}-${templateId}`
+				};
+			}
+			const container = this.#getCommonErrorsContainer();
+			return container ? {
+				container,
+				regionTestId: ERROR_REGION_TEST_ID
+			} : null;
+		}
+		#getCommonErrorsContainer() {
+			return document.getElementById(`${HTML_ELEMENT_ID}-errors`);
+		}
+		#focusErrorControl(shownErrors, errorRegion) {
+			const currentStep = this.#getCurrentStep();
+			const fields = [];
+			shownErrors.forEach(({
+				error,
+				messageId
+			}) => {
+				const {
+					parameter,
+					templateId
+				} = error.customData ?? {};
+				const formRoot = templateId ? this.#getTemplateForm(templateId) : null;
+				if (parameter && formRoot) {
+					fields.push({
+						formRoot,
+						name: `bizproc${templateId}_${parameter}`,
+						messageId
+					});
+				}
+			});
+			focusStepError(currentStep.contentNode, fields, errorRegion, currentStep.headingNode);
+		}
+
+		// constants and parameters of a template are two different forms naming their controls alike
+		#getTemplateForm(templateId) {
+			const formName = this.#currentStep === STEPS.CONSTANTS ? BP_STATE_CONSTANTS_FORM_NAME : BP_STATE_FORM_NAME;
+			return document.forms[`form_${formName}_${templateId}`] ?? null;
+		}
+		#getErrorByCode(code) {
+			return main_core.Loc.getMessage(ERRORS[code]);
+		}
+		#cleanErrors() {
+			this.#getErrorsContainers().forEach(container => main_core.Dom.clean(container));
+			clearStepInvalidControls(this.#getCurrentStep()?.contentNode);
+		}
+		#getErrorsContainers() {
+			const ids = [`${HTML_ELEMENT_ID}-errors`, ...this.#templateIds.map(templateId => `${HTML_ELEMENT_ID}-constants-${templateId}-errors`)];
+			return ids.map(id => document.getElementById(id)).filter(node => node !== null);
+		}
+		#startLoading() {
+			this.#isLoading = true;
+			this.#disableAllButtons();
+		}
+		#disableAllButtons() {
+			for (const button of document.getElementsByClassName('ui-btn')) {
+				this.#disableButton(button);
+			}
+		}
+		#finishLoading() {
+			this.#isLoading = false;
+			this.#enableAllButtons();
+		}
+		#enableAllButtons() {
+			for (const button of document.getElementsByClassName('ui-btn')) {
+				this.#enableButton(button);
+			}
+		}
+		#addNotTunedConstantsHint(button) {
+			if (main_core.Type.isDomNode(button)) {
+				main_core.Dom.attr(button, 'title', main_core.Loc.getMessage('LISTS_ELEMENT_CREATION_GUIDE_CMP_NOT_TUNING_CONSTANTS_HINT'));
+			}
+		}
+		#removeNotTunedConstantsHint(button) {
+			if (main_core.Type.isDomNode(button)) {
+				main_core.Dom.attr(button, 'title', null);
+			}
+		}
+		#sendCreationAnalytics(error) {
+			main_core.Runtime.loadExtension('ui.analytics').then(({
+				sendData
+			}) => {
+				sendData({
+					tool: 'automation',
+					category: 'bizproc_operations',
+					event: 'process_run',
+					type: 'run',
+					c_section: this.#getAnalyticsSection(),
+					p1: this.#name,
+					status: error ? 'error' : 'success'
+				});
+			}).catch(() => {});
+		}
+		#getAnalyticsSection() {
+			return new main_core.Uri(window.location.href).getQueryParam('analyticsSection') || 'bizproc';
+		}
+		#isChangedFormData() {
+			if (!this.#formData) {
+				return false;
+			}
+			const form = document.forms.form_lists_element_creation_guide_element;
+			const formData = form ? new FormData(form) : new FormData();
+			this.#appendSectionFormData(formData);
+			this.#appendBPFormData(formData);
+			const originFormData = Object.fromEntries(this.#formData.entries());
+			for (const [key, value] of formData.entries()) {
+				if (main_core.Type.isFile(value)) {
+					if (!this.checkEqualFileField(value, originFormData[key])) {
+						return true;
+					}
+				} else if (value !== originFormData[key]) {
+					return true;
+				}
+			}
+			return false;
+		}
+		checkEqualFileField(fileFieldA, fileFieldB) {
+			if (!fileFieldB) {
+				return false;
+			}
+			return fileFieldA.name === fileFieldB.name;
+		}
+		#showConfirmDialog(slider) {
+			this.#messageBox = ui_dialogs_messagebox.MessageBox.confirm(main_core.Loc.getMessage('LISTS_ELEMENT_CREATION_GUIDE_CMP_EXIT_DIALOG_DESCRIPTION'), main_core.Loc.getMessage('LISTS_ELEMENT_CREATION_GUIDE_CMP_EXIT_DIALOG_TITLE'), () => {
+				this.#canClose = true;
+				slider.close();
+			}, main_core.Loc.getMessage('LISTS_ELEMENT_CREATION_GUIDE_CMP_EXIT_DIALOG_CONFIRM'), () => {
+				this.#messageBox.close();
+				this.#messageBox = null;
+			}, main_core.Loc.getMessage('LISTS_ELEMENT_CREATION_GUIDE_CMP_EXIT_DIALOG_CANCEL'));
+		}
 	}
 	namespace.ElementCreationGuide = ElementCreationGuide;
 
-}((this.BX.Lists.Component = this.BX.Lists.Component || {}),BX,BX.Main,BX.UI,BX.UI.Dialogs));
+})(BX, BX.Main, BX.UI, BX.UI.Dialogs, BX.UI, BX, BX.UI.Accessibility);
 //# sourceMappingURL=script.js.map

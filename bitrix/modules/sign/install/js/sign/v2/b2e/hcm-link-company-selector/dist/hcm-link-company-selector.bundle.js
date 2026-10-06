@@ -5,6 +5,20 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 (function (exports, main_core, main_core_events, ui_entitySelector, sign_v2_api, humanresources_hcmlink_companyConnectPage) {
 	'use strict';
 
+	/**
+	 * Integration names come from a marketplace app through the humanresources REST intake,
+	 * so they are untrusted input and must never reach the row as markup.
+	 */
+	function setIntegrationText(node, value) {
+		if (!main_core.Type.isDomNode(node)) {
+			return;
+		}
+		main_core.Dom.adjust(node, {
+			text: value ?? ''
+		});
+	}
+
+	const activationKeys = new Set(['Enter', ' ']);
 	class HcmLinkCompanySelector extends main_core_events.EventEmitter {
 		#isAvailable = false;
 		#companyId = null;
@@ -16,7 +30,7 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 		#api;
 		#ui = {
 			container: HTMLDivElement = null,
-			active: HTMLButtonElement = null,
+			active: HTMLElement = null,
 			inactive: HTMLButtonElement = null,
 			unselect: HTMLButtonElement = null,
 			dropdownButton: HTMLSpanElement = null,
@@ -27,6 +41,7 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 			}
 		};
 		#integrationList = [];
+		#dialogTrigger = null;
 		constructor() {
 			super();
 			this.#api = new sign_v2_api.Api();
@@ -119,16 +134,14 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 				<div class="sign-document-b2e-company__hcmlink-name-container">
 					<div class="sign-document-b2e-company__hcmlink-select-header">
 						${this.#ui.info.title}
-						<span class="sign-document-b2e-company-info-dropdown-btn"
-							onclick="${() => {
-			this.#showDialog();
-		}}"></span>
+						<span class="sign-document-b2e-company-info-dropdown-btn"></span>
 						${this.#ui.dropdownButton}
 					</div>
-					${this.#ui.info.subtitle}	
-				</div>		
+					${this.#ui.info.subtitle}
+				</div>
 			</div>
 		`;
+			this.#dialogTrigger = this.#setupDialogTrigger(this.#ui.active);
 			this.#ui.unselect = main_core.Tag.render`
 			<div class="sign-document-b2e-company__hcmlink-select --inactive">
 				<div class="sign-document-b2e-company__hcmlink-name-container">
@@ -198,6 +211,7 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 			return this.#integrationList.find(company => company.id === id);
 		}
 		#showDialog() {
+			this.#dialogTrigger?.setExpanded(true);
 			this.#getDialog()?.show();
 		}
 		#getDialog() {
@@ -227,6 +241,8 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 				multiple: false,
 				enableSearch: true,
 				events: {
+					onShow: () => this.#dialogTrigger?.setExpanded(true),
+					onHide: () => this.#dialogTrigger?.setExpanded(false),
 					'Item:OnSelect': event => {
 						this.#select(event.data.item);
 					},
@@ -272,11 +288,36 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 		#setIntegrationTitle(itemId) {
 			if (main_core.Type.isNumber(itemId)) {
 				const item = this.#integrationList.find(integration => integration.id === itemId);
-				if (item && main_core.Type.isDomNode(this.#ui.info.title) && main_core.Type.isDomNode(this.#ui.info.subtitle)) {
-					this.#ui.info.title.innerHTML = item?.title ?? '';
-					this.#ui.info.subtitle.innerHTML = item?.subtitle?.toUpperCase() ?? '';
+				if (item) {
+					setIntegrationText(this.#ui.info.title, item?.title);
+					setIntegrationText(this.#ui.info.subtitle, item?.subtitle?.toUpperCase());
 				}
 			}
+		}
+		#setupDialogTrigger(element) {
+			// No aria-label: the row carries the active integration name, and a static label would
+			// override that accessible name.
+			main_core.Dom.attr(element, {
+				role: 'button',
+				tabindex: '0',
+				'aria-haspopup': 'dialog',
+				'aria-expanded': 'false',
+				'data-test-id': 'sign-b2e-hcm-company-selector-trigger'
+			});
+			const activate = () => this.#showDialog();
+			main_core.Event.bind(element, 'click', activate);
+			main_core.Event.bind(element, 'keydown', event => {
+				if (!activationKeys.has(event.key)) {
+					return;
+				}
+				event.preventDefault();
+				activate();
+			});
+			return {
+				setExpanded: expanded => {
+					main_core.Dom.attr(element, 'aria-expanded', expanded ? 'true' : 'false');
+				}
+			};
 		}
 	}
 

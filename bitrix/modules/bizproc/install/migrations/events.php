@@ -24,4 +24,30 @@ $event
 	->register('intranet', 'onAddAbsence', '\Bitrix\Bizproc\Integration\Intranet\EventHandler', 'onAddAbsence')
 	->register('aiassistant', 'AiAssistantAgentActivity::onCollectCustomContext', \Bitrix\Bizproc\Public\Integration\AiAssistant\EventHandler\AiAssistantAgentActivity::class, 'onCollectCustomContext')
 	->register('humanresources', 'OnAiReportsEnabled', '\Bitrix\Bizproc\Integration\HumanResources\EventHandler', 'onAiReportsEnabled')
+	->register(
+		'bizproc',
+		'onAfterWorkflowTemplateDelete',
+		\Bitrix\Bizproc\Internal\Service\LastValues\EventHandler::class,
+		'onAfterWorkflowTemplateDelete',
+	)
+	// Ownership of the workflows of a managed system AI agent copy: the barrier of OnCreateWorkflow runs before
+	// the workflow is initialized, the two events that end a workflow release its ownership row.
+	->registerCompatible(
+		'bizproc',
+		'OnCreateWorkflow',
+		\Bitrix\Bizproc\Internal\AiAgent\Lifecycle\EventHandler\WorkflowLifecycleEventHandler::class,
+		'onCreateWorkflow',
+	)
+	->registerCompatible(
+		'bizproc',
+		'OnWorkflowComplete',
+		\Bitrix\Bizproc\Internal\AiAgent\Lifecycle\EventHandler\WorkflowLifecycleEventHandler::class,
+		'onWorkflowComplete',
+	)
+	->register(
+		'bizproc',
+		'onAfterWorkflowKill',
+		\Bitrix\Bizproc\Internal\AiAgent\Lifecycle\EventHandler\WorkflowLifecycleEventHandler::class,
+		'onAfterWorkflowKill',
+	)
 ;

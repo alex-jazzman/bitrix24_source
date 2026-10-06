@@ -7,6 +7,7 @@ import { DeleteConnectionBtn } from '../delete-connection-btn/delete-connection-
 import { ContextMenuLayout } from '../context-menu-layout/context-menu-layout';
 import { GroupedBlocks } from '../grouped-blocks/grouped-blocks';
 import { GroupedConnections } from '../grouped-connections/grouped-connections';
+import { ConnectionPreview } from '../connection-preview/connection-preview.ts';
 import { MoveableBlock } from '../moveable-block/moveable-block';
 import { BlockContentStub } from '../block-content-stub/block-content-stub';
 import {
@@ -19,7 +20,7 @@ import {
 	useDragAndDrop,
 	useContextMenu,
 } from '../../composables';
-import { getGroupBlockSlotName, getGroupConnectionSlotName } from '../../utils';
+import { getGroupBlockSlotName, getGroupConnectionSlotName, GRID_DEFAULT_SIZE } from '../../utils';
 
 import {
 	HOOK_NAMES,
@@ -60,6 +61,8 @@ type Props = {
 	blocks: Array<DiagramBlock>,
 	connections: Array<DiagramConnection>,
 	canvasStyle: Object,
+	snapToGrid: boolean,
+	snapSize: number | null,
 	zoomSensitivity: number,
 	zoomSensitivityMouse: number,
 	zoom: number,
@@ -69,6 +72,7 @@ type Props = {
 	snapshotHandler: () => void,
 	revertHandler: () => void,
 	disabled: boolean,
+	connectionRouteHitTestEnabled: boolean,
 	contextMenuItems: Array<MenuItemOptions>,
 };
 
@@ -80,6 +84,7 @@ export const BlockDiagram = {
 		ContextMenuLayout,
 		GroupedBlocks,
 		GroupedConnections,
+		ConnectionPreview,
 		Connection,
 		DeleteConnectionBtn,
 		MoveableBlock,
@@ -100,10 +105,20 @@ export const BlockDiagram = {
 			type: Object,
 			default: () => ({
 				style: 'grid',
-				size: 64,
+				size: GRID_DEFAULT_SIZE,
 				gridColor: UI_CANVAS_GRID_COLOR,
 				backgroundColor: UI_CANVAS_BACKGROUND_COLOR,
 			}),
+		},
+		// Allows snapping rather than turns it on: a gesture is aligned to the grid only while
+		// Shift is held, and with the prop off Shift changes nothing.
+		snapToGrid: {
+			type: Boolean,
+			default: false,
+		},
+		snapSize: {
+			type: Number,
+			default: null,
 		},
 		zoomSensitivity: {
 			type: Number,
@@ -159,6 +174,10 @@ export const BlockDiagram = {
 			type: Boolean,
 			default: false,
 		},
+		connectionRouteHitTestEnabled: {
+			type: Boolean,
+			default: false,
+		},
 		enableGrouping: {
 			type: Boolean,
 			default: false,
@@ -199,6 +218,12 @@ export const BlockDiagram = {
 			cursorType,
 			blockIntersections,
 			isRunUpdateBlocksCommand,
+			blockElMap,
+			purgeBlockGeometry,
+			purgeBlockGeometryExcept,
+			isRenderOptimizationAvailable,
+			connectionPreview,
+			clearConnectionPreview,
 		} = useBlockDiagram(props);
 
 		const initAppElements = useInitAppElements({
@@ -237,31 +262,72 @@ export const BlockDiagram = {
 				{
 					isRunUpdateBlocksCommand.value = true;
 					blockIntersections.updateBlock(oldBlock, newBlock);
+
+					// Geometry retention/purge only exists under render optimization; under N
+					// nothing is retained (unmount clears rects) — strict no-op. Under Y a
+					// culled node moved programmatically keeps stale retained coordinates with
+					// no remount to refresh them: invalidate so the next mount re-measures.
+					if (toValue(isRenderOptimizationAvailable) && !toValue(blockElMap).has(toValue(newBlock).id))
+					{
+						purgeBlockGeometry(toValue(newBlock).id);
+					}
 				},
 				[HOOK_NAMES.DELETE_BLOCK](block)
 				{
 					isRunUpdateBlocksCommand.value = true;
 					blockIntersections.removeBlock(toValue(block));
+					// Under Y, deleting an already-culled node has no unmount to clear its
+					// retained rect, so purge explicitly. Under N unmount clears it → no-op.
+					if (toValue(isRenderOptimizationAvailable))
+					{
+						purgeBlockGeometry(toValue(block).id);
+					}
 				},
 				[HOOK_NAMES.DELETE_BLOCKS](blocks)
 				{
 					isRunUpdateBlocksCommand.value = true;
+					const renderOptimization = toValue(isRenderOptimizationAvailable);
 					toValue(blocks)
 						.forEach((block) => {
 							blockIntersections.removeBlock(toValue(block));
+							if (renderOptimization)
+							{
+								purgeBlockGeometry(toValue(block).id);
+							}
 						});
 				},
+				// Unlike the block hooks above, this one fires AFTER the props watcher of the same
+				// change: the revert emits update:blocks first and the watcher flushes before
+				// useHistory() gets here. So isRunUpdateBlocksCommand must NOT be raised because the run
+				// it would suppress is already over, nothing would clear it, and it would suppress
+				// the index rebuild of the next, unrelated change instead.
 				[HOOK_NAMES.HISTORY_NEXT]({ snapshot })
 				{
-					isRunUpdateBlocksCommand.value = true;
-					blockIntersections.clear();
-					blockIntersections.load(toValue(snapshot.blocks));
+					// The block index is left to that watcher pass: it clears and reloads the very
+					// model this snapshot restores, so rebuilding it here would build the whole
+					// index a second time on every history step.
+					//
+					// The connection index still needs an immediate rebuild: the watcher's clear()
+					// empties it and its own loadConnections only lands on the next frame, so a
+					// restored connection would render culled for that frame. The synchronous
+					// rebuild supersedes that pending frame.
+					blockIntersections.loadConnectionsFromSnapshot(toValue(snapshot.connections), toValue(snapshot.blocks));
+					// Purge retained geometry of culled nodes dropped by the restore (no
+					// unmount to clear them). Under N nothing is retained → no-op.
+					if (toValue(isRenderOptimizationAvailable))
+					{
+						purgeBlockGeometryExcept(toValue(snapshot.blocks).map((block) => block.id));
+					}
 				},
+				// Same ordering as HISTORY_NEXT: the flag would outlive its own change.
 				[HOOK_NAMES.HISTORY_PREV]({ snapshot })
 				{
-					isRunUpdateBlocksCommand.value = true;
-					blockIntersections.clear();
-					blockIntersections.load(toValue(snapshot.blocks));
+					// Same split as HISTORY_NEXT: the block index comes from the props watcher.
+					blockIntersections.loadConnectionsFromSnapshot(toValue(snapshot.connections), toValue(snapshot.blocks));
+					if (toValue(isRenderOptimizationAvailable))
+					{
+						purgeBlockGeometryExcept(toValue(snapshot.blocks).map((block) => block.id));
+					}
 				},
 			},
 			{
@@ -292,9 +358,11 @@ export const BlockDiagram = {
 		});
 
 		onUnmounted(() => {
+			clearConnectionPreview(toValue(connectionPreview)?.activationKey);
 			disposeModelValue();
 			disposeWatchProps();
 			disposeRegisterHooks();
+			blockIntersections.clear();
 			initAppElements.onUnmountedAppElements();
 		});
 
@@ -341,6 +409,7 @@ export const BlockDiagram = {
 	template: `
 		<div
 			:class="blockDiagramClassNames"
+			:data-test-id="$blockDiagramTestId('blockDiagram')"
 			ref="blockDiagram"
 			@dragover.prevent
 			@dragenter="onDragEnter"
@@ -386,6 +455,7 @@ export const BlockDiagram = {
 							<slot name="new-connection"/>
 						</template>
 					</GroupedConnections>
+					<ConnectionPreview/>
 					<GroupedBlocks>
 						<template
 							v-for="groupName in visibleBlockGroupNames"

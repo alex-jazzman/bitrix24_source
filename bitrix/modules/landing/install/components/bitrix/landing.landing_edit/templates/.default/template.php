@@ -47,12 +47,28 @@ if ($arResult['ERRORS'])
 		?>
 		<div class="landing-error-page">
 			<div class="landing-error-page-inner">
-				<div class="landing-error-page-title"><?= implode('<br>', $errorMessages)?></div>
+				<div
+					class="landing-error-page-title"
+					id="landing-page-settings-error"
+					role="alert"
+					tabindex="-1"
+					data-testid="page-settings-error"
+				><?= implode('<br>', $errorMessages)?></div>
 				<div class="landing-error-page-img">
 					<div class="landing-error-page-img-inner"></div>
 				</div>
 			</div>
 		</div>
+		<script>
+			BX.ready(function()
+			{
+				const errorBlock = BX('landing-page-settings-error');
+				if (errorBlock)
+				{
+					errorBlock.focus();
+				}
+			});
+		</script>
 		<?php
 	}
 }
@@ -202,9 +218,9 @@ elseif ($isVibeEditor)
 			top.window['landingSettingsSaved'] = false;
 		<?php endif;?>
 		BX.Landing.Env.createInstance({
- 			site_id: '<?= $row['SITE_ID']['CURRENT'] ?>',
+ 			site_id: '<?= CUtil::jsEscape((string)$row['SITE_ID']['CURRENT']) ?>',
 			params: {
-				type: '<?= $arParams['TYPE'] ?>',
+				type: '<?= CUtil::jsEscape((string)$arParams['TYPE']) ?>',
 			},
 		});
 	});
@@ -239,16 +255,25 @@ if ($arParams['SUCCESS_SAVE'])
 						<?= $row['TITLE']['CURRENT']?>
 					</label>
 					<input type="text"
+						id="<?= $template->getFieldId('TITLE') ?>"
 						name="fields[TITLE]"
 						class="ui-input landing-editable-field-input landing-editable-field-input-js"
 						value="<?=$row['TITLE']['CURRENT']?>"
 						placeholder="<?=$row['TITLE']['TITLE']?>"
 						autocomplete="off"
+						aria-label="<?= htmlspecialcharsbx(Loc::getMessage('LANDING_TPL_FIELD_PAGE_TITLE')) ?>"
+						data-testid="page-settings-title-input"
 					/>
 					<div class="landing-editable-field-buttons">
-						<div class="ui-title-input-btn ui-title-input-btn-js ui-editing-pen">
-							<div class="ui-icon-set --pencil-60"></div>
-						</div>
+						<button
+							type="button"
+							class="ui-title-input-btn ui-title-input-btn-js ui-editing-pen"
+							aria-label="<?= htmlspecialcharsbx(Loc::getMessage('LANDING_TPL_PAGE_TITLE_EDIT')) ?>"
+							aria-controls="<?= $template->getFieldId('TITLE') ?>"
+							data-testid="page-settings-title-edit-btn"
+						>
+							<span class="ui-icon-set --pencil-60" aria-hidden="true"></span>
+						</button>
 					</div>
 				</div>
 			</div>
@@ -258,19 +283,19 @@ if ($arParams['SUCCESS_SAVE'])
 			<!--Adress-->
 			<div class="ui-form-row">
 				<div class="ui-form-label">
-					<div class="ui-ctl-label-text">
+					<div class="ui-ctl-label-text" id="<?= $template->getFieldId('CODE_LABEL') ?>">
 						<?= Loc::getMessage('LANDING_TPL_FIELD_CODE') ?>
 					</div>
 				</div>
 				<div class="ui-form-content">
 					<div class="ui-form-row">
 						<div class="landing-form-site-name-block">
-							<span class="landing-form-site-name-label">
+							<span class="landing-form-site-name-label" id="<?= $template->getFieldId('CODE_PREFIX') ?>">
 								<?php
-								echo $domainName;
+								echo htmlspecialcharsbx($domainName);
 								if ($isVibeEditor)
 								{
-									echo $arResult['VIBE_PUBLIC_URL'] ?? '/';
+									echo htmlspecialcharsbx($arResult['VIBE_PUBLIC_URL'] ?? '/');
 								}
 								elseif ($isIntranet)
 								{
@@ -316,7 +341,10 @@ if ($arParams['SUCCESS_SAVE'])
 								name="fields[CODE]"
 								value="<?=$row['CODE']['CURRENT']?>"
 								maxlength="100"
-								class="ui-input"/>
+								class="ui-input"
+								aria-labelledby="<?= $template->getFieldId('CODE_LABEL') ?>"
+								aria-describedby="<?= $template->getFieldId('CODE_PREFIX') ?>"
+								data-testid="page-settings-code-input"/>
 							<?=($isIndex || $isFolderIndex) ? '' : '<span class="landing-form-site-name-label">/</span>'?>
 							<?php if ($isIndex && !$isVibeEditor): ?>
 								<?php
@@ -324,7 +352,8 @@ if ($arParams['SUCCESS_SAVE'])
 								if ($arParams['PAGE_URL_SITE_EDIT'])
 								{
 									$link1 = $isAjax
-										? '<a data-page="SITE_EDIT" style="cursor: pointer;">'
+										? '<a href="' . htmlspecialcharsbx($arParams['PAGE_URL_SITE_EDIT']) . '" '
+											. 'data-page="SITE_EDIT" data-testid="page-settings-site-settings-btn">'
 										: '<a href="' . $arParams['PAGE_URL_SITE_EDIT'] . '">'
 									;
 								}
@@ -430,7 +459,7 @@ if ($arParams['SUCCESS_SAVE'])
 												isAiAvailable: <?= \CUtil::PhpToJSObject($arResult['AI_TEXT_AVAILABLE']) ?>,
 												isAiActive: <?= \CUtil::PhpToJSObject($arResult['AI_TEXT_ACTIVE']) ?>,
 												aiUnactiveInfoCode: <?= \CUtil::PhpToJSObject($arResult['AI_UNACTIVE_INFO_CODE']) ?>,
-												siteId: '<?= $row['SITE_ID']['CURRENT'] ?>',
+												siteId: '<?= CUtil::jsEscape((string)$row['SITE_ID']['CURRENT']) ?>',
 											});
 										});
 									</script>
@@ -449,14 +478,27 @@ if ($arParams['SUCCESS_SAVE'])
 												'id' => $template->getFieldId('METAOG_TITLE'),
 												'rows' => 1,
 												'autocomplete' => 'off',
+												'additional' => 'aria-label="'
+													. htmlspecialcharsbx($pageFields['METAOG_TITLE']->getLabel())
+													. '" data-testid="page-settings-og-title-input"',
 											]);
 											?>
 											<div class="landing-editable-field-buttons">
-												<div class="ui-title-input-btn ui-title-input-btn-js ui-editing-pen">
-													<div class="ui-icon-set --pencil-60"></div>
-												</div>
+												<button
+													type="button"
+													class="ui-title-input-btn ui-title-input-btn-js ui-editing-pen"
+													aria-label="<?= htmlspecialcharsbx(Loc::getMessage('LANDING_TPL_PAGE_OG_TITLE_EDIT')) ?>"
+													aria-controls="<?= $template->getFieldId('METAOG_TITLE') ?>"
+													data-testid="page-settings-og-title-edit-btn"
+												>
+													<span class="ui-icon-set --pencil-60" aria-hidden="true"></span>
+												</button>
 												<?php if ($arResult['AI_TEXT_AVAILABLE']): ?>
-													<div class="landing-editable-field-button --copilot"></div>
+													<button
+														type="button"
+														class="landing-editable-field-button --copilot"
+														aria-label="<?= htmlspecialcharsbx(Loc::getMessage('LANDING_TPL_PAGE_COPILOT')) ?>"
+													></button>
 												<?php endif; ?>
 											</div>
 										</span>
@@ -477,7 +519,7 @@ if ($arParams['SUCCESS_SAVE'])
 												isAiAvailable: <?= \CUtil::PhpToJSObject($arResult['AI_TEXT_AVAILABLE']) ?>,
 												isAiActive: <?= \CUtil::PhpToJSObject($arResult['AI_TEXT_ACTIVE']) ?>,
 												aiUnactiveInfoCode: <?= \CUtil::PhpToJSObject($arResult['AI_UNACTIVE_INFO_CODE']) ?>,
-												siteId: '<?= $row['SITE_ID']['CURRENT'] ?>',
+												siteId: '<?= CUtil::jsEscape((string)$row['SITE_ID']['CURRENT']) ?>',
 												display: true,
 											});
 										});
@@ -494,23 +536,37 @@ if ($arParams['SUCCESS_SAVE'])
 											$pageFields['METAOG_DESCRIPTION']->viewForm([
 												'class' => 'ui-textarea landing-editable-field-textarea landing-editable-field-input-js',
 												'name_format' => 'fields[ADDITIONAL_FIELDS][#field_code#]',
+												'id' => $template->getFieldId('METAOG_DESCRIPTION'),
 												'autocomplete' => 'off',
 												'rows' => '1',
+												'additional' => 'aria-label="'
+													. htmlspecialcharsbx($pageFields['METAOG_DESCRIPTION']->getLabel())
+													. '" data-testid="page-settings-og-description-input"',
 											]);
 											?>
 											<div class="landing-editable-field-buttons">
-												<div class="ui-title-input-btn ui-title-input-btn-js ui-editing-pen">
-													<div class="ui-icon-set --pencil-60"></div>
-												</div>
+												<button
+													type="button"
+													class="ui-title-input-btn ui-title-input-btn-js ui-editing-pen"
+													aria-label="<?= htmlspecialcharsbx(Loc::getMessage('LANDING_TPL_PAGE_OG_TEXT_EDIT')) ?>"
+													aria-controls="<?= $template->getFieldId('METAOG_DESCRIPTION') ?>"
+													data-testid="page-settings-og-description-edit-btn"
+												>
+													<span class="ui-icon-set --pencil-60" aria-hidden="true"></span>
+												</button>
 												<?php if ($arResult['AI_TEXT_AVAILABLE']): ?>
-													<div class="landing-editable-field-button --copilot"></div>
+													<button
+														type="button"
+														class="landing-editable-field-button --copilot"
+														aria-label="<?= htmlspecialcharsbx(Loc::getMessage('LANDING_TPL_PAGE_COPILOT')) ?>"
+													></button>
 												<?php endif; ?>
 											</div>
 										</span>
 									</div>
 								<?php endif; ?>
 								<?php if (!$isIntranet): ?>
-									<div class="landing-form-social-site-name"><?=$domainName?></div>
+									<div class="landing-form-social-site-name"><?=htmlspecialcharsbx($domainName)?></div>
 								<?php endif; ?>
 							</div>
 						</div>
@@ -523,56 +579,102 @@ if ($arParams['SUCCESS_SAVE'])
 		<!--Additional labels-->
 		<?php if (!$isArea): ?>
 			<div class="landing-form-additional-fields landing-form-collapse-block landing-form-additional-fields-js">
-				<span class="landing-form-collapse-label"><?=Loc::getMessage('LANDING_TPL_ADDITIONAL')?></span>
+				<button
+					type="button"
+					class="landing-form-collapse-label"
+					aria-expanded="false"
+					aria-controls="<?= $template->getFieldId('ADDITIONAL_FIELDS') ?>"
+					data-testid="page-settings-additional-toggle"
+				><?=Loc::getMessage('LANDING_TPL_ADDITIONAL')?></button>
 				<span class="landing-additional-alt-promo-wrap">
 					<?php if (isset($hooks['B24BUTTON'])): ?>
-						<span class="landing-additional-alt-promo-text"
-							  data-landing-additional-option="b24widget"><?=Loc::getMessage('LANDING_TPL_ADDITIONAL_WIDGET')?></span>
+						<button
+							type="button"
+							class="landing-additional-alt-promo-text"
+							data-landing-additional-option="b24widget"
+							data-testid="page-settings-additional-link"
+						><?=Loc::getMessage('LANDING_TPL_ADDITIONAL_WIDGET')?></button>
 					<?php endif; ?>
 					<?php if (isset($hooks['METAMAIN'])): ?>
-						<span class="landing-additional-alt-promo-text"
-							data-landing-additional-option="meta"><?=Loc::getMessage('LANDING_TPL_ADDITIONAL_TAGS')?></span>
+						<button
+							type="button"
+							class="landing-additional-alt-promo-text"
+							data-landing-additional-option="meta"
+							data-testid="page-settings-additional-link"
+						><?=Loc::getMessage('LANDING_TPL_ADDITIONAL_TAGS')?></button>
 					<?php endif; ?>
 					<?php if (isset($hooks['VIEW'])): ?>
-						<span class="landing-additional-alt-promo-text"
-							data-landing-additional-option="view"><?=Loc::getMessage('LANDING_TPL_ADDITIONAL_VIEW')?></span>
+						<button
+							type="button"
+							class="landing-additional-alt-promo-text"
+							data-landing-additional-option="view"
+							data-testid="page-settings-additional-link"
+						><?=Loc::getMessage('LANDING_TPL_ADDITIONAL_VIEW')?></button>
 					<?php endif; ?>
 					<?php if ($arResult['TEMPLATES']): ?>
-						<span class="landing-additional-alt-promo-text"
-							data-landing-additional-option="layout"><?=Loc::getMessage('LANDING_TPL_ADDITIONAL_LAYOUT')?></span>
+						<button
+							type="button"
+							class="landing-additional-alt-promo-text"
+							data-landing-additional-option="layout"
+							data-testid="page-settings-additional-link"
+						><?=Loc::getMessage('LANDING_TPL_ADDITIONAL_LAYOUT')?></button>
 					<?php endif; ?>
 					<?php if (isset($hooks['YACOUNTER']) || isset($hooks['GACOUNTER']) || isset($hooks['GTM'])): ?>
-						<span class="landing-additional-alt-promo-text"
-							data-landing-additional-option="metrika"><?=Loc::getMessage('LANDING_TPL_ADDITIONAL_METRIKA')?></span>
+						<button
+							type="button"
+							class="landing-additional-alt-promo-text"
+							data-landing-additional-option="metrika"
+							data-testid="page-settings-additional-link"
+						><?=Loc::getMessage('LANDING_TPL_ADDITIONAL_METRIKA')?></button>
 					<?php endif; ?>
 					<?php if (isset($hooks['PIXELFB']) || isset($hooks['PIXELVK'])): ?>
-						<span class="landing-additional-alt-promo-text"
-							data-landing-additional-option="pixel"><?=Loc::getMessage('LANDING_TPL_HOOK_PIXEL')?></span>
+						<button
+							type="button"
+							class="landing-additional-alt-promo-text"
+							data-landing-additional-option="pixel"
+							data-testid="page-settings-additional-link"
+						><?=Loc::getMessage('LANDING_TPL_HOOK_PIXEL')?></button>
 					<?php endif; ?>
 					<?php if (isset($hooks['METAROBOTS'])): ?>
-						<span class="landing-additional-alt-promo-text"
-							data-landing-additional-option="index"><?=Loc::getMessage('LANDING_TPL_ADDITIONAL_INDEX')?></span>
+						<button
+							type="button"
+							class="landing-additional-alt-promo-text"
+							data-landing-additional-option="index"
+							data-testid="page-settings-additional-link"
+						><?=Loc::getMessage('LANDING_TPL_ADDITIONAL_INDEX')?></button>
 					<?php endif; ?>
 					<?php if (isset($hooks['HEADBLOCK'])): ?>
-						<span class="landing-additional-alt-promo-text"
-							data-landing-additional-option="html"><?=Loc::getMessage('LANDING_TPL_ADDITIONAL_HTML')?></span>
+						<button
+							type="button"
+							class="landing-additional-alt-promo-text"
+							data-landing-additional-option="html"
+							data-testid="page-settings-additional-link"
+						><?=Loc::getMessage('LANDING_TPL_ADDITIONAL_HTML')?></button>
 					<?php endif; ?>
 					<?php if (isset($hooks['CSSBLOCK'])): ?>
-						<span class="landing-additional-alt-promo-text"
-							data-landing-additional-option="css"><?=Loc::getMessage('LANDING_TPL_ADDITIONAL_CSS')?></span>
+						<button
+							type="button"
+							class="landing-additional-alt-promo-text"
+							data-landing-additional-option="css"
+							data-testid="page-settings-additional-link"
+						><?=Loc::getMessage('LANDING_TPL_ADDITIONAL_CSS')?></button>
 					<?php endif; ?>
 					<?php if (!$isIntranet && !$isFormEditor && !$isVibeEditor && !$isSMN): ?>
-						<span class="landing-additional-alt-promo-text"
-							data-landing-additional-option="sitemap"><?=Loc::getMessage('LANDING_TPL_ADDITIONAL_SITEMAP')?></span>
+						<button
+							type="button"
+							class="landing-additional-alt-promo-text"
+							data-landing-additional-option="sitemap"
+							data-testid="page-settings-additional-link"
+						><?=Loc::getMessage('LANDING_TPL_ADDITIONAL_SITEMAP')?></button>
 					<?php endif; ?>
 				</span>
 			</div>
 
-			<div class="ui-form ui-form-section landing-form-additional">
+			<div class="ui-form ui-form-section landing-form-additional" id="<?= $template->getFieldId('ADDITIONAL_FIELDS') ?>">
 				<!--Widget-->
 				<?php if (isset($hooks['B24BUTTON'])): ?>
 					<?php $pageFields = $hooks['B24BUTTON']->getPageFields(); ?>
-					<div class="ui-form-row landing-form-additional-row" data-landing-additional-detail="b24widget">
+					<div class="ui-form-row landing-form-additional-row" tabindex="-1" data-landing-additional-detail="b24widget">
 						<div class="ui-form-label">
 							<div class="ui-ctl-label-text">
 								<?= $hooks['B24BUTTON']->getPageTitle() ?>
@@ -637,7 +739,7 @@ if ($arParams['SUCCESS_SAVE'])
 				<!--MetaMain-->
 				<?php if (isset($hooks['METAMAIN'])): ?>
 					<?php $pageFields = $hooks['METAMAIN']->getPageFields(); ?>
-					<div class="ui-form-row landing-form-additional-row" data-landing-additional-detail="meta">
+					<div class="ui-form-row landing-form-additional-row" tabindex="-1" data-landing-additional-detail="meta">
 						<div class="ui-form-label">
 							<div class="ui-ctl-label-text">
 								<?= $hooks['METAMAIN']->getTitle() ?>
@@ -671,7 +773,7 @@ if ($arParams['SUCCESS_SAVE'])
 											>
 												<?=htmlspecialcharsbx($pageFields['METAMAIN_TITLE']->getValue())?>
 											</div>
-											<div class="landing-form-meta-link"><?=$domainProtocol?>://<?=$domainName?>/</div>
+											<div class="landing-form-meta-link"><?=htmlspecialcharsbx($domainProtocol)?>://<?=htmlspecialcharsbx($domainName)?>/</div>
 											<div
 												class="landing-form-meta-text"
 												id="<?= $template->getFieldId('METAMAIN_DESCRIPTION_NODE') ?>"
@@ -726,13 +828,13 @@ if ($arParams['SUCCESS_SAVE'])
 								</div>
 							</div>
 						</div>
-					</div data-landing-additional-detail="view">
+					</div>
 				<?php endif;?>
 
 				<!--View-->
 				<?php if (isset($hooks['VIEW'])): ?>
 					<?php $pageFields = $hooks['VIEW']->getPageFields(); ?>
-					<div class="ui-form-row landing-form-additional-row" data-landing-additional-detail="view">
+					<div class="ui-form-row landing-form-additional-row" tabindex="-1" data-landing-additional-detail="view">
 						<div class="ui-form-label">
 							<div class="ui-ctl-label-text">
 								<?= $hooks['VIEW']->getTitle() ?>
@@ -753,16 +855,22 @@ if ($arParams['SUCCESS_SAVE'])
 											$value = array_shift($array);
 										}
 										?>
-										<div class="landing-form-type-page-wrap">
+										<div
+											class="landing-form-type-page-wrap"
+											role="group"
+											aria-label="<?= htmlspecialcharsbx(Loc::getMessage('LANDING_TPL_VIEW_TYPE_GROUP')) ?>"
+											data-testid="page-settings-view-type-group"
+										>
 											<?php foreach ($items as $key => $title): ?>
 												<span class="landing-form-type-page landing-form-type-<?=$key?>">
 													<input type="radio" <?php
 													?>name="fields[ADDITIONAL_FIELDS][VIEW_TYPE]" <?php
 													?>class="ui-radio" <?php
 													?>id="<?= $template->getFieldId('VIEW_TYPE_' . $key) ?>" <?php
+													?>data-testid="page-settings-view-type-radio" <?php
 													?><? if ($value === $key) { ?> checked="checked"<? } ?> <?php
 													?>value="<?=$key?>"/>
-													<label for="<?= $template->getFieldId('VIEW_TYPE_' . $key) ?>">
+													<label for="<?= $template->getFieldId('VIEW_TYPE_' . $key) ?>" data-testid="page-settings-view-type-tile">
 														<span class="landing-form-type-page-img"></span>
 														<span class="landing-form-type-page-title"><?=$title?></span>
 													</label>
@@ -778,7 +886,7 @@ if ($arParams['SUCCESS_SAVE'])
 
 				<!--Template-->
 				<?php if ($arResult['TEMPLATES']): ?>
-					<div class="ui-form-row landing-form-additional-row" data-landing-additional-detail="layout">
+					<div class="ui-form-row landing-form-additional-row" tabindex="-1" data-landing-additional-detail="layout">
 						<div class="ui-form-label">
 							<div class="ui-ctl-label-text">
 								<?= Loc::getMessage('LANDING_TPL_LAYOUT') ?>
@@ -816,7 +924,7 @@ if ($arParams['SUCCESS_SAVE'])
 											id="<?= $template->getFieldId('LAYOUT_TPLREFS_USE') ?>"
 											<?= $tplUsed ? ' checked ' : '' ?>
 										/>
-										<div class="ui-ctl-label-text" for="<?= $template->getFieldId('LAYOUT_TPLREFS_USE') ?>">
+										<div class="ui-ctl-label-text">
 											<?= Loc::getMessage('LANDING_TPL_LAYOUT_USE') ?>
 										</div>
 									</label>
@@ -825,7 +933,12 @@ if ($arParams['SUCCESS_SAVE'])
 									class="ui-form-row-hidden landing-form-page-layout<?= $isVibeEditor ? ' --main-page' : '' ?>"
 									id="<?= $template->getFieldId('PAGE_LAYOUT') ?>"
 								>
-									<div class="landing-form-layout-select">
+									<div
+										class="landing-form-layout-select"
+										role="group"
+										aria-label="<?= htmlspecialcharsbx(Loc::getMessage('LANDING_TPL_LAYOUT_GROUP')) ?>"
+										data-testid="page-settings-layout-group"
+									>
 										<?php foreach (array_values($arResult['TEMPLATES']) as $i => $tpl): ?>
 											<input <?php
 												?>class="layout-switcher <?= $template->getFieldClass('LAYOUT-RADIO_' . ($i + 1)) ?>" <?php
@@ -833,15 +946,27 @@ if ($arParams['SUCCESS_SAVE'])
 												?>type="radio" <?php
 												?>name="fields[TPL_ID]" <?php
 												?>value="<?=$tpl['ID']?>" <?php
-												?>id="<?= $template->getFieldId('LAYOUT-RADIO_' . ($i + 1)) ?>"<?php
+												?>id="<?= $template->getFieldId('LAYOUT-RADIO_' . ($i + 1)) ?>" <?php
+												?>data-testid="page-settings-layout-radio" <?php
+												?>aria-label="<?= htmlspecialcharsbx($tpl['TITLE']) ?>"<?php
 												?><?php if ($tpl['ID'] === $row['TPL_ID']['CURRENT']) { ?> checked="checked"<?php } ?>
 											>
 										<?php endforeach; ?>
 										<div class="landing-form-list">
 											<div class="landing-form-select-buttons">
 												<?php if (!$isVibeEditor): ?>
-													<div class="landing-form-select-prev"></div>
-													<div class="landing-form-select-next"></div>
+													<button
+														type="button"
+														class="landing-form-select-prev"
+														aria-label="<?= htmlspecialcharsbx(Loc::getMessage('LANDING_TPL_LAYOUT_PREV')) ?>"
+														data-testid="page-settings-layout-prev-btn"
+													></button>
+													<button
+														type="button"
+														class="landing-form-select-next"
+														aria-label="<?= htmlspecialcharsbx(Loc::getMessage('LANDING_TPL_LAYOUT_NEXT')) ?>"
+														data-testid="page-settings-layout-next-btn"
+													></button>
 												<?php endif; ?>
 											</div>
 											<div class="landing-form-list-container">
@@ -852,6 +977,7 @@ if ($arParams['SUCCESS_SAVE'])
 																?>landing-form-layout-item-<?= $tpl['XML_ID'] ?>" <?php
 																?>data-block="<?= $tpl['AREA_COUNT'] ?>" <?php
 																?>data-layout="<?= $tpl['XML_ID'] ?>" <?php
+																?>data-testid="page-settings-layout-tile" <?php
 																?>for="<?= $template->getFieldId('LAYOUT-RADIO_' . ($i + 1)) ?>"
 															>
 																<div class="landing-form-layout-item-img"></div>
@@ -880,9 +1006,9 @@ if ($arParams['SUCCESS_SAVE'])
 						BX.ready(function() {
 							new BX.Landing.Layout({
 								container: BX('<?= $template->getFieldId('PAGE_LAYOUT') ?>'),
-								siteId: '<?= $row['SITE_ID']['CURRENT'] ?>',
-								landingId: '<?= $row['ID']['CURRENT'] ?>',
-								type: '<?= $siteCurrent ? $siteCurrent['TYPE'] : 'PAGE' ?>',
+								siteId: '<?= CUtil::jsEscape((string)$row['SITE_ID']['CURRENT']) ?>',
+								landingId: '<?= CUtil::jsEscape((string)$row['ID']['CURRENT']) ?>',
+								type: '<?= CUtil::jsEscape((string)($siteCurrent ? $siteCurrent['TYPE'] : 'PAGE')) ?>',
 								tplUse: BX('<?= $template->getFieldId('LAYOUT_TPLREFS_USE') ?>'),
 								valueField: BX('<?= $template->getFieldId('LAYOUT_TPLREFS') ?>'),
 								messages: {
@@ -905,7 +1031,7 @@ if ($arParams['SUCCESS_SAVE'])
 
 				<!--Analytics-->
 				<?php if (isset($hooks['YACOUNTER']) || isset($hooks['GACOUNTER']) || isset($hooks['GTM'])): ?>
-					<div class="ui-form-row landing-form-additional-row" data-landing-additional-detail="metrika">
+					<div class="ui-form-row landing-form-additional-row" tabindex="-1" data-landing-additional-detail="metrika">
 						<div class="ui-form-label">
 							<div class="ui-ctl-label-text">
 								<?= Loc::getMessage('LANDING_TPL_HOOK_METRIKA') ?>
@@ -986,7 +1112,7 @@ if ($arParams['SUCCESS_SAVE'])
 
 				<!--Pixels-->
 				<?php if (isset($hooks['PIXELFB'], $hooks['PIXELVK'])): ?>
-					<div class="ui-form-row landing-form-additional-row" data-landing-additional-detail="pixel">
+					<div class="ui-form-row landing-form-additional-row" tabindex="-1" data-landing-additional-detail="pixel">
 						<div class="ui-form-label">
 							<div class="ui-ctl-label-text">
 								<?= Loc::getMessage('LANDING_TPL_HOOK_PIXEL') ?>
@@ -1023,7 +1149,7 @@ if ($arParams['SUCCESS_SAVE'])
 				<!--MetaRobots-->
 				<?php if (isset($hooks['METAROBOTS'])): ?>
 					<?php $pageFields = $hooks['METAROBOTS']->getPageFields(); ?>
-					<div class="ui-form-row landing-form-additional-row" data-landing-additional-detail="index">
+					<div class="ui-form-row landing-form-additional-row" tabindex="-1" data-landing-additional-detail="index">
 						<div class="ui-form-label">
 							<div class="ui-ctl-label-text">
 								<?= $hooks['METAROBOTS']->getTitle() ?>
@@ -1050,7 +1176,7 @@ if ($arParams['SUCCESS_SAVE'])
 
 				<!--HTML-->
 				<?php if (isset($hooks['HEADBLOCK'])): ?>
-					<div class="ui-form-row landing-form-additional-row" data-landing-additional-detail="html">
+					<div class="ui-form-row landing-form-additional-row" tabindex="-1" data-landing-additional-detail="html">
 						<div class="ui-form-label">
 							<div class="ui-ctl-label-text">
 								<?= $hooks['HEADBLOCK']->getTitle() ?>
@@ -1065,7 +1191,7 @@ if ($arParams['SUCCESS_SAVE'])
 				<!--CSS-->
 				<?php if (isset($hooks['CSSBLOCK'])): ?>
 					<?php $pageFields = $hooks['CSSBLOCK']->getPageFields(); ?>
-					<div class="ui-form-row landing-form-additional-row" data-landing-additional-detail="css">
+					<div class="ui-form-row landing-form-additional-row" tabindex="-1" data-landing-additional-detail="css">
 						<div class="ui-form-label">
 							<div class="ui-ctl-label-text">
 								<?= $hooks['CSSBLOCK']->getTitle() ?>
@@ -1088,20 +1214,22 @@ if ($arParams['SUCCESS_SAVE'])
 
 				<!--SITEMAP-->
 				<?php if (!$isIntranet && !$isFormEditor && !$isVibeEditor && !$isSMN): ?>
-					<div class="ui-form-row landing-form-additional-row" data-landing-additional-detail="sitemap">
+					<div class="ui-form-row landing-form-additional-row" tabindex="-1" data-landing-additional-detail="sitemap">
 						<div class="ui-form-label">
 							<div class="ui-ctl-label-text">
 								<?= $row['SITEMAP']['TITLE'] ?>
 							</div>
 						</div>
 						<div class="ui-form-content">
-							<label class="ui-ctl ui-ctl-checkbox">
+							<label class="ui-ctl ui-ctl-checkbox" for="<?= $template->getFieldId('SITEMAP') ?>">
 								<input type="hidden" name="fields[SITEMAP]" value="N">
 								<input type="checkbox"
 									class="ui-ctl-element ui-field-sitemap"
+									id="<?= $template->getFieldId('SITEMAP') ?>"
 									name="fields[SITEMAP]"
-									value="Y"<? if ($row['SITEMAP']['CURRENT'] == 'Y') { ?> checked="checked"<? } ?> />
-								<div class="ui-ctl-label-text" for="checkbox-sitemap">
+									value="Y"<? if ($row['SITEMAP']['CURRENT'] == 'Y') { ?> checked="checked"<? } ?>
+									data-testid="page-settings-sitemap-checkbox" />
+								<div class="ui-ctl-label-text">
 									<?= Loc::getMessage('LANDING_TPL_ACTION_ADD_IN_SITEMAP')?>
 								</div>
 							</label>
@@ -1146,6 +1274,7 @@ if ($arParams['SUCCESS_SAVE'])
 	{
 		BX.UI.Hint.init(BX('landing-page-set-form'));
 		new BX.UI.LayoutForm({container: BX('landing-page-set-form')});
+		new BX.Landing.FormRowToggleKeyboard(BX('landing-page-set-form'));
 		new BX.Landing.ToggleAdditionalFields(BX('landing-page-set-form'));
 		new BX.Landing.EditTitleForm({
 			node: BX('<?= $template->getFieldId('EDITABLE_TITLE') ?>'),

@@ -79,7 +79,7 @@ export const TableBlock = {
 		},
 		getFormattedText(text: string): string
 		{
-			return Parser.decodeText(text);
+			return Parser.decodeInlineText(text);
 		},
 	},
 	template: `
@@ -93,7 +93,8 @@ export const TableBlock = {
 					:class="{ '--narrow': isNarrow }"
 					:style="{ '--im-message-builder-table-cols': columnCount }"
 					ref="container"
-					class="bx-im-message-block-table__container" 
+					class="bx-im-message-block-table__container"
+					data-testid="message-builder-table"
 				>
 					<table class="bx-im-message-block-table__table">
 						<tbody>
@@ -104,6 +105,7 @@ export const TableBlock = {
 								<td
 									v-for="(cell, cellIndex) in row"
 									:key="cellIndex"
+									data-testid="message-builder-table-cell"
 								>
 									<BuilderTextContent
 										:text="getFormattedText(cell.text)"

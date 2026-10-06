@@ -67,7 +67,11 @@ this.BX.Booking = this.BX.Booking || {};
 			integrationMapsImageUrl() {
 				const languageId = this.loc('LANGUAGE_ID') ?? 'en';
 				const imageLanguageId = languageId === 'ru' ? 'ru' : 'en';
-				return `/bitrix/js/booking/application/yandex-integration-wizard/images/integrations-maps-${imageLanguageId}.png`;
+				return `/bitrix/js/booking/application/yandex-integration-wizard/images/integrations-maps-${imageLanguageId}.webp`;
+			},
+			integrationMapsImageSrcSet() {
+				const imageUrl = this.integrationMapsImageUrl;
+				return `${imageUrl} 1x, ${imageUrl.replace('.webp', '-2x.webp')} 2x`;
 			}
 		},
 		template: `
@@ -129,6 +133,7 @@ this.BX.Booking = this.BX.Booking || {};
 			<img 
 				class="booking-yiw__info-map"
 				:src="integrationMapsImageUrl"
+				:srcset="integrationMapsImageSrcSet"
 				:alt="loc('YANDEX_WIZARD_TITLE')"
 				draggable="false"
 			/>
@@ -507,7 +512,11 @@ this.BX.Booking = this.BX.Booking || {};
 			cabinetLinkImageUrl() {
 				const languageId = this.loc('LANGUAGE_ID') ?? 'en';
 				const imageLanguageId = languageId === 'ru' ? 'ru' : 'en';
-				return `/bitrix/js/booking/application/yandex-integration-wizard/images/yandex-cabinet-link-guide-${imageLanguageId}.png`;
+				return `/bitrix/js/booking/application/yandex-integration-wizard/images/yandex-cabinet-link-guide-${imageLanguageId}.webp`;
+			},
+			cabinetLinkImageSrcSet() {
+				const imageUrl = this.cabinetLinkImageUrl;
+				return `${imageUrl} 1x, ${imageUrl.replace('.webp', '-2x.webp')} 2x`;
 			},
 			yandexBusinessLink() {
 				const integrationSettings = this.$store.getters[`${booking_const.Model.YandexIntegrationWizard}/getIntegrationSettings`];
@@ -597,6 +606,7 @@ this.BX.Booking = this.BX.Booking || {};
 					<img 
 						class="booking-yiw-cabinet-link__guide-image"
 						:src="cabinetLinkImageUrl"
+						:srcset="cabinetLinkImageSrcSet"
 						:alt="loc('YANDEX_WIZARD_CABINET_LINK_GUIDE_TITLE')"
 						draggable="false"
 					/>

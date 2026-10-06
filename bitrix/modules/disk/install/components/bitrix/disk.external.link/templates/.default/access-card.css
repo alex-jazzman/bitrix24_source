@@ -1,0 +1,419 @@
+.disk-ext-page {
+	/* Top bar of the mockup: neither the height nor the right inset has a design token. */
+	--disk-ext-header-height: 58px;
+	--disk-ext-header-inset-right: 30px;
+
+	min-height: 100vh;
+	background-color: var(--ui-color-bg-content-secondary);
+	background-image: url(images/access-bg.png);
+	background-repeat: no-repeat;
+	background-position: center center;
+	background-size: cover;
+	background-attachment: fixed;
+}
+
+/* Internal page has its own backdrop: the external photo is not loaded here. */
+.disk-ext-page.--internal {
+	background-image: none;
+}
+
+/* Backdrop is split in two fixed layers below the content: the photo and the blurred veil over it. */
+.disk-ext-page.--internal::before,
+.disk-ext-page.--internal::after {
+	content: '';
+	position: fixed;
+	inset: 0;
+}
+
+.disk-ext-page.--internal::before {
+	z-index: -2;
+	background-image: url(images/access-bg-internal.png);
+	background-repeat: no-repeat;
+	background-position: center center;
+	background-size: cover;
+}
+
+.disk-ext-page.--internal::after {
+	z-index: -1;
+	background-color: rgba(0, 32, 78, 0.5);
+	-webkit-backdrop-filter: blur(15px);
+	backdrop-filter: blur(15px);
+}
+
+/* The header floats over the backdrop: it must not push the centered card down.
+   The layouts below it are positioned too, so the header needs an explicit layer to stay clickable. */
+.disk-ext-page .bx-shared-header {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	z-index: 1;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--ui-space-inline-md);
+	box-sizing: border-box;
+	width: auto;
+	height: auto;
+	min-height: var(--disk-ext-header-height);
+	margin: 0;
+	padding: 0 var(--disk-ext-header-inset-right) 0 var(--ui-space-inset-lg2);
+	/* White 8% over the photo backdrop, as in the mockup; there is no token for it. */
+	background: rgba(255, 255, 255, 0.08);
+	text-align: left;
+	flex-wrap: wrap;
+}
+
+/* Logo of the mockup: both words share one color and size, the clock mark is a separate 10x16 box.
+   Overrides the legacy .bx-shared-logo rules of style.css by specificity, not by source order. */
+.disk-ext-page .bx-shared-logo {
+	display: flex;
+	align-items: center;
+	gap: 1px;
+	color: var(--ui-color-base-white-fixed);
+	font-size: 18px;
+	font-weight: var(--ui-font-weight-medium, 500);
+	line-height: 24px;
+}
+
+.disk-ext-page .bx-shared-logo span {
+	color: inherit;
+}
+
+/* The logo leads to the signup page, the same one the action on the other side of the header opens,
+   so it is a link there and plain text on a portal that offers no signup. */
+.disk-ext-page a.bx-shared-logo {
+	text-decoration: none;
+}
+
+/* The header lies over the photo backdrop, where the accent color of the design system loses its
+   contrast: the outline repeats the color of the logo itself. */
+.disk-ext-page a.bx-shared-logo:focus-visible {
+	outline: 1px solid var(--ui-color-base-white-fixed);
+	outline-offset: 2px;
+	border-radius: var(--ui-border-radius-2xs);
+}
+
+.disk-ext-page .disk-ext-header__logo-clock {
+	flex-shrink: 0;
+	width: 10px;
+	height: 16px;
+	background-image: url(images/access-logo-clock.svg);
+	background-repeat: no-repeat;
+	background-position: center;
+	background-size: 10px 16px;
+}
+
+.disk-ext-header__actions {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-xs);
+	flex-wrap: wrap;
+}
+
+/* Spacing between the actions comes from the flex gap, not from the button margin. */
+.disk-ext-header__actions .ui-btn {
+	margin: 0;
+}
+
+/* Positioned, so the content stays above the backdrop layers. The header is a layer above it. */
+.disk-ext-card-layout,
+.disk-ext-content-layout {
+	position: relative;
+	display: flex;
+	justify-content: center;
+	box-sizing: border-box;
+	width: 100%;
+	padding: var(--ui-space-inset-xl);
+}
+
+/* The card keeps its width on a narrow viewport, so centering must not push its left edge
+   out of the scrollable area: below the card width the layout falls back to flex-start. */
+.disk-ext-card-layout {
+	justify-content: safe center;
+}
+
+/* The card is the only content of its page, so it is centered in the viewport. */
+.disk-ext-card-layout.--centered {
+	align-items: center;
+	min-height: 100vh;
+}
+
+/* Scrollable pages are the only ones the floating header would overlap. */
+.disk-ext-page:not(.--internal) .disk-ext-content-layout {
+	padding-top: calc(var(--disk-ext-header-height) + var(--ui-space-inset-xl));
+}
+
+/* The file card is the only content of its page, so it is centered in the viewport. Content taller
+   than the viewport falls back to flex-start, keeping its top reachable; a browser without the
+   safe keyword drops that declaration and keeps the plain centering above it. */
+.disk-ext-content-layout.--centered {
+	align-items: center;
+	align-items: safe center;
+	min-height: 100vh;
+}
+
+/* The header reserve above must be matched below, otherwise the card sits off-center by half of it. */
+.disk-ext-page:not(.--internal) .disk-ext-content-layout.--centered {
+	padding-bottom: calc(var(--disk-ext-header-height) + var(--ui-space-inset-xl));
+}
+
+.disk-ext-content-layout .disk-ext-surface {
+	box-sizing: border-box;
+	width: 100%;
+	max-width: 900px;
+	padding: var(--ui-space-inset-xl);
+	border-radius: var(--ui-border-radius-3xl);
+	box-shadow: var(--ui-shadow-bottom-3xl);
+	background: var(--ui-color-base-white-fixed);
+}
+
+/* The folder panel is a column: everything above the file list keeps the height of its content,
+   the list takes the rest. */
+.disk-ext-content-layout .disk-object-container {
+	display: flex;
+	flex-direction: column;
+}
+
+/* The panel stops at the bottom of the viewport, so the file list inside it scrolls instead of
+   the page. The reserve repeats the padding of the layout around the panel.
+   Below the threshold the fixed head of the panel eats the whole limit and the list is left
+   without a single row, so there the limit is dropped and the page scrolls as a whole: the
+   content has to stay reachable at 200% zoom, which shrinks the viewport the same way. */
+@media screen and (min-height: 600px) {
+	.disk-ext-content-layout .disk-object-container {
+		max-height: calc(100vh - var(--ui-space-inset-xl) * 2);
+	}
+
+	/* The floating header takes its reserve from the panel too, exactly as from the layout above. */
+	.disk-ext-page:not(.--internal) .disk-ext-content-layout .disk-object-container {
+		max-height: calc(100vh - var(--disk-ext-header-height) - var(--ui-space-inset-xl) * 2);
+	}
+}
+
+/* The head shared by both pages: the heading names the object of the link, the line below it tells
+   about that object and the actions of the link stand to the right of both. On the folder page the
+   crumbs sit between the two.
+   The file list is the only part that divides the free height of the folder panel, so the head keeps
+   the height of its content. */
+.disk-ext-object-header {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: var(--ui-space-inline-md);
+	flex: 0 0 auto;
+	flex-wrap: wrap;
+}
+
+/* The head of the folder panel holds the gap down to the file list under it; on the file page it is
+   the last block of the card, where the gap of the card column is enough. */
+.disk-object-container .disk-ext-object-header {
+	margin-bottom: var(--ui-space-stack-md);
+}
+
+/* The column takes what the actions leave and gives it to the crumbs, which truncate long names
+   instead of pushing the buttons out of the panel. Below the basis the actions wrap under it. */
+.disk-ext-object-header__nav {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-2xs);
+	min-width: 0;
+	flex: 1 1 260px;
+}
+
+/* The name of the shared object is the heading of its page. It is truncated the way a crumb is,
+   instead of pushing the actions out of the head; the gap of the column below it is smaller, so the
+   heading holds its own. */
+.disk-ext-object-header__title {
+	overflow: hidden;
+	margin: 0 0 var(--ui-space-stack-2xs) 0;
+	color: var(--ui-color-base-1);
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font-size: var(--ui-font-size-4xl);
+	font-weight: var(--ui-font-weight-semi-bold);
+	line-height: var(--ui-font-line-height-3xs);
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.disk-ext-object-header__meta {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-2xs);
+	flex-wrap: wrap;
+	margin: 0;
+	color: var(--ui-color-base-3);
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font-size: var(--ui-font-size-sm);
+	line-height: var(--ui-font-line-height-2xs);
+}
+
+.disk-ext-object-header__meta-separator {
+	color: var(--ui-color-base-5);
+}
+
+.disk-ext-object-header__actions {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-xs);
+	flex-wrap: wrap;
+}
+
+/* Spacing between the actions comes from the flex gap, not from the legacy button margin. */
+.disk-ext-object-header__actions .ui-btn {
+	margin: 0;
+}
+
+.disk-access-card {
+	box-sizing: border-box;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	/* The shortest card (denied mode) is below the 350px of the mockup, so the extra space
+	   is split above and below the content instead of hanging under it. */
+	justify-content: center;
+	gap: var(--ui-space-stack-md2);
+	/* 400x350 is the minimum of the mockup: the card must not shrink as a flex item. */
+	width: 400px;
+	min-width: 400px;
+	min-height: 350px;
+	padding: var(--ui-space-inset-xl);
+	border-radius: var(--ui-border-radius-3xl);
+	box-shadow: var(--ui-shadow-bottom-3xl);
+	background: var(--ui-color-base-white-fixed);
+}
+
+/* The gradient layer of the mockup is mirrored horizontally, so its declared angle reads as
+   360 - angle here: the colored corner is the top left one, not the top right one.
+   Angles and stops are rounded: 159.82deg / 8.25% / 30.98% and 161.98deg / 2.62% / 34.74%. */
+.disk-access-card.--denied {
+	background: linear-gradient(
+		160deg,
+		var(--ui-color-accent-soft-red-1) 8%,
+		var(--ui-color-base-white-fixed) 31%
+	);
+}
+
+.disk-access-card.--password {
+	background: linear-gradient(
+		162deg,
+		var(--ui-color-accent-soft-blue-1) 3%,
+		var(--ui-color-base-white-fixed) 35%
+	);
+}
+
+.disk-access-card__illustration {
+	display: flex;
+	justify-content: center;
+	width: 100%;
+}
+
+.disk-access-card__image {
+	display: block;
+	max-width: 100%;
+	height: auto;
+}
+
+/* Each mode has its own illustration box in the mockup. The assets are exactly twice their box,
+   so the width alone gives the mockup height and keeps the image scalable on a narrow viewport. */
+.disk-access-card.--denied .disk-access-card__image {
+	width: 216px;
+}
+
+.disk-access-card.--password .disk-access-card__image {
+	width: 293px;
+}
+
+/* Text and controls share one 300px column of the mockup, centered by the card. The width is
+   limited here only: the field and the button below take the full width of their container,
+   so the single limit reaches them without overriding the design system classes. */
+.disk-access-card__content {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-xl);
+	width: 100%;
+	max-width: 300px;
+}
+
+.disk-access-card__info {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--ui-space-stack-xs);
+	text-align: center;
+}
+
+.disk-access-card__title {
+	color: var(--ui-color-base-1);
+	font-size: 19px;
+	font-weight: 500;
+	line-height: 26px;
+	letter-spacing: -0.2px;
+}
+
+.disk-access-card__description {
+	color: var(--ui-color-base-2);
+	font-size: 14px;
+	font-weight: 400;
+	line-height: 19px;
+	letter-spacing: -0.05px;
+}
+
+.disk-access-card__controls {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-2xs2);
+	width: 100%;
+}
+
+/* The mockup keeps 14px between the field and the button: 8px reserved here for the error label
+   of the input (it hangs 6px below the field and must not shift the layout when it appears)
+   plus the 6px gap of the controls column. */
+.disk-access-card__field {
+	display: flex;
+	width: 100%;
+	padding-bottom: var(--ui-space-inset-xs);
+}
+
+/* File screen. It has no mockup and follows the folder page: the same light surface of the
+   layout, the content stacked in a single column. */
+.disk-ext-file-card {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-xl);
+	color: var(--ui-color-base-1);
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font-size: var(--ui-font-size-md);
+	line-height: var(--ui-font-line-height-md);
+}
+
+/* Only one preview branch renders at a time and each has its own intrinsic size: the column
+   centers it without imposing a width, while the document viewer still stretches to 100%. */
+.disk-ext-file-card__preview {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	width: 100%;
+}
+
+/* The Google Viewer frame is built for 720x520; the max-width keeps it inside the surface
+   on a viewport narrower than that. */
+.disk-ext-file-card__preview-frame {
+	display: block;
+	box-sizing: border-box;
+	width: 720px;
+	max-width: 100%;
+	height: 520px;
+	border: 0;
+}
+
+/* The legacy image preview is capped at 60vw, which is wider than the surface on a wide screen. */
+.disk-ext-file-card__preview .bx-shared-preview-images {
+	max-width: 100%;
+}
+
+/* The type icon stands in for a missing preview, so it is shown far above the 40px the set is
+   drawn at; the assets are vector and scale without loss. */
+.disk-ext-file-card__type-icon {
+	--ui-icon-set__icon-size: 96px;
+}

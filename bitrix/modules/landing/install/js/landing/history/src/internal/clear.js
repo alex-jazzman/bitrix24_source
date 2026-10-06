@@ -1,4 +1,4 @@
-import {INIT, RESOLVED} from './constants';
+import {RESOLVED} from './constants';
 import type {History} from '../history';
 
 /**

@@ -16,10 +16,19 @@ export const RecentEmptyState = {
 			type: String,
 			default: '',
 		},
+		imageModifier: {
+			type: String,
+			default: '',
+		},
 	},
 	computed: {
 		imageClasses()
 		{
+			if (this.imageModifier)
+			{
+				return `--${this.imageModifier}`;
+			}
+
 			if (!this.recentSection)
 			{
 				return '--base';

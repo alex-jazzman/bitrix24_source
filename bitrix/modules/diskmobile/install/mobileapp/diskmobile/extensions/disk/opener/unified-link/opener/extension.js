@@ -7,7 +7,8 @@ jn.define('disk/opener/unified-link/opener', (require, exports, module) => {
 	const { FileType } = require('disk/enum');
 	const { withCurrentDomain } = require('utils/url');
 	const { requireLazy } = require('require-lazy');
-	const { showErrorToast, showToast } = require('toast');
+	const { openPortalPage } = require('in-app-url/portal-page');
+	const { showErrorToast, showOfflineToast, showToast } = require('toast');
 	const { PasswordInputBox } = require('layout/ui/password-input-box');
 	const {
 		getUnifiedLinkData,
@@ -55,6 +56,10 @@ jn.define('disk/opener/unified-link/opener', (require, exports, module) => {
 			this.#uniqueCode = props.uniqueCode ? props.uniqueCode.replace('#__bx_android_click_detect__', '') : null;
 		}
 
+		/**
+		 * Resolves once the link is either opened or refused with a message of its own;
+		 * rejects only on a failure it could not report itself, which the router then reports.
+		 */
 		async open()
 		{
 			if (isEmpty(this.#uniqueCode))
@@ -78,12 +83,12 @@ jn.define('disk/opener/unified-link/opener', (require, exports, module) => {
 				{
 					this.#showForbiddenToast();
 
-					return Promise.reject(error);
+					return null;
 				}
 
-				this.#showErrorToast(error);
+				this.#showNotFoundToast(error);
 
-				return Promise.reject(error);
+				return null;
 			}
 
 			return this.#openLinkData(linkData);
@@ -93,9 +98,10 @@ jn.define('disk/opener/unified-link/opener', (require, exports, module) => {
 		{
 			if (isEmpty(linkData) || linkData.status !== 'success')
 			{
+				console.error('disk/opener/unified-link: unexpected link data', linkData);
 				void showInternalAlert();
 
-				return Promise.reject(new Error('Failed to retrieve unified link data'));
+				return null;
 			}
 
 			return this.factoryOpeners(linkData?.data?.object || {});
@@ -103,17 +109,13 @@ jn.define('disk/opener/unified-link/opener', (require, exports, module) => {
 
 		async factoryOpeners(fileData)
 		{
-			if (!this.#isSupportedFileType(fileData.typeFile))
-			{
-				console.warn('UnifiedOpener: Unsupported file type -', fileData.typeFile);
-
-				return null;
-			}
-
 			const link = fileData.links?.download;
-			if (!link)
+			if (!link || !this.#isSupportedFileType(fileData.typeFile))
 			{
-				return null;
+				console.error('UnifiedOpener: nothing to open natively -', fileData.typeFile);
+
+				// the app cannot render such a file, and the portal page can
+				return this.#openPortalPage();
 			}
 
 			const name = fileData.name;
@@ -203,6 +205,43 @@ jn.define('disk/opener/unified-link/opener', (require, exports, module) => {
 					})
 				;
 			});
+		}
+
+		#openPortalPage()
+		{
+			const { url } = this.#props;
+			if (!url)
+			{
+				this.#showNotFoundToast(new Error('nothing to open and no page to fall back to'));
+
+				return null;
+			}
+
+			const parentWidget = this.#getParentWidget();
+
+			return openPortalPage(url, { parentWidget });
+		}
+
+		/**
+		 * A link to a missing file fails inside the engine, and its message is an exception dump,
+		 * so the user gets a defined message and the details go to the console. A lost connection
+		 * is not a missing file and keeps its own message.
+		 */
+		#showNotFoundToast(error)
+		{
+			console.error('disk/opener/unified-link: unable to resolve the link', error);
+
+			if (error?.errors?.some((ajaxError) => ajaxError?.code === 'NETWORK_ERROR'))
+			{
+				showOfflineToast({}, this.#getParentWidget());
+
+				return;
+			}
+
+			showErrorToast(
+				{ message: Loc.getMessage('M_DISK_UNIFIED_LINK_OPENER_NOT_FOUND_TOAST') },
+				this.#getParentWidget(),
+			);
 		}
 
 		#showErrorToast(error)

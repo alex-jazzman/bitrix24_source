@@ -458,6 +458,15 @@ html[data-input-modality="pointer"] :where(.ui-btn, .ui-btn-main, .ui-btn-menu:n
 	--ui-btn-split-divider-color: var(--ui-color-design-filled-content-divider);
 }
 
+.ui-btn.--air.--style-filled-white,
+.ui-btn-split.--air.--style-filled-white {
+	--ui-btn-background: var(--ui-color-design-filled-white-bg);
+	--ui-btn-border-color: var(--ui-color-design-filled-white-stroke);
+	--ui-btn-border-width: var(--ui-design-filled-white-stroke-weight);
+	--ui-btn-color: var(--ui-color-design-filled-white-content);
+	--ui-btn-split-divider-color: var(--ui-color-design-filled-white-content-divider);
+}
+
 .ui-btn.--air.--style-tinted,
 .ui-btn-split.--air.--style-tinted {
 	--ui-btn-background: var(--ui-color-design-tinted-bg);

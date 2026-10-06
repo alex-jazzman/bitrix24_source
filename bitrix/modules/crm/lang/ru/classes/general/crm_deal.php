@@ -96,4 +96,5 @@ $MESS["CRM_FIELD_COMPARE_SOURCE_ID"] = "Изменено поле \"Источн
 $MESS["CRM_FIELD_COMPARE_IS_MANUAL_OPPORTUNITY"] = "Изменен режим расчета поля \"Сумма\"";
 $MESS["CRM_FIELD_COMPARE_IS_MANUAL_OPPORTUNITY_Y"] = "Вручную";
 $MESS["CRM_FIELD_COMPARE_IS_MANUAL_OPPORTUNITY_N"] = "На основе стоимости товаров";
-$MESS["CRM_DEAL_NO_PERMISSIONS_TO_DELETE"] = "#DEAL_NAME#: недостаточно прав для удаления";
+$MESS["CRM_DEAL_NO_PERMISSIONS_TO_DELETE"] = "#DEAL_NAME#: недостаточно прав для удаления сделок";
+$MESS["CRM_DEAL_PROGRESS_IM_NOTIFY_SUBJECT"] = "#AUTHOR# изменил стадию сделки";

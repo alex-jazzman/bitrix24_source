@@ -17,6 +17,9 @@ $APPLICATION->IncludeComponent(
 	'',
 	[
 		'MENU_ITEMS' => $arParams['MENU_ITEMS'],
+		'PATH_TO' => [
+			'COUNTERPARTY_CONTACTS' => $arParams['PAGE_URL_CONTACT'],
+		],
 	],
 	$this->getComponent()
 );

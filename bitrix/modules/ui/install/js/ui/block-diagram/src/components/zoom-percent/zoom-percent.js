@@ -1,6 +1,11 @@
 import './zoom-percent.css';
 import { computed, toValue, ref } from 'ui.vue3';
-import { useBlockDiagram, useContextMenu, useCanvas } from '../../composables';
+import {
+	useBlockDiagram,
+	useContextMenu,
+	useCanvas,
+	useLoc,
+} from '../../composables';
 
 type ZoomPercentSetup = {
 	percent: number,
@@ -11,23 +16,32 @@ const ZOOM_PRESET = [0.5, 0.7, 1, 2];
 // @vue/component
 export const ZoomPercent = {
 	name: 'zoom-percent',
+	props: {
+		disabled: {
+			type: Boolean,
+			default: false,
+		},
+	},
 	setup(props): ZoomPercentSetup
 	{
 		const { zoom, isDisabledBlockDiagram } = useBlockDiagram();
-
 		const { setZoom } = useCanvas();
-
-		const { showMenu, isOpen } = useContextMenu();
+		const loc = useLoc();
 
 		const percent = computed(() => {
 			return ((toValue(zoom) ?? 0) * 100).toFixed(0);
 		});
-
+		const { showMenu, isOpen } = useContextMenu();
+		const isDisabled = computed(() => props.disabled || toValue(isDisabledBlockDiagram));
+		const buttonLabel = computed(() => {
+			return `${loc.getMessage('UI_BLOCK_DIAGRAM_ZOOM_PRESET_BUTTON')}: ${toValue(percent)}%`;
+		});
 		const root = ref(null);
 
 		function onOpenZoomPresetMenu(): void
 		{
-			if (toValue(isDisabledBlockDiagram))
+			const rootElement = toValue(root);
+			if (toValue(isDisabled) || !rootElement)
 			{
 				return;
 			}
@@ -35,7 +49,8 @@ export const ZoomPercent = {
 			const options = {
 				className: 'ui-block-diagram-percent-menu',
 				minWidth: 106,
-				targetContainer: root.value.parentElement,
+				bindElement: rootElement,
+				targetContainer: rootElement.parentElement,
 				items: ZOOM_PRESET.map((value) => {
 					return {
 						text: `${value * 100}%`,
@@ -53,17 +68,25 @@ export const ZoomPercent = {
 			percent,
 			root,
 			isOpen,
+			isDisabled,
+			buttonLabel,
 			onOpenZoomPresetMenu,
 		};
 	},
 	template: `
-		<span
+		<button
+			type="button"
+			:data-test-id="$blockDiagramTestId('zoomPercentBtn')"
 			class="ui-block-diagram-percent"
 			:class="{ '--selected': isOpen }"
+			:aria-label="buttonLabel"
+			aria-haspopup="menu"
+			:aria-expanded="isOpen"
+			:disabled="isDisabled"
 			ref="root"
 			@click="onOpenZoomPresetMenu"
 		>
 			{{ percent }}
-		</span>
+		</button>
 	`,
 };

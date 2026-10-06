@@ -3,6 +3,7 @@
 $MESS['BPWFI_SLIDER_TASK'] = 'Задание';
 $MESS['BPWFI_SLIDER_PROCESS'] = 'Процесс';
 $MESS['BPWFI_SLIDER_TIMELINE_MSGVER_1'] = 'Протокол';
+$MESS['BPWFI_SLIDER_TABS_NAV_LABEL'] = 'Разделы карточки';
 $MESS['BPWFI_SLIDER_DOCUMENT'] = 'Элемент';
 $MESS['BPWFI_SLIDER_NAME'] = 'Название';
 $MESS['BPWFI_SLIDER_TYPE'] = 'Тип процесса';

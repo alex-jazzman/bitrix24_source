@@ -26,8 +26,13 @@ const createGhost = (el: HTMLElement): HTMLElement => {
 
 const checkForDragTarget = (draggedItem: HTMLElement, event: DragEvent): HTMLElement | null => {
 	const closestNode = event.target.closest(`[data-name=${draggedItem.dataset.name}]`);
+	// Sections (data-section) come from the canonical order of the card: a drop onto another
+	// section is refused here (the cursor shows the move is not allowed) instead of being
+	// taken and then bounced back by the canonical re-sort of the card.
 	const isDragAllowed = closestNode
-		&& closestNode !== draggedItem && closestNode.parentElement === draggedItem.parentElement;
+		&& closestNode !== draggedItem
+		&& closestNode.parentElement === draggedItem.parentElement
+		&& closestNode.dataset.section === draggedItem.dataset.section;
 	if (isDragAllowed)
 	{
 		return closestNode;

@@ -3,4 +3,4 @@ import { mapModelToDto, mapDtoToModel, mapModelToSliderData, mapSliderDataToMode
 export { taskService } from './task-service';
 export { ReplicateCreator } from './mappers/replicate-creator';
 export const TaskMappers = { mapModelToDto, mapDtoToModel, mapModelToSliderData, mapSliderDataToModel };
-export type { TaskDto, TagDto, Status, TemplatePermissionDto } from './types';
+export type { TaskDto, TagDto, Status, TaskSliderData, TemplatePermissionDto } from './types';

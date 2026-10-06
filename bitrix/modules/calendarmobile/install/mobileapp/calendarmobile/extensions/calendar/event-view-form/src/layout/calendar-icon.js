@@ -25,7 +25,7 @@ jn.define('calendar/event-view-form/layout/calendar-icon', (require, exports, mo
 					justifyContent: 'center',
 					position: 'relative',
 					minWidth: 50,
-					maxHeight: 50,
+					minHeight: 50,
 				},
 			},
 			View({

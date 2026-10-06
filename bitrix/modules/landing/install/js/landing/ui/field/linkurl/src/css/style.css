@@ -96,6 +96,20 @@
 	z-index: 309;
 }
 
+.landing-ui-field-url-placeholder-delete {
+	appearance: none;
+	-webkit-appearance: none;
+	border: none;
+	margin: 0;
+	padding: 0;
+	font: inherit;
+}
+
+.landing-ui-field-url-placeholder-delete:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary, #0075ff);
+	outline-offset: -2px;
+}
+
 
 .landing-ui-field-link-url-grid {
 	display: flex;

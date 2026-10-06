@@ -10,12 +10,19 @@ type ParseResult = {
 	raw: string,
 };
 
+type AssetMatch = {
+	match: ParseResult,
+	start: number,
+	end: number,
+};
+
 // Strict syntax for REST-uploaded attachments: [[<type> fileId=<digits> <opt-attrs>]]
 // Lowercase type, integer fileId, then zero or more ` key=value` pairs (only whitelisted keys).
 // Block form: the token owns its line (trailing newline / EOF). All asset nodes are block.
 // Up to 3 leading spaces are tolerated (CommonMark block indentation); 4+ would be an indented
 // code block. Imports may emit a token under stray/structural whitespace.
-const NOTE_ASSET_RE: RegExp = /^ {0,3}\[\[(image|file|video) fileId=(\d+)((?:[ \t]+[a-z]+=[^\s\]]+)*)\]\][ \t]*(?:\n|$)/;
+const NOTE_ASSET_GRAMMAR: string = String.raw`\[\[(image|file|video) fileId=(\d+)((?:[ \t]+[a-z]+=[^\s\]]+)*)\]\]`;
+const NOTE_ASSET_RE: RegExp = new RegExp(`^ {0,3}${NOTE_ASSET_GRAMMAR}[ \\t]*(?:\\n|$)`);
 
 // Optional attributes allowed after fileId. Unknown keys make the whole token non-canonical (rejected).
 const KNOWN_ASSET_ATTRS: Set<string> = new Set(['width', 'align']);
@@ -24,16 +31,22 @@ const KNOWN_ASSET_ATTRS: Set<string> = new Set(['width', 'align']);
 // so it never round-trips into markdown — only left/right are serialized.
 const ALIGN_VALUES: Set<string> = new Set(['left', 'right', 'center']);
 
+export function isEscapedAt(src: string, index: number): boolean
+{
+	let backslashCount = 0;
+	for (let cursor = index - 1; cursor >= 0 && src[cursor] === '\\'; cursor--)
+	{
+		backslashCount++;
+	}
+
+	return backslashCount % 2 === 1;
+}
+
 export const ASSET_TYPE_TO_NODE: { [AssetType]: string } = {
 	image: 'imageAttachment',
 	file: 'fileAttachment',
 	video: 'video',
 };
-
-// Asset node types that are inline in the editor schema (would need paragraph-wrapping as a
-// direct child of `doc`/`tableCell`). All asset nodes — image, file, video — are block now, so
-// this is empty; kept so the wrap helpers that consume it stay no-ops without code churn.
-export const INLINE_ASSET_NODE_TYPES: Set<string> = new Set([]);
 
 function interpretAssetMatch(match: Object): ParseResult | null
 {
@@ -101,6 +114,33 @@ export function parseNoteAssetSyntax(src: string, pos: number): ParseResult | nu
 	const match = NOTE_ASSET_RE.exec(slice);
 
 	return match ? interpretAssetMatch(match) : null;
+}
+
+export function findNoteAssetMatches(src: string, includeEscaped = false): AssetMatch[]
+{
+	const matches: AssetMatch[] = [];
+	const searchRe = new RegExp(NOTE_ASSET_GRAMMAR, 'g');
+	let match = searchRe.exec(src);
+
+	while (match)
+	{
+		if (includeEscaped || !isEscapedAt(src, match.index))
+		{
+			const interpreted = interpretAssetMatch(match);
+			if (interpreted)
+			{
+				matches.push({
+					match: interpreted,
+					start: match.index,
+					end: match.index + match[0].length,
+				});
+			}
+		}
+
+		match = searchRe.exec(src);
+	}
+
+	return matches;
 }
 
 export function findNoteAssetStart(src: string): number

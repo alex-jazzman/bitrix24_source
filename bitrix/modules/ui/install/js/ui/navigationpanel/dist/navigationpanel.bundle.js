@@ -1,6 +1,6 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports, ui_actionsBar, main_core, main_core_events, ui_iconSet_api_core, ui_system_menu) {
+(function (exports, ui_actionsBar, main_core, ui_a11y, main_core_events, ui_iconSet_api_core, ui_system_menu) {
 	'use strict';
 
 	function _classPrivateMethodInitSpec$1(e, a) { _checkPrivateRedeclaration$1(e, a), a.add(e); }
@@ -16,8 +16,8 @@ this.BX = this.BX || {};
 	var _NavigationItem_brand = /*#__PURE__*/new WeakSet();
 	let NavigationItem = /*#__PURE__*/function () {
 		function NavigationItem({
-			id,
-			title,
+			id: _id,
+			title: _title,
 			active,
 			events,
 			link,
@@ -32,8 +32,8 @@ this.BX = this.BX || {};
 			_classPrivateFieldInitSpec$1(this, _menuItems, []);
 			_classPrivateFieldInitSpec$1(this, _onActivate, null);
 			_classPrivateFieldInitSpec$1(this, _menu, null);
-			this.id = id ?? null;
-			this.title = main_core.Type.isString(title) ? title : null;
+			this.id = _id ?? null;
+			this.title = main_core.Type.isString(_title) ? _title : null;
 			this.active = main_core.Type.isBoolean(active) ? active : false;
 			this.events = events ?? null;
 			this.link = link ?? null;
@@ -46,12 +46,7 @@ this.BX = this.BX || {};
 		return babelHelpers.createClass(NavigationItem, [{
 			key: "getTitle",
 			value: function getTitle() {
-				if (!this.title) {
-					this.title = main_core.Tag.render`
-				<div class="ui-nav-panel__item-title">${this.title}</div>	
-			`;
-				}
-				return this.title;
+				return this.title ?? '';
 			}
 		}, {
 			key: "getContainer",
@@ -60,15 +55,11 @@ this.BX = this.BX || {};
 					return null;
 				}
 				if (!this.linkContainer) {
-					const id = this.id ? `id="ui-nav-panel-item-${this.id}"` : '';
-					this.linkContainer = main_core.Tag.render`
-				<div ${id} class="ui-nav-panel__item">
-					<span>${this.title ? this.getTitle() : ''}</span>
-					${_classPrivateFieldGet$1(_isDropdown, this) ? _assertClassBrand$1(_NavigationItem_brand, this, _renderDropdownIcon).call(this) : ''}
-				</div>
-			`;
+					this.linkContainer = _assertClassBrand$1(_NavigationItem_brand, this, _renderContainer).call(this);
 					if (_classPrivateFieldGet$1(_isDropdown, this)) {
 						main_core.Dom.addClass(this.linkContainer, '--dropdown');
+						this.linkContainer.setAttribute('aria-haspopup', 'menu');
+						_assertClassBrand$1(_NavigationItem_brand, this, _setExpanded).call(this, false);
 					}
 					this.setEvents();
 					if (this.active) {
@@ -93,13 +84,38 @@ this.BX = this.BX || {};
 			key: "lock",
 			value: function lock() {
 				this.locked = true;
-				main_core.Dom.addClass(this.getContainer(), '--locked');
+				const container = this.getContainer();
+				if (!container) {
+					return;
+				}
+
+				// locked items stay operable (e.g. to surface an upsell), so no aria-disabled;
+				// the lock is conveyed to assistive tech through the accessible name instead
+				main_core.Dom.addClass(container, '--locked');
+				const lockedLabel = main_core.Loc.getMessage('UI_NAV_PANEL_ITEM_LOCKED_ARIA', {
+					'#TITLE#': this.getTitle()
+				});
+				if (main_core.Type.isStringFilled(lockedLabel)) {
+					container.setAttribute('aria-label', lockedLabel);
+				}
 			}
 		}, {
 			key: "unLock",
 			value: function unLock() {
 				this.locked = false;
-				main_core.Dom.removeClass(this.getContainer(), '--locked');
+				const container = this.getContainer();
+				if (!container) {
+					return;
+				}
+				main_core.Dom.removeClass(container, '--locked');
+
+				// restore the consumer-provided accessible name (from the link option) instead of dropping it
+				const ariaLabel = this.link?.['aria-label'];
+				if (main_core.Type.isStringFilled(ariaLabel)) {
+					container.setAttribute('aria-label', ariaLabel);
+				} else {
+					container.removeAttribute('aria-label');
+				}
 			}
 		}, {
 			key: "setEvents",
@@ -111,11 +127,6 @@ this.BX = this.BX || {};
 					return;
 				}
 				if (this.link) {
-					this.linkContainer = main_core.Tag.render`
-				<a class="ui-nav-panel__item">
-					<span>${this.title ? this.getTitle() : ''}</span>
-				</a>
-			`;
 					Object.entries(this.link).forEach(([linkKey, linkValue]) => {
 						this.linkContainer.setAttribute(linkKey, linkValue);
 					});
@@ -132,9 +143,13 @@ this.BX = this.BX || {};
 			key: "activate",
 			value: function activate() {
 				this.active = true;
+				const container = this.getContainer();
 				if (_classPrivateFieldGet$1(_isDropdown, this) === false) {
-					main_core.Dom.addClass(this.getContainer(), '--active');
+					main_core.Dom.addClass(container, '--active');
 				}
+
+				// aria-current is independent of the visual class: a collapsed active item is a dropdown trigger too
+				container?.setAttribute('aria-current', _assertClassBrand$1(_NavigationItem_brand, this, _isLink).call(this) ? 'page' : 'true');
 				_classPrivateFieldGet$1(_onActivate, this)?.call(this, this);
 				main_core_events.EventEmitter.emit('BX.UI.NavigationPanel.Item:active', this);
 			}
@@ -142,9 +157,12 @@ this.BX = this.BX || {};
 			key: "inactivate",
 			value: function inactivate() {
 				this.active = false;
+				// getContainer() returns null for an inactive dropdown, so fall back to the rendered node
+				const container = this.linkContainer ?? this.getContainer();
 				if (_classPrivateFieldGet$1(_isDropdown, this) === false) {
-					main_core.Dom.removeClass(this.getContainer(), '--active');
+					main_core.Dom.removeClass(container, '--active');
 				}
+				container?.removeAttribute('aria-current');
 				main_core_events.EventEmitter.emit('BX.UI.NavigationPanel.Item:inactive', this);
 			}
 		}, {
@@ -156,14 +174,38 @@ this.BX = this.BX || {};
 			}
 		}]);
 	}();
+	function _isLink() {
+		// only a link with an href is a real anchor; an href-less <a> drops out of the focus zone (a[href])
+		return main_core.Type.isStringFilled(this.link?.href) && _classPrivateFieldGet$1(_isDropdown, this) === false;
+	}
+	function _renderContainer() {
+		const id = this.id ? `id="ui-nav-panel-item-${this.id}"` : '';
+		const title = main_core.Tag.render`
+			<span class="ui-nav-panel__item-title">${this.getTitle()}</span>
+		`;
+		if (_assertClassBrand$1(_NavigationItem_brand, this, _isLink).call(this)) {
+			return main_core.Tag.render`
+				<a ${id} class="ui-nav-panel__item">${title}</a>
+			`;
+		}
+		return main_core.Tag.render`
+			<button ${id} type="button" class="ui-nav-panel__item">
+				${title}
+				${_classPrivateFieldGet$1(_isDropdown, this) ? _assertClassBrand$1(_NavigationItem_brand, this, _renderDropdownIcon).call(this) : ''}
+			</button>
+		`;
+	}
 	function _renderDropdownIcon() {
 		const icon = new ui_iconSet_api_core.Icon({
 			size: 16,
 			icon: ui_iconSet_api_core.Outline.CHEVRON_DOWN_L
 		}).render();
 		return main_core.Tag.render`
-			<span class="ui-nav-panel__item-dropdown-icon ui-icon-set__scope">${icon}</span>
+			<span class="ui-nav-panel__item-dropdown-icon ui-icon-set__scope" aria-hidden="true">${icon}</span>
 		`;
+	}
+	function _setExpanded(isExpanded) {
+		this.linkContainer?.setAttribute('aria-expanded', isExpanded ? 'true' : 'false');
 	}
 	function _showMenu() {
 		_assertClassBrand$1(_NavigationItem_brand, this, _getMenu).call(this).show(this.getContainer());
@@ -183,9 +225,11 @@ this.BX = this.BX || {};
 			events: {
 				onShow: () => {
 					main_core.Dom.addClass(this.linkContainer, '--active');
+					_assertClassBrand$1(_NavigationItem_brand, this, _setExpanded).call(this, true);
 				},
 				onClose: () => {
 					main_core.Dom.removeClass(this.linkContainer, '--active');
+					_assertClassBrand$1(_NavigationItem_brand, this, _setExpanded).call(this, false);
 				}
 			}
 		}));
@@ -200,14 +244,19 @@ this.BX = this.BX || {};
 	function _assertClassBrand(e, t, n) { if ("function" == typeof e ? e === t : e.has(t)) return arguments.length < 3 ? t : n; throw new TypeError("Private element is not present on this object"); }
 	const instanceMap = new WeakMap();
 	var _isCollapsed = /*#__PURE__*/new WeakMap();
+	var _ariaLabel = /*#__PURE__*/new WeakMap();
+	var _focusZone = /*#__PURE__*/new WeakMap();
 	var _rawItems = /*#__PURE__*/new WeakMap();
 	var _deactivateOthers = /*#__PURE__*/new WeakMap();
 	var _NavigationPanel_brand = /*#__PURE__*/new WeakSet();
 	let NavigationPanel = /*#__PURE__*/function () {
 		function NavigationPanel(options) {
 			babelHelpers.classCallCheck(this, NavigationPanel);
+			// roving tabindex: the whole panel is a single tab stop, arrow keys move between items
 			_classPrivateMethodInitSpec(this, _NavigationPanel_brand);
 			_classPrivateFieldInitSpec(this, _isCollapsed, false);
+			_classPrivateFieldInitSpec(this, _ariaLabel, null);
+			_classPrivateFieldInitSpec(this, _focusZone, null);
 			_classPrivateFieldInitSpec(this, _rawItems, []);
 			_classPrivateFieldInitSpec(this, _deactivateOthers, activatedItem => {
 				this.items.forEach(item => {
@@ -226,6 +275,7 @@ this.BX = this.BX || {};
 			this.container = null;
 			this.keys = [];
 			_classPrivateFieldSet(_isCollapsed, this, options.collapsed === true);
+			_classPrivateFieldSet(_ariaLabel, this, main_core.Type.isStringFilled(options.ariaLabel) ? options.ariaLabel : null);
 		}
 		return babelHelpers.createClass(NavigationPanel, [{
 			key: "adjustItem",
@@ -259,9 +309,12 @@ this.BX = this.BX || {};
 			value: function getContainer() {
 				if (!this.container) {
 					this.container = main_core.Tag.render`
-				<div class="ui-nav-panel ui-nav-panel__scope"></div>
+				<div class="ui-nav-panel ui-nav-panel__scope" role="toolbar" aria-orientation="horizontal"></div>
 			`;
 					instanceMap.set(this.container, this);
+					if (main_core.Type.isStringFilled(_classPrivateFieldGet(_ariaLabel, this))) {
+						this.container.setAttribute('aria-label', _classPrivateFieldGet(_ariaLabel, this));
+					}
 					if (this.hasAirDesign()) {
 						main_core.Dom.addClass(this.container, '--air');
 					}
@@ -284,6 +337,7 @@ this.BX = this.BX || {};
 				});
 				main_core.Dom.clean(this.target);
 				main_core.Dom.append(this.getContainer(), this.target);
+				_assertClassBrand(_NavigationPanel_brand, this, _setupFocusZone).call(this);
 			}
 		}, {
 			key: "init",
@@ -326,6 +380,15 @@ this.BX = this.BX || {};
 			}
 		}]);
 	}();
+	function _setupFocusZone() {
+		if (!_classPrivateFieldGet(_focusZone, this)) {
+			_classPrivateFieldSet(_focusZone, this, new ui_a11y.FocusZone(this.getContainer(), {
+				bindKeys: ui_a11y.FocusKeys.ArrowHorizontal | ui_a11y.FocusKeys.HomeAndEnd,
+				focusOutBehavior: 'stop'
+			}));
+		}
+		_classPrivateFieldGet(_focusZone, this).activate();
+	}
 	function _rebuild() {
 		this.items.forEach(item => {
 			if (item instanceof NavigationItem) {
@@ -333,6 +396,7 @@ this.BX = this.BX || {};
 			}
 		});
 		const currentActiveId = this.items.find(item => item.active === true)?.id ?? null;
+		const focusedItemId = _assertClassBrand(_NavigationPanel_brand, this, _getFocusedItemId).call(this);
 		_classPrivateFieldSet(_rawItems, this, _classPrivateFieldGet(_rawItems, this).map(item => ({
 			...item,
 			active: item.id === currentActiveId
@@ -341,6 +405,26 @@ this.BX = this.BX || {};
 		this.items = _classPrivateFieldGet(_rawItems, this);
 		this.adjustItem();
 		_assertClassBrand(_NavigationPanel_brand, this, _rerenderContent).call(this);
+		_classPrivateFieldGet(_focusZone, this)?.refreshElements();
+		_assertClassBrand(_NavigationPanel_brand, this, _restoreFocus).call(this, focusedItemId);
+	}
+	function _getFocusedItemId() {
+		const focusedElement = document.activeElement;
+		if (!main_core.Type.isDomNode(focusedElement) || !this.container?.contains(focusedElement)) {
+			return null;
+		}
+		const focusedItem = focusedElement.closest('.ui-nav-panel__item');
+		return this.items.find(item => item.linkContainer === focusedItem)?.id ?? null;
+	}
+	// a collapsed panel hides every inactive item: fall back to the active one, its menu holds the rest
+	function _restoreFocus(itemId) {
+		if (itemId === null) {
+			return;
+		}
+		const focusTarget = this.getItemById(itemId)?.linkContainer ?? this.items.find(item => item.active === true)?.linkContainer;
+		focusTarget?.focus({
+			preventScroll: true
+		});
 	}
 	function _rerenderContent() {
 		const container = this.getContainer();
@@ -382,5 +466,5 @@ this.BX = this.BX || {};
 
 	exports.NavigationPanel = NavigationPanel;
 
-})(this.BX.UI = this.BX.UI || {}, BX.UI, BX, BX.Event, BX.UI.IconSet, BX.UI.System);
+})(this.BX.UI = this.BX.UI || {}, BX.UI, BX, BX.UI.Accessibility, BX.Event, BX.UI.IconSet, BX.UI.System);
 //# sourceMappingURL=navigationpanel.bundle.js.map

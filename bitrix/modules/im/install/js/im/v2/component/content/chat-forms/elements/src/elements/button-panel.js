@@ -15,6 +15,10 @@ export const ButtonPanel = {
 			type: String,
 			required: true,
 		},
+		createButtonDisabled: {
+			type: Boolean,
+			default: false,
+		},
 		createButtonColorScheme: {
 			type: [Object, null],
 			required: false,
@@ -42,7 +46,7 @@ export const ButtonPanel = {
 				:customColorScheme="createButtonColorScheme"
 				:text="createButtonTitle"
 				:isLoading="isCreating"
-				:isDisabled="isCreating"
+				:isDisabled="isCreating || createButtonDisabled"
 				@click="$emit('create')"
 				class="bx-im-chat-forms-button-panel__create-button"
 			/>

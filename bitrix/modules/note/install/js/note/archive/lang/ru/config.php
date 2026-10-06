@@ -14,3 +14,7 @@ $MESS['NOTE_ARCHIVE_PAGE_DELETE_ALL_SUCCESS'] = 'Удалено документ
 $MESS['NOTE_ARCHIVE_PAGE_DELETE_ALL_NOTHING'] = 'Нет документов, которые можно удалить';
 $MESS['NOTE_ARCHIVE_PAGE_CONFIRM_CANCEL'] = 'Отменить';
 $MESS['NOTE_ARCHIVE_PAGE_ERROR_GENERIC'] = 'Не удалось выполнить действие, попробуйте ещё раз немного позже';
+
+$MESS['NOTE_ARCHIVE_BULK_CANCEL'] = 'Отмена';
+$MESS['NOTE_ARCHIVE_BULK_DELETE_TITLE'] = 'Удалить документы?';
+$MESS['NOTE_ARCHIVE_BULK_DELETE_ACTION'] = 'Удалить';

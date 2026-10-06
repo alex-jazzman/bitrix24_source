@@ -272,6 +272,15 @@ class CBPCrmSendEmailActivity extends CBPActivity
 			return CBPActivityExecutionStatus::Closed;
 		}
 
+		$emailMeta = [
+			'__email' => $fromEmail,
+			'from' => $from,
+			'replyTo' => $reply,
+			'to' => $to,
+		];
+		// the EmailSent trigger fires inside the add, so the addresses must already be in these fields
+		$activityFields['SETTINGS'] = ['EMAIL_META' => $emailMeta];
+
 		$id = CCrmActivity::Add($activityFields, false, false, $addOptions);
 		if (!$id)
 		{
@@ -300,12 +309,7 @@ class CBPCrmSendEmailActivity extends CBPActivity
 						'Message-Id' => $messageId,
 						'Reply-To' => $reply ?: $from,
 					],
-					'EMAIL_META' => [
-						'__email' => $fromEmail,
-						'from' => $from,
-						'replyTo' => $reply,
-						'to' => $to,
-					],
+					'EMAIL_META' => $emailMeta,
 					'BP_ACTIVITY_ID' => $this->GetName(),
 					'BP_TEMPLATE_ID' => $this->GetWorkflowTemplateId()
 				],
@@ -356,6 +360,7 @@ class CBPCrmSendEmailActivity extends CBPActivity
 					->setEntityType("rpa")
 					->setEntityId($urn)
 			);
+		Crm\Integration\Mail\MessageSender::applySenderIdentity($context, (int)($userImap['ID'] ?? 0));
 
 		$outgoingParams = [
 			'CHARSET' => SITE_CHARSET,
@@ -390,11 +395,26 @@ class CBPCrmSendEmailActivity extends CBPActivity
 				->pack();
 		}
 
-		$sendResult = Mail\Mail::send($outgoingParams);
+		$transportResult = null;
+		if (method_exists(Mail\Mail::class, 'sendResult'))
+		{
+			$transportResult = Mail\Mail::sendResult($outgoingParams);
+			$sendResult = $transportResult->isSuccess();
+		}
+		else
+		{
+			$sendResult = Mail\Mail::send($outgoingParams);
+		}
 
 		if (!$sendResult)
 		{
-			$this->writeError(GetMessage('CRM_SEMA_EMAIL_CREATION_CANCELED'), $userId);
+			$controlledTransportError = Crm\Integration\Mail\MessageSender::getControlledTransportError(
+				$transportResult,
+			);
+			$this->writeError(
+				$controlledTransportError?->getMessage() ?? GetMessage('CRM_SEMA_EMAIL_CREATION_CANCELED'),
+				$userId,
+			);
 			\CCrmActivity::delete($id);
 
 			return CBPActivityExecutionStatus::Closed;
@@ -921,11 +941,13 @@ class CBPCrmSendEmailActivity extends CBPActivity
 			return;
 		}
 
-		$value = sprintf(
-			'/bitrix/components/bitrix/crm.activity.planner/slider.php?site_id='
-			. SITE_ID . '&ajax_action=ACTIVITY_VIEW&activity_id=%d',
-			$id
+		$pathTemplate = Config\Option::get(
+			'crm',
+			'path_to_activity_show',
+			SITE_DIR . 'crm/activity/?ID=#activity_id#&open_view=#activity_id#'
 		);
+		$value = CComponentEngine::makePathFromTemplate($pathTemplate, ['activity_id' => $id]);
+		$value = (new Main\Web\Uri($value))->addParams(['open_view' => $id])->getUri();
 
 		$toWrite = [
 			'propertyName' => GetMessage("CRM_SEMA_MESSAGE_TEXT"),

@@ -1,8 +1,8 @@
+import { confirm } from 'crm.timeline.dialog';
 import { Router } from 'crm.router';
-import { ajax as Ajax, Loc, Text, Type } from 'main.core';
+import { ajax as Ajax, Loc, Tag, Text, Type } from 'main.core';
 import type { BaseEvent } from 'main.core.events';
 import { AirButtonStyle, ApplyButton, ButtonSize, CancelButton, CreateButton } from 'ui.buttons';
-import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
 import { Dialog, Item } from 'ui.entity-selector';
 import { UI } from 'ui.notification';
 
@@ -109,20 +109,18 @@ export class Activity extends Base
 			const confirmationText = actionData.confirmationText ?? '';
 			if (confirmationText)
 			{
-				MessageBox.show({
-					message: Text.encode(confirmationText),
-					modal: true,
-					buttons: MessageBoxButtons.YES_NO,
-					onYes: () => {
+				// eslint-disable-next-line @bitrix24/bitrix24-rules/no-native-dialogs
+				confirm({
+					content: Tag.render`<div>${Text.encode(confirmationText)}</div>`,
+					preset: 'YES_NO',
+					destructive: true,
+					onConfirm: () => {
 						return this.runDeleteAction(
 							actionData.activityId,
 							actionData.ownerTypeId,
 							actionData.ownerId,
 							animationCallbacks,
 						);
-					},
-					onNo: (messageBox) => {
-						messageBox.close();
 					},
 				});
 			}
@@ -141,20 +139,18 @@ export class Activity extends Base
 			const confirmationText = actionData.confirmationText ?? '';
 			if (confirmationText)
 			{
-				MessageBox.show({
-					message: Text.encode(confirmationText),
-					modal: true,
-					buttons: MessageBoxButtons.YES_CANCEL,
-					yesCaption: Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_TODO_DELETE_TAG_CONFIRM_YES_CAPTION'),
-					onYes: () => {
+				// eslint-disable-next-line @bitrix24/bitrix24-rules/no-native-dialogs
+				confirm({
+					content: Tag.render`<div>${Text.encode(confirmationText)}</div>`,
+					preset: 'YES_NO',
+					destructive: true,
+					confirmText: Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_TODO_DELETE_TAG_CONFIRM_YES_CAPTION'),
+					onConfirm: () => {
 						return this.runDeleteTagAction(
 							actionData.activityId,
 							actionData.ownerTypeId,
 							actionData.ownerId,
 						);
-					},
-					onCancel: (messageBox) => {
-						messageBox.close();
 					},
 				});
 			}

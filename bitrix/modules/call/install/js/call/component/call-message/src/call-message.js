@@ -113,6 +113,10 @@ export const CallMessage = {
 		{
 			return CallManager.getInstance().hasActiveAnotherCall(this.dialogId);
 		},
+		hasActiveCallInDialog(): boolean
+		{
+			return CallManager.getInstance().hasActiveCallInDialog(this.dialogId);
+		},
 		dialog(): ImModelChat
 		{
 			return this.$store.getters['chats/get'](this.dialogId, true);
@@ -156,6 +160,11 @@ export const CallMessage = {
 				clearTimeout(this.hintTimeout);
 				this.hintTimeout = setTimeout(() => this.showHint = false, 10000);
 
+				return;
+			}
+
+			if (!this.hasActiveCallInDialog)
+			{
 				return;
 			}
 

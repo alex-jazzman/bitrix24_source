@@ -78,9 +78,22 @@
 	display: flex;
 	align-items: center;
 	padding: 10px;
+	width: 100%;
 	max-height: 64px;
 	box-sizing: border-box;
+	border: none;
+	background: none;
+	font: inherit;
+	color: inherit;
+	text-align: left;
 	cursor: pointer;
+}
+
+.intranet-settings-widget__branch:focus-visible,
+.intranet-settings-widget__close-btn:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+	border-radius: var(--ui-border-radius-sm);
 }
 
 .intranet-settings-widget__branch-icon_box {
@@ -119,12 +132,14 @@
 }
 
 .intranet-settings-widget__branch_content {
+	min-width: 0;
 	margin-right: 12px;
 	overflow: hidden;
 }
 
 .intranet-settings-widget__branch-title,
 .intranet-settings-widget__title {
+	display: block;
 	max-width: 100%;
 	text-overflow: ellipsis;
 	white-space: nowrap;
@@ -152,6 +167,12 @@
 
 .intranet-settings-widget__close-btn {
 	margin-bottom: 15px;
+	padding: 0;
+	border: none;
+	background: none;
+	font: inherit;
+	text-align: left;
+	cursor: pointer;
 }
 
 .intranet-settings-widget__close-btn .intranet-settings-widget__close-btn_icon {

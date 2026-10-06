@@ -1,6 +1,9 @@
 <?php
 
 return [
-	'navigator/base',
-	'tasks:navigator/meta',
+	'extensions' => [
+		'entity-ready',
+		'navigator/base',
+		'tasks:navigator/meta',
+	],
 ];

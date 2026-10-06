@@ -4,6 +4,7 @@ namespace Bitrix\Mail\Helper;
 
 use Bitrix\Main\ORM\Query\Join;
 use Bitrix\Main\ORM\Fields\Relations\Reference;
+use Bitrix\Mail\Helper\Config\Feature;
 use Bitrix\Mail\Internals\MailEntityOptionsTable;
 use Bitrix\Main;
 use Bitrix\Bitrix24;
@@ -22,6 +23,9 @@ class LicenseManager
 	private const MAIL_ACCESS_RIGHTS_OPTION_NAME = 'mail_access_rights';
 	private const MAIL_MAILBOXES_MANAGEMENT_OPTION_NAME = 'mail_mailboxes_management_grid';
 	private const MAIL_MAILBOXES_MASS_CONNECT_OPTION_NAME = 'mail_mailbox_massconnect';
+	private const MAIL_LARGE_ATTACHMENT_DISK_UPLOAD_OPTION_NAME = 'mail_large_attachment_disk_upload';
+	private const MAIL_MESSAGE_RECIPIENTS_TOTAL_LIMIT_VARIABLE_NAME = 'mail_message_recipients_total_limit';
+	private const MAIL_MESSAGE_RECIPIENTS_TOTAL_LIMIT_FALLBACK = 10;
 
 	private static function sendNotificationsAboutBlockedMailboxes($ids): void
 	{
@@ -419,6 +423,18 @@ class LicenseManager
 		return -1;
 	}
 
+	public static function getMessageRecipientsTotalLimit(): int
+	{
+		if (!Main\Loader::includeModule('bitrix24'))
+		{
+			return self::MAIL_MESSAGE_RECIPIENTS_TOTAL_LIMIT_FALLBACK;
+		}
+
+		$limit = (int)Bitrix24\Feature::getVariable(self::MAIL_MESSAGE_RECIPIENTS_TOTAL_LIMIT_VARIABLE_NAME);
+
+		return $limit > 0 ? $limit : self::MAIL_MESSAGE_RECIPIENTS_TOTAL_LIMIT_FALLBACK;
+	}
+
 	/**
 	 * Returns the number of days to store messages
 	 *
@@ -477,5 +493,22 @@ class LicenseManager
 		}
 
 		return Bitrix24\Feature::isFeatureEnabled(self::MAIL_MAILBOXES_MASS_CONNECT_OPTION_NAME);
+	}
+
+	public static function isLargeAttachmentAutoUploadEnabled(): bool
+	{
+		if (!Feature::isLargeAttachmentDiskUploadAvailable())
+		{
+			return false;
+		}
+
+		if (!Main\Loader::includeModule('bitrix24'))
+		{
+			return true;
+		}
+
+		return Bitrix24\Feature::isFeatureChargeable(self::MAIL_LARGE_ATTACHMENT_DISK_UPLOAD_OPTION_NAME)
+			&& Bitrix24\Feature::isFeatureEnabled(self::MAIL_LARGE_ATTACHMENT_DISK_UPLOAD_OPTION_NAME)
+		;
 	}
 }

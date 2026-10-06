@@ -162,6 +162,36 @@ jn.define('sign/connector', (require, exports, module) => {
 		});
 	}
 
+	/**
+	 * @function annul
+	 *
+	 * @param memberId
+	 * @returns {Promise}
+	 */
+	function annul(memberId)
+	{
+		return BX.ajax.runAction('signmobile.api.document.annul', {
+			data: {
+				memberId: Number(memberId),
+			},
+		});
+	}
+
+	/**
+	 * @function cancelAnnulment
+	 *
+	 * @param memberId
+	 * @returns {Promise}
+	 */
+	function cancelAnnulment(memberId)
+	{
+		return BX.ajax.runAction('signmobile.api.document.cancelAnnulment', {
+			data: {
+				memberId: Number(memberId),
+			},
+		});
+	}
+
 	module.exports = {
 		getTemplateListPromise,
 		getFieldsPromise,
@@ -175,5 +205,7 @@ jn.define('sign/connector', (require, exports, module) => {
 		rejectConfirmation,
 		confirmationPostpone,
 		getExternalUrl,
+		annul,
+		cancelAnnulment,
 	};
 });

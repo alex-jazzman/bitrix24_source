@@ -174,7 +174,12 @@ class WorktimeRecordReportComponent extends Timeman\Component\BaseComponent
 	{
 		$userHelper = UserHelper::getInstance();
 		$employee = $record->obtainUser();
-		if ($employee && $record->getStartOffset() !== $employee->obtainUtcOffset())
+		// Employee "as it was recorded": the frozen START_OFFSET snapshot (historical reconstruction) is
+		// what the employee column shows; this synthetic historical offset is legitimate here only.
+		// Use obtainPinnedUtcOffset() for the "already pinned to the same value?" guard — an explicit
+		// null/value check, not a numeric equality heuristic that would misfire when a snapshot offset
+		// numerically coincides with the current "as of now" offset.
+		if ($employee && $employee->obtainPinnedUtcOffset() !== $record->getStartOffset())
 		{
 			$employee->defineUtcOffset($record->getStartOffset());
 			$employee->defineTimezoneName('');
@@ -186,8 +191,24 @@ class WorktimeRecordReportComponent extends Timeman\Component\BaseComponent
 			->where('ID', $this->currentUserId)
 			->exec()
 			->fetchObject();
+		// Viewer's ACTUAL zone is date-aware (P5.T4): pin the viewer offset to the real IANA zone at the
+		// record's start instant instead of the legacy "offset as of now" fallback, and expose the IANA id
+		// as the zone name for the hint. The employee side keeps its historical snapshot (above).
+		if ($currentUser)
+		{
+			$currentUser->defineUtcOffset(
+				$this->timeHelper->getOffsetAt((int)$this->currentUserId, (int)$recordForm->recordedStartTimestamp)
+			);
+			$currentUser->defineTimezoneName(
+				$this->timeHelper->resolveEffectiveTimeZoneId((int)$this->currentUserId)
+			);
+		}
 		$this->mainUser = $this->useEmployeesTimezone() ? $employee : $currentUser;
 		$this->oppositeUser = $this->useEmployeesTimezone() ? $currentUser : $employee;
+		if (!$this->mainUser || !$employee)
+		{
+			return;
+		}
 		$recordManager = DependencyManager::getInstance()->buildWorktimeRecordManager(
 			$record,
 			$record->obtainSchedule(),
@@ -197,10 +218,10 @@ class WorktimeRecordReportComponent extends Timeman\Component\BaseComponent
 		$userManagers = $this->findUserManagers([$userManagerIds[0]]);
 		$this->showingOffset = $this->mainUser->obtainUtcOffset();
 
-		$recordedStartDate = $this->timeHelper->createUserDateTimeFromFormat(
+		$recordedStartDate = $this->timeHelper->createDateTimeFromFormat(
 			'U',
 			$recordForm->recordedStartTimestamp,
-			$this->mainUser->getId()
+			$this->showingOffset
 		);
 		$this->arResult['REPORT_FORMATTED_DATE'] =
 			$this->timeHelper->formatDateTime(
@@ -222,12 +243,19 @@ class WorktimeRecordReportComponent extends Timeman\Component\BaseComponent
 		$this->arResult['IS_RECORD_APPROVED'] = $recordForm->getRecord()->isApproved();
 		$this->arResult['startTimestamp'] = $recordForm->recordedStartTimestamp;
 
+		// Edit-form prefill (TIME_PICKER_INIT_*) is ALWAYS the employee's wall clock "as it was recorded"
+		// (START_OFFSET snapshot), independent of the report display zone (useEmployeesTimezone / viewer):
+		// the save path re-interprets the entered wall-time in the employee's real IANA zone, so the form
+		// must round-trip the employee's own clock, not the viewer's. Display (RECORDED_VALUE) may follow
+		// the display zone; it is not a source of form values.
+		$recordedStartForEdit = $record->buildRecordedStartDateTime();
 		$this->arResult['FIELD_CELLS']['START'] = [
 			'TITLE' => Loc::getMessage('JS_CORE_TMR_START_TITLE'),
 			'RECORDED_VALUE' => $this->timeHelper->convertUtcTimestampToHoursMinutesAmPm($recordForm->recordedStartTimestamp, $this->showingOffset),
-			'TIME_PICKER_INIT_DATE' => $this->timeHelper->createDateTimeFromFormat(
-				'U', $recordForm->recordedStartTimestamp, $this->showingOffset
-			)->format('m/d/Y'),
+			'TIME_PICKER_INIT_TIME' => $this->timeHelper->convertSecondsToHoursMinutesAmPm(
+				$this->timeHelper->getSecondsFromDateTime($recordedStartForEdit)
+			),
+			'TIME_PICKER_INIT_DATE' => $recordedStartForEdit->format('m/d/Y'),
 			'ACTUAL_VALUE' => $recordForm->actualStartTimestamp > 0 ? $this->timeHelper->convertUtcTimestampToHoursMinutesAmPm($recordForm->actualStartTimestamp, $this->showingOffset) : '',
 			'ACTUAL_INFO' => [],
 		];
@@ -248,10 +276,6 @@ class WorktimeRecordReportComponent extends Timeman\Component\BaseComponent
 			if ($recordManager->isRecordExpired())
 			{
 				$expectedStop = $recordManager->getRecommendedStopTimestamp();
-				if ($expectedStop)
-				{
-					$recommendStop = $this->timeHelper->convertUtcTimestampToHoursMinutesAmPm($expectedStop, $this->showingOffset);
-				}
 			}
 		}
 		if (!$recordForm->actualStopTimestamp)
@@ -264,25 +288,35 @@ class WorktimeRecordReportComponent extends Timeman\Component\BaseComponent
 			'ACTUAL_VALUE' => $actStop,
 			'ACTUAL_INFO' => [],
 		];
-		if (isset($recommendStop) && $expectedStop !== null)
+		if ($recordForm->recordedStopTimestamp > 0)
 		{
-			$this->arResult['FIELD_CELLS']['END']['TIME_PICKER_INIT_TIME'] = $recommendStop;
-			$this->arResult['FIELD_CELLS']['END']['TIME_PICKER_INIT_DATE'] = $this->timeHelper->createDateTimeFromFormat(
-				'U', $expectedStop, $this->showingOffset
-			)->format('m/d/Y');
+			// Closed record: edit prefill is the employee's recorded stop wall-time (STOP_OFFSET snapshot),
+			// resolved independently of START_OFFSET and of the report display zone, so a stop that fell on
+			// a different DST side than the start still prefills its own clock and date.
+			$recordedStopForEdit = $record->buildRecordedStopDateTime();
+			$this->arResult['FIELD_CELLS']['END']['TIME_PICKER_INIT_TIME'] = $this->timeHelper->convertSecondsToHoursMinutesAmPm(
+				$this->timeHelper->getSecondsFromDateTime($recordedStopForEdit)
+			);
+			$this->arResult['FIELD_CELLS']['END']['TIME_PICKER_INIT_DATE'] = $recordedStopForEdit->format('m/d/Y');
 		}
 		else
 		{
+			// Open record: there is NO historical stop. Prefill a RECOMMENDED stop (or "now") resolved in
+			// the employee's real date-aware zone at that FUTURE instant - never the frozen start snapshot.
+			$openStopInstant = ($expectedStop !== null && $expectedStop > 0)
+				? (int)$expectedStop
+				: $this->timeHelper->getUtcNowTimestamp();
+			$openStopOffset = (int)$this->timeHelper->getOffsetAt((int)$record->getUserId(), $openStopInstant);
 			$this->arResult['FIELD_CELLS']['END']['TIME_PICKER_INIT_TIME'] = $this->timeHelper->convertUtcTimestampToHoursMinutesAmPm(
-				$recordForm->recordedStopTimestamp ?: $this->timeHelper->getUtcNowTimestamp(),
-				$this->showingOffset
+				$openStopInstant,
+				$openStopOffset
 			);
 			$this->arResult['FIELD_CELLS']['END']['TIME_PICKER_INIT_DATE'] = $this->timeHelper->createDateTimeFromFormat(
-				'U', $recordForm->recordedStopTimestamp ?: $this->timeHelper->getUtcNowTimestamp(), $this->showingOffset
+				'U', $openStopInstant, $openStopOffset
 			)->format('m/d/Y');
 		}
-		$recordedStartDate = $this->timeHelper->createUserDateTimeFromFormat('U', $recordForm->recordedStartTimestamp, $this->mainUser->getId());
-		$recordedEndDate = $this->timeHelper->createUserDateTimeFromFormat('U', $recordForm->recordedStopTimestamp, $this->mainUser->getId());
+		$recordedStartDate = $this->timeHelper->createDateTimeFromFormat('U', $recordForm->recordedStartTimestamp, $this->showingOffset);
+		$recordedEndDate = $this->timeHelper->createDateTimeFromFormat('U', $recordForm->recordedStopTimestamp, $this->showingOffset);
 
 		if ($recordForm->recordedStopTimestamp > 0
 			&& $recordedEndDate && $recordedStartDate
@@ -291,8 +325,8 @@ class WorktimeRecordReportComponent extends Timeman\Component\BaseComponent
 			$this->arResult['FIELD_CELLS']['START']['DATE'] = $this->timeHelper->formatDateTime($recordedStartDate, $this->dayMonthFormat);
 			$this->arResult['FIELD_CELLS']['END']['DATE'] = $this->timeHelper->formatDateTime($recordedEndDate, $this->dayMonthFormat);
 		}
-		$actualStartDate = $this->timeHelper->createUserDateTimeFromFormat('U', $recordForm->actualStartTimestamp, $this->mainUser->getId());
-		$actualEndDate = $this->timeHelper->createUserDateTimeFromFormat('U', $recordForm->actualStopTimestamp, $this->mainUser->getId());
+		$actualStartDate = $this->timeHelper->createDateTimeFromFormat('U', $recordForm->actualStartTimestamp, $this->showingOffset);
+		$actualEndDate = $this->timeHelper->createDateTimeFromFormat('U', $recordForm->actualStopTimestamp, $this->showingOffset);
 
 		if ($recordForm->actualStopTimestamp > 0
 			&& $actualEndDate && $actualStartDate
@@ -363,8 +397,8 @@ class WorktimeRecordReportComponent extends Timeman\Component\BaseComponent
 					$this->arResult['FIELD_CELLS']['START'][$key][] = $violation;
 					if ($editStartEvent = $record->obtainEventByType(WorktimeEventTable::EVENT_TYPE_EDIT_START))
 					{
-						$editStartTime = $this->timeHelper->createUserDateTimeFromFormat(
-							'U', $editStartEvent->getActualTimestamp(), $this->mainUser->getId()
+						$editStartTime = $this->timeHelper->createDateTimeFromFormat(
+							'U', $editStartEvent->getActualTimestamp(), $this->showingOffset
 						);
 						$this->arResult['FIELD_CELLS']['START']['ACTUAL_INFO'] = [
 							'TITLE' => Loc::getMessage('JS_CORE_TMR_REPORT_START'),
@@ -388,8 +422,8 @@ class WorktimeRecordReportComponent extends Timeman\Component\BaseComponent
 					$this->arResult['FIELD_CELLS']['END'][$key][] = $violation;
 					if ($editStopEvent = $record->obtainEventByType(WorktimeEventTable::EVENT_TYPE_EDIT_STOP))
 					{
-						$editStopTime = $this->timeHelper->createUserDateTimeFromFormat(
-							'U', $editStopEvent->getActualTimestamp(), $this->mainUser->getId()
+						$editStopTime = $this->timeHelper->createDateTimeFromFormat(
+							'U', $editStopEvent->getActualTimestamp(), $this->showingOffset
 						);
 						$this->arResult['FIELD_CELLS']['END']['ACTUAL_INFO'] = [
 							'TITLE' => Loc::getMessage('JS_CORE_TMR_REPORT_FINISH'),
@@ -413,8 +447,8 @@ class WorktimeRecordReportComponent extends Timeman\Component\BaseComponent
 					$event = $record->obtainEventByType(WorktimeEventTable::EVENT_TYPE_EDIT_BREAK_LENGTH);
 					if ($event || $event = $record->obtainEventByType(WorktimeEventTable::EVENT_TYPE_APPROVE))
 					{
-						$editStopTime = $this->timeHelper->createUserDateTimeFromFormat(
-							'U', $event->getActualTimestamp(), $this->mainUser->getId()
+						$editStopTime = $this->timeHelper->createDateTimeFromFormat(
+							'U', $event->getActualTimestamp(), $this->showingOffset
 						);
 						$this->arResult['FIELD_CELLS']['BREAK']['ACTUAL_INFO'] = [
 							'TITLE' => Loc::getMessage('JS_CORE_TMR_REPORT_DURATION'),
@@ -498,11 +532,6 @@ class WorktimeRecordReportComponent extends Timeman\Component\BaseComponent
 			$rules = $this->findIndividualViolationRules($record);
 		}
 		return $rules;
-	}
-
-	private function makeOffsetSign($offset)
-	{
-		return ($offset === 0 ? '' : ($offset > 0 ? '+' : '-'));
 	}
 
 	private function getExtraInfo()
@@ -647,7 +676,12 @@ class WorktimeRecordReportComponent extends Timeman\Component\BaseComponent
 		$this->arResult['worktimeInfoHint'] = '';
 		$this->arResult['FIELD_CELLS']['END']['RECORDED_VALUE_HINT'] = '';
 		$this->arResult['FIELD_CELLS']['END']['ACTUAL_VALUE_HINT'] = '';
-		$selfOffset = (int)$this->timeHelper->getUserUtcOffset($this->currentUserId);
+		// Viewer's ACTUAL date-aware offset at the start instant (not "offset as of now"): the START hint
+		// is shown when the historical START_OFFSET snapshot differs from where the viewer actually is.
+		$selfOffset = (int)$this->timeHelper->getOffsetAt(
+			(int)$this->currentUserId,
+			(int)$record->getRecordedStartTimestamp()
+		);
 		if ($record->getStartOffset() !== $selfOffset)
 		{
 			$this->arResult['FIELD_CELLS']['START']['RECORDED_VALUE_HINT'] = $this->recordFormHelper->buildTimeDifferenceHint(
@@ -681,8 +715,8 @@ class WorktimeRecordReportComponent extends Timeman\Component\BaseComponent
 				);
 			}
 			$this->arResult['worktimeInfoHint'] = Loc::getMessage('TM_RECORD_REPORT_HINT_RECORD_TIMEZONE_INFO', [
-				'#TIME_OFFSET#' => $this->makeOffsetSign($record->getStartOffset()) . $this->timeHelper->convertSecondsToHoursMinutes($record->getStartOffset()),
-				'#TIME_OFFSET_SELF#' => $this->makeOffsetSign($selfOffset) . $this->timeHelper->convertSecondsToHoursMinutes($selfOffset),
+				'#TIME_OFFSET#' => $this->timeHelper->formatSignedOffset((int)$record->getStartOffset()),
+				'#TIME_OFFSET_SELF#' => $this->timeHelper->formatSignedOffset($selfOffset),
 			]);
 			$this->arResult['worktimeInfoHint'] .= '<br><br>';
 		}
@@ -690,7 +724,13 @@ class WorktimeRecordReportComponent extends Timeman\Component\BaseComponent
 			'#IP_OPEN#' => $validator->validate($record->getIpOpen())->isSuccess() ? $record->getIpOpen() : 'N/A',
 			'#IP_CLOSE#' => $record->isClosed() && $validator->validate($record->getIpClose())->isSuccess() ? $record->getIpClose() : 'N/A',
 		]);
-		if ($record->getStopOffset() !== $selfOffset)
+		// END hint uses the viewer's date-aware offset at the STOP instant (the stop may fall on a
+		// different DST side than the start); falls back to the start-instant viewer offset when the day
+		// is still open.
+		$selfStopOffset = $record->getRecordedStopTimestamp() > 0
+			? (int)$this->timeHelper->getOffsetAt((int)$this->currentUserId, (int)$record->getRecordedStopTimestamp())
+			: $selfOffset;
+		if ($record->getStopOffset() !== $selfStopOffset)
 		{
 			if ($record->getRecordedStopTimestamp() > 0)
 			{

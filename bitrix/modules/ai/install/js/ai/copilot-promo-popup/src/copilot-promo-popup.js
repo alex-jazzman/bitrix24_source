@@ -1,11 +1,13 @@
 import { Extension, Type } from 'main.core';
 import {
 	PromoVideoPopup,
+	AnglePosition,
+	PromoVideoPopupEvents,
+} from 'ui.promo-video-popup';
+import type {
 	PromoVideoPopupTargetOptions,
 	PromoVideoPopupAngleOptions,
 	PromoVideoPopupOffset,
-	AnglePosition,
-	PromoVideoPopupEvents,
 } from 'ui.promo-video-popup';
 import { Button } from 'ui.buttons';
 import { Main as MainIconSet } from 'ui.icon-set.api.core';
@@ -29,7 +31,6 @@ export class CopilotPromoPopup
 		TASK: 'task',
 		LIVE_FEED_EDITOR: 'liveFeedEditor',
 		CHAT: 'chat',
-		SITE_WITH_COPILOT: 'siteWithCopilot',
 	});
 
 	static PromoVideoPopupEvents = PromoVideoPopupEvents;

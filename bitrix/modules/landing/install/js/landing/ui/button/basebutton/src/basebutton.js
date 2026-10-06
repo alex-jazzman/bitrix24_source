@@ -74,6 +74,11 @@ export class BaseButton extends EventEmitter
 			Dom.attr(this.getLayout(), this.options.attrs);
 		}
 
+		if (Type.isStringFilled(this.options.ariaLabel))
+		{
+			this.setAriaLabel(this.options.ariaLabel);
+		}
+
 		if (
 			Type.isArray(this.options.className)
 			|| Type.isStringFilled(this.options.className)
@@ -101,13 +106,20 @@ export class BaseButton extends EventEmitter
 	getLayout(): HTMLElement
 	{
 		return this.cache.remember('layout', () => {
-			return Tag.render`
-				<button 
-					class="landing-ui-button" 
+			const layout = Tag.render`
+				<button
+					class="landing-ui-button"
 					type="button"
 					data-id="${this.id}"
 				>${this.getTextLayout()}</button>
 			`;
+
+			if (this.options.toggle)
+			{
+				layout.setAttribute('aria-pressed', this.options.active ? 'true' : 'false');
+			}
+
+			return layout;
 		});
 	}
 
@@ -149,9 +161,15 @@ export class BaseButton extends EventEmitter
 		Dom.attr(this.layout, key, value);
 	}
 
+	setAriaLabel(text: string)
+	{
+		Dom.attr(this.layout, 'aria-label', text);
+	}
+
 	disable()
 	{
 		Dom.addClass(this.layout, 'landing-ui-disabled');
+		Dom.attr(this.layout, 'disabled', '');
 	}
 
 	enable()
@@ -178,11 +196,21 @@ export class BaseButton extends EventEmitter
 	activate()
 	{
 		Dom.addClass(this.layout, 'landing-ui-active');
+
+		if (this.options.toggle)
+		{
+			Dom.attr(this.layout, 'aria-pressed', 'true');
+		}
 	}
 
 	deactivate()
 	{
 		Dom.removeClass(this.layout, 'landing-ui-active');
+
+		if (this.options.toggle)
+		{
+			Dom.attr(this.layout, 'aria-pressed', 'false');
+		}
 	}
 
 	isActive()

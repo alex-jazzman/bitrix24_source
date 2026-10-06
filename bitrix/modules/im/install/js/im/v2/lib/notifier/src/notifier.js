@@ -13,6 +13,7 @@ import { CallNotifier } from './functions/call';
 import { RecentNotifier } from './functions/recent';
 import { NotificationNotifier } from './functions/notification';
 import { SharedLinkNotifier } from './functions/shared-link';
+import { FolderNotifier } from './functions/folder';
 
 import { showNotification } from './utils/notification';
 
@@ -30,6 +31,7 @@ export const Notifier = {
 	sharedLink: SharedLinkNotifier,
 	notification: NotificationNotifier,
 	sticker: StickerNotifier,
+	folder: FolderNotifier,
 
 	onCopyTextComplete(): void
 	{

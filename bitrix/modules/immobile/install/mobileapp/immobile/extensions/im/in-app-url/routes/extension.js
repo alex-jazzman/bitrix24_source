@@ -284,6 +284,12 @@ jn.define('im/in-app-url/routes', (require, exports, module) => {
 			),
 		).name('im:dialog:openDialogWithBotContext');
 
+		// collab
+		inAppUrl.register(
+			'/online/\\?IM_COLLAB=:dialogId$',
+			({ dialogId }) => openDialog(dialogId),
+		).name('im:dialog:openByCollabLink');
+
 		// CoPilot
 		inAppUrl.register(
 			'/online/\\?IM_COPILOT=:dialogId$',

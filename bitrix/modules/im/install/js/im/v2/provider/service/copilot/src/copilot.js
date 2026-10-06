@@ -4,16 +4,18 @@ import { ChatService } from 'im.v2.provider.service.chat';
 
 export class CopilotChatService
 {
-	async createChat({ roleCode }: { roleCode: string }): Promise<string>
+	async createChat({ roleCode, parentChatId }: { roleCode: string, parentChatId?: number }): Promise<string>
 	{
 		const chatService = new ChatService();
 
 		try
 		{
-			const { newDialogId } = await chatService.createChat({
-				type: ChatType.copilot,
-				copilotMainRole: roleCode,
-			});
+			const config = { type: ChatType.copilot, copilotMainRole: roleCode };
+			if (parentChatId)
+			{
+				config.parentChatId = parentChatId;
+			}
+			const { newDialogId } = await chatService.createChat(config);
 
 			await chatService.loadChatWithMessages(newDialogId);
 
@@ -26,9 +28,9 @@ export class CopilotChatService
 		}
 	}
 
-	createDefaultChat(): Promise<string>
+	createDefaultChat(parentChatId?: number): Promise<string>
 	{
-		return this.createChat({ roleCode: CopilotRole.universalCode });
+		return this.createChat({ roleCode: CopilotRole.universalCode, parentChatId });
 	}
 
 	async fetchDraftChat(): Promise<{ dialogId: string, chatId: number }>

@@ -9,9 +9,15 @@ $MESS['SIGN_SIGNERS_SIGNERS_GRID_DELETE_HINT_SUCCESS'] = 'Сотрудники �
 $MESS['SIGN_SIGNERS_SIGNERS_GRID_DELETE_HINT_FAIL'] = 'Не удалось удалить сотрудников из группы';
 $MESS['SIGN_SIGNERS_GRID_LIST_CREATE_SUCCESS'] = 'Группа создана успешно';
 $MESS['SIGN_SIGNERS_GRID_LIST_CREATE_FAIL'] = 'Ошибка создания группы';
+$MESS['SIGN_SIGNERS_GRID_LIST_RENAME_SUCCESS'] = 'Группа переименована';
+$MESS['SIGN_SIGNERS_GRID_LIST_RENAME_FAIL'] = 'Не удалось переименовать группу, попробуйте ещё раз';
+$MESS['SIGN_SIGNERS_GRID_PIN_HINT_FAIL'] = 'Не удалось закрепить группу, попробуйте ещё раз';
+$MESS['SIGN_SIGNERS_GRID_UNPIN_HINT_FAIL'] = 'Не удалось открепить группу, попробуйте ещё раз';
+$MESS['SIGN_SIGNERS_GRID_WRITE_TO_FEED_HINT_FAIL'] = 'Не удалось написать в ленту, попробуйте ещё раз';
 
-$MESS['SIGN_SIGNERS_DELETE_CONFIRMATION_TITLE'] = 'Удалить группу?';
+$MESS['SIGN_SIGNERS_DELETE_CONFIRMATION_TITLE_MSGVER_1'] = 'Удалить группу?';
 $MESS['SIGN_SIGNERS_DELETE_CONFIRMATION_MESSAGE'] = 'Восстановить группу не получится';
+$MESS['SIGN_SIGNERS_DELETE_CONFIRMATION_MESSAGE_WITH_NAME'] = 'Группу #TITLE# нельзя будет восстановить';
 
 $MESS['SIGN_SIGNERS_SIGNER_DELETE_CONFIRMATION_TITLE'] = 'Удалить сотрудников из группы?';
 
@@ -23,5 +29,9 @@ $MESS['SIGN_SIGNERS_GRID_CREATE_LIST_POPUP_INPUT_PLACEHOLDER'] = 'Названи
 $MESS['SIGN_SIGNERS_GRID_CREATE_LIST_CREATE_BUTTON_TEXT'] = 'Создать';
 $MESS['SIGN_SIGNERS_GRID_CREATE_LIST_SAVE_BUTTON_TEXT'] = 'Переименовать';
 $MESS['SIGN_SIGNERS_GRID_CREATE_LIST_HINT_TITLE_NOT_EMPTY'] = 'Заполните название группы';
+$MESS['SIGN_SIGNERS_GRID_CREATE_LIST_HINT_TITLE_NOT_EMPTY_MSGVER_1'] = 'Введите название группы';
 $MESS['SIGN_SIGNERS_GRID_CREATE_LIST_CANCEL_BUTTON_TEXT'] = 'Отмена';
 $MESS['SIGN_SIGNERS_GRID_CREATE_LIST_DESCRIPTION'] = 'Создайте группу и добавьте в неё сотрудников для быстрой отправки кадровых электронных документов';
+
+$MESS['SIGN_SIGNERS_GRID_RENAME_LIST_POPUP_TITLE'] = 'Переименовать группу';
+$MESS['SIGN_SIGNERS_GRID_RENAME_LIST_DESCRIPTION'] = 'Отредактируйте название группы или укажите новое';

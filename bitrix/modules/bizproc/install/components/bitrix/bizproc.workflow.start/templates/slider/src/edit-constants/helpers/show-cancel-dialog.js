@@ -1,20 +1,17 @@
-import { Loc, Type } from 'main.core';
-import { MessageBox } from 'ui.dialogs.messagebox';
+import { Loc } from 'main.core';
 
-export function showCancelDialog(onConfirm: Function, onCancel: ?Function): void
+import { showConfirmDialog } from '../../helpers/show-confirm-dialog';
+
+export function showCancelDialog(onConfirm: Function, onClose: ?Function): void
 {
-	const messageBox = MessageBox.confirm(
-		Loc.getMessage('BIZPROC_CMP_WORKFLOW_START_TMP_EDIT_CONSTANTS_EXIT_DIALOG_DESCRIPTION'),
-		Loc.getMessage('BIZPROC_CMP_WORKFLOW_START_TMP_EDIT_CONSTANTS_EXIT_DIALOG_TITLE'),
+	showConfirmDialog(
+		{
+			title: Loc.getMessage('BIZPROC_CMP_WORKFLOW_START_TMP_EDIT_CONSTANTS_EXIT_DIALOG_TITLE'),
+			description: Loc.getMessage('BIZPROC_CMP_WORKFLOW_START_TMP_EDIT_CONSTANTS_EXIT_DIALOG_DESCRIPTION'),
+			confirmCaption: Loc.getMessage('BIZPROC_CMP_WORKFLOW_START_TMP_EDIT_CONSTANTS_EXIT_DIALOG_CONFIRM'),
+			cancelCaption: Loc.getMessage('BIZPROC_CMP_WORKFLOW_START_TMP_EDIT_CONSTANTS_EXIT_DIALOG_CANCEL'),
+		},
 		onConfirm,
-		Loc.getMessage('BIZPROC_CMP_WORKFLOW_START_TMP_EDIT_CONSTANTS_EXIT_DIALOG_CONFIRM'),
-		Type.isFunction(onCancel) ? onCancel : () => true,
-		Loc.getMessage('BIZPROC_CMP_WORKFLOW_START_TMP_EDIT_CONSTANTS_EXIT_DIALOG_CANCEL'),
+		onClose,
 	);
-
-	if (Type.isFunction(onCancel))
-	{
-		const popup = messageBox.getPopupWindow();
-		popup.subscribe('onClose', onCancel);
-	}
 }

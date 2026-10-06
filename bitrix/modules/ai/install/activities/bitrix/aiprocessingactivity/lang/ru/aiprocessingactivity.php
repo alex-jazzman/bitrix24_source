@@ -25,3 +25,4 @@ $MESS['AI_PROCESSING_ACTIVITY_JSON_SCHEMA_STATUS_INVALID'] = 'Ошибка: не
 $MESS['AI_PROCESSING_ACTIVITY_JSON_SCHEMA_PREVIEW_TITLE'] = 'Предпросмотр';
 $MESS['AI_PROCESSING_ACTIVITY_EXECUTION_TIMEOUT_ERROR'] = 'Превышено время ожидания ответа от AI-агента. Попробуйте позже';
 $MESS['AI_PROCESSING_ACTIVITY_DISABLED'] = 'Лимит запросов для этого процесса превышен. Попробуйте позже';
+$MESS['AI_PROCESSING_ACTIVITY_CONTENT_BLOCK_EMPTY'] = 'Модель не выбрана';

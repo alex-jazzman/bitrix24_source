@@ -1,16 +1,17 @@
+import { alert, confirm } from 'crm.timeline.dialog';
 import {ajax as Ajax, Loc, Tag, Text, Type, Uri} from 'main.core';
 import { DateTimeFormat } from "main.date";
 import { type ActionAnimationCallbacks, type ActionParams, Base } from './base';
 import ConfigurableItem from '../configurable-item';
 import { ActionType } from "../action";
 import { Router } from "crm.router";
-import {MessageBox, MessageBoxButtons} from "ui.dialogs.messagebox";
 import { DatetimeConverter } from "crm.timeline.tools";
 import { UI } from 'ui.notification';
+import { AirButtonStyle, Button, ButtonSize } from 'ui.buttons';
+import { Dialog } from 'ui.system.dialog';
 
 import 'ui.info-helper';
 import 'main.sidepanel';
-import 'ui.buttons';
 import 'main.popup';
 
 const ACTION_NAMESPACE = 'Document:';
@@ -18,7 +19,7 @@ const ACTION_NAMESPACE = 'Document:';
 export class Document extends Base
 {
 	static #toPrintAfterRefresh: ConfigurableItem[] = [];
-	#popupConfirm: BX.PopupWindow;
+	#popupConfirm: ?Dialog;
 
 	static isItemSupported(item: ConfigurableItem): boolean
 	{
@@ -97,15 +98,13 @@ export class Document extends Base
 			const confirmationText = actionData.confirmationText ?? '';
 			if (confirmationText)
 			{
-				MessageBox.show({
-					message: confirmationText,
-					modal: true,
-					buttons: MessageBoxButtons.YES_NO,
-					onYes: () => {
+				// eslint-disable-next-line @bitrix24/bitrix24-rules/no-native-dialogs
+				confirm({
+					content: Tag.render`<div>${Text.encode(confirmationText)}</div>`,
+					preset: 'YES_NO',
+					destructive: true,
+					onConfirm: () => {
 						return this.#deleteDocument(actionData.id, actionData.ownerTypeId, actionData.ownerId, animationCallbacks);
-					},
-					onNo: (messageBox) => {
-						messageBox.close();
 					},
 				});
 			}
@@ -135,7 +134,10 @@ export class Document extends Base
 			}
 			catch (error)
 			{
-				MessageBox.alert(error.message);
+				// eslint-disable-next-line @bitrix24/bitrix24-rules/no-native-dialogs
+				alert({
+					content: Tag.render`<div>${Text.encode(error.message)}</div>`,
+				});
 
 				return;
 			}
@@ -151,7 +153,10 @@ export class Document extends Base
 		}
 		else
 		{
-			MessageBox.alert(Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_DOCUMENT_COPY_PUBLIC_LINK_ERROR'));
+			// eslint-disable-next-line @bitrix24/bitrix24-rules/no-native-dialogs
+			alert({
+				content: Tag.render`<div>${Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_DOCUMENT_COPY_PUBLIC_LINK_ERROR')}</div>`,
+			});
 		}
 	}
 
@@ -212,7 +217,10 @@ export class Document extends Base
 		}
 		else
 		{
-			MessageBox.alert(Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_DOCUMENT_PDF_NOT_READY'));
+			// eslint-disable-next-line @bitrix24/bitrix24-rules/no-native-dialogs
+			alert({
+				content: Tag.render`<div>${Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_DOCUMENT_PDF_NOT_READY')}</div>`,
+			});
 		}
 	}
 
@@ -246,7 +254,10 @@ export class Document extends Base
 		{
 			console.error(responseWithError);
 
-			MessageBox.alert(Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_DOCUMENT_UPDATE_DOCUMENT_ERROR'));
+			// eslint-disable-next-line @bitrix24/bitrix24-rules/no-native-dialogs
+			alert({
+				content: Tag.render`<div>${Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_DOCUMENT_UPDATE_DOCUMENT_ERROR')}</div>`,
+			});
 
 			return;
 		}
@@ -278,7 +289,10 @@ export class Document extends Base
 		{
 			console.error(responseWithError);
 
-			MessageBox.alert(Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_DOCUMENT_UPDATE_DOCUMENT_ERROR'));
+			// eslint-disable-next-line @bitrix24/bitrix24-rules/no-native-dialogs
+			alert({
+				content: Tag.render`<div>${Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_DOCUMENT_UPDATE_DOCUMENT_ERROR')}</div>`,
+			});
 
 			return;
 		}
@@ -454,28 +468,28 @@ export class Document extends Base
 								'%INITIATOR%': '<b>' + BX.util.htmlspecialchars(response.data.INITIATOR || '') + '</b>',
 							}),
 						[
-							new BX.UI.Button({
-								text: BX.message('CRM_TIMELINE_ITEM_ACTIVITY_OLD_BUTTON_MSGVER_2'),
-								className: "ui-btn ui-btn-md ui-btn-primary",
-								events: {
-									click: () =>
-									{
-										convertDealAndStartSign(true);
-										this.#popupConfirm.destroy();
-									}
-								}
+							new Button({
+								text: Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_OLD_BUTTON_MSGVER_2'),
+								size: ButtonSize.LARGE,
+								useAirDesign: true,
+								style: AirButtonStyle.FILLED,
+								dataset: { testid: 'crm-timeline-document-sign-old-btn' },
+								onclick: () => {
+									convertDealAndStartSign(true);
+									this.#popupConfirm.hide();
+								},
 							}),
-							new BX.UI.Button({
+							new Button({
 								text: Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_NEW_BUTTON_MSGVER_3'),
-								className: "ui-btn ui-btn-md ui-btn-info",
-								events: {
-									click: () =>
-									{
-										convertDealAndStartSign(false);
-										this.#popupConfirm.destroy();
-									}
-								}
-							})
+								size: ButtonSize.LARGE,
+								useAirDesign: true,
+								style: AirButtonStyle.OUTLINE,
+								dataset: { testid: 'crm-timeline-document-sign-new-btn' },
+								onclick: () => {
+									convertDealAndStartSign(false);
+									this.#popupConfirm.hide();
+								},
+							}),
 						],
 						Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_POPUP_TITLE_MSGVER_2')
 					);
@@ -490,30 +504,17 @@ export class Document extends Base
 		BX.UI.InfoHelper.show(code);
 	}
 
-	#showMessage(content: string, buttons: [], title: string)
+	#showMessage(content: string, buttons: Button[], title: string): void
 	{
-		this.#popupConfirm = new BX.PopupWindow(
-			'bx-popup-document-activity-popup',
-			null,
-			{
-						zIndex: 200,
-						autoHide: true,
-						closeByEsc: true,
-						buttons: buttons,
-						closeIcon: true,
-						overlay : true,
-						events : {
-							onPopupClose : () =>
-							{
-								this.#popupConfirm.destroy();
-							}
-						},
-						content: Tag.render`<div class="bx-popup-document-activity-popup-content-text">${content}</div>`,
-						titleBar: title,
-						className : 'bx-popup-document-activity-popup',
-						maxWidth: 510
-					}
-		);
+		this.#popupConfirm = new Dialog({
+			title,
+			content: Tag.render`<div>${content}</div>`,
+			centerButtons: buttons,
+			hasOverlay: true,
+			closeByEsc: true,
+			width: 510,
+			background: 'vibrant',
+		});
 		this.#popupConfirm.show();
-	};
+	}
 }

@@ -54,7 +54,7 @@ Bitrix\Main\UI\Extension::load(
 
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/activity.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/interface_grid.js');
-Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/dialog.js');
+\Bitrix\Main\UI\Extension::load('crm.dialog');
 
 ?><div id="crm-company-list-progress-bar-container"></div><div id="batchDeletionWrapper"></div><?
 
@@ -232,10 +232,7 @@ foreach($arResult['COMPANY'] as $sKey =>  $arCompany)
 		if(!(isset($arCompany['IS_DEF_MYCOMPANY']) && $arCompany['IS_DEF_MYCOMPANY'] === 'Y'))
 		{
 			$arActions[] = array('SEPARATOR' => true);
-			$companySetDefMyCompany = CHTTP::urlAddParams(
-				$arParams['PATH_TO_COMPANY_LIST'],
-				array('action_'.$arResult['GRID_ID'] => 'set_def_mycompany', 'ID' => $sKey, 'sessid' => bitrix_sessid())
-			);
+			$companySetDefMyCompany = (string)(new Uri($arParams['PATH_TO_COMPANY_LIST']))->addParams(array('action_'.$arResult['GRID_ID'] => 'set_def_mycompany', 'ID' => $sKey, 'sessid' => bitrix_sessid()));
 			$arActions[] = array(
 				'TEXT' => Loc::getMessage('CRM_COMPANY_LIST_ACTION_MENU_SET_DEF_MYCOMPANY'),
 				'ONCLICK' => 'jsUtils.Redirect([], \''.CUtil::JSEscape($companySetDefMyCompany).'\');'

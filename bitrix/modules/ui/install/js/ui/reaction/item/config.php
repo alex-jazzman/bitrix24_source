@@ -10,6 +10,7 @@ return [
 	'rel' => [
 		'main.core',
 		'main.core.events',
+		'ui.vue3',
 	],
 	'skip_core' => false,
 ];

@@ -36,6 +36,7 @@ export class Autostart
 	#forms: HTMLFormElement[] = [];
 	#canExit: boolean = false;
 	#isExitInProcess: boolean = false;
+	#isSaving: boolean = false;
 
 	constructor(config: AutostartData)
 	{
@@ -126,7 +127,10 @@ export class Autostart
 			template.name,
 			template.parameters,
 			template.documentType,
-			template.description,
+			{
+				description: template.description,
+				onSubmit: () => this.#save(),
+			},
 		);
 
 		this.#forms.push(form);
@@ -144,6 +148,12 @@ export class Autostart
 
 	#save()
 	{
+		if (this.#isSaving)
+		{
+			return;
+		}
+
+		this.#isSaving = true;
 		this.#buttons.resolveWaitingState({ save: true });
 
 		const data = new FormData();
@@ -164,6 +174,7 @@ export class Autostart
 
 				this.#errorNotifier.clean();
 				this.#buttons.resolveWaitingState({ save: false });
+				this.#isSaving = false;
 				this.#canExit = true;
 				this.#exit();
 			})
@@ -171,6 +182,7 @@ export class Autostart
 				this.#errorNotifier.errors = response.errors;
 				this.#errorNotifier.show();
 				this.#buttons.resolveWaitingState({ save: false });
+				this.#isSaving = false;
 			})
 		;
 	}
@@ -187,6 +199,11 @@ export class Autostart
 				document.documentId.forEach((value, documentIdIndex) => {
 					data.append(`documents[${index}][documentId][${documentIdIndex}]`, value);
 				});
+			}
+
+			if (!Type.isNil(document.categoryId))
+			{
+				data.append(`documents[${index}][categoryId]`, document.categoryId);
 			}
 		});
 

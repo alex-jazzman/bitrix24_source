@@ -1,0 +1,107 @@
+/* Panel content rendered inside the BX.SidePanel slider (bottom drawer). */
+.sonet--project-wizard--notifications-panel {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	max-height: 100%;
+	min-height: 0;
+	background: var(--ui-color-drawer-bg-default, #eef2f4);
+}
+
+.sonet--project-wizard--notifications-panel-header {
+	align-items: center;
+	display: flex;
+	gap: var(--ui-space-inline-sm, 12px);
+	justify-content: space-between;
+}
+
+.sonet--project-wizard--notifications-panel-title {
+	color: var(--ui-color-base-1);
+}
+
+.sonet--project-wizard--notifications-panel-body {
+	display: flex;
+	flex: 1 1 auto;
+	flex-direction: column;
+	gap: var(--ui-space-inline-lg, 24px);
+	min-height: 0;
+	overflow-y: auto;
+	padding: var(--ui-space-inline-lg, 24px) var(--ui-space-inline-3xl, 36px) var(--ui-space-inline-3xl, 36px);
+}
+
+.sonet--project-wizard--notifications-banner {
+	align-items: center;
+	background: var(--ui-color-accent-soft-blue-2, #e8f3fc);
+	border: 1px solid var(--ui-color-accent-soft-blue-1, #d4e9fa);
+	border-radius: var(--ui-border-radius-lg, 12px);
+	display: flex;
+	gap: var(--ui-space-inline-md, 16px);
+	justify-content: space-between;
+	padding: var(--ui-space-inline-md, 16px) var(--ui-space-inline-md2, 18px);
+}
+
+.sonet--project-wizard--notifications-banner-text {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-inline-2xs2, 6px);
+}
+
+.sonet--project-wizard--notifications-banner-title {
+	color: var(--ui-color-base-2);
+}
+
+.sonet--project-wizard--notifications-banner-body {
+	color: var(--ui-color-base-3);
+}
+
+.sonet--project-wizard--notifications-banner-image {
+	background-image: url(./images/notification-settings.png);
+	background-position: center;
+	background-repeat: no-repeat;
+	background-size: contain;
+	flex-shrink: 0;
+	height: 80px;
+	width: 80px;
+}
+
+.sonet--project-wizard--notifications-group {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-inline-md, 16px);
+}
+
+.sonet--project-wizard--notifications-group-title {
+	color: var(--ui-color-base-2);
+}
+
+.sonet--project-wizard--notifications-group-list {
+	background: var(--ui-color-bg-content-primary, #fff);
+	border-radius: var(--ui-border-radius-lg, 12px);
+	overflow: hidden;
+}
+
+.sonet--project-wizard--notifications-row {
+	align-items: center;
+	box-sizing: border-box;
+	display: flex;
+	justify-content: space-between;
+	gap: var(--ui-space-inline-md, 16px);
+	min-height: 60px;
+	padding: var(--ui-space-inline-md2, 18px) var(--ui-space-inline-lg, 20px);
+}
+
+.sonet--project-wizard--notifications-row-label {
+	color: var(--ui-color-base-1);
+}
+
+.sonet--project-wizard--notifications-row + .sonet--project-wizard--notifications-row {
+	border-top: 1px solid var(--ui-color-divider-default, #f0f0f0);
+}
+
+.sonet--project-wizard--notifications-panel-footer {
+	background: var(--ui-color-bg-content-primary, #fff);
+	display: flex;
+	flex-shrink: 0;
+	gap: var(--ui-space-inline-sm, 12px);
+	padding: var(--ui-space-inline-md2, 18px) var(--ui-space-inline-3xl, 36px);
+}

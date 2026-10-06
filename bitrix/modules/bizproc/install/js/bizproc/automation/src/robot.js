@@ -1,7 +1,7 @@
 import { Dom, Type, Event, Text, Loc, Runtime, Tag } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import { Template } from './template';
-import { DelayInterval } from './delay-interval';
+import { DelayInterval } from 'bizproc.condition';
 import { ViewMode } from './view-mode';
 import { HelpHint } from './help-hint';
 import { ConditionGroup, Helper, Document } from 'bizproc.automation';
@@ -248,6 +248,11 @@ export class Robot extends EventEmitter
 		}
 
 		return errors;
+	}
+
+	getLogSkipReasons(): Array<string>
+	{
+		return this.#tracker.getRobotLog(this.getId())?.skipReasons ?? [];
 	}
 
 	getDelayNotes(): Array<string>
@@ -516,6 +521,19 @@ export class Robot extends EventEmitter
 				containerClass += ' --complete';
 				statusNode.classList.add('--complete');
 				break;
+			case TrackingStatus.SKIPPED:
+			{
+				Dom.addClass(statusNode, '--skipped');
+
+				const skipReasons = this.getLogSkipReasons();
+				if (skipReasons.length > 0)
+				{
+					statusNode.setAttribute('data-text', skipReasons.join('\n'));
+					HelpHint.bindToNode(statusNode);
+				}
+
+				break;
+			}
 		}
 
 		const errors = this.getLogErrors();

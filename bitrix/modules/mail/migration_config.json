@@ -1,0 +1,9 @@
+{
+    "defaultTableName": "b_mail_mailbox",
+    "installDirectoriesMapping": {
+        "install/components": "components",
+        "install/images": "images/mail",
+        "install/js": "js",
+        "install/templates": "templates"
+    }
+}

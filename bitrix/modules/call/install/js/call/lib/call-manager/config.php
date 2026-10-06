@@ -10,6 +10,7 @@ return [
 		'./dist/call-manager.bundle.js',
 	],
 	'rel' => [
+		'call.const',
 		'call.core',
 		'call.lib.call-slider-manager',
 		'im.public',

@@ -50,14 +50,24 @@ export class UserSelector extends EventEmitter
 			preselectedItems: preselectedEntityList,
 			hideOnDeselect: true,
 			events: {
-				onHide: (event) => this.emit(UserSelectorEvent.onHide, {
-					items: this.#dialog.getSelectedItems(),
-				}),
+				onHide: (event) => {
+					const dialog = event.getTarget();
+
+					if (!dialog.isCacheable())
+					{
+						// Flush before destruction, otherwise the debounced save loses pending recent items.
+						dialog.saveRecentItems();
+					}
+
+					this.emit(UserSelectorEvent.onHide, {
+						items: dialog.getSelectedItems(),
+					});
+				},
 				'Item:onSelect': (event) => this.emit(UserSelectorEvent.onItemSelect, {
-					items: this.#dialog.getSelectedItems(),
+					items: event.getTarget().getSelectedItems(),
 				}),
 				'Item:onDeselect': (event) => this.emit(UserSelectorEvent.onItemSelect, {
-					items: this.#dialog.getSelectedItems(),
+					items: event.getTarget().getSelectedItems(),
 				}),
 			},
 		});

@@ -233,6 +233,10 @@ BX.Disk.TileGrid.Item.prototype =
 			BX.bind(this.item.titleInput, 'keydown', function(event) {
 				if(event.key === 'Escape')
 				{
+					// cancelRenaming() blurs the input, which triggers the 'blur' handler below
+					// and would call runRename() with the new value. Restore the original title
+					// first, so runRename()'s early-return (value === this.title) makes it a no-op.
+					this.item.titleInput.value = this.title;
 					this.cancelRenaming();
 
 					event.preventDefault();

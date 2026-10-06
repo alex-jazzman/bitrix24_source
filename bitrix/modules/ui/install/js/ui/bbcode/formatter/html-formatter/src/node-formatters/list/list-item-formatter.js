@@ -14,7 +14,6 @@ export class ListItemNodeFormatter extends NodeFormatter
 				return Dom.create({
 					tag: 'li',
 					attrs: {
-						...node.getAttributes(),
 						className: `ui-typography-li${nested ? ' --nested' : ''}`,
 					},
 				});

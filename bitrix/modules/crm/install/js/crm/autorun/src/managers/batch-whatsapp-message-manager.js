@@ -13,13 +13,16 @@ interface TemplateParams {
  */
 export class BatchWhatsappMessageManager extends BatchManager
 {
-	static messages = {
-		// default messages, you can override them via settings.messages
-		title: Loc.getMessage('CRM_AUTORUN_BATCH_WHATSAPP_MESSAGE_TITLE'),
-		summaryCaption: Loc.getMessage('CRM_AUTORUN_BATCH_WHATSAPP_MESSAGE_SUMMARY_CAPTION'),
-		summarySucceeded: Loc.getMessage('CRM_AUTORUN_BATCH_WHATSAPP_MESSAGE_SUMMARY_SUCCEEDED'),
-		summaryFailed: Loc.getMessage('CRM_AUTORUN_BATCH_WHATSAPP_MESSAGE_SUMMARY_FAILED'),
-	};
+	static get messages()
+	{
+		return {
+			// default messages, you can override them via settings.messages
+			title: Loc.getMessage('CRM_AUTORUN_BATCH_WHATSAPP_MESSAGE_TITLE'),
+			summaryCaption: Loc.getMessage('CRM_AUTORUN_BATCH_WHATSAPP_MESSAGE_SUMMARY_CAPTION'),
+			summarySucceeded: Loc.getMessage('CRM_AUTORUN_BATCH_WHATSAPP_MESSAGE_SUMMARY_SUCCEEDED'),
+			summaryFailed: Loc.getMessage('CRM_AUTORUN_BATCH_WHATSAPP_MESSAGE_SUMMARY_FAILED'),
+		};
+	}
 
 	#templateParams: ?TemplateParams = null;
 

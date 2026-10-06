@@ -18,6 +18,9 @@ return [
 		'utils/object',
 		'utils/skeleton',
 
+		'ui-system/typography/text',
+		'tokens',
+
 		'statemanager/redux/slices/users',
 		'statemanager/redux/store',
 

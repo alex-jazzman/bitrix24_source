@@ -11,7 +11,8 @@ import { Utils } from 'im.v2.lib.utils';
 import { type ImModelLayout } from 'im.v2.model';
 
 import { getFirstItemFromSearchResults } from '../../helpers/get-first-search-item';
-import { EmptyState } from '../elements/empty-state';
+import { SearchEmptyState } from '../elements/empty-state/search';
+import { RecentEmptyState } from '../elements/empty-state/recent';
 import { RecentUsersCarousel } from '../elements/recent-users-carousel';
 import { SearchItem } from '../elements/search-item';
 
@@ -20,7 +21,7 @@ import '../css/chat-search.css';
 // @vue/component
 export const RecentSearchView = {
 	name: 'ChatSearch',
-	components: { ScrollWithGradient, SearchItem, EmptyState, RecentUsersCarousel, Loader },
+	components: { ScrollWithGradient, SearchItem, SearchEmptyState, RecentEmptyState, RecentUsersCarousel, Loader },
 	props: {
 		searchResult: {
 			type: Array,
@@ -68,6 +69,14 @@ export const RecentSearchView = {
 		isEmptyState(): boolean
 		{
 			return this.searchResult.length === 0;
+		},
+		isEmptyRecentState(): boolean
+		{
+			return this.recentItems.length === 0;
+		},
+		hasRecentSearchSection(): boolean
+		{
+			return this.recentItems.length > 0 || this.isRecentLoading;
 		},
 	},
 	created()
@@ -171,16 +180,19 @@ export const RecentSearchView = {
 						@clickItem="onClickRecentChatItem"
 						@openContextMenu="onOpenContextMenu"
 					/>
-					<div class="bx-im-chat-search__title">{{ loc('IM_SEARCH_SECTION_RECENT') }}</div>
-					<SearchItem
-						v-for="item in recentItems"
-						:key="item.dialogId"
-						:dialogId="item.dialogId"
-						:titleTwoLine="true"
-						@clickItem="onClickRecentSearchItem"
-						@openContextMenu="onOpenContextMenu"
-					/>
-					<Loader v-if="isRecentLoading" class="bx-im-chat-search__loader" />
+					<template v-if="hasRecentSearchSection">
+						<div class="bx-im-chat-search__title">{{ loc('IM_SEARCH_SECTION_RECENT') }}</div>
+						<SearchItem
+							v-for="item in recentItems"
+							:key="item.dialogId"
+							:dialogId="item.dialogId"
+							:titleTwoLine="true"
+							@clickItem="onClickRecentSearchItem"
+							@openContextMenu="onOpenContextMenu"
+						/>
+						<Loader v-if="isRecentLoading" class="bx-im-chat-search__loader" />
+					</template>
+					<RecentEmptyState v-else-if="isEmptyRecentState" />
 				</template>
 				<template v-else>
 					<SearchItem
@@ -194,7 +206,7 @@ export const RecentSearchView = {
 						@clickItem="onClickSearchResultItem($event, index)"
 						@openContextMenu="onOpenContextMenu"
 					/>
-					<EmptyState v-if="isEmptyState" />
+					<SearchEmptyState v-if="isEmptyState" />
 				</template>
 			</div>
 		</ScrollWithGradient>

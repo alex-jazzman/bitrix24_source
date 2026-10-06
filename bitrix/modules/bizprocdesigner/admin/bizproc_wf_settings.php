@@ -57,6 +57,7 @@ if ($trackOn > 0)
 $globalTypes = $arResult['TYPES'] = \Bitrix\Bizproc\FieldType::getBaseTypesMap();
 unset($globalTypes[\Bitrix\Bizproc\FieldType::INTERNALSELECT]);
 unset($globalTypes[\Bitrix\Bizproc\FieldType::FILE]);
+unset($globalTypes[\Bitrix\Bizproc\FieldType::CONDITIONGROUP]);
 
 $user = new CBPWorkflowTemplateUser(\CBPWorkflowTemplateUser::CurrentUser);
 $isAdmin = $user->isAdmin();
@@ -1187,3 +1188,7 @@ BX.ready(function() {
 	WFSStart();
 });
 </script>
+<?php
+// Task 722886: the admin ajax epilog flushes deferred head blocks into the popup response.
+require $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/epilog_admin_js.php";
+?>

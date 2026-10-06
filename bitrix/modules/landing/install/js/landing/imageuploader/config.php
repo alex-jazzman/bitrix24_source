@@ -8,9 +8,9 @@ return [
 	'css' => 'dist/imageuploader.bundle.css',
 	'js' => 'dist/imageuploader.bundle.js',
 	'rel' => [
-		'main.core',
-		'landing.imagecompressor',
 		'landing.backend',
+		'landing.imagecompressor',
+		'main.core',
 	],
 	'skip_core' => false,
 ];

@@ -9,7 +9,12 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 /** @var CMain $APPLICATION */
 /** @var LandingEditComponent $component */
 
+// e2e accessibility coverage of this preview lives in a neighbouring component - this template ships
+// without a bundle config, so chef would find no tests directory here:
+// landing.site_tile/templates/.default/tests/e2e/template-gallery-accessibility.spec.ts
+
 use Bitrix\Landing\Manager;
+use Bitrix\Landing\Sanitizer;
 use Bitrix\Landing\Site\Type;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Page\Asset;
@@ -105,10 +110,19 @@ else
 		'sessid' => bitrix_sessid()
 	]);
 }
+
+// the url is built from the address of the current request: it leaves the template only through the guard
+$createUrl = Sanitizer::sanitizeHrefScheme($uriSelect->getUri());
+if ($createUrl === '')
+{
+	showError(Loc::getMessage('LANDING_TPL_CREATE_URL_ERROR'));
+	return;
+}
+$createUrl = htmlspecialcharsbx($createUrl);
 ?>
 
 <div class="landing-template-demo-preview-header-container">
-	<div class="landing-template-demo-preview-header landing-ui-panel-top">
+	<div class="landing-template-demo-preview-header landing-ui-panel-top" data-testid="landing-demo-preview-header">
 		<div class="landing-template-demo-preview-header-logo">
 			<?php if (Manager::isB24()):?>
 				<span class="landing-ui-panel-top-logo-text"><?=Loc::getMessage('LANDING_TPL_HEADER_LOGO_BITRIX')?></span>
@@ -127,14 +141,19 @@ else
 				<span class="landing-ui-panel-top-logo-icon far fa-clock-three"></span>
 			<?php endif;?>
 		</div>
-		<div class="landing-template-demo-preview-header-title">
+		<h1 class="landing-template-demo-preview-header-title" tabindex="-1" data-testid="landing-demo-preview-title">
 			<?= htmlspecialcharsbx($template['TITLE'])?>
-		</div>
+		</h1>
 		<div class="right-part">
 			<?php if (!$isCreateVibe): ?>
-			<div class="mobile-view ui-btn ui-btn-light-border ui-btn-round">
+			<button
+				type="button"
+				class="mobile-view ui-btn ui-btn-light-border ui-btn-round"
+				aria-haspopup="dialog"
+				data-testid="landing-demo-preview-mobile-btn"
+			>
 				<?= Loc::getMessage('LANDING_TPL_BUTTON_SHOW_IN_MOBILE')?>
-			</div>
+			</button>
 			<?php endif;?>
 			<?php if (!$marketSubscriptionNeeded) : ?>
 				<div class="create">
@@ -145,10 +164,14 @@ else
 				if (!$hasAccessCreate)
 				{
 					?>
-					<span
+					<button
+						type="button"
 						class="ui-btn ui-btn-success ui-btn-round ui-btn-disabled"
+						aria-disabled="true"
+						aria-describedby="landing-template-preview-create-reason"
 						data-hint="<?= Loc::getMessage('LANDING_TPL_HEADER_RIGHT_CREATE_HINT_MSGVER_1') ?>"
 						data-hint-no-icon
+						data-testid="landing-demo-preview-create-disabled-btn"
 					>
 						<?php if(isset($arParams['REPLACE_LID']) && $arParams['REPLACE_LID'] !== 0) : ?>
 							<?=Loc::getMessage('LANDING_TPL_BUTTON_REPLACE_PAGE') ?>
@@ -157,20 +180,32 @@ else
 						<?php else : ?>
 							<?=Loc::getMessage('LANDING_TPL_BUTTON_CREATE_SITE') ?>
 						<?php endif;?>
-					</span>
+					</button>
+					<span
+						id="landing-template-preview-create-reason"
+						class="landing-template-preview-visually-hidden"
+					><?= Loc::getMessage('LANDING_TPL_HEADER_RIGHT_CREATE_HINT_MSGVER_1') ?></span>
 					<?php
 				}
 				elseif (!empty($arResult['EXTERNAL_IMPORT']))
 				{
 					?>
-					<span class="ui-btn ui-btn-success ui-btn-round"
-						  <?php if (isset($arResult['EXTERNAL_IMPORT']['href'])){?>onclick="BX.SidePanel.Instance.open('<?=CUtil::jsEscape($arResult['EXTERNAL_IMPORT']['href'])?>', {width: 1028})"<?}?>
-						<?php if (isset($arResult['EXTERNAL_IMPORT']['onclick'])){?>onclick="<?= CUtil::jsEscape($arResult['EXTERNAL_IMPORT']['onclick'])?>"<?}?>
+					<button
+						type="button"
+						class="ui-btn ui-btn-success ui-btn-round"
+						<?php if (isset($arResult['EXTERNAL_IMPORT']['href'])){?>onclick="BX.SidePanel.Instance.open('<?=
+							htmlspecialcharsbx(CUtil::jsEscape($arResult['EXTERNAL_IMPORT']['href']))
+						?>', {width: 1028})"<?}?>
+						<?php if (isset($arResult['EXTERNAL_IMPORT']['onclick'])){?>onclick="<?=
+							htmlspecialcharsbx(CUtil::jsEscape($arResult['EXTERNAL_IMPORT']['onclick']))
+						?>"<?}?>
 						data-slider-ignore-autobinding="true"
-						  title="<?=Loc::getMessage('LANDING_TPL_BUTTON_CREATE') ?>">
-					<?=Loc::getMessage('LANDING_TPL_BUTTON_CREATE') ?>
-				</span>
-					<a href="<?= $uriSelect->getUri() ?>" class="ui-btn ui-btn-success ui-btn-round landing-template-preview-create"
+						data-testid="landing-demo-preview-create-btn"
+						title="<?=Loc::getMessage('LANDING_TPL_BUTTON_CREATE') ?>"
+					>
+						<?=Loc::getMessage('LANDING_TPL_BUTTON_CREATE') ?>
+					</button>
+					<a href="<?= $createUrl ?>" class="ui-btn ui-btn-success ui-btn-round landing-template-preview-create"
 						  title="<?= Loc::getMessage('LANDING_TPL_BUTTON_CREATE') ?>"
 						  data-slider-ignore-autobinding="true"
 						  style="display: none;"
@@ -182,22 +217,27 @@ else
 				elseif ($isCreateStore)
 				{
 					?>
-					<span data-href="<?= $uriSelect->getUri() ?>" class="ui-btn ui-btn-success ui-btn-round landing-template-preview-create"
-						  title="<?= Loc::getMessage('LANDING_TPL_BUTTON_CREATE_STORE') ?>"
-						  data-slider-ignore-autobinding="true"
+					<button
+						type="button"
+						data-href="<?= $createUrl ?>"
+						class="ui-btn ui-btn-success ui-btn-round landing-template-preview-create"
+						title="<?= Loc::getMessage('LANDING_TPL_BUTTON_CREATE_STORE') ?>"
+						data-slider-ignore-autobinding="true"
+						data-testid="landing-demo-preview-create-btn"
 					>
 						<?= Loc::getMessage('LANDING_TPL_BUTTON_CREATE_STORE') ?>
-					</span>
+					</button>
 					<?php
 				}
 				elseif (isset($arParams['REPLACE_LID']) && $arParams['REPLACE_LID'] !== 0)
 				{
 					?>
 					<a
-						href="<?= $uriSelect->getUri() ?>"
+						href="<?= $createUrl ?>"
 						class="ui-btn ui-btn-success ui-btn-round landing-template-preview-create"
 						title="<?= Loc::getMessage('LANDING_TPL_BUTTON_REPLACE_PAGE') ?>"
 						data-slider-ignore-autobinding="true"
+						data-testid="landing-demo-preview-create-btn"
 					>
 						<?= Loc::getMessage('LANDING_TPL_BUTTON_REPLACE_PAGE') ?>
 					</a>
@@ -207,10 +247,11 @@ else
 				{
 					?>
 					<a
-						href="<?= $uriSelect->getUri() ?>"
+						href="<?= $createUrl ?>"
 						class="ui-btn ui-btn-success ui-btn-round landing-template-preview-create"
 						title="<?= Loc::getMessage('LANDING_TPL_BUTTON_CREATE_PAGE') ?>"
 						data-slider-ignore-autobinding="true"
+						data-testid="landing-demo-preview-create-btn"
 					>
 						<?= Loc::getMessage('LANDING_TPL_BUTTON_CREATE_PAGE') ?>
 					</a>
@@ -219,9 +260,10 @@ else
 				else
 				{
 					?>
-					<a href="<?= $uriSelect->getUri() ?>" class="ui-btn ui-btn-success ui-btn-round landing-template-preview-create"
+					<a href="<?= $createUrl ?>" class="ui-btn ui-btn-success ui-btn-round landing-template-preview-create"
 					   title="<?= Loc::getMessage('LANDING_TPL_BUTTON_CREATE_SITE') ?>"
-					   data-slider-ignore-autobinding="true">
+					   data-slider-ignore-autobinding="true"
+					   data-testid="landing-demo-preview-create-btn">
 						<?php if ($arParams['TYPE'] === 'KNOWLEDGE' || $arParams['TYPE'] === 'GROUP'):?>
 							<?= Loc::getMessage('LANDING_TPL_BUTTON_CREATE_KB') ?>
 						<?php else:?>
@@ -235,7 +277,7 @@ else
 		</div>
 	</div>
 </div>
-<div class="landing-template-preview-body">
+<div class="landing-template-preview-body" data-testid="landing-demo-preview-body">
 	<div class="landing-template-preview">
 		<div class="preview-container">
 			<div class="preview-left">
@@ -268,15 +310,29 @@ else
 						<div class="landing-popup-import-repeat-text">
 							<?= Loc::getMessage('LANDING_TPL_POPUP_REPEAT_TEXT') ?>
 						</div>
-						<span class="landing-popup-import-repeat-button ui-btn ui-btn-light-border ui-btn-round">
+						<button
+							type="button"
+							class="landing-popup-import-repeat-button ui-btn ui-btn-light-border ui-btn-round"
+							data-testid="landing-demo-preview-import-repeat-btn"
+						>
 							<?= Loc::getMessage('LANDING_TPL_POPUP_REPEAT_BUTTON') ?>
-						</span>
+						</button>
 					</div>
 				</div>
 			</div>
 			<div hidden class="preview-data">
-					<input type="text" data-name="title" class="landing-template-preview-input-title" value="<?= htmlspecialcharsbx($template['TITLE']) ?>">
-					<textarea data-name="description" class="landing-template-preview-input-description"><?= htmlspecialcharsbx($template['DESCRIPTION']) ?></textarea>
+					<input
+						type="text"
+						data-name="title"
+						class="landing-template-preview-input-title"
+						data-testid="landing-demo-preview-title-input"
+						value="<?= htmlspecialcharsbx($template['TITLE']) ?>"
+					>
+					<textarea
+						data-name="description"
+						class="landing-template-preview-input-description"
+						data-testid="landing-demo-preview-description-input"
+					><?= htmlspecialcharsbx($template['DESCRIPTION']) ?></textarea>
 					<?php if ($template['URL_PREVIEW']):?>
 						<div class="landing-template-preview-base-url" data-base-url="<?= htmlspecialcharsbx($template['URL_PREVIEW'])?>"></div>
 					<?php endif; ?>
@@ -290,45 +346,63 @@ else
 			if (!empty($arResult['EXTERNAL_IMPORT']))
 			{
 				?>
-				<span class="ui-btn ui-btn-success"
-					  <?php if (isset($arResult['EXTERNAL_IMPORT']['href'])){?>onclick="BX.SidePanel.Instance.open('<?=CUtil::jsEscape($arResult['EXTERNAL_IMPORT']['href'])?>', {width: 1028})"<?}?>
-						<?php if (isset($arResult['EXTERNAL_IMPORT']['onclick'])){?>onclick="<?= CUtil::jsEscape($arResult['EXTERNAL_IMPORT']['onclick'])?>"<?}?>
-						data-slider-ignore-autobinding="true"
-					  title="<?=Loc::getMessage('LANDING_TPL_BUTTON_CREATE') ?>">
+				<button
+					type="button"
+					class="ui-btn ui-btn-success"
+					<?php if (isset($arResult['EXTERNAL_IMPORT']['href'])){?>onclick="BX.SidePanel.Instance.open('<?=
+						htmlspecialcharsbx(CUtil::jsEscape($arResult['EXTERNAL_IMPORT']['href']))
+					?>', {width: 1028})"<?}?>
+					<?php if (isset($arResult['EXTERNAL_IMPORT']['onclick'])){?>onclick="<?=
+						htmlspecialcharsbx(CUtil::jsEscape($arResult['EXTERNAL_IMPORT']['onclick']))
+					?>"<?}?>
+					data-slider-ignore-autobinding="true"
+					data-testid="landing-demo-preview-create-footer-btn"
+					title="<?=Loc::getMessage('LANDING_TPL_BUTTON_CREATE') ?>"
+				>
 					<?=Loc::getMessage('LANDING_TPL_BUTTON_CREATE') ?>
-				</span>
-				<span href="<?= $uriSelect->getUri() ?>" class="ui-btn ui-btn-success landing-template-preview-create"
-					  title="<?= Loc::getMessage('LANDING_TPL_BUTTON_CREATE') ?>"
-					  data-slider-ignore-autobinding="true"
-					  style="display: none;">
+				</button>
+				<a href="<?= $createUrl ?>" class="ui-btn ui-btn-success landing-template-preview-create"
+				   title="<?= Loc::getMessage('LANDING_TPL_BUTTON_CREATE') ?>"
+				   data-slider-ignore-autobinding="true"
+				   style="display: none;">
 					<?= Loc::getMessage('LANDING_TPL_BUTTON_CREATE') ?>
-				</span>
+				</a>
 				<?php
 			}
 			elseif ($isCreateStore)
 			{
 				?>
-				<span data-href="<?= $uriSelect->getUri() ?>" class="ui-btn ui-btn-success landing-template-preview-create"
-					  title="<?= Loc::getMessage('LANDING_TPL_BUTTON_CREATE') ?>"
-					  data-slider-ignore-autobinding="true">
+				<button
+					type="button"
+					data-href="<?= $createUrl ?>"
+					class="ui-btn ui-btn-success landing-template-preview-create"
+					title="<?= Loc::getMessage('LANDING_TPL_BUTTON_CREATE') ?>"
+					data-slider-ignore-autobinding="true"
+					data-testid="landing-demo-preview-create-footer-btn"
+				>
 					<?= Loc::getMessage('LANDING_TPL_BUTTON_CREATE') ?>
-				</span>
+				</button>
 				<?php
 			}
 			else
 			{
 				?>
-				<a href="<?= $uriSelect->getUri() ?>" class="ui-btn ui-btn-success landing-template-preview-create"
+				<a href="<?= $createUrl ?>" class="ui-btn ui-btn-success landing-template-preview-create"
 				   title="<?= Loc::getMessage('LANDING_TPL_BUTTON_CREATE') ?>"
-				   data-slider-ignore-autobinding="true">
+				   data-slider-ignore-autobinding="true"
+				   data-testid="landing-demo-preview-create-footer-btn">
 					<?= Loc::getMessage('LANDING_TPL_BUTTON_CREATE') ?>
 				</a>
 				<?php
 			}
 			?>
-			<span class="ui-btn ui-btn-md ui-btn-link landing-template-preview-close">
-					<?= Loc::getMessage('LANDING_TPL_BUTTON_CANCEL') ?>
-				</span>
+			<button
+				type="button"
+				class="ui-btn ui-btn-md ui-btn-link landing-template-preview-close"
+				data-testid="landing-demo-preview-cancel-btn"
+			>
+				<?= Loc::getMessage('LANDING_TPL_BUTTON_CANCEL') ?>
+			</button>
 		</div>
 	</div>
 </div>
@@ -376,6 +450,7 @@ else
 			LANDING_LOADER_WAIT: "<?= CUtil::jsEscape(Loc::getMessage('LANDING_LOADER_WAIT_MSGVER_1')) ?>",
 			LANDING_TPL_POPUP_TITLE: "<?= CUtil::jsEscape(Loc::getMessage('LANDING_TPL_BUTTON_SHOW_IN_MOBILE')) ?>",
 			LANDING_TPL_POPUP_TEXT: "<?= CUtil::jsEscape(Loc::getMessage($popupTextCode)) ?>",
+			LANDING_TPL_PREVIEW_FRAME_TITLE: "<?= CUtil::jsEscape(Loc::getMessage('LANDING_TPL_PREVIEW_FRAME_TITLE')) ?>",
 			LANDING_PREVIEW_MAINPAGE_MESSAGE: '<?= \CUtil::jsEscape(Loc::getMessage('LANDING_PREVIEW_MAINPAGE_MESSAGE'));?>',
 			LANDING_PREVIEW_MAINPAGE_TITLE: '<?= \CUtil::jsEscape(Loc::getMessage('LANDING_PREVIEW_MAINPAGE_TITLE'));?>',
 			LANDING_PREVIEW_MAINPAGE_BUTTON_OK_TEXT: '<?= \CUtil::jsEscape(Loc::getMessage('LANDING_PREVIEW_MAINPAGE_BUTTON_OK_TEXT'));?>',
@@ -405,7 +480,7 @@ else
 
 <script>
 	BX.ready(function() {
-		BX.UI.Hint.init(BX('ui-btn-disabled'));
+		BX.UI.Hint.init(document.body);
 	})
 </script>
 <?php endif;?>

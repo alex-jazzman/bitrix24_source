@@ -84,3 +84,8 @@
 	padding-left: 12px;
 	padding-right: 12px;
 }
+
+/* BitrixGPT redesign */
+.ai__copilot-scope.--bitrixgpt-redesign .ai__copilot-image-params-item_value {
+	color: var(--ui-color-accent-main-primary);
+}

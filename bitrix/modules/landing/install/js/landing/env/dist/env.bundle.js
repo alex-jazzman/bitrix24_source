@@ -1,89 +1,111 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports,main_core) {
+(function (exports, main_core) {
 	'use strict';
 
-	var defaultOptions = {
-	  params: {
-	    type: 'EXTERNAL'
-	  }
+	const defaultOptions = {
+		params: {
+			type: 'EXTERNAL'
+		}
 	};
 
-	function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
-	function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
-	var optionsKey = Symbol('options');
+	/**
+	 * Pure predicate: tells whether the URL is a supported video-service URL.
+	 *
+	 * The `vk` service is honored only when vkVideoAvailable is true; every other
+	 * service is checked regardless of the flag. Matchers are the single source of
+	 * truth from BX.Landing.Utils.Matchers.
+	 *
+	 * @memberOf BX.Landing
+	 */
+	function isSupportedVideoUrl(value, services, vkVideoAvailable) {
+		const matchers = BX.Landing.Utils.Matchers;
+		return services.some(service => {
+			if (service === 'vk' && vkVideoAvailable !== true) {
+				return false;
+			}
+			const matcher = matchers[service];
+			return Boolean(matcher) && matcher.test(value);
+		});
+	}
+
+	const optionsKey = Symbol('options');
+	const mergeOptions = (baseOptions = {}, options = {}) => {
+		const merge = main_core.Runtime?.merge || BX?.Runtime?.merge;
+		if (typeof merge === 'function') {
+			return merge(baseOptions, options);
+		}
+		return {
+			...baseOptions,
+			...options,
+			params: {
+				...(baseOptions.params || {}),
+				...(options.params || {})
+			}
+		};
+	};
+	const getGlobalClass = name => {
+		const getClass = main_core.Reflection?.getClass || BX?.Reflection?.getClass;
+		return typeof getClass === 'function' ? getClass(name) : null;
+	};
 
 	/**
 	 * @memberOf BX.Landing
 	 */
-	var Env = /*#__PURE__*/function () {
-	  babelHelpers.createClass(Env, null, [{
-	    key: "getInstance",
-	    value: function getInstance() {
-	      return Env.instance || Env.createInstance();
-	    }
-	  }, {
-	    key: "createInstance",
-	    value: function createInstance() {
-	      var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-	      Env.instance = new Env(options);
-	      var parentEnv = main_core.Reflection.getClass('parent.BX.Landing.Env');
-	      if (parentEnv) {
-	        parentEnv.instance = Env.instance;
-	      }
-	      return Env.instance;
-	    }
-	  }]);
-	  function Env() {
-	    var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-	    babelHelpers.classCallCheck(this, Env);
-	    this[optionsKey] = Object.seal(main_core.Runtime.merge(defaultOptions, options));
-	  }
-	  babelHelpers.createClass(Env, [{
-	    key: "getOptions",
-	    value: function getOptions() {
-	      return _objectSpread({}, this[optionsKey]);
-	    }
-	  }, {
-	    key: "setOptions",
-	    value: function setOptions(options) {
-	      this[optionsKey] = main_core.Runtime.merge(this[optionsKey], options);
-	    }
-	  }, {
-	    key: "getType",
-	    value: function getType() {
-	      return this.getOptions().params.type;
-	    }
-	  }, {
-	    key: "setType",
-	    value: function setType(type) {
-	      this.getOptions().params.type = type;
-	    }
-	  }, {
-	    key: "getSpecialType",
-	    value: function getSpecialType() {
-	      return this.getOptions().specialType;
-	    }
-	  }, {
-	    key: "getSiteId",
-	    value: function getSiteId() {
-	      return this.getOptions().site_id || -1;
-	    }
-	  }, {
-	    key: "getLandingEditorUrl",
-	    value: function getLandingEditorUrl() {
-	      var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-	      var envOptions = this.getOptions();
-	      var urlMask = envOptions.params.sef_url.landing_view;
-	      var siteId = options.site ? options.site : envOptions.site_id;
-	      return urlMask.replace('#site_show#', siteId).replace('#landing_edit#', options.landing);
-	    }
-	  }]);
-	  return Env;
-	}();
-	babelHelpers.defineProperty(Env, "instance", null);
+	class Env {
+		static instance = null;
+		static getInstance() {
+			return Env.instance || Env.createInstance();
+		}
+		static createInstance(options = {}) {
+			Env.instance = new Env(options);
+			const parentEnv = getGlobalClass('parent.BX.Landing.Env');
+			if (parentEnv) {
+				parentEnv.instance = Env.instance;
+			}
+			return Env.instance;
+		}
+		constructor(options = {}) {
+			this[optionsKey] = Object.seal(mergeOptions(defaultOptions, options));
+		}
+		getOptions() {
+			return {
+				...this[optionsKey]
+			};
+		}
+		setOptions(options) {
+			this[optionsKey] = mergeOptions(this[optionsKey], options);
+		}
+		getType() {
+			return this.getOptions().params.type;
+		}
+		setType(type) {
+			this.getOptions().params.type = type;
+		}
+		getSpecialType() {
+			return this.getOptions().specialType;
+		}
+		getSiteId() {
+			return this.getOptions().site_id || -1;
+		}
+		getLandingEditorUrl(options = {}) {
+			const envOptions = this.getOptions();
+			const urlMask = envOptions.params.sef_url.landing_view;
+			const siteId = options.site ? options.site : envOptions.site_id;
+			return urlMask.replace('#site_show#', siteId).replace('#landing_edit#', options.landing);
+		}
+		isBlockControlsEnabled() {
+			const option = this.getOptions().blockControlsEnabled;
+			return typeof option === 'undefined' ? true : BX.Text.toBoolean(option);
+		}
+		isVkVideoAvailable() {
+			const option = this.getOptions().vkVideoAvailable;
+			return typeof option === 'undefined' ? true : BX.Text.toBoolean(option);
+		}
+	}
 
 	exports.Env = Env;
+	exports.isSupportedVideoUrl = isSupportedVideoUrl;
 
-}((this.BX.Landing = this.BX.Landing || {}),BX));
+})(this.BX.Landing = this.BX.Landing || {}, BX);
 //# sourceMappingURL=env.bundle.js.map

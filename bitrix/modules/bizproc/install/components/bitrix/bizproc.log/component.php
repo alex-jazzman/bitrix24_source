@@ -110,6 +110,7 @@ if (array_key_exists("COMPONENT_VERSION", $arParams) && $arParams["COMPONENT_VER
 						2 => GetMessage("BPABL_TYPE_2"),
 						3 => GetMessage("BPABL_TYPE_3"),
 						4 => GetMessage("BPABL_TYPE_4"),
+						14 => GetMessage("BPABL_TYPE_14"),
 					),
 				),
 				array(
@@ -225,6 +226,9 @@ if (array_key_exists("COMPONENT_VERSION", $arParams) && $arParams["COMPONENT_VER
 					break;
 				case 6:
 					$type = GetMessage("BPABL_TYPE_7");
+					break;
+				case CBPTrackingType::SkipActivity:
+					$type = GetMessage("BPABL_TYPE_14");
 					break;
 				default:
 					$type = GetMessage("BPABL_TYPE_6");

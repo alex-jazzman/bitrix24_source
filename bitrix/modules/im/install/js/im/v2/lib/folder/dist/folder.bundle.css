@@ -1,0 +1,8 @@
+.bx-im-folder-delete-popup__container {
+	max-width: 352px;
+	padding: 12px 0;
+}
+
+.bx-im-folder-delete-popup__text {
+	font: var(--im-font-size-xl)/21px var(--im-font-family-system);
+}

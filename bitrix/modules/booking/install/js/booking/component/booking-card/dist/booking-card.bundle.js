@@ -98,7 +98,10 @@ this.BX.Booking = this.BX.Booking || {};
 		},
 		inject: {
 			/** @type{ AbstractCardDataService } */
-			cardDataService: {}
+			cardDataService: {},
+			autoHideContext: {
+				default: null
+			}
 		},
 		props: {
 			bindElement: {
@@ -133,6 +136,12 @@ this.BX.Booking = this.BX.Booking || {};
 				return this.cardDataService.buildDataAttributes('booking-booking-card-note-button');
 			}
 		},
+		created() {
+			this.unfreezeAutoHide = null;
+		},
+		beforeUnmount() {
+			this.hidePopup();
+		},
 		methods: {
 			onNoteMouseEnter() {
 				this.showNoteTimeout = setTimeout(this.showViewPopup, 100);
@@ -146,26 +155,49 @@ this.BX.Booking = this.BX.Booking || {};
 					return;
 				}
 				this.isEditMode = false;
-				this.isPopupShown = true;
+				this.showPopup();
 			},
 			closeViewPopup() {
 				if (this.isEditMode) {
 					return;
 				}
-				this.isPopupShown = false;
+				this.hidePopup();
 			},
 			showEditPopup() {
 				this.isEditMode = true;
-				this.isPopupShown = true;
+				this.showPopup();
 			},
 			closeEditPopup() {
 				if (!this.isEditMode) {
 					return;
 				}
-				this.isPopupShown = false;
+				this.hidePopup();
 			},
 			async handleSave(payload) {
 				await this.cardDataService.saveNote(payload.note);
+			},
+			showPopup() {
+				if (!this.isPopupShown) {
+					this.freezeParentAutoHide();
+				}
+				this.isPopupShown = true;
+			},
+			hidePopup() {
+				if (!this.isPopupShown) {
+					return;
+				}
+				this.isPopupShown = false;
+				this.unfreezeParentAutoHide();
+			},
+			freezeParentAutoHide() {
+				if (this.unfreezeAutoHide) {
+					return;
+				}
+				this.unfreezeAutoHide = this.autoHideContext?.freeze() ?? null;
+			},
+			unfreezeParentAutoHide() {
+				this.unfreezeAutoHide?.();
+				this.unfreezeAutoHide = null;
 			}
 		},
 		template: `
@@ -256,12 +288,15 @@ this.BX.Booking = this.BX.Booking || {};
 		computed: {
 			soonHint() {
 				return {
-					text: this.loc('BOOKING_BOOKING_SOON_HINT')
+					text: this.loc('BOOKING_BOOKING_SOON_HINT'),
+					popupOptions: {
+						targetContainer: document.body
+					}
 				};
 			}
 		},
 		template: `
-		<div v-hint="soonHint" class="booking-booking-card__communication">
+		<div ref="hint" v-hint="soonHint" class="booking-booking-card__communication">
 			<Icon :name="IconSet.TELEPHONY_HANDSET_1"/>
 			<Icon :name="IconSet.CHATS_2"/>
 		</div>
@@ -367,6 +402,11 @@ this.BX.Booking = this.BX.Booking || {};
 		components: {
 			ClientPopup: booking_component_clientPopup.ClientPopup
 		},
+		inject: {
+			autoHideContext: {
+				default: null
+			}
+		},
 		props: {
 			expired: {
 				type: Boolean,
@@ -397,6 +437,12 @@ this.BX.Booking = this.BX.Booking || {};
 				isFeatureEnabled: `${booking_const.Model.Interface}/isFeatureEnabled`
 			})
 		},
+		created() {
+			this.unfreezeAutoHide = null;
+		},
+		beforeUnmount() {
+			this.closePopup();
+		},
 		methods: {
 			clickHandler() {
 				if (!this.isFeatureEnabled) {
@@ -407,7 +453,25 @@ this.BX.Booking = this.BX.Booking || {};
 					return;
 				}
 				main_popup.PopupManager.getPopupById(booking_component_clientPopup.CLIENT_POPUP_ID)?.destroy();
+				this.freezeParentAutoHide();
 				this.showPopup = true;
+			},
+			closePopup() {
+				if (!this.showPopup) {
+					return;
+				}
+				this.showPopup = false;
+				this.unfreezeParentAutoHide();
+			},
+			freezeParentAutoHide() {
+				if (this.unfreezeAutoHide) {
+					return;
+				}
+				this.unfreezeAutoHide = this.autoHideContext?.freeze() ?? null;
+			},
+			unfreezeParentAutoHide() {
+				this.unfreezeAutoHide?.();
+				this.unfreezeAutoHide = null;
 			},
 			getOffsetLeft() {
 				const {
@@ -436,7 +500,7 @@ this.BX.Booking = this.BX.Booking || {};
 			:offset-top="-100"
 			:offset-left="getOffsetLeft()"
 			@create="$emit('add', $event)"
-			@close="showPopup = false"
+			@close="closePopup"
 		/>
 	`
 	};

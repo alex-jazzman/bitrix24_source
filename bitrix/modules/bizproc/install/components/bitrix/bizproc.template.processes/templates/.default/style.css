@@ -25,6 +25,17 @@
 	max-height: calc(1.4em * 2);
 }
 
+.bizproc-template-processes-grid-document-title {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-xs);
+}
+
+.bizproc-template-processes-grid-document-title .bizproc-template-processes-grid-pilot {
+	display: inline-flex;
+	flex: 0 0 auto;
+}
+
 .bizproc-template-processes-grid-username {
 	max-width: 100%;
 	color: var(--ui-color-palette-black-base);

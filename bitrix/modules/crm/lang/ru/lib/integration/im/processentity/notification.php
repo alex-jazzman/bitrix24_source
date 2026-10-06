@@ -1,0 +1,3 @@
+<?php
+
+$MESS["CRM_NOTIFY_TITLE"] = "CRM";

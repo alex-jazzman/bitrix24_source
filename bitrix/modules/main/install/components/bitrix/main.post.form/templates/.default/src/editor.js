@@ -759,10 +759,14 @@ export default class Editor
 		EventEmitter.emit(this.getEventObject(), 'onShowControllers', status === 'hide' ? 'hide' : 'show');
 	}
 
-	showCopilot(): void
+	showCopilot(copilot: HTMLElement): void
 	{
-		this.getEditor().SetView('wysiwyg');
-		this.getEditor().ShowCopilotAtTheBottom();
+		const editor = this.getEditor();
+		editor.SetView('wysiwyg');
+		if (editor.ShowCopilotAtTheBottom(copilot))
+		{
+			editor.iframeView.GetSelection().removeAllRanges();
+		}
 	}
 
 	isTextCopilotEnabledBySettings()

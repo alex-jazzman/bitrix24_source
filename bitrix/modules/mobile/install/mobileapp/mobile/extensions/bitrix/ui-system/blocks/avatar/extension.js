@@ -14,6 +14,7 @@ jn.define('ui-system/blocks/avatar', (require, exports, module) => {
 	const { AvatarShape } = require('ui-system/blocks/avatar/src/enums/shape');
 	const { AvatarEntityType } = require('ui-system/blocks/avatar/src/enums/entity-type');
 	const { AvatarAccentGradient } = require('ui-system/blocks/avatar/src/enums/accent-gradient');
+	const { AvatarAccentType } = require('ui-system/blocks/avatar/src/enums/accent-type')
 
 	/**
 	 * @class Avatar
@@ -144,6 +145,7 @@ jn.define('ui-system/blocks/avatar', (require, exports, module) => {
 		AvatarClass: Avatar,
 		AvatarShape,
 		AvatarEntityType,
+		AvatarAccentType,
 		AvatarAccentGradient,
 		SelectorDataProviderClass,
 	};

@@ -20,6 +20,7 @@ $MESS["BPABL_TYPE_4"] = "Ошибка действия";
 $MESS["BPABL_TYPE_5"] = "Пользовательская запись";
 $MESS["BPABL_TYPE_7"] = "Отчет";
 $MESS["BPABL_TYPE_6"] = "Тип не найден";
+$MESS["BPABL_TYPE_14"] = "Пропуск действия";
 $MESS["BPABL_STATUS_1"] = "Инициализировано";
 $MESS["BPABL_STATUS_2"] = "Выполняется";
 $MESS["BPABL_STATUS_3"] = "Отменяется";
@@ -47,4 +48,5 @@ $MESS["CBBWL_C_ADMIN_MODE_SIMPLE"] = "Сокращенный";
 $MESS["BPWC_WLCT_F_MODIFIED_BY"] = "Изменил";
 $MESS["CBBWL_C_TYPE"] = "Тип";
 $MESS["BPWC_WLC_NOT_SET"] = "[не установлено]";
+$MESS["BPABL_GRID_ARIA_LABEL"] = "Журнал бизнес-процесса";
 ?>

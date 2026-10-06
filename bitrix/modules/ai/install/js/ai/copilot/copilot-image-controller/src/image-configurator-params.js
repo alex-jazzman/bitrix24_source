@@ -17,6 +17,7 @@ import type {
 type ImageConfiguratorParamsOptions = {
 	formats: ImageCopilotFormat[];
 	engines: EngineInfo[];
+	isBitrixGptV2Available?: boolean;
 };
 
 export class ImageConfiguratorParams extends EventEmitter
@@ -25,11 +26,13 @@ export class ImageConfiguratorParams extends EventEmitter
 	#currentValues: ImageConfiguratorParamsCurrentValues;
 	#openOptionsMenu: Menu | null;
 	#params: any = {};
+	#isBitrixGptV2Available: boolean;
 
 	constructor(options: ImageConfiguratorParamsOptions)
 	{
 		super(options);
 
+		this.#isBitrixGptV2Available = options.isBitrixGptV2Available === true;
 		this.#params = this.#initParams(options);
 
 		const data = {
@@ -116,10 +119,14 @@ export class ImageConfiguratorParams extends EventEmitter
 	#renderParam(options: ImageConfiguratorParam, parameterName): HTMLElement
 	{
 		const selectedOption = options.options.find((option) => option.value === this.#currentValues[parameterName]);
+		const iconColor = this.#isBitrixGptV2Available
+			? getComputedStyle(document.body).getPropertyValue('--ui-color-accent-main-primary')
+			: getComputedStyle(document.body).getPropertyValue('--ui-color-copilot-primary');
+
 		const icon = new Icon({
 			size: 24,
 			icon: options.icon,
-			color: '#8E52EC',
+			color: iconColor,
 		});
 
 		const rightChevronIcon = new Icon({

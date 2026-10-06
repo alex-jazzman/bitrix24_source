@@ -1,5 +1,16 @@
 <?php
 $MESS["NOTE_RECYCLEBIN_BREADCRUMB_ROOT"] = "Recycle Bin";
+$MESS["NOTE_RECYCLEBIN_BULK_DONE_DELETE_PLURAL_0"] = "#COUNT# article permanently deleted.";
+$MESS["NOTE_RECYCLEBIN_BULK_DONE_DELETE_PLURAL_1"] = "#COUNT# articles permanently deleted.";
+$MESS["NOTE_RECYCLEBIN_BULK_DONE_DELETE_PLURAL_2"] = "#COUNT# articles permanently deleted.";
+$MESS["NOTE_RECYCLEBIN_BULK_HARD_DELETE_ACTION"] = "Delete permanently";
+$MESS["NOTE_RECYCLEBIN_BULK_HARD_DELETE_MESSAGE"] = "The selected articles will be deleted permanently. This action cannot be undone. Delete permanently?";
+$MESS["NOTE_RECYCLEBIN_BULK_HARD_DELETE_TITLE"] = "Delete articles permanently";
+$MESS["NOTE_RECYCLEBIN_BULK_ORPHAN_PENDING"] = "Some articles were not restored. Select a space for them.";
+$MESS["NOTE_RECYCLEBIN_BULK_ORPHAN_TARGET_TEXT"] = "The original space has been deleted for some of the articles. Select the space you want to restore them to.";
+$MESS["NOTE_RECYCLEBIN_BULK_PARTIAL_DELETE_PLURAL_0"] = "#DONE# article permanently deleted, #SKIPPED# skipped.";
+$MESS["NOTE_RECYCLEBIN_BULK_PARTIAL_DELETE_PLURAL_1"] = "#DONE# articles permanently deleted, #SKIPPED# skipped.";
+$MESS["NOTE_RECYCLEBIN_BULK_PARTIAL_DELETE_PLURAL_2"] = "#DONE# articles permanently deleted, #SKIPPED# skipped.";
 $MESS["NOTE_RECYCLEBIN_BULK_POPUP_ORPHAN_HINT"] = "These include articles (#COUNT#) whose original containing space was deleted. Select a new parent space for these articles.";
 $MESS["NOTE_RECYCLEBIN_BULK_POPUP_TEXT"] = "All #COUNT# articles will be restored from the Recycle Bin.";
 $MESS["NOTE_RECYCLEBIN_BULK_POPUP_TITLE"] = "Restore articles";

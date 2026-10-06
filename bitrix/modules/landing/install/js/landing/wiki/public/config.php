@@ -8,8 +8,8 @@ return [
 	'css' => 'dist/public.bundle.css',
 	'js' => 'dist/public.bundle.js',
 	'rel' => [
-		'main.core',
 		'landing.sliderhacks',
+		'main.core',
 	],
 	'skip_core' => false,
 ];

@@ -7,7 +7,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Main\Analytics\AnalyticsEvent;
 use Bitrix\Main\Localization\Loc;
-use \Bitrix\Bizproc\Activity\PropertiesDialog;
+use Bitrix\Bizproc\Activity\PropertiesDialog;
 use Bitrix\Crm\Activity\Provider\Tasks\Task;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Factory;

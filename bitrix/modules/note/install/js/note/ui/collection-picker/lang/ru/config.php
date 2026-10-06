@@ -1,0 +1,3 @@
+<?php
+
+$MESS['NOTE_COLLECTION_PICKER_CANCEL'] = 'Отмена';

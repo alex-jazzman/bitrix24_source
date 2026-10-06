@@ -53,6 +53,9 @@ this.BX = this.BX || {};
 				closeByEsc: true,
 				autoHide: true,
 				zIndex: this.zIndex,
+				zIndexOptions: {
+					alwaysOnTop: true
+				},
 				content: this.render(),
 				noAllPaddings: true,
 				offsetTop: this.offsetTop,
@@ -290,6 +293,9 @@ this.BX = this.BX || {};
 				offsetTop: 0,
 				offsetLeft: 0,
 				zIndex: baseZIndex + 300,
+				zIndexOptions: {
+					alwaysOnTop: true
+				},
 				bindOptions: {
 					position: 'top'
 				},
@@ -323,6 +329,9 @@ this.BX = this.BX || {};
 			this.lineSelectMenu = new main_popup.Menu('phoneCallViewSelectLine', this.elements.lineSelector, menuItems, {
 				autoHide: true,
 				zIndex: this.zIndex + 100,
+				zIndexOptions: {
+					alwaysOnTop: true
+				},
 				closeByEsc: true,
 				bindOptions: {
 					position: 'top'
@@ -424,7 +433,6 @@ this.BX = this.BX || {};
 		skipButtonClick: 'skipButtonClick',
 		answerButtonClick: 'answerButtonClick',
 		entityChanged: 'entityChanged',
-		qualityMeterClick: 'qualityMeterClick',
 		dialpadButtonClick: 'dialpadButtonClick',
 		makeCallButtonClick: 'makeCallButtonClick',
 		notifyAdminButtonClick: 'notifyAdminButtonClick',
@@ -486,7 +494,6 @@ this.BX = this.BX || {};
 			placement.prototype.events.push('BackgroundCallCard::skipButtonClick');
 			placement.prototype.events.push('BackgroundCallCard::answerButtonClick');
 			placement.prototype.events.push('BackgroundCallCard::entityChanged');
-			placement.prototype.events.push('BackgroundCallCard::qualityMeterClick');
 			placement.prototype.events.push('BackgroundCallCard::dialpadButtonClick');
 			placement.prototype.events.push('BackgroundCallCard::makeCallButtonClick');
 			placement.prototype.events.push('BackgroundCallCard::notifyAdminButtonClick');
@@ -689,7 +696,6 @@ this.BX = this.BX || {};
 		skipButtonClick: 'DesktopCallCardSkipButtonClick',
 		answerButtonClick: 'DesktopCallCardAnswerButtonClick',
 		entityChanged: 'DesktopCallCardEntityChanged',
-		qualityMeterClick: 'DesktopCallCardQualityMeterClick',
 		dialpadButtonClick: 'DesktopCallCardDialpadButtonClick',
 		makeCallButtonClick: 'DesktopCallCardMakeCallButtonClick',
 		notifyAdminButtonClick: 'DesktopCallCardNotifyAdminButtonClick'
@@ -1446,6 +1452,9 @@ this.BX = this.BX || {};
 					position: "top"
 				},
 				zIndex: baseZIndex + 200,
+				zIndexOptions: {
+					alwaysOnTop: true
+				},
 				events: {
 					onPopupClose: () => this.itemActionMenu.destroy(),
 					onPopupDestroy: () => this.itemActionMenu = null
@@ -1734,6 +1743,9 @@ this.BX = this.BX || {};
 					props: {
 						id: 'im-phone-folded-call-view',
 						className: 'im-phone-call-wrapper im-phone-call-wrapper-fixed im-phone-call-panel'
+					},
+					attrs: {
+						'data-a11y-ignore-inert': 'true'
 					},
 					events: {
 						dblclick: this._onViewDblClick.bind(this)
@@ -2166,7 +2178,6 @@ this.BX = this.BX || {};
 		onCancelTransfer: 'phoneCallViewOnCancelTransfer',
 		onBeforeUnload: 'phoneCallViewOnBeforeUnload',
 		onSwitchDevice: 'phoneCallViewOnSwitchDevice',
-		onQualityGraded: 'phoneCallViewOnQualityGraded',
 		onDialpadButtonClicked: 'phoneCallViewOnDialpadButtonClicked',
 		onCommentShown: 'phoneCallViewOnCommentShown',
 		onSaveComment: 'phoneCallViewOnSaveComment',
@@ -2222,8 +2233,6 @@ this.BX = this.BX || {};
 			this.statusText = params.statusText || '';
 			this.progress = '';
 			this.quality = 0;
-			this.qualityPopup = null;
-			this.qualityGrade = 0;
 			this.comment = '';
 			this.commentShown = false;
 
@@ -2256,7 +2265,6 @@ this.BX = this.BX || {};
 				completeTransfer: main_core.Type.isFunction(params.events.completeTransfer) ? params.events.completeTransfer : nop$1,
 				cancelTransfer: main_core.Type.isFunction(params.events.cancelTransfer) ? params.events.cancelTransfer : nop$1,
 				switchDevice: main_core.Type.isFunction(params.events.switchDevice) ? params.events.switchDevice : nop$1,
-				qualityGraded: main_core.Type.isFunction(params.events.qualityGraded) ? params.events.qualityGraded : nop$1,
 				dialpadButtonClicked: main_core.Type.isFunction(params.events.dialpadButtonClicked) ? params.events.dialpadButtonClicked : nop$1,
 				saveComment: main_core.Type.isFunction(params.events.saveComment) ? params.events.saveComment : nop$1,
 				notifyAdmin: main_core.Type.isFunction(params.events.notifyAdmin) ? params.events.notifyAdmin : nop$1
@@ -2281,7 +2289,6 @@ this.BX = this.BX || {};
 			this._onAnswerButtonClickHandler = this._onAnswerButtonClick.bind(this);
 			this._onSkipButtonClickHandler = this._onSkipButtonClick.bind(this);
 			this._onSwitchDeviceButtonClickHandler = this._onSwitchDeviceButtonClick.bind(this);
-			this._onQualityMeterClickHandler = this._onQualityMeterClick.bind(this);
 			this._onPullEventCrmHandler = this._onPullEventCrm.bind(this);
 
 			// tabs
@@ -2471,7 +2478,7 @@ this.BX = this.BX || {};
 			return this;
 		}
 		createPopup() {
-			return new main_popup.Popup({
+			const popup = new main_popup.Popup({
 				id: this.getId(),
 				bindElement: null,
 				targetContainer: document.body,
@@ -2479,6 +2486,9 @@ this.BX = this.BX || {};
 				closeIcon: false,
 				noAllPaddings: true,
 				zIndex: baseZIndex,
+				zIndexOptions: {
+					alwaysOnTop: true
+				},
 				offsetLeft: 0,
 				offsetTop: 0,
 				closeByEsc: false,
@@ -2498,6 +2508,10 @@ this.BX = this.BX || {};
 					onPopupDestroy: () => this.popup = null
 				}
 			});
+			popup.getPopupContainer().setAttribute('data-a11y-ignore-inert', 'true');
+			popup.getPopupContainer().dataset.testid = 'vox-callview-window';
+			popup.overlay?.element?.setAttribute('data-a11y-ignore-inert', 'true');
+			return popup;
 		}
 		createLayout() {
 			if (this.isFolded()) {
@@ -2542,6 +2556,9 @@ this.BX = this.BX || {};
 						}), this.elements.crmCard = main_core.Dom.create("div", {
 							props: {
 								className: 'im-phone-call-crm-card'
+							},
+							attrs: {
+								'data-testid': 'vox-callview-crm-card'
 							}
 						}), this.elements.sections.status = main_core.Dom.create("div", {
 							props: {
@@ -3011,6 +3028,9 @@ this.BX = this.BX || {};
 				props: {
 					className: "im-phone-call-panel-mini"
 				},
+				attrs: {
+					'data-a11y-ignore-inert': 'true'
+				},
 				style: {
 					zIndex: baseZIndex
 				},
@@ -3215,6 +3235,9 @@ this.BX = this.BX || {};
 					position: "top"
 				},
 				zIndex: baseZIndex + 100,
+				zIndexOptions: {
+					alwaysOnTop: true
+				},
 				events: {
 					onPopupClose: () => this.moreTabsMenu.destroy(),
 					onPopupDestroy: () => this.moreTabsMenu = null
@@ -3972,9 +3995,6 @@ this.BX = this.BX || {};
 							props: {
 								className: 'im-phone-call-btn-signal'
 							},
-							events: {
-								click: this._onQualityMeterClickHandler
-							},
 							children: [main_core.Dom.create("span", {
 								props: {
 									className: 'im-phone-call-btn-signal-icon-container'
@@ -4025,6 +4045,7 @@ this.BX = this.BX || {};
 				}
 				if (buttonNode) {
 					this.elements.buttons[buttonName] = buttonNode;
+					buttonNode.dataset.testid = `vox-callview-${buttonName}-btn`;
 				}
 			});
 			if (this.elements.buttonsContainer) {
@@ -4615,20 +4636,6 @@ this.BX = this.BX || {};
 				});
 			}
 		}
-		_onQualityMeterClick() {
-			this.showQualityPopup({
-				onSelect: qualityGrade => {
-					this.backgroundWorker.emitEvent(backgroundWorkerEvents.qualityMeterClick, qualityGrade);
-					this.qualityGrade = qualityGrade;
-					this.closeQualityPopup();
-					if (this.isDesktop() && this.slave) {
-						im_v2_lib_desktopApi.DesktopApi.emit(desktopEvents.onQualityGraded, [qualityGrade]);
-					} else {
-						this.callbacks.qualityGraded(qualityGrade);
-					}
-				}
-			});
-		}
 		#onExternalEvent = params => {
 			console.warn('#onExternalEvent', params);
 			return;
@@ -4743,80 +4750,6 @@ this.BX = this.BX || {};
 			clearInterval(this.timerInterval);
 			this.timerInterval = null;
 		}
-		showQualityPopup(params) {
-			if (!main_core.Type.isPlainObject(params)) {
-				params = {};
-			}
-			if (!main_core.Type.isFunction(params.onSelect)) {
-				params.onSelect = nop$1;
-			}
-			const elements = {
-				'1': null,
-				'2': null,
-				'3': null,
-				'4': null,
-				'5': null
-			};
-			this.qualityPopup = new main_popup.Popup({
-				id: 'PhoneCallViewQualityGrade',
-				bindElement: this.elements.qualityMeter,
-				targetContainer: document.body,
-				darkMode: true,
-				closeByEsc: true,
-				autoHide: true,
-				zIndex: baseZIndex + 200,
-				noAllPaddings: true,
-				overlay: {
-					backgroundColor: 'white',
-					opacity: 0
-				},
-				bindOptions: {
-					position: 'top'
-				},
-				angle: {
-					position: 'bottom',
-					offset: 30
-				},
-				cacheable: false,
-				content: main_core.Dom.create("div", {
-					props: {
-						className: 'im-phone-popup-rating'
-					},
-					children: [main_core.Dom.create("div", {
-						props: {
-							className: 'im-phone-popup-rating-title'
-						},
-						text: main_core.Loc.getMessage('IM_PHONE_CALL_VIEW_RATE_QUALITY')
-					}), main_core.Dom.create("div", {
-						props: {
-							className: 'im-phone-popup-rating-stars'
-						},
-						children: [elements['1'] = createStar(1, this.qualityGrade == '1', params.onSelect), elements['2'] = createStar(2, this.qualityGrade == '2', params.onSelect), elements['3'] = createStar(3, this.qualityGrade == '3', params.onSelect), elements['4'] = createStar(4, this.qualityGrade == '4', params.onSelect), elements['5'] = createStar(5, this.qualityGrade == '5', params.onSelect)],
-						events: {
-							mouseover: () => {
-								if (elements[this.qualityGrade]) {
-									main_core.Dom.removeClass(elements[this.qualityGrade], 'im-phone-popup-rating-stars-item-active');
-								}
-							},
-							mouseout: () => {
-								if (elements[this.qualityGrade]) {
-									main_core.Dom.addClass(elements[this.qualityGrade], 'im-phone-popup-rating-stars-item-active');
-								}
-							}
-						}
-					})]
-				}),
-				events: {
-					onPopupClose: () => this.qualityPopup = null
-				}
-			});
-			this.qualityPopup.show();
-		}
-		closeQualityPopup() {
-			if (this.qualityPopup) {
-				this.qualityPopup.close();
-			}
-		}
 		saveComment() {
 			this.callbacks.saveComment({
 				callId: this.callId,
@@ -4851,6 +4784,9 @@ this.BX = this.BX || {};
 					position: "top"
 				},
 				zIndex: baseZIndex + 200,
+				zIndexOptions: {
+					alwaysOnTop: true
+				},
 				closeByEsc: true,
 				overlay: {
 					backgroundColor: 'white',
@@ -4987,7 +4923,6 @@ this.BX = this.BX || {};
 				this.callbacks.hangup();
 				this.callbacks.close();
 			}); //slave window unload
-			im_v2_lib_desktopApi.DesktopApi.subscribe(desktopEvents.onQualityGraded, grade => this.callbacks.qualityGraded(grade));
 			im_v2_lib_desktopApi.DesktopApi.subscribe(desktopEvents.onDialpadButtonClicked, grade => this.callbacks.dialpadButtonClicked(grade));
 			im_v2_lib_desktopApi.DesktopApi.subscribe(desktopEvents.onCommentShown, commentShown => this.commentShown = commentShown);
 			im_v2_lib_desktopApi.DesktopApi.subscribe(desktopEvents.onSaveComment, comment => {
@@ -5160,9 +5095,6 @@ this.BX = this.BX || {};
 				this.popup.destroy();
 				this.popup = null;
 			}
-			if (this.qualityPopup) {
-				this.qualityPopup.close();
-			}
 			if (this.keypad) {
 				this.keypad.close();
 			}
@@ -5230,9 +5162,9 @@ this.BX = this.BX || {};
 		}
 		selectTransferTarget(resultCallback) {
 			resultCallback = main_core.Type.isFunction(resultCallback) ? resultCallback : BX.DoNothing;
-			main_core.Runtime.loadExtension('ui.entity-selector').then(exports$1 => {
+			main_core.Runtime.loadExtension('ui.entity-selector').then(exports => {
 				const config = this.backgroundWorker.isUsed() ? this.getDialogConfigForBackgroundApp(resultCallback) : this.getDefaultDialogConfig(resultCallback);
-				const Dialog = exports$1.Dialog;
+				const Dialog = exports.Dialog;
 				const transferDialog = new Dialog(config);
 				transferDialog.show();
 			});
@@ -5244,6 +5176,11 @@ this.BX = this.BX || {};
 				cacheable: false,
 				hideOnSelect: false,
 				enableSearch: true,
+				popupOptions: {
+					zIndexOptions: {
+						alwaysOnTop: true
+					}
+				},
 				entities: [{
 					id: 'user',
 					options: {
@@ -5291,6 +5228,11 @@ this.BX = this.BX || {};
 				cacheable: false,
 				hideOnSelect: false,
 				enableSearch: true,
+				popupOptions: {
+					zIndexOptions: {
+						alwaysOnTop: true
+					}
+				},
 				entities: [{
 					id: 'user',
 					options: {
@@ -5402,6 +5344,9 @@ this.BX = this.BX || {};
 				autoHide: true,
 				closeByEsc: true,
 				cacheable: false,
+				zIndexOptions: {
+					alwaysOnTop: true
+				},
 				overlay: {
 					backgroundColor: '#FFFFFF',
 					opacity: 0
@@ -5430,23 +5375,6 @@ this.BX = this.BX || {};
 			};
 		}
 		return main_core.Dom.create('span', params);
-	}
-	function createStar(grade, active, onSelect) {
-		return main_core.Dom.create("div", {
-			props: {
-				className: 'im-phone-popup-rating-stars-item ' + (active ? 'im-phone-popup-rating-stars-item-active' : '')
-			},
-			dataset: {
-				grade: grade
-			},
-			events: {
-				click: e => {
-					e.preventDefault();
-					const grade = e.currentTarget.dataset.grade;
-					onSelect(grade);
-				}
-			}
-		});
 	}
 
 	const lsKeys = {
@@ -6330,6 +6258,9 @@ this.BX = this.BX || {};
 							autoHide: true,
 							closeByEsc: true,
 							cacheable: false,
+							zIndexOptions: {
+								alwaysOnTop: true
+							},
 							bindOptions: {
 								position: 'bottom'
 							},
@@ -6468,7 +6399,17 @@ this.BX = this.BX || {};
 			}
 			const internationalNumber = this.correctPhoneNumber(number);
 			if (internationalNumber.length <= 0) {
-				ui_dialogs_messagebox.MessageBox.alert(main_core.Loc.getMessage('IM_PHONE_WRONG_NUMBER_DESC'), main_core.Loc.getMessage('IM_PHONE_WRONG_NUMBER'));
+				ui_dialogs_messagebox.MessageBox.show({
+					message: main_core.Loc.getMessage('IM_PHONE_WRONG_NUMBER_DESC'),
+					title: main_core.Loc.getMessage('IM_PHONE_WRONG_NUMBER'),
+					buttons: ui_dialogs_messagebox.MessageBoxButtons.OK,
+					popupOptions: {
+						closeByEsc: true,
+						zIndexOptions: {
+							alwaysOnTop: true
+						}
+					}
+				});
 				return false;
 			}
 			this.setPhoneNumber(internationalNumber);
@@ -6541,6 +6482,11 @@ this.BX = this.BX || {};
 					const url = intranet_desktopDownload.DesktopDownload.getLinkForCurrentUser();
 					window.open(url, "desktopApp");
 					return true;
+				},
+				popupOptions: {
+					zIndexOptions: {
+						alwaysOnTop: true
+					}
 				}
 			});
 			messageBox.show();
@@ -6853,7 +6799,6 @@ this.BX = this.BX || {};
 			callView.setCallback('callListMakeCall', this.#onCallViewCallListMakeCall.bind(this));
 			callView.setCallback('close', this.#onCallViewClose.bind(this));
 			callView.setCallback('switchDevice', this.#onCallViewSwitchDevice.bind(this));
-			callView.setCallback('qualityGraded', this.#onCallViewQualityGraded.bind(this));
 			callView.setCallback('dialpadButtonClicked', this.#onCallViewDialpadButtonClicked.bind(this));
 			callView.setCallback('saveComment', this.#onCallViewSaveComment.bind(this));
 		}
@@ -6957,15 +6902,6 @@ this.BX = this.BX || {};
 			} else {
 				this.callView.close();
 				this.phoneCall(phoneNumber);
-			}
-		}
-		#onCallViewQualityGraded(grade) {
-			var message = {
-				COMMAND: 'gradeQuality',
-				grade: grade
-			};
-			if (this.currentCall) {
-				this.currentCall.sendMessage(JSON.stringify(message));
 			}
 		}
 		#onCallViewDialpadButtonClicked(key) {

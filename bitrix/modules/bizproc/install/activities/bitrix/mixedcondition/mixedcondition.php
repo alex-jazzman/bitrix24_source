@@ -61,6 +61,13 @@ class CBPMixedCondition extends CBPActivityCondition
 
 	public function collectUsages(CBPActivity $ownerActivity)
 	{
+		if (!$this->isConditionGroupExist())
+		{
+			return [];
+		}
+
+		$this->conditionGroupToArray();
+
 		$usages = [];
 		foreach ($this->condition as $cond)
 		{

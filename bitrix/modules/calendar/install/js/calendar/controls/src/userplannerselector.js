@@ -73,6 +73,9 @@ export class UserPlannerSelector extends EventEmitter
 				clickAction = () => {
 					if (!this.userSelectorDialog)
 					{
+						// entity-selector auto-loads humanresources.entity-selector for the
+						// `structure-node` entity (registered via humanresources/.settings.php
+						// `ui.entity-selector` extensions), so no manual loadExtension is needed.
 						this.userSelectorDialog = new EntitySelectorDialog({
 							targetNode: this.DOM.changeLink,
 							context: 'CALENDAR',
@@ -163,6 +166,27 @@ export class UserPlannerSelector extends EventEmitter
 		{
 			result.push({
 				id: 'project',
+			});
+		}
+
+		if (Util.isTeamsAsAttendeeEnabled())
+		{
+			// HR `structure-node` provider; backend maps structure-node <-> SNT<id>.
+			// useMultipleTabs enables the team-fetch branch (flat, no depthLevel), otherwise
+			// teams are queried at depthLevel 1 and the list comes back empty.
+			result.push({
+				id: 'structure-node',
+				options: {
+					includedNodeEntityTypes: ['team'],
+					useMultipleTabs: true,
+					// departmentsOnly gives a single selectable "Select team" item with the simple
+					// (flat) access code SNT<id> and a numeric id — matches calendar's backend
+					// mapping (strict ^SNT[0-9]+$). usersAndDepartments would also add the
+					// recursive "team + subteams" option (SNTR<id>, ignored by calendar backend),
+					// and allowFlatDepartments appends a ':F' postfix that the mapping can't parse.
+					selectMode: 'departmentsOnly',
+					visual: { avatarMode: 'node', tagStyle: 'none' },
+				},
 			});
 		}
 

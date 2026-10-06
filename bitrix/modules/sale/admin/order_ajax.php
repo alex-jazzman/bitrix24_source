@@ -3758,6 +3758,14 @@ class AjaxProcessor
 	 */
 	protected function addZReportAction()
 	{
+		global $APPLICATION;
+
+		if ($APPLICATION->GetGroupRight('sale') < 'W')
+		{
+			$this->addResultError(Loc::getMessage('SALE_OA_ERROR_HAPPENED2'));
+			return;
+		}
+
 		$cashboxId = (int)$this->request['cashboxId'];
 
 		$cashboxData = Cashbox\Internals\CashboxTable::getList(

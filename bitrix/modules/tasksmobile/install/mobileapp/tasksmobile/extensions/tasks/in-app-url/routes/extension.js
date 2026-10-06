@@ -2,7 +2,7 @@
  * @module tasks/in-app-url/routes
  */
 jn.define('tasks/in-app-url/routes', (require, exports, module) => {
-	const { getFeatureRestriction, tariffPlanRestrictionsReady } = require('tariff-plan-restriction');
+	const { registerProjectRoutes } = require('tasks/in-app-url/routes/src/project-routes');
 	const { requireLazy } = require('require-lazy');
 
 	/**
@@ -103,42 +103,7 @@ jn.define('tasks/in-app-url/routes', (require, exports, module) => {
 			},
 		).name('tasks:efficiency:open');
 
-		inAppUrl.register('/projects/', async (params, { context }) => {
-			await tariffPlanRestrictionsReady();
-			const { showRestriction, isRestricted } = getFeatureRestriction('socialnetwork_projects_groups');
-
-			if (isRestricted())
-			{
-				showRestriction();
-
-				return;
-			}
-
-			const { title } = context;
-
-			PageManager.openComponent('JSStackComponent', {
-				componentCode: 'tasks:tasks.project.list',
-				// eslint-disable-next-line no-undef
-				scriptPath: availableComponents['tasks:tasks.project.list'].publicUrl,
-				params: {
-					SITE_ID: env.siteId,
-					SITE_DIR: env.siteDir,
-					USER_ID: env.userId,
-					MODE: 'tasks_project',
-					NAVIGATION_TITLE: title,
-				},
-				rootWidget: {
-					name: 'tasks.list',
-					settings: {
-						objectName: 'list',
-						title,
-						useSearch: true,
-						useLargeTitleMode: true,
-						emptyListMode: true,
-					},
-				},
-			});
-		}).name('tasks:projects');
+		registerProjectRoutes(inAppUrl);
 
 		inAppUrl.register('/flow/', (params, { context }) => {
 			const { title } = context;

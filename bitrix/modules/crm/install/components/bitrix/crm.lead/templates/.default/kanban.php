@@ -203,3 +203,5 @@ else
 		$component
 	);
 }
+
+echo (\Bitrix\Crm\Tour\EInvoicePromo::getInstance()->build($analytics));

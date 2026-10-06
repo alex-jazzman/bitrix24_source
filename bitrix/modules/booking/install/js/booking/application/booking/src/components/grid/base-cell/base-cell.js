@@ -3,15 +3,16 @@ import { DateTimeFormat } from 'main.date';
 
 import { mapGetters } from 'ui.vue3.vuex';
 import { BIcon as Icon, Set as IconSet } from 'ui.icon-set.api.vue';
+
 import { Button as UiButton, ButtonSize, ButtonColor, ButtonIcon } from 'booking.component.button';
 
 import { Model } from 'booking.const';
-import type { DealData } from 'booking.model.bookings';
-import type { ClientData } from 'booking.model.clients';
+import { type DealData } from 'booking.model.bookings';
+import { type ClientData } from 'booking.model.clients';
 import { bookingService } from 'booking.provider.service.booking-service';
 import { BookingAnalytics } from 'booking.lib.analytics';
 import { limit } from 'booking.lib.limit';
-import { gridFactory } from 'booking.lib.grid';
+import { GridFactory, type GridBase } from 'booking.lib.grid';
 import './base-cell.css';
 
 /**
@@ -23,6 +24,11 @@ import './base-cell.css';
  * @property {boolean} boundedToBottom
  */
 export const BaseCell = {
+	inject: {
+		gridContext: {
+			default: null,
+		},
+	},
 	props: {
 		/** @type {Cell} */
 		cell: {
@@ -79,15 +85,19 @@ export const BaseCell = {
 		}),
 		grid(): GridBase
 		{
-			return gridFactory.getGrid();
+			return GridFactory.getGrid(this.gridContext);
+		},
+		multiSelectEnabled(): boolean
+		{
+			return this.gridContext?.multiSelectEnabled ?? true;
 		},
 		selected(): boolean
 		{
-			return this.cell.id in this.selectedPlacementSlots;
+			return this.multiSelectEnabled && this.cell.id in this.selectedPlacementSlots;
 		},
 		hasSelectedCells(): boolean
 		{
-			return Object.keys(this.selectedPlacementSlots).length > 0;
+			return this.multiSelectEnabled && Object.keys(this.selectedPlacementSlots).length > 0;
 		},
 		timeFormatted(): string
 		{
@@ -187,6 +197,7 @@ export const BaseCell = {
 			setTimeout(async (): Promise<void> => {
 				const creatingBooking = this.$store.getters[`${Model.Bookings}/getById`](this.creatingBookingId);
 				const result = await bookingService.add(creatingBooking);
+
 				if (result.success && result.booking)
 				{
 					const overbookingMap = this.$store.getters[`${Model.Bookings}/overbookingMap`];
@@ -224,7 +235,7 @@ export const BaseCell = {
 					>
 						<span class="booking-booking-grid-cell-time-inner">
 							<input
-								v-if="!draggedDataTransfer.id"
+								v-if="multiSelectEnabled && !draggedDataTransfer.id"
 								class="booking-booking-grid-cell-checkbox"
 								type="checkbox"
 								:checked="selected"

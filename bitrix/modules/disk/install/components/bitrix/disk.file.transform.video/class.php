@@ -13,6 +13,8 @@ if(!\Bitrix\Main\Loader::includeModule('transformer'))
 
 class CDiskFileTransformVideoComponent extends BaseComponent
 {
+	private const MAX_WAIT_TIMEOUT = 90;
+
 	/** @var int */
 	protected $bfileId;
 	/** @var \Bitrix\Disk\File */
@@ -25,8 +27,8 @@ class CDiskFileTransformVideoComponent extends BaseComponent
 		parent::prepareParams();
 
 		$this->bfileId = (int)$this->arParams['BFILE_ID'];
-		$this->file = $this->arParams['FILE'];
-		$this->attachedObject = $this->arParams['ATTACHED_OBJECT'];
+		$this->file = $this->arParams['FILE'] ?? null;
+		$this->attachedObject = $this->arParams['ATTACHED_OBJECT'] ?? null;
 
 		return $this;
 	}
@@ -74,11 +76,7 @@ class CDiskFileTransformVideoComponent extends BaseComponent
 				$this->arResult['STATUS'] = 'ERROR';
 				$this->arResult['TITLE'] = Loc::getMessage('DISK_FILE_TRANSFORM_VIDEO_ERROR_TITLE');
 				$this->arResult['DESC'] = Loc::getMessage('DISK_FILE_TRANSFORM_VIDEO_ERROR_DESC');
-
-				if ((time() - $time->getTimestamp()) > Transformer\FileTransformer::MAX_EXECUTION_TIME)
-				{
-					$this->arResult['TRANSFORM_URL_TEXT'] = Loc::getMessage('DISK_FILE_TRANSFORM_VIDEO_ERROR_TRANSFORM');
-				}
+				$this->arResult['TRANSFORM_URL_TEXT'] = Loc::getMessage('DISK_FILE_TRANSFORM_VIDEO_ERROR_TRANSFORM');
 			}
 			else
 			{
@@ -90,10 +88,15 @@ class CDiskFileTransformVideoComponent extends BaseComponent
 
 		$this->arResult['DOWNLOAD_LINK'] = $this->getUrlToDownload();
 		$this->arResult['RUN_GENERATION_PREVIEW'] = [
-			'ACTION' => $this->attachedObject? 'disk.attachedObject.runPreviewGeneration' : 'disk.file.runPreviewGeneration',
+			'ACTION' => $this->attachedObject ? 'disk.attachedObject.runPreviewGeneration' : 'disk.file.runPreviewGeneration',
 			'FILE_ID' => $this->file->getId(),
-			'ATTACHED_OBJECT_ID' => $this->attachedObject->getId(),
+			'ATTACHED_OBJECT_ID' => $this->attachedObject?->getId(),
 		];
+		$this->arResult['RETRY_INTERVAL'] = max(1, (int)($this->arParams['RETRY_INTERVAL'] ?? 5));
+		$this->arResult['WAIT_TIMEOUT'] = min(
+			self::MAX_WAIT_TIMEOUT,
+			max($this->arResult['RETRY_INTERVAL'], (int)($this->arParams['WAIT_TIMEOUT'] ?? self::MAX_WAIT_TIMEOUT))
+		);
 
 		$transformerManager->subscribeCurrentUserForTransformation($this->bfileId);
 		$this->arResult['PULL_TAG'] = $transformerManager::getPullTag($this->bfileId);

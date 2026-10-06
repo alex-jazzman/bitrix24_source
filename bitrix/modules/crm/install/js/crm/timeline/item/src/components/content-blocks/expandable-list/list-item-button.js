@@ -23,6 +23,7 @@ export default {
 	template: `
 		<div class="crm-entity-stream-advice-list-btn-box">
 			<button
+				type="button"
 				@click="executeAction"
 				class="crm-entity-stream-advice-list-btn"
 			>

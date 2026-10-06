@@ -1,0 +1,47 @@
+/* Input switcher per mockup node 1383:21596 («Input+desc»):
+   input-M control (34px, radius 8, #edeef0 stroke) + caption below */
+.editor-chart-node-settings-select-rule-port {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-inline-xs);
+}
+
+.editor-chart-node-settings-select-rule-port__control {
+	/* native button reset */
+	appearance: none;
+	margin: 0;
+	font-family: inherit;
+	text-align: left;
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--ui-space-inline-2xs);
+	height: 34px;
+	padding: 0 10px 0 12px;
+	background: var(--ui-color-design-outline-bg-alt);
+	border: 1px solid var(--ui-color-design-outline-stroke);
+	border-radius: var(--ui-border-radius-sm);
+}
+
+.editor-chart-node-settings-select-rule-port__control:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: 2px;
+}
+
+.editor-chart-node-settings-select-rule-port__value {
+	font-size: 14px;
+	line-height: 19px;
+	color: var(--ui-color-design-outline-content);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+/* «Данные, с которыми работаем» — 12/15 base-4 (node 1383:21625) */
+.editor-chart-node-settings-select-rule-port__caption {
+	padding-left: 2px;
+	font-size: 12px;
+	line-height: 15px;
+	color: var(--ui-color-base-4);
+}

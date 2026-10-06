@@ -1,4 +1,8 @@
-<?if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
+<?php
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
+
+use Bitrix\Main\Web\Uri;
 
 if (!CModule::IncludeModule('crm'))
 {
@@ -181,7 +185,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && check_bitrix_sessid() && isset($_PO
 			$arFields["USER_TYPE"] = "";
 			if(mb_strpos($arFields["PROPERTY_TYPE"], ":"))
 			{
-				list($arFields["PROPERTY_TYPE"], $arFields["USER_TYPE"]) = explode(':', $arFields["PROPERTY_TYPE"], 2);
+				[$arFields["PROPERTY_TYPE"], $arFields["USER_TYPE"]] = explode(':', $arFields["PROPERTY_TYPE"], 2);
 			}
 
 			$allowedFields = array(
@@ -264,7 +268,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && check_bitrix_sessid() && isset($_PO
 		$errorID = uniqid('crm_err_');
 		$_SESSION[$errorID] = $errorMsg;
 
-		LocalRedirect(CHTTP::urlAddParams($APPLICATION->GetCurPage(), array('error' => $errorID)));
+		LocalRedirect((string)(new Uri($APPLICATION->GetCurPage()))->addParams(array('error' => $errorID)));
 	}
 	else
 	{
@@ -294,7 +298,7 @@ elseif ($_SERVER['REQUEST_METHOD'] == 'GET' && check_bitrix_sessid() && isset($_
 		$errorID = uniqid('crm_err_');
 		$_SESSION[$errorID] = $errorMsg;
 
-		LocalRedirect(CHTTP::urlAddParams($APPLICATION->GetCurPage(), array('error' => $errorID)));
+		LocalRedirect((string)(new Uri($APPLICATION->GetCurPage()))->addParams(array('error' => $errorID)));
 	}
 	else
 	{
@@ -349,13 +353,10 @@ while($arRow = $dbRes->Fetch())
 			array('prop_id' => $arProp['ID'])
 		);
 	$arProp['PATH_TO_PRODUCTPROPS_DELETE'] =
-		CHTTP::urlAddParams(
-			CComponentEngine::MakePathFromTemplate(
+		(string)(new Uri(CComponentEngine::MakePathFromTemplate(
 				$arParams['PATH_TO_PRODUCTPROPS_LIST'],
 				array('loc_id' => $arProp['ID'])
-			),
-			array('action_'.$arResult['GRID_ID'] => 'delete', 'ID' => $arProp['ID'], 'sessid' => bitrix_sessid())
-		);
+			)))->addParams(array('action_'.$arResult['GRID_ID'] => 'delete', 'ID' => $arProp['ID'], 'sessid' => bitrix_sessid()));
 
 	$arResult['PROPS'][$arProp['ID']] = $arProp;
 }

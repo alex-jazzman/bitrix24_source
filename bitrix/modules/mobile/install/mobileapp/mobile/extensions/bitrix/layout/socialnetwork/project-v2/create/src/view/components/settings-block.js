@@ -118,6 +118,7 @@ jn.define('layout/socialnetwork/project-v2/create/src/view/components/settings-b
 		testId,
 		typeSubtitle,
 		showPermissions = true,
+		showProjectNotifications = false,
 		onItemClick,
 	}) => {
 		const getTestId = createTestIdGenerator({ prefix: testId });
@@ -150,6 +151,13 @@ jn.define('layout/socialnetwork/project-v2/create/src/view/components/settings-b
 					leftIcon: Icon.PERSON_SETTINGS,
 					onClick: onItemClick,
 					isRestricted: isRestricted(),
+					getTestId,
+				}),
+				showProjectNotifications && renderSettingsItem({
+					id: 'project-notifications',
+					title: Loc.getMessage('MOBILE_LAYOUT_PROJECT_V2_CREATE_NOTIFICATIONS_TITLE'),
+					leftIcon: Icon.NOTIFICATION,
+					onClick: onItemClick,
 					getTestId,
 				}),
 				renderSettingsItem({

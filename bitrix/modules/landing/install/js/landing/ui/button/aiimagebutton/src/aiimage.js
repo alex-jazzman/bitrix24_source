@@ -2,6 +2,7 @@ import {BaseButton} from "landing.ui.button.basebutton";
 
 import './css/ai_image.css';
 import 'ui.fonts.opensans';
+import 'ui.design-tokens.air';
 
 /**
  * @memberOf BX.Landing.UI.Button

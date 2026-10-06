@@ -10,6 +10,7 @@ type SettingLinkType = 'link';
 type SettingCacheInfoType = 'cache-info';
 type SettingToggleType = 'toggle';
 type SettingButtonType = 'button';
+type SettingTextButtonType = 'text-button';
 type SettingThemeSwitchType = 'theme-switch';
 type SettingVideoQualitySwitchType = 'video-quality-switch';
 type SettingVideoBannerType = 'video-banner';
@@ -30,6 +31,7 @@ type SettingItemType =
 	| SettingLinkType
 	| SettingToggleType
 	| SettingButtonType
+	| SettingTextButtonType
 	| SettingThemeSwitchType
 	| SettingVideoQualitySwitchType
 	| SettingLocSelectorType
@@ -109,6 +111,13 @@ export interface SettingCacheInfoButton extends SettingItem
 	onClick: Function;
 	subtitle?: string;
 	icon?: string;
+}
+
+export interface SettingTextButton extends SettingItem
+{
+	type: SettingTextButtonType;
+	onClick: Function;
+	color?: Color;
 }
 
 export interface SettingLinkButton extends SettingItem

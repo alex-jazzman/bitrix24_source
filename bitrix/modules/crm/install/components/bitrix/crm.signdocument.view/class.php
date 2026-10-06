@@ -19,6 +19,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 }
 
 \Bitrix\Main\Loader::includeModule('crm');
+\Bitrix\Main\Loader::includeModule('sign');
 Loc::loadMessages(__FILE__);
 
 class CrmSignDocumentViewComponent extends Bitrix\Crm\Component\Base
@@ -67,10 +68,23 @@ class CrmSignDocumentViewComponent extends Bitrix\Crm\Component\Base
 			return;
 		}
 
-		$this->arResult['documentResendEnabled'] = false;
 		$documentService = \Bitrix\Sign\Service\Container::instance()->getDocumentService();
 		$docItem = method_exists($documentService, 'getById') ? $documentService->getById($document->getId()) : null;
-		if ($docItem !== null && !\Bitrix\Sign\Type\DocumentScenario::isB2EScenario($docItem->scenario ?? ''))
+
+		$accessService = \Bitrix\Sign\Service\Integration\Crm\AccessService::class;
+		if (
+			$docItem === null
+			|| !method_exists($accessService, 'canCurrentUserViewDocument')
+			|| !(new $accessService())->canCurrentUserViewDocument($docItem)
+		)
+		{
+			$this->arResult['ACCESS_DENIED'] = true;
+			$this->errorCollection[] = new \Bitrix\Main\Error(Loc::getMessage('CRM_SIGNDOCUMENT_VIEW_ACCESS_DENIED'));
+			return;
+		}
+
+		$this->arResult['documentResendEnabled'] = false;
+		if (!\Bitrix\Sign\Type\DocumentScenario::isB2EScenario($docItem->scenario ?? ''))
 		{
 			$members = \Bitrix\Sign\Service\Container::instance()
 				->getMemberRepository()

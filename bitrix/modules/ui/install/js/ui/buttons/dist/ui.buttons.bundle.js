@@ -1,20 +1,20 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports, main_core, ui_designTokens_air, ui_cnt, ui_buttons, main_popup, ui_iconSet_api_core, ui_switcher, main_core_events) {
+(function (exports, main_core, ui_designTokens_air, ui_cnt, ui_buttons, ui_iconSet_api_core, main_popup, ui_switcher, main_core_events) {
 	'use strict';
 
-	function _classPrivateFieldInitSpec$2(e, t, a) { _checkPrivateRedeclaration$3(e, t), t.set(e, a); }
-	function _checkPrivateRedeclaration$3(e, t) { if (t.has(e)) throw new TypeError("Cannot initialize the same private elements twice on an object"); }
-	function _classPrivateFieldGet$2(s, a) { return s.get(_assertClassBrand$4(s, a)); }
-	function _classPrivateFieldSet$2(s, a, r) { return s.set(_assertClassBrand$4(s, a), r), r; }
-	function _assertClassBrand$4(e, t, n) { if ("function" == typeof e ? e === t : e.has(t)) return arguments.length < 3 ? t : n; throw new TypeError("Private element is not present on this object"); }
+	function _classPrivateFieldInitSpec$5(e, t, a) { _checkPrivateRedeclaration$6(e, t), t.set(e, a); }
+	function _checkPrivateRedeclaration$6(e, t) { if (t.has(e)) throw new TypeError("Cannot initialize the same private elements twice on an object"); }
+	function _classPrivateFieldGet$5(s, a) { return s.get(_assertClassBrand$7(s, a)); }
+	function _classPrivateFieldSet$5(s, a, r) { return s.set(_assertClassBrand$7(s, a), r), r; }
+	function _assertClassBrand$7(e, t, n) { if ("function" == typeof e ? e === t : e.has(t)) return arguments.length < 3 ? t : n; throw new TypeError("Private element is not present on this object"); }
 	var _counter = /*#__PURE__*/new WeakMap();
 	let ButtonCounter = /*#__PURE__*/function () {
 		function ButtonCounter(options) {
 			babelHelpers.classCallCheck(this, ButtonCounter);
-			_classPrivateFieldInitSpec$2(this, _counter, void 0);
+			_classPrivateFieldInitSpec$5(this, _counter, void 0);
 			this.validateOptions(options);
-			_classPrivateFieldSet$2(_counter, this, new ui_cnt.Counter({
+			_classPrivateFieldSet$5(_counter, this, new ui_cnt.Counter({
 				color: options.color ?? ui_cnt.CounterColor.DANGER,
 				style: options.style ?? ui_cnt.CounterStyle.FILLED_ALERT,
 				size: options.size ?? ui_cnt.CounterSize.MEDIUM,
@@ -27,17 +27,17 @@ this.BX = this.BX || {};
 		return babelHelpers.createClass(ButtonCounter, [{
 			key: "render",
 			value: function render() {
-				return _classPrivateFieldGet$2(_counter, this).render();
+				return _classPrivateFieldGet$5(_counter, this).render();
 			}
 		}, {
 			key: "getValue",
 			value: function getValue() {
-				return _classPrivateFieldGet$2(_counter, this).getValue();
+				return _classPrivateFieldGet$5(_counter, this).getValue();
 			}
 		}, {
 			key: "setValue",
 			value: function setValue(value) {
-				_classPrivateFieldGet$2(_counter, this).update(value);
+				_classPrivateFieldGet$5(_counter, this).update(value);
 			}
 
 			/*
@@ -46,12 +46,12 @@ this.BX = this.BX || {};
 		}, {
 			key: "setColor",
 			value: function setColor(color) {
-				_classPrivateFieldGet$2(_counter, this).setColor(color);
+				_classPrivateFieldGet$5(_counter, this).setColor(color);
 			}
 		}, {
 			key: "setStyle",
 			value: function setStyle(style) {
-				_classPrivateFieldGet$2(_counter, this).setStyle(style);
+				_classPrivateFieldGet$5(_counter, this).setStyle(style);
 			}
 		}, {
 			key: "validateOptions",
@@ -96,12 +96,12 @@ this.BX = this.BX || {};
 	babelHelpers.defineProperty(ButtonTag, "DIV", 4);
 	babelHelpers.defineProperty(ButtonTag, "SPAN", 5);
 
-	function _classPrivateMethodInitSpec$1(e, a) { _checkPrivateRedeclaration$2(e, a), a.add(e); }
-	function _classPrivateFieldInitSpec$1(e, t, a) { _checkPrivateRedeclaration$2(e, t), t.set(e, a); }
-	function _checkPrivateRedeclaration$2(e, t) { if (t.has(e)) throw new TypeError("Cannot initialize the same private elements twice on an object"); }
-	function _classPrivateFieldGet$1(s, a) { return s.get(_assertClassBrand$3(s, a)); }
-	function _classPrivateFieldSet$1(s, a, r) { return s.set(_assertClassBrand$3(s, a), r), r; }
-	function _assertClassBrand$3(e, t, n) { if ("function" == typeof e ? e === t : e.has(t)) return arguments.length < 3 ? t : n; throw new TypeError("Private element is not present on this object"); }
+	function _classPrivateMethodInitSpec$3(e, a) { _checkPrivateRedeclaration$5(e, a), a.add(e); }
+	function _classPrivateFieldInitSpec$4(e, t, a) { _checkPrivateRedeclaration$5(e, t), t.set(e, a); }
+	function _checkPrivateRedeclaration$5(e, t) { if (t.has(e)) throw new TypeError("Cannot initialize the same private elements twice on an object"); }
+	function _classPrivateFieldGet$4(s, a) { return s.get(_assertClassBrand$6(s, a)); }
+	function _classPrivateFieldSet$4(s, a, r) { return s.set(_assertClassBrand$6(s, a), r), r; }
+	function _assertClassBrand$6(e, t, n) { if ("function" == typeof e ? e === t : e.has(t)) return arguments.length < 3 ? t : n; throw new TypeError("Private element is not present on this object"); }
 	var _useAirDesign = /*#__PURE__*/new WeakMap();
 	var _leftCounter = /*#__PURE__*/new WeakMap();
 	var _rightCounter = /*#__PURE__*/new WeakMap();
@@ -112,13 +112,13 @@ this.BX = this.BX || {};
 	let BaseButton = /*#__PURE__*/function () {
 		function BaseButton(options) {
 			babelHelpers.classCallCheck(this, BaseButton);
-			_classPrivateMethodInitSpec$1(this, _BaseButton_brand);
-			_classPrivateFieldInitSpec$1(this, _useAirDesign, false);
-			_classPrivateFieldInitSpec$1(this, _leftCounter, void 0);
-			_classPrivateFieldInitSpec$1(this, _rightCounter, void 0);
-			_classPrivateFieldInitSpec$1(this, _leftCounterContainer, void 0);
-			_classPrivateFieldInitSpec$1(this, _rightCounterContainer, void 0);
-			_classPrivateFieldInitSpec$1(this, _handleEvent, event => {
+			_classPrivateMethodInitSpec$3(this, _BaseButton_brand);
+			_classPrivateFieldInitSpec$4(this, _useAirDesign, false);
+			_classPrivateFieldInitSpec$4(this, _leftCounter, void 0);
+			_classPrivateFieldInitSpec$4(this, _rightCounter, void 0);
+			_classPrivateFieldInitSpec$4(this, _leftCounterContainer, void 0);
+			_classPrivateFieldInitSpec$4(this, _rightCounterContainer, void 0);
+			_classPrivateFieldInitSpec$4(this, _handleEvent, event => {
 				this.events[event.type]?.call(this, this, event);
 			});
 			this.options = Object.assign(this.getDefaultOptions(), main_core.Type.isPlainObject(options) ? options : {});
@@ -182,13 +182,13 @@ this.BX = this.BX || {};
 		}, {
 			key: "setAirDesign",
 			value: function setAirDesign(use) {
-				_classPrivateFieldSet$1(_useAirDesign, this, use === true);
-				main_core.Dom.toggleClass(this.getContainer(), '--air', _classPrivateFieldGet$1(_useAirDesign, this));
+				_classPrivateFieldSet$4(_useAirDesign, this, use === true);
+				main_core.Dom.toggleClass(this.getContainer(), '--air', _classPrivateFieldGet$4(_useAirDesign, this));
 			}
 		}, {
 			key: "hasAirDesign",
 			value: function hasAirDesign() {
-				return _classPrivateFieldGet$1(_useAirDesign, this);
+				return _classPrivateFieldGet$4(_useAirDesign, this);
 			}
 
 			/**
@@ -281,24 +281,24 @@ this.BX = this.BX || {};
 					return this;
 				}
 				if (!options) {
-					_assertClassBrand$3(_BaseButton_brand, this, _removeLeftCounter).call(this);
+					_assertClassBrand$6(_BaseButton_brand, this, _removeLeftCounter).call(this);
 					return this;
 				}
-				if (_classPrivateFieldGet$1(_leftCounter, this)) {
+				if (_classPrivateFieldGet$4(_leftCounter, this)) {
 					return this;
 				}
-				_assertClassBrand$3(_BaseButton_brand, this, _removeLeftCounter).call(this);
-				_classPrivateFieldSet$1(_leftCounter, this, new ButtonCounter({
+				_assertClassBrand$6(_BaseButton_brand, this, _removeLeftCounter).call(this);
+				_classPrivateFieldSet$4(_leftCounter, this, new ButtonCounter({
 					...options,
 					size: main_core.Type.isString(options.size) ? options.size : ui_cnt.CounterSize.MEDIUM
 				}));
 				if (this.textNode) {
-					_classPrivateFieldSet$1(_leftCounterContainer, this, main_core.Tag.render`
+					_classPrivateFieldSet$4(_leftCounterContainer, this, main_core.Tag.render`
 				<div class="ui-btn-left-counter">
-					${_classPrivateFieldGet$1(_leftCounter, this).render()}
+					${_classPrivateFieldGet$4(_leftCounter, this).render()}
 				</div>
 			`);
-					main_core.Dom.prepend(_classPrivateFieldGet$1(_leftCounterContainer, this), this.textNode);
+					main_core.Dom.prepend(_classPrivateFieldGet$4(_leftCounterContainer, this), this.textNode);
 					main_core.Dom.addClass(this.getContainer(), '--with-left-counter');
 				}
 				return this;
@@ -318,19 +318,19 @@ this.BX = this.BX || {};
 					return this;
 				}
 				if (!options) {
-					_assertClassBrand$3(_BaseButton_brand, this, _removeRightCounter).call(this);
+					_assertClassBrand$6(_BaseButton_brand, this, _removeRightCounter).call(this);
 					return this;
 				}
-				_assertClassBrand$3(_BaseButton_brand, this, _removeRightCounter).call(this);
-				_classPrivateFieldSet$1(_rightCounter, this, new ButtonCounter({
+				_assertClassBrand$6(_BaseButton_brand, this, _removeRightCounter).call(this);
+				_classPrivateFieldSet$4(_rightCounter, this, new ButtonCounter({
 					...options,
 					size: main_core.Type.isString(options.size) ? options.size : ui_cnt.CounterSize.MEDIUM
 				}));
 				if (this.textNode) {
-					_classPrivateFieldSet$1(_rightCounterContainer, this, main_core.Tag.render`
-				<div class="ui-btn-right-counter">${_classPrivateFieldGet$1(_rightCounter, this).render()}</div>
+					_classPrivateFieldSet$4(_rightCounterContainer, this, main_core.Tag.render`
+				<div class="ui-btn-right-counter">${_classPrivateFieldGet$4(_rightCounter, this).render()}</div>
 			`);
-					main_core.Dom.append(_classPrivateFieldGet$1(_rightCounterContainer, this), this.textNode);
+					main_core.Dom.append(_classPrivateFieldGet$4(_rightCounterContainer, this), this.textNode);
 					main_core.Dom.addClass(this.getContainer(), '--with-right-counter');
 				}
 				return this;
@@ -338,12 +338,12 @@ this.BX = this.BX || {};
 		}, {
 			key: "getLeftCounter",
 			value: function getLeftCounter() {
-				return _classPrivateFieldGet$1(_leftCounter, this);
+				return _classPrivateFieldGet$4(_leftCounter, this);
 			}
 		}, {
 			key: "getRightCounter",
 			value: function getRightCounter() {
-				return _classPrivateFieldGet$1(_rightCounter, this);
+				return _classPrivateFieldGet$4(_rightCounter, this);
 			}
 		}, {
 			key: "setCounter",
@@ -506,7 +506,7 @@ this.BX = this.BX || {};
 				if (main_core.Type.isStringFilled(eventName) && main_core.Type.isFunction(fn)) {
 					this.unbindEvent(eventName);
 					this.events[eventName] = fn;
-					main_core.Event.bind(this.getContainer(), eventName, _classPrivateFieldGet$1(_handleEvent, this));
+					main_core.Event.bind(this.getContainer(), eventName, _classPrivateFieldGet$4(_handleEvent, this));
 				}
 				return this;
 			}
@@ -531,16 +531,317 @@ this.BX = this.BX || {};
 		}]);
 	}();
 	function _removeLeftCounter() {
-		main_core.Dom.remove(_classPrivateFieldGet$1(_leftCounterContainer, this));
+		main_core.Dom.remove(_classPrivateFieldGet$4(_leftCounterContainer, this));
 		main_core.Dom.removeClass(this.getContainer(), '--with-left-counter');
-		_classPrivateFieldSet$1(_leftCounterContainer, this, null);
-		_classPrivateFieldSet$1(_leftCounter, this, null);
+		_classPrivateFieldSet$4(_leftCounterContainer, this, null);
+		_classPrivateFieldSet$4(_leftCounter, this, null);
 	}
 	function _removeRightCounter() {
-		main_core.Dom.remove(_classPrivateFieldGet$1(_rightCounterContainer, this));
+		main_core.Dom.remove(_classPrivateFieldGet$4(_rightCounterContainer, this));
 		main_core.Dom.removeClass(this.getContainer(), '--with-right-counter');
-		_classPrivateFieldSet$1(_rightCounterContainer, this, null);
-		_classPrivateFieldSet$1(_rightCounter, this, null);
+		_classPrivateFieldSet$4(_rightCounterContainer, this, null);
+		_classPrivateFieldSet$4(_rightCounter, this, null);
+	}
+
+	function _classPrivateFieldInitSpec$3(e, t, a) { _checkPrivateRedeclaration$4(e, t), t.set(e, a); }
+	function _checkPrivateRedeclaration$4(e, t) { if (t.has(e)) throw new TypeError("Cannot initialize the same private elements twice on an object"); }
+	function _classPrivateFieldGet$3(s, a) { return s.get(_assertClassBrand$5(s, a)); }
+	function _classPrivateFieldSet$3(s, a, r) { return s.set(_assertClassBrand$5(s, a), r), r; }
+	function _assertClassBrand$5(e, t, n) { if ("function" == typeof e ? e === t : e.has(t)) return arguments.length < 3 ? t : n; throw new TypeError("Private element is not present on this object"); }
+	/**
+	 * The single criterion of a menu being set: a button and ButtonManager must not diverge here.
+	 */
+	function hasMenuItems(options) {
+		return main_core.Type.isPlainObject(options) && main_core.Type.isArray(options.items) && options.items.length > 0;
+	}
+
+	/**
+	 * A contract between a button and its menu implementation.
+	 * The button owns the click handler and its own state, the controller owns the menu instance.
+	 *
+	 * @namespace {BX.UI}
+	 */
+	var _options = /*#__PURE__*/new WeakMap();
+	var _callbacks = /*#__PURE__*/new WeakMap();
+	let MenuController = /*#__PURE__*/function () {
+		function MenuController(options, callbacks) {
+			babelHelpers.classCallCheck(this, MenuController);
+			_classPrivateFieldInitSpec$3(this, _options, void 0);
+			_classPrivateFieldInitSpec$3(this, _callbacks, void 0);
+			_classPrivateFieldSet$3(_options, this, options);
+			_classPrivateFieldSet$3(_callbacks, this, callbacks);
+		}
+
+		/**
+		 * An implementation may be asynchronous, then the returned promise is fulfilled when the opening is over
+		 * and rejected with a reason when it has failed. A fulfilled promise does not mean the menu is open: an
+		 * implementation skips the opening when the menu is already shown, is already opening or is destroyed.
+		 */
+		return babelHelpers.createClass(MenuController, [{
+			key: "show",
+			value: function show() {
+				throw new Error('BX.UI.MenuController: Must be implemented by a subclass');
+			}
+		}, {
+			key: "close",
+			value: function close() {
+				throw new Error('BX.UI.MenuController: Must be implemented by a subclass');
+			}
+		}, {
+			key: "isShown",
+			value: function isShown() {
+				throw new Error('BX.UI.MenuController: Must be implemented by a subclass');
+			}
+		}, {
+			key: "destroy",
+			value: function destroy() {
+				throw new Error('BX.UI.MenuController: Must be implemented by a subclass');
+			}
+		}, {
+			key: "getMenu",
+			value: function getMenu() {
+				throw new Error('BX.UI.MenuController: Must be implemented by a subclass');
+			}
+
+			/**
+			 * @protected
+			 */
+		}, {
+			key: "getOptions",
+			value: function getOptions() {
+				return _classPrivateFieldGet$3(_options, this);
+			}
+
+			/**
+			 * @protected
+			 */
+		}, {
+			key: "getBindElement",
+			value: function getBindElement() {
+				return _classPrivateFieldGet$3(_callbacks, this).getBindElement();
+			}
+
+			/**
+			 * @protected
+			 */
+		}, {
+			key: "notifyShow",
+			value: function notifyShow() {
+				_classPrivateFieldGet$3(_callbacks, this).onShow();
+			}
+
+			/**
+			 * @protected
+			 */
+		}, {
+			key: "notifyClose",
+			value: function notifyClose() {
+				_classPrivateFieldGet$3(_callbacks, this).onClose();
+			}
+		}]);
+	}();
+
+	function _callSuper$j(t, o, e) { return o = babelHelpers.getPrototypeOf(o), babelHelpers.possibleConstructorReturn(t, _isNativeReflectConstruct$j() ? Reflect.construct(o, e || [], babelHelpers.getPrototypeOf(t).constructor) : o.apply(t, e)); }
+	function _isNativeReflectConstruct$j() { try { var t = !Boolean.prototype.valueOf.call(Reflect.construct(Boolean, [], function () {})); } catch (t) {} return (_isNativeReflectConstruct$j = function () { return !!t; })(); }
+	function _classPrivateFieldInitSpec$2(e, t, a) { _checkPrivateRedeclaration$3(e, t), t.set(e, a); }
+	function _checkPrivateRedeclaration$3(e, t) { if (t.has(e)) throw new TypeError("Cannot initialize the same private elements twice on an object"); }
+	function _classPrivateFieldGet$2(s, a) { return s.get(_assertClassBrand$4(s, a)); }
+	function _classPrivateFieldSet$2(s, a, r) { return s.set(_assertClassBrand$4(s, a), r), r; }
+	function _assertClassBrand$4(e, t, n) { if ("function" == typeof e ? e === t : e.has(t)) return arguments.length < 3 ? t : n; throw new TypeError("Private element is not present on this object"); }
+
+	/**
+	 * @namespace {BX.UI}
+	 */
+	var _menu$1 = /*#__PURE__*/new WeakMap();
+	var _handleClose = /*#__PURE__*/new WeakMap();
+	let LegacyMenuController = /*#__PURE__*/function (_MenuController) {
+		function LegacyMenuController(options, callbacks) {
+			var _this;
+			babelHelpers.classCallCheck(this, LegacyMenuController);
+			_this = _callSuper$j(this, LegacyMenuController, [options, callbacks]);
+			_classPrivateFieldInitSpec$2(_this, _menu$1, void 0);
+			_classPrivateFieldInitSpec$2(_this, _handleClose, () => {
+				_this.notifyClose();
+			});
+			_classPrivateFieldSet$2(_menu$1, _this, new main_popup.Menu({
+				id: `ui-btn-menu-${main_core.Text.getRandom().toLowerCase()}`,
+				bindElement: _this.getBindElement(),
+				..._this.getOptions()
+			}));
+			_classPrivateFieldGet$2(_menu$1, _this).getPopupWindow().subscribe('onClose', _classPrivateFieldGet$2(_handleClose, _this));
+			return _this;
+		}
+		babelHelpers.inherits(LegacyMenuController, _MenuController);
+		return babelHelpers.createClass(LegacyMenuController, [{
+			key: "show",
+			value: function show() {
+				_classPrivateFieldGet$2(_menu$1, this).show();
+				if (this.isShown()) {
+					this.notifyShow();
+				}
+			}
+		}, {
+			key: "close",
+			value: function close() {
+				_classPrivateFieldGet$2(_menu$1, this).close();
+			}
+		}, {
+			key: "isShown",
+			value: function isShown() {
+				return _classPrivateFieldGet$2(_menu$1, this).getPopupWindow().isShown();
+			}
+		}, {
+			key: "destroy",
+			value: function destroy() {
+				this.close();
+				_classPrivateFieldGet$2(_menu$1, this).getPopupWindow().unsubscribe('onClose', _classPrivateFieldGet$2(_handleClose, this));
+				_classPrivateFieldGet$2(_menu$1, this).destroy();
+			}
+		}, {
+			key: "getMenu",
+			value: function getMenu() {
+				return _classPrivateFieldGet$2(_menu$1, this);
+			}
+		}]);
+	}(MenuController);
+
+	function _callSuper$i(t, o, e) { return o = babelHelpers.getPrototypeOf(o), babelHelpers.possibleConstructorReturn(t, _isNativeReflectConstruct$i() ? Reflect.construct(o, e || [], babelHelpers.getPrototypeOf(t).constructor) : o.apply(t, e)); }
+	function _isNativeReflectConstruct$i() { try { var t = !Boolean.prototype.valueOf.call(Reflect.construct(Boolean, [], function () {})); } catch (t) {} return (_isNativeReflectConstruct$i = function () { return !!t; })(); }
+	function _classPrivateMethodInitSpec$2(e, a) { _checkPrivateRedeclaration$2(e, a), a.add(e); }
+	function _classPrivateFieldInitSpec$1(e, t, a) { _checkPrivateRedeclaration$2(e, t), t.set(e, a); }
+	function _checkPrivateRedeclaration$2(e, t) { if (t.has(e)) throw new TypeError("Cannot initialize the same private elements twice on an object"); }
+	function _classPrivateFieldSet$1(s, a, r) { return s.set(_assertClassBrand$3(s, a), r), r; }
+	function _classPrivateFieldGet$1(s, a) { return s.get(_assertClassBrand$3(s, a)); }
+	function _assertClassBrand$3(e, t, n) { if ("function" == typeof e ? e === t : e.has(t)) return arguments.length < 3 ? t : n; throw new TypeError("Private element is not present on this object"); }
+	// ui.system.menu depends on ui.buttons, so its class can be obtained only at runtime.
+	const EXTENSION_NAME = 'ui.system.menu';
+	const CLASS_NAME = 'BX.UI.System.Menu';
+	const LOADING_TIMEOUT = 30000;
+
+	/**
+	 * @namespace {BX.UI}
+	 */
+	var _menu = /*#__PURE__*/new WeakMap();
+	var _loading = /*#__PURE__*/new WeakMap();
+	var _destroyed = /*#__PURE__*/new WeakMap();
+	var _SystemMenuController_brand = /*#__PURE__*/new WeakSet();
+	let SystemMenuController = /*#__PURE__*/function (_MenuController) {
+		function SystemMenuController(...args) {
+			var _this;
+			babelHelpers.classCallCheck(this, SystemMenuController);
+			_this = _callSuper$i(this, SystemMenuController, [...args]);
+			_classPrivateMethodInitSpec$2(_this, _SystemMenuController_brand);
+			_classPrivateFieldInitSpec$1(_this, _menu, null);
+			_classPrivateFieldInitSpec$1(_this, _loading, false);
+			_classPrivateFieldInitSpec$1(_this, _destroyed, false);
+			return _this;
+		}
+		babelHelpers.inherits(SystemMenuController, _MenuController);
+		return babelHelpers.createClass(SystemMenuController, [{
+			key: "show",
+			value: async function show() {
+				if (this.isShown() || _classPrivateFieldGet$1(_loading, this)) {
+					return;
+				}
+				if (_classPrivateFieldGet$1(_menu, this)) {
+					_assertClassBrand$3(_SystemMenuController_brand, this, _openMenu).call(this);
+					return;
+				}
+
+				// Runtime resolves even an already loaded extension asynchronously,
+				// so the class is taken directly to open the menu in the same task
+				let MenuClass = main_core.Reflection.getClass(CLASS_NAME);
+				if (!MenuClass) {
+					MenuClass = await _assertClassBrand$3(_SystemMenuController_brand, this, _loadMenuClass).call(this);
+					if (_classPrivateFieldGet$1(_destroyed, this)) {
+						return;
+					}
+				}
+				_classPrivateFieldSet$1(_menu, this, _assertClassBrand$3(_SystemMenuController_brand, this, _createMenu).call(this, MenuClass));
+				_assertClassBrand$3(_SystemMenuController_brand, this, _openMenu).call(this);
+			}
+		}, {
+			key: "close",
+			value: function close() {
+				if (_classPrivateFieldGet$1(_menu, this)?.getPopup()) {
+					_classPrivateFieldGet$1(_menu, this).close();
+				}
+			}
+		}, {
+			key: "isShown",
+			value: function isShown() {
+				return _classPrivateFieldGet$1(_menu, this)?.getPopup()?.isShown() === true;
+			}
+		}, {
+			key: "destroy",
+			value: function destroy() {
+				_classPrivateFieldSet$1(_destroyed, this, true);
+				if (_classPrivateFieldGet$1(_menu, this)?.getPopup()) {
+					_classPrivateFieldGet$1(_menu, this).destroy();
+				}
+				_classPrivateFieldSet$1(_menu, this, null);
+			}
+		}, {
+			key: "getMenu",
+			value: function getMenu() {
+				return _classPrivateFieldGet$1(_menu, this);
+			}
+		}]);
+	}(MenuController);
+	function _openMenu() {
+		// the menu is always bound to the button, so the bindElement option is ignored
+		_classPrivateFieldGet$1(_menu, this).show(this.getBindElement());
+		if (this.isShown()) {
+			this.notifyShow();
+		}
+	}
+	// Runtime.loadExtension is not guaranteed to settle, so the timeout keeps the button clickable and reports a reason.
+	// It is not a recovery: main.core retries the loading itself and keeps the extension promise forever,
+	// so a load that has failed for the page stays failed until a reload.
+	async function _loadMenuClass() {
+		let timer = null;
+		const timeout = new Promise((resolve, reject) => {
+			timer = setTimeout(() => {
+				reject(new Error('loading timed out'));
+			}, LOADING_TIMEOUT);
+		});
+		_classPrivateFieldSet$1(_loading, this, true);
+		try {
+			const exports = await Promise.race([main_core.Runtime.loadExtension(EXTENSION_NAME), timeout]);
+			if (!exports?.Menu) {
+				throw new Error('the extension does not export Menu');
+			}
+			return exports.Menu;
+		} catch (error) {
+			// the show() caller reports the reason, so a loading failure names itself apart from an opening one
+			throw new Error(`cannot load ${EXTENSION_NAME}: ${error.message}`, {
+				cause: error
+			});
+		} finally {
+			_classPrivateFieldSet$1(_loading, this, false);
+			clearTimeout(timer);
+		}
+	}
+	function _createMenu(MenuClass) {
+		const options = this.getOptions();
+		const events = options.events ?? {};
+		return new MenuClass({
+			...options,
+			events: {
+				...events,
+				// the own state is synchronized before a consumer handler: it may throw or replace the menu
+				onClose: () => {
+					this.notifyClose();
+					events.onClose?.();
+				},
+				onDestroy: () => {
+					// a popup destroyed from the outside (cacheable: false) is recreated on the next show
+					_classPrivateFieldSet$1(_menu, this, null);
+					this.notifyClose();
+					events.onDestroy?.();
+				}
+			}
+		});
 	}
 
 	/**
@@ -691,6 +992,7 @@ this.BX = this.BX || {};
 		babelHelpers.classCallCheck(this, AirButtonStyle);
 	});
 	babelHelpers.defineProperty(AirButtonStyle, "FILLED", '--style-filled');
+	babelHelpers.defineProperty(AirButtonStyle, "FILLED_WHITE", '--style-filled-white');
 	babelHelpers.defineProperty(AirButtonStyle, "FILLED_BITRIX_GPT", '--style-filled-bitrix-gpt');
 	babelHelpers.defineProperty(AirButtonStyle, "TINTED", '--style-tinted');
 	babelHelpers.defineProperty(AirButtonStyle, "TINTED_ALERT", '--style-tinted-alert');
@@ -712,6 +1014,7 @@ this.BX = this.BX || {};
 	function _callSuper$h(t, o, e) { return o = babelHelpers.getPrototypeOf(o), babelHelpers.possibleConstructorReturn(t, _isNativeReflectConstruct$h() ? Reflect.construct(o, e || [], babelHelpers.getPrototypeOf(t).constructor) : o.apply(t, e)); }
 	function _isNativeReflectConstruct$h() { try { var t = !Boolean.prototype.valueOf.call(Reflect.construct(Boolean, [], function () {})); } catch (t) {} return (_isNativeReflectConstruct$h = function () { return !!t; })(); }
 	function _superPropGet$2(t, o, e, r) { var p = babelHelpers.get(babelHelpers.getPrototypeOf(t.prototype ), o, e); return "function" == typeof p ? function (t) { return p.apply(e, t); } : p; }
+	function _classPrivateMethodInitSpec$1(e, a) { _checkPrivateRedeclaration$1(e, a), a.add(e); }
 	function _classPrivateFieldInitSpec(e, t, a) { _checkPrivateRedeclaration$1(e, t), t.set(e, a); }
 	function _checkPrivateRedeclaration$1(e, t) { if (t.has(e)) throw new TypeError("Cannot initialize the same private elements twice on an object"); }
 	function _classPrivateFieldSet(s, a, r) { return s.set(_assertClassBrand$2(s, a), r), r; }
@@ -719,7 +1022,9 @@ this.BX = this.BX || {};
 	function _assertClassBrand$2(e, t, n) { if ("function" == typeof e ? e === t : e.has(t)) return arguments.length < 3 ? t : n; throw new TypeError("Private element is not present on this object"); }
 	var _style = /*#__PURE__*/new WeakMap();
 	var _isWide = /*#__PURE__*/new WeakMap();
+	var _menuController = /*#__PURE__*/new WeakMap();
 	var _layout = /*#__PURE__*/new WeakMap();
+	var _Button_brand = /*#__PURE__*/new WeakSet();
 	/**
 	 * @namespace {BX.UI}
 	 */
@@ -732,8 +1037,10 @@ this.BX = this.BX || {};
 				...(main_core.Type.isPlainObject(options) ? options : {}),
 				baseClass: main_core.Type.isStringFilled(options?.baseClass) ? options.baseClass : Button.BASE_CLASS
 			}]);
+			_classPrivateMethodInitSpec$1(_this, _Button_brand);
 			_classPrivateFieldInitSpec(_this, _style, void 0);
 			_classPrivateFieldInitSpec(_this, _isWide, false);
+			_classPrivateFieldInitSpec(_this, _menuController, null);
 			_classPrivateFieldInitSpec(_this, _layout, {});
 			_this.isDependOnTheme = null;
 			_this.size = null;
@@ -744,14 +1051,13 @@ this.BX = this.BX || {};
 			_this.context = null;
 			_this.menuWindow = null;
 			_this.handleMenuClick = _this.handleMenuClick.bind(_this);
-			_this.handleMenuClose = _this.handleMenuClose.bind(_this);
 			_this.setDependOnTheme(_this.options.dependOnTheme ?? false);
 			_this.setSize(_this.options.size);
 			_this.setColor(_this.options.color);
 			_this.setIcon(_this.options.icon, _this.options.iconPosition || 'left');
 			_this.setState(_this.options.state);
 			_this.setId(_this.options.id);
-			_this.setMenu(_this.options.menu);
+			_assertClassBrand$2(_Button_brand, _this, _setInitialMenu).call(_this);
 			_this.setContext(_this.options.context);
 			_this.setWide(_this.options.wide === true);
 			_this.setLeftCorners(_this.options.removeLeftCorners !== true);
@@ -772,7 +1078,7 @@ this.BX = this.BX || {};
 			if (_this.options.round) {
 				_this.setRound();
 			}
-			if (_this.options.dropdown || _this.getMenuWindow() && _this.options.dropdown !== false) {
+			if (_this.options.dropdown || _classPrivateFieldGet(_menuController, _this) !== null && _this.options.dropdown !== false) {
 				_this.setDropdown();
 			}
 			return _this;
@@ -926,23 +1232,54 @@ this.BX = this.BX || {};
 		}, {
 			key: "setMenu",
 			value: function setMenu(options) {
-				if (main_core.Type.isPlainObject(options) && main_core.Type.isArray(options.items) && options.items.length > 0) {
-					this.setMenu(false);
-					this.menuWindow = new main_popup.Menu({
-						id: `ui-btn-menu-${main_core.Text.getRandom().toLowerCase()}`,
-						bindElement: this.getMenuBindElement(),
-						...options
-					});
-					this.menuWindow.getPopupWindow().subscribe('onClose', this.handleMenuClose);
+				if (hasMenuItems(options)) {
+					_assertClassBrand$2(_Button_brand, this, _removeMenu).call(this);
+					_classPrivateFieldSet(_menuController, this, new LegacyMenuController(options, _assertClassBrand$2(_Button_brand, this, _getMenuCallbacks).call(this)));
+					this.menuWindow = _classPrivateFieldGet(_menuController, this).getMenu();
 					main_core.Event.bind(this.getMenuClickElement(), 'click', this.handleMenuClick);
-				} else if (options === false && this.menuWindow !== null) {
-					this.menuWindow.close();
-					this.menuWindow.getPopupWindow().unsubscribe('onClose', this.handleMenuClose);
-					main_core.Event.unbind(this.getMenuClickElement(), 'click', this.handleMenuClick);
-					this.menuWindow.destroy();
-					this.menuWindow = null;
+				} else if (options === false) {
+					_assertClassBrand$2(_Button_brand, this, _removeMenu).call(this, LegacyMenuController);
 				}
 				return this;
+			}
+
+			/**
+			 * Sets a menu rendered by the ui.system.menu extension instead of the main.popup one.
+			 * Passing false removes it, while the PHP setter takes null for that. The arrow is a caller's
+			 * concern here, unlike the PHP setter, which keeps it in sync itself.
+			 */
+		}, {
+			key: "setSystemMenu",
+			value: function setSystemMenu(options) {
+				if (hasMenuItems(options)) {
+					_assertClassBrand$2(_Button_brand, this, _removeMenu).call(this);
+					_assertClassBrand$2(_Button_brand, this, _warnOnLegacyMenuItems).call(this, options.items);
+					_classPrivateFieldSet(_menuController, this, new SystemMenuController(options, _assertClassBrand$2(_Button_brand, this, _getMenuCallbacks).call(this)));
+					main_core.Event.bind(this.getMenuClickElement(), 'click', this.handleMenuClick);
+				} else if (options === false) {
+					_assertClassBrand$2(_Button_brand, this, _removeMenu).call(this, SystemMenuController);
+				}
+				return this;
+			}
+
+			/**
+			 * Returns the menu instance, which is created on the first opening: the ui.system.menu class
+			 * is available at runtime only. A menu that has never been opened gives null, unlike
+			 * getMenuWindow(), which has its instance right after setMenu().
+			 */
+		}, {
+			key: "getSystemMenu",
+			value: function getSystemMenu() {
+				return _classPrivateFieldGet(_menuController, this) instanceof SystemMenuController ? _classPrivateFieldGet(_menuController, this).getMenu() : null;
+			}
+
+			/**
+			 * Unlike getSystemMenu(), tells a kind of the set menu apart even before its first opening.
+			 */
+		}, {
+			key: "hasSystemMenu",
+			value: function hasSystemMenu() {
+				return _classPrivateFieldGet(_menuController, this) instanceof SystemMenuController;
 			}
 		}, {
 			key: "getMenuBindElement",
@@ -961,8 +1298,22 @@ this.BX = this.BX || {};
 		}, {
 			key: "handleMenuClick",
 			value: function handleMenuClick(event) {
-				this.getMenuWindow().show();
-				this.setActive(this.getMenuWindow().getPopupWindow().isShown());
+				const opening = _classPrivateFieldGet(_menuController, this)?.show();
+				if (opening instanceof Promise) {
+					// the button does not wait for an asynchronous menu, but its failure must not be silent
+					opening.catch(error => {
+						console.error('BX.UI.Button: cannot show a menu', error);
+					});
+				}
+			}
+
+			/**
+			 * @protected
+			 */
+		}, {
+			key: "handleMenuShow",
+			value: function handleMenuShow() {
+				this.setActive(true);
 			}
 		}, {
 			key: "setAirDesign",
@@ -982,7 +1333,10 @@ this.BX = this.BX || {};
 		}, {
 			key: "handleMenuClose",
 			value: function handleMenuClose() {
-				this.setActive(false);
+				// a system menu resets only the state it has set itself, a legacy one resets it as it always did
+				if (!this.hasSystemMenu() || this.isActive()) {
+					this.setActive(false);
+				}
 			}
 		}, {
 			key: "getMenuWindow",
@@ -1169,6 +1523,56 @@ this.BX = this.BX || {};
 			}
 		}]);
 	}(BaseButton);
+	function _setInitialMenu() {
+		const {
+			menu,
+			systemMenu
+		} = this.options;
+		if (hasMenuItems(systemMenu)) {
+			if (main_core.Type.isPlainObject(menu)) {
+				console.warn('BX.UI.Button: the "menu" option is ignored, because "systemMenu" is set.');
+			}
+			this.setSystemMenu(systemMenu);
+			return;
+		}
+		this.setMenu(menu);
+		this.setSystemMenu(systemMenu);
+	}
+	/**
+	 * Without a controller class removes a menu of any kind, otherwise only a menu of the given kind.
+	 */
+	function _removeMenu(controllerClass = null) {
+		const controller = _classPrivateFieldGet(_menuController, this);
+		if (controller === null) {
+			return;
+		}
+		if (controllerClass !== null && !(controller instanceof controllerClass)) {
+			return;
+		}
+		main_core.Event.unbind(this.getMenuClickElement(), 'click', this.handleMenuClick);
+		controller.destroy();
+
+		// a consumer handler of the destroyed menu may set a new one, and it must survive
+		if (_classPrivateFieldGet(_menuController, this) !== controller) {
+			return;
+		}
+		_classPrivateFieldSet(_menuController, this, null);
+		this.menuWindow = null;
+	}
+	function _warnOnLegacyMenuItems(items) {
+		const hasLegacyItems = items.some(item => main_core.Type.isPlainObject(item) && !item.title && item.text);
+		if (!hasLegacyItems) {
+			return;
+		}
+		console.warn('BX.UI.Button: setSystemMenu() expects ui.system.menu options ("title"), got legacy menu format ("text")');
+	}
+	function _getMenuCallbacks() {
+		return {
+			getBindElement: () => this.getMenuBindElement(),
+			onShow: () => this.handleMenuShow(),
+			onClose: () => this.handleMenuClose()
+		};
+	}
 	babelHelpers.defineProperty(Button, "BASE_CLASS", 'ui-btn');
 	babelHelpers.defineProperty(Button, "Size", ButtonSize);
 	babelHelpers.defineProperty(Button, "Color", ButtonColor);
@@ -1617,11 +2021,9 @@ this.BX = this.BX || {};
 			 * @protected
 			 */
 		}, {
-			key: "handleMenuClick",
-			value: function handleMenuClick(event) {
-				this.getMenuWindow().show();
-				const isActive = this.getMenuWindow().getPopupWindow().isShown();
-				this.getMenuButton().setActive(isActive);
+			key: "handleMenuShow",
+			value: function handleMenuShow() {
+				this.getMenuButton().setActive(true);
 			}
 
 			/**
@@ -1630,7 +2032,10 @@ this.BX = this.BX || {};
 		}, {
 			key: "handleMenuClose",
 			value: function handleMenuClose() {
-				this.getMenuButton().setActive(false);
+				// a system menu resets only the state it has set itself, a legacy one resets it as it always did
+				if (!this.hasSystemMenu() || this.getMenuButton().isActive()) {
+					this.getMenuButton().setActive(false);
+				}
 			}
 
 			/**
@@ -1793,7 +2198,13 @@ this.BX = this.BX || {};
 					options.events = nodeOptions.events;
 					_assertClassBrand(ButtonManager, this, _convertEvents).call(this, options.events);
 				}
-				if (main_core.Type.isPlainObject(nodeOptions.menu)) {
+				if (hasMenuItems(nodeOptions.systemMenu)) {
+					if (main_core.Type.isPlainObject(nodeOptions.menu)) {
+						console.warn('BX.UI.ButtonManager.createFromNode: the "menu" option is ignored, because "systemMenu" is set.');
+					}
+					options.systemMenu = nodeOptions.systemMenu;
+					_assertClassBrand(ButtonManager, this, _convertSystemMenuEvents).call(this, options.systemMenu);
+				} else if (main_core.Type.isPlainObject(nodeOptions.menu)) {
 					options.menu = nodeOptions.menu;
 					_assertClassBrand(ButtonManager, this, _convertMenuEvents).call(this, options.menu.items);
 				}
@@ -2017,6 +2428,53 @@ this.BX = this.BX || {};
 			}
 			if (main_core.Type.isArray(item.items)) {
 				_assertClassBrand(_ButtonManager, this, _convertMenuEvents).call(this, item.items);
+			}
+		});
+	}
+	/**
+	 * @private
+	 * @param options ui.buttons options of a button rendered inside a menu
+	 */
+	function _convertButtonOptions(options) {
+		if (options.onclick) {
+			options.onclick = _assertClassBrand(_ButtonManager, this, _convertEventHandler).call(this, options.onclick);
+		}
+		_assertClassBrand(_ButtonManager, this, _convertEvents).call(this, options.events);
+		if (hasMenuItems(options.systemMenu)) {
+			_assertClassBrand(_ButtonManager, this, _convertSystemMenuEvents).call(this, options.systemMenu);
+		} else if (main_core.Type.isPlainObject(options.menu)) {
+			_assertClassBrand(_ButtonManager, this, _convertMenuEvents).call(this, options.menu.items);
+		}
+	}
+	/**
+	 * @private
+	 * @param menu ui.system.menu options
+	 */
+	function _convertSystemMenuEvents(menu) {
+		_assertClassBrand(_ButtonManager, this, _convertEvents).call(this, menu.events);
+		if (menu.richHeader?.onClick) {
+			menu.richHeader.onClick = _assertClassBrand(_ButtonManager, this, _convertEventHandler).call(this, menu.richHeader.onClick);
+		}
+		if (!main_core.Type.isArray(menu.items)) {
+			return;
+		}
+		menu.items.forEach(item => {
+			if (!main_core.Type.isPlainObject(item)) {
+				return;
+			}
+			if (item.onClick) {
+				item.onClick = _assertClassBrand(_ButtonManager, this, _convertEventHandler).call(this, item.onClick);
+			}
+			if (item.extraIcon?.onClick) {
+				item.extraIcon.onClick = _assertClassBrand(_ButtonManager, this, _convertEventHandler).call(this, item.extraIcon.onClick);
+			}
+
+			// a menu item may render a ui.buttons button, and its options keep the old handler format
+			if (main_core.Type.isPlainObject(item.uiButtonOptions)) {
+				_assertClassBrand(_ButtonManager, this, _convertButtonOptions).call(this, item.uiButtonOptions);
+			}
+			if (main_core.Type.isPlainObject(item.subMenu)) {
+				_assertClassBrand(_ButtonManager, this, _convertSystemMenuEvents).call(this, item.subMenu);
 			}
 		});
 	}
@@ -2432,5 +2890,5 @@ this.BX = this.BX || {};
 	exports.SplitSubButton = SplitSubButton;
 	exports.SplitSubButtonType = SplitSubButtonType;
 
-})(this.BX.UI = this.BX.UI || {}, BX, BX, BX.UI, BX.UI, BX.Main, BX.UI.IconSet, BX.UI, BX.Event);
+})(this.BX.UI = this.BX.UI || {}, BX, window, BX.UI, BX.UI, BX.UI.IconSet, BX.Main, BX.UI, BX.Event);
 //# sourceMappingURL=ui.buttons.bundle.js.map

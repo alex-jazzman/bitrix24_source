@@ -1,4 +1,4 @@
-import { Controller } from './base/controller';
+import type { Controller } from './base/controller';
 
 let storedValues = null;
 const lsStoredValuesKey = 'b24-form-field-stored-values';

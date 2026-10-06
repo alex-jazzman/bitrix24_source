@@ -25,18 +25,20 @@
 }
 
 .bx-im-search-input__search-icon {
+	display: flex;
+	align-items: center;
+	justify-content: center;
 	flex-shrink: 0;
 	width: 24px;
 	height: 24px;
 	margin-right: 4px;
-	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='25' fill='none' viewBox='0 0 24 25'%3E%3Cpath fill='%23a8adb4' fill-rule='evenodd' d='M14.05 15.897a6.37 6.37 0 1 1 1.836-1.836l3.311 3.31a1 1 0 0 1 0 1.414l-.422.422a1 1 0 0 1-1.414 0zm1.058-5.328a4.55 4.55 0 1 1-9.098 0 4.55 4.55 0 0 1 9.098 0' clip-rule='evenodd'/%3E%3C/svg%3E");
-	background-position: center;
-	background-repeat: no-repeat;
-	background-size: cover;
+	/* DS BIcon (Outline.SEARCH) colour: neutral grey matching the previous static lupa */
+	--ui-icon-set__icon-color: var(--ui-color-base-4);
 }
 
 .bx-im-search-input__element {
 	width: 100%;
+	min-width: 0;
 	height: 100%;
 	border: none;
 	outline-color: transparent;

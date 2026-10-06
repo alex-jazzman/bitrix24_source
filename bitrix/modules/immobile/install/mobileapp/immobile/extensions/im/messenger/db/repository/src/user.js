@@ -13,6 +13,9 @@ jn.define('im/messenger/db/repository/user', (require, exports, module) => {
 	const { Query } = require('im/messenger/db/query-builder/builder');
 	const { UserSchema } = require('im/messenger/db/table-schema');
 	const { getStartWordsSearchCondition } = require('im/messenger/db/helper/start-words');
+	const { getLogger } = require('im/messenger/lib/logger');
+
+	const logger = getLogger('db--user-repository');
 
 	/**
 	 * @class UserRepository
@@ -248,6 +251,11 @@ jn.define('im/messenger/db/repository/user', (require, exports, module) => {
 				result.connector = user.connector;
 			}
 
+			if (Type.isBoolean(user.active))
+			{
+				result.active = user.active;
+			}
+
 			if (Type.isStringFilled(user.last_activity_date))
 			{
 				result.lastActivityDate = DateHelper.cast(user.last_activity_date);
@@ -289,6 +297,33 @@ jn.define('im/messenger/db/repository/user', (require, exports, module) => {
 		}
 
 		/**
+		 * @param {Array<number>} idList
+		 * @return {Promise<void>}
+		 */
+		async deleteByIdList(idList)
+		{
+			if (!Type.isArrayFilled(idList))
+			{
+				return;
+			}
+
+			const ids = idList.map(Number).filter((id) => Number.isInteger(id) && id > 0);
+			if (!Type.isArrayFilled(ids))
+			{
+				return;
+			}
+
+			try
+			{
+				await this.userTable.deleteByIdList(ids);
+			}
+			catch (error)
+			{
+				logger.error(`${this.constructor.name}: userTable.deleteByIdList error: `, error);
+			}
+		}
+
+		/**
 		 * @param {Partial<SearchOptions>} searchOptions
 		 * @returns {Promise<{items: Array<UsersModelState>}>}
 		 */
@@ -308,6 +343,7 @@ jn.define('im/messenger/db/repository/user', (require, exports, module) => {
 				.from(UserSchema)
 				.where(
 					getStartWordsSearchCondition([UserSchema.name, UserSchema.workPosition], searchText),
+					UserSchema.active.equal(true),
 				)
 				.limit(limit)
 				.execute();

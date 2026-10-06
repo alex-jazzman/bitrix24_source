@@ -10,3 +10,6 @@ export * from './ui/change-frame-color-top-btn/change-frame-color-top-btn';
 export * from './ui/change-frame-text-align-top-btn/change-frame-text-align-top-btn';
 export * from './ui/change-activation-top-btn/change-activation-top-btn';
 export * from './ui/change-activation-block-switcher/change-activation-block-switcher';
+export * from './ui/edit-frame-content/edit-frame-content';
+export * from './ui/change-edit-frame-content-top-btn/change-edit-frame-content-top-btn';
+export * from './ui/edit-node-title/edit-node-title';

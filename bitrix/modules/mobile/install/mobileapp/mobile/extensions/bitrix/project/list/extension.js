@@ -117,6 +117,7 @@
 						mandatoryFeatures: this.mandatoryFeatures,
 						mode: 'mobile',
 						shouldSelectDialogId: 'Y',
+						shouldSelectHasCollabers: 'Y',
 					},
 					filter: {
 						ACTIVE: 'Y',
@@ -348,6 +349,12 @@
 							: ''
 					),
 					opened: (item.opened === 'Y'),
+					hasCollabers: (
+						typeof item.additionalData !== 'undefined'
+						&& typeof item.additionalData.hasCollabers !== 'undefined'
+							? item.additionalData.hasCollabers
+							: false
+					),
 					membersCount: (
 						typeof item.numberOfMembers === 'undefined'
 							? 0

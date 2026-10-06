@@ -145,6 +145,12 @@ export const SidebarSearchInput = {
 				this.focusedIndex = -1;
 			}
 		},
+		// Called from the sidebar root when the collapsed rail's search entry expands the panel:
+		// the entry means "search", so the caret has to land in the field, not just open the panel.
+		focusInput(): void
+		{
+			this.$refs.input?.focus();
+		},
 		onSearchRowClick(): void
 		{
 			this.$refs.input?.focus();
@@ -281,7 +287,7 @@ export const SidebarSearchInput = {
 					...
 				</div>
 				<div v-else-if="status === 'empty'" class="note-kb-search-empty">
-					<img class="note-kb-search-empty-mascot" src="/bitrix/js/note/sidebar/src/images/empty-search.png" alt="" />
+					<img class="note-kb-search-empty-mascot" src="/bitrix/js/note/sidebar/src/images/empty-search.webp" srcset="/bitrix/js/note/sidebar/src/images/empty-search.webp 1x, /bitrix/js/note/sidebar/src/images/empty-search@2x.webp 2x" alt="" />
 					<div class="note-kb-search-empty-caption">{{ emptyText }}</div>
 				</div>
 				<div v-else-if="status === 'error'" class="note-kb-search-status note-kb-search-status--error">

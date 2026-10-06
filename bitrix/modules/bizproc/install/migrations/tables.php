@@ -87,6 +87,8 @@ $migration->table('b_bp_workflow_instance')->create(function (\Bitrix\Main\Updat
 	$table->addIndex('ix_bp_wi_started_by', ['STARTED_BY']);
 	$table->addIndex('ix_bp_wi_tpl_started', ['WORKFLOW_TEMPLATE_ID', 'STARTED']);
 	$table->addIndex('ix_bp_wi_modified', ['MODIFIED']);
+	$table->addIndex('ix_bp_wi_status_modified', ['STATUS', 'MODIFIED']);
+	$table->addIndex('ix_bp_wi_modified_id_owned_until', ['MODIFIED', 'ID', 'OWNED_UNTIL']);
 });
 
 $migration->table('b_bp_tracking')->create(function (\Bitrix\Main\UpdateSystem\Migration\CreateTableBuilder $table) {
@@ -117,7 +119,7 @@ $migration->table('b_bp_task')->create(function (\Bitrix\Main\UpdateSystem\Migra
 	$columns->datetime('CREATED_DATE');
 	$columns->datetime('MODIFIED')->notNull();
 	$columns->datetime('OVERDUE_DATE');
-	$columns->varchar('NAME', 128)->notNull();
+	$columns->varchar('NAME', 255)->notNull();
 	$columns->text('DESCRIPTION');
 	$columns->text('PARAMETERS');
 	$columns->int('STATUS')->notNull()->default('0');
@@ -457,6 +459,9 @@ $migration->table('b_bp_workflow_template_settings')->create(function (\Bitrix\M
 	$columns->varchar('NAME', 255)->notNull();
 	$columns->text('VALUE');
 	$table->addIndex('ix_bp_wf_template_settings_tpl_id', ['TEMPLATE_ID']);
+	// Covers lookups by setting value, e.g. finding the launched copies of a system AI-agent
+	// template by ORIGIN_SYSTEM_CODE. VALUE is TEXT on MySQL, so the prefix length is mandatory.
+	$table->addIndex('ix_bp_wf_template_settings_name_value', ['NAME', 'VALUE(50)']);
 });
 
 $migration->table('b_bp_workflow_template_user_option')->create(function (\Bitrix\Main\UpdateSystem\Migration\CreateTableBuilder $table) {
@@ -494,6 +499,47 @@ $migration->table('b_bp_workflow_template_draft')->create(function (\Bitrix\Main
 	$columns->datetime('CREATED')->notNull();
 	$table->addIndex('ix_bp_wf_draft_template', ['TEMPLATE_ID']);
 	$table->addIndex('ix_bp_wf_draft_user', ['USER_ID']);
+});
+
+$migration->table('b_bp_workflow_template_change')->create(function (\Bitrix\Main\UpdateSystem\Migration\CreateTableBuilder $table) {
+	$table->addId();
+	$columns = $table->addColumn();
+	$columns->int('TEMPLATE_ID')->notNull();
+	$columns->tinyInt('EVENT_TYPE')->notNull();
+	$columns->int('USER_ID');
+	$columns->datetime('CREATED')->notNull();
+	$columns->int('VERSION_NUMBER');
+	$columns->tinyInt('PUBLICATION_TYPE');
+	$columns->mediumBlob('SNAPSHOT');
+	$columns->datetime('TEMPLATE_MODIFIED');
+	$table->addUniqueIndex('ux_bp_wf_tpl_change_version', ['TEMPLATE_ID', 'VERSION_NUMBER']);
+	$table->addIndex('ix_bp_wf_tpl_change_event_pub', ['TEMPLATE_ID', 'EVENT_TYPE', 'PUBLICATION_TYPE']);
+	$table->addIndex('ix_bp_wf_tpl_change_created', ['TEMPLATE_ID', 'CREATED']);
+});
+
+$migration->table('b_bp_workflow_template_pilot')->create(function (\Bitrix\Main\UpdateSystem\Migration\CreateTableBuilder $table) {
+	$table->addId();
+	$columns = $table->addColumn();
+	$columns->int('TEMPLATE_ID')->notNull();
+	$columns->varchar('MODULE_ID', 32)->notNull();
+	$columns->varchar('ENTITY', 64)->notNull();
+	$columns->varchar('DOCUMENT_TYPE', 128)->notNull();
+	$columns->mediumBlob('TEMPLATE_DATA')->notNull();
+	$columns->varchar('REVISION', 64)->notNull();
+	$columns->int('CREATED_BY')->notNull();
+	$columns->datetime('CREATED')->notNull();
+	// The only mechanism of the "at most one pilot version per template" invariant
+	$table->addUniqueIndex('ux_bp_wf_template_pilot_template', ['TEMPLATE_ID']);
+});
+
+$migration->table('b_bp_workflow_template_pilot_access')->create(function (\Bitrix\Main\UpdateSystem\Migration\CreateTableBuilder $table) {
+	$table->addId();
+	$columns = $table->addColumn();
+	$columns->int('PILOT_ID')->notNull();
+	$columns->varchar('ACCESS_CODE', 100)->notNull();
+	// The mirrored pair: reading the audience of a version, and checking a member by their codes
+	$table->addUniqueIndex('ux_bp_wf_pilot_access_code', ['PILOT_ID', 'ACCESS_CODE']);
+	$table->addIndex('ix_bp_wf_pilot_access_code_pilot', ['ACCESS_CODE', 'PILOT_ID']);
 });
 
 $migration->table('b_bp_task_archive')->create(function (\Bitrix\Main\UpdateSystem\Migration\CreateTableBuilder $table) {
@@ -609,6 +655,9 @@ $migration->table('b_bp_storage_record_data')->create(function (\Bitrix\Main\Upd
 	$table->addIndex('ix_storage_record_data_time_storage', ['CREATED_TIME', 'STORAGE_ID']);
 	$table->addIndex('ix_storage_record_data_document_storage', ['DOCUMENT_ID', 'STORAGE_ID']);
 	$table->addIndex('ix_storage_record_data_storage', ['STORAGE_ID']);
+	$table->addIndex('ix_storage_record_data_storage_time', ['STORAGE_ID', 'CREATED_TIME']);
+	// Keyset batches of the rows owned by a template, used while removing a managed AI-agent copy.
+	$table->addIndex('ix_bp_storage_record_data_template', ['TEMPLATE_ID', 'ID']);
 });
 
 $migration->table('b_bp_workflow_template_file')->create(function (\Bitrix\Main\UpdateSystem\Migration\CreateTableBuilder $table) {
@@ -649,6 +698,7 @@ $migration->table('b_bp_messenger_workflow_resume_message')->create(function (\B
 	$columns->varchar('STATUS', 255)->notNull();
 	$table->addPrimaryKey('ID');
 	$table->addIndex('IX_QUEUE_ID_AVAILABLE_AT', ['QUEUE_ID', 'AVAILABLE_AT']);
+	$table->addIndex('IX_QUEUE_ID_ITEM_ID', ['QUEUE_ID', 'ITEM_ID']);
 });
 
 $migration->table('b_bp_workflow_template_user_data')->create(function (\Bitrix\Main\UpdateSystem\Migration\CreateTableBuilder $table) {
@@ -728,3 +778,116 @@ $migration->table('b_bp_storage_record_field')->create(function (\Bitrix\Main\Up
 	$table->addIndex('ix_storage_record_field_num_record', ['FIELD_ID', 'VALUE_NUM', 'RECORD_ID']);
 });
 
+$migration->table('b_bp_storage_data_view')->create(function (\Bitrix\Main\UpdateSystem\Migration\CreateTableBuilder $table) {
+	$table->addId();
+	$columns = $table->addColumn();
+	$columns->int('STORAGE_TYPE_ID')->notNull();
+	$columns->text('DEFINITION');
+	$columns->char('STATUS', 1)->notNull()->default('N');
+	$columns->text('ERROR_TEXT');
+	$columns->mediumText('DELETION_MARKS');
+	$columns->datetime('MATERIALIZED_AT');
+	$columns->int('MATERIALIZED_BY');
+	$columns->int('OWNER_TEMPLATE_ID');
+	$columns->varchar('OWNER_ACTIVITY_NAME', 255);
+	$columns->int('CREATED_BY')->notNull();
+	$columns->int('UPDATED_BY')->notNull();
+	$columns->datetime('CREATED_TIME')->notNull()->defaultCurrentTimestamp();
+
+	$columns->datetime('UPDATED_TIME')->notNull()->defaultCurrentTimestamp();
+	$table->addUniqueIndex('ix_bp_storage_data_view_st', ['STORAGE_TYPE_ID']);
+	$table->addIndex('ix_bp_storage_data_view_owner', ['OWNER_TEMPLATE_ID', 'OWNER_ACTIVITY_NAME']);
+});
+
+$migration->table('b_bp_workflow_last_values')->create(function (\Bitrix\Main\UpdateSystem\Migration\CreateTableBuilder $table) {
+	$columns = $table->addColumn();
+	$columns->int('TEMPLATE_ID')->notNull();
+	$columns->datetime('VERSION_KEY')->notNull();
+	$columns->varchar('WORKFLOW_ID', 32);
+	$columns->varchar('MODULE_ID', 32);
+	$columns->varchar('ENTITY', 64);
+	$columns->varchar('DOCUMENT_ID', 128);
+	$columns->int('STATUS')->notNull()->default('0');
+	$columns->datetime('COMPLETED_AT')->notNull();
+	$columns->datetime('UPDATED_AT')->notNull();
+	$columns->text('VALUES_DATA')->notNull();
+	$table->addPrimaryKey('TEMPLATE_ID');
+	$table->addIndex('IX_BP_WF_LAST_VALUES_COMPLETED', ['COMPLETED_AT']);
+});
+
+$migration->table('b_bp_access_role')->create(function (\Bitrix\Main\UpdateSystem\Migration\CreateTableBuilder $table) {
+	$table->addId();
+	$columns = $table->addColumn();
+	$columns->varchar('NAME', 250)->notNull();
+});
+
+$migration->table('b_bp_access_role_relation')->create(function (\Bitrix\Main\UpdateSystem\Migration\CreateTableBuilder $table) {
+	$table->addId();
+	$columns = $table->addColumn();
+	$columns->int('ROLE_ID')->unsigned()->notNull();
+	$columns->varchar('RELATION', 100)->notNull()->default('');
+	$table->addIndex('ix_bp_access_rel_role', ['ROLE_ID']);
+	$table->addIndex('ix_bp_access_rel_code', ['RELATION']);
+});
+
+$migration->table('b_bp_access_permission')->create(function (\Bitrix\Main\UpdateSystem\Migration\CreateTableBuilder $table) {
+	$table->addId();
+	$columns = $table->addColumn();
+	$columns->int('ROLE_ID')->unsigned()->notNull();
+	$columns->varchar('PERMISSION_ID', 32)->notNull()->default('0');
+	$columns->int('VALUE')->notNull()->default(0);
+	$table->addIndex('ix_bp_access_perm_role', ['ROLE_ID']);
+	$table->addIndex('ix_bp_access_perm_pid', ['PERMISSION_ID']);
+	$table->addIndex('ix_bp_access_perm_value_pid', ['VALUE', 'PERMISSION_ID']);
+	$table->addIndex('ix_bp_access_perm_role_pid_value', ['ROLE_ID', 'PERMISSION_ID', 'VALUE']);
+});
+
+// Managed copies of system AI agents: the instance row owns the launched copy, the resource rows own
+// everything created around it. No foreign keys: resource rows are deleted explicitly, the instance row last.
+$migration->table('b_bp_managed_agent_instance')->create(function (\Bitrix\Main\UpdateSystem\Migration\CreateTableBuilder $table) {
+	$columns = $table->addColumn();
+	$columns->bigInt('ID')->notNull()->autoincrement();
+	$columns->char('IDENTITY_HASH', 64)->notNull();
+	$columns->varchar('SYSTEM_CODE', 50)->notNull();
+	$columns->varchar('CONTEXT_NAMESPACE', 64)->notNull();
+	$columns->varchar('CONTEXT_TYPE', 64)->notNull();
+	$columns->varchar('CONTEXT_ID', 128)->notNull();
+	$columns->int('USER_ID')->notNull();
+	$columns->int('TEMPLATE_ID');
+	$columns->varchar('STATE', 24)->notNull();
+	$columns->char('CONFIG_FINGERPRINT', 64)->notNull();
+	$columns->int('RETRY_COUNT')->notNull()->default('0');
+	$columns->datetime('NEXT_RETRY_AT');
+	$columns->varchar('LAST_ERROR_CODE', 64);
+	$columns->datetime('CREATED_AT')->notNull()->defaultCurrentTimestamp();
+	$columns->datetime('UPDATED_AT')->notNull()->defaultCurrentTimestamp();
+	$table->addPrimaryKey('ID');
+	$table->addUniqueIndex('ux_bp_ma_instance_identity', ['IDENTITY_HASH']);
+	$table->addUniqueIndex('ux_bp_ma_instance_template', ['TEMPLATE_ID']);
+	$table->addIndex('ix_bp_ma_instance_cleanup', ['STATE', 'NEXT_RETRY_AT', 'ID']);
+});
+
+$migration->table('b_bp_managed_agent_resource')->create(function (\Bitrix\Main\UpdateSystem\Migration\CreateTableBuilder $table) {
+	$columns = $table->addColumn();
+	$columns->bigInt('ID')->notNull()->autoincrement();
+	$columns->bigInt('INSTANCE_ID')->notNull();
+	$columns->varchar('TYPE', 32)->notNull();
+	$columns->varchar('RESOURCE_ID', 128)->notNull();
+	$columns->mediumText('DATA');
+	$columns->datetime('CREATED_AT')->notNull()->defaultCurrentTimestamp();
+	$table->addPrimaryKey('ID');
+	$table->addUniqueIndex('ux_bp_ma_resource_identity', ['INSTANCE_ID', 'TYPE', 'RESOURCE_ID']);
+	$table->addIndex('ix_bp_ma_resource_cleanup', ['INSTANCE_ID', 'TYPE', 'ID']);
+	$table->addIndex('ix_bp_ma_resource_lookup', ['TYPE', 'RESOURCE_ID']);
+});
+
+// The registry is asked about on the creation and on the completion path of every workflow of the portal, so
+// the presence of its two tables is stated here instead of being probed by the first request that needs it.
+// Written only after both tables are really there: a create that failed must not be remembered as a schema.
+if (
+	$migration->context()->tableExists('b_bp_managed_agent_instance')
+	&& $migration->context()->tableExists('b_bp_managed_agent_resource')
+)
+{
+	$migration->option()->set('bizproc', 'ai_agent_registry_schema_ready', 'Y');
+}

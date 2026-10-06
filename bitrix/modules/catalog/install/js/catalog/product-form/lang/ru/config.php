@@ -62,3 +62,4 @@ $MESS["CATALOG_FORM_POPUP_AFTER_MARKET_CREATING_INFO1"] = "Теперь вы м�
 $MESS["CATALOG_FORM_POPUP_AFTER_MARKET_CREATING_CONTINUE"] = "Продолжить";
 $MESS["CATALOG_FORM_DISCOUNT_ACCESS_DENIED_HINT"] = "Недостаточно прав для применения скидки";
 $MESS["CATALOG_FORM_PRICE_ACCESS_DENIED_HINT"] = "Недостаточно прав для изменения цены";
+$MESS["CATALOG_FORM_TAX_WITHOUT_VAT"] = "Без НДС";

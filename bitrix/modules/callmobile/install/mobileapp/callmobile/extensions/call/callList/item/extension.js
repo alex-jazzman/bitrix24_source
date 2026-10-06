@@ -31,24 +31,24 @@ jn.define('call/callList/item', (require, exports, module) => {
 
 			if (item.status === STATUS.MISSED)
 			{
-				return BX.message('MOBILEAPP_CALL_LIST_MISSED_TYPE');
+				return BX.message('MOBILEAPP_CALL_LIST_MISSED');
 			}
 
 			if (item.type === TYPE.INCOMING)
 			{
 				return timeStr
-					? BX.message('MOBILEAPP_CALL_LIST_MISSED_INCOMING_TIME').replace('#TIME#', timeStr)
-					: BX.message('MOBILEAPP_CALL_LIST_MISSED_INCOMING');
+					? BX.message('MOBILEAPP_CALL_LIST_INCOMING_TIME').replace('#TIME#', timeStr)
+					: BX.message('MOBILEAPP_CALL_LIST_INCOMING');
 			}
 
 			if (item.type === TYPE.OUTGOING)
 			{
 				return timeStr
-					? BX.message('MOBILEAPP_CALL_LIST_MISSED_OUTGOING_TIME').replace('#TIME#', timeStr)
-					: BX.message('MOBILEAPP_CALL_LIST_MISSED_OUTGOING');
+					? BX.message('MOBILEAPP_CALL_LIST_OUTGOING_TIME').replace('#TIME#', timeStr)
+					: BX.message('MOBILEAPP_CALL_LIST_OUTGOING');
 			}
 
-			return BX.message('MOBILEAPP_CALL_LIST_MISSED_OUTGOING');
+			return BX.message('MOBILEAPP_CALL_LIST_OUTGOING');
 		}
 
 		getCallIcon(item)

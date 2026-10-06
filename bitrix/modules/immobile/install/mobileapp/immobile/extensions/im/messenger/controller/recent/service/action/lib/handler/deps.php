@@ -18,5 +18,6 @@ return [
 		'im:messenger/controller/folder/create',
 		'im:messenger/controller/folder/selector',
 		'im:messenger/provider/services/folder',
+		'im:messenger/provider/services/analytics',
 	],
 ];

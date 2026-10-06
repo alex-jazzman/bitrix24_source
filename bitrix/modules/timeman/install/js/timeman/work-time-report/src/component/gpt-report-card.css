@@ -19,12 +19,20 @@
 	flex-shrink: 0;
 	width: var(--icon-size);
 	height: var(--icon-size);
-	background: url("../../image/auto.png") no-repeat center;
+	background: no-repeat center;
+	background-image: image-set(
+		url("../../image/auto.webp") 1x,
+		url("../../image/auto@2x.webp") 2x
+	);
 	background-size: 54px;
 }
 
 .tm-work-time-report-gpt-card__title-icon.--ai-report {
-	background: url("../../image/light-2.png") no-repeat center;
+	background: no-repeat center;
+	background-image: image-set(
+		url("../../image/light-2.webp") 1x,
+		url("../../image/light-2@2x.webp") 2x
+	);
 	background-size: contain;
 }
 

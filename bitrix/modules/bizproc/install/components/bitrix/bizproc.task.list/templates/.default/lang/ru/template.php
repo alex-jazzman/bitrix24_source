@@ -12,4 +12,9 @@ $MESS ['BPATL_GROUP_ACTION_YES'] = "Утвердить";
 $MESS ['BPATL_GROUP_ACTION_NO'] = "Отклонить";
 $MESS ['BPATL_GROUP_ACTION_OK'] = "Выполнить";
 $MESS ['BPATL_GROUP_ACTION_DELEGATE'] = "Делегировать";
+$MESS ['BPATL_A11Y_COMMENTS_LABEL'] = "Комментарии: #COUNT#";
+$MESS ['BPATL_A11Y_GRID_UPDATED'] = "Список обновлён";
+$MESS ['BPATL_A11Y_DELEGATE_TO_LABEL'] = "Кому делегировать";
+$MESS ['BPATL_A11Y_ROW_ACTIONS_LABEL'] = "Действия";
+$MESS ['BPATL_A11Y_PROCESS_FACES_LABEL'] = "Участники процесса";
 ?>

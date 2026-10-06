@@ -5,6 +5,22 @@ import { MessageBox } from 'ui.dialogs.messagebox';
 import 'ui.tooltip';
 import 'ui.icons.b24';
 
+import {
+	type StepInvalidField,
+	StepFormsA11y,
+	addStepHeading,
+	announceStartResult,
+	clearStepInvalidControls,
+	focusStepError,
+	focusStepHeading,
+	hasFocusAboveFrame,
+	hasFocusedElement,
+	isolateInactiveSteps,
+	makeActivatable,
+	nameSliderDialog,
+	visuallyHidden,
+} from './a11y';
+
 import './css/style.css';
 
 const namespace = Reflection.namespace('BX.Lists.Component');
@@ -17,6 +33,14 @@ const AJAX_COMPONENT = 'bitrix:lists.element.creation_guide';
 const CLOSE_SLIDER_AFTER_SECONDS = 1;
 const MIN_STEPS_COUNT = 2;
 
+// The focus takes the heading of the first step with a delay on purpose: the slider applies its own
+// initial focus once the frame of the wizard has loaded and would take the focus straight back. The
+// pause also keeps the heading out of the speech of the slider that has just opened.
+const FIRST_STEP_FOCUS_DELAY = 1000;
+// how long the wizard keeps waiting for the frame of the slider to get the focus after that pause
+const FIRST_STEP_FOCUS_RETRY_DELAY = 200;
+const FIRST_STEP_FOCUS_ATTEMPTS = 20;
+
 const STEPS = Object.freeze({
 	DESCRIPTION: 'description',
 	CONSTANTS: 'constants',
@@ -24,9 +48,58 @@ const STEPS = Object.freeze({
 	STATUS: 'status',
 });
 
+const STEP_TITLE_MESSAGES = Object.freeze({
+	[STEPS.DESCRIPTION]: 'LISTS_ELEMENT_CREATION_GUIDE_CMP_STEP_RECOMMENDATION',
+	[STEPS.CONSTANTS]: 'LISTS_ELEMENT_CREATION_GUIDE_CMP_STEP_CONSTANTS',
+	[STEPS.FIELDS]: 'LISTS_ELEMENT_CREATION_GUIDE_CMP_STEP_FIELDS',
+	[STEPS.STATUS]: 'LISTS_ELEMENT_CREATION_GUIDE_CMP_STEP_STATUS',
+});
+
 const ERRORS = Object.freeze({
 	NETWORK_ERROR: 'LISTS_ELEMENT_CREATION_GUIDE_CMP_NETWORK_ERROR',
 });
+
+const ERROR_MESSAGE_ID_PREFIX = `${HTML_ELEMENT_ID}-error`;
+const ERROR_REGION_TEST_ID = `${HTML_ELEMENT_ID}-error-alert`;
+
+// ui.button.panel marks a button by its type, and two of the three buttons here share one type:
+// the wizard puts its own marks on them, by the ids it passes to the panel
+const NAVIGATION_BUTTON_TEST_IDS = Object.freeze({
+	[`${HTML_ELEMENT_ID}-back-button`]: `${HTML_ELEMENT_ID}-back-btn`,
+	[`${HTML_ELEMENT_ID}-next-button`]: `${HTML_ELEMENT_ID}-next-btn`,
+	[`${HTML_ELEMENT_ID}-create-button`]: `${HTML_ELEMENT_ID}-create-btn`,
+});
+
+function getStepTitle(step: string): string
+{
+	return Loc.getMessage(STEP_TITLE_MESSAGES[step]);
+}
+
+/**
+ * The role lives on this node and not on the permanent container: a region that is always there
+ * announces itself on every redraw of a step. The name of the region is a hidden text inside it
+ * rather than an attribute on it, because some screen readers voice such a name instead of the content.
+ * The node takes the focus of a rejected save when no control of the step can, hence the Tab-less stop.
+ *
+ * The mark comes from the outside: one region stands in every container that got a message, so a mark
+ * of its own is the only way to address a single one of them.
+ */
+function renderErrorRegion(messageNodes: Array<HTMLElement>, testId: string): HTMLElement
+{
+	return Tag.render`
+		<div role="alert" tabindex="-1" data-testid="${testId}">
+			${visuallyHidden(Loc.getMessage('LISTS_ELEMENT_CREATION_GUIDE_CMP_ERRORS_LABEL'))}
+			<div class="ui-alert ui-alert-danger">
+				<span class="ui-alert-message">${separateWithLineBreaks(messageNodes)}</span>
+			</div>
+		</div>
+	`;
+}
+
+function separateWithLineBreaks(nodes: Array<HTMLElement>): Array<HTMLElement>
+{
+	return nodes.flatMap((node, index) => (index === 0 ? [node] : [Tag.render`<br>`, node]));
+}
 
 type ComponentData = {
 	name: string,
@@ -44,11 +117,44 @@ type Step = {
 	step: string,
 	contentNode: HTMLElement,
 	progressBarNode: HTMLElement,
+	// the heading of the step, added for a screen reader only: the focus target of the step
+	headingNode: ?HTMLElement,
+};
+
+type ComponentError = {
+	code: string,
+	message: string,
+	// present on a validation error of a process parameter or constant only
+	customData: ?{ parameter: string, templateId: number },
+};
+
+type ShownError = {
+	error: ComponentError,
+	messageId: string,
+};
+
+// the container a message goes to, together with the mark of the alert region of that container
+type ErrorTarget = {
+	container: HTMLElement,
+	regionTestId: string,
+};
+
+type ErrorGroup = {
+	container: HTMLElement,
+	messageNodes: Array<HTMLElement>,
+};
+
+type RenderedErrors = {
+	shownErrors: Array<ShownError>,
+	// the first of the inserted alert nodes: the focus target of a rejected save with no control to take it
+	errorRegion: ?HTMLElement,
 };
 
 class ElementCreationGuide
 {
 	#steps: Array<Step> = [];
+	// every step container the markup renders, including the ones the active configuration skips
+	#stepContainers: Array<HTMLElement> = [];
 
 	#name: string;
 	#description: string;
@@ -69,6 +175,10 @@ class ElementCreationGuide
 	#formData: FormData;
 	#messageBox: MessageBox;
 	#canClose: boolean = false;
+	#formsA11y: StepFormsA11y = new StepFormsA11y({
+		calendarButtonLabel: Loc.getMessage('LISTS_ELEMENT_CREATION_GUIDE_CMP_CALENDAR_BUTTON'),
+		calendarButtonTestIdPrefix: `${HTML_ELEMENT_ID}-calendar-btn`,
+	});
 
 	constructor(props: ComponentData)
 	{
@@ -98,9 +208,12 @@ class ElementCreationGuide
 
 		this.#setCurrentStep(STEPS.DESCRIPTION);
 		this.#fillSteps(props);
+		this.#markNavigationButtons();
 		this.#toggleButtons();
 		this.#renderProgressBar();
 		this.#renderFirstStep();
+		this.#initStepA11y();
+		nameSliderDialog(Loc.getMessage('LISTS_ELEMENT_CREATION_GUIDE_CMP_DIALOG_LABEL'));
 
 		Event.EventEmitter.subscribe('SidePanel.Slider:onClose', (event) => {
 			if (event.target.getWindow() === window && this.#isChangedFormData() && !this.#canClose)
@@ -161,9 +274,99 @@ class ElementCreationGuide
 		return this.#steps.findIndex((step) => step.step === this.#currentStep);
 	}
 
+	/**
+	 * The step the wizard opens on gets its heading focused too: a change of step is not the only
+	 * moment a user of a screen reader needs to know where the wizard stands.
+	 */
+	#initStepA11y(): void
+	{
+		const firstStep = this.#steps[0];
+
+		this.#steps.forEach((step) => {
+			step.headingNode = addStepHeading(step.contentNode, this.#getStepHeadingTitle(step));
+		});
+
+		isolateInactiveSteps(this.#stepContainers, firstStep.contentNode);
+		this.#formsA11y.observeStepForms(firstStep.contentNode);
+
+		setTimeout(
+			() => this.#focusFirstStepHeading(firstStep, FIRST_STEP_FOCUS_ATTEMPTS),
+			FIRST_STEP_FOCUS_DELAY,
+		);
+	}
+
+	/**
+	 * A focus() call on a document that holds no focus of its own does nothing, and the frame of the
+	 * slider gets the focus later than the pause above (in Firefox by another half a second). So the
+	 * attempt is judged by its result and repeated until it takes, instead of being made once by a timer.
+	 */
+	#focusFirstStepHeading(firstStep: Step, attemptsLeft: number): void
+	{
+		// a move to the next step takes over, and so does a user who has already put the focus on
+		// something in the wizard on their own: until then no element of this document holds the focus.
+		// The focus a user has taken above the frame of the wizard is left alone as well: the attempt is
+		// repeated for almost five seconds, and any of those repeats would pull such a focus into the frame
+		if (this.#currentStep !== firstStep.step || hasFocusedElement() || hasFocusAboveFrame())
+		{
+			return;
+		}
+
+		this.#focusStepHeading(firstStep);
+
+		if (document.activeElement !== firstStep.headingNode && attemptsLeft > 1)
+		{
+			setTimeout(
+				() => this.#focusFirstStepHeading(firstStep, attemptsLeft - 1),
+				FIRST_STEP_FOCUS_RETRY_DELAY,
+			);
+		}
+	}
+
+	/**
+	 * Isolation goes together with the visibility switch, while the focus waits for the fade-in
+	 * (opacity transition, src/css/style.css). A cancelled fade means a newer step change took over.
+	 */
+	#switchStepA11y(previousStep: Step, nextStep: Step): void
+	{
+		this.#formsA11y.leaveStep(previousStep.contentNode);
+		this.#formsA11y.observeStepForms(nextStep.contentNode);
+		isolateInactiveSteps(this.#stepContainers, nextStep.contentNode);
+
+		const fadeIn = nextStep.contentNode.getAnimations().map((animation) => animation.finished);
+		Promise.all(fadeIn).then(
+			() => {
+				this.#focusStepHeading(nextStep);
+			},
+			() => {},
+		);
+	}
+
+	#focusStepHeading(step: Step): void
+	{
+		// the status step closes the slider before any speech, and the start result is announced separately
+		if (step.step === STEPS.STATUS)
+		{
+			return;
+		}
+
+		focusStepHeading(step.headingNode);
+	}
+
+	// the position of the step is part of its name: the step strip conveys it visually, and without it
+	// a user of a screen reader loses the only bearing on how far the wizard has gone
+	#getStepHeadingTitle(step: Step): string
+	{
+		return Loc.getMessage('LISTS_ELEMENT_CREATION_GUIDE_CMP_STEP_ANNOUNCEMENT', {
+			'#CURRENT#': String(this.#steps.indexOf(step) + 1),
+			'#TOTAL#': String(this.#steps.length),
+			'#NAME#': getStepTitle(step.step),
+		});
+	}
+
 	#fillSteps(props)
 	{
 		const contentNode = document.querySelectorAll('.list-el-cg__content >.list-el-cg__content-body');
+		this.#stepContainers = [...contentNode];
 
 		const showBPConstantsStep = Type.isBoolean(props.hasStatesToTuning) ? props.hasStatesToTuning : false;
 		const showFieldsStep = Type.isBoolean(props.hasFieldsToShow) ? props.hasFieldsToShow : false;
@@ -172,6 +375,7 @@ class ElementCreationGuide
 			step: STEPS.DESCRIPTION,
 			contentNode: contentNode.item(0),
 			progressBarNode: null,
+			headingNode: null,
 		});
 
 		if (showBPConstantsStep)
@@ -180,6 +384,7 @@ class ElementCreationGuide
 				step: STEPS.CONSTANTS,
 				contentNode: contentNode.item(1),
 				progressBarNode: null,
+				headingNode: null,
 			});
 		}
 
@@ -189,6 +394,7 @@ class ElementCreationGuide
 				step: STEPS.FIELDS,
 				contentNode: contentNode.item(2),
 				progressBarNode: null,
+				headingNode: null,
 			});
 		}
 
@@ -196,6 +402,14 @@ class ElementCreationGuide
 			step: STEPS.STATUS,
 			contentNode: contentNode.item(3),
 			progressBarNode: null,
+			headingNode: null,
+		});
+	}
+
+	#markNavigationButtons(): void
+	{
+		Object.entries(NAVIGATION_BUTTON_TEST_IDS).forEach(([buttonId, testId]) => {
+			Dom.attr(document.getElementById(buttonId), 'data-testid', testId);
 		});
 	}
 
@@ -323,20 +537,36 @@ class ElementCreationGuide
 
 		const { step0, step1, step2, step3 } = Tag.render`
 			<div>
-				<div class="list-el-cg__breadcrumbs-item --active" ref="step0">
-					<span>${Text.encode(Loc.getMessage('LISTS_ELEMENT_CREATION_GUIDE_CMP_STEP_RECOMMENDATION'))}</span>
+				<div
+					class="list-el-cg__breadcrumbs-item --active"
+					ref="step0"
+					data-testid="${HTML_ELEMENT_ID}-steps-item-${STEPS.DESCRIPTION}"
+				>
+					<span>${Text.encode(getStepTitle(STEPS.DESCRIPTION))}</span>
 					<span class="ui-icon-set --chevron-right"></span>
 				</div>
-				<div class="list-el-cg__breadcrumbs-item" ref="step1">
-					<span>${Text.encode(Loc.getMessage('LISTS_ELEMENT_CREATION_GUIDE_CMP_STEP_CONSTANTS'))}</span>
+				<div
+					class="list-el-cg__breadcrumbs-item"
+					ref="step1"
+					data-testid="${HTML_ELEMENT_ID}-steps-item-${STEPS.CONSTANTS}"
+				>
+					<span>${Text.encode(getStepTitle(STEPS.CONSTANTS))}</span>
 					<span class="ui-icon-set --chevron-right"></span>
 				</div>
-				<div class="list-el-cg__breadcrumbs-item" ref="step2">
-					<span>${Text.encode(Loc.getMessage('LISTS_ELEMENT_CREATION_GUIDE_CMP_STEP_FIELDS'))}</span>
+				<div
+					class="list-el-cg__breadcrumbs-item"
+					ref="step2"
+					data-testid="${HTML_ELEMENT_ID}-steps-item-${STEPS.FIELDS}"
+				>
+					<span>${Text.encode(getStepTitle(STEPS.FIELDS))}</span>
 					<span class="ui-icon-set --chevron-right"></span>
 				</div>
-				<div class="list-el-cg__breadcrumbs-item" ref="step3">
-					<span>${Text.encode(Loc.getMessage('LISTS_ELEMENT_CREATION_GUIDE_CMP_STEP_STATUS'))}</span>
+				<div
+					class="list-el-cg__breadcrumbs-item"
+					ref="step3"
+					data-testid="${HTML_ELEMENT_ID}-steps-item-${STEPS.STATUS}"
+				>
+					<span>${Text.encode(getStepTitle(STEPS.STATUS))}</span>
 					<span class="ui-icon-set --chevron-right"></span>
 				</div>
 			</div>
@@ -500,11 +730,18 @@ class ElementCreationGuide
 
 	#renderExpandDescriptionNode(): HTMLElement
 	{
-		return Tag.render`
-			<div class="list-el-cg__content-open" onclick="${this.#toggleDescription.bind(this)}">
+		const node = Tag.render`
+			<div
+				class="list-el-cg__content-open"
+				data-testid="${HTML_ELEMENT_ID}-description-toggle-btn"
+			>
 				${Loc.getMessage('LISTS_ELEMENT_CREATION_GUIDE_CMP_EXPAND_DESCRIPTION')}
 			</div>
 		`;
+
+		makeActivatable(node, this.#toggleDescription.bind(this));
+
+		return node;
 	}
 
 	#toggleDescription(event)
@@ -529,6 +766,7 @@ class ElementCreationGuide
 			}
 
 			Dom.toggleClass(this.#descriptionNode, ['--hide']);
+			Dom.attr(target, 'aria-expanded', String(!Dom.hasClass(this.#descriptionNode, '--hide')));
 		}
 	}
 
@@ -537,7 +775,7 @@ class ElementCreationGuide
 		if (Type.isNil(this.#duration))
 		{
 			return Tag.render`
-				<div class="list-el-cg__informer">
+				<div class="list-el-cg__informer" data-testid="${HTML_ELEMENT_ID}-duration">
 					<div class="list-el-cg__informer-header">
 						<div class="list-el-cg__informer-title">
 							${Text.encode(Loc.getMessage('LISTS_ELEMENT_CREATION_GUIDE_CMP_AVERAGE_DURATION_TITLE'))}
@@ -564,7 +802,7 @@ class ElementCreationGuide
 		}
 
 		return Tag.render`
-			<div class="list-el-cg__informer">
+			<div class="list-el-cg__informer" data-testid="${HTML_ELEMENT_ID}-duration">
 				<div class="list-el-cg__informer-header">
 					<div class="list-el-cg__informer-title">
 						${Text.encode(Loc.getMessage('LISTS_ELEMENT_CREATION_GUIDE_CMP_AVERAGE_DURATION_TITLE'))}
@@ -579,6 +817,7 @@ class ElementCreationGuide
 					<a
 						class="list-el-cg__link" href="#"
 						onclick="${this.#handleDurationHintClick}"
+						data-testid="${HTML_ELEMENT_ID}-duration-hint-link"
 					>${Loc.getMessage('LISTS_ELEMENT_CREATION_GUIDE_CMP_AVERAGE_DURATION_HINT')}
 					</a>
 				</div>
@@ -690,6 +929,8 @@ class ElementCreationGuide
 		Dom.addClass(currentStep.contentNode, '--hidden');
 		Dom.removeClass(nextStep.contentNode, '--hidden');
 
+		this.#switchStepA11y(currentStep, nextStep);
+
 		if (currentStep.step === STEPS.DESCRIPTION)
 		{
 			Dom.addClass(this.#durationNode, '--hidden');
@@ -729,7 +970,7 @@ class ElementCreationGuide
 	#renderAdminList(admins: [], canNotify: boolean = false): HTMLElement
 	{
 		return Tag.render`
-			<div>
+			<div data-testid="${HTML_ELEMENT_ID}-admin-list">
 				<div class="list-el-cg__const-desc">
 					${Text.encode(Loc.getMessage('LISTS_ELEMENT_CREATION_GUIDE_CMP_NOT_TUNING_CONSTANTS_NOTIFY_ADMIN'))}
 				</div>
@@ -745,6 +986,7 @@ class ElementCreationGuide
 							size: ButtonSize.MEDIUM,
 							color: ButtonColor.PRIMARY,
 							onclick: this.#notifyAdmin.bind(this, admin),
+							dataset: { testid: `${HTML_ELEMENT_ID}-notify-admin-btn-${admin.id}` },
 						});
 					}
 
@@ -865,6 +1107,8 @@ class ElementCreationGuide
 		Dom.addClass(currentStep.contentNode, '--hidden');
 		Dom.removeClass(previousStep.contentNode, '--hidden');
 
+		this.#switchStepA11y(currentStep, previousStep);
+
 		if (previousStep.step === STEPS.DESCRIPTION)
 		{
 			Dom.removeClass(this.#durationNode, '--hidden');
@@ -908,9 +1152,14 @@ class ElementCreationGuide
 		this.#createElement()
 			.then(() => {
 				this.#sendCreationAnalytics();
+				// the status step draws static text and the slider closes over it, so the result is
+				// announced before the closing and from the live region of the top window
+				announceStartResult(Loc.getMessage('LISTS_ELEMENT_CREATION_GUIDE_CMP_SUCCESS_START'));
 				if (Reflection.getClass('BX.SidePanel') && BX.SidePanel.Instance.getSliderByWindow(window))
 				{
 					this.#canClose = true;
+					// the focus is not touched here: the closing slider restores it to the element
+					// that owned it before the opening (focus trap, deactivate -> restoreFocus)
 					setTimeout(
 						() => {
 							BX.SidePanel.Instance.getSliderByWindow(window).close(false);
@@ -996,33 +1245,141 @@ class ElementCreationGuide
 		}
 	}
 
-	#showErrors(errors: [], toNode: HTMLElement = null)
+	#showErrors(errors: Array<ComponentError>)
 	{
-		this.#cleanErrors(toNode);
+		this.#cleanErrors();
 
-		const errorsNode = Type.isDomNode(toNode) ? toNode : document.getElementById(`${HTML_ELEMENT_ID}-errors`);
-		if (errorsNode)
+		const { shownErrors, errorRegion } = this.#renderErrors(errors);
+		if (errorRegion)
 		{
-			let message = '';
-			errors.forEach((error) => {
-				const errorMessage = this.#getErrorByCode(error.code) ?? error.message;
-				if (errorMessage)
-				{
-					message += Text.encode(errorMessage);
-					message += '<br/>';
-				}
-			});
-
-			Dom.append(
-				Tag.render`
-					<div class="ui-alert ui-alert-danger">
-						<span class="ui-alert-message">${message}</span>
-					</div>
-				`,
-				errorsNode,
-			);
-			BX.scrollToNode(errorsNode);
+			this.#focusErrorControl(shownErrors, errorRegion);
 		}
+	}
+
+	/**
+	 * Each message gets a node of its own so that a control can be bound to the message about it.
+	 * An error of a process template goes to the container of that template, the rest to the common one.
+	 * The messages are grouped by the mark of the region they go to, one region per container.
+	 */
+	#renderErrors(errors: Array<ComponentError>): RenderedErrors
+	{
+		const shownErrors = [];
+		const groups: Map<string, ErrorGroup> = new Map();
+		let errorRegion = null;
+
+		errors.forEach((error, index) => {
+			const message = this.#getErrorByCode(error.code) ?? error.message;
+			const target = this.#getErrorTarget(error);
+			if (!message || !target)
+			{
+				return;
+			}
+
+			const messageId = `${ERROR_MESSAGE_ID_PREFIX}-${index}`;
+			const messageNode = Tag.render`<span>${Text.encode(message)}</span>`;
+			Dom.attr(messageNode, { id: messageId, 'data-testid': messageId });
+
+			const group = groups.get(target.regionTestId) ?? { container: target.container, messageNodes: [] };
+			group.messageNodes.push(messageNode);
+			groups.set(target.regionTestId, group);
+
+			shownErrors.push({ error, messageId });
+		});
+
+		if (groups.size === 0 && errors.length > 0)
+		{
+			this.#addUnknownErrorMessage(groups);
+		}
+
+		groups.forEach(({ container, messageNodes }, regionTestId) => {
+			const region = renderErrorRegion(messageNodes, regionTestId);
+			Dom.append(region, container);
+			errorRegion ??= region;
+		});
+
+		const [firstGroup] = groups.values();
+		if (firstGroup)
+		{
+			BX.scrollToNode(firstGroup.container);
+		}
+
+		return { shownErrors, errorRegion };
+	}
+
+	/**
+	 * A message of the wizard for a refusal that arrived without a text of its own: the server allows
+	 * such an error, and a refusal shown nowhere leaves the buttons switched back on as its only sign.
+	 */
+	#addUnknownErrorMessage(groups: Map<string, ErrorGroup>): void
+	{
+		const container = this.#getCommonErrorsContainer();
+		if (!container)
+		{
+			return;
+		}
+
+		const messageNode = Tag.render`<span>${Text.encode(Loc.getMessage(ERRORS.NETWORK_ERROR))}</span>`;
+		// the mark alone, without an id: this message describes no control of the step
+		Dom.attr(messageNode, 'data-testid', `${ERROR_MESSAGE_ID_PREFIX}-unknown`);
+
+		groups.set(ERROR_REGION_TEST_ID, { container, messageNodes: [messageNode] });
+	}
+
+	/**
+	 * A container of a process template belongs to the constants step, and an error of a launch parameter
+	 * carries the very same templateId: on the launch step that container is hidden and inert by then,
+	 * so a message routed there would be neither seen nor announced. Hence the container of the current
+	 * step and nothing else, the common container of the wizard otherwise.
+	 */
+	#getErrorTarget(error: ComponentError): ?ErrorTarget
+	{
+		const templateId = error.customData?.templateId;
+		const templateContainer = (
+			templateId
+				? document.getElementById(`${HTML_ELEMENT_ID}-constants-${templateId}-errors`)
+				: null
+		);
+
+		if (templateContainer && this.#getCurrentStep()?.contentNode?.contains(templateContainer))
+		{
+			return { container: templateContainer, regionTestId: `${ERROR_REGION_TEST_ID}-${templateId}` };
+		}
+
+		const container = this.#getCommonErrorsContainer();
+
+		return container ? { container, regionTestId: ERROR_REGION_TEST_ID } : null;
+	}
+
+	#getCommonErrorsContainer(): ?HTMLElement
+	{
+		return document.getElementById(`${HTML_ELEMENT_ID}-errors`);
+	}
+
+	#focusErrorControl(shownErrors: Array<ShownError>, errorRegion: ?HTMLElement): void
+	{
+		const currentStep = this.#getCurrentStep();
+		const fields: Array<StepInvalidField> = [];
+
+		shownErrors.forEach(({ error, messageId }) => {
+			const { parameter, templateId } = error.customData ?? {};
+			const formRoot = templateId ? this.#getTemplateForm(templateId) : null;
+			if (parameter && formRoot)
+			{
+				fields.push({ formRoot, name: `bizproc${templateId}_${parameter}`, messageId });
+			}
+		});
+
+		focusStepError(currentStep.contentNode, fields, errorRegion, currentStep.headingNode);
+	}
+
+	// constants and parameters of a template are two different forms naming their controls alike
+	#getTemplateForm(templateId: number): ?HTMLFormElement
+	{
+		const formName = (
+			this.#currentStep === STEPS.CONSTANTS ? BP_STATE_CONSTANTS_FORM_NAME : BP_STATE_FORM_NAME
+		);
+
+		return document.forms[`form_${formName}_${templateId}`] ?? null;
 	}
 
 	#getErrorByCode(code: string): string
@@ -1030,28 +1387,20 @@ class ElementCreationGuide
 		return Loc.getMessage(ERRORS[code]);
 	}
 
-	#cleanErrors(fromNode: HTMLElement = null)
+	#cleanErrors()
 	{
-		if (Type.isDomNode(fromNode))
-		{
-			Dom.clean(fromNode);
+		this.#getErrorsContainers().forEach((container) => Dom.clean(container));
+		clearStepInvalidControls(this.#getCurrentStep()?.contentNode);
+	}
 
-			return;
-		}
+	#getErrorsContainers(): Array<HTMLElement>
+	{
+		const ids = [
+			`${HTML_ELEMENT_ID}-errors`,
+			...this.#templateIds.map((templateId) => `${HTML_ELEMENT_ID}-constants-${templateId}-errors`),
+		];
 
-		const errorsNode = document.getElementById(`${HTML_ELEMENT_ID}-errors`);
-		if (errorsNode)
-		{
-			Dom.clean(errorsNode);
-		}
-
-		this.#templateIds.forEach((templateId) => {
-			const node = document.getElementById(`${HTML_ELEMENT_ID}-constants-${templateId}-errors`);
-			if (node)
-			{
-				Dom.clean(node);
-			}
-		});
+		return ids.map((id) => document.getElementById(id)).filter((node) => node !== null);
 	}
 
 	#startLoading()

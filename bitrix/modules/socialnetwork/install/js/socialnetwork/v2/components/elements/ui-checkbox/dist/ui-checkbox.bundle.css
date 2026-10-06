@@ -27,6 +27,10 @@
 	cursor: pointer;
 	box-sizing: content-box;
 }
+.socnet-checkbox__native:focus-visible + .socnet-checkbox__checkmark {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+}
 .socnet-checkbox.socnet-checkbox_disabled .socnet-checkbox__checkmark {
 	background: var(--ui-color-design-disabled-bg);
 	cursor: default;

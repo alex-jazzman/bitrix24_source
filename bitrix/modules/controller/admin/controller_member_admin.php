@@ -415,7 +415,7 @@ if (COption::GetOptionString('controller', 'show_hostname') == 'Y')
 }
 
 $arCounters = [];
-$rsCounters = CControllerCounter::GetList();
+$rsCounters = CControllerCounter::GetList(false, ['!=COUNTER_TYPE' => 'E']);
 while ($arCounter = $rsCounters->Fetch())
 {
 	$key = 'COUNTER_' . $arCounter['ID'];

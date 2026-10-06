@@ -44,18 +44,7 @@ if ($arParams['IS_AJAX'] === 'Y')
 </script>
 
 <div id="crm-activity-todo-items" class="crm-activity-todo-items">
-<?foreach ($arResult['ITEMS'] as $item):
-	if ($item['DETAIL_EXIST'])
-	{
-		$uriView = new \Bitrix\Main\Web\Uri('/bitrix/components/bitrix/crm.activity.planner/slider.php');
-		$uriView->addParams(array(
-			'site_id' => SITE_ID,
-			'sessid' => bitrix_sessid_get(),
-			'ajax_action' => 'ACTIVITY_VIEW',
-			'activity_id' => $item['ID']
-		));
-	}
-	?>
+<?foreach ($arResult['ITEMS'] as $item): ?>
 <div class="crm-activity-todo-item<?= $item['COMPLETED']=='Y' ? ' crm-activity-todo-item-completed' : ''?>"<?
 	?> data-id="<?= $item['ID']?>"<?
 	?> data-providerid="<?= $item['PROVIDER_ID'] ?? 0 ?>"<?

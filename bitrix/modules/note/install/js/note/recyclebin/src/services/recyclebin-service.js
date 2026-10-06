@@ -6,8 +6,19 @@ const ACTION_RESTORE = 'note.infrastructure.RecycleBinController.restoreDocument
 const ACTION_RESTORE_ALL = 'note.infrastructure.RecycleBinController.restoreAll';
 const ACTION_HARD_DELETE = 'note.infrastructure.RecycleBinController.hardDeleteDocument';
 const ACTION_EMPTY = 'note.infrastructure.RecycleBinController.empty';
+const ACTION_RESTORE_MANY = 'note.infrastructure.RecycleBinController.restoreMany';
+const ACTION_HARD_DELETE_MANY = 'note.infrastructure.RecycleBinController.hardDeleteMany';
 
 export const ORPHAN_TARGET_REQUIRED_CODE = 'NOTE_RECYCLE_BIN_ORPHAN_TARGET_REQUIRED';
+
+// DTO-01: outcome of a bulk operation. On limitExceeded the counters are all zero and nothing was applied.
+export type BulkOutcome = {
+	processedCount: number,
+	skippedCount: number,
+	skippedByAccessCount: number,
+	skippedOrphanCount: number,
+	limitExceeded: boolean,
+};
 
 export type TrashedActor = { id: number, name: string, isSystem?: boolean };
 
@@ -37,11 +48,14 @@ export type TrashedListResult = {
 export class RecycleBinServiceError extends Error
 {
 	code: string;
+	// Present on the orphan double-signal: the rejection carries the partial outcome alongside the code.
+	outcome: ?BulkOutcome;
 
 	constructor(message: string, code: string = '')
 	{
 		super(message);
 		this.code = code;
+		this.outcome = null;
 	}
 }
 
@@ -169,6 +183,81 @@ export class RecycleBinService
 		{
 			throw this.#toServiceError(error);
 		}
+	}
+
+	// API-03. Ids are recycle-bin record ids, NOT document ids.
+	// Orphan double-signal: when targetCollectionId is null and orphans are present the backend both
+	// rejects (code ORPHAN_TARGET_REQUIRED) AND returns the partial outcome; both are surfaced on the error.
+	async restoreMany(recycleBinIds: number[], targetCollectionId: ?number = null): Promise<BulkOutcome>
+	{
+		try
+		{
+			const data = { recycleBinIds: this.#normalizeIds(recycleBinIds) };
+			if (targetCollectionId !== null && targetCollectionId !== undefined)
+			{
+				data.targetCollectionId = Number(targetCollectionId);
+			}
+
+			const response = await ajax.runAction(ACTION_RESTORE_MANY, { data });
+
+			return this.#parseOutcome(response?.data?.outcome);
+		}
+		catch (error)
+		{
+			throw this.#toBulkError(error);
+		}
+	}
+
+	// API-04
+	async hardDeleteMany(recycleBinIds: number[]): Promise<BulkOutcome>
+	{
+		try
+		{
+			const response = await ajax.runAction(ACTION_HARD_DELETE_MANY, {
+				data: { recycleBinIds: this.#normalizeIds(recycleBinIds) },
+			});
+
+			return this.#parseOutcome(response?.data?.outcome);
+		}
+		catch (error)
+		{
+			throw this.#toBulkError(error);
+		}
+	}
+
+	#parseOutcome(raw: mixed): BulkOutcome
+	{
+		const outcome = Type.isPlainObject(raw) ? raw : {};
+
+		return {
+			processedCount: Number(outcome.processedCount) || 0,
+			skippedCount: Number(outcome.skippedCount) || 0,
+			skippedByAccessCount: Number(outcome.skippedByAccessCount) || 0,
+			skippedOrphanCount: Number(outcome.skippedOrphanCount) || 0,
+			limitExceeded: outcome.limitExceeded === true,
+		};
+	}
+
+	#normalizeIds(ids: mixed): number[]
+	{
+		const source = ids instanceof Set ? [...ids] : (Array.isArray(ids) ? ids : []);
+
+		return source.map((id) => Number(id)).filter((id) => Number.isInteger(id) && id > 0);
+	}
+
+	#toBulkError(error: mixed): RecycleBinServiceError
+	{
+		const wrapped = this.#toServiceError(error);
+		// Keep the partial outcome from the rejection so the orphan retry does not discard progress.
+		const rawOutcome = Type.isPlainObject(error) && Type.isPlainObject(error.data)
+			? error.data.outcome
+			: null;
+		if (Type.isPlainObject(rawOutcome))
+		{
+			wrapped.outcome = this.#parseOutcome(rawOutcome);
+		}
+
+		return wrapped;
 	}
 
 	#normalizeItem(doc: Object): TrashedDocument

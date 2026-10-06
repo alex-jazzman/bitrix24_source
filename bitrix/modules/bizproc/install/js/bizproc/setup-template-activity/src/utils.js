@@ -1,13 +1,15 @@
-import { Type } from 'main.core';
+import { Loc, Type } from 'main.core';
 
 import {
 	CONSTANT_ID_PREFIX,
 	CONSTANT_TYPES,
 	DELIMITER_TYPES,
 	ITEM_TYPES,
+	SETUP_TEMPLATE_ACTIVITY_SOURCE,
 } from './constants';
 import type {
 	ConstantItem,
+	ConstantPreset,
 	DelimiterItem,
 	DescriptionItem,
 	TitleItem,
@@ -76,6 +78,16 @@ export function makeEmptyConstant(id: ?string = null): ConstantItem
 	};
 }
 
+export function makePresetConstant(preset: ConstantPreset, id: ?string = null): ConstantItem
+{
+	return {
+		...makeEmptyConstant(id),
+		name: Loc.getMessage(preset.nameKey) ?? '',
+		constantType: preset.constantType,
+		multiple: preset.multiple,
+	};
+}
+
 export function convertConstants(constant: ConstantItem): ConstantConvertedData
 {
 	return {
@@ -87,6 +99,7 @@ export function convertConstants(constant: ConstantItem): ConstantConvertedData
 		Options: Type.isObject(constant.options) ? constant.options : null,
 		Default: constant.default,
 		Settings: constant.settings,
+		Source: SETUP_TEMPLATE_ACTIVITY_SOURCE,
 	};
 }
 
@@ -106,6 +119,17 @@ function generateRandomString(length: number): string
 export function generateConstantId(): string
 {
 	return CONSTANT_ID_PREFIX + generateRandomString(10);
+}
+
+// main.popup places a bound popup below its bind element and flips it above only when the popup
+// fits there entirely, so the roomier side is the height a popup may take without leaving the window.
+export function calculateFreeHeightAround(
+	verticalBounds: { top: number, bottom: number },
+	viewportHeight: number,
+	gap: number,
+): number
+{
+	return Math.max(verticalBounds.top, viewportHeight - verticalBounds.bottom) - gap;
 }
 
 export function getScrollParent(node: HTMLElement): HTMLElement | null

@@ -131,6 +131,34 @@ jn.define('settings-v2/structure/helpers/item-create-helper', (require, exports,
 	}
 
 	/**
+	 * @param {SettingTextButton} props
+	 * @returns {SettingTextButton}
+	 */
+	function createTextButton(props)
+	{
+		const {
+			id,
+			title,
+			onClick,
+			divider,
+			prefilter,
+			color,
+		} = props;
+
+		assertDefined(['id', 'title', 'onClick'], props, 'TextButton');
+
+		return {
+			id,
+			title,
+			onClick,
+			divider,
+			color,
+			type: SettingItemType.TEXT_BUTTON,
+			prefilter,
+		};
+	}
+
+	/**
 	 * @param {SettingLinkButton} props
 	 * @returns {SettingLinkButton}
 	 */
@@ -366,6 +394,7 @@ jn.define('settings-v2/structure/helpers/item-create-helper', (require, exports,
 		createSection,
 		createToggle,
 		createButton,
+		createTextButton,
 		createLinkButton,
 		createThemeSwitch,
 		createStyleSwitch,

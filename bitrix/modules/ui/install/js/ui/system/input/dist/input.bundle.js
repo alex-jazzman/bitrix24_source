@@ -111,6 +111,10 @@ this.BX.UI.System = this.BX.UI.System || {};
 				type: String,
 				default: 'text'
 			},
+			ariaLabel: {
+				type: String,
+				default: ''
+			},
 			required: {
 				type: Boolean,
 				default: false
@@ -224,7 +228,9 @@ this.BX.UI.System = this.BX.UI.System || {};
 				{
 					'--center': center,
 					'--with-chips': chips?.length > 0,
+					'--multi': rowsQuantity > 1,
 					'--clickable': clickable,
+					'--dropdown': dropdown,
 					'--stretched': stretched,
 					'--active': active || focused,
 					'--error': error && !disabled,
@@ -251,6 +257,7 @@ this.BX.UI.System = this.BX.UI.System || {};
 					class="ui-system-input-value --multi"
 					:style="{ resize }"
 					:placeholder
+					:aria-label="ariaLabel || null"
 					:disabled
 					:rows="rowsQuantity"
 					:readonly
@@ -265,6 +272,7 @@ this.BX.UI.System = this.BX.UI.System || {};
 					class="ui-system-input-value"
 					:style="{ '--placeholder-length': placeholder.length + 'ch' }"
 					:placeholder
+					:aria-label="ariaLabel || null"
 					:disabled
 					:type="currentInputType"
 					:readonly
@@ -321,6 +329,10 @@ this.BX.UI.System = this.BX.UI.System || {};
 				type: String,
 				default: ''
 			},
+			ariaLabel: {
+				type: String,
+				default: ''
+			},
 			placeholder: {
 				type: String,
 				default: ''
@@ -367,6 +379,7 @@ this.BX.UI.System = this.BX.UI.System || {};
 			@update:modelValue="$emit('update:modelValue', $event)"
 			type="password"
 			:label="label"
+			:ariaLabel="ariaLabel"
 			:placeholder="placeholder"
 			:error="error"
 			:size="size"
@@ -415,6 +428,7 @@ this.BX.UI.System = this.BX.UI.System || {};
 		#required = false;
 		#passwordVisible = false;
 		#dataTestId = '';
+		#ariaLabel = '';
 		#onClick = null;
 		#onFocus = null;
 		#onBlur = null;
@@ -466,6 +480,7 @@ this.BX.UI.System = this.BX.UI.System || {};
 			this.#copyable = options.copyable === true;
 			this.#required = options.required === true;
 			this.#dataTestId = options.dataTestId ?? '';
+			this.#ariaLabel = options.ariaLabel ?? '';
 			this.#onClick = options.onClick ?? null;
 			this.#onFocus = options.onFocus ?? null;
 			this.#onBlur = options.onBlur ?? null;
@@ -524,6 +539,21 @@ this.BX.UI.System = this.BX.UI.System || {};
 		}
 		getLabel() {
 			return this.#label;
+		}
+		setAriaLabel(value) {
+			this.#ariaLabel = value ?? '';
+			if (this.#inputElement) {
+				if (this.#ariaLabel) {
+					main_core.Dom.attr(this.#inputElement, {
+						'aria-label': this.#ariaLabel
+					});
+				} else {
+					this.#inputElement.removeAttribute('aria-label');
+				}
+			}
+		}
+		getAriaLabel() {
+			return this.#ariaLabel;
 		}
 		setPlaceholder(value) {
 			this.#placeholder = value;
@@ -610,6 +640,7 @@ this.BX.UI.System = this.BX.UI.System || {};
 		setDropdown(value) {
 			this.#dropdown = value === true;
 			this.#updateRightIconElement(this.#dropdownElement, this.#dropdown);
+			this.#updateClasses();
 		}
 		isCopyable() {
 			return this.#copyable;
@@ -829,7 +860,8 @@ this.BX.UI.System = this.BX.UI.System || {};
 				readonly: this.#readonly,
 				type: this.#type,
 				value: this.#value,
-				dataTestId: this.#dataTestId
+				dataTestId: this.#dataTestId,
+				ariaLabel: this.#ariaLabel
 			};
 			if (this.#rows > 1) {
 				this.#inputElement = main_core.Tag.render`
@@ -837,6 +869,7 @@ this.BX.UI.System = this.BX.UI.System || {};
 					class="${commonAttrs.className} --multi"
 					style="resize: ${this.#resize};"
 					placeholder="${commonAttrs.placeholder}"
+					${commonAttrs.ariaLabel ? `aria-label="${commonAttrs.ariaLabel}"` : ''}
 					${commonAttrs.disabled ? 'disabled' : ''}
 					${commonAttrs.readonly ? 'readonly' : ''}
 					rows="${this.#rows}"
@@ -848,6 +881,7 @@ this.BX.UI.System = this.BX.UI.System || {};
 					class="${commonAttrs.className}"
 					style="--placeholder-length: ${this.#placeholder.length}ch;"
 					placeholder="${commonAttrs.placeholder}"
+					${commonAttrs.ariaLabel ? `aria-label="${commonAttrs.ariaLabel}"` : ''}
 					${commonAttrs.disabled ? 'disabled' : ''}
 					${commonAttrs.readonly ? 'readonly' : ''}
 					type="${commonAttrs.type}"
@@ -959,7 +993,7 @@ this.BX.UI.System = this.BX.UI.System || {};
 			this.#onCopy?.(event);
 		}
 		#getWrapperClasses() {
-			return [`--${this.#design}`, `--${this.#size}`, this.#center ? '--center' : '', this.#chips.length > 0 ? '--with-chips' : '', this.#clickable ? '--clickable' : '', this.#stretched ? '--stretched' : '', this.#active || this.#focused ? '--active' : '', this.#readonly ? '--readonly' : '', this.#error && !this.#isDisabled() ? '--error' : ''].filter(Boolean).join(' ');
+			return [`--${this.#design}`, `--${this.#size}`, this.#center ? '--center' : '', this.#chips.length > 0 ? '--with-chips' : '', this.#rows > 1 ? '--multi' : '', this.#clickable ? '--clickable' : '', this.#dropdown ? '--dropdown' : '', this.#stretched ? '--stretched' : '', this.#active || this.#focused ? '--active' : '', this.#readonly ? '--readonly' : '', this.#error && !this.#isDisabled() ? '--error' : ''].filter(Boolean).join(' ');
 		}
 		#getChipSize() {
 			return {
@@ -1044,6 +1078,12 @@ this.BX.UI.System = this.BX.UI.System || {};
 		}
 		getLabel() {
 			return this.#input.getLabel();
+		}
+		setAriaLabel(value) {
+			this.#input.setAriaLabel(value);
+		}
+		getAriaLabel() {
+			return this.#input.getAriaLabel();
 		}
 		setPlaceholder(value) {
 			this.#input.setPlaceholder(value);

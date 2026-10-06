@@ -1,4 +1,3 @@
-import { Button } from 'ui.buttons';
 import { ClientSelector, type Communication, type CommunicationItem } from 'crm.client-selector';
 import { Builder, Dictionary } from 'crm.integration.analytics';
 import { ConditionChecker, Types as SenderTypes } from 'crm.messagesender';
@@ -7,7 +6,9 @@ import { type BaseEvent, EventEmitter } from 'main.core.events';
 import { Loader } from 'main.loader';
 import { type Menu, type MenuItem, type MenuItemOptions, MenuManager } from 'main.popup';
 import { sendData } from 'ui.analytics';
+import { Button } from 'ui.buttons';
 import { Dialog } from 'ui.entity-selector';
+import { Dialog as EditorUnsavedChangesDialog, DialogBackground } from 'ui.system.dialog';
 import 'ui.icon-set.actions';
 import 'ui.icon-set.main';
 import 'ui.icon-set.social';
@@ -829,7 +830,11 @@ export default class GoToChat extends Item
 
 		if (this.#isEntityInEditorMode())
 		{
-			await this.#showEditorInEditModePopup();
+			const shouldContinueToChat = await this.#showEditorInEditModePopup();
+			if (!shouldContinueToChat)
+			{
+				return;
+			}
 		}
 
 		if (!this.selectedClient && !this.hasClients)
@@ -907,7 +912,7 @@ export default class GoToChat extends Item
 		return (this.#getEntityEditor().getMode() === BX.UI.EntityEditorMode.edit);
 	}
 
-	async #showEditorInEditModePopup(): Promise
+	async #showEditorInEditModePopup(): Promise<boolean>
 	{
 		const { entityTypeId } = this.#getOwnerEntity();
 		const entityType = BX.CrmEntityType.resolveName(entityTypeId);
@@ -918,24 +923,49 @@ export default class GoToChat extends Item
 				: Loc.getMessage('CRM_TIMELINE_GOTOCHAT_EDITOR_HAVE_UNSAVED_CHANGES_TEXT')
 		);
 
-		return new Promise((resolve) => {
-			BX.UI.Dialogs.MessageBox.show({
-				modal: true,
-				message,
-				buttons: BX.UI.Dialogs.MessageBoxButtons.OK_CANCEL,
-				okCaption: Loc.getMessage('CRM_TIMELINE_GOTOCHAT_EDITOR_HAVE_UNSAVED_CHANGES_SAVE_AND_CONTINUE'),
-				onOk: (messageBox) => {
-					this.saveEntityEditor();
-					messageBox.close();
-					resolve();
-				},
-				cancelCaption: Loc.getMessage('CRM_TIMELINE_GOTOCHAT_EDITOR_HAVE_UNSAVED_CHANGES_FORCE_CONTINUE'),
-				onCancel: function(messageBox) {
-					messageBox.close();
-					resolve();
+		const outcome = await new Promise((resolve) => {
+			const dialog = new EditorUnsavedChangesDialog({
+				content: Tag.render`<div data-testid="crm-timeline-gotochat-unsaved-dialog">${message}</div>`,
+				hasOverlay: true,
+				background: DialogBackground.vibrant,
+				centerButtons: [
+					new Button({
+						text: Loc.getMessage('CRM_TIMELINE_GOTOCHAT_EDITOR_HAVE_UNSAVED_CHANGES_SAVE_AND_CONTINUE'),
+						size: Button.Size.LARGE,
+						useAirDesign: true,
+						style: Button.AirStyle.FILLED,
+						dataset: { testid: 'crm-timeline-gotochat-save-continue-btn' },
+						onclick: () => {
+							resolve('saveAndLeave');
+							dialog.hide();
+						},
+					}),
+					new Button({
+						text: Loc.getMessage('CRM_TIMELINE_GOTOCHAT_EDITOR_HAVE_UNSAVED_CHANGES_FORCE_CONTINUE'),
+						size: Button.Size.LARGE,
+						useAirDesign: true,
+						style: Button.AirStyle.OUTLINE,
+						dataset: { testid: 'crm-timeline-gotochat-leave-without-saving-btn' },
+						onclick: () => {
+							resolve('leaveWithoutSaving');
+							dialog.hide();
+						},
+					}),
+				],
+				events: {
+					onHide: () => resolve('stay'),
 				},
 			});
+
+			dialog.show();
 		});
+
+		if (outcome === 'saveAndLeave')
+		{
+			this.saveEntityEditor();
+		}
+
+		return (outcome !== 'stay');
 	}
 
 	saveEntityEditor(): void

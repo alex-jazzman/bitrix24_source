@@ -1,0 +1,12 @@
+<?php
+$MESS["MOBILE_MARKET_DETAIL_OPENER_TITLE"] = 'Маркетплейс';
+$MESS["MOBILE_MARKET_DETAIL_MENU_CONTACT_DEVELOPER"] = 'Связаться с разработчиком';
+$MESS["MOBILE_MARKET_DETAIL_MENU_REQUEST_DEMO"] = 'Запросить демонстрацию';
+$MESS["MOBILE_MARKET_DETAIL_MENU_PARTNER_PAGE"] = 'Страница разработчика';
+$MESS["MOBILE_MARKET_DETAIL_MENU_SHARE"] = 'Поделиться';
+$MESS["MOBILE_MARKET_DETAIL_MENU_OPEN_APP"] = 'Открыть';
+$MESS["MOBILE_MARKET_DETAIL_MENU_UPDATE"] = 'Обновить';
+$MESS["MOBILE_MARKET_DETAIL_MENU_DELETE"] = 'Удалить';
+$MESS["MOBILE_MARKET_DETAIL_MENU_DELETE_CONFIRM_TITLE"] = 'Удаление приложения';
+$MESS["MOBILE_MARKET_DETAIL_MENU_ACTION_ERROR"] = 'Не удалось выполнить действие.';
+$MESS["MOBILE_MARKET_DETAIL_MENU_DELETE_CONFIRMATION"] = "Вы действительно хотите удалить это приложение?";

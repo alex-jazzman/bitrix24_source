@@ -1,14 +1,14 @@
 (() => {
 	const require = (extension) => jn.require(extension);
 	const { EntityReady } = require('entity-ready');
-	const { Entry } = require('tasks/entry');
+	const { triggerNewProjectsPromo } = require('new-projects-promo/trigger');
 	const { ErrorLogger } = require('utils/logger/error-logger');
 	const { StorageCache } = require('storage-cache');
-	const { FeatureId } = require('tasks/enum');
 	const { getFeatureRestriction, tariffPlanRestrictionsReady } = require('tariff-plan-restriction');
 	const { RunActionExecutor } = require('rest/run-action-executor');
 	const { TasksNavigator } = require('tasks/navigator');
-	const { TASKS_TABS_NAVIGATOR, TASKS_ROOT_COMPONENT_NAME } = require('tasks/navigator/meta');
+	const { TASKS_TABS, TASKS_TABS_NAVIGATOR, TASKS_ROOT_COMPONENT_NAME } = require('tasks/navigator/meta');
+	const { guid } = require('utils/guid');
 
 	const SITE_ID = BX.componentParameters.get('SITE_ID', 's1');
 
@@ -138,7 +138,7 @@
 					TasksTabs.setDownMenuTasksCounter(data[0].view_all.total);
 					this.tabs.updateTasksCounter(data[0].view_all.total);
 				}
-				this.tabs.updateProjectsCounter(data.projects_major);
+				this.tabs.updateProjectsCounter(data.projects_total ?? data.projects_major);
 				this.tabs.updateScrumCounter(data.scrum_total_comments);
 
 				resolve();
@@ -158,11 +158,7 @@
 	{
 		static createGuid()
 		{
-			const s4 = function() {
-				return Math.floor((1 + Math.random()) * 0x10000).toString(16).slice(1);
-			};
-
-			return `${s4()}${s4()}-${s4()}-${s4()}-${s4()}-${s4()}${s4()}${s4()}`;
+			return guid();
 		}
 
 		static setDownMenuTasksCounter(value = -1)
@@ -221,7 +217,7 @@
 			TasksTabs.setDownMenuTasksCounter();
 			EntityReady.wait('chat')
 				.then(() => setTimeout(() => TasksTabs.setDownMenuTasksCounter(), 1000))
-				.catch(() => {})
+				.catch(console.error)
 			;
 
 			tariffPlanRestrictionsReady()
@@ -229,6 +225,7 @@
 					BX.onViewLoaded(() => {
 						this.bindEvents();
 						this.updateCounters();
+						triggerNewProjectsPromo();
 					});
 				})
 				.catch(this.logger.error)
@@ -256,8 +253,8 @@
 			BX.addCustomEvent('flows.list:setVisualCounter', (data) => this.updateFlowsCounter(data.value));
 			BX.addCustomEvent('tasks.project.list:setVisualCounter', (data) => this.updateProjectsCounter(data.value));
 			BX.addCustomEvent('tasks.scrum.list:setVisualCounter', (data) => this.updateScrumCounter(data.value));
-			BX.addCustomEvent(TASKS_TABS_NAVIGATOR.makeTabActive, (taskId) => {
-				this.tabs.setActiveItem(taskId);
+			BX.addCustomEvent(TASKS_TABS_NAVIGATOR.makeTabActive, (tabId) => {
+				this.tabs.setActiveItem(this.getActualTabId(tabId));
 			});
 
 			EntityReady.ready(TASKS_ROOT_COMPONENT_NAME);
@@ -268,6 +265,16 @@
 					EntityReady.unready(TASKS_ROOT_COMPONENT_NAME);
 				}
 			});
+		}
+
+		getActualTabId(tabId)
+		{
+			if (tabId === TASKS_TABS.PROJECT || tabId === TASKS_TABS.PROJECT_V2)
+			{
+				return this.tabCodes.PROJECTS;
+			}
+
+			return tabId;
 		}
 
 		onAppPaused()

@@ -2,7 +2,10 @@
 return [
 	'rest' => [
 		'value' => [
-			'defaultNamespace' => '\\Bitrix\\Main\\Rest\\V3\\Controller',
+			'defaultNamespace' => '\\Bitrix\\Main\\Infrastructure\\Rest\\Controller',
+			'namespaces' => [
+				'\\Bitrix\\Main\\Rest\\V3\\Controller',
+			],
 		]
 	],
 	'controllers' => [
@@ -100,6 +103,15 @@ return [
 			\CUserFieldEnum::class => [
 				'className' => \CUserFieldEnum::class,
 			],
+			\Bitrix\Main\Config\Feature\FeatureManager::class => [
+				'className' => \Bitrix\Main\Config\Feature\FeatureManager::class,
+				'constructorParams' => static function() {
+					return [
+						\Bitrix\Main\DI\ServiceLocator::getInstance()->get(\Bitrix\Main\Config\Feature\Factory::class),
+						(new \Bitrix\Main\Diag\LoggerFactory())->createById('main.config.feature'),
+					];
+				},
+			]
 		],
 	],
 ];

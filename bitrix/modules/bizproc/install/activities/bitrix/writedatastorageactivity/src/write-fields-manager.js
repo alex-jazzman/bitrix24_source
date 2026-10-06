@@ -18,7 +18,6 @@ export class WriteFieldsManager
 	#fieldsContainer: ?HTMLElement = null;
 	#storageIdField: ?HTMLInputElement = null;
 	#addFieldButton: ?HTMLElement = null;
-	#createFieldButton: ?HTMLElement = null;
 	#outerBlock: ?HTMLElement = null;
 	#storageFields: StorageField[] = [];
 	#currentValues: Object = {};
@@ -29,7 +28,6 @@ export class WriteFieldsManager
 	#fieldMenu: ?FieldMenu = null;
 
 	#onAddButtonClickHandler: Function;
-	#onCreateButtonClickHandler: Function;
 	#onAfterFieldRendererHandler: Function;
 	#onStorageRemoveHandler: Function;
 
@@ -54,7 +52,6 @@ export class WriteFieldsManager
 		this.#storageBlocks = storageBlocks || [];
 
 		this.#onAddButtonClickHandler = this.#onAddButtonClick.bind(this);
-		this.#onCreateButtonClickHandler = this.#onCreateButtonClick.bind(this);
 		this.#onAfterFieldRendererHandler = this.#onAfterFieldRenderer.bind(this);
 		this.#onStorageRemoveHandler = this.#onStorageRemove.bind(this);
 	}
@@ -75,7 +72,6 @@ export class WriteFieldsManager
 		const block = this.#form.querySelector('[data-role="bpa-write-fields-block"]');
 		const fieldsContainer = block?.querySelector('#fieldsContainer');
 		const addFieldButton = block?.querySelector('#add_field');
-		const createFieldButton = block?.querySelector('#create_field');
 		const outerBlock = block?.querySelector('[data-role="bpa-write-fields-outer"]');
 		const storageIdField = this.#form.storage_id ?? this.#form.querySelector('[name="storage_id"]');
 
@@ -87,7 +83,6 @@ export class WriteFieldsManager
 		this.#fieldsContainer = fieldsContainer;
 		this.#storageIdField = storageIdField;
 		this.#addFieldButton = addFieldButton;
-		this.#createFieldButton = createFieldButton;
 		this.#outerBlock = outerBlock;
 		this.#currentValues = this.#writeFieldsOptions.currentFieldValues || {};
 
@@ -106,7 +101,7 @@ export class WriteFieldsManager
 				this.#fieldsCache.delete(this.#currentStorageId);
 			},
 			onRowRemoved: () => {
-				Dom.show(this.#addFieldButton);
+				this.#updateFieldsVisibility();
 			},
 		});
 
@@ -117,6 +112,11 @@ export class WriteFieldsManager
 			onAddStaticField: (field) => {
 				this.#addStorageField(field);
 				this.#addField(field);
+			},
+			createFieldCaption: this.#writeFieldsOptions.newFieldCaption || '',
+			canCreateField: () => this.#canCreateStorageField(),
+			onCreateField: () => {
+				void this.#createStorageField();
 			},
 		});
 
@@ -144,27 +144,16 @@ export class WriteFieldsManager
 
 		if (Number(newStorageId) > 0)
 		{
-			if (this.#createFieldButton)
-			{
-				Dom.show(this.#createFieldButton);
-			}
-
 			await this.#resetFieldContainer(newStorageId);
 		}
 		else if (Type.isStringFilled(newStorageId))
 		{
 			const dynamicFields = this.#getDynamicStorageFields(newStorageId);
 
-			if (this.#createFieldButton)
-			{
-				Dom.hide(this.#createFieldButton);
-			}
-
 			Dom.clean(this.#fieldsContainer);
 			this.#storageFields = [...dynamicFields];
 			this.#restoreSavedFieldValues();
-			Dom.show(this.#addFieldButton);
-			Dom.show(this.#outerBlock);
+			this.#updateFieldsVisibility();
 		}
 		else
 		{
@@ -177,11 +166,6 @@ export class WriteFieldsManager
 		if (this.#addFieldButton)
 		{
 			Event.unbind(this.#addFieldButton, 'click', this.#onAddButtonClickHandler);
-		}
-
-		if (this.#createFieldButton)
-		{
-			Event.unbind(this.#createFieldButton, 'click', this.#onCreateButtonClickHandler);
 		}
 
 		this.#fieldsCache.clear();
@@ -206,11 +190,6 @@ export class WriteFieldsManager
 	{
 		Event.bind(this.#addFieldButton, 'click', this.#onAddButtonClickHandler);
 
-		if (this.#createFieldButton)
-		{
-			Event.bind(this.#createFieldButton, 'click', this.#onCreateButtonClickHandler);
-		}
-
 		EventEmitter.subscribe(
 			'BX.Bizproc.FieldType.onDesignerRenderControlFinished',
 			this.#onAfterFieldRendererHandler,
@@ -233,18 +212,17 @@ export class WriteFieldsManager
 			const dynamicFields = this.#getDynamicStorageFields(this.#currentStorageId);
 			const mergedFields = this.#mergeDynamicFieldsWithSavedValues(dynamicFields);
 
-			if (this.#createFieldButton)
-			{
-				Dom.hide(this.#createFieldButton);
-			}
-
 			this.#initializeStaticStorageFields(mergedFields);
 		}
 
 		if (!this.#currentStorageId || this.#currentStorageId === '0')
 		{
 			Dom.hide(this.#outerBlock);
+
+			return;
 		}
+
+		this.#updateFieldsVisibility();
 	}
 
 	#initializeStaticStorageFields(fields: StorageField[]): void
@@ -284,8 +262,7 @@ export class WriteFieldsManager
 
 		this.#storageFields = [...fields];
 		Dom.clean(this.#fieldsContainer);
-		Dom.show(this.#addFieldButton);
-		Dom.show(this.#outerBlock);
+		this.#updateFieldsVisibility();
 	}
 
 	#clearWriteFields(): void
@@ -297,6 +274,48 @@ export class WriteFieldsManager
 	#getStorageId(): ?string
 	{
 		return this.#storageIdField.value || null;
+	}
+
+	// Only a saved storage has a schema to add a field to; a dynamic one is declared by
+	// a neighbour CreateStorageNode and is addressed by code, not by id.
+	#canCreateStorageField(): boolean
+	{
+		return Number(this.#currentStorageId) > 0;
+	}
+
+	#hasFieldsLeftToAdd(): boolean
+	{
+		return this.#fieldMenu.hasAvailableFields();
+	}
+
+	#hasFieldRows(): boolean
+	{
+		return this.#fieldsContainer.querySelector('[data-id]') !== null;
+	}
+
+	// With no field left to add and none to create, an empty block is a bare frame with a title:
+	// it goes away the same way it does with no storage bound.
+	#updateFieldsVisibility(): void
+	{
+		const canAddField = this.#hasFieldsLeftToAdd() || this.#canCreateStorageField();
+
+		if (canAddField)
+		{
+			Dom.show(this.#addFieldButton);
+		}
+		else
+		{
+			Dom.hide(this.#addFieldButton);
+		}
+
+		if (canAddField || this.#hasFieldRows())
+		{
+			Dom.show(this.#outerBlock);
+		}
+		else
+		{
+			Dom.hide(this.#outerBlock);
+		}
 	}
 
 	async #getFields(storageId: string): Promise<StorageField[]>
@@ -416,14 +435,7 @@ export class WriteFieldsManager
 		Dom.append(row, this.#fieldsContainer);
 		this.#fieldRowRenderer.renderStaticFieldRow(row, field);
 
-		const addedFieldIds = new Set(
-			[...this.#fieldsContainer.querySelectorAll('[data-id]')].map((el) => String(el.dataset.id)),
-		);
-		const notAddedFields = this.#storageFields.filter((f) => !addedFieldIds.has(String(f.Id)));
-		if (notAddedFields.length === 0)
-		{
-			Dom.hide(this.#addFieldButton);
-		}
+		this.#updateFieldsVisibility();
 	}
 
 	#editStorageField(field: StorageField): void
@@ -460,9 +472,8 @@ export class WriteFieldsManager
 		this.#fieldMenu.show();
 	}
 
-	async #onCreateButtonClick(event): Promise<void>
+	async #createStorageField(): Promise<void>
 	{
-		event.preventDefault();
 		const field = await this.#fieldRowRenderer.openFieldEdit();
 
 		if (field)

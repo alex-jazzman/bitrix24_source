@@ -2,6 +2,10 @@ import { Tag, Loc, Dom, Event } from 'main.core';
 import { Popup } from 'main.popup';
 import { Button } from 'ui.buttons';
 
+// where the popup goes when the caller passes no address: the same page the template opens, marked by
+// the sites section - st_section is the wire name Bitrix\Landing\Metrika\Sections::URL_PARAM holds
+export const DEFAULT_AI_URL = '/sites/ai/?st_section=sites';
+
 export default class PopupCopilot
 {
 	constructor(options)
@@ -10,6 +14,7 @@ export default class PopupCopilot
 		this.videoSrc = options.videoSrc;
 
 		this.zone = options.zone ?? null;
+		this.aiUrl = options.aiUrl ?? DEFAULT_AI_URL;
 
 		this.container = null;
 		this.content = null;
@@ -22,7 +27,7 @@ export default class PopupCopilot
 		if (!this.content)
 		{
 			this.content = Tag.render`
-				<div class="landing-site_title-popup-content">
+				<div class="landing-site_title-popup-content" data-testid="landing-sites-copilot-popup">
 					<div class="landing-site_title-popup-main">
 						<div class="landing-site_title-popup-title">
 							${Loc.getMessage('LANDING_SITE_TILE_POPUP_COPILOT_TITLE')}
@@ -108,9 +113,10 @@ export default class PopupCopilot
 						size: Button.Size.EXTRA_LARGE,
 						useAirDesign: true,
 						style: Button.AirStyle.FILLED_SUCCESS,
+						dataset: { testid: 'landing-sites-copilot-popup-create-btn' },
 						onclick: (button: Button) => {
 							button.setWaiting();
-							window.location.href = '/sites/ai/';
+							window.location.href = this.aiUrl;
 						},
 					}),
 				],

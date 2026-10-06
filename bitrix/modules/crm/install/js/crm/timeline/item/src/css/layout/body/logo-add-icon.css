@@ -52,17 +52,31 @@
 	mask-image: url('../../../images/timeline-card-logos/call/crm-timeline__call-outgoing.svg');
 }
 
+.crm-timeline__card-logo_add-icon.--icon-mail-incoming > i {
+	margin-top: 2px;
+	margin-left: 2px;
+	background-color: var(--ui-color-background-primary, #ffffff);
+	background-image: url('../../../images/timeline-card-logos/document/additions/crm-timeline_mail-incoming.svg');
+}
+
 .crm-timeline__card-logo_add-icon.--icon-arrow-incoming > i {
+	transform: scale(1, -1) rotateZ(-180deg);
+	margin-top: 2px;
+	margin-left: 2px;
 	background-color: var(--ui-color-background-primary, #ffffff);
 	background-image: url('../../../images/timeline-card-logos/document/additions/crm-timeline_arrow-incoming.svg');
 }
 
 .crm-timeline__card-logo_add-icon.--icon-arrow-outgoing > i {
+	margin-top: 2px;
+	margin-left: 2px;
 	background-color: var(--ui-color-background-primary, #ffffff);
 	background-image: url('../../../images/timeline-card-logos/document/additions/crm-timeline_arrow-outgoing.svg');
 }
 
 .crm-timeline__card-logo_add-icon.--icon-done > i {
+	margin-top: 2px;
+	margin-left: 2px;
 	background-color: var(--ui-color-background-primary, #ffffff);
 	background-image: url('../../../images/timeline-card-logos/document/additions/crm-timeline_done.svg');
 }
@@ -225,4 +239,8 @@
 
 .crm-timeline__card-logo_add-icon.--icon-max > i {
 	mask-image: url('../../../images/timeline-card-icons/crm-timeline__max-icon.svg');
+}
+
+.crm-timeline__card-logo_add-icon.--icon-microphone > i {
+	mask-image: url('../../../images/common/crm_timeline__microphone.svg');
 }

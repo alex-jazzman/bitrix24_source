@@ -1,0 +1,9 @@
+/* Shrinks to the text so the hint popup is bound to the value itself, not to the whole column. */
+.editor-chart-inspector-value-cell {
+	display: block;
+	width: fit-content;
+	max-width: 100%;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}

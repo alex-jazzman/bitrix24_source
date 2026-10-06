@@ -1,5 +1,5 @@
 import { BaseMessage } from 'im.v2.component.message.base';
-import { BaseFileItem, DefaultMessageContent, MessageHeader, MessageFooter } from 'im.v2.component.message.elements';
+import { BaseFileItem, DefaultMessageContent, MessageHeader, MessageFooter, Reply } from 'im.v2.component.message.elements';
 import { FileType } from 'im.v2.const';
 import { type ImModelMessage } from 'im.v2.model';
 
@@ -18,6 +18,7 @@ export const FileCollectionMessage = {
 		BaseFileItem,
 		MessageHeader,
 		MessageFooter,
+		Reply,
 	},
 	props: {
 		item: {
@@ -49,6 +50,14 @@ export const FileCollectionMessage = {
 		{
 			return this.message.files.slice(0, FILES_LIMIT);
 		},
+		isReply(): boolean
+		{
+			return this.message.replyId !== 0;
+		},
+		isForward(): boolean
+		{
+			return this.$store.getters['messages/isForward'](this.message.id);
+		},
 	},
 	created()
 	{
@@ -72,8 +81,12 @@ export const FileCollectionMessage = {
 	},
 	template: `
 		<BaseMessage :item="item" :dialogId="dialogId">
+			<template v-if="isReply && !isForward" #before-message>
+				<Reply :dialogId="dialogId" :replyId="message.replyId" :isForward="isForward" />
+			</template>
 			<div class="bx-im-message-file-collection__container">
 				<MessageHeader :withTitle="withTitle" :item="item" class="bx-im-message-file-collection__author-title" />
+				<Reply v-if="isReply && isForward" :dialogId="dialogId" :replyId="message.replyId" :isForward="isForward" />
 				<div class="bx-im-message-file-collection__items">
 					<BaseFileItem
 						v-for="fileId in fileIds"
@@ -84,10 +97,11 @@ export const FileCollectionMessage = {
 						@cancelClick="onCancel"
 					/>
 				</div>
-				<DefaultMessageContent 
-					:item="item" 
+				<DefaultMessageContent
+					:item="item"
 					:dialogId="dialogId"
-					class="bx-im-message-file-collection__default-content" 
+					:withReply="false"
+					class="bx-im-message-file-collection__default-content"
 				/>
 			</div>
 			<MessageFooter :item="item" :dialogId="dialogId" />

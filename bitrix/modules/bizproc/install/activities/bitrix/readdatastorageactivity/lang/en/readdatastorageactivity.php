@@ -1,17 +1,21 @@
 <?php
+$MESS["BIZPROC_SRA_DISK_BLOCKED_WARNING"] = "Your Drive is running low on space. Storage will soon become read-only. Free up some space to make sure you can continue write data to it.";
+$MESS["BIZPROC_SRA_DISK_LOW_WARNING"] = "Your Drive is running low on space. Storage will soon become read-only. Free up some space to make sure you can continue write data to it.";
 $MESS["BIZPROC_SRA_EMPTY_FILTER_FIELDS"] = "The \"Field filter\" must not be empty.";
 $MESS["BIZPROC_SRA_EMPTY_RETURN_FIELDS"] = "At least one return field is required.";
 $MESS["BIZPROC_SRA_EMPTY_STORAGE_ID_OR_CODE"] = "Storage not selected, or storage symbolic code not specified.";
+$MESS["BIZPROC_SRA_EMPTY_STORAGE_ID_OR_CODE_MSGVER_1"] = "The field \"Storage\" is required.";
 $MESS["BIZPROC_SRA_FIELD_RECORD_CODE"] = "Symbolic code";
 $MESS["BIZPROC_SRA_FIELD_RECORD_CODE_DESCRIPTION"] = "Storage symbolic code";
-$MESS["BIZPROC_SRA_FIELD_RECORD_NAME"] = "Name:";
+$MESS["BIZPROC_SRA_FIELD_RECORD_NAME"] = "Name";
 $MESS["BIZPROC_SRA_FILTER_FIELDS_COLLAPSED_TEXT"] = "Filter applied, click Expand to view.";
-$MESS["BIZPROC_SRA_FILTER_FIELDS_PROPERTY"] = "Field filter:";
+$MESS["BIZPROC_SRA_FILTER_FIELDS_PROPERTY"] = "Field filter";
 $MESS["BIZPROC_SRA_ITEM_NOT_FOUND"] = "The filters you selected don't match any storage items.";
-$MESS["BIZPROC_SRA_RETURN_FIELDS_SELECTION"] = "Return fields:";
+$MESS["BIZPROC_SRA_QUOTA_EXCEEDED"] = "Cannot read storage data because your Bitrix24 is out of free disk space. Free up some disk space and try again.";
+$MESS["BIZPROC_SRA_RETURN_FIELDS_SELECTION"] = "Return fields";
 $MESS["BIZPROC_SRA_RETURN_JSON_COLLECTION"] = "JSON collection";
 $MESS["BIZPROC_SRA_RETURN_MODE_COLLECTION_PROPERTY"] = "Collection (JSON)";
-$MESS["BIZPROC_SRA_RETURN_MODE_PROPERTY"] = "Return data as:";
+$MESS["BIZPROC_SRA_RETURN_MODE_PROPERTY"] = "Return data as";
 $MESS["BIZPROC_SRA_RETURN_MODE_SINGLE_PROPERTY"] = "Single record";
-$MESS["BIZPROC_SRA_RETURN_MODE_WRONG"] = "Incorrect data return mode.";
-$MESS["BIZPROC_SRA_STORAGE_ID_PROPERTY"] = "Select storage:";
+$MESS["BIZPROC_SRA_RETURN_MODE_WRONG"] = "Incorrect \"Return data as\" value.";
+$MESS["BIZPROC_SRA_STORAGE_ID_PROPERTY"] = "Select storage";

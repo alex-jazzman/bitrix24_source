@@ -12,6 +12,7 @@ use Bitrix\Crm\Integration\ClientResolver;
 use Bitrix\Crm\Integration\Rest\AppPlacement;
 use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Rest\PlacementTable;
+use Bitrix\Main\Web\Uri;
 
 if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)
 	die();
@@ -1265,18 +1266,15 @@ class CCrmRequisiteEditComponent extends \CBitrixComponent
 				break;
 
 			case 'saveAndAdd':
-				$url = CHTTP::urlAddParams(
-					CComponentEngine::MakePathFromTemplate(
+				$url = (string)(new Uri(CComponentEngine::MakePathFromTemplate(
 						$this->arParams['PATH_TO_REQUISITE_EDIT'],
 						array('id' => 0)
-					),
-					array(
-						'etype' => isset($this->entityTypeId) ? $this->entityTypeId : 0,
-						'eid' => isset($this->entityId) ? $this->entityId : 0
-					)
-				);
+					)))->addParams(array(
+						'etype' => $this->entityTypeId ?? 0,
+						'eid' => $this->entityId ?? 0
+					));
 				if (!empty($this->refererUrl))
-					$url = CHTTP::urlAddParams($url, array('back_url' => urlencode($this->refererUrl)));
+					$url = (string)(new Uri($url))->addParams(array('back_url' => $this->refererUrl));
 				LocalRedirect($url);
 				break;
 
@@ -1286,7 +1284,7 @@ class CCrmRequisiteEditComponent extends \CBitrixComponent
 					array('id' => $this->elementId)
 				);
 				if (!empty($this->refererUrl))
-					$url = CHTTP::urlAddParams($url, array('back_url' => urlencode($this->refererUrl)));
+					$url = (string)(new Uri($url))->addParams(array('back_url' => $this->refererUrl));
 				LocalRedirect($url);
 				break;
 

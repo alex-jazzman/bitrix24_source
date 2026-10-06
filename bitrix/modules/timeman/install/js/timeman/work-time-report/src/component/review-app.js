@@ -1,4 +1,4 @@
-import { Loc, Type } from 'main.core';
+import { Loc, Type, Runtime } from 'main.core';
 import { DateTimeFormat } from 'main.date';
 import { HtmlFormatterComponent } from 'ui.bbcode.formatter.html-formatter';
 import { BIcon, Outline, Solid } from 'ui.icon-set.api.vue';
@@ -272,60 +272,6 @@ export const ReviewApp = {
 			}
 		},
 
-		collectUserIds(): number[]
-		{
-			const fromId = Number(this.reportData?.fromUser?.id ?? 0);
-			const toList = this.reportData?.toUsers ?? [];
-			const toIds = toList
-				.map((user) => Number(user?.id ?? 0))
-				.filter((id) => id > 0);
-
-			const ids = [];
-			if (fromId > 0)
-			{
-				ids.push(fromId);
-			}
-			toIds.forEach((id) => {
-				if (!ids.includes(id))
-				{
-					ids.push(id);
-				}
-			});
-
-			return ids;
-		},
-
-		buildChatMessage(): ?string
-		{
-			const parts = [];
-			if (this.gptReport)
-			{
-				parts.push(this.gptReport);
-			}
-
-			if (this.bbcodeSource)
-			{
-				parts.push(this.bbcodeSource);
-			}
-			else if (this.reportText)
-			{
-				parts.push(this.reportText);
-			}
-
-			return parts.length > 0 ? parts.join('\n\n') : null;
-		},
-
-		buildChatTitle(): ?string
-		{
-			if (!this.dateText)
-			{
-				return null;
-			}
-
-			return Loc.getMessage('TIMEMAN_WORK_TIME_REPORT_REVIEW_CHAT_TITLE')
-				.replace('#DATE#', this.dateText);
-		},
-
 		async handleDiscuss(): Promise<void>
 		{
 			if (this.discussing || this.currentReportId <= 0)
@@ -333,32 +279,42 @@ export const ReviewApp = {
 				return;
 			}
 
-			const userIds = this.collectUserIds();
-			if (userIds.length === 0)
-			{
-				console.error('ReviewApp.handleDiscuss: no userIds resolved');
-
-				return;
-			}
-
 			this.discussing = true;
 			try
 			{
-				await openDiscussChat({
-					userIds,
-					entityId: this.currentReportId,
-					message: this.buildChatMessage(),
-					title: this.buildChatTitle(),
-				});
+				await openDiscussChat(this.currentReportId);
 			}
 			catch (error)
 			{
-				console.error('ReviewApp.handleDiscuss failed:', error);
+				await this.notifyDiscussError(error);
 			}
 			finally
 			{
 				this.discussing = false;
 			}
+		},
+
+		async notifyDiscussError(error: ?Object): Promise<void>
+		{
+			const code = Type.isArrayFilled(error?.errors) ? (error.errors[0]?.code ?? null) : null;
+
+			let messageKey = 'TIMEMAN_WORK_TIME_REPORT_REVIEW_DISCUSS_ERROR_COMMON';
+			if (code === 'CHAT_CREATION_ERROR')
+			{
+				messageKey = 'TIMEMAN_WORK_TIME_REPORT_REVIEW_DISCUSS_ERROR_CHAT';
+			}
+			else if (code === 'ACCESS_DENIED' || code === 'NO_MANAGER' || code === 'REPORT_NOT_FOUND')
+			{
+				messageKey = 'TIMEMAN_WORK_TIME_REPORT_REVIEW_DISCUSS_ERROR_ACCESS';
+			}
+
+			// Lazy-load ui.notification: it is only needed on the rare discuss error path,
+			// not on every card open.
+			const { UI } = await Runtime.loadExtension('ui.notification');
+			UI.Notification.Center.notify({
+				content: Loc.getMessage(messageKey),
+				autoHideDelay: 5000,
+			});
 		},
 
 		handleContentScroll(): void
@@ -407,7 +363,7 @@ export const ReviewApp = {
 		},
 	},
 	template: `
-		<div class="tm-work-time-report">
+		<div class="tm-work-time-report" data-testid="timeman-report-review">
 			<div class="tm-work-time-report__title-row">
 				<div class="tm-work-time-report__title-block">
 					<div class="tm-work-time-report__title">
@@ -476,6 +432,7 @@ export const ReviewApp = {
 					:style="AirButtonStyle.OUTLINE_ACCENT_2"
 					:text="discussText"
 					:loading="discussing"
+					:dataset="{ testid: 'timeman-report-review-discuss-btn' }"
 					@click="handleDiscuss"
 				/>
 				<UiButton

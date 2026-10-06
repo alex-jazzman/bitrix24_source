@@ -1,12 +1,21 @@
 import { Cache, Type } from 'main.core';
+import { shallowReactive } from 'ui.vue3';
+
 import { editorAPI } from '../api';
 
 import type { DocumentField, EntitySelectorItem } from '../types';
 
-const cache = new Cache.MemoryCache();
+// Reactive on purpose: the field names are taken off this cache synchronously — by the condition
+// previews of a node and by the tokens of a readable expression — so a surface rendered before its
+// fields arrived would keep showing raw field keys with nothing to re-render it. With the cache as a
+// reactive source such a reader re-runs on its own once the fields land, which is what lets a warm-up
+// stay off the critical path of the panel (see withWarmDocumentFields). Shallow: a Map of Vue tracks
+// reads per key, and the fields themselves stay raw objects — they are handed to legacy BP controls
+// as they are.
+const cache: Map<string, Array<DocumentField>> = shallowReactive(new Map());
 const pendingRequests = new Cache.MemoryCache();
 
-function getKey(documentType: string | Array<string>): string
+export function getDocumentTypeKey(documentType: string | Array<string>): string
 {
 	if (Type.isArray(documentType))
 	{
@@ -49,10 +58,7 @@ function handleFetchSuccess(key: string, items: Array<EntitySelectorItem>): Arra
 		return acc;
 	}, []);
 
-	if (fields.length > 0)
-	{
-		cache.set(key, fields);
-	}
+	cache.set(key, fields);
 
 	pendingRequests.delete(key);
 
@@ -63,6 +69,7 @@ function handleFetchError(key: string, error: Error): Array<DocumentField>
 {
 	console.error('documentFieldsCache: failed to fetch document fields', error);
 
+	cache.set(key, []);
 	pendingRequests.delete(key);
 
 	return [];
@@ -71,22 +78,22 @@ function handleFetchError(key: string, error: Error): Array<DocumentField>
 export const documentFieldsCache = {
 	has(documentType: string | Array<string>): boolean
 	{
-		return cache.has(getKey(documentType));
+		return cache.has(getDocumentTypeKey(documentType));
 	},
 
 	get(documentType: string | Array<string>): Array<DocumentField> | null
 	{
-		return cache.get(getKey(documentType), null);
+		return cache.get(getDocumentTypeKey(documentType)) ?? null;
 	},
 
 	set(documentType: string | Array<string>, fields: Array<DocumentField>): void
 	{
-		cache.set(getKey(documentType), fields);
+		cache.set(getDocumentTypeKey(documentType), fields);
 	},
 
 	async fetchFields(documentType: string | Array<string>): Promise<Array<DocumentField>>
 	{
-		const key = getKey(documentType);
+		const key = getDocumentTypeKey(documentType);
 
 		if (cache.has(key))
 		{

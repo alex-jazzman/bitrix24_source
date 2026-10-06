@@ -11,7 +11,6 @@ export class ItalicNodeFormatter extends NodeFormatter
 				return Dom.create({
 					tag: 'i',
 					attrs: {
-						...node.getAttributes(),
 						className: 'ui-typography-text-italic',
 					},
 				});

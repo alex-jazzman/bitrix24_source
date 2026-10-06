@@ -5,6 +5,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 use Bitrix\Mail;
 use Bitrix\Mail\Helper\DownloadResponse;
 use Bitrix\Mail\Helper\MailboxAccess;
+use Bitrix\Mail\Helper\Message\Loader\QueryBuilder;
 use Bitrix\Mail\Integration\Calendar\ICal\ICalMailManager;
 use Bitrix\Mail\Internals\MessageAccessTable;
 use Bitrix\Main;
@@ -15,6 +16,9 @@ use Bitrix\Main\Engine\Response\Redirect;
 use Bitrix\Mail\MailMessageTable;
 use Bitrix\Main\Errorable;
 use Bitrix\Mail\Helper\Cache\SanitizedBodyCache;
+use Bitrix\Mail\Helper\Label\LabelsFeature;
+use Bitrix\Mail\Internal\Service\Label\LabelService;
+use Bitrix\Mail\Internal\Service\SourceGeneration\MigrationActionGuard;
 use Bitrix\Mail\Integration\AI;
 
 Loc::loadMessages(__DIR__ . '/../mail.client/class.php');
@@ -71,7 +75,7 @@ class CMailClientMessageViewComponent extends CBitrixComponent implements Contro
 	{
 		global $USER, $APPLICATION;
 
-		$APPLICATION->setTitle(Loc::getMessage('MAIL_CLIENT_HOME_TITLE'));
+		$APPLICATION->setTitle(Loc::getMessage('MAIL_CLIENT_HOME_TITLE_MSGVER_1'));
 
 		if (!is_object($USER) || !$USER->isAuthorized())
 		{
@@ -97,6 +101,7 @@ class CMailClientMessageViewComponent extends CBitrixComponent implements Contro
 		$this->prepareMessageHtml($message);
 
 		$this->arResult['MESSAGE'] = $message;
+		$this->arResult['SEND_ERROR'] = Mail\Helper\Mailbox::getPermanentSendError($message);
 
 		$this->arResult['LAST_RCPT'] = Mail\Helper\Recipient::loadLastRcpt();
 		$this->arResult['EMAILS'] = array();//Mail\Helper\Recipient::loadMailContacts();
@@ -106,40 +111,7 @@ class CMailClientMessageViewComponent extends CBitrixComponent implements Contro
 			'B' => array(),
 		);
 
-		$res = Mail\MailMessageTable::getList(array(
-			'runtime' => array(
-				new Main\Entity\ReferenceField(
-					'CLOSURE',
-					Mail\Internals\MessageClosureTable::class,
-					array(
-						'=this.ID' => 'ref.MESSAGE_ID',
-					)
-				),
-				new Main\Entity\ReferenceField(
-					'MESSAGE_UID',
-					Mail\MailMessageUidTable::class,
-					array(
-						'=this.MAILBOX_ID' => 'ref.MAILBOX_ID',
-						'=this.ID' => 'ref.MESSAGE_ID',
-					),
-					array('join_type' => 'INNER'),
-				),
-			),
-			'select' => $this->getLogItemSelectFields(),
-			'filter' => array(
-				'=MAILBOX_ID' => $message['MAILBOX_ID'],
-				'=CLOSURE.PARENT_ID' => $message['ID'],
-				'!=ID' => $message['ID'],
-				'==MESSAGE_UID.DELETE_TIME' => 0,
-				'!@MESSAGE_UID.IS_OLD' => Mail\MailMessageUidTable::HIDDEN_STATUSES,
-			),
-			'order' => array(
-				'MESSAGE_UID.INTERNALDATE' => 'ASC',
-			),
-			'limit' => $pageSize,
-		));
-
-		while ($item = $res->fetch())
+		foreach ($this->getChainItems($message, 'A', $pageSize) as $item)
 		{
 			$item = $this->prepareLog($item, $message);
 
@@ -152,40 +124,7 @@ class CMailClientMessageViewComponent extends CBitrixComponent implements Contro
 
 		if ($message['__access_level'] == 'full')
 		{
-			$res = \Bitrix\Mail\MailMessageTable::getList(array(
-				'runtime' => array(
-					new Main\Entity\ReferenceField(
-						'CLOSURE',
-						Mail\Internals\MessageClosureTable::class,
-						array(
-							'=this.ID' => 'ref.PARENT_ID',
-						)
-					),
-					new Main\Entity\ReferenceField(
-						'MESSAGE_UID',
-						Mail\MailMessageUidTable::class,
-						array(
-							'=this.MAILBOX_ID' => 'ref.MAILBOX_ID',
-							'=this.ID' => 'ref.MESSAGE_ID',
-						),
-						array('join_type' => 'INNER'),
-					),
-				),
-				'select' => $this->getLogItemSelectFields(),
-				'filter' => array(
-					'=MAILBOX_ID' => $message['MAILBOX_ID'],
-					'=CLOSURE.MESSAGE_ID' => $message['ID'],
-					'!=ID' => $message['ID'],
-					'==MESSAGE_UID.DELETE_TIME' => 0,
-					'!@MESSAGE_UID.IS_OLD' => Mail\MailMessageUidTable::HIDDEN_STATUSES,
-				),
-				'order' => array(
-					'MESSAGE_UID.INTERNALDATE' => 'DESC',
-				),
-				'limit' => $pageSize,
-			));
-
-			while ($item = $res->fetch())
+			foreach ($this->getChainItems($message, 'B', $pageSize) as $item)
 			{
 				$item = $this->prepareLog($item, $message);
 
@@ -211,6 +150,15 @@ class CMailClientMessageViewComponent extends CBitrixComponent implements Contro
 		}
 		$APPLICATION->setTitle(htmlspecialcharsbx($displaySubject));
 		$this->arResult['MESSAGE_UID_KEY'] = $message['UID'] . '-' . $message['MAILBOX_ID'];
+		if (LabelsFeature::isEnabled())
+		{
+			$this->arResult['LABELS_ENABLED'] = true;
+			$this->arResult['MESSAGE_LABEL_IDS'] = (new LabelService())->getMessageLabelIds(
+				(int)Main\Engine\CurrentUser::get()->getId(),
+				(int)$message['MAILBOX_ID'],
+				(int)$message['ID'],
+			);
+		}
 		$this->arResult['COPILOT_PARAMS'] = $this->prepareCopilotParams();
 		$this->arResult['ANALYTICS'] = $this->arParams['ANALYTICS'];
 
@@ -271,87 +219,14 @@ class CMailClientMessageViewComponent extends CBitrixComponent implements Contro
 			return;
 		}
 
-		if ('A' == $type)
+		if ('A' != $type && $message['__access_level'] != 'full')
 		{
-			$res = Mail\MailMessageTable::getList(array(
-				'runtime' => array(
-					new Main\Entity\ReferenceField(
-						'CLOSURE',
-						Mail\Internals\MessageClosureTable::class,
-						array(
-							'=this.ID' => 'ref.MESSAGE_ID',
-						)
-					),
-					new Main\Entity\ReferenceField(
-						'MESSAGE_UID',
-						Mail\MailMessageUidTable::class,
-						array(
-							'=this.MAILBOX_ID' => 'ref.MAILBOX_ID',
-							'=this.ID' => 'ref.MESSAGE_ID',
-						),
-						array('join_type' => 'INNER'),
-					),
-				),
-				'select' => $this->getLogItemSelectFields(),
-				'filter' => array(
-					'=MAILBOX_ID' => $message['MAILBOX_ID'],
-					'=CLOSURE.PARENT_ID' => $message['ID'],
-					'!=ID' => $message['ID'],
-					'==MESSAGE_UID.DELETE_TIME' => 0,
-					'!@MESSAGE_UID.IS_OLD' => Mail\MailMessageUidTable::HIDDEN_STATUSES,
-				),
-				'order' => array(
-					'MESSAGE_UID.INTERNALDATE' => 'ASC',
-				),
-				'offset' => $offset,
-				'limit' => $size > 0 ? $size : 5,
-			));
-		}
-		else
-		{
-			if ($message['__access_level'] != 'full')
-			{
-				$this->errorCollection[] = new Main\Error(Loc::getMessage('MAIL_CLIENT_ELEMENT_DENIED'));
-				return;
-			}
-
-			$res = \Bitrix\Mail\MailMessageTable::getList(array(
-				'runtime' => array(
-					new Main\Entity\ReferenceField(
-						'CLOSURE',
-						Mail\Internals\MessageClosureTable::class,
-						array(
-							'=this.ID' => 'ref.PARENT_ID',
-						)
-					),
-					new Main\Entity\ReferenceField(
-						'MESSAGE_UID',
-						Mail\MailMessageUidTable::class,
-						array(
-							'=this.MAILBOX_ID' => 'ref.MAILBOX_ID',
-							'=this.ID' => 'ref.MESSAGE_ID',
-						),
-						array('join_type' => 'INNER'),
-					),
-				),
-				'select' => $this->getLogItemSelectFields(),
-				'filter' => array(
-					'=MAILBOX_ID' => $message['MAILBOX_ID'],
-					'=CLOSURE.MESSAGE_ID' => $message['ID'],
-					'!=ID' => $message['ID'],
-					'==MESSAGE_UID.DELETE_TIME' => 0,
-					'!@MESSAGE_UID.IS_OLD' => Mail\MailMessageUidTable::HIDDEN_STATUSES,
-				),
-				'order' => array(
-					'MESSAGE_UID.INTERNALDATE' => 'DESC',
-				),
-				'offset' => $offset,
-				'limit' => $size > 0 ? $size : 5,
-			));
+			$this->errorCollection[] = new Main\Error(Loc::getMessage('MAIL_CLIENT_ELEMENT_DENIED'));
+			return;
 		}
 
 		$log = array();
-		while ($item = $res->fetch())
+		foreach ($this->getChainItems($message, $type, $size > 0 ? $size : 5, $offset) as $item)
 		{
 			$item = $this->prepareLog($item, $message);
 			$item['__log'] = $type;
@@ -732,6 +607,11 @@ class CMailClientMessageViewComponent extends CBitrixComponent implements Contro
 		{
 			\Bitrix\Main\Application::getInstance()->addBackgroundJob(function () use ($message)
 			{
+				if ((new MigrationActionGuard())->isBlocked((int)$message['MAILBOX_ID']))
+				{
+					return;
+				}
+
 				$mailMarkerManager = new \Bitrix\Mail\ImapCommands\MailsFlagsManager($message['MAILBOX_ID'], $message['UID']);
 				$mailMarkerManager->setMessages([$message]);
 				$mailMarkerManager->markMailsSeen();
@@ -870,6 +750,8 @@ class CMailClientMessageViewComponent extends CBitrixComponent implements Contro
 				'UID' => 'MESSAGE_UID.ID',
 				'DIR_MD5' => 'MESSAGE_UID.DIR_MD5',
 				'MSG_UID' => 'MESSAGE_UID.MSG_UID',
+				// The generation of the placement: what tells a lazy download it is still usable
+				'GENERATION_ID' => 'MESSAGE_UID.GENERATION_ID',
 				'MAILBOX_EMAIL' => 'MAILBOX.EMAIL',
 				'MAILBOX_NAME' => 'MAILBOX.NAME',
 				'MAILBOX_OPTIONS' => 'MAILBOX.OPTIONS',
@@ -878,9 +760,11 @@ class CMailClientMessageViewComponent extends CBitrixComponent implements Contro
 				'IS_SEEN' => 'MESSAGE_UID.IS_SEEN',
 				'INTERNALDATE' => 'MESSAGE_UID.INTERNALDATE',
 			],
-			'filter' => [
-				'=ID' => $id,
-			],
+			'filter' => array_merge(
+				['=ID' => $id],
+				// Of the placements of the message, the download barrier only serves the active one
+				QueryBuilder::generationScopeFilterOfMessages([$id], 'MESSAGE_UID.'),
+			),
 		])->fetch();
 
 		if ($message)
@@ -941,6 +825,64 @@ class CMailClientMessageViewComponent extends CBitrixComponent implements Contro
 	}
 
 	/**
+	 * Messages of the chain of the given one: its answers ('A') or the messages it answers ('B').
+	 *
+	 * @param array $message Main message
+	 * @param string $log Chain side, 'A' or 'B'
+	 *
+	 * @return array Rows of the chain, oldest first for 'A' and newest first for 'B'
+	 *
+	 * @throws Main\ArgumentException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
+	private function getChainItems(array $message, string $log, int $limit, int $offset = 0): array
+	{
+		$isAnswer = ($log === 'A');
+
+		return Mail\MailMessageTable::getList([
+			'runtime' => [
+				new Main\Entity\ReferenceField(
+					'CLOSURE',
+					Mail\Internals\MessageClosureTable::class,
+					[
+						'=this.ID' => $isAnswer ? 'ref.MESSAGE_ID' : 'ref.PARENT_ID',
+					],
+				),
+				new Main\Entity\ReferenceField(
+					'MESSAGE_UID',
+					Mail\MailMessageUidTable::class,
+					[
+						'=this.MAILBOX_ID' => 'ref.MAILBOX_ID',
+						'=this.ID' => 'ref.MESSAGE_ID',
+					],
+					['join_type' => 'INNER'],
+				),
+			],
+			'select' => $this->getLogItemSelectFields(),
+			'filter' => array_merge(
+				[
+					'=MAILBOX_ID' => $message['MAILBOX_ID'],
+					($isAnswer ? '=CLOSURE.PARENT_ID' : '=CLOSURE.MESSAGE_ID') => $message['ID'],
+					'!=ID' => $message['ID'],
+					'==MESSAGE_UID.DELETE_TIME' => 0,
+					'!@MESSAGE_UID.IS_OLD' => Mail\MailMessageUidTable::HIDDEN_STATUSES,
+				],
+				/*
+					Without the scope the join returns a message held by both generations twice,
+					and a message left in the retained one is shown as a member of the chain
+				*/
+				QueryBuilder::generationScopeFilter([(int)$message['MAILBOX_ID']], 'MESSAGE_UID.'),
+			),
+			'order' => [
+				'MESSAGE_UID.INTERNALDATE' => $isAnswer ? 'ASC' : 'DESC',
+			],
+			'offset' => $offset,
+			'limit' => $limit,
+		])->fetchAll();
+	}
+
+	/**
 	 * Get fields list to select for log items
 	 *
 	 * @return array|string[]
@@ -986,7 +928,7 @@ class CMailClientMessageViewComponent extends CBitrixComponent implements Contro
 		}
 		if (!$this->isSanitizeHtmlCanBeLong($message['BODY_HTML']))
 		{
-			$message['MESSAGE_HTML'] = \Bitrix\Mail\Helper\Message::sanitizeHtml($message['BODY_HTML'], true);
+			$message['MESSAGE_HTML'] = \Bitrix\Mail\Helper\Message::sanitizeHtmlForMessageView($message['BODY_HTML']);
 			return;
 		}
 
@@ -1024,8 +966,11 @@ class CMailClientMessageViewComponent extends CBitrixComponent implements Contro
 			return [];
 		}
 
-		$messageHtml = \Bitrix\Mail\Helper\Message::sanitizeHtml($message['BODY_HTML'], true);
-		(new SanitizedBodyCache())->set($id, $messageHtml);
+		$messageHtml = \Bitrix\Mail\Helper\Message::sanitizeHtmlForMessageView($message['BODY_HTML']);
+		if (trim((string)$message['BODY_HTML']) === '' || trim($messageHtml) !== '')
+		{
+			(new SanitizedBodyCache())->set($id, $messageHtml);
+		}
 
 		$quote = Message::wrapTheMessageWithAQuote(
 			$messageHtml,

@@ -34,6 +34,8 @@ return [
 		'ui.hint',
 		'ui.tour',
 		'ui.forms',
+		'crm.timeline.dialog',
+		'ui.system.dialog',
 	],
 	'oninit' => function() {
 		return [

@@ -80,9 +80,9 @@ export const ToolbarInsertGroupComponent = {
 					>
 						<div class="note-editor-popover-card">
 							<div class="note-editor-popover-row">
-								<button type="button" class="note-editor-popover-button" :title="$Bitrix.Loc.getMessage('NOTE_EDITOR_TOOLBAR_LIST_BULLETED')" :data-note-editor-active="editor?.isActive('bulletList')" :disabled="!editor?.isEditable" @click="toggleAndClose('toggleBulletList')"><ListBulletedIcon /></button>
-								<button type="button" class="note-editor-popover-button" :title="$Bitrix.Loc.getMessage('NOTE_EDITOR_TOOLBAR_LIST_ORDERED')" :data-note-editor-active="editor?.isActive('orderedList')" :disabled="!editor?.isEditable" @click="toggleAndClose('toggleOrderedList')"><ListOrderedIcon /></button>
-								<button type="button" class="note-editor-popover-button" :title="$Bitrix.Loc.getMessage('NOTE_EDITOR_TOOLBAR_LIST_TASK')" :data-note-editor-active="editor?.isActive('taskList')" :disabled="!editor?.isEditable" @click="toggleAndClose('toggleTaskList')"><ListTaskIcon /></button>
+								<button type="button" class="note-editor-popover-button" data-testid="note-editor-list-bulleted" :title="$Bitrix.Loc.getMessage('NOTE_EDITOR_TOOLBAR_LIST_BULLETED')" :data-note-editor-active="editor?.isActive('bulletList')" :disabled="!editor?.isEditable" @click="toggleAndClose('toggleBulletList')"><ListBulletedIcon /></button>
+								<button type="button" class="note-editor-popover-button" data-testid="note-editor-list-ordered" :title="$Bitrix.Loc.getMessage('NOTE_EDITOR_TOOLBAR_LIST_ORDERED')" :data-note-editor-active="editor?.isActive('orderedList')" :disabled="!editor?.isEditable" @click="toggleAndClose('toggleOrderedList')"><ListOrderedIcon /></button>
+								<button type="button" class="note-editor-popover-button" data-testid="note-editor-list-task" :title="$Bitrix.Loc.getMessage('NOTE_EDITOR_TOOLBAR_LIST_TASK')" :data-note-editor-active="editor?.isActive('taskList')" :disabled="!editor?.isEditable" @click="toggleAndClose('toggleTaskList')"><ListTaskIcon /></button>
 							</div>
 						</div>
 					</div>

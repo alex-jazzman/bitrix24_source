@@ -1,8 +1,8 @@
 import { Loc, Type, Tag, Reflection, Dom, Text, Event, Runtime, clone } from 'main.core';
-import { Menu, MenuManager } from 'main.popup';
+import { MenuManager } from 'main.popup';
 import { DateTimeFormat } from 'main.date';
 import { DashboardManager } from 'biconnector.apache-superset-dashboard-manager';
-import { BaseEvent, EventEmitter } from 'main.core.events';
+import { EventEmitter } from 'main.core.events';
 import { ApacheSupersetAnalytics, PermissionsAnalytics, PermissionsAnalyticsSource } from 'biconnector.apache-superset-analytics';
 import type { DashboardAnalyticInfo } from 'biconnector.apache-superset-analytics';
 import { Dialog } from 'ui.entity-selector';
@@ -13,13 +13,20 @@ import { AirButtonStyle, Button, CancelButton, ButtonSize } from 'ui.buttons';
 import 'ui.alerts';
 import 'ui.forms';
 import { Dialog as SystemDialog } from 'ui.system.dialog';
+import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
 import { AhaMoment } from 'biconnector.aha-moment';
-import { Text as TypographyText } from 'ui.system.typography';
 import { SharePopup } from 'biconnector.share-popup';
+
+type SelfHostedLicensePopup = {
+	title: string,
+	text: string,
+	termKey: string,
+};
 
 type Props = {
 	gridId: ?string,
 	isNeedShowDraftGuide: boolean,
+	selfHostedLicensePopup: ?SelfHostedLicensePopup,
 	publishAhaMoment: ?Object,
 	isAvailableDashboardCreation: boolean,
 	isAvailableGroupCreation: boolean,
@@ -48,6 +55,11 @@ class SupersetDashboardGridManager
 	#publishAhaMoment: ?AhaMoment;
 	#properties: Props;
 	#sharePopups: Map<number, SharePopup> = new Map();
+	#isDashboardListChanged: boolean = false;
+	#dashboardListReloadTimeout: ?number = null;
+	#isDashboardListUpdatingLocally: boolean = false;
+	#dashboardListChangesDuringLocalUpdate: number = 0;
+	#lastDashboardListReloadScheduleAt: number = Date.now();
 	constructor(props: Props)
 	{
 		this.#dashboardManager = new DashboardManager();
@@ -59,6 +71,7 @@ class SupersetDashboardGridManager
 
 		this.#colorPinnedRows();
 		this.#initHints();
+		this.#showSelfHostedLicensePopup();
 
 		this.#replaceHistoryState();
 	}
@@ -160,7 +173,11 @@ class SupersetDashboardGridManager
 		BX.PULL && BX.PULL.extendWatch('superset_dashboard', true);
 		EventEmitter.subscribe('onPullEvent-biconnector', (event: BaseEvent) => {
 			const [eventName, eventData] = event.data;
-			if (eventName === 'onSupersetStatusUpdated')
+			if (eventName === 'onDashboardListChanged')
+			{
+				this.#onDashboardListChanged();
+			}
+			else if (eventName === 'onSupersetStatusUpdated')
 			{
 				const status = eventData?.status;
 				if (status)
@@ -168,6 +185,14 @@ class SupersetDashboardGridManager
 					this.#onSupersetStatusChange(status);
 				}
 			}
+		});
+
+		Event.bind(document, 'visibilitychange', () => {
+			this.#reloadChangedDashboardList();
+		});
+
+		Event.bind(window, 'focus', () => {
+			this.#reloadChangedDashboardList();
 		});
 
 		EventEmitter.subscribe('BX.Rest.Configuration.Install:onFinish', () => {
@@ -183,10 +208,6 @@ class SupersetDashboardGridManager
 
 		EventEmitter.subscribe('BIConnector.ExportMaster:onDashboardDataLoaded', () => {
 			this.#grid.tableUnfade();
-		});
-
-		EventEmitter.subscribe('BIConnector.DashboardManager:onEmbeddedDataLoaded', () => {
-			this.#grid.reload();
 		});
 
 		EventEmitter.subscribe('BX.BIConnector.Settings:onAfterSave', (event) => {
@@ -334,6 +355,119 @@ class SupersetDashboardGridManager
 				this.updateDashboardStatus(dashboardId, dashboardStatus);
 			}
 		}
+	}
+
+	#onDashboardListChanged(): void
+	{
+		this.getGrid().reload();
+	}
+
+	#reloadChangedDashboardList(): void
+	{
+		if (!this.#isDashboardListChanged || document.hidden)
+		{
+			return;
+		}
+
+		this.#scheduleDashboardListReload();
+	}
+
+	#scheduleDashboardListReload(): void
+	{
+		if (this.#dashboardListReloadTimeout !== null)
+		{
+			return;
+		}
+
+		const delay = Math.max(0, this.#lastDashboardListReloadScheduleAt + 1000 - Date.now());
+		this.#lastDashboardListReloadScheduleAt = Date.now() + delay;
+		this.#dashboardListReloadTimeout = setTimeout(() => {
+			this.#dashboardListReloadTimeout = null;
+			if (!this.#isDashboardListChanged || document.hidden)
+			{
+				return;
+			}
+
+			if (
+				this.#isDashboardListUpdatingLocally
+				|| this.#hasActiveDashboardListInteraction()
+			)
+			{
+				this.#scheduleDashboardListReload();
+
+				return;
+			}
+
+			this.#isDashboardListChanged = false;
+			this.getGrid().reload();
+		}, delay);
+	}
+
+	#skipOwnDashboardListChange(): void
+	{
+		if (this.#dashboardListChangesDuringLocalUpdate > 0)
+		{
+			this.#dashboardListChangesDuringLocalUpdate--;
+
+			return;
+		}
+
+	}
+
+	#hasActiveDashboardListInteraction(): boolean
+	{
+		const gridContainer = this.getGrid().getContainer();
+		const activeElement = document.activeElement;
+
+		return (
+			gridContainer.querySelector('.main-grid-editor') !== null
+			|| (
+				Type.isDomNode(activeElement)
+				&& (
+					gridContainer.contains(activeElement)
+					|| activeElement.closest('.menu-popup') !== null
+				)
+			)
+		);
+	}
+
+	/**
+	 * Warning about the term of the license running out, shown to an administrator of a boxed portal. The texts and
+	 * the decision to show it come resolved from the server; the only thing decided here is that a popup seen once
+	 * does not come back.
+	 */
+	#showSelfHostedLicensePopup(): void
+	{
+		const popup = this.#properties.selfHostedLicensePopup;
+		if (!Type.isPlainObject(popup))
+		{
+			return;
+		}
+
+		this.#properties.selfHostedLicensePopup = null;
+		MessageBox.create({
+			title: popup.title,
+			message: popup.text,
+			buttons: MessageBoxButtons.OK,
+			onOk: (messageBox) => messageBox.close(),
+			popupOptions: {
+				// Named so that a test can find the window: the texts of the popup come from the server and change
+				// with the license.
+				id: 'biconnector-selfhost-license-popup',
+				events: {
+					// Written on any way out of the popup, the cross included: the term has been seen, and the next
+					// opening of the grid must not warn about it again.
+					onPopupClose: () => {
+						BX.userOptions.save(
+							'biconnector',
+							'selfhost_license_expiry_popup',
+							popup.termKey,
+							true,
+						);
+					},
+				},
+			},
+		}).show();
 	}
 
 	#showDraftGuide(node: HTMLElement): void
@@ -780,6 +914,7 @@ class SupersetDashboardGridManager
 	{
 		const grid = this.getGrid();
 		grid.tableFade();
+		this.#isDashboardListUpdatingLocally = true;
 
 		return this.#dashboardManager.duplicateDashboard(dashboardId)
 			.then((response) => {
@@ -807,6 +942,7 @@ class SupersetDashboardGridManager
 				}
 
 				gridRealtime.addRow(newRow);
+				this.#skipOwnDashboardListChange();
 				const newRowNode = this.#grid.getRows().getById(newDashboard.id).node;
 				newRowNode.setAttribute('data-group-id', 'D');
 
@@ -853,7 +989,18 @@ class SupersetDashboardGridManager
 						c_element: analyticInfo.from,
 					});
 				}
-			});
+			})
+			.finally(() => {
+				this.#isDashboardListUpdatingLocally = false;
+				if (this.#dashboardListChangesDuringLocalUpdate > 0)
+				{
+					this.#dashboardListChangesDuringLocalUpdate = 0;
+					this.#isDashboardListChanged = true;
+				}
+
+				this.#reloadChangedDashboardList();
+			})
+		;
 	}
 
 	#notifyErrors(errors: Array): void
@@ -1492,7 +1639,9 @@ class SupersetDashboardGridManager
 		this.#switchTopMenuAction(dashboardId, true, url, restrictionCode);
 
 		return this.#dashboardManager.addToTopMenu(dashboardId)
-			.then((response) => {})
+			.then((response) => {
+				this.#grid.updateRow(dashboardId);
+			})
 			.catch((response) => {
 				this.#grid.updateRow(dashboardId);
 				BX.UI.Notification.Center.notify({
@@ -1510,7 +1659,9 @@ class SupersetDashboardGridManager
 		this.#switchTopMenuAction(dashboardId, false, url, restrictionCode);
 
 		return this.#dashboardManager.deleteFromTopMenu(dashboardId)
-			.then((response) => {})
+			.then((response) => {
+				this.#grid.updateRow(dashboardId);
+			})
 			.catch((response) => {
 				this.#grid.updateRow(dashboardId);
 				BX.UI.Notification.Center.notify({

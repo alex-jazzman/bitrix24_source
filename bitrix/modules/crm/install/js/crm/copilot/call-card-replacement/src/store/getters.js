@@ -1,4 +1,4 @@
-import type { ApplicationState } from '../store';
+import type { ApplicationState, Criterion } from '../store';
 
 export default {
 	callId(state: ApplicationState): string
@@ -24,6 +24,16 @@ export default {
 	hasAvailableSelectorItems(state: ApplicationState): boolean
 	{
 		return state.hasAvailableSelectorItems;
+	},
+
+	isCallScoringV2Enabled(state: ApplicationState): boolean
+	{
+		return state.isCallScoringV2Enabled;
+	},
+
+	criteria(state: ApplicationState): Criterion[]
+	{
+		return state.criteria;
 	},
 
 	guid(state: ApplicationState): string

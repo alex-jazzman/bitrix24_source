@@ -2,6 +2,16 @@
 	width: 100%;
 }
 
+.socialnetwork--project-title-wrapper textarea {
+	outline: none;
+}
+
+.socialnetwork--project-title-wrapper.--keyboard-focus textarea {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+	border-radius: var(--ui-border-radius-2xs, 4px);
+}
+
 .socialnetwork--project-title-wrapper.socialnetwork--project--field-highlight {
 	--highlight-background: var(--socialnetwork--project-wizard-bg);
 }

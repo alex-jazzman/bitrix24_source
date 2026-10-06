@@ -1,4 +1,4 @@
-import {B24Options} from './type';
+import type {B24Options} from './type';
 import {Conv, Type} from './util/registry';
 import {Button} from './util/button';
 import * as Form from './form/registry';

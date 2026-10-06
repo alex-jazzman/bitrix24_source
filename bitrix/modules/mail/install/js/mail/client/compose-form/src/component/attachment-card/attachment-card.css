@@ -1,0 +1,26 @@
+.mail-compose-attachment-card
+{
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-xs);
+	min-width: 0;
+}
+
+.mail-compose-attachment-card__icon
+{
+	flex: 0 0 auto;
+}
+
+/* the name yields room to the rest of the row: a long file name is truncated instead of pushing it out */
+.mail-compose-attachment-card__name
+{
+	flex: 0 1 auto;
+	min-width: 0;
+	color: var(--ui-color-base-1);
+}
+
+.mail-compose-attachment-card__size
+{
+	flex: 0 0 auto;
+	color: var(--ui-color-base-3);
+}

@@ -18,13 +18,14 @@ require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/prolog_befo
 
 $request = Bitrix\Main\Application::getInstance()->getContext()->getRequest();
 
-if (!check_bitrix_sessid() && !$request->isPost())
+if (!check_bitrix_sessid() || !$request->isPost())
 {
 	die();
 }
 
-$orderData = $request->get("orderData");
-$templateName = $request->get("templateName");
+$orderData = array_filter((array)$request->getPost("orderData"), 'is_scalar');
+$templateName = $request->getPost("templateName");
+$templateName = is_scalar($templateName) ? (string)$templateName : "";
 if(empty($templateName))
 {
 	$templateName = "";

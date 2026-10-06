@@ -11,6 +11,7 @@ import { StructureViewList } from './structure-view-list/structure-view-list';
 import { CollapseTransition } from './transition-collapse/transition-collapse';
 import type { UserMiniProfileDataType } from './type';
 import { UserBaseInfo } from './user-base-info/user-base-info';
+import { SystemUserBadge } from './system-user-badge/system-user-badge';
 import { UserDetailedInfo } from './user-detailed-info/user-detailed-info';
 
 // @vue/component
@@ -19,6 +20,7 @@ export const UserMiniProfileComponent = {
 	components: {
 		UserMiniProfileLoader,
 		UserBaseInfo,
+		SystemUserBadge,
 		UserDetailedInfo,
 		Divider,
 		StructureViewList,
@@ -103,9 +105,17 @@ export const UserMiniProfileComponent = {
 		{
 			return this.backendData?.access.canChat ?? false;
 		},
+		isSystemUser(): boolean
+		{
+			return this.backendData?.baseInfo?.isSystemUser === true;
+		},
 		isShowStructure(): boolean
 		{
-			return this.canShowDepartments && this.isExpanded;
+			return this.canShowDepartments && this.isExpanded && !this.isSystemUser;
+		},
+		isShowInlineStructure(): boolean
+		{
+			return this.canShowDepartments && this.isSystemUser;
 		},
 	},
 	created(): void
@@ -184,6 +194,7 @@ export const UserMiniProfileComponent = {
 	},
 	template: `
 		<div class="intranet-user-mini-profile-wrapper">
+			<SystemUserBadge v-if="isSystemUser"/>
 			<template v-if="!isError">
 				<LoaderTransition 
 					:isLoading="isLoading" 
@@ -198,7 +209,7 @@ export const UserMiniProfileComponent = {
 							<UserBaseInfo
 								:userId="userId"
 								:info="backendData.baseInfo"
-								:isShowExpand="canShowDepartments"
+								:isShowExpand="canShowDepartments && !isSystemUser"
 								:isExpanded="isExpanded"
 								:canChat="canChat"
 								@expand="onExpand"
@@ -211,6 +222,14 @@ export const UserMiniProfileComponent = {
 								  :departments="departments"
 								  :heads="heads"
 								  :teams="backendData.structure.teams"
+								/>
+							</template>
+							<template v-if="isShowInlineStructure">
+								<Divider style="margin-top: 18px; margin-bottom: 14px"/>
+								<StructureViewList
+									:structure="backendData.structure"
+									:user="getUserData()"
+									data-test-id="usermp_structure-view-list"
 								/>
 							</template>
 						</div>

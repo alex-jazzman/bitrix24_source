@@ -47,6 +47,8 @@ class HumanResourcesConfigPermissionsAjaxController extends \Bitrix\Main\Engine\
 		{
 			$permissionService = Container::getAccessRolePermissionService();
 			$permissionService->setCategory($category);
+			$deletedRoleIds = $this->normalizeDeletedUserGroups($deletedUserGroups);
+			$permissionService->validateRolesCanBeDeleted($deletedRoleIds);
 
 			if (!empty($userGroups))
 			{
@@ -62,19 +64,23 @@ class HumanResourcesConfigPermissionsAjaxController extends \Bitrix\Main\Engine\
 				Container::getAccessRoleRelationService()->saveRoleRelation($userGroups);
 			}
 
-			if (is_array($deletedUserGroups))
+			if (!empty($deletedRoleIds))
 			{
-				$this->deleteUserGroups($deletedUserGroups);
+				$permissionService->deleteRoles($deletedRoleIds);
 			}
 
 			return [
 				'USER_GROUPS' => $permissionService->getUserGroups(),
 			];
 		}
+		catch (\DomainException $exception)
+		{
+			$this->addError(new Main\Error($exception->getMessage(), 'ROLE_DOMAIN_ERROR'));
+		}
 		catch (\Exception)
 		{
 			$this->errorCollection[] = new \Bitrix\Main\Error(
-				Loc::getMessage('HUMAN_RESOURCES_CONFIG_PERMISSIONS_DB_ERROR') ?? ''
+				Loc::getMessage('HUMAN_RESOURCES_CONFIG_PERMISSIONS_DB_ERROR') ?? '',
 			);
 		}
 
@@ -147,15 +153,16 @@ class HumanResourcesConfigPermissionsAjaxController extends \Bitrix\Main\Engine\
 		return true;
 	}
 
-	private function deleteUserGroups(array $deletedUserGroups): void
+	private function normalizeDeletedUserGroups(?array $deletedUserGroups): array
 	{
-		$deletedUserGroups = array_filter($deletedUserGroups, is_numeric(...));
-		$deletedUserGroups = array_map(static fn($groupId) => (int)$groupId, $deletedUserGroups);
-		if (empty($deletedUserGroups))
+		if (!is_array($deletedUserGroups))
 		{
-			return;
+			return [];
 		}
 
-		Container::getAccessRolePermissionService()->deleteRoles($deletedUserGroups);
+		$deletedUserGroups = array_filter($deletedUserGroups, is_numeric(...));
+		$deletedUserGroups = array_map(static fn($groupId) => (int)$groupId, $deletedUserGroups);
+
+		return array_values(array_unique($deletedUserGroups));
 	}
 }

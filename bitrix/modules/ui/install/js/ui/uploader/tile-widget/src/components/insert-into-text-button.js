@@ -2,6 +2,7 @@ import { Loc } from 'main.core';
 import { Popup } from 'main.popup';
 import type { BaseEvent } from 'main.core.events';
 
+import { LiveAnnouncer } from 'ui.a11y';
 import { BIcon } from 'ui.icon-set.api.vue';
 import { Outline } from 'ui.icon-set.api.core';
 import 'ui.icon-set.outline';
@@ -15,7 +16,13 @@ export const InsertIntoTextButton: BitrixVueComponentProps = {
 	components: {
 		BIcon,
 	},
-	inject: ['emitter'],
+	inject: {
+		emitter: {},
+		// the tile owns the hidden status and tells whether it was rendered at all
+		tileInsertedStatus: {
+			default: null,
+		},
+	},
 	props: {
 		item: {
 			type: Object,
@@ -33,11 +40,21 @@ export const InsertIntoTextButton: BitrixVueComponentProps = {
 		{
 			return this.item.customData?.tileSelected === true;
 		},
+		buttonLabel(): string
+		{
+			return Loc.getMessage('TILE_UPLOADER_INSERT_INTO_THE_TEXT');
+		},
+		insertedStatusId(): ?string
+		{
+			return this.tileInsertedStatus?.getId() ?? null;
+		},
 	},
 	methods: {
 		handleClick(): void
 		{
 			this.emitter.emit('onInsertIntoText', { item: this.item });
+
+			LiveAnnouncer.announce(Loc.getMessage('TILE_UPLOADER_FILE_INSERTED_STATUS'));
 		},
 		handleMouseEnter(event: MouseEvent): void
 		{
@@ -50,8 +67,9 @@ export const InsertIntoTextButton: BitrixVueComponentProps = {
 			const targetNodeWidth: number = targetNode.offsetWidth;
 
 			this.hintPopup = new Popup({
-				content: Loc.getMessage('TILE_UPLOADER_INSERT_INTO_THE_TEXT'),
+				content: this.buttonLabel,
 				cacheable: false,
+				closeByEsc: true,
 				animation: 'fading-slide',
 				bindElement: targetNode,
 				targetContainer: document.body,
@@ -90,13 +108,18 @@ export const InsertIntoTextButton: BitrixVueComponentProps = {
 		},
 	},
 	template: `
-		<BIcon
+		<button
+			type="button"
 			class="ui-tile-uploader-insert-into-text-button"
+			data-testid="ui-tile-uploader-item-insert-btn"
 			:class="{ '--inserted': isInserted }"
-			:name="Outline.PROMPT_VAR"
+			:aria-label="buttonLabel"
+			:aria-describedby="insertedStatusId"
 			@click="handleClick"
 			@mouseenter="handleMouseEnter"
 			@mouseleave="handleMouseLeave"
-		/>
+		>
+			<BIcon :name="Outline.PROMPT_VAR" aria-hidden="true"/>
+		</button>
 	`,
 };

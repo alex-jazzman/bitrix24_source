@@ -189,6 +189,36 @@
 	--border-color: var(--ui-color-design-tinted-na-stroke);
 }
 
+.ui-chip.--tinted-bitrix-gpt {
+	--background: linear-gradient(
+		269.5deg,
+		var(--ui-color-design-tinted-bitrix-gpt-bg-gradient-1, #fef5f4) 1.77%,
+		var(--ui-color-design-tinted-bitrix-gpt-bg-gradient-2, #fceff8) 16.39%,
+		var(--ui-color-design-tinted-bitrix-gpt-bg-gradient-3, #f1f0ff) 50.5%,
+		var(--ui-color-design-tinted-bitrix-gpt-bg-gradient-4, #f0f7ff) 99.23%
+	);
+	--border-color: transparent;
+	--border-color-hover: transparent;
+	--icon-color: var(--ui-color-design-tinted-bitrix-gpt-content-icon, #0098ea);
+	--icon-color-hover: var(--ui-color-design-tinted-bitrix-gpt-content-icon, #0098ea);
+	--clear-color: var(--ui-color-design-tinted-bitrix-gpt-content-gradient-4, rgb(240, 70, 183));
+}
+
+.ui-chip.--tinted-bitrix-gpt .ui-chip-text,
+.ui-chip.--tinted-bitrix-gpt:hover .ui-chip-text {
+	background-image: linear-gradient(
+		257deg,
+		var(--ui-color-design-tinted-bitrix-gpt-content-gradient-5, rgb(249, 98, 105)) 1.67%,
+		var(--ui-color-design-tinted-bitrix-gpt-content-gradient-4, rgb(240, 70, 183)) 20.78%,
+		var(--ui-color-design-tinted-bitrix-gpt-content-gradient-3, rgb(157, 72, 255)) 54.22%,
+		var(--ui-color-design-tinted-bitrix-gpt-content-gradient-2, rgb(63, 104, 255)) 78.1%,
+		var(--ui-color-design-tinted-bitrix-gpt-content-gradient-1, rgb(0, 152, 234)) 97.21%
+	);
+	-webkit-background-clip: text;
+	background-clip: text;
+	color: transparent;
+}
+
 .ui-chip.--outline-accent {
 	--text-color: var(--ui-color-accent-main-primary);
 	--border-color: var(--ui-color-accent-soft-blue-1);

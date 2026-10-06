@@ -20,6 +20,7 @@ return [
 		'layout/ui/fields/focus-manager',
 		'layout/ui/entity-editor/manager',
 
+		'bizproc:helper/network-error',
 		'bizproc:wizard/progress-bar-number',
 	],
 ];

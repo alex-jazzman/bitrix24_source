@@ -1,0 +1,4 @@
+<?php
+$MESS["LANDING_AI_ASSISTANT_PANEL_CHAT_LABEL"] = 'Chat with AI assistant';
+$MESS["LANDING_AI_ASSISTANT_WIDGET_LOADING"] = 'AI assistant loading';
+$MESS["LANDING_AI_ASSISTANT_WIDGET_READY"] = 'AI assistant ready';

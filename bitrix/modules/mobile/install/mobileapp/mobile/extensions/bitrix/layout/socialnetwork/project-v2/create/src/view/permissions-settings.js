@@ -11,6 +11,9 @@ jn.define('layout/socialnetwork/project-v2/create/src/view/permissions-settings'
 	const { ProjectCreateSectionTitle } = require('layout/socialnetwork/project-v2/create/src/view/components/section-title');
 	const { createTestIdGenerator } = require('utils/test');
 	const {
+		createProjectSettingsCloseGuard,
+	} = require('layout/socialnetwork/project-v2/create/src/helpers/project-settings-close-guard');
+	const {
 		PermissionValueType,
 		PermissionBooleanValueType,
 		buildRoleMenuItems,
@@ -172,6 +175,21 @@ jn.define('layout/socialnetwork/project-v2/create/src/view/permissions-settings'
 				knowledgeSettingsPerms: props.knowledgeSettingsPerms ?? PermissionValueType.ALL,
 				knowledgeDeletePerms: props.knowledgeDeletePerms ?? PermissionValueType.ALL,
 			};
+			this.initialFields = this.#getFields();
+			this.closeGuard = null;
+		}
+
+		componentDidMount()
+		{
+			this.closeGuard = createProjectSettingsCloseGuard({
+				layoutWidget: this.props.layoutWidget,
+				preventLayoutWidget: this.props.rootLayoutWidget ?? this.props.layoutWidget,
+				releasePreventDismiss: false,
+				initialFields: this.initialFields,
+				getCurrentFields: this.#getFields,
+				onSaveAndClose: this.#close,
+				onDiscardAndClose: this.#rollbackAndClose,
+			});
 		}
 
 		render()
@@ -277,7 +295,11 @@ jn.define('layout/socialnetwork/project-v2/create/src/view/permissions-settings'
 		}
 
 		#emitChange = () => {
-			this.props.onChange?.({
+			this.props.onChange?.(this.#getFields());
+			this.closeGuard?.update();
+		};
+
+		#getFields = () => ({
 				initiatePerms: this.state.initiatePerms,
 				messageWriters: this.state.messageWriters,
 				showHistory: this.state.showHistory,
@@ -290,7 +312,15 @@ jn.define('layout/socialnetwork/project-v2/create/src/view/permissions-settings'
 				knowledgeEditPerms: this.state.knowledgeEditPerms,
 				knowledgeSettingsPerms: this.state.knowledgeSettingsPerms,
 				knowledgeDeletePerms: this.state.knowledgeDeletePerms,
-			});
+		});
+
+		#close = () => {
+			this.props.layoutWidget?.close();
+		};
+
+		#rollbackAndClose = () => {
+			this.props.onChange?.(this.initialFields);
+			this.props.layoutWidget?.close();
 		};
 
 		#getItemSubtitle = (item) => {

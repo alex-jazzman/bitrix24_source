@@ -1,9 +1,11 @@
-import { Tag, Dom, Type } from 'main.core';
+import { Dom, Event, Tag, Type } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import { Dialog, type ItemOptions } from 'ui.entity-selector';
 import './style.css';
 
 export type { ItemOptions };
+
+const activationKeys = new Set(['Enter', ' ']);
 
 export class SignDropdown extends EventEmitter
 {
@@ -41,14 +43,18 @@ export class SignDropdown extends EventEmitter
 		this.#dom = Tag.render`
 			<div
 				class="sign-b2e-dropdown"
-				onclick="${() => {
-					this.#selector.show();
-				}}"
+				role="button"
+				tabindex="0"
+				aria-haspopup="dialog"
+				aria-expanded="false"
+				data-test-id="sign-b2e-dropdown-trigger"
 			>
 				${titleNode}
 				<span class="sign-b2e-dropdown__btn"></span>
 			</div>
 		`;
+		Event.bind(this.#dom, 'click', () => this.#showSelector());
+		Event.bind(this.#dom, 'keydown', (event: KeyboardEvent) => this.#handleKeydown(event));
 		this.#selector = new Dialog({
 			targetNode: this.#dom,
 			width: width ?? 500,
@@ -59,6 +65,8 @@ export class SignDropdown extends EventEmitter
 			enableSearch: isEnableSearch ?? true,
 			hideOnSelect: true,
 			events: {
+				onShow: () => this.#setExpanded(true),
+				onHide: () => this.#setExpanded(false),
 				'Item:OnSelect': ({ data }) => this.#onSelect(data.item),
 			},
 			...dialogOptions,
@@ -139,6 +147,28 @@ export class SignDropdown extends EventEmitter
 	hide(): void
 	{
 		Dom.style(this.#dom, { display: 'none' });
+	}
+
+	#showSelector(): void
+	{
+		this.#setExpanded(true);
+		this.#selector.show();
+	}
+
+	#handleKeydown(event: KeyboardEvent): void
+	{
+		if (!activationKeys.has(event.key))
+		{
+			return;
+		}
+
+		event.preventDefault();
+		this.#showSelector();
+	}
+
+	#setExpanded(expanded: boolean): void
+	{
+		Dom.attr(this.#dom, 'aria-expanded', expanded ? 'true' : 'false');
 	}
 
 	#onSelect(item: ItemOptions): void

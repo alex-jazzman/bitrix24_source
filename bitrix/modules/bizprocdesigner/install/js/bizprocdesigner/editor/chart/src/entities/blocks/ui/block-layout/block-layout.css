@@ -41,7 +41,7 @@
 }
 
 .editor-chart-block-layout .editor-chart-block-layout__top-menu-content {
-	display: none;
+	display: var(--editor-chart-top-menu-content-display, none);
 	justify-content: flex-end;
 	align-items: flex-start;
 	height: 18px;
@@ -50,16 +50,16 @@
 	border-radius: 4px;
 }
 
-.editor-chart-block-layout.--opened-menu .editor-chart-block-layout__top-menu-content {
-	display: flex;
-}
-
-.editor-chart-block-layout.--hoverable:hover .editor-chart-block-layout__top-menu-content {
-	display: flex;
-}
-
-.editor-chart-block-container.--hoverable:hover .editor-chart-block-layout__top-menu-content {
-	display: flex;
+/*
+ * The single place that decides when the top menu buttons are shown. An editable node title
+ * fills the whole node, so it takes its gap from here instead of repeating these conditions;
+ * 15px is off the inline space scale, the neighbouring tokens are 14px and 16px.
+ */
+.editor-chart-block-layout.--opened-menu,
+.editor-chart-block-layout.--hoverable:hover,
+.editor-chart-block-container.--hoverable:hover {
+	--editor-chart-top-menu-content-display: flex;
+	--editor-chart-top-menu-gap: 15px;
 }
 
 .editor-chart-block-layout.--hoverable:hover .editor-chart-block-layout__top-menu.--hide,

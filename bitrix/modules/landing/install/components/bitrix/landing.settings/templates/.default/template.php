@@ -16,9 +16,12 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Main\Application;
 use Bitrix\Main\Loader;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI;
 use Bitrix\Main\UI\Extension;
 use Bitrix\Landing\Metrika;
+
+Loc::loadMessages(__FILE__);
 
 /** @var array $arParams */
 /** @var array $arResult */
@@ -58,8 +61,12 @@ if (!$component->isToolAvailable())
 
 		if ($link['page'] ?? null)
 		{
+			// the item carries no address: it opens a section of the same page, so it is a button,
+			// and a button built of an anchor needs a place in the tab order of its own
 			$menuItem['ATTRIBUTES'] = [
 				'data-page' => $link['page'],
+				'role' => 'button',
+				'tabindex' => '0',
 			];
 			$pages[$code] = $link;
 		}
@@ -89,29 +96,45 @@ if (!$component->isToolAvailable())
 	);
 	?>
 
+	<?php
+	// A live region announces what appears inside it and only once the region itself is already
+	// there, so the block is printed with the document and left empty. It stands outside the
+	// content container on purpose: the busy state raised on that container while a request is
+	// under way tells a screen reader to hold back everything changing inside it.
+	?>
+	<div class="landing-settings-message" id="landing-settings-message" role="alert"></div>
+
 	<div id="landing-settings-content">
 		<?php
-		if ($arResult['ERRORS'])
+		$fatalMessages = [];
+		if ($arResult['ERRORS'] && $arResult['FATAL'])
 		{
 			foreach ($arResult['ERRORS'] as $errorCode => $errorMessage)
 			{
-				$errorMessage .= $component->getSettingLinkByError(
+				$fatalMessages[] = $errorMessage . $component->getSettingLinkByError(
 					$errorCode
 				);
-				if ($arResult['FATAL'])
-				{
-					?>
-					<div class="landing-error-page">
-						<div class="landing-error-page-inner">
-							<div class="landing-error-page-title"><?= $errorMessage ?></div>
-							<div class="landing-error-page-img">
-								<div class="landing-error-page-img-inner"></div>
-							</div>
-						</div>
-					</div>
-					<?php
-				}
 			}
+		}
+
+		// the focus is moved onto one block, so every message is printed inside that block
+		if ($fatalMessages)
+		{
+			?>
+			<div
+				class="landing-error-page"
+				tabindex="-1"
+			>
+				<div class="landing-error-page-inner">
+					<?php foreach ($fatalMessages as $fatalMessage): ?>
+						<div class="landing-error-page-title"><?= $fatalMessage ?></div>
+					<?php endforeach; ?>
+					<div class="landing-error-page-img">
+						<div class="landing-error-page-img-inner"></div>
+					</div>
+				</div>
+			</div>
+			<?php
 		}
 		?>
 	</div>
@@ -143,6 +166,11 @@ if (!$component->isToolAvailable())
 					'pages' => $pages,
 					'menuId' => 'landing-settings-sidemenu',
 					'containerId' => 'landing-settings-content',
+					'messageId' => 'landing-settings-message',
+					'messages' => [
+						'sectionLoadError' => Loc::getMessage('LANDING_SITE_SETTINGS_SECTION_LOAD_ERROR'),
+						'saveError' => Loc::getMessage('LANDING_SITE_SETTINGS_SAVE_ERROR'),
+					],
 					'saveButtonId' => 'landing-settings-save-btn',
 					'cancelButtonId' => 'landing-settings-cancel-btn',
 					'type' => $arParams['TYPE'],

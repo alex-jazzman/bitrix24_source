@@ -1,7 +1,7 @@
 import { createNamespacedHelpers } from 'ui.vue3.vuex';
 
 import { BusySlot as BusySlotType, Model } from 'booking.const';
-import { gridFactory } from 'booking.lib.grid';
+import { GridFactory, type GridBase } from 'booking.lib.grid';
 
 import { UiBusySlot } from '../../../grid/bookings/ui-busy-slot/ui-busy-slot';
 import './busy-slot.css';
@@ -36,7 +36,7 @@ export const WeekBusySlot = {
 		}),
 		grid(): GridBase
 		{
-			return gridFactory.getGrid();
+			return GridFactory.getGrid();
 		},
 		enabledOverbookingFeature(): boolean
 		{

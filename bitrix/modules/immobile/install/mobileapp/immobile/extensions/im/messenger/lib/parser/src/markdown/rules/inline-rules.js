@@ -2,13 +2,21 @@
  * @module im/messenger/lib/parser/markdown/rules/inline-rules
  */
 jn.define('im/messenger/lib/parser/markdown/rules/inline-rules', (require, exports, module) => {
-	const { Color } = require('tokens');
 	const { MARKDOWN_INLINE_CODE_PREFIX, MARKDOWN_PLACEHOLDER_SUFFIX } = require('im/messenger/lib/parser/const');
+	const { Color } = require('tokens');
 
 	// Word-like characters for underscore boundary detection (ASCII + Latin Extended + Cyrillic).
 	// Android doesn't support \p{L}/\p{N} Unicode property escapes.
 	const WORD_CHAR = '[\\w\\u00C0-\\u024F\\u0400-\\u04FF]';
 	const wordCharPattern = new RegExp(WORD_CHAR);
+
+	const placeholderOnlyPattern = new RegExp(
+		`^\\s*(?:${MARKDOWN_INLINE_CODE_PREFIX}\\d+${MARKDOWN_PLACEHOLDER_SUFFIX}\\s*)+$`,
+	);
+	const inlineCodeRestorePattern = new RegExp(`${MARKDOWN_INLINE_CODE_PREFIX}(\\d+)${MARKDOWN_PLACEHOLDER_SUFFIX}`, 'g');
+	const boldItalicUnderscorePattern = new RegExp(`_{3}([^_](?:[^_\n]*[^_])?)_{3}(?!${WORD_CHAR})`, 'g');
+	const boldUnderscorePattern = new RegExp(`_{2}([^_](?:[^_\n]*[^_])?)_{2}(?!${WORD_CHAR})`, 'g');
+	const italicUnderscorePattern = new RegExp(`_([^\\s_](?:[^_\n]*[^\\s_])?)_(?!${WORD_CHAR})`, 'g');
 
 	/**
 	 * @param {string} text
@@ -57,10 +65,6 @@ jn.define('im/messenger/lib/parser/markdown/rules/inline-rules', (require, expor
 	 */
 	function protectInlineCode(text, storage)
 	{
-		const placeholderOnlyPattern = new RegExp(
-			`^\\s*(?:${MARKDOWN_INLINE_CODE_PREFIX}\\d+${MARKDOWN_PLACEHOLDER_SUFFIX}\\s*)+$`,
-		);
-
 		// Triple backticks first: ```code```
 		text = text.replaceAll(/```(.+?)```/g, (match, code) => {
 			const index = storage.length;
@@ -112,22 +116,50 @@ jn.define('im/messenger/lib/parser/markdown/rules/inline-rules', (require, expor
 			return text;
 		}
 
+		// Interim until MobileCore renders [icode] natively: style inline code with
+		// the chat accent colour + bold so it stays visually distinct. Switch back to
+		// [icode] once the native renderer lands (see child spec / CONTRACT).
 		const colorHex = Color.chatMyPrimary1.toHex();
 
-		const pattern = new RegExp(`${MARKDOWN_INLINE_CODE_PREFIX}(\\d+)${MARKDOWN_PLACEHOLDER_SUFFIX}`, 'g');
-
 		return text.replaceAll(
-			pattern,
-			(match, index) => `[color=${colorHex}][b]${storage[Number(index)]}[/b][/color]`,
+			inlineCodeRestorePattern,
+			(match, index) => {
+				const code = storage[Number(index)];
+				if (code === undefined)
+				{
+					return match;
+				}
+
+				// Keep inline code literal: a zero-width space after every '[' stops the BB
+				// content (e.g. [/b], [url]) from breaking the interim [color][b] wrapper.
+				return `[color=${colorHex}][b]${code.replaceAll('[', '[\u200B')}[/b][/color]`;
+			},
 		);
 	}
 
 	/**
 	 * Image: ![alt](url) → [img]url[/img]
+	 *
+	 * Interim: alt is intentionally dropped here. The interim mobile image renderer
+	 * (parserImage.decodeImageWithSize) only parses [img] / [img size=…] — emitting an
+	 * [img alt=…] attribute would fall through both of its patterns and break image
+	 * rendering. The alt text is reconstructed from the original `![alt](url)` by the
+	 * native renderer once it lands (see child spec); no converter data is needed in
+	 * the BB-code for that.
 	 */
 	function applyImage(text)
 	{
-		return text.replaceAll(/!\[([^\]]*)]\(([^)]+)\)/g, (match, alt, url) => {
+		// A Markdown image always contains "](" — bail early without it, which also caps
+		// cost: a crafted run of unmatched "[" can drive [^\]]+ into quadratic backtracking.
+		if (!text.includes(']('))
+		{
+			return text;
+		}
+
+		// URL group allows one level of balanced parens so a link like
+		// `(https://ru.wikipedia.org/wiki/Foo_(bar))` is captured whole, not cut at the first ')'.
+		// Alt is bounded ({0,500}) so crafted "[" runs + "](" can't go quadratic.
+		return text.replaceAll(/!\[([^\]]{0,500})]\(([^\s()]*(?:\([^\s()]*\)[^\s()]*)*)\)/g, (match, alt, url) => {
 			return `[img]${url}[/img]`;
 		});
 	}
@@ -144,7 +176,7 @@ jn.define('im/messenger/lib/parser/markdown/rules/inline-rules', (require, expor
 
 		// Underscore variant (word boundaries — don't match inside words)
 		text = text.replaceAll(
-			new RegExp(`_{3}([^_](?:.*?[^_])?)_{3}(?!${WORD_CHAR})`, 'g'),
+			boldItalicUnderscorePattern,
 			(match, content, offset, sourceText) => {
 				if (hasWordCharBefore(sourceText, offset))
 				{
@@ -170,7 +202,7 @@ jn.define('im/messenger/lib/parser/markdown/rules/inline-rules', (require, expor
 
 		// Underscore variant (word boundaries — don't match some__var__name or _____)
 		text = text.replaceAll(
-			new RegExp(`_{2}([^_](?:.*?[^_])?)_{2}(?!${WORD_CHAR})`, 'g'),
+			boldUnderscorePattern,
 			(match, content, offset, sourceText) => {
 				if (hasWordCharBefore(sourceText, offset))
 				{
@@ -198,7 +230,7 @@ jn.define('im/messenger/lib/parser/markdown/rules/inline-rules', (require, expor
 
 		// Underscore variant (word boundaries — don't match some_var_name)
 		text = text.replaceAll(
-			new RegExp(`_([^\\s_](?:.*?[^\\s_])?)_(?!${WORD_CHAR})`, 'g'),
+			italicUnderscorePattern,
 			(match, content, offset, sourceText) => {
 				if (hasWordCharBefore(sourceText, offset))
 				{
@@ -240,7 +272,16 @@ jn.define('im/messenger/lib/parser/markdown/rules/inline-rules', (require, expor
 	 */
 	function applyLink(text)
 	{
-		return text.replaceAll(/\[([^\]]+)]\(([^)]+)\)/g, (match, linkText, url, offset, sourceText) => {
+		// A Markdown link always contains "](" — bail early without it, which also caps cost:
+		// a crafted run of unmatched "[" can drive [^\]]+ into quadratic backtracking (DoS).
+		if (!text.includes(']('))
+		{
+			return text;
+		}
+
+		// URL group allows one level of balanced parens (e.g. wiki URLs ending in `(...)`).
+		// Link text is bounded ({1,500}) so crafted "[" runs + "](" can't go quadratic.
+		return text.replaceAll(/\[([^\]]{1,500})]\(([^\s()]*(?:\([^\s()]*\)[^\s()]*)*)\)/g, (match, linkText, url, offset, sourceText) => {
 			if (offset > 0 && sourceText[offset - 1] === '!')
 			{
 				return match;

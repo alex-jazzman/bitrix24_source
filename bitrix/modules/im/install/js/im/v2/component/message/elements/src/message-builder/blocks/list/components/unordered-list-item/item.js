@@ -48,7 +48,7 @@ export const ListItem = {
 		},
 		formattedText(): string
 		{
-			return Parser.decodeText(this.listItem.text);
+			return Parser.decodeInlineText(this.listItem.text);
 		},
 		itemIconType(): string
 		{
@@ -66,7 +66,7 @@ export const ListItem = {
 		},
 	},
 	template: `
-		<li class="bx-im-message-block-unordered-list-item__container">
+		<li class="bx-im-message-block-unordered-list-item__container" data-testid="message-builder-unordered-list-item">
 			<span
 				class="bx-im-message-block-unordered-list-item__marker"
 				:class="iconColorClass"

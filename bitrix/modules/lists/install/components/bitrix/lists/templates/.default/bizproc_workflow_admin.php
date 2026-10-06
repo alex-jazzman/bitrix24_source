@@ -6,6 +6,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Web\Uri;
 
 if (!CModule::IncludeModule('bizproc') || !CLists::isBpFeatureEnabled($arParams["IBLOCK_TYPE_ID"]))
 {
@@ -16,11 +17,11 @@ if (!CModule::IncludeModule('bizproc') || !CLists::isBpFeatureEnabled($arParams[
 
 CJSCore::Init(array('lists'));
 
-$listElementUrl = CHTTP::urlAddParams(str_replace(
+$listElementUrl = (string)(new Uri(str_replace(
 	array("#list_id#", "#section_id#"),
 	array($arResult["VARIABLES"]["list_id"], 0),
 	$arResult["FOLDER"].$arResult["URL_TEMPLATES"]["list"]
-), array("list_section_id" => ""));
+)))->addParams(["list_section_id" => ""]);
 
 $returnButton = new Bitrix\UI\Buttons\Button([
 	'text' => Loc::getMessage('CT_BL_TOOLBAR_RETURN_LIST_ELEMENT_MSGVER_1'),
@@ -39,11 +40,11 @@ $APPLICATION->IncludeComponent(
 			array(
 				"TEXT" => GetMessage("CT_BL_STATE_BIZPROC"),
 				"TITLE" => GetMessage("CT_BL_STATE_BIZPROC_TITLE"),
-				"LINK" => CHTTP::urlAddParams(str_replace(
+				"LINK" => (string)(new Uri(str_replace(
 						array("#list_id#", "#ID#"),
 						array($arResult["VARIABLES"]["list_id"], 0),
 						$arResult["FOLDER"].$arResult["URL_TEMPLATES"]["bizproc_workflow_edit"]
-				), array("init" => "statemachine")),
+					)))->addParams(["init" => "statemachine"]),
 				"ICON" => "btn-new",
 			),
 			array(

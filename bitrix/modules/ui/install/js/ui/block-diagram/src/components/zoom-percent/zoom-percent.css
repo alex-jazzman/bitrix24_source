@@ -1,37 +1,53 @@
 .ui-block-diagram-percent {
-    display: inline-block;
-    width: 41px;
-    font-size: 14px;
-    line-height: 19px;
-    letter-spacing: -0.05px;
-    text-align: center;
-    cursor: pointer;
-    border-radius: 4px;
-    border: 1px solid var(--ui-color-gray-20);
-    padding: 4px 8px;
+	display: inline-block;
+	width: 41px;
+	margin: 0;
+	box-sizing: content-box;
+	background-color: transparent;
+	font-size: 14px;
+	font-weight: inherit;
+	line-height: 19px;
+	font-family: inherit;
+	color: inherit;
+	letter-spacing: -0.05px;
+	text-align: center;
+	cursor: pointer;
+	border-radius: 4px;
+	border: 1px solid var(--ui-color-gray-20);
+	padding: 4px 8px;
 }
 
-.ui-block-diagram-percent:hover {
-    background: var(--ui-color-bg-state-hover-default);
+.ui-block-diagram-percent:not(:disabled):hover {
+	background: var(--ui-color-bg-state-hover-default);
 }
 
-.ui-block-diagram-percent.--selected {
-    background: var(--ui-color-bg-state-click-default);
+.ui-block-diagram-percent:not(:disabled).--selected {
+	background: var(--ui-color-bg-state-click-default);
+}
+
+.ui-block-diagram-percent:disabled {
+	cursor: default;
+	opacity: var(--ui-opacity-50);
+}
+
+.ui-block-diagram-percent:focus-visible {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
+	outline-offset: var(--ui-focus-outline-offset);
 }
 
 .ui-block-diagram-percent:after {
-    content: '%';
-    display: inline-block;
-    width: 10px;
-    margin-left: 3px;
-    font: var(--ui-font-weight-medium) 10px/12px var(--ui-font-family-system);
-    font-size: 12px;
-    line-height: 15px;
-    letter-spacing: -0.05px;
-    vertical-align: middle;
+	content: '%';
+	display: inline-block;
+	width: 10px;
+	margin-left: 3px;
+	font: var(--ui-font-weight-medium) 10px/12px var(--ui-font-family-system);
+	font-size: 12px;
+	line-height: 15px;
+	letter-spacing: -0.05px;
+	vertical-align: middle;
 	color: var(--ui-color-palette-gray-50);
 }
 
 .ui-block-diagram-percent-menu {
-    transform: translate(15px, calc(-100% - 10px));
+	transform: translate(15px, calc(-100% - 10px));
 }

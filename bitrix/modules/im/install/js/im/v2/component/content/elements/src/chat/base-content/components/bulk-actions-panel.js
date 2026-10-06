@@ -1,16 +1,15 @@
+import { type EventEmitter } from 'main.core.events';
 import { hint } from 'ui.vue3.directives.hint';
 
 import { Core } from 'im.v2.application.core';
-import { Analytics } from 'im.v2.lib.analytics';
-import { ActionByRole, EventType } from 'im.v2.const';
-import { PermissionManager } from 'im.v2.lib.permission';
 import { ChatButton, ButtonSize, ButtonIcon, ButtonColor } from 'im.v2.component.elements.button';
 import { ForwardPopup } from 'im.v2.component.entity-selector';
+import { ActionByRole, ChatType, EventType } from 'im.v2.const';
+import { Analytics } from 'im.v2.lib.analytics';
 import { showDeleteMessagesConfirm } from 'im.v2.lib.confirm';
+import { PermissionManager } from 'im.v2.lib.permission';
+import { type ImModelChat } from 'im.v2.model';
 import { MessageService } from 'im.v2.provider.service.message';
-
-import type { EventEmitter } from 'main.core.events';
-import type { ImModelChat } from 'im.v2.model';
 
 import '../css/bulk-actions-panel.css';
 
@@ -58,14 +57,28 @@ export const BulkActionsPanel = {
 
 			return this.messagesAuthorId.some((authorId) => authorId !== userId);
 		},
+		hasOwnMessages(): boolean
+		{
+			return this.messagesAuthorId.includes(Core.getUserId());
+		},
 		canDeleteMessage(): boolean
 		{
-			const permissionManager = PermissionManager.getInstance();
+			if (this.selectedMessagesSize === 0)
+			{
+				return false;
+			}
 
-			return permissionManager.canPerformActionByRole(
+			const permissionManager = PermissionManager.getInstance();
+			const canDeleteOwn = !this.hasOwnMessages || permissionManager.canPerformActionByRole(
+				ActionByRole.deleteOwnMessage,
+				this.dialogId,
+			);
+			const canDeleteOthers = !this.hasOthersMessages || permissionManager.canPerformActionByRole(
 				ActionByRole.deleteOthersMessage,
 				this.dialogId,
 			);
+
+			return canDeleteOwn && canDeleteOthers;
 		},
 		selectedMessagesSize(): number
 		{
@@ -82,12 +95,11 @@ export const BulkActionsPanel = {
 		},
 		isBlockedDeletion(): boolean
 		{
-			if (this.canDeleteMessage)
-			{
-				return false;
-			}
-
-			return this.hasOthersMessages;
+			return this.selectedMessagesSize > 0 && !this.canDeleteMessage;
+		},
+		isCopilotChat(): boolean
+		{
+			return this.dialog.type === ChatType.copilot;
 		},
 		messageCounterText(): string
 		{
@@ -180,7 +192,7 @@ export const BulkActionsPanel = {
 					</div>
 				</div>
 				<div class="bx-im-content-bulk-actions-panel__right-section">
-					<div class="bx-im-content-bulk-actions-panel__delete-button">
+					<div v-if="!isCopilotChat" class="bx-im-content-bulk-actions-panel__delete-button">
 						<div
 							v-if="isBlockedDeletion"
 							v-hint="tooltipSettings"

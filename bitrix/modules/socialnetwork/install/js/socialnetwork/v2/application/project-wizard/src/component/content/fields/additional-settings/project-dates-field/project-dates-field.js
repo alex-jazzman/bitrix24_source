@@ -10,7 +10,7 @@ import { Calendar } from 'socialnetwork.v2.lib.calendar';
 import { Timezone } from 'socialnetwork.v2.lib.timezone';
 import { useProjectStore } from 'socialnetwork.v2.model.project';
 
-import { InjectionKey } from '../../../../../const/index.js';
+import { InjectionKey } from '../../../../../const';
 
 import './project-dates-field.css';
 
@@ -247,9 +247,13 @@ export const ProjectDatesField = {
 					:active="pickerShown.start"
 					:withClear="Boolean(startTs)"
 					class="socialnetwork--project-wizard--field-shadow"
-					clickable
+					readonly
 					@clear="clearValue('start')"
 					@click="handleDateClick('start', $event)"
+					@keydown.enter.prevent="handleDateClick('start', $event)"
+					@keydown.space.prevent="handleDateClick('start', $event)"
+					@keydown.down.prevent="handleDateClick('start', $event)"
+					@keydown.delete.prevent="clearValue('start')"
 				/>
 				<div class="socialnetwork--project-wizard--project-dates-field_separator"/>
 				<BInput
@@ -259,9 +263,13 @@ export const ProjectDatesField = {
 					:active="pickerShown.finish"
 					:withClear="Boolean(finishTs)"
 					class="socialnetwork--project-wizard--field-shadow"
-					clickable
+					readonly
 					@clear="clearValue('finish')"
 					@click="handleDateClick('finish', $event)"
+					@keydown.enter.prevent="handleDateClick('finish', $event)"
+					@keydown.space.prevent="handleDateClick('finish', $event)"
+					@keydown.down.prevent="handleDateClick('finish', $event)"
+					@keydown.delete.prevent="clearValue('finish')"
 				/>
 			</div>
 		</UiField>

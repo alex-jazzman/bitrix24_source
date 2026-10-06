@@ -3,7 +3,6 @@ import { ChipDesign, ChipSize, Chip } from 'ui.system.chip.vue';
 import { hint } from 'ui.vue3.directives.hint';
 
 import { Analytics } from 'im.v2.lib.analytics';
-import { Feature, FeatureManager } from 'im.v2.lib.feature';
 
 // @vue/component
 export const ReasoningButton = {
@@ -31,10 +30,6 @@ export const ReasoningButton = {
 		modelCode(): ?string
 		{
 			return this.$store.getters['copilot/chats/getAIModel'](this.dialogId)?.code;
-		},
-		isReasoningAvailable(): boolean
-		{
-			return FeatureManager.isFeatureAvailable(Feature.isCopilotReasoningAvailable);
 		},
 		isReasoningAvailableInModel(): boolean
 		{
@@ -98,7 +93,6 @@ export const ReasoningButton = {
 	},
 	template: `
 		<Chip
-			v-if="isReasoningAvailable"
 			v-hint="hint"
 			:text="loc('IM_CONTENT_COPILOT_TEXTAREA_REASONING_BUTTON')"
 			:rounded="true"

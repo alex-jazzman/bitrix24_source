@@ -1,17 +1,20 @@
-import { Text, Loc, Dom } from 'main.core';
+import { Text, Loc, Dom, Runtime } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
 import { Button } from 'ui.buttons';
 import { Center as NotificationCenter } from 'ui.notification';
 
 import { DesktopApi } from 'im.v2.lib.desktop-api';
-import { DesktopDownload } from 'intranet.desktop-download';
 
 import { CallHint } from '../call_hint_popup';
 import Util from '../util';
 import { StartCallErrorCode, DisconnectReason } from '../engine';
 
 const BALLOON_OFFSET_CLASS_NAME = 'bx-call-control-notification-right-offset';
+
+// Client-side fallback of Util.getCallConnectionErrorCode: an internal analytics label,
+// never a code to show the user.
+const CLIENT_UNCLASSIFIED_ERROR_CODE = 'CLIENT_UNCLASSIFIED';
 
 /**
  * Manages in-call notification popups and hint overlays (mute, network, VPN, unsupported, etc.).
@@ -265,7 +268,8 @@ export class NotificationService extends EventEmitter
 				buttons: MessageBoxButtons.OK_CANCEL,
 				okCaption: BX.message('IM_M_CALL_BTN_UPDATE'),
 				cancelCaption: BX.message('IM_NOTIFY_CONFIRM_CLOSE'),
-				onOk: () => {
+				onOk: async () => {
+					const { DesktopDownload } = await Runtime.loadExtension('intranet.desktop-download');
 					const url = DesktopDownload.getLinkForCurrentUser();
 					window.open(url, 'desktopApp');
 
@@ -1062,6 +1066,7 @@ export class NotificationService extends EventEmitter
 				errorMessage = Loc.getMessage(isHttps ? 'IM_CALL_NO_WEBRT' : 'IM_CALL_ERROR_HTTPS_REQUIRED');
 				break;
 
+			case CLIENT_UNCLASSIFIED_ERROR_CODE:
 			case StartCallErrorCode.UnknownError:
 				isUnknownError = true;
 				errorMessage = Loc.getMessage('IM_CALL_ERROR_UNKNOWN');

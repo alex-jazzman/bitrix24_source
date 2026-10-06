@@ -21,13 +21,13 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/participants/src/menu/group',
 	{
 		getActionItems()
 		{
-			return this.isYou()
+			return this.isTargetCurrentUser()
 				? this.selfActions()
 				: [
 					this.canMention() && this.mentionAction(),
 					this.sendAction(),
-					this.ownerAction(),
-					this.canDelete() && this.removeAction(),
+					this.toggleManagerAction(),
+					this.canRemoveTarget() && this.removeAction(),
 				];
 		}
 
@@ -39,14 +39,18 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/participants/src/menu/group',
 			];
 		}
 
-		ownerAction()
+		toggleManagerAction()
 		{
-			if (!this.canChangeManagers())
+			if (!this.canToggleTargetManagerRole())
 			{
 				return null;
 			}
 
-			if (this.isManager())
+			if (this.isTargetAdmin()) {
+				return null;
+			}
+
+			if (this.isTargetManager())
 			{
 				return {
 					id: SidebarActionType.commonRemoveManager,
@@ -87,20 +91,20 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/participants/src/menu/group',
 			return this.permissionManager.canMention();
 		}
 
-		canDelete()
+		canRemoveTarget()
 		{
 			return this.permissionManager.canRemoveUserById(this.getUserId(), this.getDialogId())
 				&& this.permissionManager.canRemoveParticipants();
 		}
 
-		isManager()
+		isTargetManager()
 		{
 			return this.dialogHelper.dialogModel.managerList.includes(this.getUserId());
 		}
 
-		canChangeManagers()
+		canToggleTargetManagerRole()
 		{
-			return !this.isAdmin() && this.permissionManager.canChangeManagers();
+			return this.permissionManager.canChangeManagers(this.getUserId());
 		}
 
 		onAddManager = () => onAddManager(this.getDialogId(), this.getUserId());
@@ -132,8 +136,13 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/participants/src/menu/group',
 		showRemoveConfirm()
 		{
 			return new Promise((resolve) => {
+				const isGuest = UserHelper.createByUserId(this.getUserId())?.isGuest ?? false;
+
 				confirmDefaultAction({
 					title: this.getMessage('IMMOBILE_SIDEBAR_V2_PARTICIPANTS_CONFIRM_REMOVE_TITLE'),
+					description: isGuest
+						? this.getMessage('IMMOBILE_SIDEBAR_V2_PARTICIPANTS_CONFIRM_REMOVE_GUEST_DESCRIPTION')
+						: '',
 					actionButtonText: this.getMessage('IMMOBILE_SIDEBAR_V2_PARTICIPANTS_CONFIRM_REMOVE_YES'),
 					onAction: resolve,
 				});

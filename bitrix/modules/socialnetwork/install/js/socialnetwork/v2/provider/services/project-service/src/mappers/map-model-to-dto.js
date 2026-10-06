@@ -3,6 +3,7 @@ import { type ProjectModel, type ProjectDates } from 'socialnetwork.v2.model.pro
 
 import {
 	type ProjectDto,
+	type ProjectNotificationPayloadDto,
 	type ProjectPermissionsTasksValuesDto,
 	type ProjectPermissionsBlogValuesDto,
 	type ProjectPermissionsLandingKnowledgeValuesDto,
@@ -49,7 +50,51 @@ export function mapModelToDto(project: ProjectModel): ProjectDto
 		dto.avatar = { ...project.avatar };
 	}
 
+	if (project.notifications && isNotificationsDirty(project.notifications, project.notificationsInitial))
+	{
+		const notificationPayload: ProjectNotificationPayloadDto = {
+			types: project.notifications.groups
+				.flatMap((g) => g.types)
+				.map((t) => ({ id: t.id, counterEnabled: t.counterEnabled })),
+		};
+		dto.notifications = notificationPayload;
+	}
+
 	return dto;
+}
+
+function isNotificationsDirty(current: Object, initial: ?Object): boolean
+{
+	if (!initial)
+	{
+		return true;
+	}
+
+	const toFlagsMap = (catalog: Object): Map<string, boolean> => {
+		return new Map(
+			catalog.groups
+				.flatMap((g) => g.types)
+				.map((t) => [t.id, t.counterEnabled]),
+		);
+	};
+
+	const currentFlags = toFlagsMap(current);
+	const initialFlags = toFlagsMap(initial);
+
+	if (currentFlags.size !== initialFlags.size)
+	{
+		return true;
+	}
+
+	for (const [id, counterEnabled] of currentFlags)
+	{
+		if (!initialFlags.has(id) || initialFlags.get(id) !== counterEnabled)
+		{
+			return true;
+		}
+	}
+
+	return false;
 }
 
 function mapValue(value: any, mappedValue: any, checkIsEmpty = Type.isNil): any | undefined

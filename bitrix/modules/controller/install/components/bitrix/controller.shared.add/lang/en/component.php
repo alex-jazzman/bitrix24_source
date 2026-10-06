@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS ['CSA_TITLE'] = "Adding a site";
 $MESS ['CSA_MODULE_NOT_INSTALLED'] = "The Controller module is not installed";
 $MESS ['CSA_ERROR_DOMAIN_NAME'] = "Domain names can include only Latin letters, digits, dots and hyphens.";
@@ -22,4 +22,3 @@ $MESS ['CSA_ERROR_WRITE_APACHE_CONFIG'] = "Error writing to Apache configuration
 $MESS ['CSA_ERROR_NGINX_TEMPLATE_NOT_FOUND'] = "The nginx configuration template is not found (#FILE#).";
 $MESS ['CSA_ERROR_NOT_FOUND_NGINX_VHOST_DIR'] = "The catalog with nginx configuration files does not exist or cannot be written.";
 $MESS ['CSA_ERROR_WRITE_NGINX_CONFIG'] = "Error writing to nginx configuration file.";
-?>

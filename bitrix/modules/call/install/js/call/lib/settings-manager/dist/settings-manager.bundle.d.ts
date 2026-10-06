@@ -5,7 +5,6 @@ type CallSettingsType = {
 	plainCallFollowUpEnabled?: boolean;
 	plainCallCloudRecordingEnabled?: boolean;
 	callBalancerUrl?: string;
-	noiseSuppressionEnabled?: boolean;
 	accidentLogSendIntervalSecs?: number;
 	accidentLogGroupMaxAgeSecs?: number;
 };
@@ -27,11 +26,14 @@ declare namespace BX.Call.Lib {
 		get plainCallCloudRecordingEnabled(): boolean;
 		set plainCallCloudRecordingEnabled(value: boolean);
 		isJwtInPlainCallsEnabled(): boolean;
-		get noiseSuppressionEnabled(): boolean;
-		set noiseSuppressionEnabled(value: boolean);
 		get accidentLogSendIntervalSecs(): number;
 		set accidentLogSendIntervalSecs(value: number);
 		get accidentLogGroupMaxAgeSecs(): number;
 		set accidentLogGroupMaxAgeSecs(value: number);
 	}
+
+	const AccidentLogStorageKeys: Readonly<{
+		dbName: "bx_call_accidentLogDB";
+		storeName: "bx_call_accidentLogs";
+	}>;
 }

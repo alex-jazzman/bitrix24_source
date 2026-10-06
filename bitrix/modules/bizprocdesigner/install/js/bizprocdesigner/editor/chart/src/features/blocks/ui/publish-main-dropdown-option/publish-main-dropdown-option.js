@@ -31,9 +31,11 @@ export const PublishMainDropdownOption = {
 	},
 	template: `
 		<DropdownMenuOption
+			data-testid="bizprocdesigner-editor-publish-main-option"
 			:title="$Bitrix.Loc.getMessage('BIZPROCDESIGNER_EDITOR_MENU_MAIN_TITLE')"
 			:description="$Bitrix.Loc.getMessage('BIZPROCDESIGNER_EDITOR_MENU_MAIN_DESCR')"
 			:isActive="isActive"
+			:toggle="true"
 			@click="onChangeOption"
 		>
 			<template #icon>

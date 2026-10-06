@@ -20,6 +20,11 @@ class CBPCrmCreateAdsActivityVk extends CBPActivity
 		return 'vkontakte';
 	}
 
+	protected static function isRestricted(): bool
+	{
+		return !\Bitrix\Crm\Integration\Bitrix24\Product::isVkAvailable();
+	}
+
 	public function __construct($name)
 	{
 		parent::__construct($name);
@@ -89,6 +94,13 @@ class CBPCrmCreateAdsActivityVk extends CBPActivity
 	{
 		if (!static::isModulesIncluded())
 		{
+			return CBPActivityExecutionStatus::Closed;
+		}
+
+		if (static::isRestricted())
+		{
+			$this->WriteToTrackingService(GetMessage('CRM_CREATE_ADS_VK_REGION_UNAVAILABLE') ?: 'VKontakte integration is not available in the current portal region.', 0, CBPTrackingType::Error);
+
 			return CBPActivityExecutionStatus::Closed;
 		}
 

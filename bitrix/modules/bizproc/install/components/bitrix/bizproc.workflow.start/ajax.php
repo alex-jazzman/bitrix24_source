@@ -165,6 +165,7 @@ switch ($action)
 					complexDocumentType: $documentType,
 					requestParameters: $startRequestParameters,
 					targetUserId: $currentUserId,
+					manualStartSurface: \Bitrix\Bizproc\Starter\Enum\ManualStartSurface::StartForm,
 				)
 			)
 		;
@@ -186,13 +187,17 @@ switch ($action)
 				context: new \Bitrix\Bizproc\Starter\Dto\ContextDto(
 					'bizproc',
 					\Bitrix\Bizproc\Starter\Enum\Face::WEB,
+					manualStartSurface: \Bitrix\Bizproc\Starter\Enum\ManualStartSurface::StartForm,
 				),
 				document: new \Bitrix\Bizproc\Starter\Dto\DocumentDto(
 					complexDocumentId: $documentId,
 					complexDocumentType: $documentType,
 				),
 				userId: $currentUserId,
-				parameters: $workflowParameters->getParameters(),
+				// the values are prepared against the parameters of the version that acts for this
+				// employee, so they are handed over keyed by the template: a flat set would be matched
+				// against the live row and would lose the fields the pilot version has of its own
+				parameters: [$templateId => $workflowParameters->getParameters()],
 			)
 			->setValidateParameters(false)
 		;

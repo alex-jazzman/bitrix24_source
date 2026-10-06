@@ -41,13 +41,13 @@ export class PreviewLoader
 			const [eventData] = event.getCompatData();
 			if (eventData.entityTypeId === this.#entityTypeId && eventData.entityId === this.#entityId)
 			{
-				this.#previewCache.clear();
+				this.#previewCache = new Cache.MemoryCache();
 			}
 		};
 		EventEmitter.subscribe('onCrmEntityUpdate', internalHandler);
 
 		const unsubscribeExternal = BX.Crm.EntityEvent.subscribeToItem(this.#entityTypeId, this.#entityId, () => {
-			this.#previewCache.clear();
+			this.#previewCache = new Cache.MemoryCache();
 		});
 
 		this.#unsubscribe = () => {

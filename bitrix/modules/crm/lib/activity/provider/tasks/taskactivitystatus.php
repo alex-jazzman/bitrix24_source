@@ -17,14 +17,16 @@ class TaskActivityStatus
 	public const STATUS_CONTROL_WAITING = 'CONTROLWAITING';
 	public const STATUS_FINISHED = 'FINISHED';
 
+	/**
+	 * @deprecated Status projections are synchronized directly from the current task state.
+	 */
 	public const STATUSES_MANAGER_CAN_UPDATE = [
 		self::STATUS_EXPIRED,
 		self::STATUS_FINISHED,
 		self::STATUS_WAITING,
 		self::STATUS_IN_PROGRESS,
-		self::STATUS_DEADLINE_CHANGED
+		self::STATUS_DEADLINE_CHANGED,
 	];
-
 
 	// STATUSES FROM c_tasks
 	const TASKS_STATE_PENDING = 2;    // Pending === Accepted
@@ -32,21 +34,53 @@ class TaskActivityStatus
 	const TASKS_STATE_SUPPOSEDLY_COMPLETED = 4;
 	const TASKS_STATE_COMPLETED = 5;
 
+	private const STATUS_BY_TASK_STATE = [
+		self::TASKS_STATE_PENDING => self::STATUS_WAITING,
+		self::TASKS_STATE_IN_PROGRESS => self::STATUS_IN_PROGRESS,
+		self::TASKS_STATE_SUPPOSEDLY_COMPLETED => self::STATUS_CONTROL_WAITING,
+		self::TASKS_STATE_COMPLETED => self::STATUS_FINISHED,
+	];
+
+	public function isCompletedTaskState(int $taskStatus): bool
+	{
+		return in_array(
+			$taskStatus,
+			[self::TASKS_STATE_SUPPOSEDLY_COMPLETED, self::TASKS_STATE_COMPLETED],
+			true,
+		);
+	}
+
 	public function onStatusChange(int $currStatus, bool $expired = false): string
 	{
-		switch ($currStatus)
+		if (
+			$expired === true
+			&& in_array($currStatus, [self::TASKS_STATE_PENDING, self::TASKS_STATE_IN_PROGRESS], true)
+		)
 		{
-			case self::TASKS_STATE_PENDING:
-				return ($expired === true) ? self::STATUS_EXPIRED : self::STATUS_WAITING;
-			case self::TASKS_STATE_COMPLETED:
-				return self::STATUS_FINISHED;
-			case self::TASKS_STATE_IN_PROGRESS:
-				return self::STATUS_IN_PROGRESS;
-			case self::TASKS_STATE_SUPPOSEDLY_COMPLETED:
-				return self::STATUS_CONTROL_WAITING;
+			return self::STATUS_EXPIRED;
 		}
 
-		return '';
+		return self::STATUS_BY_TASK_STATE[$currStatus] ?? '';
+	}
+
+	/**
+	 * A projection mirrors the state of the task itself, unlike a marker of a single task event
+	 * such as CREATED, VIEWED, UPDATED, RESULTADDED or DEADLINECHANGED.
+	 */
+	public function isTaskStatusProjection(string $status): bool
+	{
+		return in_array($status, $this->getTaskStatusProjections(), true);
+	}
+
+	/**
+	 * Every value onStatusChange() can produce.
+	 */
+	private function getTaskStatusProjections(): array
+	{
+		return [
+			...array_values(self::STATUS_BY_TASK_STATE),
+			self::STATUS_EXPIRED,
+		];
 	}
 
 	public function getStatusLocMessage(string $status): string
@@ -95,7 +129,7 @@ class TaskActivityStatus
 					self::STATUS_CONTROL_WAITING,
 					self::STATUS_FINISHED,
 				],
-				'loc' => Loc::getMessage('TASKS_TASK_INTEGRATION_STATUS_' . self::STATUS_CREATED),
+				'loc' => Loc::getMessage('TASKS_TASK_INTEGRATION_STATUS_' . self::STATUS_CREATED . '_MSGVER_1'),
 				'icon' => Tag::TYPE_SECONDARY,
 			],
 			self::STATUS_VIEWED => [
@@ -109,7 +143,7 @@ class TaskActivityStatus
 					self::STATUS_CONTROL_WAITING,
 					self::STATUS_FINISHED,
 				],
-				'loc' => Loc::getMessage('TASKS_TASK_INTEGRATION_STATUS_' . self::STATUS_VIEWED),
+				'loc' => Loc::getMessage('TASKS_TASK_INTEGRATION_STATUS_' . self::STATUS_VIEWED . '_MSGVER_1'),
 				'icon' => Tag::TYPE_PRIMARY,
 			],
 			self::STATUS_UPDATED => [
@@ -122,7 +156,7 @@ class TaskActivityStatus
 					self::STATUS_CONTROL_WAITING,
 					self::STATUS_FINISHED,
 				],
-				'loc' => Loc::getMessage('TASKS_TASK_INTEGRATION_STATUS_' . self::STATUS_UPDATED),
+				'loc' => Loc::getMessage('TASKS_TASK_INTEGRATION_STATUS_' . self::STATUS_UPDATED . '_MSGVER_1'),
 				'icon' => Tag::TYPE_SECONDARY,
 			],
 			self::STATUS_IN_PROGRESS => [
@@ -136,7 +170,7 @@ class TaskActivityStatus
 					self::STATUS_CONTROL_WAITING,
 					self::STATUS_FINISHED,
 				],
-				'loc' => Loc::getMessage('TASKS_TASK_INTEGRATION_STATUS_' . self::STATUS_IN_PROGRESS),
+				'loc' => Loc::getMessage('TASKS_TASK_INTEGRATION_STATUS_' . self::STATUS_IN_PROGRESS . '_MSGVER_1'),
 				'icon' => Tag::TYPE_PRIMARY,
 			],
 			self::STATUS_WAITING => [
@@ -150,7 +184,7 @@ class TaskActivityStatus
 					self::STATUS_CONTROL_WAITING,
 					self::STATUS_FINISHED,
 				],
-				'loc' => Loc::getMessage('TASKS_TASK_INTEGRATION_STATUS_' . self::STATUS_WAITING),
+				'loc' => Loc::getMessage('TASKS_TASK_INTEGRATION_STATUS_' . self::STATUS_WAITING . '_MSGVER_1'),
 				'icon' => Tag::TYPE_PRIMARY,
 			],
 			self::STATUS_DEADLINE_CHANGED => [
@@ -163,7 +197,7 @@ class TaskActivityStatus
 					self::STATUS_CONTROL_WAITING,
 					self::STATUS_FINISHED,
 				],
-				'loc' => Loc::getMessage('TASKS_TASK_INTEGRATION_STATUS_' . self::STATUS_DEADLINE_CHANGED),
+				'loc' => Loc::getMessage('TASKS_TASK_INTEGRATION_STATUS_' . self::STATUS_DEADLINE_CHANGED . '_MSGVER_1'),
 				'icon' => Tag::TYPE_PRIMARY,
 			],
 			self::STATUS_RESULT_ADDED => [
@@ -176,7 +210,7 @@ class TaskActivityStatus
 					self::STATUS_CONTROL_WAITING,
 					self::STATUS_FINISHED,
 				],
-				'loc' => Loc::getMessage('TASKS_TASK_INTEGRATION_STATUS_' . self::STATUS_RESULT_ADDED),
+				'loc' => Loc::getMessage('TASKS_TASK_INTEGRATION_STATUS_' . self::STATUS_RESULT_ADDED . '_MSGVER_1'),
 				'icon' => Tag::TYPE_PRIMARY,
 			],
 			self::STATUS_EXPIRED => [
@@ -185,7 +219,7 @@ class TaskActivityStatus
 					self::STATUS_FINISHED,
 					self::STATUS_DEADLINE_CHANGED,
 				],
-				'loc' => Loc::getMessage('TASKS_TASK_INTEGRATION_STATUS_' . self::STATUS_EXPIRED),
+				'loc' => Loc::getMessage('TASKS_TASK_INTEGRATION_STATUS_' . self::STATUS_EXPIRED . '_MSGVER_1'),
 				'icon' => Tag::TYPE_FAILURE,
 			],
 			self::STATUS_CONTROL_WAITING => [
@@ -195,14 +229,14 @@ class TaskActivityStatus
 					self::STATUS_EXPIRED,
 					self::STATUS_FINISHED,
 				],
-				'loc' => Loc::getMessage('TASKS_TASK_INTEGRATION_STATUS_' . self::STATUS_CONTROL_WAITING),
+				'loc' => Loc::getMessage('TASKS_TASK_INTEGRATION_STATUS_' . self::STATUS_CONTROL_WAITING . '_MSGVER_1'),
 				'icon' => Tag::TYPE_PRIMARY,
 			],
 			self::STATUS_FINISHED => [
 				'next' => [
 					self::STATUS_WAITING,
 				],
-				'loc' => Loc::getMessage('TASKS_TASK_INTEGRATION_STATUS_' . self::STATUS_FINISHED),
+				'loc' => Loc::getMessage('TASKS_TASK_INTEGRATION_STATUS_' . self::STATUS_FINISHED . '_MSGVER_1'),
 				'icon' => Tag::TYPE_SUCCESS,
 			],
 		];

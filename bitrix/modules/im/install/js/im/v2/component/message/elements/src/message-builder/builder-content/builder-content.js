@@ -1,4 +1,3 @@
-import { Feature, FeatureManager } from 'im.v2.lib.feature';
 import { type ImModelMessage } from 'im.v2.model';
 
 import { SourceListButton } from '../source-list-button/list-button.js';
@@ -38,10 +37,6 @@ export const BuilderContent = {
 		{
 			return this.$store.getters['messages/builder/getBlocks'](this.message.id);
 		},
-		isAvailable(): boolean
-		{
-			return FeatureManager.isFeatureAvailable(Feature.isMessageBuilderAvailable);
-		},
 		hasBlocks(): boolean
 		{
 			return this.messageBlocks.length > 0;
@@ -77,7 +72,7 @@ export const BuilderContent = {
 		},
 	},
 	template: `
-		<div v-if="isAvailable && hasBlocks" :style="maxWidthStyles">
+		<div v-if="hasBlocks" :style="maxWidthStyles">
 			<component
 				v-for="(block, index) in messageBlocks"
 				:is="getComponentNameByType(block.type)"
@@ -86,7 +81,7 @@ export const BuilderContent = {
 				:block="block"
 				:dialogId="dialogId"
 			/>
-			<SourceListButton :messageBlocks="messageBlocks" />
+			<SourceListButton :messageBlocks="messageBlocks" :messageId="message.id" />
 		</div>
 	`,
 };

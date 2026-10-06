@@ -947,7 +947,10 @@
 		BX.UI.Viewer.Item.apply(this, arguments);
 
 		this.playerId = `audio-playerId_${this.generateUniqueId()}`;
-		this.svgMask = null;
+		this.player = null;
+		this.contentNode = null;
+		this.errorNode = null;
+		this.onPlayerError = this.handlePlayerError.bind(this);
 	};
 
 	BX.UI.Viewer.Audio.prototype =	{
@@ -1001,6 +1004,17 @@
 						return;
 					}
 
+					const data = response.data.data || {};
+					if (BX.Type.isStringFilled(data.contentType))
+					{
+						this.contentType = data.contentType;
+					}
+
+					if (BX.Type.isStringFilled(data.src))
+					{
+						this.src = data.src;
+					}
+
 					promise.fulfill(this);
 				});
 			});
@@ -1008,8 +1022,43 @@
 			return promise;
 		},
 
+		getContentType()
+		{
+			if (BX.Type.isStringFilled(this.contentType))
+			{
+				return this.contentType;
+			}
+
+			return /\.wav(?:$|[?#])/i.test(this.src) ? 'audio/wav' : 'audio/mpeg';
+		},
+
+		isPlaybackSupported()
+		{
+			const audio = document.createElement('audio');
+
+			return audio.canPlayType(this.getContentType()) !== '';
+		},
+
 		render()
 		{
+			if (this.contentNode !== null)
+			{
+				return this.contentNode;
+			}
+
+			this.contentNode = BX.create('div', {
+				props: {
+					className: 'ui-viewer-audio',
+				},
+			});
+
+			if (!this.isPlaybackSupported())
+			{
+				this.showPlaybackError();
+
+				return this.contentNode;
+			}
+
 			this.player = new BX.UI.VideoPlayer.Player(this.playerId, {
 				width: 320,
 				height: 52,
@@ -1017,16 +1066,107 @@
 				skin: 'vjs-viewer-audio-player-skin',
 				sources: [{
 					src: this.src,
-					type: 'audio/mp3',
+					type: this.getContentType(),
 				}],
 			});
 
-			return this.player.createElement();
+			BX.Event.EventEmitter.subscribe(this.player, 'Player:onError', this.onPlayerError);
+
+			const playerElement = this.player.createElement();
+			playerElement.setAttribute('aria-label', BX.message('JS_UI_VIEWER_AUDIO_PLAYER_LABEL'));
+			this.contentNode.appendChild(playerElement);
+
+			return this.contentNode;
 		},
 
 		afterRender()
 		{
-			this.player.init();
+			if (this.player !== null)
+			{
+				this.player.init();
+			}
+			else if (this.errorNode !== null)
+			{
+				this.focusError();
+			}
+		},
+
+		handlePlayerError()
+		{
+			this.showPlaybackError();
+			this.focusError();
+		},
+
+		showPlaybackError()
+		{
+			if (this.player !== null)
+			{
+				this.player.destroy();
+				this.player = null;
+			}
+
+			this.errorNode = BX.create('div', {
+				props: {
+					className: 'ui-viewer-audio-error',
+				},
+				attrs: {
+					role: 'alert',
+					'aria-live': 'assertive',
+					tabindex: '-1',
+				},
+				children: [
+					BX.create('div', {
+						props: {
+							className: 'ui-viewer-audio-error-message',
+						},
+						text: BX.message('JS_UI_VIEWER_AUDIO_PLAYBACK_ERROR'),
+					}),
+					BX.create('a', {
+						props: {
+							className: 'ui-viewer-audio-download',
+						},
+						attrs: {
+							href: this.getDownloadUrl(),
+							target: '_blank',
+							download: '',
+							'aria-label': BX.message('JS_UI_VIEWER_AUDIO_DOWNLOAD'),
+						},
+						text: BX.message('JS_UI_VIEWER_AUDIO_DOWNLOAD'),
+					}),
+				],
+			});
+
+			BX.cleanNode(this.contentNode);
+			this.contentNode.appendChild(this.errorNode);
+		},
+
+		focusError()
+		{
+			setTimeout(() => {
+				if (this.errorNode)
+				{
+					this.errorNode.focus();
+				}
+			}, 0);
+		},
+
+		beforeHide()
+		{
+			if (this.player !== null)
+			{
+				this.player.pause();
+			}
+		},
+
+		destroy()
+		{
+			BX.UI.Viewer.Item.prototype.destroy.apply(this);
+
+			if (this.player !== null)
+			{
+				this.player.destroy();
+				this.player = null;
+			}
 		},
 	};
 

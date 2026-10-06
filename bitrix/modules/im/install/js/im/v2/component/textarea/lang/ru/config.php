@@ -93,9 +93,6 @@ $MESS["IM_TEXTAREA_MENTION_ADD_TO_TASK_COMMENTS_DROPDOWN_TITLE"] = "Нет в з
 $MESS["IM_TEXTAREA_MENTION_ADD_TO_CHAT_DROPDOWN_MENU"] = "Добавить в чат";
 $MESS["IM_TEXTAREA_MENTION_ADD_TO_TASK_COMMENTS_DROPDOWN_MENU"] = "Добавить в задачу";
 
-$MESS["IM_TEXTAREA_EMOTE_POPUP_PROMO_TITLE"] = "Стикер вместо сотни слов 🔥";
-$MESS["IM_TEXTAREA_EMOTE_POPUP_PROMO_DESCRIPTION"] = "Теперь делиться эмоциями ещё быстрее. Можно использовать готовые стикеры и создавать свои";
-
 
 $MESS["IM_TEXTAREA_FORMAT_TOOLBAR_LINK_LABEL"] = "адрес ссылки";
 $MESS["IM_TEXTAREA_FORMAT_TOOLBAR_LINK_PLACEHOLDER"] = "https://";

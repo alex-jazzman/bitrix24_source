@@ -48,3 +48,8 @@
 .bx-im-file-menu__file-input {
 	display: none;
 }
+
+.bx-im-textarea__upload-menu-wrapper--muted {
+	opacity: 0.5;
+	pointer-events: none;
+}

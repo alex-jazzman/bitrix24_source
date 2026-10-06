@@ -118,6 +118,7 @@ jn.define('call/calls/layout/participants-list', (require, exports, module) => {
 
 			return View(
 				{
+					testId: 'participantsList-container',
 					style: Styles.body,
 				},
 				View(

@@ -1,4 +1,8 @@
-<?if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
+<?php
+
+use Bitrix\Main\Web\Uri;
+
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 
 $arData = array();
 
@@ -9,19 +13,10 @@ if($arParams['DEDUCTED'] == 'N')
 		foreach ($arResult["BASKET"] as $basketItem)
 		{
 			$arRows = array();
-			$storeLink = CHTTP::urlAddParams(
-				$arResult["STORE_PAGE"],
-					array(
-						"product_id" => $basketItem["ID"]
-					)
-			);
 
-			$barcodeLink = CHTTP::urlAddParams(
-				$arResult["BARCODE_PAGE"],
-					array(
-						"product_id" => $basketItem["ID"]
-					)
-			);
+			$storeLink = (string)(new Uri($arResult["STORE_PAGE"]))->addParams(["product_id" => $basketItem["ID"]]);
+
+			$barcodeLink = (string)(new Uri($arResult["BARCODE_PAGE"]))->addParams(["product_id" => $basketItem["ID"]]);
 
 			$arRows[] = array(
 				"TYPE" => "CUSTOM",

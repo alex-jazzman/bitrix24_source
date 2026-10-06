@@ -57,6 +57,8 @@ const acceptedUploaderFileTypes: Set<string> = new Set([
 	'odt',
 ]);
 
+const createdTemplateUidSliderDataKey = 'signB2eDocumentActivityCreatedTemplateUid';
+
 export class B2ESignSettings extends SignSettings
 {
 	#companyParty: CompanyParty;
@@ -73,6 +75,7 @@ export class B2ESignSettings extends SignSettings
 	#previewDocumentDropdown: SignDropdown | null = null;
 	#preventPreviewReady: boolean = false;
 	#waitingForPreviewAfterReplace: boolean = false;
+	#fromRobot: boolean;
 
 	constructor(containerId: string, signOptions: SignOptions)
 	{
@@ -89,6 +92,7 @@ export class B2ESignSettings extends SignSettings
 			documentSendConfig,
 			userPartyConfig,
 		} = this.#prepareConfig(signOptions);
+		this.#fromRobot = Boolean(signOptions.fromRobot);
 
 		this.documentSetup = new DocumentSetup(blankSelectorConfig);
 		this.documentSend = new DocumentSend(documentSendConfig);
@@ -244,10 +248,19 @@ export class B2ESignSettings extends SignSettings
 		this.documentSetup.subscribe('clearFiles', this.#onDocumentSetupClearFiles.bind(this));
 		this.documentSend.subscribe(
 			this.documentSend.events.onTemplateComplete,
-			(event: BaseEvent<{ templateId: number }>) => {
+			(event: BaseEvent<{ templateId: number, templateUid: string }>) => {
+				const { templateId, templateUid } = event.getData();
+				if (this.#fromRobot && Type.isStringFilled(templateUid))
+				{
+					BX.SidePanel.Instance
+						.getSliderByWindow(window)
+						?.getData()
+						.set(createdTemplateUidSliderDataKey, templateUid)
+					;
+				}
+
 				if (this.isTemplateMode() && !this.isEditMode())
 				{
-					const templateId = event.getData().templateId;
 					this.getAnalytics().send({
 						event: 'turn_on_off_template',
 						type: 'auto',
@@ -1753,7 +1766,7 @@ export class B2ESignSettings extends SignSettings
 
 				return Layout.createContent({
 					extensions: ['ui.forms'],
-					title: 'Добавить папку с файлами',
+					title: Loc.getMessage('SIGN_V2_B2E_SIGN_SETTINGS_ADD_FILES_FOLDER_TITLE'),
 					content(): void
 					{
 						self.#getUploader();

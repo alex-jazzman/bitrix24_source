@@ -55,35 +55,37 @@ export class ExplorerUI
 
 	static getSiteList(data: Array<DataType>, onClick: () => {}, siteType: string): HTMLElement
 	{
+		const sites = data.filter(item => siteType === 'SMN' || item.TYPE === siteType);
+		const setsize = sites.length;
+
 		return Tag.render`
-			<ul class="landing-site-selector-list">
-				${data.map(item => {
-					if (siteType !== 'SMN' && item.TYPE !== siteType)
-					{
-						return;
-					}
-					return Tag.render`
-						<li class="landing-site-selector-item" data-explorer-depth="0" data-explorer-siteId="${item.ID}" onclick="${() => onClick(item.ID)}">
-							<span class="ui-icon ui-icon-file-folder"><i></i></span>
-							<span class="landing-site-selector-item-value">
-								${Text.encode(item.TITLE)}
-							</span>
-						</li>
-					`;
-				})}
+			<ul class="landing-site-selector-list" role="tree" aria-label="${Loc.getMessage('LANDING_EXT_EXPLORER_TREE_LABEL')}" data-testid="landing-explorer-tree">
+				${sites.map((item, index) => Tag.render`
+					<li class="landing-site-selector-item" role="treeitem" data-testid="landing-explorer-tree-item" aria-level="1" aria-setsize="${setsize}" aria-posinset="${index + 1}" aria-selected="false" aria-expanded="false" tabindex="-1" data-explorer-depth="0" data-explorer-siteId="${item.ID}" onclick="${() => onClick(item.ID)}">
+						<span class="ui-icon ui-icon-file-folder"><i></i></span>
+						<span class="landing-site-selector-item-value">
+							${Text.encode(item.TITLE)}
+						</span>
+					</li>
+				`)}
 			</ul>
 		`;
 	}
 
-	static getFolderItem(item: DataType, depth: number, onClick: () => {}): HTMLElement
+	static getFolderItem(item: DataType, depth: number, onClick: () => {}, posinset: number, setsize: number): HTMLElement
 	{
 		return Tag.render`
-			<li style="padding-left: ${30 * depth}px" class="landing-site-selector-item landing-site-selector-item-lower" data-explorer-depth="${depth}" data-explorer-folderId="${item.ID}" onclick="${() => onClick(item.ID)}">
+			<li style="padding-left: ${30 * depth}px" class="landing-site-selector-item landing-site-selector-item-lower" role="treeitem" data-testid="landing-explorer-tree-item" aria-level="${depth + 1}" aria-setsize="${setsize}" aria-posinset="${posinset}" aria-selected="false" aria-expanded="false" tabindex="-1" data-explorer-depth="${depth}" data-explorer-folderId="${item.ID}" onclick="${() => onClick(item.ID)}">
 				<span class="ui-icon ui-icon-file-folder"><i></i></span>
-				<span class="landing-site-selector-item-value"> 
+				<span class="landing-site-selector-item-value">
 					${Text.encode(item.TITLE)}
 				</span>
 			</li>
 		`;
+	}
+
+	static getLiveRegion(): HTMLElement
+	{
+		return Tag.render`<div class="landing-explorer-status" role="status" aria-live="polite"></div>`;
 	}
 }

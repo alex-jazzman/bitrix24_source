@@ -67,10 +67,6 @@ export const BaseChatContent = {
 			type: Boolean,
 			default: true,
 		},
-		withChatContentDisclaimer: {
-			type: Boolean,
-			default: true,
-		},
 		backgroundId: {
 			type: String,
 			default: null,
@@ -170,6 +166,10 @@ export const BaseChatContent = {
 	},
 	methods:
 	{
+		getContainer(): HTMLElement
+		{
+			return this.$refs.content;
+		},
 		initTextareaResizeManager()
 		{
 			this.textareaResizeManager = new ResizeManager();
@@ -258,7 +258,7 @@ export const BaseChatContent = {
 						</slot>
 						<div class="bx-im-content-chat__after-textarea_container">
 							<slot name="after-textarea">
-								<ChatContentDisclaimer v-if="withChatContentDisclaimer"/>
+								<ChatContentDisclaimer :dialogId="dialogId"/>
 							</slot>
 						</div>
 					</div>

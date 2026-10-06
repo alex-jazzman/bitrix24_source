@@ -1,9 +1,10 @@
 import { ActivityProvider } from 'crm.ai.call';
+import { Router } from 'crm.router';
+import { confirm } from 'crm.timeline.dialog';
 import { DatetimeConverter } from 'crm.timeline.tools';
-import { ajax as Ajax, Event, Loc, Runtime, Text } from 'main.core';
+import { ajax as Ajax, Event, Loc, Runtime, Tag, Text } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import { ButtonState } from 'ui.buttons';
-import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
 import { Outline } from 'ui.icon-set.api.vue';
 import { UI } from 'ui.notification';
 import { Menu } from 'ui.system.menu';
@@ -59,6 +60,11 @@ export class OpenLines extends CopilotBase
 			void this.#showCopilotSummary(item, actionData);
 		}
 
+		if (action === 'Openline:ShowCopilotSummaryDrawer' && actionData)
+		{
+			void this.#showCopilotSummaryDrawer(actionData);
+		}
+
 		if (action === 'Openline:LaunchCopilot' && actionData)
 		{
 			void this.handleCopilotLaunch(item, actionData);
@@ -71,7 +77,6 @@ export class OpenLines extends CopilotBase
 	{
 		return {
 			actionEndpoint: 'crm.timeline.ai.launchCopilot',
-			validEntityTypes: [BX.CrmEntityType.enumeration.lead, BX.CrmEntityType.enumeration.deal],
 			agreementContext: 'audio', // @todo!
 		};
 	}
@@ -89,24 +94,34 @@ export class OpenLines extends CopilotBase
 
 	#onComplete(item: ConfigurableItem, actionData: Object, animationCallbacks: ?Object): void
 	{
-		MessageBox.show({
-			title: Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_OPENLINE_COMPLETE_CONF_TITLE'),
-			message: Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_OPENLINE_COMPLETE_CONF'),
-			modal: true,
-			okCaption: Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_OPENLINE_COMPLETE_CONF_OK_TEXT'),
-			buttons: MessageBoxButtons.OK_CANCEL,
-			onOk: () => {
-				return this.#runCompleteAction(actionData.activityId, actionData.ownerTypeId, actionData.ownerId, animationCallbacks);
-			},
-			onCancel: (messageBox) => {
-				const changeStreamButton = item.getLayoutHeaderChangeStreamButton();
-				if (changeStreamButton)
-				{
-					changeStreamButton.markCheckboxUnchecked();
-				}
+		const uncheckChangeStreamCheckbox = () => {
+			const changeStreamButton = item.getLayoutHeaderChangeStreamButton();
+			if (changeStreamButton)
+			{
+				changeStreamButton.markCheckboxUnchecked();
+			}
+		};
 
-				messageBox.close();
+		// eslint-disable-next-line promise/catch-or-return, @bitrix24/bitrix24-rules/no-native-dialogs
+		confirm({
+			title: Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_OPENLINE_COMPLETE_CONF_TITLE'),
+			content: Tag.render`<div>${Text.encode(Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_OPENLINE_COMPLETE_CONF'))}</div>`,
+			preset: 'OK_CANCEL',
+			confirmText: Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_OPENLINE_COMPLETE_CONF_OK_TEXT'),
+			onConfirm: () => {
+				return this.#runCompleteAction(
+					actionData.activityId,
+					actionData.ownerTypeId,
+					actionData.ownerId,
+					animationCallbacks,
+				);
 			},
+			onDismiss: uncheckChangeStreamCheckbox,
+		}).then((result) => {
+			if (result === 'cancel')
+			{
+				uncheckChangeStreamCheckbox();
+			}
 		});
 	}
 
@@ -161,6 +176,17 @@ export class OpenLines extends CopilotBase
 		}
 
 		this.#copilotSummaryMenu.show();
+	}
+
+	#showCopilotSummaryDrawer(actionData: Object): void
+	{
+		void Router.Instance.openAiReportDrawer('summary-history', {
+			activityId: actionData.activityId,
+			ownerTypeId: actionData.ownerTypeId,
+			ownerId: actionData.ownerId,
+			jobId: null,
+			assessmentSettingsId: null,
+		});
 	}
 
 	#runCompleteAction(activityId: Number, ownerTypeId: Number, ownerId: Number, animationCallbacks: ?Object): Promise

@@ -1,5 +1,8 @@
 <?php
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
+
+use Bitrix\Main\Web\Uri;
 
 if (!CModule::IncludeModule('crm'))
 {
@@ -255,9 +258,9 @@ if(check_bitrix_sessid())
 				);
 
 				if (isset($_REQUEST['IFRAME']))
-					$target = \CHTTP::urlAddParams($target, array('IFRAME' => $_REQUEST['IFRAME']));
+					$target = (string)(new Uri($target))->addParams(array('IFRAME' => $_REQUEST['IFRAME']));
 				if (isset($_REQUEST['IFRAME_TYPE']))
-					$target = \CHTTP::urlAddParams($target, array('IFRAME_TYPE' => $_REQUEST['IFRAME_TYPE']));
+					$target = (string)(new Uri($target))->addParams(array('IFRAME_TYPE' => $_REQUEST['IFRAME_TYPE']));
 
 				LocalRedirect($target);
 			}

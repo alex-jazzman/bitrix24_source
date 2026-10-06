@@ -1,37 +1,58 @@
 import { Type, Loc, Runtime } from 'main.core';
+import { EventEmitter } from 'main.core.events';
 import { Dialog, type Item, type ItemOptions, type TabOptions, type EntityOptions } from 'ui.entity-selector';
 
+import { EVALUATION_STAGE, isTemplateSourceAvailableForBlockType } from '../../../../shared/constants';
 import { type Block, type PortId } from '../../../../shared/types';
 import { diagramStore } from '../../../blocks';
 
 type ShowOptions = {
-	showOnlyRealProperties: boolean
+	showOnlyRealProperties?: boolean,
 };
+
+const NODE_SETTINGS_SCROLL_EVENT = 'Bizproc.NodeSettings:onScroll';
+
 export class ValueSelector
 {
 	store: diagramStore;
-	currentBlock: Block;
+	currentBlock: ?Block = null;
 	currentPortId: PortId | null = null;
 	connectedBlocks: Array<Block> | null = null;
 	selectedItem: Item | null = null;
+	evaluationStage: string = EVALUATION_STAGE.BEFORE_WORKFLOW_START;
 
+	/**
+	 * `evaluationStage` is the construction the field belongs to: a caller opening the selector for a
+	 * field of an action or of a filter says so, everyone else keeps the default — see the rule in
+	 * shared/constants.
+	 */
 	constructor(
 		store: diagramStore,
-		currentBlock: Block,
+		currentBlock: ?Block = null,
 		currentPortId: PortId | null = null,
 		connectedBlocks: Array<Block> | null = null,
+		evaluationStage: string = EVALUATION_STAGE.BEFORE_WORKFLOW_START,
 	)
 	{
 		this.store = store;
 		this.currentBlock = currentBlock;
 		this.currentPortId = currentPortId;
 		this.connectedBlocks = connectedBlocks;
+		this.evaluationStage = evaluationStage;
 	}
 
 	show(targetElement: Element, options: ShowOptions = {}): Promise
 	{
 		return new Promise((resolve) => {
-			const dialog = new Dialog({
+			let dialog: ?Dialog = null;
+			const handleScroll = () => {
+				EventEmitter.unsubscribe(NODE_SETTINGS_SCROLL_EVENT, handleScroll);
+				dialog?.hide();
+			};
+			const unsubscribeFromScroll = () => {
+				EventEmitter.unsubscribe(NODE_SETTINGS_SCROLL_EVENT, handleScroll);
+			};
+			dialog = new Dialog({
 				targetNode: targetElement,
 				width: 500,
 				height: 300,
@@ -44,6 +65,8 @@ export class ValueSelector
 				cacheable: false,
 				showAvatars: false,
 				events: {
+					onHide: unsubscribeFromScroll,
+					onDestroy: unsubscribeFromScroll,
 					'Item:onSelect': (event) => {
 						this.selectedItem = event.getData().item;
 						resolve(this.#getValue(event.getData().item));
@@ -52,6 +75,7 @@ export class ValueSelector
 				compactView: true,
 			});
 
+			EventEmitter.subscribe(NODE_SETTINGS_SCROLL_EVENT, handleScroll);
 			dialog.show();
 		});
 	}
@@ -156,7 +180,14 @@ export class ValueSelector
 			},
 		];
 
-		map.forEach((elem) => {
+		// Same cut the condition of the node is built with — see the rule in shared/constants.
+		map.filter(
+			(elem) => isTemplateSourceAvailableForBlockType(
+				this.currentBlock?.type,
+				elem.key,
+				this.evaluationStage,
+			),
+		).forEach((elem) => {
 			const collection = this.store.template[elem.key];
 			if (Type.isObject(collection) && Object.keys(collection).length > 0)
 			{
@@ -187,6 +218,11 @@ export class ValueSelector
 
 	getReturnItems(): ItemOptions[]
 	{
+		if (!Type.isArrayFilled(this.connectedBlocks) && !Type.isPlainObject(this.currentBlock))
+		{
+			return [];
+		}
+
 		const blocks = this.connectedBlocks ?? this.store.getAllBlockAncestors(
 			this.currentBlock,
 			this.currentPortId,
@@ -296,7 +332,7 @@ export class ValueSelector
 				const id = `{=${block.id}:${property.Id}}`;
 				if (property.Type === 'document')
 				{
-					res.documents.push({
+					const documentItem = {
 						id,
 						entityId: 'bizproc-document',
 						entityType: 'document',
@@ -309,15 +345,21 @@ export class ValueSelector
 						),
 						customData: {
 							document: property.Default,
-							idTemplate: `{=${block.id}:${property.Id}.#FIELD#}`,
 						},
 						nodeOptions: {
 							open: false,
-							dynamic: true,
+							dynamic: !property.Multiple,
 						},
 						tabs: 'documents',
 						searchable: false,
-					});
+					};
+
+					if (!property.Multiple)
+					{
+						documentItem.customData.idTemplate = `{=${block.id}:${property.Id}.#FIELD#}`;
+					}
+
+					res.documents.push(documentItem);
 				}
 				else
 				{

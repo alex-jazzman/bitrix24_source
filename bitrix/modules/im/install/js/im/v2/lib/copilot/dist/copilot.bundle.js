@@ -175,12 +175,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			return this.store.getters['copilot/getName'];
 		}
 		getAIModelName(dialogId) {
-			const isAIModelChangeAllowed = im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.isAIModelChangeAllowed);
-			if (isAIModelChangeAllowed) {
-				const currentAIModel = im_v2_application_core.Core.getStore().getters['copilot/chats/getAIModel'](dialogId);
-				return currentAIModel.name;
-			}
-			return im_v2_application_core.Core.getStore().getters['copilot/getProvider'];
+			const currentAIModel = im_v2_application_core.Core.getStore().getters['copilot/chats/getAIModel'](dialogId);
+			return currentAIModel.name;
 		}
 	}
 

@@ -8,6 +8,8 @@
 	--im-messenger__header_height: 64px;
 	--im-messenger__textarea_height: 64px;
 	--im-messenger__search-input_height: 34px;
+	--im-messenger__list-header_height: calc(var(--im-messenger__header_height) + 1px);
+	--im-messenger__list-header_padding: 16px 13px 14px 13px;
 
 	--im-messenger__font_helvetica: "Helvetica Neue", Helvetica, Arial, sans-serif;
 	--im-messenger__font_open-sans: 'Open Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;

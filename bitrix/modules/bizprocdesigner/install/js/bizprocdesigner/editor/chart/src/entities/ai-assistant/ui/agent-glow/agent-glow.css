@@ -1,0 +1,98 @@
+/* Read only on the ring, the very element the animation runs on, so it is not inherited */
+@property --designer-bp-ai-glow-angle {
+	syntax: '<angle>';
+	inherits: false;
+	initial-value: 90deg;
+}
+
+@keyframes designer-bp-ai-glow-spin {
+	from {
+		--designer-bp-ai-glow-angle: 90deg;
+	}
+
+	to {
+		--designer-bp-ai-glow-angle: 450deg;
+	}
+}
+
+.editor-chart-agent-glow {
+	position: absolute;
+	/* an absolutely positioned child counts inset from the padding box of the card, so -1px
+	   does not push the layer outwards but cancels the card border: the layer lands exactly on
+	   the outer contour of the body */
+	inset: -1px;
+	border-radius: 10px; /* radius of the outer contour of the body */
+	overflow: hidden; /* clips the blurred ring from spilling outwards */
+	pointer-events: none;
+	/* Above the card background and its hover underlay (z-index: -1), but below the content:
+	   block-layout__header and __content carry z-index: 100, __left-content carries 1.
+	   That keeps the glow inside the card, while text and icons stay readable on top of
+	   it. The value is set explicitly so that the stacking order does not depend on edits
+	   to the foreign block-layout.css. */
+	z-index: 0;
+}
+
+/* Selected node: the ring moves inside the border, so the blue selection border stays
+   visible outside it. The only scenario where the highlight and the selection meet is a
+   rubber-band selection over the canvas: a click on a node puts the highlight out
+   immediately and never brings the two states together. */
+.editor-chart-block-container.--highlighted .editor-chart-agent-glow,
+.editor-chart-block-container.--highlighted .editor-chart-agent-glow__ring {
+	border-radius: 9px; /* inner radius of the body: 10px outer minus the 1px border */
+}
+
+.editor-chart-block-container.--highlighted .editor-chart-agent-glow {
+	inset: 0;
+}
+
+.editor-chart-agent-glow__blur {
+	position: absolute;
+	inset: 0;
+	filter: blur(9px);
+}
+
+.editor-chart-agent-glow__ring {
+	position: absolute;
+	inset: 0;
+	border-radius: 10px; /* the same radius as the layer wrapper */
+	box-sizing: border-box;
+	/* gradient is assembled here, not in the token: the angle must be substituted on
+	   the element the animation runs on, see --designer-bp-ai-glow-stops */
+	background: conic-gradient(
+		from var(--designer-bp-ai-glow-angle),
+		var(--designer-bp-ai-glow-stops)
+	);
+	/* the mask cuts out the middle and leaves a ring as thick as the padding; #fff here is
+	   the alpha source of the mask, not a color (the same trick as in ui.system.highlighter) */
+	-webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+	-webkit-mask-composite: xor;
+	mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+	mask-composite: exclude;
+	animation: designer-bp-ai-glow-spin 4s linear infinite;
+	/* Paused until the card says otherwise: the animated angle is a registered custom property,
+	   so every frame of it costs a style recalculation and a repaint of the gradient on the main
+	   thread. A card the user cannot see must not pay for that while its highlight waits to be
+	   seen, and the highlight of a node outside the visible set can wait arbitrarily long. */
+	animation-play-state: paused;
+}
+
+/* The ring spins only while its card belongs to the visible set of the diagram engine: the same
+   signal the fade countdown waits for. */
+.editor-chart-block-container.--ai-highlight-animated .editor-chart-agent-glow__ring {
+	animation-play-state: running;
+}
+
+.editor-chart-agent-glow__ring.--glow {
+	padding: 4px;
+}
+
+.editor-chart-agent-glow__ring.--edge {
+	padding: 1px;
+	opacity: 0.3;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.editor-chart-agent-glow__ring {
+		animation: none;
+	}
+}

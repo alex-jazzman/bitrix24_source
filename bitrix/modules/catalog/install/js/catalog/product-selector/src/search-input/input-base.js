@@ -152,6 +152,7 @@ export class ProductSearchInputBase
 			const input = Tag.render`
 				<input type="text"
 					class="ui-ctl-element ui-ctl-textbox"
+					data-testid="catalog-product-selector-${Text.encode(this.inputName.toLowerCase())}-input"
 					autocomplete="off"
 					data-name="${Text.encode(this.inputName)}"
 					value="${Text.encode(this.getValue())}"
@@ -160,6 +161,12 @@ export class ProductSearchInputBase
 					onchange="${this.#handleNameInputHiddenChange.bind(this)}"
 				>
 			`;
+
+			const accessibleName = this.getPlaceholder();
+			if (Type.isStringFilled(accessibleName))
+			{
+				input.setAttribute('aria-label', accessibleName);
+			}
 
 			if (this.selector.getConfig('SELECTOR_INPUT_DISABLED', false))
 			{
@@ -176,6 +183,7 @@ export class ProductSearchInputBase
 		return this.cache.remember('closeIcon', () => {
 			return Tag.render`
 				<button
+					type="button"
 					class="ui-ctl-after ui-ctl-icon-clear"
 					onclick="${this.handleClearIconClick.bind(this)}"
 				></button>
@@ -323,6 +331,11 @@ export class ProductSearchInputBase
 			enableSearch: false,
 			multiple: false,
 			dropdownMode: true,
+			// Keep DOM focus on the name input while the dropdown loads/updates.
+			// Explicit `false` is deterministic regardless of the `useFocusTrapInDialogs` flag.
+			popupOptions: {
+				focusTrap: false,
+			},
 			recentTabOptions: {
 				stub: true,
 				stubOptions: {
@@ -364,6 +377,10 @@ export class ProductSearchInputBase
 
 			this.selector.clearLayout();
 			this.selector.layout();
+
+			// Return focus to the name input of the freshly rendered row (Q-2):
+			// the catalog tears down the old row DOM and draws a new one on select.
+			this.selector.focusName();
 		}
 
 		this.dialogMode = DialogMode.SHOW_PRODUCT_ITEM;
@@ -582,13 +599,22 @@ export class ProductSearchInputBase
 	{
 		// timeout to toggle clear icon handler while cursor is inside of name input
 		setTimeout(() => {
-			this.toggleIcon(this.getClearIcon(), 'none');
+			// display:none on a focused icon would drop keyboard focus to <body>;
+			// keep an icon (clear/search are real buttons) visible while it holds focus.
+			const hideIcon = (icon) => {
+				if (icon !== document.activeElement)
+				{
+					this.toggleIcon(icon, 'none');
+				}
+			};
+
+			hideIcon(this.getClearIcon());
 
 			if (this.showDetailLink() && Type.isStringFilled(this.getValue()))
 			{
 				if (this.isSearchEnabled())
 				{
-					this.toggleIcon(this.getSearchIcon(), 'none');
+					hideIcon(this.getSearchIcon());
 				}
 				this.toggleIcon(this.#getArrowIcon(), 'block');
 			}
@@ -597,10 +623,14 @@ export class ProductSearchInputBase
 				this.toggleIcon(this.#getArrowIcon(), 'none');
 				if (this.isSearchEnabled())
 				{
-					this.toggleIcon(
-						this.getSearchIcon(),
-						Type.isStringFilled(this.getFilledValue()) ? 'none' : 'block',
-					);
+					if (Type.isStringFilled(this.getFilledValue()))
+					{
+						hideIcon(this.getSearchIcon());
+					}
+					else
+					{
+						this.toggleIcon(this.getSearchIcon(), 'block');
+					}
 				}
 			}
 		}, 200);
@@ -609,7 +639,8 @@ export class ProductSearchInputBase
 		{
 			setTimeout(() => {
 				if (
-					!this.selector.inProcess()
+					this.#isCurrentSearchInput()
+					&& !this.selector.inProcess()
 					&& (
 						this.model.isEmpty()
 						|| !Type.isStringFilled(this.getFilledValue())
@@ -625,6 +656,11 @@ export class ProductSearchInputBase
 				}
 			}, 200);
 		}
+	}
+
+	#isCurrentSearchInput(): boolean
+	{
+		return this.selector.searchInput === this;
 	}
 
 	#getHiddenNameInput(): HTMLInputElement
@@ -658,6 +694,7 @@ export class ProductSearchInputBase
 		return this.cache.remember('searchIcon', () => {
 			return Tag.render`
 				<button
+					type="button"
 					class="ui-ctl-after ui-ctl-icon-search"
 					onclick="${this.#handleSearchIconClick.bind(this)}"
 				></button>

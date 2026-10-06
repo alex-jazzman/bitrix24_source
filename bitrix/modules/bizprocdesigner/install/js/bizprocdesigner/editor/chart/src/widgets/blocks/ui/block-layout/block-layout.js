@@ -4,6 +4,7 @@ import {
 	BLOCK_LAYOUT_SLOT_NAMES,
 	MoreMenuTopBtn,
 	getContextMenuName,
+	diagramStore as useDiagramStore,
 } from '../../../../entities/blocks';
 
 import type { DiagramContextMenuItemOptions } from 'ui.block-diagram';
@@ -13,6 +14,7 @@ type BlockLayoutWidgetSetup = {
 	openedContextMenuName: string | null,
 	getContextMenuName: (blockId: BlockId) => string,
 	blockLayoutSlotNames: { [string]: string },
+	diagramStore: Object,
 };
 
 // @vue/component
@@ -62,12 +64,17 @@ export const BlockLayoutWidget = {
 			openedContextMenuName,
 			getContextMenuName,
 			blockLayoutSlotNames: BLOCK_LAYOUT_SLOT_NAMES,
+			diagramStore: useDiagramStore(),
 		};
 	},
 	computed: {
 		isShowTopMenu(): boolean
 		{
 			return this.openedContextMenuName === getContextMenuName(this.block.id) || this.showTopMenu;
+		},
+		isShowEditingTopMenu(): boolean
+		{
+			return !this.diagramStore.isWriteLocked;
 		},
 		isShowMoreMenu(): boolean
 		{
@@ -87,7 +94,7 @@ export const BlockLayoutWidget = {
 				v-if="$slots[blockLayoutSlotNames.TOP_MENU]"
 				#[blockLayoutSlotNames.TOP_MENU]
 			>
-				<slot :name="blockLayoutSlotNames.TOP_MENU"/>
+				<slot v-if="isShowEditingTopMenu" :name="blockLayoutSlotNames.TOP_MENU"/>
 				<MoreMenuTopBtn
 					v-if="isShowMoreMenu"
 					:block="block"

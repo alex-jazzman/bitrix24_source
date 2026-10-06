@@ -11,6 +11,9 @@ jn.define('layout/socialnetwork/project-v2/create/src/view/type-settings', (requ
 	const { Checkbox } = require('ui-system/form/checkbox');
 	const { createTestIdGenerator } = require('utils/test');
 	const { ProjectType } = require('layout/socialnetwork/project-v2/create/src/enum/project-type');
+	const {
+		createProjectSettingsCloseGuard,
+	} = require('layout/socialnetwork/project-v2/create/src/helpers/project-settings-close-guard');
 
 	const BORDER_RADIUS = 12;
 	const SEPARATOR_HEIGHT = 1;
@@ -94,6 +97,21 @@ jn.define('layout/socialnetwork/project-v2/create/src/view/type-settings', (requ
 			this.state = {
 				type: props.type ?? ProjectType.PUBLIC.getValue(),
 			};
+			this.initialFields = this.#getFields();
+			this.closeGuard = null;
+		}
+
+		componentDidMount()
+		{
+			this.closeGuard = createProjectSettingsCloseGuard({
+				layoutWidget: this.props.layoutWidget,
+				preventLayoutWidget: this.props.rootLayoutWidget ?? this.props.layoutWidget,
+				releasePreventDismiss: false,
+				initialFields: this.initialFields,
+				getCurrentFields: this.#getFields,
+				onSaveAndClose: this.#close,
+				onDiscardAndClose: this.#rollbackAndClose,
+			});
 		}
 
 		render()
@@ -147,7 +165,21 @@ jn.define('layout/socialnetwork/project-v2/create/src/view/type-settings', (requ
 
 			this.setState({ type }, () => {
 				this.props.onChange?.({ type });
+				this.closeGuard?.update();
 			});
+		};
+
+		#getFields = () => ({
+			type: this.state.type,
+		});
+
+		#close = () => {
+			this.props.layoutWidget?.close();
+		};
+
+		#rollbackAndClose = () => {
+			this.props.onChange?.(this.initialFields);
+			this.props.layoutWidget?.close();
 		};
 	}
 

@@ -877,19 +877,23 @@ this.BX.Calendar = this.BX.Calendar || {};
 				disabled: disabledControl,
 				minWidth: 300,
 				onChangeCallback: () => {
+					main_core_events.EventEmitter.emit('Calendar.LocationControl.onValueChange');
+
 					// eslint-disable-next-line no-shadow
 					const menuItemList = this.menuItemList;
-					main_core_events.EventEmitter.emit('Calendar.LocationControl.onValueChange');
-					const value = this.DOM.input.value;
+					const text = this.DOM.input.value;
+					const id = this.DOM.input.dataset.selectedValue;
 					this.value = {
-						text: value
+						text
 					};
-					for (const element of menuItemList) {
-						if (element.labelRaw === value) {
+					if (main_core.Type.isStringFilled(id)) {
+						const element = menuItemList.find(item => String(item.value) === String(id));
+						if (element && (element.labelRaw === text || element.label === text)) {
 							this.value.type = element.type;
 							this.value.value = element.value;
 							Location.setCurrentCapacity(element.capacity);
-							break;
+						} else {
+							delete this.DOM.input.dataset.selectedValue;
 						}
 					}
 					if (main_core.Type.isFunction(this.params.onChangeCallback)) {
@@ -941,6 +945,7 @@ this.BX.Calendar = this.BX.Calendar || {};
 		}
 		removeValue() {
 			this.setValue(false, false);
+			delete this.DOM.input.dataset.selectedValue;
 			this.selectContol.onChangeCallback();
 			this.removeLocationRemoveButton();
 		}
@@ -1214,6 +1219,14 @@ this.BX.Calendar = this.BX.Calendar || {};
 				}
 			}
 			return res;
+		}
+		static isSameLocation(first, second) {
+			const a = main_core.Type.isPlainObject(first) ? first : Location.parseStringValue(first);
+			const b = main_core.Type.isPlainObject(second) ? second : Location.parseStringValue(second);
+			if (a.type || b.type) {
+				return a.type === b.type && String(a.value) === String(b.value);
+			}
+			return a.str === b.str;
 		}
 		getTextLocation(location) {
 			const value = main_core.Type.isPlainObject(location) ? location : Location.parseStringValue(location);
@@ -2433,6 +2446,9 @@ this.BX.Calendar = this.BX.Calendar || {};
 			this.currentValueIndex = params.valueIndex;
 			if (this.currentValueIndex !== undefined && this.values[this.currentValueIndex]) {
 				this.input.value = this.values[this.currentValueIndex].label;
+				this.input.dataset.selectedValue = this.values[this.currentValueIndex].value;
+			} else {
+				delete this.input.dataset.selectedValue;
 			}
 		}
 		setValueList(valueList) {
@@ -2540,7 +2556,7 @@ this.BX.Calendar = this.BX.Calendar || {};
 								return () => {
 									this.input.value = label;
 									this.popupMenu.close();
-									this.onChange();
+									this.onChange(value);
 								};
 							})(this.values[i].value, this.values[i].labelRaw || this.values[i].label)
 						});
@@ -2609,10 +2625,14 @@ this.BX.Calendar = this.BX.Calendar || {};
 			}
 		}
 		onKeydown() {
+			delete this.input.dataset.selectedValue;
 			setTimeout(BX.delegate(this.closePopup, this), 50);
 		}
 		onChange(value) {
 			const inputValue = this.input.value;
+			if (!main_core.Type.isNil(value)) {
+				this.input.dataset.selectedValue = value;
+			}
 			BX.onCustomEvent(this, 'onSelectInputChanged', [this, inputValue]);
 			this.onChangeCallback({
 				value: inputValue,
@@ -3139,6 +3159,7 @@ this.BX.Calendar = this.BX.Calendar || {};
 
 	class ConfirmStatusDialog extends main_core_events.EventEmitter {
 		DOM = {};
+		declined = false;
 		constructor() {
 			super();
 			this.setEventNamespace('BX.Calendar.Controls.ConfirmStatusDialog');
@@ -3146,6 +3167,7 @@ this.BX.Calendar = this.BX.Calendar || {};
 			this.id = 'confirm-status-dialog-' + Math.round(Math.random() * 10000);
 		}
 		show() {
+			this.declined = false;
 			this.dialog = new main_popup.Popup({
 				id: this.id,
 				titleBar: main_core.Loc.getMessage('EC_DECLINE_REC_EVENT'),
@@ -3165,7 +3187,14 @@ this.BX.Calendar = this.BX.Calendar || {};
 				overlay: {
 					opacity: 15
 				},
-				cacheable: false
+				cacheable: false,
+				events: {
+					onPopupClose: () => {
+						if (!this.declined) {
+							this.emit('onCancel', new main_core_events.BaseEvent());
+						}
+					}
+				}
 			});
 			this.dialog.show();
 		}
@@ -3229,6 +3258,7 @@ this.BX.Calendar = this.BX.Calendar || {};
 			}
 		}
 		onDeclineHandler() {
+			this.declined = true;
 			this.close();
 			const compactForm = calendar_entry.EntryManager.getCompactViewForm();
 			if (compactForm && compactForm.isShown()) {
@@ -4221,6 +4251,9 @@ this.BX.Calendar = this.BX.Calendar || {};
 				if (!this.isEditableSharingEvent) {
 					clickAction = () => {
 						if (!this.userSelectorDialog) {
+							// entity-selector auto-loads humanresources.entity-selector for the
+							// `structure-node` entity (registered via humanresources/.settings.php
+							// `ui.entity-selector` extensions), so no manual loadExtension is needed.
 							this.userSelectorDialog = new ui_entitySelector.Dialog({
 								targetNode: this.DOM.changeLink,
 								context: 'CALENDAR',
@@ -4301,6 +4334,28 @@ this.BX.Calendar = this.BX.Calendar || {};
 			if (calendar_util.Util.isProjectFeatureEnabled()) {
 				result.push({
 					id: 'project'
+				});
+			}
+			if (calendar_util.Util.isTeamsAsAttendeeEnabled()) {
+				// HR `structure-node` provider; backend maps structure-node <-> SNT<id>.
+				// useMultipleTabs enables the team-fetch branch (flat, no depthLevel), otherwise
+				// teams are queried at depthLevel 1 and the list comes back empty.
+				result.push({
+					id: 'structure-node',
+					options: {
+						includedNodeEntityTypes: ['team'],
+						useMultipleTabs: true,
+						// departmentsOnly gives a single selectable "Select team" item with the simple
+						// (flat) access code SNT<id> and a numeric id — matches calendar's backend
+						// mapping (strict ^SNT[0-9]+$). usersAndDepartments would also add the
+						// recursive "team + subteams" option (SNTR<id>, ignored by calendar backend),
+						// and allowFlatDepartments appends a ':F' postfix that the mapping can't parse.
+						selectMode: 'departmentsOnly',
+						visual: {
+							avatarMode: 'node',
+							tagStyle: 'none'
+						}
+					}
 				});
 			}
 			return result;

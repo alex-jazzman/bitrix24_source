@@ -17,6 +17,7 @@ jn.define('im/in-app-url/routes/src/sharing-link-handler', (require, exports, mo
 		revoked: 'SHARING_LINK_REVOKED',
 		alreadyRevoked: 'SHARING_LINK_ALREADY_REVOKED',
 		entityNotFound: 'SHARING_LINK_ENTITY_NOT_FOUND',
+		authorCannotInvite: 'SHARING_LINK_AUTHOR_CANNOT_INVITE',
 	});
 
 	const ErrorCodeToToastType = Object.freeze({
@@ -24,8 +25,17 @@ jn.define('im/in-app-url/routes/src/sharing-link-handler', (require, exports, mo
 		[SharingLinkErrorCode.notFound]: ToastType.sharingLinkInvalid,
 		[SharingLinkErrorCode.revoked]: ToastType.sharingLinkInvalid,
 		[SharingLinkErrorCode.alreadyRevoked]: ToastType.sharingLinkInvalid,
+		[SharingLinkErrorCode.authorCannotInvite]: ToastType.sharingLinkInvalid,
 	});
 
+	// race-guard: ignore repeated taps on the same link while joinByCode is in flight
+	/** @type {Set<string>} */
+	const inProgressCodes = new Set();
+
+	/**
+	 * @param {string} code
+	 * @return {Promise<void>}
+	 */
 	const joinBySharingLink = async (code) => {
 		if (!isOnline())
 		{
@@ -34,6 +44,12 @@ jn.define('im/in-app-url/routes/src/sharing-link-handler', (require, exports, mo
 			return;
 		}
 
+		if (inProgressCodes.has(code))
+		{
+			return;
+		}
+
+		inProgressCodes.add(code);
 		await NotifyManager.showLoadingIndicator();
 
 		try
@@ -56,13 +72,22 @@ jn.define('im/in-app-url/routes/src/sharing-link-handler', (require, exports, mo
 		}
 		catch (error)
 		{
-			const errorCode = error?.[0]?.code || '';
-			const toastType = ErrorCodeToToastType[errorCode] || ToastType.sharingLinkInvalid;
+			// network/timeout/etc — error is not a REST error array
+			if (!Array.isArray(error) || !error[0]?.code)
+			{
+				Notification.showErrorToast();
+			}
+			else
+			{
+				const errorCode = error[0].code;
+				const toastType = ErrorCodeToToastType[errorCode] || ToastType.sharingLinkInvalid;
 
-			Notification.showToast(toastType);
+				Notification.showToast(toastType);
+			}
 		}
 		finally
 		{
+			inProgressCodes.delete(code);
 			NotifyManager.hideLoadingIndicatorWithoutFallback();
 		}
 	};

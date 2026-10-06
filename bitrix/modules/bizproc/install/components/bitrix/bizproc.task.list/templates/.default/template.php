@@ -7,6 +7,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 
 \Bitrix\Main\UI\Extension::load([
 	'ui',
+	'main.core.events',
 	'ui.buttons',
 	'ui.icons',
 	'ui.alerts',
@@ -14,6 +15,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 	"ui.fonts.opensans",
 	'ui.buttons.icons',
 	'ui.entity-selector',
+	'bizproc.a11y',
 ]);
 \Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/bizproc/tools.js');
 \Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/components/bitrix/bizproc.workflow.faces/templates/.default/style.css');
@@ -66,8 +68,14 @@ else
 			{
 				$arResult["RECORDS"][$key]['data']['DOCUMENT_NAME'] = '<a href="'.$record['data']["DOCUMENT_URL"].'" class="bp-folder-title-link">'.$record['data']['DOCUMENT_NAME'].'</a>';
 			}
-			$arResult["RECORDS"][$key]['data']['COMMENTS'] = '<div class="bp-comments"><a '.$attrs.'><span class="bp-comments-icon"></span>'
-				.(!empty($arResult["COMMENTS_COUNT"]['WF_'.$record['data']["WORKFLOW_ID"]]) ? (int) $arResult["COMMENTS_COUNT"]['WF_'.$record['data']["WORKFLOW_ID"]] : '0')
+			$commentsCount = !empty($arResult["COMMENTS_COUNT"]['WF_'.$record['data']["WORKFLOW_ID"]])
+				? (int) $arResult["COMMENTS_COUNT"]['WF_'.$record['data']["WORKFLOW_ID"]]
+				: 0;
+			$commentsLabel = htmlspecialcharsbx(
+				GetMessage('BPATL_A11Y_COMMENTS_LABEL', ['#COUNT#' => $commentsCount])
+			);
+			$arResult["RECORDS"][$key]['data']['COMMENTS'] = '<div class="bp-comments"><a '.$attrs.' aria-label="'.$commentsLabel.'"><span class="bp-comments-icon" aria-hidden="true"></span>'
+				.$commentsCount
 				.'</a></div>';
 
 			$arResult["RECORDS"][$key]['data']["NAME"] = '<span class="bp-task"><a '.$attrs.' title="'.$record['data']["NAME"].'">'.$record['data']["NAME"].'</a></span>';
@@ -109,7 +117,7 @@ else
 						$arResult["RECORDS"][$key]['data']["NAME"] .= '<a href="#" onclick="return BX.Bizproc.doInlineTask('
 							. $props
 							. ', function(){'
-							. "BX.Main.gridManager.reload('${safeGridId}');"
+							. "BX.Main.gridManager.reload('{$safeGridId}');"
 							. '}, this)" class="ui-btn ui-btn-' . $class . ' ui-btn-icon-' . $icon
 							. '">'
 							. $control['TEXT']
@@ -339,6 +347,7 @@ else
 }
 ?>
 <script>
+	BX.message(<?= \Bitrix\Main\Web\Json::encode(\Bitrix\Main\Localization\Loc::loadLanguageFile(__FILE__)) ?>);
 	BX.ready(function()
 	{
 		<?php

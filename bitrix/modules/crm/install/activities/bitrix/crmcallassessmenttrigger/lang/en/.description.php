@@ -1,0 +1,2 @@
+<?php
+$MESS["BP_CRM_CALL_ASSESSMENT_TRIGGER_RETURN_EVENT_DATE_TIME"] = "Event date and time";

@@ -21,7 +21,7 @@
 	display: block;
 	width: var(--ai-call-popup-zephyr-size);
 	height: var(--ai-call-popup-zephyr-size);
-	background: url("../images/zephyr.png") no-repeat bottom right;
+	background: url("../images/zephyr.webp") no-repeat bottom right;
 	background-size: contain;
 	pointer-events: none;
 }
@@ -32,7 +32,7 @@
 	font-weight: var(--ui-font-weight-semi-bold, 600);
 	color: var(--ui-color-base-0, #000);
 	padding-left: 45px;
-	background: url("../images/bitrixgpt.png") no-repeat left center;
+	background: url("../images/bitrixgpt.webp") no-repeat left center;
 	background-size: 37px;
 }
 
@@ -105,7 +105,7 @@
 	display: block;
 	width: var(--ai-call-popup-video-ia-size);
 	height: var(--ai-call-popup-video-ia-size);
-	background: url("../images/bitrixgpt.png") no-repeat center;
+	background: url("../images/bitrixgpt.webp") no-repeat center;
 	background-size: contain;
 	pointer-events: none;
 	transform: translate(-11%, 40%);

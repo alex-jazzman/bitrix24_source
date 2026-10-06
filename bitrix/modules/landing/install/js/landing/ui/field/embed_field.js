@@ -23,9 +23,12 @@
 		var content = data.content;
 		data.content = content.source || content.src;
 		data.placeholder = BX.Landing.Loc.getMessage('LANDING_EMBED_ERROR_TEXT');
+		var descriptionMessageId = BX.Landing.Env.getInstance().isVkVideoAvailable()
+			? 'LANDING_EMBED_NOT_BG_FIELD_DESCRIPTION_MSGVER_1'
+			: 'LANDING_EMBED_NOT_BG_FIELD_DESCRIPTION_NO_VK_MSGVER_1';
 		data.description =
 			data.description
-			|| "<span class='landing-ui-anchor-preview'>"+BX.Landing.Loc.getMessage('LANDING_EMBED_NOT_BG_FIELD_DESCRIPTION_MSGVER_1')+"</span>";
+			|| "<span class='landing-ui-anchor-preview'>"+BX.Landing.Loc.getMessage(descriptionMessageId)+"</span>";
 
 		BX.Landing.UI.Field.Text.apply(this, arguments);
 
@@ -36,6 +39,8 @@
 		});
 
 		this.error = BX.create('div', {props: {className: 'landing-ui-field-error'}});
+		this.error.setAttribute('id', this.selector + '_error');
+		this.shownErrorMessage = null;
 		BX.Dom.append(this.error, this.layout);
 
 		BX.Dom.style(this.description, 'margin-bottom', '0px');
@@ -73,12 +78,11 @@
 
 		isEmbedUrl: function(value)
 		{
-			return BX.Landing.Utils.Matchers.youtube.test(value)
-				|| BX.Landing.Utils.Matchers.vimeo.test(value)
-				|| BX.Landing.Utils.Matchers.rutube.test(value)
-				|| BX.Landing.Utils.Matchers.vk.test(value)
-				|| BX.Landing.Utils.Matchers.vine.test(value)
-				|| BX.Landing.Utils.Matchers.facebookVideos.test(value);
+			return BX.Landing.isSupportedVideoUrl(
+				value,
+				['youtube', 'vimeo', 'rutube', 'vk', 'vine', 'facebookVideos'],
+				BX.Landing.Env.getInstance().isVkVideoAvailable()
+			);
 		},
 
 		getValue: function()
@@ -99,10 +103,10 @@
 		{
 			var value = String(this.input.innerText).trim();
 
-			this.hideError();
-
 			if (this.isEmbedUrl(value))
 			{
+				this.hideError();
+
 				if (this.mediaService && this.mediaService.form)
 				{
 					remove(this.mediaService.form.layout);
@@ -153,19 +157,70 @@
 				{
 					this.showError(BX.Landing.Loc.getMessage("LANDING_EMBED_ERROR_WRONG_SOURCE_TEXT_ALL"));
 				}
+				else
+				{
+					this.hideError();
+				}
 			}
 		},
 
 		showError: function(message)
 		{
+			if (this.shownErrorMessage === message)
+			{
+				return;
+			}
+
+			BX.Dom.clean(this.error);
 			BX.Dom.append(BX.Landing.UI.Field.BaseField.createError(message), this.error);
 			BX.Dom.style(this.description, 'margin-bottom', null);
+
+			this.input.setAttribute('aria-invalid', 'true');
+			this.addErrorDescribedBy(this.error.getAttribute('id'));
+			this.shownErrorMessage = message;
 		},
 
 		hideError: function()
 		{
+			if (this.shownErrorMessage === null)
+			{
+				return;
+			}
+
 			BX.Dom.clean(this.error);
 			BX.Dom.style(this.description, 'margin-bottom', '0px');
+
+			this.input.removeAttribute('aria-invalid');
+			this.removeErrorDescribedBy(this.error.getAttribute('id'));
+			this.shownErrorMessage = null;
+		},
+
+		// Merge (not overwrite) the error container id into aria-describedby, keeping ids set by BaseField.
+		addErrorDescribedBy: function(errorId)
+		{
+			var ids = (this.input.getAttribute('aria-describedby') || '').split(/\s+/).filter(Boolean);
+			if (!ids.includes(errorId))
+			{
+				ids.push(errorId);
+			}
+			this.input.setAttribute('aria-describedby', ids.join(' '));
+		},
+
+		removeErrorDescribedBy: function(errorId)
+		{
+			var ids = (this.input.getAttribute('aria-describedby') || '')
+				.split(/\s+/)
+				.filter(Boolean)
+				.filter(function(id) { return id !== errorId; });
+
+			if (ids.length > 0)
+			{
+				this.input.setAttribute('aria-describedby', ids.join(' '));
+			}
+			else
+			{
+				this.input.removeAttribute('aria-describedby');
+			}
 		}
 	}
 })();

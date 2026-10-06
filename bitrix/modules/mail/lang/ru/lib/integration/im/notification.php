@@ -23,14 +23,14 @@ $MESS["MAIL_PUSH_NOTIFY_NEW_SINGLE_MESSAGE_IN_MAIL_CLIENT"] = "Новое пис
 $MESS["MAIL_PUSH_NOTIFY_NEW_SINGLE_MESSAGE_IN_MAIL_CLIENT_EMPTY_SUBJECT"] = "Новое письмо";
 $MESS["MAIL_PUSH_NOTIFY_NEW_MESSAGE_MULTI"] = "Новые письма: #COUNT#";
 
+$MESS["MAIL_NOTIFY_ACCESS_GRANTED_MESSAGE_M"] = "Дал вам доступ к почте #EMAIL#. Теперь вы можете просматривать и писать письма с этого ящика<br/><br/><a target=\"_blank\" href=\"#VIEW_URL#\">подробнее</a>";
+$MESS["MAIL_NOTIFY_ACCESS_GRANTED_MESSAGE_F"] = "Дала вам доступ к почте #EMAIL#. Теперь вы можете просматривать и писать письма с этого ящика<br/><br/><a target=\"_blank\" href=\"#VIEW_URL#\">подробнее</a>";
 $MESS["MAIL_PASSWORDLESS_REQUEST_NOTIFICATION_SUBJECT_M"] = "#AUTHOR# подключил вам новый почтовый ящик. Введите пароль, чтобы завершить подключение";
 $MESS["MAIL_PASSWORDLESS_REQUEST_NOTIFICATION_SUBJECT_F"] = "#AUTHOR# подключила вам новый почтовый ящик. Введите пароль, чтобы завершить подключение";
 $MESS["MAIL_PASSWORDLESS_REQUEST_NOTIFICATION_MESSAGE_M"] = "Подключил вам новый почтовый ящик. Введите пароль, чтобы завершить подключение";
 $MESS["MAIL_PASSWORDLESS_REQUEST_NOTIFICATION_MESSAGE_F"] = "Подключила вам новый почтовый ящик. Введите пароль, чтобы завершить подключение";
 $MESS["MAIL_PASSWORDLESS_REQUEST_NOTIFICATION_LINK"] = "Завершить подключение";
 
-$MESS["MAIL_NOTIFY_ACCESS_GRANTED_MESSAGE_M"] = "Дал вам доступ к почте #EMAIL#. Теперь вы можете просматривать и писать письма с этого ящика";
-$MESS["MAIL_NOTIFY_ACCESS_GRANTED_MESSAGE_F"] = "Дала вам доступ к почте #EMAIL#. Теперь вы можете просматривать и писать письма с этого ящика";
 $MESS["MAIL_NOTIFY_ACCESS_GRANTED_SUBJECT_M"] = "#AUTHOR# дал вам доступ к почте #EMAIL#. Теперь вы можете просматривать и писать письма с этого ящика";
 $MESS["MAIL_NOTIFY_ACCESS_GRANTED_SUBJECT_F"] = "#AUTHOR# дала вам доступ к почте #EMAIL#. Теперь вы можете просматривать и писать письма с этого ящика";
 $MESS["MAIL_NOTIFY_ACCESS_REVOKED_MESSAGE_M"] = "Закрыл вам доступ к почте #EMAIL#. Вы больше не можете просматривать и писать письма с этого ящика";
@@ -42,3 +42,6 @@ $MESS["MAIL_CLIENT_CONFIG_OWNER_CHANGE_TO_NOTIFY_MESSAGE_M"] = "Подключи
 $MESS["MAIL_CLIENT_CONFIG_OWNER_CHANGE_TO_NOTIFY_MESSAGE_F"] = "Подключила вам почтовый ящик #EMAIL#";
 $MESS["MAIL_CLIENT_CONFIG_OWNER_CHANGE_TO_NOTIFY_MESSAGE_SUBJECT_M"] = "#AUTHOR# подключил вам почтовый ящик #EMAIL#";
 $MESS["MAIL_CLIENT_CONFIG_OWNER_CHANGE_TO_NOTIFY_MESSAGE_SUBJECT_F"] = "#AUTHOR# подключила вам почтовый ящик #EMAIL#";
+$MESS['MAIL_NOTIFY_MIGRATION_CANCELLED'] = 'Перенос почтового ящика #EMAIL# отменён';
+$MESS['MAIL_NOTIFY_MIGRATION_DONE'] = 'Почтовый ящик #EMAIL# перенесён на новый почтовый сервер';
+$MESS['MAIL_NOTIFY_MIGRATION_STARTED'] = 'Начался перенос почтового ящика #EMAIL#';

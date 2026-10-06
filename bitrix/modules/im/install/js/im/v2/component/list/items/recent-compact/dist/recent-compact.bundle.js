@@ -105,20 +105,21 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			CompactNavigationItem
 		},
 		computed: {
-			availableNavigationItems() {
+			copilotAvailable() {
+				return !im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.isBitrixGptV2Available) && im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.copilotAvailable);
+			},
+			openLinesAvailable() {
 				const settings = main_core.Extension.getSettings('im.v2.component.list.items.recent-compact');
-				const items = settings.get('navigationItems', []);
-				return items.map(item => item.id);
+				return settings.get('openLinesAvailable', false);
 			},
 			preparedNavigationItems() {
-				return this.compactNavigationItems.filter(item => this.availableNavigationItems.includes(item));
-			},
-			compactNavigationItems() {
 				const items = [im_v2_const.NavigationMenuItem.notification];
-				if (!im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.isBitrixGptV2Available)) {
+				if (this.copilotAvailable) {
 					items.push(im_v2_const.NavigationMenuItem.copilot);
 				}
-				items.push(im_v2_const.NavigationMenuItem.openlines, im_v2_const.NavigationMenuItem.openlinesV2);
+				if (this.openLinesAvailable) {
+					items.push(im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.openLinesV2) ? im_v2_const.NavigationMenuItem.openlinesV2 : im_v2_const.NavigationMenuItem.openlines);
+				}
 				return items;
 			}
 		},
@@ -345,6 +346,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	};
 
 	exports.RecentList = RecentList;
-
-})(this.BX.Messenger.v2.Component.List = this.BX.Messenger.v2.Component.List || {}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Application??{}, BX?.Messenger?.v2?.Const??{}, BX?.Messenger?.v2?.Css??{}, BX?.Messenger?.v2?.Css??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Service??{}, BX?.Call?.Component??{}, BX??{}, BX??{}, BX?.Messenger?.v2?.Lib??{}, BX?.UI?.IconSet??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Component?.Elements??{});
+})(this.BX.Messenger.v2.Component.List = this.BX.Messenger.v2.Component.List || {}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Application??{}, BX?.Messenger?.v2?.Const??{}, BX?.Messenger?.v2?.Css??{}, BX?.Messenger?.v2?.Css??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Service??{}, BX?.Call?.Component??{}, window??{}, BX??{}, BX?.Messenger?.v2?.Lib??{}, BX?.UI?.IconSet??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Component?.Elements??{});;
 //# sourceMappingURL=recent-compact.bundle.js.map

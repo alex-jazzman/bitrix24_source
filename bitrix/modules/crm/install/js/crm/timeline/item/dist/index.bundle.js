@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
-(function (exports, crm_timeline_tools, main_core, ui_vue3, main_loader, ui_iconSet_api_vue, main_date, rest_client, ui_analytics, ui_notification, ui_infoHelper, ui_system_menu, ui_buttons, ui_vue3_directives_hint, main_popup, ui_iconSet_api_core, ui_vue3_components_button, crm_field_colorSelector, main_core_events, ui_designTokens, ui_system_label, ui_cnt, crm_router, ui_dialogs_messagebox, ui_entitySelector, crm_common, ui_imageStackSteps, ui_iconSet_main, main_sidepanel, calendar_sharing_interface, calendar_util, crm_ai_call, ui_feedback_form, crm_ai_nameService, ui_system_chip_vue, location_core, location_widget, ui_system_typography_vue, crm_timeline_editors_commentEditor, ui_bbcode_formatter_htmlFormatter, ui_textEditor, ui_lottie, main_lazyload, ui_progressround, ui_avatar, crm_activity_fileUploaderPopup, ui_icons_generator, crm_audioPlayer, ui_iconSet_actions, ui_designTokens_air, crm_field_itemSelector, currency_currencyCore, ui_alerts, crm_field_pingSelector, bizproc_types, ui_hint, crm_entityEditor, pull_client, crm_entityEditor_field_paymentDocuments, ui_sidepanel, crm_integration_analytics) {
+(function (exports, crm_timeline_tools, main_core, ui_vue3, main_loader, ui_iconSet_api_vue, main_date, rest_client, ui_analytics, ui_notification, ui_infoHelper, ui_system_menu, ui_buttons, ui_vue3_directives_hint, main_popup, ui_iconSet_api_core, ui_vue3_components_button, crm_field_colorSelector, main_core_events, ui_designTokens, ui_system_label, ui_cnt, crm_timeline_dialog, crm_router, ui_entitySelector, crm_common, ui_imageStackSteps, ui_iconSet_main, main_sidepanel, calendar_sharing_interface, calendar_util, crm_ai_call, ui_feedback_form, ai_ajaxErrorHandler, crm_ai_nameService, ui_a11y, ui_system_chip_vue, location_core, location_widget, ui_system_typography_vue, crm_timeline_editors_commentEditor, ui_bbcode_formatter_htmlFormatter, ui_textEditor, ui_lottie, main_lazyload, ui_progressround, ui_avatar, crm_activity_fileUploaderPopup, ui_icons_generator, crm_audioPlayer, ui_iconSet_actions, ui_designTokens_air, crm_field_itemSelector, currency_currencyCore, ui_alerts, crm_field_pingSelector, bizproc_types, ui_hint, crm_entityEditor, pull_client, ui_system_dialog, crm_entityEditor_field_paymentDocuments, ui_sidepanel, crm_integration_analytics) {
 	'use strict';
 
 	const StreamType = {
@@ -3353,15 +3353,13 @@ this.BX.Crm = this.BX.Crm || {};
 			if (action === 'Activity:Delete' && actionData && actionData.activityId) {
 				const confirmationText = actionData.confirmationText ?? '';
 				if (confirmationText) {
-					ui_dialogs_messagebox.MessageBox.show({
-						message: main_core.Text.encode(confirmationText),
-						modal: true,
-						buttons: ui_dialogs_messagebox.MessageBoxButtons.YES_NO,
-						onYes: () => {
+					// eslint-disable-next-line @bitrix24/bitrix24-rules/no-native-dialogs
+					crm_timeline_dialog.confirm({
+						content: main_core.Tag.render`<div>${main_core.Text.encode(confirmationText)}</div>`,
+						preset: 'YES_NO',
+						destructive: true,
+						onConfirm: () => {
 							return this.runDeleteAction(actionData.activityId, actionData.ownerTypeId, actionData.ownerId, animationCallbacks);
-						},
-						onNo: messageBox => {
-							messageBox.close();
 						}
 					});
 				} else {
@@ -3371,16 +3369,14 @@ this.BX.Crm = this.BX.Crm || {};
 			if (action === 'Activity:DeleteTag' && actionData && actionData.activityId) {
 				const confirmationText = actionData.confirmationText ?? '';
 				if (confirmationText) {
-					ui_dialogs_messagebox.MessageBox.show({
-						message: main_core.Text.encode(confirmationText),
-						modal: true,
-						buttons: ui_dialogs_messagebox.MessageBoxButtons.YES_CANCEL,
-						yesCaption: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_TODO_DELETE_TAG_CONFIRM_YES_CAPTION'),
-						onYes: () => {
+					// eslint-disable-next-line @bitrix24/bitrix24-rules/no-native-dialogs
+					crm_timeline_dialog.confirm({
+						content: main_core.Tag.render`<div>${main_core.Text.encode(confirmationText)}</div>`,
+						preset: 'YES_NO',
+						destructive: true,
+						confirmText: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_TODO_DELETE_TAG_CONFIRM_YES_CAPTION'),
+						onConfirm: () => {
 							return this.runDeleteTagAction(actionData.activityId, actionData.ownerTypeId, actionData.ownerId);
-						},
-						onCancel: messageBox => {
-							messageBox.close();
 						}
 					});
 				} else {
@@ -3625,6 +3621,16 @@ this.BX.Crm = this.BX.Crm || {};
 		}
 	}
 
+	function openCallScoringResultV2(params) {
+		void crm_router.Router.Instance.openAiReportDrawer('call-assessment', {
+			activityId: params.activityId,
+			ownerTypeId: params.ownerTypeId,
+			ownerId: params.ownerId,
+			jobId: params.jobId ?? null,
+			assessmentSettingsId: params.assessmentSettingsId ?? null
+		});
+	}
+
 	class CallScoringResult extends Base {
 		onItemAction(item, actionParams) {
 			const {
@@ -3646,6 +3652,10 @@ this.BX.Crm = this.BX.Crm || {};
 			if (!main_core.Type.isInteger(actionData.activityId) || !main_core.Type.isInteger(actionData.ownerTypeId) || !main_core.Type.isInteger(actionData.ownerId)) {
 				return;
 			}
+			if (actionData.isV2) {
+				await openCallScoringResultV2(actionData);
+				return;
+			}
 			await top.BX.Runtime.loadExtension('crm.ai.call');
 			const callQualityDlg = new top.BX.Crm.AI.Call.CallQuality({
 				activityId: actionData.activityId,
@@ -3663,9 +3673,8 @@ this.BX.Crm = this.BX.Crm || {};
 			if (!main_core.Type.isInteger(actionData.assessmentSettingId)) {
 				return;
 			}
-			crm_router.Router.openSlider(`/crm/copilot-call-assessment/details/${actionData.assessmentSettingId}/`, {
-				width: 700,
-				cacheable: false
+			crm_router.Router.Instance.openCallAssessmentSlider(actionData.assessmentSettingId, {
+				legacyWidth: 700
 			});
 		}
 		static isItemSupported(item) {
@@ -3796,7 +3805,7 @@ this.BX.Crm = this.BX.Crm || {};
 			}).finally(() => animationCallbacks?.onStop?.());
 		}
 		static isItemSupported(item) {
-			return item.getType() === 'AI:EntityFieldsFillingResult' || item.getType() === 'Activity:OpenLine' || item.getType() === 'Activity:Call';
+			return item.getType() === 'AI:EntityFieldsFillingResult' || item.getType() === 'Activity:OpenLine' || item.getType() === 'Activity:Call' || item.getType() === 'Activity:Email';
 		}
 	}
 
@@ -4360,8 +4369,10 @@ this.BX.Crm = this.BX.Crm || {};
 
 	const COPILOT_BUTTON_DISABLE_DELAY = 5000;
 	const COPILOT_HELPDESK_CODE$1 = 18_799_442;
+	const STICKY_WAITING_MS = 45_000;
 	class CopilotBase extends Base {
 		#copilotConfig;
+		#waitingStickyReleaseList = new Set();
 		constructor() {
 			super();
 			this.#copilotConfig = this.getCopilotConfig();
@@ -4376,6 +4387,12 @@ this.BX.Crm = this.BX.Crm || {};
 		}
 		// endregion
 
+		onAfterItemRefreshLayout(item) {
+			for (const release of this.#waitingStickyReleaseList) {
+				release();
+			}
+			this.#waitingStickyReleaseList.clear();
+		}
 		async handleCopilotLaunch(item, actionData) {
 			const isCopilotAgreementNeedShow = actionData.isCopilotAgreementNeedShow || false;
 			if (isCopilotAgreementNeedShow) {
@@ -4439,15 +4456,86 @@ this.BX.Crm = this.BX.Crm || {};
 			this.#copilotConfig.onPreLaunch?.(item, actionData);
 			const previousButtonState = aiCopilotBtnUI?.getState();
 			aiCopilotBtnUI?.setState(ui_buttons.ButtonState.AI_WAITING);
+			const releaseSticky = this.#keepWaitingSticky(aiCopilotBtnUI?.getContainer?.());
+			if (releaseSticky) {
+				this.#waitingStickyReleaseList.add(releaseSticky);
+			}
 			try {
 				const response = await this.#executeCopilotRequest(actionData);
 				this.#copilotConfig.onPostLaunch?.(item, actionData, response);
 			} catch (response) {
+				releaseSticky?.();
+				this.#waitingStickyReleaseList.delete(releaseSticky);
 				this.#handleCopilotError(item, actionData, response, aiCopilotBtnUI, previousButtonState);
 			}
 		}
+		#keepWaitingSticky(clickedElement) {
+			if (!clickedElement) {
+				return null;
+			}
+			const AI_WAITING_CLASS = 'ui-btn-ai-waiting';
+			const DISABLED_CLASS = 'ui-btn-disabled';
+			const buttonText = clickedElement.textContent.trim();
+			const activityId = clickedElement.dataset?.activityId ?? '';
+			if (activityId === '') {
+				return null;
+			}
+			const ownerDoc = clickedElement.ownerDocument ?? document;
+			const root = ownerDoc.body ?? ownerDoc;
+			let stopped = false;
+			let observer = null;
+			let releaseTimer = null;
+			const findEl = () => {
+				const selector = `button.ui-btn-icon-ai[data-activity-id="${activityId}"]`;
+				for (const btn of root.querySelectorAll(selector)) {
+					if (btn.textContent.trim() === buttonText) {
+						return btn;
+					}
+				}
+				return null;
+			};
+			const stop = () => {
+				stopped = true;
+				observer?.disconnect();
+				observer = null;
+				if (releaseTimer) {
+					clearTimeout(releaseTimer);
+					releaseTimer = null;
+				}
+			};
+			const ensureWaiting = () => {
+				if (stopped) {
+					return;
+				}
+				const el = findEl();
+				if (!el) {
+					return;
+				}
+				if (main_core.Dom.hasClass(el, DISABLED_CLASS)) {
+					stop();
+					return;
+				}
+				if (!main_core.Dom.hasClass(el, AI_WAITING_CLASS)) {
+					main_core.Dom.addClass(el, AI_WAITING_CLASS);
+				}
+			};
+			observer = new MutationObserver(ensureWaiting);
+			observer.observe(root, {
+				subtree: true,
+				childList: true,
+				attributes: true,
+				attributeFilter: ['class']
+			});
+			ensureWaiting();
+			releaseTimer = setTimeout(stop, STICKY_WAITING_MS);
+			return stop;
+		}
 		#validateCopilotParams(actionData) {
-			return main_core.Type.isNumber(actionData.activityId) && main_core.Type.isNumber(actionData.ownerId) && main_core.Type.isNumber(actionData.ownerTypeId) && this.#copilotConfig.validEntityTypes.includes(parseInt(actionData.ownerTypeId, 10));
+			// Admissibility of the entity type is enforced by the backend
+			// (AIActivityService::isAIScope / AIManager::isEntityTypeSupported):
+			// the launch button is not rendered for unsupported entities, so no
+			// duplicating entity-type whitelist is kept on the frontend.
+			return main_core.Type.isNumber(actionData.activityId) && main_core.Type.isNumber(actionData.ownerId) && main_core.Type.isNumber(actionData.ownerTypeId);
 		}
 		#executeCopilotRequest(actionData) {
 			const settings = main_core.Extension.getSettings('crm.timeline.item');
@@ -4486,6 +4574,16 @@ this.BX.Crm = this.BX.Crm || {};
 			}, COPILOT_BUTTON_DISABLE_DELAY);
 		}
 		#showAdditionalInfo(data, item) {
+			const technicalLimitMessage = ai_ajaxErrorHandler.AjaxErrorHandler.getVibePlusTechnicalLimitMessage(data);
+			if (main_core.Type.isStringFilled(technicalLimitMessage)) {
+				ui_a11y.LiveAnnouncer.announce(technicalLimitMessage, 'assertive');
+				ui_notification.UI.Notification.Center.notify({
+					content: main_core.Text.encode(technicalLimitMessage),
+					autoHideDelay: COPILOT_BUTTON_DISABLE_DELAY,
+					closeButton: false
+				});
+				return;
+			}
 			if (this.#isSliderCodeExist(data)) {
 				this.#showInfoSlider(data.sliderCode);
 			} else if (this.#isAiMarketplaceAppsExist(data)) {
@@ -4522,17 +4620,13 @@ this.BX.Crm = this.BX.Crm || {};
 			}
 		}
 		#showFeedbackMessageBox() {
-			ui_dialogs_messagebox.MessageBox.show({
+			// eslint-disable-next-line @bitrix24/bitrix24-rules/no-native-dialogs
+			crm_timeline_dialog.confirm({
 				title: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_NO_AI_PROVIDER_POPUP_TITLE', crm_ai_nameService.NameService.copilotNameReplacement()),
-				message: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_NO_AI_PROVIDER_POPUP_TEXT', crm_ai_nameService.NameService.copilotNameReplacement()),
-				modal: true,
-				buttons: ui_dialogs_messagebox.MessageBoxButtons.OK_CANCEL,
-				okCaption: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_NO_AI_PROVIDER_POPUP_OK_TEXT', crm_ai_nameService.NameService.copilotNameReplacement()),
-				onOk: messageBox => {
-					messageBox.close();
-					this.#openFeedbackForm();
-				},
-				onCancel: messageBox => messageBox.close()
+				content: main_core.Tag.render`<div>${main_core.Text.encode(main_core.Loc.getMessage('CRM_TIMELINE_ITEM_NO_AI_PROVIDER_POPUP_TEXT', crm_ai_nameService.NameService.copilotNameReplacement()))}</div>`,
+				preset: 'OK_CANCEL',
+				confirmText: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_NO_AI_PROVIDER_POPUP_OK_TEXT', crm_ai_nameService.NameService.copilotNameReplacement()),
+				onConfirm: () => this.#openFeedbackForm()
 			});
 		}
 		#openFeedbackForm() {
@@ -4557,18 +4651,44 @@ this.BX.Crm = this.BX.Crm || {};
 			});
 		}
 		#showMarketMessageBox() {
-			ui_dialogs_messagebox.MessageBox.show({
+			// eslint-disable-next-line @bitrix24/bitrix24-rules/no-native-dialogs
+			crm_timeline_dialog.confirm({
 				title: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_AI_PROVIDER_POPUP_TITLE', crm_ai_nameService.NameService.copilotNameReplacement()),
-				message: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_AI_PROVIDER_POPUP_TEXT', {
-					'[helpdesklink]': `<br><br><a href="##" onclick="top.BX.Helper.show('redirect=detail&code=${COPILOT_HELPDESK_CODE$1}');">`,
-					'[/helpdesklink]': '</a>',
-					'#COPILOT_NAME#': crm_ai_nameService.NameService.copilotName()
-				}),
-				modal: true,
-				buttons: ui_dialogs_messagebox.MessageBoxButtons.OK_CANCEL,
-				okCaption: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_AI_PROVIDER_POPUP_OK_TEXT'),
-				onOk: () => crm_router.Router.openSlider(main_core.Loc.getMessage('AI_APP_COLLECTION_MARKET_LINK')),
-				onCancel: messageBox => messageBox.close()
+				content: this.#buildMarketMessageBoxContent(),
+				preset: 'OK_CANCEL',
+				confirmText: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_AI_PROVIDER_POPUP_OK_TEXT'),
+				onConfirm: () => crm_router.Router.openSlider(main_core.Loc.getMessage('AI_APP_COLLECTION_MARKET_LINK'))
+			});
+		}
+		#buildMarketMessageBoxContent() {
+			const messageText = main_core.Loc.getMessage('CRM_TIMELINE_ITEM_AI_PROVIDER_POPUP_TEXT', {
+				'#COPILOT_NAME#': crm_ai_nameService.NameService.copilotName()
+			});
+			const [beforeLink, linkAndAfter] = messageText.split('[helpdesklink]');
+			if (linkAndAfter === undefined) {
+				return main_core.Dom.create('div', {
+					text: messageText
+				});
+			}
+			const [linkLabel, afterLink] = linkAndAfter.split('[/helpdesklink]');
+			if (afterLink === undefined) {
+				return main_core.Dom.create('div', {
+					text: messageText
+				});
+			}
+			const helpdeskLink = main_core.Dom.create('a', {
+				attrs: {
+					href: '##',
+					'data-testid': 'crm-timeline-copilot-market-helpdesk-link'
+				},
+				text: linkLabel
+			});
+			main_core.Event.bind(helpdeskLink, 'click', e => {
+				e.preventDefault();
+				top.BX.Helper.show(`redirect=detail&code=${COPILOT_HELPDESK_CODE$1}`);
+			});
+			return main_core.Dom.create('div', {
+				children: [beforeLink, main_core.Dom.create('br'), main_core.Dom.create('br'), helpdeskLink, afterLink]
 			});
 		}
 		#isSliderCodeExist(data) {
@@ -4584,11 +4704,66 @@ this.BX.Crm = this.BX.Crm || {};
 		#currentTranscriptionState = 'empty';
 		#isCopilotWelcomeTourShown = false;
 		#isTranscriptEventBound = false;
+		#callScoringV2ScrollHandler = null;
+		#copilotWelcomeTourScrollHandler = null;
 
 		// region Base overridden methods
 		onInitialize(item) {
 			this.#showCopilotWelcomeTour(item);
 			this.#bindAdditionalCopilotActions(item);
+		}
+		onAfterItemLayout(item, options) {
+			this.#emitCallScoringV2TourEvent(item);
+		}
+		onBeforeItemClearLayout(item) {
+			this.#unbindCallScoringV2ScrollHandler();
+			this.#unbindCopilotWelcomeTourScrollHandler();
+		}
+		#emitCallScoringV2TourEvent(item) {
+			setTimeout(() => {
+				const container = item.getContainer();
+				if (!container) {
+					return;
+				}
+				const chart = container.querySelector('.crm-timeline__call-scoring-v2-chart');
+				if (!main_core.Type.isElementNode(chart)) {
+					return;
+				}
+				const scoringBlock = item.getLayoutContentBlockById('callGroupOfBlocks')?.getBlockById('callScoring');
+				const actionParams = scoringBlock?.action?.actionParams;
+				if (!main_core.Type.isObject(actionParams)) {
+					return;
+				}
+				const emit = () => {
+					main_core_events.EventEmitter.emit(this, 'BX.Crm.Timeline.Call:onShowCallScoringV2Tour', {
+						target: chart,
+						actionParams
+					});
+				};
+				if (this.#isInViewport(chart)) {
+					emit();
+					return;
+				}
+				const onScroll = () => {
+					if (this.#isInViewport(chart)) {
+						emit();
+						this.#unbindCallScoringV2ScrollHandler();
+					}
+				};
+				this.#unbindCallScoringV2ScrollHandler();
+				this.#callScoringV2ScrollHandler = onScroll;
+				main_core.Event.bind(window, 'scroll', onScroll);
+			}, 50);
+		}
+		#unbindCallScoringV2ScrollHandler() {
+			if (this.#callScoringV2ScrollHandler) {
+				main_core.Event.unbind(window, 'scroll', this.#callScoringV2ScrollHandler);
+				this.#callScoringV2ScrollHandler = null;
+			}
+		}
+		#isInViewport(element) {
+			const rect = element.getBoundingClientRect();
+			return rect.top < window.innerHeight && rect.bottom > 0;
 		}
 
 		// eslint-disable-next-line sonarjs/cognitive-complexity
@@ -4632,7 +4807,6 @@ this.BX.Crm = this.BX.Crm || {};
 		getCopilotConfig() {
 			return {
 				actionEndpoint: 'crm.timeline.ai.launchCopilot',
-				validEntityTypes: [BX.CrmEntityType.enumeration.lead, BX.CrmEntityType.enumeration.deal],
 				agreementContext: 'audio',
 				onPreLaunch: (...args) => this.#handlePreLaunch(...args),
 				onPostLaunch: (...args) => this.#handlePostLaunch(...args),
@@ -4723,6 +4897,16 @@ this.BX.Crm = this.BX.Crm || {};
 			if (!main_core.Type.isInteger(actionData.activityId) || !main_core.Type.isInteger(actionData.ownerTypeId) || !main_core.Type.isInteger(actionData.ownerId)) {
 				return;
 			}
+			if (actionData.isV2) {
+				void crm_router.Router.Instance.openAiReportDrawer('call-assessment', {
+					activityId: actionData.activityId,
+					ownerTypeId: actionData.ownerTypeId,
+					ownerId: actionData.ownerId,
+					jobId: actionData.jobId ?? null,
+					assessmentSettingsId: actionData.assessmentSettingsId ?? null
+				});
+				return;
+			}
 
 			// Runtime.loadExtension not work in this case (see http://jabber.bx/view.php?id=241940)
 			await top.BX.Runtime.loadExtension('crm.ai.call');
@@ -4782,11 +4966,19 @@ this.BX.Crm = this.BX.Crm || {};
 					if (aiCopilotBtn?.isInViewport()) {
 						this.#emitTimelineCopilotTourEvents(aiCopilotUIBtn.getContainer(), 1500, item.getDataPayload());
 						this.#isCopilotWelcomeTourShown = true;
-						main_core.Event.unbind(window, 'scroll', showCopilotTourOnScroll);
+						this.#unbindCopilotWelcomeTourScrollHandler();
 					}
 				};
+				this.#unbindCopilotWelcomeTourScrollHandler();
+				this.#copilotWelcomeTourScrollHandler = showCopilotTourOnScroll;
 				main_core.Event.bind(window, 'scroll', showCopilotTourOnScroll);
 			}, 50);
+		}
+		#unbindCopilotWelcomeTourScrollHandler() {
+			if (this.#copilotWelcomeTourScrollHandler) {
+				main_core.Event.unbind(window, 'scroll', this.#copilotWelcomeTourScrollHandler);
+				this.#copilotWelcomeTourScrollHandler = null;
+			}
 		}
 		#bindAdditionalCopilotActions(item) {
 			if (!item || this.#isTranscriptEventBound) {
@@ -4904,15 +5096,13 @@ this.BX.Crm = this.BX.Crm || {};
 			}
 			const confirmationText = main_core.Type.isStringFilled(actionData.confirmationText) ? actionData.confirmationText : '';
 			if (confirmationText) {
-				ui_dialogs_messagebox.MessageBox.show({
-					message: confirmationText,
-					modal: true,
-					buttons: ui_dialogs_messagebox.MessageBoxButtons.YES_NO,
-					onYes: () => {
+				// eslint-disable-next-line @bitrix24/bitrix24-rules/no-native-dialogs
+				crm_timeline_dialog.confirm({
+					content: main_core.Tag.render`<div>${main_core.Text.encode(confirmationText)}</div>`,
+					preset: 'YES_NO',
+					destructive: true,
+					onConfirm: () => {
 						return this.runDeleteAction(actionData.commentId, actionData.ownerTypeId, actionData.ownerId, animationCallbacks);
-					},
-					onNo: messageBox => {
-						messageBox.close();
 					}
 				});
 			} else {
@@ -5422,6 +5612,7 @@ this.BX.Crm = this.BX.Crm || {};
 	class EditableDescriptionHeight {
 		static SHORT = 'short';
 		static LONG = 'long';
+		static AUTO = 'auto';
 	}
 
 	const EditableDescription = {
@@ -5502,6 +5693,8 @@ this.BX.Crm = this.BX.Crm || {};
 			},
 			heightClassnameModifier() {
 				switch (this.height) {
+					case EditableDescriptionHeight.AUTO:
+						return '--height-auto';
 					case EditableDescriptionHeight.LONG:
 						return '--height-long';
 					case EditableDescriptionHeight.SHORT:
@@ -5667,6 +5860,9 @@ this.BX.Crm = this.BX.Crm || {};
 				this.isCollapsed = !this.isCollapsed;
 			},
 			checkIsLongText() {
+				if (this.height === EditableDescriptionHeight.AUTO) {
+					return false;
+				}
 				const textBlock = this.$refs.text;
 				if (!textBlock) {
 					return false;
@@ -5959,7 +6155,7 @@ this.BX.Crm = this.BX.Crm || {};
 				const attachmentList = this.editor.getAttachments();
 				const attachmentAllowEditOptions = this.editor.getAttachmentsAllowEditOptions(attachmentList);
 				this.isSaving = true;
-				void this.executeSaveAction(content, attachmentList, attachmentAllowEditOptions).then(() => {
+				void this.executeSaveAction(content, attachmentList, attachmentAllowEditOptions).then(response => {
 					this.isEdit = false;
 					if (!this.isTextChanged) {
 						this.oldValue = htmlContent;
@@ -5967,12 +6163,20 @@ this.BX.Crm = this.BX.Crm || {};
 					}
 					this.$nextTick(() => {
 						this.isLongText = this.checkIsLongText();
-						this.executeLoadAction(TYPE_LOAD_FILES_BLOCK, this.$refs.files);
+						if (!this.isCommentRecreated(response)) {
+							this.executeLoadAction(TYPE_LOAD_FILES_BLOCK, this.$refs.files);
+						}
 					});
 					this.emitEvent('Comment:FinishEdit');
 				}).finally(() => {
 					this.isSaving = false;
 				});
+			},
+			// updating a comment bound to several entities recreates it with a new id,
+			// and pull events replace the item, so the stale id must not be loaded again
+			isCommentRecreated(response) {
+				const savedCommentId = Number(response?.data);
+				return savedCommentId > 0 && savedCommentId !== this.saveAction?.actionParams?.commentId;
 			},
 			executeSaveAction(content, attachmentList, attachmentAllowEditOptions) {
 				// to avoid unintended props mutation
@@ -6334,10 +6538,7 @@ this.BX.Crm = this.BX.Crm || {};
 				if (!main_core.Type.isInteger(assessmentSettingsId)) {
 					return;
 				}
-				crm_router.Router.openSlider(`/crm/copilot-call-assessment/details/${assessmentSettingsId}/`, {
-					width: 700,
-					cacheable: false
-				});
+				crm_router.Router.Instance.openCallAssessmentSlider(assessmentSettingsId);
 			},
 			showDetails() {
 				if (main_core.Type.isObject(this.action)) {
@@ -6348,9 +6549,10 @@ this.BX.Crm = this.BX.Crm || {};
 		// language=Vue
 		template: `
 		<div class="crm-timeline__call-scoring-v2">
-			<div 
+			<div
 				class="crm-timeline__call-scoring-v2-chart"
 				ref="chartContainer"
+				@click.prevent="showDetails"
 			></div>
 			<div class="crm-timeline__call-scoring-v2-content">
 				<div class="body">
@@ -6364,7 +6566,10 @@ this.BX.Crm = this.BX.Crm || {};
 						>{{ scriptTitle }}</div>
 					</div>
 					<div>
-						<span class="summary-text">{{ scoreDescription }}</span>
+						<span
+							class="summary-text"
+							@click.prevent="showDetails"
+						>{{ scoreDescription }}</span>
 						<span
 							class="details-link"
 							@click.prevent="showDetails"
@@ -6667,13 +6872,23 @@ this.BX.Crm = this.BX.Crm || {};
 				}
 			},
 			action: Object | null,
-			styleValue: String
+			styleValue: String,
+			canChangeDeadline: {
+				type: Boolean,
+				required: false,
+				default: true
+			}
 		},
 		inject: ['isReadOnly'],
 		data() {
 			return {
 				currentTimestamp: this.value,
-				initialTimestamp: this.value
+				initialTimestamp: this.value,
+				// deadline writes are serialized on this chain, so a later pick never starts before the
+				// previous request has settled and committed its authoritative value
+				requestChain: Promise.resolve(),
+				// bumped by a push update; invalidates own in-flight writes, since the push is authoritative
+				pushGeneration: 0
 			};
 		},
 		computed: {
@@ -6704,7 +6919,7 @@ this.BX.Crm = this.BX.Crm || {};
 				return `${dateFrom} - ${dateTo}`;
 			},
 			currentDateInSiteFormat() {
-				return main_date.DateTimeFormat.format(this.withTime ? crm_timeline_tools.DatetimeConverter.getSiteDateTimeFormat() : crm_timeline_tools.DatetimeConverter.getSiteDateFormat(), this.getDatetimeConverter().getValue());
+				return this.formatTimestampForSite(this.currentTimestamp);
 			},
 			calendarParams() {
 				return {
@@ -6724,11 +6939,20 @@ this.BX.Crm = this.BX.Crm || {};
 			{
 				this.initialTimestamp = newDate;
 				this.currentTimestamp = newDate;
+				// the push carries the authoritative date: drop the outcome of any own in-flight write
+				this.pushGeneration += 1;
 			}
 		},
 		methods: {
 			openCalendar(event) {
 				if (this.isPillReadonly) {
+					return;
+				}
+				if (!this.canChangeDeadline) {
+					ui_notification.UI.Notification.Center.notify({
+						content: this.$Bitrix.Loc.getMessage('CRM_TIMELINE_ITEM_DATE_PILL_CALENDAR_EVENT_ACCESS_DENIED'),
+						autoHideDelay: 5000
+					});
 					return;
 				}
 
@@ -6750,16 +6974,66 @@ this.BX.Crm = this.BX.Crm || {};
 				if (this.currentTimestamp === this.initialTimestamp) {
 					return;
 				}
+				const attemptedTimestamp = this.currentTimestamp;
+				const generation = this.pushGeneration;
+
+				// serialize writes: a later pick waits for the previous request to settle, so a successful
+				// write always commits its timestamp before the next one can revert on error. Without this,
+				// an older success followed by a newer failure would revert the UI to a stale value while
+				// the server already holds the older date.
+				this.requestChain = this.requestChain.then(() => this.performDeadlineChange(attemptedTimestamp, generation));
+			},
+			performDeadlineChange(attemptedTimestamp, generation) {
+				// a newer pick already committed this exact value, or a push replaced it: nothing to send
+				if (!this.action || attemptedTimestamp === this.initialTimestamp) {
+					return Promise.resolve();
+				}
 
 				// to avoid unintended props mutation
 				const actionDescription = main_core.Runtime.clone(this.action);
 				actionDescription.actionParams ??= {};
-				actionDescription.actionParams.value = this.currentDateInSiteFormat;
-				actionDescription.actionParams.valueTs = this.currentTimestamp;
+				actionDescription.actionParams.value = this.formatTimestampForSite(attemptedTimestamp);
+				actionDescription.actionParams.valueTs = attemptedTimestamp;
+
+				// a push update between scheduling and settling makes the push authoritative: neither commit
+				// nor revert this write's outcome
+				const isStaleRequest = () => this.pushGeneration !== generation;
+
+				// revert to the last committed timestamp, unless the user has already picked a newer one;
+				// reading initialTimestamp here (not a value captured before the request) keeps overlapping
+				// requests from reverting past the last actually committed timestamp
+				const revertShownDate = () => {
+					if (this.currentTimestamp === attemptedTimestamp) {
+						this.currentTimestamp = this.initialTimestamp;
+					}
+				};
 				const action = new Action(actionDescription);
-				action.execute(this);
-				this.initialTimestamp = this.currentTimestamp;
-				this.$emit('onChange', this.initialTimestamp);
+				return action.execute(this).then(response => {
+					if (isStaleRequest()) {
+						return;
+					}
+
+					// backend rejected the change (e.g. no rights on the linked calendar event)
+					if (main_core.Type.isArrayFilled(response?.errors)) {
+						revertShownDate();
+						return;
+					}
+
+					// the server now holds this value; record it as the last committed one even if a newer
+					// pick already moved the shown date, so a later failing write reverts to THIS date
+					this.initialTimestamp = attemptedTimestamp;
+					this.$emit('onChange', this.initialTimestamp);
+				}).catch(() => {
+					if (isStaleRequest()) {
+						return;
+					}
+
+					// a rejected action promise is treated as a rejection as well
+					revertShownDate();
+				});
+			},
+			formatTimestampForSite(timestamp) {
+				return main_date.DateTimeFormat.format(this.withTime ? crm_timeline_tools.DatetimeConverter.getSiteDateTimeFormat() : crm_timeline_tools.DatetimeConverter.getSiteDateFormat(), crm_timeline_tools.DatetimeConverter.createFromServerTimestamp(timestamp).toUserTime().getValue());
 			},
 			getDatetimeConverter() {
 				return crm_timeline_tools.DatetimeConverter.createFromServerTimestamp(this.currentTimestamp).toUserTime();
@@ -7900,8 +8174,12 @@ this.BX.Crm = this.BX.Crm || {};
 				});
 			},
 			adjustHeight(elem) {
-				elem.style.height = 0;
-				elem.style.height = elem.scrollHeight + "px";
+				if (!elem) {
+					return;
+				}
+				elem.style.overflowY = 'hidden';
+				elem.style.height = 'auto';
+				elem.style.height = `${elem.scrollHeight}px`;
 			},
 			setEditMode(editMode) {
 				const isEdit = editMode ? !this.isReadOnly : false;
@@ -7939,16 +8217,13 @@ this.BX.Crm = this.BX.Crm || {};
 					return;
 				}
 				if (this.deleteConfirmationText && this.deleteConfirmationText.length) {
-					ui_dialogs_messagebox.MessageBox.show({
-						message: this.deleteConfirmationText,
-						modal: true,
-						buttons: ui_dialogs_messagebox.MessageBoxButtons.YES_NO,
-						onYes: messageBox => {
-							messageBox.close();
+					// eslint-disable-next-line @bitrix24/bitrix24-rules/no-native-dialogs
+					crm_timeline_dialog.confirm({
+						content: main_core.Tag.render`<div>${main_core.Text.encode(this.deleteConfirmationText)}</div>`,
+						preset: 'YES_NO',
+						destructive: true,
+						onConfirm: () => {
 							this.executeDeleteAction();
-						},
-						onNo: messageBox => {
-							messageBox.close();
 						}
 					});
 				} else {
@@ -8677,6 +8952,7 @@ this.BX.Crm = this.BX.Crm || {};
 		template: `
 		<div class="crm-entity-stream-advice-list-btn-box">
 			<button
+				type="button"
 				@click="executeAction"
 				class="crm-entity-stream-advice-list-btn"
 			>
@@ -8783,8 +9059,17 @@ this.BX.Crm = this.BX.Crm || {};
 			ListItem
 		},
 		methods: {
-			showMore() {
+			handleShowMore() {
 				this.isShortList = false;
+				this.$nextTick(() => {
+					const listContainer = this.$el.querySelector('.crm-entity-stream-advice-list');
+					const items = listContainer ? listContainer.querySelectorAll('.crm-entity-stream-advice-list-item') : [];
+					const firstRevealed = items[this.showMoreCnt] ?? null;
+					const moved = firstRevealed ? ui_a11y.FocusNavigator.focusFirst(firstRevealed) : null;
+					if (moved === null && listContainer) {
+						ui_a11y.FocusNavigator.focusContainer(listContainer);
+					}
+				});
 			},
 			isItemVisible(index) {
 				return !this.isShortList || index < this.showMoreCnt;
@@ -8793,6 +9078,9 @@ this.BX.Crm = this.BX.Crm || {};
 		computed: {
 			isShowMoreVisible() {
 				return this.isShortList && this.listItems.length > this.shortListItemsCnt;
+			},
+			ariaExpanded() {
+				return String(!this.isShortList);
 			}
 		},
 		// language=Vue
@@ -8809,14 +9097,16 @@ this.BX.Crm = this.BX.Crm || {};
 					v-bind="item.properties"
 				></ListItem>
 			</transition-group>
-			<a
+			<button
 				v-if="isShowMoreVisible"
-				@click.prevent="showMore"
+				type="button"
+				data-testid="timeline-expandable-list-show-more"
+				:aria-expanded="ariaExpanded"
+				@click="handleShowMore"
 				class="crm-entity-stream-advice-link"
-				href="#"
 			>
 				{{showMoreText}}
-			</a>
+			</button>
 		</div>
 	`
 	};
@@ -9068,15 +9358,13 @@ this.BX.Crm = this.BX.Crm || {};
 			} else if (action === ACTION_NAMESPACE + 'Delete') {
 				const confirmationText = actionData.confirmationText ?? '';
 				if (confirmationText) {
-					ui_dialogs_messagebox.MessageBox.show({
-						message: confirmationText,
-						modal: true,
-						buttons: ui_dialogs_messagebox.MessageBoxButtons.YES_NO,
-						onYes: () => {
+					// eslint-disable-next-line @bitrix24/bitrix24-rules/no-native-dialogs
+					crm_timeline_dialog.confirm({
+						content: main_core.Tag.render`<div>${main_core.Text.encode(confirmationText)}</div>`,
+						preset: 'YES_NO',
+						destructive: true,
+						onConfirm: () => {
 							return this.#deleteDocument(actionData.id, actionData.ownerTypeId, actionData.ownerId, animationCallbacks);
-						},
-						onNo: messageBox => {
-							messageBox.close();
 						}
 					});
 				} else {
@@ -9094,7 +9382,10 @@ this.BX.Crm = this.BX.Crm || {};
 				try {
 					publicUrl = await this.#createPublicUrl(documentId);
 				} catch (error) {
-					ui_dialogs_messagebox.MessageBox.alert(error.message);
+					// eslint-disable-next-line @bitrix24/bitrix24-rules/no-native-dialogs
+					crm_timeline_dialog.alert({
+						content: main_core.Tag.render`<div>${main_core.Text.encode(error.message)}</div>`
+					});
 					return;
 				}
 			}
@@ -9105,7 +9396,10 @@ this.BX.Crm = this.BX.Crm || {};
 					autoHideDelay: 5000
 				});
 			} else {
-				ui_dialogs_messagebox.MessageBox.alert(main_core.Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_DOCUMENT_COPY_PUBLIC_LINK_ERROR'));
+				// eslint-disable-next-line @bitrix24/bitrix24-rules/no-native-dialogs
+				crm_timeline_dialog.alert({
+					content: main_core.Tag.render`<div>${main_core.Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_DOCUMENT_COPY_PUBLIC_LINK_ERROR')}</div>`
+				});
 			}
 		}
 		async #createPublicUrl(documentId) {
@@ -9145,7 +9439,10 @@ this.BX.Crm = this.BX.Crm || {};
 			if (main_core.Type.isStringFilled(pdfUrl)) {
 				window.open(pdfUrl, '_blank');
 			} else {
-				ui_dialogs_messagebox.MessageBox.alert(main_core.Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_DOCUMENT_PDF_NOT_READY'));
+				// eslint-disable-next-line @bitrix24/bitrix24-rules/no-native-dialogs
+				crm_timeline_dialog.alert({
+					content: main_core.Tag.render`<div>${main_core.Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_DOCUMENT_PDF_NOT_READY')}</div>`
+				});
 			}
 		}
 		#downloadDocx(docxUrl) {
@@ -9168,7 +9465,11 @@ this.BX.Crm = this.BX.Crm || {};
 				});
 			} catch (responseWithError) {
 				console.error(responseWithError);
-				ui_dialogs_messagebox.MessageBox.alert(main_core.Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_DOCUMENT_UPDATE_DOCUMENT_ERROR'));
+
+				// eslint-disable-next-line @bitrix24/bitrix24-rules/no-native-dialogs
+				crm_timeline_dialog.alert({
+					content: main_core.Tag.render`<div>${main_core.Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_DOCUMENT_UPDATE_DOCUMENT_ERROR')}</div>`
+				});
 				return;
 			}
 			const newTitle = response.data.document?.values?.DocumentTitle;
@@ -9190,7 +9491,11 @@ this.BX.Crm = this.BX.Crm || {};
 				});
 			} catch (responseWithError) {
 				console.error(responseWithError);
-				ui_dialogs_messagebox.MessageBox.alert(main_core.Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_DOCUMENT_UPDATE_DOCUMENT_ERROR'));
+
+				// eslint-disable-next-line @bitrix24/bitrix24-rules/no-native-dialogs
+				crm_timeline_dialog.alert({
+					content: main_core.Tag.render`<div>${main_core.Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_DOCUMENT_UPDATE_DOCUMENT_ERROR')}</div>`
+				});
 				return;
 			}
 			const newCreateDate = response.data.document?.values?.DocumentCreateTime;
@@ -9309,23 +9614,29 @@ this.BX.Crm = this.BX.Crm || {};
 					this.#showMessage(main_core.Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_DO_USE_PREVIOUS_MSGVER_3', {
 						'%TITLE%': '<b>' + BX.util.htmlspecialchars(response.data.TITLE || '') + '</b>',
 						'%INITIATOR%': '<b>' + BX.util.htmlspecialchars(response.data.INITIATOR || '') + '</b>'
-					}), [new BX.UI.Button({
-						text: BX.message('CRM_TIMELINE_ITEM_ACTIVITY_OLD_BUTTON_MSGVER_2'),
-						className: "ui-btn ui-btn-md ui-btn-primary",
-						events: {
-							click: () => {
-								convertDealAndStartSign(true);
-								this.#popupConfirm.destroy();
-							}
+					}), [new ui_buttons.Button({
+						text: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_OLD_BUTTON_MSGVER_2'),
+						size: ui_buttons.ButtonSize.LARGE,
+						useAirDesign: true,
+						style: ui_buttons.AirButtonStyle.FILLED,
+						dataset: {
+							testid: 'crm-timeline-document-sign-old-btn'
+						},
+						onclick: () => {
+							convertDealAndStartSign(true);
+							this.#popupConfirm.hide();
 						}
-					}), new BX.UI.Button({
+					}), new ui_buttons.Button({
 						text: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_NEW_BUTTON_MSGVER_3'),
-						className: "ui-btn ui-btn-md ui-btn-info",
-						events: {
-							click: () => {
-								convertDealAndStartSign(false);
-								this.#popupConfirm.destroy();
-							}
+						size: ui_buttons.ButtonSize.LARGE,
+						useAirDesign: true,
+						style: ui_buttons.AirButtonStyle.OUTLINE,
+						dataset: {
+							testid: 'crm-timeline-document-sign-new-btn'
+						},
+						onclick: () => {
+							convertDealAndStartSign(false);
+							this.#popupConfirm.hide();
 						}
 					})], main_core.Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_POPUP_TITLE_MSGVER_2'));
 				} else {
@@ -9337,22 +9648,14 @@ this.BX.Crm = this.BX.Crm || {};
 			BX.UI.InfoHelper.show(code);
 		}
 		#showMessage(content, buttons, title) {
-			this.#popupConfirm = new BX.PopupWindow('bx-popup-document-activity-popup', null, {
-				zIndex: 200,
-				autoHide: true,
+			this.#popupConfirm = new ui_system_dialog.Dialog({
+				title,
+				content: main_core.Tag.render`<div>${content}</div>`,
+				centerButtons: buttons,
+				hasOverlay: true,
 				closeByEsc: true,
-				buttons: buttons,
-				closeIcon: true,
-				overlay: true,
-				events: {
-					onPopupClose: () => {
-						this.#popupConfirm.destroy();
-					}
-				},
-				content: main_core.Tag.render`<div class="bx-popup-document-activity-popup-content-text">${content}</div>`,
-				titleBar: title,
-				className: 'bx-popup-document-activity-popup',
-				maxWidth: 510
+				width: 510,
+				background: 'vibrant'
 			});
 			this.#popupConfirm.show();
 		}
@@ -9371,7 +9674,45 @@ this.BX.Crm = this.BX.Crm || {};
 	`
 	};
 
-	class Email extends Base {
+	class Email extends CopilotBase {
+		static #copilotTourObserver = null;
+		static #copilotTourCallbacks = new Map();
+		#copilotSummaryMenu = null;
+		#copilotWelcomeTourTimeout = null;
+		#copilotTourTarget = null;
+
+		// region Base overridden methods
+		onInitialize(item) {
+			if (item) {
+				this.#showCopilotWelcomeTour(item);
+			}
+		}
+		onBeforeItemClearLayout(item) {
+			super.onBeforeItemClearLayout(item);
+			this.#copilotSummaryMenu?.destroy();
+			this.#copilotSummaryMenu = null;
+			if (this.#copilotWelcomeTourTimeout) {
+				clearTimeout(this.#copilotWelcomeTourTimeout);
+				this.#copilotWelcomeTourTimeout = null;
+			}
+			if (this.#copilotTourTarget) {
+				Email.#unobserveCopilotTour(this.#copilotTourTarget);
+				this.#copilotTourTarget = null;
+			}
+		}
+		// endregion
+
+		// region CopilotBase overridden methods
+		getCopilotConfig() {
+			return {
+				actionEndpoint: 'crm.timeline.ai.launchCopilot',
+				validEntityTypes: [BX.CrmEntityType.enumeration.lead, BX.CrmEntityType.enumeration.deal],
+				agreementContext: 'text'
+			};
+		}
+		// endregion
+
+		// region Base overridden methods
 		onItemAction(item, actionParams) {
 			const {
 				action,
@@ -9387,6 +9728,65 @@ this.BX.Crm = this.BX.Crm || {};
 			if (action === 'Email::Schedule' && actionData) {
 				this.runScheduleAction(actionData.activityId, actionData.scheduleDate);
 			}
+			if (action === 'Email:LaunchCopilot' && actionData) {
+				void this.handleCopilotLaunch(item, actionData);
+			}
+			if (action === 'Email::ShowCopilotSummary' && actionData) {
+				void this.#showCopilotSummary(item, actionData);
+			}
+		}
+		getContentBlockComponents(Item) {
+			return {
+				ContactList
+			};
+		}
+		// endregion
+
+		// region jsEvent action handlers
+		#showCopilotSummary(item, actionData) {
+			const activityId = actionData.activityId;
+			const items = actionData.summarizeTranscriptionList;
+			if (activityId <= 0 || !items) {
+				return;
+			}
+			if (Object.keys(items).length === 1) {
+				void this.openCopilotSummaryPopup(actionData, crm_ai_call.ActivityProvider.email, Object.keys(items)[0]);
+				return;
+			}
+			if (this.#copilotSummaryMenu === null) {
+				const barTarget = item.getLayoutContentBlockById('aiActionBar')?.getContainer();
+				const elementTarget = barTarget?.querySelector('.ui-icon-set.--o-copilot');
+				const menuTarget = elementTarget || barTarget;
+				if (!menuTarget) {
+					return;
+				}
+				const menuItems = Object.entries(items).reverse().map(([jobId, timestamp]) => {
+					const converter = crm_timeline_tools.DatetimeConverter.createFromServerTimestamp(timestamp).toUserTime();
+					return {
+						title: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_EMAIL_SUMMARIZE_TRANSCRIPTION_MENU', {
+							'#DATE#': converter.toDatetimeString({
+								delimiter: ', '
+							})
+						}),
+						design: 'copilot',
+						icon: ui_iconSet_api_vue.Outline.TEXT,
+						onClick: () => {
+							this.#copilotSummaryMenu.close();
+							this.openCopilotSummaryPopup(actionData, crm_ai_call.ActivityProvider.email, jobId);
+						}
+					};
+				});
+				this.#copilotSummaryMenu = new ui_system_menu.Menu({
+					id: `crm-timeline-activity-email-copilot-summary-${activityId}-${main_core.Text.getRandom()}`,
+					animation: 'fading-slide',
+					bindElement: menuTarget,
+					autoHide: true,
+					closeByEsc: false,
+					offsetTop: 5,
+					items: menuItems
+				});
+			}
+			this.#copilotSummaryMenu.show();
 		}
 		#viewActivity(id) {
 			const editor = this.#getActivityEditor();
@@ -9406,11 +9806,76 @@ this.BX.Crm = this.BX.Crm || {};
 			}
 			this.#viewActivity(actionData.threadId);
 		}
-		getContentBlockComponents(Item) {
-			return {
-				ContactList
-			};
+		// endregion
+
+		#showCopilotWelcomeTour(item) {
+			this.#copilotWelcomeTourTimeout = setTimeout(() => {
+				this.#copilotWelcomeTourTimeout = null;
+				const aiCopilotBtn = this.getFooterCopilotButton(item);
+				const aiCopilotUIBtn = aiCopilotBtn?.getUiButton();
+				if (!aiCopilotUIBtn || aiCopilotUIBtn.getState() === ui_buttons.ButtonState.DISABLED) {
+					return;
+				}
+				const target = aiCopilotUIBtn.getContainer();
+				if (aiCopilotBtn?.isInViewport()) {
+					this.#emitShowCopilotTour(target, 1500);
+					return;
+				}
+				this.#copilotTourTarget = target;
+				void Email.#observeCopilotTour(target, () => {
+					this.#copilotTourTarget = null;
+					this.#emitShowCopilotTour(target, 1000);
+				});
+			}, 50);
 		}
+		#emitShowCopilotTour(target, delay) {
+			main_core_events.EventEmitter.emit(this, 'BX.Crm.Timeline.Email:onShowCopilotTour', {
+				target,
+				stepId: 'copilot-in-email',
+				delay
+			});
+		}
+		static #getCopilotTourObserver() {
+			if (Email.#copilotTourObserver === null) {
+				Email.#copilotTourObserver = new IntersectionObserver(entries => {
+					entries.forEach(entry => {
+						if (!entry.isIntersecting) {
+							return;
+						}
+						const callback = Email.#copilotTourCallbacks.get(entry.target);
+						Email.#unobserveCopilotTour(entry.target);
+						callback?.();
+					});
+				});
+			}
+			return Email.#copilotTourObserver;
+		}
+		static async #observeCopilotTour(target, callback) {
+			if (!target) {
+				return;
+			}
+			Email.#copilotTourCallbacks.set(target, callback);
+			if (typeof IntersectionObserver === 'undefined') {
+				await main_core.Runtime.loadExtension('main.polyfill.intersectionobserver');
+				if (!Email.#copilotTourCallbacks.has(target)) {
+					return;
+				}
+			}
+			Email.#getCopilotTourObserver().observe(target);
+		}
+		static #unobserveCopilotTour(target) {
+			if (!target) {
+				return;
+			}
+			Email.#copilotTourObserver?.unobserve(target);
+			Email.#copilotTourCallbacks.delete(target);
+			if (Email.#copilotTourCallbacks.size === 0) {
+				Email.#copilotTourObserver?.disconnect();
+				Email.#copilotTourObserver = null;
+			}
+		}
+		// endregion
+
 		static isItemSupported(item) {
 			const supportedItemTypes = ['ContactList', 'Activity:Email', 'EmailActivitySuccessfullyDelivered', 'EmailActivityNonDelivered', 'EmailLogIncomingMessage'];
 			return supportedItemTypes.includes(item.getType());
@@ -9690,6 +10155,9 @@ this.BX.Crm = this.BX.Crm || {};
 			if (action === 'Openline:ShowCopilotSummary' && actionData) {
 				void this.#showCopilotSummary(item, actionData);
 			}
+			if (action === 'Openline:ShowCopilotSummaryDrawer' && actionData) {
+				void this.#showCopilotSummaryDrawer(actionData);
+			}
 			if (action === 'Openline:LaunchCopilot' && actionData) {
 				void this.handleCopilotLaunch(item, actionData);
 			}
@@ -9700,7 +10168,6 @@ this.BX.Crm = this.BX.Crm || {};
 		getCopilotConfig() {
 			return {
 				actionEndpoint: 'crm.timeline.ai.launchCopilot',
-				validEntityTypes: [BX.CrmEntityType.enumeration.lead, BX.CrmEntityType.enumeration.deal],
 				agreementContext: 'audio' // @todo!
 			};
 		}
@@ -9715,21 +10182,26 @@ this.BX.Crm = this.BX.Crm || {};
 			});
 		}
 		#onComplete(item, actionData, animationCallbacks) {
-			ui_dialogs_messagebox.MessageBox.show({
+			const uncheckChangeStreamCheckbox = () => {
+				const changeStreamButton = item.getLayoutHeaderChangeStreamButton();
+				if (changeStreamButton) {
+					changeStreamButton.markCheckboxUnchecked();
+				}
+			};
+
+			// eslint-disable-next-line promise/catch-or-return, @bitrix24/bitrix24-rules/no-native-dialogs
+			crm_timeline_dialog.confirm({
 				title: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_OPENLINE_COMPLETE_CONF_TITLE'),
-				message: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_OPENLINE_COMPLETE_CONF'),
-				modal: true,
-				okCaption: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_OPENLINE_COMPLETE_CONF_OK_TEXT'),
-				buttons: ui_dialogs_messagebox.MessageBoxButtons.OK_CANCEL,
-				onOk: () => {
+				content: main_core.Tag.render`<div>${main_core.Text.encode(main_core.Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_OPENLINE_COMPLETE_CONF'))}</div>`,
+				preset: 'OK_CANCEL',
+				confirmText: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_OPENLINE_COMPLETE_CONF_OK_TEXT'),
+				onConfirm: () => {
 					return this.#runCompleteAction(actionData.activityId, actionData.ownerTypeId, actionData.ownerId, animationCallbacks);
 				},
-				onCancel: messageBox => {
-					const changeStreamButton = item.getLayoutHeaderChangeStreamButton();
-					if (changeStreamButton) {
-						changeStreamButton.markCheckboxUnchecked();
-					}
-					messageBox.close();
+				onDismiss: uncheckChangeStreamCheckbox
+			}).then(result => {
+				if (result === 'cancel') {
+					uncheckChangeStreamCheckbox();
 				}
 			});
 		}
@@ -9774,6 +10246,15 @@ this.BX.Crm = this.BX.Crm || {};
 				});
 			}
 			this.#copilotSummaryMenu.show();
+		}
+		#showCopilotSummaryDrawer(actionData) {
+			void crm_router.Router.Instance.openAiReportDrawer('summary-history', {
+				activityId: actionData.activityId,
+				ownerTypeId: actionData.ownerTypeId,
+				ownerId: actionData.ownerId,
+				jobId: null,
+				assessmentSettingsId: null
+			});
 		}
 		#runCompleteAction(activityId, ownerTypeId, ownerId, animationCallbacks) {
 			if (animationCallbacks.onStart) {
@@ -9937,7 +10418,6 @@ this.BX.Crm = this.BX.Crm || {};
 		getCopilotConfig() {
 			return {
 				actionEndpoint: 'crm.timeline.repeatsale.launchCopilot',
-				validEntityTypes: [BX.CrmEntityType.enumeration.deal],
 				agreementContext: 'audio',
 				// @todo!
 				onPreLaunch: (...args) => this.#handlePreLaunch(...args),
@@ -10074,6 +10554,7 @@ this.BX.Crm = this.BX.Crm || {};
 	});
 	class SignB2eDocument extends Base {
 		#isCancellationInProgress = false;
+		#isAnnulmentInProgress = false;
 		static isItemSupported(item) {
 			return item.getType() === 'SignB2eDocument' || item.getType() === 'Activity:SignB2eDocument';
 		}
@@ -10092,6 +10573,8 @@ this.BX.Crm = this.BX.Crm || {};
 			const documentHash = actionData?.documentHash || '';
 			if (action === 'Activity:SignB2eDocument:ShowSigningCancel') {
 				this.#cancelWithConfirm(actionData?.documentUid);
+			} else if (action === 'SignB2eDocument:ShowAnnulConfirm' || action === 'Activity:SignB2eDocument:ShowAnnulConfirm') {
+				this.#annulWithConfirm(actionData?.documentUid, actionData?.annul === 'Y');
 			} else if ((action === 'SignB2eDocument:ShowSigningProcess' || action === 'Activity:SignB2eDocument:ShowSigningProcess') && processUri.length > 0) {
 				this.#showSigningProcess(processUri);
 			} else if ((action === 'SignB2eDocument:Preview' || action === 'Activity:SignB2eDocument:Preview') && documentId > 0) {
@@ -10115,15 +10598,13 @@ this.BX.Crm = this.BX.Crm || {};
 			} else if (action === 'SignB2eDocument:Download' && documentHash) {
 				this.#download(actionData, animationCallbacks);
 			} else if (action === 'SignB2eDocumentEntry:Delete' && actionData?.entryId) {
-				ui_dialogs_messagebox.MessageBox.show({
-					message: actionData?.confirmationText || '',
-					modal: true,
-					buttons: ui_dialogs_messagebox.MessageBoxButtons.YES_NO,
-					onYes: () => {
+				// eslint-disable-next-line @bitrix24/bitrix24-rules/no-native-dialogs
+				crm_timeline_dialog.confirm({
+					content: main_core.Tag.render`<div>${main_core.Text.encode(actionData?.confirmationText || '')}</div>`,
+					preset: 'YES_NO',
+					destructive: true,
+					onConfirm: () => {
 						return this.#deleteEntry(actionData.entryId);
-					},
-					onNo: messageBox => {
-						messageBox.close();
 					}
 				});
 			} else if (action === 'SignB2eDocument:ModifyDateSignUntil') {
@@ -10134,29 +10615,22 @@ this.BX.Crm = this.BX.Crm || {};
 			if (this.#isCancellationInProgress) {
 				return;
 			}
-			const signingCancelationDialog = new ui_dialogs_messagebox.MessageBox({
+
+			// eslint-disable-next-line @bitrix24/bitrix24-rules/no-native-dialogs
+			crm_timeline_dialog.confirm({
 				title: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_SIGNING_CANCEL_DIALOG_TITLE'),
-				message: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_SIGNING_CANCEL_DIALOG_TEXT'),
-				modal: true
-			});
-			signingCancelationDialog.setButtons([new BX.UI.Button({
-				text: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_SIGNING_CANCEL_DIALOG_YES_BUTTON_TEXT'),
-				color: BX.UI.Button.Color.DANGER,
-				onclick: () => {
+				content: main_core.Tag.render`<div>${main_core.Text.encode(main_core.Loc.getMessage('CRM_TIMELINE_ITEM_SIGNING_CANCEL_DIALOG_TEXT'))}</div>`,
+				preset: 'OK_CANCEL',
+				destructive: true,
+				confirmText: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_SIGNING_CANCEL_DIALOG_YES_BUTTON_TEXT'),
+				cancelText: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_SIGNING_CANCEL_DIALOG_NO_BUTTON_TEXT'),
+				onConfirm: () => {
 					this.#isCancellationInProgress = true;
-					signingCancelationDialog.close();
 					this.#cancelSigningProcess(documentUid).finally(() => {
 						this.#isCancellationInProgress = false;
 					});
 				}
-			}), new BX.UI.Button({
-				text: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_SIGNING_CANCEL_DIALOG_NO_BUTTON_TEXT'),
-				color: BX.UI.Button.Color.LIGHT_BORDER,
-				onclick: () => {
-					signingCancelationDialog.close();
-				}
-			})]);
-			signingCancelationDialog.show();
+			});
 		}
 		#cancelSigningProcess(documentUid) {
 			return new Promise((resolve, reject) => {
@@ -10188,6 +10662,68 @@ this.BX.Crm = this.BX.Crm || {};
 				});
 			});
 		}
+		#annulWithConfirm(documentUid, annul) {
+			if (this.#isAnnulmentInProgress) {
+				return;
+			}
+
+			// eslint-disable-next-line @bitrix24/bitrix24-rules/no-native-dialogs
+			crm_timeline_dialog.confirm({
+				title: main_core.Loc.getMessage(annul ? 'CRM_TIMELINE_ITEM_SIGN_ANNUL_DIALOG_TITLE' : 'CRM_TIMELINE_ITEM_SIGN_UNANNUL_DIALOG_TITLE'),
+				content: main_core.Tag.render`<div>${main_core.Text.encode(main_core.Loc.getMessage(annul ? 'CRM_TIMELINE_ITEM_SIGN_ANNUL_DIALOG_TEXT' : 'CRM_TIMELINE_ITEM_SIGN_UNANNUL_DIALOG_TEXT'))}</div>`,
+				preset: 'OK_CANCEL',
+				confirmText: main_core.Loc.getMessage(annul ? 'CRM_TIMELINE_ITEM_SIGN_ANNUL_DIALOG_YES_BUTTON_TEXT' : 'CRM_TIMELINE_ITEM_SIGN_UNANNUL_DIALOG_YES_BUTTON_TEXT'),
+				cancelText: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_SIGN_ANNUL_DIALOG_NO_BUTTON_TEXT'),
+				onConfirm: () => {
+					this.#isAnnulmentInProgress = true;
+					this.#annulDocument(documentUid, annul).finally(() => {
+						this.#isAnnulmentInProgress = false;
+					});
+				}
+			});
+		}
+		#annulDocument(documentUid, annul) {
+			return new Promise((resolve, reject) => {
+				main_core.ajax.runAction('sign.api_v1.document.annulByDocument', {
+					data: {
+						uid: documentUid,
+						annul
+					},
+					preparePost: false,
+					headers: [{
+						name: 'Content-Type',
+						value: 'application/json'
+					}]
+				}).then(response => {
+					ui_notification.UI.Notification.Center.notify({
+						content: this.#getAnnulResultMessage(response?.data, annul),
+						autoHideDelay: 5000
+					});
+					resolve(response);
+				}, response => {
+					response.errors.forEach(error => {
+						ui_notification.UI.Notification.Center.notify({
+							content: error.message,
+							autoHideDelay: 5000
+						});
+					});
+					reject(response.errors);
+				}).catch(() => {
+					reject();
+				});
+			});
+		}
+		#getAnnulResultMessage(data, annul) {
+			const changed = main_core.Text.toInteger(data?.changed);
+			const forbidden = main_core.Text.toInteger(data?.forbidden);
+			if (changed > 0) {
+				return main_core.Loc.getMessage(annul ? 'CRM_TIMELINE_ITEM_SIGN_ANNUL_SUCCESS' : 'CRM_TIMELINE_ITEM_SIGN_UNANNUL_SUCCESS');
+			}
+			if (forbidden > 0) {
+				return main_core.Loc.getMessage('CRM_TIMELINE_ITEM_SIGN_ANNUL_FORBIDDEN');
+			}
+			return main_core.Loc.getMessage('CRM_TIMELINE_ITEM_SIGN_ANNUL_UNCHANGED');
+		}
 		#deleteEntry(entryId) {
 			console.log(`delete entry${entryId}`);
 		}
@@ -10211,7 +10747,7 @@ this.BX.Crm = this.BX.Crm || {};
 			documentId
 		}) {
 			if (api && featureResolver && featureResolver.released('createDocumentChat')) {
-				const chatId = (await api.createDocumentChat(chatType, documentId, false)).chatId;
+				const chatId = (await api.createDocumentChat(chatType, documentId)).chatId;
 				main_core.Runtime.loadExtension('im.public.iframe').then(exports => {
 					exports.Messenger.openChat(`chat${chatId}`);
 				}).catch(exception => {
@@ -10330,15 +10866,13 @@ this.BX.Crm = this.BX.Crm || {};
 			} else if (action === 'SignDocument:Download' && documentHash) {
 				this.#download(actionData, animationCallbacks);
 			} else if (action === 'SignDocumentEntry:Delete' && actionData?.entryId) {
-				ui_dialogs_messagebox.MessageBox.show({
-					message: actionData?.confirmationText || '',
-					modal: true,
-					buttons: ui_dialogs_messagebox.MessageBoxButtons.YES_NO,
-					onYes: () => {
+				// eslint-disable-next-line @bitrix24/bitrix24-rules/no-native-dialogs
+				crm_timeline_dialog.confirm({
+					content: main_core.Tag.render`<div>${main_core.Text.encode(actionData?.confirmationText || '')}</div>`,
+					preset: 'YES_NO',
+					destructive: true,
+					onConfirm: () => {
 						return this.#deleteEntry(actionData.entryId);
-					},
-					onNo: messageBox => {
-						messageBox.close();
 					}
 				});
 			}
@@ -10452,10 +10986,13 @@ this.BX.Crm = this.BX.Crm || {};
 		}
 		if (await messageItem.shouldConfirmStateChange(params)) {
 			// eslint-disable-next-line @bitrix24/bitrix24-rules/no-native-dialogs
-			const {
-				isCancelled
-			} = await confirmStateChange();
-			if (isCancelled) {
+			const result = await crm_timeline_dialog.confirm({
+				title: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_MESSAGE_RESEND_CONFIRM_DIALOG_TITLE'),
+				content: main_core.Tag.render`<div>${main_core.Text.encode(main_core.Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_MESSAGE_RESEND_CONFIRM_DIALOG_MESSAGE'))}</div>`,
+				preset: 'OK_CANCEL',
+				confirmText: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_SMS_RESEND_CONFIRM_DIALOG_OK_BTN')
+			});
+			if (result !== 'confirm') {
 				return true;
 			}
 		}
@@ -10463,29 +11000,6 @@ this.BX.Crm = this.BX.Crm || {};
 		menuBar.setActiveItemById('message');
 		void messageItem.tryToResend(params);
 		return true;
-	}
-	function confirmStateChange() {
-		return new Promise(resolve => {
-			ui_dialogs_messagebox.MessageBox.show({
-				modal: true,
-				title: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_MESSAGE_RESEND_CONFIRM_DIALOG_TITLE'),
-				message: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_MESSAGE_RESEND_CONFIRM_DIALOG_MESSAGE'),
-				buttons: ui_dialogs_messagebox.MessageBoxButtons.OK_CANCEL,
-				okCaption: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_SMS_RESEND_CONFIRM_DIALOG_OK_BTN'),
-				onOk: messageBox => {
-					messageBox.close();
-					resolve({
-						isCancelled: false
-					});
-				},
-				onCancel: messageBox => {
-					messageBox.close();
-					resolve({
-						isCancelled: true
-					});
-				}
-			});
-		});
 	}
 
 	class Sms extends Base {
@@ -10533,17 +11047,13 @@ this.BX.Crm = this.BX.Crm || {};
 				templateId
 			} = smsItem.getSendData();
 			if (main_core.Type.isStringFilled(text) || templateId !== null) {
-				ui_dialogs_messagebox.MessageBox.show({
-					modal: true,
+				// eslint-disable-next-line @bitrix24/bitrix24-rules/no-native-dialogs
+				crm_timeline_dialog.confirm({
 					title: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_SMS_RESEND_CONFIRM_DIALOG_TITLE'),
-					message: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_SMS_RESEND_CONFIRM_DIALOG_MESSAGE'),
-					buttons: ui_dialogs_messagebox.MessageBoxButtons.OK_CANCEL,
-					okCaption: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_SMS_RESEND_CONFIRM_DIALOG_OK_BTN'),
-					onOk: messageBox => {
-						messageBox.close();
-						goToEditor();
-					},
-					onCancel: messageBox => messageBox.close()
+					content: main_core.Tag.render`<div>${main_core.Text.encode(main_core.Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_SMS_RESEND_CONFIRM_DIALOG_MESSAGE'))}</div>`,
+					preset: 'OK_CANCEL',
+					confirmText: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_SMS_RESEND_CONFIRM_DIALOG_OK_BTN'),
+					onConfirm: () => goToEditor()
 				});
 			} else {
 				goToEditor();
@@ -10659,11 +11169,14 @@ this.BX.Crm = this.BX.Crm || {};
 				return;
 			}
 			const entityTypeName = this.#getEntityTypeName(item);
-			const messageBox = new ui_dialogs_messagebox.MessageBox({
-				message: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_TASK_CONFIRM_DELETE'),
-				buttons: BX.UI.Dialogs.MessageBoxButtons.YES_NO,
-				onYes: () => {
-					main_core.ajax.runAction('tasks.V2.Task.delete', {
+
+			// eslint-disable-next-line @bitrix24/bitrix24-rules/no-native-dialogs
+			crm_timeline_dialog.confirm({
+				content: main_core.Tag.render`<div>${main_core.Text.encode(main_core.Loc.getMessage('CRM_TIMELINE_ITEM_TASK_CONFIRM_DELETE'))}</div>`,
+				preset: 'YES_NO',
+				destructive: true,
+				onConfirm: () => {
+					return main_core.ajax.runAction('tasks.V2.Task.delete', {
 						json: {
 							taskId: actionData.taskId
 						},
@@ -10676,21 +11189,14 @@ this.BX.Crm = this.BX.Crm || {};
 							c_sub_section: entityTypeName,
 							c_element: 'context_menu'
 						}
-					}).then(() => {
-						messageBox.close();
 					}).catch(error => {
 						ui_notification.UI.Notification.Center.notify({
 							content: error.errors[0].message ?? 'Error',
 							autoHideDelay: 3000
 						});
-						messageBox.close();
 					});
-				},
-				onNo: () => {
-					messageBox.close();
 				}
 			});
-			messageBox.show();
 		}
 		#getEntityTypeName(item) {
 			const ownerTypeId = item.getOwnerTypeId();
@@ -10969,6 +11475,18 @@ this.BX.Crm = this.BX.Crm || {};
 			if (action === 'Activity:Visit:Schedule' && actionData) {
 				this.runScheduleAction(actionData.activityId, actionData.scheduleDate);
 			}
+			if (action === 'Activity:Visit:DownloadRecord' && actionData && actionData.url) {
+				this.#downloadRecord(actionData.url, actionData.name);
+			}
+		}
+		#downloadRecord(url, name) {
+			const link = document.createElement('a');
+			link.href = url;
+			link.download = name || '';
+			link.target = '_blank';
+			main_core.Dom.append(link, document.body);
+			link.click();
+			main_core.Dom.remove(link);
 		}
 		#changePlayerState(item, recordId) {
 			const player = item?.getLayoutContentBlockById('visitGroupOfBlocks')?.getBlockById('audio');
@@ -11047,17 +11565,13 @@ this.BX.Crm = this.BX.Crm || {};
 			const currentTemplateId = whatsAppItem.getTemplate()?.ORIGINAL_ID;
 			const currentFilledPlaceholders = whatsAppItem.getTemplate()?.FILLED_PLACEHOLDERS ?? [];
 			if (main_core.Type.isNumber(templateId) && templateId > 0 && main_core.Type.isNumber(currentTemplateId) && currentTemplateId > 0 && (templateId !== currentTemplateId || JSON.stringify(filledPlaceholders) !== JSON.stringify(currentFilledPlaceholders))) {
-				ui_dialogs_messagebox.MessageBox.show({
-					modal: true,
+				// eslint-disable-next-line @bitrix24/bitrix24-rules/no-native-dialogs
+				crm_timeline_dialog.confirm({
 					title: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_WHATSAPP_RESEND_CONFIRM_DIALOG_TITLE'),
-					message: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_WHATSAPP_RESEND_CONFIRM_DIALOG_MESSAGE'),
-					buttons: ui_dialogs_messagebox.MessageBoxButtons.OK_CANCEL,
-					okCaption: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_SMS_RESEND_CONFIRM_DIALOG_OK_BTN'),
-					onOk: messageBox => {
-						messageBox.close();
-						goToEditor();
-					},
-					onCancel: messageBox => messageBox.close()
+					content: main_core.Tag.render`<div>${main_core.Text.encode(main_core.Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_WHATSAPP_RESEND_CONFIRM_DIALOG_MESSAGE'))}</div>`,
+					preset: 'OK_CANCEL',
+					confirmText: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_SMS_RESEND_CONFIRM_DIALOG_OK_BTN'),
+					onConfirm: () => goToEditor()
 				});
 			} else {
 				goToEditor();
@@ -11169,5 +11683,5 @@ this.BX.Crm = this.BX.Crm || {};
 	exports.Item = Item;
 	exports.StreamType = StreamType;
 
-})(this.BX.Crm.Timeline = this.BX.Crm.Timeline || {}, BX.Crm.Timeline, BX, BX.Vue3, BX, BX.UI.IconSet, BX.Main, BX, BX.UI.Analytics, BX.UI.Notification, BX.UI, BX.UI.System, BX.UI, BX.Vue3.Directives, BX.Main, BX.UI.IconSet, BX.Vue3.Components, BX.Crm.Field, BX.Event, window, BX.UI.System.Label, BX.UI, BX.Crm, BX.UI.Dialogs, BX.UI.EntitySelector, BX, BX.UI, window, BX.SidePanel, BX.Calendar.Sharing, BX.Calendar, BX.Crm.AI, BX.UI.Feedback, BX.Crm.AI, BX.UI.System.Chip.Vue, BX.Location.Core, BX.Location.Widget, BX.UI.System.Typography.Vue, BX.Crm.Timeline.Editors, BX.UI.BBCode.Formatter, BX.UI.TextEditor, BX.UI, BX, BX.UI, BX.UI, BX.Crm.Activity, BX.UI.Icons.Generator, BX.Crm, window, window, BX.Crm.Field, BX.Currency, BX.UI, BX.Crm.Field, BX.Bizproc, BX.UI, BX, BX, BX.Crm, BX, BX.Crm.Integration.Analytics);
+})(this.BX.Crm.Timeline = this.BX.Crm.Timeline || {}, BX.Crm.Timeline, BX, BX.Vue3, BX, BX.UI.IconSet, BX.Main, BX, BX.UI.Analytics, BX.UI.Notification, BX.UI, BX.UI.System, BX.UI, BX.Vue3.Directives, BX.Main, BX.UI.IconSet, BX.Vue3.Components, BX.Crm.Field, BX.Event, window, BX.UI.System.Label, BX.UI, BX.Crm.Timeline, BX.Crm, BX.UI.EntitySelector, BX, BX.UI, window, BX.SidePanel, BX.Calendar.Sharing, BX.Calendar, BX.Crm.AI, BX.UI.Feedback, BX.AI, BX.Crm.AI, BX.UI.Accessibility, BX.UI.System.Chip.Vue, BX.Location.Core, BX.Location.Widget, BX.UI.System.Typography.Vue, BX.Crm.Timeline.Editors, BX.UI.BBCode.Formatter, BX.UI.TextEditor, BX.UI, BX, BX.UI, BX.UI, BX.Crm.Activity, BX.UI.Icons.Generator, BX.Crm, window, window, BX.Crm.Field, BX.Currency, BX.UI, BX.Crm.Field, BX.Bizproc, BX.UI, BX, BX, BX.UI.System, BX.Crm, BX, BX.Crm.Integration.Analytics);
 //# sourceMappingURL=index.bundle.js.map

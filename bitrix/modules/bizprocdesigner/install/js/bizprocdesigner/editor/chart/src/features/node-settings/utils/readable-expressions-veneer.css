@@ -1,0 +1,71 @@
+/* The text of the field is hidden by the fill colour, not by `color`: the settings panel paints its
+   controls with `color: … !important` at the same weight (`.node-settings-panel .field-row textarea`),
+   so a `color` of ours would come down to the order of the bundles, while the fill colour is
+   contested by no one and wins over `color` either way. A focused field shows its own text. */
+.bxr-veneer:not(.bxr-raw) + input,
+.bxr-veneer:not(.bxr-raw) + textarea {
+	-webkit-text-fill-color: transparent;
+}
+
+/* The layer lies over the border box of the field, out of flow, in the parent of the field: an
+   element of its own around the field would break the design-system rules written for a control
+   that is a direct child. Its box is set from the field at mount time; its own borders are
+   transparent and its typography is carried over, so a token covers its own code. Clicks pass
+   through everywhere but the tokens — that is what keeps the field editable. */
+.bxr-veneer {
+	position: absolute;
+	z-index: 2;
+	display: flex;
+	align-items: center;
+	overflow: hidden;
+	box-sizing: border-box;
+	border-style: solid;
+	border-color: transparent;
+	white-space: pre;
+	pointer-events: none;
+	color: var(--ui-color-base-1);
+}
+
+.bxr-veneer.bxr-multiline {
+	display: block;
+	white-space: pre-wrap;
+	overflow-wrap: break-word;
+}
+
+/* Kept after the multiline rule: both selectors weigh the same, so the last one wins. */
+.bxr-veneer.bxr-raw {
+	display: none;
+}
+
+/* The token is filled with the colour of its group in the data inspector. Neutral grey is the
+   outbound group — the own data of the node being edited, the document, system variables and
+   parameters. A token is never split by a line break: a half of a chip reads as a chip of its own. */
+.bxr-tok {
+	padding: 0 10px;
+	border-radius: 6px;
+	background: var(--ui-color-base-7);
+	color: var(--ui-color-base-1) !important;
+	white-space: nowrap;
+	cursor: pointer;
+	pointer-events: auto;
+}
+
+/* The focus ring is drawn inside the token: the layer clips whatever goes past its own bounds, and
+   a ring drawn outside the token would be cut off at the edges of the field. */
+.bxr-tok:focus-visible {
+	outline: 2px solid var(--ui-color-primary);
+	outline-offset: -2px;
+}
+
+.bxr-tok.bxr-node {
+	background: var(--ui-color-accent-soft-green-2);
+}
+
+.bxr-tok.bxr-global {
+	background: var(--ui-color-accent-soft-blue-2);
+}
+
+.bxr-tok.bxr-unknown {
+	background: var(--ui-color-accent-soft-red-2);
+	color: var(--ui-color-accent-soft-element-red) !important;
+}

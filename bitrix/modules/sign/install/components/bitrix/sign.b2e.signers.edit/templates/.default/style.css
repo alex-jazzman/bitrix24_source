@@ -55,6 +55,10 @@
 	top: 0;
 }
 
+.sign-b2e-signers-create-chat-item.--hidden {
+	display: none;
+}
+
 /* floating action panel */
 .ui-action-panel.ui-action-panel-show {
 	height: 5% !important;

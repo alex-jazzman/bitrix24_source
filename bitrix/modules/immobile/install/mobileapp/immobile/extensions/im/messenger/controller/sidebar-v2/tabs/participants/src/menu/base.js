@@ -93,14 +93,14 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/participants/src/menu/base', 
 			};
 		}
 
-		isYou()
+		isTargetCurrentUser()
 		{
 			const { isYou } = this.props;
 
 			return Boolean(isYou);
 		}
 
-		isAdmin()
+		isTargetAdmin()
 		{
 			const { isAdmin } = this.props;
 

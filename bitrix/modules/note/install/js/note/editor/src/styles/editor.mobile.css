@@ -34,6 +34,8 @@ html.note-mobile .ProseMirror.note-editor-prose {
 	padding: 12px 12px 12px var(--note-heading-gutter, 40px);
 	overflow-wrap: anywhere;
 	word-break: break-word;
+	/* Readable per-column floor for narrow-screen tables (see the table rule). */
+	--note-table-col-min-width: 8em;
 }
 
 html.note-mobile .ProseMirror.note-editor-prose img,
@@ -42,16 +44,33 @@ html.note-mobile .ProseMirror.note-editor-prose video {
 	height: auto;
 }
 
+/* Wide code blocks scroll horizontally within their box with touch inertia.
+ * No-wrap (white-space:pre) and base overflow-x live in editor.css; this only
+ * adds touch inertia and caps the box to the viewport. */
 html.note-mobile .ProseMirror.note-editor-prose pre {
-	max-width: 100%;
-}
-
-/* Wide tables scroll horizontally within their wrapper, not the page. */
-html.note-mobile .ProseMirror.note-editor-prose .tableWrapper,
-html.note-mobile .ProseMirror.note-editor-prose .note-table-wrapper {
 	max-width: 100%;
 	overflow-x: auto;
 	-webkit-overflow-scrolling: touch;
+}
+
+/* Wide tables scroll horizontally within their wrapper, not the page. */
+html.note-mobile .ProseMirror.note-editor-prose .tableWrapper {
+	max-width: 100%;
+	overflow-x: auto;
+	-webkit-overflow-scrolling: touch;
+}
+
+/* Fixed layout collapses auto-tables to viewport width on a phone (columns squeezed
+ * to a thread, wrapper scroll never engages). Auto layout honors the per-column
+ * min-width below (fixed ignores it), so the table keeps width and the wrapper
+ * scrolls. Resize is desktop-only, unaffected. */
+html.note-mobile .ProseMirror.note-editor-prose table {
+	table-layout: auto;
+}
+
+html.note-mobile .ProseMirror.note-editor-prose table td,
+html.note-mobile .ProseMirror.note-editor-prose table th {
+	min-width: var(--note-table-col-min-width);
 }
 
 /* The left field holds only the collapse chevron (reduced width); the link
@@ -109,6 +128,46 @@ html.note-mobile .note-heading.is-revealed .note-heading__hash {
 /* Wider hit zone for resize handles on mobile — visual strip (::after) unchanged. */
 html.note-mobile .ProseMirror.note-editor-prose .note-editor-media-resize-handle {
 	width: 20px;
+}
+
+/* ===== Document header on mobile =====
+ * The teleported header shrinks to just the action row (edit + more), pinned to
+ * the right of the fixed 48px header. Breadcrumb, collaboration status and the
+ * members stack are dropped — there isn't room, and they duplicate what the
+ * content area / sidebar already show.
+ */
+html.note-mobile .note-page-document-header {
+	justify-content: flex-end;
+	gap: 0;
+}
+
+/* On the document page the slot is shown for the action icons; its breadcrumb and
+ * collaboration status are dropped (no room, and duplicated by the content area).
+ * The members stack stays but collapses to a single counter puck (see document-header
+ * isMobile branch). Non-document pages hide the whole slot (see note.app). */
+html.note-mobile .note-page-document-titles,
+html.note-mobile .note-editor-collaboration-status {
+	display: none;
+}
+
+/* Compact presence on mobile: only the counter puck. Drop the desktop 20px gap between the
+ * puck and the action icons so spacing around the puck matches the 4px action rhythm. */
+html.note-mobile .note-page-document-header-right {
+	gap: 4px;
+}
+
+html.note-mobile .note-page-document-actions {
+	gap: 4px;
+}
+
+/* Icon-only edit / more: enlarge the tap target to fill the header height. */
+html.note-mobile .note-page-document-actions .note-page-document-action-icon {
+	width: 40px;
+	height: 40px;
+}
+
+html.note-mobile .note-page-document-actions .note-page-document-action-icon .ui-icon-set {
+	--ui-icon-set__icon-size: 24px;
 }
 
 /* Toolbar scroll thumb: always visible on mobile, no hover animation. */

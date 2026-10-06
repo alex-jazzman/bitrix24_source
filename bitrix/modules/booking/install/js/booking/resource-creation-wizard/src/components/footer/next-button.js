@@ -31,6 +31,16 @@ export const NextButton = {
 		{
 			return ButtonColor.SUCCESS;
 		},
+		isFinalStep(): boolean
+		{
+			return this.step === this.steps.length;
+		},
+		dataset(): Object
+		{
+			return this.isFinalStep
+				? { id: 'brcw-resource-create-button', testid: 'booking-resource-wizard-next-btn' }
+				: { testid: 'booking-resource-wizard-next-btn' };
+		},
 	},
 	template: `
 		<UiButton
@@ -38,6 +48,7 @@ export const NextButton = {
 			:title="currentStep.labelNext"
 			:size
 			:color
+			:dataset
 			:disabled
 			:waiting
 			@click="currentStep.next()"

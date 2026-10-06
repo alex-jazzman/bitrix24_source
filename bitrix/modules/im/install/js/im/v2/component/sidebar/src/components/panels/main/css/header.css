@@ -34,7 +34,19 @@
 }
 
 .bx-im-sidebar-header__cross-icon {
+	display: flex;
+	align-items: center;
+	justify-content: center;
 	margin-left: 16px;
+	padding: 0;
+	border: none;
+	background: none;
+	cursor: pointer;
+	--ui-icon-set__icon-color: var(--ui-color-base-4);
+}
+
+.bx-im-sidebar-header__cross-icon:hover {
+	--ui-icon-set__icon-color: var(--ui-color-base-3);
 }
 
 .bx-im-sidebar-header__title {
@@ -47,4 +59,8 @@
 	width: 24px;
 	height: 24px;
 	margin-right: 14px;
+}
+
+.bx-im-detach-from-collab-v2-popup__container {
+	width: 350px;
 }

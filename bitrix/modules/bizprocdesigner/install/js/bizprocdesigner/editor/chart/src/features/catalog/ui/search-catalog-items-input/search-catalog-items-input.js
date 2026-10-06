@@ -1,5 +1,6 @@
 import { BIcon, Outline } from 'ui.icon-set.api.vue';
 import {
+	mapState,
 	mapWritableState,
 	mapActions,
 } from 'ui.vue3.pinia';
@@ -34,6 +35,9 @@ export const SearchCatalogItemsInput = {
 			'searchText',
 			'canSearch',
 		]),
+		...mapState(useCatalogStore, [
+			'isShowFoundedGroupItems',
+		]),
 		iconColor(): string
 		{
 			return this.isFocused || this.searchText.length > 0
@@ -47,12 +51,18 @@ export const SearchCatalogItemsInput = {
 		},
 	},
 	watch: {
+		searchText(): void
+		{
+			if (this.isShowFoundedGroupItems)
+			{
+				this.resetFoundedGroupView();
+			}
+		},
 		canSearch(value: boolean): void
 		{
 			if (!value)
 			{
-				this.hideFoundedGroupItems();
-				this.resetCurrentGroup();
+				this.resetFoundedGroupView();
 			}
 		},
 	},
@@ -64,8 +74,7 @@ export const SearchCatalogItemsInput = {
 	},
 	methods: {
 		...mapActions(useCatalogStore, [
-			'hideFoundedGroupItems',
-			'resetCurrentGroup',
+			'resetFoundedGroupView',
 		]),
 		onInputSearchText(input: string): void
 		{
@@ -101,6 +110,7 @@ export const SearchCatalogItemsInput = {
 		<button
 			v-if="showClearButton"
 			class="editor-chart-catalog-input__clear-btn"
+			:data-test-id="$testId('catalogSearchClearBtn')"
 			@click="onClear"
 		>
 			<BIcon

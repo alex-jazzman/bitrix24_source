@@ -41,15 +41,18 @@ jn.define('tasks/layout/task/create-new/src/description', (require, exports, mod
 					testId: `${TaskField.DESCRIPTION}_FIELD`,
 					onLayout: this.onLayout,
 					onClick: () => {
-						void TextEditor.edit({
-							fileField,
-							parentWidget,
-							title: Loc.getMessage('TASKSMOBILE_TASK_CREATE_FIELD_DESCRIPTION_EDITOR_TITLE'),
-							value: description,
-							allowFiles: true,
-							closeOnSave: true,
-							onSave: this.onChange,
-						});
+						void TextEditor
+							.edit({
+								fileField,
+								parentWidget,
+								title: Loc.getMessage('TASKSMOBILE_TASK_CREATE_FIELD_DESCRIPTION_EDITOR_TITLE'),
+								value: description,
+								allowFiles: true,
+								closeOnSave: true,
+								onSave: this.onChange,
+							})
+							.then((layout) => layout.on('onViewHidden', () => this.props.onClose?.()))
+						;
 					},
 				},
 				BBCodeText({

@@ -1,8 +1,13 @@
-import {Tag, Loc} from 'main.core';
 import {Options as GridOptions} from '../options';
 import {BaseEvent, EventEmitter} from "main.core.events";
 import Backend from "../backend";
 import getMenuItem from "../gridmenu/index";
+import {keepFocusThroughMenuClose} from "../utils";
+import {
+	generateBoardsEmptyBlock,
+	generateDocumentsEmptyBlock,
+	generateTileEmptyBlock,
+} from './tile-empty-block';
 
 export default class Tile
 {
@@ -61,7 +66,7 @@ export default class Tile
 							}
 							if (item['id'] === 'rename')
 							{
-								item['onclick'] = row.onRename.bind(row);
+								item['onclick'] = () => keepFocusThroughMenuClose(row.onRename.bind(row));
 							}
 
 							const menuItem = getMenuItem(objectId, item);
@@ -96,15 +101,16 @@ export default class Tile
 
 	static generateEmptyBlock()
 	{
-		return Tag.render`
-		<div class="disk-folder-list-no-data-inner">
-			<div class="disk-folder-list-no-data-inner-message">
-				${Loc.getMessage('DISK_DOCUMENTS_GRID_TILE_EMPTY_BLOCK_TITLE')}
-			</div>
-			<div class="disk-folder-list-no-data-inner-variable">
-				<div class="disk-folder-list-no-data-inner-create-file" onmouseover="BX.onCustomEvent(window, 'onDiskUploadPopupShow', [this]);">
-					${Loc.getMessage('DISK_DOCUMENTS_GRID_TILE_EMPTY_BLOCK_UPLOAD')}</div>
-			</div>
-		</div>`;
+		return generateTileEmptyBlock();
+	}
+
+	static generateDocumentsEmptyBlock()
+	{
+		return generateDocumentsEmptyBlock();
+	}
+
+	static generateBoardsEmptyBlock()
+	{
+		return generateBoardsEmptyBlock();
 	}
 }

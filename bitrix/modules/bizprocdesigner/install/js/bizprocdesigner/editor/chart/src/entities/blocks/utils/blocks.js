@@ -4,17 +4,30 @@ import { BLOCK_TOP_CONTEXT_MENU_PREFIX_NAME } from '../constants';
 
 export function isBlockPropertiesDifferent(currentBlock: Block, newBlock: Block): boolean
 {
-	if (currentBlock.node.title !== newBlock.node.title)
+	// Defensive invariant: block.id and activity.Name are identical by construction.
+	if (currentBlock?.activity?.Name !== newBlock?.activity?.Name)
 	{
 		return true;
 	}
 
-	for (const [key: string] of Object.entries(newBlock?.activity?.Properties ?? {}))
+	if (currentBlock?.activity?.Type !== newBlock?.activity?.Type)
 	{
-		const currentBlockProperty = currentBlock?.activity?.Properties?.[key] ?? null;
-		const newBlockProperty = newBlock.activity.Properties[key];
+		return true;
+	}
 
-		if (!deepEqual(currentBlockProperty, newBlockProperty))
+	if (currentBlock?.node?.title !== newBlock?.node?.title)
+	{
+		return true;
+	}
+
+	const currentProperties = currentBlock?.activity?.Properties ?? {};
+	const newProperties = newBlock?.activity?.Properties ?? {};
+
+	// Union of both key sets: detects properties removed in the new block too.
+	const keys: Set<string> = new Set([...Object.keys(currentProperties), ...Object.keys(newProperties)]);
+	for (const key: string of keys)
+	{
+		if (!deepEqual(currentProperties[key] ?? null, newProperties[key] ?? null))
 		{
 			return true;
 		}

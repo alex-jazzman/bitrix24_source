@@ -52,11 +52,17 @@ export const MessageEditor = {
 				paddingRight: this.layout.paddingRight ?? this.layout.padding,
 			};
 		},
+		contentStyle(): Object
+		{
+			return {
+				marginBottom: this.layout.contentMarginBottom,
+			};
+		},
 	},
 	template: `
 		<div class="messageservice-message-editor" data-test-role="messageservice-message-editor" :style="paddingStyle">
 			<EditorHeader v-if="layout.isHeaderShown"/>
-			<ContentContainer>
+			<ContentContainer :content-style="contentStyle">
 				<component :is="contentComponent"/>
 			</ContentContainer>
 			<EditorFooter v-if="layout.isFooterShown"/>

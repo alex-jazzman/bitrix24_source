@@ -13,6 +13,7 @@ return [
 		'im.v2.component.elements.chat-title',
 		'im.v2.component.elements.popup',
 		'im.v2.const',
+		'im.v2.lib.analytics',
 		'im.v2.lib.guest',
 		'im.v2.lib.logger',
 		'im.v2.lib.notifier',

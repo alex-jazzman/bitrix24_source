@@ -12,6 +12,7 @@ use Bitrix\Crm\Component\EntityList\FieldRestrictionManagerTypes;
 use Bitrix\Crm\Component\EntityList\UserField\GridHeaders;
 use Bitrix\Crm\EntityAddress;
 use Bitrix\Crm\EntityAddressType;
+use Bitrix\Crm\Filter\RelatedEntity;
 use Bitrix\Crm\Format\AddressFormatter;
 use Bitrix\Crm\Integrity\Volatile;
 use Bitrix\Crm\Service\Container;
@@ -21,6 +22,7 @@ use Bitrix\Crm\Tracking;
 use Bitrix\Crm\WebForm\Manager as WebFormManager;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Web\Uri;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
@@ -883,6 +885,10 @@ if(!$arResult['IS_EXTERNAL_FILTER'])
 	$arFilter += $filterOptions->getFilter($arResult['FILTER']);
 }
 
+$relatedEntitiesParameters = ['filter' => $arFilter];
+RelatedEntity\GridFilterApplier::getDefault()->apply($relatedEntitiesParameters, CCrmOwnerType::Company);
+$arFilter = $relatedEntitiesParameters['filter'];
+
 $CCrmUserType->PrepareListFilterValues($arResult['FILTER'], $arFilter, $arResult['GRID_ID']);
 $USER_FIELD_MANAGER->AdminListAddFilter(CCrmCompany::$sUFEntityID, $arFilter);
 
@@ -1127,21 +1133,18 @@ $arResult['ENABLE_BIZPROC'] = $arResult['IS_BIZPROC_AVAILABLE'] = $isBizProcInst
 $arResult['ENABLE_TASK'] = IsModuleInstalled('tasks');
 if($arResult['ENABLE_TASK'])
 {
-	$arResult['TASK_CREATE_URL'] = CHTTP::urlAddParams(
-		CComponentEngine::MakePathFromTemplate(
+	$arResult['TASK_CREATE_URL'] = str_replace('__ENTITY_KEYS__', '#ENTITY_KEYS#', (string)(new Uri(CComponentEngine::MakePathFromTemplate(
 			COption::GetOptionString('tasks', 'paths_task_user_edit', ''),
 			array(
 				'task_id' => 0,
 				'user_id' => $userID
 			)
-		),
-		array(
-			'UF_CRM_TASK' => '#ENTITY_KEYS#',
-			'TITLE' => urlencode(GetMessage('CRM_TASK_TITLE_PREFIX')),
-			'TAGS' => urlencode(GetMessage('CRM_TASK_TAG')),
-			'back_url' => urlencode($arParams['PATH_TO_COMPANY_LIST'])
-		)
-	);
+		)))->addParams(array(
+			'UF_CRM_TASK' => '__ENTITY_KEYS__',
+			'TITLE' => GetMessage('CRM_TASK_TITLE_PREFIX'),
+			'TAGS' => GetMessage('CRM_TASK_TAG'),
+			'back_url' => $arParams['PATH_TO_COMPANY_LIST'],
+		)));
 }
 
 // Export all fields
@@ -1802,7 +1805,7 @@ foreach($arResult['COMPANY'] as &$arCompany)
 		{
 			if ($arFile = CFile::GetFileArray($arCompany['LOGO']))
 			{
-				$arCompany['LOGO'] = CHTTP::URN2URI($arFile['SRC']);
+				$arCompany['LOGO'] = (string)(new Uri($arFile['SRC']))->toAbsolute();
 			}
 		}
 		else
@@ -1863,13 +1866,10 @@ foreach($arResult['COMPANY'] as &$arCompany)
 			$addParams['contact_id'] = $arParams['INTERNAL_CONTEXT']['CONTACT_ID'];
 		}
 
-		$arCompany['PATH_TO_DEAL_EDIT'] = CHTTP::urlAddParams(
-			CComponentEngine::MakePathFromTemplate(
+		$arCompany['PATH_TO_DEAL_EDIT'] = (string)(new Uri(CComponentEngine::MakePathFromTemplate(
 				$arResult['ENABLE_SLIDER'] ? $arParams['PATH_TO_DEAL_DETAILS'] : $arParams['PATH_TO_DEAL_EDIT'],
 				array('deal_id' => 0)
-			),
-			$addParams
-		);
+			)))->addParams($addParams);
 		$arCompany['PATH_TO_DEAL_EDIT'] = \Bitrix\Crm\Integration\Analytics\Builder\Entity\AddOpenEvent::createDefault(\CCrmOwnerType::Deal)
 			->setSection(
 			!empty($arParams['ANALYTICS']['c_section']) && is_string($arParams['ANALYTICS']['c_section'])
@@ -1889,13 +1889,10 @@ foreach($arResult['COMPANY'] as &$arCompany)
 
 	if ($bContact)
 	{
-		$arCompany['PATH_TO_CONTACT_EDIT'] = CHTTP::urlAddParams(
-			CComponentEngine::MakePathFromTemplate(
+		$arCompany['PATH_TO_CONTACT_EDIT'] = (string)(new Uri(CComponentEngine::MakePathFromTemplate(
 				$arResult['ENABLE_SLIDER'] ? $arParams['PATH_TO_CONTACT_DETAILS'] : $arParams['PATH_TO_CONTACT_EDIT'],
 				['contact_id' => 0]
-			),
-			['company_id' => $entityID]
-		);
+			)))->addParams(['company_id' => $entityID]);
 		$arCompany['PATH_TO_CONTACT_EDIT'] = \Bitrix\Crm\Integration\Analytics\Builder\Entity\AddOpenEvent::createDefault(\CCrmOwnerType::Contact)
 			->setSection(
 				!empty($arParams['ANALYTICS']['c_section']) && is_string($arParams['ANALYTICS']['c_section'])
@@ -1939,14 +1936,11 @@ foreach($arResult['COMPANY'] as &$arCompany)
 		->getUri()
 	;
 
-	$arCompany['PATH_TO_COMPANY_DELETE'] =  CHTTP::urlAddParams(
-		$bInternal ? $APPLICATION->GetCurPage() : $arParams['PATH_TO_COMPANY_LIST'],
-		[
+	$arCompany['PATH_TO_COMPANY_DELETE'] =  (string)(new Uri($bInternal ? $APPLICATION->GetCurPage() : $arParams['PATH_TO_COMPANY_LIST']))->addParams([
 			'action_' . $arResult['GRID_ID'] => 'delete',
 			'ID' => $entityID,
 			'sessid' => $arResult['SESSION_ID']
-		]
-	);
+		]);
 
 	$arCompany['PATH_TO_USER_PROFILE'] = CComponentEngine::MakePathFromTemplate(
 		$arParams['PATH_TO_USER_PROFILE'],
@@ -1998,35 +1992,27 @@ foreach($arResult['COMPANY'] as &$arCompany)
 
 	if ($arResult['ENABLE_TASK'])
 	{
-		$arCompany['PATH_TO_TASK_EDIT'] = CHTTP::urlAddParams(
-			CComponentEngine::MakePathFromTemplate(
+		$arCompany['PATH_TO_TASK_EDIT'] = (string)(new Uri(CComponentEngine::MakePathFromTemplate(
 				COption::GetOptionString('tasks', 'paths_task_user_edit', ''),
 				array('task_id' => 0, 'user_id' => $userID)
-			),
-			array(
+			)))->addParams(array(
 				'UF_CRM_TASK' => "CO_{$entityID}",
-				'TITLE' => urlencode(GetMessage('CRM_TASK_TITLE_PREFIX').' '),
-				'TAGS' => urlencode(GetMessage('CRM_TASK_TAG')),
-				'back_url' => urlencode($arParams['PATH_TO_COMPANY_LIST'])
-			)
-		);
+				'TITLE' => GetMessage('CRM_TASK_TITLE_PREFIX').' ',
+				'TAGS' => GetMessage('CRM_TASK_TAG'),
+				'back_url' => $arParams['PATH_TO_COMPANY_LIST'],
+			));
 	}
 
 	if (IsModuleInstalled('sale'))
 	{
 		$arCompany['PATH_TO_QUOTE_ADD'] =
-			CHTTP::urlAddParams(CComponentEngine::makePathFromTemplate(
-				$arParams['PATH_TO_QUOTE_EDIT'], array('quote_id' => 0)),
-				array('company_id' => $entityID)
-			);
+			(string)(new Uri(CComponentEngine::makePathFromTemplate(
+				$arParams['PATH_TO_QUOTE_EDIT'], array('quote_id' => 0))))->addParams(array('company_id' => $entityID));
 		$arCompany['PATH_TO_INVOICE_ADD'] =
-			CHTTP::urlAddParams(
-				CComponentEngine::makePathFromTemplate(
+			(string)(new Uri(CComponentEngine::makePathFromTemplate(
 					$arParams['PATH_TO_INVOICE_EDIT'],
 					array('invoice_id' => 0)
-				),
-				array('company' => $entityID)
-			);
+				)))->addParams(array('company' => $entityID));
 	}
 
 	if ($arResult['ENABLE_BIZPROC'])
@@ -2038,13 +2024,10 @@ foreach($arResult['COMPANY'] as &$arCompany)
 			array('crm', 'CCrmDocumentCompany', "COMPANY_{$entityID}")
 		);
 
-		$arCompany['PATH_TO_BIZPROC_LIST'] =  CHTTP::urlAddParams(
-			CComponentEngine::MakePathFromTemplate(
+		$arCompany['PATH_TO_BIZPROC_LIST'] =  (string)(new Uri(CComponentEngine::MakePathFromTemplate(
 				$arParams['PATH_TO_COMPANY_SHOW'],
 				array('company_id' => $entityID)
-			),
-			array($bizProcTabId => 'tab_bizproc')
-		);
+			)))->addParams(array($bizProcTabId => 'tab_bizproc'));
 
 		$totalTaskQty = 0;
 		$docStatesQty = count($arDocumentStates);

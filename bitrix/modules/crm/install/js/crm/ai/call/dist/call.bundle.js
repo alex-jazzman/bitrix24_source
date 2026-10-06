@@ -1,12 +1,13 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
-(function (exports, main_core, main_core_events, ui_vue3, crm_ai_nameService, crm_ai_slider, crm_ai_textbox, crm_audioPlayer, ui_notification, ui_designTokens, crm_timeline_tools, pull_client, pull_queuemanager, ui_lottie, crm_copilot_callAssessmentSelector, crm_router, ui_bbcode_formatter_htmlFormatter) {
+(function (exports, main_core, ui_vue3, crm_ai_nameService, crm_ai_slider, crm_ai_textbox, crm_audioPlayer, ui_notification, ui_designTokens, crm_timeline_tools, main_core_events, pull_client, pull_queuemanager, ui_lottie, crm_copilot_callAssessmentSelector, crm_router, ui_bbcode_formatter_htmlFormatter) {
 	'use strict';
 
 	const ActivityProvider = Object.freeze({
 		call: 'VOXIMPLANT_CALL',
-		openLine: 'IMOPENLINES_SESSION'
+		openLine: 'IMOPENLINES_SESSION',
+		email: 'CRM_EMAIL'
 	});
 	class Base {
 		languageTitle = null;
@@ -67,6 +68,8 @@ this.BX.Crm = this.BX.Crm || {};
 						this.audioPlayerApp?.setAudioProps(this.prepareAudioProps(response));
 					} else if (this.activityProvider === ActivityProvider.openLine) {
 						main_core.Dom.append(this.getOpenLineElementNode(response.data.openline), this.topElementNode);
+					} else if (this.activityProvider === ActivityProvider.email && response.data.emailThread) {
+						main_core.Dom.append(this.getEmailThreadElementNode(response.data.emailThread), this.topElementNode);
 					}
 					const aiJobResult = this.prepareAiJobResult(response);
 					this.textbox.setText(aiJobResult);
@@ -153,8 +156,30 @@ this.BX.Crm = this.BX.Crm || {};
 				});
 			} else if (this.activityProvider === ActivityProvider.openLine) {
 				this.topElementNode = main_core.Tag.render`<div id="crm-copilot-textbox__top-container"></div>`;
+			} else if (this.activityProvider === ActivityProvider.email) {
+				this.topElementNode = main_core.Tag.render`<div id="crm-copilot-textbox__top-container"></div>`;
 			}
 			return this.topElementNode;
+		}
+		getEmailThreadElementNode(emailThread) {
+			const openEmailFn = activityId => {
+				return () => {
+					if (main_core.Type.isNumber(activityId) && activityId > 0) {
+						BX.CrmActivityEmail.create({
+							ID: activityId
+						}, BX.CrmActivityEditor.getDefault(), {}).openDialog(BX.CrmDialogMode.view);
+					}
+				};
+			};
+			const label = emailThread.senderName ? `${main_core.Text.encode(emailThread.senderName)}: ${main_core.Text.encode(emailThread.subject)}` : main_core.Text.encode(emailThread.subject);
+			return main_core.Tag.render`
+			<a
+				style="cursor: pointer; word-break: break-all;"
+				onclick="${openEmailFn(emailThread.activityId)}"
+			>
+				${label}
+			</a>
+		`;
 		}
 		getOpenLineElementNode(openlineData) {
 			const openMessengerSliderFn = dialogId => {
@@ -746,9 +771,8 @@ this.BX.Crm = this.BX.Crm || {};
 					this.showDisabledButtonHint(target);
 					return;
 				}
-				crm_router.Router.openSlider(`/crm/copilot-call-assessment/details/${this.assessmentSettingsId}/`, {
-					width: 700,
-					cacheable: false
+				crm_router.Router.Instance.openCallAssessmentSlider(this.assessmentSettingsId, {
+					legacyWidth: 700
 				});
 			},
 			onShowActualPrompt() {
@@ -1371,7 +1395,8 @@ this.BX.Crm = this.BX.Crm || {};
 		initDefaultOptions() {
 			this.id = 'crm-copilot-call-quality';
 			this.sliderTitle = main_core.Loc.getMessage('CRM_COPILOT_CALL_QUALITY_SLIDER_TITLE');
-			const width = Math.round(BX.SidePanel.Instance.getTopSlider().getWidth() * 0.75);
+			const topSlider = BX.SidePanel.Instance.getTopSlider();
+			const width = topSlider ? Math.round(topSlider.getWidth() * 0.75) : 0;
 			this.sliderWidth = width > 0 ? width : Math.round(window.screen.width * 0.75);
 			this.textboxTitle = main_core.Loc.getMessage('CRM_COPILOT_CALL_TRANSCRIPT_TITLE');
 			this.aiDataAction = 'crm.timeline.ai.getCopilotCallQuality';
@@ -1431,10 +1456,6 @@ this.BX.Crm = this.BX.Crm || {};
 					});
 					const container = main_core.Tag.render`<div class="call-quality__container"></div>`;
 					this.#layoutComponent = this.#app.mount(container);
-					main_core_events.EventEmitter.subscribe('crm.ai.callQuality:doAssessment', () => {
-						// @todo will the slider close?
-						//this.wrapperSlider?.close();
-					});
 					resolve(container);
 				}).catch(response => {
 					this.showError(response);
@@ -1532,5 +1553,5 @@ this.BX.Crm = this.BX.Crm || {};
 	exports.ActivityProvider = ActivityProvider;
 	exports.Call = Call;
 
-})(this.BX.Crm.AI = this.BX.Crm.AI || {}, BX, BX.Event, BX.Vue3, BX.Crm.AI, BX.Crm.AI, BX.Crm.AI, BX.Crm, BX, BX, BX.Crm.Timeline, BX, BX.Pull, BX.UI, BX.Crm.Copilot, BX.Crm, BX.UI.BBCode.Formatter);
+})(this.BX.Crm.AI = this.BX.Crm.AI || {}, BX, BX.Vue3, BX.Crm.AI, BX.Crm.AI, BX.Crm.AI, BX.Crm, BX.UI.Notification, window, BX.Crm.Timeline, BX.Event, BX, BX.Pull, BX.UI, BX.Crm.Copilot, BX.Crm, BX.UI.BBCode.Formatter);
 //# sourceMappingURL=call.bundle.js.map

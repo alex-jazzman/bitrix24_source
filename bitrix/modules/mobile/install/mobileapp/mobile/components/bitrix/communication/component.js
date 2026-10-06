@@ -49,6 +49,7 @@
 				menu_tab_presets: 'menu_tab_presets',
 				menu_disk_tabs: 'menu_disk_tabs',
 				mail_unseen: 'mail_unseen',
+				call_list: 'call_list',
 			};
 
 			this.userCounterMapTabName = {

@@ -36,69 +36,26 @@ Class lists extends CModule
 	{
 		/** @global CMain $APPLICATION */
 		global $APPLICATION;
-		/** @global CDatabase $DB */
-		global $DB;
-		$connection = \Bitrix\Main\Application::getConnection();
 
 		$this->errors = false;
 
-		// Database tables creation
-		if (!$DB->TableExists('b_lists_permission'))
+		$migrationResult = $this->installMigrations();
+		if (!$migrationResult->isSuccess())
 		{
-			$this->errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/lists/install/db/' . $connection->getType() . '/install.sql');
-		}
-
-		if($this->errors !== false)
-		{
+			$this->errors = $migrationResult->getErrorMessages();
 			$APPLICATION->ThrowException(implode("<br>", $this->errors));
 			return false;
 		}
-		else
+
+		RegisterModule("lists");
+		CModule::IncludeModule("lists");
+
+		if (isset($arParams["INSTALL_DEMO_DATA"]) && $arParams["INSTALL_DEMO_DATA"] == "Y")
 		{
-			RegisterModule("lists");
-			CModule::IncludeModule("lists");
-			RegisterModuleDependences("iblock", "OnAfterIBlockUpdate", "lists", "CLists", "OnAfterIBlockUpdate");
-			RegisterModuleDependences("iblock", "OnIBlockDelete", "lists", "CLists", "OnIBlockDelete");
-			RegisterModuleDependences("iblock", "OnAfterIBlockDelete", "lists", "CLists", "OnAfterIBlockDelete");
-			RegisterModuleDependences("iblock", "CIBlockDocument_OnGetDocumentAdminPage", "lists", "CList", "OnGetDocumentAdminPage");
-			RegisterModuleDependences("intranet", "OnSharepointCreateProperty", "lists", "CLists", "OnSharepointCreateProperty");
-			RegisterModuleDependences("intranet", "OnSharepointCheckAccess", "lists", "CLists", "OnSharepointCheckAccess");
-			RegisterModuleDependences("perfmon", "OnGetTableSchema", "lists", "lists", "OnGetTableSchema");
-			RegisterModuleDependences("search", "OnSearchGetURL", "lists", "CList", "OnSearchGetURL", 50);
-			RegisterModuleDependences('socialnetwork', 'OnFillSocNetLogEvents', 'lists', 'CListsLiveFeed', 'onFillSocNetLogEvents');
-			RegisterModuleDependences("socialnetwork", "OnFillSocNetAllowedSubscribeEntityTypes", "lists", "CListsLiveFeed", "onFillSocNetAllowedSubscribeEntityTypes");
-			RegisterModuleDependences('socialnetwork', 'BeforeIndexSocNet', 'lists', 'CListsLiveFeed', 'BeforeIndexSocNet');
-			RegisterModuleDependences('socialnetwork', 'OnAfterSonetLogEntryAddComment', 'lists', 'CListsLiveFeed', 'OnAfterSonetLogEntryAddComment');
-			RegisterModuleDependences('socialnetwork', 'OnForumCommentIMNotify', 'lists', 'CListsLiveFeed', 'OnForumCommentIMNotify');
-			RegisterModuleDependences("socialnetwork", "OnSendMentionGetEntityFields", "lists", "CListsLiveFeed", "OnSendMentionGetEntityFields");
-			RegisterModuleDependences("socialnetwork", "OnSocNetGroupDelete", "lists", "CListsLiveFeed", "OnSocNetGroupDelete");
-			RegisterModuleDependences('rest', 'onRestServiceBuildDescription', 'lists', '\Bitrix\Lists\Rest\RestService', 'onRestServiceBuildDescription');
-			RegisterModuleDependences("iblock", "OnAfterIBlockElementDelete", "lists", "CLists", "OnAfterIBlockElementDelete");
-			RegisterModuleDependences("iblock", "OnAfterIBlockPropertyAdd", "lists", "CLists", "OnAfterIBlockPropertyAdd");
-			RegisterModuleDependences("iblock", "OnAfterIBlockPropertyUpdate", "lists", "CLists", "OnAfterIBlockPropertyUpdate");
-			RegisterModuleDependences("iblock", "OnAfterIBlockPropertyDelete", "lists", "CLists", "OnAfterIBlockPropertyDelete");
-			RegisterModuleDependences("iblock", "OnBeforeIBlockElementAdd", "lists", "CLists", "OnBeforeIBlockElementAdd");
-			RegisterModuleDependences("iblock", "OnBeforeIBlockElementUpdate", "lists", "CLists", "OnBeforeIBlockElementUpdate");
-			RegisterModuleDependences("main", "OnGetRatingContentOwner", "lists", "\\Bitrix\\Lists\\Integration\\Main\\RatingVote", "onGetRatingContentOwner");
-
-			$eventManager = \Bitrix\Main\EventManager::getInstance();
-			$eventManager->registerEventHandler('socialnetwork', 'onLogIndexGetContent', 'lists', '\Bitrix\Lists\Integration\Socialnetwork\Log', 'onIndexGetContent');
-			$eventManager->registerEventHandlerCompatible('im', 'OnGetNotifySchema', 'lists', \Bitrix\Lists\Integration\Im\NotifySchema::class, 'onGetNotifySchema');
-
-			$eventManager->registerEventHandler(
-				fromModuleId: 'bizproc',
-				eventType: 'onGetDocumentType',
-				toModuleId: 'lists',
-				toClass: \Bitrix\Lists\Internal\Integration\Bizproc\EventHandlers\OnGetDocumentTypes\GetDocumentTypes::class,
-				toMethod: 'onGetDocumentType',
-			);
-
-			if (isset($arParams["INSTALL_DEMO_DATA"]) && $arParams["INSTALL_DEMO_DATA"] == "Y")
-			{
-				$this->installDemoData();
-			}
-			return true;
+			$this->installDemoData();
 		}
+
+		return true;
 	}
 
 	function installDemoData()
@@ -210,52 +167,16 @@ Class lists extends CModule
 	{
 		/** @global CMain $APPLICATION */
 		global $APPLICATION;
-		/** @global CDatabase $DB */
-		global $DB;
-		$connection = \Bitrix\Main\Application::getConnection();
 
 		$this->errors = false;
 
-		if(!array_key_exists("savedata", $arParams) || $arParams["savedata"] != "Y")
+		$dropTables = !array_key_exists("savedata", $arParams) || $arParams["savedata"] != "Y";
+
+		$migrationResult = $this->uninstallMigrations($dropTables);
+		if (!$migrationResult->isSuccess())
 		{
-			$this->errors = $DB->RunSQLBatch($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/lists/install/db/".$connection->getType()."/uninstall.sql");
+			$this->errors = $migrationResult->getErrorMessages();
 		}
-
-		UnRegisterModuleDependences("iblock", "OnAfterIBlockUpdate", "lists", "CLists", "OnAfterIBlockUpdate");
-		UnRegisterModuleDependences("iblock", "OnIBlockDelete", "lists", "CLists", "OnIBlockDelete");
-		UnRegisterModuleDependences("iblock", "OnAfterIBlockDelete", "lists", "CLists", "OnAfterIBlockDelete");
-		UnRegisterModuleDependences("iblock", "CIBlockDocument_OnGetDocumentAdminPage", "lists", "CList", "OnGetDocumentAdminPage");
-		UnRegisterModuleDependences("intranet", "OnSharepointCreateProperty", "lists", "CLists", "OnSharepointCreateProperty");
-		UnRegisterModuleDependences("intranet", "OnSharepointCheckAccess", "lists", "CLists", "OnSharepointCheckAccess");
-		UnRegisterModuleDependences("search", "OnSearchGetURL", "lists", "CList", "OnSearchGetURL");
-		UnRegisterModuleDependences("perfmon", "OnGetTableSchema", "lists", "lists", "OnGetTableSchema");
-		UnRegisterModuleDependences('socialnetwork', 'OnFillSocNetLogEvents', 'lists', 'CListsLiveFeed', 'onFillSocNetLogEvents');
-		UnRegisterModuleDependences("socialnetwork", "OnFillSocNetAllowedSubscribeEntityTypes", "lists", "CListsLiveFeed", "onFillSocNetAllowedSubscribeEntityTypes");
-		UnRegisterModuleDependences('socialnetwork', 'BeforeIndexSocNet', 'lists', 'CListsLiveFeed', 'BeforeIndexSocNet');
-		UnRegisterModuleDependences('socialnetwork', 'OnAfterSonetLogEntryAddComment', 'lists', 'CListsLiveFeed', 'OnAfterSonetLogEntryAddComment');
-		UnRegisterModuleDependences('socialnetwork', 'OnForumCommentIMNotify', 'lists', 'CListsLiveFeed', 'OnForumCommentIMNotify');
-		UnRegisterModuleDependences("socialnetwork", "OnSendMentionGetEntityFields", "lists", "CListsLiveFeed", "OnSendMentionGetEntityFields");
-		UnRegisterModuleDependences("socialnetwork", "OnSocNetGroupDelete", "lists", "CListsLiveFeed", "OnSocNetGroupDelete");
-		UnRegisterModuleDependences("iblock", "OnAfterIBlockElementDelete", "lists", "CLists", "OnAfterIBlockElementDelete");
-		UnRegisterModuleDependences('rest', 'onRestServiceBuildDescription', 'lists', '\Bitrix\Lists\Rest\RestService', 'onRestServiceBuildDescription');
-		UnRegisterModuleDependences("iblock", "OnAfterIBlockPropertyAdd", "lists", "CLists", "OnAfterIBlockPropertyAdd");
-		UnRegisterModuleDependences("iblock", "OnAfterIBlockPropertyUpdate", "lists", "CLists", "OnAfterIBlockPropertyUpdate");
-		UnRegisterModuleDependences("iblock", "OnAfterIBlockPropertyDelete", "lists", "CLists", "OnAfterIBlockPropertyDelete");
-		UnRegisterModuleDependences("iblock", "OnBeforeIBlockElementAdd", "lists", "CLists", "OnBeforeIBlockElementAdd");
-		UnRegisterModuleDependences("iblock", "OnBeforeIBlockElementUpdate", "lists", "CLists", "OnBeforeIBlockElementUpdate");
-		UnRegisterModuleDependences("main", "OnGetRatingContentOwner", "lists", "\\Bitrix\\Lists\\Integration\\Main\\RatingVote", "onGetRatingContentOwner");
-
-		$eventManager = \Bitrix\Main\EventManager::getInstance();
-		$eventManager->unregisterEventHandler('socialnetwork', 'onLogIndexGetContent', 'lists', '\Bitrix\Lists\Integration\Socialnetwork\Log', 'onIndexGetContent');
-		$eventManager->unRegisterEventHandler('im', 'OnGetNotifySchema', 'lists', \Bitrix\Lists\Integration\Im\NotifySchema::class, 'onGetNotifySchema');
-
-		$eventManager->unRegisterEventHandler(
-			fromModuleId: 'bizproc',
-			eventType: 'onGetDocumentType',
-			toModuleId: 'lists',
-			toClass: \Bitrix\Lists\Internal\Integration\Bizproc\EventHandlers\OnGetDocumentTypes\GetDocumentTypes::class,
-			toMethod: 'onGetDocumentType',
-		);
 
 		UnRegisterModule("lists");
 

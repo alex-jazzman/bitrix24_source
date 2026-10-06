@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports, main_core, main_core_events, main_popup, ui_system_menu, im_v2_application_core, ui_dialogs_messagebox, im_public, im_v2_const, im_v2_lib_analytics, im_v2_lib_call, im_v2_lib_channel, im_v2_lib_confirm, im_v2_lib_invite, im_v2_lib_permission, im_v2_lib_utils, im_v2_provider_service_chat, im_v2_provider_service_recent, im_v2_lib_collab, im_v2_lib_copilot, ui_iconSet_api_core, im_v2_lib_feedback, im_v2_lib_chat, im_v2_lib_entityCreator, im_v2_lib_feature, im_v2_lib_market, im_v2_lib_message, im_v2_lib_notifier, im_v2_lib_parser, im_v2_lib_promo, im_v2_provider_service_disk, im_v2_provider_service_message, im_v2_provider_service_sticker, im_v2_provider_service_sending) {
+(function (exports, main_core, main_core_events, main_popup, ui_system_menu, im_v2_application_core, ui_dialogs_messagebox, im_public, im_v2_const, im_v2_lib_analytics, im_v2_lib_call, im_v2_lib_channel, im_v2_lib_confirm, im_v2_lib_feature, im_v2_lib_folder, im_v2_lib_invite, im_v2_lib_permission, im_v2_lib_utils, im_v2_provider_service_chat, im_v2_provider_service_folder, im_v2_provider_service_recent, im_v2_lib_collab, im_v2_lib_copilot, ui_iconSet_api_core, im_v2_lib_feedback, im_v2_lib_chat, im_v2_lib_entityCreator, im_v2_lib_market, im_v2_lib_message, im_v2_lib_notifier, im_v2_lib_parser, im_v2_lib_promo, im_v2_provider_service_disk, im_v2_provider_service_message, im_v2_provider_service_sticker, im_v2_provider_service_sending) {
 	'use strict';
 
 	const EVENT_NAMESPACE = 'BX.Messenger.v2.Lib.Menu';
@@ -96,6 +96,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	const MenuSectionCode$2 = {
 		first: 'first',
 		second: 'second'};
+	const FOLDER_SUBMENU_MAX_HEIGHT = 380;
 	class RecentMenu extends BaseMenu {
 		constructor(applicationContext) {
 			super();
@@ -122,7 +123,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				const firstGroupItems = [this.getSendMessageItem(), this.getOpenProfileItem()];
 				return [...this.groupItems(firstGroupItems, MenuSectionCode$2.first), ...this.groupItems(this.getInviteItems(), MenuSectionCode$2.second)];
 			}
-			return [this.getUnreadMessageItem(), this.getPinMessageItem(), this.getMuteItem(), this.getOpenProfileItem(), this.getChatsWithUserItem(), this.getHideItem(), this.getLeaveItem()];
+			return [this.getUnreadMessageItem(), this.getPinMessageItem(), this.getAddToFolderItem(), this.getMuteItem(), this.getOpenProfileItem(), this.getChatsWithUserItem(), this.getHideItem(), this.getLeaveItem()];
 		}
 		getMenuGroups() {
 			if (this.#isInvitationActive()) {
@@ -191,6 +192,26 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 						this.chatService.pinChat(dialogId);
 						im_v2_lib_analytics.Analytics.getInstance().recentContextMenu.onPin(dialogId);
 					}
+				}
+			};
+		}
+		getAddToFolderItem() {
+			if (!im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.isChatFoldersWebAvailable)) {
+				return null;
+			}
+			const {
+				chatId
+			} = this.store.getters['chats/get'](this.context.dialogId, true);
+			if (!chatId) {
+				return null;
+			}
+			const personalFolders = this.store.getters['recent/folders/getList'].filter(folder => folder.type === im_v2_const.FolderType.personal);
+			const items = personalFolders.length === 0 ? [this.#getCreateFolderMenuItem()] : personalFolders.map(folder => this.#getFolderTargetMenuItem(folder, chatId));
+			return {
+				title: main_core.Loc.getMessage('IM_LIB_MENU_ADD_TO_FOLDER'),
+				subMenu: {
+					items,
+					maxHeight: FOLDER_SUBMENU_MAX_HEIGHT
 				}
 			};
 		}
@@ -454,6 +475,55 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				return false;
 			}
 			return recentItem.invitation.canResend;
+		}
+		#getCreateFolderMenuItem() {
+			return {
+				title: main_core.Loc.getMessage('IM_LIB_MENU_CREATE_FOLDER'),
+				onClick: () => {
+					im_v2_lib_folder.FolderManager.startCreation();
+					this.menuInstance.close();
+				}
+			};
+		}
+		#getFolderTargetMenuItem(folder, chatId) {
+			const {
+				definition: {
+					chats
+				}
+			} = folder;
+			if (chats.some(chat => chat.chatId === chatId)) {
+				return this.#getSelectedFolderMenuItem(folder);
+			}
+			if (chats.length >= im_v2_lib_folder.FolderManager.getMaxChatsPerFolder()) {
+				return this.#getFullFolderMenuItem(folder);
+			}
+			return this.#getAvailableFolderMenuItem(folder, chatId);
+		}
+		#getSelectedFolderMenuItem(folder) {
+			return {
+				title: folder.title,
+				isSelected: true,
+				design: ui_system_menu.MenuItemDesign.Disabled
+			};
+		}
+		#getFullFolderMenuItem(folder) {
+			return {
+				title: folder.title,
+				design: ui_system_menu.MenuItemDesign.Disabled,
+				subtitle: main_core.Loc.getMessage('IM_LIB_MENU_FOLDER_FULL')
+			};
+		}
+		#getAvailableFolderMenuItem(folder, chatId) {
+			return {
+				title: folder.title,
+				onClick: () => {
+					void new im_v2_provider_service_folder.FolderService().addChats(folder.id, [{
+						chatId,
+						dialogId: this.context.dialogId
+					}]);
+					this.menuInstance.close();
+				}
+			};
 		}
 	}
 
@@ -856,8 +926,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				return null;
 			}
 			const permissionManager = im_v2_lib_permission.PermissionManager.getInstance();
-			const canDeleteOthersMessage = permissionManager.canPerformActionByRole(im_v2_const.ActionByRole.deleteOthersMessage, this.context.dialogId);
-			if (!this.isOwnMessage() && !canDeleteOthersMessage) {
+			const canDeleteOwn = !this.isOwnMessage() || permissionManager.canPerformActionByRole(im_v2_const.ActionByRole.deleteOwnMessage, this.context.dialogId);
+			const canDeleteOthers = this.isOwnMessage() || permissionManager.canPerformActionByRole(im_v2_const.ActionByRole.deleteOthersMessage, this.context.dialogId);
+			if (!canDeleteOwn || !canDeleteOthers) {
 				return null;
 			}
 			return {
@@ -1144,7 +1215,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	class CopilotMessageMenu extends MessageMenu {
 		getMenuItems() {
 			const firstGroupItems = [this.getCopyItem(), this.getMarkItem(), this.getFavoriteItem(), this.getForwardItem(), this.getSendFeedbackItem()];
-			const secondGroupItems = [this.getDeleteItem(), this.getSelectItem()];
+			const secondGroupItems = [this.getSelectItem()];
 			return [...this.groupItems(firstGroupItems, MenuSectionCode$1.first), ...this.groupItems(secondGroupItems, MenuSectionCode$1.second)];
 		}
 		getSelectItem() {
@@ -1468,16 +1539,30 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			return {
 				title: main_core.Loc.getMessage('IM_LIB_MENU_SEND_STICKER'),
 				icon: ui_iconSet_api_core.Outline.SEND,
-				onClick: () => {
+				onClick: async () => {
 					this.emit(StickerMenu.events.closeParentPopup);
+
+					// draft is loaded lazily so the shared menu bundle does not pull it (and ui.dexie) eagerly
+					const {
+						DraftManager
+					} = await main_core.Runtime.loadExtension('im.v2.lib.draft');
+					const draft = DraftManager.getInstance().drafts[this.context.dialogId] ?? {};
+					const isReplyWithMediaAvailable = im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.isReplyWithMediaAvailable);
+					const replyId = isReplyWithMediaAvailable && draft.panelType === im_v2_const.TextareaPanelType.reply ? draft.panelContext?.messageId : undefined;
 					void im_v2_provider_service_sending.SendingService.getInstance().sendMessageWithSticker({
 						dialogId: this.context.dialogId,
 						stickerParams: {
 							id: this.context.sticker.id,
 							packId: this.context.sticker.packId,
 							packType: this.context.sticker.packType
-						}
+						},
+						replyId
 					});
+					if (replyId > 0) {
+						main_core_events.EventEmitter.emit(im_v2_const.EventType.textarea.closePanel, {
+							dialogId: this.context.dialogId
+						});
+					}
 				}
 			};
 		}
@@ -1541,5 +1626,5 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	exports.TaskCommentsMessageMenu = TaskCommentsMessageMenu;
 	exports.UserMenu = UserMenu;
 
-})(this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}, BX, BX.Event, BX.Main, BX.UI.System, BX.Messenger.v2.Application, BX.UI.Dialogs, BX.Messenger.v2.Lib, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Service, BX.Messenger.v2.Service, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.UI.IconSet, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Service, BX.Messenger.v2.Service, BX.Messenger.v2.Provider.Service, BX.Messenger.v2.Service);
+})(this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}, BX, BX.Event, BX.Main, BX.UI.System, BX.Messenger.v2.Application, BX.UI.Dialogs, BX.Messenger.v2.Lib, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Service, BX.Messenger.v2.Service, BX.Messenger.v2.Service, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.UI.IconSet, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Service, BX.Messenger.v2.Service, BX.Messenger.v2.Provider.Service, BX.Messenger.v2.Service);
 //# sourceMappingURL=registry.bundle.js.map

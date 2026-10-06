@@ -33,10 +33,6 @@
 	color: var(--sonet-project-wizard-privacy-item-title);
 }
 
-.sonet--project-wizard--privacy-type-title-text.--selected {
-	color: var(--sonet-project-wizard-privacy-item-title);
-}
-
 .sonet--project-wizard--privacy-type-description-text {
 	color: var(--ui-color-base-3);
 }

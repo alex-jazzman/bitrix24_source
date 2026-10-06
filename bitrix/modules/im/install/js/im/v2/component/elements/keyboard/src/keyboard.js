@@ -12,8 +12,7 @@ import { type ActionEvent, type CustomCommandEvent } from './types/events';
 import './keyboard.css';
 
 export const Keyboard = {
-	props:
-	{
+	props: {
 		buttons: {
 			type: Array,
 			required: true,
@@ -35,15 +34,13 @@ export const Keyboard = {
 		};
 	},
 	emits: ['click'],
-	watch:
-	{
+	watch: {
 		buttons()
 		{
 			this.keyboardBlocked = false;
 		},
 	},
-	computed:
-	{
+	computed: {
 		ButtonType: () => KeyboardButtonType,
 		preparedButtons(): KeyboardButtonConfig[]
 		{
@@ -52,15 +49,16 @@ export const Keyboard = {
 			});
 		},
 	},
-	methods:
-	{
+	methods: {
 		onButtonActionClick(event: ActionEvent)
 		{
 			this.getActionManager().handleAction(event);
+			this.$emit('click', event);
 		},
 		onButtonCustomCommandClick(event: CustomCommandEvent)
 		{
 			this.getBotService().sendCommand(event);
+			this.$emit('click', event);
 		},
 		getActionManager(): ActionManager
 		{

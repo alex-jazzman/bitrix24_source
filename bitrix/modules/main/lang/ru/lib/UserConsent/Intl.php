@@ -30,6 +30,7 @@ $MESS["MAIN_USER_CONSENT_INTL_NOTIFY_TEXT"] = "В июле 2017 года вст�
 Битрикс24 поможет вам соответствовать требованиям закона и избежать штрафов.";
 $MESS["MAIN_USER_CONSENT_INTL_NOTIFY_TEXT_BTN"] = "Подробнее";
 $MESS["MAIN_USER_CONSENT_INTL_DESCRIPTION"] = "В России при сборе личных данных требуется обязательное согласие пользователя на обработку его персональных данных. <a target=\"_blank\" href=\"https://152fz.net/\">Подробнее</a>";
+$MESS["MAIN_USER_CONSENT_INTL_DESCRIPTION_MSGVER_1"] = "В России при сборе персональных данных требуется правовое основание. Если вы используете согласие пользователя, оно должно соответствовать требованиям 152-ФЗ. <a target=\"_blank\" href=\"https://www.consultant.ru/document/cons_doc_LAW_61801/6c94959bc017ac80140621762d2ac59f6006b08c/\">Подробнее</a>";
 $MESS["MAIN_USER_CONSENT_INTL_NAME"] = "Стандартное согласие на обработку персональных данных «%language_name%»";
 $MESS["MAIN_USER_CONSENT_INTL_LABEL"] = "Нажимая кнопку «%button_caption%», я даю свое согласие на обработку моих персональных данных, в соответствии с Федеральным законом от 27.07.2006 года №152-ФЗ «О персональных данных», на условиях и для целей, определенных в Согласии на обработку персональных данных";
 $MESS["MAIN_USER_CONSENT_INTL_TEXT"] = "Согласие на обработку персональных данных
@@ -52,6 +53,7 @@ $MESS["MAIN_USER_CONSENT_INTL_TEXT"] = "Согласие на обработку
 
 7. В случае отзыва мною согласия на обработку персональных данных Оператор вправе продолжить обработку персональных данных без моего согласия при наличии оснований, предусмотренных Федеральным законом №152-ФЗ «О персональных данных» от 27.07.2006 г.";
 $MESS["MAIN_USER_CONSENT_INTL_DESCRIPTION_KZ"] = "-";
+$MESS["MAIN_USER_CONSENT_INTL_DESCRIPTION_MSGVER_1_KZ"] = "-";
 $MESS["MAIN_USER_CONSENT_INTL_PHRASE_COMPANY_NAME_KZ"] = "%rq_company_name% ИИН %rq_iin%";
 $MESS["MAIN_USER_CONSENT_INTL_PHRASE_IP_NAME_KZ"] = "ИП %rq_name% ИИН %rq_inn%";
 $MESS["MAIN_USER_CONSENT_INTL_FIELD_THIRD_PARTIES_HINT_KZ"] = "Перечислите данные компаний, которым вы передаете персональные данные. \nПример: ИП Касенов С.В. ИИН 123456";
@@ -70,6 +72,7 @@ $MESS["MAIN_USER_CONSENT_INTL_TEXT_KZ"] = "Согласие на обработ�
 
 Настоящее согласие действует до момента его отзыва путем направления соответствующего уведомления на электронный адрес %email%. В случае отзыва мною согласия на обработку персональных данных Оператор вправе продолжить обработку персональных данных без моего согласия при наличии оснований, указанных в статье 9 Закона Республики Казахстан от 21 мая 2013 года N 94-V «О персональных данных и их защите».";
 $MESS["MAIN_USER_CONSENT_INTL_DESCRIPTION_BY"] = "В Беларуси с 15 ноября 2021 года вступил в силу ЗАКОН РЕСПУБЛИКИ БЕЛАРУСЬ № 99-З  \"О защите персональных данных\" <a target=\"_blank\" href=\"https://pravo.by/upload/docs/op/H12100099_1620939600.pdf\">Подробнее</a>";
+$MESS["MAIN_USER_CONSENT_INTL_DESCRIPTION_MSGVER_1_BY"] = "В Беларуси с 15 ноября 2021 года вступил в силу ЗАКОН РЕСПУБЛИКИ БЕЛАРУСЬ № 99-З  \"О защите персональных данных\" <a target=\"_blank\" href=\"https://pravo.by/upload/docs/op/H12100099_1620939600.pdf\">Подробнее</a>";
 $MESS["MAIN_USER_CONSENT_INTL_PHRASE_COMPANY_NAME_BY"] = "%rq_company_name% УНП %rq_inn%";
 $MESS["MAIN_USER_CONSENT_INTL_PHRASE_IP_NAME_BY"] = "ИП %rq_name% УНП %rq_inn%";
 $MESS["MAIN_USER_CONSENT_INTL_FIELD_THIRD_PARTIES_HINT_BY"] = "Перечислите данные компаний, которым вы передаете персональные данные. \nПример: ИП Иванов А.В. (УНП 123456)";

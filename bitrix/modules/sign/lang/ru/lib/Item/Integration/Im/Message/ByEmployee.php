@@ -5,6 +5,8 @@ $MESS['SIGN_CALLBACK_CHAT_BY_EMPLOYEE_INVITE_EMPLOYEE'] = '[b]Подпишите
 
 $MESS['SIGN_CALLBACK_CHAT_BY_EMPLOYEE_SIGNED_BY_EMPLOYEE'] = '[b]Документ отправлен[/b][br][br]Вы подписали и отправили документ #DOC_NAME#. Когда компания завершит работу с документом, вы получите уведомление[br][br][url=#SIGN_URL#]Открыть документ[/url]';
 
+$MESS['SIGN_CALLBACK_CHAT_BY_EMPLOYEE_RECEIVED_BY_COMPANY'] = '[b]Документ получен[/b][br][br]#RECEIVER_NAME# получил(а) документ #DOC_NAME#. Когда компания завершит работу с документом, вы получите уведомление[br][br][url=#SIGN_URL#]Открыть документ[/url]';
+
 $MESS['SIGN_CALLBACK_CHAT_BY_EMPLOYEE_DONE_EMPLOYEE'] = '[b]Документ утверждён[/b][br][br]#INITIATOR_NAME# утвердил(а) документ #DOC_NAME#. Посмотреть и скачать документ можно в вашем профиле в разделе Мои документы[br][br][url=#SIGN_URL#]Открыть документ[/url]';
 $MESS['SIGN_CALLBACK_CHAT_BY_EMPLOYEE_DONE_EMPLOYEEM'] = '[b]Документ утверждён[/b][br][br]#INITIATOR_NAME# утвердил документ #DOC_NAME#. Посмотреть и скачать документ можно в вашем профиле в разделе Мои документы[br][br][url=#SIGN_URL#]Открыть документ[/url]';
 $MESS['SIGN_CALLBACK_CHAT_BY_EMPLOYEE_DONE_EMPLOYEEF'] = '[b]Документ утверждён[/b][br][br]#INITIATOR_NAME# утвердила документ #DOC_NAME#. Посмотреть и скачать документ можно в вашем профиле в разделе Мои документы[br][br][url=#SIGN_URL#]Открыть документ[/url]';

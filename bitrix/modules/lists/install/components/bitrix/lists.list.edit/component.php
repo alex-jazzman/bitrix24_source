@@ -360,11 +360,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && check_bitrix_sessid())
 				{
 					$url = $arResult["LIST_EDIT_URL"];
 				}
-				LocalRedirect(CHTTP::urlAddParams(
-					$url,
-					array($tab_name => $_POST[$tab_name]),
-					array("skip_empty" => true, "encode" => true)
-				));
+				LocalRedirect((string)(new Uri($url))->addParams([$tab_name => $_POST[$tab_name]]));
 			}
 			elseif(isset($_POST["save"]))
 			{
@@ -372,14 +368,12 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && check_bitrix_sessid())
 			}
 			else
 			{
-				LocalRedirect(CHTTP::urlAddParams(str_replace(
-					array("#list_id#", "#group_id#"),
-					array($res, $arParams["SOCNET_GROUP_ID"]),
-					$arParams["LIST_EDIT_URL"]
-				),
-					array($tab_name => $_POST[$tab_name]),
-					array("skip_empty" => true, "encode" => true)
-				));
+				LocalRedirect((string)(new Uri(str_replace(
+						array("#list_id#", "#group_id#"),
+						array($res, $arParams["SOCNET_GROUP_ID"]),
+						$arParams["LIST_EDIT_URL"]
+					)))->addParams([$tab_name => $_POST[$tab_name]])
+				);
 			}
 		}
 		else

@@ -27,12 +27,17 @@ $toolbarId = CUtil::JSEscape($guid);
 /** @var Bitrix\Crm\Component\EntityDetails\TimelineMenuBar\Item $item */
 foreach ($items as $item)
 {
+	$itemId = \CUtil::JSEscape($item->getId());
+	$onClick = "var menuBar = BX.Crm.Timeline.MenuBar.getById('" . $toolbarId . "');"
+		. " if (menuBar) { menuBar.onMenuItemClick('" . $itemId . "'); }"
+	;
+
 	$menuItem = [
 		'TEXT' => \Bitrix\Main\Text\HtmlFilter::encode($item->getName()),
 		'TITLE' => \Bitrix\Main\Text\HtmlFilter::encode($item->getTitle()),
 		'ID' => $item->getId(),
 		'URL' => 'javascript:void(0);',
-		'ON_CLICK' => "BX.Crm.Timeline.MenuBar.getById('" . $toolbarId . "').onMenuItemClick('" . \CUtil::JSEscape($item->getId()) . "')",
+		'ON_CLICK' => $onClick,
 		'IS_NEW' => $item->isNew(),
 	];
 

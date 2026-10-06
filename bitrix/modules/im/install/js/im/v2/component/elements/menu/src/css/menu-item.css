@@ -199,3 +199,7 @@
 .bx-im-menu_item__icon.--lock {
 	background-image: url('./images/lock.svg');
 }
+
+.bx-im-menu_item__icon.--folder {
+	background-image: url('./images/folder.svg');
+}

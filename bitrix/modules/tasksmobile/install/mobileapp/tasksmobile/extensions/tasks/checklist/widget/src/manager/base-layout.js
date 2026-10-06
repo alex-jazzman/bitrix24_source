@@ -1,21 +1,14 @@
-/**
- * @module tasks/checklist/widget/src/manager/base-layout
- */
+/** @module tasks/checklist/widget/src/manager/base-layout */
 jn.define('tasks/checklist/widget/src/manager/base-layout', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { Color } = require('tokens');
 	const { outline } = require('assets/icons');
 	const { PropTypes } = require('utils/validation');
 
-	/**
-	 * @class ChecklistBottomSheet
-	 * @abstract
-	 */
+	/** @abstract */
 	class ChecklistBaseLayout
 	{
-		/**
-		 * @param {ChecklistBottomSheetProps} props
-		 */
+		/** @param {ChecklistBottomSheetProps} props */
 		constructor(props)
 		{
 			this.props = props;
@@ -24,9 +17,9 @@ jn.define('tasks/checklist/widget/src/manager/base-layout', (require, exports, m
 			this.onPreventDismiss = false;
 			this.handleOnSave = this.handleOnSave.bind(this);
 			this.handleOnClose = this.handleOnClose.bind(this);
-			this.handleOnComplete = this.handleOnComplete.bind(this);
 		}
 
+		/** @param {ChecklistLayoutUpdateParams} params */
 		update(params)
 		{
 			const { highlightMoreButton } = params;
@@ -34,15 +27,11 @@ jn.define('tasks/checklist/widget/src/manager/base-layout', (require, exports, m
 			this.showMoreButton({ highlightMoreButton });
 		}
 
-		/**
-		 * @public
-		 * @abstract
-		 */
+		/** @abstract */
 		close()
 		{}
 
 		/**
-		 * @public
 		 * @abstract
 		 * @return {Promise}
 		 */
@@ -58,28 +47,20 @@ jn.define('tasks/checklist/widget/src/manager/base-layout', (require, exports, m
 			return Loc.getMessage('TASKSMOBILE_LAYOUT_CHECKLIST_WIDGET_TITLE');
 		}
 
-		/**
-		 * @public
-		 * @return {PageManager}
-		 */
+		/** @return {PageManager} */
 		getParentWidget()
 		{
 			const { parentWidget } = this.props;
 
 			if (!parentWidget)
 			{
-				console.warn('ChecklistWidget: parameter <parentWidget> is not passed to the component');
-
 				return null;
 			}
 
 			return parentWidget;
 		}
 
-		/**
-		 * @public
-		 * @return {Checklist}
-		 */
+		/** @return {Checklist} */
 		getComponent()
 		{
 			const { component } = this.props;
@@ -87,11 +68,16 @@ jn.define('tasks/checklist/widget/src/manager/base-layout', (require, exports, m
 			return component;
 		}
 
+		/**
+		 * @protected
+		 * @param {Object} layoutWidget
+		 */
 		setLayoutWidget(layoutWidget)
 		{
 			this.layoutWidget = layoutWidget;
 		}
 
+		/** @return {Object} */
 		getLayoutWidget()
 		{
 			return this.layoutWidget;
@@ -114,9 +100,7 @@ jn.define('tasks/checklist/widget/src/manager/base-layout', (require, exports, m
 			}
 		}
 
-		/**
-		 * @protected
-		 */
+		/** @protected */
 		showMoreButton({ highlightMoreButton } = {})
 		{
 			const { onShowMoreMenu } = this.props;
@@ -142,75 +126,63 @@ jn.define('tasks/checklist/widget/src/manager/base-layout', (require, exports, m
 
 		/**
 		 * @protected
-		 * @param {boolean} show
-		 */
-		showSaveButton(show)
-		{
-			return null;
-
-			const button = [];
-
-			if (show)
-			{
-				button.push({
-					type: 'text',
-					name: Loc.getMessage('TASKSMOBILE_LAYOUT_CHECKLIST_MORE_MENU_DONE'),
-					color: Color.accentExtraDarkblue.toHex(),
-					callback: this.handleOnComplete,
-				});
-			}
-
-			this.layoutWidget.setRightButtons(button);
-		}
-
-		/**
-		 * @protected
+		 * @param {ChecklistLayoutChangeParams} [options]
 		 */
 		onChange({ alert } = {})
 		{
 			this.alert = alert;
-			this.showSaveButton(true);
 			this.showPreventDismiss(true);
 		}
 
-		/**
-		 * @protected
-		 */
-		handleOnComplete()
-		{
-			this.showSaveButton(false);
-			this.showPreventDismiss(false);
-			this.handleOnSave();
-		}
-
-		handleOnClose()
+		/** @protected */
+		async handleOnClose()
 		{
 			const { onClose } = this.props;
 
-			if (onClose)
+			try
 			{
-				onClose();
-			}
+				if (onClose)
+				{
+					const shouldClose = await onClose();
+					if (shouldClose === false)
+					{
+						return;
+					}
+				}
 
-			this.close();
+				this.close();
+			}
+			catch (error)
+			{
+				console.error(error);
+			}
 		}
 
-		handleOnSave()
+		/** @protected */
+		async handleOnSave()
 		{
 			const { onSave } = this.props;
 
-			if (onSave)
+			try
 			{
-				onSave();
-			}
+				if (onSave)
+				{
+					const shouldClose = await onSave();
+					if (shouldClose === false)
+					{
+						return;
+					}
+				}
 
-			this.close();
+				this.close();
+			}
+			catch (error)
+			{
+				console.error(error);
+			}
 		}
 
-		/**
-		 * @public
-		 * @param {boolean} show
-		 */
+		/** @param {boolean} show */
 		showPreventDismiss(show)
 		{
 			this.onPreventDismiss = show;

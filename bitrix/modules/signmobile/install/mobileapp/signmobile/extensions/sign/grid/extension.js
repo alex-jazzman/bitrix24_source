@@ -25,6 +25,7 @@ jn.define('sign/grid', (require, exports, module) => {
 	const FILTER_PRESET_SEND = 'preset_send';
 	const FILTER_PRESET_SIGNED = 'preset_signed';
 	const FILTER_PRESET_PROCESSED_BY_ME = 'preset_processed_by_me';
+	const FILTER_PRESET_ANNULLED = 'preset_annulled';
 
 	/**
 	 * @class Grid
@@ -37,6 +38,7 @@ jn.define('sign/grid', (require, exports, module) => {
 			this.master = new Master();
 			this.stateFulListRef = null;
 			this.isE2bAvailable = this.props.isE2bAvailable;
+			this.isDocumentAnnulAvailable = this.props.isDocumentAnnulAvailable;
 
 			this.search = new SearchLayout({
 				layout,
@@ -60,8 +62,33 @@ jn.define('sign/grid', (require, exports, module) => {
 				);
 			}
 
+			if (this.isDocumentAnnulAvailable)
+			{
+				const processedByMeIndex = this.tabs.findIndex((tab) => tab.id === FILTER_PRESET_PROCESSED_BY_ME);
+				const insertIndex = processedByMeIndex === -1 ? this.tabs.length : processedByMeIndex;
+				this.tabs.splice(
+					insertIndex,
+					0,
+					{ title: Loc.getMessage('SIGN_MOBILE_GRID_TAB_ANNULLED'), id: FILTER_PRESET_ANNULLED },
+				);
+			}
+
 			this.filter = { tabId: FILTER_PRESET_IN_WORK, searchString: '' };
+
+			BX.addCustomEvent('sign.grid:reload', this.#onReloadRequested);
 		}
+
+		componentWillUnmount()
+		{
+			// The handler is a stable bound field, so the very same reference that
+			// was subscribed in the constructor is removed here: without it every
+			// recreated grid would keep reloading through the shared event bus.
+			BX.removeCustomEvent('sign.grid:reload', this.#onReloadRequested);
+		}
+
+		#onReloadRequested = () => {
+			this.stateFulListRef?.reload({ skipUseCache: true });
+		};
 
 		render()
 		{
@@ -110,6 +137,9 @@ jn.define('sign/grid', (require, exports, module) => {
 				menuButtons: this.getLayoutMenuButtons(),
 				itemType: ListItemType.DOCUMENT,
 				itemFactory: ListItemsFactory,
+				itemParams: {
+					isDocumentAnnulAvailable: this.isDocumentAnnulAvailable,
+				},
 				actions: {
 					loadItems: 'signmobile.document.getDocumentList',
 				},
@@ -160,6 +190,12 @@ jn.define('sign/grid', (require, exports, module) => {
 					return {
 						title: Loc.getMessage('SIGN_MOBILE_GRID_EMPTY_STATE_PROCESSED_BY_ME_TITLE'),
 						description: Loc.getMessage('SIGN_MOBILE_GRID_EMPTY_STATE_PROCESSED_BY_ME_DESCRIPTION'),
+						imageName
+					};
+				case FILTER_PRESET_ANNULLED:
+					return {
+						title: Loc.getMessage('SIGN_MOBILE_GRID_EMPTY_STATE_ANNULLED_TITLE'),
+						description: Loc.getMessage('SIGN_MOBILE_GRID_EMPTY_STATE_ANNULLED_DESCRIPTION'),
 						imageName
 					};
 				default:

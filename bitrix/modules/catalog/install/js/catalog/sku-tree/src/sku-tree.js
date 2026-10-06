@@ -356,4 +356,18 @@ export class SkuTree extends EventEmitter
 	{
 		this.skuProperties.forEach(property => property.toggleSkuPropertyValues());
 	}
+
+	focusPropertyTabStop(propertyId): void
+	{
+		if (!Type.isArrayFilled(this.skuProperties))
+		{
+			return;
+		}
+
+		const property = this.skuProperties.find(
+			(item) => Text.toNumber(item.getId()) === Text.toNumber(propertyId),
+		);
+
+		property?.focusTabStop();
+	}
 }

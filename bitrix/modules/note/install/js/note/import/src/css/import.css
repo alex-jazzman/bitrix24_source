@@ -248,15 +248,24 @@
 }
 
 .note-import-progress__mascot--working {
-	background-image: url('../images/working.png');
+	/* fallback for browsers without image-set; absolute url keeps the build from inlining it as base64 */
+	background-image: url(/bitrix/js/note/import/src/images/working.webp);
+	background-image: -webkit-image-set(url(/bitrix/js/note/import/src/images/working.webp) 1x, url(/bitrix/js/note/import/src/images/working@2x.webp) 2x);
+	background-image: image-set(url(/bitrix/js/note/import/src/images/working.webp) 1x, url(/bitrix/js/note/import/src/images/working@2x.webp) 2x);
 }
 
 .note-import-progress__mascot--done {
-	background-image: url('../images/done.png');
+	/* fallback for browsers without image-set; absolute url keeps the build from inlining it as base64 */
+	background-image: url(/bitrix/js/note/import/src/images/done.webp);
+	background-image: -webkit-image-set(url(/bitrix/js/note/import/src/images/done.webp) 1x, url(/bitrix/js/note/import/src/images/done@2x.webp) 2x);
+	background-image: image-set(url(/bitrix/js/note/import/src/images/done.webp) 1x, url(/bitrix/js/note/import/src/images/done@2x.webp) 2x);
 }
 
 .note-import-progress__mascot--error {
-	background-image: url('../images/error.png');
+	/* fallback for browsers without image-set; absolute url keeps the build from inlining it as base64 */
+	background-image: url(/bitrix/js/note/import/src/images/error.webp);
+	background-image: -webkit-image-set(url(/bitrix/js/note/import/src/images/error.webp) 1x, url(/bitrix/js/note/import/src/images/error@2x.webp) 2x);
+	background-image: image-set(url(/bitrix/js/note/import/src/images/error.webp) 1x, url(/bitrix/js/note/import/src/images/error@2x.webp) 2x);
 }
 
 .note-import-overwrite-message {

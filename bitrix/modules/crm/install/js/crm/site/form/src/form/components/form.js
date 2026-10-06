@@ -1,4 +1,3 @@
-import { Controller as FormController } from '../controller';
 import { Factory } from '../../field/factory';
 import { AbuseBlock } from './abuse';
 import { AgreementBlock } from './agreement';
@@ -9,9 +8,16 @@ import ReCaptcha from './recaptcha';
 import YandexCaptcha from './yandexcaptcha';
 import { Aria } from '../../util/aria';
 
+// Expected: an instance of form/controller#Controller. We avoid importing
+// the class to keep this module out of the controller.js cycle (CF1006).
+// Duck-typing via known methods preserves the dev-time validation intent.
+const isFormController = (v) => v
+	&& typeof v.submit === 'function'
+	&& typeof v.getId === 'function';
+
 const Form = {
 	props: {
-		form: { type: FormController },
+		form: { validator: isFormController },
 	},
 
 	components:

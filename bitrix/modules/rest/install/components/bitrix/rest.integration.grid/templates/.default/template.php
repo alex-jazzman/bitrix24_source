@@ -18,6 +18,7 @@ Loc ::loadMessages(__FILE__);
 \Bitrix\Main\UI\Extension::load([
 	'marketplace',
 	'ui.design-tokens',
+	'ui.dialogs.messagebox',
 ]);
 
 if ($arParams['SET_TITLE'])
@@ -82,6 +83,13 @@ Toolbar::deleteFavoriteStar();
 			'gridId' => $arParams['GRID_ID'],
 		]
 	)?>;
+
+	BX.message(<?=Json::encode([
+		'REST_INTEGRATION_GRID_CONFIRM_DELETE_POPUP_TITLE' => Loc::getMessage('REST_INTEGRATION_GRID_CONFIRM_DELETE_POPUP_TITLE'),
+		'REST_INTEGRATION_GRID_CONFIRM_DELETE_POPUP_TEXT' => Loc::getMessage('REST_INTEGRATION_GRID_CONFIRM_DELETE_POPUP_TEXT'),
+		'REST_INTEGRATION_GRID_CONFIRM_DELETE_POPUP_OK_BUTTON_TEXT' => Loc::getMessage('REST_INTEGRATION_GRID_CONFIRM_DELETE_POPUP_OK_BUTTON_TEXT'),
+	])?>);
+
 	BX.ready(function ()
 	{
 		new BX.rest.integration.grid.init({

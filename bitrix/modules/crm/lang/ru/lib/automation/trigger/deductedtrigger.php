@@ -6,3 +6,4 @@ $MESS['CRM_AUTOMATION_TRIGGER_DEDUCTED_DESCRIPTION'] = 'Меняет стади�
 
 $MESS['CRM_AUTOMATION_TRIGGER_DEDUCTED_NODE_DESCRIPTION'] = 'Запускает процесс после отгрузки товара';
 
+$MESS['CRM_AUTOMATION_TRIGGER_DEDUCTED_EVENT_DATE_TIME'] = 'Дата и время отгрузки товара';

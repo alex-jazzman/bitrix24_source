@@ -7,7 +7,7 @@
 	const master = new Master(startE2bMaster);
 
 	isSendDocumentByEmployeeEnabled().then(({ data }) => {
-		const { isE2bAvailable } = data;
+		const { isE2bAvailable, isDocumentAnnulAvailable } = data;
 		if (startE2bMaster && isE2bAvailable)
 		{
 			master.openMaster(layout);
@@ -18,6 +18,7 @@
 				new Grid({
 					currentUserId: Number(env.userId),
 					isE2bAvailable,
+					isDocumentAnnulAvailable,
 				}),
 			);
 		});

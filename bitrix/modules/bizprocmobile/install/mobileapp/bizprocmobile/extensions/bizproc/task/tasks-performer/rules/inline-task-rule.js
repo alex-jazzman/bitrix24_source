@@ -44,6 +44,7 @@ jn.define('bizproc/task/tasks-performer/rules/inline-task-rule', (require, expor
 		renderEntryPoint()
 		{
 			return new TaskButtons({
+				layout: this.layout,
 				testId: 'MBP_TASKS_PERFORMER_INLINE_TASK_RULE',
 				shouldUseEvents: false,
 				task: this.taskToShow,

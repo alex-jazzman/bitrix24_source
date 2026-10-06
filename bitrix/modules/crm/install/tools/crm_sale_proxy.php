@@ -1,4 +1,7 @@
-<?
+<?php
+
+use Bitrix\Main\Web\Uri;
+
 define("STOP_STATISTICS", true);
 define('NO_AGENT_CHECK', true);
 define("DisableEventsCheck", true);
@@ -48,7 +51,7 @@ if (!$proxy->IsInitialized())
 	die("External site is not found");
 
 $arPath = parse_url($path);
-if (CHTTP::isPathTraversalUri($arPath["path"]))
+if ((new Uri($arPath["path"]))->isPathTraversal())
 	die("Traversal paths are not permitted.");
 
 $pathRegexs = array(

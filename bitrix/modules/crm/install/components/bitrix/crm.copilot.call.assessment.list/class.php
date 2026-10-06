@@ -9,7 +9,9 @@ use Bitrix\Crm\Badge\Badge;
 use Bitrix\Crm\Badge\Type\CopilotCallAssessmentStatus;
 use Bitrix\Crm\Component\Base;
 use Bitrix\Crm\Component\EntityList\BadgeBuilder;
+use Bitrix\Crm\Copilot\AiQualityAssessment\Controller\AiQualityAssessmentController;
 use Bitrix\Crm\Copilot\AiQualityAssessment\RatingCalculator;
+use Bitrix\Crm\Copilot\CallAssessment\BiReportButton;
 use Bitrix\Crm\Copilot\CallAssessment\CallAssessmentItem;
 use Bitrix\Crm\Copilot\CallAssessment\Controller\CopilotCallAssessmentAvailabilityController;
 use Bitrix\Crm\Copilot\CallAssessment\Controller\CopilotCallAssessmentClientTypeController;
@@ -20,10 +22,12 @@ use Bitrix\Crm\Copilot\CallAssessment\Enum\AvailabilityWeekdayType;
 use Bitrix\Crm\Copilot\CallAssessment\Enum\CallType;
 use Bitrix\Crm\Copilot\CallAssessment\Enum\ClientType;
 use Bitrix\Crm\Feature;
+use Bitrix\Crm\Filter\ListFilter;
 use Bitrix\Crm\Integration\AI\AIManager;
 use Bitrix\Crm\Integration\AI\Enum\GlobalSetting;
 use Bitrix\Crm\Integration\AI\Model\QueueTable;
 use Bitrix\Crm\Integration\Bitrix24Manager;
+use Bitrix\Crm\Integration\BizProc\CallAssessmentAiAgent;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Settings\LayoutSettings;
 use Bitrix\Crm\WebForm\Internals\PageNavigation;
@@ -42,8 +46,9 @@ class CrmCopilotCallAssessmentListComponent extends Base
 	private string $navParamName = 'page';
 	private ?Options $gridOptions = null;
 	private ?PageNavigation $pageNavigation = null;
-	private array | string | null $defaultDateTimeFormat = null;
+	private array|string|null $defaultDateTimeFormat = null;
 	private array $currentAvailableAssessmentIds = [];
+	private bool $isV2 = false;
 
 	public function executeComponent(): void
 	{
@@ -65,6 +70,8 @@ class CrmCopilotCallAssessmentListComponent extends Base
 		}
 
 		Container::getInstance()->getLocalization()->loadMessages();
+
+		$this->isV2 = AIManager::isCallScoringV2Enabled();
 
 		if (Feature::enabled(Feature\CopilotCallAssessmentAvailability::class))
 		{
@@ -89,7 +96,7 @@ class CrmCopilotCallAssessmentListComponent extends Base
 			[
 				'TITLE' => Loc::getMessage('CRM_COMMON_ERROR_ACCESS_DENIED'),
 				'DESCRIPTION' => '',
-			]
+			],
 		);
 	}
 
@@ -113,7 +120,16 @@ class CrmCopilotCallAssessmentListComponent extends Base
 			$rule['CLIENT'] = $this->getField('CLIENT', $callAssessment, $fieldsData);
 			$rule['CALL_TYPE'] = $this->getField('CALL_TYPE', $callAssessment, $fieldsData);
 			$rule['IS_ENABLED'] = $this->getField('IS_ENABLED', $callAssessment);
-			$rule['ASSESSMENT_AVG'] = $this->getField('ASSESSMENT_AVG', $callAssessment, $fieldsData);
+			if ($this->isV2)
+			{
+				$rule['MATCH'] = '<div class="crm-copilot-call-assessment-list--field-wrapper">'
+					. $this->getMatchField($callAssessment, $fieldsData)
+					. '</div>';
+			}
+			else
+			{
+				$rule['ASSESSMENT_AVG'] = $this->getField('ASSESSMENT_AVG', $callAssessment, $fieldsData);
+			}
 			// $rule['INSPECTOR'] = $this->getField('INSPECTOR', $callAssessment, $fieldsData);
 			$rule['PROMPT'] = $this->getField('PROMPT', $callAssessment);
 			if ($this->needShowGistColumn())
@@ -140,10 +156,12 @@ class CrmCopilotCallAssessmentListComponent extends Base
 			return [];
 		}
 
+		$sliderWidth = AIManager::isCallScoringV2Enabled() ? 729 : 700;
+
 		return [
 			[
 				'TEXT' => Loc::getMessage('CRM_COMMON_ACTION_EDIT'),
-				'ONCLICK' => 'BX.Crm.Router.openSlider("' . $this->getDetailsUri($id) . '", {width: 700, cacheable: false });',
+				'ONCLICK' => 'BX.Crm.Router.openSlider("' . $this->getDetailsUri($id) . '", {width: ' . $sliderWidth . ', cacheable: false });',
 				'DEFAULT' => true,
 			],
 			[
@@ -152,7 +170,7 @@ class CrmCopilotCallAssessmentListComponent extends Base
 			],
 			[
 				'TEXT' => Loc::getMessage('CRM_COMMON_ACTION_DELETE'),
-				'ONCLICK' => "BX.Event.EventEmitter.emit('BX.Crm.Copilot.CallAssessment:onClickDelete', {'id':'$id'})"
+				'ONCLICK' => "BX.Event.EventEmitter.emit('BX.Crm.Copilot.CallAssessment:onClickDelete', {'id':'$id'})",
 			],
 		];
 	}
@@ -161,10 +179,7 @@ class CrmCopilotCallAssessmentListComponent extends Base
 	{
 		$filterOptions = new \Bitrix\Main\UI\Filter\Options($this->getGridId());
 		$gridFilter = $filterOptions->getFilter();
-		$listFilter = new \Bitrix\Crm\Filter\ListFilter(
-			CCrmOwnerType::Undefined,
-			$this->getFilterFields()
-		);
+		$listFilter = new ListFilter(CCrmOwnerType::Undefined, $this->getFilterFields());
 
 		$conditions = [];
 
@@ -220,6 +235,7 @@ class CrmCopilotCallAssessmentListComponent extends Base
 					ClientType::IN_WORK->value => ClientType::getTitle(ClientType::IN_WORK->value),
 					ClientType::RETURN_CUSTOMER->value => ClientType::getTitle(ClientType::RETURN_CUSTOMER->value),
 					ClientType::REPEATED_APPROACH->value => ClientType::getTitle(ClientType::REPEATED_APPROACH->value),
+					ClientType::ANY->value => ClientType::getTitle(ClientType::ANY->value),
 				],
 				'params' => [
 					'multiple' => 'Y',
@@ -255,7 +271,7 @@ class CrmCopilotCallAssessmentListComponent extends Base
 	private function getOrder(): array
 	{
 		return $this->getGridOptions()->GetSorting([
-			'sort' => ['ID' => 'desc'],
+			'sort' => ['UPDATED_AT' => 'desc'],
 		])['sort'];
 	}
 
@@ -345,17 +361,31 @@ class CrmCopilotCallAssessmentListComponent extends Base
 			$assessments = (new RatingCalculator())->calculateRatingByAssessmentIds($callAssessmentIds);
 		}
 
+		$callCounts = [];
+		if ($this->isV2 && !empty($callAssessmentIds) && $this->isMatchColumnVisible())
+		{
+			$callCounts = AiQualityAssessmentController::getInstance()
+				->countByAssessmentSettingIds($callAssessmentIds)
+			;
+		}
+
 		return [
 			'users' => $users,
 			'clientTypes' => $clientTypes,
 			'assessments' => $assessments,
+			'callCounts' => $callCounts,
 		];
+	}
+
+	private function isMatchColumnVisible(): bool
+	{
+		return in_array('MATCH', $this->getGridOptions()->getUsedColumns(['MATCH']), true);
 	}
 
 	private function getField(
 		string $fieldName,
 		CopilotCallAssessment $callAssessmentItem,
-		array $fieldsData = []
+		array $fieldsData = [],
 	): string
 	{
 		$content = '';
@@ -364,39 +394,35 @@ class CrmCopilotCallAssessmentListComponent extends Base
 		{
 			$content = $this->getClientField($callAssessmentItem, $fieldsData);
 		}
-		else if ($fieldName === 'CALL_TYPE')
+		elseif ($fieldName === 'CALL_TYPE')
 		{
 			$content = $this->getCallTypeField($callAssessmentItem);
 		}
-		else if ($fieldName === 'PROMPT')
+		elseif ($fieldName === 'PROMPT')
 		{
 			$content = $this->getPromptField($callAssessmentItem);
 		}
-		else if ($fieldName === 'IS_ENABLED')
+		elseif ($fieldName === 'IS_ENABLED')
 		{
 			$content = $this->getIsEnabledField($callAssessmentItem);
 		}
-		else if ($fieldName === 'ASSESSMENT_AVG')
+		elseif ($fieldName === 'ASSESSMENT_AVG')
 		{
 			$content = $this->getAssessmentAvgField($callAssessmentItem, $fieldsData);
 		}
-//		else if ($fieldName === 'INSPECTOR')
-//		{
-//			$content = $this->getInspectorField($callAssessmentItem, $fieldsData);
-//		}
-		else if ($fieldName === 'TITLE')
+		elseif ($fieldName === 'TITLE')
 		{
 			$content = $this->getTitleField($callAssessmentItem);
 		}
-		else if ($fieldName === 'ID')
+		elseif ($fieldName === 'ID')
 		{
 			$content = $this->getIdField($callAssessmentItem);
 		}
-		else if ($fieldName === 'MODIFIED')
+		elseif ($fieldName === 'MODIFIED')
 		{
 			$content = $this->getModifiedField($callAssessmentItem, $fieldsData);
 		}
-		else if ($fieldName === 'GIST')
+		elseif ($fieldName === 'GIST')
 		{
 			$content = $this->getGistField($callAssessmentItem, $fieldsData);
 		}
@@ -438,7 +464,7 @@ class CrmCopilotCallAssessmentListComponent extends Base
 				: 'CRM_COMMON_ACTION_EDIT'
 		);
 
-		$buttonBuilder = new UI\Buttons\Button([
+		$buttonParams = [
 			'id' => 'crm-copilot-call-assessment-list-edit-' . $id,
 			'dataset' => [
 				'btn-uniqid' => 'crm-copilot-call-assessment-list-edit-' . $id,
@@ -447,10 +473,24 @@ class CrmCopilotCallAssessmentListComponent extends Base
 			'text' => Loc::getMessage($textCode),
 			'size' => UI\Buttons\Size::EXTRA_SMALL,
 			'link' => $this->getDetailsUri($id)->getUri(),
-			'round' => true,
-		]);
+		];
 
-		return $buttonBuilder->render();
+		if ($this->isV2)
+		{
+			$buttonParams['style'] = UI\Buttons\AirButtonStyle::OUTLINE_NO_ACCENT;
+		}
+		else
+		{
+			$buttonParams['round'] = true;
+		}
+
+		$button = new UI\Buttons\Button($buttonParams);
+		if ($this->isV2)
+		{
+			$button->addClass('crm-copilot-call-assessment-list--v2-edit-btn');
+		}
+
+		return $button->render();
 	}
 
 	private function getIsEnabledField(CopilotCallAssessment $callAssessmentItem): string
@@ -477,7 +517,7 @@ class CrmCopilotCallAssessmentListComponent extends Base
 			$className .= ' --not-available';
 			$iconContainer = $this->getAvailabilityIconContainer();
 		}
-		
+
 		return <<<HTML
 			<div class="{$className}">
 				<div class="crm-copilot-call-assessment-list-modified-field-switcher-wrapper">
@@ -497,21 +537,21 @@ class CrmCopilotCallAssessmentListComponent extends Base
 			</script>
 HTML;
 	}
-	
+
 	private function getAvailabilityDataContent(CopilotCallAssessment $callAssessmentItem): string
 	{
 		if (!Feature::enabled(Feature\CopilotCallAssessmentAvailability::class))
 		{
 			return '';
 		}
-		
+
 		$item = CallAssessmentItem::createFromEntity($callAssessmentItem);
 		$availabilityData = $item->getAvailabilityData();
 		if (empty($availabilityData))
 		{
 			return '';
 		}
-		
+
 		$availabilityType = $item->getAvailabilityType();
 		if ($availabilityType === AvailabilityType::PERIOD->value)
 		{
@@ -521,16 +561,15 @@ HTML;
 					'#FROM#' => FormatDate($format, CCrmDateTimeHelper::getUserTime($row['startPoint'])->getTimestamp()),
 					'#TO#' => FormatDate($format, CCrmDateTimeHelper::getUserTime($row['endPoint'])->getTimestamp()),
 				]),
-				$availabilityData
+				$availabilityData,
 			);
-			
+
 			return '
 				<div class="crm-copilot-call-assessment-list-modified-field-availability">'
 				. implode('<br>', $result)
-				.'</div>'
-			;
+				. '</div>';
 		}
-		
+
 		if ($availabilityType === AvailabilityType::CUSTOM->value)
 		{
 			$result = array_map(
@@ -539,19 +578,18 @@ HTML;
 					'#FROM#' => CCrmDateTimeHelper::getUserTime($row['startPoint'])->format('H:i'),
 					'#TO#' => CCrmDateTimeHelper::getUserTime($row['endPoint'])->format('H:i'),
 				]),
-				$availabilityData
+				$availabilityData,
 			);
-			
+
 			return '
 				<div class="crm-copilot-call-assessment-list-modified-field-availability">'
 				. implode('<br>', $result)
-				.'</div>'
-			;
+				. '</div>';
 		}
-		
+
 		return '';
 	}
-	
+
 	private function getAvailabilityIconContainer(): string
 	{
 		return '
@@ -610,33 +648,6 @@ HTML;
 HTML;
 	}
 
-	// temporary disabled
-	/*private function getInspectorField(CopilotCallAssessment $callAssessmentItem, array $fieldsData): string
-	{
-		$headItems = $callAssessmentItem->getControlHeads() ?? [];
-
-		$content = '';
-		foreach ($headItems as $headItem)
-		{
-			[$userType, $userId] = $headItem;
-
-			if ($userType === InspectorType::DIVISION_HEAD->value)
-			{
-				$item = Loc::getMessage('CRM_COPILOT_CALL_ASSESSMENT_LIST_COLUMN_INSPECTOR_DIVISION_HEAD');
-			}
-			else
-			{
-				$photoUrl = $fieldsData['users'][$userId]['PHOTO_URL'] ?? null;
-				$avatar = $photoUrl ? '<img src="' . $photoUrl . '">' : '';
-				$item = $avatar . ' ' . htmlspecialcharsbx($fieldsData['users'][$userId]['FORMATTED_NAME'] ?? '');
-			}
-
-			$content .= '<span>' . $item . '</span>';
-		}
-
-		return '<div class="crm-copilot-call-assessment-list-inspector-field">' . $content . '</div>';
-	}*/
-
 	private function getTitleField(CopilotCallAssessment $callAssessmentItem): string
 	{
 		$id = $callAssessmentItem->getId();
@@ -647,14 +658,32 @@ HTML;
 		{
 			$badge = Badge::createByType(
 				Badge::COPILOT_CALL_ASSESSMENT_STATUS_TYPE,
-				CopilotCallAssessmentStatus::ERROR_VALUE
+				CopilotCallAssessmentStatus::ERROR_VALUE,
 			);
 			$badgeHtml = BadgeBuilder::render([$badge->getConfigFromMap()]);
 		}
 
-		return '<div class="crm-copilot-call-assessment-list--field-column"><a href="' . $uri . '">'
+		$descriptionHtml = '';
+		if ($this->isV2)
+		{
+			$description = trim((string)$callAssessmentItem->getDescription());
+			if ($description !== '')
+			{
+				$descriptionHtml = '<div class="crm-copilot-call-assessment-list--title-description">'
+					. nl2br(htmlspecialcharsbx($description))
+					. '</div>';
+			}
+		}
+
+		$wrapperClass = 'crm-copilot-call-assessment-list--field-column';
+		if ($this->isV2)
+		{
+			$wrapperClass .= ' crm-copilot-call-assessment-list--v2-title';
+		}
+
+		return '<div class="' . $wrapperClass . '"><a href="' . $uri . '">'
 			. htmlspecialcharsbx($callAssessmentItem->getTitle())
-			. '</a>' . $badgeHtml . '</div>';
+			. '</a>' . $badgeHtml . $descriptionHtml . '</div>';
 	}
 
 	private function getIdField(CopilotCallAssessment $callAssessmentItem): string
@@ -677,15 +706,75 @@ HTML;
 		$updatedAt = $this->formatDateTime($callAssessmentItem->getUpdatedAt());
 
 		$classPrefix = 'crm-copilot-call-assessment-list-modified-field';
+		$wrapperClass = $classPrefix;
+		if ($this->isV2)
+		{
+			$wrapperClass .= ' crm-copilot-call-assessment-list--v2-modified';
+		}
 		$date = '<div class="' . $classPrefix . '-date">' . $updatedAt . '</div>';
 		$user = '<div class="' . $classPrefix . '-user">' . $name . '</div>';
 
-		return '<div class="' . $classPrefix . '">' . $date . $user . '</div>';
+		return '<div class="' . $wrapperClass . '">' . $date . $user . '</div>';
 	}
 
 	private function getGistField(CopilotCallAssessment $callAssessmentItem, array $fieldsData): string
 	{
 		return '<div>' . nl2br(htmlspecialcharsbx($callAssessmentItem->getGist())) . '</div>';
+	}
+
+	private function getMatchBadge(CopilotCallAssessment $callAssessmentItem, array $fieldsData): string
+	{
+		$value = (int)($fieldsData['assessments'][$callAssessmentItem->getId()] ?? 0);
+		if ($value <= 0)
+		{
+			return '';
+		}
+
+		$zone = 'default';
+		$lowBorder = (int)$callAssessmentItem->getLowBorder();
+		$highBorder = (int)$callAssessmentItem->getHighBorder();
+		if ($lowBorder > 0 && $value < $lowBorder)
+		{
+			$zone = 'low';
+		}
+		elseif ($highBorder > 0 && $value >= $highBorder)
+		{
+			$zone = 'high';
+		}
+
+		return sprintf(
+			'<span class="crm-copilot-call-assessment-list--match-badge --%s">%d%%</span>',
+			$zone,
+			$value,
+		);
+	}
+
+	private function getMatchField(CopilotCallAssessment $callAssessmentItem, array $fieldsData): string
+	{
+		$badge = $this->getMatchBadge($callAssessmentItem, $fieldsData);
+		$count = $fieldsData['callCounts'][$callAssessmentItem->getId()] ?? 0;
+		if ($count <= 0)
+		{
+			return $badge;
+		}
+
+		$url = $this->getCallsListUri($callAssessmentItem->getId());
+		$text = Loc::getMessagePlural(
+			'CRM_COPILOT_CALL_ASSESSMENT_LIST_MATCH_CALLS_LINK',
+			$count,
+			['#COUNT#' => $count],
+		);
+
+		return $badge . sprintf(
+				'<a class="crm-copilot-call-assessment-list--match-link" href="%s">%s</a>',
+				htmlspecialcharsbx($url->getUri()),
+				htmlspecialcharsbx($text),
+			);
+	}
+
+	private function getCallsListUri(int $assessmentId): Main\Web\Uri
+	{
+		return new Main\Web\Uri('/crm/copilot-call-assessment/' . $assessmentId . '/calls/');
 	}
 
 	private function formatDateTime(DateTime $dateTime): string
@@ -710,7 +799,7 @@ HTML;
 		return FormatDate($format, $dateTime, $userNow);
 	}
 
-	private function getDefaultDateTimeFormat(): string | array | null
+	private function getDefaultDateTimeFormat(): string|array|null
 	{
 		if ($this->defaultDateTimeFormat !== null)
 		{
@@ -736,7 +825,7 @@ HTML;
 			$this->defaultDateTimeFormat = preg_replace(
 				'/:s$/',
 				'',
-				$format
+				$format,
 			);
 		}
 
@@ -761,12 +850,12 @@ HTML;
 		];
 		$columns[] = [
 			'id' => 'CLIENT',
-			'default' => true,
+			'default' => false,
 			'name' => Loc::getMessage('CRM_COPILOT_CALL_ASSESSMENT_LIST_COLUMN_CLIENT'),
 		];
 		$columns[] = [
 			'id' => 'CALL_TYPE',
-			'default' => true,
+			'default' => false,
 			'name' => Loc::getMessage('CRM_COPILOT_CALL_ASSESSMENT_LIST_COLUMN_CALL_TYPE'),
 		];
 		$columns[] = [
@@ -775,17 +864,32 @@ HTML;
 			'name' => Loc::getMessage('CRM_COPILOT_CALL_ASSESSMENT_LIST_COLUMN_ACTIVITY'),
 			'sort' => 'IS_ENABLED',
 		];
-		$columns[] = [
-			'id' => 'ASSESSMENT_AVG',
-			'default' => false,
-			'name' => Loc::getMessage('CRM_COPILOT_CALL_ASSESSMENT_LIST_COLUMN_ASSESSMENT_AVG'),
-		];
+		if ($this->isV2)
+		{
+			$columns[] = [
+				'id' => 'MATCH',
+				'default' => true,
+				'name' => Loc::getMessage('CRM_COPILOT_CALL_ASSESSMENT_LIST_COLUMN_ASSESSMENT_AVG'),
+			];
+		}
+		else
+		{
+			$columns[] = [
+				'id' => 'ASSESSMENT_AVG',
+				'default' => false,
+				'name' => Loc::getMessage('CRM_COPILOT_CALL_ASSESSMENT_LIST_COLUMN_ASSESSMENT_AVG'),
+			];
+		}
 		$columns[] = [
 			'id' => 'PROMPT',
 			'default' => true,
-			'name' => Loc::getMessage('CRM_COPILOT_CALL_ASSESSMENT_LIST_COLUMN_PROMPT'),
+			'name' => Loc::getMessage(
+				$this->isV2
+					? 'CRM_COPILOT_CALL_ASSESSMENT_LIST_COLUMN_PROMPT_V2'
+					: 'CRM_COPILOT_CALL_ASSESSMENT_LIST_COLUMN_PROMPT',
+			),
 		];
-		if ($this->needShowGistColumn())
+		if (!$this->isV2 && $this->needShowGistColumn())
 		{
 			$columns[] = [
 				'id' => 'GIST',
@@ -818,26 +922,67 @@ HTML;
 		$buttons = [];
 
 		$isCopilotEnabled = AIManager::isEnabledInGlobalSettings(GlobalSetting::CallAssessment);
+		$sliderWidth = AIManager::isCallScoringV2Enabled() ? 729 : 700;
 
 		$buttons[UI\Toolbar\ButtonLocation::AFTER_TITLE][] = new UI\Buttons\Button([
 			'color' => UI\Buttons\Color::SUCCESS,
 			'text' => Loc::getMessage('CRM_COMMON_ACTION_CREATE'),
 			'onclick' => new UI\Buttons\JsCode(
-				"(new BX.Crm.Copilot.CallAssessmentList.ActionButton(" . ($isCopilotEnabled ? 'true' : 'false') . ")).execute()"
+				"(new BX.Crm.Copilot.CallAssessmentList.ActionButton(" . ($isCopilotEnabled ? 'true' : 'false') . ", $sliderWidth)).execute()",
 			),
 		]);
 
+		if ($this->isV2)
+		{
+			$biReportOnClick = BiReportButton::getInstance()->getOnClickJsCode('crm_copilot_call_assessment_list');
+			if ($biReportOnClick !== null)
+			{
+				$buttons[UI\Toolbar\ButtonLocation::RIGHT][] = new UI\Buttons\Button([
+					'color' => UI\Buttons\Color::LIGHT_BORDER,
+					'style' => UI\Buttons\AirButtonStyle::OUTLINE_NO_ACCENT,
+					'size'  => UI\Buttons\Size::SMALL,
+					'text'  => Loc::getMessage('CRM_COPILOT_CALL_ASSESSMENT_LIST_BI_REPORT'),
+					'icon'  => null,
+					'attributes' => [
+						'title' => Loc::getMessage('CRM_COPILOT_CALL_ASSESSMENT_LIST_BI_REPORT_HINT'),
+					],
+					'onclick' => $biReportOnClick,
+				]);
+			}
+
+			$buttons[UI\Toolbar\ButtonLocation::RIGHT][] = $this->buildSettingsButton();
+		}
+
 		$parameters['buttons'] = $buttons;
 
-//		@todo prepare for narrow screens
-//		$logoPath = '/bitrix/components/bitrix/crm.copilot.call.assessment.list/templates/.default/images/crm-copilot-call-assessment-list-toolbar-person.png';
-//		$parameters['guide'] = new \Bitrix\Crm\UI\Toolbar\ToolbarGuide(
-//				Loc::getMessage('CRM_COPILOT_CALL_ASSESSMENT_LIST_TOOLBAR_GUIDE_TITLE', ['#COPILOT_NAME#' => AIManager::getCopilotName()]),
-//				$logoPath,
-//				'flows' // @todo temporary, replace to actual
-//			);
-
 		return array_merge(parent::getToolbarParameters(), $parameters);
+	}
+
+	private function buildSettingsButton(): UI\Buttons\Button
+	{
+		return new UI\Buttons\Button([
+			'color' => UI\Buttons\Color::LIGHT_BORDER,
+			'style' => UI\Buttons\AirButtonStyle::OUTLINE_NO_ACCENT,
+			'size'  => UI\Buttons\Size::SMALL,
+			'text'  => Loc::getMessage('CRM_COPILOT_CALL_ASSESSMENT_LIST_SETTINGS'),
+			'icon'  => null,
+			'dropdown' => true,
+			'menu' => [
+				'id' => 'crm-copilot-call-assessment-list-settings-menu',
+				'closeByEsc' => true,
+				'angle' => true,
+				'items' => [
+					[
+						'text' => Loc::getMessage('CRM_COPILOT_CALL_ASSESSMENT_LIST_SETTINGS_ASSESSMENT'),
+						'onclick' => $this->buildOpenAgentSetupOnClick(),
+					],
+					[
+						'html' => Loc::getMessage('CRM_COPILOT_CALL_ASSESSMENT_LIST_SETTINGS_REPORTING'),
+						'onclick' => $this->buildOpenSummaryMasterOnClick(),
+					],
+				],
+			],
+		]);
 	}
 
 	private function isReadOnly(): bool
@@ -845,11 +990,47 @@ HTML;
 		return !Container::getInstance()->getUserPermissions()->copilotCallAssessment()->canEdit();
 	}
 
+	private function buildOpenAgentSetupOnClick(): UI\Buttons\JsCode
+	{
+		$templateId = (new CallAssessmentAiAgent())->findLaunchedTemplateId();
+		if ($templateId === null)
+		{
+			return new UI\Buttons\JsCode('');
+		}
+
+		$js = <<<JS
+			BX.Runtime.loadExtension('bizproc.setup-template').then(({ SetupTemplate }) => {
+				BX.ajax.runAction('bizproc.v2.Integration.AiAgent.Template.start', {
+					json: {
+						templateId: {$templateId},
+					},
+				}).then((result) => {
+					const data = result?.data?.setupTemplateData;
+					if (data && SetupTemplate)
+					{
+						SetupTemplate.showSidePanel(data);
+					}
+				});
+			});
+JS;
+
+		return new UI\Buttons\JsCode($js);
+	}
+
+	private function buildOpenSummaryMasterOnClick(): UI\Buttons\JsCode
+	{
+		$path = '/crm/copilot-call-assessment/summary/';
+
+		return new UI\Buttons\JsCode(
+			"BX.SidePanel.Instance.open('$path', { cacheable: false, width: 700 });",
+		);
+	}
+
 	private function needShowGistColumn(): bool
 	{
 		return !is_null($this->request->get('criteria'));
 	}
-	
+
 	private function getCultureDateTimeFormat(): ?string
 	{
 		$culture = Application::getInstance()->getContext()->getCulture();
@@ -857,9 +1038,9 @@ HTML;
 		{
 			return null;
 		}
-		
+
 		$shortTimeFormat = $culture->getShortTimeFormat();
-		
+
 		return $culture->getLongDateFormat() . ', ' . $shortTimeFormat;
 	}
 

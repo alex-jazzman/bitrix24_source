@@ -5,6 +5,7 @@ export type StarterData = {
 	documentId?: string | number, // deprecated
 	signedDocumentType: string,
 	signedDocumentId?: string,
+	categoryId?: ?number,
 	templates?: [],
 	ajaxUrl?: string,
 	triggerType: ?string,

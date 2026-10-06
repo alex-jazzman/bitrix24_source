@@ -8,9 +8,11 @@ return [
 	'css' => 'dist/base.bundle.css',
 	'js' => 'dist/base.bundle.js',
 	'rel' => [
+		'landing.loc',
+		'landing.ui.a11y',
+		'landing.utils',
 		'main.core',
 		'main.core.events',
-		'landing.utils',
 	],
 	'skip_core' => false,
 ];

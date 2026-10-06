@@ -2,6 +2,6 @@
 
 return [
 	'extensions' => [
-
+		'entity-ready',
 	],
 ];

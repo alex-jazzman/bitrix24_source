@@ -15,10 +15,12 @@ jn.define('disk/simple-list/items/file-redux', (require, exports, module) => {
 				customStyles: this.props.customStyles,
 				showBorder: this.props.item.showBorder,
 				order: this.props.item.order,
-				parentWidget: this.props.parentWidget,
+				parentWidget: this.props.item.parentWidget ?? this.props.layout,
 				showStorageName: this.props.item.showStorageName,
 				context: this.props.item.context,
 				relativeFolderId: this.props.item.relativeFolderId,
+				itemDetailOpenHandler: this.props.itemDetailOpenHandler,
+				params: this.params,
 			});
 		}
 	}

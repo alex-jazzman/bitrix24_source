@@ -64,15 +64,7 @@ class DealInvoiceStatistics extends DealDataSource
 			}
 		}
 
-		if($name === '')
-		{
-			$name = 'INVOICE_SUM';
-		}
-
-		if(!in_array($name, self::getAllowedSelectNames(), true))
-		{
-			$name = 'INVOICE_SUM';
-		}
+		$name = $this->sanitizeSelectName($name, 'INVOICE_SUM');
 
 		if($aggregate !== '' && !in_array($aggregate, array('SUM', 'COUNT', 'MAX', 'MIN')))
 		{
@@ -95,20 +87,24 @@ class DealInvoiceStatistics extends DealDataSource
 		$periodEndDate = $period['END'];
 
 		$query = new Query(DealInvoiceStatisticsTable::getEntity());
-		$query->addSelect($name);
+		$nameAlias = $name;
 
 		if($aggregate !== '')
 		{
 			if($aggregate === 'COUNT')
 			{
-				$query->registerRuntimeField('', new ExpressionField($name, "COUNT(*)"));
+				$query->registerRuntimeField('', new ExpressionField($nameAlias, "COUNT(*)"));
 			}
 			else
 			{
-				$query->registerRuntimeField('', new ExpressionField($name, "{$aggregate}(%s)", $name));
+				//An expression must not be named after the field it is built from: such a field
+				//shadows the original one and makes the expression refer to itself.
+				$nameAlias = "{$name}_R";
+				$query->registerRuntimeField('', new ExpressionField($nameAlias, "{$aggregate}(%s)", $name));
 			}
 		}
 
+		$query->addSelect($nameAlias);
 		$query->setTableAliasPostfix('_s2');
 
 		$subQuery = new Query(DealInvoiceStatisticsTable::getEntity());
@@ -160,7 +156,12 @@ class DealInvoiceStatistics extends DealDataSource
 			{
 				if(isset($sortItem['name']))
 				{
-					$query->addOrder($sortItem['name'], isset($sortItem['order']) ? $sortItem['order'] : 'asc');
+					$sortName = $sortItem['name'];
+					if($sortName === $name)
+					{
+						$sortName = $nameAlias;
+					}
+					$query->addOrder($sortName, isset($sortItem['order']) ? $sortItem['order'] : 'asc');
 				}
 			}
 		}
@@ -198,10 +199,17 @@ class DealInvoiceStatistics extends DealDataSource
 		$dbResult = $query->exec();
 		//Trace('sql', Query::getLastQuery(), 1);
 		$result = array();
+		$useAlias = $nameAlias !== $name;
 		if($group === self::GROUP_BY_DATE)
 		{
 			while($ary = $dbResult->fetch())
 			{
+				if($useAlias && array_key_exists($nameAlias, $ary))
+				{
+					$ary[$name] = $ary[$nameAlias];
+					unset($ary[$nameAlias]);
+				}
+
 				$ary['DATE'] = $ary['D']->format('Y-m-d');
 				unset($ary['D']);
 
@@ -219,6 +227,12 @@ class DealInvoiceStatistics extends DealDataSource
 			$userIDs = array();
 			while($ary = $dbResult->fetch())
 			{
+				if($useAlias && array_key_exists($nameAlias, $ary))
+				{
+					$ary[$name] = $ary[$nameAlias];
+					unset($ary[$nameAlias]);
+				}
+
 				$userID = $ary['RESPONSIBLE_ID'] = (int)$ary['RESPONSIBLE_ID'];
 				if($userID > 0 && !isset($userNames[$userID]))
 				{
@@ -232,6 +246,12 @@ class DealInvoiceStatistics extends DealDataSource
 		{
 			while($ary = $dbResult->fetch())
 			{
+				if($useAlias && array_key_exists($nameAlias, $ary))
+				{
+					$ary[$name] = $ary[$nameAlias];
+					unset($ary[$nameAlias]);
+				}
+
 				$result[] = $ary;
 			}
 		}
@@ -346,7 +366,7 @@ class DealInvoiceStatistics extends DealDataSource
 		);
 	}
 
-	private static function getAllowedSelectNames()
+	protected function getAllowedSelectNames()
 	{
 		return array(
 			'INVOICE_SUM',

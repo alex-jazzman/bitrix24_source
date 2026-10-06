@@ -3,7 +3,7 @@ import { BaseEvent } from 'main.core.events';
 import { Popup } from 'main.popup';
 import { Button, ButtonColor, ButtonManager, ButtonState } from 'ui.buttons';
 import { Dialog } from 'ui.entity-selector';
-import { Slider as ImportSlider } from 'biconnector.dataset-import';
+import { Slider as ImportSlider } from 'biconnector.dataset-import-v2';
 
 type SettingField = {
 	name: string,

@@ -12,7 +12,7 @@ function ConditionCompose($arRequest, $i = 0)
 	}
 	elseif ($type == 'ugroups' && is_array($arRequest['CONDITION_ugroups']))
 	{
-		for ($i = 0; $i < count($arRequest['CONDITION_ugroups']); $i++)
+		for ($i = 0, $n = count($arRequest['CONDITION_ugroups']); $i < $n; $i++)
 		{
 			$arRequest['CONDITION_ugroups'][$i] = intval($arRequest['CONDITION_ugroups'][$i]);
 		}

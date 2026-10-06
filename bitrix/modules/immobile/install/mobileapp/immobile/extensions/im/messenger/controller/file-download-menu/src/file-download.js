@@ -8,8 +8,9 @@ jn.define('im/messenger/controller/file-download-menu/src/file-download', (requi
 	const { Logger } = require('im/messenger/lib/logger');
 	const { DiskService } = require('im/messenger/provider/services/disk');
 	const { Notification } = require('im/messenger/lib/ui/notification');
-	const { EventType } = require('im/messenger/const');
+	const { EventType, ActionByUserType } = require('im/messenger/const');
 	const { FileDownloadType } = require('im/messenger/const');
+	const { UserPermission } = require('im/messenger/lib/permission-manager');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 
 	/**
@@ -51,7 +52,7 @@ jn.define('im/messenger/controller/file-download-menu/src/file-download', (requi
 
 		createActionDownloadOneFile()
 		{
-			return [
+			const actions = [
 				{
 					id: 'download-to-device',
 					title: Loc.getMessage('IMMOBILE_MESSENGER_FILE_DOWNLOAD_MENU_DOWNLOAD_TO_DEVICE'),
@@ -60,15 +61,21 @@ jn.define('im/messenger/controller/file-download-menu/src/file-download', (requi
 						this.menuClose(this.downloadFileToDevice);
 					},
 				},
-				{
+			];
+
+			if (UserPermission.canPerformActionByUserType(ActionByUserType.saveFileToDisk))
+			{
+				actions.push({
 					id: 'download-to-disk',
 					title: Loc.getMessage('IMMOBILE_MESSENGER_FILE_DOWNLOAD_MENU_DOWNLOAD_TO_DISK_MSGVER_1'),
 					icon: Icon.FOLDER_24,
 					onClickCallback: () => {
 						this.menuClose(this.downloadFileToDisk);
 					},
-				},
-			];
+				});
+			}
+
+			return actions;
 		}
 
 		async open()

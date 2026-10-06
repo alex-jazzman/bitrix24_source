@@ -56,7 +56,6 @@ $MESS["IM_PHONE_CALL_VIEW_FOLDED_CALL_LIST_TO_NUMBER"] = "Звонок на но
 $MESS["IM_PHONE_CALL_VIEW_INTERCEPT"] = "Перехватить";
 $MESS["IM_PHONE_CALL_VIEW_MORE"] = "Еще";
 $MESS["IM_PHONE_CALL_VIEW_NUMBER_UNKNOWN"] = "Номер не указан";
-$MESS["IM_PHONE_CALL_VIEW_RATE_QUALITY"] = "Оцените качество связи";
 $MESS["IM_PHONE_CALL_VIEW_SAVE"] = "Сохранить";
 $MESS["IM_PHONE_CALL_VIEW_UNFOLD"] = "Развернуть";
 $MESS["IM_PHONE_CALL_VIEW_WEBFORM_TITLE"] = "Форма";

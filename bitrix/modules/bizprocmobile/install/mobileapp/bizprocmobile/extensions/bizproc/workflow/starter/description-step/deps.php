@@ -16,6 +16,10 @@ return [
 		'layout/ui/empty-screen',
 		'layout/ui/wizard/step',
 
+		'ui-system/typography/text',
+		'tokens',
+
+		'bizproc:helper/network-error',
 		'bizproc:wizard/progress-bar-number',
 	],
 ];

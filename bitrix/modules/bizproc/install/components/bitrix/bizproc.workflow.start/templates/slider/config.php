@@ -16,6 +16,8 @@ return [
 		'main.date',
 		'sidepanel',
 		'main.core.events',
+		'bizproc.a11y',
+		'ui.a11y',
 		'ui.buttons',
 		'main.core',
 		'ui.dialogs.messagebox',

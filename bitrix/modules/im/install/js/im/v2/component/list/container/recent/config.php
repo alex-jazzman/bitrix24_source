@@ -21,6 +21,7 @@ return [
 		'im.v2.lib.copilot',
 		'im.v2.lib.create-chat',
 		'im.v2.lib.feature',
+		'im.v2.lib.folder',
 		'im.v2.lib.helpdesk',
 		'im.v2.lib.invite',
 		'im.v2.lib.logger',
@@ -31,6 +32,7 @@ return [
 		'main.core.events',
 		'ui.icon-set.api.vue',
 		'ui.info-helper',
+		'ui.vue3',
 	],
 	'skip_core' => false,
 ];

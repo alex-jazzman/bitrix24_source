@@ -6,13 +6,15 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\Bizproc\Activity\ActivityDescription;
+use Bitrix\Bizproc\Activity\Enum\ActionArea;
+use Bitrix\Bizproc\Activity\Enum\ActionGroup;
 use Bitrix\Bizproc\Activity\Enum\ActivityColorIndex;
 use Bitrix\Bizproc\Activity\Enum\ActivityGroup;
 use Bitrix\Bizproc\Activity\Enum\ActivityType;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Ui\Public\Enum\IconSet\Outline;
 
-$arActivityDescription = (new ActivityDescription(
+$description = (new ActivityDescription(
 	name: Loc::getMessage('BPCTLCA_NAME_1') ?? '',
 	description: Loc::getMessage('BPCTLCA_DESCRIPTION_1') ?? '',
 	type: [
@@ -38,14 +40,24 @@ $arActivityDescription = (new ActivityDescription(
 		'GROUP' => ['informingEmployee'],
 		'SORT' => 800,
 	])
-	->setNodeActionSettings([
-		'HANDLES_DOCUMENT' => true,
-	])
 	->setColorIndex(ActivityColorIndex::BLUE->value)
 	->setGroups([
 		ActivityGroup::INTERNAL_COMMUNICATION->value,
 	])
 	->setIcon(Outline::ADD_TIMELINE->name)
 	->setAiDescription('Adds a comment from a specified employee to the CRM entity timeline')
-	->toArray()
 ;
+
+if (
+	enum_exists('\Bitrix\Bizproc\Activity\Enum\ActionGroup')
+	&& enum_exists('\Bitrix\Bizproc\Activity\Enum\ActionArea')
+)
+{
+	$description->setNodeActionSettings([
+		'HANDLES_DOCUMENT' => true,
+		'ACTION_GROUP' => ActionGroup::ADD->value,
+		'ACTION_AREA' => ActionArea::CRM->value,
+	]);
+}
+
+$arActivityDescription = $description->toArray();

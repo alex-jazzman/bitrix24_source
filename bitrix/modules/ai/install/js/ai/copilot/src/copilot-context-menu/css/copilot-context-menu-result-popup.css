@@ -29,3 +29,37 @@
 .ai__copilot-context-menu_result-popup-warning {
 	margin-top: 10px;
 }
+
+/* ======================================================
+ * BitrixGPT Redesign overrides (Phase 2)
+ * All rules MUST stay under .ai__copilot-scope.--bitrixgpt-redesign
+ * ====================================================== */
+
+/* P2.T5 — Result popup: border + bg.
+ * NB: the popup-window root carries ai__copilot-scope, --bitrixgpt-redesign AND
+ * ai__copilot-context-menu__result-popup on the SAME element (see result-popup.js className),
+ * so the popup-root override is a COMPOUND selector; -popup-text is a true descendant. */
+.ai__copilot-context-menu__result-popup.--bitrixgpt-redesign {
+	border-color: var(--ui-color-design-outline-bitrix-gpt-stroke-gradient-1, #73C6F3);
+	background-color: var(--ui-color-bg-content-primary, #fff);
+}
+
+.ai__copilot-context-menu__result-popup.--bitrixgpt-redesign .ai__copilot-context-menu__result-popup-text-content {
+	color: var(--ui-color-accent-main-primary, #0075ff);
+}
+
+@supports ((background-clip: text) or (-webkit-background-clip: text)) {
+	.ai__copilot-context-menu__result-popup.--bitrixgpt-redesign .ai__copilot-context-menu__result-popup-text-content {
+		background: linear-gradient(90deg,
+			var(--ui-color-design-outline-bitrix-gpt-content-gradient-1, #0098ea) 0%,
+			var(--ui-color-design-outline-bitrix-gpt-content-gradient-2, #3f68ff) 25%,
+			var(--ui-color-design-outline-bitrix-gpt-content-gradient-3, #9d48ff) 50%,
+			var(--ui-color-design-outline-bitrix-gpt-content-gradient-4, #f046b7) 75%,
+			var(--ui-color-design-outline-bitrix-gpt-content-gradient-5, #f96269) 100%
+		);
+		-webkit-background-clip: text;
+		background-clip: text;
+		color: transparent;
+		-webkit-text-fill-color: transparent;
+	}
+}

@@ -28,7 +28,7 @@ export const OrderedList = {
 	methods: {
 		getFormattedText(text: string): string
 		{
-			return Parser.decodeText(text);
+			return Parser.decodeInlineText(text);
 		},
 		getTextColorClass(item: ListItemType): string
 		{
@@ -40,11 +40,12 @@ export const OrderedList = {
 		},
 	},
 	template: `
-		<ol class="bx-im-message-block-ordered-list__container">
+		<ol class="bx-im-message-block-ordered-list__container" data-testid="message-builder-ordered-list">
 			<li
 				v-for="(item, index) in listBlock.elements"
 				:key="index"
 				class="bx-im-message-block-ordered-list__item"
+				data-testid="message-builder-ordered-list-item"
 			>
 				<span
 					class="bx-im-message-block-ordered-list__marker"

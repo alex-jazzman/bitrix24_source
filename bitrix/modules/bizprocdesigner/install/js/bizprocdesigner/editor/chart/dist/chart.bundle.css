@@ -41,622 +41,47 @@
 
 	--designer-bp-frame-pink-bg: rgba(255, 232, 232, 1);
 	--designer-bp-frame-pink-br: rgba(250, 174, 174, 1);
-}
-
-.editor-chart-app-layout {
-	display: flex;
-	flex-direction: column;
-	justify-content: space-between;
-	width: 100%;
-	height: 100%;
-	position: relative;
-}
-
-.editor-chart-app-layout__header {
-	position: relative;
-	z-index: 16;
-	width: 100%;
-	height: 56px;
-	box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.1);
-}
-
-.editor-chart-app-layout__content {
-	position: relative;
-	height: calc(100% - 56px);
-}
-
-.editor-chart-app-layout__top-right-toolbar {
-	display: flex;
-	justify-content: flex-end;
-	align-items: flex-start;
-	gap: 8px;
-	position: absolute;
-	right: 8px;
-	top: 8px;
-	z-index: 2;
-	max-width: 415px;
-	transition: transform 0.3s ease;
-}
-
-.editor-chart-app-layout__top-middle-anchor {
-	display: flex;
-	position: absolute;
-	top: 0;
-	left: 50%;
-	z-index: 16;
-	max-width: 740px;
-	transform: translate(-50%, 0%);
-}
-
-.editor-chart-app-layout__top-right-toolbar.--shifted {
-	transform: translateX(-589px);
-}
-
-.editor-chart-app-layout__bottom-right-toolbar {
-	display: flex;
-	position: absolute;
-	right: 8px;
-	bottom: 8px;
-	z-index: 2;
-	justify-content: flex-end;
-	align-items: flex-start;
-	gap: 8px;
-	max-width: 350px;
-	transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), bottom 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.editor-chart-app-layout__bottom-right-toolbar div.ui-block-diagram-canvas-zoom-bar__map-close-icon {
-	background-color: var(--ui-color-base-5);
-}
-
-.editor-chart-app-layout__bottom-right-toolbar .ui-block-diagram-canvas-map__cursor {
-	stroke: var(--ui-color-blue-57);
-}
-
-.editor-chart-app-layout__bottom-right-toolbar.--shifted {
-	transform: translateX(-589px);
-}
-
-.editor-chart-app-layout__bottom-right-toolbar.--margined {
-	bottom: 320px;
-}
-
-.editor-chart-app-layout__debug-bar-toolbar {
-	display: flex;
-	position: absolute;
-	right: 8px;
-	bottom: 8px;
-	z-index: 3;
-	justify-content: flex-end;
-	align-items: flex-start;
-	gap: 8px;
-	transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-	background: var(--ui-color-palette-white-base);
-	box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.1);
-	border-radius: 8px;
-	/* @chef-ignore */
-	scrollbar-width: thin;
-	/* @chef-ignore */
-	scrollbar-color: var(--ui-color-base-30) var(--ui-color-base-02);
-}
-
-.editor-chart-app-layout__debug-bar-toolbar.--shifted {
-	transform: translateX(-589px);
-}
-
-.editor-chart-app-layout__catalog {
-	position: absolute;
-	top: 8px;
-	bottom: 8px;
-	left: 8px;
-	z-index: 2;
-	display: flex;
-	min-width: 54px;
-	border-radius: 8px;
-	background: var(--ui-color-palette-white-base);
-	box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.1);
-}
-
-.editor-chart-app-layout__settings {
-	position: absolute;
-	z-index: 15;
-	right: 8px;
-	top: 8px;
-	bottom: 8px;
-	width: 580px;
-	background: var(--ui-color-palette-white-base);
-	box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.1);
-	border-radius: 8px;
-	/* @chef-ignore */
-	scrollbar-width: thin;
-	/* @chef-ignore */
-	scrollbar-color: var(--ui-color-base-30) var(--ui-color-base-02);
-}
-
-.editor-chart-app-layout__settings::scrollbar-thumb:hover {
-	/* @chef-ignore */
-	scrollbar-width: thin;
-}
-
-.editor-chart-app-layout__settings.--with-preview-panel {
-	border-bottom-left-radius: 0;
-}
-
-.fade-settings-panel-enter-active,
-.fade-settings-panel-leave-active {
-	transition: transform 0.3s ease;
-}
-
-.fade-settings-panel-enter-from,
-.fade-settings-panel-leave-to {
-	transform: translateX(100%);
-}
-
-.fade-settings-panel-enter-to,
-.fade-settings-panel-leave-from {
-	transform: translateX(0);
-}
-
-.editor-chart-app-layout__preview-panel {
-	position: absolute;
-	top: 0;
-	bottom: 0;
-	right: 0;
-	left: 0;
-	z-index: 3;
-	width: 100%;
-	height: 100%;
-	background-color: rgba(10, 45, 95, 0.2);
-	overflow-x: hidden;
-}
-
-.editor-chart-app-layout__preview-panel-conatiner {
-	position: absolute;
-	top: 45px;
-	bottom: 8px;
-	right: 587px;
-	z-index: 4;
-	width: 522px;
-	border-top-left-radius: 16px;
-	border-bottom-left-radius: 16px;
-	background: var(--ui-color-palette-white-base);
-	box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.1);
-	overflow: hidden;
-}
-
-.editor-chart-app-layout__preview-panel-content {
-	position: relative;
-	width: 100%;
-	height: 100%;
-	overflow: hidden;
-}
-
-.fade-preview-panel-enter-active,
-.fade-preview-panel-leave-active {
-	transition: opacity 0.2s ease;
-}
-
-.fade-preview-panel-enter-from {
-	opacity: 0;
-}
-
-.fade-preview-panel-leave-to {
-	opacity: 0;
-}
-
-.editor-chart-app-layout__settings-data-inspector {
-	position: absolute;
-	z-index: 14;
-	right: 580px;
-	top: 52px;
-	bottom: 52px;
-	width: 596px;
-	background: var(--ui-color-palette-white-base);
-	box-shadow: 0 2px 2px 0 rgba(0,0,0,0.1);
-	border-bottom-left-radius: 8px;
-	border-top-left-radius: 8px;
-	/* @chef-ignore */
-	scrollbar-width: thin;
-	/* @chef-ignore */
-	scrollbar-color: var(--ui-color-base-30) var(--ui-color-base-02);
-	transition: transform 0.1s ease;
-}
-
-.editor-chart-app-layout__settings-data-inspector::after {
-	content: '';
-	position: absolute;
-	top: 0;
-	right: 0;
-	width: 16px;
-	height: 100%;
-	background: linear-gradient(270deg, rgba(0, 0, 0, 0.12) 0%, rgba(0, 0, 0, 0) 90%);
-	pointer-events: none;
-}
-
-.editor-chart-app-layout__settings-data-inspector-overlay {
-	position: absolute;
-	background-color: rgba(10, 45, 95, 0.2);
-	top: 0;
-	bottom: 0;
-	right: 0;
-	left: 0;
-	width: 100%;
-	height: 100%;
-	z-index: 13;
-}
-
-.fade-inspector-panel-enter-active {
-	transition: opacity 0.2s ease;
-}
-
-.fade-settings-panel-enter-active ~ .fade-inspector-panel-enter-active {
-	transition: opacity 0.2s ease 0.3s;
-}
-
-.fade-inspector-panel-leave-active {
-	transition: opacity 0.2s ease;
-}
-
-.fade-inspector-panel-enter-from {
-	opacity: 0;
-}
-
-.fade-inspector-panel-leave-to {
-	opacity: 0;
-}
-
-.fade-skeleton-leave-active {
-	transition: opacity 0.3s ease;
-}
-
-.fade-skeleton-leave-to {
-	opacity: 0;
-}
-.editor-chart-app-header {
-    position: relative;
-    z-index: 1;
-    display: flex;
-    justify-content: space-between;
-    gap: var(--ui-space-inline-sm);
-    width: 100%;
-    height: 56px;
-    padding: var(--ui-space-inset-2xs2) var(--ui-space-inset-sm) var(--ui-space-inset-2xs2) var(--ui-space-inset-sm2);
-    border-bottom: 1px;
-    background: var(--ui-color-background-primary);
-    box-sizing: border-box;
-}
-
-.editor-chart-app-header__left-column {
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-    gap: var(--ui-space-inline-sm);
-}
-
-.editor-chart-app-header__right-column {
-    display: flex;
-    align-items: center;
-    gap: var(--ui-space-inline-sm);
-    justify-content: flex-end;
-    flex-grow: 1;
-}
-.editor-chart-app-skeleton {
-	position: absolute;
-	inset: 0;
-	z-index: 30;
-	display: flex;
-	flex-direction: column;
-	background-color: var(--ui-color-designer-bp-background, #ecf0f2);
-	background-image:
-		linear-gradient(to right, rgba(161, 184, 217, 0.06) 1px, transparent 1px),
-		linear-gradient(to bottom, rgba(161, 184, 217, 0.06) 1px, transparent 1px);
-	background-size: 15px 15px, 15px 15px;
-	overflow: hidden;
-}
-
-
-.editor-chart-app-skeleton .ui-skeleton {
-	--radius: 4px;
-}
-
-.editor-chart-app-skeleton__placeholder-secondary .ui-skeleton {
-	background: var(--ui-color-base-7);
-}
-
-.editor-chart-app-skeleton__header {
-	position: relative;
-	z-index: 2;
-	display: flex;
-	align-items: center;
-	gap: 12px;
-	width: 100%;
-	height: 56px;
-	box-sizing: border-box;
-	padding: 6px 12px 6px 14px;
-	background: var(--ui-color-bg-content-primary);
-	box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.1);
-}
-
-.editor-chart-app-skeleton__header-company {
-	display: flex;
-	align-items: center;
-	gap: 14px;
-}
-
-.editor-chart-app-skeleton__header-company-name {
-	display: flex;
-	align-items: center;
-	gap: 12px;
-}
-
-.editor-chart-app-skeleton__header-title {
-	display: flex;
-	flex: 1 1 0;
-	min-width: 0;
-	align-items: center;
-	justify-content: flex-end;
-	gap: 12px;
-	padding-right: 6px;
-}
-
-.editor-chart-app-skeleton__header-actions {
-	display: flex;
-	align-items: center;
-	gap: 12px;
-}
-
-.editor-chart-app-skeleton__header-status {
-	display: flex;
-	align-items: center;
-	gap: 10px;
-}
-
-.editor-chart-app-skeleton__divider {
-	width: 1px;
-	height: 16px;
-	background: var(--ui-color-base-6);
-}
-
-
-.editor-chart-app-skeleton__content {
-	position: relative;
-	flex: 1 1 0;
-	min-height: 0;
-}
-
-.editor-chart-app-skeleton__catalog {
-	position: absolute;
-	top: 8px;
-	bottom: 8px;
-	left: 8px;
-	z-index: 2;
-	display: flex;
-	flex-direction: column;
-	gap: 16px;
-	width: 330px;
-	box-sizing: border-box;
-	padding: 12px 18px 18px;
-	border-radius: 8px;
-	background: var(--ui-color-bg-content-primary);
-	box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.1);
-	overflow: hidden;
-}
-
-.editor-chart-app-skeleton__catalog-header {
-	display: flex;
-	align-items: center;
-	gap: 19px;
-}
-
-.editor-chart-app-skeleton__catalog-search {
-	display: flex;
-	align-items: center;
-	gap: 18px;
-}
-
-.editor-chart-app-skeleton__catalog-search-input {
-	flex: 1 1 0;
-	min-width: 0;
-	height: 34px;
-	border: 1px solid var(--ui-color-base-6);
-	border-radius: 8px;
-}
-
-.editor-chart-app-skeleton__catalog-group {
-	display: flex;
-	align-items: center;
-	gap: 12px;
-}
-
-.editor-chart-app-skeleton__catalog-list {
-	display: flex;
-	flex-direction: column;
-	gap: 18px;
-	overflow: hidden;
-}
-
-.editor-chart-app-skeleton__catalog-item {
-	display: flex;
-	align-items: flex-start;
-	gap: 14px;
-}
-
-.editor-chart-app-skeleton__catalog-item-lines {
-	display: flex;
-	flex: 1 1 0;
-	min-width: 0;
-	flex-direction: column;
-	gap: 8px;
-}
 
-.editor-chart-app-skeleton__flex-fill {
-	flex: 1 1 0;
-	min-width: 0;
+	/* Action = purple: no ui-color-designer-bp-rules-* DS token for "action";
+	   hex from Figma 8XCy8X0vuiOkAPneMEOLJV, node 935:29616 (+ ACTION chip palette) */
+	--designer-bp-rules-action-stroke: #decaff;
+	--designer-bp-rules-action-bg: #f8f4ff;
+	--designer-bp-rules-action-text: #aa74ff;
+
+	/* BitrixGPT "ai glow" arc: curated palette, a documented exception to the
+	   no-hardcode-hex rule (DesignOps 2026-07-29, "curated palettes outside tokens").
+	   Only the 18% stop has a DS token (#3F68FF); #00A5FF, #9D47FF, #FC83D3 and
+	   #00CCCC have none, and the nearest token would distort the brand gradient.
+	   Figma "ai glow" COMPONENT_SET node-id=4950:19400, file HZJYbinbBA1DxpX99ZjJup.
+
+	   Color stops only: the conic-gradient itself is assembled on the spinning ring.
+	   A var() inside a custom property is substituted where that property is declared,
+	   so wrapping the stops into a ready-made gradient here would freeze the rotation
+	   angle at its :root value and the ring would never spin. */
+	--designer-bp-ai-glow-stops:
+		rgba(0, 204, 204, 0) 2%,
+		#00A5FF 9%,
+		var(--ui-color-design-filled-bitrix-gpt-bg-gradient-2) 18%,
+		#9D47FF 32%,
+		#FC83D3 43%,
+		rgba(0, 204, 204, 0) 83%;
+}
+
+.bizprocdesigner-editor-ai-assistant-widget .ai-marta {
+	width: 30px;
+	height: 30px;
+	margin: 0;
+}
+
+.bizprocdesigner-editor-ai-assistant-widget .ai-marta__avatar {
+	width: 20px;
+	height: 20px;
+}
+
+.bizprocdesigner-editor-ai-assistant-widget .ai-marta__highlighter {
+	width: 42px;
+	height: 42px;
 }
-
-.editor-chart-app-skeleton__top-right {
-	position: absolute;
-	top: 8px;
-	right: 8px;
-	z-index: 2;
-	display: flex;
-	gap: 8px;
-}
-
-.editor-chart-app-skeleton__bottom-right {
-	position: absolute;
-	right: 8px;
-	bottom: 8px;
-	z-index: 2;
-	display: flex;
-	gap: 8px;
-}
-
-.editor-chart-app-skeleton__control {
-	display: flex;
-	align-items: center;
-	gap: 8px;
-	height: 36px;
-	box-sizing: border-box;
-	padding: 0 10px;
-	border-radius: 8px;
-	background: var(--ui-color-bg-content-primary);
-	box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.1);
-}
-
-.editor-chart-app-skeleton__control.--square {
-	justify-content: center;
-	width: 36px;
-	padding: 0;
-}
-
-.editor-chart-app-skeleton__hero {
-	position: absolute;
-	inset: 0;
-	z-index: 1;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	padding-left: 330px;
-	pointer-events: none;
-}
-
-.editor-chart-app-skeleton__hero-inner {
-	position: relative;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	width: 824px;
-	max-width: 90%;
-	height: 286px;
-}
-
-.editor-chart-app-skeleton__hero-inner::before {
-	content: '';
-	position: absolute;
-	inset: 0;
-	background: radial-gradient(ellipse at center, rgba(125, 135, 220, 0.10) 0%, rgba(125, 135, 220, 0) 62%);
-}
-
-.editor-chart-app-skeleton__hero-illustration {
-	position: absolute;
-	top: 50%;
-	left: 50%;
-	width: 1236px;
-	height: 428px;
-	transform: translate(-50%, -50%);
-	pointer-events: none;
-}
-
-.editor-chart-app-skeleton__hero-illustration::before,
-.editor-chart-app-skeleton__hero-illustration::after {
-	content: '';
-	position: absolute;
-	top: 0;
-	width: 736px;
-	height: 428px;
-	background: url("images/entities/app/ui/app-skeleton/images/skeleton.png") no-repeat center / cover;
-	-webkit-mask-image: radial-gradient(ellipse 46% 50% at center, #000 0%, #000 22%, transparent 82%);
-	mask-image: radial-gradient(ellipse 46% 50% at center, #000 0%, #000 22%, transparent 82%);
-}
-
-.editor-chart-app-skeleton__hero-illustration::before {
-	left: 0;
-	opacity: 0.2;
-}
-
-.editor-chart-app-skeleton__hero-illustration::after {
-	right: 0;
-	opacity: 0.12;
-	transform: scaleX(-1);
-}
-
-.editor-chart-app-skeleton__hero-text {
-	position: relative;
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	gap: 10px;
-	width: 339px;
-	max-width: 100%;
-	padding: 0 24px;
-	box-sizing: border-box;
-	text-align: center;
-}
-
-.editor-chart-app-skeleton__hero-title {
-	color: var(--ui-color-base-1);
-}
-
-.editor-chart-app-skeleton__hero-description {
-	color: var(--ui-color-base-2);
-}
-
-.editor-chart-logo-layout {
-	display: flex;
-	justify-content: flex-start;
-	align-items: center;
-	gap: var(--ui-space-inline-sm);
-	height: 44px;
-}
-
-.editor-chart-logo-title {
-	display: flex;
-	align-items: center;
-	gap: var(--ui-space-inline-2xs2);
-}
-
-.editor-chart-logo-title__company-name {
-	font-weight: var(--ui-font-weight-medium);
-	/* todo: replace with token when available */
-	font-size: 19px;
-	line-height: 26px;
-	letter-spacing: var(--ui-letter-spacing-s);
-	text-align: center;
-	color: var(--ui-color-base-black-fixed);
-	max-width: 350px;
-	overflow: hidden;
-	white-space: nowrap;
-	text-overflow: ellipsis;
-}
-
-.editor-chart-logo-title__tool-name {
-	font-weight: var(--ui-font-weight-normal);
-	font-size: var(--ui-font-size-2xl);
-	line-height: 26px;
-	letter-spacing: 0;
-	text-align: center;
-	vertical-align: middle;
-	color: var(--ui-color-base-3);
-}
-
-.editor-chart-app-header-divider
-{
-	height: 16px;
-	width: 1px;
-	background-color: var(--ui-color-base-6);
-}
-
 .editor-chart-block-container {
     position: relative;
     width: 100%;
@@ -731,6 +156,107 @@
 	z-index: 1;
 }
 
+/* Read only on the ring, the very element the animation runs on, so it is not inherited */
+@property --designer-bp-ai-glow-angle {
+	syntax: '<angle>';
+	inherits: false;
+	initial-value: 90deg;
+}
+
+@keyframes designer-bp-ai-glow-spin {
+	from {
+		--designer-bp-ai-glow-angle: 90deg;
+	}
+
+	to {
+		--designer-bp-ai-glow-angle: 450deg;
+	}
+}
+
+.editor-chart-agent-glow {
+	position: absolute;
+	/* an absolutely positioned child counts inset from the padding box of the card, so -1px
+	   does not push the layer outwards but cancels the card border: the layer lands exactly on
+	   the outer contour of the body */
+	inset: -1px;
+	border-radius: 10px; /* radius of the outer contour of the body */
+	overflow: hidden; /* clips the blurred ring from spilling outwards */
+	pointer-events: none;
+	/* Above the card background and its hover underlay (z-index: -1), but below the content:
+	   block-layout__header and __content carry z-index: 100, __left-content carries 1.
+	   That keeps the glow inside the card, while text and icons stay readable on top of
+	   it. The value is set explicitly so that the stacking order does not depend on edits
+	   to the foreign block-layout.css. */
+	z-index: 0;
+}
+
+/* Selected node: the ring moves inside the border, so the blue selection border stays
+   visible outside it. The only scenario where the highlight and the selection meet is a
+   rubber-band selection over the canvas: a click on a node puts the highlight out
+   immediately and never brings the two states together. */
+.editor-chart-block-container.--highlighted .editor-chart-agent-glow,
+.editor-chart-block-container.--highlighted .editor-chart-agent-glow__ring {
+	border-radius: 9px; /* inner radius of the body: 10px outer minus the 1px border */
+}
+
+.editor-chart-block-container.--highlighted .editor-chart-agent-glow {
+	inset: 0;
+}
+
+.editor-chart-agent-glow__blur {
+	position: absolute;
+	inset: 0;
+	filter: blur(9px);
+}
+
+.editor-chart-agent-glow__ring {
+	position: absolute;
+	inset: 0;
+	border-radius: 10px; /* the same radius as the layer wrapper */
+	box-sizing: border-box;
+	/* gradient is assembled here, not in the token: the angle must be substituted on
+	   the element the animation runs on, see --designer-bp-ai-glow-stops */
+	background: conic-gradient(
+		from var(--designer-bp-ai-glow-angle),
+		var(--designer-bp-ai-glow-stops)
+	);
+	/* the mask cuts out the middle and leaves a ring as thick as the padding; #fff here is
+	   the alpha source of the mask, not a color (the same trick as in ui.system.highlighter) */
+	-webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+	-webkit-mask-composite: xor;
+	-webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+	        mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+	-webkit-mask-composite: xor;
+	        mask-composite: exclude;
+	animation: designer-bp-ai-glow-spin 4s linear infinite;
+	/* Paused until the card says otherwise: the animated angle is a registered custom property,
+	   so every frame of it costs a style recalculation and a repaint of the gradient on the main
+	   thread. A card the user cannot see must not pay for that while its highlight waits to be
+	   seen, and the highlight of a node outside the visible set can wait arbitrarily long. */
+	animation-play-state: paused;
+}
+
+/* The ring spins only while its card belongs to the visible set of the diagram engine: the same
+   signal the fade countdown waits for. */
+.editor-chart-block-container.--ai-highlight-animated .editor-chart-agent-glow__ring {
+	animation-play-state: running;
+}
+
+.editor-chart-agent-glow__ring.--glow {
+	padding: 4px;
+}
+
+.editor-chart-agent-glow__ring.--edge {
+	padding: 1px;
+	opacity: 0.3;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.editor-chart-agent-glow__ring {
+		animation: none;
+	}
+}
+
 .editor-chart-block-layout {
 	position: relative;
 	width: 100%;
@@ -774,7 +300,7 @@
 }
 
 .editor-chart-block-layout .editor-chart-block-layout__top-menu-content {
-	display: none;
+	display: var(--editor-chart-top-menu-content-display, none);
 	justify-content: flex-end;
 	align-items: flex-start;
 	height: 18px;
@@ -783,16 +309,16 @@
 	border-radius: 4px;
 }
 
-.editor-chart-block-layout.--opened-menu .editor-chart-block-layout__top-menu-content {
-	display: flex;
-}
-
-.editor-chart-block-layout.--hoverable:hover .editor-chart-block-layout__top-menu-content {
-	display: flex;
-}
-
-.editor-chart-block-container.--hoverable:hover .editor-chart-block-layout__top-menu-content {
-	display: flex;
+/*
+ * The single place that decides when the top menu buttons are shown. An editable node title
+ * fills the whole node, so it takes its gap from here instead of repeating these conditions;
+ * 15px is off the inline space scale, the neighbouring tokens are 14px and 16px.
+ */
+.editor-chart-block-layout.--opened-menu,
+.editor-chart-block-layout.--hoverable:hover,
+.editor-chart-block-container.--hoverable:hover {
+	--editor-chart-top-menu-content-display: flex;
+	--editor-chart-top-menu-gap: 15px;
 }
 
 .editor-chart-block-layout.--hoverable:hover .editor-chart-block-layout__top-menu.--hide,
@@ -873,6 +399,91 @@
 	display: none;
 }
 
+.editor-chart-inspector-grid-view-pagination {
+	display: flex;
+	justify-content: space-between;
+	padding: 4px 12px;
+	border-top: 1px solid rgba(0, 0, 0, 0.08);
+	align-items: center;
+	cursor: default;
+}
+
+.editor-chart-inspector-grid-view-pagination__navigation {
+	display: flex;
+	gap: 7px;
+	font-size: 12px;
+	line-height: 15px;
+}
+
+.editor-chart-inspector-grid-view-pagination__navigation_current-page {
+	color: var(--ui-color-gray-90);
+}
+
+.editor-chart-inspector-grid-view-pagination__navigation_page-num {
+	color: var(--ui-color-black-base);
+	margin-left: 5px;
+}
+
+.editor-chart-inspector-grid-view-pagination__navigation_delimeter {
+	width: 1px;
+	height: 16px;
+	background: #e2e2e2;
+}
+
+.editor-chart-inspector-grid-view-pagination__navigation_move-btn {
+	padding: 0;
+	border: none;
+	background: none;
+	font: inherit;
+	color: var(--ui-color-accent-main-link);
+	cursor: pointer;
+}
+
+.editor-chart-inspector-grid-view-pagination__navigation_move-btn:disabled {
+	cursor: not-allowed;
+	color: var(--ui-color-gray-50);
+}
+
+.editor-chart-inspector-grid-view-pagination__rows-count {
+	display: flex;
+	align-items: center;
+	gap: 5px;
+}
+
+.editor-chart-inspector-grid-view-pagination__rows-count_label {
+	font-size: 12px;
+	line-height: 15px;
+	color: var(--ui-color-gray-90);
+}
+
+.editor-chart-inspector-grid-view-pagination__rows-count_dropdown {
+	--border-color: var(--ui-color-palette-gray-30);
+	--min-height: 28px;
+	--padding-horizontal: 8px;
+	width: 62px;
+	cursor: pointer;
+}
+
+.editor-chart-inspector-grid-view-pagination__rows-count_dropdown:focus-within {
+	--border-color: var(--ui-color-accent-main-link);
+}
+
+.editor-chart-inspector-grid-view-pagination__rows-count_dropdown .ui-system-input-value {
+	--font-size: 12px;
+	--text-color: var(--ui-color-gray-90);
+	cursor: pointer;
+}
+
+.editor-chart-inspector-grid-view-pagination__rows-count_select {
+	appearance: none;
+	-webkit-appearance: none;
+	padding: 0;
+}
+
+.editor-chart-inspector-grid-view-pagination__rows-count_dropdown .ui-system-input-dropdown {
+	--icon-size: 18px;
+}
+
 .editor-chart-icon-button {
 	display: block;
 	padding: 0;
@@ -916,6 +527,41 @@
 .ui-block-diagram-icon-divider .ui-block-diagram-icon-divider-line {
 	width: 1px;
 }
+/* Decorative circuit pattern (moved as is from app-skeleton __hero-illustration):
+   mirrored copies left/right, faded through a radial mask */
+.editor-chart-circuit-backdrop {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	width: 1236px;
+	height: 428px;
+	transform: translate(-50%, -50%);
+	pointer-events: none;
+}
+
+.editor-chart-circuit-backdrop::before,
+.editor-chart-circuit-backdrop::after {
+	content: '';
+	position: absolute;
+	top: 0;
+	width: 736px;
+	height: 428px;
+	background: url("images/shared/ui/circuit-backdrop/images/circuit.png") no-repeat center / cover;
+	-webkit-mask-image: radial-gradient(ellipse 46% 50% at center, #000 0%, #000 22%, transparent 82%);
+	mask-image: radial-gradient(ellipse 46% 50% at center, #000 0%, #000 22%, transparent 82%);
+}
+
+.editor-chart-circuit-backdrop::before {
+	left: 0;
+	opacity: 0.2;
+}
+
+.editor-chart-circuit-backdrop::after {
+	right: 0;
+	opacity: 0.12;
+	transform: scaleX(-1);
+}
+
 .editor-chart-tabs {
 	display: flex;
 	align-items: center;
@@ -939,6 +585,121 @@
 	border-bottom-color: var(--ui-color-accent-main-primary);
 	color: var(--ui-color-base-0);
 	font-weight: var(--ui-font-weight-medium);
+}
+
+.editor-chart-text-editor {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+	width: 100%;
+	height: 100%;
+	border-radius: 10px;
+	overflow: hidden;
+	background-color: transparent;
+}
+
+.editor-chart-text-editor__footer {
+	position: sticky;
+	bottom: 0;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	height: 47px;
+	border-top: var(--ui-border-width-thin) solid var(--ui-color-divider-default);
+	background-color: white;
+}
+
+.editor-chart-text-editor__footer-container {
+	display: flex;
+	justify-content: space-between;
+    gap: 16px;
+    align-items: center;
+	width: 100%;
+}
+
+.editor-chart-text-editor__footer-left {
+	display: flex;
+	justify-content: flex-start;
+	gap: 16px;
+}
+
+.editor-chart-text-editor__footer-right {
+	display: flex;
+	justify-content: flex-end;
+	gap: 16px;
+}
+
+.editor-chart-text-editor__editor {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+	width: calc(100% - (var(--ui-space-inset-sm) * 2));
+	height: 100%;
+	padding: 0 var(--ui-space-inset-sm);
+	background-color: white;
+}
+
+.editor-chart-text-editor__editor-container {
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+	width: 100%;
+	height: calc(100% - 48px);
+	padding-bottom: var(--ui-space-inset-sm);
+	box-sizing: border-box;
+}
+
+.editor-chart-text-editor__editor-content {
+	height: 100%;
+	overflow-y: auto;
+}
+
+.editor-chart-text-editor__editor-content.--has-files {
+	height: calc(100% - 103px);
+}
+
+.editor-chart-text-editor__editor-files-container {
+	height: 103px;
+	padding-top: var(--ui-space-inset-sm);
+	border-top: var(--ui-border-width-thin) solid var(--ui-color-divider-vibrant-accent);
+	overflow: hidden;
+	box-sizing: border-box;
+}
+
+.editor-chart-text-editor__editor-files {
+	height: 90px;
+	overflow-y: auto;
+}
+
+.editor-chart-text-editor__preview {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+	width: 100%;
+	height: 100%;
+}
+
+.editor-chart-text-editor__preview-content {
+	height: 100%;
+	overflow-y: auto;
+}
+
+.editor-chart-text-editor__preview-content .ui-typography-paragraph {
+	margin: 8px 0 0 13px;
+}
+
+.editor-chart-text-editor__preview-content.--has-files {
+	height: calc(100% - 103px);
+}
+
+.editor-chart-text-editor__preview-files {
+	height: 103px;
+	padding-top: var(--ui-space-inset-sm);
+	border-top: var(--ui-border-width-thin) solid var(--ui-color-divider-vibrant-accent);
+	overflow-y: auto;
 }
 
 .editor-chart-block-switcher {
@@ -1150,43 +911,35 @@
 }
 
 .editor-chart-block-content.--background-color-1 {
-	background-color: var(--designer-bp-ai-bg);
-    opacity: 0.4;
+	background-color: color-mix(in srgb, var(--designer-bp-ai-bg) 40%, transparent);
 }
 
 .editor-chart-block-content.--background-color-2 {
-	background-color: var(--designer-bp-entities-bg);
-    opacity: 0.4;
+	background-color: color-mix(in srgb, var(--designer-bp-entities-bg) 40%, transparent);
 }
 
 .editor-chart-block-content.--background-color-3 {
-	background-color: var(--designer-bp-employe-bg);
-    opacity: 0.4;
+	background-color: color-mix(in srgb, var(--designer-bp-employe-bg) 40%, transparent);
 }
 
 .editor-chart-block-content.--background-color-4 {
-	background-color: var(--designer-bp-technical-bg);
-    opacity: 0.4;
+	background-color: color-mix(in srgb, var(--designer-bp-technical-bg) 40%, transparent);
 }
 
 .editor-chart-block-content.--background-color-5 {
-	background-color: var(--designer-bp-communication-bg);
-    opacity: 0.4;
+	background-color: color-mix(in srgb, var(--designer-bp-communication-bg) 40%, transparent);
 }
 
 .editor-chart-block-content.--background-color-6 {
-	background-color: var(--designer-bp-storage-bg);
-    opacity: 0.4;
+	background-color: color-mix(in srgb, var(--designer-bp-storage-bg) 40%, transparent);
 }
 
 .editor-chart-block-content.--background-color-7 {
-	background-color: var(--designer-bp-afiliate-bg);
-    opacity: 0.4;
+	background-color: color-mix(in srgb, var(--designer-bp-afiliate-bg) 40%, transparent);
 }
 
 .editor-chart-block-content.--background-color-8 {
-	background-color: rgba(31, 134, 255, 1); /* token will be provided later */
-    opacity: 0.4;
+	background-color: color-mix(in srgb, rgba(31, 134, 255, 1) 40%, transparent); /* token will be provided later */
 }
 
 .editor-chart-block-content.--default {
@@ -1645,6 +1398,49 @@
 	padding: 0px 13px 0px 12px;
 }
 
+.editor-chart-node-title {
+	display: flex;
+	align-items: center;
+	min-width: 0;
+	/* block-layout.css sets the gap while the block top menu buttons are shown */
+	margin-right: var(--editor-chart-top-menu-gap, 0);
+	background: transparent;
+}
+
+/*
+ * The ring is drawn inwards: .editor-chart-block-layout__top-menu-title keeps the ellipsis
+ * with overflow: hidden and its box matches this one, so anything outside is cut off.
+ */
+.editor-chart-node-title:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: -1px;
+	border-radius: var(--ui-border-radius-2xs);
+}
+
+/*
+ * Leaving the edit mode moves the focus from the vanishing input back to the title. The browser
+ * keeps calling that focus keyboard one, so :focus-visible would draw the ring around a title
+ * nobody navigated to. The accent color of the text below still marks the focused title.
+ */
+.editor-chart-node-title.--focus-restored:focus-visible {
+	outline: none;
+}
+
+.editor-chart-node-title__text,
+.editor-chart-node-title__input {
+	flex: 1;
+	min-width: 0;
+}
+
+.editor-chart-node-title__text {
+	transition: color 200ms ease;
+}
+
+.editor-chart-node-title:not(.--editing):hover .editor-chart-node-title__text,
+.editor-chart-node-title:not(.--editing):focus-visible .editor-chart-node-title__text {
+	color: var(--ui-color-accent-main-primary);
+}
+
 .ui-top-panel-editable-title-box,
 .ui-top-panel-editable-title-edit-box,
 .ui-top-panel-editable-title-edit-buttons
@@ -1713,34 +1509,56 @@
 	align-items: center;
 	justify-content: center;
 	gap: var(--ui-space-inline-2xs2);
-	width: 120px;
-}
-
-.bizprocdesigner-editor-header-online .ui-icon-set,
-.bizprocdesigner-editor-header-offline .ui-icon-set
-{
-	--ui-icon-set__icon-size: 22px;
-}
-
-.bizprocdesigner-editor-header-online .ui-icon-set
-{
-	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary);
-}
-
-.bizprocdesigner-editor-header-offline .ui-icon-set
-{
-	--ui-icon-set__icon-color: var(--ui-color-red-50);
-}
-
-.bizprocdesigner-editor-header-online,
-.bizprocdesigner-editor-header-offline
-{
+	/* The two everyday states keep one width so the header does not jitter; the rarer
+	   error state grows for the retry button instead of clipping its text. */
+	min-width: 120px;
+	white-space: nowrap;
 	font-weight: var(--ui-font-weight-normal);
 	font-size: var(--ui-font-size-sm);
-	/* todo: replace with token when available */
 	line-height: 17px;
 	letter-spacing: -0.05px;
 	color: var(--ui-color-base-90);
+}
+
+/* The ui.loader container is absolute and centers itself in a positioned parent,
+   so the slot has to carry the bullet size (40x7) on its own. */
+.bizprocdesigner-editor-header-save-status-box__indicator
+{
+	position: relative;
+	flex: 0 0 auto;
+	width: 40px;
+	height: 7px;
+}
+
+/* Both error icons are drawn from a mask that the icon set only requests when the icon first
+   renders, and the error state appears exactly when the network is gone, so that request fails
+   and the state ends up without icons. Keeping the icons in the layout while the editor is still
+   online makes the browser fetch both masks in advance. `display: none` would skip the request,
+   which is why the block is hidden by `visibility` instead. */
+.bizprocdesigner-editor-header-save-status-icon-warmup
+{
+	position: absolute;
+	visibility: hidden;
+	pointer-events: none;
+}
+
+.bizprocdesigner-editor-header-save-status-retry
+{
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex: 0 0 auto;
+	padding: var(--ui-space-inset-3xs);
+	border: none;
+	border-radius: var(--ui-border-radius-2xs);
+	background: transparent;
+	cursor: pointer;
+	transition: background-color 200ms ease;
+}
+
+.bizprocdesigner-editor-header-save-status-retry:hover
+{
+	background: var(--ui-color-bg-state-hover-default);
 }
 
 .editor-chart-dropdown-menu-button {
@@ -1786,10 +1604,22 @@
     text-decoration: underline;
 }
 
+/* Off-screen but readable: carries the reason a disabled button cannot be used. */
+.editor-chart-dropdown-menu-button__hint-description {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	margin: -1px;
+	padding: 0;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+	border: 0;
+}
+
 
 .editor-chart-dropdown-menu-option {
 	position: relative;
-	padding: 10px 10px 10px 10px;
 	border-radius: 8px;
 	cursor: pointer;
 	transition: background 0.2s;
@@ -1805,6 +1635,33 @@
 
 .editor-chart-dropdown-menu-option:hover {
 	background: rgba(0, 0, 0, 0.03);
+}
+
+/*
+ * The whole row is one control, so the padding it used to carry belongs to the control: the focus
+ * ring then goes around the row and not around its text. The group below is the reset of the
+ * native button - the row must look exactly as it did before it became one.
+ */
+.editor-chart-dropdown-menu-option__control {
+	display: flex;
+	align-items: center;
+	flex: 1;
+	min-width: 0;
+	padding: 10px;
+	margin: 0;
+	border: 0;
+	border-radius: 8px;
+	background: none;
+	font: inherit;
+	color: inherit;
+	text-align: left;
+	cursor: inherit;
+	box-sizing: border-box;
+}
+
+.editor-chart-dropdown-menu-option__control:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: -1px;
 }
 
 .editor-chart-dropdown-menu-option__content {
@@ -2036,9 +1893,14 @@
 	display: flex;
 	justify-content: space-between;
 	flex-direction: row;
-	gap: 4px;
+	/* gap: 4px; */
 	width: 100%;
 	height: 100%;
+}
+
+.chart-editor-content-separator__wrapper.--resizing {
+	display: block;
+	position: relative;
 }
 
 .chart-editor-content-separator__wrapper.--column {
@@ -2056,6 +1918,9 @@
 	cursor: ew-resize;
 }
 
+.chart-editor-content-separator__separator.--resizing {
+}
+
 .chart-editor-content-separator__separator:after {
 	content: '';
 	position: absolute;
@@ -2067,6 +1932,10 @@
 	width: 1px;
 	margin: auto;
 	background-color: var(--ui-color-divider-vibrant-accent);
+}
+
+.chart-editor-content-separator__separator.--resizing:after {
+	background-color: transparent;
 }
 
 .chart-editor-content-separator__separator.--column {
@@ -2089,19 +1958,157 @@
 	background-color: var(--ui-color-divider-vibrant-accent);
 }
 
+.chart-editor-content-separator__separator.--column.--resizing:after {
+	background-color: transparent;
+}
+
+.chart-editor-content-separator__first-part-separator-tmp, .chart-editor-content-separator__second-part-separator-tmp {
+	display: none;
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	width: 13px;
+	height: 100%;
+	background-color: transparent;
+	z-index: 999;
+}
+
+.chart-editor-content-separator__first-part-separator-tmp {
+	right: -13px;
+}
+
+.chart-editor-content-separator__first-part-separator-tmp.--column {
+	top: auto;
+	bottom: -13px;
+	left: 0;
+	right: 0;
+	width: 100%;
+	height: 13px;
+}
+
+.chart-editor-content-separator__first-part-separator-tmp:after {
+	content: '';
+	position: absolute;
+	top: 7px;
+	bottom: 7px;
+	left: 0;
+	right: 0;
+	display: block;
+	width: 1px;
+	margin: auto;
+	background-color: var(--ui-color-divider-vibrant-accent);
+}
+
+.chart-editor-content-separator__first-part-separator-tmp.--column:after {
+	content: '';
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	left: 7px;
+	right: 7px;
+	display: block;
+	height: 1px;
+	width: auto;
+	margin: auto;
+	background-color: var(--ui-color-divider-vibrant-accent);
+}
+
+.chart-editor-content-separator__second-part-separator-tmp {
+	left: -13px;
+}
+
+.chart-editor-content-separator__second-part-separator-tmp.--column {
+	top: -13px;
+	bottom: auto;
+	left: 0;
+	right: 0;
+	height: 13px;
+	width: 100%;
+}
+
+.chart-editor-content-separator__second-part-separator-tmp:after {
+	content: '';
+	position: absolute;
+	top: 7px;
+	bottom: 7px;
+	left: 0;
+	right: 0;
+	display: block;
+	width: 1px;
+	margin: auto;
+	background-color: var(--ui-color-divider-vibrant-accent);
+}
+
+.chart-editor-content-separator__second-part-separator-tmp.--column:after {
+	content: '';
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	left: 7px;
+	right: 7px;
+	display: block;
+	height: 1px;
+	width: auto;
+	margin: auto;
+	background-color: var(--ui-color-divider-vibrant-accent);
+}
+
+.chart-editor-content-separator__first-part-separator-tmp.--show {
+	display: block;
+}
+
+.chart-editor-content-separator__second-part-separator-tmp.--show {
+	display: block;
+}
+
 .chart-editor-content-separator__first-part {
 	flex-grow: 1;
-	padding: 7px;
 	overflow: auto;
 	box-sizing: border-box;
 	
 }
 
+.chart-editor-content-separator__first-part.--resizing {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	left: 0;
+	overflow: unset;
+}
+
+.chart-editor-content-separator__first-part.--resizing.--column {
+	position: absolute;
+	top: 0;
+	bottom: auto;
+	left: 0;
+	right: 0;
+}
+
 .chart-editor-content-separator__second-part {
 	flex-grow: 1;
-	padding: 7px;
+	/* padding: 7px; */
 	overflow: auto;
 	box-sizing: border-box;
+}
+
+.chart-editor-content-separator__second-part.--resizing {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	right: 0;
+	overflow: visible;
+	/* padding-top: 0; */
+	/* padding-left: 25px; */
+}
+
+.chart-editor-content-separator__second-part.--resizing.--column {
+	position: absolute;
+	top: auto;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	/* padding-top: 25px;
+	padding-left: 0; */
 }
 
 .chart-editor-content-separator__content {
@@ -2116,6 +2123,619 @@
 	overflow: auto;
 }
 
+
+.editor-chart-app-layout {
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+	width: 100%;
+	height: 100%;
+	position: relative;
+}
+
+.editor-chart-app-layout__header {
+	position: relative;
+	z-index: 16;
+	width: 100%;
+	height: 56px;
+	box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.1);
+}
+
+.editor-chart-app-layout__content {
+	position: relative;
+	height: calc(100% - 56px);
+}
+
+.editor-chart-app-layout__top-right-toolbar {
+	display: flex;
+	justify-content: flex-end;
+	align-items: flex-start;
+	gap: 8px;
+	position: absolute;
+	right: 8px;
+	top: 8px;
+	z-index: 2;
+	max-width: 415px;
+	transition: transform 0.3s ease;
+}
+
+.editor-chart-app-layout__top-middle-anchor {
+	display: flex;
+	position: absolute;
+	top: 0;
+	left: 50%;
+	z-index: 16;
+	max-width: 740px;
+	transform: translate(-50%, 0%);
+}
+
+.editor-chart-app-layout__top-right-toolbar.--shifted {
+	transform: translateX(-589px);
+}
+
+.editor-chart-app-layout__bottom-right-toolbar {
+	display: flex;
+	position: absolute;
+	right: 8px;
+	bottom: 8px;
+	z-index: 2;
+	justify-content: flex-end;
+	align-items: flex-start;
+	gap: 8px;
+	max-width: 350px;
+	transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), bottom 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.editor-chart-app-layout__diagram-controls {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-2xs);
+	padding: var(--ui-space-inset-3xs) var(--ui-space-inset-xs);
+	border-radius: var(--ui-border-radius-sm);
+	background: var(--ui-color-bg-content-primary);
+	box-shadow: 0 1px 2px 0 rgba(var(--ui-color-palette-black-solid-rgb), 0.13);
+	box-sizing: border-box;
+}
+
+.editor-chart-app-layout__diagram-controls-separator {
+	flex: 0 0 1px;
+	width: 1px;
+	height: 28px;
+	background: var(--ui-color-divider-default);
+}
+
+.editor-chart-app-layout__bottom-right-toolbar div.ui-block-diagram-canvas-zoom-bar__map-close-icon {
+	background-color: var(--ui-color-base-5);
+}
+
+.editor-chart-app-layout__bottom-right-toolbar .ui-block-diagram-canvas-map__cursor {
+	stroke: var(--ui-color-blue-57);
+}
+
+.editor-chart-app-layout__bottom-right-toolbar.--shifted {
+	transform: translateX(-589px);
+}
+
+.editor-chart-app-layout__bottom-right-toolbar.--margined {
+	bottom: 320px;
+}
+
+.editor-chart-app-layout__debug-bar-toolbar {
+	display: flex;
+	position: absolute;
+	right: 8px;
+	bottom: 8px;
+	z-index: 3;
+	justify-content: flex-end;
+	align-items: flex-start;
+	gap: 8px;
+	transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+	background: var(--ui-color-palette-white-base);
+	box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.1);
+	border-radius: 8px;
+	/* @chef-ignore */
+	scrollbar-width: thin;
+	/* @chef-ignore */
+	scrollbar-color: var(--ui-color-base-30) var(--ui-color-base-02);
+}
+
+.editor-chart-app-layout__debug-bar-toolbar.--shifted {
+	transform: translateX(-589px);
+}
+
+.editor-chart-app-layout__catalog {
+	position: absolute;
+	top: 8px;
+	bottom: 8px;
+	left: 8px;
+	z-index: 2;
+	display: flex;
+	min-width: 54px;
+	border-radius: 8px;
+	background: var(--ui-color-palette-white-base);
+	box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.1);
+}
+
+.editor-chart-app-layout__settings {
+	position: absolute;
+	z-index: 15;
+	right: 8px;
+	top: 8px;
+	bottom: 8px;
+	width: 580px;
+	background: var(--ui-color-palette-white-base);
+	box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.1);
+	border-radius: 8px;
+	/* @chef-ignore */
+	scrollbar-width: thin;
+	/* @chef-ignore */
+	scrollbar-color: var(--ui-color-base-30) var(--ui-color-base-02);
+}
+
+.editor-chart-app-layout__settings::scrollbar-thumb:hover {
+	/* @chef-ignore */
+	scrollbar-width: thin;
+}
+
+.editor-chart-app-layout__settings.--with-preview-panel {
+	border-bottom-left-radius: 0;
+}
+
+.fade-settings-panel-enter-active,
+.fade-settings-panel-leave-active {
+	transition: transform 0.3s ease;
+}
+
+.fade-settings-panel-enter-from,
+.fade-settings-panel-leave-to {
+	transform: translateX(100%);
+}
+
+.fade-settings-panel-enter-to,
+.fade-settings-panel-leave-from {
+	transform: translateX(0);
+}
+
+.editor-chart-app-layout__preview-panel {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	right: 0;
+	left: 0;
+	z-index: 3;
+	width: 100%;
+	height: 100%;
+	background-color: rgba(10, 45, 95, 0.2);
+	overflow-x: hidden;
+}
+
+.editor-chart-app-layout__preview-panel-conatiner {
+	position: absolute;
+	top: 45px;
+	bottom: 8px;
+	right: 587px;
+	z-index: 4;
+	width: 522px;
+	border-top-left-radius: 16px;
+	border-bottom-left-radius: 16px;
+	background: var(--ui-color-palette-white-base);
+	box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.1);
+	overflow: hidden;
+}
+
+.editor-chart-app-layout__preview-panel-content {
+	position: relative;
+	width: 100%;
+	height: 100%;
+	overflow: hidden;
+}
+
+.fade-preview-panel-enter-active,
+.fade-preview-panel-leave-active {
+	transition: opacity 0.2s ease;
+}
+
+.fade-preview-panel-enter-from {
+	opacity: 0;
+}
+
+.fade-preview-panel-leave-to {
+	opacity: 0;
+}
+
+.editor-chart-app-layout__settings-data-inspector {
+	position: absolute;
+	z-index: 14;
+	right: 588px;
+	top: 52px;
+	bottom: 52px;
+	width: 596px;
+	background: var(--ui-color-palette-white-base);
+	box-shadow: 0 2px 2px 0 rgba(0,0,0,0.1);
+	border-bottom-left-radius: 8px;
+	border-top-left-radius: 8px;
+	/* @chef-ignore */
+	scrollbar-width: thin;
+	/* @chef-ignore */
+	scrollbar-color: var(--ui-color-base-30) var(--ui-color-base-02);
+	transition: transform 0.1s ease;
+}
+
+.editor-chart-app-layout__settings-data-inspector::after {
+	content: '';
+	position: absolute;
+	top: 0;
+	right: 0;
+	width: 16px;
+	height: 100%;
+	background: linear-gradient(270deg, rgba(0, 0, 0, 0.12) 0%, rgba(0, 0, 0, 0) 90%);
+	pointer-events: none;
+}
+
+.editor-chart-app-layout__settings-data-inspector-overlay {
+	position: absolute;
+	background-color: rgba(10, 45, 95, 0.2);
+	top: 0;
+	bottom: 0;
+	right: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	z-index: 13;
+}
+
+/*
+ * The scrim above makes the diagram and the catalog inert while the inspector is open, but the
+ * editor toolbars are not part of the diagram and must keep taking clicks: undo/redo and search
+ * in the top one, auto layout, zoom and the minimap in the bottom one. Undo/redo edit the model
+ * rather than the view, and keeping them clickable here is deliberate: an open inspector must
+ * not block rolling a change back. Same z-index as the inspector panel: it comes later in the
+ * markup, so it still paints over an expanded minimap the way it did before.
+ */
+.editor-chart-app-layout__top-right-toolbar.--above-inspector-overlay,
+.editor-chart-app-layout__bottom-right-toolbar.--above-inspector-overlay {
+	z-index: 14;
+}
+
+.fade-inspector-panel-enter-active {
+	transition: opacity 0.2s ease;
+}
+
+.fade-settings-panel-enter-active ~ .fade-inspector-panel-enter-active {
+	transition: opacity 0.2s ease 0.3s;
+}
+
+.fade-inspector-panel-leave-active {
+	transition: opacity 0.2s ease;
+}
+
+.fade-inspector-panel-enter-from {
+	opacity: 0;
+}
+
+.fade-inspector-panel-leave-to {
+	opacity: 0;
+}
+
+.fade-skeleton-leave-active {
+	transition: opacity 0.3s ease;
+}
+
+.fade-skeleton-leave-to {
+	opacity: 0;
+}
+
+.editor-chart-app-header {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    justify-content: space-between;
+    gap: var(--ui-space-inline-sm);
+    width: 100%;
+    height: 56px;
+    padding: var(--ui-space-inset-2xs2) var(--ui-space-inset-sm) var(--ui-space-inset-2xs2) var(--ui-space-inset-sm2);
+    border-bottom: 1px;
+    background: var(--ui-color-background-primary);
+    box-sizing: border-box;
+}
+
+.editor-chart-app-header__left-column {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: var(--ui-space-inline-sm);
+}
+
+.editor-chart-app-header__right-column {
+    display: flex;
+    align-items: center;
+    gap: var(--ui-space-inline-sm);
+    justify-content: flex-end;
+    flex-grow: 1;
+}
+.editor-chart-app-skeleton {
+	position: absolute;
+	inset: 0;
+	z-index: 30;
+	display: flex;
+	flex-direction: column;
+	background-color: var(--ui-color-designer-bp-background, #ecf0f2);
+	background-image:
+		linear-gradient(to right, rgba(161, 184, 217, 0.06) 1px, transparent 1px),
+		linear-gradient(to bottom, rgba(161, 184, 217, 0.06) 1px, transparent 1px);
+	background-size: 15px 15px, 15px 15px;
+	overflow: hidden;
+}
+
+
+.editor-chart-app-skeleton .ui-skeleton {
+	--radius: 4px;
+}
+
+.editor-chart-app-skeleton__placeholder-secondary .ui-skeleton {
+	background: var(--ui-color-base-7);
+}
+
+.editor-chart-app-skeleton__header {
+	position: relative;
+	z-index: 2;
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	width: 100%;
+	height: 56px;
+	box-sizing: border-box;
+	padding: 6px 12px 6px 14px;
+	background: var(--ui-color-bg-content-primary);
+	box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.1);
+}
+
+.editor-chart-app-skeleton__header-company {
+	display: flex;
+	align-items: center;
+	gap: 14px;
+}
+
+.editor-chart-app-skeleton__header-company-name {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+
+.editor-chart-app-skeleton__header-title {
+	display: flex;
+	flex: 1 1 0;
+	min-width: 0;
+	align-items: center;
+	justify-content: flex-end;
+	gap: 12px;
+	padding-right: 6px;
+}
+
+.editor-chart-app-skeleton__header-actions {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+
+.editor-chart-app-skeleton__header-status {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+
+.editor-chart-app-skeleton__divider {
+	width: 1px;
+	height: 16px;
+	background: var(--ui-color-base-6);
+}
+
+
+.editor-chart-app-skeleton__content {
+	position: relative;
+	flex: 1 1 0;
+	min-height: 0;
+}
+
+.editor-chart-app-skeleton__catalog {
+	position: absolute;
+	top: 8px;
+	bottom: 8px;
+	left: 8px;
+	z-index: 2;
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	width: 330px;
+	box-sizing: border-box;
+	padding: 12px 18px 18px;
+	border-radius: 8px;
+	background: var(--ui-color-bg-content-primary);
+	box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.1);
+	overflow: hidden;
+}
+
+.editor-chart-app-skeleton__catalog-header {
+	display: flex;
+	align-items: center;
+	gap: 19px;
+}
+
+.editor-chart-app-skeleton__catalog-search {
+	display: flex;
+	align-items: center;
+	gap: 18px;
+}
+
+.editor-chart-app-skeleton__catalog-search-input {
+	flex: 1 1 0;
+	min-width: 0;
+	height: 34px;
+	border: 1px solid var(--ui-color-base-6);
+	border-radius: 8px;
+}
+
+.editor-chart-app-skeleton__catalog-group {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+
+.editor-chart-app-skeleton__catalog-list {
+	display: flex;
+	flex-direction: column;
+	gap: 18px;
+	overflow: hidden;
+}
+
+.editor-chart-app-skeleton__catalog-item {
+	display: flex;
+	align-items: flex-start;
+	gap: 14px;
+}
+
+.editor-chart-app-skeleton__catalog-item-lines {
+	display: flex;
+	flex: 1 1 0;
+	min-width: 0;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.editor-chart-app-skeleton__flex-fill {
+	flex: 1 1 0;
+	min-width: 0;
+}
+
+.editor-chart-app-skeleton__top-right {
+	position: absolute;
+	top: 8px;
+	right: 8px;
+	z-index: 2;
+	display: flex;
+	gap: 8px;
+}
+
+.editor-chart-app-skeleton__bottom-right {
+	position: absolute;
+	right: 8px;
+	bottom: 8px;
+	z-index: 2;
+	display: flex;
+	gap: 8px;
+}
+
+.editor-chart-app-skeleton__control {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	height: 36px;
+	box-sizing: border-box;
+	padding: 0 10px;
+	border-radius: 8px;
+	background: var(--ui-color-bg-content-primary);
+	box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.1);
+}
+
+.editor-chart-app-skeleton__control.--square {
+	justify-content: center;
+	width: 36px;
+	padding: 0;
+}
+
+.editor-chart-app-skeleton__hero {
+	position: absolute;
+	inset: 0;
+	z-index: 1;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding-left: 330px;
+	pointer-events: none;
+}
+
+.editor-chart-app-skeleton__hero-inner {
+	position: relative;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 824px;
+	max-width: 90%;
+	height: 286px;
+}
+
+.editor-chart-app-skeleton__hero-inner::before {
+	content: '';
+	position: absolute;
+	inset: 0;
+	background: radial-gradient(ellipse at center, rgba(125, 135, 220, 0.10) 0%, rgba(125, 135, 220, 0) 62%);
+}
+
+.editor-chart-app-skeleton__hero-text {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 10px;
+	width: 339px;
+	max-width: 100%;
+	padding: 0 24px;
+	box-sizing: border-box;
+	text-align: center;
+}
+
+.editor-chart-app-skeleton__hero-title {
+	color: var(--ui-color-base-1);
+}
+
+.editor-chart-app-skeleton__hero-description {
+	color: var(--ui-color-base-2);
+}
+
+.editor-chart-logo-layout {
+	display: flex;
+	justify-content: flex-start;
+	align-items: center;
+	gap: var(--ui-space-inline-sm);
+	height: 44px;
+}
+
+.editor-chart-logo-title {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-2xs2);
+}
+
+.editor-chart-logo-title__company-name {
+	font-weight: var(--ui-font-weight-medium);
+	/* todo: replace with token when available */
+	font-size: 19px;
+	line-height: 26px;
+	letter-spacing: var(--ui-letter-spacing-s);
+	text-align: center;
+	color: var(--ui-color-base-black-fixed);
+	max-width: 350px;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.editor-chart-logo-title__tool-name {
+	font-weight: var(--ui-font-weight-normal);
+	font-size: var(--ui-font-size-2xl);
+	line-height: 26px;
+	letter-spacing: 0;
+	text-align: center;
+	vertical-align: middle;
+	color: var(--ui-color-base-3);
+}
+
+.editor-chart-app-header-divider
+{
+	height: 16px;
+	width: 1px;
+	background-color: var(--ui-color-base-6);
+}
 
 .editor-chart-catalog {
 	display: flex;
@@ -2813,6 +3433,18 @@
     overflow: hidden;
 }
 
+.editor-chart-catalog.--expanded .editor-chart-search-results-layout .editor-chart-catalog-item {
+	align-items: flex-start;
+	height: auto;
+	min-height: 54px;
+}
+
+.editor-chart-catalog.--expanded .editor-chart-search-results-layout .editor-chart-catalog-item__subtitle {
+	display: block;
+	-webkit-line-clamp: unset;
+	overflow: visible;
+}
+
 .editor-chart-search-results-layout__result-label {
     height: 26px;
     padding: 0 8px;
@@ -2940,24 +3572,46 @@
 	max-height: 58px;
 	padding: var(--ui-space-inline-sm) var(--ui-space-inset-md);
 	border-radius: 0 0 var(--ui-border-radius-2xl) var(--ui-border-radius-2xl);
+	box-shadow: var(--ui-shadow-bottom-m);
 }
 
 .bizprocdesigner-editor-toast.--warning {
-	background-color: #FAAA08;
+	background-color: var(--ui-color-accent-main-warning);
+	/* White content on saturated orange. */
+	--bizprocdesigner-editor-toast-content-color: var(--ui-color-base-8);
+	--bizprocdesigner-editor-toast-divider-color: rgba(255, 255, 255, 0.5);
 }
+
+.bizprocdesigner-editor-toast.--processing {
+	/* Processing: solid blue, white content. */
+	background-color: var(--ui-color-accent-main-primary-alt);
+	--bizprocdesigner-editor-toast-content-color: var(--ui-color-base-8);
+	--bizprocdesigner-editor-toast-divider-color: rgba(255, 255, 255, 0.5);
+}
+
+.bizprocdesigner-editor-toast.--completed {
+	/* Completed: solid green, white content. */
+	background-color: var(--ui-color-accent-main-success-alt);
+	--bizprocdesigner-editor-toast-content-color: var(--ui-color-base-8);
+	--bizprocdesigner-editor-toast-divider-color: rgba(255, 255, 255, 0.5);
+}
+
 .editor-chart-toast-layout {
 	display: flex;
 	align-items: center;
 	height: 28px;
-	color: var(--ui-color-base-8);
+	/* Content color is set by the toast scheme (--warning/--processing/--completed); default is white. */
+	color: var(--bizprocdesigner-editor-toast-content-color, var(--ui-color-base-8));
 	width: 700px;
-	--ui-icon-set__icon-color: var(--ui-color-base-8);
 }
 
 .editor-chart-toast-layout__divider {
+	display: flex;
 	width: 9px;
 	height: 20px;
 	margin: 0 9px;
+	/* Divider inherits the scheme color (semi-transparent white over the color). */
+	color: var(--bizprocdesigner-editor-toast-divider-color, #DFE0E3);
 }
 
 .editor-chart-toast-layout__left {
@@ -2996,6 +3650,2238 @@
 	display: flex;
 	cursor: pointer;
 }
+.bizproc-dataview-panel,
+.bizproc-dataview-panel *,
+.bizproc-dataview-modal,
+.bizproc-dataview-modal * {
+	box-sizing: border-box;
+}
+
+/*
+ * Fills the app-layout settings-table-settings host section, which owns the geometry (same size and
+ * position as the data-inspector panel, left of the node settings) plus the white background, shadow
+ * and left rounded corners. This root only lays out the header and the scrollable form inside it.
+ */
+.bizproc-dataview-panel {
+	position: relative;
+	width: 100%;
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+	border-top-left-radius: var(--ui-border-radius-sm);
+	border-bottom-left-radius: var(--ui-border-radius-sm);
+	overflow: hidden;
+	font-size: var(--ui-font-size-md);
+	line-height: 1.45;
+	color: var(--ui-color-base-1);
+	background-color: var(--ui-color-bg-content-primary);
+	-webkit-font-smoothing: antialiased;
+}
+
+/* Form: fills the panel, its body scrolls, header and footer stay pinned. */
+.bizproc-dataview-window {
+	flex: 1 1 auto;
+	min-height: 0;
+	display: flex;
+	flex-direction: column;
+}
+
+.bizproc-dataview-window__body {
+	flex: 1 1 auto;
+	min-height: 0;
+	padding: var(--ui-space-inset-md) var(--ui-space-inset-xl) var(--ui-space-inset-lg);
+	overflow-y: auto;
+	background-color: var(--ui-color-bg-content-secondary);
+}
+
+.bizproc-dataview-window__footer {
+	flex: 0 0 auto;
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-xs2);
+	padding: var(--ui-space-inset-sm2) var(--ui-space-inset-xl);
+	border-top: 1px solid var(--ui-color-divider-default);
+	background-color: var(--ui-color-bg-content-primary);
+}
+
+/* Panel header: mode caption, inline title and the description of the table. */
+.bizproc-dataview-header {
+	flex: 0 0 auto;
+	padding: var(--ui-space-inset-sm2) var(--ui-space-inset-xl) var(--ui-space-inset-md);
+	border-bottom: 1px solid var(--ui-color-divider-default);
+	background-color: var(--ui-color-bg-content-primary);
+}
+
+.bizproc-dataview-header__top {
+	display: flex;
+	align-items: flex-start;
+	gap: var(--ui-space-inline-sm);
+}
+
+.bizproc-dataview-header__caption {
+	flex: 1 1 auto;
+	min-width: 0;
+	padding-top: var(--ui-space-inset-2xs);
+	font-size: var(--ui-font-size-3xs);
+	font-weight: var(--ui-font-weight-medium);
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: var(--ui-color-base-4);
+}
+
+.bizproc-dataview-header__title {
+	display: block;
+	width: 100%;
+	margin-top: var(--ui-space-stack-2xs);
+	padding: var(--ui-space-inset-2xs) 0;
+	border: none;
+	background: transparent;
+	font-family: inherit;
+	font-size: var(--ui-font-size-4xl);
+	font-weight: var(--ui-font-weight-bold);
+	line-height: 1.25;
+	color: var(--ui-color-base-1);
+}
+
+.bizproc-dataview-header__title::placeholder {
+	color: var(--ui-color-base-4);
+}
+
+.bizproc-dataview-header__title:focus {
+	outline: none;
+}
+
+.bizproc-dataview-header__description-link {
+	display: inline-block;
+	margin-top: var(--ui-space-stack-2xs);
+	padding: 0;
+	border: none;
+	background: transparent;
+	font-family: inherit;
+	font-size: var(--ui-font-size-md);
+	color: var(--ui-color-accent-main-link);
+	cursor: pointer;
+}
+
+.bizproc-dataview-header__description {
+	display: flex;
+	align-items: flex-start;
+	gap: var(--ui-space-inline-xs);
+	margin-top: var(--ui-space-stack-xs);
+}
+
+.bizproc-dataview-header__description-field {
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+.bizproc-dataview-header__description-reset {
+	flex: 0 0 auto;
+	width: 28px;
+	height: 28px;
+	margin-top: var(--ui-space-stack-2xs);
+	padding: 0;
+	border: none;
+	border-radius: var(--ui-border-radius-xs);
+	display: grid;
+	place-items: center;
+	background: transparent;
+	color: var(--ui-color-base-4);
+	font-size: var(--ui-font-size-xl);
+	line-height: 1;
+	cursor: pointer;
+}
+
+.bizproc-dataview-header__description-reset:hover {
+	background-color: var(--ui-color-bg-state-hover-default);
+	color: var(--ui-color-base-2);
+}
+
+/* Section heading: title, item counter and the section action on the right. */
+.bizproc-dataview-section {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-xs);
+	margin: var(--ui-space-stack-lg) 0 var(--ui-space-stack-xs);
+}
+
+.bizproc-dataview-section__title {
+	font-size: var(--ui-font-size-lg);
+	font-weight: var(--ui-font-weight-bold);
+	color: var(--ui-color-base-1);
+}
+
+.bizproc-dataview-section__counter {
+	flex: 1 1 auto;
+	min-width: 0;
+	font-size: var(--ui-font-size-sm);
+	color: var(--ui-color-base-4);
+}
+
+/* Buttons — the panel mimics the native node-settings footer (air accent + link-gray cancel). */
+.bizproc-dataview-btn {
+	border: 1px solid transparent;
+	border-radius: var(--ui-border-radius-md);
+	padding: var(--ui-space-inset-xs) var(--ui-space-inset-sm);
+	font-family: inherit;
+	font-size: var(--ui-font-size-sm);
+	font-weight: var(--ui-font-weight-medium);
+	line-height: normal;
+	background: transparent;
+	color: var(--ui-color-base-1);
+	cursor: pointer;
+	transition: background-color 0.14s, border-color 0.14s, color 0.14s;
+	white-space: nowrap;
+}
+
+.bizproc-dataview-btn.--primary {
+	border-radius: 10px;
+	padding: var(--ui-space-inset-xs) var(--ui-space-inset-lg);
+	background-color: var(--ui-color-accent-main-primary);
+	color: var(--ui-color-base-white-fixed);
+}
+
+.bizproc-dataview-btn.--primary:hover {
+	background-color: var(--ui-color-accent-soft-element-blue);
+}
+
+.bizproc-dataview-btn.--primary:disabled {
+	background-color: var(--ui-color-design-disabled-bg);
+	color: var(--ui-color-design-disabled-content);
+}
+
+.bizproc-dataview-btn.--ghost {
+	color: var(--ui-color-base-2);
+}
+
+.bizproc-dataview-btn.--ghost:hover {
+	background-color: var(--ui-color-bg-state-hover-default);
+}
+
+/* Accent pill used for "+ Параметр": filled next to a section title, outlined inside the empty state. */
+.bizproc-dataview-btn.--accent {
+	background-color: var(--ui-color-accent-main-primary);
+	color: var(--ui-color-base-white-fixed);
+	border-radius: 10px;
+	padding: var(--ui-space-inset-2xs2) var(--ui-space-inset-sm);
+}
+
+.bizproc-dataview-btn.--accent:hover {
+	background-color: var(--ui-color-accent-soft-element-blue);
+}
+
+.bizproc-dataview-btn.--accent-outline {
+	border-color: var(--ui-color-accent-soft-border-blue);
+	border-radius: 10px;
+	padding: var(--ui-space-inset-2xs2) var(--ui-space-inset-sm);
+	color: var(--ui-color-accent-main-link);
+}
+
+.bizproc-dataview-btn.--accent-outline:hover {
+	background-color: var(--ui-color-accent-soft-blue-3);
+}
+
+.bizproc-dataview-btn:disabled {
+	cursor: not-allowed;
+}
+
+/* Intro/helper text */
+.bizproc-dataview__intro {
+	margin: var(--ui-space-stack-2xs2) 0 var(--ui-space-stack-sm2);
+	font-size: var(--ui-font-size-xs);
+	line-height: 1.45;
+	color: var(--ui-color-base-3);
+}
+
+.bizproc-dataview__hint {
+	margin: var(--ui-space-stack-2xs2) 0 0;
+	font-size: var(--ui-font-size-xs);
+	line-height: 1.45;
+	color: var(--ui-color-base-4);
+}
+
+.bizproc-dataview-window__body.--load-error {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: var(--ui-space-stack-sm);
+	text-align: center;
+}
+
+.bizproc-dataview__load-error-text {
+	margin: 0;
+	font-size: var(--ui-font-size-sm);
+	line-height: 1.45;
+	color: var(--ui-color-accent-main-alert);
+}
+
+.bizproc-dataview__field-error {
+	margin: var(--ui-space-stack-2xs2) 0 0;
+	font-size: var(--ui-font-size-xs);
+	line-height: 1.45;
+	color: var(--ui-color-accent-main-alert);
+}
+
+/* Form fields */
+.bizproc-dataview__field {
+	margin-bottom: var(--ui-space-stack-sm2);
+}
+
+.bizproc-dataview__field-label {
+	display: block;
+	font-size: var(--ui-font-size-sm);
+	font-weight: var(--ui-font-weight-medium);
+	color: var(--ui-color-base-2);
+	margin-bottom: var(--ui-space-stack-2xs2);
+}
+
+.bizproc-dataview__field-label-opt {
+	color: var(--ui-color-base-4);
+	font-weight: var(--ui-font-weight-normal);
+}
+
+/* Caps caption above a block of the parameter dialog. */
+.bizproc-dataview__caption {
+	display: block;
+	margin-bottom: var(--ui-space-stack-xs);
+	font-size: var(--ui-font-size-3xs);
+	font-weight: var(--ui-font-weight-medium);
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: var(--ui-color-base-4);
+}
+
+.bizproc-dataview__input,
+.bizproc-dataview__textarea,
+.bizproc-dataview__select {
+	width: 100%;
+	border: 1px solid var(--ui-color-divider-default);
+	border-radius: var(--ui-border-radius-md);
+	padding: var(--ui-space-inset-xs) var(--ui-space-inset-sm);
+	font-family: inherit;
+	font-size: var(--ui-font-size-sm);
+	color: var(--ui-color-base-1);
+	background-color: var(--ui-color-bg-content-primary);
+	transition: border-color 0.14s, box-shadow 0.14s;
+	box-sizing: border-box;
+}
+
+.bizproc-dataview__input::placeholder,
+.bizproc-dataview__textarea::placeholder {
+	color: var(--ui-color-base-4);
+}
+
+.bizproc-dataview__input:focus,
+.bizproc-dataview__textarea:focus,
+.bizproc-dataview__select:focus {
+	outline: none;
+	border-color: var(--ui-color-accent-main-primary);
+	box-shadow: 0 0 0 3px var(--ui-color-accent-soft-blue-2);
+}
+
+.bizproc-dataview__input--picker {
+	cursor: pointer;
+}
+
+.bizproc-dataview__textarea {
+	resize: vertical;
+	min-height: 68px;
+}
+
+.bizproc-dataview__select {
+	appearance: none;
+	-webkit-appearance: none;
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='none' stroke='%23828B95' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round' d='M1 1.5l5 5 5-5'/%3E%3C/svg%3E");
+	background-repeat: no-repeat;
+	background-position: right var(--ui-space-inset-sm) center;
+	padding-right: var(--ui-space-inset-3xl);
+	cursor: pointer;
+}
+
+.bizproc-dataview__select:disabled {
+	background-color: var(--ui-color-bg-content-secondary);
+	color: var(--ui-color-base-4);
+	cursor: not-allowed;
+}
+
+/* Preview card: the table, its horizontal scroller and the pager line. */
+.bizproc-dataview-grid {
+	position: relative;
+	border: 1px solid var(--ui-color-divider-default);
+	border-radius: var(--ui-border-radius-lg);
+	background-color: var(--ui-color-bg-content-primary);
+	overflow: hidden;
+	margin-bottom: var(--ui-space-stack-2xs2);
+}
+
+.bizproc-dataview-grid__scroll {
+	overflow-x: auto;
+}
+
+.bizproc-dataview-grid__table {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: var(--ui-font-size-md);
+}
+
+.bizproc-dataview-grid__head th,
+.bizproc-dataview-grid__head td {
+	text-align: left;
+	padding: 2px 12px;
+	font-size: var(--ui-font-size-xs);
+	font-weight: var(--ui-font-weight-medium);
+	color: var(--ui-color-base-3);
+	background-color: transparent;
+	border-bottom: 1px solid var(--ui-color-divider-default);
+	border-right: 1px solid var(--ui-color-divider-default);
+	white-space: nowrap;
+	vertical-align: middle;
+}
+
+.bizproc-dataview-grid__id-cell {
+	width: 64px;
+}
+
+.bizproc-dataview-grid__fill-cell {
+	width: auto;
+}
+
+.bizproc-dataview-grid__cell {
+	padding: 9px 12px;
+	border-top: 1px solid var(--ui-color-divider-less);
+	border-bottom: 1px solid var(--ui-color-divider-default);
+	border-right: 1px solid var(--ui-color-divider-default);
+	color: var(--ui-color-base-1);
+	line-height: 19px;
+	white-space: nowrap;
+	text-align: left;
+}
+
+/* A table without columns renders no header, so its first row has nothing to be divided from. */
+.bizproc-dataview-grid__table tbody:first-child tr:first-child .bizproc-dataview-grid__cell {
+	border-top: none;
+}
+
+.bizproc-dataview-grid__state {
+	padding: var(--ui-space-inset-sm2);
+	text-align: center;
+	font-size: var(--ui-font-size-sm);
+	color: var(--ui-color-base-3);
+	white-space: normal;
+}
+
+.bizproc-dataview-grid__state.--error {
+	color: var(--ui-color-accent-main-alert);
+}
+
+.bizproc-dataview-grid__loader {
+	display: inline-flex;
+	justify-content: center;
+	line-height: 0;
+}
+
+/* Floating chevrons over a horizontally scrolled preview. */
+/* Floats over the scrolled preview; the selector outweighs the shared icon button's own box. */
+.bizproc-dataview-grid .bizproc-dataview-grid__nav {
+	position: absolute;
+	top: 50%;
+	z-index: 1;
+	transform: translateY(-50%);
+	display: grid;
+	place-items: center;
+	box-sizing: content-box;
+	padding: var(--ui-space-inset-2xs);
+	border-radius: var(--ui-border-radius-circle);
+	background-color: var(--ui-color-bg-content-primary);
+	box-shadow: var(--ui-shadow-bottom-s);
+}
+
+.bizproc-dataview-grid__nav.--prev {
+	left: var(--ui-space-inline-xs);
+}
+
+.bizproc-dataview-grid__nav.--next {
+	right: var(--ui-space-inline-xs);
+}
+
+/* Column header: the field name, the chip of its source and the column menu. */
+.bizproc-dataview-column {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-2xs2);
+	max-width: 240px;
+}
+
+.bizproc-dataview-column__name {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font-size: var(--ui-font-size-sm);
+	font-weight: var(--ui-font-weight-bold);
+	color: var(--ui-color-base-1);
+}
+
+.bizproc-dataview-column__source {
+	flex: 0 0 auto;
+	max-width: 96px;
+	overflow: hidden;
+	border: 1px solid var(--ui-color-divider-default);
+	background: var(--ui-color-bg-content-secondary);
+}
+
+.bizproc-dataview-column__menu {
+	flex: 0 0 auto;
+}
+
+/* Empty preview: the whole card offers the first parameter instead of a table. */
+.bizproc-dataview-empty {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--ui-space-stack-xs);
+	padding: var(--ui-space-inset-3xl) var(--ui-space-inset-lg);
+	text-align: center;
+}
+
+.bizproc-dataview-empty__icon {
+	display: grid;
+	place-items: center;
+	width: 48px;
+	height: 48px;
+	border-radius: var(--ui-border-radius-lg);
+	background-color: var(--ui-color-accent-soft-blue-2);
+	color: var(--ui-color-accent-main-primary);
+	font-size: var(--ui-font-size-3xl);
+	line-height: 1;
+}
+
+.bizproc-dataview-empty__title {
+	font-size: var(--ui-font-size-md);
+	font-weight: var(--ui-font-weight-bold);
+	color: var(--ui-color-base-1);
+}
+
+.bizproc-dataview-empty__text {
+	margin: 0;
+	max-width: 320px;
+	font-size: var(--ui-font-size-sm);
+	color: var(--ui-color-base-4);
+}
+
+.bizproc-dataview-empty__action {
+	margin-top: var(--ui-space-stack-2xs);
+}
+
+/* Overlay and the centered dialogs (teleported to body, dim the whole editor). */
+.bizproc-dataview-modal {
+	position: fixed;
+	inset: 0;
+	background-color: var(--ui-color-overlay-base);
+	display: grid;
+	place-items: center;
+	animation: bizproc-dataview-fade 0.16s ease;
+	font-size: var(--ui-font-size-md);
+	line-height: 1.45;
+	color: var(--ui-color-base-1);
+	-webkit-font-smoothing: antialiased;
+}
+
+@keyframes bizproc-dataview-fade {
+	from { opacity: 0; }
+	to { opacity: 1; }
+}
+
+.bizproc-dataview-modal__window {
+	background-color: var(--ui-color-bg-content-primary);
+	border-radius: var(--ui-border-radius-2xl);
+	box-shadow: var(--ui-shadow-bottom-3xl);
+	width: 560px;
+	max-width: calc(100vw - 40px);
+	max-height: calc(100vh - 60px);
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+	animation: bizproc-dataview-dialog-in 0.18s cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+
+.bizproc-dataview-modal__window.--wide {
+	width: 680px;
+}
+
+.bizproc-dataview-modal__window.--narrow {
+	width: 440px;
+}
+
+@keyframes bizproc-dataview-dialog-in {
+	from { opacity: 0; transform: translateY(10px) scale(0.985); }
+	to { opacity: 1; transform: none; }
+}
+
+.bizproc-dataview-modal__header {
+	display: flex;
+	align-items: center;
+	padding: var(--ui-space-inset-lg) var(--ui-space-inset-lg) var(--ui-space-inset-sm);
+}
+
+.bizproc-dataview-modal__title {
+	flex: 1;
+	font-size: var(--ui-font-size-2xl);
+	font-weight: var(--ui-font-weight-bold);
+	color: var(--ui-color-base-1);
+}
+
+.bizproc-dataview-modal__close {
+	width: 30px;
+	height: 30px;
+	border-radius: var(--ui-border-radius-sm);
+	border: none;
+	padding: 0;
+	background: transparent;
+	color: var(--ui-color-base-4);
+	font-size: var(--ui-font-size-2xl);
+	display: grid;
+	place-items: center;
+	cursor: pointer;
+}
+
+.bizproc-dataview-modal__close:hover {
+	background-color: var(--ui-color-bg-state-hover-default);
+	color: var(--ui-color-base-2);
+}
+
+.bizproc-dataview-modal__body {
+	padding: var(--ui-space-inset-2xs) var(--ui-space-inset-lg) var(--ui-space-inset-md);
+	overflow-y: auto;
+}
+
+.bizproc-dataview-modal__body .bizproc-dataview__intro.--tight {
+	margin-top: var(--ui-space-stack-3xs);
+}
+
+/* The builder is a popup elsewhere and takes its height from the room around its trigger; inside
+   the dialog it is an ordinary block, so the height comes from here and the dialog pads it. */
+.bizproc-dataview-modal__body .bizprocdesigner-expression-builder {
+	--eb-height: 320px;
+	padding: 0;
+}
+
+.bizproc-dataview__formula {
+	margin-top: var(--ui-space-stack-sm2);
+}
+
+.bizproc-dataview-modal__block {
+	margin-bottom: var(--ui-space-stack-lg);
+}
+
+.bizproc-dataview-modal__footer {
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+	gap: var(--ui-space-inline-xs2);
+	padding: var(--ui-space-inset-md) var(--ui-space-inset-lg);
+	border-top: 1px solid var(--ui-color-divider-default);
+}
+
+.bizproc-dataview-modal__footer-note {
+	flex: 1 1 auto;
+	min-width: 0;
+	font-size: var(--ui-font-size-sm);
+	color: var(--ui-color-base-4);
+}
+
+/* Parameter type cards: the kind of parameter the dialog builds. */
+.bizproc-dataview-types {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+	gap: var(--ui-space-inline-xs);
+}
+
+.bizproc-dataview-type {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-2xs);
+	text-align: left;
+	padding: var(--ui-space-inset-sm) var(--ui-space-inset-sm2);
+	border: 1px solid var(--ui-color-divider-default);
+	border-radius: var(--ui-border-radius-lg);
+	background-color: var(--ui-color-bg-content-primary);
+	font-family: inherit;
+	cursor: pointer;
+	transition: border-color 0.14s, background-color 0.14s;
+}
+
+.bizproc-dataview-type:hover {
+	border-color: var(--ui-color-accent-soft-border-blue);
+}
+
+.bizproc-dataview-type.--selected {
+	border-color: var(--ui-color-accent-main-primary);
+	background-color: var(--ui-color-accent-soft-blue-3);
+}
+
+.bizproc-dataview-type.--locked {
+	cursor: not-allowed;
+	opacity: 0.6;
+}
+
+.bizproc-dataview-type.--locked:hover {
+	border-color: var(--ui-color-divider-default);
+}
+
+.bizproc-dataview-type__title {
+	font-size: var(--ui-font-size-md);
+	font-weight: var(--ui-font-weight-medium);
+	color: var(--ui-color-base-1);
+}
+
+.bizproc-dataview-type__text {
+	font-size: var(--ui-font-size-xs);
+	line-height: 1.35;
+	color: var(--ui-color-base-4);
+}
+
+.bizproc-dataview-type__locked-note {
+	grid-column: 1 / -1;
+	margin: 0;
+	font-size: var(--ui-font-size-xs);
+	color: var(--ui-color-base-4);
+}
+
+/* Field list: the checkbox multi-select shared by the simple and the merge parameter. */
+.bizproc-dataview-fields {
+	border: 1px solid var(--ui-color-divider-default);
+	border-radius: var(--ui-border-radius-lg);
+	background-color: var(--ui-color-bg-content-primary);
+	overflow: hidden;
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+}
+
+.bizproc-dataview-fields__head {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-xs);
+	padding: var(--ui-space-inset-xs) var(--ui-space-inset-sm);
+	background-color: var(--ui-color-bg-content-secondary);
+	border-bottom: 1px solid var(--ui-color-divider-less);
+}
+
+.bizproc-dataview-fields__title {
+	flex: 1 1 auto;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font-size: var(--ui-font-size-sm);
+	font-weight: var(--ui-font-weight-medium);
+	color: var(--ui-color-base-1);
+}
+
+.bizproc-dataview-fields__all {
+	flex: 0 0 auto;
+	border: none;
+	padding: 0;
+	background: transparent;
+	font-family: inherit;
+	font-size: var(--ui-font-size-xs);
+	color: var(--ui-color-accent-main-link);
+	cursor: pointer;
+}
+
+.bizproc-dataview-fields__list {
+	padding: var(--ui-space-inset-2xs);
+	display: flex;
+	flex-direction: column;
+	gap: 1px;
+	max-height: 160px;
+	overflow-y: auto;
+}
+
+.bizproc-dataview-fields__row {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-xs);
+	padding: var(--ui-space-inset-2xs2) var(--ui-space-inset-xs);
+	border: 1px solid transparent;
+	border-radius: var(--ui-border-radius-sm);
+	font-size: var(--ui-font-size-sm);
+	cursor: pointer;
+}
+
+.bizproc-dataview-fields__row:hover {
+	background-color: var(--ui-color-bg-state-hover-default);
+}
+
+.bizproc-dataview-fields__row.--checked {
+	background-color: var(--ui-color-accent-soft-blue-3);
+}
+
+.bizproc-dataview-fields__row.--key {
+	background-color: var(--ui-color-accent-soft-blue-2);
+	border-color: var(--ui-color-accent-soft-border-blue);
+	cursor: default;
+}
+
+.bizproc-dataview-fields__row-name {
+	flex: 1 1 auto;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	color: var(--ui-color-base-1);
+}
+
+.bizproc-dataview-fields__row-type {
+	flex: 0 0 auto;
+	font-size: var(--ui-font-size-3xs);
+	color: var(--ui-color-base-4);
+}
+
+.bizproc-dataview-fields__key-tag {
+	flex: 0 0 auto;
+	font-size: var(--ui-font-size-4xs);
+	font-weight: var(--ui-font-weight-medium);
+	color: var(--ui-color-accent-soft-element-blue);
+	background-color: var(--ui-color-accent-soft-blue-1);
+	border-radius: var(--ui-border-radius-2xs);
+	padding: 1px var(--ui-space-inset-2xs2);
+}
+
+.bizproc-dataview-fields__more {
+	border: none;
+	padding: var(--ui-space-inset-2xs2) var(--ui-space-inset-xs);
+	background: transparent;
+	font-family: inherit;
+	font-size: var(--ui-font-size-xs);
+	color: var(--ui-color-accent-main-link);
+	text-align: left;
+	cursor: pointer;
+}
+
+.bizproc-dataview-fields__empty {
+	padding: var(--ui-space-inset-md);
+	text-align: center;
+	font-size: var(--ui-font-size-sm);
+	color: var(--ui-color-base-4);
+}
+
+/* Placeholder shown instead of the field lists while the sources are not both picked. */
+.bizproc-dataview-fields-stub {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--ui-space-stack-2xs);
+	padding: var(--ui-space-inset-3xl) var(--ui-space-inset-lg);
+	border: 1px solid var(--ui-color-divider-default);
+	border-radius: var(--ui-border-radius-lg);
+	background-color: var(--ui-color-bg-content-secondary);
+	text-align: center;
+}
+
+.bizproc-dataview-fields-stub__title {
+	font-size: var(--ui-font-size-md);
+	font-weight: var(--ui-font-weight-medium);
+	color: var(--ui-color-base-3);
+}
+
+.bizproc-dataview-fields-stub__text {
+	margin: 0;
+	font-size: var(--ui-font-size-sm);
+	color: var(--ui-color-base-4);
+}
+
+/* Search line above the field list. */
+.bizproc-dataview-search {
+	flex: 0 0 auto;
+	width: 180px;
+}
+
+.bizproc-dataview__caption-row {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-xs);
+	margin-bottom: var(--ui-space-stack-xs);
+}
+
+.bizproc-dataview__caption-row .bizproc-dataview__caption {
+	flex: 1 1 auto;
+	min-width: 0;
+	margin-bottom: 0;
+}
+
+/* Join builder (the "merge" parameter kind): two field lists side by side. */
+.bizproc-dataview-builder {
+	display: flex;
+	gap: var(--ui-space-inline-sm);
+	align-items: stretch;
+}
+
+.bizproc-dataview-builder__col {
+	flex: 1 1 0;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+}
+
+/* Join key card: the two fields the rows of the sources are matched on. */
+.bizproc-dataview-keycard {
+	border: 1px solid var(--ui-color-divider-default);
+	border-radius: var(--ui-border-radius-lg);
+	background-color: var(--ui-color-bg-content-primary);
+	padding: var(--ui-space-inset-sm2);
+}
+
+.bizproc-dataview-keycard__head {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-xs);
+	margin-bottom: var(--ui-space-stack-xs);
+}
+
+.bizproc-dataview-keycard__title {
+	font-size: var(--ui-font-size-md);
+	font-weight: var(--ui-font-weight-medium);
+	color: var(--ui-color-base-1);
+}
+
+.bizproc-dataview-keycard__badge {
+	font-size: var(--ui-font-size-3xs);
+	color: var(--ui-color-base-4);
+	background-color: var(--ui-color-bg-content-secondary);
+	border-radius: var(--ui-border-radius-pill);
+	padding: 1px var(--ui-space-inset-xs);
+}
+
+.bizproc-dataview-keycard__row {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-xs);
+}
+
+.bizproc-dataview-keycard__eq {
+	flex: 0 0 auto;
+	color: var(--ui-color-base-4);
+}
+
+.bizproc-dataview-keycard__hint {
+	margin: var(--ui-space-stack-xs) 0 0;
+	font-size: var(--ui-font-size-xs);
+	color: var(--ui-color-base-4);
+}
+
+/* Sources: one row per alias, picked from the source catalog (ui.entity-selector). */
+.bizproc-dataview-sources {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-xs);
+}
+
+.bizproc-dataview-sources__row {
+	flex: 1 1 0;
+	min-width: 0;
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-2xs);
+}
+
+.bizproc-dataview-sources__plus {
+	flex: 0 0 auto;
+	color: var(--ui-color-base-4);
+	font-size: var(--ui-font-size-xl);
+	line-height: 1;
+}
+
+.bizproc-dataview-sources__pick {
+	flex: 1 1 auto;
+	min-width: 0;
+	text-align: left;
+	border: 1px solid var(--ui-color-divider-default);
+	border-radius: var(--ui-border-radius-md);
+	background-color: var(--ui-color-bg-content-primary);
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='none' stroke='%23828B95' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round' d='M1 1.5l5 5 5-5'/%3E%3C/svg%3E");
+	background-repeat: no-repeat;
+	background-position: right var(--ui-space-inset-sm) center;
+	padding: var(--ui-space-inset-xs) var(--ui-space-inset-3xl) var(--ui-space-inset-xs) var(--ui-space-inset-sm);
+	font-family: inherit;
+	font-size: var(--ui-font-size-sm);
+	color: var(--ui-color-base-1);
+	cursor: pointer;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.bizproc-dataview-sources__pick:hover {
+	border-color: var(--ui-color-accent-main-primary);
+}
+
+.bizproc-dataview-sources__pick.--unavailable {
+	border-color: var(--ui-color-accent-main-alert);
+}
+
+.bizproc-dataview-sources__placeholder {
+	color: var(--ui-color-base-4);
+}
+
+.bizproc-dataview-sources__unavailable {
+	flex: 0 0 auto;
+	font-size: var(--ui-font-size-xs);
+	color: var(--ui-color-accent-main-alert);
+}
+
+.bizproc-dataview-sources__remove {
+	flex: 0 0 auto;
+	border: 0;
+	background: transparent;
+	color: var(--ui-color-base-4);
+	font-size: var(--ui-font-size-xl);
+	line-height: 1;
+	padding: var(--ui-space-inset-2xs) var(--ui-space-inset-2xs2);
+	cursor: pointer;
+	border-radius: var(--ui-border-radius-2xs);
+}
+
+.bizproc-dataview-sources__remove:hover {
+	color: var(--ui-color-accent-main-alert);
+}
+
+.bizproc-dataview-sources__suggestion {
+	margin: var(--ui-space-stack-2xs2) 0 0;
+	padding: var(--ui-space-inset-xs) var(--ui-space-inset-xs2);
+	border-radius: var(--ui-border-radius-xs);
+	background-color: var(--ui-color-accent-soft-blue-2);
+	color: var(--ui-color-accent-soft-element-blue);
+	font-size: var(--ui-font-size-xs);
+	line-height: 1.45;
+}
+
+/* Aggregate: grouping columns and the totals, hosted by the "modify value" dialog. */
+.bizproc-dataview-aggregate__group {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--ui-space-inline-2xs2) var(--ui-space-inline-sm);
+}
+
+.bizproc-dataview-aggregate__group-item {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--ui-space-inline-2xs2);
+	font-size: var(--ui-font-size-sm);
+	color: var(--ui-color-base-1);
+	cursor: pointer;
+}
+
+.bizproc-dataview-aggregate__group-item.--checked {
+	color: var(--ui-color-accent-soft-element-blue);
+	font-weight: var(--ui-font-weight-medium);
+}
+
+.bizproc-dataview-aggregate__fn {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-xs);
+	margin-bottom: var(--ui-space-stack-2xs2);
+}
+
+.bizproc-dataview-aggregate__fn-remove {
+	flex: 0 0 auto;
+	border: 0;
+	background: transparent;
+	color: var(--ui-color-base-4);
+	font-size: var(--ui-font-size-xl);
+	line-height: 1;
+	padding: var(--ui-space-inset-2xs) var(--ui-space-inset-2xs2);
+	cursor: pointer;
+	border-radius: var(--ui-border-radius-2xs);
+}
+
+.bizproc-dataview-aggregate__fn-remove:hover {
+	color: var(--ui-color-accent-main-alert);
+}
+
+/* Tab strip of the "modify value" dialog: the transformation the dialog applies. */
+.bizproc-dataview-tabs {
+	display: flex;
+	gap: var(--ui-space-inline-2xs);
+	margin-bottom: var(--ui-space-stack-xs);
+}
+
+.bizproc-dataview-tabs__item {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--ui-space-inline-2xs);
+	padding: var(--ui-space-inset-2xs2) var(--ui-space-inset-sm2);
+	border: none;
+	border-radius: 6px;
+	background-color: var(--ui-color-bg-content-secondary);
+	font-family: inherit;
+	font-size: var(--ui-font-size-sm);
+	color: var(--ui-color-base-2);
+	cursor: pointer;
+}
+
+.bizproc-dataview-tabs__item.--active {
+	background-color: var(--ui-color-accent-main-primary);
+	color: var(--ui-color-base-white-fixed);
+	--ui-icon-set__icon-color: var(--ui-color-base-white-fixed);
+}
+
+.bizproc-dataview__error {
+	margin: var(--ui-space-stack-2xs2) 0 0;
+	font-size: var(--ui-font-size-xs);
+	line-height: 1.45;
+	color: var(--ui-color-accent-main-alert);
+}
+
+.bizproc-dataview__retry {
+	margin-bottom: var(--ui-space-stack-xs2);
+}
+
+.bizproc-dataview__visually-hidden {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0 0 0 0);
+	white-space: nowrap;
+	border: 0;
+}
+
+.bizproc-dataview-btn:focus-visible,
+.bizproc-dataview-modal__close:focus-visible,
+.bizproc-dataview-type:focus-visible,
+.bizproc-dataview-fields__all:focus-visible,
+.bizproc-dataview-fields__more:focus-visible,
+.bizproc-dataview-fields__row:focus-visible,
+.bizproc-dataview-header__description-link:focus-visible,
+.bizproc-dataview-header__description-reset:focus-visible,
+.bizproc-dataview-tabs__item:focus-visible,
+.bizproc-dataview-sources__pick:focus-visible,
+.bizproc-dataview-sources__remove:focus-visible,
+.bizproc-dataview-aggregate__fn-remove:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: 2px;
+}
+
+	/* @chef-ignore */
+	/* @chef-ignore */
+.node-data-inspector-layout {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	overflow: hidden;
+}
+
+.node-data-inspector-layout__header {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	padding: var(--ui-space-inset-xs) var(--ui-space-inset-md);
+	border-bottom: 1px solid var(--ui-color-palette-gray-15);
+}
+
+.node-data-inspector-layout__header-controls {
+	display: flex;
+	margin-left: auto;
+}
+
+.node-data-inspector-layout__header-title {
+	font-size: var(--ui-font-size-lg);
+	line-height: 20px;
+	color: var(--ui-color-palette-black-base);
+	font-weight: var(--ui-font-weight-medium);
+	overflow: hidden;
+}
+
+.node-data-inspector-layout__content {
+	display: flex;
+	flex-direction: column;
+}
+
+.node-data-inspector-layout__content-controls {
+	display: flex;
+	padding: 20px 18px;
+	gap: 16px;
+}
+
+.node-data-inspector-layout__content-controls-search {
+	flex: 1;
+}
+
+.node-data-inspector-layout__content-controls-view-mode {
+	display: flex;
+	flex-direction: row;
+	margin-left: auto;
+	gap: 4px;
+}
+
+.node-data-inspector-layout__content-controls-view-mode .ui-chip {
+	--background-hover: var(--ui-color-bg-state-hover-default);
+}
+
+.node-data-inspector-layout__divider {
+	border-bottom: 1px solid var(--ui-color-palette-gray-15);
+}
+
+.node-data-inspector-layout__content__data-viewer {
+	flex: 1;
+	min-height: 0;
+	overflow-y: auto;
+	margin-bottom: 16px;
+	flex: 1 1 auto;
+	min-height: 0;
+	display: flex;
+	flex-direction: column;
+}
+
+.inspector-search-container {
+	display: flex;
+	align-items: center;
+	height: 34px;
+	border-radius: 8px;
+	padding-left: var(--ui-space-inset-sm);
+	padding-right: var(--ui-space-inset-xs2);
+	border: solid 1px var(--ui-color-palette-gray-30);
+	box-sizing: border-box;
+}
+
+.inspector-search__icon {
+	flex-shrink: 0;
+	width: 20px;
+	height: 20px;
+}
+
+.inspector-search-container.--active {
+	border: solid 1px var(--ui-color-accent-main-primary);
+}
+
+.inspector-search__input {
+	flex: 1;
+	min-width: 0;
+	border: none;
+	font-size: var(--ui-font-size-md);
+	text-overflow: ellipsis;
+	overflow: hidden;
+	padding: 0;
+}
+
+.inspector-search__input::placeholder {
+	color: var(--ui-color-base-50);
+}
+
+.inspector-search__clear-btn {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+	width: 20px;
+	height: 20px;
+	padding: 0;
+	border: none;
+	background: transparent;
+	cursor: pointer;
+}
+
+.editor-chart-inspector-grid-view {
+	border-radius: 8px;
+	border: 1px solid var(--ui-color-divider-vibrant-accent, rgba(0, 0, 0, 0.08));
+	margin: 20px 18px 4px 18px;
+	cursor: default;
+	display: flex;
+	flex-direction: column;
+	height: calc(100% - 24px);
+	box-sizing: border-box;
+}
+
+.editor-chart-inspector-grid-view__table{
+	flex-grow: 1;
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	min-height: 0;
+}
+
+.editor-chart-inspector-grid-view__heads {
+	display: flex;
+	font-size: 12px;
+	font-weight: 500;
+	line-height: 14px;
+	color: var(--ui-color-gray-70);
+	background: rgba(250, 251, 252, 0.92);
+	border-top-left-radius: 8px;
+	border-top-right-radius: 8px;
+}
+
+.editor-chart-inspector-grid-view__cell {
+	padding: 14px 0 14px 18px;
+	flex: 1 1 0;
+	min-width: 0;
+}
+
+.editor-chart-inspector-grid-view__heads .editor-chart-inspector-grid-view__cell {
+	border-right: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.editor-chart-inspector-grid-view__heads .inspector-grid-view__cell:last-child {
+	border: none;
+}
+
+.editor-chart-inspector-grid-view__cell:last-child {
+	border-right: none;
+}
+
+.editor-chart-inspector-grid-view__rows {
+	overflow-y: auto;
+}
+
+.editor-chart-inspector-grid-view__row {
+	display: flex;
+	font-size: 14px;
+	line-height: 19px;
+	color: var(--ui-color-black-base);
+	border-top: 1px solid #f2f2f2;
+}
+
+.editor-chart-inspector-grid-view__cell.--name {
+	flex: 1 1 0;
+}
+
+/* Only the value is kept on a single line: the name and the type wrap and stay readable in full. */
+.editor-chart-inspector-grid-view__cell.--value {
+	flex: 1 1 0;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.editor-chart-inspector-grid-view__cell.--type {
+	flex: 0 0 116px;
+}
+
+.editor-chart-inspector-grid-view__row .editor-chart-inspector-grid-view__cell.--name {
+	font-weight: 500;
+	line-height: 17px;
+}
+
+.editor-chart-inspector-grid-view__row .editor-chart-inspector-grid-view__cell.--value {
+	color: var(--ui-color-base-2);
+}
+
+.editor-chart-inspector-grid-view__row .editor-chart-inspector-grid-view__cell.--type {
+	color: var(--ui-color-base-4);
+}
+
+/* Shrinks to the text so the hint popup is bound to the value itself, not to the whole column. */
+.editor-chart-inspector-value-cell {
+	display: block;
+	width: fit-content;
+	max-width: 100%;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.inspector-scheme-view {
+	display: flex;
+	flex-direction: column;
+	padding: 0 18px;
+}
+
+.inspector-scheme-view > .inspector-scheme-view__item-list {
+	--inspector-group-item-background-color: var(--ui-color-base-7);
+	--inspector-group-item-icon-color: var(--ui-color-base-3);
+	--inspector-group-data-item-border-color: var(--ui-color-base-5);
+}
+
+.inspector-scheme-view__item-list.--green {
+	--inspector-group-item-background-color: var(--ui-color-accent-soft-green-2);
+	--inspector-group-item-icon-color: var(--ui-color-accent-main-success-alt-2);
+	--inspector-group-data-item-border-color: var(--ui-color-accent-soft-border-green);
+}
+
+.inspector-scheme-view__item-list.--orange {
+	--inspector-group-item-background-color: var(--ui-color-accent-soft-orange-2);
+	--inspector-group-item-icon-color: var(--ui-color-accent-main-warning);
+	--inspector-group-data-item-border-color: var(--ui-color-design-filled-warning-bg);
+}
+
+.inspector-scheme-view__item-list.--blue {
+	--inspector-group-item-background-color: var(--ui-color-accent-soft-blue-2);
+	--inspector-group-item-icon-color: var(--ui-color-accent-main-primary);
+	--inspector-group-data-item-border-color: var(--ui-color-accent-soft-border-blue);
+}
+
+.inspector-scheme-view__item-list-group-divider {
+	align-self: stretch;
+	border-bottom: 1px solid var(--ui-color-palette-gray-15);
+}
+
+.inspector-scheme-view__item-list {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	list-style: none;
+	gap: 12px;
+	margin: 18px 0;
+	padding: 0;
+}
+
+.inspector-scheme-view__item-list .inspector-scheme-view__item-list {
+	padding-top: 12px;
+	padding-left: 24px;
+	margin: 0;
+}
+
+.inspector-scheme-view__collapsible-header__toggle-button {
+	width: 16px;
+	height: 16px;
+}
+
+.inspector-scheme-view__item-list .inspector-scheme-view__item-list:before {
+	content: '';
+	position: absolute;
+	left: 7px;
+	top: 0;
+	bottom: 0;
+	width: 1px;
+	background-color: var(--ui-color-divider-vibrant-accent);
+}
+
+.inspector-scheme-view__collapsible-header {
+	display: flex;
+	font-weight: var(--ui-font-weight-medium);
+	font-size: var(--ui-font-size-lg);
+	align-items: center;
+	gap: 4px;
+}
+
+.inspector-scheme-view__collapsible-header.--group {
+	gap: 8px;
+}
+
+.inspector-scheme-view__collapsible-header__icon {
+	width: 20px;
+	height: 20px;
+}
+
+.inspector-scheme-view__collapsible-item-group-title {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	padding: 2px 10px 2px 4px;
+	background: var(--inspector-group-item-background-color);
+	border-radius: 8px;
+	--ui-icon-set__icon-color: var(--inspector-group-item-icon-color);
+}
+
+.inspector-scheme-view__collapsible-item-title.--group {
+	padding: 8px 4px;
+	border-radius: 6px;
+	background: var(--inspector-group-item-background-color);
+}
+
+.inspector-scheme-view__collapsible-item-title.--node {
+	font-size: var(--ui-font-size-md);
+	line-height: 19px;
+}
+
+.inspector-scheme-view__collapsible-item-title.--data-group {
+	font-size: var(--ui-font-size-md);
+	line-height: 19px;
+	font-weight: var(--ui-font-weight-normal);
+}
+.inspector-scheme-view__data-item-row {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	align-self: stretch;
+	gap: 10px;
+	font-size: var(--ui-font-size-md);
+}
+
+.inspector-scheme-view__data-item-title {
+	display: flex;
+	align-items: center;
+	flex: 1 1 auto;
+	min-width: 0;
+	gap: 4px;
+	padding: 2px 6px 3px 4px;
+	border: 1px solid var(--inspector-group-data-item-border-color);
+	border-radius: 6px;
+
+	overflow: hidden;
+	text-overflow: ellipsis;
+	cursor: grab;
+}
+
+.inspector-scheme-view__data-item-title:hover {
+	background: var(--ui-color-bg-state-hover-default);
+}
+
+.inspector-scheme-view__data-item-drag-ghost {
+	position: fixed;
+	z-index: 9999;
+	opacity: 0.85;
+	pointer-events: none;
+}
+
+/* The ghost is re-parented to body, so it cannot inherit the panel-scoped border colour. */
+.inspector-scheme-view__data-item-drag-ghost .inspector-scheme-view__data-item-title {
+	border: 1px solid var(--ui-color-palette-gray-30);
+	border-radius: 6px;
+	background: var(--ui-color-palette-white-base);
+}
+
+/*
+ * Owns the cursor for the whole drag. The settings panel controls declare cursor with
+ * !important, including on pseudo-elements, so the overlay covers them instead of competing
+ * with their cascade. Pointer events stay on: without them the cursor comes from the element
+ * underneath and the overlay is pointless.
+ */
+.inspector-scheme-view__data-item-drag-cursor-overlay {
+	position: fixed;
+	inset: 0;
+	z-index: 2147483647;
+	background: transparent;
+	cursor: grabbing;
+}
+
+.inspector-scheme-view__data-item-hoverable {
+	display: flex;
+	align-items: center;
+	flex-direction: row;
+	gap: 4px;
+	min-width: 0;
+	flex: 0 1 auto;
+}
+
+.inspector-scheme-view__data-item-title-container:hover .inspector-scheme-view__data-item-copy-button {
+	opacity: 1;
+	pointer-events: auto;
+}
+
+.inspector-scheme-view__data-item-copy-button {
+	display: flex;
+	flex: 0 0 16px;
+	align-items: center;
+	justify-content: center;
+	width: 16px;
+	height: 16px;
+	cursor: pointer;
+	opacity: 0;
+	pointer-events: none;
+	transition: opacity 0.15s ease;
+}
+
+.inspector-scheme-view__data-item-title-text {
+	flex: 1 1 auto;
+	min-width: 0;
+	font-weight: var(--ui-font-weight-medium);
+	line-height: 19px;
+	color: var(--ui-color-base-1);
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.inspector-scheme-view__data-item-title-container {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	flex: 1 1 220px;
+	max-width: 220px;
+	min-width: 0;
+}
+
+.inspector-scheme-view__data-item-example-value {
+	flex: 0 0 160px;
+	min-width: 160px;
+	max-width: 160px;
+	font-weight: var(--ui-font-weight-normal);
+	line-height: 19px;
+	color: var(--ui-color-base-2);
+	overflow: hidden;
+}
+
+.inspector-scheme-view__data-item-type {
+	flex: 0 0 84px;
+	min-width: 84px;
+	max-width: 84px;
+	font-weight: var(--ui-font-weight-normal);
+	color: var(--ui-color-base-4);
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.inspector-scheme-view__data-item-type::before {
+	content: '// ';
+}
+
+.node-data-inspector-close-button {
+	padding: 0;
+	border: none;
+	background: none;
+	display: flex;
+	cursor: pointer;
+	--ui-icon-set__icon-color: var(--ui-color-base-3);
+}
+.node-settings-rules-toggle-inspector-button {
+	display: flex;
+	flex-direction: row;
+	gap: 4px;
+	align-items: center;
+	color: var(--ui-color-accent-main-primary);
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary);
+	cursor: pointer;
+	-webkit-user-select: none;
+	        user-select: none;
+}
+
+.node-settings-rules-toggle-inspector-button__icon {
+	width: 24px;
+	height: 24px;
+}
+
+.node-settings-rules-toggle-inspector-button__text {
+	font-weight: var(--ui-font-weight-normal);
+	font-size: var(--ui-font-size-md);
+}
+.bizprocdesigner-inspector-empty-state {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 24px;
+	height: 100%;
+	box-sizing: border-box;
+	padding-bottom: 80px;
+}
+
+.bizprocdesigner-inspector-empty-state__image {
+	width: 320px;
+	height: 163px;
+	opacity: 0.8;
+	background: url("images/entities/node-data-inspector/ui/inspector-empty-state/images/empty-state.png") no-repeat center / contain;
+}
+
+.bizprocdesigner-inspector-empty-state__text {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 12px;
+}
+
+.bizprocdesigner-inspector-empty-state__title {
+	color: var(--ui-color-base-2);
+}
+
+.bizprocdesigner-expression-builder {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-sm);
+	padding: var(--ui-space-inset-md);
+	/* Floor for the layout, capped by the popup width JS gives it: a window too narrow for the
+	   popup gets a narrower one, and the content must not stick out of it. */
+	min-width: min(340px, 100%);
+	box-sizing: border-box;
+	/* Single-scroll layout: header (formula/modes/hint/search) and footer stay put, only the mode
+	   body scrolls. No outer scroll here (overflow:hidden), so there is no second scrollbar and
+	   the footer is never clipped.
+	   --eb-height comes from JS: all the room the trigger leaves below itself, minus a margin from
+	   the window edge. `auto` covers the first paint, before the measurement runs. */
+	height: var(--eb-height, auto);
+	max-height: calc(100vh - 32px);
+	overflow: hidden;
+}
+
+.bizprocdesigner-expression-builder__modes {
+	flex: 0 0 auto;
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--ui-space-inline-xs);
+}
+
+/* Fills the space left between fixed header and footer; min-height:0 lets it shrink so the
+   inner list (not the whole popup) becomes the scroll area when content is tall. */
+.bizprocdesigner-expression-builder__body {
+	flex: 1 1 auto;
+	min-height: 0;
+	display: flex;
+	flex-direction: column;
+}
+
+/* Scrolls when the mode content outgrows the popup. Modes built from a list keep the scroll in
+   the list (it shrinks to the room left, so this never overflows); the calculator and
+   modification forms have no list of their own: without this their fields and chips spill over
+   the footer instead of scrolling. */
+.bizprocdesigner-expression-builder__mode-body {
+	flex: 1 1 auto;
+	min-height: 0;
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-xs);
+	overflow-y: auto;
+}
+
+/* Keep their own height inside the scrolling column: a flex child shrinks by default, which
+   squashes the fields and the chip rows instead of letting the column scroll. The source list is
+   the exception: it is the one child that takes the leftover room and scrolls on its own. */
+.bizprocdesigner-expression-builder__mode-body > *:not(.bizprocdesigner-expression-builder-source-list) {
+	flex: 0 0 auto;
+}
+
+.bizprocdesigner-expression-builder__placeholder,
+.bizprocdesigner-expression-builder__hint {
+	flex: 0 0 auto;
+	color: var(--ui-color-base-3);
+}
+
+.bizprocdesigner-expression-builder__operand {
+	display: flex;
+	align-items: flex-end;
+	gap: var(--ui-space-inline-xs);
+}
+
+.bizprocdesigner-expression-builder__operand .ui-ctl,
+.bizprocdesigner-expression-builder__operand > :first-child {
+	flex: 1 1 auto;
+}
+
+.bizprocdesigner-expression-builder__operations {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--ui-space-inline-xs);
+}
+
+.bizprocdesigner-expression-builder__operation {
+	display: flex;
+}
+
+.bizprocdesigner-expression-builder__operation-select {
+	flex: 1 1 auto;
+}
+
+/* The chosen source doubles as the way back to the list: Modification has no separate
+   "pick a source" button, it opens on the list itself. Native button, so the default
+   button look is reset here. */
+.bizprocdesigner-expression-builder__source-value {
+	display: block;
+	width: 100%;
+	box-sizing: border-box;
+	padding: var(--ui-space-inset-xs);
+	border: none;
+	border-radius: var(--ui-border-radius-sm);
+	background: var(--ui-color-bg-content-secondary);
+	font: inherit;
+	color: var(--ui-color-base-2);
+	text-align: left;
+	word-break: break-word;
+	cursor: pointer;
+	transition: background-color 200ms ease;
+}
+
+.bizprocdesigner-expression-builder__source-value:hover {
+	background: var(--ui-color-bg-state-hover-default);
+}
+
+.bizprocdesigner-expression-builder__source-value:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: -2px;
+}
+
+.bizprocdesigner-expression-builder__preview {
+	padding: var(--ui-space-inset-xs);
+	border-radius: var(--ui-border-radius-sm);
+	background: var(--ui-color-bg-content-secondary);
+}
+
+.bizprocdesigner-expression-builder__preview.--warning {
+	background: var(--ui-color-bg-content-secondary);
+}
+
+.bizprocdesigner-expression-builder__preview-text {
+	color: var(--ui-color-base-2);
+}
+
+.bizprocdesigner-expression-builder__preview.--warning .bizprocdesigner-expression-builder__preview-text {
+	color: var(--ui-color-accent-main-warning);
+}
+
+.bizprocdesigner-expression-builder__warning {
+	padding: var(--ui-space-inset-xs);
+	border-radius: var(--ui-border-radius-sm);
+	background: var(--ui-color-bg-content-secondary);
+}
+
+.bizprocdesigner-expression-builder__warning-text {
+	color: var(--ui-color-accent-main-warning);
+}
+
+/* Formula highlight: parts are rendered as text nodes ({{ }}), never as HTML. */
+.bizprocdesigner-expression-builder__formula {
+	flex: 0 0 auto;
+	display: block;
+	/* The block shows the whole current value of the field, and that can be a long text (a letter
+	   or a notification body). The window height is fixed, so without a cap such a value takes it
+	   all: the mode body shrinks to nothing and the footer leaves the popup, which is
+	   overflow:hidden. A share of the height, so a taller window shows more of the value — counted
+	   from --eb-height rather than written as `25%`, because a percentage of a root that is still
+	   `auto` high resolves to `none` and leaves the block uncapped (first paint, and any mount with
+	   no trigger to measure). The fallback stands for the shortest window the geometry ever gives
+	   (POPUP_MIN_HEIGHT in popup-fit.js), about three lines of the value. */
+	max-height: calc(var(--eb-height, 265px) * 0.25);
+	overflow-y: auto;
+	padding: var(--ui-space-inset-xs);
+	border-radius: var(--ui-border-radius-sm);
+	background: var(--ui-color-bg-content-secondary);
+	font-family: var(--ui-font-family-mono, monospace);
+	font-size: 12px;
+	line-height: 1.5;
+	word-break: break-word;
+	white-space: pre-wrap;
+}
+
+.bizprocdesigner-expression-builder__part {
+	white-space: pre-wrap;
+}
+
+.bizprocdesigner-expression-builder__part.--brace {
+	color: var(--ui-color-base-4);
+}
+
+.bizprocdesigner-expression-builder__part.--function {
+	color: var(--ui-color-accent-main-primary);
+	font-weight: 700;
+}
+
+.bizprocdesigner-expression-builder__part.--source {
+	color: var(--ui-color-accent-main-link);
+}
+
+.bizprocdesigner-expression-builder__part.--operator {
+	color: var(--ui-color-accent-main-warning);
+}
+
+.bizprocdesigner-expression-builder__part.--value {
+	color: var(--ui-color-base-1);
+}
+
+.bizprocdesigner-expression-builder__part.--modifier {
+	color: var(--ui-color-accent-main-success);
+}
+
+.bizprocdesigner-expression-builder__part.--plain {
+	color: var(--ui-color-base-2);
+}
+
+.bizprocdesigner-expression-builder__footer {
+	flex: 0 0 auto;
+	display: flex;
+	justify-content: flex-end;
+	gap: var(--ui-space-inline-xs);
+	padding-top: var(--ui-space-inset-xs);
+	border-top: 1px solid var(--ui-color-divider-less);
+}
+
+/* Placed absolutely in the same relative container as `bp-selector-button`,
+   shifted left of it (selector button sits at right: 8px, width 24px). */
+.bizprocdesigner-expression-builder-trigger {
+	position: absolute;
+	right: 36px;
+	top: 6px;
+	z-index: 10;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 24px;
+	height: 24px;
+	padding: 0;
+	border: 1px solid var(--ui-color-divider-default);
+	border-radius: var(--ui-border-radius-2xs);
+	background: var(--ui-color-bg-content-primary);
+	color: var(--ui-color-accent-main-primary);
+	cursor: pointer;
+	transition: background-color 200ms ease, border-color 200ms ease;
+}
+
+/* Reserve room in the field for both the trigger and the selector button.
+   Specificity (0,3,1) beats the shared field padding rules in common-settings-form,
+   for the node settings controls (`.field-row`) and for the legacy property dialog,
+   where fields are laid out in the tables of `.adm-detail-content-table`. */
+.node-settings-panel .field-row.bizprocdesigner-expression-builder-host textarea,
+.node-settings-panel .field-row.bizprocdesigner-expression-builder-host input[type="text"],
+.node-settings-panel .adm-detail-content-table .bizprocdesigner-expression-builder-host textarea,
+.node-settings-panel .adm-detail-content-table .bizprocdesigner-expression-builder-host input[type="text"] {
+	padding-right: 60px !important;
+}
+
+.bizprocdesigner-expression-builder-trigger:hover {
+	background: var(--ui-color-bg-state-hover-default);
+	border-color: var(--ui-color-divider-accent);
+}
+
+.bizprocdesigner-expression-builder-trigger:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: 1px;
+}
+
+/* The text of the field is hidden by the fill colour, not by `color`: the settings panel paints its
+   controls with `color: … !important` at the same weight (`.node-settings-panel .field-row textarea`),
+   so a `color` of ours would come down to the order of the bundles, while the fill colour is
+   contested by no one and wins over `color` either way. A focused field shows its own text. */
+.bxr-veneer:not(.bxr-raw) + input,
+.bxr-veneer:not(.bxr-raw) + textarea {
+	-webkit-text-fill-color: transparent;
+}
+
+/* The layer lies over the border box of the field, out of flow, in the parent of the field: an
+   element of its own around the field would break the design-system rules written for a control
+   that is a direct child. Its box is set from the field at mount time; its own borders are
+   transparent and its typography is carried over, so a token covers its own code. Clicks pass
+   through everywhere but the tokens — that is what keeps the field editable. */
+.bxr-veneer {
+	position: absolute;
+	z-index: 2;
+	display: flex;
+	align-items: center;
+	overflow: hidden;
+	box-sizing: border-box;
+	border-style: solid;
+	border-color: transparent;
+	white-space: pre;
+	pointer-events: none;
+	color: var(--ui-color-base-1);
+}
+
+.bxr-veneer.bxr-multiline {
+	display: block;
+	white-space: pre-wrap;
+	overflow-wrap: break-word;
+}
+
+/* Kept after the multiline rule: both selectors weigh the same, so the last one wins. */
+.bxr-veneer.bxr-raw {
+	display: none;
+}
+
+/* The token is filled with the colour of its group in the data inspector. Neutral grey is the
+   outbound group — the own data of the node being edited, the document, system variables and
+   parameters. A token is never split by a line break: a half of a chip reads as a chip of its own. */
+.bxr-tok {
+	padding: 0 10px;
+	border-radius: 6px;
+	background: var(--ui-color-base-7);
+	color: var(--ui-color-base-1) !important;
+	white-space: nowrap;
+	cursor: pointer;
+	pointer-events: auto;
+}
+
+/* The focus ring is drawn inside the token: the layer clips whatever goes past its own bounds, and
+   a ring drawn outside the token would be cut off at the edges of the field. */
+.bxr-tok:focus-visible {
+	outline: 2px solid var(--ui-color-primary);
+	outline-offset: -2px;
+}
+
+.bxr-tok.bxr-node {
+	background: var(--ui-color-accent-soft-green-2);
+}
+
+.bxr-tok.bxr-global {
+	background: var(--ui-color-accent-soft-blue-2);
+}
+
+.bxr-tok.bxr-unknown {
+	background: var(--ui-color-accent-soft-red-2);
+	color: var(--ui-color-accent-soft-element-red) !important;
+}
+
+.bizprocdesigner-readable-expression-popover__content {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-xs);
+	padding: var(--ui-space-inset-md);
+	max-width: 367px;
+	box-sizing: border-box;
+	font-size: var(--ui-font-size-sm);
+}
+
+.bizprocdesigner-readable-expression-popover .popup-window-buttons {
+	padding: var(--ui-space-inset-lg) var(--ui-space-inset-md) var(--ui-space-inset-xs2);
+}
+
+.bizprocdesigner-readable-expression-popover__row {
+	display: flex;
+	align-items: baseline;
+	gap: var(--ui-space-inline-xs);
+}
+
+.bizprocdesigner-readable-expression-popover__label {
+	flex: 0 0 auto;
+	color: var(--ui-color-base-3);
+}
+
+.bizprocdesigner-readable-expression-popover__value {
+	flex: 1 1 auto;
+	overflow-wrap: anywhere;
+}
+
+.bizprocdesigner-readable-expression-popover__unknown {
+	color: var(--ui-color-accent-main-warning);
+}
+
+.bizprocdesigner-readable-expression-popover__code {
+	padding: var(--ui-space-inset-xs);
+	border-radius: var(--ui-border-radius-xs);
+	background: var(--ui-color-bg-content-secondary);
+	color: var(--ui-color-base-2);
+	font-family: var(--ui-font-family-system-mono);
+	overflow-wrap: anywhere;
+}
+
+/* Fills the mode body given by the parent; height is driven by the parent flex chain, not a
+   hardcoded cap, so the list is compact for few items and scrolls (the single scroll area) when tall. */
+.bizprocdesigner-expression-builder-source-list {
+	flex: 1 1 auto;
+	min-height: 0;
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-xs);
+}
+
+.bizprocdesigner-expression-builder-source-list__toolbar {
+	flex: 0 0 auto;
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-xs);
+}
+
+.bizprocdesigner-expression-builder-source-list__search {
+	flex: 1 1 auto;
+}
+
+/* The field is type="search" for the semantics; hide the engine's own clear button so the
+   look stays the design-system one. */
+.bizprocdesigner-expression-builder-source-list__search input::-webkit-search-cancel-button {
+	display: none;
+}
+
+.bizprocdesigner-expression-builder-source-list__scroll {
+	flex: 1 1 auto;
+	/* No ceiling of its own: the popup has an explicit height (--eb-height on the root) and the
+	   list takes whatever the header and footer leave. min-height:0 lets it shrink instead of
+	   pushing the footer out when the popup is short. */
+	min-height: 0;
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-xs);
+	overflow-y: auto;
+}
+
+.bizprocdesigner-expression-builder-source-list__hint {
+	color: var(--ui-color-base-3);
+	padding: var(--ui-space-inset-xs);
+}
+
+/* A load failure, as opposed to an empty list: told apart by colour as well as by wording. */
+.bizprocdesigner-expression-builder-source-list__hint.--error {
+	color: var(--ui-color-accent-main-alert);
+}
+
+.bizprocdesigner-expression-builder-source-list__section {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-3xs);
+}
+
+.bizprocdesigner-expression-builder-source-list__section-title {
+	color: var(--ui-color-base-4);
+	padding: var(--ui-space-inset-2xs) var(--ui-space-inset-xs) 0;
+}
+
+/* Native button reset: the row is a button, its own look comes from the rules below. */
+.bizprocdesigner-expression-builder-source-list__item {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: var(--ui-space-stack-3xs);
+	width: 100%;
+	box-sizing: border-box;
+	padding: var(--ui-space-inset-xs);
+	border: none;
+	border-radius: var(--ui-border-radius-sm);
+	background: none;
+	font: inherit;
+	color: inherit;
+	text-align: left;
+	cursor: pointer;
+	transition: background-color 200ms ease;
+}
+
+.bizprocdesigner-expression-builder-source-list__item:hover {
+	background: var(--ui-color-bg-state-hover-default);
+}
+
+.bizprocdesigner-expression-builder-source-list__item:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: -2px;
+}
+
+.bizprocdesigner-expression-builder-source-list__item-title {
+	color: var(--ui-color-base-1);
+}
+
+.bizprocdesigner-expression-builder-source-list__item-subtitle {
+	color: var(--ui-color-base-3);
+	word-break: break-word;
+}
+
+.bp-pilot-badge {
+	position: relative;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 36px;
+	height: 36px;
+	cursor: pointer;
+	transition: background-color 200ms ease;
+	background: var(--ui-color-palette-white-base);
+	border-radius: var(--ui-border-radius-sm);
+	border-color: transparent;
+}
+
+/* The button is rendered only while the pilot is live, so the dot needs no state of its own. */
+.bp-pilot-badge::after {
+	content: '';
+	position: absolute;
+	top: 4px;
+	right: 4px;
+	width: 6px;
+	height: 6px;
+	border-radius: var(--ui-border-radius-circle);
+	background: var(--ui-color-accent-main-warning);
+}
+
+.bp-pilot-badge:hover {
+	background-color: var(--ui-color-base-30);
+}
+
+.bp-pilot-badge:active {
+	background-color: var(--ui-color-base-40);
+}
+
+.bp-pilot-badge:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+	border-radius: var(--ui-border-radius-sm);
+}
+
+.bp-pilot-card {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	padding: 16px;
+	width: 100%;
+	box-sizing: border-box;
+}
+
+/* One action per line: side by side the captions do not fit the width of the card in any language. */
+.bp-pilot-card__actions {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-xs);
+	margin-top: var(--ui-space-stack-2xs);
+}
+
+/*
+ * The platform indents every button that follows another one (`.ui-btn ~ .ui-btn`), which in a column
+ * only shifts the second action and eats its width. The rule carries two classes, so the reset needs
+ * the weight to win over it.
+ */
+.bp-pilot-card__actions > * {
+	margin-left: 0 !important;
+}
+
+/* An action of its own decides whether it is available at all, so the row may stay without any. */
+.bp-pilot-card__actions:empty {
+	display: none;
+}
+
+.bp-connect-agent-button {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 36px;
+	height: 36px;
+	cursor: pointer;
+	transition: all 0.2s ease;
+	background: var(--ui-color-palette-white-base);
+	border-radius: 8px;
+	border-color: transparent;
+}
+
+.bp-connect-agent-button:hover:not(:disabled) {
+	background-color: var(--ui-color-base-30);
+}
+
+.bp-connect-agent-button:active:not(:disabled) {
+	background-color: var(--ui-color-base-40);
+}
+
+.bp-connect-agent-button:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+	border-radius: 8px;
+}
+
+.bp-connect-agent-button--loading {
+	opacity: 0.6;
+	cursor: not-allowed;
+}
+
+.bp-connect-agent-button--locked {
+	opacity: 0.5;
+	cursor: pointer;
+}
+
+.bp-connect-agent-popup {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	padding: 16px;
+	width: 100%;
+	box-sizing: border-box;
+}
+
+.bp-connect-agent-popup__title {
+	font-size: 16px;
+	font-weight: 600;
+	color: var(--ui-color-base-90);
+}
+
+.bp-connect-agent-popup__hint {
+	font-size: 13px;
+	color: var(--ui-color-base-60);
+}
+
+.bp-connect-agent-popup__status {
+	font-size: 14px;
+	font-weight: 500;
+	color: var(--ui-color-base-80);
+}
+
+.bp-connect-agent-popup__actions {
+	display: flex;
+	gap: 8px;
+	align-items: center;
+}
+
 .bp-debug-button {
 	display: inline-flex;
 	align-items: center;
@@ -3138,6 +6024,9 @@
 	background: var(--ui-color-bg-content-secondary);
 }
 
+/* The only copy of the transition: the class names are global and both settings panels play it —
+   the form of an ordinary node and the layout of a complex one. A second copy elsewhere would put
+   the reduced-motion rule below at the mercy of the order the bundle is concatenated in. */
 .node-settings-transition-enter-active {
 	transition: opacity .7s ease-out;
 }
@@ -3148,6 +6037,12 @@
 
 .node-settings-transition-enter-to {
 	opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.node-settings-transition-enter-active {
+		transition: none;
+	}
 }
 
 .node-settings-field {
@@ -3401,6 +6296,12 @@
 	margin-bottom: 5px;
 	color: var(--ui-color-design-outline-content-label);
 	font: var(--ui-font-size-sm)/ var(--ui-font-line-height-2xs) var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+}
+
+.node-settings-edit-caption.--required:after {
+	content: '*';
+	margin-left: 2px;
+	color: var(--ui-color-palette-red-60);
 }
 
 .node-settings-select-dotted {
@@ -4213,6 +7114,8 @@ select[name="delay_type"] {
 }
 
 .node-settings-panel select[multiple] {
+	--bizprocdesigner-multi-select-scrollbar-width: 6px;
+
 	appearance: none !important;
 	-webkit-appearance: none !important;
 	-moz-appearance: none !important;
@@ -4228,7 +7131,7 @@ select[name="delay_type"] {
 	border-radius: 9px !important;
 	background-color: var(--ui-color-palette-white-base) !important;
 	border: 1px solid rgba(0, 0, 0, 0.15) !important;
-	overflow-y: auto;
+	overflow-y: scroll;
 	/* @chef-ignore */
 	scrollbar-width: thin;
 	/* @chef-ignore */
@@ -4301,7 +7204,7 @@ select[name="delay_type"] {
 }
 
 .node-settings-panel select[multiple]::-webkit-scrollbar {
-	width: 6px;
+	width: var(--bizprocdesigner-multi-select-scrollbar-width);
 }
 
 .node-settings-panel select[multiple]::-webkit-scrollbar-track {
@@ -4471,6 +7374,18 @@ img.calendar-icon {
 	height: 13px;
 	margin: 0;
 	border: none;
+}
+
+.popup-window.bizproc-automation-popup-set .bizproc-automation-popup-select > .bizproc-type-control-date + .calendar-icon,
+.popup-window.bizproc-automation-popup-set .bizproc-automation-popup-select > .bizproc-type-control-datetime + .calendar-icon {
+	display: block !important;
+	position: absolute !important;
+	right: 64px;
+	top: 14px;
+	width: 14px;
+	height: 13px;
+	margin: 0;
+	opacity: 0;
 }
 
 #tr_time_type_selector_time img.calendar-icon {
@@ -4874,6 +7789,147 @@ tr#tr_time_type_selector_time > td.adm-detail-content-cell-r > table {
 	margin-top: 18px;
 }
 
+.node-settings-form__section + .editor-chart-data-views-section {
+	margin-top: 19px;
+}
+
+.editor-chart-data-views-section__list {
+	display: flex;
+	flex-direction: column;
+	margin-bottom: 12px;
+}
+
+.editor-chart-data-views-section__columns {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 0 4px 6px;
+	border-bottom: 1px solid var(--ui-color-separator-primary, #e6e8ea);
+}
+
+.editor-chart-data-views-section__column-title {
+	font-size: 11px;
+	line-height: 14px;
+	font-weight: var(--ui-font-weight-medium);
+	letter-spacing: 0.4px;
+	text-transform: uppercase;
+	color: var(--ui-color-base-3);
+}
+
+.editor-chart-data-views-section__row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	padding: 10px 4px;
+	border-bottom: 1px solid var(--ui-color-separator-secondary, #f0f1f2);
+}
+
+.editor-chart-data-views-section__row-main {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	min-width: 0;
+}
+
+.editor-chart-data-views-section__name {
+	display: inline-block;
+	max-width: 100%;
+	background: none;
+	border: none;
+	padding: 0;
+	font-family: inherit;
+	font-size: 14px;
+	line-height: 18px;
+	text-align: left;
+	color: var(--ui-color-accent-main-primary, #2066b0);
+	cursor: pointer;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.editor-chart-data-views-section__name:hover {
+	text-decoration: underline;
+}
+
+.editor-chart-data-views-section__info {
+	background: none;
+	border: none;
+	padding: 0;
+	font: inherit;
+	display: inline-flex;
+	align-items: center;
+	color: var(--ui-color-base-4, #a8adb4);
+	cursor: default;
+}
+
+.editor-chart-data-views-section__row-data {
+	display: flex;
+	align-items: center;
+	gap: 14px;
+	flex-shrink: 0;
+}
+
+.editor-chart-data-views-section__count {
+	font-size: 13px;
+	line-height: 17px;
+	color: var(--ui-color-base-3);
+	white-space: nowrap;
+}
+
+.editor-chart-data-views-section__actions {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.editor-chart-data-views-section__action {
+	display: inline-flex;
+	align-items: center;
+	background: none;
+	border: none;
+	padding: 0;
+	color: var(--ui-color-base-4, #a8adb4);
+	cursor: pointer;
+	transition: color 0.15s ease;
+}
+
+.editor-chart-data-views-section__action:hover {
+	color: var(--ui-color-base-2, #525c69);
+}
+
+.editor-chart-data-views-section__add {
+	background: none;
+	border: none;
+	padding: 0;
+	font-family: inherit;
+	text-align: left;
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	margin-top: 12px;
+	color: var(--ui-color-base-3);
+	font-size: 14px;
+	line-height: 18px;
+	cursor: pointer;
+	width: fit-content;
+}
+
+.editor-chart-data-views-section__add:hover {
+	color: var(--ui-color-base-1);
+}
+
+.editor-chart-data-views-section__add.--disabled,
+.editor-chart-data-views-section__add.--disabled:hover {
+	color: var(--ui-color-base-5, #bdc1c6);
+	cursor: default;
+}
+
+.editor-chart-data-views-section__add .ui-icon-set {
+	--ui-icon-set__icon-color: currentColor;
+}
+
 .editor-chart-common-node-settings-preview {
 	display: flex;
 	border: 1px solid rgba(0, 0, 0, 0.05);
@@ -4893,10 +7949,13 @@ tr#tr_time_type_selector_time > td.adm-detail-content-cell-r > table {
 .editor-chart-common-node-settings-preview__edit-icon {
 	display: none;
 	margin-left: auto;
+	color: var(--ui-color-base-5);
+	transition: color 200ms ease;
 }
 
 .editor-chart-common-node-settings-preview:hover .editor-chart-common-node-settings-preview__edit-icon {
 	display: block;
+	color: var(--ui-color-blue-57, #4A9DFF);
 }
 
 .editor-chart-common-node-settings-preview__dnd-icon {
@@ -4913,6 +7972,29 @@ tr#tr_time_type_selector_time > td.adm-detail-content-cell-r > table {
 
 .editor-chart-common-node-settings-preview__construction.--empty {
 	color: var(--ui-color-palette-gray-50);
+}
+
+/* Token colors are kept here as well: the preview must not depend on the stylesheet of the veneer,
+   which lives in the features layer. */
+.editor-chart-readable-expression-text .bxr-tok {
+	padding: 0 6px;
+	border-radius: 6px;
+	background: var(--ui-color-base-7);
+	color: var(--ui-color-base-1);
+	white-space: nowrap;
+}
+
+.editor-chart-readable-expression-text .bxr-tok.bxr-node {
+	background: var(--ui-color-accent-soft-green-2);
+}
+
+.editor-chart-readable-expression-text .bxr-tok.bxr-global {
+	background: var(--ui-color-accent-soft-blue-2);
+}
+
+.editor-chart-readable-expression-text .bxr-tok.bxr-unknown {
+	background: var(--ui-color-accent-soft-red-2);
+	color: var(--ui-color-accent-soft-element-red);
 }
 
 .editor-chart-node-settings-layout {
@@ -4960,21 +8042,24 @@ tr#tr_time_type_selector_time > td.adm-detail-content-cell-r > table {
 	background: 18px 10px url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' width='201' height='38' fill='none' viewBox='0 0 201 38'%3E%3Cg id='c'%3E%3Crect width='120' height='38' fill='%23c9ccd0' rx='8'/%3E%3Crect width='63' height='12' x='138' y='13' fill='%23edeef0' rx='6'/%3E%3C/g%3E%3Crect id='d' width='100%25' height='38' fill='url(%23a)' mask='url(%23b)'/%3E%3Cmask id='b' fill='%23fff'%3E%3Cuse xlink:href='%23c'/%3E%3C/mask%3E%3ClinearGradient id='a' x1='66.6%25' x2='33.3%25' y1='50%25' y2='50%25'%3E%3Cstop offset='0%25' stop-color='%23828b95' stop-opacity='0'/%3E%3Cstop offset='50%25' stop-color='%23828b95' stop-opacity='.05'/%3E%3Cstop offset='100%25' stop-color='%23828b95' stop-opacity='0'/%3E%3C/linearGradient%3E%3Canimate xlink:href='%23d' attributeName='x' begin='0s' dur='1.5s' from='-100%25' repeatCount='indefinite' to='100%25'/%3E%3C/svg%3E") no-repeat;
 }
 
+/* The node-settings-transition classes are global and shared with the panel of an ordinary node;
+   they live in entities/common-node-settings/ui/common-settings-form/style.css. */
+
 .editor-chart-node-settings-layout__footer,
 .editor-chart-node-settings-layout.--loading:after {
 	padding: 10px 18px;
 	border-top: 1px solid var(--ui-color-palette-gray-15);
 }
 
+/* Configured-block row per mockup 935:82878 (node 935:82289) */
 .editor-chart-node-settings-preview {
 	display: flex;
-	border: 1px solid rgba(0, 0, 0, 0.05);
+	border: 1px solid var(--ui-color-divider-vibrant-accent-more);
 	border-radius: var(--ui-border-radius-sm);
-	padding: 8px 8px 6px 4px;
+	padding: 8px 8px 8px 4px;
 	font-size: 14px;
-	line-height: 20px;
+	line-height: 19px;
 	cursor: pointer;
-	margin-left: 2px;
 }
 
 .editor-chart-node-settings-preview:hover {
@@ -4985,12 +8070,43 @@ tr#tr_time_type_selector_time > td.adm-detail-content-cell-r > table {
 	margin-top: 10px;
 }
 
-.editor-chart-node-settings-preview__edit-icon {
-	display: none;
+/* Native-button reset: edit/delete controls are <button> for a11y,
+   the visual stays fully defined by the rules below */
+.editor-chart-node-settings-preview__edit-btn,
+.editor-chart-node-settings-preview__delete-btn {
+	appearance: none;
+	margin: 0;
+	padding: 0;
+	border: none;
+	background: none;
+	font: inherit;
+	color: var(--ui-color-base-5);
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	transition: color 200ms ease;
 }
 
-.editor-chart-node-settings-preview:hover .editor-chart-node-settings-preview__edit-icon {
-	display: block;
+.editor-chart-node-settings-preview__edit-btn:hover,
+.editor-chart-node-settings-preview__delete-btn:hover {
+	color: var(--ui-color-blue-57, #4A9DFF);
+}
+
+.editor-chart-node-settings-preview__edit-btn:focus-visible,
+.editor-chart-node-settings-preview__delete-btn:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: 2px;
+}
+
+/* Edit button hidden until the card is hovered or holds keyboard focus */
+.editor-chart-node-settings-preview__edit-btn {
+	opacity: 0;
+	transition: opacity 0.15s ease, color 200ms ease;
+}
+
+.editor-chart-node-settings-preview:hover .editor-chart-node-settings-preview__edit-btn,
+.editor-chart-node-settings-preview:focus-within .editor-chart-node-settings-preview__edit-btn {
+	opacity: 1;
 }
 
 .editor-chart-node-settings-preview__dnd-icon {
@@ -5043,6 +8159,11 @@ tr#tr_time_type_selector_time > td.adm-detail-content-cell-r > table {
 	color: var(--ui-color-palette-gray-50);
 }
 
+/* Green uppercase label of a configured base-settings block («БАЗОВЫЕ ДЕЙСТВИЯ» on the mockup) */
+.editor-chart-node-settings-preview__construction.--base-settings .editor-chart-node-settings-preview__construction_type {
+	color: var(--ui-color-accent-main-success);
+}
+
 .editor-chart-node-settings-preview__card:not(:last-child) {
 	margin-bottom: 7px;
 }
@@ -5056,9 +8177,31 @@ tr#tr_time_type_selector_time > td.adm-detail-content-cell-r > table {
 	min-width: 0;
 }
 
+.editor-chart-unresolved-field-hint {
+	display: flex;
+	flex-shrink: 0;
+	align-items: center;
+	padding: 0;
+	border: 0;
+	background: none;
+	cursor: pointer;
+}
+
+.editor-chart-unresolved-field-hint:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: 2px;
+}
+
 .editor-chart-node-settings-rules-layout {
 	flex: 1;
+	display: flex;
+	flex-direction: column;
 	overflow-y: auto;
+	/* height of the pinned bottom part of the rules card, measured by the component;
+	   offsets keyboard focus so controls aren't hidden under it */
+	scroll-padding-top: var(--editor-chart-rules-card-pinned-height, 60px);
+	/* @chef-ignore */
+	scrollbar-gutter: stable;
 	background: var(--ui-color-bg-content-secondary);
 }
 
@@ -5066,10 +8209,106 @@ tr#tr_time_type_selector_time > td.adm-detail-content-cell-r > table {
 	pointer-events: none;
 }
 
+/* "Rules" card per mockup page-node-settings: white card 16/18/20, radius 12, secondary shadow,
+   18px stack between header, divider and chips toolbar */
+.editor-chart-node-settings-rules-layout__rules-card {
+	/* negative top pins only the bottom part of the card (divider + chips toolbar);
+	   the offset to the divider is measured by the component via ResizeObserver */
+	position: sticky;
+	top: calc(-1 * var(--editor-chart-rules-card-sticky-offset, 120px));
+	z-index: 20;
+	flex: none;
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-md2);
+	margin: 18px 18px 0;
+	padding: var(--ui-space-inset-md) var(--ui-space-inset-md2) var(--ui-space-inset-lg);
+	background: var(--ui-color-bg-content-primary);
+	border-radius: var(--ui-border-radius-lg);
+	box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.13); /* box-shadow-area-secondary (Figma); no ready-made --ui-shadow variable */
+}
+
+/* pinned per mockup 1383:21594: flush edge-to-edge strip under the tabs header —
+   drop side margins and radius, swap the soft card shadow for a 1px bottom hairline;
+   18px side padding is inherited from the base card */
+.editor-chart-node-settings-rules-layout__rules-card.--pinned {
+	margin-right: 0;
+	margin-left: 0;
+	border-radius: 0;
+	/* symmetric 19px bottom inset below the chips per mockup — off the token scale (16/18/20/22) */
+	padding-bottom: 19px;
+	box-shadow: 0 1px 0 var(--ui-color-base-6);
+}
+
+/* Keep the measured head at the same width when the pinned card expands over its side margins. */
+.editor-chart-node-settings-rules-layout__rules-card-metrics {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-md2);
+}
+
+.editor-chart-node-settings-rules-layout__rules-card.--pinned .editor-chart-node-settings-rules-layout__rules-card-metrics {
+	margin-right: 18px;
+	margin-left: 18px;
+}
+
+/* divider stays in the DOM for sticky-offset measurement (its .top is what we measure),
+   but when pinned it is both hidden and collapsed to zero height so it adds no top space */
+.editor-chart-node-settings-rules-layout__rules-card.--pinned .editor-chart-node-settings-rules-layout__rules-card-divider {
+	height: 0;
+	visibility: hidden;
+}
+
+/* pinned toolbar per mockup 1383:21594: symmetric 19px above the pills; the gap between the
+   chips is the toolbar's own 6px in both states, so it is not overridden here.
+   The sticky strip's visible top sits at the (collapsed) divider, so the top inset is
+   defined solely here: cancel the card's inter-item gap, then set an explicit inset —
+   independent of the shared gap and below the divider, so the sticky offset is unaffected */
+.editor-chart-node-settings-rules-layout__rules-card.--pinned .editor-chart-node-settings-add-construction-toolbar {
+	margin-top: calc(-1 * var(--ui-space-stack-md2));
+	/* symmetric 19px top inset above the chips per mockup — off the token scale (16/18/20/22) */
+	padding-top: 19px;
+}
+
+/* header per node 935:29579: title row, 14px to description */
+.editor-chart-node-settings-rules-layout__rules-card-header {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-inline-sm2);
+}
+
+.editor-chart-node-settings-rules-layout__rules-card-title {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-sm);
+	font-size: 16px;
+	line-height: 21px;
+	font-weight: var(--ui-font-weight-medium);
+	color: var(--ui-color-base-1);
+}
+
+.editor-chart-node-settings-rules-layout__rules-card-description {
+	font-size: 12px;
+	line-height: 15px;
+	color: var(--ui-color-base-3);
+}
+
+/* full-width divider per node 935:29610 */
+.editor-chart-node-settings-rules-layout__rules-card-divider {
+	height: 1px;
+	background: var(--ui-color-divider-vibrant-accent-more);
+}
+
+/* Flow of the rules surface: head blocks (base-settings, filters) and group cards are
+   different block types, so the 18px rhythm per mockup page-node-settings lives on the
+   container gap - a per-block margin model breaks down as soon as the types mix */
 .editor-chart-node-settings-rules-layout__content {
-	flex: 1;
+	flex: none;
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-md2);
 	overflow-y: auto;
-	padding: 0 18px;
+	padding: var(--ui-space-inset-md2);
 }
 
 .editor-chart-node-settings-rules-layout__content::-webkit-scrollbar,
@@ -5090,72 +8329,65 @@ tr#tr_time_type_selector_time > td.adm-detail-content-cell-r > table {
 	margin-bottom: 18px;
 }
 
+/* Empty state per mockup 935:83190: centered text over the shared CircuitBackdrop */
 .editor-chart-node-settings-rules-layout__empty {
-	text-align: center;
+	position: relative;
+	flex: 1;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+	overflow: hidden;
+}
+
+/* text block per node 935:83196: 339px column, 10px gap, 24px side insets */
+.editor-chart-node-settings-rules-layout__empty-content {
+	position: relative;
 	display: flex;
 	flex-direction: column;
 	align-items: center;
-}
-
-.editor-chart-node-settings-rules-layout__empty:before {
-	display: block;
-	content: '';
-	background-image: url("images/entities/node-settings/ui/node-settings-rules-layout/images/empty.svg");
-	width: 339px;
-	height: 211px;
-}
-
-.editor-chart-node-settings-rules-layout__empty_head {
-	font-size: 19px;
-	line-height: 26px;
-	font-weight: var(--ui-font-weight-medium);
-	color: var(--ui-color-black-base);
-	margin: 0;
-}
-
-.editor-chart-node-settings-rules-layout__empty_text {
-	font-size: 16px;
-	line-height: 21px;
-	color: var(--ui-color-gray-90);
-	margin: 0;
-}
-
-.node-settings-rules-toggle-inspector-button {
-	display: flex;
-	flex-direction: row;
-	gap: 4px;
-	align-items: center;
-	color: var(--ui-color-accent-main-primary);
-	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary);
-	cursor: pointer;
-	-webkit-user-select: none;
-	        user-select: none;
-}
-
-.node-settings-rules-toggle-inspector-button__icon {
-	width: 24px;
-	height: 24px;
-}
-
-.node-settings-rules-toggle-inspector-button__text {
-	font-weight: var(--ui-font-weight-normal);
-	font-size: var(--ui-font-size-md);
-}
-.editor-chart-node-settings-rule-card {
-	margin: 18px 0;
-	background: var(--ui-color-base-8);
-	border-radius: 12px;
-	padding: 12px 18px 18px 18px;
-}
-
-.editor-chart-node-settings-rule-card__top {
-	display: flex;
 	gap: 10px;
+	width: 339px;
+	max-width: 100%;
+	padding: 0 24px;
+	box-sizing: border-box;
+	text-align: center;
+}
+
+.editor-chart-node-settings-rules-layout__empty-head {
+	color: var(--ui-color-base-1);
+}
+
+.editor-chart-node-settings-rules-layout__empty-text {
+	color: var(--ui-color-base-2);
+}
+
+/* Group card per mockup page-node-settings: white rounded card with secondary shadow.
+   Body inset 0/18/18: the top inset belongs to the fixed-height header row below;
+   the outer rhythm comes from the rules-layout content gap, not from own margins */
+.editor-chart-node-settings-rule-card {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-md2);
+	background: var(--ui-color-bg-content-primary);
+	border-radius: var(--ui-border-radius-lg);
+	padding: 0 var(--ui-space-inset-md2) var(--ui-space-inset-md2);
+	box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.13); /* box-shadow-area-secondary (Figma); no ready-made --ui-shadow variable */
+}
+
+/* 44px header row per mockup page-node-settings, off the token scale;
+   min-height instead of height: the title and the rename input keep their room when scaled up */
+.editor-chart-node-settings-rule-card__top {
+	flex: none;
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-xs);
+	min-height: 44px;
 }
 
 .editor-chart-node-settings-rule-card__top_title {
 	font-size: 15px;
-	line-height: 19px;
+	line-height: 20px;
 	color: var(--ui-color-base-4);
 }
 
@@ -5167,11 +8399,15 @@ tr#tr_time_type_selector_time > td.adm-detail-content-cell-r > table {
 	cursor: grabbing;
 }
 
+/* Type section per mockup page-node-settings: radius 12, 18px inset and the same 18px
+   gap between its rows - the constructions rely on this gap, they carry no own margin */
 .editor-chart-node-settings-rule-card__group {
-	padding: 18px;
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-md2);
+	padding: var(--ui-space-inset-md2);
 	border: 1px solid;
-	border-radius: 10px;
-	margin-top: 12px;
+	border-radius: var(--ui-border-radius-lg);
 }
 
 .editor-chart-node-settings-rule-card__group.--conditions {
@@ -5180,18 +8416,33 @@ tr#tr_time_type_selector_time > td.adm-detail-content-cell-r > table {
 }
 
 .editor-chart-node-settings-rule-card__group.--actions {
-	border: 1px solid var(--ui-color-designer-bp-rules-green-stroke);
-	background: var(--ui-color-designer-bp-rules-green-bg);
+	border: 1px solid var(--designer-bp-rules-action-stroke);
+	background: var(--designer-bp-rules-action-bg);
 }
 
 .editor-chart-node-settings-rule-card__group.--outputs {
-	border: 1px solid var(--ui-color-palette-gray-30);
-	background: var(--ui-color-palette-gray-02);
+	border: 1px solid var(--ui-color-designer-bp-rules-grey-stroke);
+	background: var(--ui-color-designer-bp-rules-grey-bg);
 }
 
-.editor-chart-node-settings-rule-card__group.--filters {
-	border: 1px solid var(--ui-color-accent-main-warning);
-	background: var(--ui-color-accent-soft-orange-3);
+/* Native-button reset: rename trigger and group add-button are <button> for a11y,
+   the visual stays fully defined by the rules below */
+.editor-chart-node-settings-rule-card__rename-btn,
+.editor-chart-node-settings-rule-card__group_add-construction-btn {
+	appearance: none;
+	margin: 0;
+	padding: 0;
+	border: none;
+	background: none;
+	font: inherit;
+	color: inherit;
+	text-align: inherit;
+}
+
+.editor-chart-node-settings-rule-card__rename-btn:focus-visible,
+.editor-chart-node-settings-rule-card__group_add-construction-btn:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: 2px;
 }
 
 .editor-chart-node-settings-rule-card__group_add-construction-btn {
@@ -5199,53 +8450,98 @@ tr#tr_time_type_selector_time > td.adm-detail-content-cell-r > table {
 	font-size: var(--ui-font-size-md);
 	display: flex;
 	align-items: center;
+	transition: opacity 0.15s ease;
+}
+
+.editor-chart-node-settings-rule-card__group_add-construction-btn:hover {
+	opacity: 0.7;
+}
+
+/* Pending addition (the base settings an action inherits are being resolved): the button stays
+   focusable (aria-disabled, not disabled) so focus is not thrown to the body mid-interaction. */
+.editor-chart-node-settings-rule-card__group_add-construction-btn.--pending {
+	cursor: default;
+	opacity: 0.4;
+	pointer-events: none;
 }
 
 .editor-chart-node-settings-rule-card__group.--conditions .editor-chart-node-settings-rule-card__group_add-construction-btn {
-	color: #3391ff;
-	--ui-icon-set__icon-color: #3391ff;
+	color: var(--ui-color-designer-bp-rules-blue-text);
+	--ui-icon-set__icon-color: var(--ui-color-designer-bp-rules-blue-text);
 }
 
 .editor-chart-node-settings-rule-card__group.--actions .editor-chart-node-settings-rule-card__group_add-construction-btn {
-	color: var(--ui-color-green-50);
-	--ui-icon-set__icon-color: var(--ui-color-green-50);
+	color: var(--designer-bp-rules-action-text);
+	--ui-icon-set__icon-color: var(--designer-bp-rules-action-text);
 }
 
+/* Pencil rename button — hidden until the header row is hovered or holds keyboard focus */
+.editor-chart-node-settings-rule-card__rename-btn {
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	opacity: 0;
+	transition: opacity 0.15s ease;
+}
+
+.editor-chart-node-settings-rule-card__top:hover .editor-chart-node-settings-rule-card__rename-btn,
+.editor-chart-node-settings-rule-card__top:focus-within .editor-chart-node-settings-rule-card__rename-btn {
+	opacity: 1;
+}
+
+/* Inline rename input — matches title font size */
+.editor-chart-node-settings-rule-card__top_title-input {
+	font-size: 15px;
+	line-height: 19px;
+	color: var(--ui-color-base-1);
+	border: none;
+	border-bottom: 1px solid var(--ui-color-palette-gray-30);
+	background: transparent;
+	outline: none;
+	padding: 0 2px;
+	flex: 1;
+	min-width: 80px;
+}
+
+/* Visible focus indicator replacing the removed outline */
+.editor-chart-node-settings-rule-card__top_title-input:focus {
+	border-bottom-color: var(--ui-color-accent-main-primary);
+}
+
+/* The 18px rhythm around a construction comes from the gap of its container: the group
+   section inside a card, or the rules-layout content flow for the head blocks */
 .editor-chart-node-settings-rule-construction {
-	border-radius: 8px;
-	margin-bottom: 18px;
-	padding: 18px;
-}
-
-.editor-chart-node-settings-rule-construction:last-of-type {
-	margin-bottom: 0;
+	border-radius: var(--ui-border-radius-sm);
+	padding: var(--ui-space-inset-md2);
 }
 
 .editor-chart-node-settings-rule-construction.--action {
-	border: 1px solid var(--ui-color-designer-bp-rules-green-stroke);
-	background: var(--ui-color-designer-bp-rules-green-bg);
+	border: 1px solid var(--designer-bp-rules-action-stroke);
+	background: var(--designer-bp-rules-action-bg);
 }
 
 .editor-chart-node-settings-rule-construction.--action .editor-chart-node-settings-rule-construction__top {
-	border-color: var(--ui-color-designer-bp-rules-green-stroke);
+	border-color: var(--designer-bp-rules-action-stroke);
 }
 
 .editor-chart-node-settings-rule-construction.--output {
-	border: 1px solid var(--ui-color-palette-gray-30);
-	background: var(--ui-color-palette-gray-02);
+	border: 1px solid var(--ui-color-designer-bp-rules-grey-stroke);
+	background: var(--ui-color-designer-bp-rules-grey-bg);
 }
 
 .editor-chart-node-settings-rule-construction.--output .editor-chart-node-settings-rule-construction__top {
-	border-color: var(--ui-color-palette-gray-30);
+	border-color: var(--ui-color-designer-bp-rules-grey-stroke);
 }
 
+/* filter is a head card, not a row inside a group - radius 12 per mockup page-node-settings */
 .editor-chart-node-settings-rule-construction.--filter {
-	border: 1px solid var(--ui-color-accent-main-warning);
-	background: var(--ui-color-accent-soft-orange-3);
+	border: 1px solid var(--ui-color-designer-bp-rules-orange-stroke);
+	background: var(--ui-color-designer-bp-rules-orange-bg);
+	border-radius: var(--ui-border-radius-lg);
 }
 
 .editor-chart-node-settings-rule-construction.--filter .editor-chart-node-settings-rule-construction__top {
-	border-color: var(--ui-color-accent-main-warning);
+	border-color: var(--ui-color-designer-bp-rules-orange-stroke);
 }
 
 .editor-chart-node-settings-rule-construction.--condition {
@@ -5266,16 +8562,21 @@ tr#tr_time_type_selector_time > td.adm-detail-content-cell-r > table {
 	color: var(--ui-color-palette-white-base);
 }
 
+/* Solid type-colored chips: condition blue, action purple, output grey, filter orange */
 .editor-chart-node-settings-rule-construction.--condition .editor-chart-node-settings-rule-construction__operator_label {
-	background: var(--ui-color-blue-55);
+	background: var(--ui-color-designer-bp-rules-blue-text);
 }
 
 .editor-chart-node-settings-rule-construction.--action .editor-chart-node-settings-rule-construction__operator_label {
-	background: var(--ui-color-green-50);
+	background: var(--designer-bp-rules-action-text);
 }
 
 .editor-chart-node-settings-rule-construction.--output .editor-chart-node-settings-rule-construction__operator_label {
-	background: var(--ui-color-palette-gray-50);
+	background: var(--ui-color-designer-bp-rules-grey-text);
+}
+
+.editor-chart-node-settings-rule-construction.--filter .editor-chart-node-settings-rule-construction__operator_label {
+	background: var(--ui-color-designer-bp-rules-orange-text);
 }
 
 .editor-chart-node-settings-rule-construction__top {
@@ -5288,6 +8589,11 @@ tr#tr_time_type_selector_time > td.adm-detail-content-cell-r > table {
 
 .editor-chart-node-settings-rule-construction__dnd-icon {
 	cursor: grab;
+}
+
+/* Head blocks (base-settings, filter) live outside the groups and are not reorderable */
+.editor-chart-node-settings-rule-construction.--filter .editor-chart-node-settings-rule-construction__dnd-icon {
+	display: none;
 }
 
 .editor-chart-node-settings-rule-construction__dnd-icon:active {
@@ -5310,6 +8616,45 @@ tr#tr_time_type_selector_time > td.adm-detail-content-cell-r > table {
 
 .editor-chart-node-settings-rule-construction__expression-form {
 	margin-top: 18px;
+}
+
+/* base-settings construction: green-framed head card per mockup page-node-settings,
+   radius 12 and a roomier 24px inset (right stays 18px, next to the delete button) */
+.editor-chart-node-settings-rule-construction.--base-settings {
+	border: 1px solid var(--ui-color-designer-bp-rules-green-stroke);
+	background: var(--ui-color-designer-bp-rules-green-bg);
+	border-radius: var(--ui-border-radius-lg);
+	padding: var(--ui-space-inset-xl) var(--ui-space-inset-md2) var(--ui-space-inset-xl) var(--ui-space-inset-xl);
+}
+
+.editor-chart-node-settings-rule-construction.--base-settings .editor-chart-node-settings-rule-construction__top {
+	flex-wrap: nowrap;
+	gap: var(--ui-space-inline-sm);
+	border-bottom: 1px solid var(--ui-color-designer-bp-rules-green-stroke);
+	padding-bottom: var(--ui-space-inset-md2);
+}
+
+.editor-chart-node-settings-rule-construction.--base-settings .editor-chart-node-settings-rule-construction__dnd-icon {
+	display: none;
+}
+
+/* solid green chip with white regular text (mockup node 935:29632) */
+.editor-chart-node-settings-rule-construction.--base-settings .editor-chart-node-settings-rule-construction__operator_label {
+	background: var(--ui-color-designer-bp-rules-green-text);
+	font-weight: var(--ui-font-weight-normal);
+	text-transform: uppercase;
+	white-space: nowrap;
+	flex-shrink: 0;
+}
+
+/* hint next to the chip: «То, что нужно для корректной работы», base-3 per mockup */
+.editor-chart-node-settings-rule-construction.--base-settings .editor-chart-node-settings-rule-construction__description {
+	color: var(--ui-color-base-3);
+	flex: 1 1 auto;
+}
+
+.editor-chart-node-settings-rule-construction.--base-settings .editor-chart-node-settings-rule-construction__expression-form {
+	margin-top: var(--ui-space-inset-md2);
 }
 
 .editor-chart-catalog__search .ui-node-catalog-icon {
@@ -5344,11 +8689,19 @@ section.editor-chart-catalog.--expanded .editor-chart-catalog-input__clear-btn
 	opacity: 1;
 	visibility: visible;
 }
+/* Holds the box of the icon it stands in for (71x67 svg), so the row of the menu keeps its height. */
+.editor-chart-publish-user-dropdown-option__progress {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: 67px;
+}
+
 .editor-chart-block-service__content--large {
 	min-height: 95px;
 }
 
-.editor-chart-block-service__constants-label {
+.editor-chart-block-service__content-label {
 	display: block;
 	padding: 0 7px;
 	font-size: var(--ui-font-size-sm);
@@ -5357,6 +8710,99 @@ section.editor-chart-catalog.--expanded .editor-chart-catalog-input__clear-btn
 	overflow: hidden;
 	text-overflow: ellipsis;
 	color: var(--ui-color-base-3);
+}
+
+.bizprocdesigner-version-history
+{
+	min-height: 120px;
+	max-height: 420px;
+	overflow-y: auto;
+}
+
+.bizprocdesigner-version-history__skeleton
+{
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	padding-top: 8px;
+}
+
+.bizprocdesigner-version-history__error
+{
+	display: block;
+	padding: 24px 0;
+	color: var(--ui-color-text-alert);
+}
+
+.bizprocdesigner-version-history__empty
+{
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	padding: 32px 0;
+	color: var(--ui-color-text-secondary);
+}
+
+.bizprocdesigner-version-history__table
+{
+	width: 100%;
+	border-collapse: collapse;
+}
+
+.bizprocdesigner-version-history__table th,
+.bizprocdesigner-version-history__table td
+{
+	padding: 10px 12px 10px 0;
+	text-align: start;
+	vertical-align: middle;
+	border-bottom: 1px solid var(--ui-color-divider-less);
+}
+
+.bizprocdesigner-version-history__table th
+{
+	font-weight: inherit;
+}
+
+.bizprocdesigner-version-history__table thead th
+{
+	color: var(--ui-color-text-secondary);
+	border-bottom-color: var(--ui-color-divider-default);
+}
+
+.bizprocdesigner-version-history__table th:last-child,
+.bizprocdesigner-version-history__table td:last-child
+{
+	width: 1%;
+	padding-right: 0;
+}
+
+/* Auto layout keeps a column at least as wide as its content, and a truncated cell never
+   wraps: without this cap it widens the table instead of showing an ellipsis. */
+.bizprocdesigner-version-history__table tbody td:not(:last-child)
+{
+	max-width: 0;
+}
+
+.bizprocdesigner-version-history__table tbody tr:last-child td
+{
+	border-bottom: none;
+}
+
+.bizprocdesigner-version-history__number
+{
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	min-width: max-content;
+}
+
+.bizprocdesigner-version-history__actions
+{
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	justify-content: flex-end;
+	min-width: max-content;
 }
 
 .bizproc-template-settings-lable
@@ -5436,7 +8882,6 @@ section.editor-chart-catalog.--expanded .editor-chart-catalog-input__clear-btn
 	opacity: 0.5;
 	cursor: default;
 }
-/* Импорт переменных */
 @import url('../debug-bar-variables.css');
 
 .debug-bar-loading-indicator {
@@ -5488,6 +8933,7 @@ section.editor-chart-catalog.--expanded .editor-chart-catalog-input__clear-btn
 		transition: none;
 	}
 }
+
 @import url('../debug-bar-variables.css');
 
 .debug-bar-sessions {
@@ -5861,7 +9307,6 @@ section.editor-chart-catalog.--expanded .editor-chart-catalog-input__clear-btn
 }
 
 
-/* Импорт переменных */
 @import url('../debug-bar-variables.css');
 
 .debug-bar-panel {
@@ -5970,512 +9415,6 @@ section.editor-chart-catalog.--expanded .editor-chart-catalog-input__clear-btn
 	font-size: calc(var(--debug-bar-font-size-base) - 1px);
 }
 
-	/* @chef-ignore */
-	/* @chef-ignore */
-.node-data-inspector-layout {
-	display: flex;
-	flex-direction: column;
-	height: 100%;
-	overflow: hidden;
-}
-
-.node-data-inspector-layout__header {
-	display: flex;
-	flex-direction: row;
-	align-items: center;
-	padding: var(--ui-space-inset-xs) var(--ui-space-inset-md);
-	border-bottom: 1px solid var(--ui-color-palette-gray-15);
-}
-
-.node-data-inspector-layout__header-controls {
-	display: flex;
-	margin-left: auto;
-}
-
-.node-data-inspector-layout__header-title {
-	font-size: var(--ui-font-size-lg);
-	line-height: 20px;
-	color: var(--ui-color-palette-black-base);
-	font-weight: var(--ui-font-weight-medium);
-	overflow: hidden;
-}
-
-.node-data-inspector-layout__content {
-	display: flex;
-	flex-direction: column;
-}
-
-.node-data-inspector-layout__content-controls {
-	display: flex;
-	padding: 20px 18px;
-	gap: 16px;
-}
-
-.node-data-inspector-layout__content-controls-search {
-	flex: 1;
-}
-
-.node-data-inspector-layout__content-controls-view-mode {
-	display: flex;
-	flex-direction: row;
-	margin-left: auto;
-	gap: 4px;
-}
-
-.node-data-inspector-layout__divider {
-	border-bottom: 1px solid var(--ui-color-palette-gray-15);
-}
-
-.node-data-inspector-layout__content__data-viewer {
-	flex: 1;
-	min-height: 0;
-	overflow-y: auto;
-	margin-bottom: 16px;
-	flex: 1 1 auto;
-	min-height: 0;
-	display: flex;
-	flex-direction: column;
-}
-
-.inspector-search-container {
-	display: flex;
-	align-items: center;
-	height: 34px;
-	border-radius: 8px;
-	padding-left: var(--ui-space-inset-sm);
-	padding-right: var(--ui-space-inset-xs2);
-	border: solid 1px var(--ui-color-palette-gray-30);
-	box-sizing: border-box;
-}
-
-.inspector-search__icon {
-	flex-shrink: 0;
-	width: 20px;
-	height: 20px;
-}
-
-.inspector-search-container.--active {
-	border: solid 1px var(--ui-color-accent-main-primary);
-}
-
-.inspector-search__input {
-	flex: 1;
-	min-width: 0;
-	border: none;
-	font-size: var(--ui-font-size-md);
-	text-overflow: ellipsis;
-	overflow: hidden;
-	padding: 0;
-}
-
-.inspector-search__input::placeholder {
-	color: var(--ui-color-base-50);
-}
-
-.inspector-search__clear-btn {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	flex-shrink: 0;
-	width: 20px;
-	height: 20px;
-	padding: 0;
-	border: none;
-	background: transparent;
-	cursor: pointer;
-}
-
-
-.editor-chart-inspector-grid-view {
-	border-radius: 8px;
-	border: 1px solid var(--ui-color-divider-vibrant-accent, rgba(0, 0, 0, 0.08));
-	margin: 20px 18px 4px 18px;
-	cursor: default;
-	display: flex;
-	flex-direction: column;
-	height: calc(100% - 24px);
-	box-sizing: border-box;
-}
-
-.editor-chart-inspector-grid-view__table{
-	flex-grow: 1;
-	display: flex;
-	flex-direction: column;
-	height: 100%;
-	min-height: 0;
-}
-
-.editor-chart-inspector-grid-view__heads {
-	display: flex;
-	font-size: 12px;
-	font-weight: 500;
-	line-height: 14px;
-	color: var(--ui-color-gray-70);
-	background: rgba(250, 251, 252, 0.92);
-	border-top-left-radius: 8px;
-	border-top-right-radius: 8px;
-}
-
-.editor-chart-inspector-grid-view__cell {
-	padding: 14px 0 14px 18px;
-	flex: 1 0;
-}
-
-.editor-chart-inspector-grid-view__heads .editor-chart-inspector-grid-view__cell {
-	border-right: 1px solid rgba(0, 0, 0, 0.05);
-}
-
-.editor-chart-inspector-grid-view__heads .inspector-grid-view__cell:last-child {
-	border: none;
-}
-
-.editor-chart-inspector-grid-view__cell:last-child {
-	flex: 1 0;
-	border-right: none;
-}
-
-.editor-chart-inspector-grid-view__rows {
-	overflow-y: auto;
-}
-
-.editor-chart-inspector-grid-view__row {
-	display: flex;
-	font-size: 14px;
-	line-height: 19px;
-	color: var(--ui-color-black-base);
-	border-top: 1px solid #f2f2f2;
-}
-
-.editor-chart-inspector-grid-view__cell.--name {
-	font-weight: 500;
-	line-height: 17px;
-}
-
-.editor-chart-inspector-grid-view__cell.--type {
-	color: var(--ui-color-base-4);
-}
-
-.inspector-scheme-view {
-	display: flex;
-	flex-direction: column;
-	padding: 0 18px;
-}
-
-.inspector-scheme-view > .inspector-scheme-view__item-list {
-	--inspector-group-item-background-color: var(--ui-color-base-7);
-	--inspector-group-item-icon-color: var(--ui-color-base-3);
-	--inspector-group-data-item-border-color: var(--ui-color-base-5);
-}
-
-.inspector-scheme-view__item-list.--green {
-	--inspector-group-item-background-color: var(--ui-color-accent-soft-green-2);
-	--inspector-group-item-icon-color: var(--ui-color-accent-main-success-alt-2);
-	--inspector-group-data-item-border-color: var(--ui-color-accent-soft-border-green);
-}
-
-.inspector-scheme-view__item-list.--orange {
-	--inspector-group-item-background-color: var(--ui-color-accent-soft-orange-2);
-	--inspector-group-item-icon-color: var(--ui-color-accent-main-warning);
-	--inspector-group-data-item-border-color: var(--ui-color-design-filled-warning-bg);
-}
-
-.inspector-scheme-view__item-list.--blue {
-	--inspector-group-item-background-color: var(--ui-color-accent-soft-blue-2);
-	--inspector-group-item-icon-color: var(--ui-color-accent-main-primary);
-	--inspector-group-data-item-border-color: var(--ui-color-accent-soft-border-blue);
-}
-
-.inspector-scheme-view__item-list-group-divider {
-	align-self: stretch;
-	border-bottom: 1px solid var(--ui-color-palette-gray-15);
-}
-
-.inspector-scheme-view__item-list {
-	position: relative;
-	display: flex;
-	flex-direction: column;
-	list-style: none;
-	gap: 12px;
-	margin: 18px 0;
-	padding: 0;
-}
-
-.inspector-scheme-view__item-list .inspector-scheme-view__item-list {
-	padding-top: 12px;
-	padding-left: 24px;
-	margin: 0;
-}
-
-.inspector-scheme-view__collapsible-header__toggle-button {
-	width: 16px;
-	height: 16px;
-}
-
-.inspector-scheme-view__item-list .inspector-scheme-view__item-list:before {
-	content: '';
-	position: absolute;
-	left: 7px;
-	top: 0;
-	bottom: 0;
-	width: 1px;
-	background-color: var(--ui-color-divider-vibrant-accent);
-}
-
-.inspector-scheme-view__collapsible-header {
-	display: flex;
-	font-weight: var(--ui-font-weight-medium);
-	font-size: var(--ui-font-size-lg);
-	align-items: center;
-	gap: 4px;
-}
-
-.inspector-scheme-view__collapsible-header.--group {
-	gap: 8px;
-}
-
-.inspector-scheme-view__collapsible-header__icon {
-	width: 20px;
-	height: 20px;
-}
-
-.inspector-scheme-view__collapsible-item-group-title {
-	display: flex;
-	align-items: center;
-	gap: 6px;
-	padding: 2px 10px 2px 4px;
-	background: var(--inspector-group-item-background-color);
-	border-radius: 8px;
-	--ui-icon-set__icon-color: var(--inspector-group-item-icon-color);
-}
-
-.inspector-scheme-view__collapsible-item-title.--group {
-	padding: 8px 4px;
-	border-radius: 6px;
-	background: var(--inspector-group-item-background-color);
-}
-
-.inspector-scheme-view__collapsible-item-title.--node {
-	font-size: var(--ui-font-size-md);
-	line-height: 19px;
-}
-
-.inspector-scheme-view__collapsible-item-title.--data-group {
-	font-size: var(--ui-font-size-md);
-	line-height: 19px;
-	font-weight: var(--ui-font-weight-normal);
-}
-.inspector-scheme-view__data-item-row {
-	display: flex;
-	flex-direction: row;
-	align-items: center;
-	align-self: stretch;
-	gap: 10px;
-	font-size: var(--ui-font-size-md);
-}
-
-.inspector-scheme-view__data-item-title {
-	display: flex;
-	align-items: center;
-	flex: 1 1 auto;
-	min-width: 0;
-	gap: 4px;
-	padding: 2px 6px 3px 4px;
-	border: 1px solid var(--inspector-group-data-item-border-color);
-	border-radius: 6px;
-
-	overflow: hidden;
-	text-overflow: ellipsis;
-	cursor: grab;
-}
-
-.inspector-scheme-view__data-item-title.--ghost {
-	border: 1px solid var(--ui-color-palette-gray-30);
-	border-radius: 6px;
-	background: var(--ui-color-palette-white-base);
-	cursor: grabbing;
-}
-
-.inspector-scheme-view__data-item-hoverable {
-	display: flex;
-	align-items: center;
-	flex-direction: row;
-	gap: 4px;
-	min-width: 0;
-	flex: 0 1 auto;
-}
-
-.inspector-scheme-view__data-item-title-container:hover .inspector-scheme-view__data-item-copy-button {
-	opacity: 1;
-	pointer-events: auto;
-}
-
-.inspector-scheme-view__data-item-copy-button {
-	display: flex;
-	flex: 0 0 16px;
-	align-items: center;
-	justify-content: center;
-	width: 16px;
-	height: 16px;
-	cursor: pointer;
-	opacity: 0;
-	pointer-events: none;
-	transition: opacity 0.15s ease;
-}
-
-.inspector-scheme-view__data-item-title-text {
-	flex: 1 1 auto;
-	min-width: 0;
-	font-weight: var(--ui-font-weight-medium);
-	line-height: 19px;
-	color: var(--ui-color-base-1);
-	overflow: hidden;
-	white-space: nowrap;
-	text-overflow: ellipsis;
-}
-
-.inspector-scheme-view__data-item-title-container {
-	display: flex;
-	align-items: center;
-	gap: 4px;
-	flex: 1 1 220px;
-	max-width: 220px;
-	min-width: 0;
-}
-
-.inspector-scheme-view__data-item-example-value {
-	flex: 0 0 160px;
-	min-width: 160px;
-	max-width: 160px;
-	font-weight: var(--ui-font-weight-normal);
-	color: var(--ui-color-base-2);
-	overflow: hidden;
-	white-space: nowrap;
-	text-overflow: ellipsis;
-}
-
-.inspector-scheme-view__data-item-type {
-	flex: 0 0 84px;
-	min-width: 84px;
-	max-width: 84px;
-	font-weight: var(--ui-font-weight-normal);
-	color: var(--ui-color-base-4);
-	overflow: hidden;
-	white-space: nowrap;
-	text-overflow: ellipsis;
-}
-
-.inspector-scheme-view__data-item-type::before {
-	content: '// ';
-}
-
-.node-data-inspector-close-button {
-	display: flex;
-	cursor: pointer;
-	--ui-icon-set__icon-color: var(--ui-color-base-3);
-}
-.bizprocdesigner-inspector-empty-state {
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	justify-content: center;
-	gap: 24px;
-	height: 100%;
-	box-sizing: border-box;
-	padding-bottom: 80px;
-}
-
-.bizprocdesigner-inspector-empty-state__image {
-	width: 320px;
-	height: 163px;
-	opacity: 0.8;
-	background: url("images/entities/node-data-inspector/ui/inspector-empty-state/images/empty-state.png") no-repeat center / contain;
-}
-
-.bizprocdesigner-inspector-empty-state__text {
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	gap: 12px;
-}
-
-.bizprocdesigner-inspector-empty-state__title {
-	color: var(--ui-color-base-2);
-}
-
-.editor-chart-inspector-grid-view-pagination {
-	display: flex;
-	justify-content: space-between;
-	padding: 12px 16px;
-	border-top: 1px solid rgba(0, 0, 0, 0.08);
-	align-items: center;
-	cursor: default;
-}
-
-.editor-chart-inspector-grid-view-pagination__navigation {
-	display: flex;
-	gap: 7px;
-	font-size: 12px;
-	line-height: 15px;
-}
-
-.editor-chart-inspector-grid-view-pagination__navigation_current-page {
-	color: var(--ui-color-gray-90);
-}
-
-.editor-chart-inspector-grid-view-pagination__navigation_page-num {
-	color: var(--ui-color-black-base);
-	margin-left: 5px;
-}
-
-.editor-chart-inspector-grid-view-pagination__navigation_delimeter {
-	width: 1px;
-	height: 16px;
-	background: #e2e2e2;
-}
-
-.editor-chart-inspector-grid-view-pagination__navigation_move-btn {
-	color: var(--ui-color-accent-main-link);
-	cursor: pointer;
-}
-
-.editor-chart-inspector-grid-view-pagination__navigation_move-btn.--inactive {
-	cursor: not-allowed;
-	color: var(--ui-color-gray-50);
-}
-
-.editor-chart-inspector-grid-view-pagination__rows-count {
-	display: flex;
-	align-items: center;
-	gap: 5px;
-}
-
-.editor-chart-inspector-grid-view-pagination__rows-count_label {
-	font-size: 12px;
-	line-height: 15px;
-	color: var(--ui-color-gray-90);
-}
-
-.editor-chart-inspector-grid-view-pagination__rows-count_dropdown {
-	--border-color: var(--ui-color-palette-gray-30);
-	--min-height: 28px;
-	--padding-horizontal: 8px;
-	width: 62px;
-	cursor: pointer;
-}
-
-.editor-chart-inspector-grid-view-pagination__rows-count_dropdown .ui-system-input-value {
-	cursor: pointer;
-}
-
-.editor-chart-inspector-grid-view-pagination__rows-count_dropdown .ui-system-input-value {
-	--font-size: 12px;
-	--text-color: var(--ui-color-gray-90);
-}
-
-.editor-chart-inspector-grid-view-pagination__rows-count_dropdown .ui-system-input-dropdown {
-	--icon-size: 18px;
-}
-
 .editor-chart-filter-grid-view-dropdown {
 	--border-color: var(--ui-color-palette-gray-30);
 	--min-height: 34px;
@@ -6515,19 +9454,16 @@ section.editor-chart-catalog.--expanded .editor-chart-catalog-input__clear-btn
 	background-color: transparent;
 }
 
+/* Section card per mockup 935:82878 («card settings»): 16/18/20 inset, radius 12, secondary shadow */
 .editor-chart-node-settings-form__section {
-	padding: 12px 15px 21px 15px;
+	padding: var(--ui-space-inset-md) var(--ui-space-inset-md2) var(--ui-space-inset-lg);
 	border-radius: var(--ui-border-radius-lg);
 	background: var(--ui-color-bg-content-primary);
 	box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.13);
 }
 
 .editor-chart-node-settings-form__section + .editor-chart-node-settings-form__section {
-	margin-top: 19px;
-}
-
-.editor-chart-node-settings-form__section.--rules .editor-chart-node-settings-form__section-header {
-	margin-bottom: 19px;
+	margin-top: 18px;
 }
 
 .editor-chart-node-settings-form__section.--data {
@@ -6573,18 +9509,18 @@ section.editor-chart-catalog.--expanded .editor-chart-catalog-input__clear-btn
 	resize: vertical;
 }
 
+/* Card header per mockup: title row, 14px to description, 12px to content */
 .editor-chart-node-settings-form__section-header {
 	display: flex;
 	flex-direction: column;
-	gap: 4px;
-	margin-bottom: 17px;
+	gap: var(--ui-space-inline-sm2);
+	margin-bottom: var(--ui-space-inline-sm);
 }
 
 .editor-chart-node-settings-form__section-header-main {
 	display: flex;
 	align-items: center;
-	gap: 9px;
-	margin-bottom: 5px;
+	gap: var(--ui-space-inline-sm);
 }
 
 .editor-chart-node-settings-form__section-title {
@@ -6618,14 +9554,40 @@ section.editor-chart-catalog.--expanded .editor-chart-catalog-input__clear-btn
 	margin-top: 0;
 }
 
+/*
+ * RelationsBlock visual styles are inherited from editor-chart-node-settings-form__section
+ * (Path A — reuse form section classes for pixel-perfect parity).
+ * No additional overrides required.
+ */
+
+/* «+ …» link per mockup 935:82878 (node 935:82383): 18px plus icon, 14/19 base-3 text, 28px row */
 .editor-chart-node-settings-add-item-button {
+	/* native button reset */
+	appearance: none;
+	margin: 0;
+	padding: 0;
+	border: none;
+	background: transparent;
+	font-family: inherit;
+	text-align: left;
 	cursor: pointer;
 	font-size: 14px;
 	line-height: 19px;
-	color: var(--ui-color-palette-gray-70);
+	color: var(--ui-color-base-3);
 	display: flex;
 	align-items: center;
+	height: 28px;
 	margin-top: 13px;
+	transition: color 200ms ease;
+}
+
+.editor-chart-node-settings-add-item-button:hover {
+	color: var(--ui-color-blue-57, #4A9DFF);
+}
+
+.editor-chart-node-settings-add-item-button:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: 2px;
 }
 
 .editor-chart-node-settings-add-item-button__plus {
@@ -6645,6 +9607,11 @@ section.editor-chart-catalog.--expanded .editor-chart-catalog-input__clear-btn
 	display: block !important;
 }
 
+.editor-chart-node-settings-edit-action-expression-form__dropdown.--disabled {
+	pointer-events: none;
+	opacity: 0.6;
+}
+
 .editor-chart-node-settings-edit-action-expression-form__label {
 	font-size: 13px;
 	line-height: 17px;
@@ -6658,6 +9625,12 @@ section.editor-chart-catalog.--expanded .editor-chart-catalog-input__clear-btn
 
 .editor-chart-node-settings-edit-action-expression-form__label .ui-icon-set {
 	cursor: pointer;
+}
+
+.edit-action-expression-form__label.--required::after {
+	content: '*';
+	margin-left: 2px;
+	color: var(--ui-color-palette-red-60);
 }
 
 .editor-chart-node-settings-edit-action-expression-form__item {
@@ -6779,6 +9752,28 @@ section.editor-chart-catalog.--expanded .editor-chart-catalog-input__clear-btn
 	display: block !important;
 }
 
+/*
+ * The angle of the control takes the right `--ui-field-size` and stands on z-index 10, the caption
+ * over it is opaque and stands on z-index 1. So the warning goes to the left of the angle and above
+ * both of them — otherwise the caption paints right over it.
+ */
+.editor-chart-node-settings-edit-condition-expression-form__dropdown .editor-chart-unresolved-field-hint {
+	position: absolute;
+	top: 50%;
+	right: var(--ui-field-size);
+	z-index: 11;
+	transform: translateY(-50%);
+}
+
+/*
+ * Room for the warning by the caption: the angle, the 18px icon of the hint and a gap, so the ellipsis
+ * of the caption comes before the icon. `!important` is unavoidable — the framework reserves room for
+ * the angle alone and does it the same way (`.ui-ctl-after-icon .ui-ctl-element`).
+ */
+.editor-chart-node-settings-edit-condition-expression-form__dropdown.ui-ctl.--unresolved .ui-ctl-element {
+	padding-right: calc(var(--ui-field-size) + 18px + var(--ui-space-inline-2xs2)) !important;
+}
+
 .editor-chart-node-settings-edit-condition-expression-form__label {
 	font-size: 13px;
 	line-height: 17px;
@@ -6800,54 +9795,177 @@ section.editor-chart-catalog.--expanded .editor-chart-catalog-input__clear-btn
 	cursor: pointer;
 }
 
+/* Chips row inside the "Rules" card (mockup page-node-settings): compact left-aligned
+   layout with the node's min-gap 6px, wrapping to the next line when tight */
 .editor-chart-node-settings-add-construction-toolbar {
+	flex: none;
 	display: flex;
+	flex-wrap: wrap;
 	align-items: center;
-	margin: 16px 0 0 18px;
-	gap: 5px;
+	gap: var(--ui-space-inline-2xs2);
+	padding-top: var(--ui-space-inset-2xs);
 }
 
+/* Native-button reset: chips and the more-trigger are <button> for a11y,
+   the visual stays fully defined by the rules below */
+.editor-chart-node-settings-add-construction-toolbar__item,
+.editor-chart-node-settings-add-construction-toolbar__more-trigger {
+	appearance: none;
+	margin: 0;
+	padding: 0;
+	border: none;
+	background: none;
+	font: inherit;
+	color: inherit;
+	text-align: inherit;
+}
+
+.editor-chart-node-settings-add-construction-toolbar__item:focus-visible,
+.editor-chart-node-settings-add-construction-toolbar__more-trigger:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: 2px;
+}
+
+/* Chip per mockup page-node-settings: 26px height, 0/8/0/4 inset, radius 6,
+   13/17 medium, 16px plus icon. border-box keeps the 1px border inside the 26px.
+   min-height instead of height: the text keeps its room when it is scaled up. */
 .editor-chart-node-settings-add-construction-toolbar__item {
 	cursor: pointer;
+	box-sizing: border-box;
+	min-height: var(--ui-size-xl2);
 	font-size: 13px;
 	font-weight: var(--ui-font-weight-medium);
 	line-height: 17px;
-	padding: 4px 8px;
+	padding: 0 var(--ui-space-inset-xs) 0 var(--ui-space-inset-2xs);
 	border: 1px solid;
-	border-radius: 6px;
+	border-radius: var(--ui-border-radius-xs);
 	display: flex;
 	align-items: center;
+	gap: 2px;
+	white-space: nowrap;
+	min-width: 0;
+}
+
+.editor-chart-node-settings-add-construction-toolbar__item:hover {
+	box-shadow: var(--ui-shadow-bottom-s);
+}
+
+.editor-chart-node-settings-add-construction-toolbar__item:active {
+	box-shadow: var(--ui-shadow-bottom-xs);
+}
+
+
+/* Pending state of an add: the base settings an action inherits are being resolved. Kept
+   focusable on purpose (aria-disabled, not disabled): focus stays on the pressed chip,
+   which is what the addition is announced against. A press that still comes through (the
+   keyboard ignores pointer-events) is answered by an announcement, not by silence.
+   The more-trigger dims along with the chips: its menu items add constructions too. */
+.editor-chart-node-settings-add-construction-toolbar__item.--pending,
+.editor-chart-node-settings-add-construction-toolbar__more-trigger.--pending {
+	cursor: default;
+	opacity: 0.4;
+	box-shadow: none;
+	pointer-events: none;
 }
 
 .editor-chart-node-settings-add-construction-toolbar__item.--condition {
 	border-color: var(--ui-color-designer-bp-rules-blue-stroke);
 	background: var(--ui-color-designer-bp-rules-blue-bg);
-	color: #3391ff;
-	--ui-icon-set__icon-color: #3391ff;
+	color: var(--ui-color-designer-bp-rules-blue-text);
+	--ui-icon-set__icon-color: var(--ui-color-designer-bp-rules-blue-text);
 }
 
 .editor-chart-node-settings-add-construction-toolbar__item.--action {
-	color: var(--ui-color-green-50);
-	border-color: var(--ui-color-designer-bp-rules-green-stroke);
-	background: var(--ui-color-designer-bp-rules-green-bg);
-	--ui-icon-set__icon-color: var(--ui-color-green-50);
+	color: var(--designer-bp-rules-action-text);
+	border-color: var(--designer-bp-rules-action-stroke);
+	background: var(--designer-bp-rules-action-bg);
+	--ui-icon-set__icon-color: var(--designer-bp-rules-action-text);
 }
 
 .editor-chart-node-settings-add-construction-toolbar__item.--output {
-	color: var(--ui-color-palette-gray-70);
-	border-color: var(--ui-color-palette-gray-30);
-	background: var(--ui-color-palette-gray-02);
-	--ui-icon-set__icon-color: var(--ui-color-palette-gray-70);
+	color: var(--ui-color-designer-bp-rules-grey-text);
+	border-color: var(--ui-color-designer-bp-rules-grey-stroke);
+	background: var(--ui-color-designer-bp-rules-grey-bg);
+	--ui-icon-set__icon-color: var(--ui-color-designer-bp-rules-grey-text);
 }
 
 .editor-chart-node-settings-add-construction-toolbar__item.--filter {
-	color: var(--ui-color-accent-main-warning);
-	border-color: var(--ui-color-accent-main-warning);
-	background: var(--ui-color-accent-soft-orange-3);
-	--ui-icon-set__icon-color: var(--ui-color-accent-main-warning);
+	color: var(--ui-color-designer-bp-rules-orange-text);
+	border-color: var(--ui-color-designer-bp-rules-orange-stroke);
+	background: var(--ui-color-designer-bp-rules-orange-bg);
+	--ui-icon-set__icon-color: var(--ui-color-designer-bp-rules-orange-text);
 }
-.editor-chart-node-settings-delete-construction {
+
+/* Green chip, truncated to «+ БАЗО…» per mockup node 935:29625 (width 77px).
+   A hard max-width is required: with flex-wrap on the row, items wrap
+   instead of shrinking, so flex-shrink alone never triggered the ellipsis. */
+.editor-chart-node-settings-add-construction-toolbar__item.--base-settings {
+	color: var(--ui-color-designer-bp-rules-green-text);
+	border-color: var(--ui-color-designer-bp-rules-green-stroke);
+	background: var(--ui-color-designer-bp-rules-green-bg);
+	--ui-icon-set__icon-color: var(--ui-color-designer-bp-rules-green-text);
+	max-width: 78px;
+	flex-shrink: 1;
+}
+
+.editor-chart-node-settings-add-construction-toolbar__item.--base-settings span {
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+/* Three-dot trigger for items with placement:'more' (e.g. group);
+   the dropdown itself is a main.popup menu.
+   Square 28x28 per mockup page-node-settings; border-box keeps the 1.5px border inside it */
+.editor-chart-node-settings-add-construction-toolbar__more-trigger {
 	cursor: pointer;
+	box-sizing: border-box;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: var(--ui-size-2xl);
+	min-height: var(--ui-size-2xl);
+	border: var(--ui-design-outline-na-stroke-weight, 1.5px) solid var(--ui-color-design-outline-na-stroke);
+	border-radius: var(--ui-border-radius-sm);
+	background: var(--ui-color-bg-content-primary);
+	--ui-icon-set__icon-color: var(--ui-color-designer-bp-rules-grey-text);
+}
+
+.editor-chart-node-settings-add-construction-toolbar__more-trigger:hover {
+	background: var(--ui-color-bg-state-hover-default);
+}
+
+/* Content of the «···» menu items rendered inside the main.popup menu */
+.editor-chart-node-settings-add-construction-menu-item {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	color: var(--ui-color-base-4);
+	--ui-icon-set__icon-color: var(--ui-color-base-4);
+}
+
+.editor-chart-node-settings-add-construction-menu-item.--group {
+	color: var(--ui-color-designer-bp-rules-grey-text);
+	--ui-icon-set__icon-color: var(--ui-color-designer-bp-rules-grey-text);
+}
+
+/* Native-button reset: the delete affordance is a <button> for a11y,
+   the visual stays the bare cross icon inside it */
+.editor-chart-node-settings-delete-construction {
+	appearance: none;
+	margin: 0;
+	padding: 0;
+	border: none;
+	background: none;
+	font: inherit;
+	color: inherit;
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+}
+
+.editor-chart-node-settings-delete-construction:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: 2px;
 }
 
 .editor-chart-node-settings-boolean-type-switcher {
@@ -6872,9 +9990,72 @@ section.editor-chart-catalog.--expanded .editor-chart-catalog-input__clear-btn
 	color: var(--ui-color-palette-gray-60);
 }
 
-.editor-chart-node-settings-delete-rule-card {
-	margin-left: auto;
+/* Input switcher per mockup node 1383:21596 («Input+desc»):
+   input-M control (34px, radius 8, #edeef0 stroke) + caption below */
+.editor-chart-node-settings-select-rule-port {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-inline-xs);
+}
+
+.editor-chart-node-settings-select-rule-port__control {
+	/* native button reset */
+	appearance: none;
+	margin: 0;
+	font-family: inherit;
+	text-align: left;
 	cursor: pointer;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--ui-space-inline-2xs);
+	height: 34px;
+	padding: 0 10px 0 12px;
+	background: var(--ui-color-design-outline-bg-alt);
+	border: 1px solid var(--ui-color-design-outline-stroke);
+	border-radius: var(--ui-border-radius-sm);
+}
+
+.editor-chart-node-settings-select-rule-port__control:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: 2px;
+}
+
+.editor-chart-node-settings-select-rule-port__value {
+	font-size: 14px;
+	line-height: 19px;
+	color: var(--ui-color-design-outline-content);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+/* «Данные, с которыми работаем» — 12/15 base-4 (node 1383:21625) */
+.editor-chart-node-settings-select-rule-port__caption {
+	padding-left: 2px;
+	font-size: 12px;
+	line-height: 15px;
+	color: var(--ui-color-base-4);
+}
+
+/* Native-button reset: the delete affordance is a <button> for a11y,
+   the visual stays the bare cross icon inside it */
+.editor-chart-node-settings-delete-rule-card {
+	appearance: none;
+	margin: 0 0 0 auto;
+	padding: 0;
+	border: none;
+	background: none;
+	font: inherit;
+	color: inherit;
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+}
+
+.editor-chart-node-settings-delete-rule-card:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: 2px;
 }
 
 .editor-chart-node-settings-edit-output-expression-form .ui-ctl {
@@ -7002,6 +10183,24 @@ section.editor-chart-catalog.--expanded .editor-chart-catalog-input__clear-btn
 	background: var(--ui-color-accent-soft-orange-3);
 }
 
+/* Visible load-failure message shown instead of the form */
+.editor-chart-node-settings-edit-base-settings__error {
+	padding: var(--ui-space-inset-xs) 2px;
+	font-size: 13px;
+	line-height: 17px;
+	color: var(--ui-color-accent-main-alert);
+}
+
+/* Caption under a base-settings field, e.g. «Доступно форматирование BBCode»
+   (mockup 935:82879, node 935:29673): 13/17 base-3 */
+.editor-chart-node-settings-edit-base-settings__field-description {
+	margin-top: 5px;
+	padding-left: 2px;
+	font-size: 13px;
+	line-height: 17px;
+	color: var(--ui-color-base-3);
+}
+
 .editor-chart-node-settings-header {
 	position: relative;
 	display: flex;
@@ -7033,4 +10232,69 @@ section.editor-chart-catalog.--expanded .editor-chart-catalog-input__clear-btn
 
 .ui-chip.editor-chart-data-inspector-toggle {
 	margin-bottom: 7px;
+}
+
+.editor-chart-data-inspector-toggle:hover {
+	background-color: var(--ui-color-bg-state-hover-default);
+}
+
+.bizprocdesigner-template-not-found-state {
+	position: absolute;
+	inset: 0;
+	z-index: 30;
+	display: flex;
+	box-sizing: border-box;
+	padding: var(--ui-space-inset-md);
+	overflow: auto;
+	background-color: var(--ui-color-designer-bp-background, #ecf0f2);
+	background-image:
+		linear-gradient(to right, rgba(161, 184, 217, 0.06) 1px, transparent 1px),
+		linear-gradient(to bottom, rgba(161, 184, 217, 0.06) 1px, transparent 1px);
+	background-size: 15px 15px, 15px 15px;
+}
+
+/* Clips the oversized CircuitBackdrop, so that only the content makes the state scrollable */
+.bizprocdesigner-template-not-found-state__backdrop {
+	position: absolute;
+	inset: 0;
+	overflow: hidden;
+	pointer-events: none;
+}
+
+/* Auto margins center the content and collapse to zero once the window becomes too short for it,
+   so the content is scrolled to instead of being clipped on both sides as align-items would do.
+   Positioned to stay above the absolutely placed backdrop. */
+.bizprocdesigner-template-not-found-state__content {
+	position: relative;
+	margin: auto;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--ui-space-stack-6xl);
+}
+
+.bizprocdesigner-template-not-found-state__text {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--ui-space-stack-sm);
+	/* Keeps the description line breaks of the mockup at TextLg metrics */
+	max-width: 270px;
+}
+
+.bizprocdesigner-template-not-found-state__title {
+	color: var(--ui-color-base-1);
+}
+
+.bizprocdesigner-template-not-found-state__description {
+	color: var(--ui-color-base-3);
+}
+
+.bizprocdesigner-template-not-found-state__actions {
+	display: flex;
+	/* Wraps instead of being clipped by the overflow of the state on narrow viewports */
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: center;
+	gap: var(--ui-space-inline-md2);
 }

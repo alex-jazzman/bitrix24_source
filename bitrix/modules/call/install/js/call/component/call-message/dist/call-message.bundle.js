@@ -88,6 +88,9 @@ this.BX.Call = this.BX.Call || {};
 			hasActiveAnotherCall() {
 				return call_lib_callManager.CallManager.getInstance().hasActiveAnotherCall(this.dialogId);
 			},
+			hasActiveCallInDialog() {
+				return call_lib_callManager.CallManager.getInstance().hasActiveCallInDialog(this.dialogId);
+			},
 			dialog() {
 				return this.$store.getters['chats/get'](this.dialogId, true);
 			},
@@ -123,6 +126,9 @@ this.BX.Call = this.BX.Call || {};
 					this.showHint = true;
 					clearTimeout(this.hintTimeout);
 					this.hintTimeout = setTimeout(() => this.showHint = false, 10000);
+					return;
+				}
+				if (!this.hasActiveCallInDialog) {
 					return;
 				}
 				this.componentParams.messageType === MESSAGE_TYPE.start ? call_lib_analytics.Analytics.getInstance().onStartCallMessageClick({

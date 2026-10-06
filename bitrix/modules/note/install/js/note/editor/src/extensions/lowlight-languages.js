@@ -29,6 +29,14 @@ import xml from 'highlight.js/lib/languages/xml';
 import yaml from 'highlight.js/lib/languages/yaml';
 
 export const DEFAULT_LANGUAGE = 'plaintext';
+export const MERMAID_LANGUAGE = 'mermaid';
+
+// Mermaid is diagram source, not a highlighted language: in read mode the block renders as a
+// diagram instead (see code-block/mermaid-diagram.js). It still needs a registered grammar:
+// the lowlight plugin falls back to highlightAuto() for anything unregistered, which would
+// colorize diagram source as whatever language it guessed. A no-op grammar keeps edit mode
+// showing the raw text.
+const mermaidSource = () => ({ name: 'Mermaid', disableAutodetect: true, contains: [] });
 
 const LANGUAGES = {
 	plaintext: { def: plaintext, label: 'Plain text' },
@@ -48,6 +56,7 @@ const LANGUAGES = {
 	lua: { def: lua, label: 'Lua' },
 	makefile: { def: makefile, label: 'Makefile' },
 	markdown: { def: markdown, label: 'Markdown' },
+	[MERMAID_LANGUAGE]: { def: mermaidSource, label: 'Mermaid' },
 	perl: { def: perl, label: 'Perl' },
 	php: { def: php, label: 'PHP' },
 	python: { def: python, label: 'Python' },
@@ -74,6 +83,21 @@ export const SUPPORTED_LANGUAGES = [
 		.map(([id, { label }]) => ({ id, label }))
 		.sort((a, b) => a.label.localeCompare(b.label)),
 ];
+
+// Broken markdown (e.g. a fence inside a GFM table cell) can put arbitrary text into the
+// info string, and that text reaches us as the `language` attribute. Everything downstream
+// treats it as a CSS class token, so only known ids may pass through.
+export function normalizeLanguage(id: ?string): string
+{
+	if (typeof id !== 'string')
+	{
+		return DEFAULT_LANGUAGE;
+	}
+
+	const normalized = id.trim().toLowerCase();
+
+	return LANGUAGES[normalized] ? normalized : DEFAULT_LANGUAGE;
+}
 
 export function getLanguageLabel(id: ?string): string
 {

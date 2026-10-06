@@ -1,4 +1,5 @@
 import { Type } from 'main.core';
+import { normalizeCategoryId } from '../normalize-category-id';
 import { type SignedDocumentType } from '../starter';
 
 export class ComplexDocumentType
@@ -6,6 +7,7 @@ export class ComplexDocumentType
 	#moduleId: string;
 	#entity: string;
 	#documentType: string;
+	#categoryId: ?number;
 
 	static tryCreate(documentType: mixed): ?ComplexDocumentType
 	{
@@ -32,10 +34,27 @@ export class ComplexDocumentType
 			documentType.moduleId,
 			documentType.entity,
 			documentType.documentType,
+			documentType.categoryId ?? null,
 		);
 	}
 
-	constructor(moduleId: string, entity: string, documentType: string)
+	withCategoryId(categoryId: mixed): ComplexDocumentType
+	{
+		const normalizedCategoryId = normalizeCategoryId(categoryId);
+		if (normalizedCategoryId === this.#categoryId)
+		{
+			return this;
+		}
+
+		return new ComplexDocumentType(
+			this.#moduleId,
+			this.#entity,
+			this.#documentType,
+			normalizedCategoryId,
+		);
+	}
+
+	constructor(moduleId: string, entity: string, documentType: string, categoryId: ?number = null)
 	{
 		if (
 			!Type.isStringFilled(moduleId)
@@ -49,6 +68,7 @@ export class ComplexDocumentType
 		this.#moduleId = moduleId;
 		this.#entity = entity;
 		this.#documentType = documentType;
+		this.#categoryId = normalizeCategoryId(categoryId);
 	}
 
 	get moduleId(): string
@@ -64,6 +84,11 @@ export class ComplexDocumentType
 	get documentType(): string
 	{
 		return this.#documentType;
+	}
+
+	get categoryId(): ?number
+	{
+		return this.#categoryId;
 	}
 
 	isEqual(targetDocumentType: SignedDocumentType | ComplexDocumentType): boolean

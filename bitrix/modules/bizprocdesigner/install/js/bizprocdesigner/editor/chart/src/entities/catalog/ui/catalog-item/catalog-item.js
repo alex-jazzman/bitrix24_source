@@ -154,6 +154,7 @@ export const CatalogItem = {
 			const {
 				id: itemId,
 				type,
+				servedByUnifiedPanel = false,
 				presetId,
 				title,
 				properties = {},
@@ -162,6 +163,8 @@ export const CatalogItem = {
 				contentBlockColor = null,
 				icon = DEFAULT_ICON_NAME,
 				hasAuxPorts = false,
+				relationsAvailable = null,
+				contentBlock = null,
 				defaultSettings: {
 					width,
 					height,
@@ -169,6 +172,8 @@ export const CatalogItem = {
 					frameColorName = null,
 					frameTextAlign = null,
 					frameSeparatorPosition = null,
+					frameContent = null,
+					frameContentFiles = null,
 				},
 			} = toValue(item);
 
@@ -185,10 +190,11 @@ export const CatalogItem = {
 					},
 					ReturnProperties: returnProperties || [],
 					Activated: 'Y',
+					...(contentBlock ? { ContentBlock: contentBlock } : {}),
 				},
 				dimensions: {
-					width,
-					height,
+					width: type === 'frame' ? 417 : width,
+					height: type === 'frame' ? 417 : height,
 				},
 				position: {
 					x: 0,
@@ -200,11 +206,17 @@ export const CatalogItem = {
 					icon,
 					title,
 					type,
+					// Kept in step with the same marker TemplateToNodes writes for a saved block, so a node
+					// dropped from the palette opens the very panel it reopens after the template reload.
+					servedByUnifiedPanel: servedByUnifiedPanel === true,
 					shouldShowAuxPorts: hasAuxPorts === true,
+					...(relationsAvailable !== null ? { relationsAvailable } : {}),
 					...(contentBlockColor !== null ? { contentBlockColor } : {}),
 					...(frameColorName !== null ? { frameColorName } : {}),
 					...(frameTextAlign !== null ? { frameTextAlign } : {}),
-					...(frameSeparatorPosition !== null ? { frameSeparatorPosition } : {}),
+					...(frameSeparatorPosition !== null ? { frameSeparatorPosition: 380 } : {}),
+					...(frameContent !== null ? { frameContent: '' } : {}),
+					...(frameContentFiles !== null ? { frameContentFiles: [] } : {}),
 				},
 			};
 		}

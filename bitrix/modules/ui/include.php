@@ -8,3 +8,7 @@ if (is_dir($documentRoot . '/bitrix/modules/ui/dev/'))
 	// developer mode
 	Loader::registerNamespace('Bitrix\Ui\Dev',	$documentRoot . '/bitrix/modules/ui/dev');
 }
+
+Loader::registerAutoLoadClasses(null, [
+	'Parsedown' => '/bitrix/modules/ui/vendor/erusev/parsedown/Parsedown.php'
+]);

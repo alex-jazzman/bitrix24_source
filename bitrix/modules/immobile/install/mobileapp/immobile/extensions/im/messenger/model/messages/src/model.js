@@ -1203,7 +1203,7 @@ jn.define('im/messenger/model/messages/model', (require, exports, module) => {
 			},
 
 			/** @function messagesModel/readMessages */
-			readMessages: (store, { chatId, messageIds }) => {
+			readMessages: (store, { chatId, messageIds, exact = false }) => {
 				if (!store.state.chatCollection[chatId])
 				{
 					return 0;
@@ -1234,6 +1234,10 @@ jn.define('im/messenger/model/messages/model', (require, exports, module) => {
 				});
 				/** @type {Set<number>} */
 				const uniqueMessageIdsToView = new Set(messageIdsToView);
+				// exact (Feed->IM exact read): clear unread for EXACTLY the given messages,
+				// no sweep up to max(ID) — other unread (including human messages) stays untouched.
+				// Without the flag — prior behavior (range up to max), graceful degradation for old backend.
+				const exactIds = exact ? new Set(messageIds) : null;
 				const uniqueMessageIdsToRead = new Set();
 				chatMessages.forEach((chatMessage) => {
 					if (!chatMessage.unread)
@@ -1241,7 +1245,10 @@ jn.define('im/messenger/model/messages/model', (require, exports, module) => {
 						return;
 					}
 
-					if (chatMessage.id <= maxMessageId)
+					const shouldRead = exact
+						? exactIds.has(chatMessage.id)
+						: chatMessage.id <= maxMessageId;
+					if (shouldRead)
 					{
 						messagesToReadCount++;
 						uniqueMessageIdsToRead.add(chatMessage.id);

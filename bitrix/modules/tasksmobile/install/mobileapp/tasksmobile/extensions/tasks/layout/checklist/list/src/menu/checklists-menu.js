@@ -7,18 +7,9 @@ jn.define('tasks/layout/checklist/list/src/menu/checklists-menu', (require, expo
 	const { UIMenu } = require('layout/ui/menu');
 	const { PropTypes } = require('utils/validation');
 
-	/**
-	 * @class ChecklistsMenu
-	 */
 	class ChecklistsMenu
 	{
-		/**
-		 * @public
-		 * @param {object} props
-		 * @param {object} [props.parentWidget]
-		 * @param {function} [props.moveItemToChecklist]
-		 * @param {array} [props.checklists]
-		 */
+		/** @param {ChecklistsMenuProps} props */
 		static open(props)
 		{
 			const menu = new ChecklistsMenu(props);
@@ -26,10 +17,13 @@ jn.define('tasks/layout/checklist/list/src/menu/checklists-menu', (require, expo
 			menu.show();
 		}
 
+		/** @param {ChecklistsMenuProps} props */
 		constructor(props)
 		{
+			/** @type {ChecklistsMenuProps} */
 			this.props = props;
 
+			/** @type {Object} */
 			this.menu = this.#createMenu();
 		}
 
@@ -40,6 +34,10 @@ jn.define('tasks/layout/checklist/list/src/menu/checklists-menu', (require, expo
 			this.menu.show({ target: targetRef });
 		}
 
+		/**
+		 * @private
+		 * @return {Object}
+		 */
 		#createMenu()
 		{
 			return new UIMenu(this.getMenuActions());
@@ -47,7 +45,7 @@ jn.define('tasks/layout/checklist/list/src/menu/checklists-menu', (require, expo
 
 		/**
 		 * @private
-		 * @return {object[]} actions
+		 * @return {ChecklistMenuAction[]}
 		 */
 		getMenuActions()
 		{
@@ -84,7 +82,7 @@ jn.define('tasks/layout/checklist/list/src/menu/checklists-menu', (require, expo
 
 		/**
 		 * @private
-		 * @return {object} createNewChecklistAction
+		 * @return {ChecklistMenuAction}
 		 */
 		getActionToNewChecklistItem()
 		{
@@ -101,7 +99,7 @@ jn.define('tasks/layout/checklist/list/src/menu/checklists-menu', (require, expo
 
 		/**
 		 * @private
-		 * @param {string | number} checklistId
+		 * @param {string | number | undefined} checklistId
 		 */
 		handleItemSelected = (checklistId) => {
 			const { moveItemToChecklist } = this.props;

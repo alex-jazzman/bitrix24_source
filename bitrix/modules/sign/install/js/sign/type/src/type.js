@@ -29,10 +29,11 @@ export const MemberStatus: Readonly<Record<string, MemberStatusType>> = Object.f
 	processing: 'processing',
 });
 
-export type ProviderCodeType = 'goskey' | 'ses-com' | 'ses-ru' | 'external';
+export type ProviderCodeType = 'goskey' | 'goskey-lite' | 'ses-com' | 'ses-ru' | 'external';
 
 export const ProviderCode: Readonly<Record<string, ProviderCodeType>> = Object.freeze({
 	goskey: 'goskey',
+	goskeyLite: 'goskey-lite',
 	sesCom: 'ses-com',
 	sesRu: 'ses-ru',
 	external: 'external',

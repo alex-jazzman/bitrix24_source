@@ -5,6 +5,7 @@ import { Messenger } from 'im.public';
 import { Core } from 'im.v2.application.core';
 import { MessengerPopup } from 'im.v2.component.elements.popup';
 import { ActionByRole, ChatType, TabId, LocalStorageKey, ActionByUserType } from 'im.v2.const';
+import { Analytics } from 'im.v2.lib.analytics';
 import { FeatureManager, Feature } from 'im.v2.lib.feature';
 import { GuestManager } from 'im.v2.lib.guest';
 import { LocalStorageManager } from 'im.v2.lib.local-storage';
@@ -200,6 +201,7 @@ export const AddToChat = {
 				const sharingLink = await new GuestInvitationService().generateInviteLink(this.chatId);
 				await Utils.text.copyToClipboard(sharingLink.url);
 				Notifier.onCopyLinkComplete();
+				Analytics.getInstance().guest.onCopyGuestInviteLink(this.dialogId);
 			}
 			catch
 			{
@@ -215,8 +217,17 @@ export const AddToChat = {
 			try
 			{
 				this.isUpdatingInviteLink = true;
-				await new GuestInvitationService().updateLink(this.chatId);
-				Notifier.onUpdateLinkComplete();
+				const sharingLink = await new GuestInvitationService().updateLink(this.chatId);
+
+				try
+				{
+					await Utils.text.copyToClipboard(sharingLink.url);
+					Notifier.onCopyLinkComplete();
+				}
+				catch
+				{
+					Notifier.onUpdateLinkComplete();
+				}
 			}
 			catch
 			{

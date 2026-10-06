@@ -26,6 +26,10 @@ type SetCursorPayload = {
 	nextCursor: MembersPaginationCursor,
 };
 
+type ResetPayload = {
+	chatId: number,
+};
+
 type MembersPaginationCursor = JsonObject;
 
 /* eslint-disable no-param-reassign */
@@ -137,6 +141,21 @@ export class MembersModel extends BuilderModel
 
 				store.commit('delete', { userId, chatId });
 			},
+			/** @function sidebar/members/reset */
+			reset: (store, payload: ResetPayload) => {
+				const { chatId } = payload;
+				if (!Type.isNumber(chatId))
+				{
+					return;
+				}
+
+				if (!store.state.collection[chatId])
+				{
+					return;
+				}
+
+				store.commit('reset', { chatId });
+			},
 		};
 	}
 
@@ -191,6 +210,11 @@ export class MembersModel extends BuilderModel
 			delete: (state: MembersState, payload: {chatId: number, userId: number}) => {
 				const { chatId, userId } = payload;
 				state.collection[chatId].users.delete(userId);
+			},
+			reset: (state: MembersState, payload: {chatId: number}) => {
+				const { chatId } = payload;
+
+				state.collection[chatId] = this.getChatState();
 			},
 		};
 	}

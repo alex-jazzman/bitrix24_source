@@ -4,7 +4,9 @@ import { sendData } from 'ui.analytics';
 import { ChatType } from 'im.v2.const';
 import { getCollabId, getUserType } from 'im.v2.lib.analytics';
 
+import { Sync } from './classes/sync';
 import { CallTypes } from 'call.const';
+import { getCallTool } from './utils';
 
 import { Copilot } from './classes/copilot';
 import {
@@ -20,6 +22,8 @@ import {
 	AnalyticsAIStatus,
 	AnalyticsVpnStatus,
 } from './const';
+
+const CALL_ALREADY_FINISHED_STATUS = 'call_already_finished';
 
 type MediaParams = {
 	video: boolean;
@@ -71,8 +75,11 @@ type StartCallParams = BaseCallTypeParams & {
 	isVpnActive: boolean;
 };
 
+type CallIdentifier = string | number;
+
 type StartCallErrorParams = {
 	callType: string;
+	callId?: CallIdentifier;
 	errorCode: string;
 	errorMessage?: string;
 	isVpnActive: boolean;
@@ -91,6 +98,11 @@ type CallErrorParams = BaseCallTypeParams & {
 	errorCode: string;
 	errorMessage?: string;
 	isVpnActive: boolean;
+};
+
+type JoinCallErrorParams = Omit<CallErrorParams, 'callId'> & {
+	callId?: CallIdentifier;
+	isRoomClosed?: boolean;
 };
 
 type ReconnectParams = BaseCallTypeParams & {
@@ -131,9 +143,23 @@ type ChatCallClickParams = { callType: string; dialog: DialogData };
 type ContextMenuCallClickParams = { callType: string; context: DialogData };
 
 type ConferenceClickParams = { chatId: string };
+type RecentStartCallClickParams = { chatId: string; isGroupChat: boolean };
 
 type StreamTypeParams = BaseCallTypeParams & { typeOfStream: 'mic' | 'cam' | 'screenshare' };
 type SettingTypeParams = BaseCallTypeParams & { typeOfSetting: 'mic' | 'cam' | 'screenshare' };
+
+/**
+ * An entry that failed before the call existed has no identifier, and a placeholder one
+ * (`callId_0`, `callId_null`) links the event to nothing. Omit the key instead of passing
+ * undefined: ui.analytics puts every own key of the object into the query string.
+ */
+function buildCallIdParam(callId?: CallIdentifier | null): { p5?: string }
+{
+	// `0` and `''` are the shapes a missing identifier takes on its way here, not calls of their own.
+	const hasIdentifier = !Type.isNil(callId) && callId !== '' && callId !== 0;
+
+	return hasIdentifier ? { p5: `callId_${callId}` } : {};
+}
 
 export class Analytics
 {
@@ -145,6 +171,7 @@ export class Analytics
 	static AnalyticsSubSection = AnalyticsSubSection;
 
 	copilot: Copilot = new Copilot();
+	sync: Sync = new Sync();
 
 	#screenShareStarted: boolean = false;
 
@@ -187,6 +214,14 @@ export class Analytics
 		}
 	}
 
+	// The whitespace of a server code is normalized at the source (Util.getCallConnectionErrorCode), but a
+	// code that arrives percent-encoded ('internal%20error') passes that step untouched and safeDecode turns
+	// it back into a space. Normalizing here, after decoding, keeps one code to one status on the dashboard.
+	#buildErrorStatus(errorCode: string): string
+	{
+		return this.safeDecode(`error_${errorCode}`).replaceAll(/\s+/g, '_');
+	}
+
 	onScreenShareBtnClick({ callId, callType }: BaseCallTypeParams)
 	{
 		if (this.#screenShareStarted)
@@ -195,7 +230,7 @@ export class Analytics
 		}
 
 		sendData({
-			tool: AnalyticsTool.im,
+			tool: getCallTool(),
 			category: AnalyticsCategory.call,
 			event: AnalyticsEvent.clickScreenshare,
 			type: callType,
@@ -209,7 +244,7 @@ export class Analytics
 		this.#screenShareStarted = true;
 
 		sendData({
-			tool: AnalyticsTool.im,
+			tool: getCallTool(),
 			category: AnalyticsCategory.call,
 			event: AnalyticsEvent.startScreenshare,
 			type: callType,
@@ -228,7 +263,7 @@ export class Analytics
 		this.#screenShareStarted = false;
 
 		sendData({
-			tool: AnalyticsTool.im,
+			tool: getCallTool(),
 			category: AnalyticsCategory.call,
 			event: AnalyticsEvent.finishScreenshare,
 			type: callType,
@@ -243,7 +278,7 @@ export class Analytics
 	onAnswerConference(params: BaseCallParams)
 	{
 		sendData({
-			tool: AnalyticsTool.im,
+			tool: getCallTool(),
 			category: AnalyticsCategory.call,
 			event: AnalyticsEvent.clickAnswer,
 			type: AnalyticsType.videoconf,
@@ -255,7 +290,7 @@ export class Analytics
 	onDeclineConference(params: BaseCallParams)
 	{
 		sendData({
-			tool: AnalyticsTool.im,
+			tool: getCallTool(),
 			category: AnalyticsCategory.call,
 			event: AnalyticsEvent.clickDeny,
 			type: AnalyticsType.videoconf,
@@ -267,7 +302,7 @@ export class Analytics
 	onStartVideoconf(params: StartVideoconfParams)
 	{
 		sendData({
-			tool: AnalyticsTool.im,
+			tool: getCallTool(),
 			category: AnalyticsCategory.call,
 			event: AnalyticsEvent.startCall,
 			type: AnalyticsType.videoconf,
@@ -285,7 +320,7 @@ export class Analytics
 	onJoinVideoconf(params: JoinVideoconfParams)
 	{
 		sendData({
-			tool: AnalyticsTool.im,
+			tool: getCallTool(),
 			category: AnalyticsCategory.call,
 			event: AnalyticsEvent.connect,
 			type: AnalyticsType.videoconf,
@@ -304,7 +339,7 @@ export class Analytics
 		const chatType = params.associatedEntity?.advanced?.chatType;
 
 		const resultData = {
-			tool: AnalyticsTool.im,
+			tool: getCallTool(),
 			category: AnalyticsCategory.call,
 			event: AnalyticsEvent.startCall,
 			type: params.callType,
@@ -319,7 +354,7 @@ export class Analytics
 		if (chatType === ChatType.collab && params.status === AnalyticsStatus.success)
 		{
 			const resultDataCollab = {
-				tool: AnalyticsTool.im,
+				tool: getCallTool(),
 				category: AnalyticsCategory.collabCall,
 				event: AnalyticsEvent.startCallCollab,
 				type: params.callType,
@@ -342,14 +377,14 @@ export class Analytics
 	onStartCallError(params: StartCallErrorParams)
 	{
 		const resultData = {
-			tool: AnalyticsTool.im,
+			tool: getCallTool(),
 			category: AnalyticsCategory.call,
 			event: AnalyticsEvent.startCall,
 			type: params.callType,
-			status: this.safeDecode(`error_${params.errorCode}`),
+			status: this.#buildErrorStatus(params.errorCode),
 			p3: params.errorMessage ? `msg_${params.errorMessage}`.slice(0, 100) : undefined,
 			p4: params.isVpnActive ? AnalyticsVpnStatus.vpnOn : AnalyticsVpnStatus.vpnOff,
-			p5: 'callId_0',
+			...buildCallIdParam(params.callId),
 		};
 
 		// @ts-expect-error [call-ts] AnalyticsOptions.status is too narrow; wait ui.analytics to ts
@@ -361,7 +396,7 @@ export class Analytics
 		const chatType = params.associatedEntity?.advanced?.chatType;
 
 		const sendParams = {
-			tool: AnalyticsTool.im,
+			tool: getCallTool(),
 			category: AnalyticsCategory.call,
 			event: AnalyticsEvent.connect,
 			type: params.callType,
@@ -396,7 +431,7 @@ export class Analytics
 			const collabId = params.associatedEntity.advanced.entityId;
 
 			const resultDataCollab = {
-				tool: AnalyticsTool.im,
+				tool: getCallTool(),
 				category: AnalyticsCategory.collabCall,
 				event: AnalyticsEvent.connectCallCollab,
 				type: params.callType,
@@ -416,17 +451,23 @@ export class Analytics
 		sendData(sendParams);
 	}
 
-	onJoinCallError(params: CallErrorParams)
+	onJoinCallError(params: JoinCallErrorParams)
 	{
 		const resultData = {
-			tool: AnalyticsTool.im,
+			tool: getCallTool(),
 			category: AnalyticsCategory.call,
 			event: AnalyticsEvent.connect,
 			type: params.callType,
-			status: this.safeDecode(`error_${params.errorCode}`),
+			// Sent as an outcome (`call_already_finished`), not as an `error_*` code: a closed room is
+			// a normal result, alongside success/busy/decline/no_answer. An `error_` prefix would put it
+			// back on the connection-errors dashboard next to real transport failures.
+			// Agreed with analytics; do not "unify" it with the CamelCase error_* server codes.
+			status: params.isRoomClosed
+				? CALL_ALREADY_FINISHED_STATUS
+				: this.#buildErrorStatus(params.errorCode),
 			p3: params.errorMessage ? `msg_${params.errorMessage}`.slice(0, 100) : undefined,
 			p4: params.isVpnActive ? AnalyticsVpnStatus.vpnOn : AnalyticsVpnStatus.vpnOff,
-			p5: `callId_${params.callId}`,
+			...buildCallIdParam(params.callId),
 		};
 
 		// @ts-expect-error [call-ts] AnalyticsOptions.status is too narrow; wait ui.analytics to ts
@@ -441,7 +482,7 @@ export class Analytics
 			.slice(0, 100);
 
 		sendData({
-			tool: AnalyticsTool.im,
+			tool: getCallTool(),
 			category: AnalyticsCategory.call,
 			event: AnalyticsEvent.reconnect,
 			type: params.callType,
@@ -458,12 +499,12 @@ export class Analytics
 	onReconnectError(params: CallErrorParams)
 	{
 		sendData({
-			tool: AnalyticsTool.im,
+			tool: getCallTool(),
 			category: AnalyticsCategory.call,
 			event: AnalyticsEvent.reconnect,
 			type: params.callType,
 			// @ts-expect-error [call-ts] AnalyticsOptions.status is too narrow; wait ui.analytics to ts
-			status: this.safeDecode(`error_${params.errorCode}`),
+			status: this.#buildErrorStatus(params.errorCode),
 			p3: params.errorMessage ? `msg_${params.errorMessage}`.slice(0, 100) : undefined,
 			p4: params.isVpnActive ? AnalyticsVpnStatus.vpnOn : AnalyticsVpnStatus.vpnOff,
 			p5: `callId_${params.callId}`,
@@ -473,7 +514,7 @@ export class Analytics
 	onInviteUser(params: InviteUserParams)
 	{
 		sendData({
-			tool: AnalyticsTool.im,
+			tool: getCallTool(),
 			category: AnalyticsCategory.call,
 			event: AnalyticsEvent.addUser,
 			type: params.callType,
@@ -486,7 +527,7 @@ export class Analytics
 	onDisconnectCall(params: DisconnectCallParams)
 	{
 		sendData({
-			tool: AnalyticsTool.im,
+			tool: getCallTool(),
 			category: AnalyticsCategory.call,
 			event: AnalyticsEvent.disconnect,
 			type: params.callType,
@@ -504,7 +545,7 @@ export class Analytics
 	onFinishCall(params: FinishCallParams)
 	{
 		sendData({
-			tool: AnalyticsTool.im,
+			tool: getCallTool(),
 			category: AnalyticsCategory.call,
 			event: AnalyticsEvent.finishCall,
 			type: params.callType,
@@ -521,7 +562,7 @@ export class Analytics
 	onRecordBtnClick(params: BaseCallTypeParams)
 	{
 		sendData({
-			tool: AnalyticsTool.im,
+			tool: getCallTool(),
 			category: AnalyticsCategory.call,
 			event: AnalyticsEvent.clickRecord,
 			type: params.callType,
@@ -534,13 +575,13 @@ export class Analytics
 	onRecordStart(params: RecordStartParams)
 	{
 		sendData({
-			tool: AnalyticsTool.im,
+			tool: getCallTool(),
 			category: AnalyticsCategory.call,
 			event: AnalyticsEvent.recordStart,
 			type: params.callType,
 			c_section: AnalyticsSection.callWindow,
 			// @ts-expect-error [call-ts] AnalyticsOptions.status is too narrow; wait ui.analytics to ts
-			status: params.errorCode ? this.safeDecode(`error_${params.errorCode}`) : AnalyticsStatus.success,
+			status: params.errorCode ? this.#buildErrorStatus(params.errorCode) : AnalyticsStatus.success,
 			p1: `recordType_${params.recordType}`,
 			p5: `callId_${params.callId}`,
 		});
@@ -549,13 +590,13 @@ export class Analytics
 	onRecordPaused(params: RecordWithErrorParams)
 	{
 		sendData({
-			tool: AnalyticsTool.im,
+			tool: getCallTool(),
 			category: AnalyticsCategory.call,
 			event: AnalyticsEvent.recordPaused,
 			type: params.callType,
 			c_section: AnalyticsSection.callWindow,
 			// @ts-expect-error [call-ts] AnalyticsOptions.status is too narrow; wait ui.analytics to ts
-			status: params.errorCode ? this.safeDecode(`error_${params.errorCode}`) : AnalyticsStatus.success,
+			status: params.errorCode ? this.#buildErrorStatus(params.errorCode) : AnalyticsStatus.success,
 			p5: `callId_${params.callId}`,
 		});
 	}
@@ -563,13 +604,13 @@ export class Analytics
 	onRecordResumed(params: RecordWithErrorParams)
 	{
 		sendData({
-			tool: AnalyticsTool.im,
+			tool: getCallTool(),
 			category: AnalyticsCategory.call,
 			event: AnalyticsEvent.recordResumed,
 			type: params.callType,
 			c_section: AnalyticsSection.callWindow,
 			// @ts-expect-error [call-ts] AnalyticsOptions.status is too narrow; wait ui.analytics to ts
-			status: params.errorCode ? this.safeDecode(`error_${params.errorCode}`) : AnalyticsStatus.success,
+			status: params.errorCode ? this.#buildErrorStatus(params.errorCode) : AnalyticsStatus.success,
 			p5: `callId_${params.callId}`,
 		});
 	}
@@ -577,12 +618,12 @@ export class Analytics
 	onRecordDelete(params: RecordWithErrorParams)
 	{
 		sendData({
-			tool: AnalyticsTool.im,
+			tool: getCallTool(),
 			category: AnalyticsCategory.call,
 			event: AnalyticsEvent.recordDelete,
 			type: params.callType,
 			// @ts-expect-error [call-ts] AnalyticsOptions.status is too narrow; wait ui.analytics to ts
-			status: params.errorCode ? this.safeDecode(`error_${params.errorCode}`) : AnalyticsStatus.success,
+			status: params.errorCode ? this.#buildErrorStatus(params.errorCode) : AnalyticsStatus.success,
 			p5: `callId_${params.callId}`,
 		});
 	}
@@ -590,7 +631,7 @@ export class Analytics
 	onRecordStop(params: RecordStopParams)
 	{
 		sendData({
-			tool: AnalyticsTool.im,
+			tool: getCallTool(),
 			category: AnalyticsCategory.call,
 			event: AnalyticsEvent.recordStop,
 			type: params.callType,
@@ -605,7 +646,7 @@ export class Analytics
 	onCloudRecordPopupShow(params: BaseCallParams & { popupType: string })
 	{
 		sendData({
-			tool: AnalyticsTool.im,
+			tool: getCallTool(),
 			category: AnalyticsCategory.callRecord,
 			event: AnalyticsEvent.viewPopup,
 			type: params.popupType,
@@ -616,7 +657,7 @@ export class Analytics
 	onToggleCamera(params: ToggleCameraParams)
 	{
 		sendData({
-			tool: AnalyticsTool.im,
+			tool: getCallTool(),
 			category: AnalyticsCategory.call,
 			event: params.video ? AnalyticsEvent.cameraOn : AnalyticsEvent.cameraOff,
 			type: params.callType,
@@ -628,7 +669,7 @@ export class Analytics
 	onToggleMicrophone(params: ToggleMicrophoneParams)
 	{
 		sendData({
-			tool: AnalyticsTool.im,
+			tool: getCallTool(),
 			category: AnalyticsCategory.call,
 			event: params.muted ? AnalyticsEvent.micOff : AnalyticsEvent.micOn,
 			type: params.callType,
@@ -640,7 +681,7 @@ export class Analytics
 	onClickUser(params: ClickUserParams)
 	{
 		sendData({
-			tool: AnalyticsTool.im,
+			tool: getCallTool(),
 			category: AnalyticsCategory.call,
 			event: AnalyticsEvent.clickUserFrame,
 			type: params.callType,
@@ -653,7 +694,7 @@ export class Analytics
 	onFloorRequest(params: BaseCallTypeParams)
 	{
 		sendData({
-			tool: AnalyticsTool.im,
+			tool: getCallTool(),
 			category: AnalyticsCategory.call,
 			event: AnalyticsEvent.handOn,
 			type: params.callType,
@@ -665,7 +706,7 @@ export class Analytics
 	onShowChat(params: BaseCallTypeParams)
 	{
 		sendData({
-			tool: AnalyticsTool.im,
+			tool: getCallTool(),
 			category: AnalyticsCategory.call,
 			event: AnalyticsEvent.clickChat,
 			type: params.callType,
@@ -677,7 +718,7 @@ export class Analytics
 	onDocumentBtnClick(params: BaseCallTypeParams)
 	{
 		sendData({
-			tool: AnalyticsTool.im,
+			tool: getCallTool(),
 			category: AnalyticsCategory.callDocs,
 			event: AnalyticsEvent.click,
 			p4: `callType_${params.callType}`,
@@ -688,7 +729,7 @@ export class Analytics
 	onDocumentCreate(params: DocumentWithTypeParams)
 	{
 		sendData({
-			tool: AnalyticsTool.im,
+			tool: getCallTool(),
 			category: AnalyticsCategory.callDocs,
 			event: AnalyticsEvent.create,
 			type: params.type,
@@ -700,7 +741,7 @@ export class Analytics
 	onDocumentClose(params: DocumentWithTypeParams)
 	{
 		sendData({
-			tool: AnalyticsTool.im,
+			tool: getCallTool(),
 			category: AnalyticsCategory.callDocs,
 			event: AnalyticsEvent.save,
 			type: params.type,
@@ -712,7 +753,7 @@ export class Analytics
 	onDocumentUpload(params: DocumentWithTypeParams)
 	{
 		sendData({
-			tool: AnalyticsTool.im,
+			tool: getCallTool(),
 			category: AnalyticsCategory.callDocs,
 			event: AnalyticsEvent.upload,
 			type: params.type,
@@ -724,7 +765,7 @@ export class Analytics
 	onLastResumeOpen(params: BaseCallTypeParams)
 	{
 		sendData({
-			tool: AnalyticsTool.im,
+			tool: getCallTool(),
 			category: AnalyticsCategory.callDocs,
 			event: AnalyticsEvent.openResume,
 			p4: `callType_${params.callType}`,
@@ -745,7 +786,7 @@ export class Analytics
 	onChatHeaderStartCallClick(params: ChatCallClickParams)
 	{
 		const resultData = {
-			tool: AnalyticsTool.im,
+			tool: getCallTool(),
 			category: AnalyticsCategory.messenger,
 			event: AnalyticsEvent.clickCallButton,
 			c_section: this.#getSectionParamByChatType(params.dialog.type),
@@ -772,7 +813,7 @@ export class Analytics
 	onContextMenuStartCallClick(params: ContextMenuCallClickParams)
 	{
 		const resultData = {
-			tool: AnalyticsTool.im,
+			tool: getCallTool(),
 			category: AnalyticsCategory.messenger,
 			event: AnalyticsEvent.clickCallButton,
 			c_section: this.#getSectionParamByChatType(params.context.type),
@@ -882,7 +923,7 @@ export class Analytics
 	onStartConferenceClick(params: ConferenceClickParams)
 	{
 		sendData({
-			tool: AnalyticsTool.im,
+			tool: getCallTool(),
 			category: AnalyticsCategory.call,
 			event: AnalyticsEvent.clickStartConf,
 			type: AnalyticsType.videoconf,
@@ -895,7 +936,7 @@ export class Analytics
 	onChatCreationMessageStartCallClick(params: ConferenceClickParams)
 	{
 		sendData({
-			tool: AnalyticsTool.im,
+			tool: getCallTool(),
 			category: AnalyticsCategory.messenger,
 			event: AnalyticsEvent.clickCallButton,
 			type: AnalyticsType.groupCall,
@@ -906,10 +947,26 @@ export class Analytics
 		});
 	}
 
+	onRecentStartCallClick(params: RecentStartCallClickParams)
+	{
+		sendData({
+			tool: getCallTool(),
+			category: AnalyticsCategory.messenger,
+			event: AnalyticsEvent.clickCallButton,
+			type: params.isGroupChat
+				? AnalyticsType.groupCall
+				: AnalyticsType.privateCall,
+			c_section: AnalyticsSection.chatList,
+			c_sub_section: AnalyticsSubSection.contextMenu,
+			c_element: AnalyticsElement.videocall,
+			p5: `chatId_${params.chatId}`,
+		});
+	}
+
 	onChatStartConferenceClick(params: ConferenceClickParams)
 	{
 		sendData({
-			tool: AnalyticsTool.im,
+			tool: getCallTool(),
 			category: AnalyticsCategory.call,
 			event: AnalyticsEvent.clickStartConf,
 			type: AnalyticsType.videoconf,
@@ -922,7 +979,7 @@ export class Analytics
 	onJoinConferenceClick(params: BaseCallParams)
 	{
 		sendData({
-			tool: AnalyticsTool.im,
+			tool: getCallTool(),
 			category: AnalyticsCategory.call,
 			event: AnalyticsEvent.clickJoin,
 			type: AnalyticsType.videoconf,
@@ -944,9 +1001,20 @@ export class Analytics
 	onOpenCallSettings(params: BaseCallTypeParams)
 	{
 		sendData({
-			tool: AnalyticsTool.im,
+			tool: getCallTool(),
 			category: AnalyticsCategory.call,
 			event: AnalyticsEvent.openSettings,
+			type: params.callType,
+			p5: `callId_${params.callId}`,
+		});
+	}
+
+	onDeleteUser(params: BaseCallTypeParams)
+	{
+		sendData({
+			tool: getCallTool(),
+			category: AnalyticsCategory.call,
+			event: AnalyticsEvent.deleteUser,
 			type: params.callType,
 			p5: `callId_${params.callId}`,
 		});
@@ -974,7 +1042,7 @@ export class Analytics
 		if (event)
 		{
 			sendData({
-				tool: AnalyticsTool.im,
+				tool: getCallTool(),
 				category: AnalyticsCategory.call,
 				event,
 				type: params.callType,
@@ -1006,7 +1074,7 @@ export class Analytics
 		if (event)
 		{
 			sendData({
-				tool: AnalyticsTool.im,
+				tool: getCallTool(),
 				category: AnalyticsCategory.call,
 				event,
 				type: params.callType,
@@ -1037,7 +1105,7 @@ export class Analytics
 		if (event)
 		{
 			sendData({
-				tool: AnalyticsTool.im,
+				tool: getCallTool(),
 				category: AnalyticsCategory.call,
 				event,
 				type: params.callType,
@@ -1049,7 +1117,7 @@ export class Analytics
 	onAllowPermissionToSpeakResponse(params: BaseCallTypeParams)
 	{
 		sendData({
-			tool: AnalyticsTool.im,
+			tool: getCallTool(),
 			category: AnalyticsCategory.call,
 			event: AnalyticsEvent.approveRequest,
 			type: params.callType,
@@ -1060,7 +1128,7 @@ export class Analytics
 	onDisallowPermissionToSpeakResponse(params: BaseCallTypeParams)
 	{
 		sendData({
-			tool: AnalyticsTool.im,
+			tool: getCallTool(),
 			category: AnalyticsCategory.call,
 			event: AnalyticsEvent.denyRequest,
 			type: params.callType,

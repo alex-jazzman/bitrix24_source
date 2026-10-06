@@ -2,7 +2,7 @@ import type { ProviderCodeType } from 'sign.type';
 import { LoadedDocumentData } from 'sign.v2.api';
 import type { CardItem } from 'sign.v2.b2e.user-party';
 import { post } from '../request';
-import type { Template, TemplateField, FieldValue, TemplateSelectedEntity, TemplateCreatedDocument } from './type';
+import type { Template, TemplateFieldsResponse, FieldValue, TemplateSelectedEntity, TemplateCreatedDocument } from './type';
 
 export type { Template };
 
@@ -18,16 +18,28 @@ export class TemplateApi
 		return post('sign.api_v1.b2e.document.template.complete', { uid: templateUid, folderId });
 	}
 
-	send(templateUid: string, fields: FieldValue[], isOnboarding: boolean = false): Promise<{
+	send(
+		templateUid: string,
+		fields: FieldValue[],
+		isOnboarding: boolean = false,
+		externalId: ?string = null,
+		externalDate: ?string = null,
+	): Promise<{
 		assigneeMember: { id: number, uid: string },
 		employeeMember: { id: number, uid: string },
 		document: { id: number, providerCode: ProviderCodeType },
 	}>
 	{
-		return post('sign.api_v1.b2e.document.template.send', { uid: templateUid, fields, isOnboarding });
+		return post('sign.api_v1.b2e.document.template.send', {
+			uid: templateUid,
+			fields,
+			isOnboarding,
+			externalId,
+			externalDate,
+		});
 	}
 
-	getFields(templateUid: string): Promise<{ fields: TemplateField[] }>
+	getFields(templateUid: string): Promise<TemplateFieldsResponse>
 	{
 		return post('sign.api_v1.b2e.document.template.getFields', { uid: templateUid });
 	}

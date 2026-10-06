@@ -8,9 +8,9 @@ return [
 	'css' => 'dist/document-counter.bundle.css',
 	'js' => 'dist/document-counter.bundle.js',
 	'rel' => [
+		'main.core',
 		'main.core.events',
 		'ui.counterpanel',
-		'main.core',
 	],
 	'skip_core' => false,
 ];

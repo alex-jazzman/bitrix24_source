@@ -9,6 +9,7 @@ $MESS["M_DISK_EMPTY_SEARCH_RESULT_GLOBAL_DESCRIPTION"] = "Check your input for e
 $MESS["M_DISK_EMPTY_SEARCH_RESULT_GLOBAL_TITLE"] = "File not found";
 $MESS["M_DISK_EMPTY_SEARCH_RESULT_SEARCH_EVERYWHERE"] = "Search everywhere";
 $MESS["M_DISK_EMPTY_SEARCH_RESULT_TITLE_MSGVER_2"] = "File not found in this folder";
+$MESS["M_DISK_FILE_GRID_CREATE_BOARD_MENU_ITEM"] = "New board";
 $MESS["M_DISK_FILE_GRID_TRASHCAN_TITLE"] = "Recycle bin";
 $MESS["M_DISK_GROUP_FILES_EMPTY_DESCRIPTION_MSGVER_1"] = "This screen will show the files you uploaded.";
 $MESS["M_DISK_GROUP_FILES_EMPTY_TITLE"] = "Project files";

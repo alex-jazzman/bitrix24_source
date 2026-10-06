@@ -39,6 +39,10 @@ export const ConnectionSettings = defineComponent({
 		{
 			return this.state.mode === 'edit';
 		},
+		credentialsReadOnly(): boolean
+		{
+			return this.state.migrationActive;
+		},
 		isOAuthService(): boolean
 		{
 			return Boolean(this.state.service?.oauth) || Boolean(this.state.connection.isOAuth);
@@ -201,6 +205,8 @@ export const ConnectionSettings = defineComponent({
 					:label="loc('MAIL_CONFIG_FORM_EMAIL_LABEL')"
 					:size="InputSize.Md"
 					v-model="state.connection.email"
+					:disabled="credentialsReadOnly"
+					:design="credentialsReadOnly ? InputDesign.Disabled : InputDesign.DEFAULT"
 					:error="state.errors.email"
 					:placeholder="loc('MAIL_CONFIG_FORM_EMAIL_LABEL_PLACEHOLDER')"
 					data-test-id="mail_config-form__connection-email_field"
@@ -225,6 +231,7 @@ export const ConnectionSettings = defineComponent({
 						:size="InputSize.Md"
 						:design="InputDesign.DEFAULT"
 						v-model="state.connection.server"
+						:disabled="credentialsReadOnly"
 						:placeholder="loc('MAIL_CONFIG_FORM_SERVER_LABEL_PLACEHOLDER')"
 						data-test-id="mail_config-form__connection-server_field"
 					/>
@@ -235,6 +242,7 @@ export const ConnectionSettings = defineComponent({
 						:size="InputSize.Md"
 						:design="InputDesign.DEFAULT"
 						v-model="portModel"
+						:disabled="credentialsReadOnly"
 						:placeholder="loc('MAIL_CONFIG_FORM_PORT_PLACEHOLDER')"
 						data-test-id="mail_config-form__connection-port_field"
 					/>
@@ -245,6 +253,7 @@ export const ConnectionSettings = defineComponent({
 						id="mail-config-imap-ssl"
 						class="mail-config-form__checkbox"
 						v-model="state.connection.ssl"
+						:disabled="credentialsReadOnly"
 						data-test-id="mail_config-form__connection-ssl_checkbox"
 					/>
 					<label class="mail-config-form__checkbox-label --connection-settings" for="mail-config-imap-ssl">
@@ -256,9 +265,9 @@ export const ConnectionSettings = defineComponent({
 				v-if="!isOAuthService"
 				:label="loc('MAIL_CONFIG_FORM_LOGIN_LABEL')"
 				:size="InputSize.Md"
-				:design="isEditMode ? InputDesign.Disabled : InputDesign.DEFAULT"
+				:design="isEditMode || credentialsReadOnly ? InputDesign.Disabled : InputDesign.DEFAULT"
 				:model-value="state.connection.login"
-				:disabled="isEditMode"
+				:disabled="isEditMode || credentialsReadOnly"
 				:error="state.errors.login"
 				data-test-id="mail_config-form__connection-login_field"
 				@update:model-value="onLoginChange"
@@ -275,8 +284,10 @@ export const ConnectionSettings = defineComponent({
 					:size="InputSize.Md"
 					:design="InputDesign.DEFAULT"
 					v-model="state.connection.password"
+					:disabled="credentialsReadOnly"
 					:placeholder="isEditMode ? passwordPlaceholder : ''"
 					:error="state.errors.password"
+					data-test-id="mail_config-form__connection-password_field"
 				/>
 			</div>
 			<a v-if="isEditMode && state.mailboxId"

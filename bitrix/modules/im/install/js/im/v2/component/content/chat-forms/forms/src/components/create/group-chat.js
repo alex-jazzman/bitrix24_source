@@ -2,7 +2,6 @@ import { type JsonObject } from 'main.core';
 import { EventEmitter, type BaseEvent } from 'main.core.events';
 import { MenuManager } from 'main.popup';
 
-import { Messenger } from 'im.public';
 import {
 	TitleInput,
 	ChatAvatar,
@@ -142,14 +141,12 @@ export const GroupChatCreation = {
 
 			this.isCreating = false;
 			this.exitByCreation = true;
-			CreateChatManager.getInstance().setCreationStatus(false);
-			void Messenger.openChat(newDialogId);
+			void CreateChatManager.getInstance().completeChatCreation(newDialogId);
 		},
 		onCancelClick()
 		{
 			this.exitByCancel = true;
-			CreateChatManager.getInstance().setCreationStatus(false);
-			Messenger.openChat();
+			void CreateChatManager.getInstance().cancelChatCreation();
 		},
 		onAvatarChange(newAvatarFile: File)
 		{

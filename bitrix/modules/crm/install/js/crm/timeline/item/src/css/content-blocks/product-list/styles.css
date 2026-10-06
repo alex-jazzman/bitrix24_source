@@ -167,7 +167,7 @@
 	padding: 0 5px;
 	background: none;
 	border: none;
-	color: var(--ui-color-primary, #2fc6f6);
+	color: #2066b0;
 	pointer-events: none;
 }
 
@@ -184,15 +184,32 @@
 .crm-entity-stream-advice-link {
 	display: inline-block;
 	margin-top: 3px;
+	padding: 0;
+	border: 0;
 	border-bottom: 1px dashed rgba(130,139,149,.4);
 	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
-	color: #80868e;
+	color: var(--ui-color-base-2, #525c69);
+	background: none;
+	text-align: inherit;
+	cursor: pointer;
 	transition: border-bottom .3s;
 }
 
 .crm-entity-stream-advice-link:hover {
 	border-bottom: 1px dashed transparent;
-	color: #80868e;
+	color: var(--ui-color-base-1, #333333);
+}
+
+.crm-entity-stream-advice-link:focus-visible,
+html[data-input-modality="keyboard"] .crm-entity-stream-advice-link:focus:not(:focus-visible) {
+	outline-style: solid;
+	outline-color: var(--ui-color-focus-outline, #4A9DFF);
+	outline-width: var(--ui-focus-outline-width, 2px);
+	outline-offset: var(--ui-focus-outline-offset, 2px);
+}
+
+html[data-input-modality="pointer"] .crm-entity-stream-advice-link:focus-visible {
+	outline: none;
 }
 
 /*** Vue's built-in animation Demo ***/

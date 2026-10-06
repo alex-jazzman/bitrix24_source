@@ -5,7 +5,6 @@ use Bitrix\Main\Context;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Type\Date;
 use Bitrix\Timeman\Helper\Form\Worktime\RecordFormHelper;
-use Bitrix\Timeman\Helper\TimeDictionary;
 use Bitrix\Timeman\Helper\TimeHelper;
 use Bitrix\Timeman\Model\Schedule\Schedule;
 use Bitrix\Timeman\Model\Schedule\Shift\Shift;
@@ -159,11 +158,26 @@ class TemplateParams
 		$formattedEnd = null;
 		if ($this->record)
 		{
-			$formattedStart = $this->buildDateInUserTimezone($this->record->getRecordedStartTimestamp(), $timezoneUserId);
-
-			if ($this->record->getRecordedStopTimestamp() > 0)
+			// Employee-time shows the record "as it was fixed": the frozen START_OFFSET / STOP_OFFSET
+			// wall-clock snapshots (historical reconstruction), NOT the employee's CURRENT zone. This is the
+			// same reconstruction the record report uses, so grid and report agree even after the employee's
+			// TIME_ZONE changes. Viewer-time keeps the existing path - translate the absolute instant into
+			// the viewer's actual IANA zone (date-aware).
+			if (static::isUsingCurrentUserTimezone())
 			{
-				$formattedEnd = $this->buildDateInUserTimezone($this->record->getRecordedStopTimestamp(), $timezoneUserId);
+				$formattedStart = $this->buildDateInUserTimezone($this->record->getRecordedStartTimestamp(), $timezoneUserId);
+				if ($this->record->getRecordedStopTimestamp() > 0)
+				{
+					$formattedEnd = $this->buildDateInUserTimezone($this->record->getRecordedStopTimestamp(), $timezoneUserId);
+				}
+			}
+			else
+			{
+				$formattedStart = $this->record->buildRecordedStartDateTime();
+				if ($this->record->getRecordedStopTimestamp() > 0)
+				{
+					$formattedEnd = $this->record->buildRecordedStopDateTime();
+				}
 			}
 		}
 		elseif ($this->shiftPlan && $this->shift)
@@ -202,32 +216,23 @@ class TemplateParams
 
 		$addBtn = !$this->record && !$this->shiftPlan && !$this->absence;
 		$workedByShifted = $this->record && ($this->shiftPlan || Schedule::isScheduleShifted($this->schedule));
-		$usersInDifferentTimezones = $this->getMainUser()->obtainUtcOffset() !== $this->getOppositeUser()->obtainUtcOffset();
+		// Compare effective IANA zones (date-aware source of truth), not the legacy "offset as of now":
+		// two users are in different timezones when their resolved IANA zone ids differ.
+		$usersInDifferentTimezones = $this->timeHelper->resolveEffectiveTimeZoneId((int)$this->getMainUser()->getId())
+			!== $this->timeHelper->resolveEffectiveTimeZoneId((int)$this->getOppositeUser()->getId());
 		if (($addBtn || $workedByShifted) && $this->shift)
 		{
 			$hint = $this->buildHintWithShiftName();
 			if (($workedByShifted || ($addBtn && $usersInDifferentTimezones)) && $this->isShiftPlan)
 			{
 				$hint .= '<br><br>';
-				$hint .= $this->recordFormHelper->buildTimeDifferenceHint(
-					$this->getMainUser(),
-					$this->getOppositeUser(),
-					$this->shortTimeFormat,
-					$this->startDate instanceof \DateTime ? $this->startDate : $this->formattedStart,
-					$this->endDate instanceof \DateTime ? $this->endDate : $this->formattedEnd
-				);
+				$hint .= $this->buildIntervalHint();
 			}
 		}
 		elseif ($usersInDifferentTimezones)
 		{
 			$hint = Loc::getMessage('TM_WORKTIME_GRID_RECORD_INFO_TITLE') . '<br><br>';
-			$hint .= $this->recordFormHelper->buildTimeDifferenceHint(
-				$this->getMainUser(),
-				$this->getOppositeUser(),
-				$this->shortTimeFormat,
-				$this->startDate instanceof \DateTime ? $this->startDate : $this->formattedStart,
-				$this->endDate instanceof \DateTime ? $this->endDate : $this->formattedEnd
-			);
+			$hint .= $this->buildIntervalHint();
 		}
 
 		if ($hint !== null)
@@ -245,6 +250,86 @@ class TemplateParams
 				$this->hintDataset .= ' data-' . $name . '="' . htmlspecialcharsbx($value) . '"';
 			};
 		}
+	}
+
+	/**
+	 * Builds the two-line "employee time / viewer time" hint for the interval.
+	 *
+	 * For a record the boundaries are the historical recorded DateTimes (START_OFFSET / STOP_OFFSET zones)
+	 * regardless of the display mode: buildTimeDifferenceHint re-derives each user's own per-edge offset
+	 * from the absolute instant, and the pinned employee reads STOP_OFFSET back from the second DateTime's
+	 * zone - so the same boundaries render correctly for both the employee (historical) and the viewer
+	 * (date-aware). The employee is pinned to the recorded START_OFFSET with a blank zone name (a snapshot
+	 * offset has no meaningful current IANA name, matching record.report); the viewer keeps its date-aware
+	 * offset and gets a normalized zone name. The pins live on User objects shared with other day cells and
+	 * with the violation hints, so they are snapshot before and restored after this single build.
+	 */
+	private function buildIntervalHint(): string
+	{
+		[$firstDateTime, $secondDateTime] = $this->buildHintBoundaries();
+
+		$employee = $this->user;
+		$viewer = $this->currentUser;
+		$employeePinnedOffset = $employee->obtainPinnedUtcOffset();
+		$employeePinnedName = $employee->obtainPinnedTimezoneName();
+		$viewerPinnedName = $viewer->obtainPinnedTimezoneName();
+
+		if ($this->record)
+		{
+			$employee->defineUtcOffset($this->record->getStartOffset());
+			$employee->defineTimezoneName('');
+		}
+		// resolveEffectiveTimeZoneIdFromPersisted uses the TIME_ZONE already loaded on the collection (no
+		// per-row b_user read) and seeds the request-scoped zone cache; for the viewer (current user) it
+		// resolves via the runtime source. This keeps the grid zone name normalized and equal to the report.
+		$viewer->defineTimezoneName(
+			$this->timeHelper->resolveEffectiveTimeZoneIdFromPersisted(
+				(int)$viewer->getId(),
+				(string)$viewer->getTimeZone()
+			)
+		);
+
+		$hint = $this->recordFormHelper->buildTimeDifferenceHint(
+			$this->getMainUser(),
+			$this->getOppositeUser(),
+			$this->shortTimeFormat,
+			$firstDateTime,
+			$secondDateTime
+		);
+
+		if ($this->record)
+		{
+			$employee->defineUtcOffset($employeePinnedOffset);
+			$employee->defineTimezoneName($employeePinnedName);
+		}
+		$viewer->defineTimezoneName($viewerPinnedName);
+
+		return $hint;
+	}
+
+	/**
+	 * Interval boundaries fed to the hint. For a record they are the historical recorded DateTimes (whose
+	 * fixed-offset zones carry START_OFFSET / STOP_OFFSET), independent of the display zone; an open record
+	 * keeps the '...' end placeholder. Without a record (shift / shift plan) the display DateTimes are used.
+	 *
+	 * @return array{0: \DateTime|string|null, 1: \DateTime|string|null}
+	 */
+	private function buildHintBoundaries(): array
+	{
+		if ($this->record)
+		{
+			return [
+				$this->record->buildRecordedStartDateTime(),
+				$this->record->getRecordedStopTimestamp() > 0
+					? $this->record->buildRecordedStopDateTime()
+					: $this->formattedEnd,
+			];
+		}
+
+		return [
+			$this->startDate instanceof \DateTime ? $this->startDate : $this->formattedStart,
+			$this->endDate instanceof \DateTime ? $this->endDate : $this->formattedEnd,
+		];
 	}
 
 	public function getViolationCommonCss()
@@ -349,7 +434,9 @@ class TemplateParams
 			$dateTime = clone $createdDateTime;
 		}
 
-		$tz = TimeHelper::getInstance()->getUserTimezone($userId);
+		// Real DST-aware IANA zone (date-aware on the displayed instant), not the legacy synthetic
+		// "+HH:MM as of now" zone: the offset is correct for the date of the row being drawn.
+		$tz = TimeHelper::getInstance()->getUserDateTimeZone((int)$userId);
 
 		return $dateTime->setTimezone($tz);
 	}
@@ -384,27 +471,16 @@ class TemplateParams
 
 	private function buildUtcShiftTime($seconds)
 	{
-		if (TemplateParams::isUsingCurrentUserTimezone())
-		{
-			$v = $seconds - TimeHelper::getInstance()->getUserUtcOffset($this->user->getId());
-			$m = TimeDictionary::SECONDS_PER_DAY;
-			$utcStartSeconds = ($v % $m + $m) % $m;
-			$v = $utcStartSeconds + TimeHelper::getInstance()->getUserUtcOffset($this->currentUser->getId());
-			$seconds = ($v % $m + $m) % $m;
-			$date = TimeHelper::getInstance()->createDateTimeFromFormat(
-				'Y-m-d H:i',
-				$this->drawingDate->format('Y-m-d') . ' ' . TimeHelper::getInstance()->convertSecondsToHoursMinutes($seconds),
-				TimeHelper::getInstance()->getUserUtcOffset($this->currentUser->getId())
-			);
-		}
-		else
-		{
-			$date = TimeHelper::getInstance()->createDateTimeFromFormat(
-				'Y-m-d H:i',
-				$this->drawingDate->format('Y-m-d') . ' ' . TimeHelper::getInstance()->convertSecondsToHoursMinutes($seconds),
-				TimeHelper::getInstance()->getUserUtcOffset($this->user->getId())
-			);
-		}
+		// The shift time is a wall-clock in the EMPLOYEE's zone on the drawing date; its absolute UTC
+		// instant is the same for everyone. Build it once in the employee's REAL IANA zone (date-aware,
+		// DST-correct) — the legacy double-offset that re-shifted by the viewer's "as of now" offset is
+		// removed; the viewer-zone adjustment is applied later in buildDateInUserTimezone().
+		$timestamp = TimeHelper::getInstance()->buildTimestampFromWallTime(
+			(int)$this->user->getId(),
+			$this->drawingDate->format('Y-m-d'),
+			(int)$seconds
+		);
+		$date = new \DateTime('@' . $timestamp);
 		$date->setTimezone(new \DateTimeZone('UTC'));
 		return $date;
 	}

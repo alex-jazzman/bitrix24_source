@@ -14,8 +14,6 @@ interface GroupedLog extends LogEntry {
 type SnapshotErrorReporter = (error: unknown, message: string) => void;
 
 declare namespace BX.Call.Lib {
-	function getUnknownErrorType(errorMsg: unknown): string;
-
 	const accidentLogger: AccidentManager;
 
 	class AccidentManager {

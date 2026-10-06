@@ -72,7 +72,7 @@ echo GridImprovements::getInstance()->build();
 
 $assets = Asset::getInstance();
 $assets->addJs('/bitrix/js/crm/progress_control.js');
-$assets->addJs('/bitrix/js/crm/dialog.js');
+\Bitrix\Main\UI\Extension::load('crm.dialog');
 $assets->addCss('/bitrix/themes/.default/crm-entity-show.css');
 $assets->addJs('/bitrix/js/crm/interface_grid.js');
 
@@ -223,5 +223,14 @@ if (!empty($arResult['restrictedFieldsEngine']))
 				'<?= CUtil::JSEscape($arResult['jsParams']['gridId']) ?>'
 			);
 		<?php endif; ?>
+
+		const urlParams = new URLSearchParams(window.location.search);
+		if (urlParams.get('modeNotAvailable') === 'Y')
+		{
+			BX.UI.Notification.Center.notify({
+				content: BX.Loc.getMessage('CRM_KANBAN_MODE_ACTIVITIES_DISABLED'),
+				autoHideDelay: 5000,
+			});
+		}
 	});
 </script>

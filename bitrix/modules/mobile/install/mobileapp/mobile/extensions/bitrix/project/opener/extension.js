@@ -3,29 +3,15 @@
  */
 jn.define('project/opener', (require, exports, module) => {
 	const { requireLazy } = require('require-lazy');
+	const { RunActionExecutor } = require('rest/run-action-executor');
 	const { showErrorToast } = require('toast');
-	const { WorkgroupUtil } = require('project/utils');
 
-	/**
-	 * @typedef {Object} ProjectOpenerItem
-	 * @property {number|string} id Project id.
-	 * @property {string} [title] Project title.
-	 * @property {'group'|'project'|'scrum'|'collab'} [type] Workgroup type.
-	 * @property {Object} [params] Additional project params used by project openers.
-	 */
-
-	/**
-	 * @typedef {Object} ProjectOpenerParams
-	 * @property {?ProjectOpenerItem} [item=null] Project item if it is already available.
-	 * @property {number|string} [projectId=0] Project id. If omitted, opener will try to use item.id.
-	 * @property {string} [selectedTabId=''] Initial tab id to open.
-	 * @property {?string} [siteId=env.siteId] Site id used for project opening.
-	 * @property {?string} [siteDir=env.siteDir] Site dir used for project opening.
-	 * @property {string} [newsPathTemplate=''] Optional news path template.
-	 * @property {string} [calendarWebPathTemplate=''] Optional calendar path template.
-	 * @property {number|string} [currentUserId=env.userId] Current user id.
-	 * @property {Object} [analyticsLabel] Optional analytics payload.
-	 */
+	const TAB_NAMES = Object.freeze({
+		tasks: 'tasks',
+		news: 'news',
+		disk: 'disk',
+		calendar: 'calendar',
+	});
 
 	class ProjectOpener
 	{
@@ -35,7 +21,7 @@ jn.define('project/opener', (require, exports, module) => {
 		 */
 		static get tabId()
 		{
-			return WorkgroupUtil.tabNames;
+			return TAB_NAMES;
 		}
 
 		/**
@@ -43,7 +29,7 @@ jn.define('project/opener', (require, exports, module) => {
 		 * @param {ProjectOpenerParams} [params={}]
 		 * @returns {Promise<void>}
 		 */
-		static open(params = {})
+		static async open(params = {})
 		{
 			const {
 				item = null,
@@ -51,6 +37,9 @@ jn.define('project/opener', (require, exports, module) => {
 				selectedTabId = '',
 				siteId = env.siteId,
 				siteDir = env.siteDir,
+				openChatFirst = true,
+				chatId = 0,
+				onProjectAccessDenied = null,
 				...restParams
 			} = params;
 			const resolvedProjectId = ProjectOpener.resolveProjectId(projectId, item);
@@ -71,6 +60,17 @@ jn.define('project/opener', (require, exports, module) => {
 
 			if (!selectedTabId)
 			{
+				if (openChatFirst && await ProjectOpener.tryOpenChatFirst({
+					projectId: resolvedProjectId,
+					chatId,
+					onProjectAccessDenied,
+				}))
+				{
+					return;
+				}
+
+				const { WorkgroupUtil } = await requireLazy('project/utils');
+
 				return WorkgroupUtil.openProject(item, openParams);
 			}
 
@@ -78,6 +78,116 @@ jn.define('project/opener', (require, exports, module) => {
 				...openParams,
 				selectedTabId,
 			});
+		}
+
+		/**
+		 * @private
+		 * @param {Object} params
+		 * @param {number} params.projectId
+		 * @param {number|string} params.chatId
+		 * @param {?Function} params.onProjectAccessDenied
+		 * @returns {Promise<boolean>}
+		 */
+		static async tryOpenChatFirst({ projectId, chatId, onProjectAccessDenied })
+		{
+			const preloadedChatId = ProjectOpener.resolveChatId(chatId);
+			if (preloadedChatId > 0 && await ProjectOpener.openChat(preloadedChatId))
+			{
+				return true;
+			}
+
+			const loadedChatId = await ProjectOpener.loadChatId(projectId);
+			if (loadedChatId === null)
+			{
+				if (typeof onProjectAccessDenied === 'function')
+				{
+					await onProjectAccessDenied({ projectId });
+
+					return true;
+				}
+
+				return false;
+			}
+
+			return loadedChatId > 0 && await ProjectOpener.openChat(loadedChatId);
+		}
+
+		/**
+		 * @private
+		 * @param {number|string} chatId
+		 * @returns {number}
+		 */
+		static resolveChatId(chatId)
+		{
+			const normalizedChatId = Number(chatId || 0);
+
+			return normalizedChatId > 0
+				? normalizedChatId
+				: 0;
+		}
+
+		/**
+		 * @private
+		 * @param {number} projectId
+		 * @returns {Promise<?number>}
+		 */
+		static async loadChatId(projectId)
+		{
+			try
+			{
+				const response = await (new RunActionExecutor('mobile.Project.getChatId', {
+					projectId,
+				}))
+					.enableJson()
+					.call(false)
+				;
+
+				if (response.errors?.length > 0)
+				{
+					console.error('ProjectOpener.loadChatId', {
+						projectId,
+						errors: response.errors,
+					});
+
+					return null;
+				}
+
+				return ProjectOpener.resolveChatId(response.data?.chatId);
+			}
+			catch (error)
+			{
+				console.error('ProjectOpener.loadChatId', {
+					projectId,
+					error,
+				});
+
+				return 0;
+			}
+		}
+
+		/**
+		 * @private
+		 * @param {number} chatId
+		 * @returns {Promise<boolean>}
+		 */
+		static async openChat(chatId)
+		{
+			try
+			{
+				const { openNestedNavigation } = await requireLazy('im:messenger/api/navigation');
+				await openNestedNavigation(chatId);
+
+				return true;
+			}
+			catch (error)
+			{
+				console.error('ProjectOpener.openChat', {
+					chatId,
+					error,
+				});
+
+				return false;
+			}
 		}
 
 		/**
@@ -103,6 +213,7 @@ jn.define('project/opener', (require, exports, module) => {
 		 */
 		static async openSelectedTab(item, params)
 		{
+			const { WorkgroupUtil } = await requireLazy('project/utils');
 			const preparedProject = await WorkgroupUtil.prepareProjectOpen(item, params);
 
 			if (!preparedProject)
@@ -110,9 +221,9 @@ jn.define('project/opener', (require, exports, module) => {
 				return;
 			}
 
-			if (ProjectOpener.shouldOpenCalendarExternally(preparedProject, params.selectedTabId))
+			if (await ProjectOpener.shouldOpenCalendarExternally(preparedProject, params.selectedTabId))
 			{
-				ProjectOpener.openCalendarExternal(preparedProject);
+				await ProjectOpener.openCalendarExternal(preparedProject);
 
 				return;
 			}
@@ -137,15 +248,16 @@ jn.define('project/opener', (require, exports, module) => {
 		 * @private
 		 * @param {{item: ProjectOpenerItem, params: ProjectOpenerParams}} preparedProject
 		 * @param {string} selectedTabId
-		 * @returns {boolean}
+		 * @returns {Promise<boolean>}
 		 */
-		static shouldOpenCalendarExternally(preparedProject, selectedTabId)
+		static async shouldOpenCalendarExternally(preparedProject, selectedTabId)
 		{
-			if (selectedTabId !== WorkgroupUtil.tabNames.calendar)
+			if (selectedTabId !== TAB_NAMES.calendar)
 			{
 				return false;
 			}
 
+			const { WorkgroupUtil } = await requireLazy('project/utils');
 			const tabs = WorkgroupUtil.getTabsItems(
 				{
 					siteId: preparedProject.params.siteId,
@@ -164,9 +276,9 @@ jn.define('project/opener', (require, exports, module) => {
 		/**
 		 * @private
 		 * @param {{item: ProjectOpenerItem, params: ProjectOpenerParams}} preparedProject
-		 * @returns {void}
+		 * @returns {Promise<void>}
 		 */
-		static openCalendarExternal(preparedProject)
+		static async openCalendarExternal(preparedProject)
 		{
 			const groupId = Number(preparedProject.item?.id || 0);
 			const calendarWebPathTemplate = preparedProject.params.calendarWebPathTemplate || '';
@@ -176,6 +288,7 @@ jn.define('project/opener', (require, exports, module) => {
 				return;
 			}
 
+			const { WorkgroupUtil } = await requireLazy('project/utils');
 			void WorkgroupUtil.onTabSelectedCalendar(
 				groupId,
 				calendarWebPathTemplate.replace('#group_id#', groupId),
@@ -191,7 +304,7 @@ jn.define('project/opener', (require, exports, module) => {
 		{
 			return ProjectOpener.open({
 				...params,
-				selectedTabId: WorkgroupUtil.tabNames.tasks,
+				selectedTabId: TAB_NAMES.tasks,
 			});
 		}
 
@@ -204,7 +317,7 @@ jn.define('project/opener', (require, exports, module) => {
 		{
 			return ProjectOpener.open({
 				...params,
-				selectedTabId: WorkgroupUtil.tabNames.news,
+				selectedTabId: TAB_NAMES.news,
 			});
 		}
 
@@ -217,7 +330,7 @@ jn.define('project/opener', (require, exports, module) => {
 		{
 			return ProjectOpener.open({
 				...params,
-				selectedTabId: WorkgroupUtil.tabNames.disk,
+				selectedTabId: TAB_NAMES.disk,
 			});
 		}
 
@@ -230,7 +343,7 @@ jn.define('project/opener', (require, exports, module) => {
 		{
 			return ProjectOpener.open({
 				...params,
-				selectedTabId: WorkgroupUtil.tabNames.calendar,
+				selectedTabId: TAB_NAMES.calendar,
 			});
 		}
 	}

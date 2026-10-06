@@ -4,26 +4,28 @@ this.BX.Booking = this.BX.Booking || {};
 (function (exports) {
 	'use strict';
 
-	const AhaMoment = Object.freeze({
-		Banner: 'banner',
-		TrialBanner: 'trial_banner',
-		AddResource: 'add_resource',
-		MessageTemplate: 'message_template',
-		AddClient: 'add_client',
-		ResourceWorkload: 'resource_workload',
-		ResourceIntersection: 'resource_intersection',
-		ExpandGrid: 'expand_grid',
-		SelectResources: 'select_resources',
-		CyclePopup: 'cycle_popup',
-		SearchNavigation: 'search_navigation',
-		IntegrationMapsYa: 'integration_maps_ya',
-		WeekView: 'week_view'
-	});
+	exports.AhaMoment = void 0;
+	(function (AhaMoment) {
+		AhaMoment["Banner"] = "banner";
+		AhaMoment["TrialBanner"] = "trial_banner";
+		AhaMoment["AddResource"] = "add_resource";
+		AhaMoment["MessageTemplate"] = "message_template";
+		AhaMoment["AddClient"] = "add_client";
+		AhaMoment["ResourceWorkload"] = "resource_workload";
+		AhaMoment["ResourceIntersection"] = "resource_intersection";
+		AhaMoment["ExpandGrid"] = "expand_grid";
+		AhaMoment["SelectResources"] = "select_resources";
+		AhaMoment["CyclePopup"] = "cycle_popup";
+		AhaMoment["SearchNavigation"] = "search_navigation";
+		AhaMoment["IntegrationMapsYa"] = "integration_maps_ya";
+		AhaMoment["WeekView"] = "week_view";
+	})(exports.AhaMoment || (exports.AhaMoment = {}));
 
-	const AiCallBannerMode = Object.freeze({
-		Invitation: 'invitation',
-		AutoSwitched: 'auto_switched'
-	});
+	exports.AiCallBannerMode = void 0;
+	(function (AiCallBannerMode) {
+		AiCallBannerMode["Invitation"] = "invitation";
+		AiCallBannerMode["AutoSwitched"] = "auto_switched";
+	})(exports.AiCallBannerMode || (exports.AiCallBannerMode = {}));
 
 	const HelpDesk = Object.freeze({
 		Intersection: {
@@ -132,44 +134,47 @@ this.BX.Booking = this.BX.Booking || {};
 		}
 	});
 
-	const BookingSource = Object.freeze({
-		Internal: 'internal',
-		Yandex: 'yandex',
-		Crm: 'crm_form',
-		Ai: 'mcp_tools'
-	});
+	exports.BookingSource = void 0;
+	(function (BookingSource) {
+		BookingSource["Internal"] = "internal";
+		BookingSource["Yandex"] = "yandex";
+		BookingSource["Crm"] = "crm_form";
+		BookingSource["Ai"] = "mcp_tools";
+	})(exports.BookingSource || (exports.BookingSource = {}));
 
-	const BusySlot = Object.freeze({
-		OffHours: 'offHours',
-		Intersection: 'intersection',
-		IntersectionOverbooking: 'intersection-overbooking'
-	});
+	exports.BusySlot = void 0;
+	(function (BusySlot) {
+		BusySlot["OffHours"] = "offHours";
+		BusySlot["Intersection"] = "intersection";
+		BusySlot["IntersectionOverbooking"] = "intersection-overbooking";
+	})(exports.BusySlot || (exports.BusySlot = {}));
 
-	const CrmEntity = Object.freeze({
-		Contact: 'CONTACT',
-		Company: 'COMPANY',
-		Deal: 'DEAL'
-	});
+	exports.CrmEntity = void 0;
+	(function (CrmEntity) {
+		CrmEntity["Contact"] = "CONTACT";
+		CrmEntity["Company"] = "COMPANY";
+		CrmEntity["Deal"] = "DEAL";
+	})(exports.CrmEntity || (exports.CrmEntity = {}));
 
-	const CrmFormTemplateId = Object.freeze({
-		BookingAutoSelection: 'booking_auto_selection',
-		BookingAnyResource: 'booking_any_resource',
-		BookingManualSettings: 'booking_manual_settings',
-		// with pay
-		BookingAutoSelectionPay: 'booking_auto_selection_pay',
-		BookingAnyResourcePay: 'booking_any_resource_pay',
-		BookingManualSettingsPay: 'booking_manual_settings_pay',
-		// with service
-		BookingAutoSelectionSku: 'booking_auto_selection_services',
-		BookingAnyResourceSku: 'booking_any_resource_services',
-		BookingManualSettingsSku: 'booking_manual_settings_services'
-	});
-	const CrmFormSettingsDataPropName = Object.freeze({
-		autoSelection: 'autoSelection',
-		default: 'default',
-		isAutoSelectionOn: 'isAutoSelectionOn'
-	});
-	const CrmFormTemplatesWithSku = Object.freeze([CrmFormTemplateId.BookingAutoSelectionPay, CrmFormTemplateId.BookingAnyResourcePay, CrmFormTemplateId.BookingManualSettingsPay, CrmFormTemplateId.BookingAutoSelectionSku, CrmFormTemplateId.BookingAnyResourceSku, CrmFormTemplateId.BookingManualSettingsSku]);
+	exports.CrmFormTemplateId = void 0;
+	(function (CrmFormTemplateId) {
+		CrmFormTemplateId["BookingAutoSelection"] = "booking_auto_selection";
+		CrmFormTemplateId["BookingAnyResource"] = "booking_any_resource";
+		CrmFormTemplateId["BookingManualSettings"] = "booking_manual_settings";
+		CrmFormTemplateId["BookingAutoSelectionPay"] = "booking_auto_selection_pay";
+		CrmFormTemplateId["BookingAnyResourcePay"] = "booking_any_resource_pay";
+		CrmFormTemplateId["BookingManualSettingsPay"] = "booking_manual_settings_pay";
+		CrmFormTemplateId["BookingAutoSelectionSku"] = "booking_auto_selection_services";
+		CrmFormTemplateId["BookingAnyResourceSku"] = "booking_any_resource_services";
+		CrmFormTemplateId["BookingManualSettingsSku"] = "booking_manual_settings_services";
+	})(exports.CrmFormTemplateId || (exports.CrmFormTemplateId = {}));
+	exports.CrmFormSettingsDataPropName = void 0;
+	(function (CrmFormSettingsDataPropName) {
+		CrmFormSettingsDataPropName["autoSelection"] = "autoSelection";
+		CrmFormSettingsDataPropName["default"] = "default";
+		CrmFormSettingsDataPropName["isAutoSelectionOn"] = "isAutoSelectionOn";
+	})(exports.CrmFormSettingsDataPropName || (exports.CrmFormSettingsDataPropName = {}));
+	const CrmFormTemplatesWithSku = Object.freeze([exports.CrmFormTemplateId.BookingAutoSelectionPay, exports.CrmFormTemplateId.BookingAnyResourcePay, exports.CrmFormTemplateId.BookingManualSettingsPay, exports.CrmFormTemplateId.BookingAutoSelectionSku, exports.CrmFormTemplateId.BookingAnyResourceSku, exports.CrmFormTemplateId.BookingManualSettingsSku]);
 
 	const DateFormat = Object.freeze({
 		Server: 'Y-m-d',
@@ -177,100 +182,111 @@ this.BX.Booking = this.BX.Booking || {};
 		WeekDays: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 	});
 
-	const EntityDataAttribute = Object.freeze({
-		Booking: 'booking',
-		WaitListItem: 'wait-list-item'
-	});
+	exports.EntityDataAttribute = void 0;
+	(function (EntityDataAttribute) {
+		EntityDataAttribute["Booking"] = "booking";
+		EntityDataAttribute["WaitListItem"] = "wait-list-item";
+	})(exports.EntityDataAttribute || (exports.EntityDataAttribute = {}));
 
-	const EntitySelectorEntity = Object.freeze({
-		Deal: 'deal',
-		Resource: 'resource',
-		Room: 'room',
-		User: 'user',
-		ResourceType: 'resource-type',
-		Product: 'product'
-	});
+	exports.EntitySelectorEntity = void 0;
+	(function (EntitySelectorEntity) {
+		EntitySelectorEntity["Deal"] = "deal";
+		EntitySelectorEntity["Resource"] = "resource";
+		EntitySelectorEntity["Room"] = "room";
+		EntitySelectorEntity["User"] = "user";
+		EntitySelectorEntity["ResourceType"] = "resource-type";
+		EntitySelectorEntity["Product"] = "product";
+	})(exports.EntitySelectorEntity || (exports.EntitySelectorEntity = {}));
 
-	const EntitySelectorTab = Object.freeze({
-		Recent: 'recents'
-	});
+	exports.EntitySelectorTab = void 0;
+	(function (EntitySelectorTab) {
+		EntitySelectorTab["Recent"] = "recents";
+	})(exports.EntitySelectorTab || (exports.EntitySelectorTab = {}));
 
-	const EntityTypeId = Object.freeze({
-		Company: 'COMPANY',
-		Contact: 'CONTACT',
-		Deal: 'DEAL',
-		Lead: 'LEAD'
-	});
+	exports.EntityTypeId = void 0;
+	(function (EntityTypeId) {
+		EntityTypeId["Company"] = "COMPANY";
+		EntityTypeId["Contact"] = "CONTACT";
+		EntityTypeId["Deal"] = "DEAL";
+		EntityTypeId["Lead"] = "LEAD";
+	})(exports.EntityTypeId || (exports.EntityTypeId = {}));
 
-	const EventName = Object.freeze({
-		CloseWizard: 'booking:resource-creation-wizard:close',
-		CloseYandexIntegrationWizard: 'booking:yandex-integration-wizard:close',
-		CloseSkuResourcesEditor: 'booking:sku-resources-editor:close',
-		CreateBookings: 'booking:booking:create',
-		DeleteBooking: 'booking:booking:delete',
-		UpdateBooking: 'booking:booking:update',
-		StartLockedBookingAnimation: 'booking:booking:startLockedBookingAnimation',
-		BookingOpenSkusSettings: 'booking:booking:open-skus-settings',
-		MultiBookingShowPreviousPeriod: 'booking:booking:multi-booking-show-previous-period',
-		MultiBookingShowNextPeriod: 'booking:booking:multi-booking-show-next-period',
-		AiCallBannerClosed: 'booking:banner:ai-call:closed'
-	});
+	exports.EventName = void 0;
+	(function (EventName) {
+		EventName["CloseWizard"] = "booking:resource-creation-wizard:close";
+		EventName["CloseYandexIntegrationWizard"] = "booking:yandex-integration-wizard:close";
+		EventName["CloseSkuResourcesEditor"] = "booking:sku-resources-editor:close";
+		EventName["CreateBookings"] = "booking:booking:create";
+		EventName["DeleteBooking"] = "booking:booking:delete";
+		EventName["UpdateBooking"] = "booking:booking:update";
+		EventName["StartLockedBookingAnimation"] = "booking:booking:startLockedBookingAnimation";
+		EventName["BookingOpenSkusSettings"] = "booking:booking:open-skus-settings";
+		EventName["MultiBookingShowPreviousPeriod"] = "booking:booking:multi-booking-show-previous-period";
+		EventName["MultiBookingShowNextPeriod"] = "booking:booking:multi-booking-show-next-period";
+		EventName["AiCallBannerClosed"] = "booking:banner:ai-call:closed";
+	})(exports.EventName || (exports.EventName = {}));
 
-	const Limit = Object.freeze({
-		ResourcesDialog: 20
-	});
-	const LimitFeatureId = Object.freeze({
-		CalendarIntegration: 'booking_calendar',
-		MultiResources: 'booking_multi',
-		NotificationsSettings: 'booking_notifications_settings',
-		Overbooking: 'booking_overbooking',
-		Waitlist: 'booking_waitlist',
-		MultidayBooking: 'booking_long'
-	});
+	exports.Limit = void 0;
+	(function (Limit) {
+		Limit[Limit["ResourcesDialog"] = 20] = "ResourcesDialog";
+	})(exports.Limit || (exports.Limit = {}));
+	exports.LimitFeatureId = void 0;
+	(function (LimitFeatureId) {
+		LimitFeatureId["CalendarIntegration"] = "booking_calendar";
+		LimitFeatureId["MultiResources"] = "booking_multi";
+		LimitFeatureId["NotificationsSettings"] = "booking_notifications_settings";
+		LimitFeatureId["Overbooking"] = "booking_overbooking";
+		LimitFeatureId["Waitlist"] = "booking_waitlist";
+		LimitFeatureId["MultidayBooking"] = "booking_long";
+	})(exports.LimitFeatureId || (exports.LimitFeatureId = {}));
 
-	const Model = Object.freeze({
-		BookingInfo: 'booking-info',
-		Bookings: 'bookings',
-		Clients: 'clients',
-		Counters: 'counters',
-		Dictionary: 'dictionary',
-		Favorites: 'favorites',
-		Interface: 'interface',
-		MainResources: 'main-resources',
-		MessageStatus: 'message-status',
-		Notifications: 'notifications',
-		ResourceCreationWizard: 'resource-creation-wizard',
-		YandexIntegrationWizard: 'yandex-integration-wizard',
-		ResourceTypes: 'resourceTypes',
-		Resources: 'resources',
-		WaitList: 'wait-list',
-		Filter: 'filter',
-		SaleChannels: 'sale-channels',
-		SkuResourcesEditor: 'sku-resources-editor',
-		ResourceSkuRelations: 'resource-sku-relations',
-		Sku: 'sku'
-	});
+	exports.Model = void 0;
+	(function (Model) {
+		Model["BookingInfo"] = "booking-info";
+		Model["Bookings"] = "bookings";
+		Model["Clients"] = "clients";
+		Model["Counters"] = "counters";
+		Model["Dictionary"] = "dictionary";
+		Model["Favorites"] = "favorites";
+		Model["Interface"] = "interface";
+		Model["MainResources"] = "main-resources";
+		Model["MessageStatus"] = "message-status";
+		Model["Notifications"] = "notifications";
+		Model["ResourceCreationWizard"] = "resource-creation-wizard";
+		Model["YandexIntegrationWizard"] = "yandex-integration-wizard";
+		Model["ResourceTypes"] = "resourceTypes";
+		Model["Resources"] = "resources";
+		Model["WaitList"] = "wait-list";
+		Model["Filter"] = "filter";
+		Model["SaleChannels"] = "sale-channels";
+		Model["SkuResourcesEditor"] = "sku-resources-editor";
+		Model["ResourceSkuRelations"] = "resource-sku-relations";
+		Model["Sku"] = "sku";
+	})(exports.Model || (exports.Model = {}));
 
-	const Module = Object.freeze({
-		Booking: 'booking',
-		Crm: 'crm'
-	});
+	exports.Module = void 0;
+	(function (Module) {
+		Module["Booking"] = "booking";
+		Module["Crm"] = "crm";
+	})(exports.Module || (exports.Module = {}));
 
-	const NotificationOn = Object.freeze({
-		info: 'isInfoNotificationOn',
-		confirmation: 'isConfirmationNotificationOn',
-		reminder: 'isReminderNotificationOn',
-		delayed: 'isDelayedNotificationOn',
-		feedback: 'isFeedbackNotificationOn',
-		cancellation: 'isCancellationNotificationOn'
-	});
-	const TemplateType = Object.freeze({
-		info: 'templateTypeInfo',
-		confirmation: 'templateTypeConfirmation',
-		reminder: 'templateTypeReminder',
-		delayed: 'templateTypeDelayed',
-		feedback: 'templateTypeFeedback'
-	});
+	var NotificationOn;
+	(function (NotificationOn) {
+		NotificationOn["info"] = "isInfoNotificationOn";
+		NotificationOn["confirmation"] = "isConfirmationNotificationOn";
+		NotificationOn["reminder"] = "isReminderNotificationOn";
+		NotificationOn["delayed"] = "isDelayedNotificationOn";
+		NotificationOn["feedback"] = "isFeedbackNotificationOn";
+		NotificationOn["cancellation"] = "isCancellationNotificationOn";
+	})(NotificationOn || (NotificationOn = {}));
+	var TemplateType;
+	(function (TemplateType) {
+		TemplateType["info"] = "templateTypeInfo";
+		TemplateType["confirmation"] = "templateTypeConfirmation";
+		TemplateType["reminder"] = "templateTypeReminder";
+		TemplateType["delayed"] = "templateTypeDelayed";
+		TemplateType["feedback"] = "templateTypeFeedback";
+	})(TemplateType || (TemplateType = {}));
 	const Settings = Object.freeze({
 		info: ['infoNotificationDelay'],
 		confirmation: ['confirmationNotificationDelay', 'confirmationNotificationRepetitions', 'confirmationNotificationRepetitionsInterval', 'confirmationCounterDelay'],
@@ -285,70 +301,86 @@ this.BX.Booking = this.BX.Booking || {};
 		Settings
 	});
 
-	const Option = Object.freeze({
-		BookingEnabled: 'aha_banner',
-		IntersectionForAll: 'IntersectionForAll',
-		WaitListExpanded: 'wait_list_expanded',
-		GridMode: 'grid_mode',
-		CalendarExpanded: 'calendar_expanded',
-		NotificationsExpanded: 'notificationsExpanded',
-		whatsAppEmergencyNotified: 'whatsapp_emergency_notified',
-		// AhaMoments
-		AhaBanner: 'aha_banner',
-		AhaTrialBanner: 'aha_trial_banner',
-		AhaAddResource: 'aha_add_resource',
-		AhaMessageTemplate: 'aha_message_template',
-		AhaAddClient: 'aha_add_client',
-		AhaResourceWorkload: 'aha_resource_workload',
-		AhaResourceIntersection: 'aha_resource_intersection',
-		AhaExpandGrid: 'aha_expand_grid',
-		AhaSelectResources: 'aha_select_resources',
-		AhaCyclePopup: 'aha_cycle_popup',
-		AhaSearchNavigation: 'aha_search_navigation',
-		AhaIntegrationMapsYa: 'aha_integration_maps_ya',
-		AhaWeekView: 'aha_week_view'
-	});
+	exports.NotificationTemplateType = void 0;
+	(function (NotificationTemplateType) {
+		NotificationTemplateType["Base"] = "base";
+		NotificationTemplateType["Animate"] = "animate";
+		NotificationTemplateType["Inanimate"] = "inanimate";
+		NotificationTemplateType["InanimateLong"] = "inanimate_long";
+	})(exports.NotificationTemplateType || (exports.NotificationTemplateType = {}));
 
-	const NotificationChannel = Object.freeze({
-		WhatsApp: 'wha',
-		Sms: 'sms'
-	});
+	exports.Option = void 0;
+	(function (Option) {
+		Option["BookingEnabled"] = "aha_banner";
+		Option["IntersectionForAll"] = "IntersectionForAll";
+		Option["WaitListExpanded"] = "wait_list_expanded";
+		Option["GridMode"] = "grid_mode";
+		Option["CalendarExpanded"] = "calendar_expanded";
+		Option["NotificationsExpanded"] = "notificationsExpanded";
+		Option["whatsAppEmergencyNotified"] = "whatsapp_emergency_notified";
+		Option["AhaBanner"] = "aha_banner";
+		Option["AhaTrialBanner"] = "aha_trial_banner";
+		Option["AhaAddResource"] = "aha_add_resource";
+		Option["AhaMessageTemplate"] = "aha_message_template";
+		Option["AhaAddClient"] = "aha_add_client";
+		Option["AhaResourceWorkload"] = "aha_resource_workload";
+		Option["AhaResourceIntersection"] = "aha_resource_intersection";
+		Option["AhaExpandGrid"] = "aha_expand_grid";
+		Option["AhaSelectResources"] = "aha_select_resources";
+		Option["AhaCyclePopup"] = "aha_cycle_popup";
+		Option["AhaSearchNavigation"] = "aha_search_navigation";
+		Option["AhaIntegrationMapsYa"] = "aha_integration_maps_ya";
+		Option["AhaWeekView"] = "aha_week_view";
+	})(exports.Option || (exports.Option = {}));
 
-	const BookingCounterType = Object.freeze({
-		Delayed: 'booking_delayed',
-		Unconfirmed: 'booking_unconfirmed'
-	});
+	exports.NotificationChannel = void 0;
+	(function (NotificationChannel) {
+		NotificationChannel["WhatsApp"] = "wha";
+		NotificationChannel["Sms"] = "sms";
+	})(exports.NotificationChannel || (exports.NotificationChannel = {}));
 
-	const DraggedElementKind = Object.freeze({
-		Booking: 'booking',
-		WaitListItem: 'wait-list-item'
-	});
+	exports.BookingCounterType = void 0;
+	(function (BookingCounterType) {
+		BookingCounterType["Delayed"] = "booking_delayed";
+		BookingCounterType["Unconfirmed"] = "booking_unconfirmed";
+	})(exports.BookingCounterType || (exports.BookingCounterType = {}));
 
-	const VisitStatus = Object.freeze({
-		Unknown: 'unknown',
-		Visited: 'visited',
-		NotVisited: 'notVisited'
-	});
+	exports.DraggedElementKind = void 0;
+	(function (DraggedElementKind) {
+		DraggedElementKind["Booking"] = "booking";
+		DraggedElementKind["WaitListItem"] = "wait-list-item";
+	})(exports.DraggedElementKind || (exports.DraggedElementKind = {}));
 
-	const ResourceEntityType = Object.freeze({
-		Calendar: 'calendar',
-		Sku: 'sku'
-	});
+	exports.VisitStatus = void 0;
+	(function (VisitStatus) {
+		VisitStatus["Unknown"] = "unknown";
+		VisitStatus["Visited"] = "visited";
+		VisitStatus["NotVisited"] = "notVisited";
+	})(exports.VisitStatus || (exports.VisitStatus = {}));
 
-	const IntegrationMapItemCode = Object.freeze({
-		Yandex: 'yandex',
-		Gis: 'gis'
-	});
-	const IntegrationMapItemStatus = Object.freeze({
-		Connected: 'connected',
-		NotConnected: 'not_connected',
-		InProgress: 'in_progress'
-	});
+	exports.ResourceEntityType = void 0;
+	(function (ResourceEntityType) {
+		ResourceEntityType["Calendar"] = "calendar";
+		ResourceEntityType["Sku"] = "sku";
+	})(exports.ResourceEntityType || (exports.ResourceEntityType = {}));
 
-	const SkuResourcesEditorTab = Object.freeze({
-		Skus: 'SkusView',
-		Resources: 'ResourcesView'
-	});
+	exports.IntegrationMapItemCode = void 0;
+	(function (IntegrationMapItemCode) {
+		IntegrationMapItemCode["Yandex"] = "yandex";
+		IntegrationMapItemCode["Gis"] = "gis";
+	})(exports.IntegrationMapItemCode || (exports.IntegrationMapItemCode = {}));
+	exports.IntegrationMapItemStatus = void 0;
+	(function (IntegrationMapItemStatus) {
+		IntegrationMapItemStatus["Connected"] = "connected";
+		IntegrationMapItemStatus["NotConnected"] = "not_connected";
+		IntegrationMapItemStatus["InProgress"] = "in_progress";
+	})(exports.IntegrationMapItemStatus || (exports.IntegrationMapItemStatus = {}));
+
+	exports.SkuResourcesEditorTab = void 0;
+	(function (SkuResourcesEditorTab) {
+		SkuResourcesEditorTab["Skus"] = "SkusView";
+		SkuResourcesEditorTab["Resources"] = "ResourcesView";
+	})(exports.SkuResourcesEditorTab || (exports.SkuResourcesEditorTab = {}));
 
 	const Grid = Object.freeze({
 		Duration: {
@@ -361,100 +393,75 @@ this.BX.Booking = this.BX.Booking || {};
 		}
 	});
 
-	const ScrollDirection = {
-		Vertical: 'scrollTop',
-		Horizontal: 'scrollLeft'
-	};
+	exports.ScrollDirection = void 0;
+	(function (ScrollDirection) {
+		ScrollDirection["Vertical"] = "scrollTop";
+		ScrollDirection["Horizontal"] = "scrollLeft";
+	})(exports.ScrollDirection || (exports.ScrollDirection = {}));
 
-	const NavigationUnit = {
-		day: 'day',
-		week: 'week',
-		month: 'month'
-	};
-	const NavigationDirection = {
-		previous: -1,
-		next: 1
-	};
+	exports.NavigationUnit = void 0;
+	(function (NavigationUnit) {
+		NavigationUnit["day"] = "day";
+		NavigationUnit["week"] = "week";
+		NavigationUnit["month"] = "month";
+	})(exports.NavigationUnit || (exports.NavigationUnit = {}));
+	exports.NavigationDirection = void 0;
+	(function (NavigationDirection) {
+		NavigationDirection[NavigationDirection["previous"] = -1] = "previous";
+		NavigationDirection[NavigationDirection["next"] = 1] = "next";
+	})(exports.NavigationDirection || (exports.NavigationDirection = {}));
 
-	const Communication = Object.freeze({
-		AiCall: 'ai_call',
-		Bitrix24: 'bitrix24'
-	});
+	exports.Communication = void 0;
+	(function (Communication) {
+		Communication["AiCall"] = "ai_call";
+		Communication["Bitrix24"] = "bitrix24";
+	})(exports.Communication || (exports.Communication = {}));
 
-	const AnalyticsTool = Object.freeze({
-		booking: 'booking'
-	});
-	const AnalyticsCategory = Object.freeze({
-		booking: 'booking',
-		waitlist: 'waitlist',
-		banners: 'banners'
-	});
-	const AnalyticsEvent = Object.freeze({
-		showPopup: 'show_popup',
-		clickAddResource: 'click_add_resource',
-		addResourceStep1: 'add_resource_step1',
-		addResourceStep2: 'add_resource_step2',
-		addResourceFinish: 'add_resource_finish',
-		acceptAgreement: 'accept_agreement'
-	});
-	const AnalyticsType = Object.freeze({
-		showPopup: 'show_popup',
-		clickAddResource: 'click_add_resource'
-	});
-	const AnalyticsCSection = Object.freeze({
-		booking: 'booking',
-		crm: 'crm',
-		mainMenu: 'main_menu'
-	});
-	const AnalyticsElement = Object.freeze({
-		addButton: 'add_button'
-	});
-	const AnalyticsCSubSection = Object.freeze({
-		accept: 'accept',
-		deny: 'deny'
-	});
+	exports.AnalyticsTool = void 0;
+	(function (AnalyticsTool) {
+		AnalyticsTool["booking"] = "booking";
+	})(exports.AnalyticsTool || (exports.AnalyticsTool = {}));
+	exports.AnalyticsCategory = void 0;
+	(function (AnalyticsCategory) {
+		AnalyticsCategory["booking"] = "booking";
+		AnalyticsCategory["waitlist"] = "waitlist";
+		AnalyticsCategory["banners"] = "banners";
+	})(exports.AnalyticsCategory || (exports.AnalyticsCategory = {}));
+	exports.AnalyticsEvent = void 0;
+	(function (AnalyticsEvent) {
+		AnalyticsEvent["showPopup"] = "show_popup";
+		AnalyticsEvent["clickAddResource"] = "click_add_resource";
+		AnalyticsEvent["addResourceStep1"] = "add_resource_step1";
+		AnalyticsEvent["addResourceStep2"] = "add_resource_step2";
+		AnalyticsEvent["addResourceFinish"] = "add_resource_finish";
+		AnalyticsEvent["acceptAgreement"] = "accept_agreement";
+	})(exports.AnalyticsEvent || (exports.AnalyticsEvent = {}));
+	exports.AnalyticsType = void 0;
+	(function (AnalyticsType) {
+		AnalyticsType["showPopup"] = "show_popup";
+		AnalyticsType["clickAddResource"] = "click_add_resource";
+	})(exports.AnalyticsType || (exports.AnalyticsType = {}));
+	exports.AnalyticsCSection = void 0;
+	(function (AnalyticsCSection) {
+		AnalyticsCSection["booking"] = "booking";
+		AnalyticsCSection["crm"] = "crm";
+		AnalyticsCSection["mainMenu"] = "main_menu";
+	})(exports.AnalyticsCSection || (exports.AnalyticsCSection = {}));
+	exports.AnalyticsElement = void 0;
+	(function (AnalyticsElement) {
+		AnalyticsElement["addButton"] = "add_button";
+	})(exports.AnalyticsElement || (exports.AnalyticsElement = {}));
+	exports.AnalyticsCSubSection = void 0;
+	(function (AnalyticsCSubSection) {
+		AnalyticsCSubSection["accept"] = "accept";
+		AnalyticsCSubSection["deny"] = "deny";
+	})(exports.AnalyticsCSubSection || (exports.AnalyticsCSubSection = {}));
 
-	exports.AhaMoment = AhaMoment;
-	exports.AiCallBannerMode = AiCallBannerMode;
-	exports.AnalyticsCSection = AnalyticsCSection;
-	exports.AnalyticsCSubSection = AnalyticsCSubSection;
-	exports.AnalyticsCategory = AnalyticsCategory;
-	exports.AnalyticsElement = AnalyticsElement;
-	exports.AnalyticsEvent = AnalyticsEvent;
-	exports.AnalyticsTool = AnalyticsTool;
-	exports.AnalyticsType = AnalyticsType;
-	exports.BookingCounterType = BookingCounterType;
-	exports.BookingSource = BookingSource;
-	exports.BusySlot = BusySlot;
-	exports.Communication = Communication;
-	exports.CrmEntity = CrmEntity;
-	exports.CrmFormSettingsDataPropName = CrmFormSettingsDataPropName;
-	exports.CrmFormTemplateId = CrmFormTemplateId;
 	exports.CrmFormTemplatesWithSku = CrmFormTemplatesWithSku;
 	exports.DateFormat = DateFormat;
-	exports.DraggedElementKind = DraggedElementKind;
-	exports.EntityDataAttribute = EntityDataAttribute;
-	exports.EntitySelectorEntity = EntitySelectorEntity;
-	exports.EntitySelectorTab = EntitySelectorTab;
-	exports.EntityTypeId = EntityTypeId;
-	exports.EventName = EventName;
 	exports.Grid = Grid;
 	exports.HelpDesk = HelpDesk;
-	exports.IntegrationMapItemCode = IntegrationMapItemCode;
-	exports.IntegrationMapItemStatus = IntegrationMapItemStatus;
-	exports.Limit = Limit;
-	exports.LimitFeatureId = LimitFeatureId;
-	exports.Model = Model;
-	exports.Module = Module;
-	exports.NavigationDirection = NavigationDirection;
-	exports.NavigationUnit = NavigationUnit;
-	exports.NotificationChannel = NotificationChannel;
 	exports.NotificationFieldsMap = NotificationFieldsMap;
-	exports.Option = Option;
-	exports.ResourceEntityType = ResourceEntityType;
-	exports.ScrollDirection = ScrollDirection;
-	exports.SkuResourcesEditorTab = SkuResourcesEditorTab;
-	exports.VisitStatus = VisitStatus;
 
 })(this.BX.Booking.Const = this.BX.Booking.Const || {});
 //# sourceMappingURL=const.bundle.js.map

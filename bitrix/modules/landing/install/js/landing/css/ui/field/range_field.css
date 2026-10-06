@@ -69,6 +69,15 @@
     transform: translate3d(-50%, -50%, 0);
 }
 
+.landing-ui-field-range-input-slider:focus {
+    outline: none;
+}
+
+.landing-ui-field-range-input-slider:focus-visible {
+    outline: 2px solid var(--ui-color-accent-main-primary, #0075ff);
+    outline-offset: 2px;
+}
+
 .landing-ui-field-range-value {
     background: #2FC6F6;
     position: absolute;
@@ -114,7 +123,17 @@
 .landing-ui-field-range-output-arrows-up,
 .landing-ui-field-range-output-arrows-down {
     position: relative;
+    display: block;
+    width: 100%;
     height: 49%;
+    padding: 0;
+    margin: 0;
+    background: none;
+    border: none;
+    font: inherit;
+    color: inherit;
+    -webkit-appearance: none;
+    appearance: none;
     box-sizing: border-box;
     cursor: pointer;
     transition: all 200ms ease;
@@ -166,4 +185,15 @@
 .landing-ui-field-range-output-arrows-up:hover::before,
 .landing-ui-field-range-output-arrows-down:hover::before {
     opacity: 1;
+}
+
+.landing-ui-field-range-output-arrows-up:focus,
+.landing-ui-field-range-output-arrows-down:focus {
+    outline: none;
+}
+
+.landing-ui-field-range-output-arrows-up:focus-visible,
+.landing-ui-field-range-output-arrows-down:focus-visible {
+    outline: 2px solid var(--ui-color-accent-main-primary, #0075ff);
+    outline-offset: -2px;
 }

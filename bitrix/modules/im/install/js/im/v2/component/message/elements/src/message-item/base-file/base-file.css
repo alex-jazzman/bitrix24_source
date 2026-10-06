@@ -4,7 +4,8 @@
 
 	display: flex;
 	cursor: pointer;
-	width: 261px;
+	min-width: 261px;
+	width: 100%;
 	font-family: var(--im-font-family-system);
 	line-height: var(--im-font-line-height-2xs);
 }

@@ -1,11 +1,14 @@
 import { PopupManager } from 'main.popup';
+import { EventEmitter } from 'main.core.events';
 import { BIcon, Outline as OutlineIcons } from 'ui.icon-set.api.vue';
 
 import { StickerPackForm, PackStickers } from 'im.v2.component.sticker';
 import { StickerMenu, StickerPackMenu, BaseMenu } from 'im.v2.lib.menu';
 import { StickerManager } from 'im.v2.lib.sticker';
+import { DraftManager } from 'im.v2.lib.draft';
+import { Feature, FeatureManager } from 'im.v2.lib.feature';
 import { SendingService } from 'im.v2.provider.service.sending';
-import { Color, PopupType, StickerPackType } from 'im.v2.const';
+import { Color, EventType, PopupType, StickerPackType, TextareaPanelType } from 'im.v2.const';
 
 import '../css/pack.css';
 
@@ -56,6 +59,12 @@ export const Pack = {
 	methods: {
 		onStickerClick({ sticker }: { sticker: ImModelSticker })
 		{
+			const draft = DraftManager.getInstance().drafts[this.dialogId] ?? {};
+			const isReplyWithMediaAvailable = FeatureManager.isFeatureAvailable(Feature.isReplyWithMediaAvailable);
+			const replyId = (isReplyWithMediaAvailable && draft.panelType === TextareaPanelType.reply)
+				? draft.panelContext?.messageId
+				: undefined;
+
 			void SendingService.getInstance().sendMessageWithSticker({
 				dialogId: this.dialogId,
 				stickerParams: {
@@ -63,7 +72,14 @@ export const Pack = {
 					packId: sticker.packId,
 					packType: sticker.packType,
 				},
+				replyId,
 			});
+
+			if (replyId > 0)
+			{
+				EventEmitter.emit(EventType.textarea.closePanel, { dialogId: this.dialogId });
+			}
+
 			this.$emit('close');
 		},
 		openPackMenu(event: PointerEvent)

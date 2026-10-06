@@ -21,6 +21,8 @@ export type { FieldsConfig } from './utils/validate';
 export type {
 	Chat as ImModelChat,
 	CollabInfo as ImModelCollabInfo,
+	Folder as ImModelFolder,
+	FolderChat as ImModelFolderChat,
 } from './type/chat';
 export type { InputActionState, ChatInputActions as ImModelInputActions } from './chats/nested-modules/input-actions';
 export type { User as ImModelUser, Bot as ImModelBot } from './type/user';
@@ -36,7 +38,7 @@ export type {
 	NotificationButton as ImModelNotificationButton,
 } from './type/notification';
 export type { RecentItem as ImModelRecentItem } from './type/recent-item';
-export type { Layout as ImModelLayout } from './type/layout';
+export type { Layout as ImModelLayout, FolderLayoutParams } from './type/layout';
 export type { Reactions as ImModelReactions } from './type/reactions';
 export type { SidebarLinkItem as ImModelSidebarLinkItem } from './type/sidebar/links';
 export type { SidebarFavoriteItem as ImModelSidebarFavoriteItem } from './type/sidebar/favorites';

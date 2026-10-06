@@ -29,46 +29,45 @@ export const ParserQuote = {
 			return text;
 		}
 
-		let isProcessed = false;
-		const quoteStartIndexes = new Set();
-		const quoteEndIndexes = new Set();
+		const lines = text.split(BR_HTML_TAG);
+		const parts = [];
 
-		const textLines = text.split(BR_HTML_TAG);
-		for (let i = 0; i < textLines.length; i++)
+		let i = 0;
+		while (i < lines.length)
 		{
-			if (!textLines[i].startsWith(QUOTE_SIGN))
+			if (!lines[i].startsWith(QUOTE_SIGN))
 			{
+				parts.push({ html: lines[i], isQuote: false });
+				i++;
 				continue;
 			}
 
-			const quoteStartIndex = i;
-			quoteStartIndexes.add(quoteStartIndex);
-
-			textLines[quoteStartIndex] = textLines[quoteStartIndex].replace(QUOTE_SIGN, '');
-			while (++i < textLines.length && textLines[i].startsWith(QUOTE_SIGN))
+			const runLines = [];
+			while (i < lines.length && lines[i].startsWith(QUOTE_SIGN))
 			{
-				textLines[i] = textLines[i].replace(QUOTE_SIGN, '');
+				// Strip exactly one quote marker; any markers left over are a deeper level
+				// and become a nested quote via the recursive call inside renderArrowQuote.
+				runLines.push(lines[i].replace(QUOTE_SIGN, ''));
+				i++;
 			}
-			const quoteEndIndex = i - 1;
-			quoteEndIndexes.add(quoteEndIndex);
-
-			const quoteTextLines = textLines.slice(quoteStartIndex, quoteEndIndex + 1);
-			const quoteText = quoteTextLines.join(BR_HTML_TAG);
-			const collapsedClass = isQuoteExpandableByText(quoteText) ? ` ${CLASS_COLLAPSED}` : '';
-			const containerEnd = '</div>';
-
-			textLines[quoteStartIndex] = `<div data-context="${NO_CONTEXT_TAG}" class="${CLASS_QUOTE_BASE}${collapsedClass}"><div class="${CLASS_QUOTE_WRAP}"><div class="${CLASS_QUOTE_TEXT}">${textLines[quoteStartIndex]}`;
-			textLines[quoteEndIndex] += `${containerEnd}${getToggleButton({ quoteText })}${containerEnd}${containerEnd}`;
-
-			isProcessed = true;
+			parts.push({ html: renderArrowQuote(runLines), isQuote: true });
 		}
 
-		if (!isProcessed)
+		let result = '';
+		for (let j = 0; j < parts.length; j++)
 		{
-			return text;
+			result += parts[j].html;
+			const isLast = j === parts.length - 1;
+
+			// A <br> is added between plain lines, but never right after a quote block
+			// (the quote container already ends the line) — mirrors the old join logic.
+			if (!isLast && !parts[j].isQuote)
+			{
+				result += BR_HTML_TAG;
+			}
 		}
 
-		return joinArrowQuoteLines(textLines, quoteStartIndexes, quoteEndIndexes);
+		return result;
 	},
 
 	purifyArrowQuote(text, spaceLetter = ' '): string
@@ -130,6 +129,22 @@ export const ParserQuote = {
 			/\[code](<br \/>)?([\0-\uFFFF]*?)\[\/code]/gis,
 			`[${Loc.getMessage('IM_PARSER_ICON_TYPE_CODE')}]${spaceLetter}`,
 		);
+	},
+
+	decodeInlineCode(text: string): string
+	{
+		return text.replaceAll(/\[icode]([\0-\uFFFF]*?)\[\/icode]/gi, (whole, code) => {
+			return Dom.create({
+				tag: 'code',
+				attrs: { className: 'bx-im-message-content-code-inline' },
+				html: code,
+			}).outerHTML;
+		});
+	},
+
+	purifyInlineCode(text: string): string
+	{
+		return text.replaceAll(/\[icode]([\0-\uFFFF]*?)\[\/icode]/gi, (whole, code) => code);
 	},
 
 	executeClickEvent(
@@ -235,35 +250,19 @@ const getFinalContextTag = (contextTag: string, contextDialogId: string): string
 	return finalContextTag;
 };
 
-const joinArrowQuoteLines = (
-	textLines: Array<string>,
-	quoteStartIndexes: Set<number>,
-	quoteEndIndexes: Set<number>,
-): string => {
-	let result = '';
+const renderArrowQuote = (runLines: Array<string>): string => {
+	// runLines already had one quote marker stripped; recurse so any remaining markers
+	// (a deeper level) render as a nested quote inside this one. A single-level run has
+	// no remaining markers, so `inner` is just the joined text and the output is
+	// byte-identical to the previous flat implementation.
+	const inner = ParserQuote.decodeArrowQuote(runLines.join(BR_HTML_TAG));
+	const collapsedClass = isQuoteExpandableByText(inner) ? ` ${CLASS_COLLAPSED}` : '';
 
-	for (let i = 0; i < textLines.length; i++)
-	{
-		const isCompactQuoteSeparator = (
-			textLines[i].trim() === ''
-			&& quoteEndIndexes.has(i - 1)
-			&& quoteStartIndexes.has(i + 1)
-		);
-		if (!isCompactQuoteSeparator)
-		{
-			result += textLines[i];
-		}
-
-		const isLastLine = i >= textLines.length - 1;
-		if (isLastLine || quoteEndIndexes.has(i) || isCompactQuoteSeparator)
-		{
-			continue;
-		}
-
-		result += BR_HTML_TAG;
-	}
-
-	return result;
+	return `<div data-context="${NO_CONTEXT_TAG}" class="${CLASS_QUOTE_BASE}${collapsedClass}">`
+		+ `<div class="${CLASS_QUOTE_WRAP}">`
+		+ `<div class="${CLASS_QUOTE_TEXT}">${inner}</div>`
+		+ getToggleButton({ quoteText: inner })
+		+ '</div></div>';
 };
 
 const getToggleButton = ({ quoteText, isExpanded = false }: { quoteText: string, isExpanded?: boolean }): string => {

@@ -1,4 +1,4 @@
-import { Tag, Dom, Type, Event, Runtime } from 'main.core';
+import { Tag, Dom, Text, Type, Event, Runtime } from 'main.core';
 import { Context, Document, getGlobalContext, setGlobalContext } from 'bizproc.automation';
 import { EventEmitter, BaseEvent } from 'main.core.events';
 
@@ -47,14 +47,15 @@ export class WriteDataStorageActivityRenderer
 			writeFields: (field: Object) => {
 				this.#writeFieldsOptions = field.property.Options || {};
 				const addFieldCaption = this.#writeFieldsOptions.addFieldCaption || '';
-				const newFieldCaption = this.#writeFieldsOptions.newFieldCaption || '';
+				const fieldsTitle = field.property.Name || '';
+				const requiredClass = (field.property.Required || field.property.RequiredMark) ? ' --required' : '';
 
 				return Tag.render`
 					<div data-role="bpa-write-fields-block">
 						<div data-role="bpa-write-fields-outer" class="bizproc-write-activity__outer-block">
+							<div class="bizproc-write-activity__fields-title${requiredClass}" data-testid="bizproc-write-fields-title">${Text.encode(fieldsTitle)}</div>
 							<div id="fieldsContainer" class="bizproc-write-activity__fields-container"></div>
-							<div id="add_field" class="node-settings-add-item-button"><div class="ui-icon-set --plus-m node-settings-add-item-button__plus bizproc-write-activity__icon-plus"></div><span>${addFieldCaption}</span></div>
-							<div id="create_field" class="add-construction-field create-field-card"><div class="ui-icon-set --plus-m bizproc-write-activity__icon-plus"></div><span>${newFieldCaption}</span></div>
+							<div id="add_field" class="node-settings-add-field-button" data-testid="bizproc-write-fields-add-btn"><div class="ui-icon-set --plus-l bizproc-write-activity__icon-plus"></div><span>${addFieldCaption}</span></div>
 						</div>
 					</div>
 				`;

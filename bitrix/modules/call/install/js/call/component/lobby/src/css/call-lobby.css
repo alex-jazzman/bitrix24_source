@@ -1,0 +1,62 @@
+.call-lobby {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	position: relative;
+	width: 100%;
+	height: 100%;
+	color: var(--ui-color-palette-white-base, #fff);
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font-size: 14px;
+	background-color: var(--call-view__background-color, #1a1a1a);
+	background-image: url('../../images/background.webp');
+	background-repeat: no-repeat;
+	background-size: cover;
+	background-position: top right;
+	--call-lobby-content-width: 351px;
+}
+
+.call-lobby__permissions {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 20px;
+}
+
+.call-lobby__permissions-text {
+	color: rgba(var(--ui-color-palette-white-base-rgb), 0.7);
+	font-size: 16px;
+}
+
+.call-lobby__content {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 20px;
+	padding: 40px;
+	padding-bottom: 110px;
+}
+
+.call-lobby__caller-info {
+	margin-bottom: 10px;
+	color: rgba(var(--ui-color-palette-white-base-rgb), 0.6);
+	font-size: 16px;
+}
+
+.call-lobby__caller-info-name {
+	color: var(--ui-color-palette-white-base, #fff);
+	font-weight: 600;
+}
+
+/* Bottom Panel */
+.call-lobby-bottom-panel {
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	right: 0;
+}
+
+.call-lobby-bottom-panel .bx-messenger-videocall-panel-item-with-arrow-right {
+	z-index: 2;
+}

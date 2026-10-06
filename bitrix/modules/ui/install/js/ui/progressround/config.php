@@ -8,8 +8,10 @@ return [
 	'css' => 'dist/progressround.bundle.css',
 	'js' => 'dist/progressround.bundle.js',
 	'rel' => [
-		'ui.fonts.opensans',
 		'main.core',
+		'ui.design-tokens.air',
+		'ui.fonts.opensans',
+		'ui.system.typography',
 	],
 	'skip_core' => false,
 ];

@@ -1,3 +1,4 @@
+import { markRaw } from 'ui.vue3';
 import { Reaction as JsReaction, ReactionEvent } from './reaction';
 import { ReactionName } from './enums/reaction-name';
 
@@ -55,14 +56,14 @@ export const Reaction = {
 	},
 	mounted()
 	{
-		this.reaction = new JsReaction({
+		this.reaction = markRaw(new JsReaction({
 			name: this.name,
 			size: this.size,
 			animation: {
 				animate: this.animate,
 				infinite: this.infiniteAnimate,
 			},
-		});
+		}));
 
 		this.reaction.subscribe(ReactionEvent.animationFinish, () => {
 			this.$emit(ReactionEvent.animationFinish);

@@ -3,6 +3,7 @@
 return [
 	'extensions' => [
 		'error',
+		'in-app-url/portal-page',
 		'layout/ui/password-input-box',
 		'loc',
 		'require-lazy',

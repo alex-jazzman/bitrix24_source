@@ -586,27 +586,32 @@ if(typeof BX.Crm.EntityEditorMoneyPay === 'undefined')
 
 	BX.Crm.EntityEditorMoneyPay.prototype.renderPayButton = function()
 	{
-		var a = BX.create("button",
-			{
-				props: { className: "crm-entity-widget-content-block-inner-pay-button ui-btn ui-btn-sm ui-btn-primary" },
-				text : this.getMessage('payButtonLabel'),
-				attrs : {type: 'button'}
+		var button = new BX.UI.Button({
+			text: this.getMessage('payButtonLabel'),
+			className: 'crm-entity-widget-content-block-inner-pay-button',
+			useAirDesign: true,
+			style: BX.UI.Button.AirStyle.FILLED,
+			color: BX.UI.Button.Color.SUCCESS,
+			size: BX.UI.Button.Size.SMALL,
+			events: {
+				click: BX.delegate(function()
+				{
+					const isSalescenterToolEnabled = this._model.getField('IS_SALESCENTER_TOOL_ENABLED', true);
+					if (isSalescenterToolEnabled)
+					{
+						var orderId = this.getLatestOrderId();
+						this.startSalescenterApplication(orderId);
+
+						return;
+					}
+
+					this.openSalescenterToolStub();
+				}, this)
 			}
-		);
+		});
 
-		BX.bind(a, 'click', BX.delegate(function()
-		{
-			const isSalescenterToolEnabled = this._model.getField('IS_SALESCENTER_TOOL_ENABLED', true);
-			if (isSalescenterToolEnabled)
-			{
-				var orderId = this.getLatestOrderId();
-				this.startSalescenterApplication(orderId);
-
-				return;
-			}
-
-			this.openSalescenterToolStub();
-		}, this));
+		var a = button.render();
+		a.setAttribute('data-testid', 'crm-money-pay-btn');
 
 		BX.bind(a, "mousedown", function(event)
 		{
@@ -7651,6 +7656,87 @@ if(typeof BX.Crm.EntityEditorClientLight === "undefined")
 		}
 
 		this.createDataElement("data", JSON.stringify(data));
+	};
+	BX.Crm.EntityEditorClientLight.prototype.processCreatedClientEntities = function(entities)
+	{
+		if(!BX.type.isArray(entities))
+		{
+			return;
+		}
+
+		var changed = false;
+		for(var i = 0, length = entities.length; i < length; i++)
+		{
+			var entityTypeId = BX.prop.getInteger(entities[i], "ENTITY_TYPE_ID", 0);
+			var entityId = BX.prop.getInteger(entities[i], "ENTITY_ID", 0);
+			var index = BX.prop.getInteger(entities[i], "INDEX", -1);
+			if(entityId <= 0 || index < 0)
+			{
+				continue;
+			}
+
+			var entityTypeName = BX.CrmEntityType.resolveName(entityTypeId);
+			var searchBoxes = null;
+			if(entityTypeName === BX.CrmEntityType.names.company)
+			{
+				searchBoxes = this._companySearchBoxes;
+			}
+			else if(entityTypeName === BX.CrmEntityType.names.contact)
+			{
+				searchBoxes = this._contactSearchBoxes;
+			}
+
+			if(!BX.type.isArray(searchBoxes))
+			{
+				continue;
+			}
+
+			// INDEX is the position in the submitted COMPANY_DATA/CONTACT_DATA, which is built by
+			// prepareEntitySubmitData() from boxes that have an entity, in order. Rebuild that same
+			// ordered list so the created id lands on the exact box that produced it (not just the
+			// first create-mode box), keeping identity correct when an earlier client failed to create.
+			var submittedBoxes = [];
+			for(var j = 0, boxCount = searchBoxes.length; j < boxCount; j++)
+			{
+				if(searchBoxes[j].getEntity())
+				{
+					submittedBoxes.push(searchBoxes[j]);
+				}
+			}
+
+			var searchBox = submittedBoxes[index];
+			if(!searchBox)
+			{
+				continue;
+			}
+
+			var entity = searchBox.getEntity();
+			if(
+				searchBox.getMode() === BX.Crm.EntityEditorClientMode.create
+				&& entity
+				&& entity.getId() <= 0
+			)
+			{
+				searchBox.switchToCreatedEntity(entityTypeName, entityId);
+				changed = true;
+			}
+		}
+
+		if(changed)
+		{
+			this.refreshSubmitData();
+		}
+	};
+	BX.Crm.EntityEditorClientLight.prototype.refreshSubmitData = function()
+	{
+		// Re-serialize the hidden submit payload so a snapshot taken right after a failed submit
+		// (e.g. the kanban required-fields dialog) carries the existing client id.
+		if(this._dataElements && this._dataElements["data"])
+		{
+			BX.remove(this._dataElements["data"]);
+			delete this._dataElements["data"];
+		}
+		this.onBeforeSubmit();
 	};
 	BX.Crm.EntityEditorClientLight.prototype.setRequisiteSelectionEnabledOnFirstContactSearchBox = function(enableRequisiteSelection)
 	{

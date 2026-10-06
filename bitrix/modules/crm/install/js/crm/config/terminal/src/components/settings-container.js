@@ -13,16 +13,18 @@ export const SettingsContainer = {
 
 	template: `
 	<div class="settings-container">
-		<div
+		<button
+			type="button"
 			class="ui-slider-heading-4 settings-container-title"
 			v-bind:class="{ 'settings-container-title-collapsed': collapsed }"
+			v-bind:aria-expanded="collapsed ? 'false' : 'true'"
 			v-on:click="onTitleClicked"
 		>
-			<div :class="iconStyle"></div>
+			<span :class="iconStyle"></span>
 			{{ title }}
-		</div>
+		</button>
 
-		<div class="settings-section-list" v-bind:class="{ 'settings-section-list-collapsed': collapsed }">
+		<div class="settings-section-list" v-bind:class="{ 'settings-section-list-collapsed': collapsed }" v-bind:inert="collapsed">
 			<slot></slot>
 		</div>
 	</div>

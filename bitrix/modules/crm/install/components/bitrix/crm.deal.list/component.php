@@ -22,6 +22,7 @@ use Bitrix\Crm\Component\EntityList\FieldRestrictionManager;
 use Bitrix\Crm\Component\EntityList\FieldRestrictionManagerTypes;
 use Bitrix\Crm\Component\EntityList\RepeatSaleDataProvider\Segments;
 use Bitrix\Crm\Component\EntityList\UserField\GridHeaders;
+use Bitrix\Crm\Filter\RelatedEntity;
 use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Display\Field;
@@ -31,6 +32,7 @@ use Bitrix\Crm\WebForm\Manager as WebFormManager;
 use Bitrix\Main;
 use Bitrix\Main\Context;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Web\Uri;
 
 $isErrorOccurred = false;
 $errorMessage = '';
@@ -400,6 +402,8 @@ if (!empty($arParams['INTERNAL_FILTER']) || $isInGadgetMode)
 }
 
 $arResult['INTERNAL'] = $bInternal;
+
+$arResult['ENABLE_GROUP_ACTIONS'] = (($arParams['ENABLE_GROUP_ACTIONS'] ?? 'N') === 'Y');
 
 if (!empty($arParams['INTERNAL_FILTER']) && is_array($arParams['INTERNAL_FILTER']))
 {
@@ -1520,6 +1524,10 @@ if (!$arResult['IS_EXTERNAL_FILTER'])
 	$arFilter += $filterOptions->getFilter($arResult['FILTER']);
 }
 
+$relatedEntitiesParameters = ['filter' => $arFilter];
+RelatedEntity\GridFilterApplier::getDefault()->apply($relatedEntitiesParameters, CCrmOwnerType::Deal);
+$arFilter = $relatedEntitiesParameters['filter'];
+
 if (isset($arFilter['CLOSEDATE_datesel']) && $arFilter['CLOSEDATE_datesel'] === 'days' && isset($arFilter['CLOSEDATE_from']))
 {
 	//Issue #58007 - limit max CLOSEDATE
@@ -1765,21 +1773,18 @@ $arResult['ENABLE_TASK'] = IsModuleInstalled('tasks');
 
 if ($arResult['ENABLE_TASK'])
 {
-	$arResult['TASK_CREATE_URL'] = CHTTP::urlAddParams(
-		CComponentEngine::MakePathFromTemplate(
+	$arResult['TASK_CREATE_URL'] = str_replace('__ENTITY_KEYS__', '#ENTITY_KEYS#', (string)(new Uri(CComponentEngine::MakePathFromTemplate(
 			COption::GetOptionString('tasks', 'paths_task_user_edit', ''),
 			array(
 				'task_id' => 0,
 				'user_id' => $userID
 			)
-		),
-		array(
-			'UF_CRM_TASK' => '#ENTITY_KEYS#',
-			'TITLE' => urlencode(Loc::getMessage('CRM_TASK_TITLE_PREFIX')),
-			'TAGS' => urlencode(Loc::getMessage('CRM_TASK_TAG')),
-			'back_url' => urlencode($arParams['PATH_TO_DEAL_LIST'])
-		)
-	);
+		)))->addParams(array(
+			'UF_CRM_TASK' => '__ENTITY_KEYS__',
+			'TITLE' => Loc::getMessage('CRM_TASK_TITLE_PREFIX'),
+			'TAGS' => Loc::getMessage('CRM_TASK_TAG'),
+			'back_url' => $arParams['PATH_TO_DEAL_LIST'],
+		)));
 }
 
 // Export all fields
@@ -2576,20 +2581,14 @@ foreach($arResult['DEAL'] as &$arDeal)
 
 	if ($arResult['CATEGORY_ID'] >= 0)
 	{
-		$arDeal['PATH_TO_DEAL_DELETE'] = CHTTP::urlAddParams(
-			CComponentEngine::makePathFromTemplate(
+		$arDeal['PATH_TO_DEAL_DELETE'] = (string)(new Uri(CComponentEngine::makePathFromTemplate(
 				$arParams['PATH_TO_DEAL_CATEGORY'] ?? '',
 				array('category_id' => $arResult['CATEGORY_ID'])
-			),
-			array('action_'.$arResult['GRID_ID'] => 'delete', 'ID' => $entityID, 'sessid' => $arResult['SESSION_ID'])
-		);
+			)))->addParams(array('action_'.$arResult['GRID_ID'] => 'delete', 'ID' => $entityID, 'sessid' => $arResult['SESSION_ID']));
 	}
 	else
 	{
-		$arDeal['PATH_TO_DEAL_DELETE'] =  CHTTP::urlAddParams(
-			$bInternal ? $APPLICATION->GetCurPage() : ($arResult['PATH_TO_CURRENT_LIST'] ?? ''),
-			array('action_'.$arResult['GRID_ID'] => 'delete', 'ID' => $entityID, 'sessid' => $arResult['SESSION_ID'])
-		);
+		$arDeal['PATH_TO_DEAL_DELETE'] =  (string)(new Uri($bInternal ? $APPLICATION->GetCurPage() : ($arResult['PATH_TO_CURRENT_LIST'] ?? '')))->addParams(array('action_'.$arResult['GRID_ID'] => 'delete', 'ID' => $entityID, 'sessid' => $arResult['SESSION_ID']));
 	}
 
 	$contactID = (int)($arDeal['~CONTACT_ID'] ?? 0);
@@ -2633,14 +2632,11 @@ foreach($arResult['DEAL'] as &$arDeal)
 
 	if ($arResult['CAN_EXCLUDE'])
 	{
-		$arDeal['PATH_TO_DEAL_EXCLUDE'] = CHTTP::urlAddParams(
-			$curPage,
-			array(
+		$arDeal['PATH_TO_DEAL_EXCLUDE'] = (string)(new Uri($curPage))->addParams(array(
 				'action_'.$arResult['GRID_ID'] => 'exclude',
 				'ID' => $entityID,
 				'sessid' => $arResult['SESSION_ID']
-			)
-		);
+			));
 	}
 
 	//region My Company
@@ -2842,40 +2838,31 @@ foreach($arResult['DEAL'] as &$arDeal)
 
 	if ($arResult['ENABLE_TASK'])
 	{
-		$arDeal['PATH_TO_TASK_EDIT'] = CHTTP::urlAddParams(
-			CComponentEngine::MakePathFromTemplate(COption::GetOptionString('tasks', 'paths_task_user_edit', ''),
+		$arDeal['PATH_TO_TASK_EDIT'] = (string)(new Uri(CComponentEngine::MakePathFromTemplate(COption::GetOptionString('tasks', 'paths_task_user_edit', ''),
 				array(
 					'task_id' => 0,
 					'user_id' => $userID
 				)
-			),
-			array(
+			)))->addParams(array(
 				'UF_CRM_TASK' => "D_{$entityID}",
-				'TITLE' => urlencode(Loc::getMessage('CRM_TASK_TITLE_PREFIX').' '),
-				'TAGS' => urlencode(Loc::getMessage('CRM_TASK_TAG')),
-				'back_url' => urlencode($arParams['PATH_TO_DEAL_LIST'])
-			)
-		);
+				'TITLE' => Loc::getMessage('CRM_TASK_TITLE_PREFIX').' ',
+				'TAGS' => Loc::getMessage('CRM_TASK_TAG'),
+				'back_url' => $arParams['PATH_TO_DEAL_LIST'],
+			));
 	}
 
 	if (IsModuleInstalled('sale'))
 	{
 		$arDeal['PATH_TO_QUOTE_ADD'] =
-			CHTTP::urlAddParams(
-				CComponentEngine::makePathFromTemplate(
+			(string)(new Uri(CComponentEngine::makePathFromTemplate(
 					$arParams['PATH_TO_QUOTE_EDIT'] ?? '',
 					array('quote_id' => 0)
-				),
-				array('deal_id' => $entityID)
-			);
+				)))->addParams(array('deal_id' => $entityID));
 		$arDeal['PATH_TO_INVOICE_ADD'] =
-			CHTTP::urlAddParams(
-				CComponentEngine::makePathFromTemplate(
+			(string)(new Uri(CComponentEngine::makePathFromTemplate(
 					$arParams['PATH_TO_INVOICE_EDIT'] ?? '',
 					array('invoice_id' => 0)
-				),
-				array('deal' => $entityID)
-			);
+				)))->addParams(array('deal' => $entityID));
 	}
 
 	if ($arResult['ENABLE_BIZPROC'])
@@ -2888,13 +2875,10 @@ foreach($arResult['DEAL'] as &$arDeal)
 			array('crm', 'CCrmDocumentDeal', "DEAL_{$entityID}")
 		);
 
-		$arDeal['PATH_TO_BIZPROC_LIST'] =  CHTTP::urlAddParams(
-			CComponentEngine::MakePathFromTemplate(
+		$arDeal['PATH_TO_BIZPROC_LIST'] =  (string)(new Uri(CComponentEngine::MakePathFromTemplate(
 				$arParams['PATH_TO_DEAL_SHOW'] ?? '',
 				array('deal_id' => $entityID)
-			),
-			array('CRM_DEAL_SHOW_V12_active_tab' => 'tab_bizproc')
-		);
+			)))->addParams(array('CRM_DEAL_SHOW_V12_active_tab' => 'tab_bizproc'));
 
 		$totalTaskQty = 0;
 		$docStatesQty = count($arDocumentStates);
@@ -3120,24 +3104,43 @@ if (!$restriction->hasPermission())
 	}
 }
 
-if (isset($arResult['DEAL_ID']) && !empty($arResult['DEAL_ID']))
+if (!empty($arResult['DEAL_ID']))
 {
-	// try to load product rows
-	$arProductRows = CCrmDeal::LoadProductRows(array_keys($arResult['DEAL_ID']));
-	foreach($arProductRows as $arProductRow)
-	{
-		$ownerID = $arProductRow['OWNER_ID'];
-		if (!isset($arResult['DEAL'][$ownerID]))
-		{
-			continue;
-		}
+	$needProductRows =
+		$isInCalendarMode
+		|| in_array('PRODUCT_ID', $arSelect, true)
+		|| ($isInExportMode && in_array('PRODUCT_ID', $arSelectedHeaders, true))
+	;
 
-		$arEntity = &$arResult['DEAL'][$ownerID];
-		if (!isset($arEntity['PRODUCT_ROWS']))
+	if ($needProductRows)
+	{
+		$productRowsQuery = Crm\ProductRowTable::query()
+			->setSelect(['OWNER_ID', 'PRODUCT_ID', 'PRODUCT_NAME', 'CP_PRODUCT_NAME', 'PRICE', 'QUANTITY'])
+			->where('OWNER_TYPE', \CCrmOwnerTypeAbbr::Deal)
+			->whereIn('OWNER_ID', array_keys($arResult['DEAL_ID']))
+			->setOrder(['SORT' => 'ASC', 'ID' => 'ASC'])
+			->exec()
+		;
+		while ($arProductRow = $productRowsQuery->fetch())
 		{
-			$arEntity['PRODUCT_ROWS'] = [];
+			if (!$arProductRow['PRODUCT_NAME'] && $arProductRow['CP_PRODUCT_NAME'])
+			{
+				$arProductRow['PRODUCT_NAME'] = $arProductRow['CP_PRODUCT_NAME'];
+			}
+
+			$ownerID = $arProductRow['OWNER_ID'];
+			if (!isset($arResult['DEAL'][$ownerID]))
+			{
+				continue;
+			}
+
+			$arEntity = &$arResult['DEAL'][$ownerID];
+			if (!isset($arEntity['PRODUCT_ROWS']))
+			{
+				$arEntity['PRODUCT_ROWS'] = [];
+			}
+			$arEntity['PRODUCT_ROWS'][] = $arProductRow;
 		}
-		$arEntity['PRODUCT_ROWS'][] = $arProductRow;
 	}
 
 	// fetch delivery and payment stage from latest related shipment/payment
@@ -3242,10 +3245,7 @@ if ($arResult['ENABLE_TOOLBAR'])
 		if (!empty($addParams))
 		{
 			$arResult['DEAL_ADD_URL_PARAMS'] = $addParams;
-			$arResult['PATH_TO_DEAL_ADD'] = CHTTP::urlAddParams(
-				$arResult['PATH_TO_DEAL_ADD'],
-				$addParams
-			);
+			$arResult['PATH_TO_DEAL_ADD'] = (string)(new Uri($arResult['PATH_TO_DEAL_ADD']))->addParams($addParams);
 		}
 	}
 	else

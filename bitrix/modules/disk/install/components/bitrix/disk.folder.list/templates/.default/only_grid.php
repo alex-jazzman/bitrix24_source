@@ -2,6 +2,8 @@
 use Bitrix\Disk\Internals\Grid\FolderListOptions;
 
 if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
+
+$actionPanelContainerId = 'disk-folder-list-toolbar-' . $component->getComponentId();
 ?>
 <div class="bx-disk-interface-filelist <?= $arResult['IS_RUNNING_FILTER']? 'disk-running-filter' : '' ?>">
 	<?
@@ -68,7 +70,7 @@ if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
 		'bitrix:main.ui.grid',
 		'',
 		array(
-			'TOP_ACTION_PANEL_RENDER_TO' => '#disk-folder-list-toolbar',
+			'TOP_ACTION_PANEL_RENDER_TO' => '#' . $actionPanelContainerId,
 			'TILE_GRID_MODE' => $arResult['GRID']['MODE'] === FolderListOptions::VIEW_MODE_TILE,
 			'TILE_SIZE' => $arResult['GRID']['VIEW_SIZE'],
 			'TILE_GRID_ITEMS' => $arResult['TILE_ITEMS'] ?? null,

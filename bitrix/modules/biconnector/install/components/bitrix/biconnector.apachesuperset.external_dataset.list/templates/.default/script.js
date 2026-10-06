@@ -1,5 +1,5 @@
 /* eslint-disable */
-(function (biconnector_datasetImport_fileExport, biconnector_loadingPopup, main_popup, main_core, main_core_events, ui_buttons, ui_system_dialog) {
+(function (biconnector_fileExport, biconnector_loadingPopup, main_popup, main_core, main_core_events, ui_buttons, ui_system_dialog) {
 	'use strict';
 
 	/**
@@ -71,7 +71,7 @@
 		}
 		exportDataset(id) {
 			this.#grid.tableFade();
-			biconnector_datasetImport_fileExport.FileExport.getInstance().downloadOnce(id).then(() => {
+			biconnector_fileExport.FileExport.getInstance().downloadOnce(id).then(() => {
 				this.#grid.tableUnfade();
 			}).catch(() => {
 				this.#grid.tableUnfade();
@@ -214,7 +214,7 @@
 					style: ui_buttons.AirButtonStyle.PLAIN,
 					useAirDesign: true,
 					onclick: () => {
-						BX.BIConnector.DatasetImport.Slider.open(datasetType, datasetId, {}, {
+						BX.BIConnector.DatasetImportV2.Slider.open(datasetType, datasetId, {}, {
 							properties: {
 								isOpenInitially: false,
 								isOpenOnLoadData: false
@@ -242,5 +242,5 @@
 	}
 	main_core.Reflection.namespace('BX.BIConnector').ExternalDatasetManager = ExternalDatasetManager;
 
-})(BX.BIConnector.DatasetImport, BX.BIConnector, BX.Main, BX, BX.Event, BX.UI, BX.UI.System);
+})(BX.BIConnector.FileExport, BX.BIConnector, BX.Main, BX, BX.Event, BX.UI, BX.UI.System);
 //# sourceMappingURL=script.js.map

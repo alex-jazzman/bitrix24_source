@@ -124,6 +124,12 @@
 	opacity: 1;
 }
 
+.landing-ui-form-header-checkbox-help:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary, #0075ff);
+	outline-offset: 2px;
+	border-radius: 2px;
+}
+
 .landing-ui-form-description-blue-hint {
 	cursor: default;
 	padding: 12px 10px;

@@ -19,6 +19,7 @@ Extension::load([
 	'ui.sidepanel',
 	'ui.switcher',
 	'ui.design-tokens',
+	'ui.design-tokens.air',
 ]);
 
 /** @var array $arResult */
@@ -65,7 +66,7 @@ $APPLICATION->IncludeComponent(
 		],
 		'USE_PADDING' => false,
 		'USE_UI_TOOLBAR' => 'Y',
-	]
+	],
 );
 
 ?>

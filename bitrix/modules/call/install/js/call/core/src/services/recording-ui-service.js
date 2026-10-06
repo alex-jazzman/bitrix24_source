@@ -51,6 +51,7 @@ export class RecordingUiService extends EventEmitter
 	 * @param {boolean} recordingState.isCloudRecordFeaturesEnabled — whether cloud recording features tariff is enabled
 	 * @param {string|number} recordingState.callId — current call id
 	 * @param {boolean} recordingState.isServiceEnabled — whether cloud record service is globally enabled
+	 * @param {boolean} recordingState.canRecord — whether recording is actually available (local desktop or cloud); gates the record menu vs. the tariff helpdesk article
 	 */
 	onRecordButtonClick({
 		commonRecordState,
@@ -70,6 +71,13 @@ export class RecordingUiService extends EventEmitter
 		{
 			if (!CallCloudRecord.tariffAvailable)
 			{
+				if (canRecord)
+				{
+					this.viewPort.showCommonRecordMenuPopup(true);
+
+					return;
+				}
+
 				Util.openArticle(CallCloudRecord.tariffSlider);
 
 				return;

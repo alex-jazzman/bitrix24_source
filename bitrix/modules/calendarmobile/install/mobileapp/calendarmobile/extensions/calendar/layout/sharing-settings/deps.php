@@ -13,6 +13,7 @@ return [
 		'utils/date/formats',
 		'tokens',
 		'selector/widget/factory',
+		'ui-system/typography/text',
 
 		'calendar:layout/avatars',
 		'calendar:model/sharing',

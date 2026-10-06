@@ -4,6 +4,7 @@
 jn.define('calendar/layout/dialog/dialog-sharing', (require, exports, module) => {
 	const { NotifyManager } = require('notify-manager');
 	const { LoadingScreenComponent } = require('layout/ui/loading-screen');
+	const { Box } = require('ui-system/layout/box');
 
 	const { ModelSharingStatus } = require('calendar/model/sharing');
 	const { SharingPanel } = require('calendar/layout/sharing-panel');
@@ -55,10 +56,17 @@ jn.define('calendar/layout/dialog/dialog-sharing', (require, exports, module) =>
 
 		render()
 		{
-			return View(
+			const isCalendar = this.isCalendarContext();
+
+			return Box(
 				{
+					testId: 'calendar-dialog-sharing',
+					// Scroll only in the calendar sheet, where this is the widget root and fills
+					// its height. In CRM it is embedded next to sibling buttons, so a full-height
+					// scroll would push them out - keep a plain Box there.
+					withScroll: isCalendar,
 					safeArea: {
-						bottom: this.isCalendarContext(),
+						bottom: isCalendar,
 					},
 				},
 				this.isLoading() && new LoadingScreenComponent(),
@@ -144,10 +152,15 @@ jn.define('calendar/layout/dialog/dialog-sharing', (require, exports, module) =>
 
 		renderBody()
 		{
+			if (!this.isCalendarContext())
+			{
+				return this.renderSettings();
+			}
+
 			return View(
 				{},
 				this.renderSettings(),
-				this.isCalendarContext() && this.renderPanelContainer(),
+				this.renderPanelContainer(),
 			);
 		}
 

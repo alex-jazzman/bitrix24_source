@@ -1,0 +1,910 @@
+/* ================================================================
+ * [P1.T5] Activity line — hub under the document title (chip / eye / bell).
+ * The caller (note.editor's DocumentEditorComponent) renders it directly between
+ * the <h1> title block and the ProseMirror content wrapper — matches the
+ * mockup's placement of #activity right under .prose h1.title.
+ * ================================================================ */
+
+.note-activity-line {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	/* Base gap between adjacent slots. Slots zero their own horizontal padding/margin so this alone
+	 * governs spacing. It's kept tight because the eye carries a thin count ("👁 N"): a big gap
+	 * after that lone digit reads as emptier than the same gap after a solid avatar. The eye adds a
+	 * bit of extra margin-left (below) so its gap FROM the avatars is a touch wider — visually
+	 * balancing the count's airiness on its right. */
+	gap: 8px;
+	width: min(100%, 1000px);
+	margin: 0 auto;
+	padding: 12px 1rem 12px var(--note-heading-gutter, 48px);
+}
+
+/* Eye + bell travel as ONE flex item: on a narrow width the wrap boundary falls before this whole
+ * group instead of splitting it, so the bell never drops to a line of its own while the eye stays
+ * up. Internally it's a plain inline-flex keeping the same 8px slot gap as the parent (the eye's own
+ * margin-left still widens its gap from the avatars — see .note-views-widget). */
+.note-activity-line__actions {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	/* [P8.T6] Widen the gap from the chip avatars to the eye/bell group: the base 8px parent gap
+	 * alone read as too tight, so add 8px here (≈16px total) to visually separate the "who/when"
+	 * chip cluster from the views/subscription actions. */
+	margin-left: 8px;
+}
+
+/* Text-only click target ("Изменён ДАТА" / fallback "Открыть историю") — avatars and the "·"
+ * separator are siblings OUTSIDE this button now, so the hover only affects the text. No
+ * background/fill: hover just darkens the text to base-1, like the other hub controls. */
+.note-activity-line__chip {
+	appearance: none;
+	display: inline-flex;
+	align-items: center;
+	padding: 6px 0;
+	border: 0;
+	background: transparent;
+	color: var(--ui-color-base-3);
+	font: inherit;
+	font-size: 13.5px;
+	line-height: 1;
+	cursor: pointer;
+}
+
+/* Link-style hover — text turns accent (mockup's `data-hover="accent"`, its primary variant),
+ * a clear clickable affordance instead of the barely-visible grey→grey the neutral variant gave. */
+.note-activity-line__chip:hover {
+	color: var(--ui-color-accent-main-primary);
+}
+
+.note-activity-line__chip:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: 2px;
+	border-radius: var(--ui-border-radius-sm, 8px);
+}
+
+/* [P8.T2] history_enabled off: the chip renders as a passive <span> label — no clickable
+ * affordance (no pointer cursor, no accent hover). It still live-updates its text. */
+.note-activity-line__chip--static {
+	cursor: default;
+}
+
+.note-activity-line__chip--static:hover {
+	color: var(--ui-color-base-3);
+}
+
+.note-activity-line__chip-sep {
+	color: var(--ui-color-base-4);
+}
+
+.note-activity-line__chip-avatars {
+	/* Inline chip: shrink the shared stack to sit on the 13.5px text baseline instead of
+	   the default 28px header size (mockup `.act-chip .lc-av`). */
+	--note-avatar-stack-size: 20px;
+}
+
+.note-activity-line__control {
+	display: inline-flex;
+	align-items: center;
+	/* Tight icon↔count coupling so "eye + N" reads as ONE token: noticeably closer than the base
+	 * gap that separates whole slots (avatars | eye | bell), so the count doesn't look like it's
+	 * floating in the middle of the eye→bell gap. */
+	gap: 4px;
+	height: 30px;
+	padding: 0;
+	border: 0;
+	border-radius: var(--ui-border-radius-sm, 8px);
+	background: transparent;
+	color: var(--ui-color-base-3);
+	font: inherit;
+	font-size: 13.5px;
+	cursor: default;
+}
+
+.note-activity-line__control:disabled {
+	opacity: 0.5;
+}
+
+.note-activity-line__control.--on {
+	color: var(--ui-color-accent-main-primary);
+}
+
+/* [P3.T4] The views eye is a real control now — override the base slot's default cursor. */
+.note-activity-line__control.--interactive {
+	cursor: pointer;
+}
+
+/* [#14] Dim-only hover (mockup's .act-ctl:hover{opacity:.8}) — no background/color change, so
+ * a subscribed (accent-colored, .--on) bell just dims instead of flashing a grey chip. */
+.note-activity-line__control.--interactive:hover {
+	opacity: .8;
+}
+
+.note-activity-line__control:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: 2px;
+}
+
+.note-activity-line__control-icon {
+	width: 22px;
+	height: 22px;
+	/* Follow the button's own color (base/--on/hover states) instead of a fixed token. */
+	--ui-icon-set__icon-color: currentColor;
+}
+
+.note-activity-line__control-count {
+	font-variant-numeric: tabular-nums;
+	font-weight: 600;
+}
+
+/* ================================================================
+ * [P3.T4] Views widget — eye control (above) + viewers popover, "как в задачах"
+ * per mockup-activity-line.html (#eyeCtl / #popViews): avatar + name left, time right.
+ * ================================================================ */
+
+.note-views-widget {
+	position: relative;
+	display: inline-flex;
+	/* Slightly wider gap from the avatars than the base — balances the airy look of the count that
+	 * sits on the eye's other side (see .note-activity-line gap comment). */
+	margin-left: 4px;
+}
+
+/* [#5] Fixed + JS-positioned (see popover-position.js) — centered under the trigger and
+ * clamped to the viewport, same treatment as the subscription and filter popovers. */
+.note-views-widget__popover {
+	position: fixed;
+	z-index: 120;
+	min-width: 260px;
+	max-width: 320px;
+	padding: 6px;
+	border: 1px solid var(--ui-color-divider-default, #f0f0f0);
+	border-radius: var(--note-popup-radius, 18px);
+	background: var(--ui-color-bg-content-primary, #ffffff);
+	box-shadow: 0 8px 17px rgba(0, 0, 0, 0.105);
+}
+
+.note-views-widget__popover-title {
+	padding: 9px 10px 7px;
+	color: var(--ui-color-base-3);
+	font-size: 12.5px;
+	font-weight: 600;
+}
+
+.note-views-widget__popover-empty {
+	padding: 12px 10px;
+	color: var(--ui-color-base-3);
+	font-size: 13.5px;
+	text-align: center;
+}
+
+.note-views-widget__list {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	/* Cap to ~6 rows (row ≈ 38px: 24px avatar + 7px x 2 padding), then scroll — the title above
+	 * stays put because only the list scrolls, not the whole popover. */
+	max-height: 228px;
+	overflow-y: auto;
+}
+
+.note-views-widget__row {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 7px 10px;
+	border-radius: var(--ui-border-radius-md, 8px);
+}
+
+/* [#14] The correct hover token (see note.sidebar's own hover rows, e.g. .tree-row:hover) is
+ * this semi-transparent state-hover overlay — --ui-color-bg-content-secondary is a SOLID surface
+ * color (panel background), not a hover tint, and reads as a flat grey box on top of the
+ * popover's own --ui-color-bg-content-primary background. */
+.note-views-widget__row:hover {
+	background: var(--ui-color-bg-state-hover-default);
+}
+
+/* [avatar profile] Wraps avatar + name so the pair is one click target (opens the user profile),
+ * keeping the viewed-at time as a non-clickable sibling. min-width:0 preserves the name ellipsis. */
+.note-views-widget__user {
+	display: flex;
+	flex: 1 1 auto;
+	align-items: center;
+	gap: 10px;
+	min-width: 0;
+	color: inherit;
+	text-decoration: none;
+}
+
+.note-views-widget__user.--clickable {
+	cursor: pointer;
+}
+
+/* The avatar itself is note.ui.avatar-stack in row mode (one participant): it brings the circle,
+   the identity color and the initial, so only the row-level metrics stay here. */
+.note-views-widget__avatar {
+	--note-avatar-stack-size: 24px;
+	flex: 0 0 auto;
+}
+
+.note-views-widget__name {
+	overflow: hidden;
+	color: var(--ui-color-base-1);
+	font-size: 14px;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.note-views-widget__time {
+	flex: 0 0 auto;
+	margin-left: auto;
+	color: var(--ui-color-base-3);
+	font-size: 12px;
+	white-space: nowrap;
+}
+
+/* ================================================================
+ * [P6.T4] Subscription bell — bell control (above, .note-activity-line__control)
+ * + scope popover per mockup-activity-line.html (#bellLine / #popSub): self/subtree
+ * radio options + a "Не отслеживать" row shown only while subscribed.
+ * ================================================================ */
+
+.note-subscription-bell {
+	position: relative;
+	display: inline-flex;
+}
+
+/* [#5] Fixed + JS-positioned (see popover-position.js) — centered under the trigger and
+ * clamped to the viewport, same treatment as the views and filter popovers. */
+.note-subscription-bell__popover {
+	position: fixed;
+	z-index: 120;
+	min-width: 260px;
+	max-width: 320px;
+	padding: 6px;
+	border: 1px solid var(--ui-color-divider-default, #f0f0f0);
+	border-radius: var(--note-popup-radius, 18px);
+	background: var(--ui-color-bg-content-primary, #ffffff);
+	box-shadow: 0 8px 17px rgba(0, 0, 0, 0.105);
+}
+
+.note-subscription-bell__popover-title {
+	padding: 9px 10px 7px;
+	color: var(--ui-color-base-3);
+	font-size: 12.5px;
+	font-weight: 600;
+}
+
+/* Informational line for the inherited / muted popover states (no scope chooser there). */
+.note-subscription-bell__info {
+	max-width: 240px;
+	padding: 9px 10px 7px;
+	color: var(--ui-color-base-3);
+	font-size: 13px;
+	line-height: 1.35;
+}
+
+.note-subscription-bell__option {
+	display: flex;
+	align-items: flex-start;
+	gap: 10px;
+	padding: 8px 10px;
+	border-radius: var(--ui-border-radius-md, 8px);
+	cursor: pointer;
+}
+
+/* [#14] See the note-views-widget__row:hover comment above — same token fix. */
+.note-subscription-bell__option:hover {
+	background: var(--ui-color-bg-state-hover-default);
+}
+
+/* [#10] Roving-tabindex focus ring on the row (the native input itself is untabbable). */
+.note-subscription-bell__option:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: -2px;
+}
+
+.note-subscription-bell__option input[type="radio"] {
+	flex: 0 0 auto;
+	width: 16px;
+	height: 16px;
+	margin-top: 2px;
+	accent-color: var(--ui-color-accent-main-primary);
+	cursor: pointer;
+}
+
+.note-subscription-bell__option input[type="radio"]:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: 2px;
+}
+
+.note-subscription-bell__option-text {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+
+.note-subscription-bell__option-title {
+	color: var(--ui-color-base-1);
+	font-size: 14px;
+	font-weight: 600;
+}
+
+.note-subscription-bell__option-desc {
+	color: var(--ui-color-base-3);
+	font-size: 12.5px;
+}
+
+.note-subscription-bell__sep {
+	height: 1px;
+	margin: 5px 4px;
+	background: var(--ui-color-divider-default);
+}
+
+.note-subscription-bell__off {
+	display: flex;
+	align-items: center;
+	width: 100%;
+	gap: 10px;
+	padding: 8px 10px;
+	border: 0;
+	border-radius: var(--ui-border-radius-md, 8px);
+	background: transparent;
+	color: var(--ui-color-base-1);
+	font: inherit;
+	font-size: 14px;
+	text-align: left;
+	cursor: pointer;
+}
+
+.note-subscription-bell__off:hover {
+	background: var(--ui-color-bg-state-hover-default);
+}
+
+.note-subscription-bell__off:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: 2px;
+}
+
+.note-subscription-bell__off:disabled,
+.note-subscription-bell__option input:disabled {
+	cursor: default;
+	opacity: 0.5;
+}
+
+/* Same 16px column width as .note-subscription-bell__option's radio, so the icon
+ * centers on the same vertical axis as the radio circles and the label text below
+ * lines up with .note-subscription-bell__option-title. */
+.note-subscription-bell__off-icon-col {
+	display: flex;
+	flex: 0 0 16px;
+	width: 16px;
+	align-items: center;
+	justify-content: center;
+}
+
+.note-subscription-bell__off-icon {
+	width: 18px;
+	height: 18px;
+	--ui-icon-set__icon-color: currentColor;
+}
+
+/* ================================================================
+ * [P1.T5] History sidebar — in-flow right column that pushes .note-editor-document-main,
+ * one screen tall, pinned (sticky) with its own hidden internal scroll. Width animates
+ * via --note-history-width.
+ * ================================================================ */
+
+/* [#6] Built as a true sibling of `.content`, mirroring the left nav `aside.sidebar`: it teleports
+ * out to `#note-page-history-slot` in `.main-layout` (see note-layout.js), so it is a direct flex
+ * child of that row — exactly one screen tall (`height: 100%` of the header-less layout), flush to
+ * the viewport right edge, with its OWN internal scroll whose native bar is hidden (same as
+ * `.sidebar-content`). The document's own `.content` scroll stays to its LEFT and never paints over
+ * the panel. Collapsed = `flex-basis: 0`; the fixed-width `__inner` keeps content from reflowing
+ * during the open/close slide. */
+.note-version-timeline {
+	--note-history-width: 340px;
+	/* Gap between day groups. Single source of truth: it sets the group's margin AND how far the
+	 * previous day's rail reaches down to the next header, so the two can't drift apart. */
+	--note-history-day-gap: 24px;
+
+	display: flex;
+	flex-direction: column;
+	flex: 0 0 0;
+	width: 0;
+	height: 100%;
+	overflow: hidden;
+	position: relative;
+	border-left: 0 solid var(--ui-color-divider-default);
+	background: var(--ui-color-bg-content-primary);
+	transition:
+		flex-basis 0.3s cubic-bezier(.4, 0, .2, 1),
+		width 0.3s cubic-bezier(.4, 0, .2, 1);
+}
+
+.note-version-timeline.--open {
+	flex-basis: var(--note-history-width);
+	width: var(--note-history-width);
+	border-left-width: 1px;
+}
+
+.note-version-timeline__inner {
+	display: flex;
+	flex-direction: column;
+	width: var(--note-history-width);
+	height: 100%;
+}
+
+.note-version-timeline__head {
+	/* [#5] No longer an anchor for the filter popover — that's `position: fixed` + JS-computed
+	 * coordinates now (see popover-position.js), same as the views/subscription popovers. */
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	flex: 0 0 auto;
+	padding: 16px 16px 12px;
+}
+
+.note-version-timeline__title {
+	margin: 0;
+	font-size: 17px;
+	font-weight: 700;
+	color: var(--ui-color-base-1);
+}
+
+.note-version-timeline__filter,
+.note-version-timeline__close {
+	appearance: none;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 32px;
+	height: 32px;
+	padding: 0;
+	border: 0;
+	border-radius: var(--ui-border-radius-circle, 50%);
+	background: transparent;
+	color: var(--ui-color-base-3);
+	cursor: pointer;
+	transition: opacity 0.15s ease;
+}
+
+/* [P2.T4] The filter button takes the "push to the right" role — the mockup docks both
+ * the funnel and the close icon at the head's right edge (#histFilter/#histClose). The
+ * filter now renders on mobile too (the overlay is a full screen with room for it); the
+ * fallback below still pushes the close button when the filter is absent. */
+.note-version-timeline__filter {
+	margin-left: auto;
+}
+
+.note-version-timeline__title + .note-version-timeline__close {
+	margin-left: auto;
+}
+
+/* [#14] Icon-buttons dim on hover (opacity), same as note.sidebar's own icon actions
+ * (.row-action-btn:hover) and this hub's eye/bell controls — no filled grey chip.
+ * An applied filter stays indicated by the accent color. */
+.note-version-timeline__filter:hover,
+.note-version-timeline__close:hover {
+	opacity: 0.8;
+}
+
+.note-version-timeline__filter.--active {
+	color: var(--ui-color-accent-main-primary);
+}
+
+.note-version-timeline__filter:focus-visible,
+.note-version-timeline__close:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: 2px;
+}
+
+.note-version-timeline__icon {
+	width: 22px;
+	height: 22px;
+	--ui-icon-set__icon-color: currentColor;
+}
+
+/* [version-diff] "Highlight changes" checkbox — a thin strip between the header and the feed.
+   Toggles the diff overlay on the previewed version (see version-timeline.js @toggle-diff). */
+.note-version-timeline__diff-toggle {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	flex: 0 0 auto;
+	margin: 0 16px 8px;
+	padding: 8px 0;
+	border-top: 1px solid var(--ui-color-divider-default, #f0f0f0);
+	color: var(--ui-color-base-2);
+	font-size: 13px;
+	line-height: 1.2;
+	cursor: pointer;
+	-webkit-user-select: none;
+	        user-select: none;
+}
+
+.note-version-timeline__diff-toggle:hover {
+	color: var(--ui-color-base-1);
+}
+
+.note-version-timeline__body {
+	flex: 1 1 auto;
+	min-height: 0;
+	overflow-y: auto;
+	overflow-x: hidden;
+	/* Hidden scrollbar, same clean scroll as the collections sidebar (.sidebar-content):
+	   the list still scrolls, just without a visible native track. */
+	-ms-overflow-style: none;
+	/* No top padding: a top pad sits above the sticky day header's stick point (top:0) and lets a
+	   scrolling tile peek through that strip. Top breathing room comes from the header's own padding. */
+	padding: 0 16px 24px;
+}
+
+.note-version-timeline__body::-webkit-scrollbar {
+	width: 0;
+	height: 0;
+}
+
+@supports not selector(::-webkit-scrollbar) {
+	.note-version-timeline__body {
+		scrollbar-width: none;
+	}
+}
+
+.note-version-timeline__empty {
+	padding: 24px 8px;
+	color: var(--ui-color-base-3);
+	font-size: 13.5px;
+	text-align: center;
+}
+
+.note-version-timeline__group {
+	margin-bottom: var(--note-history-day-gap, 24px);
+}
+
+.note-version-timeline__group:last-child {
+	margin-bottom: 4px;
+}
+
+/* Sticky date header: as you scroll through a day's events it pins to the top of the feed body
+ * so the current day stays visible; the next group's header pushes it up. The opaque panel-color
+ * band + z-index keep the tiles/timeline line reading cleanly as they scroll underneath.
+ * Spacing lives in padding (not margin) so the background is a solid band with no transparent gap
+ * a scrolling tile could peek through; the body's own top padding is 0 for the same reason (a top
+ * pad would leave a strip above the pinned header — see .note-version-timeline__body). */
+.note-version-timeline__day {
+	position: sticky;
+	top: 0;
+	z-index: 3;
+	margin: 0;
+	padding: 6px 0 10px;
+	background: var(--ui-color-bg-content-primary);
+	color: var(--ui-color-base-0);
+	font-size: 13px;
+	font-weight: 700;
+	letter-spacing: .06em;
+	text-transform: uppercase;
+}
+
+.note-version-timeline__track {
+	position: relative;
+	padding-left: 26px;
+}
+
+.note-version-timeline__item {
+	position: relative;
+	margin: 0 0 8px;
+}
+
+.note-version-timeline__item:last-child {
+	margin-bottom: 0;
+}
+
+/* Vertical rail. Deliberately built from pieces that each span only their OWN natural extent and
+ * tile together at the day boundaries — so nothing hardcodes the distance between days (which would
+ * drift if the header padding/font or node offset changed):
+ *   · a day's last event runs down through the group gap to the next header's top;
+ *   · the header draws its own segment spanning its full height (top:0→bottom:0, whatever that is);
+ *   · the next day's first event picks up from the header's bottom.
+ * The only shared constant is the group gap, single-sourced via --note-history-day-gap. */
+.note-version-timeline__item::before {
+	content: '';
+	position: absolute;
+	top: 0;
+	bottom: -8px;
+	left: -18px;
+	width: 2px;
+	border-radius: 2px;
+	background: var(--ui-color-accent-main-primary);
+	opacity: .35;
+}
+
+/* First event of the FIRST day: rail starts at its node — nothing above it. */
+.note-version-timeline__group:first-child .note-version-timeline__item:first-child::before {
+	top: 15px;
+}
+
+/* First event of a LATER day: rail starts at the item top (= the header's bottom) to meet the
+ * segment drawn through the header above. */
+.note-version-timeline__group:not(:first-child) .note-version-timeline__item:first-child::before {
+	top: 0;
+}
+
+/* Last event of a day: rail runs down through the group gap to the next day's header top. */
+.note-version-timeline__item:last-child::before {
+	bottom: calc(-1 * var(--note-history-day-gap, 24px));
+}
+
+/* No rail is drawn through the day header itself: the header's opaque background band (a sticky
+ * z-index:3 layer) simply covers the gutter, so the line reads as breaking UNDER the date — the
+ * previous day's last event runs down to the header's top edge, the next day's first event picks
+ * up from its bottom edge, and the band hides the ~28px in between. The band is present pinned or
+ * not, so the break looks the same either way. */
+
+/* Very last event of the very last day: rail stops at its node (top 10 + radius 5 = 15) — no tail. */
+.note-version-timeline__group:last-child .note-version-timeline__item:last-child::before {
+	bottom: auto;
+	height: 15px;
+}
+
+/* Lone event in the last day: still joined from the day above (via that day's header segment), but
+ * stops at its node. */
+.note-version-timeline__group:last-child:not(:first-child) .note-version-timeline__item:first-child:last-child::before {
+	top: 0;
+	bottom: auto;
+	height: 15px;
+}
+
+/* The only event in the whole feed: nothing to connect. */
+.note-version-timeline__group:first-child:last-child .note-version-timeline__item:first-child:last-child::before {
+	display: none;
+}
+
+/* Timeline node. Default (service events: created/title/moved/archive/access…) is a hollow,
+ * muted ring — a quiet marker. A restorable event (content_changed with a live version) fills
+ * the dot accent so version points read as the clickable "landmarks" on the line; combined with
+ * the existing hover background + cursor:pointer, that's the at-rest "you can open this" signal. */
+.note-version-timeline__node {
+	position: absolute;
+	/* Center on the first line's TEXT (event type), not the taller line box. */
+	top: 10px;
+	left: -22px;
+	width: 10px;
+	height: 10px;
+	border: 2px solid var(--ui-color-base-4);
+	border-radius: 50%;
+	background: var(--ui-color-bg-content-primary);
+	/* No z-index: the node already paints over its own rail (the ::before is a pseudo-child, drawn
+	 * before real children in DOM order). A positive z-index here would lift the dot ABOVE the
+	 * sticky day header (z-index:3) and make it poke through when tiles scroll underneath. */
+}
+
+.note-version-timeline__item.--restorable .note-version-timeline__node {
+	border-color: var(--ui-color-accent-main-primary);
+	background: var(--ui-color-accent-main-primary);
+	/* Subtle halo so the filled version dots pop a touch more than the hollow service ones. */
+	box-shadow: 0 0 0 3px color-mix(in srgb, var(--ui-color-accent-main-primary) 16%, transparent);
+}
+
+.note-version-timeline__tile {
+	display: flex;
+	padding: 7px 8px;
+	border-radius: var(--ui-border-radius-sm, 8px);
+	transition: background .12s ease;
+}
+
+/* Two stacked lines (mockup's .tl-main): line 1 is the prominent "{тип события} … {дата}" row —
+ * type pinned left, date pinned right (space-between), no separator dot; line 2 is the avatar
+ * stack + author name, secondary. */
+.note-version-timeline__tile-main {
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+.note-version-timeline__tile-line1 {
+	display: flex;
+	align-items: baseline;
+	gap: 8px;
+	min-height: 22px;
+	min-width: 0;
+}
+
+/* Event type — pinned left, ellipsizes before it can push the date off (min-width:0 is what lets
+ * a flex item shrink below its content). */
+.note-version-timeline__tile-type {
+	flex: 0 1 auto;
+	min-width: 0;
+	overflow: hidden;
+	color: var(--ui-color-base-0);
+	font-size: 14px;
+	font-weight: 500;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+/* Date — pinned right, never shrinks. Muted (base-3) against the base-0 event type. */
+.note-version-timeline__tile-date {
+	flex: 0 0 auto;
+	margin-left: auto;
+	color: var(--ui-color-base-3);
+	font-size: 14px;
+	white-space: nowrap;
+}
+
+.note-version-timeline__tile-line2 {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin-top: 3px;
+	min-width: 0;
+	color: var(--ui-color-base-3);
+}
+
+.note-version-timeline__tile-avatars {
+	/* Compact tile row — smaller than the 28px header default (mockup's .tl-card avatars).
+	 * Never shrinks: the stack already self-caps at 5 avatars + "+N", the NAME yields instead. */
+	--note-avatar-stack-size: 22px;
+	flex: 0 0 auto;
+	min-width: 0;
+}
+
+/* Author caption rendered by the tile itself (not NoteAvatarStack's own single-name), so it can
+ * read "{first author} и ещё N" for multi-author tiles. Takes the remaining width and ellipsizes
+ * a long name. Secondary color (base-3), inherited from the line. */
+.note-version-timeline__tile-author {
+	flex: 0 1 auto;
+	min-width: 0;
+	overflow: hidden;
+	color: inherit;
+	font-size: 13px;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+/* Restorability is expressed by clickability, not a dedicated button (see UI-requirements). */
+.note-version-timeline__item.--restorable .note-version-timeline__tile {
+	cursor: pointer;
+}
+
+/* [#14] See the note-views-widget__row:hover comment further down — same token fix. */
+.note-version-timeline__item.--restorable .note-version-timeline__tile:hover,
+.note-version-timeline__item.--restorable .note-version-timeline__tile:focus-visible {
+	background: var(--ui-color-bg-state-hover-default);
+	outline: none;
+}
+
+/* [#11 rework] The version currently open in the main editor's read-only preview (see
+ * note.editor's DocumentEditorComponent) — a second click on this same tile exits preview. */
+.note-version-timeline__tile.--active {
+	background: color-mix(in srgb, var(--ui-color-accent-main-primary) 12%, transparent);
+}
+
+/* Hovering the active (previewed) tile must keep its accent tint — don't fall back to the grey
+ * hover background (which otherwise wins on specificity). Slightly stronger tint for feedback. */
+.note-version-timeline__item.--restorable .note-version-timeline__tile.--active:hover,
+.note-version-timeline__item.--restorable .note-version-timeline__tile.--active:focus-visible {
+	background: color-mix(in srgb, var(--ui-color-accent-main-primary) 18%, transparent);
+}
+
+/* ===== Event-type filter popover (P2.T4, mockup #popFilter) ===== */
+
+.note-version-timeline__filter-pop {
+	/* [#5] Fixed + JS-positioned (see popover-position.js) — centered under the funnel trigger
+	 * and clamped to the viewport, same treatment as the views and subscription popovers.
+	 * [#8] Chrome now matches the rest of the hub's standard menu popovers (views/subscription,
+	 * and note.ui.avatar-stack's own co-authors menu) instead of a bespoke radius/shadow pair. */
+	position: fixed;
+	z-index: 120;
+	min-width: 220px;
+	padding: 6px;
+	border: 1px solid var(--ui-color-divider-default, #f0f0f0);
+	border-radius: var(--note-popup-radius, 18px);
+	background: var(--ui-color-bg-content-primary, #ffffff);
+	box-shadow: 0 8px 17px rgba(0, 0, 0, 0.105);
+}
+
+.note-version-timeline__filter-title {
+	padding: 8px 10px 6px;
+	color: var(--ui-color-base-3);
+	font-size: 12px;
+	font-weight: 700;
+	letter-spacing: .04em;
+	text-transform: uppercase;
+}
+
+.note-version-timeline__filter-option {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 7px 10px;
+	border-radius: var(--ui-border-radius-sm, 8px);
+	color: var(--ui-color-base-1);
+	font-size: 14px;
+	cursor: pointer;
+}
+
+/* [#14] See the note-views-widget__row:hover comment further down — same token fix. */
+.note-version-timeline__filter-option:hover {
+	background: var(--ui-color-bg-state-hover-default);
+}
+
+/* [#10] Roving-tabindex focus ring on the row (the native input itself is untabbable). */
+.note-version-timeline__filter-option:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: -2px;
+}
+
+.note-version-timeline__filter-option input {
+	width: 16px;
+	height: 16px;
+	accent-color: var(--ui-color-accent-main-primary);
+	cursor: pointer;
+}
+
+.note-version-timeline__filter-sep {
+	height: 1px;
+	margin: 5px 4px;
+	background: var(--ui-color-divider-default);
+}
+
+/* ===== Feed loading states (P2.T4 — initial load + seamless infinite scroll) ===== */
+
+.note-version-timeline__loading-more {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 16px 8px;
+}
+
+
+/* ================================================================
+ * Mobile adaptation (moved from note.editor's styles/editor.mobile.css).
+ * Tokens come from note.app's mobile.css (--note-* custom properties);
+ * note.editor (and this extension) are always loaded together with note.app
+ * in the current product setup, so tokens are guaranteed to be defined at
+ * :root level.
+ *
+ * There's no room to push a 3rd column on a phone screen, so the history
+ * sidebar becomes a full-screen overlay instead of pushing document-main.
+ * ================================================================ */
+
+html.note-mobile .note-activity-line {
+	padding: 8px 12px 8px var(--note-heading-gutter, 40px);
+}
+
+/* [P3.T4] Views popover: cap to the viewport so it doesn't overflow on narrow screens —
+ * the eye control itself already renders compact (icon + count) on both web and mobile. */
+html.note-mobile .note-views-widget__popover {
+	max-width: calc(100vw - 24px);
+}
+
+/* [P6.T4] Same viewport cap for the subscription-scope popover; the bell trigger
+ * itself is already compact (icon-only, no count badge) on both web and mobile. */
+html.note-mobile .note-subscription-bell__popover {
+	max-width: calc(100vw - 24px);
+}
+
+/* [#15] Above the mobile page header (note.app's mobile.css bumped it to z-index: 110 to clear the
+ * editor toolbar) — otherwise the fixed header paints over this overlay and its control buttons
+ * overlap the timeline's own head (close/filter unreachable). Kept below the timeline's own popovers
+ * (filter/views/subscription, z-index: 120) so those still layer above the overlay, and well below
+ * the nav drawer (--note-drawer-z: 991) and PopupWindow (1000+). The history overlay is a full
+ * replacement screen while open, so covering the outer header entirely is correct here. */
+html.note-mobile .note-version-timeline {
+	position: fixed;
+	inset: 0;
+	z-index: 115;
+	width: 0;
+}
+
+html.note-mobile .note-version-timeline.--open {
+	width: 100%;
+}
+
+/* Fixed viewport width (NOT 100%) so the inner keeps its full layout while the outer's `width`
+ * animates 0↔100% on open/close — the same anti-reflow trick the desktop panel uses (fixed __inner
+ * clipped by the outer's overflow:hidden). With `width: 100%` the inner tracked the shrinking outer,
+ * so tile rows reflowed into 2–3 squeezed lines mid-collapse instead of just sliding away. */
+html.note-mobile .note-version-timeline__inner {
+	width: 100vw;
+}

@@ -108,6 +108,15 @@
 	margin-right: 4px;
 }
 
+.ui-selector-footer .ui-selector-footer-link {
+	border: none;
+	background: none;
+	padding: 0;
+	font: inherit;
+	color: inherit;
+	line-height: inherit;
+}
+
 .ui-selector-footer .ui-selector-footer-link,
 .ui-selector-footer .ui-selector-footer-link-text {
 	border-bottom: 1px dashed rgba(82, 92, 105, 0.27);

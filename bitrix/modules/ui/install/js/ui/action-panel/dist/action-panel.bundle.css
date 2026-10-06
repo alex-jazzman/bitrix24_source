@@ -1,0 +1,210 @@
+/*
+ * The block is deliberately named apart from the legacy `.ui-action-panel`: both extensions may be
+ * loaded on the same page, and ten external files override the legacy selectors.
+ */
+.ui-air-action-panel {
+	position: absolute;
+	top: 0;
+	left: 0;
+	z-index: 99;
+	box-sizing: border-box;
+	display: flex;
+	align-items: center;
+	overflow: hidden;
+	padding: var(--ui-space-inset-2xs) var(--ui-space-inset-xs);
+	border-radius: var(--ui-border-radius-md);
+	background: var(--ui-color-bg-content-primary);
+	box-shadow: var(--ui-shadow-bottom-xs);
+	color: var(--ui-color-base-1);
+	font-family: var(--ui-font-family-system);
+	font-size: var(--ui-font-size-sm);
+	line-height: var(--ui-font-line-height-md);
+	opacity: 0;
+	visibility: hidden;
+	pointer-events: none;
+	/* Visibility is switched only after the fade-out: a transparent panel still keeps its controls
+	   in the tab order and in the accessibility tree, hidden ones are out of both. */
+	transition: opacity 250ms ease, visibility 0s linear 250ms;
+}
+
+.ui-air-action-panel.--shown {
+	opacity: 1;
+	visibility: visible;
+	pointer-events: auto;
+	transition: opacity 250ms ease, visibility 0s;
+}
+
+.ui-air-action-panel.--fixed {
+	position: fixed;
+	box-shadow: var(--ui-shadow-bottom-m);
+}
+
+.ui-air-action-panel__total {
+	display: flex;
+	flex-shrink: 0;
+	align-items: center;
+	gap: var(--ui-space-inline-3xs);
+	padding-right: var(--ui-space-inset-xs);
+	border-right: 1px solid var(--ui-color-divider-default);
+	color: var(--ui-color-base-2);
+	white-space: nowrap;
+}
+
+.ui-air-action-panel__total-value {
+	color: var(--ui-color-base-1);
+	font-weight: var(--ui-font-weight-semi-bold);
+}
+
+/*
+ * A single non-wrapping row: an item that does not fit goes to the "more" menu, and the overflow
+ * is measured by the right edge of the row. `min-width: 0` lets the row shrink below its content,
+ * which is what makes the panel narrower than the sum of its items in the first place.
+ */
+.ui-air-action-panel__items {
+	display: flex;
+	flex: 1;
+	min-width: 0;
+	/* The row takes the whole height of the panel so that its own controls have something to fill:
+	   a host that pins the panel to the height of the toolbar it covers leaves the free space above
+	   and below the text, and that space belongs to the hover area, not to the background. */
+	align-self: stretch;
+	align-items: center;
+	flex-wrap: nowrap;
+	gap: var(--ui-space-inline-3xs);
+	margin-left: var(--ui-space-inline-xs);
+	overflow: hidden;
+}
+
+/*
+ * Overflow is measured by the right edge of the row, so an item that absorbs the shortage by
+ * shrinking would never be recognized as one that does not fit. The rule covers every child,
+ * not only our own item: a split control brings the container of `ui.buttons` with it, and how
+ * a foreign control handles a shortage is not ours to assume.
+ */
+.ui-air-action-panel__items > * {
+	flex-shrink: 0;
+}
+
+/*
+ * The whole height of the row and the horizontal padding of the legacy item: the hover area is the
+ * target the pointer aims at, and a strip around the text alone is the one thing the panel is not
+ * allowed to shrink it to. `align-self` is set on the control itself instead of `align-items` on the
+ * row: the row also carries foreign controls — a split control brings the container of `ui.buttons`
+ * with it — and how a foreign control survives being stretched is not ours to assume.
+ */
+.ui-air-action-panel__item {
+	display: inline-flex;
+	align-self: stretch;
+	align-items: center;
+	gap: var(--ui-space-inline-3xs);
+	box-sizing: border-box;
+	margin: 0;
+	padding: var(--ui-space-inset-3xs) var(--ui-space-inset-sm);
+	border: 0;
+	border-radius: var(--ui-border-radius-2xs);
+	background: transparent;
+	color: inherit;
+	font: inherit;
+	white-space: nowrap;
+	text-decoration: none;
+	cursor: pointer;
+	transition: background-color 100ms ease, color 100ms ease;
+}
+
+.ui-air-action-panel__item:hover {
+	background: var(--ui-color-bg-state-hover-default);
+}
+
+.ui-air-action-panel__item:active {
+	background: var(--ui-color-bg-state-click-default);
+}
+
+/* The row clips its overflow, so every control of the panel draws the focus ring inside its own box. */
+.ui-air-action-panel__item:focus-visible {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
+	outline-offset: var(--ui-focus-outline-offset-inset);
+}
+
+.ui-air-action-panel__item.--static {
+	color: var(--ui-color-base-2);
+	cursor: default;
+}
+
+.ui-air-action-panel__item.--static:hover,
+.ui-air-action-panel__item.--static:active {
+	background: transparent;
+}
+
+.ui-air-action-panel__item.--disabled,
+.ui-air-action-panel__item:disabled {
+	color: var(--ui-color-base-4);
+	cursor: default;
+	pointer-events: none;
+}
+
+.ui-air-action-panel__item-icon {
+	display: inline-flex;
+	flex-shrink: 0;
+	--ui-icon-set__icon-size: 20px;
+}
+
+/* Icon-only, so the padding is the narrower one of the pair: 20px of icon between two paddings
+   comes out at the width the legacy control held with its `min-width`. */
+.ui-air-action-panel__reset {
+	display: inline-flex;
+	flex-shrink: 0;
+	align-self: stretch;
+	align-items: center;
+	box-sizing: border-box;
+	margin: 0 0 0 var(--ui-space-inline-2xs);
+	padding: var(--ui-space-inset-3xs) var(--ui-space-inset-xs);
+	border: 0;
+	border-radius: var(--ui-border-radius-2xs);
+	background: transparent;
+	color: var(--ui-color-base-3);
+	cursor: pointer;
+	transition: background-color 100ms ease, color 100ms ease;
+	--ui-icon-set__icon-size: 20px;
+}
+
+.ui-air-action-panel__reset:hover {
+	background: var(--ui-color-bg-state-hover-default);
+	color: var(--ui-color-base-1);
+}
+
+.ui-air-action-panel__reset:focus-visible {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
+	outline-offset: var(--ui-focus-outline-offset-inset);
+}
+
+.ui-air-action-panel__more {
+	display: inline-flex;
+	flex-shrink: 0;
+	align-self: stretch;
+	align-items: center;
+	gap: var(--ui-space-inline-3xs);
+	box-sizing: border-box;
+	margin: 0;
+	padding: var(--ui-space-inset-3xs) var(--ui-space-inset-sm);
+	border: 0;
+	border-radius: var(--ui-border-radius-2xs);
+	background: transparent;
+	color: var(--ui-color-base-1);
+	font: inherit;
+	white-space: nowrap;
+	cursor: pointer;
+	transition: background-color 100ms ease;
+}
+
+.ui-air-action-panel__more:hover {
+	background: var(--ui-color-bg-state-hover-default);
+}
+
+.ui-air-action-panel__more:focus-visible {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
+	outline-offset: var(--ui-focus-outline-offset-inset);
+}
+
+.ui-air-action-panel__more[aria-expanded="true"] {
+	background: var(--ui-color-bg-state-click-default);
+}

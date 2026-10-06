@@ -2,6 +2,7 @@ import { Engine, type Role, RoleIndustry } from 'ai.engine';
 import { Type, Loc, BaseError, Runtime, Text, Extension } from 'main.core';
 import { EventEmitter, BaseEvent } from 'main.core.events';
 import { UI } from 'ui.notification';
+import type { AnalyticsOptions } from 'ui.analytics';
 import { type EntityCatalog as EntityCatalogClass, type ItemData, type GroupData } from 'ui.entity-catalog';
 import { RolesDialogLoaderPopup } from './roles-dialog-loader-popup';
 import { showRolesDialogErrorPopup } from './roles-dialog-error-popup';
@@ -14,7 +15,7 @@ import { getRolesDialogRoleItemWithStates } from './components/roles-dialog-role
 import { RolesDialogGroupItem } from './components/roles-dialog-group-item';
 import { RolesDialogSearchStub, RolesDialogSearchStubEvents } from './components/roles-dialog-search-stub';
 import { getRolesDialogEmptyGroupStubWithStates } from './components/roles-dialog-empty-group-stub';
-import { RolesDialogRolesLibrary } from './components/roles-dialog-roles-library';
+import { getRolesDialogRolesLibrary } from './components/roles-dialog-roles-library';
 
 import './css/roles-dialog.css';
 
@@ -80,7 +81,6 @@ export class RolesDialog extends EventEmitter
 	#defaultRoleCode: string;
 	#industries: RoleIndustry[];
 	#selectedDefaultRoleHandler: Function | null;
-	#reloadDialogHandler: Function | null;
 	#selectedRoleCode: ?string;
 	#universalRole: Role;
 	#title: ?string;
@@ -179,6 +179,49 @@ export class RolesDialog extends EventEmitter
 		this.#entityCatalog?.close();
 	}
 
+	#openRolesLibrary(): void
+	{
+		this.hide();
+
+		if (BX.SidePanel)
+		{
+			this.#sendOpenRolesLibraryAnalytics();
+
+			BX.SidePanel.Instance.open(
+				'/bitrix/components/bitrix/ai.role.library.grid/slider.php',
+				{
+					cacheable: false,
+				},
+			);
+		}
+		else
+		{
+			window.location.href = '/bitrix/components/bitrix/ai.prompt.library.grid/slider.php';
+		}
+	}
+
+	async #sendOpenRolesLibraryAnalytics(): void
+	{
+		try
+		{
+			const { sendData } = await Runtime.loadExtension('ui.analytics');
+
+			const sendDataOptions: AnalyticsOptions = {
+				event: 'open_list',
+				status: 'success',
+				tool: 'ai',
+				category: 'roles_saving',
+				c_section: 'roles_picker',
+			};
+
+			sendData(sendDataOptions);
+		}
+		catch (e)
+		{
+			console.error('AI: RolesDialog: Can\'t send analytics', e);
+		}
+	}
+
 	async #showAfterInit(): Promise<void>
 	{
 		const loader = new RolesDialogLoaderPopup();
@@ -227,44 +270,6 @@ export class RolesDialog extends EventEmitter
 			RolesDialogSearchStubEvents.CHOOSE_STANDARD_ROLE,
 			this.#selectedDefaultRoleHandler,
 		);
-
-		this.#reloadDialogHandler = this.#reloadDialog.bind(this);
-
-		EventEmitter.subscribe(
-			'update',
-			this.#reloadDialogHandler,
-		);
-	}
-
-	async #reloadDialog() {
-		const loader = new RolesDialogLoaderPopup();
-		let isShowLoader = true;
-
-		setTimeout(() => {
-			if (isShowLoader)
-			{
-				loader.show();
-			}
-		}, 300);
-		try
-		{
-			this.#entityCatalog.setItems([]);
-			this.#entityCatalog.setGroups([]);
-			await this.#loadData();
-		}
-		catch (e)
-		{
-			showRolesDialogErrorPopup();
-			console.error(e);
-		}
-		finally
-		{
-			isShowLoader = false;
-			loader.hide();
-			this.#entityCatalog.setItems(this.#getItemsData());
-			this.#entityCatalog.setGroups(this.#getItemGroupsFromIndustries());
-			EventEmitter.emit('update-complete');
-		}
 	}
 
 	#unsubscribeEvents(): void
@@ -279,11 +284,6 @@ export class RolesDialog extends EventEmitter
 			document,
 			RolesDialogSearchStubEvents.CHOOSE_STANDARD_ROLE,
 			this.#selectedDefaultRoleHandler,
-		);
-
-		EventEmitter.unsubscribe(
-			'update',
-			this.#reloadDialogHandler,
 		);
 	}
 
@@ -338,8 +338,11 @@ export class RolesDialog extends EventEmitter
 				RolesDialogGroupItem,
 				RolesDialogGroupListFooter,
 				RolesDialogSearchStub,
-				RolesDialogEmptyGroupStub: getRolesDialogEmptyGroupStubWithStates(States),
-				RolesDialogRolesLibrary,
+				RolesDialogEmptyGroupStub: getRolesDialogEmptyGroupStubWithStates(
+					States,
+					() => this.#openRolesLibrary(),
+				),
+				RolesDialogRolesLibrary: getRolesDialogRolesLibrary(() => this.#openRolesLibrary()),
 			},
 			popupOptions: {
 				className: `ai_roles-dialog_popup ui-entity-catalog__scope${this.#isBitrixGptV2Available ? ' --bitrixgpt-redesign' : ''}`,

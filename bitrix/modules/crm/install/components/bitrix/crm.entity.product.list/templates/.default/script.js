@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
 this.BX.Crm.Entity = this.BX.Crm.Entity || {};
-(function (exports, ui_designTokens, main_core, main_core_events, catalog_productCalculator, ui_hint, ui_notification, catalog_productModel, catalog_storeSelector, catalog_storeEnableWizard, main_popup, catalog_productSelector, currency_currencyCore, ui_tour, spotlight, catalog_toolAvailabilityManager, pull_client) {
+(function (exports, ui_designTokens, main_core, main_core_events, catalog_productCalculator, ui_hint, ui_notification, catalog_productModel, catalog_storeSelector, catalog_storeEnableWizard, ui_a11y, main_popup, catalog_productSelector, currency_currencyCore, ui_tour, spotlight, catalog_toolAvailabilityManager, pull_client) {
 	'use strict';
 
 	class ReserveControl {
@@ -49,6 +49,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 				}
 				main_core.Dom.append(this.getDateNode(), this.wrapper);
 				main_core.Event.bind(this.getDateNode(), 'click', ReserveControl.onDateInputClick.bind(this));
+				main_core.Event.bind(this.getDateNode().querySelector('button'), 'keydown', ReserveControl.onDateInputKeyDown.bind(this));
 				main_core.Event.bind(this.getDateNode().querySelector('input'), 'change', this.onDateChange.bind(this));
 			}
 		}
@@ -120,11 +121,26 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 		}
 		static onDateInputClick(event) {
 			const target = event.target;
-			BX.calendar({
+			const cal = BX.calendar({
 				node: target,
 				field: target.parentNode.querySelector('input'),
 				bTime: false
 			});
+			const container = cal?.popup?.getPopupContainer?.();
+			if (container) {
+				ui_a11y.FocusNavigator.focusFirst(container);
+			}
+			cal?.popup?.subscribeOnce?.('onPopupClose', () => {
+				ui_a11y.FocusNavigator.focusTarget(target);
+			});
+		}
+		static onDateInputKeyDown(event) {
+			if (event.key !== 'Enter') {
+				return;
+			}
+			event.preventDefault();
+			event.stopPropagation();
+			ReserveControl.onDateInputClick(event);
 		}
 		onDateChange(event) {
 			const value = event.target.value;
@@ -142,7 +158,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 			return this.cache.remember('dateInput', () => {
 				return main_core.Tag.render`
 				<div>
-					<a class="crm-entity-product-list-reserve-date"></a>
+					<button type="button" class="crm-entity-product-list-reserve-date" hidden></button>
 					<input
 						data-name="${this.dateFieldName}"
 						name="${this.dateFieldName}"
@@ -195,9 +211,10 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 			const linkText = date === '' ? '' : main_core.Loc.getMessage('CRM_ENTITY_PL_RESERVED_DATE', {
 				'#FINAL_RESERVATION_DATE#': date
 			}) ?? '';
-			const link = this.getDateNode().querySelector('a');
+			const link = this.getDateNode().querySelector('button');
 			if (link) {
 				link.innerText = linkText;
+				link.hidden = linkText === '';
 			}
 			const hiddenInput = this.getDateNode().querySelector('input');
 			if (hiddenInput) {
@@ -234,6 +251,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 		inventoryManagementMode;
 		node;
 		popup = null;
+		clickHandler = this.togglePopup.bind(this);
 		constructor(options) {
 			this.rowId = options.rowId;
 			this.model = options.model;
@@ -241,9 +259,13 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 			this.setNode(options.node);
 		}
 		setNode(node) {
+			if (this.node) {
+				main_core.Event.unbind(this.node, 'click', this.clickHandler);
+				main_core.Dom.removeClass(this.node, 'store-available-popup-link');
+			}
 			this.node = node;
 			main_core.Dom.addClass(this.node, 'store-available-popup-link');
-			main_core.Event.bind(this.node, 'click', this.togglePopup.bind(this));
+			main_core.Event.bind(this.node, 'click', this.clickHandler);
 		}
 		createPopup() {
 			const popupId = `store-available-popup-row-${this.rowId}`;
@@ -267,6 +289,9 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 						forceBindPosition: true
 					},
 					closeByEsc: true,
+					focusTrap: {
+						initialFocus: true
+					},
 					content: this.getPopupContent()
 				});
 				this.popup.setOffset({
@@ -319,10 +344,13 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 			</div>
 		`;
 			if (isReservedQuantityLink) {
-				main_core.Event.bind(result.querySelector('.store-available-popup-reserves-slider-link'), 'click', e => {
-					e.preventDefault();
-					this.openDealsWithReservedProductSlider();
-				});
+				const reservesSliderLink = result.querySelector('.store-available-popup-reserves-slider-link');
+				if (reservesSliderLink) {
+					main_core.Event.bind(reservesSliderLink, 'click', e => {
+						e.preventDefault();
+						this.openDealsWithReservedProductSlider();
+					});
+				}
 			}
 			return result;
 		}
@@ -369,6 +397,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 			if (currencyBlock) {
 				currencyBlock.classList.add('main-dropdown');
 				currencyBlock.dataset.disabled = 'false';
+				currencyBlock.setAttribute('tabindex', '0');
 			}
 			this.node.querySelector('.main-grid-editor-money-price')?.removeAttribute('disabled');
 		}
@@ -380,6 +409,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 			if (currencyBlock) {
 				currencyBlock.classList.remove('main-dropdown');
 				currencyBlock.dataset.disabled = 'true';
+				currencyBlock.removeAttribute('tabindex');
 			}
 			if (this.hint) {
 				this.node.setAttribute('data-hint-no-icon', '');
@@ -573,7 +603,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 					} else if (field === 'DISCOUNT_RATE') {
 						value = row.parseFloat(value, row.getCommonPrecision());
 					} else if (field === 'TAX_RATE') {
-						value = main_core.Type.isNil(value) || value === '' ? '' : row.parseFloat(value, row.getCommonPrecision());
+						value = row.getField('TAX_ID');
 					} else if (value === 0) {
 						value = '';
 					} else if (main_core.Type.isNumber(value)) {
@@ -805,6 +835,65 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 				main_core.Event.bind(node, 'change', editor.changeProductFieldHandler);
 				main_core.Event.bind(node, 'mousedown', event => event.stopPropagation());
 			});
+			this.applyDropdownAccessibility();
+		}
+		applyDropdownAccessibility() {
+			const node = this.getNode();
+			if (!node) {
+				return;
+			}
+			node.querySelectorAll('.main-grid-editor-money-currency:not(.main-dropdown), .main-grid-editor-money-currency.main-dropdown[data-disabled="true"]').forEach(currency => {
+				const element = currency;
+				element.removeAttribute('tabindex');
+				element.removeAttribute('role');
+				element.removeAttribute('aria-haspopup');
+			});
+			node.querySelectorAll('.main-grid-editor-money-currency.main-dropdown:not([data-disabled="true"])').forEach(activator => {
+				const el = activator;
+				el.setAttribute('role', 'button');
+				el.setAttribute('aria-haspopup', 'menu');
+				if (el.dataset.a11yKeyboardBound === 'Y') {
+					return;
+				}
+				el.dataset.a11yKeyboardBound = 'Y';
+				main_core.Event.bind(el, 'keydown', event => {
+					if (event.key === 'Enter' || event.key === ' ' || event.key === 'Spacebar') {
+						event.preventDefault();
+						event.stopPropagation();
+						el.click();
+					}
+				});
+			});
+			node.querySelectorAll('select.crm-entity-product-control-select-field').forEach(select => {
+				const el = select;
+				if (el.dataset.a11yKeyboardBound === 'Y') {
+					return;
+				}
+				el.dataset.a11yKeyboardBound = 'Y';
+				main_core.Event.bind(el, 'keydown', event => {
+					if (event.key === 'Enter' && typeof el.showPicker === 'function') {
+						event.preventDefault();
+						event.stopPropagation();
+						el.showPicker();
+					}
+				});
+			});
+			node.querySelectorAll('.crm-entity-product-control-checkbox input[type="checkbox"]').forEach(checkbox => {
+				const el = checkbox;
+				if (el.dataset.a11yKeyboardBound === 'Y') {
+					return;
+				}
+				el.dataset.a11yKeyboardBound = 'Y';
+				main_core.Event.bind(el, 'keydown', event => {
+					if (event.key === 'Enter') {
+						event.preventDefault();
+						event.stopPropagation();
+						el.click();
+					} else if (event.key === ' ' || event.key === 'Spacebar') {
+						event.stopPropagation();
+					}
+				});
+			});
 		}
 		initHandlersForSelectors() {
 			const editor = this.getEditor();
@@ -844,11 +933,11 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 			`;
 				main_core.Event.bind(actionsButton, 'click', event => {
 					const menuItems = [{
-						text: main_core.Loc.getMessage('CRM_ENTITY_PL_COPY'),
+						text: main_core.Loc.getMessage('CRM_ENTITY_PL_COPY') ?? '',
 						onclick: this.handleCopyAction.bind(this),
 						disabled: this.editor.getSettingValue('disabledSelectProductInput')
 					}, {
-						text: main_core.Loc.getMessage('CRM_ENTITY_PL_DELETE'),
+						text: main_core.Loc.getMessage('CRM_ENTITY_PL_DELETE') ?? '',
 						onclick: this.handleDeleteAction.bind(this),
 						disabled: this.getModel().isEmpty() && this.getEditor().productCollection.products.length <= 1
 					}];
@@ -878,6 +967,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 			} else {
 				control.enable();
 			}
+			this.applyDropdownAccessibility();
 		}
 		modifyQuantityInput() {
 			if (!this.isRestrictedStoreInfo()) {
@@ -1118,7 +1208,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 			const fields = this.getFields(['CURRENCY', 'QUANTITY', 'MEASURE_CODE']);
 			fields['PRICE'] = this.getBasePrice();
 			fields['VAT_INCLUDED'] = this.getTaxIncluded();
-			fields['VAT_ID'] = this.getTaxId();
+			fields['VAT_ID'] = this.getTaxIdFromNode();
 			return fields;
 		}
 		getCalculateFields() {
@@ -1220,7 +1310,13 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 		getTaxNode() {
 			return this.getNode().querySelector('select[data-field-code="TAX_RATE"]');
 		}
+		getTaxName() {
+			return this.getField('TAX_NAME', '');
+		}
 		getTaxId() {
+			return this.getField('TAX_ID', '');
+		}
+		getTaxIdFromNode() {
 			const taxNode = this.getTaxNode();
 			if (main_core.Type.isElementNode(taxNode) && taxNode.options[taxNode.selectedIndex]) {
 				return main_core.Text.toNumber(taxNode.options[taxNode.selectedIndex].getAttribute('data-tax-id'));
@@ -1234,6 +1330,9 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 			this.updateField(fieldCode, value, mode);
 		}
 		updateField(fieldCode, value, mode = MODE_SET) {
+			if (fieldCode === 'TAX_RATE') {
+				fieldCode = 'TAX_ID';
+			}
 			this.resetExternalActions();
 			this.updateFieldValue(fieldCode, value, mode);
 			this.executeExternalActions();
@@ -1263,9 +1362,6 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 				case 'VAT_ID':
 				case 'TAX_ID':
 					this.changeTaxId(value);
-					break;
-				case 'TAX_RATE':
-					this.changeTaxRate(value);
 					break;
 				case 'VAT_INCLUDED':
 				case 'TAX_INCLUDED':
@@ -1367,18 +1463,14 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 		changeTaxId(value) {
 			const taxList = this.getEditor().getTaxList();
 			if (main_core.Type.isArrayFilled(taxList)) {
-				let taxRate = taxList.find(item => parseInt(item.ID) === Number(value));
+				let taxRate = taxList.find(item => parseInt(String(item.ID), 10) === Number(value));
 				if (!taxRate) {
 					taxRate = taxList.find(item => main_core.Type.isNil(item.VALUE));
 				}
 				if (taxRate) {
-					this.changeTaxRate(taxRate.VALUE);
+					this.setTaxRate(taxRate);
 				}
 			}
-		}
-		changeTaxRate(value) {
-			const preparedValue = main_core.Type.isNil(value) || value === '' ? null : this.parseFloat(value, this.getCommonPrecision());
-			this.setTaxRate(preparedValue);
 		}
 		changeTaxIncluded(value) {
 			if (main_core.Type.isBoolean(value)) {
@@ -1430,17 +1522,27 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 				return;
 			}
 			const storeId = this.getField('STORE_ID');
-			if (!storeId) {
+			const canShowAmount = Boolean(storeId) && this.getModel().isCatalogExisted() && !this.isRestrictedStoreInfo() && !this.getModel().isService();
+			if (!canShowAmount) {
+				availableWrapper.innerHTML = '';
+				this.setStoreAvailableInteractive(availableWrapper, false);
 				return;
 			}
 			const available = this.model.getStoreCollection().getStoreAvailableAmount(storeId);
 			const amount = main_core.Text.toNumber(available);
-			let amountWithMeasure = '';
-			if (!this.getModel().isCatalogExisted() || this.isRestrictedStoreInfo() || this.getModel().isService()) {
-				return;
-			}
-			amountWithMeasure = amount + ' ' + this.getMeasureName();
+			const amountWithMeasure = amount + ' ' + this.getMeasureName();
 			availableWrapper.innerHTML = amount > 0 ? amountWithMeasure : `<span class="store-available-popup-link--danger">${amountWithMeasure}</span>`;
+			this.setStoreAvailableInteractive(availableWrapper, true);
+		}
+		setStoreAvailableInteractive(node, isInteractive) {
+			if (isInteractive) {
+				node.setAttribute('href', '#');
+				main_core.Dom.addClass(node, 'store-available-popup-link');
+			} else {
+				node.removeAttribute('href');
+				node.removeAttribute('aria-label');
+				main_core.Dom.removeClass(node, 'store-available-popup-link');
+			}
 		}
 		updatePropertyFields() {
 			const productProps = this.model.getField('PRODUCT_PROPERTIES');
@@ -1701,13 +1803,16 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 				this.addActionUpdateTotal();
 			}
 		}
-		setTaxRate(value) {
+		setTaxRate(taxRate) {
 			if (!this.getEditor().isTaxAllowed()) {
 				return;
 			}
-			const isChangedValue = this.getTaxRate() !== value;
+			const preparedTaxValue = taxRate.VALUE !== null ? this.parseFloat(taxRate.VALUE, this.getCommonPrecision()) : null;
+			const isChangedValue = this.getTaxId() !== taxRate.ID || this.getTaxRate() !== preparedTaxValue || this.getTaxName() !== taxRate.NAME;
 			if (isChangedValue) {
-				const calculatedFields = this.getCalculator().calculateTax(value);
+				this.fields['TAX_ID'] = taxRate.ID;
+				this.fields['TAX_NAME'] = taxRate.NAME;
+				const calculatedFields = this.getCalculator().calculateTax(preparedTaxValue);
 				this.setFields(calculatedFields);
 				this.refreshFieldsLayout();
 				this.addActionProductChange();
@@ -1880,21 +1985,25 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	}
 
 	class SettingsPopup {
+		static lastActiveSelector = null;
 		target;
 		settings;
 		editor;
 		cache = new main_core.Cache.MemoryCache();
+		keydownHandler = null;
+		keydownBound = false;
 		constructor(target, settings = [], editor) {
 			this.target = target;
 			this.settings = settings;
 			this.editor = editor;
 		}
 		show() {
-			this.getPopup().show();
+			const popup = this.getPopup();
+			popup.show();
 		}
 		getPopup() {
 			return this.cache.remember('settings-popup', () => {
-				return new main_popup.Popup({
+				const popup = new main_popup.Popup({
 					id: this.editor.getId() + '_' + Math.random() * 100,
 					bindElement: this.target,
 					autoHide: true,
@@ -1908,8 +2017,156 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 						forceBindPosition: true
 					},
 					closeByEsc: true,
-					content: this.prepareSettingsContent()
+					focusTrap: {
+						initialFocus: true
+					},
+					content: this.prepareSettingsContent(),
+					events: {
+						onShow: () => {
+							this.setTriggerExpanded(popup, true);
+							this.bindKeyboardNavigation(popup);
+						},
+						onClose: () => {
+							this.setTriggerExpanded(popup, false);
+							this.unbindKeyboardNavigation(popup);
+						}
+					}
 				});
+				return popup;
+			});
+		}
+		setTriggerExpanded(popup, expanded) {
+			const container = this.editor.getContainer();
+			if (main_core.Type.isElementNode(container)) {
+				container.querySelectorAll('[data-role="product-list-settings-button"]').forEach(trigger => {
+					trigger.setAttribute('aria-expanded', 'false');
+				});
+			}
+			if (expanded) {
+				const trigger = popup.bindElement;
+				if (main_core.Type.isElementNode(trigger)) {
+					trigger.setAttribute('aria-expanded', 'true');
+				}
+			}
+		}
+		bindKeyboardNavigation(popup) {
+			if (this.keydownBound) {
+				return;
+			}
+			const container = popup.getContentContainer();
+			if (!main_core.Type.isElementNode(container)) {
+				return;
+			}
+			if (this.keydownHandler === null) {
+				this.keydownHandler = this.handleKeyboardNavigation.bind(this);
+			}
+			main_core.Event.bind(container, 'keydown', this.keydownHandler);
+			this.keydownBound = true;
+		}
+		unbindKeyboardNavigation(popup) {
+			if (!this.keydownBound || this.keydownHandler === null) {
+				return;
+			}
+			const container = popup.getContentContainer();
+			if (main_core.Type.isElementNode(container)) {
+				main_core.Event.unbind(container, 'keydown', this.keydownHandler);
+			}
+			this.keydownBound = false;
+		}
+		handleKeyboardNavigation(event) {
+			if (event.metaKey || event.ctrlKey || event.altKey) {
+				return;
+			}
+			const popup = this.getPopup();
+			const container = popup.getContentContainer();
+			if (!main_core.Type.isElementNode(container)) {
+				return;
+			}
+			switch (event.key) {
+				case 'ArrowDown':
+					event.preventDefault();
+					this.focusRelativeSetting(container, 1);
+					break;
+				case 'ArrowUp':
+					event.preventDefault();
+					this.focusRelativeSetting(container, -1);
+					break;
+				case 'Home':
+					event.preventDefault();
+					this.focusEdgeSetting(container, 'first');
+					break;
+				case 'End':
+					event.preventDefault();
+					this.focusEdgeSetting(container, 'last');
+					break;
+				case 'Enter':
+				case ' ':
+				case 'Space':
+					{
+						event.preventDefault();
+						const active = ui_a11y.FocusNavigator.getActiveElement();
+						if (active instanceof HTMLInputElement && !active.disabled) {
+							active.click();
+						}
+						break;
+					}
+				case 'Tab':
+					{
+						event.preventDefault();
+						const editorContainer = this.editor.getContainer();
+						popup.close();
+						if (!event.shiftKey && main_core.Type.isElementNode(editorContainer)) {
+							ui_a11y.FocusNavigator.focusNext(editorContainer);
+						}
+						break;
+					}
+			}
+		}
+		getFocusableSettingInputs(container) {
+			const inputs = container.querySelectorAll('input[type="checkbox"][data-setting-id]');
+			return Array.from(inputs).filter(input => {
+				return !input.disabled && ui_a11y.InteractivityChecker.isVisible(input);
+			});
+		}
+		focusRelativeSetting(container, direction) {
+			const items = this.getFocusableSettingInputs(container);
+			if (items.length === 0) {
+				return;
+			}
+			const active = ui_a11y.FocusNavigator.getActiveElement();
+			const current = active instanceof HTMLInputElement ? items.indexOf(active) : -1;
+			const next = current === -1 ? direction > 0 ? 0 : items.length - 1 : (current + direction + items.length) % items.length;
+			items[next].focus();
+		}
+		focusEdgeSetting(container, edge) {
+			const items = this.getFocusableSettingInputs(container);
+			if (items.length === 0) {
+				return;
+			}
+			const item = edge === 'first' ? items[0] : items[items.length - 1];
+			item.focus();
+		}
+		onSettingsGridReloaded(popupContainer) {
+			const restored = main_core.Type.isStringFilled(SettingsPopup.lastActiveSelector) ? ui_a11y.FocusNavigator.focusBySelector(popupContainer, SettingsPopup.lastActiveSelector) : null;
+			if (restored === null) {
+				ui_a11y.FocusNavigator.focusFirst(popupContainer);
+			}
+		}
+		buildSelectorForActiveControl() {
+			const active = ui_a11y.FocusNavigator.getActiveElement();
+			if (!main_core.Type.isElementNode(active)) {
+				return null;
+			}
+			const settingId = active.dataset ? active.dataset.settingId : undefined;
+			return main_core.Type.isStringFilled(settingId) ? `input[data-setting-id="${settingId}"]` : null;
+		}
+		scheduleFocusRestoreOnReload() {
+			SettingsPopup.lastActiveSelector = this.buildSelectorForActiveControl();
+			main_core_events.EventEmitter.subscribeOnce(this.editor, 'onGridReloaded', () => {
+				const settingsPopup = this.editor.getSettingsPopup();
+				const popup = settingsPopup.getPopup();
+				popup.show();
+				settingsPopup.onSettingsGridReloaded(popup.getContentContainer());
 			});
 		}
 		getSetting(id) {
@@ -1936,7 +2193,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 			const descriptionNode = main_core.Type.isStringFilled(item.desc) ? main_core.Tag.render`<span class="ui-entity-editor-popup-create-field-item-desc">${item.desc}</span>` : '';
 			const hintNode = main_core.Type.isStringFilled(item.hint) ? main_core.Tag.render`<span class="crm-entity-product-list-setting-hint" data-hint="${item.hint}"></span>` : '';
 			const setting = main_core.Tag.render`
-			<label class="ui-ctl-block ui-entity-editor-popup-create-field-item ui-ctl-w100">
+			<label class="ui-ctl-block ui-entity-editor-popup-create-field-item ui-ctl-w100 crm-entity-product-list-setting-row" data-testid="${'product-list-setting-row-' + item.id}">
 				<div class="ui-ctl-w10" style="text-align: center">${input}</div>
 				<div class="ui-ctl-w75">
 					<span class="ui-entity-editor-popup-create-field-item-title ${item.disabled ? 'crm-entity-product-list-disabled-setting' : ''}">${item.title}${hintNode}</span>
@@ -1984,17 +2241,22 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 					if (settingButton) {
 						this.getPopup().setBindElement(settingButton);
 					}
+					this.getPopup().close();
+					if (settingButton) {
+						ui_a11y.FocusNavigator.focusTarget(settingButton);
+					}
 					message = enabled ? main_core.Loc.getMessage('CRM_ENTITY_PL_SETTING_ENABLED') : main_core.Loc.getMessage('CRM_ENTITY_PL_SETTING_DISABLED');
 					message = message.replace('#NAME#', setting.title);
 				} else if (setting.id === 'WAREHOUSE') {
+					this.scheduleFocusRestoreOnReload();
 					this.editor.reloadGrid(false);
 					message = enabled ? main_core.Loc.getMessage('CRM_ENTITY_CARD_WAREHOUSE_ENABLED') : main_core.Loc.getMessage('CRM_ENTITY_CARD_WAREHOUSE_DISABLED');
 				} else {
+					this.scheduleFocusRestoreOnReload();
 					this.editor.reloadGrid();
 					message = enabled ? main_core.Loc.getMessage('CRM_ENTITY_PL_SETTING_ENABLED') : main_core.Loc.getMessage('CRM_ENTITY_PL_SETTING_DISABLED');
 					message = message.replace('#NAME#', setting.title);
 				}
-				this.getPopup().close();
 				this.showNotification(message, {
 					category: 'popup-settings'
 				});
@@ -2459,7 +2721,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	}
 
 	const TOTAL_BLOCK_FIELDS = ['totalCost', 'totalDelivery', 'totalTax', 'totalWithoutTax', 'totalDiscount', 'totalWithoutDiscount'];
-	const PRODUCT_FIELDS_FOR_TOTAL = ['PRODUCT_ID', 'PRODUCT_NAME', 'QUANTITY', 'DISCOUNT_TYPE_ID', 'DISCOUNT_RATE', 'DISCOUNT_SUM', 'TAX_RATE', 'TAX_INCLUDED', 'PRICE_EXCLUSIVE', 'PRICE', 'CUSTOMIZED'];
+	const PRODUCT_FIELDS_FOR_TOTAL = ['PRODUCT_ID', 'PRODUCT_NAME', 'QUANTITY', 'TAX_ID', 'DISCOUNT_TYPE_ID', 'DISCOUNT_RATE', 'DISCOUNT_SUM', 'TAX_RATE', 'TAX_NAME', 'TAX_INCLUDED', 'PRICE_EXCLUSIVE', 'PRICE', 'CUSTOMIZED'];
 	class EditorTotalsService {
 		editor;
 		state = {
@@ -2685,7 +2947,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 		}
 	}
 
-	const AJAX_FIELDS = ['ID', 'PRODUCT_ID', 'PRODUCT_NAME', 'QUANTITY', 'TAX_RATE', 'TAX_INCLUDED', 'PRICE_EXCLUSIVE', 'PRICE_NETTO', 'PRICE_BRUTTO', 'PRICE', 'CUSTOMIZED', 'BASE_PRICE', 'DISCOUNT_ROW', 'DISCOUNT_SUM', 'DISCOUNT_TYPE_ID', 'DISCOUNT_RATE', 'CURRENCY', 'STORE_ID', 'INPUT_RESERVE_QUANTITY', 'RESERVE_QUANTITY', 'DATE_RESERVE_END', 'SORT', 'MEASURE_CODE', 'MEASURE_NAME', 'TYPE'];
+	const AJAX_FIELDS = ['ID', 'PRODUCT_ID', 'PRODUCT_NAME', 'QUANTITY', 'TAX_RATE', 'TAX_NAME', 'TAX_INCLUDED', 'PRICE_EXCLUSIVE', 'PRICE_NETTO', 'PRICE_BRUTTO', 'PRICE', 'CUSTOMIZED', 'BASE_PRICE', 'DISCOUNT_ROW', 'DISCOUNT_SUM', 'DISCOUNT_TYPE_ID', 'DISCOUNT_RATE', 'CURRENCY', 'STORE_ID', 'INPUT_RESERVE_QUANTITY', 'RESERVE_QUANTITY', 'DATE_RESERVE_END', 'SORT', 'MEASURE_CODE', 'MEASURE_NAME', 'TYPE'];
 	class EditorProductDataSerializer {
 		editor;
 		constructor(editor) {
@@ -2920,6 +3182,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 			sended: false
 		};
 		updateFieldForList = null;
+		pendingFocusAfterProductSelect = new Set();
 		productSelectionPopupHandler = event => {
 			const caller = 'crm_entity_product_list';
 			const jsEventsManagerId = this.getSettingValue('jsEventsManagerId', '');
@@ -2955,6 +3218,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 				return;
 			}
 			const id = this.addProductRow();
+			this.pendingFocusAfterProductSelect.add(this.getRowIdPrefix() + id);
 			this.focusProductSelector(id);
 		};
 		showSettingsPopupHandler = () => {
@@ -3173,6 +3437,13 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 					productRow.modifyBasePriceInput();
 					productRow.executeExternalActions();
 					this.gridLifecycle.getGrid().tableUnfade();
+					if (this.pendingFocusAfterProductSelect.has(data.rowId)) {
+						this.pendingFocusAfterProductSelect.delete(data.rowId);
+						const selector = productRow.getSelector();
+						requestAnimationFrame(() => {
+							selector?.focusName();
+						});
+					}
 				});
 			} else {
 				this.gridLifecycle.getGrid().tableUnfade();
@@ -3378,6 +3649,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 		clearEditor() {
 			this.productCollection.unsubscribeAll();
 			this.productCollection.reset();
+			this.pendingFocusAfterProductSelect.clear();
 			this.destroySettingsPopup();
 			this.unsubscribeDomEvents();
 			this.unsubscribeCustomEvents();
@@ -3799,6 +4071,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 			if (!main_core.Type.isStringFilled(rowId)) {
 				return;
 			}
+			this.pendingFocusAfterProductSelect.delete(this.getRowIdPrefix() + rowId);
 			const gridRow = this.gridLifecycle.getGrid().getRows().getById(rowId);
 			if (gridRow) {
 				main_core.Dom.remove(gridRow.getNode());
@@ -3899,5 +4172,5 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	exports.Editor = Editor;
 	exports.PageEventsManager = PageEventsManager;
 
-})(this.BX.Crm.Entity.ProductList = this.BX.Crm.Entity.ProductList || {}, BX, BX, BX.Event, BX.Catalog, BX.UI, BX, BX.Catalog, BX.Catalog, BX.Catalog.Store, BX.Main, BX.Catalog, BX.Currency, BX.UI.Tour, BX, BX.Catalog, BX);
+})(this.BX.Crm.Entity.ProductList = this.BX.Crm.Entity.ProductList || {}, window, BX, BX.Event, BX.Catalog, BX.UI, BX.UI.Notification, BX.Catalog, BX.Catalog, BX.Catalog.Store, BX.UI.Accessibility, BX.Main, BX.Catalog, BX.Currency, BX.UI.Tour, BX, BX.Catalog, BX);
 //# sourceMappingURL=script.js.map

@@ -17,10 +17,14 @@ return [
 		'utils/random',
 		'utils/skeleton',
 
+		'ui-system/typography/text',
+		'tokens',
+
 		'layout/pure-component',
 		'layout/ui/empty-screen',
 		'layout/ui/wizard/step',
 
+		'bizproc:helper/network-error',
 		'bizproc:wizard/progress-bar-number',
 		'bizproc:helper/duration',
 	],

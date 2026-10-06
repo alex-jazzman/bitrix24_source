@@ -1,0 +1,246 @@
+.crm-ai-report-drawer__content-block.crm-ai-report-drawer__assessment-block {
+	background: rgba(255, 255, 255, 0.09);
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-sm, 12px);
+	padding-bottom: var(--ui-space-stack-5xl, 44px);
+}
+
+.crm-ai-report-drawer__content-block-assessment-header {
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+	width: 100%;
+}
+
+.crm-ai-report-drawer__content-block-assessment-header--collapsible {
+	flex-direction: column;
+	align-items: stretch;
+}
+
+.crm-ai-report-drawer__content-block-assessment-header-text {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+}
+
+.crm-ai-report-drawer__content-block-assessment-header .crm-ai-report-drawer__content-block-header-title {
+	margin-bottom: 0;
+}
+
+.crm-ai-report-drawer__content-block-assessment-header:not(.crm-ai-report-drawer__content-block-assessment-header--collapsible) .crm-ai-report-drawer__content-block-header-title {
+	margin-bottom: var(--ui-space-stack-sm, 12px);
+}
+
+.crm-ai-report-drawer__content-block-assessment-header:not(.crm-ai-report-drawer__content-block-assessment-header--collapsible) .crm-ai-report-drawer__content-block-header-chart {
+	align-self: flex-start;
+	cursor: help;
+}
+
+.crm-ai-report-drawer__content-block-assessment-header-main {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--ui-space-inline-xs, 8px);
+	width: 100%;
+}
+
+.crm-ai-report-drawer__content-block-assessment-header-main .crm-ai-report-drawer__content-block-header-chart {
+	flex-shrink: 0;
+}
+
+.crm-ai-report-drawer__content-block-assessment-header-extra {
+	display: flex;
+	flex-direction: column;
+	margin-top: var(--ui-space-stack-sm, 12px);
+}
+
+.crm-ai-report-drawer__content-block-assessment-header-script-name {
+	color: var(--ui-color-base-2, rgba(255, 255, 255, 0.8));
+	font-weight: var(--ui-font-weight-bold, 500);
+	margin-bottom: var(--ui-space-stack-2xs2, 6px);
+}
+
+.crm-ai-report-drawer__content-block-assessment-header-script-name-highlight {
+	cursor: pointer;
+	color: var(--ui-color-blue-40, #7FDEFC);
+}
+
+.crm-ai-report-drawer__content-block-header-assessment-review {
+	color: var(--ui-color-base-0, #FFFFFF);
+	margin-bottom: var(--ui-space-stack-sm, 12px);
+}
+
+.crm-ai-report-drawer__content-block-assessment-criteria {
+	display: flex;
+	flex-direction: row;
+	width: 100%;
+}
+
+.crm-ai-report-drawer__content-block-assessment-criteria-failures-spoiler {
+	width: 100%;
+	margin-left: var(--ui-space-inset-lg2, 22px);
+}
+
+.crm-ai-report-drawer__content-block-assessment-criteria-ai-logo {
+	background: url("icons/ai-logo.svg") no-repeat;
+	background-size: contain;
+	flex-shrink: 0;
+	height: 45px;
+	width: 45px;
+	border-radius: 50%;
+	background-color: rgba(255, 255, 255, 0.06);
+	position: sticky;
+	top: var(--ui-space-stack-xs, 8px);
+}
+
+.crm-ai-report-drawer__content-block-assessment-criteria-failures-list {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-xl, 24px);
+	width: 100%;
+}
+
+.crm-ai-report-drawer__content-block-assessment-criteria-footer {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	width: 100%;
+	box-sizing: border-box;
+	padding: var(--ui-space-inset-md, 16px) var(--ui-space-inset-md, 16px) var(--ui-space-inset-md2, 18px);
+	border-radius: var(--ui-border-radius-xl, 14px);
+	background: rgba(255, 255, 255, 0.80);
+}
+
+.crm-ai-report-drawer__content-block-assessment-criteria-footer-cell {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: space-between;
+	width: 100%;
+}
+
+.crm-ai-report-drawer__content-block-assessment-criteria-footer :nth-child(1 of .crm-ai-report-drawer__content-block-assessment-criteria-footer-cell) {
+	margin-bottom: var(--ui-space-stack-sm2, 14px);
+}
+
+.crm-ai-report-drawer__content-block-assessment-criteria-footer :nth-last-child(1 of .crm-ai-report-drawer__content-block-assessment-criteria-footer-cell) {
+	margin-top: var(--ui-space-stack-sm2, 14px);
+}
+
+.crm-ai-report-drawer__spoiler-content:not(.--hidden) + .crm-ai-report-drawer__content-block-assessment-criteria-footer-cell-divider {
+	margin-top: var(--ui-space-stack-sm2, 14px);
+}
+
+.crm-ai-report-drawer__content-block-assessment-criteria-footer :nth-last-child(1 of .crm-ai-report-drawer__spoiler-content):not(.--hidden) {
+	margin-top: var(--ui-space-stack-sm2, 14px);
+}
+
+.crm-ai-report-drawer__content-block-assessment-criteria-footer-cell-title {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+}
+
+.crm-ai-report-drawer__content-block-assessment-criteria-footer-cell-title-check {
+	display: inline-block;
+	-webkit-mask-image: var(--o-ui-icon-set__path_check-m);
+	mask-image: var(--o-ui-icon-set__path_check-m);
+	-webkit-mask-size: 100% 100%;
+	mask-size: 100% 100%;
+	background-color: var(--ui-color-design-tinted-success-content);
+	height: 24px;
+	width: 24px;
+	padding: 0 var(--ui-space-inset-2xs, 4px);
+	margin-left: var(--ui-space-inline-2xs-neg, -4px);
+}
+
+.crm-ai-report-drawer__content-block-assessment-criteria-footer-cell-title-circle-minus {
+	display: inline-block;
+	-webkit-mask-image: var(--o-ui-icon-set__path_circle-minus);
+	mask-image: var(--o-ui-icon-set__path_circle-minus);
+	-webkit-mask-size: 100% 100%;
+	mask-size: 100% 100%;
+	background-color: var(--ui-color-base-4);
+	height: 24px;
+	width: 24px;
+	padding: 0 var(--ui-space-inset-2xs, 4px);
+	margin-left: var(--ui-space-inline-2xs-neg, -4px);
+}
+
+.crm-ai-report-drawer__content-block-assessment-criteria-footer-cell-divider {
+	height: 1px;
+	width: 100%;
+	background: var(--ui-color-divider-default, #F0F0F0);
+}
+
+.crm-ai-report-drawer__content-block-assessment-criteria-footer-cell-counter {
+	color: var(--ui-color-base-3, #828B95);
+}
+
+.crm-ai-report-drawer__footer-criteria-container {
+	display: flex;
+	flex-direction: column;
+	padding-left: var(--ui-space-inset-2xl, 28px);
+	gap: var(--ui-space-inline-sm, 16px);
+}
+
+.crm-ai-report-drawer__content-block.crm-ai-report-drawer__assessment-block.--minimized {
+	gap: 0;
+	padding-bottom: var(--ui-space-inset-xl, 24px);
+}
+
+.crm-ai-report-drawer__content-block-header-chart-disabled .ui-progressround {
+	flex-direction: row;
+}
+
+.crm-ai-report-drawer__content-block-header-chart .ui-progressround-status-percent-incircle {
+	font-size: var(--ui-typography-text-lg-font-size, 15px);
+	font-weight: var(--ui-font-weight-medium, 500);
+	color: var(--ui-color-base-0, #FFFFFF);
+}
+
+.crm-ai-report-drawer__content-block-header-chart-disabled .ui-progressround-text-after {
+	padding-top: 0;
+	font-weight: var(--ui-font-weight-bold, 500);
+	font-size: var(--ui-font-size-xl, 16px);
+	margin-left: var(--ui-space-inline-xs, 8px);
+	color: var(--ui-color-base-3);
+}
+
+.crm-ai-report-drawer__content-block-header-chart-disabled {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	gap: var(--ui-space-inline-xs, 8px);
+}
+
+.crm-ai-report-drawer__content-block-header-assessment-badge.ui-btn {
+	background: var(--ui-color-base-8);
+	border-radius: var(--ui-border-radius-sm, 8px);
+	width: fit-content;
+	color: var(--ui-color-base-0);
+	font-weight: var(--ui-font-weight-bold, 500);
+	padding: 0 var(--ui-space-inset-2xs2, 6px);
+	margin-bottom: var(--ui-space-stack-2xs2, 6px);
+	min-height: auto;
+}
+
+.crm-ai-report-drawer__content-block-header-assessment-badge.ui-btn .ui-btn-text {
+	color: inherit;
+	font-weight: inherit;
+}
+
+.crm-ai-report-drawer__content-block-header-assessment-not-used-in-rating-badge {
+	flex-shrink: 0;
+}
+
+.crm-ai-report-drawer__content-block-header-assessment-script-updated-badge {
+	cursor: pointer;
+	transition: opacity 200ms ease;
+}
+
+.crm-ai-report-drawer__content-block-header-assessment-script-updated-badge:hover {
+	opacity: 0.85;
+}

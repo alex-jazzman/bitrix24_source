@@ -212,7 +212,7 @@ BX.Lists.ListClass = (function ()
 
 	ListClass.prototype.unLock = function (elementId)
 	{
-		BX.ajax.runAction("lists.controller.lock.unLock", {
+		BX.ajax.runAction("lists.Lock.unLock", {
 			data: {
 				element_id: elementId,
 				iblock_type_id: this.iblockTypeId,

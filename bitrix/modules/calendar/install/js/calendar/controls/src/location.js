@@ -266,20 +266,32 @@ export class Location
 			disabled: disabledControl,
 			minWidth: 300,
 			onChangeCallback: () => {
+				EventEmitter.emit('Calendar.LocationControl.onValueChange');
+
 				// eslint-disable-next-line no-shadow
 				const menuItemList = this.menuItemList;
+				const text = this.DOM.input.value;
+				const id = this.DOM.input.dataset.selectedValue;
+				this.value = { text };
 
-				EventEmitter.emit('Calendar.LocationControl.onValueChange');
-				const value = this.DOM.input.value;
-				this.value = { text: value };
-				for (const element of menuItemList)
+				if (Type.isStringFilled(id))
 				{
-					if (element.labelRaw === value)
+					const element = menuItemList.find((item) => String(item.value) === String(id));
+					if (
+						element
+						&& (
+							element.labelRaw === text
+							|| element.label === text
+						)
+					)
 					{
 						this.value.type = element.type;
 						this.value.value = element.value;
 						Location.setCurrentCapacity(element.capacity);
-						break;
+					}
+					else
+					{
+						delete this.DOM.input.dataset.selectedValue;
 					}
 				}
 
@@ -359,6 +371,7 @@ export class Location
 	removeValue()
 	{
 		this.setValue(false, false);
+		delete this.DOM.input.dataset.selectedValue;
 		this.selectContol.onChangeCallback();
 		this.removeLocationRemoveButton();
 	}
@@ -781,6 +794,19 @@ export class Location
 		}
 
 		return res;
+	}
+
+	static isSameLocation(first, second)
+	{
+		const a = Type.isPlainObject(first) ? first : Location.parseStringValue(first);
+		const b = Type.isPlainObject(second) ? second : Location.parseStringValue(second);
+
+		if (a.type || b.type)
+		{
+			return a.type === b.type && String(a.value) === String(b.value);
+		}
+
+		return a.str === b.str;
 	}
 
 	getTextLocation(location)

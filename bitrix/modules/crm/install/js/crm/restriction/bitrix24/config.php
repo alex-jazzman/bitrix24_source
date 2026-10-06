@@ -3,7 +3,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
 }
-use \Bitrix\Crm;
+use Bitrix\Crm;
 
 $restrictions = [];
 $visitRestriction = Crm\Restriction\RestrictionManager::getVisitRestriction();

@@ -4,6 +4,7 @@
 jn.define('im/messenger/lib/chat-search/src/strategy/local/user-local-search-strategy', (require, exports, module) => {
 	const { Type } = require('type');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
+	const { UserType } = require('im/messenger/const');
 
 	class UserLocalSearchStrategy
 	{
@@ -23,10 +24,22 @@ jn.define('im/messenger/lib/chat-search/src/strategy/local/user-local-search-str
 		async search(searchOptions)
 		{
 			const searchDbResult = await this.#searchInLocalDb(searchOptions);
-			const visibleUsers = this.#filterHiddenBots(searchDbResult);
+			const visibleUsers = this.#filterGuests(this.#filterHiddenBots(searchDbResult));
 			void await this.#setUsersToStorage(visibleUsers);
 
 			return this.#getDialogIds(visibleUsers);
+		}
+
+		/**
+		 * @description Drops im-guest users from results. Guests with whom the current user
+		 * had a dialog stay visible because they are returned by the parallel
+		 * RecentSectionLocalSearchStrategy (which queries the recent table).
+		 * @param {Array<UsersModelState>} users
+		 * @return {Array<UsersModelState>}
+		 */
+		#filterGuests(users)
+		{
+			return users.filter((user) => user && user.type !== UserType.guest);
 		}
 
 		/**

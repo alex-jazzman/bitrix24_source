@@ -75,8 +75,12 @@ export class ParametersStep extends StepWithErrors
 			Loc.getMessage('BIZPROC_CMP_WORKFLOW_START_TMP_SINGLE_START_PARAMETERS_TITLE'),
 			this.#parameters,
 			this.#documentType,
-			null,
-			this.#signedDocumentId,
+			{
+				signedDocumentId: this.#signedDocumentId,
+				onSubmit: () => this.emit('onEnterSubmit'),
+				// the form title is nested under the step heading
+				titleLevel: 3,
+			},
 		);
 
 		this.#originalFormData = new FormData(this.#form);
@@ -117,7 +121,7 @@ export class ParametersStep extends StepWithErrors
 
 	onBeforeNextStep(): Promise
 	{
-		this.cleanErrors();
+		this.cleanErrors(this.#form);
 
 		const data = new FormData(this.#form);
 		data.set('templateId', this.#templateId);
@@ -133,7 +137,7 @@ export class ParametersStep extends StepWithErrors
 					resolve();
 				})
 				.catch((response) => {
-					this.showErrors(response.errors);
+					this.showErrors(response.errors, this.#form);
 					reject();
 				})
 			;

@@ -15,12 +15,15 @@ jn.define('call/calls/controller', (require, exports, module) => {
 	const { CallMenu } = require('call/calls/menu');
 	const { DeviceAccessError, CallJoinedElseWhereError, CallStub } = require('call/calls/engine');
 	const { stuckCallFinishTracker } = require('call/calls/stuck-call-finish-tracker');
+	const { isRoomClosedError } = require('src/is-room-closed-error');
 	const { CallSettingsManager } = require('call/settings-manager');
 	const { Notification } = require('im/messenger/lib/ui/notification');
 	const { Theme } = require('im/lib/theme');
 	const { Icon } = require('assets/icons');
 	const { Loc } = require('loc');
 	const { Tourist } = require('tourist');
+	const { getConnectionErrorStatus } = require('call/calls/controller/connection-error-status');
+	const { buildCallIdParam } = require('call/calls/controller/call-id-analytics-param');
 
 	const pathToExtension = `${currentDomain}/bitrix/mobileapp/callmobile/extensions/call/calls/controller/`;
 	const AUDIO_DEVICE = Object.freeze({
@@ -163,8 +166,11 @@ jn.define('call/calls/controller', (require, exports, module) => {
 			this.ignoreNativeCallAnswer = false;
 
 			this.answeredElsewhereCalls = new Set();
+			this.alreadyFinishedShownUuids = new Set();
 
 			this.onProximitySensorDebounced = CallUtil.debounce(this.onProximitySensor.bind(this), 500);
+
+			this.guestIdentifiedSubscribed = false;
 			this.init();
 
 			this.isAppPaused = false;
@@ -190,6 +196,12 @@ jn.define('call/calls/controller', (require, exports, module) => {
 			BX.addCustomEvent('ImRecent::counter::messages', this.onImMessagesCounter.bind(this));
 			BX.addCustomEvent(EventType.imMobile.setCurrentUser, this.onSetCurrentUser.bind(this));
 
+			if (!this.guestIdentifiedSubscribed)
+			{
+				BX.addCustomEvent(EventType.imMobile.guestIdentified, this.onGuestIdentified.bind(this));
+				this.guestIdentifiedSubscribed = true;
+			}
+
 			BX.PULL.subscribe({
 				type: 'server',
 				moduleId: 'im',
@@ -200,11 +212,20 @@ jn.define('call/calls/controller', (require, exports, module) => {
 			device.on('proximityChanged', this.onProximitySensorDebounced);
 		}
 
+		/**
+		 * Type of the call in progress, or null when there is none.
+		 *
+		 * Null, not an empty string: AnalyticsEvent drops a nil field, so an event without a call
+		 * goes without `type` instead of reaching the dashboard as an empty one. Callers that know
+		 * the type of an attempt that never became a call pass it explicitly.
+		 *
+		 * @return {String|null}
+		 */
 		getCallType()
 		{
 			if (!this.currentCall)
 			{
-				return '';
+				return null;
 			}
 
 			const isVideoconf = this.currentCall.associatedEntity.type === 'chat'
@@ -216,6 +237,36 @@ jn.define('call/calls/controller', (require, exports, module) => {
 			;
 
 			return isVideoconf ? Analytics.AnalyticsType.videoconf : callType;
+		}
+
+		/**
+		 * Type of a call that does not exist yet.
+		 *
+		 * `currentCall` is assigned only once the engine has answered, so on the failure paths of
+		 * start and join it is still empty. The provider chosen for the attempt and the chat data
+		 * it was started with are known from the very beginning and say the same thing about the
+		 * type, which is where the web takes it from as well.
+		 *
+		 * @param {String} provider provider of the attempt
+		 * @param {Object} [associatedEntityData] chat data of the attempt: dialog data (`type`)
+		 *   or the associated entity of a call (`advanced.chatType`)
+		 * @return {String}
+		 */
+		getAttemptCallType(provider, associatedEntityData = null)
+		{
+			const isVideoconf = associatedEntityData?.type === 'videoconf'
+				|| associatedEntityData?.advanced?.chatType === 'videoconf'
+			;
+
+			if (isVideoconf)
+			{
+				return Analytics.AnalyticsType.videoconf;
+			}
+
+			return provider === BX.Call.Provider.Plain
+				? Analytics.AnalyticsType.private
+				: Analytics.AnalyticsType.group
+			;
 		}
 
 		getAssociatedEntityType()
@@ -274,7 +325,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 						? Analytics.AnalyticsVpnStatus.vpnOn
 						: Analytics.AnalyticsVpnStatus.vpnOff
 				)
-				.setP5(`callId_${this._getCallIdentifier(this.currentCall)}`)
+				.setP5(buildCallIdParam(this._getCallIdentifier(this.currentCall)))
 			;
 
 			if (this.getAssociatedEntityType() === DialogType.collab)
@@ -287,7 +338,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 					.setType(this.getCallType())
 					.setStatus(Analytics.AnalyticsStatus.success)
 					.setP4(`collabId_${collabId}`)
-					.setP5(`callId_${this._getCallIdentifier(this.currentCall)}`)
+					.setP5(buildCallIdParam(this._getCallIdentifier(this.currentCall)))
 				;
 
 				analyticsCollab.send();
@@ -296,14 +347,20 @@ jn.define('call/calls/controller', (require, exports, module) => {
 			analytics.send();
 		}
 
-		sendStartCallErrorAnalytics(errorCode)
+		/**
+		 * @param {*} errorCode
+		 * @param {boolean} [isRoomClosed]
+		 * @param {String|null} [callType] type of the attempt; the failure paths know it from the
+		 *   provider they chose, while `currentCall` is usually not assigned yet
+		 */
+		sendStartCallErrorAnalytics(errorCode, isRoomClosed = false, callType = null)
 		{
 			const analytics = new AnalyticsEvent()
 				.setTool(Analytics.AnalyticsTool.im)
 				.setCategory(Analytics.AnalyticsCategory.call)
 				.setEvent(Analytics.AnalyticsEvent.startCall)
-				.setType(this.getCallType())
-				.setStatus(`error_${errorCode}`)
+				.setType(callType ?? this.getCallType())
+				.setStatus(getConnectionErrorStatus(errorCode, isRoomClosed))
 				.setP3(
 					this.currentCall.isCopilotActive
 						? Analytics.AnalyticsAIStatus.aiOn
@@ -314,7 +371,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 						? Analytics.AnalyticsVpnStatus.vpnOn
 						: Analytics.AnalyticsVpnStatus.vpnOff
 				)
-				.setP5('callId_0')
+				.setP5(buildCallIdParam(this._getCallIdentifier(this.currentCall)))
 			;
 
 			analytics.send();
@@ -334,7 +391,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 						? Analytics.AnalyticsVpnStatus.vpnOn
 						: Analytics.AnalyticsVpnStatus.vpnOff
 				)
-				.setP5(`callId_${this._getCallIdentifier(this.currentCall)}`)
+				.setP5(buildCallIdParam(this._getCallIdentifier(this.currentCall)))
 			;
 
 			if (mediaParams)
@@ -372,7 +429,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 					.setType(this.getCallType())
 					.setStatus(status)
 					.setP4(`collabId_${collabId}`)
-					.setP5(`callId_${this._getCallIdentifier(this.currentCall)}`)
+					.setP5(buildCallIdParam(this._getCallIdentifier(this.currentCall)))
 				;
 
 				analyticsCollab.send();
@@ -381,14 +438,21 @@ jn.define('call/calls/controller', (require, exports, module) => {
 			analytics.send();
 		}
 
-		sendJoinCallErrorAnalytics(errorCode, callId)
+		/**
+		 * @param {*} errorCode
+		 * @param {String|number|null} callId identifier of the call the user tried to join
+		 * @param {boolean} [isRoomClosed]
+		 * @param {String|null} [callType] type of the attempt; the failure paths know it from the
+		 *   provider they chose, while `currentCall` is usually not assigned yet
+		 */
+		sendJoinCallErrorAnalytics(errorCode, callId, isRoomClosed = false, callType = null)
 		{
 			const analytics = new AnalyticsEvent()
 				.setTool(Analytics.AnalyticsTool.im)
 				.setCategory(Analytics.AnalyticsCategory.call)
 				.setEvent(Analytics.AnalyticsEvent.connect)
-				.setType(this.getCallType())
-				.setStatus(`error_${errorCode}`)
+				.setType(callType ?? this.getCallType())
+				.setStatus(getConnectionErrorStatus(errorCode, isRoomClosed))
 				.setP3(
 					this.currentCall.isCopilotActive
 						? Analytics.AnalyticsAIStatus.aiOn
@@ -399,7 +463,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 						? Analytics.AnalyticsVpnStatus.vpnOn
 						: Analytics.AnalyticsVpnStatus.vpnOff
 				)
-				.setP5(`callId_${callId}`)
+				.setP5(buildCallIdParam(callId))
 			;
 
 			analytics.send();
@@ -423,7 +487,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 				.setSection(Analytics.AnalyticsSection.callFollowup)
 				.setP1(isAutostart ? 'launchType_auto' : 'launchType_manual')
 				.setP2(`chatUserCount_${this.currentCall.associatedEntity?.userCounter}`)
-				.setP5(`callId_${this._getCallIdentifier(this.currentCall)}`)
+				.setP5(buildCallIdParam(this._getCallIdentifier(this.currentCall)))
 			;
 
 			const userCount = this.getActiveCallUsers().length;
@@ -476,7 +540,8 @@ jn.define('call/calls/controller', (require, exports, module) => {
 					userCounter: chatData.userCounter
 			};
 
-			this.startCall(dialogId, e.video, dialogData, userData, { invitePeriod: e.invitePeriod });
+			const invitePeriod = e.invitePeriod || null;
+			this.startCall(dialogId, e.video, dialogData, userData, { invitePeriod, pendingToast: e.pendingToast });
 		}
 
 		maybeShowLocalVideo(show)
@@ -530,6 +595,8 @@ jn.define('call/calls/controller', (require, exports, module) => {
 
 		startCall(dialogId, isVideoEnabled, associatedDialogData = {}, userData = {}, options = {})
 		{
+			const { invitePeriod, pendingToast } = options;
+			this.pendingToast = pendingToast ?? null;
 			console.log('CallController.startCall', dialogId, isVideoEnabled, associatedDialogData);
 			if (!CallUtil.isDeviceSupported())
 			{
@@ -648,7 +715,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 						videoEnabled: Boolean(isVideoEnabled),
 						joinExisting: isGroupChat,
 						chatInfo: associatedDialogData,
-						invitePeriod: options.invitePeriod,
+						invitePeriod,
 					};
 
 					return isLegacyCall
@@ -734,6 +801,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 
 						CallUtil.error(error);
 						let errorCode = error.code;
+						const isRoomClosed = errorCode === CallError.alreadyFinished;
 
 						if (error instanceof DeviceAccessError)
 						{
@@ -745,7 +813,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 							this.__createErrorControlToast(BX.message('MOBILE_CALL_ALREADY_JOINED'), true);
 							errorCode = error.name;
 						}
-						else if ('code' in error && error.code === CallError.alreadyFinished)
+						else if (isRoomClosed)
 						{
 							this.__createErrorControlToast(BX.message('MOBILE_CALL_CAN_NOT_JOIN_ALREADY_FINISHED'), true);
 						}
@@ -757,7 +825,11 @@ jn.define('call/calls/controller', (require, exports, module) => {
 							);
 						}
 
-						this.sendStartCallErrorAnalytics(errorCode);
+						this.sendStartCallErrorAnalytics(
+							errorCode,
+							isRoomClosed,
+							this.getAttemptCallType(provider, associatedDialogData),
+						);
 
 						this.clearEverything();
 					});
@@ -798,7 +870,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 					videoEnabled: Boolean(isVideoEnabled),
 					joinExisting: isGroupChat,
 					chatInfo: associatedDialogData,
-					invitePeriod: options.invitePeriod,
+					invitePeriod,
 				};
 
 				return isLegacyCall
@@ -870,6 +942,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 					CallUtil.error(error);
 
 					let errorCode = error.code;
+					const isRoomClosed = errorCode === CallError.alreadyFinished;
 					if (error instanceof DeviceAccessError)
 					{
 						CallUtil.showDeviceAccessConfirm(isVideoEnabled, () => Application.openSettings());
@@ -880,7 +953,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 						this.__createErrorControlToast(BX.message('MOBILE_CALL_ALREADY_JOINED'), true);
 						errorCode = error.name;
 					}
-					else if ('code' in error && error.code === CallError.alreadyFinished)
+					else if (isRoomClosed)
 					{
 						this.__createErrorControlToast(BX.message('MOBILE_CALL_CAN_NOT_JOIN_ALREADY_FINISHED'), true);
 					}
@@ -898,7 +971,11 @@ jn.define('call/calls/controller', (require, exports, module) => {
 
 					if (errorCode !== 'user_is_busy')
 					{
-						this.sendStartCallErrorAnalytics(errorCode);
+						this.sendStartCallErrorAnalytics(
+							errorCode,
+							isRoomClosed,
+							this.getAttemptCallType(provider, associatedDialogData),
+						);
 					}
 
 					this.clearEverything();
@@ -1024,48 +1101,15 @@ jn.define('call/calls/controller', (require, exports, module) => {
 				.catch((error) => {
 					CallUtil.error(error);
 					let errorCode = error?.code;
-					if (
-						(errorCode && errorCode === CallError.alreadyFinished)
-						|| error?.errorCode === BX.Call.ErrorPreventingReconnection.CanNotCreateRoom
-						|| error?.errorCode === BX.Call.ErrorPreventingReconnection.RoomNotFound
-					)
+					// Only a join (mustCreate=false) proves a closed room; on the
+					// outgoing create path CanNotCreateRoom is a real create failure.
+					const isRoomClosed = callInfo.mustCreate !== true && isRoomClosedError(error);
+					if (isRoomClosed)
 					{
-						// Stuck call: the media room is gone. Finish it on the PHP side
-						// with silent=Y (no chat spam) and drop the recent card locally.
-						// Debounce via stuckCallFinishTracker: delay the REST so a
-						// concurrent Pull `Call::finish` can cancel it before it hits
-						// the server. Engine pull handler calls
-						// stuckCallFinishTracker.cancelPending(id, uuid) on arrival.
-						const finishData = { silent: 'Y' };
-						if (callInfo.callId)
-						{
-							finishData.callId = callInfo.callId;
-						}
-						if (callInfo.callUuid)
-						{
-							finishData.callUuid = callInfo.callUuid;
-						}
-						if (finishData.callId || finishData.callUuid)
-						{
-							stuckCallFinishTracker.scheduleFinish(
-								finishData.callId,
-								finishData.callUuid,
-								() => callEngine.getRestClient()
-									.callMethod('call.CallManager.finish', finishData)
-									.catch((e) => CallUtil.error('call.CallManager.finish failed', e)),
-							);
-
-							const callFields = {
-								id: callInfo.callId,
-								uuid: callInfo.callUuid,
-								provider,
-								associatedEntity: callInfo.associatedEntity,
-							};
-							BX.postComponentEvent('CallEvents::inactive', [callFields], 'im.recent');
-							BX.postComponentEvent('CallEvents::inactive', [callFields], 'im.messenger');
-						}
-
-						this.__createErrorControlToast(BX.message('MOBILE_CALL_CAN_NOT_JOIN_ALREADY_FINISHED'));
+						this.handleRoomClosed(
+							callEngine.jwtCalls[callInfo.callUuid] || callEngine.legacyCalls[callInfo.callId],
+							{ ...callInfo, provider },
+						);
 					}
 					else if (error === LARGE_CALL_ERROR)
 					{
@@ -1092,7 +1136,13 @@ jn.define('call/calls/controller', (require, exports, module) => {
 						? callInfo.callId
 						: callInfo.callUuid
 					;
-					this.sendJoinCallErrorAnalytics(errorCode, analyticsCallId);
+					this.sendJoinCallErrorAnalytics(
+						errorCode,
+						analyticsCallId,
+						isRoomClosed,
+						this.getAttemptCallType(provider, callInfo.associatedEntity),
+					);
+
 					this.clearEverything();
 				});
 		}
@@ -1220,7 +1270,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 								? Analytics.AnalyticsVpnStatus.vpnOn
 								: Analytics.AnalyticsVpnStatus.vpnOff
 						)
-						.setP5(`callId_${this._getCallIdentifier(newCall)}`);
+						.setP5(buildCallIdParam(this._getCallIdentifier(newCall)));
 
 					analytics.send();
 
@@ -1256,7 +1306,16 @@ jn.define('call/calls/controller', (require, exports, module) => {
 								this.currentCall.repeatAnswerEvents();
 
 								CallUtil.warn('checking self state');
-								callEngine.getRestClient().callMethod('call.CallManager.getUserState', { callId: this.currentCall.id }).then((response) => {
+								const userStateParams = {};
+								if (this.currentCall.id)
+								{
+									userStateParams.callId = this.currentCall.id;
+								}
+								if (this.currentCall.uuid)
+								{
+									userStateParams.callUuid = this.currentCall.uuid;
+								}
+								callEngine.getRestClient().callMethod('call.CallManager.getUserState', userStateParams).then((response) => {
 									const data = response.data();
 									const myState = data.STATE;
 
@@ -1266,9 +1325,10 @@ jn.define('call/calls/controller', (require, exports, module) => {
 									}
 								}).catch((response) => {
 									CallUtil.error(response);
-									if (Application.isBackground())
+									const errorCode = response?.answer?.error;
+									if (errorCode === 'access_denied' || errorCode === 'call_not_found' || errorCode === 'unknown_call_user')
 									{
-										Application.isBackground();
+										this.clearEverything();
 									}
 								});
 							}
@@ -1371,7 +1431,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 					}
 				});
 
-				if (this.#isLargeCallBlocked(response.result.roomType))
+				if (this.#isLargeCallBlocked(response?.result?.roomType))
 				{
 					return Promise.reject(LARGE_CALL_ERROR);
 				}
@@ -1414,46 +1474,9 @@ jn.define('call/calls/controller', (require, exports, module) => {
 				{
 					this.__createErrorControlToast(BX.message('MOBILE_CALL_LARGE_ROOM_NOT_SUPPORTED'), true);
 				}
-				else if (
-					error?.errorCode === BX.Call.ErrorPreventingReconnection.CanNotCreateRoom
-					|| error?.errorCode === BX.Call.ErrorPreventingReconnection.RoomNotFound
-					|| error?.code === CallError.alreadyFinished
-				)
+				else if (isRoomClosedError(error))
 				{
-					// Stuck call: media room is gone. Finish on PHP with silent=Y and
-					// drop the recent card locally. `call` may be a CallStub (only
-					// callId) or a PlainCallJwt (id + uuid) — pass whichever exists.
-					// Debounce via stuckCallFinishTracker: delay the REST so a
-					// concurrent Pull `Call::finish` can cancel it before it hits
-					// the server.
-					const callId = call?.id ?? call?.callId ?? null;
-					const callUuid = call?.uuid ?? null;
-					if (callId || callUuid)
-					{
-						const finishData = { silent: 'Y' };
-						if (callId)
-						{
-							finishData.callId = callId;
-						}
-						if (callUuid)
-						{
-							finishData.callUuid = callUuid;
-						}
-						stuckCallFinishTracker.scheduleFinish(callId, callUuid, () => callEngine.getRestClient()
-							.callMethod('call.CallManager.finish', finishData)
-							.catch((e) => CallUtil.error('call.CallManager.finish failed', e)));
-
-						const callFields = {
-							id: callId,
-							uuid: callUuid,
-							provider: call?.provider,
-							associatedEntity: call?.associatedEntity,
-						};
-						BX.postComponentEvent('CallEvents::inactive', [callFields], 'im.recent');
-						BX.postComponentEvent('CallEvents::inactive', [callFields], 'im.messenger');
-					}
-
-					this.__createErrorControlToast(BX.message('MOBILE_CALL_CAN_NOT_JOIN_ALREADY_FINISHED'), true);
+					this.handleRoomClosed(call);
 				}
 				else
 				{
@@ -1918,6 +1941,12 @@ jn.define('call/calls/controller', (require, exports, module) => {
 						BX.postComponentEvent('CallEvents::viewOpened', []);
 						BX.postWebEvent('CallEvents::viewOpened', {});
 
+						if (this.pendingToast && this.rootWidget)
+						{
+							Notification.showToastWithParams(this.pendingToast, this.rootWidget);
+							this.pendingToast = null;
+						}
+
 						resolve();
 					})
 					.catch((error) => {
@@ -2068,6 +2097,85 @@ jn.define('call/calls/controller', (require, exports, module) => {
 			{
 				this.callView.setUserData(userData);
 			}
+		}
+
+		async onGuestIdentified(data)
+		{
+			const dialogId = data?.dialogId;
+
+			if (!dialogId)
+			{
+				// TODO: replace console.warn with project logger when available
+				console.warn('[CallController] guestIdentified: invalid payload', data);
+
+				return;
+			}
+
+			if (this.currentCall?.associatedEntity?.id === dialogId)
+			{
+				return;
+			}
+
+			let call = callEngine.getCallWithDialogId(dialogId);
+
+			if (call === undefined)
+			{
+				// Engine is empty for a guest — query the server for an active call in this chat.
+				let response;
+				try
+				{
+					response = await BX.ajax.runAction('call.Call.tryJoinCall', {
+						data: {
+							entityType: 'chat',
+							entityId: String(dialogId),
+							provider: BX.Call.Provider.Bitrix,
+							callType: BX.Call.Type.Instant,
+						},
+					});
+				}
+				catch (error)
+				{
+					// TODO: replace console.warn with project logger when available
+					console.warn('[CallController] guestIdentified: tryJoinCall request failed', error);
+
+					return;
+				}
+
+				const responseData = response?.data;
+				if (!responseData?.success)
+				{
+					// TODO: replace console.warn with project logger when available
+					console.warn('[CallController] guestIdentified: no active call for dialog', dialogId);
+
+					return;
+				}
+
+				call = callEngine.instantiateCall(
+					responseData.call,
+					responseData.connectionData,
+					responseData.users,
+					responseData.logToken,
+					responseData.userData,
+				);
+			}
+
+			if (!call?.associatedEntity)
+			{
+				// TODO: replace console.warn with project logger when available
+				console.warn('[CallController] guestIdentified: call without associatedEntity', dialogId);
+
+				return;
+			}
+
+			const callInfo = {
+				isVideoEnabled: true,
+				callId: call.id,
+				callUuid: call.uuid,
+				associatedEntity: call.associatedEntity,
+				mustCreate: false,
+			};
+
+			this.joinCall(callInfo);
 		}
 
 		onAppActive()
@@ -2361,7 +2469,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 				.setEvent(analyticsEvent)
 				.setType(this.getCallType())
 				.setSection(Analytics.AnalyticsSection.callWindow)
-				.setP5(`callId_${this._getCallIdentifier(this.currentCall)}`);
+				.setP5(buildCallIdParam(this._getCallIdentifier(this.currentCall)));
 
 			analytics.send();
 			this.muteMicDevice(muted);
@@ -2470,7 +2578,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 				.setEvent(analyticsEvent)
 				.setType(this.getCallType())
 				.setSection(Analytics.AnalyticsSection.callWindow)
-				.setP5(`callId_${this._getCallIdentifier(this.currentCall)}`);
+				.setP5(buildCallIdParam(this._getCallIdentifier(this.currentCall)));
 
 			analytics.send();
 
@@ -2527,7 +2635,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 						.setEvent(Analytics.AnalyticsEvent.clickChat)
 						.setType(this.getCallType())
 						.setSection(Analytics.AnalyticsSection.callWindow)
-						.setP5(`callId_${this._getCallIdentifier(this.currentCall)}`);
+						.setP5(buildCallIdParam(this._getCallIdentifier(this.currentCall)));
 
 					analytics.send();
 
@@ -2553,7 +2661,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 				.setEvent(Analytics.AnalyticsEvent.handOn)
 				.setType(this.getCallType())
 				.setSection(Analytics.AnalyticsSection.callWindow)
-				.setP5(`callId_${this._getCallIdentifier(this.currentCall)}`);
+				.setP5(buildCallIdParam(this._getCallIdentifier(this.currentCall)));
 
 			analytics.send();
 
@@ -2628,7 +2736,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 							? Analytics.AnalyticsEvent.micOff
 							: Analytics.AnalyticsEvent.micOn,
 					)
-					.setP5(`callId_${this._getCallIdentifier(this.currentCall)}`);
+					.setP5(buildCallIdParam(this._getCallIdentifier(this.currentCall)));
 
 				this.ignoreLeaveAnalyticsEvent = true;
 				analytics.send();
@@ -2997,7 +3105,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 				.setP1(`callLength_${CallUtil.getTimeInSeconds(this.callStartTime)}`)
 				.setP3(`maxUserCount_${this.getMaxActiveCallUsers().length}`)
 				.setP4(`chatId_${this.normalizeChatId(this.currentCall.associatedEntity.id)}`)
-				.setP5(`callId_${this._getCallIdentifier(this.currentCall)}`);
+				.setP5(buildCallIdParam(this._getCallIdentifier(this.currentCall)));
 
 			analytics.send();
 
@@ -3233,7 +3341,7 @@ jn.define('call/calls/controller', (require, exports, module) => {
 					.setP1(`callLength_${CallUtil.getTimeInSeconds(this.callStartTime)}`)
 					.setP3(`maxUserCount_${this.getMaxActiveCallUsers().length}`)
 					.setP4(`chatId_${this.normalizeChatId(this.currentCall.associatedEntity.id)}`)
-					.setP5(`callId_${this._getCallIdentifier(this.currentCall)}`);
+					.setP5(buildCallIdParam(this._getCallIdentifier(this.currentCall)));
 
 				analytics.send();
 			}
@@ -3398,6 +3506,69 @@ jn.define('call/calls/controller', (require, exports, module) => {
 				},
 				this.rootWidget,
 			);
+		}
+
+		/**
+		 * Zombie join: the media room is gone. Finish on PHP with silent=Y and
+		 * drop the recent card locally; mark the uuid closed so a repeat
+		 * attempt is short-circuited; show the "already finished" toast once
+		 * per uuid. Debounce the REST via stuckCallFinishTracker so a
+		 * concurrent Pull `Call::finish` can cancel it before it hits the
+		 * server. `call` may be a CallStub (id only) or a *CallJwt (id + uuid).
+		 *
+		 * @param {?object} call
+		 * @param {object} [callInfo]
+		 */
+		handleRoomClosed(call, callInfo = {})
+		{
+			const callId = call?.id ?? call?.callId ?? callInfo.callId ?? null;
+			const callUuid = call?.uuid ?? callInfo.callUuid ?? null;
+
+			// Repeat attempt on the same dead uuid: the side effects below (finish,
+			// recent-drop, toast) already ran on the first hit — skip them all.
+			if (callUuid && this.alreadyFinishedShownUuids.has(callUuid))
+			{
+				return;
+			}
+
+			if (callUuid)
+			{
+				stuckCallFinishTracker.markClosed(callUuid);
+				this.alreadyFinishedShownUuids.add(callUuid);
+				// Bound the dedup set so it cannot grow unbounded over a long session.
+				if (this.alreadyFinishedShownUuids.size > 100)
+				{
+					const oldest = this.alreadyFinishedShownUuids.values().next().value;
+					this.alreadyFinishedShownUuids.delete(oldest);
+				}
+			}
+
+			if (callId || callUuid)
+			{
+				const finishData = { silent: 'Y' };
+				if (callId)
+				{
+					finishData.callId = callId;
+				}
+				if (callUuid)
+				{
+					finishData.callUuid = callUuid;
+				}
+				stuckCallFinishTracker.scheduleFinish(callId, callUuid, () => callEngine.getRestClient()
+					.callMethod('call.CallManager.finish', finishData)
+					.catch((e) => CallUtil.error('call.CallManager.finish failed', e)));
+
+				const callFields = {
+					id: callId,
+					uuid: callUuid,
+					provider: call?.provider ?? callInfo.provider,
+					associatedEntity: call?.associatedEntity ?? callInfo.associatedEntity,
+				};
+				BX.postComponentEvent('CallEvents::inactive', [callFields], 'im.recent');
+				BX.postComponentEvent('CallEvents::inactive', [callFields], 'im.messenger');
+			}
+
+			this.__createErrorControlToast(BX.message('MOBILE_CALL_CAN_NOT_JOIN_ALREADY_FINISHED'), true);
 		}
 
 		__createErrorControlToast(message, global = false)

@@ -12,6 +12,7 @@ return [
 		'ui.buttons',
 		'bizproc.task',
 		'ui.dialogs.messagebox',
+		'ui.hint',
 		'main.core',
 		'sidepanel',
 	],

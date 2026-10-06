@@ -164,7 +164,7 @@ BX.CrmDiskUploader.prototype =
 				{
 					fileId: fileId,
 					name: datum["NAME"],
-					size: datum["SIZE"],
+					size: BX.type.isNumber(datum["BYTES"]) ? datum["BYTES"] : datum["SIZE"],
 					viewUrl: BX.type.isNotEmptyString(datum["VIEW_URL"]) ? datum["VIEW_URL"] : "",
 					progress: 100
 
@@ -616,7 +616,7 @@ BX.CrmDiskUploader.prototype =
 				uploader: this,
 				container: this._itemContainer,
 				name: BX.type.isNotEmptyString(info.name) ? info.name : "",
-				size: BX.type.isNotEmptyString(info.size) ? info.size : "",
+				size: BX.type.isNumber(info.size) || BX.type.isNotEmptyString(info.size) ? info.size : "",
 				fileId: BX.type.isNumber(info.fileId) ? info.fileId : 0,
 				viewUrl: BX.type.isNotEmptyString(info.viewUrl) ? info.viewUrl : "",
 				progress: BX.type.isNumber(info.progress) ? info.progress : 0
@@ -709,6 +709,80 @@ BX.CrmDiskUploader.prototype =
 	},
 	_onFileSelectButtonClick: function(e)
 	{
+		if(!BX.Runtime || typeof(BX.Runtime.loadExtension) !== "function")
+		{
+			this._openLegacyFileDialog();
+
+			return BX.PreventDefault(e);
+		}
+
+		BX.Runtime.loadExtension(["disk.disk-picker", "ui.uploader.core"])
+			.then(
+				BX.delegate(
+					function(exports)
+					{
+						var DiskPicker = exports ? exports.DiskPicker : null;
+						var formatFileSize = exports ? exports.formatFileSize : null;
+						if(
+							DiskPicker
+							&& typeof(DiskPicker.isEnabled) === "function"
+							&& DiskPicker.isEnabled()
+							&& typeof(formatFileSize) === "function"
+						)
+						{
+							this._openUniversalDiskPicker(DiskPicker, formatFileSize);
+
+							return;
+						}
+
+						this._openLegacyFileDialog();
+					},
+					this
+				)
+			)
+			.catch(BX.delegate(this._openLegacyFileDialog, this));
+
+		return BX.PreventDefault(e);
+	},
+	_openUniversalDiskPicker: function(DiskPicker, formatFileSize)
+	{
+		var picker = new DiskPicker();
+		picker.open(
+			{
+				selectionMode: "multiple",
+				onSelect: BX.delegate(
+					function(result)
+					{
+						this._onUniversalFileSelect(result, formatFileSize);
+					},
+					this
+				)
+			}
+		);
+	},
+	_onUniversalFileSelect: function(result, formatFileSize)
+	{
+		if(!result || !BX.type.isArray(result.items))
+		{
+			return;
+		}
+
+		var selected = result.items.map(
+			function(item)
+			{
+				return {
+					id: "n" + item.objectId,
+					type: "file",
+					name: item.name,
+					size: formatFileSize(item.size)
+				};
+			}
+		);
+
+		this._onFileSelect("", "", selected);
+	},
+	_openLegacyFileDialog: function()
+	{
 		BX.addCustomEvent(BX.DiskFileDialog, "inited", this._fileDialogInitHandler);
 		BX.ajax(
 			{
@@ -717,7 +791,6 @@ BX.CrmDiskUploader.prototype =
 				timeout: 30
 			}
 		);
-		return BX.PreventDefault(e);
 	},
 	_onFileDialogInit: function(name)
 	{
@@ -756,7 +829,7 @@ BX.CrmDiskUploader.prototype =
 				if(fileId > 0)
 				{
 					var name = BX.type.isNotEmptyString(info["name"]) ? info["name"] : id;
-					var size = BX.type.isNotEmptyString(info["size"]) ? info["size"] : 0;
+					var size = BX.type.isNumber(info["sizeInt"]) ? info["sizeInt"] : info["size"];
 					this.addItem(id, { fileId: fileId, name: name, size: size, progress: 100 }).layout();
 				}
 			}

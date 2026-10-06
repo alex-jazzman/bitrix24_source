@@ -78,6 +78,10 @@ class Overview extends AISenseContent
 				if ($value)
 				{
 					$this->{$field} = $value->getContent();
+					if ($this->isEmpty && !empty($this->{$field}))
+					{
+						$this->isEmpty = false;
+					}
 				}
 			}
 
@@ -100,6 +104,10 @@ class Overview extends AISenseContent
 				if (is_array($value))
 				{
 					$this->{$field} = $this->convertObjectStructure($value);
+					if ($this->isEmpty && !empty($this->{$field}))
+					{
+						$this->isEmpty = false;
+					}
 				}
 			}
 
@@ -126,6 +134,7 @@ class Overview extends AISenseContent
 							if (!empty($obj))
 							{
 								$this->{$field}[] = $obj;
+								$this->isEmpty = false;
 							}
 						}
 					}

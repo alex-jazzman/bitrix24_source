@@ -143,6 +143,10 @@ jn.define('im/messenger/provider/services/sync/fillers/base', (require, exports,
 			logger.log(`${this.constructor.name}.updateModels:`, syncListResult);
 
 			await this.processUsers(syncListResult);
+			// ORDER INVARIANT: processUserLifecycle must run strictly AFTER processUsers.
+			// A single sync batch can carry the same user in both sections; deletion must win.
+			// Do not reorder these calls.
+			await this.processUserLifecycle(syncListResult);
 			this.closeDeletedCommentsChats(syncListResult.messageSync.completeDeletedMessages);
 			await this.processDialogues(syncListResult);
 			await this.processFiles(syncListResult.files);
@@ -167,6 +171,20 @@ jn.define('im/messenger/provider/services/sync/fillers/base', (require, exports,
 			}
 
 			await this.store.dispatch('usersModel/setFromSync', usersUniqueCollection);
+		}
+
+		/**
+		 * @param {SyncListResult} syncListResult
+		 */
+		async processUserLifecycle(syncListResult)
+		{
+			const userSync = syncListResult.userSync;
+			if (!userSync || !Type.isArrayFilled(userSync.deletedUsers))
+			{
+				return;
+			}
+
+			await this.store.dispatch('usersModel/deleteByIdList', { idList: userSync.deletedUsers });
 		}
 
 		/**

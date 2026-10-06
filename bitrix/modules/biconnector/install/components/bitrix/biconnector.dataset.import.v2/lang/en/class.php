@@ -1,0 +1,11 @@
+<?php
+$MESS["BICONNECTOR_APP_NOT_FOUND"] = "Source ID is not specified.";
+$MESS["BICONNECTOR_CONNECTION_NOT_ACTIVE"] = "Connection is not active.";
+$MESS["BICONNECTOR_CONNECTION_NOT_ACTIVE_DESC_MSGVER_1"] = "Activate the connection to edit the table.";
+$MESS["BICONNECTOR_CSV_IMPORT_ACCESS_ERROR"] = "Insufficient permission to access Analytics Hub.";
+$MESS["BICONNECTOR_CSV_IMPORT_SEPARATOR_COLON"] = "Colon";
+$MESS["BICONNECTOR_CSV_IMPORT_SEPARATOR_COMMA"] = "Comma";
+$MESS["BICONNECTOR_CSV_IMPORT_SEPARATOR_SEMICOLON"] = "Semicolon";
+$MESS["BICONNECTOR_CSV_IMPORT_UTF8"] = "UTF-8";
+$MESS["BICONNECTOR_CSV_IMPORT_WIN1251"] = "Regional Windows encoding";
+$MESS["BICONNECTOR_DATASET_NOT_FOUND_MSGVER_1"] = "Table was not found.";

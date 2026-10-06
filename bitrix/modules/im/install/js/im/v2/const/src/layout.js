@@ -2,6 +2,8 @@ export const Layout = {
 	chat: 'chat',
 	createChat: 'createChat',
 	updateChat: 'updateChat',
+	createFolder: 'createFolder',
+	updateFolder: 'updateFolder',
 	copyCollab: 'copyCollab',
 	channel: 'channel',
 	notification: 'notification',
@@ -13,6 +15,7 @@ export const Layout = {
 	collab: 'collab',
 	market: 'market',
 	taskComments: 'tasksTask',
+	folder: 'folder',
 };
 
 export type LayoutType = $Values<typeof Layout>;

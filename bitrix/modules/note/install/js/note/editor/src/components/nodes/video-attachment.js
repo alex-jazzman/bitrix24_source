@@ -1,3 +1,4 @@
+import { sanitizeAttachmentUrl } from '../../utils/viewer-attrs';
 import { AttachmentNodeViewBaseComponent } from './attachment-base';
 import { ResizableMediaMixin } from './resizable-media-mixin';
 import { MediaResizeControls } from './media-resize-controls';
@@ -17,7 +18,8 @@ export const VideoAttachmentNodeViewComponent = {
 	computed: {
 		videoUrl(): string
 		{
-			return this.attrs.src || this.showUrl || '';
+			// `showUrl` is already checked by the base component, own `src` is not.
+			return sanitizeAttachmentUrl(this.attrs.src) || this.showUrl || '';
 		},
 		// Required by ResizableMediaMixin to gate handles/overlay.
 		hasMedia(): boolean

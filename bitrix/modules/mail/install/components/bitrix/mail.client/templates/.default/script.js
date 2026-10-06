@@ -476,12 +476,17 @@
 			var spamLink     = BX.findChildByClassName(this.__wrapper, 'js-msg-view-control-spam', true);
 			var deleteLink   = BX.findChildByClassName(this.__wrapper, 'js-msg-view-control-delete', true);
 
-			BX.bind(replyButton, 'click', this.showReplyForm.bind(this));
-			BX.bind(replyAllLink, 'click', this.showReplyForm.bind(this, true));
-			BX.bind(replyLink, 'click', this.showReplyForm.bind(this));
+			BX.bind(replyButton, 'click', this.showReplyForm.bind(this, false, 'fast_reply'));
+			BX.bind(replyAllLink, 'click', this.showReplyForm.bind(this, true, 'reply_all'));
+			BX.bind(replyLink, 'click', this.showReplyForm.bind(this, false, 'reply'));
 
 			BX.bind(forwardLink, 'click', function ()
 			{
+				if (self.refuseOnMigration('MAIL_MIGRATION_SEND_UNAVAILABLE'))
+				{
+					return;
+				}
+
 				var params = {
 					forward: self.options.messageId
 				};
@@ -518,6 +523,16 @@
 			}
 			BX.bind(spamLink, 'click', this.markAsSpam.bind(this, spamLink, uid));
 			BX.bind(deleteLink, 'click', this.delete.bind(this, deleteLink, uid));
+
+			this.__migrationControls = [
+				replyButton,
+				replyLink,
+				replyAllLink,
+				forwardLink,
+				spamLink,
+				deleteLink
+			];
+			this.__initMigrationGuard();
 		}
 
 		var mailForm = BXMainMailForm.getForm(this.options.formId);
@@ -609,6 +624,14 @@
 
 	BXMailMessage.handleFormSubmit = function (form, event)
 	{
+		// The migration may start while the reply form is already open: the draft survives, the send does not.
+		if (this.migrationActive === true)
+		{
+			form.showError(BX.message('MAIL_MIGRATION_SEND_UNAVAILABLE'));
+
+			return BX.PreventDefault(event);
+		}
+
 		var fields = this.htmlForm.elements;
 		var emptyRcpt = true;
 
@@ -650,39 +673,44 @@
 			return BX.PreventDefault(event);
 		}
 
-		// @TODO: use events
-		var uploads, items, totalSize = 0;
+		var localLargeAttachmentFeatureAvailable = (
+			BX.message('MAIL_LARGE_ATTACHMENT_LOCAL_FEATURE_AVAILABLE') === true
+		);
+		var totalSize = 0;
 		for (var i in form.postForm.controllers)
 		{
-			if (!form.postForm.controllers.hasOwnProperty(i))
+			if (
+				!form.postForm.controllers.hasOwnProperty(i)
+				|| form.postForm.controllers[i].storage != 'disk'
+			)
+			{
 				continue;
+			}
 
-			if (form.postForm.controllers[i].storage != 'disk')
-				continue;
-
+			var uploads = 0;
 			try
 			{
-				uploads = 0;
 				uploads = form.postForm.controllers[i].handler.agent.upload.filesCount;
 			}
 			catch (err) {}
 
 			if (uploads > 0)
 			{
-				// @TODO: hide on complete
 				form.showError(BX.message('MAIL_MESSAGE_NEW_UPLOADING'));
 				return BX.PreventDefault(event);
 			}
 
-			if (BX.message('MAIL_MESSAGE_MAX_SIZE') > 0)
+			if (!localLargeAttachmentFeatureAvailable && BX.message('MAIL_MESSAGE_MAX_SIZE') > 0)
 			{
 				try
 				{
-					items = form.postForm.controllers[i].handler.agent.queue.items.items;
+					var items = form.postForm.controllers[i].handler.agent.queue.items.items;
 					totalSize = Object.keys(items).reduce(
-						function (sum, k)
+						function (sum, key)
 						{
-							return sum + (items[k].file ? parseInt(items[k].file.sizeInt || items[k].file.size) : 0);
+							var file = items[key].file;
+
+							return sum + (file ? parseInt(file.sizeInt || file.size) : 0);
 						},
 						totalSize
 					);
@@ -691,7 +719,11 @@
 			}
 		}
 
-		if (BX.message('MAIL_MESSAGE_MAX_SIZE') > 0 && BX.message('MAIL_MESSAGE_MAX_SIZE') <= Math.ceil(totalSize / 3) * 4) // base64 coef.
+		if (
+			!localLargeAttachmentFeatureAvailable
+			&& BX.message('MAIL_MESSAGE_MAX_SIZE') > 0
+			&& BX.message('MAIL_MESSAGE_MAX_SIZE') <= Math.ceil(totalSize / 3) * 4
+		)
 		{
 			form.showError(BX.message('MAIL_MESSAGE_MAX_SIZE_EXCEED'));
 			return BX.PreventDefault(event);
@@ -737,8 +769,32 @@
 		}
 	};
 
-	BXMailMessage.prototype.showReplyForm = function(isReplyAll)
+	// Opens in the topmost window, so the panel stacks above the message view instead of replacing it.
+	function openInSidePanel(url)
 	{
+		// The width is passed explicitly: intranet binds a rule of its own to this very address and wins as
+		// the earlier one, so a rule of ours would never be reached.
+		var options = BX.message('MAIL_COMPOSE_REDESIGN_ENABLED') === true
+			? { width: 820, cacheable: false }
+			: undefined;
+
+		top.BX.SidePanel.Instance.open(url, options);
+	}
+
+	BXMailMessage.prototype.showReplyForm = function(isReplyAll, analyticsElement)
+	{
+		if (this.refuseOnMigration('MAIL_MIGRATION_SEND_UNAVAILABLE'))
+		{
+			return;
+		}
+
+		if (BX.message('MAIL_COMPOSE_REDESIGN_ENABLED') === true)
+		{
+			this.openReplyPanel(isReplyAll === true, analyticsElement);
+
+			return;
+		}
+
 		var mailForm = BXMainMailForm.getForm(this.options.formId);
 		var replyButton = BX.findChildByClassName(this.__wrapper, 'js-msg-view-reply-panel', true);
 
@@ -775,6 +831,26 @@
 		this.ctrl.scrollTo(this.htmlForm);
 	};
 
+	BXMailMessage.prototype.openReplyPanel = function (isReplyAll, analyticsElement)
+	{
+		var params = {
+			reply: this.options.messageId,
+			c_element: analyticsElement
+		};
+
+		if (isReplyAll)
+		{
+			params.reply_all = 'Y';
+		}
+
+		if (this.ctrl.options.mail_uf_message_token)
+		{
+			params.mail_uf_message_token = this.ctrl.options.mail_uf_message_token;
+		}
+
+		openInSidePanel(BX.util.add_url_param(this.ctrl.options.pathNew, params));
+	};
+
 	BXMailMessage.prototype.hideReplyForm = function ()
 	{
 		var mailForm = BXMainMailForm.getForm(this.options.formId);
@@ -790,8 +866,110 @@
 		this.__dummyNode.appendChild(this.htmlForm);
 	};
 
+	// The card mirrors the message list: while the mailbox migrates, actions the server will refuse
+	// anyway are dimmed here instead of failing after the click.
+	BXMailMessage.prototype.__initMigrationGuard = function ()
+	{
+		var mailboxId = parseInt(this.options.mailboxId, 10);
+
+		this.migrationActive = false;
+
+		if (!(mailboxId > 0) || !BX.Mail || !BX.Mail.getMigrationState)
+		{
+			return;
+		}
+
+		var state = BX.Mail.getMigrationState(mailboxId);
+		var apply = function ()
+		{
+			this.__applyMigrationState(state.isActive());
+		}.bind(this);
+
+		this.__unsubscribeMigration = state.subscribe(function (change)
+		{
+			this.__applyMigrationState(change.active === true);
+		}.bind(this));
+
+		if (state.isInitialized())
+		{
+			apply();
+		}
+
+		// Controls stay in their usual state until the status is known: the mailbox is not migrating
+		// in the overwhelming majority of cases, and the server refuses the action regardless. A click
+		// that outruns the answer is caught by the checks in the handlers below.
+		state.initialize().then(function ()
+		{
+			if (state.isInitialized())
+			{
+				apply();
+			}
+		});
+	};
+
+	BXMailMessage.prototype.__applyMigrationState = function (active)
+	{
+		this.migrationActive = active === true;
+
+		var controls = this.__migrationControls || [];
+		for (var i = 0; i < controls.length; i++)
+		{
+			if (!controls[i])
+			{
+				continue;
+			}
+
+			if (this.migrationActive)
+			{
+				BX.addClass(controls[i], 'mail-msg-view-control-disabled');
+				controls[i].setAttribute('title', BX.message('MAIL_MIGRATION_ACTION_UNAVAILABLE') || '');
+			}
+			else
+			{
+				BX.removeClass(controls[i], 'mail-msg-view-control-disabled');
+				controls[i].removeAttribute('title');
+			}
+		}
+
+		var sendButton = this.htmlForm && this.htmlForm.querySelector('.main-mail-form-submit-button');
+		if (sendButton)
+		{
+			sendButton.disabled = this.migrationActive;
+			if (this.migrationActive)
+			{
+				sendButton.setAttribute('title', BX.message('MAIL_MIGRATION_SEND_UNAVAILABLE') || '');
+			}
+			else
+			{
+				sendButton.removeAttribute('title');
+			}
+		}
+	};
+
+	BXMailMessage.prototype.refuseOnMigration = function (phraseId)
+	{
+		if (this.migrationActive !== true)
+		{
+			return false;
+		}
+
+		if (BX.UI && BX.UI.Notification)
+		{
+			BX.UI.Notification.Center.notify({
+				content: BX.message(phraseId)
+			});
+		}
+
+		return true;
+	};
+
 	BXMailMessage.prototype.markAsSpam = function (btn, uid)
 	{
+		if (this.refuseOnMigration('MAIL_MIGRATION_ACTION_UNAVAILABLE'))
+		{
+			return;
+		}
+
 		btn.classList.add('mail-msg-view-control-disabled');
 		BX.ajax.runAction('mail.message.markAsSpam', {
 			data: {ids: [uid]}
@@ -806,6 +984,11 @@
 
 	BXMailMessage.prototype.delete = function (btn, uid)
 	{
+		if (this.refuseOnMigration('MAIL_MIGRATION_ACTION_UNAVAILABLE'))
+		{
+			return;
+		}
+
 		if (btn.dataset && btn.dataset.isTrash)
 		{
 			if (!this.popupDeleteConfirm)
@@ -1166,48 +1349,50 @@
 		},
 	})
 
-	top.BX.SidePanel.Instance.bindAnchors({
-		rules: [
-			{
-				condition: [
-					siteDir + 'mail(\/|$)',
-				],
-				options: {
-					//loading animation is assigned to this class
-					contentClassName: "mail-loader-modifier",
-					//replacing the standard loader with an empty element
-					loader: this.mailLoader,
-					cacheable: false,
-					customLeftBoundary: 0,
-				}
-			},
-			{
-				condition: [
-					'^' + siteDir + 'mail/config/(new|edit)',
-				],
-				options: {
-					width: 760,
-					cacheable: false
-				}
-			},
-			{
-				condition: [
-					'^' + siteDir + 'mail/(blacklist|signature|addressbook)',
-				],
-				options: {
-					width: 1080,
-					cacheable: false
-				}
-			},
-			{
-				condition: [
-					'^' + siteDir + 'mail/(message)'
-				],
-				options: {
-					width: 1080
-				}
+	var sidePanelRules = [
+		{
+			condition: [
+				siteDir + 'mail(\/|$)',
+			],
+			options: {
+				//loading animation is assigned to this class
+				contentClassName: "mail-loader-modifier",
+				//replacing the standard loader with an empty element
+				loader: this.mailLoader,
+				cacheable: false,
+				customLeftBoundary: 0,
 			}
-		]
+		},
+		{
+			condition: [
+				'^' + siteDir + 'mail/config/(new|edit)',
+			],
+			options: {
+				width: 760,
+				cacheable: false
+			}
+		},
+		{
+			condition: [
+				'^' + siteDir + 'mail/(blacklist|signature|addressbook)',
+			],
+			options: {
+				width: 1080,
+				cacheable: false
+			}
+		},
+		{
+			condition: [
+				'^' + siteDir + 'mail/(message)'
+			],
+			options: {
+				width: 1080
+			}
+		}
+	];
+
+	top.BX.SidePanel.Instance.bindAnchors({
+		rules: sidePanelRules
 	});
 
 })();

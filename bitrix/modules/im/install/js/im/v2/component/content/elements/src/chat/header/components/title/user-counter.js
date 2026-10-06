@@ -52,7 +52,7 @@ export const UserCounter = {
 		},
 		isShowGuestCount(): boolean
 		{
-			return this.dialog.guestCount > 0 && this.dialog.type === ChatType.chat;
+			return this.dialog.guestCount > 0 && [ChatType.chat, ChatType.calendar].includes(this.dialog.type);
 		},
 		guestCounterText(): string
 		{
@@ -94,7 +94,7 @@ export const UserCounter = {
 			:class="{'--click': needShowSubtitleCursor}"
 		>
 			{{ userCounterText }}
-			<span v-if="isShowGuestCount" class="bx-im-chat-header__guest-counter">
+			<span v-if="isShowGuestCount" class="bx-im-chat-header__guest-counter" data-testid="im-chat-header-guest-counter">
 				{{ guestCounterText }}
 			</span>
 		</div>

@@ -1,5 +1,9 @@
+import { type BaseEvent } from 'main.core.events';
+
 import { BaseMessage } from 'im.v2.component.message.base';
 import { AuthorTitle, DefaultMessageContent, MessageKeyboard, MessageStatus } from 'im.v2.component.message.elements';
+import { EventType, KeyboardButtonType, type KeyboardButtonConfig } from 'im.v2.const';
+import { Analytics } from 'im.v2.lib.analytics';
 import { type ImModelMessage } from 'im.v2.model';
 
 import { BottomPanel } from './bottom-panel';
@@ -44,8 +48,47 @@ export const AiAssistantMessageV2 = {
 		{
 			return this.message.keyboard.length > 0;
 		},
+		suggestsCount(): number
+		{
+			return this.message.keyboard.filter(
+				(button: KeyboardButtonConfig) => button.type === KeyboardButtonType.button,
+			).length;
+		},
+	},
+	mounted()
+	{
+		if (this.hasKeyboard)
+		{
+			this.subscribeToVisibility();
+		}
+	},
+	beforeUnmount()
+	{
+		this.unsubscribeFromVisibility();
 	},
 	methods: {
+		subscribeToVisibility(): void
+		{
+			this.$Bitrix.eventEmitter.subscribe(EventType.dialog.onMessageIsVisible, this.onMessageIsVisible);
+		},
+		unsubscribeFromVisibility(): void
+		{
+			this.$Bitrix.eventEmitter.unsubscribe(EventType.dialog.onMessageIsVisible, this.onMessageIsVisible);
+		},
+		onMessageIsVisible(event: BaseEvent<{ messageId: number, dialogId: string }>): void
+		{
+			const { messageId, dialogId } = event.getData();
+			if (dialogId !== this.dialogId || messageId !== this.message.id)
+			{
+				return;
+			}
+
+			Analytics.getInstance().copilot.onShowSuggestedPrompts(this.dialogId, this.message.id, this.suggestsCount);
+		},
+		onSuggestedPromptClick(): void
+		{
+			Analytics.getInstance().copilot.onClickSuggestedPrompt(this.dialogId, this.suggestsCount);
+		},
 		loc(phraseCode: string, replacements: {[p: string]: string} = {}): string
 		{
 			return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
@@ -72,7 +115,7 @@ export const AiAssistantMessageV2 = {
 			</div>
 			<BottomPanel v-if="!isError" :message="message" :dialogId="dialogId" />
 			<template #after-message v-if="hasKeyboard">
-				<MessageKeyboard :item="message" :dialogId="dialogId" />
+				<MessageKeyboard :item="message" :dialogId="dialogId" @click="onSuggestedPromptClick" />
 			</template>
 		</BaseMessage>
 	`,

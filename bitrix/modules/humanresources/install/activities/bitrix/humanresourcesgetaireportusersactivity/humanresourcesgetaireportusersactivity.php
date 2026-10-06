@@ -49,6 +49,21 @@ class CBPHumanResourcesGetAiReportUsersActivity extends BaseActivity
 
 	protected function internalExecute(): ErrorCollection
 	{
+		$nodeAvailabilityLocator = \Bitrix\Main\DI\ServiceLocator::getInstance();
+		if ($nodeAvailabilityLocator->has(\Bitrix\Bizproc\Public\Service\AiAgent\NodeAvailabilityServiceInterface::class))
+		{
+			$nodeAvailabilityService = $nodeAvailabilityLocator->get(
+				\Bitrix\Bizproc\Public\Service\AiAgent\NodeAvailabilityServiceInterface::class
+			);
+			if (!$nodeAvailabilityService->isAvailable())
+			{
+				$errorCollection = new ErrorCollection();
+				$errorCollection->setError($nodeAvailabilityService->getUnavailableError());
+
+				return $errorCollection;
+			}
+		}
+
 		$usersByRole = Container::getNodeSettingsService()->getUsersByMaxRoleWithAiReportsEnabled();
 
 		$heads = $usersByRole[NodeMemberRole::Head->value] ?? [];

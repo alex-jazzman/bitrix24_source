@@ -639,14 +639,28 @@ class ProxyIntegrator implements IntegratorInterface
 	/**
 	 * @inheritDoc
 	 */
-	public function changeBiconnectorToken(string $biconnectorToken): IntegratorResponse
+	public function changeBiconnectorToken(
+		string $biconnectorToken,
+		bool $arbitrateInstanceStatus = true,
+	): IntegratorResponse
 	{
 		return
 			$this
-				->createDefaultRequest(self::PROXY_ACTION_CHANGE_BI_TOKEN_SUPERSET)
+				->createChangeBiconnectorTokenRequest($arbitrateInstanceStatus)
 				->setParams(['biconnectorToken' => $biconnectorToken])
 				->perform()
 		;
+	}
+
+	private function createChangeBiconnectorTokenRequest(bool $arbitrateInstanceStatus): IntegratorRequest
+	{
+		$request = $this->createDefaultRequest(self::PROXY_ACTION_CHANGE_BI_TOKEN_SUPERSET);
+		if (!$arbitrateInstanceStatus)
+		{
+			$request->removeAfter(Middleware\StatusArbiter::getMiddlewareId());
+		}
+
+		return $request;
 	}
 
 	/**
@@ -714,7 +728,8 @@ class ProxyIntegrator implements IntegratorInterface
 	public function importDashboard(
 		string $filePath,
 		string $appCode,
-		string $type = ''
+		string $type = '',
+		bool $forceImportDatasets = false,
 	): IntegratorResponse
 	{
 
@@ -727,6 +742,7 @@ class ProxyIntegrator implements IntegratorInterface
 					'langCode' => CultureFormatter::getLanguageCode(),
 					'appCode' => $appCode,
 					'requiresSubscription' => $type === SupersetDashboardTable::DASHBOARD_TYPE_MARKET,
+					'forceImportDatasets' => $forceImportDatasets,
 				])
 				->setSenderHttpClientParams([
 					'streamTimeout' => self::PROXY_EXTENDED_STREAM_TIMEOUT,
@@ -1321,6 +1337,79 @@ class ProxyIntegrator implements IntegratorInterface
 				->setParams($parameters)
 				->perform()
 			;
+	}
+
+	// endregion
+
+	// region Self-hosted license
+
+	/**
+	 * @inheritDoc
+	 *
+	 * A cloud portal cannot own the self-hosted license extension, so the call is refused locally and no
+	 * request is sent to the proxy.
+	 */
+	public function setSelfHostedLicenseExpiration(?DateTime $date): IntegratorResponse
+	{
+		$response = new IntegratorResponse(status: IntegratorResponse::STATUS_INNER_ERROR);
+		$response->addError(
+			new Error(
+				'Self-hosted license expiration is not applicable to a cloud portal.',
+				'selfhosted_license_not_applicable',
+			)
+		);
+
+		return $response;
+	}
+
+	public function setBoxLicenseExpiration(?DateTime $date): IntegratorResponse
+	{
+		$response = new IntegratorResponse(status: IntegratorResponse::STATUS_INNER_ERROR);
+		$response->addError(
+			new Error(
+				'Box license expiration is not applicable to a cloud portal.',
+				'box_license_not_applicable',
+			)
+		);
+
+		return $response;
+	}
+
+	/**
+	 * A cloud portal has no local mode to allow or refuse, so the call is refused locally and no request is sent
+	 * to the proxy.
+	 */
+	public function setSelfHostedEditionVerdict(bool $isAllowed): IntegratorResponse
+	{
+		$response = new IntegratorResponse(status: IntegratorResponse::STATUS_INNER_ERROR);
+		$response->addError(
+			new Error(
+				'Self-hosted edition verdict is not applicable to a cloud portal.',
+				'selfhosted_edition_verdict_not_applicable',
+			)
+		);
+
+		return $response;
+	}
+
+	/**
+	 * @inheritDoc
+	 *
+	 * A cloud portal has no instance of its own to reset, so the call is refused locally and no request is sent to
+	 * the proxy. The refusal is what keeps the reset from being asked after the mode has changed: at that moment the
+	 * factory answers with this integrator, and a refusal reads as "not reset".
+	 */
+	public function resetSelfHostedLicense(): IntegratorResponse
+	{
+		$response = new IntegratorResponse(status: IntegratorResponse::STATUS_INNER_ERROR);
+		$response->addError(
+			new Error(
+				'Self-hosted license reset is not applicable to a cloud portal.',
+				'selfhosted_license_reset_not_applicable',
+			)
+		);
+
+		return $response;
 	}
 
 	// endregion

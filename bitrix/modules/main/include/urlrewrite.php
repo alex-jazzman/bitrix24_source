@@ -81,7 +81,7 @@ if (!$uri->isPathTraversal())
 
 				$_GET += $vars;
 				$_REQUEST += $vars;
-				$_SERVER["QUERY_STRING"] = Web\Uri::urnEncode($params, false);
+				$_SERVER["QUERY_STRING"] = Web\Uri::urnEncode($params);
 				$url = substr($url, 0, $pos);
 
 				// actualize context if it is initialized already

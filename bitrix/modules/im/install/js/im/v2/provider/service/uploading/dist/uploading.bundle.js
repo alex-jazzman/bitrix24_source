@@ -503,14 +503,15 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		stop(uploaderId) {
 			this.#uploaderWrappers.get(uploaderId).stop();
 		}
-		uploadFileFromDisk(files, dialogId) {
+		uploadFileFromDisk(files, dialogId, replyId) {
 			Object.values(files).forEach(file => {
 				const messageWithFile = this.#prepareFileFromDisk(file, dialogId);
 				this.#addFileFromDiskToModel(messageWithFile).then(() => {
 					const message = {
 						tempMessageId: messageWithFile.tempMessageId,
 						fileIds: [messageWithFile.tempFileId],
-						dialogId: messageWithFile.dialogId
+						dialogId: messageWithFile.dialogId,
+						replyId
 					};
 					return this.#sendingService.sendMessageWithFiles(message);
 				}).then(() => {
@@ -519,7 +520,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 						temporaryFileId: messageWithFile.tempFileId,
 						tempMessageId: messageWithFile.tempMessageId,
 						realFileId: messageWithFile.file.id.slice(1),
-						fromDisk: true
+						fromDisk: true,
+						replyId
 					});
 				}).catch(error => {
 					console.error('SendingService: sendFilesFromDisk error:', error);
@@ -580,6 +582,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				});
 			});
 		}
+		#appendReplyId(payload, replyId) {
+			if (replyId > 0) {
+				payload.reply_id = replyId;
+			}
+			return payload;
+		}
 		commitFile(params) {
 			const {
 				temporaryFileId,
@@ -588,7 +596,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				realFileId,
 				fromDisk,
 				messageText = '',
-				sendAsFile = false
+				sendAsFile = false,
+				replyId
 			} = params;
 			const fileIdParams = {};
 			if (fromDisk) {
@@ -596,14 +605,15 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			} else {
 				fileIdParams.upload_id = realFileId.toString().slice(1);
 			}
-			this.#restClient.callMethod(im_v2_const.RestMethod.imDiskFileCommit, {
+			const payload = {
 				chat_id: chatId,
 				message: messageText,
 				template_id: tempMessageId,
 				file_template_id: temporaryFileId,
 				as_file: sendAsFile ? 'Y' : 'N',
 				...fileIdParams
-			}).catch(error => {
+			};
+			this.#restClient.callMethod(im_v2_const.RestMethod.imDiskFileCommit, this.#appendReplyId(payload, replyId)).catch(error => {
 				this.#setMessageError(tempMessageId);
 				this.#updateFileProgress(temporaryFileId, 0, im_v2_const.FileStatus.error);
 				console.error('commitFile error', error);
@@ -615,14 +625,16 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			const sendAsFile = uploader.getCustomData('sendAsFile');
 			const text = uploader.getCustomData('text');
 			const tempMessageId = uploader.getCustomData('tempMessageId');
+			const replyId = uploader.getCustomData('replyId');
 			const fileIds = uploader.getServerFilesIds();
-			return this.#restClient.callMethod(im_v2_const.RestMethod.imDiskFileCommit, {
+			const payload = {
 				chat_id: chatId,
 				message: text,
 				template_id: tempMessageId,
 				as_file: sendAsFile ? 'Y' : 'N',
 				upload_id: fileIds
-			});
+			};
+			return this.#restClient.callMethod(im_v2_const.RestMethod.imDiskFileCommit, this.#appendReplyId(payload, replyId));
 		}
 		async #uploadPreview(file) {
 			const needPreview = this.#getFileType(file) === im_v2_const.FileType.video || file.isAnimated();
@@ -774,12 +786,19 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		#setMessagesText(uploaderId, text) {
 			this.#uploaderWrappers.get(uploaderId).setCustomData('text', text);
 		}
+		#setMessagesReplyId(uploaderId, replyId) {
+			if (replyId > 0) {
+				this.#uploaderWrappers.get(uploaderId).setCustomData('replyId', replyId);
+			}
+		}
 		sendMessageWithFiles(params) {
 			const {
 				uploaderId,
-				text
+				text,
+				replyId
 			} = params;
 			this.#setMessagesText(uploaderId, text);
+			this.#setMessagesReplyId(uploaderId, replyId);
 			this.#tryToSendMessage(uploaderId);
 		}
 		#createMessageFromFiles(uploaderId) {
@@ -793,11 +812,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			const text = this.#uploaderWrappers.get(uploaderId).getCustomData('text');
 			const dialogId = this.#uploaderWrappers.get(uploaderId).getCustomData('dialogId');
 			const tempMessageId = this.#uploaderWrappers.get(uploaderId).getCustomData('tempMessageId');
+			const replyId = this.#uploaderWrappers.get(uploaderId).getCustomData('replyId');
 			return {
 				fileIds,
 				tempMessageId,
 				dialogId,
-				text
+				text,
+				replyId
 			};
 		}
 		#tryToSendMessage(uploaderId) {
@@ -869,6 +890,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			const text = uploaderWrapper.getCustomData('text');
 			const tempMessageId = uploaderWrapper.getCustomData('tempMessageId');
 			const sendAsFile = uploaderWrapper.getCustomData('sendAsFile');
+			const replyId = uploaderWrapper.getCustomData('replyId');
 			const binaryFiles = uploaderWrapper.getBinaryFiles();
 			const {
 				uploaderId: newUploaderId,
@@ -884,7 +906,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			await loadAllComplete;
 			this.sendMessageWithFiles({
 				uploaderId: newUploaderId,
-				text
+				text,
+				replyId
 			});
 			this.#destroyUploader(uploaderId);
 		}

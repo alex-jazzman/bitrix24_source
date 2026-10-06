@@ -144,3 +144,12 @@
 	color: #151515;
 	background-color: rgba(255, 255, 255, 0.92);
 }
+
+/* BitrixGPT redesign */
+.ai__copilot-scope.--bitrixgpt-redesign .ai__image-configurator-style_item-radio-btn:checked + .ai__image-configurator-styles_item-inner {
+	outline-color: var(--ui-color-accent-main-primary);
+}
+
+.ai__copilot-scope.--bitrixgpt-redesign .ai__image-configurator-style_item-radio-btn:checked + .ai__image-configurator-styles_item-inner::after {
+	background-color: var(--ui-color-accent-main-primary);
+}

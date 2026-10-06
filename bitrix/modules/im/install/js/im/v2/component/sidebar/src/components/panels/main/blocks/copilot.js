@@ -48,10 +48,6 @@ export const CopilotPreview = {
 		{
 			return (new CopilotManager()).isGroupCopilotChat(this.dialogId);
 		},
-		isAIModelChangeAllowed(): boolean
-		{
-			return FeatureManager.isFeatureAvailable(Feature.isAIModelChangeAllowed);
-		},
 		isBitrixGptV2Available(): boolean
 		{
 			return FeatureManager.isFeatureAvailable(Feature.isBitrixGptV2Available);
@@ -81,7 +77,7 @@ export const CopilotPreview = {
 					<SettingsSeparator />
 				</template>
 				<CopilotRole :dialogId="dialogId" />
-				<AIModel v-if="isAIModelChangeAllowed && !isBitrixGptV2Available" :dialogId="dialogId" />
+				<AIModel v-if="!isBitrixGptV2Available" :dialogId="dialogId" />
 				<MuteChat :dialogId="dialogId" />
 			</div>
 		</div>

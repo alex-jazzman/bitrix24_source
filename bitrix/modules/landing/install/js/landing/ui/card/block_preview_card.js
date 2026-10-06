@@ -72,12 +72,29 @@
 				props: {
 					className: favoriteBadgeClassList,
 				},
+				attrs: {
+					role: 'button',
+					tabindex: '-1',
+					'data-card-action': '',
+					'aria-label': data.isFavorite
+						? BX.Landing.Loc.getMessage('LANDING_BLOCKS_LIST_PREVIEW_FAVORITE_REMOVE_LABEL')
+						: BX.Landing.Loc.getMessage('LANDING_BLOCKS_LIST_PREVIEW_FAVORITE_ADD_LABEL'),
+				},
 				children: [
 					this.icon,
 				],
 			});
 
 			BX.append(this.favoriteBadge, this.imageContainer);
+
+			BX.Event.bind(this.favoriteBadge, 'keydown', (event) => {
+				if (event.key === 'Enter' || event.key === ' ')
+				{
+					event.preventDefault();
+					event.stopPropagation();
+					this.favoriteBadge.click();
+				}
+			});
 
 			this.showFavoriteNotification = function(message) {
 				top.BX.UI.Notification.Center.notify({
@@ -97,6 +114,10 @@
 					BX.Dom.removeClass(this.favoriteBadge, FAVOURITE_BADGE_ON_CLASS);
 					BX.Dom.addClass(this.icon, O_HEART_CLASS);
 					BX.Dom.removeClass(this.icon, HEART_CLASS);
+					this.favoriteBadge.setAttribute(
+						'aria-label',
+						BX.Landing.Loc.getMessage('LANDING_BLOCKS_LIST_PREVIEW_FAVORITE_ADD_LABEL'),
+					);
 					if (this.currentCategory === 'favourite')
 					{
 						const mainInstance = BX.Landing.Main.getInstance();
@@ -118,6 +139,10 @@
 					BX.Dom.addClass(this.favoriteBadge, FAVOURITE_BADGE_ON_CLASS);
 					BX.Dom.removeClass(this.icon, O_HEART_CLASS);
 					BX.Dom.addClass(this.icon, HEART_CLASS);
+					this.favoriteBadge.setAttribute(
+						'aria-label',
+						BX.Landing.Loc.getMessage('LANDING_BLOCKS_LIST_PREVIEW_FAVORITE_REMOVE_LABEL'),
+					);
 				}
 				const type = BX.Landing.Env.getInstance().getType();
 
@@ -206,6 +231,7 @@
 					event.stopPropagation();
 					BX.UI.Dialogs.MessageBox.show({
 						message: BX.Landing.Loc.getMessage("LANDING_BLOCKS_LIST_PREVIEW_DELETE_MSG"),
+						useAirDesign: true,
 						buttons: BX.UI.Dialogs.MessageBoxButtons.YES_CANCEL,
 						popupOptions: {
 							targetContainer: parent.document.body

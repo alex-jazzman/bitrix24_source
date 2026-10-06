@@ -16,7 +16,11 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 \Bitrix\Main\UI\Extension::load("ui.alerts");
 \Bitrix\Main\UI\Extension::load("ui.forms");
 \Bitrix\Main\UI\Extension::load('ui.buttons');
+\Bitrix\Main\UI\Extension::load('ui.buttons.icons');
 \Bitrix\Main\UI\Extension::load("ui.notification");
+// The type of a signature is shown as a label of the design system, built as markup in a grid cell
+\Bitrix\Main\UI\Extension::load('ui.label');
+\Bitrix\Main\UI\Extension::load('ui.dialogs.messagebox');
 \Bitrix\Main\Loader::includeModule('ui');
 \CJSCore::init("sidepanel");
 
@@ -29,13 +33,14 @@ $button = new Bitrix\UI\Buttons\Button([
 	'color' => Color::PRIMARY,
 ]);
 $button->addAttribute('onclick', sprintf('BX.Mail.UserSignature.List.openUrl("%s")', CUtil::JSEscape($arResult['addUrl'])));
+$button->addAttribute('data-testid', 'mail-signature-list-create-button');
 
 Toolbar::addFilter($arResult['FILTER']);
 Toolbar::addButton($button, ButtonLocation::AFTER_TITLE);
 
 $APPLICATION->SetTitle(Loc::getMessage('MAIL_USERSIGNATURE_LIST_TITLE'));
 
-?><div id="signature-alert-container">
+?><div id="signature-alert-container" data-testid="mail-signature-list-alert">
 </div><?
 
 $APPLICATION->IncludeComponent(

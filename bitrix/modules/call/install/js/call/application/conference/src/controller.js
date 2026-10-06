@@ -56,7 +56,6 @@ import {
 	FeedbackUiService,
 	FloatingWindowService,
 } from 'call.core';
-import { accidentLogger, getUnknownErrorType } from 'call.lib.accident-logger';
 import { Analytics } from 'call.lib.analytics';
 import { CallTokenManager } from 'call.lib.call-token-manager';
 import { CallSettingsManager } from 'call.lib.settings-manager';
@@ -99,6 +98,8 @@ class ConferenceApplication
 		this.callStore = null;
 		this.preCall = null;
 		this.currentCall = null;
+		// Calls where the user explicitly picked a microphone - hot-plug auto-switch must not override it.
+		this.callsWithManualMicrophone = new WeakSet();
 		this.callToken = this.params.callToken ?? null;
 		this.videoStrategy = null;
 		this.callDetails = {};
@@ -167,6 +168,8 @@ class ConferenceApplication
 				console.error('Init error', error);
 			});
 	}
+
+	#loadAccidentLogger = () => BX.Runtime.loadExtension('call.lib.accident-logger');
 
 	#initHandlers()
 	{
@@ -717,6 +720,7 @@ class ConferenceApplication
 
 				if (this.currentCall)
 				{
+					this.callsWithManualMicrophone.add(this.currentCall);
 					this.currentCall.setMicrophoneId(microphoneId);
 				}
 				else
@@ -1678,7 +1682,10 @@ class ConferenceApplication
 			switch (deviceInfo.kind)
 			{
 				case 'audioinput':
-					if (deviceInfo.deviceId === 'default' || isForceUse)
+				{
+					// Pick up any plugged-in microphone, but never override an explicit manual choice.
+					const microphoneManuallySelected = this.callsWithManualMicrophone.has(this.currentCall);
+					if (isForceUse || !microphoneManuallySelected)
 					{
 						const newDeviceId = Call.Hardware.getDefaultDeviceIdByGroupId(deviceInfo.groupId, 'audioinput');
 						this.currentCall.setMicrophoneId(newDeviceId);
@@ -1688,6 +1695,7 @@ class ConferenceApplication
 					this.checkAvailableMicrophone();
 
 					break;
+				}
 				case 'videoinput':
 					if (deviceInfo.deviceId === 'default' || isForceUse)
 					{
@@ -1826,6 +1834,7 @@ class ConferenceApplication
 		}
 		this.controller.getStore().commit('conference/startCall');
 
+		let createdCall = null;
 		let callTokenPromise = Promise.resolve(this.callToken);
 		if (CallSettingsManager.jwtCallsEnabled && !this.callToken)
 		{
@@ -1841,6 +1850,7 @@ class ConferenceApplication
 					Logger.warn('call created', e);
 
 					this.currentCall = e.call;
+					createdCall = e.call;
 
 					if (this.promotedToAdminTimeout)
 					{
@@ -1947,22 +1957,28 @@ class ConferenceApplication
 					this.onUpdateLastUsedCameraId();
 				});
 			})
-			.catch(async (error) => {
+			.catch((error) => {
 				Logger.error('creating call error', error);
 				let errorCode = Call.Util.getCallConnectionErrorCode(error);
 				const errorMessage = Call.Util.getCallConnectionErrorMessage(error);
 
-				if (errorCode === 'UNKNOWN_ERROR' && error?.message)
+				if (errorCode === 'CLIENT_UNCLASSIFIED' && error?.message)
 				{
-					errorCode = getUnknownErrorType(error?.message);
+					errorCode = Call.getUnknownErrorType(error?.message);
 				}
 
-				await accidentLogger.addLog(error, errorCode);
+				this.#loadAccidentLogger()
+					.then(({ accidentLogger }) => accidentLogger?.addLog(error, errorCode))
+					.catch(() => {});
 
 				Analytics.getInstance().onStartCallError({
 					callType: Analytics.AnalyticsType.videoconf,
+					// The room of this attempt, not this.currentCall: a failure before the room
+					// exists sends no identifier rather than the one of a call still running.
+					callId: Util.getCallIdentifier(createdCall),
 					errorCode,
 					errorMessage,
+					isVpnActive: this.#isVpnConnected(),
 				});
 
 				this.initCallPromise = null;
@@ -2113,16 +2129,18 @@ class ConferenceApplication
 
 				this.onUpdateLastUsedCameraId();
 			})
-			.catch(async (error) => {
+			.catch((error) => {
 				let errorCode = Call.Util.getCallConnectionErrorCode(error);
 				const errorMessage = Call.Util.getCallConnectionErrorMessage(error);
 
-				if (errorCode === 'UNKNOWN_ERROR' && error?.message)
+				if (errorCode === 'CLIENT_UNCLASSIFIED' && error?.message)
 				{
-					errorCode = getUnknownErrorType(error?.message);
+					errorCode = Call.getUnknownErrorType(error?.message);
 				}
 
-				await accidentLogger.addLog(error, errorCode);
+				this.#loadAccidentLogger()
+					.then(({ accidentLogger }) => accidentLogger?.addLog(error, errorCode))
+					.catch(() => {});
 
 				Analytics.getInstance().onJoinCallError({
 					callType: Analytics.AnalyticsType.videoconf,
@@ -2130,6 +2148,7 @@ class ConferenceApplication
 					callId: callUuid,
 					errorMessage,
 					isVpnActive: this.#isVpnConnected(),
+					isRoomClosed: error?.isRoomClosed === true,
 				});
 
 				this.initCallPromise = null;
@@ -2750,6 +2769,7 @@ class ConferenceApplication
 					isCloudRecordFeaturesEnabled: this.currentCall?.isCloudRecordFeaturesEnabled ?? false,
 					callId: this.currentCall?.id,
 					isServiceEnabled: Call.CallCloudRecord.serviceEnabled,
+					canRecord: this.#canCommonRecord(),
 				});
 			},
 			toggleVideo: (event) => {
@@ -4207,21 +4227,13 @@ class ConferenceApplication
 		Analytics.getInstance().onReconnectError({
 			callId: this.currentCall?.id,
 			callType: Analytics.AnalyticsType.videoconf,
-			errorCode: e?.code,
+			errorCode: e?.error?.code,
 			isVpnActive: this.#isVpnConnected(),
 		});
 	}
 
 	_onParticipantReconnecting(e)
 	{
-		if (e?.participant?.userId && this.viewPort?.wrappedView?.users)
-		{
-			const callUser = this.viewPort.wrappedView.users[e.participant.userId];
-			if (callUser)
-			{
-				callUser.showLastVideoFrame();
-			}
-		}
 	}
 
 	_onParticipantReconnected(e)

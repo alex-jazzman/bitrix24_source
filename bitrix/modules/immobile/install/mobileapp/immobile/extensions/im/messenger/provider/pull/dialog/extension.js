@@ -11,6 +11,7 @@ jn.define('im/messenger/provider/pull/dialog', (require, exports, module) => {
 		UserRole,
 		DialogType,
 		MessagesAutoDeleteDelay,
+		RecentTab,
 	} = require('im/messenger/const');
 	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { getLoggerWithContext } = require('im/messenger/lib/logger');
@@ -45,9 +46,89 @@ jn.define('im/messenger/provider/pull/dialog', (require, exports, module) => {
 
 			this.logger.info('handleChatUpdate:', params, extra);
 
+			const dialogId = params.chat.dialogId;
+			const previousDialog = this.store.getters['dialoguesModel/getById'](dialogId);
+			const previousParentChatId = Number(previousDialog?.parentChatId ?? 0);
+			const nextParentChatId = Number(params.chat?.parent_chat_id ?? params.chat?.parentChatId ?? 0);
+
 			await this.store.dispatch('dialoguesModel/update', {
-				dialogId: params.chat.dialogId,
+				dialogId,
 				fields: params.chat,
+			});
+
+			if (previousParentChatId !== nextParentChatId)
+			{
+				await this.#migrateRecentConfigTabs(dialogId, previousParentChatId, nextParentChatId);
+				await this.#reparentChatCounter(dialogId, nextParentChatId);
+			}
+		}
+
+		/**
+		 * Backend sends only `chatUpdate` (without any counter payload) on attach/detach, so the
+		 * project/collab badge (an aggregate of child counters indexed by parentChatId) never
+		 * recomputes until a full refresh. Re-parent the child's counter so childrenIndex, the old
+		 * project badge and the new project badge stay in sync without a refresh.
+		 *
+		 * @param {DialogId} dialogId
+		 * @param {number} nextParentChatId
+		 * @return {Promise<void>}
+		 */
+		async #reparentChatCounter(dialogId, nextParentChatId)
+		{
+			const chatId = Number(this.#getDialogModel(dialogId)?.chatId ?? 0);
+			if (chatId <= 0)
+			{
+				return;
+			}
+
+			const counterState = this.store.getters['counterModel/getByChatId'](chatId);
+			if (!counterState || counterState.parentChatId === nextParentChatId)
+			{
+				return;
+			}
+
+			await serviceLocator.get('counters-update-system').updateCounterState({
+				...counterState,
+				parentChatId: nextParentChatId,
+			});
+		}
+
+		/**
+		 * Backend emits only `chatUpdate` (with new parent_chat_id) when the chat is
+		 * attached/detached from a project; no separate recentDelete/recentAdd event is sent.
+		 * The client is expected to migrate the recent item between scopes on its own.
+		 *
+		 * @param {string} dialogId
+		 * @param {number} previousParentChatId
+		 * @param {number} nextParentChatId
+		 * @return {Promise<void>}
+		 */
+		async #migrateRecentConfigTabs(dialogId, previousParentChatId, nextParentChatId)
+		{
+			const previousSections = this.store.getters['recentModel/getSectionsContainingItem'](
+				dialogId,
+				[previousParentChatId],
+			);
+
+			if (previousSections.length > 0)
+			{
+				await this.store.dispatch('recentModel/hideByRecentConfigTabs', {
+					id: dialogId,
+					fromSections: previousSections.map((s) => s.recentSection),
+					parentChatId: previousParentChatId,
+				});
+			}
+
+			const recentItem = this.store.getters['recentModel/getById'](dialogId);
+			if (!recentItem)
+			{
+				return;
+			}
+
+			await this.store.dispatch('recentModel/setByRecentConfigTabs', {
+				sections: [RecentTab.chat],
+				itemList: recentItem,
+				parentChatId: nextParentChatId,
 			});
 		}
 
@@ -228,6 +309,7 @@ jn.define('im/messenger/provider/pull/dialog', (require, exports, module) => {
 				users,
 				chatExtranet = false,
 				containsCollaber = false,
+				guestCount,
 			} = params || {};
 
 			const dialogModel = this.#getDialogModel(dialogId);
@@ -254,6 +336,11 @@ jn.define('im/messenger/provider/pull/dialog', (require, exports, module) => {
 			if (Boolean(dialogModel?.containsCollaber) !== containsCollaber)
 			{
 				dialogUpdatingFields.containsCollaber = containsCollaber;
+			}
+
+			if (Type.isNumber(guestCount))
+			{
+				dialogUpdatingFields.guestCount = guestCount;
 			}
 
 			if (newUsers.includes(MessengerParams.getUserId()))
@@ -297,6 +384,7 @@ jn.define('im/messenger/provider/pull/dialog', (require, exports, module) => {
 				userCount,
 				chatExtranet,
 				containsCollaber,
+				guestCount,
 			} = params;
 
 			const userDialogModel = this.#getDialogModel(userId);
@@ -331,6 +419,11 @@ jn.define('im/messenger/provider/pull/dialog', (require, exports, module) => {
 			if (Boolean(dialogModel?.containsCollaber) !== containsCollaber)
 			{
 				dialogUpdatingFields.containsCollaber = containsCollaber;
+			}
+
+			if (Type.isNumber(guestCount))
+			{
+				dialogUpdatingFields.guestCount = guestCount;
 			}
 
 			if (Object.keys(dialogUpdatingFields).length > 0)

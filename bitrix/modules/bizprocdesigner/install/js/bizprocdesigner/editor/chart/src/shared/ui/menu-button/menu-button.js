@@ -26,6 +26,11 @@ export const MenuButton = {
 			type: {},
 			default: () => ({}),
 		},
+		/** The accessible name of an icon-only button, which has no text to be named by. */
+		ariaLabel: {
+			type: String,
+			default: null,
+		},
 	},
 	data(): Object
 	{
@@ -43,6 +48,34 @@ export const MenuButton = {
 				width: 240,
 				...this.options,
 			};
+		},
+		buttonAttributes(): { [string]: ?string }
+		{
+			return {
+				'aria-haspopup': 'menu',
+				'aria-expanded': this.isMenuShown ? 'true' : 'false',
+				'aria-label': this.ariaLabel,
+			};
+		},
+	},
+	watch: {
+		buttonAttributes(): void
+		{
+			this.syncButtonAttributes();
+		},
+	},
+	mounted(): void
+	{
+		this.syncButtonAttributes();
+	},
+	methods: {
+		/**
+		 * UiButton builds its native button imperatively, so attributes bound in the template never
+		 * reach it and have to be written to the button element on every change.
+		 */
+		syncButtonAttributes(): void
+		{
+			this.$refs.button?.button?.setProps(this.buttonAttributes);
 		},
 	},
 	template: `

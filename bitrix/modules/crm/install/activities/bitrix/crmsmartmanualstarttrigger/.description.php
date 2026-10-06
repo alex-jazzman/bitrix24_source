@@ -12,6 +12,7 @@ if (!class_exists(\Bitrix\Bizproc\Activity\ActivityDescription::class))
 
 use Bitrix\Bizproc\Activity\Enum\ActivityColorIndex;
 use Bitrix\Bizproc\Activity\Enum\ActivityGroup;
+use Bitrix\Bizproc\FieldType;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Ui\Public\Enum\IconSet\Outline;
 
@@ -54,6 +55,20 @@ $arActivityDescription =
 		->setGroups([ ActivityGroup::STARTER->value ])
 		->setColorIndex(ActivityColorIndex::ORANGE->value)
 		->setIcon(Outline::SMART_PROCESS->name)
+		// The document is not declared here: it depends on the smart process the node is set to and comes from the
+		// per-node Return map the settings dialog saves.
+		->setReturn([
+			'Initiator' => [
+				'Name' => Loc::getMessage('BP_CRM_CRM_SMART_START_TRIGGER_RETURN_INITIATOR') ?? '',
+				'Type' => FieldType::USER,
+				'Default' => null,
+			],
+			'EventDateTime' => [
+				'Name' => Loc::getMessage('BP_CRM_CRM_SMART_START_TRIGGER_RETURN_EVENT_DATE_TIME') ?? '',
+				'Type' => FieldType::DATETIME,
+				'Default' => null,
+			],
+		])
 		->setAdditionalResult(['Return'])
 		->toArray()
 ;

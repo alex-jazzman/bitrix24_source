@@ -1,9 +1,13 @@
 import { Loc } from 'main.core';
 import { DateTimeFormat } from 'main.date';
 import { Hint } from 'ui.hint';
+import { NoteAvatarStack, avatarFallbackColor } from 'note.ui.avatar-stack';
 
 export const DocumentListItem = {
 	name: 'NoteDocumentListItem',
+	components: {
+		NoteAvatarStack,
+	},
 	props: {
 		item: { type: Object, required: true },
 		mode: {
@@ -12,12 +16,45 @@ export const DocumentListItem = {
 			validator: (value: string): boolean =>
 				value === 'cards' || value === 'compact' || value === 'detailed' || value === 'search',
 		},
+		selectionEnabled: {
+			type: Boolean,
+			default: false,
+		},
+		// The list supports multi-select: on desktop a checkbox appears on hover and its
+		// click enters selection mode. Ignored on mobile (entered via a toolbar button).
+		selectable: {
+			type: Boolean,
+			default: false,
+		},
+		isMobile: {
+			type: Boolean,
+			default: false,
+		},
+		selected: {
+			type: Boolean,
+			default: false,
+		},
 	},
-	emits: ['open', 'open-collection'],
+	emits: ['open', 'open-collection', 'select'],
+	data(): Object
+	{
+		return {
+			// Set on pointerdown over the checkbox and consumed in onSelectChange, so blur() runs
+			// only for pointer input. Keyboard (Space) toggles fire `change` without a preceding
+			// pointerdown and must keep focus for multi-select (WCAG 2.4.3). Not used in render.
+			pointerToggle: false,
+		};
+	},
 	computed: {
 		title(): string
 		{
 			return String(this.item?.title ?? '');
+		},
+		selectAriaLabel(): string
+		{
+			// The checkbox is visually labelled only by an aria-hidden box, so give screen
+			// readers the document title as the accessible name.
+			return Loc.getMessage('NOTE_DOCUMENT_LIST_SELECT_ITEM_ARIA', { '#TITLE#': this.title }) || '';
 		},
 		snippetHtml(): string
 		{
@@ -48,10 +85,6 @@ export const DocumentListItem = {
 		author(): ?Object
 		{
 			return this.showAuthor ? this.item.author : null;
-		},
-		isSystemAuthor(): boolean
-		{
-			return this.author?.isSystem === true;
 		},
 		showCollection(): boolean
 		{
@@ -107,6 +140,23 @@ export const DocumentListItem = {
 		{
 			return this.hasExcerpt || this.hasMeta;
 		},
+		// Desktop-only: render a checkbox that stays hidden until the card is hovered; clicking
+		// it enters selection mode. Once mode is active the checkbox is shown unconditionally.
+		showHoverSelect(): boolean
+		{
+			return this.selectable && !this.isMobile && !this.selectionEnabled;
+		},
+		// Mobile: in management sections the checkbox is shown permanently, so entering
+		// selection mode does not require a separate toolbar button. The first tap toggles
+		// selection just like the desktop hover checkbox.
+		showMobileSelect(): boolean
+		{
+			return this.selectable && this.isMobile;
+		},
+		showSelectBox(): boolean
+		{
+			return this.selectionEnabled || this.showHoverSelect || this.showMobileSelect;
+		},
 		rootClass(): Array<string>
 		{
 			return [
@@ -114,16 +164,28 @@ export const DocumentListItem = {
 				this.mode === 'compact' ? 'note-document-card--compact' : '',
 				this.mode === 'detailed' ? 'note-document-card--detailed' : '',
 				this.mode === 'search' ? 'note-document-card--search' : '',
+				this.showHoverSelect ? 'note-document-card--hover-select' : '',
+				this.selectionEnabled ? 'note-document-card--selecting' : '',
 			];
 		},
-		authorInitials(): string
+		// The card avatar is note.ui.avatar-stack in row mode (one participant), so an author looks
+		// the same here as in the activity feed, the history tiles and the viewers list. `color` is
+		// the server identity hue (see IdentityColor); the palette stays a defensive fallback for a
+		// payload built before that field existed.
+		authorParticipants(): Array
 		{
-			if (this.isSystemAuthor)
+			const author = this.author;
+			if (!author)
 			{
-				return '';
+				return [];
 			}
 
-			return this.getInitials(this.author?.name);
+			return [{
+				id: Number(author.id) || 0,
+				name: String(author.name || ''),
+				avatar: author.photoUrl || null,
+				color: author.color || avatarFallbackColor(author.id),
+			}];
 		},
 		docHref(): string
 		{
@@ -152,8 +214,39 @@ export const DocumentListItem = {
 		this.refreshHints();
 	},
 	methods: {
+		emitSelectToggle(): void
+		{
+			// `activate` tells the page to switch into selection mode first — set when the click
+			// arrives from the hover checkbox (mode not yet on).
+			this.$emit('select', {
+				id: Number(this.item?.id) || 0,
+				selected: !this.selected,
+				activate: !this.selectionEnabled,
+			});
+		},
+		onCardClick(event: MouseEvent): void
+		{
+			// In selection mode a click anywhere on the card toggles it (fallback for cards
+			// without a title-link overlay); interactive children stop propagation themselves.
+			if (!this.selectionEnabled)
+			{
+				return;
+			}
+			event.preventDefault();
+			this.emitSelectToggle();
+		},
 		onTitleClick(event: MouseEvent): void
 		{
+			// In selection mode the whole card (the stretched title-link overlay) toggles
+			// selection instead of opening the document.
+			if (this.selectionEnabled)
+			{
+				event.preventDefault();
+				event.stopPropagation();
+				this.emitSelectToggle();
+
+				return;
+			}
 			// Let the browser handle modifier keys, middle/right click natively
 			if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0)
 			{
@@ -173,8 +266,54 @@ export const DocumentListItem = {
 		{
 			event?.stopPropagation?.();
 		},
+		onSelectClick(event: MouseEvent): void
+		{
+			// Keep the click off the card overlay so the document does not open
+			event?.stopPropagation?.();
+		},
+		onSelectPointerDown(): void
+		{
+			// Mark that the imminent toggle is pointer-driven; keyboard toggles never reach here.
+			this.pointerToggle = true;
+		},
+		onSelectKeyDown(): void
+		{
+			// Keyboard interaction (Space) fires keydown before change — clear any pointer flag left
+			// stale by a cancelled pointer gesture (pointerdown without a following change), so the
+			// keyboard toggle never wrongly triggers blur.
+			this.pointerToggle = false;
+		},
+		onSelectChange(event: Event): void
+		{
+			// Stateless component: emit the intended toggle relative to the current prop; the page owns selection
+			this.emitSelectToggle();
+
+			// Drop focus only for pointer input: otherwise a deselect that exits selection mode leaves
+			// the hover checkbox pinned open via :focus-within after the pointer moves away. Keyboard
+			// users must keep focus so multi-select stays operable (WCAG 2.4.3).
+			const pointerDriven = this.pointerToggle;
+			this.pointerToggle = false;
+			if (!pointerDriven)
+			{
+				return;
+			}
+			const input = event?.target;
+			if (input instanceof HTMLElement)
+			{
+				input.blur();
+			}
+		},
 		onCollectionClick(event: MouseEvent): void
 		{
+			// In selection mode the collection chip toggles the card too, never navigates.
+			if (this.selectionEnabled)
+			{
+				event?.preventDefault?.();
+				event?.stopPropagation?.();
+				this.emitSelectToggle();
+
+				return;
+			}
 			if (!this.hasCollectionLink)
 			{
 				return;
@@ -190,19 +329,6 @@ export const DocumentListItem = {
 				collectionId: Number(this.item?.collectionId) || 0,
 				collectionTitle: this.collectionTitle,
 			});
-		},
-		getInitials(name: ?string): string
-		{
-			const value = String(name ?? '').trim();
-			if (value === '')
-			{
-				return '';
-			}
-			const parts = value.split(/\s+/u);
-			const first = parts[0]?.charAt(0) ?? '';
-			const second = parts[1]?.charAt(0) ?? '';
-
-			return (first + second).toUpperCase();
 		},
 		toTimestampSec(value: ?string): ?number
 		{
@@ -239,8 +365,29 @@ export const DocumentListItem = {
 	},
 	// language=Vue
 	template: `
-		<div :class="rootClass">
+		<div :class="rootClass" @click="onCardClick">
 			<div class="note-document-card__header">
+				<label
+					v-if="showSelectBox"
+					class="ui-checkbox --size-md note-document-card__select"
+					:class="{ '--checked': selected }"
+					@click.stop="onSelectClick"
+					@pointerdown="onSelectPointerDown"
+				>
+					<input
+						type="checkbox"
+						class="ui-checkbox__input"
+						:checked="selected"
+						:aria-label="selectAriaLabel"
+						@keydown="onSelectKeyDown"
+						@change="onSelectChange"
+					/>
+					<span class="ui-checkbox__box" aria-hidden="true">
+						<span v-if="selected" class="ui-checkbox__icon">
+							<span class="ui-icon-set --check-m"></span>
+						</span>
+					</span>
+				</label>
 				<div class="note-document-card__title-cluster">
 					<a
 						v-if="docHref"
@@ -285,18 +432,12 @@ export const DocumentListItem = {
 				>{{ excerpt }}</p>
 				<div v-if="hasAuthor || hasAttribution" class="note-document-card__footer">
 					<div v-if="author" class="note-document-card__author">
-						<span
+						<NoteAvatarStack
 							class="note-document-card__avatar"
-							:class="{ 'note-document-card__avatar--system': isSystemAuthor }"
-						>
-							<img
-								v-if="author.photoUrl"
-								class="note-document-card__avatar-img"
-								:src="author.photoUrl"
-								:alt="author.name"
-							/>
-							<span v-else class="note-document-card__avatar-initials">{{ authorInitials }}</span>
-						</span>
+							:participants="authorParticipants"
+							:inline="true"
+							:show-hints="false"
+						/>
 						<span class="note-document-card__author-name">{{ author.name }}</span>
 					</div>
 					<span v-else class="note-document-card__footer-spacer" aria-hidden="true"></span>

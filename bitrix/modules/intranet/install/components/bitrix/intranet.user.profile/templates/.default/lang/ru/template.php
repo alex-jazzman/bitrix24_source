@@ -60,8 +60,6 @@ $MESS["INTRANET_USER_PROFILE_TAGS_POPUP_TITLE"] = "Популярные теги
 $MESS["INTRANET_USER_PROFILE_TAGS_POPUP_SEARCH_TITLE"] = "Результат поиска:";
 $MESS["INTRANET_USER_PROFILE_TAGS_POPUP_HINT_3"] = "Чтобы добавить интересы, просто напишите интересующие вас занятия через пробел и нажмите Enter.";
 $MESS["INTRANET_USER_PROFILE_TAGS_POPUP_HINT_2"] = "Нет интересов, к которым можно присоединиться. Создайте свои интересы.";
-$MESS["INTRANET_USER_PROFILE_FIRE_CONFIRM"] = "Сотрудник не сможет войти и работать в вашем Битрикс24, но данные сотрудника сохранятся";
-$MESS["INTRANET_USER_PROFILE_FIRE_CONFIRM_EXTRANET"] = "Забрать у внешнего пользователя гостевой доступ к вашему Битрикс24? Пользователь не сможет войти в ваш Битрикс24, но его данные сохранятся.";
 $MESS["INTRANET_USER_PROFILE_HIRE_CONFIRM"] = "Сотрудник сможет зайти на портал, появится в структуре компании.
 <br/><br/>
 Вы уверены, что хотите открыть доступ сотруднику?";

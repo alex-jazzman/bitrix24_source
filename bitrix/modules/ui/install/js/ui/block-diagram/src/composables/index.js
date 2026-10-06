@@ -10,6 +10,7 @@ export * from './register-hooks';
 export * from './search-blocks';
 export * from './canvas';
 export * from './highlighted-blocks';
+export * from './transient-highlighted-blocks';
 export * from './loc';
 export * from './port-state';
 export * from './connection-state';

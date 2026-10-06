@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Note = this.BX.Note || {};
-(function (exports, ui_designTokens_air, ui_iconSet_main, main_core, main_core_events, ui_vue3, note_sidebar, note_recyclebin, note_ui_themeContext, note_analytics, ui_notification, ui_buttons, ui_system_dialog, ui_vue3_router, ui_iconSet_api_vue, note_editor, note_search, note_shared, note_archive, note_workspace) {
+(function (exports, ui_designTokens_air, ui_iconSet_main, main_core, main_core_events, ui_vue3, note_sidebar, note_recyclebin, note_ui_themeContext, note_analytics, ui_notification, ui_buttons, ui_system_dialog, ui_vue3_router, ui_iconSet_api_vue, note_ui_assets, note_ui_loader, note_ui_railGeometry, note_editor, note_search, note_shared, note_archive, note_workspace) {
 	'use strict';
 
 	const NoteLayout = {
@@ -9,6 +9,7 @@ this.BX.Note = this.BX.Note || {};
 		components: {
 			RouterView: ui_vue3_router.RouterView,
 			BIcon: ui_iconSet_api_vue.BIcon,
+			Loader: note_ui_loader.Loader,
 			SidebarRootComponent: note_sidebar.SidebarRootComponent
 		},
 		props: {
@@ -41,6 +42,15 @@ this.BX.Note = this.BX.Note || {};
 				default: null
 			}
 		},
+		inject: {
+			// DTO-01, provided by the app shell. Defaults keep the header renderable in isolation.
+			aiChatEnabled: {
+				default: false
+			},
+			aiChatName: {
+				default: ''
+			}
+		},
 		provide() {
 			return {
 				noteRouteDocumentContext: this.routeDocumentContext,
@@ -53,12 +63,32 @@ this.BX.Note = this.BX.Note || {};
 		data() {
 			return {
 				brandMeasureRaf: 0,
+				viewportMeasureRaf: 0,
+				brandWidth: 0,
 				onWindowResize: null,
 				mobileSidebarOpen: false,
+				lockedScrollY: 0,
 				headerCompact: false,
 				scrollAnchorY: 0,
 				scrollRaf: 0,
-				onWindowScroll: null
+				onWindowScroll: null,
+				// [ALG-01] Panel component, resolved after the lazy load of note.ai-chat. Null until the
+				// first intent to open, which is what keeps the extension (and the whole widget stack)
+				// off an untouched page.
+				aiChatPanelComponent: null,
+				// The wrapper is mounted — the shell drops its own placeholder indicator.
+				aiChatMounted: false,
+				// Last owner seen on EVENT-02, including our own emissions.
+				aiChatRailOwner: null,
+				// [ALG-02] Mode and applied width as reported by the panel. Until it exists the shell
+				// answers the same question itself (`railGeometry`), because the rail has to be reserved in
+				// flow from the first frame of opening, long before the panel extension is loaded.
+				aiChatGeometry: null,
+				// [ALG-02] Live input of that own computation. clientWidth, not innerWidth: the latter
+				// counts the scrollbar and would move the overlay threshold by its width.
+				viewportWidth: document.documentElement.clientWidth,
+				onAiChatToggleRequested: null,
+				onRailOccupancyChanged: null
 			};
 		},
 		watch: {
@@ -67,6 +97,9 @@ this.BX.Note = this.BX.Note || {};
 				this.headerCompact = false;
 				this.scrollAnchorY = window.scrollY || document.documentElement.scrollTop || 0;
 			},
+			mobileSidebarOpen(isOpen) {
+				this.applyScrollLock(isOpen && this.state.isMobile);
+			},
 			'state.isMobile': {
 				immediate: false,
 				handler(isMobile) {
@@ -74,6 +107,7 @@ this.BX.Note = this.BX.Note || {};
 						this.attachScrollTracker();
 					} else {
 						this.detachScrollTracker();
+						this.applyScrollLock(false);
 						this.headerCompact = false;
 					}
 				}
@@ -86,11 +120,22 @@ this.BX.Note = this.BX.Note || {};
 				document.fonts.ready.then(() => this.scheduleBrandMeasure()).catch(() => {});
 			}
 			// Catch zoom (browsers fire window resize on zoom).
-			this.onWindowResize = () => this.scheduleBrandMeasure();
+			this.onWindowResize = () => {
+				this.scheduleBrandMeasure();
+				this.scheduleViewportMeasure();
+			};
 			window.addEventListener('resize', this.onWindowResize);
 			if (this.state.isMobile) {
 				this.attachScrollTracker();
 			}
+
+			// Once per page load, matching the BI dashboard. The header is never remounted on route
+			// changes, so mounted() firing once is the whole guard — nothing is persisted.
+			this.playAiChatIntroGlow();
+			this.onAiChatToggleRequested = event => this.handleAiChatToggleRequested(event);
+			this.onRailOccupancyChanged = event => this.handleRailOccupancyChanged(event);
+			main_core_events.EventEmitter.subscribe(note_sidebar.NoteEvent.AI_CHAT_TOGGLE_REQUESTED, this.onAiChatToggleRequested);
+			main_core_events.EventEmitter.subscribe(note_sidebar.NoteEvent.RAIL_OCCUPANCY_CHANGED, this.onRailOccupancyChanged);
 		},
 		beforeUnmount() {
 			if (this.onWindowResize) {
@@ -98,20 +143,226 @@ this.BX.Note = this.BX.Note || {};
 				this.onWindowResize = null;
 			}
 			this.detachScrollTracker();
+			this.applyScrollLock(false);
 			if (this.brandMeasureRaf !== 0) {
 				cancelAnimationFrame(this.brandMeasureRaf);
 				this.brandMeasureRaf = 0;
+			}
+			if (this.viewportMeasureRaf !== 0) {
+				cancelAnimationFrame(this.viewportMeasureRaf);
+				this.viewportMeasureRaf = 0;
+			}
+			if (this.onAiChatToggleRequested) {
+				main_core_events.EventEmitter.unsubscribe(note_sidebar.NoteEvent.AI_CHAT_TOGGLE_REQUESTED, this.onAiChatToggleRequested);
+				this.onAiChatToggleRequested = null;
+			}
+			if (this.onRailOccupancyChanged) {
+				main_core_events.EventEmitter.unsubscribe(note_sidebar.NoteEvent.RAIL_OCCUPANCY_CHANGED, this.onRailOccupancyChanged);
+				this.onRailOccupancyChanged = null;
+			}
+		},
+		computed: {
+			// The short version of the logo is the first letter of the wordmark with the 24 and the clock -
+			// "Б24" here, "B24" wherever the wordmark is written in Latin. Taken from the wordmark itself, so
+			// the letter follows the language rather than being spelled out a second time.
+			brandShortLetter() {
+				return main_core.Type.isStringFilled(this.messages.brandName) ? this.messages.brandName.slice(0, 1) : '';
+			},
+			aiChatVisible() {
+				// No panel on mobile, so a button there would lead nowhere.
+				return this.aiChatEnabled === true && this.state.isMobile !== true;
+			},
+			aiChatLabel() {
+				return String(main_core.Loc.getMessage('NOTE_APP_AI_CHAT_OPEN') ?? '').replace('#NAME#', String(this.aiChatName ?? ''));
+			},
+			aiChatOpen() {
+				return this.state.aiChatOpen === true;
+			},
+			// Placeholder indicator: open, but the wrapper has not landed yet. It belongs to the shell
+			// because the first frame of opening happens before the panel extension even exists.
+			aiChatPending() {
+				return this.aiChatOpen && !this.aiChatMounted;
+			},
+			/**
+			 * [EVENT-02] Width the current rail resident takes up **in flow** — what a neighbour has to
+			 * step around, not the panel's width as such.
+			 *
+			 * `null` on purpose when the rail belongs to someone else: consumers read the variable with a
+			 * `340px` fallback, so leaving it unset is how a timeline or hotkeys panel is described,
+			 * without this shell keeping a third copy of that number. An overlay chat is `0` — it is out
+			 * of flow, and the floating button on layer 90 is under the panel on layer 140 anyway.
+			 */
+			railWidth() {
+				if (this.aiChatRailOwner !== note_sidebar.NoteRailOwner.AI_CHAT) {
+					return null;
+				}
+				return this.railGeometry.mode === 'inline' ? `${this.railGeometry.width}px` : '0px';
+			},
+			/**
+			 * [EVENT-02] The rail width is being dragged right now. Published next to the width itself,
+			 * because a neighbour that animates towards `--note-rail-width` — the right thing while the
+			 * panel slides open — visibly lags behind the pointer during a gesture.
+			 */
+			railResizing() {
+				return this.aiChatRailOwner === note_sidebar.NoteRailOwner.AI_CHAT && this.aiChatGeometry?.dragging === true;
+			},
+			/**
+			 * [ALG-02] Effective geometry of the rail: the panel's answer when there is one, the shell's
+			 * own otherwise. Same function and same inputs on both sides, so the handover from the
+			 * placeholder to the panel does not change the width.
+			 */
+			railGeometry() {
+				return this.aiChatGeometry ?? note_ui_railGeometry.resolveRailGeometry({
+					viewportWidth: this.viewportWidth,
+					sidebarWidth: this.state.sidebarEffectiveWidth
+				});
+			},
+			// The width the placeholder reserves — the clamped one, so the panel takes over exactly the
+			// same number and the handover is invisible.
+			aiChatPendingStyle() {
+				return {
+					'--note-ai-chat-width': `${this.railGeometry.width}px`
+				};
 			}
 		},
 		methods: {
 			handleBrandClick() {
 				window.open('/', '_blank', 'noopener');
 			},
+			// EVENT-01. The button never touches the panel state itself: a single public entry point
+			// keeps every consumer (button, hotkey, rail neighbour) on the same path.
+			requestAiChatToggle() {
+				main_core_events.EventEmitter.emit(note_sidebar.NoteEvent.AI_CHAT_TOGGLE_REQUESTED, new main_core_events.BaseEvent({
+					data: {}
+				}));
+			},
+			playAiChatIntroGlow() {
+				const wrapper = this.$refs.aiChatAvatar;
+				if (!this.aiChatVisible || !wrapper) {
+					return;
+				}
+				const glow = main_core.Dom.create('img', {
+					attrs: {
+						className: 'aiassistant-marta__glow-svg',
+						src: note_ui_assets.AssetUrl.aiChatGlow,
+						alt: '',
+						role: 'presentation',
+						'aria-hidden': 'true'
+					}
+				});
+
+				// Removed on animationend rather than left in the DOM: the layer is decorative and its
+				// 9s animation is `forwards`, so it would otherwise sit above the icon forever.
+				glow.addEventListener('animationend', () => main_core.Dom.remove(glow), {
+					once: true
+				});
+				main_core.Dom.prepend(glow, wrapper);
+			},
+			// [ALG-01] EVENT-01 listener. The shell owns isOpen, the indicator and the rail signal;
+			// idempotent in both directions, because "close the closed" really does arrive — the panel
+			// itself asks to close through this same public entry point.
+			async handleAiChatToggleRequested(event) {
+				const desired = event?.getData()?.desired ?? null;
+				const wantsClose = desired === 'close' || desired === null && this.aiChatOpen;
+				if (wantsClose) {
+					if (this.aiChatOpen) {
+						this.collapseAiChat(true);
+					}
+					return;
+				}
+
+				// aiChatVisible, not aiChatEnabled: on mobile the panel must not rise at all, and the rail
+				// there is a full-screen overlay owned by the timeline.
+				if (this.aiChatOpen || !this.aiChatVisible) {
+					return;
+				}
+				this.emitRailOccupancy(note_sidebar.NoteRailOwner.AI_CHAT);
+				this.actions.setAiChatOpen(true);
+				try {
+					if (this.aiChatPanelComponent === null) {
+						const exports = await main_core.Runtime.loadExtension('note.ai-chat');
+						// markRaw: a component definition is a plain options object, and letting Vue make it
+						// reactive would proxy it and track its keys on every `<component :is>` render.
+						const component = exports?.NoteAiChatPanelComponent ?? null;
+						this.aiChatPanelComponent = component ? ui_vue3.markRaw(component) : null;
+						if (!this.aiChatPanelComponent) {
+							throw new Error('note.app: note.ai-chat exposes no panel component');
+						}
+						await this.$nextTick();
+					}
+
+					// The panel swallows its own failures — it notifies and asks to close itself.
+					await this.$refs.aiChatPanel?.ensureMounted();
+				} catch (error) {
+					this.notifyAiChatFailure();
+					this.collapseAiChat(true);
+					console.error('note.app: ai chat panel extension failed to load', error);
+				}
+			},
+			collapseAiChat(announce) {
+				this.actions.setAiChatOpen(false);
+				// The owner check matters: a rail neighbour may already have taken over, and announcing
+				// a free rail here would overwrite the occupancy that is actually current.
+				if (announce && this.aiChatRailOwner === note_sidebar.NoteRailOwner.AI_CHAT) {
+					this.emitRailOccupancy(null);
+				}
+			},
+			handleRailOccupancyChanged(event) {
+				const owner = event?.getData()?.owner ?? null;
+				this.aiChatRailOwner = owner;
+				if (owner !== null && owner !== note_sidebar.NoteRailOwner.AI_CHAT && this.aiChatOpen) {
+					// Someone else took the rail — yield silently: they have already announced
+					// themselves, so a second announcement from us would clobber it.
+					this.collapseAiChat(false);
+				}
+			},
+			emitRailOccupancy(owner) {
+				main_core_events.EventEmitter.emit(note_sidebar.NoteEvent.RAIL_OCCUPANCY_CHANGED, new main_core_events.BaseEvent({
+					data: {
+						owner
+					}
+				}));
+			},
+			notifyAiChatFailure() {
+				const content = String(main_core.Loc.getMessage('NOTE_APP_AI_CHAT_MOUNT_ERROR') ?? '').replace('#NAME#', String(this.aiChatName ?? '')).trim();
+				if (!content) {
+					return;
+				}
+				BX.UI.Notification.Center.notify({
+					content,
+					position: 'top-right',
+					autoHideDelay: 4000
+				});
+			},
 			toggleMobileSidebar() {
 				this.mobileSidebarOpen = !this.mobileSidebarOpen;
 			},
 			closeMobileSidebar() {
 				this.mobileSidebarOpen = false;
+			},
+			// The drawer is a layer over the page, and the page has to stand still under it. Nothing in the
+			// panel scrolls the document, but the window is what scrolls it here - so a drag anywhere the
+			// panel does not scroll itself (the backdrop, the panel chrome, a list already at its end) was
+			// handed on to the window and the document ran past behind the open panel.
+			// The body is taken out of the flow at the offset it was read at, rather than the document
+			// scroller simply being told not to scroll: a scroller with nothing left to scroll clamps its
+			// offset to zero, so the page jumped to its top as the panel opened and stayed there after it
+			// closed. Pinned at `-scrollY` it stands exactly where the reader left it, and the offset is
+			// handed back to the window when the lock comes off.
+			applyScrollLock(locked) {
+				const root = document.documentElement;
+				if (locked === root.classList.contains('note-mobile-scroll-locked')) {
+					return;
+				}
+				if (locked) {
+					this.lockedScrollY = window.scrollY || root.scrollTop || 0;
+					document.body.style.top = `-${this.lockedScrollY}px`;
+					root.classList.add('note-mobile-scroll-locked');
+					return;
+				}
+				root.classList.remove('note-mobile-scroll-locked');
+				document.body.style.top = '';
+				window.scrollTo(0, this.lockedScrollY);
 			},
 			scheduleBrandMeasure() {
 				if (this.brandMeasureRaf !== 0) {
@@ -120,6 +371,17 @@ this.BX.Note = this.BX.Note || {};
 				this.brandMeasureRaf = requestAnimationFrame(() => {
 					this.brandMeasureRaf = 0;
 					this.measureBrandMinWidth();
+				});
+			},
+			// Coalesced like the brand measurement next to it: a resize arrives as a burst, and reading
+			// clientWidth per event would put several layout reads and reactive writes in one frame.
+			scheduleViewportMeasure() {
+				if (this.viewportMeasureRaf !== 0) {
+					return;
+				}
+				this.viewportMeasureRaf = requestAnimationFrame(() => {
+					this.viewportMeasureRaf = 0;
+					this.viewportWidth = document.documentElement.clientWidth;
 				});
 			},
 			attachScrollTracker() {
@@ -181,50 +443,113 @@ this.BX.Note = this.BX.Note || {};
 					const intrinsicWidth = Math.ceil(brand.getBoundingClientRect().width);
 					// Account for the -1px divider compensation in CSS.
 					this.actions.setSidebarMinWidth(intrinsicWidth + 1);
+					// Collapsed brand shrinks to exactly the logo width (px, so it animates).
+					this.brandWidth = intrinsicWidth;
 				} finally {
 					brand.style.width = previousWidth;
 				}
 			}
 		},
 		template: `
-		<div class="note-page" :style="{ '--note-sidebar-width': \`\${state.sidebarWidth}px\` }">
-			<header
-				class="note-page-header"
-				:class="{ 'is-compact': state.isMobile && headerCompact }"
+		<div
+				class="note-page"
+				:class="{ 'is-rail-resizing': railResizing }"
+				:style="{ '--note-sidebar-width': \`\${state.sidebarWidth}px\`, '--note-brand-width': brandWidth ? \`\${brandWidth}px\` : null, '--note-rail-width': railWidth }"
 			>
-				<button
-					v-if="state.isMobile"
-					type="button"
-					class="note-page-mobile-burger"
-					@click="toggleMobileSidebar"
+			<!-- Everything the rail squeezes: the header shrinks with the working area rather than
+					 running above the panel, so the chat column reads as full window height. -->
+			<div class="note-page-main">
+				<header
+					class="note-page-header"
+					:class="{ 'is-compact': state.isMobile && headerCompact }"
 				>
-					<BIcon name="menu" :size="22" />
-				</button>
-				<button ref="brand" type="button" class="note-page-brand" @click="handleBrandClick">
-					<span class="note-page-brand-logo">
-						<span class="note-page-brand-logo-text">{{ messages.brandName }}</span>
-						<span class="note-page-brand-logo-number">{{ messages.brandSuffix }}</span>
-						<BIcon class="note-page-brand-logo-clock" name="clock-2" :size="14" />
-					</span>
-					<span class="note-page-brand-subtitle">{{ messages.knowledgeBase }}</span>
-				</button>
-				<span class="note-page-header-divider"></span>
-				<div id="note-page-header-slot" class="note-page-header-slot"></div>
-			</header>
-			<div
-				class="main-layout"
-				:class="{ 'is-mobile-sidebar-open': state.isMobile && mobileSidebarOpen }"
-			>
-				<SidebarRootComponent
-					:state="state"
-					:actions="actions"
-					:messages="messages"
-					:theme-actions="themeActions"
-				/>
-				<main class="content">
-					<RouterView />
-				</main>
+					<button
+						v-if="state.isMobile"
+						type="button"
+						class="note-page-mobile-burger"
+						@click="toggleMobileSidebar"
+					>
+						<BIcon name="menu" :size="22" />
+					</button>
+					<button
+						ref="brand"
+						type="button"
+						class="note-page-brand"
+						:class="{ 'is-collapsed': state.sidebarCollapsed }"
+						:aria-label="\`\${messages.brandName}\${messages.brandSuffix} \${messages.knowledgeBase}\`"
+						@click="handleBrandClick"
+					>
+						<span class="note-page-brand-logo">
+							<span class="note-page-brand-logo-text">{{ messages.brandName }}</span>
+							<!-- The collapsed panel is the one case that gets the short version of the logo, and the
+									 short version is a logo of its own: the first letter, the 24 and the clock. The
+									 wordmark alone dropped left "24" with a clock, which is no logo at all. -->
+							<span class="note-page-brand-logo-short">{{ brandShortLetter }}</span>
+							<span class="note-page-brand-logo-number">{{ messages.brandSuffix }}</span>
+							<span class="note-page-brand-logo-clock" aria-hidden="true"></span>
+						</span>
+						<span class="note-page-brand-subtitle">{{ messages.knowledgeBase }}</span>
+					</button>
+					<div id="note-page-header-slot" class="note-page-header-slot"></div>
+					<button
+						v-if="aiChatVisible"
+						type="button"
+						class="note-page-ai-chat-button"
+						:title="aiChatLabel"
+						:aria-label="aiChatLabel"
+						:aria-pressed="aiChatOpen ? 'true' : 'false'"
+						:aria-busy="aiChatPending ? 'true' : 'false'"
+						data-testid="note-ai-chat-toggle"
+						@click="requestAiChatToggle"
+					>
+						<span ref="aiChatAvatar" class="aiassistant-marta__avatar-wrapper --bitrixgpt" aria-hidden="true">
+							<span class="aiassistant-marta__avatar"></span>
+						</span>
+					</button>
+				</header>
+				<div
+					class="main-layout"
+					:class="{ 'is-mobile-sidebar-open': state.isMobile && mobileSidebarOpen }"
+				>
+					<SidebarRootComponent
+						:state="state"
+						:actions="actions"
+						:messages="messages"
+						:theme-actions="themeActions"
+					/>
+					<main class="content">
+						<RouterView />
+					</main>
+					<!-- Right rail slot: the document history timeline teleports here so it sits as a
+							 true sibling of \`.content\` (like \`.sidebar\` on the left), not inside the
+							 scrolling content. \`display: contents\` keeps the teleported panel itself the
+							 flex child. -->
+					<div id="note-page-history-slot" class="note-page-history-slot"></div>
+				</div>
 			</div>
+			<!-- Rail placeholder: visible from the very first frame of opening, i.e. before the panel
+					 extension is even loaded, and dropped on the panel's \`mounted\` signal so the
+					 wrapper's own loader is the only one the user sees at the end. -->
+			<!-- No context class of its own: the placeholder renders inside \`.note-page\` and inherits
+					 the page's, so it is light or dark together with the knowledge base. -->
+			<div
+				v-if="aiChatPending"
+				class="note-page-ai-chat-pending"
+				:class="{ 'is-overlay': railGeometry.mode === 'overlay' }"
+				:style="aiChatPendingStyle"
+			>
+				<Loader />
+			</div>
+			<component
+				v-if="aiChatPanelComponent"
+				:is="aiChatPanelComponent"
+				ref="aiChatPanel"
+				:open="aiChatOpen"
+				:sidebar-width="state.sidebarEffectiveWidth"
+				:product-name="aiChatName"
+				@mounted="aiChatMounted = true"
+				@geometry="aiChatGeometry = $event"
+			/>
 			<button
 				v-if="state.isMobile && mobileSidebarOpen"
 				type="button"
@@ -740,6 +1065,10 @@ this.BX.Note = this.BX.Note || {};
 				...row,
 				id,
 				collectionId: collectionId ?? 0,
+				// Container id of a shared document: keys its branch in the accessible-tree namespace.
+				// Reported apart from collectionId, which stays absent so the breadcrumb container is
+				// rendered as plain text.
+				sharedCollectionId: this.#toPositiveInt(row.sharedCollectionId) ?? 0,
 				collectionTitle: String(row.collectionTitle ?? ''),
 				ancestors: this.#normalizeAncestors(row.ancestors),
 				canEdit: Boolean(row.canEdit),
@@ -754,7 +1083,92 @@ this.BX.Note = this.BX.Note || {};
 				isTrashed,
 				trashedAt: typeof row.trashedAt === 'string' && row.trashedAt !== '' ? row.trashedAt : null,
 				isOrphan: Boolean(row.isOrphan),
-				canRestore: Boolean(row.canRestore)
+				canRestore: Boolean(row.canRestore),
+				views: this.#normalizeViews(row.views),
+				lastChange: this.#normalizeLastChange(row.lastChange),
+				subscription: this.#normalizeSubscription(row.subscription)
+			};
+		}
+
+		// Bell state bundled with the bootstrap payload (see DocumentSubscriptionStateResolver) — the
+		// subscription bell adopts this instead of its own getState request on mount.
+		#normalizeSubscription(value) {
+			if (!main_core.Type.isPlainObject(value)) {
+				return null;
+			}
+			return {
+				subscribed: Boolean(value.subscribed),
+				mode: typeof value.mode === 'string' ? value.mode : null,
+				muted: Boolean(value.muted),
+				inherited: Boolean(value.inherited),
+				inheritedSource: typeof value.inheritedSource === 'string' ? value.inheritedSource : null,
+				inheritedTitle: typeof value.inheritedTitle === 'string' ? value.inheritedTitle : ''
+			};
+		}
+
+		// [#2] `{ authors: [{id,name,avatar}], time: <ISO 8601 string> } | null` — feeds
+		// note.ui.document-history's ActivityLineComponent chip (see note.editor's `lastChange`
+		// state/prop). Missing authors or an unparsable time both collapse to null: the chip's own
+		// `hasChipInfo` check treats a partial snapshot the same as "nothing to show yet".
+		#normalizeLastChange(value) {
+			if (!main_core.Type.isPlainObject(value)) {
+				return null;
+			}
+			const rawAuthors = Array.isArray(value.authors) ? value.authors : [];
+			const authors = [];
+			for (const author of rawAuthors) {
+				if (!main_core.Type.isPlainObject(author)) {
+					continue;
+				}
+				const id = this.#toPositiveInt(author.id);
+				if (id === null) {
+					continue;
+				}
+				authors.push({
+					id,
+					name: String(author.name ?? ''),
+					avatar: author.avatar || null,
+					// Server identity color (matches the caret / timeline) — keep it so the bootstrap chip
+					// avatar isn't the palette fallback.
+					color: author.color || null
+				});
+			}
+			const time = typeof value.time === 'string' ? value.time : '';
+			if (authors.length === 0 || time === '') {
+				return null;
+			}
+			return {
+				authors,
+				time
+			};
+		}
+		#normalizeViews(value) {
+			if (!main_core.Type.isPlainObject(value)) {
+				return null;
+			}
+			const viewers = Array.isArray(value.viewers) ? value.viewers : [];
+			const normalizedViewers = [];
+			for (const viewer of viewers) {
+				if (!main_core.Type.isPlainObject(viewer)) {
+					continue;
+				}
+				const userId = this.#toPositiveInt(viewer.userId);
+				if (userId === null) {
+					continue;
+				}
+				normalizedViewers.push({
+					userId,
+					name: String(viewer.name ?? ''),
+					avatar: viewer.avatar || null,
+					// Server identity color (matches the caret / avatar stack) — keep it so bootstrap
+					// viewers aren't palette-colored while live/paginated rows use the real color.
+					color: viewer.color || null,
+					viewedAt: typeof viewer.viewedAt === 'string' ? viewer.viewedAt : ''
+				});
+			}
+			return {
+				uniqueCount: Number.isInteger(value.uniqueCount) ? value.uniqueCount : normalizedViewers.length,
+				viewers: normalizedViewers
 			};
 		}
 		#normalizeAncestors(value) {
@@ -809,6 +1223,12 @@ this.BX.Note = this.BX.Note || {};
 		#hasInitialCollectionsHydration = false;
 		#initialSidebarContext = null;
 		#hasInitialSidebarHydration = false;
+		// Bootstrap-level UI feature flags (server-fed, one per mount, not per-document). Default off.
+		#features = {
+			historyEnabled: false,
+			notificationsEnabled: false,
+			sharedTreeEnabled: false
+		};
 		#isInitialRouteContextConsumed = false;
 		#basePageTitle = '';
 		#handleDocRenamed = null;
@@ -823,15 +1243,22 @@ this.BX.Note = this.BX.Note || {};
 		#themeState = null;
 		#themeActions = null;
 		#themeRoot = null;
+		#tariffBlocked = false;
 		mount(target, options) {
 			if (!main_core.Type.isStringFilled(target)) {
 				throw new Error('Target selector is required');
 			}
 			this.destroy();
 			this.#options = main_core.Type.isPlainObject(options) ? options : {};
+			this.#tariffBlocked = Boolean(this.#options.tariffBlocked);
 			this.#basePageTitle = this.#resolveCurrentPageTitle();
 			this.#initialCollections = this.#extractInitialCollections(this.#options.initialCollections);
 			this.#initialSidebarContext = this.#extractInitialSidebarContext(this.#options.initialSidebarContext);
+			this.#features = {
+				historyEnabled: Boolean(this.#options.historyEnabled),
+				notificationsEnabled: Boolean(this.#options.notificationsEnabled),
+				sharedTreeEnabled: Boolean(this.#options.sharedTreeEnabled)
+			};
 			const sidebarOptions = this.#extractSidebarOptions(this.#options.sidebarOptions);
 			this.#themeState = ui_vue3.reactive({
 				theme: this.#extractTheme(this.#options.theme)
@@ -861,7 +1288,14 @@ this.BX.Note = this.BX.Note || {};
 					workspace: ROUTE_NAME_WORKSPACE
 				},
 				sidebarOptions,
-				isMobile: Boolean(this.#options.isMobile)
+				// [TPL-02] First page of the favorites block, server-rendered with the collections. Handed to
+				// the feature rather than hydrated afterwards: the feature reads the first page itself the
+				// moment it is created, and a payload arriving later would come after that request.
+				initialFavorites: this.#extractInitialFavorites(this.#options.initialFavorites),
+				isMobile: Boolean(this.#options.isMobile),
+				historyEnabled: this.#features.historyEnabled,
+				notificationsEnabled: this.#features.notificationsEnabled,
+				sharedTreeEnabled: this.#features.sharedTreeEnabled
 			});
 			this.#documentActions = this.#createDocumentActions();
 
@@ -874,14 +1308,18 @@ this.BX.Note = this.BX.Note || {};
 					return;
 				}
 				const docId = Number(ctx.docId);
-				const collectionId = Number(ctx.document?.collectionId);
+				const shared = ctx.document?.sharedAccess === true;
+				const collectionId = this.#branchCollectionId(ctx.document);
 				if (!Number.isInteger(docId) || docId <= 0 || !Number.isInteger(collectionId) || collectionId <= 0) {
 					ctx.children = [];
 					ctx.childrenHasMore = false;
 					return;
 				}
-				ctx.children = this.#sidebarFeature.state.getChildren(collectionId, docId);
-				ctx.childrenHasMore = this.#sidebarFeature.hasNextChildren(collectionId, docId);
+
+				// A shared document keeps its children in the accessible-tree namespace: the collection
+				// branch is empty for this user by definition (no collection access).
+				ctx.children = shared ? this.#sidebarFeature.state.getSharedChildren(collectionId, docId) : this.#sidebarFeature.state.getChildren(collectionId, docId);
+				ctx.childrenHasMore = shared ? this.#sidebarFeature.state.hasNextSharedChildren(collectionId, docId) : this.#sidebarFeature.hasNextChildren(collectionId, docId);
 			});
 			this.#app = ui_vue3.BitrixVue.createApp(NoteLayout, {
 				state: this.#sidebarFeature.state,
@@ -892,6 +1330,16 @@ this.BX.Note = this.BX.Note || {};
 				documentActions: this.#documentActions,
 				themeActions: this.#themeActions
 			});
+			// Feature flag reaches the deep editor menu via provide/inject instead of threading a prop
+			// through every router level; the document page reads it to gate the download/upload .md items.
+			this.#app.provide('markdownIoEnabled', Boolean(this.#options.markdownIoEnabled));
+			// Same reason: the document page gates the shortcuts-help surfaces (button, `?`/`Cmd+/`
+			// listener, panel) on this flag. The editor keymap itself stays on regardless.
+			this.#app.provide('hotkeysEnabled', Boolean(this.#options.hotkeysEnabled));
+			// DTO-01. Static server values, so they go the short way like the flags above instead of
+			// into reactive state: the verdict and the region-aware product name for the phrases.
+			this.#app.provide('aiChatEnabled', Boolean(this.#options.aiChatEnabled));
+			this.#app.provide('aiChatName', String(this.#options.aiChatName ?? ''));
 			// @chef-ignore
 			this.#app.use(this.#router);
 			this.#app.mount(target);
@@ -1027,6 +1475,7 @@ this.BX.Note = this.BX.Note || {};
 			this.#themeState = null;
 			this.#themeActions = null;
 			this.#themeRoot = null;
+			this.#tariffBlocked = false;
 		}
 		#extractTheme(theme) {
 			return theme === note_ui_themeContext.NoteTheme.DARK ? note_ui_themeContext.NoteTheme.DARK : note_ui_themeContext.NoteTheme.LIGHT;
@@ -1067,6 +1516,19 @@ this.BX.Note = this.BX.Note || {};
 		async #bootstrap() {
 			try {
 				await this.#router.isReady();
+
+				// Tariff/tool block: the interface stays mounted behind the tariff slider
+				// (template opens it and redirects away on close). Hydrate the sidebar from
+				// server data (no AJAX) so it renders, but skip the welcome redirect, sidebar
+				// bootstrap and route auto-select — otherwise the HOME->WORKSPACE fallback fires
+				// a listByCollection bootstrap AJAX that the server tariff gate rejects, surfacing
+				// an error toast on top of the slider. The slider is the only UX under a block.
+				if (this.#tariffBlocked) {
+					this.#hydrateFromInitialCollections();
+					this.#hydrateFromInitialSidebarContext();
+					return;
+				}
+
 				// After the router settled its initial navigation: scrubbing earlier races with
 				// vue-router rewriting history state from the URL it captured at boot (?source would return).
 				this.#scrubWelcomeSourceFromUrl();
@@ -1430,7 +1892,11 @@ this.BX.Note = this.BX.Note || {};
 			}
 			return {
 				width: Math.trunc(width),
-				collapsed: Boolean(sidebarOptions.collapsed)
+				collapsed: Boolean(sidebarOptions.collapsed),
+				// Which blocks of the panel stand open. Passed through as they came: absent means "never set",
+				// which the sidebar answers with an open block - so a missing key must not become `false` here.
+				favoritesOpen: sidebarOptions.favoritesOpen,
+				collectionsOpen: sidebarOptions.collectionsOpen
 			};
 		}
 		#extractInitialCollections(initialCollections) {
@@ -1441,6 +1907,12 @@ this.BX.Note = this.BX.Note || {};
 				return null;
 			}
 			return initialCollections;
+		}
+		#extractInitialFavorites(initialFavorites) {
+			if (!main_core.Type.isPlainObject(initialFavorites) || !Array.isArray(initialFavorites.items)) {
+				return null;
+			}
+			return initialFavorites;
 		}
 		async #applyWelcomeRedirect() {
 			const welcomeDocId = Number(this.#options?.initialWelcomeDocId || 0);
@@ -1527,15 +1999,27 @@ this.BX.Note = this.BX.Note || {};
 				canEditCollection: Boolean(document.canEditCollection)
 			};
 		}
+
+		// Branch namespace key: a shared document is keyed by its container id, which the read payload
+		// reports separately from collectionId (that one stays absent so the breadcrumb container is
+		// not clickable).
+		#branchCollectionId(document) {
+			const raw = document?.sharedAccess === true ? document?.sharedCollectionId : document?.collectionId;
+			return Number(raw);
+		}
 		async #loadChildDocuments(docId, document) {
 			if (!this.#sidebarFeature || !document) {
 				return;
 			}
-			const collectionId = Number(document.collectionId);
+			const shared = document.sharedAccess === true;
+			const collectionId = this.#branchCollectionId(document);
 			if (!Number.isInteger(collectionId) || collectionId <= 0) {
 				return;
 			}
-			const sidebarDoc = this.#sidebarFeature.findLoadedDocument(collectionId, docId);
+
+			// Shared documents are usually opened by URL, without the section ever being expanded, so
+			// there is no loaded node to read hasChildren from — the fetch itself decides.
+			const sidebarDoc = shared ? null : this.#sidebarFeature.findLoadedDocument(collectionId, docId);
 			if (sidebarDoc && !sidebarDoc.hasChildren) {
 				// Nothing to fetch; the watchEffect already reflects the empty branch.
 				this.#syncChildDocumentsState(docId, collectionId);
@@ -1545,7 +2029,7 @@ this.BX.Note = this.BX.Note || {};
 				this.#routeDocumentContext.childrenLoading = true;
 			}
 			try {
-				await this.#sidebarFeature.ensureChildrenLoaded(collectionId, docId);
+				await (shared ? this.#sidebarFeature.ensureSharedChildrenLoaded(collectionId, docId) : this.#sidebarFeature.ensureChildrenLoaded(collectionId, docId));
 			} catch {
 				if (this.#routeDocumentContext && Number(this.#routeDocumentContext.docId) === docId) {
 					this.#routeDocumentContext.childrenLoading = false;
@@ -1569,14 +2053,15 @@ this.BX.Note = this.BX.Note || {};
 			if (!this.#sidebarFeature || !this.#routeDocumentContext || Number(this.#routeDocumentContext.docId) !== docId || this.#routeDocumentContext.childrenLoading) {
 				return;
 			}
-			const storeChildren = this.#sidebarFeature.state.getChildren(collectionId, docId);
+			const shared = this.#routeDocumentContext.document?.sharedAccess === true;
+			const storeChildren = shared ? this.#sidebarFeature.state.getSharedChildren(collectionId, docId) : this.#sidebarFeature.state.getChildren(collectionId, docId);
 			if (storeChildren.length > this.#routeDocumentContext.children.length) {
 				this.#syncChildDocumentsState(docId, collectionId);
 				return;
 			}
 			this.#routeDocumentContext.childrenLoading = true;
 			try {
-				await this.#sidebarFeature.loadMoreChildren(collectionId, docId);
+				await (shared ? this.#sidebarFeature.loadMoreSharedChildren(collectionId, docId) : this.#sidebarFeature.loadMoreChildren(collectionId, docId));
 			} catch {
 				if (this.#routeDocumentContext && Number(this.#routeDocumentContext.docId) === docId) {
 					this.#routeDocumentContext.childrenLoading = false;
@@ -1601,16 +2086,13 @@ this.BX.Note = this.BX.Note || {};
 		}
 		#createDocumentActions() {
 			return {
-				archive: async documentId => {
+				archive: documentId => {
+					// Confirm (with the optional "with nested" checkbox) lives in the sidebar
+					// archiveDocument use-case, mirroring the delete action below.
 					const doc = this.#resolveLoadedDocument(documentId);
-					if (!doc || !this.#sidebarFeature) {
-						return;
+					if (doc && this.#sidebarFeature) {
+						void this.#sidebarFeature.actions.archiveDocument(doc);
 					}
-					const confirmed = await this.#dialogService.confirm(main_core.Loc.getMessage('NOTE_APP_CONFIRM_ARCHIVE_DOCUMENT') || '', main_core.Loc.getMessage('NOTE_APP_CONFIRM_ARCHIVE_DOCUMENT_TITLE') || '', main_core.Loc.getMessage('NOTE_APP_ARCHIVE') || '');
-					if (!confirmed) {
-						return;
-					}
-					void this.#sidebarFeature.actions.archiveDocument(doc);
 				},
 				restore: documentId => {
 					const doc = this.#resolveLoadedDocument(documentId);
@@ -1732,6 +2214,9 @@ this.BX.Note = this.BX.Note || {};
 						size: ui_buttons.ButtonSize.LARGE,
 						style: ui_buttons.AirButtonStyle.FILLED,
 						useAirDesign: true,
+						dataset: {
+							testid: 'note-dialog-cancel'
+						},
 						onclick: () => {
 							finish(false);
 							dialog.hide();
@@ -1741,6 +2226,9 @@ this.BX.Note = this.BX.Note || {};
 						size: ui_buttons.ButtonSize.LARGE,
 						style: ui_buttons.AirButtonStyle.PLAIN,
 						useAirDesign: true,
+						dataset: {
+							testid: 'note-dialog-confirm'
+						},
 						onclick: () => {
 							finish(true);
 							dialog.hide();
@@ -1770,5 +2258,5 @@ this.BX.Note = this.BX.Note || {};
 
 	exports.NoteApp = NoteApp;
 
-})(this.BX.Note.App = this.BX.Note.App || {}, window, window, BX, BX.Event, BX.Vue3, BX.Note.Sidebar, BX.Note, BX.Note.Ui, BX.Note, BX.UI.Notification, BX.UI, BX.UI.System, BX.Vue3.VueRouter, BX.UI.IconSet, BX.Note.Editor, BX.Note, BX.Note, BX.Note, BX.Note);
+})(this.BX.Note.App = this.BX.Note.App || {}, window, window, BX, BX.Event, BX.Vue3, BX.Note.Sidebar, BX.Note, BX.Note.Ui, BX.Note, BX.UI.Notification, BX.UI, BX.UI.System, BX.Vue3.VueRouter, BX.UI.IconSet, BX.Note.Ui, BX.Note.Ui, BX.Note.Ui, BX.Note.Editor, BX.Note, BX.Note, BX.Note, BX.Note);
 //# sourceMappingURL=app.bundle.js.map

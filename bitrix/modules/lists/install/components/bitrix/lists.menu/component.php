@@ -1,5 +1,9 @@
-<?
+<?php
+
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
+
+use Bitrix\Main\Web\Uri;
+
 /** @global CMain $APPLICATION */
 /** @global CUser $USER */
 /** @global CDatabase $DB */
@@ -57,11 +61,11 @@ if($this->StartResultCache(false, $arUserGroups))
 
 				if($arParams["IS_SEF"] == "Y")
 				{
-					$ar["LIST_URL"] = CHTTP::urlAddParams(str_replace(
+					$ar["LIST_URL"] = (string)(new Uri(str_replace(
 						array("#list_id#", "#section_id#"),
 						array($arList["ID"], "0"),
 						$arParams["~SEF_BASE_URL"].$arParams["~SEF_LIST_URL"]
-					), array("list_section_id" => ""));
+					)))->addParams(["list_section_id" => ""]);
 
 					$ar["LINKS"][] = str_replace(
 						array("#list_id#", "#section_id#"),
@@ -71,11 +75,11 @@ if($this->StartResultCache(false, $arUserGroups))
 				}
 				else
 				{
-					$ar["LIST_URL"] = CHTTP::urlAddParams(str_replace(
+					$ar["LIST_URL"] = (string)(new Uri(str_replace(
 						array("#list_id#", "#section_id#"),
 						array($arList["ID"], "0"),
 						$arParams["~LIST_URL"]
-					), array("list_section_id" => ""));
+					)))->addParams(["list_section_id" => ""]);
 				}
 
 				$arResult["LISTS"][$arList["ID"]] = $ar;

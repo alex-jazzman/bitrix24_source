@@ -40,6 +40,16 @@ jn.define('im/messenger/lib/counters/update-system/action/read-message/pull', (r
 		 */
 		async execute(repository)
 		{
+			if (await this.isOutdatedByLastReadId(this.chatId, this.lastReadId))
+			{
+				this.logger.warn('ReadMessagePullAction: skip outdated read event', {
+					chatId: this.chatId,
+					lastReadId: this.lastReadId,
+				});
+
+				return;
+			}
+
 			if (!repository.hasPendingOperations(this.chatId))
 			{
 				await repository.saveCounterStateList([this.incomingCounterState]);

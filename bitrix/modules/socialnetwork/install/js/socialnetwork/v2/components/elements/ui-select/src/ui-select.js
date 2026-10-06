@@ -1,14 +1,13 @@
-import { BInput } from 'ui.system.input.vue';
-import { BMenu, MenuItemDesign, type MenuOptions } from 'ui.system.menu.vue';
+import { type BaseEvent } from 'main.core.events';
+import { defineComponent } from 'ui.vue3';
+import { Select } from 'ui.select';
 import { type UiSelectItem } from './types';
 
+import './ui-select.css';
+
 // @vue/component
-export const UiSelect = {
+export const UiSelect = defineComponent({
 	name: 'UiSelect',
-	components: {
-		BInput,
-		BMenu,
-	},
 	props: {
 		modelValue: {
 			type: [String, Number, null],
@@ -37,56 +36,59 @@ export const UiSelect = {
 		},
 	},
 	emits: ['update:modelValue'],
-	data(): { isMenuShown: boolean }
-	{
-		return {
-			isMenuShown: false,
-		};
-	},
-	computed: {
-		inputValue(): string
+	watch: {
+		modelValue(value: string | number | null): void
 		{
-			return this.items.find((item) => this.isSelectedItem(item))?.title ?? '';
+			this.select.setValue(String(value ?? ''));
 		},
+		items(): void
+		{
+			this.initSelect();
+		},
+		disabled(): void
+		{
+			this.updateDisabled();
+		},
+	},
+	mounted(): void
+	{
+		this.initSelect();
 	},
 	methods: {
-		selectItem(item: UiSelectItem): void
+		initSelect(): void
 		{
-			this.$emit('update:modelValue', item.id);
-		},
-		isSelectedItem(item: UiSelectItem): boolean
-		{
-			return item.id === this.modelValue;
-		},
-		getMenuOptions(): MenuOptions
-		{
-			return {
-				bindElement: this.$refs.selector.$el,
-				targetContainer: this.targetContainer || document.body,
-				items: this.items.map((item: UiSelectItem) => {
+			this.select = new Select({
+				options: this.items.map((item: UiSelectItem) => {
 					return {
-						title: item.title,
-						icon: item.icon,
-						isSelected: this.isSelectedItem(item),
-						design: item.disabled ? MenuItemDesign.Disabled : MenuItemDesign.Default,
-						onClick: () => this.selectItem(item),
+						value: String(item.id),
+						label: item.title,
 					};
 				}),
-			};
+				value: String(this.modelValue ?? ''),
+				placeholder: this.label,
+				containerClassname: `socialnetwork--ui-select ${this.inputClassName}`,
+				popupParams: {
+					targetContainer: this.targetContainer || document.body,
+				},
+			});
+			this.select.subscribe('update', this.handleUpdate);
+			this.select.renderTo(this.$refs.container);
+			this.updateDisabled();
+		},
+		handleUpdate(event: BaseEvent<string>): void
+		{
+			const selectedItem = this.items.find((item: UiSelectItem) => String(item.id) === event.getData());
+			if (selectedItem && selectedItem.id !== this.modelValue)
+			{
+				this.$emit('update:modelValue', selectedItem.id);
+			}
+		},
+		updateDisabled(): void
+		{
+			this.select.getInput().disabled = this.disabled;
 		},
 	},
 	template: `
-		<BInput
-			:modelValue="inputValue"
-			:label
-			:disabled
-			dropdown
-			clickable
-			:class="inputClassName"
-			:active="isMenuShown"
-			ref="selector"
-			@click="isMenuShown = true"
-		/>
-		<BMenu v-if="isMenuShown" :options="getMenuOptions()" @close="isMenuShown = false"/>
+		<div ref="container"></div>
 	`,
-};
+});

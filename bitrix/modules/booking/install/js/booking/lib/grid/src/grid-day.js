@@ -1,12 +1,10 @@
-import { Core } from 'booking.core';
-import { Model } from 'booking.const';
 import { Duration } from 'booking.lib.duration';
 
 import { GridBase } from './grid-base';
 import { gridTokens } from './grid-tokens';
-import { GridTokenKey } from './const';
+import { GridTokenKey, HoursInDay } from './const';
 
-class GridDay extends GridBase
+export class GridDay extends GridBase
 {
 	calculateLeft(resourceId: number): number
 	{
@@ -30,7 +28,7 @@ class GridDay extends GridBase
 		const minHeight = this.#hourHeight / 4;
 
 		const from = Math.max(this.#selectedDateTs, fromTs + this.#offset);
-		const to = Math.min(new Date(this.#selectedDateTs).setHours(24), toTs + this.#offset);
+		const to = Math.min(new Date(this.#selectedDateTs).setHours(HoursInDay), toTs + this.#offset);
 
 		return Math.max((to - from) / Duration.getUnitDurations().H * this.#hourHeight, minHeight);
 	}
@@ -45,7 +43,7 @@ class GridDay extends GridBase
 		const minHeight = this.#hourHeight / 4;
 
 		const minTs = new Date(this.#selectedDateTs).setHours(this.#offHoursExpanded ? 0 : this.#fromHour);
-		const maxTs = new Date(this.#selectedDateTs).setHours(this.#offHoursExpanded ? 24 : this.#toHour);
+		const maxTs = new Date(this.#selectedDateTs).setHours(this.#offHoursExpanded ? HoursInDay : this.#toHour);
 		const from = Math.max(minTs, fromTs + this.#offset);
 		const to = Math.min(maxTs, toTs + this.#offset);
 
@@ -59,38 +57,36 @@ class GridDay extends GridBase
 
 	get #selectedDateTs(): number
 	{
-		return Core.getStore().getters[`${Model.Interface}/selectedDateTs`] + this.#offset;
+		return this.getParamValue('selectedDateTs') + this.#offset;
 	}
 
 	get #offset(): number
 	{
-		return Core.getStore().getters[`${Model.Interface}/offset`];
+		return this.getParamValue('offset');
 	}
 
 	get #zoom(): number
 	{
-		return Core.getStore().getters[`${Model.Interface}/zoom`];
+		return this.getParamValue('zoom');
 	}
 
 	get #resourcesIds(): number[]
 	{
-		return Core.getStore().getters[`${Model.Interface}/resourcesIds`];
+		return this.getParamValue('resourcesIds');
 	}
 
 	get #fromHour(): number
 	{
-		return Core.getStore().getters[`${Model.Interface}/fromHour`];
+		return this.getParamValue('fromHour');
 	}
 
 	get #toHour(): number
 	{
-		return Core.getStore().getters[`${Model.Interface}/toHour`];
+		return this.getParamValue('toHour');
 	}
 
 	get #offHoursExpanded(): boolean
 	{
-		return Core.getStore().getters[`${Model.Interface}/offHoursExpanded`];
+		return this.getParamValue('offHoursExpanded');
 	}
 }
-
-export const gridDay = new GridDay();

@@ -21,4 +21,5 @@ $MESS["CRM_GRID_HINT_FOR_NOT_VISIBLE_ELEMENT_TEXT"] = "Прокрутите вп
 $MESS['CRM_KANBAN_ITEM_COUNTER_LIMIT_IS_EXCEEDED'] = 'Счётчик не работает, когда много незакрытых дел. Закрыть их можно в разделе Мои дела';
 $MESS['CRM_KANBAN_COLUMN_HIDDEN_SUM'] = 'Сумма скрыта администратором';
 
-$MESS['CRM_KANBAN_ACTION_ERROR'] = 'Не удалось выполнить действие. Обновите страницу и попробуйте снова';
+$MESS['CRM_KANBAN_ACTION_ERROR'] = 'Не удалось выполнить действие, обновите страницу и попробуйте ещё раз';
+$MESS['CRM_KANBAN_MODE_ACTIVITIES_DISABLED'] = 'Режим просмотра Дела отключён администратором вашего Битрикс24';

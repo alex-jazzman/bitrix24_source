@@ -83,6 +83,10 @@ export const CrmIntegration = defineComponent({
 			type: Boolean,
 			default: false,
 		},
+		showEnableSwitcher: {
+			type: Boolean,
+			default: true,
+		},
 	},
 
 	emits: ['update:modelValue'],
@@ -207,6 +211,7 @@ export const CrmIntegration = defineComponent({
 					<HeadlineSm>{{ loc('MAIL_MASSCONNECT_FORM_MAILBOX_SETTINGS_INTEGRATION_CRM_TITLE') }}</HeadlineSm>
 				</div>
 				<div
+					v-if="showEnableSwitcher"
 					class="mail_massconnect__integration-block_switcher-container"
 					data-test-id="mail_massconnect__settings_crm-integration_switcher"
 				>

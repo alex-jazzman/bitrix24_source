@@ -199,6 +199,15 @@ class B24button extends \Bitrix\Landing\Hook\Page
 			return true;
 		}
 
+		// CODE is the url of the widget script and is stored as sent (Hook::saveData() checks no
+		// option list), so the widget is the code of the author as much as the head block and the
+		// GTM container are: under the sandboxed preview on the portal host it is off for the same
+		// reason (Hook\Page\HeadBlock::enabled(), Hook\Page\GTM::enabled()).
+		if (Landing\Landing::getDevicePreviewMode())
+		{
+			return false;
+		}
+
 		$isTelegramWebView = self::isTelegramWebView();
 
 		if ($this->fields['USE']->getValue() === null)
@@ -284,15 +293,25 @@ class B24button extends \Bitrix\Landing\Hook\Page
 					? Theme::prepareColor($this->fields['COLOR_VALUE']->getValue())
 					: 'var(--primary)';
 
-				Page\Asset::getInstance()->addString(
-					"<style type=\"text/css\">
+					Page\Asset::getInstance()->addString(
+						"<style type=\"text/css\">
 							:root {
 								--theme-color-b24button: {$color};
 							}
+							.landing-b24button-use-style .b24-widget-button-popup,
+							.landing-b24button-use-style .b24-widget-button-popup-triangle,
+							.landing-b24button-use-style .b24-widget-button-pulse {
+								border-color: var(--theme-color-b24button) !important;
+							}
+							.landing-b24button-use-style .b24-widget-button-inner-block,
+							.landing-b24button-use-style .b24-widget-button-inner-mask,
+							.landing-b24button-use-style .b24-widget-button-social-item {
+								background-color: var(--theme-color-b24button) !important;
+							}
 						</style>",
-					false,
-					Page\AssetLocation::BEFORE_CSS
-				);
+						false,
+						Page\AssetLocation::BEFORE_CSS
+					);
 			}
 		}
 	}

@@ -4,8 +4,12 @@ namespace Bitrix\Im\V2\Chat;
 
 use Bitrix\Im\V2\Chat;
 use Bitrix\Im\V2\Chat\ExternalChat\Config;
+use Bitrix\Im\V2\Chat\ExternalChat\Event\AfterAttachChildEvent;
 use Bitrix\Im\V2\Chat\ExternalChat\Event\AfterCreateEvent;
+use Bitrix\Im\V2\Chat\ExternalChat\Event\AfterDetachChildEvent;
 use Bitrix\Im\V2\Chat\ExternalChat\Event\AfterLoadEvent;
+use Bitrix\Im\V2\Chat\ExternalChat\Event\BeforeAttachChildEvent;
+use Bitrix\Im\V2\Chat\ExternalChat\Event\BeforeDetachChildEvent;
 use Bitrix\Im\V2\Chat\ExternalChat\Event\AfterMuteEvent;
 use Bitrix\Im\V2\Chat\ExternalChat\Event\BeforeCreateEvent;
 use Bitrix\Im\V2\Chat\ExternalChat\Event\AfterUsersDeleteEvent;
@@ -138,7 +142,8 @@ class ExternalChat extends GroupChat
 
 	public function addUsers(array $userIds, AddUsersConfig $config = new AddUsersConfig()): Chat
 	{
-		$event = new BeforeUsersAddEvent($this, $userIds, $config);
+		$initiatorId = $this->getContext()->getUserId();
+		$event = new BeforeUsersAddEvent($this, $initiatorId, $userIds, $config);
 		$event->send();
 		if ($event->isCancelled())
 		{
@@ -151,16 +156,19 @@ class ExternalChat extends GroupChat
 		return parent::addUsers($userIds, $config);
 	}
 
-	protected function processUpdateStateOnRelationsChanged(RelationChangeSet $changes): Result
+	protected function processUpdateStateOnRelationsChanged(RelationChangeSet $changes, ?AddUsersConfig $config = null): Result
 	{
-		(new Chat\ExternalChat\Event\AfterUsersAddEvent($this, $changes))->send();
+		$initiatorId = $this->getContext()->getUserId();
+		(new Chat\ExternalChat\Event\AfterUsersAddEvent($this, $initiatorId, $changes, $config))->send();
 
-		return parent::processUpdateStateOnRelationsChanged($changes);
+		return parent::processUpdateStateOnRelationsChanged($changes, $config);
 	}
 
 	public function deleteUser(int $userId, DeleteUserConfig $config = new DeleteUserConfig()): Result
 	{
-		$event = new BeforeUsersDeleteEvent($this, [$userId], $config);
+		$initiatorId = $this->getContext()->getUserId();
+
+		$event = new BeforeUsersDeleteEvent($this, $initiatorId, [$userId], $config);
 		$event->send();
 
 		if ($event->isCancelled())
@@ -180,7 +188,7 @@ class ExternalChat extends GroupChat
 
 		if ($result->isSuccess())
 		{
-			(new AfterUsersDeleteEvent($this, [$userId], $config))->send();
+			(new AfterUsersDeleteEvent($this, $initiatorId, [$userId], $config))->send();
 		}
 
 		return $result;
@@ -188,7 +196,9 @@ class ExternalChat extends GroupChat
 
 	public function hideUser(int $userId): Result
 	{
-		$event = new BeforeUsersHideEvent($this, [$userId]);
+		$initiatorId = $this->getContext()->getUserId();
+
+		$event = new BeforeUsersHideEvent($this, $initiatorId, [$userId]);
 		$event->send();
 
 		if ($event->isCancelled())
@@ -207,7 +217,7 @@ class ExternalChat extends GroupChat
 
 		if ($result->isSuccess())
 		{
-			(new AfterUsersHideEvent($this, [$userId]))->send();
+			(new AfterUsersHideEvent($this, $initiatorId, [$userId]))->send();
 		}
 
 		return $result;
@@ -243,28 +253,32 @@ class ExternalChat extends GroupChat
 
 	protected function onBeforeMessageSend(Message $message, SendingConfig $config): Result
 	{
-		(new Chat\ExternalChat\Event\BeforeMessageSendEvent($this, $message))->send();
+		$initiatorId = $this->getContext()->getUserId();
+		(new Chat\ExternalChat\Event\BeforeMessageSendEvent($this, $initiatorId, $message))->send();
 
 		return parent::onBeforeMessageSend($message, $config);
 	}
 
 	protected function onAfterMessageSend(Message $message, SendingService $sendingService): void
 	{
-		(new AfterSendMessageEvent($this, $message))->send();
+		$initiatorId = $this->getContext()->getUserId();
+		(new AfterSendMessageEvent($this, $initiatorId, $message))->send();
 
 		parent::onAfterMessageSend($message, $sendingService);
 	}
 
 	public function onAfterMessageUpdate(Message $message): Result
 	{
-		(new AfterUpdateMessageEvent($this, $message))->send();
+		$initiatorId = $this->getContext()->getUserId();
+		(new AfterUpdateMessageEvent($this, $initiatorId, $message))->send();
 
 		return parent::onAfterMessageUpdate($message);
 	}
 
 	public function onAfterMessagesDelete(MessageCollection $messages, DeletionMode $deletionMode): Result
 	{
-		(new AfterDeleteMessagesEvent($this, $messages, $deletionMode))->send();
+		$initiatorId = $this->getContext()->getUserId();
+		(new AfterDeleteMessagesEvent($this, $initiatorId, $messages, $deletionMode))->send();
 
 		return parent::onAfterMessagesDelete($messages, $deletionMode);
 	}
@@ -288,9 +302,47 @@ class ExternalChat extends GroupChat
 		(new AfterLoadEvent($this, $userId))->send();
 	}
 
+	public function onBeforeAttachChild(GroupChat $childChat, int $userId): Result
+	{
+		$event = new BeforeAttachChildEvent($this, $childChat, $userId);
+		$event->send();
+		if ($event->isCancelled())
+		{
+			return (new Result())->addError(new ChatError(ChatError::FROM_OTHER_MODULE));
+		}
+
+		return new Result();
+	}
+
+	public function onAfterAttachChild(GroupChat $childChat, int $userId): void
+	{
+		(new AfterAttachChildEvent($this, $childChat, $userId))->send();
+	}
+
+	public function onBeforeDetachChild(GroupChat $childChat, int $userId): Result
+	{
+		$event = new BeforeDetachChildEvent($this, $childChat, $userId);
+		$event->send();
+		if ($event->isCancelled())
+		{
+			return (new Result())->addError(new ChatError(ChatError::FROM_OTHER_MODULE));
+		}
+
+		return new Result();
+	}
+
+	public function onAfterDetachChild(GroupChat $childChat, int $userId): void
+	{
+		(new AfterDetachChildEvent($this, $childChat, $userId))->send();
+	}
+
 	public function onAfterAllMessagesRead(int $readerId): Result
 	{
-		(new AfterReadAllMessagesEvent($this, $readerId))->send();
+		// Snapshot the read boundary (chat's last message id at read-all time) so the
+		// deferred IM->Feed sync marks only posts whose system message existed now, not
+		// ones cross-posted into the gap before the background job runs.
+		$lastMessageId = (int)$this->getLastMessageId();
+		(new AfterReadAllMessagesEvent($this, $readerId, $lastMessageId))->send();
 
 		return parent::onAfterAllMessagesRead($readerId);
 	}

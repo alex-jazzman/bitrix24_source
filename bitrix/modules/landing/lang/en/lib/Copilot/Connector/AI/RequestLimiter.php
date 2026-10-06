@@ -1,5 +1,5 @@
 <?php
-$MESS["LANDING_REQUEST_LIMITER_ERROR_BAAS_MSGVER_1"] = "[p]Your have run out of #COPILOT_NAME# credits.[/p][p]If you're making an extensive use of #COPILOT_NAME#, we suggest you buy as many credits as required for uninterrupted work.[/p]#LINK#Buy #COPILOT_NAME# credits#/LINK#";
+$MESS["LANDING_REQUEST_LIMITER_ERROR_BAAS_MSGVER_1"] = "[p]You have run out of #COPILOT_NAME# credits.[/p][p]If you're making an extensive use of #COPILOT_NAME#, we suggest you buy as many credits as required for uninterrupted work.[/p]#LINK#Buy #COPILOT_NAME# credits#/LINK#";
 $MESS["LANDING_REQUEST_LIMITER_ERROR_BAAS_RATE_LIMIT_MSGVER_1"] = "[p]Maximum #COPILOT_NAME# queries reached. Please contact the Helpdesk to extend your limit.[/p]";
 $MESS["LANDING_REQUEST_LIMITER_ERROR_CLOUD_REGISTRATION"] = "[p]Cloud AI service is not connected. Please contact your Bitrix24 administrator.[/p]";
 $MESS["LANDING_REQUEST_LIMITER_ERROR_DAILY_MSGVER_1"] = "[p]You have run out of #COPILOT_NAME# requests. #COPILOT_NAME# will be available to you starting tomorrow.[/p]#LINK#Learn more#/LINK#";

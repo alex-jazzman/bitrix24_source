@@ -9,5 +9,6 @@ $MESS['LANDING_TPL_BUTTON_SAVE'] = 'Сохранить';
 $MESS['LANDING_TPL_BUTTON_CANCEL'] = 'Отменить';
 $MESS['LANDING_TPL_ALERT_REMOVE_TITLE'] = 'Внимание';
 $MESS['LANDING_TPL_ALERT_REMOVE_TEXT'] = 'Действительно удалить соглашение?';
-$MESS['LANDING_TPL_NEW_COOKIES'] = 'Новый тип cookie';
+$MESS['LANDING_TPL_NEW_COOKIES'] = 'Новый тип cookies';
 $MESS['LANDING_TPL_HOOK_COOKIES_SCRIPT_WARN'] = 'На вашем сайте используется сторонний html-код. Укажите информацию о коде, который отвечает за сбор и обработку Cookie-файлов.';
+$MESS['LANDING_TPL_WARNING_CLOSE'] = 'Закрыть предупреждение';

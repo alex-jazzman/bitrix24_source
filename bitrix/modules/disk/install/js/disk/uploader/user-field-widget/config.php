@@ -1,6 +1,5 @@
 <?php
 
-use Bitrix\Disk\Document\Contract\FileCreatable;
 use Bitrix\Disk\Document\Flipchart\Configuration;
 use Bitrix\Disk\Document\LocalDocumentController;
 use Bitrix\Disk\Driver;
@@ -31,16 +30,13 @@ $documentHandlers = [];
 $canCreateDocuments = \Bitrix\Disk\Configuration::canCreateFileByCloud();
 if ($canCreateDocuments)
 {
-	foreach ($handlersManager->getHandlers() as $handler)
+	foreach ($handlersManager->getHandlersForCreatingFile() as $handler)
 	{
-		if ($handler instanceof FileCreatable)
-		{
-			$documentHandlers[$handler::getCode()] = [
-				'code' => $handler::getCode(),
-				'name' => $handler::getName(),
-				'supportsUnifiedLink' => $handler->supportsUnifiedLink(),
-			];
-		}
+		$documentHandlers[$handler::getCode()] = [
+			'code' => $handler::getCode(),
+			'name' => $handler::getName(),
+			'supportsUnifiedLink' => $handler->supportsUnifiedLink(),
+		];
 	}
 
 	$documentHandlers[LocalDocumentController::getCode()] = [
@@ -58,19 +54,22 @@ return [
 	'js' => 'dist/disk.uploader.uf-file.bundle.js',
 	'css' => 'dist/disk.uploader.uf-file.bundle.css',
 	'rel' => [
-		'ui.uploader.vue',
-		'ui.uploader.tile-widget',
-		'main.core.events',
-		'ui.buttons',
-		'ui.info-helper',
+		'disk.disk-picker',
 		'disk.document',
-		'ui.vue3.components.rich-loc',
 		'main.core',
+		'main.core.events',
+		'main.popup',
+		'ui.buttons',
+		'ui.icon-set.api.core',
+		'ui.icon-set.api.vue',
+		'ui.icon-set.outline',
+		'ui.icons.generator',
+		'ui.info-helper',
 		'ui.system.menu',
 		'ui.uploader.core',
-		'ui.icons.generator',
-		'ui.icon-set.api.core',
-		'ui.icon-set.outline',
+		'ui.uploader.tile-widget',
+		'ui.uploader.vue',
+		'ui.vue3.components.rich-loc',
 	],
 	'skip_core' => false,
 	'settings' => [

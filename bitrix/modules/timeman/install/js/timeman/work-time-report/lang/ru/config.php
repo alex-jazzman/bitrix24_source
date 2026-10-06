@@ -13,7 +13,9 @@ $MESS['TIMEMAN_WORK_TIME_REPORT_DONE_TODAY_TITLE'] = 'Сделано за ден
 $MESS['TIMEMAN_WORK_TIME_REPORT_PLAN_TITLE'] = 'План на день';
 $MESS['TIMEMAN_WORK_TIME_REPORT_REVIEW_SUBMITTED'] = 'Отправлен #DATE#';
 $MESS['TIMEMAN_WORK_TIME_REPORT_REVIEW_DISCUSS'] = 'Обсудить отчёт';
-$MESS['TIMEMAN_WORK_TIME_REPORT_REVIEW_CHAT_TITLE'] = 'Рабочий отчёт за #DATE#';
+$MESS['TIMEMAN_WORK_TIME_REPORT_REVIEW_DISCUSS_ERROR_CHAT'] = 'Не удалось открыть чат для обсуждения. Попробуйте ещё раз';
+$MESS['TIMEMAN_WORK_TIME_REPORT_REVIEW_DISCUSS_ERROR_ACCESS'] = 'Обсуждение отчёта недоступно';
+$MESS['TIMEMAN_WORK_TIME_REPORT_REVIEW_DISCUSS_ERROR_COMMON'] = 'Не удалось начать обсуждение. Попробуйте ещё раз';
 
 $MESS['TIMEMAN_WORK_TIME_REPORT_GPT_TITLE_DAY'] = 'Отчёт за день от #COPILOT_NAME#';
 $MESS['TIMEMAN_WORK_TIME_REPORT_GPT_TITLE_WEEK'] = 'Отчёт за неделю от #COPILOT_NAME#';

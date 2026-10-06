@@ -24,7 +24,7 @@ if ($USER->IsAuthorized() && check_bitrix_sessid())
 			$arResult['ERROR'] = GetMessage('BCMMP_BC_NOT_INSTALLED');
 		}
 
-		if (isset($domain) && !isset($arResult['ERROR']) && !empty($arOptions))
+		if ($domain && !isset($arResult['ERROR']) && $arOptions)
 		{
 			$monitoring = CBitrixCloudMonitoring::getInstance();
 			$arUserDevices = CBitrixCloudMobile::getUserDevices($USER->GetID());

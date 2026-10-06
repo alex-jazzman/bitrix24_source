@@ -1,0 +1,52 @@
+.crm-call-assessment-v2-step-view {
+	display: flex;
+	gap: var(--ui-space-inline-sm2);
+	align-items: flex-start;
+	padding: var(--ui-space-inset-sm2) var(--ui-space-inset-sm2) var(--ui-space-inset-md) 11px;
+	border-radius: var(--ui-border-radius-md);
+	background: linear-gradient(265.76deg,
+		var(--ui-color-design-tinted-bitrix-gpt-bg-gradient-1) 1.77%,
+		var(--ui-color-design-tinted-bitrix-gpt-bg-gradient-2) 16.39%,
+		var(--ui-color-design-tinted-bitrix-gpt-bg-gradient-3) 50.50%,
+		var(--ui-color-design-tinted-bitrix-gpt-bg-gradient-4) 99.23%);
+}
+
+.crm-call-assessment-v2-step-view__bullet {
+	flex: 0 0 25px;
+	width: 25px;
+	height: 25px;
+	margin-top: 1px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	background: var(--ui-color-design-plain-na-focused-bg);
+	border: var(--ui-design-selection-stroke-weight-alt) solid var(--ui-color-design-selection-stroke);
+	border-radius: var(--ui-border-radius-pill);
+	box-sizing: border-box;
+}
+
+.crm-call-assessment-v2-step-view__bullet-number {
+	font-size: 11px;
+	font-weight: var(--ui-font-weight-medium);
+	line-height: 14px;
+	letter-spacing: 0.75px;
+	text-transform: uppercase;
+	color: var(--ui-color-design-outline-a2-content);
+}
+
+.crm-call-assessment-v2-step-view__body {
+	flex: 1 1 auto;
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-2xs);
+	min-width: 0;
+	padding-top: 2px;
+}
+
+.crm-call-assessment-v2-step-view__title {
+	color: var(--ui-color-base-0);
+}
+
+.crm-call-assessment-v2-step-view__description {
+	color: var(--ui-color-base-1);
+}

@@ -257,6 +257,24 @@ this.BX = this.BX || {};
 			}
 			return null;
 		}
+		getCurrentCategoryId() {
+			const editor = this.getEditor();
+			if (!editor || !main_core.Type.isFunction(editor.getModel)) {
+				return this.categoryId;
+			}
+			const model = editor.getModel();
+			if (!model || !main_core.Type.isFunction(model.getField)) {
+				return this.categoryId;
+			}
+			return this.resolveCategoryId(model.getField('CATEGORY_ID', this.categoryId));
+		}
+		resolveCategoryId(value) {
+			if (main_core.Type.isNil(value) || main_core.Type.isString(value) && !main_core.Type.isStringFilled(value) || !main_core.Type.isNumber(value) && !main_core.Type.isString(value)) {
+				return null;
+			}
+			const categoryId = parseInt(value, 10);
+			return Number.isNaN(categoryId) ? null : categoryId;
+		}
 		bindPartialEntityEditorEvents() {
 			main_core_events.EventEmitter.subscribe('Crm.PartialEditorDialog.Close', this.handleClosePartialEntityEditor);
 			main_core_events.EventEmitter.subscribe('Crm.PartialEditorDialog.Error', this.handleErrorPartialEntityEditor);
@@ -451,7 +469,10 @@ this.BX = this.BX || {};
 				eval(this.bizprocStarterConfig.availabilityLock);
 				return;
 			}
-			const starter = new BX.Bizproc.Starter(this.bizprocStarterConfig);
+			const starter = new BX.Bizproc.Starter({
+				...this.bizprocStarterConfig,
+				categoryId: this.getCurrentCategoryId()
+			});
 			starter.showTemplatesMenu(event.data.button.button);
 		}
 		handleClosePartialEntityEditor(event) {
@@ -558,10 +579,10 @@ this.BX = this.BX || {};
 		}
 		initTours() {
 			if (this.automationCheckAutomationTourGuideData) {
-				main_core.Runtime.loadExtension('bizproc.automation.guide').then(exports$1 => {
+				main_core.Runtime.loadExtension('bizproc.automation.guide').then(exports => {
 					const {
 						CrmCheckAutomationGuide
-					} = exports$1;
+					} = exports;
 					if (CrmCheckAutomationGuide) {
 						CrmCheckAutomationGuide.showCheckAutomation(this.entityTypeName, this.categoryId ?? 0, this.automationCheckAutomationTourGuideData['options']);
 					}
@@ -591,5 +612,5 @@ this.BX = this.BX || {};
 
 	exports.ItemDetailsComponent = ItemDetailsComponent;
 
-})(this.BX.Crm = this.BX.Crm || {}, BX.Crm.Integration.Analytics, BX.Crm.ItemDetailsComponent.PageTitle, BX.Crm.ItemDetailsComponent, BX.Crm.MessageSender, BX.Crm, BX.Crm.Models, BX.Crm.Stage, BX, BX.Event, BX, BX.UI.Dialogs, BX);
+})(this.BX.Crm = this.BX.Crm || {}, BX.Crm.Integration.Analytics, BX.Crm.ItemDetailsComponent.PageTitle, BX.Crm.ItemDetailsComponent, BX.Crm.MessageSender, BX.Crm, BX.Crm.Models, BX.Crm.Stage, BX, BX.Event, BX, BX.UI.Dialogs, BX.UI.Notification);
 //# sourceMappingURL=item-details-component.bundle.js.map

@@ -1,6 +1,7 @@
 import { BaseAction } from './base-action';
 import { Loc } from 'main.core';
 import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
+import { ErrorCollection } from 'ui.form-elements.field';
 import { ConfirmAction } from './confirm-action';
 
 export class ReinviteAction extends BaseAction
@@ -45,6 +46,19 @@ export class ReinviteAction extends BaseAction
 		}
 
 		this.unselectRows(this.grid);
+	}
+
+	handleError(result): void
+	{
+		this.grid.tableUnfade();
+		this.unselectRows(this.grid);
+		console.error(result);
+
+		if (this.showPopups && Type.isArrayFilled(result.errors))
+		{
+			const errors = result.errors.map((error) => error.message);
+			ErrorCollection.showSystemError(errors.join('<br>'));
+		}
 	}
 
 	showWaitingUsersPopup(waitingUsers: Array): void

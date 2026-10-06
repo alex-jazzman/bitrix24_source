@@ -1,7 +1,7 @@
 import { EventEmitter, type BaseEvent } from 'main.core.events';
 import { type JsonObject } from 'main.core';
 
-import { EventType, Layout, type LayoutType } from 'im.v2.const';
+import { EventType, Layout, type LayoutType, RecentType, type OpenCollabOptions } from 'im.v2.const';
 import { LayoutManager } from 'im.v2.lib.layout';
 import { type ImModelLayout, type ImModelChat } from 'im.v2.model';
 import { SlideAnimation, SlideEntrySide } from 'im.v2.component.animation';
@@ -15,7 +15,7 @@ import { chatMatchesChatId } from './functions/matches-chat-id';
 
 import './css/navigator.css';
 
-export type NestedListPayload = { parentDialogId: string };
+export type NestedListPayload = { parentDialogId: string, options: OpenCollabOptions };
 
 type SelectChatPayload = { layoutName: LayoutType, dialogId: string };
 type CloseNestedListPayload = ?{ dialogId: string };
@@ -36,6 +36,8 @@ export const ListNavigator = {
 		return {
 			isLoading: false,
 			nestedListParentChatId: 0,
+			nestedListCompactMode: true,
+			initialRecentSection: null,
 		};
 	},
 	computed: {
@@ -48,9 +50,9 @@ export const ListNavigator = {
 		{
 			return this.nestedListParentChatId > 0;
 		},
-		nestedListCompactMode(): boolean
+		isRootListAvatarsOnly(): boolean
 		{
-			return NestedListManager.isCompactModeLayout();
+			return this.isNestedListActive && this.nestedListCompactMode;
 		},
 		nestedListClasses(): Record<string, boolean>
 		{
@@ -81,8 +83,11 @@ export const ListNavigator = {
 		this.getEmitter().unsubscribe(EventType.dialog.onDialogInited, this.onDialogInited);
 	},
 	methods: {
-		async openNestedList(parentDialogId: string)
+		async openNestedList(parentDialogId: string, options: OpenCollabOptions = {})
 		{
+			const { compactMode = true, recentType = RecentType.collabDefault } = options;
+
+			this.nestedListCompactMode = compactMode;
 			this.isLoading = true;
 			const parentChatId = await NestedListManager.prepareParentChatId(parentDialogId);
 			const listWasClosed = !this.isLoading;
@@ -91,6 +96,7 @@ export const ListNavigator = {
 				return;
 			}
 			this.nestedListParentChatId = parentChatId;
+			this.initialRecentSection = recentType;
 			this.isLoading = false;
 		},
 		closeNestedList()
@@ -198,8 +204,9 @@ export const ListNavigator = {
 		},
 		onOpenNestedListEvent(event: BaseEvent<NestedListPayload>)
 		{
-			const { parentDialogId } = event.getData();
-			void this.openNestedList(parentDialogId);
+			const { parentDialogId, options } = event.getData();
+
+			void this.openNestedList(parentDialogId, options);
 		},
 		onCloseNestedListEvent(event: BaseEvent<CloseNestedListPayload>): $Values<typeof EscEventAction>
 		{
@@ -255,7 +262,7 @@ export const ListNavigator = {
 	},
 	template: `
 		<KeepAlive>
-			<component :is="listComponent" @selectChat="onSelectChat" />
+			<component :is="listComponent" :avatarsOnly="isRootListAvatarsOnly" @selectChat="onSelectChat" />
 		</KeepAlive>
 		<SlideAnimation :entrySide="SlideEntrySide.right">
 			<div v-if="isLoading || isNestedListActive" :class="nestedListClasses" class="bx-im-list-navigator-nested-list__container">
@@ -264,6 +271,7 @@ export const ListNavigator = {
 					v-else-if="isNestedListActive"
 					:parentChatId="nestedListParentChatId"
 					:compactMode="nestedListCompactMode"
+					:initialRecentSection="initialRecentSection"
 					@close="onCloseNestedListClick"
 					@selectChat="onNestedListSelectChat"
 				/>

@@ -14,7 +14,8 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 	'ui.tooltip',
 	'socnetlogdest',
 	'bp_user_selector',
-	'ui.buttons.icons'
+	'ui.buttons.icons',
+	'bizproc.a11y',
 ]);
 
 $cmpId = RandString();
@@ -39,6 +40,7 @@ if (empty($arResult['DOCUMENT_ICON']))
 		BPAT_DELEGATE_SELECT : '<?=GetMessageJS('BPAT_DELEGATE_SELECT')?>',
 		BPAT_DELEGATE_CANCEL : '<?=GetMessageJS('BPAT_DELEGATE_CANCEL')?>'
 	});
+	BX.message(<?= \Bitrix\Main\Web\Json::encode(\Bitrix\Main\Localization\Loc::loadLanguageFile(__FILE__)) ?>);
 	BX.ready(() =>
 	{
 		setTimeout(() =>
@@ -59,14 +61,14 @@ if (empty($arResult['DOCUMENT_ICON']))
 <div class="bp-task-page bp-lent <?if (empty($arResult["TASK"]['STARTED_BY_PHOTO_SRC'])):?>no-photo<?endif?>">
 	<?if (!empty($arResult["TASK"]['STARTED_BY_PHOTO_SRC'])):?>
 	<span class="bp-avatar" bx-tooltip-user-id="<?=(int)$arResult["TASK"]['STARTED_BY']?>" bx-tooltip-classname="intrantet-user-selector-tooltip">
-		<img src="<?=\Bitrix\Main\Web\Uri::urnEncode($arResult["TASK"]['STARTED_BY_PHOTO_SRC'])?>" alt="">
+		<img src="<?=\Bitrix\Main\Web\Uri::urnEncode($arResult["TASK"]['STARTED_BY_PHOTO_SRC'])?>" alt="<?=GetMessage('BPATL_A11Y_STARTER_AVATAR')?>">
 	</span>
 	<?endif?>
-	<span class="bp-title"><?=$arResult["TASK"]["NAME"]?></span>
+	<span class="bp-title" role="heading" aria-level="2"><?=$arResult["TASK"]["NAME"]?></span>
 	<?if ($arResult["TASK"]["DOCUMENT_NAME"]):?>
 	<span class="bp-title-desc">
 		<span class="bp-title-desc-icon">
-			<img src="<?=htmlspecialcharsbx($arResult['DOCUMENT_ICON'])?>" width="36" border="0" />
+			<img src="<?=htmlspecialcharsbx($arResult['DOCUMENT_ICON'])?>" width="36" border="0" alt="" />
 		</span>
 		<span class=""><?=$arResult["TASK"]["DOCUMENT_NAME"]?></span>
 	</span>
@@ -98,9 +100,10 @@ if (empty($arResult['DOCUMENT_ICON']))
 			}
 		elseif ($arResult["TASK"]['IS_INLINE'] == 'Y'):?>
 			<div class="bp-btn-panel">
-				<div class="bp-btn-panel-inner">
+				<div class="bp-btn-panel-inner" role="group" aria-label="<?=GetMessage('BPATL_A11Y_TASK_ACTIONS')?>">
 				<?php
 				if ($arParams['POPUP']):
+				$isFirstControl = true;
 				foreach ($arResult['TaskControls']['BUTTONS'] as $control):
 					$isDecline =
 						$control['TARGET_USER_STATUS'] == CBPTaskUserStatus::No
@@ -116,8 +119,11 @@ if (empty($arResult['DOCUMENT_ICON']))
 					<a href="#"
 						onclick="return BX.Bizproc.doInlineTask(<?= $props ?>, function(){ if (!!BX.Bizproc.taskPopupInstance) BX.Bizproc.taskPopupInstance.close(); if (BX.Bizproc.taskPopupCallback) return BX.Bizproc.taskPopupCallback(); window.location.reload()}, this)"
 						class="ui-btn ui-btn-<?= $class ?> ui-btn-icon-<?= $icon ?>"
+						data-testid="task-detail-action-btn"
+						<?if ($isFirstControl):?> data-autofocus<?endif?>
 					><?= $control['TEXT'] ?></a>
 				<?
+					$isFirstControl = false;
 				endforeach;
 				else: ?>
 					<form method="post" action="<?=POST_FORM_ACTION_URI?>">
@@ -160,7 +166,7 @@ if (empty($arResult['DOCUMENT_ICON']))
 			ShowError($arResult["ERROR_MESSAGE"]);
 		endif;
 		?>
-		<span class="bp-task-block-title"><?=GetMessage("BPATL_TASK_TITLE_1")?>: </span>
+		<span class="bp-task-block-title" role="heading" aria-level="3"><?=GetMessage("BPATL_TASK_TITLE_1")?>: </span>
 		<div class="bp-task-block-description">
 		<?
 		if ($arResult["TASK"]["DESCRIPTION"] <> ''):
@@ -180,6 +186,8 @@ if (empty($arResult['DOCUMENT_ICON']))
 		if ($showDelegationButton && $arResult['TASK']['IS_INLINE'] === 'Y'): ?>
 			<a href="#"
 				class="ui-btn ui-btn-light-border"
+				aria-haspopup="dialog"
+				data-testid="task-detail-delegate-btn"
 				onclick="
 					return BX.Bizproc.showDelegationPopup(
 						this,
@@ -209,9 +217,10 @@ if (empty($arResult['DOCUMENT_ICON']))
 				<table class="bizproc-table-main bizproc-task-table" cellpadding="3" border="0">
 					<?= $arResult["TaskForm"]?>
 				</table>
-				<div class="bizproc-item-buttons">
+				<div class="bizproc-item-buttons" role="group" aria-label="<?=GetMessage('BPATL_A11Y_TASK_ACTIONS')?>">
 					<?if (!empty($arResult['TaskControls']['BUTTONS'])):?>
 						<?
+						$isFirstControl = true;
 						foreach ($arResult['TaskControls']['BUTTONS'] as $control):
 							$isDecline =
 								$control['TARGET_USER_STATUS'] == CBPTaskUserStatus::No
@@ -226,9 +235,12 @@ if (empty($arResult['DOCUMENT_ICON']))
 							<button type="submit" name="<?= htmlspecialcharsbx($control['NAME']) ?>"
 									value="<?= htmlspecialcharsbx($control['VALUE']) ?>"
 									class="ui-btn ui-btn-<?= $class ?>"
+									data-testid="task-detail-action-btn"
+									<?if ($isFirstControl):?> data-autofocus<?endif?>
 							><?= $control['TEXT'] ?>
 							</button>
 						<?php
+							$isFirstControl = false;
 						endforeach;
 						?>
 					<?else: echo $arResult["TaskFormButtons"]; endif;?>
@@ -236,6 +248,8 @@ if (empty($arResult['DOCUMENT_ICON']))
 					<?php if ($showDelegationButton): ?>
 						<a href="#"
 							class="ui-btn ui-btn-light-border"
+							aria-haspopup="dialog"
+							data-testid="task-detail-delegate-btn"
 							onclick="
 								return BX.Bizproc.showDelegationPopup(
 									this,
@@ -276,27 +290,47 @@ if (empty($arResult['DOCUMENT_ICON']))
 	<?if (!$arParams['POPUP']):?>
 	<div class="bp-tab-container">
 		<div id="bp-task-tabs-header" class="bp-tabs-block">
-			<span id="bp-task-tab-1" class="bp-tab bp-tab-active" onclick="return function(){
+			<span id="bp-task-tab-1" class="bp-tab bp-tab-active" aria-pressed="true" data-testid="task-detail-tab-comments" onclick="return function(){
 			var t1 = BX('bp-task-tab-1'),
 				t2 = BX('bp-task-tab-2'),
 				t1c = BX('bp-task-tab-1-content'),
 				t2c = BX('bp-task-tab-2-content');
 
 				BX.addClass(t1, 'bp-tab-active'); BX.removeClass(t2, 'bp-tab-active');
+				t1.setAttribute('aria-pressed', 'true'); t2.setAttribute('aria-pressed', 'false');
 				BX.addClass(t1c, 'active'); BX.removeClass(t2c, 'active');
 				return false;
 			}()"><?=GetMessage("BPATL_COMMENTS")?></span>
-			<span id="bp-task-tab-2" class="bp-tab" onclick="return function(){
+			<span id="bp-task-tab-2" class="bp-tab" aria-pressed="false" data-testid="task-detail-tab-history" onclick="return function(){
 			var t1 = BX('bp-task-tab-2'),
 				t2 = BX('bp-task-tab-1'),
 				t1c = BX('bp-task-tab-2-content'),
 				t2c = BX('bp-task-tab-1-content');
 
 				BX.addClass(t1, 'bp-tab-active'); BX.removeClass(t2, 'bp-tab-active');
+				t1.setAttribute('aria-pressed', 'true'); t2.setAttribute('aria-pressed', 'false');
 				BX.addClass(t1c, 'active'); BX.removeClass(t2c, 'active');
 				return false;
 			}()"><?=GetMessage("BPATL_DOC_HISTORY")?></span>
 		</div>
+		<script>
+			BX.ready(function()
+			{
+				if (BX.Bizproc.applyTaskFormA11y)
+				{
+					BX.Bizproc.applyTaskFormA11y(document);
+				}
+				if (BX.Bizproc.A11y)
+				{
+					var tabs = document.querySelectorAll('#bp-task-tabs-header .bp-tab');
+					for (var i = 0; i < tabs.length; i++)
+					{
+						// tabs bind their own inline click; empty handler adds only keyboard activation
+						BX.Bizproc.A11y.makeActivatable(tabs[i], function() {});
+					}
+				}
+			});
+		</script>
 
 		<div id="bp-task-tabs-content" class="bp-tab-contents">
 			<div id="bp-task-tab-1-content" class="bp-tab-content active">

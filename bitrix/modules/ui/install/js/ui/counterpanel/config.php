@@ -10,6 +10,7 @@ return [
 	'rel' => [
 		'main.core',
 		'main.core.events',
+		'ui.a11y',
 		'ui.actions-bar',
 		'ui.cnt',
 		'ui.design-tokens',

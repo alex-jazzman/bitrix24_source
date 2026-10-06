@@ -55,6 +55,13 @@ class timeman extends CModule
 			}
 		}
 
+		$migrationResult = $this->installMigrations();
+		if (!$migrationResult->isSuccess())
+		{
+			$APPLICATION->ThrowException(implode('', $migrationResult->getErrorMessages()));
+			return false;
+		}
+
 		$this->InstallTasks();
 
 		RegisterModule($this->MODULE_ID);
@@ -115,8 +122,16 @@ class timeman extends CModule
 		global $DB, $APPLICATION;
 
 		$connection = \Bitrix\Main\Application::getConnection();
+		$dropTables = array_key_exists("savedata", $arParams) && ($arParams["savedata"] != 'Y');
 
-		if (array_key_exists("savedata", $arParams) && ($arParams["savedata"] != 'Y'))
+		$migrationResult = $this->uninstallMigrations($dropTables);
+		if (!$migrationResult->isSuccess())
+		{
+			$APPLICATION->ThrowException(implode('', $migrationResult->getErrorMessages()));
+			return false;
+		}
+
+		if ($dropTables)
 		{
 			if(CModule::IncludeModule("socialnetwork"))
 			{

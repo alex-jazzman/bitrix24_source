@@ -41,7 +41,7 @@ export const CopilotTextarea = {
 		},
 		hasUploadMenu(): boolean
 		{
-			return !this.isTempChat && this.isFileUploadEnabled;
+			return this.isFileUploadEnabled;
 		},
 		hasWithMention(): boolean
 		{

@@ -1,6 +1,16 @@
-<?
+<?php
+
+use Bitrix\Main\Web\Uri;
+use Bitrix\Main\Loader;
+
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_before.php");
-\Bitrix\Main\Loader::includeModule('bizproc');
+
+/**
+ * @global CUser $USER
+ * @global CMain $APPLICATION
+ */
+
+Loader::includeModule('bizproc');
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/bizproc/prolog.php");
 
 IncludeModuleLangFile(__FILE__);
@@ -60,7 +70,7 @@ else
 	if ($backUrl == '' && !empty($arTask["PARAMETERS"]["DOCUMENT_ID"]))
 		$backUrl = CBPDocument::GetDocumentAdminPage($arTask["PARAMETERS"]["DOCUMENT_ID"]);
 
-	$backUrl = CHTTP::urlDeleteParams($backUrl, array('mode'));
+	$backUrl = (string)(new Uri($backUrl))->deleteParams(['mode']);
 
 	$showType = "Form";
 
@@ -80,7 +90,6 @@ else
 				if ($backUrl <> '')
 				{
 					LocalRedirect($backUrl);
-					die();
 				}
 			}
 			else
@@ -159,9 +168,9 @@ else
 		}
 	}
 
-	list($taskForm, $taskFormButtons) = array("", "");
+	[$taskForm, $taskFormButtons] = array("", "");
 	if ($showType != "Success")
-		list($taskForm, $taskFormButtons) = CBPDocument::ShowTaskForm($arTask, $userId, "", ($_SERVER["REQUEST_METHOD"] == "POST" && $_POST["action"] == "doTask") ? $_REQUEST : null);
+		[$taskForm, $taskFormButtons] = CBPDocument::ShowTaskForm($arTask, $userId, "", ($_SERVER["REQUEST_METHOD"] == "POST" && $_POST["action"] == "doTask") ? $_REQUEST : null);
 
 	?>
 	<form method="post" name="task_delegate" action="<?= GetPagePath(false, true) ?>">
@@ -170,7 +179,7 @@ else
 		<input type="hidden" name="workflow_id" value="<?= htmlspecialcharsbx($arTask["WORKFLOW_ID"]) ?>">
 		<input type="hidden" name="back_url" value="<?= htmlspecialcharsbx($backUrl) ?>">
 		<?= bitrix_sessid_post() ?>
-		<?
+		<?php
 		if ($allowAdminAccess)
 			echo '<input type="hidden" name="uid" value="'.intval($arTask["USER_ID"]).'">';
 		?>
@@ -193,7 +202,7 @@ else
 		<input type="hidden" name="workflow_id" value="<?= htmlspecialcharsbx($arTask["WORKFLOW_ID"]) ?>">
 		<input type="hidden" name="back_url" value="<?= htmlspecialcharsbx($backUrl) ?>">
 		<?= bitrix_sessid_post() ?>
-		<?
+		<?php
 		if ($allowAdminAccess)
 			echo '<input type="hidden" name="uid" value="'.intval($arTask["USER_ID"]).'">';
 
@@ -206,11 +215,11 @@ else
 		$tabControl->Begin();
 		$tabControl->BeginNextTab();
 		?>
-			<?if ($allowAdminAccess):?>
+			<?php if ($allowAdminAccess):?>
 			<tr>
 				<td align="right" valign="top" width="40%"><?= GetMessage("BPAT_USER") ?>:</td>
 				<td width="60%" valign="top">
-					<?
+					<?php
 					$dbUserTmp = CUser::GetByID($arTask["USER_ID"]);
 					$arUserTmp = $dbUserTmp->GetNext();
 					$str = $arUserTmp? CUser::FormatName(COption::GetOptionString("bizproc", "name_template", CSite::GetNameFormat(false), SITE_ID), $arUserTmp, true) : GetMessage('BPAT_USER_NOT_FOUND');
@@ -219,7 +228,7 @@ else
 					?>
 				</td>
 			</tr>
-			<?endif;?>
+			<?php endif;?>
 			<tr>
 				<td align="right" valign="top" width="40%"><?= GetMessage("BPAT_NAME") ?>:</td>
 				<td width="60%" valign="top"><?= $arTask["NAME"] ?></td>
@@ -228,26 +237,25 @@ else
 				<td align="right" valign="top" width="40%"><?= GetMessage("BPAT_DESCR") ?>:</td>
 				<td width="60%" valign="top"><?= nl2br($arTask["DESCRIPTION"]) ?></td>
 			</tr>
-			<?if ($arTask["PARAMETERS"]["DOCUMENT_URL"] <> ''):?>
+			<?php if ($arTask["PARAMETERS"]["DOCUMENT_URL"] <> ''):?>
 			<tr>
 				<td align="right" valign="top" width="40%">&nbsp;</td>
 				<td width="60%" valign="top"><a href="<?= $arTask["PARAMETERS"]["DOCUMENT_URL"] ?>" target="_blank"><?= GetMessage("BPAT_GOTO_DOC") ?></a></td>
 			</tr>
-			<?endif;?>
+			<?php endif;?>
 			<?= $taskForm; ?>
-		<?
+		<?php
 		$tabControl->Buttons();
 		?>
 			<?= $taskFormButtons ?>
-		<?
+		<?php
 		$tabControl->End();
 
 		?>
 	</form>
-	<?
+	<?php
 }
 ?>
 
-<?
+<?php
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/epilog_admin.php");
-?>

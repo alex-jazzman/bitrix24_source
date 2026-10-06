@@ -798,6 +798,17 @@ export class Util
 		return Util.projectFeatureEnabled;
 	}
 
+	static setTeamsAsAttendeeEnabled(value)
+	{
+		Util.teamsAsAttendeeEnabled = value;
+	}
+
+	static isTeamsAsAttendeeEnabled()
+	{
+		// backend-fed flag (CFG-01); default off when absent
+		return Util.teamsAsAttendeeEnabled === true;
+	}
+
 	static setIsBitrix24Template(value)
 	{
 		Util.isBitrix24Template = value;

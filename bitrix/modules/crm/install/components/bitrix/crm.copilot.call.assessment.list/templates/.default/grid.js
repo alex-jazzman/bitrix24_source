@@ -1,5 +1,5 @@
 import { ajax as Ajax, Loc, Reflection, Text } from 'main.core';
-import { BaseEvent, EventEmitter } from 'main.core.events';
+import { type BaseEvent, EventEmitter } from 'main.core.events';
 import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
 import { UI } from 'ui.notification';
 
@@ -8,6 +8,7 @@ const namespace = Reflection.namespace('BX.Crm.Copilot.CallAssessmentList');
 export class Grid {
 	#grid = null;
 	#reloadGridTimeoutId: number = null;
+	static #SETTINGS_MENU_ID = 'crm-copilot-call-assessment-list-settings-menu';
 
 	constructor(gridId: string)
 	{
@@ -22,6 +23,47 @@ export class Grid {
 	#bindEvents(): void
 	{
 		EventEmitter.subscribe('BX.Crm.Copilot.CallAssessment:onClickDelete', this.#handleItemDelete.bind(this));
+		EventEmitter.subscribe('BX.Main.Popup:onShow', this.#handleSettingsMenuShow.bind(this));
+
+		BX.addCustomEvent('SidePanel.Slider:onCloseComplete', this.#handleSliderClose.bind(this));
+	}
+
+	#handleSettingsMenuShow(event: BaseEvent): void
+	{
+		const popup = event.getTarget();
+		if (popup?.getId?.() !== Grid.#SETTINGS_MENU_ID)
+		{
+			return;
+		}
+
+		Promise.resolve().then(() => {
+			const popupContainer = popup.popupContainer;
+			const button = popup.bindElement;
+			const angle = popupContainer?.querySelector?.('.popup-window-angly');
+			if (!popupContainer || !button || !angle)
+			{
+				return;
+			}
+
+			const btnRect = button.getBoundingClientRect();
+			const popupRect = popupContainer.getBoundingClientRect();
+			const angleWidth = angle.getBoundingClientRect().width || 16;
+			const btnCenterX = btnRect.left + btnRect.width / 2;
+			const desiredLeft = Math.max(8, btnCenterX - popupRect.left - angleWidth / 2);
+
+			angle.style.left = `${desiredLeft}px`;
+		});
+	}
+
+	#handleSliderClose(sliderEvent): void
+	{
+		const url = sliderEvent?.slider?.getUrl?.();
+		if (typeof url !== 'string' || !url.includes('/crm/copilot-call-assessment/details/'))
+		{
+			return;
+		}
+
+		this.#reloadGridAfterTimeout();
 	}
 
 	#handleItemDelete(event: BaseEvent): void

@@ -8,11 +8,11 @@ return [
 	'css' => 'dist/content.bundle.css',
 	'js' => 'dist/content.bundle.js',
 	'rel' => [
+		'landing.ui.panel.base',
+		'landing.utils',
+		'main.core',
 		'ui.design-tokens',
 		'ui.fonts.opensans',
-		'landing.ui.panel.base',
-		'main.core',
-		'landing.utils',
 	],
 	'skip_core' => false,
 ];

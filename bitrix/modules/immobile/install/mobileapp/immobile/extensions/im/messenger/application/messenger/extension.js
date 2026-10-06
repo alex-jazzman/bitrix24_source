@@ -4,7 +4,7 @@
 jn.define('im/messenger/application/messenger', (require, exports, module) => {
 	const { getLoggerWithContext } = require('im/messenger/lib/logger');
 
-	const { RestMethod } = require('im/messenger/const');
+	const { RestMethod, UserType } = require('im/messenger/const');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { MessengerInitService } = require('im/messenger/provider/services/messenger-init');
 	const { ChatAssets } = require('im/messenger/controller/dialog/lib/assets');
@@ -21,6 +21,7 @@ jn.define('im/messenger/application/messenger', (require, exports, module) => {
 	const { Anchors } = require('im/messenger/lib/anchors');
 	const { CopilotManager } = require('im/messenger/lib/copilot');
 	const { Feature } = require('im/messenger/lib/feature');
+	const { MessengerParams } = require('im/messenger/lib/params');
 
 	const { MessengerCore } = require('im/messenger/core/messenger');
 	const { MessengerHeaderManager } = require('im/messenger/controller/messenger-header');
@@ -47,7 +48,7 @@ jn.define('im/messenger/application/messenger', (require, exports, module) => {
 	const { showUpdateAppScreenIfNeeded } = require('im/messenger/application/lib/update-notifier');
 	const { PerfPoint } = require('debug/prism');
 
-	const mobileRevision = 25; // sync with im/lib/revision.php. TODO: move value to some config?
+	const mobileRevision = 26; // sync with im/lib/revision.php. TODO: move value to some config?
 
 	/**
 	 * @class Messenger
@@ -62,6 +63,8 @@ jn.define('im/messenger/application/messenger', (require, exports, module) => {
 			this.serviceLocator = serviceLocator;
 			/** @type {SubscriptionManager} */
 			this.subscriptionManager = serviceLocator.get('subscription-manager');
+			/** @type {boolean} */
+			this.isGuestMode = false;
 		}
 
 		destructor()
@@ -282,6 +285,13 @@ jn.define('im/messenger/application/messenger', (require, exports, module) => {
 			{
 				await this.store.dispatch('usersModel/setFromLocalDatabase', [currentUser]);
 			}
+
+			this.isGuestMode = MessengerParams.getUserInfo().type === UserType.guest;
+
+			if (this.isGuestMode)
+			{
+				this.logger.log('Guest mode detected for userId:', this.core.getUserId());
+			}
 		}
 
 		async initQueueRequests()
@@ -344,6 +354,7 @@ jn.define('im/messenger/application/messenger', (require, exports, module) => {
 			this.pullHandlerLauncher = new PullHandlerLauncher();
 			this.pullHandlerLauncher.subscribeEvents();
 
+			serviceLocator.add('pull-handler-launcher', this.pullHandlerLauncher);
 			this.subscriptionManager.register(this.pullHandlerLauncher);
 		}
 

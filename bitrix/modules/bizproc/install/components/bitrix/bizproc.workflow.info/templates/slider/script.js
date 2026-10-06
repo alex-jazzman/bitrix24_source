@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Bizproc = this.BX.Bizproc || {};
-(function (exports, main_core, main_core_events, ui_buttons, bizproc_task, ui_dialogs_messagebox) {
+(function (exports, main_core, main_core_events, ui_buttons, bizproc_task, bizproc_a11y, ui_dialogs_messagebox) {
 	'use strict';
 
 	class ValidateHelper {
@@ -97,6 +97,9 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 		});
 	}
 
+	const VISUALLY_HIDDEN_STYLE = 'position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;' + 'clip:rect(0 0 0 0);white-space:nowrap;border:0;';
+	const FOCUSABLE_CONTROL_SELECTOR = 'input:not([type="hidden"]), select, textarea, button, [tabindex]';
+	let fieldDescriptionSeq = 0;
 	class WorkflowInfo {
 		#isChanged = false;
 		#messageBox;
@@ -123,6 +126,40 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 			this.#canUseHumanResources = main_core.Text.toBoolean(options.canUseHumanResources);
 			this.handleMarkAsRead = main_core.Runtime.debounce(this.#sendMarkAsRead, 100, this);
 			this.#workflowResult = main_core.Type.isNil(options.workflowResult) ? null : options.workflowResult;
+			this.#setupTabsAccessibility();
+		}
+		#setupTabsAccessibility() {
+			const timelineTab = this.workflowContent?.querySelector('[data-role="wfi-timeline-tab"]');
+			if (timelineTab) {
+				// inline onclick opens Timeline; empty handler adds keyboard-only
+				// activation (mouse works even if this extension fails to load)
+				bizproc_a11y.makeActivatable(timelineTab, () => {});
+			}
+		}
+		#setupTaskFormA11y() {
+			if (!this.taskForm) {
+				return;
+			}
+			this.taskForm.querySelectorAll('.ui-form-row').forEach(row => {
+				const labelNode = row.querySelector('.ui-ctl-label-text');
+				if (!labelNode) {
+					return;
+				}
+				const label = labelNode.textContent.replaceAll('*', '').replace(/:\s*$/, '').trim();
+				if (label === '') {
+					return;
+				}
+				const content = row.querySelector('.ui-form-content');
+				if (!content) {
+					return;
+				}
+				content.querySelectorAll('input:not([type="hidden"]), select, textarea').forEach(control => {
+					const hasName = control.getAttribute('aria-label') || control.getAttribute('aria-labelledby') || control.labels && control.labels.length > 0;
+					if (!hasName) {
+						control.setAttribute('aria-label', label);
+					}
+				});
+			});
 		}
 		init() {
 			if (this.buttonsPanel) {
@@ -203,7 +240,10 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 						}
 					}
 				});
+				BX.UI.Hint.init(this.taskForm);
+				this.#applyFieldDescriptions();
 			}
+			this.#setupTaskFormA11y();
 			const desc = this.workflowContent.querySelector('.bp-workflow-info__desc-inner');
 			if (desc) {
 				BX.UI.Hint.init(desc);
@@ -216,6 +256,51 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 					}
 				}).catch(() => {});
 			}
+		}
+
+		// Links each field's description to its focusable control via aria-describedby so screen readers
+		// announce it on focus. The visual ui.hint stays mouse-only, so this is the AT-facing channel.
+		#applyFieldDescriptions() {
+			if (!this.taskForm || !main_core.Type.isArrayFilled(this.taskFields)) {
+				return;
+			}
+			const fieldRows = [...this.taskForm.querySelectorAll('.ui-form-row[data-cid]')];
+			this.taskFields.forEach(field => {
+				const description = main_core.Type.isStringFilled(field.Description) ? field.Description.trim() : '';
+				if (description === '') {
+					return;
+				}
+
+				// The server template renders data-cid without the `[]` suffix, but the client re-render
+				// (#renderTaskFields) keeps the full Id, so multi-value rows may use either form.
+				const fullId = String(field.Id);
+				const cid = fullId.replace('[]', '');
+				const row = fieldRows.find(candidate => candidate.getAttribute('data-cid') === cid) ?? (cid === fullId ? null : fieldRows.find(candidate => candidate.getAttribute('data-cid') === fullId));
+				const content = row?.querySelector('.ui-form-content');
+				if (!content) {
+					return;
+				}
+				const control = content.querySelector(FOCUSABLE_CONTROL_SELECTOR);
+				if (!control) {
+					return;
+				}
+				let descNode = content.querySelector('[data-role="field-description"]');
+				if (!descNode) {
+					fieldDescriptionSeq += 1;
+					const descId = `bp-wfi-field-desc-${fieldDescriptionSeq}`;
+					descNode = main_core.Tag.render`<span
+					id="${descId}"
+					data-role="field-description"
+					style="${VISUALLY_HIDDEN_STYLE}"
+				>${main_core.Text.encode(description)}</span>`;
+					content.appendChild(descNode);
+				}
+				const describedBy = (control.getAttribute('aria-describedby') || '').split(/\s+/).filter(id => id !== '');
+				if (!describedBy.includes(descNode.id)) {
+					describedBy.push(descNode.id);
+					control.setAttribute('aria-describedby', describedBy.join(' '));
+				}
+			});
 		}
 		#renderButtons() {
 			this.#uiButtons = [];
@@ -504,10 +589,12 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 					const fieldData = data.additionalParams?.FIELDS?.[controlId];
 					if (fieldData) {
 						const labelClass = fieldData.Required ? 'ui-form-label --required' : 'ui-form-label';
+						const description = main_core.Type.isStringFilled(fieldData.Description) ? fieldData.Description.trim() : '';
+						const hintNode = description !== '' ? main_core.Tag.render`<span class="bp-workflow-info__field-hint" data-testid="task-field-hint" data-hint="${main_core.Text.encode(description)}"></span>` : '';
 						const node = main_core.Tag.render`
 						<div class="ui-form-row" data-cid="${main_core.Text.encode(fieldData.Id)}">
 							<div class="${labelClass}">
-								<div class="ui-ctl-label-text">${main_core.Text.encode(fieldData.Name)}</div>
+								<div class="ui-ctl-label-text">${main_core.Text.encode(fieldData.Name)}${hintNode}</div>
 							</div>
 							<div class="ui-form-content"></div>
 						</div>
@@ -533,5 +620,5 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 
 	exports.WorkflowInfo = WorkflowInfo;
 
-})(this.BX.Bizproc.Component = this.BX.Bizproc.Component || {}, BX, BX.Event, BX.UI, BX.Bizproc, BX.UI.Dialogs);
+})(this.BX.Bizproc.Component = this.BX.Bizproc.Component || {}, BX, BX.Event, BX.UI, BX.Bizproc, BX.Bizproc.A11y, BX.UI.Dialogs);
 //# sourceMappingURL=script.js.map

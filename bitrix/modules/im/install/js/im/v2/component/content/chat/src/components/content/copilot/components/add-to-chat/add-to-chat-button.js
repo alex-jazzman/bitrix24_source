@@ -1,3 +1,5 @@
+import { BIcon, Outline } from 'ui.icon-set.api.vue';
+
 import { AddToChat } from 'im.v2.component.entity-selector';
 import { PromoId } from 'im.v2.const';
 import { PromoManager } from 'im.v2.lib.promo';
@@ -7,10 +9,12 @@ import { AddToChatHint } from './add-to-chat-hint';
 
 import type { JsonObject } from 'main.core';
 
+const ICON_SIZE = 24;
+
 // @vue/component
 export const AddToChatButton = {
 	name: 'AddToChatButton',
-	components: { AddToChat, AddToChatHint },
+	components: { AddToChat, AddToChatHint, BIcon },
 	props: {
 		dialogId: {
 			type: String,
@@ -24,6 +28,11 @@ export const AddToChatButton = {
 			showAddToChatPopup: false,
 			showAddToChatHint: false,
 		};
+	},
+	computed:
+	{
+		Outline: () => Outline,
+		ICON_SIZE: () => ICON_SIZE,
 	},
 	mounted()
 	{
@@ -65,10 +74,12 @@ export const AddToChatButton = {
 		<div
 			:title="loc('IM_CONTENT_CHAT_HEADER_OPEN_INVITE_POPUP_TITLE')"
 			:class="{'--active': showAddToChatPopup}"
-			class="bx-im-chat-header__icon --add-people"
+			class="bx-im-chat-header__icon --ds-icon"
+			data-testid="im-copilot-header-add-btn"
 			@click="openAddToChatPopup"
 			ref="add-members"
 		>
+			<BIcon :name="Outline.ADD_PERSON" :size="ICON_SIZE" />
 			<slot name="invite-hint" :inviteButtonRef="$refs['add-members']"></slot>
 		</div>
 		<AddToChat

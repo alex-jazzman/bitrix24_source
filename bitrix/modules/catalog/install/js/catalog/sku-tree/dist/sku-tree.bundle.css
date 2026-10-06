@@ -24,7 +24,7 @@
 .product-item-detail-info-container-title {
 	margin-bottom: 3px;
 	font: 13px/18px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
-	color: #a3a9b1;
+	color: var(--ui-color-base-2, #525c69);
 }
 
 .product-item-scu-container { margin-bottom: 5px; }
@@ -56,8 +56,7 @@
 .product-item-scu-item-color-container,
 .product-item-scu-item-text-container {
 	display: inline-block;
-	-webkit-box-sizing: border-box;
-	        box-sizing: border-box;
+	box-sizing: border-box;
 	padding: 5px 3px;
 	max-width: 100%;
 	vertical-align: middle;
@@ -78,8 +77,6 @@
 }
 
 .bx-no-touch .product-item-scu-item-color-block {
-	-webkit-transition: outline 200ms ease;
-	-o-transition: outline 200ms ease;
 	transition: outline 200ms ease;
 }
 
@@ -113,8 +110,6 @@
 }
 
 .bx-no-touch .product-item-scu-item-text-block {
-	-webkit-transition: outline 300ms ease;
-	-o-transition: outline 300ms ease;
 	transition: outline 300ms ease;
 }
 
@@ -137,8 +132,7 @@
 	vertical-align: middle;
 	text-align: center;
 	text-transform: uppercase;
-	-o-text-overflow: ellipsis;
-	   text-overflow: ellipsis;
+	text-overflow: ellipsis;
 	white-space: nowrap;
 	font-size: 11px;
 	line-height: 18px;
@@ -158,7 +152,7 @@
 	right: -2px;
 	bottom: -2px;
 	left: -2px;
-	background: rgba(255, 255, 255, 0.75) url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNiIgaGVpZ2h0PSIyNiI+PHBhdGggZmlsbD0iI0E5QURCNCIgZmlsbC1ydWxlPSJldmVub2RkIiBkPSJNMTQuMzkyIDEzLjIzMmwxMS42LTExLjgxNEwyNC42IDAgMTMgMTEuODE0IDEuNCAwIC4wMDkgMS40MTlsMTEuNTk5IDExLjgxM0wuNDczIDI0LjU3M2wxLjM5MiAxLjQxOEwxMyAxNC42NTEgMjQuMTM0IDI1Ljk5bDEuMzkyLTEuNDE4LTExLjEzNC0xMS4zNHoiLz48L3N2Zz4=) no-repeat center;
+	background: rgba(255, 255, 255, 0.75) url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNiIgaGVpZ2h0PSIyNiIgdmlld0JveD0iMCAwIDI2IDI2Ij4gIDxwYXRoIGZpbGw9IiNBOUFEQjQiIGZpbGwtcnVsZT0iZXZlbm9kZCIgZD0iTTE0LjM5MjEyNjgsMTMuMjMyMzAyOSBMMjUuOTkyLDEuNDE4IEwyNC42LDAgTDEyLjk5OTk5NTYsMTEuODE0NDM2NCBMMS40LDAgTDAuMDA5LDEuNDE5IEwxMS42MDc4Njg3LDEzLjIzMjI5NzUgTDAuNDczLDI0LjU3MyBMMS44NjUsMjUuOTkxIEwxMi45OTk5OTkzLDE0LjY1MDE2NDUgTDI0LjEzNCwyNS45OSBMMjUuNTI2LDI0LjU3MiBMMTQuMzkyMTI2OCwxMy4yMzIzMDI5IFoiLz48L3N2Zz4=) no-repeat center;
 	background-size: 80% 80%;
 	content: "";
 }
@@ -177,8 +171,7 @@
 	vertical-align: middle;
 	text-align: center;
 	text-transform: uppercase;
-	-o-text-overflow: ellipsis;
-	   text-overflow: ellipsis;
+	text-overflow: ellipsis;
 	white-space: nowrap;
 	font-size: 11px;
 	line-height: 22px;
@@ -197,11 +190,8 @@
 /* region Short format */
 
 .product-item-scu-wrapper.--short-format {
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
-	-ms-flex-wrap: wrap;
-	    flex-wrap: wrap;
+	flex-wrap: wrap;
 }
 
 .product-item-scu-wrapper.--short-format .product-item-detail-info-container {
@@ -218,9 +208,7 @@
 	height: 12px;
 	width: 1px;
 	background-color: var(--ui-color-palette-gray-20);
-	-webkit-transform: translateY(-50%);
-	    -ms-transform: translateY(-50%);
-	        transform: translateY(-50%);
+	transform: translateY(-50%);
 }
 
 .product-item-scu-wrapper.--short-format .product-item-detail-info-container:last-child:after {
@@ -259,7 +247,7 @@
 }
 
 .product-item-scu-wrapper.--short-format .ui-ctl-radio-selector .ui-ctl-label-text {
-	color: #959CA4;
+	color: #525c69;
 }
 
 .product-item-scu-wrapper.--short-format .ui-ctl-radio-selector .ui-ctl-label-img {
@@ -268,6 +256,32 @@
 	min-width: 18px;
 	min-height: 18px;
 	border-radius: var(--ui-border-radius-3xs);
+}
+
+/* endregion */
+
+/* region a11y focus (I6.B4) - inset focus ring on variation pills via ::before.
+   Pills sit flush against the left edge of overflow:hidden clippers
+   (.product-item-scu-wrapper, .product-item-detail-info-container), so the default
+   outer UA outline is cut off on the edge pills. Draw the ring inside the pill's
+   border-box instead; the pill does not move. Covers picture and text variants and
+   the --short-format layout. Keyboard focus only. */
+.product-item-scu-list .ui-ctl-radio-selector {
+	position: relative;
+}
+
+.product-item-scu-list .ui-ctl-radio-selector:focus-visible {
+	outline: none;
+}
+
+.product-item-scu-list .ui-ctl-radio-selector:focus-visible::before {
+	content: '';
+	position: absolute;
+	inset: 2px;
+	border: 3px solid var(--ui-color-focus-outline, #4A9DFF);
+	border-radius: var(--ui-border-radius-3xs, 2px);
+	pointer-events: none;
+	z-index: 1;
 }
 
 /* endregion */

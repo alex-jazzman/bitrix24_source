@@ -5,8 +5,10 @@ declare(strict_types=1);
 use Bitrix\Bizproc\Activity\Mixins\ManualStartDocumentTrait;
 use Bitrix\Bizproc\FieldType;
 use Bitrix\Bizproc\Public\Entity\Trigger\Section;
+use Bitrix\Crm\Integration\BizProc\Activity\Mixins\EventInitiatorTrait;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Type\DateTime;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
@@ -18,9 +20,18 @@ if (!CBPRuntime::getRuntime()->includeActivityFile('ManualStartTrigger'))
 	return;
 }
 
+if (!\Bitrix\Main\Loader::includeModule('crm'))
+{
+	return;
+}
+
 class CBPCrmSmartManualStartTrigger extends \CBPManualStartTrigger
 {
+	use EventInitiatorTrait;
 	use ManualStartDocumentTrait;
+
+	private const EVENT_INITIATOR_ID = 'Initiator';
+	private const EVENT_DATE_TIME_ID = 'EventDateTime';
 
 	private const PARAM_CATEGORY_ID = 'categoryId';
 	private const PARAM_SMART_TYPE_ID = 'smartTypeId';
@@ -37,6 +48,8 @@ class CBPCrmSmartManualStartTrigger extends \CBPManualStartTrigger
 		$this->arProperties[self::PARAM_CATEGORY_ID] = null;
 		$this->arProperties[self::PARAM_SMART_TYPE_ID] = null;
 		$this->arProperties[self::PARAM_ONLY_AUTOMATED_SOLUTION] = 'N';
+		$this->arProperties[self::EVENT_INITIATOR_ID] = null;
+		$this->arProperties[self::EVENT_DATE_TIME_ID] = null;
 		$this->setPropertiesTypes([
 			self::PARAM_SMART_TYPE_ID => [
 				'Type' => FieldType::SELECT,
@@ -48,7 +61,28 @@ class CBPCrmSmartManualStartTrigger extends \CBPManualStartTrigger
 			self::PARAM_ONLY_AUTOMATED_SOLUTION => [
 				'Type' => FieldType::BOOL,
 			],
+			self::EVENT_INITIATOR_ID => [
+				'Type' => FieldType::USER,
+			],
+			self::EVENT_DATE_TIME_ID => [
+				'Type' => FieldType::DATETIME,
+			],
 		]);
+	}
+
+	public function execute(): int
+	{
+		$initiatorUserId = $this->resolveEventInitiatorUserId();
+		$this->setProperties([
+			static::getReturnDocumentFieldName() => $this->getDocumentId(),
+			self::EVENT_INITIATOR_ID => $initiatorUserId ? 'user_' . $initiatorUserId : null,
+			self::EVENT_DATE_TIME_ID => (new DateTime())->format(DateTime::getFormat()),
+		]);
+		$this->setPropertiesTypes([
+			static::getReturnDocumentFieldName() => $this->getReturnDocumentMapTypeForInstance(),
+		]);
+
+		return CBPActivityExecutionStatus::Closed;
 	}
 
 	protected function getReturnDocumentMapTypeForInstance(): array

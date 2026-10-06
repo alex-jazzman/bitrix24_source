@@ -34,10 +34,13 @@ jn.define('call/calls/stuck-call-finish-tracker', (require, exports, module) => 
 	{
 		static DEBOUNCE_MS = 3000;
 
+		static MAX_CLOSED_UUIDS = 100;
+
 		constructor()
 		{
 			this._scheduledKeys = new Set();
 			this._pendingTimers = new Map();
+			this._closedUuids = new Set();
 		}
 
 		_keyOf(callId, callUuid)
@@ -83,6 +86,36 @@ jn.define('call/calls/stuck-call-finish-tracker', (require, exports, module) => 
 			// grows monotonically over the app instance lifetime and
 			// blocks any future recovery scheduling for the same call.
 			this._scheduledKeys.delete(key);
+		}
+
+		/**
+		 * Records a callUuid whose room the server just confirmed gone, so a
+		 * repeat join-by-uuid can be short-circuited without another 500 round
+		 * trip (see CallEngine.getCallConnectionDataById). Bounded FIFO (Set
+		 * keeps insertion order): the oldest entry is evicted past
+		 * MAX_CLOSED_UUIDS; re-marking refreshes recency.
+		 */
+		markClosed(callUuid)
+		{
+			if (!callUuid)
+			{
+				return;
+			}
+			this._closedUuids.delete(callUuid);
+			this._closedUuids.add(callUuid);
+			while (this._closedUuids.size > StuckCallFinishTracker.MAX_CLOSED_UUIDS)
+			{
+				const oldest = this._closedUuids.values().next().value;
+				this._closedUuids.delete(oldest);
+			}
+		}
+
+		/**
+		 * True if this callUuid was recently confirmed closed via markClosed().
+		 */
+		isRecentlyClosed(callUuid)
+		{
+			return callUuid ? this._closedUuids.has(callUuid) : false;
 		}
 	}
 

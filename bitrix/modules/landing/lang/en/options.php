@@ -6,6 +6,7 @@ $MESS["LANDING_OPT_HISTORY_LIFETIME"] = "Days to keep the history of changes";
 $MESS["LANDING_OPT_OTHER"] = "Other settings";
 $MESS["LANDING_OPT_PORTAL_URL"] = "Bitrix24 Public URL";
 $MESS["LANDING_OPT_PUBLIC_HOOK_ON_SAVE"] = "Auto republish pages and sites when their settings change";
+$MESS["LANDING_OPT_PUB_PATH"] = "Publishing path";
 $MESS["LANDING_OPT_PUB_PATH_HEADER"] = "Path to published site relative to the site root";
 $MESS["LANDING_OPT_PUB_PATH_HELP"] = "Note that a file specified by this pathname should not exist. The system will create it when publishing and configure the processing rules.";
 $MESS["LANDING_OPT_RIGHTS_EXTENDED_MODE"] = "Extended permissions";

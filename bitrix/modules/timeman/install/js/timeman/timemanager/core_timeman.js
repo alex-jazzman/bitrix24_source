@@ -1285,13 +1285,13 @@ BX.CTimeManWindow.prototype.CreateDashboard = function(DATA)
 	{
 		if (state.TIMER)
 		{
-			state.TIMER.setFrom(new Date(DATA.INFO.DATE_START*1000));
+			state.TIMER.setFrom(new Date(DATA.INFO.DISPLAY_START_TIMESTAMP*1000));
 			state.TIMER.dt = -DATA.INFO.TIME_LEAKS * 1000;
 		}
 		else
 		{
 			state.TIMER = BX.timer(state, {
-				from: new Date(DATA.INFO.DATE_START*1000),
+				from: new Date(DATA.INFO.DISPLAY_START_TIMESTAMP*1000),
 				dt: -DATA.INFO.TIME_LEAKS * 1000,
 				display: 'worktime_timeman'
 			});
@@ -1308,7 +1308,7 @@ BX.CTimeManWindow.prototype.CreateDashboard = function(DATA)
 
 		if (DATA.STATE == 'PAUSED' || DATA.STATE == 'CLOSED' && DATA.CAN_OPEN != 'OPEN')
 		{
-			var q = (DATA.INFO.DATE_FINISH - DATA.INFO.DATE_START - DATA.INFO.TIME_LEAKS);
+			var q = DATA.INFO.DURATION;
 			state.innerHTML = BX.timeman.formatWorkTimeView(q, 'worktime_timeman');
 		}
 	}
@@ -1414,7 +1414,7 @@ BX.CTimeManWindow.prototype.CreateNoticeRow = function(DATA)
 
 		if (DATA.STATE == 'OPENED')
 		{
-			this.NOTICE_TIMER = BX.timer(row_timer, {from: DATA.INFO.DATE_START * 1000, accuracy: 1, dt: -1000 * DATA.INFO.TIME_LEAKS, display: 'worktime_notice_timeman'});
+			this.NOTICE_TIMER = BX.timer(row_timer, {from: DATA.INFO.DISPLAY_START_TIMESTAMP * 1000, accuracy: 1, dt: -1000 * DATA.INFO.TIME_LEAKS, display: 'worktime_notice_timeman'});
 		}
 		else if (DATA.CAN_OPEN == 'OPEN')
 		{
@@ -1422,7 +1422,7 @@ BX.CTimeManWindow.prototype.CreateNoticeRow = function(DATA)
 		}
 		else
 		{
-			var q = (DATA.INFO.DATE_FINISH - DATA.INFO.DATE_START - DATA.INFO.TIME_LEAKS);
+			var q = DATA.INFO.DURATION;
 			row_timer.innerHTML = BX.timeman.formatWorkTimeView(q, 'worktime_notice_timeman');
 
 			//this.NOTICE_TIMER = BX.timer(row_timer, {from: DATA.INFO.DATE_FINISH * 1000, accuracy: 1, dt: 1000 * DATA.INFO.TIME_LEAKS, display: 'worktime_notice_timeman'});
@@ -1767,7 +1767,7 @@ BX.CTimeManWindow.prototype.CreateMainRow = function(DATA)
 		BX.show(row_pause);
 
 		this.PAUSE_TIMER = BX.timer(row_pause.lastChild, {
-			from: DATA.INFO.DATE_FINISH * 1000,
+			from: DATA.INFO.DISPLAY_STOP_TIMESTAMP * 1000,
 			accuracy: 1,
 			dt: 1000 * DATA.INFO.TIME_LEAKS,
 			display: 'worktime_notice_timeman'
@@ -1868,11 +1868,7 @@ BX.CTimeManWindow.prototype.CreateMainRow = function(DATA)
 					className: `tm-popup-change-time-link ${extraIndentClass}`,
 				},
 				events: {
-					click: (
-						(canCheckInPopupShow)
-							? this.showCheckInStartPopup.bind(this)
-							: BX.proxy(this.ShowClock, this)
-					),
+					click: BX.proxy(this.ShowClock, this),
 				},
 				text: BX.message('JS_CORE_TM_CHTIME_' + DATA.STATE)
 			}));
@@ -1915,7 +1911,7 @@ BX.CTimeManWindow.prototype.CreateMainRow = function(DATA)
 		BX.show(row_pause);
 
 		this.PAUSE_TIMER = BX.timer(row_pause.lastChild, {
-			from: DATA.INFO.DATE_FINISH * 1000,
+			from: DATA.INFO.DISPLAY_STOP_TIMESTAMP * 1000,
 			accuracy: 1,
 			dt: 1000 * DATA.INFO.TIME_LEAKS,
 			display: 'worktime_notice_timeman'
@@ -6293,7 +6289,7 @@ BX.CTimeManReportForm.prototype.GetContentTimeRow = function()
 			if (this.data.INFO.INFO.PAUSED === 'Y' || this.data.INFO.INFO.PAUSED === true)
 			{
 				BX.timer(pauseCont, {
-					from: (this.data.INFO.INFO.DATE_FINISH * 1000) || new Date(),
+					from: (this.data.INFO.INFO.DISPLAY_STOP_TIMESTAMP * 1000) || new Date(),
 					dt: (1000 * this.data.INFO.INFO.TIME_LEAKS),
 					display: 'worktime'
 				});

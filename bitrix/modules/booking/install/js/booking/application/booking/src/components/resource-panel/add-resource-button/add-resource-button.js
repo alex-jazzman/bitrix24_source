@@ -99,6 +99,7 @@ export const AddResourceButton = {
 				class="booking-booking-header-add-resource"
 				:class="{ '--hover': hovered }"
 				ref="button"
+				data-testid="booking-add-resource-button"
 				@click="addResource"
 				@mouseenter="hovered = true"
 				@mouseleave="hovered = false"

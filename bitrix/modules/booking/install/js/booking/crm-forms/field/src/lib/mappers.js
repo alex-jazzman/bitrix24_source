@@ -37,6 +37,7 @@ type ResourceDto = {
 	name: string,
 	description: string,
 	typeName: string,
+	avatarUrl: ?string,
 	slotRanges: {
 		id: number,
 		from: number,

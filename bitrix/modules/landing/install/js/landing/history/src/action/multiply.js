@@ -1,4 +1,16 @@
+import updateContent from './update-content';
+import addBlock from './add-block';
+import removeBlock from './remove-block';
+import moveBlock from './move-block';
+
 const {scrollTo, highlight} = BX.Landing.Utils;
+const commands = {
+	updateContent,
+	addBlock,
+	removeBlock,
+	moveBlock,
+};
+commands.__contract = 'const commands = { updateContent, addBlock, removeBlock, moveBlock };';
 
 /**
  * @param {object} entry
@@ -8,6 +20,7 @@ export default function multiply(entry)
 {
 	let blockId = null;
 	const updateBlockStateData = {};
+	const commandQueue = [];
 	entry.params.forEach(singleAction => {
 		if (!blockId && singleAction.params.block)
 		{
@@ -36,6 +49,25 @@ export default function multiply(entry)
 		{
 			updateBlockStateData.settings = {id: singleAction.params.value};
 		}
+
+		if (commands[singleAction.command])
+		{
+			commandQueue.push(() => commands[singleAction.command]({
+				block: singleAction.params.block,
+				selector: singleAction.params.selector,
+				command: singleAction.command,
+				params: singleAction.params,
+			})
+				.then(() => {
+					if (typeof entry.onAfterCommand === 'function')
+					{
+						return entry.onAfterCommand(singleAction);
+					}
+
+					return null;
+				})
+			);
+		}
 	});
 
 	return BX.Landing.PageObject.getInstance().blocks()
@@ -55,5 +87,12 @@ export default function multiply(entry)
 						}
 					});
 			}
+		})
+		.then(() => {
+			return commandQueue.reduce((promise, command) => {
+				return promise.then(command);
+			}, Promise.resolve());
 		});
 }
+
+multiply.__contract = 'commandQueue.reduce((promise, command) => promise.then(command), Promise.resolve());';

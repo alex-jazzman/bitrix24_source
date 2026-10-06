@@ -5,7 +5,7 @@ import EntityCreatePaymentStages from './components/crm-entity-create-payment/st
 import StageBlocksListShipment from './components/deal-creating-shipment/stage-blocks-list';
 import TerminalStageBlocksList from './components/deal-terminal-payment/stage-blocks-list';
 import ComponentMixin from './component-mixin';
-import { Loc, Runtime, userOptions as UserOptions } from 'main.core';
+import { Loc, Runtime } from 'main.core';
 import { MixinTemplatesType } from './components/templates-type-mixin';
 import Start from './start';
 import { ModeDictionary } from './const/mode-dictionary';

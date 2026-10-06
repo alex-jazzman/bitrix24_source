@@ -1,9 +1,12 @@
 <?php
 
 use Bitrix\Crm\Integration\StorageType;
+use Bitrix\Main\Web\Uri;
 
 class CCrmFileProxy
 {
+	public const ERROR_ACCESS_DENIED = 'ACCESS_DENIED';
+
 	public static function PrepareOwnerToken(array $ownerParams)
 	{
 		return base64_encode(serialize($ownerParams));
@@ -25,7 +28,7 @@ class CCrmFileProxy
 				&& CRestUtil::checkAuth($authToken, CCrmRestService::SCOPE_NAME, $authData)
 				&& CRestUtil::makeAuth($authData)))
 			{
-				$errors[] = 'Access denied.';
+				static::addError($errors, $options, 'Access denied.', self::ERROR_ACCESS_DENIED);
 				return false;
 			}
 		}
@@ -51,7 +54,7 @@ class CCrmFileProxy
 		{
 			if(!\Bitrix\Crm\Security\EntityAuthorization::checkReadPermission($ownerTypeID, $ownerID))
 			{
-				$errors[] = 'Access denied.';
+				static::addError($errors, $options, 'Access denied.', self::ERROR_ACCESS_DENIED);
 				return false;
 			}
 		}
@@ -86,7 +89,7 @@ class CCrmFileProxy
 				return false;
 			}
 
-			return self::InnerWriteFileToResponse($fileID, $errors, $options);
+			return static::InnerWriteFileToResponse($fileID, $errors, $options);
 		}
 		else
 		{
@@ -111,7 +114,7 @@ class CCrmFileProxy
 				return false;
 			}
 
-			return self::InnerWriteFileToResponse($fileID, $errors, $options);
+			return static::InnerWriteFileToResponse($fileID, $errors, $options);
 		}
 	}
 
@@ -170,12 +173,12 @@ class CCrmFileProxy
 			return false;
 		}
 
-		return self::InnerWriteFileToResponse($fileID, $errors, $options);
+		return static::InnerWriteFileToResponse($fileID, $errors, $options);
 	}
 
-	private static function InnerWriteFileToResponse($fileID, &$errors, $options = array())
+	protected static function InnerWriteFileToResponse($fileID, &$errors, $options = array())
 	{
-		$fileInfo = CFile::GetFileArray($fileID);
+		$fileInfo = static::getFileInfo((int)$fileID);
 		if(!is_array($fileInfo))
 		{
 			$errors[] = 'File not found';
@@ -186,9 +189,33 @@ class CCrmFileProxy
 		// Crutch for CFile::ViewByUser. Waiting for main 14.5.2
 		$options['force_download'] = true;
 		set_time_limit(0);
-		CFile::ViewByUser($fileInfo, $options);
+		$viewResult = static::viewFileByUser($fileInfo, $options);
+		if (($options['strict_view_result'] ?? false) && $viewResult === false)
+		{
+			$errors[] = 'File not found';
+			return false;
+		}
 
 		return true;
+	}
+
+	protected static function addError(array &$errors, array $options, string $message, ?string $code = null): void
+	{
+		$errors[] = $message;
+		if ($code !== null && isset($options['error_codes']) && is_array($options['error_codes']))
+		{
+			$options['error_codes'][] = $code;
+		}
+	}
+
+	protected static function getFileInfo(int $fileID): array|false
+	{
+		return CFile::GetFileArray($fileID);
+	}
+
+	protected static function viewFileByUser(array $fileInfo, array $options): bool
+	{
+		return CFile::ViewByUser($fileInfo, $options);
 	}
 
 	public static function TryResolveFile($var, &$file, $options = array())
@@ -223,7 +250,7 @@ class CCrmFileProxy
 		{
 			$path = CCrmUrlUtil::ToAbsoluteUrl($var);
 			//Parent directories and not secure URLs are not allowed.
-			if($path !== '' && !CHTTP::isPathTraversalUri($path) && CCrmUrlUtil::IsSecureUrl($path))
+			if($path !== '' && !(new Uri($path))->isPathTraversal() && CCrmUrlUtil::IsSecureUrl($path))
 			{
 				$result = CFile::MakeFileArray($path);
 			}

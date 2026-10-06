@@ -14,6 +14,7 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Catalog;
 use Bitrix\Crm;
+use Bitrix\Main\Web\Uri;
 
 if (!Loader::includeModule('crm'))
 {
@@ -173,13 +174,10 @@ else
 		$arResult['BUTTONS'][] = array(
 			'TEXT' => GetMessage('CRM_PRODUCT_ADD'),
 			'TITLE' => GetMessage('CRM_PRODUCT_ADD_TITLE'),
-			'LINK' => CHTTP::urlAddParams(
-				CComponentEngine::MakePathFromTemplate(
+			'LINK' => (string)(new Uri(CComponentEngine::MakePathFromTemplate(
 					$arParams['PATH_TO_PRODUCT_EDIT'],
 					array('product_id' => 0)
-				),
-				array('list_section_id' => isset($arResult['LIST_SECTION_ID']) ? intval($arResult['LIST_SECTION_ID']) : 0)
-			),
+				)))->addParams(array('list_section_id' => isset($arResult['LIST_SECTION_ID']) ? intval($arResult['LIST_SECTION_ID']) : 0)),
 			'ICON' => 'btn-new'
 		);
 	}
@@ -189,13 +187,10 @@ else
 		$arResult['BUTTONS'][] = array(
 			'TEXT' => GetMessage('CRM_PRODUCT_EDIT'),
 			'TITLE' => GetMessage('CRM_PRODUCT_EDIT_TITLE'),
-			'LINK' => CHTTP::urlAddParams(
-				CComponentEngine::MakePathFromTemplate(
+			'LINK' => (string)(new Uri(CComponentEngine::MakePathFromTemplate(
 					$arParams['PATH_TO_PRODUCT_EDIT'],
 					array('product_id' => $productID)
-				),
-				array('list_section_id' => isset($arResult['LIST_SECTION_ID']) ? intval($arResult['LIST_SECTION_ID']) : 0)
-			),
+				)))->addParams(array('list_section_id' => isset($arResult['LIST_SECTION_ID']) ? intval($arResult['LIST_SECTION_ID']) : 0)),
 			'ICON' => 'btn-edit'
 		);
 	}
@@ -205,13 +200,10 @@ else
 		$arResult['BUTTONS'][] = array(
 			'TEXT' => GetMessage('CRM_PRODUCT_SHOW'),
 			'TITLE' => GetMessage('CRM_PRODUCT_SHOW_TITLE'),
-			'LINK' => CHTTP::urlAddParams(
-				CComponentEngine::MakePathFromTemplate(
+			'LINK' => (string)(new Uri(CComponentEngine::MakePathFromTemplate(
 					$arParams['PATH_TO_PRODUCT_SHOW'],
 					array('product_id' => $productID)
-				),
-				array('list_section_id' => isset($arResult['LIST_SECTION_ID']) ? intval($arResult['LIST_SECTION_ID']) : 0)
-			),
+				)))->addParams(array('list_section_id' => isset($arResult['LIST_SECTION_ID']) ? intval($arResult['LIST_SECTION_ID']) : 0)),
 			'ICON' => 'btn-view'
 		);
 	}
@@ -221,16 +213,13 @@ else
 		$arResult['BUTTONS'][] = array(
 			'TEXT' => GetMessage('CRM_PRODUCT_COPY'),
 			'TITLE' => GetMessage('CRM_PRODUCT_COPY_TITLE'),
-			'LINK' => CHTTP::urlAddParams(
-				CComponentEngine::MakePathFromTemplate(
+			'LINK' => (string)(new Uri(CComponentEngine::MakePathFromTemplate(
 					$arParams['PATH_TO_PRODUCT_EDIT'],
 					array('product_id' => $productID)
-				),
-				array(
+				)))->addParams(array(
 					'list_section_id' => isset($arResult['LIST_SECTION_ID']) ? intval($arResult['LIST_SECTION_ID']) : 0,
 					'copy' => 1
-				)
-			),
+				)),
 			'ICON' => 'btn-copy'
 		);
 	}
@@ -243,20 +232,17 @@ else
 			'LINK' => "javascript:product_delete('".GetMessage('CRM_PRODUCT_DELETE_DLG_TITLE')."', '".
 				GetMessage('CRM_PRODUCT_DELETE_DLG_MESSAGE')."', '".
 				GetMessage('CRM_PRODUCT_DELETE_DLG_BTNTITLE')."', '".
-				CHTTP::urlAddParams(
-					CComponentEngine::MakePathFromTemplate(
+				(string)(new Uri(CComponentEngine::MakePathFromTemplate(
 						$arParams['PATH_TO_PRODUCT_EDIT'],
 						array(
 							'product_id' => $productID
 						)
-					),
-					array(
+					)))->addParams(array(
 						'delete' => '',
 						'list_section_id' =>
 							isset($arResult['LIST_SECTION_ID']) ? intval($arResult['LIST_SECTION_ID']) : 0,
 						'sessid' => bitrix_sessid()
-					)
-				)."')",
+					))."')",
 			'ICON' => 'btn-delete'
 		);
 	}
@@ -291,12 +277,9 @@ else
 		$arResult['BUTTONS'][] = array(
 			'TEXT' => GetMessage('CRM_PRODUCT_IMPORT'),
 			'TITLE' => GetMessage('CRM_PRODUCT_IMPORT_TITLE'),
-			'LINK' => CHTTP::urlAddParams(
-				CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_PRODUCT_IMPORT'], array()),
-				array(
+			'LINK' => (string)(new Uri(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_PRODUCT_IMPORT'], array())))->addParams(array(
 					'list_section_id' => isset($arResult['LIST_SECTION_ID']) ? intval($arResult['LIST_SECTION_ID']) : 0
-				)
-			),
+				)),
 			'ICON' => 'btn-crm-product-import'
 		);
 	}

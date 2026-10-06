@@ -3,7 +3,7 @@ import 'ui.forms';
 import 'ui.icon-set.actions';
 import 'ui.icon-set.main';
 import { EventEmitter } from 'main.core.events';
-import { Section, Row } from 'ui.section';
+import { Section, Row, SeparatorRow } from 'ui.section';
 import { Checker, Selector, SingleChecker, UserSelector, TextInput, FieldFactory } from 'ui.form-elements.view';
 import { Switcher, SwitcherSize } from 'ui.switcher';
 import { Popup } from 'main.popup';
@@ -882,6 +882,15 @@ export class SecurityPage extends BaseSettingsPage
 		{
 			const allowAutoDeleteField = new Checker(this.getValue('isWaterMarksEnabled'));
 			SecurityPage.addToSectionHelper(allowAutoDeleteField, settingsSection);
+		}
+
+		const sectionRows = settingsSection.getChildrenElements();
+		const lastRow = sectionRows[sectionRows.length - 1];
+		const lastRowChildren = lastRow ? lastRow.getChildrenElements() : [];
+		const lastChildRow = lastRowChildren[lastRowChildren.length - 1];
+		if (lastChildRow instanceof SettingsRow && lastChildRow.getRowView() instanceof SeparatorRow)
+		{
+			lastRow.removeChild(lastChildRow);
 		}
 
 		return settingsSection;

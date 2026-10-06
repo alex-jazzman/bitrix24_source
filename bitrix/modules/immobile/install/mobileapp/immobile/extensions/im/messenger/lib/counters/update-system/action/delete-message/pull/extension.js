@@ -21,17 +21,20 @@ jn.define('im/messenger/lib/counters/update-system/action/delete-message/pull', 
 		 * @param {number} chatId
 		 * @param {CounterModelState} incomingCounterState
 		 * @param {Array<number>} deletedMessageIds
+		 * @param {?number} newLastMessageId
 		 */
 		constructor({
 			chatId,
 			incomingCounterState,
 			deletedMessageIds,
+			newLastMessageId = null,
 		})
 		{
 			super();
 			this.chatId = chatId;
 			this.incomingCounterState = incomingCounterState;
 			this.deletedMessageIds = deletedMessageIds;
+			this.newLastMessageId = newLastMessageId;
 		}
 
 		/**
@@ -40,6 +43,16 @@ jn.define('im/messenger/lib/counters/update-system/action/delete-message/pull', 
 		 */
 		async execute(repository)
 		{
+			if (await this.isOutdatedByLastMessageId(this.chatId, this.newLastMessageId))
+			{
+				this.logger.warn('DeleteMessagePullAction: skip outdated delete event', {
+					chatId: this.chatId,
+					newLastMessageId: this.newLastMessageId,
+				});
+
+				return;
+			}
+
 			// If no pending operations, just save the new counter state
 			if (!repository.hasPendingOperations(this.chatId))
 			{

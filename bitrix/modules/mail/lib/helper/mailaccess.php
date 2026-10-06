@@ -20,9 +20,30 @@ class MailAccess
 		return self::checkGridAction(MailActionDictionary::ACTION_MAILBOX_LIST_VIEW);
 	}
 
-	public static function hasCurrentUserAccessToMassConnect(): bool
+	/**
+	 * Managing employee mailboxes portal-wide: MAIL_MAILBOX_LIST_ITEM_EDIT, deliberately separate
+	 * from the right to see the mailbox grid. Mass connect is one of the scenarios behind it.
+	 */
+	public static function hasCurrentUserAccessToMailboxManagement(): bool
 	{
 		return self::checkGridAction(MailActionDictionary::ACTION_MAILBOX_MASS_CONNECT_ENTER);
+	}
+
+	public static function hasCurrentUserAccessToMassConnect(): bool
+	{
+		return self::hasCurrentUserAccessToMailboxManagement();
+	}
+
+	public static function hasCurrentUserAccessToSharedSignatureManagement(): bool
+	{
+		if (!Feature::isSharedSignaturePermissionAvailable())
+		{
+			return LicenseManager::isMailboxManagementEnabled()
+				&& self::hasCurrentUserAccessToMailboxManagement()
+			;
+		}
+
+		return self::canPerform(MailActionDictionary::ACTION_SHARED_SIGNATURE_MANAGE);
 	}
 
 	public static function hasCurrentUserAccessToPermission(): bool
@@ -57,8 +78,7 @@ class MailAccess
 		{
 			return (PermissionDictionary::getType($permissionId) === PermissionDictionaryAlias::TYPE_TOGGLER)
 				? PermissionDictionaryAlias::VALUE_YES
-				: PermissionVariablesDictionary::VARIABLE_ALL
-			;
+				: PermissionVariablesDictionary::VARIABLE_ALL;
 		}
 
 		return $accessController->getUser()->getPermission($permissionId);

@@ -5,7 +5,7 @@ import { Ears } from 'ui.ears';
 
 import { AhaMoment, DraggedElementKind, Model } from 'booking.const';
 import { ahaMoments } from 'booking.lib.aha-moments';
-import { gridFactory } from 'booking.lib.grid';
+import { GridFactory, type GridBase } from 'booking.lib.grid';
 import { type BookingModel } from 'booking.model.bookings';
 
 import { LeftPanel } from './left-panel/left-panel';
@@ -43,19 +43,19 @@ export const GridDay = {
 	},
 	computed: {
 		...mapGetters({
-			resourcesIds: `${Model.Interface}/resourcesIds`,
 			scroll: `${Model.Interface}/scroll`,
 			editingBookingId: `${Model.Interface}/editingBookingId`,
 			editingWaitListItemId: `${Model.Interface}/editingWaitListItemId`,
 			isFeatureEnabled: `${Model.Interface}/isFeatureEnabled`,
 			isLoaded: `${Model.Interface}/isLoaded`,
 			selectedDateTs: `${Model.Interface}/selectedDateTs`,
+			resourcesIds: `${Model.Interface}/resourcesIds`,
 			filteredBookingsIds: `${Model.Filter}/filteredBookingsIds`,
 			isFilterMode: `${Model.Filter}/isFilterMode`,
 		}),
 		grid(): GridBase
 		{
-			return gridFactory.getGrid();
+			return GridFactory.getGrid();
 		},
 		editingBooking(): BookingModel | null
 		{
@@ -65,7 +65,7 @@ export const GridDay = {
 	watch: {
 		scroll(value): void
 		{
-			this.applyScroll(value);
+			this.$refs.columnsContainer.scrollLeft = value;
 		},
 		editingBooking(): void
 		{
@@ -121,8 +121,6 @@ export const GridDay = {
 			this.setupDrag();
 		}
 
-		this.applyScroll(this.scroll);
-
 		EventEmitter.subscribe('BX.Main.Popup:onAfterClose', this.tryShowAhaMoment);
 		EventEmitter.subscribe('BX.Main.Popup:onDestroy', this.tryShowAhaMoment);
 	},
@@ -132,10 +130,6 @@ export const GridDay = {
 		EventEmitter.unsubscribe('BX.Main.Popup:onDestroy', this.tryShowAhaMoment);
 	},
 	methods: {
-		applyScroll(value: number): void
-		{
-			this.$refs.columnsContainer.scrollLeft = value;
-		},
 		updateEars(): void
 		{
 			this.ears.toggleEars();

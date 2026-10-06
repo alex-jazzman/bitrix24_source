@@ -1,0 +1,39 @@
+.crm-call-assessment-v2-draft-card {
+	display: flex;
+	flex-direction: column;
+	gap: 11px;
+	padding: 24px;
+	background: var(--ui-color-bg-content-primary);
+	border-radius: var(--ui-border-radius-2xl);
+	box-shadow:
+		0 2px 2px var(--ui-color-area-box-shadow-accent-1-color, rgba(0, 0, 0, 0.02)),
+		0 5px 8px var(--ui-color-area-box-shadow-accent-2-color, rgba(0, 0, 0, 0.03));
+}
+
+.crm-call-assessment-v2-draft-card__heading {
+	color: var(--ui-color-base-0);
+	padding-bottom: var(--ui-space-inset-sm);
+}
+
+.crm-call-assessment-v2-draft-card__inner {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	padding: 24px;
+	border-radius: var(--ui-border-radius-2xl);
+	background: linear-gradient(
+		269deg,
+		var(--ui-color-design-tinted-bitrix-gpt-bg-gradient-1, rgb(254, 245, 244)) 1.77%,
+		var(--ui-color-design-tinted-bitrix-gpt-bg-gradient-2, rgb(252, 239, 248)) 16.39%,
+		var(--ui-color-design-tinted-bitrix-gpt-bg-gradient-3, rgb(241, 240, 255)) 50.5%,
+		var(--ui-color-design-tinted-bitrix-gpt-bg-gradient-4, rgb(240, 247, 255)) 99.23%
+	);
+}
+
+.crm-call-assessment-v2-draft-card__inner .ui-system-input-container {
+	padding: var(--padding-horizontal);
+}
+
+.crm-call-assessment-v2-draft-card__paste {
+	align-self: flex-start;
+}

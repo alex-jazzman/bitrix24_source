@@ -1,0 +1,4 @@
+<?php
+
+$MESS['BIZPROC_ACCESS_ENTITY_TEMPLATE_TITLE'] = 'Шаблоны бизнес-процессов';
+$MESS['BIZPROC_ACCESS_ENTITY_TEMPLATE_ALL_SELECTED_TITLE'] = 'Все шаблоны';

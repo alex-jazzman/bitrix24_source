@@ -5,8 +5,8 @@
 .btn-list-excel {background-image:url(images/excel.gif);}
 .bp-comments {padding: 5px 5px 5px 25px;display: inline-block;width: 30px;}
 .bp-comments a {color: #3c454b; text-align: center;  display: inline-block;}
-.bp-comments-icon {display: block; width: 16px; height: 16px; background: url(images/bp-sprite.png) no-repeat 0 -18px;}
-.bp-comments .bp-comments-icon {background: url(images/bp-sprite.png) no-repeat 0 0; margin: 0 auto 5px;}
+.bp-comments-icon {display: block; width: 16px; height: 16px; background: url(images/bp-sprite.webp) no-repeat 0 -18px;}
+.bp-comments .bp-comments-icon {background: url(images/bp-sprite.webp) no-repeat 0 0; margin: 0 auto 5px;}
 
 .bx-lists-alert {
 	background-color: #fffcde;

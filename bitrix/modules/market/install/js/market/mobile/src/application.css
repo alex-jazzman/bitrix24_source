@@ -1,0 +1,26 @@
+#market-wrapper-vue {
+	--background-light: #FFFFFF;
+	--background-dark: #0F0F0F;
+	--market-mobile-background: var(--background-light);
+	padding-bottom: 21px;
+}
+
+/* Disable long-press preview for all links and img */
+#market-wrapper-vue a,
+#market-wrapper-vue img {
+	-webkit-touch-callout: none;
+}
+
+.--ui-context-content-dark#market-wrapper-vue {
+	background-color: var(--background-dark);
+	--market-mobile-background: var(--background-dark);
+}
+
+.--ui-context-content-light#market-wrapper-vue {
+	background-color: var(--background-light);
+	--market-mobile-background: var(--background-light);
+}
+
+.market-mobile-application {
+	min-height: 100vh;
+}

@@ -359,6 +359,80 @@ this.BX = this.BX || {};
 		}
 	}
 
+	class Note extends Row {
+		getIcon() {
+			if (this.isLocked()) {
+				return ui_iconSet_api_core.Outline.LOCK_L;
+			}
+			return ui_iconSet_api_core.Outline.KNOWLEDGE_BASE;
+		}
+		getId() {
+			return 'note';
+		}
+		getNavigationMode() {
+			return NavigationMode.SIDE_PANEL;
+		}
+		handleClick(event) {
+			// Locked (tariff) — keep the base upsell behaviour (restriction slider).
+			if (this.isLocked()) {
+				super.handleClick(event);
+				return;
+			}
+			this.emit('click');
+			event?.stopPropagation();
+			event?.preventDefault();
+
+			// Lazy provisioning: the collab knowledge base is created on the FIRST click,
+			// not at collab creation. The server resolves (and provisions on demand) the
+			// section URL, which is then opened in a side panel.
+			void this.#openSection();
+		}
+		async #openSection() {
+			const projectId = this.params.projectId;
+			if (!projectId) {
+				return;
+			}
+
+			// First click may lazily create the collection on the server — show a spinner
+			// in the row and keep the menu open until the section URL is resolved.
+			this.#setLoading(true);
+			try {
+				const response = await main_core.ajax.runAction('socialnetwork.collab.Note.resolveSection', {
+					data: {
+						groupId: projectId
+					}
+				});
+				const url = response?.data?.url;
+				if (!url) {
+					return;
+				}
+				main_sidepanel.SidePanel.Instance.open(url, this.getSliderOptions());
+			} catch (error) {
+				console.error('Note: failed to resolve the knowledge-base section', error);
+			} finally {
+				this.#setLoading(false);
+			}
+		}
+		#setLoading(loading) {
+			const action = this.getActionElement();
+			if (!(action instanceof HTMLElement)) {
+				return;
+			}
+
+			// Swap the chevron (Row::getActionElement) for a self-contained CSS spinner
+			// (feature.css `.--is-loading`) — no extra icon-set dependency.
+			const chevronClass = '--chevron-right-m';
+			const loaderClass = '--is-loading';
+			if (loading) {
+				main_core.Dom.removeClass(action, chevronClass);
+				main_core.Dom.addClass(action, loaderClass);
+			} else {
+				main_core.Dom.removeClass(action, loaderClass);
+				main_core.Dom.addClass(action, chevronClass);
+			}
+		}
+	}
+
 	class Placement extends Feature {
 		getIcon() {
 			return ui_iconSet_api_core.Outline.FOLDER;
@@ -374,6 +448,48 @@ this.BX = this.BX || {};
 		}
 		getNavigationMode() {
 			return NavigationMode.SIDE_PANEL;
+		}
+	}
+
+	class StartupToolSettings extends Row {
+		getIcon() {
+			return ui_iconSet_api_core.Outline.SETTINGS;
+		}
+		getId() {
+			return 'settings_startup_tool';
+		}
+		handleClick(event) {
+			this.emit('click');
+			event?.stopPropagation();
+			event?.preventDefault();
+			void this.#openProjectWizard();
+		}
+		async #openProjectWizard() {
+			const projectId = this.params.projectId;
+			if (!projectId) {
+				return;
+			}
+			if (main_core.Type.isFunction(this.params.onOpenStartupToolSettings)) {
+				this.params.onOpenStartupToolSettings();
+				return;
+			}
+			try {
+				await main_core.Runtime.loadExtension('socialnetwork.v2.application.project-wizard');
+				const ProjectWizard = BX.Socialnetwork?.V2?.Application?.ProjectWizard;
+				const actions = BX.Socialnetwork?.V2?.Model?.TYPES_PROJECT_WIZARD_ACTION;
+				if (!ProjectWizard || !actions) {
+					return;
+				}
+				const wizard = new ProjectWizard({
+					action: actions.UPDATE,
+					projectId,
+					scrollToStartupTool: true,
+					onCancel: () => {}
+				});
+				void wizard.show();
+			} catch (error) {
+				console.error('StartupToolSettings: failed to open project wizard', error);
+			}
 		}
 	}
 
@@ -411,34 +527,46 @@ this.BX = this.BX || {};
 		calendar: Calendar,
 		files: Files,
 		landing_knowledge: Knowledge,
+		note: Note,
 		flows: Flows,
 		marketplace: Marketplace,
 		blog: Blog,
 		forum: Forum,
 		group_lists: Lists,
 		wiki: Wiki,
-		photo: Photo
+		photo: Photo,
+		settings_startup_tool: StartupToolSettings
 	};
 	class FeatureFactory {
-		static createCollection(features = []) {
+		static createCollection(features = [], projectId = null, onOpenStartupToolSettings) {
 			const collection = [];
 			features.forEach(feature => {
-				const featureItem = this.create(feature);
+				const featureItem = this.create(feature, projectId, onOpenStartupToolSettings);
 				if (featureItem) {
 					collection.push(featureItem);
 				}
 			});
 			return collection;
 		}
-		static create(feature = {}) {
+		static create(feature = {}, projectId = null, onOpenStartupToolSettings) {
+			const params = projectId === null ? feature : {
+				...feature,
+				projectId
+			};
 			if (feature.id?.startsWith('placement_')) {
-				return new Placement(feature);
+				return new Placement(params);
 			}
 			const FeatureClass = featureClassMap[feature.id];
 			if (!FeatureClass) {
 				return null;
 			}
-			return new FeatureClass(feature);
+			if (feature.id === 'settings_startup_tool' && typeof onOpenStartupToolSettings === 'function') {
+				return new FeatureClass({
+					...params,
+					onOpenStartupToolSettings
+				});
+			}
+			return new FeatureClass(params);
 		}
 	}
 
@@ -575,9 +703,14 @@ this.BX = this.BX || {};
 		}
 	}
 
-	const featuresMenuOrder = ['blog', 'landing_knowledge', 'flows', 'photo', 'group_lists', 'forum', 'wiki', 'marketplace'];
+	const featuresMenuOrder = ['blog', 'landing_knowledge', 'note', 'flows', 'photo', 'group_lists', 'forum', 'wiki', 'marketplace'];
 	const secondaryFeaturesMenuOrder = ['marketplace'];
 	const secondarySectionCode = 'secondary';
+	const startupToolFeaturesOrder = ['settings_startup_tool'];
+	const startupToolSectionCode = 'startup_tool';
+
+	// All feature ids that are excluded from primary tiles and extra/"more" menu
+	const allSecondaryIds = new Set([...secondaryFeaturesMenuOrder, ...startupToolFeaturesOrder]);
 	class FeatureMenu {
 		#cache = new main_core.Cache.MemoryCache();
 		constructor(params = {}) {
@@ -649,7 +782,7 @@ this.BX = this.BX || {};
 			return this.#cache.get('features', []);
 		}
 		#getFeatureItems() {
-			return this.#cache.remember('featureItems', () => FeatureFactory.createCollection(this.#getFeatures()));
+			return this.#cache.remember('featureItems', () => FeatureFactory.createCollection(this.#getFeatures(), this.#getParams().projectId, this.#getParams().onOpenStartupToolSettings));
 		}
 		#resetDerivedCache() {
 			['featureItems', 'content', 'popup', 'featuresMenu', 'extraFeaturesMenu', 'placementFeaturesMenu', 'moreFeature', 'appsFeature'].forEach(cacheKey => this.#cache.delete(cacheKey));
@@ -760,7 +893,7 @@ this.BX = this.BX || {};
 		#getExtraFeatureItems() {
 			const renderedFeatureIds = new Set(this.#getBaseContentDescriptions().flatMap(description => description.params.featureIds || []));
 			return this.#getFeatureItems().filter(feature => {
-				return !feature.getId().startsWith('placement_') && !renderedFeatureIds.has(feature.getId());
+				return !feature.getId().startsWith('placement_') && !renderedFeatureIds.has(feature.getId()) && !allSecondaryIds.has(feature.getId());
 			});
 		}
 		#getPlacementFeatures() {
@@ -860,36 +993,41 @@ this.BX = this.BX || {};
 					}
 				});
 			}
-			return [...primaryItems, ...secondaryItems];
+			const startupToolItems = this.#getOrderedStartupToolFeatures().map(feature => this.#createSystemMenuItem(feature, startupToolSectionCode));
+			return [...primaryItems, ...secondaryItems, ...startupToolItems];
 		}
 		#getFeaturesMenuSections() {
-			if (this.#getOrderedSecondaryFeatures().length === 0 && !this.#hasPlacementFeatures()) {
-				return [];
+			const sections = [];
+			if (this.#getOrderedSecondaryFeatures().length > 0 || this.#hasPlacementFeatures()) {
+				sections.push({
+					code: secondarySectionCode
+				});
 			}
-			return [{
-				code: secondarySectionCode
-			}];
+			if (this.#getOrderedStartupToolFeatures().length > 0) {
+				sections.push({
+					code: startupToolSectionCode
+				});
+			}
+			return sections;
 		}
-		#getOrderedPrimaryFeatures() {
-			const secondaryIds = new Set(secondaryFeaturesMenuOrder);
+		#orderFeaturesBy(order) {
 			const featuresMap = new Map(this.#getFeatureItems().map(feature => [feature.getId(), feature]));
-			return featuresMenuOrder.reduce((features, featureId) => {
-				const feature = featuresMap.get(featureId);
-				if (feature && !secondaryIds.has(featureId)) {
-					features.push(feature);
-				}
-				return features;
-			}, []);
-		}
-		#getOrderedSecondaryFeatures() {
-			const featuresMap = new Map(this.#getFeatureItems().map(feature => [feature.getId(), feature]));
-			return secondaryFeaturesMenuOrder.reduce((features, featureId) => {
+			return order.reduce((features, featureId) => {
 				const feature = featuresMap.get(featureId);
 				if (feature) {
 					features.push(feature);
 				}
 				return features;
 			}, []);
+		}
+		#getOrderedPrimaryFeatures() {
+			return this.#orderFeaturesBy(featuresMenuOrder).filter(feature => !allSecondaryIds.has(feature.getId()));
+		}
+		#getOrderedSecondaryFeatures() {
+			return this.#orderFeaturesBy(secondaryFeaturesMenuOrder);
+		}
+		#getOrderedStartupToolFeatures() {
+			return this.#orderFeaturesBy(startupToolFeaturesOrder);
 		}
 		#createPopupMenuItem(feature) {
 			return {
@@ -923,7 +1061,7 @@ this.BX = this.BX || {};
 			}, {
 				type: 'list',
 				params: {
-					featureIds: ['landing_knowledge', 'flows'],
+					featureIds: ['landing_knowledge', 'note', 'flows'],
 					minHeight: '50px',
 					margin: '8px 20px 0 20px',
 					appendMoreFeature: true

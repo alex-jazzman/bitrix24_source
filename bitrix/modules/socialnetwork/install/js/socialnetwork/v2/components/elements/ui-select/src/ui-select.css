@@ -1,0 +1,8 @@
+.socialnetwork--ui-select {
+	width: 100%;
+}
+
+.socialnetwork--ui-select input {
+	cursor: pointer;
+	border-radius: var(--ui-border-radius-sm);
+}

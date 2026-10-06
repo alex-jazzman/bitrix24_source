@@ -8,6 +8,7 @@ jn.define('im/messenger/const/user', (require, exports, module) => {
 		bot: 'bot',
 		extranet: 'extranet',
 		collaber: 'collaber',
+		guest: 'guest',
 	});
 
 	const UserExternalType = Object.freeze({

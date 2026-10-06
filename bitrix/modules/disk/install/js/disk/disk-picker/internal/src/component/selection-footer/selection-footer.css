@@ -1,0 +1,8 @@
+.disk-picker-selection-footer {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: flex-end;
+	gap: var(--ui-space-inline-sm);
+	width: 100%;
+}

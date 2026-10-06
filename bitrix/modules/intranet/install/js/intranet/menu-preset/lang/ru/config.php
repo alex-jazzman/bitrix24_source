@@ -17,3 +17,6 @@ $MESS["MENU_PRESET_TASKS_DESC2"] = "следить за сроками и кон
 $MESS["MENU_PRESET_SITES_TITLE"] = "Сайты";
 $MESS["MENU_PRESET_SITES_DESC1"] = "Создавать сайты, которые продают";
 $MESS["MENU_PRESET_SITES_DESC2"] = "самим создавать сайты и лендинги сразу в CRM";
+$MESS["MENU_PRESET_SYNC_TITLE"] = "Синк";
+$MESS["MENU_PRESET_SYNC_DESC1"] = "Проводить встречи и общаться";
+$MESS["MENU_PRESET_SYNC_DESC2"] = "организовывать звонки, вести чаты и управлять расписанием";

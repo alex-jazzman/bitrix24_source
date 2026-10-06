@@ -1,6 +1,12 @@
 import { ref, toValue, shallowRef } from 'ui.vue3';
 import { Type } from 'main.core';
-import { MenuItemOptions, MenuOptions, Popup, PopupOptions, Menu } from 'main.popup';
+import {
+	type MenuItemOptions,
+	type MenuOptions,
+	type PopupOptions,
+	Popup,
+	Menu,
+} from 'main.popup';
 import { useBlockDiagram } from './block-diagram';
 
 export type DiagramContextMenuItemOptions = MenuItemOptions;

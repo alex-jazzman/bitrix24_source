@@ -5,20 +5,12 @@ import { useLoc, useFeature } from '../../../../shared/composables';
 import { PORT_TYPES, COMPLEX_NODE_PORT_LABELS } from '../../../../shared/constants';
 import { createUniqueId, parsePortTitle } from '../../../../shared/utils';
 import { normalyzeAuxConnection } from '../../utils';
+import { useNodeSettingsStore } from '../../../node-settings/stores/node-settings-store';
 
 import './style.css';
 
-import type { Port as TPort } from '../../../../shared/types';
+import type { BlockId, Port as TPort } from '../../../../shared/types';
 
-const NOT_REALLY_COMPLEX_BLOCK = new Set([
-	'ForEachActivity',
-	'IfElseBranchActivity',
-	'IfElseActivity',
-	'WhileActivity',
-	'ApproveActivity',
-	'RequestInformationOptionalActivity',
-	'ListenActivity',
-]);
 const MAX_AUX_COUNT = 5;
 const MIN_RULE_ITEMS_COUNT = 5;
 const RESERVED_INPUT_RULES_TITLES = Array.from({ length: MIN_RULE_ITEMS_COUNT }, (_, i) => {
@@ -49,6 +41,15 @@ type RuleType = {
 const BLOCK_COMPLEX_CLASS_NAMES = {
 	base: 'block-complex',
 	deactivated: '--deactivated',
+};
+
+// Ids of droppable placeholders (input rule slots, relation entry point) become
+// engine virtual port ids: the engine keeps virtual ports in a live map keyed by
+// id and resolves the drop target by that key on mouseup. The id must therefore
+// stay the same while the slot means the same thing — a recompute between drag
+// start and drop would otherwise lose the drop handler.
+const createPlaceholderId = (blockId: BlockId, title: string): string => {
+	return `placeholder_${blockId}_${title}`;
 };
 
 // @vue/component
@@ -94,6 +95,7 @@ export const BlockComplexContent = {
 		const { updatePort, newConnection, addConnection } = useBlockDiagram();
 		const { getMessage } = useLoc();
 		const { isFeatureAvailable } = useFeature();
+		const nodeSettingsStore = useNodeSettingsStore();
 
 		return {
 			updatePort,
@@ -101,6 +103,7 @@ export const BlockComplexContent = {
 			addConnection,
 			getMessage,
 			isFeatureAvailable,
+			nodeSettingsStore,
 		};
 	},
 	computed:
@@ -129,6 +132,10 @@ export const BlockComplexContent = {
 		relationPorts(): Array<TPort>
 		{
 			return this.ports.filter((port) => port.type === PORT_TYPES.inputRelation);
+		},
+		outputRelationPorts(): Array<TPort>
+		{
+			return this.ports.filter((port) => port.type === PORT_TYPES.outputRelation);
 		},
 		inputPortsLength(): number
 		{
@@ -173,15 +180,32 @@ export const BlockComplexContent = {
 		{
 			return this.block.node?.shouldShowAuxPorts === true;
 		},
+		/**
+		 * Gate for the canvas relation section.
+		 * If the node data already carries an explicit availableBlocks descriptor
+		 * (relationsAvailable is set), use it — this keeps the gate consistent whether
+		 * or not the node settings are open (no flicker for unified nodes).
+		 * Otherwise fall back to the store when this block is selected, then to the
+		 * legacy feature-flag gate for non-descriptor (legacy) nodes.
+		 */
 		isRelationFeatureAvailable(): boolean
 		{
-			return this.isFeatureAvailable(FeatureCode.complexNodeConnections)
-				&& this.isReallyComplexBlock
-			;
-		},
-		isReallyComplexBlock(): boolean
-		{
-			return !NOT_REALLY_COMPLEX_BLOCK.has(this.block.activity.Type);
+			const nodeRelationsAvailable = this.block.node?.relationsAvailable;
+			if (nodeRelationsAvailable !== null && nodeRelationsAvailable !== undefined)
+			{
+				return nodeRelationsAvailable;
+			}
+
+			if (
+				this.nodeSettingsStore.block?.id === this.block.id
+				&& this.nodeSettingsStore.isCurrentBlock(this.block.id)
+			)
+			{
+				return this.nodeSettingsStore.isBlockAvailable('relations');
+			}
+
+			// Legacy fallback for non-selected blocks (transition period)
+			return this.isFeatureAvailable(FeatureCode.complexNodeConnections);
 		},
 		reservedInputRules(): Array<TPort | Placeholder>
 		{
@@ -193,7 +217,7 @@ export const BlockComplexContent = {
 				}
 
 				return {
-					id: createUniqueId(),
+					id: createPlaceholderId(this.block.id, title),
 					title,
 				};
 			});
@@ -223,24 +247,24 @@ export const BlockComplexContent = {
 				return null;
 			}
 
-			const { label, id } = parsePortTitle(lastRule.title);
+			const { label, id } = parsePortTitle(lastRule.title)
+				?? { label: COMPLEX_NODE_PORT_LABELS.inputRule, id: 0 };
 			const title = `${label}${id + 1}`;
 
 			return {
-				id: createUniqueId(),
+				id: createPlaceholderId(this.block.id, title),
 				title,
 			};
 		},
 		allInputRules(): Array<TPort | Placeholder>
 		{
-			if (!this.isReallyComplexBlock)
-			{
-				return this.rulePorts;
-			}
-
 			return this.lastInputRulePlaceholder
 				? [...this.reservedInputRules, ...this.restInputRules, this.lastInputRulePlaceholder]
 				: [...this.reservedInputRules, ...this.restInputRules];
+		},
+		firstInputPlaceholderIndex(): number
+		{
+			return this.allInputRules.findIndex((item) => !item.type);
 		},
 		relationPlaceholder(): Placeholder
 		{
@@ -250,7 +274,7 @@ export const BlockComplexContent = {
 			const title = `${label}${id + 1}`;
 
 			return {
-				id: createUniqueId(),
+				id: createPlaceholderId(this.block.id, title),
 				title,
 			};
 		},
@@ -294,7 +318,8 @@ export const BlockComplexContent = {
 				return null;
 			}
 
-			const { label, id } = parsePortTitle(lastRule.title);
+			const { label, id } = parsePortTitle(lastRule.title)
+				?? { label: COMPLEX_NODE_PORT_LABELS.outputRule, id: 0 };
 			const title = `${label}${id + 1}`;
 
 			return {
@@ -304,11 +329,6 @@ export const BlockComplexContent = {
 		},
 		allOutputRules(): Array<TPort | Placeholder>
 		{
-			if (!this.isReallyComplexBlock)
-			{
-				return this.outputPorts;
-			}
-
 			return this.lastOutputRulePlaceholder
 				? [...this.reservedOutputRules, ...this.restOutputRules, this.lastOutputRulePlaceholder]
 				: [...this.reservedOutputRules, ...this.restOutputRules];
@@ -350,27 +370,6 @@ export const BlockComplexContent = {
 				});
 			});
 		},
-		inputPorts(newInputPorts: Array<TPort>, oldInputPorts: Array<TPort>): void
-		{
-			if (!this.newConnection)
-			{
-				return;
-			}
-
-			const oldPortsIds = new Set(oldInputPorts.map((port) => port.id));
-			const addedPort = newInputPorts.find((port) => !oldPortsIds.has(port.id));
-			if (!addedPort)
-			{
-				return;
-			}
-
-			this.addConnection({
-				...this.newConnection,
-				targetBlockId: this.block.id,
-				targetPort: addedPort,
-				targetPortId: addedPort.id,
-			});
-		},
 		auxPortsLength(): void
 		{
 			this.$nextTick(() => {
@@ -400,7 +399,10 @@ export const BlockComplexContent = {
 		},
 	},
 	template: `
-		<div :class="blockComplexClassNames">
+		<div
+			:class="blockComplexClassNames"
+			:data-test-id="$testId('blockComplex', block.id)"
+		>
 			<slot
 				name="header"
 				:title="title"
@@ -428,6 +430,7 @@ export const BlockComplexContent = {
 								:disabled="disabled"
 								:position="ruleType.position"
 								:isOutput="ruleType.id === 'output-rules'"
+								:isInputDroppable="ruleType.id === 'input-rules' && index === firstInputPlaceholderIndex"
 							/>
 						</div>
 					</div>
@@ -461,6 +464,27 @@ export const BlockComplexContent = {
 								<slot
 									name="portPlaceholder"
 									:item="relationPlaceholder"
+									:index="relationPorts.length"
+									:disabled="disabled"
+									:isRelationDroppable="true"
+								/>
+							</div>
+						</div>
+						<div
+							class="block-complex__content_col --right"
+							:data-test-id="$testId('complexNodeOutputRelationPorts', block.id)"
+						>
+							<div
+								v-for="(port, index) in outputRelationPorts"
+								:key="port.id"
+								class="block-complex__content_col-value"
+							>
+								<slot
+									name="port"
+									:item="port"
+									:index="index"
+									:disabled="disabled"
+									position="right"
 								/>
 							</div>
 						</div>

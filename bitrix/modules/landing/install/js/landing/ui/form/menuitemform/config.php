@@ -8,8 +8,9 @@ return [
 	'css' => 'dist/menuitemform.bundle.css',
 	'js' => 'dist/menuitemform.bundle.js',
 	'rel' => [
-		'main.core',
+		'landing.loc',
 		'landing.ui.form.baseform',
+		'main.core',
 		'ui.fonts.opensans',
 	],
 	'skip_core' => false,

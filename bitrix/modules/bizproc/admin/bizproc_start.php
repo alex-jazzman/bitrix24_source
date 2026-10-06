@@ -5,6 +5,10 @@ require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admi
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/bizproc/prolog.php");
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Bizproc\Api\Request\WorkflowTemplateService\PrepareStartParametersRequest;
+use Bitrix\Bizproc\Api\Service\WorkflowTemplateService;
+use Bitrix\Bizproc\Internal\Service\Pilot\StartFormParameters;
+use Bitrix\Bizproc\Starter\Enum\ManualStartSurface;
 
 IncludeModuleLangFile(__FILE__);
 
@@ -59,7 +63,14 @@ if ($fatalErrorMessage == '')
 
 	$dbWorkflowTemplate = CBPWorkflowTemplateLoader::GetList(
 		array(),
-		array("DOCUMENT_TYPE" => $documentType, "ACTIVE"=>"Y"),
+		array_merge(
+			array("DOCUMENT_TYPE" => $documentType, "ACTIVE"=>"Y"),
+			// manual start page: the templates a pilot acts on are narrowed to the ones this employee may
+			// see; the start below is chosen out of this very list, so it is narrowed with it
+			(new \Bitrix\Bizproc\Public\Provider\PilotVisibilityProvider())->getVisibilityFilter(
+				(int)$GLOBALS["USER"]->GetID()
+			)
+		),
 		false,
 		false,
 		array("ID", "NAME", "DESCRIPTION", "MODIFIED", "USER_ID", "PARAMETERS")
@@ -78,59 +89,44 @@ if ($fatalErrorMessage == '')
 	)
 	{
 		$arWorkflowTemplate = $arWorkflowTemplates[$workflowTemplateId];
+		$arWorkflowTemplate["PARAMETERS"] = (new StartFormParameters())->forInitiator(
+			$workflowTemplateId,
+			(int)$GLOBALS["USER"]->GetID(),
+			ManualStartSurface::AdminStartPage,
+			is_array($arWorkflowTemplate["PARAMETERS"] ?? null) ? $arWorkflowTemplate["PARAMETERS"] : [],
+		);
+		$arWorkflowTemplates[$workflowTemplateId]["PARAMETERS"] = $arWorkflowTemplate["PARAMETERS"];
 
 		$arWorkflowParameters = array();
 		$bCanStartWorkflow = false;
 
-		if (count($arWorkflowTemplate["PARAMETERS"]) <= 0)
+		if (
+			count($arWorkflowTemplate["PARAMETERS"]) <= 0
+			|| ($_SERVER["REQUEST_METHOD"] == "POST" && $_POST["DoStartParamWorkflow"] <> '')
+		)
 		{
-			$bCanStartWorkflow = true;
-		}
-		elseif ($_SERVER["REQUEST_METHOD"] == "POST" && $_POST["DoStartParamWorkflow"] <> '')
-		{
-			$arErrorsTmp = array();
-
-			$arRequest = $_REQUEST;
-
-			foreach ($_FILES as $k => $v)
-			{
-				if (array_key_exists("name", $v))
-				{
-					if (is_array($v["name"]))
-					{
-						$ks = array_keys($v["name"]);
-						for ($i = 0, $cnt = count($ks); $i < $cnt; $i++)
-						{
-							$ar = array();
-							foreach ($v as $k1 => $v1)
-								$ar[$k1] = $v1[$ks[$i]];
-
-							$arRequest[$k][] = $ar;
-						}
-					}
-					else
-					{
-						$arRequest[$k] = $v;
-					}
-				}
-			}
-
-			$arWorkflowParameters = CBPWorkflowTemplateLoader::CheckWorkflowParameters(
-				$arWorkflowTemplate["PARAMETERS"],
-				$arRequest,
-				$documentType,
-				$arErrorsTmp
+			$request = \Bitrix\Main\Application::getInstance()->getContext()->getRequest();
+			$prepareResponse = (new WorkflowTemplateService())->prepareStartParameters(
+				new PrepareStartParametersRequest(
+					templateId: $workflowTemplateId,
+					complexDocumentType: $documentType,
+					requestParameters: array_merge($request->toArray(), $request->getFileList()->toArray()),
+					targetUserId: (int)$GLOBALS["USER"]->GetID(),
+					eventType: CBPDocumentEventType::Manual,
+					manualStartSurface: ManualStartSurface::AdminStartPage,
+				),
 			);
 
-			if (count($arErrorsTmp) > 0)
+			if (!$prepareResponse->isSuccess())
 			{
 				$bCanStartWorkflow = false;
 
-				foreach ($arErrorsTmp as $e)
-					$errorMessage .= $e["message"]."<br />";
+				foreach ($prepareResponse->getErrors() as $error)
+					$errorMessage .= $error->getMessage()."<br />";
 			}
 			else
 			{
+				$arWorkflowParameters = $prepareResponse->getParameters();
 				$bCanStartWorkflow = true;
 			}
 		}
@@ -138,6 +134,8 @@ if ($fatalErrorMessage == '')
 		if ($bCanStartWorkflow)
 		{
 			$arErrorsTmp = array();
+
+			$arWorkflowParameters[CBPDocument::PARAM_MANUAL_START_SURFACE] = ManualStartSurface::AdminStartPage->value;
 
 			$wfId = CBPDocument::StartWorkflow(
 				$workflowTemplateId,

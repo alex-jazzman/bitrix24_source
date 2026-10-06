@@ -85,6 +85,14 @@ export const SharingAccessPublicSettings = {
 		{
 			return Boolean(this.publicLinkDisabledReason);
 		},
+		canEditPublicLinkSettings()
+		{
+			return this.publicLink?.canEditSettings !== false;
+		},
+		isPublicLinkSettingsBlocked()
+		{
+			return this.isPublicLinkBlockedByPolicy || !this.canEditPublicLinkSettings;
+		},
 		accessItems()
 		{
 			const publicLink = this.publicLink;
@@ -135,9 +143,9 @@ export const SharingAccessPublicSettings = {
 		},
 		showSettings()
 		{
-			if (!this.isFullSettings && this.isPublicLinkBlockedByPolicy)
+			if (!this.isFullSettings && this.isPublicLinkSettingsBlocked)
 			{
-				this.handleBlockedPublicLink();
+				this.handleBlockedPublicLinkSettings();
 
 				return;
 			}
@@ -176,6 +184,24 @@ export const SharingAccessPublicSettings = {
 			}
 
 			notify('DISK_SHARING_ACCESS_POPUP_NOTIFY_ERROR_MESSAGE');
+		},
+		handleBlockedPublicLinkSettings()
+		{
+			if (!this.canEditPublicLinkSettings)
+			{
+				notify('DISK_SHARING_ACCESS_POPUP_NOTIFY_PUBLIC_LINK_EDIT_SETTINGS_DENIED');
+
+				return;
+			}
+
+			if (this.isPublicLinkBlockedByPolicy)
+			{
+				this.handleBlockedPublicLink();
+
+				return;
+			}
+
+			notify('DISK_SHARING_ACCESS_POPUP_NOTIFY_PUBLIC_LINK_EDIT_DENIED');
 		},
 		onBlockedToggleAttempt()
 		{
@@ -279,9 +305,9 @@ export const SharingAccessPublicSettings = {
 				return;
 			}
 
-			if (this.isPublicLinkBlockedByPolicy)
+			if (this.isPublicLinkSettingsBlocked)
 			{
-				this.handleBlockedPublicLink();
+				this.handleBlockedPublicLinkSettings();
 
 				return;
 			}
@@ -334,9 +360,9 @@ export const SharingAccessPublicSettings = {
 				return;
 			}
 
-			if (this.isPublicLinkBlockedByPolicy)
+			if (this.isPublicLinkSettingsBlocked)
 			{
-				this.handleBlockedPublicLink();
+				this.handleBlockedPublicLinkSettings();
 
 				return;
 			}
@@ -390,9 +416,9 @@ export const SharingAccessPublicSettings = {
 				return;
 			}
 
-			if (this.isPublicLinkBlockedByPolicy)
+			if (this.isPublicLinkSettingsBlocked)
 			{
-				this.handleBlockedPublicLink();
+				this.handleBlockedPublicLinkSettings();
 
 				return;
 			}
@@ -430,9 +456,9 @@ export const SharingAccessPublicSettings = {
 				return;
 			}
 
-			if (this.isPublicLinkBlockedByPolicy)
+			if (this.isPublicLinkSettingsBlocked)
 			{
-				this.handleBlockedPublicLink();
+				this.handleBlockedPublicLinkSettings();
 
 				return;
 			}
@@ -471,9 +497,9 @@ export const SharingAccessPublicSettings = {
 		},
 		async onToggleDownload(value)
 		{
-			if (this.isPublicLinkBlockedByPolicy)
+			if (this.isPublicLinkSettingsBlocked)
 			{
-				this.handleBlockedPublicLink();
+				this.handleBlockedPublicLinkSettings();
 
 				return;
 			}
@@ -516,9 +542,9 @@ export const SharingAccessPublicSettings = {
 				:isFullSettings="isFullSettings"
 				:accessEndDate="accessEndDate"
 				:isPassword="hasSavedPassword"
-				:isSettingsBlocked="isPublicLinkBlockedByPolicy"
+				:isSettingsBlocked="isPublicLinkSettingsBlocked"
 				@toggleSettings="showSettings"
-				@blockedSettings="handleBlockedPublicLink"
+				@blockedSettings="handleBlockedPublicLinkSettings"
 			/>
 				<div v-if="isActivePublicLink && isFullSettings" class="access-public-block__inputs">
 					<PublicAccessSelect

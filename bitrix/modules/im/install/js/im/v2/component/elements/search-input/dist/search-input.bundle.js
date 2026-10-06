@@ -3,14 +3,17 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports, im_v2_const, im_v2_lib_utils, im_v2_lib_escManager, im_v2_component_elements_loader) {
+(function (exports, ui_iconSet_api_vue, im_v2_const, im_v2_lib_utils, im_v2_lib_escManager, im_v2_component_elements_loader) {
 	'use strict';
+
+	const ICON_SIZE = 24;
 
 	// @vue/component
 	const SearchInput = {
 		name: 'SearchInput',
 		components: {
-			Spinner: im_v2_component_elements_loader.Spinner
+			Spinner: im_v2_component_elements_loader.Spinner,
+			BIcon: ui_iconSet_api_vue.BIcon
 		},
 		props: {
 			placeholder: {
@@ -48,6 +51,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		computed: {
 			SpinnerSize: () => im_v2_component_elements_loader.SpinnerSize,
 			SpinnerColor: () => im_v2_component_elements_loader.SpinnerColor,
+			Outline: () => ui_iconSet_api_vue.Outline,
+			ICON_SIZE: () => ICON_SIZE,
 			isEmptyQuery() {
 				return this.query.length === 0;
 			}
@@ -140,7 +145,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			tabindex="-1"
 			:class="{'--has-focus': hasFocus}"
 		>
-			<div v-if="!isLoading" class="bx-im-search-input__search-icon"></div>
+			<div v-if="!isLoading" class="bx-im-search-input__search-icon">
+				<BIcon :name="Outline.SEARCH" :size="ICON_SIZE" />
+			</div>
 			<Spinner 
 				v-if="withLoader && isLoading" 
 				:size="SpinnerSize.XXS" 
@@ -164,5 +171,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	exports.SearchInput = SearchInput;
 
-})(this.BX.Messenger.v2.Component.Elements = this.BX.Messenger.v2.Component.Elements || {}, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Component.Elements);
+})(this.BX.Messenger.v2.Component.Elements = this.BX.Messenger.v2.Component.Elements || {}, BX.UI.IconSet, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Component.Elements);
 //# sourceMappingURL=search-input.bundle.js.map

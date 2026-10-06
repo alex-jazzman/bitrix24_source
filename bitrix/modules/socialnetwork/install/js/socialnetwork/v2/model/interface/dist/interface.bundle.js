@@ -10,6 +10,9 @@ this.BX.Socialnetwork.V2 = this.BX.Socialnetwork.V2 || {};
 		UPDATE: 'TYPE_PROJECT_WIZARD_ACTION_UPDATE',
 		COPY: 'TYPE_PROJECT_WIZARD_ACTION_COPY'
 	};
+	function isCreateProjectWizardAction(action) {
+		return action === TYPES_PROJECT_WIZARD_ACTION.CREATE || !action;
+	}
 
 	const useInterfaceStore = ui_vue3_pinia.defineStore('interface', {
 		state: () => ({
@@ -18,6 +21,7 @@ this.BX.Socialnetwork.V2 = this.BX.Socialnetwork.V2 || {};
 			action: '',
 			isAccessRestricted: false,
 			loading: false,
+			scrollToStartupTool: false,
 			validation: {
 				title: {
 					invalid: false
@@ -35,13 +39,7 @@ this.BX.Socialnetwork.V2 = this.BX.Socialnetwork.V2 || {};
 			}
 		}),
 		getters: {
-			isActionCreate: state => {
-				const action = state.action;
-				const isActionFalsy = !action;
-				const isActionCreateDirect = action === TYPES_PROJECT_WIZARD_ACTION.CREATE;
-				const isActionCreateNew = isActionCreateDirect || isActionFalsy;
-				return isActionCreateNew;
-			},
+			isActionCreate: state => isCreateProjectWizardAction(state.action),
 			isActionUpdate: state => state.action === TYPES_PROJECT_WIZARD_ACTION.UPDATE,
 			isActionCopy: state => state.action === TYPES_PROJECT_WIZARD_ACTION.COPY,
 			wizardValidation: state => {
@@ -57,7 +55,8 @@ this.BX.Socialnetwork.V2 = this.BX.Socialnetwork.V2 || {};
 					isOldPortal: params.isOldPortal,
 					action: params.action || '',
 					currentUserId: params.currentUserId,
-					isAccessRestricted: params.isAccessRestricted
+					isAccessRestricted: params.isAccessRestricted,
+					scrollToStartupTool: params.scrollToStartupTool === true
 				});
 			},
 			setValidation(field, props) {
@@ -79,6 +78,7 @@ this.BX.Socialnetwork.V2 = this.BX.Socialnetwork.V2 || {};
 	});
 
 	exports.TYPES_PROJECT_WIZARD_ACTION = TYPES_PROJECT_WIZARD_ACTION;
+	exports.isCreateProjectWizardAction = isCreateProjectWizardAction;
 	exports.useInterfaceStore = useInterfaceStore;
 
 })(this.BX.Socialnetwork.V2.Model = this.BX.Socialnetwork.V2.Model || {}, BX.Vue3.Pinia);

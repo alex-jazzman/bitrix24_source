@@ -1,6 +1,8 @@
-import { Type } from 'main.core';
+import { Loc, Type } from 'main.core';
+import type { BaseEvent } from 'main.core.events';
 import type { PopupOptions } from 'main.popup';
 
+import { LiveAnnouncer } from 'ui.a11y';
 import { VueUploaderComponent } from 'ui.uploader.vue';
 import { TileWidgetSlot } from 'ui.uploader.tile-widget';
 import type { BitrixVueComponentProps } from 'ui.vue3';
@@ -76,6 +78,11 @@ export const TileWidgetComponent: BitrixVueComponentProps = {
 
 		this.adapter.subscribe('Item:onAdd', this.clearError);
 		this.adapter.subscribe('Item:onRemove', this.clearError);
+
+		this.adapter.subscribe('Item:onAdd', this.announceItemAdd);
+		this.adapter.subscribe('Item:onRemove', this.announceItemRemove);
+		this.adapter.subscribe('Item:onError', this.announceItemError);
+		this.adapter.subscribe('Uploader:onError', this.announceUploaderError);
 	},
 	mounted(): void
 	{
@@ -90,8 +97,42 @@ export const TileWidgetComponent: BitrixVueComponentProps = {
 	{
 		this.adapter.unsubscribe('Item:onAdd', this.clearError);
 		this.adapter.unsubscribe('Item:onRemove', this.clearError);
+
+		this.adapter.unsubscribe('Item:onAdd', this.announceItemAdd);
+		this.adapter.unsubscribe('Item:onRemove', this.announceItemRemove);
+		this.adapter.unsubscribe('Item:onError', this.announceItemError);
+		this.adapter.unsubscribe('Uploader:onError', this.announceUploaderError);
 	},
 	methods: {
+		announceItemAdd(event: BaseEvent): void
+		{
+			const { item } = event.getData();
+
+			LiveAnnouncer.announce(
+				Loc.getMessage('TILE_UPLOADER_FILE_ADDED_ANNOUNCE', { '#FILENAME#': item.name }),
+			);
+		},
+		announceItemRemove(event: BaseEvent): void
+		{
+			const { item } = event.getData();
+
+			LiveAnnouncer.announce(
+				Loc.getMessage('TILE_UPLOADER_FILE_REMOVED_ANNOUNCE', { '#FILENAME#': item.name }),
+			);
+		},
+		announceItemError(event: BaseEvent): void
+		{
+			const { item } = event.getData();
+
+			LiveAnnouncer.announce(
+				Loc.getMessage('TILE_UPLOADER_FILE_ERROR_ANNOUNCE', { '#FILENAME#': item.name }),
+				'assertive',
+			);
+		},
+		announceUploaderError(): void
+		{
+			LiveAnnouncer.announce(Loc.getMessage('TILE_UPLOADER_ERROR_ANNOUNCE'), 'assertive');
+		},
 		enableAutoCollapse(): void
 		{
 			this.autoCollapse = true;

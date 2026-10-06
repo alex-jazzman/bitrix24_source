@@ -462,14 +462,23 @@ export class SignLink
 
 		const message = event.data;
 
-		if (message.type === 'BX:SidePanel:close')
+		switch (message.type)
 		{
-			this.#closeSlider();
-		}
-		else if (message.type === 'BX:Sign:processDone')
-		{
-			this.#closeSlider();
-			this.#showProcessDoneNotification(message.role);
+			case 'BX:SidePanel:onEscapePress':
+				this.#slider?.firePageEvent('onEscapePress');
+				break;
+
+			case 'BX:SidePanel:close':
+				this.#closeSlider();
+				break;
+
+			case 'BX:Sign:processDone':
+				this.#closeSlider();
+				this.#showProcessDoneNotification(message.role);
+				break;
+
+			default:
+				break;
 		}
 	}
 

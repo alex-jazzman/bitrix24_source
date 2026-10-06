@@ -6,8 +6,10 @@ this.BX.Call = this.BX.Call || {};
 
 	class StuckCallFinishTracker {
 		static DEBOUNCE_MS = 3000;
+		static MAX_CLOSED_UUIDS = 100;
 		_scheduledKeys = new Set();
 		_pendingTimers = new Map();
+		_closedUuids = new Set();
 		_keyOf(callId, callUuid) {
 			return `${callUuid || ''}|${callId || ''}`;
 		}
@@ -32,6 +34,23 @@ this.BX.Call = this.BX.Call || {};
 				this._pendingTimers.delete(key);
 			}
 			this._scheduledKeys.delete(key);
+		}
+		markClosed(callUuid) {
+			if (!callUuid) {
+				return;
+			}
+			this._closedUuids.delete(callUuid);
+			this._closedUuids.add(callUuid);
+			while (this._closedUuids.size > StuckCallFinishTracker.MAX_CLOSED_UUIDS) {
+				const oldest = this._closedUuids.values().next().value;
+				if (oldest === undefined) {
+					break;
+				}
+				this._closedUuids.delete(oldest);
+			}
+		}
+		isRecentlyClosed(callUuid) {
+			return callUuid ? this._closedUuids.has(callUuid) : false;
 		}
 	}
 	const stuckCallFinishTracker = new StuckCallFinishTracker();

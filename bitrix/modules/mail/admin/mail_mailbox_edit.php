@@ -29,7 +29,7 @@ $bCanUseTLS = (defined('BX_MAIL_FORCE_USE_TLS') && BX_MAIL_FORCE_USE_TLS === tru
 if($_SERVER['REQUEST_METHOD']=="POST" && ($save <> '' || $save_ext <> '' || $apply <> '') && $MOD_RIGHT=="W" && check_bitrix_sessid())
 {
 	$arFields = array(
-		'ACTIVE'          => $ACTIVE,
+		'ACTIVE'          => $ACTIVE === 'Y' ? 'Y' : 'N',
 		'LID'             => $LID,
 		'SERVICE_ID'      => $SERVICE_ID,
 		'NAME'            => $NAME,
@@ -42,8 +42,8 @@ if($_SERVER['REQUEST_METHOD']=="POST" && ($save <> '' || $save_ext <> '' || $app
 		'LOGIN'           => $LOGIN,
 		'PASSWORD'        => $PASSWORD,
 		'CHARSET'         => $CHARSET,
-		'USE_MD5'         => $USE_MD5,
-		'DELETE_MESSAGES' => $DELETE_MESSAGES,
+		'USE_MD5'         => $USE_MD5 === 'Y' ? 'Y' : 'N',
+		'DELETE_MESSAGES' => $DELETE_MESSAGES === 'Y' ? 'Y' : 'N',
 		'PERIOD_CHECK'    => $PERIOD_CHECK,
 		'DESCRIPTION'     => $DESCRIPTION,
 		'MAX_MSG_COUNT'   => $MAX_MSG_COUNT,

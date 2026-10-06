@@ -49,8 +49,19 @@
 	cursor: pointer;
 }
 
-.ui-popup-menu-rich-header:hover {
+.ui-popup-menu-rich-header:hover,
+html[data-input-modality="pointer"] .ui-popup-menu-rich-header:focus {
 	box-shadow: inset 0 0 0 999px rgba(0, 0, 0, 0.02);
+}
+
+/* Visible focus follows input modality (ui.a11y sets data-input-modality on <html>):
+   a pointer focus reads as hover (above), a keyboard focus draws the focus outline. */
+html[data-input-modality="pointer"] .ui-popup-menu-rich-header:focus {
+	outline: none;
+}
+html[data-input-modality="keyboard"] .ui-popup-menu-rich-header:focus {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
+	outline-offset: var(--ui-focus-outline-offset-inset);
 }
 
 .ui-popup-menu-rich-header.--copilot {

@@ -5,9 +5,7 @@ jn.define('background/notifications/promotion', (require, exports, module) => {
 	const { BaseNotificationHandler } = require('background/notifications/base');
 	const { Color } = require('tokens');
 	const { AnalyticsEvent } = require('analytics');
-
-	const NOTIFICATION_EVENT = 'PushNotifications::OpenPromotion';
-	const SUBSCRIPTION_EVENT = 'PushNotifications::SubscribeToOpenPromotion';
+	const { NOTIFICATION_EVENTS, SUBSCRIPTION_EVENTS } = require('navigator/more-tab/meta');
 
 	/**
 	 * @class OpenPromotionNotification
@@ -21,20 +19,20 @@ jn.define('background/notifications/promotion', (require, exports, module) => {
 
 		getNotificationEventName()
 		{
-			return NOTIFICATION_EVENT;
+			return NOTIFICATION_EVENTS.PROMOTION;
 		}
 
 		getSubscriptionEventName()
 		{
-			return SUBSCRIPTION_EVENT;
+			return SUBSCRIPTION_EVENTS.PROMOTION;
 		}
 
 		static bindPromotionEvent()
 		{
-			BX.removeCustomEvent(NOTIFICATION_EVENT, OpenPromotionNotification.openPromotion);
-			BX.addCustomEvent(NOTIFICATION_EVENT, OpenPromotionNotification.openPromotion);
+			BX.removeCustomEvent(NOTIFICATION_EVENTS.PROMOTION, OpenPromotionNotification.openPromotion);
+			BX.addCustomEvent(NOTIFICATION_EVENTS.PROMOTION, OpenPromotionNotification.openPromotion);
 
-			BX.postComponentEvent(SUBSCRIPTION_EVENT, []);
+			BX.postComponentEvent(SUBSCRIPTION_EVENTS.PROMOTION, []);
 		}
 
 		static getUrlFromMessage(message)

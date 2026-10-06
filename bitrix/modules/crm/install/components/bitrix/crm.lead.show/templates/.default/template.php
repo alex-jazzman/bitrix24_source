@@ -1,15 +1,15 @@
 <?php
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
-use \Bitrix\Crm\Integration\StorageType;
-use \Bitrix\Crm\Conversion\LeadConversionScheme;
-use \Bitrix\Crm\Category\DealCategory;
-use \Bitrix\Crm\Conversion\EntityConverter;
+use Bitrix\Crm\Integration\StorageType;
+use Bitrix\Crm\Conversion\LeadConversionScheme;
+use Bitrix\Crm\Category\DealCategory;
+use Bitrix\Crm\Conversion\EntityConverter;
 use Bitrix\Crm\Restriction\RestrictionManager;
 
 global $APPLICATION;
 $APPLICATION->AddHeadScript('/bitrix/js/crm/instant_editor.js');
-$APPLICATION->AddHeadScript('/bitrix/js/crm/dialog.js');
+\Bitrix\Main\UI\Extension::load('crm.dialog');
 
 \Bitrix\Main\UI\Extension::load(['ui.fonts.opensans', 'intranet.old-interface.intranet-common']);
 $APPLICATION->SetAdditionalCSS('/bitrix/js/crm/css/crm.css');

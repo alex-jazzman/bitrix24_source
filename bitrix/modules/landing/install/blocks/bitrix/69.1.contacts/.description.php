@@ -36,7 +36,4 @@ return [
 		],
 	],
 	'attrs' => [],
-	'assets' => [
-		'ext' => ['landing_icon_fonts'],
-	],
 ];

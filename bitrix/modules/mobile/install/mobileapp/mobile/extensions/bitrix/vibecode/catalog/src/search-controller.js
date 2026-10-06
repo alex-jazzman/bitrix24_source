@@ -145,6 +145,7 @@ jn.define('vibecode/catalog/src/search-controller', (require, exports, module) =
 			this.renderer.setState({
 				searchQuery: normalizedQuery,
 			}, () => {
+				this.renderer.spendAutoSwitchOnSearch();
 				this.renderer.syncProviderParams();
 				this.renderer.reloadStatefulList();
 			});

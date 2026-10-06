@@ -1,5 +1,8 @@
 <?php
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
+
+use Bitrix\Main\Web\Uri;
 
 /** @var array $arParams */
 /** @var array $arResult */
@@ -127,10 +130,7 @@ foreach($arProducts as $sKey =>  $arProduct)
 		'TITLE' => GetMessage('CRM_PRODUCT_SHOW_TITLE'),
 		'TEXT' => GetMessage('CRM_PRODUCT_SHOW'),
 		'ONCLICK' => 'jsUtils.Redirect([], \''.CUtil::JSEscape(
-				CHTTP::urlAddParams(
-					$arProduct['PATH_TO_PRODUCT_SHOW'],
-					array('list_section_id' => $arResult['BACK_URL_SECTION_ID'])
-				)
+				(string)(new Uri($arProduct['PATH_TO_PRODUCT_SHOW']))->addParams(array('list_section_id' => $arResult['BACK_URL_SECTION_ID']))
 			).'\');',
 		'DEFAULT' => true
 	);
@@ -142,10 +142,7 @@ foreach($arProducts as $sKey =>  $arProduct)
 			'TITLE' => GetMessage('CRM_PRODUCT_EDIT_TITLE'),
 			'TEXT' => GetMessage('CRM_PRODUCT_EDIT'),
 			'ONCLICK' => 'jsUtils.Redirect([], \''.CUtil::JSEscape(
-					CHTTP::urlAddParams(
-						$arProduct['PATH_TO_PRODUCT_EDIT'],
-						array('list_section_id' => $arResult['BACK_URL_SECTION_ID'])
-					)
+					(string)(new Uri($arProduct['PATH_TO_PRODUCT_EDIT']))->addParams(array('list_section_id' => $arResult['BACK_URL_SECTION_ID']))
 				).'\');'
 		);
 
@@ -156,10 +153,7 @@ foreach($arProducts as $sKey =>  $arProduct)
 				'TITLE' => GetMessage('CRM_PRODUCT_COPY_TITLE'),
 				'TEXT' => GetMessage('CRM_PRODUCT_COPY'),
 				'ONCLICK' => 'jsUtils.Redirect([], \''.CUtil::JSEscape(
-						CHTTP::urlAddParams(
-							$arProduct['PATH_TO_PRODUCT_EDIT'],
-							array('list_section_id' => $arResult['BACK_URL_SECTION_ID'], 'copy' => 1)
-						)
+						(string)(new Uri($arProduct['PATH_TO_PRODUCT_EDIT']))->addParams(array('list_section_id' => $arResult['BACK_URL_SECTION_ID'], 'copy' => 1))
 					).'\');'
 			);
 		}
@@ -179,10 +173,7 @@ foreach($arProducts as $sKey =>  $arProduct)
 				).
 				'\', \''.CUtil::JSEscape(GetMessage('CRM_PRODUCT_DELETE')).'\', \''.
 				CUtil::JSEscape(
-					CHTTP::urlAddParams(
-						$arProduct['PATH_TO_PRODUCT_DELETE'],
-						array('list_section_id' => $arResult['BACK_URL_SECTION_ID'])
-					)
+					(string)(new Uri($arProduct['PATH_TO_PRODUCT_DELETE']))->addParams(array('list_section_id' => $arResult['BACK_URL_SECTION_ID']))
 				).'\')'
 		);
 	}
@@ -230,10 +221,7 @@ foreach($arProducts as $sKey =>  $arProduct)
 				"\t\t".'</td>'.
 				"\t\t".'<td>'.
 				"\t\t\t".'<a target="_self" href="'.
-				CHTTP::urlAddParams(
-					$arProduct['PATH_TO_PRODUCT_SHOW'],
-					array('list_section_id' => $arResult['BACK_URL_SECTION_ID'])
-				).
+				(string)(new Uri($arProduct['PATH_TO_PRODUCT_SHOW']))->addParams(array('list_section_id' => $arResult['BACK_URL_SECTION_ID'])).
 				'">'.$arProduct['NAME'].'</a>'.
 				"\t\t".'</td>'.
 				"\t".'</tr>'.PHP_EOL.

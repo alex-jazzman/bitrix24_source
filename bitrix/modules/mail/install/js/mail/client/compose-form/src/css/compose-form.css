@@ -1,0 +1,122 @@
+/*
+ * The panel wrapper sets no height of its own, so without a definite chain from the body down to the form
+ * the whole panel document scrolls and a long message pushes the header and the bottom bar off the screen.
+ * The rules reach nodes of `bitrix:ui.sidepanel.wrapper`, so they are scoped by the marker classes the form
+ * puts on the body, on the form element and on its container and takes off when it is destroyed.
+ */
+body.ui-page-slider-wrapper.mail-compose-form-frame
+{
+	height: 100% !important;
+	min-height: 100% !important;
+	overflow: hidden !important;
+}
+
+.mail-compose-form-frame .ui-slider-page,
+.mail-compose-form-frame .ui-side-panel-content,
+.mail-compose-form-frame .ui-page-slider-workarea,
+.mail-compose-form-frame .ui-side-panel-wrap-workarea,
+.mail-compose-form-shell
+{
+	position: relative;
+	height: 100%;
+	min-height: 0;
+}
+
+.mail-compose-form
+{
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	min-height: 0;
+	background: var(--ui-color-bg-content-primary);
+}
+
+/* Keep the editor mounted for draft restore, but do not expose its empty intermediate state. */
+.mail-compose-form.--draft-loading > *
+{
+	visibility: hidden;
+}
+
+.mail-compose-header,
+.mail-compose-form__content,
+.mail-compose-form__footer
+{
+	box-sizing: border-box;
+	width: 100%;
+}
+
+.mail-compose-header
+{
+	display: flex;
+	flex: 0 0 auto;
+	align-items: center;
+	gap: var(--ui-space-inline-xs);
+	min-width: 0;
+	padding: var(--ui-space-inset-md) var(--ui-space-inset-xl) var(--ui-space-inset-sm);
+}
+
+.mail-compose-header__icon
+{
+	flex: 0 0 auto;
+	color: var(--ui-color-accent-main-primary);
+}
+
+.mail-compose-form__content
+{
+	position: relative;
+	display: flex;
+	flex: 1 1 auto;
+	flex-direction: column;
+	min-height: 0;
+	padding: 0 var(--ui-space-inset-xl);
+	overflow-y: auto;
+}
+
+.mail-compose-form__fields
+{
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+}
+
+/* the subject shares its row with the control that shows the bcc field */
+.mail-compose-form__subject-row
+{
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-sm);
+	min-width: 0;
+	padding: var(--ui-space-inset-xs) 0;
+	min-height: 40px;
+	box-sizing: border-box;
+	border-bottom: 1px solid var(--ui-color-divider-default);
+}
+
+/*
+ * The zone is filled by the large attachment adapter from outside the application, so the padding is set on
+ * the filled state only and an empty zone takes no room.
+ */
+.mail-compose-form__notices:not(:empty)
+{
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-sm);
+	min-width: 0;
+	padding: var(--ui-space-inset-sm) 0;
+}
+
+/* the retry control follows the error text instead of being glued to it */
+.mail-compose-large-attachment-notice__action
+{
+	margin-inline-start: var(--ui-space-inline-xs);
+}
+
+.mail-compose-form__footer
+{
+	display: flex;
+	flex: 0 0 auto;
+	flex-direction: column;
+	gap: var(--ui-space-stack-sm);
+	padding: var(--ui-space-inset-sm) var(--ui-space-inset-xl) var(--ui-space-inset-md);
+	border-top: 1px solid var(--ui-color-divider-default);
+}

@@ -4,6 +4,7 @@ $MESS['DISK_DOCUMENTS_PAGE_TITLE_BOARDS'] = 'Доски';
 $MESS["DISK_DOCUMENTS_TOOLBAR_CREATE_DOC_TEXT"] = "Создать документ";
 $MESS["DISK_DOCUMENTS_TOOLBAR_CREATE_BOARD_TEXT"] = "Создать";
 $MESS["DISK_DOCUMENTS_TOOLBAR_TRASH"] = "Корзина";
+$MESS["DISK_DOCUMENTS_TOOLBAR_BOOST"] = "Бусты";
 $MESS["DISK_DOCUMENTS_TOOLBAR_SETTINGS"] = "Настройка работы с документами";
 $MESS["DISK_DOCUMENTS_MY_LIBRARY"] = "Мой диск";
 
@@ -24,11 +25,15 @@ $MESS['DISK_DOCUMENTS_GRID_VIEW_SMALL_TILE'] = 'Сетка';
 $MESS['DISK_DOCUMENTS_GRID_VIEW_TILE'] = 'Плитка';
 $MESS['DISK_DOCUMENTS_ACT_LOADING'] = 'Загрузка...';
 $MESS['DISK_DOCUMENTS_GRID_STUB_TITLE'] = 'Создавайте новые документы, таблицы или презентации и работайте с ними совместно с коллегами!';
+$MESS['DISK_DOCUMENTS_GRID_STUB_TITLE_MSGVER_1'] = 'Создавайте документы, таблицы и презентации, работайте над ними вместе с коллегами';
 $MESS['DISK_DOCUMENTS_GRID_STUB_DESCRIPTION'] = 'Редактируйте вместе. Обсуждайте. Делитесь.';
 
 $MESS['DISK_DOCUMENTS_GRID_TILE_EMPTY_BLOCK_TITLE'] = 'В данной папке нет файлов';
 $MESS['DISK_DOCUMENTS_GRID_TILE_EMPTY_BLOCK_CREATE'] = 'Создать файл';
 $MESS['DISK_DOCUMENTS_GRID_TILE_EMPTY_BLOCK_UPLOAD'] = 'Загрузить файл';
+$MESS['DISK_DOCUMENTS_GRID_TILE_EMPTY_DOCUMENTS_TITLE'] = 'Здесь будут ваши документы';
+$MESS['DISK_DOCUMENTS_GRID_TILE_EMPTY_BOARDS_TITLE'] = 'Здесь будут ваши доски';
+$MESS['DISK_DOCUMENTS_GRID_TILE_EMPTY_BOARDS_CREATE'] = 'Создать доску';
 $MESS['DISK_DOCUMENTS_GRID_TILE_EMPTY_BLOCK_TITLE_FOR_FILTERED'] = 'Не удалось найти документы по данному запросу';
 $MESS['DISK_DOCUMENTS_ACT_DELETE_TITLE'] = 'Подтверждение удаления';
 $MESS['DISK_DOCUMENTS_ACT_DELETE_MESSAGE'] = 'Вы хотите переместить документ "#NAME#" в корзину?';

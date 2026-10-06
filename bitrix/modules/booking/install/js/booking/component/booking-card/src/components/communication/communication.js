@@ -22,11 +22,14 @@ export const Communication = {
 		{
 			return {
 				text: this.loc('BOOKING_BOOKING_SOON_HINT'),
+				popupOptions: {
+					targetContainer: document.body,
+				},
 			};
 		},
 	},
 	template: `
-		<div v-hint="soonHint" class="booking-booking-card__communication">
+		<div ref="hint" v-hint="soonHint" class="booking-booking-card__communication">
 			<Icon :name="IconSet.TELEPHONY_HANDSET_1"/>
 			<Icon :name="IconSet.CHATS_2"/>
 		</div>

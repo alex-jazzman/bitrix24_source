@@ -157,6 +157,9 @@ Vue.component(
 						CUSTOMIZED: (Type.isNil(data.fields.PRICE) || data.fields.CUSTOMIZED === 'Y') ? 'Y' : 'N',
 						MEASURE_CODE: data.fields.MEASURE_CODE,
 						MEASURE_NAME: data.fields.MEASURE_NAME,
+						TAX_RATE: data.fields.TAX_RATE,
+						TAX_INCLUDED: data.fields.TAX_INCLUDED ?? data.fields.VAT_INCLUDED,
+						TAX_ID: data.fields.TAX_ID ?? data.fields.VAT_ID,
 						MORE_PHOTO: data.morePhoto,
 						IS_NEW: data.isNew,
 					};

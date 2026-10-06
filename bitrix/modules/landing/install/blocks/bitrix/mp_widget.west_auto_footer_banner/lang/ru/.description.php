@@ -1,0 +1,2 @@
+<?php
+$MESS["LANDING_BLOCK_WIDGET_WEST_AUTO_VIBE_FOOTER_BANNER_NAME"] = "Форма с контактами";

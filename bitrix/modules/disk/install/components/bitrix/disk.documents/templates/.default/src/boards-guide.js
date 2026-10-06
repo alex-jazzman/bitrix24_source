@@ -1,5 +1,4 @@
 import { Loc } from 'main.core';
-import { Guide } from 'ui.tour';
 
 export default class BoardsGuide
 {
@@ -7,7 +6,7 @@ export default class BoardsGuide
 	targetSpotlight: HTMLElement | null = null;
 	isBoardsPage: boolean;
 
-	guide: Guide | null = null;
+	guide = null;
 
 	constructor(options)
 	{
@@ -34,10 +33,22 @@ export default class BoardsGuide
 			return;
 		}
 
-		setTimeout(() => {
+		BX.UI.BannerDispatcher.low.toQueue((done) => {
+			let isDone = false;
+			const complete = () => {
+				if (isDone)
+				{
+					return;
+				}
+
+				isDone = true;
+				done();
+			};
+
+			this.guide.subscribe('UI.Tour.Guide:onFinish', complete);
 			this.guide.scrollToTarget(this.target);
 			this.guide.start();
-		}, 1000);
+		}, { id: this.guide.getId() });
 	}
 
 	#checkParams(): boolean
@@ -45,11 +56,11 @@ export default class BoardsGuide
 		return this.target !== null && this.targetSpotlight !== null;
 	}
 
-	#createGuide(id: string): Guide
+	#createGuide(id: string)
 	{
 		const spotlight = this.#createSpotlight();
 
-		const guide = new Guide({
+		const guide = new BX.UI.Tour.Guide({
 			id,
 			simpleMode: true,
 			overlay: false,

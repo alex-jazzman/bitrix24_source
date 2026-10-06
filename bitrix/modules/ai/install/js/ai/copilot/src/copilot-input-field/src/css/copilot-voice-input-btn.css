@@ -100,3 +100,53 @@
 	opacity: 0;
 	z-index: -1;
 }
+
+/* ======================================================
+ * BitrixGPT Redesign overrides (Phase 2)
+ * All rules MUST stay under .ai__copilot-scope.--bitrixgpt-redesign
+ * ====================================================== */
+
+/* P2.T1/T3 — Voice input button: replace hardcoded purple values */
+
+/* Pulse ring on recording: replace #DED0F4 */
+.ai__copilot-scope.--bitrixgpt-redesign .ai__copilot-voice-input-btn-container.--recording::before {
+	background-color: var(--ui-color-design-tinted-bitrix-gpt-bg-gradient-1, #FEF5F4);
+}
+
+/* Available start button: blue microphone (accent-main-primary #0075FF), replacing #8E52EC. */
+.ai__copilot-scope.--bitrixgpt-redesign .ai__copilot-voice-input-btn.--start .ui-icon-set {
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary, #0075FF);
+}
+
+/* Hover/active: no dark-accent token exists, so keep accent-main-primary to avoid the base
+ * purple (#A977FA / #8447E4) showing through under the flag. */
+.ai__copilot-scope.--bitrixgpt-redesign .ai__copilot-voice-input-btn.--start:hover .ui-icon-set,
+.ai__copilot-scope.--bitrixgpt-redesign .ai__copilot-voice-input-btn.--start:active .ui-icon-set {
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary, #0075FF);
+}
+
+/* Disabled start button: neutral microphone shown when the input contains text. */
+.ai__copilot-scope.--bitrixgpt-redesign .ai__copilot-voice-input-btn.--start[disabled] .ui-icon-set {
+	--ui-icon-set__icon-color: var(--ui-color-base-4, #a8adb4);
+}
+
+/* Stop button bg: replaces #8E52EC. Concern: verify the exact stop-button bg against Figma. */
+.ai__copilot-scope.--bitrixgpt-redesign {
+	--ai-copilot-stop-gradient: var(--Bitrix-GPT-filled, linear-gradient(264deg, #F96269 1.67%, #F046B7 21.82%, #9D48FF 52.44%, #3F68FF 76.41%, #0098EA 97.21%));
+}
+
+.ai__copilot-scope.--bitrixgpt-redesign .ai__copilot-voice-input-btn.--stop {
+	background: var(--ai-copilot-stop-gradient);
+}
+
+/* Stop button hover: replace #A977FA */
+.ai__copilot-scope.--bitrixgpt-redesign .ai__copilot-voice-input-btn.--stop:hover {
+	background: var(--ai-copilot-stop-gradient);
+	opacity: 0.85;
+}
+
+/* Stop button active: replace #8447E4 */
+.ai__copilot-scope.--bitrixgpt-redesign .ai__copilot-voice-input-btn.--stop:active {
+	background: var(--ai-copilot-stop-gradient);
+	opacity: 0.7;
+}

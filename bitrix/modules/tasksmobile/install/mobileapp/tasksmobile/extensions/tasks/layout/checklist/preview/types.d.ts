@@ -1,22 +1,28 @@
-declare type ChecklistPreviewInitialState = {
+import { LayoutWidget } from '../../../../../../../../../mobile/dev/janative/api';
+
+export type ChecklistPreviewInitialState = {
 	title: string,
 	completed: number,
 	uncompleted: number,
 };
 
-declare type ChecklistPreviewValue = {
+export type ChecklistPreviewValue = {
 	completed: number,
 	uncompleted: number,
 };
 
-declare type ChecklistPreviewConfig = {
-	parentWidget: Object,
+export type ChecklistThemeComponentParams = {
+	field: Object,
+};
+
+export type ChecklistPreviewConfig = {
+	parentWidget: LayoutWidget,
 	checklistController: Object,
 	initialState?: ChecklistPreviewInitialState[],
 	taskId: number | string,
 };
 
-declare type ChecklistPreviewProps = {
+export type ChecklistPreviewProps = {
 	id: string,
 	testId: string,
 	value: ChecklistPreviewValue,
@@ -31,5 +37,28 @@ declare type ChecklistPreviewProps = {
 	onChange?: (value: ChecklistPreviewValue) => void,
 	onContentClick?: (field: Object) => void,
 	onLayout?: (field: Object) => void,
-	ThemeComponent?: Function,
+	ThemeComponent?: (params: ChecklistThemeComponentParams) => Object,
+};
+
+export type ItemParams = {
+	testId: string,
+	completedCount: number,
+	totalCount: number,
+	title: string,
+	showBorder: boolean,
+	isComplete: boolean,
+	isLoading?: boolean,
+	onClick?: () => void,
+};
+
+export type ItemStubParams = {
+	testId: string,
+	title: string,
+	showBorder?: boolean,
+};
+
+export type TitleParams = {
+	count?: number,
+	testId: string,
+	loading?: boolean,
 };

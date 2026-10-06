@@ -1,11 +1,14 @@
 <?php
 
 $MESS['LISTS_ELEMENT_CREATION_GUIDE_CMP_TITLE'] = 'Бизнес-процессы';
+$MESS['LISTS_ELEMENT_CREATION_GUIDE_CMP_DIALOG_LABEL'] = 'Запуск бизнес-процесса';
 $MESS['LISTS_ELEMENT_CREATION_GUIDE_CMP_DESCRIPTION'] = 'Автоматизируйте процессы в компании, делайте их более прозрачными и управляемыми, контролируйте каждый этап и работайте с бизнес-процессами даже с мобильного телефона';
 $MESS['LISTS_ELEMENT_CREATION_GUIDE_CMP_STEP_RECOMMENDATION'] = 'Рекомендации';
 $MESS['LISTS_ELEMENT_CREATION_GUIDE_CMP_STEP_CONSTANTS'] = 'Константы';
 $MESS['LISTS_ELEMENT_CREATION_GUIDE_CMP_STEP_FIELDS'] = 'Запуск процесса';
 $MESS['LISTS_ELEMENT_CREATION_GUIDE_CMP_STEP_STATUS'] = 'Статус процесса';
+$MESS['LISTS_ELEMENT_CREATION_GUIDE_CMP_STEP_ANNOUNCEMENT'] = 'Шаг #CURRENT# из #TOTAL#: #NAME#';
+$MESS['LISTS_ELEMENT_CREATION_GUIDE_CMP_CALENDAR_BUTTON'] = 'Выбрать дату';
 $MESS['LISTS_ELEMENT_CREATION_GUIDE_CMP_EMPTY_DURATION'] = 'нет данных';
 $MESS['LISTS_ELEMENT_CREATION_GUIDE_CMP_ZERO_DURATION'] = 'мгновенно';
 $MESS['LISTS_ELEMENT_CREATION_GUIDE_CMP_EMPTY_DESCRIPTION_1'] = 'Вам будет удобнее работать с процессом, если администратор заполнит описание';
@@ -35,6 +38,7 @@ $MESS['LISTS_ELEMENT_CREATION_GUIDE_CMP_EXIT_DIALOG_TITLE'] = 'Отменить 
 $MESS['LISTS_ELEMENT_CREATION_GUIDE_CMP_EXIT_DIALOG_DESCRIPTION'] = 'Если вы отмените запуск процесса, информация в полях не сохранится';
 $MESS['LISTS_ELEMENT_CREATION_GUIDE_CMP_SUCCESS_START'] = 'Бизнес-процесс запущен';
 
+$MESS['LISTS_ELEMENT_CREATION_GUIDE_CMP_ERRORS_LABEL'] = 'Ошибки';
 $MESS['LISTS_ELEMENT_CREATION_GUIDE_CMP_NETWORK_ERROR'] = 'Что-то пошло не так, попробуйте запустить процесс ещё раз';
 
 

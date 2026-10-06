@@ -69,6 +69,11 @@
 		 */
 		save: function (callback)
 		{
+			if (this.state.canEditSettings === false)
+			{
+				return;
+			}
+
 			var afterSave = function(externalLinkSettings) {
 				externalLinkSettings.newState = {};
 				externalLinkSettings.initNewState();

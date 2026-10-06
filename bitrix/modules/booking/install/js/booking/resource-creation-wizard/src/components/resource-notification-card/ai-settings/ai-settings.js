@@ -1,8 +1,10 @@
+import { Text } from 'main.core';
 import { Button as UiButton, ButtonColor, ButtonSize } from 'ui.vue3.components.button';
 import { Outline } from 'ui.icon-set.api.core';
+import { Notifier } from 'ui.notification-manager';
 
 import { UiResourceWizardItem } from 'booking.component.ui-resource-wizard-item';
-import { aiAgentLauncherService } from 'booking.provider.service.ai-agent-launcher-service';
+import { aiAgentLauncherService, AiAgentErrorCode } from 'booking.provider.service.ai-agent-launcher-service';
 import 'ui.buttons';
 import './ai-settings.css';
 
@@ -37,7 +39,18 @@ export const AiSettings = {
 			this.isLoading = true;
 			try
 			{
-				await aiAgentLauncherService.launch();
+				const { errors } = await aiAgentLauncherService.launch();
+
+				const isAccessDenied = errors.some(
+					(error) => error.code === AiAgentErrorCode.START_ACCESS_DENIED,
+				);
+				if (isAccessDenied)
+				{
+					Notifier.notify({
+						id: Text.getRandom(),
+						text: this.loc('BRCW_METHODS_COMMUNICATION_AI_SETTINGS_ACCESS_DENIED'),
+					});
+				}
 			}
 			finally
 			{
@@ -50,7 +63,7 @@ export const AiSettings = {
 			:title="loc('BRCW_METHODS_COMMUNICATION_AI_SETTINGS_TITLE')"
 			:iconType="Outline.BITRIX_GPT"
 		>
-			<div class="resource-notification-card-ai-settings-card" >
+			<div class="resource-notification-card-ai-settings-card" data-testid="resource-wizard-ai-settings-card" >
 				<div class="resource-notification-card-ai-settings-card-title">
 					{{ loc('BRCW_METHODS_COMMUNICATION_AI_SETTINGS_SUBTITLE') }}
 				</div>
@@ -62,6 +75,7 @@ export const AiSettings = {
 					:size="ButtonSize.SMALL"
 					:color="ButtonColor.PRIMARY"
 					:loading="isLoading"
+					:dataset="{ testid: 'resource-wizard-ai-settings-launch-btn' }"
 					@click="launchAiAgent"
 				/>
 			</div>

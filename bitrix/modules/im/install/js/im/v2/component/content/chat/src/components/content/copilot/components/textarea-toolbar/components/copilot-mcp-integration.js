@@ -167,10 +167,18 @@ export const CopilotMcpIntegration = {
 				dialogId: this.dialogId,
 				mcpAuth,
 			});
+			Analytics.getInstance().copilot.onChangeMCP(this.dialogId);
 		},
 		clear()
 		{
+			const hadSelectedMcpAuth = this.hasSelectedMcpAuth;
+
 			this.$store.dispatch('copilot/chats/clearMcpAuth', this.dialogId);
+
+			if (hadSelectedMcpAuth)
+			{
+				Analytics.getInstance().copilot.onChangeMCP(this.dialogId);
+			}
 		},
 		onChipClearClick()
 		{

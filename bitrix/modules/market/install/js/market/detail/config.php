@@ -8,10 +8,10 @@ return [
 	'css' => 'dist/detail.bundle.css',
 	'js' => 'dist/detail.bundle.js',
 	'rel' => [
-		'main.polyfill.core',
-		'ui.vue3.pinia',
-		'ui.vue3',
+		'main.core',
 		'market.detail-component',
+		'ui.vue3',
+		'ui.vue3.pinia',
 	],
-	'skip_core' => true,
+	'skip_core' => false,
 ];

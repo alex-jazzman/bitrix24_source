@@ -1,5 +1,5 @@
-import {Dom, Event, Runtime, Loc, Type} from 'main.core';
-import {Helper} from './landing.site_domain.helper';
+import {Event, Runtime, Loc, Type} from 'main.core';
+import {DomainState, Helper} from './landing.site_domain.helper';
 
 export class Input
 {
@@ -16,12 +16,10 @@ export class Input
 		this.idDomainDnsInfo = params.idDomainDnsInfo;
 		this.idDomainSubmit = params.idDomainSubmit;
 		this.previousDomainName = null;
+		this.checkedDomainName = null;
+		this.checkGeneration = 0;
 		this.helper = new Helper(params);
 		this.tld = params.tld ? params.tld.toLowerCase() : 'tld';
-
-		this.classes = {
-			submit: 'ui-btn-clock'
-		};
 
 		this.keyupCallback = this.keyupCallback.bind(this);
 		if (this.idDomainName)
@@ -41,9 +39,10 @@ export class Input
 			}
 		}
 
-		if (this.idDomainSubmit)
+		const form = this.idDomainSubmit ? this.idDomainSubmit.form : null;
+		if (form)
 		{
-			Event.bind(this.idDomainSubmit, 'click', event => {
+			Event.bind(form, 'submit', event => {
 				this.checkSubmit(event);
 			});
 		}
@@ -66,27 +65,62 @@ export class Input
 	}
 
 	/**
-	 * Makes some check before submit.
+	 * Keeps the form only when the address is empty or refused by the server for the value in the field.
+	 * An unfinished check goes to the server validation.
 	 */
 	checkSubmit(event)
 	{
-		if (Dom.hasClass(this.idDomainSubmit, this.classes.submit))
+		if (!this.helper.shouldValidateSubmit(event))
 		{
-			event.preventDefault();
+			return;
 		}
-		else if (this.domainNameIsEmpty())
+
+		if (this.domainNameIsEmpty())
 		{
 			this.helper.setError(Loc.getMessage('LANDING_TPL_ERROR_DOMAIN_EMPTY'));
-			event.preventDefault();
+			this.helper.refuseSubmit(event);
+
+			return;
 		}
-		else if (this.helper.isErrorShowed())
+
+		if (this.helper.isInvalid())
 		{
-			event.preventDefault();
+			if (this.checkedDomainName === this.idDomainName.value)
+			{
+				this.helper.refuseSubmit(event);
+
+				return;
+			}
+
+			// the refusal is about a value the user has already changed: the current one has no verdict yet
+			this.helper.setUnverified();
 		}
-		else
+
+		if (this.helper.getState() === DomainState.checking)
 		{
-			Dom.addClass(this.idDomainSubmit, this.classes.submit);
+			// a check of an outdated value starts over; a check of the current one is left to answer
+			const restarting = this.previousDomainName !== this.idDomainName.value;
+
+			this.helper.refuseSubmitWhileChecking(event, restarting);
+
+			if (restarting)
+			{
+				this.restartCheck();
+			}
+
+			return;
 		}
+
+		this.helper.acceptSubmit();
+	}
+
+	/**
+	 * Checks the current value right away, ignoring both the debounce and the cache of the last checked value.
+	 */
+	restartCheck()
+	{
+		this.previousDomainName = null;
+		this.keyupCallback();
 	}
 
 	/**
@@ -116,6 +150,9 @@ export class Input
 		this.previousDomainName = domainName;
 		this.helper.showLoader();
 
+		// an answer of an outdated request is dropped: it would overwrite the verdict about the current value
+		const generation = ++this.checkGeneration;
+
 		BX.ajax({
 			url: '/bitrix/tools/landing/ajax.php?action=Domain::check',
 			method: 'POST',
@@ -132,9 +169,17 @@ export class Input
 			dataType: 'json',
 			onsuccess: function (data)
 			{
+				if (generation !== this.checkGeneration)
+				{
+					return;
+				}
+
 				this.helper.hideLoader();
 				if (data.type === 'success')
 				{
+					// the server has given its verdict about this very value
+					this.checkedDomainName = domainName;
+
 					if (data.result.length && data.result.length.length && data.result.length.limit)
 					{
 						this.helper.setLength(data.result.length.length, data.result.length.limit);
@@ -163,6 +208,11 @@ export class Input
 							else if (data.result.errors.wrongDomainLevel)
 							{
 								this.helper.setError(Loc.getMessage('LANDING_TPL_ERROR_DOMAIN_WRONG_DOMAIN_LEVEL'));
+							}
+							else
+							{
+								// refused for a reason this template cannot name: the state must still leave checking
+								this.helper.setError(Loc.getMessage('LANDING_TPL_ERROR_DOMAIN_INCORRECT'));
 							}
 						}
 						else
@@ -195,10 +245,28 @@ export class Input
 				}
 				else
 				{
-					this.helper.setError('Error processing');
+					this.checkFailed();
 				}
+			}.bind(this),
+			onfailure: function ()
+			{
+				if (generation !== this.checkGeneration)
+				{
+					return;
+				}
+
+				this.checkFailed();
 			}.bind(this)
 		});
+	}
+
+	/**
+	 * The check gave no answer about the address: drop the cache so the same value may be checked again.
+	 */
+	checkFailed()
+	{
+		this.previousDomainName = null;
+		this.helper.setCheckFailed(Loc.getMessage('LANDING_TPL_ERROR_DOMAIN_PROCESSING'));
 	}
 
 	/**

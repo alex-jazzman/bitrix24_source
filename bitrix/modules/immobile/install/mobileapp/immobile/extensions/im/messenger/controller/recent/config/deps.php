@@ -8,8 +8,11 @@ return [
 		'im:messenger/lib/di/service-locator',
 		'im:messenger/lib/permission-manager',
 		'im:messenger/lib/open-chat-create',
+		'im:messenger/lib/ui/notification',
 		'im:messenger/controller/recent/service/*',
 		'im:messenger/controller/recent/const',
+		'im:messenger/controller/dialog-creator',
+		'im:messenger/provider/services/chat',
 	],
 	'bundle' => [
 		'./src/dummy',
@@ -24,6 +27,7 @@ return [
 		// nested
 		'./src/nested/calendar',
 		'./src/nested/collab-chat',
+		'./src/nested/collab-copilot',
 		'./src/nested/collab-default',
 		'./src/nested/tasks-tasks',
 	],

@@ -2,7 +2,10 @@
  * @module navigator/base
  */
 jn.define('navigator/base', (require, exports, module) => {
+	const { EntityReady } = require('entity-ready');
+
 	const ACTION_DELAY = 300;
+	const announcedSubscriptions = new Set();
 
 	/**
 	 * @class BaseNavigator
@@ -48,6 +51,13 @@ jn.define('navigator/base', (require, exports, module) => {
 		onSubscribeToPushNotification(eventName, params = {})
 		{
 			BX.postComponentEvent(eventName, [params]);
+
+			if (!announcedSubscriptions.has(eventName))
+			{
+				announcedSubscriptions.add(eventName);
+				EntityReady.addCondition(eventName, () => true);
+				EntityReady.ready(eventName);
+			}
 		}
 	}
 

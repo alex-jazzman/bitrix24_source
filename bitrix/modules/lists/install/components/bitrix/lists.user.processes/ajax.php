@@ -74,7 +74,7 @@ class ProcessesAjaxController extends Controller
 				}
 				else
 				{
-					$listData[$list['ID']]['picture'] = '<img src="/bitrix/images/lists/default.png" width="19" height="16" border="0" />';
+					$listData[$list['ID']]['picture'] = '<img src="/bitrix/images/lists/default.webp" width="19" height="16" border="0" />';
 				}
 			}
 		}

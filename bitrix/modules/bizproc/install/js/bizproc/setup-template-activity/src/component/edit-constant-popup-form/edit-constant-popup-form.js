@@ -5,19 +5,35 @@ import {
 	AirButtonStyle,
 	ButtonSize,
 } from 'ui.vue3.components.button';
+import { BIcon, Outline } from 'ui.icon-set.api.vue';
+import { TextXs } from 'ui.system.typography.vue';
 import { CONSTANT_TYPES } from '../../constants';
+import { normalizeUserValue } from '../../lib/user-value';
+import { toSingleDefaultValue } from '../../lib/constant-default';
 import './edit-constant-popup-form.css';
 // eslint-disable-next-line no-unused-vars
 import type { ConstantItem, ConstantConfiguration } from '../../types';
 
 type OptionModel = {
+	value: string,
 	name: string,
 };
 
 import { EntitySelectorConstantSettings } from '../constant-settings/entity-selector/entity-selector';
+import { ConstantValueUser } from '../constant-value/user';
+import { ConstantValueBool } from '../constant-value/bool';
+import { ConstantValueDate } from '../constant-value/date';
+import { ConstantValueDateTime } from '../constant-value/datetime';
 
 const CONSTANT_SETTINGS_COMPONENT = Object.freeze({
 	[CONSTANT_TYPES.ENTITY_SELECTOR]: EntitySelectorConstantSettings,
+});
+
+// Types whose default value is edited by a dedicated control instead of the plain text input.
+const CONSTANT_VALUE_COMPONENT = Object.freeze({
+	[CONSTANT_TYPES.BOOL]: ConstantValueBool,
+	[CONSTANT_TYPES.DATE]: ConstantValueDate,
+	[CONSTANT_TYPES.DATETIME]: ConstantValueDateTime,
 });
 
 type EditConstantPopupFormData = {
@@ -41,7 +57,10 @@ export const EditConstantPopupForm = {
 	name: 'EditConstantPopupForm',
 	components: {
 		UiButton,
+		BIcon,
+		TextXs,
 		EntitySelectorConstantSettings,
+		ConstantValueUser,
 	},
 	props: {
 		/** @type ConstantItem */
@@ -65,6 +84,7 @@ export const EditConstantPopupForm = {
 		return {
 			AirButtonStyle,
 			ButtonSize,
+			Outline,
 		};
 	},
 	data(): EditConstantPopupFormData
@@ -82,9 +102,11 @@ export const EditConstantPopupForm = {
 			settings: this.item.settings,
 			required: this.item.required,
 			initialOptionsSnapshot: JSON.stringify(options),
+			isDateMissing: false,
 			errors: {
 				id: '',
 				name: '',
+				value: '',
 				options: options.map(() => ''),
 			},
 		};
@@ -97,6 +119,10 @@ export const EditConstantPopupForm = {
 		isEntitySelector(): boolean
 		{
 			return this.constantType === CONSTANT_TYPES.ENTITY_SELECTOR;
+		},
+		isUserType(): boolean
+		{
+			return this.constantType === CONSTANT_TYPES.USER;
 		},
 		submitButtonText(): string
 		{
@@ -114,7 +140,12 @@ export const EditConstantPopupForm = {
 				|| this.multiple !== this.item.multiple
 				|| this.required !== this.item.required
 				|| this.description !== this.item.description
-				|| this.defaultValue !== this.item.default
+				|| (
+					this.isUserType
+						? JSON.stringify(normalizeUserValue(this.defaultValue, this.multiple))
+							!== JSON.stringify(normalizeUserValue(this.item.default, this.item.multiple))
+						: this.defaultValue !== this.item.default
+				)
 				|| JSON.stringify(this.options) !== this.initialOptionsSnapshot;
 		},
 		errorMessages(): string
@@ -124,7 +155,27 @@ export const EditConstantPopupForm = {
 				idFormat: this.$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_ERROR_ID_FORMAT'),
 				idUnique: this.$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_ERROR_ID_UNIQUE'),
 				optionUnique: this.$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_ERROR_OPTION_UNIQUE'),
+				dateRequired: this.$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_ERROR_DATE_REQUIRED'),
 			};
+		},
+		constantValueComponent(): ?BitrixVueComponentProps
+		{
+			return CONSTANT_VALUE_COMPONENT[this.constantType] ?? null;
+		},
+		/**
+		 * The controls above edit a single value, so an array default of a multiple constant is shown
+		 * by its first element instead of leaving the control blank; editing replaces the whole
+		 * default, the way the plain text input of any other type does.
+		 */
+		scalarDefaultValue: {
+			get(): string
+			{
+				return toSingleDefaultValue(this.defaultValue);
+			},
+			set(value: string): void
+			{
+				this.defaultValue = value;
+			},
 		},
 		constantSettingsComponent(): ?BitrixVueComponentProps
 		{
@@ -147,6 +198,22 @@ export const EditConstantPopupForm = {
 		constantType(): void
 		{
 			this.options = [];
+			this.defaultValue = '';
+			this.isDateMissing = false;
+			this.errors.value = '';
+		},
+		multiple(value: boolean): void
+		{
+			if (!this.isUserType)
+			{
+				return;
+			}
+
+			// Keep defaultValue in sync with the multiple flag without discarding the user's choice:
+			// scalar -> array on enable, array -> first element (or empty string) on disable. Matches
+			// how ConstantValueUser.syncValue emits (single -> string, multiple -> array).
+			const normalized = normalizeUserValue(this.defaultValue, value);
+			this.defaultValue = value ? normalized : (normalized[0] ?? '');
 		},
 		isChanged(value: boolean): void
 		{
@@ -160,8 +227,10 @@ export const EditConstantPopupForm = {
 	methods: {
 		onAddOption(): void
 		{
+			const optionLabel = this.$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_EDIT_OPTION_LABEL');
 			this.options.push({
-				name: '',
+				value: '',
+				name: `${optionLabel} ${this.options.length + 1}`,
 			});
 			this.errors.options.push('');
 		},
@@ -204,6 +273,12 @@ export const EditConstantPopupForm = {
 
 			return true;
 		},
+		getOptionValue(option: OptionModel): string
+		{
+			const value = option.value.trim();
+
+			return Type.isStringFilled(value) ? value : option.name.trim();
+		},
 		validateOption(index: number): boolean
 		{
 			const name = this.options[index].name.trim();
@@ -216,9 +291,10 @@ export const EditConstantPopupForm = {
 				return false;
 			}
 
+			const value = this.getOptionValue(this.options[index]);
 			for (const [optionKey: number, option: OptionModel] of this.options.entries())
 			{
-				if (optionKey !== index && option.name.trim() === name)
+				if (optionKey !== index && this.getOptionValue(option) === value)
 				{
 					this.errors.options[index] = this.errorMessages.optionUnique;
 
@@ -256,8 +332,36 @@ export const EditConstantPopupForm = {
 			this.errors = {
 				id: '',
 				name: '',
+				value: '',
 				options: [],
 			};
+		},
+		onDateMissingChange(isDateMissing: boolean): void
+		{
+			this.isDateMissing = isDateMissing;
+
+			if (!isDateMissing)
+			{
+				this.errors.value = '';
+			}
+		},
+		/**
+		 * A time picked with no date is not a value: the control publishes an empty default, so the
+		 * constant would be saved without the time the form still shows. The date is asked for whether
+		 * or not the constant is required — the same rule the launch form follows.
+		 */
+		validateDefaultValue(): boolean
+		{
+			this.errors.value = '';
+
+			if (this.isDateMissing)
+			{
+				this.errors.value = this.errorMessages.dateRequired;
+
+				return false;
+			}
+
+			return true;
 		},
 		onSave(): void
 		{
@@ -265,6 +369,7 @@ export const EditConstantPopupForm = {
 				this.validateId(),
 				this.validateName(),
 				this.validateOptions(),
+				this.validateDefaultValue(),
 			])
 				.every((value: boolean) => value);
 
@@ -300,10 +405,10 @@ export const EditConstantPopupForm = {
 		convertMapToOptionsModelArray(options: Record<string, string>): Array<OptionModel>
 		{
 			const models = [];
-			Object.values(options).forEach((value: string) => {
+			Object.entries(options).forEach(([value: string, name: string]) => {
 				if (Type.isStringFilled(value))
 				{
-					models.push({ name: value });
+					models.push({ value, name });
 				}
 			});
 
@@ -314,9 +419,10 @@ export const EditConstantPopupForm = {
 			const options: Record<string, string> = {};
 			for (const model of models)
 			{
-				if (Type.isStringFilled(model.name))
+				const value = this.getOptionValue(model);
+				if (Type.isStringFilled(value))
 				{
-					options[model.name] = model.name;
+					options[value] = model.name.trim();
 				}
 			}
 
@@ -332,7 +438,10 @@ export const EditConstantPopupForm = {
 		},
 	},
 	template: `
-		<div class="bizproc-setuptemplateactivity-edit-constant-popup">
+		<div
+			class="bizproc-setuptemplateactivity-edit-constant-popup"
+			data-testid="bizproc-setup-template-constant-editor"
+		>
 			<div class="bizproc-setuptemplateactivity-edit-constant-popup__content">
 				<div class="bizproc-setuptemplateactivity-edit-constant-popup__block">
 					<div class="ui-ctl-container">
@@ -347,6 +456,7 @@ export const EditConstantPopupForm = {
 								class="ui-ctl-element"
 								:class="{ '--error': errors.name !== '' }"
 								type="text"
+								data-testid="bizproc-setup-template-constant-edit-name-input"
 								@blur="validateName"
 							/>
 						</div>
@@ -370,6 +480,7 @@ export const EditConstantPopupForm = {
 								:class="{ '--error': errors.id !== '' }"
 								type="text"
 								:disabled="!isCreation"
+								data-testid="bizproc-setup-template-constant-edit-id-input"
 								@blur="validateId"
 							/>
 						</div>
@@ -391,6 +502,7 @@ export const EditConstantPopupForm = {
 							<select
 								v-model="constantType"
 								class="ui-ctl-element"
+								data-testid="bizproc-setup-template-constant-edit-type-select"
 							>
 								<option
 									v-for="constantConfiguration in constantConfigurationList"
@@ -415,6 +527,7 @@ export const EditConstantPopupForm = {
 								v-model="multiple"
 								type="checkbox"
 								class="ui-ctl-element"
+								data-testid="bizproc-setup-template-constant-edit-multiple-checkbox"
 							/>
 							{{ $Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_EDIT_MULTIPLE_LABEL') }}
 						</label>
@@ -423,56 +536,126 @@ export const EditConstantPopupForm = {
 								v-model="required"
 								type="checkbox"
 								class="ui-ctl-element"
+								data-testid="bizproc-setup-template-constant-edit-required-checkbox"
 							/>
 							{{ $Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_EDIT_REQUIRED_LABEL') }}
 						</label>
 					</div>
-					<div class="ui-ctl-container" v-if="!isEntitySelector">
+					<div
+						class="ui-ctl-container"
+						v-if="!isEntitySelector && !isUserType"
+						:data-testid="constantValueComponent ? 'bizproc-setup-template-constant-edit-value-control' : null"
+					>
 						<div class="ui-ctl-top">
 							<label class="ui-ctl-title">
 								{{ $Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_EDIT_VALUE') }}
 							</label>
 						</div>
-						<div class="ui-ctl ui-ctl-w100 ui-ctl-sm">
+						<component
+							:is="constantValueComponent"
+							v-if="constantValueComponent"
+							v-model="scalarDefaultValue"
+							@dateMissingChange="onDateMissingChange"
+						/>
+						<div v-else class="ui-ctl ui-ctl-w100 ui-ctl-sm">
 							<input
 								v-model="defaultValue"
 								class="ui-ctl-element"
 								type="text"
+								data-testid="bizproc-setup-template-constant-edit-value-input"
 							/>
+						</div>
+						<div
+							v-if="errors.value"
+							class="ui-ctl-label-text-error"
+							role="alert"
+							data-testid="bizproc-setup-template-constant-edit-value-error"
+						>
+							{{ errors.value }}
 						</div>
 					</div>
 
+					<div
+						class="ui-ctl-container"
+						v-if="isUserType"
+						data-testid="bizproc-setup-template-constant-edit-value-user"
+					>
+						<div class="ui-ctl-top">
+							<label class="ui-ctl-title">
+								{{ $Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_EDIT_VALUE') }}
+							</label>
+						</div>
+						<ConstantValueUser
+							:item="item"
+							:multiple="multiple"
+							v-model="defaultValue"
+						/>
+					</div>
+
 					<template v-if="isSelectType">
-						<div
-							v-for="(option, index) in options"
-							class="ui-ctl-container"
-						>
-							<div class="ui-ctl-top">
-								<div class="ui-ctl-title">
-									{{ $Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_EDIT_OPTION_LABEL')  }} {{ index + 1 }}
+							<div
+								v-for="(option, index) in options"
+								:key="index"
+								class="bizproc-setuptemplateactivity-edit-constant-popup__option"
+							>
+								<div class="bizproc-setuptemplateactivity-edit-constant-popup__option-fields">
+									<div class="bizproc-setuptemplateactivity-edit-constant-popup__option-bracket" aria-hidden="true"></div>
+									<div class="bizproc-setuptemplateactivity-edit-constant-popup__option-fields-inner">
+										<div class="bizproc-setuptemplateactivity-edit-constant-popup__option-field">
+											<TextXs className="bizproc-setuptemplateactivity-edit-constant-popup__option-field-label">
+												{{ $Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_EDIT_OPTION_NAME_LABEL') }}
+											</TextXs>
+											<div
+												class="bizproc-setuptemplateactivity-edit-constant-popup__option-field-control"
+												:class="{ '--error': errors.options[index] !== '' }"
+											>
+												<input
+													v-model="option.name"
+													class="bizproc-setuptemplateactivity-edit-constant-popup__option-field-input"
+													type="text"
+													:aria-label="$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_EDIT_OPTION_NAME_LABEL')"
+													:aria-invalid="errors.options[index] !== ''"
+													:aria-describedby="errors.options[index] ? ('bizproc-setuptemplateactivity-option-error-' + index) : null"
+													@blur="validateOption(index)"
+												/>
+											</div>
+										</div>
+										<div class="bizproc-setuptemplateactivity-edit-constant-popup__option-field">
+											<TextXs className="bizproc-setuptemplateactivity-edit-constant-popup__option-field-label">
+												{{ $Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_EDIT_OPTION_VALUE_LABEL') }}
+											</TextXs>
+											<div class="bizproc-setuptemplateactivity-edit-constant-popup__option-field-control">
+												<input
+													v-model="option.value"
+													class="bizproc-setuptemplateactivity-edit-constant-popup__option-field-input"
+													type="text"
+													:aria-label="$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_EDIT_OPTION_VALUE_LABEL')"
+													:aria-invalid="errors.options[index] !== ''"
+													:aria-describedby="errors.options[index] ? ('bizproc-setuptemplateactivity-option-error-' + index) : null"
+													@blur="validateOption(index)"
+												/>
+											</div>
+										</div>
+										<div
+											v-if="errors.options[index]"
+											:id="'bizproc-setuptemplateactivity-option-error-' + index"
+											class="ui-ctl-label-text-error"
+											role="alert"
+										>
+											{{ errors.options[index] }}
+										</div>
+									</div>
 								</div>
-							</div>
-							<div class="ui-ctl ui-ctl-w100 ui-ctl-sm">
-								<div
-									class="ui-ctl-after ui-ctl-icon-clear"
+								<button
+									type="button"
+									class="bizproc-setuptemplateactivity-edit-constant-popup__option-delete"
+									:aria-label="$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_EDIT_DELETE_OPTION')"
 									@click="onDeleteOption(index)"
 								>
-								</div>
-								<input
-									v-model="option.name"
-									class="ui-ctl-element"
-									:class="{ '--error': errors.options[index] !== '' }"
-									type="text"
-									@blur="validateOption(index)"
-								/>
+									<BIcon :name="Outline.CROSS_L" :color="'var(--ui-color-base-4)'" :size="20"/>
+								</button>
 							</div>
-							<div
-								v-if="errors.options[index]"
-								class="ui-ctl-label-text-error">
-								{{ errors.options[index] }}
-							</div>
-						</div>
-					</template>
+						</template>
 
 					<div
 						v-if="isSelectType"
@@ -501,6 +684,7 @@ export const EditConstantPopupForm = {
 								v-model="description"
 								class="ui-ctl-element"
 								type="text"
+								data-testid="bizproc-setup-template-constant-edit-description-input"
 							/>
 						</div>
 					</div>
@@ -510,11 +694,13 @@ export const EditConstantPopupForm = {
 						:text="$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_EDIT_CANCEL')"
 						:style="AirButtonStyle.OUTLINE"
 						:size="ButtonSize.MEDIUM"
+						:dataset="{ testid: 'bizproc-setup-template-constant-edit-cancel-btn' }"
 						@click="onCancel"
 					/>
 					<UiButton
 						:text="submitButtonText"
 						:size="ButtonSize.MEDIUM"
+						:dataset="{ testid: 'bizproc-setup-template-constant-edit-save-btn' }"
 						@click="onSave"
 					/>
 				</div>

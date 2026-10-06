@@ -5,6 +5,7 @@ jn.define('bizproc/workflow/starter/description-step', (require, exports, module
 	const { Loc } = require('loc');
 	const { NotifyManager } = require('notify-manager');
 	const { WizardStep } = require('layout/ui/wizard/step');
+	const { handleNetworkError } = require('bizproc/helper/network-error');
 	const { ProgressBarNumber } = require('bizproc/wizard/progress-bar-number');
 	const { DescriptionStepView } = require('bizproc/workflow/starter/description-step/view');
 
@@ -112,7 +113,9 @@ jn.define('bizproc/workflow/starter/description-step', (require, exports, module
 					.catch((response) => {
 						console.error(response.errors);
 						NotifyManager.hideLoadingIndicator(false);
-						if (Array.isArray(response.errors))
+
+						const isNetworkErrorHandled = handleNetworkError(response.errors, this.getLayoutWidget());
+						if (!isNetworkErrorHandled && Array.isArray(response.errors))
 						{
 							NotifyManager.showErrors(response.errors);
 						}

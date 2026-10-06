@@ -8,6 +8,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)
 /** @var array $arResult */
 /** @var \CMain $APPLICATION */
 
+use Bitrix\Landing\Integration\AiAssistant\Service\AiSiteChatAvailabilityService;
 use Bitrix\Landing\Metrika;
 use Bitrix\Main\Application;
 use Bitrix\Main\Localization\Loc;
@@ -67,13 +68,13 @@ if ($session->has('LANDING_OPEN_SIDE_PANEL'))
 		BX.ready(function()
 		{
 			<?php if (preg_match('/width=([\d]+)/', $session['LANDING_OPEN_SIDE_PANEL'], $matches)):?>
-			BX.SidePanel.Instance.open('<?= \CUtil::JSEscape($session['LANDING_OPEN_SIDE_PANEL'])?>', {allowChangeHistory: false, width: <?= $matches[0]?>});
+				BX.SidePanel.Instance.open('<?= \CUtil::JSEscape($session['LANDING_OPEN_SIDE_PANEL'])?>', {allowChangeHistory: false, width: <?= $matches[0]?>});
 			<?php else:?>
-			BX.SidePanel.Instance.open('<?= \CUtil::JSEscape($session['LANDING_OPEN_SIDE_PANEL'])?>', {allowChangeHistory: false});
+				BX.SidePanel.Instance.open('<?= \CUtil::JSEscape($session['LANDING_OPEN_SIDE_PANEL'])?>', {allowChangeHistory: false});
 			<?php endif?>
 		});
 	</script>
-	<?
+	<?php
 	$session->remove('LANDING_OPEN_SIDE_PANEL');
 }
 
@@ -88,6 +89,12 @@ Loc::loadMessages(__DIR__ . '/template.php');
 
 \Bitrix\Main\UI\Extension::load(['ajax', 'landing_master', 'bitrix24.phoneverify']);
 
+$arResult['AI_SITE_CHAT_AVAILABLE'] = true;
+if ($arParams['TYPE'] === 'PAGE')
+{
+	$arResult['AI_SITE_CHAT_AVAILABLE'] = (new AiSiteChatAvailabilityService())->isSitesAiChatPotentiallyAvailable();
+}
+
 ob_start();
 ?>
 <script>
@@ -96,7 +103,7 @@ ob_start();
 		LANDING_TPL_JS_PAY_TARIFF: '<?= \CUtil::jsEscape(Loc::getMessage('LANDING_TPL_JS_PAY_TARIFF'));?>'
 	});
 </script>
-<?
+<?php
 \Bitrix\Main\Page\Asset::getInstance()->addString(ob_get_contents());
 ob_end_clean();
 
@@ -140,7 +147,7 @@ elseif ($request->get('IFRAME') == 'N')
 	<script>
 		window.top.location.href = "<?= \CUtil::JSEscape($redirect->getUri());?>";
 	</script>
-	<?
+	<?php
 	include 'slider_footer.php';
 	\CMain::finalActions();
 	die();
@@ -301,6 +308,12 @@ elseif (in_array($this->getPageName(), ['template', 'site_show']))
 			$button
 		];
 	}
+	$sef = [];
+	foreach ($arParams['SEF_URL_TEMPLATES'] as $code => $url)
+	{
+		$sef[$code] = $arParams['SEF_FOLDER'] . $url;
+	}
+
 	$APPLICATION->IncludeComponent(
 		'bitrix:landing.filter',
 		'.default',
@@ -309,7 +322,9 @@ elseif (in_array($this->getPageName(), ['template', 'site_show']))
 							? 'LANDING'
 							: 'SITE',
 			'SETTING_LINK' => $settingsLink,
+			'SEF' => $sef,
 			'BUTTONS' => $buttons,
+			'AI_SITE_CHAT_AVAILABLE' => $arResult['AI_SITE_CHAT_AVAILABLE'],
 			'TYPE' => $arParams['TYPE'],
 			'DRAFT_MODE' => $arParams['DRAFT_MODE'],
 			'FOLDER_ID' => $folderId,
@@ -339,7 +354,7 @@ if (
 			}
 		});
 	</script>
-	<?
+	<?php
 }
 
 // backward compatibility

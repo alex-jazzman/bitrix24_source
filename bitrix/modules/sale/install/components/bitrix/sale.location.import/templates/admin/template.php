@@ -28,6 +28,7 @@ if($arResult['DISPLAY_FILE_UPLOAD_RESPONCE']):
 endif;
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Web\Uri;
 
 Loc::loadMessages(__FILE__);
 
@@ -370,7 +371,7 @@ else:
 	<script>
 		BX.locationImport = new BX.Sale.component.location.import(<?=CUtil::PhpToJSObject(array(
 				// common
-				'url' => CHTTP::urlAddParams($arResult['URLS']['IMPORT_AJAX'], array('lang' => LANGUAGE_ID)),
+				'url' => (string)(new Uri($arResult['URLS']['IMPORT_AJAX']))->addParams(['lang' => LANGUAGE_ID]),
 				'pageUrl' => $arResult['URLS']['IMPORT'],
 				'scope' => 'location-import',
 				'defaultState' => $allowRemote ? 'remote' : 'file',

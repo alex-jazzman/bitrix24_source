@@ -3,6 +3,7 @@ import { BuilderModel, type GetterTree, type ActionTree, type MutationTree, type
 
 import { Core } from 'im.v2.application.core';
 import { Utils } from 'im.v2.lib.utils';
+import { ChatType } from 'im.v2.const';
 
 import { type ImModelCopilotAIModel, type ImModelCopilotRole, type ImModelCopilotMcpAuth } from '../../../registry';
 import { formatFieldsWithConfig } from '../../../utils/validate';
@@ -10,6 +11,7 @@ import { chatFieldsConfig } from './field-config';
 
 type ChatsState = {
 	collection: {[dialogId: string]: CopilotChat},
+	aiContentDialogs: {[dialogId: string]: boolean},
 }
 
 type CopilotChat = {
@@ -32,6 +34,7 @@ export class ChatsModel extends BuilderModel
 	{
 		return {
 			collection: {},
+			aiContentDialogs: {},
 		};
 	}
 
@@ -140,9 +143,21 @@ export class ChatsModel extends BuilderModel
 			isTempChat: () => (dialogId: string): boolean => {
 				return Utils.dialog.isTempAiAssistantDialogId(dialogId);
 			},
+			/** @function copilot/chats/hasAiGeneratedContent */
+			hasAiGeneratedContent: (state: ChatsState) => (dialogId: string): boolean => {
+				if (state.aiContentDialogs[dialogId])
+				{
+					return true;
+				}
+
+				const dialog = Core.getStore().getters['chats/get'](dialogId);
+
+				return dialog?.type === ChatType.copilot;
+			},
 		};
 	}
 
+	// eslint-disable-next-line max-lines-per-function
 	getActions(): ActionTree<ChatsState>
 	{
 		return {
@@ -279,6 +294,62 @@ export class ChatsModel extends BuilderModel
 
 				store.commit('delete', fromDialogId);
 			},
+			/** @function copilot/chats/checkMessagesForAiContent */
+			checkMessagesForAiContent: (store: Store, payload: {messages: Array}) => {
+				const { messages } = payload;
+				if (!Array.isArray(messages) || messages.length === 0)
+				{
+					return;
+				}
+
+				const rootStore = Core.getStore();
+				if (!rootStore.getters['users/bots/getCopilotBotDialogId'])
+				{
+					return;
+				}
+
+				const isCopilot = rootStore.getters['users/bots/isCopilot'];
+				const dialogByChatId = new Map();
+				const resolveDialog = (chatId) => {
+					if (!dialogByChatId.has(chatId))
+					{
+						dialogByChatId.set(chatId, rootStore.getters['chats/getByChatId'](chatId));
+					}
+
+					return dialogByChatId.get(chatId);
+				};
+
+				const processedChatIds = new Set();
+				const dialogIdsToMark = [];
+				for (const message of messages)
+				{
+					const chatId = message?.chatId;
+					if (!chatId || processedChatIds.has(chatId))
+					{
+						continue;
+					}
+
+					const dialog = resolveDialog(chatId);
+					if (!dialog || store.state.aiContentDialogs[dialog.dialogId])
+					{
+						processedChatIds.add(chatId);
+						continue;
+					}
+
+					if (!isCopilot(message.authorId))
+					{
+						continue;
+					}
+
+					dialogIdsToMark.push(dialog.dialogId);
+					processedChatIds.add(chatId);
+				}
+
+				if (dialogIdsToMark.length > 0)
+				{
+					store.commit('markHasAiContent', { dialogIds: dialogIdsToMark });
+				}
+			},
 		};
 	}
 
@@ -317,6 +388,12 @@ export class ChatsModel extends BuilderModel
 			},
 			delete: (state: ChatsState, dialogId: string) => {
 				delete state.collection[dialogId];
+			},
+			markHasAiContent: (state: ChatsState, payload: {dialogIds: string[]}) => {
+				for (const dialogId of payload.dialogIds)
+				{
+					state.aiContentDialogs[dialogId] = true;
+				}
 			},
 		};
 	}

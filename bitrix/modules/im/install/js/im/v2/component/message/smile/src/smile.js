@@ -2,6 +2,7 @@ import { BaseMessage } from 'im.v2.component.message.base';
 import {
 	MessageStatus,
 	ReactionList,
+	Reply,
 } from 'im.v2.component.message.elements';
 import { Parser } from 'im.v2.lib.parser';
 
@@ -16,6 +17,7 @@ export const SmileMessage = {
 		BaseMessage,
 		MessageStatus,
 		ReactionList,
+		Reply,
 	},
 	props: {
 		item: {
@@ -32,6 +34,14 @@ export const SmileMessage = {
 		message(): ImModelMessage
 		{
 			return this.item;
+		},
+		isReply(): boolean
+		{
+			return this.message.replyId !== 0;
+		},
+		isForward(): boolean
+		{
+			return this.$store.getters['messages/isForward'](this.message.id);
 		},
 		text(): string
 		{
@@ -51,6 +61,9 @@ export const SmileMessage = {
 			:withBackground="false"
 			:afterMessageWidthLimit="false"
 		>
+			<template v-if="isReply" #before-message>
+				<Reply :dialogId="dialogId" :replyId="message.replyId" :isForward="isForward" />
+			</template>
 			<div class="bx-im-message-smile__container">
 				<div class="bx-im-message-smile__content-container">
 					<span class="bx-im-message-smile__text" v-html="text"></span>

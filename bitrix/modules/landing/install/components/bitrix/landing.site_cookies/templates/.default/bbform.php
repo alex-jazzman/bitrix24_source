@@ -15,7 +15,9 @@ if (!isset($agreement))
 		'ACTIVE' => 'Y'
 	];
 }
-if (!isset($id) || preg_match('/[^a-z0-9_]/i', $id))
+// the key is printed raw into ids and aria references below: the allowlist is its only guard,
+// and an empty key would leave those ids without their distinguishing part
+if (!isset($id) || (string)$id === '' || preg_match('/[^a-z0-9_]/i', $id))
 {
 	$id = strtolower(\randString(5));
 }
@@ -60,28 +62,32 @@ $formParams = function(string $fieldName, string $value): array
 ?>
 
 
-<div class="landing-agreement-block">
+<div class="landing-agreement-block" data-testid="site-cookies-agreement">
 	<?if ($agreementType !== 'CUSTOM'):?>
 		<div class="landing-agreement-input-block">
 			<input type="hidden" name="<?= 'agreement_active_' . $id;?>"  value="N" >
-			<input type="checkbox" name="<?= 'agreement_active_' . $id;?>" class="landing-agreement-input"<?if ($agreement['ACTIVE'] == 'Y'){?> checked="checked"<?}?> id="<?= \htmlspecialcharsbx($agreement['TITLE']);?>" value="Y" >
-			<label class="landing-agreement-input-label" for="<?= \htmlspecialcharsbx($agreement['TITLE']);?>"><?= Loc::getMessage('LANDING_TPL_TITLE_SHOW_COOKIES', ['#BLOCK_NAME#' => \htmlspecialcharsbx($agreement['TITLE'])]);?></label>
+			<input type="checkbox" name="<?= 'agreement_active_' . $id;?>" class="landing-agreement-input"<?if ($agreement['ACTIVE'] == 'Y'){?> checked="checked"<?}?> id="<?= 'agreement_active_' . $id;?>" value="Y" data-testid="site-cookies-active-checkbox" >
+			<label class="landing-agreement-input-label" for="<?= 'agreement_active_' . $id;?>" data-testid="site-cookies-active-label"><?= Loc::getMessage('LANDING_TPL_TITLE_SHOW_COOKIES', ['#BLOCK_NAME#' => \htmlspecialcharsbx($agreement['TITLE'])]);?></label>
 		</div>
 	<?endif;?>
-	<div class="landing-agreement-block-inner<?if ($agreement['ACTIVE'] == 'Y'){?> landing-agreement-block-inner-show<?}?>">
+	<div class="landing-agreement-block-inner<?if ($agreement['ACTIVE'] == 'Y'){?> landing-agreement-block-inner-show<?}?>" data-testid="site-cookies-agreement-content">
 		<div class="landing-agreement-block-hidden">
 			<div class="landing-agreement-cookies-name-block">
 				<?if ($agreementType == 'CUSTOM'):?>
-				<span class="landing-agreement-cookies-name">
-					<span class="landing-agreement-cookies-name-value"><?= $agreement['TITLE'] ? \htmlspecialcharsbx($agreement['TITLE']) : Loc::getMessage('LANDING_TPL_NEW_COOKIES');?></span>
-					<input type="text" class="landing-agreement-cookies-name-input" name="<?= 'agreement_title_' . $id;?>" value="<?= \htmlspecialcharsbx($agreement['TITLE']);?>" size="50"/>
-					<span class="landing-agreement-edit"></span>
-					<span class="landing-agreement-delete"></span>
-				</span>
+					<?php /* the script walks these four nodes by previousElementSibling: nothing may be
+					inserted between them, so the text of an icon button is printed inside it */ ?>
+					<span class="landing-agreement-cookies-name">
+						<span class="landing-agreement-cookies-name-value" id="<?= 'agreement_name_' . $id;?>" data-testid="site-cookies-name-value"><?= $agreement['TITLE'] ? \htmlspecialcharsbx($agreement['TITLE']) : Loc::getMessage('LANDING_TPL_NEW_COOKIES');?></span>
+						<input type="text" class="landing-agreement-cookies-name-input" name="<?= 'agreement_title_' . $id;?>" value="<?= \htmlspecialcharsbx($agreement['TITLE']);?>" size="50" aria-label="<?= \htmlspecialcharsbx(Loc::getMessage('LANDING_TPL_BBFORM_TITLE_LABEL'));?>" data-testid="site-cookies-name-input"/>
+						<button type="button" class="landing-agreement-edit" id="<?= 'agreement_edit_' . $id;?>" aria-labelledby="<?= 'agreement_edit_' . $id;?> <?= 'agreement_name_' . $id;?>" data-testid="site-cookies-edit-btn"><span class="landing-agreement-icon-text"><?= Loc::getMessage('LANDING_TPL_BBFORM_ACTION_EDIT');?></span></button>
+						<button type="button" class="landing-agreement-delete" id="<?= 'agreement_delete_' . $id;?>" aria-labelledby="<?= 'agreement_delete_' . $id;?> <?= 'agreement_name_' . $id;?>" data-testid="site-cookies-delete-btn"><span class="landing-agreement-icon-text"><?= Loc::getMessage('LANDING_TPL_BBFORM_ACTION_DELETE');?></span></button>
+					</span>
 				<?endif;?>
 			</div>
-			<div class="landing-agreement-label"><?= Loc::getMessage('LANDING_TPL_LABEL_DESC');?></div>
-			<div class="landing-agreement-editor">
+			<div class="landing-agreement-label" id="<?= 'agreement_desc_' . $id;?>"><?= Loc::getMessage('LANDING_TPL_LABEL_DESC');?></div>
+			<?php /* the editable node is built by the client of the main module, so the caption is bound
+			to the frame landing owns */ ?>
+			<div class="landing-agreement-editor" role="group" aria-labelledby="<?= 'agreement_desc_' . $id;?>" data-testid="site-cookies-editor">
 				<?$APPLICATION->IncludeComponent(
 					'bitrix:main.post.form',
 					'',

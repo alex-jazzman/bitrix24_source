@@ -171,3 +171,8 @@ $MESS["CALL_DEVICE_ACCESS_DENIED_ALLOW_MIC_AND_CAM"] = "Нет доступа к
 
 $MESS["CALL_DEVICE_ACCESS_DENIED_USING_DEFAULT_MIC"] = "Не удалось получить данные от выбранного микрофона. Пробуем получить их от системного микрофона";
 $MESS["CALL_DEVICE_ACCESS_DENIED_USING_DEFAULT_CAM"] = "Не удалось получить данные от выбранной камеры. Пробуем получить их от системной камеры";
+$MESS["CALL_VIEW_GUEST_LINK_BUTTON_LABEL"] = "Ссылка";
+$MESS["CALL_VIEW_GUEST_LINK_COPIED"] = "Ссылка на звонок скопирована";
+$MESS["CALL_VIEW_GUEST_LINK_COPY_ERROR"] = "Не удалось скопировать ссылку, попробуйте ещё раз";
+
+$MESS["CALL_ALREADY_FINISHED_NOTIFICATION"] = "Не удалось присоединиться, звонок уже завершён";

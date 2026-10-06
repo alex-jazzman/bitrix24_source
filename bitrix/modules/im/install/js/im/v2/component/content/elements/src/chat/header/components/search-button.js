@@ -1,11 +1,16 @@
+import { BIcon, Outline } from 'ui.icon-set.api.vue';
+
 import { EventType, SidebarDetailBlock } from 'im.v2.const';
 import { Analytics } from 'im.v2.lib.analytics';
 
 import type { EventEmitter } from 'main.core.events';
 
+const ICON_SIZE = 24;
+
 // @vue/component
 export const SearchButton = {
 	name: 'SearchButton',
+	components: { BIcon },
 	inject: ['currentSidebarPanel'],
 	props:
 	{
@@ -16,6 +21,8 @@ export const SearchButton = {
 	},
 	computed:
 	{
+		Outline: () => Outline,
+		ICON_SIZE: () => ICON_SIZE,
 		isMessageSearchActive(): boolean
 		{
 			return this.currentSidebarPanel === SidebarDetailBlock.messageSearch;
@@ -51,8 +58,11 @@ export const SearchButton = {
 		<div
 			:title="loc('IM_CONTENT_CHAT_HEADER_OPEN_SEARCH')"
 			:class="{'--active': isMessageSearchActive}"
-			class="bx-im-chat-header__icon --search"
+			class="bx-im-chat-header__icon --ds-icon"
+			data-testid="im-chat-header-search-btn"
 			@click="toggleSearchPanel"
-		></div>
+		>
+			<BIcon :name="Outline.SEARCH" :size="ICON_SIZE" />
+		</div>
 	`,
 };

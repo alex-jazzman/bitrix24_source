@@ -1,4 +1,7 @@
 <?php
+
+use Bitrix\Main\Web\Uri;
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
 if (!CModule::IncludeModule('crm'))
@@ -66,10 +69,10 @@ if ($psDelete && $arParams['TYPE'] == 'edit' && $exists)
 	$arResult['BUTTONS'][] = array(
 		'TEXT' => GetMessage('CRM_PS_DELETE'),
 		'TITLE' => GetMessage('CRM_PS_DELETE_TITLE'),
-		'LINK' => "javascript:ps_delete('".GetMessage('CRM_PS_DELETE_DLG_TITLE')."', '".GetMessage('CRM_PS_DELETE_DLG_MESSAGE')."', '".GetMessage('CRM_PS_DELETE_DLG_BTNTITLE')."', '".CHTTP::urlAddParams(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_PS_EDIT'],
-				array('ps_id' => $psID)),
-			array('delete' => '', 'sessid' => bitrix_sessid())
-		)."')",
+		'LINK' => "javascript:ps_delete('".GetMessage('CRM_PS_DELETE_DLG_TITLE')."', '".GetMessage('CRM_PS_DELETE_DLG_MESSAGE')."', '".GetMessage('CRM_PS_DELETE_DLG_BTNTITLE')."', '"
+			. (new Uri(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_PS_EDIT'], array('ps_id' => $psID))))
+				->addParams(array('delete' => '', 'sessid' => bitrix_sessid()))
+			. "')",
 		'ICON' => 'btn-delete'
 	);
 }

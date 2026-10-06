@@ -71,6 +71,11 @@ Vue.component(config.templateName,
 			return this.options.showTaxBlock !== 'N';
 		},
 
+		discountRowClass()
+		{
+			return this.showTaxResult ? '' : 'catalog-pf-result-padding-bottom';
+		},
+
 		showResults()
 		{
 			return this.options.showResults !== false;
@@ -170,10 +175,10 @@ Vue.component(config.templateName,
 					</td>
 				</tr>
 				<tr>
-					<td class="catalog-pf-result-padding-bottom">
+					<td :class="discountRowClass">
 						<span class="catalog-pf-text catalog-pf-text--discount">{{localize.CATALOG_FORM_TOTAL_DISCOUNT}}:</span>
 					</td>
-					<td class="catalog-pf-result-padding-bottom">
+					<td :class="discountRowClass">
 						<${config.templateSummaryTotal}
 							:sum="productList.total.discount"
 							:currency="options.currency"

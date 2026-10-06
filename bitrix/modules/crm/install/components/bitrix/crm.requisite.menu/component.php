@@ -1,5 +1,8 @@
 <?php
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
+
+use Bitrix\Main\Web\Uri;
 
 if (!CModule::IncludeModule('crm'))
 	return;
@@ -39,10 +42,7 @@ if($arParams['TYPE'] === 'list')
 		$arResult['BUTTONS'][] = array(
 			'TEXT' => GetMessage('REQUISITE_ADD'),
 			'TITLE' => GetMessage('REQUISITE_ADD_TITLE'),
-			'LINK' => CHTTP::urlAddParams(
-				CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_REQUISITE_EDIT'], array('id' => 0)),
-				array('etype' => $entityTypeId, 'eid' => $entityId)
-			),
+			'LINK' => (string)(new Uri(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_REQUISITE_EDIT'], array('id' => 0))))->addParams(array('etype' => $entityTypeId, 'eid' => $entityId)),
 			//'ICON' => 'btn-new',
 			'HIGHLIGHT' => true
 		);
@@ -55,13 +55,10 @@ else
 		$arResult['BUTTONS'][] = array(
 			'TEXT' => GetMessage('REQUISITE_COPY'),
 			'TITLE' => GetMessage('REQUISITE_COPY_TITLE'),
-			'LINK' => CHTTP::urlAddParams(
-				CComponentEngine::MakePathFromTemplate(
+			'LINK' => (string)(new Uri(CComponentEngine::MakePathFromTemplate(
 					$arParams['PATH_TO_REQUISITE_EDIT'],
 					array('id' => $arParams['ELEMENT_ID'])
-				),
-				array('copy' => 1)
-			),
+				)))->addParams(array('copy' => 1)),
 			'ICON' => 'btn-copy'
 		);
 	}
@@ -80,16 +77,13 @@ else
 			'TITLE' => GetMessage('REQUISITE_DELETE_TITLE'),
 			'LINK' => "javascript:requisite_delete('".GetMessage('REQUISITE_DELETE_DLG_TITLE')."', '".
 				GetMessage('REQUISITE_DELETE_DLG_MESSAGE')."', '".GetMessage('REQUISITE_DELETE_DLG_BTNTITLE')."', '".
-				CHTTP::urlAddParams(
-					CComponentEngine::MakePathFromTemplate(
+				(string)(new Uri(CComponentEngine::MakePathFromTemplate(
 						$arParams['PATH_TO_REQUISITE_EDIT'],
 						array('id' => $arParams['ELEMENT_ID'])
-					),
-					array(
+					)))->addParams(array(
 						'delete' => '', 'sessid' => bitrix_sessid(),
-						'back_url' => isset($arParams['BACK_URL']) ? urlencode(strval($arParams['BACK_URL'])) : ''
-					)
-				)."')",
+						'back_url' => isset($arParams['BACK_URL']) ? strval($arParams['BACK_URL']) : ''
+					))."')",
 			'ICON' => 'btn-delete'
 		);
 	}
@@ -99,10 +93,7 @@ else
 		$arResult['BUTTONS'][] = array(
 			'TEXT' => GetMessage('REQUISITE_ADD'),
 			'TITLE' => GetMessage('REQUISITE_ADD_TITLE'),
-			'LINK' => CHTTP::urlAddParams(
-				CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_REQUISITE_EDIT'], array('id' => 0)),
-				array('etype' => $entityTypeId, 'eid' => $entityId)
-			),
+			'LINK' => (string)(new Uri(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_REQUISITE_EDIT'], array('id' => 0))))->addParams(array('etype' => $entityTypeId, 'eid' => $entityId)),
 			'ICON' => 'btn-new'
 		);
 	}

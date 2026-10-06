@@ -1287,12 +1287,12 @@
 				}
 			},
 			{
-				condition: [ '/bitrix/components/bitrix/bitrix24.license.scan/' ],
+				condition: [/^(?:https?:\/\/[^/?#]+)?\/settings\/license_scanner\.php(?:[?#].*)?$/i],
 				options: {
 					cacheable: false,
 					allowChangeHistory: false,
 					width: 1195,
-				}
+				},
 			},
 			{
 				condition: ['/settings/license_all.php'],
@@ -1343,6 +1343,15 @@
 				},
 			},
 			{
+				condition: ['/settings/order/make.php'],
+				options: {
+					cacheable: false,
+					allowChangeHistory: true,
+					width: 1586,
+					customRightBoundary: 0,
+				},
+			},
+			{
 				condition: ['/settings/order/'],
 				options: {
 					cacheable: false,
@@ -1363,15 +1372,6 @@
 				options: {
 					cacheable: false,
 					allowChangeHistory: false,
-					customRightBoundary: 0,
-				},
-			},
-			{
-				condition: ['/settings/order/make.php'],
-				options: {
-					cacheable: false,
-					allowChangeHistory: false,
-					width: 1586,
 					customRightBoundary: 0,
 				},
 			},
@@ -1425,14 +1425,6 @@
 
 					event.preventDefault();
 				},
-			},
-			{
-				condition: [ '/bitrix/components/bitrix/bitrix24.license.scan/' ],
-				options: {
-					cacheable: false,
-					allowChangeHistory: false,
-					width: 1195,
-				}
 			},
 			{
 				condition: [ new RegExp("/company/personal/user/[0-9]+/common_security/\\?page=auth") ],

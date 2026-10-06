@@ -985,7 +985,15 @@ class FollowUpReader
 				$dto->createdAt = $this->extractCreatedAtFromArray($outcomes);
 			}
 			$transcription = $this->findTranscriptionContent($outcomes);
+			// Same invariant as fillAllAi: apply only the newest contentful outcome per type.
+			// $outcomes is an ID-DESC ordered array here; a transient collection preserves that
+			// order so mapLatestContentfulByType() picks the newest contentful outcome per type.
+			$collection = new OutcomeCollection();
 			foreach ($outcomes as $outcome)
+			{
+				$collection->add($outcome);
+			}
+			foreach ($collection->mapLatestContentfulByType() as $outcome)
 			{
 				$this->applyOutcome($dto, $outcome, $paths, $transcription);
 			}
@@ -1017,17 +1025,9 @@ class FollowUpReader
 
 	private function fillAllAi(FollowUpDto $dto, OutcomeCollection $outcomes): void
 	{
-		$transcription = null;
-		foreach ($outcomes as $outcome)
-		{
-			$content = $outcome->getSenseContent();
-			if ($content instanceof Transcription && (string)$outcome->getType() === SenseType::TRANSCRIBE->value)
-			{
-				$transcription = $content;
-				break;
-			}
-		}
-		foreach ($outcomes as $outcome)
+		// Exactly one outcome per type reaches the DTO — the newest contentful one.
+		$transcription = $this->findTranscriptionContent(iterator_to_array($outcomes));
+		foreach ($outcomes->mapLatestContentfulByType() as $outcome)
 		{
 			$this->applyOutcome($dto, $outcome, null, $transcription);
 		}
@@ -1172,6 +1172,11 @@ class FollowUpReader
 	}
 
 	/**
+	 * The newest contentful transcription in an ID-DESC ordered outcome list.
+	 *
+	 * Skips empty later retries so speaker enrichment (talkPercentage) and the transcription
+	 * block resolve to the same transcription that mapLatestContentfulByType() selects.
+	 *
 	 * @param OutcomeEntity[] $outcomes
 	 */
 	private function findTranscriptionContent(array $outcomes): ?Transcription
@@ -1183,7 +1188,7 @@ class FollowUpReader
 				continue;
 			}
 			$content = $outcome->getSenseContent();
-			if ($content instanceof Transcription)
+			if ($content instanceof Transcription && $content->hasContent())
 			{
 				return $content;
 			}
@@ -1390,7 +1395,7 @@ class FollowUpReader
 	 */
 	private function enrichSpeakerAnalysis(array $speakerAnalysis, Transcription $transcription): array
 	{
-		$speakerList = $transcription->prepareSpeakersList();
+		$speakerList = $transcription->prepareSpeakersList(0);
 		$enriched = [];
 		foreach ($speakerAnalysis as $speaker)
 		{

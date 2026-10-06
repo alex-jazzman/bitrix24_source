@@ -719,7 +719,15 @@
 .booking-actions-popup-item-icon.--ai {
 	width: 24px;
 	height: 24px;
-	background: url("../images/bitrixgpt.png") no-repeat center;
+	background: url("../images/bitrixgpt.webp") no-repeat center;
+	background-image: -webkit-image-set(
+		url("../images/bitrixgpt.webp") 1x,
+		url("../images/bitrixgpt-2x.webp") 2x
+	);
+	background-image: image-set(
+		url("../images/bitrixgpt.webp") 1x,
+		url("../images/bitrixgpt-2x.webp") 2x
+	);
 	background-size: contain;
 	border: none;
 }

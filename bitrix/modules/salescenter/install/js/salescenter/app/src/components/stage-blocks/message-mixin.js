@@ -1,4 +1,7 @@
-import { Loc } from 'main.core';
+import { Loc, Type } from 'main.core';
+import { EventEmitter } from 'main.core.events';
+
+const PAYMENT_SEND_EVENT = 'salescenter.app:onbeforepaymentsend';
 
 const MessageMixin = {
 	watch:
@@ -36,6 +39,31 @@ const MessageMixin = {
 				return this.$store.getters['orderCreation/getMessageData'];
 			},
 		},
+	mounted()
+	{
+		if (this.messageSenderAvailable)
+		{
+			// Payment send is host-driven and never emits the editor's `onSend`,
+			// so bridge it to handleSendAttempt() across all editor-owning variants
+			// (deal-receiving-payment, crm-entity-create-payment, chat-receiving-payment).
+			// handleSendAttempt() comes from a newer crm bundle.
+			this.onBeforePaymentSendHandler = () => {
+				if (Type.isFunction(this.messageSenderEditor?.handleSendAttempt))
+				{
+					this.messageSenderEditor.handleSendAttempt();
+				}
+			};
+			EventEmitter.subscribe(PAYMENT_SEND_EVENT, this.onBeforePaymentSendHandler);
+		}
+	},
+	beforeDestroy()
+	{
+		if (this.onBeforePaymentSendHandler)
+		{
+			EventEmitter.unsubscribe(PAYMENT_SEND_EVENT, this.onBeforePaymentSendHandler);
+			this.onBeforePaymentSendHandler = null;
+		}
+	},
 	methods:
 		{
 			convertLegacyTemplateToBBCode(template: string): string
@@ -48,7 +76,7 @@ const MessageMixin = {
 					{
 						isFirstOccurrence = false;
 
-						return `[placeholder code=LINK removable=false copyable=false]${caption}[/placeholder]`;
+						return `[placeholder code=LINK removable=false copyable=false salescenterPaymentLink=true]${caption}[/placeholder]`;
 					}
 
 					return caption;

@@ -143,6 +143,8 @@ export default {
 			entityId: getEntityInfo.entityId,
 			configId: getEntityInfo.editorId,
 			entityTypeName: getEntityInfo.entityTypeName,
+			entityTypeId: getEntityInfo.entityTypeId,
+			categoryId: getEntityInfo.categoryId,
 			domContainerId: `crm-ai-merge-fields__container__${getters.mergeUuid}`,
 		});
 

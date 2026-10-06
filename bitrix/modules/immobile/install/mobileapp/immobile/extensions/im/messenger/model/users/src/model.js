@@ -403,6 +403,28 @@ jn.define('im/messenger/model/users/src/model', (require, exports, module) => {
 
 				return true;
 			},
+
+			/** @function usersModel/deleteByIdList */
+			deleteByIdList: (store, payload) => {
+				const { idList } = payload;
+				if (!Type.isArrayFilled(idList))
+				{
+					return;
+				}
+
+				const existingIdList = idList.filter((id) => Boolean(store.state.collection[id]));
+				if (!Type.isArrayFilled(existingIdList))
+				{
+					return;
+				}
+
+				store.commit('delete', {
+					actionName: 'deleteByIdList',
+					data: {
+						idList: existingIdList,
+					},
+				});
+			},
 		},
 		mutations: {
 			/**
@@ -461,11 +483,18 @@ jn.define('im/messenger/model/users/src/model', (require, exports, module) => {
 			delete: (state, payload) => {
 				logger.log('usersModel: delete mutation', payload);
 
-				const {
-					id,
-				} = payload.data;
+				const { id, idList } = payload.data;
 
-				delete state.collection[id];
+				if (Type.isArrayFilled(idList))
+				{
+					idList.forEach((userId) => {
+						delete state.collection[userId];
+					});
+				}
+				else if (id)
+				{
+					delete state.collection[id];
+				}
 			},
 		},
 	};

@@ -1,56 +1,153 @@
 <?php
-if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 /** @var array $arParams */
 /** @var array $arResult */
-/** @global CMain $APPLICATION */
-/** @global CUser $USER */
-/** @global CDatabase $DB */
 /** @var CBitrixComponentTemplate $this */
-/** @var string $templateName */
-/** @var string $templateFile */
 /** @var string $templateFolder */
-/** @var string $componentPath */
 /** @var CDiskExternalLinkComponent $component */
 
-use Bitrix\Disk\Driver;
-use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\UI\Extension;
+use Bitrix\UI\Buttons\AirButtonStyle;
+use Bitrix\UI\Buttons\Button;
 
-\Bitrix\Main\UI\Extension::load('ui.fonts.opensans');
+// Password field is mounted client-side (BX.UI.System.Input.PasswordInput).
+Extension::load(['ui.system.input']);
 
-if (!empty($arResult['FOLDER']))
-{
-	$helloMessage = $component->getMessage('DISK_EXT_LINK_FOLDER_PROTECT_BY_PASSWORD');
-}
-else
-{
-	$helloMessage = $component->getMessage('DISK_EXT_LINK_PROTECT_BY_PASSWORD');
-}
+include $_SERVER['DOCUMENT_ROOT'] . '/bitrix/components/bitrix/disk.external.link/templates/.default/access-page.php';
+/** @var callable $applyAirStyle */
+include $_SERVER['DOCUMENT_ROOT'] . '/bitrix/components/bitrix/disk.external.link/templates/.default/access-button.php';
 
-$formAction = Driver::getInstance()->getUrlManager()->getUrlExternalLink([
-	'hash' => $arResult['HASH'],
-	'action' => 'default',
+$illustration = $templateFolder . '/images/access-laptop.png';
+$mode = 'password';
+$title = $component->getMessage('DISK_EXT_LINK_PASSWORD_TITLE');
+$description = $component->getMessage('DISK_EXT_LINK_PASSWORD_DESCR');
+
+$submitButton = new Button([
+	'text' => $component->getMessage('DISK_EXT_LINK_PASSWORD_SUBMIT'),
 ]);
+$applyAirStyle($submitButton, AirButtonStyle::FILLED);
+$submitButton
+	// Buttons\Size has no constant for the XL step of the air design (46px in the mockup).
+	->addClass('ui-btn-xl')
+	->addClass('--wide')
+	->addAttribute('id', 'disk-access-password-submit')
+	->setDisabled(true)
+	->addAttribute('data-testid', 'disk-ext-password-submit-btn')
+;
+
+$slotHtml =
+	'<div class="disk-access-card__field" id="disk-access-password-field" data-testid="disk-ext-password-field"></div>'
+	. '<div id="disk-access-password-alert" role="alert" aria-live="assertive" class="disk-access-card__sr-only" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;"></div>'
+	. $submitButton->render(false)
+;
+
 ?>
-<div class="bx-shared-body">
-	<form id="form-pass" action="<?= htmlspecialcharsbx($formAction) ?>" method="POST">
-		<div class="bx-disk-pass-popup-wrap">
-			<div class="bx-disk-popup-content">
-				<div class="bx-disk-popup-content-inner">
-					<div class="bx-disk-pass-popup-title"><?= $helloMessage ?></div>
-					<? if($arResult['VALID_PASSWORD'] === false) { ?>
-						<div class="bx-disk-pass-popup-title-descript" style="color: red;"><?= $component->getMessage('DISK_EXT_LINK_PROTECT_BY_WRONG_PASSWORD') ?></div>
-					<? } else { ?>
-						<div class="bx-disk-pass-popup-title-descript"><?= $component->getMessage('DISK_EXT_LINK_PROTECT_BY_PASSWORD_DESCR') ?></div>
-					<? } ?>
-					<label class="bx-disk-popup-label"><?= $component->getMessage('DISK_EXT_LINK_LABEL_PASSWORD') ?>:</label>
-					<input id="bx-disk-popup-input-pass" class="bx-disk-popup-input" name="PASSWORD" type="password">
-				</div>
-			</div>
-			<div class="bx-disk-popup-buttons">
-				<a onclick="document.getElementById('form-pass').submit();" class="bx-disk-btn bx-disk-btn-big bx-disk-btn-green"><?= $component->getMessage('DISK_EXT_LINK_LABEL_BTN') ?></a>
-			</div>
-		</div>
-	</form>
+<div class="<?= $cardLayoutClass ?>">
+	<?php include $_SERVER['DOCUMENT_ROOT'] . '/bitrix/components/bitrix/disk.external.link/templates/.default/access-card.php'; ?>
 </div>
+<script>
+BX.ready(function() {
+	var container = document.getElementById('disk-access-password-field');
+	var submitButton = document.getElementById('disk-access-password-submit');
+	var alertRegion = document.getElementById('disk-access-password-alert');
+	if (!container || !submitButton)
+	{
+		return;
+	}
 
+	var hash = '<?= CUtil::JSEscape($arResult['HASH']) ?>';
+	var placeholder = '<?= CUtil::JSEscape($component->getMessage('DISK_EXT_LINK_PASSWORD_PLACEHOLDER')) ?>';
+	var ariaLabel = '<?= CUtil::JSEscape($component->getMessage('DISK_EXT_LINK_PASSWORD_ARIA_LABEL')) ?>';
+	var wrongPasswordText = '<?= CUtil::JSEscape($component->getMessage('DISK_EXT_LINK_PASSWORD_WRONG')) ?>';
+	var requestErrorText = '<?= CUtil::JSEscape($component->getMessage('DISK_EXT_LINK_PASSWORD_ERROR')) ?>';
+	var disabledClass = 'ui-btn-disabled';
 
+	var setSubmitEnabled = function(enabled) {
+		submitButton.disabled = !enabled;
+		submitButton.classList.toggle(disabledClass, !enabled);
+	};
+
+	BX.loadExt('ui.system.input').then(function() {
+		var clearAlert = function() {
+			if (alertRegion)
+			{
+				alertRegion.textContent = '';
+			}
+		};
+
+		var field = new BX.UI.System.Input.PasswordInput({
+			placeholder: placeholder,
+			ariaLabel: ariaLabel,
+			dataTestId: 'disk-ext-password-input',
+			stretched: true,
+			onInput: function() {
+				field.setError('');
+				clearAlert();
+				setSubmitEnabled(field.getValue() !== '');
+			},
+		});
+
+		container.appendChild(field.render());
+		setSubmitEnabled(false);
+
+		var checking = false;
+		var submit = function() {
+			var password = field.getValue();
+			if (checking || password === '')
+			{
+				return;
+			}
+
+			checking = true;
+			setSubmitEnabled(false);
+
+			var showWrong = function() {
+				checking = false;
+				field.setError(wrongPasswordText);
+				if (alertRegion)
+				{
+					alertRegion.textContent = wrongPasswordText;
+				}
+				setSubmitEnabled(field.getValue() !== '');
+			};
+
+			var showRequestError = function() {
+				checking = false;
+				field.setError(requestErrorText);
+				if (alertRegion)
+				{
+					alertRegion.textContent = requestErrorText;
+				}
+				setSubmitEnabled(field.getValue() !== '');
+			};
+
+			BX.ajax.runComponentAction('bitrix:disk.external.link', 'checkPassword', {
+				mode: 'ajax',
+				data: {
+					hash: hash,
+					password: password,
+				},
+			}).then(function(response) {
+				if (response.data && response.data.status === 'success')
+				{
+					clearAlert();
+					window.location.reload();
+
+					return;
+				}
+
+				showWrong();
+			}).catch(showRequestError);
+		};
+
+		BX.bind(submitButton, 'click', submit);
+		BX.bind(container, 'keydown', function(event) {
+			if (event.key === 'Enter' && !submitButton.disabled)
+			{
+				event.preventDefault();
+				submit();
+			}
+		});
+	});
+});
+</script>

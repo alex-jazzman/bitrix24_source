@@ -1,5 +1,5 @@
 // eslint-disable-next-line max-classes-per-file
-import { ajax, Type, Tag, Text, Dom, Runtime, Uri, Loc } from 'main.core';
+import { ajax, Type, Tag, Text, Dom, Event, Runtime, Uri, Loc } from 'main.core';
 import { DocumentId } from 'bizproc.document';
 import { Timestamp, UserId } from 'bizproc.types';
 import 'ui.icons.b24';
@@ -202,6 +202,11 @@ export class Timeline
 						cacheable: false,
 						loader: '/bitrix/js/bizproc/workflow/timeline/img/skeleton.svg',
 						printable: true,
+						events: {
+							onOpenComplete: (event) => {
+								event.getSlider()?.focus();
+							},
+						},
 					},
 				);
 			})
@@ -683,6 +688,7 @@ export class Timeline
 			width: 403,
 			minHeight: 345,
 			closeIcon: true,
+			closeByEsc: true,
 			content: this.#renderEfficiencyPopupContent(),
 			bindElement: {
 				left: 555,
@@ -713,6 +719,12 @@ export class Timeline
 				},
 			},
 		});
+
+		Dom.attr(
+			this.#efficiencyPopup.getPopupContainer(),
+			'aria-label',
+			Loc.getMessage('BIZPROC_WORKFLOW_TIMELINE_SLIDER_EFFECTIVITY_MARK'),
+		);
 
 		return this.#efficiencyPopup;
 	}
@@ -858,10 +870,13 @@ export class Timeline
 		if (menu.length === 1)
 		{
 			const linkBtn = Tag.render`
-				<a class="ui-btn ui-btn-light-border ui-btn-themes" onclick="${Text.encode(menu[0].ON_CLICK)}" target="_blank">
+				<a class="ui-btn ui-btn-light-border ui-btn-themes" target="_blank">
 					${Text.encode(Loc.getMessage('BIZPROC_WORKFLOW_TIMELINE_SLIDER_BI_ANALYTICS_BUTTON'))}
 				</a>
 			`;
+			Event.bind(linkBtn, 'click', () => {
+				(new Function(menu[0].ON_CLICK))();
+			});
 
 			Dom.prepend(linkBtn, toolbarNode);
 
@@ -884,6 +899,7 @@ export class Timeline
 			width: 403,
 			minHeight: 183,
 			closeIcon: true,
+			closeByEsc: true,
 			content: this.#renderBiPopupContent(menu),
 			bindElement: {
 				left: 555,
@@ -893,6 +909,12 @@ export class Timeline
 			borderRadius: '18px',
 			className: '--bizproc-timeline-popup --bi',
 		});
+
+		Dom.attr(
+			this.#biPopup.getPopupContainer(),
+			'aria-label',
+			Loc.getMessage('BIZPROC_WORKFLOW_TIMELINE_SLIDER_BI_ANALYTICS_TITLE'),
+		);
 
 		return this.#biPopup;
 	}
@@ -943,9 +965,9 @@ export class Timeline
 		{
 			const clickHandler = () => top.BX.UI.InfoHelper.show('limit_crm_BI_constructor');
 			btn = Tag.render`
-				<a class="ui-btn ui-btn-light-border ui-btn-round ui-btn-xs ui-btn-icon-lock ui-icon-set__scope --with-left-icon" onclick="${clickHandler}">
+				<button type="button" class="ui-btn ui-btn-light-border ui-btn-round ui-btn-xs ui-btn-icon-lock ui-icon-set__scope --with-left-icon" onclick="${clickHandler}">
 					<span class="ui-btn-text">${Loc.getMessage('BIZPROC_WORKFLOW_TIMELINE_SLIDER_BI_ANALYTICS_LINK')}</span>
-				</a>
+				</button>
 			`;
 
 			return btn;
@@ -954,21 +976,25 @@ export class Timeline
 		if (menu.length === 1)
 		{
 			btn = Tag.render`
-				<a class="ui-btn ui-btn-light-border ui-btn-round ui-btn-xs" onclick="${Text.encode(menu[0].ON_CLICK)}" target="_blank">
+				<button type="button" class="ui-btn ui-btn-light-border ui-btn-round ui-btn-xs">
 					<span class="ui-btn-text">${Loc.getMessage('BIZPROC_WORKFLOW_TIMELINE_SLIDER_BI_ANALYTICS_LINK')}</span>
-				</a>
+				</button>
 			`;
+			Event.bind(btn, 'click', () => {
+				(new Function(menu[0].ON_CLICK))();
+			});
 		}
 		else
 		{
 			const clickHandler = this.#showBiMenu.bind(this, menu);
 			btn = Tag.render`
-				<a 
+				<button
+					type="button"
 					class="ui-btn ui-btn-light-border ui-btn-round ui-btn-xs ui-btn-dropdown"
 					onclick="${clickHandler}"
 				>
 					<span class="ui-btn-text">${Loc.getMessage('BIZPROC_WORKFLOW_TIMELINE_SLIDER_BI_ANALYTICS_LINK')}</span>
-				</a>
+				</button>
 			`;
 		}
 

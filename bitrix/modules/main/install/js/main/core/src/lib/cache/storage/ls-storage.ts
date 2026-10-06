@@ -4,12 +4,12 @@ import Type from '../../type';
 export default class LsStorage implements ICacheStorage
 {
 	stackKey: string = 'BX.Cache.Storage.LsStorage.stack';
-	stack: Record<string, any> | null = null;
+	stack: Record<string, unknown> | null = null;
 
 	/**
 	 * @private
 	 */
-	getStack(): Record<string, any>
+	getStack(): Record<string, unknown>
 	{
 		if (Type.isPlainObject(this.stack))
 		{
@@ -47,14 +47,14 @@ export default class LsStorage implements ICacheStorage
 		}
 	}
 
-	get(key: string): any
+	get(key: string): unknown
 	{
 		const stack = this.getStack();
 
 		return stack[key];
 	}
 
-	set(key: string, value: any): void
+	set(key: string, value: unknown): void
 	{
 		const stack = this.getStack();
 		stack[key] = value;
@@ -92,7 +92,7 @@ export default class LsStorage implements ICacheStorage
 		return Object.keys(stack);
 	}
 
-	values(): Array<any>
+	values(): Array<unknown>
 	{
 		const stack = this.getStack();
 

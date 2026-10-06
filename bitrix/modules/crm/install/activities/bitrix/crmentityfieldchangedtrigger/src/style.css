@@ -1,0 +1,34 @@
+.crm-trigger-reaction-mode {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-xs);
+}
+
+.crm-trigger-reaction-mode__option {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-xs2);
+	padding: var(--ui-space-inset-xs) var(--ui-space-inset-xs2);
+	border: 1px solid transparent;
+	border-radius: var(--ui-border-radius-sm);
+	cursor: pointer;
+	transition: background-color 200ms ease, border-color 200ms ease;
+}
+
+.crm-trigger-reaction-mode__option.--selected {
+	background-color: var(--ui-color-accent-soft-blue-3);
+	border-color: var(--ui-color-accent-soft-border-blue);
+}
+
+.crm-trigger-reaction-mode__option-title {
+	color: var(--ui-color-base-1);
+	font-size: var(--ui-font-size-md);
+	line-height: var(--ui-font-line-height-md);
+}
+
+.crm-trigger-reaction-mode__fields-error {
+	margin-top: var(--ui-space-stack-2xs);
+	color: var(--ui-color-accent-main-alert);
+	font-size: var(--ui-font-size-sm);
+	line-height: var(--ui-font-line-height-sm);
+}

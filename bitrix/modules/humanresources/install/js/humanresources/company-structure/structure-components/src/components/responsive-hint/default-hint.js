@@ -8,6 +8,7 @@ export const DefaultHint = {
 	components: { ResponsiveHint },
 
 	props: {
+		/** Plain text only: the popup renders it via innerHTML, so it is encoded before show(). */
 		content: {
 			type: String,
 			required: true,

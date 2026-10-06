@@ -10,6 +10,7 @@ use Bitrix\Crm\Integration\Report\DisablingHelper;
 use Bitrix\Crm\Restriction\AvailabilityManager;
 use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Service\Container;
+use Bitrix\Main\Web\Uri;
 
 if (!CModule::IncludeModule('crm'))
 {
@@ -312,11 +313,7 @@ if(isset($_GET['redirect_to']))
 	$pathKey = "PATH_TO_DEAL_{$viewName}";
 	if(isset($arResult[$pathKey]))
 	{
-		$redirectUrl = CHTTP::urlAddParams(
-			CComponentEngine::makePathFromTemplate($arResult[$pathKey], array('category_id' => $currentCategoryID)),
-			array_diff_key($_GET, array_flip(array('redirect_to'))),
-			array('encode' => true)
-		);
+		$redirectUrl = (string)(new Uri(CComponentEngine::makePathFromTemplate($arResult[$pathKey], array('category_id' => $currentCategoryID))))->addParams(array_diff_key($_GET, array_flip(array('redirect_to'))));
 		LocalRedirect($redirectUrl);
 	}
 }
@@ -396,11 +393,6 @@ if(isset($_GET['id']))
 	$arResult['VARIABLES']['deal_ids'] = array_map('intval', $entityIDs);
 }
 
-\CCrmEntityHelper::setEnabledFactoryFlagByRequest(
-	Crm\Settings\DealSettings::getCurrent(),
-	\Bitrix\Main\Application::getInstance()->getContext()->getRequest()
-);
-
 if(\Bitrix\Crm\Settings\LayoutSettings::getCurrent()->isSliderEnabled()
 	&& ($componentPage === 'edit' || $componentPage === 'show')
 )
@@ -415,7 +407,7 @@ if(\Bitrix\Crm\Settings\LayoutSettings::getCurrent()->isSliderEnabled()
 		parse_str($_SERVER['QUERY_STRING'], $queryParams);
 		if(!empty($queryParams))
 		{
-			$redirectUrl = CHTTP::urlAddParams($redirectUrl, $queryParams, array('encode' => true));
+			$redirectUrl = (string)(new Uri($redirectUrl))->addParams($queryParams);
 		}
 	}
 

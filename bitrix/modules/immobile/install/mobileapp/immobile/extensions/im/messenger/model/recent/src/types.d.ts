@@ -11,6 +11,7 @@ export enum MessageStatus
 
 declare type RecentMessage = {
 	id: number,
+	chatId: number,
 	senderId: string,
 	date: Date,
 	status: MessageStatus,
@@ -23,6 +24,7 @@ declare type RecentMessage = {
 export type RecentModelState = {
 	id: string,
 	message: RecentMessage,
+	ownMessage: RecentMessage | null,
 	dateMessage: Date | null,
 	lastActivityDate: Date,
 	unread: boolean,
@@ -93,11 +95,13 @@ export type RecentModelActionParams = {
 		recentSection: SectionRecentValue;
 		itemList: Array<RecentModelState>;
 		parentChatId?: number;
+		tabId?: string;
 	};
 	'recentModel/setByRecentSection': {
 		recentSection: SectionRecentValue;
 		itemList: Array<RecentModelState>;
 		parentChatId?: number;
+		tabId?: string;
 	};
 	'recentModel/setFirstPageByTab': {
 		tab: string;

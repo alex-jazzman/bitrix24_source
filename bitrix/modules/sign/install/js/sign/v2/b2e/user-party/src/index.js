@@ -2,7 +2,7 @@ import { Dom, Loc, Tag, Text as TextFormat, Event } from 'main.core';
 import type { Loader } from 'main.loader';
 import { Helpdesk } from 'sign.v2.helper';
 import { Dialog, TagSelector, TagItem } from 'ui.entity-selector';
-import type { UserPartyOptions } from './type';
+import type { PreselectedSignerEntity, UserPartyOptions } from './type';
 import type { CardItem } from './types/card-item';
 import { UserPartyCounters } from 'sign.v2.b2e.user-party-counters';
 import { UserPartyPopup } from 'sign.v2.b2e.user-party-popup';
@@ -19,7 +19,7 @@ export type UserPartyConfig = {
 	b2eSignersLimitCount: number,
 }
 
-export type { CardItem };
+export type { CardItem, PreselectedSignerEntity };
 
 const Mode = Object.freeze({
 	view: 'view',
@@ -122,6 +122,10 @@ export class UserParty
 			entities.push({ id: 'sign-document' });
 		}
 
+		const preselectedItems = (options.preselectedSigners ?? []).map(
+			(entity: PreselectedSignerEntity) => [entity.entityType, entity.entityId],
+		);
+
 		this.#tagSelector = new TagSelector({
 			events: {
 				onTagRemove: (event) => {
@@ -143,9 +147,17 @@ export class UserParty
 				entities,
 				dropdownMode: false,
 				hideOnDeselect: false,
+				preselectedItems,
 			},
 		});
 		this.#tagSelector.renderTo(this.#ui.itemContainer);
+
+		if (preselectedItems.length > 0)
+		{
+			// the dialog resolves the preselected entities and the selector shows them as cards;
+			// further editing of the signers stays the usual selector interaction
+			this.#tagSelector.getDialog()?.load();
+		}
 	}
 
 	getLayout(region: string): HTMLElement

@@ -84,10 +84,13 @@ type AssociatedEntity = {
 
 type StartCallErrorParams = {
 	callType: string;
+	callId?: CallIdentifier;
 	errorCode: string;
 	errorMessage?: string;
 	isVpnActive: boolean;
 };
+
+type CallIdentifier = string | number;
 
 type JoinCallParams = BaseCallTypeParams & {
 	status: string;
@@ -96,6 +99,11 @@ type JoinCallParams = BaseCallTypeParams & {
 	element?: string;
 	mediaParams?: Required<MediaParams>;
 	associatedEntity: AssociatedEntity;
+};
+
+type JoinCallErrorParams = Omit<CallErrorParams, 'callId'> & {
+	callId?: CallIdentifier;
+	isRoomClosed?: boolean;
 };
 
 type CallErrorParams = BaseCallTypeParams & {
@@ -179,6 +187,11 @@ type ConferenceClickParams = {
 	chatId: string;
 };
 
+type RecentStartCallClickParams = {
+	chatId: string;
+	isGroupChat: boolean;
+};
+
 type SettingTypeParams = BaseCallTypeParams & {
 	typeOfSetting: 'mic' | 'cam' | 'screenshare';
 };
@@ -203,6 +216,7 @@ declare namespace BX.Call.Lib {
 			groupCall: "group";
 			aiOn: "ai_on";
 			turnOnAi: "turn_on_ai";
+			sync: "sync";
 		}>;
 		static AnalyticsStatus: Readonly<{
 			success: "success";
@@ -228,6 +242,7 @@ declare namespace BX.Call.Lib {
 			callMessage: "call_message";
 			callFollowup: "call_followup";
 			call: "call";
+			syncPage: "sync_page";
 		}>;
 		static AnalyticsElement: Readonly<{
 			answerButton: "answer_button";
@@ -249,8 +264,10 @@ declare namespace BX.Call.Lib {
 			contextMenu: "context_menu";
 			window: "window";
 			taskCard: "task_card";
+			mainButton: "main_button";
 		}>;
 		copilot: Copilot;
+		sync: Sync;
 		static getInstance(): Analytics;
 		safeDecode(str: string): string;
 		onScreenShareBtnClick({ callId, callType }: BaseCallTypeParams): void;
@@ -263,7 +280,7 @@ declare namespace BX.Call.Lib {
 		onStartCall(params: StartCallParams): void;
 		onStartCallError(params: StartCallErrorParams): void;
 		onJoinCall(params: JoinCallParams): void;
-		onJoinCallError(params: CallErrorParams): void;
+		onJoinCallError(params: JoinCallErrorParams): void;
 		onReconnect(params: ReconnectParams): void;
 		onReconnectError(params: CallErrorParams): void;
 		onInviteUser(params: InviteUserParams): void;
@@ -293,11 +310,13 @@ declare namespace BX.Call.Lib {
 		onContextMenuStartCallClick(params: ContextMenuCallClickParams): void;
 		onStartConferenceClick(params: ConferenceClickParams): void;
 		onChatCreationMessageStartCallClick(params: ConferenceClickParams): void;
+		onRecentStartCallClick(params: RecentStartCallClickParams): void;
 		onChatStartConferenceClick(params: ConferenceClickParams): void;
 		onJoinConferenceClick(params: BaseCallParams): void;
 		onStartCallMessageClick(params: ChatCallClickParams): void;
 		onFinishCallMessageClick(params: ChatCallClickParams): void;
 		onOpenCallSettings(params: BaseCallTypeParams): void;
+		onDeleteUser(params: BaseCallTypeParams): void;
 		onCallSettingsChanged(params: SettingTypeParams): void;
 		onTurnOffAllParticipansStream(params: StreamTypeParams): void;
 		onTurnOffParticipantStream(params: SettingTypeParams): void;
@@ -319,5 +338,15 @@ declare namespace BX.Call.Lib {
 		onClickAIOff(params: BaseCallTypeParams): void;
 		onSelectAIOff(params: BaseCallTypeParams): void;
 		onSelectAIDelete(params: BaseCallTypeParams): void;
+	}
+
+	class Sync {
+		onOpenSection(): void;
+		onStartCallClick(): void;
+		onJoinClick(): void;
+		onJoinCall(): void;
+		onCreateEventClick(): void;
+		onOpenSlotsClick(): void;
+		onBookingClick(): void;
 	}
 }

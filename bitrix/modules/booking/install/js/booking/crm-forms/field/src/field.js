@@ -203,6 +203,11 @@ export const Field = {
 		},
 		showedCalendarBlock(): boolean
 		{
+			if (!this.form.resourceId)
+			{
+				return false;
+			}
+
 			return (
 				(this.form.resourceId && !this.form.date)
 				|| this.form.date !== null
@@ -263,7 +268,7 @@ export const Field = {
 			this.occupancyManager.setTimezone(this.timezone);
 
 			this.form.skuId = 0;
-			this.form.resourceId = this.hasSlotsAllAvailableResources ? AllResource.id : 0;
+			this.form.resourceId = 0;
 			this.form.date = new Date();
 			this.form.slot = null;
 		},

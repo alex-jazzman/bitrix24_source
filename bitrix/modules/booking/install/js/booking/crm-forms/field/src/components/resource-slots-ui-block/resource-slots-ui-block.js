@@ -3,7 +3,7 @@ import { Loader } from 'main.loader';
 
 import { locMixin } from 'booking.component.mixin.loc-mixin';
 
-import type { Resource, ResourceSlot } from '../../types';
+import { type Resource, type ResourceSlot } from '../../types';
 
 import './resource-slots.css';
 
@@ -75,15 +75,9 @@ export const ResourceSlotsUiBlock = {
 				'#BR#': '<br />',
 			});
 		},
-		hasResourceAvatar(): boolean
-		{
-			return Boolean(this.resource?.avatarUrl);
-		},
 		resourceAvatarUrl(): string
 		{
-			return this.hasResourceAvatar
-				? this.resource.avatarUrl
-				: '/bitrix/js/booking/crm-forms/field/images/resource-icon.svg';
+			return this.resource?.avatarUrl || '';
 		},
 		resourceDescription(): string
 		{

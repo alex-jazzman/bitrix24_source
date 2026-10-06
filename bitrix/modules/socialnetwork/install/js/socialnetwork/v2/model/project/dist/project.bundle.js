@@ -81,7 +81,9 @@ this.BX.Socialnetwork.V2 = this.BX.Socialnetwork.V2 || {};
 			dates: {
 				startTs: 0,
 				finishTs: 0
-			}
+			},
+			notifications: null,
+			notificationsInitial: null
 		}),
 		getters: {
 			messagesAutoDeleteDelay: state => {
@@ -91,13 +93,24 @@ this.BX.Socialnetwork.V2 = this.BX.Socialnetwork.V2 || {};
 		actions: {
 			init({
 				projectId,
-				publication
+				publication,
+				notifications
 			}) {
 				this.id = projectId;
 				this.publication = publication;
+				if (notifications !== undefined) {
+					this.notifications = notifications ? structuredClone(notifications) : notifications;
+					this.notificationsInitial = notifications ? structuredClone(notifications) : notifications;
+				}
 			},
 			patchProject(patch = {}) {
-				this.$patch(patch);
+				this.$patch({
+					...patch,
+					...(patch.notifications !== undefined ? {
+						notifications: patch.notifications ? structuredClone(patch.notifications) : patch.notifications,
+						notificationsInitial: patch.notifications ? structuredClone(patch.notifications) : patch.notifications
+					} : {})
+				});
 			},
 			updateMessagesAutoDeleteDelay(delay) {
 				this.permissions.project.messagesAutoDeleteDelay = delay;
@@ -115,11 +128,28 @@ this.BX.Socialnetwork.V2 = this.BX.Socialnetwork.V2 || {};
 					return;
 				}
 				this.features[featureId] = value;
+			},
+			setNotificationCounter(typeId, counterEnabled) {
+				if (!this.notifications) {
+					return;
+				}
+				for (const group of this.notifications.groups) {
+					const type = group.types.find(t => t.id === typeId);
+					if (type) {
+						type.counterEnabled = counterEnabled;
+						return;
+					}
+				}
 			}
 		}
 	});
 
+	function isValidNotificationCatalog(value) {
+		return value !== null && typeof value === 'object' && !Array.isArray(value) && Array.isArray(value.groups) && value.groups.length > 0 && value.groups.every(g => Array.isArray(g.types) && g.types.every(type => typeof type.counterEnabled === 'boolean'));
+	}
+
 	exports.defaultProjectFeatures = defaultProjectFeatures;
+	exports.isValidNotificationCatalog = isValidNotificationCatalog;
 	exports.useProjectStore = useProjectStore;
 
 })(this.BX.Socialnetwork.V2.Model = this.BX.Socialnetwork.V2.Model || {}, BX.Vue3.Pinia, BX.Socialnetwork.V2);

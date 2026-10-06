@@ -66,6 +66,8 @@ jn.define('im/messenger/db/table-schema/src/dialog', (require, exports, module) 
 			.configureDefaultValue(FieldDefaultValue.zeroInteger);
 		static parentMessageId = new IntegerField('parentMessageId')
 			.configureDefaultValue(FieldDefaultValue.zeroInteger);
+		static guestCount = new IntegerField('guestCount')
+			.configureDefaultValue(FieldDefaultValue.zeroInteger);
 
 		static getTableName()
 		{
@@ -111,6 +113,7 @@ jn.define('im/messenger/db/table-schema/src/dialog', (require, exports, module) 
 				this.entityLink,
 				this.parentChatId,
 				this.parentMessageId,
+				this.guestCount,
 			];
 		}
 	}

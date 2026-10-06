@@ -19,11 +19,13 @@ import './feature-menu.css';
 type Params = {
 	projectId: number,
 	bindElement: HTMLElement,
+	onOpenStartupToolSettings?: () => void,
 };
 
 const featuresMenuOrder = [
 	'blog',
 	'landing_knowledge',
+	'note',
 	'flows',
 	'photo',
 	'group_lists',
@@ -34,6 +36,12 @@ const featuresMenuOrder = [
 
 const secondaryFeaturesMenuOrder = ['marketplace'];
 const secondarySectionCode = 'secondary';
+
+const startupToolFeaturesOrder = ['settings_startup_tool'];
+const startupToolSectionCode = 'startup_tool';
+
+// All feature ids that are excluded from primary tiles and extra/"more" menu
+const allSecondaryIds = new Set([...secondaryFeaturesMenuOrder, ...startupToolFeaturesOrder]);
 
 export class FeatureMenu
 {
@@ -140,7 +148,14 @@ export class FeatureMenu
 
 	#getFeatureItems(): FeatureItem[]
 	{
-		return this.#cache.remember('featureItems', () => FeatureFactory.createCollection(this.#getFeatures()));
+		return this.#cache.remember(
+			'featureItems',
+			() => FeatureFactory.createCollection(
+				this.#getFeatures(),
+				this.#getParams().projectId,
+				this.#getParams().onOpenStartupToolSettings,
+			),
+		);
 	}
 
 	#resetDerivedCache(): void
@@ -307,7 +322,11 @@ export class FeatureMenu
 		);
 
 		return this.#getFeatureItems().filter((feature: FeatureItem) => {
-			return !feature.getId().startsWith('placement_') && !renderedFeatureIds.has(feature.getId());
+			return (
+				!feature.getId().startsWith('placement_')
+				&& !renderedFeatureIds.has(feature.getId())
+				&& !allSecondaryIds.has(feature.getId())
+			);
 		});
 	}
 
@@ -447,54 +466,41 @@ export class FeatureMenu
 			});
 		}
 
+		const startupToolItems = this.#getOrderedStartupToolFeatures().map(
+			(feature: FeatureItem): SystemMenuItemOptions => this.#createSystemMenuItem(feature, startupToolSectionCode),
+		);
+
 		return [
 			...primaryItems,
 			...secondaryItems,
+			...startupToolItems,
 		];
 	}
 
 	#getFeaturesMenuSections(): MenuSectionOptions[]
 	{
-		if (
-			this.#getOrderedSecondaryFeatures().length === 0
-			&& !this.#hasPlacementFeatures()
-		)
+		const sections: MenuSectionOptions[] = [];
+
+		if (this.#getOrderedSecondaryFeatures().length > 0 || this.#hasPlacementFeatures())
 		{
-			return [];
+			sections.push({ code: secondarySectionCode });
 		}
 
-		return [
-			{
-				code: secondarySectionCode,
-			},
-		];
+		if (this.#getOrderedStartupToolFeatures().length > 0)
+		{
+			sections.push({ code: startupToolSectionCode });
+		}
+
+		return sections;
 	}
 
-	#getOrderedPrimaryFeatures(): FeatureItem[]
-	{
-		const secondaryIds = new Set(secondaryFeaturesMenuOrder);
-		const featuresMap = new Map(
-			this.#getFeatureItems().map((feature: FeatureItem): [string, FeatureItem] => [feature.getId(), feature]),
-		);
-
-		return featuresMenuOrder.reduce((features: FeatureItem[], featureId: string) => {
-			const feature = featuresMap.get(featureId);
-			if (feature && !secondaryIds.has(featureId))
-			{
-				features.push(feature);
-			}
-
-			return features;
-		}, []);
-	}
-
-	#getOrderedSecondaryFeatures(): FeatureItem[]
+	#orderFeaturesBy(order: string[]): FeatureItem[]
 	{
 		const featuresMap = new Map(
 			this.#getFeatureItems().map((feature: FeatureItem): [string, FeatureItem] => [feature.getId(), feature]),
 		);
 
-		return secondaryFeaturesMenuOrder.reduce((features: FeatureItem[], featureId: string) => {
+		return order.reduce((features: FeatureItem[], featureId: string) => {
 			const feature = featuresMap.get(featureId);
 			if (feature)
 			{
@@ -503,6 +509,23 @@ export class FeatureMenu
 
 			return features;
 		}, []);
+	}
+
+	#getOrderedPrimaryFeatures(): FeatureItem[]
+	{
+		return this.#orderFeaturesBy(featuresMenuOrder).filter(
+			(feature: FeatureItem) => !allSecondaryIds.has(feature.getId()),
+		);
+	}
+
+	#getOrderedSecondaryFeatures(): FeatureItem[]
+	{
+		return this.#orderFeaturesBy(secondaryFeaturesMenuOrder);
+	}
+
+	#getOrderedStartupToolFeatures(): FeatureItem[]
+	{
+		return this.#orderFeaturesBy(startupToolFeaturesOrder);
 	}
 
 	#createPopupMenuItem(feature: FeatureItem): MenuItemOptions
@@ -546,7 +569,7 @@ export class FeatureMenu
 			{
 				type: 'list',
 				params: {
-					featureIds: ['landing_knowledge', 'flows'],
+					featureIds: ['landing_knowledge', 'note', 'flows'],
 					minHeight: '50px',
 					margin: '8px 20px 0 20px',
 					appendMoreFeature: true,

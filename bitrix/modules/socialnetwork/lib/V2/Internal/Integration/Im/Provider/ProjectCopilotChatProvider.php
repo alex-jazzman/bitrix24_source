@@ -26,6 +26,16 @@ final class ProjectCopilotChatProvider
 			return 0;
 		}
 
+		// Phase 0 (task 718250): a hidden (admin-access) participant is not a real project member.
+		// Creating a per-author copilot chat cascades the author into the parent project chat as a
+		// visible member, which would promote them into the project (Bug B). Skip such users; a real
+		// member (present, not hidden) still gets the copilot chat as before.
+		$parentRelation = Chat::getInstance($parentChatId)->getRelationByUserId($userId);
+		if ($parentRelation === null || $parentRelation->isHidden())
+		{
+			return 0;
+		}
+
 		$cacheManager = Application::getInstance()->getManagedCache();
 		$cacheId = $this->getCacheId($userId, $projectId);
 
@@ -48,6 +58,7 @@ final class ProjectCopilotChatProvider
 			'PARENT_ID' => $parentChatId,
 			'USERS' => [$userId],
 			'SEND_GREETING_MESSAGES' => 'Y',
+			'MANAGE_DELETE' => Chat::MANAGE_RIGHTS_NONE,
 		];
 
 		$title = Loc::getMessage(self::CHAT_TITLE_MESSAGE_CODE);
@@ -56,7 +67,11 @@ final class ProjectCopilotChatProvider
 			$addParams['TITLE'] = $title;
 		}
 
-		$addResult = ChatFactory::getInstance()->withContextUser($userId)->addUniqueChatPerAuthor($addParams);
+		// A system context (user 0): the copilot bot is invisible to a collaber, so the visibility
+		// filters of the membership cascade would drop it before it reaches the project chat and the
+		// chat would be born without anyone to answer in it. AUTHOR_ID above keeps both the authorship
+		// and the uniqueness of the chat, neither of them depends on the context.
+		$addResult = ChatFactory::getInstance()->withContextUser(0)->addUniqueChatPerAuthor($addParams);
 
 		if (!$addResult->isSuccess())
 		{

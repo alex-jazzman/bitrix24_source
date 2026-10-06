@@ -7,6 +7,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 /** @var array $arParams */
 /** @var array $arResult */
 
+use Bitrix\Landing\Sanitizer;
 use \Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__FILE__);
@@ -51,7 +52,7 @@ $sidebarUsers = array_slice($arResult['USERS'], 0, 4);
 						if ($img !== '')
 						{
 							?>
-							<div style="background-image: url('<?= \htmlspecialcharsbx($img) ?>');" class="landing-widget-birthdays-content-item-img-inner"></div>
+							<div style="background-image: url('<?= \htmlspecialcharsbx(Sanitizer::sanitizeCssUrl((string)$img)) ?>');" class="landing-widget-birthdays-content-item-img-inner"></div>
 							<?php
 						}
 						else
@@ -107,7 +108,7 @@ $sidebarUsers = array_slice($arResult['USERS'], 0, 4);
 						if ($img !== '')
 						{
 							?>
-							<div style="background-image: url('<?= \htmlspecialcharsbx($img) ?>');" class="landing-widget-birthdays-content-item-img-inner"></div>
+							<div style="background-image: url('<?= \htmlspecialcharsbx(Sanitizer::sanitizeCssUrl((string)$img)) ?>');" class="landing-widget-birthdays-content-item-img-inner"></div>
 							<?php
 						}
 						else

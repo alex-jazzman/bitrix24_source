@@ -641,7 +641,7 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 			 * @param {RecentModelActionParams['recentModel/setFirstPageByRecentSection']} payload
 			 */
 			setFirstPageByRecentSection: async (store, payload) => {
-				const { recentSection, itemList } = payload;
+				const { recentSection, itemList, tabId } = payload;
 				const itemIds = itemList.map((item) => String(item.id || item.dialogId));
 				if (!recentSection)
 				{
@@ -654,7 +654,11 @@ jn.define('im/messenger/model/recent/model', (require, exports, module) => {
 				const parentChatId = payload.parentChatId ?? ROOT_PARENT_CHAT_ID;
 				await store.dispatch('set', { itemList, actionName });
 
-				const navTab = NavigationTabByRecentTab[recentSection];
+				// Resolve the filter key by the actual navigation tab id when provided.
+				// recentSection alone is ambiguous: collabCopilot reuses recentSection='copilot'
+				// (shared with the root copilot tab), so reverse-mapping it would point to the
+				// wrong tab and break the accumulate/replace choice when a filter is active.
+				const navTab = tabId ?? NavigationTabByRecentTab[recentSection];
 				const hasActiveFilter = navTab
 					&& store.rootGetters['recentModel/recentFilteredModel/hasSelectedFilter'](navTab, parentChatId);
 				const commitName = hasActiveFilter ? 'setNestedIdCollection' : 'storeNestedIdCollection';

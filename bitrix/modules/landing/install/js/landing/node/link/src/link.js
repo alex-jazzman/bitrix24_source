@@ -59,9 +59,138 @@ export class Link extends Base
 		{
 			if (!BX.Landing.UI.Panel.StylePanel.getInstance().isShown())
 			{
-				BX.Landing.UI.Panel.Link.getInstance().show(this);
+				if (!BX.Landing.Env.getInstance().isBlockControlsEnabled())
+				{
+					const options = {
+						href: this.getValue().href,
+						onSave: (url) => this.setValue(this.getSimpleLinkValue(url)),
+						onRemove: () => this.setValue(this.getSimpleLinkValue('#')),
+					};
+
+					// AI select button appears only when the copilot element
+					// picker is available and enabled: without the handler the
+					// panel keeps no trace of it. The click only toggles the AI
+					// selection of this node and never writes the href.
+					const picker = getElementPicker();
+					if (picker)
+					{
+						options.onAiSelect = () => picker.toggleSelection(this);
+					}
+
+					BX.Landing.UI.Panel.SimpleLinkPanel.getInstance().show(this.node, options);
+				}
+				else
+				{
+					BX.Landing.UI.Panel.Link.getInstance().show(this);
+				}
 			}
 		}
+	}
+
+	/**
+	 * Detects whether the given href points outside of the current site and thus
+	 * must be opened in a new tab. Internal targets (block/page anchors, hash
+	 * anchors, relative paths) stay in the same tab.
+	 * @param {string} href
+	 * @return {boolean}
+	 */
+	isExternalHref(href): boolean
+	{
+		const value = String(href || '').trim();
+
+		if (value === '')
+		{
+			return false;
+		}
+
+		if (/^(#|block:|page:)/i.test(value)) // internal anchors / block / page links
+		{
+			return false;
+		}
+
+		if (/^(\.?\/)/.test(value)) // relative paths: /… ./…
+		{
+			return false;
+		}
+
+		if (/^(https?:)?\/\//i.test(value)) // http(s):// or protocol-relative //
+		{
+			return true;
+		}
+
+		if (/^(mailto:|tel:|ftp:|callto:)/i.test(value))
+		{
+			return true;
+		}
+
+		if (/^[a-z][a-z0-9+.-]*:/i.test(value)) // any other explicit protocol
+		{
+			return true;
+		}
+
+		return true; // bare domain / anything else — treat as external
+	}
+
+	/**
+	 * Rejects hrefs whose scheme can execute code in the editor (DOM-XSS):
+	 * javascript:, data:, vbscript:, file:. Everything else is safe — http(s),
+	 * mailto:, tel:, #anchors, relative paths, schemeless values. The href is
+	 * lowercased, stripped of leading/trailing whitespace and control chars
+	 * (defeats `java\tscript:` obfuscation) before matching the scheme.
+	 * @param {string} href
+	 * @return {boolean}
+	 */
+	isSafeHref(href): boolean
+	{
+		// eslint-disable-next-line no-control-regex
+		const value = String(href || '').trim().replace(/[\x00-\x20]/g, '');
+		const scheme = (value.match(/^([a-z][a-z0-9+.-]*):/i) || [, ''])[1].toLowerCase();
+
+		return ['javascript', 'data', 'vbscript', 'file'].indexOf(scheme) === -1;
+	}
+
+	/**
+	 * Builds node value for the simple link panel (AI sites). External links are
+	 * opened in a new tab with rel="noopener noreferrer"; internal links stay in
+	 * the same tab and must not carry the rel attribute (it is dropped if a
+	 * previous _blank save had set it). An unsafe scheme (see isSafeHref) is
+	 * treated as link removal: href '#', same tab, rel dropped.
+	 * @param {string} href
+	 * @return {{text: string, href: string|*, target: string|*}}
+	 */
+	getSimpleLinkValue(href)
+	{
+		// decodeDataValue (applied on write in setAttrValue) can reveal an unsafe
+		// scheme hidden behind html-entities, so both the raw input and the
+		// decoded value are checked before the href is written.
+		if (!this.isSafeHref(href) || !this.isSafeHref(decodeDataValue(href)))
+		{
+			href = '#';
+		}
+
+		const value = this.getValue();
+		const external = this.isExternalHref(href);
+
+		value.href = href;
+		value.target = external ? '_blank' : '_self';
+
+		const attrs = { ...(value.attrs || {}) };
+		delete attrs.rel;
+
+		if (external)
+		{
+			attrs.rel = 'noopener noreferrer';
+		}
+		else
+		{
+			// setAttrValue skips keys absent from attrs, so a bare delete would
+			// leave a stale rel in the DOM; rel: null makes Dom.attr remove it.
+			attrs.rel = null;
+		}
+
+		value.attrs = attrs;
+
+		return value;
 	}
 
 	/**
@@ -238,3 +367,15 @@ export class Link extends Base
 }
 
 BX.Landing.Node.Link = Link;
+
+/**
+ * Resolves the active copilot element picker. Returns null when the extension
+ * is not loaded or its option is disabled, so AI controls are not rendered.
+ * @return {?BX.Landing.Copilot.ElementPicker}
+ */
+function getElementPicker()
+{
+	const picker = BX.Landing.Copilot && BX.Landing.Copilot.ElementPicker;
+
+	return (picker && picker.isEnabled()) ? picker.getInstance() : null;
+}

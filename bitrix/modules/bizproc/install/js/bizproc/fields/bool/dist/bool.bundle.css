@@ -1,0 +1,13 @@
+.bizproc-fields-bool-row {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-xs);
+}
+
+/* The switcher becomes keyboard-focusable (tabindex=0) but .ui-switcher has no
+   visible focus ring of its own; supply one on keyboard focus (WCAG 2.4.7).
+   outline (not box-shadow) so it is never clipped by any overflow:hidden. */
+.bizproc-fields-bool-row .ui-switcher:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: 2px;
+}

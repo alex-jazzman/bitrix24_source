@@ -1,5 +1,5 @@
 import FileUploader from '../file-uploader/fileuploader'
-import { Controller as FormController} from './controller';
+import type { Controller as FormController} from './controller';
 import type { FileData } from '../field/file/item';
 import type {ControllerOption} from "../file-uploader/fileuploader";
 

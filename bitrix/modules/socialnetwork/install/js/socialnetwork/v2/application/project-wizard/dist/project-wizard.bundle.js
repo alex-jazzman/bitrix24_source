@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Socialnetwork = this.BX.Socialnetwork || {};
 this.BX.Socialnetwork.V2 = this.BX.Socialnetwork.V2 || {};
-(function (exports, main_core, ui_vue3, ui_vue3_mixins_locMixin, socialnetwork_v2_core, socialnetwork_v2_const, ui_vue3_pinia, ui_notificationManager, socialnetwork_v2_model_project, socialnetwork_v2_model_interface, socialnetwork_v2_features_project_getProjectFeature, socialnetwork_v2_provider_services_projectService, socialnetwork_v2_components_elements_uiLoader, socialnetwork_v2_components_elements_uiAvatarProject, socialnetwork_v2_components_elements_uiGrowingTextArea, socialnetwork_v2_components_elements_uiHint, socialnetwork_v2_components_banners_newProjectBanner, ui_system_menu_vue, ui_system_typography_vue, socialnetwork_v2_components_elements_uiCheckbox, socialnetwork_v2_components_elements_uiField, socialnetwork_v2_components_elements_uiTextarea, socialnetwork_v2_components_selectors_usersSelector, socialnetwork_v2_components_elements_uiRadio, ui_iconSet_api_core, socialnetwork_v2_components_elements_uiSelect, ui_iconSet_api_vue, ui_iconSet_solid, ui_vue3_components_switcher, ui_switcher, socialnetwork_v2_components_elements_uiAccordion, ui_vue3_components_button, ui_infoHelper, ui_iconSet_outline, socialnetwork_v2_components_elements_uiDivider, ui_datePicker, ui_system_input_vue, socialnetwork_v2_lib_calendar, socialnetwork_v2_lib_timezone, socialnetwork_v2_components_selectors_tagsSelector, socialnetwork_v2_components_elements_uiSwitcherField, socialnetwork_v2_components_popup_autoDeletePopup, socialnetwork_v2_features_project_createProjectFeature, socialnetwork_v2_features_project_updateProjectFeature, socialnetwork_v2_features_project_copyProjectFeature) {
+(function (exports, main_core, ui_vue3, ui_vue3_mixins_locMixin, socialnetwork_v2_core, socialnetwork_v2_const, socialnetwork_v2_model_interface, ui_vue3_pinia, ui_notificationManager, socialnetwork_v2_model_project, socialnetwork_v2_features_project_getProjectFeature, socialnetwork_v2_provider_services_projectService, socialnetwork_v2_components_elements_uiLoader, socialnetwork_v2_components_elements_uiAvatarProject, ui_a11y, socialnetwork_v2_components_elements_uiGrowingTextArea, socialnetwork_v2_components_elements_uiHint, socialnetwork_v2_components_banners_newProjectBanner, ui_system_menu_vue, ui_system_typography_vue, socialnetwork_v2_components_elements_uiCheckbox, socialnetwork_v2_components_elements_uiField, socialnetwork_v2_components_elements_uiTextarea, socialnetwork_v2_components_selectors_usersSelector, ui_system_radiobutton, ui_iconSet_api_core, ui_system_input_vue, ui_iconSet_api_vue, ui_iconSet_solid, ui_vue3_components_switcher, ui_switcher, socialnetwork_v2_components_elements_uiAccordion, ui_vue3_components_button, ui_infoHelper, ui_iconSet_outline, socialnetwork_v2_components_elements_uiSelect, socialnetwork_v2_components_elements_uiDivider, ui_datePicker, socialnetwork_v2_lib_calendar, socialnetwork_v2_lib_timezone, socialnetwork_v2_components_selectors_tagsSelector, socialnetwork_v2_components_elements_uiSwitcherField, socialnetwork_v2_components_popup_autoDeletePopup, socialnetwork_v2_features_project_createProjectFeature, socialnetwork_v2_features_project_updateProjectFeature, socialnetwork_v2_features_project_copyProjectFeature) {
 	'use strict';
 
 	class GetDefaultData {
@@ -55,7 +55,8 @@ this.BX.Socialnetwork.V2 = this.BX.Socialnetwork.V2 || {};
 		},
 		data() {
 			return {
-				isPopupShown: false
+				isPopupShown: false,
+				keyboardFocus: false
 			};
 		},
 		computed: {
@@ -85,6 +86,12 @@ this.BX.Socialnetwork.V2 = this.BX.Socialnetwork.V2 || {};
 		},
 		methods: {
 			...ui_vue3_pinia.mapActions(socialnetwork_v2_model_interface.useInterfaceStore, ['setValidation']),
+			onFieldFocus() {
+				this.keyboardFocus = ui_a11y.FocusMonitor.Instance.getModalityTracker().getLastNavigationKey() === 'Tab';
+			},
+			onFieldBlur() {
+				this.keyboardFocus = false;
+			},
 			async highlightTitle() {
 				await this.delay();
 				const cancelHighlight = () => {
@@ -127,7 +134,8 @@ this.BX.Socialnetwork.V2 = this.BX.Socialnetwork.V2 || {};
 			:class="[
 				'socialnetwork--project-title-wrapper',
 				{
-					'socialnetwork--project--field-highlight': validation.title.invalid,
+					'--keyboard-focus': keyboardFocus,
+						'socialnetwork--project--field-highlight': validation.title.invalid,
 					'socialnetwork--project--field-highlight__error': validation.title.uniq,
 				}
 			]"
@@ -138,6 +146,8 @@ this.BX.Socialnetwork.V2 = this.BX.Socialnetwork.V2 || {};
 				:fontSize="25"
 				class="socialnetwork--project-title"
 				:placeholder="loc('SONET_EXT_PROJECT_WIZARD_TITLE_PLACEHOLDER')"
+					@focus="onFieldFocus"
+					@blur="onFieldBlur"
 			/>
 		</div>
 		<UiHint
@@ -369,6 +379,7 @@ this.BX.Socialnetwork.V2 = this.BX.Socialnetwork.V2 || {};
 					<div class="scn-pw-copy-settings__option-vis">
 						<UiCheckbox
 							class="scn-pw-copy-settings__option-checkbox"
+							inputId="sonet-pw-copy-tasks"
 							:isChecked="isCheckedTasks"
 							:isDisabled="false"
 							:isHighlighted="true"
@@ -377,9 +388,11 @@ this.BX.Socialnetwork.V2 = this.BX.Socialnetwork.V2 || {};
 						/>
 					</div>
 					<div class="scn-pw-copy-settings__option-text">
-						<TextMd
-							class="scn-pw-copy-settings__option-head"
-						>{{ loc('SONET_EXT_PROJECT_WIZARD_COPY_OPTION_TASKS_TITLE') }}</TextMd>
+						<label class="scn-pw-copy-settings__option-head-label" for="sonet-pw-copy-tasks">
+							<TextMd
+								class="scn-pw-copy-settings__option-head"
+							>{{ loc('SONET_EXT_PROJECT_WIZARD_COPY_OPTION_TASKS_TITLE') }}</TextMd>
+						</label>
 						<TextXs
 							class="scn-pw-copy-settings__option-descr"
 						>{{ loc('SONET_EXT_PROJECT_WIZARD_COPY_OPTION_TASKS_DESCR') }}</TextXs>
@@ -394,6 +407,7 @@ this.BX.Socialnetwork.V2 = this.BX.Socialnetwork.V2 || {};
 					<div class="scn-pw-copy-settings__option-vis">
 						<UiCheckbox
 							class="scn-pw-copy-settings__checkbox"
+							inputId="sonet-pw-copy-robots"
 							:isChecked="isCheckedRobots"
 							:isDisabled="!isCheckedTasks"
 							:isHighlighted="true"
@@ -403,9 +417,11 @@ this.BX.Socialnetwork.V2 = this.BX.Socialnetwork.V2 || {};
 					</div>
 					<div class="scn-pw-copy-settings__option-text">
 						<div class="scn-pw-copy-settings__option-text">
-							<TextMd
-								class="scn-pw-copy-settings__option-head"
-							>{{ loc('SONET_EXT_PROJECT_WIZARD_COPY_OPTION_ROBOTS_TITLE') }}</TextMd>
+							<label class="scn-pw-copy-settings__option-head-label" for="sonet-pw-copy-robots">
+								<TextMd
+									class="scn-pw-copy-settings__option-head"
+								>{{ loc('SONET_EXT_PROJECT_WIZARD_COPY_OPTION_ROBOTS_TITLE') }}</TextMd>
+							</label>
 							<TextXs
 								class="scn-pw-copy-settings__option-descr"
 							>{{ loc('SONET_EXT_PROJECT_WIZARD_COPY_OPTION_ROBOTS_DESCR') }}</TextXs>
@@ -421,6 +437,7 @@ this.BX.Socialnetwork.V2 = this.BX.Socialnetwork.V2 || {};
 					<div class="scn-pw-copy-settings__option-vis">
 						<UiCheckbox
 							class="scn-pw-copy-settings__checkbox"
+							inputId="sonet-pw-copy-folders"
 							:isChecked="isCheckedFolders"
 							:isDisabled="false"
 							:isHighlighted="true"
@@ -430,9 +447,11 @@ this.BX.Socialnetwork.V2 = this.BX.Socialnetwork.V2 || {};
 					</div>
 					<div class="scn-pw-copy-settings__option-text">
 						<TextMd class="scn-pw-copy-settings__option-head">
-							<span
-								class="scn-pw-copy-settings__option-head-text"
-							>{{ loc('SONET_EXT_PROJECT_WIZARD_COPY_OPTION_FOLDERS_TITLE') }}</span>
+							<label class="scn-pw-copy-settings__option-head-label" for="sonet-pw-copy-folders">
+								<span
+									class="scn-pw-copy-settings__option-head-text"
+								>{{ loc('SONET_EXT_PROJECT_WIZARD_COPY_OPTION_FOLDERS_TITLE') }}</span>
+							</label>
 							<button
 								id="selectorFoldersCopyType"
 								ref="selectorFoldersCopyType"
@@ -442,6 +461,8 @@ this.BX.Socialnetwork.V2 = this.BX.Socialnetwork.V2 || {};
 									'scn-pw-copy-settings__option-head-action_opened': isOpenedSelectorFoldersCopyType,
 								}"
 								:disabled="!isCheckedFolders"
+								aria-haspopup="menu"
+								:aria-expanded="isOpenedSelectorFoldersCopyType ? 'true' : 'false'"
 								@click="handleClickSelectorFoldersCopyType"
 							>{{ titleSelectorFoldersCopyType }}</button>
 						</TextMd>
@@ -698,7 +719,7 @@ this.BX.Socialnetwork.V2 = this.BX.Socialnetwork.V2 || {};
 					context: 'socialnetworkProjectWizardMembers',
 					multiple: true,
 					preselectedItems: this.getPreselectedMembers(),
-					entities: [socialnetwork_v2_const.EntitySelectorEntity.Department, socialnetwork_v2_const.EntitySelectorEntity.Group],
+					entities: [socialnetwork_v2_const.EntitySelectorEntity.Department],
 					targetContainer: this.getTargetContainer(),
 					onSelect: (userId, item) => {
 						this.select(item.getId(), item.getEntityId());
@@ -767,13 +788,18 @@ this.BX.Socialnetwork.V2 = this.BX.Socialnetwork.V2 || {};
 	};
 
 	// @vue/component
-	const PrivacyTypeField = {
+	const PrivacyTypeField = ui_vue3.defineComponent({
 		name: 'ProjectWizardPrivacyTypeField',
 		components: {
 			TextMd: ui_system_typography_vue.TextMd,
 			TextXs: ui_system_typography_vue.TextXs,
 			UiField: socialnetwork_v2_components_elements_uiField.UiField,
-			UiRadio: socialnetwork_v2_components_elements_uiRadio.UiRadio
+			RadioButton: ui_system_radiobutton.Vue.RadioButton
+		},
+		setup() {
+			return {
+				RadioButtonSize: ui_system_radiobutton.RadioButtonSize
+			};
 		},
 		computed: {
 			...ui_vue3_pinia.mapWritableState(socialnetwork_v2_model_project.useProjectStore, ['privacyType']),
@@ -789,24 +815,41 @@ this.BX.Socialnetwork.V2 = this.BX.Socialnetwork.V2 || {};
 				}];
 			}
 		},
+		methods: {
+			handleSelect(type, event) {
+				if (event.target instanceof HTMLElement && event.target.closest('label')) {
+					return;
+				}
+				this.privacyType = type;
+			}
+		},
 		template: `
-		<UiField
-			:label="loc('SONET_EXT_PROJECT_WIZARD_PRIVACY_TYPE_LABEL')"
-			labelFor="sonet-project-wizard-privacy-type"
-		>
-			<div class="sonet--project-wizard--privacy-type-field-content">
-				<label
+		<UiField :label="loc('SONET_EXT_PROJECT_WIZARD_PRIVACY_TYPE_LABEL')">
+			<div
+				class="sonet--project-wizard--privacy-type-field-content"
+				role="radiogroup"
+				:aria-label="loc('SONET_EXT_PROJECT_WIZARD_PRIVACY_TYPE_LABEL')"
+				data-testid="project-wizard-privacy-type-group"
+			>
+				<div
 					v-for="item in items"
 					:key="item.type"
 					:class="['sonet--project-wizard--privacy-type', {
 						'--selected': privacyType === item.type
 					}]"
+					:data-testid="'project-wizard-privacy-type-option-' + item.type"
+					@click="handleSelect(item.type, $event)"
 				>
-					<UiRadio
-						v-model="privacyType"
-						:value="item.type"
-						class="sonet--project-wizard--privacy-type-radio"
-					/>
+					<span class="sonet--project-wizard--privacy-type-radio">
+						<RadioButton
+							group="sonet-project-wizard-privacy-type"
+							:size="RadioButtonSize.Sm"
+							:modelValue="privacyType === item.type"
+							:aria-label="item.title"
+							:data-testid="'project-wizard-privacy-type-radio-' + item.type"
+							@update:modelValue="privacyType = item.type"
+						/>
+					</span>
 					<div class="sonet--project-wizard--privacy-type-content">
 						<div class="sonet--project-wizard--privacy-type-title">
 							<TextMd class="sonet--project-wizard--privacy-type-title-text">
@@ -819,11 +862,11 @@ this.BX.Socialnetwork.V2 = this.BX.Socialnetwork.V2 || {};
 							</TextXs>
 						</div>
 					</div>
-				</label>
+				</div>
 			</div>
 		</UiField>
 	`
-	};
+	});
 
 	const whiteList = ['chat', 'tasks', 'files', 'calendar', 'blog', 'flows', 'landing_knowledge'];
 	const whiteListOrder = new Map(whiteList.map((featureId, index) => [featureId, index]));
@@ -841,15 +884,20 @@ this.BX.Socialnetwork.V2 = this.BX.Socialnetwork.V2 || {};
 	const BaseFeatureField = {
 		name: 'ProjectWizardBaseFeatureField',
 		components: {
-			TextMd: ui_system_typography_vue.TextMd,
-			TextXs: ui_system_typography_vue.TextXs,
-			UiField: socialnetwork_v2_components_elements_uiField.UiField,
-			UiSelect: socialnetwork_v2_components_elements_uiSelect.UiSelect
+			BInput: ui_system_input_vue.BInput,
+			BMenu: ui_system_menu_vue.BMenu,
+			UiField: socialnetwork_v2_components_elements_uiField.UiField
 		},
 		inject: {
 			getWizardBodyContainer: {
 				from: InjectionKey.GetWizardBodyContainer
 			}
+		},
+		data() {
+			return {
+				isMounted: false,
+				isMenuShown: false
+			};
 		},
 		computed: {
 			...ui_vue3_pinia.mapWritableState(socialnetwork_v2_model_project.useProjectStore, ['baseFeatureId', 'availableFeatures']),
@@ -865,29 +913,116 @@ this.BX.Socialnetwork.V2 = this.BX.Socialnetwork.V2 || {};
 					icon: featureIconMap[feature.id] ?? ui_iconSet_api_core.Outline.TASK
 				}));
 			},
+			selectedFeature() {
+				return this.baseFeatures.find(feature => feature.id === this.baseFeatureId) ?? null;
+			},
+			menuOptions() {
+				return {
+					bindElement: this.$refs.input.$el,
+					closeOnItemClick: false,
+					targetContainer: this.targetContainer,
+					items: this.baseFeatures.map(feature => ({
+						title: feature.title,
+						icon: feature.icon,
+						isSelected: feature.id === this.baseFeatureId,
+						design: ui_system_menu_vue.MenuItemDesign.Default,
+						onClick: () => {
+							this.update(feature.id);
+							this.closeMenu();
+						}
+					}))
+				};
+			},
 			targetContainer() {
-				return this.getWizardBodyContainer();
+				// `isMounted` makes this recompute once the wizard body ref is available
+				// (it is null while the field renders inside the layout's body slot).
+				return (this.isMounted ? this.getWizardBodyContainer() : null) ?? document.body;
 			}
+		},
+		mounted() {
+			this.isMounted = true;
 		},
 		methods: {
 			update(featureId) {
 				this.baseFeatureId = featureId;
+			},
+			openMenu() {
+				if (this.isMenuShown) {
+					return;
+				}
+				this.isMenuShown = true;
+				void this.$nextTick(() => {
+					this.focusActiveMenuItem();
+				});
+			},
+			closeMenu() {
+				if (!this.isMenuShown) {
+					return;
+				}
+				const container = this.getMenuContainer();
+				const focusWasInMenu = container?.contains(document.activeElement) ?? false;
+				this.isMenuShown = false;
+				if (focusWasInMenu) {
+					this.$refs.input?.focus();
+				}
+			},
+			handleKeydown(event) {
+				if (this.isMenuShown) {
+					return;
+				}
+				if (['Enter', ' ', 'Spacebar', 'ArrowDown', 'ArrowUp'].includes(event.key)) {
+					event.preventDefault();
+					this.openMenu();
+				}
+			},
+			focusActiveMenuItem() {
+				const container = this.getMenuContainer();
+				if (!container) {
+					return;
+				}
+				const buttons = container.querySelectorAll('.ui-popup-menu-item-action');
+				if (buttons.length === 0) {
+					return;
+				}
+				const selectedIndex = this.baseFeatures.findIndex(feature => feature.id === this.baseFeatureId);
+				const target = (selectedIndex >= 0 ? buttons[selectedIndex] : null) ?? buttons[0];
+				target.focus();
+			},
+			getMenuContainer() {
+				const fromInstance = this.$refs.menu?.menu?.getPopupContainer?.();
+				if (fromInstance) {
+					return fromInstance;
+				}
+				const root = this.targetContainer ?? document.body;
+				return root.querySelector?.('.ui-popup-menu-container') ?? null;
 			}
 		},
 		template: `
 		<UiField
 			:label="loc('SONET_EXT_PROJECT_WIZARD_BASE_FEATURE_LABEL')"
 			labelFor="sonet-project-wizard-base-feature"
+			data-testid="base-feature-target"
 		>
 			<div class="sonet--project-wizard--base-feature-field-content">
 				<div class="sonet--project-wizard--base-feature-item">
-					<UiSelect
-						:modelValue="baseFeatureId"
-						:label="loc('SONET_EXT_PROJECT_WIZARD_BASE_FEATURE_INFO')"
-						:items="baseFeatures"
-						inputClassName="socialnetwork--project-wizard--field-shadow"
-						:targetContainer
-						@update:modelValue="update($event)"
+					<BInput
+						v-if="isMounted"
+						:modelValue="selectedFeature?.title ?? ''"
+						:placeholder="loc('SONET_EXT_PROJECT_WIZARD_BASE_FEATURE_INFO')"
+						readonly
+						dropdown
+						stretched
+						:active="isMenuShown"
+						ref="input"
+						data-testid="base-feature-select"
+						@click="openMenu"
+						@keydown="handleKeydown"
+					/>
+					<BMenu
+						v-if="isMenuShown"
+						ref="menu"
+						:options="menuOptions"
+						@close="closeMenu"
 					/>
 				</div>
 			</div>
@@ -1129,6 +1264,7 @@ this.BX.Socialnetwork.V2 = this.BX.Socialnetwork.V2 || {};
 			UiAccordionItem: socialnetwork_v2_components_elements_uiAccordion.UiAccordionItem,
 			UiButton: ui_vue3_components_button.Button,
 			UiDivider: socialnetwork_v2_components_elements_uiDivider.UiDivider,
+			UiField: socialnetwork_v2_components_elements_uiField.UiField,
 			UiSelect: socialnetwork_v2_components_elements_uiSelect.UiSelect
 		},
 		inject: {
@@ -1204,16 +1340,20 @@ this.BX.Socialnetwork.V2 = this.BX.Socialnetwork.V2 || {};
 						class="sonet--project-wizard--access-rights-item"
 					>
 						<div class="sonet--project-wizard--access-rights-item-title">{{ group.title }}</div>
-						<UiSelect
+						<UiField
 							v-for="field in group.fields"
 							:key="field.id"
-							:modelValue="permissions[group.id]?.[field.id]"
 							:label="field.label"
-							:items="field.items"
-							inputClassName="socialnetwork--project-wizard--field-shadow"
-							:targetContainer
-							@update:modelValue="updatePermission(group.id, field.id, $event)"
-						/>
+						>
+							<UiSelect
+								:modelValue="permissions[group.id]?.[field.id]"
+								:label="field.label"
+								:items="field.items"
+								inputClassName="socialnetwork--project-wizard--field-shadow"
+								:targetContainer
+								@update:modelValue="updatePermission(group.id, field.id, $event)"
+							/>
+						</UiField>
 						<UiDivider/>
 					</div>
 					<UiButton
@@ -1229,6 +1369,143 @@ this.BX.Socialnetwork.V2 = this.BX.Socialnetwork.V2 || {};
 		</UiAccordion>
 	`
 	};
+
+	const SLIDER_ID = 'socialnetwork:project-notifications';
+	const SLIDER_WIDTH = 600;
+	const NotificationsBlock = ui_vue3.defineComponent({
+		name: 'ProjectWizardNotificationsBlock',
+		components: {
+			BIcon: ui_iconSet_api_vue.BIcon,
+			TextMd: ui_system_typography_vue.TextMd
+		},
+		setup() {
+			return {
+				Outline: ui_iconSet_api_vue.Outline
+			};
+		},
+		data() {
+			return {
+				panelApp: null,
+				slider: null
+			};
+		},
+		created() {
+			this._panelDepsPromise = null;
+		},
+		computed: {
+			...ui_vue3_pinia.mapState(socialnetwork_v2_model_project.useProjectStore, ['notifications']),
+			isVisible() {
+				return socialnetwork_v2_model_project.isValidNotificationCatalog(this.notifications);
+			}
+		},
+		beforeUnmount() {
+			this.unmountPanel();
+		},
+		methods: {
+			...ui_vue3_pinia.mapActions(socialnetwork_v2_model_project.useProjectStore, ['setNotificationCounter']),
+			async openPanel() {
+				if (this._panelDepsPromise === null) {
+					this._panelDepsPromise = Promise.all([main_core.Runtime.loadExtension('main.sidepanel'), main_core.Runtime.loadExtension('intranet.sidepanel.air'), main_core.Runtime.loadExtension('socialnetwork.v2.application.project-wizard.notifications-drawer')]).catch(error => {
+						this._panelDepsPromise = null;
+						throw error;
+					});
+				}
+				const [{
+					SidePanel
+				},, {
+					NotificationsPanel
+				}] = await this._panelDepsPromise;
+				if (!SidePanel || !SidePanel.Instance) {
+					return;
+				}
+				const snapshot = this.notifications ? JSON.parse(JSON.stringify(this.notifications)) : null;
+				SidePanel.Instance.open(SLIDER_ID, {
+					cacheable: false,
+					width: SLIDER_WIDTH,
+					contentCallback: slider => {
+						this.slider = ui_vue3.markRaw(slider);
+						const container = slider.getContentContainer();
+						this.panelApp = ui_vue3.markRaw(ui_vue3.BitrixVue.createApp(NotificationsPanel, {
+							catalog: snapshot,
+							onSave: updatedCatalog => this.applyAndClose(updatedCatalog),
+							onCancel: () => this.closeSlider()
+						}));
+						this.panelApp.mixin(ui_vue3_mixins_locMixin.locMixin);
+						this.panelApp.mount(container);
+					},
+					events: {
+						onCloseComplete: () => {
+							this.unmountPanel();
+							this.slider = null;
+							this.$nextTick(() => {
+								this.$refs.trigger?.focus();
+							});
+						}
+					}
+				});
+			},
+			applyAndClose(updatedCatalog) {
+				this.applyToStore(updatedCatalog);
+				this.closeSlider();
+			},
+			applyToStore(updatedCatalog) {
+				if (!updatedCatalog || !this.notifications) {
+					return;
+				}
+				for (const group of updatedCatalog.groups) {
+					for (const type of group.types) {
+						const stored = this.findStoredType(type.id);
+						if (stored && stored.counterEnabled !== type.counterEnabled) {
+							this.setNotificationCounter(type.id, type.counterEnabled);
+						}
+					}
+				}
+			},
+			findStoredType(typeId) {
+				if (!this.notifications) {
+					return null;
+				}
+				for (const group of this.notifications.groups) {
+					const type = group.types.find(item => item.id === typeId);
+					if (type) {
+						return type;
+					}
+				}
+				return null;
+			},
+			closeSlider() {
+				this.slider?.close();
+			},
+			unmountPanel() {
+				if (this.panelApp) {
+					this.panelApp.unmount();
+					this.panelApp = null;
+				}
+			}
+		},
+		template: `
+		<div v-if="isVisible">
+			<div
+				ref="trigger"
+				class="sonet--project-wizard--notifications-trigger"
+				role="button"
+				tabindex="0"
+				data-testid="project-notifications-block"
+				@click="openPanel"
+				@keydown.enter.prevent="openPanel"
+				@keydown.space.prevent="openPanel"
+			>
+				<span class="sonet--project-wizard--notifications-trigger-content">
+					<BIcon :size="24" :name="Outline.NOTIFICATION" color="var(--ui-color-base-4)"/>
+					<TextMd>{{ loc('SONET_EXT_PROJECT_WIZARD_NOTIFICATIONS_LABEL') }}</TextMd>
+				</span>
+				<span class="sonet--project-wizard--notifications-trigger-chevron">
+					<BIcon :size="26" :name="Outline.CHEVRON_RIGHT_L" color="var(--ui-color-base-4)"/>
+				</span>
+			</div>
+		</div>
+	`
+	});
 
 	// @vue/component
 	const ProjectDatesField = {
@@ -1406,9 +1683,13 @@ this.BX.Socialnetwork.V2 = this.BX.Socialnetwork.V2 || {};
 					:active="pickerShown.start"
 					:withClear="Boolean(startTs)"
 					class="socialnetwork--project-wizard--field-shadow"
-					clickable
+					readonly
 					@clear="clearValue('start')"
 					@click="handleDateClick('start', $event)"
+					@keydown.enter.prevent="handleDateClick('start', $event)"
+					@keydown.space.prevent="handleDateClick('start', $event)"
+					@keydown.down.prevent="handleDateClick('start', $event)"
+					@keydown.delete.prevent="clearValue('start')"
 				/>
 				<div class="socialnetwork--project-wizard--project-dates-field_separator"/>
 				<BInput
@@ -1418,9 +1699,13 @@ this.BX.Socialnetwork.V2 = this.BX.Socialnetwork.V2 || {};
 					:active="pickerShown.finish"
 					:withClear="Boolean(finishTs)"
 					class="socialnetwork--project-wizard--field-shadow"
-					clickable
+					readonly
 					@clear="clearValue('finish')"
 					@click="handleDateClick('finish', $event)"
+					@keydown.enter.prevent="handleDateClick('finish', $event)"
+					@keydown.space.prevent="handleDateClick('finish', $event)"
+					@keydown.down.prevent="handleDateClick('finish', $event)"
+					@keydown.delete.prevent="clearValue('finish')"
 				/>
 			</div>
 		</UiField>
@@ -1639,6 +1924,7 @@ this.BX.Socialnetwork.V2 = this.BX.Socialnetwork.V2 || {};
 		name: 'ProjectWizardContent',
 		components: {
 			AccessRightsBlock,
+			NotificationsBlock,
 			AdditionalSettingsBlock,
 			CopySettingsField,
 			GoalField,
@@ -1677,6 +1963,7 @@ this.BX.Socialnetwork.V2 = this.BX.Socialnetwork.V2 || {};
 			<PrivacyTypeField />
 			<BaseFeatureField v-if="isOldPortal" />
 			<AccessRightsBlock />
+			<NotificationsBlock />
 			<LegacyToolsBlock
 				v-if="(toggleableFeatures.length > 0 && !isActionCopy)"
 			/>
@@ -1816,6 +2103,11 @@ this.BX.Socialnetwork.V2 = this.BX.Socialnetwork.V2 || {};
 	`
 	};
 
+	const HIGHLIGHT_CLASS = 'sonet--project-wizard--base-feature-highlight';
+	// Must match the animation duration of `.sonet--project-wizard--base-feature-highlight`
+	// defined in base-feature.css (@keyframes sonet-project-wizard-base-feature-highlight-fade, 1.8s).
+	const HIGHLIGHT_DURATION_MS = 1800;
+
 	// @vue/component
 	const App = {
 		name: 'SocialnetworkProjectWizardApp',
@@ -1826,7 +2118,7 @@ this.BX.Socialnetwork.V2 = this.BX.Socialnetwork.V2 || {};
 			ProjectWizardFooter
 		},
 		computed: {
-			...ui_vue3_pinia.mapState(socialnetwork_v2_model_interface.useInterfaceStore, ['currentUserId', 'isActionCreate']),
+			...ui_vue3_pinia.mapState(socialnetwork_v2_model_interface.useInterfaceStore, ['currentUserId', 'isActionCreate', 'isActionUpdate', 'isActionCopy', 'scrollToStartupTool']),
 			...ui_vue3_pinia.mapWritableState(socialnetwork_v2_model_interface.useInterfaceStore, ['loading']),
 			...ui_vue3_pinia.mapState(socialnetwork_v2_model_project.useProjectStore, {
 				id: 'id'
@@ -1838,16 +2130,20 @@ this.BX.Socialnetwork.V2 = this.BX.Socialnetwork.V2 || {};
 			});
 			void this.initWizard();
 		},
+		beforeUnmount() {
+			clearTimeout(this._highlightTimer);
+		},
 		methods: {
 			...ui_vue3_pinia.mapActions(socialnetwork_v2_model_project.useProjectStore, ['patchProject']),
 			async initWizard() {
 				this.loading = true;
+				this._scrollDone = false;
 				if (!this.isActionCreate && this.id > 0) {
 					await new socialnetwork_v2_features_project_getProjectFeature.GetProjectFeature().getProject(this.id);
 					void this.getDefaultData();
 				} else {
 					await new socialnetwork_v2_features_project_getProjectFeature.GetProjectFeature().getAvailableFeatures();
-					void this.getDefaultData();
+					await this.getDefaultData();
 					const error = await new socialnetwork_v2_features_project_getProjectFeature.GetProjectFeature().getAvailableFeatures();
 					if (error) {
 						ui_notificationManager.Notifier.notifyViaBrowserProvider({
@@ -1857,9 +2153,47 @@ this.BX.Socialnetwork.V2 = this.BX.Socialnetwork.V2 || {};
 					}
 				}
 				this.loading = false;
+				if (this.isActionUpdate && this.scrollToStartupTool) {
+					void this.$nextTick(() => {
+						requestAnimationFrame(() => {
+							requestAnimationFrame(() => {
+								if (!this._scrollDone) {
+									this._scrollDone = true;
+									this.scrollToStartupToolHandler();
+								}
+							});
+						});
+					});
+				}
 			},
 			async getDefaultData() {
 				await GetDefaultData.getDefaultData();
+			},
+			scrollToStartupToolHandler() {
+				try {
+					const searchRoot = this.$el instanceof HTMLElement ? this.$el : document;
+					const target = searchRoot.querySelector('[data-testid="base-feature-target"]');
+					if (target instanceof HTMLElement) {
+						target.scrollIntoView({
+							block: 'center',
+							behavior: 'smooth'
+						});
+						const highlightTarget = target.querySelector('.sonet--project-wizard--base-feature-field-content');
+						if (!(highlightTarget instanceof HTMLElement)) {
+							return;
+						}
+						clearTimeout(this._highlightTimer);
+						highlightTarget.classList.remove(HIGHLIGHT_CLASS);
+						// Force reflow so re-adding the class restarts the animation
+						void highlightTarget.offsetWidth;
+						highlightTarget.classList.add(HIGHLIGHT_CLASS);
+						this._highlightTimer = setTimeout(() => {
+							highlightTarget.classList.remove(HIGHLIGHT_CLASS);
+						}, HIGHLIGHT_DURATION_MS);
+					}
+				} catch {
+					// best-effort: scroll failure must not break the wizard
+				}
 			}
 		},
 		template: `
@@ -1875,6 +2209,8 @@ this.BX.Socialnetwork.V2 = this.BX.Socialnetwork.V2 || {};
 	`
 	};
 
+	let pendingStartupToolScroll = false;
+	let projectsTrialBannerProposed = false;
 	class ProjectWizard {
 		#params;
 		#application;
@@ -1883,6 +2219,9 @@ this.BX.Socialnetwork.V2 = this.BX.Socialnetwork.V2 || {};
 		#boundClose = null;
 		constructor(params) {
 			this.#params = this.#sanitizeParams(params || {});
+		}
+		static requestStartupToolScroll() {
+			pendingStartupToolScroll = true;
 		}
 		#sanitizeParams(params = {}) {
 			return Object.fromEntries(Object.entries(params).filter(([, value]) => !main_core.Type.isUndefined(value)));
@@ -1900,6 +2239,10 @@ this.BX.Socialnetwork.V2 = this.BX.Socialnetwork.V2 || {};
 			});
 		}
 		async mount(slider) {
+			if (pendingStartupToolScroll) {
+				pendingStartupToolScroll = false;
+				this.#params.scrollToStartupTool = true;
+			}
 			if (slider) {
 				if (slider.isOpen()) {
 					return;
@@ -1950,6 +2293,18 @@ this.BX.Socialnetwork.V2 = this.BX.Socialnetwork.V2 || {};
 			}
 			this.#slider?.close();
 			this.unmount();
+			this.#proposeProjectsTrial();
+		}
+		#proposeProjectsTrial() {
+			if (!socialnetwork_v2_model_interface.isCreateProjectWizardAction(this.#params.action) || socialnetwork_v2_core.Core.getSettings().canProposeProjectsTrial !== true || projectsTrialBannerProposed) {
+				return;
+			}
+			projectsTrialBannerProposed = true;
+			main_core.Runtime.loadExtension('socialnetwork.v2.components.popup.projects-trial-banner').then(({
+				showProjectsTrialBanner
+			}) => showProjectsTrialBanner()).catch(() => {
+				projectsTrialBannerProposed = false;
+			});
 		}
 		async #mountApplication(container) {
 			const application = ui_vue3.BitrixVue.createApp(App);
@@ -1968,5 +2323,5 @@ this.BX.Socialnetwork.V2 = this.BX.Socialnetwork.V2 || {};
 
 	exports.ProjectWizard = ProjectWizard;
 
-})(this.BX.Socialnetwork.V2.Application = this.BX.Socialnetwork.V2.Application || {}, BX, BX.Vue3, BX.Vue3.Mixins, BX.Socialnetwork.V2, BX.Socialnetwork.V2, BX.Vue3.Pinia, BX.UI.NotificationManager, BX.Socialnetwork.V2.Model, BX.Socialnetwork.V2.Model, BX.Socialnetwork.V2.Features.Project, BX.Socialnetwork.V2.Provider.Services, BX.Socialnetwork.V2.Components.Elements, BX.Socialnetwork.V2.Components.Elements, BX.Socialnetwork.V2.Components.Elements, BX.Socialnetwork.V2.Components.Elements, BX.Socialnetwork.V2.Components.Banners, BX.UI.System.Menu, BX.UI.System.Typography.Vue, BX.Socialnetwork.V2.Components.Elements, BX.Socialnetwork.V2.Components.Elements, BX.Socialnetwork.V2.Components.Elements, BX.Socialnetwork.V2.Components.Selectors, BX.Socialnetwork.V2.Components.Elements, BX.UI.IconSet, BX.Socialnetwork.V2.Components.Elements, BX.UI.IconSet, window, BX.UI.Vue3.Components, BX.UI, BX.Socialnetwork.V2.Components.Elements, BX.Vue3.Components, BX.UI, window, BX.Socialnetwork.V2.Components.Elements, BX.UI.DatePicker, BX.UI.System.Input.Vue, BX.Socialnetwork.V2.Lib, BX.Socialnetwork.V2.Lib, BX.Socialnetwork.V2.Components.Selectors, BX.Socialnetwork.V2.Components.Elements, BX.Socialnetwork.V2.Components.Popup, BX.Socialnetwork.V2.Features.Project, BX.Socialnetwork.V2.Features.Project, BX.Socialnetwork.V2.Features.Project);
+})(this.BX.Socialnetwork.V2.Application = this.BX.Socialnetwork.V2.Application || {}, BX, BX.Vue3, BX.Vue3.Mixins, BX.Socialnetwork.V2, BX.Socialnetwork.V2, BX.Socialnetwork.V2.Model, BX.Vue3.Pinia, BX.UI.NotificationManager, BX.Socialnetwork.V2.Model, BX.Socialnetwork.V2.Features.Project, BX.Socialnetwork.V2.Provider.Services, BX.Socialnetwork.V2.Components.Elements, BX.Socialnetwork.V2.Components.Elements, BX.UI.Accessibility, BX.Socialnetwork.V2.Components.Elements, BX.Socialnetwork.V2.Components.Elements, BX.Socialnetwork.V2.Components.Banners, BX.UI.System.Menu, BX.UI.System.Typography.Vue, BX.Socialnetwork.V2.Components.Elements, BX.Socialnetwork.V2.Components.Elements, BX.Socialnetwork.V2.Components.Elements, BX.Socialnetwork.V2.Components.Selectors, BX.UI.System.RadioButton, BX.UI.IconSet, BX.UI.System.Input.Vue, BX.UI.IconSet, window, BX.UI.Vue3.Components, BX.UI, BX.Socialnetwork.V2.Components.Elements, BX.Vue3.Components, BX.UI, window, BX.Socialnetwork.V2.Components.Elements, BX.Socialnetwork.V2.Components.Elements, BX.UI.DatePicker, BX.Socialnetwork.V2.Lib, BX.Socialnetwork.V2.Lib, BX.Socialnetwork.V2.Components.Selectors, BX.Socialnetwork.V2.Components.Elements, BX.Socialnetwork.V2.Components.Popup, BX.Socialnetwork.V2.Features.Project, BX.Socialnetwork.V2.Features.Project, BX.Socialnetwork.V2.Features.Project);
 //# sourceMappingURL=project-wizard.bundle.js.map

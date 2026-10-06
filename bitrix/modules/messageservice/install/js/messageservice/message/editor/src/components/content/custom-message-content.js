@@ -1,8 +1,10 @@
+import { type BaseEvent } from 'main.core.events';
 import { Plugins, TextEditor, TextEditorComponent, Constants, type TextEditorOptions } from 'ui.text-editor';
 import { $getRoot, $setSelection } from 'ui.lexical.core';
 import { shallowRef } from 'ui.vue3';
 import { mapGetters, mapState } from 'ui.vue3.vuex';
 
+import { INSERT_PLACEHOLDER_TEXT_EVENT } from '../../const/editor-events';
 import { ContentProviderFactory } from '../../content-provider/content-provider-factory';
 import {
 	INSERT_PLACEHOLDER_COMMAND,
@@ -166,15 +168,26 @@ export const CustomMessageContent = {
 				void this.$store.dispatch('application/setProgress', { isLoading });
 			},
 		});
+
+		// The header (CustomTemplateSelector) lives outside this content subtree
+		// and cannot reach the editor directly. It emits a domain intent on the
+		// per-app bus; the active content owner (this component) executes it.
+		this.$Bitrix.eventEmitter.subscribe(INSERT_PLACEHOLDER_TEXT_EVENT, this.handleInsertPlaceholderText);
 	},
 	unmounted(): any
 	{
+		this.$Bitrix.eventEmitter.unsubscribe(INSERT_PLACEHOLDER_TEXT_EVENT, this.handleInsertPlaceholderText);
+
 		this.textEditor.destroy();
 		this.textEditor = null;
 
 		this.insertContext = null;
 	},
 	methods: {
+		handleInsertPlaceholderText(event: BaseEvent): void
+		{
+			this.insertContext.insertPlaceholderText(event.getData().text);
+		},
 		showCopilot(): void
 		{
 			this.textEditor.focus();

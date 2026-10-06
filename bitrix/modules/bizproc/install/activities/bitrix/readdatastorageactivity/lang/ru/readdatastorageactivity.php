@@ -14,6 +14,8 @@ $MESS['BIZPROC_SRA_RETURN_MODE_PROPERTY'] = 'Режим возврата дан�
 $MESS['BIZPROC_SRA_RETURN_MODE_SINGLE_PROPERTY'] = 'Одна запись';
 $MESS['BIZPROC_SRA_RETURN_MODE_COLLECTION_PROPERTY'] = 'Коллекция записей (JSON)';
 
-$MESS['BIZPROC_SRA_EMPTY_STORAGE_ID_OR_CODE'] = 'Не заполнено обязательное поле "Хранилище" или его символьный код';
+$MESS['BIZPROC_SRA_EMPTY_STORAGE_ID_OR_CODE_MSGVER_1'] = 'Заполните обязательное поле «Хранилище» — без него сохранить не получится';
 $MESS['BIZPROC_SRA_EMPTY_RETURN_FIELDS'] = 'Не заполнено обязательное поле "Возвращаемые поля"';
 $MESS['BIZPROC_SRA_EMPTY_FILTER_FIELDS'] = 'Не заполнено обязательное поле "Фильтр по полям"';
+$MESS['BIZPROC_SRA_DISK_LOW_WARNING'] = 'Заканчивается место на диске. Данные из хранилища доступны для просмотра, но скоро не получится добавлять и изменять записи. Освободите место, чтобы продолжить работу';
+$MESS['BIZPROC_SRA_DISK_BLOCKED_WARNING'] = 'Заканчивается место на диске. Данные из хранилища прочитаны, но добавление и изменение записей уже недоступно. Освободите место, чтобы продолжить работу';

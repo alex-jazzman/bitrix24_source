@@ -169,6 +169,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	};
 
 	exports.ChatCreationMessage = ChatCreationMessage;
-
-})(this.BX.Messenger.v2.Component.Message = this.BX.Messenger.v2.Component.Message || {}, BX?.Vue3?.Directives??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Component?.Elements??{}, BX?.Messenger?.v2?.Component?.EntitySelector??{}, BX?.Messenger?.v2?.Component?.Message??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Call?.Lib??{});
+})(this.BX.Messenger.v2.Component.Message = this.BX.Messenger.v2.Component.Message || {}, BX?.Vue3?.Directives??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Component?.Elements??{}, BX?.Messenger?.v2?.Component?.EntitySelector??{}, BX?.Messenger?.v2?.Component?.Message??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Call?.Lib??{});;
 //# sourceMappingURL=chat-creation.bundle.js.map

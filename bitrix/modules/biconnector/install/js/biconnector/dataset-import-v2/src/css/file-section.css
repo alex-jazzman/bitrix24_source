@@ -1,0 +1,263 @@
+.biconnector-dataset-import-v2-file-section {
+	flex: 0 0 auto;
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	background: var(--ui-color-bg-content-primary, #fff);
+	border-radius: 20px;
+	box-sizing: border-box;
+	transition: box-shadow 0.15s ease-in-out;
+	box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
+	overflow: hidden;
+}
+
+.biconnector-dataset-import-v2-file-section--empty {
+	flex: 1 1 auto;
+	min-height: 0;
+}
+
+.biconnector-dataset-import-v2-file-section--dragging .biconnector-dataset-import-v2-file-section__empty {
+	pointer-events: none;
+}
+
+.biconnector-dataset-import-v2-file-section__drag-overlay {
+	position: absolute;
+	inset: 20px;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 16px;
+	border: 1px solid var(--ui-color-accent-main-primary, #0075ff);
+	background: rgba(237, 247, 255, 0.9);
+	border-radius: 14px;
+	pointer-events: none;
+}
+
+.biconnector-dataset-import-v2-file-section__drag-content {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 6px;
+	max-width: 320px;
+	text-align: center;
+}
+
+.biconnector-dataset-import-v2-file-section__drag-heading {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.biconnector-dataset-import-v2-file-section__drag-icon {
+	--ui-icon-set__icon-size: 24px;
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary, #0075ff);
+}
+
+.biconnector-dataset-import-v2-file-section__drag-title {
+	font-size: 17px;
+	font-weight: 500;
+	line-height: 23px;
+	letter-spacing: -0.1px;
+	color: #000;
+}
+
+.biconnector-dataset-import-v2-file-section__drag-hint {
+	margin: 0;
+	font-size: 13px;
+	line-height: 17px;
+	letter-spacing: -0.05px;
+	color: var(--ui-color-base-2, #525c69);
+}
+
+
+.biconnector-dataset-import-v2-file-section__hidden-input {
+	display: none;
+}
+
+.biconnector-dataset-import-v2-file-section__header {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 18px 20px;
+}
+
+.biconnector-dataset-import-v2-file-section__header-icon {
+	flex: 0 0 auto;
+	--ui-icon-set__icon-size: 22px;
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary, #0075ff);
+}
+
+.biconnector-dataset-import-v2-file-section__header-title {
+	flex: 0 0 auto;
+	font-weight: 500;
+	letter-spacing: -0.1px;
+	color: #000;
+}
+
+.biconnector-dataset-import-v2-file-section__chip {
+	flex: 0 1 auto;
+	min-width: 0;
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	max-width: 100%;
+	margin-left: auto;
+	padding: 6px 10px 6px 6px;
+	background: var(--ui-color-bg-content-primary, #fff);
+	border: 1px solid var(--ui-color-design-outline-stroke-alt1, #dfe0e3);
+	border-radius: 10px;
+	box-sizing: border-box;
+	overflow: hidden;
+}
+
+.biconnector-dataset-import-v2-file-section__chip-icon {
+	flex: 0 0 auto;
+	width: 20px;
+	height: 22px;
+	background-image: url("../images/csv.svg");
+	background-repeat: no-repeat;
+	background-position: center;
+	background-size: contain;
+}
+
+.biconnector-dataset-import-v2-file-section__chip-name {
+	flex: 0 1 auto;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	color: var(--ui-color-base-1, #333);
+}
+
+.biconnector-dataset-import-v2-file-section__chip-remove {
+	flex: 0 0 auto;
+	width: 16px;
+	height: 16px;
+	border: 0;
+	cursor: pointer;
+	padding: 0;
+	--ui-icon-set__icon-color: var(--ui-color-base-3, #828b95);
+	--ui-icon-set__icon-size: 16px;
+}
+
+.biconnector-dataset-import-v2-file-section__chip-remove:hover {
+	--ui-icon-set__icon-color: var(--ui-color-base-1, #333);
+}
+
+.biconnector-dataset-import-v2-file-section__divider {
+	flex: 0 0 auto;
+	width: 1px;
+	height: 24px;
+	background: var(--ui-color-design-outline-stroke-alt1, #dfe0e3);
+}
+
+.biconnector-dataset-import-v2-file-section__replace {
+	flex: 0 0 auto;
+	margin-left: auto;
+	height: 32px;
+	padding: 0 16px;
+	border: 1px solid var(--ui-color-accent-main-primary, #0075ff);
+	border-radius: 8px;
+	background: transparent;
+	color: var(--ui-color-accent-main-primary, #0075ff);
+	font: inherit;
+	font-weight: 500;
+	cursor: pointer;
+	transition: background-color 0.15s ease-in-out;
+}
+
+.biconnector-dataset-import-v2-file-section__chip + .biconnector-dataset-import-v2-file-section__divider + .biconnector-dataset-import-v2-file-section__replace,
+.biconnector-dataset-import-v2-file-section__chip + .biconnector-dataset-import-v2-file-section__replace {
+	margin-left: 0;
+}
+
+.biconnector-dataset-import-v2-file-section__replace:hover {
+	background: rgba(0, 117, 255, 0.06);
+}
+
+.biconnector-dataset-import-v2-file-section__empty {
+	flex: 1 1 auto;
+	min-height: 0;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 30px;
+	padding: 40px 24px 60px;
+	text-align: center;
+}
+
+.biconnector-dataset-import-v2-file-section__mascot {
+	flex: 0 1 280px;
+	min-height: 140px;
+}
+
+@media (max-height: 540px) {
+	.biconnector-dataset-import-v2-file-section__mascot {
+		display: none;
+	}
+}
+
+.biconnector-dataset-import-v2-file-section__empty-text {
+	flex: 0 0 auto;
+	max-width: 470px;
+	margin: 0;
+	letter-spacing: -0.05px;
+	color: var(--ui-color-base-3, #828b95);
+}
+
+.biconnector-dataset-import-v2-file-section__empty-text--loading {
+	color: var(--ui-color-base-2, #525c69);
+}
+
+.biconnector-dataset-import-v2-file-section__browse {
+	flex: 0 0 auto;
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	height: 34px;
+	padding: 0 24px;
+	border: 0;
+	border-radius: 10px;
+	background: var(--ui-color-accent-main-primary, #0075ff);
+	color: #fff;
+	font: inherit;
+	font-size: 14px;
+	font-weight: 500;
+	letter-spacing: -0.05px;
+	cursor: pointer;
+	transition: background-color 0.15s ease-in-out;
+}
+
+.biconnector-dataset-import-v2-file-section__browse:hover {
+	background: #0066df;
+}
+
+.biconnector-dataset-import-v2-file-section__browse-icon {
+	--ui-icon-set__icon-size: 18px;
+	--ui-icon-set__icon-color: #fff;
+}
+
+.biconnector-dataset-import-v2-file-section__browse--loading {
+	cursor: progress;
+	min-width: 138px;
+	justify-content: center;
+}
+
+.biconnector-dataset-import-v2-file-section__browse--loading:disabled {
+	opacity: 1;
+}
+
+.biconnector-dataset-import-v2-file-section__browse-spinner {
+	width: 18px;
+	height: 18px;
+	border-radius: 50%;
+	border: 2px solid rgba(255, 255, 255, 0.35);
+	border-top-color: #fff;
+	animation: biconnector-dataset-import-v2-spin 0.8s linear infinite;
+}
+
+@keyframes biconnector-dataset-import-v2-spin {
+	to { transform: rotate(360deg); }
+}

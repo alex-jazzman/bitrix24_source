@@ -49,6 +49,15 @@ $MESS['SIGN_CALLBACK_CHAT_DOCUMENT_STOPPED_TO_EDITORF'] = '[b]Подписани
 
 $MESS['SIGN_CALLBACK_CHAT_DOCUMENT_CANCELLED'] = '[b]Подписание документа отменено[/b][br][br]Документ #DOC_NAME# больше недоступен для подписания[br][br][url=#GRID_URL#]К процессу подписания[/url]';
 
+$MESS['SIGN_CALLBACK_CHAT_DOCUMENT_ANNULLED_TO_EMPLOYEE'] = '[b]Подписание аннулировано[/b][br][br]#INITIATOR_NAME# аннулировал(а) ваше подписание документа #DOC_NAME#[br][br][url=#GRID_URL#]К процессу подписания[/url]';
+$MESS['SIGN_CALLBACK_CHAT_DOCUMENT_ANNULLED_TO_INITIATOR_PLURAL_0'] = '[b]Подписание аннулировано[/b][br][br]#INITIATOR_NAME# аннулировал(а) подписание документа #DOC_NAME#[br][br][url=#GRID_URL#]К процессу подписания[/url]';
+$MESS['SIGN_CALLBACK_CHAT_DOCUMENT_ANNULLED_TO_INITIATOR_PLURAL_1'] = '[b]Подписания аннулированы[/b][br][br]#INITIATOR_NAME# аннулировал(а) #COUNT# подписания документа #DOC_NAME#[br][br][url=#GRID_URL#]К процессу подписания[/url]';
+$MESS['SIGN_CALLBACK_CHAT_DOCUMENT_ANNULLED_TO_INITIATOR_PLURAL_2'] = '[b]Подписания аннулированы[/b][br][br]#INITIATOR_NAME# аннулировал(а) #COUNT# подписаний документа #DOC_NAME#[br][br][url=#GRID_URL#]К процессу подписания[/url]';
+$MESS['SIGN_CALLBACK_CHAT_ANNULMENT_CANCELED_TO_EMPLOYEE'] = '[b]Аннулирование отменено[/b][br][br]#INITIATOR_NAME# отменил(а) аннулирование вашего подписания документа #DOC_NAME#. Отметка снята, статус снова «Подписано»[br][br][url=#GRID_URL#]К процессу подписания[/url]';
+$MESS['SIGN_CALLBACK_CHAT_ANNULMENT_CANCELED_TO_INITIATOR_PLURAL_0'] = '[b]Аннулирование отменено[/b][br][br]#INITIATOR_NAME# снял(а) отметку «Аннулировано» с подписания для документа #DOC_NAME#. Статус подписания снова «Подписано»[br][br][url=#GRID_URL#]К процессу подписания[/url]';
+$MESS['SIGN_CALLBACK_CHAT_ANNULMENT_CANCELED_TO_INITIATOR_PLURAL_1'] = '[b]Аннулирование отменено[/b][br][br]#INITIATOR_NAME# снял(а) #COUNT# отметки «Аннулировано» для документа #DOC_NAME#. Статус подписаний снова «Подписано»[br][br][url=#GRID_URL#]К процессу подписания[/url]';
+$MESS['SIGN_CALLBACK_CHAT_ANNULMENT_CANCELED_TO_INITIATOR_PLURAL_2'] = '[b]Аннулирование отменено[/b][br][br]#INITIATOR_NAME# снял(а) #COUNT# отметок «Аннулировано» для документа #DOC_NAME#. Статус подписаний снова «Подписано»[br][br][url=#GRID_URL#]К процессу подписания[/url]';
+
 $MESS['SIGN_CALLBACK_CHAT_INVITE_EDITOR_MSGVER_1'] = '[b]Проверьте и заполните документ[/b][br][br]После проверки документ #DOC_NAME# будет отправлен на подпись представителю компании[br][br][url=#SIGN_URL#]Проверить и заполнить[/url]';
 $MESS['SIGN_CALLBACK_CHAT_INVITE_EDITOR_INITIATOR'] = '[b]Проверьте и заполните документ[/b][br][br]#INITIATOR_NAME# просит вас проверить документ #DOC_NAME#. После проверки документ будет отправлен на подпись представителю компании[br][br][url=#SIGN_URL#]Проверить и заполнить[/url]';
 $MESS['SIGN_CALLBACK_CHAT_INVITE_REVIEWER_MSGVER_2'] = '[b]Согласуйте документ[/b][br][br]Согласуйте документ #DOC_NAME#. После вашего согласования документ будет отправлен остальным участникам[br][br][url=#SIGN_URL#]Перейти к согласованию[/url]';
@@ -56,3 +65,5 @@ $MESS['SIGN_CALLBACK_CHAT_INVITE_REVIEWER_INITIATOR'] = '[b]Согласуйте
 
 $MESS['SIGN_CALLBACK_CHAT_SIGNING_ERROR'] = '[b]Некоторые сотрудники не смогли подписать документ[/b][br][br]Представитель компании #SIGNER_NAME# должен ещё раз подписать документ #DOC_NAME#[br][br][url=#GRID_URL#]К процессу подписания[/url]';
 $MESS['SIGN_CALLBACK_CHAT_REPEAT_SIGNING'] = '[b]Подпишите документ повторно[/b][br][br]Некоторые сотрудники не смогли подписать документ #DOC_NAME#. Подпишите документ ещё раз, после этого он снова будет отправлен сотрудникам[br][br][url=#SIGN_URL#]Подписать повторно[/url]';
+
+$MESS['SIGN_CALLBACK_CHAT_DOCUMENT_PREPARATION_FAILED'] = '[b]Не удалось подготовить документ к подписанию[/b][br][br]Документ #DOC_NAME# больше недоступен для подписания[br][br][url=#GRID_URL#]К процессу подписания[/url]';

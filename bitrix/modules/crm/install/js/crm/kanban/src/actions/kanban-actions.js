@@ -1,7 +1,7 @@
 import { Runtime, Loc, Type } from 'main.core';
-import { PopupManager, PopupWindowButton } from 'main.popup';
 import { SidePanel } from 'main.sidepanel';
 import 'crm_activity_planner';
+import 'crm.dialog';
 import SimpleAction from './simpleaction';
 import DeleteAction from './deleteaction';
 
@@ -327,57 +327,28 @@ export const Actions = {
 	 * @param {String} message
 	 * @param {Function} acceptFunc
 	 * @param {Object} params
-	 * @return {BX.PopupWindowManager}
 	 */
 	confirm(message, acceptFunc, params = {})
 	{
-		var dialog = PopupManager.create(
-			"crm-kanban-confirm-dialog",
-			null,
+		const dialog = BX.Crm.ConfirmationDialog.create('crm-kanban-confirm-dialog', {
+			title: Loc.getMessage('CRM_KANBAN_CONFIRM_TITLE'),
+			content: message,
+			acceptButtonTitle: Loc.getMessage('CRM_KANBAN_CONFIRM_Y'),
+			cancelButtonTitle: Loc.getMessage('CRM_KANBAN_CONFIRM_N'),
+		});
+
+		dialog.open().then((result) => {
+			if (BX.prop.getBoolean(result, 'cancel', true))
 			{
-				titleBar: Loc.getMessage("CRM_KANBAN_CONFIRM_TITLE"),
-				content: "",
-				width: 400,
-				autoHide: false,
-				overlay: true,
-				closeByEsc : true,
-				closeIcon : true,
-				draggable : { restrict : true}
+				if (params.grid instanceof BX.CRM.Kanban.Grid)
+				{
+					params.grid.resetMultiSelectMode();
+				}
+
+				return;
 			}
-		);
 
-		dialog.setContent(message);
-
-		dialog.setButtons([,
-			new PopupWindowButton({
-				text: Loc.getMessage("CRM_KANBAN_CONFIRM_Y"),
-				className: "popup-window-button-accept",
-				events: {
-					click: function()
-					{
-						acceptFunc();
-						this.popupWindow.close();
-					}
-				}
-			}),
-			new PopupWindowButton({
-				text: Loc.getMessage("CRM_KANBAN_CONFIRM_N"),
-				className: "popup-window-button-cancel",
-				events: {
-					click: function()
-					{
-						if (params.grid instanceof BX.CRM.Kanban.Grid)
-						{
-							params.grid.resetMultiSelectMode();
-						}
-						this.popupWindow.close();
-					}
-				}
-			})
-		]);
-
-		dialog.show();
-
-		return dialog;
+			acceptFunc();
+		});
 	},
 };

@@ -1,6 +1,6 @@
 import { Type } from 'main.core';
-import type { BookingModel } from 'booking.model.bookings';
-import type { BookingDto, BookingFromWaitListItemDto } from './types';
+import { type BookingModel } from 'booking.model.bookings';
+import { type BookingDto, type BookingFromWaitListItemDto } from './types';
 
 export function mapModelToDto(booking: BookingModel): BookingDto
 {
@@ -74,7 +74,7 @@ export function mapDtoToModel(bookingDto: BookingDto): BookingModel
 		note: bookingDto.note,
 		visitStatus: bookingDto.visitStatus,
 		externalData: bookingDto.externalData,
-		messages: bookingDto.messages?.length ? bookingDto.messages : undefined,
+		isConfirmationSent: bookingDto.isConfirmationSent ?? false,
 		skus: bookingDto.skus,
 		payment: bookingDto.payment,
 		source: bookingDto.source,

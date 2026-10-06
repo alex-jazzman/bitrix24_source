@@ -1,6 +1,4 @@
-/**
- * @module tasks/checklist/widget/src/more-menu
- */
+/** @module tasks/checklist/widget/src/more-menu */
 jn.define('tasks/checklist/widget/src/more-menu', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { PropTypes } = require('utils/validation');
@@ -13,11 +11,9 @@ jn.define('tasks/checklist/widget/src/more-menu', (require, exports, module) => 
 		onlyMine: 'show-only-mine',
 	};
 
-	/**
-	 * @class ChecklistMoreMenu
-	 */
 	class ChecklistMoreMenu extends LayoutComponent
 	{
+		/** @param {ChecklistMoreMenuProps} [props] */
 		constructor(props = {})
 		{
 			super(props);
@@ -25,11 +21,16 @@ jn.define('tasks/checklist/widget/src/more-menu', (require, exports, module) => 
 			this.#initState(props);
 		}
 
+		/** @param {ChecklistMoreMenuProps} props */
 		componentWillReceiveProps(props)
 		{
 			this.#initState(props);
 		}
 
+		/**
+		 * @private
+		 * @param {ChecklistMoreMenuProps} props
+		 */
 		#initState(props)
 		{
 			this.state = {
@@ -38,6 +39,10 @@ jn.define('tasks/checklist/widget/src/more-menu', (require, exports, module) => 
 			};
 		}
 
+		/**
+		 * @param {ChecklistMoreMenuState} params
+		 * @return {Promise<ChecklistMoreMenuState>}
+		 */
 		reload(params)
 		{
 			return new Promise((resolve) => {
@@ -53,11 +58,19 @@ jn.define('tasks/checklist/widget/src/more-menu', (require, exports, module) => 
 			this.menu.show(parentWidget);
 		}
 
+		/**
+		 * @private
+		 * @return {Object}
+		 */
 		createMenu()
 		{
 			return new UIMenu(this.getActions());
 		}
 
+		/**
+		 * @private
+		 * @param {ChecklistMoreMenuSelectedActionParams} params
+		 */
 		selectedAction({ state, action })
 		{
 			this.setState(
@@ -68,6 +81,7 @@ jn.define('tasks/checklist/widget/src/more-menu', (require, exports, module) => 
 			);
 		}
 
+		/** @private */
 		getActions()
 		{
 			const {

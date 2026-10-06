@@ -4,6 +4,7 @@ return [
 	'extensions' => [
 		'asset-manager',
 		'assets/icons',
+		'feature',
 		'haptics',
 		'in-app-url',
 		'layout/pure-component',
@@ -23,6 +24,7 @@ return [
 		'ui-system/typography/heading',
 		'ui-system/typography/text',
 		'utils/function',
+		'utils/logger',
 		'utils/object',
 		'utils/test',
 		'utils/url',

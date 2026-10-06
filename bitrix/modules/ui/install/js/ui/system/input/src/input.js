@@ -29,6 +29,7 @@ export type InputOptions = {
 	active?: boolean,
 	readonly?: boolean,
 	dataTestId?: string,
+	ariaLabel?: string,
 	copyable?: boolean,
 	required?: boolean,
 	onClick?: Function,
@@ -67,6 +68,7 @@ export class Input
 	#required: boolean = false;
 	#passwordVisible: boolean = false;
 	#dataTestId: string = '';
+	#ariaLabel: string = '';
 
 	#onClick: ?Function = null;
 	#onFocus: ?Function = null;
@@ -124,6 +126,7 @@ export class Input
 		this.#copyable = options.copyable === true;
 		this.#required = options.required === true;
 		this.#dataTestId = options.dataTestId ?? '';
+		this.#ariaLabel = options.ariaLabel ?? '';
 
 		this.#onClick = options.onClick ?? null;
 		this.#onFocus = options.onFocus ?? null;
@@ -206,6 +209,28 @@ export class Input
 	getLabel(): string
 	{
 		return this.#label;
+	}
+
+	setAriaLabel(value: string): void
+	{
+		this.#ariaLabel = value ?? '';
+
+		if (this.#inputElement)
+		{
+			if (this.#ariaLabel)
+			{
+				Dom.attr(this.#inputElement, { 'aria-label': this.#ariaLabel });
+			}
+			else
+			{
+				this.#inputElement.removeAttribute('aria-label');
+			}
+		}
+	}
+
+	getAriaLabel(): string
+	{
+		return this.#ariaLabel;
 	}
 
 	setPlaceholder(value: string): void
@@ -338,6 +363,7 @@ export class Input
 	{
 		this.#dropdown = value === true;
 		this.#updateRightIconElement(this.#dropdownElement, this.#dropdown);
+		this.#updateClasses();
 	}
 
 	isCopyable(): boolean
@@ -640,6 +666,7 @@ export class Input
 			type: this.#type,
 			value: this.#value,
 			dataTestId: this.#dataTestId,
+			ariaLabel: this.#ariaLabel,
 		};
 
 		if (this.#rows > 1)
@@ -649,6 +676,7 @@ export class Input
 					class="${commonAttrs.className} --multi"
 					style="resize: ${this.#resize};"
 					placeholder="${commonAttrs.placeholder}"
+					${commonAttrs.ariaLabel ? `aria-label="${commonAttrs.ariaLabel}"` : ''}
 					${commonAttrs.disabled ? 'disabled' : ''}
 					${commonAttrs.readonly ? 'readonly' : ''}
 					rows="${this.#rows}"
@@ -662,6 +690,7 @@ export class Input
 					class="${commonAttrs.className}"
 					style="--placeholder-length: ${this.#placeholder.length}ch;"
 					placeholder="${commonAttrs.placeholder}"
+					${commonAttrs.ariaLabel ? `aria-label="${commonAttrs.ariaLabel}"` : ''}
 					${commonAttrs.disabled ? 'disabled' : ''}
 					${commonAttrs.readonly ? 'readonly' : ''}
 					type="${commonAttrs.type}"
@@ -835,7 +864,9 @@ export class Input
 			`--${this.#size}`,
 			this.#center ? '--center' : '',
 			this.#chips.length > 0 ? '--with-chips' : '',
+			this.#rows > 1 ? '--multi' : '',
 			this.#clickable ? '--clickable' : '',
+			this.#dropdown ? '--dropdown' : '',
 			this.#stretched ? '--stretched' : '',
 			(this.#active || this.#focused) ? '--active' : '',
 			this.#readonly ? '--readonly' : '',

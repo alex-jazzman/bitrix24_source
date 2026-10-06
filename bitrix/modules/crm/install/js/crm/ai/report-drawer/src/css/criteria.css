@@ -1,0 +1,26 @@
+.crm-ai-report-drawer__criteria-name-circle {
+	height: 8px;
+	width: 8px;
+	border-radius: 50%;
+	display: inline-block;
+	margin-right: var(--ui-space-inline-xs, 8px);
+}
+
+.crm-ai-report-drawer__criteria-name-circle.--success {
+	background-color: var(--ui-color-accent-main-success);
+}
+
+.crm-ai-report-drawer__criteria-name-circle.--unused {
+	background-color: var(--ui-color-base-4);
+}
+
+.crm-ai-report-drawer__criteria-name-circle.--failure {
+	background-color: var(--ui-color-accent-main-alert);
+}
+
+.crm-ai-report-drawer__criteria-name {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	margin-bottom: var(--ui-space-stack-xs, 8px);
+}

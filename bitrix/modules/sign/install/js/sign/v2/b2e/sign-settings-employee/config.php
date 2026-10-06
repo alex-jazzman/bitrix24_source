@@ -10,13 +10,13 @@ return [
 	'rel' => [
 		'main.core',
 		'main.core.cache',
+		'main.core.events',
+		'main.loader',
 		'sign.v2.analytics',
 		'sign.v2.b2e.start-process',
 		'sign.v2.b2e.submit-document-info',
 		'sign.v2.helper',
 		'ui.wizard',
-		'main.loader',
-		'main.core.events',
 	],
 	'skip_core' => false,
 ];

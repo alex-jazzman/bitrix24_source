@@ -47,5 +47,7 @@ return [
 		'./src/search',
 		'./src/recent',
 		'./src/message-menu',
+		'./src/folder',
+		'./src/guest',
 	],
 ];

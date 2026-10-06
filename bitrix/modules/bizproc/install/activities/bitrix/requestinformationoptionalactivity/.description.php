@@ -44,15 +44,15 @@ $arActivityDescription = (new ActivityDescription(
 			'TYPE' => 'user',
 		],
 	])
-	->setNodeType(ActivityNodeType::COMPLEX->value)
+	->setNodeType(ActivityNodeType::OPERATORS->value)
 	->setNodeSettings(new \Bitrix\Bizproc\Activity\Dto\NodeSettings(
 		ports: new \Bitrix\Bizproc\Activity\Dto\NodePorts(
 			input: new \Bitrix\Bizproc\Activity\Dto\PortCollection(
 				new \Bitrix\Bizproc\Activity\Dto\Port('i0'),
 			),
 			output: new \Bitrix\Bizproc\Activity\Dto\PortCollection(
-				new \Bitrix\Bizproc\Activity\Dto\Port('o0', 1, 'ok'),
-				new \Bitrix\Bizproc\Activity\Dto\Port('o1', 2, 'cancel'),
+				new \Bitrix\Bizproc\Activity\Dto\Port('o0', title: Loc::getMessage('BPRIOA_DESCR_PORT_OK') ?? 'ok'),
+				new \Bitrix\Bizproc\Activity\Dto\Port('o1', title: Loc::getMessage('BPRIOA_DESCR_PORT_CANCEL') ?? 'cancel'),
 			),
 		)
 	))

@@ -9,6 +9,10 @@
 }
 
 .sign-b2e-document-setup__add-button:disabled {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 4px;
 	border-color: var(--ui-color-palette-gray-20);
 	color: var(--ui-color-palette-gray-20);
 	padding: 7px;
@@ -22,8 +26,6 @@
 	display: none;
 }
 
-.sign-b2e-document-setup__add-button:disabled .sign-b2e-document-setup__add-button_disabled_hint{
+.sign-b2e-document-setup__add-button:disabled .sign-b2e-document-setup__add-button_disabled_hint {
 	display: inline-block;
-	position: relative;
-	bottom: 1px;
 }

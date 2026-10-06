@@ -46,6 +46,7 @@ export const useWizardStore = defineStore('wizard', {
 				periodValue: '',
 			},
 			assignKnownClientEmails: true,
+			vcf: true,
 			incoming: {
 				enabled: true,
 				createAction: '',
@@ -59,6 +60,7 @@ export const useWizardStore = defineStore('wizard', {
 			responsibleQueue: [],
 		},
 		crmSourceOptions: [],
+		isCrmAvailable: false,
 		calendarSettings: {
 			enabled: true,
 			autoAddEvents: true,
@@ -74,6 +76,7 @@ export const useWizardStore = defineStore('wizard', {
 		permissions: {
 			allowedLevels: null,
 			canEditCrmIntegration: false,
+			canViewMailboxList: false,
 		},
 	}),
 	actions: {
@@ -118,6 +121,8 @@ export const useWizardStore = defineStore('wizard', {
 			this.crmSyncOptions = mapped.crmSyncOptions;
 			this.crmEntityOptions = mapped.crmEntityOptions;
 			this.crmSourceOptions = mapped.crmSourceOptions;
+			this.isCrmAvailable = mapped.crmAvailable;
+			this.permissions.canEditCrmIntegration = mapped.canEditCrmIntegration;
 
 			this.mailSettings.sync.enabled = mapped.mailSyncEnabled;
 			this.mailSettings.sync.periodValue = resolveSettingValue(
@@ -134,6 +139,7 @@ export const useWizardStore = defineStore('wizard', {
 				mapped.crmSyncPeriod,
 			);
 			this.crmSettings.assignKnownClientEmails = mapped.crmAssignKnownClientEmails;
+			this.crmSettings.vcf = mapped.crmVcf;
 			this.crmSettings.incoming.enabled = mapped.crmIncomingCreate;
 			this.crmSettings.incoming.createAction = resolveSettingValue(
 				mapped.crmEntityOptions,
@@ -160,7 +166,7 @@ export const useWizardStore = defineStore('wizard', {
 		},
 		prepareCrmOptions(): CrmOptionsPayload
 		{
-			if (!this.crmSettings.enabled)
+			if (!this.isCrmAvailable || !this.crmSettings.enabled)
 			{
 				return { enabled: NO_VALUE };
 			}
@@ -176,6 +182,8 @@ export const useWizardStore = defineStore('wizard', {
 			{
 				crmOptions.config.crm_public = this.crmSettings.assignKnownClientEmails ? YES_VALUE : NO_VALUE;
 			}
+
+			crmOptions.config.crm_vcf = this.crmSettings.vcf ? YES_VALUE : NO_VALUE;
 
 			if (this.crmSettings.incoming.enabled)
 			{
@@ -327,7 +335,7 @@ export const useWizardStore = defineStore('wizard', {
 		setPermissions(permissions: MassconnectPermissions): void
 		{
 			this.permissions.allowedLevels = [permissions?.allowedLevels];
-			this.permissions.canEditCrmIntegration = permissions?.canEditCrmIntegration;
+			this.permissions.canViewMailboxList = permissions?.canViewMailboxList ?? false;
 		},
 	},
 });

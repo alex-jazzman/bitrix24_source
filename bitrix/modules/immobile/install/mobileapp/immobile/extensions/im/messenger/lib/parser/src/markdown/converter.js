@@ -5,38 +5,34 @@ jn.define('im/messenger/lib/parser/markdown/converter', (require, exports, modul
 	const { Type } = require('type');
 	const { CodeProtector } = require('im/messenger/lib/parser/markdown/utils/code-protector');
 	const { EscapeHandler } = require('im/messenger/lib/parser/markdown/utils/escape-handler');
+	const { MentionProtector } = require('im/messenger/lib/parser/markdown/utils/mention-protector');
 	const { applyBlockRules } = require('im/messenger/lib/parser/markdown/rules/block-rules');
 	const { applyInlineRules } = require('im/messenger/lib/parser/markdown/rules/inline-rules');
 	const { applyHtmlRules } = require('im/messenger/lib/parser/markdown/rules/html-rules');
 	const { convertTables } = require('im/messenger/lib/parser/markdown/rules/table-rules');
 
-	// Every Markdown construct requires at least one of these characters.
-	// Safe to skip the entire pipeline when none are present.
-	const MARKDOWN_TRIGGER = /[\t!#&*+<=>[\\_`|~-]/;
+	// Fast-path: skip the whole pipeline when the text has no Markdown-significant shape.
+	// Deliberately NOT triggered by a bare "[" or "=" — those appear in ordinary BB-code
+	// ([USER=…], [URL=…], [DISK=…]) with no Markdown to convert; on mobile recent/dialog
+	// open this fast-path runs in bulk, so the narrower trigger matters. Each real shape is
+	// matched precisely: link/image via "](", setext-H1 via "={3}", list bullets/ordered
+	// markers via the line-anchored alternation, rules/setext-H2/separators via "-{3}".
+	const MARKDOWN_TRIGGER = /[\t!#&*+<>\\_`|~]|\]\(|^[ \t]*(?:-|\d+\.)[ \t]|-{3}|={3}/m;
 
 	class MarkdownConverter
 	{
-		/** @type {Map<string, Map<string, { headers: string[], rows: string[][] }>>} */
-		#tableDataStore = new Map();
-
 		/**
-		 * Convert Markdown to BB-codes for full message rendering.
-		 * Tables are stored in memory and replaced with clickable links.
+		 * Convert Markdown to BB-codes for full message rendering. A GFM table
+		 * becomes a "show table" link whose payload carries the table data inline
+		 * (see table-rules), so no in-memory store is needed and it survives
+		 * session reloads.
 		 *
 		 * @param {string} text
-		 * @param {number|string} [messageId=0]
-		 * @param {string} [dialogCode='']
 		 * @returns {string}
 		 */
-		decode(text, messageId = 0, dialogCode = '')
+		decode(text)
 		{
-			return this.#convert(text, {
-				mode: 'decode',
-				messageId,
-				storeTableData: (messageIdToStore, tableIndex, data) => {
-					return this.#storeTableData(dialogCode, messageIdToStore, tableIndex, data);
-				},
-			});
+			return this.#convert(text, { mode: 'decode' });
 		}
 
 		/**
@@ -71,8 +67,10 @@ jn.define('im/messenger/lib/parser/markdown/converter', (require, exports, modul
 			// Per-call instances to avoid shared mutable state between concurrent calls
 			const escapeHandler = new EscapeHandler();
 			const codeProtector = new CodeProtector();
+			const mentionProtector = new MentionProtector();
 
 			text = codeProtector.protect(text);
+			text = mentionProtector.protect(text);
 			text = escapeHandler.protect(text);
 
 			text = convertTables(text, tableOptions);
@@ -81,53 +79,10 @@ jn.define('im/messenger/lib/parser/markdown/converter', (require, exports, modul
 			text = applyHtmlRules(text);
 
 			text = escapeHandler.restore(text);
+			text = mentionProtector.restore(text);
 			text = codeProtector.restore(text);
 
 			return text;
-		}
-
-		/**
-		 * @param {string} dialogCode
-		 * @param {number|string} messageId
-		 * @param {number} tableIndex
-		 * @param {{ headers: string[], rows: string[][] }} data
-		 * @returns {string}
-		 */
-		#storeTableData(dialogCode, messageId, tableIndex, data)
-		{
-			if (!messageId)
-			{
-				return '';
-			}
-
-			const tableId = `${messageId}:${tableIndex}`;
-
-			if (!this.#tableDataStore.has(dialogCode))
-			{
-				this.#tableDataStore.set(dialogCode, new Map());
-			}
-
-			this.#tableDataStore.get(dialogCode).set(tableId, data);
-
-			return tableId;
-		}
-
-		/**
-		 * @param {string} dialogCode
-		 * @param {string} tableId
-		 * @returns {{ headers: string[], rows: string[][] } | null}
-		 */
-		getTableData(dialogCode, tableId)
-		{
-			return this.#tableDataStore.get(dialogCode)?.get(tableId) || null;
-		}
-
-		/**
-		 * @param {string} dialogCode
-		 */
-		clearTableData(dialogCode)
-		{
-			this.#tableDataStore.delete(dialogCode);
 		}
 	}
 
@@ -135,7 +90,5 @@ jn.define('im/messenger/lib/parser/markdown/converter', (require, exports, modul
 
 	module.exports = {
 		markdownConverter,
-		getMarkdownTableData: (dialogCode, tableId) => markdownConverter.getTableData(dialogCode, tableId),
-		clearTableData: (dialogCode) => markdownConverter.clearTableData(dialogCode),
 	};
 });

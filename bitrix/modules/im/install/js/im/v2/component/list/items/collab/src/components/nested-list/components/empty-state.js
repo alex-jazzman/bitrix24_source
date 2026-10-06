@@ -1,18 +1,23 @@
 import { Loc } from 'main.core';
 
 import { RecentType } from 'im.v2.const';
+import { CopilotManager } from 'im.v2.lib.copilot';
 import { RecentEmptyState } from 'im.v2.component.list.items.elements.empty-state';
 
-const TitleByType = {
-	[RecentType.taskComments]: Loc.getMessage('IM_LIST_COLLAB_V2_EMPTY_TASK_TITLE'),
-	[RecentType.collabChat]: Loc.getMessage('IM_LIST_COLLAB_V2_EMPTY_CHAT_TITLE'),
-	[RecentType.calendar]: Loc.getMessage('IM_LIST_COLLAB_V2_EMPTY_CALENDAR_TITLE'),
+const TitleByTypeHandler = {
+	[RecentType.taskComments]: () => Loc.getMessage('IM_LIST_COLLAB_V2_EMPTY_TASK_TITLE'),
+	[RecentType.collabChat]: () => Loc.getMessage('IM_LIST_COLLAB_V2_EMPTY_CHAT_TITLE'),
+	[RecentType.calendar]: () => Loc.getMessage('IM_LIST_COLLAB_V2_EMPTY_CALENDAR_TITLE'),
+	[RecentType.copilot]: () => Loc.getMessage('IM_LIST_COLLAB_V2_EMPTY_COPILOT_TITLE', {
+		'#COPILOT_NAME#': (new CopilotManager()).getName(),
+	}),
 };
 
-const SubtitleByType = {
-	[RecentType.taskComments]: Loc.getMessage('IM_LIST_COLLAB_V2_EMPTY_TASK_SUBTITLE'),
-	[RecentType.collabChat]: Loc.getMessage('IM_LIST_COLLAB_V2_EMPTY_CHAT_SUBTITLE'),
-	[RecentType.calendar]: Loc.getMessage('IM_LIST_COLLAB_V2_EMPTY_CALENDAR_SUBTITLE'),
+const SubtitleByTypeHandler = {
+	[RecentType.taskComments]: () => Loc.getMessage('IM_LIST_COLLAB_V2_EMPTY_TASK_SUBTITLE'),
+	[RecentType.collabChat]: () => Loc.getMessage('IM_LIST_COLLAB_V2_EMPTY_CHAT_SUBTITLE'),
+	[RecentType.calendar]: () => Loc.getMessage('IM_LIST_COLLAB_V2_EMPTY_CALENDAR_SUBTITLE'),
+	[RecentType.copilot]: () => Loc.getMessage('IM_LIST_COLLAB_V2_EMPTY_COPILOT_SUBTITLE'),
 };
 
 // @vue/component
@@ -28,11 +33,11 @@ export const CollabNestedEmptyState = {
 	computed: {
 		title(): string
 		{
-			return TitleByType[this.type];
+			return TitleByTypeHandler[this.type]();
 		},
 		subtitle(): string
 		{
-			return SubtitleByType[this.type];
+			return SubtitleByTypeHandler[this.type]();
 		},
 	},
 	template: `

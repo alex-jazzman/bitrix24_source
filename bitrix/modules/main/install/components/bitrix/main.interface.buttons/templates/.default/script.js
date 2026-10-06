@@ -435,7 +435,7 @@ if (typeof(BX.Main.interfaceButtons) === 'undefined')
 						this.enableItem(currentAlias);
 
 					}
-					else if (!this.isDisabled(currentAlias) && visibleItemsLength > 2)
+					else if (!this.isDisabled(currentAlias) && visibleItemsLength > 1)
 					{
 						this.disableItem(currentAlias);
 					}

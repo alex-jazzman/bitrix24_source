@@ -46,4 +46,4 @@ export const EntityButton = {
 			<BIcon class="bx-im-chat-header-entity-button__icon" :name="OutlineIcons.CHEVRON_RIGHT_M" />
 		</a>
 	`,
-}
+};

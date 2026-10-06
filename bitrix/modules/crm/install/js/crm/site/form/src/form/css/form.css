@@ -109,8 +109,10 @@
 	text-align: start;
 }
 
-.b24-form .b24-window-scrollable:has(.b24-form-sign-abuse-popup) {
-	padding-bottom: 0;
+@supports selector(:has(*)) {
+	.b24-form .b24-window-scrollable:has(.b24-form-sign-abuse-popup) {
+		padding-bottom: 0;
+	}
 }
 
 .b24-form .b24-form-sign-abuse-link:hover {

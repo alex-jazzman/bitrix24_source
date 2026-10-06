@@ -8,8 +8,8 @@ return [
 	'css' => 'dist/video-quality-range.bundle.css',
 	'js' => 'dist/video-quality-range.bundle.js',
 	'rel' => [
-		'main.polyfill.core',
+		'main.core',
 		'ui.vue3',
 	],
-	'skip_core' => true,
+	'skip_core' => false,
 ];

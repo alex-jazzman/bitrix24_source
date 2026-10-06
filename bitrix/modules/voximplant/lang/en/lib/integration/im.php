@@ -1,0 +1,2 @@
+<?php
+$MESS["VOXIMPLANT_NOTIFICATION_TITLE"] = "Telephony";

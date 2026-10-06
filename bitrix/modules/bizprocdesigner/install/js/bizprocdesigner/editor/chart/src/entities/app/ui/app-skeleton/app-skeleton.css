@@ -216,39 +216,6 @@
 	background: radial-gradient(ellipse at center, rgba(125, 135, 220, 0.10) 0%, rgba(125, 135, 220, 0) 62%);
 }
 
-.editor-chart-app-skeleton__hero-illustration {
-	position: absolute;
-	top: 50%;
-	left: 50%;
-	width: 1236px;
-	height: 428px;
-	transform: translate(-50%, -50%);
-	pointer-events: none;
-}
-
-.editor-chart-app-skeleton__hero-illustration::before,
-.editor-chart-app-skeleton__hero-illustration::after {
-	content: '';
-	position: absolute;
-	top: 0;
-	width: 736px;
-	height: 428px;
-	background: url('./images/skeleton.png') no-repeat center / cover;
-	-webkit-mask-image: radial-gradient(ellipse 46% 50% at center, #000 0%, #000 22%, transparent 82%);
-	mask-image: radial-gradient(ellipse 46% 50% at center, #000 0%, #000 22%, transparent 82%);
-}
-
-.editor-chart-app-skeleton__hero-illustration::before {
-	left: 0;
-	opacity: 0.2;
-}
-
-.editor-chart-app-skeleton__hero-illustration::after {
-	right: 0;
-	opacity: 0.12;
-	transform: scaleX(-1);
-}
-
 .editor-chart-app-skeleton__hero-text {
 	position: relative;
 	display: flex;

@@ -7,6 +7,7 @@ jn.define('im/messenger/provider/pull/recent', (require, exports, module) => {
 	const { clone } = require('utils/object');
 	const { ShareDialogCache } = require('im/messenger/cache/share-dialog');
 	const { MessengerParams } = require('im/messenger/lib/params');
+	const { MessageStatus } = require('im/messenger/const');
 	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { getLoggerWithContext } = require('im/messenger/lib/logger');
 	const { RecentDataProvider } = require('im/messenger/provider/data');
@@ -687,17 +688,64 @@ jn.define('im/messenger/provider/pull/recent', (require, exports, module) => {
 				text: ChatMessengerCommon.purifyText(newLastMessage.text, newLastMessage.params),
 				date: newLastMessage.date,
 				author_id: newLastMessage.author_id,
+				chat_id: newLastMessage.chat_id,
 				id: newLastMessage.id,
 				file: (newLastMessage.file || newLastMessage.params.FILE_ID) ?? false,
 				unread: newLastMessage.unread ?? false,
 			};
 
-			await this.store.dispatch('recentModel/update', [{
+			const recentUpdate = {
 				id: dialogId,
 				message,
 				lastActivityDate: currentRecentItem.lastActivityDate,
-			}]);
+			};
+
+			const mainCollabChatId = this.#getMainCollabChatId(dialogId);
+			if (mainCollabChatId !== null && Number(newLastMessage.chat_id) === mainCollabChatId)
+			{
+				recentUpdate.ownMessage = Number.isInteger(newLastMessage.id) && newLastMessage.id > 0
+					? this.#prepareOwnMessageFromRaw(newLastMessage)
+					: null;
+			}
+
+			await this.store.dispatch('recentModel/update', [recentUpdate]);
 			this.#saveShareDialogCache();
+		}
+
+		/**
+		 * @param {DialogId} dialogId
+		 * @return {number|null}
+		 */
+		#getMainCollabChatId(dialogId)
+		{
+			if (!Feature.isCollabPreviewSourceAvailable)
+			{
+				return null;
+			}
+
+			const dialogHelper = DialogHelper.createByDialogId(dialogId);
+			if (!dialogHelper || !dialogHelper.isCollab)
+			{
+				return null;
+			}
+
+			const chatId = Number(dialogHelper.chatId);
+
+			return chatId > 0 ? chatId : null;
+		}
+
+		/**
+		 * @param {NewLastMessageDataMessageDeleteV2Params|RawMessage} rawMessage
+		 * @return {object}
+		 */
+		#prepareOwnMessageFromRaw(rawMessage)
+		{
+			const ownMessage = { ...rawMessage };
+			ownMessage.status = ownMessage.author_id === MessengerParams.getUserId() ? MessageStatus.received : '';
+			ownMessage.senderId = ownMessage.author_id;
+			ownMessage.text = ChatMessengerCommon.purifyText(ownMessage.text, ownMessage.params);
+
+			return ownMessage;
 		}
 
 		/**
@@ -803,24 +851,44 @@ jn.define('im/messenger/provider/pull/recent', (require, exports, module) => {
 			}
 
 			const recentParams = params;
+			message.text = ChatMessengerCommon.purifyText(recentParams.text, recentParams.params);
+			message.params = recentParams.params;
+			message.file = recentParams.params && recentParams.params.FILE_ID
+				? recentParams.params.FILE_ID.length > 0
+				: false
+			;
+			message.attach = recentParams.params && recentParams.params.ATTACH
+				? recentParams.params.ATTACH.length > 0
+				: false
+			;
+
+			const recentUpdate = {
+				id: params.dialogId,
+				lastActivityDate: recentItem.lastActivityDate,
+			};
+
+			let hasChange = false;
 			if (recentItem.message.id === message.id)
 			{
-				message.text = ChatMessengerCommon.purifyText(recentParams.text, recentParams.params);
-				message.params = recentParams.params;
-				message.file = recentParams.params && recentParams.params.FILE_ID
-					? recentParams.params.FILE_ID.length > 0
-					: false
-				;
-				message.attach = recentParams.params && recentParams.params.ATTACH
-					? recentParams.params.ATTACH.length > 0
-					: false
-				;
+				recentUpdate.message = message;
+				hasChange = true;
+			}
 
-				await this.store.dispatch('recentModel/update', [{
-					id: params.dialogId,
-					message,
-					lastActivityDate: recentItem.lastActivityDate,
-				}]);
+			const mainCollabChatId = this.#getMainCollabChatId(params.dialogId);
+			const currentOwnId = recentItem.ownMessage?.id;
+			if (
+				mainCollabChatId !== null
+				&& Number(params.chatId) === mainCollabChatId
+				&& currentOwnId === message.id
+			)
+			{
+				recentUpdate.ownMessage = { ...recentItem.ownMessage, ...message };
+				hasChange = true;
+			}
+
+			if (hasChange)
+			{
+				await this.store.dispatch('recentModel/update', [recentUpdate]);
 			}
 		}
 

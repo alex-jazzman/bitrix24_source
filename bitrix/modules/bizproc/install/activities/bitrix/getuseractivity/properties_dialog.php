@@ -11,9 +11,20 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 		<script>
 		function __BPCRUUserTypeChange(v)
 		{
-			if (v == 'boss')
+			const userTypeText = document.getElementById('bpcru_user_type_text');
+			const hasUserTypeText = userTypeText && userTypeText.value.replace(/^\s+|\s+$/g, '') !== '';
+
+			if (v === 'boss')
 			{
 				document.getElementById("bpcrUserParameterTitle").innerHTML = "<?= GetMessage("BPCRU_PD_USER_BOSS") ?>";
+			}
+			else
+			{
+				document.getElementById("bpcrUserParameterTitle").innerHTML = "<?= GetMessage("BPCRU_PD_USER_RANDOM") ?>";
+			}
+
+			if (v === 'boss' || hasUserTypeText)
+			{
 				try{
 					document.getElementById("tr_max_level").style.display = 'table-row';
 				}catch(e){
@@ -22,7 +33,6 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 			}
 			else
 			{
-				document.getElementById("bpcrUserParameterTitle").innerHTML = "<?= GetMessage("BPCRU_PD_USER_RANDOM") ?>";
 				document.getElementById("tr_max_level").style.display = 'none';
 			}
 		}
@@ -35,6 +45,12 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 			<option value="lead"<?= ($arCurrentValues['user_type'] === "lead") ? " selected" : "" ?>><?= GetMessage("BPCRU_PD_TYPE_LEAD") ?></option>
 			<?php endif; ?>
 		</select>
+		<?= CBPDocument::ShowParameterField(
+			'string',
+			'user_type_text',
+			$arCurrentValues['user_type_text'] ?? '',
+			['id' => 'bpcru_user_type_text', 'rows' => 1]
+		) ?>
 	</td>
 </tr>
 <tr>
@@ -88,5 +104,26 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 	</td>
 </tr>
 <script>
-__BPCRUUserTypeChange('<?= $arCurrentValues['user_type'] ?>');
+(function()
+{
+	const userTypeText = document.getElementById('bpcru_user_type_text');
+
+	function __BPCRUUserTypeTextChange()
+	{
+		const userTypeSelect = document.forms['<?= CUtil::JSEscape($formName) ?>'] ? document.forms['<?= CUtil::JSEscape($formName) ?>'].user_type : null;
+		__BPCRUUserTypeChange(userTypeSelect ? userTypeSelect.value : '');
+	}
+
+	if (userTypeText)
+	{
+		userTypeText.oninput = __BPCRUUserTypeTextChange;
+		userTypeText.onchange = __BPCRUUserTypeTextChange;
+	}
+
+	<?php if (CBPActivity::isExpression($arCurrentValues['user_type_text'] ?? '')): ?>
+	__BPCRUUserTypeTextChange();
+	<?php else: ?>
+	__BPCRUUserTypeChange('<?= CUtil::JSEscape($arCurrentValues['user_type'] ?? '') ?>');
+	<?php endif; ?>
+})();
 </script>

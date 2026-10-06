@@ -68,8 +68,22 @@
 }
 
 .sonet--new-project-banner--link {
+	display: inline;
+	background: none;
+	border: 0;
+	padding: 0;
+	font: inherit;
+	letter-spacing: inherit;
+	text-align: inherit;
+	vertical-align: baseline;
 	color: var(--ui-color-accent-main-link);
 	cursor: pointer;
+}
+
+.sonet--new-project-banner--link:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+	border-radius: var(--ui-border-radius-2xs, 4px);
 }
 
 .sonet--new-project-banner--close {
@@ -83,6 +97,7 @@
 }
 
 .sonet--new-project-banner--close-btn {
+	display: flex;
 	background: transparent;
 	border: 0;
 	color: inherit;
@@ -91,6 +106,12 @@
 
 .sonet--new-project-banner--close-btn > div {
 	cursor: pointer;
+}
+
+.sonet--new-project-banner--close-btn:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+	border-radius: var(--ui-border-radius-2xs, 4px);
 }
 
 .sonet--new-project-banner--close:hover {

@@ -1,0 +1,1773 @@
+body.biconnector-dataset-import-v2-page.ui-page-slider-wrapper-default-theme {
+	background: #f6fafb !important;
+}
+
+body.biconnector-dataset-import-v2-page .ui-side-panel-wrap-workarea {
+	background-color: #f6fafb !important;
+}
+
+.biconnector-dataset-import-v2-save-btn.ui-btn {
+	min-width: 164px;
+}
+
+.biconnector-dataset-import-v2 {
+	display: flex;
+	flex-direction: column;
+	height: calc(100vh - 94px);
+	background: var(--ui-color-bg-content-secondary, #f6fafb);
+	font-family: var(--ui-font-family-primary, 'Helvetica Neue', Arial, sans-serif);
+	color: var(--ui-color-base-1, #333);
+}
+
+.biconnector-dataset-import-v2__body {
+	flex: 1 1 auto;
+	display: grid;
+	grid-template-columns: 500px 1fr;
+	gap: 20px;
+	padding-bottom: 22px;
+	box-sizing: border-box;
+	min-height: 0;
+	overflow: hidden;
+}
+
+.biconnector-dataset-import-v2__cards-column {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	min-height: 0;
+	overflow-y: auto;
+	padding-right: 4px;
+}
+
+.biconnector-dataset-import-v2-readonly-chip {
+	display: inline-flex;
+	align-items: center;
+	gap: 2px;
+	height: 24px;
+	margin-left: 12px;
+	padding: 0 4px 0 10px;
+	box-sizing: border-box;
+	border: 1px solid var(--ui-color-accent-soft-blue-1, #c4e6ff);
+	border-radius: 512px;
+	background: var(--ui-color-base-white-fixed, #fff);
+}
+
+.biconnector-dataset-import-v2-readonly-chip__text {
+	font-size: 13px;
+	line-height: 17px;
+	letter-spacing: -0.05px;
+	color: var(--ui-color-accent-main-primary, #0075ff);
+	white-space: nowrap;
+}
+
+.biconnector-dataset-import-v2-readonly-chip .ui-hint-icon {
+	--ui-icon-set__icon-color: #80baff;
+}
+
+.biconnector-dataset-import-v2__cards-column-placeholder,
+.biconnector-dataset-import-v2__data-panel-placeholder {
+	padding: 24px;
+	border-radius: 16px;
+	background: var(--ui-color-bg-content-primary, #fff);
+	border: 1px dashed var(--ui-color-design-outline-stroke-alt1, #dfe0e3);
+	color: var(--ui-color-base-2, #525c69);
+	font-size: 14px;
+	line-height: 19px;
+}
+
+.biconnector-dataset-import-v2__data-panel {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	min-height: 0;
+	overflow-y: auto;
+	padding-right: 4px;
+}
+
+.biconnector-dataset-import-v2-card {
+	flex: 0 0 auto;
+	background: var(--ui-color-bg-content-primary, #fff);
+	border-radius: 16px;
+	box-shadow: var(--ui-box-shadow-card-default, 0 1px 0 rgba(0, 0, 0, 0.04));
+}
+
+.biconnector-dataset-import-v2-card__header {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	width: 100%;
+	padding: 22px 24px;
+	box-sizing: border-box;
+	color: var(--ui-color-base-1, #333);
+}
+
+.biconnector-dataset-import-v2-card__icon {
+	flex: 0 0 auto;
+	width: 24px;
+	height: 24px;
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary, #0075ff);
+}
+
+.biconnector-dataset-import-v2-card__title {
+	flex: 1;
+	font-weight: 500;
+	color: #000;
+	letter-spacing: -0.1px;
+}
+
+.biconnector-dataset-import-v2-card__title-hint.ui-hint .ui-hint-icon,
+.biconnector-dataset-import-v2-card__title-hint.ui-hint .ui-hint-icon.ui-icon-set.--o-question,
+.biconnector-dataset-import-v2-card__title-hint.ui-hint .ui-hint-icon .ui-icon-set.--o-question {
+	--ui-icon-set__icon-size: 18px;
+}
+
+.biconnector-dataset-import-v2-card__title-hint {
+	display: inline-flex;
+	align-items: center;
+	line-height: 1;
+}
+
+.biconnector-dataset-import-v2-card__header-extra {
+	flex: 0 0 auto;
+	display: inline-flex;
+	align-items: center;
+}
+
+.biconnector-dataset-import-v2-card__header-link {
+	display: inline-flex;
+	align-items: center;
+	gap: 2px;
+	height: 24px;
+	padding: 0 4px;
+	border: 0;
+	background: transparent;
+	color: var(--ui-color-accent-main-primary, #0075ff);
+	cursor: pointer;
+	font-family: inherit;
+	font-weight: 500;
+	letter-spacing: -0.05px;
+}
+
+.biconnector-dataset-import-v2-card__header-link:hover {
+	color: var(--ui-color-accent-main-primary-hover, #0066df);
+}
+
+.biconnector-dataset-import-v2-card__header-link-icon {
+	--ui-icon-set__icon-size: 16px;
+	--ui-icon-set__icon-color: currentColor;
+}
+
+.biconnector-dataset-import-v2-card--disabled .biconnector-dataset-import-v2-card__icon {
+	--ui-icon-set__icon-color: var(--ui-color-base-3, #828b95);
+}
+
+.biconnector-dataset-import-v2-card--disabled .biconnector-dataset-import-v2-card__title {
+	color: var(--ui-color-base-3, #828b95);
+}
+
+.biconnector-dataset-import-v2-card__body {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	padding: 0 24px 24px;
+}
+
+.biconnector-dataset-import-v2-connection__selector {
+	min-height: 42px;
+}
+
+.biconnector-dataset-import-v2-connection__preview {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	padding: 9px 12px;
+	border: 1px solid var(--ui-color-design-outline-stroke-alt1, #dfe0e3);
+	border-radius: 8px;
+	background: var(--ui-color-base-white-fixed, #fff);
+	cursor: pointer;
+	font-family: inherit;
+	font-size: 14px;
+	line-height: 20px;
+	color: var(--ui-color-accent-main-primary, #0075ff);
+}
+
+.biconnector-dataset-import-v2-connection__avatar {
+	width: 24px;
+	height: 24px;
+	flex-shrink: 0;
+	background-size: contain;
+	background-repeat: no-repeat;
+	background-position: center;
+}
+
+.biconnector-dataset-import-v2-connection__name {
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.biconnector-dataset-import-v2-related__list {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+}
+
+.biconnector-dataset-import-v2-related__chip {
+	display: inline-flex;
+	align-items: center;
+	height: 34px;
+	padding: 0 8px 0 12px;
+	box-sizing: border-box;
+	border: 1px solid var(--ui-color-accent-soft-blue-1, #c4e6ff);
+	border-radius: 8px;
+	background: var(--ui-color-base-white-fixed, #fff);
+	color: var(--ui-color-accent-main-primary, #0075ff);
+	font-size: 15px;
+	line-height: 20px;
+	letter-spacing: -0.05px;
+	text-decoration: none;
+	white-space: nowrap;
+	transition: background-color 0.15s ease-in-out;
+}
+
+.biconnector-dataset-import-v2-related__chip:hover {
+	background: var(--ui-color-bg-content-secondary, #f6fafb);
+}
+
+.biconnector-dataset-import-v2-related__empty {
+	font-size: 14px;
+	line-height: 20px;
+	color: var(--ui-color-base-3, #828b95);
+}
+
+.biconnector-dataset-import-v2-card__row {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 12px;
+}
+
+.biconnector-dataset-import-v2-card__field {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.biconnector-dataset-import-v2-card__field-label {
+	font-size: 13px;
+	line-height: 18px;
+	color: var(--ui-color-base-2, #525c69);
+}
+
+.biconnector-dataset-import-v2-card__field-error {
+	font-size: 12px;
+	line-height: 16px;
+	color: var(--ui-color-accent-main-alert, #ff5752);
+}
+
+.biconnector-dataset-import-v2-card__input,
+.biconnector-dataset-import-v2-card__select,
+.biconnector-dataset-import-v2-card__textarea {
+	width: 100%;
+	padding: 9px 12px;
+	box-sizing: border-box;
+	border: 1px solid var(--ui-color-design-outline-stroke-alt1, #dfe0e3);
+	border-radius: 8px;
+	background: var(--ui-color-design-outline-bg-alt, #fff);
+	color: var(--ui-color-base-1, #333);
+	font-family: inherit;
+	font-size: 15px;
+	line-height: 20px;
+	outline: 0;
+	transition: border-color 0.15s ease-in-out;
+}
+
+.biconnector-dataset-import-v2-card__select {
+	appearance: none;
+	padding-right: 36px;
+	background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none'><path d='M1 1L6 6L11 1' stroke='%23828b95' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+	background-repeat: no-repeat;
+	background-position: right 12px center;
+}
+
+.biconnector-dataset-import-v2-card__input:focus,
+.biconnector-dataset-import-v2-card__select:focus,
+.biconnector-dataset-import-v2-card__textarea:focus {
+	border-color: var(--ui-color-accent-main-primary, #0075ff);
+}
+
+.biconnector-dataset-import-v2-card__input--error,
+.biconnector-dataset-import-v2-card__input--error:focus {
+	border-color: var(--ui-color-accent-main-alert, #ff5752);
+}
+
+.biconnector-dataset-import-v2-card__input:disabled,
+.biconnector-dataset-import-v2-card__select:disabled,
+.biconnector-dataset-import-v2-card__textarea:disabled {
+	border-color: transparent;
+	background: #f7f7f7;
+	color: #525c69;
+	opacity: 1;
+	-webkit-text-fill-color: #525c69;
+	cursor: not-allowed;
+}
+
+.biconnector-dataset-import-v2-card__textarea {
+	resize: vertical;
+	min-height: 80px;
+}
+
+.biconnector-dataset-import-v2-card__toggle {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	cursor: pointer;
+	-webkit-user-select: none;
+	        user-select: none;
+}
+
+.biconnector-dataset-import-v2-card__toggle-input {
+	position: absolute;
+	opacity: 0;
+	pointer-events: none;
+}
+
+.biconnector-dataset-import-v2-card__toggle-track {
+	flex: 0 0 auto;
+	width: 40px;
+	height: 22px;
+	background: var(--ui-color-base-6, #c6cdd3);
+	border-radius: 11px;
+	transition: background-color 0.15s ease-in-out;
+	position: relative;
+}
+
+.biconnector-dataset-import-v2-card__toggle-knob {
+	position: absolute;
+	top: 2px;
+	left: 2px;
+	width: 18px;
+	height: 18px;
+	background: #fff;
+	border-radius: 50%;
+	transition: transform 0.15s ease-in-out;
+}
+
+.biconnector-dataset-import-v2-card__toggle-input:checked + .biconnector-dataset-import-v2-card__toggle-track {
+	background: var(--ui-color-accent-main-primary, #0075ff);
+}
+
+.biconnector-dataset-import-v2-card__toggle-input:checked + .biconnector-dataset-import-v2-card__toggle-track .biconnector-dataset-import-v2-card__toggle-knob {
+	transform: translateX(18px);
+}
+
+.biconnector-dataset-import-v2-card__toggle-label {
+	font-size: 14px;
+	line-height: 20px;
+	color: var(--ui-color-base-1, #333);
+}
+
+.biconnector-dataset-import-v2-card__columns-empty {
+	padding: 24px;
+	text-align: center;
+	font-size: 14px;
+	line-height: 19px;
+	color: var(--ui-color-base-3, #828b95);
+	background: var(--ui-color-bg-content-secondary, #f7f9fb);
+	border-radius: 12px;
+}
+
+.biconnector-dataset-import-v2-card__columns-list {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.biconnector-dataset-import-v2-card__column-row {
+	padding: 12px 14px;
+	border: 1px dashed var(--ui-color-design-outline-stroke-alt1, #dfe0e3);
+	border-radius: 10px;
+	color: var(--ui-color-base-2, #525c69);
+}
+
+.biconnector-dataset-import-v2-card__column-row-stub {
+	font-size: 13px;
+}
+
+.biconnector-dataset-import-v2-field-card {
+	position: relative;
+	padding: 16px;
+	background: var(--ui-color-bg-content-primary, #fff);
+	border: 1px solid var(--ui-color-design-outline-stroke-alt1, #dfe0e3);
+	border-radius: 12px;
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.biconnector-dataset-import-v2-field-card--active {
+	border-color: var(--ui-color-accent-main-primary, #0075ff);
+	box-shadow: 0 0 0 1px var(--ui-color-accent-main-primary, #0075ff);
+}
+
+.biconnector-dataset-import-v2-field-card__visibility {
+	position: absolute;
+	top: -12px;
+	right: -12px;
+	width: 28px;
+	height: 28px;
+	border: 0;
+	background: var(--ui-color-bg-content-primary, #fff);
+	border-radius: 50%;
+	cursor: pointer;
+	padding: 0;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	z-index: 1;
+}
+
+.biconnector-dataset-import-v2-field-card__visibility-icon {
+	--ui-icon-set__icon-size: 24px;
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary, #0075ff);
+}
+
+.biconnector-dataset-import-v2-field-card__visibility--hidden .biconnector-dataset-import-v2-field-card__visibility-icon {
+	--ui-icon-set__icon-color: var(--ui-color-base-3, #828b95);
+}
+
+.biconnector-dataset-import-v2-field-card--excluded .biconnector-dataset-import-v2-field-card__field--description,
+.biconnector-dataset-import-v2-field-card--excluded .biconnector-dataset-import-v2-field-card__field-label {
+	display: none;
+}
+
+.biconnector-dataset-import-v2-field-card__row {
+	display: grid;
+	grid-template-columns: 140px 1fr;
+	gap: 12px;
+}
+
+.biconnector-dataset-import-v2-field-card__field {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	min-width: 0;
+}
+
+.biconnector-dataset-import-v2-field-card__field-label {
+	font-size: 13px;
+	line-height: 18px;
+	color: var(--ui-color-base-2, #525c69);
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+}
+
+.biconnector-dataset-import-v2-field-card__control {
+	display: block;
+	min-width: 0;
+}
+
+.biconnector-dataset-import-v2-field-card__select--locked,
+.biconnector-dataset-import-v2-field-card__input--locked {
+	pointer-events: none;
+}
+
+.biconnector-dataset-import-v2-field-card__field-error {
+	font-size: 12px;
+	line-height: 16px;
+	color: var(--ui-color-accent-main-alert, #ff5752);
+}
+
+.biconnector-dataset-import-v2-field-card__select,
+.biconnector-dataset-import-v2-field-card__input,
+.biconnector-dataset-import-v2-field-card__textarea {
+	width: 100%;
+	padding: 9px 12px;
+	box-sizing: border-box;
+	border: 1px solid var(--ui-color-design-outline-stroke-alt1, #dfe0e3);
+	border-radius: 8px;
+	background: var(--ui-color-bg-content-primary, #fff);
+	color: var(--ui-color-base-1, #333);
+	font-family: inherit;
+	font-size: 14px;
+	line-height: 20px;
+	outline: 0;
+	transition: border-color 0.15s ease-in-out;
+}
+
+.biconnector-dataset-import-v2-field-card__select {
+	appearance: none;
+	padding-right: 32px;
+	background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none'><path d='M1 1L6 6L11 1' stroke='%23828b95' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+	background-repeat: no-repeat;
+	background-position: right 12px center;
+}
+
+.biconnector-dataset-import-v2-field-card__input:focus,
+.biconnector-dataset-import-v2-field-card__select:focus,
+.biconnector-dataset-import-v2-field-card__textarea:focus {
+	border-color: var(--ui-color-accent-main-primary, #0075ff);
+}
+
+.biconnector-dataset-import-v2-field-card__input--error,
+.biconnector-dataset-import-v2-field-card__input--error:focus {
+	border-color: var(--ui-color-accent-main-alert, #ff5752);
+}
+
+.biconnector-dataset-import-v2-field-card__textarea {
+	resize: vertical;
+	min-height: 56px;
+	padding: 9px 12px;
+}
+
+.biconnector-dataset-import-v2-field-card__select:disabled,
+.biconnector-dataset-import-v2-field-card__input:disabled,
+.biconnector-dataset-import-v2-field-card__textarea:disabled {
+	border-color: transparent;
+	background: #f7f7f7;
+	color: #525c69;
+	opacity: 1;
+	-webkit-text-fill-color: #525c69;
+	cursor: not-allowed;
+}
+
+.biconnector-dataset-import-v2-card__columns-list {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+
+.biconnector-dataset-import-v2-file-section {
+	flex: 0 0 auto;
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	background: var(--ui-color-bg-content-primary, #fff);
+	border-radius: 20px;
+	box-sizing: border-box;
+	transition: box-shadow 0.15s ease-in-out;
+	box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
+	overflow: hidden;
+}
+
+.biconnector-dataset-import-v2-file-section--empty {
+	flex: 1 1 auto;
+	min-height: 0;
+}
+
+.biconnector-dataset-import-v2-file-section--dragging .biconnector-dataset-import-v2-file-section__empty {
+	pointer-events: none;
+}
+
+.biconnector-dataset-import-v2-file-section__drag-overlay {
+	position: absolute;
+	inset: 20px;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 16px;
+	border: 1px solid var(--ui-color-accent-main-primary, #0075ff);
+	background: rgba(237, 247, 255, 0.9);
+	border-radius: 14px;
+	pointer-events: none;
+}
+
+.biconnector-dataset-import-v2-file-section__drag-content {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 6px;
+	max-width: 320px;
+	text-align: center;
+}
+
+.biconnector-dataset-import-v2-file-section__drag-heading {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.biconnector-dataset-import-v2-file-section__drag-icon {
+	--ui-icon-set__icon-size: 24px;
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary, #0075ff);
+}
+
+.biconnector-dataset-import-v2-file-section__drag-title {
+	font-size: 17px;
+	font-weight: 500;
+	line-height: 23px;
+	letter-spacing: -0.1px;
+	color: #000;
+}
+
+.biconnector-dataset-import-v2-file-section__drag-hint {
+	margin: 0;
+	font-size: 13px;
+	line-height: 17px;
+	letter-spacing: -0.05px;
+	color: var(--ui-color-base-2, #525c69);
+}
+
+
+.biconnector-dataset-import-v2-file-section__hidden-input {
+	display: none;
+}
+
+.biconnector-dataset-import-v2-file-section__header {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 18px 20px;
+}
+
+.biconnector-dataset-import-v2-file-section__header-icon {
+	flex: 0 0 auto;
+	--ui-icon-set__icon-size: 22px;
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary, #0075ff);
+}
+
+.biconnector-dataset-import-v2-file-section__header-title {
+	flex: 0 0 auto;
+	font-weight: 500;
+	letter-spacing: -0.1px;
+	color: #000;
+}
+
+.biconnector-dataset-import-v2-file-section__chip {
+	flex: 0 1 auto;
+	min-width: 0;
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	max-width: 100%;
+	margin-left: auto;
+	padding: 6px 10px 6px 6px;
+	background: var(--ui-color-bg-content-primary, #fff);
+	border: 1px solid var(--ui-color-design-outline-stroke-alt1, #dfe0e3);
+	border-radius: 10px;
+	box-sizing: border-box;
+	overflow: hidden;
+}
+
+.biconnector-dataset-import-v2-file-section__chip-icon {
+	flex: 0 0 auto;
+	width: 20px;
+	height: 22px;
+	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='22' fill='none' viewBox='0 0 20 22'%3E%3Cpath fill='url(%23a)' stroke='url(%23b)' stroke-linejoin='round' stroke-width='.7' d='M6.6.35h7.919l5.131 5.29V19.4a2.25 2.25 0 0 1-2.25 2.25H6.6a2.25 2.25 0 0 1-2.25-2.25V2.6A2.25 2.25 0 0 1 6.6.35Z'/%3E%3Cg filter='url(%23c)'%3E%3Cpath fill='%235cc94a' d='M1.104 9.152c0-.644.505-1.167 1.128-1.167h13.537c.623 0 1.128.523 1.128 1.167v4.667c0 .644-.505 1.166-1.128 1.166H2.232c-.623 0-1.128-.522-1.128-1.166z'/%3E%3C/g%3E%3Cpath fill='%23fff' d='m4.046 9.206.961 1.625h.038l.966-1.625h1.138L5.694 11.59l1.487 2.384H6.022l-.977-1.627h-.038l-.977 1.627H2.875l1.492-2.384-1.464-2.384zm3.741 4.768V9.206h1.008v3.937h2.043v.83zm6.305-3.397a.59.59 0 0 0-.24-.437q-.211-.156-.575-.156a1.1 1.1 0 0 0-.416.07.6.6 0 0 0-.261.188.45.45 0 0 0-.088.275.4.4 0 0 0 .053.223.6.6 0 0 0 .165.166q.105.067.242.118.138.049.294.084l.428.102q.312.071.573.187t.451.286.296.4.11.529a1.3 1.3 0 0 1-.224.759 1.4 1.4 0 0 1-.633.495q-.412.175-.994.175-.577 0-1.006-.177a1.47 1.47 0 0 1-.666-.524q-.237-.348-.249-.863h.976q.015.24.137.4a.76.76 0 0 0 .328.24q.207.08.468.08.256 0 .445-.075a.7.7 0 0 0 .295-.207.48.48 0 0 0 .105-.305.4.4 0 0 0-.095-.27.7.7 0 0 0-.275-.187 3 3 0 0 0-.44-.14l-.52-.13q-.601-.146-.951-.458t-.347-.84a1.25 1.25 0 0 1 .23-.757q.236-.324.645-.505.41-.182.931-.182.531 0 .927.182.397.181.619.505.22.323.228.75z'/%3E%3Cdefs%3E%3ClinearGradient id='a' x1='4' x2='12.317' y1='0' y2='21.879' gradientUnits='userSpaceOnUse'%3E%3Cstop stop-color='%23f7faff'/%3E%3Cstop offset='.37' stop-color='%23edf1f9'/%3E%3Cstop offset='1' stop-color='%23edf1f9'/%3E%3C/linearGradient%3E%3ClinearGradient id='b' x1='12' x2='12' y1='0' y2='21.694' gradientUnits='userSpaceOnUse'%3E%3Cstop stop-color='%23e4e8f0'/%3E%3Cstop offset='1' stop-color='%23e5e9f1'/%3E%3C/linearGradient%3E%3Cfilter id='c' width='18.193' height='9.4' x='-.096' y='7.385' color-interpolation-filters='sRGB' filterUnits='userSpaceOnUse'%3E%3CfeFlood flood-opacity='0' result='BackgroundImageFix'/%3E%3CfeColorMatrix in='SourceAlpha' result='hardAlpha' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0'/%3E%3CfeOffset dy='.6'/%3E%3CfeGaussianBlur stdDeviation='.6'/%3E%3CfeComposite in2='hardAlpha' operator='out'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.12 0'/%3E%3CfeBlend in2='BackgroundImageFix' result='effect1_dropShadow_4680_181765'/%3E%3CfeBlend in='SourceGraphic' in2='effect1_dropShadow_4680_181765' result='shape'/%3E%3C/filter%3E%3C/defs%3E%3C/svg%3E");
+	background-repeat: no-repeat;
+	background-position: center;
+	background-size: contain;
+}
+
+.biconnector-dataset-import-v2-file-section__chip-name {
+	flex: 0 1 auto;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	color: var(--ui-color-base-1, #333);
+}
+
+.biconnector-dataset-import-v2-file-section__chip-remove {
+	flex: 0 0 auto;
+	width: 16px;
+	height: 16px;
+	border: 0;
+	cursor: pointer;
+	padding: 0;
+	--ui-icon-set__icon-color: var(--ui-color-base-3, #828b95);
+	--ui-icon-set__icon-size: 16px;
+}
+
+.biconnector-dataset-import-v2-file-section__chip-remove:hover {
+	--ui-icon-set__icon-color: var(--ui-color-base-1, #333);
+}
+
+.biconnector-dataset-import-v2-file-section__divider {
+	flex: 0 0 auto;
+	width: 1px;
+	height: 24px;
+	background: var(--ui-color-design-outline-stroke-alt1, #dfe0e3);
+}
+
+.biconnector-dataset-import-v2-file-section__replace {
+	flex: 0 0 auto;
+	margin-left: auto;
+	height: 32px;
+	padding: 0 16px;
+	border: 1px solid var(--ui-color-accent-main-primary, #0075ff);
+	border-radius: 8px;
+	background: transparent;
+	color: var(--ui-color-accent-main-primary, #0075ff);
+	font: inherit;
+	font-weight: 500;
+	cursor: pointer;
+	transition: background-color 0.15s ease-in-out;
+}
+
+.biconnector-dataset-import-v2-file-section__chip + .biconnector-dataset-import-v2-file-section__divider + .biconnector-dataset-import-v2-file-section__replace,
+.biconnector-dataset-import-v2-file-section__chip + .biconnector-dataset-import-v2-file-section__replace {
+	margin-left: 0;
+}
+
+.biconnector-dataset-import-v2-file-section__replace:hover {
+	background: rgba(0, 117, 255, 0.06);
+}
+
+.biconnector-dataset-import-v2-file-section__empty {
+	flex: 1 1 auto;
+	min-height: 0;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 30px;
+	padding: 40px 24px 60px;
+	text-align: center;
+}
+
+.biconnector-dataset-import-v2-file-section__mascot {
+	flex: 0 1 280px;
+	min-height: 140px;
+}
+
+@media (max-height: 540px) {
+	.biconnector-dataset-import-v2-file-section__mascot {
+		display: none;
+	}
+}
+
+.biconnector-dataset-import-v2-file-section__empty-text {
+	flex: 0 0 auto;
+	max-width: 470px;
+	margin: 0;
+	letter-spacing: -0.05px;
+	color: var(--ui-color-base-3, #828b95);
+}
+
+.biconnector-dataset-import-v2-file-section__empty-text--loading {
+	color: var(--ui-color-base-2, #525c69);
+}
+
+.biconnector-dataset-import-v2-file-section__browse {
+	flex: 0 0 auto;
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	height: 34px;
+	padding: 0 24px;
+	border: 0;
+	border-radius: 10px;
+	background: var(--ui-color-accent-main-primary, #0075ff);
+	color: #fff;
+	font: inherit;
+	font-size: 14px;
+	font-weight: 500;
+	letter-spacing: -0.05px;
+	cursor: pointer;
+	transition: background-color 0.15s ease-in-out;
+}
+
+.biconnector-dataset-import-v2-file-section__browse:hover {
+	background: #0066df;
+}
+
+.biconnector-dataset-import-v2-file-section__browse-icon {
+	--ui-icon-set__icon-size: 18px;
+	--ui-icon-set__icon-color: #fff;
+}
+
+.biconnector-dataset-import-v2-file-section__browse--loading {
+	cursor: progress;
+	min-width: 138px;
+	justify-content: center;
+}
+
+.biconnector-dataset-import-v2-file-section__browse--loading:disabled {
+	opacity: 1;
+}
+
+.biconnector-dataset-import-v2-file-section__browse-spinner {
+	width: 18px;
+	height: 18px;
+	border-radius: 50%;
+	border: 2px solid rgba(255, 255, 255, 0.35);
+	border-top-color: #fff;
+	animation: biconnector-dataset-import-v2-spin 0.8s linear infinite;
+}
+
+@keyframes biconnector-dataset-import-v2-spin {
+	to { transform: rotate(360deg); }
+}
+
+.biconnector-dataset-import-v2-connection-section {
+	flex: 0 0 auto;
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	background: var(--ui-color-bg-content-primary, #fff);
+	border-radius: 20px;
+	box-sizing: border-box;
+	box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
+	overflow: hidden;
+}
+
+.biconnector-dataset-import-v2-connection-section--empty {
+	flex: 1 1 auto;
+	min-height: 0;
+}
+
+.biconnector-dataset-import-v2-connection-section__header {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 18px 20px;
+}
+
+.biconnector-dataset-import-v2-connection-section__header-icon {
+	flex: 0 0 auto;
+	--ui-icon-set__icon-size: 22px;
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary, #0075ff);
+}
+
+.biconnector-dataset-import-v2-connection-section__header-title {
+	flex: 0 0 auto;
+	font-weight: 500;
+	letter-spacing: -0.1px;
+	color: #000;
+}
+
+.biconnector-dataset-import-v2-connection-section__chip {
+	flex: 0 1 auto;
+	min-width: 0;
+	margin-left: auto;
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	max-width: 100%;
+	height: 36px;
+	padding: 0 12px;
+	background: var(--ui-color-bg-content-primary, #fff);
+	border: 1px solid var(--ui-color-design-outline-stroke-alt1, #dfe0e3);
+	border-radius: 10px;
+	box-sizing: border-box;
+	overflow: hidden;
+	cursor: pointer;
+	font: inherit;
+	transition: background-color 0.15s ease-in-out;
+}
+
+.biconnector-dataset-import-v2-connection-section__chip:hover {
+	background: var(--ui-color-bg-state-hover-default, rgba(0, 0, 0, 0.04));
+}
+
+.biconnector-dataset-import-v2-connection-section__chip-avatar {
+	flex: 0 0 auto;
+	width: 20px;
+	height: 20px;
+	background-repeat: no-repeat;
+	background-position: center;
+	background-size: contain;
+}
+
+.biconnector-dataset-import-v2-connection-section__chip-name {
+	flex: 0 1 auto;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	color: var(--ui-color-base-1, #333);
+}
+
+.biconnector-dataset-import-v2-connection-section__divider {
+	flex: 0 0 auto;
+	width: 1px;
+	height: 24px;
+	background: var(--ui-color-design-outline-stroke-alt1, #dfe0e3);
+}
+
+.biconnector-dataset-import-v2-connection-section__replace {
+	flex: 0 0 auto;
+	height: 32px;
+	padding: 0 16px;
+	border: 1px solid var(--ui-color-accent-main-primary, #0075ff);
+	border-radius: 8px;
+	background: transparent;
+	color: var(--ui-color-accent-main-primary, #0075ff);
+	font: inherit;
+	font-weight: 500;
+	cursor: pointer;
+	transition: background-color 0.15s ease-in-out;
+}
+
+.biconnector-dataset-import-v2-connection-section__replace:hover {
+	background: rgba(0, 117, 255, 0.06);
+}
+
+.biconnector-dataset-import-v2-connection-section__body {
+	flex: 1 1 auto;
+	min-height: 540px;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 24px;
+	padding: 40px 24px 60px;
+	text-align: center;
+}
+
+.biconnector-dataset-import-v2-connection-section__empty-text {
+	max-width: 470px;
+	margin: 0;
+	letter-spacing: -0.05px;
+	color: var(--ui-color-base-3, #828b95);
+}
+
+.biconnector-dataset-import-v2-connection-section__form {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	width: 100%;
+	max-width: 360px;
+	text-align: left;
+}
+
+.biconnector-dataset-import-v2-connection-section__field {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.biconnector-dataset-import-v2-connection-section__field-label {
+	color: var(--ui-color-base-2, #525c69);
+}
+
+.biconnector-dataset-import-v2-connection-section__continue {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	height: 40px;
+	padding: 0 28px;
+	border: 0;
+	border-radius: 10px;
+	background: var(--ui-color-accent-main-primary, #0075ff);
+	color: #fff;
+	font: inherit;
+	font-size: 14px;
+	font-weight: 500;
+	letter-spacing: -0.05px;
+	cursor: pointer;
+	transition: background-color 0.15s ease-in-out;
+}
+
+.biconnector-dataset-import-v2-connection-section__continue:hover {
+	background: #0066df;
+}
+
+.biconnector-dataset-import-v2-connection-section__continue:disabled {
+	background: var(--ui-color-base-6, #d5d7db);
+	cursor: default;
+}
+
+.biconnector-dataset-entity-selector-popup .ui-selector-tab-labels {
+	display: none;
+}
+
+.biconnector-dataset-import-v2-preview {
+	flex: 1 1 auto;
+	min-height: 0;
+	background: var(--ui-color-bg-content-primary, #fff);
+	border-radius: 20px;
+	padding: 18px 20px 8px;
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	box-sizing: border-box;
+	box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
+}
+
+.biconnector-dataset-import-v2-preview__header {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.biconnector-dataset-import-v2-preview__icon {
+	--ui-icon-set__icon-size: 22px;
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary, #0075ff);
+}
+
+.biconnector-dataset-import-v2-preview__title {
+	flex: 0 0 auto;
+	font-weight: 500;
+	letter-spacing: -0.1px;
+	color: #000;
+}
+
+.biconnector-dataset-import-v2-preview__subtitle {
+	margin: -6px 0 0 28px;
+	color: var(--ui-color-base-3, #828b95);
+}
+
+.biconnector-dataset-import-v2-preview__col-hint.ui-hint .ui-hint-icon,
+.biconnector-dataset-import-v2-preview__col-hint.ui-hint .ui-hint-icon.ui-icon-set.--o-question,
+.biconnector-dataset-import-v2-preview__col-hint.ui-hint .ui-hint-icon .ui-icon-set.--o-question {
+	--ui-icon-set__icon-size: 18px;
+}
+
+.biconnector-dataset-import-v2-preview__col-hint {
+	display: inline-flex;
+	align-items: center;
+	line-height: 1;
+}
+
+.biconnector-dataset-import-v2-preview__empty {
+	flex: 1 1 auto;
+	min-height: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 60px 24px;
+	text-align: center;
+	color: var(--ui-color-base-3, #828b95);
+	background: var(--ui-color-bg-content-secondary, #f6fafb);
+	border-radius: 12px;
+}
+
+.biconnector-dataset-import-v2-preview__scroll-wrapper {
+	position: relative;
+	flex: 1 1 auto;
+	min-height: 0;
+	width: 100%;
+}
+
+.biconnector-dataset-import-v2-preview__scroll {
+	position: absolute;
+	inset: 0;
+	overflow: auto;
+	padding-bottom: 2px;
+	scrollbar-width: none;
+}
+
+.biconnector-dataset-import-v2-preview__scroll::-webkit-scrollbar {
+	display: none;
+}
+
+.biconnector-dataset-import-v2-preview__table {
+	width: 100%;
+	border-collapse: collapse;
+}
+
+.biconnector-dataset-import-v2-preview__th {
+	min-width: 200px;
+	height: 45px;
+	padding: 0 20px;
+	box-sizing: border-box;
+	text-align: left;
+	vertical-align: middle;
+	font-weight: 500;
+	color: #5c5c5c;
+	letter-spacing: 0.4px;
+	white-space: nowrap;
+	cursor: pointer;
+	border-top: 1px solid #f0f0f0;
+	border-right: 1px solid #f0f0f0;
+	border-bottom: 1px solid #f0f0f0;
+}
+
+.biconnector-dataset-import-v2-preview__th:last-child {
+	border-right: 0;
+}
+
+.biconnector-dataset-import-v2-preview__th-content {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.biconnector-dataset-import-v2-preview__col-name {
+	flex: 0 0 auto;
+}
+
+.biconnector-dataset-import-v2-preview__col-hint {
+	margin-left: auto;
+}
+
+.biconnector-dataset-import-v2-preview__td {
+	min-width: 200px;
+	height: 70px;
+	padding: 0 20px;
+	box-sizing: border-box;
+	text-align: left;
+	vertical-align: middle;
+	color: var(--ui-color-base-1, #333);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	cursor: pointer;
+	border-bottom: 1px solid #f0f0f0;
+}
+
+.biconnector-dataset-import-v2-preview__tr:last-child .biconnector-dataset-import-v2-preview__td {
+	border-bottom: 0;
+}
+
+.biconnector-dataset-import-v2-preview__column-highlight {
+	position: absolute;
+	pointer-events: none;
+	border: 1px solid var(--ui-color-accent-main-primary, #0075ff);
+	border-radius: 12px;
+	box-sizing: border-box;
+	opacity: 0;
+	transition:
+		left 0.2s ease,
+		top 0.2s ease,
+		width 0.2s ease,
+		height 0.2s ease,
+		opacity 0.15s ease;
+	z-index: 1;
+}
+
+.biconnector-dataset-import-v2-preview__column-highlight--visible {
+	opacity: 1;
+}
+
+.biconnector-dataset-import-v2-preview__header-badge {
+	display: inline-flex;
+	align-items: center;
+	gap: 5px;
+	margin-left: auto;
+	padding: 4px 8px 4px 8px;
+	border: 1px solid #ffcdcc;
+	border-radius: 6px;
+	background: var(--ui-color-bg-content-primary, #fff);
+	color: var(--ui-color-accent-main-alert, #ff5752);
+	white-space: nowrap;
+	line-height: 20px;
+}
+
+
+.biconnector-dataset-import-v2-preview__header-badge-icon {
+	width: 20px;
+	height: 20px;
+	--ui-icon-set__icon-size: 20px;
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-alert, #ff5752);
+}
+
+.biconnector-dataset-import-v2-preview__header-badge-count {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 18px;
+	height: 18px;
+	padding: 0 5px;
+	box-sizing: border-box;
+	border-radius: 9px;
+	background: var(--ui-color-accent-main-alert, #ff5752);
+	color: #fff;
+	font-size: 12px;
+	line-height: 18px;
+	font-weight: 500;
+}
+
+.biconnector-dataset-import-v2-preview__col-badge {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 16px;
+	height: 16px;
+	padding: 0 4px;
+	box-sizing: border-box;
+	border-radius: 8px;
+	background: var(--ui-color-accent-main-alert, #ff5752);
+	color: #fff;
+	font-size: 11px;
+	line-height: 16px;
+	font-weight: 600;
+	letter-spacing: 0;
+	text-transform: none;
+}
+
+.biconnector-dataset-import-v2-preview__td--error {
+	position: relative;
+	background: #fffcfc;
+	color: var(--ui-color-accent-main-alert, #ff5752);
+}
+
+.biconnector-dataset-import-v2-preview__td--error::before {
+	content: '';
+	position: absolute;
+	inset: 0;
+	border: 2px solid #ff5752;
+	border-radius: 9px;
+	pointer-events: none;
+	z-index: 2;
+}
+
+.biconnector-dataset-import-v2-preview__loader-bg {
+	position: absolute;
+	inset: 0;
+	z-index: 3;
+	background: rgba(255, 255, 255, 0.75);
+	-webkit-backdrop-filter: blur(2px);
+	        backdrop-filter: blur(2px);
+	pointer-events: none;
+}
+
+.biconnector-dataset-import-v2-preview__loader-indicator {
+	position: absolute;
+	left: 50%;
+	top: 0;
+	transform: translate(-50%, -50%);
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 12px;
+	pointer-events: none;
+}
+
+.biconnector-dataset-import-v2-preview__loader-spinner {
+	width: 28px;
+	height: 28px;
+	border: 2px solid var(--ui-color-design-outline-stroke-alt1, #ebedef);
+	border-top-color: var(--ui-color-accent-main-primary, #0075ff);
+	border-radius: 50%;
+	animation: biconnector-dataset-import-v2-preview-spin 0.7s linear infinite;
+}
+
+.biconnector-dataset-import-v2-preview__loader-text {
+	color: var(--ui-color-base-3, #828b95);
+}
+
+@keyframes biconnector-dataset-import-v2-preview-spin {
+	to { transform: rotate(360deg); }
+}
+
+.biconnector-dataset-import-v2-preview__sticky-anchor {
+	position: absolute;
+	left: 0;
+	right: 0;
+	top: 50%;
+	height: 0;
+	z-index: 4;
+	pointer-events: none;
+}
+
+.biconnector-dataset-import-v2-preview__scroll-ear {
+	position: absolute;
+	top: -24px;
+	width: 48px;
+	height: 48px;
+	border-radius: 50%;
+	background: rgba(130, 139, 149, 0.5);
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+	transition: background-color 0.15s ease-in-out;
+	pointer-events: auto;
+	--ui-icon-set__icon-color: #fff;
+	--ui-icon-set__icon-size: 24px;
+}
+
+.biconnector-dataset-import-v2-preview__scroll-ear:hover {
+	background: rgba(130, 139, 149, 0.75);
+}
+
+.biconnector-dataset-import-v2-preview__scroll-ear--prev {
+	left: 8px;
+}
+
+.biconnector-dataset-import-v2-preview__scroll-ear--next {
+	right: 8px;
+}
+
+.biconnector-dataset-import-v2-popup {
+	padding: 24px;
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	min-width: 360px;
+	max-width: 440px;
+	box-sizing: border-box;
+}
+
+.biconnector-dataset-import-v2-popup__header {
+	margin: 0;
+	font-size: 18px;
+	font-weight: 500;
+	line-height: 24px;
+	color: var(--ui-color-base-1, #333);
+}
+
+.biconnector-dataset-import-v2-popup__content {
+	font-size: 14px;
+	line-height: 20px;
+	color: var(--ui-color-base-2, #525c69);
+}
+
+.biconnector-dataset-import-v2-popup__buttons {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	flex-wrap: wrap;
+}
+
+.biconnector-dataset-import-v2-success-popup.popup-window {
+	padding: 0;
+	border: 0;
+	background: transparent;
+	box-shadow: none;
+	border-radius: 20px;
+}
+
+.biconnector-dataset-import-v2-success {
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+	box-sizing: border-box;
+	padding: 24px;
+	border-radius: 20px;
+	background-image: linear-gradient(
+		198deg,
+		var(--ui-color-accent-soft-blue-1, #c4e6ff) 2.62%,
+		var(--ui-color-base-white-fixed, #fff) 34.74%
+	);
+	box-shadow: 0 8px 17px rgba(0, 0, 0, 0.21);
+}
+
+.biconnector-dataset-import-v2-success__body {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 16px;
+	text-align: center;
+}
+
+.biconnector-dataset-import-v2-success__mascot {
+	width: 160px;
+	height: 160px;
+	background-image: url("data:image/webp;base64,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");
+	background-size: contain;
+	background-repeat: no-repeat;
+	background-position: center;
+}
+
+.biconnector-dataset-import-v2-success__text {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	width: 100%;
+	word-break: break-word;
+}
+
+.biconnector-dataset-import-v2-success__title {
+	margin: 0;
+	font-size: 19px;
+	font-weight: 500;
+	line-height: 26px;
+	letter-spacing: -0.2px;
+	color: var(--ui-color-base-1, #333);
+}
+
+.biconnector-dataset-import-v2-success__description {
+	font-size: 15px;
+	font-weight: 400;
+	line-height: 20px;
+	letter-spacing: -0.05px;
+	color: var(--ui-color-base-2, #525c69);
+}
+
+.biconnector-dataset-import-v2-success__actions {
+	display: flex;
+	gap: 12px;
+	justify-content: center;
+	padding-top: 24px;
+}
+
+.biconnector-dataset-import-v2-success__btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	height: 38px;
+	padding: 0 18px;
+	border: 0;
+	border-radius: 10px;
+	box-sizing: border-box;
+	font-family: inherit;
+	font-size: 15px;
+	font-weight: 500;
+	line-height: 20px;
+	letter-spacing: -0.05px;
+	text-transform: none;
+	white-space: nowrap;
+	cursor: pointer;
+	transition: background-color 0.15s ease-in-out, border-color 0.15s ease-in-out;
+}
+
+.biconnector-dataset-import-v2-success__btn:disabled {
+	opacity: 0.6;
+	cursor: default;
+}
+
+.biconnector-dataset-import-v2-success__btn--primary {
+	background: var(--ui-color-accent-main-primary, #0075ff);
+	color: var(--ui-color-base-white-fixed, #fff);
+}
+
+.biconnector-dataset-import-v2-success__btn--primary:not(:disabled):hover {
+	background: #0061d6;
+}
+
+.biconnector-dataset-import-v2-success__btn--secondary {
+	background: var(--ui-color-base-white-fixed, #fff);
+	border: 1.5px solid var(--ui-color-design-outline-stroke, #edeef0);
+	color: var(--ui-color-base-2, #525c69);
+}
+
+.biconnector-dataset-import-v2-success__btn--secondary:not(:disabled):hover {
+	border-color: var(--ui-color-base-4, #a8adb4);
+}
+
+.biconnector-dataset-import-v2-error-popup.popup-window {
+	padding: 0;
+	border: 0;
+	background: transparent;
+	box-shadow: none;
+	border-radius: 20px;
+}
+
+.biconnector-dataset-import-v2-error-popup {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+	box-sizing: border-box;
+	padding: 24px;
+	border-radius: 20px;
+	background-image: linear-gradient(
+		198deg,
+		var(--ui-color-accent-soft-orange-1, #fff3c4) 2.62%,
+		var(--ui-color-base-white-fixed, #fff) 34.74%
+	);
+	box-shadow: 0 8px 17px rgba(0, 0, 0, 0.21);
+}
+
+.biconnector-dataset-import-v2-error-popup__close {
+	position: absolute;
+	top: 16px;
+	right: 16px;
+	z-index: 2;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 28px;
+	height: 28px;
+	padding: 0;
+	border: 0;
+	background: transparent;
+	cursor: pointer;
+	--ui-icon-set__icon-color: var(--ui-color-base-3, #828b95);
+}
+
+.biconnector-dataset-import-v2-error-popup__close:hover {
+	--ui-icon-set__icon-color: var(--ui-color-base-1, #333);
+}
+
+.biconnector-dataset-import-v2-error-popup__close:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+	border-radius: 4px;
+}
+
+.biconnector-dataset-import-v2-error-popup__body {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 16px;
+	text-align: center;
+}
+
+.biconnector-dataset-import-v2-error-popup__mascot {
+	width: 160px;
+	height: 160px;
+	background-image: url("images/failed-mascot.png");
+	background-size: contain;
+	background-repeat: no-repeat;
+	background-position: center;
+}
+
+.biconnector-dataset-import-v2-error-popup__text {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	width: 100%;
+	word-break: break-word;
+}
+
+.biconnector-dataset-import-v2-error-popup__title {
+	margin: 0;
+	font-size: 19px;
+	font-weight: 500;
+	line-height: 26px;
+	letter-spacing: -0.2px;
+	color: var(--ui-color-base-1, #333);
+}
+
+.biconnector-dataset-import-v2-error-popup__description {
+	font-size: 15px;
+	font-weight: 400;
+	line-height: 20px;
+	letter-spacing: -0.05px;
+	color: var(--ui-color-base-2, #525c69);
+}
+
+.biconnector-dataset-import-v2-error-popup__actions {
+	display: flex;
+	justify-content: center;
+	padding-top: 24px;
+}
+
+.biconnector-dataset-import-v2-popup__file-name {
+	color: var(--ui-color-accent-main-primary, #0075ff);
+	word-break: break-all;
+}
+
+.biconnector-dataset-import-v2-popup__error-list {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	max-height: 320px;
+	overflow-y: auto;
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.biconnector-dataset-import-v2-popup__error-item {
+	display: grid;
+	grid-template-columns: 60px 140px 1fr;
+	gap: 12px;
+	padding: 8px 12px;
+	background: var(--ui-color-bg-content-secondary, #f6fafb);
+	border-radius: 8px;
+	font-size: 13px;
+	line-height: 18px;
+}
+
+.biconnector-dataset-import-v2-popup__error-line {
+	color: var(--ui-color-base-3, #828b95);
+}
+
+.biconnector-dataset-import-v2-popup__error-col {
+	color: var(--ui-color-base-1, #333);
+	font-weight: 500;
+}
+
+.biconnector-dataset-import-v2-popup__error-msg {
+	color: var(--ui-color-accent-main-alert, #ff5752);
+}
+
+.biconnector-dataset-import-v2-file-errors-popup.popup-window {
+	max-width: calc(100vw - 48px);
+	overflow: hidden;
+	border-radius: 24px;
+}
+
+.biconnector-dataset-import-v2-file-errors {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	min-height: 0;
+	box-sizing: border-box;
+}
+
+.biconnector-dataset-import-v2-file-errors::before {
+	content: "";
+	position: absolute;
+	top: 0;
+	right: 0;
+	width: 55%;
+	height: 40%;
+	background: radial-gradient(
+		120% 120% at 100% 0%,
+		#ffd9d4 0%,
+		rgba(255, 233, 233, 0.55) 35%,
+		rgba(255, 233, 233, 0) 70%
+	);
+	pointer-events: none;
+	z-index: 0;
+}
+
+.biconnector-dataset-import-v2-file-errors__header {
+	position: relative;
+	z-index: 1;
+	display: flex;
+	flex-direction: row;
+	align-items: flex-start;
+	flex-shrink: 0;
+	gap: 16px;
+	padding: 32px 32px 20px;
+}
+
+.biconnector-dataset-import-v2-file-errors__graphic {
+	flex-shrink: 0;
+	width: 80px;
+	height: 80px;
+	background-image: url("images/attention-lighter.png");
+	background-repeat: no-repeat;
+	background-position: center;
+	background-size: contain;
+}
+
+.biconnector-dataset-import-v2-file-errors__close {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+	width: 28px;
+	height: 28px;
+	padding: 0;
+	border: 0;
+	background: transparent;
+	cursor: pointer;
+	--ui-icon-set__icon-color: var(--ui-color-base-3, #828b95);
+}
+
+.biconnector-dataset-import-v2-file-errors__close:hover {
+	--ui-icon-set__icon-color: var(--ui-color-base-1, #333);
+}
+
+.biconnector-dataset-import-v2-file-errors__close:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+	border-radius: 4px;
+}
+
+.biconnector-dataset-import-v2-file-errors__header-body {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+	flex-grow: 1;
+	gap: 8px;
+}
+
+.biconnector-dataset-import-v2-file-errors__title {
+	margin: 0;
+	font-size: 20px;
+	font-weight: 600;
+	line-height: 26px;
+	color: var(--ui-color-base-1, #333);
+}
+
+.biconnector-dataset-import-v2-file-errors__description {
+	font-size: 15px;
+	line-height: 20px;
+	color: var(--ui-color-base-3, #828b95);
+}
+
+.biconnector-dataset-import-v2-file-errors__description-text {
+	color: var(--ui-color-base-3, #828b95);
+}
+
+.biconnector-dataset-import-v2-file-errors__more {
+	margin-left: 4px;
+	color: var(--ui-color-accent-main-primary, #0075ff);
+	text-decoration: none;
+	cursor: pointer;
+	white-space: nowrap;
+}
+
+.biconnector-dataset-import-v2-file-errors__more:hover {
+	text-decoration: underline;
+}
+
+.biconnector-dataset-import-v2-file-errors__table {
+	position: relative;
+	z-index: 1;
+	display: flex;
+	flex-direction: column;
+	min-height: 0;
+	margin: 0 32px 20px;
+	overflow: hidden;
+	border: 1px solid var(--ui-color-divider-default, #e5e7eb);
+	border-radius: 16px;
+	background: var(--ui-color-bg-content-primary, #fff);
+}
+
+.biconnector-dataset-import-v2-file-errors__scroll {
+	min-height: 0;
+	max-height: min(480px, 60vh);
+	overflow-y: auto;
+}
+
+.biconnector-dataset-import-v2-file-errors__row {
+	display: grid;
+	grid-template-columns: minmax(0, 2.4fr) minmax(0, 1.2fr) 88px minmax(0, 0.9fr);
+	align-items: center;
+	min-height: 44px;
+}
+
+.biconnector-dataset-import-v2-file-errors__row:not(:last-child) {
+	border-bottom: 1px solid var(--ui-color-divider-default, #e5e7eb);
+}
+
+.biconnector-dataset-import-v2-file-errors__row--head {
+	position: sticky;
+	top: 0;
+	z-index: 1;
+	min-height: 40px;
+	background: var(--ui-color-bg-content-secondary, #f6fafb);
+}
+
+.biconnector-dataset-import-v2-file-errors__cell {
+	display: flex;
+	align-items: center;
+	min-width: 0;
+	padding: 0 16px 0 18px;
+	font-size: 14px;
+	line-height: 19px;
+	color: var(--ui-color-base-1, #333);
+}
+
+.biconnector-dataset-import-v2-file-errors__cell-text {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.biconnector-dataset-import-v2-file-errors__cell--head {
+	font-size: 15px;
+	line-height: 20px;
+	color: var(--ui-color-base-3, #828b95);
+}
+
+.biconnector-dataset-import-v2-file-errors__cell--value {
+	color: var(--ui-color-accent-main-alert, #ff5752);
+}
+
+.biconnector-dataset-import-v2-file-errors__cell--muted {
+	color: var(--ui-color-base-2, #525c69);
+}
+
+.biconnector-dataset-import-v2-file-errors__actions {
+	position: relative;
+	z-index: 1;
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: flex-end;
+	flex-shrink: 0;
+	gap: 12px;
+	padding: 20px 32px;
+}
+
+.biconnector-dataset-import-v2-mascot {
+	width: 280px;
+	height: 280px;
+	object-fit: contain;
+	pointer-events: none;
+}

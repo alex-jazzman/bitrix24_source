@@ -1,0 +1,192 @@
+/* The list is the only part of the folder panel that divides its free height: the scrolled area
+   grows, the footer with the total and the pages keeps the height of its content below it. */
+.disk-ext-folder-list {
+	display: flex;
+	flex-direction: column;
+	min-height: 0;
+	flex: 1;
+	color: var(--ui-color-base-1);
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font-size: var(--ui-font-size-md);
+	line-height: var(--ui-font-line-height-md);
+}
+
+/* min-height: 0 lets the area shrink below the height of the table it holds, which is what turns
+   the overflow into a scroll instead of stretching the panel. */
+.disk-ext-folder-list__scroll {
+	min-height: 0;
+	overflow: auto;
+	flex: 1;
+}
+
+.disk-ext-folder-list__table {
+	width: 100%;
+	border-collapse: collapse;
+	table-layout: fixed;
+}
+
+.disk-ext-folder-list__cell {
+	box-sizing: border-box;
+	padding: var(--ui-space-inset-xs) var(--ui-space-inset-sm);
+	border-bottom: 1px solid var(--ui-color-divider-less);
+	text-align: left;
+	vertical-align: middle;
+}
+
+/* The head stays in view while the rows below it scroll. Its own background is opaque, otherwise
+   the rows would show through it. */
+.disk-ext-folder-list__table thead .disk-ext-folder-list__cell {
+	position: sticky;
+	top: 0;
+	z-index: 1;
+	background: var(--ui-color-base-white-fixed);
+	color: var(--ui-color-base-3);
+	font-size: var(--ui-font-size-sm);
+	font-weight: var(--ui-font-weight-medium);
+	white-space: nowrap;
+}
+
+/* The name column takes what the fixed columns leave, so only they carry a width. */
+.disk-ext-folder-list__cell.--changed {
+	width: 150px;
+}
+
+.disk-ext-folder-list__cell.--size {
+	width: 110px;
+	text-align: right;
+}
+
+.disk-ext-folder-list__cell.--action {
+	width: 48px;
+	text-align: right;
+}
+
+.disk-ext-folder-list__row {
+	transition: background-color 200ms ease;
+}
+
+.disk-ext-folder-list__row:hover {
+	background: var(--ui-color-bg-state-hover-default);
+}
+
+/* The icon and the name share one line inside the cell: the cell itself stays a table cell, so
+   the fixed layout of the table keeps working. */
+.disk-ext-folder-list__object {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-xs);
+	min-width: 0;
+}
+
+.disk-ext-folder-list__icon {
+	--ui-icon-set__icon-size: 24px;
+}
+
+/* A file name has no spaces to wrap at, so a long one is truncated instead of widening the column.
+   The full name stays reachable through the title attribute. */
+.disk-ext-folder-list__link {
+	overflow: hidden;
+	color: var(--ui-color-base-1);
+	text-decoration: none;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	transition: color 200ms ease;
+}
+
+.disk-ext-folder-list__link:hover {
+	color: var(--ui-color-accent-main-link);
+}
+
+.disk-ext-folder-list__link:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+	border-radius: var(--ui-border-radius-2xs);
+}
+
+.disk-ext-folder-list__download {
+	--ui-icon-set__icon-size: 22px;
+	--ui-icon-set__icon-color: var(--ui-color-base-4);
+}
+
+.disk-ext-folder-list__download:hover {
+	--ui-icon-set__icon-color: var(--ui-color-base-1);
+}
+
+.disk-ext-folder-list__download:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+	border-radius: var(--ui-border-radius-2xs);
+}
+
+.disk-ext-folder-list__empty {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: var(--ui-space-stack-sm);
+	box-sizing: border-box;
+	height: 100%;
+	padding: var(--ui-space-inset-3xl) var(--ui-space-inset-md);
+	color: var(--ui-color-base-3);
+}
+
+.disk-ext-folder-list__empty-icon {
+	--ui-icon-set__icon-size: 48px;
+	--ui-icon-set__icon-color: var(--ui-color-base-5);
+}
+
+.disk-ext-folder-list__footer {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--ui-space-inline-md);
+	flex: 0 0 auto;
+	flex-wrap: wrap;
+	padding-top: var(--ui-space-stack-sm);
+	color: var(--ui-color-base-3);
+	font-size: var(--ui-font-size-sm);
+}
+
+.disk-ext-folder-list__total-value {
+	color: var(--ui-color-base-1);
+	font-weight: var(--ui-font-weight-medium);
+}
+
+.disk-ext-folder-list__pages {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-xs);
+	flex-wrap: wrap;
+}
+
+.disk-ext-folder-list__page {
+	color: var(--ui-color-accent-main-link);
+	text-decoration: none;
+	transition: color 200ms ease;
+}
+
+.disk-ext-folder-list__page:hover {
+	color: var(--ui-color-accent-main-primary);
+}
+
+.disk-ext-folder-list__page.--current {
+	color: var(--ui-color-base-1);
+	font-weight: var(--ui-font-weight-medium);
+}
+
+/* The column head of the actions has no visible text: the label is left for screen readers only. */
+.disk-ext-folder-list__hidden-label {
+	position: absolute;
+	overflow: hidden;
+	width: 1px;
+	height: 1px;
+	clip-path: inset(50%);
+	white-space: nowrap;
+}
+
+/* The narrower the viewport, the less the date matters next to the name and the size. */
+@media screen and (max-width: 640px) {
+	.disk-ext-folder-list__cell.--changed {
+		display: none;
+	}
+}

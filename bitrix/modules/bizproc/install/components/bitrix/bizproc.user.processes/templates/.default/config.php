@@ -8,6 +8,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 return [
 	'js' => 'script.js',
 	'rel' => [
+		'bizproc.a11y',
 		'ui.alerts',
 		'ui.entity-selector',
 		'main.popup',

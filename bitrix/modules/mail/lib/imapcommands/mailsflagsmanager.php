@@ -39,6 +39,7 @@ class MailsFlagsManager extends SyncInternalManager
 		if ($result->isSuccess())
 		{
 			$this->updateLeftMenuCounter();
+			$this->cancelDeferredPush();
 		}
 		return $result;
 	}
@@ -86,6 +87,7 @@ class MailsFlagsManager extends SyncInternalManager
 
 	public function setMessages($messages)
 	{
-		$this->messages = $messages;
+		// Injected rows skip the repository lookup, so they are narrowed here instead
+		$this->messages = $this->getActivePlacementResolver()->filterActivePlacements($messages);
 	}
 }

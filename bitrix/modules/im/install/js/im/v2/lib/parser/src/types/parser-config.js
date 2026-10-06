@@ -9,4 +9,5 @@ export type ParserConfig = {
 	removeLinks?: boolean,
 	contextDialogId?: string,
 	removeNewLines?: boolean,
+	inlineOnlyMarkdown?: boolean,
 };

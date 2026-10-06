@@ -1,0 +1,110 @@
+.call-lobby-user-form {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 16px;
+	width: var(--call-lobby-content-width, 351px);
+}
+
+.call-lobby-user-form__name-container {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+
+.call-lobby-user-form__avatar {
+	width: 36px;
+	height: 36px;
+	border-radius: 50%;
+	background-size: cover;
+	background-position: center;
+}
+
+.call-lobby-user-form__name-text {
+	color: var(--ui-color-palette-white-base, #fff);
+	font-size: 16px;
+	font-weight: 600;
+}
+
+.call-lobby-user-form__name-input {
+	width: 100%;
+	box-sizing: border-box;
+	padding: 10px 16px;
+	border: 1px solid var(--call-view__conference-connection-name-input-border-color, rgba(var(--ui-color-palette-white-base-rgb), 0.6));
+	border-radius: var(--ui-border-radius-md, 10px);
+	background: var(--call-view__conference-connection-name-input-background-color, rgba(var(--ui-color-palette-white-base-rgb), 0.1));
+	color: var(--call-view__conference-connection-name-input-text-color, rgba(var(--ui-color-palette-white-base-rgb), 0.8));
+	font-size: 15px;
+	outline: none;
+}
+
+.call-lobby-user-form__name-input::placeholder {
+	color: var(--call-view__conference-connection-name-input-placeholder-color, rgba(var(--ui-color-palette-white-base-rgb), 0.4));
+}
+
+.call-lobby-user-form__name-input:focus {
+	border-color: rgba(var(--ui-color-palette-white-base-rgb), 0.4);
+}
+
+.call-lobby-user-form__buttons {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 8px;
+	width: 100%;
+}
+
+.call-lobby-user-form__button {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	position: relative;
+	overflow: hidden;
+	min-width: 293px;
+	width: fit-content;
+	height: 38px;
+	border: 1px solid var(--call-view__conference-connection-primary-button-border-color, rgba(var(--ui-color-palette-white-base-rgb), 0.24));
+	border-radius: var(--ui-border-radius-md, 10px);
+	font-size: var(--ui-font-size-lg, 15px);
+	font-weight: var(--ui-font-weight-medium, 500);
+	cursor: pointer;
+}
+
+.call-lobby-user-form__button::after {
+	content: '';
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background-color: transparent;
+	transition: background-color 0.15s;
+}
+
+.call-lobby-user-form__button:hover::after {
+	background-color: var(--call-view__conference-connection-button-background-color-hover, rgba(var(--ui-color-palette-black-solid-rgb), 0.08));
+}
+
+.call-lobby-user-form__button.--video {
+	background-color: var(--call-view__conference-connection-primary-button-background-color, #1587fa);
+	color: var(--ui-color-palette-white-base, #fff);
+}
+
+.call-lobby-user-form__button.--audio {
+	background-color: var(--call-view__conference-connection-secondary-button-background-color, #ffffff1a);
+	color: var(--ui-color-palette-white-base, #fff);
+}
+
+.call-lobby-user-form__button.--disabled {
+	background-color: var(--call-view__conference-connection-button-background-color-disabled, rgba(var(--ui-color-palette-white-base-rgb), 0.16));
+	border-color: var(--call-view__conference-connection-button-border-color-disabled, rgba(var(--ui-color-palette-white-base-rgb), 0.16));
+	color: var(--call-view__conference-connection-button-text-color-disabled, rgba(var(--ui-color-palette-white-base-rgb), 0.3));
+	cursor: default;
+	pointer-events: none;
+}
+
+/* a11y: keyboard focus indication. Inset outline avoids clipping by button overflow: hidden */
+.call-lobby-user-form__button:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-link, #2067db);
+	outline-offset: -2px;
+}

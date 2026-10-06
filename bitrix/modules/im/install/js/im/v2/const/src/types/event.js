@@ -17,6 +17,10 @@ export type OnDialogInitedEvent = {
 	dialogId: string
 };
 
+export type OnGuestInitialChatOpenEvent = {
+	dialogId: string
+};
+
 export type InsertTextEvent = {
 	text: string,
 	withNewLine?: boolean,

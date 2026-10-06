@@ -360,7 +360,7 @@ $APPLICATION->IncludeComponent(
 			exportProcessParams: <?= Json::encode([
 				'excel' => [
 					'id' => 'lists_list_export_' . $arResult['GRID_ID'] . '_excel',
-					'controller' => 'lists.controller.export',
+					'controller' => 'lists.Export',
 					'queue' => [
 						[
 							'action' => 'dispatcher',

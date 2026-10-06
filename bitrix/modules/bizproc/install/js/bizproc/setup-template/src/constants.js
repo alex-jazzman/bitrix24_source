@@ -19,6 +19,9 @@ export const CONSTANT_TYPES: Record<string, ConstantType> = Object.freeze({
 	PROJECT: 'project',
 	ENTITY_SELECTOR: 'entityselector',
 	TIME: 'time',
+	DATE: 'date',
+	DATETIME: 'datetime',
+	BOOL: 'bool',
 	BI_DASHBOARD: 'bi_dashboard',
 });
 

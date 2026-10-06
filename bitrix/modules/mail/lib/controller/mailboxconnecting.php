@@ -3,11 +3,13 @@
 namespace Bitrix\Mail\Controller;
 
 use Bitrix\Mail\Controller\ActionFilter\ConnectionRequestResponsibleAdminAccess;
+use Bitrix\Mail\Controller\ActionFilter\MailboxGridBulkActionsAccess;
 use Bitrix\Mail\Controller\ActionFilter\MassConnectAccess;
 use Bitrix\Mail\Helper;
 use Bitrix\Mail\Helper\LicenseManager;
 use Bitrix\Mail\Helper\Mailbox;
 use Bitrix\Mail\Helper\Dto\MailboxConnect\MailboxConnectDTO;
+use Bitrix\Mail\Helper\Dto\Mailbox\BulkActionResult;
 use Bitrix\Mail\Helper\Mailbox\MailMassConnect;
 use Bitrix\Mail\Helper\Enum\MailboxStatus;
 use Bitrix\Mail\Helper\Enum\MailboxConnectionRequestStatus;
@@ -33,6 +35,7 @@ use Bitrix\Main\Validation\Engine\AutoWire\ValidationParameter;
 use Bitrix\Main\Web\Uri;
 use Bitrix\Mail\MailMessageUidTable;
 use Bitrix\Mail\Helper\Message;
+use Bitrix\Mail\Internal\Service\SourceGeneration\MigrationActionGuard;
 use Bitrix\Main;
 use Bitrix\Intranet;
 use Bitrix\HumanResources\Service\Container;
@@ -61,6 +64,7 @@ class MailboxConnecting extends Controller
 	public function configureActions(): array
 	{
 		$massConnectFilter = ['+prefilters' => [new MassConnectAccess()]];
+		$bulkActionsFilter = ['+prefilters' => [new MassConnectAccess(), new MailboxGridBulkActionsAccess()]];
 
 		return [
 			'createPasswordlessRequest' => $massConnectFilter,
@@ -68,6 +72,9 @@ class MailboxConnecting extends Controller
 			'resendPasswordlessRequest' => $massConnectFilter,
 			'deletePasswordlessRequest' => $massConnectFilter,
 			'getPasswordlessRequestsCount' => $massConnectFilter,
+			'massDisconnectMailboxes' => $bulkActionsFilter,
+			'massSetCrmIntegration' => $bulkActionsFilter,
+			'massSetCalendarIntegration' => $bulkActionsFilter,
 			'connectMailboxByConnectionRequest' => ['+prefilters' => [new ConnectionRequestResponsibleAdminAccess()]],
 		];
 	}
@@ -272,6 +279,22 @@ class MailboxConnecting extends Controller
 		return $data;
 	}
 
+	/**
+	 * The one path of the edit screen that goes to the OAuth provider. The form asks for it after it is
+	 * drawn, so a slow or a revoked token delays a picture and a prefilled hint instead of the screen.
+	 */
+	public function getOauthUserAction(int $mailboxId): ?array
+	{
+		if (!MailboxAccess::hasCurrentUserAccessToEditMailbox($mailboxId))
+		{
+			$this->addError(new Error(Loc::getMessage('MAIL_MAILBOX_CONNECTING_ERROR_HAS_NOT_PERMISSION')));
+
+			return null;
+		}
+
+		return (new MailboxConnector())->getOAuthUserProfile($mailboxId);
+	}
+
 	public function getSettingsConfigAction(): array
 	{
 		return MailboxSettingsConfig::getClientConfig();
@@ -461,6 +484,7 @@ class MailboxConnecting extends Controller
 		$replaceWithTheCurrentUserName = Loader::includeModule('humanresources');
 
 		$previousSeenMailboxId = (int)\CUserOptions::getOption('mail', 'previous_seen_mailbox_id', 0);
+		$signaturesAvailable = Helper\Config\Feature::isMobileSignaturesAvailable();
 
 		foreach ($mailboxesFullData as $mailbox)
 		{
@@ -480,6 +504,7 @@ class MailboxConnecting extends Controller
 					'ID' => $mailboxId,
 					'COUNTER' => $mailboxesCounters[$mailboxId]['UNSEEN'],
 					'CAN_EDIT_SETTINGS' => MailboxAccess::hasCurrentUserAccessToEditMailbox($mailboxId),
+					'SIGNATURES_AVAILABLE' => $signaturesAvailable,
 				];
 
 			if ($previousSeenMailboxId === 0)
@@ -704,6 +729,21 @@ class MailboxConnecting extends Controller
 	 */
 	public function syncMailboxAction(int $id, ?string $dir = null, bool $onlySyncCurrent = false): array
 	{
+		if (!MailboxAccess::hasCurrentUserAnyAccessToMailbox($id))
+		{
+			$this->addError(new Error('Access to the mailbox is denied', 403));
+
+			return [];
+		}
+
+		$guard = (new MigrationActionGuard())->check($id);
+		if (!$guard->isSuccess())
+		{
+			$this->errorCollection->add($guard->getErrors());
+
+			return [];
+		}
+
 		$result = \Bitrix\Mail\Helper\Mailbox::quickSync($id, $dir, $onlySyncCurrent);
 		$this->errorCollection = $result->getErrorCollection();
 
@@ -722,10 +762,24 @@ class MailboxConnecting extends Controller
 			return ['mailboxes' => []];
 		}
 
+		$mailboxes = \Bitrix\Mail\MailboxTable::getUserMailboxes($userId);
+		$mailboxIds = array_map(
+			static fn (array $mailbox): int => (int)$mailbox['ID'],
+			$mailboxes,
+		);
+		$guardResults = (new MigrationActionGuard())->checkMany($mailboxIds);
+
 		$results = [];
-		foreach (\Bitrix\Mail\MailboxTable::getUserMailboxes($userId) as $mailbox)
+		foreach ($mailboxes as $mailbox)
 		{
 			$id = (int)$mailbox['ID'];
+			$guard = $guardResults[$id];
+			if (!$guard->isSuccess())
+			{
+				$this->errorCollection->add($guard->getErrors());
+				continue;
+			}
+
 			$result = \Bitrix\Mail\Helper\Mailbox::quickSync($id);
 			$results[$id] = $result->getData();
 
@@ -771,5 +825,232 @@ class MailboxConnecting extends Controller
 		$this->errorCollection = $result->getErrorCollection();
 
 		return $result->getData();
+	}
+
+	/**
+	 * @return array{applied: int[], skipped: array, failed: array}
+	 */
+	public function massDisconnectMailboxesAction(array $mailboxIds): array
+	{
+		if (empty($mailboxIds))
+		{
+			$this->addError(new Error('mailboxIds must not be empty', 422));
+
+			return [];
+		}
+
+		if (!$this->checkBulkIdsLimit($mailboxIds))
+		{
+			return [];
+		}
+
+		$bulkResult = new BulkActionResult();
+
+		foreach ($mailboxIds as $rawId)
+		{
+			$id = (int)$rawId;
+			if ($id <= 0)
+			{
+				$bulkResult->addSkipped($id, 'Invalid mailbox id');
+				continue;
+			}
+
+			$result = MailboxConnector::deleteMailbox($id);
+
+			if ($result->isSuccess())
+			{
+				$bulkResult->addApplied($id);
+			}
+			else
+			{
+				$errors = $result->getErrors();
+				$errorMessage = !empty($errors) ? $errors[0]->getMessage() : 'Unknown error';
+				$bulkResult->addFailed($id, $errorMessage);
+			}
+		}
+
+		return $bulkResult->jsonSerialize();
+	}
+
+	private const BULK_ACTION_IDS_LIMIT = 500;
+
+	private function checkBulkIdsLimit(array $mailboxIds): bool
+	{
+		if (count($mailboxIds) > self::BULK_ACTION_IDS_LIMIT)
+		{
+			$this->addError(new Error(
+				sprintf('mailboxIds count exceeds the limit of %d', self::BULK_ACTION_IDS_LIMIT),
+				422,
+			));
+
+			return false;
+		}
+
+		return true;
+	}
+
+	/**
+	 * @return array{applied: int[], skipped: array, failed: array}
+	 */
+	public function massSetCrmIntegrationAction(array $mailboxIds, $enabled, ?array $crmOptions = null): array
+	{
+		$enabled = $this->parseEnabledFlag($enabled);
+		if ($enabled === null)
+		{
+			$this->addError(new Error('enabled must be a boolean flag', 422));
+
+			return [];
+		}
+
+		if (empty($mailboxIds))
+		{
+			$this->addError(new Error('mailboxIds must not be empty', 422));
+
+			return [];
+		}
+
+		if (!$this->checkBulkIdsLimit($mailboxIds))
+		{
+			return [];
+		}
+
+		$bulkResult = new BulkActionResult();
+
+		$useDefaults = $enabled && $crmOptions === null;
+
+		$resolvedCrmOptions = null;
+		if (!$useDefaults)
+		{
+			if ($enabled)
+			{
+				$resolvedCrmOptions = \Bitrix\Mail\Helper\Dto\MailboxConnect\CrmOptions::fromArray(
+					array_merge(['enabled' => true], $crmOptions),
+				);
+			}
+			else
+			{
+				$resolvedCrmOptions = \Bitrix\Mail\Helper\Dto\MailboxConnect\CrmOptions::disabled();
+			}
+		}
+
+		foreach ($mailboxIds as $rawId)
+		{
+			$id = (int)$rawId;
+			if ($id <= 0)
+			{
+				$bulkResult->addSkipped($id, 'Invalid mailbox id');
+				continue;
+			}
+
+			$mailboxConnector = new MailboxConnector();
+
+			if ($useDefaults)
+			{
+				$result = $mailboxConnector->enableCrmWithDefaults($id);
+
+				if (!$result->isSuccess())
+				{
+					$errors = $result->getErrors();
+					$errorMessage = !empty($errors) ? $errors[0]->getMessage() : 'Unknown error';
+					$bulkResult->addFailed($id, $errorMessage);
+				}
+				elseif (($result->getData()['skipped'] ?? false) === true)
+				{
+					$bulkResult->addSkipped($id, (string)($result->getData()['reason'] ?? 'CRM already enabled'));
+				}
+				else
+				{
+					$bulkResult->addApplied($id);
+				}
+			}
+			else
+			{
+				$result = $mailboxConnector->updateCrmOptions($id, $resolvedCrmOptions);
+
+				if (!$result->isSuccess())
+				{
+					$errors = $result->getErrors();
+					$errorMessage = !empty($errors) ? $errors[0]->getMessage() : 'Unknown error';
+					$bulkResult->addFailed($id, $errorMessage);
+				}
+				elseif (($result->getData()['skipped'] ?? false) === true)
+				{
+					$bulkResult->addSkipped($id, (string)($result->getData()['reason'] ?? 'No changes'));
+				}
+				else
+				{
+					$bulkResult->addApplied($id);
+				}
+			}
+		}
+
+		return $bulkResult->jsonSerialize();
+	}
+
+	/**
+	 * @return array{applied: int[], skipped: array, failed: array}
+	 */
+	public function massSetCalendarIntegrationAction(array $mailboxIds, $enabled): array
+	{
+		$enabled = $this->parseEnabledFlag($enabled);
+		if ($enabled === null)
+		{
+			$this->addError(new Error('enabled must be a boolean flag', 422));
+
+			return [];
+		}
+
+		if (empty($mailboxIds))
+		{
+			$this->addError(new Error('mailboxIds must not be empty', 422));
+
+			return [];
+		}
+
+		if (!$this->checkBulkIdsLimit($mailboxIds))
+		{
+			return [];
+		}
+
+		$bulkResult = new BulkActionResult();
+
+		foreach ($mailboxIds as $rawId)
+		{
+			$id = (int)$rawId;
+			if ($id <= 0)
+			{
+				$bulkResult->addSkipped($id, 'Invalid mailbox id');
+				continue;
+			}
+
+			$mailboxConnector = new MailboxConnector();
+			$result = $mailboxConnector->updateCalendarOptions($id, $enabled);
+
+			if (!$result->isSuccess())
+			{
+				$errors = $result->getErrors();
+				$errorMessage = !empty($errors) ? $errors[0]->getMessage() : 'Unknown error';
+				$bulkResult->addFailed($id, $errorMessage);
+			}
+			elseif (($result->getData()['skipped'] ?? false) === true)
+			{
+				$bulkResult->addSkipped($id, (string)($result->getData()['reason'] ?? 'No changes'));
+			}
+			else
+			{
+				$bulkResult->addApplied($id);
+			}
+		}
+
+		return $bulkResult->jsonSerialize();
+	}
+
+	private function parseEnabledFlag(mixed $value): ?bool
+	{
+		return match ($value) {
+			'Y' => true,
+			'N' => false,
+			default => null,
+		};
 	}
 }

@@ -10,8 +10,8 @@ return [
 	'rel' => [
 		'main.polyfill.core',
 		'main.core.events',
-		'ui.entity-selector',
 		'sign.type',
+		'ui.entity-selector',
 	],
 	'skip_core' => true,
 ];

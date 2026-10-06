@@ -2,7 +2,10 @@ import { Loc, Extension, Type, Text } from 'main.core';
 
 import { type ImModelMessage, type ImModelRecentItem, type ImModelNotification } from 'im.v2.model';
 
+import { MarkdownConverter } from '../markdown/converter.js';
+
 import { ParserFont } from '../functions/font';
+import { ParserHeading } from '../functions/heading';
 import { ParserImage } from '../functions/image';
 import { ParserDisk } from '../functions/disk';
 import { ParserDate } from '../functions/date';
@@ -14,7 +17,7 @@ import { ParserLines } from '../functions/lines.js';
 import { ParserMention } from '../functions/mention.js';
 import { ParserQuote } from '../functions/quote.js';
 import { ParserUrl } from '../functions/url.js';
-import { getCore, getLogger, getConst } from '../utils/core-proxy.js';
+import { getCore, getLogger, getConst, isMarkdownFeatureEnabled } from '../utils/core-proxy.js';
 import { type ParserConfig } from '../types/parser-config';
 
 const { FileType, FileIconType, AttachDescription } = getConst();
@@ -122,6 +125,12 @@ export const Purifier = {
 			return text.trim();
 		}
 
+		const isMarkdownAvailable = isMarkdownFeatureEnabled();
+		if (isMarkdownAvailable)
+		{
+			text = MarkdownConverter.simplify(text);
+		}
+
 		text = Text.encode(text.trim());
 
 		text = ParserCommon.purifyNewLine(text, '\n');
@@ -129,6 +138,15 @@ export const Purifier = {
 		text = ParserQuote.purifyArrowQuote(text);
 		text = ParserQuote.purifyQuote(text);
 		text = ParserQuote.purifyCode(text);
+		if (isMarkdownAvailable)
+		{
+			text = ParserQuote.purifyInlineCode(text);
+			// Unwrap [h1]/[h2] to plain text and drop [hr] — these block markers exist only
+			// with Markdown on, and nothing else in this chain removes them (they would leak
+			// raw into the preview). Runs BEFORE ParserFont.purify so it can strip any inner
+			// inline BB (e.g. a bold heading) left behind by the unwrap.
+			text = ParserHeading.purify(text);
+		}
 		text = ParserAction.purifyPut(text);
 		text = ParserAction.purifySend(text);
 		text = ParserMention.purify(text);

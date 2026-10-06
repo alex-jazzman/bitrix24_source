@@ -341,7 +341,7 @@
 	position: relative;
 	margin-bottom: 2px;
 	padding: 1px 5px 1px 8px;
-	width: 115px;
+	width: 100%;
 	border: 1px solid #c6cdd3;
 	text-align: left;
 	font: 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
@@ -361,7 +361,6 @@
 
 .crm-entity-product-control-select-field:focus,
 .crm-entity-product-control-select-field:active {
-	outline: none;
 	border-color: #aeb2b7;
 }
 
@@ -718,6 +717,7 @@
 	margin-bottom: 24px;
 	padding: 0;
 	display: flex;
+	flex-wrap: wrap;
 	align-items: center;
 	justify-content: space-between;
 	border-radius: var(--ui-border-radius-md);
@@ -858,7 +858,18 @@ select.crm-entity-product-control-select-field:hover {
 	cursor: pointer !important;
 }
 
-.crm-entity-product-list-reserve-date, .crm-entity-product-list-reserve-date:hover {
+/* a11y: former <a> reserve date is now a native <button>; strip UA button chrome, keep the dotted-link look.
+   :not([hidden]) keeps the author display from overriding the UA [hidden]{display:none}, so the button with
+   no reserve date stays out of layout and the tab order (no empty focus ring). */
+.crm-entity-product-list-reserve-date:not([hidden]), .crm-entity-product-list-reserve-date:not([hidden]):hover {
+	display: inline;
+	margin: 0;
+	padding: 0;
+	border: none;
+	background: none;
+	font: inherit;
+	color: inherit;
+	text-align: left;
 	cursor: pointer;
 	border-bottom-width: 1px;
 	border-bottom-style: dotted;
@@ -920,4 +931,90 @@ select.crm-entity-product-control-select-field:hover {
 	cursor: pointer;
 	background: var(--ui-color-base-8);
 	border-radius: var(--ui-border-radius-sm);
+	padding: 0;
+	border: none;
+	font: inherit;
+	color: inherit;
 }
+
+/*region a11y focus (TPL-01) */
+/* Visible focus for the products-tab native controls: air outline on :focus-visible of our own
+   selectors, scoped to the block (no marker class). Values are air tokens with fallbacks. */
+.crm-entity-product-list-wrapper .crm-entity-product-list-reserve-date:focus-visible,
+.crm-entity-product-list-wrapper .crm-entity-product-control-select-field:focus-visible,
+.crm-entity-product-list-wrapper [data-role="product-list-settings-button"]:focus-visible,
+.crm-entity-product-list-wrapper a[data-name="STORE_AVAILABLE"]:focus-visible,
+.crm-entity-product-list-wrapper .main-grid-editor-money-currency.main-dropdown:focus-visible,
+.crm-entity-product-list-wrapper .crm-entity-product-control-checkbox input:focus-visible,
+html[data-input-modality="keyboard"] .crm-entity-product-list-wrapper .crm-entity-product-list-reserve-date:focus:not(:focus-visible),
+html[data-input-modality="keyboard"] .crm-entity-product-list-wrapper .crm-entity-product-control-select-field:focus:not(:focus-visible),
+html[data-input-modality="keyboard"] .crm-entity-product-list-wrapper [data-role="product-list-settings-button"]:focus:not(:focus-visible),
+html[data-input-modality="keyboard"] .crm-entity-product-list-wrapper a[data-name="STORE_AVAILABLE"]:focus:not(:focus-visible),
+html[data-input-modality="keyboard"] .crm-entity-product-list-wrapper .main-grid-editor-money-currency.main-dropdown:focus:not(:focus-visible),
+html[data-input-modality="keyboard"] .crm-entity-product-list-wrapper .crm-entity-product-control-checkbox input:focus:not(:focus-visible) {
+	outline-style: solid;
+	outline-color: var(--ui-color-focus-outline, #4A9DFF);
+	outline-width: var(--ui-focus-outline-width, 2px);
+	outline-offset: var(--ui-focus-outline-offset, 2px);
+}
+html[data-input-modality="pointer"] .crm-entity-product-list-wrapper .crm-entity-product-list-reserve-date:focus-visible,
+html[data-input-modality="pointer"] .crm-entity-product-list-wrapper .crm-entity-product-control-select-field:focus-visible,
+html[data-input-modality="pointer"] .crm-entity-product-list-wrapper [data-role="product-list-settings-button"]:focus-visible,
+html[data-input-modality="pointer"] .crm-entity-product-list-wrapper a[data-name="STORE_AVAILABLE"]:focus-visible,
+html[data-input-modality="pointer"] .crm-entity-product-list-wrapper .main-grid-editor-money-currency.main-dropdown:focus-visible,
+html[data-input-modality="pointer"] .crm-entity-product-list-wrapper .crm-entity-product-control-checkbox input:focus-visible {
+	outline: none;
+}
+/*endregion*/
+
+/*region a11y focus (I6.B3) - highlight the whole settings-popup row on keyboard focus of its checkbox.
+   The popup content lives in body (main.popup), outside .crm-entity-product-list-wrapper, so the TPL-01
+   rules above do not apply to it. The native checkbox ring is tiny/invisible, so instead we highlight
+   the whole row (background + ring), like in dropdown menus (APG checkbox). Keyboard modality only. */
+/* Base row transitions with `all` (ui.entity-editor) - exclude outline so the focus
+   ring appears instantly instead of animating thin-black -> thick-blue. */
+label.crm-entity-product-list-setting-row {
+	transition: all 220ms linear, outline 0s, outline-offset 0s;
+}
+.crm-entity-product-list-setting-row:has(input[type="checkbox"]:focus-visible),
+html[data-input-modality="keyboard"] .crm-entity-product-list-setting-row:has(input[type="checkbox"]:focus:not(:focus-visible)) {
+	background-color: var(--menu-popup-item-bg-color-hover, #f5f5f6);
+	outline: var(--ui-color-focus-outline, #4A9DFF) solid 2px;
+	outline-offset: -3px;
+	border-radius: 8px;
+}
+html[data-input-modality="pointer"] .crm-entity-product-list-setting-row:has(input[type="checkbox"]:focus-visible) {
+	outline: none;
+}
+/*endregion*/
+
+/*region a11y focus (I3.B1 rev) - asymmetric focus ring for the top panel via ::before.
+   The buttons sit flush against the left/right edge of the #workarea-content overflow clipper, so the
+   outer ring gets clipped horizontally. That is why on the left/right the ring runs ALONG the button
+   border (left/right:0, never past the edge), while on the top/bottom it extends 5px outward (there is
+   enough vertical room, no clipping). The buttons do not move. All three share the same geometry. */
+.crm-entity-product-list-add-block [data-role="product-list-add-button"],
+.crm-entity-product-list-add-block [data-role="product-list-select-button"],
+.crm-entity-product-list-add-block [data-role="product-list-settings-button"] {
+	position: relative;
+}
+.crm-entity-product-list-add-block [data-role="product-list-add-button"]:focus-visible,
+.crm-entity-product-list-add-block [data-role="product-list-select-button"]:focus-visible,
+.crm-entity-product-list-add-block [data-role="product-list-settings-button"]:focus-visible {
+	outline: none;
+}
+.crm-entity-product-list-add-block [data-role="product-list-add-button"]:focus-visible::before,
+.crm-entity-product-list-add-block [data-role="product-list-select-button"]:focus-visible::before,
+.crm-entity-product-list-add-block [data-role="product-list-settings-button"]:focus-visible::before {
+	content: '';
+	position: absolute;
+	top: -7px;
+	bottom: -7px;
+	left: 0;
+	right: 0;
+	border: 2px solid var(--ui-color-focus-outline, #4A9DFF);
+	border-radius: 8px;
+	pointer-events: none;
+	z-index: 1;
+}
+/*endregion*/

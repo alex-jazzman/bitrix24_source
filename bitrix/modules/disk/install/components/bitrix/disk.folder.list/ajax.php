@@ -1832,6 +1832,7 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 			'linkData' => array(
 				'hasPassword' => $extLink->hasPassword(),
 				'hasDeathTime' => $extLink->hasDeathTime(),
+				'canEditSettings' => $extLink->canEditSettings(),
 				'deathTime' => $extLink->hasDeathTime()? (string)$extLink->getDeathTime() : null,
 				'hash' => $extLink->getHash(),
 				'link' => Driver::getInstance()->getUrlManager()->getPublicExternalLink(
@@ -1849,6 +1850,11 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 		[$object, $extLink] = $this->getObjectAndExternalLink($objectId);
 
 		if(!$extLink)
+		{
+			$this->sendJsonErrorResponse();
+		}
+
+		if (!$extLink->canEditSettings())
 		{
 			$this->sendJsonErrorResponse();
 		}
@@ -1881,6 +1887,7 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 			'linkData' => array(
 				'hasPassword' => $extLink->hasPassword(),
 				'hasDeathTime' => $extLink->hasDeathTime(),
+				'canEditSettings' => $extLink->canEditSettings(),
 				'hash' => $extLink->getHash(),
 				'link' => Driver::getInstance()->getUrlManager()->getPublicExternalLink(
 					object: $object,

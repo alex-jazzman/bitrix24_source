@@ -92,7 +92,10 @@ jn.define('im/messenger/controller/dialog/copilot/dialog', (require, exports, mo
 		subscribeCopilotStoreEvents()
 		{
 			this.storeManager
-				.on('dialoguesModel/copilotModel/update', this.dialogUpdateHandlerRouter);
+				.on('dialoguesModel/copilotModel/update', this.dialogUpdateHandlerRouter)
+				.on('dialoguesModel/copilotModel/updateCollection', this.copilotCollectionUpdateHandler)
+				.on('dialoguesModel/copilotModel/addCollection', this.copilotCollectionUpdateHandler)
+			;
 		}
 
 		unsubscribeStoreEvents()
@@ -104,7 +107,39 @@ jn.define('im/messenger/controller/dialog/copilot/dialog', (require, exports, mo
 		unsubscribeCopilotStoreEvents()
 		{
 			this.storeManager
-				.off('dialoguesModel/copilotModel/update', this.dialogUpdateHandlerRouter);
+				.off('dialoguesModel/copilotModel/update', this.dialogUpdateHandlerRouter)
+				.off('dialoguesModel/copilotModel/updateCollection', this.copilotCollectionUpdateHandler)
+				.off('dialoguesModel/copilotModel/addCollection', this.copilotCollectionUpdateHandler)
+			;
+		}
+
+		bindMethods()
+		{
+			super.bindMethods();
+			/** @private */
+			this.copilotCollectionUpdateHandler = this.copilotCollectionUpdateHandler.bind(this);
+		}
+
+		/**
+		 * @desc setCollection commits addCollection/updateCollection mutations, not update,
+		 * so the header title must be redrawn here as well (e.g. after loadChatWithMessages).
+		 * @param {object} mutation
+		 * @param {MutationPayload<CopilotUpdateCollectionData|CopilotAddCollectionData, CopilotUpdateActions|CopilotAddActions>} mutation.payload
+		 */
+		copilotCollectionUpdateHandler(mutation)
+		{
+			const { updateItems = [], addItems = [] } = mutation.payload.data;
+			const currentDialogId = String(this.getDialogId());
+			const hasCurrentDialogChanges = [...updateItems, ...addItems]
+				.some((item) => String(item.dialogId) === currentDialogId)
+			;
+
+			if (!hasCurrentDialogChanges)
+			{
+				return;
+			}
+
+			void this.headerTitle.renderTitle();
 		}
 
 		/**

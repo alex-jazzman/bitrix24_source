@@ -5,7 +5,7 @@ jn.define('im/messenger/lib/permission-manager/user-permission', (require, expor
 	const { Type } = require('type');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
-	const { ActionByUserType } = require('im/messenger/const');
+	const { ActionByUserType, UserType } = require('im/messenger/const');
 
 	class UserPermission
 	{
@@ -42,12 +42,19 @@ jn.define('im/messenger/lib/permission-manager/user-permission', (require, expor
 
 		/**
 		 * @desc check is can call by user data ( use id user or user state object )
+		 * @desc a guest can never initiate a call, regardless of user data (verbose mode also returns a flat false)
 		 * @param {UsersModelState||number} userData
 		 * @param {boolean} [verbose=false] - prop for verbose response, returns object with key
 		 * @return {boolean|object}
 		 */
 		canCall(userData, verbose = false)
 		{
+			// guest never initiates a call: client-side counterpart of the REST start-call whitelist gate
+			if (this.isCurrentUserGuest())
+			{
+				return false;
+			}
+
 			if (!this.setUserData(userData))
 			{
 				return false;
@@ -71,6 +78,15 @@ jn.define('im/messenger/lib/permission-manager/user-permission', (require, expor
 			}
 
 			return canCall;
+		}
+
+		/**
+		 * @desc Check the current user (not the interlocutor) is a guest
+		 * @return {boolean}
+		 */
+		isCurrentUserGuest()
+		{
+			return MessengerParams.getUserInfo()?.type === UserType.guest;
 		}
 
 		/**

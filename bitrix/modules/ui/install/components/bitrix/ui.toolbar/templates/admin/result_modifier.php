@@ -1,4 +1,7 @@
 <?php
+
+use Bitrix\Main\Web\Uri;
+
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 {
 	die();
@@ -14,7 +17,7 @@ if (!is_object($adminSidePanelHelper))
 $currentFavId = null;
 if ($adminSidePanelHelper->isSidePanel())
 {
-	$requestUri = CHTTP::urlDeleteParams($_SERVER['REQUEST_URI'], ['IFRAME', 'IFRAME_TYPE']);
+	$requestUri = (string)(new Uri($_SERVER['REQUEST_URI']))->deleteParams(['IFRAME', 'IFRAME_TYPE']);
 	$currentFavId = CFavorites::getIDByUrl($requestUri);
 }
 else

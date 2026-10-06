@@ -1,190 +1,107 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports,main_core) {
+(function (exports, main_core) {
 	'use strict';
 
-	var _enable = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("enable");
 	class Logger {
-	  constructor(enable = false) {
-	    Object.defineProperty(this, _enable, {
-	      writable: true,
-	      value: false
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _enable)[_enable] = enable;
-	  }
-	  log(...message) {
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _enable)[_enable]) {
-	      console.log(...message);
-	    }
-	  }
+		#enable = false;
+		constructor(enable = false) {
+			this.#enable = enable;
+		}
+		log(...message) {
+			if (this.#enable) {
+				console.log(...message);
+			}
+		}
 	}
 
-	var _rootNode = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("rootNode");
-	var _template = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("template");
-	var _style = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("style");
-	var _lang = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("lang");
-	var _appId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("appId");
-	var _appAllowedByTariff = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("appAllowedByTariff");
-	var _fetchable = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("fetchable");
-	var _clickable = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("clickable");
-	var _uniqueId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("uniqueId");
-	var _frame = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("frame");
-	var _logger = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("logger");
-	var _demoData = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("demoData");
-	var _useDemoData = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("useDemoData");
-	var _blockId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("blockId");
-	var _getFrameContent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getFrameContent");
-	var _getEngineParams = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getEngineParams");
-	var _getCoreConfigs = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getCoreConfigs");
-	var _getAssetsConfigs = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getAssetsConfigs");
-	var _parseExtensionConfig = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("parseExtensionConfig");
-	var _fetchData = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("fetchData");
-	var _message = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("message");
-	var _bindEvents = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("bindEvents");
-	var _onMessage = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onMessage");
 	class WidgetVue {
-	  /**
-	   * Unique string for every widget
-	   * @type {string}
-	   */
+		static runningAppNodes = new Set();
+		#rootNode = null;
+		#template;
+		#style;
+		#lang = {};
+		#appId = 0;
+		#appAllowedByTariff = true;
+		#fetchable = false;
+		#clickable = false;
 
-	  constructor(options) {
-	    Object.defineProperty(this, _onMessage, {
-	      value: _onMessage2
-	    });
-	    Object.defineProperty(this, _bindEvents, {
-	      value: _bindEvents2
-	    });
-	    Object.defineProperty(this, _message, {
-	      value: _message2
-	    });
-	    Object.defineProperty(this, _fetchData, {
-	      value: _fetchData2
-	    });
-	    Object.defineProperty(this, _parseExtensionConfig, {
-	      value: _parseExtensionConfig2
-	    });
-	    Object.defineProperty(this, _getAssetsConfigs, {
-	      value: _getAssetsConfigs2
-	    });
-	    Object.defineProperty(this, _getCoreConfigs, {
-	      value: _getCoreConfigs2
-	    });
-	    Object.defineProperty(this, _getEngineParams, {
-	      value: _getEngineParams2
-	    });
-	    Object.defineProperty(this, _getFrameContent, {
-	      value: _getFrameContent2
-	    });
-	    Object.defineProperty(this, _rootNode, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _template, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _style, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _lang, {
-	      writable: true,
-	      value: {}
-	    });
-	    Object.defineProperty(this, _appId, {
-	      writable: true,
-	      value: 0
-	    });
-	    Object.defineProperty(this, _appAllowedByTariff, {
-	      writable: true,
-	      value: true
-	    });
-	    Object.defineProperty(this, _fetchable, {
-	      writable: true,
-	      value: false
-	    });
-	    Object.defineProperty(this, _clickable, {
-	      writable: true,
-	      value: false
-	    });
-	    Object.defineProperty(this, _uniqueId, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _frame, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _logger, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _demoData, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _useDemoData, {
-	      writable: true,
-	      value: false
-	    });
-	    Object.defineProperty(this, _blockId, {
-	      writable: true,
-	      value: 0
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _uniqueId)[_uniqueId] = `widget_${main_core.Text.getRandom(8)}`;
-	    babelHelpers.classPrivateFieldLooseBase(this, _logger)[_logger] = new Logger(options.debug || false);
-	    babelHelpers.classPrivateFieldLooseBase(this, _rootNode)[_rootNode] = main_core.Type.isString(options.rootNode) ? document.querySelector(options.rootNode) : null;
-	    babelHelpers.classPrivateFieldLooseBase(this, _template)[_template] = main_core.Type.isString(options.template) ? options.template : '';
-	    babelHelpers.classPrivateFieldLooseBase(this, _style)[_style] = main_core.Type.isString(options.style) ? options.style : null;
-	    babelHelpers.classPrivateFieldLooseBase(this, _demoData)[_demoData] = main_core.Type.isObject(options.demoData) ? options.demoData : null;
-	    babelHelpers.classPrivateFieldLooseBase(this, _useDemoData)[_useDemoData] = main_core.Type.isBoolean(options.useDemoData) ? options.useDemoData : false;
-	    babelHelpers.classPrivateFieldLooseBase(this, _lang)[_lang] = options.lang || {};
-	    babelHelpers.classPrivateFieldLooseBase(this, _blockId)[_blockId] = options.blockId ? main_core.Text.toNumber(options.blockId) : 0;
-	    babelHelpers.classPrivateFieldLooseBase(this, _appId)[_appId] = options.appId ? main_core.Text.toNumber(options.appId) : 0;
-	    babelHelpers.classPrivateFieldLooseBase(this, _appAllowedByTariff)[_appAllowedByTariff] = babelHelpers.classPrivateFieldLooseBase(this, _appId)[_appId] && main_core.Type.isBoolean(options.appAllowedByTariff) ? options.appAllowedByTariff : true;
-	    babelHelpers.classPrivateFieldLooseBase(this, _fetchable)[_fetchable] = main_core.Type.isBoolean(options.fetchable) ? options.fetchable : false;
-	    const isEditMode = main_core.Type.isFunction(BX.Landing.getMode) && BX.Landing.getMode() === 'edit';
-	    babelHelpers.classPrivateFieldLooseBase(this, _clickable)[_clickable] = !isEditMode;
-	  }
+		/**
+		 * Unique string for every widget
+		 * @type {string}
+		 */
+		#uniqueId;
+		#frame = null;
+		#logger;
+		#demoData = null;
+		#useDemoData = false;
+		#blockId = 0;
+		constructor(options) {
+			this.#uniqueId = `widget_${main_core.Text.getRandom(8)}`;
+			this.#logger = new Logger(options.debug || false);
+			this.#rootNode = main_core.Type.isString(options.rootNode) ? document.querySelector(options.rootNode) : null;
+			this.#template = main_core.Type.isString(options.template) ? options.template : '';
+			this.#style = main_core.Type.isString(options.style) ? options.style : null;
+			this.#demoData = main_core.Type.isObject(options.demoData) ? options.demoData : null;
+			this.#useDemoData = main_core.Type.isBoolean(options.useDemoData) ? options.useDemoData : false;
+			this.#lang = options.lang || {};
+			this.#blockId = options.blockId ? main_core.Text.toNumber(options.blockId) : 0;
+			this.#appId = options.appId ? main_core.Text.toNumber(options.appId) : 0;
+			this.#appAllowedByTariff = this.#appId && main_core.Type.isBoolean(options.appAllowedByTariff) ? options.appAllowedByTariff : true;
+			this.#fetchable = main_core.Type.isBoolean(options.fetchable) ? options.fetchable : false;
+			const isEditMode = main_core.Type.isFunction(BX.Landing.getMode) && BX.Landing.getMode() === 'edit';
+			this.#clickable = !isEditMode;
+		}
 
-	  /**
-	   * Create frame with widget content
-	   * @returns {Promise|*}
-	   */
-	  mount() {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _getFrameContent)[_getFrameContent]().then(srcDoc => {
-	      babelHelpers.classPrivateFieldLooseBase(this, _frame)[_frame] = document.createElement('iframe');
-	      babelHelpers.classPrivateFieldLooseBase(this, _frame)[_frame].className = 'landing-widgetvue-iframe';
-	      babelHelpers.classPrivateFieldLooseBase(this, _frame)[_frame].sandbox = 'allow-scripts';
-	      babelHelpers.classPrivateFieldLooseBase(this, _frame)[_frame].srcdoc = srcDoc;
-	      babelHelpers.classPrivateFieldLooseBase(this, _frame)[_frame].onload = () => {
-	        babelHelpers.classPrivateFieldLooseBase(this, _message)[_message]('getSize', {}, babelHelpers.classPrivateFieldLooseBase(this, _frame)[_frame].contentWindow);
-	      };
-	      if (babelHelpers.classPrivateFieldLooseBase(this, _blockId)[_blockId] > 0 && babelHelpers.classPrivateFieldLooseBase(this, _rootNode)[_rootNode] && !WidgetVue.runningAppNodes.has(babelHelpers.classPrivateFieldLooseBase(this, _rootNode)[_rootNode])) {
-	        const blockWrapper = babelHelpers.classPrivateFieldLooseBase(this, _rootNode)[_rootNode].parentElement;
-	        main_core.Dom.clean(blockWrapper);
-	        main_core.Dom.append(babelHelpers.classPrivateFieldLooseBase(this, _frame)[_frame], blockWrapper);
-	        WidgetVue.runningAppNodes.add(babelHelpers.classPrivateFieldLooseBase(this, _rootNode)[_rootNode]);
-	        babelHelpers.classPrivateFieldLooseBase(this, _bindEvents)[_bindEvents]();
-	      }
-	    });
-	  }
-	}
-	async function _getFrameContent2() {
-	  let content = '';
-	  const core = await babelHelpers.classPrivateFieldLooseBase(this, _getCoreConfigs)[_getCoreConfigs]();
-	  content += babelHelpers.classPrivateFieldLooseBase(this, _parseExtensionConfig)[_parseExtensionConfig](core.data);
-	  const assets = await babelHelpers.classPrivateFieldLooseBase(this, _getAssetsConfigs)[_getAssetsConfigs]();
-	  content += babelHelpers.classPrivateFieldLooseBase(this, _parseExtensionConfig)[_parseExtensionConfig](assets.data);
-	  content += babelHelpers.classPrivateFieldLooseBase(this, _parseExtensionConfig)[_parseExtensionConfig]({
-	    lang_additional: babelHelpers.classPrivateFieldLooseBase(this, _lang)[_lang]
-	  });
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _style)[_style]) {
-	    content += `<link rel="stylesheet" href="${babelHelpers.classPrivateFieldLooseBase(this, _style)[_style]}">`;
-	  }
-	  const engineParams = await babelHelpers.classPrivateFieldLooseBase(this, _getEngineParams)[_getEngineParams]();
-	  const appInit = `
+		/**
+		 * Create frame with widget content
+		 * @returns {Promise|*}
+		 */
+		mount() {
+			return this.#getFrameContent().then(srcDoc => {
+				this.#frame = document.createElement('iframe');
+				this.#frame.className = 'landing-widgetvue-iframe';
+				this.#frame.sandbox = 'allow-scripts';
+				this.#frame.srcdoc = srcDoc;
+				this.#frame.onload = () => {
+					this.#message('getSize', {}, this.#frame.contentWindow);
+				};
+				if (this.#blockId > 0 && this.#rootNode && !WidgetVue.runningAppNodes.has(this.#rootNode)) {
+					const blockWrapper = this.#rootNode.parentElement;
+					main_core.Dom.clean(blockWrapper);
+					main_core.Dom.append(this.#frame, blockWrapper);
+					WidgetVue.runningAppNodes.add(this.#rootNode);
+					this.#bindEvents();
+				}
+			});
+		}
+
+		/**
+		 * Remove frame and release all subscriptions
+		 */
+		unmount() {
+			main_core.Event.unbind(window, 'message', this.#onMessage);
+			BX.removeCustomEvent('BX.Landing.Block:remove', this.#onBlockRemove);
+			if (this.#frame) {
+				main_core.Dom.remove(this.#frame);
+				this.#frame = null;
+			}
+			WidgetVue.runningAppNodes.delete(this.#rootNode);
+		}
+		async #getFrameContent() {
+			let content = '';
+			const core = await this.#getCoreConfigs();
+			content += this.#parseExtensionConfig(core.data);
+			const assets = await this.#getAssetsConfigs();
+			content += this.#parseExtensionConfig(assets.data);
+			content += this.#parseExtensionConfig({
+				lang_additional: this.#lang
+			});
+			if (this.#style) {
+				content += `<link rel="stylesheet" href="${this.#style}">`;
+			}
+			const engineParams = await this.#getEngineParams();
+			const appInit = `
 			<script>
 				BX.ready(function() {
 					(new BX.Landing.WidgetVue.Engine(
@@ -193,143 +110,151 @@ this.BX = this.BX || {};
 				});
 			</script>
 
-			<div id="${babelHelpers.classPrivateFieldLooseBase(this, _uniqueId)[_uniqueId]}">${babelHelpers.classPrivateFieldLooseBase(this, _template)[_template]}</div>
+			<div id="${this.#uniqueId}">${this.#template}</div>
 		`;
-	  content += appInit;
-	  return content;
+			content += appInit;
+			return content;
+		}
+		async #getEngineParams() {
+			const engineParams = {
+				id: this.#uniqueId,
+				origin: window.location.origin,
+				fetchable: this.#fetchable,
+				clickable: this.#clickable
+			};
+			if (this.#appAllowedByTariff) {
+				if (this.#useDemoData) {
+					if (!this.#demoData) {
+						this.#logger.log('Widget haven\'t demo data and can be render correctly');
+					}
+					engineParams.data = this.#demoData || {};
+				} else {
+					try {
+						engineParams.data = await this.#fetchData();
+					} catch (error) {
+						engineParams.error = error.message || 'error';
+					}
+				}
+			} else {
+				engineParams.error = main_core.Loc.getMessage('LANDING_WIDGETVUE_ERROR_PAYMENT_MSGVER_1');
+			}
+			return engineParams;
+		}
+		async #getCoreConfigs() {
+			return main_core.ajax.runAction('landing.vibe.getCoreConfig');
+		}
+		async #getAssetsConfigs() {
+			const extCodes = ['landing.widgetvue.engine'];
+			return main_core.ajax.runAction('landing.vibe.getAssetsConfig', {
+				data: {
+					extCodes
+				}
+			});
+		}
+		#parseExtensionConfig(ext) {
+			const domain = `${document.location.protocol}//${document.location.host}`;
+			let html = '';
+			if (ext.lang_additional !== undefined) {
+				html += `<script>BX.message(${JSON.stringify(ext.lang_additional)})</script>`;
+			}
+			(ext.js || []).forEach(js => {
+				html += `<script src="${domain}${js}"></script>`;
+			});
+			(ext.css || []).forEach(css => {
+				html += `<link href="${domain}${css}" type="text/css" rel="stylesheet" />`;
+			});
+			return html;
+		}
+		#fetchData(params = {}) {
+			if (!this.#fetchable) {
+				this.#logger.log('Fetch data is impossible now (haven`t handler)');
+				return Promise.resolve({});
+			}
+			if (this.#useDemoData) {
+				return Promise.resolve(this.#demoData || {});
+			}
+			return main_core.ajax.runAction('landing.vibe.fetchData', {
+				data: {
+					blockId: this.#blockId,
+					params
+				}
+			}).then(jsonData => {
+				const data = JSON.parse(jsonData.data || []);
+				if (data.error) {
+					throw new Error(data.error);
+				}
+				return data;
+			}).catch(fail => {
+				const logMessages = [`Fetch data error!\nWidget ID: ${this.#blockId}`];
+				if (Object.keys(params) > 0) {
+					logMessages.push('\nFetch request params:', params);
+				}
+				if (main_core.Type.isString(fail)) {
+					logMessages.push(`\nError in JSON data: ${fail}`);
+				} else if (main_core.Type.isObject(fail) && 'errors' in fail && main_core.Type.isArray(fail.errors)) {
+					fail.errors.forEach(error => {
+						if (error.message !== undefined) {
+							logMessages.push(`\nJavaScript error: ${error.message}`);
+						}
+					});
+				}
+				this.#logger.log(...logMessages);
+				throw new Error(main_core.Loc.getMessage('LANDING_WIDGETVUE_ERROR_FETCH'));
+			});
+		}
+		#message(name, params = {}, target = window) {
+			target.postMessage({
+				name,
+				params,
+				origin: this.#uniqueId
+			}, '*');
+		}
+		#bindEvents() {
+			main_core.Event.bind(window, 'message', this.#onMessage);
+			BX.addCustomEvent('BX.Landing.Block:remove', this.#onBlockRemove);
+		}
+		#onBlockRemove = event => {
+			if (this.#blockId > 0 && event?.blockId === this.#blockId) {
+				this.unmount();
+			}
+		};
+		#onMessage = event => {
+			// Frame is sandboxed without allow-same-origin, its origin is opaque - the sender is checked by window reference
+			if (!this.#frame || event.source !== this.#frame.contentWindow) {
+				return;
+			}
+			if (event.data && event.data.origin && event.data.name && event.data.params && main_core.Type.isObject(event.data.params)) {
+				if (event.data.origin !== this.#uniqueId) {
+					return;
+				}
+				if (event.data.name === 'fetchData') {
+					this.#fetchData(event.data.params).then(data => {
+						this.#message('setData', {
+							data
+						}, event.source);
+					}).catch(error => {
+						this.#message('setError', {
+							error
+						}, event.source);
+					});
+				}
+				if (event.data.name === 'setSize' && event.data.params.size !== undefined) {
+					this.#frame.height = parseInt(event.data.params.size, 10);
+				}
+				if (event.data.name === 'openApplication' && this.#appId > 0) {
+					const params = main_core.Type.isObject(event.data.params) ? event.data.params : {};
+					BX.rest.AppLayout.openApplication(this.#appId, params);
+				}
+				if (event.data.name === 'openPath' && main_core.Type.isString(event.data.params.path)) {
+					BX.rest.AppLayout.openPath(this.#appId, {
+						path: event.data.params.path
+					});
+				}
+			}
+		};
 	}
-	async function _getEngineParams2() {
-	  const engineParams = {
-	    id: babelHelpers.classPrivateFieldLooseBase(this, _uniqueId)[_uniqueId],
-	    origin: window.location.origin,
-	    fetchable: babelHelpers.classPrivateFieldLooseBase(this, _fetchable)[_fetchable],
-	    clickable: babelHelpers.classPrivateFieldLooseBase(this, _clickable)[_clickable]
-	  };
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _appAllowedByTariff)[_appAllowedByTariff]) {
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _useDemoData)[_useDemoData]) {
-	      if (!babelHelpers.classPrivateFieldLooseBase(this, _demoData)[_demoData]) {
-	        babelHelpers.classPrivateFieldLooseBase(this, _logger)[_logger].log('Widget haven\'t demo data and can be render correctly');
-	      }
-	      engineParams.data = babelHelpers.classPrivateFieldLooseBase(this, _demoData)[_demoData] || {};
-	    } else {
-	      try {
-	        engineParams.data = await babelHelpers.classPrivateFieldLooseBase(this, _fetchData)[_fetchData]();
-	      } catch (error) {
-	        engineParams.error = error.message || 'error';
-	      }
-	    }
-	  } else {
-	    engineParams.error = main_core.Loc.getMessage('LANDING_WIDGETVUE_ERROR_PAYMENT_MSGVER_1');
-	  }
-	  return engineParams;
-	}
-	async function _getCoreConfigs2() {
-	  return main_core.ajax.runAction('landing.vibe.getCoreConfig');
-	}
-	async function _getAssetsConfigs2() {
-	  const extCodes = ['landing.widgetvue.engine'];
-	  return main_core.ajax.runAction('landing.vibe.getAssetsConfig', {
-	    data: {
-	      extCodes
-	    }
-	  });
-	}
-	function _parseExtensionConfig2(ext) {
-	  const domain = `${document.location.protocol}//${document.location.host}`;
-	  let html = '';
-	  if (ext.lang_additional !== undefined) {
-	    html += `<script>BX.message(${JSON.stringify(ext.lang_additional)})</script>`;
-	  }
-	  (ext.js || []).forEach(js => {
-	    html += `<script src="${domain}${js}"></script>`;
-	  });
-	  (ext.css || []).forEach(css => {
-	    html += `<link href="${domain}${css}" type="text/css" rel="stylesheet" />`;
-	  });
-	  return html;
-	}
-	function _fetchData2(params = {}) {
-	  if (!babelHelpers.classPrivateFieldLooseBase(this, _fetchable)[_fetchable]) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _logger)[_logger].log('Fetch data is impossible now (haven`t handler)');
-	    return Promise.resolve({});
-	  }
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _useDemoData)[_useDemoData]) {
-	    return Promise.resolve(babelHelpers.classPrivateFieldLooseBase(this, _demoData)[_demoData] || {});
-	  }
-	  return main_core.ajax.runAction('landing.vibe.fetchData', {
-	    data: {
-	      blockId: babelHelpers.classPrivateFieldLooseBase(this, _blockId)[_blockId],
-	      params
-	    }
-	  }).then(jsonData => {
-	    const data = JSON.parse(jsonData.data || []);
-	    if (data.error) {
-	      throw new Error(data.error);
-	    }
-	    return data;
-	  }).catch(fail => {
-	    const logMessages = [`Fetch data error!\nWidget ID: ${babelHelpers.classPrivateFieldLooseBase(this, _blockId)[_blockId]}`];
-	    if (Object.keys(params) > 0) {
-	      logMessages.push('\nFetch request params:', params);
-	    }
-	    if (main_core.Type.isString(fail)) {
-	      logMessages.push(`\nError in JSON data: ${fail}`);
-	    } else if (main_core.Type.isObject(fail) && 'errors' in fail && main_core.Type.isArray(fail.errors)) {
-	      fail.errors.forEach(error => {
-	        if (error.message !== undefined) {
-	          logMessages.push(`\nJavaScript error: ${error.message}`);
-	        }
-	      });
-	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _logger)[_logger].log(...logMessages);
-	    throw new Error(main_core.Loc.getMessage('LANDING_WIDGETVUE_ERROR_FETCH'));
-	  });
-	}
-	function _message2(name, params = {}, target = window) {
-	  target.postMessage({
-	    name,
-	    params,
-	    origin: babelHelpers.classPrivateFieldLooseBase(this, _uniqueId)[_uniqueId]
-	  }, '*');
-	}
-	function _bindEvents2() {
-	  main_core.Event.bind(window, 'message', babelHelpers.classPrivateFieldLooseBase(this, _onMessage)[_onMessage].bind(this));
-	}
-	function _onMessage2(event) {
-	  // todo: need check origin manually?
-
-	  if (event.data && event.data.origin && event.data.name && event.data.params && main_core.Type.isObject(event.data.params)) {
-	    if (event.data.origin !== babelHelpers.classPrivateFieldLooseBase(this, _uniqueId)[_uniqueId]) {
-	      return;
-	    }
-	    if (event.data.name === 'fetchData') {
-	      babelHelpers.classPrivateFieldLooseBase(this, _fetchData)[_fetchData](event.data.params).then(data => {
-	        babelHelpers.classPrivateFieldLooseBase(this, _message)[_message]('setData', {
-	          data
-	        }, event.source);
-	      }).catch(error => {
-	        babelHelpers.classPrivateFieldLooseBase(this, _message)[_message]('setError', {
-	          error
-	        }, event.source);
-	      });
-	    }
-	    if (event.data.name === 'setSize' && event.data.params.size !== undefined) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _frame)[_frame].height = parseInt(event.data.params.size, 10);
-	    }
-	    if (event.data.name === 'openApplication' && babelHelpers.classPrivateFieldLooseBase(this, _appId)[_appId] > 0) {
-	      const params = main_core.Type.isObject(event.data.params) ? event.data.params : {};
-	      BX.rest.AppLayout.openApplication(babelHelpers.classPrivateFieldLooseBase(this, _appId)[_appId], params);
-	    }
-	    if (event.data.name === 'openPath' && main_core.Type.isString(event.data.params.path)) {
-	      BX.rest.AppLayout.openPath(babelHelpers.classPrivateFieldLooseBase(this, _appId)[_appId], {
-	        path: event.data.params.path
-	      });
-	    }
-	  }
-	}
-	WidgetVue.runningAppNodes = new Set();
 
 	exports.WidgetVue = WidgetVue;
 
-}((this.BX.Landing = this.BX.Landing || {}),BX));
+})(this.BX.Landing = this.BX.Landing || {}, BX);
 //# sourceMappingURL=widgetvue.bundle.js.map

@@ -392,7 +392,7 @@ export default class Grid extends Kanban.Grid
 	onColumnUpdated(column: Column)
 	{
 		this.startProgress();
-		Ajax.runAction('rpa.stage.update', {
+		Ajax.runAction('rpa.Stage.update', {
 			analyticsLabel: 'rpaKanbanStageUpdate',
 			data: {
 				id: column.getId(),
@@ -423,7 +423,7 @@ export default class Grid extends Kanban.Grid
 		const previousColumnId = previousColumn ? previousColumn.getId() : 0;
 
 		const promise = new BX.Promise();
-		Ajax.runAction('rpa.stage.add', {
+		Ajax.runAction('rpa.Stage.add', {
 			analyticsLabel: 'rpaKanbanStageAdd',
 			data: {
 				fields: {
@@ -455,7 +455,7 @@ export default class Grid extends Kanban.Grid
 	{
 		const promise = new BX.Promise();
 		this.startProgress();
-		Ajax.runAction('rpa.stage.delete', {
+		Ajax.runAction('rpa.Stage.delete', {
 			analyticsLabel: 'rpaKanbanStageDelete',
 			data: {
 				id: column.getId(),
@@ -484,7 +484,7 @@ export default class Grid extends Kanban.Grid
 		const previousColumn = this.getPreviousColumnSibling(column);
 		const previousColumnId = previousColumn ? previousColumn.getId() : 0;
 
-		Ajax.runAction('rpa.stage.update', {
+		Ajax.runAction('rpa.Stage.update', {
 			analyticsLabel: 'rpaKanbanStageMove',
 			data: {
 				id: column.getId(),
@@ -758,7 +758,7 @@ export default class Grid extends Kanban.Grid
 					return;
 				}
 				this.startProgress();
-				Ajax.runAction('rpa.fields.setVisibilitySettings', {
+				Ajax.runAction('rpa.Fields.setVisibilitySettings', {
 					analyticsLabel: 'rpaKanbanSaveVisibleFields',
 					data: {
 						typeId: this.getTypeId(),
@@ -829,7 +829,7 @@ export default class Grid extends Kanban.Grid
 				return;
 			}
 			this.startProgress();
-			Ajax.runAction('rpa.fields.setVisibilitySettings', {
+			Ajax.runAction('rpa.Fields.setVisibilitySettings', {
 				data: {
 					typeId: this.getTypeId(),
 					fields: Array.from(result),
@@ -942,7 +942,7 @@ export default class Grid extends Kanban.Grid
 			return;
 		}
 		this.startProgress();
-		Ajax.runAction('rpa.item.delete', {
+		Ajax.runAction('rpa.Item.delete', {
 			analyticsLabel: 'rpaKanbanItemDelete',
 			data: {
 				typeId: this.getTypeId(),

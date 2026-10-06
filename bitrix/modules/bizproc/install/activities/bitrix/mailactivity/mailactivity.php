@@ -16,7 +16,7 @@ use Bitrix\Main\Text\Encoding;
 
 use Bitrix\Crm\Integration\Analytics\Dictionary;
 
-class CBPMailActivity extends CBPActivity
+class CBPMailActivity extends CBPActivity implements IBPConfigurableActivity
 {
 	const DEFAULT_SEPARATOR = ',';
 
@@ -300,7 +300,7 @@ class CBPMailActivity extends CBPActivity
 		return $dialog;
 	}
 
-	protected static function getPropertiesMap(array $documentType, array $context = []): array
+	public static function getPropertiesMap(array $documentType, array $context = []): array
 	{
 		return [
 			'MailUserFrom' => [
@@ -317,6 +317,7 @@ class CBPMailActivity extends CBPActivity
 				'Required' => true,
 				'Multiple' => true,
 				'Getter' => static::getMailUserPropertyGetter(),
+				'Setter' => static::getMailUserToPropertySetter(),
 				'Default' => \Bitrix\Bizproc\Automation\Helper::getResponsibleUserExpression($documentType),
 			],
 			'MailSubject' => [
@@ -352,11 +353,13 @@ class CBPMailActivity extends CBPActivity
 				'Name' => Loc::getMessage('BPSNMA_MESSAGE'),
 				'FieldName' => 'mail_charset',
 				'Type' => 'string',
+				'Default' => 'windows-1251',
 			],
 			'DirrectMail' => [
 				'Name' => Loc::getMessage('BPSNMA_MESSAGE'),
 				'FieldName' => 'dirrect_mail',
 				'Type' => 'string',
+				'Default' => 'Y',
 			],
 			'MailSite' => [
 				'Name' => Loc::getMessage('BPSNMA_MESSAGE'),
@@ -677,6 +680,31 @@ class CBPMailActivity extends CBPActivity
 		return [$users, $emails];
 	}
 
+	/**
+	 * Symmetric counterpart of getMailUserPropertyGetter() for the node-action save path.
+	 *
+	 * The Getter reads recipients out of the MailUserToArray property; on save this Setter routes the
+	 * internalised form value back into that same MailUserToArray (the array of user expressions that
+	 * Execute()/getMailUserTo() resolves) and keeps MailUserTo as the literal-email string. It reproduces
+	 * the split the legacy GetPropertiesDialogValues performs (UsersStringToArray → MailUserToArray users
+	 * + MailUserTo emails), which the generic getPropertiesMap extraction cannot express on its own.
+	 * Robot dialogs never invoke this — it is honoured only by the node-action internalisation bridge.
+	 */
+	private static function getMailUserToPropertySetter()
+	{
+		return static function ($value): array {
+			$users = CBPHelper::MakeArrayFlat(is_array($value) ? $value : [$value]);
+			$users = array_values(
+				array_filter($users, static fn($user) => $user !== null && $user !== '')
+			);
+
+			return [
+				'MailUserToArray' => $users,
+				'MailUserTo' => '',
+			];
+		};
+	}
+
 	private static function getMailUserPropertyGetter()
 	{
 		return function($dialog, $property, $arCurrentActivity, $compatible = false)
@@ -817,12 +845,15 @@ class CBPMailActivity extends CBPActivity
 		}
 
 		$crmAddress = new Main\Mail\Address(Main\Config\Option::get('crm', 'mail', ''));
+		$matchedEmails = [];
 		if ($crmAddress->validate())
 		{
 			$result[] = $crmAddress->getEmail();
+			$matchedEmails[mb_strtolower($crmAddress->getEmail())] = true;
 		}
 
-		if (Loader::includeModule('mail'))
+		$mailModuleLoaded = Loader::includeModule('mail');
+		if ($mailModuleLoaded)
 		{
 			$res = Mail\MailboxTable::getList(array(
 				'filter' => array(
@@ -839,6 +870,18 @@ class CBPMailActivity extends CBPActivity
 
 			while ($mailbox = $res->fetch())
 			{
+				foreach ($emailsToCheck as $emailToCheck)
+				{
+					foreach (['EMAIL', 'NAME', 'LOGIN'] as $fieldName)
+					{
+						if (strcasecmp((string)$mailbox[$fieldName], (string)$emailToCheck) === 0)
+						{
+							$matchedEmails[mb_strtolower((string)$emailToCheck)] = true;
+							break;
+						}
+					}
+				}
+
 				Mail\MailboxTable::normalizeEmail($mailbox);
 				$result[] = $mailbox['EMAIL'];
 			}
@@ -854,6 +897,98 @@ class CBPMailActivity extends CBPActivity
 		while ($item = $res->fetch())
 		{
 			$result[] = mb_strtolower($item['EMAIL']);
+			$matchedEmails[mb_strtolower((string)$item['EMAIL'])] = true;
+		}
+
+		$resolverClass = Mail\Public\Service\Mailbox\AddressResolver::class;
+		if ($mailModuleLoaded && class_exists($resolverClass))
+		{
+			$resolver = new $resolverClass();
+			$mailboxIdsByEmail = [];
+			$unmatchedEmails = [];
+			foreach ($emailsToCheck as $emailToCheck)
+			{
+				if (isset($matchedEmails[mb_strtolower((string)$emailToCheck)]))
+				{
+					continue;
+				}
+
+				$unmatchedEmails[] = (string)$emailToCheck;
+			}
+			$unmatchedEmails = array_values(array_unique($unmatchedEmails));
+
+			if (method_exists($resolverClass, 'findBindingsForEmails'))
+			{
+				$bindingsByEmail = $resolver->findBindingsForEmails($unmatchedEmails);
+				foreach ($unmatchedEmails as $emailToCheck)
+				{
+					$bindings = $bindingsByEmail[mb_strtolower($emailToCheck)] ?? [];
+					if ($bindings !== [])
+					{
+						$mailboxIdsByEmail[$emailToCheck] = array_map(
+							static fn($binding): int => $binding->mailboxId,
+							$bindings,
+						);
+					}
+				}
+			}
+			elseif (method_exists($resolverClass, 'findBindings'))
+			{
+				foreach ($unmatchedEmails as $emailToCheck)
+				{
+					$bindings = $resolver->findBindings($emailToCheck);
+					if ($bindings !== [])
+					{
+						$mailboxIdsByEmail[$emailToCheck] = array_map(
+							static fn($binding): int => $binding->mailboxId,
+							$bindings,
+						);
+					}
+				}
+			}
+
+			if ($mailboxIdsByEmail !== [])
+			{
+				$mailboxIds = array_values(array_unique(array_merge(...array_values($mailboxIdsByEmail))));
+				$activeMailboxIdMap = [];
+				if (method_exists($resolverClass, 'findActiveMailboxesByIds'))
+				{
+					$activeMailboxIdMap = array_fill_keys(
+						array_keys($resolver->findActiveMailboxesByIds($mailboxIds, 'imap')),
+						true,
+					);
+				}
+				else
+				{
+					foreach (array_chunk($mailboxIds, 100) as $mailboxIdChunk)
+					{
+						$activeMailboxes = Mail\MailboxTable::getList([
+							'select' => ['ID'],
+							'filter' => [
+								'@ID' => $mailboxIdChunk,
+								'=ACTIVE' => 'Y',
+								'=SERVER_TYPE' => 'imap',
+							],
+						]);
+						while ($activeMailbox = $activeMailboxes->fetch())
+						{
+							$activeMailboxIdMap[(int)$activeMailbox['ID']] = true;
+						}
+					}
+				}
+
+				foreach ($mailboxIdsByEmail as $emailToCheck => $mailboxIds)
+				{
+					foreach ($mailboxIds as $mailboxId)
+					{
+						if (isset($activeMailboxIdMap[$mailboxId]))
+						{
+							$result[] = $emailToCheck;
+							break;
+						}
+					}
+				}
+			}
 		}
 
 		return array_unique($result);

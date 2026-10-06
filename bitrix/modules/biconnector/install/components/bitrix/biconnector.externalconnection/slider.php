@@ -9,6 +9,8 @@ require($_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php');
 if (
 	!Loader::includeModule('biconnector')
 	|| !BIConnector\Configuration\Feature::isExternalEntitiesEnabled()
+	// A finished term of the extension closes the workplace of the analyst the same way an unsuitable tariff does.
+	|| BIConnector\Superset\Selfhost\License\SelfHostedLicenseLock::isDashboardLocked()
 )
 {
 	LocalRedirect('/');

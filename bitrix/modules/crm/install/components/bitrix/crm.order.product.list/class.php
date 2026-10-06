@@ -18,6 +18,7 @@ use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
+use Bitrix\Main\Web\Uri;
 
 Loc::loadMessages(__FILE__);
 
@@ -447,9 +448,7 @@ final class CCrmOrderProductListComponent extends \CBitrixComponent
 				}
 			}
 
-			$data['PATH_TO_DELETE'] =  CHTTP::urlAddParams(
-				$this->arResult['PATH_TO_ORDER_PRODUCT_LIST'],
-				[
+			$data['PATH_TO_DELETE'] =  (string)(new Uri($this->arResult['PATH_TO_ORDER_PRODUCT_LIST']))->addParams([
 					'action_'.$this->arResult['GRID_ID'] => 'delete',
 					'ID' => $data['BASKET_CODE'],
 					'sessid' => bitrix_sessid()

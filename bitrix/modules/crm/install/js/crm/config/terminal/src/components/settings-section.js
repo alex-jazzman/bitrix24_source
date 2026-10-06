@@ -1,5 +1,6 @@
 // @flow
 
+import { markRaw } from 'ui.vue3';
 import 'ui.switcher';
 
 export const SettingsSection = {
@@ -14,7 +15,7 @@ export const SettingsSection = {
 
 	mounted()
 	{
-		(new BX.UI.Switcher({
+		this.switcher = markRaw(new BX.UI.Switcher({
 			node: this.$refs.switcher,
 			size: 'small',
 			checked: this.isEnabled,
@@ -31,6 +32,14 @@ export const SettingsSection = {
 		{
 			this.isEnabled = !this.isEnabled;
 			this.$emit('toggle', this.isEnabled);
+		},
+		onSwitcherKeydown(event)
+		{
+			if (event.key === 'Enter' || event.key === ' ')
+			{
+				event.preventDefault();
+				this.switcher.toggle();
+			}
 		},
 		onTitleClick()
 		{
@@ -63,7 +72,15 @@ export const SettingsSection = {
 		<div>
 			<div class="ui-slider-heading-4 settings-section-header">
 				<div v-if="switchable" class="settings-setction-switcher-container">
-					<span ref="switcher" class="ui-switcher"></span>
+					<span
+						ref="switcher"
+						class="ui-switcher"
+						role="switch"
+						tabindex="0"
+						:aria-checked="isEnabled ? 'true' : 'false'"
+						:aria-label="title"
+						@keydown="onSwitcherKeydown"
+					></span>
 				</div>
 				<div v-if="leftIconClass" :class="leftIconClass"></div>
 				<div

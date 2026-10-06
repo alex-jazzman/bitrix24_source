@@ -6,3 +6,4 @@ $MESS["UPLOADER_NETWORK_ERROR"] = "Ошибка подключения к сер
 $MESS["UPLOADER_FILE_UPLOAD_ABORTED"] = "Загрузка файла на сервер была прервана.";
 $MESS["UPLOADER_FILE_LOAD_ABORTED"] = "Загрузка данных файла была прервана.";
 $MESS["UPLOADER_FILE_UPLOAD_NOT_ALLOWED"] = "Загрузка файла недоступна.";
+$MESS["UPLOADER_CLOUD_ERROR"] = "Ошибка загрузки файла в облако (#CODE#).";

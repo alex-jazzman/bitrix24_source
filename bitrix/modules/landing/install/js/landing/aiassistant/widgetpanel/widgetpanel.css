@@ -1,0 +1,156 @@
+.landing-ai-assistant-panel {
+	display: flex;
+	width: 100%;
+	height: 100vh;
+	min-height: 100vh;
+	background: #f7f9fb;
+	overflow: hidden;
+}
+
+.landing-ai-assistant-panel__main {
+	flex: 1 1 auto;
+	height: 100vh;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	border-right: 1px solid #e5e8ee;
+	background: #fff;
+	overflow: hidden;
+	transition: border-right-color 0.3s ease-in-out;
+}
+
+.landing-ai-assistant-panel__main > :first-child {
+	flex-shrink: 0;
+}
+
+.landing-ui-panel-top.landing-ai-assistant-panel-top--compact .landing-ui-panel-top-logo-link {
+	font-size: 18px;
+}
+
+.landing-ui-panel-top.landing-ai-assistant-panel-top--compact .landing-ui-panel-top-selector {
+	width: auto;
+}
+
+.landing-ui-panel-top.landing-ai-assistant-panel-top--compact:not(.landing-ui-panel-top-ai) #landing-popup-preview-btn,
+.landing-ui-panel-top.landing-ai-assistant-panel-top--compact:not(.landing-ui-panel-top-ai) .landing-ui-panel-top-menu-link-features {
+	font-size: var(--ui-font-size-4xs);
+}
+
+.landing-ui-panel-top.landing-ai-assistant-panel-top--compact:not(.landing-ui-panel-top-ai) .landing-ui-panel-top-devices {
+	display: none;
+}
+
+.landing-ai-assistant-panel--chat-minimized .landing-ai-assistant-panel__main {
+	border-right-color: transparent;
+}
+
+.landing-ai-assistant-panel__main .landing-ui-view-container {
+	position: relative;
+	flex: 1 1 auto;
+	width: 100%;
+	min-height: 0;
+	min-width: 0;
+	overflow: hidden;
+}
+
+.landing-ai-assistant-panel__main .landing-ui-view-wrapper {
+	position: relative;
+	inset: auto;
+	flex: 1 1 auto;
+	width: 100%;
+	min-width: 0;
+	height: 100%;
+	min-height: 0;
+	overflow: hidden;
+}
+
+.landing-ai-assistant-panel__main .landing-editor-loader-container {
+	position: absolute;
+	inset: 0;
+	width: auto;
+	height: auto;
+	max-width: 100%;
+	overflow: hidden;
+}
+
+.landing-ai-assistant-panel__main .landing-ui-view-iframe-wrapper {
+	flex: 0 1 auto;
+	width: 100%;
+	min-width: 0;
+}
+
+.landing-ai-assistant-panel__toggle-container {
+	flex-shrink: 0;
+	margin-left: 16px;
+}
+
+.landing-ui-panel-top-chat-toggle {
+	width: 34px;
+	height: 28px;
+	background: url(./images/btn-bitrix-gpt.svg) center no-repeat;
+	border: none;
+	font-size: 0;
+	outline: none;
+}
+
+.landing-ui-panel-top-chat-toggle:hover,
+.landing-ui-panel-top-chat-toggle:focus,
+.landing-ui-panel-top-chat-toggle:active {
+	border: none;
+	box-shadow: none;
+	outline: none;
+}
+
+.landing-ai-assistant-panel__chat {
+	position: relative;
+	flex: 0 0 420px;
+	width: 420px;
+	min-width: 0;
+	height: 100vh;
+	display: flex;
+	align-items: stretch;
+	background: #f7f9fb;
+	overflow: hidden;
+	transition:
+		flex-basis 0.3s ease-in-out,
+		width 0.3s ease-in-out,
+		min-width 0.3s ease-in-out;
+	will-change: width, flex-basis;
+}
+
+.landing-ai-assistant-panel__chat--loading {
+	background: #fff;
+}
+
+.landing-ai-assistant-panel--chat-minimized .landing-ai-assistant-panel__chat {
+	flex-basis: 0;
+	width: 0;
+	min-width: 0;
+	pointer-events: none;
+}
+
+.landing-ai-assistant-panel__widget {
+	width: 100%;
+	height: 100%;
+	position: relative;
+	z-index: 1;
+}
+
+.landing-ai-assistant-panel__loader {
+	position: absolute;
+	inset: 0;
+	z-index: 3;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: #fff;
+}
+
+.landing-ai-assistant-panel__chat--loading .landing-ai-assistant-panel__widget {
+	visibility: hidden;
+}
+
+.landing-ai-assistant-panel__widget .bx-im-messenger__scope,
+.landing-ai-assistant-panel__widget .bx-im-content-chat__container {
+	height: 100%;
+}

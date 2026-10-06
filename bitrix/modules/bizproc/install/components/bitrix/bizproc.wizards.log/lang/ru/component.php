@@ -17,6 +17,7 @@ $MESS["BPABL_TYPE_4"] = "Ошибка действия";
 $MESS["BPABL_TYPE_5"] = "Запись";
 $MESS["BPABL_TYPE_6"] = "Тип не найден";
 $MESS["BPABL_TYPE_7"] = "Отчет";
+$MESS["BPABL_TYPE_14"] = "Пропуск действия";
 $MESS["BPABL_STATUS_1"] = "Инициализировано";
 $MESS["BPABL_STATUS_2"] = "Выполняется";
 $MESS["BPABL_STATUS_3"] = "Отменяется";

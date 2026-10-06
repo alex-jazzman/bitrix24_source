@@ -4,6 +4,7 @@ namespace Bitrix\Landing\Node;
 
 use \Bitrix\Landing\File;
 use Bitrix\Landing\History;
+use Bitrix\Landing\Sanitizer;
 use \Bitrix\Landing\Manager;
 use \Bitrix\Main\Web\DOM\StyleInliner;
 use \Bitrix\Landing\Node;
@@ -54,13 +55,21 @@ class Img extends \Bitrix\Landing\Node
 
 			if (isset($value['url']))
 			{
-				$url = is_array($value['url'])
-					? json_encode($value['url'])
-					: $value['url'];
+				$url = (new Sanitizer())->sanitizePseudoUrl($value['url']);
 			}
 			else
 			{
 				$url = '';
+			}
+
+			if (
+				Sanitizer::containsUnneutralizedPhpOpenTag($src)
+				|| Sanitizer::containsUnneutralizedPhpOpenTag($src2x)
+				|| Sanitizer::containsUnneutralizedPhpOpenTag($alt)
+				|| (is_string($url) && Sanitizer::containsUnneutralizedPhpOpenTag($url))
+			)
+			{
+				continue;
 			}
 
 			if (isset($resultList[$pos]))

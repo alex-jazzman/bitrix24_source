@@ -1,20 +1,23 @@
 <?php
 
-use Bitrix\Mail\Internals\UserSignatureTable;
+use Bitrix\Mail\Helper\SignatureEditorConfig;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\UI\Extension;
 use Bitrix\UI\Toolbar\Facade\Toolbar;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
 }
-\Bitrix\Main\UI\Extension::load([
+
+Extension::load([
 	'ui.design-tokens',
+	// color tokens used by the editor styles live in the air layer
+	'ui.design-tokens.air',
 	'sidepanel',
 	'ui.forms',
 	'ui.buttons',
-	'ui.alerts',
-	'ui.notification',
+	'mail.signature.editor',
 ]);
 
 if (isset($_REQUEST['IFRAME']) && $_REQUEST['IFRAME'] === 'Y')
@@ -23,85 +26,57 @@ if (isset($_REQUEST['IFRAME']) && $_REQUEST['IFRAME'] === 'Y')
 }
 
 $bodyClass = $APPLICATION->getPageProperty('BodyClass', false);
-$APPLICATION->setPageProperty('BodyClass', trim(sprintf('%s %s', $bodyClass, 'pagetitle-toolbar-field-view pagetitle-mail-view')));
 $APPLICATION->setPageProperty('BodyClass', trim(sprintf('%s %s', $bodyClass, 'pagetitle-toolbar-field-view pagetitle-mail-view no-background')));
 ?>
-<div class="mail-user-signature-editor-wrapper">
-	<div id="signature-alert-container">
-	</div>
-	<div id="signature-editor-container">
-		<?
+<div
+	id="signature-alert-container"
+	role="alert"
+	aria-live="assertive"
+	aria-atomic="true"
+	data-testid="mail-signature-editor-alert"
+></div>
+<div class="mail-signature-editor-wrapper" data-testid="mail-signature-editor-container">
+	<?php if (!empty($arResult['showSignatureMacros'])): ?>
+		<div
+			id="signature-macro-action-container"
+			class="mail-signature-editor-wrapper__macro-action"
+			data-testid="mail-signature-editor-macro-action"
+		></div>
+	<?php endif; ?>
+	<div
+		id="signature-editor-container"
+		class="mail-signature-editor-wrapper__editor"
+		data-testid="mail-signature-editor-field"
+	>
+		<?php
 		$editor = new CHTMLEditor;
-		$editor->show([
-			'name'                => 'signature-editor-name',
-			'id'                  => 'signature-editor-id',
-			'siteId'              => SITE_ID,
-			'width'               => "100%",
-			'minBodyWidth'        => "100%",
-			'normalBodyWidth'     => 680,
-			'height'              => 300,
-			'minBodyHeight'       => 300,
-			'showTaskbars'        => false,
-			'showNodeNavi'        => false,
-			'autoResize'          => true,
-			'autoResizeOffset'    => 40,
-			'bbCode'              => false,
-			'saveOnBlur'          => false,
-			'bAllowPhp'           => false,
-			'limitPhpAccess'      => false,
-			'setFocusAfterShow'   => false,
-			'askBeforeUnloadPage' => true,
-			'useFileDialogs' => false,
-			'useLinkStat' => false,
-			'controlsMap'         => [
-				['id' => 'Bold',  'compact' => true, 'sort' => 10],
-				['id' => 'Italic',  'compact' => true, 'sort' => 20],
-				['id' => 'Underline',  'compact' => true, 'sort' => 30],
-				['id' => 'Strikeout',  'compact' => true, 'sort' => 40],
-				['id' => 'RemoveFormat',  'compact' => true, 'sort' => 50],
-				['id' => 'Color',  'compact' => true, 'sort' => 60],
-				['id' => 'FontSelector',  'compact' => true, 'sort' => 70],
-				['id' => 'FontSize',  'compact' => true, 'sort' => 80],
-				['separator' => true, 'compact' => true, 'sort' => 90],
-				['id' => 'OrderedList',  'compact' => true, 'sort' => 100],
-				['id' => 'UnorderedList',  'compact' => true, 'sort' => 110],
-				['id' => 'AlignList', 'compact' => true, 'sort' => 120],
-				['separator' => true, 'compact' => true, 'sort' => 130],
-				['id' => 'InsertLink',  'compact' => true, 'sort' => 140],
-				['id' => 'InsertImage',  'compact' => true, 'sort' => 150],
-				['id' => 'InsertTable',  'compact' => true, 'sort' => 170],
-				['id' => 'Code',  'compact' => true, 'sort' => 180],
-				['id' => 'Quote',  'compact' => true, 'sort' => 190],
-				['separator' => true, 'compact' => true, 'sort' => 200],
-				['id' => 'Fullscreen',  'compact' => true, 'sort' => 210],
-				['id' => 'BbCode',  'compact' => true, 'sort' => 220],
-				['id' => 'More',  'compact' => true, 'sort' => 400]
-			],
-			'content' => $arResult['signature'],
-			'isCopilotEnabled' => false,
-		]);
+		$editor->show(SignatureEditorConfig::getHtmlEditorConfig('signature', (string)($arResult['signature'] ?? '')));
 		?>
 	</div>
-	<div class="sender-select mail-adding-signature-selecting-binding" id="sender-select-row">
-		<input type="hidden" name="signatureId" value="<?=$arResult['signatureId'];?>" id="mail-signature-signature-id" />
-		<input type="checkbox" name="sender_bind" value="y" id="sender_bind_checkbox"
-		<?
-		if($arResult['signatureId'] > 0 && $arResult['sender'])
-		{
-			?> checked<?
-		}
-		?> />
-
-		<label class="mail-signature-edit-sender-text" for="sender_bind_checkbox"><?=Loc::getMessage('MAIL_USERSIGNATURE_SENDER_SELECT') ?></label>
-
-		<div id="binding-type-field-wrapper"></div>
-
-	</div>
+	<div
+		id="sender-binding-panel"
+		class="mail-signature-editor-wrapper__settings"
+		data-testid="mail-signature-editor-sender-panel"
+	></div>
+	<?php
+	/*
+	 * The card of the shared signature is not on the screen of whoever may not manage them: it is
+	 * absent from the markup rather than hidden by styles.
+	 */
+	if (!empty($arResult['showSharedSignatureCard']))
+	{
+		?><div
+			id="shared-signature-panel"
+			class="mail-signature-editor-wrapper__scope"
+			data-testid="mail-signature-editor-shared-panel"
+		></div><?php
+	}
+	?>
 </div>
 
 <script>
 	BX.ready(function() {
-		<?='BX.message('.\CUtil::PhpToJSObject(\Bitrix\Main\Localization\Loc::loadLanguageFile(__FILE__)).');'?>
+		<?='BX.message('.\CUtil::PhpToJSObject(Loc::loadLanguageFile(__FILE__)).');'?>
 		BX.Mail.UserSignature.Edit.init(<?=CUtil::PhpToJSObject($arResult);?>);
 	});
 </script>

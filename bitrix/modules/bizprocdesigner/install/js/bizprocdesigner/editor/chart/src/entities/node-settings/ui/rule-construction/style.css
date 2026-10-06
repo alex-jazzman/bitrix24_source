@@ -1,38 +1,37 @@
+/* The 18px rhythm around a construction comes from the gap of its container: the group
+   section inside a card, or the rules-layout content flow for the head blocks */
 .editor-chart-node-settings-rule-construction {
-	border-radius: 8px;
-	margin-bottom: 18px;
-	padding: 18px;
-}
-
-.editor-chart-node-settings-rule-construction:last-of-type {
-	margin-bottom: 0;
+	border-radius: var(--ui-border-radius-sm);
+	padding: var(--ui-space-inset-md2);
 }
 
 .editor-chart-node-settings-rule-construction.--action {
-	border: 1px solid var(--ui-color-designer-bp-rules-green-stroke);
-	background: var(--ui-color-designer-bp-rules-green-bg);
+	border: 1px solid var(--designer-bp-rules-action-stroke);
+	background: var(--designer-bp-rules-action-bg);
 }
 
 .editor-chart-node-settings-rule-construction.--action .editor-chart-node-settings-rule-construction__top {
-	border-color: var(--ui-color-designer-bp-rules-green-stroke);
+	border-color: var(--designer-bp-rules-action-stroke);
 }
 
 .editor-chart-node-settings-rule-construction.--output {
-	border: 1px solid var(--ui-color-palette-gray-30);
-	background: var(--ui-color-palette-gray-02);
+	border: 1px solid var(--ui-color-designer-bp-rules-grey-stroke);
+	background: var(--ui-color-designer-bp-rules-grey-bg);
 }
 
 .editor-chart-node-settings-rule-construction.--output .editor-chart-node-settings-rule-construction__top {
-	border-color: var(--ui-color-palette-gray-30);
+	border-color: var(--ui-color-designer-bp-rules-grey-stroke);
 }
 
+/* filter is a head card, not a row inside a group - radius 12 per mockup page-node-settings */
 .editor-chart-node-settings-rule-construction.--filter {
-	border: 1px solid var(--ui-color-accent-main-warning);
-	background: var(--ui-color-accent-soft-orange-3);
+	border: 1px solid var(--ui-color-designer-bp-rules-orange-stroke);
+	background: var(--ui-color-designer-bp-rules-orange-bg);
+	border-radius: var(--ui-border-radius-lg);
 }
 
 .editor-chart-node-settings-rule-construction.--filter .editor-chart-node-settings-rule-construction__top {
-	border-color: var(--ui-color-accent-main-warning);
+	border-color: var(--ui-color-designer-bp-rules-orange-stroke);
 }
 
 .editor-chart-node-settings-rule-construction.--condition {
@@ -53,16 +52,21 @@
 	color: var(--ui-color-palette-white-base);
 }
 
+/* Solid type-colored chips: condition blue, action purple, output grey, filter orange */
 .editor-chart-node-settings-rule-construction.--condition .editor-chart-node-settings-rule-construction__operator_label {
-	background: var(--ui-color-blue-55);
+	background: var(--ui-color-designer-bp-rules-blue-text);
 }
 
 .editor-chart-node-settings-rule-construction.--action .editor-chart-node-settings-rule-construction__operator_label {
-	background: var(--ui-color-green-50);
+	background: var(--designer-bp-rules-action-text);
 }
 
 .editor-chart-node-settings-rule-construction.--output .editor-chart-node-settings-rule-construction__operator_label {
-	background: var(--ui-color-palette-gray-50);
+	background: var(--ui-color-designer-bp-rules-grey-text);
+}
+
+.editor-chart-node-settings-rule-construction.--filter .editor-chart-node-settings-rule-construction__operator_label {
+	background: var(--ui-color-designer-bp-rules-orange-text);
 }
 
 .editor-chart-node-settings-rule-construction__top {
@@ -75,6 +79,11 @@
 
 .editor-chart-node-settings-rule-construction__dnd-icon {
 	cursor: grab;
+}
+
+/* Head blocks (base-settings, filter) live outside the groups and are not reorderable */
+.editor-chart-node-settings-rule-construction.--filter .editor-chart-node-settings-rule-construction__dnd-icon {
+	display: none;
 }
 
 .editor-chart-node-settings-rule-construction__dnd-icon:active {
@@ -97,4 +106,43 @@
 
 .editor-chart-node-settings-rule-construction__expression-form {
 	margin-top: 18px;
+}
+
+/* base-settings construction: green-framed head card per mockup page-node-settings,
+   radius 12 and a roomier 24px inset (right stays 18px, next to the delete button) */
+.editor-chart-node-settings-rule-construction.--base-settings {
+	border: 1px solid var(--ui-color-designer-bp-rules-green-stroke);
+	background: var(--ui-color-designer-bp-rules-green-bg);
+	border-radius: var(--ui-border-radius-lg);
+	padding: var(--ui-space-inset-xl) var(--ui-space-inset-md2) var(--ui-space-inset-xl) var(--ui-space-inset-xl);
+}
+
+.editor-chart-node-settings-rule-construction.--base-settings .editor-chart-node-settings-rule-construction__top {
+	flex-wrap: nowrap;
+	gap: var(--ui-space-inline-sm);
+	border-bottom: 1px solid var(--ui-color-designer-bp-rules-green-stroke);
+	padding-bottom: var(--ui-space-inset-md2);
+}
+
+.editor-chart-node-settings-rule-construction.--base-settings .editor-chart-node-settings-rule-construction__dnd-icon {
+	display: none;
+}
+
+/* solid green chip with white regular text (mockup node 935:29632) */
+.editor-chart-node-settings-rule-construction.--base-settings .editor-chart-node-settings-rule-construction__operator_label {
+	background: var(--ui-color-designer-bp-rules-green-text);
+	font-weight: var(--ui-font-weight-normal);
+	text-transform: uppercase;
+	white-space: nowrap;
+	flex-shrink: 0;
+}
+
+/* hint next to the chip: «То, что нужно для корректной работы», base-3 per mockup */
+.editor-chart-node-settings-rule-construction.--base-settings .editor-chart-node-settings-rule-construction__description {
+	color: var(--ui-color-base-3);
+	flex: 1 1 auto;
+}
+
+.editor-chart-node-settings-rule-construction.--base-settings .editor-chart-node-settings-rule-construction__expression-form {
+	margin-top: var(--ui-space-inset-md2);
 }

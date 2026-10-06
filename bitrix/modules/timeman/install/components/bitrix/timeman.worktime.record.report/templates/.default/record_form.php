@@ -23,6 +23,8 @@ $APPLICATION->IncludeComponent(
 		'START_INPUT_ID' => 'startTimeClock',
 		'END_INPUT_NAME' => 'endTime',
 		'END_INPUT_ID' => 'endTimeClock',
+		'START_CLOCK_STEP' => 1,
+		'END_CLOCK_STEP' => 1,
 		'START_DATE_INPUT_SELECTOR_ROLE' => 'start-date',
 		'END_DATE_INPUT_SELECTOR_ROLE' => 'end-date',
 		'END_INIT_TIME' => $arResult['FIELD_CELLS']['END']['TIME_PICKER_INIT_TIME'],
@@ -34,7 +36,7 @@ $APPLICATION->IncludeComponent(
 		'END_DATE_DEFAULT_VALUE' => $arResult['FIELD_CELLS']['END']['TIME_PICKER_INIT_DATE'],
 		'EDIT_BREAK_LENGTH_ATTRIBUTE_NAME' => 'breakLength',
 		'EDIT_REASON_ATTRIBUTE_NAME' => $arResult['WORKTIME_EVENT_FORM_NAME'] . '[reason]',
-		'START_INIT_TIME' => $arResult['FIELD_CELLS']['START']['RECORDED_VALUE'],
+		'START_INIT_TIME' => $arResult['FIELD_CELLS']['START']['TIME_PICKER_INIT_TIME'],
 		'BREAK_LENGTH_VALUE' => $arResult['FIELD_CELLS']['BREAK']['RECORDED_VALUE'],
 	]
 );

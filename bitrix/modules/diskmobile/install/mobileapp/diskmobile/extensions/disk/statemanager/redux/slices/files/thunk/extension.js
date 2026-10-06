@@ -13,7 +13,7 @@ jn.define('disk/statemanager/redux/slices/files/thunk', (require, exports, modul
 	const condition = () => isOnline();
 
 	const runActionPromise = ({ action, options }) => new Promise((resolve) => {
-		(new RunActionExecutor(action, options)).setHandler(resolve).call(false);
+		(new RunActionExecutor(action, options)).setHandler(resolve).call(false).catch(console.error);
 	});
 
 	const rename = createAsyncThunk(

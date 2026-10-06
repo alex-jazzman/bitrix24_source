@@ -27,11 +27,6 @@
 	cursor: pointer;
 }
 
-.bx-im-copilot-header__container .bx-im-chat-header__icon.--add-people.--active {
-	background-image: url('./images/add-users-active.svg');
-	opacity: 1;
-}
-
 .bx-im-copilot-header__container .bx-im-chat-header__icon.--panel.--active {
 	background-image: url('./images/panel-active.svg');
 	opacity: 1;

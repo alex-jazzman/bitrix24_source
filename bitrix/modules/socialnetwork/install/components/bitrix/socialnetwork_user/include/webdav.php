@@ -1,4 +1,8 @@
-<?if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+<?php
+
+use Bitrix\Main\Web\Uri;
+
+if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 if (!CModule::IncludeModule("webdav")):
 	ShowError(GetMessage("SONET_WD_MODULE_IS_NOT_INSTALLED"));
 	return 0;
@@ -436,7 +440,7 @@ if(array_key_exists("GetExtLink", $_REQUEST) && intval($_REQUEST["GetExtLink"]) 
 	$o["PASSWORD"] = (array_key_exists("PASSWORD", $_REQUEST) ? $_REQUEST["PASSWORD"] : "");
 	$o["LIFETIME_NUMBER"] = (array_key_exists("LIFETIME_NUMBER", $_REQUEST) ? intval($_REQUEST["LIFETIME_NUMBER"]) : 0);
 	$o["LIFETIME_TYPE"] = (array_key_exists("LIFETIME_TYPE", $_REQUEST) ? $_REQUEST["LIFETIME_TYPE"] : "notlimited");
-	$o["URL"] = CHTTP::urnDecode($ob->_path);
+	$o["URL"] = Uri::urnDecode($ob->_path);
 	$o["BASE_URL"] = $arResult['BASE_URL'];
 	$o["DESCRIPTION"] = (array_key_exists("DESCRIPTION", $_REQUEST) ? $_REQUEST["DESCRIPTION"] : "");
 	$fileOptT = CWebDavExtLinks::GetFileOptions($ob);

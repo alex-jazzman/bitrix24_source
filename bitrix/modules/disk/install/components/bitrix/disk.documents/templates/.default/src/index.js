@@ -10,7 +10,6 @@ import {EventEmitter} from 'main.core.events';
 import Backend from './backend';
 import BoardsGuide from './boards-guide';
 import { Switcher as GridSwitcher } from './grid/switcher';
-import 'ui.tour';
 
 function showShared(objectId, node) {
 	new Sharing(objectId, node);

@@ -14,11 +14,14 @@ import { PermissionManager } from 'im.v2.lib.permission';
 import { PromoManager } from 'im.v2.lib.promo';
 import { CopilotChatService } from 'im.v2.provider.service.copilot';
 import { CopilotManager } from 'im.v2.lib.copilot';
+import { FolderManager } from 'im.v2.lib.folder';
 
 import { DescriptionBanner } from './components/collab/description-banner';
 import { CopilotRoleSelectionButton } from './components/copilot-role-selection-button';
 import { CreateChatHelp } from './components/create-chat-help';
 import { InvitePromo } from './components/invite-promo';
+
+import './css/create-chat-menu.css';
 
 const PromoByChatType = {
 	[ChatType.chat]: PromoId.createGroupChat,
@@ -54,6 +57,18 @@ export const CreateChatMenu = {
 	{
 		ChatType: () => ChatType,
 		MenuItemIcon: () => MenuItemIcon,
+		hasMenuAccess(): boolean
+		{
+			const actions = [
+				this.canCreateChat,
+				this.canCreateChannel,
+				this.canCreateConference,
+				this.isCollabAvailable,
+				this.isFolderAvailable,
+			];
+
+			return actions.includes(true);
+		},
 		menuConfig(): MenuOptions
 		{
 			return {
@@ -67,6 +82,10 @@ export const CreateChatMenu = {
 		isCollabV2Available(): boolean
 		{
 			return FeatureManager.isFeatureAvailable(Feature.isCollabV2Available);
+		},
+		isFolderAvailable(): boolean
+		{
+			return FeatureManager.isFeatureAvailable(Feature.isChatFoldersWebAvailable);
 		},
 		isBitrixGptV2Available(): boolean
 		{
@@ -85,27 +104,13 @@ export const CreateChatMenu = {
 		{
 			return TariffManager.collabV2.isAvailable();
 		},
-		collabAvailable(): boolean
+		isCollabAvailable(): boolean
 		{
-			const hasAccess = PermissionManager.getInstance().canPerformActionByUserType(
-				ActionByUserType.createCollab,
-			);
+			const hasAccess = PermissionManager.getInstance().canPerformActionByUserType(ActionByUserType.createCollab);
 			const creationAvailable = FeatureManager.isFeatureAvailable(Feature.collabCreationAvailable);
 			const featureAvailable = FeatureManager.isFeatureAvailable(Feature.collabAvailable);
 
 			return hasAccess && featureAvailable && creationAvailable;
-		},
-		canCreateChat(): boolean
-		{
-			return PermissionManager.getInstance().canPerformActionByUserType(
-				ActionByUserType.createChat,
-			);
-		},
-		canCreateCopilot(): boolean
-		{
-			return PermissionManager.getInstance().canPerformActionByUserType(
-				ActionByUserType.createCopilot,
-			);
 		},
 		isCopilotAvailable(): boolean
 		{
@@ -119,17 +124,21 @@ export const CreateChatMenu = {
 		{
 			return this.isCopilotAvailable && this.canCreateCopilot;
 		},
+		canCreateChat(): boolean
+		{
+			return PermissionManager.getInstance().canPerformActionByUserType(ActionByUserType.createChat);
+		},
+		canCreateCopilot(): boolean
+		{
+			return PermissionManager.getInstance().canPerformActionByUserType(ActionByUserType.createCopilot);
+		},
 		canCreateChannel(): boolean
 		{
-			return PermissionManager.getInstance().canPerformActionByUserType(
-				ActionByUserType.createChannel,
-			);
+			return PermissionManager.getInstance().canPerformActionByUserType(ActionByUserType.createChannel);
 		},
 		canCreateConference(): boolean
 		{
-			return PermissionManager.getInstance().canPerformActionByUserType(
-				ActionByUserType.createConference,
-			);
+			return PermissionManager.getInstance().canPerformActionByUserType(ActionByUserType.createConference);
 		},
 		iconStatusClasses(): { [key: string]: boolean }
 		{
@@ -168,6 +177,11 @@ export const CreateChatMenu = {
 			}
 
 			this.startChatCreation();
+			this.showMenu = false;
+		},
+		onFolderCreateClick()
+		{
+			FolderManager.startCreation();
 			this.showMenu = false;
 		},
 		onCollabV2CreateClick()
@@ -322,6 +336,7 @@ export const CreateChatMenu = {
 	},
 	template: `
 		<div
+			v-if="hasMenuAccess"
 			class="bx-im-list-container-recent__create-chat_icon"
 			:class="{'--active': showMenu}"
 			@click="handleShowPopup"
@@ -358,7 +373,7 @@ export const CreateChatMenu = {
 				:subtitle="loc('IM_RECENT_CREATE_CHANNEL_SUBTITLE_MSGVER_1')"
 				@click="onChatCreateClick(ChatType.channel)"
 			/>
-			<template v-if="collabAvailable">
+			<template v-if="isCollabAvailable">
 				<MenuItem
 					v-if="isCollabV2Available"
 					:disabled="!isCollabV2AvailableByTariff"
@@ -386,6 +401,13 @@ export const CreateChatMenu = {
 				:subtitle="loc('IM_RECENT_CREATE_CONFERENCE_SUBTITLE_MSGVER_1')"
 				:withBottomBorder="showInvitePromo"
 				@click="onChatCreateClick(ChatType.videoconf)"
+			/>
+			<MenuItem
+				v-if="isFolderAvailable"
+				:icon="MenuItemIcon.folder"
+				:title="loc('IM_RECENT_CREATE_FOLDER_TITLE')"
+				:subtitle="loc('IM_RECENT_CREATE_FOLDER_SUBTITLE')"
+				@click="onFolderCreateClick"
 			/>
 			<InvitePromo v-if="showInvitePromo" @close="showInvitePromo = false" />
 			<template #footer>

@@ -4,7 +4,6 @@ import { CallSettingsManager } from 'call.lib.settings-manager';
 import { AccidentManager } from './classes/accident-manager';
 import { AccidentStorage } from './classes/accident-storage';
 import { LogEntryProvider } from './classes/log-entry-provider';
-export { getUnknownErrorType } from './utils/get-unknown-error-type';
 
 const sendIntervalSecs = CallSettingsManager.accidentLogSendIntervalSecs || 0;
 const maxStorageAgeSecs = CallSettingsManager.accidentLogGroupMaxAgeSecs || 0;

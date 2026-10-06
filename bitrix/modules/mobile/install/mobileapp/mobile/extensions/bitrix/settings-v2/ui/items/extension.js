@@ -6,6 +6,7 @@ jn.define('settings-v2/ui/items', (require, exports, module) => {
 	const { ToggleItem } = require('settings-v2/ui/items/src/toggle');
 	const { LinkItem } = require('settings-v2/ui/items/src/link');
 	const { ButtonItem } = require('settings-v2/ui/items/src/button');
+	const { TextButtonItem } = require('settings-v2/ui/items/src/text-button');
 	const { LinkButtonItem } = require('settings-v2/ui/items/src/link-button');
 	const { ThemeSwitchItem } = require('settings-v2/ui/items/src/theme-switch');
 	const { DescriptionItem } = require('settings-v2/ui/items/src/description');
@@ -36,6 +37,8 @@ jn.define('settings-v2/ui/items', (require, exports, module) => {
 					return new ToggleItem(item);
 				case SettingItemType.BUTTON:
 					return new ButtonItem(item);
+				case SettingItemType.TEXT_BUTTON:
+					return new TextButtonItem(item);
 				case SettingItemType.LINK_BUTTON:
 					return new LinkButtonItem(item);
 				case SettingItemType.THEME:

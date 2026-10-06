@@ -8,6 +8,7 @@ return [
 	'css' => 'dist/basecard.bundle.css',
 	'js' => 'dist/basecard.bundle.js',
 	'rel' => [
+		'landing.loc',
 		'main.core',
 		'main.core.events',
 		'ui.fonts.opensans',

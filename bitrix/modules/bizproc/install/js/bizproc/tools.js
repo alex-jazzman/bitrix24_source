@@ -52,13 +52,69 @@ if (typeof BX.Bizproc.doInlineTask === 'undefined')
 	};
 	BX.Bizproc.taskPopupInstance = null;
 	BX.Bizproc.taskPopupCallback = null;
+	BX.Bizproc.taskPopupDialog = null;
+	BX.Bizproc.applyTaskFormA11y = function (root)
+	{
+		if (!root || !root.querySelectorAll)
+			return;
+
+		var firstControl = null;
+		var rows = root.querySelectorAll('.bizproc-task-table tr');
+		for (var i = 0; i < rows.length; i++)
+		{
+			var nameCell = rows[i].querySelector('.bizproc-field-name');
+			var valueCell = rows[i].querySelector('.bizproc-field-value');
+			if (!nameCell || !valueCell)
+				continue;
+
+			var label = nameCell.textContent.replace(/\*/g, '').replace(/:\s*$/, '').trim();
+			if (!label)
+				continue;
+
+			var controls = valueCell.querySelectorAll('input:not([type="hidden"]), select, textarea');
+			for (var k = 0; k < controls.length; k++)
+			{
+				if (!firstControl)
+					firstControl = controls[k];
+				if (
+					!controls[k].getAttribute('aria-label')
+					&& !controls[k].getAttribute('aria-labelledby')
+					&& !(controls[k].labels && controls[k].labels.length)
+				)
+				{
+					controls[k].setAttribute('aria-label', label);
+				}
+			}
+		}
+
+		if (firstControl && !root.querySelector('.bizproc-task-table [data-autofocus]'))
+		{
+			firstControl.setAttribute('data-autofocus', '');
+		}
+
+		var facesLabel = BX.message['BPATL_A11Y_PROCESS_FACES_LABEL'] || '';
+		if (facesLabel)
+		{
+			var steps = root.querySelectorAll('.bp-short-process-step');
+			for (var j = 0; j < steps.length; j++)
+			{
+				if (!steps[j].getAttribute('aria-label'))
+					steps[j].setAttribute('aria-label', facesLabel);
+			}
+		}
+	};
 	BX.Bizproc.showTaskPopup = function (taskId, callback, userId, scope, useIframe)
 	{
+		var a11y = (BX.Bizproc.A11y || null);
 		if (scope)
 		{
 			if (scope.__waiting)
 				return false;
 			scope.__waiting = true;
+			if (a11y)
+			{
+				a11y.setBusy(scope, true);
+			}
 			if (BX.hasClass(scope, 'bp-button'))
 			{
 				BX.addClass(scope, 'bp-button-wait');
@@ -81,6 +137,10 @@ if (typeof BX.Bizproc.doInlineTask === 'undefined')
 				if (scope)
 				{
 					scope.__waiting = false;
+					if (a11y)
+					{
+						a11y.setBusy(scope, false);
+					}
 					BX.removeClass(scope, ['bp-button-wait', 'ui-btn-wait']);
 				}
 				var wrapper = BX.create('div', {
@@ -109,8 +169,24 @@ if (typeof BX.Bizproc.doInlineTask === 'undefined')
 					draggable: {restrict: false},
 					overlay: {backgroundColor: 'black', opacity: 30},
 					events: {
+						onPopupShow: function (popup)
+						{
+							if (a11y && !BX.Bizproc.taskPopupDialog)
+							{
+								BX.Bizproc.applyTaskFormA11y(popup.getPopupContainer());
+								BX.Bizproc.taskPopupDialog = a11y.setupDialog(popup.getPopupContainer(), {
+									label: title,
+									restoreTo: scope || undefined
+								});
+							}
+						},
 						onPopupClose: function (popup)
 						{
+							if (BX.Bizproc.taskPopupDialog)
+							{
+								BX.Bizproc.taskPopupDialog.destroy();
+								BX.Bizproc.taskPopupDialog = null;
+							}
 							popup.destroy();
 							if (BX.Bizproc.delegationPopup)
 								BX.Bizproc.delegationPopup.destroy();
@@ -498,6 +574,8 @@ if (typeof BX.Bizproc.WorkflowFaces === 'undefined')
 	{
 		if (typeof scope.__popup === 'undefined')
 		{
+			scope.setAttribute('aria-haspopup', 'true');
+			scope.setAttribute('aria-expanded', 'false');
 			scope.__popup = new BX.PopupWindow('bp-wf-faces-'+Math.round(Math.random() * 100000), scope, {
 				lightShadow : true,
 				offsetLeft: -51,
@@ -507,7 +585,11 @@ if (typeof BX.Bizproc.WorkflowFaces === 'undefined')
 				closeByEsc: true,
 				bindOptions: {position: "bottom"},
 				angle: {position:'top', offset: 78},
-				content : BX.Bizproc.WorkflowFaces.createMenu(tasks, simple, taskBased)
+				content : BX.Bizproc.WorkflowFaces.createMenu(tasks, simple, taskBased),
+				events: {
+					onPopupShow: function(){ scope.setAttribute('aria-expanded', 'true'); },
+					onPopupClose: function(){ scope.setAttribute('aria-expanded', 'false'); }
+				}
 			});
 		}
 		if (scope.__popup.isShown())

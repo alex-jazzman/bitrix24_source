@@ -39,6 +39,13 @@ jn.define('im/messenger/db/repository/validators/recent', (require, exports, mod
 			result.message = prepareMessage(fields);
 		}
 
+		if ('ownMessage' in fields)
+		{
+			result.ownMessage = Type.isPlainObject(fields.ownMessage)
+				? prepareMessage({ message: fields.ownMessage })
+				: null;
+		}
+
 		if (Type.isUndefined(fields.dateMessage) && Type.isPlainObject(fields.message))
 		{
 			result.dateMessage = fields.message.date;
@@ -153,6 +160,15 @@ jn.define('im/messenger/db/repository/validators/recent', (require, exports, mod
 		if (Type.isDate(fields.message.date) || Type.isString(fields.message.date))
 		{
 			message.date = fields.message.date;
+		}
+
+		if (Type.isNumber(fields.message.chatId))
+		{
+			message.chatId = fields.message.chatId;
+		}
+		else if (Type.isNumber(fields.message.chat_id))
+		{
+			message.chatId = fields.message.chat_id;
 		}
 
 		if (Type.isNumber(fields.message.author_id))

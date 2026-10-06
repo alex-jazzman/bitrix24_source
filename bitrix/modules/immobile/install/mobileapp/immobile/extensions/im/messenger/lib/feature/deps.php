@@ -5,6 +5,7 @@ return [
 		'feature',
 		'type',
 		'im:messenger/lib/params',
+		'im:messenger/const',
 		'native/feature',
 	],
 	'bundle' => [

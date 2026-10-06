@@ -1,3 +1,5 @@
 <?php
+$MESS["BIZPROCDESIGNER_COMMAND_VALIDATE_SINGLE_RULE_ACTION_AREA_OBJECT_MISMATCH"] = "The selected area or object is not available for this action.";
+$MESS["BIZPROCDESIGNER_COMMAND_VALIDATE_SINGLE_RULE_BLOCK_NOT_ALLOWED_ON_PORT"] = "Block \"#BLOCK#\" cannot be used in link rules.";
 $MESS["BIZPROCDESIGNER_COMMAND_VALIDATE_SINGLE_RULE_NO_ACTIVITY"] = "Action \"#NAME#\" was not found.";
 $MESS["BIZPROCDESIGNER_COMMAND_VALIDATE_SINGLE_RULE_NO_HANDLE_DOCUMENT"] = "Action \"#NAME#\" requires workflow element.";

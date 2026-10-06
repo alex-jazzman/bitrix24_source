@@ -8,9 +8,7 @@ jn.define('more-menu/navigator', (require, exports, module) => {
 		SUBSCRIPTION_EVENTS,
 		NAVIGATION_EVENTS,
 	} = require('navigator/more-tab/meta');
-	const {
-		handleItemClick,
-	} = require('more-menu/utils');
+	const { handleItemClick } = require('more-menu/utils');
 	const { Type } = require('type');
 	const { inAppUrl } = require('in-app-url');
 
@@ -49,27 +47,32 @@ jn.define('more-menu/navigator', (require, exports, module) => {
 			this.restrictions = restrictions;
 		}
 
+		static #subscriptions = [
+			{ event: NOTIFICATION_EVENTS.TASKS, push: SUBSCRIPTION_EVENTS.TASKS, handler: 'onTaskNotification' },
+			{ event: NOTIFICATION_EVENTS.CRM, push: SUBSCRIPTION_EVENTS.CRM, handler: 'onCrmNotification' },
+			{ event: NOTIFICATION_EVENTS.INVITE, push: SUBSCRIPTION_EVENTS.INVITE, handler: 'onInviteNotification' },
+			{ event: NOTIFICATION_EVENTS.CALENDAR, push: SUBSCRIPTION_EVENTS.CALENDAR, handler: 'onCalenderNotification' },
+			{ event: NAVIGATION_EVENTS.SCROLL_TO_MENU_ITEM, handler: 'onScrollToMenuItem' },
+		];
+
 		subscribeToEvents()
 		{
 			this.unsubscribeFromEvents();
 
-			this.subscribeToTaskNotification();
-			this.subscribeToCrmNotification();
-			this.subscribeToInviteNotification();
-			this.subscribeToScrollToMenuItem();
+			MenuNavigator.#subscriptions.forEach(({ event, push, handler }) => {
+				BX.addCustomEvent(event, this[handler].bind(this));
+				if (push)
+				{
+					this.onSubscribeToPushNotification(push);
+				}
+			});
 		}
 
 		unsubscribeFromEvents()
 		{
-			BX.removeCustomEvent(NOTIFICATION_EVENTS.TASKS, this.onTaskNotification.bind(this));
-			BX.removeCustomEvent(NOTIFICATION_EVENTS.CRM, this.onCrmNotification.bind(this));
-			BX.removeCustomEvent(NOTIFICATION_EVENTS.INVITE, this.onInviteNotification.bind(this));
-			BX.removeCustomEvent(NAVIGATION_EVENTS.SCROLL_TO_MENU_ITEM, this.onScrollToMenuItem.bind(this));
-		}
-
-		subscribeToScrollToMenuItem()
-		{
-			BX.addCustomEvent(NAVIGATION_EVENTS.SCROLL_TO_MENU_ITEM, this.onScrollToMenuItem.bind(this));
+			MenuNavigator.#subscriptions.forEach(({ event, handler }) => {
+				BX.removeCustomEvent(event, this[handler].bind(this));
+			});
 		}
 
 		async onScrollToMenuItem(params = {})
@@ -153,50 +156,116 @@ jn.define('more-menu/navigator', (require, exports, module) => {
 				});
 		}
 
-		subscribeToTaskNotification(MoreTabMenu)
-		{
-			BX.addCustomEvent(NOTIFICATION_EVENTS.TASKS, this.onTaskNotification.bind(this, MoreTabMenu));
-			this.onSubscribeToPushNotification(SUBSCRIPTION_EVENTS.TASKS);
-		}
-
 		async onTaskNotification()
 		{
-			if (!this.isActiveTab())
-			{
-				await this.makeTabActive();
-			}
-			const taskItem = this.getItemById('tasks');
-			if (taskItem)
-			{
-				handleItemClick(taskItem);
-			}
-			else
-			{
-				console.error('Task item is not found in menu');
-			}
-		}
-
-		subscribeToCrmNotification()
-		{
-			BX.addCustomEvent(NOTIFICATION_EVENTS.CRM, this.onCrmNotification.bind(this));
-			this.onSubscribeToPushNotification(SUBSCRIPTION_EVENTS.CRM);
+			void this.#openItem('tasks');
 		}
 
 		async onCrmNotification()
 		{
-			if (!this.isActiveTab())
-			{
-				await this.makeTabActive();
-			}
+			void this.#openItem('crm');
+		}
 
-			const crmMenuItem = this.getItemById('crm');
-			if (crmMenuItem)
+		async onCalenderNotification()
+		{
+			void this.#openItem('calendar');
+		}
+
+		async onInviteNotification(openInviteOnMount = true)
+		{
+			await this.#ensureActiveTab();
+
+			// cold start: restrictions arrive later via update(), same reason as #waitForItemById
+			const restrictions = await this.#waitForRestrictions();
+			if (restrictions?.canInvite)
 			{
-				handleItemClick(crmMenuItem);
+				inAppUrl.open('/intranetmobile/users', {
+					canInvite: restrictions.canInvite,
+					canUseTelephony: restrictions.canUseTimeMan,
+					openInviteOnMount,
+				});
+			}
+		}
+
+		#waitForRestrictions(timeout = 5000, interval = 100)
+		{
+			return new Promise((resolve) => {
+				let elapsed = 0;
+
+				const check = () => {
+					if (this.restrictions)
+					{
+						resolve(this.restrictions);
+
+						return;
+					}
+
+					elapsed += interval;
+					if (elapsed >= timeout)
+					{
+						resolve(null);
+
+						return;
+					}
+
+					setTimeout(check, interval);
+				};
+
+				check();
+			});
+		}
+
+		async #openItem(itemKey)
+		{
+			await this.#ensureActiveTab();
+
+			// При холодном старте menuList заполняется позже (через update()), а push-обработчик
+			// уже сработал — без ожидания getItemById вернёт null и мы останемся на вкладке «Ещё».
+			const item = await this.#waitForItemById(itemKey);
+			if (item)
+			{
+				handleItemClick(item);
 			}
 			else
 			{
-				console.error('CRM menu item not found');
+				console.error(`${itemKey} menu item not found`);
+			}
+		}
+
+		#waitForItemById(itemKey, timeout = 5000, interval = 100)
+		{
+			return new Promise((resolve) => {
+				let elapsed = 0;
+
+				const check = () => {
+					const item = this.getItemById(itemKey);
+					if (item)
+					{
+						resolve(item);
+
+						return;
+					}
+
+					elapsed += interval;
+					if (elapsed >= timeout)
+					{
+						resolve(null);
+
+						return;
+					}
+
+					setTimeout(check, interval);
+				};
+
+				check();
+			});
+		}
+
+		async #ensureActiveTab()
+		{
+			if (!this.isActiveTab())
+			{
+				await this.makeTabActive();
 			}
 		}
 
@@ -212,30 +281,6 @@ jn.define('more-menu/navigator', (require, exports, module) => {
 			}
 
 			return null;
-		}
-
-		subscribeToInviteNotification()
-		{
-			BX.addCustomEvent(NOTIFICATION_EVENTS.INVITE, this.onInviteNotification.bind(this));
-
-			this.onSubscribeToPushNotification(SUBSCRIPTION_EVENTS.INVITE);
-		}
-
-		async onInviteNotification(openInviteOnMount = true)
-		{
-			if (!this.isActiveTab())
-			{
-				await this.makeTabActive();
-			}
-
-			if (this.restrictions?.canInvite)
-			{
-				inAppUrl.open('/intranetmobile/users', {
-					canInvite: this.restrictions?.canInvite,
-					canUseTelephony: this.restrictions?.canUseTimeMan,
-					openInviteOnMount,
-				});
-			}
 		}
 	}
 

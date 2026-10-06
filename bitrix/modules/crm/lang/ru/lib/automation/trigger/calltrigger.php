@@ -7,3 +7,4 @@ $MESS['CRM_AUTOMATION_TRIGGER_CALL_PROPERTY_LINE'] = 'Выберите лини�
 $MESS['CRM_AUTOMATION_TRIGGER_CALL_DEFAULT_LINE'] = '[любая]';
 
 $MESS['CRM_AUTOMATION_TRIGGER_CALL_NODE_DESCRIPTION'] = 'Запускает процесс после входящего звонка от клиента';
+$MESS['CRM_AUTOMATION_TRIGGER_CALL_EVENT_DATE_TIME'] = 'Дата и время звонка';

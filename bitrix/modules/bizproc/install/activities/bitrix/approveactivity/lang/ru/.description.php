@@ -1,4 +1,5 @@
-<?
+<?php
+
 $MESS ['BPAA_DESCR_DESCR'] = "Утверждение документа";
 $MESS ['BPAA_DESCR_NAME'] = "Утверждение документа";
 $MESS ['BPAA_DESCR_VC'] = "Сколько проголосовало";
@@ -17,4 +18,5 @@ $MESS ['BPAA_DESCR_APPROVERS_STRING'] = "Утвердили пользовате
 $MESS ['BPAA_DESCR_REJECTERS'] = "Отклонили пользователи";
 $MESS ['BPAA_DESCR_REJECTERS_STRING'] = "Отклонили пользователи (текст)";
 $MESS ['BPAA_DESCR_TASKS'] = 'Задания';
-?>
+$MESS ['BPAA_DESCR_PORT_YES'] = "Да";
+$MESS ['BPAA_DESCR_PORT_NO'] = "Нет";

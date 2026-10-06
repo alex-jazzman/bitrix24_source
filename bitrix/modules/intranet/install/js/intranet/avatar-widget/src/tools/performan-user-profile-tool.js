@@ -9,12 +9,7 @@ export class PerformanUserProfileTool extends BaseSecondaryTool
 
 	onClick(): void
 	{
-		const userId = this.options.userId;
-
-		BX.Runtime.loadExtension('performan.application.user-profile')
-			.then(() => {
-				(new BX.Performan.Application.UserProfile({ userId })).show();
-			});
+		window.open(this.options.path || '/performan/', '_blank');
 	}
 
 	getId(): string

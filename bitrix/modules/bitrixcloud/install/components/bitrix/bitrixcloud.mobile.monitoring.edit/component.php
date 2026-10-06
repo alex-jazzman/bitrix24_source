@@ -55,101 +55,97 @@ CJSCore::Init(['mobile_monitoring']);
 
 $monitoring = CBitrixCloudMonitoring::getInstance();
 
-if (isset($arResult['ACTION']))
+switch ($arResult['ACTION'])
 {
-	switch ($arResult['ACTION'])
-	{
-		case 'add':
-			$arResult['DOMAIN_PARAMS'] = [
-				'DOMAIN' => $arResult['DOMAIN'],
-				'IS_HTTPS' => 'N',
-				'LANG' => LANGUAGE_ID,
-				'EMAILS' => [
-					COption::GetOptionString('main', 'email_from', ''),
-				],
-				'TESTS' => [
-					'test_lic',
-					'test_domain_registration',
-					'test_http_response_time',
-				],
-			];
+	case 'add':
+		$arResult['DOMAIN_PARAMS'] = [
+			'DOMAIN' => $arResult['DOMAIN'],
+			'IS_HTTPS' => 'N',
+			'LANG' => LANGUAGE_ID,
+			'EMAILS' => [
+				COption::GetOptionString('main', 'email_from', ''),
+			],
+			'TESTS' => [
+				'test_lic',
+				'test_domain_registration',
+				'test_http_response_time',
+			],
+		];
 
-			break;
+		break;
 
-		case 'update':
-			try
+	case 'update':
+		try
+		{
+			$result = $monitoring->startMonitoring(
+				$arResult['DOMAIN'],
+				$_REQUEST['IS_HTTPS'] === 'Y',
+				$_REQUEST['LANG'],
+				$_REQUEST['EMAILS'],
+				$_REQUEST['TESTS']
+			);
+
+			if ($result !== '')
 			{
-				$result = $monitoring->startMonitoring(
-					$arResult['DOMAIN'],
-					$_REQUEST['IS_HTTPS'] === 'Y',
-					$_REQUEST['LANG'],
-					$_REQUEST['EMAILS'],
-					$_REQUEST['TESTS']
-				);
-
-				if ($result !== '')
-				{
-					ShowError($result);
-					return;
-				}
-
-				LocalRedirect($arParams['LIST_URL']);
-			}
-			catch (Exception $e)
-			{
-				ShowError($e->getMessage());
-				return;
-			}
-
-			break;
-
-		case 'delete':
-			$strError = $monitoring->stopMonitoring($arResult['DOMAIN']);
-
-			if ($strError !== '')
-			{
-				ShowError($strError);
+				ShowError($result);
 				return;
 			}
 
 			LocalRedirect($arParams['LIST_URL']);
-			break;
+		}
+		catch (Exception $e)
+		{
+			ShowError($e->getMessage());
+			return;
+		}
 
+		break;
 
-		case 'edit':
-		default:
-			try
+	case 'delete':
+		$strError = $monitoring->stopMonitoring($arResult['DOMAIN']);
+
+		if ($strError !== '')
+		{
+			ShowError($strError);
+			return;
+		}
+
+		LocalRedirect($arParams['LIST_URL']);
+		break;
+
+	case 'edit':
+	default:
+		try
+		{
+			$arList = $monitoring->getList();
+		}
+		catch (Exception $e)
+		{
+			ShowError($e->getMessage());
+			return;
+		}
+
+		if (is_string($arList))
+		{
+			ShowError($arList);
+			return;
+		}
+
+		foreach ($arList as $arRes)
+		{
+			if ($arRes['DOMAIN'] === $arResult['DOMAIN'])
 			{
-				$arList = $monitoring->getList();
+				$arResult['DOMAIN_PARAMS'] = $arRes;
+				break;
 			}
-			catch (Exception $e)
-			{
-				ShowError($e->getMessage());
-				return;
-			}
+		}
 
-			if (is_string($arList))
-			{
-				ShowError($arList);
-				return;
-			}
+		if (!isset($arResult['DOMAIN_PARAMS']) && isset($arParams['LIST_URL']) )
+		{
+			LocalRedirect($arParams['LIST_URL']);
+		}
 
-			foreach ($arList as $arRes)
-			{
-				if ($arRes['DOMAIN'] === $arResult['DOMAIN'])
-				{
-					$arResult['DOMAIN_PARAMS'] = $arRes;
-					break;
-				}
-			}
-
-			if (!isset($arResult['DOMAIN_PARAMS']) && isset($arParams['LIST_URL']) )
-			{
-				LocalRedirect($arParams['LIST_URL']);
-			}
-
-			break;
-	}
+		break;
 }
 
 $converter = CBXPunycode::GetConverter();

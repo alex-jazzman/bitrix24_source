@@ -1,9 +1,9 @@
 import { Base } from './base';
 import ConfigurableItem from '../configurable-item';
 import type { ActionParams } from './base';
-import { ajax, Loc } from 'main.core';
+import { ajax, Loc, Tag, Text } from 'main.core';
 import { UI } from 'ui.notification';
-import { MessageBox } from 'ui.dialogs.messagebox';
+import { confirm } from 'crm.timeline.dialog';
 import 'main.sidepanel';
 import 'crm_common';
 
@@ -153,44 +153,35 @@ export class Task extends Base
 
 		const entityTypeName = this.#getEntityTypeName(item);
 
-		const messageBox = new MessageBox(
-			{
-				message: Loc.getMessage('CRM_TIMELINE_ITEM_TASK_CONFIRM_DELETE'),
-				buttons: BX.UI.Dialogs.MessageBoxButtons.YES_NO,
-				onYes: () => {
-					ajax.runAction('tasks.V2.Task.delete', {
-							json: {
-								taskId: actionData.taskId,
-							},
-							analytics: {
-								tool: 'tasks',
-								category: 'task_operations',
-								event: 'task_delete',
-								type: 'task',
-								c_section: 'crm',
-								c_sub_section: entityTypeName,
-								c_element: 'context_menu',
-							},
+		// eslint-disable-next-line @bitrix24/bitrix24-rules/no-native-dialogs
+		confirm({
+			content: Tag.render`<div>${Text.encode(Loc.getMessage('CRM_TIMELINE_ITEM_TASK_CONFIRM_DELETE'))}</div>`,
+			preset: 'YES_NO',
+			destructive: true,
+			onConfirm: () => {
+				return ajax.runAction('tasks.V2.Task.delete', {
+						json: {
+							taskId: actionData.taskId,
 						},
-					)
-					.then(() => {
-						messageBox.close();
-					})
-					.catch((error) => {
-						UI.Notification.Center.notify({
-							content: error.errors[0].message ?? 'Error',
-							autoHideDelay: 3000,
-						});
-						messageBox.close();
-					})
-				},
-				onNo: () => {
-					messageBox.close();
-				}
-			}
-		);
-
-		messageBox.show();
+						analytics: {
+							tool: 'tasks',
+							category: 'task_operations',
+							event: 'task_delete',
+							type: 'task',
+							c_section: 'crm',
+							c_sub_section: entityTypeName,
+							c_element: 'context_menu',
+						},
+					},
+				)
+				.catch((error) => {
+					UI.Notification.Center.notify({
+						content: error.errors[0].message ?? 'Error',
+						autoHideDelay: 3000,
+					});
+				});
+			},
+		});
 	}
 
 	#getEntityTypeName(item: ConfigurableItem): ?string

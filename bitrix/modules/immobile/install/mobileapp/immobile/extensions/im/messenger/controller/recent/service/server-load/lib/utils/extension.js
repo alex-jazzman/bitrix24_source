@@ -2,10 +2,31 @@
  * @module im/messenger/controller/recent/service/server-load/lib/utils
  */
 jn.define('im/messenger/controller/recent/service/server-load/lib/utils', (require, exports, module) => {
+	/* global ChatMessengerCommon */
 	const { Type } = require('type');
 
 	class ServerLoadUtils
 	{
+		/**
+		 * @param {object} recentItem
+		 * @param {Array<object>} allMessages
+		 * @return {object|null}
+		 */
+		static resolveOwnMessage(recentItem, allMessages)
+		{
+			const ownMessageId = recentItem.ownMessageId;
+			if (Type.isNumber(ownMessageId) && ownMessageId > 0)
+			{
+				const ownMessage = allMessages.find((message) => message.id === ownMessageId);
+
+				return ownMessage
+					? { ...ownMessage, text: ChatMessengerCommon.purifyText(ownMessage.text, ownMessage.params) }
+					: null;
+			}
+
+			return null;
+		}
+
 		/**
 		 * @param {Array<MessagesAutoDeleteConfigs>} configs
 		 * @return {Object}

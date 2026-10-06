@@ -3,6 +3,8 @@ import { createNamespacedHelpers } from 'ui.vue3.vuex';
 import { Grid, Model } from 'booking.const';
 import { Duration } from 'booking.lib.duration';
 
+import { type DayColumnPopupParams } from '../day-column-popup/types';
+
 import { WeekGridCell } from './cell/cell';
 import './row.css';
 
@@ -20,6 +22,7 @@ export const Row = {
 			required: true,
 		},
 	},
+	emits: ['openDayColumnPopup'],
 	computed: {
 		...mapInterfaceGetters({
 			selectedFirstDayPeriodTs: 'selectedFirstDayPeriodTs',
@@ -52,15 +55,22 @@ export const Row = {
 			return weekData;
 		},
 	},
+	methods: {
+		openDayColumnPopup(params: DayColumnPopupParams): void
+		{
+			this.$emit('openDayColumnPopup', params);
+		},
+	},
 	template: `
 		<div
 			class="booking-booking__booking__week-grid_row"
 			:data-id="resourceId"
 		>
-			<template v-for="day of week" key="day.id">
+			<template v-for="day of week" :key="day.id">
 				<WeekGridCell
 					:resourceId
 					:dayStartTs="day.dayStartTs"
+					@openDayColumnPopup="openDayColumnPopup"
 				/>
 			</template>
 		</div>

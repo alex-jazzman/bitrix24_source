@@ -1,5 +1,7 @@
 export type PermissionLevel = 'view' | 'edit' | 'manage' | 'moderate';
 
+export type PermissionScope = 'document' | 'subtree';
+
 export type PopupKind = 'collection' | 'document';
 
 export type PopupMode = 'create' | 'edit';
@@ -9,6 +11,13 @@ export type Member = {
 	title: string,
 	entityId: string,
 	entityItemId: string,
+	// Document-scope grants only; collections leave it at the 'document' default.
+	scope: PermissionScope,
+	// Inherited rows (derived from an ancestor) are read-only: kept out of byLevel and never
+	// sent back on save; the selector renders them as non-removable tags. sourceDocumentId
+	// names the originating document.
+	inherited: boolean,
+	sourceDocumentId: number | null,
 };
 
 export type DecodedSubjectCode = {
@@ -19,11 +28,19 @@ export type DecodedSubjectCode = {
 export type PermissionPayloadItem = {
 	subjectCode: string,
 	level: string,
+	// Present on document API-02 responses; absent on collection payloads.
+	scope?: PermissionScope,
+	inherited?: boolean,
+	sourceDocumentId?: number | null,
+	name?: string,
 };
 
 export type CollectionPermissionsPayload = {
 	policyLevel?: string,
 	permissions?: PermissionPayloadItem[],
+	// Document API-02 only: server-confirmed availability of the subtree-scope
+	// feature. When absent/false the scope switcher stays hidden.
+	subtreeAvailable?: boolean,
 };
 
 export type LevelSection = {

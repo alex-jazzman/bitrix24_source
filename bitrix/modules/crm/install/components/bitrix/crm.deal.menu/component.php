@@ -294,13 +294,10 @@ if ($arParams['TYPE'] === 'details')
 	}
 	elseif ($bAdd)
 	{
-		$exposeUrl = CHTTP::urlAddParams(
-			CComponentEngine::MakePathFromTemplate(
+		$exposeUrl = (string)(new Uri(CComponentEngine::MakePathFromTemplate(
 				$arParams['PATH_TO_DEAL_DETAILS'],
 				array('deal_id' => $arParams['ELEMENT_ID'])
-			),
-			array('expose' => 1)
-		);
+			)))->addParams(array('expose' => 1));
 
 		$exposeData = array(
 			'entityId' => $arParams['ELEMENT_ID'],
@@ -1020,12 +1017,10 @@ if (($arParams['TYPE'] == 'edit' || $arParams['TYPE'] == 'show') && $bAdd
 	$arResult['BUTTONS'][] = array(
 		'TEXT' => GetMessage('DEAL_COPY'),
 		'TITLE' => GetMessage('DEAL_COPY_TITLE'),
-		'LINK' => CHTTP::urlAddParams(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_DEAL_EDIT'],
+		'LINK' => (string)(new Uri(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_DEAL_EDIT'],
 			array(
 				'deal_id' => $arParams['ELEMENT_ID']
-			)),
-			array('copy' => 1)
-		),
+			))))->addParams(array('copy' => 1)),
 		'ICON' => 'btn-copy'
 	);
 }
@@ -1045,12 +1040,10 @@ if (($arParams['TYPE'] == 'edit' || $arParams['TYPE'] == 'show') && $bDelete && 
 	$arResult['BUTTONS'][] = array(
 		'TEXT' => GetMessage('DEAL_DELETE'),
 		'TITLE' => GetMessage('DEAL_DELETE_TITLE'),
-		'LINK' => "javascript:deal_delete('".GetMessage('DEAL_DELETE_DLG_TITLE')."', '".GetMessage('DEAL_DELETE_DLG_MESSAGE')."', '".GetMessage('DEAL_DELETE_DLG_BTNTITLE')."', '".CHTTP::urlAddParams(CComponentEngine::MakePathFromTemplate($path,
+		'LINK' => "javascript:deal_delete('".GetMessage('DEAL_DELETE_DLG_TITLE')."', '".GetMessage('DEAL_DELETE_DLG_MESSAGE')."', '".GetMessage('DEAL_DELETE_DLG_BTNTITLE')."', '".(string)(new Uri(CComponentEngine::MakePathFromTemplate($path,
 			array(
 				'deal_id' => $arParams['ELEMENT_ID']
-			)),
-			array('delete' => '', 'sessid' => bitrix_sessid())
-		)."')",
+			))))->addParams(array('delete' => '', 'sessid' => bitrix_sessid()))."')",
 		'ICON' => 'btn-delete'
 	);
 }

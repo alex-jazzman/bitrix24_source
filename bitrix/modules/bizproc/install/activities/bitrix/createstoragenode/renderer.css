@@ -1,11 +1,7 @@
-#row_SelectedFields .node-settings-edit-caption {
-	display: none;
-}
-
 .bizproc-create-storage__outer-block {
 	border: 1px solid var(--ui-color-base-20, #e0e2e4);
 	border-radius: var(--ui-border-radius-lg, 12px);
-	background: var(--ui-color-background-primary, #fff);
+	background: transparent;
 	padding: 12px;
 	overflow: visible;
 }
@@ -14,6 +10,10 @@
 	display: flex;
 	flex-direction: column;
 	gap: 8px;
+}
+
+.bizproc-create-storage__field-row:first-child {
+	margin-top: 8px;
 }
 
 .bizproc-create-storage__field-row {
@@ -65,14 +65,15 @@
 }
 
 .bizproc-create-storage__icon-plus {
-	--ui-icon-set__icon-size: 20px;
+	--ui-icon-set__icon-size: 24px;
 	--ui-icon-set__icon-color: #828b95;
+	margin-right: 2px;
 }
 
 .node-settings-edit-box .node-settings-add-field-button {
 	border: 1px solid rgba(0, 0, 0, 0.08);
 	border-radius: 8px;
-	margin-top: 18px;
+	margin-top: 16px;
 	justify-content: center;
 	padding: 5px 0;
 	font-size: 14px;
@@ -81,4 +82,21 @@
 	display: flex;
 	align-items: center;
 	cursor: pointer;
+}
+
+#row_SelectedFields .node-settings-edit-caption {
+	display: none;
+}
+
+.bizproc-create-storage__fields-title {
+	color: var(--ui-color-base-1);
+	font-size: var(--ui-font-size-xl);
+	font-weight: var(--ui-font-weight-medium);
+	line-height: var(--ui-font-line-height-xl);
+}
+
+.bizproc-create-storage__fields-title.--required:after {
+	content: '*';
+	margin-left: 2px;
+	color: var(--ui-color-palette-red-60);
 }

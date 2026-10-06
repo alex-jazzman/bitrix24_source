@@ -8,9 +8,9 @@ return [
 	'css' => 'dist/install-store.bundle.css',
 	'js' => 'dist/install-store.bundle.js',
 	'rel' => [
-		'main.polyfill.core',
-		'ui.vue3.pinia',
+		'main.core',
 		'ui.vue3',
+		'ui.vue3.pinia',
 	],
-	'skip_core' => true,
+	'skip_core' => false,
 ];

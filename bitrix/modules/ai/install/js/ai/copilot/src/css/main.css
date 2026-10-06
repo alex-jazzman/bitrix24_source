@@ -34,7 +34,7 @@
 	overflow-y: auto;
 }
 
-.ai__copilot-result:not(:empty) {
+.ai__copilot-result.--has-content {
 	box-shadow: inset 0 -7px 9px -9px var(--ui-color-base-40);
 }
 
@@ -45,4 +45,109 @@
 .ai__copilot .ai__copilot_waning-field.--expanded {
 	border-color: var(--ai__copilot_color-pastel);
 	padding: 6px 10px;
+}
+
+/* === BitrixGPT redesign overrides — every rule scoped to .--bitrixgpt-redesign === */
+
+/* Brand-token aliases + central colour-variable override */
+.ai__copilot-scope.--bitrixgpt-redesign {
+	--Bitrix-GPT-filled: linear-gradient(264deg,
+		var(--ui-color-design-filled-bitrix-gpt-bg-gradient-5, #F96269) 1.67%,
+		var(--ui-color-design-filled-bitrix-gpt-bg-gradient-4, #F046B7) 21.82%,
+		var(--ui-color-design-filled-bitrix-gpt-bg-gradient-3, #9D48FF) 52.44%,
+		var(--ui-color-design-filled-bitrix-gpt-bg-gradient-2, #3F68FF) 76.41%,
+		var(--ui-color-design-filled-bitrix-gpt-bg-gradient-1, #0098EA) 97.21%
+	);
+	/* Bar stroke = the saturated BitrixGPT outline-content gradient: same colours as filled, but
+	 * semantically outline-content (themed tokens that adapt to dark theme). ~250deg matches the
+	 * gradient "BitrixGPT" wordmark. */
+	--Bitrix-GPT-outline: linear-gradient(250deg,
+		var(--ui-color-design-outline-bitrix-gpt-content-gradient-5, #F96269) 1.67%,
+		var(--ui-color-design-outline-bitrix-gpt-content-gradient-4, #F046B7) 21.82%,
+		var(--ui-color-design-outline-bitrix-gpt-content-gradient-3, #9D48FF) 52.44%,
+		var(--ui-color-design-outline-bitrix-gpt-content-gradient-2, #3F68FF) 76.41%,
+		var(--ui-color-design-outline-bitrix-gpt-content-gradient-1, #0098EA) 97.21%
+	);
+
+	/*
+	 * Remap the three central brand variables to BitrixGPT tokens.
+	 * These are solid values — safe for color:/border-color: consumers.
+	 * Concern: mapping tinted-bg-gradient-1 → pastel and stroke-gradient-1 → soft —
+	 * verify the exact token choice against Figma.
+	 */
+	--ai__copilot_color-pastel: var(--ui-color-design-tinted-bitrix-gpt-bg-gradient-1, #FEF5F4);
+	--ai__copilot_color-soft: var(--ui-color-design-outline-bitrix-gpt-stroke-gradient-1, #73C6F3);
+	--ai__copilot_color-main: var(--ui-color-accent-main-primary, #0075FF);
+
+	/* BitrixGPT avatar (vector, no raster). Declared once and reused via var in both consumer
+	 * rules (menu header + input icon) so chef inlines the asset a single time, not twice. */
+	--ai-copilot-avatar: url(../copilot-input-field/images/bitrixgpt-avatar.svg);
+}
+
+/* Keep gradient painting on the content element rather than the scroll container.
+ * Microsoft Edge otherwise changes the scroll geometry without repainting the clipped text. */
+.ai__copilot-scope.--bitrixgpt-redesign .ai__copilot-result-content {
+	color: var(--ui-color-accent-main-primary, #0075ff);
+}
+
+.ai__copilot-scope.--bitrixgpt-redesign .ai__copilot_loader-text {
+	color: var(--ui-color-accent-main-primary, #0075ff);
+}
+
+@supports ((background-clip: text) or (-webkit-background-clip: text)) {
+	.ai__copilot-scope.--bitrixgpt-redesign .ai__copilot-result-content,
+	.ai__copilot-scope.--bitrixgpt-redesign .ai__copilot_loader-text {
+		background: linear-gradient(90deg,
+			var(--ui-color-design-outline-bitrix-gpt-content-gradient-1, #0098ea) 0%,
+			var(--ui-color-design-outline-bitrix-gpt-content-gradient-2, #3f68ff) 25%,
+			var(--ui-color-design-outline-bitrix-gpt-content-gradient-3, #9d48ff) 50%,
+			var(--ui-color-design-outline-bitrix-gpt-content-gradient-4, #f046b7) 75%,
+			var(--ui-color-design-outline-bitrix-gpt-content-gradient-5, #f96269) 100%
+		);
+		-webkit-background-clip: text;
+		background-clip: text;
+		color: transparent;
+		-webkit-text-fill-color: transparent;
+	}
+}
+
+/* Control border: gradient stroke via the padding-box/border-box technique.
+ * NB: .ai__copilot IS the scope element (class="ai__copilot ai__copilot-scope --bitrixgpt-redesign",
+ * see copilot.js render()), so this is a compound selector on the same element, not a descendant.
+ * The base layer has no background on .ai__copilot, so the white padding-box fill is safe;
+ * overflow:hidden and border-radius come from the base rule (intentionally not overridden).
+ * Stroke colours come from the saturated --Bitrix-GPT-outline (outline-content tokens). */
+.ai__copilot.--bitrixgpt-redesign {
+	border: var(--ui-border-width-thin) solid transparent;
+	background:
+		linear-gradient(var(--ui-color-bg-content-primary, #fff), var(--ui-color-bg-content-primary, #fff)) padding-box,
+		var(--Bitrix-GPT-outline) border-box;
+	box-shadow:
+		var(--ui-box-shadow-popup-secondary-x, 0)
+		var(--ui-box-shadow-popup-secondary-y, 7px)
+		14px
+		var(--ui-box-shadow-popup-secondary-spread, 0)
+		var(--ui-box-shadow-popup-secondary-color, #0000001C);
+}
+
+/* Error state under redesign: the gradient border above would otherwise win over the base
+ * .ai__copilot.--error red border (equal specificity, later in source). Restore the solid red
+ * border and drop the gradient background. Base --error rule (red) stays untouched. */
+.ai__copilot.--bitrixgpt-redesign.--error {
+	border: var(--ui-border-width-thin) solid var(--ui-color-palette-red-40);
+	background: none;
+}
+
+/* dot-flashing animation: @keyframes can't be scoped, but it references the brand variables
+   overridden on the scope root above, so it picks up the new values automatically. */
+
+/* Override the hardcoded colour on the base dot-flashing rule */
+.ai__copilot-scope.--bitrixgpt-redesign .dot-flashing,
+.ai__copilot-scope.--bitrixgpt-redesign .dot-flashing::before,
+.ai__copilot-scope.--bitrixgpt-redesign .dot-flashing::after {
+	--ai__copilot_color-pastel: var(--ui-color-design-outline-bitrix-gpt-content-gradient-3, #9d48ff);
+	--ai__copilot_color-soft: var(--ui-color-design-outline-bitrix-gpt-content-gradient-4, #f046b7);
+	--ai__copilot_color-main: var(--ui-color-design-outline-bitrix-gpt-content-gradient-5, #f96269);
+	background-color: var(--ui-color-design-outline-bitrix-gpt-content-gradient-5, #f96269);
+	color: var(--ui-color-design-outline-bitrix-gpt-content-gradient-5, #f96269);
 }

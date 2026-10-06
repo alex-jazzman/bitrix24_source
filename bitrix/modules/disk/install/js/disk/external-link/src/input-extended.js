@@ -105,6 +105,11 @@ export default class InputExtended extends Input
 
 	showSettings()
 	{
+		if (!this.canEditSettings())
+		{
+			return;
+		}
+
 		this.cache.set('settingsAreShown', 'Y');
 		if (this.cache.get('popup'))
 		{
@@ -351,7 +356,7 @@ export default class InputExtended extends Input
 
 	saveSettings()
 	{
-		if (!(this.data.id > 0))
+		if (!(this.data.id > 0) || !this.canEditSettings())
 		{
 			return;
 		}

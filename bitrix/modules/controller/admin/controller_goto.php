@@ -62,6 +62,7 @@ if ($bAsAdmin)
 		"LOGIN"=>"' . EscapePHPString($USER->GetParam('LOGIN')) . '",
 		"NAME"=>"' . EscapePHPString($USER->GetParam('FIRST_NAME')) . '",
 		"LAST_NAME"=>"' . EscapePHPString($USER->GetParam('LAST_NAME')) . '",
+		"SECOND_NAME"=>"' . EscapePHPString($USER->GetParam('SECOND_NAME')) . '",
 		"EMAIL"=>"' . EscapePHPString($USER->GetParam('EMAIL')) . '",
 	)';
 	$query = '
@@ -92,7 +93,7 @@ else
 		}
 	}
 
-	if (count($arGroups) > 0)
+	if ($arGroups)
 	{
 		$strGroups = '"GROUP_ID" => Array("' . implode('", "', $arGroups) . '"),';
 	}
@@ -106,6 +107,7 @@ else
 		"LOGIN"=>"' . EscapePHPString($USER->GetParam('LOGIN')) . '",
 		"NAME"=>"' . EscapePHPString($USER->GetParam('FIRST_NAME')) . '",
 		"LAST_NAME"=>"' . EscapePHPString($USER->GetParam('LAST_NAME')) . '",
+		"SECOND_NAME"=>"' . EscapePHPString($USER->GetParam('SECOND_NAME')) . '",
 		"EMAIL"=>"' . EscapePHPString($USER->GetParam('EMAIL')) . '",
 	)';
 	$query = '

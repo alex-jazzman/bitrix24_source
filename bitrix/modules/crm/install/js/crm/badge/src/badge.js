@@ -1,6 +1,7 @@
 import { Dom, Event, Runtime, Type } from 'main.core';
 
 import 'ui.design-tokens';
+import 'ui.system.label';
 import './badge.css';
 
 type BadgeParams = {

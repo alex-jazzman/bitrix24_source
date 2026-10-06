@@ -10,6 +10,7 @@ return [
 	'js' => 'dist/index.bundle.js',
 	'rel' => [
 		'crm.copilot.call-assessment-selector',
+		'crm.copilot.call-assessment-v2',
 		'crm.router',
 		'im.v2.lib.desktop-api',
 		'im.v2.lib.phone',

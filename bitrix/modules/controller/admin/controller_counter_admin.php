@@ -151,6 +151,7 @@ $arHeaders = [
 ];
 
 $lAdmin->AddHeaders($arHeaders);
+$phpPrefix = preg_replace('/[^!]+$/', '', preg_replace('/^[^!]+/', '', highlight_string('!<?php !', 1)));
 
 while ($arRes = $rsData->Fetch())
 {
@@ -168,7 +169,7 @@ while ($arRes = $rsData->Fetch())
 	}
 	else
 	{
-		$row->AddViewField('COMMAND', str_replace('<span style="color: #0000BB">&lt;?php&nbsp;</span>', '', highlight_string('<?php ' . $arRes['COMMAND'], 1)));
+		$row->AddViewField('COMMAND', str_replace($phpPrefix, '', highlight_string('!<?php !' . $arRes['COMMAND'], 1), mb_strlen($phpPrefix)));
 	}
 
 	$arActions = [];

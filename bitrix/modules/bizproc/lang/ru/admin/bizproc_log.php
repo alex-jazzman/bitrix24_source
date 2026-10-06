@@ -18,6 +18,7 @@ $MESS ['BPABL_TYPE_3_1'] = "Отменено действие '#ACTIVITY#'#NOTE#
 $MESS ['BPABL_TYPE_4_1'] = "Ошибка действия '#ACTIVITY#'#NOTE#";
 $MESS ['BPABL_TYPE_5_1'] = "Действие '#ACTIVITY#'#NOTE#";
 $MESS ['BPABL_TYPE_6_1'] = "Что-то сделали с действием '#ACTIVITY#'#NOTE#";
+$MESS ['BPABL_TYPE_14_1'] = "Пропущено действие '#ACTIVITY#'#NOTE#";
 $MESS ['BPABL_STATUS_1'] = "Инициализировано";
 $MESS ['BPABL_STATUS_2'] = "Выполняется";
 $MESS ['BPABL_STATUS_3'] = "Отменяется";

@@ -65,3 +65,8 @@
 .landing-ui-form-menu-add-button:focus {
 	outline: none;
 }
+
+.landing-ui-form-menu-add-button:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary, #0075ff);
+	outline-offset: 2px;
+}

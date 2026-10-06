@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Note = this.BX.Note || {};
-(function (exports, ui_viewer, color_picker, main_core, ui_vue3, note_ui_themeContext, translit, ui_iconSet_api_vue, ui_entitySelector, ui_uploader_tileWidget, ui_uploader_core, ui_uploader_vue, ui_notification, ui_vue3_bitrixvue, note_ui_mentionChip, main_core_events, note_sidebar, pull_client, note_ui_actionMenu, note_permissions, note_ui_loader, ui_buttons, ui_iconSet_outline, note_ui_documentList, note_analytics) {
+(function (exports, ui_viewer, color_picker, main_core, ui_vue3, note_ui_themeContext, note_ui_documentHistory, note_ui_loader, translit, ui_iconSet_api_vue, ui_entitySelector, ui_uploader_tileWidget, ui_uploader_core, ui_uploader_vue, ui_notification, ui_vue3_bitrixvue, note_ui_mentionChip, main_core_events, note_sidebar, pull_client, note_ui_actionMenu, note_permissions, ui_buttons, ui_iconSet_outline, note_ui_avatarStack, note_ui_documentList, note_ui_hotkeys, note_analytics) {
 	'use strict';
 
 	function syncPopoverPositions({
@@ -201,7 +201,11 @@ this.BX.Note = this.BX.Note || {};
 			}
 			if (!childA.sameMarkup(childB)) return pos;
 			if (childA.isText && childA.text != childB.text) {
-				for (let j = 0; childA.text[j] == childB.text[j]; j++) pos++;
+				let tA = childA.text,
+					tB = childB.text,
+					j = 0;
+				for (; tA[j] == tB[j]; j++) pos++;
+				if (j && j < tA.length && j < tB.length && surrogateHigh(tA.charCodeAt(j - 1)) && surrogateLow(tA.charCodeAt(j))) pos--;
 				return pos;
 			}
 			if (childA.content.size || childB.content.size) {
@@ -230,12 +234,19 @@ this.BX.Note = this.BX.Note || {};
 				b: posB
 			};
 			if (childA.isText && childA.text != childB.text) {
-				let same = 0,
-					minSize = Math.min(childA.text.length, childB.text.length);
-				while (same < minSize && childA.text[childA.text.length - same - 1] == childB.text[childB.text.length - same - 1]) {
-					same++;
+				let tA = childA.text,
+					tB = childB.text,
+					iA = tA.length,
+					iB = tB.length;
+				while (iA > 0 && iB > 0 && tA[iA - 1] == tB[iB - 1]) {
+					iA--;
+					iB--;
 					posA--;
 					posB--;
+				}
+				if (iA && iB && iA < tA.length && surrogateHigh(tA.charCodeAt(iA - 1)) && surrogateLow(tA.charCodeAt(iA))) {
+					posA++;
+					posB++;
 				}
 				return {
 					a: posA,
@@ -249,6 +260,12 @@ this.BX.Note = this.BX.Note || {};
 			posA -= size;
 			posB -= size;
 		}
+	}
+	function surrogateLow(ch) {
+		return ch >= 0xDC00 && ch < 0xE000;
+	}
+	function surrogateHigh(ch) {
+		return ch >= 0xD800 && ch < 0xDC00;
 	}
 
 	/**
@@ -495,7 +512,7 @@ this.BX.Note = this.BX.Note || {};
 		static fromJSON(schema, value) {
 			if (!value) return Fragment.empty;
 			if (!Array.isArray(value)) throw new RangeError("Invalid input for Fragment.fromJSON");
-			return new Fragment(value.map(schema.nodeFromJSON));
+			return Fragment.fromArray(value.map(schema.nodeFromJSON));
 		}
 		/**
 		Build a fragment from an array of nodes. Ensures that adjacent
@@ -692,17 +709,6 @@ this.BX.Note = this.BX.Note || {};
 	given an invalid replacement.
 	*/
 	class ReplaceError extends Error {}
-	/*
-	ReplaceError = function(this: any, message: string) {
-		let err = Error.call(this, message)
-		;(err as any).__proto__ = ReplaceError.prototype
-		return err
-	} as any
-
-	ReplaceError.prototype = Object.create(Error.prototype)
-	ReplaceError.prototype.constructor = ReplaceError
-	ReplaceError.prototype.name = "ReplaceError"
-	*/
 	/**
 	A slice represents a piece cut out of a larger document. It
 	stores not only a fragment, but also the depth up to which nodes on
@@ -748,7 +754,7 @@ this.BX.Note = this.BX.Note || {};
 		@internal
 		*/
 		insertAt(pos, fragment) {
-			let content = insertInto(this.content, pos + this.openStart, fragment);
+			let content = insertInto(this.content, pos + this.openStart, fragment, this.openStart + 1, this.openEnd + 1);
 			return content && new Slice(content, this.openStart, this.openEnd);
 		}
 		/**
@@ -824,17 +830,17 @@ this.BX.Note = this.BX.Note || {};
 		if (index != indexTo) throw new RangeError("Removing non-flat range");
 		return content.replaceChild(index, child.copy(removeRange(child.content, from - offset - 1, to - offset - 1)));
 	}
-	function insertInto(content, dist, insert, parent) {
+	function insertInto(content, dist, insert, openStart, openEnd, parent) {
 		let {
 				index,
 				offset
 			} = content.findIndex(dist),
 			child = content.maybeChild(index);
 		if (offset == dist || child.isText) {
-			if (parent && !parent.canReplace(index, index, insert)) return null;
+			if (parent && openStart <= 0 && openEnd <= 0 && !parent.canReplace(index, index, insert)) return null;
 			return content.cut(0, dist).append(insert).append(content.cut(dist));
 		}
-		let inner = insertInto(child.content, dist - offset - 1, insert, child);
+		let inner = insertInto(child.content, dist - offset - 1, insert, index == 0 ? openStart - 1 : 0, index == content.childCount - 1 ? openEnd - 1 : 0, child);
 		return inner && content.replaceChild(index, child.copy(inner));
 	}
 	function replace($from, $to, slice) {
@@ -892,7 +898,7 @@ this.BX.Note = this.BX.Note || {};
 		if ($end && $end.depth == depth && $end.textOffset) addNode($end.nodeBefore, target);
 	}
 	function close(node, content) {
-		node.type.checkContent(content);
+		if (!node.type.validContent(content)) throw new ReplaceError("Invalid content for node " + node.type.name);
 		return node.copy(content);
 	}
 	function replaceThreeWay($from, $start, $end, $to, depth) {
@@ -1375,10 +1381,11 @@ this.BX.Note = this.BX.Note || {};
 			this.content.forEach(f);
 		}
 		/**
-		Invoke a callback for all descendant nodes recursively between
+		Invoke a callback for all descendant nodes recursively overlapping
 		the given two positions that are relative to start of this
-		node's content. The callback is invoked with the node, its
-		position relative to the original node (method receiver),
+		node's content. This includes all ancestors of the nodes
+		containing the two positions. The callback is invoked with the
+		node, its position relative to the original node (method receiver),
 		its parent node, and its child index. When the callback returns
 		false for a given node, that node's children will not be
 		recursed over. The last parameter can be used to specify a
@@ -2248,10 +2255,9 @@ this.BX.Note = this.BX.Note || {};
 		return built;
 	}
 	function checkAttrs(attrs, values, type, name) {
-		for (let name in values) if (!(name in attrs)) throw new RangeError(`Unsupported attribute ${name} for ${type} of type ${name}`);
-		for (let name in attrs) {
-			let attr = attrs[name];
-			if (attr.validate) attr.validate(values[name]);
+		for (let attr in values) if (!(attr in attrs)) throw new RangeError(`Unsupported attribute ${attr} for ${type} of type ${name}`);
+		for (let attr in attrs) {
+			if (attrs[attr].validate) attrs[attr].validate(values[attr]);
 		}
 	}
 	function initAttrs(typeName, attrs) {
@@ -2832,6 +2838,7 @@ this.BX.Note = this.BX.Note || {};
 		article: true,
 		aside: true,
 		blockquote: true,
+		body: true,
 		canvas: true,
 		dd: true,
 		div: true,
@@ -3393,6 +3400,7 @@ this.BX.Note = this.BX.Note || {};
 		@internal
 		*/
 		serializeNodeInner(node, options) {
+			if (node.isText) return doc$2(options).createTextNode(node.text);
 			let {
 				dom,
 				contentDOM
@@ -3429,6 +3437,10 @@ this.BX.Note = this.BX.Note || {};
 			return toDOM && renderSpec(doc$2(options), toDOM(mark, inline), null, mark.attrs);
 		}
 		static renderSpec(doc, structure, xmlNS = null, blockArraysIn) {
+			// Kludge for backwards-compatibility with accidental original behavious
+			if (typeof structure == "string") return {
+				dom: doc.createTextNode(structure)
+			};
 			return renderSpec(doc, structure, xmlNS, blockArraysIn);
 		}
 		/**
@@ -3491,13 +3503,10 @@ this.BX.Note = this.BX.Note || {};
 		return result;
 	}
 	function renderSpec(doc, structure, xmlNS, blockArraysIn) {
-		if (typeof structure == "string") return {
-			dom: doc.createTextNode(structure)
-		};
-		if (structure.nodeType != null) return {
+		if (structure.nodeType == 1) return {
 			dom: structure
 		};
-		if (structure.dom && structure.dom.nodeType != null) return structure;
+		if (structure.dom && structure.dom.nodeType == 1) return structure;
 		let tagName = structure[0],
 			suspicious;
 		if (typeof tagName != "string") throw new RangeError("Invalid array passed to renderSpec");
@@ -3526,6 +3535,8 @@ this.BX.Note = this.BX.Note || {};
 					dom,
 					contentDOM: dom
 				};
+			} else if (typeof child == "string") {
+				dom.appendChild(doc.createTextNode(child));
 			} else {
 				let {
 					dom: inner,
@@ -4277,8 +4288,8 @@ this.BX.Note = this.BX.Note || {};
 			return new ReplaceStep(this.from, this.from + this.slice.size, doc.slice(this.from, this.to));
 		}
 		map(mapping) {
-			let from = mapping.mapResult(this.from, 1),
-				to = mapping.mapResult(this.to, -1);
+			let to = mapping.mapResult(this.to, -1);
+			let from = this.from == this.to && ReplaceStep.MAP_BIAS < 0 ? to : mapping.mapResult(this.from, 1);
 			if (from.deletedAcross && to.deletedAcross) return null;
 			return new ReplaceStep(from.pos, Math.max(from.pos, to.pos), this.slice, this.structure);
 		}
@@ -4312,6 +4323,15 @@ this.BX.Note = this.BX.Note || {};
 			return new ReplaceStep(json.from, json.to, Slice.fromJSON(schema, json.slice), !!json.structure);
 		}
 	}
+	/**
+	By default, for backwards compatibility, an inserting step
+	mapped over an insertion at that same position fill move after
+	the inserted content. In a collaborative editing situation, that
+	can make redone insertions appear in unexpected places. You can
+	set this to -1 to make such mapping keep the step before the
+	insertion instead.
+	*/
+	ReplaceStep.MAP_BIAS = 1;
 	Step.jsonID("replace", ReplaceStep);
 	/**
 	Replace a part of the document with a slice of content, but
@@ -5290,6 +5310,20 @@ this.BX.Note = this.BX.Note || {};
 	function deleteRange$1(tr, from, to) {
 		let $from = tr.doc.resolve(from),
 			$to = tr.doc.resolve(to);
+		// When the deleted range spans from the start of one textblock to
+		// the start of another one, move out of the start of both blocks.
+		if ($from.parent.isTextblock && $to.parent.isTextblock && $from.start() != $to.start() && $from.parentOffset == 0 && $to.parentOffset == 0) {
+			let shared = $from.sharedDepth(to),
+				isolated = false;
+			for (let d = $from.depth; d > shared; d--) if ($from.node(d).type.spec.isolating) isolated = true;
+			for (let d = $to.depth; d > shared; d--) if ($to.node(d).type.spec.isolating) isolated = true;
+			if (!isolated) {
+				for (let d = $from.depth; d > 0 && from == $from.start(d); d--) from = $from.before(d);
+				for (let d = $to.depth; d > 0 && to == $to.start(d); d--) to = $to.before(d);
+				$from = tr.doc.resolve(from);
+				$to = tr.doc.resolve(to);
+			}
+		}
 		let covered = coveredDepths($from, $to);
 		for (let i = 0; i < covered.length; i++) {
 			let depth = covered[i],
@@ -7132,16 +7166,21 @@ this.BX.Note = this.BX.Note || {};
 	*/
 	function splitBlockAs(splitNode) {
 		return (state, dispatch) => {
-			let {
-				$from,
-				$to
-			} = state.selection;
 			if (state.selection instanceof NodeSelection && state.selection.node.isBlock) {
+				let {
+					$from
+				} = state.selection;
 				if (!$from.parentOffset || !canSplit(state.doc, $from.pos)) return false;
 				if (dispatch) dispatch(state.tr.split($from.pos).scrollIntoView());
 				return true;
 			}
-			if (!$from.depth) return false;
+			if (!state.selection.$from.depth) return false;
+			let tr = state.tr;
+			if (!state.selection.empty && (state.selection instanceof TextSelection || state.selection instanceof AllSelection)) tr.deleteSelection();
+			let {
+					$from
+				} = tr.selection,
+				mapFrom = tr.steps.length;
 			let types = [];
 			let splitDepth,
 				deflt,
@@ -7163,9 +7202,7 @@ this.BX.Note = this.BX.Note || {};
 					types.unshift(null);
 				}
 			}
-			let tr = state.tr;
-			if (state.selection instanceof TextSelection || state.selection instanceof AllSelection) tr.deleteSelection();
-			let splitPos = tr.mapping.map($from.pos);
+			let splitPos = $from.pos;
 			let can = canSplit(tr.doc, splitPos, types.length, types);
 			if (!can) {
 				types[0] = deflt ? {
@@ -7176,9 +7213,10 @@ this.BX.Note = this.BX.Note || {};
 			if (!can) return false;
 			tr.split(splitPos, types.length, types);
 			if (!atEnd && atStart && $from.node(splitDepth).type != deflt) {
-				let first = tr.mapping.map($from.before(splitDepth)),
+				let mapping = tr.mapping.slice(mapFrom);
+				let first = mapping.map($from.before(splitDepth)),
 					$first = tr.doc.resolve(first);
-				if (deflt && $from.node(splitDepth - 1).canReplaceWith($first.index(), $first.index() + 1, deflt)) tr.setNodeMarkup(tr.mapping.map($from.before(splitDepth)), deflt);
+				if (deflt && $from.node(splitDepth - 1).canReplaceWith($first.index(), $first.index() + 1, deflt)) tr.setNodeMarkup(mapping.map($from.before(splitDepth)), deflt);
 			}
 			if (dispatch) dispatch(tr.scrollIntoView());
 			return true;
@@ -7733,6 +7771,8 @@ this.BX.Note = this.BX.Note || {};
 		};
 	}
 	function scrollRectIntoView(view, rect, startDOM) {
+		// Skip empty rects with all sides at 0, for example, when the element has no CSS box (display: none)
+		if (!nonZero(rect) && rect.left == 0) return;
 		let scrollThreshold = view.someProp("scrollThreshold") || 0,
 			scrollMargin = view.someProp("scrollMargin") || 5;
 		let doc = view.dom.ownerDocument;
@@ -8295,7 +8335,7 @@ this.BX.Note = this.BX.Note || {};
 		// When parsing in-editor content (in domchange.js), we allow
 		// descriptions to determine the parse rules that should be used to
 		// parse them.
-		parseRule() {
+		parseRule(addedNodes) {
 			return null;
 		}
 		// Used by the editor's event handler to ignore events that come
@@ -8819,7 +8859,7 @@ this.BX.Note = this.BX.Note || {};
 	// correspond to an actual node in the document. Unlike mark descs,
 	// they populate their child array themselves.
 	class NodeViewDesc extends ViewDesc {
-		constructor(parent, node, outerDeco, innerDeco, dom, contentDOM, nodeDOM, view, pos) {
+		constructor(parent, node, outerDeco, innerDeco, dom, contentDOM, nodeDOM) {
 			super(parent, [], dom, contentDOM);
 			this.node = node;
 			this.outerDeco = outerDeco;
@@ -8862,9 +8902,9 @@ this.BX.Note = this.BX.Note || {};
 			}
 			let nodeDOM = dom;
 			dom = applyOuterDeco(dom, outerDeco, node);
-			if (spec) return descObj = new CustomNodeViewDesc(parent, node, outerDeco, innerDeco, dom, contentDOM || null, nodeDOM, spec, view, pos + 1);else if (node.isText) return new TextViewDesc(parent, node, outerDeco, innerDeco, dom, nodeDOM, view);else return new NodeViewDesc(parent, node, outerDeco, innerDeco, dom, contentDOM || null, nodeDOM, view, pos + 1);
+			if (spec) return descObj = new CustomNodeViewDesc(parent, node, outerDeco, innerDeco, dom, contentDOM || null, nodeDOM, spec);else if (node.isText) return new TextViewDesc(parent, node, outerDeco, innerDeco, dom, nodeDOM);else return new NodeViewDesc(parent, node, outerDeco, innerDeco, dom, contentDOM || null, nodeDOM);
 		}
-		parseRule() {
+		parseRule(addedNodes) {
 			// Experimental kludge to allow opt-in re-parsing of nodes
 			if (this.node.type.spec.reparseInView) return null;
 			// FIXME the assumption that this can always return the current
@@ -8891,7 +8931,10 @@ this.BX.Note = this.BX.Note || {};
 						break;
 					}
 				}
-				if (!rule.contentElement) rule.getContent = () => Fragment.empty;
+				if (!rule.contentElement) {
+					let found = addedNodes && addedNodes.find(n => n.nodeType == 1 && addedNodes.indexOf(n.parentNode) < 0 && this.dom.contains(n));
+					if (found) rule.contentElement = found;else rule.getContent = () => Fragment.empty;
+				}
 			}
 			return rule;
 		}
@@ -9039,13 +9082,13 @@ this.BX.Note = this.BX.Note || {};
 	// and used by the view class.
 	function docViewDesc(doc, outerDeco, innerDeco, dom, view) {
 		applyOuterDeco(dom, outerDeco, doc);
-		let docView = new NodeViewDesc(undefined, doc, outerDeco, innerDeco, dom, dom, dom, view, 0);
+		let docView = new NodeViewDesc(undefined, doc, outerDeco, innerDeco, dom, dom, dom);
 		if (docView.contentDOM) docView.updateChildren(view, 0);
 		return docView;
 	}
 	class TextViewDesc extends NodeViewDesc {
-		constructor(parent, node, outerDeco, innerDeco, dom, nodeDOM, view) {
-			super(parent, node, outerDeco, innerDeco, dom, null, nodeDOM, view, 0);
+		constructor(parent, node, outerDeco, innerDeco, dom, nodeDOM) {
+			super(parent, node, outerDeco, innerDeco, dom, null, nodeDOM);
 		}
 		parseRule() {
 			let skip = this.nodeDOM.parentNode;
@@ -9083,10 +9126,10 @@ this.BX.Note = this.BX.Note || {};
 		ignoreMutation(mutation) {
 			return mutation.type != "characterData" && mutation.type != "selection";
 		}
-		slice(from, to, view) {
+		slice(from, to, _view) {
 			let node = this.node.cut(from, to),
 				dom = document.createTextNode(node.text);
-			return new TextViewDesc(this.parent, node, this.outerDeco, this.innerDeco, dom, dom, view);
+			return new TextViewDesc(this.parent, node, this.outerDeco, this.innerDeco, dom, dom);
 		}
 		markDirty(from, to) {
 			super.markDirty(from, to);
@@ -9121,8 +9164,8 @@ this.BX.Note = this.BX.Note || {};
 	// extra checks only have to be made for nodes that are actually
 	// customized.
 	class CustomNodeViewDesc extends NodeViewDesc {
-		constructor(parent, node, outerDeco, innerDeco, dom, contentDOM, nodeDOM, spec, view, pos) {
-			super(parent, node, outerDeco, innerDeco, dom, contentDOM, nodeDOM, view, pos);
+		constructor(parent, node, outerDeco, innerDeco, dom, contentDOM, nodeDOM, spec) {
+			super(parent, node, outerDeco, innerDeco, dom, contentDOM, nodeDOM);
 			this.spec = spec;
 		}
 		// A custom `update` method gets to decide whether the update goes
@@ -9322,6 +9365,17 @@ this.BX.Note = this.BX.Note || {};
 					if (next.matchesMark(marks[depth]) && !this.isLocked(next.dom)) {
 						found = i;
 						break;
+					}
+				}
+				// When nothing matches, try to update the mark view at this position
+				// in place, so a custom mark view can adapt to a changed mark without
+				// re-creating its DOM.
+				if (found < 0 && this.index < this.top.children.length) {
+					let cur = this.top.children[this.index];
+					if (cur instanceof MarkViewDesc && cur.dirty != NODE_DIRTY && cur.mark.type == marks[depth].type && cur.spec.update && !this.isLocked(cur.dom) && cur.spec.update(marks[depth])) {
+						cur.mark = marks[depth];
+						found = this.index;
+						this.changed = true;
 					}
 				}
 				if (found > -1) {
@@ -9704,14 +9758,13 @@ this.BX.Note = this.BX.Note || {};
 		let sel = view.state.selection;
 		syncNodeSelection(view, sel);
 		if (!editorOwnsSelection(view)) return;
-		// The delayed drag selection causes issues with Cell Selections
-		// in Safari. And the drag selection delay is to workarond issues
-		// which only present in Chrome.
-		if (!force && view.input.mouseDown && view.input.mouseDown.allowDefault && chrome) {
+		// Need to delay selection normalization during a native selection
+		// drag on Chrome, or it will cause further dragging to glitch.
+		let mouseDown = view.input.mouseDown;
+		if (!force && chrome && mouseDown) {
 			let domSel = view.domSelectionRange(),
 				curSel = view.domObserver.currentSelection;
-			if (domSel.anchorNode && curSel.anchorNode && isEquivalentPosition(domSel.anchorNode, domSel.anchorOffset, curSel.anchorNode, curSel.anchorOffset)) {
-				view.input.mouseDown.delayedSelectionSync = true;
+			if (domSel.anchorNode && curSel.anchorNode && isEquivalentPosition(domSel.anchorNode, domSel.anchorOffset, curSel.anchorNode, curSel.anchorOffset) && mouseDown.delaySelUpdate()) {
 				view.domObserver.setCurSelection();
 				return;
 			}
@@ -10396,9 +10449,8 @@ this.BX.Note = this.BX.Note || {};
 		td: ["table", "tbody", "tr"],
 		th: ["table", "tbody", "tr"]
 	};
-	let _detachedDoc = null;
 	function detachedDoc() {
-		return _detachedDoc || (_detachedDoc = document.implementation.createHTMLDocument("title"));
+		return document.implementation.createHTMLDocument("title");
 	}
 	let _policy = null;
 	function maybeWrapTrusted(html) {
@@ -10415,12 +10467,24 @@ this.BX.Note = this.BX.Note || {};
 	function readHTML(html) {
 		let metas = /^(\s*<meta [^>]*>)*/.exec(html);
 		if (metas) html = html.slice(metas[0].length);
-		let elt = detachedDoc().createElement("div");
+		let doc = detachedDoc(),
+			elt = doc.body;
 		let firstTag = /<([a-z][^>\s]+)/i.exec(html),
 			wrap;
 		if (wrap = firstTag && wrapMap[firstTag[1].toLowerCase()]) html = wrap.map(n => "<" + n + ">").join("") + html + wrap.map(n => "</" + n + ">").reverse().join("");
 		elt.innerHTML = maybeWrapTrusted(html);
 		if (wrap) for (let i = 0; i < wrap.length; i++) elt = elt.querySelector(wrap[i]) || elt;
+		// Inline styles defined in the pasted content, so that parse rules pick them up
+		for (let i = 0; i < doc.styleSheets.length; i++) {
+			let style = doc.styleSheets[i];
+			for (let j = 0; j < style.rules.length; j++) {
+				let rule = style.rules[j];
+				if (rule instanceof CSSStyleRule) {
+					let matches = elt.querySelectorAll(rule.selectorText);
+					for (let k = 0; k < matches.length; k++) matches[k].style.cssText += rule.style.cssText;
+				}
+			}
+		}
 		return elt;
 	}
 	// Webkit browsers do some hard-to-predict replacement of regular
@@ -10521,6 +10585,7 @@ this.BX.Note = this.BX.Note || {};
 		view.input.lastSelectionTime = Date.now();
 	}
 	function destroyInput(view) {
+		if (view.input.mouseDown) view.input.mouseDown.done();
 		view.domObserver.stop();
 		for (let type in view.input.eventHandlers) view.dom.removeEventListener(type, view.input.eventHandlers[type]);
 		clearTimeout(view.input.composingTimeout);
@@ -10549,7 +10614,7 @@ this.BX.Note = this.BX.Note || {};
 	editHandlers.keydown = (view, _event) => {
 		let event = _event;
 		view.input.shiftKey = event.keyCode == 16 || event.shiftKey;
-		if (inOrNearComposition(view, event)) return;
+		if (inOrNearComposition(view)) return;
 		view.input.lastKeyCode = event.keyCode;
 		view.input.lastKeyCodeTime = Date.now();
 		// Suppress enter key events on Chrome Android, because those tend
@@ -10581,7 +10646,7 @@ this.BX.Note = this.BX.Note || {};
 	};
 	editHandlers.keypress = (view, _event) => {
 		let event = _event;
-		if (inOrNearComposition(view, event) || !event.charCode || event.ctrlKey && !event.altKey || mac$2 && event.metaKey) return;
+		if (inOrNearComposition(view) || !event.charCode || event.ctrlKey && !event.altKey || mac$2 && event.metaKey) return;
 		if (view.someProp("handleKeyPress", f => f(view, event))) {
 			event.preventDefault();
 			return;
@@ -10662,21 +10727,23 @@ this.BX.Note = this.BX.Note || {};
 	}
 	function defaultTripleClick(view, inside, event) {
 		if (event.button != 0) return false;
+		let selection = selectionForTripleClick(view, inside, true),
+			doc = view.state.doc;
+		if (!selection) return false;
+		updateSelection(view, selection);
+		if (selection instanceof TextSelection && doc.eq(view.state.doc)) view.input.mouseDown = new TripleClickDrag(view, selection);
+		return true;
+	}
+	function selectionForTripleClick(view, inside, selectNodes) {
 		let doc = view.state.doc;
-		if (inside == -1) {
-			if (doc.inlineContent) {
-				updateSelection(view, TextSelection.create(doc, 0, doc.content.size));
-				return true;
-			}
-			return false;
-		}
+		if (inside == -1) return doc.inlineContent ? TextSelection.create(doc, 0, doc.content.size) : null;
 		let $pos = doc.resolve(inside);
 		for (let i = $pos.depth + 1; i > 0; i--) {
 			let node = i > $pos.depth ? $pos.nodeAfter : $pos.node(i);
 			let nodePos = $pos.before(i);
-			if (node.inlineContent) updateSelection(view, TextSelection.create(doc, nodePos + 1, nodePos + 1 + node.content.size));else if (NodeSelection.isSelectable(node)) updateSelection(view, NodeSelection.create(doc, nodePos));else continue;
-			return true;
+			if (node.inlineContent) return TextSelection.create(doc, nodePos + 1, nodePos + 1 + node.content.size);else if (selectNodes && NodeSelection.isSelectable(node)) return NodeSelection.create(doc, nodePos);
 		}
+		return null;
 	}
 	function forceDOMFlush(view) {
 		return endComposition(view);
@@ -10698,11 +10765,11 @@ this.BX.Note = this.BX.Note || {};
 			type,
 			button: event.button
 		};
+		if (view.input.mouseDown) view.input.mouseDown.done();
 		let pos = view.posAtCoords(eventCoords(event));
 		if (!pos) return;
 		if (type == "singleClick") {
-			if (view.input.mouseDown) view.input.mouseDown.done();
-			view.input.mouseDown = new MouseDown(view, pos, event, !!flushed);
+			view.input.mouseDown = new LeftMouseDown(view, pos, event, !!flushed);
 		} else if ((type == "doubleClick" ? handleDoubleClick : handleTripleClick$1)(view, pos.pos, pos.inside, event)) {
 			event.preventDefault();
 		} else {
@@ -10710,13 +10777,34 @@ this.BX.Note = this.BX.Note || {};
 		}
 	};
 	class MouseDown {
-		constructor(view, pos, event, flushed) {
+		constructor(view) {
 			this.view = view;
+			this.mightDrag = null;
+			view.root.addEventListener("mouseup", this.up = this.up.bind(this));
+			view.root.addEventListener("mousemove", this.move = this.move.bind(this));
+		}
+		up(event) {
+			this.done();
+		}
+		move(event) {
+			if (event.buttons == 0) this.done();
+		}
+		done() {
+			this.view.root.removeEventListener("mouseup", this.up);
+			this.view.root.removeEventListener("mousemove", this.move);
+			if (this.view.input.mouseDown == this) this.view.input.mouseDown = null;
+		}
+		delaySelUpdate() {
+			return false;
+		}
+	}
+	class LeftMouseDown extends MouseDown {
+		constructor(view, pos, event, flushed) {
+			super(view);
 			this.pos = pos;
 			this.event = event;
 			this.flushed = flushed;
 			this.delayedSelectionSync = false;
-			this.mightDrag = null;
 			this.startDoc = view.state.doc;
 			this.selectNode = !!event[selectNodeModifier];
 			this.allowDefault = event.shiftKey;
@@ -10735,7 +10823,7 @@ this.BX.Note = this.BX.Note || {};
 			let {
 				selection
 			} = view.state;
-			if (event.button == 0 && targetNode.type.spec.draggable && targetNode.type.spec.selectable !== false || selection instanceof NodeSelection && selection.from <= targetPos && selection.to > targetPos) this.mightDrag = {
+			if (event.button == 0 && (targetNode.type.spec.draggable && targetNode.type.spec.selectable !== false || selection instanceof NodeSelection && selection.from <= targetPos && selection.to > targetPos)) this.mightDrag = {
 				node: targetNode,
 				pos: targetPos,
 				addAttr: !!(this.target && !this.target.draggable),
@@ -10749,21 +10837,19 @@ this.BX.Note = this.BX.Note || {};
 				}, 20);
 				this.view.domObserver.start();
 			}
-			view.root.addEventListener("mouseup", this.up = this.up.bind(this));
-			view.root.addEventListener("mousemove", this.move = this.move.bind(this));
 			setSelectionOrigin(view, "pointer");
 		}
 		done() {
-			this.view.root.removeEventListener("mouseup", this.up);
-			this.view.root.removeEventListener("mousemove", this.move);
+			super.done();
 			if (this.mightDrag && this.target) {
 				this.view.domObserver.stop();
 				if (this.mightDrag.addAttr) this.target.removeAttribute("draggable");
 				if (this.mightDrag.setUneditable) this.target.removeAttribute("contentEditable");
 				this.view.domObserver.start();
 			}
-			if (this.delayedSelectionSync) setTimeout(() => selectionToDOM(this.view));
-			this.view.input.mouseDown = null;
+			if (this.delayedSelectionSync) setTimeout(() => {
+				if (!this.view.isDestroyed) selectionToDOM(this.view);
+			});
 		}
 		up(event) {
 			this.done();
@@ -10795,10 +10881,39 @@ this.BX.Note = this.BX.Note || {};
 		move(event) {
 			this.updateAllowDefault(event);
 			setSelectionOrigin(this.view, "pointer");
-			if (event.buttons == 0) this.done();
+			super.move(event);
 		}
 		updateAllowDefault(event) {
 			if (!this.allowDefault && (Math.abs(this.event.x - event.clientX) > 4 || Math.abs(this.event.y - event.clientY) > 4)) this.allowDefault = true;
+		}
+		delaySelUpdate() {
+			if (!this.allowDefault) return false;
+			this.delayedSelectionSync = true;
+			return true;
+		}
+	}
+	class TripleClickDrag extends MouseDown {
+		constructor(view, startSelection) {
+			super(view);
+			this.startSelection = startSelection;
+			this.startDoc = view.state.doc;
+		}
+		move(event) {
+			if (event.buttons == 0 || this.view.isDestroyed || !this.view.state.doc.eq(this.startDoc)) {
+				this.done();
+				return;
+			}
+			event.preventDefault();
+			setSelectionOrigin(this.view, "pointer");
+			let pos = this.view.posAtCoords(eventCoords(event));
+			let target = pos && selectionForTripleClick(this.view, pos.inside, false);
+			if (!target) return;
+			let {
+					doc
+				} = this.view.state,
+				start = this.startSelection;
+			let [anchor, head] = target.from < start.from ? [start.to, target.from] : [start.from, target.to];
+			updateSelection(this.view, TextSelection.create(doc, anchor, head));
 		}
 	}
 	handlers.touchstart = view => {
@@ -10823,7 +10938,7 @@ this.BX.Note = this.BX.Note || {};
 		// This guards against the case where compositionend is triggered without the keyboard
 		// (e.g. character confirmation may be done with the mouse), and keydown is triggered
 		// afterwards- we wouldn't want to ignore the keydown event in this case.
-		if (safari && Math.abs(event.timeStamp - view.input.compositionEndedAt) < 500) {
+		if (safari && Math.abs(Date.now() - view.input.compositionEndedAt) < 500) {
 			view.input.compositionEndedAt = -2e8;
 			return true;
 		}
@@ -10881,7 +10996,7 @@ this.BX.Note = this.BX.Note || {};
 	editHandlers.compositionend = (view, event) => {
 		if (view.composing) {
 			view.input.composing = false;
-			view.input.compositionEndedAt = event.timeStamp;
+			view.input.compositionEndedAt = Date.now();
 			view.input.compositionPendingChanges = view.domObserver.pendingRecords().length ? view.input.compositionID : 0;
 			view.input.compositionNode = null;
 			if (view.input.badSafariComposition) view.domObserver.forceFlush();else if (view.input.compositionPendingChanges) Promise.resolve().then(() => view.domObserver.flush());
@@ -10896,7 +11011,7 @@ this.BX.Note = this.BX.Note || {};
 	function clearComposition(view) {
 		if (view.composing) {
 			view.input.composing = false;
-			view.input.compositionEndedAt = timestampFromCustomEvent();
+			view.input.compositionEndedAt = Date.now();
 		}
 		while (view.input.compositionNodes.length > 0) view.input.compositionNodes.pop().markParentsDirty();
 	}
@@ -10917,11 +11032,6 @@ this.BX.Note = this.BX.Note || {};
 			}
 		}
 		return textBefore || textAfter;
-	}
-	function timestampFromCustomEvent() {
-		let event = document.createEvent("Event");
-		event.initEvent("event", true, true);
-		return event.timeStamp;
 	}
 	/**
 	@internal
@@ -11011,7 +11121,7 @@ this.BX.Note = this.BX.Note || {};
 		view.dispatch(tr.scrollIntoView().setMeta("paste", true).setMeta("uiEvent", "paste"));
 		return true;
 	}
-	function getText$1(clipboardData) {
+	function getText$2(clipboardData) {
 		let text = clipboardData.getData("text/plain") || clipboardData.getData("Text");
 		if (text) return text;
 		let uris = clipboardData.getData("text/uri-list");
@@ -11026,7 +11136,7 @@ this.BX.Note = this.BX.Note || {};
 		if (view.composing && !android) return;
 		let data = brokenClipboardAPI ? null : event.clipboardData;
 		let plain = view.input.shiftKey && view.input.lastKeyCode != 45;
-		if (data && doPaste(view, getText$1(data), data.getData("text/html"), plain, event)) event.preventDefault();else capturePaste(view, event);
+		if (data && doPaste(view, getText$2(data), data.getData("text/html"), plain, event)) event.preventDefault();else capturePaste(view, event);
 	};
 	class Dragging {
 		constructor(slice, move, node) {
@@ -11037,8 +11147,11 @@ this.BX.Note = this.BX.Note || {};
 	}
 	const dragCopyModifier = mac$2 ? "altKey" : "ctrlKey";
 	function dragMoves(view, event) {
-		let moves = view.someProp("dragCopies", test => !test(event));
-		return moves != null ? moves : !event[dragCopyModifier];
+		let copy;
+		view.someProp("dragCopies", test => {
+			copy = copy || test(event);
+		});
+		return copy != null ? !copy : !event[dragCopyModifier];
 	}
 	handlers.dragstart = (view, _event) => {
 		let event = _event;
@@ -11063,7 +11176,7 @@ this.BX.Note = this.BX.Note || {};
 		// Pre-120 Chrome versions clear files when calling `clearData` (#1472)
 		if (!event.dataTransfer.files.length || !chrome || chrome_version > 120) event.dataTransfer.clearData();
 		event.dataTransfer.setData(brokenClipboardAPI ? "Text" : "text/html", dom.innerHTML);
-		// See https://github.com/ProseMirror/prosemirror/issues/1156
+		// See https://code.haverbeke.berlin/prosemirror/prosemirror/issues/1156
 		event.dataTransfer.effectAllowed = "copyMove";
 		if (!brokenClipboardAPI) event.dataTransfer.setData("text/plain", text);
 		view.dragging = new Dragging(slice, dragMoves(view, event), node);
@@ -11093,7 +11206,7 @@ this.BX.Note = this.BX.Note || {};
 				slice = f(slice, view, false);
 			});
 		} else {
-			slice = parseFromClipboard(view, getText$1(event.dataTransfer), brokenClipboardAPI ? null : event.dataTransfer.getData("text/html"), false, $mouse);
+			slice = parseFromClipboard(view, getText$2(event.dataTransfer), brokenClipboardAPI ? null : event.dataTransfer.getData("text/html"), false, $mouse);
 		}
 		let move = !!(dragging && dragMoves(view, event));
 		if (view.someProp("handleDrop", f => f(view, event, slice || Slice.empty, move))) {
@@ -11154,8 +11267,8 @@ this.BX.Note = this.BX.Note || {};
 		// We should probably do more with beforeinput events, but support
 		// is so spotty that I'm still waiting to see where they are going.
 		// Very specific hack to deal with backspace sometimes failing on
-		// Chrome Android when after an uneditable node.
-		if (chrome && android && event.inputType == "deleteContentBackward") {
+		// Chrome and Firefox Android when after an uneditable node.
+		if (android && event.inputType == "deleteContentBackward") {
 			view.domObserver.flushSoon();
 			let {
 				domChangeCount
@@ -11968,12 +12081,18 @@ this.BX.Note = this.BX.Note || {};
 					}
 				}
 			}
-			if (added.some(n => n.nodeName == "BR") && (view.input.lastKeyCode == 8 || view.input.lastKeyCode == 46)) {
+			if (added.some(n => n.nodeName == "BR") && (view.input.lastKeyCode == 8 || view.input.lastKeyCode == 46 || chrome && (view.composing || view.input.compositionEndedAt > Date.now() - 50) && mutations.some(m => m.type == "childList" && m.removedNodes.length))) {
 				// Browsers sometimes insert a bogus break node if you
 				// backspace out the last bit of text before an inline-flex node (#1552)
 				for (let node of added) if (node.nodeName == "BR" && node.parentNode) {
 					let after = node.nextSibling;
-					if (after && after.nodeType == 1 && after.contentEditable == "false") node.parentNode.removeChild(node);
+					while (after && after.nodeType == 1) {
+						if (after.contentEditable == "false") {
+							node.parentNode.removeChild(node);
+							break;
+						}
+						after = after.firstChild;
+					}
 				}
 			} else if (gecko && added.length) {
 				let brs = added.filter(n => n.nodeName == "BR");
@@ -12167,7 +12286,7 @@ this.BX.Note = this.BX.Note || {};
 	// that the DOM represents. If any changes came in in the meantime,
 	// the modification is mapped over those before it is applied, in
 	// readDOMChange.
-	function parseBetween(view, from_, to_) {
+	function parseBetween(view, from_, to_, addedNodes) {
 		let {
 			node: parent,
 			fromOffset,
@@ -12213,7 +12332,7 @@ this.BX.Note = this.BX.Note || {};
 				to: toOffset,
 				preserveWhitespace: $from.parent.type.whitespace == "pre" ? "full" : true,
 				findPositions: find,
-				ruleFromNode,
+				ruleFromNode: ruleFromNode(addedNodes),
 				context: $from
 			});
 		if (find && find[0].pos != null) {
@@ -12232,10 +12351,10 @@ this.BX.Note = this.BX.Note || {};
 			to
 		};
 	}
-	function ruleFromNode(dom) {
+	const ruleFromNode = added => dom => {
 		let desc = dom.pmViewDesc;
 		if (desc) {
-			return desc.parseRule();
+			return desc.parseRule(added);
 		} else if (dom.nodeName == "BR" && dom.parentNode) {
 			// Safari replaces the list item or table cell with a BR
 			// directly in the list node (?!) if you delete the last
@@ -12257,7 +12376,7 @@ this.BX.Note = this.BX.Note || {};
 			};
 		}
 		return null;
-	}
+	};
 	const isInline = /^(a|abbr|acronym|b|bd[io]|big|br|button|cite|code|data(list)?|del|dfn|em|i|img|ins|kbd|label|map|mark|meter|output|q|ruby|s|samp|small|span|strong|su[bp]|time|u|tt|var)$/i;
 	function readDOMChange(view, from, to, typeOver, addedNodes) {
 		let compositionID = view.input.compositionPendingChanges || (view.composing ? view.input.compositionID : 0);
@@ -12279,7 +12398,7 @@ this.BX.Note = this.BX.Note || {};
 		from = $before.before(shared + 1);
 		to = view.state.doc.resolve(to).after(shared + 1);
 		let sel = view.state.selection;
-		let parse = parseBetween(view, from, to);
+		let parse = parseBetween(view, from, to, addedNodes);
 		let doc = view.state.doc,
 			compare = doc.slice(parse.from, parse.to);
 		let preferredPos, preferredSide;
@@ -12493,26 +12612,26 @@ this.BX.Note = this.BX.Note || {};
 		return end;
 	}
 	function findDiff(a, b, pos, preferredPos, preferredSide) {
-		let start = a.findDiffStart(b, pos);
+		let start = a.findDiffStart(b, pos),
+			lenA = pos + a.size,
+			lenB = pos + b.size;
 		if (start == null) return null;
 		let {
 			a: endA,
 			b: endB
-		} = a.findDiffEnd(b, pos + a.size, pos + b.size);
+		} = a.findDiffEnd(b, lenA, lenB);
 		if (preferredSide == "end") {
 			let adjust = Math.max(0, start - Math.min(endA, endB));
 			preferredPos -= endA + adjust - start;
 		}
-		if (endA < start && a.size < b.size) {
+		if (endA < start && lenA < lenB) {
 			let move = preferredPos <= start && preferredPos >= endA ? start - preferredPos : 0;
 			start -= move;
-			if (start && start < b.size && isSurrogatePair(b.textBetween(start - 1, start + 1))) start += move ? 1 : -1;
 			endB = start + (endB - endA);
 			endA = start;
 		} else if (endB < start) {
 			let move = preferredPos <= start && preferredPos >= endB ? start - preferredPos : 0;
 			start -= move;
-			if (start && start < a.size && isSurrogatePair(a.textBetween(start - 1, start + 1))) start += move ? 1 : -1;
 			endA = start + (endA - endB);
 			endB = start;
 		}
@@ -12521,12 +12640,6 @@ this.BX.Note = this.BX.Note || {};
 			endA,
 			endB
 		};
-	}
-	function isSurrogatePair(str) {
-		if (str.length != 2) return false;
-		let a = str.charCodeAt(0),
-			b = str.charCodeAt(1);
-		return a >= 0xDC00 && a <= 0xDFFF && b >= 0xD800 && b <= 0xDBFF;
 	}
 	/**
 	An editor view manages the DOM structure that represents an
@@ -12572,7 +12685,7 @@ this.BX.Note = this.BX.Note || {};
 			this.pluginViews = [];
 			/**
 			Holds `true` when a hack node is needed in Firefox to prevent the
-			[space is eaten issue](https://github.com/ProseMirror/prosemirror/issues/651)
+			[space is eaten issue](https://code.haverbeke.berlin/prosemirror/prosemirror/issues/651)
 			@internal
 			*/
 			this.requiresGeckoHackNode = false;
@@ -12710,7 +12823,8 @@ this.BX.Note = this.BX.Note || {};
 				// a DOM selection change and the "selectionchange" event for it
 				// can cause a spurious DOM selection update, disrupting mouse
 				// drag selection.
-				if (forceSelUpdate || !(this.input.mouseDown && this.domObserver.currentSelection.eq(this.domSelectionRange()) && anchorInRightPlace(this))) {
+				let mouseDown = this.input.mouseDown;
+				if (forceSelUpdate || !(mouseDown && this.domObserver.currentSelection.eq(this.domSelectionRange()) && anchorInRightPlace(this) && mouseDown.delaySelUpdate())) {
 					selectionToDOM(this, forceSelUpdate);
 				} else {
 					syncNodeSelection(this, state.selection);
@@ -12766,11 +12880,11 @@ this.BX.Note = this.BX.Note || {};
 		updateDraggedNode(dragging, prev) {
 			let sel = dragging.node,
 				found = -1;
-			if (this.state.doc.nodeAt(sel.from) == sel.node) {
+			if (sel.from < this.state.doc.content.size && this.state.doc.nodeAt(sel.from) == sel.node) {
 				found = sel.from;
 			} else {
 				let movedPos = sel.from + (this.state.doc.content.size - prev.doc.content.size);
-				let moved = movedPos > 0 && this.state.doc.nodeAt(movedPos);
+				let moved = movedPos > 0 && movedPos < this.state.doc.content.size && this.state.doc.nodeAt(movedPos);
 				if (moved == sel.node) found = movedPos;
 			}
 			this.dragging = new Dragging(dragging.slice, dragging.move, found < 0 ? undefined : NodeSelection.create(this.state.doc, found));
@@ -15182,7 +15296,7 @@ this.BX.Note = this.BX.Note || {};
 	}
 
 	// src/helpers/getText.ts
-	function getText(node, options) {
+	function getText$1(node, options) {
 		const range = {
 			from: 0,
 			to: node.content.size
@@ -18597,7 +18711,7 @@ img.ProseMirror-separator {
 				blockSeparator = "\n\n",
 				textSerializers = {}
 			} = options || {};
-			return getText(this.state.doc, {
+			return getText$1(this.state.doc, {
 				blockSeparator,
 				textSerializers: {
 					...getTextSerializersFromSchema(this.schema),
@@ -20972,9 +21086,9 @@ ${indentedChild}`;
 					>
 						<div class="note-editor-popover-card">
 							<div class="note-editor-popover-row">
-								<button type="button" class="note-editor-popover-button" :title="$Bitrix.Loc.getMessage('NOTE_EDITOR_TOOLBAR_LIST_BULLETED')" :data-note-editor-active="editor?.isActive('bulletList')" :disabled="!editor?.isEditable" @click="toggleAndClose('toggleBulletList')"><ListBulletedIcon /></button>
-								<button type="button" class="note-editor-popover-button" :title="$Bitrix.Loc.getMessage('NOTE_EDITOR_TOOLBAR_LIST_ORDERED')" :data-note-editor-active="editor?.isActive('orderedList')" :disabled="!editor?.isEditable" @click="toggleAndClose('toggleOrderedList')"><ListOrderedIcon /></button>
-								<button type="button" class="note-editor-popover-button" :title="$Bitrix.Loc.getMessage('NOTE_EDITOR_TOOLBAR_LIST_TASK')" :data-note-editor-active="editor?.isActive('taskList')" :disabled="!editor?.isEditable" @click="toggleAndClose('toggleTaskList')"><ListTaskIcon /></button>
+								<button type="button" class="note-editor-popover-button" data-testid="note-editor-list-bulleted" :title="$Bitrix.Loc.getMessage('NOTE_EDITOR_TOOLBAR_LIST_BULLETED')" :data-note-editor-active="editor?.isActive('bulletList')" :disabled="!editor?.isEditable" @click="toggleAndClose('toggleBulletList')"><ListBulletedIcon /></button>
+								<button type="button" class="note-editor-popover-button" data-testid="note-editor-list-ordered" :title="$Bitrix.Loc.getMessage('NOTE_EDITOR_TOOLBAR_LIST_ORDERED')" :data-note-editor-active="editor?.isActive('orderedList')" :disabled="!editor?.isEditable" @click="toggleAndClose('toggleOrderedList')"><ListOrderedIcon /></button>
+								<button type="button" class="note-editor-popover-button" data-testid="note-editor-list-task" :title="$Bitrix.Loc.getMessage('NOTE_EDITOR_TOOLBAR_LIST_TASK')" :data-note-editor-active="editor?.isActive('taskList')" :disabled="!editor?.isEditable" @click="toggleAndClose('toggleTaskList')"><ListTaskIcon /></button>
 							</div>
 						</div>
 					</div>
@@ -21349,6 +21463,12 @@ ${indentedChild}`;
 				type: Boolean,
 				default: false
 			},
+			// Set when the link form was opened from the keyboard (Mod+K): the URL field takes focus so the
+			// next keystroke goes into it instead of the document. Opening by click leaves focus alone.
+			linkAutofocus: {
+				type: Boolean,
+				default: false
+			},
 			popoverOwnerId: {
 				type: String,
 				default: ''
@@ -21460,6 +21580,7 @@ ${indentedChild}`;
 								:editor-tick="editorTick"
 								:link-value="linkValue"
 								:link-is-active="linkIsActive"
+								:autofocus="linkAutofocus"
 								:show-apply="false"
 								@update:link-value="setLinkValue"
 								@apply="onApplyLink?.()"
@@ -21539,6 +21660,8 @@ ${indentedChild}`;
 			return {
 				openMenu: null,
 				moreSubMode: 'menu',
+				// True only while the link form was summoned by Mod+K (see setMoreSubMode).
+				linkAutofocus: false,
 				popoverSyncFrame: null,
 				toolbarId: `note-editor-toolbar-${++toolbarSequence}`
 			};
@@ -21596,6 +21719,7 @@ ${indentedChild}`;
 			openMenu(nextOpenMenu) {
 				if (nextOpenMenu !== 'more') {
 					this.moreSubMode = 'menu';
+					this.linkAutofocus = false;
 					// Auto-apply the link on close (no explicit "Apply" button); commit is a no-op if unchanged.
 					this.linkState.commit();
 					this.linkState.close();
@@ -21619,6 +21743,19 @@ ${indentedChild}`;
 				this.$nextTick(() => {
 					this.syncOpenPopoverPosition();
 				});
+			},
+			// The keymap extension can't open host-owned menus, so it emits `note:hotkey` on the editor;
+			// bind here (the toolbar owns openMenu/moreSubMode) and rebind if the editor instance swaps.
+			editor: {
+				immediate: true,
+				handler(nextEditor, prevEditor) {
+					if (prevEditor && main_core.Type.isFunction(prevEditor.off)) {
+						prevEditor.off('note:hotkey', this.handleHotkeyIntent);
+					}
+					if (nextEditor && main_core.Type.isFunction(nextEditor.on)) {
+						nextEditor.on('note:hotkey', this.handleHotkeyIntent);
+					}
+				}
 			}
 		},
 		mounted() {
@@ -21640,6 +21777,9 @@ ${indentedChild}`;
 			document.removeEventListener('scroll', this.handleWindowScroll, {
 				capture: true
 			});
+			if (this.editor && main_core.Type.isFunction(this.editor.off)) {
+				this.editor.off('note:hotkey', this.handleHotkeyIntent);
+			}
 			if (this.popoverSyncFrame !== null) {
 				cancelAnimationFrame(this.popoverSyncFrame);
 				this.popoverSyncFrame = null;
@@ -21786,7 +21926,10 @@ ${indentedChild}`;
 			closeMenu() {
 				this.openMenu = null;
 			},
-			setMoreSubMode(mode) {
+			// autofocus is opt-in per call: only the keyboard path asks for it, so a click on the link
+			// button keeps focus where the user put it.
+			setMoreSubMode(mode, autofocus = false) {
+				this.linkAutofocus = mode === 'link' && autofocus;
 				this.moreSubMode = mode;
 			},
 			handleDocumentClick(event) {
@@ -21810,6 +21953,20 @@ ${indentedChild}`;
 			handleDocumentKeydown(event) {
 				if (event.key === 'Escape') {
 					this.openMenu = null;
+				}
+			},
+			// The link hotkey opens the same "more" popover the `+` button opens, in link sub-mode
+			// (a link needs a URL typed in). Attachments are handled in note-editor.js instead — that
+			// hotkey inserts a file tile directly rather than opening this menu.
+			handleHotkeyIntent(payload) {
+				if (!this.editor?.isEditable) {
+					return;
+				}
+				if (payload?.action === 'openLinkPopup') {
+					this.openMenu = 'more';
+					// A URL has to be typed, so the field takes focus — otherwise the keystrokes after the
+					// shortcut keep editing the document.
+					this.setMoreSubMode('link', true);
 				}
 			},
 			undo() {
@@ -21911,6 +22068,7 @@ ${indentedChild}`;
 				:insert-table-disabled="insertTableDisabled"
 				:link-value="linkValue"
 				:link-is-active="linkIsActive"
+				:link-autofocus="linkAutofocus"
 				:popover-owner-id="toolbarId"
 				:on-toggle-menu="toggleMenu"
 				:on-close-menu="closeMenu"
@@ -25439,6 +25597,508 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 		}
 	});
 
+	// Strict syntax for REST-uploaded attachments: [[<type> fileId=<digits> <opt-attrs>]]
+	// Lowercase type, integer fileId, then zero or more ` key=value` pairs (only whitelisted keys).
+	// Block form: the token owns its line (trailing newline / EOF). All asset nodes are block.
+	// Up to 3 leading spaces are tolerated (CommonMark block indentation); 4+ would be an indented
+	// code block. Imports may emit a token under stray/structural whitespace.
+	const NOTE_ASSET_GRAMMAR = String.raw`\[\[(image|file|video) fileId=(\d+)((?:[ \t]+[a-z]+=[^\s\]]+)*)\]\]`;
+	const NOTE_ASSET_RE = new RegExp(`^ {0,3}${NOTE_ASSET_GRAMMAR}[ \\t]*(?:\\n|$)`);
+
+	// Optional attributes allowed after fileId. Unknown keys make the whole token non-canonical (rejected).
+	const KNOWN_ASSET_ATTRS = new Set(['width', 'align']);
+
+	// Float-based image alignment. `center` is the default (no float) and is stored as null,
+	// so it never round-trips into markdown — only left/right are serialized.
+	const ALIGN_VALUES = new Set(['left', 'right', 'center']);
+	function isEscapedAt(src, index) {
+		let backslashCount = 0;
+		for (let cursor = index - 1; cursor >= 0 && src[cursor] === '\\'; cursor--) {
+			backslashCount++;
+		}
+		return backslashCount % 2 === 1;
+	}
+	const ASSET_TYPE_TO_NODE$1 = {
+		image: 'imageAttachment',
+		file: 'fileAttachment',
+		video: 'video'
+	};
+	function interpretAssetMatch(match) {
+		const fileId = Number(match[2]);
+		if (!Number.isInteger(fileId) || fileId <= 0) {
+			return null;
+		}
+		let width = null;
+		let align = null;
+		const attrsRaw = match[3] || '';
+		if (attrsRaw) {
+			const attrRe = /([a-z]+)=([^\s\]]+)/g;
+			let attrMatch = attrRe.exec(attrsRaw);
+			while (attrMatch) {
+				const key = attrMatch[1];
+				if (!KNOWN_ASSET_ATTRS.has(key)) {
+					return null; // unknown attribute — not canonical
+				}
+				if (key === 'width') {
+					// width is a percentage of the container (>0..100), fractional allowed. Clamp over-100
+					// (e.g. legacy px values like 280) to 100 instead of rejecting the token, and
+					// normalize to two decimals so the stored attr stays clean across round-trips.
+					const value = Number(attrMatch[2]);
+					if (!Number.isFinite(value) || value <= 0) {
+						return null;
+					}
+					width = Math.min(Math.round(value * 100) / 100, 100);
+				} else if (key === 'align') {
+					if (!ALIGN_VALUES.has(attrMatch[2])) {
+						return null;
+					}
+					align = attrMatch[2] === 'center' ? null : attrMatch[2];
+				}
+				attrMatch = attrRe.exec(attrsRaw);
+			}
+		}
+		return {
+			assetType: match[1],
+			fileId,
+			width,
+			align,
+			raw: match[0]
+		};
+	}
+	function parseNoteAssetSyntax(src, pos) {
+		if (pos >= src.length) {
+			return null;
+		}
+		const slice = src ;
+		const match = NOTE_ASSET_RE.exec(slice);
+		return match ? interpretAssetMatch(match) : null;
+	}
+	function findNoteAssetMatches(src, includeEscaped = false) {
+		const matches = [];
+		const searchRe = new RegExp(NOTE_ASSET_GRAMMAR, 'g');
+		let match = searchRe.exec(src);
+		while (match) {
+			if (includeEscaped || !isEscapedAt(src, match.index)) {
+				const interpreted = interpretAssetMatch(match);
+				if (interpreted) {
+					matches.push({
+						match: interpreted,
+						start: match.index,
+						end: match.index + match[0].length
+					});
+				}
+			}
+			match = searchRe.exec(src);
+		}
+		return matches;
+	}
+	function findNoteAssetStart(src) {
+		let from = 0;
+		while (from < src.length) {
+			const idx = src.indexOf('[[', from);
+			if (idx === -1) {
+				return -1;
+			}
+
+			// Block-level, but tolerate up to 3 leading spaces from line start (CommonMark block
+			// indentation); 4+ spaces stay an indented code block. Return the line start so the
+			// token's raw consumes the indent, leaving no stray whitespace text node.
+			const lineStart = idx === 0 ? 0 : src.lastIndexOf('\n', idx - 1) + 1;
+			if (/^ {0,3}$/.test(src.slice(lineStart, idx))) {
+				return lineStart;
+			}
+			from = idx + 1;
+		}
+		return -1;
+	}
+
+	const ASSET_TYPE_TO_NODE = Object.assign(Object.create(null), {
+		image: 'imageAttachment',
+		file: 'fileAttachment',
+		video: 'video'
+	});
+	function parseAttrs(str) {
+		const attrs = {};
+		const re = /(\w+)=(?:"([^"]*)"|(\S+))/g;
+		let match = re.exec(str);
+		while (match) {
+			attrs[match[1]] = match[2] ?? match[3];
+			match = re.exec(str);
+		}
+		return attrs;
+	}
+
+	/**
+	 * Scans `src` from `pos` forward, looking for a balanced pair of the given
+	 * open/close characters. Handles `\`-escaping and nesting via depth counter.
+	 *
+	 * Returns the index **after** the closing character, or -1 if unmatched.
+	 * `content` is written into `out.value`.
+	 */
+	function scanBalanced(src, pos, open, close, out) {
+		if (pos >= src.length || src.charCodeAt(pos) !== open) {
+			return -1;
+		}
+		let depth = 1;
+		const start = pos + 1;
+		let i = start;
+		while (i < src.length && depth > 0) {
+			const ch = src.charCodeAt(i);
+			if (ch === 0x5C)
+				// backslash
+				{
+					i += 2; // skip escaped character
+					continue;
+				}
+			if (ch === open) {
+				depth++;
+			} else if (ch === close) {
+				depth--;
+				if (depth === 0) {
+					out.value = src.slice(start, i);
+					return i + 1;
+				}
+			}
+			i++;
+		}
+		return -1;
+	}
+
+	// Character codes
+	const CH_EXCL = 0x21; // !
+	const CH_OPEN_BRACKET = 0x5B; // [
+	const CH_OPEN_PAREN = 0x28; // (
+	const CH_CLOSE_PAREN = 0x29; // )
+	const CH_OPEN_BRACE = 0x7B; // {
+	const CH_CLOSE_BRACE = 0x7D; // }
+	const CH_CLOSE_BRACKET = 0x5D; // ]
+	const CH_SPACE = 0x20;
+	const CH_TAB = 0x09;
+	const CH_NEWLINE = 0x0A;
+
+	/**
+	 * Character-level parser for enriched asset syntax: `!?[label](url){attrs}`
+	 *
+	 * Properly handles nested brackets, parentheses, and braces via depth counters.
+	 * Recognises `\`-escaped delimiters inside each segment.
+	 *
+	 * @param {string} src   — source string
+	 * @param {number} pos   — position to start scanning from
+	 * @param {'block'|'inline'} mode
+	 *   - `'block'`: consumes 0-3 leading spaces/tabs and requires trailing
+	 *     `[ \t]*(\n|$)`.  `raw` spans from `pos` to end of trailing whitespace/newline.
+	 *   - `'inline'`: no leading-space limit, no trailing-newline requirement.
+	 *     `raw` spans exactly the `!?[label](url){attrs}` syntax, without surrounding whitespace.
+	 * @returns {ParseResult|null}
+	 */
+	function parseEnrichedAssetSyntax(src, pos, mode) {
+		let i = pos;
+
+		// Block mode: consume 0-3 leading spaces/tabs
+		{
+			let spaces = 0;
+			while (i < src.length && spaces < 4) {
+				const ch = src.charCodeAt(i);
+				if (ch !== CH_SPACE && ch !== CH_TAB) {
+					break;
+				}
+				spaces++;
+				i++;
+			}
+			if (spaces >= 4) {
+				return null; // code block territory
+			}
+		}
+
+		// Optional `!` prefix (image marker)
+		let isImage = false;
+		if (i < src.length && src.charCodeAt(i) === CH_EXCL) {
+			isImage = true;
+			i++;
+		}
+
+		// [label]
+		const labelOut = {
+			value: ''
+		};
+		const afterLabel = scanBalanced(src, i, CH_OPEN_BRACKET, CH_CLOSE_BRACKET, labelOut);
+		if (afterLabel === -1) {
+			return null;
+		}
+
+		// (url) — must follow immediately
+		const urlOut = {
+			value: ''
+		};
+		const afterUrl = scanBalanced(src, afterLabel, CH_OPEN_PAREN, CH_CLOSE_PAREN, urlOut);
+		if (afterUrl === -1) {
+			return null;
+		}
+
+		// {attrs} — must follow immediately
+		const attrsOut = {
+			value: ''
+		};
+		const afterAttrs = scanBalanced(src, afterUrl, CH_OPEN_BRACE, CH_CLOSE_BRACE, attrsOut);
+		if (afterAttrs === -1) {
+			return null;
+		}
+
+		// Block mode: consume optional trailing spaces/tabs, then require \n or EOF
+		let endPos = afterAttrs;
+		{
+			while (endPos < src.length) {
+				const ch = src.charCodeAt(endPos);
+				if (ch !== CH_SPACE && ch !== CH_TAB) {
+					break;
+				}
+				endPos++;
+			}
+			if (endPos < src.length && src.charCodeAt(endPos) !== CH_NEWLINE) {
+				return null; // trailing content after attrs — not a standalone block
+			}
+			if (endPos < src.length) {
+				endPos++; // consume the newline
+			}
+		}
+		if (!urlOut.value) {
+			return null; // empty URL
+		}
+		return {
+			isImage,
+			label: labelOut.value,
+			url: urlOut.value,
+			attrsRaw: attrsOut.value,
+			raw: src.slice(pos, endPos)
+		};
+	}
+
+	/**
+	 * Fast candidate finder for `markdownTokenizer.start()`.
+	 *
+	 * Scans `src` for positions where an enriched asset *might* begin,
+	 * without running the full parser. Returns the index of the line start
+	 * (including leading spaces) for the first viable candidate, or -1.
+	 *
+	 * Complexity: O(n) typical. Worst case O(n^2) when many `[` occur without
+	 * a matching `){` sequence — each `[` triggers a linear look-ahead to find
+	 * `){`. In practice, markdown documents are compact and this is not an issue,
+	 * but be aware of this on very large synthetic inputs.
+	 */
+	function findEnrichedAssetStart(src) {
+		let searchFrom = 0;
+		while (searchFrom < src.length) {
+			const bracketIdx = src.indexOf('[', searchFrom);
+			if (bracketIdx === -1) {
+				return -1;
+			}
+
+			// Walk back to find line start and count leading whitespace
+			let lineStart = bracketIdx;
+			let leadingSpaces = 0;
+			while (lineStart > 0 && src.charCodeAt(lineStart - 1) !== CH_NEWLINE) {
+				lineStart--;
+			}
+
+			// Count spaces/tabs from lineStart to bracketIdx (or bracketIdx-1 if `!` prefix)
+			let prefixEnd = bracketIdx;
+			if (prefixEnd > lineStart && src.charCodeAt(prefixEnd - 1) === CH_EXCL) {
+				prefixEnd--;
+			}
+			let valid = true;
+			for (let k = lineStart; k < prefixEnd; k++) {
+				const ch = src.charCodeAt(k);
+				if (ch === CH_SPACE || ch === CH_TAB) {
+					leadingSpaces++;
+				} else {
+					valid = false;
+					break;
+				}
+			}
+			if (!valid || leadingSpaces > 3) {
+				searchFrom = bracketIdx + 1;
+				continue;
+			}
+
+			// Quick look-ahead: check that `){` appears somewhere after `[`
+			const closeParen = src.indexOf('){', bracketIdx);
+			if (closeParen === -1) {
+				// No `){` anywhere after this point — no match possible
+				return -1;
+			}
+			return lineStart;
+		}
+		return -1;
+	}
+
+	/**
+	 * Finds all enriched asset occurrences in a string.
+	 * Designed for mixed-content table cells where text and assets can be interleaved.
+	 *
+	 * Returns an array of `{ match, start, end }` where `start` and `end` are
+	 * positions in the original `src` string. Text between assets can be extracted
+	 * via `src.slice(prevEnd, nextStart)`.
+	 */
+	function parseAllEnrichedAssets(src) {
+		const results = [];
+		const closingPositions = buildClosingPositions(src);
+		let pos = 0;
+		while (pos < src.length) {
+			// Find next `[` or `![` candidate
+			const bracketIdx = src.indexOf('[', pos);
+			if (bracketIdx === -1) {
+				break;
+			}
+
+			// Check for `!` prefix
+			const startPos = bracketIdx > 0 && src.charCodeAt(bracketIdx - 1) === CH_EXCL ? bracketIdx - 1 : bracketIdx;
+
+			// Don't re-scan positions we already covered
+			if (startPos < pos) {
+				pos = bracketIdx + 1;
+				continue;
+			}
+			const result = parseEnrichedAssetSyntaxWithClosingPositions(src, startPos, closingPositions);
+			if (result) {
+				results.push({
+					match: result,
+					start: startPos,
+					end: startPos + result.raw.length
+				});
+				pos = startPos + result.raw.length;
+			} else {
+				pos = bracketIdx + 1;
+			}
+		}
+		return results;
+	}
+	function buildClosingPositions(src) {
+		const closingPositions = new Int32Array(src.length);
+		closingPositions.fill(-1);
+		const stacks = new Map([[CH_OPEN_BRACKET, []], [CH_OPEN_PAREN, []], [CH_OPEN_BRACE, []]]);
+		const openingByClosing = new Map([[CH_CLOSE_BRACKET, CH_OPEN_BRACKET], [CH_CLOSE_PAREN, CH_OPEN_PAREN], [CH_CLOSE_BRACE, CH_OPEN_BRACE]]);
+		for (let index = 0; index < src.length; index++) {
+			const character = src.charCodeAt(index);
+			if (character === 0x5C) {
+				index++;
+				continue;
+			}
+			if (stacks.has(character)) {
+				stacks.get(character).push(index);
+				continue;
+			}
+			const opening = openingByClosing.get(character);
+			const stack = stacks.get(opening);
+			if (stack?.length > 0) {
+				closingPositions[stack.pop()] = index;
+			}
+		}
+		return closingPositions;
+	}
+	function parseEnrichedAssetSyntaxWithClosingPositions(src, pos, closingPositions) {
+		let labelStart = pos;
+		let isImage = false;
+		if (src.charCodeAt(labelStart) === CH_EXCL) {
+			isImage = true;
+			labelStart++;
+		}
+		if (src.charCodeAt(labelStart) !== CH_OPEN_BRACKET) {
+			return null;
+		}
+		const labelEnd = closingPositions[labelStart];
+		const urlStart = labelEnd + 1;
+		if (labelEnd < 0 || src.charCodeAt(urlStart) !== CH_OPEN_PAREN) {
+			return null;
+		}
+		const urlEnd = closingPositions[urlStart];
+		const attrsStart = urlEnd + 1;
+		if (urlEnd < 0 || src.charCodeAt(attrsStart) !== CH_OPEN_BRACE) {
+			return null;
+		}
+		const attrsEnd = closingPositions[attrsStart];
+		if (attrsEnd < 0 || urlEnd === urlStart + 1) {
+			return null;
+		}
+		const end = attrsEnd + 1;
+		return {
+			isImage,
+			label: src.slice(labelStart + 1, labelEnd),
+			url: src.slice(urlStart + 1, urlEnd),
+			attrsRaw: src.slice(attrsStart + 1, attrsEnd),
+			raw: src.slice(pos, end)
+		};
+	}
+	function findValidEnrichedAssetMatches(src) {
+		return parseAllEnrichedAssets(src).filter(({
+			match,
+			start
+		}) => {
+			if (isEscapedAt(src, start)) {
+				return false;
+			}
+			const attrs = parseAttrs(match.attrsRaw);
+			const fileId = Number(attrs.fileId);
+			const hasAllowedType = Object.prototype.hasOwnProperty.call(ASSET_TYPE_TO_NODE, attrs.type);
+			return hasAllowedType && Number.isInteger(fileId) && fileId > 0;
+		});
+	}
+
+	/**
+	 * Pre-processes a markdown string so that enriched assets mixed with text
+	 * on the same line are split onto their own lines. This allows the block-level
+	 * EnrichedAssetTokenizer to recognise them.
+	 *
+	 * Example:
+	 *   "sad ![img](/url){f=1}" → "sad\n\n![img](/url){f=1}"
+	 *   "![img](/url){f=1} text" → "![img](/url){f=1}\n\ntext"
+	 *
+	 * Lines that are already a standalone enriched asset are left unchanged.
+	 * Lines with no enriched assets are left unchanged.
+	 */
+	function splitInlineAssets(src) {
+		const lines = src.split('\n');
+		const result = [];
+		for (const line of lines) {
+			const assets = parseAllEnrichedAssets(line);
+			if (assets.length === 0) {
+				result.push(line);
+				continue;
+			}
+
+			// Check if the entire line is already a single asset (with optional whitespace)
+			if (assets.length === 1 && line.trim() === assets[0].match.raw) {
+				result.push(line);
+				continue;
+			}
+
+			// Split: emit text before, asset, text after, etc.
+			let lastEnd = 0;
+			for (const {
+				match,
+				start,
+				end
+			} of assets) {
+				const before = line.slice(lastEnd, start).trim();
+				if (before.length > 0) {
+					result.push(before);
+					result.push('');
+				} else if (lastEnd > 0) {
+					// Consecutive assets with only whitespace between them —
+					// add a blank line so the block tokenizer sees them as separate blocks.
+					result.push('');
+				}
+				result.push(match.raw);
+				lastEnd = end;
+			}
+			const after = line.slice(lastEnd).trim();
+			if (after.length > 0) {
+				result.push('');
+				result.push(after);
+			}
+		}
+		return result.join('\n');
+	}
+
 	/**
 	 * Shared Marked instance for the note editor.
 	 *
@@ -25462,7 +26122,27 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 		tokenizer: {
 			// Disable HTML tokenization — treat <tag> as plain text
 			html() {},
-			tag() {}
+			tag() {},
+			escape(src) {
+				if (!src.startsWith('\\')) {
+					return undefined;
+				}
+				const escapeAssetLengths = this.escapeAssetLengthsStack?.at(-1);
+				const assetLength = escapeAssetLengths?.get(src.length) ?? 0;
+				if (assetLength === 0) {
+					const escapedPunctuation = /^\\([!-/:-@[-`{-~])/.exec(src);
+					return escapedPunctuation ? {
+						type: 'escape',
+						raw: escapedPunctuation[0],
+						text: escapedPunctuation[1]
+					} : undefined;
+				}
+				return {
+					type: 'escape',
+					raw: src.slice(0, assetLength + 1),
+					text: src.slice(1, assetLength + 1)
+				};
+			}
 		}
 	});
 
@@ -25473,12 +26153,140 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 	// defaults when no options are provided.
 	const OriginalLexer = _sharedMarked.Lexer;
 	const markedRef = _sharedMarked;
+	function collectEscapedAssetLengths(src) {
+		const assetLengths = new Map();
+		if (!src.includes('\\[') && !src.includes('\\![')) {
+			return assetLengths;
+		}
+		const matches = [...findNoteAssetMatches(src, true), ...parseAllEnrichedAssets(src)];
+		for (const {
+			start,
+			end
+		} of matches) {
+			if (!isEscapedAt(src, start)) {
+				continue;
+			}
+			const remainingLength = src.length - start + 1;
+			assetLengths.set(remainingLength, Math.max(assetLengths.get(remainingLength) ?? 0, end - start));
+		}
+		return assetLengths;
+	}
 	_sharedMarked.Lexer = class PatchedLexer extends OriginalLexer {
 		constructor(options) {
 			super(options ?? markedRef.defaults);
 		}
+		inlineTokens(src, tokens) {
+			this.tokenizer.escapeAssetLengthsStack ??= [];
+			this.tokenizer.escapeAssetLengthsStack.push(collectEscapedAssetLengths(src));
+			try {
+				return super.inlineTokens(src, tokens);
+			} finally {
+				this.tokenizer.escapeAssetLengthsStack.pop();
+			}
+		}
 	};
 	const sharedMarked = _sharedMarked;
+	const MarkdownEscapeParser = Extension.create({
+		name: 'markdownEscapeParser',
+		markdownTokenName: 'escape',
+		parseMarkdown(token, h) {
+			return h.createTextNode(decodeHtmlEntities(String(token.text ?? '')));
+		}
+	});
+	const escapedTextNodes = new WeakSet();
+	const MARKDOWN_PUNCTUATION_RE = /[!-/:-@[-`{-~]/;
+	function buildEscapedText(text, offsets) {
+		const escaped = [];
+		const originalOffsets = [];
+		for (let offset = 0; offset < text.length; offset++) {
+			if (offsets.has(offset)) {
+				escaped.push('\\');
+				originalOffsets.push(null);
+			}
+			escaped.push(text[offset]);
+			originalOffsets.push(offset);
+		}
+		return {
+			escaped: escaped.join(''),
+			originalOffsets
+		};
+	}
+	function collectMarkdownEscapeOffsets(text) {
+		const offsets = new Set();
+		const assetRanges = [...findNoteAssetMatches(text, true), ...parseAllEnrichedAssets(text)];
+		for (let offset = 0; offset < text.length; offset++) {
+			if (text[offset] === '\\' || text[offset] === '|') {
+				offsets.add(offset);
+			}
+		}
+		for (const {
+			start
+		} of assetRanges) {
+			offsets.add(start);
+		}
+		const baseline = buildEscapedText(text, offsets);
+		let tokenOffset = 0;
+		for (const token of new sharedMarked.Lexer().inlineTokens(baseline.escaped)) {
+			const raw = String(token?.raw ?? '');
+			if (!['text', 'escape'].includes(token?.type)) {
+				for (let rawOffset = 0; rawOffset < raw.length; rawOffset++) {
+					if (!MARKDOWN_PUNCTUATION_RE.test(raw[rawOffset])) {
+						break;
+					}
+					const originalOffset = baseline.originalOffsets[tokenOffset + rawOffset];
+					if (originalOffset !== null && originalOffset !== undefined) {
+						offsets.add(originalOffset);
+					}
+				}
+			}
+			tokenOffset += raw.length;
+		}
+		return offsets;
+	}
+	function escapeMarkdownText(text) {
+		const offsets = collectMarkdownEscapeOffsets(text);
+		const escaped = [];
+		for (let offset = 0; offset < text.length; offset++) {
+			if (offsets.has(offset)) {
+				escaped.push('\\');
+			}
+			escaped.push(text[offset]);
+		}
+		return escaped.join('');
+	}
+	function haveSameMarks(left, right) {
+		return JSON.stringify(left?.marks ?? []) === JSON.stringify(right?.marks ?? []);
+	}
+	function escapeInlineText(nodes) {
+		const escapedNodes = [];
+		for (const sourceNode of nodes ?? []) {
+			const node = escapedTextNodes.has(sourceNode) ? sourceNode : sourceNode?.type === 'text' ? {
+				...sourceNode
+			} : Array.isArray(sourceNode?.content) && sourceNode.type !== 'codeBlock' ? {
+				...sourceNode,
+				content: escapeInlineText(sourceNode.content)
+			} : sourceNode;
+			const previous = escapedNodes.at(-1);
+			if (node?.type === 'text' && previous?.type === 'text' && haveSameMarks(previous, node) && !escapedTextNodes.has(previous) && !escapedTextNodes.has(node)) {
+				previous.text = `${previous.text ?? ''}${node.text ?? ''}`;
+				continue;
+			}
+			escapedNodes.push(node);
+		}
+		return escapedNodes.map(node => {
+			if (node?.type !== 'text' || escapedTextNodes.has(node) || node.marks?.some(({
+				type
+			}) => type === 'code')) {
+				return node;
+			}
+			const escapedNode = {
+				...node,
+				text: escapeMarkdownText(String(node.text ?? ''))
+			};
+			escapedTextNodes.add(escapedNode);
+			return escapedNode;
+		});
+	}
 
 	/**
 	 * Patch flush: sending local text changes to the server.
@@ -25497,7 +26305,24 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 	 * Reduces the number of rows in b_note_document_updates and keeps yjsState fresh.
 	 * Also updates the markdown (ProseMirror JSON) in b_note_document for search/preview.
 	 */
-	const COMPACT_INTERVAL_MS = 5 * 60 * 1000; // 5 min
+	const COMPACT_INTERVAL_MS = 3 * 60 * 1000; // 3 min
+
+	/**
+	 * Materialization: pushing the current markdown to the server on work boundaries.
+	 *
+	 * Cheap and non-destructive (no journal rewrite, no yjsState) — it only keeps CONTENT_UPDATED_AT
+	 * fresh so REST/search see the latest text soon after editing stops, without waiting for compaction.
+	 * MATERIALIZE_DEBOUNCE_MS — pause after the last keystroke before materializing.
+	 * MATERIALIZE_MAX_INTERVAL_MS — ceiling during continuous typing; forces a materialize anyway.
+	 */
+	const MATERIALIZE_DEBOUNCE_MS = 30 * 1000; // 30 s
+	const MATERIALIZE_MAX_INTERVAL_MS = 2 * 60 * 1000; // 2 min
+
+	/**
+	 * Journal backstop: debounce for the server-driven compaction hint (savePatch → compactSuggested).
+	 * A burst of flushes with the flag raised collapses into a single compaction run.
+	 */
+	const COMPACT_SUGGEST_DEBOUNCE_MS = 5 * 1000; // 5 s
 
 	/**
 	 * Awareness: presence and cursor sharing between users.
@@ -25540,7 +26365,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 	 * File upload size limits.
 	 */
 	const MAX_IMAGE_SIZE = 5 * 1024 * 1024 * 1024; // 5 GB
-	const MAX_FILE_SIZE = 5 * 1024 * 1024 * 1024; // 5 GB
+	const MAX_FILE_SIZE$1 = 5 * 1024 * 1024 * 1024; // 5 GB
 
 	function toPositiveInt(value) {
 		const normalized = Number(value);
@@ -25566,7 +26391,8 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 		return {
 			id: normalizeStringValue(user.id ?? user.userId, '0'),
 			name: normalizeStringValue(user.name, 'User') || 'User',
-			color: normalizeUserColor(user.color)
+			color: normalizeUserColor(user.color),
+			avatar: main_core.Type.isStringFilled(user.avatar) ? user.avatar : null
 		};
 	}
 
@@ -25665,7 +26491,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 			const targetFile = await this.resolveFile(file, 'video/*');
 			this.assertFile(targetFile, {
 				accept: 'video/*',
-				maxSize: MAX_FILE_SIZE,
+				maxSize: MAX_FILE_SIZE$1,
 				allowMedia: true
 			});
 			return this.uploadToServer(targetFile, options);
@@ -25679,7 +26505,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 			const targetFile = await this.resolveFile(file, '*/*');
 			this.assertFile(targetFile, {
 				accept: '*/*',
-				maxSize: MAX_FILE_SIZE,
+				maxSize: MAX_FILE_SIZE$1,
 				allowMedia
 			});
 			return this.uploadToServer(targetFile, options);
@@ -25913,6 +26739,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 			this.cursorPos = null;
 			this.element = null;
 			this.timeout = -1;
+			this.lastDragEvent = null;
 			this.width = (_a = options.width) !== null && _a !== void 0 ? _a : 1;
 			this.color = options.color === false ? undefined : options.color || "black";
 			this.class = options.class;
@@ -25935,7 +26762,14 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 		}
 		update(editorView, prevState) {
 			if (this.cursorPos != null && prevState.doc != editorView.state.doc) {
-				if (this.cursorPos > editorView.state.doc.content.size) this.setCursor(null);else this.updateOverlay();
+				// if we currently have an on-going drag event
+				// we need to update the cursor position again and update the overlay
+				if (this.lastDragEvent) {
+					let target = this.computeTarget(this.lastDragEvent);
+					if (target == this.cursorPos) this.updateOverlay();else this.setCursor(target);
+				} else {
+					this.updateOverlay();
+				}
 			}
 		}
 		setCursor(pos) {
@@ -26016,8 +26850,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 			clearTimeout(this.timeout);
 			this.timeout = setTimeout(() => this.setCursor(null), timeout);
 		}
-		dragover(event) {
-			if (!this.editorView.editable) return;
+		computeTarget(event) {
 			let pos = this.editorView.posAtCoords({
 				left: event.clientX,
 				top: event.clientY
@@ -26025,12 +26858,19 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 			let node = pos && pos.inside >= 0 && this.editorView.state.doc.nodeAt(pos.inside);
 			let disableDropCursor = node && node.type.spec.disableDropCursor;
 			let disabled = typeof disableDropCursor == "function" ? disableDropCursor(this.editorView, pos, event) : disableDropCursor;
-			if (pos && !disabled) {
-				let target = pos.pos;
-				if (this.editorView.dragging && this.editorView.dragging.slice) {
-					let point = dropPoint(this.editorView.state.doc, target, this.editorView.dragging.slice);
-					if (point != null) target = point;
-				}
+			if (!pos || disabled) return null;
+			let target = pos.pos;
+			if (this.editorView.dragging && this.editorView.dragging.slice) {
+				let point = dropPoint(this.editorView.state.doc, target, this.editorView.dragging.slice);
+				if (point != null) target = point;
+			}
+			return target;
+		}
+		dragover(event) {
+			if (!this.editorView.editable) return;
+			this.lastDragEvent = event;
+			let target = this.computeTarget(event);
+			if (target != null) {
 				this.setCursor(target);
 				this.scheduleRemoval(5000);
 			}
@@ -26091,7 +26931,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 		*/
 		static valid($pos) {
 			let parent = $pos.parent;
-			if (parent.isTextblock || !closedBefore($pos) || !closedAfter($pos)) return false;
+			if (parent.inlineContent || !closedBefore($pos) || !closedAfter($pos)) return false;
 			let override = parent.type.spec.allowGapCursor;
 			if (override != null) return override;
 			let deflt = parent.contentMatchAt($pos.index()).defaultType;
@@ -28135,6 +28975,12 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 	}
 
 	const HeadingAnchor = Heading.extend({
+		renderMarkdown(node, h, ctx) {
+			return this.parent?.({
+				...node,
+				content: escapeInlineText(node.content)
+			}, h, ctx) ?? '';
+		},
 		addOptions() {
 			return {
 				...(this.parent?.() ?? {}),
@@ -28295,11 +29141,19 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 		}
 	});
 
+	const MarkdownParagraph = Paragraph.extend({
+		renderMarkdown(node, h, ctx) {
+			return this.parent?.({
+				...node,
+				content: escapeInlineText(node.content)
+			}, h, ctx) ?? '';
+		}
+	});
 	function createCoreExtensions({
 		hasCollaborationProvider,
 		documentId = null
 	}) {
-		return [Document, Paragraph, Text$1, HardBreak, HeadingAnchor.configure({
+		return [Document, MarkdownParagraph, Text$1, HardBreak, HeadingAnchor.configure({
 			levels: [1, 2, 3, 4],
 			documentId
 		}), HeadingCollapseEnter, Dropcursor, NoteGapcursor, ...(hasCollaborationProvider ? [] : [UndoRedo])];
@@ -29545,14 +30399,21 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 			return match && match.index === 0;
 		}
 
-		// BACKREF_RE matches an open parenthesis or backreference. To avoid
-		// an incorrect parse, it additionally matches the following:
-		// - [...] elements, where the meaning of parentheses and escapes change
-		// - other escape sequences, so we do not misparse escape sequences as
-		//   interesting elements
-		// - non-matching or lookahead parentheses, which do not capture. These
-		//   follow the '(' with a '?'.
-		const BACKREF_RE = /\[(?:[^\\\]]|\\.)*\]|\(\??|\\([1-9][0-9]*)|\\./;
+		// BACKREF_RE matches an open parenthesis or backreference. To avoid an
+		// incorrect parse, it also matches the constructs where the meaning of
+		// parentheses, escapes, or capture counting changes.
+		const BACKREF_RE = new RegExp(either(/\[(?:[^\\\]]|\\.)*\]/,
+		// a character class, inside which ( and \ lose their meaning
+		/\(\?<(?![=!])[^>]+>/,
+		// a named capture group `(?<name>` (not a lookbehind `(?<=` / `(?<!`)
+		/\(\?'[^']+'/,
+		// a named capture group `(?'name'`
+		/\(\??/,
+		// an opening parenthesis, capturing or non-capturing / lookahead
+		/\\([1-9][0-9]*)/,
+		// a backreference like `\1`
+		/\\./ // any other escape sequence
+		));
 
 		// **INTERNAL** Not intended for outside usage
 		// join logically computes regexps.join(separator), but fixes the
@@ -29587,7 +30448,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 						out += '\\' + String(Number(match[1]) + offset);
 					} else {
 						out += match[0];
-						if (match[0] === '(') {
+						if (match[0] === '(' || /^\(\?[<']/.test(match[0])) {
 							numCaptures++;
 						}
 					}
@@ -30568,7 +31429,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 			// no special dependency issues, just return ourselves
 			return mode;
 		}
-		var version = "11.11.1";
+		var version = "11.12.0";
 		class HTMLInjectionError extends Error {
 			constructor(reason, html) {
 				super(reason);
@@ -31075,12 +31936,15 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 						}
 					}
 
-					// edge case for when illegal matches $ (end of line) which is technically
+					// edge case for when illegal matches $ (end of line/text) which is technically
 					// a 0 width match but not a begin/end match so it's not caught by the
-					// first handler (when ignoreIllegals is true)
+					// first handler (when `ignoreIllegals` is true)
 					if (match.type === "illegal" && lexeme === "") {
-						// advance so we aren't stuck in an infinite loop
-						modeBuffer += "\n";
+						if (match.index === codeToHighlight.length) ;else {
+							// matched literal `\n` (with `$`) so we must manually add the newline
+							// itself to the modeBuffer so it is not lost when we advance the cursor
+							modeBuffer += "\n";
+						}
 						return 1;
 					}
 
@@ -34855,12 +35719,17 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 		const NAMESPACE_RE = '[a-zA-Z_]\\w*::';
 		const TEMPLATE_ARGUMENT_RE = '<[^<>]+>';
 		const FUNCTION_TYPE_RE = '(' + DECLTYPE_AUTO_RE + '|' + regex.optional(NAMESPACE_RE) + '[a-zA-Z_]\\w*' + regex.optional(TEMPLATE_ARGUMENT_RE) + ')';
+
+		// C11 <stdatomic.h> atomic type names. This is an explicit whitelist so that
+		// C11 atomic *functions* (atomic_init, atomic_store, atomic_load,
+		// atomic_fetch_add, ...) are not mistakenly highlighted as types. See #3837.
+		const ATOMIC_TYPES = regex.concat(/\batomic_/, regex.either('bool', 'char', 'schar', 'uchar', 'short', 'ushort', 'int', 'uint', 'long', 'ulong', 'llong', 'ullong', 'char16_t', 'char32_t', 'wchar_t', 'int_least8_t', 'uint_least8_t', 'int_least16_t', 'uint_least16_t', 'int_least32_t', 'uint_least32_t', 'int_least64_t', 'uint_least64_t', 'int_fast8_t', 'uint_fast8_t', 'int_fast16_t', 'uint_fast16_t', 'int_fast32_t', 'uint_fast32_t', 'int_fast64_t', 'uint_fast64_t', 'intptr_t', 'uintptr_t', 'size_t', 'ptrdiff_t', 'intmax_t', 'uintmax_t'), /\b/);
 		const TYPES = {
 			className: 'type',
 			variants: [{
 				begin: '\\b[a-z\\d_]*_t\\b'
 			}, {
-				match: /\batomic_[a-z]{3,6}\b/
+				match: ATOMIC_TYPES
 			}]
 		};
 
@@ -34878,9 +35747,14 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 				begin: '(u8?|U|L)?\'(' + CHARACTER_ESCAPES + "|.)",
 				end: '\'',
 				illegal: '.'
-			}, hljs.END_SAME_AS_BEGIN({
-				begin: /(?:u8?|U|L)?R"([^()\\ ]{0,16})\(/,
-				end: /\)([^()\\ ]{0,16})"/
+			},
+			// https://en.cppreference.com/w/cpp/language/string_literal
+			// a d-char-sequence never contains parentheses, backslashes or whitespace;
+			// quotes are excluded as well so the closing delimiter cannot swallow the
+			// quote that actually terminates the literal
+			hljs.END_SAME_AS_BEGIN({
+				begin: /(?:u8?|U|L)?R"([^()\\\s"]{0,16})\(/,
+				end: /\)([^()\\\s"]{0,16})"/
 			})]
 		};
 		const NUMBERS = {
@@ -34896,6 +35770,28 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 			}],
 			relevance: 0
 		};
+
+		// `#include` is the only preprocessor directive that takes an angle-bracket
+		// quoted header (`#include <header>`). Scoping that rule to `#include` keeps
+		// the greedy `<...>` match from eating a `>` that belongs to the body of
+		// another directive (e.g. `#define what do { cout << ">"; } while (0)`),
+		// which would otherwise leave an unbalanced `"` and break highlighting for
+		// the rest of the file. See issue #3505.
+		const PREPROCESSOR_INCLUDE = {
+			scope: 'meta',
+			begin: /#\s*include\b/,
+			end: /$/,
+			keywords: {
+				keyword: 'include'
+			},
+			contains: [{
+				// the `\` at the end of a line signaling continuation
+				begin: /\\\n/
+			}, STRINGS, {
+				scope: 'string',
+				begin: /<.*?>/
+			}, C_LINE_COMMENT_MODE, hljs.C_BLOCK_COMMENT_MODE]
+		};
 		const PREPROCESSOR = {
 			className: 'meta',
 			begin: /#\s*[a-z]+\b/,
@@ -34908,17 +35804,20 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 				relevance: 0
 			}, hljs.inherit(STRINGS, {
 				className: 'string'
-			}), {
-				className: 'string',
-				begin: /<.*?>/
-			}, C_LINE_COMMENT_MODE, hljs.C_BLOCK_COMMENT_MODE]
+			}), C_LINE_COMMENT_MODE, hljs.C_BLOCK_COMMENT_MODE]
 		};
+		const PREPROCESSORS = [PREPROCESSOR_INCLUDE, PREPROCESSOR];
 		const TITLE_MODE = {
 			className: 'title',
 			begin: regex.optional(NAMESPACE_RE) + hljs.IDENT_RE,
 			relevance: 0
 		};
 		const FUNCTION_TITLE = regex.optional(NAMESPACE_RE) + hljs.IDENT_RE + '\\s*\\(';
+		// Bounded on purpose: an unbounded quantifier here consumes an arbitrarily
+		// long run of words, and when no function title follows it the engine retries
+		// the title at every token boundary of that run - quadratic in the size of
+		// the document.  See #4362.
+		const MAX_FUNCTION_TYPE_TOKENS = 12;
 		const C_KEYWORDS = ["asm", "auto", "break", "case", "continue", "default", "do", "else", "enum", "extern", "for", "fortran", "goto", "if", "inline", "register", "restrict", "return", "sizeof", "typeof", "typeof_unqual", "struct", "switch", "typedef", "union", "volatile", "while", "_Alignas", "_Alignof", "_Atomic", "_Generic", "_Noreturn", "_Static_assert", "_Thread_local",
 		// aliases
 		"alignas", "alignof", "noreturn", "static_assert", "thread_local",
@@ -34936,7 +35835,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 			// TODO: apply hinting work similar to what was done in cpp.js
 			built_in: 'std string wstring cin cout cerr clog stdin stdout stderr stringstream istringstream ostringstream ' + 'auto_ptr deque list queue stack vector map set pair bitset multiset multimap unordered_set ' + 'unordered_map unordered_multiset unordered_multimap priority_queue make_pair array shared_ptr abort terminate abs acos ' + 'asin atan2 atan calloc ceil cosh cos exit exp fabs floor fmod fprintf fputs free frexp ' + 'fscanf future isalnum isalpha iscntrl isdigit isgraph islower isprint ispunct isspace isupper ' + 'isxdigit tolower toupper labs ldexp log10 log malloc realloc memchr memcmp memcpy memset modf pow ' + 'printf putchar puts scanf sinh sin snprintf sprintf sqrt sscanf strcat strchr strcmp ' + 'strcpy strcspn strlen strncat strncmp strncpy strpbrk strrchr strspn strstr tanh tan ' + 'vfprintf vprintf vsprintf endl initializer_list unique_ptr'
 		};
-		const EXPRESSION_CONTAINS = [PREPROCESSOR, TYPES, C_LINE_COMMENT_MODE, hljs.C_BLOCK_COMMENT_MODE, NUMBERS, STRINGS];
+		const EXPRESSION_CONTAINS = [...PREPROCESSORS, TYPES, C_LINE_COMMENT_MODE, hljs.C_BLOCK_COMMENT_MODE, NUMBERS, STRINGS];
 		const EXPRESSION_CONTEXT = {
 			// This mode covers expression context where we can't expect a function
 			// definition and shouldn't highlight anything that looks like one:
@@ -34962,7 +35861,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 			relevance: 0
 		};
 		const FUNCTION_DECLARATION = {
-			begin: '(' + FUNCTION_TYPE_RE + '[\\*&\\s]+)+' + FUNCTION_TITLE,
+			begin: '(' + FUNCTION_TYPE_RE + '[\\*&\\s]+){1,' + MAX_FUNCTION_TYPE_TOKENS + '}' + FUNCTION_TITLE,
 			returnBegin: true,
 			end: /[{;=]/,
 			excludeEnd: true,
@@ -35001,7 +35900,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 					relevance: 0,
 					contains: ['self', C_LINE_COMMENT_MODE, hljs.C_BLOCK_COMMENT_MODE, STRINGS, NUMBERS, TYPES]
 				}]
-			}, TYPES, C_LINE_COMMENT_MODE, hljs.C_BLOCK_COMMENT_MODE, PREPROCESSOR]
+			}, TYPES, C_LINE_COMMENT_MODE, hljs.C_BLOCK_COMMENT_MODE, ...PREPROCESSORS]
 		};
 		return {
 			name: "C",
@@ -35011,7 +35910,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 			// not be auto-detected to avoid auto-detect conflicts between C and C++
 			disableAutodetect: true,
 			illegal: '</',
-			contains: [].concat(EXPRESSION_CONTEXT, FUNCTION_DECLARATION, EXPRESSION_CONTAINS, [PREPROCESSOR, {
+			contains: [].concat(EXPRESSION_CONTEXT, FUNCTION_DECLARATION, EXPRESSION_CONTAINS, [...PREPROCESSORS, {
 				begin: hljs.IDENT_RE + '::',
 				keywords: KEYWORDS
 			}, {
@@ -35070,9 +35969,14 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 				begin: '(u8?|U|L)?\'(' + CHARACTER_ESCAPES + '|.)',
 				end: '\'',
 				illegal: '.'
-			}, hljs.END_SAME_AS_BEGIN({
-				begin: /(?:u8?|U|L)?R"([^()\\ ]{0,16})\(/,
-				end: /\)([^()\\ ]{0,16})"/
+			},
+			// https://en.cppreference.com/w/cpp/language/string_literal
+			// a d-char-sequence never contains parentheses, backslashes or whitespace;
+			// quotes are excluded as well so the closing delimiter cannot swallow the
+			// quote that actually terminates the literal
+			hljs.END_SAME_AS_BEGIN({
+				begin: /(?:u8?|U|L)?R"([^()\\\s"]{0,16})\(/,
+				end: /\)([^()\\\s"]{0,16})"/
 			})]
 		};
 		const NUMBERS = {
@@ -35082,9 +35986,9 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 			{
 				begin: "[+-]?(?:" // Leading sign.
 				// Decimal.
-				+ "(?:" + "[0-9](?:'?[0-9])*\\.(?:[0-9](?:'?[0-9])*)?" + "|\\.[0-9](?:'?[0-9])*" + ")(?:[Ee][+-]?[0-9](?:'?[0-9])*)?" + "|[0-9](?:'?[0-9])*[Ee][+-]?[0-9](?:'?[0-9])*"
+				+ "(?:" + "\\b[0-9](?:'?[0-9])*\\.(?:[0-9](?:'?[0-9])*)?" + "|\\.[0-9](?:'?[0-9])*" + ")(?:[Ee][+-]?[0-9](?:'?[0-9])*)?" + "|\\b[0-9](?:'?[0-9])*[Ee][+-]?[0-9](?:'?[0-9])*"
 				// Hexadecimal.
-				+ "|0[Xx](?:" + "[0-9A-Fa-f](?:'?[0-9A-Fa-f])*(?:\\.(?:[0-9A-Fa-f](?:'?[0-9A-Fa-f])*)?)?" + "|\\.[0-9A-Fa-f](?:'?[0-9A-Fa-f])*" + ")[Pp][+-]?[0-9](?:'?[0-9])*" + ")(?:" // Literal suffixes.
+				+ "|\\b0[Xx](?:" + "[0-9A-Fa-f](?:'?[0-9A-Fa-f])*(?:\\.(?:[0-9A-Fa-f](?:'?[0-9A-Fa-f])*)?)?" + "|\\.[0-9A-Fa-f](?:'?[0-9A-Fa-f])*" + ")[Pp][+-]?[0-9](?:'?[0-9])*" + ")(?:" // Literal suffixes.
 				+ "[Ff](?:16|32|64|128)?" + "|(BF|bf)16" + "|[Ll]" + "|" // Literal suffix is optional.
 				+ ")"
 			},
@@ -35103,6 +36007,28 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 			}],
 			relevance: 0
 		};
+
+		// `#include` is the only preprocessor directive that takes an angle-bracket
+		// quoted header (`#include <header>`). Scoping that rule to `#include` keeps
+		// the greedy `<...>` match from eating a `>` that belongs to the body of
+		// another directive (e.g. `#define what do { cout << ">"; } while (0)`),
+		// which would otherwise leave an unbalanced `"` and break highlighting for
+		// the rest of the file. See issue #3505.
+		const PREPROCESSOR_INCLUDE = {
+			scope: 'meta',
+			begin: /#\s*include\b/,
+			end: /$/,
+			keywords: {
+				keyword: 'include'
+			},
+			contains: [{
+				// the `\` at the end of a line signaling continuation
+				begin: /\\\n/
+			}, STRINGS, {
+				scope: 'string',
+				begin: /<.*?>/
+			}, C_LINE_COMMENT_MODE, hljs.C_BLOCK_COMMENT_MODE]
+		};
 		const PREPROCESSOR = {
 			className: 'meta',
 			begin: /#\s*[a-z]+\b/,
@@ -35115,17 +36041,20 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 				relevance: 0
 			}, hljs.inherit(STRINGS, {
 				className: 'string'
-			}), {
-				className: 'string',
-				begin: /<.*?>/
-			}, C_LINE_COMMENT_MODE, hljs.C_BLOCK_COMMENT_MODE]
+			}), C_LINE_COMMENT_MODE, hljs.C_BLOCK_COMMENT_MODE]
 		};
+		const PREPROCESSORS = [PREPROCESSOR_INCLUDE, PREPROCESSOR];
 		const TITLE_MODE = {
 			className: 'title',
 			begin: regex.optional(NAMESPACE_RE) + hljs.IDENT_RE,
 			relevance: 0
 		};
 		const FUNCTION_TITLE = regex.optional(NAMESPACE_RE) + hljs.IDENT_RE + '\\s*\\(';
+		// Bounded on purpose: an unbounded quantifier here consumes an arbitrarily
+		// long run of words, and when no function title follows it the engine retries
+		// the title at every token boundary of that run - quadratic in the size of
+		// the document.  See #4362.
+		const MAX_FUNCTION_TYPE_TOKENS = 12;
 
 		// https://en.cppreference.com/w/cpp/keyword
 		const RESERVED_KEYWORDS = ['alignas', 'alignof', 'and', 'and_eq', 'asm', 'atomic_cancel', 'atomic_commit', 'atomic_noexcept', 'auto', 'bitand', 'bitor', 'break', 'case', 'catch', 'class', 'co_await', 'co_return', 'co_yield', 'compl', 'concept', 'const_cast|10', 'consteval', 'constexpr', 'constinit', 'continue', 'decltype', 'default', 'delete', 'do', 'dynamic_cast|10', 'else', 'enum', 'explicit', 'export', 'extern', 'false', 'final', 'for', 'friend', 'goto', 'if', 'import', 'inline', 'module', 'mutable', 'namespace', 'new', 'noexcept', 'not', 'not_eq', 'nullptr', 'operator', 'or', 'or_eq', 'override', 'private', 'protected', 'public', 'reflexpr', 'register', 'reinterpret_cast|10', 'requires', 'return', 'sizeof', 'static_assert', 'static_cast|10', 'struct', 'switch', 'synchronized', 'template', 'this', 'thread_local', 'throw', 'transaction_safe', 'transaction_safe_dynamic', 'true', 'try', 'typedef', 'typeid', 'typename', 'union', 'using', 'virtual', 'volatile', 'while', 'xor', 'xor_eq'];
@@ -35152,9 +36081,9 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 				// Only for relevance, not highlighting.
 				_hint: FUNCTION_HINTS
 			},
-			begin: regex.concat(/\b/, /(?!decltype)/, /(?!if)/, /(?!for)/, /(?!switch)/, /(?!while)/, hljs.IDENT_RE, regex.lookahead(/(<[^<>]+>|)\s*\(/))
+			begin: regex.concat(/\b/, `(?!${RESERVED_KEYWORDS.join('|')})`, hljs.IDENT_RE, regex.lookahead(/(<[^<>]+>|)\s*\(/))
 		};
-		const EXPRESSION_CONTAINS = [FUNCTION_DISPATCH, PREPROCESSOR, CPP_PRIMITIVE_TYPES, C_LINE_COMMENT_MODE, hljs.C_BLOCK_COMMENT_MODE, NUMBERS, STRINGS];
+		const EXPRESSION_CONTAINS = [FUNCTION_DISPATCH, ...PREPROCESSORS, CPP_PRIMITIVE_TYPES, C_LINE_COMMENT_MODE, hljs.C_BLOCK_COMMENT_MODE, NUMBERS, STRINGS];
 		const EXPRESSION_CONTEXT = {
 			// This mode covers expression context where we can't expect a function
 			// definition and shouldn't highlight anything that looks like one:
@@ -35181,7 +36110,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 		};
 		const FUNCTION_DECLARATION = {
 			className: 'function',
-			begin: '(' + FUNCTION_TYPE_RE + '[\\*&\\s]+)+' + FUNCTION_TITLE,
+			begin: '(' + FUNCTION_TYPE_RE + '[\\*&\\s]+){1,' + MAX_FUNCTION_TYPE_TOKENS + '}' + FUNCTION_TITLE,
 			returnBegin: true,
 			end: /[{;=]/,
 			excludeEnd: true,
@@ -35230,7 +36159,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 					relevance: 0,
 					contains: ['self', C_LINE_COMMENT_MODE, hljs.C_BLOCK_COMMENT_MODE, STRINGS, NUMBERS, CPP_PRIMITIVE_TYPES]
 				}]
-			}, CPP_PRIMITIVE_TYPES, C_LINE_COMMENT_MODE, hljs.C_BLOCK_COMMENT_MODE, PREPROCESSOR]
+			}, CPP_PRIMITIVE_TYPES, C_LINE_COMMENT_MODE, hljs.C_BLOCK_COMMENT_MODE, ...PREPROCESSORS]
 		};
 		return {
 			name: 'C++',
@@ -35240,7 +36169,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 			classNameAliases: {
 				'function.dispatch': 'built_in'
 			},
-			contains: [].concat(EXPRESSION_CONTEXT, FUNCTION_DECLARATION, FUNCTION_DISPATCH, EXPRESSION_CONTAINS, [PREPROCESSOR, {
+			contains: [].concat(EXPRESSION_CONTEXT, FUNCTION_DECLARATION, FUNCTION_DISPATCH, EXPRESSION_CONTAINS, [...PREPROCESSORS, {
 				// containers: ie, `vector <int> rooms (9);`
 				begin: '\\b(deque|list|queue|priority_queue|pair|stack|vector|map|set|bitset|multiset|multimap|unordered_map|unordered_set|unordered_multiset|unordered_multimap|array|tuple|optional|variant|function|flat_map|flat_set)\\s*<(?!<)',
 				end: '>',
@@ -35284,14 +36213,20 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 		const TITLE_MODE = hljs.inherit(hljs.TITLE_MODE, {
 			begin: '[a-zA-Z](\\.?\\w)*'
 		});
+		// https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/builtin-types/integral-numeric-types
+		// https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/builtin-types/floating-point-numeric-types
+		// `_` separators sit between digits, and may also follow the `0x`/`0b` prefix
+		const DIGITS = '\\d(_*\\d)*';
+		const INTEGER_SUFFIX = '([uU][lL]?|[lL][uU]?)?';
+		const REAL_SUFFIX = '([fFdDmM]|[uU][lL]?|[lL][uU]?)?';
 		const NUMBERS = {
 			className: 'number',
 			variants: [{
-				begin: '\\b(0b[01\']+)'
+				begin: '\\b0[bB]_*[01](_*[01])*' + INTEGER_SUFFIX
 			}, {
-				begin: '(-?)\\b([\\d\']+(\\.[\\d\']*)?|\\.[\\d\']+)(u|U|l|L|ul|UL|f|F|b|B)'
+				begin: '(-?)\\b0[xX]_*[a-fA-F0-9](_*[a-fA-F0-9])*' + INTEGER_SUFFIX
 			}, {
-				begin: '(-?)(\\b0[xX][a-fA-F0-9\']+|(\\b[\\d\']+(\\.[\\d\']*)?|\\.[\\d\']+)([eE][-+]?[\\d\']+)?)'
+				begin: '(-?)(\\b' + DIGITS + '(\\.(' + DIGITS + ')?)?|\\.' + DIGITS + ')([eE][-+]?' + DIGITS + ')?' + REAL_SUFFIX
 			}],
 			relevance: 0
 		};
@@ -35481,6 +36416,10 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 				scope: 'number',
 				begin: /#(([0-9a-fA-F]{3,4})|(([0-9a-fA-F]{2}){3,4}))\b/
 			},
+			UNICODE_RANGE: {
+				scope: 'number',
+				begin: /\b[Uu]\+[0-9A-Fa-f][0-9A-Fa-f?]{0,5}(-[0-9A-Fa-f][0-9A-Fa-f]{0,5})?/
+			},
 			FUNCTION_DISPATCH: {
 				className: "built_in",
 				begin: /[\w-]+(?=\()/
@@ -35546,9 +36485,9 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 
 	// https://developer.mozilla.org/en-US/docs/Web/CSS/Pseudo-elements
 	const PSEUDO_ELEMENTS$2 = ['after', 'backdrop', 'before', 'cue', 'cue-region', 'first-letter', 'first-line', 'grammar-error', 'marker', 'part', 'placeholder', 'selection', 'slotted', 'spelling-error'].sort().reverse();
-	const ATTRIBUTES$2 = ['accent-color', 'align-content', 'align-items', 'align-self', 'alignment-baseline', 'all', 'anchor-name', 'animation', 'animation-composition', 'animation-delay', 'animation-direction', 'animation-duration', 'animation-fill-mode', 'animation-iteration-count', 'animation-name', 'animation-play-state', 'animation-range', 'animation-range-end', 'animation-range-start', 'animation-timeline', 'animation-timing-function', 'appearance', 'aspect-ratio', 'backdrop-filter', 'backface-visibility', 'background', 'background-attachment', 'background-blend-mode', 'background-clip', 'background-color', 'background-image', 'background-origin', 'background-position', 'background-position-x', 'background-position-y', 'background-repeat', 'background-size', 'baseline-shift', 'block-size', 'border', 'border-block', 'border-block-color', 'border-block-end', 'border-block-end-color', 'border-block-end-style', 'border-block-end-width', 'border-block-start', 'border-block-start-color', 'border-block-start-style', 'border-block-start-width', 'border-block-style', 'border-block-width', 'border-bottom', 'border-bottom-color', 'border-bottom-left-radius', 'border-bottom-right-radius', 'border-bottom-style', 'border-bottom-width', 'border-collapse', 'border-color', 'border-end-end-radius', 'border-end-start-radius', 'border-image', 'border-image-outset', 'border-image-repeat', 'border-image-slice', 'border-image-source', 'border-image-width', 'border-inline', 'border-inline-color', 'border-inline-end', 'border-inline-end-color', 'border-inline-end-style', 'border-inline-end-width', 'border-inline-start', 'border-inline-start-color', 'border-inline-start-style', 'border-inline-start-width', 'border-inline-style', 'border-inline-width', 'border-left', 'border-left-color', 'border-left-style', 'border-left-width', 'border-radius', 'border-right', 'border-right-color', 'border-right-style', 'border-right-width', 'border-spacing', 'border-start-end-radius', 'border-start-start-radius', 'border-style', 'border-top', 'border-top-color', 'border-top-left-radius', 'border-top-right-radius', 'border-top-style', 'border-top-width', 'border-width', 'bottom', 'box-align', 'box-decoration-break', 'box-direction', 'box-flex', 'box-flex-group', 'box-lines', 'box-ordinal-group', 'box-orient', 'box-pack', 'box-shadow', 'box-sizing', 'break-after', 'break-before', 'break-inside', 'caption-side', 'caret-color', 'clear', 'clip', 'clip-path', 'clip-rule', 'color', 'color-interpolation', 'color-interpolation-filters', 'color-profile', 'color-rendering', 'color-scheme', 'column-count', 'column-fill', 'column-gap', 'column-rule', 'column-rule-color', 'column-rule-style', 'column-rule-width', 'column-span', 'column-width', 'columns', 'contain', 'contain-intrinsic-block-size', 'contain-intrinsic-height', 'contain-intrinsic-inline-size', 'contain-intrinsic-size', 'contain-intrinsic-width', 'container', 'container-name', 'container-type', 'content', 'content-visibility', 'counter-increment', 'counter-reset', 'counter-set', 'cue', 'cue-after', 'cue-before', 'cursor', 'cx', 'cy', 'direction', 'display', 'dominant-baseline', 'empty-cells', 'enable-background', 'field-sizing', 'fill', 'fill-opacity', 'fill-rule', 'filter', 'flex', 'flex-basis', 'flex-direction', 'flex-flow', 'flex-grow', 'flex-shrink', 'flex-wrap', 'float', 'flood-color', 'flood-opacity', 'flow', 'font', 'font-display', 'font-family', 'font-feature-settings', 'font-kerning', 'font-language-override', 'font-optical-sizing', 'font-palette', 'font-size', 'font-size-adjust', 'font-smooth', 'font-smoothing', 'font-stretch', 'font-style', 'font-synthesis', 'font-synthesis-position', 'font-synthesis-small-caps', 'font-synthesis-style', 'font-synthesis-weight', 'font-variant', 'font-variant-alternates', 'font-variant-caps', 'font-variant-east-asian', 'font-variant-emoji', 'font-variant-ligatures', 'font-variant-numeric', 'font-variant-position', 'font-variation-settings', 'font-weight', 'forced-color-adjust', 'gap', 'glyph-orientation-horizontal', 'glyph-orientation-vertical', 'grid', 'grid-area', 'grid-auto-columns', 'grid-auto-flow', 'grid-auto-rows', 'grid-column', 'grid-column-end', 'grid-column-start', 'grid-gap', 'grid-row', 'grid-row-end', 'grid-row-start', 'grid-template', 'grid-template-areas', 'grid-template-columns', 'grid-template-rows', 'hanging-punctuation', 'height', 'hyphenate-character', 'hyphenate-limit-chars', 'hyphens', 'icon', 'image-orientation', 'image-rendering', 'image-resolution', 'ime-mode', 'initial-letter', 'initial-letter-align', 'inline-size', 'inset', 'inset-area', 'inset-block', 'inset-block-end', 'inset-block-start', 'inset-inline', 'inset-inline-end', 'inset-inline-start', 'isolation', 'justify-content', 'justify-items', 'justify-self', 'kerning', 'left', 'letter-spacing', 'lighting-color', 'line-break', 'line-height', 'line-height-step', 'list-style', 'list-style-image', 'list-style-position', 'list-style-type', 'margin', 'margin-block', 'margin-block-end', 'margin-block-start', 'margin-bottom', 'margin-inline', 'margin-inline-end', 'margin-inline-start', 'margin-left', 'margin-right', 'margin-top', 'margin-trim', 'marker', 'marker-end', 'marker-mid', 'marker-start', 'marks', 'mask', 'mask-border', 'mask-border-mode', 'mask-border-outset', 'mask-border-repeat', 'mask-border-slice', 'mask-border-source', 'mask-border-width', 'mask-clip', 'mask-composite', 'mask-image', 'mask-mode', 'mask-origin', 'mask-position', 'mask-repeat', 'mask-size', 'mask-type', 'masonry-auto-flow', 'math-depth', 'math-shift', 'math-style', 'max-block-size', 'max-height', 'max-inline-size', 'max-width', 'min-block-size', 'min-height', 'min-inline-size', 'min-width', 'mix-blend-mode', 'nav-down', 'nav-index', 'nav-left', 'nav-right', 'nav-up', 'none', 'normal', 'object-fit', 'object-position', 'offset', 'offset-anchor', 'offset-distance', 'offset-path', 'offset-position', 'offset-rotate', 'opacity', 'order', 'orphans', 'outline', 'outline-color', 'outline-offset', 'outline-style', 'outline-width', 'overflow', 'overflow-anchor', 'overflow-block', 'overflow-clip-margin', 'overflow-inline', 'overflow-wrap', 'overflow-x', 'overflow-y', 'overlay', 'overscroll-behavior', 'overscroll-behavior-block', 'overscroll-behavior-inline', 'overscroll-behavior-x', 'overscroll-behavior-y', 'padding', 'padding-block', 'padding-block-end', 'padding-block-start', 'padding-bottom', 'padding-inline', 'padding-inline-end', 'padding-inline-start', 'padding-left', 'padding-right', 'padding-top', 'page', 'page-break-after', 'page-break-before', 'page-break-inside', 'paint-order', 'pause', 'pause-after', 'pause-before', 'perspective', 'perspective-origin', 'place-content', 'place-items', 'place-self', 'pointer-events', 'position', 'position-anchor', 'position-visibility', 'print-color-adjust', 'quotes', 'r', 'resize', 'rest', 'rest-after', 'rest-before', 'right', 'rotate', 'row-gap', 'ruby-align', 'ruby-position', 'scale', 'scroll-behavior', 'scroll-margin', 'scroll-margin-block', 'scroll-margin-block-end', 'scroll-margin-block-start', 'scroll-margin-bottom', 'scroll-margin-inline', 'scroll-margin-inline-end', 'scroll-margin-inline-start', 'scroll-margin-left', 'scroll-margin-right', 'scroll-margin-top', 'scroll-padding', 'scroll-padding-block', 'scroll-padding-block-end', 'scroll-padding-block-start', 'scroll-padding-bottom', 'scroll-padding-inline', 'scroll-padding-inline-end', 'scroll-padding-inline-start', 'scroll-padding-left', 'scroll-padding-right', 'scroll-padding-top', 'scroll-snap-align', 'scroll-snap-stop', 'scroll-snap-type', 'scroll-timeline', 'scroll-timeline-axis', 'scroll-timeline-name', 'scrollbar-color', 'scrollbar-gutter', 'scrollbar-width', 'shape-image-threshold', 'shape-margin', 'shape-outside', 'shape-rendering', 'speak', 'speak-as', 'src',
+	const ATTRIBUTES$2 = ['accent-color', 'align-content', 'align-items', 'align-self', 'alignment-baseline', 'all', 'anchor-name', 'animation', 'animation-composition', 'animation-delay', 'animation-direction', 'animation-duration', 'animation-fill-mode', 'animation-iteration-count', 'animation-name', 'animation-play-state', 'animation-range', 'animation-range-end', 'animation-range-start', 'animation-timeline', 'animation-timing-function', 'appearance', 'aspect-ratio', 'backdrop-filter', 'backface-visibility', 'background', 'background-attachment', 'background-blend-mode', 'background-clip', 'background-color', 'background-image', 'background-origin', 'background-position', 'background-position-x', 'background-position-y', 'background-repeat', 'background-size', 'baseline-shift', 'block-size', 'border', 'border-block', 'border-block-color', 'border-block-end', 'border-block-end-color', 'border-block-end-style', 'border-block-end-width', 'border-block-start', 'border-block-start-color', 'border-block-start-style', 'border-block-start-width', 'border-block-style', 'border-block-width', 'border-bottom', 'border-bottom-color', 'border-bottom-left-radius', 'border-bottom-right-radius', 'border-bottom-style', 'border-bottom-width', 'border-collapse', 'border-color', 'border-end-end-radius', 'border-end-start-radius', 'border-image', 'border-image-outset', 'border-image-repeat', 'border-image-slice', 'border-image-source', 'border-image-width', 'border-inline', 'border-inline-color', 'border-inline-end', 'border-inline-end-color', 'border-inline-end-style', 'border-inline-end-width', 'border-inline-start', 'border-inline-start-color', 'border-inline-start-style', 'border-inline-start-width', 'border-inline-style', 'border-inline-width', 'border-left', 'border-left-color', 'border-left-style', 'border-left-width', 'border-radius', 'border-right', 'border-right-color', 'border-right-style', 'border-right-width', 'border-spacing', 'border-start-end-radius', 'border-start-start-radius', 'border-style', 'border-top', 'border-top-color', 'border-top-left-radius', 'border-top-right-radius', 'border-top-style', 'border-top-width', 'border-width', 'bottom', 'box-align', 'box-decoration-break', 'box-direction', 'box-flex', 'box-flex-group', 'box-lines', 'box-ordinal-group', 'box-orient', 'box-pack', 'box-shadow', 'box-sizing', 'break-after', 'break-before', 'break-inside', 'caption-side', 'caret-color', 'clear', 'clip', 'clip-path', 'clip-rule', 'color', 'color-interpolation', 'color-interpolation-filters', 'color-profile', 'color-rendering', 'color-scheme', 'column-count', 'column-fill', 'column-gap', 'column-rule', 'column-rule-color', 'column-rule-style', 'column-rule-width', 'column-span', 'column-width', 'columns', 'contain', 'contain-intrinsic-block-size', 'contain-intrinsic-height', 'contain-intrinsic-inline-size', 'contain-intrinsic-size', 'contain-intrinsic-width', 'container', 'container-name', 'container-type', 'content', 'content-visibility', 'corner-bottom-left-shape', 'corner-bottom-right-shape', 'corner-shape', 'corner-top-left-shape', 'corner-top-right-shape', 'counter-increment', 'counter-reset', 'counter-set', 'cue', 'cue-after', 'cue-before', 'cursor', 'cx', 'cy', 'direction', 'display', 'dominant-baseline', 'empty-cells', 'enable-background', 'field-sizing', 'fill', 'fill-opacity', 'fill-rule', 'filter', 'flex', 'flex-basis', 'flex-direction', 'flex-flow', 'flex-grow', 'flex-shrink', 'flex-wrap', 'float', 'flood-color', 'flood-opacity', 'flow', 'font', 'font-display', 'font-family', 'font-feature-settings', 'font-kerning', 'font-language-override', 'font-optical-sizing', 'font-palette', 'font-size', 'font-size-adjust', 'font-smooth', 'font-smoothing', 'font-stretch', 'font-style', 'font-synthesis', 'font-synthesis-position', 'font-synthesis-small-caps', 'font-synthesis-style', 'font-synthesis-weight', 'font-variant', 'font-variant-alternates', 'font-variant-caps', 'font-variant-east-asian', 'font-variant-emoji', 'font-variant-ligatures', 'font-variant-numeric', 'font-variant-position', 'font-variation-settings', 'font-weight', 'forced-color-adjust', 'gap', 'glyph-orientation-horizontal', 'glyph-orientation-vertical', 'grid', 'grid-area', 'grid-auto-columns', 'grid-auto-flow', 'grid-auto-rows', 'grid-column', 'grid-column-end', 'grid-column-start', 'grid-gap', 'grid-row', 'grid-row-end', 'grid-row-start', 'grid-template', 'grid-template-areas', 'grid-template-columns', 'grid-template-rows', 'hanging-punctuation', 'height', 'hyphenate-character', 'hyphenate-limit-chars', 'hyphens', 'icon', 'image-orientation', 'image-rendering', 'image-resolution', 'ime-mode', 'initial-letter', 'initial-letter-align', 'inline-size', 'inset', 'inset-area', 'inset-block', 'inset-block-end', 'inset-block-start', 'inset-inline', 'inset-inline-end', 'inset-inline-start', 'isolation', 'justify-content', 'justify-items', 'justify-self', 'kerning', 'left', 'letter-spacing', 'lighting-color', 'line-break', 'line-height', 'line-height-step', 'list-style', 'list-style-image', 'list-style-position', 'list-style-type', 'margin', 'margin-block', 'margin-block-end', 'margin-block-start', 'margin-bottom', 'margin-inline', 'margin-inline-end', 'margin-inline-start', 'margin-left', 'margin-right', 'margin-top', 'margin-trim', 'marker', 'marker-end', 'marker-mid', 'marker-start', 'marks', 'mask', 'mask-border', 'mask-border-mode', 'mask-border-outset', 'mask-border-repeat', 'mask-border-slice', 'mask-border-source', 'mask-border-width', 'mask-clip', 'mask-composite', 'mask-image', 'mask-mode', 'mask-origin', 'mask-position', 'mask-repeat', 'mask-size', 'mask-type', 'masonry-auto-flow', 'math-depth', 'math-shift', 'math-style', 'max-block-size', 'max-height', 'max-inline-size', 'max-width', 'min-block-size', 'min-height', 'min-inline-size', 'min-width', 'mix-blend-mode', 'nav-down', 'nav-index', 'nav-left', 'nav-right', 'nav-up', 'none', 'normal', 'object-fit', 'object-position', 'offset', 'offset-anchor', 'offset-distance', 'offset-path', 'offset-position', 'offset-rotate', 'opacity', 'order', 'orphans', 'outline', 'outline-color', 'outline-offset', 'outline-style', 'outline-width', 'overflow', 'overflow-anchor', 'overflow-block', 'overflow-clip-margin', 'overflow-inline', 'overflow-wrap', 'overflow-x', 'overflow-y', 'overlay', 'overscroll-behavior', 'overscroll-behavior-block', 'overscroll-behavior-inline', 'overscroll-behavior-x', 'overscroll-behavior-y', 'padding', 'padding-block', 'padding-block-end', 'padding-block-start', 'padding-bottom', 'padding-inline', 'padding-inline-end', 'padding-inline-start', 'padding-left', 'padding-right', 'padding-top', 'page', 'page-break-after', 'page-break-before', 'page-break-inside', 'paint-order', 'pause', 'pause-after', 'pause-before', 'perspective', 'perspective-origin', 'place-content', 'place-items', 'place-self', 'pointer-events', 'position', 'position-anchor', 'position-visibility', 'print-color-adjust', 'quotes', 'r', 'resize', 'rest', 'rest-after', 'rest-before', 'right', 'rotate', 'row-gap', 'ruby-align', 'ruby-position', 'scale', 'scroll-behavior', 'scroll-margin', 'scroll-margin-block', 'scroll-margin-block-end', 'scroll-margin-block-start', 'scroll-margin-bottom', 'scroll-margin-inline', 'scroll-margin-inline-end', 'scroll-margin-inline-start', 'scroll-margin-left', 'scroll-margin-right', 'scroll-margin-top', 'scroll-padding', 'scroll-padding-block', 'scroll-padding-block-end', 'scroll-padding-block-start', 'scroll-padding-bottom', 'scroll-padding-inline', 'scroll-padding-inline-end', 'scroll-padding-inline-start', 'scroll-padding-left', 'scroll-padding-right', 'scroll-padding-top', 'scroll-snap-align', 'scroll-snap-stop', 'scroll-snap-type', 'scroll-timeline', 'scroll-timeline-axis', 'scroll-timeline-name', 'scrollbar-color', 'scrollbar-gutter', 'scrollbar-width', 'shape-image-threshold', 'shape-margin', 'shape-outside', 'shape-rendering', 'speak', 'speak-as', 'src',
 	// @font-face
-	'stop-color', 'stop-opacity', 'stroke', 'stroke-dasharray', 'stroke-dashoffset', 'stroke-linecap', 'stroke-linejoin', 'stroke-miterlimit', 'stroke-opacity', 'stroke-width', 'tab-size', 'table-layout', 'text-align', 'text-align-all', 'text-align-last', 'text-anchor', 'text-combine-upright', 'text-decoration', 'text-decoration-color', 'text-decoration-line', 'text-decoration-skip', 'text-decoration-skip-ink', 'text-decoration-style', 'text-decoration-thickness', 'text-emphasis', 'text-emphasis-color', 'text-emphasis-position', 'text-emphasis-style', 'text-indent', 'text-justify', 'text-orientation', 'text-overflow', 'text-rendering', 'text-shadow', 'text-size-adjust', 'text-transform', 'text-underline-offset', 'text-underline-position', 'text-wrap', 'text-wrap-mode', 'text-wrap-style', 'timeline-scope', 'top', 'touch-action', 'transform', 'transform-box', 'transform-origin', 'transform-style', 'transition', 'transition-behavior', 'transition-delay', 'transition-duration', 'transition-property', 'transition-timing-function', 'translate', 'unicode-bidi', 'user-modify', 'user-select', 'vector-effect', 'vertical-align', 'view-timeline', 'view-timeline-axis', 'view-timeline-inset', 'view-timeline-name', 'view-transition-name', 'visibility', 'voice-balance', 'voice-duration', 'voice-family', 'voice-pitch', 'voice-range', 'voice-rate', 'voice-stress', 'voice-volume', 'white-space', 'white-space-collapse', 'widows', 'width', 'will-change', 'word-break', 'word-spacing', 'word-wrap', 'writing-mode', 'x', 'y', 'z-index', 'zoom'].sort().reverse();
+	'stop-color', 'stop-opacity', 'stroke', 'stroke-dasharray', 'stroke-dashoffset', 'stroke-linecap', 'stroke-linejoin', 'stroke-miterlimit', 'stroke-opacity', 'stroke-width', 'tab-size', 'table-layout', 'text-align', 'text-align-all', 'text-align-last', 'text-anchor', 'text-combine-upright', 'text-decoration', 'text-decoration-color', 'text-decoration-line', 'text-decoration-skip', 'text-decoration-skip-ink', 'text-decoration-style', 'text-decoration-thickness', 'text-emphasis', 'text-emphasis-color', 'text-emphasis-position', 'text-emphasis-style', 'text-indent', 'text-justify', 'text-orientation', 'text-overflow', 'text-rendering', 'text-shadow', 'text-size-adjust', 'text-transform', 'text-underline-offset', 'text-underline-position', 'text-wrap', 'text-wrap-mode', 'text-wrap-style', 'timeline-scope', 'top', 'touch-action', 'transform', 'transform-box', 'transform-origin', 'transform-style', 'transition', 'transition-behavior', 'transition-delay', 'transition-duration', 'transition-property', 'transition-timing-function', 'translate', 'unicode-bidi', 'unicode-range', 'user-modify', 'user-select', 'vector-effect', 'vertical-align', 'view-timeline', 'view-timeline-axis', 'view-timeline-inset', 'view-timeline-name', 'view-transition-name', 'visibility', 'voice-balance', 'voice-duration', 'voice-family', 'voice-pitch', 'voice-range', 'voice-rate', 'voice-stress', 'voice-volume', 'white-space', 'white-space-collapse', 'widows', 'width', 'will-change', 'word-break', 'word-spacing', 'word-wrap', 'writing-mode', 'x', 'y', 'z-index', 'zoom'].sort().reverse();
 
 	/*
 	Language: CSS
@@ -35612,9 +36551,9 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 			{
 				begin: /:/,
 				end: /[;}{]/,
-				contains: [modes.BLOCK_COMMENT, modes.HEXCOLOR, modes.IMPORTANT, modes.CSS_NUMBER_MODE, ...STRINGS,
+				contains: [modes.BLOCK_COMMENT, modes.HEXCOLOR, modes.IMPORTANT, modes.CSS_NUMBER_MODE, modes.UNICODE_RANGE, ...STRINGS,
 				// needed to highlight these as strings and to avoid issues with
-				// illegal characters that might be inside urls that would tigger the
+				// illegal characters that might be inside urls that would trigger the
 				// languages illegal stack
 				{
 					begin: /(url|data-uri)\(/,
@@ -35681,7 +36620,15 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 			contains: [{
 				className: 'meta',
 				relevance: 10,
-				match: regex.either(/^@@ +-\d+,\d+ +\+\d+,\d+ +@@/, /^\*\*\* +\d+,\d+ +\*\*\*\*$/, /^--- +\d+,\d+ +----$/)
+				match: regex.either(/^@@ +-\d+,\d+ +\+\d+,\d+ +@@/,
+				// @@ -1,2 +1,2 @@
+				/^@@ +-\d+ +\+\d+,\d+ +@@/,
+				// @@ -1 +1,2 @@
+				/^@@ +-\d+,\d+ +\+\d+ +@@/,
+				// @@ -1,2 +1 @@
+				/^@@ +-\d+ +\+\d+ +@@/,
+				// @@ -1 +1 @@
+				/^\*\*\* +\d+,\d+ +\*\*\*\*$/, /^--- +\d+,\d+ +----$/)
 			}, {
 				className: 'comment',
 				variants: [{
@@ -35750,6 +36697,10 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 				}, {
 					match: /-?\b0[oO](_?[0-7])*i?/,
 					// leading 0o octal
+					relevance: 0
+				}, {
+					match: /-?\b0[bB](_?[01])*i?/,
+					// leading 0b binary
 					relevance: 0
 				}, {
 					match: /-?\.\d(_?\d)*([eE][+-]?\d(_?\d)*)?i?/,
@@ -35939,8 +36890,25 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 	/** @type LanguageFn */
 	function java(hljs) {
 		const regex = hljs.regex;
+
+		// A Java identifier consisting of letters, digits, underscore or dollar sign, not beginning with a digit
 		const JAVA_IDENT_RE = '[\u00C0-\u02B8a-zA-Z_$][\u00C0-\u02B8a-zA-Z_$0-9]*';
-		const GENERIC_IDENT_RE = JAVA_IDENT_RE + recurRegex('(?:<' + JAVA_IDENT_RE + '~~~(?:\\s*,\\s*' + JAVA_IDENT_RE + '~~~)*>)?', /~~~/g, 2);
+
+		// Optional 1..n pairs of square brackets identifying an array type
+		const ARRAY_BRACKETS_OPTIONAL_RE = '(?:(?:\\s*\\[\\s*])+)?';
+
+		// A simple Java type: a type name, optionally followed by type arguments and/or array brackets
+		// '<@@@>' is replaced with the pattern for optional type arguments by recurRegex below.
+		const SIMPLE_TYPE_RE = JAVA_IDENT_RE + '<@@@>' + ARRAY_BRACKETS_OPTIONAL_RE;
+
+		// A bounded (? extends Number) or unbounded (?) wildcard type
+		const WILDCARD_TYPE_RE = '\\?(?:\\s+(?:extends|super)\\s+' + SIMPLE_TYPE_RE + ')?';
+
+		// A Java type argument, consisting of a wildcard or simple type
+		const TYPE_ARG_RE = '(?:' + WILDCARD_TYPE_RE + '|' + SIMPLE_TYPE_RE + ')';
+
+		// Pattern for optional generic type arguments in angle brackets with up to 2 levels of nested type arguments
+		const TYPE_ARGS_OPTIONAL_RE = recurRegex('(?:\\s*<\\s*' + TYPE_ARG_RE + '(?:\\s*,\\s*' + TYPE_ARG_RE + ')*\\s*>)?', /<@@@>/g, 2);
 		const MAIN_KEYWORDS = ['synchronized', 'abstract', 'private', 'var', 'static', 'if', 'const ', 'for', 'while', 'strictfp', 'finally', 'protected', 'import', 'native', 'final', 'void', 'enum', 'else', 'break', 'transient', 'catch', 'instanceof', 'volatile', 'case', 'assert', 'package', 'default', 'public', 'try', 'switch', 'continue', 'throws', 'protected', 'public', 'private', 'module', 'requires', 'exports', 'do', 'sealed', 'yield', 'permits', 'goto', 'when'];
 		const BUILT_INS = ['super', 'this'];
 		const LITERALS = ['false', 'true', 'null'];
@@ -36006,11 +36974,16 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 				match: /non-sealed/,
 				scope: "keyword"
 			}, {
-				begin: [regex.concat(/(?!else)/, JAVA_IDENT_RE), /\s+/, JAVA_IDENT_RE, /\s+/, /=(?!=)/],
+				// Expression keywords prevent keyword-led expressions from being
+				// recognized as variable or method declarations.
+				beginKeywords: 'new throw return else yield assert',
+				relevance: 0
+			}, {
+				begin: [JAVA_IDENT_RE, regex.concat(TYPE_ARGS_OPTIONAL_RE, ARRAY_BRACKETS_OPTIONAL_RE, /\s+/), JAVA_IDENT_RE, ARRAY_BRACKETS_OPTIONAL_RE, /\s*/, /=(?!=)/],
 				className: {
 					1: "type",
 					3: "variable",
-					5: "operator"
+					6: "operator"
 				}
 			}, {
 				begin: [/record/, /\s+/, JAVA_IDENT_RE],
@@ -36020,14 +36993,10 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 				},
 				contains: [PARAMS, hljs.C_LINE_COMMENT_MODE, hljs.C_BLOCK_COMMENT_MODE]
 			}, {
-				// Expression keywords prevent 'keyword Name(...)' from being
-				// recognized as a function definition
-				beginKeywords: 'new throw return else',
-				relevance: 0
-			}, {
-				begin: ['(?:' + GENERIC_IDENT_RE + '\\s+)', hljs.UNDERSCORE_IDENT_RE, /\s*(?=\()/],
+				begin: [JAVA_IDENT_RE, regex.concat(TYPE_ARGS_OPTIONAL_RE, ARRAY_BRACKETS_OPTIONAL_RE, /\s+/), JAVA_IDENT_RE, /\s*(?=\()/],
 				className: {
-					2: "title.function"
+					1: "type",
+					3: "title.function"
 				},
 				keywords: KEYWORDS,
 				contains: [{
@@ -36043,7 +37012,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 	}
 
 	const IDENT_RE = '[A-Za-z$_][0-9A-Za-z$_]*';
-	const KEYWORDS = ["as",
+	const KEYWORDS$1 = ["as",
 	// for exports
 	"in", "of", "if", "for", "while", "finally", "var", "new", "function", "do", "return", "void", "else", "break", "catch", "instanceof", "with", "throw", "case", "default", "try", "switch", "continue", "typeof", "delete", "let", "yield", "const", "class",
 	// JS handles these with a special rule
@@ -36078,7 +37047,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 	"WebAssembly"];
 	const ERROR_TYPES = ["Error", "EvalError", "InternalError", "RangeError", "ReferenceError", "SyntaxError", "TypeError", "URIError"];
 	const BUILT_IN_GLOBALS = ["setInterval", "setTimeout", "clearInterval", "clearTimeout", "require", "exports", "eval", "isFinite", "isNaN", "parseFloat", "parseInt", "decodeURI", "decodeURIComponent", "encodeURI", "encodeURIComponent", "escape", "unescape"];
-	const BUILT_IN_VARIABLES = ["arguments", "this", "super", "console", "window", "document", "localStorage", "sessionStorage", "module", "global" // Node.js
+	const BUILT_IN_VARIABLES = ["arguments", "this", "super", "console", "window", "document", "localStorage", "sessionStorage", "module", "self", "global" // Node.js
 	];
 	const BUILT_INS = [].concat(BUILT_IN_GLOBALS, TYPES, ERROR_TYPES);
 
@@ -36172,9 +37141,9 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 				}
 			}
 		};
-		const KEYWORDS$1 = {
+		const KEYWORDS$1$1 = {
 			$pattern: IDENT_RE,
-			keyword: KEYWORDS,
+			keyword: KEYWORDS$1,
 			literal: LITERALS,
 			built_in: BUILT_INS,
 			"variable.language": BUILT_IN_VARIABLES
@@ -36218,7 +37187,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 			className: 'subst',
 			begin: '\\$\\{',
 			end: '\\}',
-			keywords: KEYWORDS$1,
+			keywords: KEYWORDS$1$1,
 			contains: [] // defined later
 		};
 		const HTML_TEMPLATE = {
@@ -36304,7 +37273,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 			// it from ending too early by matching another }
 			begin: /\{/,
 			end: /\}/,
-			keywords: KEYWORDS$1,
+			keywords: KEYWORDS$1$1,
 			contains: ["self"].concat(SUBST_INTERNALS)
 		});
 		const SUBST_AND_COMMENTS = [].concat(COMMENT, SUBST.contains);
@@ -36313,7 +37282,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 		{
 			begin: /(\s*)\(/,
 			end: /\)/,
-			keywords: KEYWORDS$1,
+			keywords: KEYWORDS$1$1,
 			contains: ["self"].concat(SUBST_AND_COMMENTS)
 		}]);
 		const PARAMS = {
@@ -36324,7 +37293,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 			end: /\)/,
 			excludeBegin: true,
 			excludeEnd: true,
-			keywords: KEYWORDS$1,
+			keywords: KEYWORDS$1$1,
 			contains: PARAMS_CONTAINS
 		};
 
@@ -36404,7 +37373,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 			return regex.concat("(?!", list.join("|"), ")");
 		}
 		const FUNCTION_CALL = {
-			match: regex.concat(/\b/, noneOf([...BUILT_IN_GLOBALS, "super", "import"].map(x => `${x}\\s*\\(`)), IDENT_RE$1, regex.lookahead(/\s*\(/)),
+			match: regex.concat(/\b/, noneOf([...BUILT_IN_GLOBALS, "super", "import", "await"].map(x => `${x}\\s*\\(`)), IDENT_RE$1, regex.lookahead(/\s*\(/)),
 			className: "title.function",
 			relevance: 0
 		};
@@ -36442,13 +37411,13 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 		return {
 			name: 'JavaScript',
 			aliases: ['js', 'jsx', 'mjs', 'cjs'],
-			keywords: KEYWORDS$1,
+			keywords: KEYWORDS$1$1,
 			// this will be extended by TypeScript
 			exports: {
 				PARAMS_CONTAINS,
 				CLASS_REFERENCE
 			},
-			illegal: /#(?![$_A-z])/,
+			illegal: /#(?![$_A-Za-z])/,
 			contains: [hljs.SHEBANG({
 				label: "shebang",
 				binary: "node",
@@ -36488,7 +37457,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 							end: /\)/,
 							excludeBegin: true,
 							excludeEnd: true,
-							keywords: KEYWORDS$1,
+							keywords: KEYWORDS$1$1,
 							contains: PARAMS_CONTAINS
 						}]
 					}]
@@ -36563,18 +37532,25 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 		};
 	}
 
+	const EXTENDED_NUMBER_RE = '([-+]?)(\\b0[xX][a-fA-F0-9]+|(\\b\\d+(\\.\\d*)?|\\.\\d+)([eE][-+]?\\d+)?)|NaN|[-+]?Infinity'; // 0x..., 0..., decimal, float
+
+	const EXTENDED_NUMBER_MODE = {
+		scope: 'number',
+		match: EXTENDED_NUMBER_RE,
+		relevance: 0
+	};
+
 	/*
 	Language: JSON
 	Description: JSON (JavaScript Object Notation) is a lightweight data-interchange format.
-	Author: Ivan Sagalaev <maniac@softwaremaniacs.org>
-	Website: http://www.json.org
+	Websites: http://www.json.org, https://www.json5.org
 	Category: common, protocols, web
 	*/
 
 	function json(hljs) {
 		const ATTRIBUTE = {
 			className: 'attr',
-			begin: /"(\\.|[^\\"\r\n])*"(?=\s*:)/,
+			begin: /(("(\\.|[^\\"\r\n])*")|('(\\.|[^\\'\r\n])*'))(?=\s*:)/,
 			relevance: 1.01
 		};
 		const PUNCTUATION = {
@@ -36594,11 +37570,11 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 		};
 		return {
 			name: 'JSON',
-			aliases: ['jsonc'],
+			aliases: ['jsonc', 'json5'],
 			keywords: {
 				literal: LITERALS
 			},
-			contains: [ATTRIBUTE, PUNCTUATION, hljs.QUOTE_STRING_MODE, LITERALS_MODE, hljs.C_NUMBER_MODE, hljs.C_LINE_COMMENT_MODE, hljs.C_BLOCK_COMMENT_MODE],
+			contains: [ATTRIBUTE, PUNCTUATION, hljs.APOS_STRING_MODE, hljs.QUOTE_STRING_MODE, LITERALS_MODE, EXTENDED_NUMBER_MODE, hljs.C_LINE_COMMENT_MODE, hljs.C_BLOCK_COMMENT_MODE],
 			illegal: '\\S'
 		};
 	}
@@ -36747,7 +37723,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 		KOTLIN_PAREN_TYPE.variants[1].contains = [KOTLIN_PAREN_TYPE2];
 		return {
 			name: 'Kotlin',
-			aliases: ['kt', 'kts'],
+			aliases: ['kt', 'kts', 'ktm', 'ktx'],
 			keywords: KEYWORDS,
 			contains: [hljs.COMMENT('/\\*\\*', '\\*/', {
 				relevance: 0,
@@ -36834,6 +37810,10 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 				scope: 'number',
 				begin: /#(([0-9a-fA-F]{3,4})|(([0-9a-fA-F]{2}){3,4}))\b/
 			},
+			UNICODE_RANGE: {
+				scope: 'number',
+				begin: /\b[Uu]\+[0-9A-Fa-f][0-9A-Fa-f?]{0,5}(-[0-9A-Fa-f][0-9A-Fa-f]{0,5})?/
+			},
 			FUNCTION_DISPATCH: {
 				className: "built_in",
 				begin: /[\w-]+(?=\()/
@@ -36899,9 +37879,9 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 
 	// https://developer.mozilla.org/en-US/docs/Web/CSS/Pseudo-elements
 	const PSEUDO_ELEMENTS$1 = ['after', 'backdrop', 'before', 'cue', 'cue-region', 'first-letter', 'first-line', 'grammar-error', 'marker', 'part', 'placeholder', 'selection', 'slotted', 'spelling-error'].sort().reverse();
-	const ATTRIBUTES$1 = ['accent-color', 'align-content', 'align-items', 'align-self', 'alignment-baseline', 'all', 'anchor-name', 'animation', 'animation-composition', 'animation-delay', 'animation-direction', 'animation-duration', 'animation-fill-mode', 'animation-iteration-count', 'animation-name', 'animation-play-state', 'animation-range', 'animation-range-end', 'animation-range-start', 'animation-timeline', 'animation-timing-function', 'appearance', 'aspect-ratio', 'backdrop-filter', 'backface-visibility', 'background', 'background-attachment', 'background-blend-mode', 'background-clip', 'background-color', 'background-image', 'background-origin', 'background-position', 'background-position-x', 'background-position-y', 'background-repeat', 'background-size', 'baseline-shift', 'block-size', 'border', 'border-block', 'border-block-color', 'border-block-end', 'border-block-end-color', 'border-block-end-style', 'border-block-end-width', 'border-block-start', 'border-block-start-color', 'border-block-start-style', 'border-block-start-width', 'border-block-style', 'border-block-width', 'border-bottom', 'border-bottom-color', 'border-bottom-left-radius', 'border-bottom-right-radius', 'border-bottom-style', 'border-bottom-width', 'border-collapse', 'border-color', 'border-end-end-radius', 'border-end-start-radius', 'border-image', 'border-image-outset', 'border-image-repeat', 'border-image-slice', 'border-image-source', 'border-image-width', 'border-inline', 'border-inline-color', 'border-inline-end', 'border-inline-end-color', 'border-inline-end-style', 'border-inline-end-width', 'border-inline-start', 'border-inline-start-color', 'border-inline-start-style', 'border-inline-start-width', 'border-inline-style', 'border-inline-width', 'border-left', 'border-left-color', 'border-left-style', 'border-left-width', 'border-radius', 'border-right', 'border-right-color', 'border-right-style', 'border-right-width', 'border-spacing', 'border-start-end-radius', 'border-start-start-radius', 'border-style', 'border-top', 'border-top-color', 'border-top-left-radius', 'border-top-right-radius', 'border-top-style', 'border-top-width', 'border-width', 'bottom', 'box-align', 'box-decoration-break', 'box-direction', 'box-flex', 'box-flex-group', 'box-lines', 'box-ordinal-group', 'box-orient', 'box-pack', 'box-shadow', 'box-sizing', 'break-after', 'break-before', 'break-inside', 'caption-side', 'caret-color', 'clear', 'clip', 'clip-path', 'clip-rule', 'color', 'color-interpolation', 'color-interpolation-filters', 'color-profile', 'color-rendering', 'color-scheme', 'column-count', 'column-fill', 'column-gap', 'column-rule', 'column-rule-color', 'column-rule-style', 'column-rule-width', 'column-span', 'column-width', 'columns', 'contain', 'contain-intrinsic-block-size', 'contain-intrinsic-height', 'contain-intrinsic-inline-size', 'contain-intrinsic-size', 'contain-intrinsic-width', 'container', 'container-name', 'container-type', 'content', 'content-visibility', 'counter-increment', 'counter-reset', 'counter-set', 'cue', 'cue-after', 'cue-before', 'cursor', 'cx', 'cy', 'direction', 'display', 'dominant-baseline', 'empty-cells', 'enable-background', 'field-sizing', 'fill', 'fill-opacity', 'fill-rule', 'filter', 'flex', 'flex-basis', 'flex-direction', 'flex-flow', 'flex-grow', 'flex-shrink', 'flex-wrap', 'float', 'flood-color', 'flood-opacity', 'flow', 'font', 'font-display', 'font-family', 'font-feature-settings', 'font-kerning', 'font-language-override', 'font-optical-sizing', 'font-palette', 'font-size', 'font-size-adjust', 'font-smooth', 'font-smoothing', 'font-stretch', 'font-style', 'font-synthesis', 'font-synthesis-position', 'font-synthesis-small-caps', 'font-synthesis-style', 'font-synthesis-weight', 'font-variant', 'font-variant-alternates', 'font-variant-caps', 'font-variant-east-asian', 'font-variant-emoji', 'font-variant-ligatures', 'font-variant-numeric', 'font-variant-position', 'font-variation-settings', 'font-weight', 'forced-color-adjust', 'gap', 'glyph-orientation-horizontal', 'glyph-orientation-vertical', 'grid', 'grid-area', 'grid-auto-columns', 'grid-auto-flow', 'grid-auto-rows', 'grid-column', 'grid-column-end', 'grid-column-start', 'grid-gap', 'grid-row', 'grid-row-end', 'grid-row-start', 'grid-template', 'grid-template-areas', 'grid-template-columns', 'grid-template-rows', 'hanging-punctuation', 'height', 'hyphenate-character', 'hyphenate-limit-chars', 'hyphens', 'icon', 'image-orientation', 'image-rendering', 'image-resolution', 'ime-mode', 'initial-letter', 'initial-letter-align', 'inline-size', 'inset', 'inset-area', 'inset-block', 'inset-block-end', 'inset-block-start', 'inset-inline', 'inset-inline-end', 'inset-inline-start', 'isolation', 'justify-content', 'justify-items', 'justify-self', 'kerning', 'left', 'letter-spacing', 'lighting-color', 'line-break', 'line-height', 'line-height-step', 'list-style', 'list-style-image', 'list-style-position', 'list-style-type', 'margin', 'margin-block', 'margin-block-end', 'margin-block-start', 'margin-bottom', 'margin-inline', 'margin-inline-end', 'margin-inline-start', 'margin-left', 'margin-right', 'margin-top', 'margin-trim', 'marker', 'marker-end', 'marker-mid', 'marker-start', 'marks', 'mask', 'mask-border', 'mask-border-mode', 'mask-border-outset', 'mask-border-repeat', 'mask-border-slice', 'mask-border-source', 'mask-border-width', 'mask-clip', 'mask-composite', 'mask-image', 'mask-mode', 'mask-origin', 'mask-position', 'mask-repeat', 'mask-size', 'mask-type', 'masonry-auto-flow', 'math-depth', 'math-shift', 'math-style', 'max-block-size', 'max-height', 'max-inline-size', 'max-width', 'min-block-size', 'min-height', 'min-inline-size', 'min-width', 'mix-blend-mode', 'nav-down', 'nav-index', 'nav-left', 'nav-right', 'nav-up', 'none', 'normal', 'object-fit', 'object-position', 'offset', 'offset-anchor', 'offset-distance', 'offset-path', 'offset-position', 'offset-rotate', 'opacity', 'order', 'orphans', 'outline', 'outline-color', 'outline-offset', 'outline-style', 'outline-width', 'overflow', 'overflow-anchor', 'overflow-block', 'overflow-clip-margin', 'overflow-inline', 'overflow-wrap', 'overflow-x', 'overflow-y', 'overlay', 'overscroll-behavior', 'overscroll-behavior-block', 'overscroll-behavior-inline', 'overscroll-behavior-x', 'overscroll-behavior-y', 'padding', 'padding-block', 'padding-block-end', 'padding-block-start', 'padding-bottom', 'padding-inline', 'padding-inline-end', 'padding-inline-start', 'padding-left', 'padding-right', 'padding-top', 'page', 'page-break-after', 'page-break-before', 'page-break-inside', 'paint-order', 'pause', 'pause-after', 'pause-before', 'perspective', 'perspective-origin', 'place-content', 'place-items', 'place-self', 'pointer-events', 'position', 'position-anchor', 'position-visibility', 'print-color-adjust', 'quotes', 'r', 'resize', 'rest', 'rest-after', 'rest-before', 'right', 'rotate', 'row-gap', 'ruby-align', 'ruby-position', 'scale', 'scroll-behavior', 'scroll-margin', 'scroll-margin-block', 'scroll-margin-block-end', 'scroll-margin-block-start', 'scroll-margin-bottom', 'scroll-margin-inline', 'scroll-margin-inline-end', 'scroll-margin-inline-start', 'scroll-margin-left', 'scroll-margin-right', 'scroll-margin-top', 'scroll-padding', 'scroll-padding-block', 'scroll-padding-block-end', 'scroll-padding-block-start', 'scroll-padding-bottom', 'scroll-padding-inline', 'scroll-padding-inline-end', 'scroll-padding-inline-start', 'scroll-padding-left', 'scroll-padding-right', 'scroll-padding-top', 'scroll-snap-align', 'scroll-snap-stop', 'scroll-snap-type', 'scroll-timeline', 'scroll-timeline-axis', 'scroll-timeline-name', 'scrollbar-color', 'scrollbar-gutter', 'scrollbar-width', 'shape-image-threshold', 'shape-margin', 'shape-outside', 'shape-rendering', 'speak', 'speak-as', 'src',
+	const ATTRIBUTES$1 = ['accent-color', 'align-content', 'align-items', 'align-self', 'alignment-baseline', 'all', 'anchor-name', 'animation', 'animation-composition', 'animation-delay', 'animation-direction', 'animation-duration', 'animation-fill-mode', 'animation-iteration-count', 'animation-name', 'animation-play-state', 'animation-range', 'animation-range-end', 'animation-range-start', 'animation-timeline', 'animation-timing-function', 'appearance', 'aspect-ratio', 'backdrop-filter', 'backface-visibility', 'background', 'background-attachment', 'background-blend-mode', 'background-clip', 'background-color', 'background-image', 'background-origin', 'background-position', 'background-position-x', 'background-position-y', 'background-repeat', 'background-size', 'baseline-shift', 'block-size', 'border', 'border-block', 'border-block-color', 'border-block-end', 'border-block-end-color', 'border-block-end-style', 'border-block-end-width', 'border-block-start', 'border-block-start-color', 'border-block-start-style', 'border-block-start-width', 'border-block-style', 'border-block-width', 'border-bottom', 'border-bottom-color', 'border-bottom-left-radius', 'border-bottom-right-radius', 'border-bottom-style', 'border-bottom-width', 'border-collapse', 'border-color', 'border-end-end-radius', 'border-end-start-radius', 'border-image', 'border-image-outset', 'border-image-repeat', 'border-image-slice', 'border-image-source', 'border-image-width', 'border-inline', 'border-inline-color', 'border-inline-end', 'border-inline-end-color', 'border-inline-end-style', 'border-inline-end-width', 'border-inline-start', 'border-inline-start-color', 'border-inline-start-style', 'border-inline-start-width', 'border-inline-style', 'border-inline-width', 'border-left', 'border-left-color', 'border-left-style', 'border-left-width', 'border-radius', 'border-right', 'border-right-color', 'border-right-style', 'border-right-width', 'border-spacing', 'border-start-end-radius', 'border-start-start-radius', 'border-style', 'border-top', 'border-top-color', 'border-top-left-radius', 'border-top-right-radius', 'border-top-style', 'border-top-width', 'border-width', 'bottom', 'box-align', 'box-decoration-break', 'box-direction', 'box-flex', 'box-flex-group', 'box-lines', 'box-ordinal-group', 'box-orient', 'box-pack', 'box-shadow', 'box-sizing', 'break-after', 'break-before', 'break-inside', 'caption-side', 'caret-color', 'clear', 'clip', 'clip-path', 'clip-rule', 'color', 'color-interpolation', 'color-interpolation-filters', 'color-profile', 'color-rendering', 'color-scheme', 'column-count', 'column-fill', 'column-gap', 'column-rule', 'column-rule-color', 'column-rule-style', 'column-rule-width', 'column-span', 'column-width', 'columns', 'contain', 'contain-intrinsic-block-size', 'contain-intrinsic-height', 'contain-intrinsic-inline-size', 'contain-intrinsic-size', 'contain-intrinsic-width', 'container', 'container-name', 'container-type', 'content', 'content-visibility', 'corner-bottom-left-shape', 'corner-bottom-right-shape', 'corner-shape', 'corner-top-left-shape', 'corner-top-right-shape', 'counter-increment', 'counter-reset', 'counter-set', 'cue', 'cue-after', 'cue-before', 'cursor', 'cx', 'cy', 'direction', 'display', 'dominant-baseline', 'empty-cells', 'enable-background', 'field-sizing', 'fill', 'fill-opacity', 'fill-rule', 'filter', 'flex', 'flex-basis', 'flex-direction', 'flex-flow', 'flex-grow', 'flex-shrink', 'flex-wrap', 'float', 'flood-color', 'flood-opacity', 'flow', 'font', 'font-display', 'font-family', 'font-feature-settings', 'font-kerning', 'font-language-override', 'font-optical-sizing', 'font-palette', 'font-size', 'font-size-adjust', 'font-smooth', 'font-smoothing', 'font-stretch', 'font-style', 'font-synthesis', 'font-synthesis-position', 'font-synthesis-small-caps', 'font-synthesis-style', 'font-synthesis-weight', 'font-variant', 'font-variant-alternates', 'font-variant-caps', 'font-variant-east-asian', 'font-variant-emoji', 'font-variant-ligatures', 'font-variant-numeric', 'font-variant-position', 'font-variation-settings', 'font-weight', 'forced-color-adjust', 'gap', 'glyph-orientation-horizontal', 'glyph-orientation-vertical', 'grid', 'grid-area', 'grid-auto-columns', 'grid-auto-flow', 'grid-auto-rows', 'grid-column', 'grid-column-end', 'grid-column-start', 'grid-gap', 'grid-row', 'grid-row-end', 'grid-row-start', 'grid-template', 'grid-template-areas', 'grid-template-columns', 'grid-template-rows', 'hanging-punctuation', 'height', 'hyphenate-character', 'hyphenate-limit-chars', 'hyphens', 'icon', 'image-orientation', 'image-rendering', 'image-resolution', 'ime-mode', 'initial-letter', 'initial-letter-align', 'inline-size', 'inset', 'inset-area', 'inset-block', 'inset-block-end', 'inset-block-start', 'inset-inline', 'inset-inline-end', 'inset-inline-start', 'isolation', 'justify-content', 'justify-items', 'justify-self', 'kerning', 'left', 'letter-spacing', 'lighting-color', 'line-break', 'line-height', 'line-height-step', 'list-style', 'list-style-image', 'list-style-position', 'list-style-type', 'margin', 'margin-block', 'margin-block-end', 'margin-block-start', 'margin-bottom', 'margin-inline', 'margin-inline-end', 'margin-inline-start', 'margin-left', 'margin-right', 'margin-top', 'margin-trim', 'marker', 'marker-end', 'marker-mid', 'marker-start', 'marks', 'mask', 'mask-border', 'mask-border-mode', 'mask-border-outset', 'mask-border-repeat', 'mask-border-slice', 'mask-border-source', 'mask-border-width', 'mask-clip', 'mask-composite', 'mask-image', 'mask-mode', 'mask-origin', 'mask-position', 'mask-repeat', 'mask-size', 'mask-type', 'masonry-auto-flow', 'math-depth', 'math-shift', 'math-style', 'max-block-size', 'max-height', 'max-inline-size', 'max-width', 'min-block-size', 'min-height', 'min-inline-size', 'min-width', 'mix-blend-mode', 'nav-down', 'nav-index', 'nav-left', 'nav-right', 'nav-up', 'none', 'normal', 'object-fit', 'object-position', 'offset', 'offset-anchor', 'offset-distance', 'offset-path', 'offset-position', 'offset-rotate', 'opacity', 'order', 'orphans', 'outline', 'outline-color', 'outline-offset', 'outline-style', 'outline-width', 'overflow', 'overflow-anchor', 'overflow-block', 'overflow-clip-margin', 'overflow-inline', 'overflow-wrap', 'overflow-x', 'overflow-y', 'overlay', 'overscroll-behavior', 'overscroll-behavior-block', 'overscroll-behavior-inline', 'overscroll-behavior-x', 'overscroll-behavior-y', 'padding', 'padding-block', 'padding-block-end', 'padding-block-start', 'padding-bottom', 'padding-inline', 'padding-inline-end', 'padding-inline-start', 'padding-left', 'padding-right', 'padding-top', 'page', 'page-break-after', 'page-break-before', 'page-break-inside', 'paint-order', 'pause', 'pause-after', 'pause-before', 'perspective', 'perspective-origin', 'place-content', 'place-items', 'place-self', 'pointer-events', 'position', 'position-anchor', 'position-visibility', 'print-color-adjust', 'quotes', 'r', 'resize', 'rest', 'rest-after', 'rest-before', 'right', 'rotate', 'row-gap', 'ruby-align', 'ruby-position', 'scale', 'scroll-behavior', 'scroll-margin', 'scroll-margin-block', 'scroll-margin-block-end', 'scroll-margin-block-start', 'scroll-margin-bottom', 'scroll-margin-inline', 'scroll-margin-inline-end', 'scroll-margin-inline-start', 'scroll-margin-left', 'scroll-margin-right', 'scroll-margin-top', 'scroll-padding', 'scroll-padding-block', 'scroll-padding-block-end', 'scroll-padding-block-start', 'scroll-padding-bottom', 'scroll-padding-inline', 'scroll-padding-inline-end', 'scroll-padding-inline-start', 'scroll-padding-left', 'scroll-padding-right', 'scroll-padding-top', 'scroll-snap-align', 'scroll-snap-stop', 'scroll-snap-type', 'scroll-timeline', 'scroll-timeline-axis', 'scroll-timeline-name', 'scrollbar-color', 'scrollbar-gutter', 'scrollbar-width', 'shape-image-threshold', 'shape-margin', 'shape-outside', 'shape-rendering', 'speak', 'speak-as', 'src',
 	// @font-face
-	'stop-color', 'stop-opacity', 'stroke', 'stroke-dasharray', 'stroke-dashoffset', 'stroke-linecap', 'stroke-linejoin', 'stroke-miterlimit', 'stroke-opacity', 'stroke-width', 'tab-size', 'table-layout', 'text-align', 'text-align-all', 'text-align-last', 'text-anchor', 'text-combine-upright', 'text-decoration', 'text-decoration-color', 'text-decoration-line', 'text-decoration-skip', 'text-decoration-skip-ink', 'text-decoration-style', 'text-decoration-thickness', 'text-emphasis', 'text-emphasis-color', 'text-emphasis-position', 'text-emphasis-style', 'text-indent', 'text-justify', 'text-orientation', 'text-overflow', 'text-rendering', 'text-shadow', 'text-size-adjust', 'text-transform', 'text-underline-offset', 'text-underline-position', 'text-wrap', 'text-wrap-mode', 'text-wrap-style', 'timeline-scope', 'top', 'touch-action', 'transform', 'transform-box', 'transform-origin', 'transform-style', 'transition', 'transition-behavior', 'transition-delay', 'transition-duration', 'transition-property', 'transition-timing-function', 'translate', 'unicode-bidi', 'user-modify', 'user-select', 'vector-effect', 'vertical-align', 'view-timeline', 'view-timeline-axis', 'view-timeline-inset', 'view-timeline-name', 'view-transition-name', 'visibility', 'voice-balance', 'voice-duration', 'voice-family', 'voice-pitch', 'voice-range', 'voice-rate', 'voice-stress', 'voice-volume', 'white-space', 'white-space-collapse', 'widows', 'width', 'will-change', 'word-break', 'word-spacing', 'word-wrap', 'writing-mode', 'x', 'y', 'z-index', 'zoom'].sort().reverse();
+	'stop-color', 'stop-opacity', 'stroke', 'stroke-dasharray', 'stroke-dashoffset', 'stroke-linecap', 'stroke-linejoin', 'stroke-miterlimit', 'stroke-opacity', 'stroke-width', 'tab-size', 'table-layout', 'text-align', 'text-align-all', 'text-align-last', 'text-anchor', 'text-combine-upright', 'text-decoration', 'text-decoration-color', 'text-decoration-line', 'text-decoration-skip', 'text-decoration-skip-ink', 'text-decoration-style', 'text-decoration-thickness', 'text-emphasis', 'text-emphasis-color', 'text-emphasis-position', 'text-emphasis-style', 'text-indent', 'text-justify', 'text-orientation', 'text-overflow', 'text-rendering', 'text-shadow', 'text-size-adjust', 'text-transform', 'text-underline-offset', 'text-underline-position', 'text-wrap', 'text-wrap-mode', 'text-wrap-style', 'timeline-scope', 'top', 'touch-action', 'transform', 'transform-box', 'transform-origin', 'transform-style', 'transition', 'transition-behavior', 'transition-delay', 'transition-duration', 'transition-property', 'transition-timing-function', 'translate', 'unicode-bidi', 'unicode-range', 'user-modify', 'user-select', 'vector-effect', 'vertical-align', 'view-timeline', 'view-timeline-axis', 'view-timeline-inset', 'view-timeline-name', 'view-transition-name', 'visibility', 'voice-balance', 'voice-duration', 'voice-family', 'voice-pitch', 'voice-range', 'voice-rate', 'voice-stress', 'voice-volume', 'white-space', 'white-space-collapse', 'widows', 'width', 'will-change', 'word-break', 'word-spacing', 'word-wrap', 'writing-mode', 'x', 'y', 'z-index', 'zoom'].sort().reverse();
 
 	// some grammars use them all as a single group
 	const PSEUDO_SELECTORS = PSEUDO_CLASSES$1.concat(PSEUDO_ELEMENTS$1).sort().reverse();
@@ -36965,7 +37945,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 				end: '[\\)\\n]',
 				excludeEnd: true
 			}
-		}, modes.HEXCOLOR, PARENS_MODE, IDENT_MODE('variable', '@@?' + IDENT_RE, 10), IDENT_MODE('variable', '@\\{' + IDENT_RE + '\\}'), IDENT_MODE('built_in', '~?`[^`]*?`'),
+		}, modes.UNICODE_RANGE, modes.HEXCOLOR, PARENS_MODE, IDENT_MODE('variable', '@@?' + IDENT_RE, 10), IDENT_MODE('variable', '@\\{' + IDENT_RE + '\\}'), IDENT_MODE('built_in', '~?`[^`]*?`'),
 		// inline javascript (or whatever host language) *multiline* string
 		{
 			// @media features (it’s here to not duplicate things in AT_RULE_MODE with extra PARENS_MODE overriding):
@@ -37123,7 +38103,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 			keywords: {
 				$pattern: hljs.UNDERSCORE_IDENT_RE,
 				literal: "true false nil",
-				keyword: "and break do else elseif end for goto if in local not or repeat return then until while",
+				keyword: "and break do else elseif end for goto if in local global not or repeat return then until while",
 				built_in:
 				// Metatags and globals:
 				'_G _ENV _VERSION __index __newindex __mode __call __metatable __tostring __len ' + '__gc __add __sub __mul __div __mod __pow __concat __unm __eq __lt __le assert '
@@ -37239,9 +38219,11 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 			subLanguage: 'xml',
 			relevance: 0
 		};
+		// https://spec.commonmark.org/0.31.2/#thematic-breaks
+		// three or more `-`, `*` or `_`, all the same character, optionally
+		// separated and followed by spaces or tabs, and nothing else on the line
 		const HORIZONTAL_RULE = {
-			begin: '^[-\\*]{3,}',
-			end: '$'
+			match: /^ {0,3}([-*_])[ \t]*(?:\1[ \t]*){2,}$/
 		};
 		const CODE = {
 			className: 'code',
@@ -37421,7 +38403,10 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 		return {
 			name: 'Markdown',
 			aliases: ['md', 'mkdown', 'mkd'],
-			contains: [HEADER, INLINE_HTML, LIST, BOLD, ITALIC, BLOCKQUOTE, CODE, HORIZONTAL_RULE, LINK, LINK_REFERENCE, ENTITY]
+			contains: [HEADER, INLINE_HTML, LIST,
+			// must come before BOLD/ITALIC so that a `***` or `___` thematic break
+			// isn't mistaken for the start of bold text
+			HORIZONTAL_RULE, BOLD, ITALIC, BLOCKQUOTE, CODE, LINK, LINK_REFERENCE, ENTITY]
 		};
 	}
 
@@ -37658,6 +38643,10 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 	Author: Victor Karamzin <Victor.Karamzin@enterra-inc.com>
 	Contributors: Evgeny Stepanischev <imbolk@gmail.com>, Ivan Sagalaev <maniac@softwaremaniacs.org>
 	Website: https://www.php.net
+	Description: Use this for plain PHP code, i.e. code that does not include the
+							 surrounding `<?php ... ?>` tags. If your snippet mixes PHP with
+							 HTML markup and the opening/closing tags, use `php-template`
+							 instead.
 	Category: common
 	*/
 
@@ -37862,7 +38851,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 			begin: /\(/,
 			end: /\)/,
 			keywords: KEYWORDS,
-			contains: [NAMED_ARGUMENT, VARIABLE, LEFT_AND_RIGHT_SIDE_OF_DOUBLE_COLON, hljs.C_BLOCK_COMMENT_MODE, STRING, NUMBER, CONSTRUCTOR_CALL]
+			contains: [NAMED_ARGUMENT, VARIABLE, LEFT_AND_RIGHT_SIDE_OF_DOUBLE_COLON, hljs.C_BLOCK_COMMENT_MODE, hljs.C_LINE_COMMENT_MODE, hljs.HASH_COMMENT_MODE, STRING, NUMBER, CONSTRUCTOR_CALL]
 		};
 		const FUNCTION_INVOKE = {
 			relevance: 0,
@@ -37875,7 +38864,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 			contains: [PARAMS_MODE]
 		};
 		PARAMS_MODE.contains.push(FUNCTION_INVOKE);
-		const ATTRIBUTE_CONTAINS = [NAMED_ARGUMENT, LEFT_AND_RIGHT_SIDE_OF_DOUBLE_COLON, hljs.C_BLOCK_COMMENT_MODE, STRING, NUMBER, CONSTRUCTOR_CALL];
+		const ATTRIBUTE_CONTAINS = [NAMED_ARGUMENT, LEFT_AND_RIGHT_SIDE_OF_DOUBLE_COLON, hljs.C_BLOCK_COMMENT_MODE, hljs.C_LINE_COMMENT_MODE, hljs.HASH_COMMENT_MODE, STRING, NUMBER, CONSTRUCTOR_CALL];
 		const ATTRIBUTES = {
 			begin: regex.concat(/#\[\s*\\?/, regex.either(PASCAL_CASE_CLASS_NAME_RE, UPCASE_NAME_RE)),
 			beginScope: "meta",
@@ -37951,7 +38940,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 					excludeBegin: true,
 					excludeEnd: true,
 					keywords: KEYWORDS,
-					contains: ['self', ATTRIBUTES, VARIABLE, LEFT_AND_RIGHT_SIDE_OF_DOUBLE_COLON, hljs.C_BLOCK_COMMENT_MODE, STRING, NUMBER]
+					contains: ['self', ATTRIBUTES, VARIABLE, LEFT_AND_RIGHT_SIDE_OF_DOUBLE_COLON, hljs.C_BLOCK_COMMENT_MODE, hljs.C_LINE_COMMENT_MODE, hljs.HASH_COMMENT_MODE, STRING, NUMBER]
 				}]
 			}, {
 				scope: 'class',
@@ -38021,8 +39010,8 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 	function python(hljs) {
 		const regex = hljs.regex;
 		const IDENT_RE = /[\p{XID_Start}_]\p{XID_Continue}*/u;
-		const RESERVED_WORDS = ['and', 'as', 'assert', 'async', 'await', 'break', 'case', 'class', 'continue', 'def', 'del', 'elif', 'else', 'except', 'finally', 'for', 'from', 'global', 'if', 'import', 'in', 'is', 'lambda', 'match', 'nonlocal|10', 'not', 'or', 'pass', 'raise', 'return', 'try', 'while', 'with', 'yield'];
-		const BUILT_INS = ['__import__', 'abs', 'all', 'any', 'ascii', 'bin', 'bool', 'breakpoint', 'bytearray', 'bytes', 'callable', 'chr', 'classmethod', 'compile', 'complex', 'delattr', 'dict', 'dir', 'divmod', 'enumerate', 'eval', 'exec', 'filter', 'float', 'format', 'frozenset', 'getattr', 'globals', 'hasattr', 'hash', 'help', 'hex', 'id', 'input', 'int', 'isinstance', 'issubclass', 'iter', 'len', 'list', 'locals', 'map', 'max', 'memoryview', 'min', 'next', 'object', 'oct', 'open', 'ord', 'pow', 'print', 'property', 'range', 'repr', 'reversed', 'round', 'set', 'setattr', 'slice', 'sorted', 'staticmethod', 'str', 'sum', 'super', 'tuple', 'type', 'vars', 'zip'];
+		const RESERVED_WORDS = ['and', 'as', 'assert', 'async', 'await', 'break', 'case', 'class', 'continue', 'def', 'del', 'elif', 'else', 'except', 'finally', 'for', 'from', 'global', 'if', 'import', 'in', 'is', 'lambda', 'lazy', 'match', 'nonlocal|10', 'not', 'or', 'pass', 'raise', 'return', 'try', 'while', 'with', 'yield'];
+		const BUILT_INS = ['__import__', 'abs', 'aiter', 'all', 'anext', 'any', 'ascii', 'bin', 'bool', 'breakpoint', 'bytearray', 'bytes', 'callable', 'chr', 'classmethod', 'compile', 'complex', 'delattr', 'dict', 'dir', 'divmod', 'enumerate', 'eval', 'exec', 'filter', 'float', 'format', 'frozendict', 'frozenset', 'getattr', 'globals', 'hasattr', 'hash', 'help', 'hex', 'id', 'input', 'int', 'isinstance', 'issubclass', 'iter', 'len', 'list', 'locals', 'map', 'max', 'memoryview', 'min', 'next', 'object', 'oct', 'open', 'ord', 'pow', 'print', 'property', 'range', 'repr', 'reversed', 'round', 'sentinel', 'set', 'setattr', 'slice', 'sorted', 'staticmethod', 'str', 'sum', 'super', 'tuple', 'type', 'vars', 'zip'];
 		const LITERALS = ['__debug__', 'Ellipsis', 'False', 'None', 'NotImplemented', 'True'];
 
 		// https://docs.python.org/3/library/typing.html
@@ -38065,11 +39054,11 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 				contains: [hljs.BACKSLASH_ESCAPE, PROMPT],
 				relevance: 10
 			}, {
-				begin: /([fF][rR]|[rR][fF]|[fF])'''/,
+				begin: /([fFtT][rR]|[rR][fFtT]|[fFtT])'''/,
 				end: /'''/,
 				contains: [hljs.BACKSLASH_ESCAPE, PROMPT, LITERAL_BRACKET, SUBST]
 			}, {
-				begin: /([fF][rR]|[rR][fF]|[fF])"""/,
+				begin: /([fFtT][rR]|[rR][fFtT]|[fFtT])"""/,
 				end: /"""/,
 				contains: [hljs.BACKSLASH_ESCAPE, PROMPT, LITERAL_BRACKET, SUBST]
 			}, {
@@ -38087,11 +39076,11 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 				begin: /([bB]|[bB][rR]|[rR][bB])"/,
 				end: /"/
 			}, {
-				begin: /([fF][rR]|[rR][fF]|[fF])'/,
+				begin: /([fFtT][rR]|[rR][fFtT]|[fFtT])'/,
 				end: /'/,
 				contains: [hljs.BACKSLASH_ESCAPE, LITERAL_BRACKET, SUBST]
 			}, {
-				begin: /([fF][rR]|[rR][fF]|[fF])"/,
+				begin: /([fFtT][rR]|[rR][fFtT]|[fFtT])"/,
 				end: /"/,
 				contains: [hljs.BACKSLASH_ESCAPE, LITERAL_BRACKET, SUBST]
 			}, hljs.APOS_STRING_MODE, hljs.QUOTE_STRING_MODE]
@@ -38425,8 +39414,8 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 			scope: "title.class"
 		};
 		const RUBY_DEFAULT_CONTAINS = [STRING, CLASS_DEFINITION, INCLUDE_EXTEND, OBJECT_CREATION, UPPER_CASE_CONSTANT, CLASS_REFERENCE, METHOD_DEFINITION, {
-			// swallow namespace qualifiers before symbols
-			begin: hljs.IDENT_RE + '::'
+			// swallow the scope resolution operator so `::` is not read as a symbol
+			begin: '::'
 		}, {
 			className: 'symbol',
 			begin: hljs.UNDERSCORE_IDENT_RE + '(!|\\?)?:',
@@ -38534,12 +39523,12 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 		const IDENT_RE = regex.concat(RAW_IDENTIFIER, hljs.IDENT_RE);
 		// ============================================
 		const FUNCTION_INVOKE = {
-			className: "title.function.invoke",
+			scope: "title.function.invoke",
 			relevance: 0,
-			begin: regex.concat(/\b/, /(?!let|for|while|if|else|match\b)/, IDENT_RE, regex.lookahead(/\s*\(/))
+			begin: regex.concat(/\b/, /(?!(?:let|for|while|if|else|match)\b)/, IDENT_RE, regex.lookahead(/\s*\(/))
 		};
-		const NUMBER_SUFFIX = '([ui](8|16|32|64|128|size)|f(32|64))\?';
-		const KEYWORDS = ["abstract", "as", "async", "await", "become", "box", "break", "const", "continue", "crate", "do", "dyn", "else", "enum", "extern", "false", "final", "fn", "for", "if", "impl", "in", "let", "loop", "macro", "match", "mod", "move", "mut", "override", "priv", "pub", "ref", "return", "self", "Self", "static", "struct", "super", "trait", "true", "try", "type", "typeof", "union", "unsafe", "unsized", "use", "virtual", "where", "while", "yield"];
+		const NUMBER_SUFFIX = '([ui](8|16|32|64|128|size)|f(16|32|64|128))\?';
+		const KEYWORDS = ["abstract", "as", "async", "await", "become", "box", "break", "const", "continue", "crate", "do", "dyn", "else", "enum", "extern", "false", "final", "fn", "for", "if", "impl", "in", "let", "loop", "macro", "match", "mod", "move", "mut", "override", "priv", "pub", "raw", "ref", "return", "self", "Self", "static", "struct", "super", "trait", "true", "try", "type", "typeof", "union", "unsafe", "unsized", "use", "virtual", "where", "while", "yield"];
 		const LITERALS = ["true", "false", "Some", "None", "Ok", "Err"];
 		const BUILTINS = [
 		// functions
@@ -38548,7 +39537,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 		"Copy", "Send", "Sized", "Sync", "Drop", "Fn", "FnMut", "FnOnce", "ToOwned", "Clone", "Debug", "PartialEq", "PartialOrd", "Eq", "Ord", "AsRef", "AsMut", "Into", "From", "Default", "Iterator", "Extend", "IntoIterator", "DoubleEndedIterator", "ExactSizeIterator", "SliceConcatExt", "ToString",
 		// macros
 		"assert!", "assert_eq!", "bitflags!", "bytes!", "cfg!", "col!", "concat!", "concat_idents!", "debug_assert!", "debug_assert_eq!", "env!", "eprintln!", "panic!", "file!", "format!", "format_args!", "include_bytes!", "include_str!", "line!", "local_data_key!", "module_path!", "option_env!", "print!", "println!", "select!", "stringify!", "try!", "unimplemented!", "unreachable!", "vec!", "write!", "writeln!", "macro_rules!", "assert_ne!", "debug_assert_ne!"];
-		const TYPES = ["i8", "i16", "i32", "i64", "i128", "isize", "u8", "u16", "u32", "u64", "u128", "usize", "f32", "f64", "str", "char", "bool", "Box", "Option", "Result", "String", "Vec"];
+		const TYPES = ["i8", "i16", "i32", "i64", "i128", "isize", "u8", "u16", "u32", "u64", "u128", "usize", "f16", "f32", "f64", "f128", "str", "char", "bool", "Box", "Option", "Result", "String", "Vec"];
 		return {
 			name: 'Rust',
 			aliases: ['rs'],
@@ -38566,7 +39555,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 				begin: /b?"/,
 				illegal: null
 			}), {
-				className: 'symbol',
+				scope: 'symbol',
 				// negative lookahead to avoid matching `'`
 				begin: /'[a-zA-Z_][a-zA-Z0-9_]*(?!')/
 			}, {
@@ -38578,11 +39567,11 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 					end: /'/,
 					contains: [{
 						scope: "char.escape",
-						match: /\\('|\w|x\w{2}|u\w{4}|U\w{8})/
+						match: /\\('|"|\\|\w|x\w{2}|u\w{4}|U\w{8})/
 					}]
 				}]
 			}, {
-				className: 'number',
+				scope: 'number',
 				variants: [{
 					begin: '\\b0b([01_]+)' + NUMBER_SUFFIX
 				}, {
@@ -38594,24 +39583,30 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 				}],
 				relevance: 0
 			}, {
+				begin: [/\bsafe/, /\s+/, /extern/],
+				scope: {
+					1: "keyword",
+					3: "keyword"
+				}
+			}, {
 				begin: [/fn/, /\s+/, UNDERSCORE_IDENT_RE],
-				className: {
+				scope: {
 					1: "keyword",
 					3: "title.function"
 				}
 			}, {
-				className: 'meta',
+				scope: 'meta',
 				begin: '#!?\\[',
 				end: '\\]',
 				contains: [{
-					className: 'string',
+					scope: 'string',
 					begin: /"/,
 					end: /"/,
 					contains: [hljs.BACKSLASH_ESCAPE]
 				}]
 			}, {
 				begin: [/let/, /\s+/, /(?:mut\s+)?/, UNDERSCORE_IDENT_RE],
-				className: {
+				scope: {
 					1: "keyword",
 					3: "keyword",
 					4: "variable"
@@ -38620,20 +39615,20 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 			// must come before impl/for rule later
 			{
 				begin: [/for/, /\s+/, UNDERSCORE_IDENT_RE, /\s+/, /in/],
-				className: {
+				scope: {
 					1: "keyword",
 					3: "variable",
 					5: "keyword"
 				}
 			}, {
 				begin: [/type/, /\s+/, UNDERSCORE_IDENT_RE],
-				className: {
+				scope: {
 					1: "keyword",
 					3: "title.class"
 				}
 			}, {
 				begin: [/(?:trait|enum|struct|union|impl|for)/, /\s+/, UNDERSCORE_IDENT_RE],
-				className: {
+				scope: {
 					1: "keyword",
 					3: "title.class"
 				}
@@ -38645,7 +39640,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 					type: TYPES
 				}
 			}, {
-				className: "punctuation",
+				scope: "punctuation",
 				begin: '->'
 			}, FUNCTION_INVOKE]
 		};
@@ -38661,6 +39656,10 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 			HEXCOLOR: {
 				scope: 'number',
 				begin: /#(([0-9a-fA-F]{3,4})|(([0-9a-fA-F]{2}){3,4}))\b/
+			},
+			UNICODE_RANGE: {
+				scope: 'number',
+				begin: /\b[Uu]\+[0-9A-Fa-f][0-9A-Fa-f?]{0,5}(-[0-9A-Fa-f][0-9A-Fa-f]{0,5})?/
 			},
 			FUNCTION_DISPATCH: {
 				className: "built_in",
@@ -38727,9 +39726,9 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 
 	// https://developer.mozilla.org/en-US/docs/Web/CSS/Pseudo-elements
 	const PSEUDO_ELEMENTS = ['after', 'backdrop', 'before', 'cue', 'cue-region', 'first-letter', 'first-line', 'grammar-error', 'marker', 'part', 'placeholder', 'selection', 'slotted', 'spelling-error'].sort().reverse();
-	const ATTRIBUTES = ['accent-color', 'align-content', 'align-items', 'align-self', 'alignment-baseline', 'all', 'anchor-name', 'animation', 'animation-composition', 'animation-delay', 'animation-direction', 'animation-duration', 'animation-fill-mode', 'animation-iteration-count', 'animation-name', 'animation-play-state', 'animation-range', 'animation-range-end', 'animation-range-start', 'animation-timeline', 'animation-timing-function', 'appearance', 'aspect-ratio', 'backdrop-filter', 'backface-visibility', 'background', 'background-attachment', 'background-blend-mode', 'background-clip', 'background-color', 'background-image', 'background-origin', 'background-position', 'background-position-x', 'background-position-y', 'background-repeat', 'background-size', 'baseline-shift', 'block-size', 'border', 'border-block', 'border-block-color', 'border-block-end', 'border-block-end-color', 'border-block-end-style', 'border-block-end-width', 'border-block-start', 'border-block-start-color', 'border-block-start-style', 'border-block-start-width', 'border-block-style', 'border-block-width', 'border-bottom', 'border-bottom-color', 'border-bottom-left-radius', 'border-bottom-right-radius', 'border-bottom-style', 'border-bottom-width', 'border-collapse', 'border-color', 'border-end-end-radius', 'border-end-start-radius', 'border-image', 'border-image-outset', 'border-image-repeat', 'border-image-slice', 'border-image-source', 'border-image-width', 'border-inline', 'border-inline-color', 'border-inline-end', 'border-inline-end-color', 'border-inline-end-style', 'border-inline-end-width', 'border-inline-start', 'border-inline-start-color', 'border-inline-start-style', 'border-inline-start-width', 'border-inline-style', 'border-inline-width', 'border-left', 'border-left-color', 'border-left-style', 'border-left-width', 'border-radius', 'border-right', 'border-right-color', 'border-right-style', 'border-right-width', 'border-spacing', 'border-start-end-radius', 'border-start-start-radius', 'border-style', 'border-top', 'border-top-color', 'border-top-left-radius', 'border-top-right-radius', 'border-top-style', 'border-top-width', 'border-width', 'bottom', 'box-align', 'box-decoration-break', 'box-direction', 'box-flex', 'box-flex-group', 'box-lines', 'box-ordinal-group', 'box-orient', 'box-pack', 'box-shadow', 'box-sizing', 'break-after', 'break-before', 'break-inside', 'caption-side', 'caret-color', 'clear', 'clip', 'clip-path', 'clip-rule', 'color', 'color-interpolation', 'color-interpolation-filters', 'color-profile', 'color-rendering', 'color-scheme', 'column-count', 'column-fill', 'column-gap', 'column-rule', 'column-rule-color', 'column-rule-style', 'column-rule-width', 'column-span', 'column-width', 'columns', 'contain', 'contain-intrinsic-block-size', 'contain-intrinsic-height', 'contain-intrinsic-inline-size', 'contain-intrinsic-size', 'contain-intrinsic-width', 'container', 'container-name', 'container-type', 'content', 'content-visibility', 'counter-increment', 'counter-reset', 'counter-set', 'cue', 'cue-after', 'cue-before', 'cursor', 'cx', 'cy', 'direction', 'display', 'dominant-baseline', 'empty-cells', 'enable-background', 'field-sizing', 'fill', 'fill-opacity', 'fill-rule', 'filter', 'flex', 'flex-basis', 'flex-direction', 'flex-flow', 'flex-grow', 'flex-shrink', 'flex-wrap', 'float', 'flood-color', 'flood-opacity', 'flow', 'font', 'font-display', 'font-family', 'font-feature-settings', 'font-kerning', 'font-language-override', 'font-optical-sizing', 'font-palette', 'font-size', 'font-size-adjust', 'font-smooth', 'font-smoothing', 'font-stretch', 'font-style', 'font-synthesis', 'font-synthesis-position', 'font-synthesis-small-caps', 'font-synthesis-style', 'font-synthesis-weight', 'font-variant', 'font-variant-alternates', 'font-variant-caps', 'font-variant-east-asian', 'font-variant-emoji', 'font-variant-ligatures', 'font-variant-numeric', 'font-variant-position', 'font-variation-settings', 'font-weight', 'forced-color-adjust', 'gap', 'glyph-orientation-horizontal', 'glyph-orientation-vertical', 'grid', 'grid-area', 'grid-auto-columns', 'grid-auto-flow', 'grid-auto-rows', 'grid-column', 'grid-column-end', 'grid-column-start', 'grid-gap', 'grid-row', 'grid-row-end', 'grid-row-start', 'grid-template', 'grid-template-areas', 'grid-template-columns', 'grid-template-rows', 'hanging-punctuation', 'height', 'hyphenate-character', 'hyphenate-limit-chars', 'hyphens', 'icon', 'image-orientation', 'image-rendering', 'image-resolution', 'ime-mode', 'initial-letter', 'initial-letter-align', 'inline-size', 'inset', 'inset-area', 'inset-block', 'inset-block-end', 'inset-block-start', 'inset-inline', 'inset-inline-end', 'inset-inline-start', 'isolation', 'justify-content', 'justify-items', 'justify-self', 'kerning', 'left', 'letter-spacing', 'lighting-color', 'line-break', 'line-height', 'line-height-step', 'list-style', 'list-style-image', 'list-style-position', 'list-style-type', 'margin', 'margin-block', 'margin-block-end', 'margin-block-start', 'margin-bottom', 'margin-inline', 'margin-inline-end', 'margin-inline-start', 'margin-left', 'margin-right', 'margin-top', 'margin-trim', 'marker', 'marker-end', 'marker-mid', 'marker-start', 'marks', 'mask', 'mask-border', 'mask-border-mode', 'mask-border-outset', 'mask-border-repeat', 'mask-border-slice', 'mask-border-source', 'mask-border-width', 'mask-clip', 'mask-composite', 'mask-image', 'mask-mode', 'mask-origin', 'mask-position', 'mask-repeat', 'mask-size', 'mask-type', 'masonry-auto-flow', 'math-depth', 'math-shift', 'math-style', 'max-block-size', 'max-height', 'max-inline-size', 'max-width', 'min-block-size', 'min-height', 'min-inline-size', 'min-width', 'mix-blend-mode', 'nav-down', 'nav-index', 'nav-left', 'nav-right', 'nav-up', 'none', 'normal', 'object-fit', 'object-position', 'offset', 'offset-anchor', 'offset-distance', 'offset-path', 'offset-position', 'offset-rotate', 'opacity', 'order', 'orphans', 'outline', 'outline-color', 'outline-offset', 'outline-style', 'outline-width', 'overflow', 'overflow-anchor', 'overflow-block', 'overflow-clip-margin', 'overflow-inline', 'overflow-wrap', 'overflow-x', 'overflow-y', 'overlay', 'overscroll-behavior', 'overscroll-behavior-block', 'overscroll-behavior-inline', 'overscroll-behavior-x', 'overscroll-behavior-y', 'padding', 'padding-block', 'padding-block-end', 'padding-block-start', 'padding-bottom', 'padding-inline', 'padding-inline-end', 'padding-inline-start', 'padding-left', 'padding-right', 'padding-top', 'page', 'page-break-after', 'page-break-before', 'page-break-inside', 'paint-order', 'pause', 'pause-after', 'pause-before', 'perspective', 'perspective-origin', 'place-content', 'place-items', 'place-self', 'pointer-events', 'position', 'position-anchor', 'position-visibility', 'print-color-adjust', 'quotes', 'r', 'resize', 'rest', 'rest-after', 'rest-before', 'right', 'rotate', 'row-gap', 'ruby-align', 'ruby-position', 'scale', 'scroll-behavior', 'scroll-margin', 'scroll-margin-block', 'scroll-margin-block-end', 'scroll-margin-block-start', 'scroll-margin-bottom', 'scroll-margin-inline', 'scroll-margin-inline-end', 'scroll-margin-inline-start', 'scroll-margin-left', 'scroll-margin-right', 'scroll-margin-top', 'scroll-padding', 'scroll-padding-block', 'scroll-padding-block-end', 'scroll-padding-block-start', 'scroll-padding-bottom', 'scroll-padding-inline', 'scroll-padding-inline-end', 'scroll-padding-inline-start', 'scroll-padding-left', 'scroll-padding-right', 'scroll-padding-top', 'scroll-snap-align', 'scroll-snap-stop', 'scroll-snap-type', 'scroll-timeline', 'scroll-timeline-axis', 'scroll-timeline-name', 'scrollbar-color', 'scrollbar-gutter', 'scrollbar-width', 'shape-image-threshold', 'shape-margin', 'shape-outside', 'shape-rendering', 'speak', 'speak-as', 'src',
+	const ATTRIBUTES = ['accent-color', 'align-content', 'align-items', 'align-self', 'alignment-baseline', 'all', 'anchor-name', 'animation', 'animation-composition', 'animation-delay', 'animation-direction', 'animation-duration', 'animation-fill-mode', 'animation-iteration-count', 'animation-name', 'animation-play-state', 'animation-range', 'animation-range-end', 'animation-range-start', 'animation-timeline', 'animation-timing-function', 'appearance', 'aspect-ratio', 'backdrop-filter', 'backface-visibility', 'background', 'background-attachment', 'background-blend-mode', 'background-clip', 'background-color', 'background-image', 'background-origin', 'background-position', 'background-position-x', 'background-position-y', 'background-repeat', 'background-size', 'baseline-shift', 'block-size', 'border', 'border-block', 'border-block-color', 'border-block-end', 'border-block-end-color', 'border-block-end-style', 'border-block-end-width', 'border-block-start', 'border-block-start-color', 'border-block-start-style', 'border-block-start-width', 'border-block-style', 'border-block-width', 'border-bottom', 'border-bottom-color', 'border-bottom-left-radius', 'border-bottom-right-radius', 'border-bottom-style', 'border-bottom-width', 'border-collapse', 'border-color', 'border-end-end-radius', 'border-end-start-radius', 'border-image', 'border-image-outset', 'border-image-repeat', 'border-image-slice', 'border-image-source', 'border-image-width', 'border-inline', 'border-inline-color', 'border-inline-end', 'border-inline-end-color', 'border-inline-end-style', 'border-inline-end-width', 'border-inline-start', 'border-inline-start-color', 'border-inline-start-style', 'border-inline-start-width', 'border-inline-style', 'border-inline-width', 'border-left', 'border-left-color', 'border-left-style', 'border-left-width', 'border-radius', 'border-right', 'border-right-color', 'border-right-style', 'border-right-width', 'border-spacing', 'border-start-end-radius', 'border-start-start-radius', 'border-style', 'border-top', 'border-top-color', 'border-top-left-radius', 'border-top-right-radius', 'border-top-style', 'border-top-width', 'border-width', 'bottom', 'box-align', 'box-decoration-break', 'box-direction', 'box-flex', 'box-flex-group', 'box-lines', 'box-ordinal-group', 'box-orient', 'box-pack', 'box-shadow', 'box-sizing', 'break-after', 'break-before', 'break-inside', 'caption-side', 'caret-color', 'clear', 'clip', 'clip-path', 'clip-rule', 'color', 'color-interpolation', 'color-interpolation-filters', 'color-profile', 'color-rendering', 'color-scheme', 'column-count', 'column-fill', 'column-gap', 'column-rule', 'column-rule-color', 'column-rule-style', 'column-rule-width', 'column-span', 'column-width', 'columns', 'contain', 'contain-intrinsic-block-size', 'contain-intrinsic-height', 'contain-intrinsic-inline-size', 'contain-intrinsic-size', 'contain-intrinsic-width', 'container', 'container-name', 'container-type', 'content', 'content-visibility', 'corner-bottom-left-shape', 'corner-bottom-right-shape', 'corner-shape', 'corner-top-left-shape', 'corner-top-right-shape', 'counter-increment', 'counter-reset', 'counter-set', 'cue', 'cue-after', 'cue-before', 'cursor', 'cx', 'cy', 'direction', 'display', 'dominant-baseline', 'empty-cells', 'enable-background', 'field-sizing', 'fill', 'fill-opacity', 'fill-rule', 'filter', 'flex', 'flex-basis', 'flex-direction', 'flex-flow', 'flex-grow', 'flex-shrink', 'flex-wrap', 'float', 'flood-color', 'flood-opacity', 'flow', 'font', 'font-display', 'font-family', 'font-feature-settings', 'font-kerning', 'font-language-override', 'font-optical-sizing', 'font-palette', 'font-size', 'font-size-adjust', 'font-smooth', 'font-smoothing', 'font-stretch', 'font-style', 'font-synthesis', 'font-synthesis-position', 'font-synthesis-small-caps', 'font-synthesis-style', 'font-synthesis-weight', 'font-variant', 'font-variant-alternates', 'font-variant-caps', 'font-variant-east-asian', 'font-variant-emoji', 'font-variant-ligatures', 'font-variant-numeric', 'font-variant-position', 'font-variation-settings', 'font-weight', 'forced-color-adjust', 'gap', 'glyph-orientation-horizontal', 'glyph-orientation-vertical', 'grid', 'grid-area', 'grid-auto-columns', 'grid-auto-flow', 'grid-auto-rows', 'grid-column', 'grid-column-end', 'grid-column-start', 'grid-gap', 'grid-row', 'grid-row-end', 'grid-row-start', 'grid-template', 'grid-template-areas', 'grid-template-columns', 'grid-template-rows', 'hanging-punctuation', 'height', 'hyphenate-character', 'hyphenate-limit-chars', 'hyphens', 'icon', 'image-orientation', 'image-rendering', 'image-resolution', 'ime-mode', 'initial-letter', 'initial-letter-align', 'inline-size', 'inset', 'inset-area', 'inset-block', 'inset-block-end', 'inset-block-start', 'inset-inline', 'inset-inline-end', 'inset-inline-start', 'isolation', 'justify-content', 'justify-items', 'justify-self', 'kerning', 'left', 'letter-spacing', 'lighting-color', 'line-break', 'line-height', 'line-height-step', 'list-style', 'list-style-image', 'list-style-position', 'list-style-type', 'margin', 'margin-block', 'margin-block-end', 'margin-block-start', 'margin-bottom', 'margin-inline', 'margin-inline-end', 'margin-inline-start', 'margin-left', 'margin-right', 'margin-top', 'margin-trim', 'marker', 'marker-end', 'marker-mid', 'marker-start', 'marks', 'mask', 'mask-border', 'mask-border-mode', 'mask-border-outset', 'mask-border-repeat', 'mask-border-slice', 'mask-border-source', 'mask-border-width', 'mask-clip', 'mask-composite', 'mask-image', 'mask-mode', 'mask-origin', 'mask-position', 'mask-repeat', 'mask-size', 'mask-type', 'masonry-auto-flow', 'math-depth', 'math-shift', 'math-style', 'max-block-size', 'max-height', 'max-inline-size', 'max-width', 'min-block-size', 'min-height', 'min-inline-size', 'min-width', 'mix-blend-mode', 'nav-down', 'nav-index', 'nav-left', 'nav-right', 'nav-up', 'none', 'normal', 'object-fit', 'object-position', 'offset', 'offset-anchor', 'offset-distance', 'offset-path', 'offset-position', 'offset-rotate', 'opacity', 'order', 'orphans', 'outline', 'outline-color', 'outline-offset', 'outline-style', 'outline-width', 'overflow', 'overflow-anchor', 'overflow-block', 'overflow-clip-margin', 'overflow-inline', 'overflow-wrap', 'overflow-x', 'overflow-y', 'overlay', 'overscroll-behavior', 'overscroll-behavior-block', 'overscroll-behavior-inline', 'overscroll-behavior-x', 'overscroll-behavior-y', 'padding', 'padding-block', 'padding-block-end', 'padding-block-start', 'padding-bottom', 'padding-inline', 'padding-inline-end', 'padding-inline-start', 'padding-left', 'padding-right', 'padding-top', 'page', 'page-break-after', 'page-break-before', 'page-break-inside', 'paint-order', 'pause', 'pause-after', 'pause-before', 'perspective', 'perspective-origin', 'place-content', 'place-items', 'place-self', 'pointer-events', 'position', 'position-anchor', 'position-visibility', 'print-color-adjust', 'quotes', 'r', 'resize', 'rest', 'rest-after', 'rest-before', 'right', 'rotate', 'row-gap', 'ruby-align', 'ruby-position', 'scale', 'scroll-behavior', 'scroll-margin', 'scroll-margin-block', 'scroll-margin-block-end', 'scroll-margin-block-start', 'scroll-margin-bottom', 'scroll-margin-inline', 'scroll-margin-inline-end', 'scroll-margin-inline-start', 'scroll-margin-left', 'scroll-margin-right', 'scroll-margin-top', 'scroll-padding', 'scroll-padding-block', 'scroll-padding-block-end', 'scroll-padding-block-start', 'scroll-padding-bottom', 'scroll-padding-inline', 'scroll-padding-inline-end', 'scroll-padding-inline-start', 'scroll-padding-left', 'scroll-padding-right', 'scroll-padding-top', 'scroll-snap-align', 'scroll-snap-stop', 'scroll-snap-type', 'scroll-timeline', 'scroll-timeline-axis', 'scroll-timeline-name', 'scrollbar-color', 'scrollbar-gutter', 'scrollbar-width', 'shape-image-threshold', 'shape-margin', 'shape-outside', 'shape-rendering', 'speak', 'speak-as', 'src',
 	// @font-face
-	'stop-color', 'stop-opacity', 'stroke', 'stroke-dasharray', 'stroke-dashoffset', 'stroke-linecap', 'stroke-linejoin', 'stroke-miterlimit', 'stroke-opacity', 'stroke-width', 'tab-size', 'table-layout', 'text-align', 'text-align-all', 'text-align-last', 'text-anchor', 'text-combine-upright', 'text-decoration', 'text-decoration-color', 'text-decoration-line', 'text-decoration-skip', 'text-decoration-skip-ink', 'text-decoration-style', 'text-decoration-thickness', 'text-emphasis', 'text-emphasis-color', 'text-emphasis-position', 'text-emphasis-style', 'text-indent', 'text-justify', 'text-orientation', 'text-overflow', 'text-rendering', 'text-shadow', 'text-size-adjust', 'text-transform', 'text-underline-offset', 'text-underline-position', 'text-wrap', 'text-wrap-mode', 'text-wrap-style', 'timeline-scope', 'top', 'touch-action', 'transform', 'transform-box', 'transform-origin', 'transform-style', 'transition', 'transition-behavior', 'transition-delay', 'transition-duration', 'transition-property', 'transition-timing-function', 'translate', 'unicode-bidi', 'user-modify', 'user-select', 'vector-effect', 'vertical-align', 'view-timeline', 'view-timeline-axis', 'view-timeline-inset', 'view-timeline-name', 'view-transition-name', 'visibility', 'voice-balance', 'voice-duration', 'voice-family', 'voice-pitch', 'voice-range', 'voice-rate', 'voice-stress', 'voice-volume', 'white-space', 'white-space-collapse', 'widows', 'width', 'will-change', 'word-break', 'word-spacing', 'word-wrap', 'writing-mode', 'x', 'y', 'z-index', 'zoom'].sort().reverse();
+	'stop-color', 'stop-opacity', 'stroke', 'stroke-dasharray', 'stroke-dashoffset', 'stroke-linecap', 'stroke-linejoin', 'stroke-miterlimit', 'stroke-opacity', 'stroke-width', 'tab-size', 'table-layout', 'text-align', 'text-align-all', 'text-align-last', 'text-anchor', 'text-combine-upright', 'text-decoration', 'text-decoration-color', 'text-decoration-line', 'text-decoration-skip', 'text-decoration-skip-ink', 'text-decoration-style', 'text-decoration-thickness', 'text-emphasis', 'text-emphasis-color', 'text-emphasis-position', 'text-emphasis-style', 'text-indent', 'text-justify', 'text-orientation', 'text-overflow', 'text-rendering', 'text-shadow', 'text-size-adjust', 'text-transform', 'text-underline-offset', 'text-underline-position', 'text-wrap', 'text-wrap-mode', 'text-wrap-style', 'timeline-scope', 'top', 'touch-action', 'transform', 'transform-box', 'transform-origin', 'transform-style', 'transition', 'transition-behavior', 'transition-delay', 'transition-duration', 'transition-property', 'transition-timing-function', 'translate', 'unicode-bidi', 'unicode-range', 'user-modify', 'user-select', 'vector-effect', 'vertical-align', 'view-timeline', 'view-timeline-axis', 'view-timeline-inset', 'view-timeline-name', 'view-transition-name', 'visibility', 'voice-balance', 'voice-duration', 'voice-family', 'voice-pitch', 'voice-range', 'voice-rate', 'voice-stress', 'voice-volume', 'white-space', 'white-space-collapse', 'widows', 'width', 'will-change', 'word-break', 'word-spacing', 'word-wrap', 'writing-mode', 'x', 'y', 'z-index', 'zoom'].sort().reverse();
 
 	/*
 	Language: SCSS
@@ -38792,7 +39791,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 				begin: /:/,
 				end: /[;}{]/,
 				relevance: 0,
-				contains: [modes.BLOCK_COMMENT, VARIABLE, modes.HEXCOLOR, modes.CSS_NUMBER_MODE, hljs.QUOTE_STRING_MODE, hljs.APOS_STRING_MODE, modes.IMPORTANT, modes.FUNCTION_DISPATCH]
+				contains: [modes.BLOCK_COMMENT, VARIABLE, modes.HEXCOLOR, modes.CSS_NUMBER_MODE, modes.UNICODE_RANGE, hljs.QUOTE_STRING_MODE, hljs.APOS_STRING_MODE, modes.IMPORTANT, modes.FUNCTION_DISPATCH]
 			},
 			// matching these here allows us to treat them more like regular CSS
 			// rules so everything between the {} gets regular rule highlighting,
@@ -38841,7 +39840,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 				// We cannot add \s (spaces) in the regular expression otherwise it will be too broad and produce unexpected result.
 				// For instance, in the following example, it would match "echo /path/to/home >" as a prompt:
 				// echo /path/to/home > t.exe
-				begin: /^\s{0,3}[/~\w\d[\]()@-]*[>%$#][ ]?/,
+				begin: /^\s{0,3}[./~\w\d[\]()@-]*[>%$#][ ]?/,
 				starts: {
 					end: /[^\\](?=\s*$)/,
 					subLanguage: 'bash'
@@ -39051,6 +40050,22 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 		const joined = '(' + (opts.capture ? "" : "?:") + args.map(x => source(x)).join("|") + ")";
 		return joined;
 	}
+
+	// BACKREF_RE matches an open parenthesis or backreference. To avoid an
+	// incorrect parse, it also matches the constructs where the meaning of
+	// parentheses, escapes, or capture counting changes.
+	new RegExp(either(/\[(?:[^\\\]]|\\.)*\]/,
+	// a character class, inside which ( and \ lose their meaning
+	/\(\?<(?![=!])[^>]+>/,
+	// a named capture group `(?<name>` (not a lookbehind `(?<=` / `(?<!`)
+	/\(\?'[^']+'/,
+	// a named capture group `(?'name'`
+	/\(\??/,
+	// an opening parenthesis, capturing or non-capturing / lookahead
+	/\\([1-9][0-9]*)/,
+	// a backreference like `\1`
+	/\\./ // any other escape sequence
+	));
 	const keywordWrapper = keyword => concat(/\b/, keyword, /\w$/.test(keyword) ? /\b/ : /\B/);
 
 	// Keywords that require a leading dot.
@@ -39713,7 +40728,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 				starts: {
 					end: /<\/style>/,
 					returnEnd: true,
-					subLanguage: ['css', 'xml']
+					subLanguage: 'css'
 				}
 			}, {
 				className: 'tag',
@@ -39727,7 +40742,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 				starts: {
 					end: /<\/script>/,
 					returnEnd: true,
-					subLanguage: ['javascript', 'handlebars', 'xml']
+					subLanguage: 'javascript'
 				}
 			},
 			// we need this for now for jSX
@@ -39960,6 +40975,18 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 	}
 
 	const DEFAULT_LANGUAGE = 'plaintext';
+	const MERMAID_LANGUAGE = 'mermaid';
+
+	// Mermaid is diagram source, not a highlighted language: in read mode the block renders as a
+	// diagram instead (see code-block/mermaid-diagram.js). It still needs a registered grammar:
+	// the lowlight plugin falls back to highlightAuto() for anything unregistered, which would
+	// colorize diagram source as whatever language it guessed. A no-op grammar keeps edit mode
+	// showing the raw text.
+	const mermaidSource = () => ({
+		name: 'Mermaid',
+		disableAutodetect: true,
+		contains: []
+	});
 	const LANGUAGES = {
 		plaintext: {
 			def: plaintext,
@@ -40029,6 +41056,10 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 			def: markdown,
 			label: 'Markdown'
 		},
+		[MERMAID_LANGUAGE]: {
+			def: mermaidSource,
+			label: 'Mermaid'
+		},
 		perl: {
 			def: perl,
 			label: 'Perl'
@@ -40090,6 +41121,17 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 		id,
 		label
 	})).sort((a, b) => a.label.localeCompare(b.label))];
+
+	// Broken markdown (e.g. a fence inside a GFM table cell) can put arbitrary text into the
+	// info string, and that text reaches us as the `language` attribute. Everything downstream
+	// treats it as a CSS class token, so only known ids may pass through.
+	function normalizeLanguage(id) {
+		if (typeof id !== 'string') {
+			return DEFAULT_LANGUAGE;
+		}
+		const normalized = id.trim().toLowerCase();
+		return LANGUAGES[normalized] ? normalized : DEFAULT_LANGUAGE;
+	}
 	function getLanguageLabel(id) {
 		if (typeof id === 'string' && LANGUAGES[id]) {
 			return LANGUAGES[id].label;
@@ -40114,9 +41156,28 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 			isEditable: {
 				type: Boolean,
 				default: true
+			},
+			// Read mode with a diagram actually drawn. Then the block is a picture: the zoom controls
+			// appear and the language caption goes away, because it says nothing about a diagram. A
+			// diagram that failed to render keeps the caption - its source is what is on screen.
+			hasDiagram: {
+				type: Boolean,
+				default: false
+			},
+			zoomLabel: {
+				type: String,
+				default: ''
+			},
+			canZoomIn: {
+				type: Boolean,
+				default: false
+			},
+			canZoomOut: {
+				type: Boolean,
+				default: false
 			}
 		},
-		emits: ['language-select', 'copy'],
+		emits: ['language-select', 'copy', 'zoom-in', 'zoom-out', 'zoom-reset', 'fullscreen'],
 		data() {
 			return {
 				copied: false
@@ -40128,6 +41189,18 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 			},
 			copyTitle() {
 				return main_core.Loc.getMessage('NOTE_EDITOR_DOCUMENT_MENU_COPY_MARKDOWN');
+			},
+			zoomInTitle() {
+				return main_core.Loc.getMessage('NOTE_EDITOR_DIAGRAM_ZOOM_IN');
+			},
+			zoomOutTitle() {
+				return main_core.Loc.getMessage('NOTE_EDITOR_DIAGRAM_ZOOM_OUT');
+			},
+			zoomResetTitle() {
+				return main_core.Loc.getMessage('NOTE_EDITOR_DIAGRAM_ZOOM_RESET');
+			},
+			fullscreenTitle() {
+				return main_core.Loc.getMessage('NOTE_EDITOR_DIAGRAM_FULLSCREEN');
 			}
 		},
 		created() {
@@ -40291,19 +41364,65 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 				ref="languageButton"
 				type="button"
 				class="note-editor-code-block-language"
+				data-testid="note-code-block-language"
 				@click="toggleMenu"
 			>
 				<span class="note-editor-code-block-language-text">{{ languageLabel }}</span>
 			</button>
 			<span
-				v-else
+				v-else-if="!hasDiagram"
 				class="note-editor-code-block-language note-editor-code-block-language--readonly"
 			>
 				<span class="note-editor-code-block-language-text">{{ languageLabel }}</span>
 			</span>
+			<span v-if="hasDiagram" class="note-editor-code-block-zoom">
+				<button
+					type="button"
+					class="note-editor-code-block-zoom-button"
+					data-testid="note-diagram-zoom-out"
+					:disabled="!canZoomOut"
+					:title="zoomOutTitle"
+					:aria-label="zoomOutTitle"
+					@click="$emit('zoom-out')"
+				>
+					<BIcon name="o-zoom-out" :size="16" />
+				</button>
+				<button
+					type="button"
+					class="note-editor-code-block-zoom-value"
+					data-testid="note-diagram-zoom-reset"
+					:disabled="!canZoomOut"
+					:title="zoomResetTitle"
+					:aria-label="zoomResetTitle"
+					@click="$emit('zoom-reset')"
+				>{{ zoomLabel }}</button>
+				<button
+					type="button"
+					class="note-editor-code-block-zoom-button"
+					data-testid="note-diagram-zoom-in"
+					:disabled="!canZoomIn"
+					:title="zoomInTitle"
+					:aria-label="zoomInTitle"
+					@click="$emit('zoom-in')"
+				>
+					<BIcon name="o-zoom-in" :size="16" />
+				</button>
+				<button
+					type="button"
+					class="note-editor-code-block-zoom-button"
+					data-testid="note-diagram-fullscreen-open"
+					:title="fullscreenTitle"
+					:aria-label="fullscreenTitle"
+					@click="$emit('fullscreen', $event.currentTarget)"
+				>
+					<BIcon name="expand-l" :size="16" />
+				</button>
+			</span>
 			<button
+				v-if="!hasDiagram"
 				type="button"
 				class="note-editor-code-block-copy"
+				data-testid="note-code-block-copy"
 				:class="{ 'note-editor-code-block-copy--copied': copied }"
 				:title="copyTitle"
 				:aria-label="copyTitle"
@@ -40324,13 +41443,1852 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 	`
 	};
 
+	/**
+	 * Link opening that is aware of the Bitrix24 mobile app webview.
+	 *
+	 * On desktop a link is opened in a new browser tab.
+	 *
+	 * Inside the classic mobile app webview `window.open('_blank')` escapes to the
+	 * OS browser (sliders are not available/adapted there), so instead we route the
+	 * URL through the native app via the legacy `BX.MobileTools` bridge — task/user
+	 * URLs open native cards, everything else opens inside the app.
+	 *
+	 * `BX.MobileTools` / `window.app` are injected natively by the classic webview
+	 * container; hence the guarded global access with a plain new-tab fallback when
+	 * the bridge is absent (desktop).
+	 */
+
+	/**
+	 * Returns true when the URL is safe to open: relative paths (starting with '/')
+	 * and absolute URLs with http: or https: scheme are allowed. Everything else
+	 * (javascript:, data:, vbscript:, file:, protocol-relative '//', etc.) is rejected.
+	 *
+	 * Defense-in-depth guard — the backend currently only produces relative paths,
+	 * but this check ensures a future source change cannot introduce dangerous schemes.
+	 *
+	 * @param {string} url
+	 * @returns {boolean}
+	 */
+	function isAllowedUrl(url) {
+		if (!url) {
+			return false;
+		}
+
+		// Relative paths (must start with a single '/', not protocol-relative '//').
+		if (url.startsWith('/') && !url.startsWith('//')) {
+			return true;
+		}
+
+		// Absolute URLs: only http and https are allowed.
+		try {
+			const parsed = new URL(url, window.location.origin);
+			return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+		} catch {
+			return false;
+		}
+	}
+
+	/**
+	 * @returns {boolean} true when running inside the mobile app webview.
+	 */
+	function isMobileApp() {
+		if (typeof document !== 'undefined' && document.documentElement.classList.contains('note-mobile')) {
+			return true;
+		}
+		return typeof navigator !== 'undefined' && navigator.userAgent.toLowerCase().includes('bitrixmobile');
+	}
+
+	/**
+	 * @returns {boolean} true when running on iOS.
+	 */
+	function isIos() {
+		return typeof navigator !== 'undefined' && /iphone|ipad|ipod/i.test(navigator.userAgent);
+	}
+
+	// User profile URL (`/company/personal/user/{id}/`), excluding deeper paths like
+	// `/.../tasks/task/view/{id}/` which must keep their own native routing.
+	// Capture group 1 is the user id.
+	const USER_PROFILE_URL = /\/company\/personal\/user\/(\d+)\/($|\?)/i;
+
+	/**
+	 * Tries to open a URL natively inside the mobile app.
+	 *
+	 * No-op returning false when not inside the app (so desktop behaviour is left
+	 * untouched by the caller). Inside the app it routes through the native bridge:
+	 * task/user URLs open native cards, other URLs open inside the app webview.
+	 *
+	 * @param {string} url
+	 * @returns {boolean} true if the URL was handed off to the native app.
+	 */
+	function openViaMobileApp(url) {
+		if (!url || !isMobileApp()) {
+			return false;
+		}
+
+		// The profile opener (`onUserProfileOpen`) is an UNADDRESSED broadcast in
+		// mobile_tools; from the note webview it never reaches the native
+		// `communication` subscriber (alive only in native contexts like chat) and on
+		// iOS the URL escapes to the OS browser. Address the event straight to the
+		// persistent `communication` component — the same trick tasks use with the
+		// `background` component — so the native profile card opens from the webview.
+		if (isIos()) {
+			const userId = url.match(USER_PROFILE_URL)?.[1];
+			const events = window.BXMobileApp?.Events;
+			if (userId && typeof events?.postToComponent === 'function') {
+				events.postToComponent('onUserProfileOpen', [userId], 'communication');
+				return true;
+			}
+		}
+		const mobileTools = window.BX?.MobileTools;
+		if (mobileTools) {
+			const open = mobileTools.resolveOpenFunction(url);
+			if (open) {
+				open();
+				return true;
+			}
+		}
+
+		// Fallback for older webviews that expose the app bridge but not MobileTools.
+		if (typeof window.app?.openNewPage === 'function') {
+			window.app.openNewPage(url);
+			return true;
+		}
+		return false;
+	}
+
+	/**
+	 * Downloads/opens a file URL through the mobile app's native document viewer.
+	 *
+	 * Inside the classic webview a plain `<a download>` click is silently ignored and
+	 * `window.open` escapes to the session-less OS browser (auth'd download URLs then
+	 * fail with "please sign in"). The native `BXMobileApp.UI.Document.open` fetches the
+	 * URL WITH the app session and hands the file to the native viewer — the same path
+	 * the disk module uses. `app.openDocument` is the legacy fallback for older webviews.
+	 *
+	 * No-op returning false outside the app (desktop keeps its own download path).
+	 *
+	 * @param {string} url authenticated file URL
+	 * @param {string} filename display name hint for the native viewer
+	 * @returns {boolean} true if handed off to the native document viewer
+	 */
+	function openFileNative(url, filename) {
+		if (!url || !isAllowedUrl(url) || !isMobileApp()) {
+			return false;
+		}
+		const nativeDocument = window.BXMobileApp?.UI?.Document;
+		if (nativeDocument && typeof nativeDocument.open === 'function') {
+			nativeDocument.open({
+				url,
+				filename
+			});
+			return true;
+		}
+		if (typeof window.app?.openDocument === 'function') {
+			window.app.openDocument({
+				url,
+				filename
+			});
+			return true;
+		}
+		return false;
+	}
+
+	/**
+	 * Opens a URL: natively inside the mobile app when possible, otherwise in a new
+	 * browser tab. Use for entry points that open a new tab on desktop by design
+	 * (e.g. mention chips), not for plain in-content anchors.
+	 *
+	 * @param {string} url
+	 * @returns {void}
+	 */
+	function openLinkNative(url) {
+		if (!url) {
+			return;
+		}
+		if (!isAllowedUrl(url)) {
+			console.warn('[note] openLinkNative: blocked disallowed URL scheme');
+			return;
+		}
+		if (openViaMobileApp(url)) {
+			return;
+		}
+		window.open(url, '_blank', 'noopener,noreferrer');
+	}
+
+	/**
+	 * Moves a single colour of a light diagram into the shade of a dark surface.
+	 *
+	 * Not a second, hand-authored palette: the colours a reader knows from a light document are the ones a
+	 * dark document shows, only pulled down onto the surface they sit on - a red stays red and becomes a
+	 * dark red. Naming dark design-system tokens instead resolved to near-black and turned a colourful
+	 * diagram monochrome; the engine's own 'dark' theme does the same thing by itself.
+	 *
+	 * Applied per colour found in the rendered SVG (see diagram-recolor), so it has to hold for anything a
+	 * diagram can contain: theme values, the scale the engine derives at render time, and the colours a
+	 * diagram's author writes by hand.
+	 */
+
+	// Where the flipped lightness is allowed to land. Neither end reaches the extreme: a pure white label
+	// over a near-black fill is harsher than the tinted pair a light document actually shows.
+	const LIGHTNESS_FLOOR = 0.18;
+	const LIGHTNESS_CEIL = 0.92;
+
+	// A pale tint carries an enormous HSL saturation - #ECECFF, the default node fill, is s=100% - so
+	// flipping its lightness with that saturation intact turns a soft lavender into neon indigo. Damping
+	// by distance from mid-lightness hits exactly those colours and barely touches the mid-saturation
+	// ones (borders, accents), which are the diagram's actual accents.
+	const SATURATION_FLOOR = 0.25;
+
+	// How far a colour is sat down onto the surface, scaled by how bright and saturated it still is after
+	// the flip. That scaling is the point. Text and strokes come out grey, so they keep the full lift and
+	// stay in the foreground - a flat share dragged them back down and left labels at a washed-out grey.
+	// A colour that survives the flip both bright and saturated is the one that needs the surface most:
+	// unstyled gitGraph branch labels are dark text on saturated fills, and flipping the text alone left
+	// light text on a still-glowing plate.
+	const SURFACE_PULL = 0.7;
+	let colorProbe = null;
+
+	// Any CSS colour string to {r,g,b,a}, and null for a value that is not a colour at all - the variable
+	// set also carries font families, sizes and plain numbers, and those must pass through untouched.
+	// Canvas is what makes this exhaustive: the default palette mixes hex, rgba() and bare names
+	// ('white', 'black'), and a hand-written parser that missed one would leak a light colour into the
+	// dark palette as a glaring white box.
+	function parseColor(value) {
+		if (!main_core.Type.isString(value) || value.trim() === '') {
+			return null;
+		}
+		if (colorProbe === null) {
+			colorProbe = document.createElement('canvas').getContext('2d');
+		}
+		if (!colorProbe) {
+			return null;
+		}
+
+		// Two sentinels: an invalid assignment leaves fillStyle at its previous value, so a value is only
+		// a colour if both probes agree on the result.
+		colorProbe.fillStyle = '#000000';
+		colorProbe.fillStyle = value;
+		const first = colorProbe.fillStyle;
+		colorProbe.fillStyle = '#ffffff';
+		colorProbe.fillStyle = value;
+		if (first !== colorProbe.fillStyle) {
+			return null;
+		}
+		if (first.startsWith('#')) {
+			return {
+				r: Number.parseInt(first.slice(1, 3), 16),
+				g: Number.parseInt(first.slice(3, 5), 16),
+				b: Number.parseInt(first.slice(5, 7), 16),
+				a: 1
+			};
+		}
+		const parts = /rgba?\(([^)]+)\)/.exec(first);
+		if (!parts) {
+			return null;
+		}
+		const numbers = parts[1].split(',').map(Number);
+		return {
+			r: numbers[0],
+			g: numbers[1],
+			b: numbers[2],
+			a: numbers.length > 3 ? numbers[3] : 1
+		};
+	}
+	function toCss({
+		r,
+		g,
+		b,
+		a
+	}) {
+		const channel = value => Math.max(0, Math.min(255, Math.round(value)));
+		const rgb = `${channel(r)}, ${channel(g)}, ${channel(b)}`;
+		return a >= 1 ? `rgb(${rgb})` : `rgba(${rgb}, ${a})`;
+	}
+	function rgbToHsl({
+		r,
+		g,
+		b,
+		a
+	}) {
+		const rn = r / 255;
+		const gn = g / 255;
+		const bn = b / 255;
+		const max = Math.max(rn, gn, bn);
+		const min = Math.min(rn, gn, bn);
+		const l = (max + min) / 2;
+		if (max === min) {
+			return {
+				h: 0,
+				s: 0,
+				l,
+				a
+			};
+		}
+		const delta = max - min;
+		const s = l > 0.5 ? delta / (2 - max - min) : delta / (max + min);
+		let h = 0;
+		if (max === rn) {
+			h = ((gn - bn) / delta + (gn < bn ? 6 : 0)) / 6;
+		} else if (max === gn) {
+			h = ((bn - rn) / delta + 2) / 6;
+		} else {
+			h = ((rn - gn) / delta + 4) / 6;
+		}
+		return {
+			h,
+			s,
+			l,
+			a
+		};
+	}
+	function hslToRgb({
+		h,
+		s,
+		l,
+		a
+	}) {
+		if (s === 0) {
+			const grey = l * 255;
+			return {
+				r: grey,
+				g: grey,
+				b: grey,
+				a
+			};
+		}
+		const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+		const p = 2 * l - q;
+		const channel = offset => {
+			let t = offset;
+			if (t < 0) {
+				t += 1;
+			}
+			if (t > 1) {
+				t -= 1;
+			}
+			if (t < 1 / 6) {
+				return p + (q - p) * 6 * t;
+			}
+			if (t < 1 / 2) {
+				return q;
+			}
+			if (t < 2 / 3) {
+				return p + (q - p) * (2 / 3 - t) * 6;
+			}
+			return p;
+		};
+		return {
+			r: channel(h + 1 / 3) * 255,
+			g: channel(h) * 255,
+			b: channel(h - 1 / 3) * 255,
+			a
+		};
+	}
+	function mixRgb(rgb, target, ratio) {
+		return {
+			r: rgb.r + (target.r - rgb.r) * ratio,
+			g: rgb.g + (target.g - rgb.g) * ratio,
+			b: rgb.b + (target.b - rgb.b) * ratio,
+			a: rgb.a
+		};
+	}
+
+	/**
+	 * Moves one colour into the dark range, keeping its hue. Non-colour values pass through.
+	 *
+	 * `surface` is the parsed colour of the block the diagram sits on, or null to skip the blend.
+	 * `foreground` marks a colour that paints on top of the diagram - label text, mostly.
+	 */
+	function toDarkColor(value, surface, foreground = false) {
+		const rgb = parseColor(value);
+		if (!rgb) {
+			return value;
+		}
+		const hsl = rgbToHsl(rgb);
+		let lightness = LIGHTNESS_FLOOR + (1 - hsl.l) * (LIGHTNESS_CEIL - LIGHTNESS_FLOOR);
+		if (foreground) {
+			// Whatever side it started on, text over a dark surface has to end up light. Flipping alone is
+			// not enough: a diagram whose author wrote white text on a red plate got dark text on a dark red
+			// plate, because the plate sits mid-lightness and barely moves while the text crosses over.
+			lightness = Math.max(lightness, 1 - lightness);
+		}
+		const damping = SATURATION_FLOOR + (1 - SATURATION_FLOOR) * (1 - Math.abs(2 * hsl.l - 1));
+		const flipped = hslToRgb({
+			h: hsl.h,
+			s: hsl.s * damping,
+			l: lightness,
+			a: hsl.a
+		});
+
+		// The blend ties a fill to the surface it lies on; foreground colours are the thing that has to
+		// stand off that surface, so they keep the full lift.
+		if (!surface || foreground) {
+			return toCss(flipped);
+		}
+		const result = rgbToHsl(flipped);
+		return toCss(mixRgb(flipped, surface, SURFACE_PULL * result.s * result.l));
+	}
+
+	/**
+	 * Repaints a rendered diagram for a dark surface without asking the engine to draw it again.
+	 *
+	 * The engine bakes colors into the SVG, so a theme switch used to mean a full re-render - and layout
+	 * runs synchronously on the main thread, which is the freeze. Measured on a 120-node flowchart: the
+	 * re-render costs ~380ms, this pass ~5ms on the same 180KB of markup.
+	 *
+	 * Colors are rewritten through the parsed document, not by replacing text in the string: labels are
+	 * document content, and a node captioned "Error #FF0000" would otherwise have its caption edited.
+	 * Going through the document is also what tells label paint from plate paint, and the two move in
+	 * opposite directions (see toDarkColor).
+	 */
+
+	// Presentation attributes that hold a color. Paint servers (url(#gradient)) are values here too, and
+	// they are left alone - the gradient's own stops get repainted where they are declared.
+	const COLOR_ATTRIBUTES = Object.freeze(['fill', 'stroke', 'color', 'stop-color', 'flood-color', 'lighting-color']);
+
+	// Longest names first so a shorthand does not swallow the specific property.
+	const COLOR_DECLARATION = new RegExp('(background-color|border-top-color|border-right-color|border-bottom-color|border-left-color' + '|border-color|outline-color|caret-color|stop-color|flood-color|lighting-color|text-shadow' + '|box-shadow|background|border|outline|color|fill|stroke)(\\s*:\\s*)([^;{}]*)', 'gi');
+
+	// A stylesheet, split into rules, so a declaration is read together with what it applies to.
+	const CSS_RULE = /([^{}]*)\{([^{}]*)\}/g;
+
+	// `color` always paints text. `fill`/`stroke` depend on what they are applied to - these are the parts
+	// of a mermaid diagram that carry a label.
+	const TEXT_ELEMENTS = 'text, tspan, foreignObject';
+	// sequenceNumber is deliberately absent: those digits sit on a disc that carries no fill of its own and
+	// inherits it from the root, where the engine writes the text colour - so the disc is dark in a light
+	// document and light in a dark one. The number has to be the colour of the surface and flip with it,
+	// which is exactly what a fill does here.
+	const TEXT_SELECTOR = /\b(text|tspan|span|p|div|label|title)\b|\.(node|edge|cluster|title|actor|section|task|slice|legend)[\w-]*label|labeltext|titletext/i;
+
+	// A label's plate is named after the label it sits under - gitGraph draws `.commit-label-bkg` - so the
+	// name alone reads as text. Checked first, and the plate wins: the two move in opposite directions, and
+	// a plate left light is a light box in a dark document, while a label left dark is still readable text.
+	const PLATE_SELECTOR = /bkg|background|\b(bg|rect|box|plate)\b/i;
+
+	// A color-valued position can still hold non-colors: keywords, lengths, `!important`, a paint server.
+	// Every token is offered to the color parser and only a real color is rewritten, so the list of things
+	// to skip stays short. `url(...)` comes first in the alternation because an id like `#abc123` inside it
+	// would otherwise read as a hex color.
+	const VALUE_TOKEN = /url\([^)]*\)|#[0-9a-fA-F]{3,8}\b|(?:rgba?|hsla?)\([^)]*\)|[a-zA-Z]{3,}/g;
+
+	// Keywords that mean "no paint" or "whatever the context says". `transparent` does parse as a color
+	// (black at zero alpha), and rewriting it would swap a plain keyword for an equally invisible triplet.
+	const KEYWORDS = Object.freeze(['transparent', 'currentcolor', 'inherit', 'initial', 'unset', 'revert']);
+	function recolorValue(value, surface, foreground) {
+		return value.replace(VALUE_TOKEN, token => {
+			if (token.startsWith('url(') || KEYWORDS.includes(token.toLowerCase())) {
+				return token;
+			}
+			const next = toDarkColor(token, surface, foreground);
+			return typeof next === 'string' ? next : token;
+		});
+	}
+
+	// Some properties say what they paint whatever they are applied to: `color` is always the text, a
+	// background is always the plate under it. The selector only gets to decide `fill` and `stroke`.
+	// mermaid draws an edge caption as `.edgeLabel { color; background-color }` - one rule, both roles -
+	// and reading the whole rule as text turned the caption into a light box with invisible letters.
+	const FOREGROUND_PROPERTY = /^color$/i;
+	const PLATE_PROPERTY = /^background/i;
+	function recolorDeclarations(css, surface, foreground) {
+		return css.replace(COLOR_DECLARATION, (match, property, separator, value) => {
+			let paintsText = foreground;
+			if (FOREGROUND_PROPERTY.test(property)) {
+				paintsText = true;
+			} else if (PLATE_PROPERTY.test(property)) {
+				paintsText = false;
+			}
+			return property + separator + recolorValue(value, surface, paintsText);
+		});
+	}
+
+	// A scale is drawn over the surface rather than filled onto it, so its lines belong to the foreground
+	// with the labels they belong to: read as a plate, a gantt tick came out darker than the surface it
+	// crosses and the schedule lost its grid, while the light document draws the same line lighter than
+	// its background.
+	// Not word-bounded: the names are camelCase as often as not - radarAxisLine, xAxis, gridLine.
+	const OVERLAY_SELECTOR = /grid|tick|axis|domain/i;
+	function isForegroundSelector(selector) {
+		if (PLATE_SELECTOR.test(selector)) {
+			return false;
+		}
+		return TEXT_SELECTOR.test(selector) || OVERLAY_SELECTOR.test(selector);
+	}
+	function recolorStylesheet(css, surface) {
+		return css.replace(CSS_RULE, (match, selector, body) => selector + '{' + recolorDeclarations(body, surface, isForegroundSelector(selector)) + '}');
+	}
+	function recolorElement(element, surface) {
+		// closest() and not a tag check: a label lives inside <foreignObject> as ordinary HTML, several
+		// elements deep.
+		const foreground = element.closest(TEXT_ELEMENTS) !== null;
+		COLOR_ATTRIBUTES.forEach(name => {
+			const value = element.getAttribute(name);
+			if (value === null || value.trim() === '') {
+				return;
+			}
+			const next = recolorValue(value, surface, foreground || name === 'color');
+			if (next !== value) {
+				element.setAttribute(name, next);
+			}
+		});
+		const style = element.getAttribute('style');
+		if (style) {
+			element.setAttribute('style', recolorDeclarations(style, surface, foreground));
+		}
+	}
+
+	/**
+	 * Takes the SVG the engine produced for the light palette and returns it painted for `surface`.
+	 *
+	 * Returns the input unchanged when the surface is not a color or the markup holds no root <svg>, so a
+	 * missing token degrades to the light diagram rather than to a blank frame.
+	 */
+	function recolorSvgForDark(svg, surface) {
+		const surfaceRgb = parseColor(surface);
+		if (!surfaceRgb) {
+			return svg;
+		}
+
+		// Same inert parse as the measuring path, and text/html for the same reason: the engine puts HTML
+		// labels in <foreignObject> with unclosed <br>, which is fatal for the XML parser.
+		let root = null;
+		try {
+			root = new DOMParser().parseFromString(svg, 'text/html').querySelector('svg');
+		} catch {
+			return svg;
+		}
+		if (!root) {
+			return svg;
+		}
+
+		// The stylesheet carries most of the palette: the engine writes per-class fills there, and the
+		// scale colors it derives at render time (hsl(...), named colors) appear nowhere else.
+		root.querySelectorAll('style').forEach(element => {
+			element.textContent = recolorStylesheet(element.textContent, surfaceRgb);
+		});
+		recolorElement(root, surfaceRgb);
+		root.querySelectorAll('*').forEach(element => recolorElement(element, surfaceRgb));
+		return root.outerHTML;
+	}
+
+	// Diagram source is document content: in a shared document any co-author can put anything here, and
+	// it renders in the reader's session. So the rendered SVG is treated as hostile output and never
+	// reaches this document - it goes either into a frame with scripting and same-origin access both
+	// withheld (see buildDiagramFrame) or into an image, which by the SVG spec cannot script, cannot fire
+	// an event handler and cannot fetch anything either (see buildDiagramImage). strict mode below is
+	// output hygiene on top of that boundary, not the boundary itself.
+	const SANDBOX_ATTR = '';
+
+	// The frame is the carrier everywhere it works: its document renders <foreignObject>, so the engine
+	// keeps its own HTML labels and the diagram gets the geometry it was laid out for. The app's webview is
+	// the one exception - it never loads a document from srcdoc, the load event does not arrive there under
+	// any sandbox or CSP, so the diagram is delivered as an image instead. Both the engine configuration
+	// and the carrier read this single answer: an image drawn from HTML labels is a set of empty plates.
+	function usesFrameDelivery() {
+		return !isMobileApp();
+	}
+
+	// mermaid lays out synchronously on the main thread, so a runaway diagram cannot be interrupted
+	// once the engine is entered - a promise timeout would resolve while the tab stays frozen. The
+	// only defence that actually works is refusing oversized input up front.
+	const MAX_SOURCE_LEN = 20000;
+
+	// Diagram colors come from the note design system, not from a built-in mermaid theme. 'base' plus
+	// these variables is what makes a diagram colourful: from primaryColor the theme derives its whole
+	// twelve-color scale by rotating hue, and that scale is what paints mindmap sections, chart series and
+	// gitGraph branches. The engine's own 'dark' instead paints every unstyled node near-black.
+	const THEME_TOKENS = Object.freeze({
+		background: '--ui-color-accent-soft-grey-2',
+		primaryColor: '--ui-color-accent-soft-blue-2',
+		mainBkg: '--ui-color-accent-soft-blue-2',
+		primaryBorderColor: '--ui-color-accent-main-primary',
+		nodeBorder: '--ui-color-accent-main-primary',
+		primaryTextColor: '--ui-color-base-1',
+		textColor: '--ui-color-base-1',
+		nodeTextColor: '--ui-color-base-1',
+		lineColor: '--ui-color-base-4',
+		secondaryColor: '--ui-color-bg-content-primary',
+		tertiaryColor: '--ui-color-accent-soft-grey-2',
+		clusterBkg: '--ui-color-bg-content-primary',
+		clusterBorder: '--ui-color-divider-accent',
+		edgeLabelBackground: '--ui-color-accent-soft-grey-2',
+		// A sequence step number sits in a circle the engine never fills, so the circle is black - the SVG
+		// default. The engine picks the number's colour by inverting lineColor, which with a light palette
+		// means dark digits on that black disc. White is what the disc actually needs.
+		sequenceNumberColor: '--ui-color-base-8'
+	});
+
+	// The surface a code block is painted on: what the colors get tinted with when a dark document repaints
+	// the diagram (see diagram-palette).
+	const SURFACE_TOKEN = '--ui-color-accent-soft-grey-2';
+
+	// Ordinary document text: the foreground colour the carrier is given (see foregroundColorRule), and
+	// what a label falls back to when the engine paints it a colour of its own choosing that our palette
+	// has made unreadable (see labelColorRule).
+	const LABEL_TOKEN = '--ui-color-base-1';
+
+	// Journey is the one type whose task plate is a fixed width from the config instead of being sized from
+	// its label, and it does not wrap the label in native text mode - a long one would run over its
+	// neighbours. Widening the plate to the longest label is the knob the engine offers for exactly this.
+	// The font is the engine's own default for these labels (taskFontSize/taskFontFamily).
+	const JOURNEY_TASK_FONT = '14px "Open Sans", sans-serif';
+	const JOURNEY_PLATE_MIN = 150;
+	// Past this a row of plates stops fitting any screen, so a label longer than the cap is left to run
+	// over rather than dragging the whole diagram out of the block.
+	const JOURNEY_PLATE_MAX = 360;
+	// boxTextMargin on both sides of the label.
+	const JOURNEY_PLATE_PADDING = 10;
+
+	// Every diagram is drawn once, in the light palette, whatever theme the document is in - a dark one
+	// repaints the finished SVG instead of asking for another layout. So the tokens are always read in a
+	// light context: in a dark one they are near-black (--ui-color-accent-soft-blue-2 is #E6F4FF in light
+	// and #062040 in dark), a twelve-color scale derived from blackness is black, and that is exactly how
+	// a colourful diagram used to arrive monochrome. The design system declares the tokens for
+	// ':root, .--ui-context-content-light', so an element carrying this class hands over the light values.
+	const LIGHT_CONTEXT_CLASS = '--ui-context-content-light';
+	let enginePromise = null;
+	// Per engine, not per module: the configuration is engine state, and a second engine (a stub under
+	// test) has none of it yet.
+	const appliedConfig = new WeakMap();
+	let textMeter = null;
+	// mermaid keeps global state across render() calls, so renders must not interleave.
+	let renderChain = Promise.resolve();
+	let renderSeq = 0;
+
+	// Resolved against the element the diagram actually lives in, so the value is the one in force for the
+	// surrounding design-system context instead of a guess about the global theme.
+	function resolveSurface(contextEl) {
+		return getComputedStyle(contextEl ?? document.body).getPropertyValue(SURFACE_TOKEN).trim();
+	}
+	function resolveLabelColor(contextEl) {
+		return getComputedStyle(contextEl ?? document.body).getPropertyValue(LABEL_TOKEN).trim();
+	}
+	function resolveThemeVariables(contextEl) {
+		const styles = getComputedStyle(contextEl ?? document.body);
+		const variables = {};
+		Object.entries(THEME_TOKENS).forEach(([name, token]) => {
+			const value = styles.getPropertyValue(token).trim();
+			if (value !== '') {
+				variables[name] = value;
+			}
+		});
+		return variables;
+	}
+
+	// The light values of the tokens, whatever theme the document is in. Custom properties only resolve for
+	// an element that is in the document, so the probe is attached for the read and taken away again.
+	function resolveLightThemeVariables() {
+		const probe = document.createElement('div');
+		probe.className = LIGHT_CONTEXT_CLASS;
+		probe.style.display = 'none';
+		document.body.append(probe);
+		const variables = resolveThemeVariables(probe);
+		probe.remove();
+		return variables;
+	}
+	function loadEngine() {
+		return main_core.Runtime.loadExtension('ui.mermaid').then(exports => {
+			const mermaid = exports?.mermaid;
+			if (!mermaid || !main_core.Type.isFunction(mermaid.render) || !main_core.Type.isFunction(mermaid.initialize)) {
+				throw new Error('ui.mermaid: unexpected extension exports');
+			}
+			return mermaid;
+		});
+	}
+	function ensureMermaid() {
+		if (enginePromise === null) {
+			// Drop a failed promise instead of caching it: a transient load failure must not
+			// disable diagrams for the rest of the session.
+			enginePromise = loadEngine().catch(error => {
+				enginePromise = null;
+				throw error;
+			});
+		}
+		return enginePromise;
+	}
+	function measureTextWidth(text, font) {
+		textMeter ??= document.createElement('canvas').getContext('2d');
+		if (!textMeter) {
+			return 0;
+		}
+		textMeter.font = font;
+		return textMeter.measureText(text).width;
+	}
+
+	// Null for every other type: the plate width only exists in the journey config, and handing it over
+	// where it means nothing would just make the configuration read as if it did.
+	function resolveJourneyPlateWidth(source) {
+		if (!/^\s*journey\b/.test(source)) {
+			return null;
+		}
+		let widest = 0;
+		source.split('\n').forEach(line => {
+			// A task line is `label: score: actor`, so the label is what stands before the first colon.
+			// Everything else in the source either has no colon or is a keyword line.
+			const label = line.split(':')[0].trim();
+			if (label !== '' && !/^(journey|title|section)\b/.test(label)) {
+				widest = Math.max(widest, measureTextWidth(label, JOURNEY_TASK_FONT));
+			}
+		});
+		if (widest === 0) {
+			return null;
+		}
+		return Math.min(JOURNEY_PLATE_MAX, Math.max(JOURNEY_PLATE_MIN, Math.ceil(widest) + JOURNEY_PLATE_PADDING));
+	}
+
+	// The label settings the image path needs, and only it. The frame keeps the engine's own defaults
+	// instead: it renders <foreignObject>, so labels stay HTML, the engine wraps and measures them itself,
+	// and the layout is the one every diagram type was tuned for - native text makes a mindmap's central
+	// label drift off its node and packs the geometry tighter than the type expects.
+	function nativeLabelConfig() {
+		return {
+			// Labels as native <text>, never inside <foreignObject>. An SVG shown as an image renders no
+			// foreignObject at all (that is what the image delivery rests on, see buildDiagramImage), so a
+			// diagram drawn with HTML labels would arrive as a set of empty plates. The engine wraps native
+			// labels itself and sizes plates from the wrapped text, so the geometry stays workable.
+			htmlLabels: false,
+			flowchart: {
+				htmlLabels: false
+			},
+			class: {
+				htmlLabels: false
+			},
+			state: {
+				htmlLabels: false
+			},
+			// journey ignores htmlLabels and picks its label renderer by this key: 'fo' is foreignObject,
+			// anything else is native text.
+			journey: {
+				textPlacement: 'tspan'
+			}
+		};
+	}
+
+	// Whichever way the label is drawn, a journey plate is a fixed width from the config, so a long label
+	// either runs over its neighbour (native text, which does not wrap here) or wraps to a third line and
+	// spills out the bottom of the plate (HTML). Widening the plate to the longest label is the knob the
+	// engine offers for exactly this, and both deliveries need it.
+	function journeySection(source, native) {
+		const width = resolveJourneyPlateWidth(source);
+		const journey = {
+			...native.journey,
+			...(width === null ? {} : {
+				width
+			})
+		};
+		return Object.keys(journey).length === 0 ? {} : {
+			journey
+		};
+	}
+	function applyEngineConfig(mermaid, source) {
+		const variables = resolveLightThemeVariables();
+		const native = usesFrameDelivery() ? {} : nativeLabelConfig();
+		const config = {
+			startOnLoad: false,
+			securityLevel: 'strict',
+			theme: 'base',
+			// 'base' plus these variables is what makes a diagram colourful: from primaryColor the theme
+			// derives its whole twelve-color scale by rotating hue, and that scale paints mindmap sections,
+			// chart series and gitGraph branches. Per-node `style` directives inside the diagram still win
+			// over all of it. A dark document repaints the result (see themeDiagramSvg) instead of getting a
+			// palette of its own.
+			themeVariables: variables,
+			// Without this the engine answers a broken diagram by DRAWING an error picture ("Syntax
+			// error in text") into the page and then throwing - and it skips its own cleanup on that
+			// path, so the error diagram stays in <body> for good. With the flag it cleans up and just
+			// throws. Both this and securityLevel are `secure` keys in mermaid, so a diagram cannot
+			// turn them off with an %%{init}%% directive.
+			suppressErrorRendering: true,
+			...native,
+			...journeySection(source, native)
+		};
+
+		// initialize() rebuilds the whole configuration from defaults rather than merging into what is
+		// already there, so the cache key has to cover all of it - a journey plate width from a previous
+		// diagram must not be what decides whether the palette gets applied. It also keeps the two delivery
+		// modes apart: the settings differ, so the key differs and neither reuses the other's engine state.
+		const next = JSON.stringify(config);
+		if (next === appliedConfig.get(mermaid)) {
+			return;
+		}
+		mermaid.initialize(config);
+		appliedConfig.set(mermaid, next);
+	}
+
+	/**
+	 * Paints an already rendered diagram for the theme in force around it.
+	 *
+	 * Colors are baked into the SVG, so this used to be a re-render. Layout is synchronous on the main
+	 * thread - measured at ~380ms for a 120-node flowchart - which is what froze the page on every theme
+	 * switch. Repainting the finished markup costs ~5ms on the same diagram.
+	 */
+	function themeDiagramSvg(svg, theme, contextEl = null) {
+		return theme === 'dark' ? recolorSvgForDark(svg, resolveSurface(contextEl)) : svg;
+	}
+
+	// The engine mounts scratch nodes in this document while rendering, derived from the id we give it
+	// (see mermaid render: 'd' + id for the container, 'i' + id for the sandbox iframe). It normally
+	// takes them away itself; anything still here afterwards is debris and must not be left in the page.
+	function removeEngineScratch(id) {
+		[`d${id}`, `i${id}`, id].forEach(scratchId => {
+			document.getElementById(scratchId)?.remove();
+		});
+	}
+
+	/**
+	 * Turns mermaid source into an SVG string, or null when the source is not a valid diagram.
+	 *
+	 * Takes the engine as an argument so the syntax gate and the cleanup can be tested without
+	 * loading the real one.
+	 */
+	async function renderDiagramSvg(engine, id, source) {
+		try {
+			applyEngineConfig(engine, source);
+
+			// Syntax gate before render: parse() only parses (no DOM at all) and answers false instead
+			// of throwing, so a broken diagram degrades to its source without the engine ever getting
+			// near the page.
+			const parsed = await engine.parse(source, {
+				suppressErrors: true
+			});
+			if (!parsed) {
+				return null;
+			}
+			const {
+				svg
+			} = await engine.render(id, source);
+			return svg;
+		} finally {
+			removeEngineScratch(id);
+		}
+	}
+
+	// Layout runs synchronously on the main thread, so a queue of diagrams is one long freeze: the mode
+	// switch that started it cannot paint until the last one is done. A full task boundary before each
+	// render lets the browser draw what it already has, so the reader sees the page move on and the
+	// diagrams fill in one after another.
+	function yieldToBrowser() {
+		return new Promise(resolve => {
+			setTimeout(resolve, 0);
+		});
+	}
+	function enqueueRender(task) {
+		const result = renderChain.then(() => yieldToBrowser()).then(() => task());
+		renderChain = result.then(() => {}, () => {});
+		return result;
+	}
+	let visibilityObserver = null;
+	const visibilityWaiters = new WeakMap();
+
+	// One shared observer for every diagram block in the document.
+	function getVisibilityObserver() {
+		if (visibilityObserver === null && typeof IntersectionObserver === 'function') {
+			visibilityObserver = new IntersectionObserver(entries => {
+				entries.forEach(entry => {
+					if (!entry.isIntersecting) {
+						return;
+					}
+					const waiter = visibilityWaiters.get(entry.target);
+					visibilityWaiters.delete(entry.target);
+					visibilityObserver.unobserve(entry.target);
+					waiter?.();
+				});
+			}, {
+				rootMargin: '300px'
+			});
+		}
+		return visibilityObserver;
+	}
+
+	/**
+	 * Calls back once the element is on screen (or close to it), and returns a cancel function.
+	 *
+	 * A document can hold many diagrams, and drawing the ones nobody has scrolled to yet costs the same
+	 * blocking layout as the visible ones. The callback also lands after the current frame, which is
+	 * what keeps a mode switch from waiting on any rendering at all.
+	 */
+	function whenVisible(element, callback) {
+		const observer = getVisibilityObserver();
+		if (!observer) {
+			// No observer support: keep the ordering guarantee (never render inside the caller's frame)
+			// and just draw everything.
+			const timer = setTimeout(callback, 0);
+			return () => clearTimeout(timer);
+		}
+		visibilityWaiters.set(element, callback);
+		observer.observe(element);
+		return () => {
+			visibilityWaiters.delete(element);
+			observer.unobserve(element);
+		};
+	}
+
+	// The SVG string is untrusted, so it must not touch the live DOM to be measured: DOMParser yields
+	// an inert document (no scripts, no subresource loads) that is safe to read attributes from.
+	//
+	// Parsed as text/html, NOT image/svg+xml: the engine puts HTML labels in <foreignObject> and emits
+	// unclosed <br> there, which is valid HTML but a fatal error for the XML parser. Measuring used to
+	// fail on every diagram with a <br/> in a label, and a failed measure leaves the frame at its
+	// default 150px height - the diagram was simply cut off.
+	function measureSvg(svg) {
+		let root = null;
+		try {
+			root = new DOMParser().parseFromString(svg, 'text/html').querySelector('svg');
+		} catch {
+			return null;
+		}
+		if (!root) {
+			return null;
+		}
+		const viewBox = (root.getAttribute('viewBox') ?? '').trim().split(/[\s,]+/).map(Number);
+		if (viewBox.length === 4 && viewBox[2] > 0 && viewBox[3] > 0) {
+			return {
+				width: viewBox[2],
+				height: viewBox[3]
+			};
+		}
+
+		// Only absolute values: mermaid often sizes the root as width="100%", and parseFloat would
+		// happily read that as 100 units and pin a nonsense ratio.
+		const width = parseAbsoluteLength(root.getAttribute('width'));
+		const height = parseAbsoluteLength(root.getAttribute('height'));
+		return width && height ? {
+			width,
+			height
+		} : null;
+	}
+	function parseAbsoluteLength(value) {
+		const match = /^\s*(\d+(?:\.\d+)?)(?:px)?\s*$/.exec(value ?? '');
+		const parsed = match ? Number.parseFloat(match[1]) : 0;
+		return parsed > 0 ? parsed : null;
+	}
+	const SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
+
+	// Worn by whichever carrier the diagram arrived in, so the viewport and its stylesheet never have to
+	// know which one that was.
+	const DIAGRAM_MEDIA_CLASS = 'note-editor-diagram-media';
+	const DIAGRAM_IMAGE_CLASS = 'note-editor-diagram-image';
+
+	// A gantt draws its scale as stroke="currentColor", and nothing in a carrier ever sets `color`: an
+	// image has no document to inherit it from, and the frame's document has no rule for it either. The
+	// property falls back to its initial value, every tick comes out black, and on a dark surface that is a
+	// grid of near-invisible strokes. So the root is told what the foreground colour is - the same one the
+	// labels use - and currentColor resolves against the theme instead of against nothing.
+	function foregroundColorRule(color) {
+		return `svg{color:${color}}`;
+	}
+
+	// The diagram's own proportions are pinned from outside whichever carrier it went into: a frame with
+	// scripting withheld cannot measure itself or react to a resize, and an image has no say in the box it
+	// is given. With the ratio pinned, height follows width at any container size.
+	function applyMediaSize(media, svg) {
+		const box = measureSvg(svg);
+		if (!box) {
+			media.style.width = '100%';
+			return;
+		}
+
+		// Never upscale past the diagram's natural size, but shrink freely on narrow screens.
+		media.style.width = `min(100%, ${Math.round(box.width)}px)`;
+		media.style.aspectRatio = `${box.width} / ${box.height}`;
+		// Kept on the element so zooming can work from the diagram's own size without re-measuring.
+		media.dataset.naturalWidth = String(box.width);
+		media.dataset.naturalHeight = String(box.height);
+	}
+	function wrapSvg(svg, contextEl) {
+		// Nothing scripts inside the frame, so the document cannot report its own size or react to
+		// resize. The SVG scales itself to the frame box instead, and the frame keeps the diagram's
+		// aspect ratio (see applyMediaSize), so height follows width at any container size.
+		//
+		// max-width has to be forced off: with useMaxWidth (the engine's default) it writes
+		// style="max-width: {layout width}px" onto the root <svg> itself, and an inline declaration beats
+		// a plain rule from here. That cap equals the viewBox width, so zooming past it grew the frame
+		// while the diagram inside stayed at its natural size and slid out of view.
+		//
+		// The empty sandbox stops the diagram from running code; the policy stops it from reaching the
+		// network. The engine's strict mode strips event handlers out of a label but keeps the tag, so a
+		// co-author could leave `<img src="http://...">` in a caption and have every reader's browser fetch
+		// it - a beacon that reports who opened the document. A diagram needs no network at all: its markup
+		// is inline, and fonts are named, not loaded. `data:` stays allowed so a self-contained image still
+		// shows. Inline styles are the engine's own palette and the rules below.
+		const labelColor = resolveLabelColor(contextEl);
+		return '<!doctype html><meta charset="utf-8">' + '<meta http-equiv="Content-Security-Policy" ' + `content="default-src 'none'; style-src 'unsafe-inline'; img-src data:; font-src data:">` + '<style>html,body{margin:0;padding:0;background:transparent;overflow:hidden}' + 'svg{display:block;width:100%!important;max-width:none!important;height:auto}' + (labelColor === '' ? '' : foregroundColorRule(labelColor)) + '</style>' + svg;
+	}
+
+	/**
+	 * Wraps an already rendered SVG into the sandboxed frame it is allowed to be shown in.
+	 *
+	 * The isolation the frame delivery rests on: the diagram gets a browsing context of its own, but one
+	 * with neither scripting nor this origin, so nothing in it can run and nothing in it can read the
+	 * document around it. Putting the same markup into this document is what would remove the boundary.
+	 *
+	 * Exported so the sandbox invariant can be asserted without starting the engine.
+	 */
+	function buildDiagramFrame(svg, contextEl = null) {
+		const iframe = document.createElement('iframe');
+		iframe.className = DIAGRAM_MEDIA_CLASS;
+		// Hard XSS boundary. Adding allow-scripts or allow-same-origin here removes the
+		// isolation this whole approach is built on.
+		iframe.setAttribute('sandbox', SANDBOX_ATTR);
+		iframe.setAttribute('referrerpolicy', 'no-referrer');
+		iframe.setAttribute('scrolling', 'no');
+		// A frame without a name is announced as "frame" and nothing else, and the diagram is the whole
+		// point of the block. The title is what a reader hears in its place.
+		iframe.setAttribute('title', main_core.Loc.getMessage('NOTE_EDITOR_DIAGRAM_FRAME'));
+		iframe.srcdoc = wrapSvg(svg, contextEl);
+		applyMediaSize(iframe, svg);
+		return iframe;
+	}
+
+	// An image is parsed as strict XML, unlike the same markup inside this document, and the engine does
+	// not always emit well-formed output: a C4 diagram references its icons with xlink:href while the root
+	// never declares that prefix, and an undeclared prefix is a fatal error - the diagram then simply does
+	// not decode. Instead of patching the symptoms one type at a time, the markup goes through the lenient
+	// HTML parser (which knows the foreign-content rules and puts xlink where it belongs) and comes back
+	// out through the XML serializer, so what leaves here is well-formed for every type.
+	//
+	// The sizing rule rides along in the same pass. With useMaxWidth (the engine's default) the engine
+	// writes style="max-width: {layout width}px" onto the root itself, and that cap equals the viewBox
+	// width - a zoomed diagram would stop growing at its natural size while the box around it kept going.
+	// An inline declaration is only outranked by an important one from a stylesheet, and the only
+	// stylesheet an image obeys is the one inside it.
+	//
+	// Parsing does not make the markup live: the parsed document is inert, so nothing is fetched and
+	// nothing runs, and what comes out is on its way into an image either way.
+	// A label often shares its class with the plate behind it - a journey section names both its plate and
+	// its title `section-type-0` - and a `fill` from the engine's own stylesheet outranks the `fill`
+	// attribute on the element. Native labels therefore came out painted the colour of their own plate and
+	// vanished: with HTML labels the clash could not happen, because those took a `color` instead. The
+	// element's own colour is promoted to an inline declaration, which outranks the stylesheet in turn.
+	function promoteTextColors(root) {
+		root.querySelectorAll('text[fill], tspan[fill]').forEach(label => {
+			// An inline fill of its own is already the strongest thing there is - leave it alone.
+			if (label.style.fill === '') {
+				label.style.fill = label.getAttribute('fill');
+			}
+		});
+	}
+
+	// journey names its plate and its own title `section-type-N`, and the engine's stylesheet paints that
+	// class - so our palette lightens the plate and takes the label with it. The label colour the engine
+	// wrote is no help either: it is hard-coded white (the renderer captures sectionColours once at load,
+	// which is why no configuration reaches it), and white on a pale plate is nothing at all. So these
+	// labels are told to be ordinary document text, and this rule outranks the promotion below on purpose.
+	function labelColorRule(color) {
+		return `text.journey-section,text.task{fill:${color}!important}`;
+	}
+	function prepareSvgForImage(svg, contextEl) {
+		const root = new DOMParser().parseFromString(svg, 'text/html').querySelector('svg');
+		if (!root) {
+			return svg;
+		}
+		const labelColor = resolveLabelColor(contextEl);
+		const style = document.createElementNS(SVG_NAMESPACE, 'style');
+		style.textContent = 'svg{max-width:none!important;width:100%;height:100%}' + (labelColor === '' ? '' : foregroundColorRule(labelColor) + labelColorRule(labelColor));
+		root.prepend(style);
+		promoteTextColors(root);
+		return new XMLSerializer().serializeToString(root);
+	}
+
+	// base64 rather than percent-encoding: labels here are mostly non-ASCII, and every such character
+	// costs six characters percent-encoded against four thirds of a byte in base64. Chunked because a
+	// 200 KB diagram is more arguments than fromCharCode takes in one call.
+	function svgToDataUri(svg) {
+		const bytes = new TextEncoder().encode(svg);
+		const CHUNK = 0x8000;
+		let binary = '';
+		for (let offset = 0; offset < bytes.length; offset += CHUNK) {
+			binary += String.fromCharCode(...bytes.subarray(offset, offset + CHUNK));
+		}
+		return `data:image/svg+xml;base64,${btoa(binary)}`;
+	}
+
+	/**
+	 * Wraps an already rendered SVG into the inert image it is allowed to be shown in.
+	 *
+	 * The isolation the image delivery rests on. An SVG referenced by `<img>` is rendered in the secure
+	 * static mode of the SVG spec: it gets no browsing context at all, so scripts never run, event handlers
+	 * never fire, and no subresource is ever fetched - not because those were configured away, but because
+	 * an image has no way to do any of it. Putting the same markup into this document, or into a frame that
+	 * is allowed to script, is what would remove the boundary.
+	 *
+	 * Exported so that invariant can be asserted without starting the engine.
+	 */
+	function buildDiagramImage(svg, contextEl = null) {
+		const image = document.createElement('img');
+		// The editor caps every picture in the text at the column width. This one is not part of the text -
+		// its size belongs to the zoom - so the second class is what takes it out of that rule.
+		image.className = `${DIAGRAM_MEDIA_CLASS} ${DIAGRAM_IMAGE_CLASS}`;
+		image.src = svgToDataUri(prepareSvgForImage(svg, contextEl));
+		// The picture is the whole point of the block, and a reader with a screen reader hears this in its
+		// place. The diagram's own text is inside the image and unreachable from the outside either way.
+		image.alt = main_core.Loc.getMessage('NOTE_EDITOR_DIAGRAM_FRAME');
+		// Otherwise a stray drag drops a data-URI image somewhere else in the document.
+		image.draggable = false;
+		applyMediaSize(image, svg);
+		return image;
+	}
+
+	/**
+	 * Renders mermaid source into an SVG string, loading the engine on first use.
+	 *
+	 * Theme-independent on purpose: the result is what the caller keeps and repaints per theme, so a theme
+	 * switch never costs another layout. Returns null when the diagram cannot be shown (oversized source,
+	 * invalid syntax, engine unavailable) - the caller then keeps the raw source visible. Never throws and
+	 * never leaves the editor in a broken state.
+	 */
+	async function renderDiagramSource(source) {
+		const text = main_core.Type.isString(source) ? source : '';
+		if (text.trim() === '' || text.length > MAX_SOURCE_LEN) {
+			return null;
+		}
+		try {
+			const mermaid = await ensureMermaid();
+			return await enqueueRender(() => renderDiagramSvg(mermaid, `note-mermaid-${++renderSeq}`, text));
+		} catch {
+			return null;
+		}
+	}
+
+	/**
+	 * Zoom and pan arithmetic for a rendered diagram.
+	 *
+	 * Kept free of the DOM: the diagram itself lives in a sandboxed frame that cannot script, so all of
+	 * the interaction is driven from the parent and every decision here is plain geometry.
+	 */
+
+	// Only a sanity floor against a nonsensical number. The real lower bound is the fit scale, enforced
+	// where zooming happens: a long diagram can legitimately fit at 8%, and flooring that at some
+	// "reasonable" minimum drew it two and a half times larger than the space it had.
+	const MIN_SCALE = 0.01;
+	const MAX_SCALE = 4;
+
+	// Feels like a zoom step without needing many clicks to get anywhere.
+	const STEP = 1.25;
+	function clampScale(scale) {
+		if (!Number.isFinite(scale)) {
+			return 1;
+		}
+		return Math.min(MAX_SCALE, Math.max(MIN_SCALE, scale));
+	}
+	function stepScale(scale, direction) {
+		return clampScale(direction > 0 ? scale * STEP : scale / STEP);
+	}
+
+	/**
+	 * Scale at which the diagram fits the space available to it.
+	 *
+	 * Height is optional: a code block grows to whatever height the diagram needs, so only its width
+	 * binds - a fullscreen viewport cannot grow and has to contain both directions.
+	 *
+	 * Never above 1: a small diagram is shown at its natural size instead of being blown up to fill the
+	 * block, which is how it reads on any other markdown surface.
+	 */
+	function fitScale(naturalWidth, viewportWidth, naturalHeight = 0, viewportHeight = 0) {
+		if (!(naturalWidth > 0) || !(viewportWidth > 0)) {
+			return 1;
+		}
+		let ratio = viewportWidth / naturalWidth;
+		if (naturalHeight > 0 && viewportHeight > 0) {
+			ratio = Math.min(ratio, viewportHeight / naturalHeight);
+		}
+		return clampScale(Math.min(1, ratio));
+	}
+
+	/**
+	 * Keeps the diagram inside the viewport: no dragging it out of sight, and an axis that has room to
+	 * spare is centred instead of pinned to one edge.
+	 */
+	function clampPan({
+		contentWidth,
+		contentHeight,
+		viewportWidth,
+		viewportHeight,
+		x,
+		y
+	}) {
+		return {
+			x: clampAxis(contentWidth, viewportWidth, x),
+			y: clampAxis(contentHeight, viewportHeight, y)
+		};
+	}
+	function clampAxis(content, viewport, offset) {
+		const slack = viewport - content;
+		if (!Number.isFinite(slack)) {
+			return 0;
+		}
+		if (slack >= 0) {
+			return slack / 2;
+		}
+		return Math.min(0, Math.max(slack, Number.isFinite(offset) ? offset : 0));
+	}
+
+	/**
+	 * Pan offset that keeps the point under the cursor still while the scale changes.
+	 *
+	 * Without this a wheel zoom drifts away from whatever the reader was looking at.
+	 */
+	function anchorPan({
+		x,
+		y,
+		pointerX,
+		pointerY,
+		previousScale,
+		nextScale
+	}) {
+		const ratio = previousScale > 0 ? nextScale / previousScale : 1;
+		return {
+			x: pointerX - (pointerX - x) * ratio,
+			y: pointerY - (pointerY - y) * ratio
+		};
+	}
+	function formatScale(scale) {
+		return `${Math.round(clampScale(scale) * 100)}%`;
+	}
+
+	const VIEWPORT_CLASS = 'note-editor-diagram-viewport';
+	const CAPTURE_CLASS = 'note-editor-diagram-capture';
+	const ZOOMED_CLASS = 'note-editor-diagram-viewport--zoomed';
+	const IMMERSIVE_CLASS = 'note-editor-diagram-viewport--immersive';
+
+	/**
+	 * A rendered diagram the reader can zoom and pan.
+	 *
+	 * The carrier is whatever the delivery produced - a sandboxed frame or an inert image (see
+	 * buildDiagramFrame / buildDiagramImage) - and neither can answer a gesture: pointer and wheel events
+	 * never cross into a frame with `sandbox=""`, and nothing inside a picture runs at all. So every
+	 * gesture is captured by a transparent layer above the carrier and answered here, in this document.
+	 * Zoom is the carrier's own width (the SVG scales to it) and panning is a transform on it, so nothing
+	 * has to be added to either delivery and the isolation both rest on stays untouched.
+	 *
+	 * Used both by a code block in the document and by the fullscreen viewer, which differ only in how
+	 * they treat touch - see `immersive`.
+	 */
+	class DiagramViewport {
+		#media;
+		#capture;
+		#immersive;
+		#onChange;
+		#onActivate;
+		#fitWidthStyle;
+		#zoom;
+		#pointers;
+		#drag;
+		#pinch;
+		constructor({
+			media,
+			immersive = false,
+			onChange = null,
+			onActivate = null
+		}) {
+			this.#media = media;
+			this.#immersive = immersive;
+			this.#onChange = onChange;
+			this.#onActivate = onActivate;
+			this.#fitWidthStyle = media.style.width;
+			this.#zoom = null;
+			this.#pointers = new Map();
+			this.#drag = null;
+			this.#pinch = null;
+			this.#capture = document.createElement('div');
+			this.#capture.className = CAPTURE_CLASS;
+			this.element = document.createElement('div');
+			this.element.className = immersive ? `${VIEWPORT_CLASS} ${IMMERSIVE_CLASS}` : VIEWPORT_CLASS;
+			this.element.append(media, this.#capture);
+			this.#bindEvents();
+		}
+		state() {
+			const natural = this.#naturalSize();
+			const scale = this.#zoom?.scale ?? this.#fitScale();
+			return {
+				// Without the diagram's own size there is no scale to zoom from, so the controls have
+				// nothing to show.
+				hasSize: natural !== null,
+				label: formatScale(scale),
+				canZoomIn: scale < MAX_SCALE,
+				canZoomOut: this.#zoom !== null
+			};
+		}
+
+		/**
+		 * A copy of the carrier at its fit size, for showing the same diagram somewhere else.
+		 *
+		 * Cloning carries the payload along - `srcdoc` and the empty `sandbox` for a frame, the data URI
+		 * for a picture - so the copy shows the same static SVG under the same isolation, and the engine is
+		 * not asked to draw anything a second time.
+		 */
+		cloneMedia() {
+			const clone = this.#media.cloneNode(false);
+			clone.style.width = this.#fitWidthStyle;
+			clone.style.removeProperty('transform');
+			return clone;
+		}
+		zoomIn() {
+			this.#setZoom(stepScale(this.#zoom?.scale ?? this.#fitScale(), 1));
+		}
+		zoomOut() {
+			this.#setZoom(stepScale(this.#zoom?.scale ?? this.#fitScale(), -1));
+		}
+		reset() {
+			this.#zoom = null;
+			this.#drag = null;
+			this.#pinch = null;
+			this.#apply();
+			this.#notify();
+		}
+
+		/**
+		 * Recomputes the fit for the space the viewport has right now.
+		 *
+		 * Needed after the element lands in the document (it has no size before that) and after the space
+		 * itself changes - anything already zoomed goes back to fit rather than keeping a scale measured
+		 * against a box that no longer exists.
+		 */
+		refresh() {
+			this.reset();
+		}
+		destroy() {
+			this.#pointers.clear();
+			this.#drag = null;
+			this.#pinch = null;
+			this.#onChange = null;
+			this.#onActivate = null;
+			this.element.remove();
+		}
+		#bindEvents() {
+			const capture = this.#capture;
+			capture.addEventListener('wheel', event => this.#onWheel(event), {
+				passive: false
+			});
+			capture.addEventListener('pointerdown', event => this.#onPointerDown(event));
+			capture.addEventListener('pointermove', event => this.#onPointerMove(event));
+			capture.addEventListener('pointerup', event => this.#onPointerEnd(event));
+			capture.addEventListener('pointercancel', event => this.#onPointerEnd(event));
+			capture.addEventListener('click', event => this.#onClick(event));
+			capture.addEventListener('dblclick', event => this.#onDoubleClick(event));
+			if (this.#immersive) {
+				// iOS reads a swipe that starts near the edge as "go back", and touch-action does not apply
+				// to it - in the app's webview that closed the document instead of panning the diagram. The
+				// gesture stands down once the page claims the move. Only the move: claiming the touch itself
+				// would also cost us the synthesized click, and that is tap-to-zoom.
+				capture.addEventListener('touchmove', event => event.preventDefault(), {
+					passive: false
+				});
+			}
+		}
+		#naturalSize() {
+			const width = Number.parseFloat(this.#media.dataset?.naturalWidth ?? '');
+			const height = Number.parseFloat(this.#media.dataset?.naturalHeight ?? '');
+			return width > 0 && height > 0 ? {
+				width,
+				height
+			} : null;
+		}
+		#fitScale() {
+			const natural = this.#naturalSize();
+			if (!natural) {
+				return 1;
+			}
+
+			// A block in the document grows to the diagram's height, so only its width binds. The
+			// fullscreen viewport is the size of the screen and has to contain both directions.
+			return this.#immersive ? fitScale(natural.width, this.element.clientWidth, natural.height, this.element.clientHeight) : fitScale(natural.width, this.element.clientWidth);
+		}
+
+		// Where the diagram stands right now, whether or not it has been zoomed yet: at fit that is the
+		// centred position CSS already gives it, so the first zoom step starts from what the reader sees.
+		#currentZoom() {
+			if (this.#zoom) {
+				return this.#zoom;
+			}
+			const scale = this.#fitScale();
+			const natural = this.#naturalSize();
+			return {
+				scale,
+				...clampPan({
+					contentWidth: (natural?.width ?? 0) * scale,
+					contentHeight: (natural?.height ?? 0) * scale,
+					viewportWidth: this.element.clientWidth,
+					viewportHeight: this.element.clientHeight,
+					x: 0,
+					y: 0
+				})
+			};
+		}
+		#setZoom(scale, anchorPoint = null) {
+			const natural = this.#naturalSize();
+			if (!natural) {
+				return;
+			}
+
+			// Fit is the floor: shrinking a diagram below the space it already has only wastes it.
+			const fit = this.#fitScale();
+			const target = clampScale(Math.max(fit, scale));
+			if (target <= fit) {
+				this.reset();
+				return;
+			}
+			const previous = this.#currentZoom();
+			this.#lockHeight();
+			const anchored = anchorPan({
+				x: previous.x,
+				y: previous.y,
+				pointerX: anchorPoint?.x ?? this.element.clientWidth / 2,
+				pointerY: anchorPoint?.y ?? this.element.clientHeight / 2,
+				previousScale: previous.scale,
+				nextScale: target
+			});
+			this.#zoom = {
+				scale: target,
+				...this.#clamp(target, anchored.x, anchored.y)
+			};
+			this.#apply();
+			this.#notify();
+		}
+		#clamp(scale, x, y) {
+			const natural = this.#naturalSize();
+			return clampPan({
+				contentWidth: (natural?.width ?? 0) * scale,
+				contentHeight: (natural?.height ?? 0) * scale,
+				viewportWidth: this.element.clientWidth,
+				viewportHeight: this.element.clientHeight,
+				x,
+				y
+			});
+		}
+
+		// A block in the document keeps the height it had at fit, so panning happens inside the block
+		// instead of the page growing downwards on every zoom step. The fullscreen viewport already has
+		// its height from the layout.
+		#lockHeight() {
+			if (this.#immersive || this.element.style.height !== '') {
+				return;
+			}
+			this.element.style.height = `${this.element.clientHeight}px`;
+		}
+		#apply() {
+			const natural = this.#naturalSize();
+			if (!this.#zoom || !natural) {
+				this.element.classList.remove(ZOOMED_CLASS);
+				this.#media.style.removeProperty('transform');
+				if (!this.#immersive) {
+					// Only a block locks its height (see #lockHeight); fullscreen takes it from the layout
+					// and must not have it removed here.
+					this.element.style.removeProperty('height');
+				}
+
+				// In the document the fit width from the carrier itself is exactly right: the block grows to
+				// whatever height the diagram needs, so only the width binds. A fullscreen viewport has a
+				// fixed box, and `width: min(100%, Xpx)` is a definite width that a height cap cannot pull
+				// back - a long diagram was drawn nearly full width with its ratio broken and its tail cut
+				// off, which then read as the first zoom step making the diagram *smaller*. So here the fit
+				// width is computed, from the same scale the controls report.
+				this.#media.style.width = this.#immersive ? `${natural.width * this.#fitScale()}px` : this.#fitWidthStyle;
+				return;
+			}
+			this.element.classList.add(ZOOMED_CLASS);
+			this.#media.style.width = `${natural.width * this.#zoom.scale}px`;
+			this.#media.style.transform = `translate(${this.#zoom.x}px, ${this.#zoom.y}px)`;
+		}
+		#notify() {
+			this.#onChange?.(this.state());
+		}
+		#point(event) {
+			const rect = this.element.getBoundingClientRect();
+			return {
+				x: event.clientX - rect.left,
+				y: event.clientY - rect.top
+			};
+		}
+		#onWheel(event) {
+			// In the document a plain wheel keeps scrolling the page: a diagram in the middle of a text
+			// must not be a trap the reader has to scroll around. Fullscreen has nothing else to scroll,
+			// so there the wheel is the zoom.
+			if (!this.#immersive && !event.ctrlKey && !event.metaKey) {
+				return;
+			}
+			event.preventDefault();
+			this.#setZoom(stepScale(this.#zoom?.scale ?? this.#fitScale(), event.deltaY < 0 ? 1 : -1), this.#point(event));
+		}
+		#onPointerDown(event) {
+			this.#pointers.set(event.pointerId, this.#point(event));
+			if (this.#pointers.size === 2) {
+				this.#startPinch();
+				event.preventDefault();
+				return;
+			}
+
+			// Only a zoomed diagram is draggable, so an untouched one in the document lets a swipe
+			// scroll the page.
+			if (this.#pointers.size !== 1 || this.#zoom === null || !event.isPrimary) {
+				return;
+			}
+			this.#drag = {
+				pointerId: event.pointerId,
+				pointerX: event.clientX,
+				pointerY: event.clientY,
+				x: this.#zoom.x,
+				y: this.#zoom.y
+			};
+			this.#capture.setPointerCapture?.(event.pointerId);
+			event.preventDefault();
+		}
+		#onPointerMove(event) {
+			if (!this.#pointers.has(event.pointerId)) {
+				return;
+			}
+			this.#pointers.set(event.pointerId, this.#point(event));
+			if (this.#pinch) {
+				event.preventDefault();
+				this.#updatePinch();
+				return;
+			}
+			if (this.#drag?.pointerId !== event.pointerId || !this.#zoom) {
+				return;
+			}
+			event.preventDefault();
+			this.#zoom = {
+				scale: this.#zoom.scale,
+				...this.#clamp(this.#zoom.scale, this.#drag.x + (event.clientX - this.#drag.pointerX), this.#drag.y + (event.clientY - this.#drag.pointerY))
+			};
+			this.#apply();
+		}
+		#onPointerEnd(event) {
+			this.#pointers.delete(event.pointerId);
+			if (this.#pinch && this.#pointers.size < 2) {
+				this.#pinch = null;
+			}
+			if (this.#drag?.pointerId === event.pointerId) {
+				if (this.#capture.hasPointerCapture?.(event.pointerId)) {
+					this.#capture.releasePointerCapture(event.pointerId);
+				}
+				this.#drag = null;
+			}
+		}
+
+		// The capture layer shows a magnifier, so a click has to actually magnify. Only from fit, though:
+		// once zoomed, a press is the start of a pan.
+		#onClick(event) {
+			if (this.#zoom !== null) {
+				return;
+			}
+
+			// A diagram in the document opens fullscreen instead of creeping up one step at a time: a
+			// block only ever has a slice of the page, and a schema worth clicking on is worth the screen.
+			// Works from a tap too - unlike zooming in place, this traps nothing, the reader just closes it.
+			if (!this.#immersive) {
+				this.#onActivate?.();
+				return;
+			}
+			this.#setZoom(stepScale(this.#fitScale(), 1), this.#point(event));
+		}
+		#onDoubleClick(event) {
+			// In the document the first click has already opened fullscreen, so there is nothing sensible
+			// left for a double click to mean here.
+			if (!this.#immersive) {
+				return;
+			}
+			event.preventDefault();
+			if (this.#zoom !== null) {
+				this.reset();
+				return;
+			}
+
+			// Natural size, or twice it for a diagram that already fits without shrinking.
+			this.#setZoom(this.#fitScale() >= 1 ? 2 : 1, this.#point(event));
+		}
+		#startPinch() {
+			const distance = this.#pinchDistance();
+			if (distance === null) {
+				return;
+			}
+
+			// A pinch takes over from a drag that was already running.
+			this.#drag = null;
+			this.#pinch = {
+				distance,
+				scale: this.#zoom?.scale ?? this.#fitScale()
+			};
+		}
+		#updatePinch() {
+			const distance = this.#pinchDistance();
+			const center = this.#pinchCenter();
+			if (distance === null || center === null || !(this.#pinch.distance > 0)) {
+				return;
+			}
+			this.#setZoom(this.#pinch.scale * (distance / this.#pinch.distance), center);
+
+			// Pinching all the way back drops the zoom, and dropping it ends the gesture - re-base it on
+			// the fingers that are still down so spreading them again keeps working without lifting.
+			if (this.#zoom === null && this.#pointers.size === 2) {
+				this.#pinch = {
+					distance,
+					scale: this.#fitScale()
+				};
+			}
+		}
+		#pinchDistance() {
+			const [first, second] = [...this.#pointers.values()];
+			if (!first || !second) {
+				return null;
+			}
+			return Math.hypot(second.x - first.x, second.y - first.y);
+		}
+		#pinchCenter() {
+			const [first, second] = [...this.#pointers.values()];
+			if (!first || !second) {
+				return null;
+			}
+			return {
+				x: (first.x + second.x) / 2,
+				y: (first.y + second.y) / 2
+			};
+		}
+	}
+
+	const LAYER_CLASS = 'note-editor-diagram-fullscreen';
+	const LOCK_CLASS = 'note-editor-diagram-fullscreen-lock';
+	let openViewer = null;
+	function createButton({
+		className,
+		title,
+		testId,
+		iconModifier = null,
+		label = ''
+	}) {
+		const button = document.createElement('button');
+		button.type = 'button';
+		button.className = className;
+		button.title = title;
+		button.setAttribute('aria-label', title);
+		// The controls of the bar share one class, so without this a test can only tell them apart by a
+		// localized label or by position in the row.
+		button.dataset.testid = testId;
+		if (iconModifier) {
+			const icon = document.createElement('span');
+			icon.className = `ui-icon-set --${iconModifier}`;
+			button.append(icon);
+		} else {
+			button.textContent = label;
+		}
+		return button;
+	}
+
+	/**
+	 * Fullscreen reader for a diagram that is too dense to follow inside a code block.
+	 *
+	 * Reuses the carrier the block already rendered: the clone carries the same payload - `srcdoc` and the
+	 * empty `sandbox`, or the same data URI - so nothing is re-rendered and the isolation is exactly the one
+	 * the block had. Gestures are the immersive set - plain wheel zooms, pinch works, and there is no page
+	 * behind to scroll.
+	 */
+	class DiagramFullscreen {
+		#layer;
+		#viewport;
+		#zoomValue;
+		#zoomIn;
+		#zoomOut;
+		#close;
+		#returnFocusTo;
+		#onKeydown;
+		#onResize;
+		#themeUnsubscribe;
+		constructor({
+			media,
+			contextClass,
+			returnFocusTo = null
+		}) {
+			this.#returnFocusTo = returnFocusTo;
+			this.#layer = document.createElement('div');
+			this.#layer.className = `${LAYER_CLASS} ${contextClass}`;
+			// A layer over the whole page is a modal, and saying so is what lets a screen reader treat the
+			// document behind it as out of reach.
+			this.#layer.setAttribute('role', 'dialog');
+			this.#layer.setAttribute('aria-modal', 'true');
+			// Its own name, not the opening control's: a dialog is announced by what it is, and
+			// "open the diagram fullscreen" is an action.
+			this.#layer.setAttribute('aria-label', main_core.Loc.getMessage('NOTE_EDITOR_DIAGRAM_FULLSCREEN_TITLE'));
+			this.#viewport = new DiagramViewport({
+				media,
+				immersive: true,
+				onChange: state => this.#applyState(state)
+			});
+			this.#zoomOut = createButton({
+				className: 'note-editor-diagram-fullscreen-button',
+				title: main_core.Loc.getMessage('NOTE_EDITOR_DIAGRAM_ZOOM_OUT'),
+				testId: 'note-diagram-fullscreen-zoom-out',
+				iconModifier: 'o-zoom-out'
+			});
+			this.#zoomIn = createButton({
+				className: 'note-editor-diagram-fullscreen-button',
+				title: main_core.Loc.getMessage('NOTE_EDITOR_DIAGRAM_ZOOM_IN'),
+				testId: 'note-diagram-fullscreen-zoom-in',
+				iconModifier: 'o-zoom-in'
+			});
+			this.#zoomValue = createButton({
+				className: 'note-editor-diagram-fullscreen-value',
+				title: main_core.Loc.getMessage('NOTE_EDITOR_DIAGRAM_ZOOM_RESET'),
+				testId: 'note-diagram-fullscreen-zoom-reset'
+			});
+			this.#close = createButton({
+				className: 'note-editor-diagram-fullscreen-button',
+				title: main_core.Loc.getMessage('NOTE_EDITOR_DOCUMENT_EXIT_PREVIEW'),
+				testId: 'note-diagram-fullscreen-close',
+				iconModifier: 'cross-l'
+			});
+			this.#zoomOut.addEventListener('click', () => this.#viewport.zoomOut());
+			this.#zoomIn.addEventListener('click', () => this.#viewport.zoomIn());
+			this.#zoomValue.addEventListener('click', () => this.#viewport.reset());
+			this.#close.addEventListener('click', () => this.close());
+			const bar = document.createElement('div');
+			bar.className = 'note-editor-diagram-fullscreen-bar';
+			const divider = document.createElement('span');
+			divider.className = 'note-editor-diagram-fullscreen-divider';
+			bar.append(this.#zoomOut, this.#zoomValue, this.#zoomIn, divider, this.#close);
+			this.#layer.append(bar, this.#viewport.element);
+
+			// The fit depends on the size of the viewport, and a rotated phone or a resized window is a
+			// different viewport - recompute instead of keeping a scale measured against the old one.
+			this.#onResize = () => this.#viewport.refresh();
+			this.#onKeydown = event => {
+				if (event.key === 'Escape') {
+					event.stopPropagation();
+					this.close();
+					return;
+				}
+
+				// aria-modal has to be true in behaviour as well: without holding Tab inside, it walks
+				// straight into the document the reader was told is unreachable.
+				if (event.key === 'Tab') {
+					this.#moveFocus(event);
+				}
+			};
+
+			// The clone's colors were baked in for the theme in force when the block drew it, so a theme
+			// switch would leave the reader looking at the old palette. Closing hands them back to the
+			// block, which redraws itself.
+			this.#themeUnsubscribe = note_ui_themeContext.NoteThemeContext.subscribe(() => this.close());
+		}
+		open() {
+			document.body.append(this.#layer);
+			document.documentElement.classList.add(LOCK_CLASS);
+			document.addEventListener('keydown', this.#onKeydown, true);
+			window.addEventListener('resize', this.#onResize);
+			// Only now does the viewport have a size to fit the diagram into.
+			this.#viewport.refresh();
+			// The way out comes first: whoever arrives here by keyboard has to be able to leave without
+			// hunting for the control.
+			this.#close.focus();
+		}
+		close() {
+			document.removeEventListener('keydown', this.#onKeydown, true);
+			window.removeEventListener('resize', this.#onResize);
+			document.documentElement.classList.remove(LOCK_CLASS);
+			this.#themeUnsubscribe?.();
+			this.#themeUnsubscribe = null;
+			this.#viewport.destroy();
+			this.#layer.remove();
+
+			// Back to the control that opened the viewer, so the keyboard does not restart from the top of
+			// the document. Skipped if that control is gone (the block re-rendered while the viewer was up).
+			if (this.#returnFocusTo?.isConnected) {
+				this.#returnFocusTo.focus();
+			}
+			this.#returnFocusTo = null;
+			if (openViewer === this) {
+				openViewer = null;
+			}
+		}
+		#moveFocus(event) {
+			const stops = [this.#zoomOut, this.#zoomValue, this.#zoomIn, this.#close].filter(button => !button.disabled);
+			if (stops.length === 0) {
+				return;
+			}
+			event.preventDefault();
+			const current = stops.indexOf(document.activeElement);
+			if (current === -1) {
+				stops[event.shiftKey ? stops.length - 1 : 0].focus();
+				return;
+			}
+			const next = event.shiftKey ? current - 1 : current + 1;
+			stops[(next + stops.length) % stops.length].focus();
+		}
+		#applyState(state) {
+			// Which control the reader is on has to be read before anything is disabled: the browser drops
+			// focus to <body> the moment the focused element turns disabled, and then there is nothing left
+			// to ask. Pressing "fit" disables exactly the control that was pressed.
+			const focused = document.activeElement;
+			this.#zoomValue.textContent = state?.label ?? '';
+			this.#zoomValue.disabled = !state?.canZoomOut;
+			this.#zoomOut.disabled = !state?.canZoomOut;
+			this.#zoomIn.disabled = !state?.canZoomIn;
+
+			// The way out is always enabled, so that is where focus goes rather than out of the dialog.
+			if (focused?.disabled === true && this.#layer.contains(focused)) {
+				this.#close.focus();
+			}
+		}
+	}
+
+	/**
+	 * Opens the fullscreen reader for an already rendered diagram. One at a time.
+	 */
+	function openDiagramFullscreen(media, returnFocusTo = null) {
+		if (!media) {
+			return;
+		}
+		openViewer?.close();
+
+		// The layer hangs off <body>, outside the document's own markup, so it has to carry the
+		// design-system context itself - otherwise the controls would fall back to the light palette.
+		openViewer = new DiagramFullscreen({
+			media,
+			contextClass: note_ui_themeContext.NoteThemeContext.getDesignSystemContext(),
+			returnFocusTo
+		});
+		openViewer.open();
+	}
+
 	const OVERLAY_HOST_CLASS = 'note-editor-code-block-overlay-host';
 	const WRAPPER_CLASS = 'note-editor-code-block';
+	const GUTTER_CLASS = 'note-editor-code-block-gutter';
+	const DIAGRAM_HOST_CLASS = 'note-editor-code-block-diagram';
+	const DIAGRAM_MODE_CLASS = 'note-editor-code-block--diagram';
+	const DIAGRAM_PENDING_CLASS = 'note-editor-code-block-diagram-pending';
+	const GUTTER_HOVER_CLASS = 'note-editor-code-block--gutter-hover';
+	const DIAGRAM_RENDER_DEBOUNCE = 300;
+	// A frame that has not reported a load by now is one that never will. Generous on purpose: srcdoc needs
+	// no network, so anything past a moment here is a webview that refuses the document outright, not a
+	// slow one.
+	const DIAGRAM_FRAME_LOAD_TIMEOUT = 2500;
 	class CodeBlockNodeView {
 		#overlayHost;
+		#gutterEl;
+		#gutterLineCount;
 		#preEl;
+		#diagramHost;
+		#diagramKey;
+		// The drawn SVG and the source it came from, kept for the block's lifetime. It is theme-independent,
+		// so a theme switch repaints it, and it outlives a switch to edit mode, so coming back to reading
+		// does not pay for another layout either. Layout is the expensive part: ~380ms for a 120-node
+		// flowchart, blocking the main thread.
+		#diagramSvg;
+		#diagramSvgKey;
+		#diagramTheme;
+		#diagramViewport;
+		#frameWatchTimer;
+		#frameWatchEl;
+		#onFrameLoad;
+		#renderToken;
+		#renderTimer;
+		#cancelVisibility;
+		#themeUnsubscribe;
 		#vueApp;
 		#vm;
+		#onMouseMove;
+		#onMouseLeave;
+		#onMouseDown;
 		constructor({
 			node,
 			editor,
@@ -40342,9 +43300,16 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 			this.dom = document.createElement('div');
 			this.dom.className = WRAPPER_CLASS;
 			this.dom.setAttribute('data-type', 'codeBlock');
+			this.dom.dataset.testid = 'note-code-block-root';
 			this.#overlayHost = document.createElement('div');
 			this.#overlayHost.className = OVERLAY_HOST_CLASS;
 			this.#overlayHost.contentEditable = 'false';
+			this.#gutterEl = document.createElement('div');
+			this.#gutterEl.className = GUTTER_CLASS;
+			this.#gutterEl.contentEditable = 'false';
+			this.#gutterEl.setAttribute('aria-hidden', 'true');
+			this.#gutterEl.dataset.testid = 'note-code-block-gutter';
+			this.#gutterLineCount = 0;
 			this.#preEl = document.createElement('pre');
 			const codeEl = document.createElement('code');
 			const language = this.#resolveLanguage(node);
@@ -40352,12 +43317,84 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 				codeEl.classList.add(`language-${language}`);
 			}
 			this.#preEl.append(codeEl);
-			this.dom.append(this.#overlayHost, this.#preEl);
+
+			// Read-mode host for a rendered mermaid diagram; hidden (and empty) for every other
+			// language and while editing.
+			this.#diagramHost = document.createElement('div');
+			this.#diagramHost.className = DIAGRAM_HOST_CLASS;
+			this.#diagramHost.contentEditable = 'false';
+			this.#diagramKey = null;
+			this.#diagramSvg = null;
+			this.#diagramSvgKey = null;
+			this.#diagramTheme = null;
+			this.#diagramViewport = null;
+			this.#frameWatchTimer = null;
+			this.#frameWatchEl = null;
+			this.#onFrameLoad = null;
+			this.#renderToken = 0;
+			this.#renderTimer = null;
+			this.#cancelVisibility = null;
+			this.#themeUnsubscribe = null;
+
+			// Flex order: gutter first, then the scrolling pre; the overlay host is
+			// absolutely positioned and out of flow.
+			this.dom.append(this.#overlayHost, this.#gutterEl, this.#preEl, this.#diagramHost);
 			this.contentDOM = codeEl;
 			this.#vueApp = null;
 			this.#vm = null;
+			this.#onMouseMove = event => this.#handleMouseMove(event);
+			this.#onMouseLeave = () => this.#clearGutterHover();
+			this.#onMouseDown = event => this.#handleMouseDown(event);
+			this.#renderGutter();
 			this.#mountOverlay();
 			this.#bindEditorEvents();
+			this.#bindPointerEvents();
+			this.#syncDiagramState();
+		}
+		#bindPointerEvents() {
+			main_core.Event.bind(this.dom, 'mousemove', this.#onMouseMove);
+			main_core.Event.bind(this.dom, 'mouseleave', this.#onMouseLeave);
+			main_core.Event.bind(this.dom, 'mousedown', this.#onMouseDown);
+		}
+		#unbindPointerEvents() {
+			main_core.Event.unbind(this.dom, 'mousemove', this.#onMouseMove);
+			main_core.Event.unbind(this.dom, 'mouseleave', this.#onMouseLeave);
+			main_core.Event.unbind(this.dom, 'mousedown', this.#onMouseDown);
+		}
+		#handleMouseMove(event) {
+			const shouldHover = event.buttons === 0 && this.#canSelectFromGutter() && this.#isGutterPoint(event.clientX, event.clientY);
+			main_core.Dom.toggleClass(this.dom, GUTTER_HOVER_CLASS, shouldHover);
+		}
+		#handleMouseDown(event) {
+			this.#clearGutterHover();
+			if (event.button !== 0 || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey || !this.#canSelectFromGutter() || !this.#isGutterPoint(event.clientX, event.clientY)) {
+				return;
+			}
+			const view = this.editor?.view;
+			const pos = this.#resolvePos();
+			if (!view || pos === null || this.#isSelected(pos)) {
+				return;
+			}
+			event.preventDefault();
+			event.stopPropagation();
+			view.dom.focus({
+				preventScroll: true
+			});
+			view.dispatch(view.state.tr.setSelection(NodeSelection.create(view.state.doc, pos)));
+		}
+		#canSelectFromGutter() {
+			return Boolean(this.editor?.isEditable) && Boolean(this.editor?.view?.editable) && !main_core.Dom.hasClass(document.documentElement, 'note-mobile');
+		}
+		#isSelected(pos) {
+			const selection = this.editor?.view?.state?.selection;
+			return selection instanceof NodeSelection && selection.from === pos && selection.node.type === this.node.type;
+		}
+		#isGutterPoint(clientX, clientY) {
+			const rect = this.#gutterEl.getBoundingClientRect();
+			return clientX > rect.left && clientX < rect.right && clientY > rect.top && clientY < rect.bottom;
+		}
+		#clearGutterHover() {
+			main_core.Dom.removeClass(this.dom, GUTTER_HOVER_CLASS);
 		}
 		#bindEditorEvents() {
 			if (!this.editor || typeof this.editor.on !== 'function') {
@@ -40376,42 +43413,291 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 			this.onEditorState = null;
 		}
 		#syncEditableState() {
+			const isEditable = Boolean(this.editor?.isEditable);
+			if (!isEditable || main_core.Dom.hasClass(document.documentElement, 'note-mobile')) {
+				this.#clearGutterHover();
+			}
+			if (this.#vm && this.#vm.isEditable !== isEditable) {
+				this.#vm.isEditable = isEditable;
+			}
+			this.#syncDiagramState();
+		}
+
+		// A diagram replaces the code text only while reading: editing a mermaid block always shows
+		// its source. The trigger is the node's language attribute, never a guess from the text.
+		#isDiagramMode() {
+			return !this.editor?.isEditable && this.#resolveLanguage(this.node) === MERMAID_LANGUAGE;
+		}
+		#syncDiagramState(immediate = false) {
+			if (!this.#isDiagramMode()) {
+				this.#dropDiagram();
+				return;
+			}
+			this.#subscribeTheme();
+			const source = this.node?.textContent ?? '';
+
+			// Editor 'update'/'transaction' fire for every change anywhere in the document, so re-render only
+			// when this block's own source moved. The key doubles as the cache: a source that failed to
+			// render is not retried until it changes.
+			if (source === this.#diagramKey) {
+				// Same diagram, different theme. The drawn SVG serves both: repainting it costs milliseconds
+				// where another layout costs hundreds, and layout is blocking work on the main thread.
+				if (note_ui_themeContext.NoteThemeContext.get() !== this.#diagramTheme && this.#diagramSvg !== null) {
+					this.#paintDiagram();
+				}
+				return;
+			}
+			const isFirstPaint = this.#diagramKey === null;
+			this.#diagramKey = source;
+			const token = ++this.#renderToken;
+			this.#cancelPendingRender();
+
+			// This exact source has already been drawn - reading it again after an edit-mode round trip, or
+			// after the block was dropped and picked up. Nothing to ask the engine for.
+			if (this.#diagramSvg !== null && this.#diagramSvgKey === source) {
+				this.#paintDiagram();
+				return;
+			}
+
+			// First paint is a one-shot event - no reason to make it wait.
+			if (isFirstPaint || immediate) {
+				this.#renderDiagram(source, token);
+				return;
+			}
+
+			// Reaching here means the source changed under a reader - a co-author typing inside the
+			// block streams a patch per keystroke, so collapse the burst into one render.
+			this.#renderTimer = setTimeout(() => {
+				this.#renderTimer = null;
+				this.#renderDiagram(source, token);
+			}, DIAGRAM_RENDER_DEBOUNCE);
+		}
+
+		// Builds the carrier for the theme in force right now out of the SVG already drawn, and mounts it.
+		//
+		// The theme is read here, not passed in: a block below the fold waits for the reader to scroll to
+		// it, and the reader may well switch the theme in between. Painting with the theme captured when
+		// the render was scheduled left those diagrams in the old palette.
+		#paintDiagram() {
+			this.#diagramTheme = note_ui_themeContext.NoteThemeContext.get();
+			const svg = themeDiagramSvg(this.#diagramSvg, this.#diagramTheme, this.#diagramHost);
+			this.#mountMedia(usesFrameDelivery() ? buildDiagramFrame(svg, this.#diagramHost) : buildDiagramImage(svg, this.#diagramHost));
+		}
+		#renderDiagram(source, token) {
+			// Give the block its place with a pending state right away. Rendering is blocking work on the
+			// main thread, so it must not sit between the reader's click and the next frame: the switch to
+			// read mode paints first, the diagram lands after. A diagram already on screen (theme switch,
+			// an edit by a co-author) stays put instead of blinking through the placeholder.
+			if (this.#diagramHost.firstElementChild === null) {
+				this.#showPending();
+			}
+			this.#cancelVisibility?.();
+			this.#cancelVisibility = whenVisible(this.dom, () => {
+				this.#cancelVisibility = null;
+				if (token !== this.#renderToken) {
+					return;
+				}
+				renderDiagramSource(source).then(svg => {
+					if (token !== this.#renderToken) {
+						return;
+					}
+					if (svg === null) {
+						this.#showSource();
+						return;
+					}
+					this.#diagramSvg = svg;
+					this.#diagramSvgKey = source;
+					this.#paintDiagram();
+				});
+			});
+		}
+
+		// The carrier goes into a viewport that owns zooming and panning; the same viewport backs the
+		// fullscreen viewer, so both read the diagram the same way.
+		#mountMedia(media) {
+			this.#releaseViewport();
+			this.#diagramViewport = new DiagramViewport({
+				media,
+				onChange: state => this.#applyZoomState(state),
+				onActivate: () => this.#openFullscreen()
+			});
+
+			// Read mode is switched on here and nowhere else: this is the one place a diagram becomes
+			// visible. The pending placeholder switches it on too, but a diagram taken from the cache -
+			// coming back from edit mode, or a theme switch - never goes through the placeholder, and
+			// without this the diagram was mounted into a host the stylesheet keeps hidden.
+			this.dom.classList.add(DIAGRAM_MODE_CLASS);
+			this.#diagramHost.classList.remove(DIAGRAM_PENDING_CLASS);
+			this.#diagramHost.replaceChildren(this.#diagramViewport.element);
+			this.#applyZoomState(this.#diagramViewport.state());
+			this.#watchFrameLoad(media);
+		}
+
+		// A webview that refuses to load a document from srcdoc leaves the block showing nothing at all, and
+		// a reader cannot tell that from a diagram that is simply blank. The app's webview is known to do
+		// exactly that and is delivered an image instead (see usesFrameDelivery); this is the net under any
+		// other one that behaves the same way, and it costs a timer per mounted frame.
+		#watchFrameLoad(media) {
+			if (!(media instanceof HTMLIFrameElement)) {
+				return;
+			}
+
+			// Read now, not in the callback: by then the block may have been repainted, and dropping a
+			// diagram that has since been drawn again is worse than the blank it guards against.
+			const token = this.#renderToken;
+			this.#onFrameLoad = () => this.#clearFrameWatch();
+			this.#frameWatchEl = media;
+			media.addEventListener('load', this.#onFrameLoad, {
+				once: true
+			});
+			this.#frameWatchTimer = setTimeout(() => {
+				this.#frameWatchTimer = null;
+				if (token === this.#renderToken) {
+					this.#showSource();
+				}
+			}, DIAGRAM_FRAME_LOAD_TIMEOUT);
+		}
+		#clearFrameWatch() {
+			if (this.#frameWatchTimer !== null) {
+				clearTimeout(this.#frameWatchTimer);
+				this.#frameWatchTimer = null;
+			}
+			if (this.#frameWatchEl !== null && this.#onFrameLoad !== null) {
+				this.#frameWatchEl.removeEventListener('load', this.#onFrameLoad);
+			}
+			this.#frameWatchEl = null;
+			this.#onFrameLoad = null;
+		}
+		#openFullscreen(trigger = null) {
+			openDiagramFullscreen(this.#diagramViewport?.cloneMedia(), trigger);
+		}
+
+		// The mounted carrier goes with the viewport it lives in, so the watch on it has to go too - every
+		// path that takes a diagram off the screen comes through here.
+		#releaseViewport() {
+			this.#clearFrameWatch();
+			this.#diagramViewport?.destroy();
+			this.#diagramViewport = null;
+		}
+		#applyZoomState(state) {
 			if (!this.#vm) {
 				return;
 			}
-			const isEditable = Boolean(this.editor?.isEditable);
-			if (this.#vm.isEditable !== isEditable) {
-				this.#vm.isEditable = isEditable;
+			this.#vm.hasDiagram = Boolean(state?.hasSize);
+			this.#vm.zoomLabel = state?.label ?? '';
+			this.#vm.canZoomIn = Boolean(state?.canZoomIn);
+			this.#vm.canZoomOut = Boolean(state?.canZoomOut);
+		}
+
+		// Read mode with the source hidden and nothing drawn yet.
+		#showPending() {
+			this.#releaseViewport();
+			this.#applyZoomState(null);
+			this.#diagramHost.replaceChildren();
+			this.#diagramHost.classList.add(DIAGRAM_PENDING_CLASS);
+			this.dom.classList.add(DIAGRAM_MODE_CLASS);
+		}
+
+		// Theme colors are baked into the SVG by the engine, so a theme switch means a redraw.
+		// Subscribed only while a diagram is on screen - not once per code block in the document.
+		#subscribeTheme() {
+			this.#themeUnsubscribe ??= note_ui_themeContext.NoteThemeContext.subscribe(() => this.#syncDiagramState(true));
+		}
+		#cancelPendingRender() {
+			if (this.#renderTimer) {
+				clearTimeout(this.#renderTimer);
+				this.#renderTimer = null;
 			}
 		}
+
+		// Degradation path: the block goes back to being a plain code block with its source visible.
+		#showSource() {
+			this.#releaseViewport();
+			this.#applyZoomState(null);
+			this.dom.classList.remove(DIAGRAM_MODE_CLASS);
+			this.#diagramHost.classList.remove(DIAGRAM_PENDING_CLASS);
+			this.#diagramHost.replaceChildren();
+		}
+		#dropDiagram() {
+			this.#cancelPendingRender();
+			this.#cancelVisibility?.();
+			this.#cancelVisibility = null;
+			this.#themeUnsubscribe?.();
+			this.#themeUnsubscribe = null;
+
+			// Runs on every transaction for every non-diagram code block, so stop here unless there
+			// is actually something to tear down.
+			if (this.#diagramKey === null) {
+				return;
+			}
+
+			// Invalidate whatever render is in flight so its result cannot land after the switch.
+			this.#renderToken++;
+			this.#diagramKey = null;
+			this.#showSource();
+		}
 		#resolveLanguage(node) {
-			const lang = node?.attrs?.language;
-			return main_core.Type.isStringFilled(lang) ? lang : DEFAULT_LANGUAGE;
+			return normalizeLanguage(node?.attrs?.language);
+		}
+
+		// Line count = newlines + 1; code never wraps, so one number aligns to one row.
+		#renderGutter() {
+			const text = this.node?.textContent ?? '';
+			const lineCount = text.split('\n').length;
+			if (lineCount === this.#gutterLineCount) {
+				return;
+			}
+			this.#gutterLineCount = lineCount;
+			const numbers = [];
+			for (let i = 1; i <= lineCount; i++) {
+				numbers.push(i);
+			}
+			this.#gutterEl.textContent = numbers.join('\n');
 		}
 		#mountOverlay() {
 			const initialLanguage = this.#resolveLanguage(this.node);
 			const initialEditable = Boolean(this.editor?.isEditable);
 			const onLanguageSelect = id => this.#changeLanguage(id);
 			const onCopy = ack => this.#copyContent(ack);
+			const onZoomIn = () => this.#diagramViewport?.zoomIn();
+			const onZoomOut = () => this.#diagramViewport?.zoomOut();
+			const onZoomReset = () => this.#diagramViewport?.reset();
+			const onFullscreen = trigger => this.#openFullscreen(trigger);
 			this.#vueApp = ui_vue3.BitrixVue.createApp({
 				components: {
 					NoteCodeBlockOverlay
 				},
 				data: () => ({
 					language: initialLanguage,
-					isEditable: initialEditable
+					isEditable: initialEditable,
+					hasDiagram: false,
+					zoomLabel: '',
+					canZoomIn: false,
+					canZoomOut: false
 				}),
 				methods: {
 					onLanguageSelect,
-					onCopy
+					onCopy,
+					onZoomIn,
+					onZoomOut,
+					onZoomReset,
+					onFullscreen
 				},
 				// language=Vue
 				template: `
 				<NoteCodeBlockOverlay
 					:language="language"
 					:is-editable="isEditable"
+					:has-diagram="hasDiagram"
+					:zoom-label="zoomLabel"
+					:can-zoom-in="canZoomIn"
+					:can-zoom-out="canZoomOut"
 					@language-select="onLanguageSelect"
 					@copy="onCopy"
+					@zoom-in="onZoomIn"
+					@zoom-out="onZoomOut"
+					@zoom-reset="onZoomReset"
+					@fullscreen="onFullscreen"
 				/>
 			`
 			});
@@ -40429,10 +43715,14 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 			if (!view) {
 				return;
 			}
+			const shouldRestoreSelection = this.#isSelected(pos);
 			const tr = view.state.tr.setNodeMarkup(pos, undefined, {
 				...this.node.attrs,
 				language
 			});
+			if (shouldRestoreSelection) {
+				tr.setSelection(NodeSelection.create(tr.doc, pos));
+			}
 			view.dispatch(tr);
 		}
 		async #copyContent(ack) {
@@ -40484,6 +43774,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 			const prevLanguage = this.#resolveLanguage(this.node);
 			const nextLanguage = this.#resolveLanguage(node);
 			this.node = node;
+			this.#renderGutter();
 			if (prevLanguage !== nextLanguage) {
 				const codeEl = this.contentDOM;
 				if (codeEl) {
@@ -40500,7 +43791,16 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 			if (this.#vm && this.#vm.isEditable !== isEditable) {
 				this.#vm.isEditable = isEditable;
 			}
+
+			// Covers a language switch, local typing and remote patches from co-authors alike.
+			this.#syncDiagramState();
 			return true;
+		}
+		selectNode() {
+			main_core.Dom.addClass(this.dom, 'ProseMirror-selectednode');
+		}
+		deselectNode() {
+			main_core.Dom.removeClass(this.dom, 'ProseMirror-selectednode');
 		}
 		ignoreMutation(mutation) {
 			if (!mutation || !mutation.target) {
@@ -40516,9 +43816,11 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 			if (!(target instanceof Node)) {
 				return false;
 			}
-			return this.#overlayHost.contains(target);
+			return this.#overlayHost.contains(target) || this.#diagramHost.contains(target);
 		}
 		destroy() {
+			this.#dropDiagram();
+			this.#unbindPointerEvents();
 			this.#unbindEditorEvents();
 			this.#vueApp?.unmount?.();
 			this.#vueApp = null;
@@ -40526,7 +43828,93 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 		}
 	}
 
+	function mapDragOrigin(tr, origin, codeBlockType, newState) {
+		if (origin === null || !tr.docChanged) {
+			return origin;
+		}
+		const mapped = tr.mapping.mapResult(origin.pos, 1);
+		if (mapped.deleted || newState.doc.nodeAt(mapped.pos)?.type !== codeBlockType) {
+			return null;
+		}
+		return {
+			...origin,
+			pos: mapped.pos
+		};
+	}
+	function getDragOrigin(view, event, codeBlockType) {
+		if (event.button !== 0 || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey || !view.editable || main_core.Dom.hasClass(document.documentElement, 'note-mobile')) {
+			return null;
+		}
+		const selection = view.state.selection;
+		const sourceDom = selection instanceof NodeSelection && selection.node.type === codeBlockType ? view.nodeDOM(selection.from) : null;
+		if (!(sourceDom instanceof HTMLElement)) {
+			return null;
+		}
+		const eventTarget = event.target instanceof Element ? event.target : null;
+		const directHandle = eventTarget?.closest('[data-testid="note-code-block-gutter"], code');
+		const gutter = sourceDom.querySelector('[data-testid="note-code-block-gutter"]');
+		const code = sourceDom.querySelector('code');
+		const isInside = (element, tolerance = 0) => {
+			if (!element) {
+				return false;
+			}
+			const rect = element.getBoundingClientRect();
+			return event.clientX > rect.left - tolerance && event.clientX < rect.right + tolerance && event.clientY > rect.top - tolerance && event.clientY < rect.bottom + tolerance;
+		};
+		return directHandle && sourceDom.contains(directHandle) || isInside(gutter, 2) || isInside(code) ? {
+			pos: selection.from,
+			node: selection.node,
+			dom: sourceDom
+		} : null;
+	}
+	function getDragSourceSelection(view, event, origin, codeBlockType) {
+		const eventTarget = event.target instanceof Element ? event.target : null;
+		if (eventTarget === null) {
+			return null;
+		}
+		const selection = view.state.selection;
+		if (selection instanceof NodeSelection && selection.node.type === codeBlockType) {
+			const selectionDom = view.nodeDOM(selection.from);
+			if (selectionDom === origin.dom && selectionDom.contains(eventTarget)) {
+				return selection;
+			}
+		}
+		if (view.state.doc.nodeAt(origin.pos) !== origin.node) {
+			return null;
+		}
+		const sourceDom = view.nodeDOM(origin.pos);
+		if (!(sourceDom instanceof HTMLElement) || !sourceDom.contains(eventTarget)) {
+			return null;
+		}
+		return NodeSelection.create(view.state.doc, origin.pos);
+	}
+	function restoreDraggingNode(view, currentSelection, origin, mappedOrigin) {
+		const dragging = view.dragging;
+		if (!dragging) {
+			return;
+		}
+		if (currentSelection !== null && view.state.doc.nodeAt(currentSelection.from) === currentSelection.node) {
+			dragging.node = currentSelection;
+			return;
+		}
+		if (mappedOrigin !== null && mappedOrigin.dom === origin.dom && view.state.doc.nodeAt(mappedOrigin.pos) === mappedOrigin.node) {
+			dragging.node = NodeSelection.create(view.state.doc, mappedOrigin.pos);
+		}
+	}
+	function createDragSourcePluginView(view, dragState) {
+		const handleDragStart = () => {
+			const source = dragState.takePending();
+			if (source !== null) {
+				restoreDraggingNode(view, source.selection, source.origin, dragState.origin);
+			}
+		};
+		main_core.Event.bind(view.dom, 'dragstart', handleDragStart);
+		return {
+			destroy: () => main_core.Event.unbind(view.dom, 'dragstart', handleDragStart)
+		};
+	}
 	const CodeBlock = CodeBlockLowlight.extend({
+		selectable: true,
 		addNodeView() {
 			return ({
 				node,
@@ -40537,6 +43925,59 @@ Please report this to https://github.com/markedjs/marked.`, e) {
 				editor,
 				getPos
 			});
+		},
+		addProseMirrorPlugins() {
+			const codeBlockType = this.type;
+			const dragState = {
+				origin: null,
+				pending: null,
+				takePending() {
+					const source = this.pending;
+					this.pending = null;
+					return source;
+				}
+			};
+			return [...(this.parent?.() ?? []), new Plugin({
+				state: {
+					init() {
+						return null;
+					},
+					apply(tr, value, _oldState, newState) {
+						dragState.origin = mapDragOrigin(tr, dragState.origin, codeBlockType, newState);
+						return value;
+					}
+				},
+				props: {
+					handleDOMEvents: {
+						mousedown(view, event) {
+							dragState.origin = getDragOrigin(view, event, codeBlockType);
+							dragState.pending = null;
+							return false;
+						},
+						dragstart(view, event) {
+							dragState.pending = null;
+							const origin = dragState.origin;
+							if (origin !== null) {
+								const sourceSelection = getDragSourceSelection(view, event, origin, codeBlockType);
+								if (sourceSelection !== null) {
+									view.dispatch(view.state.tr.setSelection(sourceSelection));
+									dragState.pending = {
+										selection: sourceSelection,
+										origin
+									};
+								}
+							}
+							return false;
+						},
+						dragend() {
+							dragState.origin = null;
+							dragState.pending = null;
+							return false;
+						}
+					}
+				},
+				view: view => createDragSourcePluginView(view, dragState)
+			})];
 		}
 	}).configure({
 		lowlight,
@@ -40628,357 +44069,6 @@ ${prefix}
 			})];
 		}
 	});
-
-	const ASSET_TYPE_TO_NODE$1 = {
-		image: 'imageAttachment',
-		file: 'fileAttachment',
-		video: 'video'
-	};
-	function parseAttrs(str) {
-		const attrs = {};
-		const re = /(\w+)=(?:"([^"]*)"|(\S+))/g;
-		let match = re.exec(str);
-		while (match) {
-			attrs[match[1]] = match[2] ?? match[3];
-			match = re.exec(str);
-		}
-		return attrs;
-	}
-
-	/**
-	 * Scans `src` from `pos` forward, looking for a balanced pair of the given
-	 * open/close characters. Handles `\`-escaping and nesting via depth counter.
-	 *
-	 * Returns the index **after** the closing character, or -1 if unmatched.
-	 * `content` is written into `out.value`.
-	 */
-	function scanBalanced(src, pos, open, close, out) {
-		if (pos >= src.length || src.charCodeAt(pos) !== open) {
-			return -1;
-		}
-		let depth = 1;
-		const start = pos + 1;
-		let i = start;
-		while (i < src.length && depth > 0) {
-			const ch = src.charCodeAt(i);
-			if (ch === 0x5C)
-				// backslash
-				{
-					i += 2; // skip escaped character
-					continue;
-				}
-			if (ch === open) {
-				depth++;
-			} else if (ch === close) {
-				depth--;
-				if (depth === 0) {
-					out.value = src.slice(start, i);
-					return i + 1;
-				}
-			}
-			i++;
-		}
-		return -1;
-	}
-
-	// Character codes
-	const CH_EXCL = 0x21; // !
-	const CH_OPEN_BRACKET = 0x5B; // [
-	const CH_OPEN_PAREN = 0x28; // (
-	const CH_CLOSE_PAREN = 0x29; // )
-	const CH_OPEN_BRACE = 0x7B; // {
-	const CH_CLOSE_BRACE = 0x7D; // }
-	const CH_CLOSE_BRACKET = 0x5D; // ]
-	const CH_SPACE = 0x20;
-	const CH_TAB = 0x09;
-	const CH_NEWLINE = 0x0A;
-
-	/**
-	 * Character-level parser for enriched asset syntax: `!?[label](url){attrs}`
-	 *
-	 * Properly handles nested brackets, parentheses, and braces via depth counters.
-	 * Recognises `\`-escaped delimiters inside each segment.
-	 *
-	 * @param {string} src   — source string
-	 * @param {number} pos   — position to start scanning from
-	 * @param {'block'|'inline'} mode
-	 *   - `'block'`: consumes 0-3 leading spaces/tabs and requires trailing
-	 *     `[ \t]*(\n|$)`.  `raw` spans from `pos` to end of trailing whitespace/newline.
-	 *   - `'inline'`: no leading-space limit, no trailing-newline requirement.
-	 *     `raw` spans exactly the `!?[label](url){attrs}` syntax, without surrounding whitespace.
-	 * @returns {ParseResult|null}
-	 */
-	function parseEnrichedAssetSyntax(src, pos, mode) {
-		let i = pos;
-
-		// Block mode: consume 0-3 leading spaces/tabs
-		if (mode === 'block') {
-			let spaces = 0;
-			while (i < src.length && spaces < 4) {
-				const ch = src.charCodeAt(i);
-				if (ch !== CH_SPACE && ch !== CH_TAB) {
-					break;
-				}
-				spaces++;
-				i++;
-			}
-			if (spaces >= 4) {
-				return null; // code block territory
-			}
-		}
-
-		// Optional `!` prefix (image marker)
-		let isImage = false;
-		if (i < src.length && src.charCodeAt(i) === CH_EXCL) {
-			isImage = true;
-			i++;
-		}
-
-		// [label]
-		const labelOut = {
-			value: ''
-		};
-		const afterLabel = scanBalanced(src, i, CH_OPEN_BRACKET, CH_CLOSE_BRACKET, labelOut);
-		if (afterLabel === -1) {
-			return null;
-		}
-
-		// (url) — must follow immediately
-		const urlOut = {
-			value: ''
-		};
-		const afterUrl = scanBalanced(src, afterLabel, CH_OPEN_PAREN, CH_CLOSE_PAREN, urlOut);
-		if (afterUrl === -1) {
-			return null;
-		}
-
-		// {attrs} — must follow immediately
-		const attrsOut = {
-			value: ''
-		};
-		const afterAttrs = scanBalanced(src, afterUrl, CH_OPEN_BRACE, CH_CLOSE_BRACE, attrsOut);
-		if (afterAttrs === -1) {
-			return null;
-		}
-
-		// Block mode: consume optional trailing spaces/tabs, then require \n or EOF
-		let endPos = afterAttrs;
-		if (mode === 'block') {
-			while (endPos < src.length) {
-				const ch = src.charCodeAt(endPos);
-				if (ch !== CH_SPACE && ch !== CH_TAB) {
-					break;
-				}
-				endPos++;
-			}
-			if (endPos < src.length && src.charCodeAt(endPos) !== CH_NEWLINE) {
-				return null; // trailing content after attrs — not a standalone block
-			}
-			if (endPos < src.length) {
-				endPos++; // consume the newline
-			}
-		}
-		if (!urlOut.value) {
-			return null; // empty URL
-		}
-		return {
-			isImage,
-			label: labelOut.value,
-			url: urlOut.value,
-			attrsRaw: attrsOut.value,
-			raw: src.slice(pos, endPos)
-		};
-	}
-
-	/**
-	 * Fast candidate finder for `markdownTokenizer.start()`.
-	 *
-	 * Scans `src` for positions where an enriched asset *might* begin,
-	 * without running the full parser. Returns the index of the line start
-	 * (including leading spaces) for the first viable candidate, or -1.
-	 *
-	 * Complexity: O(n) typical. Worst case O(n^2) when many `[` occur without
-	 * a matching `){` sequence — each `[` triggers a linear look-ahead to find
-	 * `){`. In practice, markdown documents are compact and this is not an issue,
-	 * but be aware of this on very large synthetic inputs.
-	 */
-	function findEnrichedAssetStart(src) {
-		let searchFrom = 0;
-		while (searchFrom < src.length) {
-			const bracketIdx = src.indexOf('[', searchFrom);
-			if (bracketIdx === -1) {
-				return -1;
-			}
-
-			// Walk back to find line start and count leading whitespace
-			let lineStart = bracketIdx;
-			let leadingSpaces = 0;
-			while (lineStart > 0 && src.charCodeAt(lineStart - 1) !== CH_NEWLINE) {
-				lineStart--;
-			}
-
-			// Count spaces/tabs from lineStart to bracketIdx (or bracketIdx-1 if `!` prefix)
-			let prefixEnd = bracketIdx;
-			if (prefixEnd > lineStart && src.charCodeAt(prefixEnd - 1) === CH_EXCL) {
-				prefixEnd--;
-			}
-			let valid = true;
-			for (let k = lineStart; k < prefixEnd; k++) {
-				const ch = src.charCodeAt(k);
-				if (ch === CH_SPACE || ch === CH_TAB) {
-					leadingSpaces++;
-				} else {
-					valid = false;
-					break;
-				}
-			}
-			if (!valid || leadingSpaces > 3) {
-				searchFrom = bracketIdx + 1;
-				continue;
-			}
-
-			// Quick look-ahead: check that `){` appears somewhere after `[`
-			const closeParen = src.indexOf('){', bracketIdx);
-			if (closeParen === -1) {
-				// No `){` anywhere after this point — no match possible
-				return -1;
-			}
-			return lineStart;
-		}
-		return -1;
-	}
-
-	/**
-	 * Finds all enriched asset occurrences in a string.
-	 * Designed for mixed-content table cells where text and assets can be interleaved.
-	 *
-	 * Returns an array of `{ match, start, end }` where `start` and `end` are
-	 * positions in the original `src` string. Text between assets can be extracted
-	 * via `src.slice(prevEnd, nextStart)`.
-	 */
-	function parseAllEnrichedAssets(src) {
-		const results = [];
-		let pos = 0;
-		while (pos < src.length) {
-			// Find next `[` or `![` candidate
-			const bracketIdx = src.indexOf('[', pos);
-			if (bracketIdx === -1) {
-				break;
-			}
-
-			// Check for `!` prefix
-			const startPos = bracketIdx > 0 && src.charCodeAt(bracketIdx - 1) === CH_EXCL ? bracketIdx - 1 : bracketIdx;
-
-			// Don't re-scan positions we already covered
-			if (startPos < pos) {
-				pos = bracketIdx + 1;
-				continue;
-			}
-			const result = parseEnrichedAssetSyntax(src, startPos, 'inline');
-			if (result) {
-				results.push({
-					match: result,
-					start: startPos,
-					end: startPos + result.raw.length
-				});
-				pos = startPos + result.raw.length;
-			} else {
-				pos = bracketIdx + 1;
-			}
-		}
-		return results;
-	}
-
-	/**
-	 * Pre-processes a markdown string so that enriched assets mixed with text
-	 * on the same line are split onto their own lines. This allows the block-level
-	 * EnrichedAssetTokenizer to recognise them.
-	 *
-	 * Example:
-	 *   "sad ![img](/url){f=1}" → "sad\n\n![img](/url){f=1}"
-	 *   "![img](/url){f=1} text" → "![img](/url){f=1}\n\ntext"
-	 *
-	 * Lines that are already a standalone enriched asset are left unchanged.
-	 * Lines with no enriched assets are left unchanged.
-	 */
-	function splitInlineAssets(src) {
-		const lines = src.split('\n');
-		const result = [];
-		for (const line of lines) {
-			const assets = parseAllEnrichedAssets(line);
-			if (assets.length === 0) {
-				result.push(line);
-				continue;
-			}
-
-			// Check if the entire line is already a single asset (with optional whitespace)
-			if (assets.length === 1 && line.trim() === assets[0].match.raw) {
-				result.push(line);
-				continue;
-			}
-
-			// Split: emit text before, asset, text after, etc.
-			let lastEnd = 0;
-			for (const {
-				match,
-				start,
-				end
-			} of assets) {
-				const before = line.slice(lastEnd, start).trim();
-				if (before.length > 0) {
-					result.push(before);
-					result.push('');
-				} else if (lastEnd > 0) {
-					// Consecutive assets with only whitespace between them —
-					// add a blank line so the block tokenizer sees them as separate blocks.
-					result.push('');
-				}
-				result.push(match.raw);
-				lastEnd = end;
-			}
-			const after = line.slice(lastEnd).trim();
-			if (after.length > 0) {
-				result.push('');
-				result.push(after);
-			}
-		}
-		return result.join('\n');
-	}
-
-	/**
-	 * Parses a single table cell that is expected to contain exactly one enriched asset.
-	 * Returns a ProseMirror node descriptor or null if the cell doesn't match.
-	 */
-	function parseEnrichedAssetCell(text) {
-		const trimmed = text.trim();
-		if (!trimmed) {
-			return null;
-		}
-		const result = parseEnrichedAssetSyntax(trimmed, 0, 'inline');
-		if (!result || result.raw.length !== trimmed.length) {
-			return null;
-		}
-		const attrs = {
-			...parseAttrs(result.attrsRaw),
-			label: result.label,
-			url: result.url,
-			isImage: result.isImage
-		};
-		const nodeType = ASSET_TYPE_TO_NODE$1[attrs.type];
-		if (!nodeType) {
-			return null;
-		}
-		return {
-			type: nodeType,
-			attrs: {
-				fileId: Number(attrs.fileId),
-				documentId: Number(attrs.documentId),
-				name: attrs.name ?? attrs.label,
-				size: attrs.size ? Number(attrs.size) : null,
-				mimeType: attrs.mimeType ?? null
-			}
-		};
-	}
 
 	/**
 	 * Character-level parser for callout blocks (:::info / :::success / :::warning / :::tip / :::zefir).
@@ -41190,6 +44280,48 @@ ${prefix}
 		}).join('\n');
 	}
 
+	// Pure helpers for the callout live-input rule — no @tiptap dependency, so they stay unit-testable
+	// in isolation (mirrors callout-parser.js). `:::info ` / `:::success ` / `:::warning ` / `:::tip `
+	// (and a bare `::: ` defaulting to info) at the start of a block trigger the wrap; the trailing
+	// space or tab is what fires the ProseMirror input rule, matching blockquote's `> `.
+
+	const CALLOUT_INPUT_REGEX = /^:::(info|success|warning|tip)?[ \t]$/;
+
+	// Resolves the callout type from an input-rule match, defaulting to "info" for the bare `::: ` form.
+	function resolveCalloutInputType(match) {
+		return match && match[1] || 'info';
+	}
+
+	// Enter variant of the trigger: the whole paragraph text must be exactly `:::type` (no trailing
+	// space — a space would already have fired CALLOUT_INPUT_REGEX). ProseMirror input rules never fire
+	// on Enter, so a dedicated keyboard handler covers it, matching how the other blocks feel.
+	const CALLOUT_ENTER_REGEX = /^:::(info|success|warning|tip)?$/;
+
+	// Returns the callout type if the paragraph text is a bare `:::type` line (Enter case), else null.
+	function matchCalloutEnterType(text) {
+		const match = CALLOUT_ENTER_REGEX.exec(String(text).trim());
+		if (!match) {
+			return null;
+		}
+		return match[1] || 'info';
+	}
+
+	// True if the resolved position sits inside a callout. The live-input paths (`:::type ` input rule
+	// and its Enter counterpart) check this to refuse nesting — the toolbar and the Mod-Alt-b hotkey
+	// already avoid it via toggleCallout's isActive guard, and the schema alone doesn't forbid
+	// callout-in-callout.
+	function hasCalloutAncestor($pos) {
+		if (!$pos || typeof $pos.depth !== 'number') {
+			return false;
+		}
+		for (let depth = $pos.depth; depth > 0; depth--) {
+			if ($pos.node(depth)?.type?.name === 'callout') {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	const CALLOUT_ICON_CLASS = {
 		info: '--o-info-circle',
 		success: '--o-circle-check',
@@ -41241,15 +44373,6 @@ ${prefix}
 		},
 		addCommands() {
 			return {
-				setCallout: ({
-					type
-				}) => ({
-					commands
-				}) => {
-					return commands.wrapIn(this.name, {
-						type
-					});
-				},
 				toggleCallout: ({
 					type
 				}) => ({
@@ -41276,6 +44399,33 @@ ${prefix}
 					return commands.lift(this.name);
 				}
 			};
+		},
+		// `:::info ` and friends wrap the current block into a callout as you type (see
+		// callout-input-rule.js). The only live-typed note markdown token — mentions/assets can't be.
+		addInputRules() {
+			const rule = wrappingInputRule({
+				find: CALLOUT_INPUT_REGEX,
+				type: this.type,
+				getAttributes: match => ({
+					type: resolveCalloutInputType(match)
+				}),
+				// Never merge into the callout above: wrappingInputRule joins a same-type previous sibling
+				// without comparing attributes, so `:::warning ` typed right after an info callout would be
+				// swallowed by it and keep the info type. Each typed token makes its own callout.
+				joinPredicate: () => false
+			});
+
+			// Refuse to nest: skip the wrap when the caret already sits inside a callout, so `:::info ` typed
+			// inside a callout stays literal text instead of producing callout-in-callout (which the toolbar
+			// can't create). Wrapping the handler keeps wrappingInputRule's wrap logic intact.
+			const wrap = rule.handler.bind(rule);
+			rule.handler = props => {
+				if (hasCalloutAncestor(props.state.selection.$from)) {
+					return null;
+				}
+				return wrap(props);
+			};
+			return [rule];
 		},
 		markdownTokenizer: {
 			name: 'callout',
@@ -41325,6 +44475,55 @@ ${prefix}
 			// the image unparseable on re-paste). Without an explicit separator renderChildren joins with ''.
 			const inner = helpers.renderChildren(node, '\n\n');
 			return `:::${calloutType}\n${inner}\n:::`;
+		}
+	});
+
+	// Enter counterpart to the `:::info ` input rule. Input rules only fire on text input, never on
+	// Enter, so a `:::info` line finished with Enter wouldn't convert without this. A standalone
+	// high-priority Extension (not the Node) keeps the schema's node order untouched — same reasoning
+	// as HeadingCollapseEnter. Returns false unless the caret sits in an empty-selection paragraph whose
+	// entire text is a bare `:::type`, so any other Enter falls through to the default split.
+	const CalloutInputEnter = Extension.create({
+		name: 'calloutInputEnter',
+		priority: 1000,
+		addKeyboardShortcuts() {
+			return {
+				Enter: ({
+					editor
+				}) => {
+					const {
+						selection
+					} = editor.state;
+					if (!selection.empty) {
+						return false;
+					}
+					const {
+						$from
+					} = selection;
+					if ($from.parent.type.name !== 'paragraph') {
+						return false;
+					}
+
+					// Refuse to nest: a `:::type` line finished with Enter inside a callout must not wrap a
+					// second callout — let the default Enter split the paragraph instead.
+					if (hasCalloutAncestor($from)) {
+						return false;
+					}
+					const type = matchCalloutEnterType($from.parent.textContent);
+					if (!type) {
+						return false;
+					}
+
+					// Clear the `:::type` text, then wrap the now-empty paragraph into a callout — the
+					// caret lands inside it, ready for the body.
+					return editor.chain().deleteRange({
+						from: $from.start(),
+						to: $from.end()
+					}).wrapIn('callout', {
+						type
+					}).run();
+				}
+			};
 		}
 	});
 
@@ -43392,7 +46591,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 	// THIS FILE IS AUTOMATICALLY GENERATED DO NOT EDIT DIRECTLY
 	// See update-tlds.js for encoding/decoding format
 	// https://data.iana.org/TLD/tlds-alpha-by-domain.txt
-	const encodedTlds = 'aaa1rp3bb0ott3vie4c1le2ogado5udhabi7c0ademy5centure6ountant0s9o1tor4d0s1ult4e0g1ro2tna4f0l1rica5g0akhan5ency5i0g1rbus3force5tel5kdn3l0ibaba4pay4lfinanz6state5y2sace3tom5m0azon4ericanexpress7family11x2fam3ica3sterdam8nalytics7droid5quan4z2o0l2partments8p0le4q0uarelle8r0ab1mco4chi3my2pa2t0e3s0da2ia2sociates9t0hleta5torney7u0ction5di0ble3o3spost5thor3o0s4w0s2x0a2z0ure5ba0by2idu3namex4d1k2r0celona5laycard4s5efoot5gains6seball5ketball8uhaus5yern5b0c1t1va3cg1n2d1e0ats2uty4er2rlin4st0buy5t2f1g1h0arti5i0ble3d1ke2ng0o3o1z2j1lack0friday9ockbuster8g1omberg7ue3m0s1w2n0pparibas9o0ats3ehringer8fa2m1nd2o0k0ing5sch2tik2on4t1utique6x2r0adesco6idgestone9oadway5ker3ther5ussels7s1t1uild0ers6siness6y1zz3v1w1y1z0h3ca0b1fe2l0l1vinklein9m0era3p2non3petown5ital0one8r0avan4ds2e0er0s4s2sa1e1h1ino4t0ering5holic7ba1n1re3c1d1enter4o1rn3f0a1d2g1h0anel2nel4rity4se2t2eap3intai5ristmas6ome4urch5i0priani6rcle4sco3tadel4i0c2y3k1l0aims4eaning6ick2nic1que6othing5ud3ub0med6m1n1o0ach3des3ffee4llege4ogne5m0mbank4unity6pany2re3uter5sec4ndos3struction8ulting7tact3ractors9oking4l1p2rsica5untry4pon0s4rses6pa2r0edit0card4union9icket5own3s1uise0s6u0isinella9v1w1x1y0mru3ou3z2dad1nce3ta1e1ing3sun4y2clk3ds2e0al0er2s3gree4livery5l1oitte5ta3mocrat6ntal2ist5si0gn4v2hl2iamonds6et2gital5rect0ory7scount3ver5h2y2j1k1m1np2o0cs1tor4g1mains5t1wnload7rive4tv2ubai3nlop4pont4rban5vag2r2z2earth3t2c0o2deka3u0cation8e1g1mail3erck5nergy4gineer0ing9terprises10pson4quipment8r0icsson6ni3s0q1tate5t1u0rovision8s2vents5xchange6pert3osed4ress5traspace10fage2il1rwinds6th3mily4n0s2rm0ers5shion4t3edex3edback6rrari3ero6i0delity5o2lm2nal1nce1ial7re0stone6mdale6sh0ing5t0ness6j1k1lickr3ghts4r2orist4wers5y2m1o0o0d1tball6rd1ex2sale4um3undation8x2r0ee1senius7l1ogans4ntier7tr2ujitsu5n0d2rniture7tbol5yi3ga0l0lery3o1up4me0s3p1rden4y2b0iz3d0n2e0a1nt0ing5orge5f1g0ee3h1i0ft0s3ves2ing5l0ass3e1obal2o4m0ail3bh2o1x2n1odaddy5ld0point6f2o0dyear5g0le4p1t1v2p1q1r0ainger5phics5tis4een3ipe3ocery4up4s1t1u0cci3ge2ide2tars5ru3w1y2hair2mburg5ngout5us3bo2dfc0bank7ealth0care8lp1sinki6re1mes5iphop4samitsu7tachi5v2k0t2m1n1ockey4ldings5iday5medepot5goods5s0ense7nda3rse3spital5t0ing5t0els3mail5use3w2r1sbc3t1u0ghes5yatt3undai7ibm2cbc2e1u2d1e0ee3fm2kano4l1m0amat4db2mo0bilien9n0c1dustries8finiti5o2g1k1stitute6urance4e4t0ernational10uit4vestments10o1piranga7q1r0ish4s0maili5t0anbul7t0au2v3jaguar4va3cb2e0ep2tzt3welry6io2ll2m0p2nj2o0bs1urg4t1y2p0morgan6rs3uegos4niper7kaufen5ddi3e0rryhotels6properties14fh2g1h1i0a1ds2m1ndle4tchen5wi3m1n1oeln3matsu5sher5p0mg2n2r0d1ed3uokgroup8w1y0oto4z2la0caixa5mborghini8er3nd0rover6xess5salle5t0ino3robe5w0yer5b1c1ds2ease3clerc5frak4gal2o2xus4gbt3i0dl2fe0insurance9style7ghting6ke2lly3mited4o2ncoln4k2ve1ing5k1lc1p2oan0s3cker3us3l1ndon4tte1o3ve3pl0financial11r1s1t0d0a3u0ndbeck6xe1ury5v1y2ma0drid4if1son4keup4n0agement7go3p1rket0ing3s4riott5shalls7ttel5ba2c0kinsey7d1e0d0ia3et2lbourne7me1orial6n0u2rckmsd7g1h1iami3crosoft7l1ni1t2t0subishi9k1l0b1s2m0a2n1o0bi0le4da2e1i1m1nash3ey2ster5rmon3tgage6scow4to0rcycles9v0ie4p1q1r1s0d2t0n1r2u0seum3ic4v1w1x1y1z2na0b1goya4me2vy3ba2c1e0c1t0bank4flix4work5ustar5w0s2xt0direct7us4f0l2g0o2hk2i0co2ke1on3nja3ssan1y5l1o0kia3rton4w0ruz3tv4p1r0a1w2tt2u1yc2z2obi1server7ffice5kinawa6layan0group9lo3m0ega4ne1g1l0ine5oo2pen3racle3nge4g0anic5igins6saka4tsuka4t2vh3pa0ge2nasonic7ris2s1tners4s1y3y2ccw3e0t2f0izer5g1h0armacy6d1ilips5one2to0graphy6s4ysio5ics1tet2ures6d1n0g1k2oneer5zza4k1l0ace2y0station9umbing5s3m1n0c2ohl2ker3litie5rn2st3r0axi3ess3ime3o0d0uctions8f1gressive8mo2perties3y5tection8u0dential9s1t1ub2w0c2y2qa1pon3uebec3st5racing4dio4e0ad1lestate6tor2y4cipes5d0stone5umbrella9hab3ise0n3t2liance6n0t0als5pair3ort3ublican8st0aurant8view0s5xroth6ich0ardli6oh3l1o1p2o0cks3deo3gers4om3s0vp3u0gby3hr2n2w0e2yukyu6sa0arland6fe0ty4kura4le1on3msclub4ung5ndvik0coromant12ofi4p1rl2s1ve2xo3b0i1s2c0b1haeffler7midt4olarships8ol3ule3warz5ience5ot3d1e0arch3t2cure1ity6ek2lect4ner3rvices6ven3w1x0y3fr2g1h0angrila6rp3ell3ia1ksha5oes2p0ping5uji3w3i0lk2na1gles5te3j1k0i0n2y0pe4l0ing4m0art3ile4n0cf3o0ccer3ial4ftbank4ware6hu2lar2utions7ng1y2y2pa0ce3ort2t3r0l2s1t0ada2ples4r1tebank4farm7c0group6ockholm6rage3e3ream4udio2y3yle4u0cks3pplies3y2ort5rf1gery5zuki5v1watch4iss4x1y0dney4stems6z2tab1ipei4lk2obao4rget4tamotors6r2too4x0i3c0i2d0k2eam2ch0nology8l1masek5nnis4va3f1g1h0d1eater2re6iaa2ckets5enda4ps2res2ol4j0maxx4x2k0maxx5l1m0all4n1o0day3kyo3ols3p1ray3shiba5tal3urs3wn2yota3s3r0ade1ing4ining5vel0ers0insurance16ust3v2t1ube2i1nes3shu4v0s2w1z2ua1bank3s2g1k1nicom3versity8o2ol2ps2s1y1z2va0cations7na1guard7c1e0gas3ntures6risign5mögensberater2ung14sicherung10t2g1i0ajes4deo3g1king4llas4n1p1rgin4sa1ion4va1o3laanderen9n1odka3lvo3te1ing3o2yage5u2wales2mart4ter4ng0gou5tch0es6eather0channel12bcam3er2site5d0ding5ibo2r3f1hoswho6ien2ki2lliamhill9n0dows4e1ners6me2olterskluwer11odside6rk0s2ld3w2s1tc1f3xbox3erox4ihuan4n2xx2yz3yachts4hoo3maxun5ndex5e1odobashi7ga2kohama6u0tube6t1un3za0ppos4ra3ero3ip2m1one3uerich6w2';
+	const encodedTlds = 'aaa1rp3bb0ott3vie4c1le2ogado5udhabi7c0ademy5centure6ountant0s9o1tor4d0s1ult4e0g1ro2tna4f0l1rica5g0akhan5ency5i0g1rbus3force5tel5kdn3l0ibaba4pay4lfinanz6state5y2sace3tom5m0azon4ericanexpress7family11x2fam3ica3sterdam8nalytics7droid5quan4z2o0l2partments8p0le4q0uarelle8r0ab1mco4chi3my2pa2t0e3s0da2ia2sociates9t0hleta5torney7u0ction5di0ble3o3spost5thor3o0s4w0s2x0a2z0ure5ba0by2idu3namex4d1k2r0celona5laycard4s5efoot5gains6seball5ketball8uhaus5yern5b0c1t1va3cg1n2d1e0ats2uty4er2rlin4st0buy5t2f1g1h0arti5i0ble3d1ke2ng0o3o1z2j1lack0friday9ockbuster8g1omberg7ue3m0s1w2n0pparibas9o0ats3ehringer8fa2m1nd2o0k0ing5sch2tik2on4t1utique6x2r0adesco6idgestone9oadway5ker3ther5ussels7s1t1uild0ers6siness6y1zz3v1w1y1z0h3ca0b1fe2l0l1vinklein9m0era3p2non3petown5ital0one8r0avan4ds2e0er0s4s2sa1e1h1ino4t0ering5holic7ba1n1re3c1d1enter4o1rn3f0a1d2g1h0anel2nel4rity4se2t2eap3intai5ristmas6ome4urch5i0priani6rcle4sco3tadel4i0c2y3k1l0aims4eaning6ick2nic1que6othing5ud3ub0med6m1n1o0ach3des3ffee4llege4ogne5m0mbank4unity6pany2re3uter5sec4ndos3struction8ulting7tact3ractors9oking4l1p2rsica5untry4pon0s4rses6pa2r0edit0card4union9icket5own3s1uise0s6u0isinella9v1w1x1y0mru3ou3z2dad1nce3ta1e1ing3sun4y2clk3ds2e0al0er2s3gree4livery5l1oitte5ta3mocrat6ntal2ist5si0gn4v2hl2iamonds6et2gital5rect0ory7scount3ver5h2y2j1k1m1np2o0cs1tor4g1mains5t1wnload7rive4tv2ubai3pont4rban5vag2r2z2earth3t2c0o2deka3u0cation8e1g1mail3erck5nergy4gineer0ing9terprises10pson4quipment8r0icsson6ni3s0q1tate5t1u0rovision8s2vents5xchange6pert3osed4ress5traspace10fage2il1rwinds6th3mily4n0s2rm0ers5shion4t3edex3edback6rrari3ero6i0delity5o2lm2nal1nce1ial7re0stone6mdale6sh0ing5t0ness6j1k1lickr3ghts4r2orist4wers5y2m1o0o0d1tball6rd1ex2sale4um3undation8x2r0ee1senius7l1ogans4ntier7tr2ujitsu5n0d2rniture7tbol5yi3ga0l0lery3o1up4me0s3p1rden4y2b0iz3d0n2e0a1nt0ing5orge5f1g0ee3h1i0ft0s3ves2ing5l0ass3e1obal2o4m0ail3bh2o1x2n1odaddy5ld0point6f2odyear5g0le4p1t1v2p1q1r0ainger5phics5tis4een3ipe3ocery4up4s1t1u0cci3ge2ide2tars5ru3w1y2hair2mburg5ngout5us3bo2dfc0bank7ealth0care8lp1sinki6re1mes5iphop4samitsu7tachi5v2k0t2m1n1ockey4ldings5iday5medepot5goods5s0ense7nda3rse3spital5t0ing5t0els3mail5use3w2r1sbc3t1u0ghes5yatt3undai7ibm2cbc2e1u2d1e0ee3fm2kano4l1m0amat4db2mo0bilien9n0c1dustries8finiti5o2g1k1stitute6urance4e4t0ernational10uit4vestments10o1piranga7q1r0ish4s0maili5t0anbul7t0au2v3jaguar4va3cb2e0ep2tzt3welry6io2ll2m0p2nj2o0bs1urg4t1y2p0morgan6rs3uegos4niper7kaufen5ddi3e0rryhotels6properties14fh2g1h1i0a1ds2m1ndle4tchen5wi3m1n1oeln3matsu5sher5p0mg2n2r0d1ed3uokgroup8w1y0oto4z2la0caixa5mborghini8er3nd0rover6xess5salle5t0ino3robe5w0yer5b1c1ds2ease3clerc5frak4gal2o2xus4gbt3i0dl2fe0insurance9style7ghting6ke2lly3mited4o2ncoln4k2ve1ing5k1lc1p2oan0s3cker3us3l1ndon4tte1o3ve3pl0financial11r1s1t0d0a3u0ndbeck6xe1ury5v1y2ma0drid4if1son4keup4n0agement7go3p1rket0ing3s4riott5shalls7ttel5ba2c0kinsey7d1e0d0ia3et2lbourne7me1orial6n0u2rck0msd7g1h1iami3crosoft7l1ni1t2t0subishi9k1l0b1s2m0a2n1o0bi0le4da2e1i1m1nash3ey2ster5rmon3tgage6scow4to0rcycles9v0ie4p1q1r1s0d2t0n1r2u0seum3ic4v1w1x1y1z2na0b1goya4me2vy3ba2c1e0c1t0bank4flix4work5ustar5w0s2xt0direct7us4f0l2g0o2hk2i0co2ke1on3nja3ssan1y5l1o0kia3rton4w0ruz3tv4p1r0a1w2tt2u1yc2z2obi1server7ffice5kinawa6layan0group9lo3m0ega4ne1g1l0ine5oo2pen3racle3nge4g0anic5igins6saka4tsuka4t2vh3pa0ge2nasonic7ris2s1tners4s1y3y2ccw3e0t2f0izer5g1h0armacy6d1ilips5one2to0graphy6s4ysio5ics1tet2ures6d1n0g1k2oneer5zza4k1l0ace2y0station9umbing5s3m1n0c2ohl2ker3litie5rn2st3r0axi3ess3ime3o0d0uctions8f1gressive8mo2perties3y5tection8u0dential9s1t1ub2w0c2y2qa1pon3uebec3st5racing4dio4e0ad1lestate6tor2y4cipes5d0umbrella9hab3ise0n3t2liance6n0t0als5pair3ort3ublican8st0aurant8view0s5xroth6ich0ardli6oh3l1o1p2o0cks3deo3gers4om3s0vp3u0gby3hr2n2w0e2yukyu6sa0arland6fe0ty4kura4le1on3msclub4ung5ndvik0coromant12ofi4p1rl2s1ve2xo3b0i1s2c0b1haeffler7midt4olarships8ol3ule3warz5ience5ot3d1e0arch3t2cure1ity6ek2lect4ner3rvices6ven3w1x0y3fr2g1h0angrila6rp3ell3ia1ksha5oes2p0ping5uji3w3i0lk2na1gles5te3j1k0i0n2y0pe4l0ing4m0art3ile4n0cf3o0ccer3ial4ftbank4ware6hu2lar2utions7ng1y2y2pa0ce3ort2t3r0l2s1t0ada2ples4r1tebank4farm7c0group6ockholm6rage3e3ream4udio2y3yle4u0cks3pplies3y2ort5rf1gery5zuki5v1watch4iss4x1y0dney4stems6z2tab1ipei4lk2obao4rget4tamotors6r2too4x0i3c0i2d0k2eam2ch0nology8l1masek5nnis4va3f1g1h0d1eater2re6iaa2ckets5enda4ps2res2ol4j0maxx4x2k0maxx5l1m0all4n1o0day3kyo3ols3p1ray3shiba5tal3urs3wn2yota3s3r0ade1ing4ining5vel0ers0insurance16ust3v2t1ube2i1nes3shu4v0s2w1z2ua1bank3s2g1k1nicom3versity8o2ol2ps2s1y1z2va0cations7na1guard7c1e0gas3ntures6risign5mögensberater2ung14sicherung10t2g1i0ajes4deo3g1king4llas4n1p1rgin4sa1ion4va1o3laanderen9n1odka3lvo3te1ing3o2yage5u2wales2mart4ter4ng0gou5tch0es6eather0channel12bcam3er2site5d0ding5ibo2r3f1hoswho6ien2ki2lliamhill9n0dows4e1ners6me2oodside6rk0s2ld3w2s1tc1f3xbox3erox4ihuan4n2xx2yz3yachts4hoo3maxun5ndex5e1odobashi7ga2kohama6u0tube6t1un3za0ppos4ra3ero3ip2m1one3uerich6w2';
 	// Internationalized domain names containing non-ASCII
 	const encodedUtlds = 'ελ1υ2бг1ел3дети4ею2католик6ом3мкд2он1сква6онлайн5рг3рус2ф2сайт3рб3укр3қаз3հայ3ישראל5קום3ابوظبي5رامكو5لاردن4بحرين5جزائر5سعودية6عليان5مغرب5مارات5یران5بارت2زار4يتك3ھارت5تونس4سودان3رية5شبكة4عراق2ب2مان4فلسطين6قطر3كاثوليك6وم3مصر2ليسيا5وريتانيا7قع4همراه5پاکستان7ڀارت4कॉम3नेट3भारत0म्3ोत5संगठन5বাংলা5ভারত2ৰত4ਭਾਰਤ4ભારત4ଭାରତ4இந்தியா6லங்கை6சிங்கப்பூர்11భారత్5ಭಾರತ4ഭാരതം5ලංකා4คอม3ไทย3ລາວ3გე2みんな3アマゾン4クラウド4グーグル4コム2ストア3セール3ファッション6ポイント4世界2中信1国1國1文网3亚马逊3企业2佛山2信息2健康2八卦2公司1益2台湾1灣2商城1店1标2嘉里0大酒店5在线2大拿2天主教3娱乐2家電2广东2微博2慈善2我爱你3手机2招聘2政务1府2新加坡2闻2时尚2書籍2机构2淡马锡3游戏2澳門2点看2移动2组织机构4网址1店1站1络2联通2谷歌2购物2通販2集团2電訊盈科4飞利浦3食品2餐厅2香格里拉3港2닷넷1컴2삼성2한국2';
 
@@ -44783,11 +47982,6 @@ ${nextLine.slice(indentLevel + 2)}`;
 		tt(Email$1, DOT, EmailDomainDot);
 		tt(Email$1, HYPHEN, EmailDomainHyphen);
 
-		// Final possible email states
-		const EmailColon = tt(Email$1, COLON); // URL followed by colon (potential port number here)
-		/*const EmailColonPort = */
-		ta(EmailColon, groups.numeric, Email); // URL followed by colon and port number
-
 		// Account for dots and hyphens. Hyphens are usually parts of domain names
 		// (but not TLDs)
 		const DomainHyphen = tt(Domain, HYPHEN); // domain followed by hyphen
@@ -44870,16 +48064,18 @@ ${nextLine.slice(indentLevel + 2)}`;
 			// Continue not accepting for open brackets
 			tt(UrlNonaccept, OPEN, UrlOpen);
 
-			// Closing bracket component. This character WILL be included in the URL
-			tt(UrlOpen, CLOSE, Url$1);
-
-			// URL that beings with an opening bracket, followed by a symbols.
+			// URL that begins with an opening bracket, followed by a symbols.
 			// Note that the final state can still be `UrlOpen` (if the URL has a
 			// single opening bracket for some reason).
 			const UrlOpenQ = makeState(Url);
 			ta(UrlOpen, qsAccepting, UrlOpenQ);
 			const UrlOpenSyms = makeState(); // UrlOpen followed by some symbols it cannot end it
-			ta(UrlOpen, qsNonAccepting);
+			ta(UrlOpen, qsNonAccepting, UrlOpenSyms);
+
+			// Closing bracket component. This character WILL be included in the URL.
+			// Must come after qsNonAccepting (which includes all close-bracket tokens)
+			// so that CLOSE -> Url wins over CLOSE -> UrlOpenSyms.
+			tt(UrlOpen, CLOSE, Url$1);
 
 			// URL that begins with an opening bracket, followed by some symbols
 			ta(UrlOpenQ, qsAccepting, UrlOpenQ);
@@ -45652,6 +48848,12 @@ ${nextLine.slice(indentLevel + 2)}`;
 		});
 	}
 	const SafeListItem = ListItem.extend({
+		renderMarkdown(node, h, ctx) {
+			return this.parent?.({
+				...node,
+				content: escapeInlineText(node.content)
+			}, h, ctx) ?? '';
+		},
 		parseMarkdown: (token, helpers) => {
 			if (token.type !== 'list_item') {
 				return [];
@@ -45713,6 +48915,14 @@ ${nextLine.slice(indentLevel + 2)}`;
 			};
 		}
 	});
+	const MarkdownBlockquote = Blockquote.extend({
+		renderMarkdown(node, h, ctx) {
+			return this.parent?.({
+				...node,
+				content: escapeInlineText(node.content)
+			}, h, ctx) ?? '';
+		}
+	});
 	const CleanOrderedList = OrderedList.extend({
 		markdownTokenizer: null,
 		parseMarkdown: (token, helpers) => {
@@ -45752,7 +48962,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 			// Default '_' excludes ALL marks; 'code link' only prevents code-in-code
 			// and link inside code (autolink would otherwise linkify URLs in code spans).
 			excludes: 'code link'
-		}), CodeBlock, Blockquote, Callout, BulletList, CleanOrderedList, SafeListItem, TaskList, TaskItem.configure({
+		}), CodeBlock, MarkdownBlockquote, Callout, CalloutInputEnter, BulletList, CleanOrderedList, SafeListItem, TaskList, TaskItem.configure({
 			nested: true
 		}), CustomHorizontalRule, TextStyle, Color.configure({
 			types: ['textStyle']
@@ -48626,2541 +51836,6 @@ ${nextLine.slice(indentLevel + 2)}`;
 		}
 	});
 
-	const IMAGE_EXTENSIONS = new Set(['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg', 'avif', 'heic', 'heif']);
-	const VIDEO_EXTENSIONS = new Set(['mp4', 'webm', 'mov', 'm4v', 'mkv', 'avi', 'wmv', 'flv', '3gp', 'mpeg', 'mpg']);
-	function getFileExtension(fileName) {
-		if (!main_core.Type.isStringFilled(fileName)) {
-			return '';
-		}
-		const normalizedName = fileName.trim();
-		const dotPosition = normalizedName.lastIndexOf('.');
-		if (dotPosition <= 0 || dotPosition === normalizedName.length - 1) {
-			return '';
-		}
-		return normalizedName.slice(dotPosition + 1).toLowerCase();
-	}
-	function resolveTargetNodeTypeByPayload(payload) {
-		const mimeType = String(payload?.mimeType || '').toLowerCase();
-		if (mimeType.startsWith('image/')) {
-			return 'imageAttachment';
-		}
-		if (mimeType.startsWith('video/')) {
-			return 'video';
-		}
-		const extension = getFileExtension(payload?.name);
-		if (IMAGE_EXTENSIONS.has(extension)) {
-			return 'imageAttachment';
-		}
-		if (VIDEO_EXTENSIONS.has(extension)) {
-			return 'video';
-		}
-		return 'fileAttachment';
-	}
-	function buildAttachmentAttrs(payload, targetNodeType) {
-		const documentId = toPositiveInt(payload.documentId);
-		const fileId = toPositiveInt(payload.fileId);
-		const showUrl = main_core.Type.isStringFilled(payload.showUrl) ? payload.showUrl : '';
-		if (documentId === null || fileId === null || showUrl === '') {
-			return null;
-		}
-		const downloadUrl = main_core.Type.isStringFilled(payload.downloadUrl) ? payload.downloadUrl : showUrl;
-		const viewerAttrs = main_core.Type.isPlainObject(payload.viewerAttrs) ? payload.viewerAttrs : {};
-		const attrs = {
-			name: payload.name || '',
-			size: Number(payload.size) || 0,
-			mimeType: payload.mimeType || '',
-			fileId,
-			documentId,
-			downloadUrl,
-			showUrl,
-			viewerAttrs
-		};
-		if (targetNodeType === 'video') {
-			return {
-				...attrs,
-				src: showUrl,
-				controls: true
-			};
-		}
-		return attrs;
-	}
-	function isUploaderInteractiveElement(target) {
-		if (!(target instanceof Element)) {
-			return false;
-		}
-		const interactiveSelectors = ['input[type="file"]', 'button', 'a', '[role="button"]', '.ui-tile-uploader-selector-link', '.ui-tile-uploader-item-menu', '.ui-tile-uploader-item-remove', '.ui-tile-uploader-item-state-remove'];
-		return interactiveSelectors.some(selector => target.closest(selector));
-	}
-	class VueUploadAssetNodeView {
-		constructor({
-			node,
-			editor,
-			getPos,
-			extension,
-			dataType,
-			className
-		}) {
-			this.node = node;
-			this.editor = editor;
-			this.getPos = getPos;
-			this.extension = extension;
-			this.dataType = dataType;
-			this.className = className;
-			this.app = null;
-			this.vm = null;
-			this.lastEditable = Boolean(this.editor?.isEditable);
-			this.dom = document.createElement('div');
-			this.dom.setAttribute('data-type', dataType);
-			this.dom.className = className;
-			this.dom.contentEditable = 'false';
-			this.applyVisibility(this.lastEditable);
-			this.handleEditorUpdate = () => this.syncEditableState();
-			this.editor?.on('update', this.handleEditorUpdate);
-			this.mountVue();
-		}
-		applyVisibility(editable) {
-			main_core.Dom.style(this.dom, 'display', editable ? '' : 'none');
-			this.dom.setAttribute('aria-hidden', editable ? 'false' : 'true');
-		}
-		syncEditableState() {
-			const editable = Boolean(this.editor?.isEditable);
-			if (editable === this.lastEditable) {
-				return;
-			}
-			this.lastEditable = editable;
-			this.applyVisibility(editable);
-			if (!editable) {
-				this.unmountVue();
-				return;
-			}
-			if (!this.vm) {
-				this.mountVue();
-			}
-		}
-		unmountVue() {
-			this.app?.unmount();
-			this.app = null;
-			this.vm = null;
-			this.dom.innerHTML = '';
-		}
-		mountVue() {
-			const component = this.extension.options.nodeViewComponent;
-			if (!component || !this.editor?.isEditable) {
-				return;
-			}
-			this.app = ui_vue3.BitrixVue.createApp({
-				components: {
-					UploadAssetNodeViewComponent: component
-				},
-				data: () => ({
-					attrs: this.node.attrs
-				}),
-				methods: {
-					handleComplete: payload => {
-						setTimeout(() => {
-							this.replaceWithAttachment(payload);
-						}, 0);
-					}
-				},
-				// language=Vue
-				template: `
-				<UploadAssetNodeViewComponent
-					:attrs="attrs"
-					:on-complete="handleComplete"
-				/>
-			`
-			});
-			this.vm = this.app.mount(this.dom);
-		}
-		update(node) {
-			if (node.type !== this.node.type) {
-				return false;
-			}
-			this.node = node;
-			this.syncEditableState();
-			if (this.vm) {
-				this.vm.attrs = node.attrs;
-			}
-			return true;
-		}
-		replaceWithAttachment(payload) {
-			if (!main_core.Type.isPlainObject(payload)) {
-				return;
-			}
-			const pos = this.resolvePos();
-			if (pos === null) {
-				return;
-			}
-			const targetNodeType = resolveTargetNodeTypeByPayload(payload);
-			const schemaNodeType = this.editor?.state?.schema?.nodes?.[targetNodeType];
-			if (!schemaNodeType) {
-				return;
-			}
-			const attrs = buildAttachmentAttrs(payload, targetNodeType);
-			if (!attrs) {
-				return;
-			}
-			const newNode = schemaNodeType.create(attrs);
-			// uploadAsset is a block node; an inline result (image) must be wrapped in a paragraph
-			// so it stays legal at the document root after the replace.
-			const paragraphType = this.editor?.state?.schema?.nodes?.paragraph;
-			const nodeToInsert = newNode.isInline && paragraphType ? paragraphType.create(null, newNode) : newNode;
-			const tr = this.editor.state.tr.replaceWith(pos, pos + this.node.nodeSize, nodeToInsert);
-			this.editor.view.dispatch(tr);
-		}
-		resolvePos() {
-			if (!main_core.Type.isFunction(this.getPos)) {
-				return null;
-			}
-			const pos = this.getPos();
-			return Number.isInteger(pos) && pos >= 0 ? pos : null;
-		}
-		stopEvent(event) {
-			if (!(event.target instanceof Element) || !this.dom.contains(event.target)) {
-				return false;
-			}
-			const isInteractive = isUploaderInteractiveElement(event.target);
-			switch (event.type) {
-				case 'mousedown':
-				case 'mouseup':
-				case 'click':
-				case 'touchstart':
-				case 'touchend':
-				case 'keydown':
-				case 'keypress':
-				case 'keyup':
-					return isInteractive;
-				case 'dragenter':
-				case 'dragover':
-				case 'dragleave':
-				case 'drop':
-					// Keep uploader drag-and-drop working inside the node.
-					return true;
-				case 'dragstart':
-					// Allow dragging the node itself, but keep controls non-draggable.
-					return isInteractive;
-				default:
-					return isInteractive;
-			}
-		}
-		ignoreMutation() {
-			return true;
-		}
-		destroy() {
-			if (this.handleEditorUpdate) {
-				this.editor?.off('update', this.handleEditorUpdate);
-				this.handleEditorUpdate = null;
-			}
-			this.unmountVue();
-		}
-	}
-
-	// Float images cap at 70% of the container so wrapped text keeps a usable column; center/no-align
-	// can fill the width.
-	const FLOAT_MAX_PCT$1 = 70;
-
-	// Minimum readable text column width. If the hypothetical column beside a floated image (or
-	// between two facing floats) falls below this value, the image is demoted to a block.
-	const MIN_COLUMN_REM = 12;
-
-	// Text gap between a float and the adjacent text column (matches the 2rem margin in editor.css).
-	const FLOAT_GAP_REM = 2;
-
-	// Mirrors the `note-mobile` signal used by heading-block-node-view / code-block-overlay.
-	function isMobileLayout() {
-		return typeof document !== 'undefined' && document.documentElement.classList.contains('note-mobile');
-	}
-	class VueAttachmentNodeView {
-		constructor({
-			node,
-			editor,
-			getPos,
-			extension,
-			dataType,
-			className,
-			inline,
-			uploadService
-		}) {
-			this.node = node;
-			this.editor = editor;
-			this.getPos = getPos;
-			this.extension = extension;
-			this.dataType = dataType;
-			this.className = className;
-			this.inline = inline === true;
-			this.uploadService = uploadService || null;
-			// Capability flag: enables resize/align/stack logic for this node type.
-			this.resizable = Boolean(extension?.options?.resizable);
-			this.app = null;
-			this.vm = null;
-			this.dom = document.createElement(this.inline ? 'span' : 'div');
-			this.dom.setAttribute('data-type', dataType);
-			this.dom.className = className;
-			this.dom.contentEditable = 'false';
-			// Shared marker class so shared CSS modifiers (align, stacked) apply to any resizable node.
-			if (this.resizable) {
-				this.dom.classList.add('note-editor-media');
-			}
-			// Drag-resize drives the block width directly; suppress layout recompute while it runs.
-			this.isResizing = false;
-			this._stackRafId = undefined;
-			// One observer watches both the block (this.dom — live drag width) and its container (the text
-			// column). The container ref is tracked so we can re-observe after a DnD reparent.
-			this._resizeObserver = null;
-			this._observedParent = null;
-			this._handleImgLoad = () => this.scheduleStackUpdate();
-			this.syncLayout();
-			this.mountVue();
-
-			// ResizeObserver wiring is deferred to scheduleStackUpdate() because this.dom is not yet in the
-			// document at construction time (ProseMirror inserts it after the view is created).
-
-			// editable can flip after mount (doc loads read-only, then setEditable(true)) without a
-			// node update, so sync the prop on every editor update to keep resize handles in sync.
-			this.handleEditorUpdate = () => {
-				if (this.vm) {
-					this.vm.editable = Boolean(this.editor?.isEditable);
-				}
-				// Non-resizable nodes (e.g. files) have no stacking layout — skip the per-update layout work.
-				if (!this.resizable) {
-					return;
-				}
-				// Recompute stacking: a sibling image may have been added/removed or had its align changed.
-				this.scheduleStackUpdate();
-			};
-			this.editor?.on('update', this.handleEditorUpdate);
-		}
-		mountVue() {
-			const component = this.extension.options.nodeViewComponent;
-			if (!component) {
-				return;
-			}
-			this.app = ui_vue3.BitrixVue.createApp({
-				components: {
-					AttachmentNodeViewComponent: component
-				},
-				data: () => ({
-					attrs: this.node.attrs,
-					defaultTypeMessage: this.extension.options.defaultTypeMessage,
-					editable: Boolean(this.editor?.isEditable),
-					selected: false,
-					// onReplace is null unless an uploadService was injected (image node only).
-					canReplace: Boolean(this.uploadService)
-				}),
-				methods: {
-					handleResize: width => this.applyWidth(width),
-					handleResizeActive: active => {
-						this.isResizing = Boolean(active);
-						// On drag end, reconcile the layout (clears the raw drag px, re-applies the
-						// committed width / stacking) even if the commit was a no-op that skips update().
-						if (!active) {
-							this.syncLayout();
-							this.scheduleStackUpdate();
-						}
-					},
-					// Per-frame drag tick: recompute stacking so the dragged image (and its partner) demote
-					// live, not relying on ResizeObserver delivery timing.
-					handleResizeProgress: () => this.scheduleStackUpdate(),
-					handleAlign: align => this.applyAlign(align),
-					handleReplace: () => this.replaceImage()
-				},
-				// language=Vue
-				template: `
-				<AttachmentNodeViewComponent
-					:attrs="attrs"
-					:default-type-message="defaultTypeMessage"
-					:editable="editable"
-					:selected="selected"
-					:on-resize="handleResize"
-					:on-resize-active="handleResizeActive"
-					:on-resize-progress="handleResizeProgress"
-					:on-align="handleAlign"
-					:on-replace="canReplace ? handleReplace : null"
-				/>
-			`
-			});
-			this.vm = this.app.mount(this.dom);
-		}
-		update(node) {
-			if (node.type !== this.node.type) {
-				return false;
-			}
-			this.node = node;
-			this.syncLayout();
-			this.scheduleStackUpdate();
-			if (this.vm) {
-				this.vm.attrs = node.attrs;
-				this.vm.editable = Boolean(this.editor?.isEditable);
-			}
-			return true;
-		}
-
-		// Effective rendered width of this node's block in px. offsetWidth reflects the live drag px, the
-		// applied % and the max-width cap; attrs.width is only a fallback when the DOM isn't laid out yet.
-		// The --stacked class never changes width/max-width, so this value is stable across demote, which
-		// is what keeps the decision from oscillating.
-		#ownWidth(containerWidth) {
-			const measured = this.dom.offsetWidth;
-			if (measured > 0) {
-				return measured;
-			}
-			const w = this.node.attrs.width;
-			if (Number.isFinite(w) && w > 0) {
-				return containerWidth * Math.min(w, FLOAT_MAX_PCT$1) / 100;
-			}
-			return containerWidth * 0.5;
-		}
-
-		// Effective rendered width of the partner block in px, measured from its own DOM via nodeDOM.
-		#partnerWidth(partner, containerWidth) {
-			const dom = this.editor.view?.nodeDOM?.(partner.pos);
-			if (dom instanceof HTMLElement && dom.offsetWidth > 0) {
-				return dom.offsetWidth;
-			}
-			const w = partner.node.attrs.width;
-			if (Number.isFinite(w) && w > 0) {
-				return containerWidth * Math.min(w, FLOAT_MAX_PCT$1) / 100;
-			}
-			return containerWidth * 0.5;
-		}
-
-		// Returns the adjacent sibling { node, pos } in the same parent that is an imageAttachment with the
-		// opposite float align, or null if no such sibling exists. Partner is an immediate neighbour, so
-		// its pos is derivable from this node's pos and nodeSize.
-		#findOppositeFloatSibling() {
-			const pos = this.resolvePos();
-			if (pos === null) {
-				return null;
-			}
-			const myAlign = this.node.attrs.align;
-			if (myAlign !== 'left' && myAlign !== 'right') {
-				return null;
-			}
-			const oppositeAlign = myAlign === 'left' ? 'right' : 'left';
-			const $pos = this.editor.state.doc.resolve(pos);
-			const parent = $pos.parent;
-			const myIndex = $pos.index();
-
-			// Check immediately preceding sibling.
-			if (myIndex > 0) {
-				const prev = parent.child(myIndex - 1);
-				if (prev.type.name === this.node.type.name && prev.attrs.align === oppositeAlign) {
-					return {
-						node: prev,
-						pos: pos - prev.nodeSize
-					};
-				}
-			}
-
-			// Check immediately following sibling.
-			if (myIndex < parent.childCount - 1) {
-				const next = parent.child(myIndex + 1);
-				if (next.type.name === this.node.type.name && next.attrs.align === oppositeAlign) {
-					return {
-						node: next,
-						pos: pos + this.node.nodeSize
-					};
-				}
-			}
-			return null;
-		}
-
-		// Pure decision: returns true when this resizable node should be demoted to a block.
-		// Inputs: container width, own rendered width, optional partner rendered width, constants.
-		// Does not touch the DOM.
-		shouldStack() {
-			if (!this.resizable) {
-				return false;
-			}
-			const align = this.node.attrs.align;
-			if (align !== 'left' && align !== 'right') {
-				return false;
-			}
-			const container = this.dom.parentElement;
-			if (!container) {
-				return false;
-			}
-
-			// Content-box width of the container (same base used for % width resolution).
-			const style = window.getComputedStyle(container);
-			const containerWidth = container.clientWidth - parseFloat(style.paddingLeft || '0') - parseFloat(style.paddingRight || '0');
-			if (containerWidth <= 0) {
-				return false;
-			}
-			const rootFontSize = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
-			const minColumnPx = MIN_COLUMN_REM * rootFontSize;
-			const floatGapPx = FLOAT_GAP_REM * rootFontSize;
-			const partner = this.#findOppositeFloatSibling();
-			let usedWidth = this.#ownWidth(containerWidth) + floatGapPx;
-			if (partner !== null) {
-				usedWidth += this.#partnerWidth(partner, containerWidth) + floatGapPx;
-			}
-			const hypotheticalColumn = containerWidth - usedWidth;
-			return hypotheticalColumn < minColumnPx;
-		}
-
-		// Applies the stack decision to the DOM. Runs even during drag-resize: toggling --stacked changes
-		// only float/position, not width, so it can't fight the live px width (unlike syncLayout).
-		applyStackDecision() {
-			const stack = this.shouldStack();
-			this.dom.classList.toggle('note-editor-media--stacked', stack);
-
-			// Apply the same decision to the facing partner synchronously: the pair shares one
-			// hypothetical column, so the boolean is identical for both. This makes the partner demote
-			// during drag instead of lagging until the release transaction fires its 'update'. Toggling
-			// the class doesn't change width, so the partner's ResizeObserver won't refire from this.
-			const partner = this.#findOppositeFloatSibling();
-			if (partner !== null) {
-				const partnerDom = this.editor.view?.nodeDOM?.(partner.pos);
-				if (partnerDom instanceof HTMLElement) {
-					partnerDom.classList.toggle('note-editor-media--stacked', stack);
-				}
-			}
-		}
-
-		// Coalesces multiple calls within the same frame into a single applyStackDecision().
-		// Also keeps the ResizeObserver and img load listener wired across re-render / DnD reparent.
-		scheduleStackUpdate() {
-			if (this.resizable) {
-				this.#syncObserver();
-				this.#ensureMediaLoadListener();
-			}
-			if (this._stackRafId !== undefined) {
-				return;
-			}
-			this._stackRafId = requestAnimationFrame(() => {
-				this._stackRafId = undefined;
-				this.applyStackDecision();
-			});
-		}
-
-		// Observe both this.dom (live drag width) and its container (text column). this.dom keeps its
-		// identity for the node's lifetime; the container changes on a DnD reparent, so re-observe it.
-		#syncObserver() {
-			if (!this._resizeObserver) {
-				this._resizeObserver = new ResizeObserver(() => this.scheduleStackUpdate());
-				this._resizeObserver.observe(this.dom);
-			}
-			const parent = this.dom.parentElement;
-			if (parent !== this._observedParent) {
-				if (this._observedParent) {
-					this._resizeObserver.unobserve(this._observedParent);
-				}
-				if (parent) {
-					this._resizeObserver.observe(parent);
-				}
-				this._observedParent = parent;
-			}
-		}
-
-		// Idempotent across re-render / replaceImage: attach a one-shot load listener to the current
-		// not-yet-loaded media element. Marking the element prevents double-binding.
-		// Uses 'load' for <img> and 'loadedmetadata' for <video> (fires once dimensions are known).
-		#ensureMediaLoadListener() {
-			const img = this.dom.querySelector('img');
-			if (img && !img.complete && img.dataset.noteStackLoadBound !== 'true') {
-				img.dataset.noteStackLoadBound = 'true';
-				img.addEventListener('load', this._handleImgLoad, {
-					once: true
-				});
-			}
-			const video = this.dom.querySelector('video');
-			if (video && video.readyState < 1 && video.dataset.noteStackLoadBound !== 'true') {
-				video.dataset.noteStackLoadBound = 'true';
-				video.addEventListener('loadedmetadata', this._handleImgLoad, {
-					once: true
-				});
-			}
-		}
-
-		// Layout (align float + width %) lives on the DOM element that participates in block flow
-		// (this.dom), not inside the Vue component — only there does float make following text wrap, and
-		// only the block can carry a percentage width (a shrink-to-fit float can't resolve a percentage
-		// width on its child). Non-resizable blocks (file) have no layout.
-		syncLayout() {
-			if (!this.resizable) {
-				return;
-			}
-
-			// A drag-resize drives the block width directly; recomputing here would overwrite the live
-			// width (reset to the committed %) and cause visible jitter.
-			if (this.isResizing) {
-				return;
-			}
-			const align = this.node.attrs.align;
-			const suffix = align === 'left' || align === 'right' ? align : 'center';
-			this.dom.classList.remove('note-editor-media--align-left', 'note-editor-media--align-right', 'note-editor-media--align-center');
-			this.dom.classList.add(`note-editor-media--align-${suffix}`);
-			const width = this.node.attrs.width;
-			if (Number.isFinite(width) && width > 0) {
-				this.dom.style.width = `${Math.min(width, 100)}%`;
-			} else {
-				// No width → natural size via CSS fit-content.
-				this.dom.style.width = '';
-			}
-		}
-
-		// ProseMirror calls these on selectable nodes when the NodeSelection enters/leaves.
-		// Defining selectNode means PM no longer adds the ProseMirror-selectednode class itself,
-		// so we add it manually to keep the selection outline.
-		selectNode() {
-			this.dom.classList.add('ProseMirror-selectednode');
-			if (this.vm) {
-				// Sync editable here too: a click changes the selection, not the doc, so the
-				// 'update' listener may not have fired since a read-only → editable switch.
-				this.vm.editable = Boolean(this.editor?.isEditable);
-				this.vm.selected = true;
-			}
-
-			// On mobile, selecting an image focuses the contenteditable and pops the soft keyboard, which
-			// just covers the image while resizing. Drop DOM focus — ProseMirror keeps the NodeSelection in
-			// its own state, so the outline/handles/overlay stay; tapping text refocuses and reopens it.
-			if (isMobileLayout()) {
-				requestAnimationFrame(() => {
-					if (this.isNodeSelected()) {
-						this.editor?.view?.dom?.blur?.();
-						if (document.activeElement instanceof HTMLElement && this.dom.contains(document.activeElement)) {
-							document.activeElement.blur();
-						}
-					}
-				});
-			}
-		}
-		deselectNode() {
-			this.dom.classList.remove('ProseMirror-selectednode');
-			if (this.vm) {
-				this.vm.selected = false;
-			}
-		}
-		applyWidth(width) {
-			const pos = this.resolvePos();
-			if (pos === null) {
-				return;
-			}
-
-			// width is a percentage of the container (>0..100), fractional allowed.
-			const normalized = Number.isFinite(width) && width > 0 ? Math.min(width, 100) : null;
-			const tr = this.editor.state.tr.setNodeMarkup(pos, null, {
-				...this.node.attrs,
-				width: normalized
-			});
-			// setNodeMarkup recreates the node and drops the NodeSelection — restore it so the
-			// image stays selected (handles visible) right after a resize.
-			tr.setSelection(NodeSelection.create(tr.doc, pos));
-			this.editor.view.dispatch(tr);
-		}
-		applyAlign(align) {
-			const pos = this.resolvePos();
-			if (pos === null) {
-				return;
-			}
-
-			// center is the default — store as null so it never serializes into markdown.
-			const normalized = align === 'left' || align === 'right' ? align : null;
-			// Switching to a float caps the width at the float ceiling so the stored % matches the
-			// rendered (CSS-capped) width — otherwise a 90%-wide centered image keeps 90 but renders 70.
-			let width = this.node.attrs.width;
-			if (normalized !== null && Number.isFinite(width) && width > FLOAT_MAX_PCT$1) {
-				width = FLOAT_MAX_PCT$1;
-			}
-			const tr = this.editor.state.tr.setNodeMarkup(pos, null, {
-				...this.node.attrs,
-				align: normalized,
-				width
-			});
-			tr.setSelection(NodeSelection.create(tr.doc, pos));
-			this.editor.view.dispatch(tr);
-		}
-
-		// Replace the image in place: pick a new file, upload it, then swap fileId/urls while keeping
-		// width + align. The old fileId is left orphaned for the background cleanup to reclaim later.
-		async replaceImage() {
-			if (!this.uploadService) {
-				return;
-			}
-			const file = await this.uploadService.pickFile({
-				accept: 'image/*'
-			});
-			if (!file) {
-				return;
-			}
-			const uploaded = await this.uploadService.uploadFileWithMeta(file);
-			const attrs = buildAttachmentAttrs({
-				name: uploaded.name,
-				size: uploaded.size,
-				mimeType: uploaded.type,
-				fileId: uploaded.fileId,
-				documentId: this.uploadService.documentId,
-				showUrl: uploaded.showUrl,
-				downloadUrl: uploaded.downloadUrl,
-				viewerAttrs: uploaded.viewerAttrs
-			}, 'imageAttachment');
-			if (!attrs) {
-				return;
-			}
-			const pos = this.resolvePos();
-			if (pos === null) {
-				return;
-			}
-			const tr = this.editor.state.tr.setNodeMarkup(pos, null, {
-				...attrs,
-				width: this.node.attrs.width,
-				align: this.node.attrs.align
-			});
-			tr.setSelection(NodeSelection.create(tr.doc, pos));
-			this.editor.view.dispatch(tr);
-		}
-		resolvePos() {
-			if (!main_core.Type.isFunction(this.getPos)) {
-				return null;
-			}
-			const pos = this.getPos();
-			return Number.isInteger(pos) && pos >= 0 ? pos : null;
-		}
-		isNodeSelected() {
-			const pos = this.resolvePos();
-			const selection = this.editor?.state?.selection;
-			if (pos === null || !selection) {
-				return false;
-			}
-			return selection.from === pos && selection.to === pos + this.node.nodeSize;
-		}
-		#isActivatableTarget(target) {
-			return Boolean(target.closest('.note-editor-image-attachment-link') || target.closest('.note-editor-file-attachment-link') || target.closest('.note-editor-video-player'));
-		}
-		stopEvent(event) {
-			if (!(event.target instanceof Element) || !this.dom.contains(event.target)) {
-				return false;
-			}
-
-			// Resize handles and the overlay (align/replace) drive their own UI — keep ProseMirror out of
-			// it so clicking a control doesn't move the selection or drop the NodeSelection.
-			if (event.target.closest('.note-editor-media-resize-handle') || event.target.closest('.note-editor-media-overlay')) {
-				return true;
-			}
-
-			// Read-only: only let activatable targets (viewer link / video player) through.
-			if (!this.editor?.isEditable) {
-				return this.#isActivatableTarget(event.target);
-			}
-
-			// Editable: let ProseMirror own the event — click-to-select via handleClickOn, plus native
-			// drag-and-drop of the selected node. The viewer opens via the link's native click once
-			// the node is already selected (handleClickOn steps aside in that case).
-			return false;
-		}
-		ignoreMutation() {
-			return true;
-		}
-		destroy() {
-			if (this.handleEditorUpdate) {
-				this.editor?.off('update', this.handleEditorUpdate);
-				this.handleEditorUpdate = null;
-			}
-			if (this._resizeObserver) {
-				this._resizeObserver.disconnect();
-				this._resizeObserver = null;
-				this._observedParent = null;
-			}
-			if (this._stackRafId !== undefined) {
-				cancelAnimationFrame(this._stackRafId);
-				this._stackRafId = undefined;
-			}
-			this.app?.unmount();
-			this.app = null;
-			this.vm = null;
-		}
-	}
-
-	function normalizeFileSize(bytes) {
-		const value = Number(bytes);
-		if (!Number.isFinite(value) || value < 1) {
-			return '0 B';
-		}
-		const units = ['B', 'KB', 'MB', 'GB'];
-		const index = Math.min(Math.floor(Math.log(value) / Math.log(1024)), units.length - 1);
-		const normalized = value / 1024 ** index;
-		const rounded = normalized >= 10 || index === 0 ? Math.round(normalized) : Number(normalized.toFixed(1));
-		return `${rounded} ${units[index]}`;
-	}
-
-	function buildBaseAttributes(config) {
-		return {
-			name: {
-				default: main_core.Loc.getMessage(config.defaultNameMessage)
-			},
-			size: {
-				default: 0
-			},
-			mimeType: {
-				default: ''
-			},
-			fileId: {
-				default: null
-			},
-			documentId: {
-				default: null
-			},
-			downloadUrl: {
-				default: null
-			},
-			showUrl: {
-				default: null
-			},
-			viewerAttrs: {
-				default: null
-			},
-			// Set when the backend reports the fileId as unresolvable (not linked / missing source).
-			// Session-transient: cleared on a successful re-resolve, so access granted later recovers.
-			unavailable: {
-				default: false
-			},
-			// Rendered width as a percentage of the container (image resize), >0..100, fractional
-			// allowed (0.01% steps). null = natural size. Persisted in markdown as `width=N` (bare
-			// number = percent).
-			width: {
-				default: null
-			},
-			// Float-based image alignment: 'left' | 'right'. null = center (default, no float).
-			// Persisted in markdown as `align=left|right` (center is never serialized).
-			align: {
-				default: null
-			}
-		};
-	}
-	function resolveExtraAttributes(config) {
-		if (main_core.Type.isFunction(config.extraAttrs)) {
-			return config.extraAttrs();
-		}
-		return config.extraAttrs || {};
-	}
-	function resolveExtraDataAttributes(config, attrs) {
-		if (main_core.Type.isFunction(config.dataAttributes)) {
-			return config.dataAttributes(attrs);
-		}
-		return config.dataAttributes || {};
-	}
-	function resolveParseHtml(config) {
-		if (Array.isArray(config.parseHTMLTags) && config.parseHTMLTags.length > 0) {
-			return config.parseHTMLTags.map(tag => ({
-				tag
-			}));
-		}
-		return [{
-			tag: `div[data-type="${config.dataType}"]`
-		}];
-	}
-	function renderFallback(config, attrs) {
-		return [config.inline === true ? 'span' : 'div', {
-			class: `${config.className}-fallback`
-		}, attrs.name || main_core.Loc.getMessage(config.defaultNameMessage), ' · ', attrs.mimeType || main_core.Loc.getMessage(config.defaultTypeMessage), ' · ', normalizeFileSize(attrs.size)];
-	}
-	function createCommandFactory(config) {
-		return function commandFactory() {
-			if (!config.commandName) {
-				return {};
-			}
-			return {
-				[config.commandName]: attrs => ({
-					commands
-				}) => commands.insertContent({
-					type: config.name,
-					attrs
-				})
-			};
-		};
-	}
-	class FileAssetNodeFactory {
-		static normalizeSize(bytes) {
-			return normalizeFileSize(bytes);
-		}
-		static createNode(config) {
-			const isInline = config.inline === true;
-			return Node3.create({
-				name: config.name,
-				group: isInline ? 'inline' : 'block',
-				inline: isInline,
-				atom: true,
-				selectable: true,
-				draggable: true,
-				addAttributes() {
-					return {
-						...buildBaseAttributes(config),
-						...resolveExtraAttributes(config)
-					};
-				},
-				parseHTML() {
-					return resolveParseHtml(config);
-				},
-				renderHTML({
-					HTMLAttributes,
-					node
-				}) {
-					return [isInline ? 'span' : 'div', mergeAttributes(HTMLAttributes, {
-						'data-type': config.dataType,
-						class: config.className,
-						contenteditable: 'false',
-						'data-file-id': node.attrs.fileId || '',
-						'data-document-id': node.attrs.documentId || '',
-						'data-download-url': node.attrs.downloadUrl || '',
-						'data-show-url': node.attrs.showUrl || '',
-						...resolveExtraDataAttributes(config, node.attrs)
-					}), renderFallback(config, node.attrs)];
-				},
-				addOptions() {
-					return {
-						nodeViewComponent: config.nodeViewComponent || null,
-						defaultTypeMessage: config.defaultTypeMessage,
-						// Injected for image replace (see media-extensions/registry). null for file/video.
-						uploadService: null,
-						// Enables resize/align/float-stacking for this node type (image, video).
-						resizable: config.resizable === true
-					};
-				},
-				addNodeView() {
-					return ({
-						node,
-						editor,
-						getPos
-					}) => new VueAttachmentNodeView({
-						node,
-						editor,
-						getPos,
-						extension: this,
-						dataType: config.dataType,
-						className: config.className,
-						inline: isInline,
-						uploadService: this.options.uploadService
-					});
-				},
-				addProseMirrorPlugins() {
-					const nodeName = config.name;
-					return [new Plugin({
-						props: {
-							// Deterministic click-to-select: PM's native click handling leaves inline atoms
-							// selected-or-not depending on click x-position. Force a NodeSelection instead.
-							handleClickOn(view, pos, node, nodePos, event, direct) {
-								if (!direct || node.type.name !== nodeName || !view.editable) {
-									return false;
-								}
-								if (event.target instanceof Element && event.target.closest('.note-editor-media-resize-handle')) {
-									return false;
-								}
-
-								// Already selected: let the click pass through natively (link → viewer),
-								// and don't block ProseMirror's drag-and-drop of the selected node.
-								const {
-									selection
-								} = view.state;
-								if (selection instanceof NodeSelection && selection.from === nodePos) {
-									return false;
-								}
-								view.dispatch(view.state.tr.setSelection(NodeSelection.create(view.state.doc, nodePos)));
-								return true;
-							}
-						}
-					})];
-				},
-				addCommands: createCommandFactory(config),
-				renderMarkdown(node) {
-					const fileId = Number(node?.attrs?.fileId);
-					if (!Number.isInteger(fileId) || fileId <= 0) {
-						return '';
-					}
-
-					// width is a percentage (>0..100, fractional allowed); serialize as a bare number.
-					const width = Number(node?.attrs?.width);
-					const widthAttr = Number.isFinite(width) && width > 0 && width <= 100 ? ` width=${width}` : '';
-					const align = node?.attrs?.align;
-					const alignAttr = align === 'left' || align === 'right' ? ` align=${align}` : '';
-					return `[[${config.assetType} fileId=${fileId}${widthAttr}${alignAttr}]]`;
-				}
-			});
-		}
-		static createAttrs(file) {
-			if (!file) {
-				return {
-					name: main_core.Loc.getMessage('NOTE_EDITOR_FILE_ATTACHMENT_UNTITLED'),
-					size: 0,
-					mimeType: '',
-					fileId: null,
-					documentId: null,
-					downloadUrl: null,
-					showUrl: null,
-					viewerAttrs: null
-				};
-			}
-			return {
-				name: file.getName?.() || main_core.Loc.getMessage('NOTE_EDITOR_FILE_ATTACHMENT_UNTITLED'),
-				size: file.getSize?.() || 0,
-				mimeType: file.getType?.() || '',
-				fileId: file.getServerFileId?.() || null,
-				documentId: null,
-				downloadUrl: file.getDownloadUrl?.() || null,
-				showUrl: file.getDownloadUrl?.() || null,
-				viewerAttrs: file.getViewerAttrs?.() || null
-			};
-		}
-	}
-
-	const AttachmentNodeViewBaseComponent = {
-		props: {
-			attrs: {
-				type: Object,
-				required: true
-			},
-			defaultTypeMessage: {
-				type: String,
-				default: 'NOTE_EDITOR_FILE_ATTACHMENT_TYPE_FILE'
-			},
-			editable: {
-				type: Boolean,
-				default: false
-			},
-			selected: {
-				type: Boolean,
-				default: false
-			},
-			onResize: {
-				type: Function,
-				default: null
-			},
-			onResizeActive: {
-				type: Function,
-				default: null
-			},
-			onResizeProgress: {
-				type: Function,
-				default: null
-			},
-			onAlign: {
-				type: Function,
-				default: null
-			},
-			onReplace: {
-				type: Function,
-				default: null
-			}
-		},
-		computed: {
-			width() {
-				const value = Number(this.attrs.width);
-				return Number.isFinite(value) && value > 0 ? value : null;
-			},
-			align() {
-				const value = this.attrs.align;
-				return value === 'left' || value === 'right' ? value : 'center';
-			},
-			fileName() {
-				return this.attrs.name || main_core.Loc.getMessage('NOTE_EDITOR_FILE_ATTACHMENT_UNTITLED');
-			},
-			fileType() {
-				return this.attrs.mimeType || main_core.Loc.getMessage(this.defaultTypeMessage);
-			},
-			fileSize() {
-				return normalizeFileSize(this.attrs.size);
-			},
-			downloadUrl() {
-				return this.attrs.downloadUrl || '';
-			},
-			showUrl() {
-				return this.attrs.showUrl || '';
-			},
-			fileId() {
-				const value = Number(this.attrs.fileId);
-				return Number.isInteger(value) && value > 0 ? value : null;
-			},
-			documentId() {
-				const value = Number(this.attrs.documentId);
-				return Number.isInteger(value) && value > 0 ? value : null;
-			},
-			viewerAttrs() {
-				return main_core.Type.isPlainObject(this.attrs.viewerAttrs) ? this.attrs.viewerAttrs : {};
-			},
-			isUnavailable() {
-				return Boolean(this.attrs.unavailable);
-			},
-			// fileId present but no URL yet and not flagged failed: the resolver is in flight.
-			// Render a skeleton instead of the "Без названия" name fallback during this window.
-			isResolving() {
-				return this.fileId !== null && !this.showUrl && !this.downloadUrl && !this.isUnavailable;
-			},
-			unavailableMessage() {
-				return main_core.Loc.getMessage('NOTE_EDITOR_FILE_ATTACHMENT_UNAVAILABLE');
-			}
-		}
-	};
-
-	const FileAttachmentNodeViewComponent = {
-		extends: AttachmentNodeViewBaseComponent,
-		computed: {
-			fileUrl() {
-				return this.showUrl || this.downloadUrl;
-			},
-			fileViewerAttrs() {
-				const attrs = {};
-				if (main_core.Type.isPlainObject(this.viewerAttrs)) {
-					Object.entries(this.viewerAttrs).forEach(([key, value]) => {
-						const normalizedKey = String(key).startsWith('data-') ? String(key) : `data-${main_core.Text.toKebabCase(key)}`;
-						attrs[normalizedKey] = value;
-					});
-				}
-				attrs['data-viewer'] = true;
-				if (main_core.Type.isStringFilled(this.fileName)) {
-					attrs['data-title'] = this.fileName;
-				}
-				attrs.href = this.fileUrl || '#';
-				attrs.target = '_blank';
-				attrs.rel = 'noopener noreferrer';
-				return attrs;
-			}
-		},
-		methods: {
-			handleClick(event) {
-				if (!this.fileUrl) {
-					event.preventDefault();
-				}
-			}
-		},
-		// language=Vue
-		template: `
-		<a
-			class="note-editor-file-attachment-inner note-editor-file-attachment-link"
-			:class="{ 'note-editor-attachment--unavailable': isUnavailable }"
-			v-bind="fileViewerAttrs"
-			:draggable="false"
-			@click="handleClick"
-		>
-			<div class="note-editor-file-attachment-icon" aria-hidden="true">
-				<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-			</div>
-			<div class="note-editor-file-attachment-text">
-				<div class="note-editor-file-attachment-name">
-					<span v-if="isResolving" class="note-editor-attachment-skeleton note-editor-attachment-skeleton--line" aria-hidden="true"></span>
-					<template v-else>{{ isUnavailable ? unavailableMessage : fileName }}</template>
-				</div>
-				<div v-if="!isUnavailable && !isResolving" class="note-editor-file-attachment-extra">{{ fileType }} · {{ fileSize }}</div>
-			</div>
-		</a>
-	`
-	};
-
-	const FileAttachment = FileAssetNodeFactory.createNode({
-		name: 'fileAttachment',
-		dataType: 'fileAttachment',
-		className: 'note-editor-file-attachment',
-		assetType: 'file',
-		defaultNameMessage: 'NOTE_EDITOR_FILE_ATTACHMENT_UNTITLED',
-		defaultTypeMessage: 'NOTE_EDITOR_FILE_ATTACHMENT_TYPE_FILE',
-		nodeViewComponent: FileAttachmentNodeViewComponent
-	});
-
-	// Width is stored as a percentage of the container. Resize is dragged in px (natural for the mouse)
-	// then converted to %. Float media cap at 70% so wrapped text keeps a column; others fill to 100%.
-	const MIN_PCT = 10;
-	const FLOAT_MAX_PCT = 70;
-	const MAX_PCT = 100;
-
-	// Shared resize / align / overlay-pill logic. Host component must provide a `hasMedia` computed.
-	const ResizableMediaMixin = {
-		data() {
-			return {
-				dragging: false,
-				draftWidth: null,
-				startX: 0,
-				startWidth: 0,
-				side: 'right',
-				pendingClientX: 0,
-				rafId: null,
-				pointerId: null,
-				captureEl: null,
-				// Extra translateX applied to the overlay pill so it stays within .note-editor-content.
-				overlayTranslateX: 0,
-				clampRafId: null
-			};
-		},
-		computed: {
-			isFloat() {
-				return this.align === 'left' || this.align === 'right';
-			},
-			showHandles() {
-				return this.editable && this.selected && this.hasMedia && !this.isResolving && !this.isUnavailable;
-			},
-			// Align pill — shown only while the media node is selected.
-			showOverlay() {
-				return this.editable && this.selected && this.hasMedia && !this.isResolving && !this.isUnavailable;
-			},
-			alignTitles() {
-				return {
-					left: main_core.Loc.getMessage('NOTE_EDITOR_TOOLBAR_ALIGN_LEFT'),
-					center: main_core.Loc.getMessage('NOTE_EDITOR_TOOLBAR_ALIGN_CENTER'),
-					right: main_core.Loc.getMessage('NOTE_EDITOR_TOOLBAR_ALIGN_RIGHT')
-				};
-			},
-			overlayStyle() {
-				const shift = this.overlayTranslateX;
-				return {
-					transform: `translateX(calc(-50% + ${shift}px))`
-				};
-			}
-		},
-		watch: {
-			showOverlay(visible) {
-				if (visible) {
-					// Wait for DOM to render the pill before measuring.
-					this.$nextTick(() => {
-						this.scheduleClamp();
-						this.attachClampListeners();
-					});
-				} else {
-					this.detachClampListeners();
-					this.overlayTranslateX = 0;
-				}
-			},
-			// Re-clamp whenever width or alignment changes while the pill is visible.
-			width() {
-				if (this.showOverlay) {
-					this.scheduleClamp();
-				}
-			},
-			align() {
-				if (this.showOverlay) {
-					this.scheduleClamp();
-				}
-			}
-		},
-		beforeUnmount() {
-			this.detachDragListeners();
-			this.detachClampListeners();
-			if (this.rafId !== null) {
-				cancelAnimationFrame(this.rafId);
-				this.rafId = null;
-			}
-			if (this.clampRafId !== null) {
-				cancelAnimationFrame(this.clampRafId);
-				this.clampRafId = null;
-			}
-		},
-		methods: {
-			// Pill clamp: keep .note-editor-media-overlay within .note-editor-content bounds.
-			clampOverlay() {
-				const overlay = this.$el?.querySelector('.note-editor-media-overlay');
-				const content = this.$el?.closest?.('.note-editor-content');
-				if (!overlay || !content) {
-					this.overlayTranslateX = 0;
-					return;
-				}
-				const MARGIN = 4;
-				const oRect = overlay.getBoundingClientRect();
-				const cRect = content.getBoundingClientRect();
-
-				// The pill is currently shifted by overlayTranslateX; derive its base (untransformed)
-				// edges by subtracting the applied shift, so the result is absolute from the center.
-				const baseLeft = oRect.left - this.overlayTranslateX;
-				const baseRight = oRect.right - this.overlayTranslateX;
-				const overLeft = cRect.left + MARGIN - baseLeft;
-				const overRight = baseRight - (cRect.right - MARGIN);
-				let shift = 0;
-				if (overLeft > 0) {
-					shift = overLeft;
-				} else if (overRight > 0) {
-					shift = -overRight;
-				}
-				this.overlayTranslateX = shift;
-			},
-			scheduleClamp() {
-				if (this.clampRafId !== null) {
-					return;
-				}
-				this.clampRafId = requestAnimationFrame(() => {
-					this.clampRafId = null;
-					this.clampOverlay();
-				});
-			},
-			attachClampListeners() {
-				window.addEventListener('resize', this.scheduleClamp, {
-					passive: true
-				});
-				// Scroll on the main content scroller (document capture, as per project convention).
-				document.addEventListener('scroll', this.scheduleClamp, {
-					passive: true,
-					capture: true
-				});
-			},
-			detachClampListeners() {
-				window.removeEventListener('resize', this.scheduleClamp);
-				document.removeEventListener('scroll', this.scheduleClamp, {
-					capture: true
-				});
-			},
-			// The block element (this.dom in the NodeView) carries the width; media fills it 100%.
-			// Resolved via data-type attribute so this mixin is node-agnostic.
-			blockEl() {
-				return this.$el?.closest?.('[data-type]') || null;
-			},
-			containerWidth() {
-				const parent = this.blockEl()?.parentElement;
-				if (!parent) {
-					return 0;
-				}
-
-				// Use the content-box width (the reference a `%` width resolves against), not clientWidth:
-				// the prose container has horizontal padding (heading-anchor gutter), so clientWidth is
-				// wider than the % base. Computing the committed % off clientWidth made every drop ~11%
-				// too small, so the media always snapped narrower on release.
-				const cs = getComputedStyle(parent);
-				return parent.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
-			},
-			startResize(side, event) {
-				event.preventDefault();
-				event.stopPropagation();
-				const block = this.blockEl();
-				this.side = side;
-				this.startX = event.clientX;
-				this.startWidth = block ? block.offsetWidth : 0;
-				this.draftWidth = this.startWidth;
-				this.dragging = true;
-
-				// Pointer Events cover mouse + touch with one path; capture keeps the drag glued to the
-				// handle even when the finger/cursor leaves it (touch on mobile would otherwise lose it).
-				this.pointerId = event.pointerId;
-				this.captureEl = event.currentTarget instanceof HTMLElement ? event.currentTarget : null;
-				if (this.captureEl && this.pointerId != null) {
-					try {
-						this.captureEl.setPointerCapture(this.pointerId);
-					} catch {/* capture is best-effort */}
-				}
-
-				// Tell the NodeView to suspend responsive recompute — it would fight the live drag width.
-				if (main_core.Type.isFunction(this.onResizeActive)) {
-					this.onResizeActive(true);
-				}
-				document.addEventListener('pointermove', this.onDrag);
-				document.addEventListener('pointerup', this.stopResize);
-				document.addEventListener('pointercancel', this.stopResize);
-			},
-			onDrag(event) {
-				this.pendingClientX = event.clientX;
-				if (this.rafId !== null) {
-					return;
-				}
-				this.rafId = requestAnimationFrame(() => {
-					this.rafId = null;
-					const containerW = this.containerWidth();
-					if (containerW <= 0) {
-						return;
-					}
-					const cap = this.isFloat ? FLOAT_MAX_PCT : MAX_PCT;
-					const minPx = containerW * MIN_PCT / 100;
-					const maxPx = containerW * cap / 100;
-					const delta = this.pendingClientX - this.startX;
-					const raw = this.side === 'left' ? this.startWidth - delta : this.startWidth + delta;
-					const px = Math.round(Math.min(Math.max(raw, minPx), maxPx));
-					this.draftWidth = px;
-
-					// Live preview straight on the block (px); the commit below converts to %.
-					const block = this.blockEl();
-					if (block) {
-						block.style.width = `${px}px`;
-					}
-
-					// Let the NodeView recompute stacking against the live width every frame.
-					if (main_core.Type.isFunction(this.onResizeProgress)) {
-						this.onResizeProgress();
-					}
-				});
-			},
-			stopResize() {
-				this.detachDragListeners();
-				if (this.rafId !== null) {
-					cancelAnimationFrame(this.rafId);
-					this.rafId = null;
-				}
-				const containerW = this.containerWidth();
-				const finalPx = this.draftWidth;
-				this.dragging = false;
-				this.draftWidth = null;
-
-				// Resume responsive recompute before committing, so the post-commit layout re-applies
-				// the final width (and re-evaluates stacking) instead of leaving the raw drag px.
-				if (main_core.Type.isFunction(this.onResizeActive)) {
-					this.onResizeActive(false);
-				}
-				if (!main_core.Type.isFunction(this.onResize) || !Number.isInteger(finalPx) || finalPx <= 0 || containerW <= 0) {
-					return;
-				}
-				const cap = this.isFloat ? FLOAT_MAX_PCT : MAX_PCT;
-				// Keep two decimals (0.01% steps) so the committed width doesn't snap to a visible %-grid.
-				const rawPct = finalPx / containerW * 100;
-				const pct = Math.round(Math.min(Math.max(rawPct, MIN_PCT), cap) * 100) / 100;
-				this.onResize(pct);
-			},
-			detachDragListeners() {
-				document.removeEventListener('pointermove', this.onDrag);
-				document.removeEventListener('pointerup', this.stopResize);
-				document.removeEventListener('pointercancel', this.stopResize);
-				if (this.captureEl && this.pointerId != null) {
-					try {
-						this.captureEl.releasePointerCapture(this.pointerId);
-					} catch {/* already released */}
-				}
-				this.captureEl = null;
-				this.pointerId = null;
-			},
-			setAlign(value) {
-				if (main_core.Type.isFunction(this.onAlign)) {
-					this.onAlign(value);
-				}
-			}
-		}
-	};
-
-	// Shared resize handles + align/replace overlay pill, used by both image and video node views.
-	const MediaResizeControls = {
-		components: {
-			ImageAlignLeftIcon,
-			ImageAlignCenterIcon,
-			ImageAlignRightIcon,
-			BIcon: ui_iconSet_api_vue.BIcon
-		},
-		props: {
-			showHandles: {
-				type: Boolean,
-				default: false
-			},
-			showOverlay: {
-				type: Boolean,
-				default: false
-			},
-			overlayStyle: {
-				type: Object,
-				default: () => ({})
-			},
-			align: {
-				type: String,
-				default: 'center'
-			},
-			alignTitles: {
-				type: Object,
-				default: () => ({})
-			},
-			onStartResize: {
-				type: Function,
-				default: null
-			},
-			onSetAlign: {
-				type: Function,
-				default: null
-			},
-			// null = no replace button (video); function = show replace button (image)
-			onReplace: {
-				type: Function,
-				default: null
-			},
-			replaceTitle: {
-				type: String,
-				default: ''
-			}
-		},
-		// language=Vue
-		template: `
-		<span
-			v-if="showHandles"
-			class="note-editor-media-resize-handle note-editor-media-resize-handle--left"
-			@pointerdown="onStartResize('left', $event)"
-		></span>
-		<span
-			v-if="showHandles"
-			class="note-editor-media-resize-handle note-editor-media-resize-handle--right"
-			@pointerdown="onStartResize('right', $event)"
-		></span>
-		<div
-			v-if="showOverlay"
-			class="note-editor-media-overlay"
-			:style="overlayStyle"
-			contenteditable="false"
-			@mousedown.prevent
-		>
-			<button
-				type="button"
-				class="note-editor-media-overlay-btn"
-				:class="{ 'note-editor-media-overlay-btn--active': align === 'left' }"
-				:title="alignTitles.left"
-				@click="onSetAlign('left')"
-			>
-				<ImageAlignLeftIcon/>
-			</button>
-			<button
-				type="button"
-				class="note-editor-media-overlay-btn"
-				:class="{ 'note-editor-media-overlay-btn--active': align === 'center' }"
-				:title="alignTitles.center"
-				@click="onSetAlign('center')"
-			>
-				<ImageAlignCenterIcon/>
-			</button>
-			<button
-				type="button"
-				class="note-editor-media-overlay-btn"
-				:class="{ 'note-editor-media-overlay-btn--active': align === 'right' }"
-				:title="alignTitles.right"
-				@click="onSetAlign('right')"
-			>
-				<ImageAlignRightIcon/>
-			</button>
-			<span v-if="onReplace" class="note-editor-media-overlay-divider"></span>
-			<button
-				v-if="onReplace"
-				type="button"
-				class="note-editor-media-overlay-btn"
-				:title="replaceTitle"
-				@click="onReplace()"
-			>
-				<BIcon name="o-change-order" :size="24"/>
-			</button>
-		</div>
-	`
-	};
-
-	const ImageAttachmentNodeViewComponent = {
-		extends: AttachmentNodeViewBaseComponent,
-		mixins: [ResizableMediaMixin],
-		components: {
-			MediaResizeControls
-		},
-		props: {
-			defaultTypeMessage: {
-				type: String,
-				default: 'NOTE_EDITOR_FILE_ATTACHMENT_TYPE_IMAGE'
-			}
-		},
-		computed: {
-			imageUrl() {
-				return this.showUrl || this.downloadUrl;
-			},
-			hasImage() {
-				return main_core.Type.isStringFilled(this.imageUrl);
-			},
-			// Required by ResizableMediaMixin to gate handles/overlay.
-			hasMedia() {
-				return this.hasImage;
-			},
-			replaceTitle() {
-				return main_core.Loc.getMessage('NOTE_EDITOR_IMAGE_REPLACE');
-			},
-			imageViewerAttrs() {
-				const attrs = {};
-				if (main_core.Type.isPlainObject(this.viewerAttrs)) {
-					Object.entries(this.viewerAttrs).forEach(([key, value]) => {
-						const normalizedKey = String(key).startsWith('data-') ? String(key) : `data-${main_core.Text.toKebabCase(key)}`;
-						attrs[normalizedKey] = value;
-					});
-				}
-				attrs['data-viewer'] = true;
-				if (main_core.Type.isStringFilled(this.fileName)) {
-					attrs['data-title'] = this.fileName;
-				}
-				attrs.href = this.hasImage ? this.imageUrl : '#';
-				if (this.hasImage) {
-					attrs['data-viewer-preview'] = this.imageUrl;
-				}
-				attrs.target = '_blank';
-				attrs.rel = 'noopener noreferrer';
-				return attrs;
-			}
-		},
-		methods: {
-			handleClick(event) {
-				if (!this.hasImage) {
-					event.preventDefault();
-				}
-			}
-		},
-		// language=Vue
-		template: `
-		<div class="note-editor-image-attachment-inner" :class="{ 'note-editor-attachment--unavailable': isUnavailable }">
-			<div v-if="isUnavailable" class="note-editor-image-attachment-empty">{{ unavailableMessage }}</div>
-			<div v-else-if="isResolving" class="note-editor-image-attachment-loading note-editor-attachment-skeleton" aria-hidden="true"></div>
-			<div v-else class="note-editor-image-attachment-preview" :class="{ 'note-editor-image-attachment-preview--resizing': dragging }">
-				<a
-					class="note-editor-attachment-tile-link note-editor-image-attachment-link"
-					v-bind="imageViewerAttrs"
-					:draggable="false"
-					@click="handleClick"
-				>
-					<img
-						v-if="hasImage"
-						ref="image"
-						class="note-editor-image-attachment-image"
-						:src="imageUrl"
-						:alt="fileName"
-						loading="lazy"
-						draggable="false"
-					/>
-					<span v-else class="note-editor-image-attachment-empty">{{ fileName }}</span>
-				</a>
-				<MediaResizeControls
-					:show-handles="showHandles"
-					:show-overlay="showOverlay"
-					:overlay-style="overlayStyle"
-					:align="align"
-					:align-titles="alignTitles"
-					:on-start-resize="startResize"
-					:on-set-align="setAlign"
-					:on-replace="onReplace"
-					:replace-title="replaceTitle"
-				/>
-			</div>
-		</div>
-	`
-	};
-
-	const ImageAttachment = FileAssetNodeFactory.createNode({
-		name: 'imageAttachment',
-		dataType: 'imageAttachment',
-		className: 'note-editor-image-attachment',
-		assetType: 'image',
-		defaultNameMessage: 'NOTE_EDITOR_FILE_ATTACHMENT_UNTITLED',
-		defaultTypeMessage: 'NOTE_EDITOR_FILE_ATTACHMENT_TYPE_IMAGE',
-		nodeViewComponent: ImageAttachmentNodeViewComponent,
-		resizable: true
-	});
-
-	function isInProgressStatus(status) {
-		return status === ui_uploader_core.FileStatus.PREPARING || status === ui_uploader_core.FileStatus.PENDING || status === ui_uploader_core.FileStatus.UPLOADING;
-	}
-	function resolveAcceptedFileTypes(assetKind) {
-		switch (assetKind) {
-			case 'image':
-				return ['image/*'];
-			case 'video':
-				return ['video/*'];
-			default:
-				return [];
-		}
-	}
-	const UploadAssetNodeViewComponent = {
-		name: 'NoteUploadAssetNodeView',
-		components: {
-			TileWidgetComponent: ui_uploader_tileWidget.TileWidgetComponent
-		},
-		props: {
-			attrs: {
-				type: Object,
-				required: true
-			},
-			onComplete: {
-				type: Function,
-				required: true
-			}
-		},
-		data() {
-			return {
-				localError: '',
-				uploaderOptions: null,
-				uploaderAdapter: null,
-				currentThemeContextClass: note_ui_themeContext.NoteThemeContext.getDesignSystemContext(),
-				unsubscribeTheme: null
-			};
-		},
-		computed: {
-			widgetOptions() {
-				return {
-					autoCollapse: false,
-					forceDisableSelection: true,
-					showItemMenuButton: false,
-					removeFromServer: false,
-					contextClass: this.currentThemeContextClass
-				};
-			},
-			assetKind() {
-				const value = String(this.attrs.assetKind || 'file').toLowerCase();
-				return ['file', 'image', 'video'].includes(value) ? value : 'file';
-			},
-			documentId() {
-				return toPositiveInt(this.attrs.documentId);
-			},
-			collectionId() {
-				return toPositiveInt(this.attrs.collectionId);
-			},
-			isContextValid() {
-				return this.documentId !== null;
-			},
-			nodeTitle() {
-				switch (this.assetKind) {
-					case 'image':
-						return main_core.Loc.getMessage('NOTE_EDITOR_UPLOAD_NODE_TITLE_IMAGE');
-					case 'video':
-						return main_core.Loc.getMessage('NOTE_EDITOR_UPLOAD_NODE_TITLE_VIDEO');
-					default:
-						return main_core.Loc.getMessage('NOTE_EDITOR_UPLOAD_NODE_TITLE_FILE');
-				}
-			},
-			errorMessage() {
-				if (!this.isContextValid) {
-					return main_core.Loc.getMessage('NOTE_EDITOR_UPLOAD_NODE_ERROR_CONTEXT');
-				}
-				return this.localError || String(this.attrs.errorMessage || '');
-			},
-			maxFileSize() {
-				return MAX_FILE_SIZE;
-			}
-		},
-		created() {
-			this.uploaderOptions = this.buildUploaderOptions();
-			this.uploaderAdapter = this.createUploaderAdapter(this.uploaderOptions);
-			this.unsubscribeTheme = note_ui_themeContext.NoteThemeContext.subscribe(theme => {
-				this.currentThemeContextClass = note_ui_themeContext.NoteThemeContext.resolveDesignSystemContext(theme);
-			});
-		},
-		beforeUnmount() {
-			this.unsubscribeTheme?.();
-			this.unsubscribeTheme = null;
-			if (this.uploaderAdapter) {
-				this.uploaderAdapter.destroy();
-				this.uploaderAdapter = null;
-			}
-		},
-		methods: {
-			createUploaderAdapter(uploaderOptions) {
-				const adapter = new ui_uploader_vue.VueUploaderAdapter(uploaderOptions);
-				adapter.setRemoveFilesFromServerWhenDestroy(false);
-				return ui_vue3.markRaw(adapter);
-			},
-			buildUploaderOptions() {
-				const events = {
-					[ui_uploader_core.UploaderEvent.FILE_STATUS_CHANGE]: this.handleFileStatusChange,
-					[ui_uploader_core.UploaderEvent.FILE_UPLOAD_COMPLETE]: this.handleFileUploadComplete,
-					[ui_uploader_core.UploaderEvent.FILE_ERROR]: this.handleFileError,
-					[ui_uploader_core.UploaderEvent.ERROR]: this.handleFileError
-				};
-				const acceptedFileTypes = resolveAcceptedFileTypes(this.assetKind);
-				const acceptedFileTypesOptions = acceptedFileTypes.length > 0 ? {
-					acceptedFileTypes
-				} : {};
-				if (!this.isContextValid) {
-					return {
-						autoUpload: false,
-						multiple: false,
-						events,
-						...acceptedFileTypesOptions
-					};
-				}
-				const controllerOptions = {
-					documentId: this.documentId
-				};
-				if (this.collectionId !== null) {
-					controllerOptions.collectionId = this.collectionId;
-				}
-				return {
-					controller: 'note.infrastructure.controller.editorUploaderController',
-					controllerOptions,
-					multiple: false,
-					autoUpload: true,
-					maxFileSize: this.maxFileSize,
-					events,
-					...acceptedFileTypesOptions
-				};
-			},
-			handleFileStatusChange(event) {
-				const file = event.getData?.()?.file;
-				const status = file?.getStatus?.();
-				if (isInProgressStatus(status)) {
-					this.localError = '';
-				}
-			},
-			handleFileUploadComplete(event) {
-				const file = event.getData?.()?.file;
-				const payload = this.buildPayload(file);
-				if (!payload) {
-					this.handleUploadError(main_core.Loc.getMessage('NOTE_EDITOR_UPLOAD_NODE_ERROR_UPLOAD'));
-					return;
-				}
-				this.localError = '';
-				this.onComplete(payload);
-			},
-			handleFileError(event) {
-				const message = event?.getData?.()?.error?.getMessage?.() || main_core.Loc.getMessage('NOTE_EDITOR_UPLOAD_NODE_ERROR_UPLOAD');
-				this.handleUploadError(message);
-			},
-			handleUploadError(message) {
-				this.localError = String(message || '');
-			},
-			buildPayload(file) {
-				if (!file) {
-					return null;
-				}
-				const customData = file.getCustomData?.();
-				if (!main_core.Type.isPlainObject(customData)) {
-					return null;
-				}
-				const fileId = toPositiveInt(customData.fileId);
-				const showUrl = main_core.Type.isStringFilled(customData.showUrl) ? customData.showUrl : '';
-				if (fileId === null || !main_core.Type.isStringFilled(showUrl)) {
-					return null;
-				}
-				const viewerAttrs = main_core.Type.isPlainObject(customData.viewerAttrs) ? customData.viewerAttrs : {};
-				const downloadUrl = main_core.Type.isStringFilled(customData.downloadUrl) ? customData.downloadUrl : showUrl;
-				return {
-					assetKind: this.assetKind,
-					name: file.getName?.() || '',
-					size: Number(file.getSize?.() ?? 0) || 0,
-					mimeType: file.getType?.() || '',
-					fileId,
-					documentId: this.documentId,
-					showUrl,
-					downloadUrl,
-					previewUrl: main_core.Type.isStringFilled(file.getPreviewUrl?.()) ? file.getPreviewUrl() : showUrl,
-					viewerAttrs
-				};
-			}
-		},
-		// language=Vue
-		template: `
-		<div ref="container" class="note-editor-upload-asset-inner" :class="{'--error': errorMessage !== ''}">
-			<div class="note-editor-upload-asset-title">{{ nodeTitle }}</div>
-				<TileWidgetComponent
-					ref="uploader"
-					:uploader-adapter="uploaderAdapter"
-					:widgetOptions="widgetOptions"
-				/>
-			<div v-if="errorMessage" class="note-editor-upload-asset-error">{{ errorMessage }}</div>
-		</div>
-	`
-	};
-
-	const UploadAsset = Node3.create({
-		name: 'uploadAsset',
-		group: 'block',
-		atom: true,
-		selectable: true,
-		draggable: true,
-		addAttributes() {
-			return {
-				assetKind: {
-					default: 'file'
-				},
-				documentId: {
-					default: null
-				},
-				collectionId: {
-					default: null
-				},
-				status: {
-					default: 'pending'
-				},
-				errorMessage: {
-					default: ''
-				},
-				uploadToken: {
-					default: null
-				}
-			};
-		},
-		parseHTML() {
-			return [{
-				tag: 'div[data-type="uploadAsset"]'
-			}];
-		},
-		renderHTML({
-			HTMLAttributes,
-			node
-		}) {
-			return ['div', mergeAttributes(HTMLAttributes, {
-				'data-type': 'uploadAsset',
-				class: 'note-editor-upload-asset',
-				contenteditable: 'false',
-				'data-asset-kind': node.attrs.assetKind || 'file',
-				'data-document-id': node.attrs.documentId || '',
-				'data-collection-id': node.attrs.collectionId || '',
-				'data-status': node.attrs.status || 'pending'
-			}), node.attrs.errorMessage || ''];
-		},
-		addOptions() {
-			return {
-				nodeViewComponent: UploadAssetNodeViewComponent
-			};
-		},
-		addNodeView() {
-			return ({
-				node,
-				editor,
-				getPos
-			}) => new VueUploadAssetNodeView({
-				node,
-				editor,
-				getPos,
-				extension: this,
-				dataType: 'uploadAsset',
-				className: 'note-editor-upload-asset'
-			});
-		}
-	});
-
-	const VideoAttachmentNodeViewComponent = {
-		extends: AttachmentNodeViewBaseComponent,
-		mixins: [ResizableMediaMixin],
-		components: {
-			MediaResizeControls
-		},
-		props: {
-			defaultTypeMessage: {
-				type: String,
-				default: 'NOTE_EDITOR_FILE_ATTACHMENT_TYPE_VIDEO'
-			}
-		},
-		computed: {
-			videoUrl() {
-				return this.attrs.src || this.showUrl || '';
-			},
-			// Required by ResizableMediaMixin to gate handles/overlay.
-			hasMedia() {
-				return Boolean(this.videoUrl) && !this.isUnavailable;
-			}
-		},
-		// language=Vue
-		template: `
-		<div class="note-editor-video-inner" :class="{ 'note-editor-attachment--unavailable': isUnavailable }">
-			<div v-if="isUnavailable" class="note-editor-video-meta">
-				<div class="note-editor-video-name">{{ unavailableMessage }}</div>
-			</div>
-			<template v-else>
-				<div v-if="isResolving" class="note-editor-video-preview">
-					<div class="note-editor-video-player note-editor-attachment-skeleton" aria-hidden="true"></div>
-				</div>
-				<div v-else-if="videoUrl" class="note-editor-video-attachment-preview" :class="{ 'note-editor-video-attachment-preview--resizing': dragging }">
-					<video
-						class="note-editor-video-player"
-						:src="videoUrl"
-						controls
-						preload="metadata"
-					></video>
-					<MediaResizeControls
-						:show-handles="showHandles"
-						:show-overlay="showOverlay"
-						:overlay-style="overlayStyle"
-						:align="align"
-						:align-titles="alignTitles"
-						:on-start-resize="startResize"
-						:on-set-align="setAlign"
-						:on-replace="null"
-					/>
-				</div>
-				<div class="note-editor-video-meta">
-					<div class="note-editor-video-name">
-						<span v-if="isResolving" class="note-editor-attachment-skeleton note-editor-attachment-skeleton--line" aria-hidden="true"></span>
-						<template v-else>{{ fileName }}</template>
-					</div>
-					<div v-if="!isResolving" class="note-editor-video-extra">{{ fileType }} · {{ fileSize }}</div>
-				</div>
-			</template>
-		</div>
-	`
-	};
-
-	const Video = FileAssetNodeFactory.createNode({
-		name: 'video',
-		dataType: 'videoAttachment',
-		className: 'note-editor-video-attachment',
-		assetType: 'video',
-		defaultNameMessage: 'NOTE_EDITOR_FILE_ATTACHMENT_UNTITLED',
-		defaultTypeMessage: 'NOTE_EDITOR_FILE_ATTACHMENT_TYPE_VIDEO',
-		nodeViewComponent: VideoAttachmentNodeViewComponent,
-		commandName: 'setVideo',
-		parseHTMLTags: ['div[data-type="videoAttachment"]', 'video[src]'],
-		extraAttrs: {
-			src: {
-				default: null
-			},
-			controls: {
-				default: true
-			}
-		},
-		resizable: true
-	});
-
-	// Strict syntax for REST-uploaded attachments: [[<type> fileId=<digits> <opt-attrs>]]
-	// Lowercase type, integer fileId, then zero or more ` key=value` pairs (only whitelisted keys).
-	// Block form: the token owns its line (trailing newline / EOF). All asset nodes are block.
-	// Up to 3 leading spaces are tolerated (CommonMark block indentation); 4+ would be an indented
-	// code block. Imports may emit a token under stray/structural whitespace.
-	const NOTE_ASSET_RE = /^ {0,3}\[\[(image|file|video) fileId=(\d+)((?:[ \t]+[a-z]+=[^\s\]]+)*)\]\][ \t]*(?:\n|$)/;
-
-	// Optional attributes allowed after fileId. Unknown keys make the whole token non-canonical (rejected).
-	const KNOWN_ASSET_ATTRS = new Set(['width', 'align']);
-
-	// Float-based image alignment. `center` is the default (no float) and is stored as null,
-	// so it never round-trips into markdown — only left/right are serialized.
-	const ALIGN_VALUES = new Set(['left', 'right', 'center']);
-	const ASSET_TYPE_TO_NODE = {
-		image: 'imageAttachment',
-		file: 'fileAttachment',
-		video: 'video'
-	};
-
-	// Asset node types that are inline in the editor schema (would need paragraph-wrapping as a
-	// direct child of `doc`/`tableCell`). All asset nodes — image, file, video — are block now, so
-	// this is empty; kept so the wrap helpers that consume it stay no-ops without code churn.
-	const INLINE_ASSET_NODE_TYPES = new Set([]);
-	function interpretAssetMatch(match) {
-		const fileId = Number(match[2]);
-		if (!Number.isInteger(fileId) || fileId <= 0) {
-			return null;
-		}
-		let width = null;
-		let align = null;
-		const attrsRaw = match[3] || '';
-		if (attrsRaw) {
-			const attrRe = /([a-z]+)=([^\s\]]+)/g;
-			let attrMatch = attrRe.exec(attrsRaw);
-			while (attrMatch) {
-				const key = attrMatch[1];
-				if (!KNOWN_ASSET_ATTRS.has(key)) {
-					return null; // unknown attribute — not canonical
-				}
-				if (key === 'width') {
-					// width is a percentage of the container (>0..100), fractional allowed. Clamp over-100
-					// (e.g. legacy px values like 280) to 100 instead of rejecting the token, and
-					// normalize to two decimals so the stored attr stays clean across round-trips.
-					const value = Number(attrMatch[2]);
-					if (!Number.isFinite(value) || value <= 0) {
-						return null;
-					}
-					width = Math.min(Math.round(value * 100) / 100, 100);
-				} else if (key === 'align') {
-					if (!ALIGN_VALUES.has(attrMatch[2])) {
-						return null;
-					}
-					align = attrMatch[2] === 'center' ? null : attrMatch[2];
-				}
-				attrMatch = attrRe.exec(attrsRaw);
-			}
-		}
-		return {
-			assetType: match[1],
-			fileId,
-			width,
-			align,
-			raw: match[0]
-		};
-	}
-	function parseNoteAssetSyntax(src, pos) {
-		if (pos >= src.length) {
-			return null;
-		}
-		const slice = src ;
-		const match = NOTE_ASSET_RE.exec(slice);
-		return match ? interpretAssetMatch(match) : null;
-	}
-	function findNoteAssetStart(src) {
-		let from = 0;
-		while (from < src.length) {
-			const idx = src.indexOf('[[', from);
-			if (idx === -1) {
-				return -1;
-			}
-
-			// Block-level, but tolerate up to 3 leading spaces from line start (CommonMark block
-			// indentation); 4+ spaces stay an indented code block. Return the line start so the
-			// token's raw consumes the indent, leaving no stray whitespace text node.
-			const lineStart = idx === 0 ? 0 : src.lastIndexOf('\n', idx - 1) + 1;
-			if (/^ {0,3}$/.test(src.slice(lineStart, idx))) {
-				return lineStart;
-			}
-			from = idx + 1;
-		}
-		return -1;
-	}
-
-	const EnrichedAssetTokenizer = Node3.create({
-		name: 'enrichedAsset',
-		markdownTokenizer: {
-			name: 'enrichedAsset',
-			level: 'block',
-			start(src) {
-				return findEnrichedAssetStart(src);
-			},
-			tokenize(src) {
-				const result = parseEnrichedAssetSyntax(src, 0, 'block');
-				if (!result) {
-					return null;
-				}
-				return {
-					type: 'enrichedAsset',
-					raw: result.raw,
-					attrs: {
-						...parseAttrs(result.attrsRaw),
-						label: result.label,
-						url: result.url,
-						isImage: result.isImage
-					}
-				};
-			},
-			childTokens: []
-		},
-		parseMarkdown(token) {
-			const {
-				type,
-				fileId,
-				documentId,
-				name,
-				size,
-				mimeType,
-				label
-			} = token.attrs;
-			const nodeType = ASSET_TYPE_TO_NODE$1[type];
-			if (!nodeType) {
-				return null;
-			}
-			const node = {
-				type: nodeType,
-				attrs: {
-					fileId: Number(fileId),
-					documentId: Number(documentId),
-					name: name ?? label,
-					size: size ? Number(size) : null,
-					mimeType: mimeType ?? null
-				}
-			};
-
-			// Inline asset node from a block-level token: wrap in a paragraph to keep `doc` content legal.
-			if (INLINE_ASSET_NODE_TYPES.has(nodeType)) {
-				return {
-					type: 'paragraph',
-					content: [node]
-				};
-			}
-			return node;
-		}
-	});
-
-	// Block-level tokenizer for all asset types (image/file/video). Each [[<type> fileId=N ...]] token
-	// owns its line and becomes a top-level block node — images are block nodes again, so they are no
-	// longer wrapped in a paragraph nor handled by a separate inline tokenizer.
-	const NoteAssetTokenizer = Node3.create({
-		name: 'noteAsset',
-		markdownTokenizer: {
-			name: 'noteAsset',
-			level: 'block',
-			start(src) {
-				return findNoteAssetStart(src);
-			},
-			tokenize(src) {
-				const result = parseNoteAssetSyntax(src, 0);
-				if (!result) {
-					return null;
-				}
-				return {
-					type: 'noteAsset',
-					raw: result.raw,
-					attrs: {
-						assetType: result.assetType,
-						fileId: result.fileId,
-						width: result.width,
-						align: result.align
-					}
-				};
-			},
-			childTokens: []
-		},
-		parseMarkdown(token) {
-			const nodeType = ASSET_TYPE_TO_NODE[token.attrs.assetType];
-			if (!nodeType) {
-				return null;
-			}
-			const attrs = {
-				fileId: token.attrs.fileId,
-				documentId: null,
-				name: null,
-				size: null,
-				mimeType: null
-			};
-
-			// Resizable media (image, video) carries presentation attributes (resize width, alignment); file does not.
-			if (nodeType === 'imageAttachment' || nodeType === 'video') {
-				attrs.width = token.attrs.width ?? null;
-				attrs.align = token.attrs.align ?? null;
-			}
-			return {
-				type: nodeType,
-				attrs
-			};
-		}
-	});
-
-	// A table cell holds block content, so an inline asset node (image) must be wrapped in a paragraph.
-	function wrapAssetForCell(node) {
-		return INLINE_ASSET_NODE_TYPES.has(node?.type) ? {
-			type: 'paragraph',
-			content: [node]
-		} : node;
-	}
-	function buildCellChildren(cell, h, cellNodeType) {
-		// Defensive access: fall back gracefully if marked internal API changes
-		const rawText = cell && typeof cell === 'object' && 'text' in cell ? cell.text : '';
-		const tokens = cell && typeof cell === 'object' && 'tokens' in cell ? cell.tokens : [];
-
-		// Fast path: entire cell is a single enriched asset (most common case)
-		const singleAsset = parseEnrichedAssetCell(rawText);
-		if (singleAsset) {
-			return [wrapAssetForCell(singleAsset)];
-		}
-
-		// Mixed content: scan for enriched assets within the cell text
-		const assets = parseAllEnrichedAssets(rawText);
-		if (assets.length === 0) {
-			// No enriched assets: use standard inline token parsing
-			return [{
-				type: 'paragraph',
-				content: h.parseInline(tokens)
-			}];
-		}
-
-		// Build children array: interleave text segments with asset nodes.
-		// NOTE: text segments are inserted as plain text without inline parsing
-		// (bold/italic/links). We don't have marked tokens for individual text
-		// fragments between assets, and re-lexing substrings is unreliable.
-		// TODO: if mixed content with formatting becomes a real use case, switch
-		// to full re-lex via sharedMarked.lexer() or remark preprocessor.
-		const children = [];
-		let lastEnd = 0;
-		for (const {
-			match,
-			start,
-			end
-		} of assets) {
-			if (start > lastEnd) {
-				const textBefore = rawText.slice(lastEnd, start).trim();
-				if (textBefore.length > 0) {
-					children.push({
-						type: 'paragraph',
-						content: [{
-							type: 'text',
-							text: textBefore
-						}]
-					});
-				}
-			}
-			const attrs = {
-				...parseAttrs(match.attrsRaw),
-				label: match.label,
-				url: match.url,
-				isImage: match.isImage
-			};
-			const nodeType = ASSET_TYPE_TO_NODE$1[attrs.type];
-			if (nodeType) {
-				children.push(wrapAssetForCell({
-					type: nodeType,
-					attrs: {
-						fileId: Number(attrs.fileId),
-						documentId: Number(attrs.documentId),
-						name: attrs.name ?? attrs.label,
-						size: attrs.size ? Number(attrs.size) : null,
-						mimeType: attrs.mimeType ?? null
-					}
-				}));
-			}
-			lastEnd = end;
-		}
-		if (lastEnd < rawText.length) {
-			const textAfter = rawText.slice(lastEnd).trim();
-			if (textAfter.length > 0) {
-				children.push({
-					type: 'paragraph',
-					content: [{
-						type: 'text',
-						text: textAfter
-					}]
-				});
-			}
-		}
-		return children.length > 0 ? children : [{
-			type: 'paragraph',
-			content: []
-		}];
-	}
-	const CustomTable = Table.extend({
-		addNodeView() {
-			return ({
-				node
-			}) => {
-				const View = this.options.View;
-				const cellMinWidth = this.options.cellMinWidth;
-				return new View(node, cellMinWidth);
-			};
-		},
-		addProseMirrorPlugins() {
-			const plugins = [];
-			if (this.options.resizable) {
-				plugins.push(columnResizing({
-					handleWidth: this.options.handleWidth,
-					cellMinWidth: this.options.cellMinWidth,
-					defaultCellMinWidth: this.options.cellMinWidth,
-					View: this.options.View,
-					lastColumnResizable: this.options.lastColumnResizable
-				}));
-			}
-			plugins.push(tableEditing({
-				allowTableNodeSelection: this.options.allowTableNodeSelection
-			}));
-			return plugins;
-		},
-		parseMarkdown(token, h) {
-			const rows = [];
-			if (token.header) {
-				const headerCells = [];
-				token.header.forEach(cell => {
-					headerCells.push(h.createNode('tableHeader', {}, buildCellChildren(cell, h)));
-				});
-				rows.push(h.createNode('tableRow', {}, headerCells));
-			}
-			if (token.rows) {
-				token.rows.forEach(row => {
-					const bodyCells = [];
-					row.forEach(cell => {
-						bodyCells.push(h.createNode('tableCell', {}, buildCellChildren(cell, h)));
-					});
-					rows.push(h.createNode('tableRow', {}, bodyCells));
-				});
-			}
-			return h.createNode('table', undefined, rows);
-		}
-	});
-	const backgroundColorAttribute = {
-		default: null,
-		parseHTML: element => element.getAttribute('data-background-color') || null,
-		renderHTML: attrs => {
-			if (!attrs.backgroundColor) {
-				return {};
-			}
-			return {
-				'data-background-color': attrs.backgroundColor,
-				style: `background-color: ${attrs.backgroundColor};`
-			};
-		}
-	};
-	const CustomTableCell = TableCell.extend({
-		addAttributes() {
-			return {
-				...this.parent?.(),
-				backgroundColor: backgroundColorAttribute
-			};
-		}
-	});
-	const CustomTableHeader = TableHeader.extend({
-		addAttributes() {
-			return {
-				...this.parent?.(),
-				backgroundColor: backgroundColorAttribute
-			};
-		}
-	});
-	function createTableExtensions() {
-		return [TableKit.configure({
-			table: false,
-			tableCell: false,
-			tableHeader: false
-		}), CustomTable.configure({
-			resizable: true
-		}), CustomTableCell, CustomTableHeader];
-	}
-
-	// src/image.ts
-	var inputRegex = /(?:^|\s)(!\[(.+|:?)]\((\S+)(?:(?:\s+)["'](\S+)["'])?\))$/;
-	var Image = Node3.create({
-		name: "image",
-		addOptions() {
-			return {
-				inline: false,
-				allowBase64: false,
-				HTMLAttributes: {},
-				resize: false
-			};
-		},
-		inline() {
-			return this.options.inline;
-		},
-		group() {
-			return this.options.inline ? "inline" : "block";
-		},
-		draggable: true,
-		addAttributes() {
-			return {
-				src: {
-					default: null
-				},
-				alt: {
-					default: null
-				},
-				title: {
-					default: null
-				},
-				width: {
-					default: null
-				},
-				height: {
-					default: null
-				}
-			};
-		},
-		parseHTML() {
-			return [{
-				tag: this.options.allowBase64 ? "img[src]" : 'img[src]:not([src^="data:"])'
-			}];
-		},
-		renderHTML({
-			HTMLAttributes
-		}) {
-			return ["img", mergeAttributes(this.options.HTMLAttributes, HTMLAttributes)];
-		},
-		parseMarkdown: (token, helpers) => {
-			return helpers.createNode("image", {
-				src: token.href,
-				title: token.title,
-				alt: token.text
-			});
-		},
-		renderMarkdown: node => {
-			var _a, _b, _c, _d, _e, _f;
-			const src = (_b = (_a = node.attrs) == null ? void 0 : _a.src) != null ? _b : "";
-			const alt = (_d = (_c = node.attrs) == null ? void 0 : _c.alt) != null ? _d : "";
-			const title = (_f = (_e = node.attrs) == null ? void 0 : _e.title) != null ? _f : "";
-			return title ? `![${alt}](${src} "${title}")` : `![${alt}](${src})`;
-		},
-		addNodeView() {
-			if (!this.options.resize || !this.options.resize.enabled || typeof document === "undefined") {
-				return null;
-			}
-			const {
-				directions,
-				minWidth,
-				minHeight,
-				alwaysPreserveAspectRatio
-			} = this.options.resize;
-			return ({
-				node,
-				getPos,
-				HTMLAttributes,
-				editor
-			}) => {
-				const el = document.createElement("img");
-				Object.entries(HTMLAttributes).forEach(([key, value]) => {
-					if (value != null) {
-						switch (key) {
-							case "width":
-							case "height":
-								break;
-							default:
-								el.setAttribute(key, value);
-								break;
-						}
-					}
-				});
-				el.src = HTMLAttributes.src;
-				const nodeView = new ResizableNodeView({
-					element: el,
-					editor,
-					node,
-					getPos,
-					onResize: (width, height) => {
-						el.style.width = `${width}px`;
-						el.style.height = `${height}px`;
-					},
-					onCommit: (width, height) => {
-						const pos = getPos();
-						if (pos === void 0) {
-							return;
-						}
-						this.editor.chain().setNodeSelection(pos).updateAttributes(this.name, {
-							width,
-							height
-						}).run();
-					},
-					onUpdate: (updatedNode, _decorations, _innerDecorations) => {
-						if (updatedNode.type !== node.type) {
-							return false;
-						}
-						return true;
-					},
-					options: {
-						directions,
-						min: {
-							width: minWidth,
-							height: minHeight
-						},
-						preserveAspectRatio: alwaysPreserveAspectRatio === true
-					}
-				});
-				const dom = nodeView.dom;
-				dom.style.visibility = "hidden";
-				dom.style.pointerEvents = "none";
-				el.onload = () => {
-					dom.style.visibility = "";
-					dom.style.pointerEvents = "";
-				};
-				return nodeView;
-			};
-		},
-		addCommands() {
-			return {
-				setImage: options => ({
-					commands
-				}) => {
-					return commands.insertContent({
-						type: this.name,
-						attrs: options
-					});
-				}
-			};
-		},
-		addInputRules() {
-			return [nodeInputRule({
-				find: inputRegex,
-				type: this.type,
-				getAttributes: match => {
-					const [,, alt, src, title] = match;
-					return {
-						src,
-						alt,
-						title
-					};
-				}
-			})];
-		}
-	});
-
-	function createSafeImageExtension() {
-		return Image.extend({
-			addAttributes() {
-				return {
-					...this.parent?.(),
-					src: {
-						default: null,
-						parseHTML: element => sanitizeUrl(element.getAttribute('src')),
-						renderHTML: attrs => {
-							const safeSrc = sanitizeUrl(attrs.src);
-							return safeSrc ? {
-								src: safeSrc
-							} : {};
-						}
-					}
-				};
-			}
-		});
-	}
-	function createMediaExtensions(uploadService = null) {
-		// SafeImage handles raw markdown `![](url)` images only; inline so they coexist with text in a
-		// paragraph and keep the lexer's inline image tokens schema-legal. imageAttachment/video are block.
-		const SafeImage = createSafeImageExtension().configure({
-			inline: true
-		});
-		return [SafeImage, UploadAsset, FileAttachment,
-		// uploadService powers the in-place "replace image" action in the node-view overlay.
-		ImageAttachment.configure({
-			uploadService
-		}), Video];
-	}
-
 	/**
 	 * Utility module to work with key-value stores.
 	 *
@@ -53425,7 +54100,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 	 * @param {PRNG} gen
 	 * @return {string} A single letter (a-z)
 	 */
-	const letter = gen => fromCharCode(int31(gen, 97, 122));
+	const letter$1 = gen => fromCharCode(int31(gen, 97, 122));
 
 	/**
 	 * @param {PRNG} gen
@@ -53437,7 +54112,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 		const len = int31(gen, minLen, maxLen);
 		let str = '';
 		for (let i = 0; i < len; i++) {
-			str += letter(gen);
+			str += letter$1(gen);
 		}
 		return str;
 	};
@@ -54928,7 +55603,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 				const left = dels[j - 1];
 				const right = dels[i];
 				if (left.clock + left.len >= right.clock) {
-					left.len = max(left.len, right.clock + right.len - left.clock);
+					dels[j - 1] = new DeleteItem(left.clock, max(left.len, right.clock + right.len - left.clock));
 				} else {
 					if (j < i) {
 						dels[j] = right;
@@ -57950,10 +58625,9 @@ ${nextLine.slice(indentLevel + 2)}`;
 					this.emit('stack-item-updated', changeEvent);
 				}
 			};
+			this.destroy = this.destroy.bind(this);
 			this.doc.on('afterTransaction', this.afterTransactionHandler);
-			this.doc.on('destroy', () => {
-				this.destroy();
-			});
+			this.doc.on('destroy', this.destroy);
 		}
 
 		/**
@@ -58081,6 +58755,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 		destroy() {
 			this.trackedOrigins.delete(this);
 			this.doc.off('afterTransaction', this.afterTransactionHandler);
+			this.doc.off('destroy', this.destroy);
 			super.destroy();
 		}
 	}
@@ -63692,6 +64367,10 @@ ${nextLine.slice(indentLevel + 2)}`;
 			} else {
 				left = parentType._map.get(item.parentSub) || null;
 			}
+			// drop cross-parent left so origin doesn't mislead the remote (#757)
+			if (left !== null && /** @type {AbstractType<any>} */left.parent._item !== parentItem) {
+				left = parentType._map.get(item.parentSub) || null;
+			}
 		}
 		const nextClock = getState(store, ownClientID);
 		const nextId = createID(ownClientID, nextClock);
@@ -64872,7 +65551,9 @@ ${nextLine.slice(indentLevel + 2)}`;
 							pluginState[key] = change[key];
 						}
 					}
-					pluginState.addToHistory = tr.getMeta('addToHistory') !== false;
+					if (tr.docChanged) {
+						pluginState.addToHistory = tr.getMeta('addToHistory') !== false;
+					}
 					// always set isChangeOrigin. If undefined, this is not change origin.
 					pluginState.isChangeOrigin = change !== undefined && !!change.isChangeOrigin;
 					pluginState.isUndoRedoOperation = change !== undefined && !!change.isChangeOrigin && !!change.isUndoRedoOperation;
@@ -64947,20 +65628,67 @@ ${nextLine.slice(indentLevel + 2)}`;
 	};
 
 	/**
+	 * Resolves one text-selection endpoint after a remote update. Falls back to
+	 * content-based matching when the Yjs resolution is missing or lands in the
+	 * wrong block, and keeps the Yjs resolution when the fallback finds nothing.
+	 *
+	 * @param {import('prosemirror-model').Node} newDoc
+	 * @param {import('prosemirror-model').Node} oldDoc
+	 * @param {number|null|undefined} oldAbs
+	 * @param {number|null} resolved
+	 * @return {number|null}
+	 */
+	const recoverSelectionEndpoint = (newDoc, oldDoc, oldAbs, resolved) => {
+		if (oldAbs == null) {
+			return resolved;
+		}
+		const misresolved = resolved === null || oldAbs > 1 && resolved <= 1 || isMisresolvedAfterStructuralChange(oldDoc, newDoc, oldAbs, resolved);
+		if (!misresolved) {
+			return resolved;
+		}
+		const recovered = findAbsolutePositionAfterStructuralChange(oldDoc, newDoc, oldAbs);
+		return recovered !== null ? recovered : resolved;
+	};
+
+	/**
 	 * @param {import('prosemirror-state').Transaction} tr
 	 * @param {ReturnType<typeof getRelativeSelection>} relSel
 	 * @param {ProsemirrorBinding} binding
+	 * @param {import('prosemirror-model').Node} [oldDoc]
 	 */
-	const restoreRelativeSelection = (tr, relSel, binding) => {
+	const restoreRelativeSelection = (tr, relSel, binding, oldDoc) => {
 		if (relSel !== null && relSel.anchor !== null && relSel.head !== null) {
 			if (relSel.type === 'all') {
 				tr.setSelection(new AllSelection(tr.doc));
 			} else if (relSel.type === 'node') {
 				const anchor = relativePositionToAbsolutePosition(binding.doc, binding.type, relSel.anchor, binding.mapping);
-				tr.setSelection(createSafeNodeSelection(tr, anchor));
-			} else {
+				// anchor is null when the referenced node was deleted or moved out of
+				// binding.type by a remote update; resolving null would throw.
+				if (anchor !== null) {
+					tr.setSelection(createSafeNodeSelection(tr, anchor));
+				}
+			} else if (relSel.type === 'nodeRange') {
 				const anchor = relativePositionToAbsolutePosition(binding.doc, binding.type, relSel.anchor, binding.mapping);
 				const head = relativePositionToAbsolutePosition(binding.doc, binding.type, relSel.head, binding.mapping);
+				const selection = createSafeNodeRangeSelection(tr, anchor, head, relSel.depth);
+				if (selection !== null) {
+					tr.setSelection(selection);
+				}
+			} else {
+				let anchor = relativePositionToAbsolutePosition(binding.doc, binding.type, relSel.anchor, binding.mapping);
+				let head = relativePositionToAbsolutePosition(binding.doc, binding.type, relSel.head, binding.mapping);
+				if (oldDoc != null) {
+					anchor = recoverSelectionEndpoint(tr.doc, oldDoc, relSel.absAnchor, anchor);
+					head = recoverSelectionEndpoint(tr.doc, oldDoc, relSel.absHead, head);
+				}
+				// Collapse to the surviving endpoint instead of dropping the selection;
+				// an unset selection maps through the full-doc replace to the doc start.
+				if (anchor === null) {
+					anchor = head;
+				}
+				if (head === null) {
+					head = anchor;
+				}
 				if (anchor !== null && head !== null) {
 					tr.setSelection(TextSelection.between(tr.doc.resolve(anchor), tr.doc.resolve(head)));
 				}
@@ -64986,14 +65714,58 @@ ${nextLine.slice(indentLevel + 2)}`;
 	};
 
 	/**
+	 * Safely reconstructs a NodeRangeSelection from resolved absolute positions.
+	 *
+	 * @param {import('prosemirror-state').Transaction} tr - The transaction whose document provides resolved positions.
+	 * @param {number|null} anchor - Absolute document position marking the start (boundary) of the node range.
+	 *        Use `relativePositionToAbsolutePosition` before calling this function.
+	 * @param {number|null} head - Absolute document position marking the end (boundary) of the node range.
+	 *        Use `relativePositionToAbsolutePosition` before calling this function.
+	 * @param {number|undefined} depth - The nesting depth at which the range operates (e.g. 0 for
+	 *        top-level blocks, 1 for blocks nested inside a wrapper). Passed through to
+	 *        `Selection.fromJSON`; ignored by `@tiptap/extension-node-range` < v2.29 but
+	 *        properly stored starting from that version.
+	 * @returns {import('prosemirror-state').Selection|null} Reconstructed selection, or null if
+	 *          anchor/head could not be resolved.
+	 */
+	const createSafeNodeRangeSelection = (tr, anchor, head, depth) => {
+		if (anchor === null || head === null) {
+			return null;
+		}
+		const clampedAnchor = Math.min(Math.max(anchor, 0), tr.doc.content.size);
+		const clampedHead = Math.min(Math.max(head, 0), tr.doc.content.size);
+		try {
+			const selection = Selection.fromJSON(tr.doc, {
+				type: 'nodeRange',
+				anchor: clampedAnchor,
+				head: clampedHead,
+				depth
+			});
+			if (!selection.ranges.length) {
+				return TextSelection.near(tr.doc.resolve(clampedAnchor));
+			}
+			return selection;
+		} catch (e) {
+			return TextSelection.near(tr.doc.resolve(clampedAnchor));
+		}
+	};
+
+	/**
 	 * @param {ProsemirrorBinding} pmbinding
 	 * @param {import('prosemirror-state').EditorState} state
 	 */
-	const getRelativeSelection = (pmbinding, state) => ({
-		type: /** @type {any} */state.selection.jsonID,
-		anchor: absolutePositionToRelativePosition(state.selection.anchor, pmbinding.type, pmbinding.mapping),
-		head: absolutePositionToRelativePosition(state.selection.head, pmbinding.type, pmbinding.mapping)
-	});
+	const getRelativeSelection = (pmbinding, state) => {
+		const type = /** @type {any} */state.selection.jsonID;
+		return {
+			type,
+			// `depth` is only meaningful for NodeRangeSelection; undefined for every other type.
+			depth: type === 'nodeRange' ? /** @type {any} */state.selection.depth : undefined,
+			anchor: absolutePositionToRelativePosition(state.selection.anchor, pmbinding.type, pmbinding.mapping),
+			head: absolutePositionToRelativePosition(state.selection.head, pmbinding.type, pmbinding.mapping),
+			absAnchor: state.selection.anchor,
+			absHead: state.selection.head
+		};
+	};
 
 	/**
 	 * Binding for prosemirror.
@@ -65255,10 +66027,14 @@ ${nextLine.slice(indentLevel + 2)}`;
 				});
 				transaction.changed.forEach(delType);
 				transaction.changedParentTypes.forEach(delType);
+				// Rebuild the full Y↔PM mapping so relative cursor positions resolve against
+				// current node sizes after structural changes (e.g. drag-and-drop block moves).
+				this.mapping.clear();
 				const fragmentContent = this.type.toArray().map(t => createNodeIfNotExists(/** @type {Y.XmlElement | Y.XmlHook} */t, this.prosemirrorView.state.schema, this)).filter(n => n !== null);
+				const oldDoc = this.prosemirrorView.state.doc;
 				// @ts-ignore
 				let tr = this._tr.replace(0, this.prosemirrorView.state.doc.content.size, new Slice(Fragment.from(fragmentContent), 0, 0));
-				restoreRelativeSelection(tr, this.beforeTransactionSelection, this);
+				restoreRelativeSelection(tr, this.beforeTransactionSelection, this, oldDoc);
 				tr = tr.setMeta(ySyncPluginKey, {
 					isChangeOrigin: true,
 					isUndoRedoOperation: transaction.origin instanceof UndoManager
@@ -65555,10 +66331,194 @@ ${nextLine.slice(indentLevel + 2)}`;
 	};
 
 	/**
-	 * @param {PModel.Node | Array<PModel.Node> | undefined} mapped
-	 * @param {PModel.Node | Array<PModel.Node>} pcontent
+	 * For a given Y type and ProseMirror node content, check if the ProseMirror node content is the same as the mapped ProseMirror node content.
+	 *
+	 * @param {PModel.Node | Array<PModel.Node> | undefined} mapped The ProseMirror node content that is mapped to the Y type.
+	 * @param {PModel.Node | Array<PModel.Node>} pcontent The ProseMirror node content to compare against the mapped content.
+	 * @returns {boolean} Returns true if the mapped content is the same as the ProseMirror node content, false otherwise.
 	 */
 	const mappedIdentity = (mapped, pcontent) => mapped === pcontent || mapped instanceof Array && pcontent instanceof Array && mapped.length === pcontent.length && mapped.every((a, i) => pcontent[i] === a);
+
+	/**
+	 * @typedef {{ yIndex: number, pIndex: number, yChild: Y.XmlElement | Y.XmlText | Y.XmlHook }} MappedChildAnchor
+	 */
+
+	/**
+	 * Find mapped children that retain their relative order after a move.
+	 *
+	 * @param {Array<Y.XmlElement | Y.XmlText | Y.XmlHook>} yChildren
+	 * @param {NormalizedPNodeContent} pChildren
+	 * @param {BindingMetadata} meta
+	 * @return {Array<MappedChildAnchor>}
+	 */
+	const findMappedChildAnchors = (yChildren, pChildren, meta) => {
+		const pChildIndices = new Map();
+		pChildren.forEach((pChild, index) => {
+			if (!pChildIndices.has(pChild)) {
+				pChildIndices.set(pChild, index);
+			}
+		});
+		const candidates = [];
+		yChildren.forEach((yChild, yIndex) => {
+			const mapped = meta.mapping.get(yChild);
+			const pIndex = pChildIndices.get(mapped);
+			if (pIndex !== undefined && mappedIdentity(mapped, pChildren[pIndex])) {
+				candidates.push({
+					yIndex,
+					pIndex,
+					yChild
+				});
+			}
+		});
+		if (candidates.length === 0) {
+			return [];
+		}
+		const predecessors = new Array(candidates.length);
+		const tails = [];
+		for (let index = 0; index < candidates.length; index++) {
+			let low = 0;
+			let high = tails.length;
+			while (low < high) {
+				const middle = low + high >> 1;
+				if (candidates[tails[middle]].pIndex < candidates[index].pIndex) {
+					low = middle + 1;
+				} else {
+					high = middle;
+				}
+			}
+			predecessors[index] = low > 0 ? tails[low - 1] : -1;
+			tails[low] = index;
+		}
+		const anchors = [];
+		for (let index = tails[tails.length - 1]; index !== -1; index = predecessors[index]) {
+			anchors.push(candidates[index]);
+		}
+		return anchors.reverse();
+	};
+
+	/**
+	 * @param {Y.XmlFragment} yDomFragment
+	 * @param {number} index
+	 * @param {number} length
+	 * @param {BindingMetadata} meta
+	 */
+	const deleteYChildren = (yDomFragment, index, length, meta) => {
+		if (length > 0) {
+			yDomFragment.slice(index, index + length).forEach(type => meta.mapping.delete(type));
+			yDomFragment.delete(index, length);
+		}
+	};
+
+	/**
+	 * @param {Y.XmlFragment} yDomFragment
+	 * @param {number} index
+	 * @param {NormalizedPNodeContent} pChildren
+	 * @param {number} start
+	 * @param {number} end
+	 * @param {BindingMetadata} meta
+	 */
+	const insertPChildren = (yDomFragment, index, pChildren, start, end, meta) => {
+		if (start < end) {
+			const children = [];
+			for (let childIndex = start; childIndex < end; childIndex++) {
+				children.push(createTypeFromTextOrElementNode(pChildren[childIndex], meta));
+			}
+			yDomFragment.insert(index, children);
+		}
+	};
+
+	/**
+	 * Updates a Y child in place when it still lines up with the ProseMirror child.
+	 * Recreating it instead would drop concurrent remote edits on that child.
+	 *
+	 * @param {{ transact: Function }} y
+	 * @param {Y.XmlElement | Y.XmlText | Y.XmlHook} yChild
+	 * @param {PModel.Node | Array<PModel.Node>} pChild
+	 * @param {BindingMetadata} meta
+	 * @return {boolean}
+	 */
+	const updateMatchingYChild = (y, yChild, pChild, meta) => {
+		if (yChild instanceof YXmlText && pChild instanceof Array) {
+			if (equalYTextPText(yChild, pChild)) {
+				meta.mapping.set(yChild, pChild);
+			} else {
+				updateYText(yChild, pChild, meta);
+			}
+			return true;
+		}
+		if (yChild instanceof YXmlElement && !(pChild instanceof Array) && matchNodeName(yChild, pChild)) {
+			if (equalYTypePNode(yChild, pChild)) {
+				meta.mapping.set(yChild, pChild);
+			} else {
+				updateYFragment(y, yChild, pChild, meta);
+			}
+			return true;
+		}
+		return false;
+	};
+
+	/**
+	 * Reconciles the children between two anchors by position, then deletes or
+	 * inserts to make up the length difference.
+	 *
+	 * @param {{ transact: Function }} y
+	 * @param {Y.XmlFragment} yDomFragment
+	 * @param {NormalizedPNodeContent} pChildren
+	 * @param {Array<Y.XmlElement | Y.XmlText | Y.XmlHook>} yChildren
+	 * @param {number} yStart
+	 * @param {number} yEnd
+	 * @param {number} pStart
+	 * @param {number} pEnd
+	 * @param {BindingMetadata} meta
+	 */
+	const reconcileUnanchoredChildren = (y, yDomFragment, pChildren, yChildren, yStart, yEnd, pStart, pEnd, meta) => {
+		const matchingChildren = min(yEnd - yStart, pEnd - pStart);
+		for (let index = 0; index < matchingChildren; index++) {
+			const yChild = yChildren[yStart + index];
+			const pChild = pChildren[pStart + index];
+			if (!updateMatchingYChild(y, yChild, pChild, meta)) {
+				deleteYChildren(yDomFragment, pStart + index, 1, meta);
+				insertPChildren(yDomFragment, pStart + index, pChildren, pStart + index, pStart + index + 1, meta);
+			}
+		}
+		deleteYChildren(yDomFragment, pStart + matchingChildren, yEnd - yStart - matchingChildren, meta);
+		insertPChildren(yDomFragment, pStart + matchingChildren, pChildren, pStart + matchingChildren, pEnd, meta);
+	};
+
+	/**
+	 * Reconciles a fragment whose children were reordered, keeping the Y types of the
+	 * anchors. The left/right diff in `updateYFragment` mismatches on both ends after
+	 * a move, so it rebuilds the middle and drops text that is still being edited.
+	 *
+	 * @param {{ transact: Function }} y
+	 * @param {Y.XmlFragment} yDomFragment
+	 * @param {NormalizedPNodeContent} pChildren
+	 * @param {Array<Y.XmlElement | Y.XmlText | Y.XmlHook>} yChildren
+	 * @param {BindingMetadata} meta
+	 * @return {boolean}
+	 */
+	const reconcileMappedChildren = (y, yDomFragment, pChildren, yChildren, meta) => {
+		const anchors = findMappedChildAnchors(yChildren, pChildren, meta);
+		// A move needs two anchors with at least one of them at a new index; less than
+		// that is a plain edit. Mismatched kinds cannot be updated in place.
+		if (anchors.length < 2 || !anchors.some(anchor => anchor.yIndex !== anchor.pIndex) || anchors.some(anchor => {
+			const pChild = pChildren[anchor.pIndex];
+			return !(anchor.yChild instanceof YXmlText && pChild instanceof Array || anchor.yChild instanceof YXmlElement && !(pChild instanceof Array));
+		})) {
+			return false;
+		}
+		let yIndex = 0;
+		let pIndex = 0;
+		for (const anchor of anchors) {
+			reconcileUnanchoredChildren(y, yDomFragment, pChildren, yChildren, yIndex, anchor.yIndex, pIndex, anchor.pIndex, meta);
+			const pChild = pChildren[anchor.pIndex];
+			updateMatchingYChild(y, anchor.yChild, pChild, meta);
+			yIndex = anchor.yIndex + 1;
+			pIndex = anchor.pIndex + 1;
+		}
+		reconcileUnanchoredChildren(y, yDomFragment, pChildren, yChildren, yIndex, yChildren.length, pIndex, pChildren.length, meta);
+		return true;
+	};
 
 	/**
 	 * @param {Y.XmlElement} ytype
@@ -65737,6 +66697,9 @@ ${nextLine.slice(indentLevel + 2)}`;
 		const yChildren = yDomFragment.toArray();
 		const yChildCnt = yChildren.length;
 		const minCnt = min(pChildCnt, yChildCnt);
+		if (reconcileMappedChildren(y, yDomFragment, pChildren, yChildren, meta)) {
+			return;
+		}
 		let left = 0;
 		let right = 0;
 		// find number of matching elements from left
@@ -65847,23 +66810,111 @@ ${nextLine.slice(indentLevel + 2)}`;
 	 * @type {Map<EditorView, Map<any, any>>|null}
 	 */
 	let viewsToUpdate = null;
-	const updateMetas = () => {
-		const ups = /** @type {Map<EditorView, Map<any, any>>} */viewsToUpdate;
-		viewsToUpdate = null;
-		ups.forEach((metas, view) => {
-			const tr = view.state.tr;
-			const syncState = ySyncPluginKey.getState(view.state);
+	class MetaEntry {
+		/**
+		 * @param {EditorView} view
+		 * @param {any} key
+		 * @param {any} value
+		 */
+		constructor(view, key, value) {
+			this.view = view;
+			this.key = key;
+			this.value = value;
+		}
+		apply() {
+			const syncState = ySyncPluginKey.getState(this.view.state);
 			if (syncState && syncState.binding && !syncState.binding.isDestroyed) {
-				metas.forEach((val, key) => {
-					tr.setMeta(key, val);
-				});
-				view.dispatch(tr);
+				const tr = this.view.state.tr;
+				tr.setMeta(this.key, this.value);
+				this.view.dispatch(tr);
 			}
-		});
+		}
+	}
+	class MetaEntriesQueue {
+		/**
+		 * @param {Array<MetaEntry>} [entries=[]]
+		 */
+		constructor(entries = []) {
+			this.entries = entries;
+		}
+
+		/**
+		 * @return {MetaEntry|undefined}
+		 */
+		getFirst() {
+			return this.entries[0];
+		}
+
+		/**
+		 * @return {MetaEntry|undefined}
+		 */
+		dequeueFirst() {
+			return this.entries.shift();
+		}
+
+		/**
+		 * @return {boolean}
+		 */
+		isEmpty() {
+			return this.entries.length === 0;
+		}
+		static fromViewsToUpdate() {
+			const ups = /** @type {Map<EditorView, Map<any, any>>} */viewsToUpdate;
+			viewsToUpdate = null;
+			const entries = [];
+			ups.forEach((metas, view) => {
+				metas.forEach((value, key) => {
+					entries.push(new MetaEntry(view, key, value));
+				});
+			});
+			return new MetaEntriesQueue(entries);
+		}
+	}
+
+	/**
+	 * Dispatch queued plugin metadata in order, retrying only the remaining
+	 * entries if a transaction becomes stale while the async queue is flushing.
+	 *
+	 * Cursor awareness updates are decoration-only refreshes. If a real document
+	 * transaction lands before one of these queued meta transactions is applied,
+	 * ProseMirror can reject it with a RangeError. In that case we reschedule the
+	 * remaining entries on the next tick. If the first remaining entry fails again
+	 * on retry, we drop that entry and continue with the rest of the queue instead
+	 * of retrying forever or crashing the editor.
+	 *
+	 * @param {MetaEntriesQueue} [metaEntries=MetaEntriesQueue.fromViewsToUpdate()]
+	 * @param {boolean} [isRetry=false]
+	 */
+	const updateMetas = (metaEntries = MetaEntriesQueue.fromViewsToUpdate(), isRetry = false) => {
+		let isFirst = true;
+		while (!metaEntries.isEmpty()) {
+			const metaEntry = metaEntries.getFirst();
+			try {
+				metaEntry.apply();
+			} catch (err) {
+				// ProseMirror throws a RangeError when this transaction was created from
+				// an older state and another transaction changed the document before this
+				// meta-only dispatch was applied ("Applying a mismatched transaction").
+				if (err instanceof RangeError) {
+					if (isRetry && isFirst) {
+						// Drop the repeatedly stale entry so the queue can continue flushing.
+						metaEntries.dequeueFirst();
+					}
+					if (!metaEntries.isEmpty()) {
+						timeout(0, () => updateMetas(metaEntries, true));
+					}
+					return;
+				}
+				throw err;
+			}
+			isFirst = false;
+			metaEntries.dequeueFirst();
+		}
 	};
 	const setMeta = (view, key, value) => {
 		if (!viewsToUpdate) {
 			viewsToUpdate = new Map();
+			// Awareness listeners can fire in bursts, so batch them into one tick.
 			timeout(0, updateMetas);
 		}
 		setIfUndefined(viewsToUpdate, view, create$5).set(key, value);
@@ -65947,6 +66998,23 @@ ${nextLine.slice(indentLevel + 2)}`;
 		}
 		return createRelativePositionFromTypeIndex(type, type._length, -1);
 	};
+
+	/**
+	 * Item-id based relative positions can misresolve to the document start after
+	 * block reorder during collaborative drag-and-drop.
+	 *
+	 * @param {Y.Doc} y
+	 * @param {Y.RelativePosition} relPos
+	 * @param {number|null} absPos
+	 * @return {boolean}
+	 */
+	const isMisresolvedTextPosition = (y, relPos, absPos) => {
+		if (absPos === null) {
+			return false;
+		}
+		const decoded = createAbsolutePositionFromRelativePosition(relPos, y);
+		return decoded !== null && decoded.type instanceof YXmlText && relPos.item !== null && absPos <= 1;
+	};
 	const createRelativePosition = (type, item) => {
 		let typeid = null;
 		let tname = null;
@@ -65984,7 +67052,11 @@ ${nextLine.slice(indentLevel + 2)}`;
 					if (t instanceof YXmlText) {
 						pos += t._length;
 					} else {
-						pos += /** @type {any} */mapping.get(t).nodeSize;
+						const mapped = mapping.get(t);
+						if (mapped == null) {
+							return null;
+						}
+						pos += /** @type {any} */mapped.nodeSize;
 					}
 				}
 				n = /** @type {Y.Item} */n.right;
@@ -66008,7 +67080,11 @@ ${nextLine.slice(indentLevel + 2)}`;
 						if (contentType instanceof YXmlText) {
 							pos += contentType._length;
 						} else {
-							pos += /** @type {any} */mapping.get(contentType).nodeSize;
+							const mapped = mapping.get(contentType);
+							if (mapped == null) {
+								return null;
+							}
+							pos += /** @type {any} */mapped.nodeSize;
 						}
 					}
 					n = n.right;
@@ -66016,7 +67092,266 @@ ${nextLine.slice(indentLevel + 2)}`;
 			}
 			type = /** @type {Y.AbstractType} */parent;
 		}
-		return pos - 1; // we don't count the most outer tag, because it is a fragment
+		const absPos = pos - 1; // we don't count the most outer tag, because it is a fragment
+		if (isMisresolvedTextPosition(y, relPos, absPos)) {
+			return null;
+		}
+		return absPos;
+	};
+
+	/**
+	 * Shallow attrs comparison. Attr values are primitives in most schemas;
+	 * non-primitive values fail the check and callers fall back to text matching.
+	 *
+	 * @param {Object<string, any>} a
+	 * @param {Object<string, any>} b
+	 * @return {boolean}
+	 */
+	const attrsEqual = (a, b) => {
+		if (a === b) {
+			return true;
+		}
+		const aKeys = Object.keys(a);
+		return aKeys.length === Object.keys(b).length && aKeys.every(k => a[k] === b[k]);
+	};
+
+	/**
+	 * Returns true when any attr deviates from its spec default or has none.
+	 * Default-only attrs cannot tell same-type siblings apart.
+	 *
+	 * @param {import('prosemirror-model').Node} node
+	 * @return {boolean}
+	 */
+	const hasDistinctiveAttrs = node => {
+		const specAttrs = node.type.spec.attrs || {};
+		return Object.keys(node.attrs).some(key => {
+			const spec = specAttrs[key];
+			return spec == null || !Object.prototype.hasOwnProperty.call(spec, 'default') || spec.default !== node.attrs[key];
+		});
+	};
+
+	/**
+	 * Remaps a position into a matched block by walking the same child-index path
+	 * it had in the old block. A raw byte offset would overshoot into a sibling
+	 * inner textblock when the old block contains local keystrokes that are not
+	 * yet part of the rebuilt document.
+	 *
+	 * @param {import('prosemirror-model').ResolvedPos} $oldPos
+	 * @param {number} newBlockStart
+	 * @param {import('prosemirror-model').Node} newBlock
+	 * @return {number|null}
+	 */
+	const remapIntoBlock = ($oldPos, newBlockStart, newBlock) => {
+		let pos = newBlockStart + 1;
+		let node = newBlock;
+		for (let depth = 1; depth < $oldPos.depth; depth++) {
+			const idx = $oldPos.index(depth);
+			if (idx >= node.childCount) {
+				return null;
+			}
+			for (let i = 0; i < idx; i++) {
+				pos += node.child(i).nodeSize;
+			}
+			pos += 1;
+			node = node.child(idx);
+			if (node.type !== $oldPos.node(depth + 1).type) {
+				return null;
+			}
+		}
+		if (!node.isTextblock) {
+			return null;
+		}
+		return pos + Math.min($oldPos.parentOffset, node.content.size);
+	};
+
+	/**
+	 * @param {import('prosemirror-model').Node} oldDoc
+	 * @param {import('prosemirror-model').Node} newDoc
+	 * @param {number} absPos
+	 * @return {number|null}
+	 */
+	const findAbsolutePositionAfterStructuralChange = (oldDoc, newDoc, absPos) => {
+		let pos = 0;
+		let targetIdx = 0;
+		for (; targetIdx < oldDoc.childCount; targetIdx++) {
+			const child = oldDoc.child(targetIdx);
+			if (pos + child.nodeSize > absPos) {
+				break;
+			}
+			pos += child.nodeSize;
+		}
+		if (targetIdx >= oldDoc.childCount) {
+			return null;
+		}
+		const targetChild = oldDoc.child(targetIdx);
+		const $oldPos = oldDoc.resolve(absPos);
+
+		/**
+		 * @param {number} newBlockStart
+		 * @param {import('prosemirror-model').Node} newBlock
+		 * @return {number|null}
+		 */
+		const place = (newBlockStart, newBlock) => {
+			// Positions between top-level blocks carry no inner path; clamp them just
+			// inside the matched block like the previous raw-offset remap did.
+			if ($oldPos.depth === 0) {
+				const remapped = newBlockStart + (absPos - pos);
+				const contentStart = newBlockStart + 1;
+				const contentEnd = newBlockStart + newBlock.nodeSize - 1;
+				return Math.max(contentStart, Math.min(remapped, contentEnd));
+			}
+			return remapIntoBlock($oldPos, newBlockStart, newBlock);
+		};
+
+		/**
+		 * Finds the Nth block in newDoc matching `pred`, where N is the number of
+		 * matching blocks in oldDoc up to and including the target block.
+		 *
+		 * @param {function(import('prosemirror-model').Node): boolean} pred
+		 * @param {boolean} requireUnique
+		 * @return {number|null}
+		 */
+		const findByPredicate = (pred, requireUnique = false) => {
+			let occurrence = 0;
+			for (let i = 0; i <= targetIdx; i++) {
+				if (pred(oldDoc.child(i))) {
+					occurrence++;
+				}
+			}
+			let matchCount = 0;
+			let matchStart = -1;
+			let matchBlock = null;
+			let newPos = 0;
+			for (let i = 0; i < newDoc.childCount; i++) {
+				const child = newDoc.child(i);
+				if (pred(child)) {
+					matchCount++;
+					if (matchCount === occurrence) {
+						matchStart = newPos;
+						matchBlock = child;
+					}
+				}
+				newPos += child.nodeSize;
+			}
+			if (matchBlock === null || requireUnique && (occurrence !== 1 || matchCount !== 1)) {
+				return null;
+			}
+			return place(matchStart, matchBlock);
+		};
+
+		/**
+		 * @param {import('prosemirror-model').Node} child
+		 * @return {boolean}
+		 */
+		const sameTypeAndAttrs = child => child.type === targetChild.type && attrsEqual(child.attrs, targetChild.attrs);
+		const oldText = targetChild.textContent;
+		const byAll = findByPredicate(child => sameTypeAndAttrs(child) && child.textContent === oldText);
+		if (byAll !== null) {
+			return byAll;
+		}
+
+		// Text must be matched before attrs: after a remote attr-only edit, the
+		// attrs pass would steer the cursor into a sibling that kept the old attrs.
+		const byText = findByPredicate(child => child.type === targetChild.type && child.textContent === oldText);
+		if (byText !== null) {
+			return byText;
+		}
+
+		// In-flight local typing diverges the text between both docs. Distinctive
+		// attrs still identify the block; default-only attrs match every sibling.
+		if (hasDistinctiveAttrs(targetChild)) {
+			const byAttrs = findByPredicate(sameTypeAndAttrs, true);
+			if (byAttrs !== null) {
+				return byAttrs;
+			}
+		}
+
+		// Trailing in-flight keystrokes leave a prefix relation between old and new
+		// text. Empty text is a prefix of everything and must never match.
+		return findByPredicate(child => sameTypeAndAttrs(child) && oldText !== '' && child.textContent !== '' && (oldText.startsWith(child.textContent) || child.textContent.startsWith(oldText)), true);
+	};
+
+	/**
+	 * Returns true when a transaction changes block structure rather than only
+	 * editing inline content inside existing blocks.
+	 *
+	 * @param {import('prosemirror-state').Transaction} tr
+	 * @param {import('prosemirror-model').Node} oldDoc
+	 * @return {boolean}
+	 */
+	const isStructuralTransaction = (tr, oldDoc) => {
+		if (!tr.docChanged) {
+			return false;
+		}
+		if (tr.doc.childCount !== oldDoc.childCount) {
+			return true;
+		}
+		for (const step of tr.steps) {
+			if (step instanceof ReplaceStep) {
+				if (step.from === 0 && step.to === oldDoc.content.size) {
+					return true;
+				}
+				if (step.slice.content.size > 0) {
+					let hasBlock = false;
+					step.slice.content.forEach(node => {
+						if (node.isBlock) {
+							hasBlock = true;
+						}
+					});
+					if (hasBlock) {
+						return true;
+					}
+				} else if (step.to > step.from) {
+					const $from = oldDoc.resolve(step.from);
+					const $to = oldDoc.resolve(step.to);
+					if ($from.depth === 0 && $to.depth === 0 && $from.index() !== $to.index()) {
+						return true;
+					}
+				}
+			}
+		}
+		return false;
+	};
+
+	/**
+	 * Detect stale relative positions after structural changes that resolve to the
+	 * wrong text block or to the start of the correct block.
+	 *
+	 * @param {import('prosemirror-model').Node} oldDoc
+	 * @param {import('prosemirror-model').Node} newDoc
+	 * @param {number} oldAbs
+	 * @param {number|null} resolvedAbs
+	 * @return {boolean}
+	 */
+	const isMisresolvedAfterStructuralChange = (oldDoc, newDoc, oldAbs, resolvedAbs) => {
+		if (resolvedAbs === null) {
+			return false;
+		}
+		const $old = oldDoc.resolve(oldAbs);
+		const $new = newDoc.resolve(resolvedAbs);
+		if (!$old.parent.isTextblock) {
+			return false;
+		}
+		// A textblock cursor cannot legitimately resolve into a non-textblock;
+		// a structural reorder replaced the block via delete + insert.
+		if (!$new.parent.isTextblock) {
+			return true;
+		}
+		if ($old.parent.textContent !== $new.parent.textContent) {
+			return true;
+		}
+		if ($old.parentOffset !== 0 && $new.parentOffset === 0) {
+			return true;
+		}
+		const bothAtStart = $old.parentOffset === 0 && $new.parentOffset === 0;
+		// A changed offset, type or attrs hints at a same-text sibling. When all
+		// of them agree there is no signal left and the Yjs resolution must win.
+		const suspicious = $old.parentOffset !== $new.parentOffset || $old.parent.type !== $new.parent.type || !attrsEqual($old.parent.attrs, $new.parent.attrs);
+		if (bothAtStart || suspicious) {
+			const expected = findAbsolutePositionAfterStructuralChange(oldDoc, newDoc, oldAbs);
+			return expected !== null && expected !== resolvedAbs;
+		}
+		return false;
 	};
 
 	/**
@@ -66152,7 +67487,10 @@ ${nextLine.slice(indentLevel + 2)}`;
 			if (!awarenessFilter(y.clientID, clientId, aw)) {
 				return;
 			}
-			if (aw.cursor != null) {
+
+			// `aw` can be null when a client disconnects, so we guard against it
+			// before reading `cursor` to avoid a TypeError.
+			if (aw && aw.cursor != null) {
 				const user = aw.user || {};
 				if (user.color == null) {
 					user.color = '#ffa500';
@@ -66210,13 +67548,22 @@ ${nextLine.slice(indentLevel + 2)}`;
 			init(_, state) {
 				return createDecorations(state, awareness, awarenessStateFilter, cursorBuilder, selectionBuilder);
 			},
-			apply(tr, prevState, _oldState, newState) {
+			apply(tr, prevState, oldState, newState) {
 				const ystate = ySyncPluginKey.getState(newState);
 				const yCursorState = tr.getMeta(yCursorPluginKey);
-				if (ystate && ystate.isChangeOrigin || yCursorState && yCursorState.awarenessUpdated) {
+				const isRemoteChange = ystate && ystate.isChangeOrigin;
+				if (tr.docChanged && !isRemoteChange && isStructuralTransaction(tr, oldState.doc)) {
+					// The ProseMirror document leads the Yjs mapping during local moves.
+					// Hide stale awareness until the collaborator publishes its new cursor.
+					return DecorationSet.empty;
+				}
+				if (isRemoteChange || yCursorState && yCursorState.awarenessUpdated) {
 					return createDecorations(newState, awareness, awarenessStateFilter, cursorBuilder, selectionBuilder);
 				}
-				return prevState.map(tr.mapping, tr.doc);
+				if (tr.docChanged) {
+					return prevState.map(tr.mapping, tr.doc);
+				}
+				return prevState;
 			}
 		},
 		props: {
@@ -66233,12 +67580,19 @@ ${nextLine.slice(indentLevel + 2)}`;
 					});
 				}
 			};
-			const updateCursorInfo = () => {
-				const ystate = ySyncPluginKey.getState(view.state);
+			/**
+			 * @param {import('prosemirror-view').EditorView} editorView
+			 * @param {{ force?: boolean }} [opts]
+			 */
+			const updateCursorInfo = (editorView, opts = {}) => {
+				const ystate = ySyncPluginKey.getState(editorView.state);
+				// `ystate` is undefined during sync-plugin init and Y.Doc transitions;
+				// reading from it here would throw and break cursor tracking for the view.
+				if (!ystate || !ystate.binding) return;
 				// @note We make implicit checks when checking for the cursor property
 				const current = awareness.getLocalState() || {};
-				if (view.hasFocus()) {
-					const selection = getSelection(view.state);
+				if (editorView.hasFocus()) {
+					const selection = getSelection(editorView.state);
 					/**
 					 * @type {Y.RelativePosition}
 					 */
@@ -66247,7 +67601,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 					 * @type {Y.RelativePosition}
 					 */
 					const head = absolutePositionToRelativePosition(selection.head, ystate.type, ystate.binding.mapping);
-					if (current.cursor == null || !compareRelativePositions(createRelativePositionFromJSON(current.cursor.anchor), anchor) || !compareRelativePositions(createRelativePositionFromJSON(current.cursor.head), head)) {
+					if (opts.force || current.cursor == null || !compareRelativePositions(createRelativePositionFromJSON(current.cursor.anchor), anchor) || !compareRelativePositions(createRelativePositionFromJSON(current.cursor.head), head)) {
 						awareness.setLocalStateField(cursorStateField, {
 							anchor,
 							head
@@ -66258,14 +67612,21 @@ ${nextLine.slice(indentLevel + 2)}`;
 					awareness.setLocalStateField(cursorStateField, null);
 				}
 			};
+			const onFocusChange = () => updateCursorInfo(view);
 			awareness.on('change', awarenessListener);
-			view.dom.addEventListener('focusin', updateCursorInfo);
-			view.dom.addEventListener('focusout', updateCursorInfo);
+			view.dom.addEventListener('focusin', onFocusChange);
+			view.dom.addEventListener('focusout', onFocusChange);
 			return {
-				update: updateCursorInfo,
+				update: (editorView, prevState) => {
+					const ystate = ySyncPluginKey.getState(editorView.state);
+					const forceAwarenessUpdate = !!(ystate?.isChangeOrigin && prevState?.doc && !prevState.doc.eq(editorView.state.doc));
+					updateCursorInfo(editorView, {
+						force: forceAwarenessUpdate
+					});
+				},
 				destroy: () => {
-					view.dom.removeEventListener('focusin', updateCursorInfo);
-					view.dom.removeEventListener('focusout', updateCursorInfo);
+					view.dom.removeEventListener('focusin', onFocusChange);
+					view.dom.removeEventListener('focusout', onFocusChange);
 					awareness.off('change', awarenessListener);
 					awareness.setLocalStateField(cursorStateField, null);
 				}
@@ -66298,11 +67659,25 @@ ${nextLine.slice(indentLevel + 2)}`;
 			init: (initargs, state) => {
 				// TODO: check if plugin order matches and fix
 				const ystate = ySyncPluginKey.getState(state);
-				const _undoManager = undoManager || new UndoManager(ystate.type, {
-					trackedOrigins: new Set([ySyncPluginKey].concat(trackedOrigins)),
-					deleteFilter: item => defaultDeleteFilter(item, protectedNodes),
-					captureTransaction: tr => tr.meta.get('addToHistory') !== false
-				});
+				let _undoManager = undoManager;
+				if (!_undoManager) {
+					// Y.UndoManager registers a `doc.on('destroy', …)` listener in its
+					// constructor that UndoManager.destroy() never removes. When the doc
+					// outlives the editor (e.g. several editors sharing one provider), that
+					// listener keeps the UndoManager — and everything it references —
+					// reachable from the doc, leaking memory on every editor destroy.
+					// We only own the lifecycle of a manager we create here, so capture the
+					// listener(s) it adds and remove them when the plugin view is destroyed.
+					const doc = ystate.doc;
+					const destroyListenersBefore = new Set(doc ? doc._observers.get('destroy') : []);
+					_undoManager = new UndoManager(ystate.type, {
+						trackedOrigins: new Set([ySyncPluginKey].concat(trackedOrigins)),
+						deleteFilter: item => defaultDeleteFilter(item, protectedNodes),
+						captureTransaction: tr => tr.meta.get('addToHistory') !== false
+					});
+					const destroyListenersAfter = doc ? doc._observers.get('destroy') : new Set();
+					_undoManager._yTiptapDocDestroyListeners = Array.from(destroyListenersAfter || []).filter(listener => !destroyListenersBefore.has(listener));
+				}
 				return {
 					undoManager: _undoManager,
 					prevSel: null,
@@ -66360,10 +67735,3073 @@ ${nextLine.slice(indentLevel + 2)}`;
 			return {
 				destroy: () => {
 					undoManager.destroy();
+					// Remove the doc 'destroy' listener Y.UndoManager fails to clean up
+					// (only for managers we created — see state.init above).
+					const leakedDestroyListeners = undoManager._yTiptapDocDestroyListeners;
+					if (leakedDestroyListeners && undoManager.doc) {
+						leakedDestroyListeners.forEach(listener => undoManager.doc.off('destroy', listener));
+						undoManager._yTiptapDocDestroyListeners = null;
+					}
 				}
 			};
 		}
 	});
+
+	// prosemirror-tables sizes a table to the sum of its column widths ONLY when every
+	// column carries an explicit width (its `fixedWidth` path). Otherwise the table
+	// width is auto: a resize just redistributes space inside it (neighbours shrink)
+	// and cells stop wrapping. A fresh table has no widths, so we give each column an
+	// equal share of the current wrapper width once it is laid out. Because the widths
+	// then sum to the wrapper, widening one column pushes the total past the wrapper
+	// (which scrolls) instead of stealing from its neighbours, and cells keep wrapping.
+	const tableColwidthKey = new PluginKey('noteTableColwidthDefaults');
+	const MIN_COLUMN_WIDTH = 25;
+	// border-collapse paints the outer cell borders ~1px beyond the table box, so a
+	// column-width sum equal to the wrapper overflows it by a hairline. Reserve it.
+	const TABLE_BORDER_ALLOWANCE = 2;
+
+	// Per-column view of the first row (prosemirror-tables sizes columns from it):
+	// `known` holds every explicit width, `hasMissing` flags any column without one,
+	// `columns` is the expanded count (colspans unrolled).
+	function tableColumnState(tableNode) {
+		const firstRow = tableNode.firstChild;
+		const known = [];
+		let hasMissing = false;
+		let columns = 0;
+		if (firstRow) {
+			firstRow.forEach(cell => {
+				const span = cell.attrs.colspan || 1;
+				const colwidth = cell.attrs.colwidth;
+				for (let i = 0; i < span; i++) {
+					columns++;
+					const width = Array.isArray(colwidth) ? colwidth[i] : 0;
+					if (width) {
+						known.push(width);
+					} else {
+						hasMissing = true;
+					}
+				}
+			});
+		}
+		return {
+			known,
+			hasMissing,
+			columns
+		};
+	}
+
+	// Give only the columns that lack a width one, leaving sized columns untouched:
+	// - a brand-new table (nothing sized) is filled equally to the wrapper width, so it
+	//   fills the column with no hairline scroll;
+	// - a column inserted into an already-sized table gets a base width (the mean of the
+	//   existing ones) and the table grows by it — the set widths are preserved, not
+	//   rebuilt to 100%.
+	// Editable only — a read-only view fills via CSS and must not be mutated.
+	function applyMeasuredColwidths(view) {
+		if (!view.editable) {
+			return;
+		}
+		const {
+			state
+		} = view;
+		let tr = null;
+		state.doc.descendants((node, pos) => {
+			if (node.type.name !== 'table') {
+				// Tables never live inside a textblock (paragraph/heading/code), so don't
+				// walk their text — keeps this off the hot path on large documents.
+				return !node.isTextblock;
+			}
+			const {
+				known,
+				hasMissing,
+				columns
+			} = tableColumnState(node);
+			if (!hasMissing || !columns) {
+				return false;
+			}
+			let fillWidth;
+			if (known.length === 0) {
+				const dom = view.nodeDOM(pos);
+				const wrapper = dom instanceof HTMLElement ? dom.classList.contains('tableWrapper') ? dom : dom.closest('.tableWrapper') : null;
+				const available = (wrapper ? wrapper.clientWidth : 0) - TABLE_BORDER_ALLOWANCE;
+				if (available <= 0) {
+					return false;
+				}
+				fillWidth = Math.max(MIN_COLUMN_WIDTH, Math.floor(available / columns));
+			} else {
+				const mean = known.reduce((sum, width) => sum + width, 0) / known.length;
+				fillWidth = Math.max(MIN_COLUMN_WIDTH, Math.round(mean));
+			}
+			tr = tr || state.tr;
+			state.doc.nodesBetween(pos, pos + node.nodeSize, (cell, cellPos) => {
+				if (cell.type.name === 'tableCell' || cell.type.name === 'tableHeader') {
+					const span = cell.attrs.colspan || 1;
+					const colwidth = cell.attrs.colwidth;
+					// Preserve existing per-column entries; fill only the missing ones.
+					let changed = false;
+					const next = Array.from({
+						length: span
+					}, (_, i) => {
+						const width = Array.isArray(colwidth) ? colwidth[i] : 0;
+						if (width) {
+							return width;
+						}
+						changed = true;
+						return fillWidth;
+					});
+					if (changed) {
+						tr.setNodeAttribute(cellPos, 'colwidth', next);
+					}
+				}
+				return true;
+			});
+			return false;
+		});
+		if (tr) {
+			// Not an editing step — keep it out of the undo stack.
+			tr.setMeta('addToHistory', false);
+			view.dispatch(tr);
+		}
+	}
+	function createTableColwidthPlugin() {
+		return new Plugin({
+			key: tableColwidthKey,
+			view: editorView => {
+				const schedule = targetView => {
+					requestAnimationFrame(() => applyMeasuredColwidths(targetView));
+				};
+				return {
+					update: (updatedView, prevState) => {
+						if (updatedView.state.doc === prevState.doc) {
+							return;
+						}
+
+						// Only backfill on a local structural edit (table insert, column add,
+						// resize of a legacy table). Skipping remote/initial-load changes keeps
+						// this from silently writing width attrs into the shared Yjs document on
+						// mere open and from baking one client's screen width into everyone's copy.
+						// No ySync plugin (non-collaborative editor) → getState is undefined → local.
+						const syncState = ySyncPluginKey.getState(updatedView.state);
+						if (syncState?.isChangeOrigin) {
+							return;
+						}
+						schedule(updatedView);
+					}
+				};
+			}
+		});
+	}
+	const tableTouchResizeKey = new PluginKey('noteTableTouchResize');
+	// Finger-friendly zone around a column border where a touch starts a resize.
+	const TOUCH_RESIZE_TOLERANCE = 24;
+
+	// prosemirror-tables' columnResizing listens to mouse events only, so a touch drag
+	// on the handle just scrolls the wrapper. This bridges touch → the exact mouse
+	// events the resize plugin expects: arm the handle at the border, start the drag,
+	// stream moves, and suppress wrapper scroll while dragging.
+	// Coupled to prosemirror-tables@1.8.5 internals: the `resize-cursor` class (arm
+	// signal), drag listeners on the doc's defaultView, and the legacy `!event.which`
+	// guard. Revisit this bridge if that dependency is bumped.
+	function createTableTouchResizePlugin() {
+		return new Plugin({
+			key: tableTouchResizeKey,
+			view: editorView => {
+				let engaged = false;
+				// Resolve against the editor's own document, not the top window — the plugin
+				// dispatches its drag listeners on `view.dom.ownerDocument.defaultView`, so an
+				// iframe/webview mount must target that window, not the global one.
+				const ownerDoc = editorView.dom.ownerDocument;
+				const win = ownerDoc.defaultView ?? window;
+				const cellAt = (x, y) => {
+					let node = ownerDoc.elementFromPoint(x, y);
+					while (node && node.nodeName !== 'TD' && node.nodeName !== 'TH') {
+						if (node.classList && node.classList.contains('ProseMirror')) {
+							return null;
+						}
+						node = node.parentNode;
+					}
+					return node instanceof HTMLElement ? node : null;
+				};
+				const fireMouse = (target, type, x, y) => {
+					const event = new MouseEvent(type, {
+						bubbles: true,
+						cancelable: true,
+						view: win,
+						clientX: x,
+						clientY: y,
+						button: 0,
+						buttons: type === 'mouseup' ? 0 : 1
+					});
+					// The resize plugin's move handler bails on `!event.which`, and the
+					// constructor can't set it — pin it for the held-button events.
+					Object.defineProperty(event, 'which', {
+						value: type === 'mouseup' ? 0 : 1
+					});
+					target.dispatchEvent(event);
+				};
+				const endDrag = (x, y) => {
+					engaged = false;
+					fireMouse(win, 'mouseup', x, y);
+				};
+				const onTouchStart = event => {
+					if (!editorView.editable || event.touches.length !== 1) {
+						return;
+					}
+					const touch = event.touches[0];
+					const cell = cellAt(touch.clientX, touch.clientY);
+					if (!cell) {
+						return;
+					}
+					const rect = cell.getBoundingClientRect();
+					const nearRight = rect.right - touch.clientX <= TOUCH_RESIZE_TOLERANCE;
+					const nearLeft = touch.clientX - rect.left <= TOUCH_RESIZE_TOLERANCE;
+					if (!nearRight && !nearLeft) {
+						return;
+					}
+
+					// Snap the arming move to the exact border so the plugin's small
+					// handleWidth still catches it regardless of the finger's offset.
+					const edgeX = nearRight ? rect.right : rect.left;
+					fireMouse(cell, 'mousemove', edgeX, touch.clientY);
+					// resize-cursor confirms the plugin armed a handle (e.g. not the last,
+					// non-resizable column). If it did not, leave the touch to scroll.
+					if (!editorView.dom.classList.contains('resize-cursor')) {
+						return;
+					}
+					fireMouse(cell, 'mousedown', edgeX, touch.clientY);
+					engaged = true;
+					event.preventDefault();
+				};
+				const onTouchMove = event => {
+					if (!engaged) {
+						return;
+					}
+
+					// A second finger during the drag: commit at the last point and release,
+					// so the column never freezes with the wrapper free to scroll under it.
+					if (event.touches.length !== 1) {
+						const first = event.touches[0];
+						endDrag(first ? first.clientX : 0, first ? first.clientY : 0);
+						return;
+					}
+					const touch = event.touches[0];
+					// Keep the wrapper from scrolling while a column is being dragged.
+					event.preventDefault();
+					fireMouse(win, 'mousemove', touch.clientX, touch.clientY);
+				};
+				const onTouchEnd = event => {
+					if (!engaged) {
+						return;
+					}
+					const touch = event.changedTouches[0];
+					endDrag(touch ? touch.clientX : 0, touch ? touch.clientY : 0);
+				};
+				const {
+					dom
+				} = editorView;
+				dom.addEventListener('touchstart', onTouchStart, {
+					passive: false
+				});
+				dom.addEventListener('touchmove', onTouchMove, {
+					passive: false
+				});
+				dom.addEventListener('touchend', onTouchEnd);
+				dom.addEventListener('touchcancel', onTouchEnd);
+				return {
+					destroy: () => {
+						dom.removeEventListener('touchstart', onTouchStart);
+						dom.removeEventListener('touchmove', onTouchMove);
+						dom.removeEventListener('touchend', onTouchEnd);
+						dom.removeEventListener('touchcancel', onTouchEnd);
+					}
+				};
+			}
+		});
+	}
+	const TABLE_CELL_ASSET_MARKER_GRAMMAR = String.raw`\uE000noteTableAsset(\d+)\uE001`;
+	const TABLE_CELL_LINE_SEPARATOR = '\u001F';
+	function rangesOverlap(left, right) {
+		return left.start < right.end && right.start < left.end;
+	}
+	function findCanonicalAssetRanges(rawText) {
+		return findNoteAssetMatches(rawText).map(({
+			start,
+			end
+		}) => ({
+			start,
+			end
+		}));
+	}
+	function findEscapedCanonicalAssetRanges(rawText) {
+		return findNoteAssetMatches(rawText, true).filter(({
+			start
+		}) => isEscapedAt(rawText, start)).map(({
+			start,
+			end
+		}) => ({
+			start: start - 1,
+			end
+		}));
+	}
+	function findEnrichedAssetRanges(rawText) {
+		return findValidEnrichedAssetMatches(rawText).map(({
+			start,
+			end
+		}) => ({
+			start,
+			end
+		}));
+	}
+	function findEscapedEnrichedAssetRanges(rawText) {
+		return parseAllEnrichedAssets(rawText).filter(({
+			start
+		}) => isEscapedAt(rawText, start)).map(({
+			start,
+			end
+		}) => ({
+			start: start - 1,
+			end
+		}));
+	}
+	function excludeContainedRanges(ranges, containers) {
+		let containerIndex = 0;
+		let furthestContainerEnd = -1;
+		return ranges.filter(range => {
+			while (containerIndex < containers.length && containers[containerIndex].start <= range.start) {
+				furthestContainerEnd = Math.max(furthestContainerEnd, containers[containerIndex].end);
+				containerIndex++;
+			}
+			return furthestContainerEnd < range.end;
+		});
+	}
+	function mergeAssetRanges(rawText, referenceLinks) {
+		const escapedAssetRanges = [...findEscapedCanonicalAssetRanges(rawText), ...findEscapedEnrichedAssetRanges(rawText)].sort((left, right) => left.start - right.start);
+		const canonicalRanges = excludeContainedRanges(findCanonicalAssetRanges(rawText), escapedAssetRanges);
+		const enrichedRanges = excludeContainedRanges(findEnrichedAssetRanges(rawText), escapedAssetRanges);
+		const assetRanges = [];
+		let canonicalIndex = 0;
+		let enrichedIndex = 0;
+		while (canonicalIndex < canonicalRanges.length && enrichedIndex < enrichedRanges.length) {
+			const canonicalRange = canonicalRanges[canonicalIndex];
+			const enrichedRange = enrichedRanges[enrichedIndex];
+			if (rangesOverlap(canonicalRange, enrichedRange)) {
+				assetRanges.push(enrichedRange);
+				enrichedIndex++;
+				while (canonicalIndex < canonicalRanges.length && rangesOverlap(enrichedRange, canonicalRanges[canonicalIndex])) {
+					canonicalIndex++;
+				}
+			} else if (canonicalRange.start < enrichedRange.start) {
+				assetRanges.push(canonicalRange);
+				canonicalIndex++;
+			} else {
+				assetRanges.push(enrichedRange);
+				enrichedIndex++;
+			}
+		}
+		const mergedRanges = [...assetRanges, ...canonicalRanges.slice(canonicalIndex), ...enrichedRanges.slice(enrichedIndex)];
+		const markedCell = replaceTableCellAssetsWithMarkers(rawText, mergedRanges);
+		const visibleMarkers = new Set();
+		const lexer = new sharedMarked.Lexer();
+		lexer.tokens.links = referenceLinks;
+		findVisibleAssetMarkers(lexer.inlineTokens(markedCell.markdown), markedCell.assetByMarker, visibleMarkers);
+		const markers = Array.from(markedCell.assetByMarker.keys());
+		return mergedRanges.filter((range, index) => visibleMarkers.has(markers[index]));
+	}
+	function replaceTableCellAssetsWithMarkers(rawText, assetRanges) {
+		const usedMarkerIds = new Set();
+		const markerRe = new RegExp(TABLE_CELL_ASSET_MARKER_GRAMMAR, 'g');
+		let markerMatch = markerRe.exec(rawText);
+		while (markerMatch) {
+			usedMarkerIds.add(markerMatch[1]);
+			markerMatch = markerRe.exec(rawText);
+		}
+		let markdown = '';
+		let lastEnd = 0;
+		let nextMarkerId = 0;
+		const assetByMarker = new Map();
+		for (const {
+			start,
+			end
+		} of assetRanges) {
+			while (usedMarkerIds.has(String(nextMarkerId))) {
+				nextMarkerId++;
+			}
+			const marker = `\uE000noteTableAsset${nextMarkerId}\uE001`;
+			markdown += rawText.slice(lastEnd, start) + marker;
+			assetByMarker.set(marker, rawText.slice(start, end));
+			usedMarkerIds.add(String(nextMarkerId));
+			nextMarkerId++;
+			lastEnd = end;
+		}
+		return {
+			markdown: markdown + rawText.slice(lastEnd),
+			assetByMarker
+		};
+	}
+	function parseTableCellAsset(assetMarkdown, h) {
+		const tokens = sharedMarked.lexer(`${assetMarkdown}\n`).filter(token => token.type !== 'space');
+		return h.parseChildren(tokens);
+	}
+	function findInlineHtmlTagRanges(text) {
+		const ranges = [];
+		for (let index = 0; index < text.length; index++) {
+			if (text[index] !== '<' || !/^(?:[A-Za-z!?]|\/[A-Za-z])/.test(text.slice(index + 1, index + 3))) {
+				continue;
+			}
+			let quote = null;
+			let closed = false;
+			for (let end = index + 1; end < text.length; end++) {
+				const character = text[end];
+				if (quote !== null) {
+					if (character === quote) {
+						quote = null;
+					}
+					continue;
+				}
+				if (character === '"' || character === "'") {
+					quote = character;
+				} else if (character === '>') {
+					ranges.push({
+						start: index,
+						end: end + 1
+					});
+					index = end;
+					closed = true;
+					break;
+				}
+			}
+			if (!closed) {
+				break;
+			}
+		}
+		return ranges;
+	}
+	function findVisibleAssetMarkers(tokens, assetByMarker, markers) {
+		const markerRe = new RegExp(TABLE_CELL_ASSET_MARKER_GRAMMAR, 'g');
+		for (const token of tokens) {
+			if (token?.type === 'codespan' || token?.type === 'image') {
+				continue;
+			}
+			if (Array.isArray(token?.tokens)) {
+				findVisibleAssetMarkers(token.tokens, assetByMarker, markers);
+				continue;
+			}
+			if (typeof token?.text !== 'string') {
+				continue;
+			}
+			const htmlTagRanges = findInlineHtmlTagRanges(token.text);
+			let htmlTagIndex = 0;
+			let markerMatch = markerRe.exec(token.text);
+			while (markerMatch) {
+				while (htmlTagIndex < htmlTagRanges.length && htmlTagRanges[htmlTagIndex].end <= markerMatch.index) {
+					htmlTagIndex++;
+				}
+				const htmlTagRange = htmlTagRanges[htmlTagIndex];
+				const isInsideHtmlTag = htmlTagRange && htmlTagRange.start <= markerMatch.index && markerMatch.index < htmlTagRange.end;
+				if (!isInsideHtmlTag && assetByMarker.has(markerMatch[0])) {
+					markers.add(markerMatch[0]);
+				}
+				markerMatch = markerRe.exec(token.text);
+			}
+		}
+	}
+	function findKnownAssetMarkers(value, assetByMarker, markers) {
+		if (typeof value === 'string') {
+			const markerRe = new RegExp(TABLE_CELL_ASSET_MARKER_GRAMMAR, 'g');
+			let markerMatch = markerRe.exec(value);
+			while (markerMatch) {
+				if (assetByMarker.has(markerMatch[0])) {
+					markers.add(markerMatch[0]);
+				}
+				markerMatch = markerRe.exec(value);
+			}
+			return;
+		}
+		if (Array.isArray(value)) {
+			for (const item of value) {
+				findKnownAssetMarkers(item, assetByMarker, markers);
+			}
+			return;
+		}
+		if (value && typeof value === 'object') {
+			for (const nestedValue of Object.values(value)) {
+				findKnownAssetMarkers(nestedValue, assetByMarker, markers);
+			}
+		}
+	}
+	function getReferenceLabel(token) {
+		if (!['link', 'image'].includes(token?.type) || typeof token?.raw !== 'string') {
+			return null;
+		}
+		const raw = token.raw.trimEnd();
+		if (!raw.endsWith(']')) {
+			return null;
+		}
+		let openingBracket = raw.length - 2;
+		while (openingBracket >= 0 && (raw[openingBracket] !== '[' || isEscapedAt(raw, openingBracket))) {
+			openingBracket--;
+		}
+		if (openingBracket < 0) {
+			return null;
+		}
+		const prefix = raw.slice(0, openingBracket).trimEnd();
+		let label;
+		if (prefix.endsWith(']') && !isEscapedAt(prefix, prefix.length - 1)) {
+			label = raw.slice(openingBracket + 1, -1) || token.text || '';
+		} else if (openingBracket === (raw.startsWith('!') ? 1 : 0)) {
+			label = raw.slice(openingBracket + 1, -1);
+		} else {
+			return null;
+		}
+		return label.replace(/\s+/g, ' ').toLowerCase();
+	}
+	function collectReferenceLinks(tokens, links = Object.create(null)) {
+		for (const token of tokens) {
+			const label = getReferenceLabel(token);
+			if (label && typeof token?.href === 'string') {
+				links[label] = {
+					href: token.href,
+					title: token.title ?? undefined
+				};
+			}
+			if (Array.isArray(token?.tokens)) {
+				collectReferenceLinks(token.tokens, links);
+			}
+		}
+		return links;
+	}
+	function splitInlineContentAtAssets(inlineContent, assetByMarker, h) {
+		const blocks = [];
+		let paragraphContent = [];
+		const flushParagraph = () => {
+			const hasContent = paragraphContent.some(node => node?.type !== 'text' || typeof node.text === 'string' && node.text.trim().length > 0);
+			if (hasContent) {
+				blocks.push({
+					type: 'paragraph',
+					content: paragraphContent
+				});
+			}
+			paragraphContent = [];
+		};
+		const markerRe = new RegExp(TABLE_CELL_ASSET_MARKER_GRAMMAR, 'g');
+		for (const node of inlineContent) {
+			if (node?.type !== 'text' || typeof node.text !== 'string') {
+				const nestedMarkers = new Set();
+				findKnownAssetMarkers(node, assetByMarker, nestedMarkers);
+				if (nestedMarkers.size > 0) {
+					flushParagraph();
+					for (const marker of nestedMarkers) {
+						const assetMarkdown = assetByMarker.get(marker);
+						if (assetMarkdown) {
+							blocks.push(...parseTableCellAsset(assetMarkdown, h));
+						}
+					}
+					continue;
+				}
+				paragraphContent.push(node);
+				continue;
+			}
+			let lastEnd = 0;
+			let markerMatch = markerRe.exec(node.text);
+			while (markerMatch) {
+				const marker = markerMatch[0];
+				const assetMarkdown = assetByMarker.get(marker);
+				if (!assetMarkdown) {
+					markerMatch = markerRe.exec(node.text);
+					continue;
+				}
+				const textBefore = node.text.slice(lastEnd, markerMatch.index);
+				if (textBefore.length > 0) {
+					paragraphContent.push({
+						...node,
+						text: textBefore
+					});
+				}
+				flushParagraph();
+				blocks.push(...parseTableCellAsset(assetMarkdown, h));
+				lastEnd = markerMatch.index + marker.length;
+				markerMatch = markerRe.exec(node.text);
+			}
+			const textAfter = node.text.slice(lastEnd);
+			if (textAfter.length > 0) {
+				paragraphContent.push({
+					...node,
+					text: textAfter
+				});
+			}
+		}
+		flushParagraph();
+		return blocks;
+	}
+	function buildCellChildren(cell, h) {
+		// Defensive access: fall back gracefully if marked internal API changes
+		const cellText = cell && typeof cell === 'object' && 'text' in cell ? cell.text : '';
+		const rawText = cellText.replaceAll(TABLE_CELL_LINE_SEPARATOR, ' ');
+		const tokens = cell && typeof cell === 'object' && 'tokens' in cell ? cell.tokens : [];
+		if (!rawText.includes('fileId=')) {
+			if (!rawText.includes('\\') && cellText === rawText) {
+				return [{
+					type: 'paragraph',
+					content: h.parseInline(tokens)
+				}];
+			}
+			const lexer = new sharedMarked.Lexer();
+			lexer.tokens.links = collectReferenceLinks(tokens);
+			return [{
+				type: 'paragraph',
+				content: h.parseInline(lexer.inlineTokens(rawText))
+			}];
+		}
+		const referenceLinks = collectReferenceLinks(tokens);
+		const assetRanges = mergeAssetRanges(rawText, referenceLinks);
+		if (assetRanges.length === 0) {
+			const lexer = new sharedMarked.Lexer();
+			lexer.tokens.links = referenceLinks;
+			return [{
+				type: 'paragraph',
+				content: h.parseInline(lexer.inlineTokens(rawText))
+			}];
+		}
+		const lexer = new sharedMarked.Lexer();
+		lexer.tokens.links = referenceLinks;
+		const markedCell = replaceTableCellAssetsWithMarkers(rawText, assetRanges);
+		const inlineContent = h.parseInline(lexer.inlineTokens(markedCell.markdown));
+		const children = splitInlineContentAtAssets(inlineContent, markedCell.assetByMarker, h);
+		return children.length > 0 ? children : [{
+			type: 'paragraph',
+			content: []
+		}];
+	}
+	const CustomTable = Table.extend({
+		addNodeView() {
+			return ({
+				node
+			}) => {
+				const View = this.options.View;
+				const cellMinWidth = this.options.cellMinWidth;
+				return new View(node, cellMinWidth);
+			};
+		},
+		addProseMirrorPlugins() {
+			const plugins = [];
+			if (this.options.resizable) {
+				plugins.push(columnResizing({
+					handleWidth: this.options.handleWidth,
+					cellMinWidth: this.options.cellMinWidth,
+					defaultCellMinWidth: this.options.cellMinWidth,
+					View: this.options.View,
+					lastColumnResizable: this.options.lastColumnResizable
+				}));
+				plugins.push(createTableColwidthPlugin());
+				plugins.push(createTableTouchResizePlugin());
+			}
+			plugins.push(tableEditing({
+				allowTableNodeSelection: this.options.allowTableNodeSelection
+			}));
+			return plugins;
+		},
+		parseMarkdown(token, h) {
+			const rows = [];
+			if (token.header) {
+				const headerCells = [];
+				token.header.forEach(cell => {
+					headerCells.push(h.createNode('tableHeader', {}, buildCellChildren(cell, h)));
+				});
+				rows.push(h.createNode('tableRow', {}, headerCells));
+			}
+			if (token.rows) {
+				token.rows.forEach(row => {
+					const bodyCells = [];
+					row.forEach(cell => {
+						bodyCells.push(h.createNode('tableCell', {}, buildCellChildren(cell, h)));
+					});
+					rows.push(h.createNode('tableRow', {}, bodyCells));
+				});
+			}
+			return h.createNode('table', undefined, rows);
+		},
+		renderMarkdown(node, h) {
+			return renderTableToMarkdown({
+				...node,
+				content: escapeInlineText(node.content)
+			}, h, {
+				cellLineSeparator: ' '
+			});
+		}
+	});
+	const backgroundColorAttribute = {
+		default: null,
+		parseHTML: element => element.getAttribute('data-background-color') || null,
+		renderHTML: attrs => {
+			if (!attrs.backgroundColor) {
+				return {};
+			}
+			return {
+				'data-background-color': attrs.backgroundColor,
+				style: `background-color: ${attrs.backgroundColor};`
+			};
+		}
+	};
+	const CustomTableCell = TableCell.extend({
+		addAttributes() {
+			return {
+				...this.parent?.(),
+				backgroundColor: backgroundColorAttribute
+			};
+		}
+	});
+	const CustomTableHeader = TableHeader.extend({
+		addAttributes() {
+			return {
+				...this.parent?.(),
+				backgroundColor: backgroundColorAttribute
+			};
+		}
+	});
+	function createTableExtensions() {
+		return [TableKit.configure({
+			table: false,
+			tableCell: false,
+			tableHeader: false
+		}), CustomTable.configure({
+			resizable: true
+		}), CustomTableCell, CustomTableHeader];
+	}
+
+	// src/image.ts
+	var inputRegex = /(?:^|\s)(!\[(.+|:?)]\((\S+)(?:(?:\s+)["'](\S+)["'])?\))$/;
+	var Image = Node3.create({
+		name: "image",
+		addOptions() {
+			return {
+				inline: false,
+				allowBase64: false,
+				HTMLAttributes: {},
+				resize: false
+			};
+		},
+		inline() {
+			return this.options.inline;
+		},
+		group() {
+			return this.options.inline ? "inline" : "block";
+		},
+		draggable: true,
+		addAttributes() {
+			return {
+				src: {
+					default: null
+				},
+				alt: {
+					default: null
+				},
+				title: {
+					default: null
+				},
+				width: {
+					default: null
+				},
+				height: {
+					default: null
+				}
+			};
+		},
+		parseHTML() {
+			return [{
+				tag: this.options.allowBase64 ? "img[src]" : 'img[src]:not([src^="data:"])'
+			}];
+		},
+		renderHTML({
+			HTMLAttributes
+		}) {
+			return ["img", mergeAttributes(this.options.HTMLAttributes, HTMLAttributes)];
+		},
+		parseMarkdown: (token, helpers) => {
+			return helpers.createNode("image", {
+				src: token.href,
+				title: token.title,
+				alt: token.text
+			});
+		},
+		renderMarkdown: node => {
+			var _a, _b, _c, _d, _e, _f;
+			const src = (_b = (_a = node.attrs) == null ? void 0 : _a.src) != null ? _b : "";
+			const alt = (_d = (_c = node.attrs) == null ? void 0 : _c.alt) != null ? _d : "";
+			const title = (_f = (_e = node.attrs) == null ? void 0 : _e.title) != null ? _f : "";
+			return title ? `![${alt}](${src} "${title}")` : `![${alt}](${src})`;
+		},
+		addNodeView() {
+			if (!this.options.resize || !this.options.resize.enabled || typeof document === "undefined") {
+				return null;
+			}
+			const {
+				directions,
+				minWidth,
+				minHeight,
+				alwaysPreserveAspectRatio
+			} = this.options.resize;
+			return ({
+				node,
+				getPos,
+				HTMLAttributes,
+				editor
+			}) => {
+				const el = document.createElement("img");
+				Object.entries(HTMLAttributes).forEach(([key, value]) => {
+					if (value != null) {
+						switch (key) {
+							case "width":
+							case "height":
+								break;
+							default:
+								el.setAttribute(key, value);
+								break;
+						}
+					}
+				});
+				el.src = HTMLAttributes.src;
+				const nodeView = new ResizableNodeView({
+					element: el,
+					editor,
+					node,
+					getPos,
+					onResize: (width, height) => {
+						el.style.width = `${width}px`;
+						el.style.height = `${height}px`;
+					},
+					onCommit: (width, height) => {
+						const pos = getPos();
+						if (pos === void 0) {
+							return;
+						}
+						this.editor.chain().setNodeSelection(pos).updateAttributes(this.name, {
+							width,
+							height
+						}).run();
+					},
+					onUpdate: (updatedNode, _decorations, _innerDecorations) => {
+						if (updatedNode.type !== node.type) {
+							return false;
+						}
+						return true;
+					},
+					options: {
+						directions,
+						min: {
+							width: minWidth,
+							height: minHeight
+						},
+						preserveAspectRatio: alwaysPreserveAspectRatio === true
+					}
+				});
+				const dom = nodeView.dom;
+				dom.style.visibility = "hidden";
+				dom.style.pointerEvents = "none";
+				el.onload = () => {
+					dom.style.visibility = "";
+					dom.style.pointerEvents = "";
+				};
+				return nodeView;
+			};
+		},
+		addCommands() {
+			return {
+				setImage: options => ({
+					commands
+				}) => {
+					return commands.insertContent({
+						type: this.name,
+						attrs: options
+					});
+				}
+			};
+		},
+		addInputRules() {
+			return [nodeInputRule({
+				find: inputRegex,
+				type: this.type,
+				getAttributes: match => {
+					const [,, alt, src, title] = match;
+					return {
+						src,
+						alt,
+						title
+					};
+				}
+			})];
+		}
+	});
+
+	const IMAGE_EXTENSIONS = new Set(['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg', 'avif', 'heic', 'heif']);
+	const VIDEO_EXTENSIONS = new Set(['mp4', 'webm', 'mov', 'm4v', 'mkv', 'avi', 'wmv', 'flv', '3gp', 'mpeg', 'mpg']);
+	function getFileExtension(fileName) {
+		if (!main_core.Type.isStringFilled(fileName)) {
+			return '';
+		}
+		const normalizedName = fileName.trim();
+		const dotPosition = normalizedName.lastIndexOf('.');
+		if (dotPosition <= 0 || dotPosition === normalizedName.length - 1) {
+			return '';
+		}
+		return normalizedName.slice(dotPosition + 1).toLowerCase();
+	}
+	function resolveTargetNodeTypeByPayload(payload) {
+		const mimeType = String(payload?.mimeType || '').toLowerCase();
+		if (mimeType.startsWith('image/')) {
+			return 'imageAttachment';
+		}
+		if (mimeType.startsWith('video/')) {
+			return 'video';
+		}
+		const extension = getFileExtension(payload?.name);
+		if (IMAGE_EXTENSIONS.has(extension)) {
+			return 'imageAttachment';
+		}
+		if (VIDEO_EXTENSIONS.has(extension)) {
+			return 'video';
+		}
+		return 'fileAttachment';
+	}
+	function buildAttachmentAttrs(payload, targetNodeType) {
+		const documentId = toPositiveInt(payload.documentId);
+		const fileId = toPositiveInt(payload.fileId);
+		const showUrl = main_core.Type.isStringFilled(payload.showUrl) ? payload.showUrl : '';
+		if (documentId === null || fileId === null || showUrl === '') {
+			return null;
+		}
+		const downloadUrl = main_core.Type.isStringFilled(payload.downloadUrl) ? payload.downloadUrl : showUrl;
+		const viewerAttrs = main_core.Type.isPlainObject(payload.viewerAttrs) ? payload.viewerAttrs : {};
+		const attrs = {
+			name: payload.name || '',
+			size: Number(payload.size) || 0,
+			mimeType: payload.mimeType || '',
+			fileId,
+			documentId,
+			downloadUrl,
+			showUrl,
+			viewerAttrs
+		};
+		if (targetNodeType === 'video') {
+			return {
+				...attrs,
+				src: showUrl,
+				controls: true
+			};
+		}
+		return attrs;
+	}
+	function isUploaderInteractiveElement(target) {
+		if (!(target instanceof Element)) {
+			return false;
+		}
+		const interactiveSelectors = ['input[type="file"]', 'button', 'a', '[role="button"]', '.ui-tile-uploader-selector-link', '.ui-tile-uploader-item-menu', '.ui-tile-uploader-item-remove', '.ui-tile-uploader-item-state-remove'];
+		return interactiveSelectors.some(selector => target.closest(selector));
+	}
+	class VueUploadAssetNodeView {
+		constructor({
+			node,
+			editor,
+			getPos,
+			extension,
+			dataType,
+			className
+		}) {
+			this.node = node;
+			this.editor = editor;
+			this.getPos = getPos;
+			this.extension = extension;
+			this.dataType = dataType;
+			this.className = className;
+			this.app = null;
+			this.vm = null;
+			this.lastEditable = Boolean(this.editor?.isEditable);
+			this.dom = document.createElement('div');
+			this.dom.setAttribute('data-type', dataType);
+			this.dom.className = className;
+			this.dom.contentEditable = 'false';
+			this.applyVisibility(this.lastEditable);
+			this.handleEditorUpdate = () => this.syncEditableState();
+			this.editor?.on('update', this.handleEditorUpdate);
+			this.mountVue();
+		}
+		applyVisibility(editable) {
+			main_core.Dom.style(this.dom, 'display', editable ? '' : 'none');
+			this.dom.setAttribute('aria-hidden', editable ? 'false' : 'true');
+		}
+		syncEditableState() {
+			const editable = Boolean(this.editor?.isEditable);
+			if (editable === this.lastEditable) {
+				return;
+			}
+			this.lastEditable = editable;
+			this.applyVisibility(editable);
+			if (!editable) {
+				this.unmountVue();
+				return;
+			}
+			if (!this.vm) {
+				this.mountVue();
+			}
+		}
+		unmountVue() {
+			this.app?.unmount();
+			this.app = null;
+			this.vm = null;
+			this.dom.innerHTML = '';
+		}
+		mountVue() {
+			const component = this.extension.options.nodeViewComponent;
+			if (!component || !this.editor?.isEditable) {
+				return;
+			}
+			this.app = ui_vue3.BitrixVue.createApp({
+				components: {
+					UploadAssetNodeViewComponent: component
+				},
+				data: () => ({
+					attrs: this.node.attrs
+				}),
+				methods: {
+					handleComplete: payload => {
+						setTimeout(() => {
+							this.replaceWithAttachment(payload);
+						}, 0);
+					}
+				},
+				// language=Vue
+				template: `
+				<UploadAssetNodeViewComponent
+					:attrs="attrs"
+					:on-complete="handleComplete"
+				/>
+			`
+			});
+			this.vm = this.app.mount(this.dom);
+		}
+		update(node) {
+			if (node.type !== this.node.type) {
+				return false;
+			}
+			this.node = node;
+			this.syncEditableState();
+			if (this.vm) {
+				this.vm.attrs = node.attrs;
+			}
+			return true;
+		}
+		replaceWithAttachment(payload) {
+			if (!main_core.Type.isPlainObject(payload)) {
+				return;
+			}
+			const pos = this.resolvePos();
+			if (pos === null) {
+				return;
+			}
+			const targetNodeType = resolveTargetNodeTypeByPayload(payload);
+			const schemaNodeType = this.editor?.state?.schema?.nodes?.[targetNodeType];
+			if (!schemaNodeType) {
+				return;
+			}
+			const attrs = buildAttachmentAttrs(payload, targetNodeType);
+			if (!attrs) {
+				return;
+			}
+			const newNode = schemaNodeType.create(attrs);
+			// uploadAsset is a block node; an inline result (image) must be wrapped in a paragraph
+			// so it stays legal at the document root after the replace.
+			const paragraphType = this.editor?.state?.schema?.nodes?.paragraph;
+			const nodeToInsert = newNode.isInline && paragraphType ? paragraphType.create(null, newNode) : newNode;
+			const tr = this.editor.state.tr.replaceWith(pos, pos + this.node.nodeSize, nodeToInsert);
+			this.editor.view.dispatch(tr);
+		}
+		resolvePos() {
+			if (!main_core.Type.isFunction(this.getPos)) {
+				return null;
+			}
+			const pos = this.getPos();
+			return Number.isInteger(pos) && pos >= 0 ? pos : null;
+		}
+		stopEvent(event) {
+			if (!(event.target instanceof Element) || !this.dom.contains(event.target)) {
+				return false;
+			}
+			const isInteractive = isUploaderInteractiveElement(event.target);
+			switch (event.type) {
+				case 'mousedown':
+				case 'mouseup':
+				case 'click':
+				case 'touchstart':
+				case 'touchend':
+				case 'keydown':
+				case 'keypress':
+				case 'keyup':
+					return isInteractive;
+				case 'dragenter':
+				case 'dragover':
+				case 'dragleave':
+				case 'drop':
+					// Keep uploader drag-and-drop working inside the node.
+					return true;
+				case 'dragstart':
+					// Allow dragging the node itself, but keep controls non-draggable.
+					return isInteractive;
+				default:
+					return isInteractive;
+			}
+		}
+		ignoreMutation() {
+			return true;
+		}
+		destroy() {
+			if (this.handleEditorUpdate) {
+				this.editor?.off('update', this.handleEditorUpdate);
+				this.handleEditorUpdate = null;
+			}
+			this.unmountVue();
+		}
+	}
+
+	// Float images cap at 70% of the container so wrapped text keeps a usable column; center/no-align
+	// can fill the width.
+	const FLOAT_MAX_PCT$1 = 70;
+
+	// Minimum readable text column width. If the hypothetical column beside a floated image (or
+	// between two facing floats) falls below this value, the image is demoted to a block.
+	const MIN_COLUMN_REM = 12;
+
+	// Text gap between a float and the adjacent text column (matches the 2rem margin in editor.css).
+	const FLOAT_GAP_REM = 2;
+
+	// Mirrors the `note-mobile` signal used by heading-block-node-view / code-block-overlay.
+	function isMobileLayout() {
+		return typeof document !== 'undefined' && document.documentElement.classList.contains('note-mobile');
+	}
+	class VueAttachmentNodeView {
+		constructor({
+			node,
+			editor,
+			getPos,
+			extension,
+			dataType,
+			className,
+			inline,
+			uploadService
+		}) {
+			this.node = node;
+			this.editor = editor;
+			this.getPos = getPos;
+			this.extension = extension;
+			this.dataType = dataType;
+			this.className = className;
+			this.inline = inline === true;
+			this.uploadService = uploadService || null;
+			// Capability flag: enables resize/align/stack logic for this node type.
+			this.resizable = Boolean(extension?.options?.resizable);
+			this.app = null;
+			this.vm = null;
+			this.dom = document.createElement(this.inline ? 'span' : 'div');
+			this.dom.setAttribute('data-type', dataType);
+			this.dom.className = className;
+			this.dom.contentEditable = 'false';
+			// Shared marker class so shared CSS modifiers (align, stacked) apply to any resizable node.
+			if (this.resizable) {
+				this.dom.classList.add('note-editor-media');
+			}
+			// Drag-resize drives the block width directly; suppress layout recompute while it runs.
+			this.isResizing = false;
+			this._stackRafId = undefined;
+			// One observer watches both the block (this.dom — live drag width) and its container (the text
+			// column). The container ref is tracked so we can re-observe after a DnD reparent.
+			this._resizeObserver = null;
+			this._observedParent = null;
+			this._handleImgLoad = () => this.scheduleStackUpdate();
+			this.syncLayout();
+			this.syncDiffState();
+			this.mountVue();
+
+			// ResizeObserver wiring is deferred to scheduleStackUpdate() because this.dom is not yet in the
+			// document at construction time (ProseMirror inserts it after the view is created).
+
+			// editable can flip after mount (doc loads read-only, then setEditable(true)) without a
+			// node update, so sync the prop on every editor update to keep resize handles in sync.
+			this.handleEditorUpdate = () => {
+				if (this.vm) {
+					this.vm.editable = Boolean(this.editor?.isEditable);
+				}
+				// Non-resizable nodes (e.g. files) have no stacking layout — skip the per-update layout work.
+				if (!this.resizable) {
+					return;
+				}
+				// Recompute stacking: a sibling image may have been added/removed or had its align changed.
+				this.scheduleStackUpdate();
+			};
+			this.editor?.on('update', this.handleEditorUpdate);
+		}
+		mountVue() {
+			const component = this.extension.options.nodeViewComponent;
+			if (!component) {
+				return;
+			}
+			this.app = ui_vue3.BitrixVue.createApp({
+				components: {
+					AttachmentNodeViewComponent: component
+				},
+				data: () => ({
+					attrs: this.node.attrs,
+					defaultTypeMessage: this.extension.options.defaultTypeMessage,
+					editable: Boolean(this.editor?.isEditable),
+					selected: false,
+					// onReplace is null unless an uploadService was injected (image node only).
+					canReplace: Boolean(this.uploadService)
+				}),
+				methods: {
+					handleResize: width => this.applyWidth(width),
+					handleResizeActive: active => {
+						this.isResizing = Boolean(active);
+						// On drag end, reconcile the layout (clears the raw drag px, re-applies the
+						// committed width / stacking) even if the commit was a no-op that skips update().
+						if (!active) {
+							this.syncLayout();
+							this.scheduleStackUpdate();
+						}
+					},
+					// Per-frame drag tick: recompute stacking so the dragged image (and its partner) demote
+					// live, not relying on ResizeObserver delivery timing.
+					handleResizeProgress: () => this.scheduleStackUpdate(),
+					handleAlign: align => this.applyAlign(align),
+					handleReplace: () => this.replaceImage()
+				},
+				// language=Vue
+				template: `
+				<AttachmentNodeViewComponent
+					:attrs="attrs"
+					:default-type-message="defaultTypeMessage"
+					:editable="editable"
+					:selected="selected"
+					:on-resize="handleResize"
+					:on-resize-active="handleResizeActive"
+					:on-resize-progress="handleResizeProgress"
+					:on-align="handleAlign"
+					:on-replace="canReplace ? handleReplace : null"
+				/>
+			`
+			});
+			this.vm = this.app.mount(this.dom);
+		}
+		update(node) {
+			if (node.type !== this.node.type) {
+				return false;
+			}
+			this.node = node;
+			this.syncLayout();
+			this.syncDiffState();
+			this.scheduleStackUpdate();
+			if (this.vm) {
+				this.vm.attrs = node.attrs;
+				this.vm.editable = Boolean(this.editor?.isEditable);
+			}
+			return true;
+		}
+
+		// [version-diff] Reflect the diffState attr as a class on the block DOM (the element in block flow,
+		// same place align/stacking classes live). The attr is part of the model and survives resolve, so
+		// the paint never drops after an image loads — unlike a positional node decoration.
+		syncDiffState() {
+			const state = this.node.attrs.diffState;
+			this.dom.classList.toggle('note-version-diff-node--added', state === 'added');
+			this.dom.classList.toggle('note-version-diff-node--removed', state === 'removed');
+		}
+
+		// Effective rendered width of this node's block in px. offsetWidth reflects the live drag px, the
+		// applied % and the max-width cap; attrs.width is only a fallback when the DOM isn't laid out yet.
+		// The --stacked class never changes width/max-width, so this value is stable across demote, which
+		// is what keeps the decision from oscillating.
+		#ownWidth(containerWidth) {
+			const measured = this.dom.offsetWidth;
+			if (measured > 0) {
+				return measured;
+			}
+			const w = this.node.attrs.width;
+			if (Number.isFinite(w) && w > 0) {
+				return containerWidth * Math.min(w, FLOAT_MAX_PCT$1) / 100;
+			}
+			return containerWidth * 0.5;
+		}
+
+		// Effective rendered width of the partner block in px, measured from its own DOM via nodeDOM.
+		#partnerWidth(partner, containerWidth) {
+			const dom = this.editor.view?.nodeDOM?.(partner.pos);
+			if (dom instanceof HTMLElement && dom.offsetWidth > 0) {
+				return dom.offsetWidth;
+			}
+			const w = partner.node.attrs.width;
+			if (Number.isFinite(w) && w > 0) {
+				return containerWidth * Math.min(w, FLOAT_MAX_PCT$1) / 100;
+			}
+			return containerWidth * 0.5;
+		}
+
+		// Returns the adjacent sibling { node, pos } in the same parent that is an imageAttachment with the
+		// opposite float align, or null if no such sibling exists. Partner is an immediate neighbour, so
+		// its pos is derivable from this node's pos and nodeSize.
+		#findOppositeFloatSibling() {
+			const pos = this.resolvePos();
+			if (pos === null) {
+				return null;
+			}
+			const myAlign = this.node.attrs.align;
+			if (myAlign !== 'left' && myAlign !== 'right') {
+				return null;
+			}
+			const oppositeAlign = myAlign === 'left' ? 'right' : 'left';
+			const $pos = this.editor.state.doc.resolve(pos);
+			const parent = $pos.parent;
+			const myIndex = $pos.index();
+
+			// Check immediately preceding sibling.
+			if (myIndex > 0) {
+				const prev = parent.child(myIndex - 1);
+				if (prev.type.name === this.node.type.name && prev.attrs.align === oppositeAlign) {
+					return {
+						node: prev,
+						pos: pos - prev.nodeSize
+					};
+				}
+			}
+
+			// Check immediately following sibling.
+			if (myIndex < parent.childCount - 1) {
+				const next = parent.child(myIndex + 1);
+				if (next.type.name === this.node.type.name && next.attrs.align === oppositeAlign) {
+					return {
+						node: next,
+						pos: pos + this.node.nodeSize
+					};
+				}
+			}
+			return null;
+		}
+
+		// Pure decision: returns true when this resizable node should be demoted to a block.
+		// Inputs: container width, own rendered width, optional partner rendered width, constants.
+		// Does not touch the DOM.
+		shouldStack() {
+			if (!this.resizable) {
+				return false;
+			}
+			const align = this.node.attrs.align;
+			if (align !== 'left' && align !== 'right') {
+				return false;
+			}
+			const container = this.dom.parentElement;
+			if (!container) {
+				return false;
+			}
+
+			// Content-box width of the container (same base used for % width resolution).
+			const style = window.getComputedStyle(container);
+			const containerWidth = container.clientWidth - parseFloat(style.paddingLeft || '0') - parseFloat(style.paddingRight || '0');
+			if (containerWidth <= 0) {
+				return false;
+			}
+			const rootFontSize = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+			const minColumnPx = MIN_COLUMN_REM * rootFontSize;
+			const floatGapPx = FLOAT_GAP_REM * rootFontSize;
+			const partner = this.#findOppositeFloatSibling();
+			let usedWidth = this.#ownWidth(containerWidth) + floatGapPx;
+			if (partner !== null) {
+				usedWidth += this.#partnerWidth(partner, containerWidth) + floatGapPx;
+			}
+			const hypotheticalColumn = containerWidth - usedWidth;
+			return hypotheticalColumn < minColumnPx;
+		}
+
+		// Applies the stack decision to the DOM. Runs even during drag-resize: toggling --stacked changes
+		// only float/position, not width, so it can't fight the live px width (unlike syncLayout).
+		applyStackDecision() {
+			const stack = this.shouldStack();
+			this.dom.classList.toggle('note-editor-media--stacked', stack);
+
+			// Apply the same decision to the facing partner synchronously: the pair shares one
+			// hypothetical column, so the boolean is identical for both. This makes the partner demote
+			// during drag instead of lagging until the release transaction fires its 'update'. Toggling
+			// the class doesn't change width, so the partner's ResizeObserver won't refire from this.
+			const partner = this.#findOppositeFloatSibling();
+			if (partner !== null) {
+				const partnerDom = this.editor.view?.nodeDOM?.(partner.pos);
+				if (partnerDom instanceof HTMLElement) {
+					partnerDom.classList.toggle('note-editor-media--stacked', stack);
+				}
+			}
+		}
+
+		// Coalesces multiple calls within the same frame into a single applyStackDecision().
+		// Also keeps the ResizeObserver and img load listener wired across re-render / DnD reparent.
+		scheduleStackUpdate() {
+			if (this.resizable) {
+				this.#syncObserver();
+				this.#ensureMediaLoadListener();
+			}
+			if (this._stackRafId !== undefined) {
+				return;
+			}
+			this._stackRafId = requestAnimationFrame(() => {
+				this._stackRafId = undefined;
+				this.applyStackDecision();
+			});
+		}
+
+		// Observe both this.dom (live drag width) and its container (text column). this.dom keeps its
+		// identity for the node's lifetime; the container changes on a DnD reparent, so re-observe it.
+		#syncObserver() {
+			if (!this._resizeObserver) {
+				this._resizeObserver = new ResizeObserver(() => this.scheduleStackUpdate());
+				this._resizeObserver.observe(this.dom);
+			}
+			const parent = this.dom.parentElement;
+			if (parent !== this._observedParent) {
+				if (this._observedParent) {
+					this._resizeObserver.unobserve(this._observedParent);
+				}
+				if (parent) {
+					this._resizeObserver.observe(parent);
+				}
+				this._observedParent = parent;
+			}
+		}
+
+		// Idempotent across re-render / replaceImage: attach a one-shot load listener to the current
+		// not-yet-loaded media element. Marking the element prevents double-binding.
+		// Uses 'load' for <img> and 'loadedmetadata' for <video> (fires once dimensions are known).
+		#ensureMediaLoadListener() {
+			const img = this.dom.querySelector('img');
+			if (img && !img.complete && img.dataset.noteStackLoadBound !== 'true') {
+				img.dataset.noteStackLoadBound = 'true';
+				img.addEventListener('load', this._handleImgLoad, {
+					once: true
+				});
+			}
+			const video = this.dom.querySelector('video');
+			if (video && video.readyState < 1 && video.dataset.noteStackLoadBound !== 'true') {
+				video.dataset.noteStackLoadBound = 'true';
+				video.addEventListener('loadedmetadata', this._handleImgLoad, {
+					once: true
+				});
+			}
+		}
+
+		// Layout (align float + width %) lives on the DOM element that participates in block flow
+		// (this.dom), not inside the Vue component — only there does float make following text wrap, and
+		// only the block can carry a percentage width (a shrink-to-fit float can't resolve a percentage
+		// width on its child). Non-resizable blocks (file) have no layout.
+		syncLayout() {
+			if (!this.resizable) {
+				return;
+			}
+
+			// A drag-resize drives the block width directly; recomputing here would overwrite the live
+			// width (reset to the committed %) and cause visible jitter.
+			if (this.isResizing) {
+				return;
+			}
+			const align = this.node.attrs.align;
+			const suffix = align === 'left' || align === 'right' ? align : 'center';
+			this.dom.classList.remove('note-editor-media--align-left', 'note-editor-media--align-right', 'note-editor-media--align-center');
+			this.dom.classList.add(`note-editor-media--align-${suffix}`);
+			const width = this.node.attrs.width;
+			if (Number.isFinite(width) && width > 0) {
+				this.dom.style.width = `${Math.min(width, 100)}%`;
+			} else {
+				// No width → natural size via CSS fit-content.
+				this.dom.style.width = '';
+			}
+		}
+
+		// ProseMirror calls these on selectable nodes when the NodeSelection enters/leaves.
+		// Defining selectNode means PM no longer adds the ProseMirror-selectednode class itself,
+		// so we add it manually to keep the selection outline.
+		selectNode() {
+			this.dom.classList.add('ProseMirror-selectednode');
+			if (this.vm) {
+				// Sync editable here too: a click changes the selection, not the doc, so the
+				// 'update' listener may not have fired since a read-only → editable switch.
+				this.vm.editable = Boolean(this.editor?.isEditable);
+				this.vm.selected = true;
+			}
+
+			// On mobile, selecting an image focuses the contenteditable and pops the soft keyboard, which
+			// just covers the image while resizing. Drop DOM focus — ProseMirror keeps the NodeSelection in
+			// its own state, so the outline/handles/overlay stay; tapping text refocuses and reopens it.
+			if (isMobileLayout()) {
+				requestAnimationFrame(() => {
+					if (this.isNodeSelected()) {
+						this.editor?.view?.dom?.blur?.();
+						if (document.activeElement instanceof HTMLElement && this.dom.contains(document.activeElement)) {
+							document.activeElement.blur();
+						}
+					}
+				});
+			}
+		}
+		deselectNode() {
+			this.dom.classList.remove('ProseMirror-selectednode');
+			if (this.vm) {
+				this.vm.selected = false;
+			}
+		}
+		applyWidth(width) {
+			const pos = this.resolvePos();
+			if (pos === null) {
+				return;
+			}
+
+			// width is a percentage of the container (>0..100), fractional allowed.
+			const normalized = Number.isFinite(width) && width > 0 ? Math.min(width, 100) : null;
+			const tr = this.editor.state.tr.setNodeMarkup(pos, null, {
+				...this.node.attrs,
+				width: normalized
+			});
+			// setNodeMarkup recreates the node and drops the NodeSelection — restore it so the
+			// image stays selected (handles visible) right after a resize.
+			tr.setSelection(NodeSelection.create(tr.doc, pos));
+			this.editor.view.dispatch(tr);
+		}
+		applyAlign(align) {
+			const pos = this.resolvePos();
+			if (pos === null) {
+				return;
+			}
+
+			// center is the default — store as null so it never serializes into markdown.
+			const normalized = align === 'left' || align === 'right' ? align : null;
+			// Switching to a float caps the width at the float ceiling so the stored % matches the
+			// rendered (CSS-capped) width — otherwise a 90%-wide centered image keeps 90 but renders 70.
+			let width = this.node.attrs.width;
+			if (normalized !== null && Number.isFinite(width) && width > FLOAT_MAX_PCT$1) {
+				width = FLOAT_MAX_PCT$1;
+			}
+			const tr = this.editor.state.tr.setNodeMarkup(pos, null, {
+				...this.node.attrs,
+				align: normalized,
+				width
+			});
+			tr.setSelection(NodeSelection.create(tr.doc, pos));
+			this.editor.view.dispatch(tr);
+		}
+
+		// Replace the image in place: pick a new file, upload it, then swap fileId/urls while keeping
+		// width + align. The old fileId is left orphaned for the background cleanup to reclaim later.
+		async replaceImage() {
+			if (!this.uploadService) {
+				return;
+			}
+			const file = await this.uploadService.pickFile({
+				accept: 'image/*'
+			});
+			if (!file) {
+				return;
+			}
+			const uploaded = await this.uploadService.uploadFileWithMeta(file);
+			const attrs = buildAttachmentAttrs({
+				name: uploaded.name,
+				size: uploaded.size,
+				mimeType: uploaded.type,
+				fileId: uploaded.fileId,
+				documentId: this.uploadService.documentId,
+				showUrl: uploaded.showUrl,
+				downloadUrl: uploaded.downloadUrl,
+				viewerAttrs: uploaded.viewerAttrs
+			}, 'imageAttachment');
+			if (!attrs) {
+				return;
+			}
+			const pos = this.resolvePos();
+			if (pos === null) {
+				return;
+			}
+			const tr = this.editor.state.tr.setNodeMarkup(pos, null, {
+				...attrs,
+				width: this.node.attrs.width,
+				align: this.node.attrs.align
+			});
+			tr.setSelection(NodeSelection.create(tr.doc, pos));
+			this.editor.view.dispatch(tr);
+		}
+		resolvePos() {
+			if (!main_core.Type.isFunction(this.getPos)) {
+				return null;
+			}
+			const pos = this.getPos();
+			return Number.isInteger(pos) && pos >= 0 ? pos : null;
+		}
+		isNodeSelected() {
+			const pos = this.resolvePos();
+			const selection = this.editor?.state?.selection;
+			if (pos === null || !selection) {
+				return false;
+			}
+			return selection.from === pos && selection.to === pos + this.node.nodeSize;
+		}
+		#isActivatableTarget(target) {
+			return Boolean(target.closest('.note-editor-image-attachment-link') || target.closest('.note-editor-file-attachment-link') || target.closest('.note-editor-video-player'));
+		}
+		stopEvent(event) {
+			if (!(event.target instanceof Element) || !this.dom.contains(event.target)) {
+				return false;
+			}
+
+			// Resize handles and the overlay (align/replace) drive their own UI — keep ProseMirror out of
+			// it so clicking a control doesn't move the selection or drop the NodeSelection.
+			if (event.target.closest('.note-editor-media-resize-handle') || event.target.closest('.note-editor-media-overlay')) {
+				return true;
+			}
+
+			// Read-only: only let activatable targets (viewer link / video player) through.
+			if (!this.editor?.isEditable) {
+				return this.#isActivatableTarget(event.target);
+			}
+
+			// Editable: let ProseMirror own the event — click-to-select via handleClickOn, plus native
+			// drag-and-drop of the selected node. The viewer opens via the link's native click once
+			// the node is already selected (handleClickOn steps aside in that case).
+			return false;
+		}
+		ignoreMutation() {
+			return true;
+		}
+		destroy() {
+			if (this.handleEditorUpdate) {
+				this.editor?.off('update', this.handleEditorUpdate);
+				this.handleEditorUpdate = null;
+			}
+			if (this._resizeObserver) {
+				this._resizeObserver.disconnect();
+				this._resizeObserver = null;
+				this._observedParent = null;
+			}
+			if (this._stackRafId !== undefined) {
+				cancelAnimationFrame(this._stackRafId);
+				this._stackRafId = undefined;
+			}
+			this.app?.unmount();
+			this.app = null;
+			this.vm = null;
+		}
+	}
+
+	function normalizeFileSize(bytes) {
+		const value = Number(bytes);
+		if (!Number.isFinite(value) || value < 1) {
+			return '0 B';
+		}
+		const units = ['B', 'KB', 'MB', 'GB'];
+		const index = Math.min(Math.floor(Math.log(value) / Math.log(1024)), units.length - 1);
+		const normalized = value / 1024 ** index;
+		const rounded = normalized >= 10 || index === 0 ? Math.round(normalized) : Number(normalized.toFixed(1));
+		return `${rounded} ${units[index]}`;
+	}
+
+	function buildBaseAttributes(config) {
+		return {
+			name: {
+				default: main_core.Loc.getMessage(config.defaultNameMessage)
+			},
+			size: {
+				default: 0
+			},
+			mimeType: {
+				default: ''
+			},
+			fileId: {
+				default: null
+			},
+			documentId: {
+				default: null
+			},
+			downloadUrl: {
+				default: null
+			},
+			showUrl: {
+				default: null
+			},
+			viewerAttrs: {
+				default: null
+			},
+			// Set when the backend reports the fileId as unresolvable (not linked / missing source).
+			// Session-transient: cleared on a successful re-resolve, so access granted later recovers.
+			unavailable: {
+				default: false
+			},
+			// Rendered width as a percentage of the container (image resize), >0..100, fractional
+			// allowed (0.01% steps). null = natural size. Persisted in markdown as `width=N` (bare
+			// number = percent).
+			width: {
+				default: null
+			},
+			// Float-based image alignment: 'left' | 'right'. null = center (default, no float).
+			// Persisted in markdown as `align=left|right` (center is never serialized).
+			align: {
+				default: null
+			},
+			// [version-diff] 'added' | 'removed' | null. Set only inside the read-only version preview to
+			// tag the node in the diff; the NodeView turns it into a CSS class. Not serialized to markdown
+			// (renderMarkdown emits only fileId/width/align) and preserved across resolve (see
+			// resolve-file-nodes.js), so it rides along like width/align.
+			diffState: {
+				default: null
+			}
+		};
+	}
+	function resolveExtraAttributes(config) {
+		if (main_core.Type.isFunction(config.extraAttrs)) {
+			return config.extraAttrs();
+		}
+		return config.extraAttrs || {};
+	}
+	function resolveExtraDataAttributes(config, attrs) {
+		if (main_core.Type.isFunction(config.dataAttributes)) {
+			return config.dataAttributes(attrs);
+		}
+		return config.dataAttributes || {};
+	}
+	function resolveParseHtml(config) {
+		if (Array.isArray(config.parseHTMLTags) && config.parseHTMLTags.length > 0) {
+			return config.parseHTMLTags.map(tag => ({
+				tag
+			}));
+		}
+		return [{
+			tag: `div[data-type="${config.dataType}"]`
+		}];
+	}
+	function renderFallback(config, attrs) {
+		return [config.inline === true ? 'span' : 'div', {
+			class: `${config.className}-fallback`
+		}, attrs.name || main_core.Loc.getMessage(config.defaultNameMessage), ' · ', attrs.mimeType || main_core.Loc.getMessage(config.defaultTypeMessage), ' · ', normalizeFileSize(attrs.size)];
+	}
+	function createCommandFactory(config) {
+		return function commandFactory() {
+			if (!config.commandName) {
+				return {};
+			}
+			return {
+				[config.commandName]: attrs => ({
+					commands
+				}) => commands.insertContent({
+					type: config.name,
+					attrs
+				})
+			};
+		};
+	}
+	class FileAssetNodeFactory {
+		static normalizeSize(bytes) {
+			return normalizeFileSize(bytes);
+		}
+		static createNode(config) {
+			const isInline = config.inline === true;
+			return Node3.create({
+				name: config.name,
+				group: isInline ? 'inline' : 'block',
+				inline: isInline,
+				atom: true,
+				selectable: true,
+				draggable: true,
+				addAttributes() {
+					return {
+						...buildBaseAttributes(config),
+						...resolveExtraAttributes(config)
+					};
+				},
+				parseHTML() {
+					return resolveParseHtml(config);
+				},
+				renderHTML({
+					HTMLAttributes,
+					node
+				}) {
+					return [isInline ? 'span' : 'div', mergeAttributes(HTMLAttributes, {
+						'data-type': config.dataType,
+						class: config.className,
+						contenteditable: 'false',
+						'data-file-id': node.attrs.fileId || '',
+						'data-document-id': node.attrs.documentId || '',
+						'data-download-url': node.attrs.downloadUrl || '',
+						'data-show-url': node.attrs.showUrl || '',
+						...resolveExtraDataAttributes(config, node.attrs)
+					}), renderFallback(config, node.attrs)];
+				},
+				addOptions() {
+					return {
+						nodeViewComponent: config.nodeViewComponent || null,
+						defaultTypeMessage: config.defaultTypeMessage,
+						// Injected for image replace (see media-extensions/registry). null for file/video.
+						uploadService: null,
+						// Enables resize/align/float-stacking for this node type (image, video).
+						resizable: config.resizable === true
+					};
+				},
+				addNodeView() {
+					return ({
+						node,
+						editor,
+						getPos
+					}) => new VueAttachmentNodeView({
+						node,
+						editor,
+						getPos,
+						extension: this,
+						dataType: config.dataType,
+						className: config.className,
+						inline: isInline,
+						uploadService: this.options.uploadService
+					});
+				},
+				addProseMirrorPlugins() {
+					const nodeName = config.name;
+					return [new Plugin({
+						props: {
+							// Deterministic click-to-select: PM's native click handling leaves inline atoms
+							// selected-or-not depending on click x-position. Force a NodeSelection instead.
+							handleClickOn(view, pos, node, nodePos, event, direct) {
+								if (!direct || node.type.name !== nodeName || !view.editable) {
+									return false;
+								}
+								if (event.target instanceof Element && event.target.closest('.note-editor-media-resize-handle')) {
+									return false;
+								}
+
+								// Already selected: let the click pass through natively (link → viewer),
+								// and don't block ProseMirror's drag-and-drop of the selected node.
+								const {
+									selection
+								} = view.state;
+								if (selection instanceof NodeSelection && selection.from === nodePos) {
+									return false;
+								}
+								view.dispatch(view.state.tr.setSelection(NodeSelection.create(view.state.doc, nodePos)));
+								return true;
+							}
+						}
+					})];
+				},
+				addCommands: createCommandFactory(config),
+				renderMarkdown(node) {
+					const fileId = Number(node?.attrs?.fileId);
+					if (!Number.isInteger(fileId) || fileId <= 0) {
+						return '';
+					}
+
+					// width is a percentage (>0..100, fractional allowed); serialize as a bare number.
+					const width = Number(node?.attrs?.width);
+					const widthAttr = Number.isFinite(width) && width > 0 && width <= 100 ? ` width=${width}` : '';
+					const align = node?.attrs?.align;
+					const alignAttr = align === 'left' || align === 'right' ? ` align=${align}` : '';
+					return `[[${config.assetType} fileId=${fileId}${widthAttr}${alignAttr}]]`;
+				}
+			});
+		}
+		static createAttrs(file) {
+			if (!file) {
+				return {
+					name: main_core.Loc.getMessage('NOTE_EDITOR_FILE_ATTACHMENT_UNTITLED'),
+					size: 0,
+					mimeType: '',
+					fileId: null,
+					documentId: null,
+					downloadUrl: null,
+					showUrl: null,
+					viewerAttrs: null
+				};
+			}
+			return {
+				name: file.getName?.() || main_core.Loc.getMessage('NOTE_EDITOR_FILE_ATTACHMENT_UNTITLED'),
+				size: file.getSize?.() || 0,
+				mimeType: file.getType?.() || '',
+				fileId: file.getServerFileId?.() || null,
+				documentId: null,
+				downloadUrl: file.getDownloadUrl?.() || null,
+				showUrl: file.getDownloadUrl?.() || null,
+				viewerAttrs: file.getViewerAttrs?.() || null
+			};
+		}
+	}
+
+	// Attachment node attributes are part of the collaboratively edited document, so any editor
+	// can author them. The `ui` viewer evaluates some of its `data-*` inputs (`data-actions` goes
+	// through eval, `data-viewer-type-class` through BX.getClass), hence an allow list instead of
+	// a deny list: only keys the backend is the sole source of truth for reach the DOM.
+	const ALLOWED_KEYS = ['viewerType', 'viewerResized'];
+	function isPrimitive(value) {
+		return main_core.Type.isString(value) || main_core.Type.isNumber(value) || main_core.Type.isBoolean(value);
+	}
+	function buildViewerDataAttrs(source) {
+		const result = {};
+		if (!main_core.Type.isPlainObject(source)) {
+			return result;
+		}
+		Object.entries(source).forEach(([key, value]) => {
+			if (!ALLOWED_KEYS.includes(key) || !isPrimitive(value)) {
+				return;
+			}
+			result[`data-${main_core.Text.toKebabCase(key)}`] = value;
+		});
+		return result;
+	}
+
+	// Attachment urls come from node attributes, so they are author-controlled too. Beyond the
+	// obvious `javascript:` in href, `data-src` is fetched by the viewer, hence the origin check:
+	// a foreign host would render its own content inside the portal page.
+	function sanitizeAttachmentUrl(url) {
+		if (!main_core.Type.isStringFilled(url)) {
+			return null;
+		}
+
+		// Trimmed once and reused: what gets returned must be exactly what was checked,
+		// otherwise the string reaching the DOM is not the string that passed the policy.
+		const candidate = url.trim();
+		let parsed = null;
+		try {
+			parsed = new URL(candidate, window.location.origin);
+		} catch {
+			return null;
+		}
+
+		// Blob urls are inert outside their own context, and `URL.origin` for them differs
+		// between browsers — comparing it would break upload previews for no security gain.
+		if (parsed.protocol === 'blob:') {
+			return candidate;
+		}
+		if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+			return null;
+		}
+		if (parsed.origin !== window.location.origin) {
+			return null;
+		}
+
+		// Not `parsed.toString()`: attachment urls are relative paths and absolutising them
+		// is not this fix's business.
+		return candidate;
+	}
+
+	const AttachmentNodeViewBaseComponent = {
+		props: {
+			attrs: {
+				type: Object,
+				required: true
+			},
+			defaultTypeMessage: {
+				type: String,
+				default: 'NOTE_EDITOR_FILE_ATTACHMENT_TYPE_FILE'
+			},
+			editable: {
+				type: Boolean,
+				default: false
+			},
+			selected: {
+				type: Boolean,
+				default: false
+			},
+			onResize: {
+				type: Function,
+				default: null
+			},
+			onResizeActive: {
+				type: Function,
+				default: null
+			},
+			onResizeProgress: {
+				type: Function,
+				default: null
+			},
+			onAlign: {
+				type: Function,
+				default: null
+			},
+			onReplace: {
+				type: Function,
+				default: null
+			}
+		},
+		computed: {
+			width() {
+				const value = Number(this.attrs.width);
+				return Number.isFinite(value) && value > 0 ? value : null;
+			},
+			align() {
+				const value = this.attrs.align;
+				return value === 'left' || value === 'right' ? value : 'center';
+			},
+			fileName() {
+				return this.attrs.name || main_core.Loc.getMessage('NOTE_EDITOR_FILE_ATTACHMENT_UNTITLED');
+			},
+			fileType() {
+				return this.attrs.mimeType || main_core.Loc.getMessage(this.defaultTypeMessage);
+			},
+			fileSize() {
+				return normalizeFileSize(this.attrs.size);
+			},
+			// An url that fails the check degrades to '' — the same value these properties already
+			// return when the attribute is missing, so the existing "no url" branches take over.
+			downloadUrl() {
+				return sanitizeAttachmentUrl(this.attrs.downloadUrl) || '';
+			},
+			showUrl() {
+				return sanitizeAttachmentUrl(this.attrs.showUrl) || '';
+			},
+			fileId() {
+				const value = Number(this.attrs.fileId);
+				return Number.isInteger(value) && value > 0 ? value : null;
+			},
+			documentId() {
+				const value = Number(this.attrs.documentId);
+				return Number.isInteger(value) && value > 0 ? value : null;
+			},
+			// Single filtering point for viewer attributes: descendants must never read
+			// `attrs.viewerAttrs` directly, it is author-controlled document data.
+			viewerDataAttrs() {
+				return buildViewerDataAttrs(this.attrs.viewerAttrs);
+			},
+			isUnavailable() {
+				return Boolean(this.attrs.unavailable);
+			},
+			// fileId present but no URL yet and not flagged failed: the resolver is in flight.
+			// Render a skeleton instead of the "Untitled" name fallback during this window.
+			isResolving() {
+				return this.fileId !== null && !this.showUrl && !this.downloadUrl && !this.isUnavailable;
+			},
+			unavailableMessage() {
+				return main_core.Loc.getMessage('NOTE_EDITOR_FILE_ATTACHMENT_UNAVAILABLE');
+			}
+		}
+	};
+
+	const FileAttachmentNodeViewComponent = {
+		extends: AttachmentNodeViewBaseComponent,
+		computed: {
+			fileUrl() {
+				return this.showUrl || this.downloadUrl;
+			},
+			fileViewerAttrs() {
+				// Component-owned attributes go last so node data can never override them.
+				const attrs = {
+					...this.viewerDataAttrs
+				};
+				attrs['data-viewer'] = true;
+				if (this.fileUrl) {
+					attrs['data-src'] = this.fileUrl;
+				}
+				if (main_core.Type.isStringFilled(this.fileName)) {
+					attrs['data-title'] = this.fileName;
+				}
+				attrs.href = this.fileUrl || '#';
+				attrs.target = '_blank';
+				attrs.rel = 'noopener noreferrer';
+				return attrs;
+			}
+		},
+		methods: {
+			handleClick(event) {
+				if (!this.fileUrl) {
+					event.preventDefault();
+				}
+			}
+		},
+		// language=Vue
+		template: `
+		<a
+			class="note-editor-file-attachment-inner note-editor-file-attachment-link"
+			:class="{ 'note-editor-attachment--unavailable': isUnavailable }"
+			v-bind="fileViewerAttrs"
+			:draggable="false"
+			@click="handleClick"
+		>
+			<div class="note-editor-file-attachment-icon" aria-hidden="true">
+				<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+			</div>
+			<div class="note-editor-file-attachment-text">
+				<div class="note-editor-file-attachment-name">
+					<span v-if="isResolving" class="note-editor-attachment-skeleton note-editor-attachment-skeleton--line" aria-hidden="true"></span>
+					<template v-else>{{ isUnavailable ? unavailableMessage : fileName }}</template>
+				</div>
+				<div v-if="!isUnavailable && !isResolving" class="note-editor-file-attachment-extra">{{ fileType }} · {{ fileSize }}</div>
+			</div>
+		</a>
+	`
+	};
+
+	const FileAttachment = FileAssetNodeFactory.createNode({
+		name: 'fileAttachment',
+		dataType: 'fileAttachment',
+		className: 'note-editor-file-attachment',
+		assetType: 'file',
+		defaultNameMessage: 'NOTE_EDITOR_FILE_ATTACHMENT_UNTITLED',
+		defaultTypeMessage: 'NOTE_EDITOR_FILE_ATTACHMENT_TYPE_FILE',
+		nodeViewComponent: FileAttachmentNodeViewComponent
+	});
+
+	// Width is stored as a percentage of the container. Resize is dragged in px (natural for the mouse)
+	// then converted to %. Float media cap at 70% so wrapped text keeps a column; others fill to 100%.
+	const MIN_PCT = 10;
+	const FLOAT_MAX_PCT = 70;
+	const MAX_PCT = 100;
+
+	// Shared resize / align / overlay-pill logic. Host component must provide a `hasMedia` computed.
+	const ResizableMediaMixin = {
+		data() {
+			return {
+				dragging: false,
+				draftWidth: null,
+				startX: 0,
+				startWidth: 0,
+				side: 'right',
+				pendingClientX: 0,
+				rafId: null,
+				pointerId: null,
+				captureEl: null,
+				// Extra translateX applied to the overlay pill so it stays within .note-editor-content.
+				overlayTranslateX: 0,
+				clampRafId: null
+			};
+		},
+		computed: {
+			isFloat() {
+				return this.align === 'left' || this.align === 'right';
+			},
+			showHandles() {
+				return this.editable && this.selected && this.hasMedia && !this.isResolving && !this.isUnavailable;
+			},
+			// Align pill — shown only while the media node is selected.
+			showOverlay() {
+				return this.editable && this.selected && this.hasMedia && !this.isResolving && !this.isUnavailable;
+			},
+			alignTitles() {
+				return {
+					left: main_core.Loc.getMessage('NOTE_EDITOR_TOOLBAR_ALIGN_LEFT'),
+					center: main_core.Loc.getMessage('NOTE_EDITOR_TOOLBAR_ALIGN_CENTER'),
+					right: main_core.Loc.getMessage('NOTE_EDITOR_TOOLBAR_ALIGN_RIGHT')
+				};
+			},
+			overlayStyle() {
+				const shift = this.overlayTranslateX;
+				return {
+					transform: `translateX(calc(-50% + ${shift}px))`
+				};
+			}
+		},
+		watch: {
+			showOverlay(visible) {
+				if (visible) {
+					// Wait for DOM to render the pill before measuring.
+					this.$nextTick(() => {
+						this.scheduleClamp();
+						this.attachClampListeners();
+					});
+				} else {
+					this.detachClampListeners();
+					this.overlayTranslateX = 0;
+				}
+			},
+			// Re-clamp whenever width or alignment changes while the pill is visible.
+			width() {
+				if (this.showOverlay) {
+					this.scheduleClamp();
+				}
+			},
+			align() {
+				if (this.showOverlay) {
+					this.scheduleClamp();
+				}
+			}
+		},
+		beforeUnmount() {
+			this.detachDragListeners();
+			this.detachClampListeners();
+			if (this.rafId !== null) {
+				cancelAnimationFrame(this.rafId);
+				this.rafId = null;
+			}
+			if (this.clampRafId !== null) {
+				cancelAnimationFrame(this.clampRafId);
+				this.clampRafId = null;
+			}
+		},
+		methods: {
+			// Pill clamp: keep .note-editor-media-overlay within .note-editor-content bounds.
+			clampOverlay() {
+				const overlay = this.$el?.querySelector('.note-editor-media-overlay');
+				const content = this.$el?.closest?.('.note-editor-content');
+				if (!overlay || !content) {
+					this.overlayTranslateX = 0;
+					return;
+				}
+				const MARGIN = 4;
+				const oRect = overlay.getBoundingClientRect();
+				const cRect = content.getBoundingClientRect();
+
+				// The pill is currently shifted by overlayTranslateX; derive its base (untransformed)
+				// edges by subtracting the applied shift, so the result is absolute from the center.
+				const baseLeft = oRect.left - this.overlayTranslateX;
+				const baseRight = oRect.right - this.overlayTranslateX;
+				const overLeft = cRect.left + MARGIN - baseLeft;
+				const overRight = baseRight - (cRect.right - MARGIN);
+				let shift = 0;
+				if (overLeft > 0) {
+					shift = overLeft;
+				} else if (overRight > 0) {
+					shift = -overRight;
+				}
+				this.overlayTranslateX = shift;
+			},
+			scheduleClamp() {
+				if (this.clampRafId !== null) {
+					return;
+				}
+				this.clampRafId = requestAnimationFrame(() => {
+					this.clampRafId = null;
+					this.clampOverlay();
+				});
+			},
+			attachClampListeners() {
+				window.addEventListener('resize', this.scheduleClamp, {
+					passive: true
+				});
+				// Scroll on the main content scroller (document capture, as per project convention).
+				document.addEventListener('scroll', this.scheduleClamp, {
+					passive: true,
+					capture: true
+				});
+			},
+			detachClampListeners() {
+				window.removeEventListener('resize', this.scheduleClamp);
+				document.removeEventListener('scroll', this.scheduleClamp, {
+					capture: true
+				});
+			},
+			// The block element (this.dom in the NodeView) carries the width; media fills it 100%.
+			// Resolved via data-type attribute so this mixin is node-agnostic.
+			blockEl() {
+				return this.$el?.closest?.('[data-type]') || null;
+			},
+			containerWidth() {
+				const parent = this.blockEl()?.parentElement;
+				if (!parent) {
+					return 0;
+				}
+
+				// Use the content-box width (the reference a `%` width resolves against), not clientWidth:
+				// the prose container has horizontal padding (heading-anchor gutter), so clientWidth is
+				// wider than the % base. Computing the committed % off clientWidth made every drop ~11%
+				// too small, so the media always snapped narrower on release.
+				const cs = getComputedStyle(parent);
+				return parent.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+			},
+			startResize(side, event) {
+				event.preventDefault();
+				event.stopPropagation();
+				const block = this.blockEl();
+				this.side = side;
+				this.startX = event.clientX;
+				this.startWidth = block ? block.offsetWidth : 0;
+				this.draftWidth = this.startWidth;
+				this.dragging = true;
+
+				// Pointer Events cover mouse + touch with one path; capture keeps the drag glued to the
+				// handle even when the finger/cursor leaves it (touch on mobile would otherwise lose it).
+				this.pointerId = event.pointerId;
+				this.captureEl = event.currentTarget instanceof HTMLElement ? event.currentTarget : null;
+				if (this.captureEl && this.pointerId != null) {
+					try {
+						this.captureEl.setPointerCapture(this.pointerId);
+					} catch {/* capture is best-effort */}
+				}
+
+				// Tell the NodeView to suspend responsive recompute — it would fight the live drag width.
+				if (main_core.Type.isFunction(this.onResizeActive)) {
+					this.onResizeActive(true);
+				}
+				document.addEventListener('pointermove', this.onDrag);
+				document.addEventListener('pointerup', this.stopResize);
+				document.addEventListener('pointercancel', this.stopResize);
+			},
+			onDrag(event) {
+				this.pendingClientX = event.clientX;
+				if (this.rafId !== null) {
+					return;
+				}
+				this.rafId = requestAnimationFrame(() => {
+					this.rafId = null;
+					const containerW = this.containerWidth();
+					if (containerW <= 0) {
+						return;
+					}
+					const cap = this.isFloat ? FLOAT_MAX_PCT : MAX_PCT;
+					const minPx = containerW * MIN_PCT / 100;
+					const maxPx = containerW * cap / 100;
+					const delta = this.pendingClientX - this.startX;
+					const raw = this.side === 'left' ? this.startWidth - delta : this.startWidth + delta;
+					const px = Math.round(Math.min(Math.max(raw, minPx), maxPx));
+					this.draftWidth = px;
+
+					// Live preview straight on the block (px); the commit below converts to %.
+					const block = this.blockEl();
+					if (block) {
+						block.style.width = `${px}px`;
+					}
+
+					// Let the NodeView recompute stacking against the live width every frame.
+					if (main_core.Type.isFunction(this.onResizeProgress)) {
+						this.onResizeProgress();
+					}
+				});
+			},
+			stopResize() {
+				this.detachDragListeners();
+				if (this.rafId !== null) {
+					cancelAnimationFrame(this.rafId);
+					this.rafId = null;
+				}
+				const containerW = this.containerWidth();
+				const finalPx = this.draftWidth;
+				this.dragging = false;
+				this.draftWidth = null;
+
+				// Resume responsive recompute before committing, so the post-commit layout re-applies
+				// the final width (and re-evaluates stacking) instead of leaving the raw drag px.
+				if (main_core.Type.isFunction(this.onResizeActive)) {
+					this.onResizeActive(false);
+				}
+				if (!main_core.Type.isFunction(this.onResize) || !Number.isInteger(finalPx) || finalPx <= 0 || containerW <= 0) {
+					return;
+				}
+				const cap = this.isFloat ? FLOAT_MAX_PCT : MAX_PCT;
+				// Keep two decimals (0.01% steps) so the committed width doesn't snap to a visible %-grid.
+				const rawPct = finalPx / containerW * 100;
+				const pct = Math.round(Math.min(Math.max(rawPct, MIN_PCT), cap) * 100) / 100;
+				this.onResize(pct);
+			},
+			detachDragListeners() {
+				document.removeEventListener('pointermove', this.onDrag);
+				document.removeEventListener('pointerup', this.stopResize);
+				document.removeEventListener('pointercancel', this.stopResize);
+				if (this.captureEl && this.pointerId != null) {
+					try {
+						this.captureEl.releasePointerCapture(this.pointerId);
+					} catch {/* already released */}
+				}
+				this.captureEl = null;
+				this.pointerId = null;
+			},
+			setAlign(value) {
+				if (main_core.Type.isFunction(this.onAlign)) {
+					this.onAlign(value);
+				}
+			}
+		}
+	};
+
+	// Shared resize handles + align/replace overlay pill, used by both image and video node views.
+	const MediaResizeControls = {
+		components: {
+			ImageAlignLeftIcon,
+			ImageAlignCenterIcon,
+			ImageAlignRightIcon,
+			BIcon: ui_iconSet_api_vue.BIcon
+		},
+		props: {
+			showHandles: {
+				type: Boolean,
+				default: false
+			},
+			showOverlay: {
+				type: Boolean,
+				default: false
+			},
+			overlayStyle: {
+				type: Object,
+				default: () => ({})
+			},
+			align: {
+				type: String,
+				default: 'center'
+			},
+			alignTitles: {
+				type: Object,
+				default: () => ({})
+			},
+			onStartResize: {
+				type: Function,
+				default: null
+			},
+			onSetAlign: {
+				type: Function,
+				default: null
+			},
+			// null = no replace button (video); function = show replace button (image)
+			onReplace: {
+				type: Function,
+				default: null
+			},
+			replaceTitle: {
+				type: String,
+				default: ''
+			}
+		},
+		// language=Vue
+		template: `
+		<span
+			v-if="showHandles"
+			class="note-editor-media-resize-handle note-editor-media-resize-handle--left"
+			@pointerdown="onStartResize('left', $event)"
+		></span>
+		<span
+			v-if="showHandles"
+			class="note-editor-media-resize-handle note-editor-media-resize-handle--right"
+			@pointerdown="onStartResize('right', $event)"
+		></span>
+		<div
+			v-if="showOverlay"
+			class="note-editor-media-overlay"
+			:style="overlayStyle"
+			contenteditable="false"
+			@mousedown.prevent
+		>
+			<button
+				type="button"
+				class="note-editor-media-overlay-btn"
+				:class="{ 'note-editor-media-overlay-btn--active': align === 'left' }"
+				:title="alignTitles.left"
+				@click="onSetAlign('left')"
+			>
+				<ImageAlignLeftIcon/>
+			</button>
+			<button
+				type="button"
+				class="note-editor-media-overlay-btn"
+				:class="{ 'note-editor-media-overlay-btn--active': align === 'center' }"
+				:title="alignTitles.center"
+				@click="onSetAlign('center')"
+			>
+				<ImageAlignCenterIcon/>
+			</button>
+			<button
+				type="button"
+				class="note-editor-media-overlay-btn"
+				:class="{ 'note-editor-media-overlay-btn--active': align === 'right' }"
+				:title="alignTitles.right"
+				@click="onSetAlign('right')"
+			>
+				<ImageAlignRightIcon/>
+			</button>
+			<span v-if="onReplace" class="note-editor-media-overlay-divider"></span>
+			<button
+				v-if="onReplace"
+				type="button"
+				class="note-editor-media-overlay-btn"
+				:title="replaceTitle"
+				@click="onReplace()"
+			>
+				<BIcon name="o-change-order" :size="24"/>
+			</button>
+		</div>
+	`
+	};
+
+	const ImageAttachmentNodeViewComponent = {
+		extends: AttachmentNodeViewBaseComponent,
+		mixins: [ResizableMediaMixin],
+		components: {
+			MediaResizeControls
+		},
+		props: {
+			defaultTypeMessage: {
+				type: String,
+				default: 'NOTE_EDITOR_FILE_ATTACHMENT_TYPE_IMAGE'
+			}
+		},
+		computed: {
+			imageUrl() {
+				return this.showUrl || this.downloadUrl;
+			},
+			hasImage() {
+				return main_core.Type.isStringFilled(this.imageUrl);
+			},
+			// Required by ResizableMediaMixin to gate handles/overlay.
+			hasMedia() {
+				return this.hasImage;
+			},
+			replaceTitle() {
+				return main_core.Loc.getMessage('NOTE_EDITOR_IMAGE_REPLACE');
+			},
+			imageViewerAttrs() {
+				// Component-owned attributes go last so node data can never override them.
+				const attrs = {
+					...this.viewerDataAttrs
+				};
+				attrs['data-viewer'] = true;
+				if (main_core.Type.isStringFilled(this.fileName)) {
+					attrs['data-title'] = this.fileName;
+				}
+				attrs.href = this.hasImage ? this.imageUrl : '#';
+				if (this.hasImage) {
+					attrs['data-viewer-preview'] = this.imageUrl;
+					attrs['data-src'] = this.imageUrl;
+				}
+				attrs.target = '_blank';
+				attrs.rel = 'noopener noreferrer';
+				return attrs;
+			}
+		},
+		methods: {
+			handleClick(event) {
+				if (!this.hasImage) {
+					event.preventDefault();
+				}
+			}
+		},
+		// language=Vue
+		template: `
+		<div class="note-editor-image-attachment-inner" :class="{ 'note-editor-attachment--unavailable': isUnavailable }">
+			<div v-if="isUnavailable" class="note-editor-image-attachment-empty">{{ unavailableMessage }}</div>
+			<div v-else-if="isResolving" class="note-editor-image-attachment-loading note-editor-attachment-skeleton" aria-hidden="true"></div>
+			<div v-else class="note-editor-image-attachment-preview" :class="{ 'note-editor-image-attachment-preview--resizing': dragging }">
+				<a
+					class="note-editor-attachment-tile-link note-editor-image-attachment-link"
+					v-bind="imageViewerAttrs"
+					:draggable="false"
+					@click="handleClick"
+				>
+					<img
+						v-if="hasImage"
+						ref="image"
+						class="note-editor-image-attachment-image"
+						:src="imageUrl"
+						:alt="fileName"
+						loading="lazy"
+						draggable="false"
+					/>
+					<span v-else class="note-editor-image-attachment-empty">{{ fileName }}</span>
+				</a>
+				<MediaResizeControls
+					:show-handles="showHandles"
+					:show-overlay="showOverlay"
+					:overlay-style="overlayStyle"
+					:align="align"
+					:align-titles="alignTitles"
+					:on-start-resize="startResize"
+					:on-set-align="setAlign"
+					:on-replace="onReplace"
+					:replace-title="replaceTitle"
+				/>
+			</div>
+		</div>
+	`
+	};
+
+	const ImageAttachment = FileAssetNodeFactory.createNode({
+		name: 'imageAttachment',
+		dataType: 'imageAttachment',
+		className: 'note-editor-image-attachment',
+		assetType: 'image',
+		defaultNameMessage: 'NOTE_EDITOR_FILE_ATTACHMENT_UNTITLED',
+		defaultTypeMessage: 'NOTE_EDITOR_FILE_ATTACHMENT_TYPE_IMAGE',
+		nodeViewComponent: ImageAttachmentNodeViewComponent,
+		resizable: true
+	});
+
+	function isInProgressStatus(status) {
+		return status === ui_uploader_core.FileStatus.PREPARING || status === ui_uploader_core.FileStatus.PENDING || status === ui_uploader_core.FileStatus.UPLOADING;
+	}
+	function resolveAcceptedFileTypes(assetKind) {
+		switch (assetKind) {
+			case 'image':
+				return ['image/*'];
+			case 'video':
+				return ['video/*'];
+			default:
+				return [];
+		}
+	}
+	const UploadAssetNodeViewComponent = {
+		name: 'NoteUploadAssetNodeView',
+		components: {
+			TileWidgetComponent: ui_uploader_tileWidget.TileWidgetComponent
+		},
+		props: {
+			attrs: {
+				type: Object,
+				required: true
+			},
+			onComplete: {
+				type: Function,
+				required: true
+			}
+		},
+		data() {
+			return {
+				localError: '',
+				uploaderOptions: null,
+				uploaderAdapter: null,
+				currentThemeContextClass: note_ui_themeContext.NoteThemeContext.getDesignSystemContext(),
+				unsubscribeTheme: null
+			};
+		},
+		computed: {
+			widgetOptions() {
+				return {
+					autoCollapse: false,
+					forceDisableSelection: true,
+					showItemMenuButton: false,
+					removeFromServer: false,
+					contextClass: this.currentThemeContextClass
+				};
+			},
+			assetKind() {
+				const value = String(this.attrs.assetKind || 'file').toLowerCase();
+				return ['file', 'image', 'video'].includes(value) ? value : 'file';
+			},
+			documentId() {
+				return toPositiveInt(this.attrs.documentId);
+			},
+			collectionId() {
+				return toPositiveInt(this.attrs.collectionId);
+			},
+			isContextValid() {
+				return this.documentId !== null;
+			},
+			nodeTitle() {
+				switch (this.assetKind) {
+					case 'image':
+						return main_core.Loc.getMessage('NOTE_EDITOR_UPLOAD_NODE_TITLE_IMAGE');
+					case 'video':
+						return main_core.Loc.getMessage('NOTE_EDITOR_UPLOAD_NODE_TITLE_VIDEO');
+					default:
+						return main_core.Loc.getMessage('NOTE_EDITOR_UPLOAD_NODE_TITLE_FILE');
+				}
+			},
+			errorMessage() {
+				if (!this.isContextValid) {
+					return main_core.Loc.getMessage('NOTE_EDITOR_UPLOAD_NODE_ERROR_CONTEXT');
+				}
+				return this.localError || String(this.attrs.errorMessage || '');
+			},
+			maxFileSize() {
+				return MAX_FILE_SIZE$1;
+			}
+		},
+		created() {
+			this.uploaderOptions = this.buildUploaderOptions();
+			this.uploaderAdapter = this.createUploaderAdapter(this.uploaderOptions);
+			this.unsubscribeTheme = note_ui_themeContext.NoteThemeContext.subscribe(theme => {
+				this.currentThemeContextClass = note_ui_themeContext.NoteThemeContext.resolveDesignSystemContext(theme);
+			});
+		},
+		beforeUnmount() {
+			this.unsubscribeTheme?.();
+			this.unsubscribeTheme = null;
+			if (this.uploaderAdapter) {
+				this.uploaderAdapter.destroy();
+				this.uploaderAdapter = null;
+			}
+		},
+		methods: {
+			createUploaderAdapter(uploaderOptions) {
+				const adapter = new ui_uploader_vue.VueUploaderAdapter(uploaderOptions);
+				adapter.setRemoveFilesFromServerWhenDestroy(false);
+				return ui_vue3.markRaw(adapter);
+			},
+			buildUploaderOptions() {
+				const events = {
+					[ui_uploader_core.UploaderEvent.FILE_STATUS_CHANGE]: this.handleFileStatusChange,
+					[ui_uploader_core.UploaderEvent.FILE_UPLOAD_COMPLETE]: this.handleFileUploadComplete,
+					[ui_uploader_core.UploaderEvent.FILE_ERROR]: this.handleFileError,
+					[ui_uploader_core.UploaderEvent.ERROR]: this.handleFileError
+				};
+				const acceptedFileTypes = resolveAcceptedFileTypes(this.assetKind);
+				const acceptedFileTypesOptions = acceptedFileTypes.length > 0 ? {
+					acceptedFileTypes
+				} : {};
+				if (!this.isContextValid) {
+					return {
+						autoUpload: false,
+						multiple: false,
+						events,
+						...acceptedFileTypesOptions
+					};
+				}
+				const controllerOptions = {
+					documentId: this.documentId
+				};
+				if (this.collectionId !== null) {
+					controllerOptions.collectionId = this.collectionId;
+				}
+				return {
+					controller: 'note.infrastructure.controller.editorUploaderController',
+					controllerOptions,
+					multiple: false,
+					autoUpload: true,
+					maxFileSize: this.maxFileSize,
+					events,
+					...acceptedFileTypesOptions
+				};
+			},
+			handleFileStatusChange(event) {
+				const file = event.getData?.()?.file;
+				const status = file?.getStatus?.();
+				if (isInProgressStatus(status)) {
+					this.localError = '';
+				}
+			},
+			handleFileUploadComplete(event) {
+				const file = event.getData?.()?.file;
+				const payload = this.buildPayload(file);
+				if (!payload) {
+					this.handleUploadError(main_core.Loc.getMessage('NOTE_EDITOR_UPLOAD_NODE_ERROR_UPLOAD'));
+					return;
+				}
+				this.localError = '';
+				this.onComplete(payload);
+			},
+			handleFileError(event) {
+				const message = event?.getData?.()?.error?.getMessage?.() || main_core.Loc.getMessage('NOTE_EDITOR_UPLOAD_NODE_ERROR_UPLOAD');
+				this.handleUploadError(message);
+			},
+			handleUploadError(message) {
+				this.localError = String(message || '');
+			},
+			buildPayload(file) {
+				if (!file) {
+					return null;
+				}
+				const customData = file.getCustomData?.();
+				if (!main_core.Type.isPlainObject(customData)) {
+					return null;
+				}
+				const fileId = toPositiveInt(customData.fileId);
+				const showUrl = main_core.Type.isStringFilled(customData.showUrl) ? customData.showUrl : '';
+				if (fileId === null || !main_core.Type.isStringFilled(showUrl)) {
+					return null;
+				}
+				const viewerAttrs = main_core.Type.isPlainObject(customData.viewerAttrs) ? customData.viewerAttrs : {};
+				const downloadUrl = main_core.Type.isStringFilled(customData.downloadUrl) ? customData.downloadUrl : showUrl;
+				return {
+					assetKind: this.assetKind,
+					name: file.getName?.() || '',
+					size: Number(file.getSize?.() ?? 0) || 0,
+					mimeType: file.getType?.() || '',
+					fileId,
+					documentId: this.documentId,
+					showUrl,
+					downloadUrl,
+					previewUrl: main_core.Type.isStringFilled(file.getPreviewUrl?.()) ? file.getPreviewUrl() : showUrl,
+					viewerAttrs
+				};
+			}
+		},
+		// language=Vue
+		template: `
+		<div ref="container" class="note-editor-upload-asset-inner" :class="{'--error': errorMessage !== ''}">
+			<div class="note-editor-upload-asset-title">{{ nodeTitle }}</div>
+				<TileWidgetComponent
+					ref="uploader"
+					:uploader-adapter="uploaderAdapter"
+					:widgetOptions="widgetOptions"
+				/>
+			<div v-if="errorMessage" class="note-editor-upload-asset-error">{{ errorMessage }}</div>
+		</div>
+	`
+	};
+
+	const UploadAsset = Node3.create({
+		name: 'uploadAsset',
+		group: 'block',
+		atom: true,
+		selectable: true,
+		draggable: true,
+		addAttributes() {
+			return {
+				assetKind: {
+					default: 'file'
+				},
+				documentId: {
+					default: null
+				},
+				collectionId: {
+					default: null
+				},
+				status: {
+					default: 'pending'
+				},
+				errorMessage: {
+					default: ''
+				},
+				uploadToken: {
+					default: null
+				}
+			};
+		},
+		parseHTML() {
+			return [{
+				tag: 'div[data-type="uploadAsset"]'
+			}];
+		},
+		renderHTML({
+			HTMLAttributes,
+			node
+		}) {
+			return ['div', mergeAttributes(HTMLAttributes, {
+				'data-type': 'uploadAsset',
+				class: 'note-editor-upload-asset',
+				contenteditable: 'false',
+				'data-asset-kind': node.attrs.assetKind || 'file',
+				'data-document-id': node.attrs.documentId || '',
+				'data-collection-id': node.attrs.collectionId || '',
+				'data-status': node.attrs.status || 'pending'
+			}), node.attrs.errorMessage || ''];
+		},
+		addOptions() {
+			return {
+				nodeViewComponent: UploadAssetNodeViewComponent
+			};
+		},
+		addNodeView() {
+			return ({
+				node,
+				editor,
+				getPos
+			}) => new VueUploadAssetNodeView({
+				node,
+				editor,
+				getPos,
+				extension: this,
+				dataType: 'uploadAsset',
+				className: 'note-editor-upload-asset'
+			});
+		}
+	});
+
+	const VideoAttachmentNodeViewComponent = {
+		extends: AttachmentNodeViewBaseComponent,
+		mixins: [ResizableMediaMixin],
+		components: {
+			MediaResizeControls
+		},
+		props: {
+			defaultTypeMessage: {
+				type: String,
+				default: 'NOTE_EDITOR_FILE_ATTACHMENT_TYPE_VIDEO'
+			}
+		},
+		computed: {
+			videoUrl() {
+				// `showUrl` is already checked by the base component, own `src` is not.
+				return sanitizeAttachmentUrl(this.attrs.src) || this.showUrl || '';
+			},
+			// Required by ResizableMediaMixin to gate handles/overlay.
+			hasMedia() {
+				return Boolean(this.videoUrl) && !this.isUnavailable;
+			}
+		},
+		// language=Vue
+		template: `
+		<div class="note-editor-video-inner" :class="{ 'note-editor-attachment--unavailable': isUnavailable }">
+			<div v-if="isUnavailable" class="note-editor-video-meta">
+				<div class="note-editor-video-name">{{ unavailableMessage }}</div>
+			</div>
+			<template v-else>
+				<div v-if="isResolving" class="note-editor-video-preview">
+					<div class="note-editor-video-player note-editor-attachment-skeleton" aria-hidden="true"></div>
+				</div>
+				<div v-else-if="videoUrl" class="note-editor-video-attachment-preview" :class="{ 'note-editor-video-attachment-preview--resizing': dragging }">
+					<video
+						class="note-editor-video-player"
+						:src="videoUrl"
+						controls
+						preload="metadata"
+					></video>
+					<MediaResizeControls
+						:show-handles="showHandles"
+						:show-overlay="showOverlay"
+						:overlay-style="overlayStyle"
+						:align="align"
+						:align-titles="alignTitles"
+						:on-start-resize="startResize"
+						:on-set-align="setAlign"
+						:on-replace="null"
+					/>
+				</div>
+				<div class="note-editor-video-meta">
+					<div class="note-editor-video-name">
+						<span v-if="isResolving" class="note-editor-attachment-skeleton note-editor-attachment-skeleton--line" aria-hidden="true"></span>
+						<template v-else>{{ fileName }}</template>
+					</div>
+					<div v-if="!isResolving" class="note-editor-video-extra">{{ fileType }} · {{ fileSize }}</div>
+				</div>
+			</template>
+		</div>
+	`
+	};
+
+	const Video = FileAssetNodeFactory.createNode({
+		name: 'video',
+		dataType: 'videoAttachment',
+		className: 'note-editor-video-attachment',
+		assetType: 'video',
+		defaultNameMessage: 'NOTE_EDITOR_FILE_ATTACHMENT_UNTITLED',
+		defaultTypeMessage: 'NOTE_EDITOR_FILE_ATTACHMENT_TYPE_VIDEO',
+		nodeViewComponent: VideoAttachmentNodeViewComponent,
+		commandName: 'setVideo',
+		parseHTMLTags: ['div[data-type="videoAttachment"]', 'video[src]'],
+		extraAttrs: {
+			src: {
+				default: null
+			},
+			controls: {
+				default: true
+			}
+		},
+		resizable: true
+	});
+
+	const EnrichedAssetTokenizer = Node3.create({
+		name: 'enrichedAsset',
+		markdownTokenizer: {
+			name: 'enrichedAsset',
+			level: 'block',
+			start(src) {
+				const start = findEnrichedAssetStart(src);
+				return start === 0 ? -1 : start;
+			},
+			tokenize(src) {
+				const result = parseEnrichedAssetSyntax(src, 0);
+				if (!result) {
+					return null;
+				}
+				return {
+					type: 'enrichedAsset',
+					raw: result.raw,
+					attrs: {
+						...parseAttrs(result.attrsRaw),
+						label: result.label,
+						url: result.url,
+						isImage: result.isImage
+					}
+				};
+			},
+			childTokens: []
+		},
+		parseMarkdown(token) {
+			const {
+				type,
+				fileId,
+				documentId,
+				name,
+				size,
+				mimeType,
+				label
+			} = token.attrs;
+			const nodeType = ASSET_TYPE_TO_NODE[type];
+			if (!nodeType) {
+				return null;
+			}
+			return {
+				type: nodeType,
+				attrs: {
+					fileId: Number(fileId),
+					documentId: Number(documentId),
+					name: name ?? label,
+					size: size ? Number(size) : null,
+					mimeType: mimeType ?? null
+				}
+			};
+		}
+	});
+
+	// Block-level tokenizer for all asset types (image/file/video). Each [[<type> fileId=N ...]] token
+	// owns its line and becomes a top-level block node — images are block nodes again, so they are no
+	// longer wrapped in a paragraph nor handled by a separate inline tokenizer.
+	const NoteAssetTokenizer = Node3.create({
+		name: 'noteAsset',
+		markdownTokenizer: {
+			name: 'noteAsset',
+			level: 'block',
+			start(src) {
+				return findNoteAssetStart(src);
+			},
+			tokenize(src) {
+				const result = parseNoteAssetSyntax(src, 0);
+				if (!result) {
+					return null;
+				}
+				return {
+					type: 'noteAsset',
+					raw: result.raw,
+					attrs: {
+						assetType: result.assetType,
+						fileId: result.fileId,
+						width: result.width,
+						align: result.align
+					}
+				};
+			},
+			childTokens: []
+		},
+		parseMarkdown(token) {
+			const nodeType = ASSET_TYPE_TO_NODE$1[token.attrs.assetType];
+			if (!nodeType) {
+				return null;
+			}
+			const attrs = {
+				fileId: token.attrs.fileId,
+				documentId: null,
+				name: null,
+				size: null,
+				mimeType: null
+			};
+
+			// Resizable media (image, video) carries presentation attributes (resize width, alignment); file does not.
+			if (nodeType === 'imageAttachment' || nodeType === 'video') {
+				attrs.width = token.attrs.width ?? null;
+				attrs.align = token.attrs.align ?? null;
+			}
+			return {
+				type: nodeType,
+				attrs
+			};
+		}
+	});
+
+	function createSafeImageExtension() {
+		return Image.extend({
+			addAttributes() {
+				return {
+					...this.parent?.(),
+					src: {
+						default: null,
+						parseHTML: element => sanitizeUrl(element.getAttribute('src')),
+						renderHTML: attrs => {
+							const safeSrc = sanitizeUrl(attrs.src);
+							return safeSrc ? {
+								src: safeSrc
+							} : {};
+						}
+					}
+				};
+			}
+		});
+	}
+	function createMediaExtensions(uploadService = null) {
+		// SafeImage handles raw markdown `![](url)` images only; inline so they coexist with text in a
+		// paragraph and keep the lexer's inline image tokens schema-legal. imageAttachment/video are block.
+		const SafeImage = createSafeImageExtension().configure({
+			inline: true
+		});
+		return [SafeImage, UploadAsset, FileAttachment,
+		// uploadService powers the in-place "replace image" action in the node-view overlay.
+		ImageAttachment.configure({
+			uploadService
+		}), Video];
+	}
 
 	// src/collaboration.ts
 	function isChangeOrigin(transaction) {
@@ -66642,6 +71080,9 @@ ${nextLine.slice(indentLevel + 2)}`;
 
 	const remoteNodeOutlinePluginKey = new PluginKey('note-remote-node-outline');
 	const TABLE_ROLES = new Set(['cell', 'header_cell', 'row', 'table']);
+	const supportsRemoteOutline = node => {
+		return node.isAtom && node.isBlock || node.type.name === 'codeBlock';
+	};
 	const toRelativePosition = raw => {
 		if (raw === null || raw === undefined) {
 			return null;
@@ -66704,7 +71145,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 				return;
 			}
 			const nodeAfter = $from.nodeAfter;
-			if (!nodeAfter || !nodeAfter.isAtom || !nodeAfter.isBlock) {
+			if (!nodeAfter || !supportsRemoteOutline(nodeAfter)) {
 				return;
 			}
 			if ($from.pos + nodeAfter.nodeSize !== to) {
@@ -66799,6 +71240,12 @@ ${nextLine.slice(indentLevel + 2)}`;
 					<span class="collaboration-cursor__caret" style="border-color: ${caretColor}; --caret-color: ${caretColor}">
 					</span>
 				`;
+
+				// Tag the caret so the header participant list can scroll a peer's cursor into view.
+				const caretUserId = Number(caretUser.id);
+				if (Number.isFinite(caretUserId) && caretUserId > 0) {
+					el.dataset.userId = String(caretUserId);
+				}
 				requestAnimationFrame(() => {
 					if (!el.isConnected) {
 						return;
@@ -66859,10 +71306,6 @@ ${nextLine.slice(indentLevel + 2)}`;
 						main_core.Dom.style(el, 'width', '0');
 						main_core.Dom.style(el, 'height', `${caretHeight}px`);
 					}
-					const shell = el.closest('.note-editor-document-shell');
-					if (!shell) {
-						return;
-					}
 					const label = main_core.Tag.render`
 						<div class="collaboration-cursor__label">
 							<span class="collaboration-cursor__label-dot" style="background-color: ${caretColor}"></span>
@@ -66870,12 +71313,20 @@ ${nextLine.slice(indentLevel + 2)}`;
 						</div>
 					`;
 					main_core.Dom.append(label, el);
+
+					// Keep the label inside the nearest surface that bounds the editor. The document
+					// page wraps it in a shell; embedded surfaces (the collection description) have
+					// none, so fall back to the prose area — the label still renders either way.
+					const bounds = el.closest('.note-editor-document-shell') ?? prose;
+					if (!(bounds instanceof HTMLElement)) {
+						return;
+					}
 					const labelRect = label.getBoundingClientRect();
-					const shellRect = shell.getBoundingClientRect();
-					if (labelRect.right > shellRect.right) {
+					const boundsRect = bounds.getBoundingClientRect();
+					if (labelRect.right > boundsRect.right) {
 						main_core.Dom.style(label, 'left', 'auto');
 						main_core.Dom.style(label, 'right', '0');
-					} else if (labelRect.left < shellRect.left) {
+					} else if (labelRect.left < boundsRect.left) {
 						main_core.Dom.style(label, 'left', '0');
 						main_core.Dom.style(label, 'right', 'auto');
 					}
@@ -67360,15 +71811,48 @@ ${nextLine.slice(indentLevel + 2)}`;
 				data
 			});
 		}
-		static async saveYjsState({
+		static async materialize({
 			documentId,
-			yjsState
+			markdown,
+			uptoId
 		}) {
-			return main_core.ajax.runAction('note.infrastructure.CollaborationSyncController.saveYjsState', {
+			return main_core.ajax.runAction('note.infrastructure.CollaborationSyncController.materialize', {
 				data: {
 					documentId: Number(documentId),
-					yjsState
+					markdown,
+					uptoId: Number(uptoId)
 				}
+			});
+		}
+
+		/**
+		 * `rebuiltFromMarkdown` states that this baseline was built from the markdown the load response had
+		 * just served, not from a Y.Doc this session was already holding. It is what lets a document demoted
+		 * by an out-of-band overwrite come back into the collaborative format. Sent as 1/0: the request is
+		 * urlencoded, where a plain false would arrive as the string "false".
+		 *
+		 * `markdownChecksum` names the text that statement is about - crc32 of its UTF-8 bytes as an unsigned
+		 * decimal. The server weighs it against the markdown it holds at the moment of the write and refuses
+		 * the statement without it, so a claim made for a text a second overwrite has since replaced is not
+		 * taken at its word. Omitted from the request when there is nothing to name, which keeps a document
+		 * being created exactly as it was.
+		 */
+		static async saveYjsState({
+			documentId,
+			yjsState,
+			rebuiltFromMarkdown = false,
+			markdownChecksum = null
+		}) {
+			const data = {
+				documentId: Number(documentId),
+				yjsState,
+				rebuiltFromMarkdown: rebuiltFromMarkdown === true ? 1 : 0
+			};
+			if (main_core.Type.isStringFilled(markdownChecksum)) {
+				data.markdownChecksum = markdownChecksum;
+			}
+			return main_core.ajax.runAction('note.infrastructure.CollaborationSyncController.saveYjsState', {
+				data
 			});
 		}
 		static async sendAwareness({
@@ -67434,8 +71918,13 @@ ${nextLine.slice(indentLevel + 2)}`;
 	 * Resolve missing file URLs by fileId for attachment nodes in the document.
 	 *
 	 * Sets showUrl/downloadUrl/name/viewerAttrs (and clears `unavailable`) for every node whose
-	 * fileId the backend resolved. Nodes the backend reports as failed are NOT mutated here — the
-	 * caller decides how to surface them (placeholder vs removal), since that depends on origin.
+	 * fileId the backend resolved. Nodes the backend reports as failed (e.g. a file the [P4.T3]
+	 * reachability sweep already physically removed) are flagged `unavailable = true` here, which is
+	 * enough on its own to surface the existing placeholder (AC-024/ERR-004) — this is the fallback
+	 * for read-only consumers like the version preview, which have no extra caller-side handling.
+	 * A caller with origin-specific needs (e.g. the live editor's paste-delete flow) may still act on
+	 * `failedIds`/`failedById` afterwards — marking unavailable first does not preclude removing the
+	 * node right after.
 	 *
 	 * @param {Object} editor — Tiptap editor instance.
 	 * @param {number} documentId — owning document id (URLs are document-scoped).
@@ -67490,7 +71979,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 				failedById.set(id, String(item.message || ''));
 			}
 		}
-		if (urlMap.size > 0) {
+		if (urlMap.size > 0 || failedById.size > 0) {
 			const {
 				tr,
 				doc,
@@ -67503,6 +71992,15 @@ ${nextLine.slice(indentLevel + 2)}`;
 				}
 				const payload = urlMap.get(node.attrs.fileId);
 				if (!payload) {
+					// Backend-confirmed failure (e.g. reachability-swept file): flag the placeholder
+					// fallback. The caller may still delete the node afterwards (see doc comment above).
+					if (failedById.has(node.attrs.fileId) && !node.attrs.unavailable) {
+						tr.setNodeMarkup(pos, undefined, {
+							...node.attrs,
+							unavailable: true
+						});
+						changed = true;
+					}
 					return;
 				}
 
@@ -67520,6 +72018,9 @@ ${nextLine.slice(indentLevel + 2)}`;
 				// (full attr replace) wipes the width/align from a pasted [[image ... width=N align=X]].
 				attrs.width = node.attrs.width ?? null;
 				attrs.align = node.attrs.align ?? null;
+				// [version-diff] Same reason: keep the diff tag so a removed/added image stays painted
+				// after it resolves (the resolve is exactly what used to drop the old decoration).
+				attrs.diffState = node.attrs.diffState ?? null;
 				if (targetType === node.type.name) {
 					tr.setNodeMarkup(pos, undefined, attrs);
 				} else {
@@ -68553,141 +73054,6 @@ ${nextLine.slice(indentLevel + 2)}`;
 	}
 
 	/**
-	 * Link opening that is aware of the Bitrix24 mobile app webview.
-	 *
-	 * On desktop a link is opened in a new browser tab.
-	 *
-	 * Inside the classic mobile app webview `window.open('_blank')` escapes to the
-	 * OS browser (sliders are not available/adapted there), so instead we route the
-	 * URL through the native app via the legacy `BX.MobileTools` bridge — task/user
-	 * URLs open native cards, everything else opens inside the app.
-	 *
-	 * `BX.MobileTools` / `window.app` are injected natively by the classic webview
-	 * container; hence the guarded global access with a plain new-tab fallback when
-	 * the bridge is absent (desktop).
-	 */
-
-	/**
-	 * Returns true when the URL is safe to open: relative paths (starting with '/')
-	 * and absolute URLs with http: or https: scheme are allowed. Everything else
-	 * (javascript:, data:, vbscript:, file:, protocol-relative '//', etc.) is rejected.
-	 *
-	 * Defense-in-depth guard — the backend currently only produces relative paths,
-	 * but this check ensures a future source change cannot introduce dangerous schemes.
-	 *
-	 * @param {string} url
-	 * @returns {boolean}
-	 */
-	function isAllowedUrl(url) {
-		if (!url) {
-			return false;
-		}
-
-		// Relative paths (must start with a single '/', not protocol-relative '//').
-		if (url.startsWith('/') && !url.startsWith('//')) {
-			return true;
-		}
-
-		// Absolute URLs: only http and https are allowed.
-		try {
-			const parsed = new URL(url, window.location.origin);
-			return parsed.protocol === 'http:' || parsed.protocol === 'https:';
-		} catch {
-			return false;
-		}
-	}
-
-	/**
-	 * @returns {boolean} true when running inside the mobile app webview.
-	 */
-	function isMobileApp() {
-		if (typeof document !== 'undefined' && document.documentElement.classList.contains('note-mobile')) {
-			return true;
-		}
-		return typeof navigator !== 'undefined' && navigator.userAgent.toLowerCase().includes('bitrixmobile');
-	}
-
-	/**
-	 * @returns {boolean} true when running on iOS.
-	 */
-	function isIos() {
-		return typeof navigator !== 'undefined' && /iphone|ipad|ipod/i.test(navigator.userAgent);
-	}
-
-	// User profile URL (`/company/personal/user/{id}/`), excluding deeper paths like
-	// `/.../tasks/task/view/{id}/` which must keep their own native routing.
-	// Capture group 1 is the user id.
-	const USER_PROFILE_URL = /\/company\/personal\/user\/(\d+)\/($|\?)/i;
-
-	/**
-	 * Tries to open a URL natively inside the mobile app.
-	 *
-	 * No-op returning false when not inside the app (so desktop behaviour is left
-	 * untouched by the caller). Inside the app it routes through the native bridge:
-	 * task/user URLs open native cards, other URLs open inside the app webview.
-	 *
-	 * @param {string} url
-	 * @returns {boolean} true if the URL was handed off to the native app.
-	 */
-	function openViaMobileApp(url) {
-		if (!url || !isMobileApp()) {
-			return false;
-		}
-
-		// The profile opener (`onUserProfileOpen`) is an UNADDRESSED broadcast in
-		// mobile_tools; from the note webview it never reaches the native
-		// `communication` subscriber (alive only in native contexts like chat) and on
-		// iOS the URL escapes to the OS browser. Address the event straight to the
-		// persistent `communication` component — the same trick tasks use with the
-		// `background` component — so the native profile card opens from the webview.
-		if (isIos()) {
-			const userId = url.match(USER_PROFILE_URL)?.[1];
-			const events = window.BXMobileApp?.Events;
-			if (userId && typeof events?.postToComponent === 'function') {
-				events.postToComponent('onUserProfileOpen', [userId], 'communication');
-				return true;
-			}
-		}
-		const mobileTools = window.BX?.MobileTools;
-		if (mobileTools) {
-			const open = mobileTools.resolveOpenFunction(url);
-			if (open) {
-				open();
-				return true;
-			}
-		}
-
-		// Fallback for older webviews that expose the app bridge but not MobileTools.
-		if (typeof window.app?.openNewPage === 'function') {
-			window.app.openNewPage(url);
-			return true;
-		}
-		return false;
-	}
-
-	/**
-	 * Opens a URL: natively inside the mobile app when possible, otherwise in a new
-	 * browser tab. Use for entry points that open a new tab on desktop by design
-	 * (e.g. mention chips), not for plain in-content anchors.
-	 *
-	 * @param {string} url
-	 * @returns {void}
-	 */
-	function openLinkNative(url) {
-		if (!url) {
-			return;
-		}
-		if (!isAllowedUrl(url)) {
-			console.warn('[note] openLinkNative: blocked disallowed URL scheme');
-			return;
-		}
-		if (openViaMobileApp(url)) {
-			return;
-		}
-		window.open(url, '_blank', 'noopener,noreferrer');
-	}
-
-	/**
 	 * ProseMirror NodeView that mounts a Vue MentionChip for noteMention nodes.
 	 *
 	 * Mounted in both edit and view modes.
@@ -68714,6 +73080,15 @@ ${nextLine.slice(indentLevel + 2)}`;
 			this.dom.setAttribute('data-type', 'note-mention');
 			this.dom.contentEditable = 'false';
 			this.#mountVue();
+			this.#syncDiffState();
+		}
+
+		// [version-diff] Reflect the diffState attr as a class on the chip wrapper. The attr is part of the
+		// model and the mention resolver preserves it (spreads node.attrs), so the paint survives resolve.
+		#syncDiffState() {
+			const state = this.node.attrs.diffState;
+			this.dom.classList.toggle('note-version-diff-node--added', state === 'added');
+			this.dom.classList.toggle('note-version-diff-node--removed', state === 'removed');
 		}
 		#mountVue() {
 			const nodeView = this;
@@ -68843,6 +73218,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 				return false;
 			}
 			this.node = node;
+			this.#syncDiffState();
 			if (this.vm) {
 				this.vm.attrs = {
 					...node.attrs
@@ -68934,7 +73310,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 
 	// Regex that matches the canonical mention token @{type:id} where id is a positive integer.
 	// Used by both start() and tokenize() so the pattern is consistent.
-	const MENTION_TOKEN_RE = /^@\{([a-z]+):(\d+)\}/;
+	const MENTION_TOKEN_RE$1 = /^@\{([a-z]+):(\d+)\}/;
 
 	/**
 	 * TipTap inline-atom node for entity mentions.
@@ -68998,6 +73374,13 @@ ${nextLine.slice(indentLevel + 2)}`;
 				unavailable: {
 					default: false,
 					rendered: false
+				},
+				// [version-diff] 'added' | 'removed' | null — tags the chip in the read-only version diff.
+				// The NodeView turns it into a CSS class; the mention resolver preserves it (it spreads
+				// node.attrs), so it survives resolve. Not serialised to markdown (rendered: false).
+				diffState: {
+					default: null,
+					rendered: false
 				}
 			};
 		},
@@ -69038,7 +73421,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 				return src.indexOf('@{');
 			},
 			tokenize(src) {
-				const match = MENTION_TOKEN_RE.exec(src);
+				const match = MENTION_TOKEN_RE$1.exec(src);
 				if (!match) {
 					return null;
 				}
@@ -69128,7 +73511,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 	 * they receive unavailable:true as a placeholder (persisted mention remains valid).
 	 */
 
-	const MENTION_NODE_TYPE = 'noteMention';
+	const MENTION_NODE_TYPE$1 = 'noteMention';
 
 	/**
 	 * Collects unresolved mention nodes from the ProseMirror document.
@@ -69143,7 +73526,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 		const seen = new Set();
 		const items = [];
 		doc.descendants(node => {
-			if (node.type.name !== MENTION_NODE_TYPE) {
+			if (node.type.name !== MENTION_NODE_TYPE$1) {
 				return;
 			}
 			const {
@@ -69375,6 +73758,40 @@ ${nextLine.slice(indentLevel + 2)}`;
 		}
 	});
 
+	// [version-diff] Inline mark that tags a text run as added/removed in the version diff. The diff lives
+	// IN the document model (a mark), not as a positional decoration overlay — so it rides along with the
+	// text through every later transaction (image/mention resolve via setNodeMarkup, etc.) without any
+	// recompute. It is applied only inside the read-only version-preview instance and carries no
+	// renderMarkdown handler, so it never serializes into markdown and never affects the live editor.
+	const DiffChangeMark = Mark.create({
+		name: 'diffChange',
+		// Excluded from nothing and never merged away: added and removed runs must keep their own spans.
+		excludes: '',
+		addAttributes() {
+			return {
+				state: {
+					default: null,
+					parseHTML: element => element.getAttribute('data-diff'),
+					renderHTML: attributes => attributes.state ? {
+						'data-diff': attributes.state
+					} : {}
+				}
+			};
+		},
+		parseHTML() {
+			return [{
+				tag: 'span[data-diff]'
+			}];
+		},
+		renderHTML({
+			HTMLAttributes
+		}) {
+			return ['span', mergeAttributes(HTMLAttributes, {
+				class: 'note-version-diff-mark'
+			}), 0];
+		}
+	});
+
 	const TAB_INDENT_PLUGIN_KEY = new PluginKey('noteTabIndent');
 	const MODIFIER_KEYS = new Set(['Shift', 'Control', 'Alt', 'Meta']);
 
@@ -69572,6 +73989,363 @@ ${nextLine.slice(indentLevel + 2)}`;
 		}
 	});
 
+	// Single source of truth for the editor hotkey map. Consumed by the keymap
+	// extension (phase 2), the app-level listener (phase 3), the help popup and tests.
+	// Combos are stored in TipTap mod-notation (Mod = Cmd on macOS, Ctrl elsewhere),
+	// never pre-rendered — rendering per OS is the job of format-shortcut.js.
+
+	// Fills DTO-01 defaults so records below can omit the boilerplate fields.
+	function entry(record) {
+		return Object.freeze({
+			aliases: [],
+			command: null,
+			editorScoped: true,
+			...record
+		});
+	}
+	const HOTKEYS = Object.freeze([
+	// Group: format — all provided by official TipTap packages (binding: builtin).
+	entry({
+		id: 'bold',
+		group: 'format',
+		combo: 'Mod-b',
+		binding: 'builtin',
+		labelKey: 'NOTE_HOTKEYS_ACTION_BOLD'
+	}), entry({
+		id: 'italic',
+		group: 'format',
+		combo: 'Mod-i',
+		binding: 'builtin',
+		labelKey: 'NOTE_HOTKEYS_ACTION_ITALIC'
+	}), entry({
+		id: 'underline',
+		group: 'format',
+		combo: 'Mod-u',
+		binding: 'builtin',
+		labelKey: 'NOTE_HOTKEYS_ACTION_UNDERLINE'
+	}), entry({
+		id: 'strike',
+		group: 'format',
+		combo: 'Mod-Shift-s',
+		aliases: ['Ctrl-Shift-x'],
+		binding: 'builtin',
+		labelKey: 'NOTE_HOTKEYS_ACTION_STRIKE'
+	}), entry({
+		id: 'inlineCode',
+		group: 'format',
+		combo: 'Mod-e',
+		binding: 'builtin',
+		labelKey: 'NOTE_HOTKEYS_ACTION_INLINE_CODE'
+	}), entry({
+		id: 'highlight',
+		group: 'format',
+		combo: 'Mod-Shift-h',
+		binding: 'builtin',
+		labelKey: 'NOTE_HOTKEYS_ACTION_HIGHLIGHT'
+	}), entry({
+		id: 'superscript',
+		group: 'format',
+		combo: 'Mod-.',
+		binding: 'builtin',
+		labelKey: 'NOTE_HOTKEYS_ACTION_SUPERSCRIPT'
+	}), entry({
+		id: 'subscript',
+		group: 'format',
+		combo: 'Mod-,',
+		binding: 'builtin',
+		labelKey: 'NOTE_HOTKEYS_ACTION_SUBSCRIPT'
+	}),
+	// Group: headings — paragraph reset is note-added, H1..H4 come from the heading package.
+	entry({
+		id: 'paragraph',
+		group: 'headings',
+		combo: 'Mod-Alt-0',
+		binding: 'new',
+		command: 'setParagraph',
+		labelKey: 'NOTE_HOTKEYS_ACTION_PARAGRAPH'
+	}), entry({
+		id: 'heading1',
+		group: 'headings',
+		combo: 'Mod-Alt-1',
+		binding: 'builtin',
+		labelKey: 'NOTE_HOTKEYS_ACTION_HEADING_1'
+	}), entry({
+		id: 'heading2',
+		group: 'headings',
+		combo: 'Mod-Alt-2',
+		binding: 'builtin',
+		labelKey: 'NOTE_HOTKEYS_ACTION_HEADING_2'
+	}), entry({
+		id: 'heading3',
+		group: 'headings',
+		combo: 'Mod-Alt-3',
+		binding: 'builtin',
+		labelKey: 'NOTE_HOTKEYS_ACTION_HEADING_3'
+	}), entry({
+		id: 'heading4',
+		group: 'headings',
+		combo: 'Mod-Alt-4',
+		binding: 'builtin',
+		labelKey: 'NOTE_HOTKEYS_ACTION_HEADING_4'
+	}),
+	// Group: lists — all from TipTap list packages.
+	entry({
+		id: 'bulletList',
+		group: 'lists',
+		combo: 'Mod-Shift-8',
+		binding: 'builtin',
+		labelKey: 'NOTE_HOTKEYS_ACTION_BULLET_LIST'
+	}), entry({
+		id: 'orderedList',
+		group: 'lists',
+		combo: 'Mod-Shift-7',
+		binding: 'builtin',
+		labelKey: 'NOTE_HOTKEYS_ACTION_ORDERED_LIST'
+	}), entry({
+		id: 'taskList',
+		group: 'lists',
+		combo: 'Mod-Shift-9',
+		binding: 'builtin',
+		labelKey: 'NOTE_HOTKEYS_ACTION_TASK_LIST'
+	}),
+	// Group: blocks — callout is note-specific (default type "info"), the rest are builtin.
+	entry({
+		id: 'blockquote',
+		group: 'blocks',
+		combo: 'Mod-Shift-b',
+		binding: 'builtin',
+		labelKey: 'NOTE_HOTKEYS_ACTION_BLOCKQUOTE'
+	}), entry({
+		id: 'codeBlock',
+		group: 'blocks',
+		combo: 'Mod-Alt-c',
+		binding: 'builtin',
+		labelKey: 'NOTE_HOTKEYS_ACTION_CODE_BLOCK'
+	}), entry({
+		id: 'callout',
+		group: 'blocks',
+		combo: 'Mod-Alt-b',
+		binding: 'new',
+		command: 'toggleCallout:info',
+		labelKey: 'NOTE_HOTKEYS_ACTION_CALLOUT'
+	}),
+	// Group: align — all note-added.
+	entry({
+		id: 'alignLeft',
+		group: 'align',
+		combo: 'Mod-Shift-l',
+		binding: 'new',
+		command: 'setTextAlign:left',
+		labelKey: 'NOTE_HOTKEYS_ACTION_ALIGN_LEFT'
+	}), entry({
+		id: 'alignCenter',
+		group: 'align',
+		combo: 'Mod-Shift-e',
+		binding: 'new',
+		command: 'setTextAlign:center',
+		labelKey: 'NOTE_HOTKEYS_ACTION_ALIGN_CENTER'
+	}), entry({
+		id: 'alignRight',
+		group: 'align',
+		combo: 'Mod-Shift-r',
+		binding: 'new',
+		command: 'setTextAlign:right',
+		labelKey: 'NOTE_HOTKEYS_ACTION_ALIGN_RIGHT'
+	}), entry({
+		id: 'alignJustify',
+		group: 'align',
+		combo: 'Mod-Shift-j',
+		binding: 'new',
+		command: 'setTextAlign:justify',
+		labelKey: 'NOTE_HOTKEYS_ACTION_ALIGN_JUSTIFY'
+	}),
+	// Group: insert — named actions resolved by the keymap extension in phase 2.
+	entry({
+		id: 'link',
+		group: 'insert',
+		combo: 'Mod-k',
+		binding: 'new',
+		command: 'openLinkPopup',
+		labelKey: 'NOTE_HOTKEYS_ACTION_LINK'
+	}), entry({
+		id: 'attachments',
+		group: 'insert',
+		combo: 'Mod-Shift-u',
+		binding: 'new',
+		command: 'insertFileNode',
+		labelKey: 'NOTE_HOTKEYS_ACTION_ATTACHMENTS'
+	}),
+	// Group: history — from the TipTap history package.
+	entry({
+		id: 'undo',
+		group: 'history',
+		combo: 'Mod-z',
+		binding: 'builtin',
+		labelKey: 'NOTE_HOTKEYS_ACTION_UNDO'
+	}), entry({
+		id: 'redo',
+		group: 'history',
+		combo: 'Mod-Shift-z',
+		aliases: ['Ctrl-y'],
+		binding: 'builtin',
+		labelKey: 'NOTE_HOTKEYS_ACTION_REDO'
+	}),
+	// Group: global — the help popup itself; bound outside the editor by an app listener (phase 3).
+	entry({
+		id: 'helpOpen',
+		group: 'global',
+		combo: '?',
+		aliases: ['Mod-/'],
+		binding: 'app',
+		command: 'helpOpen',
+		labelKey: 'NOTE_HOTKEYS_ACTION_HELP_OPEN',
+		editorScoped: false
+	})]);
+	function getHotkeyDescriptor() {
+		return HOTKEYS;
+	}
+	function getEditorHotkeys() {
+		return HOTKEYS.filter(item => item.binding === 'new' && item.editorScoped === true);
+	}
+
+	// Pure keymap-building logic for the note editor hotkeys, split out from the TipTap extension so
+	// it can be unit-tested without importing the `note.ui.hotkeys` bundle (the unit harness can't
+	// resolve Bitrix extension namespaces). The extension (hotkeys-extension.js) feeds the descriptor
+	// in; this module owns the command -> editor-call mapping and returns the {combo: handler} map.
+
+	// Maps a descriptor `command` to the editor call its toolbar button makes. Each returns true when
+	// the key was consumed (ProseMirror preventDefault), false to let the event fall through the keymap
+	// chain / to the browser. Parity target: the matching button in
+	// note/install/js/note/editor/src/components/toolbar/*.
+	const EDITOR_COMMANDS = {
+		// heading-group: reset to paragraph (editor.commands.setParagraph()).
+		setParagraph: editor => {
+			editor.chain().focus().setParagraph().run();
+			return true;
+		},
+		// align-group: editor.commands.setTextAlign(<value>). Mod-Shift-R / Mod-Shift-J also trigger
+		// browser reload / DevTools, so consume the key only where the alignment can actually apply;
+		// otherwise return false and let the browser default run (don't swallow the key for nothing).
+		setTextAlign: (editor, value) => {
+			if (!editor.can().setTextAlign(value)) {
+				return false;
+			}
+			editor.chain().focus().setTextAlign(value).run();
+			return true;
+		},
+		// callout-group. A single on/off toggle, like every other block formatting: inside any callout the
+		// hotkey removes it, outside it wraps the block with the default type — regardless of the current
+		// callout's type. (The per-type toolbar buttons switch type instead; the hotkey has just one type,
+		// so switching-then-removing on a non-default callout would feel wrong.)
+		toggleCallout: (editor, type) => {
+			if (editor.isActive('callout')) {
+				editor.chain().focus().unsetCallout().run();
+			} else {
+				editor.chain().focus().toggleCallout({
+					type
+				}).run();
+			}
+			return true;
+		},
+		// The link popup and the attachment menu are host-owned UI (editor-toolbar.js openMenu state /
+		// the system file dialog), not editor commands — the keymap can't open them directly. It emits
+		// an intent on the shared editor event bus that the host layer turns into the same UI the button
+		// opens. Mod-K also focuses the browser address bar: consume it only where a link is applicable
+		// (the link mark is excluded inside code), otherwise pass the key through.
+		openLinkPopup: editor => {
+			if (!editor.can().setLink({
+				href: 'https://example.com'
+			})) {
+				return false;
+			}
+			editor.emit('note:hotkey', {
+				action: 'openLinkPopup'
+			});
+			return true;
+		},
+		// Unlike the link popup, attachments no longer open the toolbar menu: the hotkey drops a file
+		// upload tile at the caret (handled by note-editor.js, which owns the document/collection
+		// context) and selects it — click to browse, arrow away to skip. A direct edit, not a menu.
+		insertFileNode: editor => {
+			editor.emit('note:hotkey', {
+				action: 'insertFileNode'
+			});
+			return true;
+		}
+	};
+
+	// Builtin combos are bound by the official TipTap packages; only the extra aliases the descriptor
+	// adds need binding here. A builtin entry's `command` is null (the package owns it), so alias-bearing
+	// builtin ids are mapped to their editor call explicitly.
+	const BUILTIN_ALIAS_COMMANDS = {
+		strike: editor => editor.chain().focus().toggleStrike().run(),
+		redo: editor => editor.chain().focus().redo().run()
+	};
+	function resolveHandler(command) {
+		const [name, arg] = String(command).split(':');
+		const run = EDITOR_COMMANDS[name];
+		if (!run) {
+			return null;
+		}
+		return ({
+			editor
+		}) => run(editor, arg);
+	}
+
+	// Builds the TipTap keyboard-shortcuts map from the hotkey descriptor (single source of truth).
+	// `editorHotkeys` are the note-added `binding:'new'` editor-scoped entries; `descriptor` is the
+	// full list, used only to pick up the extra aliases on builtin entries. Builtin primary combos are
+	// intentionally NOT rebound here (one keymap per key) — the TipTap packages own them.
+	function buildHotkeyShortcuts({
+		editorHotkeys,
+		descriptor
+	}) {
+		const shortcuts = {};
+		for (const {
+			combo,
+			command
+		} of editorHotkeys) {
+			const handler = resolveHandler(command);
+			if (handler) {
+				shortcuts[combo] = handler;
+			}
+		}
+		for (const entry of descriptor) {
+			const run = BUILTIN_ALIAS_COMMANDS[entry.id];
+			if (entry.binding !== 'builtin' || !run || entry.aliases.length === 0) {
+				continue;
+			}
+			for (const alias of entry.aliases) {
+				shortcuts[alias] = ({
+					editor
+				}) => {
+					run(editor);
+					return true;
+				};
+			}
+		}
+		return shortcuts;
+	}
+
+	// Keymap for the note-added editor hotkeys. Bindings are built dynamically from the descriptor
+	// (single source of truth: note/install/js/note/ui/hotkeys/src/descriptor.js) so the map can't
+	// drift from the help popup / tests. The descriptor is imported by source path, not via the
+	// `note.ui.hotkeys` bundle name, on purpose: pulling that bundle into the editor's static graph
+	// breaks every unit test that imports the extension registry (the harness can't resolve Bitrix
+	// bundle namespaces). descriptor.js is dependency-free, so it inlines cleanly.
+	// The command -> editor-call logic lives in hotkeys-bindings.js (also bitrix-import-free, so it's
+	// unit-testable). Default priority: these combos don't overlap the reserved Tab/Esc/Enter/table/
+	// mention contracts, so they don't need to pre-empt them (contrast heading-enter-command.js).
+	const NoteHotkeys = Extension.create({
+		name: 'noteHotkeys',
+		addKeyboardShortcuts() {
+			return buildHotkeyShortcuts({
+				editorHotkeys: getEditorHotkeys(),
+				descriptor: getHotkeyDescriptor()
+			});
+		}
+	});
+
 	function createEditorExtensions({
 		uploadService = FileUploadService,
 		provider = null,
@@ -69579,20 +74353,24 @@ ${nextLine.slice(indentLevel + 2)}`;
 		documentId = 0,
 		onMentionClick = null
 	} = {}) {
-		const hasCollaborationProvider = Boolean(provider?.document);
+		// Awareness counts as much as the document: the caret extension binds straight to it, so a provider
+		// that stopped halfway through its connect is not one the collaborative extensions can run on.
+		const hasCollaborationProvider = Boolean(provider?.document && provider?.awareness);
 		const extensions = [...createCoreExtensions({
 			hasCollaborationProvider,
 			documentId
-		}), ...createFormattingExtensions(), ...createMediaExtensions(uploadService), ...createTableExtensions(), createFileHandlerExtension(uploadService), TabIndent, Markdown.configure({
+		}), ...createFormattingExtensions(), ...createMediaExtensions(uploadService), ...createTableExtensions(), createFileHandlerExtension(uploadService), TabIndent, NoteHotkeys, Markdown.configure({
 			marked: sharedMarked,
 			markedOptions: {
 				gfm: true
 			}
-		}), MarkdownPasteExtension, NoteAssetTokenizer, EnrichedAssetTokenizer, FileNodeResolverExtension.configure({
+		}), MarkdownEscapeParser, MarkdownPasteExtension, NoteAssetTokenizer, EnrichedAssetTokenizer, FileNodeResolverExtension.configure({
 			getDocumentId: () => Number(documentId) || 0
 		}), NoteMentionNode.configure({
 			onMentionClick: typeof onMentionClick === 'function' ? onMentionClick : null
-		}), NoteMentionResolverExtension];
+		}), NoteMentionResolverExtension,
+		// Read-only version-preview diff mark; inert everywhere else (never applied on the live editor).
+		DiffChangeMark];
 		if (hasCollaborationProvider) {
 			extensions.push(...createCollaborationExtensions({
 				provider,
@@ -69829,6 +74607,833 @@ ${nextLine.slice(indentLevel + 2)}`;
 		});
 	}
 
+	function typeID(type) {
+		let cache = type.schema.cached.changeSetIDs || (type.schema.cached.changeSetIDs = Object.create(null));
+		let id = cache[type.name];
+		if (id == null) cache[type.name] = id = Object.keys(type.schema.nodes).indexOf(type.name) + 1;
+		return id;
+	}
+	// The default token encoder, which encodes node open tokens are
+	// encoded as strings holding the node name, characters as their
+	// character code, and node close tokens as negative numbers.
+	const DefaultEncoder = {
+		encodeCharacter: char => char,
+		encodeNodeStart: node => node.type.name,
+		encodeNodeEnd: node => -typeID(node.type),
+		compareTokens: (a, b) => a === b
+	};
+	// Convert the given range of a fragment to tokens.
+	function tokens(frag, encoder, start, end, target) {
+		for (let i = 0, off = 0; i < frag.childCount; i++) {
+			let child = frag.child(i),
+				endOff = off + child.nodeSize;
+			let from = Math.max(off, start),
+				to = Math.min(endOff, end);
+			if (from < to) {
+				if (child.isText) {
+					for (let j = from; j < to; j++) target.push(encoder.encodeCharacter(child.text.charCodeAt(j - off), child.marks));
+				} else if (child.isLeaf) {
+					target.push(encoder.encodeNodeStart(child));
+				} else {
+					if (from == off) target.push(encoder.encodeNodeStart(child));
+					tokens(child.content, encoder, Math.max(off + 1, from) - off - 1, Math.min(endOff - 1, to) - off - 1, target);
+					if (to == endOff) target.push(encoder.encodeNodeEnd(child));
+				}
+			}
+			off = endOff;
+		}
+		return target;
+	}
+	// The code below will refuse to compute a diff with more than 5000
+	// insertions or deletions, which takes about 300ms to reach on my
+	// machine. This is a safeguard against runaway computations.
+	const MAX_DIFF_SIZE = 5000;
+	// This obscure mess of constants computes the minimum length of an
+	// unchanged range (not at the start/end of the compared content). The
+	// idea is to make it higher in bigger replacements, so that you don't
+	// get a diff soup of coincidentally identical letters when replacing
+	// a paragraph.
+	function minUnchanged(sizeA, sizeB) {
+		return Math.min(15, Math.max(2, Math.floor(Math.max(sizeA, sizeB) / 10)));
+	}
+	function computeDiff(fragA, fragB, range, encoder = DefaultEncoder) {
+		let tokA = tokens(fragA, encoder, range.fromA, range.toA, []);
+		let tokB = tokens(fragB, encoder, range.fromB, range.toB, []);
+		// Scan from both sides to cheaply eliminate work
+		let start = 0,
+			endA = tokA.length,
+			endB = tokB.length;
+		let cmp = encoder.compareTokens;
+		while (start < tokA.length && start < tokB.length && cmp(tokA[start], tokB[start])) start++;
+		if (start == tokA.length && start == tokB.length) return [];
+		while (endA > start && endB > start && cmp(tokA[endA - 1], tokB[endB - 1])) endA--, endB--;
+		// If the result is simple _or_ too big to cheaply compute, return
+		// the remaining region as the diff
+		if (endA == start || endB == start || endA == endB && endA == start + 1) return [range.slice(start, endA, start, endB)];
+		// This is an implementation of Myers' diff algorithm
+		// See https://neil.fraser.name/writing/diff/myers.pdf and
+		// https://blog.jcoglan.com/2017/02/12/the-myers-diff-algorithm-part-1/
+		let lenA = endA - start,
+			lenB = endB - start;
+		let max = Math.min(MAX_DIFF_SIZE, lenA + lenB),
+			off = max + 1;
+		let history = [];
+		let frontier = [];
+		for (let len = off * 2, i = 0; i < len; i++) frontier[i] = -1;
+		for (let size = 0; size <= max; size++) {
+			for (let diag = -size; diag <= size; diag += 2) {
+				let next = frontier[diag + 1 + max],
+					prev = frontier[diag - 1 + max];
+				let x = next < prev ? prev : next + 1,
+					y = x + diag;
+				while (x < lenA && y < lenB && cmp(tokA[start + x], tokB[start + y])) x++, y++;
+				frontier[diag + max] = x;
+				// Found a match
+				if (x >= lenA && y >= lenB) {
+					// Trace back through the history to build up a set of changed ranges.
+					let diff = [],
+						minSpan = minUnchanged(endA - start, endB - start);
+					// Used to add steps to a diff one at a time, back to front, merging
+					// ones that are less than minSpan tokens apart
+					let fromA = -1,
+						toA = -1,
+						fromB = -1,
+						toB = -1;
+					let add = (fA, tA, fB, tB) => {
+						if (fromA > -1 && fromA < tA + minSpan) {
+							fromA = fA;
+							fromB = fB;
+						} else {
+							if (fromA > -1) diff.push(range.slice(fromA, toA, fromB, toB));
+							fromA = fA;
+							toA = tA;
+							fromB = fB;
+							toB = tB;
+						}
+					};
+					for (let i = size - 1; i >= 0; i--) {
+						let next = frontier[diag + 1 + max],
+							prev = frontier[diag - 1 + max];
+						if (next < prev) {
+							// Deletion
+							diag--;
+							x = prev + start;
+							y = x + diag;
+							add(x, x, y, y + 1);
+						} else {
+							// Insertion
+							diag++;
+							x = next + start;
+							y = x + diag;
+							add(x, x + 1, y, y);
+						}
+						frontier = history[i >> 1];
+					}
+					if (fromA > -1) diff.push(range.slice(fromA, toA, fromB, toB));
+					return diff.reverse();
+				}
+			}
+			// Since only either odd or even diagonals are read from each
+			// frontier, we only copy them every other iteration.
+			if (size % 2 == 0) history.push(frontier.slice());
+		}
+		// The loop exited, meaning the maximum amount of work was done.
+		// Just return a change spanning the entire range.
+		return [range.slice(start, endA, start, endB)];
+	}
+
+	/**
+	Stores metadata for a part of a change.
+	*/
+	class Span {
+		/**
+		@internal
+		*/
+		constructor(
+		/**
+		The length of this span.
+		*/
+		length,
+		/**
+		The data associated with this span.
+		*/
+		data) {
+			this.length = length;
+			this.data = data;
+		}
+		/**
+		@internal
+		*/
+		cut(length) {
+			return length == this.length ? this : new Span(length, this.data);
+		}
+		/**
+		@internal
+		*/
+		static slice(spans, from, to) {
+			if (from == to) return Span.none;
+			if (from == 0 && to == Span.len(spans)) return spans;
+			let result = [];
+			for (let i = 0, off = 0; off < to; i++) {
+				let span = spans[i],
+					end = off + span.length;
+				let overlap = Math.min(to, end) - Math.max(from, off);
+				if (overlap > 0) result.push(span.cut(overlap));
+				off = end;
+			}
+			return result;
+		}
+		/**
+		@internal
+		*/
+		static join(a, b, combine) {
+			if (a.length == 0) return b;
+			if (b.length == 0) return a;
+			let combined = combine(a[a.length - 1].data, b[0].data);
+			if (combined == null) return a.concat(b);
+			let result = a.slice(0, a.length - 1);
+			result.push(new Span(a[a.length - 1].length + b[0].length, combined));
+			for (let i = 1; i < b.length; i++) result.push(b[i]);
+			return result;
+		}
+		/**
+		@internal
+		*/
+		static len(spans) {
+			let len = 0;
+			for (let i = 0; i < spans.length; i++) len += spans[i].length;
+			return len;
+		}
+	}
+	/**
+	@internal
+	*/
+	Span.none = [];
+	/**
+	A replaced range with metadata associated with it.
+	*/
+	class Change {
+		/**
+		@internal
+		*/
+		constructor(
+		/**
+		The start of the range deleted/replaced in the old document.
+		*/
+		fromA,
+		/**
+		The end of the range in the old document.
+		*/
+		toA,
+		/**
+		The start of the range inserted in the new document.
+		*/
+		fromB,
+		/**
+		The end of the range in the new document.
+		*/
+		toB,
+		/**
+		Data associated with the deleted content. The length of these
+		spans adds up to `this.toA - this.fromA`.
+		*/
+		deleted,
+		/**
+		Data associated with the inserted content. Length adds up to
+		`this.toB - this.fromB`.
+		*/
+		inserted) {
+			this.fromA = fromA;
+			this.toA = toA;
+			this.fromB = fromB;
+			this.toB = toB;
+			this.deleted = deleted;
+			this.inserted = inserted;
+		}
+		/**
+		@internal
+		*/
+		get lenA() {
+			return this.toA - this.fromA;
+		}
+		/**
+		@internal
+		*/
+		get lenB() {
+			return this.toB - this.fromB;
+		}
+		/**
+		@internal
+		*/
+		slice(startA, endA, startB, endB) {
+			if (startA == 0 && startB == 0 && endA == this.toA - this.fromA && endB == this.toB - this.fromB) return this;
+			return new Change(this.fromA + startA, this.fromA + endA, this.fromB + startB, this.fromB + endB, Span.slice(this.deleted, startA, endA), Span.slice(this.inserted, startB, endB));
+		}
+		/**
+		This merges two changesets (the end document of x should be the
+		start document of y) into a single one spanning the start of x to
+		the end of y.
+		*/
+		static merge(x, y, combine) {
+			if (x.length == 0) return y;
+			if (y.length == 0) return x;
+			let result = [];
+			// Iterate over both sets in parallel, using the middle coordinate
+			// system (B in x, A in y) to synchronize.
+			for (let iX = 0, iY = 0, curX = x[0], curY = y[0];;) {
+				if (!curX && !curY) {
+					return result;
+				} else if (curX && (!curY || curX.toB < curY.fromA)) {
+					// curX entirely in front of curY
+					let off = iY ? y[iY - 1].toB - y[iY - 1].toA : 0;
+					result.push(off == 0 ? curX : new Change(curX.fromA, curX.toA, curX.fromB + off, curX.toB + off, curX.deleted, curX.inserted));
+					curX = iX++ == x.length ? null : x[iX];
+				} else if (curY && (!curX || curY.toA < curX.fromB)) {
+					// curY entirely in front of curX
+					let off = iX ? x[iX - 1].toB - x[iX - 1].toA : 0;
+					result.push(off == 0 ? curY : new Change(curY.fromA - off, curY.toA - off, curY.fromB, curY.toB, curY.deleted, curY.inserted));
+					curY = iY++ == y.length ? null : y[iY];
+				} else {
+					// Touch, need to merge
+					// The rules for merging ranges are that deletions from the
+					// old set and insertions from the new are kept. Areas of the
+					// middle document covered by a but not by b are insertions
+					// from a that need to be added, and areas covered by b but
+					// not a are deletions from b that need to be added.
+					let pos = Math.min(curX.fromB, curY.fromA);
+					let fromA = Math.min(curX.fromA, curY.fromA - (iX ? x[iX - 1].toB - x[iX - 1].toA : 0)),
+						toA = fromA;
+					let fromB = Math.min(curY.fromB, curX.fromB + (iY ? y[iY - 1].toB - y[iY - 1].toA : 0)),
+						toB = fromB;
+					let deleted = Span.none,
+						inserted = Span.none;
+					// Used to prevent appending ins/del range for the same Change twice
+					let enteredX = false,
+						enteredY = false;
+					// Need to have an inner loop since any number of further
+					// ranges might be touching this group
+					for (;;) {
+						let nextX = !curX ? 2e8 : pos >= curX.fromB ? curX.toB : curX.fromB;
+						let nextY = !curY ? 2e8 : pos >= curY.fromA ? curY.toA : curY.fromA;
+						let next = Math.min(nextX, nextY);
+						let inX = curX && pos >= curX.fromB,
+							inY = curY && pos >= curY.fromA;
+						if (!inX && !inY) break;
+						if (inX && pos == curX.fromB && !enteredX) {
+							deleted = Span.join(deleted, curX.deleted, combine);
+							toA += curX.lenA;
+							enteredX = true;
+						}
+						if (inX && !inY) {
+							inserted = Span.join(inserted, Span.slice(curX.inserted, pos - curX.fromB, next - curX.fromB), combine);
+							toB += next - pos;
+						}
+						if (inY && pos == curY.fromA && !enteredY) {
+							inserted = Span.join(inserted, curY.inserted, combine);
+							toB += curY.lenB;
+							enteredY = true;
+						}
+						if (inY && !inX) {
+							deleted = Span.join(deleted, Span.slice(curY.deleted, pos - curY.fromA, next - curY.fromA), combine);
+							toA += next - pos;
+						}
+						if (inX && next == curX.toB) {
+							curX = iX++ == x.length ? null : x[iX];
+							enteredX = false;
+						}
+						if (inY && next == curY.toA) {
+							curY = iY++ == y.length ? null : y[iY];
+							enteredY = false;
+						}
+						pos = next;
+					}
+					if (fromA < toA || fromB < toB) result.push(new Change(fromA, toA, fromB, toB, deleted, inserted));
+				}
+			}
+		}
+		/**
+		Deserialize a change from JSON format.
+		*/
+		static fromJSON(json) {
+			return new Change(json.fromA, json.toA, json.fromB, json.toB, json.deleted.map(d => new Span(d.length, d.data)), json.inserted.map(d => new Span(d.length, d.data)));
+		}
+		/**
+		Returns a JSON-serializeable object to represent this change.
+		*/
+		toJSON() {
+			return this;
+		}
+	}
+	let letter;
+	// If the runtime support unicode properties in regexps, that's a good
+	// source of info on whether something is a letter.
+	try {
+		letter = new RegExp("[\\p{Alphabetic}_]", "u");
+	} catch (_) {}
+	// Otherwise, we see if the character changes when upper/lowercased,
+	// or if it is part of these common single-case scripts.
+	const nonASCIISingleCaseWordChar = /[\u00df\u0587\u0590-\u05f4\u0600-\u06ff\u3040-\u309f\u30a0-\u30ff\u3400-\u4db5\u4e00-\u9fcc\uac00-\ud7af]/;
+	function isLetter(code) {
+		if (code < 128) return code >= 48 && code <= 57 || code >= 65 && code <= 90 || code >= 97 && code <= 122;
+		let ch = String.fromCharCode(code);
+		if (letter) return letter.test(ch);
+		return ch.toUpperCase() != ch.toLowerCase() || nonASCIISingleCaseWordChar.test(ch);
+	}
+	// Convert a range of document into a string, so that we can easily
+	// access characters at a given position. Treat non-text tokens as
+	// spaces so that they aren't considered part of a word.
+	function getText(frag, start, end) {
+		let out = "";
+		function convert(frag, start, end) {
+			for (let i = 0, off = 0; i < frag.childCount; i++) {
+				let child = frag.child(i),
+					endOff = off + child.nodeSize;
+				let from = Math.max(off, start),
+					to = Math.min(endOff, end);
+				if (from < to) {
+					if (child.isText) {
+						out += child.text.slice(Math.max(0, start - off), Math.min(child.text.length, end - off));
+					} else if (child.isLeaf) {
+						out += " ";
+					} else {
+						if (from == off) out += " ";
+						convert(child.content, Math.max(0, from - off - 1), Math.min(child.content.size, end - off));
+						if (to == endOff) out += " ";
+					}
+				}
+				off = endOff;
+			}
+		}
+		convert(frag, start, end);
+		return out;
+	}
+	// The distance changes have to be apart for us to not consider them
+	// candidates for merging.
+	const MAX_SIMPLIFY_DISTANCE = 30;
+	/**
+	Simplifies a set of changes for presentation. This makes the
+	assumption that having both insertions and deletions within a word
+	is confusing, and, when such changes occur without a word boundary
+	between them, they should be expanded to cover the entire set of
+	words (in the new document) they touch. An exception is made for
+	single-character replacements.
+	*/
+	function simplifyChanges(changes, doc) {
+		let result = [];
+		for (let i = 0; i < changes.length; i++) {
+			let end = changes[i].toB,
+				start = i;
+			while (i < changes.length - 1 && changes[i + 1].fromB <= end + MAX_SIMPLIFY_DISTANCE) end = changes[++i].toB;
+			simplifyAdjacentChanges(changes, start, i + 1, doc, result);
+		}
+		return result;
+	}
+	function simplifyAdjacentChanges(changes, from, to, doc, target) {
+		let start = Math.max(0, changes[from].fromB - MAX_SIMPLIFY_DISTANCE);
+		let end = Math.min(doc.content.size, changes[to - 1].toB + MAX_SIMPLIFY_DISTANCE);
+		let text = getText(doc.content, start, end);
+		for (let i = from; i < to; i++) {
+			let startI = i,
+				last = changes[i],
+				deleted = last.lenA,
+				inserted = last.lenB;
+			while (i < to - 1) {
+				let next = changes[i + 1],
+					boundary = false;
+				let prevLetter = last.toB == end ? false : isLetter(text.charCodeAt(last.toB - 1 - start));
+				for (let pos = last.toB; !boundary && pos < next.fromB; pos++) {
+					let nextLetter = pos == end ? false : isLetter(text.charCodeAt(pos - start));
+					if ((!prevLetter || !nextLetter) && pos != changes[startI].fromB) boundary = true;
+					prevLetter = nextLetter;
+				}
+				if (boundary) break;
+				deleted += next.lenA;
+				inserted += next.lenB;
+				last = next;
+				i++;
+			}
+			if (inserted > 0 && deleted > 0 && !(inserted == 1 && deleted == 1)) {
+				let from = changes[startI].fromB,
+					to = changes[i].toB;
+				if (from < end && isLetter(text.charCodeAt(from - start))) while (from > start && isLetter(text.charCodeAt(from - 1 - start))) from--;
+				if (to > start && isLetter(text.charCodeAt(to - 1 - start))) while (to < end && isLetter(text.charCodeAt(to - start))) to++;
+				let joined = fillChange(changes.slice(startI, i + 1), from, to);
+				let last = target.length ? target[target.length - 1] : null;
+				if (last && last.toA == joined.fromA) target[target.length - 1] = new Change(last.fromA, joined.toA, last.fromB, joined.toB, last.deleted.concat(joined.deleted), last.inserted.concat(joined.inserted));else target.push(joined);
+			} else {
+				for (let j = startI; j <= i; j++) target.push(changes[j]);
+			}
+		}
+		return changes;
+	}
+	function combine(a, b) {
+		return a === b ? a : null;
+	}
+	function fillChange(changes, fromB, toB) {
+		let fromA = changes[0].fromA - (changes[0].fromB - fromB);
+		let last = changes[changes.length - 1];
+		let toA = last.toA + (toB - last.toB);
+		let deleted = Span.none,
+			inserted = Span.none;
+		let delData = (changes[0].deleted.length ? changes[0].deleted : changes[0].inserted)[0].data;
+		let insData = (changes[0].inserted.length ? changes[0].inserted : changes[0].deleted)[0].data;
+		for (let posA = fromA, posB = fromB, i = 0;; i++) {
+			let next = i == changes.length ? null : changes[i];
+			let endA = next ? next.fromA : toA,
+				endB = next ? next.fromB : toB;
+			if (endA > posA) deleted = Span.join(deleted, [new Span(endA - posA, delData)], combine);
+			if (endB > posB) inserted = Span.join(inserted, [new Span(endB - posB, insData)], combine);
+			if (!next) break;
+			deleted = Span.join(deleted, next.deleted, combine);
+			inserted = Span.join(inserted, next.inserted, combine);
+			if (deleted.length) delData = deleted[deleted.length - 1].data;
+			if (inserted.length) insData = inserted[inserted.length - 1].data;
+			posA = next.toA;
+			posB = next.toB;
+		}
+		return new Change(fromA, toA, fromB, toB, deleted, inserted);
+	}
+
+	/**
+	A change set tracks the changes to a document from a given point
+	in the past. It condenses a number of step maps down to a flat
+	sequence of replacements, and simplifies replacments that
+	partially undo themselves by comparing their content.
+	*/
+	class ChangeSet {
+		/**
+		@internal
+		*/
+		constructor(
+		/**
+		@internal
+		*/
+		config,
+		/**
+		Replaced regions.
+		*/
+		changes) {
+			this.config = config;
+			this.changes = changes;
+		}
+		/**
+		Computes a new changeset by adding the given step maps and
+		metadata (either as an array, per-map, or as a single value to be
+		associated with all maps) to the current set. Will not mutate the
+		old set.
+		
+		Note that due to simplification that happens after each add,
+		incrementally adding steps might create a different final set
+		than adding all those changes at once, since different document
+		tokens might be matched during simplification depending on the
+		boundaries of the current changed ranges.
+		*/
+		addSteps(newDoc, maps, data) {
+			// This works by inspecting the position maps for the changes,
+			// which indicate what parts of the document were replaced by new
+			// content, and the size of that new content. It uses these to
+			// build up Change objects.
+			//
+			// These change objects are put in sets and merged together using
+			// Change.merge, giving us the changes created by the new steps.
+			// Those changes can then be merged with the existing set of
+			// changes.
+			//
+			// For each change that was touched by the new steps, we recompute
+			// a diff to try to minimize the change by dropping matching
+			// pieces of the old and new document from the change.
+			let stepChanges = [];
+			// Add spans for new steps.
+			for (let i = 0; i < maps.length; i++) {
+				let d = Array.isArray(data) ? data[i] : data;
+				let off = 0;
+				maps[i].forEach((fromA, toA, fromB, toB) => {
+					stepChanges.push(new Change(fromA + off, toA + off, fromB, toB, fromA == toA ? Span.none : [new Span(toA - fromA, d)], fromB == toB ? Span.none : [new Span(toB - fromB, d)]));
+					off = toB - fromB - (toA - fromA);
+				});
+			}
+			if (stepChanges.length == 0) return this;
+			let newChanges = mergeAll(stepChanges, this.config.combine);
+			let changes = Change.merge(this.changes, newChanges, this.config.combine);
+			let updated = changes;
+			// Minimize changes when possible
+			for (let i = 0; i < updated.length; i++) {
+				let change = updated[i];
+				if (change.fromA == change.toA || change.fromB == change.toB ||
+				// Only look at changes that touch newly added changed ranges
+				!newChanges.some(r => r.toB > change.fromB && r.fromB < change.toB)) continue;
+				let diff = computeDiff(this.config.doc.content, newDoc.content, change, this.config.encoder);
+				// Fast path: If they are completely different, don't do anything
+				if (diff.length == 1 && diff[0].fromB == 0 && diff[0].toB == change.toB - change.fromB) continue;
+				if (updated == changes) updated = changes.slice();
+				if (diff.length == 1) {
+					updated[i] = diff[0];
+				} else {
+					updated.splice(i, 1, ...diff);
+					i += diff.length - 1;
+				}
+			}
+			return new ChangeSet(this.config, updated);
+		}
+		/**
+		The starting document of the change set.
+		*/
+		get startDoc() {
+			return this.config.doc;
+		}
+		/**
+		Map the span's data values in the given set through a function
+		and construct a new set with the resulting data.
+		*/
+		map(f) {
+			let mapSpan = span => {
+				let newData = f(span);
+				return newData === span.data ? span : new Span(span.length, newData);
+			};
+			return new ChangeSet(this.config, this.changes.map(ch => {
+				return new Change(ch.fromA, ch.toA, ch.fromB, ch.toB, ch.deleted.map(mapSpan), ch.inserted.map(mapSpan));
+			}));
+		}
+		/**
+		Compare two changesets and return the range in which they are
+		changed, if any. If the document changed between the maps, pass
+		the maps for the steps that changed it as second argument, and
+		make sure the method is called on the old set and passed the new
+		set. The returned positions will be in new document coordinates.
+		*/
+		changedRange(b, maps) {
+			if (b == this) return null;
+			let touched = maps && touchedRange(maps);
+			let moved = touched ? touched.toB - touched.fromB - (touched.toA - touched.fromA) : 0;
+			function map(p) {
+				return !touched || p <= touched.fromA ? p : p + moved;
+			}
+			let from = touched ? touched.fromB : 2e8,
+				to = touched ? touched.toB : -2e8;
+			function add(start, end = start) {
+				from = Math.min(start, from);
+				to = Math.max(end, to);
+			}
+			let rA = this.changes,
+				rB = b.changes;
+			for (let iA = 0, iB = 0; iA < rA.length && iB < rB.length;) {
+				let rangeA = rA[iA],
+					rangeB = rB[iB];
+				if (rangeA && rangeB && sameRanges(rangeA, rangeB, map)) {
+					iA++;
+					iB++;
+				} else if (rangeB && (!rangeA || map(rangeA.fromB) >= rangeB.fromB)) {
+					add(rangeB.fromB, rangeB.toB);
+					iB++;
+				} else {
+					add(map(rangeA.fromB), map(rangeA.toB));
+					iA++;
+				}
+			}
+			return from <= to ? {
+				from,
+				to
+			} : null;
+		}
+		/**
+		Create a changeset with the given base object and configuration.
+		
+		The `combine` function is used to compare and combine metadata—it
+		should return null when metadata isn't compatible, and a combined
+		version for a merged range when it is.
+		
+		When given, a token encoder determines how document tokens are
+		serialized and compared when diffing the content produced by
+		changes. The default is to just compare nodes by name and text
+		by character, ignoring marks and attributes.
+		
+		To serialize a change set, you can store its document and
+		change array as JSON, and then pass the deserialized (via
+		[`Change.fromJSON`](https://prosemirror.net/docs/ref/#changes.Change^fromJSON)) set of changes
+		as fourth argument to `create` to recreate the set.
+		*/
+		static create(doc, combine = (a, b) => a === b ? a : null, tokenEncoder = DefaultEncoder, changes = []) {
+			return new ChangeSet({
+				combine,
+				doc,
+				encoder: tokenEncoder
+			}, changes);
+		}
+	}
+	/**
+	Exported for testing @internal
+	*/
+	ChangeSet.computeDiff = computeDiff;
+	// Divide-and-conquer approach to merging a series of ranges.
+	function mergeAll(ranges, combine, start = 0, end = ranges.length) {
+		if (end == start + 1) return [ranges[start]];
+		let mid = start + end >> 1;
+		return Change.merge(mergeAll(ranges, combine, start, mid), mergeAll(ranges, combine, mid, end), combine);
+	}
+	function endRange(maps) {
+		let from = 2e8,
+			to = -2e8;
+		for (let i = 0; i < maps.length; i++) {
+			let map = maps[i];
+			if (from != 2e8) {
+				from = map.map(from, -1);
+				to = map.map(to, 1);
+			}
+			map.forEach((_s, _e, start, end) => {
+				from = Math.min(from, start);
+				to = Math.max(to, end);
+			});
+		}
+		return from == 2e8 ? null : {
+			from,
+			to
+		};
+	}
+	function touchedRange(maps) {
+		let b = endRange(maps);
+		if (!b) return null;
+		let a = endRange(maps.map(m => m.invert()).reverse());
+		return {
+			fromA: a.from,
+			toA: a.to,
+			fromB: b.from,
+			toB: b.to
+		};
+	}
+	function sameRanges(a, b, map) {
+		return map(a.fromB) == b.fromB && map(a.toB) == b.toB && sameSpans(a.deleted, b.deleted) && sameSpans(a.inserted, b.inserted);
+	}
+	function sameSpans(a, b) {
+		if (a.length != b.length) return false;
+		for (let i = 0; i < a.length; i++) if (a[i].length != b[i].length || a[i].data !== b[i].data) return false;
+		return true;
+	}
+
+	// [version-diff] Unified inline diff of "version vs previous version" (N vs N-1), Google-Docs style.
+	// The diff is baked straight INTO the document model: we build ONE merged document (version N with the
+	// removed N-1 slices spliced back in) and tag every changed span — text via the `diffChange` mark,
+	// attachment/mention atoms via their `diffState` attribute. Because the tags are part of the model
+	// (not a positional decoration overlay), they ride along through every later transaction — most
+	// importantly the async attachment/mention resolve (setNodeMarkup) that used to wipe decorations —
+	// with zero recompute. The merged doc is built once per version; toggling the highlight is then a pure
+	// CSS class flip on the preview wrapper (no transaction, no content reload, no re-resolve).
+
+	// Plans the N-vs-N-1 diff. Returns the removed base slices to splice into version N (each with the
+	// version-N position it sits at) and the version-N ranges that were added. On any failure returns an
+	// empty plan — the preview must never break because the diff failed.
+	function planVersionDiff(baseDoc, versionDoc) {
+		try {
+			const transform = new Transform(baseDoc);
+			transform.replace(0, baseDoc.content.size, new Slice(versionDoc.content, 0, 0));
+			const changes = simplifyChanges(ChangeSet.create(baseDoc).addSteps(transform.doc, transform.mapping.maps, null).changes, transform.doc);
+			const inserts = [];
+			const addedVersionRanges = [];
+			changes.forEach(change => {
+				if (change.toA > change.fromA) {
+					inserts.push({
+						pos: change.fromB,
+						slice: baseDoc.slice(change.fromA, change.toA)
+					});
+				}
+				if (change.toB > change.fromB) {
+					addedVersionRanges.push({
+						from: change.fromB,
+						to: change.toB
+					});
+				}
+			});
+			return {
+				inserts,
+				addedVersionRanges
+			};
+		} catch {
+			return {
+				inserts: [],
+				addedVersionRanges: []
+			};
+		}
+	}
+
+	// Tags every changed span in one range: text runs get the `diffChange` mark, atoms that carry a
+	// `diffState` attr (attachments, mentions) get the attr set. Positions are collected first, then
+	// applied — marks and setNodeMarkup preserve node sizes, so pre-collected positions stay valid.
+	function tagRange(transform, markType, from, to, state) {
+		const textRuns = [];
+		const atoms = [];
+		transform.doc.nodesBetween(from, to, (node, pos) => {
+			if (node.isText) {
+				const start = Math.max(from, pos);
+				const end = Math.min(to, pos + node.nodeSize);
+				if (end > start) {
+					textRuns.push([start, end]);
+				}
+			} else if (node.attrs && Object.prototype.hasOwnProperty.call(node.attrs, 'diffState')) {
+				atoms.push(pos);
+			}
+		});
+		if (markType) {
+			textRuns.forEach(([start, end]) => transform.addMark(start, end, markType.create({
+				state
+			})));
+		}
+		atoms.forEach(pos => {
+			const node = transform.doc.nodeAt(pos);
+			if (node) {
+				transform.setNodeMarkup(pos, undefined, {
+					...node.attrs,
+					diffState: state
+				});
+			}
+		});
+	}
+
+	// Builds the merged diff document (version N + spliced-in removed N-1 slices, everything tagged) and
+	// returns it as JSON for editor.commands.setContent(). On any failure returns the plain version-N doc
+	// JSON — the preview must always render, even without the diff.
+	function buildVersionDiffDoc(schema, versionDocJson, baseDocJson) {
+		const versionDoc = schema.nodeFromJSON(versionDocJson);
+		try {
+			const baseDoc = schema.nodeFromJSON(baseDocJson);
+			const plan = planVersionDiff(baseDoc, versionDoc);
+			const markType = schema.marks.diffChange || null;
+			const transform = new Transform(versionDoc);
+
+			// Splice removed slices highest-position-first so lower positions stay valid without remapping.
+			// Record each one with the step index after which it was inserted, to map it forward afterwards.
+			const removedRaw = [];
+			plan.inserts.slice().sort((left, right) => right.pos - left.pos).forEach(insert => {
+				try {
+					transform.replace(insert.pos, insert.pos, insert.slice);
+					removedRaw.push({
+						from: insert.pos,
+						to: insert.pos + insert.slice.size,
+						afterStep: transform.steps.length
+					});
+				} catch {
+					// A slice that will not fit this boundary is skipped rather than breaking the diff.
+				}
+			});
+
+			// Map every recorded range to its final coordinates in the now-spliced merged doc.
+			const removedRanges = removedRaw.map(raw => {
+				const mapping = transform.mapping.slice(raw.afterStep);
+				return {
+					from: mapping.map(raw.from, 1),
+					to: mapping.map(raw.to, -1)
+				};
+			}).filter(range => range.to > range.from);
+			const addedRanges = plan.addedVersionRanges.map(range => ({
+				from: transform.mapping.map(range.from, 1),
+				to: transform.mapping.map(range.to, -1)
+			})).filter(range => range.to > range.from);
+			addedRanges.forEach(range => tagRange(transform, markType, range.from, range.to, 'added'));
+			removedRanges.forEach(range => tagRange(transform, markType, range.from, range.to, 'removed'));
+			return transform.doc.toJSON();
+		} catch {
+			return versionDoc.toJSON();
+		}
+	}
+
 	// `/note` prefix is optional: the SPA is mounted on base `/note/`, so `/document/{id}/` and
 	// `/note/document/{id}/` denote the same internal document link (user-typed short form must not reload).
 	const DOCUMENT_PATH_PATTERN = /^(?:\/note)?\/document\/(\d+)\/?$/;
@@ -69928,9 +75533,14 @@ ${nextLine.slice(indentLevel + 2)}`;
 	function createUploadToken() {
 		return `upload-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 	}
+
+	// `select` puts a NodeSelection on the just-inserted (atom) node — used by the attachments hotkey
+	// so the tile lands focused: click it to browse-and-upload, or move the caret away to keep typing.
+	// The toolbar `+` buttons pass it falsy and keep the caret after the node, as before.
 	function insertUploadAssetNode(editor, assetKind, {
 		documentId,
-		collectionId
+		collectionId,
+		select = false
 	} = {}) {
 		if (!editor) {
 			return;
@@ -69944,7 +75554,9 @@ ${nextLine.slice(indentLevel + 2)}`;
 			from,
 			to
 		} : editor.state.doc.content.size;
-		editor.chain().focus().insertContentAt(range, {
+		const insertAnchor = hasSelection ? from : editor.state.doc.content.size;
+		const uploadToken = createUploadToken();
+		const chain = editor.chain().focus().insertContentAt(range, {
 			type: 'uploadAsset',
 			attrs: {
 				assetKind,
@@ -69952,9 +75564,54 @@ ${nextLine.slice(indentLevel + 2)}`;
 				collectionId: normalizedCollectionId,
 				status: 'pending',
 				errorMessage: '',
-				uploadToken: createUploadToken()
+				uploadToken
 			}
-		}).run();
+		});
+		if (select) {
+			// Put a NodeSelection on the tile just inserted (attachments hotkey: click to browse, arrow
+			// away to skip). Locate it by its unique uploadToken rather than the pre-insert caret position —
+			// insertContentAt splits/maps around the caret, so the node rarely lands exactly at `from`.
+			chain.command(({
+				tr,
+				dispatch
+			}) => {
+				if (!dispatch) {
+					return true;
+				}
+				const isInsertedTile = node => {
+					return node.type.name === 'uploadAsset' && node.attrs.uploadToken === uploadToken;
+				};
+
+				// Scan around the mapped insertion anchor rather than the whole document: the tile lands next
+				// to where the caret was. The token check keeps the scan self-verifying, and a miss (filtered
+				// or relocated insert) falls back to the full walk, so correctness never depends on the window.
+				let nodePos = null;
+				const anchor = tr.mapping.map(insertAnchor, -1);
+				tr.doc.nodesBetween(Math.max(0, anchor - 1), Math.min(tr.doc.content.size, anchor + 2), (node, pos) => {
+					if (nodePos === null && isInsertedTile(node)) {
+						nodePos = pos;
+					}
+					return nodePos === null;
+				});
+				if (nodePos === null) {
+					tr.doc.descendants((node, pos) => {
+						if (nodePos === null && isInsertedTile(node)) {
+							nodePos = pos;
+						}
+						return nodePos === null;
+					});
+				}
+				if (nodePos !== null) {
+					try {
+						tr.setSelection(NodeSelection.create(tr.doc, nodePos));
+					} catch {
+						// Node isn't selectable (e.g. filtered on insert) — leave the caret as inserted.
+					}
+				}
+				return true;
+			});
+		}
+		chain.run();
 	}
 	function createScopedUploadService(uploadAdapter, collectionId, documentId) {
 		const scopedCollectionId = normalizeCollectionId(collectionId);
@@ -69995,14 +75652,44 @@ ${nextLine.slice(indentLevel + 2)}`;
 		components: {
 			EditorToolbarComponent,
 			TableContextMenuComponent,
-			LinkFloatingPopupComponent
+			LinkFloatingPopupComponent,
+			ActivityLineComponent: note_ui_documentHistory.ActivityLineComponent,
+			Loader: note_ui_loader.Loader
+			// [#11 rework] NoteDocumentEditor (self) is registered right after this object literal —
+			// see the self-registration statement at the end of the file and the `contentOnly` prop doc.
 		},
 		props: {
+			// [#11 rework] True only for the nested read-only instance this component mounts for
+			// itself while previewing a version (see `isPreviewMode`/`setPreview` below): suppresses
+			// the title block and the activity line, which the OUTER instance already renders (the
+			// preview only replaces the document body, not the whole page chrome).
+			contentOnly: {
+				type: Boolean,
+				default: false
+			},
+			// [version-diff] Preview-only props (set on the nested content-only instance): when
+			// `diffHighlight` is on and `diffBaseMarkdown` holds the live document's markdown, the
+			// preview overlays a diff of the rendered version against that base (see applyVersionDiff).
+			diffHighlight: {
+				type: Boolean,
+				default: false
+			},
+			diffBaseMarkdown: {
+				type: String,
+				default: null
+			},
 			editable: {
 				type: Boolean,
 				default: true
 			},
 			showToolbar: {
+				type: Boolean,
+				default: true
+			},
+			// Off for embedded surfaces that are not a document page (the collection description):
+			// the activity line's chip/views/bell belong to a document the user navigated to, and
+			// skipping the component also skips its own views/subscription requests.
+			showActivityLine: {
 				type: Boolean,
 				default: true
 			},
@@ -70049,9 +75736,63 @@ ${nextLine.slice(indentLevel + 2)}`;
 			onMentionClick: {
 				type: Function,
 				default: null
+			},
+			// [P1.T5 relocation, #2] Activity line hub (chip / eye / bell), rendered right under the
+			// <h1> title — that DOM lives in this component, not in note-document-page.js.
+			// ActivityLineComponent now lives in the note.ui.document-history extension and owns its
+			// own lang (see historyMessages below). `lastChange` is `{ authors, time } | null`,
+			// normalized upstream in note.app's route-document-resolver.js and threaded through
+			// create-document-state.js/EditorMount (the bell is self-contained since P6.T4 — no
+			// `subscribed` prop needed).
+			lastChange: {
+				type: Object,
+				default: null
+			},
+			// [P8.T5] ISO creation timestamp — passed through to ActivityLineComponent for the chip's
+			// "Created <date>" fallback when there is no last-change info.
+			createdAt: {
+				type: String,
+				default: null
+			},
+			// [P8.T2/T3] Bootstrap UI flags. historyEnabled gates the chip's history-open affordance;
+			// notificationsEnabled gates the subscription bell. Both default off (hidden).
+			historyEnabled: {
+				type: Boolean,
+				default: false
+			},
+			notificationsEnabled: {
+				type: Boolean,
+				default: false
+			},
+			// [#6] Initial "who viewed" snapshot bundled with the document bootstrap payload —
+			// passed straight through to ActivityLineComponent/ViewsWidgetComponent, which uses it
+			// as a base and skips its own getViews call when present (see note.editor's type.js).
+			initialViews: {
+				type: Object,
+				default: null
+			},
+			// [DTO-01] Backlinks counter bundled with the document bootstrap payload — passed through to
+			// ActivityLineComponent/BacklinksWidgetComponent, which adopts it instead of reading the count
+			// itself (see note.editor's type.js). `null` = nothing reported, the widget asks on its own.
+			initialBacklinks: {
+				type: Object,
+				default: null
+			},
+			// Bell state bundled with the document bootstrap — passed through to ActivityLineComponent/
+			// SubscriptionBellComponent so the bell skips its own getState call on mount.
+			initialSubscription: {
+				type: Object,
+				default: null
+			},
+			// [TPL-01] "In favorites" flag bundled with the document bootstrap - passed through to
+			// ActivityLineComponent/FavoriteStarComponent so the star is right on the first frame of a
+			// document opened by a direct link. `null` = nothing reported, the star reads the sidebar only.
+			initialFavorite: {
+				type: Boolean,
+				default: null
 			}
 		},
-		emits: ['ready', 'update:modelValue', 'update:content', 'rename-title', 'open-internal-link'],
+		emits: ['ready', 'update:modelValue', 'update:content', 'rename-title', 'open-internal-link', 'open-history'],
 		data() {
 			return {
 				editor: null,
@@ -70066,16 +75807,40 @@ ${nextLine.slice(indentLevel + 2)}`;
 				isTitleEditing: false,
 				titleBeforeEdit: '',
 				editableLocal: this.editable,
-				showToolbarLocal: this.showToolbar
+				showToolbarLocal: this.showToolbar,
+				// Toolbar enter/leave animation state. `toolbarInDom` keeps the node mounted
+				// through the leave transition; `toolbarShown` toggles the `.is-visible` class
+				// the CSS transition animates. Driven by a rAF (not Vue <Transition>, which
+				// force-reflows on every toggle).
+				toolbarInDom: this.showToolbar,
+				toolbarShown: this.showToolbar,
+				// [#11/#12 rework] Version-preview state — driven imperatively by EditorMount's
+				// setPreview()/clearPreview() (see create-document-feature.js's showVersionPreview/
+				// hideVersionPreview), not by props: this instance is mounted once via
+				// BitrixVue.createApp and its props don't re-flow reactively from outside afterwards
+				// (the same reason `title` is pushed via `updateTitle()` instead of a prop watcher).
+				previewActive: false,
+				previewLoading: false,
+				previewMarkdown: null,
+				previewMeta: null,
+				previewError: false,
+				// [version-diff] Diff state pushed down to the nested preview instance as reactive props
+				// (unlike the imperative preview-body state above, this crosses an ordinary Vue child
+				// boundary, so a plain data->prop binding is enough).
+				previewDiffHighlight: false,
+				previewDiffBaseMarkdown: null
 			};
 		},
 		computed: {
+			isPreviewMode() {
+				return this.previewActive;
+			},
 			displayTitle() {
 				if (this.internalTitle) {
 					return this.internalTitle;
 				}
 				const id = Number(this.documentId);
-				return id > 0 ? `Документ #${id}` : '';
+				return id > 0 ? `${main_core.Loc.getMessage('NOTE_EDITOR_DOCUMENT_TITLE')} #${id}` : '';
 			},
 			headingLevel() {
 				const current = this.editor;
@@ -70100,6 +75865,11 @@ ${nextLine.slice(indentLevel + 2)}`;
 			},
 			effectiveEditable() {
 				return Boolean(this.editableLocal) && !this.isReadOnly;
+			},
+			// Static per-request lang strings for the history hub (note.ui.document-history owns
+			// its own lang now — see that extension's src/messages.js).
+			historyMessages() {
+				return note_ui_documentHistory.createHistoryMessages();
 			}
 		},
 		watch: {
@@ -70108,6 +75878,9 @@ ${nextLine.slice(indentLevel + 2)}`;
 			},
 			showToolbar(nextShowToolbar) {
 				this.showToolbarLocal = Boolean(nextShowToolbar);
+			},
+			showToolbarLocal(nextShow) {
+				this.animateToolbar(Boolean(nextShow));
 			},
 			editableLocal() {
 				this.applyEditableState();
@@ -70126,7 +75899,20 @@ ${nextLine.slice(indentLevel + 2)}`;
 					return;
 				}
 				this.internalTitle = nextValue;
+			},
+			// [version-diff] The highlight toggle is NOT watched here: the diff is baked into the doc once
+			// per version, and showing/hiding it is a pure CSS class flip on the preview wrapper (driven by
+			// the parent's previewDiffHighlight) — no content reload, no re-resolve. Only a change of the
+			// base document (i.e. a version switch) rebuilds the merged doc. The version body itself is
+			// handled by the content watcher → syncIncomingContent → renderPreviewDoc.
+			diffBaseMarkdown() {
+				this.renderPreviewDoc();
 			}
+		},
+		created() {
+			// Non-reactive handles for the toolbar enter/leave animation.
+			this.toolbarEnterRaf = 0;
+			this.toolbarLeaveTimer = 0;
 		},
 		mounted() {
 			this.createEditor();
@@ -70138,7 +75924,9 @@ ${nextLine.slice(indentLevel + 2)}`;
 			this.toolbarTracker.start();
 		},
 		beforeUnmount() {
+			this.clearToolbarAnim();
 			this.toolbarTracker?.stop();
+			this.editor?.off?.('note:hotkey', this.handleEditorHotkeyIntent);
 			this.editor?.destroy();
 			this.editor = null;
 		},
@@ -70175,6 +75963,85 @@ ${nextLine.slice(indentLevel + 2)}`;
 			updateTitle(newTitle) {
 				this.internalTitle = newTitle;
 			},
+			handleOpenHistory() {
+				this.$emit('open-history');
+			},
+			// Reuses the mention-chip navigation contract (open-link.js): native user card in the
+			// mobile app, a new tab on desktop. Handed down to the activity line's avatar stack.
+			openUserProfile(userId) {
+				const id = Number(userId);
+				if (!Number.isInteger(id) || id <= 0) {
+					return;
+				}
+				openLinkNative(`/company/personal/user/${id}/`);
+			},
+			// [#11/NEW-A rework] Called imperatively by EditorMount (see create-document-feature.js's
+			// showVersionPreview) — merges partial state so the caller can call it once with
+			// `{ loading: true, meta }` to show the loader immediately, then again with just
+			// `{ loading: false, markdown }` once the version body has loaded, without re-sending
+			// `meta`. Never touches `this.editor` (the live, collaboration-bound instance) — the
+			// preview body renders in a separate nested instance of this same component instead
+			// (see `contentOnly` prop and the template's `isPreviewMode` branch).
+			setPreview({
+				loading = false,
+				markdown = null,
+				meta = null,
+				error = false,
+				highlight = null,
+				baseMarkdown = null
+			} = {}) {
+				this.previewActive = true;
+				this.previewLoading = loading;
+				this.previewError = error;
+				if (markdown !== null) {
+					this.previewMarkdown = markdown;
+				}
+				if (meta !== null) {
+					this.previewMeta = meta;
+				}
+
+				// [version-diff] Merge-updatable like the fields above: a highlight toggle re-calls
+				// setPreview with only `highlight`/`baseMarkdown`, leaving the loaded body untouched.
+				if (highlight !== null) {
+					this.previewDiffHighlight = Boolean(highlight);
+				}
+				if (baseMarkdown !== null) {
+					this.previewDiffBaseMarkdown = baseMarkdown;
+				}
+			},
+			clearPreview() {
+				this.previewActive = false;
+				this.previewLoading = false;
+				this.previewMarkdown = null;
+				this.previewMeta = null;
+				this.previewError = false;
+				this.previewDiffHighlight = false;
+				this.previewDiffBaseMarkdown = null;
+			},
+			// [version-diff] Renders the preview body for the content-only instance, baking the diff into
+			// the document ONCE per version. When a base (previous) version is present it builds the merged
+			// doc (version N + spliced-in removed N-1 slices, every change tagged by the diffChange mark /
+			// diffState attr); otherwise it renders the plain version. Called on create and on a version
+			// switch (content / base change) — NOT on the highlight toggle, which is a pure CSS flip. A
+			// signature guard skips redundant rebuilds so the two watchers firing on one switch cost one
+			// setContent. setContent(doc, false) emits no update and there is no provider — fully inert.
+			renderPreviewDoc() {
+				const editor = this.editor;
+				if (!editor || !this.contentOnly) {
+					return;
+				}
+				const markdown = main_core.Type.isString(this.content) ? this.content : '';
+				const hasBase = main_core.Type.isString(this.diffBaseMarkdown);
+				const signature = `${markdown}\0${hasBase ? `1:${this.diffBaseMarkdown}` : `0`}`;
+				if (signature === this.previewDocSignature) {
+					return;
+				}
+				this.previewDocSignature = signature;
+				const versionDocJson = safeParseMarkdown(editor, markdown).doc;
+				const doc = hasBase ? buildVersionDiffDoc(editor.schema, versionDocJson, safeParseMarkdown(editor, this.diffBaseMarkdown).doc) : versionDocJson;
+				editor.commands.setContent(doc, false);
+				this.editorTick += 1;
+			},
 			setEditable(value) {
 				this.editableLocal = Boolean(value);
 			},
@@ -70194,6 +76061,41 @@ ${nextLine.slice(indentLevel + 2)}`;
 			},
 			setShowToolbar(value) {
 				this.showToolbarLocal = Boolean(value);
+			},
+			animateToolbar(show) {
+				this.clearToolbarAnim();
+				if (show) {
+					// Mount at the "from" state (no .is-visible), let the browser paint it, then
+					// flip to visible so the transition has a committed start value. Double rAF
+					// (paint the from-state on frame 1, animate on frame 2) does what Vue's
+					// forceReflow() does, but without the synchronous document.body.offsetHeight
+					// read that was causing the jank.
+					this.toolbarInDom = true;
+					this.$nextTick(() => {
+						this.toolbarEnterRaf = requestAnimationFrame(() => {
+							this.toolbarEnterRaf = requestAnimationFrame(() => {
+								this.toolbarShown = true;
+							});
+						});
+					});
+				} else {
+					// Play the leave transition, then unmount once it has finished (see
+					// --note-editor-toolbar-anim duration mirrored in editor.css).
+					this.toolbarShown = false;
+					this.toolbarLeaveTimer = setTimeout(() => {
+						this.toolbarInDom = false;
+					}, 200);
+				}
+			},
+			clearToolbarAnim() {
+				if (this.toolbarEnterRaf) {
+					cancelAnimationFrame(this.toolbarEnterRaf);
+					this.toolbarEnterRaf = 0;
+				}
+				if (this.toolbarLeaveTimer) {
+					clearTimeout(this.toolbarLeaveTimer);
+					this.toolbarLeaveTimer = 0;
+				}
 			},
 			onTitleFocus() {
 				this.titleBeforeEdit = this.internalTitle;
@@ -70297,7 +76199,9 @@ ${nextLine.slice(indentLevel + 2)}`;
 						this.$emit('ready', editor);
 					}
 				});
-				if (isMarkdownContent) {
+				// The preview instance sets its own body via renderPreviewDoc (baking the diff) below —
+				// skip the plain initial setContent for it to avoid a throwaway render + double resolve.
+				if (isMarkdownContent && !this.contentOnly) {
 					const {
 						doc
 					} = safeParseMarkdown(this.editor, resolvedContent);
@@ -70305,6 +76209,17 @@ ${nextLine.slice(indentLevel + 2)}`;
 				}
 				this.editor.registerPlugin(createLinkSelectionDecorationPlugin());
 				this.editor.registerPlugin(createAttachmentSelectionDecorationPlugin());
+				// The attachments hotkey can't insert an upload node from the keymap (no document/collection
+				// context there), so it emits an intent the live editor turns into the same file tile the
+				// `+` menu inserts — see handleEditorHotkeyIntent. Preview instances don't edit, so skip.
+				if (!this.contentOnly) {
+					this.editor.on('note:hotkey', this.handleEditorHotkeyIntent);
+				}
+				// [version-diff] The preview instance bakes the diff into its body here; the live instance
+				// (no base markdown) just renders the plain content. Nothing to do for the live editor.
+				if (this.contentOnly) {
+					this.renderPreviewDoc();
+				}
 			},
 			resolveInitialContent() {
 				return this.modelValue ?? this.content ?? DEFAULT_CONTENT;
@@ -70324,6 +76239,13 @@ ${nextLine.slice(indentLevel + 2)}`;
 					return;
 				}
 				if (!this.editor || nextValue === null || nextValue === undefined) {
+					return;
+				}
+
+				// [version-diff] The preview instance owns its body via renderPreviewDoc, which bakes the
+				// diff and dedups by (version + base) signature — bypass the plain-content sync entirely.
+				if (this.contentOnly) {
+					this.renderPreviewDoc();
 					return;
 				}
 				const incomingSerialized = this.serializeContent(nextValue);
@@ -70354,6 +76276,18 @@ ${nextLine.slice(indentLevel + 2)}`;
 					collectionId: this.collectionId
 				});
 			},
+			// Attachments hotkey (see hotkeys-bindings.js `insertFileNode`): drop a file tile at the caret
+			// and select it, so a click browses-and-uploads while an arrow key / click-away just moves on.
+			handleEditorHotkeyIntent(payload) {
+				if (payload?.action !== 'insertFileNode' || !this.editor?.isEditable) {
+					return;
+				}
+				insertUploadAssetNode(this.editor, 'file', {
+					documentId: this.documentId,
+					collectionId: this.collectionId,
+					select: true
+				});
+			},
 			handleInsertImageStub() {
 				if (!this.editor?.isEditable) {
 					return;
@@ -70378,14 +76312,15 @@ ${nextLine.slice(indentLevel + 2)}`;
 		<div ref="root" class="note-editor-root" :style="{ '--note-editor-toolbar-sticky-top': toolbarTop + 'px' }">
 			<div ref="toolbarAnchor"></div>
 			<EditorToolbarComponent
-				v-if="showToolbarLocal"
+				v-if="toolbarInDom && !isPreviewMode"
+				:class="{ 'is-visible': toolbarShown }"
 				:editor="editor"
 				:heading-level="headingLevel"
 				:editor-tick="editorTick"
 				:can-undo="canUndo"
 				:can-redo="canRedo"
 				:max-image-size="${MAX_IMAGE_SIZE}"
-				:max-file-size="${MAX_FILE_SIZE}"
+				:max-file-size="${MAX_FILE_SIZE$1}"
 				:fixed="toolbarFixed"
 				:fixed-top="toolbarTop"
 				:fixed-left="toolbarLeft"
@@ -70394,8 +76329,8 @@ ${nextLine.slice(indentLevel + 2)}`;
 				@insertImageStub="handleInsertImageStub"
 				@insertVideoStub="handleInsertVideoStub"
 			/>
-			<div v-if="showToolbarLocal && toolbarFixed" class="note-editor-toolbar-placeholder"></div>
-			<div v-if="displayTitle || effectiveEditable" class="note-editor-title-block">
+			<div v-if="toolbarInDom && toolbarFixed && !isPreviewMode" class="note-editor-toolbar-placeholder" :class="{ 'is-visible': toolbarShown }"></div>
+			<div v-if="!contentOnly && (displayTitle || effectiveEditable)" class="note-editor-title-block">
 				<h1
 					ref="titleEl"
 					class="note-editor-title"
@@ -70406,7 +76341,47 @@ ${nextLine.slice(indentLevel + 2)}`;
 					@paste="onTitlePaste"
 				>{{ displayTitle }}</h1>
 			</div>
-			<div ref="contentWrapper" class="note-editor-content-wrapper">
+			<ActivityLineComponent
+				v-if="!contentOnly && showActivityLine"
+				:document-id="Number(documentId)"
+				:collection-id="Number(collectionId) || 0"
+				:provider="provider"
+				:can-edit="effectiveEditable"
+				:messages="historyMessages"
+				:last-change="lastChange"
+				:created-at="createdAt"
+				:history-enabled="historyEnabled"
+				:notifications-enabled="notificationsEnabled"
+				:preview-info="isPreviewMode ? previewMeta : null"
+				:initial-views="initialViews"
+				:initial-backlinks="initialBacklinks"
+				:initial-subscription="initialSubscription"
+				:initial-favorite="initialFavorite"
+				:document-title="displayTitle"
+				:current-user="normalizedCurrentUser"
+				:open-user-profile="openUserProfile"
+				@open-history="handleOpenHistory"
+				@open-internal-link="$emit('open-internal-link', $event)"
+			/>
+			<div v-if="isPreviewMode" class="note-editor-content-wrapper note-editor-content-wrapper--preview" :class="{ 'note-editor-content-wrapper--diff': previewDiffHighlight }" role="region" :aria-label="historyMessages.historyPreviewLabel">
+				<div v-if="previewLoading" class="note-editor-document-loading" role="status" :aria-label="historyMessages.historyPreviewLabel">
+					<Loader :label="historyMessages.historyPreviewLabel" />
+				</div>
+				<div v-else-if="previewError" class="note-editor-preview-error">{{ historyMessages.historyPreviewLoadError }}</div>
+				<NoteDocumentEditor
+					v-else
+					key="version-preview"
+					:document-id="documentId"
+					:content="previewMarkdown"
+					:read-only="true"
+					:editable="false"
+					:show-toolbar="false"
+					:content-only="true"
+					:diff-highlight="previewDiffHighlight"
+					:diff-base-markdown="previewDiffBaseMarkdown"
+				/>
+			</div>
+			<div v-show="!isPreviewMode" ref="contentWrapper" class="note-editor-content-wrapper">
 				<div ref="content" class="note-editor-content"></div>
 			</div>
 			<TableContextMenuComponent :editor="editor" :editor-tick="editorTick" />
@@ -70414,6 +76389,11 @@ ${nextLine.slice(indentLevel + 2)}`;
 		</div>
 	`
 	};
+
+	// [#11 rework] Self-registration for the nested read-only preview instance (see `contentOnly`
+	// prop + template above) — added after the object literal so the reference exists by the time
+	// Vue resolves `<NoteDocumentEditor>` at render time (component resolution is lazy).
+	DocumentEditorComponent.components.NoteDocumentEditor = DocumentEditorComponent;
 
 	function createDocumentMessages() {
 		return {
@@ -70440,13 +76420,31 @@ ${nextLine.slice(indentLevel + 2)}`;
 			delete: main_core.Loc.getMessage('NOTE_EDITOR_DOCUMENT_MENU_DELETE'),
 			restoreFromTrash: main_core.Loc.getMessage('NOTE_EDITOR_DOCUMENT_MENU_RESTORE_FROM_TRASH'),
 			hardDelete: main_core.Loc.getMessage('NOTE_EDITOR_DOCUMENT_MENU_HARD_DELETE'),
+			download: main_core.Loc.getMessage('NOTE_EDITOR_DOCUMENT_MENU_DOWNLOAD'),
 			documents: main_core.Loc.getMessage('NOTE_EDITOR_CHILDREN_HEADER'),
 			archivedRemote: main_core.Loc.getMessage('NOTE_EDITOR_DOC_ARCHIVED_REMOTE'),
 			trashedRemote: main_core.Loc.getMessage('NOTE_EDITOR_DOC_TRASHED_REMOTE'),
 			restoredRemote: main_core.Loc.getMessage('NOTE_EDITOR_DOC_RESTORED_REMOTE'),
 			hardDeletedRemote: main_core.Loc.getMessage('NOTE_EDITOR_DOC_HARD_DELETED_REMOTE'),
 			accessRevokedRemote: main_core.Loc.getMessage('NOTE_EDITOR_DOC_ACCESS_REVOKED_REMOTE'),
-			editRevokedRemote: main_core.Loc.getMessage('NOTE_EDITOR_DOC_EDIT_REVOKED_REMOTE')
+			editRevokedRemote: main_core.Loc.getMessage('NOTE_EDITOR_DOC_EDIT_REVOKED_REMOTE'),
+			saveBlocked: main_core.Loc.getMessage('NOTE_EDITOR_DOC_SAVE_BLOCKED'),
+			contentOverwrittenKept: main_core.Loc.getMessage('NOTE_EDITOR_CONTENT_OVERWRITTEN_KEPT'),
+			participantsTitle: main_core.Loc.getMessage('NOTE_EDITOR_PARTICIPANTS_TITLE'),
+			participantViewing: main_core.Loc.getMessage('NOTE_EDITOR_PARTICIPANT_VIEWING'),
+			participantEditing: main_core.Loc.getMessage('NOTE_EDITOR_PARTICIPANT_EDITING'),
+			participantSelf: main_core.Loc.getMessage('NOTE_EDITOR_PARTICIPANT_SELF'),
+			// [#11 rework] The header's primary action button morphs Edit → Restore while a version
+			// preview is open (see document-header.js's `showRestoreButton`).
+			restoreVersion: main_core.Loc.getMessage('NOTE_EDITOR_DOCUMENT_RESTORE_VERSION'),
+			restoringVersion: main_core.Loc.getMessage('NOTE_EDITOR_DOCUMENT_RESTORING_VERSION'),
+			exitPreview: main_core.Loc.getMessage('NOTE_EDITOR_DOCUMENT_EXIT_PREVIEW'),
+			importMarkdown: main_core.Loc.getMessage('NOTE_EDITOR_DOCUMENT_MENU_IMPORT_MARKDOWN'),
+			importMdErrExtension: main_core.Loc.getMessage('NOTE_EDITOR_DOCUMENT_IMPORT_MD_ERR_EXTENSION'),
+			importMdErrTooLarge: main_core.Loc.getMessage('NOTE_EDITOR_DOCUMENT_IMPORT_MD_ERR_TOO_LARGE'),
+			importMdErrUnreadable: main_core.Loc.getMessage('NOTE_EDITOR_DOCUMENT_IMPORT_MD_ERR_UNREADABLE'),
+			importMdErrGeneric: main_core.Loc.getMessage('NOTE_EDITOR_DOCUMENT_IMPORT_MD_ERR_GENERIC'),
+			importMdDegraded: main_core.Loc.getMessage('NOTE_EDITOR_DOCUMENT_IMPORT_MD_DEGRADED')
 		};
 	}
 
@@ -70475,6 +76473,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 			canEdit: false,
 			canEditCollection: false,
 			canManagePermissions: false,
+			isMain: false,
 			isArchived: false,
 			archivedAt: null,
 			isTrashed: false,
@@ -70485,12 +76484,47 @@ ${nextLine.slice(indentLevel + 2)}`;
 			canHardDelete: false,
 			sharedAccess: false,
 			collaborationStatus: 'idle',
+			// Id of the document the server refused a collaborative baseline for: an out-of-band REST
+			// overwrite demoted it to plain markdown, and it will never be collaborative again. Held as an
+			// id rather than a flag so it cannot travel with the user to the next document opened, and so
+			// reopening the same document does not pay for a request that is bound to be refused.
+			collaborationUnavailableDocumentId: 0,
+			// Id of the document whose attempt to stand up collaborative editing has ENDED leaving no
+			// provider behind, which means it has no path that persists text - why that follows, and why the
+			// test is the provider and not the indicator, is in #settleCollaborationOutcome. Editing stays
+			// open on such a document so the text can be read and copied out; what closes is saving.
+			// Distinct from collaborationUnavailableDocumentId, which states a rule of the document itself:
+			// this one describes this tab and clears the moment a provider appears.
+			collaborationSettledWithoutProviderDocumentId: 0,
 			readOnly: false,
 			currentUser: {},
+			participants: [],
 			mode: 'view',
 			isLoading: true,
 			isSaving: false,
-			loadRequestId: 0
+			loadRequestId: 0,
+			// [#6] Initial "who viewed" snapshot bundled with the document bootstrap — handed down
+			// to ViewsWidgetComponent so it can skip its own getViews call on mount (see type.js's
+			// DocumentViewsSnapshot).
+			initialViews: null,
+			// [DTO-01] Backlinks counter bundled with the document bootstrap — handed down to
+			// BacklinksWidgetComponent so it can skip its own count request on mount (see type.js's
+			// DocumentBacklinksSnapshot).
+			initialBacklinks: null,
+			// [#2] `{ authors, time } | null` — last content-change snapshot bundled with the
+			// document bootstrap, handed down to ActivityLineComponent's chip (see type.js's
+			// DocumentLastChange).
+			lastChange: null,
+			// [P8.T5] ISO-8601 creation timestamp from the bootstrap payload — the activity-line chip
+			// falls back to "Created <date>" when there is no last-change info to show.
+			createdAt: null,
+			// Bell state bundled with the document bootstrap, handed down to SubscriptionBellComponent
+			// so it skips its own getState request on mount.
+			initialSubscription: null,
+			// [TPL-01] "In favorites" flag bundled with the document bootstrap, handed down to the
+			// activity-line star. `null` means the bootstrap reported nothing, so the star keeps reading
+			// the sidebar store alone.
+			initialFavorite: null
 		};
 	}
 
@@ -70519,6 +76553,65 @@ ${nextLine.slice(indentLevel + 2)}`;
 		return fallback;
 	}
 
+	// CRC-32/ISO-HDLC over the UTF-8 bytes of the text, as an unsigned decimal string - the very value
+	// PHP's crc32() returns for the same input. Two places name a text by this number and both are read on
+	// the server as one agreed field: the genesis claim names the markdown its baseline was rebuilt from
+	// (SaveYjsStateCommand), and a queue left in local storage names the baseline it belongs to.
+	//
+	// Not a hash for storage or identity: a 32-bit checksum answers "is this still the same text", which is
+	// the only question either place asks, and it answers it with the same arithmetic on both sides of the
+	// wire.
+	const CRC32_POLYNOMIAL = 0xEDB88320;
+	function buildTable() {
+		const table = new Int32Array(256);
+		for (let index = 0; index < 256; index++) {
+			let value = index;
+			for (let bit = 0; bit < 8; bit++) {
+				value = (value & 1) === 1 ? value >>> 1 ^ CRC32_POLYNOMIAL : value >>> 1;
+			}
+			table[index] = value;
+		}
+		return table;
+	}
+	const CRC32_TABLE = buildTable();
+	function crc32Utf8(text) {
+		const bytes = new TextEncoder().encode(String(text ?? ''));
+		let crc = 0xFFFFFFFF;
+		for (const byte of bytes) {
+			crc = crc >>> 8 ^ CRC32_TABLE[(crc ^ byte) & 0xFF];
+		}
+		return String((crc ^ 0xFFFFFFFF) >>> 0);
+	}
+
+	// The tab's name for one write it asked the server to make. It travels with the request and comes back
+	// in the push that reports the write, which is how the tab tells the answer to its own request from a
+	// write somebody else made in the meantime.
+	//
+	// 32 hex characters, because that is the only shape the server admits - anything else it reads as no
+	// identifier at all (DocumentController::normalizeOperationId), leaving the tab unable to recognise its
+	// own operation. Randomness only has to make a collision between two open tabs implausible; nothing is
+	// authorised by this value, and the server never stores it.
+	const OPERATION_ID_BYTES = 16;
+	function randomBytes(count) {
+		const bytes = new Uint8Array(count);
+		const source = globalThis.crypto;
+		if (main_core.Type.isFunction(source?.getRandomValues)) {
+			source.getRandomValues(bytes);
+			return bytes;
+		}
+		for (let index = 0; index < count; index++) {
+			bytes[index] = Math.floor(Math.random() * 256);
+		}
+		return bytes;
+	}
+	function createOperationId() {
+		let id = '';
+		for (const byte of randomBytes(OPERATION_ID_BYTES)) {
+			id += byte.toString(16).padStart(2, '0');
+		}
+		return id;
+	}
+
 	const CollaborationStatus = Object.freeze({
 		IDLE: 'idle',
 		CONNECTING: 'connecting',
@@ -70527,6 +76620,127 @@ ${nextLine.slice(indentLevel + 2)}`;
 		DISCONNECTED: 'disconnected',
 		UNKNOWN: 'unknown'
 	});
+
+	function uint8ArrayToBase64(bytes) {
+		let binary = '';
+		for (const byte of bytes) {
+			binary += String.fromCodePoint(byte);
+		}
+		return btoa(binary);
+	}
+	function base64ToUint8Array(base64) {
+		const binary = atob(base64);
+		const bytes = new Uint8Array(binary.length);
+		for (const [i, char] of [...binary].entries()) {
+			bytes[i] = char.codePointAt(0);
+		}
+		return bytes;
+	}
+
+	// The document's waterline as one session knows it: the journal id its text has been materialized up to.
+	// Together with the baseline checksum it says WHICH lineage a stored queue continues, which the queue
+	// itself cannot - a Y update carries no document identity.
+	//
+	// Absent is not zero. A response that carried no waterline says nothing about the document, while a real
+	// zero says the journal has never been materialized. Read as zero, every open whose response omits the
+	// value would look like the start of a fresh lineage, and the unsent queue of the session before it would
+	// be taken for the queue of a lineage that is gone - and dropped.
+	function readBaselineCursor(value) {
+		if (value === null || value === undefined || value === '') {
+			return null;
+		}
+		const cursor = Number(value);
+		return Number.isInteger(cursor) && cursor >= 0 ? cursor : null;
+	}
+
+	class PatchPersistence {
+		static #storageKey(documentId) {
+			return `note_unsent_patches_${documentId}`;
+		}
+
+		// A key of its own rather than a wrapper around the queue: the stored value is a merged Y update in
+		// base64 and every reader of it - including a bundle already running in a browser - expects exactly
+		// that. A satellite key an older bundle never reads costs it nothing, and a queue stored without one
+		// is simply a queue whose lineage is unknown.
+		static #baselineKey(documentId) {
+			return `note_unsent_patches_baseline_${documentId}`;
+		}
+
+		/**
+		 * @return the queue as it now stands in storage, or null when this call stored nothing - an oversized
+		 * merge and a failed write both leave whatever was there before. The caller cannot tell the two apart
+		 * from the outside, and it needs to: the lineage record names its queue by checksum, so it may only be
+		 * written for a queue this call actually put there.
+		 */
+		static save(documentId, patch) {
+			try {
+				const key = PatchPersistence.#storageKey(documentId);
+				const existing = PatchPersistence.load(documentId);
+				const merged = existing === null ? patch : uint8ArrayToBase64(mergeUpdates([base64ToUint8Array(existing), base64ToUint8Array(patch)]));
+				if (merged.length > PATCH_PERSISTENCE_MAX_SIZE) {
+					return null;
+				}
+				localStorage.setItem(key, merged);
+				return merged;
+			} catch {
+				// localStorage unavailable or quota exceeded — silent degrade
+				return null;
+			}
+		}
+		static load(documentId) {
+			try {
+				const key = PatchPersistence.#storageKey(documentId);
+				const value = localStorage.getItem(key);
+				if (main_core.Type.isStringFilled(value)) {
+					return value;
+				}
+				return null;
+			} catch {
+				return null;
+			}
+		}
+
+		// The baseline the queue was written against: the waterline of the document as this tab knew it, and
+		// the checksum of the state the Y.Doc was built from. Together they say WHICH lineage the queue
+		// continues, which the queue itself cannot - a Y update carries no document identity, so a queue of
+		// the text an overwrite replaced applies onto the text that replaced it just as cleanly.
+		// `queueChecksum` names the queue this record is about. Without it the record could outlive what it
+		// describes: a bundle that does not know this key clears the queue and leaves the satellite behind, and
+		// the next queue stored under that key would be weighed against a lineage that was never its own. It is
+		// computed from `queue`, which the caller must pass exactly as save() reported storing it - re-reading
+		// storage here would checksum up to five megabytes a second time for no new information.
+		static saveBaseline(documentId, baseline, queue) {
+			try {
+				localStorage.setItem(PatchPersistence.#baselineKey(documentId), JSON.stringify({
+					materializedUptoId: readBaselineCursor(baseline?.materializedUptoId),
+					checksum: String(baseline?.checksum ?? ''),
+					queueChecksum: crc32Utf8(queue)
+				}));
+			} catch {
+				// localStorage unavailable or quota exceeded - the queue then reads as one of unknown lineage
+			}
+		}
+		static loadBaseline(documentId) {
+			try {
+				const raw = localStorage.getItem(PatchPersistence.#baselineKey(documentId));
+				if (!main_core.Type.isStringFilled(raw)) {
+					return null;
+				}
+				const parsed = JSON.parse(raw);
+				return main_core.Type.isPlainObject(parsed) ? parsed : null;
+			} catch {
+				return null;
+			}
+		}
+		static clear(documentId) {
+			try {
+				localStorage.removeItem(PatchPersistence.#storageKey(documentId));
+				localStorage.removeItem(PatchPersistence.#baselineKey(documentId));
+			} catch {
+				// silent
+			}
+		}
+	}
 
 	class IdleTracker {
 		constructor() {
@@ -70580,6 +76794,9 @@ ${nextLine.slice(indentLevel + 2)}`;
 		#userId;
 		#userName;
 		#userColor;
+		#userAvatar;
+		#getMode;
+		#onParticipantsChange;
 		#hasPendingUpdates;
 		#heartbeatTimer;
 		#staleCheckTimer;
@@ -70595,6 +76812,9 @@ ${nextLine.slice(indentLevel + 2)}`;
 			userId,
 			userName,
 			userColor,
+			userAvatar = null,
+			getMode = () => 'view',
+			onParticipantsChange = () => {},
 			hasPendingUpdates = () => false
 		}) {
 			this.#awareness = awareness;
@@ -70602,6 +76822,9 @@ ${nextLine.slice(indentLevel + 2)}`;
 			this.#userId = userId;
 			this.#userName = userName;
 			this.#userColor = userColor;
+			this.#userAvatar = userAvatar;
+			this.#getMode = getMode;
+			this.#onParticipantsChange = onParticipantsChange;
 			this.#hasPendingUpdates = hasPendingUpdates;
 			this.#heartbeatTimer = null;
 			this.#staleCheckTimer = null;
@@ -70621,7 +76844,9 @@ ${nextLine.slice(indentLevel + 2)}`;
 				type: 'join',
 				userId: this.#userId,
 				name: this.#userName,
-				color: this.#userColor
+				color: this.#userColor,
+				avatar: this.#userAvatar,
+				mode: this.#getMode()
 			});
 			this.#startHeartbeat();
 			this.#startStaleCheck();
@@ -70636,6 +76861,41 @@ ${nextLine.slice(indentLevel + 2)}`;
 				userId: this.#userId,
 				position: null
 			});
+		}
+
+		// Called when the local user toggles view/edit — re-broadcast so peers refresh the participant chip.
+		broadcastMode() {
+			if (this.#isDestroyed) {
+				return;
+			}
+			this.#sendAwarenessMessage({
+				type: 'heartbeat',
+				userId: this.#userId,
+				name: this.#userName,
+				color: this.#userColor,
+				avatar: this.#userAvatar,
+				mode: this.#getMode()
+			});
+		}
+		getParticipants() {
+			const participants = [];
+			for (const userId of this.#remoteUsers.keys()) {
+				const syntheticClientId = this.#getSyntheticClientId(userId);
+				const state = this.#awareness?.states?.get(syntheticClientId);
+				const user = state?.user;
+				if (!user) {
+					continue;
+				}
+				participants.push({
+					id: userId,
+					name: String(user.name || ''),
+					color: String(user.color || '#999999'),
+					avatar: typeof user.avatar === 'string' && user.avatar !== '' ? user.avatar : null,
+					mode: user.mode === 'edit' ? 'edit' : 'view',
+					hasCursor: Boolean(state?.cursor)
+				});
+			}
+			return participants;
 		}
 		leave() {
 			this.#unsubscribeFromLocalAwareness();
@@ -70689,16 +76949,18 @@ ${nextLine.slice(indentLevel + 2)}`;
 			}
 			const name = String(params.name || '');
 			const color = String(params.color || '#999999');
+			const avatar = typeof params.avatar === 'string' && params.avatar !== '' ? params.avatar : null;
+			const mode = params.mode === 'edit' ? 'edit' : 'view';
 			switch (params?.type) {
 				case 'join':
-					this.#addOrRefreshRemoteUser(remoteUserId, name, color);
+					this.#addOrRefreshRemoteUser(remoteUserId, name, color, avatar, mode);
 					this.#sendPresenceResponse();
 					break;
 				case 'heartbeat':
-					this.#addOrRefreshRemoteUser(remoteUserId, name, color);
+					this.#addOrRefreshRemoteUser(remoteUserId, name, color, avatar, mode);
 					break;
 				case 'presence':
-					this.#addOrRefreshRemoteUser(remoteUserId, name, color);
+					this.#addOrRefreshRemoteUser(remoteUserId, name, color, avatar, mode);
 					if (params.position !== null && params.position !== undefined) {
 						this.#updateRemoteCursor(remoteUserId, params.position);
 					}
@@ -70711,17 +76973,21 @@ ${nextLine.slice(indentLevel + 2)}`;
 					break;
 			}
 		}
-		#addOrRefreshRemoteUser(userId, name, color) {
+		#addOrRefreshRemoteUser(userId, name, color, avatar = null, mode = 'view') {
 			const syntheticClientId = this.#getSyntheticClientId(userId);
 			const wasNew = !this.#remoteUsers.has(userId);
 			this.#remoteUsers.set(userId, this.#nowSeconds());
 			const existingState = this.#awareness.states.get(syntheticClientId) || {};
+			const existingUser = existingState.user || {};
 			const newState = {
 				...existingState,
+				// Cursor-only messages don't carry name/avatar — keep the last known values on refresh.
 				user: {
 					id: userId,
-					name,
-					color
+					name: name || existingUser.name || '',
+					color: color || existingUser.color || '#999999',
+					avatar: avatar ?? existingUser.avatar ?? null,
+					mode
 				}
 			};
 			this.#awareness.states.set(syntheticClientId, newState);
@@ -70874,6 +77140,8 @@ ${nextLine.slice(indentLevel + 2)}`;
 				userId: this.#userId,
 				name: this.#userName,
 				color: this.#userColor,
+				avatar: this.#userAvatar,
+				mode: this.#getMode(),
 				position: this.#awareness?.getLocalState()?.cursor ?? null
 			});
 		}
@@ -70884,7 +77152,9 @@ ${nextLine.slice(indentLevel + 2)}`;
 					type: 'heartbeat',
 					userId: this.#userId,
 					name: this.#userName,
-					color: this.#userColor
+					color: this.#userColor,
+					avatar: this.#userAvatar,
+					mode: this.#getMode()
 				});
 			}, HEARTBEAT_INTERVAL_MS);
 		}
@@ -70945,6 +77215,14 @@ ${nextLine.slice(indentLevel + 2)}`;
 					removed
 				}, 'remote']);
 			}
+			if (added.length > 0 || updated.length > 0 || removed.length > 0) {
+				this.#notifyParticipants();
+			}
+		}
+		#notifyParticipants() {
+			if (typeof this.#onParticipantsChange === 'function') {
+				this.#onParticipantsChange(this.getParticipants());
+			}
 		}
 		#refreshMeta(syntheticClientId) {
 			const existingMeta = this.#awareness.meta.get(syntheticClientId) || {
@@ -70988,22 +77266,6 @@ ${nextLine.slice(indentLevel + 2)}`;
 		}
 	}
 
-	function uint8ArrayToBase64(bytes) {
-		let binary = '';
-		for (const byte of bytes) {
-			binary += String.fromCodePoint(byte);
-		}
-		return btoa(binary);
-	}
-	function base64ToUint8Array(base64) {
-		const binary = atob(base64);
-		const bytes = new Uint8Array(binary.length);
-		for (const [i, char] of [...binary].entries()) {
-			bytes[i] = char.codePointAt(0);
-		}
-		return bytes;
-	}
-
 	function normalizeMarkdown(markdown) {
 		if (main_core.Type.isPlainObject(markdown) && markdown.type === 'doc') {
 			return markdown;
@@ -71044,48 +77306,32 @@ ${nextLine.slice(indentLevel + 2)}`;
 		return doc;
 	}
 
-	class PatchPersistence {
-		static #storageKey(documentId) {
-			return `note_unsent_patches_${documentId}`;
-		}
-		static save(documentId, patch) {
-			try {
-				const key = PatchPersistence.#storageKey(documentId);
-				const existing = PatchPersistence.load(documentId);
-				const merged = existing === null ? patch : uint8ArrayToBase64(mergeUpdates([base64ToUint8Array(existing), base64ToUint8Array(patch)]));
-				if (merged.length > PATCH_PERSISTENCE_MAX_SIZE) {
-					return;
-				}
-				localStorage.setItem(key, merged);
-			} catch {
-				// localStorage unavailable or quota exceeded — silent degrade
-			}
-		}
-		static load(documentId) {
-			try {
-				const key = PatchPersistence.#storageKey(documentId);
-				const value = localStorage.getItem(key);
-				if (main_core.Type.isStringFilled(value)) {
-					return value;
-				}
-				return null;
-			} catch {
-				return null;
-			}
-		}
-		static clear(documentId) {
-			try {
-				localStorage.removeItem(PatchPersistence.#storageKey(documentId));
-			} catch {
-				// silent
-			}
-		}
-	}
+	// How many send passes settle() is allowed before it declares the document unsettled. Each pass is one
+	// round trip, and every pass but the last exists only to pick up what was typed during the previous
+	// one — three is plenty for a human typist and still bounds a caller that must not hang.
+	const SETTLE_MAX_PASSES = 3;
 
+	// Server-side code for "this document is not collaborative any more" (DocumentUpdateRepository).
+	// It marks the one patch failure that no retry can fix. Deliberately the only code the rescue path hangs
+	// on: the archived, trashed and missing states have codes of their own there, and each of them is a
+	// lifecycle state the client reports in its own way rather than a reason to close saving.
+	const NOT_EDITABLE_ERROR_CODE = 'NOTE_DOCUMENT_NOT_EDITABLE';
+
+	// What became of a queue restored from local storage. REPLACED is the one outcome the caller has to act
+	// on: the queue continues a lineage the document no longer has, so the connection this queue was
+	// restored into is not one it can ever be sent through.
+	const PersistedQueueOutcome = Object.freeze({
+		SENT: 'sent',
+		REPLACED: 'replaced'
+	});
 	class FlushManager {
 		#documentId;
 		#document;
 		#getCursorPosition;
+		#onPatchSaved;
+		#onCompactSuggested;
+		#onSaveRefused;
+		#getBaseline;
 		#pendingUpdates;
 		#flushDebounceTimer;
 		#flushMaxTimer;
@@ -71093,12 +77339,17 @@ ${nextLine.slice(indentLevel + 2)}`;
 		#beforeUnloadHandler;
 		#isFlushing;
 		#hasRecentEdits;
+		#currentFlush;
 		constructor({
 			documentId
 		}) {
 			this.#documentId = documentId;
 			this.#document = null;
 			this.#getCursorPosition = null;
+			this.#onPatchSaved = null;
+			this.#onCompactSuggested = null;
+			this.#onSaveRefused = null;
+			this.#getBaseline = null;
 			this.#pendingUpdates = [];
 			this.#flushDebounceTimer = null;
 			this.#flushMaxTimer = null;
@@ -71106,14 +77357,28 @@ ${nextLine.slice(indentLevel + 2)}`;
 			this.#beforeUnloadHandler = null;
 			this.#isFlushing = false;
 			this.#hasRecentEdits = false;
+			this.#currentFlush = null;
 		}
+
+		// `getBaseline` answers which lineage the queue this manager holds belongs to - the document's
+		// waterline and the checksum of the state the Y.Doc was built from. Stored next to the queue and
+		// weighed against the document on the next open; a manager started without it stores no lineage, and
+		// its queue is then sent as it always was.
 		start({
 			document,
-			getCursorPosition
+			getCursorPosition,
+			getBaseline = null,
+			onPatchSaved = null,
+			onCompactSuggested = null,
+			onSaveRefused = null
 		}) {
 			this.#stopDocUpdates();
 			this.#document = document;
 			this.#getCursorPosition = getCursorPosition;
+			this.#getBaseline = main_core.Type.isFunction(getBaseline) ? getBaseline : null;
+			this.#onPatchSaved = typeof onPatchSaved === 'function' ? onPatchSaved : null;
+			this.#onCompactSuggested = typeof onCompactSuggested === 'function' ? onCompactSuggested : null;
+			this.#onSaveRefused = typeof onSaveRefused === 'function' ? onSaveRefused : null;
 			this.#updateHandler = (update, origin) => {
 				if (origin === 'remote') {
 					return;
@@ -71124,33 +77389,105 @@ ${nextLine.slice(indentLevel + 2)}`;
 			};
 			this.#document.on('update', this.#updateHandler);
 		}
-		stop() {
+
+		// `discardPending` throws the queue away instead of saving and sending it. It is for the case where the
+		// queue describes text the server has already replaced: sending it is refused while the document is out
+		// of the collaborative format, and accepted - putting the replaced text back - once someone rebuilds the
+		// document onto the new text. Neither is wanted, so it never leaves the browser.
+		stop(options = {}) {
 			this.#stopDocUpdates();
 			this.#clearTimers();
+			if (options.discardPending === true) {
+				this.#pendingUpdates = [];
+				// Nothing is waiting to be sent any more, and callers ask this manager exactly that.
+				this.#hasRecentEdits = false;
+				return;
+			}
 			if (this.#pendingUpdates.length > 0) {
 				this.#persistPendingUpdates();
 				void this.flush();
 			}
 		}
+
+		/**
+		 * @return true if everything this call was responsible for reached the server.
+		 */
 		async flush() {
-			if (this.#isFlushing || this.#pendingUpdates.length === 0) {
-				return;
+			// A caller that needs the patch to have LANDED (settle) must be able to wait for a send that is
+			// already in the air, not skip past it.
+			if (this.#isFlushing) {
+				return this.#currentFlush === null ? false : this.#currentFlush;
 			}
+			if (this.#pendingUpdates.length === 0) {
+				return true;
+			}
+			this.#currentFlush = this.#doFlush();
+			return this.#currentFlush;
+		}
+
+		/**
+		 * Drain everything typed so far and wait for the server to acknowledge it, cancelling the debounce
+		 * that would otherwise hold the text back. Materialization calls this first and only proceeds when
+		 * this returns true: it reports the applied patch id as its cursor, so a text that has run ahead of
+		 * the journal would be pinned at a cursor that does not cover it — and no other client could correct
+		 * that projection afterwards, the forward-only guard refusing an equal cursor.
+		 *
+		 * One pass is not enough: keystrokes landing while a send is in the air queue up behind it, so the
+		 * loop keeps going until nothing is pending. The pass limit is what makes it terminate — someone who
+		 * never stops typing would otherwise hold the caller forever. Giving up returns false, and the text
+		 * simply waits for the next boundary.
+		 *
+		 * @return true if the journal now holds everything the local document contains.
+		 */
+		async settle() {
+			this.#clearTimers();
+			for (let pass = 0; pass < SETTLE_MAX_PASSES; pass++) {
+				if (!this.#isFlushing && this.#pendingUpdates.length === 0) {
+					return true;
+				}
+				if (!(await this.flush())) {
+					return false;
+				}
+			}
+			return !this.#isFlushing && this.#pendingUpdates.length === 0;
+		}
+
+		/**
+		 * @return true if the patch reached the server; false leaves the updates queued and persisted.
+		 */
+		async #doFlush() {
 			this.#isFlushing = true;
 			const updates = this.#pendingUpdates.splice(0);
+			let saved = false;
 			try {
 				const merged = mergeUpdates(updates);
 				const base64Patch = uint8ArrayToBase64(merged);
 				const cursor = this.#getCursorPosition ? this.#getCursorPosition() : null;
-				await DocumentService.savePatch({
+				const response = await DocumentService.savePatch({
 					documentId: this.#documentId,
 					patch: base64Patch,
 					cursor
 				});
 				PatchPersistence.clear(this.#documentId);
-			} catch {
-				this.#pendingUpdates.unshift(...updates);
-				this.#persistPendingUpdates();
+				this.#handleSaveResponse(response);
+				saved = true;
+			} catch (error) {
+				// A refusal is not a failure. Requeueing is right for a send that did not get through - the
+				// next attempt sends it - and wrong for one the server will refuse just as firmly next time:
+				// the queue would go back into local storage and stay there, and this session would keep
+				// believing its work is on its way. So the queue is dropped here and the caller told, while
+				// the text is still on screen and can be rescued.
+				if (this.#isRefusedError(error)) {
+					PatchPersistence.clear(this.#documentId);
+					if (this.#onSaveRefused) {
+						this.#onSaveRefused();
+					}
+				} else {
+					// The failure is reported, not swallowed: a caller that is about to publish this text as
+					// the document projection must know the journal does not back it yet.
+					this.#pendingUpdates.unshift(...updates);
+					this.#persistPendingUpdates();
+				}
 			} finally {
 				this.#isFlushing = false;
 				this.#hasRecentEdits = false;
@@ -71159,27 +77496,141 @@ ${nextLine.slice(indentLevel + 2)}`;
 				clearTimeout(this.#flushMaxTimer);
 				this.#flushMaxTimer = null;
 			}
+			return saved;
+		}
+		#handleSaveResponse(response) {
+			const data = response?.data;
+			if (!data) {
+				return;
+			}
+			if (data.patchId !== null && data.patchId !== undefined && this.#onPatchSaved) {
+				// prevPatchId travels with the id: the provider needs it to tell whether our own patch
+				// continues what we have applied or jumped over somebody else's. journalBaseId comes with it
+				// for the case where nothing precedes ours - the level the journal was cut down to, which is
+				// what says whether the cut took anything we had not applied.
+				this.#onPatchSaved(Number(data.patchId), data.prevPatchId ?? null, data.journalBaseId ?? null);
+			}
+			if (data.compactSuggested === true && this.#onCompactSuggested) {
+				this.#onCompactSuggested();
+			}
+		}
+
+		/**
+		 * The server refusing this patch because the document is no longer collaborative - not a network
+		 * failure, not a temporary one. Recognised by the error code rather than the message, which is text
+		 * for the user and free to change.
+		 */
+		#isRefusedError(error) {
+			if (!main_core.Type.isPlainObject(error)) {
+				return false;
+			}
+			const errors = Array.isArray(error?.errors) ? error.errors : [];
+			return errors.some(item => main_core.Type.isPlainObject(item) && String(item?.code || '') === NOT_EDITABLE_ERROR_CODE);
+		}
+
+		// A baseline rebuilt from the document's own text begins a new lineage, and whatever is left in local
+		// storage belongs to the Y.Doc that came before it: sending it would merge the replaced text back
+		// into the new baseline. Dropped rather than sent.
+		discardPersistedPatches() {
+			PatchPersistence.clear(this.#documentId);
 		}
 		hasPendingUpdates() {
 			return this.#hasRecentEdits || this.#pendingUpdates.length > 0 || this.#isFlushing;
 		}
+
+		/**
+		 * @return one of the PersistedQueueOutcome values.
+		 */
 		async sendPersistedPatches(document) {
 			const patch = PatchPersistence.load(this.#documentId);
 			if (patch === null) {
-				return;
+				return PersistedQueueOutcome.SENT;
+			}
+			if (this.#belongsToReplacedBaseline(patch)) {
+				// Applied but never sent. The text in this queue is somebody's unsent work and the only copy of
+				// it left, so it goes on screen - and it stops there: the server would take it now that the
+				// document is collaborative again, and taking it means merging the replaced text back in.
+				if (document) {
+					applyUpdate(document, base64ToUint8Array(patch), 'remote');
+				}
+				PatchPersistence.clear(this.#documentId);
+				return PersistedQueueOutcome.REPLACED;
 			}
 			try {
 				if (document) {
 					applyUpdate(document, base64ToUint8Array(patch), 'remote');
 				}
-				await DocumentService.savePatch({
+				const response = await DocumentService.savePatch({
 					documentId: this.#documentId,
 					patch
 				});
 				PatchPersistence.clear(this.#documentId);
-			} catch {
-				// Failed to send — patches stay in localStorage for next reconnect
+				this.#handleSaveResponse(response);
+			} catch (error) {
+				// Failed to send - patches stay in localStorage for next reconnect. A refusal is the one
+				// answer that no later reconnect improves on, so it clears the slot instead of leaving a patch
+				// there that every future open will try and be refused again.
+				if (this.#isRefusedError(error)) {
+					PatchPersistence.clear(this.#documentId);
+					if (this.#onSaveRefused) {
+						this.#onSaveRefused();
+					}
+				}
 			}
+			return PersistedQueueOutcome.SENT;
+		}
+
+		/**
+		 * Whether the stored queue continues a lineage this document no longer has.
+		 *
+		 * A Y update carries no document identity, so a queue written against the text an overwrite replaced
+		 * applies onto the text that replaced it just as cleanly - and the server accepts it, because by then
+		 * somebody has rebuilt the document back into the collaborative format. That is the loop closing
+		 * through local storage rather than through a push, and nothing in the queue itself can tell it apart.
+		 *
+		 * What tells it apart here is the waterline going BACKWARDS. An accepted rebuild resets
+		 * MATERIALIZED_UPTO_ID to zero (SaveYjsStateCommand), so a document whose waterline now sits below the
+		 * one this queue was stored under has had its journal replaced since. Where neither line ever
+		 * materialized - both waterlines a real zero - the baseline checksum answers instead: the state the
+		 * Y.Doc was built from is not the state the document holds now.
+		 *
+		 * Not a general answer, and knowingly so. Once the rebuilt lineage materializes, its waterline climbs
+		 * back above the stored one and the check below says nothing: the checksum, the only discriminator
+		 * left, is out of reach because a checksum differs after any ordinary compaction too and would refuse
+		 * honest queues wholesale. Only the author of the rebuild is covered past that point, by
+		 * discardPersistedPatches() at genesis. Closing it for everyone needs identity the server has to
+		 * issue - a generation stamped on the document and on each queued patch - not a value a returning tab
+		 * can derive on its own; see RESULT-frontend.md.
+		 *
+		 * A queue with no stored lineage is sent, and so is one the current baseline cannot be compared with.
+		 * Unknown is not suspicion: an absent waterline is not a zero one, and reading it as zero would make
+		 * the first open after an update take away text people typed before it. A lineage that names another
+		 * queue counts as no lineage for the same reason - it is what a bundle that does not know the
+		 * satellite key leaves behind when it clears the queue alone.
+		 */
+		#belongsToReplacedBaseline(patch) {
+			const stored = PatchPersistence.loadBaseline(this.#documentId);
+			if (stored === null || this.#getBaseline === null) {
+				return false;
+			}
+			if (String(stored.queueChecksum ?? '') !== crc32Utf8(patch)) {
+				return false;
+			}
+			const current = this.#getBaseline() ?? {};
+			const storedUptoId = readBaselineCursor(stored.materializedUptoId);
+			const currentUptoId = readBaselineCursor(current.materializedUptoId);
+			if (storedUptoId === null || currentUptoId === null) {
+				return false;
+			}
+			if (storedUptoId > 0) {
+				return currentUptoId < storedUptoId;
+			}
+			if (currentUptoId > 0) {
+				return false;
+			}
+			const storedChecksum = String(stored.checksum ?? '');
+			const currentChecksum = String(current.checksum ?? '');
+			return storedChecksum !== '' && currentChecksum !== '' && storedChecksum !== currentChecksum;
 		}
 		registerBeforeUnload() {
 			this.unregisterBeforeUnload();
@@ -71224,7 +77675,14 @@ ${nextLine.slice(indentLevel + 2)}`;
 			try {
 				const merged = mergeUpdates(this.#pendingUpdates);
 				const base64Patch = uint8ArrayToBase64(merged);
-				PatchPersistence.save(this.#documentId, base64Patch);
+				const storedQueue = PatchPersistence.save(this.#documentId, base64Patch);
+				// Written with the queue, not once at start: the waterline moves while the session runs, and
+				// what the next open has to weigh is the lineage as of the moment the queue was put away. A
+				// call that stored nothing gets no record: it would name a queue that is not there, and the
+				// older queue still in storage would then be weighed against a lineage that is not its own.
+				if (storedQueue !== null && this.#getBaseline !== null) {
+					PatchPersistence.saveBaseline(this.#documentId, this.#getBaseline() ?? {}, storedQueue);
+				}
 			} catch {
 				// localStorage write failed — patches remain in memory
 			}
@@ -71504,55 +77962,57 @@ ${nextLine.slice(indentLevel + 2)}`;
 			this.#documentId = documentId;
 			this.#compactIntervalTimer = null;
 		}
+
+		// Pure transport: the snapshot of the document it is handed, published under the cursor it is handed.
+		// Neither is decided here. The document has to be brought level with the server state first, because
+		// the server drains the journal up to processedUpToId and keeps nothing but this snapshot - a cursor
+		// covering text the snapshot lacks deletes that text for good. Only the provider knows whether that
+		// holds, so it does the reading and this only sends.
+		//
+		// @return true when the server drained the window; false when nothing was sent or the server stood
+		//         down, so the caller keeps treating the window as still open.
 		async compact({
 			document,
-			getEditorMarkdown
+			getEditorMarkdown,
+			processedUpToId
 		}) {
 			if (!document) {
-				return;
+				return false;
+			}
+			const uptoId = Number(processedUpToId);
+			if (!Number.isInteger(uptoId) || uptoId <= 0) {
+				return false; // nothing has been applied yet, so there is nothing to drain behind us
+			}
+			const markdown = getEditorMarkdown();
+			if (typeof markdown !== 'string') {
+				return false;
 			}
 			try {
-				const patchResponse = await DocumentService.loadPatches({
-					documentId: this.#documentId
-				});
-				const patchData = patchResponse?.data;
-				const patches = Array.isArray(patchData?.patches) ? patchData.patches : [];
-				const serverLastPatchId = patchData?.lastPatchId ?? null;
-				if (!serverLastPatchId) {
-					return;
-				}
-				for (const patch of patches) {
-					const raw = String(patch.PATCH || patch.patch || '');
-					if (raw.length > 0) {
-						applyUpdate(document, base64ToUint8Array(raw), 'remote');
-					}
-				}
-				const markdown = getEditorMarkdown();
-				if (typeof markdown !== 'string') {
-					return;
-				}
 				const fullState = encodeStateAsUpdate(document);
 				const yjsState = uint8ArrayToBase64(fullState);
-				await DocumentService.compact({
+				const response = await DocumentService.compact({
 					documentId: this.#documentId,
 					markdown,
-					processedUpToId: serverLastPatchId,
+					processedUpToId: uptoId,
 					yjsState
 				});
+
+				// 'locked' means another editor holds the compact lock: our journal window was left untouched,
+				// so this attempt has settled nothing and the next trigger has to ask again.
+				return response?.data?.success === true;
 			} catch {
 				// Compact errors are non-fatal — patches accumulate and will be compacted later
+				return false;
 			}
 		}
-		startInterval({
-			document,
-			getEditorMarkdown
-		}) {
+
+		// The tick calls back instead of compacting on its own: whether compaction may run at all is decided
+		// by the provider, which is the only one that knows the document is whole. A timer that went straight
+		// to compact() here would be a way around that decision.
+		startInterval(onTick) {
 			this.stopInterval();
 			this.#compactIntervalTimer = setInterval(() => {
-				void this.compact({
-					document,
-					getEditorMarkdown
-				});
+				onTick();
 			}, COMPACT_INTERVAL_MS);
 		}
 		stopInterval() {
@@ -71566,14 +78026,177 @@ ${nextLine.slice(indentLevel + 2)}`;
 		}
 	}
 
+	// Non-destructive sibling of CompactManager: it ships the current markdown + uptoId so the server
+	// can refresh CONTENT_UPDATED_AT, but never touches the patch journal or the yjsState snapshot.
+	// Idempotent by a cheap markdown hash so the many work-boundary triggers (typing pause, finishEdit,
+	// visibilitychange, idle, softReconnect, SPA teardown) collapse to at most one send per change.
+	class MaterializeManager {
+		#documentId;
+		#getCollectionId;
+		#lastMaterializedHash;
+		#lastMaterializedUpto;
+		#inFlightKey;
+		#inFlight;
+		constructor({
+			documentId,
+			getCollectionId = null
+		}) {
+			this.#documentId = documentId;
+			this.#getCollectionId = typeof getCollectionId === 'function' ? getCollectionId : null;
+			this.#lastMaterializedHash = null;
+			this.#lastMaterializedUpto = 0;
+			this.#inFlightKey = null;
+			this.#inFlight = null;
+		}
+		async materialize({
+			getEditorMarkdown,
+			getUptoId
+		}) {
+			const markdown = typeof getEditorMarkdown === 'function' ? getEditorMarkdown() : null;
+			if (typeof markdown !== 'string') {
+				return;
+			}
+			const uptoId = Number(typeof getUptoId === 'function' ? getUptoId() : 0) || 0;
+			const hash = this.#cheapHash(markdown);
+			if (hash === this.#lastMaterializedHash && uptoId <= this.#lastMaterializedUpto) {
+				return; // text and cursor unchanged since the last successful materialize
+			}
+
+			// The hash above only de-dupes against a FINISHED send. Boundaries love to arrive together — a
+			// typing pause, leaving edit mode, the tab going hidden and the provider being torn down all land
+			// within the same moment — and without this every one of them would ship the same full markdown
+			// over its own request. Joining the in-flight send makes them one. The slot clears in finally, so
+			// a failed or locked attempt is retried, and a send for different text/cursor never joins the
+			// wrong request.
+			const key = `${hash}:${uptoId}`;
+			if (this.#inFlight !== null && this.#inFlightKey === key) {
+				return this.#inFlight;
+			}
+			this.#inFlightKey = key;
+			this.#inFlight = this.#send(markdown, uptoId, hash).finally(() => {
+				if (this.#inFlightKey === key) {
+					this.#inFlightKey = null;
+					this.#inFlight = null;
+				}
+			});
+			return this.#inFlight;
+		}
+		async #send(markdown, uptoId, hash) {
+			try {
+				const response = await DocumentService.materialize({
+					documentId: this.#documentId,
+					markdown,
+					uptoId
+				});
+				const data = response?.data;
+				if (data?.locked) {
+					return; // someone else holds the compact lock — skip this tick, retry on the next trigger
+				}
+
+				// `applied` is the forward-only guard's answer: it refused this cursor and stored nothing, so
+				// remembering the text as materialized would mean never sending it again. A server still on the
+				// previous contract answers without the field, where `success` carried that same meaning.
+				const applied = data?.applied ?? Boolean(data?.success);
+				// Sends with different keys do not join, so two can be in flight at once and their answers can
+				// come back in the other order. The cursor check keeps the later answer from rolling the
+				// watermark back and from publishing a preview of text that is already superseded.
+				if (applied && uptoId >= this.#lastMaterializedUpto) {
+					this.#lastMaterializedHash = hash;
+					this.#lastMaterializedUpto = uptoId;
+					this.#emitExcerpt(data?.excerpt);
+				}
+			} catch {
+				// Materialize errors are non-fatal — the next trigger or compaction carries the text.
+			}
+		}
+
+		// Emitted from the manager rather than the provider: the last materialize of a document is fired off
+		// while the provider is being torn down, so by the time the answer arrives there is no provider left
+		// to ask. An empty string is a valid preview of an emptied document and must travel too.
+		#emitExcerpt(excerpt) {
+			if (typeof excerpt !== 'string') {
+				return; // a server on the previous contract answers without a preview
+			}
+			main_core_events.EventEmitter.emit(note_sidebar.NoteEvent.DOCUMENT_EXCERPT_CHANGED, new main_core_events.BaseEvent({
+				data: {
+					documentId: this.#documentId,
+					collectionId: this.#getCollectionId === null ? 0 : Number(this.#getCollectionId()) || 0,
+					excerpt
+				}
+			}));
+		}
+
+		// Cheap, non-cryptographic hash (djb2 over char codes, prefixed with length). Only needs to
+		// answer "did the markdown change" — collisions across genuinely different text are acceptable.
+		#cheapHash(text) {
+			let hash = 5381;
+			for (let i = 0; i < text.length; i++) {
+				hash = (hash << 5) + hash + text.charCodeAt(i) | 0;
+			}
+			return `${text.length}:${hash}`;
+		}
+	}
+
+	// The cursor of a journal read. The patch list and the last id are answered by two queries of their
+	// own, with no transaction shared between them: a patch inserted between the two reads is counted by
+	// the id and absent from the list, so taking the id would declare applied what we never received.
+	// Nothing would ever catch that hole either - the next patch reports a predecessor equal to our
+	// cursor. What we applied speaks for itself; the server id is only needed when the list is empty and
+	// cannot answer at all.
+	function resolveAppliedCursor(patches, lastPatchId) {
+		if (!Array.isArray(patches) || patches.length === 0) {
+			return Number(lastPatchId ?? 0) || 0;
+		}
+		let appliedId = 0;
+		for (const patch of patches) {
+			const id = Number(patch.ID ?? patch.id ?? 0) || 0;
+			if (id > appliedId) {
+				appliedId = id;
+			}
+		}
+		return appliedId;
+	}
+
+	// Writing the genesis state has exactly three outcomes, and only a refusal says anything about the
+	// document itself: the server answered and would answer the same way to every further attempt. A
+	// technical failure says nothing — the next attempt may well succeed — so it must never be read as one.
+	const GenesisOutcome = Object.freeze({
+		APPLIED: 'applied',
+		REFUSED: 'refused',
+		FAILED: 'failed'
+	});
 	class PushPullYjsProvider {
 		#userId;
 		#userName;
 		#userColor;
+		#userAvatar;
+		#mode;
 		#schema;
+		#lastAppliedPatchId;
+		#compactedUpToId;
+		#isCompactionForced;
+		// The compaction in flight, so overlapping triggers join it instead of each paying for its own.
+		#compaction;
+		#hasJournalGap;
+		#recovery;
+		#recoveryQueued;
+		#hasLocalEdits;
+		#pendingPullPatches;
+		// Which lineage this session's Y.Doc belongs to: the document's waterline as the server reported it,
+		// and the checksum of the state the Y.Doc was built from. Stored with a queue that goes into local
+		// storage and weighed against the document on the next open - see FlushManager.
+		#materializedUptoId;
+		#baselineChecksum;
 		#flushManager;
 		#pullTransport;
 		#compactManager;
+		#materializeManager;
+		#getEditorMarkdown;
+		#materializeDebounceTimer;
+		#materializeMaxTimer;
+		#materializeUpdateHandler;
+		#visibilityHandler;
+		#compactSuggestTimer;
 		#awarenessManager;
 		#isDestroyed;
 		constructor({
@@ -71581,18 +78204,33 @@ ${nextLine.slice(indentLevel + 2)}`;
 			userId,
 			userName,
 			userColor,
-			schema
+			userAvatar = null,
+			mode = 'view',
+			schema,
+			getEditorMarkdown = null
 		}) {
 			this.documentId = documentId;
 			this.collectionId = 0;
 			this.#userId = userId;
 			this.#userName = userName;
 			this.#userColor = userColor;
+			this.#userAvatar = userAvatar;
+			this.#mode = mode === 'edit' ? 'edit' : 'view';
 			this.#schema = schema;
 			this.document = null;
 			this.awareness = null;
 			this.isConnected = false;
-			this.lastPatchId = null;
+			this.#lastAppliedPatchId = 0;
+			this.#compactedUpToId = 0;
+			this.#isCompactionForced = false;
+			this.#compaction = null;
+			this.#hasJournalGap = false;
+			this.#recovery = null;
+			this.#recoveryQueued = false;
+			this.#hasLocalEdits = false;
+			this.#pendingPullPatches = null;
+			this.#materializedUptoId = null;
+			this.#baselineChecksum = '';
 			this.onStatus = null;
 			this.onSynced = null;
 			this.onDisconnect = null;
@@ -71604,7 +78242,11 @@ ${nextLine.slice(indentLevel + 2)}`;
 			this.onRemoteDelete = null;
 			this.onRemoteHardDelete = null;
 			this.onRemoteContentOverwritten = null;
+			this.onGenesisRefused = null;
+			this.onGenesisFailed = null;
+			this.onSaveRefused = null;
 			this.onRemoteCapabilities = null;
+			this.onParticipants = null;
 			this.#flushManager = new FlushManager({
 				documentId
 			});
@@ -71614,6 +78256,17 @@ ${nextLine.slice(indentLevel + 2)}`;
 			this.#compactManager = new CompactManager({
 				documentId
 			});
+			// Read through a getter: collectionId is still zero here and only arrives with the loaded document.
+			this.#materializeManager = new MaterializeManager({
+				documentId,
+				getCollectionId: () => Number(this.collectionId) || 0
+			});
+			this.#getEditorMarkdown = typeof getEditorMarkdown === 'function' ? getEditorMarkdown : null;
+			this.#materializeDebounceTimer = null;
+			this.#materializeMaxTimer = null;
+			this.#materializeUpdateHandler = null;
+			this.#visibilityHandler = null;
+			this.#compactSuggestTimer = null;
 			this.#awarenessManager = null;
 			this.#isDestroyed = false;
 		}
@@ -71623,6 +78276,15 @@ ${nextLine.slice(indentLevel + 2)}`;
 			}
 			this.#cleanupBeforeReconnect();
 			this.#emitStatus('connecting');
+
+			// Pull is subscribed to BEFORE the state is read, never after. The server puts this tab into the
+			// document channel while it is answering loadForCollaboration, so a patch published in the window
+			// between that registration and BX.PULL.subscribe here is delivered to the browser and dropped for
+			// want of a handler. Nothing reports the loss afterwards: prevPatchId only exposes a hole to
+			// whoever receives the NEXT patch, and if the lost one was the last, no next patch ever comes.
+			// The Y.Doc is not built yet, so whatever arrives is buffered and replayed into it below.
+			this.#pendingPullPatches = [];
+			this.#startPullTransport();
 			let data = collaborationData;
 			if (data === null || data === undefined) {
 				try {
@@ -71631,6 +78293,9 @@ ${nextLine.slice(indentLevel + 2)}`;
 					});
 					data = response?.data ?? {};
 				} catch (error) {
+					// No Y.Doc will be built, so the buffered patches have nowhere to go; the reconnect that
+					// follows reads the whole state again anyway.
+					this.#pendingPullPatches = null;
 					this.#emitStatus('disconnected');
 					if (this.onConnectError) {
 						this.onConnectError(error);
@@ -71638,13 +78303,24 @@ ${nextLine.slice(indentLevel + 2)}`;
 					return;
 				}
 				if (this.#isDestroyed) {
+					this.#pendingPullPatches = null;
 					return;
 				}
 			}
 			const yjsState = data?.yjsState ?? null;
 			const markdown = data?.markdown ?? null;
 			const patches = Array.isArray(data?.patches) ? data.patches : [];
-			this.lastPatchId = data?.lastPatchId ?? null;
+			this.#adoptBaseline(data, yjsState);
+			// connect() rebuilds the Y.Doc from scratch, so the cursor is taken as-is - but from the patches
+			// that actually went into it, not from the server's own last id.
+			this.#lastAppliedPatchId = resolveAppliedCursor(patches, data?.lastPatchId);
+			this.#hasJournalGap = false;
+			// The document is read from scratch here, so nothing is known to have been compacted yet: the
+			// journal this cursor came from is exactly what the first compaction has to drain. Anything
+			// carried over from a previous connection would be measured against a cursor that no longer
+			// means the same thing, and the one direction that must never happen is standing down when a
+			// compaction is due - the journal then grows with nobody left to cut it.
+			this.#compactedUpToId = 0;
 			this.document = createYDoc({
 				yjsState,
 				markdown,
@@ -71655,16 +78331,59 @@ ${nextLine.slice(indentLevel + 2)}`;
 			// Skip genesis save when server holds raw markdown — ydoc-factory has no MD parser,
 			// so the Y.Doc would be empty and would clobber the real content in DB.
 			if (yjsState === null && this.document && !main_core.Type.isString(markdown)) {
-				await this.#saveGenesisState();
+				// Anything but an accepted genesis ends the connection here, before awareness, flushing and
+				// the materialize triggers are wired to a Y.Doc the server will not accept anything for.
+				// Both outcomes are reported: what they say about the document differs, but either way this
+				// provider stops halfway and must not be taken for a working one.
+				//
+				// The claim that this baseline IS the document's own current text rebuilt - the one claim under
+				// which a document demoted by an overwrite is taken back into the collaborative format. It is
+				// made by the caller, never inferred here: only the caller knows whether it parsed the text
+				// the server had just served, and the shape of `markdown` does not say so. A document in the
+				// json format arrives here as a tree too (that is what an import leaves behind), and a
+				// provider that read the state itself never parsed anything - neither is a rebuild, and
+				// claiming one for them would spend the claim on a document nobody demoted.
+				//
+				// `markdownChecksum` names WHICH text was rebuilt. The document can be overwritten again
+				// between the response the caller parsed and this write, and the claim alone would then be an
+				// honest client's word for a text that is already gone.
+				const isRebuiltFromMarkdown = data?.rebuiltFromMarkdown === true;
+				const markdownChecksum = isRebuiltFromMarkdown ? data?.markdownChecksum ?? null : null;
+				const outcome = await this.#saveGenesisState(patches, isRebuiltFromMarkdown, markdownChecksum);
+				if (outcome !== GenesisOutcome.APPLIED) {
+					this.#pendingPullPatches = null;
+					this.#emitStatus('disconnected');
+					this.#reportGenesisOutcome(outcome);
+					return;
+				}
+
+				// The baseline just stored was built from the server's own text, so anything this browser had
+				// left in local storage was written against the Y.Doc that came before it. Sending it below
+				// would merge the replaced text back into the document - the very thing the overwrite undid.
+				if (isRebuiltFromMarkdown) {
+					this.#flushManager.discardPersistedPatches();
+				}
 			}
 			this.#initializeAwareness();
-			await this.#flushManager.sendPersistedPatches(this.document);
-			this.#startPullTransport();
-			this.#flushManager.start({
-				document: this.document,
-				getCursorPosition: () => this.#getCursorPosition()
-			});
+			// The Y.Doc and the cursor are both in place now, so the patches held back during the read can go
+			// in: the ones the response already carried are dropped by the cursor, the rest continue it.
+			this.#drainPendingPullPatches();
+			this.#startFlushManager();
 			this.#flushManager.registerBeforeUnload();
+			// Sent only once the response handler above is wired up. A patch restored from localStorage is a
+			// patch like any other: its id moves the cursor, its prevPatchId is checked for continuity, and it
+			// marks this session as having edited - without which no work boundary would ever publish it.
+			//
+			// Unless it belongs to a lineage this document no longer has: then it is on screen and stays there,
+			// and this connection ends the same way a refused patch ends it - nothing more can be saved through
+			// it, and the text has to stay in front of the person who typed it.
+			if ((await this.#flushManager.sendPersistedPatches(this.document)) === PersistedQueueOutcome.REPLACED) {
+				this.#pendingPullPatches = null;
+				this.#emitStatus('disconnected');
+				this.#handleSaveRefused();
+				return;
+			}
+			this.#startMaterializeTriggers();
 			this.isConnected = true;
 			this.#emitStatus('connected');
 			if (this.onSynced) {
@@ -71675,40 +78394,67 @@ ${nextLine.slice(indentLevel + 2)}`;
 			if (this.#isDestroyed || !this.document) {
 				return;
 			}
-			await this.#flushManager.sendPersistedPatches(this.document);
-			await this.#flushManager.flush();
+
+			// Subscribed before the read for the same reason as in connect(): the server registers this tab in
+			// the channel while answering, so subscribing afterwards leaves a window in which a patch reaches
+			// the browser with no handler to take it. Buffering rather than applying straight away keeps the
+			// replay behind the server state, so these patches meet the cursor that state has already set.
+			this.#pendingPullPatches = [];
+			this.#startPullTransport();
+
+			// Read BEFORE anything is sent, and that order is the whole reason the read sits here. A session
+			// coming back from a disconnect knows only the lineage it left with, so weighing the stored queue
+			// against what it already knows compares that lineage with itself - it can never notice that an
+			// overwrite ended it while this tab was away, which is the one case the weighing exists for.
+			let data = null;
 			try {
 				const response = await DocumentService.loadForCollaboration({
 					documentId: this.documentId
 				});
-				const data = response?.data ?? {};
-				const yjsState = data?.yjsState ?? null;
-				const patches = Array.isArray(data?.patches) ? data.patches : [];
-				this.lastPatchId = data?.lastPatchId ?? this.lastPatchId;
-				if (main_core.Type.isStringFilled(yjsState)) {
-					applyUpdate(this.document, base64ToUint8Array(yjsState), 'remote');
-				}
-				for (const patch of patches) {
-					const raw = String(patch.PATCH || patch.patch || '');
-					if (raw.length > 0) {
-						applyUpdate(this.document, base64ToUint8Array(raw), 'remote');
-					}
-				}
-			} catch {
-				// sync failed, will retry on next reconnect
+				data = response?.data ?? {};
+			} catch (error) {
+				// Nothing is sent against a state that could not be read: sending blind is exactly what the
+				// read above prevents, and the queue loses nothing by waiting - it stays in local storage and
+				// in memory. Thrown rather than swallowed so the caller cannot take a resync that never
+				// happened for a finished one: softReconnect() ends in its own catch, the indicator stays
+				// offline, and the next activity or reconnect reads again.
+				this.#pendingPullPatches = null;
+				throw error;
 			}
-			this.#startPullTransport();
-			this.#flushManager.start({
-				document: this.document,
-				getCursorPosition: () => this.#getCursorPosition()
-			});
+			if (this.#isDestroyed || !this.document) {
+				this.#pendingPullPatches = null;
+				return;
+			}
+
+			// Only the lineage of that answer is taken now; what it does to the Y.Doc waits until the queue has
+			// been judged. Applied first, the state that replaced the text would be merged into the Y.Doc of the
+			// text it replaced, and the queue would then be weighed against a document already holding both.
+			this.#adoptBaseline(data, data?.yjsState ?? null);
+
+			// Same answer as in connect() and for the same reason.
+			if ((await this.#flushManager.sendPersistedPatches(this.document)) === PersistedQueueOutcome.REPLACED) {
+				this.#pendingPullPatches = null;
+				this.#emitStatus('disconnected');
+				this.#handleSaveRefused();
+				return;
+			}
+			await this.#flushManager.flush();
+
+			// The snapshot predates the sends above, which costs nothing: applying it only ever adds, and the
+			// cursor it carries moves forward only (see #applyServerState).
+			this.#applyServerState(data);
+			this.#drainPendingPullPatches();
+			this.#startFlushManager();
 			this.#flushManager.unregisterBeforeUnload();
 			this.#flushManager.registerBeforeUnload();
+			this.#startMaterializeTriggers();
 			if (this.awareness) {
 				this.awareness.setLocalStateField('user', {
 					id: this.#userId,
 					name: this.#userName,
-					color: this.#userColor
+					color: this.#userColor,
+					avatar: this.#userAvatar,
+					mode: this.#mode
 				});
 			}
 			if (this.#awarenessManager) {
@@ -71716,6 +78462,27 @@ ${nextLine.slice(indentLevel + 2)}`;
 			}
 			this.isConnected = true;
 			this.#emitStatus('connected');
+		}
+		setMode(mode) {
+			const normalized = mode === 'edit' ? 'edit' : 'view';
+			if (normalized === this.#mode) {
+				return;
+			}
+			this.#mode = normalized;
+			if (this.awareness) {
+				const localState = this.awareness.getLocalState() || {};
+				this.awareness.setLocalStateField('user', {
+					...(localState.user || {}),
+					id: this.#userId,
+					name: this.#userName,
+					color: this.#userColor,
+					avatar: this.#userAvatar,
+					mode: this.#mode
+				});
+			}
+			if (this.#awarenessManager) {
+				this.#awarenessManager.broadcastMode();
+			}
 		}
 		clearCursor() {
 			if (this.#awarenessManager) {
@@ -71725,10 +78492,13 @@ ${nextLine.slice(indentLevel + 2)}`;
 				this.awareness.setLocalStateField('cursor', null);
 			}
 		}
-		disconnect() {
+		disconnect(options = {}) {
+			this.#stopMaterializeTriggers();
+			this.#clearCompactSuggestTimer();
+			this.#pendingPullPatches = null;
 			this.#flushManager.unregisterBeforeUnload();
 			this.#pullTransport.stop();
-			this.#flushManager.stop();
+			this.#flushManager.stop(options);
 			this.#compactManager.stopInterval();
 			if (this.#awarenessManager) {
 				this.#awarenessManager.leave();
@@ -71739,12 +78509,28 @@ ${nextLine.slice(indentLevel + 2)}`;
 				this.onDisconnect();
 			}
 		}
-		destroy() {
+		async destroy(options = {}) {
 			if (this.#isDestroyed) {
 				return;
 			}
 			this.#isDestroyed = true;
-			this.disconnect();
+
+			// The markdown is taken HERE, synchronously, before anything is awaited. The caller may be Vue's
+			// beforeUnmount, which unmounts the editor the moment this returns — by the time an awaited flush
+			// resolved there would be no view model left to read, and the last patches would stay in the
+			// journal with no fresh projection. Whether there is anything to send is decided now for the same
+			// reason: disconnect() below drains the pending updates.
+			const shouldMaterialize = options.materialize !== false && (this.#hasLocalEdits || this.#flushManager.hasPendingUpdates());
+			const finalMarkdown = shouldMaterialize ? this.#captureMarkdown() : null;
+			this.disconnect(options);
+
+			// Deliberately not awaited: an SPA navigation would otherwise sit through a savePatch and a
+			// full-markdown round trip before the next document even starts loading. The text is already
+			// captured, so the Y.Doc can die right away, and FlushManager.destroy() below only stops
+			// listeners and timers — it does not cancel a send that is already on its way.
+			if (finalMarkdown !== null) {
+				void this.#materializeSnapshot(finalMarkdown);
+			}
 			this.#flushManager.destroy();
 			this.#pullTransport.destroy();
 			this.#compactManager.destroy();
@@ -71762,6 +78548,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 			}
 		}
 		freezeWrites() {
+			this.#stopMaterializeTriggers();
 			this.#flushManager.unregisterBeforeUnload();
 			this.#flushManager.stop();
 			this.#compactManager.stopInterval();
@@ -71776,28 +78563,302 @@ ${nextLine.slice(indentLevel + 2)}`;
 			if (this.#isDestroyed || !this.document) {
 				return;
 			}
-			this.#flushManager.start({
-				document: this.document,
-				getCursorPosition: () => this.#getCursorPosition()
-			});
+			this.#startFlushManager();
 			this.#flushManager.registerBeforeUnload();
+			this.#startMaterializeTriggers();
 			if (this.#awarenessManager) {
 				this.#awarenessManager.start();
 			}
 		}
+
+		// Every compaction goes through here - the interval, the server-driven backstop, the restore flow and
+		// the e2e trigger alike - because this is where the document is known to be whole.
+		//
+		// One at a time, and a second caller waits for the first rather than starting its own. The triggers
+		// are independent and do collide: the one-shot five seconds after connect, the backstop the server
+		// raises when the journal grows too long, and the periodic tick all decide on their own. The cheap
+		// gate below cannot separate them - the cursor it reads only moves once a compaction is accepted, so
+		// until the first one returns every caller sees the same "yes, there is work". Each of them would
+		// then pay the whole price: a full read of the server state, a full snapshot of the Y.Doc serialised
+		// on the main thread, and the text sent back - to be told "busy" by the server lock that lets only
+		// one of them write. Nothing accumulated meanwhile is lost by waiting: a backstop raised during a
+		// compaction keeps its flag until one is accepted, and the cursor keeps whatever moved it.
 		async compact(getEditorMarkdown) {
+			if (this.#compaction !== null) {
+				return this.#compaction;
+			}
+			this.#compaction = (async () => {
+				try {
+					await this.#runCompaction(getEditorMarkdown);
+				} finally {
+					this.#compaction = null;
+				}
+			})();
+			return this.#compaction;
+		}
+		async #runCompaction(getEditorMarkdown) {
 			if (this.#isDestroyed || !this.document) {
 				return;
 			}
-			await this.#compactManager.compact({
+
+			// The cheap question first, before anything goes over the wire. Everything below costs a full
+			// read of the server state and a full snapshot of the Y.Doc back, and a tab where nobody typed
+			// used to pay that every three minutes for nothing: the first compaction empties the journal
+			// while the cursor stays where it is, so the tick had no way of telling itself apart from a
+			// useful one.
+			if (!this.#hasSomethingToCompact()) {
+				return;
+			}
+
+			// Compaction is materialization's destructive twin: it overwrites YJS_STATE with a snapshot of THIS
+			// Y.Doc and drains the journal behind it. While a hole is open the missing patch is either still in
+			// the journal - and then it is the recovery below that brings it in - or already folded into another
+			// client's snapshot, and then ours replaces that snapshot with text the co-author's paragraph never
+			// reached, with no journal row left to restore it from. The server waterline does not catch it: it
+			// refuses a cursor that runs ahead, and a cursor with a hole in it lags behind instead. So give the
+			// recovery in flight its round trip and stand down if the hole survives it.
+			await this.#awaitRecovery();
+			if (this.#hasJournalGap || this.#isDestroyed || !this.document) {
+				return;
+			}
+
+			// The gap flag is not enough on its own, and it never can be: it only knows about holes that some
+			// later patch reported through its prevPatchId, so a patch lost with nobody typing afterwards
+			// leaves it clean. Compaction cannot afford that - it replaces YJS_STATE with a snapshot of THIS
+			// Y.Doc, and a snapshot missing a paragraph another client already folded into the server one
+			// erases that paragraph from the snapshot and from the journal at once. So the server state is
+			// pulled in first: applying it makes our snapshot a provable superset of the one we overwrite,
+			// whether or not we ever learned we were behind. Y.applyUpdate is idempotent, so this only ever
+			// adds. If the state does not arrive, nothing is proven and the destructive path stands down.
+			if (!(await this.#loadAuthoritativeState())) {
+				return;
+			}
+			if (this.#isDestroyed || !this.document) {
+				return;
+			}
+
+			// Read before the request leaves, not after it returns. A patch arriving while it is in the air
+			// moves the cursor past the window the server was asked to drain, and remembering that later
+			// value would write off patches the journal still holds.
+			const processedUpToId = this.#lastAppliedPatchId;
+			const isCompacted = await this.#compactManager.compact({
 				document: this.document,
-				getEditorMarkdown
+				getEditorMarkdown,
+				processedUpToId
+			});
+			if (isCompacted) {
+				this.#compactedUpToId = processedUpToId;
+				this.#isCompactionForced = false;
+			}
+		}
+
+		// Has anything happened since the last compaction the server accepted? The applied-patch cursor
+		// answers it without a request: it moves for every patch of this document, ours or a co-author's,
+		// and the journal cannot have grown without one of those. Whatever the cursor cannot see is covered
+		// by the two clauses around it.
+		#hasSomethingToCompact() {
+			// The server backstop outranks the cursor. compactSuggested rides on a savePatch response and
+			// says the journal has already grown past what the server is willing to keep, so that demand has
+			// to reach compact() whatever the cursor looks like: standing down here would leave the journal
+			// growing with nothing to cut it back.
+			if (this.#isCompactionForced) {
+				return true;
+			}
+
+			// Local updates that have not been flushed yet are part of the window too - the restore flow
+			// compacts precisely that window before it rewrites the text, and it may run between a keystroke
+			// and the flush that carries it.
+			return this.#lastAppliedPatchId > this.#compactedUpToId || this.#flushManager.hasPendingUpdates();
+		}
+
+		// Work-boundary materialize: guarded against a destroyed provider. All P2 triggers funnel here,
+		// so hash-idempotency in MaterializeManager de-dupes overlapping boundaries.
+		async materialize() {
+			if (this.#isDestroyed) {
+				return;
+			}
+			await this.#materializeNow();
+		}
+
+		// Final materialize during teardown. Takes the markdown captured before the teardown began instead
+		// of reading it now: the editor it would read from may already be gone. Past the #isDestroyed gate
+		// that destroy() has raised, and best-effort throughout — a failed send must never break teardown.
+		async #materializeSnapshot(markdown) {
+			// The journal must hold the text before it is published as the projection. If the last patch
+			// never made it, sending anyway would store markdown the journal cannot reproduce: a later
+			// compaction rebuilds the text from patches and the projection silently regresses. The unsent
+			// patch survives in localStorage, so the next opening of the document sends it and materializes.
+			if (!(await this.#settleQuietly())) {
+				return;
+			}
+
+			// An open hole does NOT stop this one, unlike the work-boundary materialize above. Recovery
+			// cannot run any more - the Y.Doc is already gone - and there is no later boundary to retry at,
+			// so skipping would drop the author's last edit from the projection for good. Publishing is safe
+			// because the cursor no longer lies: it stopped at the last patch that continued ours, below the
+			// id of whatever we are missing, so any editor that does hold that patch outranks this projection
+			// and overwrites it, and a compaction drains no further than the cursor either.
+			try {
+				await this.#materializeManager.materialize({
+					getEditorMarkdown: () => markdown,
+					getUptoId: () => this.#lastAppliedPatchId
+				});
+			} catch {
+				// teardown materialize is best-effort
+			}
+		}
+
+		// settle() answers whether the journal caught up with the local text; a throw from it counts as "no".
+		async #settleQuietly() {
+			try {
+				return await this.#flushManager.settle();
+			} catch {
+				return false;
+			}
+		}
+		#captureMarkdown() {
+			if (typeof this.#getEditorMarkdown !== 'function') {
+				return null;
+			}
+			try {
+				const markdown = this.#getEditorMarkdown();
+				return typeof markdown === 'string' ? markdown : null;
+			} catch {
+				return null; // the editor is already gone — nothing to materialize
+			}
+		}
+		async #materializeNow() {
+			if (!this.document) {
+				return;
+			}
+
+			// A reader who never typed has nothing to materialize: the projection is already whatever the
+			// server stores. Sending anyway costs a full-markdown round trip on every boundary — and for a
+			// read-only viewer it is a request the server is bound to refuse, which SPA navigation would
+			// still sit and wait for.
+			if (!this.#hasLocalEdits && !this.#flushManager.hasPendingUpdates()) {
+				return;
+			}
+
+			// The cursor reported below is the last APPLIED patch id, so the text must not run ahead of it.
+			// Leaving edit mode right after typing would otherwise ship new markdown with the previous
+			// cursor: the server's forward-only guard refuses an equal cursor, and if it did accept, the
+			// projection would be pinned at a cursor that does not cover the text it holds — nobody could
+			// correct it afterwards. Not settled means not materialized; the next boundary tries again.
+			if (!(await this.#settleQuietly())) {
+				return;
+			}
+			if (!this.document) {
+				return; // torn down while the flush was in the air
+			}
+
+			// A hole in the applied patches means this text is not the document: publishing it would put a
+			// projection out there with somebody's paragraph silently missing, and feed the derived search
+			// and RAG the same. Recovery is one round trip away, so wait for the one in flight; if the hole
+			// is still open after it, drop this boundary - another one follows, and so does another editor.
+			await this.#awaitRecovery();
+			if (this.#hasJournalGap || !this.document) {
+				return;
+			}
+			await this.#materializeManager.materialize({
+				getEditorMarkdown: this.#getEditorMarkdown ?? (() => null),
+				getUptoId: () => this.#lastAppliedPatchId
 			});
 		}
+
+		// Implicit boundaries: a pause in typing (debounce) with a ceiling for continuous typing, and the
+		// tab going hidden. Explicit boundaries (finishEdit, idle, softReconnect, teardown) call
+		// materialize() directly from the feature/lifecycle layer.
+		#startMaterializeTriggers() {
+			this.#stopMaterializeTriggers();
+			if (!this.document) {
+				return;
+			}
+			this.#materializeUpdateHandler = (update, origin) => {
+				if (origin === 'remote') {
+					return; // remote edits must not keep resetting the local materialize debounce
+				}
+				this.#scheduleMaterialize();
+			};
+			this.document.on('update', this.#materializeUpdateHandler);
+			this.#visibilityHandler = () => {
+				if (typeof document !== 'undefined' && document.visibilityState === 'hidden') {
+					void this.materialize();
+				}
+			};
+			main_core.Event.bind(document, 'visibilitychange', this.#visibilityHandler);
+		}
+		#stopMaterializeTriggers() {
+			this.#clearMaterializeTimers();
+			if (this.#materializeUpdateHandler && this.document) {
+				this.document.off('update', this.#materializeUpdateHandler);
+			}
+			this.#materializeUpdateHandler = null;
+			if (this.#visibilityHandler) {
+				main_core.Event.unbind(document, 'visibilitychange', this.#visibilityHandler);
+				this.#visibilityHandler = null;
+			}
+		}
+		#scheduleMaterialize() {
+			if (this.#materializeDebounceTimer !== null) {
+				clearTimeout(this.#materializeDebounceTimer);
+			}
+			this.#materializeDebounceTimer = setTimeout(() => {
+				this.#materializeDebounceTimer = null;
+				this.#fireMaterialize();
+			}, MATERIALIZE_DEBOUNCE_MS);
+			if (this.#materializeMaxTimer === null) {
+				this.#materializeMaxTimer = setTimeout(() => {
+					this.#materializeMaxTimer = null;
+					this.#fireMaterialize();
+				}, MATERIALIZE_MAX_INTERVAL_MS);
+			}
+		}
+		#fireMaterialize() {
+			this.#clearMaterializeTimers();
+			void this.materialize();
+		}
+		#clearMaterializeTimers() {
+			if (this.#materializeDebounceTimer !== null) {
+				clearTimeout(this.#materializeDebounceTimer);
+				this.#materializeDebounceTimer = null;
+			}
+			if (this.#materializeMaxTimer !== null) {
+				clearTimeout(this.#materializeMaxTimer);
+				this.#materializeMaxTimer = null;
+			}
+		}
+
+		// Journal backstop (P4): the server raised compactSuggested in a savePatch response, so the
+		// journal is piling up. Debounce so a burst of flagged flushes collapses into one compaction; the
+		// server 'compact' lock resolves any race between editors.
+		#handleCompactSuggested() {
+			if (this.#isDestroyed || !this.document) {
+				return;
+			}
+
+			// Raised here rather than left to the cursor. The patch that carried the flag normally moves the
+			// cursor along with it, but "normally" is not a guarantee the journal can rely on: the backstop
+			// is the one signal that says the journal is already too long, and it has to reach compact()
+			// even when the cursor has nothing to add. Cleared only once a compaction is accepted.
+			this.#isCompactionForced = true;
+			if (this.#compactSuggestTimer !== null) {
+				clearTimeout(this.#compactSuggestTimer);
+			}
+			this.#compactSuggestTimer = setTimeout(() => {
+				this.#compactSuggestTimer = null;
+				void this.compact(this.#getEditorMarkdown ?? (() => null));
+			}, COMPACT_SUGGEST_DEBOUNCE_MS);
+		}
+		#clearCompactSuggestTimer() {
+			if (this.#compactSuggestTimer !== null) {
+				clearTimeout(this.#compactSuggestTimer);
+				this.#compactSuggestTimer = null;
+			}
+		}
 		startCompactInterval(getEditorMarkdown) {
-			this.#compactManager.startInterval({
-				document: this.document,
-				getEditorMarkdown
+			this.#compactManager.startInterval(() => {
+				void this.compact(getEditorMarkdown);
 			});
 		}
 		stopCompactInterval() {
@@ -71817,31 +78878,139 @@ ${nextLine.slice(indentLevel + 2)}`;
 				this.document = null;
 			}
 		}
-		async #saveGenesisState() {
-			if (!this.document) {
-				return;
-			}
+		#startFlushManager() {
+			this.#flushManager.start({
+				document: this.document,
+				getCursorPosition: () => this.#getCursorPosition(),
+				getBaseline: () => this.#currentBaseline(),
+				onPatchSaved: (patchId, prevPatchId, journalBaseId) => {
+					this.#handleLocalPatchSaved(patchId, prevPatchId, journalBaseId);
+				},
+				onCompactSuggested: () => this.#handleCompactSuggested(),
+				onSaveRefused: () => this.#handleSaveRefused()
+			});
+		}
+
+		// The lineage of the state just read: the document's waterline, and the checksum of what the Y.Doc was
+		// built from. The checksum is taken of the server's own snapshot rather than of the local Y.Doc - the
+		// local one changes with every keystroke, while the question this value answers is whether the
+		// DOCUMENT still stands where it stood. A response that carried no snapshot leaves it unknown, and
+		// unknown never accuses: see FlushManager.
+		// A response that carries no waterline leaves the lineage unknown rather than zero - see
+		// readBaselineCursor. Every path that builds this provider's data now passes the value through
+		// (bootstrap, direct open, the reload after an overwrite), so an absent one means an older server or a
+		// caller that has not been taught, and neither is grounds to suspect somebody's unsent text.
+		#adoptBaseline(data, yjsState) {
+			this.#materializedUptoId = readBaselineCursor(data?.materializedUptoId);
+			this.#baselineChecksum = main_core.Type.isStringFilled(yjsState) ? crc32Utf8(yjsState) : '';
+		}
+		#currentBaseline() {
+			return {
+				materializedUptoId: this.#materializedUptoId,
+				checksum: this.#baselineChecksum
+			};
+		}
+
+		// The journal of a document being created is normally empty, but a co-author who got in first may
+		// already have typed into it - hence `patches`, which the rebuild below has to carry over.
+		// Returns one of the GenesisOutcome values: only REFUSED means the server itself said no, and only
+		// APPLIED lets this connection continue. Called from the one place in connect() that has just built
+		// `this.document`, so the encode below has a Y.Doc to read.
+		async #saveGenesisState(patches = [], rebuiltFromMarkdown = false, markdownChecksum = null) {
 			try {
 				const fullState = encodeStateAsUpdate(this.document);
 				const yjsState = uint8ArrayToBase64(fullState);
 				const response = await DocumentService.saveYjsState({
 					documentId: this.documentId,
-					yjsState
+					yjsState,
+					rebuiltFromMarkdown,
+					markdownChecksum
 				});
+
+				// The provider may have been torn down while the write was in flight — a rebuilt Y.Doc would
+				// then be assigned to a dead provider, and its caller would carry on connecting it.
+				if (this.#isDestroyed) {
+					return GenesisOutcome.FAILED;
+				}
 				const applied = response?.data?.applied;
 				const serverState = response?.data?.yjsState ?? null;
 				if (applied === false && main_core.Type.isStringFilled(serverState)) {
 					// Lost the genesis race: discard our orphan baseline and rebuild from the
-					// authoritative server state so transport/awareness/flush/editor bind to it.
+					// authoritative server state so transport/awareness/flush/editor bind to it. The journal
+					// goes back in with it - the cursor was already set from these patches, and a rebuild
+					// without them would leave it covering text the new document does not hold.
 					this.document = createYDoc({
 						yjsState: serverState,
 						markdown: null,
-						patches: [],
+						patches,
 						schema: this.#schema
 					});
+					this.#baselineChecksum = crc32Utf8(serverState);
+					// Whose baseline won, and whether winning it zeroed the waterline, this answer does not
+					// say. The value read before the race describes the document as it was before somebody
+					// else wrote it, so it is dropped rather than kept: an unknown lineage costs a queue
+					// nothing but the check, a stale one could cost the next session its text.
+					this.#materializedUptoId = null;
+				} else if (applied === false) {
+					// Refused with no state to rebuild from: this document is out of the collaborative format
+					// and this baseline is not the one thing that brings it back - a rebuild of the document's
+					// own current text. The local Y.Doc describes text the server no longer holds, and it
+					// rejects patches for a non-collaborative document, so carrying on would let someone type
+					// into a document whose every keystroke is dropped, with nothing to tell them.
+					return GenesisOutcome.REFUSED;
+				} else {
+					// The document now holds the baseline this session wrote, so that is the lineage anything
+					// queued from here belongs to. An accepted rebuild claim also zeroed the waterline on the
+					// server (SaveYjsStateCommand): the value the load response carried belongs to the text
+					// that was replaced, and keeping it would make this session's own queue look like a queue
+					// of a lineage that is gone.
+					this.#baselineChecksum = crc32Utf8(yjsState);
+					if (rebuiltFromMarkdown) {
+						this.#materializedUptoId = 0;
+					}
 				}
 			} catch {
-				// Genesis state save failed — will be recreated on next connect
+				// A failed request says nothing about the document: it is not a refusal, and it is not a
+				// reason to connect either. Nothing retries it here - the caller tears this provider down,
+				// and the genesis is written again only by the next provider built for this document.
+				return GenesisOutcome.FAILED;
+			}
+			return GenesisOutcome.APPLIED;
+		}
+
+		// A refusal says the document itself is not collaborative any more, a technical failure says only
+		// that this attempt did not get through — but the caller has to hear about both, because either way
+		// awareness, flushing and the materialize triggers stayed unwired. Each outcome has its own channel:
+		// they end the attempt the same way and differ in everything the caller decides afterwards.
+		#reportGenesisOutcome(outcome) {
+			if (this.#isDestroyed) {
+				return;
+			}
+			if (outcome === GenesisOutcome.REFUSED) {
+				if (this.onGenesisRefused) {
+					this.onGenesisRefused({
+						documentId: this.documentId
+					});
+				}
+				return;
+			}
+			if (this.onGenesisFailed) {
+				this.onGenesisFailed();
+			}
+		}
+
+		// The server refused a patch, and a refusal is final: this document is out of the collaborative format,
+		// so nothing this session types can reach it any more. Nothing is torn down here - the Y.Doc still
+		// holds what was typed, and it is the only copy of it left. What to do with that text is the feature
+		// layer's call, the same as for a refused genesis.
+		#handleSaveRefused() {
+			if (this.#isDestroyed) {
+				return;
+			}
+			if (this.onSaveRefused) {
+				this.onSaveRefused({
+					documentId: this.documentId
+				});
 			}
 		}
 		#initializeAwareness() {
@@ -71849,7 +79018,9 @@ ${nextLine.slice(indentLevel + 2)}`;
 			this.awareness.setLocalStateField('user', {
 				id: this.#userId,
 				name: this.#userName,
-				color: this.#userColor
+				color: this.#userColor,
+				avatar: this.#userAvatar,
+				mode: this.#mode
 			});
 			this.#awarenessManager = new AwarenessManager({
 				awareness: this.awareness,
@@ -71857,37 +79028,78 @@ ${nextLine.slice(indentLevel + 2)}`;
 				userId: this.#userId,
 				userName: this.#userName,
 				userColor: this.#userColor,
+				userAvatar: this.#userAvatar,
+				getMode: () => this.#mode,
+				onParticipantsChange: participants => {
+					if (this.onParticipants) {
+						this.onParticipants(participants);
+					}
+				},
 				hasPendingUpdates: () => this.#flushManager.hasPendingUpdates()
 			});
 			this.#awarenessManager.start();
 		}
+
+		// Replays what the pull channel delivered while the state was being read, then goes back to applying
+		// patches as they arrive. Order is preserved, and the cursor sorts out what the response already
+		// carried: an id at or below it is a duplicate, and the CRDT takes it either way.
+		#drainPendingPullPatches() {
+			const buffered = this.#pendingPullPatches;
+			this.#pendingPullPatches = null;
+			if (buffered === null) {
+				return;
+			}
+			for (const {
+				update,
+				params
+			} of buffered) {
+				this.#applyPulledPatch(update, params);
+			}
+		}
+		#applyPulledPatch(update, params) {
+			if (!this.document || this.#isDestroyed) {
+				return;
+			}
+			applyUpdate(this.document, update, 'remote');
+			this.#trackAppliedPatch(params);
+			if (this.#awarenessManager) {
+				this.#awarenessManager.refreshAllCursors();
+			}
+			if (params?.cursor && this.#awarenessManager) {
+				let cursorData = params.cursor;
+				if (main_core.Type.isString(cursorData)) {
+					try {
+						cursorData = JSON.parse(cursorData);
+					} catch {
+						cursorData = null;
+					}
+				}
+				if (cursorData) {
+					this.#awarenessManager.handleRemoteAwareness({
+						type: 'cursor',
+						userId: params.userId,
+						position: cursorData
+					});
+				}
+			}
+		}
 		#startPullTransport() {
 			this.#pullTransport.start({
 				onPatch: (update, params) => {
-					if (!this.document || this.#isDestroyed) {
+					if (this.#isDestroyed) {
 						return;
 					}
-					applyUpdate(this.document, update, 'remote');
-					if (this.#awarenessManager) {
-						this.#awarenessManager.refreshAllCursors();
+
+					// connect()/sync() are reading the state right now: hold the patch instead of dropping it,
+					// there being no Y.Doc yet in the first case and no cursor for it yet in the second.
+					if (this.#pendingPullPatches !== null) {
+						this.#pendingPullPatches.push({
+							update,
+							params
+						});
+						return;
 					}
-					if (params?.cursor && this.#awarenessManager) {
-						let cursorData = params.cursor;
-						if (main_core.Type.isString(cursorData)) {
-							try {
-								cursorData = JSON.parse(cursorData);
-							} catch {
-								cursorData = null;
-							}
-						}
-						if (cursorData) {
-							this.#awarenessManager.handleRemoteAwareness({
-								type: 'cursor',
-								userId: params.userId,
-								position: cursorData
-							});
-						}
-					}
+					this.#applyPulledPatch(update, params);
 				},
 				onAwareness: params => {
 					if (this.#awarenessManager) {
@@ -71955,6 +79167,164 @@ ${nextLine.slice(indentLevel + 2)}`;
 				this.onRemoteContentOverwritten(params);
 			}
 		}
+
+		// Our own patch landed on the server: this session has edited, so a teardown or a work boundary has
+		// something worth materializing. Backfill must not set this — it carries other people's patches.
+		//
+		// The cursor goes through the same continuity check as an incoming patch. Saving our own patch used
+		// to advance it unconditionally, which quietly skipped over anything we had missed: seen 8, missed
+		// somebody's 9, saved our 10 — the cursor read 10 while the text lacked 9. Materialization would
+		// then pin that incomplete text at cursor 10, and a client that did have 9 could no longer correct
+		// the projection, because its own cursor was 10 as well and the forward-only guard refuses equals.
+		#handleLocalPatchSaved(patchId, prevPatchId = null, journalBaseId = null) {
+			this.#hasLocalEdits = true;
+			this.#applyPatchCursor(patchId, prevPatchId, journalBaseId);
+		}
+		#advanceAppliedPatchId(patchId) {
+			if (patchId === null || patchId === undefined) {
+				return;
+			}
+			const id = Number(patchId);
+			if (Number.isInteger(id) && id > this.#lastAppliedPatchId) {
+				this.#lastAppliedPatchId = id;
+			}
+		}
+
+		// Applied-patch cursor + gap detection (ALG-F2). The CRDT applyUpdate already ran; here we only
+		// keep #lastAppliedPatchId honest so uptoId for materialization stays correct, and recover when we
+		// turn out to have missed a patch.
+		#trackAppliedPatch(params) {
+			this.#applyPatchCursor(params?.patchId, params?.prevPatchId, params?.journalBaseId);
+		}
+
+		// Continuity is decided by prevPatchId — the id of the previous patch OF THIS DOCUMENT — not by
+		// arithmetic on the ids themselves. b_note_document_updates.ID is a table-wide auto-increment, so
+		// two consecutive patches of one document are numbered consecutively only while nobody else on the
+		// portal is typing. Treating any jump as a gap therefore refetched on nearly every pull, replaying
+		// the whole journal each time.
+		#applyPatchCursor(patchId, prevPatchId, journalBaseId = null) {
+			if (patchId === null || patchId === undefined) {
+				return;
+			}
+			const id = Number(patchId);
+			if (!Number.isInteger(id) || id <= this.#lastAppliedPatchId) {
+				return; // duplicate / reordered — CRDT is idempotent, cursor must not roll back
+			}
+
+			// A server that does not send prevPatchId leaves nothing to verify: trust the id, as before.
+			if (prevPatchId === null || prevPatchId === undefined) {
+				this.#lastAppliedPatchId = id;
+				return;
+			}
+			const previousId = Number(prevPatchId);
+			if (previousId === this.#lastAppliedPatchId) {
+				this.#lastAppliedPatchId = id;
+				return;
+			}
+
+			// prevPatchId === 0 says the journal holds nothing before this patch, and our cursor is above
+			// zero, so a compaction cut the journal behind us. It does not say WHAT was cut: journalBaseId -
+			// the level the journal now starts from - does. A cursor at or above that level proves the cut
+			// took only patches we had already applied, so the cursor moves on without a fetch; that is the
+			// path after every compaction and the reason the waterline exists at all. Below the level, the
+			// cut also took something we never received: accepting it would write a hole into the cursor,
+			// and our own compaction would then persist the incomplete text as the settled state. A server
+			// that does not state the waterline (0, or an older build that omits the field) leaves nothing
+			// to verify, and an unverified cut is treated as a hole.
+			if (previousId === 0) {
+				const waterline = Number(journalBaseId);
+				if (Number.isInteger(waterline) && waterline > 0 && this.#lastAppliedPatchId >= waterline) {
+					this.#lastAppliedPatchId = id;
+					return;
+				}
+				this.#recoverFromGap();
+				return;
+			}
+
+			// The patch does not continue what we hold - something never reached us.
+			this.#recoverFromGap();
+		}
+
+		// A hole in the applied patches. It cannot be closed from the journal alone: whatever is missing may
+		// already have been compacted out of it, and re-reading the journal would then leave the hole open
+		// while the cursor claimed otherwise. The consistent state is the snapshot plus the journal on top of
+		// it - the same authoritative state sync() applies - so recovery goes through that.
+		//
+		// The cursor is deliberately left where it is until the state arrives: until then the text does not
+		// cover this patch, and #hasJournalGap keeps materialization from publishing it.
+		#recoverFromGap() {
+			this.#hasJournalGap = true;
+			if (this.#recovery !== null) {
+				// The fetch already in the air was issued before this gap was known, so it cannot answer for
+				// it. Queue one more pass instead of dropping the signal.
+				this.#recoveryQueued = true;
+				return;
+			}
+			this.#recovery = this.#loadAuthoritativeState().then(() => {
+				this.#recovery = null;
+				if (this.#recoveryQueued) {
+					this.#recoveryQueued = false;
+					this.#recoverFromGap();
+				}
+			});
+		}
+
+		/**
+		 * @return true if the server state was read and applied to the live Y.Doc.
+		 */
+		async #loadAuthoritativeState() {
+			if (!this.document || this.#isDestroyed) {
+				return false;
+			}
+			try {
+				const response = await DocumentService.loadForCollaboration({
+					documentId: this.documentId
+				});
+				if (!this.document || this.#isDestroyed) {
+					return false;
+				}
+				this.#applyServerState(response?.data ?? {});
+				return true;
+			} catch {
+				// The hole stays open: the next patch that does not continue ours retries, and until then
+				// nothing publishes this text as the document projection. CRDT convergence is unaffected.
+				return false;
+			}
+		}
+
+		// Waits out a recovery that is already running, so a caller about to publish the text gives the
+		// missing patches their one round trip. A pass queued behind this one is not waited for - the gap
+		// flag still tells the caller the text is not whole.
+		async #awaitRecovery() {
+			const recovery = this.#recovery;
+			if (recovery !== null) {
+				await recovery;
+			}
+		}
+
+		// The authoritative state: the snapshot as the baseline, the surviving journal on top of it. Whatever
+		// a hole in the cursor was hiding is inside one or the other, so applying both closes it.
+		#applyServerState(data) {
+			const yjsState = data?.yjsState ?? null;
+			const patches = Array.isArray(data?.patches) ? data.patches : [];
+			// The lineage travels with the state: this read is as authoritative as the one connect() made, and
+			// a queue put away after it must be weighed against what was read here.
+			this.#adoptBaseline(data, yjsState);
+			if (main_core.Type.isStringFilled(yjsState)) {
+				applyUpdate(this.document, base64ToUint8Array(yjsState), 'remote');
+			}
+			for (const patch of patches) {
+				const raw = String(patch.PATCH || patch.patch || '');
+				if (raw.length > 0) {
+					applyUpdate(this.document, base64ToUint8Array(raw), 'remote');
+				}
+			}
+
+			// The live Y.Doc is kept, so the cursor only moves forward: a lagging replica/cache behind
+			// loadForCollaboration must not roll it back and break uptoId.
+			this.#advanceAppliedPatchId(resolveAppliedCursor(patches, data?.lastPatchId));
+			this.#hasJournalGap = false;
+		}
 		#getCursorPosition() {
 			if (!this.awareness) {
 				return null;
@@ -71963,11 +79333,14 @@ ${nextLine.slice(indentLevel + 2)}`;
 			return localState?.cursor ?? null;
 		}
 		#emitStatus(status) {
-			if (this.onStatus) {
-				this.onStatus({
-					status
-				});
+			// A destroyed provider owns nothing on screen any more: a late status of its own would overwrite
+			// what the live provider has already put there.
+			if (this.#isDestroyed || !this.onStatus) {
+				return;
 			}
+			this.onStatus({
+				status
+			});
 		}
 	}
 
@@ -71981,11 +79354,16 @@ ${nextLine.slice(indentLevel + 2)}`;
 		#onCapabilities;
 		#onLifecycleChange;
 		#onRemoteContentOverwritten;
+		#onGenesisRefused;
+		#onSaveRefused;
+		#onConnectionSettled;
 		#provider;
 		#isReconnecting;
-		#isHandlingAuthFailure;
+		#isEndingConnectionAttempt;
+		#isGoingIdle;
 		#idleTracker;
 		#compactTimerId;
+		#participantsTimer;
 		constructor({
 			state,
 			schema,
@@ -71995,7 +79373,10 @@ ${nextLine.slice(indentLevel + 2)}`;
 			onRemoteRename = null,
 			onCapabilities = null,
 			onLifecycleChange = null,
-			onRemoteContentOverwritten = null
+			onRemoteContentOverwritten = null,
+			onGenesisRefused = null,
+			onSaveRefused = null,
+			onConnectionSettled = null
 		}) {
 			this.#state = state;
 			this.#schema = schema;
@@ -72006,71 +79387,156 @@ ${nextLine.slice(indentLevel + 2)}`;
 			this.#onCapabilities = typeof onCapabilities === 'function' ? onCapabilities : null;
 			this.#onLifecycleChange = typeof onLifecycleChange === 'function' ? onLifecycleChange : null;
 			this.#onRemoteContentOverwritten = typeof onRemoteContentOverwritten === 'function' ? onRemoteContentOverwritten : null;
+			this.#onGenesisRefused = typeof onGenesisRefused === 'function' ? onGenesisRefused : null;
+			this.#onSaveRefused = typeof onSaveRefused === 'function' ? onSaveRefused : null;
+			this.#onConnectionSettled = typeof onConnectionSettled === 'function' ? onConnectionSettled : null;
 			this.#provider = null;
 			this.#isReconnecting = false;
-			this.#isHandlingAuthFailure = false;
+			this.#isEndingConnectionAttempt = false;
+			this.#isGoingIdle = false;
 			this.#idleTracker = new IdleTracker();
 			this.#compactTimerId = null;
+			this.#participantsTimer = null;
 		}
 		get provider() {
 			return this.#provider;
+		}
+		setMode(mode) {
+			this.#provider?.setMode?.(mode);
+		}
+		materialize() {
+			void this.#provider?.materialize?.();
 		}
 		async initialize(documentId, user, collaborationData = null) {
 			if (documentId <= 0 || !user?.id) {
 				return;
 			}
-			this.#state.collaborationStatus = CollaborationStatus.CONNECTING;
-			this.#provider = ui_vue3.markRaw(new PushPullYjsProvider({
+
+			// One lifecycle never runs two providers. Callers tear the previous one down themselves, but they
+			// do it before awaits of their own, and a path that gets in between would leave the predecessor
+			// alive: undestroyed, still subscribed to pull and still flushing patches from a Y.Doc that has
+			// been replaced.
+			if (this.#provider) {
+				await this.destroy();
+			}
+			this.#setStatus(CollaborationStatus.CONNECTING, null);
+
+			// Held in a local for the callbacks below to close over: `this.#provider` is whoever is current
+			// when a signal arrives, and that is exactly what a signal has to be checked against.
+			const provider = ui_vue3.markRaw(new PushPullYjsProvider({
 				documentId,
 				userId: Number(user.id),
 				userName: String(user.name || ''),
 				userColor: String(user.color || '#999999'),
-				schema: this.#schema
+				userAvatar: typeof user.avatar === 'string' && user.avatar !== '' ? user.avatar : null,
+				mode: this.#state.mode === 'edit' ? 'edit' : 'view',
+				schema: this.#schema,
+				// Persisted on the provider so timer/idle/teardown triggers can materialize without an
+				// argument, unlike compact() which still receives it per call.
+				getEditorMarkdown: () => this.#getEditorMarkdown()
 			}));
-			this.#provider.collectionId = Number(this.#state.collectionId) || 0;
-			this.#provider.onStatus = ({
+			this.#provider = provider;
+			provider.collectionId = Number(this.#state.collectionId) || 0;
+			provider.onParticipants = participants => {
+				// Presence arrives as one pull message per peer (each answers our `join` independently),
+				// so the initial fill trickles in over a window wider than a normal update.
+				// Use a longer settle window while the list is still empty to gather everyone into one
+				// batch, then a short debounce afterwards so mode/join changes stay responsive.
+				const next = Array.isArray(participants) ? participants : [];
+				const isInitialFill = this.#state.participants.length === 0 && next.length > 0;
+				const settleMs = isInitialFill ? 500 : 180;
+				if (this.#participantsTimer !== null) {
+					clearTimeout(this.#participantsTimer);
+				}
+				this.#participantsTimer = setTimeout(() => {
+					this.#participantsTimer = null;
+					this.#state.participants = next;
+				}, settleMs);
+			};
+			provider.onStatus = ({
 				status
 			}) => {
-				this.#state.collaborationStatus = main_core.Type.isStringFilled(status) ? status : CollaborationStatus.UNKNOWN;
+				this.#setStatus(main_core.Type.isStringFilled(status) ? status : CollaborationStatus.UNKNOWN, provider);
 			};
-			this.#provider.onSynced = () => {
-				this.#state.collaborationStatus = CollaborationStatus.SYNCED;
+			provider.onSynced = () => {
+				this.#setStatus(CollaborationStatus.SYNCED, provider);
 			};
-			this.#provider.onDisconnect = () => {
-				this.#state.collaborationStatus = CollaborationStatus.DISCONNECTED;
+			provider.onDisconnect = () => {
+				this.#setStatus(CollaborationStatus.DISCONNECTED, provider);
 			};
-			this.#provider.onConnectError = () => {
-				this.handleConnectError();
+			provider.onConnectError = () => {
+				this.handleConnectError(provider);
 			};
-			this.#provider.onNeedReconnect = () => {
+			provider.onNeedReconnect = () => {
 				void this.softReconnect();
 			};
-			this.#provider.onRemoteDocumentUpdate = params => {
+			provider.onRemoteDocumentUpdate = params => {
 				this.handleRemoteDocumentUpdate(params);
 			};
-			this.#provider.onRemoteArchive = params => {
+			provider.onRemoteArchive = params => {
 				this.handleRemoteArchive(params);
 			};
-			this.#provider.onRemoteRestore = params => {
+			provider.onRemoteRestore = params => {
 				this.handleRemoteRestore(params);
 			};
-			this.#provider.onRemoteDelete = params => {
+			provider.onRemoteDelete = params => {
 				this.handleRemoteDelete(params);
 			};
-			this.#provider.onRemoteHardDelete = params => {
+			provider.onRemoteHardDelete = params => {
 				this.handleRemoteHardDelete(params);
 			};
-			this.#provider.onRemoteCapabilities = params => {
+			provider.onRemoteCapabilities = params => {
 				this.handleRemoteCapabilities(params);
 			};
-			this.#provider.onRemoteContentOverwritten = params => {
-				this.handleRemoteContentOverwritten(params);
+			provider.onRemoteContentOverwritten = params => {
+				this.handleRemoteContentOverwritten(params, provider);
 			};
-			await this.#provider.connect(collaborationData);
+			provider.onGenesisRefused = params => {
+				this.handleGenesisRefused(params, provider);
+			};
+			provider.onGenesisFailed = () => {
+				this.handleGenesisFailed(provider);
+			};
+			provider.onSaveRefused = params => {
+				this.handleSaveRefused(params, provider);
+			};
+			await provider.connect(collaborationData);
 		}
-		handleRemoteContentOverwritten(params) {
+
+		// `source` is the provider the signal came from, on the same terms as the status writes: a rebuild
+		// belongs to whoever is running now, and a predecessor asking for one would throw away the state of
+		// its successor. Every signal has a provider behind it, so the argument is not optional: a call
+		// without one would pass the check it exists for.
+		handleRemoteContentOverwritten(params, source) {
+			if (source !== this.#provider) {
+				return;
+			}
 			if (this.#onRemoteContentOverwritten) {
 				this.#onRemoteContentOverwritten(params || {});
+			}
+		}
+
+		// Reported once per provider, from inside its own connect(): the server refused to write a
+		// collaborative baseline for this document. Nothing is decided here - what to do with a document
+		// that cannot be collaborative is the feature layer's call.
+		handleGenesisRefused(params, source) {
+			if (source !== this.#provider) {
+				return;
+			}
+			if (this.#onGenesisRefused) {
+				this.#onGenesisRefused(params || {});
+			}
+		}
+
+		// The server refused a patch this provider sent. Told apart from a refused genesis by when it happens:
+		// the connection was up and working, and the document was taken out of the collaborative format under
+		// it. The provider is left standing - it holds the text - and the feature layer decides.
+		handleSaveRefused(params, source) {
+			if (source !== this.#provider) {
+				return;
+			}
+			if (this.#onSaveRefused) {
+				this.#onSaveRefused(params || {});
 			}
 		}
 		startCompaction() {
@@ -72090,44 +79556,78 @@ ${nextLine.slice(indentLevel + 2)}`;
 			}
 			this.#provider?.stopCompactInterval();
 		}
-		destroy() {
+		async destroy(options = {}) {
 			this.stopCompaction();
 			this.#idleTracker.stop();
-			if (this.#provider) {
-				this.#provider.destroy();
-				this.#provider = null;
+			if (this.#participantsTimer !== null) {
+				clearTimeout(this.#participantsTimer);
+				this.#participantsTimer = null;
 			}
-			this.#state.collaborationStatus = CollaborationStatus.IDLE;
+
+			// Detach the provider and reset reactive state synchronously so double-fire teardowns and the
+			// status indicator behave exactly as before; only the provider's own async teardown materialize
+			// is awaited, and only callers on the SPA-navigation path actually await this method.
+			const provider = this.#provider;
+			this.#provider = null;
+			this.#state.participants = [];
+			this.#setStatus(CollaborationStatus.IDLE, null);
+			if (provider) {
+				await provider.destroy(options);
+			}
 		}
 		startIdleTracking() {
-			if (!this.#provider) {
+			const provider = this.#provider;
+			if (!provider) {
 				return;
 			}
-			this.#idleTracker.start(() => {
-				if (this.#provider?.isConnected) {
-					this.#state.collaborationStatus = CollaborationStatus.DISCONNECTED;
-					this.#provider.disconnect();
+			this.#idleTracker.start(async () => {
+				if (!provider.isConnected) {
+					return;
 				}
+
+				// The intent to go idle is recorded BEFORE the await. The provider is still connected
+				// while the request is in the air, so a user coming back right then would see a live
+				// provider, skip the reconnect — and then get disconnected by this very handler once it
+				// resumed. The resume callback clears the flag, and the disconnect below stands down.
+				this.#isGoingIdle = true;
+				this.#setStatus(CollaborationStatus.DISCONNECTED, provider);
+				// Materialize before going silent for ~10 minutes so the last state still lands.
+				await provider.materialize();
+				if (!this.#isGoingIdle) {
+					return; // activity resumed mid-flight — stay connected
+				}
+				this.#isGoingIdle = false;
+				provider.disconnect();
 			}, () => {
-				if (this.#provider && !this.#provider.isConnected) {
+				const wasGoingIdle = this.#isGoingIdle;
+				this.#isGoingIdle = false;
+				if (!provider.isConnected) {
 					void this.softReconnect();
+					return;
+				}
+				if (wasGoingIdle) {
+					// Never actually disconnected — undo the status the idle handler set ahead of time.
+					this.#setStatus(CollaborationStatus.SYNCED, provider);
 				}
 			});
 		}
 		async softReconnect() {
-			if (this.#isReconnecting || !this.#provider) {
+			const provider = this.#provider;
+			if (this.#isReconnecting || !provider) {
 				return;
 			}
 			this.#isReconnecting = true;
 			try {
 				this.stopCompaction();
-				this.#state.collaborationStatus = CollaborationStatus.CONNECTING;
-				await this.#provider.sync();
-				this.#state.collaborationStatus = CollaborationStatus.SYNCED;
+				this.#setStatus(CollaborationStatus.CONNECTING, provider);
+				await provider.sync();
+				this.#setStatus(CollaborationStatus.SYNCED, provider);
 				this.startIdleTracking();
 				this.startCompaction();
+				// State accumulated during the disconnect window materializes right after resync.
+				void this.#provider?.materialize();
 			} catch {
-				this.#state.collaborationStatus = CollaborationStatus.DISCONNECTED;
+				this.#setStatus(CollaborationStatus.DISCONNECTED, provider);
 			} finally {
 				this.#isReconnecting = false;
 			}
@@ -72174,7 +79674,11 @@ ${nextLine.slice(indentLevel + 2)}`;
 				return;
 			}
 			const mode = this.#state.recycleBinId ? 'recyclebin' : this.#state.isArchived ? 'archive' : 'home';
-			this.destroy();
+
+			// Push teardown: the document is already gone remotely — nothing to materialize, and no await.
+			void this.destroy({
+				materialize: false
+			});
 			this.#notifyLifecycle(this.#messages.hardDeletedRemote);
 			if (this.#onHardDelete) {
 				this.#onHardDelete({
@@ -72238,6 +79742,19 @@ ${nextLine.slice(indentLevel + 2)}`;
 			this.#notifyLifecycle(this.#messages.restoredRemote);
 			this.#emitLifecycleChange('restored');
 		}
+
+		// The one place the lifecycle writes the indicator; terminal states after a server refusal are set by
+		// the feature layer. `source` is the provider a status belongs to: a provider that has already been torn
+		// down still has continuations in flight and callbacks the transport holds, and none of them may
+		// overwrite the status of the provider that replaced it. Writes the lifecycle makes on its own behalf —
+		// the pre-connect status and the teardown reset — pass `null`: at that moment there is no provider whose
+		// word it would be. Guarding here rather than in each callback is deliberate.
+		#setStatus(status, source) {
+			if (source !== null && source !== this.#provider) {
+				return;
+			}
+			this.#state.collaborationStatus = status;
+		}
 		#emitLifecycleChange(reason) {
 			if (this.#onLifecycleChange) {
 				this.#onLifecycleChange(reason);
@@ -72256,16 +79773,302 @@ ${nextLine.slice(indentLevel + 2)}`;
 				});
 			}
 		}
-		handleConnectError() {
-			if (this.#isHandlingAuthFailure) {
+
+		// `source` names the provider that lost its connection. The check stands before the teardown rather
+		// than at the status write: a broken connection reported by a provider that has already been replaced
+		// would dismantle its successor and complain about a connection nobody is using, and by the time the
+		// status is written the field is null anyway.
+		handleConnectError(source) {
+			if (this.#endConnectionAttempt(source)) {
+				showErrorToast(this.#messages.loadError);
+			}
+		}
+
+		// Writing the collaborative baseline failed for a reason the server never named: the text on screen
+		// is the server's own and did not change, so the attempt ends on the indicator alone. The load error
+		// of handleConnectError() would announce a failure to load the document the user is reading.
+		handleGenesisFailed(source) {
+			this.#endConnectionAttempt(source);
+		}
+
+		// Ends the connection attempt of `source` and answers whether this call is the one that ended it, so
+		// that a caller which also speaks to the user does so once, and only for the provider it runs.
+		#endConnectionAttempt(source) {
+			if (source !== this.#provider) {
+				return false;
+			}
+			if (this.#isEndingConnectionAttempt) {
+				return false;
+			}
+			this.#isEndingConnectionAttempt = true;
+			// Push teardown: the connection is broken, materialize has nowhere to go — fire and forget.
+			// State reset runs synchronously inside destroy(), so the DISCONNECTED set below still wins.
+			void this.destroy({
+				materialize: false
+			});
+			this.#setStatus(CollaborationStatus.DISCONNECTED, null);
+			this.#isEndingConnectionAttempt = false;
+			// The attempt is over and no provider is left: the caller decides what that means for editing.
+			// Reported after the teardown so the caller sees the outcome, not the provider on its way out.
+			if (this.#onConnectionSettled) {
+				this.#onConnectionSettled({
+					documentId: Number(source?.documentId) || 0
+				});
+			}
+			return true;
+		}
+	}
+
+	const MENTION_NODE_TYPE = 'noteMention';
+	const ASSET_NODE_TYPES = new Set(['imageAttachment', 'fileAttachment', 'video']);
+
+	// Maps the ProseMirror node type name to the wire assetType used in the [[type fileId=N]] token.
+	const ASSET_NODE_TYPE_TO_ASSET_TYPE = {
+		imageAttachment: 'image',
+		fileAttachment: 'file',
+		video: 'video'
+	};
+
+	// Mirrors MENTION_TOKEN_RE from note-mention-node.js (`/^@\{([a-z]+):(\d+)\}/`), but global and
+	// unanchored so a `.replace()` over the whole markdown string catches every occurrence, not just
+	// one match at the string start.
+	const MENTION_TOKEN_RE = /@\{([a-z]+):(\d+)\}/g;
+
+	// Mirrors the token core matched by NOTE_ASSET_RE in note-asset-parser.js (type/fileId/attrs).
+	// The block-level indentation and trailing-newline capture from that regex are dropped here:
+	// a global replace only needs to swap the token substring itself, leaving surrounding
+	// whitespace/newlines in the source markdown untouched.
+	const ASSET_TOKEN_RE = /\[\[(image|file|video) fileId=(\d+)(?:[ \t]+[a-z]+=[^\s\]]+)*\]\]/g;
+
+	// Normative source for the zip entry naming contract: DocumentZipExportService::sanitizeFileName
+	// (PHP) MUST fold identically. The client writes `attachments/{fileId}-{name}` links into the .md
+	// and the server names the archived file the same way — they only resolve if both produce a
+	// byte-identical string. We fold every character outside printable ASCII (0x20-0x7E) plus the
+	// forbidden punctuation class to '_': CZip stores entry names as CP866 without the ZIP UTF-8 flag
+	// (main zip.php:1164), so a non-ASCII name is mojibake in external extractors and characters
+	// outside CP866 (é, emoji, CJK) become '?', breaking the link even on Windows. The unicode flag
+	// folds an astral character (emoji) to a single '_' so it matches the PHP /u pattern.
+	const FORBIDDEN_NAME_CHARS_RE = /[^\x20-\x7E]|[\\/:*?"'<>|~#&;]/gu;
+
+	// Cap the entry base name so `{fileId}-{name}` stays under the filesystem's 255-byte per-component
+	// limit. Mirrored by the server; after the fold the name is pure ASCII, so length == bytes and
+	// slicing is byte-exact on both sides.
+	const MAX_ENTRY_BASE_NAME = 100;
+	function capEntryBaseName(name) {
+		if (name.length <= MAX_ENTRY_BASE_NAME) {
+			return name;
+		}
+		const dot = name.lastIndexOf('.');
+		if (dot > 0 && name.length - dot <= 16) {
+			const ext = name.slice(dot);
+			const keep = MAX_ENTRY_BASE_NAME - ext.length;
+			return keep > 0 ? name.slice(0, keep) + ext : name.slice(0, MAX_ENTRY_BASE_NAME);
+		}
+		return name.slice(0, MAX_ENTRY_BASE_NAME);
+	}
+
+	/**
+	 * Forces resolution of unresolved mention/file nodes before export.
+	 *
+	 * Export reads mention/asset attrs straight off the node — attrs that are normally filled in
+	 * asynchronously by the debounced background resolver (RESOLVE_DEBOUNCE_MS/RESOLVE_MAX_WAIT_MS).
+	 * Without this, exporting right after inserting a mention/file would carry empty label/url.
+	 *
+	 * One forced attempt per export call — no retry loop if resolveMentionsBatch reports a
+	 * transient failure (null); any mentions left unresolved stay in their current node state.
+	 *
+	 * @param {Object} editor - Tiptap editor instance.
+	 * @param {number} documentId - owning document id.
+	 * @returns {Promise<void>}
+	 */
+	async function ensureResolved(editor, documentId) {
+		await resolveFileNodes(editor, documentId);
+		const items = collectUnresolvedMentions(editor.state.doc, new Set());
+		if (items.length === 0) {
+			return;
+		}
+		const resolvedMap = await resolveMentionsBatch(items);
+		if (resolvedMap === null) {
+			return;
+		}
+		const {
+			tr,
+			doc
+		} = editor.state;
+		let changed = false;
+		doc.descendants((node, pos) => {
+			if (node.type.name !== MENTION_NODE_TYPE) {
 				return;
 			}
-			this.#isHandlingAuthFailure = true;
-			this.destroy();
-			this.#state.collaborationStatus = CollaborationStatus.DISCONNECTED;
-			showErrorToast(this.#messages.loadError);
-			this.#isHandlingAuthFailure = false;
+			const {
+				entityType,
+				entityId,
+				available
+			} = node.attrs;
+			if (available !== null) {
+				return; // already resolved
+			}
+			const mention = resolvedMap.get(`${entityType}:${entityId}`);
+
+			// Same attribute set as note-mention-resolver-extension.js:106-129 — a missing key means
+			// the backend reported the entity as gone/no-access, so it becomes unavailable:true.
+			tr.setNodeMarkup(pos, undefined, {
+				...node.attrs,
+				label: mention?.label ?? null,
+				avatar: mention?.avatar ?? null,
+				url: mention?.url ?? null,
+				available: Boolean(mention?.available),
+				isCurrentUser: Boolean(mention?.isCurrentUser),
+				unavailable: !mention?.available
+			});
+			changed = true;
+		});
+		if (changed) {
+			editor.view.dispatch(tr);
 		}
+	}
+
+	/**
+	 * Builds the deterministic zip entry name for an attachment: `{fileId}-{sanitizedBaseName}`.
+	 *
+	 * @param {number} fileId
+	 * @param {string} originalName - may include a path; only the base name is kept.
+	 * @returns {string}
+	 */
+	function zipEntryName(fileId, originalName) {
+		const baseName = String(originalName ?? '').replace(/^.*[\\/]/, '');
+		const sanitizedBaseName = capEntryBaseName(baseName.replace(FORBIDDEN_NAME_CHARS_RE, '_'));
+		return `${fileId}-${sanitizedBaseName}`;
+	}
+
+	/**
+	 * Percent-encodes a zip entry name for use inside a markdown/HTML link destination. Spaces and
+	 * parentheses left in a file name (e.g. "img 1 (2).png") otherwise terminate the `](...)`
+	 * destination early and break the link. encodeURIComponent leaves `!'()*` intact, so those are
+	 * encoded explicitly. The archived file keeps its raw name; a compliant renderer percent-decodes
+	 * the destination back to it.
+	 *
+	 * @param {string} entryName
+	 * @returns {string}
+	 */
+	function encodeZipEntryPath(entryName) {
+		return encodeURIComponent(String(entryName ?? '')).replace(/[!'()*]/g, char => `%${char.charCodeAt(0).toString(16).toUpperCase()}`);
+	}
+
+	/**
+	 * Escapes markdown link/image text so a `]`, `[` or `\` in a file name or mention label does not
+	 * terminate the `[...]`/`![...]` span early.
+	 *
+	 * @param {string} text
+	 * @returns {string}
+	 */
+	function escapeLinkText(text) {
+		return String(text ?? '').replace(/[[\]\\]/g, char => `\\${char}`);
+	}
+	function buildMentionMap(doc) {
+		const mentionMap = new Map();
+		doc.descendants(node => {
+			if (node.type.name !== MENTION_NODE_TYPE) {
+				return;
+			}
+			const {
+				entityType,
+				entityId,
+				label,
+				url,
+				available
+			} = node.attrs;
+			if (!entityType || !Number.isInteger(entityId) || entityId <= 0) {
+				return;
+			}
+			mentionMap.set(`${entityType}:${entityId}`, {
+				label,
+				url,
+				available
+			});
+		});
+		return mentionMap;
+	}
+	function buildAssetMap(doc) {
+		const assetMap = new Map();
+		doc.descendants(node => {
+			if (!ASSET_NODE_TYPES.has(node.type.name)) {
+				return;
+			}
+			const {
+				fileId,
+				name,
+				downloadUrl
+			} = node.attrs;
+			if (!Number.isInteger(fileId) || fileId <= 0) {
+				return;
+			}
+			assetMap.set(fileId, {
+				name,
+				downloadUrl,
+				assetType: ASSET_NODE_TYPE_TO_ASSET_TYPE[node.type.name]
+			});
+		});
+		return assetMap;
+	}
+
+	/**
+	 * Canonical export algorithm (ALG-01): turns the live editor document into readable markdown
+	 * with mentions replaced by markdown links (or bare labels when unavailable) and attachment
+	 * tokens replaced by absolute download links (`mode: 'links'`) or `attachments/...` zip paths
+	 * (`mode: 'zip'`).
+	 *
+	 * A regex match that has no counterpart in the mention/asset map (e.g. hand-typed text that
+	 * happens to look like a token) is left untouched rather than replaced with an empty/undefined
+	 * label — the map is the only source of truth for what is a real node-backed token.
+	 *
+	 * @param {Object} editor - Tiptap editor instance.
+	 * @param {number} documentId - owning document id, forwarded to ensureResolved.
+	 * @param {'links' | 'zip'} mode
+	 * @returns {Promise<string>}
+	 */
+	async function exportMarkdown(editor, documentId, mode) {
+		await ensureResolved(editor, documentId);
+		const mentionMap = buildMentionMap(editor.state.doc);
+		const assetMap = buildAssetMap(editor.state.doc);
+		const {
+			origin
+		} = window.location;
+		let markdown = editor.getMarkdown();
+		markdown = markdown.replace(MENTION_TOKEN_RE, (raw, type, idStr) => {
+			const mention = mentionMap.get(`${type}:${Number(idStr)}`);
+			if (!mention) {
+				return raw;
+			}
+			const label = mention.label ?? '';
+			return mention.available === true ? `[${escapeLinkText(label)}](${origin}${mention.url ?? ''})` : label;
+		});
+		markdown = markdown.replace(ASSET_TOKEN_RE, (raw, type, idStr) => {
+			const asset = assetMap.get(Number(idStr));
+			if (!asset) {
+				return raw;
+			}
+			const name = asset.name ?? '';
+			const target = mode === 'zip' ? `attachments/${encodeZipEntryPath(zipEntryName(Number(idStr), name))}` : `${origin}${asset.downloadUrl ?? ''}`;
+			const text = escapeLinkText(name);
+			return asset.assetType === 'image' ? `![${text}](${target})` : `[${text}](${target})`;
+		});
+		return markdown;
+	}
+
+	/**
+	 * @param {Object} editor - Tiptap editor instance.
+	 * @returns {boolean} true if the document has at least one image/file/video node with a
+	 * positive integer fileId.
+	 */
+	function hasAttachments(editor) {
+		let found = false;
+		editor.state.doc.descendants(node => {
+			if (ASSET_NODE_TYPES.has(node.type.name) && Number.isInteger(node.attrs.fileId) && node.attrs.fileId > 0) {
+				found = true;
+			}
+		});
+		return found;
 	}
 
 	class EditorMount {
@@ -72293,9 +80096,19 @@ ${nextLine.slice(indentLevel + 2)}`;
 			currentUser = {},
 			readOnly = false,
 			title = '',
+			initialViews = null,
+			initialBacklinks = null,
+			lastChange = null,
+			createdAt = null,
+			initialSubscription = null,
+			initialFavorite = null,
+			historyEnabled = false,
+			notificationsEnabled = false,
+			showActivityLine = true,
 			onRenameTitle = null,
 			onOpenInternalLink = null,
-			onMentionClick = null
+			onMentionClick = null,
+			onOpenHistory = null
 		} = {}) {
 			const target = document.getElementById(this.#state.editorMountId);
 			if (!(target instanceof HTMLElement)) {
@@ -72313,9 +80126,34 @@ ${nextLine.slice(indentLevel + 2)}`;
 					currentUser,
 					readOnly,
 					title,
+					// [#6] Base snapshot for the views widget — see create-document-feature.js's
+					// applyLoadedDocument(); null falls back to the widget's own getViews call.
+					initialViews,
+					// [DTO-01] Backlinks counter from the same bootstrap — see create-document-feature.js's
+					// applyLoadedDocument(); null makes the chip read its own count.
+					initialBacklinks,
+					// [#2] `{ authors, time } | null` for the activity-line chip's default (non-preview)
+					// state — see create-document-feature.js's applyLoadedDocument()/state.lastChange.
+					lastChange,
+					// [P8.T5] ISO creation timestamp for the chip's "Created …" fallback.
+					createdAt,
+					// Bell state bundled with the bootstrap — the bell adopts it instead of its own getState.
+					initialSubscription,
+					// [TPL-01] Star state from the same bootstrap - the star prefers it over the sidebar
+					// store until the store reports a change of its own.
+					initialFavorite,
+					// [P8.T2/T3] UI feature flags — gate the chip's history-open affordance and the bell.
+					historyEnabled,
+					notificationsEnabled,
+					showActivityLine,
+					// [P1.T5 relocation] Activity line renders inside DocumentEditorComponent (right
+					// under the title) and builds its own lang via note.ui.document-history's
+					// createHistoryMessages() — it no longer needs this bundle's own messages. The
+					// open-history bridge still crosses this createApp() boundary.
 					onRenameTitle,
 					onOpenInternalLink,
-					onMentionClick
+					onMentionClick,
+					onOpenHistory
 				});
 				this.#editorVm = this.#editorApp.mount(`#${this.#state.editorMountId}`);
 				return true;
@@ -72341,6 +80179,16 @@ ${nextLine.slice(indentLevel + 2)}`;
 		setShowToolbar(value) {
 			this.#editorVm?.setShowToolbar?.(value);
 		}
+
+		// [#11/NEW-A rework] Bridges document-page.js's version-preview state across the
+		// BitrixVue.createApp() boundary — same pattern as setEditable/setShowToolbar above.
+		// See DocumentEditorComponent.setPreview() for the merge semantics.
+		setPreview(payload) {
+			this.#editorVm?.setPreview?.(payload);
+		}
+		clearPreview() {
+			this.#editorVm?.clearPreview?.();
+		}
 		focusTitleAndSelectAll() {
 			this.#editorVm?.focusTitleAndSelectAll?.();
 		}
@@ -72357,6 +80205,25 @@ ${nextLine.slice(indentLevel + 2)}`;
 				return typeof markdown === 'string' ? markdown : null;
 			} catch {
 				return null;
+			}
+		}
+		async exportMarkdown(mode) {
+			try {
+				const editor = this.#editorVm?.editor;
+				if (!editor) {
+					return null;
+				}
+				return await exportMarkdown(editor, Number(this.#getDocumentId()), mode);
+			} catch {
+				return null;
+			}
+		}
+		hasAttachments() {
+			try {
+				const editor = this.#editorVm?.editor;
+				return editor ? hasAttachments(editor) : false;
+			} catch {
+				return false;
 			}
 		}
 	}
@@ -72411,12 +80278,93 @@ ${nextLine.slice(indentLevel + 2)}`;
 		state.titleDraft = title;
 	}
 
+	// Closed set of file-validation failures for markdown import — do not extend without
+	// updating every switch/if that maps codes to user-facing messages (document-page.js).
+	const ImportMdErrorCode = Object.freeze({
+		INVALID_EXTENSION: 'INVALID_EXTENSION',
+		FILE_TOO_LARGE: 'FILE_TOO_LARGE',
+		UNREADABLE: 'UNREADABLE'
+	});
+	const MAX_FILE_SIZE = 1048576;
+	class ImportMdError extends Error {
+		constructor(code) {
+			super(code);
+			this.name = 'ImportMdError';
+			this.code = code;
+		}
+	}
+
+	// Reads and validates a `.md` file. Knows nothing about the editor/markdown parsing —
+	// that is the job of applyImportedContent (feature/import/apply-imported-content.js).
+	function readMarkdownFile(file) {
+		return new Promise((resolve, reject) => {
+			const name = typeof file?.name === 'string' ? file.name : '';
+			if (!name.toLowerCase().endsWith('.md')) {
+				reject(new ImportMdError(ImportMdErrorCode.INVALID_EXTENSION));
+				return;
+			}
+			if (Number(file?.size) > MAX_FILE_SIZE) {
+				reject(new ImportMdError(ImportMdErrorCode.FILE_TOO_LARGE));
+				return;
+			}
+			const reader = new FileReader();
+			reader.onload = () => {
+				resolve(typeof reader.result === 'string' ? reader.result : '');
+			};
+			reader.onerror = () => {
+				reject(new ImportMdError(ImportMdErrorCode.UNREADABLE));
+			};
+			reader.readAsText(file);
+		});
+	}
+
+	// Reads, parses and applies a `.md` file as the single, entire content of the editor.
+	// Callers (create-document-feature.js) are responsible for permission/mode gating and
+	// for resolving the currently mounted editor instance.
+	async function applyImportedContent(editor, file) {
+		const text = await readMarkdownFile(file);
+		const {
+			doc,
+			degraded,
+			droppedCount
+		} = safeParseMarkdown(editor, text);
+
+		// Under an active Yjs provider, yUndoPlugin already owns an UndoManager (see
+		// @tiptap/extension-collaboration). Closing its current capture boundary keeps the
+		// replacement as one isolated undo step instead of merging with prior edits.
+		// Without a provider this is undefined — the native UndoRedo extension handles undo instead.
+		const undoManager = yUndoPluginKey.getState(editor.state)?.undoManager ?? null;
+		if (undoManager) {
+			undoManager.stopCapturing();
+		}
+		editor.commands.setContent(doc);
+
+		// setContent stamps a fresh change time on the Yjs undo item, so without closing the capture
+		// boundary again a keystroke within the default 500 ms captureTimeout would merge into the import
+		// step and get rolled back together with it. Close it so the next edit is its own undo step.
+		if (undoManager) {
+			undoManager.stopCapturing();
+		}
+		return {
+			degraded,
+			droppedCount
+		};
+	}
+
 	function extractCollaborationContext(documentData) {
 		const collaboration = main_core.Type.isPlainObject(documentData?.collaboration) ? documentData.collaboration : {};
 		return {
 			readOnly: Boolean(collaboration.readOnly),
 			currentUser: normalizeCurrentUser(collaboration.currentUser)
 		};
+	}
+
+	// The server's collaboration-eligibility hint: `false` means this document was overwritten out-of-band
+	// and will never be collaborative again, `true` means an attempt is allowed. An absent or malformed key
+	// means the rule is unknown - a server without it has to keep working - so it reads as null and the
+	// caller falls back to the ordinary single attempt.
+	function readCollaborationEligibility(value) {
+		return main_core.Type.isBoolean(value) ? value : null;
 	}
 
 	// Debounce window for ACL-driven capability refresh; jitter desynchronises
@@ -72431,15 +80379,33 @@ ${nextLine.slice(indentLevel + 2)}`;
 			messages,
 			onOpenInternalLink = null,
 			onHardDelete = null,
-			onAccessRevoked = null
+			onAccessRevoked = null,
+			onContentChange = null,
+			onOpenHistory = null,
+			historyEnabled = false,
+			notificationsEnabled = false,
+			showActivityLine = true
 		}) {
 			this.state = state;
 			this.getDocumentId = getDocumentId;
 			this.nextTick = nextTick;
 			this.messages = messages;
+			// [P8.T2/T3] Bootstrap-level UI flags. history_enabled gates the chip's history-open
+			// affordance; notifications_enabled gates the subscription bell. Default off.
+			this.historyEnabled = Boolean(historyEnabled);
+			this.notificationsEnabled = Boolean(notificationsEnabled);
+			// Embedded surfaces (the collection description) render the editor without the activity line.
+			this.showActivityLine = showActivityLine !== false;
 			this.onOpenInternalLink = typeof onOpenInternalLink === 'function' ? onOpenInternalLink : null;
 			this.onHardDelete = typeof onHardDelete === 'function' ? onHardDelete : null;
 			this.onAccessRevoked = typeof onAccessRevoked === 'function' ? onAccessRevoked : null;
+			// Optional reporter of the editor's live emptiness so an embedding surface can react to
+			// content becoming (non-)empty -- including remote edits -- without a mode/save/ACL flip.
+			this.notifyContentEmpty = typeof onContentChange === 'function' ? onContentChange : null;
+			// [P1.T5 relocation] Activity line chip lives inside DocumentEditorComponent now
+			// (own createApp() instance) — bridge its "open history" click back to the page
+			// component the same way onOpenInternalLink bridges mention clicks.
+			this.onOpenHistory = typeof onOpenHistory === 'function' ? onOpenHistory : null;
 
 			// Handles internal-link mention clicks (document/collection) from NodeView dispatcher.
 			// NodeView dispatches by navKind: slider types open SidePanel directly;
@@ -72458,12 +80424,36 @@ ${nextLine.slice(indentLevel + 2)}`;
 				}
 			};
 			this.capabilityRefreshTimer = null;
+			// Guards the overwrite handler against a parallel entry for the SAME document: the rebuild it
+			// runs is a sequence of awaits, and a second signal landing mid-way would stand up a provider
+			// next to the one the first pass is still building. Keyed by document rather than global: this
+			// controller outlives SPA navigation, so a global latch held by a rebuild of the document the
+			// user just left would silently drop the real overwrite of the one they just opened - and that
+			// event is never sent twice.
+			this.handledContentOverwriteDocumentId = 0;
+			// The signal that arrived while the latch above was held. Held rather than dropped: a document
+			// rebuilt back into the collaborative format can be overwritten again, so a second signal is a
+			// second real change, and the server never repeats it. One slot is enough - the pass it queues
+			// re-reads the document, so several signals waiting behind one rebuild describe the same state
+			// by the time it runs.
+			this.queuedContentOverwriteParams = null;
+			// Set by the tab when it asks the server to replace the whole text itself (a version restore),
+			// so the push that reports it is told apart from a rewrite that arrived from outside - see
+			// expectContentOverwrite().
+			this.expectedContentOverwriteOperationId = '';
+			this.lastLifecycleToast = null;
 			// When a lifecycle event (trash/archive) triggers the access re-check, its own toast
-			// already explains the removal — suppress the redundant access-revoked toast.
+			// already explains the removal - suppress the redundant access-revoked toast.
 			this.silentAccessRevoke = false;
 
 			// Cleanup for the active anchor pinning session (see #keepTargetPinned).
 			this.anchorPinCleanup = null;
+
+			// Attached to the editor's `update` on every mount so local and remote content changes
+			// report the current emptiness upward. Dropped automatically when the editor is destroyed.
+			this.handleEditorContentChange = () => {
+				this.notifyContentEmpty?.(this.#isEditorContentEmpty());
+			};
 			this.editorMount = new EditorMount({
 				state,
 				getDocumentId,
@@ -72480,7 +80470,12 @@ ${nextLine.slice(indentLevel + 2)}`;
 				onLifecycleChange: reason => this.#handleLifecycleChange(reason),
 				onRemoteContentOverwritten: params => {
 					void this.#handleRemoteContentOverwritten(params);
-				}
+				},
+				onGenesisRefused: params => this.#handleGenesisRefused(params),
+				onSaveRefused: params => {
+					void this.#handleSaveRefused(params);
+				},
+				onConnectionSettled: params => this.#settleCollaborationOutcome(Number(params?.documentId) || 0)
 			});
 			this.handleTitleRename = newTitle => {
 				void this.renameTitleFromEditor(newTitle);
@@ -72559,7 +80554,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 				}
 			}
 
-			// Patch ancestors list — breadcrumb of a child document reflects parent renames.
+			// Patch ancestors list - breadcrumb of a child document reflects parent renames.
 			if (Array.isArray(this.state.ancestors) && this.state.ancestors.length > 0) {
 				const next = this.state.ancestors.map(ancestor => Number(ancestor?.id) === id ? {
 					...ancestor,
@@ -72610,7 +80605,10 @@ ${nextLine.slice(indentLevel + 2)}`;
 			if (this.state.isTrashed || this.state.isArchived) {
 				return '';
 			}
-			if (this.state.sharedAccess || !this.state.collectionId) {
+
+			// Shared access has no collectionId (the workspace is closed to this user), but the
+			// container name is still shown — as plain text, see DocumentHeader.pathCrumbs.
+			if (!this.state.sharedAccess && !this.state.collectionId) {
 				return '';
 			}
 			if (main_core.Type.isStringFilled(this.state.collectionTitle)) {
@@ -72640,46 +80638,190 @@ ${nextLine.slice(indentLevel + 2)}`;
 			const editor = this.editorMount.vm?.editor;
 			const documentId = Number(this.getDocumentId());
 			if (!editor || documentId <= 0) {
+				// Not "this document is not collaborative" but "the state is not ready yet" - the indicator
+				// is left as it is, and the next open makes the attempt again.
+				return;
+			}
+
+			// The local flag is read first and short-circuits the hint: it came from an authoritative
+			// refusal, while the hint travels with a cached document and may still say `true` for a document
+			// already demoted, so only its `false` adds anything. Both mean the same thing and share one
+			// exit - which is what keeps every path out of here from stopping on the pre-connect status.
+			const isCollaborationRefused = this.#isCollaborationUnavailable(documentId) || readCollaborationEligibility(documentData?.collaboration?.canEnableCollaboration) === false;
+			if (isCollaborationRefused) {
+				this.state.collaborationUnavailableDocumentId = documentId;
+				// Whatever is still queued for this document can never be sent: DocumentUpdateRepository::add
+				// rejects a patch for a document that is not in a collaborative format, and the one thing that
+				// brings it back - a baseline rebuilt from its own current text - is exactly what was refused
+				// here. Left alone, the queue would stay in local storage forever.
+				PatchPersistence.clear(documentId);
+				this.state.collaborationStatus = CollaborationStatus.DISCONNECTED;
+				this.#settleCollaborationOutcome(documentId);
 				return;
 			}
 			try {
 				await resolveFileNodes(editor, documentId);
+				// Re-read after every wait: a refusal may have landed meanwhile, and the user may have left
+				// and come back to a document already known not to be collaborative.
+				if (this.#isCollaborationUnavailable(documentId)) {
+					return;
+				}
 				const json = this.editorMount.readData();
 				if (!json) {
+					// Reading the editor threw — the same dead end as the catch below, and the same reason not
+					// to leave the indicator in the pre-connect status.
+					this.state.collaborationStatus = CollaborationStatus.DISCONNECTED;
 					return;
 				}
 				this.state.content = json;
 				const collaboration = documentData?.collaboration ?? {};
+				// This is the one place that rebuilds a baseline out of a text the server served: the markdown
+				// above went through the editor and came back as the tree below. So the claim is made here, and
+				// the checksum names the very string that produced it - the server weighs it against the
+				// markdown it holds under the same lock it writes the baseline in, so a text replaced since the
+				// response was served costs the claim nothing but its acceptance.
+				const markdown = documentData?.markdown ?? null;
+				const isRebuiltFromMarkdown = main_core.Type.isStringFilled(markdown);
+				// The baseline is the markdown and nothing else. A document in the markdown format has an empty
+				// journal by construction - the server refuses a patch for one - so a row that does arrive here
+				// belongs to the text this rebuild replaces: the overwrite deleted the journal, and only the
+				// narrow race in DocumentUpdateRepository::add can leave one behind it. Applying it would merge
+				// the replaced text into the baseline built to replace it, which is the loop itself. Dropped for
+				// the same reason the server drops them when it accepts the claim. The cursor still moves to the
+				// journal head: everything below it is accounted for, exactly as the overwrite recorded.
 				const genesisData = {
-					patches: collaboration.patches ?? [],
+					patches: [],
 					lastPatchId: collaboration.lastPatchId ?? null,
-					markdown: json
+					// The lineage this session opens on. An accepted rebuild claim zeroes it on the server, and
+					// the provider follows suit; carried here so a genesis that is not a rebuild keeps the
+					// waterline the document actually has instead of reading as a lineage of unknown age.
+					materializedUptoId: collaboration.materializedUptoId ?? null,
+					markdown: json,
+					rebuiltFromMarkdown: isRebuiltFromMarkdown,
+					markdownChecksum: isRebuiltFromMarkdown ? crc32Utf8(markdown) : null
 				};
 				await this.providerLifecycle.initialize(documentId, this.state.currentUser, genesisData);
+				// A provider is what everything below works on: idle tracking, the remount that binds the
+				// editor to it, compaction. An attempt that ends without one - the server refused the
+				// baseline, or writing it failed technically - is already torn down and reported by now, and
+				// the editor mounted by the caller carries the converted content: still editable, but with
+				// nowhere to save it (the finally below settles that). A half-built provider must never reach
+				// the remount.
+				if (!this.providerLifecycle.provider) {
+					return;
+				}
 				this.providerLifecycle.startIdleTracking();
 				this.editorMount.unmount();
 				await this.nextTick();
-				await this.#mountEditorWithContext(false);
+				// Remount with the CURRENT mode, not a hardcoded false: genesis runs after isLoading is
+				// cleared, so the user can enter edit mode while it is still in flight. Remounting
+				// read-only then left state.mode = 'edit' with a read-only editor — header "Готово", no
+				// toolbar, until the user toggled edit mode again.
+				await this.#mountEditorWithContext(this.isEditMode());
 				if (this.providerLifecycle.provider) {
 					this.providerLifecycle.startCompaction();
 				}
 			} catch (error) {
-				this.providerLifecycle.destroy();
+				// Conversion failed — tear down without a teardown materialize (fire-and-forget).
+				void this.providerLifecycle.destroy({
+					materialize: false
+				});
+				// The attempt is over, so the indicator has to end somewhere. The teardown leaves it in the
+				// pre-connect status, which the header renders as "connecting", and nothing would move it
+				// again. Unlike a refusal, a technical failure marks nothing: one lost attempt says nothing
+				// about whether this document could be collaborative.
+				this.state.collaborationStatus = CollaborationStatus.DISCONNECTED;
 				if (!this.editorMount.vm) {
 					await this.nextTick();
 					await this.#mountEditorWithContext(false);
 				}
 				showErrorToast(extractErrorMessage(error, this.messages.loadError));
+			} finally {
+				// Convert always remounts read-only (#mountEditorWithContext(false) above), so reflect the
+				// current state.mode once conversion settles: an edit session opened during the unawaited
+				// reload path (applyRouteDocumentContext md branch, where `ready` -> enterEditMode races the
+				// convert remount) -> editable editor, not a stuck read-only one. Idempotent for the awaited
+				// caller (#handleRemoteContentOverwritten), which re-applies right after.
+				this.#applyEditorState();
+				this.#settleCollaborationOutcome(documentId);
 			}
 		}
+
+		// The server broadcasts this event only for a document that WAS collaborative at the moment of the
+		// overwrite (OverwriteDocumentContentCommand). A document rebuilt back into the collaborative format
+		// can be overwritten again, so more than one event per document is possible - each one a real change,
+		// and each handled. What is dropped is an event for a document this session knows cannot be
+		// collaborative at all: that knowledge came from an authoritative refusal, and a document that cannot
+		// hold a baseline cannot have been demoted from one.
 		async #handleRemoteContentOverwritten(params) {
 			const documentId = Number(this.getDocumentId());
 			if (documentId <= 0 || Number(params?.documentId) !== documentId) {
 				return;
 			}
+			if (this.#isCollaborationUnavailable(documentId)) {
+				return;
+			}
+			if (this.handledContentOverwriteDocumentId === documentId) {
+				// Kept for after the rebuild in flight, not dropped: it reports a change of its own, and the
+				// server sends it once. The pass it earns runs below, once the latch is free.
+				this.queuedContentOverwriteParams = params;
+				return;
+			}
+			this.handledContentOverwriteDocumentId = documentId;
+			try {
+				await this.#rebuildAfterContentOverwritten(documentId, params);
+			} finally {
+				// Release only what this pass claimed: a rebuild of the previous document finishing late
+				// must not free the claim of the rebuild running now.
+				if (this.handledContentOverwriteDocumentId === documentId) {
+					this.handledContentOverwriteDocumentId = 0;
+				}
+			}
+			await this.#drainQueuedContentOverwrite();
+		}
+
+		// One pass for whatever arrived while the previous one was running. Not a loop of its own: the pass
+		// goes through the handler above, so it takes the latch again and drains anything that lands during
+		// it by the same route. The slot is emptied before the pass starts, so a signal it receives is a
+		// signal about the state that pass reads - not the one it was waiting behind.
+		async #drainQueuedContentOverwrite() {
+			const queued = this.queuedContentOverwriteParams;
+			if (queued === null) {
+				return;
+			}
+			this.queuedContentOverwriteParams = null;
+			await this.#handleRemoteContentOverwritten(queued);
+		}
+		async #rebuildAfterContentOverwritten(documentId, params) {
+			// [NEW-B] PushNotificationService::sendDocumentContentOverwritten deliberately does NOT
+			// exclude the initiator (unlike documentArchive/documentDelete) — an out-of-band overwrite
+			// must reach even the initiator's own open tab so it rebuilds too. That means MY OWN
+			// restore/overwrite arrives back at me as this same push. The rebuild below still has to
+			// run (server state genuinely changed), but the "someone else changed it" toast is wrong when
+			// byUserId is me — and just as wrong when the push names no author at all.
+			const byUserId = Number(params?.byUserId);
+			const isAuthorKnown = Number.isInteger(byUserId) && byUserId > 0;
+			const isOwnAction = isAuthorKnown && byUserId === Number(this.state.currentUser?.id);
+
+			// A rebuild puts the server's text on screen. That is right for someone reading the document and
+			// destructive for someone typing into it: the overwrite deleted the journal and demoted the
+			// document, so everything this session typed is already gone from the server - the editor holds
+			// the only copy left, and the rebuild would be the moment it disappears. An open edit session
+			// therefore keeps what it has.
+			//
+			// Unless this tab is the one that asked for the replacement: a version restore goes through the
+			// same command and comes back as this same push, and there the old text is exactly what the user
+			// chose to bring back. Told apart by the tab's own claim rather than by the author, because a
+			// REST rewrite by an integration running under this very account is not this user's doing.
+			// Consumed either way: a restore made outside an edit session takes the ordinary path anyway, and a
+			// claim left standing for an operation already reported would be a claim on the next push.
+			const wasAskedForHere = this.#consumeExpectedContentOverwrite(params?.operationId);
+			if (this.isEditMode() && !wasAskedForHere) {
+				await this.#keepLocalContentAfterOverwrite(documentId, isAuthorKnown && !isOwnAction);
+				return;
+			}
 			const requestId = this.state.loadRequestId + 1;
 			this.state.loadRequestId = requestId;
-			this.providerLifecycle.destroy();
 			let response = null;
 			try {
 				response = await DocumentService.loadForCollaboration({
@@ -72689,6 +80831,10 @@ ${nextLine.slice(indentLevel + 2)}`;
 				showErrorToast(extractErrorMessage(error, this.messages.loadError));
 				return;
 			}
+
+			// Read first, tear down second. A re-read that failed, was superseded by a newer load, or landed
+			// after the user moved on leaves the editor exactly as it is, provider included: staying with the
+			// current state beats dismantling the editor with nothing to put in its place.
 			if (this.state.loadRequestId !== requestId || Number(this.getDocumentId()) !== documentId) {
 				return;
 			}
@@ -72696,27 +80842,71 @@ ${nextLine.slice(indentLevel + 2)}`;
 			const contentFormat = String(data.contentFormat ?? 'md');
 			const patches = Array.isArray(data.patches) ? data.patches : [];
 			const lastPatchId = data.lastPatchId ?? null;
+			// Authoritative on this path: loadForCollaboration reads the document uncached.
+			const canEnableCollaboration = readCollaborationEligibility(data.canEnableCollaboration);
 			const documentData = {
 				markdown: data.markdown ?? null,
 				contentFormat,
 				collaboration: {
 					patches,
-					lastPatchId
+					lastPatchId,
+					canEnableCollaboration,
+					materializedUptoId: data.materializedUptoId ?? null
 				}
 			};
+
+			// Content was overwritten out-of-band, so the local Y.Doc is stale — do NOT materialize it back
+			// over the fresh server state. Fire-and-forget; the state above is already in hand.
+			//
+			// Whatever the flush manager still held goes with it rather than being saved and sent. The queue
+			// describes the text the overwrite replaced on every path out of here, not only on the two that
+			// clear local storage below: it is refused while the document is out of the collaborative format
+			// and taken the moment somebody rebuilds it onto the new text, and being taken is the worse of the
+			// two - that is the replaced text merging back in.
+			void this.providerLifecycle.destroy({
+				materialize: false,
+				discardPending: true
+			});
+
+			// The editor app (which hosts the activity-line chip) is unmounted+remounted below, so its
+			// live `content_changed` update is lost — refresh the bootstrap prop from this reload's
+			// fresh lastChange, or the chip would revert to the pre-overwrite time (same normalization
+			// as applyLoadedDocument).
+			this.state.lastChange = main_core.Type.isPlainObject(data.lastChange) ? data.lastChange : null;
+			// createdAt is immutable; only adopt a fresh value if the reload actually carried one,
+			// otherwise keep the bootstrap value so the remounted chip's fallback stays correct.
+			if (typeof data.createdAt === 'string' && data.createdAt !== '') {
+				this.state.createdAt = data.createdAt;
+			}
 			this.state.content = this.resolveDocumentContent(documentData);
 			this.editorMount.unmount();
 			await this.nextTick();
 			await this.#mountEditorWithContext(this.isEditMode());
-			if (contentFormat === 'md') {
-				// Re-runs the genesis flow: PM JSON → Y.Doc → provider.connect with patches=[].
+			if (canEnableCollaboration === false) {
+				this.state.collaborationUnavailableDocumentId = documentId;
+				// Nothing still queued for this document can ever be sent: DocumentUpdateRepository::add
+				// rejects a patch for a document that is no longer in a collaborative format. Left alone, the
+				// queue would stay in local storage forever, unappliable at any future open.
+				PatchPersistence.clear(documentId);
+				this.state.collaborationStatus = CollaborationStatus.DISCONNECTED;
+			} else if (contentFormat === 'md') {
+				// The ordinary end of an overwrite for a session that was only reading: the document comes back
+				// as plain markdown, and the genesis flow puts it back into the collaborative format on the new
+				// text - PM JSON -> Y.Doc -> provider.connect with patches=[]. The baseline is a rebuild of the
+				// text this very response carried, which is the claim the server accepts it under.
 				await this.convertAndStartCollaboration(documentData);
 			} else {
+				// The document is collaborative again on a journal somebody has already rebuilt, and that is
+				// the one state in which the queue left in local storage would be ACCEPTED - putting the
+				// replaced text back into the text that replaced it. Emptied before the provider connects,
+				// because connecting is what sends it.
+				PatchPersistence.clear(documentId);
 				const providerData = {
 					yjsState: data.yjsState ?? null,
 					markdown: data.markdown ?? null,
 					patches,
-					lastPatchId
+					lastPatchId,
+					materializedUptoId: data.materializedUptoId ?? null
 				};
 				await this.providerLifecycle.initialize(documentId, this.state.currentUser, providerData);
 				this.providerLifecycle.startIdleTracking();
@@ -72730,9 +80920,265 @@ ${nextLine.slice(indentLevel + 2)}`;
 				}
 			}
 
-			// convertAndStartCollaboration always remounts with editable=false; restore UI state from state.mode.
+			// The yjs branch mounts with isEditMode() but still needs readOnly/toolbar/provider synced here;
+			// for the md branch convertAndStartCollaboration already restored state from state.mode -> this is
+			// an idempotent re-apply. All three branches above end an attempt, so the outcome is settled here
+			// once instead of in each of them.
 			this.#applyEditorState();
-			this.#notifyContentOverwritten();
+			this.#settleCollaborationOutcome(documentId);
+
+			// One toast per handled event, and only when the overwrite has a named author who is not me: a
+			// push without an author says nothing about who to point at.
+			if (isAuthorKnown && !isOwnAction) {
+				this.#notifyContentOverwritten();
+			}
+		}
+
+		// Detaches an open edit session from a document that has been overwritten out of band: the provider
+		// goes, the text stays. The Y.Doc dies with the provider (PushPullYjsProvider.destroy), so the editor
+		// cannot keep its collaborative binding - it is remounted from a snapshot of what it shows right now,
+		// plain and unconnected. Nothing is materialized on the way out: the local document is a fork of a
+		// text the server has already replaced, and writing it back would overwrite the change that just
+		// arrived. The document is not re-read either, which is the point - a re-read is what would bring the
+		// replacing text here. The activity chip therefore keeps the time it was mounted with; the toast, not
+		// the chip, is what tells the user the document has moved on without them.
+		async #keepLocalContentAfterOverwrite(documentId, isForeignAuthor) {
+			// Read before anything is torn down: this snapshot is the user's work. A read that fails leaves
+			// the content as it was loaded - worse than the snapshot, but the remount below is not optional:
+			// the editor cannot stay bound to a Y.Doc that is about to be destroyed.
+			const rescued = this.editorMount.readData();
+			// Where the caret was, for the same reason. The node holding it is about to be destroyed, and the
+			// browser has nowhere to put focus but the body - which is the one place from which the text this
+			// method just rescued cannot be selected or copied without reaching for the mouse.
+			const caret = this.#readCaretPosition();
+
+			// Whatever the flush manager still held describes the text the overwrite replaced, so it must not
+			// travel to the server at all: DocumentUpdateRepository::add rejects it while the document is out
+			// of the collaborative format, and the moment somebody rebuilds the document onto the new text it
+			// would be accepted - merging the replaced text back in. Dropped on the way out for both reasons.
+			void this.providerLifecycle.destroy({
+				materialize: false,
+				discardPending: true
+			});
+			PatchPersistence.clear(documentId);
+			this.state.collaborationStatus = CollaborationStatus.DISCONNECTED;
+			// Before the awaits below, not after: the remount takes frames, and a press of Done inside them
+			// would find saving still open and close the session without a word.
+			this.#settleCollaborationOutcome(documentId, isForeignAuthor ? this.messages?.contentOverwrittenKept : null);
+			if (rescued) {
+				this.state.content = rescued;
+			}
+			this.editorMount.unmount();
+			await this.nextTick();
+			// A navigation may have started while the tick resolved. Mounting here would then paint the text
+			// of the document being left over the one being opened, and the navigation would mount again.
+			if (Number(this.getDocumentId()) !== documentId) {
+				return;
+			}
+			await this.#mountEditorWithContext(this.isEditMode());
+			this.#applyEditorState();
+			this.#restoreCaretPosition(caret);
+		}
+
+		// Null unless the caret was inside the editor body: focus that was somewhere else (the title, a
+		// dialog, nothing at all) is not ours to move.
+		#readCaretPosition() {
+			const editor = this.editorMount.vm?.editor;
+			if (!editor?.isFocused) {
+				return null;
+			}
+			const position = editor.state?.selection?.from;
+			return Number.isInteger(position) ? position : null;
+		}
+		#restoreCaretPosition(position) {
+			if (position === null) {
+				return;
+			}
+			const editor = this.editorMount.vm?.editor;
+			if (typeof editor?.commands?.focus !== 'function') {
+				return;
+			}
+
+			// The rescued text is the same document, so the offset still points where it pointed - but it is
+			// clamped by the editor anyway, and a mount that produced no editor simply leaves focus alone.
+			editor.commands.focus(position);
+		}
+
+		// A patch came back refused: the document was taken out of the collaborative format while this session
+		// was typing into it, and the queue that carried the text is gone with the refusal. The situation is
+		// the same one the overwrite push describes, and it is handled the same way - the text on screen is
+		// kept and saving closes - the difference being only which of the two arrives first. Whichever does,
+		// the other finds the claim taken and stays out.
+		//
+		// The push is the ordinary path and this is the backstop: a session that never received it (pull down,
+		// tab asleep, the push lost) otherwise learns nothing and goes on typing into a document that keeps
+		// nothing.
+		async #handleSaveRefused(params) {
+			const documentId = Number(this.getDocumentId());
+			if (documentId <= 0 || Number(params?.documentId) !== documentId) {
+				return;
+			}
+			if (this.handledContentOverwriteDocumentId === documentId) {
+				return;
+			}
+
+			// Saving has already ended for this document, with the user told once. A second refusal - the next
+			// queued patch, a persisted one sent on reconnect - says nothing new.
+			if (this.#hasNoPersistencePath()) {
+				return;
+			}
+			this.handledContentOverwriteDocumentId = documentId;
+			try {
+				// Someone reading has nothing queued and nothing to rescue, so there is nothing to keep: the
+				// provider goes and the outcome is settled without a word (a reader is told nothing - see
+				// #settleCollaborationOutcome). The refusal came from a patch, so this is the rare case of a
+				// session that left edit mode while its last patch was still in the air.
+				if (!this.isEditMode()) {
+					void this.providerLifecycle.destroy({
+						materialize: false,
+						discardPending: true
+					});
+					PatchPersistence.clear(documentId);
+					this.state.collaborationStatus = CollaborationStatus.DISCONNECTED;
+					this.#settleCollaborationOutcome(documentId);
+					return;
+				}
+
+				// The author of the replacement is not known here - a refusal carries no author - so the notice
+				// is the general one about saving being closed rather than the one naming someone else's change.
+				await this.#keepLocalContentAfterOverwrite(documentId, false);
+			} finally {
+				if (this.handledContentOverwriteDocumentId === documentId) {
+					this.handledContentOverwriteDocumentId = 0;
+				}
+			}
+
+			// This path holds the same latch, so a push that arrived under it is waiting in the same slot.
+			await this.#drainQueuedContentOverwrite();
+		}
+
+		// Claimed by the tab before it asks the server for a replacement of the whole text (a version
+		// restore), and consumed by the push that reports THAT replacement. One-shot: an attempt that failed
+		// releases it (cancelExpectedContentOverwrite), and reading the document again drops it
+		// (applyLoadedDocument), so it cannot outlive the session it was made in.
+		//
+		// The claim is the identifier of the operation, and the caller has to carry it into the request: the
+		// document number would not do. A rewrite from outside can land on the same document while the restore
+		// is still in flight - the push travels faster than the answer to the request that caused it - and a
+		// claim naming only the document would spend itself on that foreign write, applying somebody else's
+		// text over an open edit session. Named, the tab recognises its own operation and treats every other
+		// as what it is.
+		//
+		// Only a collaborative document is worth claiming: OverwriteDocumentContentCommand sends the push
+		// for a document it demotes, and nothing is demoted when the text was plain markdown already. A claim
+		// made there would find no push to spend itself on.
+		//
+		// @return the identifier to send with the request, or null when there is nothing to claim.
+		expectContentOverwrite() {
+			if (!this.providerLifecycle.provider) {
+				return null;
+			}
+			this.expectedContentOverwriteOperationId = createOperationId();
+			return this.expectedContentOverwriteOperationId;
+		}
+		cancelExpectedContentOverwrite() {
+			this.expectedContentOverwriteOperationId = '';
+		}
+
+		// Spent only by the push that names the same operation. A push naming another, or naming none at all -
+		// which is every REST overwrite - is somebody else's write and leaves the claim where it is: the
+		// restore it belongs to has its own push still coming.
+		#consumeExpectedContentOverwrite(operationId) {
+			const claimed = String(this.expectedContentOverwriteOperationId || '');
+			if (claimed === '' || String(operationId ?? '') !== claimed) {
+				return false;
+			}
+			this.expectedContentOverwriteOperationId = '';
+			return true;
+		}
+
+		// The server refused to write a collaborative baseline. This session offered the one baseline the
+		// server accepts for a document taken out of the collaborative format - a rebuild of its own current
+		// text - and was still refused, so every further attempt from here would be refused the same way.
+		// Unlike an incoming overwrite, nothing about the content changed - only our attempt to raise
+		// collaboration failed. So the document is not re-read, no provider is built again, and the user is
+		// told nothing here: the text on screen is the server's own and current. What it can no longer do is
+		// travel back to the server - see #settleCollaborationOutcome, called by every path that ends an
+		// attempt.
+		#handleGenesisRefused(params) {
+			const documentId = Number(this.getDocumentId());
+			if (documentId <= 0 || Number(params?.documentId) !== documentId) {
+				return;
+			}
+			this.state.collaborationUnavailableDocumentId = documentId;
+
+			// Push teardown: the provider never connected, and its local Y.Doc must not be materialized over
+			// the server's markdown. State reset runs synchronously inside destroy(), so the terminal status
+			// set below still wins (same ordering as ProviderLifecycle.handleConnectError).
+			// Pending updates go with it: the refusal is final, and the server rejects every patch for a
+			// document that is not collaborative - a send would only put the queue back into local storage.
+			void this.providerLifecycle.destroy({
+				materialize: false,
+				discardPending: true
+			});
+			PatchPersistence.clear(documentId);
+			this.state.collaborationStatus = CollaborationStatus.DISCONNECTED;
+		}
+		#isCollaborationUnavailable(documentId) {
+			return documentId > 0 && Number(this.state.collaborationUnavailableDocumentId) === documentId;
+		}
+
+		// Called by every path that ENDS an attempt to stand up collaborative editing - accepted, refused,
+		// failed technically or torn down. The outcome answers a question beyond the indicator: a document
+		// left without a provider has no path that persists text - the server rejects a patch for a document
+		// that is not collaborative, finishEdit materializes through the provider that is not there, and no
+		// ordinary save exists. A LIVE provider that merely lost its connection or went to sleep on idle is
+		// the opposite case: what is typed waits in the local queue and leaves with the next connection.
+		// Hence the test is the provider, not the indicator - the offline label is shown for both.
+		//
+		// What follows from it is that SAVING is over, not editing. The text already typed is the user's own
+		// work and the only copy of it left, so the session stays open and the body editable: it is there to
+		// be read, selected and carried somewhere else. Only the ways back to the server close - the Done
+		// button (finishEdit), and an import that would replace the body with something else.
+		//
+		// A reload fixes the document but not the work: reopening the page rebuilds the collaborative format on
+		// the server's text (CollaborationEligibility), and a connection that simply failed to come up comes up
+		// again - but in both cases what is on screen right now is replaced by what the server holds. Hence the
+		// wording: copy the text BEFORE reloading.
+		#settleCollaborationOutcome(documentId, toast = null) {
+			if (!Number.isInteger(documentId) || documentId <= 0 || Number(this.getDocumentId()) !== documentId) {
+				return;
+			}
+			if (this.providerLifecycle.provider) {
+				// The flag holds one document at a time, so a provider standing for the one open now makes
+				// whatever it held stale - the tab moved on to a document that persists text.
+				this.state.collaborationSettledWithoutProviderDocumentId = 0;
+				return;
+			}
+
+			// Already settled: stay silent. A second pass over the same outcome must not say the same thing
+			// to the user twice.
+			if (Number(this.state.collaborationSettledWithoutProviderDocumentId) === documentId) {
+				return;
+			}
+			this.state.collaborationSettledWithoutProviderDocumentId = documentId;
+			// Only someone who is mid-edit has anything to lose and anything to do about it. A reader has no
+			// unsaved work and nothing to carry anywhere, so a notice would interrupt reading and ask for
+			// nothing in return.
+			if (this.isEditMode()) {
+				this.#showLifecycleToast(toast ?? this.messages?.saveBlocked);
+			}
+		}
+		#hasNoPersistencePath() {
+			const documentId = Number(this.getDocumentId());
+			return documentId > 0 && Number(this.state.collaborationSettledWithoutProviderDocumentId) === documentId;
+		}
+
+		// Why saving is unavailable, or null when it is available. Reported outward so the surface that owns
+		// the Done button can block it and say why: a button that finishes an edit session without saving it
+		// would throw the text away silently.
+		saveBlockedReason() {
+			return this.#hasNoPersistencePath() ? this.messages?.saveBlocked ?? null : null;
 		}
 		#notifyContentOverwritten() {
 			const center = BX?.UI?.Notification?.Center;
@@ -72745,12 +81191,16 @@ ${nextLine.slice(indentLevel + 2)}`;
 			}
 		}
 		applyLoadedDocument(documentData) {
+			// A document read anew is a new baseline: an unspent claim from before it belongs to a text that
+			// is no longer on screen.
+			this.expectedContentOverwriteOperationId = '';
 			this.state.collectionId = Number(documentData.collectionId || 0);
 			this.state.collectionTitle = String(documentData.collectionTitle || '');
 			this.state.ancestors = Array.isArray(documentData.ancestors) ? documentData.ancestors : [];
 			this.state.canEdit = Boolean(documentData.canEdit);
 			this.state.canEditCollection = Boolean(documentData.canEditCollection);
 			this.state.canManagePermissions = Boolean(documentData.canManagePermissions);
+			this.state.isMain = Boolean(documentData.isMain);
 			this.state.isArchived = Boolean(documentData.isArchived);
 			this.state.archivedAt = documentData.archivedAt ?? null;
 			this.state.isTrashed = Boolean(documentData.isTrashed);
@@ -72763,6 +81213,23 @@ ${nextLine.slice(indentLevel + 2)}`;
 			this.state.title = String(documentData.title || '');
 			this.state.titleDraft = this.state.title;
 			this.state.content = this.resolveDocumentContent(documentData);
+			// [#6] Base snapshot for the views widget — null falls back to its own getViews call.
+			this.state.initialViews = main_core.Type.isPlainObject(documentData.views) ? documentData.views : null;
+			// [DTO-01] Backlinks counter for the chip of incoming links. A payload without the key (an
+			// older answer, or the feature switched off) stays null — the widget then reads the count
+			// itself and gets a neutral zero, which renders no chip at all.
+			this.state.initialBacklinks = main_core.Type.isPlainObject(documentData.backlinks) ? documentData.backlinks : null;
+			// [#2] Bootstrap snapshot for the activity-line chip — already normalized upstream in
+			// note.app's route-document-resolver.js (or null if the backend has nothing to report yet).
+			this.state.lastChange = main_core.Type.isPlainObject(documentData.lastChange) ? documentData.lastChange : null;
+			// [P8.T5] ISO creation timestamp — spread from the resolver payload (route-document-resolver's
+			// ...row). Used for the chip's "Created …" fallback when there is no last-change info.
+			this.state.createdAt = typeof documentData.createdAt === 'string' && documentData.createdAt !== '' ? documentData.createdAt : null;
+			// Bell state — null falls back to the bell's own getState call on mount.
+			this.state.initialSubscription = main_core.Type.isPlainObject(documentData.subscription) ? documentData.subscription : null;
+			// [TPL-01] Star state - bundled next to the bell. A payload without the key (an older answer)
+			// stays null, which leaves the star exactly as it behaved before: sidebar store only.
+			this.state.initialFavorite = typeof documentData.isFavorite === 'boolean' ? documentData.isFavorite : null;
 			const collaborationContext = extractCollaborationContext(documentData);
 			if (!this.state.canEdit || this.state.isArchived || this.state.isTrashed) {
 				collaborationContext.readOnly = true;
@@ -72793,9 +81260,12 @@ ${nextLine.slice(indentLevel + 2)}`;
 				})).filter(ancestor => ancestor.id > 0);
 			}
 		}
-		resetStateBeforeLoad() {
-			this.providerLifecycle.destroy();
+		async resetStateBeforeLoad() {
+			// Loader goes up synchronously, before the teardown is awaited: the teardown hands its final
+			// markdown off without waiting for the network, but it still resolves a tick later, and nothing
+			// in between should render the outgoing document as if it were still live.
 			this.state.isLoading = true;
+			await this.providerLifecycle.destroy();
 			this.state.isSaving = false;
 			this.state.mode = 'view';
 			this.state.collectionTitle = '';
@@ -72803,6 +81273,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 			this.state.canEdit = false;
 			this.state.canEditCollection = false;
 			this.state.canManagePermissions = false;
+			this.state.isMain = false;
 			this.state.isArchived = false;
 			this.state.archivedAt = null;
 			this.state.isTrashed = false;
@@ -72814,13 +81285,21 @@ ${nextLine.slice(indentLevel + 2)}`;
 			this.state.sharedAccess = false;
 			this.state.readOnly = false;
 			this.state.currentUser = {};
+			this.state.initialViews = null;
+			this.state.initialBacklinks = null;
+			this.state.lastChange = null;
+			this.state.createdAt = null;
+			this.state.initialSubscription = null;
+			this.state.initialFavorite = null;
 			this.editorMount.unmount();
 		}
 		async applyRouteDocumentContext(routeContext) {
 			const status = String(routeContext?.status || '');
 			if (status === 'loading') {
-				this.providerLifecycle.destroy();
+				// Loader and request-id bump go first, synchronously (ALG-F4): the id has to be claimed
+				// before anything below is awaited, or a newer navigation could claim it first.
 				this.state.loadRequestId += 1;
+				const loadingRequestId = this.state.loadRequestId;
 				this.state.isLoading = true;
 				// Drop previous doc identity so the header renders the loader in place of the stale title.
 				this.state.title = '';
@@ -72829,12 +81308,26 @@ ${nextLine.slice(indentLevel + 2)}`;
 				this.state.collectionTitle = '';
 				this.state.ancestors = [];
 				this.state.isArchived = false;
+				await this.providerLifecycle.destroy();
+
+				// The teardown is awaited, and this method runs from a Vue watcher that nobody awaits, so it
+				// can outlive its own navigation: with A -> B -> C in quick succession, C may claim the
+				// request id while B is still suspended here. Painting B's preview then would overwrite the
+				// live document.
+				if (this.state.loadRequestId !== loadingRequestId) {
+					return;
+				}
 				this.applyDocumentPreview(routeContext?.preview);
 				return;
 			}
 			const currentRequestId = this.state.loadRequestId + 1;
 			this.state.loadRequestId = currentRequestId;
-			this.resetStateBeforeLoad();
+			await this.resetStateBeforeLoad();
+
+			// Same race as above: the reset is awaited, so a newer navigation can have taken over while it ran.
+			if (this.state.loadRequestId !== currentRequestId) {
+				return;
+			}
 			if (status === 'idle' && Number(this.getDocumentId()) > 0 && Number(routeContext?.docId || 0) <= 0) {
 				return;
 			}
@@ -72849,7 +81342,12 @@ ${nextLine.slice(indentLevel + 2)}`;
 						yjsState: doc?.yjsState ?? null,
 						markdown: doc?.markdown ?? null,
 						patches: collaboration.patches ?? [],
-						lastPatchId: collaboration.lastPatchId ?? null
+						lastPatchId: collaboration.lastPatchId ?? null,
+						// Without this the ordinary open would adopt an unknown waterline, and the queue any
+						// earlier session left behind would be weighed against it - a queue stored under a real
+						// waterline against a document that reads as having none. That is the shape of a false
+						// accusation: text nobody overwrote, dropped on the next open.
+						materializedUptoId: collaboration.materializedUptoId ?? null
 					};
 					await this.providerLifecycle.initialize(Number(this.getDocumentId()), this.state.currentUser, providerData);
 					this.providerLifecycle.startIdleTracking();
@@ -72863,13 +81361,31 @@ ${nextLine.slice(indentLevel + 2)}`;
 				if (!isMdFormat && this.providerLifecycle.provider) {
 					this.providerLifecycle.startCompaction();
 				}
+
+				// Md genesis remounts the editor, so it must run BEFORE entering edit mode: otherwise the
+				// toolbar flashes in and vanishes right after a drag-and-drop import. The remount itself
+				// now carries the current mode over (see convertAndStartCollaboration), so a mode entered
+				// while genesis is in flight survives it.
+				if (isMdFormat) {
+					await this.convertAndStartCollaboration(routeContext.document);
+					if (currentRequestId !== this.state.loadRequestId) {
+						return;
+					}
+				}
+
+				// Both branches above have finished their attempt by now: the yjs one awaited initialize, the
+				// md one awaited the conversion. Settled before the auto-edit below rather than after, so a
+				// session opened here finds the Done button already carrying the reason instead of learning
+				// it a tick later.
+				this.#settleCollaborationOutcome(Number(this.getDocumentId()));
 				if (shouldAutoEdit && this.canEdit()) {
-					await this.enterEditMode();
+					// A new document is named first: the title owns the focus here, so edit mode must not
+					// grab the body (see enterEditMode's focusContent).
+					await this.enterEditMode({
+						focusContent: false
+					});
 					await this.nextTick();
 					this.editorMount.focusTitleAndSelectAll();
-				}
-				if (isMdFormat) {
-					void this.convertAndStartCollaboration(routeContext.document);
 				}
 				return;
 			}
@@ -72893,7 +81409,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 			await this.nextTick();
 
 			// `slug` comes straight from the URL hash, so it may contain characters
-			// (`"`, `]`, `\`) that make an `[id="…"]` selector throw a SyntaxError.
+			// (`"`, `]`, `\`) that make an `[id="..."]` selector throw a SyntaxError.
 			// CSS.escape keeps the lookup a safe no-match instead of an exception.
 			const target = editorRoot.querySelector(`#${CSS.escape(slug)}`);
 			if (!(target instanceof HTMLElement)) {
@@ -72915,16 +81431,16 @@ ${nextLine.slice(indentLevel + 2)}`;
 
 			// Extend the scrollable area only as much as needed for this specific
 			// target. Documents without anchor navigation keep their natural height
-			// — no permanent empty void at the bottom.
+			// - no permanent empty void at the bottom.
 			this.#ensureRoomToScrollTargetToTop(scroller, target);
 
 			// Initial alignment is smooth (unless the user prefers reduced motion);
-			// every later `realign` inside #keepTargetPinned stays 'auto' — see there.
+			// every later `realign` inside #keepTargetPinned stays 'auto' - see there.
 			this.#alignTargetToTop(scroller, target, this.#getAnchorScrollBehavior());
 
 			// Images above the target may still load later (browser prefetch, user
 			// scrolls up). Keep the target visually pinned by re-aligning inside the
-			// ResizeObserver callback, which fires after layout but before paint —
+			// ResizeObserver callback, which fires after layout but before paint -
 			// so the heading never drifts away on screen.
 			this.#keepTargetPinned(scroller, target, editorRoot);
 		}
@@ -72944,7 +81460,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 			return prefersReducedMotion ? 'auto' : 'smooth';
 		}
 		#alignTargetToTop(scrollContainer, target, behavior = 'auto') {
-			// Land the heading where the document title normally sits — flush against
+			// Land the heading where the document title normally sits - flush against
 			// the sticky page actions bar (plus the mobile fixed page header).
 			const {
 				reservedTop
@@ -72969,7 +81485,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 				return;
 			}
 
-			// Pad just enough — plus a small buffer — and accumulate across repeated
+			// Pad just enough - plus a small buffer - and accumulate across repeated
 			// in-document anchor jumps. The padding is inline, so it vanishes with
 			// the component when the user navigates to another document.
 			const current = parseFloat(docContent.style.paddingBottom) || 0;
@@ -72988,13 +81504,13 @@ ${nextLine.slice(indentLevel + 2)}`;
 				}
 
 				// Re-align synchronously so the same paint that shows the new image
-				// also shows the corrected scroll position — no visible jump.
+				// also shows the corrected scroll position - no visible jump.
 				this.#ensureRoomToScrollTargetToTop(scrollContainer, target);
 				this.#alignTargetToTop(scrollContainer, target);
 			};
 
 			// Image `load` events don't bubble, but a capture-phase listener on the
-			// editor root still receives them — including from Vue NodeViews that
+			// editor root still receives them - including from Vue NodeViews that
 			// mount their <img> after the initial scroll. This is the most direct
 			// signal for layout shifts caused by late-loading images above the target.
 			const onLoadCapture = event => {
@@ -73015,7 +81531,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 			}));
 
 			// ResizeObserver as a fallback for anything else that resizes the editor
-			// (videos, web fonts, late NodeView mounting, …).
+			// (videos, web fonts, late NodeView mounting, ...).
 			// ResizeObserver always fires once on observe() with the current size (no real change);
 			// that spurious 'auto' realign would clobber the smooth scroll scrollToAnchor just started.
 			let skipInitialResize = true;
@@ -73083,8 +81599,8 @@ ${nextLine.slice(indentLevel + 2)}`;
 				if (overflowY === 'auto' || overflowY === 'scroll') {
 					// On mobile the height chain is `height:auto` and the page scrolls the native
 					// viewport, yet <body> still computes overflow-y:auto (mobile.css's overflow-x:hidden
-					// coerces overflow-y to auto). Such a match isn't a real inner scrollport —
-					// body.scrollTo() is a no-op — so treat it as "use the window" (return null; the
+					// coerces overflow-y to auto). Such a match isn't a real inner scrollport -
+					// body.scrollTo() is a no-op - so treat it as "use the window" (return null; the
 					// caller falls back to the viewport scroller).
 					if (parent === document.body || parent === document.documentElement) {
 						return null;
@@ -73107,7 +81623,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 			for (let i = 0; i < entries.length; i++) {
 				const entry = entries[i];
 				// Plain headings (table, blockquote, callout) neither collapse anything
-				// nor terminate a range — same rules the collapse mask follows (see
+				// nor terminate a range - same rules the collapse mask follows (see
 				// heading-anchor-plugin).
 				if (!entry.collapsed || entry.plain || entry.pos >= targetPos) {
 					continue;
@@ -73149,7 +81665,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 
 			// View mode: surfacing an anchor target must NOT mutate or persist the
 			// shared document. A meta-only transaction (no document steps) tells the
-			// anchor plugin to drop the collapse mask locally — FlushManager never
+			// anchor plugin to drop the collapse mask locally - FlushManager never
 			// sees a non-remote update, so nothing is saved for read-only viewers.
 			const tr = editor.state.tr;
 			tr.setMeta(headingAnchorPluginKey, {
@@ -73158,7 +81674,16 @@ ${nextLine.slice(indentLevel + 2)}`;
 			tr.setMeta('addToHistory', false);
 			editor.view.dispatch(tr);
 		}
-		async enterEditMode() {
+
+		/**
+		 * `focusContent: false` keeps the caret where the caller wants it. Needed by the autoEdit path
+		 * of a freshly created document, whose focus target is the title, not the body: tiptap's focus
+		 * command lands through requestAnimationFrame, so a body focus started here would win a frame
+		 * AFTER focusTitleAndSelectAll() and steal the title away.
+		 */
+		async enterEditMode({
+			focusContent = true
+		} = {}) {
 			if (this.state.isLoading || this.state.isSaving || this.isEditMode() || !this.canEdit()) {
 				return;
 			}
@@ -73167,21 +81692,89 @@ ${nextLine.slice(indentLevel + 2)}`;
 			}
 			this.state.mode = 'edit';
 			this.state.titleDraft = this.state.title;
+			this.providerLifecycle.setMode('edit');
 			if (!this.editorMount.isMounted()) {
 				await this.#mountEditorWithContext(true);
+				if (focusContent) {
+					await this.#focusEditorContent();
+				}
 				return;
 			}
 			this.#applyEditorState();
+			if (focusContent) {
+				await this.#focusEditorContent();
+			}
+		}
+		async #focusEditorContent() {
+			// A11Y (WCAG 2.4.3 Focus Order): entering edit mode must move focus into the editor.
+			// The edit-trigger button unmounts on the mode flip, so without this focus falls back to
+			// <body>.
+			await this.nextTick();
+			const editor = this.editorMount.vm?.editor;
+			if (!editor?.commands?.focus) {
+				return;
+			}
+
+			// The caret lands where the reader is, and the view is left where it stands. Sent to the start
+			// of the document it took the page with it - TipTap brings the caret into view - so pressing
+			// "edit" halfway down a document threw the reader back to its beginning.
+			editor.commands.focus(this.#firstVisiblePosition(editor) ?? 'start', {
+				scrollIntoView: false
+			});
+		}
+
+		// Position in the document under the top of what is on screen, or null when that cannot be resolved
+		// (a document shorter than the viewport, coordinates outside the editor).
+		#firstVisiblePosition(editor) {
+			const dom = editor?.view?.dom;
+			if (!(dom instanceof HTMLElement)) {
+				return null;
+			}
+			const scroller = this.#findScrollContainer(dom) ?? (document.scrollingElement || document.documentElement);
+			if (!(scroller instanceof HTMLElement)) {
+				return null;
+			}
+
+			// Same reserved top the anchor navigation aligns to: what the sticky actions bar and the fixed
+			// mobile header cover is not on screen, whatever the scroll position says.
+			const {
+				reservedTop
+			} = this.#computeReservedTop(scroller);
+			const box = dom.getBoundingClientRect();
+			const found = editor.view.posAtCoords({
+				left: box.left + box.width / 2,
+				top: Math.max(reservedTop, box.top) + 1
+			});
+			return found ? found.pos : null;
+		}
+		#isEditorContentEmpty() {
+			const editor = this.editorMount.vm?.editor;
+			return editor ? Boolean(editor.isEmpty) : true;
 		}
 		async finishEdit() {
 			if (!this.isEditMode() || this.state.isSaving) {
 				return;
 			}
+
+			// Enforced here rather than in the surface that owns the button, so every surface obeys it - the
+			// document page and the embedded description share this controller but not that button. Leaving
+			// edit mode would drop everything typed without a word: materialize below has no provider to go
+			// through, and there is no ordinary save. So the session stays open, and the press is answered
+			// with the reason instead of silence.
+			if (this.#hasNoPersistencePath()) {
+				this.#showLifecycleToast(this.messages?.saveBlocked);
+				return;
+			}
 			if (this.providerLifecycle.provider) {
 				this.providerLifecycle.provider.clearCursor();
 			}
+
+			// Leaving edit mode is a work boundary: materialize now, so that a user who types, presses Done
+			// and walks away does not leave the text sitting in the journal until the next compaction tick.
+			this.providerLifecycle.materialize();
 			this.state.mode = 'view';
 			this.state.titleDraft = this.state.title;
+			this.providerLifecycle.setMode('view');
 			if (!this.editorMount.isMounted()) {
 				await this.#mountEditorWithContext(false);
 				return;
@@ -73191,8 +81784,36 @@ ${nextLine.slice(indentLevel + 2)}`;
 		async cancelEdit() {
 			return this.finishEdit();
 		}
+
+		// Replaces the entire document content from a user-picked `.md` file. Gate duplicates the
+		// menu-item visibility check (defence in depth) and guarantees edit mode is entered before
+		// resolving the editor instance, since entering edit mode may remount it.
+		async importMarkdown(file) {
+			// The no-persistence case is refused here even though editing itself is not: an import replaces
+			// the whole body at once, so it would destroy the very text the open session exists to let the
+			// user copy out - and put in its place content that can never be saved.
+			if (this.#isEditingLocked() || this.#hasNoPersistencePath()) {
+				throw new Error('Document is not editable');
+			}
+			if (!this.isEditMode()) {
+				await this.enterEditMode();
+			}
+			const editor = this.editorMount.vm?.editor;
+			if (!editor) {
+				throw new Error('Editor is not mounted');
+			}
+			return applyImportedContent(editor, file);
+		}
 		async saveDocumentAction() {
 			if (!this.isEditMode() || this.state.isSaving || this.state.isLoading || !this.canEdit()) {
+				return;
+			}
+
+			// The only path that writes a whole body. Nothing calls it today and the server action does not
+			// bind the content fields, but if it is ever revived it must not carry a local fork of a text the
+			// server has already replaced.
+			if (this.#hasNoPersistencePath()) {
+				this.#showLifecycleToast(this.messages?.saveBlocked);
 				return;
 			}
 			const title = String(this.state.titleDraft || '').trim();
@@ -73268,7 +81889,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 					}
 				}));
 			} catch {
-				// Silently ignore — the title in the editor stays as typed
+				// Silently ignore - the title in the editor stays as typed
 			}
 		}
 		scheduleCapabilityRefresh({
@@ -73315,7 +81936,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 					return;
 				}
 
-				// Access retained — clear any pending lifecycle suppression so a later genuine revoke toasts.
+				// Access retained - clear any pending lifecycle suppression so a later genuine revoke toasts.
 				this.silentAccessRevoke = false;
 				const wasInEditMode = this.isEditMode();
 				const hadEditRights = Boolean(this.state.canEdit);
@@ -73331,8 +81952,8 @@ ${nextLine.slice(indentLevel + 2)}`;
 				const remoteRecycleBinId = Number(access.recycleBinId);
 				this.state.recycleBinId = Number.isFinite(remoteRecycleBinId) && remoteRecycleBinId > 0 ? remoteRecycleBinId : null;
 				this.state.trashedAt = typeof access.trashedAt === 'string' && access.trashedAt !== '' ? access.trashedAt : null;
-				// Without these the more-menu's «Restore» / «Delete forever» items stay hidden
-				// after a push-driven mode flip — they read state.canRestore/canHardDelete imperatively.
+				// Without these the more-menu's "Restore" / "Delete forever" items stay hidden
+				// after a push-driven mode flip - they read state.canRestore/canHardDelete imperatively.
 				this.state.canRestore = Boolean(access.canRestore);
 				this.state.canHardDelete = Boolean(access.canHardDelete);
 				this.state.isOrphan = Boolean(access.isOrphan);
@@ -73340,7 +81961,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 					const previousCollectionId = Number(this.state.collectionId) || 0;
 					const nextCollectionId = Number(access.collectionId);
 					this.state.collectionId = nextCollectionId;
-					// documentMove flips state.collectionId — re-extend pull watch on the new
+					// documentMove flips state.collectionId - re-extend pull watch on the new
 					// collection so cascade/ACL pushes land on this tab.
 					if (nextCollectionId !== previousCollectionId) {
 						const provider = this.providerLifecycle.provider;
@@ -73351,17 +81972,17 @@ ${nextLine.slice(indentLevel + 2)}`;
 					}
 				}
 
-				// EDIT → VIEW downgrade: yank the user out of edit mode, lock the mount.
+				// EDIT -> VIEW downgrade: yank the user out of edit mode, lock the mount.
 				if (hadEditRights && !nextCanEdit) {
 					this.#handleEditDowngraded(wasInEditMode);
 				}
 
-				// VIEW → EDIT upgrade: unlock writes so the user can re-enter edit-mode via the header button.
+				// VIEW -> EDIT upgrade: unlock writes so the user can re-enter edit-mode via the header button.
 				if (!hadEditRights && nextCanEdit) {
 					this.#handleEditUpgraded();
 				}
-			} catch (error) {
-				console.warn('[NOTE PULL EDITOR] capability refresh failed', documentId, error);
+			} catch {
+				// Non-critical: background capability refresh failed; retried on the next tick.
 			}
 		}
 		#handleEditDowngraded(wasInEditMode) {
@@ -73376,12 +81997,12 @@ ${nextLine.slice(indentLevel + 2)}`;
 		#handleLifecycleChange(reason) {
 			if (reason === 'restored') {
 				this.providerLifecycle.startCompaction();
-				// Capabilities may have shifted while the doc was archived/trashed — refetch to settle canEdit.
+				// Capabilities may have shifted while the doc was archived/trashed - refetch to settle canEdit.
 				this.scheduleCapabilityRefresh();
 			} else if (reason === 'archived' || reason === 'trashed') {
 				this.providerLifecycle.stopCompaction();
 				// Trash/archive may strip access (e.g. collection delete cascade). Re-check now:
-				// access kept → stay on the recyclebin/archive banner, lost → redirect, mirroring reload.
+				// access kept -> stay on the recyclebin/archive banner, lost -> redirect, mirroring reload.
 				// The lifecycle toast already explains the removal, so the revoke path stays silent.
 				this.scheduleCapabilityRefresh({
 					immediate: true,
@@ -73394,7 +82015,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 			return Boolean(this.state.isArchived) || Boolean(this.state.isTrashed) || Boolean(this.state.recycleBinId) || !this.state.canEdit;
 		}
 
-		// Single source of truth for editor UI state — recomputed from `state`, applied to
+		// Single source of truth for editor UI state - recomputed from `state`, applied to
 		// the mounted Vue editor and Yjs provider. All lifecycle / ACL handlers funnel here.
 		#applyEditorState() {
 			const locked = this.#isEditingLocked();
@@ -73417,19 +82038,95 @@ ${nextLine.slice(indentLevel + 2)}`;
 					provider.unfreezeWrites();
 				}
 			}
+
+			// Presence action reflects the real editable state (a lock forces 'view' even if mode is edit).
+			this.providerLifecycle.setMode(editable ? 'edit' : 'view');
+		}
+
+		// [P1.T5 restore flow, SDD 455-468] Exposes the periodic auto-compact path (see
+		// provider-lifecycle.js#startCompaction / compact-manager.js) for an on-demand call —
+		// the client always compacts the pending patch window right before a version restore.
+		async compactBeforeRestore() {
+			const provider = this.providerLifecycle.provider;
+			if (!provider) {
+				return;
+			}
+			await provider.compact(() => this.editorMount.readMarkdown());
+		}
+
+		// [#11/NEW-A rework] Bridges document-page.js's version-preview flow into the isolated
+		// editor Vue app (EditorMount) — the caller (document-page.js) owns fetching the version
+		// markdown (HistoryApi.getVersion) and the restore/compact/409-retry flow (SDD P1.T2); this
+		// controller only pushes the resulting state across the createApp() boundary.
+		showVersionPreview({
+			loading = false,
+			markdown = null,
+			meta = null,
+			error = false,
+			highlight = null,
+			baseMarkdown = null
+		} = {}) {
+			this.editorMount.setPreview({
+				loading,
+				markdown,
+				meta,
+				error,
+				highlight,
+				baseMarkdown
+			});
+		}
+		hideVersionPreview() {
+			this.editorMount.clearPreview();
+		}
+		scrollToParticipant(userId) {
+			const id = Number(userId);
+			if (!Number.isFinite(id) || id <= 0) {
+				return;
+			}
+			const root = document.getElementById(this.state.editorMountId) ?? document;
+			const caret = root.querySelector(`.collaboration-cursor__caret[data-user-id="${id}"]`);
+			if (caret) {
+				caret.scrollIntoView({
+					behavior: 'smooth',
+					block: 'center'
+				});
+			}
+		}
+
+		// Reading time rather than one fixed window: the longest of these messages runs to 27 words, and four
+		// seconds is about twice as fast as unhurried Russian reading - and for that one it is the only place
+		// it is ever said. The floor keeps the short ones exactly as they were; the ceiling keeps even the
+		// longest from outstaying a reader who has already moved on.
+		#lifecycleToastDelay(content) {
+			const words = content.trim().split(/\s+/).length;
+			return Math.min(9000, Math.max(4000, words * 400));
 		}
 		#showLifecycleToast(content) {
 			if (!main_core.Type.isStringFilled(content)) {
 				return;
 			}
 			const center = BX?.UI?.Notification?.Center;
-			if (center && typeof center.notify === 'function') {
-				center.notify({
-					content,
-					position: 'top-right',
-					autoHideDelay: 4000
-				});
+			if (!center || typeof center.notify !== 'function') {
+				return;
 			}
+
+			// A blocked Done button stays pressable on purpose, so the same question can be asked again and
+			// again. While the answer is still on screen, repeating it adds nothing: what a second balloon
+			// would give is a growing stack of identical sentences, not a second answer.
+			const now = Date.now();
+			if (this.lastLifecycleToast?.content === content && this.lastLifecycleToast.until > now) {
+				return;
+			}
+			const autoHideDelay = this.#lifecycleToastDelay(content);
+			this.lastLifecycleToast = {
+				content,
+				until: now + autoHideDelay
+			};
+			center.notify({
+				content,
+				position: 'top-right',
+				autoHideDelay
+			});
 		}
 		#handleAccessRevoked() {
 			this.providerLifecycle.freezeForLostAccess();
@@ -73452,7 +82149,9 @@ ${nextLine.slice(indentLevel + 2)}`;
 				clearTimeout(this.capabilityRefreshTimer);
 				this.capabilityRefreshTimer = null;
 			}
-			this.providerLifecycle.destroy();
+
+			// Component unmount can't await; teardown materialize is best-effort here (Vue beforeUnmount).
+			void this.providerLifecycle.destroy();
 			this.editorMount.unmount();
 			if (this.handleDocRenamed) {
 				main_core_events.EventEmitter.unsubscribe(note_sidebar.NoteEvent.DOCUMENT_RENAMED, this.handleDocRenamed);
@@ -73468,15 +82167,33 @@ ${nextLine.slice(indentLevel + 2)}`;
 			}
 		}
 		async #mountEditorWithContext(editable) {
-			return this.editorMount.mount(editable, {
+			const mounted = await this.editorMount.mount(editable, {
 				provider: this.providerLifecycle.provider,
 				currentUser: this.state.currentUser,
 				readOnly: this.state.readOnly,
 				title: this.state.title,
+				initialViews: this.state.initialViews,
+				initialBacklinks: this.state.initialBacklinks,
+				lastChange: this.state.lastChange,
+				createdAt: this.state.createdAt,
+				initialSubscription: this.state.initialSubscription,
+				initialFavorite: this.state.initialFavorite,
+				historyEnabled: this.historyEnabled,
+				notificationsEnabled: this.notificationsEnabled,
+				showActivityLine: this.showActivityLine,
 				onRenameTitle: this.handleTitleRename,
 				onOpenInternalLink: this.onOpenInternalLink,
-				onMentionClick: this.onMentionClick
+				onMentionClick: this.onMentionClick,
+				onOpenHistory: this.onOpenHistory
 			});
+
+			// A fresh editor instance is created on every mount; wire live emptiness reporting to it.
+			// The listener is dropped when the editor is destroyed on unmount, so no manual off().
+			if (mounted && this.notifyContentEmpty) {
+				this.editorMount.vm?.editor?.on('update', this.handleEditorContentChange);
+				this.notifyContentEmpty(this.#isEditorContentEmpty());
+			}
+			return mounted;
 		}
 	}
 	function createDocumentFeature(options) {
@@ -73489,6 +82206,10 @@ ${nextLine.slice(indentLevel + 2)}`;
 			messages,
 			isEditMode: () => controller.isEditMode(),
 			canEdit: () => controller.canEdit(),
+			saveBlockedReason: () => controller.saveBlockedReason(),
+			expectContentOverwrite: () => controller.expectContentOverwrite(),
+			cancelExpectedContentOverwrite: () => controller.cancelExpectedContentOverwrite(),
+			isMain: () => Boolean(controller.state.isMain),
 			getDocumentTitle: () => controller.getDocumentTitle(),
 			headerDocumentTitle: () => controller.headerDocumentTitle(),
 			collectionLabel: () => controller.collectionLabel(),
@@ -73498,7 +82219,14 @@ ${nextLine.slice(indentLevel + 2)}`;
 			finishEdit: () => controller.finishEdit(),
 			saveDocument: () => controller.saveDocumentAction(),
 			getEditorMarkdown: () => controller.editorMount.readMarkdown(),
+			importMarkdown: file => controller.importMarkdown(file),
+			getExportMarkdown: mode => controller.editorMount.exportMarkdown(mode),
+			hasAttachments: () => controller.editorMount.hasAttachments(),
 			scrollToAnchor: hash => controller.scrollToAnchor(hash),
+			compactBeforeRestore: () => controller.compactBeforeRestore(),
+			showVersionPreview: payload => controller.showVersionPreview(payload),
+			hideVersionPreview: () => controller.hideVersionPreview(),
+			scrollToParticipant: userId => controller.scrollToParticipant(userId),
 			destroy: () => controller.destroy()
 		};
 	}
@@ -73531,6 +82259,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 			});
 		}
 		#buildMenuItems(docId, context) {
+			const isMain = Boolean(context?.isMain);
 			const isTrashed = Boolean(context?.isTrashed);
 			const isArchived = Boolean(context?.isArchived);
 			const canEditCollection = Boolean(context?.canEditCollection);
@@ -73538,25 +82267,57 @@ ${nextLine.slice(indentLevel + 2)}`;
 			const canRestore = Boolean(context?.canRestore);
 			const canHardDelete = Boolean(context?.canHardDelete);
 			const documentTitle = main_core.Type.isString(context?.documentTitle) ? context.documentTitle : '';
+			const onCopyLink = typeof context?.onCopyLink === 'function' ? context.onCopyLink : null;
+			const canEdit = Boolean(context?.canEdit);
 			const onCopyMarkdown = typeof context?.onCopyMarkdown === 'function' ? context.onCopyMarkdown : null;
+			const onDownload = typeof context?.onDownload === 'function' ? context.onDownload : null;
+			const onImportMarkdown = typeof context?.onImportMarkdown === 'function' ? context.onImportMarkdown : null;
 			const onArchive = typeof context?.onArchive === 'function' ? context.onArchive : null;
 			const onRestore = typeof context?.onRestore === 'function' ? context.onRestore : null;
 			const onDelete = typeof context?.onDelete === 'function' ? context.onDelete : null;
 			const onRestoreFromTrash = typeof context?.onRestoreFromTrash === 'function' ? context.onRestoreFromTrash : null;
 			const onHardDelete = typeof context?.onHardDelete === 'function' ? context.onHardDelete : null;
 			const items = [];
+			if (onCopyLink) {
+				items.push({
+					text: this.#messages.copyLink ?? '',
+					iconModifier: 'o-link',
+					testId: 'note-doc-menu-copy-link',
+					onClick: onCopyLink
+				});
+			}
 			if (onCopyMarkdown) {
 				items.push({
 					text: this.#messages.copyMarkdown ?? '',
 					iconModifier: 'o-copy',
+					testId: 'note-doc-menu-copy-markdown',
 					onClick: onCopyMarkdown
 				});
+			}
+
+			// Not gated by isTrashed/isArchived/canEditCollection: viewing the document page
+			// already implies view access, and downloading is allowed for trashed/archived docs too.
+			if (onDownload) {
+				items.push({
+					text: this.#messages.download ?? '',
+					iconModifier: 'o-download',
+					testId: 'note-doc-menu-download',
+					onClick: onDownload
+				});
+			}
+
+			// The collection's main document (the "About" description) cannot be archived,
+			// deleted, moved, or have its permissions managed - it lives and dies with the
+			// collection. Expose only the safe, non-destructive actions (e.g. copy markdown).
+			if (isMain) {
+				return items;
 			}
 			if (isTrashed) {
 				if (canRestore && onRestoreFromTrash) {
 					items.push({
 						text: this.#messages.restoreFromTrash ?? '',
 						iconModifier: 'o-undo',
+						testId: 'note-doc-menu-restore',
 						onClick: onRestoreFromTrash
 					});
 				}
@@ -73565,6 +82326,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 						text: this.#messages.hardDelete ?? '',
 						iconModifier: 'o-trashcan',
 						danger: true,
+						testId: 'note-doc-menu-hard-delete',
 						onClick: onHardDelete
 					});
 				}
@@ -73575,6 +82337,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 					items.push({
 						text: this.#messages.restore ?? '',
 						iconModifier: 'o-undo',
+						testId: 'note-doc-menu-restore',
 						onClick: onRestore
 					});
 				}
@@ -73583,15 +82346,25 @@ ${nextLine.slice(indentLevel + 2)}`;
 						text: this.#messages.delete ?? '',
 						iconModifier: 'o-trashcan',
 						danger: true,
+						testId: 'note-doc-menu-delete',
 						onClick: onDelete
 					});
 				}
 				return items;
 			}
+			if (!isArchived && canEdit && onImportMarkdown) {
+				items.push({
+					text: this.#messages.importMarkdown ?? '',
+					iconModifier: 'o-share',
+					testId: 'note-doc-menu-import-markdown',
+					onClick: onImportMarkdown
+				});
+			}
 			if (!isArchived && canEditCollection && onArchive) {
 				items.push({
 					text: this.#messages.archive ?? '',
 					iconModifier: 'o-box-with-lid',
+					testId: 'note-doc-menu-archive',
 					onClick: onArchive
 				});
 			}
@@ -73599,6 +82372,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 				items.push({
 					text: this.#messages.permissions ?? '',
 					iconModifier: 'o-settings',
+					testId: 'note-doc-menu-permissions',
 					onClick: () => {
 						void note_permissions.App.openDocumentPopup(docId, {
 							documentTitle
@@ -73611,10 +82385,109 @@ ${nextLine.slice(indentLevel + 2)}`;
 					text: this.#messages.delete ?? '',
 					iconModifier: 'o-trashcan',
 					danger: true,
+					testId: 'note-doc-menu-delete',
 					onClick: onDelete
 				});
 			}
 			return items;
+		}
+	}
+
+	const FORBIDDEN_FILENAME_CHARS_RE = /[\\/:*?"<>|\r\n]+/g;
+	const MD_EXTENSION = 'md';
+	const MD_MIME_TYPE = 'text/markdown;charset=utf-8';
+	function sanitizeFileName(rawTitle, documentId) {
+		const sanitized = String(rawTitle ?? '').replace(FORBIDDEN_FILENAME_CHARS_RE, '').trim();
+		return sanitized === '' ? `note-${documentId}` : sanitized;
+	}
+	function triggerBlobDownload(content, fileName, mimeType) {
+		const blob = new Blob([content], {
+			type: mimeType
+		});
+		const url = URL.createObjectURL(blob);
+		const link = document.createElement('a');
+		link.href = url;
+		link.download = fileName;
+		document.body.appendChild(link);
+		link.click();
+		link.remove();
+		URL.revokeObjectURL(url);
+	}
+	async function getExportContent(feature, mode) {
+		const content = await feature?.getExportMarkdown?.(mode);
+
+		// null/undefined means the serializer failed (editor-mount catches everything and returns null)
+		// or the export API is unavailable — surface it so DownloadService.download shows a toast instead
+		// of silently uploading an empty article. An empty string is a legitimately empty document.
+		if (content === null || content === undefined) {
+			throw new Error('Export serialization failed');
+		}
+		return String(content);
+	}
+	async function downloadPlain({
+		feature,
+		documentId,
+		documentTitle
+	}) {
+		const content = await getExportContent(feature, 'links');
+		const fileName = `${sanitizeFileName(documentTitle, documentId)}.${MD_EXTENSION}`;
+		triggerBlobDownload(content, fileName, MD_MIME_TYPE);
+	}
+	async function downloadViaServer({
+		feature,
+		documentId,
+		documentTitle
+	}) {
+		const content = await getExportContent(feature, 'zip');
+		const response = await main_core.ajax.runAction('note.infrastructure.ExportController.prepareZip', {
+			data: {
+				documentId: Number(documentId),
+				content
+			}
+		});
+		const token = response?.data?.token;
+		if (!main_core.Type.isStringFilled(token)) {
+			throw new Error('Export token is missing');
+		}
+		const url = `/bitrix/services/main/ajax.php?action=note.infrastructure.ExportController.downloadZip&token=${encodeURIComponent(token)}`;
+		const zipName = `${sanitizeFileName(documentTitle, documentId)}.zip`;
+
+		// Inside the mobile app the download URL must go through the native document viewer so the app
+		// session travels with the request; window.open would escape to the session-less OS browser and
+		// the auth'd downloadZip action would reject it. On desktop openFileNative is a no-op and we open
+		// a new tab, where the browser session authorizes the download.
+		if (openFileNative(url, zipName)) {
+			return;
+		}
+		openLinkNative(url);
+	}
+	class DownloadService {
+		static async download({
+			feature,
+			documentId,
+			documentTitle
+		}) {
+			try {
+				// Server path when the document has attachments (needs a zip) OR we are on mobile, where a
+				// Blob + <a download> click is silently ignored by the classic webview. On mobile a clean
+				// document therefore arrives as a zip holding the single .md — a documented deviation from
+				// the desktop bare-file download.
+				if (Boolean(feature?.hasAttachments?.()) || isMobileApp()) {
+					await downloadViaServer({
+						feature,
+						documentId,
+						documentTitle
+					});
+					return;
+				}
+				await downloadPlain({
+					feature,
+					documentId,
+					documentTitle
+				});
+			} catch (error) {
+				showErrorToast(extractErrorMessage(error, main_core.Loc.getMessage('NOTE_EDITOR_DOWNLOAD_ERROR')));
+			}
 		}
 	}
 
@@ -73623,7 +82496,8 @@ ${nextLine.slice(indentLevel + 2)}`;
 		name: 'NoteEditorDocumentHeader',
 		components: {
 			BIcon: ui_iconSet_api_vue.BIcon,
-			Loader: note_ui_loader.Loader
+			Loader: note_ui_loader.Loader,
+			NoteAvatarStack: note_ui_avatarStack.NoteAvatarStack
 		},
 		props: {
 			collectionLabel: {
@@ -73654,6 +82528,41 @@ ${nextLine.slice(indentLevel + 2)}`;
 				type: Boolean,
 				default: false
 			},
+			isEditMode: {
+				type: Boolean,
+				default: false
+			},
+			// [#11 rework] Whether the main editor currently shows a read-only version preview
+			// (note.editor's DocumentEditorComponent) — morphs the primary action button from
+			// Edit/Done into Restore (mockup's `pvActions="meta"`: editBtn → IC_RESTORE), and shows
+			// an explicit "exit preview" affordance alongside it.
+			isPreviewing: {
+				type: Boolean,
+				default: false
+			},
+			isRestoringVersion: {
+				type: Boolean,
+				default: false
+			},
+			canEdit: {
+				type: Boolean,
+				default: false
+			},
+			// Why finishing the edit session is unavailable while canEdit is still true, or null when it is
+			// available. Editing itself stays open in that state - what is gone is the way back to the
+			// server, so it is the Done button this blocks, not the Edit one.
+			saveBlockedReason: {
+				type: String,
+				default: null
+			},
+			isSaving: {
+				type: Boolean,
+				default: false
+			},
+			isMobile: {
+				type: Boolean,
+				default: false
+			},
 			sharedAccess: {
 				type: Boolean,
 				default: false
@@ -73677,19 +82586,79 @@ ${nextLine.slice(indentLevel + 2)}`;
 		},
 		data() {
 			return {
-				ancestorsMenu: null
+				ancestorsMenu: null,
+				// Width of the row and the natural widths of its units: what decides whether the root point
+				// still has room beside the document (see isRootPointCollapsed).
+				availableWidth: 0,
+				crumbWidths: {},
+				measurePass: false
 			};
 		},
 		created() {
 			this.ancestorsMenu = ui_vue3.markRaw(new note_ui_actionMenu.ActionMenuService({
 				additionalClassName: ANCESTORS_MENU_MODIFIER
 			}));
+			this.breadcrumbResizeObserver = null;
+		},
+		mounted() {
+			this.scheduleCrumbMeasure();
+			if (typeof ResizeObserver === 'function' && this.$refs.breadcrumb) {
+				this.breadcrumbResizeObserver = new ResizeObserver(() => this.updateAvailableWidth());
+				this.breadcrumbResizeObserver.observe(this.$refs.breadcrumb);
+			}
 		},
 		beforeUnmount() {
 			this.ancestorsMenu?.destroy?.();
 			this.ancestorsMenu = null;
+			this.breadcrumbResizeObserver?.disconnect?.();
+			this.breadcrumbResizeObserver = null;
+		},
+		watch: {
+			crumbSignature() {
+				// Labels changed - the measured widths belong to the previous path, so measure again.
+				this.scheduleCrumbMeasure();
+			}
 		},
 		computed: {
+			canShowEditButton() {
+				return !this.isArchived && !this.isTrashed;
+			},
+			// [#11 rework] Takes priority over the edit/done branch regardless of isEditMode — a
+			// version preview can in principle be opened while mid-edit (the sidebar tiles are always
+			// clickable), and Restore is the only sensible primary action for the header at that point.
+			showRestoreButton() {
+				return this.isPreviewing && this.canShowEditButton;
+			},
+			restoreButtonDisabled() {
+				return this.isLoading || !this.canEdit || this.isRestoringVersion;
+			},
+			primaryButtonDisabled() {
+				if (this.isLoading) {
+					return true;
+				}
+				if (this.isEditMode) {
+					return this.isSaving;
+				}
+				return this.isSaving || !this.canEdit;
+			},
+			// Blocked is not the same as disabled. The button keeps its place, its look and its slot in the
+			// tab order, but does not finish the session: a native `disabled` would drop it out of the tab
+			// order, and the reason - the only thing that explains why the text is not being saved - would be
+			// reachable by mouse hover alone. Pressing it says the reason instead (finishEdit answers it).
+			isSaveBlocked() {
+				return Boolean(this.saveBlockedReason) && !this.primaryButtonDisabled;
+			},
+			// A11Y (WCAG 2.5.3, label in name): the accessible name has to contain the visible label, so the
+			// reason is appended to it rather than replacing it. On the mobile render there is no visible
+			// label, and this is what tells the icon apart from its neighbours - so that one always takes the
+			// name, while the desktop button takes it only while it carries the reason: with a visible label
+			// and nothing to add, an aria-label would only repeat what is written on the button.
+			doneButtonAriaLabel() {
+				return this.saveBlockedReason ? `${this.messages.done}. ${this.saveBlockedReason}` : this.messages.done;
+			},
+			secondaryActionsDisabled() {
+				return this.isLoading;
+			},
 			effectiveMode() {
 				// Prefer the loaded document's flags when available, otherwise fall back to viewMode
 				// (so during loading the breadcrumb root matches the source page — archive/recyclebin/shared).
@@ -73724,10 +82693,13 @@ ${nextLine.slice(indentLevel + 2)}`;
 				return Boolean(this.collectionLabel) && Number(this.collectionId) > 0;
 			},
 			showCollectionSegment() {
-				return this.effectiveMode === 'normal' && Boolean(this.collectionLabel);
+				// Shared mode shows the container too - see rootPointCrumb for how it renders there.
+				return (this.effectiveMode === 'normal' || this.effectiveMode === 'shared') && Boolean(this.collectionLabel);
 			},
 			showAncestorsSegment() {
-				return this.effectiveMode === 'normal';
+				// In shared mode the server already truncated the chain at the first ancestor the
+				// user may not see, so every crumb here is openable.
+				return this.effectiveMode === 'normal' || this.effectiveMode === 'shared';
 			},
 			rootRouteName() {
 				if (this.effectiveMode === 'recyclebin') {
@@ -73757,31 +82729,81 @@ ${nextLine.slice(indentLevel + 2)}`;
 					}
 				}).href : '';
 			},
-			parentHref() {
-				return this.directParent ? this.$router.resolve({
-					name: 'document',
-					params: {
-						id: Number(this.directParent.id)
-					}
-				}).href : '';
-			},
 			hasAncestors() {
 				return Array.isArray(this.ancestors) && this.ancestors.length > 0;
 			},
-			directParent() {
-				if (!this.hasAncestors) {
+			// The path is four slots at most, whatever the depth of the document: the section, the point the
+			// section starts from (the knowledge base), one "…" standing for everything in between, and the
+			// document itself. Archive and the recycle bin have no root point and no chain, so there it is
+			// the section and the document. The row used to lay every ancestor out and drop them into the
+			// "…" only when it ran out of width, so the same document read differently at two window sizes.
+			rootPointCrumb() {
+				if (!this.showCollectionSegment || !this.collectionLabel) {
 					return null;
 				}
-				return this.ancestors[this.ancestors.length - 1] ?? null;
+				return {
+					key: 'collection',
+					// Shared mode shows the container too, but as plain text: without a collectionId
+					// canOpenCollection stays false and the crumb renders non-clickable.
+					type: this.canOpenCollection ? 'collection' : 'text',
+					id: Number(this.collectionId) || 0,
+					title: String(this.collectionLabel),
+					href: this.canOpenCollection ? this.collectionHref : ''
+				};
 			},
-			middleAncestors() {
-				if (!this.hasAncestors) {
+			// Every document between the root point and the current one. Always behind the "…", however much
+			// room the row has: laid out inline they made the same document read differently at two window
+			// sizes, and the chain of a deep document ate the width its own title needed.
+			ancestorCrumbs() {
+				if (!this.showAncestorsSegment || !this.hasAncestors) {
 					return [];
 				}
-				return this.ancestors.slice(0, -1);
+				return this.ancestors.map(ancestor => {
+					const id = Number(ancestor.id) || 0;
+					return {
+						key: `anc-${id}`,
+						type: 'ancestor',
+						id,
+						title: String(ancestor.title || `#${id}`),
+						href: this.ancestorHref(id)
+					};
+				});
 			},
-			hasMiddleAncestors() {
-				return this.middleAncestors.length > 0;
+			crumbSignature() {
+				// Cheap change detector for the path - triggers a width re-measure when the labels change.
+				return JSON.stringify({
+					mode: this.effectiveMode,
+					root: this.rootLabel,
+					point: this.rootPointCrumb?.title ?? '',
+					current: this.headerDocumentTitle,
+					ancestors: this.ancestorCrumbs.length
+				});
+			},
+			// Too narrow a row drops the root point into the "…" as well, so what is left is the section and
+			// the document. Decided on natural widths (measured with nothing shrunk), not on what the flexbox
+			// has already squeezed - otherwise the answer would depend on its own previous answer.
+			isRootPointCollapsed() {
+				if (!this.rootPointCrumb || this.measurePass) {
+					return false;
+				}
+				const widths = this.crumbWidths;
+				if (this.availableWidth <= 0 || !Number.isFinite(widths.point)) {
+					return false;
+				}
+				const needed = (widths.root || 0) + widths.point + (this.ancestorCrumbs.length > 0 ? widths.more || 0 : 0) + (widths.current || 0);
+				return needed > this.availableWidth;
+			},
+			showRootPointInline() {
+				return Boolean(this.rootPointCrumb) && !this.isRootPointCollapsed;
+			},
+			// What the "…" stands for, in path order: the root point when it had to give up its place,
+			// then the documents between it and the current one.
+			collapsedCrumbs() {
+				const crumbs = this.isRootPointCollapsed ? [this.rootPointCrumb] : [];
+				return [...crumbs, ...this.ancestorCrumbs];
+			},
+			showMoreButton() {
+				return this.collapsedCrumbs.length > 0;
 			},
 			effectiveCollaborationStatus() {
 				// IDLE is the pre-connect window before the provider mounts; visually equivalent to CONNECTING.
@@ -73796,48 +82818,83 @@ ${nextLine.slice(indentLevel + 2)}`;
 					[CollaborationStatus.UNKNOWN]: main_core.Loc.getMessage('NOTE_EDITOR_COLLAB_STATUS_UNKNOWN')
 				};
 				return labels[this.effectiveCollaborationStatus] || labels[CollaborationStatus.UNKNOWN];
-			},
-			visibleParticipants() {
-				return Array.isArray(this.participants) ? this.participants.slice(0, 3) : [];
-			},
-			extraParticipantsCount() {
-				const total = Array.isArray(this.participants) ? this.participants.length : 0;
-				return total > 3 ? total - 3 : 0;
 			}
 		},
-		emits: ['open-collection', 'open-root', 'open-document'],
+		emits: ['open-collection', 'open-root', 'open-document', 'enter-edit-mode', 'finish-edit', 'copy-link', 'open-more', 'scroll-to-participant', 'restore-version', 'exit-preview'],
 		methods: {
-			handleCollectionClick() {
-				if (this.canOpenCollection) {
-					this.$emit('open-collection', Number(this.collectionId));
-				}
-			},
 			handleRootClick() {
 				if (this.isRootClickable) {
 					this.$emit('open-root', this.rootRouteName);
 				}
 			},
-			handleParentClick() {
-				if (this.directParent) {
-					this.$emit('open-document', Number(this.directParent.id));
+			handleCrumbClick(crumb) {
+				if (crumb?.type === 'collection') {
+					this.$emit('open-collection', Number(crumb.id));
+				} else if (crumb?.type === 'ancestor') {
+					this.$emit('open-document', Number(crumb.id));
 				}
 			},
+			ancestorHref(id) {
+				const documentId = Number(id) || 0;
+				return documentId > 0 ? this.$router.resolve({
+					name: 'document',
+					params: {
+						id: documentId
+					}
+				}).href : '';
+			},
 			handleMoreClick() {
-				if (!this.hasMiddleAncestors || !this.ancestorsMenu) {
+				if (!this.ancestorsMenu || this.collapsedCrumbs.length === 0) {
 					return;
 				}
-				const target = this.$refs.ancestorsMoreButton;
+				const target = this.$refs.moreButton;
 				if (!target) {
 					return;
 				}
-				const items = this.middleAncestors.map(ancestor => ({
-					text: String(ancestor.title || `#${Number(ancestor.id)}`),
-					onClick: () => {
-						this.$emit('open-document', Number(ancestor.id));
-					}
+				const items = this.collapsedCrumbs.map(crumb => ({
+					text: crumb.title,
+					onClick: () => this.handleCrumbClick(crumb)
 				}));
 				this.ancestorsMenu.open(items, target, {
-					key: 'breadcrumb-ancestors'
+					key: 'breadcrumb-overflow'
+				});
+			},
+			updateAvailableWidth() {
+				const el = this.$refs.breadcrumb;
+				if (el instanceof HTMLElement) {
+					this.availableWidth = el.clientWidth;
+				}
+			},
+			measureCrumbs() {
+				// Natural width of every unit, each including its leading separator. Read during a measure
+				// pass, when nothing shrinks - see the `--measuring` rule in the stylesheet.
+				const widths = {};
+				const units = {
+					root: 'rootUnit',
+					point: 'rootPointUnit',
+					more: 'moreUnit',
+					current: 'currentUnit'
+				};
+				for (const [key, ref] of Object.entries(units)) {
+					const el = this.$refs[ref];
+					if (el instanceof HTMLElement && el.offsetWidth > 0) {
+						widths[key] = el.offsetWidth;
+					}
+				}
+
+				// The "…" is out of the row whenever there is nothing behind it, and a width of its own is
+				// still needed to answer whether the root point fits beside it. Keep the last one read.
+				if (!Number.isFinite(widths.more) && Number.isFinite(this.crumbWidths.more)) {
+					widths.more = this.crumbWidths.more;
+				}
+				this.crumbWidths = widths;
+			},
+			scheduleCrumbMeasure() {
+				this.measurePass = true;
+				this.$nextTick(() => {
+					this.measureCrumbs();
+					this.updateAvailableWidth();
+					this.measurePass = false;
 				});
 			}
 		},
@@ -73845,51 +82902,56 @@ ${nextLine.slice(indentLevel + 2)}`;
 		template: `
 		<div class="note-page-document-header">
 			<div class="note-page-document-titles">
-				<div class="note-page-breadcrumb">
-					<a
-						v-if="isRootClickable"
-						class="note-page-breadcrumb-link note-page-breadcrumb-root"
-						:href="rootHref"
-						:title="rootLabel"
-						@click.prevent="handleRootClick"
-					>{{ rootLabel }}</a>
-					<span v-else class="note-page-breadcrumb-root" :title="rootLabel">{{ rootLabel }}</span>
-					<template v-if="showCollectionSegment">
-						<BIcon class="note-page-breadcrumb-separator" name="chevron-right-s" :size="24" />
+				<div ref="breadcrumb" class="note-page-breadcrumb" :class="{ '--measuring': measurePass }">
+					<span ref="rootUnit" class="note-page-breadcrumb-unit --root">
 						<a
-							v-if="canOpenCollection"
+							v-if="isRootClickable"
+							class="note-page-breadcrumb-link note-page-breadcrumb-root"
+							:href="rootHref"
+							:title="rootLabel"
+							@click.prevent="handleRootClick"
+						>{{ rootLabel }}</a>
+						<span v-else class="note-page-breadcrumb-root" :title="rootLabel">{{ rootLabel }}</span>
+					</span>
+					<span
+						v-if="rootPointCrumb"
+						v-show="showRootPointInline || measurePass"
+						ref="rootPointUnit"
+						class="note-page-breadcrumb-unit"
+					>
+						<BIcon class="note-page-breadcrumb-separator" name="chevron-right-s" :size="20" />
+						<a
+							v-if="rootPointCrumb.href"
 							class="note-page-breadcrumb-link"
-							:href="collectionHref"
-							:title="collectionLabel"
-							@click.prevent="handleCollectionClick"
-						>{{ collectionLabel }}</a>
-						<span v-else class="note-page-breadcrumb-text" :title="collectionLabel">{{ collectionLabel }}</span>
-					</template>
-					<template v-if="showAncestorsSegment && hasMiddleAncestors">
-						<BIcon class="note-page-breadcrumb-separator" name="chevron-right-s" :size="24" />
+							:href="rootPointCrumb.href"
+							:title="rootPointCrumb.title"
+							@click.prevent="handleCrumbClick(rootPointCrumb)"
+						>{{ rootPointCrumb.title }}</a>
+						<span v-else class="note-page-breadcrumb-text" :title="rootPointCrumb.title">{{ rootPointCrumb.title }}</span>
+					</span>
+					<span
+						v-show="showMoreButton || measurePass"
+						ref="moreUnit"
+						class="note-page-breadcrumb-unit --more"
+					>
+						<BIcon class="note-page-breadcrumb-separator" name="chevron-right-s" :size="20" />
 						<button
-							ref="ancestorsMoreButton"
+							ref="moreButton"
 							type="button"
 							class="note-page-breadcrumb-more-button"
+							:aria-label="messages.more"
 							@click="handleMoreClick"
-						><BIcon class="note-page-breadcrumb-more" name="more-s" :size="24" /></button>
-					</template>
-					<template v-if="showAncestorsSegment && directParent">
-						<BIcon class="note-page-breadcrumb-separator" name="chevron-right-s" :size="24" />
-						<a
-							class="note-page-breadcrumb-link"
-							:href="parentHref"
-							:title="directParent.title || ('#' + directParent.id)"
-							@click.prevent="handleParentClick"
-						>{{ directParent.title || ('#' + directParent.id) }}</a>
-					</template>
-					<BIcon class="note-page-breadcrumb-separator" name="chevron-right-s" :size="24" />
-					<Loader
-						v-if="isLoading && !headerDocumentTitle"
-						class="note-page-breadcrumb-current-loader"
-						:label="messages.loading"
-					/>
-					<span v-else class="note-page-breadcrumb-current" :title="headerDocumentTitle">{{ headerDocumentTitle }}</span>
+						><BIcon class="note-page-breadcrumb-more" name="more-s" :size="20" /></button>
+					</span>
+					<span ref="currentUnit" class="note-page-breadcrumb-unit --current">
+						<BIcon class="note-page-breadcrumb-separator" name="chevron-right-s" :size="20" />
+						<Loader
+							v-if="isLoading && !headerDocumentTitle"
+							class="note-page-breadcrumb-current-loader"
+							:label="messages.loading"
+						/>
+						<span v-else class="note-page-breadcrumb-current" :title="headerDocumentTitle">{{ headerDocumentTitle }}</span>
+					</span>
 				</div>
 			</div>
 			<div class="note-page-document-header-right">
@@ -73900,21 +82962,125 @@ ${nextLine.slice(indentLevel + 2)}`;
 				>
 					<span class="note-editor-collaboration-status-dot"></span>
 				</div>
-				<div
-					v-if="visibleParticipants.length > 0 || extraParticipantsCount > 0"
-					class="note-page-document-members"
-				>
-					<span
-						v-for="(participant, index) in visibleParticipants"
-						:key="participant.id || index"
-						class="note-page-document-member"
-						:title="participant.name || ''"
-						:style="participant.avatar ? { backgroundImage: 'url(' + participant.avatar + ')' } : null"
-					></span>
-					<span
-						v-if="extraParticipantsCount > 0"
-						class="note-page-document-member-extra"
-					>+{{ extraParticipantsCount }}</span>
+				<NoteAvatarStack
+					:participants="participants"
+					:compact="isMobile"
+					:viewing-label="messages.participantViewing"
+					:editing-label="messages.participantEditing"
+					:self-label-template="messages.participantSelf"
+					:menu-aria-label="messages.participantsTitle"
+					@activate="(participant) => $emit('scroll-to-participant', Number(participant.id))"
+				/>
+				<div class="note-page-document-actions">
+					<button
+						v-if="isPreviewing"
+						type="button"
+						class="note-page-document-action-icon"
+						:title="messages.exitPreview"
+						:aria-label="messages.exitPreview"
+						@click="$emit('exit-preview')"
+					>
+						<div class="ui-icon-set --cross-l"></div>
+					</button>
+					<template v-if="isMobile">
+						<!-- Mobile is view-only for versions: no restore action, and edit/done stay hidden while previewing. -->
+						<button
+							v-if="!isPreviewing && canShowEditButton && !isEditMode"
+							type="button"
+							class="note-page-document-action-icon"
+							:title="messages.edit"
+							:aria-label="messages.edit"
+							:disabled="primaryButtonDisabled"
+							data-testid="note-doc-edit"
+							@click="$emit('enter-edit-mode')"
+						>
+							<div class="ui-icon-set --edit-l"></div>
+						</button>
+						<button
+							v-else-if="!isPreviewing && canShowEditButton"
+							type="button"
+							class="note-page-document-action-icon"
+							:title="saveBlockedReason ?? messages.done"
+							:aria-label="doneButtonAriaLabel"
+							:aria-disabled="isSaveBlocked ? 'true' : null"
+							:disabled="primaryButtonDisabled"
+							data-testid="note-doc-done"
+							@click="$emit('finish-edit')"
+						>
+							<div class="ui-icon-set --check-l"></div>
+						</button>
+						<button
+							type="button"
+							class="note-page-document-action-icon"
+							:title="messages.more"
+							:aria-label="messages.more"
+							:disabled="secondaryActionsDisabled"
+							data-testid="note-doc-more"
+							@click="(e) => $emit('open-more', e.currentTarget)"
+						>
+							<div class="ui-icon-set --more-l"></div>
+						</button>
+					</template>
+					<template v-else>
+						<button
+							v-if="showRestoreButton"
+							type="button"
+							class="ui-btn --air ui-btn-md --style-filled ui-btn-no-caps --with-left-icon"
+							:disabled="restoreButtonDisabled"
+							data-testid="note-doc-restore-version"
+							@click="$emit('restore-version')"
+						>
+							<div class="ui-icon-set --o-undo"></div>
+							{{ isRestoringVersion ? messages.restoringVersion : messages.restoreVersion }}
+						</button>
+						<button
+							v-else-if="canShowEditButton && !isEditMode"
+							type="button"
+							class="ui-btn --air ui-btn-md --style-filled ui-btn-no-caps --with-left-icon"
+							:disabled="primaryButtonDisabled"
+							data-testid="note-doc-edit"
+							@click="$emit('enter-edit-mode')"
+						>
+							<div class="ui-icon-set --edit-l"></div>
+							{{ messages.edit }}
+						</button>
+						<button
+							v-else-if="canShowEditButton"
+							type="button"
+							class="ui-btn --air ui-btn-md --style-filled ui-btn-no-caps"
+							:class="{ 'ui-btn-disabled': isSaveBlocked }"
+							:title="saveBlockedReason"
+							:aria-label="saveBlockedReason ? doneButtonAriaLabel : null"
+							:aria-disabled="isSaveBlocked ? 'true' : null"
+							:disabled="primaryButtonDisabled"
+							data-testid="note-doc-done"
+							@click="$emit('finish-edit')"
+						>
+							{{ messages.done }}
+						</button>
+						<button
+							type="button"
+							class="note-page-document-action-icon"
+							:title="messages.copyLink"
+							:aria-label="messages.copyLink"
+							:disabled="secondaryActionsDisabled"
+							data-testid="note-doc-copy-link"
+							@click="$emit('copy-link')"
+						>
+							<div class="ui-icon-set --o-link"></div>
+						</button>
+						<button
+							type="button"
+							class="note-page-document-action-icon"
+							:title="messages.more"
+							:aria-label="messages.more"
+							:disabled="secondaryActionsDisabled"
+							data-testid="note-doc-more"
+							@click="(e) => $emit('open-more', e.currentTarget)"
+						>
+							<div class="ui-icon-set --more-l"></div>
+						</button>
+					</template>
 				</div>
 			</div>
 		</div>
@@ -73980,24 +83146,6 @@ ${nextLine.slice(indentLevel + 2)}`;
 				default: () => ({})
 			}
 		},
-		emits: ['enter-edit-mode', 'finish-edit', 'copy-link', 'open-more'],
-		computed: {
-			canShowEditButton() {
-				return !this.isArchived && !this.isTrashed;
-			},
-			primaryButtonDisabled() {
-				if (this.isLoading) {
-					return true;
-				}
-				if (this.isEditMode) {
-					return this.isSaving;
-				}
-				return this.isSaving || !this.canEdit;
-			},
-			secondaryActionsDisabled() {
-				return this.isLoading;
-			}
-		},
 		// language=Vue
 		template: `
 		<div class="note-editor-document-page">
@@ -74008,47 +83156,6 @@ ${nextLine.slice(indentLevel + 2)}`;
 					'note-editor-document-content--edit-mode': isEditMode,
 				}"
 			>
-				<div class="note-page-document-actions">
-					<button
-						v-if="canShowEditButton && !isEditMode"
-						type="button"
-						class="ui-btn --air ui-btn-md --style-filled ui-btn-no-caps --with-left-icon"
-						:disabled="primaryButtonDisabled"
-						@click="$emit('enter-edit-mode')"
-					>
-						<div class="ui-icon-set --edit-l"></div>
-						{{ messages.edit }}
-					</button>
-					<button
-						v-else-if="canShowEditButton"
-						type="button"
-						class="ui-btn --air ui-btn-md --style-filled ui-btn-no-caps"
-						:disabled="primaryButtonDisabled"
-						@click="$emit('finish-edit')"
-					>
-						{{ messages.done }}
-					</button>
-					<button
-						type="button"
-						class="note-page-document-action-icon"
-						:title="messages.copyLink"
-						:aria-label="messages.copyLink"
-						:disabled="secondaryActionsDisabled"
-						@click="$emit('copy-link')"
-					>
-						<div class="ui-icon-set --o-link"></div>
-					</button>
-					<button
-						type="button"
-						class="note-page-document-action-icon"
-						:title="messages.more"
-						:aria-label="messages.more"
-						:disabled="secondaryActionsDisabled"
-						@click="(e) => $emit('open-more', e.currentTarget)"
-					>
-						<div class="ui-icon-set --more-l"></div>
-					</button>
-				</div>
 				<div
 					v-if="isLoading"
 					class="note-editor-document-loading"
@@ -74149,7 +83256,10 @@ ${nextLine.slice(indentLevel + 2)}`;
 		components: {
 			DocumentHeaderComponent,
 			DocumentContentComponent,
-			DocumentChildrenComponent
+			DocumentChildrenComponent,
+			VersionTimelineComponent: note_ui_documentHistory.VersionTimelineComponent,
+			HotkeysPanelComponent: note_ui_hotkeys.HotkeysPanelComponent,
+			BIcon: ui_iconSet_api_vue.BIcon
 		},
 		props: {
 			documentId: {
@@ -74181,14 +83291,59 @@ ${nextLine.slice(indentLevel + 2)}`;
 				default: () => ({})
 			}
 		},
+		// One inject block per component: a second one silently replaces the first (plain object
+		// literal semantics), which is exactly how markdownIoEnabled stopped being injected and
+		// the download/upload .md items disappeared from the menu even with the flag on.
+		inject: {
+			sidebarState: {
+				from: 'noteSidebarState',
+				default: () => ({})
+			},
+			// Feature flag (provided by note.app): gates the download/upload .md menu items.
+			markdownIoEnabled: {
+				default: false
+			},
+			// Gates every way to reach the shortcuts help: button, `?`/`Cmd+/` listener, panel.
+			hotkeysEnabled: {
+				default: false
+			}
+		},
 		data() {
 			return {
 				state: createDocumentState(),
 				feature: null,
-				actionMenuService: null
+				actionMenuService: null,
+				Outline: ui_iconSet_api_vue.Outline,
+				// [P1.T5] History sidebar open/closed — purely local UI state, not persisted.
+				historyOpen: false,
+				// Hotkeys help panel open/closed. Mutually exclusive with the history sidebar — both are
+				// the single right-hand rail (see openHotkeys / openHistory). Purely local UI state.
+				hotkeysOpen: false,
+				// [EVENT-02] Last seen occupant of the right rail, including our own announcements. Two
+				// jobs: deciding whether an `owner: null` of ours would clobber someone else's claim, and
+				// driving the shift of the floating hotkeys button.
+				railOwner: null,
+				// [#11 rework] Which version (if any) the main editor currently shows a read-only
+				// preview of — 0 means "no preview". Drives VersionTimelineComponent's active-tile
+				// highlight, DocumentHeaderComponent's Edit→Restore morph, and the actual preview
+				// content pushed across the EditorMount boundary (see handleVersionPreview below).
+				previewVersionId: 0,
+				previewRestoring: false,
+				// [version-diff] Timeline "highlight changes" toggle — when on, an opened version
+				// preview overlays its diff against the PREVIOUS version N-1 (see handleVersionPreview /
+				// handleToggleDiff). A UI preference, persisted across version switches, not per-open.
+				highlightChanges: false,
+				// Markdown of the previous version (N-1), delivered by getVersion alongside the opened
+				// version's own body — the diff base. Kept so a highlight toggle re-overlays without a
+				// second fetch. Empty when the opened version is the document's first.
+				previewBaseMarkdown: ''
 			};
 		},
 		created() {
+			// Plain instance field on purpose: a DOM node in data() would be wrapped in a reactive proxy,
+			// and the proxy no longer compares equal to activeElement.
+			this.hotkeysFocusOrigin = null;
+			this.onRailOccupancyChanged = null;
 			this.feature = createDocumentFeature({
 				state: this.state,
 				getDocumentId: () => this.documentId,
@@ -74197,7 +83352,15 @@ ${nextLine.slice(indentLevel + 2)}`;
 				onHardDelete: ({
 					mode
 				}) => this.handleRemoteHardDelete(mode),
-				onAccessRevoked: () => this.handleAccessRevoked()
+				onAccessRevoked: () => this.handleAccessRevoked(),
+				// [P1.T5 relocation] The activity line's chip now lives inside the editor's own
+				// Vue app (see note-editor.js) — bridge its click back to this component's local
+				// historyOpen state, same as it did when ActivityLineComponent was mounted here.
+				// [#3] A repeat click toggles the sidebar closed instead of always (re-)opening it.
+				onOpenHistory: () => this.toggleHistory(),
+				// [P8.T2/T3] Bootstrap UI flags threaded to the isolated editor app (chip + bell).
+				historyEnabled: Boolean(this.sidebarState?.historyEnabled),
+				notificationsEnabled: Boolean(this.sidebarState?.notificationsEnabled)
 			});
 			this.actionMenuService = ui_vue3.markRaw(new DocumentActionMenuService(this.feature?.messages ?? {}));
 		},
@@ -74214,11 +83377,39 @@ ${nextLine.slice(indentLevel + 2)}`;
 			messages() {
 				return this.feature?.messages ?? {};
 			},
+			// note.ui.document-history owns its own lang now (see that extension's src/messages.js) —
+			// VersionTimelineComponent no longer reads from this page's own `messages`.
+			historyMessages() {
+				return note_ui_documentHistory.createHistoryMessages();
+			},
+			// [#11 rework] Whether the main editor currently shows a read-only version preview —
+			// gates VersionTimelineComponent's active-tile highlight and DocumentHeaderComponent's
+			// Edit→Restore morph.
+			isPreviewing() {
+				return this.previewVersionId > 0;
+			},
 			isEditMode() {
 				return this.feature?.isEditMode?.() ?? false;
 			},
 			canEdit() {
 				return this.feature?.canEdit?.() ?? false;
+			},
+			// Why finishing the edit session is unavailable while the right to edit is still there - null when
+			// it is available. Editing stays open in that state; saving does not.
+			saveBlockedReason() {
+				return this.feature?.saveBlockedReason?.() ?? null;
+			},
+			isMobile() {
+				return Boolean(this.sidebarState?.isMobile);
+			},
+			// [P8.T2] history_enabled bootstrap flag (from the injected sidebar root state). Gates the
+			// version-timeline panel and the chip's history-open path.
+			historyEnabled() {
+				return Boolean(this.sidebarState?.historyEnabled);
+			},
+			// [P8.T3] notifications_enabled bootstrap flag — gates the subscription bell.
+			notificationsEnabled() {
+				return Boolean(this.sidebarState?.notificationsEnabled);
 			},
 			canEditCollection() {
 				return Boolean(this.state.canEditCollection);
@@ -74264,11 +83455,35 @@ ${nextLine.slice(indentLevel + 2)}`;
 				return mode === '' ? 'normal' : mode;
 			},
 			collaborationParticipants() {
-				const participants = this.feature?.collaborationParticipants?.();
-				return Array.isArray(participants) ? participants : [];
+				// While disconnected (idle timeout, offline) presence goes stale — we no longer receive
+				// updates, so peers may have left without us knowing. Collapse to just self until we
+				// reconnect; sync() re-broadcasts join and active peers repopulate the list.
+				const remote = Array.isArray(this.state.participants) && this.state.collaborationStatus !== CollaborationStatus.DISCONNECTED ? this.state.participants : [];
+				const self = this.state.currentUser || {};
+				const selfId = Number(self.id) || 0;
+
+				// Show the current user's own avatar as soon as the document is loaded — even alone,
+				// so presence is visible from entry. Without a resolved self, fall back to remote peers.
+				if (selfId <= 0) {
+					return remote;
+				}
+
+				// Self is listed first, but rendered beneath peers in the stack (see header z-index).
+				return [{
+					id: selfId,
+					name: String(self.name || ''),
+					color: String(self.color || '#999999'),
+					avatar: typeof self.avatar === 'string' && self.avatar !== '' ? self.avatar : null,
+					mode: this.state.mode === 'edit' ? 'edit' : 'view',
+					hasCursor: false,
+					isSelf: true
+				}, ...remote];
 			},
 			hasChildrenBlock() {
 				return this.children.length > 0;
+			},
+			hotkeysButtonLabel() {
+				return main_core.Loc.getMessage('NOTE_HOTKEYS_ACTION_HELP_OPEN') || '';
 			}
 		},
 		watch: {
@@ -74277,6 +83492,15 @@ ${nextLine.slice(indentLevel + 2)}`;
 					if (!this.feature) {
 						return;
 					}
+
+					// [#11 rework] This component instance persists across document-to-document
+					// navigation (the router reuses it for the same route, only `documentId` changes)
+					// — local preview state from the PREVIOUS document must not leak into the next
+					// one. The editor's own preview state is destroyed for free (applyRouteDocumentContext
+					// unmounts/remounts EditorMount), but this page's own bookkeeping needs an explicit reset.
+					this.previewVersionId = 0;
+					this.previewRestoring = false;
+					this.previewBaseMarkdown = '';
 					await this.feature.applyRouteDocumentContext(this.routeDocumentContext);
 					if (String(this.routeDocumentContext?.status || '') === 'ready' && this.$route?.hash) {
 						void this.feature.scrollToAnchor(this.$route.hash);
@@ -74290,7 +83514,27 @@ ${nextLine.slice(indentLevel + 2)}`;
 				}
 			}
 		},
+		mounted() {
+			// Global hotkey listener lives with the panel's owning component (the panel is editor-only),
+			// so it binds/unbinds with the document page. Capture phase mirrors the toolbar's own combo
+			// handling and lets the input/popup guard run before the editor consumes the key.
+			if (this.hotkeysEnabled) {
+				document.addEventListener('keydown', this.handleHelpKeydown, true);
+			}
+
+			// [EVENT-02] The event only carries CHANGES, and the chat can already be open before this page
+			// exists: opened on the workspace root, then a document is opened from the tree. Without this
+			// initial read the floating button would come up unshifted, right on top of the open panel.
+			this.railOwner = this.sidebarState?.aiChatOpen === true ? note_sidebar.NoteRailOwner.AI_CHAT : null;
+			this.onRailOccupancyChanged = event => this.handleRailOccupancyChanged(event);
+			main_core_events.EventEmitter.subscribe(note_sidebar.NoteEvent.RAIL_OCCUPANCY_CHANGED, this.onRailOccupancyChanged);
+		},
 		beforeUnmount() {
+			document.removeEventListener('keydown', this.handleHelpKeydown, true);
+			if (this.onRailOccupancyChanged) {
+				main_core_events.EventEmitter.unsubscribe(note_sidebar.NoteEvent.RAIL_OCCUPANCY_CHANGED, this.onRailOccupancyChanged);
+				this.onRailOccupancyChanged = null;
+			}
 			this.actionMenuService?.destroy?.();
 			this.actionMenuService = null;
 			this.feature?.destroy?.();
@@ -74304,6 +83548,313 @@ ${nextLine.slice(indentLevel + 2)}`;
 			finishEdit() {
 				if (this.feature) {
 					void this.feature.finishEdit();
+				}
+			},
+			scrollToParticipant(userId) {
+				this.feature?.scrollToParticipant?.(userId);
+			},
+			// [EVENT-02] Claim the rail for one of our two panels.
+			announceRail(owner) {
+				main_core_events.EventEmitter.emit(note_sidebar.NoteEvent.RAIL_OCCUPANCY_CHANGED, new main_core_events.BaseEvent({
+					data: {
+						owner
+					}
+				}));
+			},
+			/**
+			 * Announce the rail as free — but only if we are still its owner. A panel that closed because
+			 * someone else walked in must stay silent: its `null` would erase the claim just made, and the
+			 * new occupant would be left with the shift of the floating button reset under it.
+			 */
+			releaseRail(owner) {
+				if (this.railOwner !== owner) {
+					return;
+				}
+				this.announceRail(null);
+			},
+			handleRailOccupancyChanged(event) {
+				const owner = event?.getData()?.owner ?? null;
+				this.railOwner = owner;
+				if (owner !== note_sidebar.NoteRailOwner.AI_CHAT) {
+					return;
+				}
+
+				// Yield the rail without announcing anything: the chat has already claimed it. Closing
+				// happens through the fields directly rather than through closeHistory/closeHotkeys — those
+				// two also move focus, which belongs to an explicit close by the user, not to being
+				// displaced.
+				if (this.historyOpen) {
+					this.historyOpen = false;
+					this.exitPreview();
+				}
+				this.hotkeysOpen = false;
+				this.hotkeysFocusOrigin = null;
+			},
+			openHistory() {
+				// [P8.T2] history_enabled off — the timeline entry point is closed; keep it a no-op.
+				if (!this.historyEnabled) {
+					return;
+				}
+
+				// The history sidebar and the hotkeys panel share the single right-hand rail — opening
+				// one closes the other.
+				this.hotkeysOpen = false;
+				this.historyOpen = true;
+				// [EVENT-02] Claim the rail: the chat, the third resident, collapses on this.
+				this.announceRail(note_sidebar.NoteRailOwner.HISTORY);
+			},
+			// Reuses the mention-chip navigation contract (open-link.js): native user card in the
+			// mobile app, a new tab on desktop. Handed down to the history sidebar's avatar stacks.
+			openUserProfile(userId) {
+				const id = Number(userId);
+				if (!Number.isInteger(id) || id <= 0) {
+					return;
+				}
+				openLinkNative(`/company/personal/user/${id}/`);
+			},
+			closeHistory() {
+				this.historyOpen = false;
+				// [#11 rework, mockup closeHist→setPreview(false)] Closing the sidebar exits preview too.
+				this.exitPreview();
+				this.releaseRail(note_sidebar.NoteRailOwner.HISTORY);
+			},
+			// [#3] The chip's own toggle: open when closed, close (same as the X button) when already open.
+			toggleHistory() {
+				// [P8.T2] history_enabled off — no timeline at all.
+				if (!this.historyEnabled) {
+					return;
+				}
+				if (this.historyOpen) {
+					this.closeHistory();
+					return;
+				}
+				this.openHistory();
+			},
+			// SC-002/SC-003: the hotkeys help panel. Opening it closes the history sidebar (shared rail).
+			openHotkeys() {
+				this.historyOpen = false;
+				this.exitPreview();
+				this.hotkeysOpen = true;
+				// [EVENT-02] The hotkeys panel is a rail resident too — without this claim it and the chat
+				// could be expanded at the same time, squeezing the document with two columns.
+				this.announceRail(note_sidebar.NoteRailOwner.HOTKEYS);
+				// Remember where focus came from: the global shortcut can fire from anywhere on the page, and
+				// the FAB is not always the right place to come back to (it is absent on mobile entirely).
+				const active = this.$el?.ownerDocument?.activeElement;
+				this.hotkeysFocusOrigin = active?.closest?.('.note-hotkeys-panel') ? null : active ?? null;
+				// The FAB turns visibility:hidden while the panel is open, so keyboard focus would land on
+				// body. Move it into the panel (the close button is the first stop) — a keyboard anchor from
+				// which Escape and Tab work naturally. openHistory() clears hotkeysOpen directly, not via
+				// closeHotkeys(), so this focus dance only runs on a genuine open of the hotkeys panel.
+				this.$nextTick(() => {
+					this.$el?.ownerDocument?.querySelector?.('.note-hotkeys-panel__close')?.focus?.();
+				});
+			},
+			closeHotkeys() {
+				this.hotkeysOpen = false;
+				this.releaseRail(note_sidebar.NoteRailOwner.HOTKEYS);
+				// Give focus back so a keyboard user isn't dropped on body while the close button they were
+				// standing on turns inert: the element that opened the panel first, the FAB as a fallback.
+				// Only reached on an explicit close (Escape, the close button, or toggling the FAB), never
+				// when history takes over the rail.
+				const origin = this.hotkeysFocusOrigin;
+				this.hotkeysFocusOrigin = null;
+				this.$nextTick(() => {
+					if (origin?.isConnected && main_core.Type.isFunction(origin.focus)) {
+						origin.focus();
+						return;
+					}
+					this.$refs.hotkeysFab?.focus?.();
+				});
+			},
+			toggleHotkeys() {
+				if (this.hotkeysOpen) {
+					this.closeHotkeys();
+					return;
+				}
+				this.openHotkeys();
+			},
+			// ALG-01: open the hotkeys panel on ?/Cmd+/ (Ctrl+/ off macOS), and close it (or the history
+			// sidebar) on Escape. Skip while typing (input/textarea/contenteditable) or inside an open
+			// popup so the combo never swallows a form/editor keystroke.
+			handleHelpKeydown(event) {
+				if (event.key === 'Escape' && this.hotkeysOpen) {
+					event.preventDefault();
+					this.closeHotkeys();
+					return;
+				}
+				if (!this.isHelpCombo(event)) {
+					return;
+				}
+				const target = event.target;
+				if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable === true || main_core.Type.isFunction(target.closest) && target.closest('.popup-window'))) {
+					return;
+				}
+				event.preventDefault();
+				this.toggleHotkeys();
+			},
+			isHelpCombo(event) {
+				const bare = event.key === '?' && !(event.ctrlKey || event.metaKey || event.altKey);
+				const slash = event.key === '/' && (main_core.Browser.isMac() ? event.metaKey : event.ctrlKey) && !event.altKey;
+				return bare || slash;
+			},
+			// [#11/#12/NEW-A rework] Clicking a restorable tile in VersionTimelineComponent lands
+			// here (see version-timeline.js's `preview` emit). A second click on the SAME tile is the
+			// explicit "exit preview" path handled by VersionTimelineComponent's own highlight — it
+			// keeps emitting `preview` for that tile, so toggle off here when the id repeats.
+			async handleVersionPreview({
+				versionId,
+				item
+			}) {
+				const id = Number(versionId);
+				if (!Number.isInteger(id) || id <= 0) {
+					return;
+				}
+
+				// [mobile two-screen swap] The history overlay is full-screen on mobile, covering the
+				// editor preview and the header Restore button. Tapping a version leaves the list for the
+				// preview screen (hide overlay, keep preview alive → editor shows it, header shows
+				// Restore). Re-tapping the currently-previewed tile just re-reveals it; NO toggle-off
+				// here (that would strand the user with the preview gone and no way back to the tile).
+				if (this.isMobile) {
+					this.historyOpen = false;
+					if (this.previewVersionId === id) {
+						return;
+					}
+				} else if (this.previewVersionId === id) {
+					this.exitPreview();
+					return;
+				}
+				this.previewVersionId = id;
+				const meta = {
+					authors: Array.isArray(item?.authors) ? item.authors : [],
+					time: typeof item?.createdAt === 'string' ? item.createdAt : ''
+				};
+				this.feature?.showVersionPreview({
+					loading: true,
+					meta
+				});
+				try {
+					const response = await note_ui_documentHistory.HistoryApi.getVersion({
+						documentId: this.documentId,
+						versionId: id
+					});
+					// Stale-response guard: the user may have exited or switched to another version
+					// while this request was in flight.
+					if (this.previewVersionId !== id) {
+						return;
+					}
+					const markdown = String(response?.data?.markdown ?? '');
+					// N-1 snapshot for the diff base, delivered with the version body.
+					this.previewBaseMarkdown = String(response?.data?.previousMarkdown ?? '');
+					this.feature?.showVersionPreview({
+						loading: false,
+						markdown,
+						highlight: this.highlightChanges,
+						baseMarkdown: this.previewBaseMarkdown
+					});
+				} catch (error) {
+					if (this.previewVersionId !== id) {
+						return;
+					}
+					this.feature?.showVersionPreview({
+						loading: false,
+						error: true
+					});
+					showErrorToast(extractErrorMessage(error, this.historyMessages.historyPreviewLoadError));
+				}
+			},
+			// [mobile two-screen swap] The X on the mobile preview screen is a BACK action: return to
+			// the history list (reopen the overlay), keeping the preview alive so the originating tile
+			// stays highlighted. Full exit to the live document happens from the list's own close button
+			// (closeHistory → exitPreview). On desktop the timeline is a side column, so X stays a plain
+			// exit-preview.
+			handleExitPreview() {
+				if (this.isMobile) {
+					this.openHistory();
+					return;
+				}
+				this.exitPreview();
+			},
+			// [#11 rework] Explicit exit path — closing the sidebar (closeHistory) and a repeat click
+			// on the active tile (handleVersionPreview) both funnel here.
+			exitPreview() {
+				if (this.previewVersionId === 0) {
+					return;
+				}
+				this.previewVersionId = 0;
+				this.previewBaseMarkdown = '';
+				this.feature?.hideVersionPreview();
+			},
+			// [version-diff] Timeline checkbox flip. Re-pushes only the diff fields to the preview
+			// (merge-updatable — the loaded body stays put); the N-1 base was already fetched with
+			// the version, so no second request is needed.
+			handleToggleDiff(value) {
+				this.highlightChanges = Boolean(value);
+				if (!this.isPreviewing) {
+					return;
+				}
+				this.feature?.showVersionPreview({
+					highlight: this.highlightChanges,
+					baseMarkdown: this.previewBaseMarkdown
+				});
+			},
+			// [P1.T2 client flow, SDD 455-468] Relocated from VersionTimelineComponent (see that
+			// extension's history — this used to live in the sidebar's own restore button). Always
+			// compact the pending patch window before restoring; a 409 NOTE_RESTORE_DIRTY_WINDOW means
+			// a patch landed in the gap, so compact once more and retry exactly once.
+			// `operationId` is the claim this tab made before asking (restorePreviewedVersion): the same value
+			// on the retry, because both attempts are the same operation as far as the tab is concerned - the
+			// first one wrote nothing.
+			async attemptRestore(versionId, operationId = null) {
+				const compactBeforeRestore = this.feature?.compactBeforeRestore;
+				if (typeof compactBeforeRestore === 'function') {
+					await compactBeforeRestore();
+				}
+				try {
+					await note_ui_documentHistory.HistoryApi.restoreVersion({
+						documentId: this.documentId,
+						versionId,
+						operationId
+					});
+				} catch (error) {
+					if (!note_ui_documentHistory.isRestoreDirtyWindowError(error)) {
+						throw error;
+					}
+					if (typeof compactBeforeRestore === 'function') {
+						await compactBeforeRestore();
+					}
+					await note_ui_documentHistory.HistoryApi.restoreVersion({
+						documentId: this.documentId,
+						versionId,
+						operationId
+					});
+				}
+			},
+			async restorePreviewedVersion() {
+				if (!this.canEdit || this.previewVersionId === 0 || this.previewRestoring) {
+					return;
+				}
+				const versionId = this.previewVersionId;
+				this.previewRestoring = true;
+
+				// The restore comes back as a documentContentOverwritten push, which an open edit session
+				// otherwise treats as a rewrite from outside and refuses to apply over the local text. Here
+				// the replacement is exactly what the user asked for, so the tab says so in advance - and
+				// names the operation, so only the push reporting THIS restore is taken for the answer.
+				const operationId = this.feature?.expectContentOverwrite?.() ?? null;
+				try {
+					await this.attemptRestore(versionId, operationId);
+					// The restore push (documentContentOverwritten) refreshes the live editor content —
+					// NEW-B suppresses the "changed by another user" toast for this, our own, restore.
+					this.exitPreview();
+				} catch (error) {
+					// No push is coming, so the claim has to go - left behind it would let the next rewrite
+					// from outside overwrite an open edit session's text.
+					this.feature?.cancelExpectedContentOverwrite?.();
+					showErrorToast(extractErrorMessage(error, this.historyMessages.historyRestoreError));
+				} finally {
+					this.previewRestoring = false;
 				}
 			},
 			openChildDocument(child) {
@@ -74375,7 +83926,7 @@ ${nextLine.slice(indentLevel + 2)}`;
 					}
 
 					// When the hash actually changes, the `$route.hash` watcher runs
-					// scrollToAnchor — calling it here too would double every jump
+					// scrollToAnchor - calling it here too would double every jump
 					// (two DOM passes, two pinning sessions). Scroll directly only
 					// when the hash is unchanged and the watcher won't fire.
 					const nextHash = `#${anchorHash}`;
@@ -74476,12 +84027,59 @@ ${nextLine.slice(indentLevel + 2)}`;
 					});
 				}
 			},
+			resolveImportMarkdownErrorMessage(error) {
+				switch (error?.code) {
+					case ImportMdErrorCode.INVALID_EXTENSION:
+						return this.messages.importMdErrExtension;
+					case ImportMdErrorCode.FILE_TOO_LARGE:
+						return this.messages.importMdErrTooLarge;
+					case ImportMdErrorCode.UNREADABLE:
+						return this.messages.importMdErrUnreadable;
+					default:
+						return this.messages.importMdErrGeneric;
+				}
+			},
+			async importDocumentMarkdown() {
+				// Said before the file picker, and with the reason rather than the generic import error: an
+				// import replaces the whole body at once, so on a document that no longer saves it would
+				// destroy the very text the open session exists to let the user copy out.
+				if (this.saveBlockedReason) {
+					BX.UI.Notification.Center.notify({
+						content: this.saveBlockedReason,
+						position: 'top-right'
+					});
+					return;
+				}
+				const file = await FileUploadService.pickFile({
+					accept: '.md'
+				});
+				if (!file) {
+					return;
+				}
+				try {
+					const {
+						degraded
+					} = await this.feature.importMarkdown(file);
+					if (degraded) {
+						BX.UI.Notification.Center.notify({
+							content: this.messages.importMdDegraded,
+							position: 'top-right'
+						});
+					}
+				} catch (error) {
+					BX.UI.Notification.Center.notify({
+						content: this.resolveImportMarkdownErrorMessage(error),
+						position: 'top-right'
+					});
+				}
+			},
 			openMoreMenu(target) {
 				if (!this.actionMenuService || !target) {
 					return;
 				}
 				const actions = this.documentActions ?? {};
 				this.actionMenuService.open(this.documentId, target, {
+					isMain: Boolean(this.state.isMain),
 					isArchived: this.isArchived,
 					isTrashed: this.isTrashed,
 					isOrphan: this.isOrphan,
@@ -74489,8 +84087,22 @@ ${nextLine.slice(indentLevel + 2)}`;
 					canHardDelete: this.canHardDelete,
 					canEditCollection: this.canEditCollection,
 					canManagePermissions: this.canManagePermissions,
+					canEdit: this.canEdit,
 					documentTitle: this.headerDocumentTitle,
+					// On mobile the standalone copy-link icon is dropped from the header row;
+					// surface it inside the more menu instead. Desktop keeps its own button.
+					onCopyLink: this.isMobile ? () => this.copyDocumentLink() : null,
 					onCopyMarkdown: () => this.copyDocumentMarkdown(),
+					// Download / upload .md are behind the markdown_io_enabled feature flag; passing null
+					// keeps the menu item out of the list entirely (see DocumentActionMenuService).
+					onDownload: this.markdownIoEnabled ? () => {
+						void DownloadService.download({
+							feature: this.feature,
+							documentId: this.documentId,
+							documentTitle: this.headerDocumentTitle
+						});
+					} : null,
+					onImportMarkdown: this.markdownIoEnabled ? () => this.importDocumentMarkdown() : null,
 					onArchive: typeof actions.archive === 'function' ? () => actions.archive(this.documentId) : null,
 					onRestore: typeof actions.restore === 'function' ? () => actions.restore(this.documentId) : null,
 					onDelete: typeof actions.delete === 'function' ? () => actions.delete(this.documentId) : null,
@@ -74511,54 +84123,335 @@ ${nextLine.slice(indentLevel + 2)}`;
 		// language=Vue
 		template: `
 		<div class="note-editor-document-shell">
-			<teleport to="#note-page-header-slot">
-				<DocumentHeaderComponent
-					:collection-label="collectionLabel"
-					:collection-id="collectionId"
-					:ancestors="ancestors"
-					:header-document-title="headerDocumentTitle"
+			<div class="note-editor-document-main">
+				<teleport to="#note-page-header-slot">
+					<DocumentHeaderComponent
+						:collection-label="collectionLabel"
+						:collection-id="collectionId"
+						:ancestors="ancestors"
+						:header-document-title="headerDocumentTitle"
+						:is-loading="state.isLoading"
+						:is-archived="isArchived"
+						:is-trashed="isTrashed"
+						:is-edit-mode="isEditMode"
+						:is-previewing="isPreviewing"
+						:is-restoring-version="previewRestoring"
+						:can-edit="canEdit"
+						:save-blocked-reason="saveBlockedReason"
+						:is-saving="state.isSaving"
+						:is-mobile="isMobile"
+						:shared-access="sharedAccess"
+						:view-mode="viewMode"
+						:collaboration-status="state.collaborationStatus"
+						:participants="collaborationParticipants"
+						:messages="messages"
+						@open-collection="openCollection"
+						@open-root="openRoot"
+						@open-document="openAncestorDocument"
+						@enter-edit-mode="enterEditMode"
+						@finish-edit="finishEdit"
+						@copy-link="copyDocumentLink"
+						@open-more="openMoreMenu"
+						@scroll-to-participant="scrollToParticipant"
+						@restore-version="restorePreviewedVersion"
+						@exit-preview="handleExitPreview"
+					/>
+				</teleport>
+				<DocumentContentComponent
 					:is-loading="state.isLoading"
+					:loading-label="messages.loading"
+					:editor-mount-id="state.editorMountId"
+					:has-children-block="hasChildrenBlock"
+					:is-edit-mode="isEditMode"
+					:can-edit="canEdit"
 					:is-archived="isArchived"
 					:is-trashed="isTrashed"
-					:shared-access="sharedAccess"
-					:view-mode="viewMode"
-					:collaboration-status="state.collaborationStatus"
-					:participants="collaborationParticipants"
+					:trashed-at="trashedAt"
+					:is-orphan="isOrphan"
+					:can-restore="canRestore"
+					:is-saving="state.isSaving"
 					:messages="messages"
-					@open-collection="openCollection"
-					@open-root="openRoot"
-					@open-document="openAncestorDocument"
+				>
+					<DocumentChildrenComponent
+						v-if="!state.isLoading"
+						:children="children"
+						:children-loading="childrenLoading"
+						:children-has-more="childrenHasMore"
+						:load-more-children="loadMoreChildren"
+						:documents-label="messages.documents"
+						@open-child="openChildDocument"
+					/>
+				</DocumentContentComponent>
+			</div>
+			<button
+				v-if="!isMobile && hotkeysEnabled"
+				ref="hotkeysFab"
+				type="button"
+				class="note-hotkeys-fab"
+				:class="{ 'is-hidden': hotkeysOpen, 'is-shifted': railOwner !== null }"
+				:title="hotkeysButtonLabel"
+				:aria-label="hotkeysButtonLabel"
+				:aria-pressed="hotkeysOpen.toString()"
+				@click="toggleHotkeys"
+			>
+				<BIcon class="note-hotkeys-fab__icon" :name="Outline.KEYBOARD" :size="24" />
+			</button>
+			<teleport to="#note-page-history-slot">
+				<VersionTimelineComponent
+					v-if="historyEnabled"
+					:open="historyOpen"
+					:document-id="documentId"
+					:preview-version-id="previewVersionId"
+					:highlight-changes="highlightChanges"
+					:messages="historyMessages"
+					:open-user-profile="openUserProfile"
+					@close="closeHistory"
+					@preview="handleVersionPreview"
+					@toggle-diff="handleToggleDiff"
+				/>
+				<HotkeysPanelComponent
+					v-if="hotkeysEnabled"
+					:open="hotkeysOpen"
+					@close="closeHotkeys"
 				/>
 			</teleport>
-			<DocumentContentComponent
-				:is-loading="state.isLoading"
-				:loading-label="messages.loading"
-				:editor-mount-id="state.editorMountId"
-				:has-children-block="hasChildrenBlock"
-				:is-edit-mode="isEditMode"
-				:can-edit="canEdit"
-				:is-archived="isArchived"
-				:is-trashed="isTrashed"
-				:trashed-at="trashedAt"
-				:is-orphan="isOrphan"
-				:can-restore="canRestore"
-				:is-saving="state.isSaving"
-				:messages="messages"
-				@enter-edit-mode="enterEditMode"
-				@finish-edit="finishEdit"
-				@copy-link="copyDocumentLink"
-				@open-more="openMoreMenu"
+		</div>
+	`
+	};
+
+	const ACTION_GET_DOCUMENT = 'note.infrastructure.DocumentController.get';
+
+	// Payload reported upward through `state-change`. Keep this shape in sync with the AboutPanel
+	// relay (note.workspace) and its top-bar consumer, which mirror the same named type.
+
+	// Embeddable, router-agnostic surface for editing a single document inline (used by the
+	// workspace "About" tab for the collection's main document). It reuses the exact editing
+	// engine of the full document page - createDocumentFeature + the shared DocumentEditorComponent
+	// mounted into #state.editorMountId - so autosave via the collaboration provider works the same.
+	//
+	// Unlike NoteDocumentPageComponent it owns no router/teleport wiring: it renders only the editor
+	// host, exposes enterEditMode()/finishEdit() for the parent toolbar, and surfaces state through
+	// events (`ready`, `state-change`, `load-error`, `open-internal-link`). The parent decides when
+	// to show the toolbar, the empty state, and how to navigate internal links.
+	const NoteDocumentEmbedComponent = {
+		name: 'NoteDocumentEmbed',
+		components: {
+			Loader: note_ui_loader.Loader
+		},
+		props: {
+			documentId: {
+				type: Number,
+				required: true
+			},
+			// Optional pre-fetched DocumentController.get payload; when absent the component loads it itself.
+			preloadedDocument: {
+				type: Object,
+				default: null
+			}
+		},
+		emits: ['ready', 'state-change', 'load-error', 'open-internal-link'],
+		data() {
+			return {
+				state: createDocumentState(),
+				feature: null,
+				loadError: false,
+				requestId: 0,
+				// Reactive emptiness of the document. Seeded from the loaded payload and kept live by the
+				// feature's onContentChange callback (local and remote edits), so a filled/cleared
+				// document re-emits state-change via stateKey without a mode/save/ACL flip.
+				contentEmpty: true
+			};
+		},
+		computed: {
+			isLoading() {
+				return Boolean(this.state.isLoading);
+			},
+			isEditMode() {
+				return this.state.mode === 'edit';
+			},
+			canEditContent() {
+				return Boolean(this.state.canEdit);
+			},
+			// The right to edit is intact and the body stays editable; what this reports is that the way back
+			// to the server is closed. The surface that owns the Done button is elsewhere (the workspace top
+			// bar), so it has to be told - the block itself is enforced in the controller either way.
+			saveBlockedReason() {
+				return this.feature?.saveBlockedReason?.() ?? null;
+			},
+			isSaving() {
+				return Boolean(this.state.isSaving);
+			},
+			loadingLabel() {
+				return this.feature?.messages?.loading ?? '';
+			},
+			loadErrorText() {
+				return this.feature?.messages?.loadError ?? '';
+			},
+			// Aggregate key so a single watcher re-emits `state-change` whenever any tracked flag flips.
+			// Emptiness is included so a live/remote content change updates the consumer's empty-state.
+			stateKey() {
+				return [this.isEditMode, this.canEditContent, this.isSaving, this.contentEmpty, this.saveBlockedReason].join('|');
+			}
+		},
+		watch: {
+			stateKey() {
+				this.emitState();
+			},
+			documentId() {
+				void this.reload();
+			}
+		},
+		created() {
+			this.feature = createDocumentFeature({
+				state: this.state,
+				getDocumentId: () => Number(this.documentId),
+				nextTick: () => this.$nextTick(),
+				onOpenInternalLink: payload => this.handleOpenInternalLink(payload),
+				onContentChange: isEmpty => this.handleContentEmptyChange(isEmpty),
+				// The description is not a document page: no activity chip, views counter or bell.
+				showActivityLine: false
+			});
+			void this.reload();
+		},
+		beforeUnmount() {
+			this.feature?.destroy?.();
+			this.feature = null;
+		},
+		methods: {
+			async reload() {
+				const documentId = Number(this.documentId);
+				const currentRequestId = ++this.requestId;
+				this.loadError = false;
+				this.state.isLoading = true;
+				if (documentId <= 0) {
+					// No valid document to load: settle into the same terminal error state as a failed
+					// fetch instead of hanging in `isLoading` forever (public API may be mounted with a
+					// bad id even though AboutPanel never mounts the embed for documentId <= 0).
+					this.loadError = true;
+					this.state.isLoading = false;
+					this.$emit('load-error');
+					return;
+				}
+				let document = main_core.Type.isPlainObject(this.preloadedDocument) ? this.preloadedDocument : null;
+				try {
+					if (document === null) {
+						const response = await main_core.ajax.runAction(ACTION_GET_DOCUMENT, {
+							data: {
+								id: documentId
+							}
+						});
+						if (currentRequestId !== this.requestId) {
+							return;
+						}
+						document = response?.data ?? null;
+					}
+					if (!main_core.Type.isPlainObject(document)) {
+						throw new Error('Empty document payload');
+					}
+					await this.feature.applyRouteDocumentContext({
+						status: 'ready',
+						document,
+						autoEdit: false,
+						viewMode: 'normal'
+					});
+					if (currentRequestId !== this.requestId) {
+						return;
+					}
+
+					// The mount inside applyRouteDocumentContext already pushed a live emptiness value;
+					// refine it from the authoritative payload (a yjs doc may not expose markdown yet).
+					this.contentEmpty = this.computePayloadEmpty(document);
+					this.$emit('ready', {
+						isEmpty: this.contentEmpty
+					});
+					this.emitState();
+				} catch (error) {
+					if (currentRequestId !== this.requestId) {
+						return;
+					}
+					this.loadError = true;
+					this.state.isLoading = false;
+					this.$emit('load-error');
+				}
+			},
+			emitState() {
+				const payload = {
+					isEditMode: this.isEditMode,
+					canEdit: this.canEditContent,
+					isSaving: this.isSaving,
+					isEmpty: this.contentEmpty,
+					saveBlockedReason: this.saveBlockedReason
+				};
+				this.$emit('state-change', payload);
+			},
+			// Live emptiness pushed by the feature on every editor `update` (local or remote); keeps the
+			// empty-state in sync with the mounted document without a mode/save/ACL flip.
+			handleContentEmptyChange(isEmpty) {
+				this.contentEmpty = Boolean(isEmpty);
+			},
+			computePayloadEmpty(document) {
+				const markdown = document?.markdown ?? null;
+				if (typeof markdown === 'string') {
+					return markdown.trim() === '';
+				}
+				if (main_core.Type.isPlainObject(markdown)) {
+					return this.isEmptyDocJson(markdown);
+				}
+
+				// No markdown returned: a yjs document with persisted state is treated as non-empty.
+				return !main_core.Type.isStringFilled(document?.yjsState ?? '');
+			},
+			isEmptyDocJson(doc) {
+				const content = Array.isArray(doc?.content) ? doc.content : [];
+				if (content.length === 0) {
+					return true;
+				}
+				if (content.length === 1) {
+					const only = content[0];
+					const onlyContent = Array.isArray(only?.content) ? only.content : [];
+					return only?.type === 'paragraph' && onlyContent.length === 0;
+				}
+				return false;
+			},
+			handleOpenInternalLink(payload) {
+				if (!payload) {
+					return;
+				}
+
+				// In-document anchor jumps stay inside this surface - the parent has no scrollport of ours.
+				if (payload.type === 'anchor') {
+					void this.feature?.scrollToAnchor?.(payload.hash);
+					return;
+				}
+				this.$emit('open-internal-link', payload);
+			},
+			// Public API for the parent toolbar (called through a template ref).
+			enterEditMode() {
+				void this.feature?.enterEditMode?.();
+			},
+			finishEdit() {
+				void this.feature?.finishEdit?.();
+			}
+		},
+		// language=Vue
+		template: `
+		<div class="note-document-embed" data-testid="note-document-embed">
+			<div
+				v-if="isLoading"
+				class="note-editor-document-loading"
+				role="status"
+				:aria-label="loadingLabel"
 			>
-				<DocumentChildrenComponent
-					v-if="!state.isLoading"
-					:children="children"
-					:children-loading="childrenLoading"
-					:children-has-more="childrenHasMore"
-					:load-more-children="loadMoreChildren"
-					:documents-label="messages.documents"
-					@open-child="openChildDocument"
-				/>
-			</DocumentContentComponent>
+				<Loader :label="loadingLabel" />
+			</div>
+			<div v-else-if="loadError" class="note-document-embed__error" role="alert" data-testid="note-document-embed-error">
+				<p class="note-document-embed__error-text">{{ loadErrorText }}</p>
+			</div>
+			<div
+				v-show="!isLoading && !loadError"
+				:id="state.editorMountId"
+				class="note-document-embed__host"
+			></div>
 		</div>
 	`
 	};
@@ -74588,8 +84481,9 @@ ${nextLine.slice(indentLevel + 2)}`;
 	}
 
 	exports.DocumentEditorComponent = DocumentEditorComponent;
+	exports.NoteDocumentEmbedComponent = NoteDocumentEmbedComponent;
 	exports.NoteDocumentPageComponent = NoteDocumentPageComponent;
 	exports.NoteEditorApp = NoteEditorApp;
 
-})(this.BX.Note.Editor = this.BX.Note.Editor || {}, BX.UI.Viewer, BX, BX, BX.Vue3, BX.Note.Ui, BX, BX.UI.IconSet, BX.UI.EntitySelector, BX.UI.Uploader, BX.UI.Uploader, BX.UI.Uploader, BX.UI.Notification, BX.Vue3, BX.Note.Ui, BX.Event, BX.Note.Sidebar, BX, BX.Note.Ui, BX.Note.Permissions, BX.Note.Ui, BX.UI, window, BX.Note.Ui, BX.Note);
+})(this.BX.Note.Editor = this.BX.Note.Editor || {}, BX.UI.Viewer, BX, BX, BX.Vue3, BX.Note.Ui, BX.Note.Ui, BX.Note.Ui, BX, BX.UI.IconSet, BX.UI.EntitySelector, BX.UI.Uploader, BX.UI.Uploader, BX.UI.Uploader, BX.UI.Notification, BX.Vue3, BX.Note.Ui, BX.Event, BX.Note.Sidebar, BX, BX.Note.Ui, BX.Note.Permissions, BX.UI, window, BX.Note.Ui, BX.Note.Ui, BX.Note.Ui, BX.Note);
 //# sourceMappingURL=editor.bundle.js.map

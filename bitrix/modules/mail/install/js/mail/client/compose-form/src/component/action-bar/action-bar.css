@@ -1,0 +1,24 @@
+/*
+ * The column the two rows stand in, its gap and its padding belong to the form footer
+ * (`compose-form.css`), so each row sets its own inner gap only.
+ *
+ * The action row wraps instead of stretching the panel: it grows when the unfinished elements are on, and a
+ * narrow panel still has to keep every control reachable.
+ */
+.mail-compose-action-bar
+{
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--ui-space-inline-2xs);
+	min-width: 0;
+	margin-inline-start: calc(-1 * var(--ui-space-inset-xs));
+}
+
+.mail-compose-send-row
+{
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-xs);
+	min-width: 0;
+}

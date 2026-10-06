@@ -16,11 +16,23 @@ body {
 	color: var(--ui-color-base-1);
 }
 
+/* A row, not a column: the right rail is a sibling of the whole left side, so the header is squeezed
+   with the working area instead of running above the panel. `position: relative` anchors the panel in
+   overlay mode. */
 .note-page {
+	position: relative;
 	display: flex;
-	flex-direction: column;
 	height: 100vh;
 	min-height: 100vh;
+	overflow: hidden;
+}
+
+/* Header plus working area — everything the rail squeezes. */
+.note-page-main {
+	display: flex;
+	flex-direction: column;
+	flex: 1 1 auto;
+	min-width: 0;
 	overflow: hidden;
 }
 
@@ -39,7 +51,10 @@ body {
 	display: flex;
 	align-items: center;
 	gap: 6px;
-	width: calc(var(--note-sidebar-width, 280px) - 1px);
+	/* The full width of the panel, edge included: the boundary below is drawn by the panel's own right
+	   edge, so this block has to end where that edge ends - a pixel short of it and the line, the shadow
+	   and the resize highlight of the header all stand a pixel off the ones below. */
+	width: var(--note-sidebar-width, 280px);
 	height: 56px;
 	padding: 14px 12px 14px 16px;
 	background: none;
@@ -48,8 +63,77 @@ body {
 	font-family: inherit;
 	color: inherit;
 	text-align: left;
-	transition: opacity 0.15s ease;
+	transition: opacity 0.15s ease, width 220ms ease;
 	flex: 0 0 auto;
+	/* The header half of the boundary the panel below draws: one edge, so one shadow along all of it,
+	   or the seam shows where the shadow starts. Carried by this block and not by the 1px divider next
+	   to it - a shadow is the blur of the shape it comes from, and blurring a one-pixel sliver by four
+	   spreads it to both sides at an alpha nothing can be seen at. This block stands exactly as wide as
+	   the panel, so the same declaration reads exactly the same.
+	   Positioned to paint above the header slot, which comes later in DOM - the panel solves that
+	   overlap with a stacking order of its own for the same reason. */
+	/* The header half of the same boundary, drawn with the same declarations as `.sidebar`: the edge line
+	   as an inset shadow at the right, the outer shadow beside it. Positioned for the same two reasons
+	   the panel is - to hold the highlight below and to paint above the header slot, which comes later in
+	   DOM and would overdraw the shadow. */
+	position: relative;
+	z-index: 1;
+	box-shadow:
+		1px 0 4px 0 var(--ui-color-box-shadow-contrast-default-color),
+		inset -1px 0 0 0 var(--ui-color-divider-default);
+	/* Sideways only. A shadow is cast around the whole shape, so the same declaration also blurs four
+	   pixels down - onto the seam where the header meets the panel, where it shows as a smudge beside the
+	   line. Clipped at top and bottom, let out to the right: the density of the shadow stays as declared,
+	   which is what keeps it equal to the one below. */
+	clip-path: inset(0 -8px 0 0);
+}
+
+/* The header half of the resize line, the same 2px the handle lights below: the handle lives inside the
+   panel and cannot reach above it, so the same rule is carried here. Both halves are lit off the body,
+   which the panel marks on hover of the handle and while a drag is on. */
+.note-page-brand::after {
+	content: '';
+	position: absolute;
+	right: 0;
+	top: 0;
+	bottom: 0;
+	width: 2px;
+	background: transparent;
+	transition: background 0.15s ease;
+}
+
+body.note-sidebar-resize-hover .note-page-brand::after,
+body.note-sidebar-resizing .note-page-brand::after {
+	background: var(--ui-color-divider-accent);
+}
+
+/* Collapsed sidebar: the header shrinks to the rail and keeps only the compact mark,
+   centred. 66px is the width of the rail itself - the block ends where the rail ends, edge included. */
+.note-page-brand.is-collapsed {
+	width: 66px;
+	justify-content: center;
+	padding-left: 0;
+	padding-right: 0;
+}
+
+.note-page-brand.is-collapsed .note-page-brand-logo-text,
+.note-page-brand.is-collapsed .note-page-brand-subtitle {
+	display: none;
+}
+
+/* The leading letter belongs to the short version of the logo only, and the wordmark to the full one:
+   whichever of the two is on screen, exactly one of them is. */
+.note-page-brand-logo-short {
+	display: none;
+}
+
+.note-page-brand.is-collapsed .note-page-brand-logo-short {
+	display: block;
+}
+
+/* No lag while dragging the sidebar resizer (brand width tracks --note-sidebar-width). */
+.note-sidebar-resizing .note-page-brand {
+	transition: none !important;
 }
 
 .note-page-brand:focus-visible {
@@ -59,25 +143,44 @@ body {
 
 .note-page-brand-logo {
 	display: flex;
+	align-items: center;
 	font-size: var(--ui-font-size-2xl);
-	font-weight: var(--ui-font-weight-medium);
+	font-weight: var(--ui-font-weight-semi-bold);
 	line-height: var(--ui-font-line-height-3xs);
 	color: var(--ui-color-base-1);
 }
 
+/* One colour for the whole mark, the colour of the text around it - the black version of the logo on a
+   light theme, the white one on a dark. The only colours the logo has are its own two, and the accent of
+   the design system is neither of them; the same reason the portal draws its own text substitution in
+   `--ui-color-base-1` and nothing else. */
 .note-page-brand-logo-number {
 	margin-left: 1px;
-	color: var(--ui-color-accent-main-primary);
+	color: inherit;
 }
 
+/* The product logo's own mark (`.logo-number::after` in the bitrix24 template). Its size and its place
+   are the logo's, not ours: measured off the official artwork, the clock is 0.77 of the height of the
+   digits and starts level with their top edge. At this font that is 13px of digit and 10px of clock,
+   the top edge reached by the margin below - the mark spans the digits, not the whole line. */
 .note-page-brand-logo-clock {
-	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary);
-	margin: 2px 0 0 1px;
+	width: 10px;
+	height: 10px;
+	align-self: flex-start;
+	margin-top: 4px;
+	margin-left: 3px;
+	-webkit-mask-image: url(/bitrix/js/note/ui/assets/images/clock.svg);
+	mask-image: url(/bitrix/js/note/ui/assets/images/clock.svg);
+	-webkit-mask-repeat: no-repeat;
+	mask-repeat: no-repeat;
+	-webkit-mask-size: contain;
+	mask-size: contain;
+	background-color: currentcolor;
 }
 
 .note-page-brand-subtitle {
 	font-size: var(--ui-font-size-2xl);
-	font-weight: var(--ui-font-weight-medium);
+	font-weight: var(--ui-font-weight-semi-bold);
 	line-height: var(--ui-font-line-height-3xs);
 	color: var(--ui-color-base-3);
 	white-space: nowrap;
@@ -85,11 +188,6 @@ body {
 	text-overflow: ellipsis;
 }
 
-.note-page-header-divider {
-	width: 1px;
-	align-self: stretch;
-	background: var(--ui-color-divider-default);
-}
 
 .note-page-header-slot {
 	display: flex;
@@ -97,6 +195,101 @@ body {
 	flex: 1 1 auto;
 	min-width: 0;
 	padding: 14px 24px;
+}
+
+/*
+ * BitrixGPT button — last element of the header. Its 40px avatar is taller than the section icons
+ * (24px), so the button is centered inside the 56px header instead of stretching it: the editor
+ * toolbar positions itself off the header geometry and would shift if the height changed.
+ */
+.note-page-ai-chat-button {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex: 0 0 auto;
+	align-self: center;
+	width: 40px;
+	height: 40px;
+	margin-right: 16px;
+	padding: 0;
+	background: transparent;
+	border: 0;
+	border-radius: 50%;
+	cursor: pointer;
+}
+
+.note-page-ai-chat-button:hover {
+	opacity: .8;
+}
+
+.note-page-ai-chat-button:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: 2px;
+}
+
+/*
+ * Placeholder shown while the panel extension and the widget are on their way. It lives in the
+ * shell, not in the lazily loaded panel: the first frame of opening happens before that extension
+ * exists, and BRIEF 4.К asks for an indicator from that very frame.
+ *
+ * In flow, and growing from zero: that is what makes the header and the document squeeze in one
+ * motion with the panel appearing. The shell can afford this because the mode and the width come from
+ * the same ALG-02 function the panel uses (`note.ui.rail-geometry` sits in the shell's own rel), so
+ * the placeholder never guesses — in the overlay mode it goes out of flow via `is-overlay` below.
+ *
+ * The 360px fallback is PANEL_WIDTH (`note.ui.rail-geometry`), duplicated here because CSS cannot
+ * read it. Same fallback-copy pattern as `--note-history-width` in editor.css.
+ *
+ * The divider matches the panel's own: 1px on the same token, so the handover frame does not shift
+ * the rail by a pixel and the line does not appear only once the widget has landed.
+ */
+.note-page-ai-chat-pending {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex: 0 0 var(--note-ai-chat-width, 360px);
+	width: var(--note-ai-chat-width, 360px);
+	border-left: 1px solid var(--ui-color-divider-default);
+	background: var(--ui-color-bg-content-primary);
+	overflow: hidden;
+	/* The placeholder is what the first open actually shows, so it does the whole opening motion: in
+	   flow, growing from zero, which squeezes the header and the document in the same 0.3s. The panel
+	   then takes this exact width over without a transition of its own (`--instant`), so the rail
+	   moves once instead of twice. */
+	animation: note-ai-chat-reserve 0.3s cubic-bezier(.4, 0, .2, 1);
+}
+
+@keyframes note-ai-chat-reserve {
+	from {
+		flex-basis: 0;
+		width: 0;
+	}
+}
+
+/* [ALG-02] Overlay: the document keeps its width, so the placeholder must not reserve anything —
+   it slides over the page instead, on the layer the panel itself will use. */
+.note-page-ai-chat-pending.is-overlay {
+	position: absolute;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	z-index: 140;
+	flex-basis: auto;
+	max-width: 100%;
+	animation: note-ai-chat-slide-in 0.3s cubic-bezier(.4, 0, .2, 1);
+}
+
+@keyframes note-ai-chat-slide-in {
+	from { transform: translateX(100%); }
+}
+
+/*
+ * Global UI notification balloons render fixed at the viewport top (top: ~25px)
+ * as body children, overlapping the 56px page header. Nudge them below it —
+ * margin-top offsets each balloon uniformly, so their stacking stays intact.
+ */
+.ui-notification-balloon {
+	margin-top: 40px;
 }
 
 .main-layout {
@@ -123,12 +316,44 @@ body {
 	height: 100%;
 }
 
+/* Teleport target for the document history timeline. `display: contents` makes the wrapper
+   itself transparent to layout, so the teleported `.note-version-timeline` is the direct flex
+   child of `.main-layout` — a right-side sibling of `.content`, exactly like `.sidebar` on the
+   left. Empty (no document open) it generates no box. */
+.note-page-history-slot {
+	display: contents;
+}
+
 .note-page-breadcrumb {
 	display: flex;
 	align-items: center;
-	gap: 0;
 	min-width: 0;
 	flex: 1 1 auto;
+	overflow: hidden;
+}
+
+/*
+ * Each "unit" is a crumb plus its leading separator, measured as one width. The path holds four of them
+ * at most - section, root point, "…", document (see document-header) - and when even that does not fit,
+ * the root point joins the "…" as well. The section and the "…" hold their size, the two titles
+ * ellipsize as the safety net under measurement drift.
+ */
+.note-page-breadcrumb-unit {
+	display: inline-flex;
+	align-items: center;
+	min-width: 0;
+	flex: 0 1 auto;
+}
+
+.note-page-breadcrumb-unit.--root,
+.note-page-breadcrumb-unit.--more {
+	flex: 0 0 auto;
+}
+
+/* During a measure pass every unit is laid out at its natural width (no shrinking) so offsetWidth
+   reflects the untruncated crumb; the container's overflow:hidden clips the temporary spill. */
+.note-page-breadcrumb.--measuring .note-page-breadcrumb-unit {
+	flex: 0 0 auto;
 }
 
 .note-page-breadcrumb-root,
@@ -150,7 +375,6 @@ body {
 }
 
 .note-page-breadcrumb-root {
-	flex: 0 0 auto;
 	overflow: visible;
 	text-overflow: clip;
 }
@@ -283,6 +507,22 @@ html.note-mobile:has(> body .popup-window-overlay) body {
 	height: 100dvh !important;
 }
 
+/* The page under the open drawer stands still - see applyScrollLock in note-layout, which is what puts
+   this class on and reads the offset the body is pinned at. Fixed rather than merely unscrollable: a
+   document scroller told to stop scrolling loses the offset it stood at, and the reader came back to the
+   top of the article on closing the panel. */
+html.note-mobile.note-mobile-scroll-locked,
+html.note-mobile.note-mobile-scroll-locked body {
+	overflow: hidden;
+}
+
+html.note-mobile.note-mobile-scroll-locked body {
+	position: fixed;
+	left: 0;
+	right: 0;
+	width: 100%;
+}
+
 html.note-mobile .note-page {
 	height: auto;
 	min-height: 100dvh;
@@ -312,12 +552,16 @@ html.note-mobile .sidebar-resizer {
 	display: none;
 }
 
+/* z-index sits above the sticky editor toolbar (also 100): the header is a fixed stacking
+ * context, so its teleported participants popup is trapped inside it — with an equal z-index the
+ * toolbar (later in DOM) would paint over the dropped-down popup. Stays well below main.popup's
+ * 1000 baseline so sliders/viewer still cover the header. */
 html.note-mobile .note-page-header {
 	position: fixed;
 	top: 0;
 	left: 0;
 	right: 0;
-	z-index: 100;
+	z-index: 110;
 	height: var(--note-mobile-header-h);
 	padding: 0;
 	gap: 0;
@@ -338,10 +582,28 @@ html.note-mobile .note-page-header.is-compact {
 	overflow: hidden;
 }
 
-html.note-mobile .note-page-brand,
-html.note-mobile .note-page-header-divider,
+/* The header carries no left block on mobile: the burger stands where the brand does on a desktop, and
+   the app names the knowledge base in its own bar above the page. Left in place the block held the width
+   of the panel - a width nothing shrinks - and the action icons of the document, pinned to the right,
+   were laid over its subtitle. It also has no boundary to draw here: the panel is an overlay, so there
+   is no edge for the header to continue. */
+html.note-mobile .note-page-brand {
+	display: none;
+}
+
+/* Mobile header is empty by default: the archive / recyclebin / shared /
+ * workspace pages only teleport a breadcrumb into the slot, which we don't want
+ * on mobile. The slot is revealed only on the document page, where it carries
+ * the action icons (edit / more) next to the burger, pinned to the right. */
 html.note-mobile .note-page-header-slot {
 	display: none;
+}
+
+/* @chef-ignore */
+html.note-mobile .note-page-header-slot:has(.note-page-document-header) {
+	display: flex;
+	padding: 0 8px 0 0;
+	justify-content: flex-end;
 }
 
 html.note-mobile .note-page-mobile-burger {
@@ -424,6 +686,17 @@ html.note-mobile .ui-selector-dialog {
 	box-sizing: border-box;
 }
 
+/* Collection picker keeps the tab rail (search + collections ushki), so it needs the rail gutter
+   (left: rail-gutter from the blanket rule — do not override left). Only trim the width so the
+   dropdown's right edge lines up with the input instead of overhanging toward the screen edge:
+   input right edge sits at dialog-gutter/2 (3px) + ui-system-dialog content padding (24px) from
+   the viewport's right; dropdown left is rail-gutter. */
+/* @chef-ignore */
+html.note-mobile .popup-window.note-collection-picker-dropdown:has(.ui-selector-dialog) {
+	width: calc(100vw - var(--note-popup-rail-gutter) - var(--note-popup-dialog-gutter) / 2 - 24px) !important;
+	max-width: calc(100vw - var(--note-popup-rail-gutter) - var(--note-popup-dialog-gutter) / 2 - 24px) !important;
+}
+
 /* @chef-ignore */
 html.note-mobile .popup-window:has(.ui-selector-dialog) {
 	max-height: calc(100dvh - var(--note-popup-vh-gutter)) !important;
@@ -500,9 +773,14 @@ html.note-mobile .note-sidebar-search-input {
 	line-height: 20px;
 }
 
+/* Toasts are top-right anchored. Forcing full width stretched them across the
+ * screen and killed the right gutter. Let them hug their content (capped to the
+ * viewport) so they sit compactly in the top-right corner with breathing room. */
+/* ui.notification positions balloons via inline (important) left/top, so only
+ * max-width is ours to control. Cap it well below the viewport so the toast
+ * reads as a compact chip with a clear gutter instead of a full-width bar. */
 html.note-mobile .ui-notification-balloon {
-	max-width: calc(100vw - 32px) !important;
-	width: calc(100vw - 32px) !important;
+	max-width: min(320px, calc(100vw - 48px)) !important;
 }
 
 /* ===== ui.viewer header on mobile =====

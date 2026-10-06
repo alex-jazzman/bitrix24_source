@@ -12,6 +12,7 @@ use Bitrix\Crm\Component\EntityDetails\ComponentMode;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Sale\Internals\AccountNumberGenerator;
+use Bitrix\Main\Web\Uri;
 
 if (!Main\Loader::includeModule('crm'))
 {
@@ -1039,13 +1040,11 @@ class CCrmOrderPaymentDetailsComponent extends Crm\Component\EntityDetails\BaseC
 
 	protected function getVoucherUrl($type)
 	{
-		return CHTTP::urlAddParams('/bitrix/components/bitrix/crm.order.payment.voucher/slider.ajax.php?'.bitrix_sessid_get(),
-			array(
+		return (string)(new Uri('/bitrix/components/bitrix/crm.order.payment.voucher/slider.ajax.php?'.bitrix_sessid_get()))->addParams(array(
 				'siteID' => SITE_ID,
 				'paymentId' => $this->entityID,
 				'paymentType' => (int)$type,
-			)
-		);
+			));
 	}
 
 	protected function createVoucherLink ($type, $text)

@@ -21,14 +21,9 @@ jn.define('tasks/layout/checklist/preview', (require, exports, module) => {
 		OPEN: 'OPEN',
 	};
 
-	/**
-	 * @class ChecklistPreview
-	 */
 	class ChecklistPreview extends PureComponent
 	{
-		/**
-		 * @param {ChecklistPreviewProps} props
-		 */
+		/** @param {ChecklistPreviewProps} props */
 		constructor(props)
 		{
 			super(props);
@@ -45,21 +40,25 @@ jn.define('tasks/layout/checklist/preview', (require, exports, module) => {
 			};
 		}
 
+		/** @return {ChecklistPreviewConfig | {}} */
 		getConfig()
 		{
 			return this.props.config || {};
 		}
 
+		/** @return {Object} */
 		get controller()
 		{
 			return this.getConfig().checklistController;
 		}
 
+		/** @return {string} */
 		get testId()
 		{
 			return this.props.testId;
 		}
 
+		/** @return {boolean} */
 		isEmpty()
 		{
 			const { completed = 0, uncompleted = 0 } = this.state.value || {};
@@ -67,41 +66,49 @@ jn.define('tasks/layout/checklist/preview', (require, exports, module) => {
 			return (completed + uncompleted) === 0;
 		}
 
+		/** @return {boolean} */
 		isLoading()
 		{
 			return this.props.loading;
 		}
 
+		/** @return {boolean} */
 		validate()
 		{
 			return true;
 		}
 
+		/** @return {boolean} */
 		isValid()
 		{
 			return true;
 		}
 
+		/** @return {boolean} */
 		isRequired()
 		{
 			return false;
 		}
 
+		/** @return {boolean} */
 		isReadOnly()
 		{
 			return this.props.readOnly;
 		}
 
+		/** @return {boolean} */
 		isDisabled()
 		{
 			return Boolean(this.props.disabled);
 		}
 
+		/** @return {boolean} */
 		isMultiple()
 		{
 			return Boolean(this.props.multiple);
 		}
 
+		/** @return {string} */
 		getId()
 		{
 			return this.props.id;
@@ -114,23 +121,31 @@ jn.define('tasks/layout/checklist/preview', (require, exports, module) => {
 			return maxElements > 0 ? maxElements : MAX_ELEMENTS;
 		}
 
+		/** @return {boolean} */
 		hasUploadingFiles()
 		{
 			return false;
 		}
 
+		/**
+		 * @param {Object} ref
+		 * @return {void}
+		 */
 		bindContainerRef(ref)
 		{
 			this.fieldContainerRef = ref;
 		}
 
+		/**
+		 * @param {number | string} taskId
+		 * @return {void}
+		 */
 		setTaskId(taskId)
 		{
 			this.controller.setTaskId(taskId);
 		}
 
 		/**
-		 * @public
 		 * @param {number} completed
 		 * @param {number} uncompleted
 		 * @return {void}
@@ -140,10 +155,7 @@ jn.define('tasks/layout/checklist/preview', (require, exports, module) => {
 			this.props.onChange?.({ completed, uncompleted });
 		}
 
-		/**
-		 * @public
-		 * @return {(function(): void)|null}
-		 */
+		/** @return {(function(): void)|null} */
 		getContentClickHandler()
 		{
 			if (this.isReadOnly() && !this.props.onContentClick)
@@ -154,10 +166,7 @@ jn.define('tasks/layout/checklist/preview', (require, exports, module) => {
 			return this.handleContentClick;
 		}
 
-		/**
-		 * @public
-		 * @return {(function(): void)}
-		 */
+		/** @return {(function(): void)} */
 		getCustomContentClickHandler()
 		{
 			return () => {
@@ -184,6 +193,7 @@ jn.define('tasks/layout/checklist/preview', (require, exports, module) => {
 			};
 		}
 
+		/** @return {void} */
 		handleContentClick()
 		{
 			if (!this.isReadOnly() && !this.isDisabled() && !isOnline())
@@ -243,6 +253,10 @@ jn.define('tasks/layout/checklist/preview', (require, exports, module) => {
 			return actions;
 		}
 
+		/**
+		 * @param {ChecklistPreviewProps} props
+		 * @return {void}
+		 */
 		componentWillReceiveProps(props)
 		{
 			this.state.value = props.value;
@@ -266,11 +280,16 @@ jn.define('tasks/layout/checklist/preview', (require, exports, module) => {
 			this.setState({ collapsed: false });
 		}
 
+		/**
+		 * @param {Object} checklist
+		 * @return {void}
+		 */
 		openPageManager(checklist)
 		{
 			this.controller.openChecklist({ checklist });
 		}
 
+		/** @return {void} */
 		createChecklist()
 		{
 			if (this.isLoading())
@@ -285,18 +304,13 @@ jn.define('tasks/layout/checklist/preview', (require, exports, module) => {
 			factory();
 		}
 
-		/**
-		 * @public
-		 * @return {*}
-		 */
+		/** @return {Object} */
 		getParentWidget()
 		{
 			return this.getConfig().parentWidget;
 		}
 
-		/**
-		 * @return {*[]}
-		 */
+		/** @return {Object[]} */
 		getSortedChecklists()
 		{
 			const checklists = this.controller.getChecklists();
@@ -311,15 +325,13 @@ jn.define('tasks/layout/checklist/preview', (require, exports, module) => {
 				});
 		}
 
-		/**
-		 * @public
-		 * @return {{title: string}[]}
-		 */
+		/** @return {ChecklistPreviewInitialState[]} */
 		getChecklistStubs()
 		{
 			return (this.getConfig().initialState || [{ title: '' }]);
 		}
 
+		/** @return {Object[] | ChecklistPreviewInitialState[]} */
 		getChecklists()
 		{
 			return this.isLoading()
@@ -327,6 +339,7 @@ jn.define('tasks/layout/checklist/preview', (require, exports, module) => {
 				: this.getSortedChecklists();
 		}
 
+		/** @return {Object} */
 		render()
 		{
 			const { ThemeComponent } = this.props;
@@ -368,6 +381,10 @@ jn.define('tasks/layout/checklist/preview', (require, exports, module) => {
 			);
 		}
 
+		/**
+		 * @param {Object[]} checklists
+		 * @return {Object | null}
+		 */
 		renderTitle(checklists)
 		{
 			const { hideTitle } = this.props;
@@ -384,6 +401,10 @@ jn.define('tasks/layout/checklist/preview', (require, exports, module) => {
 			});
 		}
 
+		/**
+		 * @param {Object[]} checklists
+		 * @return {Object | null}
+		 */
 		renderItems(checklists)
 		{
 			if (this.isEmpty() || this.isLoading())
@@ -411,6 +432,10 @@ jn.define('tasks/layout/checklist/preview', (require, exports, module) => {
 			);
 		}
 
+		/**
+		 * @param {ChecklistPreviewInitialState[]} checklists
+		 * @return {Object | null}
+		 */
 		renderStubItems(checklists)
 		{
 			if (!this.isLoading())
@@ -430,6 +455,10 @@ jn.define('tasks/layout/checklist/preview', (require, exports, module) => {
 			);
 		}
 
+		/**
+		 * @param {number} restCount
+		 * @return {Object | null}
+		 */
 		renderMoreButton(restCount)
 		{
 			if (!this.#isCollapsed())
@@ -449,6 +478,7 @@ jn.define('tasks/layout/checklist/preview', (require, exports, module) => {
 			});
 		}
 
+		/** @return {Object | null} */
 		renderAddButtons()
 		{
 			const { showAddButton } = this.props;
@@ -498,9 +528,7 @@ jn.define('tasks/layout/checklist/preview', (require, exports, module) => {
 	module.exports = {
 		ChecklistPreview,
 		ClickStrategy,
-		/**
-		 * @param {ChecklistPreviewProps} props
-		 */
+		/** @param {ChecklistPreviewProps} props */
 		ChecklistField: (props) => new ChecklistPreview(props),
 	};
 });

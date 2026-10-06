@@ -4,6 +4,8 @@
 jn.define('im/messenger/lib/parser/markdown/utils/code-protector', (require, exports, module) => {
 	const { MARKDOWN_CODE_PREFIX, MARKDOWN_PLACEHOLDER_SUFFIX } = require('im/messenger/lib/parser/const');
 
+	const CODE_PLACEHOLDER_PATTERN = new RegExp(`${MARKDOWN_CODE_PREFIX}(\\d+)${MARKDOWN_PLACEHOLDER_SUFFIX}`, 'g');
+
 	class CodeProtector
 	{
 		#blocks = [];
@@ -44,9 +46,8 @@ jn.define('im/messenger/lib/parser/markdown/utils/code-protector', (require, exp
 			}
 
 			const blocks = this.#blocks;
-			const pattern = new RegExp(`${MARKDOWN_CODE_PREFIX}(\\d+)${MARKDOWN_PLACEHOLDER_SUFFIX}`, 'g');
 			const result = text.replaceAll(
-				pattern,
+				CODE_PLACEHOLDER_PATTERN,
 				(match, index) => `[code]${blocks[Number(index)]}[/code]`,
 			);
 

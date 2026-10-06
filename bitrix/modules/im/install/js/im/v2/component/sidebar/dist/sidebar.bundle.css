@@ -1,15 +1,3 @@
-.bx-im-sidebar__back-icon {
-	cursor: pointer;
-	border: none;
-	width: 24px;
-	height: 24px;
-	background: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' viewBox='0 0 24 24'%3E%3Cpath fill='%23959ca4' fill-rule='evenodd' d='M15.154 18.364a1 1 0 0 0 0-1.414l-3.82-3.82-.423-.421a1 1 0 0 1 0-1.417l.423-.421 3.82-3.82a1 1 0 0 0 0-1.414l-.183-.184a1 1 0 0 0-1.415 0l-5.84 5.84a1 1 0 0 0 0 1.415l5.84 5.84a1 1 0 0 0 1.415 0z' clip-rule='evenodd'/%3E%3C/svg%3E") no-repeat center;
-}
-
-.bx-im-sidebar__back-icon:hover {
-	background: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' viewBox='0 0 24 24'%3E%3Cpath fill='%236a737f' fill-rule='evenodd' d='M15.154 18.364a1 1 0 0 0 0-1.414l-3.82-3.82-.423-.421a1 1 0 0 1 0-1.417l.423-.421 3.82-3.82a1 1 0 0 0 0-1.414l-.183-.184a1 1 0 0 0-1.415 0l-5.84 5.84a1 1 0 0 0 0 1.415l5.84 5.84a1 1 0 0 0 1.415 0z' clip-rule='evenodd'/%3E%3C/svg%3E") no-repeat center;
-}
-
 .bx-im-sidebar__forward-icon {
 	cursor: pointer;
 	border: none;
@@ -219,7 +207,19 @@
 }
 
 .bx-im-sidebar-header__cross-icon {
+	display: flex;
+	align-items: center;
+	justify-content: center;
 	margin-left: 16px;
+	padding: 0;
+	border: none;
+	background: none;
+	cursor: pointer;
+	--ui-icon-set__icon-color: var(--ui-color-base-4);
+}
+
+.bx-im-sidebar-header__cross-icon:hover {
+	--ui-icon-set__icon-color: var(--ui-color-base-3);
 }
 
 .bx-im-sidebar-header__title {
@@ -232,6 +232,10 @@
 	width: 24px;
 	height: 24px;
 	margin-right: 14px;
+}
+
+.bx-im-detach-from-collab-v2-popup__container {
+	width: 350px;
 }
 
 .bx-im-sidebar-info-preview__container {
@@ -2028,12 +2032,17 @@
 }
 
 .bx-im-sidebar-detail-header__title-text {
-	font: var(--im-font-size-xl)/var(--im-font-line-height-2xs) var(--im-font-family-system);
+	font: var(--im-font-size-2xl)/var(--im-font-line-height-2xs) var(--im-font-family-system);
 	font-weight: var(--im-font-weight-semi-bold);
-	margin-left: 14px;
+	margin-left: 12px;
 	text-overflow: ellipsis;
 	white-space: nowrap;
 	overflow: hidden;
+}
+
+/* Ведущая иконка без margin-right: зазор до заголовка задаёт его margin-left (12px). Правые иконки вложены и margin-right сохраняют. */
+.bx-im-sidebar-detail-header__title-container > .bx-im-sidebar-detail-header__ds-icon {
+	margin-right: 0;
 }
 
 .bx-im-sidebar-detail-header__add-button {
@@ -2058,6 +2067,34 @@
 .bx-im-sidebar-detail-header__search__icon:hover {
 	opacity: 0.7;
 }
+
+.bx-im-sidebar-detail-header__add-icon-button {
+	display: flex;
+	align-items: center;
+}
+
+/*
+ * Members panel header (addButtonAsIcon): search + add-person are rendered via DS BIcon. The glyph
+ * colour is driven by the icon-set "--ui-icon-set__icon-color" variable (theme-aware token), so
+ * these icons are solid (no 0.4 dimming). Other panels keep the default background-image lupa
+ * ("__search__icon" above) untouched.
+ */
+.bx-im-sidebar-detail-header__ds-icon {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	margin-right: var(--im-space-inline-sm);
+	cursor: pointer;
+	border: none;
+	background: none;
+	padding: 0;
+	--ui-icon-set__icon-color: var(--ui-color-base-4);
+}
+
+.bx-im-sidebar-detail-header__ds-icon:hover {
+	--ui-icon-set__icon-color: var(--ui-color-base-3);
+}
+
 .bx-im-detail-empty-search-state__container {
 	--im-message-search-empty-state__color_title: var(--im-color-palette-gray-70, #828b95);
 	--im-message-search-empty-state__color_subtitle: var(--ui-color-palette-gray-50, #a8adb4);
@@ -2775,6 +2812,14 @@
 	padding: 4px 17px 9px;
 }
 
+.bx-im-sidebar-main-detail__error-container {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 16px;
+	padding: 24px 17px;
+}
+
 .bx-im-sidebar-main-detail__user {
 	display: flex;
 	height: 70px;
@@ -2853,6 +2898,11 @@
 .bx-im-sidebar-main-detail__context-menu-icon {
 	flex-shrink: 0;
 	cursor: pointer;
+}
+
+.bx-im-sidebar-main-detail__user .--highlight {
+	color: var(--im-color-palette-black-solid);
+	background-color: #faf16d;
 }
 
 .bx-im-sidebar-favorite-detail__container .bx-im-sidebar-detail-empty-state__container {
@@ -3062,6 +3112,21 @@
 .bx-im-sidebar-search-header__input {
 	margin-left: 11px;
 	width: 246px;
+}
+
+.bx-im-sidebar-search-header__ds-icon {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+	border: none;
+	background: none;
+	padding: 0;
+	--ui-icon-set__icon-color: var(--ui-color-base-4);
+}
+
+.bx-im-sidebar-search-header__ds-icon:hover {
+	--ui-icon-set__icon-color: var(--ui-color-base-3);
 }
 
 .bx-im-sidebar-chats-with-user-detail__container {

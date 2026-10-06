@@ -9,6 +9,10 @@ use Bitrix\Mail\Integration;
 use Bitrix\Mail\Integration\Im\Chat;
 use Bitrix\Mail\Integration\Intranet\Secretary;
 use Bitrix\Mail\ImapCommands\MailsFoldersManager;
+use Bitrix\Mail\Internal\Service\Label\LabelCountersService;
+use Bitrix\Mail\Internal\Service\SourceGeneration\ActivePlacementResolver;
+use Bitrix\Mail\Internal\Service\SourceGeneration\GenerationScope;
+use Bitrix\Mail\Internal\Service\SourceGeneration\MigrationActionGuard;
 use Bitrix\Mail\MailMessageUidTable;
 use Bitrix\Mail\Internals\MailboxDirectoryTable;
 use Bitrix\Mail\Internals\MessageAccessTable;
@@ -23,6 +27,7 @@ final class MessageActions
 {
 	public const DATE_FORMAT = 'Y-m-d H:i:s';
 	public const MAX_BATCH_MESSAGE_IDS = 100;
+	public const ERROR_CRM_ACCESS_DENIED = 'MAIL_MESSAGE_CRM_ACCESS_DENIED';
 
 	/**
 	 * @param string[] $ids Composite IDs in "{messageId}-{mailboxId}" format, e.g. ["123-1", "456-1", "789-2"]
@@ -62,15 +67,66 @@ final class MessageActions
 		return $result;
 	}
 
+	/**
+	 * The whole selection is admitted or rejected as a whole: a set mixing placements of the
+	 * active physical source with placements left by a previous one runs nothing at all.
+	 *
+	 * @param MailboxMessageBatch[] $groups
+	 */
+	private static function rejectStaleGenerations(array $groups): ?\Bitrix\Main\Result
+	{
+		foreach ($groups as $group)
+		{
+			$check = (new ActivePlacementResolver($group->mailboxId))->checkPlacements($group->messageIds);
+
+			if (!$check->isSuccess())
+			{
+				return (new \Bitrix\Main\Result())->addErrors($check->getErrors());
+			}
+		}
+
+		return null;
+	}
+
+	/**
+	 * @param MailboxMessageBatch[] $groups
+	 * @return array<int, \Bitrix\Main\Result>
+	 */
+	private static function checkMigrationActions(array $groups): array
+	{
+		$mailboxIds = array_map(
+			static fn (MailboxMessageBatch $group): int => $group->mailboxId,
+			$groups,
+		);
+
+		return (new MigrationActionGuard())->checkMany($mailboxIds);
+	}
+
+	/**
+	 * Adds the active generation of the mailbox that owns the message to a filter joining
+	 * MESSAGE_UID. The owner is looked up only once the schema of the feature is there.
+	 */
+	private static function activePlacementFilter(int $messageId, array $filter): array
+	{
+		if (!GenerationScope::isSchemaInstalled())
+		{
+			return $filter;
+		}
+
+		return GenerationScope::forMailbox(Helper\Mailbox::getIdByMessageId($messageId))
+			->apply($filter, 'MESSAGE_UID.')
+		;
+	}
+
 	private static function filterOldMessages(array $messageIds, int $mailboxId): array
 	{
 		$oldIds = MailMessageUidTable::getList([
 			'select' => ['ID'],
-			'filter' => [
+			'filter' => GenerationScope::forMailbox($mailboxId)->apply([
 				'@ID' => $messageIds,
 				'=MAILBOX_ID' => $mailboxId,
 				'=IS_OLD' => 'Y',
-			],
+			]),
 		])->fetchAll();
 
 		$oldMap = array_flip(array_column($oldIds, 'ID'));
@@ -97,10 +153,25 @@ final class MessageActions
 			return $result->addError(new \Bitrix\Main\Error('validation'));
 		}
 
+		$staleResult = self::rejectStaleGenerations($groups);
+		if ($staleResult !== null)
+		{
+			return $staleResult;
+		}
+
 		$processedIds = [];
+		$guardResults = self::checkMigrationActions($groups);
 
 		foreach ($groups as $group)
 		{
+			$allowed = $guardResults[$group->mailboxId];
+			if (!$allowed->isSuccess())
+			{
+				$result->addErrors($allowed->getErrors());
+
+				continue;
+			}
+
 			$mailboxId = $group->mailboxId;
 			$messagesIds = $group->messageIds;
 
@@ -111,11 +182,13 @@ final class MessageActions
 			}
 
 			$dirWithMessagesId = MessageFolder::getDirIdForMessages($mailboxId, $messagesIds);
-			$idsUnseenCount = MailMessageUidTable::getCount([
-				'!@IS_SEEN' => ['Y', 'S'],
-				'@ID' => $messagesIds,
-				'=MAILBOX_ID' => $mailboxId,
-			]);
+			$idsUnseenCount = MailMessageUidTable::getCount(
+				GenerationScope::forMailbox($mailboxId)->apply([
+					'!@IS_SEEN' => ['Y', 'S'],
+					'@ID' => $messagesIds,
+					'=MAILBOX_ID' => $mailboxId,
+				])
+			);
 
 			$groupResult = $mailMarkerManager->deleteMails($deleteImmediately);
 
@@ -129,6 +202,7 @@ final class MessageActions
 
 					$mailboxHelper = Helper\Mailbox::createInstance($mailboxId);
 					Helper::updateMailboxUnseenCounter($mailboxId);
+					(new LabelCountersService())->recalculateForUidRows($mailboxId, $messagesIds);
 					$mailboxHelper->updateGlobalCounterForCurrentUser();
 				}
 			}
@@ -158,19 +232,36 @@ final class MessageActions
 			return $result->addError(new \Bitrix\Main\Error('validation'));
 		}
 
+		$staleResult = self::rejectStaleGenerations($groups);
+		if ($staleResult !== null)
+		{
+			return $staleResult;
+		}
+
 		$processedIds = [];
+		$guardResults = self::checkMigrationActions($groups);
 
 		foreach ($groups as $group)
 		{
+			$allowed = $guardResults[$group->mailboxId];
+			if (!$allowed->isSuccess())
+			{
+				$result->addErrors($allowed->getErrors());
+
+				continue;
+			}
+
 			$mailboxId = $group->mailboxId;
 			$messagesIds = $group->messageIds;
 
 			$dirWithMessagesId = MessageFolder::getDirIdForMessages($mailboxId, $messagesIds);
-			$idsUnseenCount = MailMessageUidTable::getCount([
-				'!@IS_SEEN' => ['Y', 'S'],
-				'@ID' => $messagesIds,
-				'=MAILBOX_ID' => $mailboxId,
-			]);
+			$idsUnseenCount = MailMessageUidTable::getCount(
+				GenerationScope::forMailbox($mailboxId)->apply([
+					'!@IS_SEEN' => ['Y', 'S'],
+					'@ID' => $messagesIds,
+					'=MAILBOX_ID' => $mailboxId,
+				])
+			);
 
 			$mailMarkerManager = new MailsFoldersManager($mailboxId, $messagesIds, $userId);
 			$groupResult = $mailMarkerManager->sendMailsToSpam();
@@ -183,6 +274,7 @@ final class MessageActions
 
 				$mailboxHelper = Helper\Mailbox::createInstance($mailboxId);
 				Helper::updateMailboxUnseenCounter($mailboxId);
+				(new LabelCountersService())->recalculateForUidRows($mailboxId, $messagesIds);
 				$mailboxHelper->updateGlobalCounterForCurrentUser();
 			}
 
@@ -210,18 +302,35 @@ final class MessageActions
 			return $result->addError(new \Bitrix\Main\Error('validation'));
 		}
 
+		$staleResult = self::rejectStaleGenerations($groups);
+		if ($staleResult !== null)
+		{
+			return $staleResult;
+		}
+
 		$processedIds = [];
+		$guardResults = self::checkMigrationActions($groups);
 
 		foreach ($groups as $group)
 		{
+			$allowed = $guardResults[$group->mailboxId];
+			if (!$allowed->isSuccess())
+			{
+				$result->addErrors($allowed->getErrors());
+
+				continue;
+			}
+
 			$mailboxId = $group->mailboxId;
 			$messagesIds = $group->messageIds;
 
-			$idsUnseenCount = MailMessageUidTable::getCount([
-				'!@IS_SEEN' => ['Y', 'S'],
-				'@ID' => $messagesIds,
-				'=MAILBOX_ID' => $mailboxId,
-			]);
+			$idsUnseenCount = MailMessageUidTable::getCount(
+				GenerationScope::forMailbox($mailboxId)->apply([
+					'!@IS_SEEN' => ['Y', 'S'],
+					'@ID' => $messagesIds,
+					'=MAILBOX_ID' => $mailboxId,
+				])
+			);
 
 			$mailMarkerManager = new MailsFoldersManager($mailboxId, $messagesIds, $userId);
 			$groupResult = $mailMarkerManager->restoreMailsFromSpam();
@@ -236,10 +345,10 @@ final class MessageActions
 						'select' => [
 							'ID',
 						],
-						'filter' => [
+						'filter' => GenerationScope::forMailbox($mailboxId)->apply([
 							'=PATH' => 'INBOX',
 							'=MAILBOX_ID' => $mailboxId,
-						],
+						]),
 						'limit' => 1,
 					])->fetchAll();
 
@@ -251,6 +360,7 @@ final class MessageActions
 						MessageFolder::increaseDirCounter($mailboxId, $dirForMoveMessages, $dirForMoveMessagesId, $idsUnseenCount);
 
 						Helper::updateMailboxUnseenCounter($mailboxId);
+						(new LabelCountersService())->recalculateForUidRows($mailboxId, $messagesIds);
 						$mailboxHelper->updateGlobalCounterForCurrentUser();
 					}
 				}
@@ -282,20 +392,37 @@ final class MessageActions
 			return $result->addError(new \Bitrix\Main\Error('validation'));
 		}
 
+		$staleResult = self::rejectStaleGenerations($groups);
+		if ($staleResult !== null)
+		{
+			return $staleResult;
+		}
+
 		$processedIds = [];
+		$guardResults = self::checkMigrationActions($groups);
 
 		foreach ($groups as $group)
 		{
+			$allowed = $guardResults[$group->mailboxId];
+			if (!$allowed->isSuccess())
+			{
+				$result->addErrors($allowed->getErrors());
+
+				continue;
+			}
+
 			$mailboxId = $group->mailboxId;
 			$messagesIds = $group->messageIds;
 
 			$mailMarkerManager = new MailsFoldersManager($mailboxId, $messagesIds, $userId);
 
-			$idsUnseenCount = MailMessageUidTable::getCount([
-				'!@IS_SEEN' => ['Y', 'S'],
-				'@ID' => $messagesIds,
-				'=MAILBOX_ID' => $mailboxId,
-			]);
+			$idsUnseenCount = MailMessageUidTable::getCount(
+				GenerationScope::forMailbox($mailboxId)->apply([
+					'!@IS_SEEN' => ['Y', 'S'],
+					'@ID' => $messagesIds,
+					'=MAILBOX_ID' => $mailboxId,
+				])
+			);
 
 			$dirWithMessagesId = false;
 			$dirForMoveMessagesId = [];
@@ -308,10 +435,10 @@ final class MessageActions
 					'select' => [
 						'ID',
 					],
-					'filter' => [
+					'filter' => GenerationScope::forMailbox($mailboxId)->apply([
 						'=PATH' => $folderPath,
 						'=MAILBOX_ID' => $mailboxId,
-					],
+					]),
 					'limit' => 1,
 				])->fetchAll();
 			}
@@ -334,6 +461,7 @@ final class MessageActions
 					MessageFolder::increaseDirCounter($mailboxId, $dirForMoveMessages, $dirForMoveMessagesId, $idsUnseenCount);
 
 					Helper::updateMailboxUnseenCounter($mailboxId);
+					(new LabelCountersService())->recalculateForUidRows($mailboxId, $messagesIds);
 					$mailboxHelper->updateGlobalCounterForCurrentUser();
 				}
 			}
@@ -377,7 +505,7 @@ final class MessageActions
 			if (!empty($mailboxIds) && !empty($md5Dirs))
 			{
 				$res = MailMessageUidTable::getList([
-					'select' => ['ID', 'MAILBOX_ID'],
+					'select' => ['ID', 'MAILBOX_ID', 'GENERATION_ID'],
 					'filter' => [
 						'@MAILBOX_ID' => $mailboxIds,
 						'@DIR_MD5' => $md5Dirs,
@@ -387,9 +515,15 @@ final class MessageActions
 					],
 				]);
 
+				// The scope is per mailbox, so the generation is checked row by row here
 				while ($item = $res->fetch())
 				{
-					$ids[] = "{$item['ID']}-{$item['MAILBOX_ID']}";
+					$mailboxId = (int)$item['MAILBOX_ID'];
+
+					if (GenerationScope::forMailbox($mailboxId)->includes((int)$item['GENERATION_ID']))
+					{
+						$ids[] = "{$item['ID']}-{$mailboxId}";
+					}
 				}
 			}
 		}
@@ -401,10 +535,25 @@ final class MessageActions
 			return $result->addError(new \Bitrix\Main\Error('validation'));
 		}
 
+		$staleResult = self::rejectStaleGenerations($groups);
+		if ($staleResult !== null)
+		{
+			return $staleResult;
+		}
+
 		$processedIds = [];
+		$guardResults = self::checkMigrationActions($groups);
 
 		foreach ($groups as $group)
 		{
+			$allowed = $guardResults[$group->mailboxId];
+			if (!$allowed->isSuccess())
+			{
+				$result->addErrors($allowed->getErrors());
+
+				continue;
+			}
+
 			$filteredMessageIds = self::filterOldMessages($group->messageIds, $group->mailboxId);
 
 			if (empty($filteredMessageIds))
@@ -460,7 +609,7 @@ final class MessageActions
 			&& !empty($message[MailMessageTable::FIELD_SANITIZE_ON_VIEW])
 			&& !empty($message['BODY_HTML']))
 		{
-			$message['BODY_HTML'] = \Bitrix\Mail\Helper\Message::sanitizeHtml($message['BODY_HTML'], true);
+			$message['BODY_HTML'] = \Bitrix\Mail\Helper\Message::sanitizeHtmlForMessageView($message['BODY_HTML']);
 		}
 	}
 
@@ -471,6 +620,16 @@ final class MessageActions
 		if (!Loader::includeModule('crm'))
 		{
 			$result->addError(new \Bitrix\Main\Error(Loc::getMessage('MAIL_MESSAGE_ACTIONS_NO_CRM')));
+			return $result;
+		}
+
+		if (!Integration\Crm\Permissions::getInstance()->hasAccessToCrm($userId))
+		{
+			$result->addError(new \Bitrix\Main\Error(
+				Loc::getMessage('MAIL_MESSAGE_ACTIONS_NO_CRM_ACCESS'),
+				self::ERROR_CRM_ACCESS_DENIED,
+			));
+
 			return $result;
 		}
 
@@ -488,6 +647,9 @@ final class MessageActions
 					]
 				),
 			],
+			// The message is read through its active placement: a retained one carries
+			// the coordinates of a physical source the mailbox no longer talks to
+			'filter' => self::activePlacementFilter($messageId, ['=ID' => $messageId]),
 			'select' => [
 				'*',
 				'MAILBOX_EMAIL' => 'MAILBOX.EMAIL',
@@ -497,9 +659,6 @@ final class MessageActions
 				'MSG_HASH' => 'MESSAGE_UID.HEADER_MD5',
 				'DIR_MD5' => 'MESSAGE_UID.DIR_MD5',
 				'MSG_UID' => 'MESSAGE_UID.MSG_UID',
-			],
-			'filter' => [
-				'=ID' => $messageId,
 			],
 			'order' => [
 				'MESSAGE_UID.INTERNALDATE' => 'DESC',
@@ -520,7 +679,7 @@ final class MessageActions
 			return self::createCrmActivity($messageId, $iteration + 1, $userId);
 		}
 
-		Helper\Message::prepare($message);
+		$message = self::prepareMessageForCrm($message);
 
 		$message['IS_OUTCOME'] = $message['__is_outcome'];
 		$message['IS_SEEN'] = in_array($message['IS_SEEN'], ['Y', 'S']);
@@ -543,6 +702,21 @@ final class MessageActions
 
 		return $result;
 	}
+
+	private static function prepareMessageForCrm(array $message): array
+	{
+		if (empty($message['FIELD_RCPT']))
+		{
+			$message['FIELD_RCPT'] = Helper\Message::getOriginalRecipientsFromHeader(
+				(string)($message['HEADER'] ?? '')
+			);
+		}
+
+		Helper\Message::prepare($message);
+
+		return $message;
+	}
+
 	public static function deleteByMessageIds(array $messageIds, int $userId, bool $deleteImmediately = false): \Bitrix\Main\Result
 	{
 		$ids = self::buildUidIds($messageIds, $userId);
@@ -641,7 +815,10 @@ final class MessageActions
 
 		if (!\Bitrix\Mail\Integration\Crm\Permissions::getInstance()->hasAccessToCrm($userId))
 		{
-			$result->addError(new \Bitrix\Main\Error('Access denied: no access to CRM'));
+			$result->addError(new \Bitrix\Main\Error(
+				Loc::getMessage('MAIL_MESSAGE_ACTIONS_NO_CRM_ACCESS'),
+				self::ERROR_CRM_ACCESS_DENIED,
+			));
 
 			return $result;
 		}
@@ -1041,12 +1218,19 @@ final class MessageActions
 		$ids = [];
 
 		$rows = MailMessageUidTable::getList([
-			'select' => ['ID', 'MAILBOX_ID', 'MESSAGE_ID'],
+			'select' => ['ID', 'MAILBOX_ID', 'MESSAGE_ID', 'GENERATION_ID'],
 			'filter' => [
 				'@MESSAGE_ID' => $messageIds,
 				'!@IS_OLD' => MailMessageUidTable::HIDDEN_STATUSES,
 			],
 		])->fetchAll();
+
+		// A logical message is addressed through its active placement only
+		$rows = array_values(array_filter(
+			$rows,
+			static fn(array $row): bool => GenerationScope::forMailbox((int)$row['MAILBOX_ID'])
+				->includes((int)$row['GENERATION_ID']),
+		));
 
 		if (empty($rows))
 		{

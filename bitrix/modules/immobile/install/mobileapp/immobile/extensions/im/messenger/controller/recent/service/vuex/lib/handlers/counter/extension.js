@@ -36,10 +36,12 @@ jn.define('im/messenger/controller/recent/service/vuex/lib/handlers/counter', (r
 		 */
 		setHandler = ({ payload }) => {
 			this.logger.log('counterSetHandler', payload);
-			const { counterList } = payload.data;
+			const { counterList, previousParentChatIdList = [] } = payload.data;
 			const chatIdList = this.#extractChatIdFromCounterStates(counterList);
 
-			this.#updateRecentItems(chatIdList);
+			// previousParentChatIdList covers parents a counter just detached from: their
+			// aggregated badge is computed via childrenIndex, which no longer links them.
+			this.#updateRecentItems(unique([...chatIdList, ...previousParentChatIdList]));
 		};
 
 		/**

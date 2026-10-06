@@ -1,4 +1,5 @@
 /* eslint-disable */
+
 BX.namespace("BX.Crm");
 
 //region EDITOR
@@ -29,6 +30,8 @@ if(typeof BX.Crm.EntityEditor === "undefined")
 
 		this._modeChangeNotifier = null;
 		this._controlChangeNotifier = null;
+
+		this._unavailableFieldsChecker = null;
 
 		this._entityCreateHandler = BX.delegate(this.onCreateHandler, this);
 		this._entityUpdateHandler = BX.delegate(this.onEntityUpdate, this);
@@ -70,6 +73,9 @@ if(typeof BX.Crm.EntityEditor === "undefined")
 				? BX.CRM.Kanban.Grid.getInstance().getColumn(this.hostColumnForQuickEditorId)
 				: null
 		;
+
+		const unavailableFields = settings.restrictions?.unavailableRequiredFields ?? {};
+		this._unavailableFieldsChecker = new BX.Crm.UnavailableFieldsChecker(unavailableFields);
 
 		BX.Crm.EntityEditor.superclass.initialize.apply(this, [id, settings]);
 
@@ -139,6 +145,11 @@ if(typeof BX.Crm.EntityEditor === "undefined")
 			'BX.UI.EntityEditor:onUserFieldFileUploadComplete',
 			this.onUploaderUploadComplete.bind(this),
 		);
+		BX.Event.EventEmitter.subscribe(
+			this,
+			'onControlChanged',
+			this.onControlChanged.bind(this),
+		);
 	};
 	BX.Crm.EntityEditor.prototype.deattachFromEvents = function()
 	{
@@ -161,6 +172,10 @@ if(typeof BX.Crm.EntityEditor === "undefined")
 		BX.Event.EventEmitter.unsubscribe(
 			'BX.UI.EntityEditor:onUserFieldFileUploadComplete',
 			this.onUploaderUploadComplete,
+		);
+		BX.Event.EventEmitter.unsubscribe(
+			'onControlChanged',
+			this.onControlChanged,
 		);
 	};
 	BX.Crm.EntityEditor.prototype.onUploaderUploadStart = function(event)
@@ -206,6 +221,40 @@ if(typeof BX.Crm.EntityEditor === "undefined")
 			}
 		}
 	};
+
+	BX.Crm.EntityEditor.prototype.onControlChanged = function(event)
+	{
+		if (this._mode !== BX.UI.EntityEditorMode.edit)
+		{
+			return;
+		}
+
+		const control = event.getData()[1]?.control;
+
+		if (control?.getId() !== 'STAGE_ID' && control?.getId() !== 'STATUS_ID')
+		{
+			return;
+		}
+
+		const stageId = control.getRuntimeValue() ?? null;
+
+		if (
+			this._unavailableFieldsChecker.hasUnavailableFieldsByStage(stageId)
+			|| (stageId === null && this._unavailableFieldsChecker.hasUnavailableFields())
+		)
+		{
+			this._toolPanel?.disableSaveButton();
+
+			this.showUnavailableFieldsPopup(this._toolPanel?._editButton, stageId);
+		}
+		else
+		{
+			this._toolPanel?.enableSaveButton();
+
+			this.hideUnavailableFieldsPopup();
+		}
+	}
+
 	BX.Crm.EntityEditor.prototype.enableQuickFormSaveButton = function()
 	{
 		if (
@@ -771,6 +820,76 @@ if(typeof BX.Crm.EntityEditor === "undefined")
 		BX.onCustomEvent(window, this.eventsNamespace + ":onLayout", [ this ]);
 	};
 	//endregion
+
+	BX.Crm.EntityEditor.prototype.showToolPanel = function()
+	{
+		BX.Crm.EntityEditor.superclass.showToolPanel.apply(this);
+
+		if (this._mode !== BX.UI.EntityEditorMode.edit)
+		{
+			return;
+		}
+
+		const stageControl = this.getControlById('STAGE_ID') ?? this.getControlById('STATUS_ID');
+		let stageId = stageControl?.getRuntimeValue() ?? null;
+
+		// Kanban quick form has no stage control: the stage is fixed by the host column
+		if (stageId === null && this.hostColumnForQuickEditor)
+		{
+			stageId = this.hostColumnForQuickEditor.getId()?.toString() ?? null;
+		}
+
+		if (!this.hasUnavailableFieldsByStage(stageId))
+		{
+			return;
+		}
+
+		// Kanban quick form: tool panel is disabled, popup must be anchored to the column's save button
+		const quickFormSaveButton = this.hostColumnForQuickEditor?.editorNodeCreate?.firstChild ?? null;
+		if (quickFormSaveButton)
+		{
+			// Do not (re)show the popup for a quick editor that is closing:
+			// cleanEditor() -> refreshLayout() -> showToolPanel() fires after cancel
+			if (!this.hostColumnForQuickEditor.isEditorOpen())
+			{
+				return;
+			}
+
+			this.disableQuickFormSaveButton();
+			BX.Dom.addClass(quickFormSaveButton, 'ui-btn-disabled');
+			this.showUnavailableFieldsPopup(quickFormSaveButton, stageId);
+
+			return;
+		}
+
+		if (this._toolPanel)
+		{
+			this._toolPanel.disableSaveButton();
+			this.showUnavailableFieldsPopup(this._toolPanel._editButton, stageId);
+		}
+	};
+
+	BX.Crm.EntityEditor.prototype.hasUnavailableFieldsByStage = function(stageId)
+	{
+		return this._unavailableFieldsChecker.hasUnavailableFieldsByStage(stageId);
+	}
+
+	BX.Crm.EntityEditor.prototype.showUnavailableFieldsPopup = function(target, stageId)
+	{
+		this._unavailableFieldsChecker.showPopup(target, stageId);
+	}
+
+	BX.Crm.EntityEditor.prototype.hideUnavailableFieldsPopup = function()
+	{
+		this._unavailableFieldsChecker.hidePopup()
+	}
+
+	BX.Crm.EntityEditor.prototype.hideToolPanel = function()
+	{
+		this.hideUnavailableFieldsPopup();
+		BX.Crm.EntityEditor.superclass.hideToolPanel.apply(this);
+	}
+
 	BX.Crm.EntityEditor.prototype.adjustTitle = function()
 	{
 		BX.Crm.EntityEditor.superclass.adjustTitle.apply(this);

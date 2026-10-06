@@ -1,0 +1,249 @@
+.bizprocdesigner-expression-builder {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-sm);
+	padding: var(--ui-space-inset-md);
+	/* Floor for the layout, capped by the popup width JS gives it: a window too narrow for the
+	   popup gets a narrower one, and the content must not stick out of it. */
+	min-width: min(340px, 100%);
+	box-sizing: border-box;
+	/* Single-scroll layout: header (formula/modes/hint/search) and footer stay put, only the mode
+	   body scrolls. No outer scroll here (overflow:hidden), so there is no second scrollbar and
+	   the footer is never clipped.
+	   --eb-height comes from JS: all the room the trigger leaves below itself, minus a margin from
+	   the window edge. `auto` covers the first paint, before the measurement runs. */
+	height: var(--eb-height, auto);
+	max-height: calc(100vh - 32px);
+	overflow: hidden;
+}
+
+.bizprocdesigner-expression-builder__modes {
+	flex: 0 0 auto;
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--ui-space-inline-xs);
+}
+
+/* Fills the space left between fixed header and footer; min-height:0 lets it shrink so the
+   inner list (not the whole popup) becomes the scroll area when content is tall. */
+.bizprocdesigner-expression-builder__body {
+	flex: 1 1 auto;
+	min-height: 0;
+	display: flex;
+	flex-direction: column;
+}
+
+/* Scrolls when the mode content outgrows the popup. Modes built from a list keep the scroll in
+   the list (it shrinks to the room left, so this never overflows); the calculator and
+   modification forms have no list of their own: without this their fields and chips spill over
+   the footer instead of scrolling. */
+.bizprocdesigner-expression-builder__mode-body {
+	flex: 1 1 auto;
+	min-height: 0;
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-xs);
+	overflow-y: auto;
+}
+
+/* Keep their own height inside the scrolling column: a flex child shrinks by default, which
+   squashes the fields and the chip rows instead of letting the column scroll. The source list is
+   the exception: it is the one child that takes the leftover room and scrolls on its own. */
+.bizprocdesigner-expression-builder__mode-body > *:not(.bizprocdesigner-expression-builder-source-list) {
+	flex: 0 0 auto;
+}
+
+.bizprocdesigner-expression-builder__placeholder,
+.bizprocdesigner-expression-builder__hint {
+	flex: 0 0 auto;
+	color: var(--ui-color-base-3);
+}
+
+.bizprocdesigner-expression-builder__operand {
+	display: flex;
+	align-items: flex-end;
+	gap: var(--ui-space-inline-xs);
+}
+
+.bizprocdesigner-expression-builder__operand .ui-ctl,
+.bizprocdesigner-expression-builder__operand > :first-child {
+	flex: 1 1 auto;
+}
+
+.bizprocdesigner-expression-builder__operations {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--ui-space-inline-xs);
+}
+
+.bizprocdesigner-expression-builder__operation {
+	display: flex;
+}
+
+.bizprocdesigner-expression-builder__operation-select {
+	flex: 1 1 auto;
+}
+
+/* The chosen source doubles as the way back to the list: Modification has no separate
+   "pick a source" button, it opens on the list itself. Native button, so the default
+   button look is reset here. */
+.bizprocdesigner-expression-builder__source-value {
+	display: block;
+	width: 100%;
+	box-sizing: border-box;
+	padding: var(--ui-space-inset-xs);
+	border: none;
+	border-radius: var(--ui-border-radius-sm);
+	background: var(--ui-color-bg-content-secondary);
+	font: inherit;
+	color: var(--ui-color-base-2);
+	text-align: left;
+	word-break: break-word;
+	cursor: pointer;
+	transition: background-color 200ms ease;
+}
+
+.bizprocdesigner-expression-builder__source-value:hover {
+	background: var(--ui-color-bg-state-hover-default);
+}
+
+.bizprocdesigner-expression-builder__source-value:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: -2px;
+}
+
+.bizprocdesigner-expression-builder__preview {
+	padding: var(--ui-space-inset-xs);
+	border-radius: var(--ui-border-radius-sm);
+	background: var(--ui-color-bg-content-secondary);
+}
+
+.bizprocdesigner-expression-builder__preview.--warning {
+	background: var(--ui-color-bg-content-secondary);
+}
+
+.bizprocdesigner-expression-builder__preview-text {
+	color: var(--ui-color-base-2);
+}
+
+.bizprocdesigner-expression-builder__preview.--warning .bizprocdesigner-expression-builder__preview-text {
+	color: var(--ui-color-accent-main-warning);
+}
+
+.bizprocdesigner-expression-builder__warning {
+	padding: var(--ui-space-inset-xs);
+	border-radius: var(--ui-border-radius-sm);
+	background: var(--ui-color-bg-content-secondary);
+}
+
+.bizprocdesigner-expression-builder__warning-text {
+	color: var(--ui-color-accent-main-warning);
+}
+
+/* Formula highlight: parts are rendered as text nodes ({{ }}), never as HTML. */
+.bizprocdesigner-expression-builder__formula {
+	flex: 0 0 auto;
+	display: block;
+	/* The block shows the whole current value of the field, and that can be a long text (a letter
+	   or a notification body). The window height is fixed, so without a cap such a value takes it
+	   all: the mode body shrinks to nothing and the footer leaves the popup, which is
+	   overflow:hidden. A share of the height, so a taller window shows more of the value — counted
+	   from --eb-height rather than written as `25%`, because a percentage of a root that is still
+	   `auto` high resolves to `none` and leaves the block uncapped (first paint, and any mount with
+	   no trigger to measure). The fallback stands for the shortest window the geometry ever gives
+	   (POPUP_MIN_HEIGHT in popup-fit.js), about three lines of the value. */
+	max-height: calc(var(--eb-height, 265px) * 0.25);
+	overflow-y: auto;
+	padding: var(--ui-space-inset-xs);
+	border-radius: var(--ui-border-radius-sm);
+	background: var(--ui-color-bg-content-secondary);
+	font-family: var(--ui-font-family-mono, monospace);
+	font-size: 12px;
+	line-height: 1.5;
+	word-break: break-word;
+	white-space: pre-wrap;
+}
+
+.bizprocdesigner-expression-builder__part {
+	white-space: pre-wrap;
+}
+
+.bizprocdesigner-expression-builder__part.--brace {
+	color: var(--ui-color-base-4);
+}
+
+.bizprocdesigner-expression-builder__part.--function {
+	color: var(--ui-color-accent-main-primary);
+	font-weight: 700;
+}
+
+.bizprocdesigner-expression-builder__part.--source {
+	color: var(--ui-color-accent-main-link);
+}
+
+.bizprocdesigner-expression-builder__part.--operator {
+	color: var(--ui-color-accent-main-warning);
+}
+
+.bizprocdesigner-expression-builder__part.--value {
+	color: var(--ui-color-base-1);
+}
+
+.bizprocdesigner-expression-builder__part.--modifier {
+	color: var(--ui-color-accent-main-success);
+}
+
+.bizprocdesigner-expression-builder__part.--plain {
+	color: var(--ui-color-base-2);
+}
+
+.bizprocdesigner-expression-builder__footer {
+	flex: 0 0 auto;
+	display: flex;
+	justify-content: flex-end;
+	gap: var(--ui-space-inline-xs);
+	padding-top: var(--ui-space-inset-xs);
+	border-top: 1px solid var(--ui-color-divider-less);
+}
+
+/* Placed absolutely in the same relative container as `bp-selector-button`,
+   shifted left of it (selector button sits at right: 8px, width 24px). */
+.bizprocdesigner-expression-builder-trigger {
+	position: absolute;
+	right: 36px;
+	top: 6px;
+	z-index: 10;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 24px;
+	height: 24px;
+	padding: 0;
+	border: 1px solid var(--ui-color-divider-default);
+	border-radius: var(--ui-border-radius-2xs);
+	background: var(--ui-color-bg-content-primary);
+	color: var(--ui-color-accent-main-primary);
+	cursor: pointer;
+	transition: background-color 200ms ease, border-color 200ms ease;
+}
+
+/* Reserve room in the field for both the trigger and the selector button.
+   Specificity (0,3,1) beats the shared field padding rules in common-settings-form,
+   for the node settings controls (`.field-row`) and for the legacy property dialog,
+   where fields are laid out in the tables of `.adm-detail-content-table`. */
+.node-settings-panel .field-row.bizprocdesigner-expression-builder-host textarea,
+.node-settings-panel .field-row.bizprocdesigner-expression-builder-host input[type="text"],
+.node-settings-panel .adm-detail-content-table .bizprocdesigner-expression-builder-host textarea,
+.node-settings-panel .adm-detail-content-table .bizprocdesigner-expression-builder-host input[type="text"] {
+	padding-right: 60px !important;
+}
+
+.bizprocdesigner-expression-builder-trigger:hover {
+	background: var(--ui-color-bg-state-hover-default);
+	border-color: var(--ui-color-divider-accent);
+}
+
+.bizprocdesigner-expression-builder-trigger:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: 1px;
+}

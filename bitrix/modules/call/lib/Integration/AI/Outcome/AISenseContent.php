@@ -21,7 +21,7 @@ abstract class AISenseContent
 		return $this->version;
 	}
 
-	public function hasContent(): bool
+	public function hasContent(bool $ignoreComputedCriteria = false): bool
 	{
 		return !$this->isEmpty;
 	}

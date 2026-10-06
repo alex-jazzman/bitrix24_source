@@ -16,6 +16,13 @@ require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/classes/general/wiz
 $wizard =  new CWizard("bitrix:sale.locations");
 $wizard->IncludeWizardLang("scripts/import.php");
 
+if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !check_bitrix_sessid())
+{
+	echo GetMessage('WSL_IMPORT_ERROR_ACCESS_DENIED');
+	require_once($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/epilog_after.php");
+	die();
+}
+
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/sale/general/location_import.php");
 
 define('ZIP_WRITE_TO_LOG', 0);

@@ -1,5 +1,6 @@
 <?php
 $MESS["LANDING_TPL_ACTIONS"] = "actions";
+$MESS["LANDING_TPL_ACTIONS_ARIA_SITE"] = "Actions for site \"#TITLE#\"";
 $MESS["LANDING_TPL_ACTION_ADD"] = "New Website";
 $MESS["LANDING_TPL_ACTION_ADDPAGE"] = "Create page";
 $MESS["LANDING_TPL_ACTION_ADDPAGE2"] = "Add a page";
@@ -55,6 +56,7 @@ $MESS["LANDING_TPL_TITLE"] = "Sites";
 $MESS["LANDING_TPL_TITLE_KNOWLEDGE"] = "Knowledge bases";
 $MESS["LANDING_TPL_TITLE_PAGE"] = "Sites";
 $MESS["LANDING_TPL_TITLE_STORE"] = "Online Stores";
+$MESS["LANDING_TPL_TRASH_EMPTY_TITLE"] = 'The Recycle Bin is empty.';
 $MESS["LANDING_TPL_TTL_DELETE"] = "Days until permanent deletion";
 $MESS["LANDING_TPL_TTL_DELETE_D"] = "days";
 $MESS["LANDING_TPL_UNPUBLIC"] = "Unpublished";

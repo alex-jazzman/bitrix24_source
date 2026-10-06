@@ -17,10 +17,13 @@
 .editor-chart-common-node-settings-preview__edit-icon {
 	display: none;
 	margin-left: auto;
+	color: var(--ui-color-base-5);
+	transition: color 200ms ease;
 }
 
 .editor-chart-common-node-settings-preview:hover .editor-chart-common-node-settings-preview__edit-icon {
 	display: block;
+	color: var(--ui-color-blue-57, #4A9DFF);
 }
 
 .editor-chart-common-node-settings-preview__dnd-icon {

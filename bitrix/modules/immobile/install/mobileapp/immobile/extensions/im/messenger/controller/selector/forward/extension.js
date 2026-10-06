@@ -3,11 +3,10 @@
  */
 jn.define('im/messenger/controller/selector/forward', (require, exports, module) => {
 	const { openDialogSelector } = require('im/messenger/controller/selector/dialog/opener');
-	const { Feature } = require('im/messenger/lib/feature');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { EventType } = require('im/messenger/const');
 	const { Loc } = require('im/messenger/loc');
-	const { DialogHelper } = require('im/messenger/lib/helper');
+	const { DialogHelper, UserHelper } = require('im/messenger/lib/helper');
 	const { Notification, ToastType } = require('im/messenger/lib/ui/notification');
 
 	const REPLY_MANAGER_KEY = 'reply-manager';
@@ -29,15 +28,28 @@ jn.define('im/messenger/controller/selector/forward', (require, exports, module)
 		 */
 		async open({ parentWidget })
 		{
-			const openSelector = Feature.isExternalChatMessageForwardingAvailable
+			// Tabbed forward selector requires lazy-loading additional extensions (tasks,
+			// channels, copilot list services) whose REST endpoints aren't whitelisted in
+			// the guest scope (`MobileGuestApplication`). Fall back to the simple
+			// openDialogSelector for guests — they only have access to one chat anyway.
+			const canUseTabbed = !UserHelper.isCurrentUserGuest();
+			const openSelector = canUseTabbed
 				? await this.#getForwardDialogSelector()
 				: openDialogSelector;
 
+			const providerOptions = {
+				withFavorite: true,
+			};
+			// Tabbed provider hardcodes guest filtering internally, so we only need to pass
+			// excludeGuests when falling back to the simple openDialogSelector.
+			if (!canUseTabbed)
+			{
+				providerOptions.excludeGuests = true;
+			}
+
 			return openSelector({
 				title: Loc.getMessage('IMMOBILE_MESSENGER_FORWARD_SELECTOR_TITLE'),
-				providerOptions: {
-					withFavorite: true,
-				},
+				providerOptions,
 				onItemSelected: this.#onDialogSelected,
 				closeOnSelect: this.props.closeOnSelect ?? true,
 			}, parentWidget);

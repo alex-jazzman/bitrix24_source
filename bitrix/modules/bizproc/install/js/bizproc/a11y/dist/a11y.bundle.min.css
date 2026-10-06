@@ -1,0 +1,1 @@
+.bizproc-a11y-focusable:focus-visible{outline:1px solid var(--ui-color-accent-main-link);outline-offset:2px;border-radius:4px}.bizproc-a11y-dialog :is(a[href],button,input,select,textarea,[tabindex]):focus-visible{outline:1px solid var(--ui-color-accent-main-link);outline-offset:2px}

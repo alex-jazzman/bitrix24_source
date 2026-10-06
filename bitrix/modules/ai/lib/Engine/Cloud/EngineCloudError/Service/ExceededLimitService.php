@@ -6,17 +6,23 @@ use Bitrix\AI\Container;
 use Bitrix\AI\Engine\Cloud\EngineCloudError\Dto\ExceededLimitDto;
 use Bitrix\AI\Facade\Portal;
 use Bitrix\AI\Integration\Baas\BaasTokenService;
+use Bitrix\AI\Services\VibePlusUpsellService;
 use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Ui\Public\Services\Copilot\CopilotNameService;
 use Bitrix\UI\Util;
 
+// Own phrases of the mapper (AI_ENGINE_ERROR_LIMIT_BAAS_MARKET and the rest). The Vibe+ phrases are
+// not here: VibePlusUpsellService has its own lang file and loads it itself.
+Loc::loadMessages(__FILE__);
+
 class ExceededLimitService
 {
 	protected const SLIDER_CODE_REQUESTS = 'limit_copilot_requests_box';
 	protected const SLIDER_CODE_BOOST = 'limit_boost_copilot_box';
 	protected const SLIDER_CODE_BOX = 'limit_copilot_box';
+	protected const SLIDER_CODE_WEST_TARIFF = 'limit_copilot';
 
 	protected const ERROR_CODE_LIMIT_STANDARD = 'LIMIT_IS_EXCEEDED_MONTHLY';
 	protected const ERROR_CODE_LIMIT_BAAS = 'LIMIT_IS_EXCEEDED_BAAS';
@@ -28,16 +34,23 @@ class ExceededLimitService
 	public function mapExceededLimitError(Error $errorLimit): Error
 	{
 		$exceededLimitDto = $this->getErrorsLimitRules($errorLimit);
+		$mainData = $exceededLimitDto->toArray();
+		$customData = [
+			'sliderCode' => $exceededLimitDto->sliderCode,
+			'showSliderWithMsg' => $exceededLimitDto->showSliderWithMsg,
+			'msgForIm' => $exceededLimitDto->msgForIm,
+			'mainData' => $mainData,
+		];
+
+		if (isset($mainData['vibePlusLimitState']))
+		{
+			$customData['vibePlusLimitState'] = $mainData['vibePlusLimitState'];
+		}
 
 		return new Error(
 			$this->getMessageByErrorCode($exceededLimitDto->errorCode),
 			$exceededLimitDto->errorCode,
-			[
-				'sliderCode' => $exceededLimitDto->sliderCode,
-				'showSliderWithMsg' => $exceededLimitDto->showSliderWithMsg,
-				'msgForIm' => $exceededLimitDto->msgForIm,
-				'mainData' => $exceededLimitDto->toArray()
-			]
+			$customData,
 		);
 	}
 
@@ -67,7 +80,8 @@ class ExceededLimitService
 		$errorData = $errorLimit->getCustomData();
 		$isAvailableBaas = $this->isBaasAvailable();
 		$errorCode = $this->getErrorCode($errorData, $isAvailableBaas);
-		$sliderCode = static::SLIDER_CODE_REQUESTS;
+		$isWestZone = $this->isWestZone();
+		$sliderCode = $isWestZone ? static::SLIDER_CODE_WEST_TARIFF : static::SLIDER_CODE_REQUESTS;
 
 		$msgForIm = Loc::getMessage(
 			'AI_ENGINE_ERROR_LIMIT_IS_EXCEEDED_WITH_MORE',
@@ -79,16 +93,35 @@ class ExceededLimitService
 
 		if (empty($errorData['baasAvailable']))
 		{
+			// This branch is chosen by the absence of BAAS, not by the error code, so throttling
+			// reaches it too - hence the explicit quota code, or "requests come too fast, wait a bit"
+			// would be replaced with an upsell. The zone is asked for the reason spelled out in
+			// Engine::throwError(): the gate reads the model from the controller group name, this
+			// zone from the license region, and on an empty group name the two disagree.
+			// Not reached in shipped configurations at all - the mapper is registered only without the
+			// bitrix24 module, which the Vibe+ gate requires; kept for ai.use_bitrix24 = 'N'.
+			$vibePlusMessage = $isWestZone && $errorCode === static::ERROR_CODE_LIMIT_STANDARD
+				? $this->getVibePlusUpsellService()->resolveLimitMessage()
+				: null;
+
 			return new ExceededLimitDto(
 				showSliderWithMsg: false,
-				sliderCode: $sliderCode,
+				sliderCode: $vibePlusMessage?->sliderCode ?? $sliderCode,
 				errorCode: $errorCode,
-				msgForIm: $msgForIm,
-				isAvailableBaas: false
+				msgForIm: $vibePlusMessage?->msgForIm ?? $msgForIm,
+				isAvailableBaas: false,
+				vibePlusLimitState: $vibePlusMessage?->state,
 			);
 		}
 
-		$sliderCode = $isAvailableBaas ? static::SLIDER_CODE_BOOST : static::SLIDER_CODE_BOX;
+		if ($isWestZone)
+		{
+			$sliderCode = $isAvailableBaas ? static::SLIDER_CODE_BOOST : static::SLIDER_CODE_WEST_TARIFF;
+		}
+		else
+		{
+			$sliderCode = $isAvailableBaas ? static::SLIDER_CODE_BOOST : static::SLIDER_CODE_BOX;
+		}
 		$showSliderWithMsg = !$isAvailableBaas;
 
 		if ($errorCode === static::ERROR_CODE_LIMIT_BAAS_RATE_LIMIT && Portal::isMarketAvailable())
@@ -132,8 +165,19 @@ class ExceededLimitService
 			sliderCode: $sliderCode,
 			errorCode: $errorCode,
 			msgForIm: $msgForIm,
-			isAvailableBaas: $isAvailableBaas
+			isAvailableBaas: $isAvailableBaas,
+			vibePlusLimitState: null,
 		);
+	}
+
+	protected function getVibePlusUpsellService(): VibePlusUpsellService
+	{
+		return new VibePlusUpsellService();
+	}
+
+	protected function isWestZone(): bool
+	{
+		return Portal::isWestZone();
 	}
 
 	protected function isBaasAvailable(): bool

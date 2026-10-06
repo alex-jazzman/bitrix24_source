@@ -126,6 +126,11 @@ jn.define('feature', (require, exports, module) => {
 		{
 			return Boolean(feature?.isFeatureEnabled('device_location_status'));
 		}
+
+		static isPersistentScreenSupported()
+		{
+			return Boolean(feature?.isFeatureEnabled('persistent_screen'));
+		}
 	}
 
 	/**

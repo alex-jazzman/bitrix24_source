@@ -295,7 +295,9 @@ export class MessagesModel extends BuilderModel
 					return chatCollection[currentMessageIndex - 1].id;
 				}
 
-				return -1;
+				// Nothing precedes the message: anchor to the same fake id getByChatId starts the loading
+				// chain from, otherwise a re-anchored loading message stays in the store but leaves the feed
+				return this.#makeFakePreviousSiblingId(payload.chatId);
 			},
 			/** @function messages/findLastChatMessageId */
 			findLastChatMessageId: (state, getters) => (chatId: number): MessageId | null => {
@@ -355,7 +357,7 @@ export class MessagesModel extends BuilderModel
 				}
 
 				messages = messages.map((message: RawMessage) => {
-					return { ...this.getElementState(), ...this.#formatFields(message) };
+					return this.#prepareMessage(store, message);
 				});
 				const chatId = messages[0]?.chatId;
 				if (chatId && clearCollection)
@@ -365,6 +367,7 @@ export class MessagesModel extends BuilderModel
 
 				store.commit('store', { messages });
 				store.commit('setChatCollection', { messages });
+				this.store.dispatch('copilot/chats/checkMessagesForAiContent', { messages });
 			},
 			/** @function messages/store */
 			store: (store, payload: RawMessage | RawMessage[]) => {
@@ -375,13 +378,7 @@ export class MessagesModel extends BuilderModel
 				}
 
 				preparedMessages = preparedMessages.map((message: RawMessage) => {
-					const currentMessage: ImModelMessage = store.state.collection[message.id];
-					if (currentMessage)
-					{
-						return { ...currentMessage, ...this.#formatFields(message) };
-					}
-
-					return { ...this.getElementState(), ...this.#formatFields(message) };
+					return this.#prepareMessage(store, message);
 				});
 
 				if (preparedMessages.length === 0)
@@ -392,6 +389,7 @@ export class MessagesModel extends BuilderModel
 				store.commit('store', {
 					messages: preparedMessages,
 				});
+				this.store.dispatch('copilot/chats/checkMessagesForAiContent', { messages: preparedMessages });
 			},
 			/** @function messages/add */
 			add: (store, payload: RawMessage) => {
@@ -405,6 +403,7 @@ export class MessagesModel extends BuilderModel
 				store.commit('setChatCollection', {
 					messages: [message],
 				});
+				this.store.dispatch('copilot/chats/checkMessagesForAiContent', { messages: [message] });
 
 				return message.id;
 			},
@@ -436,8 +435,8 @@ export class MessagesModel extends BuilderModel
 				});
 			},
 			/** @function messages/readMessages */
-			readMessages: (store, payload: {chatId: number, messageIds: number[]}): number => {
-				const { chatId, messageIds } = payload;
+			readMessages: (store, payload: {chatId: number, messageIds: number[], exact?: boolean}): number => {
+				const { chatId, messageIds, exact = false } = payload;
 				if (!store.state.chatCollection[chatId])
 				{
 					return 0;
@@ -448,7 +447,11 @@ export class MessagesModel extends BuilderModel
 				});
 
 				let messagesToReadCount = 0;
-				const maxMessageId = this.#getMaxMessageId(messageIds);
+				// exact (Feed->IM exact read): clear unread for EXACTLY the given messages,
+				// no sweep up to max(ID) — other unread (including human messages) stays untouched.
+				// Without the flag — prior behavior (range up to max), graceful degradation for old backend.
+				const exactIds = exact ? new Set(messageIds) : null;
+				const maxMessageId = exact ? null : this.#getMaxMessageId(messageIds);
 				const messageIdsToView = messageIds;
 				const messageIdsToRead = [];
 				chatMessages.forEach((chatMessage: ImModelMessage) => {
@@ -457,7 +460,8 @@ export class MessagesModel extends BuilderModel
 						return;
 					}
 
-					if (chatMessage.id <= maxMessageId)
+					const shouldRead = exact ? exactIds.has(chatMessage.id) : chatMessage.id <= maxMessageId;
+					if (shouldRead)
 					{
 						messagesToReadCount++;
 						messageIdsToRead.push(chatMessage.id);
@@ -483,6 +487,15 @@ export class MessagesModel extends BuilderModel
 				const { id } = payload;
 				if (!store.state.collection[id])
 				{
+					// the collection entry can already be renamed away by updateWithId while the loading
+					// message is still there - it must not outlive its own deletion
+					if (store.getters.hasLoadingMessageByMessageId(id))
+					{
+						store.commit('deleteLoadingMessageByMessageId', {
+							messageId: id,
+						});
+					}
+
 					return;
 				}
 
@@ -724,6 +737,19 @@ export class MessagesModel extends BuilderModel
 		return [];
 	}
 
+	// Merge with the stored message when it exists: partial payloads (e.g. a recent preview built
+	// without read fields) must not reset unread/viewed of a live message to the element defaults.
+	#prepareMessage(store, message: RawMessage): ImModelMessage
+	{
+		const currentMessage: ImModelMessage = store.state.collection[message.id];
+		if (currentMessage)
+		{
+			return { ...currentMessage, ...this.#formatFields(message) };
+		}
+
+		return { ...this.getElementState(), ...this.#formatFields(message) };
+	}
+
 	#formatFields(rawFields: JsonObject): JsonObject
 	{
 		const messageParams = Type.isPlainObject(rawFields.params) ? rawFields.params : {};
@@ -879,7 +905,7 @@ export class MessagesModel extends BuilderModel
 		return a.id - b.id;
 	}
 
-	#makeFakePreviousSiblingId(chatId: number): number
+	#makeFakePreviousSiblingId(chatId: number): string
 	{
 		return `${chatId}/-1`;
 	}

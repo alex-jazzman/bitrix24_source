@@ -23,14 +23,14 @@ function findTargetInput(form: ?HTMLElement, button: HTMLElement): ?HTMLElement
 
 async function insertSelectedValue(button: HTMLElement, context): Promise<void>
 {
-	const { form, store, block, portId, onChange } = context;
+	const { form, store, block, portId, connectedBlocks = null, evaluationStage, onChange } = context;
 	const inputElement = findTargetInput(form, button);
 	if (!inputElement)
 	{
 		return;
 	}
 
-	const selector = new ValueSelector(store, block, portId);
+	const selector = new ValueSelector(store, block, portId, connectedBlocks, evaluationStage);
 	try
 	{
 		const value = await selector.show(button);
@@ -49,10 +49,17 @@ async function insertSelectedValue(button: HTMLElement, context): Promise<void>
 	}
 }
 
+// The very check handleBpSelectorButtonClick makes, exposed so a form-wide handler can filter the
+// click before it builds a context of its own.
+export function isBpSelectorButtonTarget(target: ?EventTarget): boolean
+{
+	return target instanceof HTMLElement && target.getAttribute('data-role') === SELECTOR_BUTTON_ROLE;
+}
+
 export function handleBpSelectorButtonClick(event: MouseEvent, context): void
 {
 	const { target } = event;
-	if (!(target instanceof HTMLElement) || target.getAttribute('data-role') !== SELECTOR_BUTTON_ROLE)
+	if (!isBpSelectorButtonTarget(target))
 	{
 		return;
 	}

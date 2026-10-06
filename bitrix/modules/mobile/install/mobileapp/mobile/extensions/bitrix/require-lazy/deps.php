@@ -2,6 +2,8 @@
 
 return [
 	'extensions' => [
-		'notify-manager',
+		'require-lazy',
+		'require-lazy/lazy',
+		'require-lazy/lazy-batch',
 	],
 ];

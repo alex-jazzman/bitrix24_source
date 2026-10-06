@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports, main_core, ui_iconSet_api_vue, im_public, im_v2_lib_createChat, im_v2_component_elements_avatar, im_v2_const) {
+(function (exports, main_core, ui_iconSet_api_vue, im_v2_lib_createChat, im_v2_component_elements_avatar, im_v2_const) {
 	'use strict';
 
 	const DefaultTitleByChatType = {
@@ -113,11 +113,11 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			},
 			onCancel() {
 				im_v2_lib_createChat.CreateChatManager.getInstance().clearPresetFields();
-				im_v2_lib_createChat.CreateChatManager.getInstance().setCreationStatus(false);
 				if (!this.chatCreationIsOpened) {
+					im_v2_lib_createChat.CreateChatManager.getInstance().setCreationStatus(false);
 					return;
 				}
-				void im_public.Messenger.openChat();
+				void im_v2_lib_createChat.CreateChatManager.getInstance().cancelChatCreation();
 			},
 			loc(phraseCode) {
 				return this.$Bitrix.Loc.getMessage(phraseCode);
@@ -161,5 +161,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	exports.CreateChatStatus = CreateChatStatus;
 
-})(this.BX.Messenger.v2.Component.List = this.BX.Messenger.v2.Component.List || {}, BX, BX.UI.IconSet, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Const);
+})(this.BX.Messenger.v2.Component.List = this.BX.Messenger.v2.Component.List || {}, BX, BX.UI.IconSet, BX.Messenger.v2.Lib, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Const);
 //# sourceMappingURL=create-chat-status.bundle.js.map

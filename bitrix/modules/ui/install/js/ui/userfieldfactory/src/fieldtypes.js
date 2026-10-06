@@ -1,4 +1,4 @@
-import {Loc} from 'main.core';
+import {Loc, Extension} from 'main.core';
 
 export const MAX_FIELD_LENGTH = 50;
 
@@ -7,9 +7,14 @@ export const MAX_FIELD_LENGTH = 50;
  */
 export class FieldTypes
 {
+	static isRichTextEnabled(): boolean
+	{
+		return Extension.getSettings('ui.userfieldfactory').get('richTextEnabled', false) === true;
+	}
+
 	static getTypes(): {}
 	{
-		return Object.freeze({
+		const types = {
 			string: 'string',
 			enumeration: 'enumeration',
 			date: 'date',
@@ -23,12 +28,19 @@ export class FieldTypes
 			employee: 'employee',
 			crm: 'crm',
 			crmStatus: 'crm_status',
-		});
+		};
+
+		if (FieldTypes.isRichTextEnabled())
+		{
+			types.richText = 'rich_text';
+		}
+
+		return Object.freeze(types);
 	}
 
 	static getDescriptions(): {}
 	{
-		return Object.freeze({
+		const descriptions = {
 			string: {
 				title: Loc.getMessage("UI_USERFIELD_FACTORY_UF_STRING_TITLE"),
 				description: Loc.getMessage("UI_USERFIELD_FACTORY_UF_STRING_LEGEND"),
@@ -80,7 +92,18 @@ export class FieldTypes
 				title: Loc.getMessage("UI_USERFIELD_FACTORY_UF_EMPLOYEE_TITLE"),
 				description: Loc.getMessage("UI_USERFIELD_FACTORY_UF_EMPLOYEE_LEGEND"),
 			},
-		});
+		};
+
+		if (FieldTypes.isRichTextEnabled())
+		{
+			descriptions[FieldTypes.getTypes().richText] = {
+				title: Loc.getMessage("UI_USERFIELD_FACTORY_UF_RICH_TEXT_TITLE"),
+				description: Loc.getMessage("UI_USERFIELD_FACTORY_UF_RICH_TEXT_LEGEND"),
+				defaultTitle: Loc.getMessage('UI_USERFIELD_FACTORY_UF_RICH_TEXT_LABEL'),
+			};
+		}
+
+		return Object.freeze(descriptions);
 	}
 
 	static getCustomTypeDescription(): {}

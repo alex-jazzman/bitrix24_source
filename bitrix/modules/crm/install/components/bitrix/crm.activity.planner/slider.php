@@ -19,7 +19,15 @@ if ($siteId)
 
 require($_SERVER['DOCUMENT_ROOT'].'/bitrix/header.php');
 
-$action = isset($_REQUEST['ajax_action']) && $_REQUEST['ajax_action'] == 'ACTIVITY_VIEW' ? 'VIEW' : 'EDIT';
+$requestedAction = isset($_REQUEST['action']) && is_string($_REQUEST['action'])
+	? mb_strtolower($_REQUEST['action'])
+	: ''
+;
+$legacyAction = isset($_REQUEST['ajax_action']) && is_string($_REQUEST['ajax_action'])
+	? $_REQUEST['ajax_action']
+	: ''
+;
+$action = $requestedAction === 'view' || $legacyAction === 'ACTIVITY_VIEW' ? 'VIEW' : 'EDIT';
 
 $APPLICATION->includeComponent(
 	'bitrix:crm.activity.planner', '',

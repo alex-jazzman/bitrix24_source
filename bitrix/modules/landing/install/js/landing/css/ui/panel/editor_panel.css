@@ -254,3 +254,11 @@
 		opacity: 0;
 	}
 }
+
+/* Compact editor panel (AI mode): visible keyboard focus for format buttons
+   (base_button.css resets outline for mouse users, :focus-visible restores it
+   for keyboard navigation only; scoped to the compact panel) */
+.landing-ui-panel-compact-editor .landing-ui-button:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary, #0075ff);
+	outline-offset: -2px;
+}

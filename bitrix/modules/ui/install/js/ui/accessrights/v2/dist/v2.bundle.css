@@ -173,6 +173,13 @@
 	color: var(--ui-color-palette-black-base);
 }
 
+/* the store guard is what actually forbids the change, these rules only stop the cell from inviting a click */
+.ui-access-rights-v2-column-item.--read-only .ui-access-rights-v2-column-item-text-link {
+	color: var(--ui-color-base-4);
+	border-bottom-color: transparent;
+	pointer-events: none;
+}
+
 .ui-access-rights-v2-section-head .ui-access-rights-v2-column-item {
 	align-items: center;
 	flex-direction: row;

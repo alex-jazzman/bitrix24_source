@@ -1,9 +1,9 @@
 import { mapGetters } from 'ui.vue3.vuex';
 
-import { Model } from 'booking.const';
+import { Grid, Model } from 'booking.const';
 import { checkBookingIntersection } from 'booking.lib.check-booking-intersection';
 import { MaxInteractionBookingDurationsMs } from 'booking.lib.drag';
-import { gridFactory } from 'booking.lib.grid';
+import { GridFactory, gridTokens, GridTokenKey, type GridBase } from 'booking.lib.grid';
 
 import { BaseCell } from '../../../grid/base-cell/base-cell';
 import { UiRestrictionPopup } from '../../../grid/bookings/ui-restriction-popup/ui-restriction-popup';
@@ -26,6 +26,11 @@ export const DayPlacementSlot = {
 		BaseCell,
 		UiRestrictionPopup,
 	},
+	inject: {
+		gridContext: {
+			default: null,
+		},
+	},
 	props: {
 		/** @type {Cell} */
 		cell: {
@@ -46,11 +51,28 @@ export const DayPlacementSlot = {
 	computed: {
 		...mapGetters({
 			overbookingMap: `${Model.Bookings}/overbookingMap`,
-			zoom: `${Model.Interface}/zoom`,
 		}),
 		grid(): GridBase
 		{
-			return gridFactory.getGrid();
+			return GridFactory.getGrid(this.gridContext);
+		},
+		isWeekMode(): boolean
+		{
+			if (this.gridContext)
+			{
+				return this.gridContext.gridMode === Grid.Mode.Week;
+			}
+
+			return this.$store.getters[`${Model.Interface}/isWeekMode`];
+		},
+		zoom(): number
+		{
+			if (this.gridContext)
+			{
+				return this.gridContext.zoom;
+			}
+
+			return this.$store.getters[`${Model.Interface}/zoom`];
 		},
 		left(): number
 		{
@@ -86,11 +108,25 @@ export const DayPlacementSlot = {
 		},
 		width(): number
 		{
-			return this.overbookingPositionsInCell.length === 0 ? 280 : 280 / 2;
+			const dayCellWidth = gridTokens.get(GridTokenKey.DayCellWidth);
+
+			return this.overbookingPositionsInCell.length === 0 ? dayCellWidth : dayCellWidth / 2;
 		},
 		isRestricted(): boolean
 		{
 			return (this.cell.toTs - this.cell.fromTs) > MaxInteractionBookingDurationsMs;
+		},
+		isRestrictionPopupVisible(): boolean
+		{
+			return this.restrictionPopupEnabled && this.isRestricted && !this.isWeekMode;
+		},
+		restrictionPopupEnabled(): boolean
+		{
+			return this.gridContext?.restrictionPopupEnabled ?? true;
+		},
+		isVisible(): boolean
+		{
+			return this.left >= 0 && (!this.isRestricted || this.isRestrictionPopupVisible);
 		},
 		popupId(): string
 		{
@@ -138,7 +174,7 @@ export const DayPlacementSlot = {
 	},
 	template: `
 		<div
-			v-if="left >= 0"
+			v-if="isVisible"
 			class="booking-booking-selected-cell"
 			:style="{
 				'--left': left + 'px',
@@ -149,7 +185,7 @@ export const DayPlacementSlot = {
 			@mouseleave="$store.dispatch('interface/setHoveredPlacementSlot', null)"
 		>
 			<UiRestrictionPopup
-				v-if="isRestricted"
+				v-if="isRestrictionPopupVisible"
 				:message="loc('BOOKING_BOOKING_DAY_CELL_RESTRICTION')"
 				:popupId="popupId"
 			/>

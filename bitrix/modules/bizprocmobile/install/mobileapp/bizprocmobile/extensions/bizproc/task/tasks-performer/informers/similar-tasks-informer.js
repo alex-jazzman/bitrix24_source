@@ -3,6 +3,8 @@
  */
 jn.define('bizproc/task/tasks-performer/informers/similar-tasks-informer', (require, exports, module) => {
 	const { AppTheme } = require('apptheme/extended');
+	const { Color, Typography } = require('tokens');
+	const { Text2, Text4 } = require('ui-system/typography/text');
 	const { Loc } = require('loc');
 	const { Type } = require('type');
 	const { PureComponent } = require('layout/pure-component');
@@ -162,11 +164,9 @@ jn.define('bizproc/task/tasks-performer/informers/similar-tasks-informer', (requ
 						flexDirection: 'column',
 					},
 				},
-				Text({
+				Text2({
+					color: Color.base2,
 					style: {
-						fontSize: 18,
-						fontWeight: '400',
-						color: AppTheme.colors.base2,
 						textAlign: 'center',
 					},
 					text: Loc.getMessage('BPMOBILE_TASK_TASKS_PERFORMER_INFORMERS_SIMILAR_TASKS_DESCRIPTION'),
@@ -174,7 +174,7 @@ jn.define('bizproc/task/tasks-performer/informers/similar-tasks-informer', (requ
 				BBCodeText({
 					style: {
 						marginTop: 6,
-						fontSize: 18,
+						fontSize: Typography.text2.getValue().fontSize,
 						fontWeight: '500',
 						color: AppTheme.colors.base1,
 						textAlign: 'center',
@@ -217,11 +217,9 @@ jn.define('bizproc/task/tasks-performer/informers/similar-tasks-informer', (requ
 							borderColor: AppTheme.colors.accentSoftBlue1,
 						},
 					},
-					Text({
+					Text4({
+						color: Color.base2,
 						style: {
-							fontSize: 14,
-							fontWeight: '400',
-							color: AppTheme.colors.base2,
 							lineHeightMultiple: 1.1,
 						},
 						text: Loc.getMessage('BPMOBILE_TASK_TASKS_PERFORMER_INFORMERS_MULTIPLE_TASK_COMPLETION'),

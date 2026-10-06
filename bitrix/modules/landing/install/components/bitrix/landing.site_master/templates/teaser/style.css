@@ -115,7 +115,7 @@
 	overflow: hidden;
 	position: relative;
 	margin: -5px 20px 0 20px;
-	background: url(image/landing-sm-teaser-bg.png) left top 25px no-repeat;
+	background: url(image/landing-sm-teaser-bg.webp) left top 25px no-repeat;
 	background-size: 100%;
 }
 
@@ -128,12 +128,12 @@
 	left: 50%;
 	top: 0;
 	transform: translateX(-50%);
-	background: url(image/landing-sm-shop-page-ru.png) top center no-repeat;
+	background: url(image/landing-sm-shop-page-ru.webp) top center no-repeat;
 	background-size: 100%;
 }
 
 .landing-sm-teaser--en .landing-sm-teaser-bottom:after {
-	background-image: url(image/landing-sm-shop-page-en.png);
+	background-image: url(image/landing-sm-shop-page-en.webp);
 }
 
 .landing-sm-teaser-title {

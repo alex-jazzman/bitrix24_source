@@ -33,6 +33,7 @@ export class MediaServer
 
 		this.sendersProcesses = {};
 		this.savedSenderEncodings = {};
+		this.senderKinds = new WeakMap();
 
 		this.callStatsInterval = null;
 		this.statsTimeout = 3000;
@@ -100,7 +101,7 @@ export class MediaServer
 		this.#iceCandidateHandler(data);
 	}
 
-	async addTrack(mediaStreamKind, mediaStreamTrack, streamQualityOptions = {})
+	async addTrack(mediaStreamKind, mediaStreamTrack, streamQualityOptions = {}, hasKnownSid = true)
 	{
 		return new Promise(async (resolve, reject) => {
 			try
@@ -124,6 +125,43 @@ export class MediaServer
 
 				if (sender)
 				{
+					const senderWasEmpty = !sender.track;
+					if (mediaStreamKind === MediaStreamsKinds.Microphone && (!hasKnownSid || senderWasEmpty))
+					{
+						// Reuse the microphone transceiver and re-signal to obtain a fresh sid.
+						// - !hasKnownSid: sender still has a live track but its sid was lost.
+						// - senderWasEmpty: removeTrack() nulled the track and inactivated the transceiver, so a
+						//   plain replaceTrack would not re-publish (server removed the publication, m-line
+						//   inactive) and republishTrack would falsely report success while the mic is silent.
+						//   Reactivate the transceiver and renegotiate so the server actually re-publishes it.
+						if (senderWasEmpty)
+						{
+							const transceiver = this.publisherPeerConnection.getTransceivers?.().find((t) => t.sender === sender);
+							if (transceiver)
+							{
+								transceiver.direction = 'sendonly';
+							}
+						}
+
+						await sender.replaceTrack(mediaStreamTrack);
+						this.#log(`Re-signaling microphone publication to restore a lost sid`);
+						this.#triggerEvents('addTrack', [
+							this.id,
+							{ cid: mediaStreamTrack.id, source: mediaStreamKind },
+							mediaStreamTrack.id,
+							mediaStreamKind,
+						]);
+
+						// Renegotiate for both cases: the new cid must be mapped to an m-line via a fresh SDP,
+						// otherwise the server keeps the old msid and trackCreated never arrives (publish times
+						// out). Exactly one renegotiation happens here per re-signal.
+						this.offersStack++;
+						await this.#sendOffer();
+						resolve(false);
+
+						return;
+					}
+
 					await sender.replaceTrack(mediaStreamTrack);
 					if (mediaStreamKind === MediaStreamsKinds.Camera && this.publicationParams.videoSimulcast)
 					{
@@ -159,6 +197,7 @@ export class MediaServer
 					}
 
 					const transceiver = this.publisherPeerConnection.addTransceiver(mediaStreamTrack, transceiverOptions);
+					this.senderKinds.set(transceiver.sender, mediaStreamKind);
 
 					if (this.publicationParams.videoSimulcast)
 					{
@@ -177,12 +216,14 @@ export class MediaServer
 					|| mediaStreamKind === MediaStreamsKinds.ScreenAudio
 				)
 				{
-					this.publisherPeerConnection.addTransceiver(mediaStreamTrack, transceiverOptions);
+					const transceiver = this.publisherPeerConnection.addTransceiver(mediaStreamTrack, transceiverOptions);
+					this.senderKinds.set(transceiver.sender, mediaStreamKind);
 					this.#triggerEvents('addTrack', [this.id, addTrackSignal, mediaStreamTrack.id, mediaStreamKind]);
 				}
 				else if (mediaStreamKind === MediaStreamsKinds.Screen)
 				{
-					this.publisherPeerConnection.addTransceiver(mediaStreamTrack, transceiverOptions);
+					const transceiver = this.publisherPeerConnection.addTransceiver(mediaStreamTrack, transceiverOptions);
+					this.senderKinds.set(transceiver.sender, mediaStreamKind);
 					const width = mediaStreamTrack.getSettings().width;
 					const height = mediaStreamTrack.getSettings().height;
 
@@ -215,6 +256,12 @@ export class MediaServer
 			{
 				await this.#updateVideoEncodings(sender, mediaStreamTrack);
 			}
+		}
+		else
+		{
+			// No sender yet (device switched before the first publish); the track stays in the local stream
+			// and is published on the next enable, so only surface the gap instead of dropping it silently.
+			this.#log(`No sender for a track with kind ${mediaStreamKind}, deferring replace to the next publication`, LOG_LEVEL.WARNING);
 		}
 	}
 
@@ -516,6 +563,21 @@ export class MediaServer
 			for (const sender of senders)
 			{
 				if (sender.track?.source === kind)
+				{
+					return sender;
+				}
+			}
+
+			// Reuse a sender whose track was nulled by removeTrack, avoiding a duplicate transceiver.
+			// Microphone only: for screen (video/audio) a re-share must go through addTrack so the server
+			// re-publishes it, otherwise replaceTrack on the stale sender leaves it invisible to others.
+			for (const sender of senders)
+			{
+				if (
+					kind === MediaStreamsKinds.Microphone
+					&& !sender.track
+					&& this.senderKinds.get(sender) === kind
+				)
 				{
 					return sender;
 				}

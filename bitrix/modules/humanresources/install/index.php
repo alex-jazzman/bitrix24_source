@@ -1,9 +1,5 @@
 <?php
 
-use Bitrix\HumanResources\Compatibility\Event\NewToOldEventHandler;
-use Bitrix\HumanResources\Compatibility\Event\HcmLink\JobEventHandler;
-use Bitrix\HumanResources\Compatibility\Event\NodeEventHandler;
-use Bitrix\HumanResources\Compatibility\Event\UserEventHandler;
 use Bitrix\Main\Localization\Loc;
 
 if (class_exists('humanresources'))
@@ -19,34 +15,6 @@ class HumanResources extends CModule
 	public $MODULE_VERSION_DATE;
 	public $MODULE_NAME;
 	public $MODULE_DESCRIPTION;
-
-	private $eventsData =
-		[
-			'iblock' => [
-				'OnBeforeIBlockSectionUpdate' => [NodeEventHandler::class, 'onBeforeIBlockSectionUpdate',],
-				'OnAfterIBlockSectionAdd' => [NodeEventHandler::class, 'onAfterIBlockSectionAdd',],
-				'OnBeforeIBlockSectionDelete' => [NodeEventHandler::class, 'onBeforeIBlockSectionDelete',],
-			],
-			'main' => [
-				'OnAfterUserUpdate' => [UserEventHandler::class, 'onAfterUserUpdate',],
-				'OnAfterUserDelete' => [UserEventHandler::class, 'onAfterUserDelete',],
-				'OnAfterUserAdd' => [UserEventHandler::class, 'onAfterUserAdd', 9],
-				'OnAuthProvidersBuildList' => ['\Bitrix\HumanResources\Access\AuthProvider\StructureAuthProvider', 'getProviders',],
-			],
-			'humanresources' => [
-				'OnMemberAdded' => [NewToOldEventHandler::class, 'onMemberAdded',],
-				'OnMemberDeleted' => [NewToOldEventHandler::class, 'onMemberDeleted',],
-				'OnMemberUpdated' => [NewToOldEventHandler::class, 'onMemberUpdated',],
-				'OnNodeAdded' => [NewToOldEventHandler::class, 'onNodeAdded',],
-				'OnNodeUpdated' => [NewToOldEventHandler::class, 'onNodeUpdated',],
-				'OnNodeDeleted' => [NewToOldEventHandler::class, 'onNodeDeleted',],
-				'OnHumanResourcesHcmLinkJobIsDone' => [JobEventHandler::class, 'onUpdateDoneJob'],
-			],
-			'rest' => [
-				'OnRestServiceBuildDescription' => [\Bitrix\HumanResources\Marketplace\Rest\HcmLink::class, 'onRestServiceBuildDescription']
-			],
-		]
-	;
 
 	/**
 	 * Constructor.
@@ -88,7 +56,6 @@ class HumanResources extends CModule
 
 		$this->installFiles();
 		$this->installDB();
-		$this->installEvents();
 
 		$APPLICATION->includeAdminFile(
 			Loc::getMessage('HUMAN_RESOURCES_CORE_INSTALL_TITLE'),
@@ -112,26 +79,17 @@ class HumanResources extends CModule
 	 */
 	public function installDB()
 	{
-		global $DB, $APPLICATION;
-		$application = \Bitrix\Main\HttpApplication::getInstance();
+		global $APPLICATION;
 
-		$connectionType = $application->getConnection()->getType();
-
-		$errors = $DB->runSQLBatch(
-			$this->getDocumentRoot() .'/bitrix/modules/' . $this->MODULE_ID . '/install/db/' . $connectionType . '/install.sql'
-		);
-		if ($errors !== false)
+		$migrationResult = $this->installMigrations();
+		if (!$migrationResult->isSuccess())
 		{
-			$APPLICATION->throwException(implode('', $errors));
+			$APPLICATION->throwException(implode('', $migrationResult->getErrorMessages()));
 			return false;
 		}
 
 		// module
 		registerModule($this->MODULE_ID);
-
-		$DB->runSQLBatch(
-			$this->getDocumentRoot() .'/bitrix/modules/' . $this->MODULE_ID . '/install/db/' . $connectionType . '/install_ft.sql'
-		);
 
 		return true;
 	}
@@ -156,28 +114,18 @@ class HumanResources extends CModule
 	 */
 	public function uninstallDB(array $uninstallParameters = [])
 	{
-		return true;
-	}
+		global $APPLICATION;
 
-	public function installEvents(): void
-	{
-		$eventManager = Bitrix\Main\EventManager::getInstance();
-		foreach ($this->eventsData as $module => $events)
+		$dropTables = false;
+
+		$migrationResult = $this->uninstallMigrations($dropTables);
+		if (!$migrationResult->isSuccess())
 		{
-			foreach ($events as $eventCode => $callback)
-			{
-				$eventManager->registerEventHandler(
-					$module,
-					$eventCode,
-					$this->MODULE_ID,
-					$callback[0],
-					$callback[1],
-					$callback[2] ?? 100,
-				);
-			}
+			$APPLICATION->throwException(implode('', $migrationResult->getErrorMessages()));
+			return false;
 		}
 
-		$this->installAgents();
+		return true;
 	}
 
 	/**
@@ -187,49 +135,5 @@ class HumanResources extends CModule
 	public function uninstallFiles()
 	{
 		return true;
-	}
-
-	private function installAgents(): void
-	{
-		$startTime = \ConvertTimeStamp(time() + \CTimeZone::GetOffset() + 600, 'FULL');
-		\CAgent::AddAgent(
-			name: 'Bitrix\HumanResources\Access\Install\AccessInstaller::installAgent();',
-			module: $this->MODULE_ID,
-			interval: 60,
-			next_exec: $startTime,
-			existError: false,
-		);
-
-		\CAgent::AddAgent(
-			name: 'Bitrix\HumanResources\Compatibility\Converter\StructureBackwardConverter::startDefaultConverting();',
-			module: $this->MODULE_ID,
-			interval: 60,
-			next_exec: $startTime,
-			existError: false,
-		);
-
-		\CAgent::AddAgent(
-			name: 'Bitrix\HumanResources\Install\Stepper\UpdateSortAndActiveFieldsStepper::checkDefaultConverting();',
-			module: $this->MODULE_ID,
-			interval: 600,
-			next_exec: $startTime,
-			existError: false,
-		);
-
-		\CAgent::addAgent(
-			'Bitrix\HumanResources\Install\Agent\HcmLink\JobCleaner::run();',
-			$this->MODULE_ID,
-			'N',
-			3600,
-			existError: false,
-		);
-
-		\CAgent::addAgent(
-			'Bitrix\HumanResources\Install\Agent\HcmLink\ExpiredFieldValueCleaner::run();',
-			$this->MODULE_ID,
-			'N',
-			3600,
-			existError: false,
-		);
 	}
 }

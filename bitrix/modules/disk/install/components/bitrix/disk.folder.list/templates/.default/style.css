@@ -262,7 +262,7 @@ div.bizproc-statuses{width:22px;height:18px;margin-right:6px;float: right;backgr
 	width: 32px;
 }
 
-.bx-disk-interface-filelist.disk-running-filter .main-grid-row-empty {
+.bx-disk-interface-filelist-search-host.disk-running-filter .main-grid-row-empty {
 	visibility: hidden;
 }
 
@@ -296,13 +296,18 @@ div.bizproc-statuses{width:22px;height:18px;margin-right:6px;float: right;backgr
 }
 
 .bx-disk-interface-filelist {
+	position: relative;
 	padding: 0 !important;
+}
+
+.bx-disk-interface-filelist-search-host {
+	position: relative;
 }
 
 .bx-disk-interface-filelist-loader {
 	display: block;
-	height: 350px;
-	position: relative;
+	position: absolute;
+	inset: 0;
 }
 
 .bx-disk-interface-filelist-loader-container {
@@ -1108,6 +1113,16 @@ div.disk-folder-list-search-progress {
 	background-size: cover;
 }
 
+/* Mail attachments folder icon in "Tile" mode (reuses SVG from disk.css/images) */
+.ui-icon.ui-icon-file-folder-mail > i {
+	background-image: url(/bitrix/js/disk/css/images/disk-folder-mail.svg);
+	background-size: cover;
+}
+.ui-icon.ui-icon-file-folder-mail-shared > i {
+	background-image: url(/bitrix/js/disk/css/images/disk-folder-mail-shared.svg);
+	background-size: cover;
+}
+
 .disk-air-message-box-fit-content .popup-window-content {
 	max-width: 500px;
 }
@@ -1120,9 +1135,30 @@ div.disk-folder-list-search-progress {
 }
 
 .disk-air-message-box-file-name {
-	display: block;
+	flex: 0 1 auto;
 	min-width: 0;
 	overflow: hidden;
 	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.disk-air-message-box-file-name-tail {
+	flex: 0 0 auto;
+	max-width: 100%;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.disk-air-message-box-file-name-sr-only {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	margin: -1px;
+	padding: 0;
+	border: 0;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
 	white-space: nowrap;
 }

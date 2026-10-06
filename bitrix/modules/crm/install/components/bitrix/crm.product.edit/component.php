@@ -1,4 +1,8 @@
-<?if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
+<?php
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
+
+use Bitrix\Main\Web\Uri;
 
 if (!CModule::IncludeModule('crm'))
 {
@@ -524,12 +528,9 @@ if (check_bitrix_sessid())
 					$redirectUrl = $arResult['BACK_URL'];
 
 				LocalRedirect(
-					CHTTP::urlAddParams(
-						$redirectUrl,
-						array(
-							'list_section_id' => isset($arResult['LIST_SECTION_ID']) ? $arResult['LIST_SECTION_ID'] : 0
-						)
-					)
+					(string)(new Uri($redirectUrl))->addParams(array(
+							'list_section_id' => $arResult['LIST_SECTION_ID'] ?? 0
+						))
 				);
 			}
 		}

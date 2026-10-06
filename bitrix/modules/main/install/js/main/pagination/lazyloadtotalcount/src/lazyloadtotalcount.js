@@ -28,7 +28,7 @@ export class Lazyloadtotalcount
 	{
 		return Tag.render`
 			<span class="main-pagination-lazyload-count_label">
-				${Loc.getMessage('MAIN_PAGE_NAVIGATION_TOTAL_COUNTER_AMOUNT')}: 
+				${Loc.getMessage('MAIN_PAGE_NAVIGATION_TOTAL_COUNTER_AMOUNT_MSGVER_1')} 
 			</span>
 		`;
 	}

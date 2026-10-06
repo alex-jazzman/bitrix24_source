@@ -48,7 +48,8 @@ export const Application = {
 	},
 	data(): {
 		selectedGroup: ?GroupData,
-		selectedGroupId: ?string,
+		selectedGroupId: ?string | number,
+		selectedGroupIdBeforeSearch: ?string | number,
 		shownItems: Array,
 		shownGroups: Array<Array<GroupData>>,
 		lastSearchString: string,
@@ -69,6 +70,7 @@ export const Application = {
 		return {
 			selectedGroup,
 			selectedGroupId: selectedGroup?.id ?? null,
+			selectedGroupIdBeforeSearch: null,
 			shownItems: [],
 			shownGroups: [],
 			lastSearchString: '',
@@ -78,7 +80,14 @@ export const Application = {
 	computed: {
 		itemsBySelectedGroupId(): Array<ItemData>
 		{
-			const items = this.items.filter((item) => item.groupIds.some(id => id === this.selectedGroupId));
+			if (Type.isNil(this.selectedGroupId))
+			{
+				return [];
+			}
+
+			const items = this.items.filter((item) => (
+				item.groupIds.some(id => String(id) === String(this.selectedGroupId))
+			));
 
 			return this.selectedGroup?.compare ? items.sort(this.selectedGroup.compare) : items;
 		},
@@ -91,12 +100,14 @@ export const Application = {
 
 			const groupIdsWithItems = new Set();
 			this.items.forEach((item) => {
-				item.groupIds.forEach((groupId) => groupIdsWithItems.add(groupId));
+				item.groupIds.forEach((groupId) => groupIdsWithItems.add(String(groupId)));
 			});
 
 			return (
 				this.groups
-					.map(groupList => groupList.filter(group => group.isHeaderGroup === true || groupIdsWithItems.has(group.id)))
+					.map(groupList => groupList.filter(group => (
+						group.isHeaderGroup === true || groupIdsWithItems.has(String(group.id))
+					)))
 					.filter(list => list.length > 0)
 			);
 		},
@@ -152,15 +163,18 @@ export const Application = {
 				// quick replace in-place to keep same array object reference
 				this.shownGroups.splice(0, this.shownGroups.length, ...newVal);
 
-				if (!this.selectedGroupId)
+				const groups = newVal.flat();
+				let selectedGroup = null;
+				if (!Type.isNil(this.selectedGroupId))
 				{
-					const selected = this.shownGroups.flat().find(g => g.selected);
-					if (selected)
-					{
-						this.selectedGroup = selected;
-						this.selectedGroupId = selected.id;
-					}
+					selectedGroup = groups.find(group => (
+						String(group.id) === String(this.selectedGroupId)
+					));
 				}
+
+				selectedGroup ??= groups.find(group => group.selected) ?? null;
+				this.selectedGroup = selectedGroup;
+				this.selectedGroupId = selectedGroup?.id ?? null;
 			},
 		},
 		selectedGroup()
@@ -180,7 +194,7 @@ export const Application = {
 			const groupIdsWithItems = new Set();
 			this.items.forEach((item: ItemData) => {
 				item.groupIds.forEach((groupId: String | Number) => {
-					groupIdsWithItems.add(groupId);
+					groupIdsWithItems.add(String(groupId));
 				});
 			});
 
@@ -188,7 +202,7 @@ export const Application = {
 				this
 					.groups
 					.map((groupList: Array<GroupData>) => groupList.filter((group: GroupData) => (
-						(group.isHeaderGroup === true) || groupIdsWithItems.has(group.id)
+						(group.isHeaderGroup === true) || groupIdsWithItems.has(String(group.id))
 					)))
 					.filter(groupList => groupList.length > 0)
 			);
@@ -212,7 +226,27 @@ export const Application = {
 				this.searching = false;
 				this.shownItems = [];
 
+				if (!Type.isNil(this.selectedGroupIdBeforeSearch))
+				{
+					const selectedGroup = this.getDisplayedGroup()
+						.flat()
+						.find((group) => String(group.id) === String(this.selectedGroupIdBeforeSearch))
+					;
+					if (selectedGroup)
+					{
+						this.selectedGroup = selectedGroup;
+						this.selectedGroupId = selectedGroup.id;
+					}
+				}
+
+				this.selectedGroupIdBeforeSearch = null;
+
 				return;
+			}
+
+			if (this.searching === false)
+			{
+				this.selectedGroupIdBeforeSearch = this.selectedGroupId;
 			}
 
 			this.searching = true;

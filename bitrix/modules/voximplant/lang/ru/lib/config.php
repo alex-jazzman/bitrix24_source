@@ -46,4 +46,5 @@ $MESS["INCOMING_CONFIG_ENTITY_WORKTIME_DAYOFF_FIELD"] = "Выходные дни
 $MESS["INCOMING_CONFIG_ENTITY_WORKTIME_DAYOFF_RULE_FIELD"] = "Правило при звонке вне рабочее время";
 $MESS["INCOMING_CONFIG_ENTITY_WORKTIME_DAYOFF_NUMBER_FIELD"] = "Номер для перенаправления звонка во вне рабочее время";
 $MESS["INCOMING_CONFIG_ENTITY_WORKTIME_DAYOFF_MELODY_FIELD"] = "Мелодия звонка во вне рабочее время";
+$MESS["INCOMING_CONFIG_ENTITY_DTMF_TYPE_FIELD"] = "Тип DTMF";
 ?>

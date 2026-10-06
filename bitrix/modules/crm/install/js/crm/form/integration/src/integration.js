@@ -40,6 +40,7 @@ export class Integration extends EventEmitter
 	#adForms: Array|null = null;
 	#adFormsErrors: Array|null = null;
 	#adAccounts: Array|null = null;
+	#adAccountsErrors: Array|null = [];
 	#seoEventHandler: Function;
 
 	constructor(options: Options)
@@ -425,6 +426,10 @@ export class Integration extends EventEmitter
 					};
 				});
 				this.#renderPageSelector();
+			}).catch(response => {
+				this.#adAccountsErrors = response.errors;
+				this.#adAccounts = [];
+				this.#renderPageSelector();
 			});
 
 			return this.#pagesContainer;
@@ -434,7 +439,7 @@ export class Integration extends EventEmitter
 		{
 			this.#pagesContainer.appendChild((new Alert({
 				color: Alert.Color.PRIMARY,
-				text: Loc.getMessage(
+				text: this.#adAccountsErrors.length > 0 ? this.#adAccountsErrors[0].message : Loc.getMessage(
 					'CRM_FORM_INTEGRATION_JS_PAGE_EMPTY',
 					{'%providerName%': this.getTypeTitle()}
 				),

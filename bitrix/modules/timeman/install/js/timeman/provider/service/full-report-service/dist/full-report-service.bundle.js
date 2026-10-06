@@ -92,6 +92,17 @@ this.BX.Timeman.Provider = this.BX.Timeman.Provider || {};
 			});
 			return Boolean(response?.data);
 		}
+		async discuss(reportId) {
+			const response = await main_core.ajax.runAction('timeman.V2.ReportDiscussion.discuss', {
+				json: {
+					reportId
+				}
+			});
+			return {
+				dialogId: response?.data?.dialogId ?? '',
+				created: Boolean(response?.data?.created)
+			};
+		}
 	}
 	const fullReportService = new FullReportService();
 

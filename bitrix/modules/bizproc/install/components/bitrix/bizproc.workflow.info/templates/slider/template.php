@@ -37,6 +37,7 @@ use Bitrix\Main\Loader;
 	'ui.dialogs.messagebox',
 	'bizproc.workflow.timeline',
 	'ui.hint',
+	'bizproc.a11y',
 ]);
 ?>
 
@@ -48,15 +49,15 @@ use Bitrix\Main\Loader;
 		</div>
 		<div class="bp-workflow-info__content">
 			<div class="bp-workflow-info__tabs">
-				<div class="ui-tabs__tabs-header-container">
-					<span class="ui-tabs__tab-header-container --header-active">
+				<div class="ui-tabs__tabs-header-container" role="navigation" aria-label="<?= htmlspecialcharsbx(Loc::getMessage('BPWFI_SLIDER_TABS_NAV_LABEL')) ?>">
+					<span class="ui-tabs__tab-header-container --header-active" aria-current="true">
 						<span><?= $task ? Loc::getMessage('BPWFI_SLIDER_TASK') : Loc::getMessage('BPWFI_SLIDER_PROCESS') ?></span>
 					</span>
 					<span class="ui-tabs__tab-header-container">
-						<span onclick="BX.Bizproc.Workflow.Timeline.open({ workflowId: '<?= CUtil::JSEscape($workflowId) ?>' });"><?= Loc::getMessage('BPWFI_SLIDER_TIMELINE_MSGVER_1') ?></span>
+						<span data-role="wfi-timeline-tab" aria-haspopup="dialog" data-testid="workflow-info-timeline-tab" onclick="BX.Bizproc.Workflow.Timeline.open({ workflowId: '<?= CUtil::JSEscape($workflowId) ?>' });"><?= Loc::getMessage('BPWFI_SLIDER_TIMELINE_MSGVER_1') ?></span>
 					</span>
 					<span class="ui-tabs__tab-header-container">
-						<a href="<?= htmlspecialcharsbx($workflow['documentUrl']) ?>" target="_blank" style="color: var(--ui-color-base-90);"><?= Loc::getMessage('BPWFI_SLIDER_DOCUMENT') ?></a>
+						<a href="<?= htmlspecialcharsbx($workflow['documentUrl']) ?>" target="_blank" class="bizproc-a11y-focusable" style="color: var(--ui-color-base-90);"><?= Loc::getMessage('BPWFI_SLIDER_DOCUMENT') ?></a>
 					</span>
 				</div>
 				<?php if (!$isMyTask): ?>
@@ -120,7 +121,10 @@ use Bitrix\Main\Loader;
 						?>
 						<div class="ui-form-row" data-cid="<?= htmlspecialcharsbx($cid) ?>">
 							<div class="ui-form-label <?= $field['Required'] ? '--required' : '' ?>">
-								<div class="ui-ctl-label-text"><?= htmlspecialcharsbx(CBPHelper::stringify($field['Name'])) ?></div>
+								<div class="ui-ctl-label-text"><?= htmlspecialcharsbx(CBPHelper::stringify($field['Name'])) ?><?php
+									$fieldDescription = trim((string)($field['Description'] ?? ''));
+									if ($fieldDescription !== ''):
+									?><span class="bp-workflow-info__field-hint" data-testid="task-field-hint" data-hint="<?= htmlspecialcharsbx($fieldDescription) ?>"></span><?php endif; ?></div>
 							</div>
 							<div class="ui-form-content">
 								<?= $documentService->getFieldInputControl(

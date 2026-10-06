@@ -19,6 +19,7 @@ export const Preset = {
 				TASKS: 'tasks',
 				SOCIAL: 'social',
 				SITES: 'sites',
+				SYNC: 'sync',
 			},
 			activePresetId: this.currentPresetId,
 		};
@@ -39,6 +40,10 @@ export const Preset = {
 		isCurrentPresetLanding(): Boolean
 		{
 			return this.activePresetId === this.PRESET_ID.SITES;
+		},
+		isCurrentPresetSync(): Boolean
+		{
+			return this.activePresetId === this.PRESET_ID.SYNC;
 		},
 	},
 	methods: {
@@ -180,6 +185,37 @@ export const Preset = {
 							aria-describedby="presetSitesDesc"
 							:checked="isCurrentPresetLanding"
 						>	   
+					</label>
+				</template>
+
+				<template v-if="presetData.SYNC_PRESET_AVAILABLE">
+					<label
+						class="left-menu-popup-card-item js-left-menu-preset-item"
+						:class="{'left-menu-popup-selected': isCurrentPresetSync}"
+						for="presetTypeSync"
+						@click="setCurrentPreset(PRESET_ID.SYNC)"
+					>
+						<div class="left-menu-popup-card-item-title">
+							{{ $Bitrix.Loc.getMessage('MENU_PRESET_SYNC_TITLE') }}
+						</div>
+						<div class="left-menu-popup-card-item-icon-box left-menu-popup-icon-sync" aria-hidden="true">
+							<div class="left-menu-popup-card-item-icon"></div>
+						</div>
+						<div class="left-menu-popup-card-item-info" id="presetSyncDesc">
+							{{ $Bitrix.Loc.getMessage('MENU_PRESET_SYNC_DESC1') }}
+						</div>
+						<div class="left-menu-popup-card-item-description">
+							{{ $Bitrix.Loc.getMessage('MENU_PRESET_SYNC_DESC2') }}
+						</div>
+						<input
+							type="radio"
+							name="presetType"
+							:value="PRESET_ID.SYNC"
+							id="presetTypeSync"
+							class="menu-visually-hidden"
+							aria-describedby="presetSyncDesc"
+							:checked="isCurrentPresetSync"
+						>
 					</label>
 				</template>
 			</div><!--left-menu-popup-card-container-->

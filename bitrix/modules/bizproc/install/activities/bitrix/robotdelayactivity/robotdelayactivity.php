@@ -6,6 +6,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\Bizproc\Activity\Enum\SchedulerTransport;
+use Bitrix\Bizproc\Activity\Enum\ResumeWorkflowQueue;
 
 $runtime = CBPRuntime::GetRuntime();
 $runtime->includeActivityFile('DelayActivity');
@@ -104,6 +105,11 @@ class CBPRobotDelayActivity extends CBPDelayActivity
 				: null
 			;
 
+			$resumeWorkflowQueue = $schedulerService->useMessengerTransport()
+				? ResumeWorkflowQueue::RobotDelay
+				: null
+			;
+
 			$this->startEventId = $schedulerService->subscribeOnEvent(
 				$this->getWorkflowInstanceId(),
 				$this->getName(),
@@ -112,6 +118,7 @@ class CBPRobotDelayActivity extends CBPDelayActivity
 				[self::FIELD_USER_ID => $userId],
 				sort: self::START_EVENT_SORT,
 				schedulerTransport: $this->getSchedulerTransport(),
+				resumeWorkflowQueue: $resumeWorkflowQueue,
 			);
 
 			$this->continueEventId = $schedulerService->subscribeOnEvent(
@@ -122,6 +129,7 @@ class CBPRobotDelayActivity extends CBPDelayActivity
 				[self::FIELD_USER_ID => $userId],
 				sort: self::CONTINUE_EVENT_SORT,
 				schedulerTransport: $this->getSchedulerTransport(),
+				resumeWorkflowQueue: $resumeWorkflowQueue,
 			);
 
 			$this->logMessage(
@@ -144,7 +152,7 @@ class CBPRobotDelayActivity extends CBPDelayActivity
 			$schedulerService->unSubscribeByEventId(
 				$this->startEventId,
 				self::FIELD_USER_ID,
-				$this->getSchedulerTransport()
+				$this->getSchedulerTransport(),
 			);
 		}
 		if (isset($this->continueEventId))
@@ -152,7 +160,7 @@ class CBPRobotDelayActivity extends CBPDelayActivity
 			$schedulerService->unSubscribeByEventId(
 				$this->continueEventId,
 				self::FIELD_USER_ID,
-				$this->getSchedulerTransport()
+				$this->getSchedulerTransport(),
 			);
 		}
 

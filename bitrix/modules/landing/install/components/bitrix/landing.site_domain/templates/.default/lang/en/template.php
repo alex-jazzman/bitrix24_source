@@ -4,12 +4,16 @@ $MESS["LANDING_TPL_BITRIX24_DOMAIN_NAME"] = "Enter subdomain name:";
 $MESS["LANDING_TPL_BITRIX24_SUBTITLE"] = "Start your site on subdomain #POSTFIX#";
 $MESS["LANDING_TPL_CHECK"] = "Check";
 $MESS["LANDING_TPL_DOMAIN_AVAILABLE"] = "This domain is available!";
+// TEMPORARY: pending translator review
+$MESS["LANDING_TPL_DOMAIN_CHECKING"] = "Checking address";
+// TEMPORARY: pending translator review
+$MESS["LANDING_TPL_DOMAIN_CHECKING_SUBMIT"] = "Checking address. Please submit again once the check is complete.";
 $MESS["LANDING_TPL_DOMAIN_FREE_ALREADY_EXIST_DOMAIN_ALERT"] = "Do you want to connect domain <b>#DOMAIN_NAME#</b> to this site?";
 $MESS["LANDING_TPL_DOMAIN_FREE_ALREADY_EXIST_DOMAIN_H1"] = "Your Bitrix24 already has a gift domain.";
 $MESS["LANDING_TPL_DOMAIN_FREE_ALREADY_EXIST_DOMAIN_TEXT"] = "Gift domain <b>#DOMAIN_NAME#</b> is in use for email purposes.";
 $MESS["LANDING_TPL_DOMAIN_FREE_ANOTHER_SITE_ALERT"] = "Do you want to move the domain <b>#DOMAIN_NAME#</b>?";
 $MESS["LANDING_TPL_DOMAIN_FREE_ANOTHER_SITE_H1"] = "You already have a gift domain";
-$MESS["LANDING_TPL_DOMAIN_FREE_ANOTHER_SITE_NOTICE"] = "Moving a domain to another site may take couple hours to several days.";
+$MESS["LANDING_TPL_DOMAIN_FREE_ANOTHER_SITE_NOTICE"] = "Moving a domain to another site may take a couple of hours to several days.";
 $MESS["LANDING_TPL_DOMAIN_FREE_ANOTHER_SITE_TEXT"] = "The domain <b>#DOMAIN_NAME#</b> is now in use by <b>#SITE_NAME#</b>. You can use the domain with any site on your Bitrix24.";
 $MESS["LANDING_TPL_DOMAIN_FREE_AVAILABLE_LABEL"] = "Domain <b>#DOMAIN_NAME#</b> is active.";
 $MESS["LANDING_TPL_DOMAIN_FREE_AVAILABLE_TITLE"] = "Domain is active";
@@ -20,6 +24,10 @@ $MESS["LANDING_TPL_DOMAIN_FREE_SUSPENDED_H1"] = "Your free domain was suspended"
 $MESS["LANDING_TPL_DOMAIN_FREE_SUSPENDED_NOTICE"] = "The site on your free domain is active but unavailable at the previous address. You can select a new address on the page \"Bitrix24 subdomain\" or upgrade to one of the commercial plans and restore your free domain.";
 $MESS["LANDING_TPL_DOMAIN_FREE_SUSPENDED_TEXT"] = "You have migrated to the free plan. Your site is no longer available at <b>#DOMAIN_NAME#</b>. To restore your domain, please upgrade to any commercial plan.";
 $MESS["LANDING_TPL_DOMAIN_LENGTH_LIMIT"] = "#LENGTH# out of #LIMIT# max";
+// TEMPORARY: pending translator review
+$MESS["LANDING_TPL_DOMAIN_MESSAGE_ERROR"] = "Error. #MESSAGE#";
+// TEMPORARY: pending translator review
+$MESS["LANDING_TPL_DOMAIN_MESSAGE_SUCCESS"] = "Success. #MESSAGE#";
 $MESS["LANDING_TPL_DOMAIN_RULES"] = "Latin alphabet characters, numbers and hyphens only.<br>A dot can only be used as a domain level separator.<br>Maximum 63 characters.";
 $MESS["LANDING_TPL_DOMAIN_RULES_B24"] = "Latin alphabet characters, numbers and hyphens only.<br>Maximum 63 characters.";
 $MESS["LANDING_TPL_ERROR_DOMAIN_CHECK"] = "Domain name can only include Latin characters, numbers and a minus sign. Also, it can end with \".#TLD#\" (e.g.: \"mysite.#TLD#\").";
@@ -28,6 +36,8 @@ $MESS["LANDING_TPL_ERROR_DOMAIN_EMPTY"] = "Domain name cannot be empty";
 $MESS["LANDING_TPL_ERROR_DOMAIN_EXIST"] = "This domain already exists";
 $MESS["LANDING_TPL_ERROR_DOMAIN_EXIST_DELETED"] = "This domain already exists, but it was assigned to a site currently in the Recycle Bin. Please unassign the site first, then try again.";
 $MESS["LANDING_TPL_ERROR_DOMAIN_INCORRECT"] = "The domain name you specified is incorrect.";
+// TEMPORARY: pending translator review
+$MESS["LANDING_TPL_ERROR_DOMAIN_PROCESSING"] = "Could not check the address. Please try again later";
 $MESS["LANDING_TPL_ERROR_DOMAIN_WRONG_DOMAIN_LEVEL"] = "Domain name has to have at least two parts separated by a dot.";
 $MESS["LANDING_TPL_ERROR_DOMAIN_WRONG_LENGTH"] = "Domain name is too long";
 $MESS["LANDING_TPL_ERROR_DOMAIN_WRONG_NAME"] = "Domain name contains invalid characters";

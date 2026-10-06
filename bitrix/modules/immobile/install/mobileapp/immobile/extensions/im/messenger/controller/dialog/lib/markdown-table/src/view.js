@@ -40,12 +40,13 @@ jn.define('im/messenger/controller/dialog/lib/markdown-table/view', (require, ex
 
 		renderTable(headers, rows)
 		{
-			const renderCells = (cells, tag) => cells
+			const renderCells = (cells, tag) => (Array.isArray(cells) ? cells : [])
 				.map((cell) => `<${tag}>${encodeHtml(String(cell ?? ''))}</${tag}>`)
 				.join('');
 
+			const safeRows = Array.isArray(rows) ? rows.filter(Array.isArray) : [];
 			const headerRow = `<thead><tr>${renderCells(headers, 'th')}</tr></thead>`;
-			const bodyRows = rows
+			const bodyRows = safeRows
 				.map((row) => `<tr>${renderCells(row, 'td')}</tr>`)
 				.join('');
 

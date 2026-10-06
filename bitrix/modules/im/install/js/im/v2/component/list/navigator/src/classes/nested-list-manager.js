@@ -7,7 +7,6 @@ import { ChatService } from 'im.v2.provider.service.chat';
 
 const SUPPORTED_CHAT_TYPES = new Set([ChatType.collab]);
 const EXCLUDED_LAYOUTS = new Set([Layout.taskComments]);
-const COMPACT_MODE_LAYOUTS = new Set([Layout.chat]);
 
 export class NestedListManager
 {
@@ -27,11 +26,6 @@ export class NestedListManager
 	static isSupportedChatType(chatType: ChatTypeItem): boolean
 	{
 		return SUPPORTED_CHAT_TYPES.has(chatType);
-	}
-
-	static isCompactModeLayout(): boolean
-	{
-		return COMPACT_MODE_LAYOUTS.has(NestedListManager.#getCurrentLayoutName());
 	}
 
 	static async prepareParentChatId(parentDialogId: string): Promise<number>

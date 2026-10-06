@@ -23,6 +23,7 @@ global $APPLICATION;
 	'ui.buttons',
 	'ui.dialogs.messagebox',
 	'ui.lottie',
+	'bizproc.a11y',
 ]);
 
 /**

@@ -20,6 +20,13 @@ $pageName = $this->getPageName();
 		<form method="POST" action="<?= str_replace('IS_AJAX=Y', '', POST_FORM_ACTION_URI);?>" id="<?= $id;?>-form">
 			<input type="hidden" name="action" value="accept_agreement" />
 			<?= bitrix_sessid_post();?>
+			<?php if (($arResult['AGREEMENT_INITIAL_PROMPT'] ?? '') !== ''): ?>
+				<input
+					type="hidden"
+					name="initial_prompt"
+					value="<?= htmlspecialcharsbx((string)$arResult['AGREEMENT_INITIAL_PROMPT']);?>"
+				/>
+			<?php endif; ?>
 			<?= $arResult['AGREEMENT']['TEXT'];?>
 		</form>
 	</div>
@@ -38,6 +45,7 @@ $pageName = $this->getPageName();
 			draggable: true,
 			lightShadow: true,
 			overlay: true,
+			focusTrap: true,
 			className: '<?= $id;?>-wrapper',
 			buttons: [
 				new BX.PopupWindowButton({

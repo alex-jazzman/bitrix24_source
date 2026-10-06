@@ -159,6 +159,7 @@ $initialData = [
 			&& Option::get('mail', 'enable_mailbox_owner_change', 'N') === 'Y'
 			&& MailAccess::hasCurrentUserAdminAccess()
 			&& OrphanedMailboxLifecycle::isOrphan($mailbox),
+		'canViewMailboxList' => MailAccess::hasCurrentUserAccessToMailboxGrid(),
 		'isSmtpAvailable' => !empty($arParams['IS_SMTP_AVAILABLE']),
 		'isCrmAvailable' => !empty($arParams['CRM_AVAILABLE']),
 		'isCalendarAvailable' => !empty($arParams['IS_CALENDAR_AVAILABLE']),

@@ -11,6 +11,7 @@ $APPLICATION->includeComponent(
 	'',
 	[
 		'MESSAGE' => $arResult['ERROR'] ?? null,
+		'MESSAGE_TYPE' => 'alert',
 	],
 	false
 );

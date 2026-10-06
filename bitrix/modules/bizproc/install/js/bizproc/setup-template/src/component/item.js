@@ -40,7 +40,7 @@ export const FormElement = {
 			required: true,
 		},
 	},
-	emits: ['constantUpdate'],
+	emits: ['constantUpdate', 'constantDateMissing'],
 	computed: {
 		componentName(): ?string
 		{
@@ -61,6 +61,10 @@ export const FormElement = {
 		{
 			this.$emit('constantUpdate', constantId, value);
 		},
+		constantDateMissing(constantId: string, isDateMissing: boolean): void
+		{
+			this.$emit('constantDateMissing', constantId, isDateMissing);
+		},
 	},
 	template: `
 		<component
@@ -70,6 +74,7 @@ export const FormElement = {
 			:formData="constantFormData"
 			:error="errors[item.id]"
 			@constantUpdate="constantUpdate"
+			@constantDateMissing="constantDateMissing"
 		/>
 	`,
 };

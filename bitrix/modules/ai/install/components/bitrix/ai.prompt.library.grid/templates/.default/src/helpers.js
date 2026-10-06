@@ -1,10 +1,11 @@
-import { Runtime, Tag, Type } from 'main.core';
+import { Reflection, Runtime, Tag, Type } from 'main.core';
 
 export async function showNotification(content: string | HTMLElement): void
 {
 	Runtime.loadExtension('ui.notification')
-		.then(({ BX }) => {
-			BX.UI.Notification.Center.notify({
+		.then(() => {
+			const NotificationCenter = Reflection.getClass('BX.UI.Notification.Center');
+			NotificationCenter.notify({
 				content,
 			});
 		})

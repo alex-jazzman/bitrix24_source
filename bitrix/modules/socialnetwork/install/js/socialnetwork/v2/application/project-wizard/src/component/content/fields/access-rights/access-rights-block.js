@@ -8,6 +8,7 @@ import 'ui.icon-set.outline';
 import { UiAccordion, UiAccordionItem } from 'socialnetwork.v2.components.elements.ui-accordion';
 import { UiSelect } from 'socialnetwork.v2.components.elements.ui-select';
 import { UiDivider } from 'socialnetwork.v2.components.elements.ui-divider';
+import { UiField } from 'socialnetwork.v2.components.elements.ui-field';
 import { useProjectStore } from 'socialnetwork.v2.model.project';
 import { useInterfaceStore } from 'socialnetwork.v2.model.interface';
 
@@ -26,6 +27,7 @@ export const AccessRightsBlock = {
 		UiAccordionItem,
 		UiButton,
 		UiDivider,
+		UiField,
 		UiSelect,
 	},
 	inject: {
@@ -108,16 +110,20 @@ export const AccessRightsBlock = {
 						class="sonet--project-wizard--access-rights-item"
 					>
 						<div class="sonet--project-wizard--access-rights-item-title">{{ group.title }}</div>
-						<UiSelect
+						<UiField
 							v-for="field in group.fields"
 							:key="field.id"
-							:modelValue="permissions[group.id]?.[field.id]"
 							:label="field.label"
-							:items="field.items"
-							inputClassName="socialnetwork--project-wizard--field-shadow"
-							:targetContainer
-							@update:modelValue="updatePermission(group.id, field.id, $event)"
-						/>
+						>
+							<UiSelect
+								:modelValue="permissions[group.id]?.[field.id]"
+								:label="field.label"
+								:items="field.items"
+								inputClassName="socialnetwork--project-wizard--field-shadow"
+								:targetContainer
+								@update:modelValue="updatePermission(group.id, field.id, $event)"
+							/>
+						</UiField>
 						<UiDivider/>
 					</div>
 					<UiButton

@@ -1,6 +1,5 @@
 <?php
 
-use Bitrix\Main\EventManager;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
 
@@ -13,8 +12,7 @@ class DiskMobile extends CModule
 	public $MODULE_VERSION_DATE;
 	public $MODULE_NAME;
 	public $MODULE_DESCRIPTION;
-
-	private $workspaceClass = \Bitrix\DiskMobile\Workspace::class;
+	public array $errors = [];
 
 	public function __construct()
 	{
@@ -35,46 +33,26 @@ class DiskMobile extends CModule
 	{
 		ModuleManager::registerModule($this->MODULE_ID);
 
-		$eventManager = EventManager::getInstance();
+		$migrationResult = $this->installMigrations();
+		if (!$migrationResult->isSuccess())
+		{
+			$this->errors = $migrationResult->getErrorMessages();
 
-		$eventManager->registerEventHandler(
-			'mobileapp',
-			'onJNComponentWorkspaceGet',
-			$this->MODULE_ID,
-			$this->workspaceClass,
-			'getPath'
-		);
-
-		$eventManager->registerEventHandler(
-			'mobile',
-			'onTariffRestrictionsCollect',
-			'diskmobile',
-			\Bitrix\DiskMobile\Provider\TariffPlanRestrictionProvider::class,
-			'getTariffPlanRestrictions',
-		);
+			return false;
+		}
 
 		return true;
 	}
 
 	public function uninstallDB()
 	{
-		$eventManager = EventManager::getInstance();
+		$migrationResult = $this->uninstallMigrations(false);
+		if (!$migrationResult->isSuccess())
+		{
+			$this->errors = $migrationResult->getErrorMessages();
 
-		$eventManager->unRegisterEventHandler(
-			'mobileapp',
-			'onJNComponentWorkspaceGet',
-			$this->MODULE_ID,
-			$this->workspaceClass,
-			'getPath'
-		);
-
-		$eventManager->unRegisterEventHandler(
-			'mobile',
-			'onTariffRestrictionsCollect',
-			'diskmobile',
-			\Bitrix\DiskMobile\Provider\TariffPlanRestrictionProvider::class,
-			'getTariffPlanRestrictions',
-		);
+			return false;
+		}
 
 		ModuleManager::unRegisterModule($this->MODULE_ID);
 

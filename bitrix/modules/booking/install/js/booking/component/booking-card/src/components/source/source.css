@@ -25,6 +25,6 @@
 }
 
 .booking-booking-card__source.--yandex {
-	background: var(--ui-color-bg-vibrant-accent) url("../images/yandex.png") center no-repeat;
+	background: var(--ui-color-bg-vibrant-accent) url("../images/yandex.webp") center no-repeat;
 	background-size: 10px;
 }

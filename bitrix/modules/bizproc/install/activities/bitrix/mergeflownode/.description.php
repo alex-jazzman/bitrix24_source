@@ -9,6 +9,7 @@ use Bitrix\Bizproc\Activity\ActivityDescription;
 use Bitrix\Bizproc\Activity\Enum\ActivityType;
 use Bitrix\Bizproc\Activity\Enum\ActivityGroup;
 use Bitrix\Bizproc\Activity\Enum\ActivityColorIndex;
+use Bitrix\Bizproc\Activity\Enum\ActivityNodeType;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Ui\Public\Enum\IconSet\Outline;
 
@@ -19,6 +20,7 @@ $arActivityDescription =
 		[ActivityType::NODE->value],
 	))
 		->setClass('MergeFlowNode')
+		->setNodeType(ActivityNodeType::OPERATORS->value)
 		->setGroups([ ActivityGroup::WORKFLOW->value ])
 		->setColorIndex(ActivityColorIndex::GREY->value)
 		->setIcon(Outline::MERGE->name)

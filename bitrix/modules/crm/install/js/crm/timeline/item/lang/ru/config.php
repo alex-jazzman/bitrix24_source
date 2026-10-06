@@ -36,6 +36,7 @@ $MESS['CRM_TIMELINE_ITEM_ACTIVITY_OPENLINE_COMPLETE_CONF'] = 'При завер�
 $MESS['CRM_TIMELINE_ITEM_ACTIVITY_OPENLINE_COMPLETE_CONF_OK_TEXT'] = 'Завершить дело';
 $MESS['CRM_TIMELINE_ITEM_ACTIVITY_OPENLINE_COMPLETE_CONF_TITLE'] = 'Вы уверены, что хотите завершить дело?';
 $MESS['CRM_TIMELINE_ITEM_ACTIVITY_OPENLINE_SUMMARIZE_TRANSCRIPTION_MENU'] = 'Резюме чата [#DATE#]';
+$MESS['CRM_TIMELINE_ITEM_ACTIVITY_EMAIL_SUMMARIZE_TRANSCRIPTION_MENU'] = 'Резюме почты [#DATE#]';
 $MESS['CRM_TIMELINE_ITEM_FILE_LIST_SHOW_MORE'] = 'Показать еще #COUNT#';
 $MESS['CRM_TIMELINE_ITEM_FILE_LIST_COLLAPSE'] = 'Свернуть';
 $MESS['CRM_TIMELINE_ITEM_FILE_LIST_EXPAND'] = 'Показать все';
@@ -45,6 +46,18 @@ $MESS['CRM_TIMELINE_ITEM_SIGNING_CANCEL_DIALOG_TEXT'] = 'Подписание о
 $MESS['CRM_TIMELINE_ITEM_SIGNING_CANCEL_SUCCESS'] = 'Процесс подписания отменен успешно';
 $MESS['CRM_TIMELINE_ITEM_SIGNING_CANCEL_DIALOG_YES_BUTTON_TEXT'] = 'Отменить подписание';
 $MESS['CRM_TIMELINE_ITEM_SIGNING_CANCEL_DIALOG_NO_BUTTON_TEXT'] = 'Не отменять';
+
+$MESS['CRM_TIMELINE_ITEM_SIGN_ANNUL_DIALOG_TITLE'] = 'Аннулировать документ?';
+$MESS['CRM_TIMELINE_ITEM_SIGN_ANNUL_DIALOG_TEXT'] = 'Документ получит статус «Аннулировано» и перестанет отображаться в основном списке. Найти его можно с помощью фильтра по этому статусу. Действие можно отменить';
+$MESS['CRM_TIMELINE_ITEM_SIGN_ANNUL_DIALOG_YES_BUTTON_TEXT'] = 'Да, аннулировать';
+$MESS['CRM_TIMELINE_ITEM_SIGN_UNANNUL_DIALOG_TITLE'] = 'Снять аннулирование?';
+$MESS['CRM_TIMELINE_ITEM_SIGN_UNANNUL_DIALOG_TEXT'] = 'Отметка «Аннулировано» будет снята с записей документа';
+$MESS['CRM_TIMELINE_ITEM_SIGN_UNANNUL_DIALOG_YES_BUTTON_TEXT'] = 'Снять аннулирование';
+$MESS['CRM_TIMELINE_ITEM_SIGN_ANNUL_DIALOG_NO_BUTTON_TEXT'] = 'Отмена';
+$MESS['CRM_TIMELINE_ITEM_SIGN_ANNUL_SUCCESS'] = 'Документ аннулирован';
+$MESS['CRM_TIMELINE_ITEM_SIGN_UNANNUL_SUCCESS'] = 'Аннулирование снято';
+$MESS['CRM_TIMELINE_ITEM_SIGN_ANNUL_FORBIDDEN'] = 'Недостаточно прав, чтобы изменить отметку аннулирования';
+$MESS['CRM_TIMELINE_ITEM_SIGN_ANNUL_UNCHANGED'] = 'Изменений нет';
 
 $MESS['CRM_TIMELINE_ITEM_AI_PROVIDER_POPUP_TITLE'] ='Для работы #COPILOT_NAME# в CRM установите приложение из Маркета';
 $MESS['CRM_TIMELINE_ITEM_AI_PROVIDER_POPUP_TEXT'] ='#COPILOT_NAME# расшифрует разговор с клиентом, выделит главное и заполнит сделку данными из звонка [helpdesklink]Подробнее[/helpdesklink]';
@@ -77,3 +90,5 @@ $MESS["CRM_TIMELINE_ITEM_EDITABLE_DESCRIPTION_COPILOT_HEADER"] = 'Рекомен
 
 $MESS["CRM_TIMELINE_ITEM_TEXT_EXPAND"] = "ещё";
 $MESS["CRM_TIMELINE_ITEM_TEXT_COLLAPSE"] = "свернуть";
+
+$MESS["CRM_TIMELINE_ITEM_DATE_PILL_CALENDAR_EVENT_ACCESS_DENIED"] = "Недостаточно прав, чтобы изменить событие в календаре, привязанное к делу";

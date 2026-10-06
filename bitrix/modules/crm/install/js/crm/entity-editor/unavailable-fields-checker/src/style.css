@@ -1,0 +1,33 @@
+#crm-unavailable-fields-checker-popup {
+	background: url('../images/unavailable-source-fields-popup-bg.svg') no-repeat left center, var(--ui-color-accent-soft-element-blue);
+}
+
+#crm-unavailable-fields-checker-popup .popup-window-angly--arrow {
+	background: var(--ui-color-accent-soft-element-blue);
+}
+
+.crm-unavailable-fields-checker-popup {
+	padding-left: 110px;
+	background: url('../images/unavailable-source-fields-popup.png') no-repeat left center;
+	color: var(--ui-color-white-base);
+}
+
+.crm-unavailable-fields-checker-popup .crm-unavailable-fields-checker-popup__title {
+	font-size: var(--ui-font-size-xl);
+	font-weight: var(--ui-font-weight-medium);
+	line-height: var(--ui-font-line-height-2xl);
+}
+
+.crm-unavailable-fields-checker-popup .crm-unavailable-fields-checker-popup__description {
+	font-size: var(--ui-font-size-lg);
+	color: var(--ui-color-base-20);
+	overflow-wrap: anywhere;
+	word-break: break-word;
+}
+
+.crm-unavailable-fields-checker-popup button {
+	margin-top: 16px;
+	margin-bottom: 10px;
+	--ui-btn-background: rgba(255, 255, 255, 0.16) !important;
+	--ui-btn-color: var(--ui-color-white-base) !important;
+}

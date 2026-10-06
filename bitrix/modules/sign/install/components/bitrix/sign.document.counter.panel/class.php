@@ -6,6 +6,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)
 }
 
 
+use Bitrix\Main\Context;
 use Bitrix\Main\ErrorCollection;
 use Bitrix\Main\Localization\Loc;
 
@@ -41,6 +42,18 @@ class SignDocumentCounterPanelComponent extends SignBaseComponent
 		$this->arResult['ITEMS'] = $this->prepareItems();
 		$this->arResult['TITLE'] = $this->arParams['TITLE'] ?? null;
 		$this->arResult['FILTER_ID'] = $this->arParams['FILTER_ID'] ?? 'DEFAULT_FILTER_ID';
+		$this->arResult['NUMBER_THOUSANDS_SEPARATOR'] = $this->getNumberThousandsSeparator();
+	}
+
+	/**
+	 * Without a culture the number is rendered ungrouped: the default of the client-side formatter
+	 * is a dot, which would be wrong for most cultures.
+	 */
+	private function getNumberThousandsSeparator(): string
+	{
+		$culture = Context::getCurrent()?->getCulture();
+
+		return (string)($culture?->getNumberThousandsSeparator() ?? '');
 	}
 
 	private function prepareItems(): array

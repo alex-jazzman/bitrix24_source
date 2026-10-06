@@ -1,3 +1,9 @@
+.ui-block-diagram-canvas-map__container:focus-visible {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
+	outline-offset: var(--ui-focus-outline-offset);
+	border-radius: var(--ui-border-radius-2xs);
+}
+
 .ui-block-diagram-canvas-map {
 	width: 100%;
 	height: 100%;

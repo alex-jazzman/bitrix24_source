@@ -1,6 +1,7 @@
 import {Vuex} from 'ui.vue.vuex';
 import {Vue} from 'ui.vue';
 import {ajax, Loc} from 'main.core';
+import { CurrencyCore } from 'currency.currency-core';
 import DeliverySelector from 'salescenter.deliveryselector';
 
 export default {
@@ -86,6 +87,11 @@ export default {
 	{
 		this.$store.dispatch('orderCreation/setPersonTypeId', this.config.personTypeId);
 
+		if (this.config.currency)
+		{
+			CurrencyCore.loadCurrencyFormat(this.config.currency);
+		}
+
 		this.refreshAvailableServices();
 	},
 
@@ -110,7 +116,7 @@ export default {
 		{
 			if (this.isDeliveryCalculated)
 			{
-				return BX.Currency.currencyFormat(this.delivery, this.config.currency, false);
+				return CurrencyCore.currencyFormat(this.delivery, this.config.currency, false);
 			}
 
 		},
@@ -125,7 +131,7 @@ export default {
 		},
 		totalFormatted()
 		{
-			return BX.Currency.currencyFormat(this.total, this.config.currency, false);
+			return CurrencyCore.currencyFormat(this.total, this.config.currency, false);
 		},
 		isDeliveryCalculated()
 		{

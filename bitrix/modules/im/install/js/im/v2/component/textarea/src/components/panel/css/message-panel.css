@@ -99,7 +99,7 @@
 .bx-im-message-panel-file__icon {
 	display: flex;
 	flex-shrink: 0;
-	padding-right: 7px;
+	padding-right: 8px;
 	font: var(--ui-font-size-sm) var(--im-font-family-system);
 	line-height: var(--ui-font-line-height-md);
 	color: var(--im-color-palette-gray-70);
@@ -128,6 +128,119 @@
 	right: 0;
 	top: 0;
 	object-fit: cover;
+}
+
+/* Video note: round poster thumbnail (no background — poster fills the circle). Fits the 47px panel row. */
+.bx-im-message-panel__video-note {
+	width: 36px;
+	height: 36px;
+	border-radius: 50%;
+	overflow: hidden;
+	margin-right: 8px;
+	flex-shrink: 0;
+}
+
+.bx-im-message-panel__video-note_img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+
+.bx-im-message-panel__sticker {
+	width: 36px;
+	height: 36px;
+	margin-right: 8px;
+	flex-shrink: 0;
+}
+
+.bx-im-message-panel__sticker_img {
+	display: block;
+	width: 100%;
+	height: 100%;
+	object-fit: contain;
+}
+
+.bx-im-message-panel__gallery-stack {
+	position: relative;
+	width: 50px;
+	height: 34px;
+	margin-right: 8px;
+	flex-shrink: 0;
+}
+
+/*
+ * Absolutely positioned stack items do not stretch the container, so the width is set per
+ * shown-thumbnail count to hug the actual right edge of the last (rotated) thumbnail and keep
+ * the 8px stack↔text spacing consistent. Widths are the rotated bounding-box right edges:
+ * item1 -> 30, item2 (8deg) -> ~37, item3 (12deg)/badge -> 50 (unchanged base layout).
+ */
+.bx-im-message-panel__gallery-stack.--count-2 {
+	width: 37px;
+}
+
+.bx-im-message-panel__gallery-stack.--count-3 {
+	width: 50px;
+}
+
+.bx-im-message-panel__gallery-stack-item {
+	position: absolute;
+	overflow: hidden;
+	background-color: var(--im-color-palette-gray-03);
+}
+
+.bx-im-message-panel__gallery-stack-item:nth-child(1) {
+	left: 0;
+	top: 2px;
+	width: 30px;
+	height: 30px;
+	border-radius: 7px;
+	z-index: 3;
+}
+
+.bx-im-message-panel__gallery-stack-item:nth-child(2) {
+	left: 6px;
+	top: 1px;
+	width: 29px;
+	height: 29px;
+	border-radius: 6px;
+	transform: rotate(8deg);
+	z-index: 2;
+}
+
+.bx-im-message-panel__gallery-stack-item:nth-child(3) {
+	left: 13px;
+	top: 3px;
+	width: 27px;
+	height: 27px;
+	border-radius: 6px;
+	transform: rotate(12deg);
+	z-index: 1;
+}
+
+.bx-im-message-panel__gallery-stack-img {
+	display: block;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+
+.bx-im-message-panel__gallery-badge {
+	position: absolute;
+	left: 28px;
+	top: 18px;
+	z-index: 4;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	box-sizing: border-box;
+	min-height: 14px;
+	padding: 0 4px;
+	border: 1px solid var(--ui-color-palette-white-base, #fff);
+	border-radius: 14px;
+	background-color: var(--ui-color-accent-main-primary);
+	color: var(--ui-color-palette-white-base, #fff);
+	font: var(--im-font-weight-medium) 10px/12px var(--im-font-family-system);
+	white-space: nowrap;
 }
 
 .bx-im-message-panel__close {

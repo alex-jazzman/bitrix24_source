@@ -11,5 +11,6 @@ return [
 		'calendar:layout/sharing-joint',
 		'calendar:sharing/analytics',
 		'tokens',
+		'ui-system/typography/text',
 	],
 ];

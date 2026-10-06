@@ -13,8 +13,9 @@
 		self.options = options;
 
 		var handler = self.createAction.bind(self);
+		var controlId = self.options.controlId || self.options.messageId;
 
-		var createBtn = BX('mail-msg-' + self.options.messageId + '-actions-create-btn');
+		var createBtn = BX('mail-msg-' + controlId + '-actions-create-btn');
 		BX.bind(
 			createBtn,
 			'click',
@@ -31,27 +32,28 @@
 			}
 		);
 
-		var createMenuBtn = BX('mail-msg-' + self.options.messageId + '-actions-create-menu-btn');
+		var createMenuBtn = BX('mail-msg-' + controlId + '-actions-create-menu-btn');
 		BX.bind(
 			createMenuBtn,
 			'click',
 			function ()
 			{
-				var items = ['TASKS_TASK'];
-				if (self.options.isCrmEnabled)
+				var items = (self.options.availableItems || []).slice();
+
+				var crmActivityIndex = items.indexOf('CRM_ACTIVITY');
+				if (self.options.isCrmEnabled && crmActivityIndex !== -1)
 				{
-					items.push(self.options.createMenu['CRM_ACTIVITY'].binded ? 'CRM_EXCLUDE' : 'CRM_ACTIVITY');
+					items[crmActivityIndex] = self.options.createMenu['CRM_ACTIVITY'].binded ? 'CRM_EXCLUDE' : 'CRM_ACTIVITY';
 				}
-				items = items.concat([
-					'BLOG_POST',
-					'IM_CHAT',
-					'CALENDAR_EVENT'
-				]);
+				else if (!self.options.isCrmEnabled && crmActivityIndex !== -1)
+				{
+					items.splice(crmActivityIndex, 1);
+				}
 				for (var i = 0, id; i < items.length; i++)
 				{
 					id = items[i];
 
-					if (id == self.options.createMenu.__default.id)
+					if (!self.options.createMenu[id] || id == self.options.createMenu.__default.id)
 					{
 						items.splice(i, 1);
 						i--;
@@ -67,8 +69,13 @@
 					};
 				}
 
+				if (items.length === 0)
+				{
+					return;
+				}
+
 				BX.Main.MenuManager.show(
-					'mail-msg-' + self.options.messageId + '-create-menu',
+					'mail-msg-' + controlId + '-create-menu',
 					createMenuBtn,
 					items,
 					{
@@ -84,6 +91,8 @@
 	BXMailMessageActions.createAction = function (event, item)
 	{
 		var self = this;
+
+		var controlId = self.options.controlId || self.options.messageId;
 
 		var failHandler = function (json)
 		{
@@ -145,7 +154,7 @@
 
 						self.options.createMenu['CRM_ACTIVITY'].binded = true;
 
-						BX.Main.MenuManager.destroy('mail-msg-' + self.options.messageId + '-create-menu');
+						BX.Main.MenuManager.destroy('mail-msg-' + controlId + '-create-menu');
 
 						BX.Event.EventEmitter.emit(
 							'BXMailMessageActions:CRM_ACTIVITY',
@@ -195,7 +204,7 @@
 							self.options.createMenu['CRM_ACTIVITY'].binded = false;
 						}
 
-						BX.Main.MenuManager.destroy('mail-msg-' + self.options.messageId + '-create-menu');
+						BX.Main.MenuManager.destroy('mail-msg-' + controlId + '-create-menu');
 					},
 					failHandler
 				);

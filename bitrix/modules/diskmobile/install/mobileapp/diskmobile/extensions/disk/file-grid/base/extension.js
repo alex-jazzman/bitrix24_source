@@ -47,11 +47,19 @@ jn.define('disk/file-grid/base', (require, exports, module) => {
 	const { storagesAdded, storagesUpserted } = require('disk/statemanager/redux/slices/storages');
 	const { observeListChange } = require('disk/statemanager/redux/slices/files/observers/stateful-list');
 	const { selectById, selectEntities, selectRightsById } = require('disk/statemanager/redux/slices/files/selector');
+	const {
+		selectSortingOrder,
+		selectSortingType,
+		setSortingOrder,
+		setSortingType,
+	} = require('disk/statemanager/redux/slices/settings');
 
 	const { FolderContextType, FileType } = require('disk/enum');
 	const { FileGridMoreMenu, FileGridSorting, FileGridFilter } = require('disk/file-grid/navigation');
 	const { CreateFolderDialog } = require('disk/dialogs/create-folder');
 	const { DiskUploader } = require('disk/uploader');
+	const { createBoard } = require('disk/create-board');
+	const { finalizePendingRemovals } = require('disk/remove');
 
 	/**
 	 * @abstract
@@ -79,11 +87,13 @@ jn.define('disk/file-grid/base', (require, exports, module) => {
 				this.breadcrumbs.push(this.props.folderId);
 			}
 
+			const { sortingType, isASC } = this.getInitialSorting();
+
 			this.state = {
 				loading: true,
 				folderId: this.props.folderId ?? null,
-				isASC: false,
-				sortingType: FileGridSorting.types.UPDATE_TIME,
+				isASC,
+				sortingType,
 			};
 
 			this.searchFilter = new FileGridFilter();
@@ -101,7 +111,7 @@ jn.define('disk/file-grid/base', (require, exports, module) => {
 				getDefaultPresetId: () => this.searchFilter.getDefaultPreset(),
 			});
 
-			this.sorting = new FileGridSorting({ type: FileGridSorting.types.UPDATE_TIME, isASC: this.state.isASC });
+			this.sorting = new FileGridSorting({ type: sortingType, isASC });
 
 			this.state.folderRights = this.getFolderId() ? selectRightsById(store.getState(), this.getFolderId()) : {};
 
@@ -125,6 +135,10 @@ jn.define('disk/file-grid/base', (require, exports, module) => {
 		{
 			this.fetchStorage();
 			this.unsubscribeFilesObserver = observeListChange(store, this.onVisibleFilesChange);
+			if (this.shouldUseStoredSorting())
+			{
+				this.unsubscribeSettings = store.subscribe(this.syncSortingSettings);
+			}
 		}
 
 		componentWillUnmount()
@@ -134,9 +148,19 @@ jn.define('disk/file-grid/base', (require, exports, module) => {
 				this.unsubscribeFilesObserver();
 			}
 
+			finalizePendingRemovals({
+				relativeFolderId: this.getFolderId(),
+				parentWidget: this.parentWidget,
+			});
+
 			if (this.moreMenu.unsubscribe)
 			{
 				this.moreMenu.unsubscribe();
+			}
+
+			if (this.unsubscribeSettings)
+			{
+				this.unsubscribeSettings();
 			}
 		}
 
@@ -330,6 +354,15 @@ jn.define('disk/file-grid/base', (require, exports, module) => {
 
 		/**
 		 * @protected
+		 * @return {boolean} list shows children of getFolderId(), so row visibility can be reconciled by parentId
+		 */
+		shouldReconcileByParentId()
+		{
+			return true;
+		}
+
+		/**
+		 * @protected
 		 * @return {boolean}
 		 */
 		isShowFloatingButton()
@@ -379,16 +412,40 @@ jn.define('disk/file-grid/base', (require, exports, module) => {
 			return false;
 		}
 
+		shouldUseStoredSorting()
+		{
+			return true;
+		}
+
+		getInitialSorting()
+		{
+			if (!this.shouldUseStoredSorting())
+			{
+				return {
+					sortingType: FileGridSorting.types.UPDATE_TIME,
+					isASC: false,
+				};
+			}
+
+			const state = store.getState();
+
+			return {
+				sortingType: selectSortingType(state),
+				isASC: selectSortingOrder(state),
+			};
+		}
+
 		/**
 		 * @protected
 		 */
 		setSorting(sortingType)
 		{
-			if (this.sorting.getType() !== sortingType)
+			if (
+				this.shouldUseStoredSorting()
+				&& this.state.sortingType !== sortingType
+			)
 			{
-				this.sorting.setType(sortingType);
-				this.moreMenu.setSelectedSorting(sortingType);
-				this.setState({ sortingType }, this.reload);
+				dispatch(setSortingType(sortingType));
 			}
 		}
 
@@ -397,9 +454,35 @@ jn.define('disk/file-grid/base', (require, exports, module) => {
 		 */
 		setOrder(isASC)
 		{
-			this.sorting.setIsASC(isASC);
-			this.setState({ isASC }, this.reload);
+			if (
+				this.shouldUseStoredSorting()
+				&& this.state.isASC !== isASC
+			)
+			{
+				dispatch(setSortingOrder(isASC));
+			}
 		}
+
+		syncSortingSettings = () => {
+			const state = store.getState();
+			const sortingType = selectSortingType(state);
+			const isASC = selectSortingOrder(state);
+
+			if (
+				this.state.sortingType === sortingType
+				&& this.state.isASC === isASC
+			)
+			{
+				return;
+			}
+
+			this.sorting.setType(sortingType);
+			this.sorting.setIsASC(isASC);
+			this.moreMenu.setSelectedSorting(sortingType);
+			this.moreMenu.setIsASC(isASC);
+
+			this.setState({ sortingType, isASC }, this.reload);
+		};
 
 		getListActions()
 		{
@@ -971,6 +1054,21 @@ jn.define('disk/file-grid/base', (require, exports, module) => {
 				folderId: this.getFolderId(),
 				storageId: this.getStorageId(),
 				layoutWidget: this.parentWidget,
+				extraItems: [
+					{
+						id: 'board',
+						name: Loc.getMessage('M_DISK_FILE_GRID_CREATE_BOARD_MENU_ITEM'),
+					},
+				],
+				itemSelectedCallback: (id) => {
+					if (id === 'board')
+					{
+						void createBoard({
+							folderId: this.getFolderId(),
+							parentWidget: this.parentWidget,
+						});
+					}
+				},
 			});
 		};
 
@@ -1026,7 +1124,24 @@ jn.define('disk/file-grid/base', (require, exports, module) => {
 
 			if (moved.length > 0)
 			{
-				void this.updateFiles(filterCurrentFolderFiles(filterFiles(moved)));
+				const visibleMovedFiles = filterFiles(moved);
+				if (this.isSearching() || !this.shouldReconcileByParentId())
+				{
+					const visibleSearchResultFiles = visibleMovedFiles.filter(
+						({ id }) => this.stateFulListRef.hasItem(id),
+					);
+
+					void this.updateFiles(visibleSearchResultFiles);
+				}
+				else
+				{
+					const currentFolderFiles = filterCurrentFolderFiles(visibleMovedFiles);
+					const otherFolderFiles = visibleMovedFiles.filter(({ parentId }) => parentId !== this.getFolderId());
+
+					void this.removeFiles(otherFolderFiles);
+					void this.addOrRestoreFiles(currentFolderFiles);
+					void this.updateFiles(currentFolderFiles);
+				}
 			}
 
 			if (created.length > 0)

@@ -2,12 +2,15 @@ import { BaseField } from './base-field';
 import { Dom, Tag, Text, Event, Loc } from 'main.core';
 import { DateTimeFormat } from 'main.date';
 import { GridManager } from '../grid-manager';
+import { Chip, ChipDesign, ChipSize } from 'ui.system.chip';
 
 export type LastSyncFieldType = {
 	lastSync: ?number,
 	mailboxId: ?number,
 	hasError: ?boolean,
 	canEdit: ?boolean,
+	migrationStatus: ?string,
+	migrationActive: ?boolean,
 }
 
 export class LastSyncField extends BaseField
@@ -18,7 +21,11 @@ export class LastSyncField extends BaseField
 			<div class="mailbox-grid_last-sync-container mailbox-grid_single-line_field"></div>
 		`;
 
-		if (params.hasError)
+		if (params.migrationActive)
+		{
+			Dom.append(this.#getMigrationStatus(), lastSyncContainer);
+		}
+		else if (params.hasError)
 		{
 			Dom.append(this.#getErrorMessage(), lastSyncContainer);
 		}
@@ -40,6 +47,16 @@ export class LastSyncField extends BaseField
 		}
 
 		this.appendToFieldNode(lastSyncContainer);
+	}
+
+	#getMigrationStatus(): HTMLElement
+	{
+		return new Chip({
+			size: ChipSize.Sm,
+			rounded: true,
+			text: Loc.getMessage('MAIL_MAILBOX_LIST_MIGRATION_IN_PROGRESS') ?? '',
+			design: ChipDesign.OutlineWarning,
+		}).render();
 	}
 
 	#getLastSyncContainer(lastSync: string): HTMLElement

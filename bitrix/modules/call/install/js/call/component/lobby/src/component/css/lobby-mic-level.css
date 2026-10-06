@@ -1,0 +1,36 @@
+.call-lobby-mic-level {
+	box-sizing: border-box;
+	position: absolute;
+	bottom: 16px;
+	left: 50%;
+	transform: translate(-50%);
+	padding: 1px 24px 1px 11px;
+	display: flex;
+	align-items: center;
+	background-color: rgba(var(--ui-color-palette-black-solid-rgb), 0.45);
+	backdrop-filter: blur(50px);
+	border-radius: 14px;
+}
+
+.call-lobby-mic-level__icon {
+	width: 14px;
+	height: 14px;
+	margin-right: 3px;
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' fill='none'%3E%3Cpath d='M7 1a2 2 0 0 0-2 2v4a2 2 0 0 0 4 0V3a2 2 0 0 0-2-2zM3.5 6.5a3.5 3.5 0 0 0 7 0' stroke='%23fff' stroke-linecap='round'/%3E%3Cpath d='M7 10v3' stroke='%23fff' stroke-linecap='round'/%3E%3C/svg%3E");
+	background-repeat: no-repeat;
+	background-position: center;
+}
+
+.call-lobby-mic-level__bars {
+	display: flex;
+	align-items: center;
+	height: 20px;
+}
+
+.call-lobby-mic-level__bar {
+	width: 3px;
+	height: 8px;
+	margin-right: 2px;
+	border-radius: 2px;
+	background-color: rgba(var(--ui-color-palette-white-base-rgb), 0.42);
+}

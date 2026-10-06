@@ -530,7 +530,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/src/context/default',
 		 */
 		addDownloadToDiskAction(menu, actionHelper, options = {})
 		{
-			if (actionHelper.isPossibleSaveFile())
+			if (actionHelper.isPossibleSaveToDisk())
 			{
 				menu.addAction(DownloadToDiskAction, options);
 				menu.addSeparator();

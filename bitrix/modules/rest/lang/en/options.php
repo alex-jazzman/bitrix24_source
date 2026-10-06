@@ -1,7 +1,8 @@
 <?php
 $MESS["REST_OPT_ACCESS_POLICY"] = "Permissions";
 $MESS["REST_OPT_ACCESS_POLICY_ADD_USERS"] = "Add users";
-$MESS["REST_OPT_ACCESS_POLICY_INCOMING_WEBHOOK"] = "Users allowed to add incoming webhooks";
+$MESS["REST_OPT_ACCESS_POLICY_INCOMING_WEBHOOK_CREATE_OWN"] = "Users allowed to add their own incoming webhooks";
+$MESS["REST_OPT_ACCESS_POLICY_INCOMING_WEBHOOK_CREATE"] = "Users allowed to add incoming webhooks for everyone";
 $MESS["REST_OPT_ACCESS_POLICY_LOCAL_APP"] = "Users allowed to add apps for everyone";
 $MESS["REST_OPT_ACCESS_POLICY_PERSONAL_APP"] = "Users allowed to add their own apps";
 $MESS["REST_OPT_ACTIVE"] = "Logging is active";
@@ -29,4 +30,3 @@ $MESS["REST_TAB_LOG"] = "Logging";
 $MESS["REST_TAB_SET"] = "Settings";
 $MESS["REST_TAB_TITLE_LOG"] = "Logging parameters";
 $MESS["REST_TAB_TITLE_SET"] = "Module settings";
-?>

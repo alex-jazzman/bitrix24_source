@@ -6,6 +6,15 @@ this.BX = this.BX || {};
 	const CONNECTION_OFFSET = 30;
 	const CONNECTION_BEND_OFFSET = 30;
 	const CONNECTION_BORDER_RADIUS = 10;
+
+	// Screen distance the pointer has to travel before a press on a block turns into a drag.
+	// A press below it stays a selection: with snapping on, treating the shake of a hand as a
+	// drag would move a block of an old scheme to the nearest node and dirty the draft.
+	const DRAG_START_THRESHOLD = 4;
+
+	// Max never-measured connection ends mounted for measurement per render cycle, so a
+	// large off-screen set drains over several frames instead of one long main-thread task.
+	const FIRST_MEASURE_BATCH_SIZE = 12;
 	const HOOK_NAMES = {
 		CHANGED_BLOCKS: 'changedBlocks',
 		CHANGED_CONNECTIONS: 'changedConnections',
@@ -82,18 +91,31 @@ this.BX = this.BX || {};
 		}
 	};
 	function getLinePath(start, end) {
+		const startPoint = {
+			x: start.x,
+			y: start.y
+		};
+		const endPoint = {
+			x: end.x,
+			y: end.y
+		};
 		const [x, y] = getConnectionCenter({
-			sourceX: start.x,
-			sourceY: start.y,
-			targetX: end.x,
-			targetY: end.y
+			sourceX: startPoint.x,
+			sourceY: startPoint.y,
+			targetX: endPoint.x,
+			targetY: endPoint.y
 		});
 		return {
-			path: `M ${start.x} ${start.y} L ${end.x} ${end.y}`,
+			path: `M ${startPoint.x} ${startPoint.y} L ${endPoint.x} ${endPoint.y}`,
 			center: {
 				x,
 				y
-			}
+			},
+			primitives: [{
+				type: 'line',
+				start: startPoint,
+				end: endPoint
+			}]
 		};
 	}
 	const BEZIER_DIR = {
@@ -101,20 +123,50 @@ this.BX = this.BX || {};
 		HORIZONTAL: 'horizontal'
 	};
 	function getBeziePath(start, end, dir = BEZIER_DIR.VERTICAL) {
-		const midX = (start.x + end.x) / 2;
-		const midY = (start.y + end.y) / 2;
+		const startPoint = {
+			x: start.x,
+			y: start.y
+		};
+		const endPoint = {
+			x: end.x,
+			y: end.y
+		};
+		const midX = (startPoint.x + endPoint.x) / 2;
+		const midY = (startPoint.y + endPoint.y) / 2;
 		const [centerX, centerY] = getConnectionCenter({
-			sourceX: start.x,
-			sourceY: start.y,
-			targetX: end.x,
-			targetY: end.y
+			sourceX: startPoint.x,
+			sourceY: startPoint.y,
+			targetX: endPoint.x,
+			targetY: endPoint.y
 		});
+		const control1 = dir === BEZIER_DIR.HORIZONTAL ? {
+			x: midX,
+			y: startPoint.y
+		} : {
+			x: startPoint.x,
+			y: midY
+		};
+		const control2 = dir === BEZIER_DIR.HORIZONTAL ? {
+			x: midX,
+			y: endPoint.y
+		} : {
+			x: endPoint.x,
+			y: midY
+		};
+		const path = [`M ${startPoint.x} ${startPoint.y}`, `C ${control1.x} ${control1.y},`, `${control2.x} ${control2.y},`, `${endPoint.x} ${endPoint.y}`].join(' ');
 		return {
-			path: dir === BEZIER_DIR.HORIZONTAL ? `M ${start.x} ${start.y} C ${midX} ${start.y}, ${midX} ${end.y}, ${end.x} ${end.y}` : `M ${start.x} ${start.y} C ${start.x} ${midY}, ${end.x} ${midY}, ${end.x} ${end.y}`,
+			path,
 			center: {
 				x: centerX,
 				y: centerY
-			}
+			},
+			primitives: [{
+				type: 'cubic',
+				start: startPoint,
+				control1,
+				control2,
+				end: endPoint
+			}]
 		};
 	}
 	function transformPoint(point, transform, viewport) {
@@ -299,23 +351,83 @@ this.BX = this.BX || {};
 			centerY
 		};
 	}
-	function getBend(a, b, c, size) {
+	function getBend(a, b, c, size, start) {
 		const bendSize = Math.min(distance(a, b) / 2, distance(b, c) / 2, size);
 		const {
 			x,
 			y
 		} = b;
 		if (a.x === x && x === c.x || a.y === y && y === c.y) {
-			return `L${x} ${y}`;
+			const end = {
+				x,
+				y
+			};
+			return {
+				path: `L${x} ${y}`,
+				primitives: [{
+					type: 'line',
+					start,
+					end
+				}],
+				end
+			};
 		}
 		if (a.y === y) {
 			const xDir = a.x < c.x ? -1 : 1;
 			const yDir = a.y < c.y ? 1 : -1;
-			return `L ${x + bendSize * xDir},${y}Q ${x},${y} ${x},${y + bendSize * yDir}`;
+			const lineEnd = {
+				x: x + bendSize * xDir,
+				y
+			};
+			const end = {
+				x,
+				y: y + bendSize * yDir
+			};
+			return {
+				path: `L ${lineEnd.x},${lineEnd.y}Q ${x},${y} ${end.x},${end.y}`,
+				primitives: [{
+					type: 'line',
+					start,
+					end: lineEnd
+				}, {
+					type: 'quadratic',
+					start: lineEnd,
+					control: {
+						x,
+						y
+					},
+					end
+				}],
+				end
+			};
 		}
 		const xDir = a.x < c.x ? 1 : -1;
 		const yDir = a.y < c.y ? -1 : 1;
-		return `L ${x},${y + bendSize * yDir}Q ${x},${y} ${x + bendSize * xDir},${y}`;
+		const lineEnd = {
+			x,
+			y: y + bendSize * yDir
+		};
+		const end = {
+			x: x + bendSize * xDir,
+			y
+		};
+		return {
+			path: `L ${lineEnd.x},${lineEnd.y}Q ${x},${y} ${end.x},${end.y}`,
+			primitives: [{
+				type: 'line',
+				start,
+				end: lineEnd
+			}, {
+				type: 'quadratic',
+				start: lineEnd,
+				control: {
+					x,
+					y
+				},
+				end
+			}],
+			end
+		};
 	}
 	function getSmoothStepPath(params) {
 		const {
@@ -351,19 +463,40 @@ this.BX = this.BX || {};
 			},
 			offset
 		});
-		const path = points.reduce((res, p, i) => {
-			let segment = '';
-			if (i > 0 && i < points.length - 1) {
-				segment = getBend(points[i - 1], p, points[i + 1], borderRadius);
-			} else {
-				segment = `${i === 0 ? 'M' : 'L'}${p.x} ${p.y}`;
+		const route = points.reduce((result, point, index) => {
+			if (index === 0) {
+				return {
+					path: `M${point.x} ${point.y}`,
+					primitives: [],
+					current: point
+				};
 			}
-			res += segment;
-			return res;
-		}, '');
+			if (index < points.length - 1) {
+				const bend = getBend(points[index - 1], point, points[index + 1], borderRadius, result.current);
+				return {
+					path: result.path + bend.path,
+					primitives: [...result.primitives, ...bend.primitives],
+					current: bend.end
+				};
+			}
+			return {
+				path: `${result.path}L${point.x} ${point.y}`,
+				primitives: [...result.primitives, {
+					type: 'line',
+					start: result.current,
+					end: point
+				}],
+				current: point
+			};
+		}, {
+			path: '',
+			primitives: [],
+			current: points[0]
+		});
 		return {
-			path,
+			path: route.path,
 			points,
+			primitives: route.primitives,
 			center: {
 				x: pointsCenterX,
 				y: pointsCenterY
@@ -371,11 +504,748 @@ this.BX = this.BX || {};
 		};
 	}
 
+	const MIN_DISTANCE_DISPLAY_BEZIER_LINE = 100;
+	const PORT_POSITIONS = Object.values(PORT_POSITION);
+
+	function isFiniteNumber$1(value)
+	{
+		return Number.isFinite(value);
+	}
+
+	function resolvePortPosition(options)
+	{
+		const {
+			connectionId,
+			blockId,
+			portId,
+			portsRectMap,
+			connectionsOffsetMap,
+			bendOffset,
+		} = options;
+		const portRect = portsRectMap?.[blockId]?.[portId];
+
+		if (portRect === null || typeof portRect !== 'object')
+		{
+			return null;
+		}
+
+		const {
+			x,
+			y,
+			width,
+			height,
+			position,
+			firstSegmentSize,
+			secondSegmentSize,
+			secondSegmentSizeWithoutOffset,
+		} = portRect;
+
+		if (
+			!PORT_POSITIONS.includes(position)
+			|| ![x, y, width, height].every(isFiniteNumber$1)
+		)
+		{
+			return null;
+		}
+
+		const portOffsets = connectionsOffsetMap?.[blockId]?.[portId] ?? {};
+		const hasManyConnections = Object.keys(portOffsets).length > 1;
+		const {
+			firstSegmentSize: connectionFirstSegmentSize = 0,
+			secondSegmentOrder = 0,
+		} = portOffsets?.[connectionId] ?? {};
+		const resolvedFirstSegmentSize = hasManyConnections
+			? connectionFirstSegmentSize
+			: firstSegmentSize;
+		const resolvedSecondSegmentSize = hasManyConnections
+			? secondSegmentSizeWithoutOffset + (bendOffset * secondSegmentOrder)
+			: secondSegmentSize;
+		const centerX = x + (width / 2);
+		const centerY = y + (height / 2);
+
+		if (
+			!isFiniteNumber$1(resolvedFirstSegmentSize)
+			|| !isFiniteNumber$1(resolvedSecondSegmentSize)
+			|| !isFiniteNumber$1(centerX)
+			|| !isFiniteNumber$1(centerY)
+		)
+		{
+			return null;
+		}
+
+		return {
+			x: centerX,
+			y: centerY,
+			position,
+			firstSegmentSize: resolvedFirstSegmentSize,
+			secondSegmentSize: resolvedSecondSegmentSize,
+		};
+	}
+
+	function isVerticalPosition(position)
+	{
+		return position === PORT_POSITION.TOP || position === PORT_POSITION.BOTTOM;
+	}
+
+	function isHorizontalPosition(position)
+	{
+		return position === PORT_POSITION.LEFT || position === PORT_POSITION.RIGHT;
+	}
+
+	function resolveConnectionPortsPosition(options)
+	{
+		const {
+			connection,
+			portsRectMap,
+			connectionsOffsetMap,
+			bendOffset,
+		} = options;
+
+		if (connection === null || typeof connection !== 'object')
+		{
+			return null;
+		}
+
+		const {
+			id: connectionId,
+			sourceBlockId,
+			sourcePortId,
+			targetBlockId,
+			targetPortId,
+		} = connection;
+		const sourcePort = resolvePortPosition({
+			connectionId,
+			blockId: sourceBlockId,
+			portId: sourcePortId,
+			portsRectMap,
+			connectionsOffsetMap,
+			bendOffset,
+		});
+		const targetPort = resolvePortPosition({
+			connectionId,
+			blockId: targetBlockId,
+			portId: targetPortId,
+			portsRectMap,
+			connectionsOffsetMap,
+			bendOffset,
+		});
+
+		if (sourcePort === null || targetPort === null)
+		{
+			return null;
+		}
+
+		return { sourcePort, targetPort };
+	}
+
+	function resolveRenderedConnectionRoute(options)
+	{
+		const {
+			offset,
+			borderRadius,
+		} = options;
+
+		if (!isFiniteNumber$1(offset) || !isFiniteNumber$1(borderRadius))
+		{
+			return null;
+		}
+
+		const portsPosition = resolveConnectionPortsPosition(options);
+
+		if (portsPosition === null)
+		{
+			return null;
+		}
+
+		return resolveConnectionRoute({
+			...portsPosition,
+			offset,
+			borderRadius,
+		});
+	}
+
+	function resolveConnectionRoute(options)
+	{
+		const {
+			sourcePort,
+			targetPort,
+			offset,
+			borderRadius,
+		} = options;
+		const sourcePosition = sourcePort.position;
+		const targetPosition = targetPort.position;
+		const isVerticalDirection = sourcePosition !== targetPosition
+			&& isVerticalPosition(sourcePosition)
+			&& isVerticalPosition(targetPosition);
+		const isHorizontalDirection = sourcePosition !== targetPosition
+			&& isHorizontalPosition(sourcePosition)
+			&& isHorizontalPosition(targetPosition);
+
+		const initialPath = getSmoothStepPath({
+			sourceX: sourcePort.x,
+			sourceY: sourcePort.y,
+			sourcePosition,
+			targetX: targetPort.x,
+			targetY: targetPort.y,
+			targetPosition,
+			borderRadius,
+			offset,
+		});
+		const [p1, p2, p3, p4, p5, p6] = initialPath.points;
+		const isDisplayBezierLineByDistance = distance(p1, p6) < MIN_DISTANCE_DISPLAY_BEZIER_LINE;
+		const isXConsistOfThreeParts = p1.x === p2.x
+			&& p1.x === p3.x
+			&& p4.x === p5.x
+			&& p4.x === p6.x;
+		const isYConsistOfThreeParts = p1.y === p2.y
+			&& p1.y === p3.y
+			&& p4.y === p5.y
+			&& p4.y === p6.y;
+
+		if (
+			isDisplayBezierLineByDistance
+			|| (isXConsistOfThreeParts && isVerticalDirection)
+			|| (isYConsistOfThreeParts && isHorizontalDirection)
+		)
+		{
+			return getBeziePath(
+				sourcePort,
+				targetPort,
+				isVerticalDirection ? BEZIER_DIR.VERTICAL : BEZIER_DIR.HORIZONTAL,
+			);
+		}
+
+		const firstSegmentTargetX = isHorizontalDirection
+			? (sourcePort.x + targetPort.x) / 2
+			: sourcePort.x + sourcePort.secondSegmentSize;
+		const firstSegmentTargetY = isHorizontalDirection
+			? sourcePort.y + sourcePort.secondSegmentSize
+			: (sourcePort.y + targetPort.y) / 2;
+		const firstSegmentPath = getSmoothStepPath({
+			sourceX: sourcePort.x,
+			sourceY: sourcePort.y,
+			targetX: firstSegmentTargetX,
+			targetY: firstSegmentTargetY,
+			sourcePosition,
+			targetPosition: isHorizontalDirection ? PORT_POSITION.RIGHT : PORT_POSITION.BOTTOM,
+			borderRadius,
+			offset: sourcePort.firstSegmentSize,
+		});
+		const secondSegmentPath = getSmoothStepPath({
+			sourceX: firstSegmentTargetX,
+			sourceY: firstSegmentTargetY,
+			targetX: targetPort.x,
+			targetY: targetPort.y,
+			sourcePosition: isHorizontalDirection ? PORT_POSITION.LEFT : PORT_POSITION.TOP,
+			targetPosition,
+			borderRadius,
+			offset: targetPort.firstSegmentSize,
+		});
+
+		return {
+			path: `${firstSegmentPath.path} ${secondSegmentPath.path}`,
+			center: {
+				x: firstSegmentTargetX,
+				y: firstSegmentTargetY,
+			},
+			primitives: [
+				...firstSegmentPath.primitives,
+				...secondSegmentPath.primitives,
+			],
+		};
+	}
+
+	const MAX_FLATTEN_DEPTH = 18;
+
+	function getEndpointOffsetData(connection, connectionsOffsetMap, endpoint)
+	{
+		const isSource = endpoint === 'source';
+		const blockId = isSource ? connection?.sourceBlockId : connection?.targetBlockId;
+		const portId = isSource ? connection?.sourcePortId : connection?.targetPortId;
+		const portOffsets = connectionsOffsetMap?.[blockId]?.[portId] ?? {};
+		const connectionOffset = portOffsets?.[connection?.id] ?? {};
+
+		return {
+			connectionCount: Object.keys(portOffsets).length,
+			firstSegmentSize: connectionOffset.firstSegmentSize ?? 0,
+			secondSegmentOrder: connectionOffset.secondSegmentOrder ?? 0,
+		};
+	}
+
+	function getPortGeometryKey(port)
+	{
+		return [
+			port?.x,
+			port?.y,
+			port?.position,
+			port?.firstSegmentSize,
+			port?.secondSegmentSize,
+		];
+	}
+
+	function createConnectionStructuralSignature(connection)
+	{
+		return JSON.stringify([
+			connection?.id ?? null,
+			connection?.type ?? null,
+			connection?.sourceBlockId ?? null,
+			connection?.sourcePortId ?? null,
+			connection?.targetBlockId ?? null,
+			connection?.targetPortId ?? null,
+		]);
+	}
+
+	function createConnectionRouteCacheKey(options)
+	{
+		const {
+			connection,
+			portsPosition,
+			connectionsOffsetMap,
+			offset,
+			bendOffset,
+			borderRadius,
+			zoom,
+		} = options;
+		const sourceOffset = getEndpointOffsetData(connection, connectionsOffsetMap, 'source');
+		const targetOffset = getEndpointOffsetData(connection, connectionsOffsetMap, 'target');
+		const sourceGeometry = getPortGeometryKey(portsPosition?.sourcePort);
+		const targetGeometry = getPortGeometryKey(portsPosition?.targetPort);
+		const numericValues = [
+			sourceGeometry[0],
+			sourceGeometry[1],
+			sourceGeometry[3],
+			sourceGeometry[4],
+			targetGeometry[0],
+			targetGeometry[1],
+			targetGeometry[3],
+			targetGeometry[4],
+			sourceOffset.connectionCount,
+			sourceOffset.firstSegmentSize,
+			sourceOffset.secondSegmentOrder,
+			targetOffset.connectionCount,
+			targetOffset.firstSegmentSize,
+			targetOffset.secondSegmentOrder,
+			offset,
+			bendOffset,
+			borderRadius,
+			zoom,
+		];
+
+		if (
+			portsPosition?.sourcePort === null
+			|| portsPosition?.sourcePort === undefined
+			|| portsPosition?.targetPort === null
+			|| portsPosition?.targetPort === undefined
+			|| !numericValues.every((value) => Number.isFinite(value))
+		)
+		{
+			return null;
+		}
+
+		return JSON.stringify([
+			connection?.id ?? null,
+			connection?.type ?? null,
+			connection?.sourceBlockId ?? null,
+			connection?.sourcePortId ?? null,
+			connection?.targetBlockId ?? null,
+			connection?.targetPortId ?? null,
+			sourceGeometry,
+			targetGeometry,
+			[
+				sourceOffset.connectionCount,
+				sourceOffset.firstSegmentSize,
+				sourceOffset.secondSegmentOrder,
+			],
+			[
+				targetOffset.connectionCount,
+				targetOffset.firstSegmentSize,
+				targetOffset.secondSegmentOrder,
+			],
+			offset,
+			bendOffset,
+			borderRadius,
+			zoom,
+		]);
+	}
+
+	function isFinitePoint(point)
+	{
+		return Number.isFinite(point?.x) && Number.isFinite(point?.y);
+	}
+
+	function copyPoint(point)
+	{
+		return { x: point.x, y: point.y };
+	}
+
+	function midpoint(first, second)
+	{
+		return {
+			x: first.x / 2 + second.x / 2,
+			y: first.y / 2 + second.y / 2,
+		};
+	}
+
+	function pointDistance(first, second)
+	{
+		return Math.hypot(second.x - first.x, second.y - first.y);
+	}
+
+	function pointToLineDistance(point, start, end)
+	{
+		const deltaX = end.x - start.x;
+		const deltaY = end.y - start.y;
+		const lineLength = Math.hypot(deltaX, deltaY);
+
+		if (lineLength === 0)
+		{
+			return pointDistance(point, start);
+		}
+
+		return Math.abs(deltaY * point.x - deltaX * point.y + end.x * start.y - end.y * start.x)
+			/ lineLength;
+	}
+
+	function isQuadraticFlatEnough(primitive, tolerance)
+	{
+		const chordLength = pointDistance(primitive.start, primitive.end);
+		const controlPolygonLength = pointDistance(primitive.start, primitive.control)
+			+ pointDistance(primitive.control, primitive.end);
+
+		return pointToLineDistance(primitive.control, primitive.start, primitive.end) <= tolerance
+			&& controlPolygonLength - chordLength <= tolerance;
+	}
+
+	function isCubicFlatEnough(primitive, tolerance)
+	{
+		const chordLength = pointDistance(primitive.start, primitive.end);
+		const controlPolygonLength = pointDistance(primitive.start, primitive.control1)
+			+ pointDistance(primitive.control1, primitive.control2)
+			+ pointDistance(primitive.control2, primitive.end);
+
+		return Math.max(
+			pointToLineDistance(primitive.control1, primitive.start, primitive.end),
+			pointToLineDistance(primitive.control2, primitive.start, primitive.end),
+		) <= tolerance
+			&& controlPolygonLength - chordLength <= tolerance;
+	}
+
+	function appendQuadraticSegments(primitive, tolerance, depth, segments)
+	{
+		if (depth >= MAX_FLATTEN_DEPTH || isQuadraticFlatEnough(primitive, tolerance))
+		{
+			segments.push({
+				start: copyPoint(primitive.start),
+				end: copyPoint(primitive.end),
+			});
+
+			return;
+		}
+
+		const startControl = midpoint(primitive.start, primitive.control);
+		const controlEnd = midpoint(primitive.control, primitive.end);
+		const split = midpoint(startControl, controlEnd);
+
+		appendQuadraticSegments({
+			start: primitive.start,
+			control: startControl,
+			end: split,
+		}, tolerance, depth + 1, segments);
+		appendQuadraticSegments({
+			start: split,
+			control: controlEnd,
+			end: primitive.end,
+		}, tolerance, depth + 1, segments);
+	}
+
+	function appendCubicSegments(primitive, tolerance, depth, segments)
+	{
+		if (depth >= MAX_FLATTEN_DEPTH || isCubicFlatEnough(primitive, tolerance))
+		{
+			segments.push({
+				start: copyPoint(primitive.start),
+				end: copyPoint(primitive.end),
+			});
+
+			return;
+		}
+
+		const startControl = midpoint(primitive.start, primitive.control1);
+		const firstSecondControl = midpoint(primitive.control1, primitive.control2);
+		const secondControlEnd = midpoint(primitive.control2, primitive.end);
+		const firstMiddle = midpoint(startControl, firstSecondControl);
+		const secondMiddle = midpoint(firstSecondControl, secondControlEnd);
+		const split = midpoint(firstMiddle, secondMiddle);
+
+		appendCubicSegments({
+			start: primitive.start,
+			control1: startControl,
+			control2: firstMiddle,
+			end: split,
+		}, tolerance, depth + 1, segments);
+		appendCubicSegments({
+			start: split,
+			control1: secondMiddle,
+			control2: secondControlEnd,
+			end: primitive.end,
+		}, tolerance, depth + 1, segments);
+	}
+
+	function isValidPrimitive(primitive)
+	{
+		if (!isFinitePoint(primitive?.start) || !isFinitePoint(primitive?.end))
+		{
+			return false;
+		}
+
+		if (primitive.type === 'line')
+		{
+			return true;
+		}
+
+		if (primitive.type === 'quadratic')
+		{
+			return isFinitePoint(primitive.control);
+		}
+
+		if (primitive.type === 'cubic')
+		{
+			return isFinitePoint(primitive.control1) && isFinitePoint(primitive.control2);
+		}
+
+		return false;
+	}
+
+	function flattenConnectionRoute(route, zoom, maxScreenError = 1)
+	{
+		const primitives = Array.isArray(route) ? route : route?.primitives;
+		if (
+			!Array.isArray(primitives)
+			|| !Number.isFinite(zoom)
+			|| zoom <= 0
+			|| !Number.isFinite(maxScreenError)
+			|| maxScreenError <= 0
+			|| !primitives.every((primitive) => isValidPrimitive(primitive))
+		)
+		{
+			return [];
+		}
+
+		const tolerance = maxScreenError / zoom;
+		const segments = [];
+
+		for (const primitive of primitives)
+		{
+			if (primitive.type === 'line')
+			{
+				segments.push({
+					start: copyPoint(primitive.start),
+					end: copyPoint(primitive.end),
+				});
+			}
+			else if (primitive.type === 'quadratic')
+			{
+				appendQuadraticSegments(primitive, tolerance, 0, segments);
+			}
+			else
+			{
+				appendCubicSegments(primitive, tolerance, 0, segments);
+			}
+		}
+
+		return segments;
+	}
+
+	function normalizeRect(rect)
+	{
+		if (
+			!Number.isFinite(rect?.x)
+			|| !Number.isFinite(rect?.y)
+			|| !Number.isFinite(rect?.width)
+			|| !Number.isFinite(rect?.height)
+		)
+		{
+			return null;
+		}
+
+		const oppositeX = rect.x + rect.width;
+		const oppositeY = rect.y + rect.height;
+		if (!Number.isFinite(oppositeX) || !Number.isFinite(oppositeY))
+		{
+			return null;
+		}
+
+		return {
+			left: Math.min(rect.x, oppositeX),
+			top: Math.min(rect.y, oppositeY),
+			right: Math.max(rect.x, oppositeX),
+			bottom: Math.max(rect.y, oppositeY),
+		};
+	}
+
+	function expandRect(rect, tolerance)
+	{
+		const normalizedRect = normalizeRect(rect);
+		if (!normalizedRect || !Number.isFinite(tolerance) || tolerance < 0)
+		{
+			return null;
+		}
+
+		return {
+			x: normalizedRect.left - tolerance,
+			y: normalizedRect.top - tolerance,
+			width: normalizedRect.right - normalizedRect.left + tolerance * 2,
+			height: normalizedRect.bottom - normalizedRect.top + tolerance * 2,
+		};
+	}
+
+	function segmentIntersectsRect(start, end, rect)
+	{
+		let minRatio = 0;
+		let maxRatio = 1;
+		const dimensions = [
+			{ start: start.x, delta: end.x - start.x, min: rect.left, max: rect.right },
+			{ start: start.y, delta: end.y - start.y, min: rect.top, max: rect.bottom },
+		];
+
+		for (const dimension of dimensions)
+		{
+			if (dimension.delta === 0)
+			{
+				if (dimension.start < dimension.min || dimension.start > dimension.max)
+				{
+					return false;
+				}
+
+				continue;
+			}
+
+			const firstRatio = (dimension.min - dimension.start) / dimension.delta;
+			const secondRatio = (dimension.max - dimension.start) / dimension.delta;
+			minRatio = Math.max(minRatio, Math.min(firstRatio, secondRatio));
+			maxRatio = Math.min(maxRatio, Math.max(firstRatio, secondRatio));
+
+			if (minRatio > maxRatio)
+			{
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	function pointToRectDistance(point, rect)
+	{
+		const deltaX = Math.max(rect.left - point.x, 0, point.x - rect.right);
+		const deltaY = Math.max(rect.top - point.y, 0, point.y - rect.bottom);
+
+		return Math.hypot(deltaX, deltaY);
+	}
+
+	function pointToSegmentDistance(point, start, end)
+	{
+		const deltaX = end.x - start.x;
+		const deltaY = end.y - start.y;
+		const squaredLength = deltaX * deltaX + deltaY * deltaY;
+
+		if (squaredLength === 0)
+		{
+			return pointDistance(point, start);
+		}
+
+		if (!Number.isFinite(squaredLength))
+		{
+			return Number.POSITIVE_INFINITY;
+		}
+
+		const ratio = Math.max(
+			0,
+			Math.min(1, ((point.x - start.x) * deltaX + (point.y - start.y) * deltaY) / squaredLength),
+		);
+
+		return Math.hypot(
+			point.x - (start.x + ratio * deltaX),
+			point.y - (start.y + ratio * deltaY),
+		);
+	}
+
+	function rectToSegmentDistance(rect, segment)
+	{
+		if (segmentIntersectsRect(segment.start, segment.end, rect))
+		{
+			return 0;
+		}
+
+		const corners = [
+			{ x: rect.left, y: rect.top },
+			{ x: rect.right, y: rect.top },
+			{ x: rect.right, y: rect.bottom },
+			{ x: rect.left, y: rect.bottom },
+		];
+
+		return Math.min(
+			pointToRectDistance(segment.start, rect),
+			pointToRectDistance(segment.end, rect),
+			...corners.map((corner) => pointToSegmentDistance(corner, segment.start, segment.end)),
+		);
+	}
+
+	function distanceBetweenRectAndSegments(rect, segments)
+	{
+		const normalizedRect = normalizeRect(rect);
+		if (!normalizedRect || !Array.isArray(segments) || segments.length === 0)
+		{
+			return Number.POSITIVE_INFINITY;
+		}
+
+		let distance = Number.POSITIVE_INFINITY;
+		for (const segment of segments)
+		{
+			if (!isFinitePoint(segment?.start) || !isFinitePoint(segment?.end))
+			{
+				return Number.POSITIVE_INFINITY;
+			}
+
+			distance = Math.min(distance, rectToSegmentDistance(normalizedRect, segment));
+		}
+
+		return distance;
+	}
+
+	function sortConnectionRouteHits(hits, getSignature)
+	{
+		return hits
+			.map((hit, index) => ({ hit, index, signature: getSignature(hit) }))
+			.sort((first, second) => {
+				const distanceDifference = first.hit.distancePx - second.hit.distancePx;
+				if (distanceDifference !== 0)
+				{
+					return distanceDifference;
+				}
+
+				if (first.signature < second.signature)
+				{
+					return -1;
+				}
+
+				if (first.signature > second.signature)
+				{
+					return 1;
+				}
+
+				return first.index - second.index;
+			})
+			.map(({ hit }) => hit)
+		;
+	}
+
 	const ARRAY_COMMANDS = Object.freeze({
 		REPLACE: 'replace',
 		PUSH: 'push',
 		UPDATE_BY_INDEX: 'updateByIndex',
-		DELETE_BY_INDEX: 'deleteByIndex'
+		DELETE_BY_INDEX: 'deleteByIndex',
+		DELETE_BY_ID: 'deleteById',
+		DELETE_BY_IDS: 'deleteByIds'
 	});
 	const commandExecMap = {
 		[ARRAY_COMMANDS.REPLACE]: ({
@@ -414,6 +1284,19 @@ this.BX = this.BX || {};
 			const result = [...source];
 			result.splice(index, 1);
 			return result;
+		},
+		[ARRAY_COMMANDS.DELETE_BY_ID]: ({
+			source,
+			payload
+		}) => {
+			return source.filter(item => item.id !== payload);
+		},
+		[ARRAY_COMMANDS.DELETE_BY_IDS]: ({
+			source,
+			payload
+		}) => {
+			const ids = payload instanceof Set ? payload : new Set(payload);
+			return source.filter(item => !ids.has(item.id));
 		}
 	};
 	function command(commandType, args) {
@@ -438,9 +1321,14 @@ this.BX = this.BX || {};
 			payload
 		});
 	}
-	function commandDeleteByIndex(index) {
-		return command(ARRAY_COMMANDS.DELETE_BY_INDEX, {
-			index
+	function commandDeleteById(id) {
+		return command(ARRAY_COMMANDS.DELETE_BY_ID, {
+			payload: id
+		});
+	}
+	function commandDeleteByIds(ids) {
+		return command(ARRAY_COMMANDS.DELETE_BY_IDS, {
+			payload: ids
 		});
 	}
 	function runCommand(sourceArray, commandPayload, callback) {
@@ -1416,6 +2304,11 @@ this.BX = this.BX || {};
 			camera.#zoom = this.#zoom;
 			camera.#rotation = this.#rotation;
 			camera.updateMatrix();
+			camera.#onChangedTransformParams({
+				x: camera.#x,
+				y: camera.#y,
+				zoom: camera.#zoom
+			});
 			return camera;
 		}
 		projection(width, height) {
@@ -1730,32 +2623,47 @@ this.BX = this.BX || {};
 `;
 	const fragmentShader = `
 	#extension GL_OES_standard_derivatives : enable
+
+	// Cross-fade needs the coarse grid lines to land exactly on fine ones, and that
+	// survives only while world coordinates keep their precision: a mediump float
+	// (10-bit mantissa) drifts by a noticeable fraction of a cell a few thousand
+	// world units away from the origin. highp in fragment shaders is optional in
+	// GLSL ES 1.00, so it is taken when the implementation reports it.
+	#ifdef GL_FRAGMENT_PRECISION_HIGH
+	precision highp float;
+	#else
 	precision mediump float;
+	#endif
 
 	uniform vec4 u_BackgroundColor;
-	uniform vec4 u_GridColor;
-	uniform float u_GridSize;
-	uniform float u_ZoomStep;
-	uniform float u_ZoomScale;
+	uniform vec4 u_CoarseColor;
+	uniform vec4 u_FineColor;
+	uniform float u_CoarseSize;
+	uniform float u_FineSize;
+	uniform float u_Blend;
 	varying vec2 v_Position;
 
+	const float MAX_LINE_ALPHA = 0.222;
+
+	float line_coverage(vec2 coord, float size) {
+		vec2 grid = abs(fract(coord / size - 0.5) - 0.5) / fwidth(coord) * size / 0.95;
+
+		return 1.0 - min(min(grid.x, grid.y), 1.0);
+	}
+
 	vec4 render_grid(vec2 coord) {
-		float alpha = 0.0;
-		float gridSize1 = u_GridSize;
-		float gridSize2 = gridSize1 / 4.0;
+		// Each level is capped before the blend is applied: capping the product
+		// instead would saturate the fine level once u_Blend reaches MAX_LINE_ALPHA
+		// and collapse the rest of the fade into the antialiased edges.
+		float coarse = clamp(line_coverage(coord, u_CoarseSize), 0.0, MAX_LINE_ALPHA);
+		float fine = clamp(line_coverage(coord, u_FineSize), 0.0, MAX_LINE_ALPHA);
+		float alpha = max(coarse, fine * u_Blend);
+		// Coarse lines are a subset of the fine ones, so the visible grid belongs to
+		// whichever level the blend currently favours - hence a single interpolated
+		// color rather than one per level. Equal colors reduce to the plain case.
+		vec4 gridColor = mix(u_CoarseColor, u_FineColor, u_Blend);
 
-		vec2 grid1 = abs(fract(coord / gridSize1 - 0.5) - 0.5) / fwidth(coord) * gridSize1 / 0.95;
-		vec2 grid2 = abs(fract(coord / gridSize2 - 0.5) - 0.5) / fwidth(coord) * gridSize2 / 0.75;
-		float v1 = 1.0 - min(min(grid1.x, grid1.y), 1.0);
-		float v2 = 1.0 - min(min(grid2.x, grid2.y), 1.0);
-
-		if (v1 > 0.0) {
-			alpha = clamp(v1, 0.0, 0.222);
-		} else {
-			alpha = v2 * clamp(u_ZoomScale / u_ZoomStep, 0.0, 1.0);
-		}
-
-		return mix(u_BackgroundColor, u_GridColor, alpha);
+		return mix(u_BackgroundColor, gridColor, alpha);
 	}
 
 	void main() {
@@ -1799,6 +2707,155 @@ this.BX = this.BX || {};
 		return [r / 255, g / 255, b / 255];
 	}
 
+	// Divisor turning the base grid cell into the snap step. The default zoom ladder takes its
+	// finest level from the same constant (src/utils/canvas/grid.js), so the step a block snaps
+	// to and the finest line the canvas draws stay one and the same value by construction.
+	const GRID_SUBDIVISION = 4;
+	function snapValueToGrid(value, step) {
+		// a disabled or broken step keeps the previous free positioning instead of dividing by zero
+		if (!Number.isFinite(value) || !Number.isFinite(step) || step <= 0) {
+			return value;
+		}
+		return Math.round(value / step) * step;
+	}
+	function snapPointToGrid(point, step) {
+		return {
+			x: snapValueToGrid(point.x, step),
+			y: snapValueToGrid(point.y, step)
+		};
+	}
+
+	const GRID_DEFAULT_SIZE = 64;
+
+	// Default ladder of discrete cell sizes. Adjacent sizes must be integer multiples
+	// of each other so coarse grid lines stay a subset of the finer level - otherwise
+	// the cross-fade shows duplicated lines. The step above 1.0 keeps the grid
+	// detailing on zoom in: the cross-fade runs in the 0.99 - 2 band, above zoom 2 a
+	// single level stays.
+	// The finest level equals the snap step, so a snapped block lands on a line the
+	// canvas actually draws instead of somewhere between two of them.
+	const GRID_DEFAULT_ZOOM_STEPS = [{
+		zoom: 2,
+		size: GRID_DEFAULT_SIZE / GRID_SUBDIVISION
+	}, {
+		zoom: 0.99,
+		size: GRID_DEFAULT_SIZE
+	}, {
+		zoom: 0.5,
+		size: GRID_DEFAULT_SIZE * 5
+	}, {
+		zoom: 0.25,
+		size: GRID_DEFAULT_SIZE * 25
+	}, {
+		zoom: 0.125,
+		size: GRID_DEFAULT_SIZE * 125
+	}];
+
+	// A level of the built ladder. Keeps the logarithm of its threshold: blending is
+	// logarithmic and render runs every frame, while the thresholds never change.
+
+	// Normalizes the public canvasStyle zoom steps into levels sorted by zoom
+	// descending, filling omitted size and color from the base grid options.
+	// An empty ladder is a supported configuration: it degrades to a single base
+	// level instead of leaving the grid without any level to render.
+	function prepareZoomSteps(zoomSteps, base) {
+		if (!Array.isArray(zoomSteps) || zoomSteps.length === 0) {
+			return [base];
+		}
+		return [...zoomSteps].sort((stepA, stepB) => stepB.zoom - stepA.zoom).map(step => ({
+			zoom: step.zoom,
+			size: 'size' in step ? step.size : base.size,
+			gridColor: 'gridColor' in step ? convHex(step.gridColor) : base.gridColor
+		}));
+	}
+
+	// Names the adjacent sizes that break the cross-fade contract: a coarse level is
+	// drawn on top of a finer one, so its lines must coincide with the finer grid,
+	// which holds only while the sizes are integer multiples.
+	function findNonMultipleLevels(levels) {
+		const broken = [];
+		for (let i = 1; i < levels.length; i++) {
+			const ratio = levels[i].size / levels[i - 1].size;
+			if (Math.abs(ratio - Math.round(ratio)) > 1e-9) {
+				broken.push([levels[i].size, levels[i - 1].size]);
+			}
+		}
+		return broken;
+	}
+
+	// Collapses zoom steps that share a discrete cell size into a single level and
+	// keeps the lowest zoom threshold - the boundary at which that size takes over.
+	// Steps of one size may declare different colors; the collapsed level keeps the
+	// first one, since a single size is a single visual level.
+	// The input must be sorted by zoom descending.
+	function buildGridLevels(steps) {
+		const levels = [];
+		for (const step of steps) {
+			const previous = levels[levels.length - 1];
+			if (previous && previous.size === step.size) {
+				previous.zoom = step.zoom;
+				previous.logZoom = Math.log(step.zoom);
+				continue;
+			}
+			levels.push({
+				zoom: step.zoom,
+				logZoom: Math.log(step.zoom),
+				size: step.size,
+				gridColor: step.gridColor
+			});
+		}
+		const broken = findNonMultipleLevels(levels);
+		if (broken.length > 0) {
+			console.error('Invalid canvasStyle.zoomSteps: adjacent grid sizes are not integer multiples, ' + 'the grid will show duplicated lines while they cross-fade', broken.map(([coarse, fine]) => `${coarse} / ${fine}`).join(', '));
+		}
+		return levels;
+	}
+
+	// Position of zoom between the coarse (logLo) and fine (logHi) thresholds on a
+	// logarithmic scale, since the thresholds form a geometric progression.
+	// Thresholds come in as logarithms - they are precomputed with the ladder, so a
+	// frame only pays for the logarithm of the current zoom.
+	// Returns 0 at logLo (fully coarse) and 1 at logHi (fully fine).
+	function getBlendFactor(logZoom, logLo, logHi) {
+		const t = (logZoom - logLo) / (logHi - logLo);
+		// Coinciding thresholds divide by zero, a zero threshold gives -Infinity;
+		// either way the levels are effectively merged - show the fine one instead of
+		// letting NaN reach the shader alpha.
+		if (!Number.isFinite(t)) {
+			return 1;
+		}
+		return Math.min(Math.max(t, 0), 1);
+	}
+
+	// Picks the two adjacent discrete levels around the current zoom together with
+	// the blend factor between them. blend === 1 shows only the fine (smaller) level,
+	// blend === 0 only the coarse (larger) one. Beyond the outermost thresholds it
+	// degrades to a single level with a stable blend, so there is no jump.
+	function getGridBlendState(levels, zoom) {
+		const coarseIndex = levels.findIndex(level => level.zoom <= zoom);
+		if (coarseIndex === -1) {
+			const coarsest = levels[levels.length - 1];
+			return {
+				coarse: coarsest,
+				fine: coarsest,
+				blend: 0
+			};
+		}
+		const coarse = levels[coarseIndex];
+		if (coarseIndex === 0) {
+			return {
+				coarse,
+				fine: coarse,
+				blend: 1
+			};
+		}
+		const fine = levels[coarseIndex - 1];
+		return {
+			coarse,
+			fine,
+			blend: getBlendFactor(Math.log(zoom), coarse.logZoom, fine.logZoom)
+		};
+	}
 	class Grid {
 		#gl;
 		#program = null;
@@ -1810,17 +2867,16 @@ this.BX = this.BX || {};
 		#viewProjectionInvMatrixLink = null;
 		#backgroundColorLink = null;
 		#backgroundColor = null;
-		#gridColorLink = null;
-		#gridColor = null;
-		#gridColorAlpha = null;
-		#gridSizeLink = null;
+		#coarseColorLink = null;
+		#fineColorLink = null;
+		#gridColor = [];
+		#coarseSizeLink = null;
+		#fineSizeLink = null;
+		#blendLink = null;
 		#gridSize = null;
-		#zoomScaleLink = null;
 		#gridPosition = [-1, -1, -1, 1, 1, -1, 1, 1];
 		#gridPositionBuffer = null;
-		#zoomStepLink = null;
-		#zoomStep = 4;
-		#zoomSteps = [];
+		#gridLevels = [];
 		constructor(canvas, options) {
 			this.#initParams(options);
 			this.#initGrid(canvas);
@@ -1837,47 +2893,28 @@ this.BX = this.BX || {};
 			this.#viewMatrixLink = this.#gl.getUniformLocation(this.#program, 'u_ViewMatrix');
 			this.#viewProjectionInvMatrixLink = this.#gl.getUniformLocation(this.#program, 'u_ViewProjectionInvMatrix');
 			this.#backgroundColorLink = this.#gl.getUniformLocation(this.#program, 'u_BackgroundColor');
-			this.#gridColorLink = this.#gl.getUniformLocation(this.#program, 'u_GridColor');
-			this.#gridSizeLink = this.#gl.getUniformLocation(this.#program, 'u_GridSize');
-			this.#zoomStepLink = this.#gl.getUniformLocation(this.#program, 'u_ZoomStep');
-			this.#zoomScaleLink = this.#gl.getUniformLocation(this.#program, 'u_ZoomScale');
+			this.#coarseColorLink = this.#gl.getUniformLocation(this.#program, 'u_CoarseColor');
+			this.#fineColorLink = this.#gl.getUniformLocation(this.#program, 'u_FineColor');
+			this.#coarseSizeLink = this.#gl.getUniformLocation(this.#program, 'u_CoarseSize');
+			this.#fineSizeLink = this.#gl.getUniformLocation(this.#program, 'u_FineSize');
+			this.#blendLink = this.#gl.getUniformLocation(this.#program, 'u_Blend');
 			this.#gridPositionBuffer = createBufferFromTypedArray(this.#gl, new Float32Array(this.#gridPosition));
-		}
-		#getPreparedZoomSteps(zoomSteps) {
-			return zoomSteps.sort((stepA, stepB) => stepB.zoomStep - stepA.zoomStep).map(step => ({
-				zoomStep: this.#zoomStep,
-				...step,
-				size: 'size' in step ? step.size : this.#gridSize,
-				gridColor: 'gridColor' in step ? convHex(step.gridColor) : this.#gridColor
-			}));
 		}
 		#initParams(options) {
 			const {
 				size,
 				gridColor,
-				gridColorAlpha,
 				backgroundColor,
-				zoomStep,
 				zoomSteps
 			} = options;
 			this.#gridSize = size;
-			this.#zoomStep = zoomStep;
-			this.#gridColor = new Float32Array(convHex(gridColor));
-			this.#gridColorAlpha = gridColorAlpha;
+			this.#gridColor = convHex(gridColor);
 			this.#backgroundColor = new Float32Array(convHex(backgroundColor));
-			this.#zoomSteps = this.#getPreparedZoomSteps(zoomSteps);
-		}
-		#getParamsByZoom(zoom) {
-			for (const step of this.#zoomSteps) {
-				if (step.zoom <= zoom) {
-					return step;
-				}
-			}
-			return {
-				gridColor: this.#gridColor,
+			this.#gridLevels = buildGridLevels(prepareZoomSteps(zoomSteps, {
+				zoom: 0,
 				size: this.#gridSize,
-				zoomStep: this.#zoomStep
-			};
+				gridColor: this.#gridColor
+			}));
 		}
 		render({
 			projectionMatrix,
@@ -1889,18 +2926,19 @@ this.BX = this.BX || {};
 			this.#gl.clear(this.#gl.COLOR_BUFFER_BIT);
 			this.#gl.useProgram(this.#program);
 			const {
-				gridColor,
-				zoomStep,
-				size
-			} = this.#getParamsByZoom(zoomScale);
+				coarse,
+				fine,
+				blend
+			} = getGridBlendState(this.#gridLevels, zoomScale);
 			this.#gl.uniformMatrix3fv(this.#projectionMatrixLink, false, projectionMatrix);
 			this.#gl.uniformMatrix3fv(this.#viewMatrixLink, false, viewMatrix);
 			this.#gl.uniformMatrix3fv(this.#viewProjectionInvMatrixLink, false, viewProjectionMatrixInv);
 			this.#gl.uniform4f(this.#backgroundColorLink, ...this.#backgroundColor, 1);
-			this.#gl.uniform4f(this.#gridColorLink, ...gridColor, 1);
-			this.#gl.uniform1f(this.#gridSizeLink, size);
-			this.#gl.uniform1f(this.#zoomStepLink, zoomStep);
-			this.#gl.uniform1f(this.#zoomScaleLink, zoomScale);
+			this.#gl.uniform4f(this.#coarseColorLink, ...coarse.gridColor, 1);
+			this.#gl.uniform4f(this.#fineColorLink, ...fine.gridColor, 1);
+			this.#gl.uniform1f(this.#coarseSizeLink, coarse.size);
+			this.#gl.uniform1f(this.#fineSizeLink, fine.size);
+			this.#gl.uniform1f(this.#blendLink, blend);
 			this.#gl.enableVertexAttribArray(this.#positionAttributeLocation);
 			this.#gl.bindBuffer(this.#gl.ARRAY_BUFFER, this.#gridPositionBuffer);
 			this.#gl.vertexAttribPointer(this.#positionAttributeLocation, 2, this.#gl.FLOAT, false, 0, 0);
@@ -2455,16 +3493,205 @@ this.BX = this.BX || {};
 		}
 	}
 
+	// A connection item carrying its own routing-aware bounding box, so toBBox stays
+	// self-contained (like BlockRBush reads position/dimensions off the block).
+
+	// Routing parameters of a single connection, taken from state refs (not constants),
+	// so the box matches the geometry actually produced in connection-state.js. The two
+	// firstSegmentSize values are the real per-endpoint first-segment lengths (many-port
+	// count * offset, or single-port (index + 1) * offset), resolved the same way drawing
+	// resolves them (connection-state.js:75-140).
+
+	// Safe minimum padding used when runtime routing values are unavailable. Equals the
+	// single-connection extent (offset + borderRadius + one bend), the same 70px the box
+	// used before routing params were threaded in.
+	const CONNECTION_ROUTE_PADDING = CONNECTION_OFFSET + CONNECTION_BEND_OFFSET + CONNECTION_BORDER_RADIUS;
+
+	// Orthogonal routing bends the path outside the raw union of the endpoint boxes. The
+	// first segment extends by the endpoint's real firstSegmentSize (single-port
+	// (index + 1) * offset, or many-port count * offset); the bend point is then pushed
+	// perpendicular by the endpoint's secondSegmentSize (~block width/height, see
+	// connection-state.js:208-213); the bend itself adds offset + bendOffset * (order + 1)
+	// (connection-state.js:127, 138). We pad by the max of the two endpoints' first and
+	// second segments and the bend extent, plus borderRadius, so no single excursion can
+	// leave the box. The padding is applied symmetrically to every side, so taking the
+	// largest excursion on any axis is safe (the box can only grow). At index 0 / order 0
+	// with zero/absent second segments this equals offset + bendOffset + borderRadius (the
+	// old 70px). Keeping the padding at least as large as the real geometry means culling
+	// never hides a visible connection (a false hide is worse than an extra item in the set).
+	function resolveRoutePadding(routing) {
+		if (routing === null) {
+			return CONNECTION_ROUTE_PADDING;
+		}
+		const {
+			offset,
+			bendOffset,
+			borderRadius,
+			secondSegmentOrder
+		} = routing;
+		if (!Number.isFinite(offset) || !Number.isFinite(bendOffset) || !Number.isFinite(borderRadius)) {
+			return CONNECTION_ROUTE_PADDING;
+		}
+		const order = Number.isFinite(secondSegmentOrder) ? Math.max(secondSegmentOrder, 0) : 0;
+		const sourceFirstSegmentSize = Number.isFinite(routing.sourceFirstSegmentSize) ? Math.max(routing.sourceFirstSegmentSize, 0) : 0;
+		const targetFirstSegmentSize = Number.isFinite(routing.targetFirstSegmentSize) ? Math.max(routing.targetFirstSegmentSize, 0) : 0;
+		const sourceSecondSegmentSize = Number.isFinite(routing.sourceSecondSegmentSize) ? Math.max(routing.sourceSecondSegmentSize, 0) : 0;
+		const targetSecondSegmentSize = Number.isFinite(routing.targetSecondSegmentSize) ? Math.max(routing.targetSecondSegmentSize, 0) : 0;
+		return Math.max(sourceFirstSegmentSize, targetFirstSegmentSize, sourceSecondSegmentSize, targetSecondSegmentSize, offset + bendOffset * (order + 1)) + borderRadius;
+	}
+
+	/**
+	 * Both ends of the connection resolve to a block of the model. This is the admission rule of
+	 * the connection index — a connection failing it has no route to draw — so every other set of
+	 * connections shown on the canvas is held to the same rule.
+	 */
+	function hasBothEndpointsInModel(connection, getBlockById) {
+		return getBlockById(connection.sourceBlockId) !== null && getBlockById(connection.targetBlockId) !== null;
+	}
+
+	/**
+	 * ALG-02: box of a connection = union of its endpoint block boxes (taken from the
+	 * MODEL position/dimensions), expanded by the routing padding. When routing params are
+	 * given the padding follows the real geometry; otherwise it falls back to the safe
+	 * minimum. Returns null when an endpoint block is absent from the model — such a
+	 * connection is left out of the index.
+	 */
+	function computeConnectionBBox(connection, getBlockById, routing = null) {
+		if (!hasBothEndpointsInModel(connection, getBlockById)) {
+			return null;
+		}
+		const src = getBlockById(connection.sourceBlockId);
+		const tgt = getBlockById(connection.targetBlockId);
+		const srcPosition = ui_vue3.toValue(src.position);
+		const srcDimensions = ui_vue3.toValue(src.dimensions);
+		const tgtPosition = ui_vue3.toValue(tgt.position);
+		const tgtDimensions = ui_vue3.toValue(tgt.dimensions);
+		const minX = Math.min(srcPosition.x, tgtPosition.x);
+		const minY = Math.min(srcPosition.y, tgtPosition.y);
+		const maxX = Math.max(srcPosition.x + srcDimensions.width, tgtPosition.x + tgtDimensions.width);
+		const maxY = Math.max(srcPosition.y + srcDimensions.height, tgtPosition.y + tgtDimensions.height);
+		const padding = resolveRoutePadding(routing);
+		return {
+			minX: minX - padding,
+			minY: minY - padding,
+			maxX: maxX + padding,
+			maxY: maxY + padding
+		};
+	}
+	class ConnectionRBush extends RBush {
+		toBBox({
+			minX,
+			minY,
+			maxX,
+			maxY
+		}) {
+			return {
+				minX,
+				minY,
+				maxX,
+				maxY
+			};
+		}
+		compareMinX(a, b) {
+			return a.minX - b.minX;
+		}
+		compareMinY(a, b) {
+			return a.minY - b.minY;
+		}
+	}
+
+	function isPortMeasured(portsRectMap, blockId, portId) {
+		return blockId in portsRectMap && portId in portsRectMap[blockId];
+	}
+
+	// True when the port still exists in the model block and can actually render (and so be
+	// measured). A connection pointing at a deleted/absent port would never write to
+	// portsRectMap, so measuring it must not be requested — otherwise its endpoint block
+	// would stay in the visible set forever and culling for it would be disabled.
+	function isPortRenderable(blockById, blockId, portId) {
+		const block = blockById?.get(blockId);
+		if (block === undefined || block === null) {
+			return false;
+		}
+		const ports = ui_vue3.toValue(block)?.ports ?? [];
+		return ports.some(port => (ui_vue3.toValue(port)?.id ?? port?.id) === portId);
+	}
+
+	/**
+	 * ALG-03 (Phase 3, P3.T1): endpoints of the viewport-crossing connections whose port
+	 * coordinates were never measured (absent from portsRectMap) AND whose port still exists
+	 * in the model (renderable). Such an endpoint started off-screen and was never mounted,
+	 * so Phase 1 has no geometry to retain — it needs one pointed measure-mount. The
+	 * "measured" check mirrors connection-state.js (both block id and port id must be
+	 * present). A connection to a port absent from the model is inconsistent and skipped: it
+	 * would never be measured, so requesting it would pin its block into the visible set.
+	 * Only ends of the given connections are considered, so the set stays bounded by the
+	 * connections that cross the viewport — culling is not disabled.
+	 */
+	function collectEndpointsToMeasure(connections, portsRectMap, blockById) {
+		const endpoints = new Set();
+		for (const connection of connections) {
+			if (!isPortMeasured(portsRectMap, connection.sourceBlockId, connection.sourcePortId) && isPortRenderable(blockById, connection.sourceBlockId, connection.sourcePortId)) {
+				endpoints.add(connection.sourceBlockId);
+			}
+			if (!isPortMeasured(portsRectMap, connection.targetBlockId, connection.targetPortId) && isPortRenderable(blockById, connection.targetBlockId, connection.targetPortId)) {
+				endpoints.add(connection.targetBlockId);
+			}
+		}
+		return endpoints;
+	}
+
+	/**
+	 * P3.T2: up to batchSize never-measured ends to mount this cycle, skipping ends already
+	 * visible and ids absent from the model. Iterates measureIds in insertion order so the
+	 * batch boundary is deterministic; the caller drains the rest over the next cycles as
+	 * measuring each batch drops its ends from measureIds.
+	 */
+	function takeFirstMeasureBatch(measureIds, visibleIds, blockById, batchSize) {
+		const batch = [];
+		for (const blockId of measureIds) {
+			if (batch.length >= batchSize) {
+				break;
+			}
+			if (visibleIds.has(blockId)) {
+				continue;
+			}
+			const block = blockById.get(blockId);
+			if (block !== undefined) {
+				batch.push(block);
+			}
+		}
+		return batch;
+	}
+
+	const CONNECTION_ROUTE_HIT_TOLERANCE = 12;
 	class BlockIntersections {
-		#throttleTimerId = null;
 		#tree = null;
+		#connectionTree = null;
 		#state = null;
+		#selectVisibleBlocksRafId = null;
+		#selectVisibleConnectionsRafId = null;
+		#loadConnectionsRafId = null;
+		#connectionRouteCache = new Map();
+		#interactingBlocksCache = new Map();
+		// Connections the running gesture keeps on the canvas, and the set of nodes they were derived
+		// for. Null while nothing is derived.
+		#gestureConnections = null;
+		#gestureConnectionsHeldIds = null;
 		visibleBlocks = ui_vue3.ref([]);
 		visibleBlockIds = ui_vue3.computed(() => {
 			return new Set(ui_vue3.toValue(this.visibleBlocks).map(block => block.id));
 		});
+
+		// P3.T1: ends of viewport-crossing connections whose geometry was never measured.
+		blocksToMeasureIds = ui_vue3.computed(() => {
+			if (!(this.#state?.isRenderOptimizationAvailable ?? false)) {
+				return new Set();
+			}
+			return collectEndpointsToMeasure(ui_vue3.toValue(this.visibleConnections), this.#state?.portsRectMap ?? {}, this.#blockByIdMap(this.#state?.blocks ?? []));
+		});
 		groupedVisibleBlocks = ui_vue3.computed(() => {
-			const blocks = this.#state?.isRenderOptimizationAvailable ?? false ? this.visibleBlocks : this.#state?.blocks ?? [];
+			const blocks = this.#state?.isRenderOptimizationAvailable ?? false ? this.#visibleBlocksWithMeasureEndpoints() : this.#state?.blocks ?? [];
 			return ui_vue3.toValue(blocks).reduce((acc, block) => {
 				const type = block?.type ?? BLOCK_GROUP_DEFAULT_NAME;
 				if (type in acc) {
@@ -2492,36 +3719,562 @@ this.BX = this.BX || {};
 			}
 			return portsMap;
 		});
+		visibleConnections = ui_vue3.ref([]);
+		groupedVisibleConnections = ui_vue3.computed(() => {
+			const connections = this.#state?.isRenderOptimizationAvailable ?? false ? this.visibleConnections : this.#state?.connections ?? [];
+			return ui_vue3.toValue(connections).reduce((acc, connection) => {
+				const type = connection?.type ?? CONNECTION_GROUP_DEFAULT_NAME;
+				if (type in acc) {
+					acc[type].push(connection);
+				} else {
+					acc[type] = [connection];
+				}
+				return acc;
+			}, {
+				[CONNECTION_GROUP_DEFAULT_NAME]: []
+			});
+		});
+		visibleConnectionGroupNames = ui_vue3.computed(() => {
+			return Object.keys(ui_vue3.toValue(this.groupedVisibleConnections));
+		});
 		constructor(ctx) {
 			this.#state = ctx.state;
 			this.#tree = new BlockRBush();
 		}
+		#shouldMaintainConnectionIndex() {
+			return (this.#state?.isRenderOptimizationAvailable ?? false) || (this.#state?.connectionRouteHitTestEnabled ?? false);
+		}
+		#ensureConnectionTree() {
+			this.#connectionTree ??= new ConnectionRBush();
+			return this.#connectionTree;
+		}
+		#disableConnectionIndex() {
+			if (this.#selectVisibleConnectionsRafId !== null) {
+				cancelAnimationFrame(this.#selectVisibleConnectionsRafId);
+				this.#selectVisibleConnectionsRafId = null;
+			}
+			if (this.#loadConnectionsRafId !== null) {
+				cancelAnimationFrame(this.#loadConnectionsRafId);
+				this.#loadConnectionsRafId = null;
+			}
+			this.#connectionTree?.clear();
+			this.#connectionTree = null;
+			this.#connectionRouteCache.clear();
+			this.#resetGestureConnections();
+			this.visibleConnections.value = [];
+		}
+
+		// P3.T2: for one render cycle, append the never-measured connection ends to the
+		// visible set so their ports mount and onMountedPort measures them. After that
+		// Phase 1 retention keeps the geometry, blocksToMeasureIds no longer returns them,
+		// and they are culled again — the measure-mount is strictly one-time per end.
+		//
+		// At most FIRST_MEASURE_BATCH_SIZE ends are added per cycle. Measuring the batch
+		// writes portsRectMap, which blocksToMeasureIds reads, so the computed re-runs, drops
+		// the measured ends, and the next cycle takes the next batch — a large off-screen set
+		// drains over several frames without a single long measure task (no explicit queue).
+		#visibleBlocksWithMeasureEndpoints() {
+			const visible = ui_vue3.toValue(this.visibleBlocks);
+			const measureIds = ui_vue3.toValue(this.blocksToMeasureIds);
+			if (measureIds.size === 0) {
+				return visible;
+			}
+			const visibleIds = ui_vue3.toValue(this.visibleBlockIds);
+			const blockById = this.#blockByIdMap(this.#state?.blocks ?? []);
+			const measureBlocks = takeFirstMeasureBatch(measureIds, visibleIds, blockById, FIRST_MEASURE_BATCH_SIZE);
+			return measureBlocks.length === 0 ? visible : [...visible, ...measureBlocks];
+		}
+
+		// Builds an O(1) id→block lookup once per index rebuild, so connection boxes resolve
+		// their endpoints in O(C + B) instead of O(C × B) (a linear blocks.find per connection).
+		#blockByIdMap(blocks) {
+			return new Map(ui_vue3.toValue(blocks ?? []).map(block => [ui_vue3.toValue(block).id, block]));
+		}
+
+		// Connection index items (connection + routing-aware bbox), skipping any connection
+		// whose endpoint block is absent from the given lookup. Routing params come from the
+		// live state refs so the box matches the geometry connection-state.js actually draws.
+		#buildConnectionItems(connections, blockById) {
+			const offset = ui_vue3.toValue(this.#state?.connectionOffset);
+			const bendOffset = ui_vue3.toValue(this.#state?.connectionBendOffset);
+			const borderRadius = ui_vue3.toValue(this.#state?.connectionBorderRadius);
+			const offsetMap = ui_vue3.toValue(this.#state?.connectionsOffsetMap) ?? {};
+			const portsRectMap = ui_vue3.toValue(this.#state?.portsRectMap) ?? {};
+			return ui_vue3.toValue(connections ?? []).map(connection => {
+				const rawConnection = ui_vue3.toRaw(ui_vue3.unref(connection));
+				const routing = {
+					offset,
+					bendOffset,
+					borderRadius,
+					secondSegmentOrder: this.#connectionSecondSegmentOrder(rawConnection, offsetMap),
+					sourceFirstSegmentSize: this.#endpointFirstSegmentSize(rawConnection.sourceBlockId, rawConnection.sourcePortId, rawConnection.id, offsetMap, portsRectMap, offset, blockById),
+					targetFirstSegmentSize: this.#endpointFirstSegmentSize(rawConnection.targetBlockId, rawConnection.targetPortId, rawConnection.id, offsetMap, portsRectMap, offset, blockById),
+					sourceSecondSegmentSize: this.#endpointSecondSegmentSize(rawConnection.sourceBlockId, rawConnection.sourcePortId, rawConnection.id, offsetMap, portsRectMap, bendOffset, blockById),
+					targetSecondSegmentSize: this.#endpointSecondSegmentSize(rawConnection.targetBlockId, rawConnection.targetPortId, rawConnection.id, offsetMap, portsRectMap, bendOffset, blockById)
+				};
+				const bbox = computeConnectionBBox(rawConnection, blockId => blockById.get(blockId) ?? null, routing);
+				const hasFiniteBBox = bbox !== null && [bbox.minX, bbox.minY, bbox.maxX, bbox.maxY].every(value => Number.isFinite(value));
+				return hasFiniteBBox ? {
+					...rawConnection,
+					...bbox
+				} : null;
+			}).filter(connection => connection !== null);
+		}
+
+		// Real first-segment length of one connection end, resolved the same way drawing
+		// resolves it (connection-state.js:75-140): a many-connection port uses the per-
+		// connection firstSegmentSize (count * offset), a single-connection port uses the
+		// measured/retained value in portsRectMap ((portIndex + 1) * offset). When the port
+		// was never measured, fall back to a conservative estimate from its index in the
+		// model block's ports, so the bbox never underestimates a high-index port.
+		#endpointFirstSegmentSize(blockId, portId, connectionId, offsetMap, portsRectMap, offset, blockById) {
+			const portOffsets = offsetMap?.[blockId]?.[portId];
+			const hasManyConnection = Object.keys(portOffsets ?? {}).length > 1;
+			if (hasManyConnection) {
+				const size = portOffsets?.[connectionId]?.firstSegmentSize;
+				if (Number.isFinite(size)) {
+					return size;
+				}
+			}
+			const measured = portsRectMap?.[blockId]?.[portId]?.firstSegmentSize;
+			if (Number.isFinite(measured) && measured > 0) {
+				return measured;
+			}
+			return this.#estimateFirstSegmentSize(blockId, portId, offset, blockById);
+		}
+
+		// Conservative first-segment estimate for a never-measured port: (portIndex + 1) *
+		// offset, matching updatePortSegmentSizes (actions.js:508/514). Falls back to a single
+		// offset when the port is not found in the model block.
+		#estimateFirstSegmentSize(blockId, portId, offset, blockById) {
+			const step = Number.isFinite(offset) ? offset : 0;
+			const block = blockById.get(blockId);
+			const ports = ui_vue3.toValue(block)?.ports ?? [];
+			const index = ports.findIndex(port => (ui_vue3.toValue(port)?.id ?? port?.id) === portId);
+			return (index >= 0 ? index + 1 : 1) * step;
+		}
+
+		// Real second-segment length of one connection end, resolved the same way drawing
+		// resolves it (connection-state.js:126-128, 137-139): a many-connection port uses the
+		// measured secondSegmentSizeWithoutOffset plus bendOffset * secondSegmentOrder, a
+		// single-connection port uses the measured secondSegmentSize. When the port was never
+		// measured, fall back to a conservative upper bound from the model block's dimensions,
+		// so the bbox never underestimates the perpendicular bend excursion (~block size).
+		#endpointSecondSegmentSize(blockId, portId, connectionId, offsetMap, portsRectMap, bendOffset, blockById) {
+			const portRect = portsRectMap?.[blockId]?.[portId];
+			const portOffsets = offsetMap?.[blockId]?.[portId];
+			const hasManyConnection = Object.keys(portOffsets ?? {}).length > 1;
+			const step = Number.isFinite(bendOffset) ? bendOffset : 0;
+			if (hasManyConnection) {
+				const withoutOffset = portRect?.secondSegmentSizeWithoutOffset;
+				if (Number.isFinite(withoutOffset) && withoutOffset > 0) {
+					const order = portOffsets?.[connectionId]?.secondSegmentOrder ?? 0;
+					return withoutOffset + step * Math.max(order, 0);
+				}
+			} else {
+				const measured = portRect?.secondSegmentSize;
+				if (Number.isFinite(measured) && measured > 0) {
+					return measured;
+				}
+			}
+			return this.#estimateSecondSegmentSize(blockId, portId, connectionId, offsetMap, step, blockById);
+		}
+
+		// Conservative second-segment estimate for a never-measured port: the drawn value is
+		// blockDimension - portOffset + bendOffset * (order + 1) (actions.js:519-520), and
+		// portOffset >= 0, so max(blockWidth, blockHeight) + bendOffset * (order + 1) is a safe
+		// upper bound regardless of the port's (still unknown) side. Direction is safe — the
+		// padding only grows.
+		#estimateSecondSegmentSize(blockId, portId, connectionId, offsetMap, bendStep, blockById) {
+			const block = blockById.get(blockId);
+			const dimensions = ui_vue3.toValue(block)?.dimensions ?? {};
+			const width = Number.isFinite(dimensions.width) ? dimensions.width : 0;
+			const height = Number.isFinite(dimensions.height) ? dimensions.height : 0;
+			const order = offsetMap?.[blockId]?.[portId]?.[connectionId]?.secondSegmentOrder ?? 0;
+			return Math.max(width, height) + bendStep * (Math.max(order, 0) + 1);
+		}
+
+		// Largest secondSegmentOrder among the connection's two endpoints — a port carrying
+		// several connections fans each bend out by bendOffset * order (connection-state.js).
+		#connectionSecondSegmentOrder(connection, offsetMap) {
+			const {
+				id,
+				sourceBlockId,
+				sourcePortId,
+				targetBlockId,
+				targetPortId
+			} = connection;
+			const sourceOrder = offsetMap?.[sourceBlockId]?.[sourcePortId]?.[id]?.secondSegmentOrder ?? 0;
+			const targetOrder = offsetMap?.[targetBlockId]?.[targetPortId]?.[id]?.secondSegmentOrder ?? 0;
+			return Math.max(sourceOrder, targetOrder);
+		}
+
+		// Clears and reloads the connection index from the given blocks/connections. Shared
+		// by the coalesced current-model rebuild and the synchronous history-snapshot rebuild.
+		#rebuildConnectionIndex(connections, blocks) {
+			if (!this.#shouldMaintainConnectionIndex()) {
+				this.#disableConnectionIndex();
+				return;
+			}
+			const blockById = this.#blockByIdMap(blocks);
+			const prepared = this.#buildConnectionItems(connections, blockById);
+
+			// The connections held for a running gesture were derived from the model this rebuild
+			// replaces, so they are derived again on the next pass.
+			this.#resetGestureConnections();
+			this.#pruneConnectionRouteCache(connections);
+			const connectionTree = this.#ensureConnectionTree();
+			connectionTree.clear();
+			connectionTree.load(prepared);
+			if (this.#state?.isRenderOptimizationAvailable ?? false) {
+				this.#updateVisibleConnections();
+			}
+		}
+		#pruneConnectionRouteCache(connections) {
+			const activeIds = new Set(ui_vue3.toValue(connections ?? []).map(connection => ui_vue3.toRaw(ui_vue3.unref(connection)).id));
+			for (const connectionId of this.#connectionRouteCache.keys()) {
+				if (!activeIds.has(connectionId)) {
+					this.#connectionRouteCache.delete(connectionId);
+				}
+			}
+		}
+
+		// Rebuilds the whole connection index from the current model. Connection boxes
+		// derive from block positions, so a block move refreshes them here too; a full
+		// rebuild avoids RBush remove-by-navigation, which is unsafe for items whose
+		// geometry lives outside the item. Coalesced through a RAF so a drag (deep block
+		// watcher firing per mousemove) triggers at most one rebuild per frame.
+		loadConnections() {
+			if (!this.#shouldMaintainConnectionIndex()) {
+				this.#disableConnectionIndex();
+				return;
+			}
+			if (this.#loadConnectionsRafId !== null) {
+				return;
+			}
+			this.#loadConnectionsRafId = requestAnimationFrame(() => {
+				this.#loadConnectionsRafId = null;
+				this.#rebuildConnectionIndex(this.#state?.connections ?? [], this.#state?.blocks ?? []);
+			});
+		}
+
+		// Rebuilds the connection index from an explicit snapshot (blocks + connections),
+		// used by history undo/redo. On revert the props watcher empties the index through
+		// clear() and its own loadConnections only lands on the next frame, so without an
+		// immediate rebuild the index would stay empty for a frame while blocks are restored.
+		// Resolves endpoint boxes from the snapshot's own blocks (state refs may not yet
+		// reflect the snapshot at hook time).
+		loadConnectionsFromSnapshot(connections, blocks) {
+			if (!this.#shouldMaintainConnectionIndex()) {
+				this.#disableConnectionIndex();
+				return;
+			}
+
+			// A pending coalesced rebuild would repeat this same work one frame later, so the full
+			// synchronous rebuild supersedes it. Dropping that frame used to be a side effect of
+			// clear() in the history hooks; the dedup belongs to the rebuild itself.
+			if (this.#loadConnectionsRafId !== null) {
+				cancelAnimationFrame(this.#loadConnectionsRafId);
+				this.#loadConnectionsRafId = null;
+			}
+
+			// Intentionally synchronous: closes the one-frame index gap left by the props
+			// watcher's clear(); must not be coalesced through a RAF.
+			this.#rebuildConnectionIndex(connections, blocks);
+		}
+		selectVisibleConnections() {
+			if (!(this.#state?.isRenderOptimizationAvailable ?? false)) {
+				return;
+			}
+			if (this.#selectVisibleConnectionsRafId !== null) {
+				return;
+			}
+			this.#selectVisibleConnectionsRafId = requestAnimationFrame(() => {
+				this.#selectVisibleConnectionsRafId = null;
+				this.#updateVisibleConnections();
+			});
+		}
+		#updateVisibleConnections() {
+			const {
+				transformX,
+				transformY,
+				zoom,
+				canvasWidth,
+				canvasHeight
+			} = this.#state;
+			this.visibleConnections.value = this.#withGestureConnections(this.#connectionTree?.search({
+				minX: ui_vue3.toValue(transformX),
+				minY: ui_vue3.toValue(transformY),
+				maxX: ui_vue3.toValue(transformX) + ui_vue3.toValue(canvasWidth) / ui_vue3.toValue(zoom),
+				maxY: ui_vue3.toValue(transformY) + ui_vue3.toValue(canvasHeight) / ui_vue3.toValue(zoom)
+			}) ?? []);
+		}
+
+		// The connection index is frozen exactly like the block one: a connection box is computed from
+		// the endpoint positions in the model, and a gesture reaches the model only on mouseup. Once
+		// autoscroll pans the camera past a pre-gesture box, the culling pass drops the connection
+		// although its nodes are retained, mounted and on screen and its route still follows the
+		// gesture - the user sees nodes with nothing between them. Keep every connection with an end
+		// among the nodes of the gesture, and only while those nodes are retained. Every writer of
+		// visibleConnections goes through here, clear() included: it empties the set synchronously
+		// while the refill waits for a RAF. Duplicates are ruled out by id.
+		#withGestureConnections(connections) {
+			if (!(this.#state?.isRenderOptimizationAvailable ?? false)) {
+				return connections;
+			}
+			const interactingIds = this.#interactingBlockIds();
+			if (interactingIds.size === 0) {
+				this.#resetGestureConnections();
+				return connections;
+			}
+			const gestureConnections = this.#heldGestureConnections(interactingIds);
+			if (gestureConnections.length === 0) {
+				return connections;
+			}
+			const presentIds = new Set();
+			connections.forEach(connection => presentIds.add(ui_vue3.toValue(connection).id));
+			const missing = gestureConnections.filter(connection => !presentIds.has(connection.id));
+			return missing.length === 0 ? connections : [...connections, ...missing];
+		}
+
+		// Connections the gesture keeps on the canvas: those with an end among its nodes. The whole
+		// point of the gesture is that the model is not written until mouseup, so this set is derived
+		// once and then only filtered against what the culling pass already reports. It is dropped when
+		// the nodes of the gesture change and when the connection index is rebuilt - the two events
+		// that can change the model behind it.
+		#heldGestureConnections(interactingIds) {
+			if (this.#gestureConnections !== null && this.#isSameHeldIds(interactingIds)) {
+				return this.#gestureConnections;
+			}
+			const blockById = this.#blockByIdMap(this.#state?.blocks ?? []);
+			const getBlockById = blockId => blockById.get(blockId) ?? null;
+
+			// The model is filtered before it is converted: only the connections kept for the gesture
+			// are worth taking out of the reactive wrapper.
+			this.#gestureConnections = ui_vue3.toValue(this.#state?.connections ?? []).filter(connection => {
+				const candidate = ui_vue3.toValue(connection);
+				return (interactingIds.has(candidate.sourceBlockId) || interactingIds.has(candidate.targetBlockId)
+
+				// A connection the index refused has no route to draw: mounting it would put an
+				// empty path and its delete button at the origin of the canvas.
+				) && hasBothEndpointsInModel(candidate, getBlockById);
+			}).map(connection => ui_vue3.toRaw(ui_vue3.unref(connection)));
+			this.#gestureConnectionsHeldIds = new Set(interactingIds);
+			return this.#gestureConnections;
+		}
+		#isSameHeldIds(interactingIds) {
+			const heldIds = this.#gestureConnectionsHeldIds;
+			if (heldIds === null || heldIds.size !== interactingIds.size) {
+				return false;
+			}
+			for (const blockId of interactingIds) {
+				if (!heldIds.has(blockId)) {
+					return false;
+				}
+			}
+			return true;
+		}
+		#resetGestureConnections() {
+			this.#gestureConnections = null;
+			this.#gestureConnectionsHeldIds = null;
+		}
+
+		// Nodes of the running gesture: the one being resized, the one leading a drag, the whole set
+		// the gesture registered and the source of a new connection. Empty once the gesture ends, so
+		// nothing is retained past it.
+		#interactingBlockIds() {
+			const interactingIds = new Set();
+			const resizingId = this.#state?.resizingBlock?.id ?? null;
+			const movingId = ui_vue3.toValue(this.#state?.movingBlockId) ?? null;
+			const gestureIds = ui_vue3.toValue(this.#state?.gestureBlockIds) ?? null;
+			if (resizingId !== null) {
+				interactingIds.add(resizingId);
+			}
+			if (movingId !== null) {
+				interactingIds.add(movingId);
+			}
+			gestureIds?.forEach(blockId => interactingIds.add(blockId));
+
+			// The camera pans away from the source node while a new connection is drawn, and culling it
+			// would take the source port marker off the screen mid-gesture.
+			const connectionSourceId = ui_vue3.toValue(this.#state?.newConnection)?.sourceBlockId ?? null;
+			if (connectionSourceId !== null) {
+				interactingIds.add(connectionSourceId);
+			}
+			return interactingIds;
+		}
 		load(blocks) {
+			this.#interactingBlocksCache.clear();
 			this.#tree?.load(ui_vue3.toRaw(ui_vue3.unref(blocks)));
 			this.selectVisibleBlocks();
 		}
 		search(searchRect) {
 			return this.#tree.search(searchRect);
 		}
-		selectVisibleBlocks(throttleDelay = 50) {
-			if (this.#throttleTimerId === null) {
-				this.#throttleTimerId = setTimeout(() => {
-					const {
-						transformX,
-						transformY,
-						zoom,
-						canvasWidth,
-						canvasHeight
-					} = this.#state;
-					this.visibleBlocks.value = this.#tree.search({
-						minX: ui_vue3.toValue(transformX),
-						minY: ui_vue3.toValue(transformY),
-						maxX: ui_vue3.toValue(transformX) + ui_vue3.toValue(canvasWidth) / ui_vue3.toValue(zoom),
-						maxY: ui_vue3.toValue(transformY) + ui_vue3.toValue(canvasHeight) / ui_vue3.toValue(zoom)
-					});
-					this.#throttleTimerId = null;
-				}, throttleDelay);
+		findConnectionRouteHits(rect) {
+			if (!this.#shouldMaintainConnectionIndex()) {
+				return [];
 			}
+			const zoom = ui_vue3.toValue(this.#state?.zoom);
+			if (!Number.isFinite(zoom) || zoom <= 0) {
+				return [];
+			}
+			const canvasTolerance = CONNECTION_ROUTE_HIT_TOLERANCE / zoom;
+			const expandedRect = expandRect(rect, canvasTolerance);
+			if (expandedRect === null) {
+				return [];
+			}
+			const candidates = this.#connectionTree?.search({
+				minX: expandedRect.x,
+				minY: expandedRect.y,
+				maxX: expandedRect.x + expandedRect.width,
+				maxY: expandedRect.y + expandedRect.height
+			}) ?? [];
+			const hits = [];
+			for (const candidate of candidates) {
+				const connection = ui_vue3.toRaw(ui_vue3.unref(candidate));
+				const segments = this.#getConnectionRouteSegments(connection, zoom);
+				if (segments.length === 0) {
+					continue;
+				}
+				const distancePx = distanceBetweenRectAndSegments(rect, segments) * zoom;
+				if (Number.isFinite(distancePx) && distancePx <= CONNECTION_ROUTE_HIT_TOLERANCE) {
+					hits.push({
+						connection,
+						distancePx
+					});
+				}
+			}
+			return sortConnectionRouteHits(hits, hit => createConnectionStructuralSignature(hit.connection));
+		}
+		#getConnectionRouteSegments(connection, zoom) {
+			const options = {
+				connection,
+				portsRectMap: ui_vue3.toValue(this.#state?.portsRectMap) ?? {},
+				connectionsOffsetMap: ui_vue3.toValue(this.#state?.connectionsOffsetMap) ?? {},
+				bendOffset: ui_vue3.toValue(this.#state?.connectionBendOffset),
+				offset: ui_vue3.toValue(this.#state?.connectionOffset),
+				borderRadius: ui_vue3.toValue(this.#state?.connectionBorderRadius)
+			};
+			const portsPosition = resolveConnectionPortsPosition(options);
+			const key = createConnectionRouteCacheKey({
+				...options,
+				portsPosition,
+				zoom
+			});
+			if (portsPosition === null || key === null) {
+				this.#connectionRouteCache.delete(connection.id);
+				return [];
+			}
+			const cached = this.#connectionRouteCache.get(connection.id);
+			if (cached?.key === key) {
+				return cached.segments;
+			}
+			const route = resolveRenderedConnectionRoute(options);
+			const segments = route === null ? [] : flattenConnectionRoute(route.primitives, zoom, 1);
+			if (segments.length === 0) {
+				this.#connectionRouteCache.delete(connection.id);
+				return [];
+			}
+			this.#connectionRouteCache.set(connection.id, {
+				key,
+				segments
+			});
+			return segments;
+		}
+		selectVisibleBlocks() {
+			if (this.#selectVisibleBlocksRafId !== null) {
+				return;
+			}
+			this.#selectVisibleBlocksRafId = requestAnimationFrame(() => {
+				this.#selectVisibleBlocksRafId = null;
+				this.#updateVisibleBlocks();
+			});
+		}
+		#updateVisibleBlocks() {
+			const {
+				transformX,
+				transformY,
+				zoom,
+				canvasWidth,
+				canvasHeight
+			} = this.#state;
+			const blocks = this.#withInteractingBlocks(this.#tree.search({
+				minX: ui_vue3.toValue(transformX),
+				minY: ui_vue3.toValue(transformY),
+				maxX: ui_vue3.toValue(transformX) + ui_vue3.toValue(canvasWidth) / ui_vue3.toValue(zoom),
+				maxY: ui_vue3.toValue(transformY) + ui_vue3.toValue(canvasHeight) / ui_vue3.toValue(zoom)
+			}));
+			if (this.#isSameVisibleBlocks(blocks)) {
+				return;
+			}
+			this.visibleBlocks.value = blocks;
+		}
+
+		// A camera frame usually brings back the very same nodes, only in another order, and
+		// reassigning the ref republishes visibleBlockIds, visiblePorts and everything watching
+		// them on every frame of a pan. The set is compared by its composition - which block
+		// answers for which id - so a pass that changed nothing leaves the ref untouched, while
+		// a block replaced by a fresh object (insert, update, history restore) still goes through.
+		// Object identity is the whole comparison, which leans on every write path replacing the
+		// block object (insert, update, remove, load, clear): a node mutated in place - a changed
+		// port list above all - would leave visibleBlockIds and visiblePorts stale.
+		#isSameVisibleBlocks(blocks) {
+			const current = ui_vue3.toValue(this.visibleBlocks);
+			if (current.length !== blocks.length) {
+				return false;
+			}
+			const currentById = new Map(current.map(block => [ui_vue3.toValue(block).id, ui_vue3.toRaw(ui_vue3.unref(block))]));
+			return blocks.every(block => currentById.get(ui_vue3.toValue(block).id) === ui_vue3.toRaw(ui_vue3.unref(block)));
+		}
+
+		// The index holds the pre-gesture boxes of the blocks being moved or resized: staged geometry
+		// reaches the model only on mouseup. Autoscroll can pan the camera past those boxes, and
+		// culling such a block mid-gesture unmounts it, which tears the gesture down. Keep every node
+		// of the gesture in the visible set until the gesture ends and the index catches up - a frame
+		// drag moves a whole selection, so the retained set is the one the gesture registered, not a
+		// single node. Every writer of visibleBlocks goes through here, not just the culling pass:
+		// clear() empties the set synchronously while the refill waits for a RAF, so an unretained
+		// block would unmount for a frame. Duplicates are ruled out by id.
+		#withInteractingBlocks(blocks) {
+			if (!(this.#state?.isRenderOptimizationAvailable ?? false)) {
+				return blocks;
+			}
+			const interactingIds = this.#interactingBlockIds();
+			this.#forgetInteractingBlocksExcept(interactingIds);
+			const missingIds = new Set(interactingIds);
+			blocks.forEach(block => missingIds.delete(ui_vue3.toValue(block).id));
+			if (missingIds.size === 0) {
+				return blocks;
+			}
+			const interactingBlocks = [...missingIds].map(blockId => this.#interactingBlock(blockId)).filter(block => block !== null);
+			return interactingBlocks.length === 0 ? blocks : [...blocks, ...interactingBlocks];
+		}
+
+		// Once the camera has left the block behind, the retained block is missing from every
+		// culling pass, and resolving it in the model would be a linear pass over the whole diagram
+		// on every frame of the gesture. The model is read once per block and the answer is kept
+		// until the gesture ends (#forgetInteractingBlocksExcept) or the block itself changes
+		// (insert/remove/load).
+		#interactingBlock(blockId) {
+			const cached = this.#interactingBlocksCache.get(blockId) ?? null;
+			if (cached !== null) {
+				return cached;
+			}
+			const block = ui_vue3.toValue(this.#state?.blocks ?? []).find(stateBlock => ui_vue3.toValue(stateBlock).id === blockId) ?? null;
+			if (block === null) {
+				return null;
+			}
+			const rawBlock = ui_vue3.toRaw(ui_vue3.unref(block));
+			this.#interactingBlocksCache.set(blockId, rawBlock);
+			return rawBlock;
+		}
+		#forgetInteractingBlocksExcept(interactingIds) {
+			this.#interactingBlocksCache.forEach((block, blockId) => {
+				if (!interactingIds.has(blockId)) {
+					this.#interactingBlocksCache.delete(blockId);
+				}
+			});
 		}
 		updateBlock(oldBlock, newBlock) {
 			this.removeBlock(oldBlock);
@@ -2536,20 +4289,42 @@ this.BX = this.BX || {};
 			}));
 		}
 		insertBlock(block) {
+			this.#interactingBlocksCache.delete(ui_vue3.toValue(block).id);
 			this.#tree?.insert(this.#preparedBlock(block));
 			this.selectVisibleBlocks();
 		}
 		removeBlock(block) {
+			this.#interactingBlocksCache.delete(ui_vue3.toValue(block).id);
 			this.#tree?.remove(this.#preparedBlock(block), (blockA, blockB) => {
 				return ui_vue3.toValue(blockA).id === ui_vue3.toValue(blockB).id;
 			});
 			this.selectVisibleBlocks();
 		}
 		clear() {
+			// The retained block is resolved from the model, so the answer must not outlive the
+			// composition it was read from: clear() drops every block, and #withInteractingBlocks
+			// below re-reads whatever is still interacting.
+			this.#interactingBlocksCache.clear();
+			if (this.#selectVisibleBlocksRafId !== null) {
+				cancelAnimationFrame(this.#selectVisibleBlocksRafId);
+				this.#selectVisibleBlocksRafId = null;
+			}
+			if (this.#selectVisibleConnectionsRafId !== null) {
+				cancelAnimationFrame(this.#selectVisibleConnectionsRafId);
+				this.#selectVisibleConnectionsRafId = null;
+			}
+			if (this.#loadConnectionsRafId !== null) {
+				cancelAnimationFrame(this.#loadConnectionsRafId);
+				this.#loadConnectionsRafId = null;
+			}
 			this.#tree?.clear();
-			this.visibleBlocks.value = [];
-			clearTimeout(this.#throttleTimerId);
-			this.#throttleTimerId = null;
+			this.visibleBlocks.value = this.#withInteractingBlocks([]);
+			this.#connectionTree?.clear();
+			this.#connectionRouteCache.clear();
+			// Dropped before the refill below: clear() answers a change of the model, and the held set
+			// was derived from the model as it stood before it.
+			this.#resetGestureConnections();
+			this.visibleConnections.value = this.#withGestureConnections([]);
 		}
 	}
 
@@ -2729,9 +4504,9 @@ this.BX = this.BX || {};
 			return this.#innerSearch(node.right, node, point);
 		}
 		insert(point) {
-			const insertPosition = this.#innerSearch(this.root, null, point);
+			const insertPosition = this.#innerSearch(this.#root, null, point);
 			if (insertPosition === null) {
-				this.root = new Node(point, 0, null);
+				this.#root = new Node(point, 0, null);
 				return;
 			}
 			const newNode = new Node(point, (insertPosition.dimension + 1) % this.#dimensions.length, insertPosition);
@@ -2891,6 +4666,9 @@ this.BX = this.BX || {};
 		constructor(ctx) {
 			this.#state = ctx.state;
 		}
+
+		// Builds the index from scratch for the given set. This is also the rebuild path: insertion
+		// does not rebalance, so a gesture that accumulated enough inserts comes back here.
 		init(portsMap) {
 			const {
 				portsRectMap
@@ -2898,10 +4676,15 @@ this.BX = this.BX || {};
 			const portsPoint = [];
 			for (const [blockId, ports] of portsMap.entries()) {
 				for (const [portId, port] of ports.entries()) {
+					// Same invariant as addPort: an unmeasured port stays out of the index.
+					const portRect = ui_vue3.toValue(portsRectMap)?.[blockId]?.[portId] ?? null;
+					if (portRect === null) {
+						continue;
+					}
 					const {
 						x = 0,
 						y = 0
-					} = ui_vue3.toValue(portsRectMap)?.[blockId]?.[portId] ?? {};
+					} = portRect;
 					portsPoint.push({
 						x,
 						y,
@@ -2914,6 +4697,34 @@ this.BX = this.BX || {};
 				}
 			}
 			this.#portsKdTree = new KdTree(portsPoint, distance, [PORT_X_KEY, PORT_Y_KEY]);
+		}
+
+		// A port joins the visible set before its geometry is measured. Adding an unmeasured port
+		// would plant a phantom target at the world origin, so it is refused here and picked up by a
+		// later pass instead. A caller that has already resolved the rect passes it in; the lookup
+		// here is the fallback, not a second check.
+		addPort(blockId, portId, port, rect = null) {
+			const {
+				portsRectMap
+			} = this.#state;
+			const portRect = rect ?? ui_vue3.toValue(portsRectMap)?.[blockId]?.[portId] ?? null;
+			if (portRect === null || this.#portsKdTree === null) {
+				return false;
+			}
+			const {
+				x = 0,
+				y = 0
+			} = portRect;
+			this.#portsKdTree.insert({
+				x,
+				y,
+				blockId,
+				portId,
+				port: {
+					...port
+				}
+			});
+			return true;
 		}
 		insert(point, blockId, port) {
 			this.#portsKdTree?.insert({
@@ -2936,6 +4747,245 @@ this.BX = this.BX || {};
 		}
 	}
 
+	// Merge registered block ports with opt-in virtual (placeholder) ports so both
+	// participate as snap targets for a new connection. Virtual ports win on id
+	// collision: a materializable placeholder must stay droppable even if a stale
+	// real port with the same id still lingers in the diagram.
+	function buildSnapCandidatePorts(visiblePorts, virtualPortsMap) {
+		const merged = new Map();
+		for (const [blockId, ports] of visiblePorts.entries()) {
+			merged.set(blockId, new Map(ports));
+		}
+		for (const [blockId, entries] of virtualPortsMap.entries()) {
+			if (!merged.has(blockId)) {
+				merged.set(blockId, new Map());
+			}
+			for (const [portId, entry] of entries.entries()) {
+				merged.get(blockId).set(portId, entry.port);
+			}
+		}
+		return merged;
+	}
+
+	// Резервный таймаут (мс) на один шаг анимации. Должен быть заметно больше
+	// длительности видимого перехода (opacity 0.7s в *-queue-transition.css), чтобы
+	// таймер никогда не соперничал с экранным переходом: он срабатывает, только
+	// когда продвигающего перехода не будет вовсе (отсечение блоков вне экрана,
+	// добавление/удаление без изменений).
+	const ANIMATION_STEP_FALLBACK_MS = 1200;
+	/**
+	 * Управляет продвижением очереди анимации так, чтобы каждый yield-шаг
+	 * продвигался РОВНО ОДИН РАЗ — тем, что наступит первым: совпавшим экранным
+	 * переходом или резервным таймером; проигравший игнорируется.
+	 *
+	 * Чистая логика (без Vue и DOM): таймеры инъектируются, поэтому класс
+	 * тестируется с поддельными часами. Сопоставление элемента с текущим шагом (какой
+	 * переход относится к текущему шагу) остаётся в компонентах переходов — этот
+	 * контроллер лишь обеспечивает инвариант «одно продвижение на шаг» через
+	 * монотонный токен шага.
+	 */
+	class AnimationStepController {
+		#token = 0;
+		#settledToken = 0;
+		#timerId = null;
+		#fallbackMs;
+		#onAdvance;
+		#setTimeoutFn;
+		#clearTimeoutFn;
+		constructor(options = {}) {
+			const {
+				fallbackMs = ANIMATION_STEP_FALLBACK_MS,
+				onAdvance = null,
+				// Таймеры по умолчанию связываем с глобальным объектом: нативные
+				// setTimeout/clearTimeout требуют this === window, иначе браузер бросает
+				// «Illegal invocation» при вызове как метода инстанса. Инъекция таймеров
+				// для тестов (sinon) остаётся приоритетной и перекрывает значение по умолчанию.
+				setTimeoutFn = globalThis.setTimeout.bind(globalThis),
+				clearTimeoutFn = globalThis.clearTimeout.bind(globalThis)
+			} = options;
+			this.#fallbackMs = fallbackMs;
+			this.#onAdvance = onAdvance;
+			this.#setTimeoutFn = setTimeoutFn;
+			this.#clearTimeoutFn = clearTimeoutFn;
+		}
+		setAdvanceHandler(onAdvance) {
+			this.#onAdvance = onAdvance;
+		}
+		get currentToken() {
+			return this.#token;
+		}
+
+		/**
+		 * Открывает новый шаг: увеличивает токен и вооружает резервный таймер. Таймер
+		 * от предыдущего незавершённого шага снимается. Возвращает токен нового шага.
+		 */
+		openStep() {
+			this.#clearTimer();
+			this.#token += 1;
+			const token = this.#token;
+			this.#timerId = this.#setTimeoutFn(() => {
+				this.#settle(token);
+			}, this.#fallbackMs);
+			return token;
+		}
+
+		/**
+		 * Запрашивает продвижение для указанного токена шага (вызывается совпавшим
+		 * переходом). Продвигает, только если токен всё ещё соответствует текущему
+		 * незавершённому шагу; иначе запрос игнорируется. Возвращает, произошло ли
+		 * продвижение.
+		 */
+		settle(token) {
+			return this.#settle(token);
+		}
+		#settle(token) {
+			if (token !== this.#token) {
+				// Устаревший токен: относится к уже сменённому шагу.
+				return false;
+			}
+			if (this.#settledToken >= token) {
+				// Этот шаг уже был продвинут (гонка таймера и перехода).
+				return false;
+			}
+			this.#settledToken = token;
+			this.#clearTimer();
+			this.#onAdvance?.();
+			return true;
+		}
+		#clearTimer() {
+			if (this.#timerId !== null) {
+				this.#clearTimeoutFn(this.#timerId);
+				this.#timerId = null;
+			}
+		}
+		stop() {
+			this.#clearTimer();
+			this.#token = 0;
+			this.#settledToken = 0;
+		}
+	}
+
+	// Чистая проверка: соответствует ли DOM-элемент завершившегося перехода текущему
+	// элементу очереди. Точное сопоставление по data-id (MoveableBlock и Connection
+	// кладут его на корень своего элемента). Вынесено из *-queue-transition, чтобы
+	// логику можно было покрыть unit-тестами без Vue и DOM.
+	//
+	// Правила:
+	//  - item отсутствует → false (переход относится к уже завершённой очереди);
+	//  - у элемента нет data-id → true (грубая деградация к тип-фильтру и резервному
+	//    таймеру контроллера, сохраняем прежнее поведение);
+	//  - иначе сравниваем строковые представления data-id и item.id.
+	function matchesTransitionEl(el, item) {
+		if (!item) {
+			return false;
+		}
+		const elId = el?.getAttribute?.('data-id');
+		if (elId === null || elId === undefined) {
+			return true;
+		}
+		return String(elId) === String(item.id);
+	}
+
+	function promiseWithResolvers() {
+		let resolve = null;
+		let reject = null;
+		const promise = new Promise((res, rej) => {
+			resolve = res;
+			reject = rej;
+		});
+		return {
+			promise,
+			resolve,
+			reject
+		};
+	}
+
+	const TRANSFORM_LAYOUT_SELECTOR = '.ui-block-diagram-canvas-transform__transform';
+	function getCanvasRect(element) {
+		const layout = element?.closest(TRANSFORM_LAYOUT_SELECTOR);
+		if (!layout) {
+			return null;
+		}
+		const layoutRect = layout.getBoundingClientRect();
+		const elementRect = element.getBoundingClientRect();
+		const {
+			transform
+		} = getComputedStyle(layout);
+		const scale = transform === 'none' ? 1 : new DOMMatrixReadOnly(transform).a;
+		return {
+			x: (elementRect.x - layoutRect.x) / scale,
+			y: (elementRect.y - layoutRect.y) / scale,
+			width: elementRect.width / scale,
+			height: elementRect.height / scale
+		};
+	}
+
+	/**
+	 * ALG-01: retain a node's measured geometry when its port/block unmounts only
+	 * while render optimization culls the node out of the viewport yet it stays in
+	 * the model. Any other unmount is a real removal and its geometry must be cleared.
+	 */
+	function shouldRetainGeometry(isRenderOptimizationAvailable, blockIdsInModel, blockId) {
+		return isRenderOptimizationAvailable === true && blockIdsInModel.has(blockId);
+	}
+
+	/**
+	 * ALG-01 (port level): retain a port's measured geometry only while the block stays
+	 * in the model AND the port itself is still present in that block's ports. Culling
+	 * unmounts an offscreen node but keeps its ports in the model — retain. Deleting a
+	 * single port (setPorts without it) drops it from the model — clear, even though the
+	 * block remains, so no connection is drawn to a port that no longer exists.
+	 */
+	function shouldRetainPortGeometry(isRenderOptimizationAvailable, blockIdsInModel, blockId, blockPortIdsInModel, portId) {
+		return shouldRetainGeometry(isRenderOptimizationAvailable, blockIdsInModel, blockId) && blockPortIdsInModel.has(portId);
+	}
+
+	/**
+	 * Port ids a block currently exposes in the LIVE model, read through getBlockById
+	 * rather than a captured prop. An immutable setPorts swaps the block object, so an
+	 * unmounting port that closed over the old block would still see the dropped port and
+	 * wrongly retain its geometry; resolving the block from the current model instead makes
+	 * the removed port absent here — so retention clears it. A block removed entirely yields
+	 * an empty set (getBlockById returns null).
+	 */
+	function collectModelPortIds(getBlockById, blockId) {
+		const block = getBlockById(blockId);
+		const ports = ui_vue3.toValue(block?.ports) ?? [];
+		return new Set(ports.map(port => ui_vue3.toValue(port)?.id));
+	}
+
+	// Chrome on Windows hands the custom drag image to the OS as a bitmap and degrades it into a blurred
+	// blob once its longer side grows too large; the blur depends on the longer side only, not on the area.
+	// DRAG_IMAGE_SIDE_LIMIT is not a measured-safe side (260 already blurred in the tests): it only marks
+	// where previews that already worked are left untouched, so scaling applies to clearly oversized nodes only.
+	// DRAG_IMAGE_TARGET_SIDE is the side measured as still sharp; a preview above the limit is zoomed down
+	// so its longer side becomes the target.
+	const DRAG_IMAGE_SIDE_LIMIT = 260;
+	const DRAG_IMAGE_TARGET_SIDE = 240;
+	function resolveDragImageScale(width, height) {
+		const maxSide = Math.max(width, height);
+		if (!Number.isFinite(maxSide) || maxSide <= DRAG_IMAGE_SIDE_LIMIT) {
+			return 1;
+		}
+		return DRAG_IMAGE_TARGET_SIDE / maxSide;
+	}
+
+	// The dragged edge is snapped first, the opposite edge keeps its place; the minimum size
+	// wins over the grid node.
+	function getSizeByEndEdge(endEdge, fixedStart, minSize) {
+		return Math.max(endEdge - fixedStart, minSize);
+	}
+	function getBoundsByStartEdge(startEdge, fixedEnd, minSize) {
+		const size = fixedEnd - startEdge;
+		return size < minSize ? {
+			position: fixedEnd - minSize,
+			size: minSize
+		} : {
+			position: startEdge,
+			size
+		};
+	}
+
 	const isRenderOptimizationAvailable = main_core.Extension.getSettings('ui.block-diagram').get('isRenderOptimizationAvailable');
 	const RENDER_OPTIMIZATION = {
 		enabled: 'Y'
@@ -2950,9 +5000,9 @@ this.BX = this.BX || {};
 			cursorType: 'default',
 			isResizing: false,
 			isDisabled: false,
-			waitAllBlocksMounted: Promise.withResolvers(),
+			waitAllBlocksMounted: promiseWithResolvers(),
 			waitedBlockIds: new Set(),
-			waitAllPortsMounted: Promise.withResolvers(),
+			waitAllPortsMounted: promiseWithResolvers(),
 			waitedBlockPortsIds: new Set(),
 			isRunUpdateBlocksCommand: false,
 			blocks: [],
@@ -2960,15 +5010,23 @@ this.BX = this.BX || {};
 			connectionOffset: CONNECTION_OFFSET,
 			connectionBendOffset: CONNECTION_BEND_OFFSET,
 			connectionBorderRadius: CONNECTION_BORDER_RADIUS,
-			connectionsOffsetMap: {},
+			connectionsOffsetMap: Object.create(null),
 			blockElMap: ui_vue3.markRaw(new Map()),
 			blocksRectMap: {},
 			portsElMap: ui_vue3.markRaw(new Map()),
 			portsRectMap: {},
+			// Bumped when a port registers or drops its own rect (addPortRect/deletePortRect); a
+			// bulk purge of a culled block's geometry stays silent. Watching the map itself would
+			// mean a structural walk of every block ever measured on each pass; a counter says
+			// the same thing in one read.
+			portsGeometryVersion: 0,
 			portsValidationsFnMap: new Map(),
 			validPortsMap: new Map(),
+			virtualPortsMap: ui_vue3.markRaw(new Map()),
 			newConnection: null,
+			connectionPreview: null,
 			movingBlockId: null,
+			gestureBlockIds: new Set(),
 			resizingBlock: null,
 			canvasRef: null,
 			transformLayoutRef: null,
@@ -2982,6 +5040,11 @@ this.BX = this.BX || {};
 			zoom: 1,
 			minZoom: 0.2,
 			maxZoom: 4,
+			snapToGrid: false,
+			snapSize: null,
+			// fallback for a canvasStyle without an explicit size: the same base cell the grid
+			// style defaults to, so the snap step never diverges from the drawn grid
+			canvasGridSize: GRID_DEFAULT_SIZE,
 			contextMenuLayerRef: null,
 			targetContainerRef: null,
 			isOpenContextMenu: false,
@@ -3002,8 +5065,13 @@ this.BX = this.BX || {};
 			snapshotHandler: null,
 			revertHandler: null,
 			highlitedBlockIds: [],
+			transientHighlightedBlockIds: [],
 			isSelectionActive: false,
 			selectionWorldRect: null,
+			groupDragOffset: {
+				x: 0,
+				y: 0
+			},
 			animationQueue: null,
 			currentAnimationItem: null,
 			isPauseAnimation: false,
@@ -3015,14 +5083,15 @@ this.BX = this.BX || {};
 			},
 			isKeyboardInitialized: false,
 			isRenderOptimizationAvailable: isRenderOptimizationAvailable === RENDER_OPTIMIZATION.enabled,
-			waitForTransformEnd: null
+			connectionRouteHitTestEnabled: false
 		};
 	}
 
 	function useInstances(ctx) {
 		return {
 			portsNearest: new PortsNearest(ctx),
-			blockIntersections: new BlockIntersections(ctx)
+			blockIntersections: new BlockIntersections(ctx),
+			animationStep: new AnimationStepController()
 		};
 	}
 
@@ -3074,17 +5143,16 @@ this.BX = this.BX || {};
 			}
 			rafId = requestAnimationFrame(scrollLoop);
 		};
+
+		// The press only arms the autoscroll: the loop is left to the first move of the pointer.
+		// Started here it would pan the camera under a gesture that has not begun - a plain click on a
+		// block standing in the edge threshold carries the canvas away with the mouse never moving.
+		// When the gesture begins is for the gesture to say, and it says it by reporting the pointer:
+		// a drag reports it past its threshold, a selection frame or a resize from the first move.
 		const start = (event, callback) => {
-			const el = ui_vue3.toValue(state.canvasRef);
-			if (el) {
-				rect = el.getBoundingClientRect();
-			}
 			mouseX = event.clientX;
 			mouseY = event.clientY;
 			activeCallback = callback;
-			if (!rafId) {
-				rafId = requestAnimationFrame(scrollLoop);
-			}
 		};
 		const stop = () => {
 			if (rafId) {
@@ -3097,6 +5165,21 @@ this.BX = this.BX || {};
 		const updateMousePosition = event => {
 			mouseX = event.clientX;
 			mouseY = event.clientY;
+			if (!activeCallback || rafId) {
+				return;
+			}
+
+			// The canvas is measured here rather than on the press: between the two the panel of the
+			// selected block opens and the canvas loses the width the press would have measured, so
+			// the edge threshold would be counted from a border that has moved.
+			const el = ui_vue3.toValue(state.canvasRef);
+			if (!el) {
+				// A frame without geometry would exit at once, leaving rafId set: every later move would
+				// then read the loop as running and the autoscroll would stay dead for the whole gesture.
+				return;
+			}
+			rect = el.getBoundingClientRect();
+			rafId = requestAnimationFrame(scrollLoop);
 		};
 		return {
 			start,
@@ -3105,139 +5188,87 @@ this.BX = this.BX || {};
 		};
 	}
 
-	// eslint-disable-next-line max-lines-per-function
-	function useHistory(options = {}) {
-		const commonSnapshotHandler = newState => {
-			return ui_vue3.markRaw({
-				blocks: ui_vue3.markRaw(JSON.parse(JSON.stringify(newState.blocks))),
-				connections: ui_vue3.markRaw(JSON.parse(JSON.stringify(newState.connections)))
-			});
-		};
-		const commonRevertHandler = snapshot => {
-			hooks.changedBlocks.trigger(commandReplace(snapshot.blocks));
-			hooks.changedConnections.trigger(commandReplace(snapshot.connections));
-		};
-		const commonEmptyHistorySnapshot = {
-			blocks: [],
-			connections: []
-		};
-		const instance = useBlockDiagram();
-		const {
-			headSnapshot,
-			tailSnapshot,
-			currentSnapshot,
-			maxCountSnapshots,
-			hooks,
-			snapshotHandler,
-			revertHandler,
-			setHistoryHandlers,
-			historyCurrentState
-		} = instance;
-		const {
-			snapshotHandler: newSnapshotHandler = null,
-			revertHandler: newRevertHandler = null,
-			emptyHistorySnapshot = commonEmptyHistorySnapshot,
-			maxCount
-		} = options;
-		setHandlers({
-			});
-		maxCountSnapshots.value = maxCount || ui_vue3.toValue(maxCountSnapshots);
-		const hasNext = ui_vue3.computed(() => ui_vue3.toValue(currentSnapshot) && ui_vue3.toValue(currentSnapshot).next !== null);
-		const hasPrev = ui_vue3.computed(() => ui_vue3.toValue(currentSnapshot) && ui_vue3.toValue(currentSnapshot).prev !== null);
-		function setHandlers(newHandlerOptions) {
-			const handlerOptions = {
-				snapshotHandler: newHandlerOptions.snapshotHandler ?? ui_vue3.toValue(snapshotHandler) ?? commonSnapshotHandler,
-				revertHandler: newHandlerOptions.revertHandler ?? ui_vue3.toValue(revertHandler) ?? commonRevertHandler
-			};
-			setHistoryHandlers(handlerOptions);
-		}
-		function getCountSnapshots() {
-			let count = 0;
-			let current = ui_vue3.toValue(headSnapshot);
-			while (current) {
-				current = current.next;
-				count += 1;
+	function createConnectionsOffsetMap(connections, connectionOffset, connectionBendOffset) {
+		const connectionsOffsetMap = Object.create(null);
+		const connectionsCountMap = Object.create(null);
+		const getPortOffsets = (blockId, portId) => {
+			if (!(blockId in connectionsOffsetMap)) {
+				connectionsOffsetMap[blockId] = Object.create(null);
+				connectionsCountMap[blockId] = Object.create(null);
 			}
-			return count;
-		}
-		function makeSnapshot(options = {}) {
+			if (!(portId in connectionsOffsetMap[blockId])) {
+				connectionsOffsetMap[blockId][portId] = Object.create(null);
+				connectionsCountMap[blockId][portId] = 0;
+			}
+			return connectionsOffsetMap[blockId][portId];
+		};
+		connections.forEach(connection => {
 			const {
-				snapshotHandler: newSnapshotHandler = null,
-				revertHandler: newRevertHandler = null,
-				emptySnapshot: newEmptySnapshot = null
-			} = options;
-			const snapshotHistoryHandler = newSnapshotHandler || ui_vue3.toValue(snapshotHandler);
-			const revertHistoryHandler = newRevertHandler || ui_vue3.toValue(revertHandler);
-			const emptySnapshot = newEmptySnapshot || emptyHistorySnapshot;
-			const newSnapshot = ui_vue3.markRaw({
-				snapshot: snapshotHistoryHandler(ui_vue3.toValue(historyCurrentState)),
-				revertHandler: revertHistoryHandler,
-				emptySnapshot,
-				next: null,
-				prev: tailSnapshot.value
-			});
-			if (ui_vue3.toValue(currentSnapshot) && ui_vue3.toValue(currentSnapshot)?.next !== null) {
-				currentSnapshot.value.next = newSnapshot;
-				newSnapshot.prev = currentSnapshot.value;
-				tailSnapshot.value.prev = null;
-				tailSnapshot.value.next = null;
-				tailSnapshot.value = newSnapshot;
-			} else if (ui_vue3.toValue(headSnapshot) === null) {
-				headSnapshot.value = newSnapshot;
-				tailSnapshot.value = newSnapshot;
-			} else {
-				tailSnapshot.value.next = newSnapshot;
-				tailSnapshot.value = newSnapshot;
+				id,
+				sourceBlockId,
+				sourcePortId,
+				targetBlockId,
+				targetPortId
+			} = connection;
+			const sourcePortOffsets = getPortOffsets(sourceBlockId, sourcePortId);
+			const targetPortOffsets = getPortOffsets(targetBlockId, targetPortId);
+			const sourceConnectionExists = id in sourcePortOffsets;
+			const targetConnectionExists = id in targetPortOffsets;
+			const sourceConnectionsCount = connectionsCountMap[sourceBlockId][sourcePortId] + 1;
+			const targetConnectionsCount = connectionsCountMap[targetBlockId][targetPortId] + 1;
+			sourcePortOffsets[id] = {
+				firstSegmentSize: sourceConnectionsCount * connectionOffset,
+				secondSegmentSize: connectionBendOffset * connectionOffset,
+				secondSegmentOrder: sourceConnectionsCount
+			};
+			targetPortOffsets[id] = {
+				firstSegmentSize: targetConnectionsCount * connectionOffset,
+				secondSegmentSize: connectionBendOffset * connectionOffset,
+				secondSegmentOrder: targetConnectionsCount
+			};
+			if (!sourceConnectionExists) {
+				connectionsCountMap[sourceBlockId][sourcePortId] = sourceConnectionsCount;
 			}
-			currentSnapshot.value = newSnapshot;
-			if (getCountSnapshots() <= ui_vue3.toValue(maxCountSnapshots) + 1) {
-				return;
+			if (!targetConnectionExists) {
+				connectionsCountMap[targetBlockId][targetPortId] = targetConnectionsCount;
 			}
-			const firstSnapshot = headSnapshot.value;
-			headSnapshot.value = firstSnapshot.next;
-			headSnapshot.value.prev = null;
-			firstSnapshot.next = null;
+		});
+		return connectionsOffsetMap;
+	}
+	function isFilledString(value) {
+		return main_core.Type.isStringFilled(value) && value.trim() !== '';
+	}
+	function isDiagramConnection(connection) {
+		return main_core.Type.isObject(connection) && ['id', 'sourceBlockId', 'sourcePortId', 'targetBlockId', 'targetPortId'].every(field => isFilledString(connection[field]));
+	}
+	function prepareConnectionPreview(preview) {
+		if (!main_core.Type.isObject(preview) || !isFilledString(preview.activationKey) || !isFilledString(preview.hiddenConnectionId) || !main_core.Type.isArray(preview.temporaryConnections) || preview.temporaryConnections.length !== 2 || !preview.temporaryConnections.every(isDiagramConnection) || preview.temporaryConnections[0].id === preview.temporaryConnections[1].id || !main_core.Type.isArray(preview.portMarkers) || preview.portMarkers.length !== 2 || !preview.portMarkers.every(marker => main_core.Type.isObject(marker) && isFilledString(marker.blockId) && isFilledString(marker.portId)) || !main_core.Type.isArray(preview.routingConnections) || !preview.routingConnections.every(isDiagramConnection)) {
+			return null;
 		}
-		async function revertState({
-			revertHandler,
-			snapshot,
-			emptySnapshot
-		}) {
-			revertHandler(emptySnapshot);
-			await ui_vue3.nextTick();
-			revertHandler(snapshot);
-		}
-		async function next() {
-			if (ui_vue3.toValue(currentSnapshot) === null || ui_vue3.toValue(currentSnapshot).next === null) {
-				return;
-			}
-			await revertState(ui_vue3.toValue(currentSnapshot).next);
-			currentSnapshot.value = ui_vue3.toValue(currentSnapshot).next;
-			hooks.historyNext.trigger(currentSnapshot.value);
-		}
-		async function prev() {
-			if (ui_vue3.toValue(currentSnapshot) === null || ui_vue3.toValue(currentSnapshot).prev === null) {
-				return;
-			}
-			await revertState(ui_vue3.toValue(currentSnapshot).prev);
-			currentSnapshot.value = ui_vue3.toValue(currentSnapshot).prev;
-			hooks.historyPrev.trigger(currentSnapshot.value);
-		}
-		function clear() {
-			headSnapshot.value = null;
-			tailSnapshot.value = null;
-			currentSnapshot.value = null;
+		const temporaryConnectionIds = new Set(preview.temporaryConnections.map(connection => connection.id));
+		const routingConnectionIds = new Set(preview.routingConnections.map(connection => connection.id));
+		const hasUniqueRoutingConnectionIds = routingConnectionIds.size === preview.routingConnections.length;
+		const hasIndependentHiddenConnection = !temporaryConnectionIds.has(preview.hiddenConnectionId);
+		const hasTemporaryConnections = [...temporaryConnectionIds].every(connectionId => routingConnectionIds.has(connectionId));
+		if (!hasUniqueRoutingConnectionIds || !hasIndependentHiddenConnection || !hasTemporaryConnections) {
+			return null;
 		}
 		return {
-			hasNext,
-			hasPrev,
-			setHandlers,
-			makeSnapshot: () => ui_vue3.nextTick(() => makeSnapshot()),
-			next,
-			prev,
-			clear,
-			commonSnapshotHandler,
-			commonRevertHandler
+			hiddenConnectionId: preview.hiddenConnectionId,
+			temporaryConnections: [{
+				...preview.temporaryConnections[0]
+			}, {
+				...preview.temporaryConnections[1]
+			}],
+			routingConnections: preview.routingConnections.map(connection => ({
+				...connection
+			})),
+			portMarkers: [{
+				...preview.portMarkers[0]
+			}, {
+				...preview.portMarkers[1]
+			}],
+			activationKey: preview.activationKey
 		};
 	}
 
@@ -3246,7 +5277,8 @@ this.BX = this.BX || {};
 	function useActions({
 		state,
 		getters,
-		hooks
+		hooks,
+		instances = null
 	}) {
 		function setState(options) {
 			state.blocks = ui_vue3.toValue(options.blocks);
@@ -3258,8 +5290,14 @@ this.BX = this.BX || {};
 		function setUnmountedBlocks(newBlocks, oldBlocks = []) {
 			const oldBlockIdsMap = new Set(oldBlocks.map(block => block.id));
 			const arrWaitedBlockIds = newBlocks.filter(block => !oldBlockIdsMap.has(block.id)).map(block => block.id);
-			state.waitAllBlocksMounted = Promise.withResolvers();
+			state.waitAllBlocksMounted = promiseWithResolvers();
 			state.waitedBlockIds = new Set(arrWaitedBlockIds);
+
+			// Nothing new to mount: a replacement that only moves existing blocks. The graph
+			// is ready right away, and no mount event is coming to resolve the barrier.
+			if (state.waitedBlockIds.size === 0) {
+				state.waitAllBlocksMounted.resolve();
+			}
 		}
 		function blockMounted(blockId) {
 			const {
@@ -3278,7 +5316,7 @@ this.BX = this.BX || {};
 			}, new Set());
 			const arrNewBlockPortIds = newBlocks.flatMap(block => block.ports.map(port => `${block.id}_${port.id}`)).filter(blockPortId => !oldBlockPortsIds.has(blockPortId));
 			state.waitedBlockPortsIds = new Set(arrNewBlockPortIds);
-			state.waitAllPortsMounted = Promise.withResolvers();
+			state.waitAllPortsMounted = promiseWithResolvers();
 		}
 		function portMounted(blockId, portId) {
 			const {
@@ -3295,33 +5333,23 @@ this.BX = this.BX || {};
 				connectionOffset,
 				connectionBendOffset
 			} = state;
-			state.connectionsOffsetMap = connections.reduce((accMap, connection) => {
-				const {
-					id,
-					sourceBlockId,
-					sourcePortId,
-					targetBlockId,
-					targetPortId
-				} = connection;
-				accMap[sourceBlockId] = sourceBlockId in accMap ? accMap[sourceBlockId] : {};
-				accMap[sourceBlockId][sourcePortId] = sourcePortId in accMap[sourceBlockId] ? accMap[sourceBlockId][sourcePortId] : {};
-				accMap[targetBlockId] = targetBlockId in accMap ? accMap[targetBlockId] : {};
-				accMap[targetBlockId][targetPortId] = targetPortId in accMap[targetBlockId] ? accMap[targetBlockId][targetPortId] : {};
-				const sourceConnectionsCount = Object.keys(accMap[sourceBlockId][sourcePortId]).length + 1;
-				const targetConnectionsCount = Object.keys(accMap[targetBlockId][targetPortId]).length + 1;
-				accMap[sourceBlockId][sourcePortId][id] = {
-					firstSegmentSize: sourceConnectionsCount * connectionOffset,
-					secondSegmentSize: connectionBendOffset * connectionOffset,
-					secondSegmentOrder: sourceConnectionsCount
-				};
-				accMap[targetBlockId][targetPortId][id] = {
-					firstSegmentSize: targetConnectionsCount * connectionOffset,
-					secondSegmentSize: connectionBendOffset * connectionOffset,
-					secondSegmentOrder: targetConnectionsCount
-				};
-				return accMap;
-			}, {});
+			state.connectionsOffsetMap = createConnectionsOffsetMap(connections, connectionOffset, connectionBendOffset);
 		}
+		const findConnectionRouteHits = rect => {
+			return instances?.blockIntersections?.findConnectionRouteHits(rect) ?? [];
+		};
+		const showConnectionPreview = preview => {
+			state.connectionPreview = prepareConnectionPreview(preview);
+		};
+		const clearConnectionPreview = (expectedActivationKey = null) => {
+			if (main_core.Type.isNil(expectedActivationKey)) {
+				state.connectionPreview = null;
+				return;
+			}
+			if (isFilledString(expectedActivationKey) && state.connectionPreview?.activationKey === expectedActivationKey) {
+				state.connectionPreview = null;
+			}
+		};
 		function setHistoryBlocksCurrentState(blocks) {
 			state.historyCurrentState.blocks = ui_vue3.markRaw(JSON.parse(JSON.stringify(blocks)));
 		}
@@ -3375,8 +5403,7 @@ this.BX = this.BX || {};
 			}
 		};
 		const deleteConnectionById = connectionId => {
-			const connections = state.connections.filter(connection => connection.id !== connectionId);
-			hooks.changedConnections.trigger(commandReplace(connections));
+			hooks.changedConnections.trigger(commandDeleteById(connectionId));
 			hooks.deleteConnection.trigger(connectionId);
 		};
 		const deleteConnectionByBlockIdAndPortId = (blockId, portId) => {
@@ -3384,8 +5411,9 @@ this.BX = this.BX || {};
 			if (!block) {
 				return;
 			}
-			const portIdMap = new Set([...(block.ports?.input ?? []), ...(block.ports?.output ?? [])].map(port => port.id));
-			const newConnections = state.connections.filter(connection => {
+			const ports = main_core.Type.isArray(block.ports) ? block.ports : [];
+			const portIdMap = new Set(ports.map(port => port.id));
+			const removeConnectionIds = state.connections.filter(connection => {
 				const {
 					sourceBlockId,
 					sourcePortId,
@@ -3394,18 +5422,24 @@ this.BX = this.BX || {};
 				} = connection;
 				const isSource = sourceBlockId === blockId && portIdMap.has(sourcePortId);
 				const isTarget = targetBlockId === blockId && portIdMap.has(targetPortId);
-				return !isSource && !isTarget;
-			});
-			hooks.changedConnections.trigger(commandReplace(newConnections));
+				return isSource || isTarget;
+			}).map(connection => connection.id);
+			if (removeConnectionIds.length === 0) {
+				return;
+			}
+			hooks.changedConnections.trigger(commandDeleteByIds(removeConnectionIds));
 		};
 		const deleteBlockById = blockId => {
-			const blockIndex = state.blocks.findIndex(block => block.id === blockId);
-			if (blockIndex === -1) {
+			const block = state.blocks.find(stateBlock => stateBlock.id === blockId);
+			if (!block) {
 				return;
 			}
 			deleteConnectionByBlockIdAndPortId(blockId);
-			hooks.changedBlocks.trigger(commandDeleteByIndex(blockIndex));
-			hooks.deleteBlock.trigger(state.blocks[blockIndex]);
+			hooks.changedBlocks.trigger(commandDeleteById(blockId));
+			hooks.deleteBlock.trigger(block);
+		};
+		const getBlockById = blockId => {
+			return state.blocks.find(block => block.id === blockId) ?? null;
 		};
 		const addBlock = block => {
 			setUnmountedPorts([block]);
@@ -3419,12 +5453,15 @@ this.BX = this.BX || {};
 			hooks.changedBlocks.trigger(commandPush(blocks));
 			hooks.addBlocks.trigger(blocks);
 		};
+		const replaceBlocks = blocks => {
+			hooks.changedBlocks.trigger(commandReplace(blocks));
+		};
 		const deleteBlock = block => {
 			deleteBlockById(ui_vue3.toValue(block).id);
 		};
 		const deleteBlocks = blocks => {
-			const deleteBlockMapIds = new Set(ui_vue3.toValue(blocks).map(block => block.id));
-			hooks.changedBlocks.trigger(commandReplace(state.blocks.filter(block => !deleteBlockMapIds.has(block.id))));
+			const ids = ui_vue3.toValue(blocks).map(block => block.id);
+			hooks.changedBlocks.trigger(commandDeleteByIds(ids));
 			hooks.deleteBlocks.trigger(blocks);
 		};
 		const addBlocksAndConnections = (newBlocks, newConnections) => {
@@ -3442,6 +5479,20 @@ this.BX = this.BX || {};
 			}
 			hooks.updateBlock.trigger(state.blocks[blockIndex], newBlock);
 			hooks.changedBlocks.trigger(commandUpdateByIndex(blockIndex, newBlock));
+		};
+
+		// Each side of the rollback is applied only for a block the caller could resolve: an update
+		// intercepted after its block left the model carries no geometry, and passing it on would ask
+		// the index for the box of a block that no longer has one. Releasing the command flag is
+		// unconditional - the interception is over either way.
+		const rollbackBlockUpdate = (attemptedBlock, actualBlock) => {
+			if (main_core.Type.isObjectLike(attemptedBlock)) {
+				instances?.blockIntersections?.removeBlock(attemptedBlock);
+			}
+			if (main_core.Type.isObjectLike(actualBlock)) {
+				instances?.blockIntersections?.insertBlock(actualBlock);
+			}
+			state.isRunUpdateBlocksCommand = false;
 		};
 		const transformEventToPoint = point => {
 			let transformedX = Math.round(point.clientX / ui_vue3.toValue(state.zoom));
@@ -3466,11 +5517,61 @@ this.BX = this.BX || {};
 		const resetMovingBlock = () => {
 			state.movingBlockId = null;
 		};
+
+		// Every node of the running gesture, whatever leads it: the frame drag moves a whole selection
+		// and the node drag takes its group members along, while the model keeps their pre-gesture
+		// positions until the commit. The set is replaced rather than mutated - a reactive Set read
+		// inside an animation frame only needs its current value.
+		const setGestureBlocks = blockIds => {
+			state.gestureBlockIds = new Set(ui_vue3.toValue(blockIds).map(blockId => ui_vue3.toValue(blockId)));
+		};
+		const resetGestureBlocks = () => {
+			state.gestureBlockIds = new Set();
+		};
+
+		// The shift the frame drag has drawn and not yet committed. It belongs to the diagram instance:
+		// a page may hold several of them, and the box of one must not follow the gesture of another.
+		const setGroupDragOffset = offset => {
+			state.groupDragOffset = {
+				x: offset.x,
+				y: offset.y
+			};
+		};
+		const resetGroupDragOffset = () => {
+			state.groupDragOffset = {
+				x: 0,
+				y: 0
+			};
+		};
 		const updateBlockRectById = (blockId, rect) => {
 			state.blocksRectMap[blockId] = {
 				...state.blocksRectMap[blockId],
 				...rect
 			};
+		};
+
+		// Reports that a port registered or dropped its own rect. Neither the coordinates of an
+		// already measured port nor a bulk purge of a culled block's geometry count as a change
+		// here: the signal only wakes the pass that adds targets, and a gesture never revokes one it
+		// already earned. A purge does drop the rect, so its readers treat a missing one as no target.
+		const touchPortsGeometry = () => {
+			state.portsGeometryVersion += 1;
+		};
+
+		// Release geometry retained under culling. The only path that frees a retained
+		// node's coordinates when it leaves the model without producing an unmount.
+		const purgeBlockGeometry = blockId => {
+			delete state.portsRectMap[blockId];
+			delete state.blocksRectMap[blockId];
+		};
+		const purgeBlockGeometryExcept = keepBlockIds => {
+			const keep = new Set(ui_vue3.toValue(keepBlockIds));
+			const trackedIds = new Set([...Object.keys(state.blocksRectMap), ...Object.keys(state.portsRectMap)]);
+			trackedIds.forEach(blockId => {
+				if (!keep.has(blockId)) {
+					purgeBlockGeometry(blockId);
+				}
+			});
 		};
 		const setHistoryHandlers = ({
 			snapshotHandler: newSnapshotHandler = null,
@@ -3479,48 +5580,71 @@ this.BX = this.BX || {};
 			state.snapshotHandler = newSnapshotHandler || state.snapshotHandler;
 			state.revertHandler = newRevertHandler || state.revertHandler;
 		};
+
+		// Block ids come from an untrusted graph, so a rect is only ever taken as an own property.
+		const getOwnRect = (rectMap, key) => {
+			const map = ui_vue3.toValue(rectMap) ?? {};
+			return Object.hasOwn(map, key) ? map[key] : null;
+		};
+		const translatePortRects = (blockId, offset) => {
+			const ports = getOwnRect(state.portsRectMap, blockId) ?? {};
+			Object.values(ports).forEach(portRect => {
+				portRect.x += offset.x;
+				portRect.y += offset.y;
+			});
+		};
+
+		// Drag passes previous minus new position, so its offset is the negation of the move.
 		const setPortOffsetByBlockId = (blockId, offsets) => {
-			const ports = ui_vue3.toValue(state.portsRectMap)?.[blockId] ?? {};
-			Object.entries(ports).forEach(([id, portRect]) => {
-				ports[id].x = portRect.x - offsets.x;
-				ports[id].y = portRect.y - offsets.y;
+			translatePortRects(blockId, {
+				x: -offsets.x,
+				y: -offsets.y
+			});
+		};
+
+		// Moving a block by a known offset leaves its size and the placement of its ports relative
+		// to it untouched, so measured geometry follows by arithmetic and the browser is never asked
+		// to measure again. Records are moved, never dropped: consumers read them without an
+		// existence check. Culled blocks are translated as well, but a moved one does not keep the
+		// transfer: the props watcher flushing right after purges retained geometry whose model key
+		// changed, and the first-measure path measures such a block again on its next mount. So for
+		// blocks outside the viewport correctness rests on that path, not on this translation.
+		const translateBlockGeometry = (blockId, offset) => {
+			const blockRect = getOwnRect(state.blocksRectMap, blockId);
+			if (blockRect) {
+				blockRect.x += offset.x;
+				blockRect.y += offset.y;
+			}
+			translatePortRects(blockId, offset);
+		};
+		const translateBlocksGeometry = offsets => {
+			offsets.forEach((offset, blockId) => {
+				translateBlockGeometry(blockId, offset);
 			});
 		};
 		const updateBlockRect = blockId => {
 			const {
 				blockElMap,
 				blocksRectMap,
-				zoom,
-				transformX,
-				transformY,
-				blockDiagramLeft,
-				blockDiagramTop,
 				blocks
 			} = state;
-			const {
-				x: newX = 0,
-				y: newY = 0,
-				width: newWidth = 0,
-				height: newHeight = 0
-			} = ui_vue3.toValue(blockElMap).get(ui_vue3.toValue(blockId))?.getBoundingClientRect() ?? {};
-			const x = newX / ui_vue3.toValue(zoom) + ui_vue3.toValue(transformX) - ui_vue3.toValue(blockDiagramLeft) / ui_vue3.toValue(zoom);
-			const y = newY / ui_vue3.toValue(zoom) + ui_vue3.toValue(transformY) - ui_vue3.toValue(blockDiagramTop) / ui_vue3.toValue(zoom);
+			const rect = getCanvasRect(ui_vue3.toValue(blockElMap).get(ui_vue3.toValue(blockId)));
+			if (!rect) {
+				return;
+			}
 			blocksRectMap[ui_vue3.toValue(blockId)] = {
-				x,
-				y,
-				width: newWidth,
-				height: newHeight
+				...rect
 			};
 			const block = ui_vue3.toValue(blocks).find(b => b.id === ui_vue3.toValue(blockId));
 			updateBlock({
 				...ui_vue3.toValue(block),
 				position: {
-					x,
-					y
+					x: rect.x,
+					y: rect.y
 				},
 				dimensions: {
-					width: newWidth / zoom,
-					height: newHeight / zoom
+					width: rect.width,
+					height: rect.height
 				}
 			});
 		};
@@ -3532,28 +5656,21 @@ this.BX = this.BX || {};
 		const updatePortRect = (blockId, portId) => {
 			const {
 				portsElMap,
-				portsRectMap,
-				blockDiagramLeft,
-				blockDiagramTop,
-				zoom,
-				transformX,
-				transformY
+				portsRectMap
 			} = state;
 			const hasBlock = ui_vue3.toValue(portsElMap).has(blockId);
 			const hasPort = hasBlock && ui_vue3.toValue(portsElMap).get(blockId).has(portId);
 			if (!hasBlock || !hasPort) {
 				return;
 			}
-			const {
-				x = 0,
-				y = 0,
-				width = 0,
-				height = 0
-			} = portsElMap.get(blockId)?.get(portId)?.getBoundingClientRect() ?? {};
-			portsRectMap[blockId][portId].x = x / zoom + ui_vue3.toValue(transformX) - ui_vue3.toValue(blockDiagramLeft) / zoom;
-			portsRectMap[blockId][portId].y = y / zoom + ui_vue3.toValue(transformY) - ui_vue3.toValue(blockDiagramTop) / zoom;
-			portsRectMap[blockId][portId].width = width / zoom;
-			portsRectMap[blockId][portId].height = height / zoom;
+			const rect = getCanvasRect(portsElMap.get(blockId)?.get(portId));
+			if (!rect) {
+				return;
+			}
+			portsRectMap[blockId][portId].x = rect.x;
+			portsRectMap[blockId][portId].y = rect.y;
+			portsRectMap[blockId][portId].width = rect.width;
+			portsRectMap[blockId][portId].height = rect.height;
 		};
 		const updatePortSegmentSizes = (blockId, portId, order) => {
 			const {
@@ -3617,9 +5734,27 @@ this.BX = this.BX || {};
 				y
 			};
 		};
+
+		// Input points never align on their own: a point is snapped only where the caller reports the
+		// modifier as held and only while the diagram allows snapping.
+		const isSnapApplied = isSnapRequested => {
+			return isSnapRequested === true && ui_vue3.toValue(getters.snapStep) !== null;
+		};
+		const snapValue = (value, isSnapRequested = false) => {
+			return isSnapApplied(isSnapRequested) ? snapValueToGrid(value, ui_vue3.toValue(getters.snapStep)) : value;
+		};
+		const snapPoint = (point, isSnapRequested = false) => {
+			return isSnapApplied(isSnapRequested) ? snapPointToGrid(point, ui_vue3.toValue(getters.snapStep)) : {
+				x: point.x,
+				y: point.y
+			};
+		};
 		return {
 			setState,
 			setConnectionsOffsets,
+			findConnectionRouteHits,
+			showConnectionPreview,
+			clearConnectionPreview,
 			setHistoryBlocksCurrentState,
 			setHistoryConnectionsCurrentState,
 			setUnmountedBlocks,
@@ -3631,19 +5766,31 @@ this.BX = this.BX || {};
 			addConnection,
 			addConnections,
 			deleteConnectionById,
+			getBlockById,
 			addBlock,
 			addBlocks,
+			replaceBlocks,
 			deleteBlock,
 			deleteBlocks,
 			addBlocksAndConnections,
 			updateBlockPositionByIndex,
 			updateBlock,
+			rollbackBlockUpdate,
 			deleteBlockById,
 			transformEventToPoint,
 			setMovingBlock,
 			resetMovingBlock,
+			setGestureBlocks,
+			resetGestureBlocks,
+			setGroupDragOffset,
+			resetGroupDragOffset,
 			setHistoryHandlers,
 			setPortOffsetByBlockId,
+			touchPortsGeometry,
+			translateBlockGeometry,
+			translateBlocksGeometry,
+			purgeBlockGeometry,
+			purgeBlockGeometryExcept,
 			updatePort,
 			updatePortRect,
 			updateBlockRectById,
@@ -3654,7 +5801,9 @@ this.BX = this.BX || {};
 			stopAutoScroll: autoScroll.stop,
 			updateMousePosition: autoScroll.updateMousePosition,
 			setCamera,
-			transformMouseEventToPoint
+			transformMouseEventToPoint,
+			snapValue,
+			snapPoint
 		};
 	}
 
@@ -3689,20 +5838,42 @@ this.BX = this.BX || {};
 		const connectionGroupNames = ui_vue3.computed(() => {
 			return Object.keys(ui_vue3.toValue(groupedConnections));
 		});
+		const blockIdsInModel = ui_vue3.computed(() => {
+			return new Set(state.blocks.map(block => block.id));
+		});
 		const isAnimate = ui_vue3.computed(() => {
 			return state.animationQueue !== null;
 		});
 		const isDisabledBlockDiagram = ui_vue3.computed(() => {
 			return state.isDisabled || ui_vue3.toValue(isAnimate);
 		});
+
+		// The only place deciding which snap step is in effect. A step other than null merely permits
+		// snapping; whether a gesture applies it is decided by the caller together with the Shift
+		// modifier (`isSnapApplied`).
+		// Counted from the base grid size (`canvasStyle.size`), so the step ignores zoom by design.
+		// The default zoom ladder derives its finest level from the same divisor, so the step is a
+		// line the canvas draws rather than a value of its own; a consumer passing a ladder of its
+		// own has to keep that agreement. `snapSize` sets the step explicitly.
+		const snapStep = ui_vue3.computed(() => {
+			if (!state.snapToGrid) {
+				return null;
+			}
+			if (Number.isFinite(state.snapSize) && state.snapSize > 0) {
+				return state.snapSize;
+			}
+			return state.canvasGridSize / GRID_SUBDIVISION;
+		});
 		return {
 			transform,
 			canvasId,
 			groupedConnections,
 			connectionGroupNames,
+			blockIdsInModel,
 			isAnimate,
 			isDisabledBlockDiagram,
-			isMakeNewConnection
+			isMakeNewConnection,
+			snapStep
 		};
 	}
 
@@ -3742,14 +5913,15 @@ this.BX = this.BX || {};
 		const reactiveState = ui_vue3.reactive(state);
 		const getters = useGetters(reactiveState);
 		const hooks = useHooks();
-		const actions = useActions({
-			state: reactiveState,
-			getters,
-			hooks
-		});
 		const instances = useInstances({
 			state: reactiveState,
 			getters
+		});
+		const actions = useActions({
+			state: reactiveState,
+			getters,
+			hooks,
+			instances
 		});
 		if (options) {
 			actions.setState(options);
@@ -3878,26 +6050,591 @@ this.BX = this.BX || {};
 		};
 	}
 
+	function blockGeometryKey(block) {
+		const {
+			x = 0,
+			y = 0
+		} = ui_vue3.toValue(block.position) ?? {};
+		const {
+			width = 0,
+			height = 0
+		} = ui_vue3.toValue(block.dimensions) ?? {};
+		const ports = ui_vue3.toValue(block.ports) ?? [];
+		return JSON.stringify({
+			x,
+			y,
+			width,
+			height,
+			ports
+		});
+	}
+	function buildBlockModel(list) {
+		return new Map(ui_vue3.toValue(list ?? []).map(block => [block.id, blockGeometryKey(block)]));
+	}
+
+	// Free geometry that the model no longer backs: (a) blocks removed from the model,
+	// (b) unmounted (culled) blocks whose position/size changed — their retained
+	// coordinates are now stale and no unmount will fire to clear them.
+	function purgeStaleGeometry(previousModel, newModel, blockElMap, purgeBlockGeometry) {
+		for (const blockId of previousModel.keys()) {
+			if (!newModel.has(blockId)) {
+				purgeBlockGeometry(blockId);
+			}
+		}
+		for (const [blockId, geometry] of newModel) {
+			if (ui_vue3.toValue(blockElMap)?.has(blockId) ?? false) {
+				continue;
+			}
+			const previous = previousModel.get(blockId);
+			if (previous !== undefined && previous !== geometry) {
+				purgeBlockGeometry(blockId);
+			}
+		}
+	}
+
+	// Selection is model state, not markup state: under render optimization a node culled out of
+	// the viewport unmounts and must stay selected, while a node the model no longer has must not.
+	// Unmount cannot tell the two apart, so the selection is trimmed here against the model, the
+	// only source that knows a node is really gone. Shared with the slow revert path of the
+	// history, which restores the selection it kept and trims it by the very same rule.
+	function pruneSelection(highlitedBlockIds, blockIdsInModel) {
+		const selected = ui_vue3.toValue(highlitedBlockIds) ?? [];
+		const modelIds = ui_vue3.toValue(blockIdsInModel);
+		const retained = selected.filter(blockId => modelIds.has(blockId));
+		if (retained.length !== selected.length) {
+			// The selection ref is handed in as an argument, same as in actions.js.
+			// eslint-disable-next-line no-param-reassign
+			highlitedBlockIds.value = retained;
+		}
+	}
+	function useWatchProps(props) {
+		const {
+			blocks,
+			connections,
+			zoom,
+			snapToGrid,
+			snapSize,
+			canvasGridSize,
+			isDisabled,
+			connectionOffset,
+			connectionBendOffset,
+			connectionBorderRadius,
+			setUnmountedBlocks,
+			setUnmountedPorts,
+			setConnectionsOffsets,
+			setHistoryBlocksCurrentState,
+			setHistoryConnectionsCurrentState,
+			blockIntersections,
+			connectionPreview,
+			clearConnectionPreview,
+			isRunUpdateBlocksCommand,
+			purgeBlockGeometry,
+			blockElMap,
+			isRenderOptimizationAvailable,
+			highlitedBlockIds,
+			blockIdsInModel,
+			connectionRouteHitTestEnabled
+		} = useBlockDiagram();
+		const scope = ui_vue3.effectScope(true);
+		const clearCurrentConnectionPreview = () => {
+			clearConnectionPreview(ui_vue3.toValue(connectionPreview)?.activationKey);
+		};
+
+		// Own snapshot of the previous block model (id → geometry key). Independent of the
+		// watcher's oldValue, which is unreliable: props.blocks mutated in place yields
+		// oldBlocks === newBlocks, so a diff against it sees no change.
+		let previousBlockModel = new Map();
+		scope.run(() => {
+			// Enabling builds the index right here instead of through the coalesced rAF path: a consumer
+			// switches the hit test on at the start of a gesture, and the first frame of that gesture
+			// already asks for hits. Watchers flush before the frame, so a synchronous build is ready in
+			// time, while a scheduled one would miss exactly that frame. Disabling stays coalesced —
+			// loadConnections frees the index when nothing maintains it any more.
+			ui_vue3.watch(() => props.connectionRouteHitTestEnabled, enabled => {
+				connectionRouteHitTestEnabled.value = enabled;
+				if (enabled) {
+					blockIntersections.loadConnectionsFromSnapshot(ui_vue3.toValue(props.connections), ui_vue3.toValue(props.blocks));
+					return;
+				}
+				blockIntersections.loadConnections();
+			}, {
+				immediate: true
+			});
+			ui_vue3.watch([() => props.blocks, () => props.blocks.length], ([newBlocks = [], newLength = 0], [oldBlocks = [], oldLength = 0]) => {
+				clearCurrentConnectionPreview();
+				if (newBlocks && Array.isArray(newBlocks)) {
+					setHistoryBlocksCurrentState(newBlocks);
+					setUnmountedPorts(newBlocks, oldBlocks);
+					setUnmountedBlocks(newBlocks, oldBlocks);
+					blocks.value = newBlocks;
+					pruneSelection(highlitedBlockIds, blockIdsInModel);
+					const optimizationEnabled = ui_vue3.toValue(isRenderOptimizationAvailable);
+					const newBlockModel = optimizationEnabled ? buildBlockModel(newBlocks) : null;
+					if (!ui_vue3.toValue(isRunUpdateBlocksCommand)) {
+						// Direct props.blocks mutation bypasses DELETE_BLOCK hooks, so retained
+						// geometry of removed or shifted culled nodes would leak: purge via the
+						// own snapshot instead of the unreliable oldBlocks diff.
+						if (optimizationEnabled) {
+							purgeStaleGeometry(previousBlockModel, newBlockModel, blockElMap, purgeBlockGeometry);
+						}
+						blockIntersections.clear();
+						blockIntersections.load(blocks.value);
+					}
+					if (optimizationEnabled) {
+						previousBlockModel = newBlockModel;
+					}
+					isRunUpdateBlocksCommand.value = false;
+
+					// Connection boxes derive from block positions, so any block change
+					// (move/add/delete) must rebuild the connection index too.
+					blockIntersections.loadConnections();
+				}
+			}, {
+				immediate: true,
+				deep: true
+			});
+			ui_vue3.watch([() => props.connections, () => props.connections.length], ([newConnections]) => {
+				clearCurrentConnectionPreview();
+				setConnectionsOffsets(newConnections);
+				setHistoryConnectionsCurrentState(newConnections);
+				connections.value = [...newConnections];
+				blockIntersections.loadConnections();
+			}, {
+				immediate: true,
+				deep: true
+			});
+			ui_vue3.watch(() => props.zoom, newZoom => {
+				zoom.value = newZoom;
+			}, {
+				immediate: true
+			});
+			ui_vue3.watch(() => props.minZoom, newMinZoom => {
+				zoom.value = newMinZoom;
+			}, {
+				immediate: true
+			});
+			ui_vue3.watch(() => props.maxZoom, newMaxZoom => {
+				zoom.value = newMaxZoom;
+			}, {
+				immediate: true
+			});
+			ui_vue3.watch(() => props.snapToGrid, newSnapToGrid => {
+				snapToGrid.value = newSnapToGrid;
+			}, {
+				immediate: true
+			});
+			ui_vue3.watch(() => props.snapSize, newSnapSize => {
+				snapSize.value = newSnapSize;
+			}, {
+				immediate: true
+			});
+
+			// The base size the snap step is counted from (see `snapStep` in getters.js for how that
+			// step relates to the drawn grid).
+			ui_vue3.watch(() => props.canvasStyle?.size, newCanvasGridSize => {
+				// A broken grid size would turn the snap step into NaN and silently disable
+				// snapping, so keep the last valid size instead.
+				if (Number.isFinite(newCanvasGridSize) && newCanvasGridSize > 0) {
+					canvasGridSize.value = newCanvasGridSize;
+				}
+			}, {
+				immediate: true
+			});
+			ui_vue3.watch(() => props.connectionOffset, newConnectionOffset => {
+				connectionOffset.value = newConnectionOffset;
+				// Routing param feeds connection bbox padding: rebuild the index to match.
+				blockIntersections.loadConnections();
+			}, {
+				immediate: true
+			});
+			ui_vue3.watch(() => props.connectionBendOffset, newConnectionOffsetBend => {
+				connectionBendOffset.value = newConnectionOffsetBend;
+				// Routing param feeds connection bbox padding: rebuild the index to match.
+				blockIntersections.loadConnections();
+			}, {
+				immediate: true
+			});
+			ui_vue3.watch(() => props.connectionBorderRadius, newConnectionBorderRadius => {
+				connectionBorderRadius.value = newConnectionBorderRadius;
+				// Routing param feeds connection bbox padding: rebuild the index to match.
+				blockIntersections.loadConnections();
+			}, {
+				immediate: true
+			});
+			ui_vue3.watch(() => props.disabled, disabled => {
+				isDisabled.value = disabled;
+				if (disabled) {
+					clearCurrentConnectionPreview();
+				}
+			}, {
+				immediate: true
+			});
+		});
+		function dispose() {
+			scope.stop();
+		}
+		return {
+			dispose
+		};
+	}
+
+	// eslint-disable-next-line max-lines-per-function
+	function useHistory(options = {}) {
+		const commonSnapshotHandler = newState => {
+			return ui_vue3.markRaw({
+				blocks: ui_vue3.markRaw(JSON.parse(JSON.stringify(newState.blocks))),
+				connections: ui_vue3.markRaw(JSON.parse(JSON.stringify(newState.connections)))
+			});
+		};
+		const commonRevertHandler = snapshot => {
+			hooks.changedBlocks.trigger(commandReplace(snapshot.blocks));
+			hooks.changedConnections.trigger(commandReplace(snapshot.connections));
+		};
+		const commonEmptyHistorySnapshot = {
+			blocks: [],
+			connections: []
+		};
+		const instance = useBlockDiagram();
+		const {
+			headSnapshot,
+			tailSnapshot,
+			currentSnapshot,
+			maxCountSnapshots,
+			hooks,
+			snapshotHandler,
+			revertHandler,
+			setHistoryHandlers,
+			historyCurrentState,
+			translateBlocksGeometry,
+			highlitedBlockIds,
+			blockIdsInModel
+		} = instance;
+		const {
+			snapshotHandler: newSnapshotHandler = null,
+			revertHandler: newRevertHandler = null,
+			emptyHistorySnapshot = commonEmptyHistorySnapshot,
+			maxCount
+		} = options;
+		setHandlers({
+			snapshotHandler: newSnapshotHandler,
+			revertHandler: newRevertHandler
+		});
+		maxCountSnapshots.value = maxCount || ui_vue3.toValue(maxCountSnapshots);
+		const hasNext = ui_vue3.computed(() => ui_vue3.toValue(currentSnapshot) && ui_vue3.toValue(currentSnapshot).next !== null);
+		const hasPrev = ui_vue3.computed(() => ui_vue3.toValue(currentSnapshot) && ui_vue3.toValue(currentSnapshot).prev !== null);
+		function setHandlers(newHandlerOptions) {
+			const handlerOptions = {
+				snapshotHandler: newHandlerOptions.snapshotHandler ?? ui_vue3.toValue(snapshotHandler) ?? commonSnapshotHandler,
+				revertHandler: newHandlerOptions.revertHandler ?? ui_vue3.toValue(revertHandler) ?? commonRevertHandler
+			};
+			setHistoryHandlers(handlerOptions);
+		}
+		function getCountSnapshots() {
+			let count = 0;
+			let current = ui_vue3.toValue(headSnapshot);
+			while (current) {
+				current = current.next;
+				count += 1;
+			}
+			return count;
+		}
+		let serializedSnapshot = null;
+		let serializedSnapshotSource = null;
+
+		// Serialized form of the current snapshot, cached by snapshot reference so a burst
+		// of makeSnapshot calls (see dedup below) reuses the string instead of re-stringifying
+		// the whole graph each time. Reference change (new snapshot, undo/redo, clear) invalidates it.
+		function getSerializedCurrentSnapshot() {
+			const current = ui_vue3.toValue(currentSnapshot);
+			const snapshot = current?.snapshot ?? null;
+			if (snapshot === null) {
+				serializedSnapshotSource = null;
+				serializedSnapshot = null;
+				return null;
+			}
+			if (current !== serializedSnapshotSource) {
+				serializedSnapshotSource = current;
+				serializedSnapshot = JSON.stringify(snapshot);
+			}
+			return serializedSnapshot;
+		}
+		function makeSnapshot(options = {}) {
+			const {
+				snapshotHandler: newSnapshotHandler = null,
+				revertHandler: newRevertHandler = null,
+				emptySnapshot: newEmptySnapshot = null
+			} = options;
+			const snapshotHistoryHandler = newSnapshotHandler || ui_vue3.toValue(snapshotHandler);
+			const revertHistoryHandler = newRevertHandler || ui_vue3.toValue(revertHandler);
+			const emptySnapshot = newEmptySnapshot || emptyHistorySnapshot;
+			const nextSnapshotState = snapshotHistoryHandler(ui_vue3.toValue(historyCurrentState));
+			const nextSerializedState = JSON.stringify(nextSnapshotState);
+
+			// Skip the history step when the serialized new state equals the current snapshot.
+			// A single user action can trigger several hooks (endDragBlock/addBlock/deleteBlock/...),
+			// each scheduling makeSnapshot; deferred to nextTick they all read the same final state
+			// and would otherwise create identical snapshots that surface as dead empty undo steps.
+			const currentSerializedState = getSerializedCurrentSnapshot();
+			if (currentSerializedState !== null && nextSerializedState === currentSerializedState) {
+				return;
+			}
+			const newSnapshot = ui_vue3.markRaw({
+				snapshot: nextSnapshotState,
+				revertHandler: revertHistoryHandler,
+				emptySnapshot,
+				next: null,
+				prev: tailSnapshot.value
+			});
+			if (ui_vue3.toValue(currentSnapshot) && ui_vue3.toValue(currentSnapshot)?.next !== null) {
+				currentSnapshot.value.next = newSnapshot;
+				newSnapshot.prev = currentSnapshot.value;
+				tailSnapshot.value.prev = null;
+				tailSnapshot.value.next = null;
+				tailSnapshot.value = newSnapshot;
+			} else if (ui_vue3.toValue(headSnapshot) === null) {
+				headSnapshot.value = newSnapshot;
+				tailSnapshot.value = newSnapshot;
+			} else {
+				tailSnapshot.value.next = newSnapshot;
+				tailSnapshot.value = newSnapshot;
+			}
+			currentSnapshot.value = newSnapshot;
+			if (getCountSnapshots() <= ui_vue3.toValue(maxCountSnapshots) + 1) {
+				return;
+			}
+			const firstSnapshot = headSnapshot.value;
+			headSnapshot.value = firstSnapshot.next;
+			headSnapshot.value.prev = null;
+			firstSnapshot.next = null;
+		}
+		function toPortList(block) {
+			return Array.isArray(block.ports) ? block.ports : [];
+		}
+
+		// A port is plain graph data, so its own keys are exactly the fields a serialized
+		// comparison used to cover, and comparing them directly is indifferent to the order
+		// the keys happen to have.
+		function hasSamePortAttributes(current, target) {
+			const currentKeys = Object.keys(current);
+			return currentKeys.length === Object.keys(target).length && currentKeys.every(key => current[key] === target[key]);
+		}
+
+		// Ports of one side are laid out in the order of the array, and a measured rect keeps the
+		// coordinates of its own row along with that order, so a reordered port list is a changed
+		// measured shape. Hence the comparison is positional: such a pair of states must leave the
+		// fast path for the slow one, which recreates the elements and measures them anew.
+		function hasSamePorts(currentPorts, targetPorts) {
+			if (currentPorts.length !== targetPorts.length) {
+				return false;
+			}
+			return currentPorts.every((port, index) => {
+				const targetPort = targetPorts[index];
+				return targetPort !== undefined && targetPort.id === port.id && hasSamePortAttributes(port, targetPort);
+			});
+		}
+
+		// Everything a measured rect depends on except the position, the only thing an
+		// in-place revert is allowed to change. Compared field by field: a revert runs this
+		// for every block, and a serialized form would cost a string per block.
+		//
+		// Hence the assumption this fast path makes about a consumer: the rendered size of a block
+		// follows from its dimensions and its ports and from nothing else. A field outside them that
+		// drives the size (a type mapped to its own height, say) must not change for an id that stays
+		// in the graph — the keyed v-for would not remount the block, so its rect would keep the
+		// translated value while the real size changed. Widening the comparison would cost that extra
+		// work on every block of every undo instead.
+		//
+		// Known limitation of that assumption: the height of an ordinary block comes from its content
+		// (useMoveableBlock styles top/left only), and content is invisible here, so an undo of a step
+		// that changed the content alone — a title wrapping onto a second line, say — keeps the rect
+		// measured before it. A rect is measured once per mount (useBlockState.onMountedBlock), so the
+		// stale one lives until the block remounts: a slow-path revert, a cull/uncull under render
+		// optimization, or the next mount of the diagram. Accepted as is, because the forward path never
+		// re-measured such an edit either: the fast path drops an incidental refresh, it does not add a
+		// new invariant.
+		function hasSameBlockShape(current, target) {
+			const {
+				width: currentWidth = 0,
+				height: currentHeight = 0
+			} = current.dimensions ?? {};
+			const {
+				width: targetWidth = 0,
+				height: targetHeight = 0
+			} = target.dimensions ?? {};
+			return currentWidth === targetWidth && currentHeight === targetHeight && hasSamePorts(toPortList(current), toPortList(target));
+		}
+
+		// Ids come from an untrusted graph, so membership is only ever kept in a Set.
+		// Consuming the matched id keeps this a single pass over each side: a repeated id
+		// finds nothing the second time, so a differing composition never passes.
+		function hasSameIds(current, target) {
+			if (current.length !== target.length) {
+				return false;
+			}
+			const unmatchedIds = new Set();
+			for (const {
+				id
+			} of current) {
+				unmatchedIds.add(id);
+			}
+			for (const {
+				id
+			} of target) {
+				if (!unmatchedIds.delete(id)) {
+					return false;
+				}
+			}
+			return true;
+		}
+
+		// How far every block has to move to reach the snapshot, or null when the snapshot is
+		// not reachable by moving blocks alone: the composition of the graph differs, or a block
+		// changed shape and its measured geometry no longer follows from a translation.
+		function getRevertOffsets(snapshot) {
+			const {
+				blocks: currentBlocks,
+				connections: currentConnections
+			} = ui_vue3.toValue(historyCurrentState) ?? {};
+			const isComparable = Array.isArray(currentBlocks) && Array.isArray(currentConnections) && Array.isArray(snapshot?.blocks) && Array.isArray(snapshot?.connections);
+			if (!isComparable || currentBlocks.length !== snapshot.blocks.length || !hasSameIds(currentConnections, snapshot.connections)) {
+				return null;
+			}
+			const unmatchedBlocks = new Map();
+			for (const block of currentBlocks) {
+				unmatchedBlocks.set(block.id, block);
+			}
+			const offsets = new Map();
+
+			// One pass matches the composition, compares the shape and collects the offset.
+			// The matched block is consumed, so with the lengths already equal a block the
+			// snapshot does not know about leaves a later lookup empty.
+			for (const block of snapshot.blocks) {
+				const currentBlock = unmatchedBlocks.get(block.id);
+				if (currentBlock === undefined || !hasSameBlockShape(currentBlock, block)) {
+					return null;
+				}
+				unmatchedBlocks.delete(block.id);
+				const offset = {
+					x: (block.position?.x ?? 0) - (currentBlock.position?.x ?? 0),
+					y: (block.position?.y ?? 0) - (currentBlock.position?.y ?? 0)
+				};
+				if (offset.x !== 0 || offset.y !== 0) {
+					offsets.set(block.id, offset);
+				}
+			}
+			return offsets;
+		}
+
+		// A snapshot that only moves blocks is restored by a single replacement: measured
+		// geometry follows the move arithmetically, in the same step the coordinates change.
+		// The empty snapshot in between recreates the whole graph, the historical way of
+		// getting measurements refreshed, and the reason undo costs several applies. It stays
+		// for the case the composition really changed and elements have to be recreated.
+		//
+		// Both paths end with the same selection rule: what was selected before the revert, minus
+		// the blocks the model no longer has. The fast path keeps that by itself — the composition
+		// does not change, so the selection survives untouched. The empty snapshot of the slow path
+		// empties the model for a tick and useWatchProps trims the selection to nothing along with
+		// it, so the selection is kept here and trimmed against the restored model instead.
+		async function revertState({
+			revertHandler,
+			snapshot,
+			emptySnapshot
+		}) {
+			const offsets = getRevertOffsets(snapshot);
+			if (offsets !== null) {
+				revertHandler(snapshot);
+				translateBlocksGeometry(offsets);
+				return;
+			}
+			const selectionBeforeRevert = [...(ui_vue3.toValue(highlitedBlockIds) ?? [])];
+			revertHandler(emptySnapshot);
+			await ui_vue3.nextTick();
+			revertHandler(snapshot);
+			if (selectionBeforeRevert.length === 0) {
+				return;
+			}
+
+			// The restored model reaches the state on the next flush, together with the trimming
+			// useWatchProps does, so the kept selection is put back only after that.
+			await ui_vue3.nextTick();
+			highlitedBlockIds.value = selectionBeforeRevert;
+			pruneSelection(highlitedBlockIds, blockIdsInModel);
+		}
+		async function next() {
+			if (ui_vue3.toValue(currentSnapshot) === null || ui_vue3.toValue(currentSnapshot).next === null) {
+				return;
+			}
+			await revertState(ui_vue3.toValue(currentSnapshot).next);
+			currentSnapshot.value = ui_vue3.toValue(currentSnapshot).next;
+			hooks.historyNext.trigger(currentSnapshot.value);
+		}
+		async function prev() {
+			if (ui_vue3.toValue(currentSnapshot) === null || ui_vue3.toValue(currentSnapshot).prev === null) {
+				return;
+			}
+			await revertState(ui_vue3.toValue(currentSnapshot).prev);
+			currentSnapshot.value = ui_vue3.toValue(currentSnapshot).prev;
+			hooks.historyPrev.trigger(currentSnapshot.value);
+		}
+		function clear() {
+			headSnapshot.value = null;
+			tailSnapshot.value = null;
+			currentSnapshot.value = null;
+		}
+		return {
+			hasNext,
+			hasPrev,
+			setHandlers,
+			makeSnapshot: () => ui_vue3.nextTick(() => makeSnapshot()),
+			next,
+			prev,
+			clear,
+			commonSnapshotHandler,
+			commonRevertHandler
+		};
+	}
+
+	// Point insertion does not rebalance the tree: targets arriving along a column come in almost
+	// monotonic order and degrade it into a one-sided branch that nearest() walks on every frame of
+	// the ride. The cap has to bound that walk by a constant rather than by the size of the diagram,
+	// or the hot path grows with the schema exactly where the autoscroll is needed. A rebuild is paid
+	// for by the inserts that asked for it, so the cap is what those inserts amortize.
+	const SNAP_TARGETS_REBUILD_INSERTS_LIMIT = 50;
 	// eslint-disable-next-line max-lines-per-function
 	function useNewConnection(options) {
 		const {
 			isDisabledBlockDiagram,
 			newConnection,
 			portsRectMap,
+			portsGeometryVersion,
 			portsValidationsFnMap,
 			validPortsMap,
+			virtualPortsMap,
 			addConnection,
 			portsNearest,
 			blockIntersections,
-			transformMouseEventToPoint
+			transformMouseEventToPoint,
+			startAutoScroll,
+			stopAutoScroll,
+			updateMousePosition
 		} = useBlockDiagram();
 		const {
 			block,
 			port,
 			position,
-			normalyzeConnectionFn = null
+			normalyzeConnectionFn = null,
+			isVirtual = false
 		} = options;
 		const isSourcePort = ui_vue3.ref(false);
+		// A candidate the rules turned down stays turned down for the whole gesture: the source port
+		// is fixed, so re-running the rules on every pass only rebuilds the same probe connection.
+		// Hence the contract on DiagramValidationPortRuleFn: a verdict must hold for the whole gesture.
+		const rejectedTargets = new Map();
+		let lastMouseEvent = null;
+		let isAutoScrollStarted = false;
+		let stopSnapTargetsWatch = null;
+		let insertsSinceBuild = 0;
 		const isTargetPort = ui_vue3.computed(() => {
 			const {
 				targetBlockId = null,
@@ -3905,6 +6642,18 @@ this.BX = this.BX || {};
 			} = ui_vue3.toValue(newConnection) ?? {};
 			return ui_vue3.toValue(block).id === targetBlockId && ui_vue3.toValue(port).id === targetPortId;
 		});
+		ui_vue3.watch(isDisabledBlockDiagram, isDisabled => {
+			if (isDisabled) {
+				closeGesture();
+			}
+		});
+
+		// Only the owner's unmount winds the gesture down - closeGesture leaves every other instance
+		// alone. That distinction is the whole point here: culling unmounts neighbour ports while the
+		// camera pans for a live gesture, and an unowned close would kill it. For the owner the
+		// opposite holds - leaving the document handlers bound would keep the composable, the index
+		// and the port snapshots alive until a mouseup that would then commit on a dead context.
+		ui_vue3.onUnmounted(closeGesture);
 		function validateConnection(rules, connection) {
 			if (rules === null) {
 				return true;
@@ -3917,20 +6666,47 @@ this.BX = this.BX || {};
 			}
 			return rules(ui_vue3.toValue(connection));
 		}
+		function isValidTargetPort(blockId, portId, targetPort, connection) {
+			// Rules are missing here only for a port that unmounted mid-pass: a candidate whose rules
+			// are not registered yet is held back by hasValidationRules before it gets here. Without
+			// that guard validateConnection would read undefined rules as universally valid.
+			const rules = ui_vue3.toValue(portsValidationsFnMap).get(blockId)?.get(portId);
+			return validateConnection(rules, {
+				...ui_vue3.toValue(connection),
+				targetBlockId: blockId,
+				targetPortId: portId,
+				targetPort: {
+					...ui_vue3.toValue(targetPort)
+				}
+			});
+		}
+		function hasValidationRules(blockId, portId) {
+			return ui_vue3.toValue(portsValidationsFnMap).get(blockId)?.has(portId) ?? false;
+		}
+		function isRejectedTarget(blockId, portId) {
+			return rejectedTargets.get(blockId)?.has(portId) ?? false;
+		}
+		function rememberRejectedTarget(blockId, portId) {
+			if (!rejectedTargets.has(blockId)) {
+				rejectedTargets.set(blockId, new Set());
+			}
+			rejectedTargets.get(blockId).add(portId);
+		}
+		function getPortRect(blockId, portId) {
+			return ui_vue3.toValue(portsRectMap)?.[blockId]?.[portId] ?? null;
+		}
 		function getValidPorts(portsMap, connection) {
 			const filteredPortsMap = new Map();
 			for (const [blockId, ports] of ui_vue3.toValue(portsMap).entries()) {
 				for (const [portId, targetPort] of ports.entries()) {
-					const rules = ui_vue3.toValue(portsValidationsFnMap).get(blockId).get(portId);
-					const isValidConnection = validateConnection(rules, {
-						...ui_vue3.toValue(connection),
-						targetBlockId: blockId,
-						targetPortId: portId,
-						targetPort: {
-							...ui_vue3.toValue(targetPort)
-						}
-					});
-					if (!isValidConnection) {
+					// A port that has no measured geometry or no registered rules yet is no target: it
+					// must stay out of the set and out of rejectedTargets, so a later pass can take it
+					// once the port is mounted through.
+					if (getPortRect(blockId, portId) === null || !hasValidationRules(blockId, portId)) {
+						continue;
+					}
+					if (!isValidTargetPort(blockId, portId, targetPort, connection)) {
+						rememberRejectedTarget(blockId, portId);
 						continue;
 					}
 					if (!filteredPortsMap.has(blockId)) {
@@ -3940,6 +6716,104 @@ this.BX = this.BX || {};
 				}
 			}
 			return filteredPortsMap;
+		}
+		function collectSnapCandidatePorts() {
+			return buildSnapCandidatePorts(ui_vue3.toValue(blockIntersections.visiblePorts), ui_vue3.toValue(virtualPortsMap));
+		}
+		function hasSnapTarget(blockId, portId) {
+			return ui_vue3.toValue(validPortsMap).get(blockId)?.has(portId) ?? false;
+		}
+		function addSnapTarget(blockId, portId, targetPort) {
+			const targetsMap = ui_vue3.toValue(validPortsMap);
+			if (!targetsMap.has(blockId)) {
+				targetsMap.set(blockId, new Map());
+			}
+			targetsMap.get(blockId).set(portId, targetPort);
+		}
+
+		// A rebuild leaves out every target whose rect is gone, so the highlighted set drops it too:
+		// what is highlighted stays exactly what accepts the connection. Culling alone never gets
+		// here - it retains the geometry of a node that only left the viewport.
+		function dropUnmeasuredSnapTargets() {
+			const targetsMap = ui_vue3.toValue(validPortsMap);
+			for (const [blockId, ports] of targetsMap.entries()) {
+				for (const portId of ports.keys()) {
+					if (getPortRect(blockId, portId) === null) {
+						ports.delete(portId);
+					}
+				}
+				if (ports.size === 0) {
+					targetsMap.delete(blockId);
+				}
+			}
+		}
+
+		// A target joins the highlighted set only together with the index, so what is highlighted is
+		// exactly what accepts the connection.
+		function tryAppendSnapTarget(blockId, portId, candidatePort) {
+			if (hasSnapTarget(blockId, portId) || isRejectedTarget(blockId, portId)) {
+				return false;
+			}
+			const portRect = getPortRect(blockId, portId);
+			if (portRect === null) {
+				return false;
+			}
+
+			// A port whose node returned into the viewport already has its retained geometry, but its
+			// rules are registered by the mount hook, which runs after this pass. Like a port without a
+			// rect it is skipped without a rejection, so the pass after the mount takes it.
+			if (!hasValidationRules(blockId, portId)) {
+				return false;
+			}
+			if (!isValidTargetPort(blockId, portId, candidatePort, newConnection)) {
+				rememberRejectedTarget(blockId, portId);
+				return false;
+			}
+			if (!portsNearest.addPort(blockId, portId, candidatePort, portRect)) {
+				return false;
+			}
+			addSnapTarget(blockId, portId, candidatePort);
+			return true;
+		}
+
+		// The set of targets only grows over a gesture: a node that arrived into the viewport becomes
+		// droppable, while one that left keeps the target it already earned. A port without measured
+		// geometry is skipped and taken on a later pass, once the rect is there.
+		function appendSnapTargets() {
+			const candidatePortsMap = collectSnapCandidatePorts();
+			let inserted = 0;
+			for (const [blockId, ports] of candidatePortsMap.entries()) {
+				for (const [portId, candidatePort] of ports.entries()) {
+					if (tryAppendSnapTarget(blockId, portId, candidatePort)) {
+						inserted += 1;
+					}
+				}
+			}
+			insertsSinceBuild += inserted;
+			if (insertsSinceBuild > SNAP_TARGETS_REBUILD_INSERTS_LIMIT) {
+				dropUnmeasuredSnapTargets();
+				portsNearest.init(ui_vue3.toValue(validPortsMap));
+				insertsSinceBuild = 0;
+			}
+		}
+
+		// The watcher is created per gesture instead of per port instance: every mounted port runs this
+		// composable, and a permanent subscription would fire in each of them on every camera frame.
+		function startSnapTargetsWatch() {
+			stopSnapTargetsWatch?.();
+			// Two signals, neither of which walks a structure. The candidate set changes when a node
+			// enters or leaves the viewport - that alone is what makes new ports droppable, and it
+			// holds whether or not the nodes are virtualized. Port geometry is the second signal: a
+			// port measured after its node was already counted visible would otherwise wait for the
+			// next arrival. Post flush folds a whole mount batch into one pass and still lands before
+			// the next autoscroll frame queries the index.
+			stopSnapTargetsWatch = ui_vue3.watch([blockIntersections.visiblePorts, portsGeometryVersion], appendSnapTargets, {
+				flush: 'post'
+			});
+		}
+		function unwatchSnapTargets() {
+			stopSnapTargetsWatch?.();
+			stopSnapTargetsWatch = null;
 		}
 		function normalyzeNewConnection(connection, normalyzeFn = null) {
 			if (main_core.Type.isFunction(normalyzeFn)) {
@@ -3955,11 +6829,26 @@ this.BX = this.BX || {};
 		}
 		function onMouseDownPort(event) {
 			event.stopPropagation();
-			if (ui_vue3.toValue(isDisabledBlockDiagram)) {
+
+			// Virtual (placeholder) ports are drop-only targets: they never originate
+			// a connection, otherwise a drag would start from a not-yet-created port.
+			if (ui_vue3.toValue(isDisabledBlockDiagram) || isVirtual) {
 				return;
 			}
+
+			// A non-primary press opens a gesture whose mouseup the context menu eats, and a press
+			// over a live gesture leaves its owner with bound handlers, a live watch and an unmount
+			// that would stop the autoscroll of the gesture that replaced it.
+			if (event.button !== 0 || ui_vue3.toValue(newConnection) !== null) {
+				return;
+			}
+			const portRect = getPortRect(ui_vue3.toValue(block).id, ui_vue3.toValue(port).id);
+			if (portRect === null) {
+				return;
+			}
+
+			// Ownership is claimed only once the gesture is certain to start.
 			isSourcePort.value = true;
-			const portRect = ui_vue3.toValue(portsRectMap)?.[ui_vue3.toValue(block).id]?.[ui_vue3.toValue(port).id];
 			const start = {
 				x: portRect.x + portRect.width / 2,
 				y: portRect.y + portRect.height / 2
@@ -3980,44 +6869,117 @@ this.BX = this.BX || {};
 				center,
 				end: null
 			};
-			validPortsMap.value = getValidPorts(blockIntersections.visiblePorts, newConnection);
+			rejectedTargets.clear();
+			validPortsMap.value = getValidPorts(collectSnapCandidatePorts(), newConnection);
 			portsNearest.init(ui_vue3.toValue(validPortsMap));
+			insertsSinceBuild = 0;
+			bindGestureHandlers();
+			startSnapTargetsWatch();
+		}
+		function bindGestureHandlers() {
 			main_core.Event.bind(document, 'mousemove', onMouseMove);
 			main_core.Event.bind(document, 'mouseup', onMouseUp);
+			main_core.Event.bind(document, 'pointercancel', closeGesture);
+			main_core.Event.bind(window, 'blur', closeGesture);
+		}
+		function unbindGestureHandlers() {
+			main_core.Event.unbind(document, 'mousemove', onMouseMove);
+			main_core.Event.unbind(document, 'mouseup', onMouseUp);
+			main_core.Event.unbind(document, 'pointercancel', closeGesture);
+			main_core.Event.unbind(window, 'blur', closeGesture);
+		}
+
+		// Winds the gesture down without committing anything. Only the instance that owns the
+		// gesture may close it: under render optimization neighbour ports are unmounted by culling
+		// exactly while the camera pans for this gesture, so an unowned close would kill a live one.
+		function closeGesture() {
+			if (!ui_vue3.toValue(isSourcePort)) {
+				return;
+			}
+
+			// The autoscroll instance is shared by the whole diagram, so only a gesture that started
+			// it may stop it.
+			if (isAutoScrollStarted) {
+				stopAutoScroll();
+			}
+			unbindGestureHandlers();
+			unwatchSnapTargets();
+			newConnection.value = null;
+			isSourcePort.value = false;
+			lastMouseEvent = null;
+			isAutoScrollStarted = false;
+			insertsSinceBuild = 0;
+			rejectedTargets.clear();
+			validPortsMap.value = new Map();
+			portsNearest.clear();
+			// Move and resize change the model as they end, and the write path itself asks culling to
+			// catch up. This gesture changes nothing, so the retained source node would stay in the
+			// visible set until the camera moves next.
+			blockIntersections.selectVisibleBlocks();
 		}
 		function onMouseMove(event) {
 			if (!ui_vue3.toValue(newConnection) || ui_vue3.toValue(isDisabledBlockDiagram)) {
 				return;
 			}
+			lastMouseEvent = event;
+
+			// Autoscroll waits for the first move on purpose: armed on mousedown it would pan the
+			// camera on a plain click on a port that itself sits in the edge threshold, with no move
+			// at all. start() only arms it - the loop is started by updateMousePosition(), so the very
+			// move that arms the autoscroll must report the cursor to it as well. Otherwise the ride
+			// begins one event late, and a gesture whose move is the only one never begins at all.
+			if (!isAutoScrollStarted) {
+				isAutoScrollStarted = true;
+				startAutoScroll(event, onAutoScrollFrame);
+			}
+			updateMousePosition(event);
+			updateConnectionTarget(event);
+		}
+
+		// The camera has already moved when autoscroll calls back, so the same cursor point maps to a
+		// new world point and the connection follows without a mouse move. The pan delta is never
+		// added to the gesture math - the recalculated point already carries it.
+		function onAutoScrollFrame() {
+			if (lastMouseEvent !== null) {
+				onMouseMove(lastMouseEvent);
+			}
+		}
+		function updateConnectionTarget(event) {
 			const point = transformMouseEventToPoint(event);
 			const [nearestPort] = portsNearest.nearest(point, 1, 100)?.[0] ?? [null];
 			const isSamePorts = ui_vue3.toValue(newConnection).sourceBlockId === nearestPort?.blockId && ui_vue3.toValue(newConnection).sourcePortId === nearestPort?.portId;
-			if (nearestPort && !isSamePorts) {
-				const portRect = ui_vue3.toValue(portsRectMap)?.[nearestPort.blockId]?.[nearestPort.portId];
-				newConnection.value = {
-					...ui_vue3.toValue(newConnection),
-					targetBlockId: nearestPort.blockId,
-					targetPortId: nearestPort.portId,
-					targetPort: nearestPort.port,
-					center: point,
-					end: {
-						x: portRect.x + portRect.width / 2,
-						y: portRect.y + portRect.height / 2
-					}
+			// The gesture never revokes a target, but the rect behind it can still go: culling drops a
+			// virtual port's measurement, and a bulk purge takes a whole block's geometry. A target
+			// that can no longer be drawn counts as no target at all.
+			const portRect = nearestPort === null ? null : getPortRect(nearestPort.blockId, nearestPort.portId);
+
+			// Fields are written in place: every mounted port watches newConnection through its own
+			// isTargetPort, so replacing the object would wake all of them on every frame of a ride
+			// that usually does not change the target at all.
+			const connection = ui_vue3.toValue(newConnection);
+			if (nearestPort && !isSamePorts && portRect !== null) {
+				connection.targetBlockId = nearestPort.blockId;
+				connection.targetPortId = nearestPort.portId;
+				connection.targetPort = nearestPort.port;
+				connection.center = point;
+				connection.end = {
+					x: portRect.x + portRect.width / 2,
+					y: portRect.y + portRect.height / 2
 				};
 			} else {
-				newConnection.value = {
-					...ui_vue3.toValue(newConnection),
-					targetBlockId: null,
-					targetPortId: null,
-					targetPort: null,
-					center: point,
-					end: null
-				};
+				connection.targetBlockId = null;
+				connection.targetPortId = null;
+				connection.targetPort = null;
+				connection.center = point;
+				connection.end = null;
 			}
 		}
-		function onMouseUp(event) {
-			if (ui_vue3.toValue(newConnection) === null || ui_vue3.toValue(isDisabledBlockDiagram)) {
+		function onMouseUp() {
+			if (ui_vue3.toValue(newConnection) === null) {
+				return;
+			}
+			if (ui_vue3.toValue(isDisabledBlockDiagram)) {
+				closeGesture();
 				return;
 			}
 			const {
@@ -4028,19 +6990,55 @@ this.BX = this.BX || {};
 			} = ui_vue3.toValue(newConnection);
 			const isSamePort = sourceBlockId === targetBlockId && sourcePortId === targetPortId;
 			const hasSourceIds = sourceBlockId !== null && sourcePortId !== null;
-			const hasTargetIds = targetBlockId !== null && targetPortId !== null;
-			if (!isSamePort && hasSourceIds && hasTargetIds) {
-				addConnection(normalyzeNewConnection(ui_vue3.toValue(newConnection), normalyzeConnectionFn));
+			// A target that lost its rect is unresolvable: a virtual one is gone from virtualPortsMap
+			// as well, and committing it would wire the connection to the placeholder id.
+			const hasResolvableTarget = targetBlockId !== null && targetPortId !== null && getPortRect(targetBlockId, targetPortId) !== null;
+			if (!isSamePort && hasSourceIds && hasResolvableTarget) {
+				const virtualEntry = ui_vue3.toValue(virtualPortsMap).get(targetBlockId)?.get(targetPortId) ?? null;
+				if (virtualEntry) {
+					// Virtual target: hand the drop intent to the consumer BEFORE
+					// resetting the drag state so it materializes the real port and
+					// wires the connection to its real id. A virtual target without a
+					// handler is cancelled — the engine must never commit a connection
+					// to the placeholder id itself.
+					virtualEntry.onDrop?.({
+						...ui_vue3.toValue(newConnection)
+					});
+				} else {
+					// Real target: standard commit.
+					addConnection(normalyzeNewConnection(ui_vue3.toValue(newConnection), normalyzeConnectionFn));
+				}
 			}
-			newConnection.value = null;
-			isSourcePort.value = false;
-			main_core.Event.unbind(document, 'mousemove', onMouseMove);
-			main_core.Event.unbind(document, 'mouseup', onMouseUp);
+			closeGesture();
 		}
 		return {
 			isSourcePort,
 			isTargetPort,
 			onMouseDownPort
+		};
+	}
+
+	function useTransientHighlightedBlocks() {
+		const {
+			highlitedBlockIds,
+			transientHighlightedBlockIds
+		} = useBlockDiagram();
+		function add(blockId) {
+			if (!ui_vue3.toValue(transientHighlightedBlockIds).includes(blockId)) {
+				ui_vue3.toValue(transientHighlightedBlockIds).push(blockId);
+			}
+		}
+		function clear() {
+			transientHighlightedBlockIds.value = [];
+		}
+		function isBlockVisuallyHighlighted(blockId) {
+			return ui_vue3.toValue(highlitedBlockIds).includes(blockId) || ui_vue3.toValue(transientHighlightedBlockIds).includes(blockId);
+		}
+		return {
+			transientHighlightedBlockIds,
+			add,
+			clear,
+			isBlockVisuallyHighlighted
 		};
 	}
 
@@ -4052,18 +7050,19 @@ this.BX = this.BX || {};
 		const {
 			blockElMap,
 			blocksRectMap,
-			highlitedBlockIds,
 			isDisabledBlockDiagram,
-			zoom,
-			transformX,
-			transformY,
-			blockDiagramLeft,
-			blockDiagramTop,
 			movingBlockId,
-			blockMounted
+			blockMounted,
+			isRenderOptimizationAvailable,
+			blockIdsInModel,
+			updatePortSegmentSizes,
+			portsRectMap
 		} = useBlockDiagram();
+		const {
+			isBlockVisuallyHighlighted
+		} = useTransientHighlightedBlocks();
 		const isHiglitedBlock = ui_vue3.computed(() => {
-			return ui_vue3.toValue(highlitedBlockIds).includes(ui_vue3.toValue(block)?.id);
+			return isBlockVisuallyHighlighted(ui_vue3.toValue(block)?.id);
 		});
 		const isDisabled = ui_vue3.computed(() => {
 			return ui_vue3.toValue(isDisabledBlockDiagram);
@@ -4083,29 +7082,56 @@ this.BX = this.BX || {};
 				zIndex: BLOCK_INDEXES.STANDING
 			};
 		});
+
+		// Under culling an off-screen block never mounts, so waitAllBlocksMounted never
+		// resolves and the deferred updatePortSegmentSizes in onMountedPort never runs — the
+		// port keeps zero-length segments and its retained routing geometry stays empty. The
+		// block's ports mount before it (children before parent) and its rect is written just
+		// above, so compute the segments here directly, bypassing the global barrier (the same
+		// direct-compute precedent as connections-queue-transition.js). The promise path stays
+		// and recomputes idempotently if the barrier ever resolves. Order comes from the rect
+		// captured at port mount, matching the order the drawing path uses.
+		function measurePortSegments(blockId) {
+			const portsRect = ui_vue3.toValue(portsRectMap)[blockId];
+			if (!portsRect) {
+				return;
+			}
+			for (const portId of Object.keys(portsRect)) {
+				updatePortSegmentSizes(blockId, portId, portsRect[portId].order ?? 0);
+			}
+		}
 		function onMountedBlock() {
-			if (!ui_vue3.toValue(blockElMap).has(ui_vue3.toValue(block).id)) {
-				ui_vue3.toValue(blockElMap).set(ui_vue3.toValue(block).id, ui_vue3.toValue(blockRef));
+			const blockId = ui_vue3.toValue(block).id;
+			if (!ui_vue3.toValue(blockElMap).has(blockId)) {
+				ui_vue3.toValue(blockElMap).set(blockId, ui_vue3.toValue(blockRef));
 			}
 			const {
+				x = 0,
+				y = 0,
+				width = 0,
+				height = 0
+			} = getCanvasRect(ui_vue3.toValue(blockRef)) ?? {};
+			blocksRectMap.value[blockId] = {
 				x,
 				y,
 				width,
 				height
-			} = ui_vue3.toValue(blockRef)?.getBoundingClientRect() ?? {};
-			blocksRectMap.value[ui_vue3.toValue(block).id] = {
-				x: x / ui_vue3.toValue(zoom) + ui_vue3.toValue(transformX) - ui_vue3.toValue(blockDiagramLeft) / ui_vue3.toValue(zoom),
-				y: y / ui_vue3.toValue(zoom) + ui_vue3.toValue(transformY) - ui_vue3.toValue(blockDiagramTop) / ui_vue3.toValue(zoom),
-				width: width / ui_vue3.toValue(zoom),
-				height: height / ui_vue3.toValue(zoom)
 			};
-			blockMounted(ui_vue3.toValue(block).id);
+			if (ui_vue3.toValue(isRenderOptimizationAvailable)) {
+				measurePortSegments(blockId);
+			}
+			blockMounted(blockId);
 		}
 		function onUnmountedBlock() {
-			if (ui_vue3.toValue(blockElMap).has(ui_vue3.toValue(block).id)) {
-				ui_vue3.toValue(blockElMap).delete(ui_vue3.toValue(block).id);
+			const blockId = ui_vue3.toValue(block).id;
+			ui_vue3.toValue(blockElMap).delete(blockId);
+
+			// Retain measured rect while the node stays in the model under culling
+			// (see onUnmountedPort). Real removal clears it via purgeBlockGeometry.
+			const retain = shouldRetainGeometry(ui_vue3.toValue(isRenderOptimizationAvailable), ui_vue3.toValue(blockIdsInModel), blockId);
+			if (!retain) {
+				delete blocksRectMap.value[blockId];
 			}
-			delete blocksRectMap[ui_vue3.toValue(block).id];
 		}
 		return {
 			isHiglitedBlock,
@@ -4113,6 +7139,81 @@ this.BX = this.BX || {};
 			blockZindex,
 			onMountedBlock,
 			onUnmountedBlock
+		};
+	}
+
+	// Kept in JS on purpose: chef takes the package language from the entry point (src/index.js), so a
+	// lone .ts source inside this extension would not resolve.
+	// Shift asks for snapping. Both mouse and keyboard events carry the flag, so a single predicate
+	// answers for a caller holding an event and for the state tracked below.
+	function isSnapModifier(event) {
+		return event?.shiftKey === true;
+	}
+
+	// The modifier is tracked for the window, not read off the frame event: a frame of the autoscroll
+	// loop has no event of its own, so a key pressed over a motionless pointer would go unnoticed
+	// until the pointer moves again.
+	let isModifierPressed = false;
+	let trackerCount = 0;
+	const onKeyChange = event => {
+		isModifierPressed = isSnapModifier(event);
+	};
+
+	// A window that loses focus never delivers the keyup, so a held modifier would stay pressed.
+	const onWindowBlur = () => {
+		isModifierPressed = false;
+	};
+	function addTracker() {
+		trackerCount += 1;
+		if (trackerCount > 1) {
+			return;
+		}
+		main_core.Event.bind(window, 'keydown', onKeyChange);
+		main_core.Event.bind(window, 'keyup', onKeyChange);
+		main_core.Event.bind(window, 'blur', onWindowBlur);
+	}
+	function removeTracker() {
+		trackerCount -= 1;
+		if (trackerCount > 0) {
+			return;
+		}
+		main_core.Event.unbind(window, 'keydown', onKeyChange);
+		main_core.Event.unbind(window, 'keyup', onKeyChange);
+		main_core.Event.unbind(window, 'blur', onWindowBlur);
+		isModifierPressed = false;
+	}
+	function useSnapModifier() {
+		// The listeners live only while a gesture needs them: every consumer keeps its own
+		// subscription, so it is released exactly once whatever ends the gesture.
+		let isTracking = false;
+		return {
+			isPressed: () => isModifierPressed,
+			// A mouse event carries the modifier itself, so every frame corrects the tracked state -
+			// including a Shift toggled while the window was out of focus.
+			sync: event => {
+				isModifierPressed = isSnapModifier(event);
+			},
+			startTracking: () => {
+				if (isTracking) {
+					return;
+				}
+				isTracking = true;
+				addTracker();
+			},
+			stopTracking: () => {
+				if (!isTracking) {
+					return;
+				}
+				isTracking = false;
+				removeTracker();
+			}
+		};
+	}
+
+	function copyPosition(position) {
+		return {
+			x: position.x,
+			y: position.y
 		};
 	}
 
@@ -4126,27 +7227,36 @@ this.BX = this.BX || {};
 			hooks,
 			setMovingBlock,
 			resetMovingBlock,
+			setGestureBlocks,
+			resetGestureBlocks,
 			setPortOffsetByBlockId,
 			updateBlockRectById,
+			getBlockById,
 			blocks: allBlocksRef,
+			blocksRectMap,
+			blockElMap,
 			highlitedBlockIds,
 			startAutoScroll,
 			stopAutoScroll,
-			updateMousePosition
+			updateMousePosition,
+			connectionPreview,
+			clearConnectionPreview,
+			snapPoint
 		} = useBlockDiagram();
-		let prevValueBlockX = 0;
-		let prevValueBlockY = 0;
-		let lastClientX = 0;
-		let lastClientY = 0;
-		let currentZoom = 1;
-		const offsetBlockX = ui_vue3.ref(0);
-		const offsetBlockY = ui_vue3.ref(0);
-		let cachedGroupBlocks = [];
+		const snapModifier = useSnapModifier();
 		const x = ui_vue3.ref(ui_vue3.toValue(block).position.x);
 		const y = ui_vue3.ref(ui_vue3.toValue(block).position.y);
+		let activeGesture = null;
+		let nextGestureToken = 0;
+		let reconciliationToken = 0;
 		ui_vue3.watchEffect(() => {
 			x.value = ui_vue3.toValue(block).position.x;
 			y.value = ui_vue3.toValue(block).position.y;
+		});
+		ui_vue3.watch(isDisabledBlockDiagram, isDisabled => {
+			if (isDisabled && activeGesture !== null) {
+				cancelGesture(activeGesture.token);
+			}
 		});
 		const blockPositionStyle = ui_vue3.computed(() => {
 			return {
@@ -4154,160 +7264,378 @@ this.BX = this.BX || {};
 				left: `${x.value}px`
 			};
 		});
-		const updatePositions = (clientX, clientY) => {
-			const newX = Math.round((clientX - ui_vue3.toValue(offsetBlockX)) / currentZoom);
-			const newY = Math.round((clientY - ui_vue3.toValue(offsetBlockY)) / currentZoom);
-			const deltaX = newX - prevValueBlockX;
-			const deltaY = newY - prevValueBlockY;
-			x.value = newX;
-			y.value = newY;
-			for (const targetBlock of cachedGroupBlocks) {
-				targetBlock.position.x += deltaX;
-				targetBlock.position.y += deltaY;
-				if (setPortOffsetByBlockId) {
-					setPortOffsetByBlockId(targetBlock.id, {
-						x: -deltaX,
-						y: -deltaY
-					});
+		function createGestureBlock(targetBlock, isPrimary) {
+			const blockValue = ui_vue3.toValue(targetBlock);
+			const storedRect = ui_vue3.toValue(blocksRectMap)?.[blockValue.id] ?? {};
+			const dimensions = ui_vue3.toValue(blockValue.dimensions) ?? {};
+			const position = copyPosition(ui_vue3.toValue(blockValue.position));
+			return {
+				id: blockValue.id,
+				isPrimary,
+				originalPosition: position,
+				currentPosition: copyPosition(position),
+				width: Number.isFinite(storedRect.width) ? storedRect.width : Number.isFinite(dimensions.width) ? dimensions.width : 0,
+				height: Number.isFinite(storedRect.height) ? storedRect.height : Number.isFinite(dimensions.height) ? dimensions.height : 0
+			};
+		}
+
+		// Geometry entries are updated, never created: the geometry of a node may have been purged on
+		// purpose, and a merge over a missing entry would resurrect it. The size of the gesture snapshot
+		// only fills an entry that has none - it falls back to zero when nothing was measured at the
+		// press, and it goes stale as soon as the node is measured again during the gesture.
+		function updateGestureBlockRect(gestureBlock, position) {
+			const storedRect = ui_vue3.toValue(blocksRectMap)?.[gestureBlock.id];
+			if (!main_core.Type.isObjectLike(storedRect)) {
+				return;
+			}
+			const rect = {
+				x: position.x,
+				y: position.y
+			};
+			if (!Number.isFinite(storedRect.width)) {
+				rect.width = gestureBlock.width;
+			}
+			if (!Number.isFinite(storedRect.height)) {
+				rect.height = gestureBlock.height;
+			}
+			updateBlockRectById(gestureBlock.id, rect);
+		}
+		function updateLocalPosition(gestureBlock, position) {
+			const deltaX = position.x - gestureBlock.currentPosition.x;
+			const deltaY = position.y - gestureBlock.currentPosition.y;
+			gestureBlock.currentPosition = copyPosition(position);
+			if (gestureBlock.isPrimary) {
+				x.value = position.x;
+				y.value = position.y;
+			} else {
+				const blockElement = ui_vue3.toValue(blockElMap)?.get(gestureBlock.id);
+				if (blockElement) {
+					main_core.Dom.style(blockElement, 'left', `${position.x}px`);
+					main_core.Dom.style(blockElement, 'top', `${position.y}px`);
 				}
 			}
-			setPortOffsetByBlockId(ui_vue3.toValue(block).id, {
-				x: prevValueBlockX - x.value,
-				y: prevValueBlockY - y.value
+			updateGestureBlockRect(gestureBlock, position);
+			if (deltaX !== 0 || deltaY !== 0) {
+				setPortOffsetByBlockId(gestureBlock.id, {
+					x: -deltaX,
+					y: -deltaY
+				});
+			}
+		}
+		function isBeyondDragThreshold(gesture, clientX, clientY) {
+			return Math.abs(clientX - gesture.downClientX) >= DRAG_START_THRESHOLD || Math.abs(clientY - gesture.downClientY) >= DRAG_START_THRESHOLD;
+		}
+		function getPointerPosition(gesture, clientX, clientY, isSnapRequested) {
+			return snapPoint({
+				x: Math.round((clientX - gesture.offsetX) / gesture.zoom),
+				y: Math.round((clientY - gesture.offsetY) / gesture.zoom)
+			}, isSnapRequested);
+		}
+		function applyPointerPosition(gesture, clientX, clientY, notifyMove, notifyUnchanged = false, isSnapRequested = false) {
+			const newPosition = getPointerPosition(gesture, clientX, clientY, isSnapRequested);
+			const deltaX = newPosition.x - gesture.primaryBlock.currentPosition.x;
+			const deltaY = newPosition.y - gesture.primaryBlock.currentPosition.y;
+			const changed = deltaX !== 0 || deltaY !== 0;
+			gesture.lastClientX = clientX;
+			gesture.lastClientY = clientY;
+			gesture.isLastFrameSnapped = isSnapRequested;
+			if (changed) {
+				updateLocalPosition(gesture.primaryBlock, newPosition);
+				for (const groupBlock of gesture.groupBlocks) {
+					updateLocalPosition(groupBlock, {
+						x: groupBlock.currentPosition.x + deltaX,
+						y: groupBlock.currentPosition.y + deltaY
+					});
+				}
+				gesture.hasMoved = true;
+			}
+			if ((changed || notifyUnchanged)) {
+				hooks.moveDragBlock.trigger(block);
+			}
+			return changed;
+		}
+		function getActiveGesture(token) {
+			if (activeGesture?.token !== token || activeGesture.isClosing) {
+				return null;
+			}
+			return activeGesture;
+		}
+		function bindGestureHandlers(gesture) {
+			gesture.handlers = {
+				mouseMove: event => handleMouseMove(gesture.token, event),
+				mouseUp: event => finishGesture(gesture.token, event),
+				pointerCancel: () => cancelGesture(gesture.token),
+				keyDown: event => {
+					if (event.key === 'Escape') {
+						cancelGesture(gesture.token);
+					}
+				},
+				blur: () => cancelGesture(gesture.token)
+			};
+			main_core.Event.bind(document, 'mousemove', gesture.handlers.mouseMove);
+			main_core.Event.bind(document, 'mouseup', gesture.handlers.mouseUp);
+			main_core.Event.bind(document, 'pointercancel', gesture.handlers.pointerCancel);
+			main_core.Event.bind(document, 'keydown', gesture.handlers.keyDown);
+			main_core.Event.bind(window, 'blur', gesture.handlers.blur);
+		}
+		function unbindGestureHandlers(gesture) {
+			if (gesture.handlers === null) {
+				return;
+			}
+			main_core.Event.unbind(document, 'mousemove', gesture.handlers.mouseMove);
+			main_core.Event.unbind(document, 'mouseup', gesture.handlers.mouseUp);
+			main_core.Event.unbind(document, 'pointercancel', gesture.handlers.pointerCancel);
+			main_core.Event.unbind(document, 'keydown', gesture.handlers.keyDown);
+			main_core.Event.unbind(window, 'blur', gesture.handlers.blur);
+			gesture.handlers = null;
+		}
+		function getCurrentPreviewActivationKey() {
+			const activationKey = ui_vue3.toValue(connectionPreview)?.activationKey;
+			return main_core.Type.isStringFilled(activationKey) ? activationKey : null;
+		}
+		function clearGesturePreview(activationKey) {
+			if (activationKey !== null) {
+				clearConnectionPreview(activationKey);
+			}
+		}
+		function closeGesture(gesture) {
+			stopAutoScroll();
+			snapModifier.stopTracking();
+			unbindGestureHandlers(gesture);
+			resetMovingBlock();
+			resetGestureBlocks();
+			isDragged.value = false;
+			activeGesture = null;
+		}
+		function cancelGesture(token) {
+			const gesture = getActiveGesture(token);
+			if (gesture === null) {
+				return;
+			}
+			gesture.isClosing = true;
+			const previewActivationKey = getCurrentPreviewActivationKey();
+			updateLocalPosition(gesture.primaryBlock, gesture.primaryBlock.originalPosition);
+			for (const groupBlock of gesture.groupBlocks) {
+				updateLocalPosition(groupBlock, groupBlock.originalPosition);
+			}
+			closeGesture(gesture);
+			clearGesturePreview(previewActivationKey);
+		}
+
+		// The command carries the content of the live model and the position the gesture arrived at:
+		// the content read from the component input would be the copy the visible-set selection took
+		// on the previous frame, so a node edited during the gesture would be overwritten on commit.
+		function createUpdatedBlock(gestureBlock) {
+			const modelBlock = getBlockById(gestureBlock.id);
+			if (modelBlock === null) {
+				return null;
+			}
+			return {
+				...ui_vue3.toValue(modelBlock),
+				position: {
+					...ui_vue3.toValue(modelBlock).position,
+					...gestureBlock.currentPosition
+				}
+			};
+		}
+
+		// The end of the gesture is part of the public contract of the extension, so it is reported even
+		// when the node has left the model and no command was built: a consumer waits for this event to
+		// close a gesture of its own. With no model block the input is all there is to name the node by.
+		function commitPrimaryBlock(gestureBlock) {
+			const updatedBlock = createUpdatedBlock(gestureBlock);
+			if (updatedBlock) {
+				updateBlock(updatedBlock);
+			}
+			hooks.endDragBlock.trigger(updatedBlock ?? ui_vue3.toValue(block));
+		}
+
+		// The model is the truth about where a node stands, so after the gesture the measured
+		// geometry is brought to the model position instead of arbitrating between the gesture
+		// result and the component input: that input comes from the visible-set selection, which
+		// lags the model by a frame under render optimization. A consumer that refused the move
+		// left the previous position in the model, and the alignment returns the geometry to it.
+		function alignGeometryToModel(gestureBlock) {
+			const modelBlock = getBlockById(gestureBlock.id);
+			if (modelBlock === null) {
+				return;
+			}
+			const modelPosition = ui_vue3.toValue(modelBlock).position;
+			if (!main_core.Type.isObjectLike(modelPosition)) {
+				return;
+			}
+
+			// A non-finite coordinate would turn every port of the node into NaN and take all its
+			// connections off the canvas.
+			if (!Number.isFinite(modelPosition.x) || !Number.isFinite(modelPosition.y)) {
+				return;
+			}
+			updateLocalPosition(gestureBlock, modelPosition);
+		}
+
+		// Precondition of the extension: the consumer applies `changedBlocks` within this same flush
+		// cycle - the model is read once here, and a command applied later misses the alignment.
+		function schedulePositionReconciliation(gesture) {
+			const token = ++reconciliationToken;
+			void ui_vue3.nextTick(() => {
+				if (token !== reconciliationToken || activeGesture !== null) {
+					return;
+				}
+				for (const gestureBlock of [gesture.primaryBlock, ...gesture.groupBlocks]) {
+					alignGeometryToModel(gestureBlock);
+				}
 			});
-			prevValueBlockX = x.value;
-			prevValueBlockY = y.value;
-		};
+		}
+		function finishGesture(token, event) {
+			const gesture = getActiveGesture(token);
+			if (gesture === null) {
+				return;
+			}
+			event.stopPropagation();
+			if (ui_vue3.toValue(isDisabledBlockDiagram)) {
+				cancelGesture(token);
+				return;
+			}
+
+			// A mouseup can carry a position no mousemove has seen, so the threshold is judged against
+			// the release point as well: a press that ends far from where it started is a drag even
+			// without a single move frame. Below the threshold the press stays a selection - the block
+			// never followed the pointer, and committing the release would move a block nobody dragged,
+			// with snapping on onto a grid node it did not stand on.
+			const hasDrawnFrame = gesture.isDragStarted;
+			if (!hasDrawnFrame && isBeyondDragThreshold(gesture, event.clientX, event.clientY)) {
+				gesture.isDragStarted = true;
+			}
+			if (gesture.isDragStarted) {
+				// The modifier is taken from the last applied frame rather than from this mouseup: Shift
+				// released an instant before the button would part the committed position from the drawn
+				// one. With no frame drawn there is nothing to keep in step, so the release decides.
+				applyPointerPosition(gesture, event.clientX, event.clientY, true, false, hasDrawnFrame ? gesture.isLastFrameSnapped : isSnapModifier(event));
+			}
+			gesture.isClosing = true;
+			const previewActivationKey = getCurrentPreviewActivationKey();
+			stopAutoScroll();
+			unbindGestureHandlers(gesture);
+
+			// The commands go out first and the gesture is released after them, but the release is not
+			// theirs to skip: a consumer hook that throws would leave the moving node and the retention
+			// standing for good, and the next press would find a gesture still active. The exception
+			// itself is not the extension's to handle and goes on to the consumer.
+			try {
+				if (gesture.hasMoved) {
+					for (const groupBlock of gesture.groupBlocks) {
+						const updatedBlock = createUpdatedBlock(groupBlock);
+						if (updatedBlock) {
+							updateBlock(updatedBlock);
+							hooks.endDragBlock.trigger(updatedBlock);
+						}
+					}
+					commitPrimaryBlock(gesture.primaryBlock);
+				}
+			} finally {
+				closeGesture(gesture);
+				clearGesturePreview(previewActivationKey);
+			}
+			if (gesture.hasMoved) {
+				schedulePositionReconciliation(gesture);
+			}
+		}
+		function handleMouseMove(token, event) {
+			const gesture = getActiveGesture(token);
+			if (gesture === null) {
+				return;
+			}
+			if (ui_vue3.toValue(isDisabledBlockDiagram)) {
+				cancelGesture(token);
+				return;
+			}
+			event.stopPropagation();
+
+			// Below the threshold the press is still a selection, so the block must not follow the
+			// pointer: snapping would pull a block standing between grid nodes onto the nearest one on
+			// the shake of a hand, which is a move nobody asked for.
+			if (!gesture.isDragStarted) {
+				if (!isBeyondDragThreshold(gesture, event.clientX, event.clientY)) {
+					return;
+				}
+				gesture.isDragStarted = true;
+			}
+			snapModifier.sync(event);
+			updateMousePosition(event);
+			applyPointerPosition(gesture, event.clientX, event.clientY, true, true, snapModifier.isPressed());
+		}
+		function onMouseDown(event) {
+			if (event.button !== 0 || ui_vue3.toValue(isDisabledBlockDiagram) || activeGesture !== null) {
+				return;
+			}
+			event.stopPropagation();
+			++reconciliationToken;
+			const blockValue = ui_vue3.toValue(block);
+			const blockId = blockValue.id;
+			const selectedIds = ui_vue3.toValue(highlitedBlockIds);
+			const isSelected = selectedIds.includes(blockId);
+			if (!isSelected) {
+				highlitedBlockIds.value = [blockId];
+			}
+			const currentZoom = ui_vue3.toValue(zoom);
+			if (!Number.isFinite(currentZoom) || currentZoom <= 0) {
+				return;
+			}
+			const groupIds = ui_vue3.toValue(highlitedBlockIds);
+			const groupBlocks = groupIds.length > 1 ? ui_vue3.toValue(allBlocksRef).filter(item => groupIds.includes(ui_vue3.toValue(item).id) && ui_vue3.toValue(item).id !== blockId).map(item => createGestureBlock(item, false)) : [];
+			const primaryBlock = createGestureBlock(blockValue, true);
+			const gesture = {
+				token: ++nextGestureToken,
+				primaryBlock,
+				groupBlocks,
+				offsetX: Math.round(event.clientX - primaryBlock.originalPosition.x * currentZoom),
+				offsetY: Math.round(event.clientY - primaryBlock.originalPosition.y * currentZoom),
+				downClientX: event.clientX,
+				downClientY: event.clientY,
+				lastClientX: event.clientX,
+				lastClientY: event.clientY,
+				zoom: currentZoom,
+				isDragStarted: false,
+				isLastFrameSnapped: false,
+				hasMoved: false,
+				isClosing: false,
+				handlers: null
+			};
+			activeGesture = gesture;
+			isDragged.value = true;
+			setMovingBlock(blockId);
+			// The group members are led by the same gesture and reach the model only on mouseup, so
+			// culling must judge none of them by the pre-gesture box the index still holds.
+			setGestureBlocks([blockId, ...groupBlocks.map(groupBlock => groupBlock.id)]);
+			snapModifier.sync(event);
+			snapModifier.startTracking();
+			hooks.startDragBlock.trigger(block);
+
+			// The press only arms the autoscroll; the loop starts when the gesture first reports the
+			// pointer, and it reports it past the drag threshold - so the camera cannot pan under a
+			// press that is still a selection.
+			startAutoScroll(event, (deltaX, deltaY) => {
+				const currentGesture = getActiveGesture(gesture.token);
+				if (currentGesture === null) {
+					return;
+				}
+				currentGesture.offsetX -= deltaX;
+				currentGesture.offsetY -= deltaY;
+				applyPointerPosition(currentGesture, currentGesture.lastClientX, currentGesture.lastClientY, true, false, snapModifier.isPressed());
+			});
+			bindGestureHandlers(gesture);
+		}
 		ui_vue3.onMounted(() => {
 			main_core.Event.bind(ui_vue3.toValue(blockRef), 'mousedown', onMouseDown);
 		});
 		ui_vue3.onBeforeUnmount(() => {
 			main_core.Event.unbind(ui_vue3.toValue(blockRef), 'mousedown', onMouseDown);
-			stopAutoScroll();
+			++reconciliationToken;
+			if (activeGesture !== null) {
+				cancelGesture(activeGesture.token);
+			}
+			snapModifier.stopTracking();
 		});
-		const onMouseDown = event => {
-			if (event.button !== 0 || ui_vue3.toValue(isDisabledBlockDiagram)) {
-				return;
-			}
-			event.stopPropagation();
-			const blockId = ui_vue3.toValue(block).id;
-			const selectedIds = ui_vue3.toValue(highlitedBlockIds);
-			const isSelected = selectedIds.includes(blockId);
-			currentZoom = ui_vue3.toValue(zoom);
-			if (!isSelected) {
-				highlitedBlockIds.value = [blockId];
-			}
-			setMovingBlock(ui_vue3.toValue(block).id);
-			hooks.startDragBlock.trigger(block);
-			prevValueBlockX = ui_vue3.toValue(block).position.x;
-			prevValueBlockY = ui_vue3.toValue(block).position.y;
-			offsetBlockX.value = Math.round(event.clientX - prevValueBlockX * currentZoom);
-			offsetBlockY.value = Math.round(event.clientY - prevValueBlockY * currentZoom);
-			const groupIds = ui_vue3.toValue(highlitedBlockIds);
-			cachedGroupBlocks = groupIds.length > 1 ? ui_vue3.toValue(allBlocksRef).filter(item => groupIds.includes(item.id) && item.id !== blockId) : [];
-			isDragged.value = true;
-			lastClientX = event.clientX;
-			lastClientY = event.clientY;
-			startAutoScroll(event, (dx, dy) => {
-				offsetBlockX.value -= dx;
-				offsetBlockY.value -= dy;
-				updatePositions(lastClientX, lastClientY);
-			});
-			main_core.Event.bind(document, 'mousemove', onMouseMove);
-			main_core.Event.bind(document, 'mouseup', onMouseUp);
-		};
-		const onMouseMove = event => {
-			if (!ui_vue3.toValue(isDragged) || ui_vue3.toValue(isDisabledBlockDiagram)) {
-				return;
-			}
-			event.stopPropagation();
-			lastClientX = event.clientX;
-			lastClientY = event.clientY;
-			updateMousePosition(event);
-			updatePositions(lastClientX, lastClientY);
-			hooks.moveDragBlock.trigger(block);
-			const newX = Math.round((event.clientX - ui_vue3.toValue(offsetBlockX)) / ui_vue3.toValue(zoom));
-			const newY = Math.round((event.clientY - ui_vue3.toValue(offsetBlockY)) / ui_vue3.toValue(zoom));
-			const deltaX = newX - prevValueBlockX;
-			const deltaY = newY - prevValueBlockY;
-			x.value = newX;
-			y.value = newY;
-			for (const targetBlock of cachedGroupBlocks) {
-				targetBlock.position.x += deltaX;
-				targetBlock.position.y += deltaY;
-				if (setPortOffsetByBlockId) {
-					setPortOffsetByBlockId(targetBlock.id, {
-						x: -deltaX,
-						y: -deltaY
-					});
-				}
-			}
-			updateBlockRectById(ui_vue3.toValue(block).id, {
-				x: prevValueBlockX - x.value,
-				y: prevValueBlockY - y.value
-			});
-			setPortOffsetByBlockId(ui_vue3.toValue(block).id, {
-				x: prevValueBlockX - x.value,
-				y: prevValueBlockY - y.value
-			});
-			prevValueBlockX = x.value;
-			prevValueBlockY = y.value;
-		};
-		const onMouseUp = event => {
-			event.stopPropagation();
-			stopAutoScroll();
-			if (!ui_vue3.toValue(isDragged) || ui_vue3.toValue(isDisabledBlockDiagram)) {
-				return;
-			}
-			const positionX = Math.round((event.clientX - ui_vue3.toValue(offsetBlockX)) / currentZoom);
-			const positionY = Math.round((event.clientY - ui_vue3.toValue(offsetBlockY)) / currentZoom);
-			const isMoved = ui_vue3.toValue(block).position.x !== positionX || ui_vue3.toValue(block).position.y !== positionY;
-			if (isMoved) {
-				cachedGroupBlocks.forEach(targetBlock => {
-					const finalX = targetBlock.position.x;
-					const finalY = targetBlock.position.y;
-					const newBlockState = {
-						...targetBlock,
-						position: {
-							...targetBlock.position,
-							x: finalX,
-							y: finalY
-						}
-					};
-					if (setPortOffsetByBlockId) {
-						setPortOffsetByBlockId(targetBlock.id, {
-							x: 0,
-							y: 0
-						});
-					}
-					updateBlock(newBlockState);
-					hooks.endDragBlock.trigger(newBlockState);
-				});
-				const currentBlockState = {
-					...ui_vue3.toValue(block),
-					position: {
-						...ui_vue3.toValue(block).position,
-						x: positionX,
-						y: positionY
-					}
-				};
-				if (setPortOffsetByBlockId) {
-					setPortOffsetByBlockId(ui_vue3.toValue(block).id, {
-						x: prevValueBlockX - positionX,
-						y: prevValueBlockY - positionY
-					});
-				}
-				updateBlock(currentBlockState);
-				hooks.endDragBlock.trigger(currentBlockState);
-			}
-			resetMovingBlock();
-			cachedGroupBlocks = [];
-			offsetBlockX.value = 0;
-			offsetBlockY.value = 0;
-			isDragged.value = false;
-			main_core.Event.unbind(document, 'mousemove', onMouseMove);
-			main_core.Event.unbind(document, 'mouseup', onMouseUp);
-		};
 		return {
 			isDragged,
 			blockPositionStyle
@@ -4342,93 +7670,6 @@ this.BX = this.BX || {};
 			Object.entries(handlersMap).forEach(([hookName, handler]) => {
 				hooks[hookName].off(handler);
 			});
-		}
-		return {
-			dispose
-		};
-	}
-
-	function useWatchProps(props) {
-		const {
-			blocks,
-			connections,
-			zoom,
-			isDisabled,
-			connectionOffset,
-			connectionBendOffset,
-			connectionBorderRadius,
-			setUnmountedBlocks,
-			setUnmountedPorts,
-			setConnectionsOffsets,
-			setHistoryBlocksCurrentState,
-			setHistoryConnectionsCurrentState,
-			blockIntersections,
-			isRunUpdateBlocksCommand
-		} = useBlockDiagram();
-		const scope = ui_vue3.effectScope(true);
-		scope.run(() => {
-			ui_vue3.watch([() => props.blocks, () => props.blocks.length], ([newBlocks = [], newLength = 0], [oldBlocks = [], oldLength = 0]) => {
-				if (newBlocks && Array.isArray(newBlocks)) {
-					setHistoryBlocksCurrentState(newBlocks);
-					setUnmountedPorts(newBlocks, oldBlocks);
-					setUnmountedBlocks(newBlocks, oldBlocks);
-					blocks.value = newBlocks;
-					if (!ui_vue3.toValue(isRunUpdateBlocksCommand)) {
-						blockIntersections.clear();
-						blockIntersections.load(blocks.value);
-					}
-					isRunUpdateBlocksCommand.value = false;
-				}
-			}, {
-				immediate: true,
-				deep: true
-			});
-			ui_vue3.watch([() => props.connections, () => props.connections.length], ([newConnections]) => {
-				setConnectionsOffsets(newConnections);
-				setHistoryConnectionsCurrentState(newConnections);
-				connections.value = [...newConnections];
-			}, {
-				immediate: true,
-				deep: true
-			});
-			ui_vue3.watch(() => props.zoom, newZoom => {
-				zoom.value = newZoom;
-			}, {
-				immediate: true
-			});
-			ui_vue3.watch(() => props.minZoom, newMinZoom => {
-				zoom.value = newMinZoom;
-			}, {
-				immediate: true
-			});
-			ui_vue3.watch(() => props.maxZoom, newMaxZoom => {
-				zoom.value = newMaxZoom;
-			}, {
-				immediate: true
-			});
-			ui_vue3.watch(() => props.connectionOffset, newConnectionOffset => {
-				connectionOffset.value = newConnectionOffset;
-			}, {
-				immediate: true
-			});
-			ui_vue3.watch(() => props.connectionBendOffset, newConnectionOffsetBend => {
-				connectionBendOffset.value = newConnectionOffsetBend;
-			}, {
-				immediate: true
-			});
-			ui_vue3.watch(() => props.connectionBorderRadius, newConnectionBorderRadius => {
-				connectionBorderRadius.value = newConnectionBorderRadius;
-			}, {
-				immediate: true
-			});
-			ui_vue3.watch(() => props.disabled, disabled => {
-				isDisabled.value = disabled;
-			}, {
-				immediate: true
-			});
-		});
-		function dispose() {
-			scope.stop();
 		}
 		return {
 			dispose
@@ -4529,9 +7770,8 @@ this.BX = this.BX || {};
 		function setCamera(params) {
 			ui_vue3.toValue(canvasInstance)?.setCamera(params);
 		}
-		function goToBlockById(id) {
-			const block = ui_vue3.toValue(blocks).find(block => block.id === id);
-			if (!block) {
+		function goToBlock(block) {
+			if (!block?.position || !block?.dimensions) {
 				return;
 			}
 			const {
@@ -4549,11 +7789,15 @@ this.BX = this.BX || {};
 				y: centerY - ui_vue3.toValue(canvasHeight) / 2 / ui_vue3.toValue(zoom) - ui_vue3.toValue(blockDiagramTop) / ui_vue3.toValue(zoom)
 			});
 		}
+		function goToBlockById(id) {
+			goToBlock(ui_vue3.toValue(blocks).find(block => block.id === id));
+		}
 		return {
 			zoomIn,
 			zoomOut,
 			setZoom,
 			setCamera,
+			goToBlock,
 			goToBlockById
 		};
 	}
@@ -4604,7 +7848,9 @@ this.BX = this.BX || {};
 			port,
 			position = PORT_POSITION.LEFT,
 			validationRules = [],
-			index = 0
+			index = 0,
+			isVirtual = false,
+			onVirtualDrop = null
 		} = options;
 		const {
 			isMakeNewConnection,
@@ -4612,19 +7858,20 @@ this.BX = this.BX || {};
 			portsElMap,
 			portsRectMap,
 			portsValidationsFnMap,
-			zoom,
-			transformX,
-			transformY,
-			blockDiagramTop,
-			blockDiagramLeft,
-			highlitedBlockIds,
+			virtualPortsMap,
 			movingBlockId,
 			isDisabledBlockDiagram,
 			updatePortSegmentSizes,
+			touchPortsGeometry,
 			portMounted,
 			validPortsMap,
-			waitForTransformEnd
+			isRenderOptimizationAvailable,
+			blockIdsInModel,
+			getBlockById
 		} = useBlockDiagram();
+		const {
+			isBlockVisuallyHighlighted
+		} = useTransientHighlightedBlocks();
 		const isMaybePortForNewConnection = ui_vue3.computed(() => {
 			const hasBlock = ui_vue3.toValue(validPortsMap).has(ui_vue3.toValue(block).id);
 			const hasPort = ui_vue3.toValue(validPortsMap)?.get(ui_vue3.toValue(block).id)?.has(ui_vue3.toValue(port).id) ?? false;
@@ -4633,8 +7880,12 @@ this.BX = this.BX || {};
 		const isDisabled = ui_vue3.computed(() => {
 			return ui_vue3.toValue(isDisabledBlockDiagram);
 		});
+
+		// The ports follow the visual highlight of their block through both channels of it, the user
+		// selection and the temporary highlight of a block being played back — the same check the block
+		// itself uses (block-state.js). The name is kept: it belongs to the public usePortState API.
 		const isIncludedPortInSelectedBlock = ui_vue3.computed(() => {
-			return ui_vue3.toValue(highlitedBlockIds).includes(ui_vue3.toValue(block).id);
+			return isBlockVisuallyHighlighted(ui_vue3.toValue(block).id);
 		});
 		const isIncludedPortInMovingBlock = ui_vue3.computed(() => {
 			return ui_vue3.toValue(movingBlockId) !== null && ui_vue3.toValue(movingBlockId) === ui_vue3.toValue(block).id;
@@ -4660,28 +7911,34 @@ this.BX = this.BX || {};
 				y = 0,
 				width = 0,
 				height = 0
-			} = ui_vue3.toValue(portEl)?.getBoundingClientRect() ?? {};
+			} = getCanvasRect(ui_vue3.toValue(portEl)) ?? {};
 			ui_vue3.toValue(portsRectMap)[blockId][portId] = {
-				x: x / ui_vue3.toValue(zoom) + ui_vue3.toValue(transformX) - ui_vue3.toValue(blockDiagramLeft) / ui_vue3.toValue(zoom),
-				y: y / ui_vue3.toValue(zoom) + ui_vue3.toValue(transformY) - ui_vue3.toValue(blockDiagramTop) / ui_vue3.toValue(zoom),
-				width: width / ui_vue3.toValue(zoom),
-				height: height / ui_vue3.toValue(zoom),
+				x,
+				y,
+				width,
+				height,
 				position,
+				// The port's fan-out order within its side, captured here so onMountedBlock can
+				// recompute the segments with the same order the drawing/promise path uses — under
+				// culling that promise path never runs (see block-state.js onMountedBlock).
+				order: index,
 				firstSegmentSize: 0,
 				secondSegmentSize: 0,
 				secondSegmentSizeWithoutOffset: 0
 			};
+			touchPortsGeometry();
 		}
 		function deletePortRect(blockId, portId) {
-			if (!(blockId in ui_vue3.toValue(portsRectMap))) {
+			const portsMap = ui_vue3.toValue(portsRectMap)[blockId];
+			if (!portsMap || !(portId in portsMap)) {
 				return;
 			}
-			const portsMap = ui_vue3.toValue(portsRectMap)[blockId];
 			if (Object.keys(portsMap).length === 1) {
 				delete ui_vue3.toValue(portsRectMap)[blockId];
 			} else {
-				delete ui_vue3.toValue(portsMap)[portId];
+				delete portsMap[portId];
 			}
+			touchPortsGeometry();
 		}
 		function addValidationFn() {
 			if (!ui_vue3.toValue(portsValidationsFnMap).has(ui_vue3.toValue(block).id)) {
@@ -4696,12 +7953,38 @@ this.BX = this.BX || {};
 			}
 			ui_vue3.toValue(portsValidationsFnMap)?.get(ui_vue3.toValue(block).id)?.delete(ui_vue3.toValue(port).id);
 		}
-		async function onMountedPort() {
-			// Workaround to fix connections render after they are in viewport. Should be removed later
-			await waitForTransformEnd.value?.promise;
+		function addVirtualPort() {
+			if (!isVirtual) {
+				return;
+			}
+			if (!ui_vue3.toValue(virtualPortsMap).has(ui_vue3.toValue(block).id)) {
+				ui_vue3.toValue(virtualPortsMap).set(ui_vue3.toValue(block).id, new Map());
+			}
+			ui_vue3.toValue(virtualPortsMap).get(ui_vue3.toValue(block).id).set(ui_vue3.toValue(port).id, {
+				port: {
+					...ui_vue3.toValue(port)
+				},
+				onDrop: onVirtualDrop
+			});
+		}
+		function deleteVirtualPort() {
+			if (!isVirtual) {
+				return;
+			}
+			const ports = ui_vue3.toValue(virtualPortsMap).get(ui_vue3.toValue(block).id);
+			if (!ports) {
+				return;
+			}
+			ports.delete(ui_vue3.toValue(port).id);
+			if (ports.size === 0) {
+				ui_vue3.toValue(virtualPortsMap).delete(ui_vue3.toValue(block).id);
+			}
+		}
+		function onMountedPort() {
 			addPortElement(ui_vue3.toValue(block).id, ui_vue3.toValue(port).id, portRef);
 			addPortRect(ui_vue3.toValue(block).id, ui_vue3.toValue(port).id, portRef);
 			addValidationFn();
+			addVirtualPort();
 			waitAllBlocksMounted.value?.promise.then(() => {
 				if (!(ui_vue3.toValue(block).id in ui_vue3.toValue(portsRectMap))) {
 					return;
@@ -4710,12 +7993,25 @@ this.BX = this.BX || {};
 				portMounted(ui_vue3.toValue(block).id, ui_vue3.toValue(port).id);
 			});
 		}
-		async function onUnmountedPort() {
-			// Workaround to fix connections render after they are in viewport. Should be removed later
-			await waitForTransformEnd.value?.promise;
-			deletePortElement(ui_vue3.toValue(block).id, ui_vue3.toValue(port).id);
-			deletePortRect(ui_vue3.toValue(block).id, ui_vue3.toValue(port).id);
+		function onUnmountedPort() {
+			const blockId = ui_vue3.toValue(block).id;
+			const portId = ui_vue3.toValue(port).id;
+			deletePortElement(blockId, portId);
 			deleteValidationFn();
+			deleteVirtualPort();
+
+			// Under render optimization culling unmounts the offscreen node while it
+			// stays in the model: retain measured port coordinates so the connection
+			// path can still be resolved. A real removal — the block gone, or this port
+			// dropped from a surviving block's ports — clears them (see purgeBlockGeometry).
+			// Read the port composition from the CURRENT model (getBlockById), not the prop
+			// captured in setup: an immutable setPorts swaps the block, and the stale prop
+			// would still list the removed port and wrongly retain its geometry.
+			const blockPortIdsInModel = collectModelPortIds(getBlockById, blockId);
+			const retain = shouldRetainPortGeometry(ui_vue3.toValue(isRenderOptimizationAvailable), ui_vue3.toValue(blockIdsInModel), blockId, blockPortIdsInModel, portId);
+			if (!retain) {
+				deletePortRect(blockId, portId);
+			}
 		}
 		return {
 			isDisabled,
@@ -4727,7 +8023,6 @@ this.BX = this.BX || {};
 		};
 	}
 
-	const MIN_DISTANCE_DISPLAY_BIZIER_LINE = 100;
 	const DEFAULT_PATH_INFO$1 = {
 		path: '',
 		center: {
@@ -4746,135 +8041,19 @@ this.BX = this.BX || {};
 			connectionBendOffset,
 			connectionBorderRadius
 		} = useBlockDiagram();
+		const resolveRouteOptions = () => ({
+			connection: ui_vue3.toValue(connection),
+			portsRectMap: ui_vue3.toValue(portsRectMap),
+			connectionsOffsetMap: ui_vue3.toValue(connectionsOffsetMap),
+			bendOffset: ui_vue3.toValue(connectionBendOffset),
+			offset: ui_vue3.toValue(connectionOffset),
+			borderRadius: ui_vue3.toValue(connectionBorderRadius)
+		});
 		const connectionPortsPosition = ui_vue3.computed(() => {
-			const {
-				id: connectionId,
-				sourceBlockId,
-				sourcePortId,
-				targetBlockId,
-				targetPortId
-			} = ui_vue3.toValue(connection);
-			const hasSourceBlockId = sourceBlockId in ui_vue3.toValue(portsRectMap);
-			const hasSourcePortId = hasSourceBlockId && sourcePortId in ui_vue3.toValue(portsRectMap)[sourceBlockId];
-			const hasTargetBlockId = targetBlockId in ui_vue3.toValue(portsRectMap);
-			const hasTargetPortId = hasTargetBlockId && targetPortId in ui_vue3.toValue(portsRectMap)[targetBlockId];
-			if (!hasSourceBlockId || !hasSourcePortId || !hasTargetBlockId || !hasTargetPortId) {
-				return null;
-			}
-			const hasManyConnectionSourcePort = Object.keys(ui_vue3.toValue(connectionsOffsetMap)?.[sourceBlockId]?.[sourcePortId] ?? {}).length > 1;
-			const hasManyConnectionTargetPort = Object.keys(ui_vue3.toValue(connectionsOffsetMap)?.[targetBlockId]?.[targetPortId] ?? {}).length > 1;
-			const {
-				firstSegmentSize: sourceConnectionFirstSegmentSize = 0,
-				secondSegmentOrder: sourceSecondSegmentOrder = 0
-			} = ui_vue3.toValue(connectionsOffsetMap)?.[sourceBlockId]?.[sourcePortId]?.[connectionId] ?? {};
-			const {
-				firstSegmentSize: targetConnectionFirstSegmentSize = 0,
-				secondSegmentOrder: targetSecondSegmentOrder = 0
-			} = ui_vue3.toValue(connectionsOffsetMap)?.[targetBlockId]?.[targetPortId]?.[connectionId] ?? {};
-			const {
-				x: sourceX,
-				y: sourceY,
-				width: sourceWidth,
-				height: sourceHeight,
-				position: sourcePosition,
-				firstSegmentSize: sourceFirstSegmentSize,
-				secondSegmentSize: sourceSecondSegmentSize,
-				secondSegmentSizeWithoutOffset: sourceSecondSegmentSizeWithoutOffset
-			} = ui_vue3.toValue(portsRectMap)[sourceBlockId][sourcePortId];
-			const {
-				x: targetX,
-				y: targetY,
-				width: targetWidth,
-				height: targetHeight,
-				position: targetPosition,
-				firstSegmentSize: targetFirstSegmentSize,
-				secondSegmentSize: targetSecondSegmentSize,
-				secondSegmentSizeWithoutOffset: targetSecondSegmentSizeWithoutOffset
-			} = ui_vue3.toValue(portsRectMap)[targetBlockId][targetPortId];
-			return {
-				sourcePort: {
-					x: sourceX + sourceWidth / 2,
-					y: sourceY + sourceHeight / 2,
-					position: sourcePosition,
-					firstSegmentSize: hasManyConnectionSourcePort ? sourceConnectionFirstSegmentSize : sourceFirstSegmentSize,
-					secondSegmentSize: hasManyConnectionSourcePort ? sourceSecondSegmentSizeWithoutOffset + ui_vue3.toValue(connectionBendOffset) * sourceSecondSegmentOrder : sourceSecondSegmentSize
-				},
-				targetPort: {
-					x: targetX + targetWidth / 2,
-					y: targetY + targetHeight / 2,
-					position: targetPosition,
-					firstSegmentSize: hasManyConnectionTargetPort ? targetConnectionFirstSegmentSize : targetFirstSegmentSize,
-					secondSegmentSize: hasManyConnectionTargetPort ? targetSecondSegmentSizeWithoutOffset + ui_vue3.toValue(connectionBendOffset) * targetSecondSegmentOrder : targetSecondSegmentSize
-				}
-			};
+			return resolveConnectionPortsPosition(resolveRouteOptions());
 		});
 		const connectionPathInfo = ui_vue3.computed(() => {
-			if (ui_vue3.toValue(connectionPortsPosition) === null) {
-				return DEFAULT_PATH_INFO$1;
-			}
-			const sourcePosition = ui_vue3.toValue(connectionPortsPosition).sourcePort.position;
-			const targetPosition = ui_vue3.toValue(connectionPortsPosition).targetPort.position;
-			const isVerticalDirection = sourcePosition !== targetPosition && [PORT_POSITION.TOP, PORT_POSITION.BOTTOM].includes(sourcePosition) && [PORT_POSITION.TOP, PORT_POSITION.BOTTOM].includes(targetPosition);
-			const isHorizontalDirection = sourcePosition !== targetPosition && [PORT_POSITION.LEFT, PORT_POSITION.RIGHT].includes(sourcePosition) && [PORT_POSITION.LEFT, PORT_POSITION.RIGHT].includes(targetPosition);
-			const {
-				points
-			} = getSmoothStepPath({
-				sourceX: ui_vue3.toValue(connectionPortsPosition).sourcePort.x,
-				sourceY: ui_vue3.toValue(connectionPortsPosition).sourcePort.y,
-				sourcePosition,
-				targetX: ui_vue3.toValue(connectionPortsPosition).targetPort.x,
-				targetY: ui_vue3.toValue(connectionPortsPosition).targetPort.y,
-				targetPosition,
-				borderRadius: ui_vue3.toValue(connectionBorderRadius),
-				offset: ui_vue3.toValue(connectionOffset)
-			});
-			const [p1, p2, p3, p4, p5, p6] = points;
-			const isDisplayBezierLineByDistance = distance(p1, p6) < MIN_DISTANCE_DISPLAY_BIZIER_LINE;
-			const isXConsistOfThreeParts = p1.x === p2.x && p1.x === p3.x && p4.x === p5.x && p4.x === p6.x;
-			const isYConsistOfThreeParts = p1.y === p2.y && p1.y === p3.y && p4.y === p5.y && p4.y === p6.y;
-			if (isDisplayBezierLineByDistance || isXConsistOfThreeParts && isVerticalDirection || isYConsistOfThreeParts && isHorizontalDirection) {
-				return getBeziePath(ui_vue3.toValue(connectionPortsPosition).sourcePort, ui_vue3.toValue(connectionPortsPosition).targetPort, isVerticalDirection ? BEZIER_DIR.VERTICAL : BEZIER_DIR.HORIZONTAL);
-			}
-			const {
-				x: sourceX,
-				y: sourceY,
-				firstSegmentSize: sourceFirtsSegmentSize,
-				secondSegmentSize
-			} = ui_vue3.toValue(connectionPortsPosition).sourcePort;
-			const {
-				x: targetX,
-				y: targetY,
-				firstSegmentSize: targetFirstSegmentSize
-			} = ui_vue3.toValue(connectionPortsPosition).targetPort;
-			const firstSegmentTargetX = isHorizontalDirection ? (sourceX + targetX) / 2 : sourceX + secondSegmentSize;
-			const firstSegmentTargetY = isHorizontalDirection ? sourceY + secondSegmentSize : (sourceY + targetY) / 2;
-			const firstSegmentPath = getSmoothStepPath({
-				sourceX,
-				sourceY,
-				targetX: firstSegmentTargetX,
-				targetY: firstSegmentTargetY,
-				sourcePosition,
-				targetPosition: isHorizontalDirection ? PORT_POSITION.RIGHT : PORT_POSITION.BOTTOM,
-				borderRadius: ui_vue3.toValue(connectionBorderRadius),
-				offset: sourceFirtsSegmentSize
-			});
-			const secondSegmentPath = getSmoothStepPath({
-				sourceX: firstSegmentTargetX,
-				sourceY: firstSegmentTargetY,
-				targetX,
-				targetY,
-				sourcePosition: isHorizontalDirection ? PORT_POSITION.LEFT : PORT_POSITION.TOP,
-				targetPosition,
-				borderRadius: ui_vue3.toValue(connectionBorderRadius),
-				offset: targetFirstSegmentSize
-			});
-			return {
-				path: `${firstSegmentPath.path} ${secondSegmentPath.path}`,
-				center: {
-					x: firstSegmentTargetX,
-					y: firstSegmentTargetY
-				}
-			};
+			return resolveRenderedConnectionRoute(resolveRouteOptions()) ?? DEFAULT_PATH_INFO$1;
 		});
 		const isDisabled = ui_vue3.computed(() => {
 			return ui_vue3.toValue(isDisabledBlockDiagram);
@@ -5016,33 +8195,87 @@ this.BX = this.BX || {};
 			isStopAnimation,
 			animationQueue,
 			currentAnimationItem,
+			isRenderOptimizationAvailable,
+			blockIntersections,
+			animationStep,
 			addConnection,
 			deleteConnectionById,
 			addBlock,
 			deleteBlockById
 		} = useBlockDiagram();
+		const {
+			goToBlock
+		} = useCanvas();
+		const history = useHistory();
+
+		// Единая точка продвижения очереди. Вызывается ровно один раз на каждый
+		// yield-шаг — либо совпавшим экранным переходом (переходом отрисованного
+		// элемента), либо резервным таймером (см. AnimationStepController). Гарантия
+		// «ровно один advance на шаг» лежит на контроллере; здесь — само действие
+		// продвижения генератора.
+		function advance() {
+			const queue = animationQueue.value;
+			if (!queue) {
+				return;
+			}
+			const {
+				done = false
+			} = queue.next() ?? {};
+			if (done) {
+				animationQueue.value = null;
+				// Снимок истории делаем ОДИН раз при завершении очереди, а не на
+				// каждом шаге — иначе O(N^2) клонов и засорение undo.
+				history.makeSnapshot();
+			}
+		}
+		animationStep.setAdvanceHandler(advance);
+
+		// Отрисован ли блок сейчас. При выключенной оптимизации рендерятся все блоки;
+		// при включённой — только попавшие в видимый набор (видимая область).
+		function isBlockRendered(blockId) {
+			return !ui_vue3.toValue(isRenderOptimizationAvailable) || ui_vue3.toValue(blockIntersections.visibleBlockIds).has(blockId);
+		}
+
+		// Возвращает true, если элемент даст переход (enter/leave), которым очередь
+		// продвинется дальше через onAfter* в *-queue-transition. Если перехода не
+		// будет (удаление неотрисованного блока), очередь не должна его ждать.
 		function animateItem(animatedItem) {
 			switch (animatedItem.type) {
 				case ANIMATED_TYPES.BLOCK:
 					{
+						// Доводим камеру до блока ДО его отрисовки. При включённой
+						// оптимизации рендерятся только блоки в видимой области: блок вне видимой
+						// области не смонтируется, его enter-переход не сработает и очередь
+						// встанет. Центрирование камеры синхронно обновляет transform, из-за
+						// чего selectVisibleBlocks включит блок в видимый набор и он
+						// отрисуется — очередь продолжится, а пользователь «доезжает» до
+						// каждого блока независимо от размера графа. (onEnter в
+						// blocks-queue-transition уточняет центрирование уже после монтажа.)
+						goToBlock(animatedItem.item);
 						addBlock(animatedItem.item);
-						break;
+						return true;
 					}
 				case ANIMATED_TYPES.CONNECTION:
 					{
 						addConnection(animatedItem.item);
-						break;
+						return true;
 					}
 				case ANIMATED_TYPES.REMOVE_BLOCK:
 					{
+						// Leave-переход возможен только для отрисованного блока. Блок вне экрана
+						// (при оптимизации не в DOM) удаляется без перехода — ждать его
+						// нельзя, иначе очередь встанет. Видимый удаляется с затуханием как обычно.
+						const willAnimate = isBlockRendered(animatedItem.item.id);
 						deleteBlockById(animatedItem.item.id);
-						break;
+						return willAnimate;
 					}
 				case ANIMATED_TYPES.REMOVE_CONNECTION:
 					{
 						deleteConnectionById(animatedItem.item.id);
-						break;
+						return true;
 					}
+				default:
+					return false;
 			}
 		}
 		function* animationQueueFn(animatedQueueItems) {
@@ -5055,8 +8288,18 @@ this.BX = this.BX || {};
 				}
 				currentAnimationItem.value = animatedItem;
 				if (animatedItem.type && animatedItem.item) {
-					animateItem(animatedItem);
-					yield animatedItem;
+					const willAnimate = animateItem(animatedItem);
+
+					// Ждём завершения перехода только если он будет. Иначе (удаление
+					// неотрисованного блока) сразу переходим к следующему элементу — так
+					// удаления блоков вне экрана проходят мгновенно и очередь не зависает.
+					if (willAnimate) {
+						// Открываем шаг: вооружаем резервный таймер и получаем токен.
+						// Продвинет шаг первый из {совпавший переход, таймер}, второй —
+						// идемпотентно игнорируется контроллером.
+						animationStep.openStep();
+						yield animatedItem;
+					}
 				}
 			}
 			stop();
@@ -5067,6 +8310,7 @@ this.BX = this.BX || {};
 			} = options ?? {};
 			zoom.value = 1;
 			isStopAnimation.value = false;
+			animationStep.stop();
 			animationQueue.value = animationQueueFn(shouldAnimatedItems);
 			if (shouldAnimatedItems.length > 0) {
 				setTimeout(() => play(), 100);
@@ -5086,6 +8330,8 @@ this.BX = this.BX || {};
 			isPauseAnimation.value = false;
 			currentAnimationItem.value = null;
 			animationQueue.value = null;
+			// Снимаем вооружённый резервный таймер и сбрасываем состояние шага.
+			animationStep.stop();
 		}
 		return {
 			start,
@@ -5098,35 +8344,10 @@ this.BX = this.BX || {};
 	const CANVAS_STYLE_DEFAULT_OPTIONS = {
 		grid: {
 			options: {
-				size: 64,
+				size: GRID_DEFAULT_SIZE,
 				gridColor: '#A1B8D9',
 				backgroundColor: '#ECF0F2',
-				zoomStep: 4,
-				zoomSteps: [{
-					zoom: 1.1,
-					size: 64,
-					zoomStep: 4
-				}, {
-					zoom: 1,
-					size: 64,
-					zoomStep: 4
-				}, {
-					zoom: 0.99,
-					size: 64,
-					zoomStep: 4
-				}, {
-					zoom: 0.5,
-					size: 64 * 5,
-					zoomStep: 0.5
-				}, {
-					zoom: 0.25,
-					size: 64 * 25,
-					zoomStep: 0.25
-				}, {
-					zoom: 0.125,
-					size: 64 * 125,
-					zoomStep: 0.125
-				}]
+				zoomSteps: GRID_DEFAULT_ZOOM_STEPS
 			},
 			instance: Grid
 		}
@@ -5153,14 +8374,12 @@ this.BX = this.BX || {};
 			canvasWidth,
 			canvasHeight,
 			canvasInstance,
-			blockIntersections,
-			waitForTransformEnd
+			blockIntersections
 		} = useBlockDiagram();
 		const dragOn = ui_vue3.ref(false);
 		const isDragging = ui_vue3.ref(false);
 		const zooming = ui_vue3.ref(false);
 		let requestAnimationId = null;
-		let transformEndTimer = null;
 		function getCanvasStyleOptions(canvasStyle) {
 			if (canvasStyle && canvasStyle.style in CANVAS_STYLE_DEFAULT_OPTIONS) {
 				return {
@@ -5189,21 +8408,9 @@ this.BX = this.BX || {};
 				canvasWidth.value = payload.width;
 				canvasHeight.value = payload.height;
 				blockIntersections.selectVisibleBlocks();
-				waitTransformEnd();
+				blockIntersections.selectVisibleConnections();
 			});
 			render();
-		}
-		function waitTransformEnd() {
-			if (!waitForTransformEnd.value) {
-				waitForTransformEnd.value = Promise.withResolvers();
-			}
-			if (transformEndTimer) {
-				clearTimeout(transformEndTimer);
-			}
-			transformEndTimer = setTimeout(() => {
-				waitForTransformEnd.value?.resolve();
-				waitForTransformEnd.value = null;
-			}, 150);
 		}
 		function onUnmounted() {
 			ui_vue3.toValue(canvasInstance)?.destroy();
@@ -5276,11 +8483,11 @@ this.BX = this.BX || {};
 	function useDragAndDrop() {
 		const {
 			zoom,
-			blockDiagramTop,
-			blockDiagramLeft,
+			blockDiagramRef,
 			transformX,
 			transformY,
 			addBlock,
+			snapPoint,
 			hooks
 		} = useBlockDiagram();
 		function onDrop(event) {
@@ -5291,12 +8498,27 @@ this.BX = this.BX || {};
 				width,
 				height
 			} = receivedData.dimensions;
+			const el = ui_vue3.toValue(blockDiagramRef);
+			const {
+				left,
+				top
+			} = el?.getBoundingClientRect() ?? {
+				left: 0,
+				top: 0
+			};
 			receivedData.position.x = (event.clientX - width * ui_vue3.toValue(zoom) / 2) / ui_vue3.toValue(zoom);
 			receivedData.position.y = (event.clientY - height * ui_vue3.toValue(zoom) / 2) / ui_vue3.toValue(zoom);
 			receivedData.position.x += ui_vue3.toValue(transformX);
 			receivedData.position.y += ui_vue3.toValue(transformY);
-			receivedData.position.x -= ui_vue3.toValue(blockDiagramLeft) / ui_vue3.toValue(zoom);
-			receivedData.position.y -= ui_vue3.toValue(blockDiagramTop) / ui_vue3.toValue(zoom);
+			receivedData.position.x -= left / ui_vue3.toValue(zoom);
+			receivedData.position.y -= top / ui_vue3.toValue(zoom);
+
+			// Rounded before snapping: the divisions above leave fractions, and the model keeps
+			// whole-pixel coordinates even when the drop is not snapped.
+			receivedData.position = snapPoint({
+				x: Math.round(receivedData.position.x),
+				y: Math.round(receivedData.position.y)
+			}, isSnapModifier(event));
 			addBlock(receivedData);
 			hooks.dropNewBlock.trigger(receivedData);
 		}
@@ -5314,13 +8536,14 @@ this.BX = this.BX || {};
 		const {
 			cursorType,
 			resizingBlock,
-			blockDiagramTop,
-			blockDiagramLeft,
-			transformX,
-			transformY,
-			zoom,
-			updateBlock
+			transformMouseEventToPoint,
+			snapValue,
+			updateBlock,
+			startAutoScroll,
+			stopAutoScroll,
+			updateMousePosition
 		} = useBlockDiagram();
+		const snapModifier = useSnapModifier();
 		const {
 			block,
 			minWidth,
@@ -5339,11 +8562,22 @@ this.BX = this.BX || {};
 		let prevBlockY = 0;
 		let prevBlockWidth = 0;
 		let prevBlockHeight = 0;
+		let activeResizeHandlers = [];
+		let lastResizeEvent = null;
 		const sizeBlockStyle = ui_vue3.computed(() => {
 			if (ui_vue3.toValue(isResize)) {
+				const {
+					position,
+					dimensions
+				} = ui_vue3.toValue(resizingBlock);
+
+				// Staged position has to win over blockPositionStyle: the model block keeps its
+				// own position until mouseup, so left/top resize would not move the block.
 				return {
-					width: `${ui_vue3.toValue(resizingBlock).dimensions.width}px`,
-					height: `${ui_vue3.toValue(resizingBlock).dimensions.height}px`,
+					top: `${position.y}px`,
+					left: `${position.x}px`,
+					width: `${dimensions.width}px`,
+					height: `${dimensions.height}px`,
 					cursor: ui_vue3.toValue(cursorType)
 				};
 			}
@@ -5353,6 +8587,24 @@ this.BX = this.BX || {};
 				cursor: ui_vue3.toValue(cursorType)
 			};
 		});
+
+		// While resizing the model block keeps its old size, so slot content has to read the
+		// staged geometry to stay in step with the frame it lives in.
+		const blockDimensions = ui_vue3.computed(() => {
+			const staged = ui_vue3.toValue(resizingBlock);
+			return ui_vue3.toValue(isResize) && staged !== null ? staged.dimensions : ui_vue3.toValue(block).dimensions;
+		});
+		function isGeometryStaged() {
+			const staged = ui_vue3.toValue(resizingBlock);
+			if (staged === null) {
+				return false;
+			}
+			const {
+				position,
+				dimensions
+			} = ui_vue3.toValue(block);
+			return staged.position.x !== position.x || staged.position.y !== position.y || staged.dimensions.width !== dimensions.width || staged.dimensions.height !== dimensions.height;
+		}
 		function updateResizableBlock() {
 			updateBlock({
 				...ui_vue3.toValue(block),
@@ -5385,217 +8637,154 @@ this.BX = this.BX || {};
 			main_core.Event.unbind(ui_vue3.toValue(rightBottomCornerRef), 'mousedown', onMouseDownRightBottomCorner);
 			main_core.Event.unbind(ui_vue3.toValue(leftTopCornerRef), 'mousedown', onMouseDownLeftTopCorner);
 			main_core.Event.unbind(ui_vue3.toValue(leftBottomCornerRef), 'mousedown', onMouseDownLeftBottomCorner);
+
+			// Autoscroll and the staged geometry belong to the whole diagram, so only the instance
+			// that owns the gesture may wind it down: under render optimization neighbour blocks
+			// are culled and unmounted exactly while the camera pans for this gesture.
+			if (!ui_vue3.toValue(isResize)) {
+				return;
+			}
+
+			// The block is gone, so the staged geometry is dropped without reaching the model.
+			teardownGesture();
 		}
-		function startResize(event, curType) {
+		function teardownGesture() {
+			stopAutoScroll();
+			snapModifier.stopTracking();
+			main_core.Event.unbind(document, 'mousemove', onMouseMove);
+			main_core.Event.unbind(document, 'mouseup', endResize);
+			cursorType.value = 'default';
+			isResize.value = false;
+			resizingBlock.value = null;
+			activeResizeHandlers = [];
+			lastResizeEvent = null;
+		}
+		function startResize(event, curType, resizeHandlers) {
 			event.stopPropagation();
 			cursorType.value = curType;
+			// Geometry is staged in its own objects. Sharing position/dimensions with the model
+			// block turns every resize step into a deep mutation of props.blocks, which makes
+			// useWatchProps rebuild the intersections index; under render optimization that
+			// unmounts the block mid-gesture and onUnmounted then tears the gesture down.
 			resizingBlock.value = {
-				...ui_vue3.toValue(block)
+				...ui_vue3.toValue(block),
+				position: {
+					...ui_vue3.toValue(block).position
+				},
+				dimensions: {
+					...ui_vue3.toValue(block).dimensions
+				}
 			};
 			prevBlockX = ui_vue3.toValue(block).position.x;
 			prevBlockY = ui_vue3.toValue(block).position.y;
 			prevBlockWidth = ui_vue3.toValue(block).dimensions.width;
 			prevBlockHeight = ui_vue3.toValue(block).dimensions.height;
 			isResize.value = true;
+			activeResizeHandlers = resizeHandlers;
+			snapModifier.sync(event);
+			snapModifier.startTracking();
+			startAutoScroll(event, applyResize);
+			main_core.Event.bind(document, 'mousemove', onMouseMove);
+			main_core.Event.bind(document, 'mouseup', endResize);
 		}
 		function endResize(event) {
 			event.stopPropagation();
-			cursorType.value = 'default';
-			updateResizableBlock();
-			isResize.value = false;
-			resizingBlock.value = null;
+
+			// A click on a handle without a move stages nothing: emitting the command anyway would
+			// mark the document dirty and wake autosave for an unchanged block.
+			if (isGeometryStaged()) {
+				// The staged geometry is dropped as soon as the command is out, so the consumer has
+				// to apply update:blocks synchronously: until the model catches up the block is drawn
+				// with its pre-gesture position and size.
+				updateResizableBlock();
+			}
+			teardownGesture();
+		}
+		function applyResize() {
+			if (!ui_vue3.toValue(isResize) || !lastResizeEvent) {
+				return;
+			}
+			for (const resize of activeResizeHandlers) {
+				resize(lastResizeEvent);
+			}
+		}
+		function onMouseMove(event) {
+			event.stopPropagation();
+			if (!ui_vue3.toValue(isResize)) {
+				return;
+			}
+			lastResizeEvent = event;
+			snapModifier.sync(event);
+
+			// Autoscroll moves the camera, so the same cursor point maps to a new world point. The
+			// gesture reports the pointer on every move and the autoscroll itself holds the loop back
+			// until this first report - the wait no longer belongs here.
+			updateMousePosition(event);
+			applyResize();
+		}
+
+		// Edge under the cursor in canvas coordinates. It is rounded before snapping, so an
+		// unsnapped edge still leaves the model with whole-pixel geometry at any zoom.
+		function getEdgeX(event) {
+			return snapValue(Math.round(transformMouseEventToPoint(event).x), snapModifier.isPressed());
+		}
+		function getEdgeY(event) {
+			return snapValue(Math.round(transformMouseEventToPoint(event).y), snapModifier.isPressed());
 		}
 		function resizeTopSide(event) {
-			let newY = event.clientY / ui_vue3.toValue(zoom);
-			newY += ui_vue3.toValue(transformY);
-			newY -= ui_vue3.toValue(blockDiagramTop) / ui_vue3.toValue(zoom);
-			let newHeight = event.clientY / ui_vue3.toValue(zoom);
-			newHeight += ui_vue3.toValue(transformY);
-			newHeight -= ui_vue3.toValue(blockDiagramTop) / ui_vue3.toValue(zoom);
-			newHeight -= prevBlockY + prevBlockHeight;
-			newHeight = Math.abs(newHeight);
-			const fixedPositionY = prevBlockY + prevBlockHeight - ui_vue3.toValue(minHeight);
-			resizingBlock.value.position.y = newHeight < ui_vue3.toValue(minHeight) || newY >= fixedPositionY ? fixedPositionY : newY;
-			resizingBlock.value.dimensions.height = newHeight < ui_vue3.toValue(minHeight) || newY >= fixedPositionY ? ui_vue3.toValue(minHeight) : newHeight;
+			const edgeY = getEdgeY(event);
+			const {
+				position,
+				size
+			} = getBoundsByStartEdge(edgeY, prevBlockY + prevBlockHeight, ui_vue3.toValue(minHeight));
+			resizingBlock.value.position.y = position;
+			resizingBlock.value.dimensions.height = size;
 		}
 		function resizeRightSide(event) {
-			let cursorX = event.clientX / ui_vue3.toValue(zoom);
-			cursorX += ui_vue3.toValue(transformX);
-			cursorX -= ui_vue3.toValue(blockDiagramLeft) / ui_vue3.toValue(zoom);
-			let newWidth = prevBlockX;
-			newWidth -= event.clientX / ui_vue3.toValue(zoom);
-			newWidth -= ui_vue3.toValue(transformX);
-			newWidth -= ui_vue3.toValue(blockDiagramLeft) / ui_vue3.toValue(zoom);
-			newWidth = Math.abs(newWidth);
-			resizingBlock.value.dimensions.width = newWidth < ui_vue3.toValue(minWidth) || cursorX <= prevBlockX ? ui_vue3.toValue(minWidth) : newWidth;
+			const edgeX = getEdgeX(event);
+			resizingBlock.value.dimensions.width = getSizeByEndEdge(edgeX, prevBlockX, ui_vue3.toValue(minWidth));
 		}
 		function resizeBottomSide(event) {
-			let cursorX = event.clientY / ui_vue3.toValue(zoom);
-			cursorX += ui_vue3.toValue(transformY);
-			cursorX -= ui_vue3.toValue(blockDiagramTop) / ui_vue3.toValue(zoom);
-			let newHeight = event.clientY / ui_vue3.toValue(zoom);
-			newHeight -= prevBlockY;
-			newHeight += ui_vue3.toValue(transformY);
-			newHeight -= ui_vue3.toValue(blockDiagramTop) / ui_vue3.toValue(zoom);
-			newHeight = Math.abs(newHeight);
-			resizingBlock.value.dimensions.height = newHeight < ui_vue3.toValue(minHeight) || cursorX <= prevBlockY ? ui_vue3.toValue(minHeight) : newHeight;
+			const edgeY = getEdgeY(event);
+			resizingBlock.value.dimensions.height = getSizeByEndEdge(edgeY, prevBlockY, ui_vue3.toValue(minHeight));
 		}
 		function resizeLeftSide(event) {
-			let newX = event.clientX / ui_vue3.toValue(zoom);
-			newX += ui_vue3.toValue(transformX);
-			newX -= ui_vue3.toValue(blockDiagramLeft) / ui_vue3.toValue(zoom);
-			let newWidth = event.clientX / ui_vue3.toValue(zoom);
-			newWidth += ui_vue3.toValue(transformX);
-			newWidth -= ui_vue3.toValue(blockDiagramLeft) / ui_vue3.toValue(zoom);
-			newWidth -= prevBlockX + prevBlockWidth;
-			newWidth = Math.abs(newWidth);
-			const fixedPositionX = prevBlockX + prevBlockWidth - ui_vue3.toValue(minWidth);
-			resizingBlock.value.position.x = newWidth < ui_vue3.toValue(minWidth) || newX >= fixedPositionX ? fixedPositionX : newX;
-			resizingBlock.value.dimensions.width = newWidth < ui_vue3.toValue(minWidth) || newX >= fixedPositionX ? ui_vue3.toValue(minWidth) : newWidth;
+			const edgeX = getEdgeX(event);
+			const {
+				position,
+				size
+			} = getBoundsByStartEdge(edgeX, prevBlockX + prevBlockWidth, ui_vue3.toValue(minWidth));
+			resizingBlock.value.position.x = position;
+			resizingBlock.value.dimensions.width = size;
 		}
 		function onMouseDownRightSide(event) {
-			startResize(event, CURSOR_TYPES.EW_RESIZE);
-			main_core.Event.bind(document, 'mousemove', onMouseMoveRightSide);
-			main_core.Event.bind(document, 'mouseup', onMouseUpRightSide);
-		}
-		function onMouseMoveRightSide(event) {
-			event.stopPropagation();
-			if (!ui_vue3.toValue(isResize)) {
-				return;
-			}
-			resizeRightSide(event);
-		}
-		function onMouseUpRightSide(event) {
-			endResize(event);
-			main_core.Event.unbind(document, 'mousemove', onMouseMoveRightSide);
-			main_core.Event.unbind(document, 'mouseup', onMouseUpRightSide);
+			startResize(event, CURSOR_TYPES.EW_RESIZE, [resizeRightSide]);
 		}
 		function onMouseDownBottomSide(event) {
-			startResize(event, CURSOR_TYPES.NS_RESIZE);
-			main_core.Event.bind(document, 'mousemove', onMouseMoveBottomSide);
-			main_core.Event.bind(document, 'mouseup', onMouseUpBottomSide);
-		}
-		function onMouseMoveBottomSide(event) {
-			event.stopPropagation();
-			if (!ui_vue3.toValue(isResize)) {
-				return;
-			}
-			resizeBottomSide(event);
-		}
-		function onMouseUpBottomSide(event) {
-			endResize(event);
-			main_core.Event.unbind(document, 'mousemove', onMouseMoveBottomSide);
-			main_core.Event.unbind(document, 'mouseup', onMouseUpBottomSide);
+			startResize(event, CURSOR_TYPES.NS_RESIZE, [resizeBottomSide]);
 		}
 		function onMouseDownLeftSide(event) {
-			startResize(event, CURSOR_TYPES.EW_RESIZE);
-			main_core.Event.bind(document, 'mousemove', onMouseMoveLeftSide);
-			main_core.Event.bind(document, 'mouseup', onMouseUpLeftSide);
-		}
-		function onMouseMoveLeftSide(event) {
-			event.stopPropagation();
-			if (!ui_vue3.toValue(isResize)) {
-				return;
-			}
-			resizeLeftSide(event);
-		}
-		function onMouseUpLeftSide(event) {
-			endResize(event);
-			main_core.Event.unbind(document, 'mousemove', onMouseMoveLeftSide);
-			main_core.Event.unbind(document, 'mouseup', onMouseUpLeftSide);
+			startResize(event, CURSOR_TYPES.EW_RESIZE, [resizeLeftSide]);
 		}
 		function onMouseDownTopSide(event) {
-			startResize(event, CURSOR_TYPES.NS_RESIZE);
-			main_core.Event.bind(document, 'mousemove', onMouseMoveTopSide);
-			main_core.Event.bind(document, 'mouseup', onMouseUpTopSide);
-		}
-		function onMouseMoveTopSide(event) {
-			event.stopPropagation();
-			if (!ui_vue3.toValue(isResize)) {
-				return;
-			}
-			resizeTopSide(event);
-		}
-		function onMouseUpTopSide(event) {
-			endResize(event);
-			main_core.Event.unbind(document, 'mousemove', onMouseMoveTopSide);
-			main_core.Event.unbind(document, 'mouseup', onMouseUpTopSide);
+			startResize(event, CURSOR_TYPES.NS_RESIZE, [resizeTopSide]);
 		}
 		function onMouseDownRightBottomCorner(event) {
-			startResize(event, CURSOR_TYPES.NWSE_RESIZE);
-			main_core.Event.bind(document, 'mousemove', onMouseMoveRightBottomCorner);
-			main_core.Event.bind(document, 'mouseup', onMouseUpRightBottomCorner);
-		}
-		function onMouseMoveRightBottomCorner(event) {
-			event.stopPropagation();
-			if (!ui_vue3.toValue(isResize)) {
-				return;
-			}
-			resizeRightSide(event);
-			resizeBottomSide(event);
-		}
-		function onMouseUpRightBottomCorner(event) {
-			endResize(event);
-			main_core.Event.unbind(document, 'mousemove', onMouseMoveRightBottomCorner);
-			main_core.Event.unbind(document, 'mouseup', onMouseUpRightBottomCorner);
+			startResize(event, CURSOR_TYPES.NWSE_RESIZE, [resizeRightSide, resizeBottomSide]);
 		}
 		function onMouseDownRightTopCorner(event) {
-			startResize(event, CURSOR_TYPES.NESW_RESIZE);
-			main_core.Event.bind(document, 'mousemove', onMouseMoveRightTopCorner);
-			main_core.Event.bind(document, 'mouseup', onMouseUpRightTopCorner);
-		}
-		function onMouseMoveRightTopCorner(event) {
-			event.stopPropagation();
-			if (!ui_vue3.toValue(isResize)) {
-				return;
-			}
-			resizeTopSide(event);
-			resizeRightSide(event);
-		}
-		function onMouseUpRightTopCorner(event) {
-			endResize(event);
-			main_core.Event.unbind(document, 'mousemove', onMouseMoveRightTopCorner);
-			main_core.Event.unbind(document, 'mouseup', onMouseUpRightTopCorner);
+			startResize(event, CURSOR_TYPES.NESW_RESIZE, [resizeTopSide, resizeRightSide]);
 		}
 		function onMouseDownLeftBottomCorner(event) {
-			startResize(event, CURSOR_TYPES.NESW_RESIZE);
-			main_core.Event.bind(document, 'mousemove', onMouseMoveLeftBottomCorner);
-			main_core.Event.bind(document, 'mouseup', onMouseUpLeftBottomCorner);
-		}
-		function onMouseMoveLeftBottomCorner(event) {
-			event.stopPropagation();
-			if (!ui_vue3.toValue(isResize)) {
-				return;
-			}
-			resizeLeftSide(event);
-			resizeBottomSide(event);
-		}
-		function onMouseUpLeftBottomCorner(event) {
-			endResize(event);
-			main_core.Event.unbind(document, 'mousemove', onMouseMoveLeftBottomCorner);
-			main_core.Event.unbind(document, 'mouseup', onMouseUpLeftBottomCorner);
+			startResize(event, CURSOR_TYPES.NESW_RESIZE, [resizeLeftSide, resizeBottomSide]);
 		}
 		function onMouseDownLeftTopCorner(event) {
-			startResize(event, CURSOR_TYPES.NWSE_RESIZE);
-			main_core.Event.bind(document, 'mousemove', onMouseMoveLeftTopCorner);
-			main_core.Event.bind(document, 'mouseup', onMouseUpLeftTopCorner);
-		}
-		function onMouseMoveLeftTopCorner(event) {
-			event.stopPropagation();
-			if (!ui_vue3.toValue(isResize)) {
-				return;
-			}
-			resizeLeftSide(event);
-			resizeTopSide(event);
-		}
-		function onMouseUpLeftTopCorner(event) {
-			endResize(event);
-			main_core.Event.unbind(document, 'mousemove', onMouseMoveLeftTopCorner);
-			main_core.Event.unbind(document, 'mouseup', onMouseUpLeftTopCorner);
+			startResize(event, CURSOR_TYPES.NWSE_RESIZE, [resizeLeftSide, resizeTopSide]);
 		}
 		return {
 			isResize,
 			sizeBlockStyle,
+			blockDimensions,
 			onMounted,
 			onUnmounted
 		};
@@ -5726,15 +8915,31 @@ this.BX = this.BX || {};
 			blocks: uiBlocksRef,
 			zoom,
 			updateBlock,
+			blockElMap,
+			blocksRectMap,
+			updateBlockRectById,
 			setPortOffsetByBlockId,
 			highlitedBlockIds,
 			startAutoScroll,
 			stopAutoScroll,
-			updateMousePosition
+			updateMousePosition,
+			snapPoint,
+			setGestureBlocks,
+			resetGestureBlocks,
+			setGroupDragOffset,
+			resetGroupDragOffset,
+			isDisabledBlockDiagram
 		} = useBlockDiagram();
+		const snapModifier = useSnapModifier();
 		let currentZoom = 1;
 		let movingItems = [];
 		let anchor = {
+			x: 0,
+			y: 0
+		};
+		// Where the button went down, in the coordinates of the pointer. Unlike the anchor it is never
+		// compensated for autoscroll: the drag threshold is about the hand, not about the camera.
+		let downClient = {
 			x: 0,
 			y: 0
 		};
@@ -5746,35 +8951,157 @@ this.BX = this.BX || {};
 			x: 0,
 			y: 0
 		};
-		const updatePositions = (clientX, clientY) => {
-			const totalDeltaX = (clientX - anchor.x) / currentZoom;
-			const totalDeltaY = (clientY - anchor.y) / currentZoom;
+		let gestureToken = 0;
+		let isGestureActive = false;
+		let isDragStarted = false;
+		// Whether the last applied frame was snapped: the release must commit exactly the position that
+		// frame has drawn, even if the modifier changed between it and the mouseup.
+		let isLastFrameSnapped = false;
+		const drawMarkup = (blockId, x, y) => {
+			const blockElement = ui_vue3.toValue(blockElMap)?.get(blockId);
+			if (blockElement) {
+				main_core.Dom.style(blockElement, 'left', `${x}px`);
+				main_core.Dom.style(blockElement, 'top', `${y}px`);
+			}
+		};
+
+		// One node moved by hand, the way a dragged node moves its group members: the markup by style,
+		// the cached rect and the port coordinates by the step of this frame. The model is left alone
+		// until mouseup - a frame-by-frame write goes outside the command path, so the block watcher
+		// clears the spatial index on every frame and the connections leave the canvas for the whole
+		// gesture.
+		const moveItem = (blockId, x, y, stepX, stepY) => {
+			drawMarkup(blockId, x, y);
+
+			// Only an existing entry is moved: a merge over a missing one would recreate geometry that
+			// a purge removed on purpose, and without a measured size at that.
+			if (main_core.Type.isObjectLike(ui_vue3.toValue(blocksRectMap)?.[blockId])) {
+				updateBlockRectById(blockId, {
+					x,
+					y
+				});
+			}
+			if (setPortOffsetByBlockId && (stepX !== 0 || stepY !== 0)) {
+				setPortOffsetByBlockId(blockId, {
+					x: -stepX,
+					y: -stepY
+				});
+			}
+		};
+
+		// The same threshold the node gesture is held to (moveable-block.js): below it the press is a
+		// click on the selection rather than a drag.
+		const isBeyondDragThreshold = (clientX, clientY) => {
+			return Math.abs(clientX - downClient.x) >= DRAG_START_THRESHOLD || Math.abs(clientY - downClient.y) >= DRAG_START_THRESHOLD;
+		};
+		const updatePositions = (clientX, clientY, isSnapRequested) => {
+			// the whole group moves by one snapped delta, so distances inside it stay untouched;
+			// the delta is whole-pixel even unsnapped, because the model keeps integer coordinates
+			const {
+				x: totalDeltaX,
+				y: totalDeltaY
+			} = snapPoint({
+				x: Math.round((clientX - anchor.x) / currentZoom),
+				y: Math.round((clientY - anchor.y) / currentZoom)
+			}, isSnapRequested);
+
+			// Nothing but a finite delta is ever applied: a NaN would spread over the rect cache, the
+			// port coordinates and the model, and the coordinates it came from are past recovering by
+			// the time the gesture is committed.
+			if (!Number.isFinite(totalDeltaX) || !Number.isFinite(totalDeltaY)) {
+				return;
+			}
 			const stepX = totalDeltaX - lastTotalDelta.x;
 			const stepY = totalDeltaY - lastTotalDelta.y;
+			isLastFrameSnapped = isSnapRequested;
 			if (stepX === 0 && stepY === 0) {
 				return;
 			}
 			for (const item of movingItems) {
-				item.block.position.x = item.startX + totalDeltaX;
-				item.block.position.y = item.startY + totalDeltaY;
-				if (setPortOffsetByBlockId) {
-					setPortOffsetByBlockId(item.block.id, {
-						x: -stepX,
-						y: -stepY
-					});
-				}
+				moveItem(item.id, item.startX + totalDeltaX, item.startY + totalDeltaY, stepX, stepY);
 			}
-			lastTotalDelta.x = totalDeltaX;
-			lastTotalDelta.y = totalDeltaY;
+			lastTotalDelta = {
+				x: totalDeltaX,
+				y: totalDeltaY
+			};
+			setGroupDragOffset({
+				x: totalDeltaX,
+				y: totalDeltaY
+			});
+		};
+		const releaseGesture = () => {
+			stopAutoScroll();
+			snapModifier.stopTracking();
+			resetGestureBlocks();
+			main_core.Event.unbind(window, 'mousemove', onGroupMouseMove);
+			main_core.Event.unbind(window, 'mouseup', onGroupMouseUp);
+			main_core.Event.unbind(document, 'keydown', onGroupKeyDown);
+			main_core.Event.unbind(document, 'pointercancel', onGroupGestureAbort);
+			main_core.Event.unbind(window, 'blur', onGroupGestureAbort);
+			isGestureActive = false;
+			isDragStarted = false;
+			movingItems = [];
+			lastTotalDelta = {
+				x: 0,
+				y: 0
+			};
+			resetGroupDragOffset();
+		};
+
+		// A node whose model position is unusable stays out of the gesture: a non-finite coordinate
+		// would poison the rect cache on the very first frame, write NaN into every port of the node on
+		// the commit and reach the model from there.
+		const createMovingItem = block => {
+			const position = ui_vue3.toValue(block).position;
+			if (!main_core.Type.isObjectLike(position)) {
+				return null;
+			}
+			const startX = Number(position.x);
+			const startY = Number(position.y);
+			if (!Number.isFinite(startX) || !Number.isFinite(startY)) {
+				return null;
+			}
+			return {
+				id: ui_vue3.toValue(block).id,
+				startX,
+				startY
+			};
 		};
 		const onGroupMouseDown = event => {
-			if (event.button !== 0) {
+			// The frame is shown by the selection alone, so it stays on screen over a readonly template
+			// and over an animation: without this the gesture would move the nodes there and write the
+			// move into the model. A press over a gesture still open is refused as well: restarting the
+			// gesture would lose the nodes the open one carries, leaving them shifted with nothing to
+			// bring them back.
+			if (event.button !== 0 || ui_vue3.toValue(isDisabledBlockDiagram) || isGestureActive) {
 				return;
 			}
 			event.stopPropagation();
 			closeContextMenu();
-			currentZoom = ui_vue3.toValue(zoom);
+			const selectedIds = new Set(ui_vue3.toValue(highlitedBlockIds));
+			const items = ui_vue3.toValue(uiBlocksRef).filter(block => selectedIds.has(block.id)).map(block => createMovingItem(block)).filter(item => item !== null);
+
+			// Nothing is left to move once the unusable positions are filtered out. A gesture started over
+			// such a selection would subscribe to the pointer, run autoscroll and carry the frame away
+			// from the nodes it belongs to.
+			if (items.length === 0) {
+				return;
+			}
+
+			// The zoom divides the pointer delta, so a zero or non-finite one would turn every position
+			// of the gesture into infinity or NaN and carry it into the rect cache, into the ports and
+			// into the model on the commit.
+			const gestureZoom = ui_vue3.toValue(zoom);
+			if (!Number.isFinite(gestureZoom) || gestureZoom <= 0) {
+				return;
+			}
+			currentZoom = gestureZoom;
+			++gestureToken;
 			anchor = {
+				x: event.clientX,
+				y: event.clientY
+			};
+			downClient = {
 				x: event.clientX,
 				y: event.clientY
 			};
@@ -5786,49 +9113,220 @@ this.BX = this.BX || {};
 				x: 0,
 				y: 0
 			};
-			const selectedIds = new Set(ui_vue3.toValue(highlitedBlockIds));
-			movingItems = ui_vue3.toValue(uiBlocksRef).filter(block => selectedIds.has(block.id)).map(block => ({
-				block,
-				startX: Number(block.position.x),
-				startY: Number(block.position.y)
-			}));
+			isGestureActive = true;
+			isDragStarted = false;
+			resetGroupDragOffset();
+			snapModifier.sync(event);
+			snapModifier.startTracking();
+			isLastFrameSnapped = isSnapModifier(event);
+			movingItems = items;
+
+			// The model keeps the pre-gesture positions until mouseup, so culling would judge these
+			// nodes by boxes the gesture has already left behind: autoscroll pans the camera past them
+			// and unmounts a node that is in fact on screen.
+			setGestureBlocks(movingItems.map(item => item.id));
 			startAutoScroll(event, (dx, dy) => {
 				anchor.x -= dx;
 				anchor.y -= dy;
-				updatePositions(client.x, client.y);
+				updatePositions(client.x, client.y, snapModifier.isPressed());
 			});
 			main_core.Event.bind(window, 'mousemove', onGroupMouseMove);
 			main_core.Event.bind(window, 'mouseup', onGroupMouseUp);
+			main_core.Event.bind(document, 'keydown', onGroupKeyDown);
+			main_core.Event.bind(document, 'pointercancel', onGroupGestureAbort);
+			main_core.Event.bind(window, 'blur', onGroupGestureAbort);
 		};
 		const onGroupMouseMove = event => {
 			client.x = event.clientX;
 			client.y = event.clientY;
-			updateMousePosition(event);
-			updatePositions(client.x, client.y);
+			snapModifier.sync(event);
+			if (!isDragStarted) {
+				isDragStarted = isBeyondDragThreshold(event.clientX, event.clientY);
+			}
+
+			// The press only arms the autoscroll, and the pointer is reported to it past the threshold, as
+			// the node gesture reports it: below the threshold the press is still a click on the selection
+			// and the camera must stand.
+			if (isDragStarted) {
+				updateMousePosition(event);
+			}
+			updatePositions(client.x, client.y, snapModifier.isPressed());
 		};
-		const onGroupMouseUp = () => {
-			stopAutoScroll();
-			main_core.Event.unbind(window, 'mousemove', onGroupMouseMove);
-			main_core.Event.unbind(window, 'mouseup', onGroupMouseUp);
-			for (const item of movingItems) {
-				const {
-					block
-				} = item;
-				block.position.x = Math.round(block.position.x);
-				block.position.y = Math.round(block.position.y);
-				if (setPortOffsetByBlockId) {
-					setPortOffsetByBlockId(block.id, {
-						x: 0,
-						y: 0
+
+		// The model is the truth about where a node stands, so after the gesture the markup and the
+		// measured geometry are brought to the model position instead of being left on the result of the
+		// gesture: a consumer may refuse the move or write a position of its own. The rect of a node is
+		// written absolutely and would come back into agreement on the next gesture anyway, but the port
+		// offsets are written as steps - nothing but this brings them back into step.
+		const alignGeometryToModel = ({
+			id,
+			x,
+			y
+		}, blockById) => {
+			const block = blockById.get(id) ?? null;
+			if (block === null) {
+				return;
+			}
+			const position = ui_vue3.toValue(block).position;
+			if (!main_core.Type.isObjectLike(position)) {
+				return;
+			}
+
+			// A non-finite coordinate would turn every port of the node into NaN and take all its
+			// connections off the canvas.
+			if (!Number.isFinite(position.x) || !Number.isFinite(position.y)) {
+				return;
+			}
+			moveItem(id, position.x, position.y, position.x - x, position.y - y);
+		};
+
+		// One pass over the model instead of a linear lookup per node: the commit and the
+		// reconciliation each walk the whole selection, and the model of a large diagram is long.
+		const buildBlockByIdMap = () => {
+			return new Map(ui_vue3.toValue(uiBlocksRef).map(block => [ui_vue3.toValue(block).id, block]));
+		};
+		const onGroupMouseUp = event => {
+			// The watcher below is flushed before the render, so a diagram disabled in this very tick is
+			// still to reach it: without this check the release would carry the gesture into the model
+			// over a readonly template or an animation.
+			if (ui_vue3.toValue(isDisabledBlockDiagram)) {
+				cancelGesture();
+				return;
+			}
+
+			// A mouseup can arrive with no coordinates at all - a plain `Event('mouseup')` from a
+			// consumer, or the core `BX.fireEvent`. Applying it as a frame would make the release delta
+			// NaN, and a NaN passes the "moved nothing" check below straight into the model.
+			if (!Number.isFinite(event.clientX) || !Number.isFinite(event.clientY)) {
+				cancelGesture();
+				return;
+			}
+
+			// A mouseup can carry a position no mousemove has seen, so the release point is applied as
+			// the last frame of the gesture - but only once it is past the threshold that separates a
+			// drag from a click, the same one the node gesture uses. Otherwise the shake of a hand over
+			// the frame writes a command per selected node. A gesture that has already moved the nodes
+			// is past that question: its release point is a frame like any other. The modifier is taken
+			// from the last frame rather than from this event: Shift released an instant before the
+			// button would part the committed position from the drawn one.
+			if (lastTotalDelta.x !== 0 || lastTotalDelta.y !== 0 || isBeyondDragThreshold(event.clientX, event.clientY)) {
+				updatePositions(event.clientX, event.clientY, isLastFrameSnapped);
+			}
+
+			// A gesture that left the nodes where they started is a click on the selection, not a drag:
+			// committing it would write a command per selected node, with the pre-gesture coordinates,
+			// and ask the consumer to save a diagram nothing changed in. A pointer that wandered off and
+			// came back to the press point ends there just as a press that never moved does.
+			if (lastTotalDelta.x === 0 && lastTotalDelta.y === 0) {
+				releaseGesture();
+				return;
+			}
+
+			// The markup and the geometry are brought to the whole-pixel position first, so all three
+			// describe the same place: the model keeps integer coordinates.
+			const committedPositions = movingItems.map(item => {
+				const currentX = item.startX + lastTotalDelta.x;
+				const currentY = item.startY + lastTotalDelta.y;
+				const x = Math.round(currentX);
+				const y = Math.round(currentY);
+				moveItem(item.id, x, y, x - currentX, y - currentY);
+				return {
+					id: item.id,
+					x,
+					y
+				};
+			});
+			const token = gestureToken;
+			const blockById = buildBlockByIdMap();
+
+			// The commands go out first and the gesture is released after them, but the release is not
+			// theirs to skip: a consumer hook that throws would leave the gesture live - the window
+			// listeners bound, the nodes held and the frame offset standing, so the next pointer move
+			// would drag them with no button held. The exception itself is not the extension's to handle
+			// and goes on to the consumer, taking the reconciliation below with it: a torn commit leaves
+			// the model in a state there is nothing to align the geometry to.
+			try {
+				for (const {
+					id,
+					x,
+					y
+				} of committedPositions) {
+					const block = blockById.get(id) ?? null;
+					if (block === null) {
+						continue;
+					}
+					updateBlock({
+						...ui_vue3.toValue(block),
+						position: {
+							...ui_vue3.toValue(block).position,
+							x,
+							y
+						}
 					});
 				}
-				const newBlock = {
-					...block
-				};
-				updateBlock(newBlock);
+			} finally {
+				// The nodes are held in the visible set until the last command has gone out: released
+				// earlier, they would be judged by the pre-gesture boxes the spatial index still holds
+				// for as long as the write takes.
+				releaseGesture();
 			}
-			movingItems = [];
+
+			// Rendering a node rewrites its markup from the block input, and under render optimization
+			// that input still carries the pre-gesture position on the render of this very commit. The
+			// position is put back once that render has flushed, so the nodes do not blink back to where
+			// the gesture started while the visible set catches up.
+			// Precondition of the extension: the consumer applies `changedBlocks` within this same flush
+			// cycle - the model is read once here, and a command applied later misses the alignment.
+			void ui_vue3.nextTick(() => {
+				if (token !== gestureToken) {
+					return;
+				}
+
+				// The lookup is built again rather than reused: the consumer applies the commands by
+				// replacing the model, so the map of the commit holds the pre-commit blocks, and the
+				// whole point here is to read where the consumer has put the nodes.
+				const committedBlockById = buildBlockByIdMap();
+				for (const committedPosition of committedPositions) {
+					alignGeometryToModel(committedPosition, committedBlockById);
+				}
+			});
 		};
+		const cancelGesture = () => {
+			if (!isGestureActive) {
+				return;
+			}
+			for (const item of movingItems) {
+				moveItem(item.id, item.startX, item.startY, -lastTotalDelta.x, -lastTotalDelta.y);
+			}
+			releaseGesture();
+		};
+		const onGroupKeyDown = event => {
+			if (event.key === 'Escape') {
+				cancelGesture();
+			}
+		};
+
+		// The pointer can be lost without a mouseup: released outside the browser window, or taken away
+		// by the system. Left alone the gesture would stay live - the markup shifted, the model on the
+		// pre-gesture positions, and the next pointer move dragging the nodes with no button held.
+		const onGroupGestureAbort = () => {
+			cancelGesture();
+		};
+		ui_vue3.watch(isDisabledBlockDiagram, isDisabled => {
+			if (isDisabled) {
+				cancelGesture();
+			}
+		});
+
+		// A gesture torn down without a mouseup would leave the markup and the geometry where the
+		// pointer left them while the model still holds the pre-gesture positions. The token is bumped
+		// on top of that: the reconciliation of a release is a microtask, and a teardown between the two
+		// would otherwise let it write geometry and markup on a diagram that is gone. `cancelGesture`
+		// cannot do it - by then the gesture is already released and it returns at once.
+		ui_vue3.onBeforeUnmount(() => {
+			++gestureToken;
+			cancelGesture();
+		});
 		return {
 			onGroupMouseDown
 		};
@@ -5841,7 +9339,8 @@ this.BX = this.BX || {};
 			transformLayoutRef,
 			highlitedBlockIds,
 			setSelectionActive,
-			isSelectionActive
+			isSelectionActive,
+			groupDragOffset
 		} = useBlockDiagram();
 		const width = options.defaultBlockSize.width;
 		const height = options.defaultBlockSize.height;
@@ -5858,6 +9357,24 @@ this.BX = this.BX || {};
 			return {
 				w,
 				h
+			};
+		};
+
+		// A node whose model position is unusable is left out of the bounds: a single non-finite
+		// coordinate would spread NaN over the whole box, and the browser drops such a style outright.
+		const getUsablePosition = block => {
+			const position = block.position;
+			if (!main_core.Type.isObjectLike(position)) {
+				return null;
+			}
+			const x = Number(position.x);
+			const y = Number(position.y);
+			if (!Number.isFinite(x) || !Number.isFinite(y)) {
+				return null;
+			}
+			return {
+				x,
+				y
 			};
 		};
 		const getSelectionBoxPadding = () => {
@@ -5931,11 +9448,15 @@ this.BX = this.BX || {};
 			ids.forEach(id => {
 				const block = blocks.find(item => item.id === id);
 				if (block) {
+					const position = getUsablePosition(block);
+					if (position === null) {
+						return;
+					}
 					hasBlocks = true;
 					const {
 						x,
 						y
-					} = block.position;
+					} = position;
 					const {
 						w,
 						h
@@ -5950,9 +9471,15 @@ this.BX = this.BX || {};
 				return null;
 			}
 			const padding = getSelectionBoxPadding();
+			// Positions come from the model, which the frame drag leaves untouched until mouseup, so
+			// the box follows the shift the gesture has drawn and stands on the model in between.
+			const {
+				x: dragOffsetX,
+				y: dragOffsetY
+			} = ui_vue3.toValue(groupDragOffset);
 			return {
-				left: `${minX - padding.left}px`,
-				top: `${minY - padding.top}px`,
+				left: `${minX + dragOffsetX - padding.left}px`,
+				top: `${minY + dragOffsetY - padding.top}px`,
 				width: `${maxX - minX + padding.left + padding.right}px`,
 				height: `${maxY - minY + padding.top + padding.bottom}px`
 			};
@@ -6352,7 +9879,7 @@ this.BX = this.BX || {};
 			};
 		},
 		template: `
-		<svg :class="connectionClassNames">
+		<svg :class="connectionClassNames" :data-id="connection.id">
 			<g class="ui-block-diagram-connection__group">
 				<path
 					:d="connectionPathInfo.path"
@@ -6466,36 +9993,75 @@ this.BX = this.BX || {};
 			const {
 				isAnimate,
 				currentAnimationItem,
-				animationQueue,
+				animationStep,
 				hooks
 			} = useBlockDiagram();
 			const canvas = useCanvas();
-			const history = useHistory();
-			const highlighted = useHighlightedBlocks();
-			function nextAnimationItem() {
-				const {
-					done = false
-				} = ui_vue3.toValue(animationQueue)?.next() ?? {};
-				if (done) {
-					animationQueue.value = null;
-				} else {
-					history.makeSnapshot();
+			const transientHighlightedBlocks = useTransientHighlightedBlocks();
+
+			// The temporary highlight is set on enter here, so it is dropped here too — and with the
+			// lifetime of this component, not of the diagram state. Sync flush keeps the drop in the
+			// same tick as the stop() that ends the queue, so no code that runs right after it sees
+			// a block still highlighted by a queue that is already over.
+			ui_vue3.watch(() => ui_vue3.toValue(isAnimate), animating => {
+				if (animating === false) {
+					transientHighlightedBlocks.clear();
 				}
+			}, {
+				flush: 'sync'
+			});
+
+			// The other way a queue ends is this component going away mid-queue: the watcher above never
+			// fires then, so drop the highlight here as well and let nothing of it outlive the component.
+			ui_vue3.onUnmounted(() => {
+				transientHighlightedBlocks.clear();
+			});
+
+			// Совпадает ли завершившийся переход с текущим элементом очереди. Логика
+			// сопоставления вынесена в чистую matchesTransitionEl; здесь только достаём
+			// текущий элемент очереди. Без сопоставления по data-id отсечение при
+			// движении камеры выталкивает соседние блоки из этой же TransitionGroup, их
+			// сторонние enter/leave продвинули бы чужой шаг рывками.
+			function isCurrentTransitionEl(el) {
+				return matchesTransitionEl(el, ui_vue3.toValue(currentAnimationItem)?.item);
+			}
+			function advanceForCurrent() {
+				// Продвигаем шаг через контроллер: он гарантирует ровно одно
+				// продвижение на шаг (переход vs резервный таймер) по токену шага.
+				animationStep.settle(animationStep.currentToken);
 			}
 			function onBeforeEnter() {
 				hooks.blockTransitionStart.trigger(ui_vue3.toValue(currentAnimationItem)?.item);
 			}
 			function onEnter() {
-				highlighted.clear();
-				highlighted.add(ui_vue3.toValue(currentAnimationItem).item.id);
-				canvas.goToBlockById(ui_vue3.toValue(currentAnimationItem).item.id);
+				// Сторонний enter-переход (отсечение при движении камеры) может сработать
+				// уже ПОСЛЕ завершения очереди, когда stop() обнулил currentAnimationItem.
+				// В этом случае подсвечивать и двигать камеру нечего — просто выходим.
+				const current = ui_vue3.toValue(currentAnimationItem);
+				if (!current?.item) {
+					return;
+				}
+				transientHighlightedBlocks.clear();
+				transientHighlightedBlocks.add(current.item.id);
+				// Наводим камеру по уже готовому объекту блока из очереди, без линейного
+				// поиска по id (O(N) на каждый блок).
+				canvas.goToBlock(current.item);
 			}
-			function onAfterEnter() {
+			function onAfterEnter(el) {
 				hooks.blockTransitionEnd.trigger(ui_vue3.toValue(currentAnimationItem)?.item);
-				nextAnimationItem();
+				// Продвигаем очередь только для перехода текущего элемента-блока. При
+				// включённой оптимизации центрирование камеры выталкивает ранее
+				// показанные блоки из видимой области, отсечение убирает их из этой же
+				// TransitionGroup и запускает сторонние enter/leave-переходы. Тип-фильтр
+				// плюс сопоставление по id отсекают их; контроллер — двойное продвижение.
+				if (ui_vue3.toValue(currentAnimationItem)?.type === ANIMATED_TYPES.BLOCK && isCurrentTransitionEl(el)) {
+					advanceForCurrent();
+				}
 			}
-			function onAfterLeave() {
-				nextAnimationItem();
+			function onAfterLeave(el) {
+				if (ui_vue3.toValue(currentAnimationItem)?.type === ANIMATED_TYPES.REMOVE_BLOCK && isCurrentTransitionEl(el)) {
+					advanceForCurrent();
+				}
 			}
 			return {
 				isAnimate,
@@ -6731,15 +10297,33 @@ this.BX = this.BX || {};
 			const {
 				isAnimate,
 				currentAnimationItem,
-				animationQueue,
-				updatePortPosition,
+				animationStep,
+				updatePort,
 				hooks
 			} = useBlockDiagram();
-			const history = useHistory();
+
+			// Совпадает ли завершившийся переход с текущим элементом-связью. Логика
+			// сопоставления по data-id корня связи (Connection кладёт его на <svg>)
+			// вынесена в чистую matchesTransitionEl. Если data-id недоступен — грубый
+			// тип-фильтр + резервный таймер контроллера.
+			function isCurrentTransitionEl(el) {
+				return matchesTransitionEl(el, ui_vue3.toValue(currentAnimationItem)?.item);
+			}
+			function advanceForCurrent() {
+				// Контроллер гарантирует ровно одно продвижение на шаг (переход vs
+				// резервный таймер) по токену шага.
+				animationStep.settle(animationStep.currentToken);
+			}
 			function onBeforeEnter() {
 				const {
 					item: connection
 				} = ui_vue3.toValue(currentAnimationItem) ?? {};
+				// Сторонний enter-переход может сработать после завершения очереди, когда
+				// stop() обнулил currentAnimationItem — тогда connection отсутствует и
+				// деструктуризация/updatePort ниже упали бы. Просто выходим.
+				if (!connection) {
+					return;
+				}
 				hooks.connectionTransitionStart.trigger(connection);
 				const {
 					sourceBlockId,
@@ -6747,25 +10331,28 @@ this.BX = this.BX || {};
 					targetBlockId,
 					targetPortId
 				} = connection;
-				updatePortPosition(sourceBlockId, sourcePortId);
-				updatePortPosition(targetBlockId, targetPortId);
+
+				// Полный рефреш геометрии обоих портов перед входом связи: rect + segment
+				// sizes. Во время поблочной анимации updatePortSegmentSizes ещё не отработал
+				// (он ждёт waitAllBlocksMounted), поэтому одного updatePortRect мало —
+				// связь отрисуется без сегментов. updatePort покрывает block rect + port
+				// rect + segment sizes самодостаточно.
+				updatePort(sourceBlockId, sourcePortId);
+				updatePort(targetBlockId, targetPortId);
 			}
-			function nextAnimatedItem() {
-				const {
-					done = false
-				} = ui_vue3.toValue(animationQueue)?.next() ?? {};
-				if (done) {
-					animationQueue.value = null;
-				} else {
-					history.makeSnapshot();
+			function onAfterEnter(el) {
+				hooks.connectionTransitionEnd.trigger(ui_vue3.toValue(currentAnimationItem)?.item);
+				// Как и в blocks-queue-transition: продвигаем очередь только для перехода
+				// текущего элемента-связи, чтобы сторонний переход (в т.ч. вызванный
+				// отсечением при движении камеры) не дал лишнее продвижение.
+				if (ui_vue3.toValue(currentAnimationItem)?.type === ANIMATED_TYPES.CONNECTION && isCurrentTransitionEl(el)) {
+					advanceForCurrent();
 				}
 			}
-			function onAfterEnter() {
-				hooks.connectionTransitionEnd.trigger(ui_vue3.toValue(currentAnimationItem)?.item);
-				nextAnimatedItem();
-			}
-			function onAfterLeave() {
-				nextAnimatedItem();
+			function onAfterLeave(el) {
+				if (ui_vue3.toValue(currentAnimationItem)?.type === ANIMATED_TYPES.REMOVE_CONNECTION && isCurrentTransitionEl(el)) {
+					advanceForCurrent();
+				}
 			}
 			return {
 				isAnimate,
@@ -6800,29 +10387,216 @@ this.BX = this.BX || {};
 		},
 		setup() {
 			const {
-				groupedConnections,
-				connectionGroupNames,
-				newConnections
+				blockIntersections,
+				connectionPreview
 			} = useBlockDiagram();
+			const groupedVisibleConnections = ui_vue3.computed(() => {
+				const hiddenConnectionId = ui_vue3.toValue(connectionPreview)?.hiddenConnectionId;
+				const groups = ui_vue3.toValue(blockIntersections.groupedVisibleConnections);
+				if (!hiddenConnectionId) {
+					return groups;
+				}
+				return Object.fromEntries(Object.entries(groups).map(([groupName, connections]) => [groupName, connections.filter(connection => connection.id !== hiddenConnectionId)]));
+			});
 			return {
-				groupedConnections,
-				connectionGroupNames,
-				getGroupConnectionSlotName,
-				newConnections
+				groupedVisibleConnections,
+				visibleConnectionGroupNames: blockIntersections.visibleConnectionGroupNames,
+				getGroupConnectionSlotName
 			};
 		},
 		template: `
 		<ConnectionsQueueTransition>
 			<slot
-				v-for="connection in connectionGroupNames"
+				v-for="connection in visibleConnectionGroupNames"
 				:key="connection"
 				:name="getGroupConnectionSlotName(connection)"
-				:connections="groupedConnections[connection]"
+				:connections="groupedVisibleConnections[connection]"
 			/>
 			<NewConnection/>
 		</ConnectionsQueueTransition>
 	`
 	};
+
+	const MARKER_RADIUS = 4;
+
+	function isFiniteNumber(value)
+	{
+		return typeof value === 'number' && Number.isFinite(value);
+	}
+
+	function resolvePortCenter(marker, portsRectMap)
+	{
+		const rect = portsRectMap?.[marker.blockId]?.[marker.portId];
+
+		if (rect === null || typeof rect !== 'object')
+		{
+			return null;
+		}
+
+		const { x, y, width, height } = rect;
+		if (![x, y, width, height].every(isFiniteNumber) || width < 0 || height < 0)
+		{
+			return null;
+		}
+
+		const center = {
+			x: x + (width / 2),
+			y: y + (height / 2),
+		};
+
+		return [center.x, center.y].every(isFiniteNumber) ? center : null;
+	}
+
+	function isValidPath(path)
+	{
+		return typeof path === 'string'
+			&& path.trim() !== ''
+			&& !/(?:NaN|Infinity)/.test(path);
+	}
+
+	function createConnectionPreviewRender(
+		{
+			connectionPreview,
+			portsRectMap,
+			connectionOffset,
+			connectionBendOffset,
+			connectionBorderRadius,
+		},
+		createOffsetMap = createConnectionsOffsetMap,
+	)
+	{
+		const previewOffsets = ui_vue3.computed(() => {
+			const preview = ui_vue3.toValue(connectionPreview);
+			const offset = ui_vue3.toValue(connectionOffset);
+			const bendOffset = ui_vue3.toValue(connectionBendOffset);
+
+			if (preview === null || ![offset, bendOffset].every(isFiniteNumber))
+			{
+				return null;
+			}
+
+			return {
+				activationKey: preview.activationKey,
+				connectionsOffsetMap: createOffsetMap(
+					preview.routingConnections,
+					offset,
+					bendOffset,
+				),
+				offset,
+				bendOffset,
+			};
+		});
+
+		return ui_vue3.computed(() => {
+			const preview = ui_vue3.toValue(connectionPreview);
+			const currentPortsRectMap = ui_vue3.toValue(portsRectMap);
+			const borderRadius = ui_vue3.toValue(connectionBorderRadius);
+			const offsets = previewOffsets.value;
+
+			if (
+				preview === null
+				|| offsets === null
+				|| preview.activationKey !== offsets.activationKey
+				|| !isFiniteNumber(borderRadius)
+			)
+			{
+				return null;
+			}
+
+			const {
+				connectionsOffsetMap,
+				offset,
+				bendOffset,
+			} = offsets;
+			const [firstRoute, secondRoute] = preview.temporaryConnections.map((connection) => {
+				return resolveRenderedConnectionRoute({
+					connection,
+					portsRectMap: currentPortsRectMap,
+					connectionsOffsetMap,
+					bendOffset,
+					offset,
+					borderRadius,
+				});
+			});
+			const [firstMarker, secondMarker] = preview.portMarkers.map((marker) => {
+				return resolvePortCenter(marker, currentPortsRectMap);
+			});
+
+			if (
+				firstRoute === null
+				|| secondRoute === null
+				|| !isValidPath(firstRoute.path)
+				|| !isValidPath(secondRoute.path)
+				|| firstMarker === null
+				|| secondMarker === null
+			)
+			{
+				return null;
+			}
+
+			return {
+				activationKey: preview.activationKey,
+				paths: [firstRoute.path, secondRoute.path],
+				markers: [firstMarker, secondMarker],
+			};
+		});
+	}
+
+	// @vue/component
+	const ConnectionPreview = ui_vue3.defineComponent({
+		name: 'UiBlockDiagramConnectionPreview',
+		setup()
+		{
+			const {
+				connectionPreview,
+				portsRectMap,
+				connectionOffset,
+				connectionBendOffset,
+				connectionBorderRadius,
+			} = useBlockDiagram();
+			const previewRender = createConnectionPreviewRender({
+				connectionPreview,
+				portsRectMap,
+				connectionOffset,
+				connectionBendOffset,
+				connectionBorderRadius,
+			});
+
+			return {
+				previewRender,
+				markerRadius: MARKER_RADIUS,
+			};
+		},
+		template: `
+		<svg
+			v-if="previewRender"
+			class="ui-block-diagram-connection-preview"
+			:data-test-id="$blockDiagramTestId('connectionPreview')"
+			aria-hidden="true"
+			focusable="false"
+		>
+			<g
+				:key="previewRender.activationKey"
+				class="ui-block-diagram-connection-preview__group"
+			>
+				<path
+					v-for="(path, index) in previewRender.paths"
+					:key="'path-' + index"
+					:d="path"
+					class="ui-block-diagram-connection-preview__path"
+				/>
+				<circle
+					v-for="(marker, index) in previewRender.markers"
+					:key="'marker-' + index"
+					:cx="marker.x"
+					:cy="marker.y"
+					:r="markerRadius"
+					class="ui-block-diagram-connection-preview__marker"
+				/>
+			</g>
+		</svg>
+	`,
+	});
 
 	// eslint-disable-next-line no-unused-vars
 
@@ -6878,7 +10652,6 @@ this.BX = this.BX || {};
 				onMountedBlock();
 			});
 			ui_vue3.onUnmounted(() => {
-				highlightedBlocks.remove(props.block.id);
 				onUnmountedBlock();
 			});
 			function onMouseDownSelectBlock() {
@@ -6962,6 +10735,16 @@ this.BX = this.BX || {};
 			disabled: {
 				type: Boolean,
 				default: false
+			},
+			/** Opt-in: a placeholder port that is a valid drop target but never a source. */
+			isVirtual: {
+				type: Boolean,
+				default: false
+			},
+			/** @type DiagramVirtualPortDropFn | null - invoked on drop when isVirtual. */
+			onVirtualDrop: {
+				type: Function,
+				default: null
 			}
 		},
 		setup(props, {
@@ -6980,7 +10763,9 @@ this.BX = this.BX || {};
 				port: props.port,
 				position: props.position,
 				validationRules: props.validationRules,
-				index: props.index
+				index: props.index,
+				isVirtual: props.isVirtual,
+				onVirtualDrop: props.onVirtualDrop
 			});
 			const {
 				isSourcePort,
@@ -6991,7 +10776,8 @@ this.BX = this.BX || {};
 				port: props.port,
 				position: props.position,
 				index: props.index,
-				normalyzeConnectionFn: props.normalyzeConnectionFn
+				normalyzeConnectionFn: props.normalyzeConnectionFn,
+				isVirtual: props.isVirtual
 			});
 			const isActive = ui_vue3.computed(() => {
 				return (ui_vue3.toValue(isSourcePort) || ui_vue3.toValue(isMaybePortForNewConnection) || ui_vue3.toValue(isTargetPort) || ui_vue3.toValue(isIncludedPortInSelectedBlock)) && !ui_vue3.toValue(isIncludedPortInMovingBlock);
@@ -7194,6 +10980,7 @@ this.BX = this.BX || {};
 			ContextMenuLayout,
 			GroupedBlocks,
 			GroupedConnections,
+			ConnectionPreview,
 			Connection,
 			DeleteConnectionBtn,
 			MoveableBlock,
@@ -7214,10 +11001,20 @@ this.BX = this.BX || {};
 				type: Object,
 				default: () => ({
 					style: 'grid',
-					size: 64,
+					size: GRID_DEFAULT_SIZE,
 					gridColor: UI_CANVAS_GRID_COLOR,
 					backgroundColor: UI_CANVAS_BACKGROUND_COLOR
 				})
+			},
+			// Allows snapping rather than turns it on: a gesture is aligned to the grid only while
+			// Shift is held, and with the prop off Shift changes nothing.
+			snapToGrid: {
+				type: Boolean,
+				default: false
+			},
+			snapSize: {
+				type: Number,
+				default: null
 			},
 			zoomSensitivity: {
 				type: Number,
@@ -7267,6 +11064,10 @@ this.BX = this.BX || {};
 				type: Boolean,
 				default: false
 			},
+			connectionRouteHitTestEnabled: {
+				type: Boolean,
+				default: false
+			},
 			enableGrouping: {
 				type: Boolean,
 				default: false
@@ -7287,7 +11088,13 @@ this.BX = this.BX || {};
 				groupedConnections,
 				cursorType,
 				blockIntersections,
-				isRunUpdateBlocksCommand
+				isRunUpdateBlocksCommand,
+				blockElMap,
+				purgeBlockGeometry,
+				purgeBlockGeometryExcept,
+				isRenderOptimizationAvailable,
+				connectionPreview,
+				clearConnectionPreview
 			} = useBlockDiagram(props);
 			const initAppElements = useInitAppElements({
 				blockDiagramRef: ui_vue3.useTemplateRef('blockDiagram')
@@ -7324,30 +11131,66 @@ this.BX = this.BX || {};
 				[HOOK_NAMES.UPDATE_BLOCK](oldBlock, newBlock) {
 					isRunUpdateBlocksCommand.value = true;
 					blockIntersections.updateBlock(oldBlock, newBlock);
+
+					// Geometry retention/purge only exists under render optimization; under N
+					// nothing is retained (unmount clears rects) — strict no-op. Under Y a
+					// culled node moved programmatically keeps stale retained coordinates with
+					// no remount to refresh them: invalidate so the next mount re-measures.
+					if (ui_vue3.toValue(isRenderOptimizationAvailable) && !ui_vue3.toValue(blockElMap).has(ui_vue3.toValue(newBlock).id)) {
+						purgeBlockGeometry(ui_vue3.toValue(newBlock).id);
+					}
 				},
 				[HOOK_NAMES.DELETE_BLOCK](block) {
 					isRunUpdateBlocksCommand.value = true;
 					blockIntersections.removeBlock(ui_vue3.toValue(block));
+					// Under Y, deleting an already-culled node has no unmount to clear its
+					// retained rect, so purge explicitly. Under N unmount clears it → no-op.
+					if (ui_vue3.toValue(isRenderOptimizationAvailable)) {
+						purgeBlockGeometry(ui_vue3.toValue(block).id);
+					}
 				},
 				[HOOK_NAMES.DELETE_BLOCKS](blocks) {
 					isRunUpdateBlocksCommand.value = true;
+					const renderOptimization = ui_vue3.toValue(isRenderOptimizationAvailable);
 					ui_vue3.toValue(blocks).forEach(block => {
 						blockIntersections.removeBlock(ui_vue3.toValue(block));
+						if (renderOptimization) {
+							purgeBlockGeometry(ui_vue3.toValue(block).id);
+						}
 					});
 				},
+				// Unlike the block hooks above, this one fires AFTER the props watcher of the same
+				// change: the revert emits update:blocks first and the watcher flushes before
+				// useHistory() gets here. So isRunUpdateBlocksCommand must NOT be raised because the run
+				// it would suppress is already over, nothing would clear it, and it would suppress
+				// the index rebuild of the next, unrelated change instead.
 				[HOOK_NAMES.HISTORY_NEXT]({
 					snapshot
 				}) {
-					isRunUpdateBlocksCommand.value = true;
-					blockIntersections.clear();
-					blockIntersections.load(ui_vue3.toValue(snapshot.blocks));
+					// The block index is left to that watcher pass: it clears and reloads the very
+					// model this snapshot restores, so rebuilding it here would build the whole
+					// index a second time on every history step.
+					//
+					// The connection index still needs an immediate rebuild: the watcher's clear()
+					// empties it and its own loadConnections only lands on the next frame, so a
+					// restored connection would render culled for that frame. The synchronous
+					// rebuild supersedes that pending frame.
+					blockIntersections.loadConnectionsFromSnapshot(ui_vue3.toValue(snapshot.connections), ui_vue3.toValue(snapshot.blocks));
+					// Purge retained geometry of culled nodes dropped by the restore (no
+					// unmount to clear them). Under N nothing is retained → no-op.
+					if (ui_vue3.toValue(isRenderOptimizationAvailable)) {
+						purgeBlockGeometryExcept(ui_vue3.toValue(snapshot.blocks).map(block => block.id));
+					}
 				},
+				// Same ordering as HISTORY_NEXT: the flag would outlive its own change.
 				[HOOK_NAMES.HISTORY_PREV]({
 					snapshot
 				}) {
-					isRunUpdateBlocksCommand.value = true;
-					blockIntersections.clear();
-					blockIntersections.load(ui_vue3.toValue(snapshot.blocks));
+					// Same split as HISTORY_NEXT: the block index comes from the props watcher.
+					blockIntersections.loadConnectionsFromSnapshot(ui_vue3.toValue(snapshot.connections), ui_vue3.toValue(snapshot.blocks));
+					if (ui_vue3.toValue(isRenderOptimizationAvailable)) {
+						purgeBlockGeometryExcept(ui_vue3.toValue(snapshot.blocks).map(block => block.id));
+					}
 				}
 			}, {
 				...props.historyHooks.reduce((acc, hookName) => {
@@ -7375,9 +11218,11 @@ this.BX = this.BX || {};
 				initAppElements.onMountedAppElements();
 			});
 			ui_vue3.onUnmounted(() => {
+				clearConnectionPreview(ui_vue3.toValue(connectionPreview)?.activationKey);
 				disposeModelValue();
 				disposeWatchProps();
 				disposeRegisterHooks();
+				blockIntersections.clear();
 				initAppElements.onUnmountedAppElements();
 			});
 			function onDragEnter(event) {
@@ -7416,6 +11261,7 @@ this.BX = this.BX || {};
 		template: `
 		<div
 			:class="blockDiagramClassNames"
+			:data-test-id="$blockDiagramTestId('blockDiagram')"
 			ref="blockDiagram"
 			@dragover.prevent
 			@dragenter="onDragEnter"
@@ -7461,6 +11307,7 @@ this.BX = this.BX || {};
 							<slot name="new-connection"/>
 						</template>
 					</GroupedConnections>
+					<ConnectionPreview/>
 					<GroupedBlocks>
 						<template
 							v-for="groupName in visibleBlockGroupNames"
@@ -7681,12 +11528,18 @@ this.BX = this.BX || {};
 				zoomIn,
 				zoomOut
 			} = useCanvas();
+			const loc = useLoc();
 			const {
 				stepZoom,
 				typeZoom
 			} = ui_vue3.toRefs(props);
+			const isDisabled = ui_vue3.computed(() => props.disabled || ui_vue3.toValue(isDisabledBlockDiagram));
+			const ariaLabel = ui_vue3.computed(() => {
+				const messageId = ui_vue3.toValue(typeZoom) === ZOOM_TYPES.in ? 'UI_BLOCK_DIAGRAM_ZOOM_IN' : 'UI_BLOCK_DIAGRAM_ZOOM_OUT';
+				return loc.getMessage(messageId);
+			});
 			function onZoom() {
-				if (props.disabled || ui_vue3.toValue(isDisabledBlockDiagram)) {
+				if (ui_vue3.toValue(isDisabled)) {
 					return;
 				}
 				if (ui_vue3.toValue(typeZoom) === ZOOM_TYPES.in) {
@@ -7698,24 +11551,32 @@ this.BX = this.BX || {};
 			return {
 				iconSet: ui_iconSet_api_vue.Outline,
 				zoomTypes: ZOOM_TYPES,
+				ariaLabel,
+				isDisabled,
 				onZoom
 			};
 		},
 		template: `
 		<button
+			type="button"
+			:data-test-id="$blockDiagramTestId(typeZoom === zoomTypes.in ? 'zoomInBtn' : 'zoomOutBtn')"
 			class="ui-block-diagram-control-btn__btn"
+			:aria-label="ariaLabel"
+			:disabled="isDisabled"
 			@click="onZoom"
 		>
 			<BIcon
 				v-if="typeZoom === zoomTypes.in"
 				:name="iconSet.PLUS_M"
 				:size="22"
+				aria-hidden="true"
 				class="ui-block-diagram-control-btn__icon"
 			/>
 			<BIcon
 				v-else
 				:name="iconSet.MINUS_M"
 				:size="22"
+				aria-hidden="true"
 				class="ui-block-diagram-control-btn__icon"
 			/>
 		</button>
@@ -7727,6 +11588,12 @@ this.BX = this.BX || {};
 	// @vue/component
 	const ZoomPercent = {
 		name: 'zoom-percent',
+		props: {
+			disabled: {
+				type: Boolean,
+				default: false
+			}
+		},
 		setup(props) {
 			const {
 				zoom,
@@ -7735,22 +11602,29 @@ this.BX = this.BX || {};
 			const {
 				setZoom
 			} = useCanvas();
+			const loc = useLoc();
+			const percent = ui_vue3.computed(() => {
+				return ((ui_vue3.toValue(zoom) ?? 0) * 100).toFixed(0);
+			});
 			const {
 				showMenu,
 				isOpen
 			} = useContextMenu();
-			const percent = ui_vue3.computed(() => {
-				return ((ui_vue3.toValue(zoom) ?? 0) * 100).toFixed(0);
+			const isDisabled = ui_vue3.computed(() => props.disabled || ui_vue3.toValue(isDisabledBlockDiagram));
+			const buttonLabel = ui_vue3.computed(() => {
+				return `${loc.getMessage('UI_BLOCK_DIAGRAM_ZOOM_PRESET_BUTTON')}: ${ui_vue3.toValue(percent)}%`;
 			});
 			const root = ui_vue3.ref(null);
 			function onOpenZoomPresetMenu() {
-				if (ui_vue3.toValue(isDisabledBlockDiagram)) {
+				const rootElement = ui_vue3.toValue(root);
+				if (ui_vue3.toValue(isDisabled) || !rootElement) {
 					return;
 				}
 				const options = {
 					className: 'ui-block-diagram-percent-menu',
 					minWidth: 106,
-					targetContainer: root.value.parentElement,
+					bindElement: rootElement,
+					targetContainer: rootElement.parentElement,
 					items: ZOOM_PRESET.map(value => {
 						return {
 							text: `${value * 100}%`,
@@ -7767,22 +11641,31 @@ this.BX = this.BX || {};
 				percent,
 				root,
 				isOpen,
+				isDisabled,
+				buttonLabel,
 				onOpenZoomPresetMenu
 			};
 		},
 		template: `
-		<span
+		<button
+			type="button"
+			:data-test-id="$blockDiagramTestId('zoomPercentBtn')"
 			class="ui-block-diagram-percent"
 			:class="{ '--selected': isOpen }"
+			:aria-label="buttonLabel"
+			aria-haspopup="menu"
+			:aria-expanded="isOpen"
+			:disabled="isDisabled"
 			ref="root"
 			@click="onOpenZoomPresetMenu"
 		>
 			{{ percent }}
-		</span>
+		</button>
 	`
 	};
 
 	const MAP_PADDING = 50;
+	const KEYBOARD_PAN_STEP = 50;
 	const DEFAULT_BLOCK_COLOR = 'var(--ui-color-palette-gray-15)';
 	const DEFAULT_FRAME_BLOCK_COLOR = 'rgba(0,0,0,0.05)';
 	const FRAME_BLOCK_TYPE = 'frame';
@@ -7810,7 +11693,7 @@ this.BX = this.BX || {};
 		},
 		// eslint-disable-next-line max-lines-per-function
 		setup(props, {
-			emit
+			expose
 		}) {
 			const {
 				blocks,
@@ -7824,12 +11707,15 @@ this.BX = this.BX || {};
 			const {
 				setCamera
 			} = useCanvas();
+			const loc = useLoc();
 			const {
 				mapWidth,
 				mapHeight,
 				blockColors
 			} = ui_vue3.toRefs(props);
 			const mapEl = ui_vue3.useTemplateRef('map');
+			const mapRootEl = ui_vue3.useTemplateRef('mapRoot');
+			const mapLabel = loc.getMessage('UI_BLOCK_DIAGRAM_CANVAS_MAP_LABEL');
 			const interactionState = ui_vue3.reactive({
 				isDragging: false,
 				mode: null,
@@ -7984,6 +11870,42 @@ this.BX = this.BX || {};
 				interactionState.isDragging = false;
 				interactionState.mode = null;
 			}
+			function onMapKeyDown(event) {
+				let deltaX = 0;
+				let deltaY = 0;
+				switch (event.key) {
+					case 'ArrowLeft':
+						deltaX = -1;
+						break;
+					case 'ArrowRight':
+						deltaX = 1;
+						break;
+					case 'ArrowUp':
+						deltaY = -1;
+						break;
+					case 'ArrowDown':
+						deltaY = 1;
+						break;
+					default:
+						return;
+				}
+				event.preventDefault();
+				event.stopPropagation();
+				const currentZoom = ui_vue3.toValue(zoom) || 1;
+				setCamera({
+					x: ui_vue3.toValue(transformX) + deltaX * KEYBOARD_PAN_STEP / currentZoom,
+					y: ui_vue3.toValue(transformY) + deltaY * KEYBOARD_PAN_STEP / currentZoom,
+					zoom: currentZoom
+				});
+			}
+			function focus() {
+				ui_vue3.toValue(mapRootEl)?.focus({
+					preventScroll: true
+				});
+			}
+			expose({
+				focus
+			});
 			function getBlockColor(block) {
 				const blockType = block?.node?.type;
 				const colorIndex = block?.node?.colorIndex;
@@ -8016,17 +11938,30 @@ this.BX = this.BX || {};
 				contentOffsetY,
 				renderScale,
 				viewportIndicator,
+				mapLabel,
 				onMapMouseDown,
 				onMapMouseMove,
 				onMapMouseUp,
+				onMapKeyDown,
 				getBlockColor
 			};
 		},
 		template: `
-		<div :style="canvasMapStyle">
+		<div
+			ref="mapRoot"
+			:data-test-id="$blockDiagramTestId('zoomCanvasMap')"
+			:style="canvasMapStyle"
+			class="ui-block-diagram-canvas-map__container"
+			role="region"
+			tabindex="0"
+			:aria-label="mapLabel"
+			@keydown="onMapKeyDown"
+		>
 			<svg
 				:width="mapWidth"
 				:height="mapHeight"
+				aria-hidden="true"
+				focusable="false"
 				ref="map"
 				class="ui-block-diagram-canvas-map"
 				@mousedown="onMapMouseDown"
@@ -8087,26 +12022,36 @@ this.BX = this.BX || {};
 			}
 		},
 		setup(props) {
+			const loc = useLoc();
 			const btnStyle = ui_vue3.computed(() => ({
 				width: `${props.width}px`,
 				height: `${props.height}px`
 			}));
+			const ariaLabel = ui_vue3.computed(() => {
+				const messageId = props.isActive ? 'UI_BLOCK_DIAGRAM_CANVAS_MAP_CLOSE' : 'UI_BLOCK_DIAGRAM_CANVAS_MAP_OPEN';
+				return loc.getMessage(messageId);
+			});
 			const currentIconColor = ui_vue3.computed(() => {
 				return props.isActive ? props.clickedIconColor : props.iconColor;
 			});
 			return {
 				btnStyle,
+				ariaLabel,
 				currentIconColor
 			};
 		},
 		template: `
 		<button
+			type="button"
 			:style="btnStyle"
+			:aria-label="ariaLabel"
 			class="ui-block-diagram-canvas-map-btn"
 		>
 			<svg
 				width="24"
 				height="24"
+				aria-hidden="true"
+				focusable="false"
 				class="ui-block-diagram-canvas-map-btn__icon"
 				:fill="currentIconColor"
 			>
@@ -8157,11 +12102,24 @@ this.BX = this.BX || {};
 			disabled: {
 				type: Boolean,
 				default: false
+			},
+			flat: {
+				type: Boolean,
+				default: false
 			}
 		},
 		emits: ['update:modelValue'],
 		setup(props) {
+			const loc = useLoc();
+			const {
+				isDisabledBlockDiagram
+			} = useBlockDiagram();
 			const isShowMap = ui_vue3.ref(false);
+			const mapButton = ui_vue3.ref(null);
+			const canvasMap = ui_vue3.ref(null);
+			const canvasMapPanelId = `ui-block-diagram-canvas-map-${main_core.Text.getRandom()}`;
+			const closeMapLabel = loc.getMessage('UI_BLOCK_DIAGRAM_CANVAS_MAP_CLOSE');
+			const isDisabled = ui_vue3.computed(() => props.disabled || ui_vue3.toValue(isDisabledBlockDiagram));
 			const mapPositionClasses = ui_vue3.computed(() => {
 				const isTop = props.positionMap.toLowerCase().includes(HORIZONTAL_MAP_POSITION.top);
 				const isLeft = props.positionMap.toLowerCase().includes(VERTICAL_MAP_POSITION.left);
@@ -8173,47 +12131,92 @@ this.BX = this.BX || {};
 					[MAP_CLASSES.right]: !isLeft
 				};
 			});
+			function focusMapButton() {
+				ui_vue3.toValue(mapButton)?.$el?.focus();
+			}
+			function closeMap(restoreFocus) {
+				isShowMap.value = false;
+				if (restoreFocus) {
+					ui_vue3.nextTick(focusMapButton);
+				}
+			}
+			function onCloseMap() {
+				closeMap(true);
+			}
 			function onToggleMap() {
-				if (props.disabled) {
-					isShowMap.value = false;
+				if (ui_vue3.toValue(isDisabled)) {
 					return;
 				}
-				isShowMap.value = !ui_vue3.toValue(isShowMap);
+				if (ui_vue3.toValue(isShowMap)) {
+					closeMap(true);
+					return;
+				}
+				isShowMap.value = true;
+				ui_vue3.nextTick(() => ui_vue3.toValue(canvasMap)?.focus());
 			}
+			ui_vue3.watch(isDisabled, disabled => {
+				if (disabled && ui_vue3.toValue(isShowMap)) {
+					closeMap(false);
+				}
+			});
 			return {
 				iconSet: ui_iconSet_api_vue.Outline,
 				mapPositionClasses,
 				isShowMap,
-				onToggleMap
+				isDisabled,
+				mapButton,
+				canvasMap,
+				canvasMapPanelId,
+				closeMapLabel,
+				onToggleMap,
+				onCloseMap
 			};
 		},
 		template: `
-		<div class="ui-block-diagram-canvas-zoom-bar">
+		<div
+			class="ui-block-diagram-canvas-zoom-bar"
+			:class="{ '--flat': flat }"
+			:data-test-id="$blockDiagramTestId('zoomBar')"
+		>
 			<div class="ui-block-diagram-canvas-zoom-bar__locate">
 				<CanvasMapBtn
+					ref="mapButton"
 					:isActive="isShowMap"
+					:disabled="isDisabled"
+					:aria-expanded="isShowMap"
+					:aria-controls="canvasMapPanelId"
 					:data-test-id="$blockDiagramTestId('zoomOpenMapBtn')"
 					@click="onToggleMap"
 				/>
 				<transition name="editor-large-map-fade" mode="in-out">
 					<div
 						v-if="isShowMap"
+						:id="canvasMapPanelId"
+						:data-test-id="$blockDiagramTestId('zoomMapPanel')"
 						class="ui-block-diagram-canvas-zoom-bar__map"
 						:class="mapPositionClasses"
+						@keydown.esc.stop.prevent="onCloseMap"
 					>
 						<div class="ui-block-diagram-canvas-zoom-bar__map-header">
-							<BIcon
-								:name="iconSet.CROSS_M"
-								:size="24"
+							<button
+								type="button"
+								class="ui-block-diagram-canvas-zoom-bar__map-close-button"
+								:aria-label="closeMapLabel"
 								:data-test-id="$blockDiagramTestId('zoomCloseMapBtn')"
-								class="ui-block-diagram-canvas-zoom-bar__map-close-icon"
-								color="#2FC6F6"
-								@click="onToggleMap"
-							/>
+								@click="onCloseMap"
+							>
+								<BIcon
+									:name="iconSet.CROSS_M"
+									:size="24"
+									aria-hidden="true"
+									class="ui-block-diagram-canvas-zoom-bar__map-close-icon"
+									color="#2FC6F6"
+								/>
+							</button>
 						</div>
 						<CanvasMap
+							ref="canvasMap"
 							:mapSize="310"
-							:data-test-id="$blockDiagramTestId('zoomCanvasMap')"
 							:blockColors="blockColors"
 						/>
 					</div>
@@ -8224,14 +12227,12 @@ this.BX = this.BX || {};
 				<ZoomBtn
 					:stepZoom="stepZoom"
 					:disabled="disabled"
-					:data-test-id="$blockDiagramTestId('zoomOutBtn')"
 					typeZoom="out"
 				/>
-				<ZoomPercent/>
+				<ZoomPercent :disabled="disabled"/>
 				<ZoomBtn
 					:stepZoom="stepZoom"
 					:disabled="disabled"
-					:data-test-id="$blockDiagramTestId('zoomInBtn')"
 					typeZoom="in"
 				/>
 			</div>
@@ -8692,7 +12693,9 @@ this.BX = this.BX || {};
 			const blockRef = ui_vue3.useTemplateRef('blockEl');
 			const {
 				isHiglitedBlock,
-				isDisabled
+				isDisabled,
+				onMountedBlock,
+				onUnmountedBlock
 			} = useBlockState({
 				block,
 				blockRef
@@ -8705,6 +12708,7 @@ this.BX = this.BX || {};
 			const {
 				isResize,
 				sizeBlockStyle,
+				blockDimensions,
 				onMounted: onMountedResizableBlock,
 				onUnmounted: onUnmountedResizableBlock
 			} = useResizableBlock({
@@ -8740,10 +12744,11 @@ this.BX = this.BX || {};
 				}
 			});
 			ui_vue3.onMounted(() => {
+				onMountedBlock();
 				onMountedResizableBlock();
 			});
 			ui_vue3.onUnmounted(() => {
-				highlightedBlocks.remove(props.block.id);
+				onUnmountedBlock();
 				onUnmountedResizableBlock();
 			});
 			function onMouseDownSelectBlock() {
@@ -8756,6 +12761,7 @@ this.BX = this.BX || {};
 				isResize,
 				isDragged,
 				blockStyle,
+				blockDimensions,
 				onMouseDownSelectBlock
 			};
 		},
@@ -8806,8 +12812,8 @@ this.BX = this.BX || {};
 					:isDragged="isDragged"
 					:isResize="isResize"
 					:isDisabled="isDisabled"
-					:width="block.dimensions.width"
-					:height="block.dimensions.height"
+					:width="blockDimensions.width"
+					:height="blockDimensions.height"
 				/>
 			</div>
 		</div>
@@ -8887,6 +12893,7 @@ this.BX = this.BX || {};
 			v-if="groupSelectionStyle"
 			:style="groupSelectionStyle"
 			class="ui-block-diagram-group-box"
+			data-testid="ui-block-diagram-group-box"
 			@mousedown.stop="onGroupMouseDown"
 		>
 			<div
@@ -8917,7 +12924,17 @@ this.BX = this.BX || {};
 			width,
 			height
 		} = copiedDragItem.getBoundingClientRect();
-		event.dataTransfer.setDragImage(copiedDragItem, width / 2, height / 2);
+		const dragImageScale = resolveDragImageScale(width, height);
+		if (dragImageScale < 1) {
+			main_core.Dom.style(copiedDragItem, {
+				zoom: dragImageScale
+			});
+		}
+
+		// anchor on the size the bitmap is actually rendered at, which also keeps the anchor correct
+		// in browsers that ignore zoom (Firefox below 126)
+		const rendered = copiedDragItem.getBoundingClientRect();
+		event.dataTransfer.setDragImage(copiedDragItem, rendered.width / 2, rendered.height / 2);
 		event.dataTransfer.setData('text/plain', JSON.stringify({
 			...ui_vue3.toValue(dragData),
 			dimensions: {
@@ -8971,6 +12988,7 @@ this.BX = this.BX || {};
 		}
 	};
 
+	exports.ANIMATED_TYPES = ANIMATED_TYPES;
 	exports.BlockDiagram = BlockDiagram;
 	exports.Connection = Connection;
 	exports.DeleteConnectionBtn = DeleteConnectionBtn;

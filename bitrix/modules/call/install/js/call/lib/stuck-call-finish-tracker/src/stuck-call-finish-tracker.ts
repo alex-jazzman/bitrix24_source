@@ -29,9 +29,11 @@
 export class StuckCallFinishTracker
 {
 	static DEBOUNCE_MS = 3000;
+	static MAX_CLOSED_UUIDS = 100;
 
 	_scheduledKeys: Set<string> = new Set();
 	_pendingTimers: Map<string, ReturnType<typeof setTimeout>> = new Map();
+	_closedUuids: Set<string> = new Set();
 
 	_keyOf(callId: number | string | null, callUuid: string | null): string
 	{
@@ -92,6 +94,39 @@ export class StuckCallFinishTracker
 		// monotonically over the lifetime of the tab and blocks any future
 		// recovery scheduling for the same call.
 		this._scheduledKeys.delete(key);
+	}
+
+	/**
+	 * Records a callUuid whose room the server just confirmed gone, so a repeat
+	 * join attempt for it can be short-circuited without another 500 round-trip.
+	 * Bounded FIFO (Set keeps insertion order): the oldest entry is evicted past
+	 * MAX_CLOSED_UUIDS. Re-marking refreshes recency.
+	 */
+	markClosed(callUuid: string | null): void
+	{
+		if (!callUuid)
+		{
+			return;
+		}
+		this._closedUuids.delete(callUuid);
+		this._closedUuids.add(callUuid);
+		while (this._closedUuids.size > StuckCallFinishTracker.MAX_CLOSED_UUIDS)
+		{
+			const oldest = this._closedUuids.values().next().value;
+			if (oldest === undefined)
+			{
+				break;
+			}
+			this._closedUuids.delete(oldest);
+		}
+	}
+
+	/**
+	 * True if this callUuid was recently confirmed closed via markClosed().
+	 */
+	isRecentlyClosed(callUuid: string | null): boolean
+	{
+		return callUuid ? this._closedUuids.has(callUuid) : false;
 	}
 }
 

@@ -206,6 +206,12 @@ export const Content = {
 		},
 		onSelectAllClick(): void
 		{
+			// pointer-events: none keeps a mouse click off the native input (see style.css), so the
+			// browser never focuses the checkbox by itself; focus it here, otherwise focus stays where
+			// it was (the search field on open) and a Space right after the click types there instead
+			// of toggling. Keyboard activation already has the focus, so this is a no-op for it.
+			this.$refs.selectAllCheckbox?.focus();
+
 			if (this.isAllSelected)
 			{
 				this.deselectAll();
@@ -214,6 +220,11 @@ export const Content = {
 			{
 				this.selectAll();
 			}
+
+			// A click/Space on the <input> itself triggers the native checkbox activation; because of
+			// @click.prevent the browser rolls checked/indeterminate back to the pre-click state after Vue
+			// has updated. Re-sync the DOM on the next macrotask, i.e. after that rollback.
+			setTimeout(() => this.syncSelectAllCheckbox(), 0);
 		},
 		select(id: string, value: boolean = true): void
 		{
@@ -230,14 +241,7 @@ export const Content = {
 		},
 		setValueForAllVisibleOptions(value: boolean): void
 		{
-			const visibleOptionIds: Set<string> = new Set(this.getOptions().map((option) => option.id));
-
-			this.getOptionRefs().forEach((option) => {
-				if (option.isLocked || !visibleOptionIds.has(option.getId()))
-				{
-					return;
-				}
-
+			this.getSelectableVisibleOptionRefs().forEach((option) => {
 				this.dataOptions.get(option.getId()).value = value;
 				option.setValue(value);
 			});
@@ -245,6 +249,35 @@ export const Content = {
 		getOptionRefs(): []
 		{
 			return [...this.optionsRef.values()];
+		},
+		getSelectableVisibleOptionRefs(): Object[]
+		{
+			// Sectioning hides the options of a disabled section, but their refs stay in optionsRef
+			// (CheckboxListCategory.setRef ignores the null ref an unmount passes), so the set has to
+			// follow what the template actually renders: visibleOptions with sectioning on, the plain
+			// search-filtered getOptions() without it.
+			const shownOptions = this.dataParams.useSectioning ? this.visibleOptions : this.getOptions();
+			const shownOptionIds: Set<string> = new Set(shownOptions.map((option) => option.id));
+
+			return this.getOptionRefs().filter(
+				(option) => !option.isLocked && shownOptionIds.has(option.getId()),
+			);
+		},
+		// Invariant: the checkbox's checked/indeterminate state is synced to the DOM imperatively here
+		// (from mounted()/updated(), plus a deferred setTimeout in onSelectAllClick), not by a reactive
+		// template binding alone. `indeterminate` has no plain attribute binding, and a trusted click on
+		// the @click.prevent input makes the browser roll checked/indeterminate back to its pre-click
+		// value after Vue has rendered. Reasserting the DOM property here (and once more on the next
+		// macrotask) keeps it aligned with the derived tri-state. Do not "simplify" to a binding only —
+		// that reintroduces the checked/indeterminate rollback bug on a trusted click.
+		syncSelectAllCheckbox(): void
+		{
+			const input = this.$refs.selectAllCheckbox;
+			if (input)
+			{
+				input.checked = this.isAllSelected;
+				input.indeterminate = this.isSelectAllIndeterminate;
+			}
 		},
 		cancel(): void
 		{
@@ -452,9 +485,14 @@ export const Content = {
 		},
 		selectAllClassName()
 		{
+			// Reading isSelectAllIndeterminate here makes it a dependency of the render: without a plain
+			// :indeterminate binding, this class binding is what wakes the rerender (and updated() ->
+			// syncSelectAllCheckbox()) on any tri-state transition, not only the ones that also flip
+			// isAllSelected or isCheckedCheckboxes.
 			return [
 				'ui-checkbox-list__footer-link --select-all',
 				{ '--narrow': this.isNarrowWidth },
+				{ '--indeterminate': this.isSelectAllIndeterminate },
 			];
 		},
 		switcherText(): string
@@ -535,45 +573,55 @@ export const Content = {
 					: Loc.getMessage('UI_CHECKBOX_LIST_DEFAULT_SETTINGS_EMPTY_STATE_DESCRIPTION_MSGVER_1')
 			);
 		},
+		// Single source of truth for the select-all tri-state: one pass over the selectable visible
+		// options yields both counts, and isAllSelected/isSelectAllIndeterminate are derived from it.
+		// The footer checkbox stays in sync because the render reads both derived values reactively:
+		// isAllSelected via :checked and isSelectAllIndeterminate via selectAllClassName. A change in
+		// either reruns render() and thus updated()/syncSelectAllCheckbox(); this does not rely on any
+		// side effect of dataOptions.set() (a repeat set of an already-toggled option does not retrigger).
+		selectAllState(): { selectedCount: number, selectableCount: number }
+		{
+			const options = this.getSelectableVisibleOptionRefs();
+			let selectedCount = 0;
+
+			for (const option of options)
+			{
+				if (option.getValue() === true)
+				{
+					selectedCount += 1;
+				}
+			}
+
+			return { selectedCount, selectableCount: options.length };
+		},
 		isAllSelected(): boolean
 		{
-			const isAllSelected = this.getOptionRefs()
-				.filter((option) => !option.isLocked)
-				.every((option) => option.getValue() === true)
-			;
-			const isSomeSelected = this.getOptionRefs()
-				.filter((option) => !option.isLocked)
-				.some((option) => option.getValue() === true && !option.isLocked)
-			;
+			const { selectedCount, selectableCount } = this.selectAllState;
 
-			if (
-				!isAllSelected
-				&& isSomeSelected
-				&& this.$refs.selectAllCheckbox
-			)
-			{
-				this.$refs.selectAllCheckbox.indeterminate = true;
+			return selectableCount > 0 && selectedCount === selectableCount;
+		},
+		isSelectAllIndeterminate(): boolean
+		{
+			const { selectedCount, selectableCount } = this.selectAllState;
 
-				return false;
-			}
-
-			if (this.$refs.selectAllCheckbox)
-			{
-				this.$refs.selectAllCheckbox.indeterminate = false;
-			}
-
-			return isAllSelected;
+			return selectedCount > 0 && selectedCount < selectableCount;
 		},
 	},
 
 	mounted()
 	{
 		this.renderSwitcher();
+		this.syncSelectAllCheckbox();
 
 		void this.$nextTick(() => {
 			this.checkLongContent();
 			this.setFocusToSearchInput();
 		});
+	},
+
+	updated()
+	{
+		this.syncSelectAllCheckbox();
 	},
 
 	template: `
@@ -694,11 +742,13 @@ export const Content = {
 						@click="onSelectAllClick()"
 						:class="selectAllClassName"
 					>
-						<input 
-							type="checkbox" 
+						<input
+							type="checkbox"
 							name="selectAllCheckbox"
 							ref="selectAllCheckbox"
-							v-model="isAllSelected"
+							:aria-label="selectAllBtnText"
+							:checked="isAllSelected"
+							@click.prevent
 						>
 						<label
 							v-if="!isNarrowWidth"

@@ -8,13 +8,14 @@ jn.define('im/messenger/lib/popup-menu/recent-actions/recent-actions-menu', (req
 	const { PopupMenu } = require('ui-system/popups/popup-menu');
 
 	const { Loc } = require('im/messenger/loc');
-	const { RecentFilterId, RecentActionId, NavigationTabId } = require('im/messenger/const');
+	const { RecentFilterId, RecentActionId, NavigationTabId, Analytics } = require('im/messenger/const');
 	const { Feature } = require('im/messenger/lib/feature');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { readAllChatsByRecentTab } = require('im/messenger/lib/read-all-chats');
 	const { FolderListView } = require('im/messenger/controller/folder/list');
 	const { FolderUpdate } = require('im/messenger/controller/folder/update');
 	const { deleteFolder, showDeleteSuccessToast } = require('im/messenger/controller/folder/lib/actions');
+	const { AnalyticsService } = require('im/messenger/provider/services/analytics');
 	const { getLoggerWithContext } = require('im/messenger/lib/logger');
 
 	const logger = getLoggerWithContext('popup-menu--recent-actions', 'RecentActionsMenu');
@@ -90,7 +91,7 @@ jn.define('im/messenger/lib/popup-menu/recent-actions/recent-actions-menu', (req
 			const locator = serviceLocator.get('recent-manager');
 			const recent = locator?.getRecentById(tabId);
 
-			return Boolean(Feature.isRecentFilterAvailable && recent?.isSupportedFilter());
+			return Boolean(recent?.isSupportedFilter());
 		}
 
 		/**
@@ -291,7 +292,7 @@ jn.define('im/messenger/lib/popup-menu/recent-actions/recent-actions-menu', (req
 		 */
 		#createFilterItem(recent, filterId, titleKey)
 		{
-			if (!recent || !(Feature.isRecentFilterAvailable && recent.isSupportedFilter()))
+			if (!recent || !recent.isSupportedFilter())
 			{
 				return null;
 			}
@@ -384,14 +385,25 @@ jn.define('im/messenger/lib/popup-menu/recent-actions/recent-actions-menu', (req
 			switch (item.id)
 			{
 				case FolderActionId.folderList:
-					FolderListView.open();
+					FolderListView.open()
+						.then((opened) => {
+							if (opened)
+							{
+								AnalyticsService.getInstance().sendOpenFolderList(Analytics.SubSection.folderContextMenu);
+							}
+						});
 					break;
 
 				case FolderActionId.folderSettings:
+					AnalyticsService.getInstance().sendClickEditFolder(Analytics.SubSection.folderContextMenu);
 					new FolderUpdate({ id: this.#tabId }).open();
 					break;
 
 				case FolderActionId.folderDelete:
+					AnalyticsService.getInstance().sendClickDeleteFolder({
+						folderId: Number(this.#tabId),
+						subSection: Analytics.SubSection.folderContextMenu,
+					});
 					deleteFolder({
 						folderId: Number(this.#tabId),
 					})

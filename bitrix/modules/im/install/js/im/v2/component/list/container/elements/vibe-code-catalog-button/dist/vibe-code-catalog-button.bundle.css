@@ -5,6 +5,7 @@
 
 	position: relative;
 	display: flex;
+	flex-shrink: 0;
 	width: 42px;
 	height: 34px;
 	align-items: center;

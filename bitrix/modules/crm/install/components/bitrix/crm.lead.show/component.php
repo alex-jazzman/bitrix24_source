@@ -14,6 +14,7 @@ use Bitrix\Crm\Format\AddressFormatter;
 use Bitrix\Crm\Conversion\LeadConversionDispatcher;
 use Bitrix\Crm\LeadAddress;
 use Bitrix\Crm\Restriction\RestrictionManager;
+use Bitrix\Main\Web\Uri;
 
 CUtil::InitJSCore(array('ajax', 'tooltip'));
 $currentUserID = CCrmSecurityHelper::GetCurrentUserID();
@@ -1099,7 +1100,7 @@ if (IsModuleInstalled('bizproc') && CModule::IncludeModule('bizproc') && CBPRunt
 		{
 			$bizprocContainerID = $arResult['BIZPROC_CONTAINER_ID'] = $arResult['FORM_ID'].'_bp_wrapper';
 			$arResult['ENABLE_BIZPROC_LAZY_LOADING'] = true;
-			$arResult['POST_FORM_URI'] = CHTTP::urlAddParams(POST_FORM_ACTION_URI, array($formTabKey => 'tab_bizproc'));
+			$arResult['POST_FORM_URI'] = (string)(new Uri(POST_FORM_ACTION_URI))->addParams(array($formTabKey => 'tab_bizproc'));
 
 			$arResult['FIELDS']['tab_bizproc'][] = array(
 				'id' => 'LEAD_BIZPROC',
@@ -1119,30 +1120,22 @@ if (IsModuleInstalled('bizproc') && CModule::IncludeModule('bizproc') && CBPRunt
 					'ENTITY' => 'CCrmDocumentLead',
 					'DOCUMENT_TYPE' => 'LEAD',
 					'DOCUMENT_ID' => 'LEAD_'.$arResult['ELEMENT']['ID'],
-					'TASK_EDIT_URL' => CHTTP::urlAddParams(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_LEAD_SHOW'],
+					'TASK_EDIT_URL' => str_replace('__ID__', '#ID#', (string)(new Uri(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_LEAD_SHOW'],
 						array(
 							'lead_id' => $arResult['ELEMENT']['ID']
-						)),
-						array('bizproc_task' => '#ID#', $formTabKey => 'tab_bizproc')
-					),
-					'WORKFLOW_LOG_URL' => CHTTP::urlAddParams(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_LEAD_SHOW'],
+						))))->addParams(array('bizproc_task' => '__ID__', $formTabKey => 'tab_bizproc'))),
+					'WORKFLOW_LOG_URL' => str_replace('__ID__', '#ID#', (string)(new Uri(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_LEAD_SHOW'],
 						array(
 							'lead_id' => $arResult['ELEMENT']['ID']
-						)),
-						array('bizproc_log' => '#ID#', $formTabKey => 'tab_bizproc')
-					),
-					'WORKFLOW_START_URL' => CHTTP::urlAddParams(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_LEAD_SHOW'],
+						))))->addParams(array('bizproc_log' => '__ID__', $formTabKey => 'tab_bizproc'))),
+					'WORKFLOW_START_URL' => (string)(new Uri(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_LEAD_SHOW'],
 						array(
 							'lead_id' => $arResult['ELEMENT']['ID']
-						)),
-						array('bizproc_start' => 1, $formTabKey => 'tab_bizproc')
-					),
-					'back_url' => CHTTP::urlAddParams(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_LEAD_SHOW'],
+						))))->addParams(array('bizproc_start' => 1, $formTabKey => 'tab_bizproc')),
+					'back_url' => (string)(new Uri(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_LEAD_SHOW'],
 						array(
 							'lead_id' => $arResult['ELEMENT']['ID']
-						)),
-						array($formTabKey => 'tab_bizproc')
-					),
+						))))->addParams(array($formTabKey => 'tab_bizproc')),
 					'SET_TITLE'	=>	'Y'
 				),
 				'',
@@ -1175,12 +1168,10 @@ if (\Bitrix\Crm\Automation\Factory::isAutomationAvailable(CCrmOwnerType::Lead))
 				'ENTITY_TYPE_ID'     => \CCrmOwnerType::Lead,
 				'ENTITY_ID'          => $arResult['ELEMENT']['ID'],
 				'ENTITY_CATEGORY_ID' => null, //$arResult['CATEGORY_ID']
-				'back_url'           => CHTTP::urlAddParams(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_LEAD_SHOW'],
+				'back_url'           => (string)(new Uri(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_LEAD_SHOW'],
 					array(
 						'lead_id' => $arResult['ELEMENT']['ID']
-					)),
-					array($formTabKey => 'tab_automation')
-				),
+					))))->addParams(array($formTabKey => 'tab_automation')),
 			)
 		)
 	);

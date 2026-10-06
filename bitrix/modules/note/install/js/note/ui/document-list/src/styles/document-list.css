@@ -2,6 +2,13 @@
 	width: 100%;
 	display: flex;
 	flex-direction: column;
+	transition: padding-bottom 0.2s ease;
+}
+
+/* Clearance for the fixed bulk-actions pill (bottom: 26px + pill height) so the last card is
+   scrollable above it instead of being partially covered. */
+.note-document-cards--bulk-active {
+	padding-bottom: 96px;
 }
 
 .note-document-cards__grid {
@@ -56,10 +63,55 @@
 
 /* Lift interactive children above the stretched overlay so they remain clickable */
 .note-document-card__header-action,
+.note-document-card__select,
 a.note-document-card__collection-link,
 .note-document-card__attribution {
 	position: relative;
 	z-index: 2;
+}
+
+.note-document-card__select {
+	flex: 0 0 auto;
+	transition: opacity 0.12s ease, width 0.12s ease, margin-right 0.12s ease;
+}
+
+/* Mobile: the always-visible checkbox is the sole entry into selection mode, so grow its
+   tap target to ~44px. Negative margins absorb the padding to keep the row layout unchanged
+   (top/bottom fully, left fully; a small right gap to the title remains). width/margin are
+   pinned here so the desktop slide-in (--selecting/hover, below) never resizes the permanent
+   mobile checkbox — otherwise entering selection mode would shift every title sideways. */
+html.note-mobile .note-document-card__select {
+	width: auto;
+	padding: 13px;
+	margin: -13px -5px -13px -13px;
+}
+
+/* Hover-select gutter: idle cards keep full width (checkbox collapsed); the checkbox slides
+   in on card hover or keyboard focus. Its click enters selection mode (see page onSelect).
+   Suppressed on mobile — showHoverSelect is false there, so this class is never applied. */
+.note-document-card--hover-select .note-document-card__select {
+	width: 0;
+	margin-right: -12px;
+	opacity: 0;
+	overflow: hidden;
+	pointer-events: none;
+}
+
+.note-document-card--hover-select:hover .note-document-card__select,
+.note-document-card--hover-select:focus-within .note-document-card__select {
+	width: 20px;
+	margin-right: 0;
+	opacity: 1;
+	overflow: visible;
+	pointer-events: auto;
+}
+
+/* Entering selection mode expands the checkbox with the same slide-in as hover,
+   so checkboxes on non-hovered cards animate in instead of popping in. */
+.note-document-card--selecting .note-document-card__select {
+	width: 20px;
+	margin-right: 0;
+	opacity: 1;
 }
 
 .note-document-card:hover {
@@ -69,7 +121,7 @@ a.note-document-card__collection-link,
 .note-document-card__header {
 	display: flex;
 	flex-direction: row;
-	gap: 24px;
+	gap: 12px;
 	justify-content: space-between;
 	align-items: center;
 }
@@ -80,6 +132,9 @@ a.note-document-card__collection-link,
 	gap: 6px;
 	align-items: center;
 	min-width: 0;
+	/* Grow to fill the row so the title stays left-aligned right after the checkbox
+	   instead of being pushed toward the centre by the header's space-between. */
+	flex: 1 1 auto;
 }
 
 .note-document-card__title {
@@ -139,31 +194,11 @@ a.note-document-card__collection-link,
 	min-width: 0;
 }
 
+/* The avatar itself is note.ui.avatar-stack in row mode (one participant): the circle, the
+   identity color and the initial come from there, only the card metrics stay here. */
 .note-document-card__avatar {
-	width: 20px;
-	height: 20px;
-	border-radius: 9999px;
-	overflow: hidden;
-	background: var(--ui-color-base-7, #EEF2F4);
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
+	--note-avatar-stack-size: 20px;
 	flex: 0 0 auto;
-}
-
-.note-document-card__avatar-img {
-	width: 100%;
-	height: 100%;
-	object-fit: cover;
-	display: block;
-}
-
-.note-document-card__avatar-initials {
-	font-size: 9px;
-	line-height: 1;
-	font-weight: 600;
-	color: var(--ui-color-base-3, #828B95);
-	text-transform: uppercase;
 }
 
 .note-document-card__author-name {

@@ -6,6 +6,7 @@ jn.define('tasks/layout/checklist/list/src/constants', (require, exports, module
 	const { FeatureId } = require('tasks/enum');
 	const { getFeatureRestriction } = require('tariff-plan-restriction');
 
+	/** @type {string} */
 	const pathToExtension = `${currentDomain}/bitrix/mobileapp/tasksmobile/extensions/tasks/layout/checklist/list/`;
 
 	const directions = {
@@ -13,17 +14,21 @@ jn.define('tasks/layout/checklist/list/src/constants', (require, exports, module
 		RIGHT: 'right',
 	};
 
+	/** @type {number} */
 	const CHECKBOX_SIZE = 24;
+
 	const MEMBER_TYPE = {
 		accomplice: 'accomplice',
 		auditor: 'auditor',
 	};
 
+	/** @type {Record<string, Object>} */
 	const MEMBER_TYPE_ICONS = {
 		[MEMBER_TYPE.auditor]: Icon.OBSERVER,
 		[MEMBER_TYPE.accomplice]: Icon.GROUP,
 	};
 
+	/** @type {Record<string, Object>} */
 	const MEMBER_TYPE_RESTRICTION_FEATURE_META = {
 		[MEMBER_TYPE.accomplice]: getFeatureRestriction(FeatureId.ACCOMPLICE_AUDITOR),
 		[MEMBER_TYPE.auditor]: getFeatureRestriction(FeatureId.ACCOMPLICE_AUDITOR),

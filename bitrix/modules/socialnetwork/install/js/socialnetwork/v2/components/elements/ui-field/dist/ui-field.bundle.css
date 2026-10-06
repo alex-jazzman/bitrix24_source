@@ -26,6 +26,12 @@
 	width: inherit;
 }
 
+/* Focus outline on field cards — only for text fields (goal/description). This should be fixed when :has() becomes "Widely available." */
+.socialnetwork--project-wizard-goal-field .socialnetwork--project-wizard--ui-field_field:focus-within,
+.socialnetwork--project-wizard-description-field .socialnetwork--project-wizard--ui-field_field:focus-within {
+	outline: 1px solid var(--ui-color-accent-main-link);
+}
+
 .socialnetwork--project-wizard--field-shadow {
 	box-shadow: var(--ui-box-shadow-contrast-default-x, 0) var(--ui-box-shadow-contrast-default-y, 1px) 1px 0 rgba(0, 0, 0, 0.04);
 }

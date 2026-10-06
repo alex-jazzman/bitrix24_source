@@ -1,0 +1,70 @@
+.bp-pilot-badge {
+	position: relative;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 36px;
+	height: 36px;
+	cursor: pointer;
+	transition: background-color 200ms ease;
+	background: var(--ui-color-palette-white-base);
+	border-radius: var(--ui-border-radius-sm);
+	border-color: transparent;
+}
+
+/* The button is rendered only while the pilot is live, so the dot needs no state of its own. */
+.bp-pilot-badge::after {
+	content: '';
+	position: absolute;
+	top: 4px;
+	right: 4px;
+	width: 6px;
+	height: 6px;
+	border-radius: var(--ui-border-radius-circle);
+	background: var(--ui-color-accent-main-warning);
+}
+
+.bp-pilot-badge:hover {
+	background-color: var(--ui-color-base-30);
+}
+
+.bp-pilot-badge:active {
+	background-color: var(--ui-color-base-40);
+}
+
+.bp-pilot-badge:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+	border-radius: var(--ui-border-radius-sm);
+}
+
+.bp-pilot-card {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	padding: 16px;
+	width: 100%;
+	box-sizing: border-box;
+}
+
+/* One action per line: side by side the captions do not fit the width of the card in any language. */
+.bp-pilot-card__actions {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-xs);
+	margin-top: var(--ui-space-stack-2xs);
+}
+
+/*
+ * The platform indents every button that follows another one (`.ui-btn ~ .ui-btn`), which in a column
+ * only shifts the second action and eats its width. The rule carries two classes, so the reset needs
+ * the weight to win over it.
+ */
+.bp-pilot-card__actions > * {
+	margin-left: 0 !important;
+}
+
+/* An action of its own decides whether it is available at all, so the row may stay without any. */
+.bp-pilot-card__actions:empty {
+	display: none;
+}

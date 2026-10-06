@@ -11,5 +11,6 @@ return array(
 		'disk.model.item',
 		'disk.model.external-link.settings',
 		'ui.design-tokens',
+		'ui.notification',
 	],
 );

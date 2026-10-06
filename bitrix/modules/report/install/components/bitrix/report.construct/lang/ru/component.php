@@ -3,6 +3,7 @@ $MESS["REPORT_NOT_FOUND"] = "Отчет с ID `%s` не найден.";
 $MESS["REPORT_VIEW_PERMISSION_DENIED"] = "Недостаточно прав для просмотра отчета.";
 $MESS["REPORT_TITLE_NOT_SELECTED"] = "Не указано название отчета.";
 $MESS["REPORT_NO_COLUMN_SELECTED"] = "Не выбрано ни одной колонки.";
+$MESS["REPORT_ERR_FILTER_DATE_INVALID"] = "Некорректная дата в фильтре отчёта. Проверьте выбранные даты";
 $MESS["REPORT_UNKNOWN_ERROR"] = "Неизвестная ошибка.";
 $MESS["REPORT_USER_NOT_FOUND"] = "Пользователь не найден";
 $MESS["REPORT_PROJECT_NOT_FOUND"] = "Проект не найден";

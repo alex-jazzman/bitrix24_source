@@ -64,6 +64,21 @@ jn.define('im/messenger/provider/services/chat/create', (require, exports, modul
 		 */
 		async createCopilot(params)
 		{
+			if (Type.isNumber(params.parentChatId))
+			{
+				const config = {
+					type: params.type,
+					copilotMainRole: params.copilotMainRole,
+					parentChatId: params.parentChatId,
+				};
+
+				return runAction(RestMethod.imV2ChatAdd, {
+					data: {
+						fields: config,
+					},
+				});
+			}
+
 			if (Feature.isCopilotDraftChatAvailable)
 			{
 				return this.getOrCreateCopilotDraft();

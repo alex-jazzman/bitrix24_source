@@ -4,15 +4,22 @@ declare(strict_types=1);
 
 namespace Bitrix\Bizproc\Internal\Service\StorageActivity;
 
+use Bitrix\Bizproc\Activity\Dto\ContentBlock;
+use Bitrix\Bizproc\Activity\Dto\ContentBlockContext;
 use Bitrix\Bizproc\FieldType;
+use Bitrix\Bizproc\Internal\Entity\StorageField\StorageFieldCollection;
 use Bitrix\Bizproc\Internal\Repository\Mapper\StorageItemMapper;
 use Bitrix\Bizproc\Internal\Service\StorageField\FieldService;
 use Bitrix\Bizproc\Public\Provider\StorageFieldProvider;
 use Bitrix\Bizproc\Public\Provider\StorageTypeProvider;
 use Bitrix\Bizproc\Internal\Entity\StorageItem\StorageEavMigrationPhase;
+use Bitrix\Main\Localization\Loc;
 
 final class StorageActivityService
 {
+	/** Scope namespace under which CreateStorageNode declares dynamic storage titles (code => title). */
+	public const CONTENT_BLOCK_SCOPE_NAMESPACE = 'storage';
+
 	private const DEFAULT_SUPPORTED_FIELDS = [
 		'ID',
 		'WORKFLOW_ID',
@@ -21,6 +28,18 @@ final class StorageActivityService
 		'CREATED_BY',
 		'CREATED_TIME',
 	];
+
+	/**
+	 * Request-local caches for content-block resolution. getContentBlock() is called once per
+	 * storage node while a diagram is opened/saved/cataloged, so without caching it produces N+1
+	 * ORM lookups on large schemas. Keyed by storageId / storageCode.
+	 *
+	 * @var array<int, string>
+	 */
+	private static array $storageTitleByIdCache = [];
+
+	/** @var array<string, int> */
+	private static array $storageIdByCodeCache = [];
 
 	private static function buildFieldEntry(string $id, string $name, string $type): array
 	{
@@ -51,7 +70,10 @@ final class StorageActivityService
 		return $options;
 	}
 
-	public static function getFilteringFieldsMap(int $storageId, ?array $prefetchedFields = null): array
+	public static function getFilteringFieldsMap(
+		int $storageId,
+		?StorageFieldCollection $prefetchedFields = null,
+	): array
 	{
 		$map = [];
 
@@ -82,6 +104,51 @@ final class StorageActivityService
 		}
 
 		return $map;
+	}
+
+	/**
+	 * Both activity dialog maps of a single storage, built from one field load.
+	 *
+	 * @return array{filterFields: array, returnFields: array}
+	 */
+	public static function getActivityFieldsMaps(int $storageId): array
+	{
+		$fields = self::loadStorageFields($storageId);
+
+		return [
+			'filterFields' => array_values(self::getFilteringFieldsMap($storageId, $fields)),
+			'returnFields' => self::buildReturnFieldsMap($fields),
+		];
+	}
+
+	public static function loadStorageFields(int $storageId): StorageFieldCollection
+	{
+		if ($storageId <= 0)
+		{
+			return new StorageFieldCollection();
+		}
+
+		try
+		{
+			return (new StorageFieldProvider())->getByStorageId($storageId);
+		}
+		catch (\Bitrix\Main\ArgumentException)
+		{
+			return new StorageFieldCollection();
+		}
+	}
+
+	public static function buildReturnFieldsMap(StorageFieldCollection $fields): array
+	{
+		$fieldsMap = [];
+
+		foreach ($fields as $field)
+		{
+			$property = $field->toProperty();
+			$fieldsMap[$property['FieldName']] = $property;
+		}
+
+		return self::getReturnableSystemFields() + $fieldsMap;
 	}
 
 	public static function getSystemFields(?array $supportedFields = null): array
@@ -143,10 +210,81 @@ final class StorageActivityService
 			return 0;
 		}
 
+		if (isset(self::$storageIdByCodeCache[$storageCode]))
+		{
+			return self::$storageIdByCodeCache[$storageCode];
+		}
+
 		$provider = new StorageTypeProvider();
 		$type = $provider->getType(['CODE' => $storageCode], ['ID']);
 
-		return (int)$type?->getId();
+		$id = (int)$type?->getId();
+		if ($id > 0)
+		{
+			self::$storageIdByCodeCache[$storageCode] = $id;
+		}
+
+		return $id;
+	}
+
+	/**
+	 * Declarative scope consumption shared by all storage read/write/delete nodes. Lets the editor
+	 * client resolve a dynamic storage title (declared by an on-canvas CreateStorageNode) reactively.
+	 */
+	public static function getScopeConsumption(): array
+	{
+		return [
+			'namespace' => self::CONTENT_BLOCK_SCOPE_NAMESPACE,
+			'keyProperty' => 'StorageCode',
+			'emptyLabel' => (string)Loc::getMessage('BIZPROC_STORAGE_ACTIVITY_CONTENT_BLOCK_EMPTY'),
+		];
+	}
+
+	public static function getContentBlock(array $properties, ?ContentBlockContext $context = null): ?ContentBlock
+	{
+		$storageId = isset($properties['StorageId']) ? (int)$properties['StorageId'] : 0;
+		$storageCode = (string)($properties['StorageCode'] ?? '');
+		if ($storageId <= 0 && $storageCode !== '')
+		{
+			$storageId = self::resolveStorageId(null, $storageCode);
+		}
+
+		if ($storageId > 0)
+		{
+			return self::makeStorageContentBlock(self::resolveStorageTitleById($storageId));
+		}
+
+		if ($storageCode !== '')
+		{
+			$dynamicTitle = $context?->scope?->resolve(self::CONTENT_BLOCK_SCOPE_NAMESPACE, $storageCode);
+			if ($dynamicTitle !== null)
+			{
+				return self::makeStorageContentBlock($dynamicTitle);
+			}
+		}
+
+		return self::makeStorageContentBlock('');
+	}
+
+	private static function resolveStorageTitleById(int $storageId): string
+	{
+		if (isset(self::$storageTitleByIdCache[$storageId]))
+		{
+			return self::$storageTitleByIdCache[$storageId];
+		}
+
+		$title = (string)((new StorageTypeProvider())->getById($storageId)?->getTitle() ?? '');
+
+		return self::$storageTitleByIdCache[$storageId] = $title;
+	}
+
+	public static function makeStorageContentBlock(string $title): ContentBlock
+	{
+		$title = trim($title);
+
+		return new ContentBlock(
+			$title !== '' ? $title : (string)Loc::getMessage('BIZPROC_STORAGE_ACTIVITY_CONTENT_BLOCK_EMPTY'),
+		);
 	}
 
 	public static function getFilteringFieldsMapByStorageIds(array $storageIds): array
@@ -165,7 +303,10 @@ final class StorageActivityService
 
 		foreach ($storageIds as $id)
 		{
-			$result[$id] = self::getFilteringFieldsMap($id, $fieldsByStorage[$id] ?? []);
+			$result[$id] = self::getFilteringFieldsMap(
+				$id,
+				new StorageFieldCollection(...($fieldsByStorage[$id] ?? [])),
+			);
 		}
 
 		return $result;

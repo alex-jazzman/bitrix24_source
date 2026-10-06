@@ -11,9 +11,12 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Uri;
 
+use Bitrix\Bizproc\Api\Enum\Template\WorkflowTemplateSection;
+use Bitrix\Bizproc\Internal\Config\Storage;
 use Bitrix\Bizproc\Internal\Service\Feature\AiAgentsFeature;
 use Bitrix\Bizproc\Internal\Grid\AiAgents\AiAgentsGrid;
 use Bitrix\Bizproc\Internal\Grid\AiAgents\AiAgentsGridHelper;
+use Bitrix\Bizproc\Public\Service\AiAgent\RegionAvailabilityServiceInterface;
 
 Loc::loadMessages(__FILE__);
 
@@ -26,16 +29,19 @@ class BizprocAiAgentsComponent extends \Bitrix\Bizproc\Automation\Component\Base
 	private ?AiAgentsGrid $grid = null;
 	private AiAgentsGridHelper $gridHelper;
 	private AiAgentsFeature $aiAgentFeature;
+	private Storage $storage;
 
 	public function __construct(
 		$component = null,
 		?AiAgentsGridHelper $gridHelper = null,
 		?AiAgentsFeature $aiAgentFeature = null,
+		?Storage $storage = null,
 	)
 	{
 		parent::__construct($component);
 		$this->gridHelper = $gridHelper ?? ServiceLocator::getInstance()->get(AiAgentsGridHelper::class);
 		$this->aiAgentFeature = $aiAgentFeature ?? ServiceLocator::getInstance()->get(AiAgentsFeature::class);
+		$this->storage = $storage ?? ServiceLocator::getInstance()->get(Storage::class);
 	}
 
 	private function loadModules(): bool
@@ -98,6 +104,12 @@ class BizprocAiAgentsComponent extends \Bitrix\Bizproc\Automation\Component\Base
 		$result['IS_AI_AGENTS_AVAILABLE_BY_TARIFF'] = $this->aiAgentFeature->isAvailable();
 		$result['AI_AGENTS_TARIFF_SLIDER_CODE'] = $this->aiAgentFeature->getTariffSliderCode();
 
+		// One-off display flag of the current user, read at render time - that is, before anything
+		// on this page can be shown. It only lets the client skip the pre-flight request; the
+		// decision itself always stays on the server, so a stale snapshot in another tab is
+		// harmless.
+		$result['IS_EXISTING_RUNS_WARNING_SPENT'] = $this->storage->isExistingRunsWarningSpent();
+
 		$result['IS_BP_EDITOR_OPEN'] = Option::get('bizproc', 'designer_v2', 'N') === 'Y';
 
 		return $result;
@@ -115,10 +127,15 @@ class BizprocAiAgentsComponent extends \Bitrix\Bizproc\Automation\Component\Base
 
 	public function executeComponent(): void
 	{
+		if (!ServiceLocator::getInstance()->get(RegionAvailabilityServiceInterface::class)->isAvailable())
+		{
+			return;
+		}
+
 		if ($this->loadModules())
 		{
 			(new \Bitrix\Bizproc\Public\Service\Template\NodesInstallerService())
-				->trySyncSection('AI_AGENT')
+				->trySyncSection(WorkflowTemplateSection::AiAgent->value)
 			;
 
 			$this->arResult = $this->prepareData();

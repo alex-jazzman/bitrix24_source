@@ -15,6 +15,7 @@ use Bitrix\Crm\Component\EntityList\UserField\GridHeaders;
 use Bitrix\Crm\Controller\ErrorCode;
 use Bitrix\Crm\Field;
 use Bitrix\Crm\Filter\FieldsTransform;
+use Bitrix\Crm\Filter\RelatedEntity;
 use Bitrix\Crm\Filter\UiFilterOptions;
 use Bitrix\Crm\Integration;
 use Bitrix\Crm\Integration\Analytics\Builder\Entity\AddOpenEvent;
@@ -98,8 +99,14 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList implements \Bit
 		}
 		$factory = \Bitrix\Crm\Service\Container::getInstance()->getFactory($entityTypeId);
 		$listFilter = $this->prepareTotalActionFilter($this->unsignParams($listFilter));
+		$applied = $this->applyRelatedEntitiesFilter($listFilter, $entityTypeId);
 
-		$totalCountRow = $factory->getItemsCountFilteredByPermissions($listFilter);
+		$totalCountRow = $factory->getItemsCountFilteredByPermissions(
+			$applied['filter'],
+			null,
+			\Bitrix\Crm\Service\UserPermissions::OPERATION_READ,
+			$applied['runtime']
+		);
 
 		return Loc::getMessage('CRM_LIST_ALL_COUNT', ['#COUNT#' => $totalCountRow]);
 	}
@@ -121,6 +128,25 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList implements \Bit
 		}
 
 		return $filter;
+	}
+
+	/**
+	 * Pulls the related-entities filter out of $listFilter and returns the prepared
+	 * (filter, runtime) tuple. Counting and exporting need both pieces to be applied
+	 * symmetrically with the grid query - without this, the count endpoint and the
+	 * export bypass RELATED_ENTITIES and return unfiltered totals.
+	 *
+	 * @return array{filter: array, runtime: array}
+	 */
+	private function applyRelatedEntitiesFilter(array $listFilter, int $entityTypeId): array
+	{
+		$parameters = ['filter' => $listFilter];
+		RelatedEntity\GridFilterApplier::getDefault()->apply($parameters, $entityTypeId);
+
+		return [
+			'filter' => $parameters['filter'],
+			'runtime' => $parameters['runtime'] ?? [],
+		];
 	}
 
 	protected function init(): void
@@ -437,14 +463,17 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList implements \Bit
 		else
 		{
 			$order = $this->validateOrder($gridSort['sort']);
+			$applied = $this->applyRelatedEntitiesFilter($listFilter, $this->factory->getEntityTypeId());
+			$factoryParameters = [
+				'select' => $this->getSelect(),
+				'order' => $order,
+				'offset' => $pageNavigation->getOffset(),
+				'limit' => $pageNavigation->getLimit() + 1,
+				'filter' => $applied['filter'],
+				'runtime' => $applied['runtime'],
+			];
 			$list = $this->factory->getItemsFilteredByPermissions(
-				[
-					'select' => $this->getSelect(),
-					'order' => $order,
-					'offset' => $pageNavigation->getOffset(),
-					'limit' => $pageNavigation->getLimit() + 1,
-					'filter' => $listFilter,
-				],
+				$factoryParameters,
 				$this->userPermissions->getUserId(),
 				$this->isExportMode()
 					? \Bitrix\Crm\Service\UserPermissions::OPERATION_EXPORT
@@ -938,10 +967,12 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList implements \Bit
 		$listFilter = $this->getListFilter();
 		if (!isset($this->arParams['STEXPORT_TOTAL_ITEMS']) || $this->arParams['STEXPORT_TOTAL_ITEMS'] <= 0)
 		{
+			$applied = $this->applyRelatedEntitiesFilter($listFilter, $this->factory->getEntityTypeId());
 			$totalCount = $this->factory->getItemsCountFilteredByPermissions(
-				$listFilter,
+				$applied['filter'],
 				$this->userPermissions->getUserId(),
-				$this->userPermissions::OPERATION_EXPORT
+				$this->userPermissions::OPERATION_EXPORT,
+				$applied['runtime']
 			);
 			$lastExportedId = -1;
 		}

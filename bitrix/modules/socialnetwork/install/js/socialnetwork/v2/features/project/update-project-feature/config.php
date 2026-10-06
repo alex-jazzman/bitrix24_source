@@ -13,6 +13,7 @@ return [
 		'socialnetwork.v2.model.interface',
 		'socialnetwork.v2.model.project',
 		'socialnetwork.v2.provider.services.project-service',
+		'ui.notification-manager',
 	],
 	'skip_core' => false,
 ];

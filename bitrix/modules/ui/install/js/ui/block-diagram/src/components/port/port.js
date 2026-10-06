@@ -77,6 +77,16 @@ export const Port = {
 			type: Boolean,
 			default: false,
 		},
+		/** Opt-in: a placeholder port that is a valid drop target but never a source. */
+		isVirtual: {
+			type: Boolean,
+			default: false,
+		},
+		/** @type DiagramVirtualPortDropFn | null - invoked on drop when isVirtual. */
+		onVirtualDrop: {
+			type: Function,
+			default: null,
+		},
 	},
 	setup(props, { slots }): PortSetup
 	{
@@ -94,6 +104,8 @@ export const Port = {
 			position: props.position,
 			validationRules: props.validationRules,
 			index: props.index,
+			isVirtual: props.isVirtual,
+			onVirtualDrop: props.onVirtualDrop,
 		});
 		const {
 			isSourcePort,
@@ -105,6 +117,7 @@ export const Port = {
 			position: props.position,
 			index: props.index,
 			normalyzeConnectionFn: props.normalyzeConnectionFn,
+			isVirtual: props.isVirtual,
 		});
 
 		const isActive = computed((): boolean => {

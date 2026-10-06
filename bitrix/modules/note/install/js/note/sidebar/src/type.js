@@ -4,6 +4,8 @@ export type Collection = {
 	position: number,
 	canEditCollection: boolean,
 	canManagePermissions: boolean,
+	hasDescription: boolean,
+	mainDocumentId: number,
 };
 
 export type SidebarDocument = {

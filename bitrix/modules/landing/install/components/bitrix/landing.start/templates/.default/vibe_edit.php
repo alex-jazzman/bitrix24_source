@@ -95,7 +95,7 @@ else
 						customLeftBoundary: 66,
 						events: {
 							onCloseComplete: () => {
-								window.top.location = '<?= $publicUrl ?>';
+								window.top.location = '<?= \CUtil::jsEscape((string)$publicUrl) ?>';
 							},
 						},
 					},

@@ -1,35 +1,41 @@
+/*
+ * Add-members icon (collab header): glyph rendered via DS BIcon (Outline.ADD_PERSON). The colour is
+ * driven by the icon-set "--ui-icon-set__icon-color" variable. Neutral states are aligned with the
+ * shared header "--ds-icon" (resting base-4, hover base-3, active accent) — the resting state was
+ * migrated from the previous mask-based base-2 @ opacity 0.35 to base-4 @ opacity 1. The guest branch
+ * (--with-guest) keeps its collab-accent colours.
+ */
 .bx-im-collab-header__add-people-icon {
-	width: 22px;
-	height: 22px;
-	background-color: var(--ui-color-base-2);
-	mask-image: url('./images/add-people.svg');
-	mask-position: center;
-	mask-repeat: no-repeat;
-	mask-size: contain;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 24px;
+	height: 24px;
 	cursor: pointer;
-	opacity: 0.35;
+	opacity: 1;
+	--ui-icon-set__icon-color: var(--ui-color-base-4);
 }
 
 .bx-im-collab-header__add-people-icon:hover {
-	opacity: 0.7;
+	--ui-icon-set__icon-color: var(--ui-color-base-3);
 }
 
 .bx-im-collab-header__add-people-icon.--active {
-	background-color: #00ade3; /* no matching token */
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary);
 	opacity: 1;
 }
 
 .bx-im-collab-header__add-people-icon.--with-guest {
-	background-color: var(--ui-color-collab-accent-primary);
+	--ui-icon-set__icon-color: var(--ui-color-collab-accent-primary);
 	opacity: 1;
 }
 
 .bx-im-collab-header__add-people-icon.--with-guest:hover {
-	background-color: var(--ui-color-collab-accent-primary-alt);
+	--ui-icon-set__icon-color: var(--ui-color-collab-accent-primary-alt);
 }
 
 .bx-im-collab-header__add-people-icon.--with-guest.--active {
-	background-color: var(--ui-color-collab-element-1);
+	--ui-icon-set__icon-color: var(--ui-color-collab-element-1);
 }
 
 .bx-im-collab-header__add-to-chat {

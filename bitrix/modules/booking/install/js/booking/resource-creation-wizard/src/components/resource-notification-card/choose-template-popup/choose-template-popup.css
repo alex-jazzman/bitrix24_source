@@ -53,7 +53,15 @@
 
 .booking-resource-wizard-choose-template-popup-content-msg-example-body.wha {
 	overflow: hidden;
-	background: url('../images/whatsapp-msg-bg.svg') no-repeat;
+	background: url('../images/whatsapp-msg-bg.webp') no-repeat;
+	background-image: -webkit-image-set(
+		url('../images/whatsapp-msg-bg.webp') 1x,
+		url('../images/whatsapp-msg-bg-2x.webp') 2x
+	);
+	background-image: image-set(
+		url('../images/whatsapp-msg-bg.webp') 1x,
+		url('../images/whatsapp-msg-bg-2x.webp') 2x
+	);
 	background-size: cover;
 }
 

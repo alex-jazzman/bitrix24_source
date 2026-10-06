@@ -83,7 +83,7 @@ jn.define('im/messenger/model/dialogues/copilot/validator', (require, exports, m
 
 		if (!Type.isUndefined(newElem.chats) && !Type.isNull(newElem.chats))
 		{
-			result.chats = newElem.chats;
+			result.chats = mergeChats(existingElem.chats, newElem.chats);
 		}
 		else
 		{
@@ -119,6 +119,31 @@ jn.define('im/messenger/model/dialogues/copilot/validator', (require, exports, m
 		}
 
 		return result;
+	}
+
+	/**
+	 * @desc Partial payloads (e.g. search) carry chats without titleIsCustom/engine,
+	 * so existing chat fields must survive the update instead of being replaced.
+	 * Chats missing from the payload are preserved, same as in the updateRole action.
+	 * @param {Array<ChatsCopilotDataItem>} existingChats
+	 * @param {Array<ChatsCopilotDataItem>} newChats
+	 * @return {Array<ChatsCopilotDataItem>}
+	 */
+	function mergeChats(existingChats, newChats)
+	{
+		if (!Type.isArrayFilled(existingChats))
+		{
+			return newChats;
+		}
+
+		const chatsByDialogId = new Map(existingChats.map((chat) => [chat.dialogId, chat]));
+
+		newChats.forEach((chat) => {
+			const existingChat = chatsByDialogId.get(chat.dialogId);
+			chatsByDialogId.set(chat.dialogId, existingChat ? { ...existingChat, ...chat } : chat);
+		});
+
+		return [...chatsByDialogId.values()];
 	}
 
 	module.exports = {

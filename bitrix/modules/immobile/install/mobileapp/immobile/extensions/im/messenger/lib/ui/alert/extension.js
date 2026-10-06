@@ -209,6 +209,27 @@ jn.define('im/messenger/lib/ui/alert', (require, exports, module) => {
 		});
 	}
 
+	/**
+	 * @param {object} params
+	 * @param {boolean} params.forGuests
+	 * @param {function} params.onConfirm
+	 * @param {function} [params.onCancel]
+	 */
+	function showRegenerateSharingLinkAlert({ forGuests, onConfirm, onCancel })
+	{
+		const descriptionKey = forGuests
+			? 'IMMOBILE_MESSENGER_UI_NOTIFY_ALERT_REGENERATE_SHARING_LINK_DESCRIPTION_GUEST'
+			: 'IMMOBILE_MESSENGER_UI_NOTIFY_ALERT_REGENERATE_SHARING_LINK_DESCRIPTION_EMPLOYEE';
+
+		confirmDestructiveAction({
+			title: Loc.getMessage('IMMOBILE_MESSENGER_UI_NOTIFY_ALERT_REGENERATE_SHARING_LINK_TITLE'),
+			description: Loc.getMessage(descriptionKey),
+			destructionText: Loc.getMessage('IMMOBILE_MESSENGER_UI_NOTIFY_ALERT_REGENERATE_SHARING_LINK_CONFIRM_YES'),
+			onDestruct: onConfirm,
+			onCancel,
+		});
+	}
+
 	function clearHistoryDescription(forAll)
 	{
 		return forAll
@@ -231,5 +252,6 @@ jn.define('im/messenger/lib/ui/alert', (require, exports, module) => {
 		showLeaveChannelAlert,
 		showClearHistoryChatAlert,
 		showClearHistoryCollabAlert,
+		showRegenerateSharingLinkAlert,
 	};
 });

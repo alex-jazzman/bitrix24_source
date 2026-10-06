@@ -12,6 +12,11 @@ import type {
 
 import { BaseAction } from './base-action';
 
+// Template ids whose restart request is currently in flight. A fresh action
+// instance is created per grid click, so the guard against a duplicate restart
+// of the same click must live outside the instance.
+const restartsInFlight: Set<number> = new Set();
+
 export class RestartAction extends BaseAction
 {
 	templateId: ?number;
@@ -19,6 +24,43 @@ export class RestartAction extends BaseAction
 	static getActionId(): string
 	{
 		return ACTION_TYPE.RESTART;
+	}
+
+	// Block a duplicate restart while this template's request is still in flight.
+	// A legitimate restart after the previous one finished is allowed — the guard
+	// is released in the finally below on every exit path, and only for the id
+	// this call captured, so a concurrent in-flight restart's guard is untouched.
+	async execute(): Promise<void>
+	{
+		if (this.templateId && restartsInFlight.has(this.templateId))
+		{
+			return;
+		}
+
+		let capturedTemplateId: ?number = null;
+		if (this.templateId)
+		{
+			restartsInFlight.add(this.templateId);
+			capturedTemplateId = this.templateId;
+		}
+
+		// Releasing the guard in finally is correct only because RestartAction has no
+		// confirmation popup: super.execute() awaits the full ajax cycle. If a
+		// getConfirmationPopup() is ever added, BaseAction.execute() resolves right after
+		// the popup is shown (the ok-callback request is not awaited), so finally would
+		// release the guard prematurely. In that case move the release to the request
+		// boundary (as UpgradeAction does in onClose).
+		try
+		{
+			await super.execute();
+		}
+		finally
+		{
+			if (capturedTemplateId !== null)
+			{
+				restartsInFlight.delete(capturedTemplateId);
+			}
+		}
 	}
 
 	async run(): void

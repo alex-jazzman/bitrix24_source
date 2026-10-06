@@ -9,7 +9,7 @@ CJSCore::Init(["voximplant.common", "ui.alerts", "ui.buttons", "ui.sidepanel-con
 
 ?>
 <div class="ui-slider-section">
-    <div class="tel-set-item">
+	<div class="tel-set-item">
 
 <?php
 if ($arResult['SHOW_INTERNOD_WARNING'])
@@ -27,7 +27,7 @@ if ($arResult['SHOW_INTERNOD_WARNING'])
 }
 ?>
 
-        <div class="bx-vi-docs-body">
+		<div class="bx-vi-docs-body">
 			<?=GetMessage('VI_DOCS_BODY_2');?>
 			<? if (empty($arResult['DOCUMENTS'])): ?>
 				<?=GetMessage('VI_DOCS_UPLOAD_WHILE_RENT');?>
@@ -35,7 +35,7 @@ if ($arResult['SHOW_INTERNOD_WARNING'])
 		</div>
 
 		<? $previousCountry = '' ?>
-        <?foreach ($arResult['DOCUMENTS'] as $key => $verification):?>
+		<?foreach ($arResult['DOCUMENTS'] as $key => $verification):?>
 			<? if ($verification['COUNTRY_CODE'] != $previousCountry): ?>
 				<div class="tel-set-item-select-wrap">
 					<div class="ui-slider-heading-4"><?= htmlspecialcharsbx($verification['COUNTRY']) ?></div>
@@ -44,7 +44,7 @@ if ($arResult['SHOW_INTERNOD_WARNING'])
 			<? if($verification['COUNTRY_CODE'] !== 'RU'): ?>
 				<div class="voximplant-doc-label"><?= htmlspecialcharsbx($verification['ADDRESS']) ?></div>
 			<? endif ?>
-            <div class="bx-vi-docs-box">
+			<div class="bx-vi-docs-box">
 				<?
 					switch ($verification['STATUS'])
 					{
@@ -155,8 +155,8 @@ if ($arResult['SHOW_INTERNOD_WARNING'])
 					</script>
 				</div>
 
-            </div>
-            <div class="tel-set-divider"></div>
+			</div>
+			<div class="tel-set-divider"></div>
 			<?if(isset($verification['UPLOAD_IFRAME_URL'])):?>
 				<div id="vi_docs_upload_form_<?= htmlspecialcharsbx($verification['COUNTRY_CODE'])?>" class="tel-set-block-wrap tel-set-block-wrap-2" <?=($verification['SHOW_UPLOAD_IFRAME'] ? '' : 'style="display: none;"')?>>
 					<div class="tel-set-block tel-set-block-active">
@@ -164,7 +164,7 @@ if ($arResult['SHOW_INTERNOD_WARNING'])
 							<div class="tel-set-inner">
 								<?=GetMessage('VI_DOCS_UPLOAD_NOTICE')?>
 								<div class="bx-vi-docs-iframe">
-									<iframe src="<?=$verification['UPLOAD_IFRAME_URL']?>" frameborder="0" width="100%" height="100%"></iframe>
+									<iframe src="<?=$verification['UPLOAD_IFRAME_URL']?>" frameborder="0" width="100%" height="100%" allow="camera"></iframe>
 								</div>
 							</div>
 						</div>
@@ -176,14 +176,14 @@ if ($arResult['SHOW_INTERNOD_WARNING'])
 					</script>
 				<?endif?>
 			<?endif?>
-            <script>
+			<script>
 				<?if(isset($verification['UPLOAD_IFRAME_URL'])):?>
 					BX.Voximplant.Documents.initUploader('<?=CUtil::JSEscape($verification['COUNTRY_CODE'])?>');
 				<?endif?>
-            </script>
+			</script>
 			<? $previousCountry = $verification['COUNTRY_CODE'] ?>
-        <?endforeach;?>
-    </div>
+		<?endforeach;?>
+	</div>
 
 	<script>
 		BX.Voximplant.Documents.initAdditionalDocumentsUploader();

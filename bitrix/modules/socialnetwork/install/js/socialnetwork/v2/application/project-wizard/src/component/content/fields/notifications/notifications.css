@@ -1,0 +1,35 @@
+.sonet--project-wizard--notifications-trigger {
+	align-items: center;
+	background: var(--ui-color-bg-content-primary, #fff);
+	border-radius: var(--ui-border-radius-md, 10px);
+	box-shadow:
+		var(--ui-box-shadow-contrast-default-x, 0)
+		var(--ui-box-shadow-contrast-default-y, 1px)
+		var(--ui-area-box-shadow-default-blur, 1px)
+		var(--ui-box-shadow-contrast-default-spread, 0)
+		var(--ui-color-area-box-shadow-default-color, rgba(0, 0, 0, 0.04));
+	cursor: pointer;
+	display: flex;
+	gap: var(--ui-space-inline-xs, 8px);
+	justify-content: space-between;
+	min-height: 38px;
+	padding: var(--ui-space-inline-sm, 12px) var(--ui-space-inline-md2, 18px);
+}
+
+.sonet--project-wizard--notifications-trigger:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary, #2067b0);
+	outline-offset: 2px;
+}
+
+.sonet--project-wizard--notifications-trigger-content {
+	align-items: center;
+	display: flex;
+	gap: var(--ui-space-inline-xs, 8px);
+}
+
+.sonet--project-wizard--notifications-trigger-chevron {
+	align-items: center;
+	display: inline-flex;
+	justify-content: center;
+}
+

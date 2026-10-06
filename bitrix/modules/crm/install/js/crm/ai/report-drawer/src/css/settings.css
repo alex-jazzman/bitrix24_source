@@ -1,0 +1,41 @@
+.crm-ai-report-drawer-settings-menu .crm-ai-report-drawer-settings-item {
+	flex-direction: row-reverse;
+}
+
+.crm-ai-report-drawer-settings-menu .crm-ai-report-drawer-settings-item .menu-popup-item-text {
+	padding: 0 var(--ui-space-inset-xs, 8px) 0 var(--ui-space-inset-md2, 18px);
+}
+
+.crm-ai-report-drawer-settings-menu .crm-ai-report-drawer-settings-item .menu-popup-item-icon {
+	margin-left: 0;
+	margin-right: 18px;
+	width: 18px;
+	height: 18px;
+	background-color: var(--ui-color-base-5, #C9CCD0);
+	-webkit-mask-position: center;
+	mask-position: center;
+	-webkit-mask-repeat: no-repeat;
+	mask-repeat: no-repeat;
+	-webkit-mask-size: 18px 18px;
+	mask-size: 18px 18px;
+}
+
+.crm-ai-report-drawer-settings-menu .crm-ai-report-drawer-settings-item--choose-new-script .menu-popup-item-icon {
+	-webkit-mask-image: var(--o-ui-icon-set__path_change-order);
+	mask-image: var(--o-ui-icon-set__path_change-order);
+}
+
+.crm-ai-report-drawer-settings-menu .crm-ai-report-drawer-settings-item--analytics .menu-popup-item-icon {
+	-webkit-mask-image: var(--o-ui-icon-set__path_statistics-arrow);
+	mask-image: var(--o-ui-icon-set__path_statistics-arrow);
+}
+
+.crm-ai-report-drawer-settings-menu .crm-ai-report-drawer-settings-item--share-slider .menu-popup-item-icon {
+	-webkit-mask-image: var(--o-ui-icon-set__path_share);
+	mask-image: var(--o-ui-icon-set__path_share);
+}
+
+.crm-ai-report-drawer-settings-menu .crm-ai-report-drawer-settings-item--how-it-works .menu-popup-item-icon {
+	-webkit-mask-image: var(--o-ui-icon-set__path_graduation-cap);
+	mask-image: var(--o-ui-icon-set__path_graduation-cap);
+}

@@ -25,9 +25,9 @@ Loc::loadMessages(__FILE__);
 		);
 		?>
 		<input type="hidden" name="<?= $arParams['FIELD_NAME'];?>_ID" id="<?= $arParams['FIELD_ID'];?>_id" value="<?= $arParams['DOMAIN_ID'];?>" />
-		<input type="hidden" name="<?= $arParams['FIELD_NAME'];?>" id="<?= $arParams['FIELD_ID'];?>" value="<?= $arResult['DOMAIN_NAME'];?>" />
+		<input type="hidden" name="<?= $arParams['FIELD_NAME'];?>" id="<?= $arParams['FIELD_ID'];?>" value="<?= \htmlspecialcharsbx($arResult['DOMAIN_NAME']);?>" />
 		<span class="landing-form-site-name-wrap">
-			<span class="landing-form-site-name-label" id="<?= $arParams['FIELD_ID'];?>_title"><?= $arResult['DOMAIN_NAME'];?></span>
+			<span class="landing-form-site-name-label" id="<?= $arParams['FIELD_ID'];?>_title"><?= \htmlspecialcharsbx($arResult['DOMAIN_NAME']);?></span>
 			<span class="ui-title-input-btn  ui-domain-input-btn-js ui-editing-pen"></span>
 		</span>
 		<div id="ui-editable-domain-content" class="ui-editable-domain-content" style="display: none;">
@@ -58,7 +58,7 @@ Loc::loadMessages(__FILE__);
 						?>data-input-id="<?= $arParams['FIELD_ID'];?>_<?= $domainCode;?>" />
 					<div class="landing-form-domainname-wrap">
 						<label class="ui-form-control-label" for="landing-domain-name-<?= $counter;?>"><?= Loc::getMessage('LANDING_TPL_DOMAIN_NAME_'.mb_strtoupper($domainCode));?></label>
-						<input type="text" id="<?= $arParams['FIELD_ID'];?>_<?= $domainCode;?>" value="<?= $selected ? $domainNameLocal : '';?>" class="ui-input ui-domainname ui-domainname-subdomain" data-postfix="<?= $domainItem['postfix'];?>" />
+						<input type="text" id="<?= $arParams['FIELD_ID'];?>_<?= $domainCode;?>" value="<?= $selected ? \htmlspecialcharsbx($domainNameLocal) : '';?>" class="ui-input ui-domainname ui-domainname-subdomain" data-postfix="<?= $domainItem['postfix'];?>" />
 						<span class="landing-site-name-postfix"><?= $domainItem['postfix'];?></span>
 						<div class="landing-site-name-status" id="landing-site-name-status-subdomain"></div>
 					</div>
@@ -72,7 +72,7 @@ Loc::loadMessages(__FILE__);
 						?>data-input-id="<?= $arParams['FIELD_ID'];?>_<?= $domainCode;?>" />
 					<div class="landing-form-domainname-wrap">
 						<label class="ui-form-control-label" for="landing-domain-name-<?= $counter;?>"><?= Loc::getMessage('LANDING_TPL_DOMAIN_NAME_'.mb_strtoupper($domainCode));?></label>
-						<input type="text" id="<?= $arParams['FIELD_ID'];?>_<?= $domainCode;?>" maxlength="64" value="<?= $selected ? $domainNameLocal : '';?>" class="ui-input ui-domainname" data-postfix="" />
+						<input type="text" id="<?= $arParams['FIELD_ID'];?>_<?= $domainCode;?>" maxlength="64" value="<?= $selected ? \htmlspecialcharsbx($domainNameLocal) : '';?>" class="ui-input ui-domainname" data-postfix="" />
 						<div class="landing-site-name-status" id="landing-site-name-status-domain"></div>
 					</div>
 				</div>
@@ -94,14 +94,14 @@ Loc::loadMessages(__FILE__);
 						</tr>
 						<tr class="landing-alert-table-content">
 							<td id="landing-form-domain-name-text">
-								<?= $arResult['DOMAIN_NAME_ORIGINAL'] ? $arResult['DOMAIN_NAME_ORIGINAL'] : 'landing.mydomain';?>
+								<?= $arResult['DOMAIN_NAME_ORIGINAL'] ? \htmlspecialcharsbx($arResult['DOMAIN_NAME_ORIGINAL']) : 'landing.mydomain';?>
 							</td>
 							<td>CNAME</td>
 							<td>lb<?= $arResult['POSTFIX'];?>.</td>
 						</tr>
 						<tr class="landing-alert-table-content">
 							<td id="landing-form-domain-any-name-text">
-								<?= $arResult['DOMAIN_NAME_ORIGINAL'] ? $arResult['DOMAIN_NAME_ORIGINAL'] : 'landing.mydomain.ru';?>
+								<?= $arResult['DOMAIN_NAME_ORIGINAL'] ? \htmlspecialcharsbx($arResult['DOMAIN_NAME_ORIGINAL']) : 'landing.mydomain.ru';?>
 							</td>
 							<td>A</td>
 							<td><?= $arResult['IP_FOR_DNS'];?></td>

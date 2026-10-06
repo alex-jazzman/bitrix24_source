@@ -1,0 +1,15 @@
+.tasks-check-list-formatting-layer {
+	width: 100%;
+	min-width: 0;
+}
+
+.tasks-check-list-formatting-layer-display {
+	width: 100%;
+	font-family: inherit;
+	overflow: hidden;
+	display: -webkit-box;
+	-webkit-line-clamp: 3;
+	-webkit-box-orient: vertical;
+	text-overflow: ellipsis;
+	white-space: pre-wrap;
+}

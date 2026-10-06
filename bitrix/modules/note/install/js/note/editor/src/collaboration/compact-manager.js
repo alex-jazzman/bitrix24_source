@@ -1,6 +1,6 @@
 import * as Y from 'yjs';
 import { DocumentService } from '../application/document-service';
-import { uint8ArrayToBase64, base64ToUint8Array } from '../utils/binary';
+import { uint8ArrayToBase64 } from '../utils/binary';
 import { COMPACT_INTERVAL_MS } from '../const';
 
 export class CompactManager
@@ -14,68 +14,70 @@ export class CompactManager
 		this.#compactIntervalTimer = null;
 	}
 
+	// Pure transport: the snapshot of the document it is handed, published under the cursor it is handed.
+	// Neither is decided here. The document has to be brought level with the server state first, because
+	// the server drains the journal up to processedUpToId and keeps nothing but this snapshot - a cursor
+	// covering text the snapshot lacks deletes that text for good. Only the provider knows whether that
+	// holds, so it does the reading and this only sends.
+	//
+	// @return true when the server drained the window; false when nothing was sent or the server stood
+	//         down, so the caller keeps treating the window as still open.
 	async compact(
-		{ document, getEditorMarkdown }: { document: Object, getEditorMarkdown: () => string | null },
-	): Promise<void>
+		{ document, getEditorMarkdown, processedUpToId }: {
+			document: Object,
+			getEditorMarkdown: () => string | null,
+			processedUpToId: number,
+		},
+	): Promise<boolean>
 	{
 		if (!document)
 		{
-			return;
+			return false;
+		}
+
+		const uptoId = Number(processedUpToId);
+		if (!Number.isInteger(uptoId) || uptoId <= 0)
+		{
+			return false; // nothing has been applied yet, so there is nothing to drain behind us
+		}
+
+		const markdown = getEditorMarkdown();
+		if (typeof markdown !== 'string')
+		{
+			return false;
 		}
 
 		try
 		{
-			const patchResponse = await DocumentService.loadPatches({
-				documentId: this.#documentId,
-			});
-
-			const patchData = patchResponse?.data;
-			const patches = Array.isArray(patchData?.patches) ? patchData.patches : [];
-			const serverLastPatchId = patchData?.lastPatchId ?? null;
-
-			if (!serverLastPatchId)
-			{
-				return;
-			}
-
-			for (const patch of patches)
-			{
-				const raw = String(patch.PATCH || patch.patch || '');
-				if (raw.length > 0)
-				{
-					Y.applyUpdate(document, base64ToUint8Array(raw), 'remote');
-				}
-			}
-
-			const markdown = getEditorMarkdown();
-			if (typeof markdown !== 'string')
-			{
-				return;
-			}
-
 			const fullState = Y.encodeStateAsUpdate(document);
 			const yjsState = uint8ArrayToBase64(fullState);
 
-			await DocumentService.compact({
+			const response = await DocumentService.compact({
 				documentId: this.#documentId,
 				markdown,
-				processedUpToId: serverLastPatchId,
+				processedUpToId: uptoId,
 				yjsState,
 			});
+
+			// 'locked' means another editor holds the compact lock: our journal window was left untouched,
+			// so this attempt has settled nothing and the next trigger has to ask again.
+			return response?.data?.success === true;
 		}
 		catch
 		{
 			// Compact errors are non-fatal — patches accumulate and will be compacted later
+			return false;
 		}
 	}
 
-	startInterval(
-		{ document, getEditorMarkdown }: { document: Object, getEditorMarkdown: () => string | null },
-	): void
+	// The tick calls back instead of compacting on its own: whether compaction may run at all is decided
+	// by the provider, which is the only one that knows the document is whole. A timer that went straight
+	// to compact() here would be a way around that decision.
+	startInterval(onTick: () => mixed): void
 	{
 		this.stopInterval();
 		this.#compactIntervalTimer = setInterval(() => {
-			void this.compact({ document, getEditorMarkdown });
+			onTick();
 		}, COMPACT_INTERVAL_MS);
 	}
 

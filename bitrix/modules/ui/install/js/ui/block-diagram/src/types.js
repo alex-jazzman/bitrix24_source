@@ -1,5 +1,5 @@
 import { SnapshotHandler, RevertHandler } from './composables';
-import { PortsNearest, BlockIntersections } from './utils';
+import { PortsNearest, BlockIntersections, AnimationStepController } from './utils';
 
 export type Point = {
 	x: number;
@@ -65,6 +65,15 @@ export type DiagramNearestPort = {
 
 export type DiagramPortsMap = Map<DiagramBlockId, Map<DiagramPortId, DiagramPort>>;
 
+export type DiagramVirtualPortDropFn = (newConnection: DiagramNewConnection) => void;
+
+export type DiagramVirtualPortEntry = {
+	port: DiagramPort;
+	onDrop: DiagramVirtualPortDropFn | null;
+};
+
+export type DiagramVirtualPortsMap = Map<DiagramBlockId, Map<DiagramPortId, DiagramVirtualPortEntry>>;
+
 export type DiagramBlockPorts = {
 	input: Array<DiagramPort>;
 	output: Array<DiagramPort>;
@@ -105,6 +114,38 @@ export type DiagramConnection = {
 	targetPortId: DiagramPortId;
 };
 
+export type DiagramConnectionRouteHit = {
+	connection: DiagramConnection;
+	distancePx: number;
+};
+
+export type DiagramConnectionOffset = {
+	firstSegmentSize: number;
+	secondSegmentSize: number;
+	secondSegmentOrder: number;
+};
+
+export type DiagramConnectionsOffsetMap = {
+	[DiagramBlockId]: {
+		[DiagramPortId]: {
+			[DiagramConnectionId]: DiagramConnectionOffset;
+		};
+	};
+};
+
+export type DiagramConnectionPreviewPortMarker = {
+	blockId: DiagramBlockId;
+	portId: DiagramPortId;
+};
+
+export type DiagramConnectionPreview = {
+	hiddenConnectionId: DiagramConnectionId;
+	temporaryConnections: [DiagramConnection, DiagramConnection];
+	routingConnections: DiagramConnection[];
+	portMarkers: [DiagramConnectionPreviewPortMarker, DiagramConnectionPreviewPortMarker];
+	activationKey: string;
+};
+
 export type GroupedConnections = { [string]: Array<DiagramConnection> };
 export type ConnectionGroupNames = Array<string>;
 
@@ -135,7 +176,14 @@ export type DragData = {
 	dragImage: HTMLElement,
 };
 
+/**
+ * Must return the same verdict for the same target throughout one connection gesture: a refusal
+ * is cached until the gesture ends and the rule is not asked about that target again.
+ */
 export type DiagramValidationPortRuleFn = (newConnection: DiagramNewConnection) => boolean;
+
+// What a port may register as its validation: a list of rules, a single rule, or nothing.
+export type DiagramValidationPortRules = Array<DiagramValidationPortRuleFn> | DiagramValidationPortRuleFn | null;
 
 export type DiagramNormalyzeConnectionFn = (newConnection: DiagramNewConnection) => DiagramNewConnection;
 
@@ -147,6 +195,7 @@ export type DiagramInstancesContext = {
 export type DiagramInstances = {
 	portsNearest: typeof PortsNearest;
 	blockIntersections: typeof BlockIntersections;
+	animationStep: typeof AnimationStepController;
 };
 
 export type DiagramSearchBlockRect = {
@@ -175,13 +224,24 @@ export type State = {
 	connectionOffset: number;
 	connectionBendOffset: number;
 	connectionBorderRadius: number,
+	connectionsOffsetMap: DiagramConnectionsOffsetMap;
 
 	portsElMap: Map<DiagramBlockId, Map<DiagramPortId, HTMLElement>>;
 	portsRectMap: { [DiagramBlockId]: { [DiagramPortId]: DiagramPortRect } };
+	portsGeometryVersion: number;
+	portsValidationsFnMap: Map<DiagramBlockId, Map<DiagramPortId, DiagramValidationPortRules>>;
+	validPortsMap: DiagramPortsMap;
+
+	virtualPortsMap: DiagramVirtualPortsMap;
 
 	newConnection: DiagramNewConnection | null;
+	connectionPreview: DiagramConnectionPreview | null;
 
 	movingBlockId: DiagramBlockId | null;
+
+	// Every node the running gesture leads: a frame drag moves a whole selection, and a node drag
+	// takes its group members along.
+	gestureBlockIds: Set<DiagramBlockId>;
 
 	canvasRef: HTMLElement | null,
 	transformLayoutRef: HTMLElement | null,
@@ -195,6 +255,11 @@ export type State = {
 	zoom: number;
 	minZoom: number,
 	maxZoom: number,
+
+	// permission to snap, not snapping itself: a gesture is aligned only while Shift is held
+	snapToGrid: boolean;
+	snapSize: number | null;
+	canvasGridSize: number;
 
 	contextMenuLayerRef: HTMLElement | null;
 	targetContainerRef: HTMLElement | null;
@@ -214,8 +279,13 @@ export type State = {
 	revertHandler: RevertHandler;
 
 	highlitedBlockIds: Array<DiagramBlockId>;
+	transientHighlightedBlockIds: Array<DiagramBlockId>;
 	isSelectionActive: boolean;
 	selectionWorldRect: { x: number, y: number, width: number, height: number } | null;
+
+	// Shift the frame drag has drawn but not yet committed: the model keeps the pre-gesture
+	// positions until mouseup, and the selection box follows the nodes by this offset.
+	groupDragOffset: Point;
 
 	animationQueue: Generator<AnimationItem | undefined> | null;
 	currentAnimationItem: AnimationItem | null;
@@ -225,6 +295,8 @@ export type State = {
 	shortcuts: Array<PreparedShortcut>;
 	mousePosition: Point;
 	isKeyboardInitialized: boolean;
+	isRenderOptimizationAvailable: boolean;
+	connectionRouteHitTestEnabled: boolean;
 };
 
 export type Getters = {
@@ -232,7 +304,9 @@ export type Getters = {
 	canvasId: string | null;
 	groupedConnections: GroupedConnections;
 	connectionGroupNames: ConnectionGroupNames;
+	blockIdsInModel: Set<DiagramBlockId>;
 	isAnimate: boolean;
 	isDisabledBlockDiagram: boolean;
 	isMakeNewConnection: boolean;
+	snapStep: number | null;
 };

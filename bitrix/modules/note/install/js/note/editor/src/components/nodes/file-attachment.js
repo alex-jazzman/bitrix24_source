@@ -1,5 +1,5 @@
 import { AttachmentNodeViewBaseComponent } from './attachment-base';
-import { Text, Type } from 'main.core';
+import { Type } from 'main.core';
 
 export const FileAttachmentNodeViewComponent = {
 	extends: AttachmentNodeViewBaseComponent,
@@ -10,20 +10,15 @@ export const FileAttachmentNodeViewComponent = {
 		},
 		fileViewerAttrs(): Object
 		{
-			const attrs = {};
-			if (Type.isPlainObject(this.viewerAttrs))
-			{
-				Object.entries(this.viewerAttrs).forEach(([key, value]) => {
-					const normalizedKey = String(key).startsWith('data-')
-						? String(key)
-						: `data-${Text.toKebabCase(key)}`
-					;
-
-					attrs[normalizedKey] = value;
-				});
-			}
+			// Component-owned attributes go last so node data can never override them.
+			const attrs = { ...this.viewerDataAttrs };
 
 			attrs['data-viewer'] = true;
+			if (this.fileUrl)
+			{
+				attrs['data-src'] = this.fileUrl;
+			}
+
 			if (Type.isStringFilled(this.fileName))
 			{
 				attrs['data-title'] = this.fileName;

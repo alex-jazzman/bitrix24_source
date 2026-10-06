@@ -46,12 +46,14 @@ jn.define('im/messenger/model/folder/src/normalizer', (require, exports, module)
 			result.sort = folder.sort;
 		}
 
-		// REST: definition.chatIds / definition.recentSection → flat
+		// REST: definition.chats / definition.recentSection → flat
 		if (!options.fromLocalDatabase && Type.isPlainObject(folder.definition))
 		{
-			if (Type.isArray(folder.definition.chatIds))
+			if (Type.isArray(folder.definition.chats))
 			{
-				result.chatIds = folder.definition.chatIds;
+				result.chatIds = folder.definition.chats
+					.map((chat) => chat.chatId)
+					.filter((chatId) => Type.isInteger(chatId) && chatId > 0);
 			}
 
 			if (Type.isStringFilled(folder.definition.recentSection) || Type.isNull(folder.definition.recentSection))

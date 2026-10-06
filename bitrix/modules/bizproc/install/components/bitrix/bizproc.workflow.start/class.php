@@ -5,17 +5,22 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
-use Bitrix\Bizproc\Api\Request\WorkflowTemplateService\PrepareParametersRequest;
+use Bitrix\Bizproc\Api\Request\WorkflowTemplateService\PrepareStartParametersRequest;
 use Bitrix\Bizproc\Api\Request\WorkflowStateService\GetAverageWorkflowDurationRequest;
 use Bitrix\Bizproc\Api\Service\WorkflowTemplateService;
 use Bitrix\Bizproc\Api\Service\WorkflowStateService;
 use Bitrix\Bizproc\Internal\Service\Document\DocumentsResolver;
+use Bitrix\Bizproc\Internal\Service\Pilot\StartFormParameters;
+use Bitrix\Bizproc\Public\Provider\PilotVisibilityProvider;
 use Bitrix\Bizproc\Public\Service\Workflow\StarterService;
 use Bitrix\Bizproc\Starter\Dto\ContextDto;
 use Bitrix\Bizproc\Starter\Dto\DocumentDto;
 use Bitrix\Bizproc\Starter\Dto\EventDto;
 use Bitrix\Bizproc\Starter\Enum\Face;
+use Bitrix\Bizproc\Starter\Enum\ManualStartSurface;
 use Bitrix\Bizproc\Starter\Starter;
+use Bitrix\Bizproc\Starter\Template\Start\CollectRequest;
+use Bitrix\Bizproc\Starter\Template\Start\CollectorService;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 
@@ -29,7 +34,6 @@ class BizprocWorkflowStart extends \CBitrixComponent
 	private const ERROR_CODE_REQUIRED_CONSTANTS = 'required_constants';
 	private const ERROR_CODE_EMPTY_AUTOSTART_PARAMETERS = 'empty_autostart_parameters';
 	private const ERROR_CODE_TEMPLATE_NOT_FOUND = 'template_not_found';
-	private const ERROR_CODE_CONSTANTS_NOT_FOUND = 'constants_not_found';
 	private const ERROR_CODE_EDIT_CONSTANTS_ACCESS_DENIED = 'edit_constants_access_denied';
 	private const ERROR_CODE_START_WORKFLOW = 'StartWorkflowError';
 	private const ERROR_CODE_CHECK_WORKFLOW_PARAMETERS = 'CheckWorkflowParameters';
@@ -48,6 +52,7 @@ class BizprocWorkflowStart extends \CBitrixComponent
 		$arParams['DOCUMENT_ID'] = trim(
 			empty($arParams['DOCUMENT_ID']) ? ($request->get('document_id') ?? '') : $arParams['DOCUMENT_ID']
 		);
+		$arParams['CATEGORY_ID'] = $arParams['CATEGORY_ID'] ?? null;
 		$arParams['TEMPLATE_ID'] =
 			isset($arParams['TEMPLATE_ID'])
 				? (int)$arParams['TEMPLATE_ID']
@@ -133,6 +138,13 @@ class BizprocWorkflowStart extends \CBitrixComponent
 				$this->includeComponentTemplate('error');
 
 				return false;
+			}
+
+			if ($this->arParams['SET_TITLE'] === 'Y')
+			{
+				// the slider takes its accessible name from the page title. All three modes of the
+				// template share one title on purpose: each mode renders its own heading inside
+				$GLOBALS['APPLICATION']->SetTitle(Loc::getMessage('BPABS_TITLE'));
 			}
 
 			if ($this->isSingleStart())
@@ -327,9 +339,12 @@ class BizprocWorkflowStart extends \CBitrixComponent
 				return;
 			}
 
+			// a template without constants is refused the same way a template that is not there is: the two
+			// answers of the slider used to differ, and a difference of the codes tells about a template
+			// whatever the reason a template is not shown by
 			if (empty($template['CONSTANTS']))
 			{
-				$this->arResult = ['errors' => [$this->getErrorByCode(self::ERROR_CODE_CONSTANTS_NOT_FOUND)]];
+				$this->arResult = ['errors' => [$this->getErrorByCode(self::ERROR_CODE_TEMPLATE_NOT_FOUND)]];
 
 				return;
 			}
@@ -346,8 +361,19 @@ class BizprocWorkflowStart extends \CBitrixComponent
 		$this->arResult = ['errors' => [$this->getErrorByCode(self::ERROR_CODE_ACCESS_DENIED)]];
 	}
 
+	/**
+	 * The identifier comes from the link the slider is opened by, so the templates a pilot acts on are asked
+	 * about here one by one: the narrowing of the lists is not on this path at all. The question is asked
+	 * before the row is read, so a template the employee may not see leaves by the branch of a template that
+	 * does not exist.
+	 */
 	private function getTemplateById(int $templateId, array $complexDocumentType, ?string $triggerType = null): ?array
 	{
+		if (!(new PilotVisibilityProvider())->isVisible($this->getCurrentUserId(), $templateId))
+		{
+			return null;
+		}
+
 		$filter = [
 			'ID' => $templateId,
 			'ACTIVE' => 'Y',
@@ -368,22 +394,42 @@ class BizprocWorkflowStart extends \CBitrixComponent
 			['ID', 'NAME', 'DESCRIPTION', 'PARAMETERS', 'CONSTANTS'],
 		)->fetch();
 
-		return is_array($template) ? $template : null;
+		if (!is_array($template))
+		{
+			return null;
+		}
+
+		$template['PARAMETERS'] = $this->getStartFormParameters($templateId, $template['PARAMETERS'] ?? []);
+
+		return $template;
 	}
 
 	private function startParametersAction(int $templateId, array $complexDocumentType, array $complexDocumentId): void
 	{
 		$errors = [];
 
+		$this->arResult['TEMPLATES'][$templateId]['PARAMETERS'] = $this->getStartFormParameters(
+			$templateId,
+			$this->arResult['TEMPLATES'][$templateId]['PARAMETERS'] ?? [],
+		);
+
 		$template = $this->arResult['TEMPLATES'][$templateId];
 		$hasParameters = is_array($template['PARAMETERS']) && $template['PARAMETERS'];
 		$canStartWorkflow = !$hasParameters;
 
 		$parameters = [];
+		if (!$hasParameters)
+		{
+			['errors' => $errors, 'parameters' => $parameters] =
+				$this->prepareStartParametersFromRequest($templateId, $complexDocumentType)
+			;
+			$canStartWorkflow = !$errors;
+		}
+
 		if ($hasParameters && $this->isDoStartParamWorkflowAction())
 		{
 			['errors' => $errors, 'parameters' => $parameters] =
-				$this->prepareStartParametersFromRequest($template['PARAMETERS'], $complexDocumentType)
+				$this->prepareStartParametersFromRequest($templateId, $complexDocumentType)
 			;
 			$canStartWorkflow = !$errors;
 		}
@@ -426,19 +472,48 @@ class BizprocWorkflowStart extends \CBitrixComponent
 		$this->IncludeComponentTemplate();
 	}
 
-	private function prepareStartParametersFromRequest(array $templateParameters, array $complexDocumentType): array
+	/**
+	 * The fields of the form belong to the version that will be started for the current employee, and not
+	 * to the live row the template is read by.
+	 */
+	private function getStartFormParameters(int $templateId, mixed $commonParameters): array
+	{
+		return (new StartFormParameters())->forInitiator(
+			$templateId,
+			$this->getCurrentUserId(),
+			$this->getManualStartSurface(),
+			is_array($commonParameters) ? $commonParameters : [],
+		);
+	}
+
+	/**
+	 * Both branches of the component start the process by hand from the same form, and the trigger branch
+	 * is the manual start by a trigger button of the scheme.
+	 */
+	private function getManualStartSurface(): ManualStartSurface
+	{
+		return ($this->arParams['TRIGGER_TYPE'] ?? null)
+			? ManualStartSurface::TriggerButton
+			: ManualStartSurface::StartForm
+		;
+	}
+
+	private function prepareStartParametersFromRequest(int $templateId, array $complexDocumentType): array
 	{
 		$request = \Bitrix\Main\Application::getInstance()->getContext()->getRequest();
 
 		$response =
 			(new WorkflowTemplateService())
-				->prepareParameters(
-					new PrepareParametersRequest(
-						templateParameters: $templateParameters,
-						requestParameters: array_merge($request->toArray(), $request->getFileList()->toArray()),
+				->prepareStartParameters(
+					new PrepareStartParametersRequest(
+						templateId: $templateId,
 						complexDocumentType: $complexDocumentType,
-					)
-			)
+						requestParameters: array_merge($request->toArray(), $request->getFileList()->toArray()),
+						targetUserId: $this->getCurrentUserId(),
+						eventType: CBPDocumentEventType::Manual,
+						manualStartSurface: $this->getManualStartSurface(),
+					),
+				)
 		;
 
 		$errors = [];
@@ -465,12 +540,18 @@ class BizprocWorkflowStart extends \CBitrixComponent
 
 		$dbWorkflowTemplate = CBPWorkflowTemplateLoader::getList(
 			['SORT' => 'ASC', 'NAME' => 'ASC'],
-			[
-				'DOCUMENT_TYPE' => $complexDocumentType,
-				'ACTIVE' => 'Y',
-				'IS_SYSTEM' => 'N',
-				'<AUTO_EXECUTE' => CBPDocumentEventType::Automation,
-			],
+			array_merge(
+				[
+					'DOCUMENT_TYPE' => $complexDocumentType,
+					'ACTIVE' => 'Y',
+					'IS_SYSTEM' => 'N',
+					'<AUTO_EXECUTE' => CBPDocumentEventType::Automation,
+				],
+				// the box page of the component is a manual start point of its own, and the template it
+				// starts is taken from this very list, so the templates a pilot acts on are narrowed here
+				// to the ones this employee may see
+				(new PilotVisibilityProvider())->getVisibilityFilter($this->getCurrentUserId()),
+			),
 			false,
 			false,
 			['ID', 'NAME', 'DESCRIPTION', 'MODIFIED', 'USER_ID', 'PARAMETERS', 'AUTO_EXECUTE']
@@ -552,7 +633,14 @@ class BizprocWorkflowStart extends \CBitrixComponent
 		$currentUserId = $this->getCurrentUserId();
 		$triggerType = $this->arParams['TRIGGER_TYPE'] ?? null;
 
-		$context = new ContextDto('bizproc', Face::WEB);
+		// the single start without parameters and the start by SHOW_MODE run the process from here,
+		// bypassing the controller, so the mark of the surface travels in the context of this start
+		$context = new ContextDto('bizproc', Face::WEB, manualStartSurface: $this->getManualStartSurface());
+
+		// the values were filled in against the parameters of the version that acts for this employee, so
+		// they are handed over keyed by the template: a flat set would be matched against the live row and
+		// would lose the fields the pilot version of the template has of its own
+		$workflowParameters = [$templateId => $workflowParameters];
 
 		if ($triggerType)
 		{
@@ -659,16 +747,14 @@ class BizprocWorkflowStart extends \CBitrixComponent
 		$templatesById = [];
 		foreach ($documents as $document)
 		{
-			$documentType = $document['documentType'] ?? null;
+			$documentType = $document['documentType'];
 			if (!is_array($documentType))
 			{
 				continue;
 			}
 
-			$documentId = (isset($document['documentId']) && is_array($document['documentId']))
-				? $document['documentId']
-				: null
-			;
+			$documentId = is_array($document['documentId']) ? $document['documentId'] : null;
+			$categoryId = $document['categoryId'];
 			$documentStates = CBPWorkflowTemplateLoader::getDocumentTypeStates($documentType, $execType);
 			$userGroups = $this->getUserGroupsForAutostartDocument($documentType, $documentId);
 
@@ -680,9 +766,10 @@ class BizprocWorkflowStart extends \CBitrixComponent
 			$accessibleDocuments[] = [
 				'documentType' => $documentType,
 				'documentId' => $documentId,
+				'categoryId' => $categoryId,
 			];
 
-			foreach ($this->getTemplatesWithParametersFromStates($documentStates, $documentType) as $template)
+			foreach ($this->collectTemplatesWithParameters($documentType, $execType, $categoryId) as $template)
 			{
 				$templatesById[$template['ID']] ??= $template;
 			}
@@ -705,32 +792,39 @@ class BizprocWorkflowStart extends \CBitrixComponent
 		];
 	}
 
-	private function getTemplatesWithParametersFromStates(array $documentStates, array $documentType): array
+	private function collectTemplatesWithParameters(array $documentType, int $execType, ?int $categoryId): array
 	{
 		$templates = [];
-		foreach ($documentStates as $template)
-		{
-			if (!is_array($template['TEMPLATE_PARAMETERS']) || !$template['TEMPLATE_PARAMETERS'])
-			{
-				continue;
-			}
+		$collection = (new CollectorService())->collect(
+			new CollectRequest(
+				complexDocumentType: $documentType,
+				eventType: $execType,
+				categoryId: $categoryId,
+				onlyParameterized: true,
+				useAutoExecuteBitmask: true,
+				requireActive: true,
+				excludeSystem: false,
+			),
+		);
 
+		foreach ($collection->getAll() as $template)
+		{
 			$templates[] = [
-				'ID' => $template['TEMPLATE_ID'],
-				'NAME' => $template['TEMPLATE_NAME'],
-				'DESCRIPTION' => $template['TEMPLATE_DESCRIPTION'],
+				'ID' => $template->id,
+				'NAME' => $template->name,
+				'DESCRIPTION' => $template->description,
 				'DOCUMENT_TYPE' => $documentType,
-				'PARAMETERS' => $this->getTemplateParametersFromState($template),
+				'PARAMETERS' => $this->getTemplateParameters($template->parameters, $template->id),
 			];
 		}
 
 		return $templates;
 	}
 
-	private function getTemplateParametersFromState(array $template): array
+	private function getTemplateParameters(array $templateParameters, int $templateId): array
 	{
 		$parameters = [];
-		foreach ($template['TEMPLATE_PARAMETERS'] as $parameterKey => $parameter)
+		foreach ($templateParameters as $parameterKey => $parameter)
 		{
 			if ($parameterKey === 'TargetUser')
 			{
@@ -738,7 +832,7 @@ class BizprocWorkflowStart extends \CBitrixComponent
 			}
 
 			$parameter['Default'] = $this->convertParameterValues($parameter['Default']);
-			$parameters["bizproc{$template['TEMPLATE_ID']}_{$parameterKey}"] = $parameter;
+			$parameters["bizproc{$templateId}_{$parameterKey}"] = $parameter;
 		}
 
 		return $parameters;
@@ -920,6 +1014,10 @@ class BizprocWorkflowStart extends \CBitrixComponent
 		return [[
 			'documentType' => $documentType,
 			'documentId' => $this->getComplexDocumentIdOrNull(),
+			'categoryId' => is_numeric($this->arParams['CATEGORY_ID'] ?? null)
+				? (int)$this->arParams['CATEGORY_ID']
+				: null
+			,
 		]];
 	}
 
@@ -991,6 +1089,7 @@ class BizprocWorkflowStart extends \CBitrixComponent
 			$result[$complexDocumentType->getKey()] = [
 				'documentType' => $complexDocumentType->toArray(),
 				'documentId' => $resolvedDocument->complexDocumentId?->toArray(),
+				'categoryId' => $resolvedDocument->categoryId,
 			];
 		}
 
@@ -1029,6 +1128,11 @@ class BizprocWorkflowStart extends \CBitrixComponent
 		{
 			$arParams['DOCUMENT_ID'] = (string)($documentId[2] ?? '');
 		}
+
+		if (array_key_exists('categoryId', $firstDocument))
+		{
+			$arParams['CATEGORY_ID'] = $firstDocument['categoryId'];
+		}
 	}
 
 	private function showErrorMessages(array $errors): bool
@@ -1055,7 +1159,6 @@ class BizprocWorkflowStart extends \CBitrixComponent
 			self::ERROR_CODE_REQUIRED_CONSTANTS => Loc::getMessage('BPABS_REQUIRED_CONSTANTS'),
 			self::ERROR_CODE_EMPTY_AUTOSTART_PARAMETERS => Loc::getMessage('BPABS_NO_AUTOSTART_PARAMETERS'),
 			self::ERROR_CODE_TEMPLATE_NOT_FOUND => Loc::getMessage('BIZPROC_CMP_WORKFLOW_START_TEMPLATE_NOT_FOUND') ?? '',
-			self::ERROR_CODE_CONSTANTS_NOT_FOUND => Loc::getMessage('BIZPROC_CMP_WORKFLOW_START_CONSTANTS_NOT_FOUND'),
 			self::ERROR_CODE_EDIT_CONSTANTS_ACCESS_DENIED => Loc::getMessage('BIZPROC_CMP_WORKFLOW_START_CONSTANTS_ACCESS_DENIED'),
 			default => '',
 		};

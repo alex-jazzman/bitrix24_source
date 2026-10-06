@@ -1,0 +1,59 @@
+.ui-block-diagram-connection-preview {
+	position: absolute;
+	top: 0;
+	left: 0;
+	z-index: 5;
+	width: 100%;
+	height: 100%;
+	overflow: visible;
+	pointer-events: none;
+}
+
+.ui-block-diagram-connection-preview__path {
+	stroke: var(--pallete-blue-blue-57, #4A9DFF);
+	stroke-width: 1;
+	fill: var(--ui-color-background-transparent, transparent);
+	opacity: 1;
+	animation: ui-block-diagram-connection-preview-path 200ms ease-out;
+}
+
+.ui-block-diagram-connection-preview__marker {
+	fill: var(--pallete-blue-blue-57, #4A9DFF);
+	transform: scale(1);
+	transform-box: fill-box;
+	transform-origin: center;
+	animation: ui-block-diagram-connection-preview-marker 200ms ease-out;
+}
+
+@keyframes ui-block-diagram-connection-preview-path {
+	from {
+		opacity: 0.55;
+	}
+
+	to {
+		opacity: 1;
+	}
+}
+
+@keyframes ui-block-diagram-connection-preview-marker {
+	0% {
+		transform: scale(0.6);
+	}
+
+	60% {
+		transform: scale(1.15);
+	}
+
+	100% {
+		transform: scale(1);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.ui-block-diagram-connection-preview__path,
+	.ui-block-diagram-connection-preview__marker {
+		opacity: 1;
+		transform: scale(1);
+		animation: none;
+	}
+}

@@ -23,12 +23,21 @@ if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->isCrmAd
 	die();
 }
 
+if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !check_bitrix_sessid())
+{
+	echo GetMessage('CRM_LOC_IMP_LOAD_ACCESS_DENIED');
+	require_once($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/epilog_after.php");
+	die();
+}
+
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/sale/general/location_import.php");
+
+$tmpPath = CTempFile::GetDirectoryName(12, 'crm');
 
 $arLoadParams = [
 	'STEP' => (int)($_REQUEST['STEP'] ?? 0),
 	'CSVFILE' => (string)($_REQUEST['CSVFILE'] ?? ''),
-	'TMP_PATH' => (string)($_REQUEST['TMP_PATH'] ?? ''),
+	'TMP_PATH' => $tmpPath,
 	'LOADZIP' => $_REQUEST['LOADZIP'] ?? '',
 	'DLSERVER' => 'https://www.1c-bitrix.ru',
 	'DLPORT' => null,

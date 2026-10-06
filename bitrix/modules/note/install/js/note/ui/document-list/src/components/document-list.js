@@ -27,9 +27,30 @@ export const DocumentList = {
 			validator: (value: string): boolean =>
 				value === 'cards' || value === 'compact' || value === 'detailed' || value === 'search',
 		},
+		selectionEnabled: {
+			type: Boolean,
+			default: false,
+		},
+		// List supports multi-select: enables the desktop hover checkbox on each card.
+		selectable: {
+			type: Boolean,
+			default: false,
+		},
+		isMobile: {
+			type: Boolean,
+			default: false,
+		},
+		selectedIds: {
+			type: [Set, Array],
+			default: () => [],
+		},
 	},
-	emits: ['open', 'open-collection', 'load-more'],
+	emits: ['open', 'open-collection', 'load-more', 'select'],
 	computed: {
+		selectedSet(): Set
+		{
+			return this.selectedIds instanceof Set ? this.selectedIds : new Set(this.selectedIds);
+		},
 		isEmpty(): boolean
 		{
 			return !this.loading && this.items.length === 0;
@@ -43,6 +64,9 @@ export const DocumentList = {
 			return [
 				'note-document-cards',
 				this.mode === 'compact' ? 'note-document-cards--compact' : '',
+				// Reserve room at the bottom while the floating bulk-actions pill is up (shown once
+				// something is selected), so the last card can scroll clear of it and stay reachable.
+				this.selectedSet.size > 0 ? 'note-document-cards--bulk-active' : '',
 			];
 		},
 	},
@@ -67,6 +91,14 @@ export const DocumentList = {
 		onOpenCollection(payload): void
 		{
 			this.$emit('open-collection', payload);
+		},
+		onSelect(payload): void
+		{
+			this.$emit('select', payload);
+		},
+		isSelected(id): boolean
+		{
+			return this.selectedSet.has(Number(id));
 		},
 		setupObserver(): void
 		{
@@ -98,10 +130,23 @@ export const DocumentList = {
 				this.observer = null;
 			}
 		},
+		// Move focus to the list root. Called by the host page when the floating bulk-actions bar
+		// collapses (exit / select-all off / after an action): the bar is teleported to <body>, so
+		// once it hides the focus that sat on its buttons would be lost, breaking keyboard/AT flow
+		// (WCAG 2.4.3). Landing on the (programmatically focusable, tabindex=-1) list root keeps the
+		// next Tab anchored to the content instead of jumping to the end of the document.
+		focusRoot(): void
+		{
+			const root = this.$refs.root;
+			if (root instanceof HTMLElement)
+			{
+				root.focus();
+			}
+		},
 	},
 	// language=Vue
 	template: `
-		<div :class="rootClass">
+		<div :class="rootClass" ref="root" tabindex="-1">
 			<div v-if="loading && items.length === 0" class="note-document-cards__loader">
 				<Loader />
 			</div>
@@ -113,8 +158,13 @@ export const DocumentList = {
 						:key="item.id"
 						:item="item"
 						:mode="mode"
+						:selection-enabled="selectionEnabled"
+						:selectable="selectable"
+						:is-mobile="isMobile"
+						:selected="isSelected(item.id)"
 						@open="onOpen"
 						@open-collection="onOpenCollection"
+						@select="onSelect"
 					>
 						<template v-if="$slots.actions" #actions="slotProps">
 							<slot name="actions" :item="slotProps.item" />

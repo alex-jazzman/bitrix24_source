@@ -1,3 +1,5 @@
+import { Loc } from 'main.core';
+
 import type { BitrixVueComponentProps } from 'ui.vue3';
 
 export const SettingsButton: BitrixVueComponentProps = {
@@ -5,6 +7,12 @@ export const SettingsButton: BitrixVueComponentProps = {
 	data: () => ({
 		selected: false,
 	}),
+	computed: {
+		buttonLabel(): string
+		{
+			return Loc.getMessage('TILE_UPLOADER_SETTINGS_LABEL');
+		},
+	},
 	methods: {
 		handleSettingsClick(): void
 		{
@@ -34,11 +42,16 @@ export const SettingsButton: BitrixVueComponentProps = {
 	},
 	// language=Vue
 	template: `
-		<div 
-			class="ui-tile-uploader-settings" 
-			:class="{ '--selected': this.selected }" 
-			@click="handleSettingsClick" 
+		<button
+			type="button"
+			class="ui-tile-uploader-settings"
+			data-testid="ui-tile-uploader-settings-btn"
+			:class="{ '--selected': selected }"
+			:aria-label="buttonLabel"
+			aria-haspopup="menu"
+			:aria-expanded="selected ? 'true' : 'false'"
+			@click="handleSettingsClick"
 			ref="container"
-		></div>
+		></button>
 	`
 };

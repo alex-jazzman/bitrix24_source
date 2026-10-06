@@ -322,27 +322,34 @@
 
 						if (BX.Landing.Utils.isPlainObject(action) && !BX.Landing.Utils.isEmpty(action))
 						{
+							// the message is built detached, so the region is filled in one go and announced once
+							var userActionContent = document.createDocumentFragment();
+
 							if (action.header)
 							{
-								userActionContainer.querySelector('h3').innerText = action.header;
+								BX.Dom.append(BX.Dom.create('h3', {text: action.header}), userActionContent);
 							}
 
 							if (action.description)
 							{
-								userActionContainer.querySelector('p').innerText = action.description;
-							}
-
-							if (action.href)
-							{
-								userActionContainer.querySelector('a').setAttribute('href', action.href);
+								BX.Dom.append(BX.Dom.create('p', {text: action.description}), userActionContent);
 							}
 
 							if (action.text)
 							{
-								userActionContainer.querySelector('a').innerText = action.text;
+								// an action without an address leads nowhere: it stays a button, reachable all the same
+								var userActionButton = action.href
+									? BX.Dom.create('a', {attrs: {href: action.href, className: 'ui-btn'}, text: action.text})
+									: BX.Dom.create('button', {attrs: {type: 'button', className: 'ui-btn'}, text: action.text});
+
+								BX.Dom.append(BX.Dom.create('div', {children: [userActionButton]}), userActionContent);
 							}
 
-							userActionContainer.classList.add('landing-ui-user-action-show');
+							// the region is announceable only from the moment it has the message: an empty alert
+							// left in the markup is a live region announcing nothing
+							BX.Dom.attr(userActionContainer, 'role', 'alert');
+							BX.Dom.append(userActionContent, userActionContainer);
+							BX.Dom.addClass(userActionContainer, 'landing-ui-user-action-show');
 
 							document.querySelector('.landing-ui-panel-top-history').classList.add('landing-ui-disabled');
 							document.querySelector('.landing-ui-panel-top-devices').classList.add('landing-ui-disabled');
@@ -356,7 +363,13 @@
 							BX.Dom.addClass(loaderContainer, 'landing-ui-hide');
 							setTimeout(function() {
 								BX.remove(loaderContainer);
-								BX.remove(userActionContainer);
+
+								// a message shown stays: a live region taken away half a second later is
+								// one a screen reader may never get to read
+								if (!BX.Dom.hasClass(userActionContainer, 'landing-ui-user-action-show'))
+								{
+									BX.remove(userActionContainer);
+								}
 							}, 200);
 						}, 300);
 					});
@@ -578,23 +591,36 @@
 																	},
 																	dataType: 'json',
 																	onsuccess: data => {
-																		BX.removeClass(BX('landing-popup-publication-btn'), "landing-ui-panel-top-pub-btn-error");
+																		const publicationButton = BX('landing-popup-publication-btn');
+																		const publicationIcon = publicationButton ? publicationButton.querySelector('.ui-icon-set') : null;
+
+																		BX.removeClass(publicationButton, "landing-ui-panel-top-pub-btn-error");
 																		if (this.checked)
 																		{
-																			BX.addClass(BX('landing-popup-publication-btn'), "landing-ui-panel-top-pub-btn-auto");
-																			BX.addClass(BX('landing-popup-publication-btn'), "landing-ui-panel-top-pub-btn-loader");
+																			BX.addClass(publicationButton, "landing-ui-panel-top-pub-btn-auto");
+																			BX.addClass(publicationButton, "landing-ui-panel-top-pub-btn-loader");
+																			if (publicationIcon)
+																			{
+																				BX.removeClass(publicationIcon, "--o-cloud");
+																				BX.addClass(publicationIcon, "--s-cloud");
+																			}
 																			BX.addClass(document.body.querySelector(".landing-popup-publication-content-autopub-icon"), "landing-ui-panel-top-pub-btn-auto");
 																			BX.Landing.Backend.getInstance()
 																				.action('Landing::publication', {
 																					lid: landingId
 																				})
 																				.then(() => {
-																					BX.removeClass(BX('landing-popup-publication-btn'), "landing-ui-panel-top-pub-btn-loader");
+																					BX.removeClass(publicationButton, "landing-ui-panel-top-pub-btn-loader");
 																				})
 																		}
 																		else
 																		{
-																			BX.removeClass(BX('landing-popup-publication-btn'), "landing-ui-panel-top-pub-btn-auto");
+																			BX.removeClass(publicationButton, "landing-ui-panel-top-pub-btn-auto");
+																			if (publicationIcon)
+																			{
+																				BX.removeClass(publicationIcon, "--s-cloud");
+																				BX.addClass(publicationIcon, "--o-cloud");
+																			}
 																			BX.removeClass(document.body.querySelector(".landing-popup-publication-content-autopub-icon"), "landing-ui-panel-top-pub-btn-auto");
 																		}
 																	}
@@ -607,11 +633,9 @@
 														children: [
 															BX.create('span', {
 																props: { className: 'landing-popup-publication-content-autopub-switcher-on' },
-																text: BX.message('LANDING_PUBLICATION_AUTO_TOGGLE_ON')
 															}),
 															BX.create('span', {
 																props: { className: 'landing-popup-publication-content-autopub-switcher-off' },
-																text: BX.message('LANDING_PUBLICATION_AUTO_TOGGLE_OFF')
 															}),
 														]
 													}),

@@ -91,6 +91,7 @@ if($arResult['userField']['SETTINGS']['DISPLAY'] === EnumType::DISPLAY_UI)
 
 	$arResult['params'] = [
 		'isMulti' => ($arResult['userField']['MULTIPLE'] === 'Y'),
+		'enableSearch' => true,
 		'fieldName' => $arResult['fieldName']
 	];
 

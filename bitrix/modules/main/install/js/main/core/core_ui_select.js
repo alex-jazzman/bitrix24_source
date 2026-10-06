@@ -21,6 +21,7 @@
 		this.classClose = 'main-ui-popup-fast-close-animation';
 		this.classInput = 'main-ui-square-search-item';
 		this.classMenuItem = 'main-ui-select-inner-item';
+		this.classMenuItemHidden = 'main-ui-select-inner-item-hidden';
 		this.classLegend = 'main-ui-select-inner-item-legend';
 		this.classMenuItemText = 'main-ui-select-inner-item-element';
 		this.classMenuMultiItemText = 'main-ui-select-inner-label';
@@ -30,6 +31,7 @@
 		this.classTextValueNode = 'main-ui-select-name';
 		this.classMultiSelect = 'main-ui-multi-select';
 		this.classSelect = 'main-ui-select';
+		this.classSearchable = 'main-ui-select-searchable';
 		this.classValueDelete = 'main-ui-control-value-delete';
 		this.classValueDeleteItem = 'main-ui-control-value-delete-item';
 		this.classSquareSelected = 'main-ui-square-selected';
@@ -43,6 +45,8 @@
 		this.popupItems = null;
 		this.isShown = false;
 		this.isMulti = false;
+		this.enableSearch = false;
+		this.searchThreshold = 10;
 		this.input = null;
 		this.init(node, params);
 	};
@@ -75,6 +79,7 @@
 				}
 
 				this.isMulti = this.prepareParam('isMulti');
+				this.enableSearch = this.prepareParam('enableSearch');
 			}
 
 			popup = this.getPopup();
@@ -121,12 +126,111 @@
 		{
 			var target = event.currentTarget;
 
+			if (this.isSearchEnabled())
+			{
+				this.scheduleFilterPopupItems(target.value);
+
+				return;
+			}
+
 			clearTimeout(this.inputTimer);
 			this.inputTimer = setTimeout(function() {
 				target.value = '';
 			}, 1000);
 
 			this.selectPopupItemBySubstring(target.value);
+		},
+
+		isSearchEnabled: function()
+		{
+			return this.enableSearch === true
+				&& this.isMulti === false
+				&& this.getSearchableItemsCount() >= this.searchThreshold;
+		},
+
+		scheduleFilterPopupItems: function(substr)
+		{
+			this.pendingFilterSubstr = substr;
+
+			if (this.filterRequestId)
+			{
+				return;
+			}
+
+			// coalesce keystroke bursts into one filter pass per frame
+			this.filterRequestId = requestAnimationFrame(function() {
+				this.filterRequestId = null;
+				this.filterPopupItemsBySubstring(this.pendingFilterSubstr);
+			}.bind(this));
+		},
+
+		filterPopupItemsBySubstring: function(substr)
+		{
+			substr = substr.toLowerCase();
+
+			var firstVisible = null;
+
+			// read cached text and toggle classes only (no interleaved layout reads)
+			this.getPopupItems().forEach(function(item) {
+				if (this.isLegend(item))
+				{
+					return;
+				}
+
+				BX.removeClass(item, this.classPopupItemSelected);
+
+				if (this.getPopupItemSearchText(item).indexOf(substr) >= 0)
+				{
+					BX.removeClass(item, this.classMenuItemHidden);
+
+					if (firstVisible === null)
+					{
+						firstVisible = item;
+					}
+				}
+				else
+				{
+					BX.addClass(item, this.classMenuItemHidden);
+				}
+			}, this);
+
+			// keep Enter in sync with the filtered list: highlight the first
+			// visible match so a previously selected but now hidden item is not chosen
+			this.selectedItem = firstVisible;
+
+			if (BX.type.isDomNode(firstVisible))
+			{
+				BX.addClass(firstVisible, this.classPopupItemSelected);
+			}
+
+			this.adjustPopupPosition();
+		},
+
+		getPopupItemSearchText: function(item)
+		{
+			if (typeof item.searchTextCache !== 'string')
+			{
+				item.searchTextCache = item.textContent.toLowerCase();
+			}
+
+			return item.searchTextCache;
+		},
+
+		isPopupItemVisible: function(item)
+		{
+			return !BX.hasClass(item, this.classMenuItemHidden);
+		},
+
+		isNavigablePopupItem: function(item)
+		{
+			return this.isPopupItemVisible(item) && !this.isLegend(item);
+		},
+
+		resetPopupFilter: function()
+		{
+			this.getPopupItems().forEach(function(item) {
+				BX.removeClass(item, this.classMenuItemHidden);
+			}, this);
 		},
 
 		_onKeyDown: function(event)
@@ -165,20 +269,37 @@
 			if (event.code === 'ArrowDown')
 			{
 				this.selectNextPopupItem();
-				target.value = '';
+				if (!this.isSearchEnabled())
+				{
+					target.value = '';
+				}
 			}
 
 			if (event.code === 'ArrowUp')
 			{
 				this.selectPrevPopupItem();
-				target.value = '';
+				if (!this.isSearchEnabled())
+				{
+					target.value = '';
+				}
 			}
 
 			if (event.code === 'Enter')
 			{
-				this.selectSelectedItem();
+				if (this.isSearchEnabled() && this.filterRequestId)
+				{
+					cancelAnimationFrame(this.filterRequestId);
+					this.filterRequestId = null;
+					this.filterPopupItemsBySubstring(this.pendingFilterSubstr);
+				}
+
+				if (!this.isSearchEnabled() || BX.type.isDomNode(this.selectedItem))
+				{
+					this.selectSelectedItem();
+					target.value = '';
+				}
+
 				event.stopPropagation();
-				target.value = '';
 			}
 		},
 
@@ -235,6 +356,18 @@
 			var items = this.getPopupItems();
 			var selected, nextSelected;
 
+			if (this.isSearchEnabled())
+			{
+				items = items.filter(this.isNavigablePopupItem, this);
+			}
+
+			if (!BX.type.isArray(items) || items.length === 0)
+			{
+				this.selectedItem = null;
+
+				return;
+			}
+
 			if (BX.type.isArray(items))
 			{
 				selected = items.filter(function(current) {
@@ -246,11 +379,18 @@
 
 			if (BX.type.isDomNode(selected))
 			{
-				nextSelected = BX.nextSibling(selected);
-
-				if (!BX.type.isDomNode(nextSelected))
+				if (this.isSearchEnabled())
 				{
-					nextSelected = items[0];
+					nextSelected = items[items.indexOf(selected) + 1] || items[0];
+				}
+				else
+				{
+					nextSelected = BX.nextSibling(selected);
+
+					if (!BX.type.isDomNode(nextSelected))
+					{
+						nextSelected = items[0];
+					}
 				}
 
 				BX.removeClass(selected, this.classPopupItemSelected);
@@ -270,6 +410,18 @@
 			var items = this.getPopupItems();
 			var selected, prevSelected;
 
+			if (this.isSearchEnabled())
+			{
+				items = items.filter(this.isNavigablePopupItem, this);
+			}
+
+			if (!BX.type.isArray(items) || items.length === 0)
+			{
+				this.selectedItem = null;
+
+				return;
+			}
+
 			if (BX.type.isArray(items))
 			{
 				selected = items.filter(function(current) {
@@ -281,11 +433,18 @@
 
 			if (BX.type.isDomNode(selected))
 			{
-				prevSelected = BX.previousSibling(selected);
-
-				if (!BX.type.isDomNode(prevSelected))
+				if (this.isSearchEnabled())
 				{
-					prevSelected = items[items.length-1];
+					prevSelected = items[items.indexOf(selected) - 1] || items[items.length-1];
+				}
+				else
+				{
+					prevSelected = BX.previousSibling(selected);
+
+					if (!BX.type.isDomNode(prevSelected))
+					{
+						prevSelected = items[items.length-1];
+					}
 				}
 
 				BX.removeClass(selected, this.classPopupItemSelected);
@@ -841,6 +1000,26 @@
 
 			BX.removeClass(this.getNode(), this.classFocus);
 
+			if (this.isSearchEnabled())
+			{
+				var searchInput = this.getInput();
+
+				if (this.filterRequestId)
+				{
+					cancelAnimationFrame(this.filterRequestId);
+					this.filterRequestId = null;
+				}
+
+				BX.removeClass(this.getNode(), this.classSearchable);
+
+				if (BX.type.isDomNode(searchInput))
+				{
+					searchInput.value = '';
+				}
+
+				this.resetPopupFilter();
+			}
+
 			this.unselectAllPopupItems();
 			this.resetPopupScroll();
 		},
@@ -886,6 +1065,19 @@
 					currentPopupItemPos = BX.pos(currentPopupItem, popupContainer);
 					BX.scrollTop(popupContainer, currentPopupItemPos.top);
 					this.checkItem(currentPopupItem);
+				}
+
+				if (this.isSearchEnabled())
+				{
+					var searchInput = this.getInput();
+
+					BX.addClass(this.getNode(), this.classSearchable);
+					this.resetPopupFilter();
+
+					if (BX.type.isDomNode(searchInput))
+					{
+						searchInput.focus();
+					}
 				}
 
 				if (!this.trackMouse && this.getPopupItemsCount() > 5)
@@ -1014,6 +1206,21 @@
 			}
 
 			return this.popupItemsCount;
+		},
+
+		getSearchableItemsCount: function()
+		{
+			var popupItems;
+
+			if (typeof this.searchableItemsCount !== 'number')
+			{
+				popupItems = this.getPopupItems();
+				this.searchableItemsCount = BX.type.isArray(popupItems)
+					? popupItems.filter(function(item) { return !this.isLegend(item); }, this).length
+					: 0;
+			}
+
+			return this.searchableItemsCount;
 		},
 
 

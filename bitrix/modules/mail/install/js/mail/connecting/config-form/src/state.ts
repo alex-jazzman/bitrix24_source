@@ -46,6 +46,7 @@ function createPermissions(initialData: InitialData, mapped: MappedSettingsConfi
 		canEditCrm: rawPermissions?.canEditCrm ?? false,
 		canEditAccess: rawPermissions?.canEditAccess ?? false,
 		canChangeOwner: rawPermissions?.canChangeOwner ?? false,
+		canViewMailboxList: rawPermissions?.canViewMailboxList ?? false,
 		isSmtpAvailable: rawPermissions?.isSmtpAvailable ?? false,
 		isCrmAvailable: rawPermissions?.isCrmAvailable ?? mapped.crmAvailable,
 		isCalendarAvailable: rawPermissions?.isCalendarAvailable ?? false,
@@ -72,6 +73,7 @@ export function createFormState(initialData: InitialData = {}): FormState
 		mailboxId: initialData.mailboxId ?? null,
 		connectionRequestId,
 		lastMailCheck: null,
+		providerRestriction: null,
 
 		settingsConfig: rawConfig,
 		settingsOptions: {
@@ -91,7 +93,7 @@ export function createFormState(initialData: InitialData = {}): FormState
 			isOAuth: Boolean(service?.oauth),
 			oauthUid: null,
 			oauthUser: null,
-			userPrincipalName: '',
+			userPrincipalName: null,
 			oauthEmailNeedsConfirmation: false,
 			oauthEmailCheckStatus: 'idle',
 		},
@@ -100,8 +102,8 @@ export function createFormState(initialData: InitialData = {}): FormState
 			enabled: true,
 			server: service?.smtp?.server ?? '',
 			port: service?.smtp?.port !== undefined && service?.smtp?.port !== null
-				? Number(service.smtp.port) || 587
-				: 587,
+				? Number(service.smtp.port) || null
+				: null,
 			ssl: true,
 			login: '',
 			password: '',
@@ -158,6 +160,7 @@ export function createFormState(initialData: InitialData = {}): FormState
 		},
 
 		changedDirs: false,
+		migrationActive: false,
 
 		permissions: createPermissions(initialData, mapped),
 

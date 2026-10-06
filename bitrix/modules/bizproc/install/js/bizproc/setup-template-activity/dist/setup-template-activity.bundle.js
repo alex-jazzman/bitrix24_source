@@ -1,6 +1,6 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports, main_core_events, ui_vue3, ui_dialogs_messagebox, ui_iconSet_api_vue, ui_iconSet_api_core, main_core, ui_system_menu_vue, ui_vue3_components_button, bizproc_setupTemplate) {
+(function (exports, main_core_events, ui_vue3, ui_dialogs_messagebox, ui_iconSet_api_vue, ui_iconSet_api_core, main_core, ui_system_menu_vue, bizproc_setupTemplate, ui_entitySelector, ui_vue3_components_button, ui_system_typography_vue) {
 	'use strict';
 
 	// @vue/component
@@ -346,7 +346,11 @@ this.BX = this.BX || {};
 		FILE: 'file',
 		TEXT: 'text',
 		SELECT: 'select',
-		ENTITY_SELECTOR: 'entityselector'
+		ENTITY_SELECTOR: 'entityselector',
+		KNOWLEDGE_BASE: 'rag_knowledge_base',
+		BOOL: 'bool',
+		DATE: 'date',
+		DATETIME: 'datetime'
 	});
 	const DELIMITER_TYPES = Object.freeze({
 		LINE: 'line'
@@ -356,12 +360,42 @@ this.BX = this.BX || {};
 		EDIT: 'edit'
 	});
 	const CONSTANT_ID_PREFIX = 'SetupTemplateActivity_';
+	const SETUP_TEMPLATE_ACTIVITY_SOURCE = 'SetupTemplateActivity';
 	const PRESET_TITLE_ICONS = {
 		IMAGE: 'o-image',
 		ATTACH: 'o-attach',
 		SETTINGS: 'o-settings',
 		STARS: 'o-ai-stars'
 	};
+	const MENU_SECTIONS = Object.freeze({
+		ELEMENTS: 'elements',
+		PRESETS: 'presets',
+		CUSTOM: 'custom'
+	});
+
+	// Order of the entries is the order of the menu items in the "ready-made constants" section.
+	const CONSTANT_PRESETS = Object.freeze([{
+		code: 'user',
+		constantType: CONSTANT_TYPES.USER,
+		multiple: true,
+		labelKey: 'BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_PRESET_USER_LABEL',
+		hintKey: 'BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_PRESET_USER_HINT',
+		nameKey: 'BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_PRESET_USER_NAME'
+	}, {
+		code: 'knowledgeBase',
+		constantType: CONSTANT_TYPES.KNOWLEDGE_BASE,
+		multiple: false,
+		labelKey: 'BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_PRESET_KNOWLEDGE_BASE_LABEL',
+		hintKey: 'BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_PRESET_KNOWLEDGE_BASE_HINT',
+		nameKey: 'BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_PRESET_KNOWLEDGE_BASE_NAME'
+	}, {
+		code: 'prompt',
+		constantType: CONSTANT_TYPES.TEXT,
+		multiple: false,
+		labelKey: 'BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_PRESET_PROMPT_LABEL',
+		hintKey: 'BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_PRESET_PROMPT_HINT',
+		nameKey: 'BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_PRESET_PROMPT_NAME'
+	}]);
 
 	function makeEmptyBlock() {
 		return {
@@ -412,6 +446,14 @@ this.BX = this.BX || {};
 			settings: {}
 		};
 	}
+	function makePresetConstant(preset, id = null) {
+		return {
+			...makeEmptyConstant(id),
+			name: main_core.Loc.getMessage(preset.nameKey) ?? '',
+			constantType: preset.constantType,
+			multiple: preset.multiple
+		};
+	}
 	function convertConstants(constant) {
 		return {
 			Name: constant.name,
@@ -421,7 +463,8 @@ this.BX = this.BX || {};
 			Multiple: constant.multiple ? 1 : 0,
 			Options: main_core.Type.isObject(constant.options) ? constant.options : null,
 			Default: constant.default,
-			Settings: constant.settings
+			Settings: constant.settings,
+			Source: SETUP_TEMPLATE_ACTIVITY_SOURCE
 		};
 	}
 	function generateRandomString(length) {
@@ -435,6 +478,12 @@ this.BX = this.BX || {};
 	}
 	function generateConstantId() {
 		return CONSTANT_ID_PREFIX + generateRandomString(10);
+	}
+
+	// main.popup places a bound popup below its bind element and flips it above only when the popup
+	// fits there entirely, so the roomier side is the height a popup may take without leaving the window.
+	function calculateFreeHeightAround(verticalBounds, viewportHeight, gap) {
+		return Math.max(verticalBounds.top, viewportHeight - verticalBounds.bottom) - gap;
 	}
 	function getScrollParent(node) {
 		let parent = node?.parentElement;
@@ -450,6 +499,34 @@ this.BX = this.BX || {};
 		return null;
 	}
 
+	// The popup keeps a fixed width: item subtitles wrap instead of sizing the menu by their length.
+	// Exported for the tests, which assert the layout of the menu against these very values.
+	const MENU_WIDTH = 380;
+
+	// Keeps the popup off the window edge, borders and shadow included.
+	const MENU_VIEWPORT_GAP = 12;
+
+	// A popup applies any non-negative maxHeight, so a smaller free space is left unlimited:
+	// a menu a few pixels tall is worse than a menu reaching beyond the window.
+	const MENU_MIN_HEIGHT = 200;
+	const VISUAL_ELEMENTS = [{
+		labelKey: 'BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_TITLE_ITEM_LABEL',
+		hintKey: 'BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_TITLE_ITEM_HINT',
+		make: makeEmptyTitle
+	}, {
+		labelKey: 'BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_ICON_TITLE_ITEM_LABEL',
+		hintKey: 'BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_ICON_TITLE_ITEM_HINT',
+		make: makeEmptyTitleWithIcon
+	}, {
+		labelKey: 'BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_DESCRIPTION_ITEM_LABEL',
+		hintKey: 'BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_DESCRIPTION_ITEM_HINT',
+		make: makeEmptyDescription
+	}, {
+		labelKey: 'BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_DELIMITER_ITEM_LABEL',
+		hintKey: 'BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_DELIMITER_ITEM_HINT',
+		make: makeEmptyDelimiter
+	}];
+
 	// @vue/component
 	const AddElementBtn = {
 		name: 'AddElementBtn',
@@ -460,41 +537,81 @@ this.BX = this.BX || {};
 			constantIds: {
 				type: Set,
 				default: () => new Set()
+			},
+			/** @type ConstantConfiguration[] */
+			constantConfigurationList: {
+				type: Array,
+				default: () => []
 			}
 		},
 		emits: ['add:element', 'create:constant'],
 		data() {
 			return {
 				isMenuShown: false,
-				offsetLeft: 0
+				offsetLeft: 0,
+				menuMaxHeight: null
 			};
 		},
 		computed: {
 			menuOptions() {
 				return {
 					bindElement: this.$refs.addElementButton,
+					// The popup gets its content as an element, so main.popup has no text to name it with.
+					ariaLabel: this.$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_ADD_ITEM'),
 					offsetLeft: this.offsetLeft,
+					width: MENU_WIDTH,
+					maxHeight: this.menuMaxHeight,
 					fixed: false,
 					cacheable: false,
-					items: [{
-						title: this.$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_TITLE_ITEM_LABEL'),
-						onClick: () => this.$emit('add:element', makeEmptyTitle())
-					}, {
-						title: this.$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_ICON_TITLE_ITEM_LABEL'),
-						onClick: () => this.$emit('add:element', makeEmptyTitleWithIcon())
-					}, {
-						title: this.$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_DESCRIPTION_ITEM_LABEL'),
-						onClick: () => this.$emit('add:element', makeEmptyDescription())
-					}, {
-						title: this.$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_DELIMITER_ITEM_LABEL'),
-						onClick: () => this.$emit('add:element', makeEmptyDelimiter())
-					}, {
-						title: this.$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_MENU'),
-						onClick: () => {
-							const id = this.generateFriendlyId();
-							this.$emit('create:constant', makeEmptyConstant(id));
-						}
-					}]
+					sections: this.menuSections,
+					items: [...this.visualElementItems, ...this.presetItems, this.customConstantItem]
+				};
+			},
+			menuSections() {
+				return [{
+					code: MENU_SECTIONS.ELEMENTS,
+					title: this.$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_MENU_SECTION_ELEMENTS')
+				}, {
+					code: MENU_SECTIONS.PRESETS,
+					title: this.$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_MENU_SECTION_PRESETS')
+				},
+				// An empty title renders a bare divider instead of a section heading.
+				{
+					code: MENU_SECTIONS.CUSTOM,
+					title: ''
+				}];
+			},
+			visualElementItems() {
+				return VISUAL_ELEMENTS.map(element => ({
+					sectionCode: MENU_SECTIONS.ELEMENTS,
+					title: this.$Bitrix.Loc.getMessage(element.labelKey),
+					subtitle: this.$Bitrix.Loc.getMessage(element.hintKey),
+					onClick: () => this.$emit('add:element', element.make())
+				}));
+			},
+			availablePresets() {
+				const types = new Set(this.constantConfigurationList.map(configuration => configuration.type));
+				return CONSTANT_PRESETS.filter(preset => types.has(preset.constantType));
+			},
+			presetItems() {
+				return this.availablePresets.map(preset => ({
+					sectionCode: MENU_SECTIONS.PRESETS,
+					title: this.$Bitrix.Loc.getMessage(preset.labelKey),
+					subtitle: this.$Bitrix.Loc.getMessage(preset.hintKey),
+					onClick: () => {
+						this.$emit('create:constant', makePresetConstant(preset, this.generateFriendlyId()));
+					}
+				}));
+			},
+			customConstantItem() {
+				return {
+					sectionCode: MENU_SECTIONS.CUSTOM,
+					icon: ui_iconSet_api_core.Outline.PLUS_L,
+					title: this.$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CUSTOM_CONSTANT_LABEL'),
+					subtitle: this.$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CUSTOM_CONSTANT_HINT'),
+					onClick: () => {
+						this.$emit('create:constant', makeEmptyConstant(this.generateFriendlyId()));
+					}
 				};
 			}
 		},
@@ -509,9 +626,20 @@ this.BX = this.BX || {};
 		methods: {
 			onShowMenu(event) {
 				const {
-					left = 0
+					left = 0,
+					top = 0,
+					bottom = 0
 				} = this.$refs.addElementButton?.getBoundingClientRect() ?? {};
-				this.offsetLeft = Math.abs(event.clientX - left);
+
+				// A click from Enter/Space carries no click count and no pointer position,
+				// so the menu is bound to the button itself instead of the (0, 0) coordinate.
+				const isKeyboardActivation = event.detail === 0;
+				const freeHeight = calculateFreeHeightAround({
+					top,
+					bottom
+				}, window.innerHeight, MENU_VIEWPORT_GAP);
+				this.offsetLeft = isKeyboardActivation ? 0 : Math.abs(event.clientX - left);
+				this.menuMaxHeight = freeHeight >= MENU_MIN_HEIGHT ? freeHeight : null;
 				this.isMenuShown = true;
 			},
 			generateFriendlyId() {
@@ -524,9 +652,37 @@ this.BX = this.BX || {};
 				}
 				return potentialId;
 			},
+			// A close often arrives from the very action that has already moved the focus elsewhere:
+			// a click into a field of the settings form, a confirmation popup opened from a menu item.
+			// Only a focus nobody holds is free to come back to the button.
+			isFocusUnclaimed() {
+				const {
+					activeElement,
+					body
+				} = document;
+				return !activeElement || activeElement === body;
+			},
 			closeMenu() {
-				this.$refs.addElementButton.blur();
+				// Events of the surrounding UI arrive whether the menu is open or not, and every block has
+				// its own button: an idle one must not pull the focus away from where the user is.
+				if (!this.isMenuShown) {
+					return;
+				}
 				this.isMenuShown = false;
+
+				// While the menu is still on screen the focus belongs to it — a menu item button after
+				// Escape or a click. Whether anybody actually wants the focus is only visible once the popup
+				// is gone, so the decision waits for the render that removes it: a focus left behind by the
+				// popup reads as free, a focus already taken by a field or an editor stays where it is.
+				void this.$nextTick(() => {
+					if (this.isFocusUnclaimed()) {
+						// The air button draws its focus ring on :focus-visible only, so returning the focus
+						// stays invisible after a mouse close; preventScroll keeps a scroll-driven close in place.
+						this.$refs.addElementButton?.focus({
+							preventScroll: true
+						});
+					}
+				});
 			}
 		},
 		template: `
@@ -534,6 +690,9 @@ this.BX = this.BX || {};
 			ref="addElementButton"
 			class="ui-btn --air --wide --style-outline-no-accent ui-btn-no-caps --with-icon bizproc-setuptemplateactivity-add-element-btn"
 			type="button"
+			data-testid="bizproc-setup-template-add-element-btn"
+			aria-haspopup="menu"
+			:aria-expanded="isMenuShown"
 			@click="onShowMenu"
 		>
 			<div class="ui-icon-set --plus-l"/>
@@ -543,7 +702,7 @@ this.BX = this.BX || {};
 			<BMenu
 				v-if="isMenuShown"
 				:options="menuOptions"
-				@close="isMenuShown = false"
+				@close="closeMenu"
 			/>
 		</button>
 	`
@@ -881,6 +1040,223 @@ this.BX = this.BX || {};
 	`
 	};
 
+	const USER_ENTITY_TYPES = Object.freeze({
+		USER: 'user',
+		DEPARTMENT: 'structure-node'
+	});
+
+	// The editor writes user-constant defaults in bizproc's internal format (`user_5`, `group_hr5` for a
+	// flat department, `group_hrr5` for a department subtree). This internal format is accepted by the
+	// launch form's value parser and by the backend (CBPHelper::UsersStringToArray). Note that the launch
+	// form field itself emits the printable form (`Name[5]`, `Name[HR5]`, `Name[HRR5]`) on user input;
+	// the parsers below accept both that printable form and a bare numeric id for backward compatibility.
+	const VALUE_PARSERS = [{
+		template: /\[hrr(\d+)]$/i,
+		format: match => [USER_ENTITY_TYPES.DEPARTMENT, match[1]]
+	}, {
+		template: /\[hr(\d+)]$/i,
+		format: match => [USER_ENTITY_TYPES.DEPARTMENT, `${match[1]}:F`]
+	}, {
+		template: /\[(\d+)]$/,
+		format: match => [USER_ENTITY_TYPES.USER, match[1]]
+	}, {
+		template: /^group_hrr(\d+)$/i,
+		format: match => [USER_ENTITY_TYPES.DEPARTMENT, match[1]]
+	}, {
+		template: /^group_hr(\d+)$/i,
+		format: match => [USER_ENTITY_TYPES.DEPARTMENT, `${match[1]}:F`]
+	}, {
+		template: /^user_(\d+)$/i,
+		format: match => [USER_ENTITY_TYPES.USER, match[1]]
+	}, {
+		template: /^(\d+)$/,
+		format: match => [USER_ENTITY_TYPES.USER, match[1]]
+	}];
+	function parseUserValue(rawValue) {
+		const value = String(rawValue).trim();
+		if (!value) {
+			return null;
+		}
+		for (const parser of VALUE_PARSERS) {
+			const match = value.match(parser.template);
+			if (match) {
+				return parser.format(match);
+			}
+		}
+
+		// Keep an unrecognized legacy value as a user reference instead of dropping it silently.
+		return [USER_ENTITY_TYPES.USER, value];
+	}
+	function normalizeUserValue(modelValue, multiple) {
+		if (multiple && main_core.Type.isStringFilled(modelValue)) {
+			return modelValue.split(';');
+		}
+		if (main_core.Type.isArray(modelValue)) {
+			return modelValue;
+		}
+		return modelValue ? [String(modelValue)] : [];
+	}
+	function buildUserPreselectedItems(modelValue, multiple) {
+		return normalizeUserValue(modelValue, multiple).map(element => parseUserValue(element)).filter(Boolean);
+	}
+	function getUserSelectorEntities() {
+		return [{
+			id: USER_ENTITY_TYPES.USER,
+			options: {
+				inviteEmployeeLink: false
+			}
+		}, {
+			id: USER_ENTITY_TYPES.DEPARTMENT,
+			options: {
+				selectMode: 'usersAndDepartments',
+				allowSelectRootDepartment: true,
+				allowFlatDepartments: true
+			}
+		}];
+	}
+
+	// Titles resolved so far, keyed by "entityId:id". A miss is cached as null so a value that the
+	// provider does not know (deleted user, dropped department) is not re-requested on every redraw.
+	const NAME_CACHE = new Map();
+	let pendingItems = new Map();
+	let pendingWaiters = [];
+	let isFlushScheduled = false;
+	function getCacheKey(item) {
+		const [entityId, id] = item;
+		return `${entityId}:${id}`;
+	}
+	function readFromCache(keys) {
+		return keys.map(key => NAME_CACHE.get(key)).filter(Boolean);
+	}
+	function settleWaiters(waiters) {
+		waiters.forEach(({
+			keys,
+			resolve
+		}) => resolve(readFromCache(keys)));
+	}
+	function createNameDialog(preselectedItems, events) {
+		// Headless dialog: never rendered, it only resolves id tokens to titles through the same
+		// entity-selector providers the value popup uses. Its constructor starts the load itself.
+		return new ui_entitySelector.Dialog({
+			context: 'BIZPROC_SETUP_TEMPLATE_ACTIVITY_USER_NAMES',
+			preselectedItems,
+			entities: getUserSelectorEntities(),
+			events
+		});
+	}
+	function flushBatch(createDialog) {
+		isFlushScheduled = false;
+		const items = [...pendingItems.values()];
+		const waiters = pendingWaiters;
+		pendingItems = new Map();
+		pendingWaiters = [];
+		if (items.length === 0) {
+			settleWaiters(waiters);
+			return;
+		}
+		const dialog = createDialog(items, {
+			onLoad: () => {
+				items.forEach(item => {
+					NAME_CACHE.set(getCacheKey(item), dialog.getItem(item)?.getTitle() ?? null);
+				});
+				dialog.destroy();
+				settleWaiters(waiters);
+			},
+			onLoadError: () => {
+				// Nothing is cached on a failed load, so the next resolve retries instead of
+				// freezing an empty title for an id that does exist.
+				dialog.destroy();
+				settleWaiters(waiters);
+			}
+		});
+	}
+
+	/**
+	 * Resolves entity-selector items ([entityId, id] pairs) to human-readable titles.
+	 *
+	 * Every caller within the same tick shares one dialog load, and already known titles are served
+	 * from the cache - so N constant cards cost one request instead of N.
+	 *
+	 * @param {Array} items preselected items to resolve
+	 * @param {Function} [createDialog] dialog factory, overridden in tests
+	 * @return {Promise<Array<string>>} titles in the order of the requested items, unknown ones dropped
+	 */
+	function resolveUserNames(items, createDialog = createNameDialog) {
+		const keys = items.map(item => getCacheKey(item));
+		if (keys.every(key => NAME_CACHE.has(key))) {
+			return Promise.resolve(readFromCache(keys));
+		}
+		return new Promise(resolve => {
+			items.forEach((item, index) => {
+				if (!NAME_CACHE.has(keys[index])) {
+					pendingItems.set(keys[index], item);
+				}
+			});
+			pendingWaiters.push({
+				keys,
+				resolve
+			});
+			if (!isFlushScheduled) {
+				isFlushScheduled = true;
+				// Microtask: collect every card rendered in the same tick into a single load.
+				queueMicrotask(() => flushBatch(createDialog));
+			}
+		});
+	}
+
+	// The label is the only part of a bool value the wizard owns: the value itself and its synonyms
+	// live in bizproc.setup-template, so the form of the constant and the launch form never diverge.
+	function getBoolValueLabel(value) {
+		const key = bizproc_setupTemplate.normalizeBoolValue(value) === bizproc_setupTemplate.BOOL_VALUES.YES ? 'BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_VALUE_BOOL_YES' : 'BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_VALUE_BOOL_NO';
+		return main_core.Loc.getMessage(key);
+	}
+
+	// @vue/component
+	const ConstantValueBool = {
+		name: 'ConstantValueBool',
+		props: {
+			modelValue: {
+				type: String,
+				default: bizproc_setupTemplate.BOOL_VALUES.NO
+			}
+		},
+		emits: ['update:modelValue'],
+		setup() {
+			return {
+				BOOL_VALUES: bizproc_setupTemplate.BOOL_VALUES
+			};
+		},
+		computed: {
+			selectedValue() {
+				return bizproc_setupTemplate.normalizeBoolValue(this.modelValue);
+			}
+		},
+		methods: {
+			handleChange(event) {
+				this.$emit('update:modelValue', event.target.value);
+			}
+		},
+		template: `
+		<div class="ui-ctl ui-ctl-after-icon ui-ctl-dropdown ui-ctl-w100 ui-ctl-sm">
+			<div class="ui-ctl-after ui-ctl-icon-angle"></div>
+			<select
+				:value="selectedValue"
+				class="ui-ctl-element"
+				:aria-label="$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_EDIT_VALUE')"
+				data-testid="bizproc-setup-template-constant-value-bool"
+				@change="handleChange"
+			>
+				<option :value="BOOL_VALUES.YES">
+					{{ $Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_VALUE_BOOL_YES') }}
+				</option>
+				<option :value="BOOL_VALUES.NO">
+					{{ $Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_VALUE_BOOL_NO') }}
+				</option>
+			</select>
+		</div>
+	`
+	};
+
 	// @vue/component
 	const ConstantField = {
 		name: 'ConstantField',
@@ -888,7 +1264,7 @@ this.BX = this.BX || {};
 			BIcon: ui_iconSet_api_vue.BIcon
 		},
 		props: {
-			/** @type TitleItem */
+			/** @type ConstantItem */
 			item: {
 				type: Object,
 				required: true
@@ -906,6 +1282,12 @@ this.BX = this.BX || {};
 				Main: ui_iconSet_api_core.Main
 			};
 		},
+		data() {
+			return {
+				// Human-readable names resolved from the user-constant default tokens (`user_5`, `group_hr3`).
+				resolvedUserNames: []
+			};
+		},
 		computed: {
 			typeLabel() {
 				return this.constantConfigurationList.find(constantConfiguration => constantConfiguration.type === this.item.constantType)?.title ?? this.$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_ITEM_TYPE_UNSUPPORTED');
@@ -915,9 +1297,81 @@ this.BX = this.BX || {};
 					'#NAME#': this.item.name,
 					'#TYPE#': this.typeLabel
 				});
+			},
+			isUserConstant() {
+				return this.item.constantType === CONSTANT_TYPES.USER;
+			},
+			isBoolConstant() {
+				return this.item.constantType === CONSTANT_TYPES.BOOL;
+			},
+			isDateConstant() {
+				return [CONSTANT_TYPES.DATE, CONSTANT_TYPES.DATETIME].includes(this.item.constantType);
+			},
+			/**
+			 * User, date and bool values are not plain text: they carry preselected items, a timezone suffix
+			 * or the stored Y/N, so the card only shows them and the constant form owns editing. The input is
+			 * readonly rather than disabled: the value stays in the Tab order, is read out by a screen reader
+			 * and can be selected.
+			 */
+			isValueReadonly() {
+				return this.isUserConstant || this.isDateConstant || this.isBoolConstant;
+			},
+			displayValue() {
+				if (this.isUserConstant) {
+					return this.resolvedUserNames.join(', ');
+				}
+				const value = this.item.default;
+				if (this.isBoolConstant) {
+					// The stored value stays Y/N, the card shows the human-readable option.
+					return main_core.Type.isArray(value) ? value.map(item => getBoolValueLabel(item)).join(', ') : getBoolValueLabel(value);
+				}
+
+				// The timezone suffix stays in the stored value, the card shows the date only.
+				if (this.isDateConstant) {
+					return main_core.Type.isArray(value) ? value.map(item => bizproc_setupTemplate.parseValue(item).text).join(', ') : bizproc_setupTemplate.parseValue(value).text;
+				}
+				if (main_core.Type.isArray(value)) {
+					return value.join(', ');
+				}
+				return value ?? '';
 			}
 		},
+		watch: {
+			'item.default': {
+				immediate: true,
+				deep: true,
+				handler() {
+					this.resolveUserNames();
+				}
+			}
+		},
+		beforeUnmount() {
+			// Invalidate in-flight resolves so a late batch response cannot touch a destroyed component.
+			this.resolveGeneration = (this.resolveGeneration ?? 0) + 1;
+		},
 		methods: {
+			async resolveUserNames() {
+				// Invalidate any in-flight resolve so a late response cannot overwrite fresh names.
+				// The counter is created lazily: the immediate watcher runs before created().
+				this.resolveGeneration = (this.resolveGeneration ?? 0) + 1;
+				const generation = this.resolveGeneration;
+				if (!this.isUserConstant) {
+					this.resolvedUserNames = [];
+					return;
+				}
+				const preselectedItems = buildUserPreselectedItems(this.item.default, this.item.multiple);
+				if (preselectedItems.length === 0) {
+					this.resolvedUserNames = [];
+					return;
+				}
+
+				// Shared resolver: all cards rendered in the same tick are served by a single dialog load.
+				const names = await resolveUserNames(preselectedItems);
+				if (generation !== this.resolveGeneration) {
+					return;
+				}
+				this.resolvedUserNames = names;
+			},
 			onInput(event) {
 				const payload = {
 					propertyValues: {
@@ -937,7 +1391,10 @@ this.BX = this.BX || {};
 			}
 		},
 		template: `
-		<div class="bizproc-setuptemplateactivity-field-wrapper">
+		<div
+			class="bizproc-setuptemplateactivity-field-wrapper"
+			:data-testid="'bizproc-setup-template-constant-field-' + item.id"
+		>
 			<div
 				class="bizproc-setuptemplateactivity-field-drag-icon"
 				@mousedown.prevent="handleDragStart"
@@ -954,9 +1411,11 @@ this.BX = this.BX || {};
 						</div>
 						<div class="ui-ctl ui-ctl-w100">
 							<input
-								:value="item.default"
+								:value="displayValue"
 								class="ui-ctl-element"
 								type="text"
+								:readonly="isValueReadonly"
+								data-testid="bizproc-setup-template-constant-field-value"
 								@input="onInput"
 							/>
 						</div>
@@ -966,12 +1425,14 @@ this.BX = this.BX || {};
 							:name="Outline.EDIT_L"
 							:size="18"
 							class="bizproc-setuptemplateactivity-constant-edit__control-icon"
+							data-testid="bizproc-setup-template-constant-field-edit-btn"
 							@click="onEdit"
 						/>
 						<BIcon
 							:name="Outline.CROSS_L"
 							:size="18"
 							class="bizproc-setuptemplateactivity-constant-edit__control-icon"
+							data-testid="bizproc-setup-template-constant-field-delete-btn"
 							@click="$emit('delete')"
 						/>
 					</div>
@@ -1116,6 +1577,21 @@ this.BX = this.BX || {};
 	`
 	};
 
+	/**
+	 * Single value the dedicated controls of the constant form work with. The form edits one default
+	 * value, while the stored default of a multiple constant may be an array: the wizard never writes
+	 * one, but a template built outside it (import, REST, template generator) does, and the array is a
+	 * legitimate part of the `default` contract. The first element is taken, the way
+	 * Bitrix\Bizproc\BaseType\Date::toSingleValue does it on the server.
+	 */
+	function toSingleDefaultValue(defaultValue) {
+		const value = main_core.Type.isArray(defaultValue) ? defaultValue[0] : defaultValue;
+		if (main_core.Type.isString(value)) {
+			return value;
+		}
+		return main_core.Type.isNumber(value) ? String(value) : '';
+	}
+
 	const EntitySelectorConstantSettings = {
 		name: 'EntitySelectorConstantSettings',
 		emits: ['update:modelValue'],
@@ -1188,15 +1664,483 @@ this.BX = this.BX || {};
 	`
 	};
 
+	// @vue/component
+	const ConstantValueUser = {
+		name: 'ConstantValueUser',
+		props: {
+			/** @type ConstantItem */
+			item: {
+				type: Object,
+				required: true
+			},
+			multiple: {
+				type: Boolean,
+				default: false
+			},
+			modelValue: {
+				type: [String, Array],
+				default: ''
+			}
+		},
+		emits: ['update:modelValue'],
+		watch: {
+			multiple() {
+				this.reinitializeSelector();
+			}
+		},
+		mounted() {
+			this.initializeSelector();
+		},
+		beforeUnmount() {
+			this.destroySelector();
+		},
+		methods: {
+			syncValue() {
+				if (!this.tagSelector) {
+					return;
+				}
+				const newValues = this.tagSelector.getTags().map(tag => {
+					const rawId = tag.getId();
+					const entityId = tag.getEntityId();
+					if (entityId === USER_ENTITY_TYPES.USER) {
+						return `user_${rawId}`;
+					}
+					if (entityId === USER_ENTITY_TYPES.DEPARTMENT) {
+						if (main_core.Type.isString(rawId) && rawId.endsWith(':F')) {
+							return `group_hr${rawId.replace(':F', '')}`;
+						}
+						return `group_hrr${rawId}`;
+					}
+					return null;
+				}).filter(Boolean);
+				if (this.multiple) {
+					// Multiple values are stored as an array - same shape the launch form
+					// (ConstantComponent.getCurrentConstantValue) and other multiple constant
+					// fields (entity-selector) expect for preselect.
+					this.$emit('update:modelValue', newValues);
+				} else {
+					this.$emit('update:modelValue', newValues.length > 0 ? newValues[0] : '');
+				}
+			},
+			getPreselectedItems() {
+				return this.normalizeModelValue().map(element => this.parseValue(element)).filter(Boolean);
+			},
+			normalizeModelValue() {
+				return normalizeUserValue(this.modelValue, this.multiple);
+			},
+			parseValue(rawValue) {
+				return parseUserValue(rawValue);
+			},
+			destroySelector() {
+				if (this.tagSelector) {
+					this.tagSelector.getDialog().destroy();
+					this.tagSelector = null;
+				}
+			},
+			reinitializeSelector() {
+				this.destroySelector();
+				if (this.$refs.container) {
+					this.$refs.container.innerHTML = '';
+				}
+				this.initializeSelector();
+			},
+			initializeSelector() {
+				this.tagSelector = new ui_entitySelector.TagSelector({
+					multiple: this.multiple,
+					showCreateButton: false,
+					dialogOptions: {
+						context: `BIZPROC_SETUP_TEMPLATE_ACTIVITY_USER_SELECTOR_${this.item.id}`,
+						preselectedItems: this.getPreselectedItems(),
+						popupOptions: {
+							className: 'bizproc-setuptemplateactivity-no-tabs-selector-popup'
+						},
+						width: 500,
+						entities: getUserSelectorEntities(),
+						multiple: this.multiple,
+						showAvatars: true,
+						dropdownMode: true,
+						compactView: true,
+						height: 250
+					},
+					addButtonCaption: main_core.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_EDIT_ADD_USER'),
+					events: {
+						onAfterTagAdd: this.syncValue,
+						onAfterTagRemove: this.syncValue
+					}
+				});
+				this.tagSelector.renderTo(this.$refs.container);
+
+				// In dropdownMode the dialog loads lazily on first open, so preselected items stay
+				// unresolved (shown as a "hidden" placeholder) until the user opens it. Force the load
+				// now so they render as tags immediately, including when a saved constant is reopened.
+				if (this.getPreselectedItems().length > 0) {
+					this.tagSelector.getDialog()?.load();
+				}
+			}
+		},
+		template: `
+		<div ref="container" data-testid="bizproc-setup-template-constant-value-user"></div>
+	`
+	};
+
+	const EXTENSION_NAME = 'bizproc.setup-template-activity';
+
+	// A constant is filled in for the server or for the user, so the module-wide zone list is narrowed
+	// to these two and titled with the phrases of the constant form.
+	const TIMEZONE_TITLES = new Map([['', 'BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_EDIT_TIMEZONE_SERVER'], ['current', 'BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_EDIT_TIMEZONE_USER']]);
+	let offeredTimezones = null;
+
+	/**
+	 * Narrowing the module-wide zone list gives the same two zones for the whole page, so it is done
+	 * once: the constant form is reopened for every constant.
+	 */
+	function getTimezones() {
+		offeredTimezones ??= Object.freeze(main_core.Extension.getSettings(EXTENSION_NAME).get('timezones', []).filter(zone => TIMEZONE_TITLES.has(zone.value)).map(zone => ({
+			...zone,
+			text: main_core.Loc.getMessage(TIMEZONE_TITLES.get(zone.value))
+		})));
+		return offeredTimezones;
+	}
+
+	// @vue/component
+	const ConstantValueDate = {
+		name: 'ConstantValueDate',
+		props: {
+			modelValue: {
+				type: String,
+				default: ''
+			}
+		},
+		emits: ['update:modelValue'],
+		data() {
+			return {
+				pickedDate: null
+			};
+		},
+		computed: {
+			dateText() {
+				return bizproc_setupTemplate.formatDate(this.pickedDate);
+			}
+		},
+		// No `watch modelValue` here, unlike the same control of the launch form: the default value of a
+		// constant is replaced only by a change of its type, and that change recreates the control.
+		created() {
+			this.datePicker = null;
+			// A date has no timezone control, but a value saved with one still has to show its date.
+			this.pickedDate = bizproc_setupTemplate.createDateFromText(bizproc_setupTemplate.parseValue(this.modelValue).text);
+		},
+		beforeUnmount() {
+			this.datePicker?.destroy();
+			this.datePicker = null;
+		},
+		methods: {
+			handleInputKeydown(event) {
+				if (bizproc_setupTemplate.isPickerOpenKey(event)) {
+					event.preventDefault();
+					this.openDatePicker();
+				}
+			},
+			openDatePicker() {
+				const input = this.$refs.dateInput;
+				if (!input) {
+					return;
+				}
+				if (this.datePicker === null) {
+					this.datePicker = bizproc_setupTemplate.createBoundPicker({
+						input,
+						pickerId: 'day',
+						onSelect: this.handleDateSelect,
+						pickerOptions: {
+							type: 'date',
+							selectedDates: this.pickedDate === null ? [] : [this.pickedDate]
+						}
+					});
+				}
+				this.datePicker.show();
+			},
+			handleDateSelect() {
+				// The callback is deferred, so by the time it runs the picker may be gone: the form was
+				// closed or the value was replaced from outside.
+				if (!this.datePicker) {
+					return;
+				}
+				const selectedDate = this.datePicker.getSelectedDate();
+				if (!main_core.Type.isDate(selectedDate)) {
+					return;
+				}
+				this.pickedDate = selectedDate;
+				this.$emit('update:modelValue', bizproc_setupTemplate.serializeValue(selectedDate));
+			}
+		},
+		template: `
+		<div class="ui-ctl ui-ctl-textbox ui-ctl-after-icon ui-ctl-w100 ui-ctl-sm">
+			<div class="ui-ctl-after ui-ctl-icon-calendar"></div>
+			<input
+				ref="dateInput"
+				:value="dateText"
+				type="text"
+				class="ui-ctl-element"
+				:aria-label="$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_EDIT_VALUE')"
+				:placeholder="$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_EDIT_DATE_PLACEHOLDER')"
+				readonly
+				data-testid="bizproc-setup-template-constant-value-date"
+				@click="openDatePicker"
+				@keydown="handleInputKeydown"
+			/>
+		</div>
+	`
+	};
+
+	const TIME_PICKER_OPTIONS = Object.freeze({
+		type: 'time',
+		timePickerStyle: 'wheel',
+		amPmMode: false,
+		minuteStep: 5
+	});
+
+	// @vue/component
+	const ConstantValueDateTime = {
+		name: 'ConstantValueDateTime',
+		props: {
+			modelValue: {
+				type: String,
+				default: ''
+			}
+		},
+		emits: ['update:modelValue', 'dateMissingChange'],
+		data() {
+			return {
+				pickedDate: null,
+				pickedTime: null,
+				timezoneValue: '',
+				timezones: []
+			};
+		},
+		computed: {
+			dateText() {
+				return bizproc_setupTemplate.formatDate(this.pickedDate);
+			},
+			timeText() {
+				return bizproc_setupTemplate.formatDate(this.pickedTime, bizproc_setupTemplate.VALUE_FORMATS.TIME);
+			},
+			timezone() {
+				return this.timezones.find(zone => zone.value === this.timezoneValue) ?? null;
+			},
+			/**
+			 * Date and time are picked separately, so they are merged here.
+			 * A date without a time means midnight; a time without a date is not a value yet.
+			 */
+			pickedDateTime() {
+				if (!main_core.Type.isDate(this.pickedDate)) {
+					return null;
+				}
+				const dateTime = new Date(this.pickedDate.getTime());
+				dateTime.setUTCHours(this.pickedTime?.getUTCHours() ?? 0, this.pickedTime?.getUTCMinutes() ?? 0, 0, 0);
+				return dateTime;
+			},
+			/**
+			 * A time picked with no date shows in the field but is not a value yet, so the form of the
+			 * constant is told about it and asks for the date when the constant is saved.
+			 */
+			isDateMissing() {
+				return !main_core.Type.isDate(this.pickedDate) && main_core.Type.isDate(this.pickedTime);
+			}
+		},
+		// Unlike the same control of the launch form, `modelValue` is deliberately not watched here: the
+		// default value of a constant is replaced only by a change of its type, and that change recreates
+		// the control.
+		watch: {
+			isDateMissing: {
+				handler(isDateMissing) {
+					this.$emit('dateMissingChange', isDateMissing);
+				},
+				immediate: true
+			}
+		},
+		created() {
+			this.datePicker = null;
+			this.timePicker = null;
+			this.timezones = getTimezones();
+			const {
+				text,
+				timezone
+			} = bizproc_setupTemplate.parseValue(this.modelValue, this.timezones);
+			const storedDateTime = bizproc_setupTemplate.createDateFromText(text);
+			this.pickedDate = storedDateTime;
+			this.pickedTime = storedDateTime;
+			this.timezoneValue = timezone?.value ?? '';
+		},
+		beforeUnmount() {
+			this.datePicker?.destroy();
+			this.timePicker?.destroy();
+			this.datePicker = null;
+			this.timePicker = null;
+		},
+		methods: {
+			handleDateInputKeydown(event) {
+				if (bizproc_setupTemplate.isPickerOpenKey(event)) {
+					event.preventDefault();
+					this.openDatePicker();
+				}
+			},
+			handleTimeInputKeydown(event) {
+				if (bizproc_setupTemplate.isPickerOpenKey(event)) {
+					event.preventDefault();
+					this.openTimePicker();
+				}
+			},
+			openDatePicker() {
+				if (!this.$refs.dateInput) {
+					return;
+				}
+				if (this.datePicker === null) {
+					this.datePicker = bizproc_setupTemplate.createBoundPicker({
+						input: this.$refs.dateInput,
+						pickerId: 'day',
+						onSelect: this.handleDateSelect,
+						pickerOptions: {
+							type: 'date',
+							selectedDates: this.pickedDate === null ? [] : [this.pickedDate]
+						}
+					});
+				}
+				this.datePicker.show();
+			},
+			openTimePicker() {
+				if (!this.$refs.timeInput) {
+					return;
+				}
+				if (this.timePicker === null) {
+					this.timePicker = bizproc_setupTemplate.createBoundPicker({
+						input: this.$refs.timeInput,
+						pickerId: 'time',
+						onSelect: this.handleTimeSelect,
+						pickerOptions: {
+							...TIME_PICKER_OPTIONS,
+							selectedDates: this.pickedTime === null ? [] : [this.pickedTime]
+						}
+					});
+				}
+				this.timePicker.show();
+			},
+			handleDateSelect() {
+				// The callback is deferred, so by the time it runs the picker may be gone: the form was
+				// closed or the value was replaced from outside.
+				if (!this.datePicker) {
+					return;
+				}
+				const selectedDate = this.datePicker.getSelectedDate();
+				if (!main_core.Type.isDate(selectedDate)) {
+					return;
+				}
+				this.pickedDate = selectedDate;
+				// A date picked with no time is midnight, and the time control shows it instead of staying empty.
+				this.pickedTime ??= this.pickedDateTime;
+				this.emitValue();
+			},
+			handleTimeSelect() {
+				if (!this.timePicker) {
+					return;
+				}
+				const selectedTime = this.timePicker.getSelectedDate() ?? this.timePicker.getFocusDate();
+				if (!main_core.Type.isDate(selectedTime)) {
+					return;
+				}
+				this.pickedTime = selectedTime;
+				this.emitValue();
+			},
+			handleTimezoneChange(event) {
+				this.timezoneValue = event.target.value;
+				this.emitValue();
+			},
+			emitValue() {
+				this.$emit('update:modelValue', bizproc_setupTemplate.serializeValue(this.pickedDateTime, {
+					timezone: this.timezone,
+					isDateTime: true
+				}));
+			}
+		},
+		template: `
+		<div
+			class="bizproc-setuptemplateactivity-constant-value-datetime"
+			role="group"
+			:aria-label="$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_EDIT_VALUE')"
+			data-testid="bizproc-setup-template-constant-value-datetime"
+		>
+			<div class="bizproc-setuptemplateactivity-constant-value-datetime__pickers">
+				<div class="ui-ctl ui-ctl-textbox ui-ctl-after-icon ui-ctl-w100 ui-ctl-sm">
+					<div class="ui-ctl-after ui-ctl-icon-calendar"></div>
+					<input
+						ref="dateInput"
+						:value="dateText"
+						type="text"
+						class="ui-ctl-element"
+						:placeholder="$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_EDIT_DATE_PLACEHOLDER')"
+						readonly
+						data-testid="bizproc-setup-template-constant-value-datetime-date"
+						@click="openDatePicker"
+						@keydown="handleDateInputKeydown"
+					/>
+				</div>
+				<div class="ui-ctl ui-ctl-textbox ui-ctl-after-icon ui-ctl-w100 ui-ctl-sm">
+					<div class="ui-ctl-after ui-ctl-icon-clock"></div>
+					<input
+						ref="timeInput"
+						:value="timeText"
+						type="text"
+						class="ui-ctl-element"
+						:placeholder="$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_EDIT_TIME_PLACEHOLDER')"
+						readonly
+						data-testid="bizproc-setup-template-constant-value-datetime-time"
+						@click="openTimePicker"
+						@keydown="handleTimeInputKeydown"
+					/>
+				</div>
+			</div>
+			<div
+				v-if="timezones.length > 0"
+				class="ui-ctl ui-ctl-after-icon ui-ctl-dropdown ui-ctl-w100 ui-ctl-sm"
+			>
+				<div class="ui-ctl-after ui-ctl-icon-angle"></div>
+				<select
+					:value="timezoneValue"
+					class="ui-ctl-element"
+					:aria-label="$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_EDIT_TIMEZONE_LABEL')"
+					data-testid="bizproc-setup-template-constant-value-datetime-timezone"
+					@change="handleTimezoneChange"
+				>
+					<option
+						v-for="zone in timezones"
+						:key="zone.value"
+						:value="zone.value"
+					>
+						{{ zone.text }}
+					</option>
+				</select>
+			</div>
+		</div>
+	`
+	};
+
 	const CONSTANT_SETTINGS_COMPONENT = Object.freeze({
 		[CONSTANT_TYPES.ENTITY_SELECTOR]: EntitySelectorConstantSettings
+	});
+
+	// Types whose default value is edited by a dedicated control instead of the plain text input.
+	const CONSTANT_VALUE_COMPONENT = Object.freeze({
+		[CONSTANT_TYPES.BOOL]: ConstantValueBool,
+		[CONSTANT_TYPES.DATE]: ConstantValueDate,
+		[CONSTANT_TYPES.DATETIME]: ConstantValueDateTime
 	});
 	// @vue/component
 	const EditConstantPopupForm = {
 		name: 'EditConstantPopupForm',
 		components: {
 			UiButton: ui_vue3_components_button.Button,
-			EntitySelectorConstantSettings
+			BIcon: ui_iconSet_api_vue.BIcon,
+			TextXs: ui_system_typography_vue.TextXs,
+			EntitySelectorConstantSettings,
+			ConstantValueUser
 		},
 		props: {
 			/** @type ConstantItem */
@@ -1218,7 +2162,8 @@ this.BX = this.BX || {};
 		setup() {
 			return {
 				AirButtonStyle: ui_vue3_components_button.AirButtonStyle,
-				ButtonSize: ui_vue3_components_button.ButtonSize
+				ButtonSize: ui_vue3_components_button.ButtonSize,
+				Outline: ui_iconSet_api_vue.Outline
 			};
 		},
 		data() {
@@ -1234,9 +2179,11 @@ this.BX = this.BX || {};
 				settings: this.item.settings,
 				required: this.item.required,
 				initialOptionsSnapshot: JSON.stringify(options),
+				isDateMissing: false,
 				errors: {
 					id: '',
 					name: '',
+					value: '',
 					options: options.map(() => '')
 				}
 			};
@@ -1248,20 +2195,40 @@ this.BX = this.BX || {};
 			isEntitySelector() {
 				return this.constantType === CONSTANT_TYPES.ENTITY_SELECTOR;
 			},
+			isUserType() {
+				return this.constantType === CONSTANT_TYPES.USER;
+			},
 			submitButtonText() {
 				const key = this.isCreation ? 'BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_EDIT_ADD' : 'BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_EDIT_EDIT';
 				return this.$Bitrix.Loc.getMessage(key);
 			},
 			isChanged() {
-				return this.id !== this.item.id || this.name !== this.item.name || this.constantType !== this.item.constantType || this.multiple !== this.item.multiple || this.required !== this.item.required || this.description !== this.item.description || this.defaultValue !== this.item.default || JSON.stringify(this.options) !== this.initialOptionsSnapshot;
+				return this.id !== this.item.id || this.name !== this.item.name || this.constantType !== this.item.constantType || this.multiple !== this.item.multiple || this.required !== this.item.required || this.description !== this.item.description || (this.isUserType ? JSON.stringify(normalizeUserValue(this.defaultValue, this.multiple)) !== JSON.stringify(normalizeUserValue(this.item.default, this.item.multiple)) : this.defaultValue !== this.item.default) || JSON.stringify(this.options) !== this.initialOptionsSnapshot;
 			},
 			errorMessages() {
 				return {
 					required: this.$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_ERROR_LABEL_REQUIRED'),
 					idFormat: this.$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_ERROR_ID_FORMAT'),
 					idUnique: this.$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_ERROR_ID_UNIQUE'),
-					optionUnique: this.$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_ERROR_OPTION_UNIQUE')
+					optionUnique: this.$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_ERROR_OPTION_UNIQUE'),
+					dateRequired: this.$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_ERROR_DATE_REQUIRED')
 				};
+			},
+			constantValueComponent() {
+				return CONSTANT_VALUE_COMPONENT[this.constantType] ?? null;
+			},
+			/**
+			 * The controls above edit a single value, so an array default of a multiple constant is shown
+			 * by its first element instead of leaving the control blank; editing replaces the whole
+			 * default, the way the plain text input of any other type does.
+			 */
+			scalarDefaultValue: {
+				get() {
+					return toSingleDefaultValue(this.defaultValue);
+				},
+				set(value) {
+					this.defaultValue = value;
+				}
 			},
 			constantSettingsComponent() {
 				const types = this.constantConfigurationList.map(constant => constant.type);
@@ -1277,6 +2244,20 @@ this.BX = this.BX || {};
 		watch: {
 			constantType() {
 				this.options = [];
+				this.defaultValue = '';
+				this.isDateMissing = false;
+				this.errors.value = '';
+			},
+			multiple(value) {
+				if (!this.isUserType) {
+					return;
+				}
+
+				// Keep defaultValue in sync with the multiple flag without discarding the user's choice:
+				// scalar -> array on enable, array -> first element (or empty string) on disable. Matches
+				// how ConstantValueUser.syncValue emits (single -> string, multiple -> array).
+				const normalized = normalizeUserValue(this.defaultValue, value);
+				this.defaultValue = value ? normalized : normalized[0] ?? '';
 			},
 			isChanged(value) {
 				this.$emit('update:changed', value);
@@ -1287,8 +2268,10 @@ this.BX = this.BX || {};
 		},
 		methods: {
 			onAddOption() {
+				const optionLabel = this.$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_EDIT_OPTION_LABEL');
 				this.options.push({
-					name: ''
+					value: '',
+					name: `${optionLabel} ${this.options.length + 1}`
 				});
 				this.errors.options.push('');
 			},
@@ -1317,6 +2300,10 @@ this.BX = this.BX || {};
 				}
 				return true;
 			},
+			getOptionValue(option) {
+				const value = option.value.trim();
+				return main_core.Type.isStringFilled(value) ? value : option.name.trim();
+			},
 			validateOption(index) {
 				const name = this.options[index].name.trim();
 				this.errors.options[index] = '';
@@ -1324,8 +2311,9 @@ this.BX = this.BX || {};
 					this.errors.options[index] = this.errorMessages.required;
 					return false;
 				}
+				const value = this.getOptionValue(this.options[index]);
 				for (const [optionKey, option] of this.options.entries()) {
-					if (optionKey !== index && option.name.trim() === name) {
+					if (optionKey !== index && this.getOptionValue(option) === value) {
 						this.errors.options[index] = this.errorMessages.optionUnique;
 						return false;
 					}
@@ -1351,11 +2339,31 @@ this.BX = this.BX || {};
 				this.errors = {
 					id: '',
 					name: '',
+					value: '',
 					options: []
 				};
 			},
+			onDateMissingChange(isDateMissing) {
+				this.isDateMissing = isDateMissing;
+				if (!isDateMissing) {
+					this.errors.value = '';
+				}
+			},
+			/**
+			 * A time picked with no date is not a value: the control publishes an empty default, so the
+			 * constant would be saved without the time the form still shows. The date is asked for whether
+			 * or not the constant is required — the same rule the launch form follows.
+			 */
+			validateDefaultValue() {
+				this.errors.value = '';
+				if (this.isDateMissing) {
+					this.errors.value = this.errorMessages.dateRequired;
+					return false;
+				}
+				return true;
+			},
 			onSave() {
-				const isValid = [this.validateId(), this.validateName(), this.validateOptions()].every(value => value);
+				const isValid = [this.validateId(), this.validateName(), this.validateOptions(), this.validateDefaultValue()].every(value => value);
 				if (!isValid) {
 					return;
 				}
@@ -1383,10 +2391,11 @@ this.BX = this.BX || {};
 			},
 			convertMapToOptionsModelArray(options) {
 				const models = [];
-				Object.values(options).forEach(value => {
+				Object.entries(options).forEach(([value, name]) => {
 					if (main_core.Type.isStringFilled(value)) {
 						models.push({
-							name: value
+							value,
+							name
 						});
 					}
 				});
@@ -1395,8 +2404,9 @@ this.BX = this.BX || {};
 			convertOptionModelsToMap(models) {
 				const options = {};
 				for (const model of models) {
-					if (main_core.Type.isStringFilled(model.name)) {
-						options[model.name] = model.name;
+					const value = this.getOptionValue(model);
+					if (main_core.Type.isStringFilled(value)) {
+						options[value] = model.name.trim();
 					}
 				}
 				return options;
@@ -1409,7 +2419,10 @@ this.BX = this.BX || {};
 			}
 		},
 		template: `
-		<div class="bizproc-setuptemplateactivity-edit-constant-popup">
+		<div
+			class="bizproc-setuptemplateactivity-edit-constant-popup"
+			data-testid="bizproc-setup-template-constant-editor"
+		>
 			<div class="bizproc-setuptemplateactivity-edit-constant-popup__content">
 				<div class="bizproc-setuptemplateactivity-edit-constant-popup__block">
 					<div class="ui-ctl-container">
@@ -1424,6 +2437,7 @@ this.BX = this.BX || {};
 								class="ui-ctl-element"
 								:class="{ '--error': errors.name !== '' }"
 								type="text"
+								data-testid="bizproc-setup-template-constant-edit-name-input"
 								@blur="validateName"
 							/>
 						</div>
@@ -1447,6 +2461,7 @@ this.BX = this.BX || {};
 								:class="{ '--error': errors.id !== '' }"
 								type="text"
 								:disabled="!isCreation"
+								data-testid="bizproc-setup-template-constant-edit-id-input"
 								@blur="validateId"
 							/>
 						</div>
@@ -1468,6 +2483,7 @@ this.BX = this.BX || {};
 							<select
 								v-model="constantType"
 								class="ui-ctl-element"
+								data-testid="bizproc-setup-template-constant-edit-type-select"
 							>
 								<option
 									v-for="constantConfiguration in constantConfigurationList"
@@ -1492,6 +2508,7 @@ this.BX = this.BX || {};
 								v-model="multiple"
 								type="checkbox"
 								class="ui-ctl-element"
+								data-testid="bizproc-setup-template-constant-edit-multiple-checkbox"
 							/>
 							{{ $Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_EDIT_MULTIPLE_LABEL') }}
 						</label>
@@ -1500,56 +2517,126 @@ this.BX = this.BX || {};
 								v-model="required"
 								type="checkbox"
 								class="ui-ctl-element"
+								data-testid="bizproc-setup-template-constant-edit-required-checkbox"
 							/>
 							{{ $Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_EDIT_REQUIRED_LABEL') }}
 						</label>
 					</div>
-					<div class="ui-ctl-container" v-if="!isEntitySelector">
+					<div
+						class="ui-ctl-container"
+						v-if="!isEntitySelector && !isUserType"
+						:data-testid="constantValueComponent ? 'bizproc-setup-template-constant-edit-value-control' : null"
+					>
 						<div class="ui-ctl-top">
 							<label class="ui-ctl-title">
 								{{ $Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_EDIT_VALUE') }}
 							</label>
 						</div>
-						<div class="ui-ctl ui-ctl-w100 ui-ctl-sm">
+						<component
+							:is="constantValueComponent"
+							v-if="constantValueComponent"
+							v-model="scalarDefaultValue"
+							@dateMissingChange="onDateMissingChange"
+						/>
+						<div v-else class="ui-ctl ui-ctl-w100 ui-ctl-sm">
 							<input
 								v-model="defaultValue"
 								class="ui-ctl-element"
 								type="text"
+								data-testid="bizproc-setup-template-constant-edit-value-input"
 							/>
+						</div>
+						<div
+							v-if="errors.value"
+							class="ui-ctl-label-text-error"
+							role="alert"
+							data-testid="bizproc-setup-template-constant-edit-value-error"
+						>
+							{{ errors.value }}
 						</div>
 					</div>
 
+					<div
+						class="ui-ctl-container"
+						v-if="isUserType"
+						data-testid="bizproc-setup-template-constant-edit-value-user"
+					>
+						<div class="ui-ctl-top">
+							<label class="ui-ctl-title">
+								{{ $Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_EDIT_VALUE') }}
+							</label>
+						</div>
+						<ConstantValueUser
+							:item="item"
+							:multiple="multiple"
+							v-model="defaultValue"
+						/>
+					</div>
+
 					<template v-if="isSelectType">
-						<div
-							v-for="(option, index) in options"
-							class="ui-ctl-container"
-						>
-							<div class="ui-ctl-top">
-								<div class="ui-ctl-title">
-									{{ $Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_EDIT_OPTION_LABEL')  }} {{ index + 1 }}
+							<div
+								v-for="(option, index) in options"
+								:key="index"
+								class="bizproc-setuptemplateactivity-edit-constant-popup__option"
+							>
+								<div class="bizproc-setuptemplateactivity-edit-constant-popup__option-fields">
+									<div class="bizproc-setuptemplateactivity-edit-constant-popup__option-bracket" aria-hidden="true"></div>
+									<div class="bizproc-setuptemplateactivity-edit-constant-popup__option-fields-inner">
+										<div class="bizproc-setuptemplateactivity-edit-constant-popup__option-field">
+											<TextXs className="bizproc-setuptemplateactivity-edit-constant-popup__option-field-label">
+												{{ $Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_EDIT_OPTION_NAME_LABEL') }}
+											</TextXs>
+											<div
+												class="bizproc-setuptemplateactivity-edit-constant-popup__option-field-control"
+												:class="{ '--error': errors.options[index] !== '' }"
+											>
+												<input
+													v-model="option.name"
+													class="bizproc-setuptemplateactivity-edit-constant-popup__option-field-input"
+													type="text"
+													:aria-label="$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_EDIT_OPTION_NAME_LABEL')"
+													:aria-invalid="errors.options[index] !== ''"
+													:aria-describedby="errors.options[index] ? ('bizproc-setuptemplateactivity-option-error-' + index) : null"
+													@blur="validateOption(index)"
+												/>
+											</div>
+										</div>
+										<div class="bizproc-setuptemplateactivity-edit-constant-popup__option-field">
+											<TextXs className="bizproc-setuptemplateactivity-edit-constant-popup__option-field-label">
+												{{ $Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_EDIT_OPTION_VALUE_LABEL') }}
+											</TextXs>
+											<div class="bizproc-setuptemplateactivity-edit-constant-popup__option-field-control">
+												<input
+													v-model="option.value"
+													class="bizproc-setuptemplateactivity-edit-constant-popup__option-field-input"
+													type="text"
+													:aria-label="$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_EDIT_OPTION_VALUE_LABEL')"
+													:aria-invalid="errors.options[index] !== ''"
+													:aria-describedby="errors.options[index] ? ('bizproc-setuptemplateactivity-option-error-' + index) : null"
+													@blur="validateOption(index)"
+												/>
+											</div>
+										</div>
+										<div
+											v-if="errors.options[index]"
+											:id="'bizproc-setuptemplateactivity-option-error-' + index"
+											class="ui-ctl-label-text-error"
+											role="alert"
+										>
+											{{ errors.options[index] }}
+										</div>
+									</div>
 								</div>
-							</div>
-							<div class="ui-ctl ui-ctl-w100 ui-ctl-sm">
-								<div
-									class="ui-ctl-after ui-ctl-icon-clear"
+								<button
+									type="button"
+									class="bizproc-setuptemplateactivity-edit-constant-popup__option-delete"
+									:aria-label="$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_EDIT_DELETE_OPTION')"
 									@click="onDeleteOption(index)"
 								>
-								</div>
-								<input
-									v-model="option.name"
-									class="ui-ctl-element"
-									:class="{ '--error': errors.options[index] !== '' }"
-									type="text"
-									@blur="validateOption(index)"
-								/>
+									<BIcon :name="Outline.CROSS_L" :color="'var(--ui-color-base-4)'" :size="20"/>
+								</button>
 							</div>
-							<div
-								v-if="errors.options[index]"
-								class="ui-ctl-label-text-error">
-								{{ errors.options[index] }}
-							</div>
-						</div>
-					</template>
+						</template>
 
 					<div
 						v-if="isSelectType"
@@ -1578,6 +2665,7 @@ this.BX = this.BX || {};
 								v-model="description"
 								class="ui-ctl-element"
 								type="text"
+								data-testid="bizproc-setup-template-constant-edit-description-input"
 							/>
 						</div>
 					</div>
@@ -1587,11 +2675,13 @@ this.BX = this.BX || {};
 						:text="$Bitrix.Loc.getMessage('BIZPROC_SETUP_TEMPLATE_ACTIVITY_JS_CONSTANT_EDIT_CANCEL')"
 						:style="AirButtonStyle.OUTLINE"
 						:size="ButtonSize.MEDIUM"
+						:dataset="{ testid: 'bizproc-setup-template-constant-edit-cancel-btn' }"
 						@click="onCancel"
 					/>
 					<UiButton
 						:text="submitButtonText"
 						:size="ButtonSize.MEDIUM"
+						:dataset="{ testid: 'bizproc-setup-template-constant-edit-save-btn' }"
 						@click="onSave"
 					/>
 				</div>
@@ -1699,6 +2789,31 @@ this.BX = this.BX || {};
 				}, {});
 			}
 		},
+		methods: {
+			/**
+			 * The preview is a picture of the form, not the form itself, but the `disabled` prop below is
+			 * not declared by the field chain and only lands on the row element. A date or time field
+			 * carries a real picker, so activating its row would open the picker and change the shown
+			 * value. Only such a row is caught: everything the other fields do stays in the preview
+			 * anyway (`formData` is a computed without a setter), and swallowing their events would take
+			 * the space bar out of a text field and the toggling out of a radio.
+			 */
+			isPickerRow(event) {
+				return main_core.Type.isElementNode(event.target) && main_core.Type.isDomNode(event.target.closest(bizproc_setupTemplate.PICKER_ROW_SELECTOR));
+			},
+			suppressActivation(event) {
+				if (!this.isPickerRow(event)) {
+					return;
+				}
+				event.preventDefault();
+				event.stopPropagation();
+			},
+			suppressKeyActivation(event) {
+				if (bizproc_setupTemplate.isPickerOpenKey(event)) {
+					this.suppressActivation(event);
+				}
+			}
+		},
 		template: `
 		<PreviewLayout>
 			<template #header>
@@ -1719,6 +2834,8 @@ this.BX = this.BX || {};
 							:formData="formData"
 							:disabled="true"
 							:errors="{}"
+							@click.capture="suppressActivation"
+							@keydown.capture="suppressKeyActivation"
 						/>
 					</template>
 				</PreviewBlock>
@@ -1784,7 +2901,7 @@ this.BX = this.BX || {};
 		},
 		data() {
 			return {
-				blocks: [],
+				blocks: JSON.parse(this.serializedBlocks) ?? [],
 				isShowPreview: false,
 				initialConstantIds: new Set(),
 				editingConstant: null,
@@ -1833,7 +2950,6 @@ this.BX = this.BX || {};
 			}
 		},
 		mounted() {
-			this.blocks = JSON.parse(this.serializedBlocks) ?? [];
 			this.initialConstantIds = new Set(this.localConstantIds);
 			main_core_events.EventEmitter.subscribe('Bizproc.NodeSettings:nodeSettingsSaving', this.onNodeSettingsSave);
 			main_core_events.EventEmitter.subscribe('Bizproc.SetupTemplate:Draggable:drop', this.onItemDrop);
@@ -2103,6 +3219,7 @@ this.BX = this.BX || {};
 					<template #footer>
 						<AddElementBtn
 							:constantIds="allConstantIds"
+							:constantConfigurationList="constantConfigurationList"
 							@add:element="onAddItem(blockIndex, $event)"
 							@create:constant="onCreateConstant(blockIndex, $event)"
 						/>
@@ -2163,5 +3280,5 @@ this.BX = this.BX || {};
 
 	exports.SetupTemplateActivity = SetupTemplateActivity;
 
-})(this.BX.Bizproc = this.BX.Bizproc || {}, BX.Event, BX.Vue3, BX.UI.Dialogs, BX.UI.IconSet, BX.UI.IconSet, BX, BX.UI.System.Menu, BX.Vue3.Components, BX.Bizproc);
+})(this.BX.Bizproc = this.BX.Bizproc || {}, BX.Event, BX.Vue3, BX.UI.Dialogs, BX.UI.IconSet, BX.UI.IconSet, BX, BX.UI.System.Menu, BX.Bizproc, BX.UI.EntitySelector, BX.Vue3.Components, BX.UI.System.Typography.Vue);
 //# sourceMappingURL=setup-template-activity.bundle.js.map

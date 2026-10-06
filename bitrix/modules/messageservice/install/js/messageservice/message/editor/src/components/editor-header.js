@@ -3,8 +3,10 @@ import { BaseEvent } from 'main.core.events';
 import { Outline } from 'ui.icon-set.api.vue';
 import { AirButtonStyle, Button as BButton } from 'ui.vue3.components.button';
 import { mapGetters, mapState } from 'ui.vue3.vuex';
+
 import { openContactCenter } from '../utils';
 import { ChannelSelector } from './editor-header/channel-selector';
+import { CustomTemplateSelector } from './editor-header/custom-template-selector';
 import { NotificationTemplateSelector } from './editor-header/notification-template-selector';
 import { TemplateSelector } from './editor-header/template-selector';
 import { ToSelector } from './editor-header/to-selector';
@@ -15,6 +17,7 @@ export const EditorHeader = {
 	components: {
 		BButton,
 		ChannelSelector,
+		CustomTemplateSelector,
 		NotificationTemplateSelector,
 		ToSelector,
 		TemplateSelector,
@@ -35,6 +38,8 @@ export const EditorHeader = {
 		...mapState({
 			/** @type {Layout} */
 			layout: (state) => state.application.layout,
+			/** @type {?TemplateBinding} */
+			templateBinding: (state) => state.application.scene.templateBinding,
 		}),
 		hasChannels(): boolean
 		{
@@ -42,13 +47,20 @@ export const EditorHeader = {
 		},
 		isTemplatesSelectorShown(): boolean
 		{
-			// todo templates for custom text
 			return Boolean(this.currentChannel?.isTemplatesBased);
 		},
 		isNotificationTemplateSelectorShown(): boolean
 		{
 			return this.currentChannel?.backend.senderCode === 'bitrix24'
 				&& this.hasMultipleNotificationTemplates;
+		},
+		isCustomTemplateSelectorShown(): boolean
+		{
+			return Boolean(this.layout?.isCustomTemplateSelectorShown)
+				&& !Type.isNil(this.templateBinding)
+				&& !Type.isNil(this.currentChannel)
+				&& this.currentChannel.backend.senderCode !== 'bitrix24'
+				&& !this.currentChannel.isTemplatesBased;
 		},
 	},
 	methods: {
@@ -87,6 +99,10 @@ export const EditorHeader = {
 			<div class="messageservice-message-editor__header-right">
 				<TemplateSelector v-if="isTemplatesSelectorShown"/>
 				<NotificationTemplateSelector v-if="isNotificationTemplateSelectorShown"/>
+				<CustomTemplateSelector
+					v-if="isCustomTemplateSelectorShown"
+					:binding="templateBinding"
+				/>
 			</div>
 		</div>
 	`,

@@ -300,7 +300,7 @@ if ($arParams["TEMPLATE_TYPE"] == "IM_NEW_NOTIFY" || $arParams["TEMPLATE_TYPE"] 
 															<td valign="top" style="vertical-align: top;width: 464px; max-width: 100%;" <?if (!isset($arResult["USER_PHOTO"]) || empty($arResult["USER_PHOTO"])):?>colspan="2" <?endif?>>
 																<span style="display: block; border-radius: 14px; padding: 13px 16px; background-color: #fbfcfc;text-align: left;">
 																	<span style="display: block; font-size: 16px;font-family: Helvetica Neue, Helvetica, Arial, sans-serif; color: #525c69;text-align: left;">
-																		<?=htmlspecialcharsback($arParams["MESSAGE"])?>
+																		<?=$arParams["MESSAGE"]?>
 																	</span>
 																</span>
 															</td>
@@ -363,7 +363,7 @@ if ($arParams["TEMPLATE_TYPE"] == "IM_NEW_MESSAGE_GROUP")
 											<tr>
 												<td align="left" style="text-align: left; padding: 5px 0;">
 													<span style="color: #2066b0; font-size: 19px; font-family: Helvetica Neue, Helvetica, Arial, sans-serif;">
-														<?=GetMessage("INTRANET_MAIL_TITLE_".$arParams["TEMPLATE_TYPE"], array("#NAME#" => "<span style=\"font-weight: bold;\">".$arParams["FROM_USER"]."</span>"))?>
+														<?=GetMessage("INTRANET_MAIL_TITLE_".$arParams["TEMPLATE_TYPE"], array("#NAME#" => "<span style=\"font-weight: bold;\">".htmlspecialcharsbx($arParams["FROM_USER"])."</span>"))?>
 													</span>
 												</td>
 											</tr>

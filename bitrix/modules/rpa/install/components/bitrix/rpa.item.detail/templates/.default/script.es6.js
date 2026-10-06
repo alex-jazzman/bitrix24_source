@@ -277,7 +277,7 @@ class ItemDetailComponent
 		this.progress = false;
 		const eventId = Text.getRandom();
 		this.eventIds.add(eventId);
-		Ajax.runAction('rpa.item.update', {
+		Ajax.runAction('rpa.Item.update', {
 			analyticsLabel: 'rpaItemDetailUpdateStage',
 			data: {
 				id: this.item.id,
@@ -503,7 +503,7 @@ class ItemDetailComponent
 		this.reloadTasksTimeoutId = setTimeout(() =>
 		{
 			this.startProgress();
-			Ajax.runAction('rpa.item.getTasks', {
+			Ajax.runAction('rpa.Item.getTasks', {
 				analyticsLabel: 'rpaItemTimelineGetTasks',
 				data: {
 					typeId: this.typeId,
@@ -573,7 +573,7 @@ class ItemDetailComponent
 
 			EventEmitter.subscribe('BX.UI.Timeline.CommentEditor:onLoadVisualEditor', (event: BaseEvent) => {
 				return new Promise((resolve, reject) => {
-					Ajax.runAction('rpa.comment.getVisualEditor', {
+					Ajax.runAction('rpa.Comment.getVisualEditor', {
 						analyticsLabel: 'rpaTimelineCommentLoadVisualEditor',
 						data: {
 							name: event.getData().name,
@@ -593,7 +593,7 @@ class ItemDetailComponent
 					const eventId = Text.getRandom();
 					this.eventIds.add(eventId);
 					let analyticsLabel = 'rpaTimelineCommentAdd';
-					let action = 'rpa.comment.add';
+					let action = 'rpa.Comment.add';
 					let data = {
 						typeId: this.typeId,
 						itemId: this.id,
@@ -606,7 +606,7 @@ class ItemDetailComponent
 					const commentId = Text.toInteger(event.getData().commentId);
 					if(commentId > 0)
 					{
-						action = 'rpa.comment.update';
+						action = 'rpa.Comment.update';
 						data.id = commentId;
 						analyticsLabel = 'rpaTimelineCommentUpdate';
 					}
@@ -658,7 +658,7 @@ class ItemDetailComponent
 						reject();
 						return;
 					}
-					Ajax.runAction('rpa.comment.get', {
+					Ajax.runAction('rpa.Comment.get', {
 						analyticsLabel: 'rpaTimelineCommentGetContent',
 						data: {
 							id: commentId,
@@ -692,7 +692,7 @@ class ItemDetailComponent
 						reject();
 						return;
 					}
-					Ajax.runAction('rpa.comment.getFilesContent', {
+					Ajax.runAction('rpa.Comment.getFilesContent', {
 						analyticsLabel: 'rpaTimelineCommentGetFilesContent',
 						data: {
 							id: commentId,
@@ -729,7 +729,7 @@ class ItemDetailComponent
 					}
 					const eventId = Text.getRandom();
 					this.eventIds.add(eventId);
-					Ajax.runAction('rpa.comment.delete', {
+					Ajax.runAction('rpa.Comment.delete', {
 						analyticsLabel: 'rpaTimelineCommentDelete',
 						data: {
 							id: commentId,
@@ -762,7 +762,7 @@ class ItemDetailComponent
 		}
 		this.startProgress();
 		this.stream.currentPage++;
-		Ajax.runAction('rpa.timeline.listForItem', {
+		Ajax.runAction('rpa.Timeline.listForItem', {
 			analyticsLabel: 'rpaItemDetailTimelineLoadOnScroll',
 			data: {
 				typeId: this.typeId,
@@ -809,7 +809,7 @@ class ItemDetailComponent
 		const item = event.getData().item;
 		if(item instanceof Timeline.Item)
 		{
-			Ajax.runAction('rpa.timeline.updateIsFixed', {
+			Ajax.runAction('rpa.Timeline.updateIsFixed', {
 				analyticsLabel: 'rpaTimelinePinClick',
 				data: {
 					id: item.getId(),

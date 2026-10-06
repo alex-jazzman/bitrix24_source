@@ -1,0 +1,4 @@
+<?php
+$MESS["MAIL_DRAFT_LIST_DELETE_PARTIAL_ERROR"] = "Could not delete drafts (#COUNT#).";
+$MESS["MAIL_DRAFT_LIST_NO_RECIPIENTS"] = "No recipients";
+$MESS["MAIL_MESSAGE_LIST_DRAFT_FILTER_TO"] = "To";

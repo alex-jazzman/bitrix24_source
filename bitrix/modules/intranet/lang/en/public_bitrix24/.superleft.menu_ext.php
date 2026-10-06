@@ -57,6 +57,7 @@ $MESS["MENU_SIGN_MSGVER_1"] = "e-Signature";
 $MESS["MENU_SITES"] = "Sites";
 $MESS["MENU_SITES_AND_STORES"] = "Sites and stores";
 $MESS["MENU_STORE_ACCOUNTING_SECTION"] = "Inventory management";
+$MESS["MENU_SYNC"] = "Calls";
 $MESS["MENU_TARIFF"] = "Subscription";
 $MESS["MENU_TASKS"] = "Tasks and Projects";
 $MESS["MENU_TASKS_NEW"] = "Tasks";

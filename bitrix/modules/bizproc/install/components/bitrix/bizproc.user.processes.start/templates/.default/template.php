@@ -14,6 +14,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
  */
 
 \Bitrix\Main\UI\Extension::load([
+	'bizproc.a11y',
 	'bizproc.router',
 	'bizproc.workflow.instances.widget',
 	'tooltip',
@@ -33,6 +34,9 @@ global $APPLICATION;
 /** @var \Bitrix\Main\UI\PageNavigation $pageNavigation */
 $pageNavigation = $arResult['pageNavigation'];
 
+?>
+<section aria-label="<?= htmlspecialcharsbx(\Bitrix\Main\Localization\Loc::getMessage('BIZPROC_USER_PROCESSES_START_GRID_ARIA_LABEL')) ?>">
+<?php
 $APPLICATION->IncludeComponent(
 	'bitrix:main.ui.grid',
 	'',
@@ -64,7 +68,9 @@ $APPLICATION->IncludeComponent(
 		'AJAX_OPTION_HISTORY' => 'N',
 	],
 );
-
+?>
+</section>
+<?php
 $messages = \Bitrix\Main\Localization\Loc::loadLanguageFile(__FILE__);
 ?>
 <script>

@@ -10,6 +10,7 @@ import { gridTokens, GridTokenKey } from 'booking.lib.grid';
 import { type ResourceModel } from 'booking.model.resources';
 import { type Cell, type HoveredPlacementSlot } from 'booking.model.interface';
 
+import { type OpenDayColumnPopupParams } from '../../types';
 import { weekCellService } from '../../lib/cell';
 import { cellStatsService } from '../../lib/cell-stats';
 import { CellStatsOverlay } from './cell-stats-overlay/cell-stats-overlay';
@@ -32,6 +33,7 @@ export const WeekGridCell = {
 			required: true,
 		},
 	},
+	emits: ['openDayColumnPopup'],
 	data(): Object
 	{
 		return {
@@ -213,6 +215,13 @@ export const WeekGridCell = {
 		clearTimeout(this.cellStatsTimeoutId);
 	},
 	methods: {
+		openDayColumnPopup(params: OpenDayColumnPopupParams): void
+		{
+			this.$emit('openDayColumnPopup', {
+				...params,
+				bindElement: this.$refs.cellContainer,
+			});
+		},
 		syncHoveredCell(): void
 		{
 			if (this.isBookingDragged)
@@ -453,7 +462,11 @@ export const WeekGridCell = {
 	},
 	template: `
 		<div
+			ref="cellContainer"
 			class="booking-booking__booking__week-grid_row-cell"
+			data-element="booking-week-grid-day-cell"
+			:data-resource-id="resourceId"
+			:data-date="dayStartTs"
 			@mouseenter="onMouseEnter"
 			@mouseleave="onMouseLeave"
 			@mouseup.capture="onMouseUp"
@@ -461,6 +474,7 @@ export const WeekGridCell = {
 			<CellStatsOverlay
 				v-if="needShowStatsOverlay"
 				:cell
+				@openDayColumnPopup="openDayColumnPopup"
 			/>
 		</div>
 	`,

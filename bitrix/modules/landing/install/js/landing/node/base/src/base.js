@@ -1,3 +1,7 @@
+// BX.Landing.Utils is read at module scope below, so landing.utils must be
+// loaded before this bundle: the import declares that order in config.php rel.
+import 'landing.utils';
+
 const isFunction = BX.Landing.Utils.isFunction;
 const isString = BX.Landing.Utils.isString;
 const isPlainObject = BX.Landing.Utils.isPlainObject;

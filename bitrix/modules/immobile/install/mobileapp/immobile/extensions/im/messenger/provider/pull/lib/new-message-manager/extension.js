@@ -136,7 +136,7 @@ jn.define('im/messenger/provider/pull/lib/new-message-manager', (require, export
 		{
 			const message = this.getPreparedRecentMessage();
 
-			return RecentDataConverter.fromPullToModel({
+			const recentItem = RecentDataConverter.fromPullToModel({
 				id: this.getDialogId(),
 				chat: this.getChat(),
 				user: this.getSender(),
@@ -146,6 +146,39 @@ jn.define('im/messenger/provider/pull/lib/new-message-manager', (require, export
 				lastActivityDate: this.#params.dateLastActivity,
 				message,
 			});
+
+			this.#applyOwnMessage(recentItem);
+
+			return recentItem;
+		}
+
+		/**
+		 * @param {RecentModelState|false} recentItem
+		 */
+		#applyOwnMessage(recentItem)
+		{
+			if (!recentItem || typeof recentItem !== 'object')
+			{
+				return;
+			}
+
+			if (!Feature.isCollabPreviewSourceAvailable || !this.isCollabChat())
+			{
+				return;
+			}
+
+			recentItem.ownMessage = this.#getPreparedOwnMessage();
+		}
+
+		/**
+		 * @return {object}
+		 */
+		#getPreparedOwnMessage()
+		{
+			const ownMessage = this.getPreparedRecentMessage();
+			ownMessage.text = ChatMessengerCommon.purifyText(ownMessage.text, ownMessage.params);
+
+			return ownMessage;
 		}
 
 		/**
@@ -224,6 +257,14 @@ jn.define('im/messenger/provider/pull/lib/new-message-manager', (require, export
 		isCopilotChat()
 		{
 			return this.getChatType() === DialogType.copilot;
+		}
+
+		/**
+		 * @return {boolean}
+		 */
+		isCollabChat()
+		{
+			return this.getChatType() === DialogType.collab;
 		}
 
 		/**

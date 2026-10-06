@@ -87,6 +87,7 @@ export type Company = {
 	rqInn: ?number,
 	registerUrl: ?string,
 	providers: ?Array<Provider>,
+	goskeyLiteAvailable: ?boolean,
 };
 
 export type B2eCompanyList = { companies: Array<Company>, showTaxId: boolean };

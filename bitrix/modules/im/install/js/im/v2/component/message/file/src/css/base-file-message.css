@@ -5,6 +5,19 @@
 	overflow: hidden;
 }
 
+/*
+ * A reply quote outside the bubble widens it (quote max-width is 460px). The card, time and
+ * download button must follow that width, so the base 285px cap is lifted to the quote limit.
+ */
+.bx-im-message-base__content-main > .bx-im-message-quote ~ .bx-im-message-base__body .bx-im-message-base-file__container {
+	max-width: 460px;
+}
+
+.bx-im-message-base-file__container > .bx-im-message-quote {
+	margin-top: 4px;
+	margin-bottom: 12px;
+}
+
 .bx-im-message-base-file__author-title {
 	padding-bottom: 6px;
 }

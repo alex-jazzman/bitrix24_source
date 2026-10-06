@@ -1,7 +1,7 @@
 import { Type } from 'main.core';
 
 import { BaseMessage } from 'im.v2.component.message.base';
-import { AudioItem, DefaultMessageContent, MessageHeader, MessageFooter } from 'im.v2.component.message.elements';
+import { AudioItem, DefaultMessageContent, MessageHeader, MessageFooter, Reply } from 'im.v2.component.message.elements';
 import { FileType } from 'im.v2.const';
 import { type ImModelMessage, type ImModelFile } from 'im.v2.model';
 
@@ -16,6 +16,7 @@ export const AudioMessage = {
 		MessageFooter,
 		DefaultMessageContent,
 		AudioItem,
+		Reply,
 	},
 	props: {
 		item: {
@@ -49,6 +50,14 @@ export const AudioMessage = {
 		{
 			return Type.isNumber(this.message.id);
 		},
+		isReply(): boolean
+		{
+			return this.message.replyId !== 0;
+		},
+		isForward(): boolean
+		{
+			return this.$store.getters['messages/isForward'](this.message.id);
+		},
 	},
 	methods:
 	{
@@ -61,6 +70,7 @@ export const AudioMessage = {
 		<BaseMessage :item="item" :dialogId="dialogId">
 			<div class="bx-im-message-audio__container">
 				<MessageHeader :withTitle="withTitle" :item="item" class="bx-im-message-audio__header"/>
+				<Reply v-if="isReply" :dialogId="dialogId" :replyId="message.replyId" :isForward="isForward" />
 				<AudioItem
 					:key="messageFile.id"
 					:item="messageFile"
@@ -69,7 +79,7 @@ export const AudioMessage = {
 				/>
 			</div>
 			<div class="bx-im-message-audio__default-message-container">
-				<DefaultMessageContent :item="item" :dialogId="dialogId" />
+				<DefaultMessageContent :item="item" :dialogId="dialogId" :withReply="false" />
 			</div>
 			<MessageFooter :item="item" :dialogId="dialogId" />
 		</BaseMessage>

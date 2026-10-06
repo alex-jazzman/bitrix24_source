@@ -12,7 +12,7 @@ jn.define('user-profile/common-tab/src/block/base-view', (require, exports, modu
 	};
 
 	const BaseViewStyles = {
-		backgroundColor: Color.bgContentPrimary.toHex(),
+		backgroundColor: Color.bgContentSecondaryInvert.toHex(),
 		flexDirection: 'column',
 		justifyContent: 'center',
 	};

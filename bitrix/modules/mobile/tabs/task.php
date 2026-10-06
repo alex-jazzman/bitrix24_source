@@ -11,6 +11,7 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Mobile\Context;
 use Bitrix\Mobile\Project\Helper;
 use Bitrix\Mobile\Tab\Tabable;
+use Bitrix\Mobile\Tab\Tasks\ProjectsComponent;
 use Bitrix\Mobile\Tab\Utils;
 use Bitrix\MobileApp\Janative\Manager;
 use Bitrix\Socialnetwork\Component\WorkgroupList;
@@ -113,6 +114,7 @@ class Task implements Tabable
 	private function getCacheId(): string
 	{
 		$enabledTools = [];
+		$projectsListComponent = ProjectsComponent::getListComponent();
 
 		$tools = ['projects', 'tasks', 'templates', 'scrum', 'crm_bi', 'flows'];
 		foreach ($tools as $toolId)
@@ -120,6 +122,10 @@ class Task implements Tabable
 			if ($this->isToolAvailable($toolId))
 			{
 				$enabledTools[] = $toolId;
+				if ($toolId === 'projects')
+				{
+					$enabledTools[] = $projectsListComponent['code'];
+				}
 			}
 		}
 
@@ -146,6 +152,8 @@ class Task implements Tabable
 	 */
 	private function getTabsComponent(): array
 	{
+		$projectsListComponent = ProjectsComponent::getListComponent();
+
 		return [
 			'name' => 'JSStackComponent',
 			'title' => Loc::getMessage('TAB_TASKS_NAVIGATION_HEADER'),
@@ -163,7 +171,7 @@ class Task implements Tabable
 						'items' => array_values(
 							array_filter([
 								$this->getTaskListTab(),
-								$this->getProjectListTab(),
+								$this->getProjectListTab($projectsListComponent),
 								$this->getFlowListTab(),
 								$this->getTemplateListTab(),
 								$this->getScrumListTab(),
@@ -182,7 +190,7 @@ class Task implements Tabable
 					'TASKS' => 'tasks.dashboard',
 					'FLOW' => 'tasks.flow.list',
 					'TEMPLATES' => 'tasks.template.list',
-					'PROJECTS' => 'tasks.project.list',
+					'PROJECTS' => $projectsListComponent['code'],
 					'SCRUM' => 'tasks.scrum.list',
 					'ANALYTICS' => 'tasks.analytics',
 				],
@@ -243,7 +251,7 @@ class Task implements Tabable
 		];
 	}
 
-	private function getProjectListTab(): ?array
+	private function getProjectListTab(array $projectsListComponent): ?array
 	{
 		if (!$this->isToolAvailable('projects'))
 		{
@@ -254,9 +262,8 @@ class Task implements Tabable
 			!Feature::isFeatureEnabled(Feature::PROJECTS_GROUPS)
 			&& !Feature::canTurnOnTrial(Feature::PROJECTS_GROUPS)
 		);
-
 		return [
-			'id' => 'tasks.project.list',
+			'id' => $projectsListComponent['code'],
 			'testId' => 'tasks_project',
 			'title' => Loc::getMessage('TAB_TASKS_NAVIGATION_TAB_PROJECTS'),
 			'icon' => ($isProjectRestricted ? 'lock' : null),
@@ -264,19 +271,11 @@ class Task implements Tabable
 			'component' => [
 				'name' => 'JSStackComponent',
 				'title' => Loc::getMessage('TAB_TASKS_NAVIGATION_HEADER'),
-				'componentCode' => 'tasks.project.list',
-				'scriptPath' => Manager::getComponentPath('tasks:tasks.project.list'),
-				'rootWidget' => [
-					'name' => 'tasks.list',
-					'settings' => [
-						'objectName' => 'list',
-						'useSearch' => true,
-						'useLargeTitleMode' => true,
-						'emptyListMode' => true,
-					],
-				],
+				'componentCode' => $projectsListComponent['code'],
+				'scriptPath' => $projectsListComponent['scriptPath'],
+				'rootWidget' => ProjectsComponent::getRootWidget($projectsListComponent['code']),
 				'params' => [
-					'COMPONENT_CODE' => 'tasks.project.list',
+					'COMPONENT_CODE' => $projectsListComponent['code'],
 					'SITE_ID' => $this->context->siteId,
 					'SITE_DIR' => $this->context->siteDir,
 					'USER_ID' => $this->context->userId,

@@ -5,6 +5,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 use \Bitrix\Landing\Connector;
+use \Bitrix\Landing\Sanitizer;
 use \Bitrix\Landing\Site\Type;
 use \Bitrix\Main\Localization\Loc;
 
@@ -119,7 +120,7 @@ if (
 				</div>
 				<div class="landing-error-kb-desc">
 					<?= Loc::getMessage('LANDING_TPL_ERROR_NOT_ALLOWED_NOTE_2_GROUP', [
-						'#LINK1#' => '<a href="' . $groupPath . '" target="_top">',
+						'#LINK1#' => '<a href="' . htmlspecialcharsbx(Sanitizer::sanitizeHrefScheme($groupPath)) . '" target="_top">',
 						'#LINK2#' => '</a>',
 					]);?>
 				</div>
@@ -137,7 +138,7 @@ if (
 		<div class="landing-error-site-title"><?= $error;?></div>
 		<div class="landing-error-site-desc">
 			<?= Loc::getMessage('LANDING_TPL_ERROR_NOT_FOUND_NOTE', [
-				'#LINK1#' => '<a href="' . ($arResult['SITE_URL'] ?? '/') . '">',
+				'#LINK1#' => '<a href="' . htmlspecialcharsbx(Sanitizer::sanitizeHrefScheme($arResult['SITE_URL'] ?? '/')) . '">',
 				'#LINK2#' => '</a>',
 			]);?>
 		</div>

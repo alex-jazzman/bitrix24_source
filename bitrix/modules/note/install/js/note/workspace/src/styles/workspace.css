@@ -4,15 +4,6 @@
 	min-height: 100%;
 }
 
-.note-workspace-page__actions {
-	display: flex;
-	align-items: center;
-	justify-content: flex-end;
-	gap: var(--ui-space-inline-md, 16px);
-	padding: var(--ui-space-stack-md, 16px) var(--ui-space-inline-lg, 20px) var(--ui-space-stack-xs, 8px);
-	flex: 0 0 auto;
-}
-
 .note-workspace-page__body {
 	width: min(100%, 1000px);
 	margin: 0 auto;
@@ -39,6 +30,48 @@
 	min-width: 0;
 }
 
+.note-workspace-page__favorite,
+.note-workspace-page__subscribe {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 24px;
+	height: 24px;
+	padding: 0;
+	margin-left: 4px;
+	vertical-align: middle;
+	background: transparent;
+	border: 0;
+	cursor: pointer;
+	color: var(--ui-color-base-3);
+}
+
+/* BIcon sets --ui-icon-set__icon-color on its own root, so the var must live ON the icon element
+ * (not the button) to win — point it at currentColor so the icon follows the button's base/--on
+ * state (same trick as note.ui.document-history's bell). */
+.note-workspace-page__favorite-icon,
+.note-workspace-page__subscribe-icon {
+	--ui-icon-set__icon-color: currentColor;
+}
+
+/* Dim-only hover (like the document bell) — no background rectangle. When active (subscribed) the
+ * accent bell stays as-is on hover: no dim, no colour change. */
+.note-workspace-page__favorite:not(.--on):hover,
+.note-workspace-page__subscribe:not(.--on):hover {
+	opacity: .8;
+}
+
+.note-workspace-page__favorite.--on,
+.note-workspace-page__subscribe.--on {
+	color: var(--ui-color-accent-main-primary);
+}
+
+.note-workspace-page__favorite:disabled,
+.note-workspace-page__subscribe:disabled {
+	opacity: 0.6;
+	cursor: default;
+}
+
 .note-workspace-page__title-edit {
 	display: inline-flex;
 	align-items: center;
@@ -54,8 +87,15 @@
 	color: var(--ui-color-base-3);
 }
 
+/* The pencil is a ui-icon-set span too — it colours via --ui-icon-set__icon-color, not `color`, so
+ * point that at currentColor (same as the bell) to get the identical base-3 grey. */
+.note-workspace-page__title-edit .ui-icon-set {
+	--ui-icon-set__icon-color: currentColor;
+}
+
+/* Same dim-only hover as the subscribe bell — consistent icon affordances next to the title. */
 .note-workspace-page__title-edit:hover {
-	color: var(--ui-color-base-1);
+	opacity: .8;
 }
 
 .note-workspace-page__title-input {
@@ -73,35 +113,6 @@
 	line-height: 1.15;
 	color: var(--ui-color-base-1);
 	letter-spacing: -0.3px;
-}
-
-.note-workspace-page__action-icon {
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	width: 24px;
-	height: 24px;
-	padding: 0;
-	background: transparent;
-	border: 0;
-	cursor: pointer;
-	color: var(--ui-color-base-3);
-}
-
-.note-workspace-page__action-icon:hover {
-	color: var(--ui-color-base-1);
-}
-
-.note-workspace-page__action-icon:focus-visible {
-	outline: 2px solid var(--ui-color-accent-main-primary);
-	outline-offset: 2px;
-	border-radius: var(--ui-border-radius-sm, 4px);
-}
-
-.note-workspace-page__action-icon:disabled {
-	cursor: default;
-	opacity: 0.4;
-	pointer-events: none;
 }
 
 .note-workspace-page__tabs {
@@ -123,6 +134,11 @@
 	background: color-mix(in srgb, var(--ui-color-base-3) 8%, transparent);
 }
 
+.note-workspace-page__tab:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: 2px;
+}
+
 .note-workspace-page__tab--active {
 	background: color-mix(in srgb, var(--ui-color-accent-main-primary) 12%, transparent);
 	color: var(--ui-color-accent-main-primary);
@@ -140,7 +156,10 @@
 .note-workspace-page__empty-image {
 	width: 240px;
 	height: 200px;
-	background-image: url('../images/empty-workspace.png');
+	/* fallback for browsers without image-set; absolute url keeps the build from inlining it as base64 */
+	background-image: url(/bitrix/js/note/workspace/src/images/empty-workspace.webp);
+	background-image: -webkit-image-set(url(/bitrix/js/note/workspace/src/images/empty-workspace.webp) 1x, url(/bitrix/js/note/workspace/src/images/empty-workspace@2x.webp) 2x);
+	background-image: image-set(url(/bitrix/js/note/workspace/src/images/empty-workspace.webp) 1x, url(/bitrix/js/note/workspace/src/images/empty-workspace@2x.webp) 2x);
 	background-repeat: no-repeat;
 	background-size: contain;
 	background-position: center;
@@ -151,4 +170,114 @@
 	font-size: 14px;
 	line-height: 1.4;
 	margin: 0;
+	text-align: center;
+}
+
+.note-workspace-about__empty .note-workspace-page__empty-text {
+	font-weight: var(--ui-font-weight-medium, 500);
+}
+
+.note-workspace-about {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	min-width: 0;
+}
+
+/* While editing, the description claims the rest of the page so its click-zone reaches the
+   bottom of the body — clicking any empty spot under the last paragraph places the caret.
+   In view mode the panel stays content-sized, so the empty-state placeholder is not pushed down. */
+.note-workspace-about--editing {
+	flex: 1 1 auto;
+	min-height: 0;
+}
+
+/* Sync status shown in the top bar next to "Done" while the description is being edited.
+   The description autosaves through the collaboration provider, so "Done" only leaves edit
+   mode - the badge reassures the editor that changes are already persisted. */
+.note-workspace-about-sync {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	font-size: 13px;
+	line-height: 1;
+	color: var(--ui-color-base-3);
+	white-space: nowrap;
+}
+
+.note-workspace-about-sync__dot {
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	background: var(--ui-color-accent-main-success);
+}
+
+.note-workspace-about-sync--saving .note-workspace-about-sync__dot {
+	background: var(--ui-color-accent-main-warning);
+}
+
+/* The inline description surface (NoteDocumentEmbedComponent) styles itself in note.editor's
+   editor.css (host layout, hidden service title, trimmed click-zone, loader/error). */
+
+/* Bulk selection: toolbar "Select" toggle (desktop) */
+.note-page-document-action-select {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	height: 36px;
+	padding: 0 14px;
+	border: none;
+	border-radius: 8px;
+	background: none;
+	color: var(--ui-color-base-1);
+	font-size: 14px;
+	font-weight: 500;
+	white-space: nowrap;
+	cursor: pointer;
+	transition: background 0.12s ease, color 0.12s ease;
+	--ui-icon-set__icon-size: 20px;
+	--ui-icon-set__icon-color: var(--ui-color-base-3);
+}
+
+.note-page-document-action-select:hover {
+	background: var(--ui-color-bg-gray-secondary, rgba(0, 0, 0, 0.04));
+}
+
+.note-page-document-action-select.--active {
+	background: color-mix(in srgb, var(--ui-color-accent-main-primary) 12%, transparent);
+	color: var(--ui-color-accent-main-primary);
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary);
+}
+
+.note-page-document-action-icon.--active {
+	color: var(--ui-color-accent-main-primary);
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary);
+}
+
+/* Bulk confirm dialog: nested-documents toggle */
+.note-workspace-bulk-confirm-text {
+	color: var(--ui-color-base-1);
+	font-size: 14px;
+	line-height: 1.5;
+}
+
+.note-workspace-bulk-confirm-toggle {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin-top: 14px;
+	cursor: pointer;
+}
+
+/* ui.checkbox label text has no themed color of its own, so it keeps a non-themed value in the
+   dark dialog context; pin it to the same themed token the description above uses. */
+.note-workspace-bulk-confirm-toggle .ui-checkbox__label-text {
+	color: var(--ui-color-base-1);
+}
+
+.note-workspace-bulk-confirm-limit {
+	margin-top: 6px;
+	color: var(--ui-color-accent-soft-red-01, #f5535b);
+	font-size: 14px;
+	line-height: 1.5;
 }

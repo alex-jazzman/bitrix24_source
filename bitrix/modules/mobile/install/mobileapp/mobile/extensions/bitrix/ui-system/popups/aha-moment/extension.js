@@ -41,6 +41,8 @@ jn.define('ui-system/popups/aha-moment', (require, exports, module) => {
 		 * @param {function} [props.onClose]
 		 * @param {function} [props.onClick]
 		 * @param {function} [props.onHide]
+		 * @param {function} [props.onShowSkipped]
+		 * @param {function} [props.canShow]
 		 * @param {number} [props.fadeInDuration=10]
 		 * @param {object} [props.image]
 		 * @param {number} [props.image.size=78]
@@ -52,10 +54,13 @@ jn.define('ui-system/popups/aha-moment', (require, exports, module) => {
 			const {
 				targetRef,
 				delay = 0,
+				canShow,
 			} = props;
 
-			if (!targetRef || !momentsEnabled)
+			if (!targetRef || !momentsEnabled || (canShow && !canShow()))
 			{
+				props.onShowSkipped?.();
+
 				return;
 			}
 
@@ -75,15 +80,51 @@ jn.define('ui-system/popups/aha-moment', (require, exports, module) => {
 
 		#showSpotlight(props)
 		{
-			const spotlight = new Spotlight(props.targetRef, props);
-			const targetParams = spotlight.setTarget(props.targetParams);
-
-			const component = this.#createAhaMoment(props, spotlight, targetParams);
-
-			if (!AhaMoment.isShown)
+			if (props.canShow && !props.canShow())
 			{
-				AhaMoment.isShown = true;
-				spotlight.show();
+				props.onShowSkipped?.();
+
+				return;
+			}
+
+			if (AhaMoment.isShown && props.onShowSkipped)
+			{
+				props.onShowSkipped();
+
+				return;
+			}
+
+			let component = null;
+			let isShowStarted = false;
+			try
+			{
+				const spotlight = new Spotlight(props.targetRef, props);
+				const targetParams = spotlight.setTarget(props.targetParams);
+
+				component = this.#createAhaMoment(props, spotlight, targetParams);
+
+				if (!AhaMoment.isShown)
+				{
+					AhaMoment.isShown = true;
+					isShowStarted = true;
+					spotlight.show();
+				}
+			}
+			catch (error)
+			{
+				if (isShowStarted)
+				{
+					AhaMoment.isShown = false;
+				}
+
+				if (props.onShowSkipped)
+				{
+					props.onShowSkipped(error);
+
+					return;
+				}
+
+				throw error;
 			}
 
 			component.sendAnalytics({
@@ -270,6 +311,8 @@ jn.define('ui-system/popups/aha-moment', (require, exports, module) => {
 		onClick: null,
 		onClose: null,
 		onHide: null,
+		onShowSkipped: null,
+		canShow: null,
 		image: null,
 		delay: 0,
 		autoCloseDelay: 0,
@@ -287,6 +330,8 @@ jn.define('ui-system/popups/aha-moment', (require, exports, module) => {
 		onClick: PropTypes.func,
 		onClose: PropTypes.func,
 		onHide: PropTypes.func,
+		onShowSkipped: PropTypes.func,
+		canShow: PropTypes.func,
 		delay: PropTypes.number,
 		autoCloseDelay: PropTypes.number,
 		spotlightParams: PropTypes.object,

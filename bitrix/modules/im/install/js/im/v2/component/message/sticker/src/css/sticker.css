@@ -3,6 +3,11 @@
 	position: relative;
 }
 
+.bx-im-message-sticker__reply {
+	max-width: 240px;
+	margin-top: 0;
+}
+
 .bx-im-message-sticker__header-container {
 	margin-bottom: 4px;
 }

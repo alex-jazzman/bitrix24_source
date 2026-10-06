@@ -80,6 +80,7 @@ export class Keypad
 			closeByEsc: true,
 			autoHide: true,
 			zIndex: this.zIndex,
+			zIndexOptions: {alwaysOnTop: true},
 			content: this.render(),
 			noAllPaddings: true,
 
@@ -358,6 +359,7 @@ export class Keypad
 				offsetTop: 0,
 				offsetLeft: 0,
 				zIndex: baseZIndex + 300,
+				zIndexOptions: {alwaysOnTop: true},
 				bindOptions: {
 					position: 'top'
 				},
@@ -401,6 +403,7 @@ export class Keypad
 			{
 				autoHide: true,
 				zIndex: this.zIndex + 100,
+				zIndexOptions: {alwaysOnTop: true},
 				closeByEsc: true,
 				bindOptions: {
 					position: 'top'

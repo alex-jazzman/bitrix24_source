@@ -1,0 +1,2 @@
+<?php
+$MESS["SIGN_B2E_MY_DOCUMENTS_BULK_ACTION_LIMIT_WARNING"] = "Selected: #SOURCE#. To be processed: #LIMIT#";

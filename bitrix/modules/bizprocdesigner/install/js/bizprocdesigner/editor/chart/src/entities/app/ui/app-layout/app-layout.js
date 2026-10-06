@@ -1,4 +1,5 @@
-import { useFeature } from '../../../../shared/composables';
+import { useFeature, useLoc } from '../../../../shared/composables';
+import { FocusAnchor, setFocusAnchor } from '../../../../shared/utils/focus-rescue';
 
 import './app-layout.css';
 
@@ -15,12 +16,14 @@ const SETTINGS_DATA_INSPECTOR_PANEL_CLASSNAMES = {
 const TOP_RIGHT_TOOLBAR_CLASSNAMES = {
 	base: 'editor-chart-app-layout__top-right-toolbar',
 	shifted: '--shifted',
+	aboveInspectorOverlay: '--above-inspector-overlay',
 };
 
 const BOTTOM_RIGHT_TOOLBAR_CLASSNAMES = {
 	base: 'editor-chart-app-layout__bottom-right-toolbar',
 	shifted: '--shifted',
 	margined: '--margined',
+	aboveInspectorOverlay: '--above-inspector-overlay',
 };
 
 const DEBUG_BAR_TOOLBAR_CLASSNAMES = {
@@ -40,6 +43,10 @@ export const AppLayout = {
 			type: Boolean,
 			default: false,
 		},
+		isTableSettingsPanelShown: {
+			type: Boolean,
+			default: false,
+		},
 		showPreviewPanel: {
 			type: Boolean,
 			default: false,
@@ -53,12 +60,24 @@ export const AppLayout = {
 			default: true,
 		},
 	},
+	setup(): { getMessage: (messageId: string, replacements?: Object) => string }
+	{
+		const { getMessage } = useLoc();
+
+		return { getMessage };
+	},
 	computed: {
+		// The inspector scrim makes the diagram inert; the editor toolbars stay reachable.
+		isInspectorOverlayShown(): boolean
+		{
+			return this.showSettings && (this.isDataInspectorPanelShown || this.isTableSettingsPanelShown);
+		},
 		topRightClassNames(): { [string]: boolean }
 		{
 			return {
 				[TOP_RIGHT_TOOLBAR_CLASSNAMES.base]: true,
 				[TOP_RIGHT_TOOLBAR_CLASSNAMES.shifted]: this.showSettings,
+				[TOP_RIGHT_TOOLBAR_CLASSNAMES.aboveInspectorOverlay]: this.isInspectorOverlayShown,
 			};
 		},
 		bottomRightClassNames(): { [string]: boolean }
@@ -67,6 +86,7 @@ export const AppLayout = {
 				[BOTTOM_RIGHT_TOOLBAR_CLASSNAMES.base]: true,
 				[BOTTOM_RIGHT_TOOLBAR_CLASSNAMES.shifted]: this.showSettings,
 				[BOTTOM_RIGHT_TOOLBAR_CLASSNAMES.margined]: this.showDebugBar,
+				[BOTTOM_RIGHT_TOOLBAR_CLASSNAMES.aboveInspectorOverlay]: this.isInspectorOverlayShown,
 			};
 		},
 		debugBarClassNames(): { [string]: boolean }
@@ -82,6 +102,12 @@ export const AppLayout = {
 				[SETTINGS_PANEL_CLASSNAMES.base]: true,
 				[SETTINGS_PANEL_CLASSNAMES.withPreviewPanel]: this.showPreviewPanel,
 			};
+		},
+		// The section receives the rescued focus when the settings content is replaced, and the header
+		// of the panel goes down with that content, so the name cannot be a reference into it.
+		settingsPanelLabel(): string
+		{
+			return this.getMessage('BIZPROCDESIGNER_EDITOR_SETTINGS_PANEL_ARIA_LABEL');
 		},
 		settingsDataInspectorClassNames(): { [string]: boolean }
 		{
@@ -112,8 +138,21 @@ export const AppLayout = {
 			return isFeatureAvailable('debugBar');
 		},
 	},
+	methods: {
+		setSettingsAnchor(element: ?HTMLElement): void
+		{
+			setFocusAnchor(FocusAnchor.settingsPanel, element);
+		},
+		setDataInspectorAnchor(element: ?HTMLElement): void
+		{
+			setFocusAnchor(FocusAnchor.dataInspectorPanel, element);
+		},
+	},
 	template: `
-		<div class="editor-chart-app-layout">
+		<div
+			class="editor-chart-app-layout"
+			:data-test-id="$testId('editorLayout')"
+		>
 			<transition name="fade-skeleton">
 				<slot name="skeleton" />
 			</transition>
@@ -151,16 +190,22 @@ export const AppLayout = {
 				>
 					<section
 						v-if="showSettings"
+						:ref="setSettingsAnchor"
 						:class="settingsClassNames"
+						:data-testid="$testId('bizprocdesigner-settings-panel')"
+						:aria-label="settingsPanelLabel"
+						tabindex="-1"
 					>
 						<slot name="settings"/>
 					</section>
 				</transition>
 
 				<transition-group name="fade-inspector-panel">
-					<template v-if="showSettings && isDataInspectorPanelShown">
+					<template v-if="isInspectorOverlayShown && !isTableSettingsPanelShown">
 						<section
+							:ref="setDataInspectorAnchor"
 							:class="settingsDataInspectorClassNames"
+							:data-testid="$testId('bizprocdesigner-settings-data-inspector')"
 							key="data-inspector-section"
 						>
 							<slot name="settings-data-inspector"/>
@@ -168,6 +213,21 @@ export const AppLayout = {
 						<div
 							class="editor-chart-app-layout__settings-data-inspector-overlay"
 							key="data-inspector-overlay"
+						></div>
+					</template>
+				</transition-group>
+
+				<transition-group name="fade-inspector-panel">
+					<template v-if="isInspectorOverlayShown && isTableSettingsPanelShown">
+						<section
+							:class="settingsDataInspectorClassNames"
+							key="table-settings-section"
+						>
+							<slot name="settings-table-settings"/>
+						</section>
+						<div
+							class="editor-chart-app-layout__settings-data-inspector-overlay"
+							key="table-settings-overlay"
 						></div>
 					</template>
 				</transition-group>

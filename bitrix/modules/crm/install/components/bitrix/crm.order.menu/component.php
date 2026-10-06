@@ -18,6 +18,7 @@ use Bitrix\Crm\Order\Permissions;
 use Bitrix\Crm\Service;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Web\Uri;
 
 if (!CModule::IncludeModule('crm'))
 {
@@ -159,13 +160,10 @@ if ($arParams['TYPE'] === 'details')
 
 	if ($bAdd)
 	{
-		$copyUrl = CHTTP::urlAddParams(
-			Service\Sale\EntityLinkBuilder\EntityLinkBuilder::getInstance()->getOrderDetailsLink(
+		$copyUrl = (string)(new Uri(Service\Sale\EntityLinkBuilder\EntityLinkBuilder::getInstance()->getOrderDetailsLink(
 				$arParams['ELEMENT_ID'],
 				Service\Sale\EntityLinkBuilder\Context::getShopAreaContext()
-			),
-			array('copy' => 1)
-		);
+			)))->addParams(array('copy' => 1));
 
 		$arResult['BUTTONS'][] = array(
 			'TEXT' => GetMessage('ORDER_COPY'),

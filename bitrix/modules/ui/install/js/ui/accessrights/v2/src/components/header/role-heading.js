@@ -32,6 +32,9 @@ export const RoleHeading = {
 			isMaxValueSetForAny: 'accessRights/isMaxValueSetForAny',
 			isMinValueSetForAny: 'accessRights/isMinValueSetForAny',
 		}),
+		isReadOnly(): boolean {
+			return this.userGroup.isReadOnly === true;
+		},
 		title: {
 			get(): string {
 				return this.userGroup.title;
@@ -161,6 +164,11 @@ export const RoleHeading = {
 		onEnableEditClick(): void {
 			this.isPopupShown = false;
 
+			if (this.isReadOnly)
+			{
+				return;
+			}
+
 			this.isEdit = true;
 		},
 		onCopyRoleClick(): void {
@@ -176,6 +184,11 @@ export const RoleHeading = {
 		onDeleteRoleClick(): void {
 			this.isPopupShown = false;
 
+			if (this.isReadOnly)
+			{
+				return;
+			}
+
 			this.showDeleteConfirmation();
 		},
 	},
@@ -183,7 +196,7 @@ export const RoleHeading = {
 		<div ref="container" class='ui-access-rights-v2-role'>
 			<div class="ui-access-rights-v2-role-value-container">
 				<input
-					v-if="isEdit && !isProgress"
+					v-if="isEdit && !isProgress && !isReadOnly"
 					ref="input"
 					type='text'
 					class='ui-access-rights-v2-role-input'
@@ -201,20 +214,21 @@ export const RoleHeading = {
 			>
 				<RichMenuPopup v-if="isPopupShown" @close="isPopupShown = false" :popup-options="{bindElement: $refs.menu}">
 					<RichMenuItem
-						v-if="isMaxValueSetForAny"
+						v-if="isMaxValueSetForAny && !isReadOnly"
 						:icon="RichMenuItemIcon.check"
 						:title="$Bitrix.Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_SET_MAX_ACCESS_RIGHTS')"
 						:subtitle="$Bitrix.Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_SET_MAX_ACCESS_RIGHTS_SUBTITLE')"
 						@click="onSetMaxValuesClick"
 					/>
 					<RichMenuItem
-						v-if="isMinValueSetForAny"
+						v-if="isMinValueSetForAny && !isReadOnly"
 						:icon="RichMenuItemIcon['red-lock']"
 						:title="$Bitrix.Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_SET_MIN_ACCESS_RIGHTS')"
 						:subtitle="$Bitrix.Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_SET_MIN_ACCESS_RIGHTS_SUBTITLE')"
 						@click="onSetMinValuesClick"
 					/>
 					<RichMenuItem
+						v-if="!isReadOnly"
 						:icon="RichMenuItemIcon.pencil"
 						:title="$Bitrix.Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_RENAME')"
 						:subtitle="$Bitrix.Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_RENAME_SUBTITLE')"
@@ -235,6 +249,7 @@ export const RoleHeading = {
 						@click="onCopyRoleClick"
 					/>
 					<RichMenuItem
+						v-if="!isReadOnly"
 						:icon="RichMenuItemIcon['trash-bin']"
 						:title="$Bitrix.Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_REMOVE')"
 						:subtitle="$Bitrix.Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_REMOVE_SUBTITLE')"

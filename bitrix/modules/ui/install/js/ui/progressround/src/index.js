@@ -1,11 +1,13 @@
 import { Reflection } from 'main.core';
 import 'ui.fonts.opensans';
+import 'ui.design-tokens.air';
 
 import ProgressRound from './progressround';
 import ProgressRoundColor from './progressround-color';
 import ProgressRoundStatus from './progressround-status';
 
 import './css/style.css';
+import './css/air.css';
 
 export {
 	ProgressRound,

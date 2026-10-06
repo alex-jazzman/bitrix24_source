@@ -334,6 +334,47 @@ export type RepeatSaleBannerCloseEvent = {
 	p1: CrmMode,
 };
 
+export type EInvoicePromoEventSection = Dictionary.SECTION_DEAL
+	| Dictionary.SECTION_COMPANY
+	| Dictionary.SECTION_CONTACT
+	| Dictionary.SECTION_LEAD
+;
+
+export type EInvoicePromoEventSubSection = Dictionary.SUB_SECTION_LIST
+	| Dictionary.SUB_SECTION_KANBAN
+	| Dictionary.SUB_SECTION_ACTIVITIES
+;
+
+export type EInvoicePromoViewEvent = {
+	tool: Dictionary.TOOL_CRM,
+	category: Dictionary.CATEGORY_BANNERS,
+	event: Dictionary.EVENT_EINVOICE_PROMO_VIEW,
+	type: Dictionary.TYPE_EINVOICE_PROMO,
+	c_section: EInvoicePromoEventSection,
+	c_sub_section: EInvoicePromoEventSubSection,
+	p1: CrmMode,
+};
+
+export type EInvoicePromoClickEvent = {
+	tool: Dictionary.TOOL_CRM,
+	category: Dictionary.CATEGORY_BANNERS,
+	event: Dictionary.EVENT_EINVOICE_PROMO_CLICK,
+	type: Dictionary.TYPE_EINVOICE_PROMO,
+	c_section: EInvoicePromoEventSection,
+	c_sub_section: EInvoicePromoEventSubSection,
+	p1: CrmMode,
+};
+
+export type EInvoicePromoCloseEvent = {
+	tool: Dictionary.TOOL_CRM,
+	category: Dictionary.CATEGORY_BANNERS,
+	event: Dictionary.EVENT_EINVOICE_PROMO_CLOSE,
+	type: Dictionary.TYPE_EINVOICE_PROMO,
+	c_section: EInvoicePromoEventSection,
+	c_sub_section: EInvoicePromoEventSubSection,
+	p1: CrmMode,
+};
+
 export type RepeatSaleSegmentViewEvent = {
 	tool: Dictionary.TOOL_CRM,
 	category: Dictionary.CATEGORY_EDITOR,

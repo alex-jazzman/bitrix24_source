@@ -1,5 +1,6 @@
 <?php
 
+use Bitrix\Crm\Activity\CallDeletionRestriction;
 use Bitrix\Crm\Activity\Provider\Tasks\Task;
 use Bitrix\Crm\Integration\IntranetManager;
 use Bitrix\Main\Localization\Loc;
@@ -697,6 +698,7 @@ $arSelectMap['OWNER_ID'] = true;
 $arSelectMap['OWNER_TYPE_ID'] = true;
 $arSelectMap['PROVIDER_ID'] = true;
 $arSelectMap['PROVIDER_TYPE_ID'] = true;
+$arSelectMap['ORIGIN_ID'] = true;
 $arSelectMap['ASSOCIATED_ENTITY_ID'] = true;
 
 if(!isset($arSelectMap['RESPONSIBLE_ID']))
@@ -1120,6 +1122,11 @@ while($arRes = $dbRes->GetNext())
 		else
 		{
 			$arRes['CAN_EDIT'] = $arRes['CAN_COMPLETE'] = $arRes['CAN_DELETE'] = true;
+		}
+
+		if ($arRes['CAN_DELETE'] && CallDeletionRestriction::isDeletionRestricted($itemID, $arRes, $currentUserID))
+		{
+			$arRes['CAN_DELETE'] = false;
 		}
 	}
 

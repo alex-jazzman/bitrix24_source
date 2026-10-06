@@ -6,7 +6,6 @@ export type CallSettingsType = {
 	plainCallFollowUpEnabled?: boolean;
 	plainCallCloudRecordingEnabled?: boolean;
 	callBalancerUrl?: string;
-	noiseSuppressionEnabled?: boolean;
 	accidentLogSendIntervalSecs?: number;
 	accidentLogGroupMaxAgeSecs?: number;
 };
@@ -15,7 +14,6 @@ class CallSettings
 {
 	#accidentLogSendIntervalSecs = 0;
 	#accidentLogGroupMaxAgeSecs = 0;
-	#noiseSuppressionEnabled = false;
 	#jwtCallsEnabled = false;
 	#plainCallsUseJwt = false;
 	#callBalancerUrl = '';
@@ -34,11 +32,6 @@ class CallSettings
 		if (settings.jwtCallsEnabled !== undefined)
 		{
 			this.jwtCallsEnabled = settings.jwtCallsEnabled;
-		}
-
-		if (settings.noiseSuppressionEnabled !== undefined)
-		{
-			this.noiseSuppressionEnabled = settings.noiseSuppressionEnabled;
 		}
 
 		if (settings.plainCallsUseJwt !== undefined)
@@ -129,16 +122,6 @@ class CallSettings
 		return this.jwtCallsEnabled && this.plainCallsUseJwt;
 	}
 
-	get noiseSuppressionEnabled(): boolean
-	{
-		return this.#noiseSuppressionEnabled;
-	}
-
-	set noiseSuppressionEnabled(value: boolean)
-	{
-		this.#noiseSuppressionEnabled = value;
-	}
-
 	get accidentLogSendIntervalSecs(): number
 	{
 		return this.#accidentLogSendIntervalSecs || 0;
@@ -161,3 +144,8 @@ class CallSettings
 }
 
 export const CallSettingsManager = new CallSettings();
+
+export const AccidentLogStorageKeys = Object.freeze({
+	dbName: 'bx_call_accidentLogDB',
+	storeName: 'bx_call_accidentLogs',
+});

@@ -1,8 +1,13 @@
 import { Heading } from '@tiptap/extension-heading';
 import { headingAnchorPlugin } from './heading-anchor-plugin';
 import { HeadingBlockNodeView } from './heading-block-node-view';
+import { escapeInlineText } from './shared-marked';
 
 export const HeadingAnchor = Heading.extend({
+	renderMarkdown(node, h, ctx): string
+	{
+		return this.parent?.({ ...node, content: escapeInlineText(node.content) }, h, ctx) ?? '';
+	},
 	addOptions()
 	{
 		return {

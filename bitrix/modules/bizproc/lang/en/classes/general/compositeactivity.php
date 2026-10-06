@@ -1,0 +1,25 @@
+<?php
+$MESS["BPCGCA_DEBUG_TRACE_CLEAR"] = "Clear nested activities.";
+$MESS["BPCGCA_DEBUG_TRACE_CLEAR_DONE"] = "Nested activities cleared.";
+$MESS["BPCGCA_DEBUG_TRACE_FINALIZE"] = "Finalizing composite activity \"#NAME#\".";
+$MESS["BPCGCA_DEBUG_TRACE_FINALIZE_CHILD"] = "Finalizing child activity.";
+$MESS["BPCGCA_DEBUG_TRACE_FINALIZE_DONE"] = "Composite activity finalized.";
+$MESS["BPCGCA_DEBUG_TRACE_FIX_RELATION"] = "Binding child objects to parent objects.";
+$MESS["BPCGCA_DEBUG_TRACE_FIX_RELATION_DONE"] = "Child activity added.";
+$MESS["BPCGCA_DEBUG_TRACE_INIT"] = "Initilizing composite activity \"#NAME#\".";
+$MESS["BPCGCA_DEBUG_TRACE_INIT_CHILD"] = "Initializing child activity \"#TITLE#\".";
+$MESS["BPCGCA_DEBUG_TRACE_INIT_CHILD_DONE"] = "Child activity initialized.";
+$MESS["BPCGCA_DEBUG_TRACE_INIT_DONE"] = "Composite activity initialized.";
+$MESS["BPCGCA_DEBUG_TRACE_INIT_ERROR"] = "Initialization error: #MESSAGE#.";
+$MESS["BPCGCA_DEBUG_TRACE_PULL_PROPS"] = "Getting properties of composite activity and nested activities: \"#NAME#\".";
+$MESS["BPCGCA_DEBUG_TRACE_PULL_PROPS_CHILD"] = "Obtained properties of child activity.";
+$MESS["BPCGCA_DEBUG_TRACE_PULL_PROPS_DONE"] = "Properties collected.";
+$MESS["BPCGCA_DEBUG_TRACE_REINIT"] = "Re-initializing composite activity \"#NAME#\".";
+$MESS["BPCGCA_DEBUG_TRACE_REINIT_CHILD"] = "Child activity re-initialized.";
+$MESS["BPCGCA_DEBUG_TRACE_REINIT_DONE"] = "Re-initializing completed.";
+$MESS["BPCGCA_DEBUG_TRACE_SET_WF"] = "Setting workflow for composite activity \"#NAME#\".";
+$MESS["BPCGCA_DEBUG_TRACE_SET_WF_CHILD_DONE"] = "Workflow set for composite activity.";
+$MESS["BPCGCA_DEBUG_TRACE_SET_WF_DONE"] = "Workflow successfully set for all nested activities.";
+$MESS["BPCGCA_DEBUG_TRACE_SET_WF_NO_METHOD"] = "setWorkflow method was not found in child activity.";
+$MESS["BPCGCA_DEBUG_TRACE_UNSET_WF"] = "Disabling workflow for composite activity \"#NAME#\".";
+$MESS["BPCGCA_DEBUG_TRACE_UNSET_WF_CHILD_DONE"] = "Workflow disabled for child activity.";

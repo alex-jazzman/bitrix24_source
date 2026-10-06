@@ -36,10 +36,7 @@ CModule::AddAutoloadClasses(
 		"CListFileControl" => "classes/general/comp_lib.php",
 		"CListsSocnet" => "classes/general/listsocnet.php",
 		"CListsLiveFeed" => "classes/general/livefeed.php",
-		"BizprocDocument" => "lib/bizprocdocument.php",
-
-		"bitrix\\lists\\importer" => "lib/importer.php",
-		"bitrix\\lists\\bizprocdocumentlists" => "lib/bizprocdocumentlists.php",
+		"BizprocDocument" => "lib/BizprocDocument.php",
 	)
 );
 

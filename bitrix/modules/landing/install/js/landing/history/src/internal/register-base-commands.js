@@ -10,6 +10,7 @@ import editIcon from '../action/edit-icon';
 import editLink from '../action/edit-link';
 import changeNodeName from '../action/change-node-name';
 import sortBlock from '../action/sort-block';
+import moveBlock from '../action/move-block';
 import addBlock from '../action/add-block';
 import removeBlock from '../action/remove-block';
 import addCard from '../action/add-card';
@@ -88,6 +89,13 @@ export default function registerBaseCommands(history: History)
 		new Command({
 			id: 'sortBlock',
 			command: sortBlock,
+		}),
+	);
+
+	history.registerCommand(
+		new Command({
+			id: 'moveBlock',
+			command: moveBlock,
 		}),
 	);
 

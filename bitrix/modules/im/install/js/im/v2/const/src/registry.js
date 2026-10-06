@@ -47,8 +47,9 @@ export { DataAttribute } from './data-attributе';
 export { StickerPackType, StickerType } from './sticker';
 export { TabId } from './tab';
 export { SelectorEntity } from './entity-selector';
-export { MessageBuilderPlainColorToken, MessageBuilderBackgroundPlainToken, MessageBuilderGradientColorToken } from './message-builder.js';
-export { ParentChatScope } from './parent-chat-scope.js';
+export { MessageBuilderPlainColorToken, MessageBuilderBackgroundPlainToken, MessageBuilderGradientColorToken } from './message-builder';
+export { ParentChatScope } from './parent-chat-scope';
+export { FolderType } from './folder';
 
 export type {
 	OnLayoutChangeEvent,
@@ -101,4 +102,7 @@ export type {
 	AnyBlockType,
 } from './message-builder';
 
-export type { SelectorEntityItem } from './entity-selector.js';
+export type { SelectorEntityItem } from './entity-selector';
+export type { FolderTypeItem } from './folder';
+export type { ParentChatIdType } from './parent-chat-scope';
+export type { OpenCollabOptions } from './collab';

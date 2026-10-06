@@ -1,7 +1,6 @@
 <?php
 IncludeModuleLangFile(__FILE__);
 /** @var CMain $APPLICATION */
-/** @var CDatabase $DB */
 if (class_exists('bitrixcloud'))
 {
 	return;
@@ -20,10 +19,13 @@ class bitrixcloud extends CModule
 
 	public function __construct()
 	{
+		/** @var array{VERSION: string, VERSION_DATE: string} $arModuleVersion */
 		$arModuleVersion = [];
 		include __DIR__ . '/version.php';
+
 		$this->MODULE_VERSION = $arModuleVersion['VERSION'];
 		$this->MODULE_VERSION_DATE = $arModuleVersion['VERSION_DATE'];
+
 		$this->MODULE_NAME = GetMessage('BCL_MODULE_NAME');
 		$this->MODULE_DESCRIPTION = GetMessage('BCL_MODULE_DESCRIPTION_2');
 	}
@@ -50,50 +52,39 @@ class bitrixcloud extends CModule
 
 	public function InstallDB($arParams = [])
 	{
-		global $DB, $APPLICATION;
-		$connection = \Bitrix\Main\Application::getConnection();
+		global $APPLICATION;
 		$this->errors = false;
 
-		if (!$DB->TableExists('b_bitrixcloud_option'))
+		$migrationResult = $this->installMigrations();
+		if (!$migrationResult->isSuccess())
 		{
-			$this->errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/bitrixcloud/install/db/' . $connection->getType() . '/install.sql');
-		}
-
-		if ($this->errors !== false)
-		{
+			$this->errors = $migrationResult->getErrorMessages();
 			$APPLICATION->ThrowException(implode('<br>', $this->errors));
 			return false;
 		}
 
 		$this->InstallTasks();
 		RegisterModule('bitrixcloud');
-		RegisterModuleDependences('main', 'OnAdminInformerInsertItems', 'bitrixcloud', 'CBitrixCloudBackup', 'OnAdminInformerInsertItems');
-		RegisterModuleDependences('mobileapp', 'OnBeforeAdminMobileMenuBuild', 'bitrixcloud', 'CBitrixCloudMobile', 'OnBeforeAdminMobileMenuBuild');
 
 		return true;
 	}
 
 	public function UnInstallDB($arParams = [])
 	{
-		global $DB, $APPLICATION;
-		$connection = \Bitrix\Main\Application::getConnection();
+		global $APPLICATION;
 		$this->errors = false;
 
-		UnRegisterModuleDependences('main', 'OnAdminInformerInsertItems', 'bitrixcloud', 'CBitrixCloudBackup', 'OnAdminInformerInsertItems');
-		UnRegisterModuleDependences('mobileapp', 'OnBeforeAdminMobileMenuBuild', 'bitrixcloud', 'CBitrixCloudMobile', 'OnBeforeAdminMobileMenuBuild');
+		$dropTables = !array_key_exists('save_tables', $arParams) || $arParams['save_tables'] != 'Y';
 
-		if (!array_key_exists('save_tables', $arParams) || $arParams['save_tables'] != 'Y')
+		$migrationResult = $this->uninstallMigrations($dropTables);
+		if (!$migrationResult->isSuccess())
 		{
-			$this->errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/bitrixcloud/install/db/' . $connection->getType() . '/uninstall.sql');
-		}
-
-		UnRegisterModule('bitrixcloud');
-
-		if ($this->errors !== false)
-		{
+			$this->errors = $migrationResult->getErrorMessages();
 			$APPLICATION->ThrowException(implode('<br>', $this->errors));
 			return false;
 		}
+
+		UnRegisterModule('bitrixcloud');
 
 		return true;
 	}

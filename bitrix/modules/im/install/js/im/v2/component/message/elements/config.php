@@ -24,7 +24,6 @@ return [
 		'im.v2.lib.channel',
 		'im.v2.lib.copilot',
 		'im.v2.lib.date-formatter',
-		'im.v2.lib.feature',
 		'im.v2.lib.logger',
 		'im.v2.lib.menu',
 		'im.v2.lib.parser',

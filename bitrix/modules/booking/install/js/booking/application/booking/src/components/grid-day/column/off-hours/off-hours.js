@@ -30,14 +30,12 @@ export const OffHours = {
 		},
 	},
 	template: `
-		<div class="booking-booking-grid-padding">
-			<div
-				class="booking-booking-column-off-hours"
-				:class="{'--bottom': bottom, '--hover': offHoursHover}"
-				@click="animateOffHours({ keepScroll: bottom })"
-				@mouseenter="$store.dispatch('interface/setOffHoursHover', true)"
-				@mouseleave="$store.dispatch('interface/setOffHoursHover', false)"
-			></div>
-		</div>
+		<div
+			class="booking-booking-column-off-hours"
+			:class="{'--bottom': bottom, '--hover': offHoursHover}"
+			@click="animateOffHours({ keepScroll: bottom })"
+			@mouseenter="$store.dispatch('interface/setOffHoursHover', true)"
+			@mouseleave="$store.dispatch('interface/setOffHoursHover', false)"
+		></div>
 	`,
 };

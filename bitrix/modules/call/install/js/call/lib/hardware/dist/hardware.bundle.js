@@ -13,6 +13,9 @@ this.BX.Call = this.BX.Call || {};
 		initialized: 'initialized',
 		deviceChanged: 'deviceChange'
 	};
+	const getSelectableDeviceIds = deviceMap => {
+		return Object.keys(deviceMap).filter(deviceId => deviceId !== '');
+	};
 	class HardwareManager extends main_core_events.EventEmitter {
 		Events = Events;
 		initialized = false;
@@ -140,16 +143,17 @@ this.BX.Call = this.BX.Call || {};
 		}
 		get defaultMicrophone() {
 			let microphoneId = localStorage?.getItem(lsKey.defaultMicrophone) ?? '';
-			if ((!microphoneId || !this.microphoneList[microphoneId]) && Object.keys(this.microphoneList).length > 0) {
-				if (Object.keys(this.microphoneList).includes('default')) {
+			const selectableIds = getSelectableDeviceIds(this.microphoneList);
+			if (!selectableIds.includes(microphoneId) && selectableIds.length > 0) {
+				if (selectableIds.includes('default')) {
 					microphoneId = this.getDefaultDeviceIdByGroupId(this.getDeviceGroupIdByDeviceId('default', 'audioinput'), 'audioinput') ?? '';
 				}
 				if (!microphoneId) {
-					microphoneId = Object.keys(this.microphoneList)[0];
+					microphoneId = selectableIds[0];
 				}
 				return microphoneId;
 			}
-			return this.microphoneList[microphoneId] ? microphoneId : '';
+			return selectableIds.includes(microphoneId) ? microphoneId : '';
 		}
 		set defaultMicrophone(microphoneId) {
 			if (localStorage) {
@@ -158,10 +162,11 @@ this.BX.Call = this.BX.Call || {};
 		}
 		get defaultCamera() {
 			const cameraId = localStorage?.getItem(lsKey.defaultCamera) ?? '';
-			if ((!cameraId || !this.cameraList[cameraId]) && Object.keys(this.cameraList).length > 0) {
-				return Object.keys(this.cameraList)[0];
+			const selectableIds = getSelectableDeviceIds(this.cameraList);
+			if (!selectableIds.includes(cameraId) && selectableIds.length > 0) {
+				return selectableIds[0];
 			}
-			return this.cameraList[cameraId] ? cameraId : '';
+			return selectableIds.includes(cameraId) ? cameraId : '';
 		}
 		set defaultCamera(cameraId) {
 			if (localStorage) {
@@ -170,10 +175,8 @@ this.BX.Call = this.BX.Call || {};
 		}
 		get defaultSpeaker() {
 			let speakerId = localStorage?.getItem(lsKey.defaultSpeaker) ?? '';
-			const audioOutputList = this.audioOutputList;
-			const outputDeviceIds = Object.keys(audioOutputList);
-			const speakerNotFound = !speakerId || !(speakerId in audioOutputList);
-			if (speakerNotFound && outputDeviceIds.length > 0) {
+			const outputDeviceIds = getSelectableDeviceIds(this.audioOutputList);
+			if (!outputDeviceIds.includes(speakerId) && outputDeviceIds.length > 0) {
 				if (outputDeviceIds.includes('default')) {
 					const groupId = this.getDeviceGroupIdByDeviceId('default', 'audiooutput');
 					speakerId = this.getDefaultDeviceIdByGroupId(groupId, 'audiooutput') ?? '';
@@ -182,7 +185,7 @@ this.BX.Call = this.BX.Call || {};
 				}
 				return speakerId;
 			}
-			return speakerId in audioOutputList ? speakerId : '';
+			return outputDeviceIds.includes(speakerId) ? speakerId : '';
 		}
 		set defaultSpeaker(speakerId) {
 			if (localStorage) {

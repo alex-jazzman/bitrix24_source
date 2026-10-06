@@ -6,7 +6,8 @@ $MESS['REST_TAB_TITLE_LOG'] = "Настройка логирования";
 $MESS['REST_OPT_ENABLE_MOD_ZIP'] = 'Модуль <a href="https://www.nginx.com/resources/wiki/modules/zip/" target="_blank">mod_zip</a> включен и настроен (требуется для экспорта)';
 $MESS['REST_OPT_MAX_IMPORT_SIZE'] = 'Максимальный размер импортируемого файла (МБ)';
 $MESS['REST_OPT_ACCESS_POLICY'] = 'Доступы';
-$MESS['REST_OPT_ACCESS_POLICY_INCOMING_WEBHOOK'] = 'Разрешить пользователям добавлять входящие вебхуки';
+$MESS['REST_OPT_ACCESS_POLICY_INCOMING_WEBHOOK_CREATE_OWN'] = 'Разрешить пользователям добавлять свои входящие вебхуки';
+$MESS['REST_OPT_ACCESS_POLICY_INCOMING_WEBHOOK_CREATE'] = 'Разрешить пользователям добавлять входящие вебхуки для всех';
 $MESS['REST_OPT_ACCESS_POLICY_LOCAL_APP'] = 'Разрешить пользователям добавлять приложения для всех';
 $MESS['REST_OPT_ACCESS_POLICY_PERSONAL_APP'] = 'Разрешить пользователям добавлять свои приложения';
 $MESS['REST_OPT_ACCESS_POLICY_ADD_USERS'] = 'Добавить пользователей';
@@ -29,4 +30,3 @@ $MESS["REST_OPT_LOG_FILTER_PASSWORD_ID"] = "Идентификатор паро�
 $MESS["REST_OPT_LOG_FILTER_SCOPE"] = "Область видимости";
 $MESS["REST_OPT_LOG_FILTER_METHOD"] = "Метод";
 $MESS["REST_OPT_LOG_FILTER_USER_ID"] = "Идентификатор пользователя";
-?>

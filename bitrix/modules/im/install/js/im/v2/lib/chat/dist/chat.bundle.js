@@ -10,6 +10,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		[im_v2_const.ChatType.collab]: im_v2_const.GetParameter.openCollab
 	};
 	const ChatManager = {
+		prepareParentChatId(parentChatId) {
+			const isAllScope = parentChatId === im_v2_const.ParentChatScope.all;
+			if (!parentChatId || isAllScope) {
+				return im_v2_const.ParentChatScope.topLevel;
+			}
+			return parentChatId;
+		},
 		buildChatLink(dialogId) {
 			const chat = im_v2_application_core.Core.getStore().getters['chats/get'](dialogId);
 			const chatGetParameter = GetParameterByChatType[chat.type] ?? im_v2_const.GetParameter.openChat;

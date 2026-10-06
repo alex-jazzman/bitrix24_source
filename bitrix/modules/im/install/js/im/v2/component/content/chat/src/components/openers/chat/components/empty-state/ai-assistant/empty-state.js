@@ -32,6 +32,10 @@ export const AiAssistantEmptyState = {
 
 			return ThemeManager.getBackgroundStyleById(backgroundId);
 		},
+		isFileUploadEnabled(): boolean
+		{
+			return FeatureManager.isFeatureAvailable(Feature.isCopilotFileUploadAvailable);
+		},
 		suggestions(): string[]
 		{
 			return this.$store.getters['copilot/getSuggests'];
@@ -103,6 +107,7 @@ export const AiAssistantEmptyState = {
 				:dialogId="currentDialogId"
 				:withTextArea="true"
 				:deferredDialogPromise="deferredDialogPromise"
+				:isFileUploadEnabled="isFileUploadEnabled"
 				@selectSuggestion="onSuggestionSelect"
 			/>
 		</div>

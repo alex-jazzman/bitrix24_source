@@ -1,3 +1,7 @@
+.sonet--project-wizard--base-feature-description {
+	color: var(--ui-color-base-3);
+}
+
 .sonet--project-wizard--base-feature-field-content {
 	--sonet-project-wizard-privacy-item-title: var(--ui-color-base-2);
 
@@ -13,4 +17,22 @@
 	display: flex;
 	flex-direction: column;
 	gap: var(--ui-space-inline-sm, 12px);
+}
+
+.sonet--project-wizard--base-feature-highlight {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	border-radius: var(--ui-border-radius-md);
+	animation: sonet-project-wizard-base-feature-highlight-fade 1.8s ease forwards;
+}
+
+@keyframes sonet-project-wizard-base-feature-highlight-fade {
+	0% { outline-color: var(--ui-color-accent-main-primary); }
+	70% { outline-color: var(--ui-color-accent-main-primary); }
+	100% { outline-color: transparent; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.sonet--project-wizard--base-feature-highlight {
+		animation: none;
+	}
 }

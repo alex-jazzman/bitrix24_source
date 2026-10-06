@@ -1,5 +1,6 @@
-import { Dom, Event } from 'main.core';
-import type { PopupOptions } from 'main.popup';
+import { Dom, Event, Type } from 'main.core';
+import { type PopupOptions } from 'main.popup';
+
 import { Popup } from './popup';
 
 export const StickyPopup = {
@@ -17,11 +18,11 @@ export const StickyPopup = {
 	mounted(): void
 	{
 		this.adjustPosition();
-		Event.bind(document, 'scroll', this.adjustPosition, true);
+		Event.bind(document, 'scroll', this.handleScroll, true);
 	},
 	beforeUnmount(): void
 	{
-		Event.unbind(document, 'scroll', this.adjustPosition, true);
+		Event.unbind(document, 'scroll', this.handleScroll, true);
 	},
 	computed: {
 		options(): PopupOptions
@@ -39,9 +40,26 @@ export const StickyPopup = {
 		},
 	},
 	methods: {
+		handleScroll(event: Event): void
+		{
+			if (Type.isDomNode(event.target) && this.$refs.stickyContent.contains(event.target))
+			{
+				return;
+			}
+
+			this.adjustPosition();
+		},
 		contains(element: HTMLElement): boolean
 		{
 			return this.$refs.popup.contains(element);
+		},
+		freeze(): void
+		{
+			this.$refs.popup.freeze();
+		},
+		unfreeze(): void
+		{
+			this.$refs.popup.unfreeze();
 		},
 		adjustPosition(): void
 		{

@@ -1,12 +1,18 @@
-import { Controller } from '../controller';
 import { Aria } from '../../../util/aria';
 import './css/field.css';
 import './css/animation.css';
 
+// Expected: an instance of field/base/controller#Controller. We avoid importing
+// the class to keep this module out of the controller.js cycle (CF1006).
+// Duck-typing via known methods preserves the dev-time validation intent.
+const isFieldController = (v) => v
+	&& typeof v.getType === 'function'
+	&& typeof v.getComponentName === 'function';
+
 const Field = {
 	props: {
 		field: {
-			type: Controller,
+			validator: isFieldController,
 			required: true,
 		},
 	},

@@ -19,4 +19,13 @@ export class InvitationToPortal extends InvitationProvider
 			},
 		});
 	}
+
+	inviteWithDeliveryResult(invitations: Array): Promise
+	{
+		return ajax.runAction('intranet.v2.Invitation.inviteUsersWithDeliveryResult', {
+			data: {
+				invitations,
+			},
+		});
+	}
 }

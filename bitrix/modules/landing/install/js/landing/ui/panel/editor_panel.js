@@ -25,6 +25,7 @@
 		this.position = "absolute";
 		this.currentElement = null;
 		this.outOfFrame = true;
+		this.hasManualPosition = false;
 
 		this.onKeydown = this.onKeydown.bind(this);
 		this.onTabDown = this.onTabDown.bind(this);
@@ -56,7 +57,6 @@
 		return BX.Landing.UI.Panel.EditorPanel.instance;
 	};
 
-	var scrollHandler = null;
 	var target = null;
 
 	/**
@@ -265,17 +265,48 @@
 	}
 
 
+	// Cache of the last applied position, shared by EditorPanel, CompactEditorPanel and SmallEditorPanel
+	// through the inherited adjustPosition(). It is only a no-op guard, never a source of truth for a
+	// particular panel: show() always calls adjustPosition() with force = true, so a value left here by
+	// another panel cannot suppress the first recalculation of the panel being shown.
 	var lastPosition = {top: 0, left: 0};
+
+	function getWindowScope(editor)
+	{
+		return editor.outOfFrame ? window.parent : window;
+	}
+
+	/**
+	 * Keeps the panel inside the visible area of the window
+	 * @param {BX.Landing.UI.Panel.EditorPanel} editor
+	 * @param {number} left
+	 * @return {number}
+	 */
+	function clampLeftToWindow(editor, left)
+	{
+		var windowScope = getWindowScope(editor);
+
+		if ((left + editor.rect.width) > (windowScope.innerWidth - 20))
+		{
+			left -= ((left + editor.rect.width) - (windowScope.innerWidth - 20));
+		}
+
+		return Math.max(20, left);
+	}
+
 	function adjustAbsolutePosition(editor, node, force)
 	{
+		if (editor.hasManualPosition)
+		{
+			return;
+		}
+
 		var nodeRect = node.getBoundingClientRect();
 
 		var left = nodeRect.left + (nodeRect.width / 2) - (editor.rect.width / 2);
 		var top = (nodeRect.top - editor.rect.height - 4);
 		var position = 'absolute';
-		var windowScope = editor.outOfFrame
-			? window.parent
-			: window;
+		var windowScope = getWindowScope(editor);
 		var bodyContent = node.closest('.landing-ui-panel-content-body-content');
 		if (bodyContent)
 		{
@@ -359,12 +390,7 @@
 			left += editor.contextDocument.defaultView.frameElement.getBoundingClientRect().left;
 		}
 
-		if ((left + editor.rect.width) > (windowScope.innerWidth - 20))
-		{
-			left -= ((left + editor.rect.width) - (windowScope.innerWidth - 20));
-		}
-
-		left = Math.max(20, left);
+		left = clampLeftToWindow(editor, left);
 
 		if (lastPosition.top !== top || lastPosition.left !== left || force)
 		{
@@ -503,6 +529,11 @@
 				this.showBaseButtons();
 			}
 
+			if (element !== this.currentElement)
+			{
+				this.resetManualPosition();
+			}
+
 			this.currentElement = element;
 			this.setContextDocument(this.currentElement ? this.currentElement.ownerDocument : document);
 
@@ -579,17 +610,19 @@
 			this.adjustButtonsContextDocument();
 		},
 
+		// onScroll is bound to the instance in the constructor, so it is both a
+		// stable reference for removeEventListener and the handler of the panel
+		// that is actually shown (EditorPanel or its CompactEditorPanel subclass).
 		onShow: function(node)
 		{
 			target = node;
-			scrollHandler = scrollHandler || this.onScroll.bind(null, node);
 			this.contextDocument.addEventListener("keydown", this.onKeydown);
-			this.contextWindow.addEventListener("resize", scrollHandler);
+			this.contextWindow.addEventListener("resize", this.onScroll);
 
 			try {
-				this.contextDocument.addEventListener("scroll", scrollHandler, {passive: true});
+				this.contextDocument.addEventListener("scroll", this.onScroll, {passive: true});
 			} catch (err) {
-				this.contextDocument.addEventListener("scroll", scrollHandler);
+				this.contextDocument.addEventListener("scroll", this.onScroll);
 			}
 		},
 
@@ -610,18 +643,69 @@
 			}
 
 			BX.Landing.UI.Panel.BaseButtonPanel.prototype.hide.call(this, arguments);
+			this.resetManualPosition();
 			this.onHide();
+		},
+
+		/**
+		 * Drops the position the user has dragged the panel to,
+		 * the panel follows the edited element again
+		 */
+		resetManualPosition: function()
+		{
+			this.hasManualPosition = false;
+		},
+
+		/**
+		 * Stores the position the panel was moved to bypassing adjustPosition,
+		 * so that the next automatic recalculation is not skipped as a no-op
+		 * @param {number} top
+		 * @param {number} left
+		 */
+		rememberPosition: function(top, left)
+		{
+			lastPosition.top = top;
+			lastPosition.left = left;
+		},
+
+		/**
+		 * Returns a manually placed panel into the visible area of the window.
+		 * Only the horizontal axis is clamped: "top" is written in viewport coordinates for a fixed
+		 * panel and in document coordinates otherwise, so a common vertical limit would need the
+		 * branch of adjustPosition() that produced the current position.
+		 * @param {number} [left] - Position the caller has just applied. Pass it whenever it is known:
+		 *   the styles are written through the deferred BX.DOM queue, so reading them back right after
+		 *   a write returns the position of the previous frame.
+		 */
+		clampManualPosition: function(left)
+		{
+			var currentLeft = (typeof left === "number") ? left : parseFloat(this.layout.style.left);
+			if (isNaN(currentLeft))
+			{
+				return;
+			}
+
+			var clampedLeft = clampLeftToWindow(this, currentLeft);
+			if (clampedLeft === currentLeft)
+			{
+				return;
+			}
+
+			BX.DOM.write(function() {
+				this.layout.style.left = clampedLeft + "px";
+				lastPosition.left = clampedLeft;
+			}.bind(this));
 		},
 
 		onHide: function()
 		{
 			this.contextDocument.removeEventListener("keydown", this.onKeydown);
-			this.contextWindow.removeEventListener("resize", scrollHandler);
+			this.contextWindow.removeEventListener("resize", this.onScroll);
 
 			try {
-				this.contextDocument.removeEventListener("scroll", scrollHandler, {passive: true});
+				this.contextDocument.removeEventListener("scroll", this.onScroll, {passive: true});
 			} catch (err) {
-				this.contextDocument.removeEventListener("scroll", scrollHandler);
+				this.contextDocument.removeEventListener("scroll", this.onScroll);
 			}
 		},
 
@@ -633,6 +717,13 @@
 				&& event.target.nodeName !== "LI"
 			)
 			{
+				// Only list/blockquote indent hijacks Tab; otherwise let Tab move focus
+				// so keyboard users aren't trapped inside the editable region.
+				if (!this.isSelectionInListContext())
+				{
+					return;
+				}
+
 				event.preventDefault();
 
 				if (!event.shiftKey)
@@ -676,8 +767,8 @@
 			}
 
 			setTimeout(function() {
-				BX.Landing.UI.Panel.EditorPanel.getInstance().adjustPosition(target);
-			}, 10);
+				this.adjustPosition(target);
+			}.bind(this), 10);
 		},
 
 		onTabDown: function()
@@ -742,9 +833,43 @@
 			}
 		},
 
-		onScroll: function()
+		isSelectionInListContext: function()
 		{
-			BX.Landing.UI.Panel.EditorPanel.getInstance().adjustPosition(target);
+			var selection = this.contextWindow.getSelection();
+			if (!selection || selection.rangeCount === 0 || !selection.focusNode)
+			{
+				return false;
+			}
+
+			var listTags = ['UL', 'OL', 'LI', 'BLOCKQUOTE'];
+			var node = selection.focusNode;
+			var body = this.contextDocument.body;
+			while (node && node !== body)
+			{
+				if (node.nodeType === 1 && listTags.indexOf(node.tagName) !== -1)
+				{
+					return true;
+				}
+				node = node.parentNode;
+			}
+
+			return false;
+		},
+
+		onScroll: function(event)
+		{
+			if (this.hasManualPosition)
+			{
+				// The manual position is kept as is, but the panel must not stay out of the window
+				if (event && event.type === "resize")
+				{
+					this.clampManualPosition();
+				}
+
+				return;
+			}
+
+			this.adjustPosition(target);
 		},
 
 		enableSimpleScrollMode: function()

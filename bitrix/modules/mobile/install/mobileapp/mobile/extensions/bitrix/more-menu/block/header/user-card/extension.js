@@ -41,6 +41,7 @@ jn.define('more-menu/block/header/user-card', (require, exports, module) => {
 					{
 						style: {
 							marginTop: Indent.XL2.toNumber(),
+							alignSelf: 'stretch',
 						},
 					},
 					this.renderDetails(),
@@ -96,7 +97,8 @@ jn.define('more-menu/block/header/user-card', (require, exports, module) => {
 						style: {
 							flexDirection: 'row',
 							alignItems: 'center',
-							flexShrink: 2,
+							alignSelf: 'stretch',
+							justifyContent: 'center',
 						},
 					},
 					Text2({

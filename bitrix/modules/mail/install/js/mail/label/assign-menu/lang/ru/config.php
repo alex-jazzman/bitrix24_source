@@ -1,0 +1,7 @@
+<?php
+
+$MESS['MAIL_LABEL_ASSIGN_MENU_TITLE'] = 'Метки';
+$MESS['MAIL_LABEL_ASSIGN_MENU_CREATE'] = 'Создать метку';
+$MESS['MAIL_LABEL_ASSIGN_MENU_ERROR'] = 'Не удалось изменить метки';
+$MESS['MAIL_LABEL_ASSIGN_MENU_ANNOUNCE_ASSIGNED'] = 'Метка «#TITLE#» назначена';
+$MESS['MAIL_LABEL_ASSIGN_MENU_ANNOUNCE_UNASSIGNED'] = 'Метка «#TITLE#» снята';

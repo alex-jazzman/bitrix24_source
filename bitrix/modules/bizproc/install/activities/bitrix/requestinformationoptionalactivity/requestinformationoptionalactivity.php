@@ -6,6 +6,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
 }
 
 use Bitrix\Bizproc;
+use Bitrix\Bizproc\UI\Helpers\TaskTextDecoder;
 use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
 
@@ -287,11 +288,10 @@ class CBPRequestInformationOptionalActivity extends CBPRequestInformationActivit
 
 		if (self::validateRequiredCommentInTaskEventParameters($arTask, $eventParameters))
 		{
-			$label =
-				$arTask["PARAMETERS"]["CommentLabelMessage"] !== ''
-					? $arTask["PARAMETERS"]["CommentLabelMessage"]
-					: GetMessage("BPAR_ACT_COMMENT")
-			;
+			$label = TaskTextDecoder::decode(
+				$arTask['PARAMETERS']['CommentLabelMessage'] ?? '',
+				(string)Loc::getMessage('BPAR_ACT_COMMENT'),
+			);
 			self::$errors->setError(
 				new Error(
 					Loc::getMessage(

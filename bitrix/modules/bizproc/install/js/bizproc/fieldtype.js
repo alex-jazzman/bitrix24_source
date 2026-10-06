@@ -78,6 +78,7 @@
 				case 'string':
 				case 'user':
 				case 'time':
+				case 'conditiongroup':
 					return true;
 			}
 
@@ -639,7 +640,10 @@
 
 			var btn = BX.create('a', {
 				attrs: {
-					className: 'bizproc-type-control-clone-btn'
+					className: 'bizproc-type-control-clone-btn',
+					role: 'button',
+					tabindex: '0',
+					'data-testid': 'bizproc-field-clone-btn'
 				},
 				text: BX.message('BIZPROC_JS_BP_FIELD_TYPE_ADD'),
 				events: {
@@ -647,6 +651,14 @@
 					{
 						event.preventDefault();
 						FieldType.cloneControl(property, fieldName, this.parentNode)
+					},
+					keydown: function(event)
+					{
+						if (event.key === 'Enter' || event.key === ' ')
+						{
+							event.preventDefault();
+							this.click();
+						}
 					}
 				}
 			});
@@ -668,6 +680,31 @@
 					var wrapper = BX.create('div', {children: [controlNode]});
 					this.initControl(wrapper, property);
 					node.parentNode.insertBefore(wrapper, node);
+					this.inheritControlLabel(node.parentNode, wrapper);
+				}
+			}
+		},
+		inheritControlLabel: function(container, wrapper)
+		{
+			// the same selector the slider form walker uses: the name lives on the control
+			// itself, while .bizproc-type-control may sit on an outer div (file fields)
+			var labeled = container.querySelector(
+				'input:not([type="hidden"])[aria-label], select[aria-label], textarea[aria-label]'
+			);
+
+			if (!labeled)
+			{
+				return;
+			}
+
+			var label = labeled.getAttribute('aria-label');
+			var controls = wrapper.querySelectorAll('input:not([type="hidden"]), select, textarea');
+
+			for (var i = 0; i < controls.length; i++)
+			{
+				if (!controls[i].hasAttribute('aria-label'))
+				{
+					controls[i].setAttribute('aria-label', label);
 				}
 			}
 		},
@@ -834,7 +871,11 @@
 					attrs: {
 						src: '/bitrix/js/main/core/images/calendar-icon.gif',
 						className: 'calendar-icon',
-						border: '0'
+						border: '0',
+						alt: BX.message('BIZPROC_JS_BP_FIELD_TYPE_CALENDAR'),
+						role: 'button',
+						tabindex: '0',
+						'data-testid': 'bizproc-field-calendar-btn'
 					},
 					events: {
 						click: function(e)
@@ -846,6 +887,14 @@
 								bTime: (type === 'datetime'),
 								bHideTime: (type === 'date')
 							});
+						},
+						keydown: function(event)
+						{
+							if (event.key === 'Enter' || event.key === ' ')
+							{
+								event.preventDefault();
+								this.click();
+							}
 						}
 					}
 				});
@@ -1138,7 +1187,11 @@
 			var designer = BX.getClass('BX.Bizproc.Automation.Designer') && BX.Bizproc.Automation.Designer.getInstance();
 			var dlg;
 			var childControlNodes = controlNode.querySelectorAll('[data-role]');
-			if (designer && designer.getRobotSettingsDialog())
+			if (property && property['Type'] === 'conditiongroup' && BX.Bizproc.decorateConditionGroupField)
+			{
+				BX.Bizproc.decorateConditionGroupField(controlNode.querySelector('[data-role="bp-condition-group"]'));
+			}
+			else if (designer && designer.getRobotSettingsDialog())
 			{
 				dlg = designer.getRobotSettingsDialog();
 				dlg.template.initRobotSettingsControls(dlg.robot, controlNode);

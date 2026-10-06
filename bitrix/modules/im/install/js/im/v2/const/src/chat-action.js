@@ -8,6 +8,7 @@ export const ActionByRole = Object.freeze({
 	mute: 'mute',
 	rename: 'rename',
 	send: 'send',
+	deleteOwnMessage: 'deleteOwnMessage',
 	deleteOthersMessage: 'deleteOthersMessage',
 	deleteCompleteOwnMessage: 'deleteCompleteOwnMessage',
 	userList: 'userList',
@@ -32,6 +33,7 @@ export const ActionByRole = Object.freeze({
 	createDocumentSign: 'createDocumentSign',
 	createCalendarSlots: 'createCalendarSlots',
 	changeMessagesAutoDeleteDelay: 'changeMessagesAutoDeleteDelay',
+	attachToParent: 'attachToParent',
 });
 
 export const ChatActionGroup = Object.freeze({
@@ -41,6 +43,7 @@ export const ChatActionGroup = Object.freeze({
 	manageUsersDelete: 'manageUsersDelete',
 	manageMessages: 'manageMessages',
 	manageGuestInvites: 'manageGuestInvites',
+	manageDelete: 'manageDelete',
 });
 
 export const ActionByUserType = Object.freeze({

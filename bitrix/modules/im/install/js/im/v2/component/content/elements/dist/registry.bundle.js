@@ -3,14 +3,17 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports, im_v2_component_animation, im_v2_component_elements_avatar, im_v2_component_elements_loader, im_v2_const, im_v2_lib_permission, im_v2_provider_service_chat, im_v2_component_entitySelector, im_v2_lib_analytics, call_component_callButton, main_core, im_v2_lib_utils, im_v2_component_elements_chatTitle, ui_iconSet_api_vue, main_core_events, ui_vue3, im_v2_component_dialog_chat, im_v2_component_sidebar, im_v2_component_textarea, im_v2_lib_textarea, im_v2_lib_theme, ui_vue3_directives_hint, im_v2_application_core, im_v2_component_elements_button, im_v2_lib_confirm, im_v2_provider_service_message, ui_vue3_components_richLoc, im_v2_lib_copilot, im_v2_lib_feature, im_v2_lib_helpdesk, ui_uploader_core, im_v2_provider_service_uploading) {
+(function (exports, im_v2_application_core, im_v2_component_animation, im_v2_component_elements_avatar, im_v2_component_elements_loader, im_v2_const, im_v2_lib_permission, im_v2_provider_service_chat, ui_iconSet_api_vue, im_v2_component_entitySelector, im_v2_lib_analytics, call_component_callButton, main_core, im_v2_lib_utils, im_v2_component_elements_chatTitle, main_core_events, ui_vue3, im_v2_component_dialog_chat, im_v2_component_sidebar, im_v2_component_textarea, im_v2_lib_textarea, im_v2_lib_theme, ui_vue3_directives_hint, im_v2_component_elements_button, im_v2_lib_confirm, im_v2_provider_service_message, ui_vue3_components_richLoc, im_v2_lib_copilot, im_v2_lib_feature, im_v2_lib_helpdesk, ui_uploader_core, im_v2_provider_service_uploading) {
 	'use strict';
+
+	const ICON_SIZE$2 = 24;
 
 	// @vue/component
 	const AddToChatButton = {
 		name: 'AddToChatButton',
 		components: {
-			AddToChat: im_v2_component_entitySelector.AddToChat
+			AddToChat: im_v2_component_entitySelector.AddToChat,
+			BIcon: ui_iconSet_api_vue.BIcon
 		},
 		props: {
 			dialogId: {
@@ -23,6 +26,10 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				showInviteButton: false,
 				showAddToChatPopup: false
 			};
+		},
+		computed: {
+			Outline: () => ui_iconSet_api_vue.Outline,
+			ICON_SIZE: () => ICON_SIZE$2
 		},
 		methods: {
 			openAddToChatPopup() {
@@ -40,10 +47,13 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		<div
 			:title="loc('IM_CONTENT_CHAT_HEADER_OPEN_INVITE_POPUP_TITLE')"
 			:class="{'--active': showAddToChatPopup}"
-			class="bx-im-chat-header__icon --add-people"
+			class="bx-im-chat-header__icon --ds-icon"
+			data-testid="im-chat-header-add-btn"
 			@click="openAddToChatPopup"
 			ref="add-members"
-		></div>
+		>
+			<BIcon :name="Outline.ADD_PERSON" :size="ICON_SIZE" />
+		</div>
 		<AddToChat
 			v-if="showAddToChatPopup"
 			:bindElement="$refs['add-members'] ?? {}"
@@ -172,9 +182,14 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	`
 	};
 
+	const ICON_SIZE$1 = 24;
+
 	// @vue/component
 	const SearchButton = {
 		name: 'SearchButton',
+		components: {
+			BIcon: ui_iconSet_api_vue.BIcon
+		},
 		inject: ['currentSidebarPanel'],
 		props: {
 			dialogId: {
@@ -183,6 +198,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			}
 		},
 		computed: {
+			Outline: () => ui_iconSet_api_vue.Outline,
+			ICON_SIZE: () => ICON_SIZE$1,
 			isMessageSearchActive() {
 				return this.currentSidebarPanel === im_v2_const.SidebarDetailBlock.messageSearch;
 			}
@@ -212,15 +229,23 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		<div
 			:title="loc('IM_CONTENT_CHAT_HEADER_OPEN_SEARCH')"
 			:class="{'--active': isMessageSearchActive}"
-			class="bx-im-chat-header__icon --search"
+			class="bx-im-chat-header__icon --ds-icon"
+			data-testid="im-chat-header-search-btn"
 			@click="toggleSearchPanel"
-		></div>
+		>
+			<BIcon :name="Outline.SEARCH" :size="ICON_SIZE" />
+		</div>
 	`
 	};
+
+	const ICON_SIZE = 24;
 
 	// @vue/component
 	const SidebarButton = {
 		name: 'SidebarButton',
+		components: {
+			BIcon: ui_iconSet_api_vue.BIcon
+		},
 		inject: ['currentSidebarPanel'],
 		props: {
 			dialogId: {
@@ -229,6 +254,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			}
 		},
 		computed: {
+			Outline: () => ui_iconSet_api_vue.Outline,
+			ICON_SIZE: () => ICON_SIZE,
 			isSidebarOpened() {
 				return main_core.Type.isStringFilled(this.currentSidebarPanel);
 			}
@@ -255,11 +282,13 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		},
 		template: `
 		<div
-			class="bx-im-chat-header__icon --panel"
+			class="bx-im-chat-header__icon --ds-icon"
 			:title="loc('IM_CONTENT_CHAT_HEADER_OPEN_SIDEBAR')"
 			:class="{'--active': isSidebarOpened}"
 			@click="toggleRightPanel"
-		></div>
+		>
+			<BIcon :name="Outline.COLUMNS_SIDEBAR_PENDING" :size="ICON_SIZE" />
+		</div>
 	`
 	};
 
@@ -405,7 +434,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				});
 			},
 			isShowGuestCount() {
-				return this.dialog.guestCount > 0 && this.dialog.type === im_v2_const.ChatType.chat;
+				return this.dialog.guestCount > 0 && [im_v2_const.ChatType.chat, im_v2_const.ChatType.calendar].includes(this.dialog.type);
 			},
 			guestCounterText() {
 				return main_core.Loc.getMessagePlural('IM_CONTENT_CHAT_HEADER_GUEST_COUNT', this.dialog.guestCount, {
@@ -441,7 +470,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			:class="{'--click': needShowSubtitleCursor}"
 		>
 			{{ userCounterText }}
-			<span v-if="isShowGuestCount" class="bx-im-chat-header__guest-counter">
+			<span v-if="isShowGuestCount" class="bx-im-chat-header__guest-counter" data-testid="im-chat-header-guest-counter">
 				{{ guestCounterText }}
 			</span>
 		</div>
@@ -626,8 +655,14 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				}
 				return this.user.type === im_v2_const.UserType.bot;
 			},
+			isCurrentUserGuest() {
+				return this.$store.getters['users/isGuest'](im_v2_application_core.Core.getUserId());
+			},
 			showCallButton() {
 				if (this.isBot || !this.withCallButton) {
+					return false;
+				}
+				if (this.isCurrentUserGuest || this.dialog.role === im_v2_const.UserRole.guest) {
 					return false;
 				}
 				return im_v2_lib_permission.PermissionManager.getInstance().canPerformActionByRole(im_v2_const.ActionByRole.call, this.dialogId);
@@ -641,9 +676,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				if (this.isUser && !hasCreateChatAccess) {
 					return false;
 				}
-				const canPerformActionByRole = permissionManager.canPerformActionByRole(im_v2_const.ActionByRole.extend, this.dialogId);
-				const canPerformActionByUserType = permissionManager.canPerformActionByUserType(im_v2_const.ActionByUserType.extend);
-				return canPerformActionByRole && canPerformActionByUserType;
+				return permissionManager.canManageUsersAdd(this.dialogId);
 			},
 			showSearchButton() {
 				return this.withSearchButton;
@@ -779,9 +812,17 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				const userId = im_v2_application_core.Core.getUserId();
 				return this.messagesAuthorId.some(authorId => authorId !== userId);
 			},
+			hasOwnMessages() {
+				return this.messagesAuthorId.includes(im_v2_application_core.Core.getUserId());
+			},
 			canDeleteMessage() {
+				if (this.selectedMessagesSize === 0) {
+					return false;
+				}
 				const permissionManager = im_v2_lib_permission.PermissionManager.getInstance();
-				return permissionManager.canPerformActionByRole(im_v2_const.ActionByRole.deleteOthersMessage, this.dialogId);
+				const canDeleteOwn = !this.hasOwnMessages || permissionManager.canPerformActionByRole(im_v2_const.ActionByRole.deleteOwnMessage, this.dialogId);
+				const canDeleteOthers = !this.hasOthersMessages || permissionManager.canPerformActionByRole(im_v2_const.ActionByRole.deleteOthersMessage, this.dialogId);
+				return canDeleteOwn && canDeleteOthers;
 			},
 			selectedMessagesSize() {
 				return this.selectedMessages.size;
@@ -793,10 +834,10 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				return `(${this.selectedMessagesSize})`;
 			},
 			isBlockedDeletion() {
-				if (this.canDeleteMessage) {
-					return false;
-				}
-				return this.hasOthersMessages;
+				return this.selectedMessagesSize > 0 && !this.canDeleteMessage;
+			},
+			isCopilotChat() {
+				return this.dialog.type === im_v2_const.ChatType.copilot;
 			},
 			messageCounterText() {
 				if (!this.selectedMessagesSize) {
@@ -874,7 +915,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 					</div>
 				</div>
 				<div class="bx-im-content-bulk-actions-panel__right-section">
-					<div class="bx-im-content-bulk-actions-panel__delete-button">
+					<div v-if="!isCopilotChat" class="bx-im-content-bulk-actions-panel__delete-button">
 						<div
 							v-if="isBlockedDeletion"
 							v-hint="tooltipSettings"
@@ -922,14 +963,20 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		components: {
 			RichLoc: ui_vue3_components_richLoc.RichLoc
 		},
+		props: {
+			dialogId: {
+				type: String,
+				default: ''
+			}
+		},
 		computed: {
 			warningText() {
 				return main_core.Loc.getMessage('IM_CONTENT_COPILOT_DISCLAIMER_MSGVER_1', {
 					'#COPILOT_NAME#': this.copilotManager.getName()
 				});
 			},
-			shouldShowDisclaimer() {
-				return im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.isBitrixGptV2Available) && im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.copilotAvailable) && im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.copilotActive);
+			shouldShow() {
+				return im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.isBitrixGptV2Available) && im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.copilotAvailable) && im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.copilotActive) && this.$store.getters['copilot/chats/hasAiGeneratedContent'](this.dialogId);
 			}
 		},
 		created() {
@@ -941,7 +988,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			}
 		},
 		template: `
-		<div v-if="shouldShowDisclaimer" class="bx-im-chat-content-disclaimer__container --ui-context-content-dark">
+		<div v-if="shouldShow" class="bx-im-chat-content-disclaimer__container">
 			<RichLoc
 				:text="warningText"
 				placeholder="[link]"
@@ -1262,10 +1309,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				type: Boolean,
 				default: true
 			},
-			withChatContentDisclaimer: {
-				type: Boolean,
-				default: true
-			},
 			backgroundId: {
 				type: String,
 				default: null
@@ -1340,6 +1383,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			this.unbindEvents();
 		},
 		methods: {
+			getContainer() {
+				return this.$refs.content;
+			},
 			initTextareaResizeManager() {
 				this.textareaResizeManager = new im_v2_lib_textarea.ResizeManager();
 				this.textareaResizeManager.subscribe(im_v2_lib_textarea.ResizeManager.events.onHeightChange, this.onTextareaHeightChange);
@@ -1424,7 +1470,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 						</slot>
 						<div class="bx-im-content-chat__after-textarea_container">
 							<slot name="after-textarea">
-								<ChatContentDisclaimer v-if="withChatContentDisclaimer"/>
+								<ChatContentDisclaimer :dialogId="dialogId"/>
 							</slot>
 						</div>
 					</div>
@@ -1601,6 +1647,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	exports.GroupChatTitle = GroupChatTitle;
 	exports.IconClass = IconClass;
 	exports.UserCounter = UserCounter;
-
-})(this.BX.Messenger.v2.Component.Content = this.BX.Messenger.v2.Component.Content || {}, BX?.Messenger?.v2?.Component?.Animation??{}, BX?.Messenger?.v2?.Component?.Elements??{}, BX?.Messenger?.v2?.Component?.Elements??{}, BX?.Messenger?.v2?.Const??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Service??{}, BX?.Messenger?.v2?.Component?.EntitySelector??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Call?.Component??{}, BX??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Component?.Elements??{}, BX?.UI?.IconSet??{}, BX?.Event??{}, BX?.Vue3??{}, BX?.Messenger?.v2?.Component?.Dialog??{}, BX?.Messenger?.v2?.Component??{}, BX?.Messenger?.v2?.Component??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Vue3?.Directives??{}, BX?.Messenger?.v2?.Application??{}, BX?.Messenger?.v2?.Component?.Elements??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Service??{}, BX?.UI?.Vue3?.Components??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.UI?.Uploader??{}, BX?.Messenger?.v2?.Service??{});
+})(this.BX.Messenger.v2.Component.Content = this.BX.Messenger.v2.Component.Content || {}, BX?.Messenger?.v2?.Application??{}, BX?.Messenger?.v2?.Component?.Animation??{}, BX?.Messenger?.v2?.Component?.Elements??{}, BX?.Messenger?.v2?.Component?.Elements??{}, BX?.Messenger?.v2?.Const??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Service??{}, BX?.UI?.IconSet??{}, BX?.Messenger?.v2?.Component?.EntitySelector??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Call?.Component??{}, BX??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Component?.Elements??{}, BX?.Event??{}, BX?.Vue3??{}, BX?.Messenger?.v2?.Component?.Dialog??{}, BX?.Messenger?.v2?.Component??{}, BX?.Messenger?.v2?.Component??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Vue3?.Directives??{}, BX?.Messenger?.v2?.Component?.Elements??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Service??{}, BX?.UI?.Vue3?.Components??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.UI?.Uploader??{}, BX?.Messenger?.v2?.Service??{});;
 //# sourceMappingURL=registry.bundle.js.map

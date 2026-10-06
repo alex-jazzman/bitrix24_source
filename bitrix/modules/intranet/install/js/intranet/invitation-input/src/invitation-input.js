@@ -155,6 +155,24 @@ export class InvitationInput extends EventEmitter
 		return this.#invite(invitationProvider);
 	}
 
+	inviteToPortalWithDeliveryResult(invitations: Array): Promise
+	{
+		const invitationProvider = new InvitationToPortal([]);
+
+		return invitationProvider.inviteWithDeliveryResult(invitations);
+	}
+
+	showError(message: string): void
+	{
+		this.#removeErrorBlock();
+		this.#addErrorBlockByMessage(message);
+	}
+
+	clearError(): void
+	{
+		this.#removeErrorBlock();
+	}
+
 	inviteToDepartment(departmentIds: Array<number>): Promise
 	{
 		const invitationProvider = new InvitationToDepartment(this.#getPreparedUserList(), departmentIds);
@@ -323,7 +341,7 @@ export class InvitationInput extends EventEmitter
 			return Loc.getMessage('INTRANET_INVITATION_INPUT_VALIDATION_MESSAGE');
 		}
 
-		return Loc.getMessage('INTRANET_INVITATION_INPUT_VALIDATION_MESSAGE_WITH_PHONE');
+		return Loc.getMessage('INTRANET_INVITATION_INPUT_VALIDATION_MESSAGE_WITH_PHONE_MSGVER_1');
 	}
 
 	#getEmptyValidationMessage(): string
@@ -396,6 +414,7 @@ export class InvitationInput extends EventEmitter
 				{
 					this.#setErrorStateForTag(tag);
 					this.#invalidPhoneNumbersTagIds.push(tag.getId());
+					this.#addErrorBlockByMessage(this.#getDefaultValidationMessage());
 				}
 				tag.render();
 			}).catch(() => {});
@@ -540,7 +559,6 @@ export class InvitationInput extends EventEmitter
 	{
 		return Tag.render`
 			<div class="intranet-invitation-input-error__wrapper">
-				<span class="ui-icon-set --warning"></span>
 				<span class="intranet-invitation-input-error__text">${message}</span>
 			</div>
 		`;

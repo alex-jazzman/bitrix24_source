@@ -744,6 +744,7 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 					this.updateSheetHeight();
 				},
 				onChange: this.#onChangeDescription,
+				onClose: () => this.focusTitle(),
 			});
 		}
 
@@ -1375,7 +1376,6 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 			}
 
 			this.task.description = description;
-			this.focusTitle();
 			this.handlePreventBottomSheetDismiss();
 		};
 
@@ -1580,7 +1580,6 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 						reduxFields: this.prepareReduxFields(),
 						serverFields: this.prepareFieldsToSave(),
 						relatedTaskId: this.task.relatedTaskId,
-						analyticsLabel: analyticsLabelParams,
 					}),
 				)
 					.then(({ payload }) => {
@@ -1592,6 +1591,21 @@ jn.define('tasks/layout/task/create-new', (require, exports, module) => {
 								},
 								parentWidget,
 							);
+							analyticsLabelParams.forEach((label) => {
+								new AnalyticsEvent(label).setStatus('error').send();
+							});
+						}
+						else
+						{
+							const createdTaskId = payload.data?.task?.id;
+							analyticsLabelParams.forEach((label) => {
+								const analyticsEvent = new AnalyticsEvent(label).setStatus('success');
+								if (createdTaskId)
+								{
+									analyticsEvent.setP1(`taskId_${createdTaskId}`);
+								}
+								analyticsEvent.send();
+							});
 						}
 					})
 					.catch(console.error)

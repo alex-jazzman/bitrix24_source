@@ -5,6 +5,7 @@ namespace Bitrix\BIConnector\Integration\Superset\Integrator;
 use Bitrix\BIConnector\Integration\Superset\Integrator\Dto\User;
 use Bitrix\BIConnector\Integration\Superset\Integrator\Request\IntegratorResponse;
 use Bitrix\Main\Type\Date;
+use Bitrix\Main\Type\DateTime;
 
 interface IntegratorInterface
 {
@@ -95,9 +96,15 @@ interface IntegratorInterface
 	 * If response is OK - the token was changed successfully.
 	 *
 	 * @param string $biconnectorToken
+	 * @param bool $arbitrateInstanceStatus Whether the response is allowed to move the local instance
+	 *        status. Background synchronization passes false: a gateway failure on a token push must
+	 *        not drop a live instance out of READY.
 	 * @return IntegratorResponse<Dto\Dashboard>
 	 */
-	public function changeBiconnectorToken(string $biconnectorToken): IntegratorResponse;
+	public function changeBiconnectorToken(
+		string $biconnectorToken,
+		bool $arbitrateInstanceStatus = true,
+	): IntegratorResponse;
 
 	/**
 	 * Returns response with result of clear cache superset.
@@ -196,9 +203,10 @@ interface IntegratorInterface
 	 * @param string $filePath
 	 * @param string $appCode
 	 * @param string $type
+	 * @param bool $forceImportDatasets
 	 * @return IntegratorResponse<Dto\Dashboard>
 	 */
-	public function importDashboard(string $filePath, string $appCode, string $type = ''): IntegratorResponse;
+	public function importDashboard(string $filePath, string $appCode, string $type = '', bool $forceImportDatasets = false,): IntegratorResponse;
 
 	/**
 	 * Returns response with created dashboard result.
@@ -472,6 +480,57 @@ interface IntegratorInterface
 	 * @return IntegratorResponse
 	 */
 	public function syncMarketDashboards(array $marketDashboardsIdList): IntegratorResponse;
+
+	// endregion
+
+	// region Self-hosted license
+
+	/**
+	 * Sends the self-hosted license extension expiration to the instance.
+	 *
+	 * Applicable to a self-hosted instance only: a cloud portal has no such license and answers with an error.
+	 * Null is refused by the receiving side and sends nothing: the absence of a term is asked for by the reset of the
+	 * license state and not by a write of an empty value.
+	 *
+	 * The exact time of day matters: the portal and the instance must compare the same moment, so the
+	 * argument is a DateTime and never a Date, which would zero the time out.
+	 *
+	 * @param DateTime|null $date
+	 *
+	 * @return IntegratorResponse
+	 */
+	public function setSelfHostedLicenseExpiration(?DateTime $date): IntegratorResponse;
+
+	/**
+	 * Hands the term of the boxed portal license over to the instance. A term of its own: an instance closes
+	 * itself when the license of the product is over, and renewing the extension does not help there.
+	 *
+	 * @param DateTime|null $date
+	 *
+	 * @return IntegratorResponse
+	 */
+	public function setBoxLicenseExpiration(?DateTime $date): IntegratorResponse;
+
+	/**
+	 * Tells the instance whether the edition of this box allows the local mode at all. Not a term: the edition of a
+	 * box has no date, and only the portal knows it, so the instance is told the verdict and keeps it.
+	 *
+	 * @param bool $isAllowed
+	 *
+	 * @return IntegratorResponse
+	 */
+	public function setSelfHostedEditionVerdict(bool $isAllowed): IntegratorResponse;
+
+	/**
+	 * Wipes both terms kept by the instance, the extension and the boxed portal alike, and leaves it not connected.
+	 *
+	 * Applicable to a self-hosted instance only. Asked before the portal leaves the local mode and never after it:
+	 * an instance that keeps a term would go on working once switched back on, while the portal is already paying
+	 * for the cloud.
+	 *
+	 * @return IntegratorResponse
+	 */
+	public function resetSelfHostedLicense(): IntegratorResponse;
 
 	// endregion
 

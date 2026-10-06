@@ -32,6 +32,7 @@ return [
 		'im:messenger/lib/counters/tab-counters',
 		'im:messenger/lib/di/service-locator',
 		'im:messenger/lib/feature',
+		'im:messenger/lib/params',
 		'im:messenger/lib/integration/callmobile/call-manager',
 		'im:messenger/lib/integration/mobile/communication',
 		'im:messenger/lib/logger',

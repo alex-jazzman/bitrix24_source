@@ -210,9 +210,9 @@ class SalesCenterCashboxPanel extends CBitrixComponent implements Controllerable
 				[
 					'id' => 'businessru-atol',
 					'title' => Loc::getMessage('SCP_CASHBOX_BUSINESS_RU_ATOL'),
-					'image' => $this->getImagePath() . 'businessru_atol.svg',
+					'image' => $this->getImagePath() . 'businessru_atol.webp',
 					'itemSelectedColor' => '#FF142C',
-					'itemSelectedImage' => $this->getImagePath() . 'businessru_atol_s.svg',
+					'itemSelectedImage' => $this->getImagePath() . 'businessru_atol_s.webp',
 					'itemSelected' => false,
 					'data' => [
 						'type' => 'cashbox',
@@ -230,9 +230,9 @@ class SalesCenterCashboxPanel extends CBitrixComponent implements Controllerable
 				[
 					'id' => Sale\Cashbox\CashboxBusinessRuV5::getCode() . '-atol',
 					'title' => Loc::getMessage('SCP_CASHBOX_BUSINESS_RU_ATOL') . ' (' . Loc::getMessage('SCP_CASHBOX_FFD_12') . ')',
-					'image' => $this->getImagePath() . 'businessru_atol.svg',
+					'image' => $this->getImagePath() . 'businessru_atol.webp',
 					'itemSelectedColor' => '#FF142C',
-					'itemSelectedImage' => $this->getImagePath() . 'businessru_atol_s.svg',
+					'itemSelectedImage' => $this->getImagePath() . 'businessru_atol_s.webp',
 					'itemSelected' => false,
 					'data' => [
 						'type' => 'cashbox',
@@ -250,9 +250,9 @@ class SalesCenterCashboxPanel extends CBitrixComponent implements Controllerable
 				[
 					'id' => 'businessru-shtrihm',
 					'title' => Loc::getMessage('SCP_CASHBOX_BUSINESS_RU_SHTRIHM'),
-					'image' => $this->getImagePath() . 'businessru_shtrihm.svg',
+					'image' => $this->getImagePath() . 'businessru_shtrihm.webp',
 					'itemSelectedColor' => '#8F7B66',
-					'itemSelectedImage' => $this->getImagePath() . 'businessru_shtrihm_s.svg',
+					'itemSelectedImage' => $this->getImagePath() . 'businessru_shtrihm_s.webp',
 					'itemSelected' => false,
 					'data' => [
 						'type' => 'cashbox',
@@ -270,9 +270,9 @@ class SalesCenterCashboxPanel extends CBitrixComponent implements Controllerable
 				[
 					'id' => Sale\Cashbox\CashboxBusinessRuV5::getCode() . '-shtrihm',
 					'title' => Loc::getMessage('SCP_CASHBOX_BUSINESS_RU_SHTRIHM') . ' (' . Loc::getMessage('SCP_CASHBOX_FFD_12') . ')',
-					'image' => $this->getImagePath() . 'businessru_shtrihm.svg',
+					'image' => $this->getImagePath() . 'businessru_shtrihm.webp',
 					'itemSelectedColor' => '#8F7B66',
-					'itemSelectedImage' => $this->getImagePath() . 'businessru_shtrihm_s.svg',
+					'itemSelectedImage' => $this->getImagePath() . 'businessru_shtrihm_s.webp',
 					'itemSelected' => false,
 					'data' => [
 						'type' => 'cashbox',
@@ -290,9 +290,9 @@ class SalesCenterCashboxPanel extends CBitrixComponent implements Controllerable
 				[
 					'id' => 'businessru-evotor',
 					'title' => Loc::getMessage('SCP_CASHBOX_BUSINESS_RU_EVOTOR'),
-					'image' => $this->getImagePath() . 'businessru_evotor.svg',
+					'image' => $this->getImagePath() . 'businessru_evotor.webp',
 					'itemSelectedColor' => '#E44A21',
-					'itemSelectedImage' => $this->getImagePath() . 'businessru_evotor_s.svg',
+					'itemSelectedImage' => $this->getImagePath() . 'businessru_evotor_s.webp',
 					'itemSelected' => false,
 					'data' => [
 						'type' => 'cashbox',
@@ -310,9 +310,9 @@ class SalesCenterCashboxPanel extends CBitrixComponent implements Controllerable
 				[
 					'id' => Sale\Cashbox\CashboxBusinessRuV5::getCode() . '-evotor',
 					'title' => Loc::getMessage('SCP_CASHBOX_BUSINESS_RU_EVOTOR') . ' (' . Loc::getMessage('SCP_CASHBOX_FFD_12') . ')',
-					'image' => $this->getImagePath() . 'businessru_evotor.svg',
+					'image' => $this->getImagePath() . 'businessru_evotor.webp',
 					'itemSelectedColor' => '#E44A21',
-					'itemSelectedImage' => $this->getImagePath() . 'businessru_evotor_s.svg',
+					'itemSelectedImage' => $this->getImagePath() . 'businessru_evotor_s.webp',
 					'itemSelected' => false,
 					'data' => [
 						'type' => 'cashbox',

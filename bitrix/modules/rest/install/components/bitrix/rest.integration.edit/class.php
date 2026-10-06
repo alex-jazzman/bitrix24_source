@@ -13,6 +13,9 @@ use Bitrix\Main\Localization\LanguageTable;
 use Bitrix\Main;
 use Bitrix\Rest\Engine\Access;
 use Bitrix\Rest\Engine\Access\HoldEntity;
+use Bitrix\Rest\Internal\Exception\VibePlus\FeatureNotAvailableOnCurrentPlanExceptionInterface;
+use Bitrix\Rest\Internal\Entity\Application\AppInstallCompletionMode;
+use Bitrix\Rest\Internal\Service\VibePlus\IntegrationUpsellHelperCodeProvider;
 use Bitrix\Main\Loader;
 use Bitrix\Rest\Preset\Data\Element;
 use Bitrix\Rest\Preset\Provider;
@@ -455,7 +458,9 @@ class RestIntegrationEditComponent extends CBitrixComponent implements Main\Engi
 		if (!$this->canEditIntegrationById($integrationId))
 		{
 			return [
-				'helperCode' => 'limit_subscription_market_access_buy_marketplus',
+				'helperCode' => $this->getUnavailableHelperCode(
+					'limit_subscription_market_access_buy_marketplus',
+				),
 			];
 		}
 
@@ -465,11 +470,35 @@ class RestIntegrationEditComponent extends CBitrixComponent implements Main\Engi
 		)
 		{
 			return [
-				'helperCode' => Access::getHelperCode(Access::ACTION_INSTALL, Access::ENTITY_TYPE_INTEGRATION, $requestData['ID'])
+				'helperCode' => $this->getUnavailableHelperCode(
+					Access::getHelperCode(
+						Access::ACTION_INSTALL,
+						Access::ENTITY_TYPE_INTEGRATION,
+						$requestData['ID'],
+					),
+				),
 			];
 		}
 
-		return Provider::saveIntegration($requestData, $this->arParams['ELEMENT_CODE'], $this->arParams['ID']);
+		try
+		{
+			$result = Provider::saveIntegration($requestData, $this->arParams['ELEMENT_CODE'], $this->arParams['ID']);
+		}
+		catch (FeatureNotAvailableOnCurrentPlanExceptionInterface)
+		{
+			return [
+				'helperCode' => $this->getUnavailableHelperCode(
+					'limit_subscription_market_access_buy_marketplus',
+				),
+			];
+		}
+
+		if (($requestData['MODE'] ?? null) !== 'GEN_SAVE')
+		{
+			$result['redirectUrl'] = DevOps::getInstance()->getListUrl('ID', 'DESC');
+		}
+
+		return $result;
 	}
 
 	private function canEditIntegrationById(?int $integrationId): bool
@@ -498,7 +527,9 @@ class RestIntegrationEditComponent extends CBitrixComponent implements Main\Engi
 			|| !Access::isAvailableCount(Access::ENTITY_TYPE_INTEGRATION)
 		)
 		{
-			$result['helperCode'] = Access::getHelperCode(Access::ACTION_INSTALL, Access::ENTITY_TYPE_INTEGRATION);
+			$result['helperCode'] = $this->getUnavailableHelperCode(
+				Access::getHelperCode(Access::ACTION_INSTALL, Access::ENTITY_TYPE_INTEGRATION),
+			);
 			return $result;
 		}
 
@@ -519,7 +550,18 @@ class RestIntegrationEditComponent extends CBitrixComponent implements Main\Engi
 					'WIDGET_NEEDED' => $presetData['OPTIONS']['WIDGET_NEEDED'] ?? null,
 				];
 
-				$data = Provider::saveIntegration($saveData, $saveData['ELEMENT_CODE']);
+				try
+				{
+					$data = Provider::saveIntegration($saveData, $saveData['ELEMENT_CODE']);
+				}
+				catch (FeatureNotAvailableOnCurrentPlanExceptionInterface)
+				{
+					return [
+						'helperCode' => $this->getUnavailableHelperCode(
+							Access::getHelperCode(Access::ACTION_INSTALL, Access::ENTITY_TYPE_INTEGRATION),
+						),
+					];
+				}
 				if (!empty($data['ID']))
 				{
 					Analytic::logToFile(
@@ -544,6 +586,13 @@ class RestIntegrationEditComponent extends CBitrixComponent implements Main\Engi
 		}
 
 		return $result;
+	}
+
+	private function getUnavailableHelperCode(
+		string $fallback,
+	): string
+	{
+		return (new IntegrationUpsellHelperCodeProvider())->getHelperCode($fallback);
 	}
 
 	public function analyticAction()

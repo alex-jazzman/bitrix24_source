@@ -8,10 +8,12 @@ return [
 	'css' => 'dist/copilot-creation.bundle.css',
 	'js' => 'dist/copilot-creation.bundle.js',
 	'rel' => [
-		'main.polyfill.core',
 		'im.v2.component.elements.avatar',
 		'im.v2.component.message.base',
+		'im.v2.const',
+		'im.v2.lib.analytics',
 		'im.v2.provider.service.sending',
+		'main.core',
 	],
-	'skip_core' => true,
+	'skip_core' => false,
 ];

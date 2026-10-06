@@ -103,6 +103,8 @@
 	font-weight: var(--im-font-weight-normal);
 	color: var(--im-chat-header__font-color_secondary);
 	max-width: 100%;
+	min-width: 0;
+	flex-shrink: 1;
 	text-overflow: ellipsis;
 	white-space: nowrap;
 	overflow: hidden;
@@ -114,6 +116,11 @@
 
 .bx-im-chat-header__guest-counter {
 	color: var(--ui-color-collab-accent-primary-alt);
+}
+
+/* Keep the entity link (e.g. "Open meeting") from collapsing when it shares the subtitle row with the user/guest counter; the counter truncates instead. */
+.bx-im-chat-header__subtitle_container .bx-im-chat-header-entity-button__container {
+	flex-shrink: 0;
 }
 
 .bx-im-chat-header__icon {
@@ -134,29 +141,28 @@
 	margin-right: 0;
 }
 
-.bx-im-chat-header__icon.--add-people {
-	background-image: url('./images/add-people.svg');
-}
-
-.bx-im-chat-header__icon.--add-people.--active {
-	background-image: url('./images/add-people-active.svg');
+/*
+ * DS icons (BIcon): the shared search and add-to-chat header buttons. The glyph colour is driven by
+ * the icon-set "--ui-icon-set__icon-color" variable, so opacity dimming is dropped in favour of the
+ * theme-aware tokens (base -> hover -> accent for the active/opened state).
+ */
+.bx-im-chat-header__icon.--ds-icon {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 24px;
+	height: 24px;
 	opacity: 1;
+	--ui-icon-set__icon-color: var(--ui-color-base-4);
 }
 
-.bx-im-chat-header__icon.--search {
-	background-image: url('./images/search.svg?v2');
-}
-
-.bx-im-chat-header__icon.--search.--active {
-	background-image: url('./images/search-active.svg');
+.bx-im-chat-header__icon.--ds-icon:hover {
 	opacity: 1;
+	--ui-icon-set__icon-color: var(--ui-color-base-3);
 }
 
-.bx-im-chat-header__icon.--panel {
-	background-image: url('./images/panel.svg');
-}
-
-.bx-im-chat-header__icon.--panel.--active {
-	background-image: url('./images/panel-active.svg');
+.bx-im-chat-header__icon.--ds-icon.--active,
+.bx-im-chat-header__icon.--ds-icon.--active:hover {
 	opacity: 1;
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary);
 }

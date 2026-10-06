@@ -19,7 +19,7 @@ import { UserOptions } from './user-options';
 import { ViewMode } from './view-mode';
 import { Helper } from './helper';
 import { HelpHint } from './help-hint';
-import { DelayInterval } from './delay-interval';
+import { DelayInterval } from 'bizproc.condition';
 import { Popup } from 'main.popup';
 
 import 'ui.hint';

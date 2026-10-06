@@ -70,4 +70,5 @@ class Controller extends BaseField.Controller
 	}
 }
 
-export {Controller, Options}
+export {Controller}
+export type {Options}

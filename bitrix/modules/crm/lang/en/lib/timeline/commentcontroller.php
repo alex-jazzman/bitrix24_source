@@ -1,4 +1,5 @@
 <?php
+$MESS["CRM_ACTIVITY_PROVIDER_REQUEST_NOTIFY_SUBJECT"] = "#AUTHOR# mentioned you in a comment to:";
 $MESS["CRM_COMMENT_IM_MENTION_POST"] = "Mentioned you in comment to \"#ENTITY_TITLE#\", comment text: \"#COMMENT#\"";
 $MESS["CRM_COMMENT_IM_MENTION_POST_F"] = "Mentioned you in comment to \"#ENTITY_TITLE#\", comment text: \"#COMMENT#\"";
 $MESS["CRM_COMMENT_IM_MENTION_POST_M"] = "Mentioned you in comment to \"#ENTITY_TITLE#\", comment text: \"#COMMENT#\"";

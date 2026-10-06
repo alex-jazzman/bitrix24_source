@@ -1,9 +1,9 @@
 import { Core } from 'im.v2.application.core';
 import { ChatType, UserType } from 'im.v2.const';
 import { Utils } from 'im.v2.lib.utils';
+import { type ImModelChat, type ImModelUser } from 'im.v2.model';
 
-import type { ImModelChat, ImModelUser } from 'im.v2.model';
-import type { SearchResultItem } from 'im.v2.lib.search';
+import { type SearchResultItem } from '../types/types.js';
 
 export const sortByDate = (items: SearchResultItem[]): SearchResultItem[] => {
 	return [...items].sort((firstItem, secondItem) => {

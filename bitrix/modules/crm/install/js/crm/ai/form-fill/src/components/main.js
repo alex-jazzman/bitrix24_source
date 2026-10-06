@@ -1,4 +1,5 @@
-import { Event, Runtime } from 'main.core';
+import { Event, Loc, Runtime } from 'main.core';
+import { UI } from 'ui.notification';
 import { mapActions, mapGetters, mapMutations } from 'ui.vue3.vuex';
 
 import { myScrollTo } from '../services/utils';
@@ -54,6 +55,7 @@ export const Main = {
 			'startLoading',
 			'stopLoading',
 			'setMainLayoutScrollHeight',
+			'setAiFeedbackShowBeforeClose',
 		]),
 		onFooterSaveBtn() {
 			this.saveFormFieldsToMerge()
@@ -96,6 +98,16 @@ export const Main = {
 			this.$Bitrix.eventEmitter.unsubscribe('crm:ai:form-fill:close-confirm:confirmClose', this.onCloseConfirm);
 			this.$Bitrix.eventEmitter.unsubscribe('crm:ai:form-fill:close-confirm:cancelClose', this.scrollToNext);
 		},
+		onInitializeFailed(error) {
+			// staying in the loading state denies closing the slider, see ai-form-fill-app.js
+			this.stopLoading();
+			this.setAiFeedbackShowBeforeClose(false);
+			console.error(error);
+			UI.Notification.Center.notify({
+				content: Loc.getMessage('CRM_AI_FORM_FILL_MERGER_LOAD_ERROR'),
+				autoHideDelay: 5000,
+			});
+		},
 		autoScrollToFirst() {
 			const height = this.$refs.layout.getBoundingClientRect().height;
 			const firstPosY = this.getFirstUnseenFieldPosition;
@@ -112,7 +124,17 @@ export const Main = {
 			this.positionChanged();
 		}, 300);
 
-		await this.initialize();
+		try
+		{
+			await this.initialize();
+		}
+		catch (error)
+		{
+			this.onInitializeFailed(error);
+
+			return;
+		}
+
 		this.positionChanged();
 
 		this.subscribeInternalEvents();

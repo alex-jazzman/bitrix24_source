@@ -24,11 +24,24 @@ jn.define('tasks/task/remove', (require, exports, module) => {
 			return;
 		}
 
+		const deleteAnalyticsLabel = {
+			tool: 'tasks',
+			category: 'task_operations',
+			type: 'task',
+			event: 'task_delete',
+			p1: `taskId_${taskId}`,
+		};
+
 		if (!Feature.isToastSupported())
 		{
-			dispatch(
-				(task.isCreationErrorExist ? taskRemoved : remove)({ taskId }),
-			);
+			if (task.isCreationErrorExist)
+			{
+				dispatch(taskRemoved({ taskId }));
+			}
+			else
+			{
+				dispatch(remove({ taskId, analyticsLabel: deleteAnalyticsLabel }));
+			}
 
 			return;
 		}
@@ -47,9 +60,14 @@ jn.define('tasks/task/remove', (require, exports, module) => {
 					);
 				},
 				onTimerOver: () => {
-					dispatch(
-						(task.isCreationErrorExist ? taskRemoved : remove)({ taskId }),
-					);
+					if (task.isCreationErrorExist)
+					{
+						dispatch(taskRemoved({ taskId }));
+					}
+					else
+					{
+						dispatch(remove({ taskId, analyticsLabel: deleteAnalyticsLabel }));
+					}
 				},
 			},
 		);

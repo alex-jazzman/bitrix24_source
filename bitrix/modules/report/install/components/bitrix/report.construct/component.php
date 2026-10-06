@@ -331,6 +331,21 @@ try
 		}
 		// </editor-fold>
 
+		// Reject period dates whose year is out of the DB-storable range so they
+		// are not persisted into b_report.SETTINGS (they would otherwise fatal the
+		// report on every open).
+		if (empty($formErr)
+			&& !empty($_POST['F_DATE_TYPE'])
+			&& in_array($_POST['F_DATE_TYPE'], $periodTypes, true)
+			&& CReport::periodInputHasInvalidDate(
+				$_POST['F_DATE_TYPE'],
+				$_POST['F_DATE_FROM'] ?? null,
+				$_POST['F_DATE_TO'] ?? null
+			))
+		{
+			$formErr = GetMessage('REPORT_ERR_FILTER_DATE_INVALID');
+		}
+
 		// <editor-fold defaultstate="collapsed" desc="prepare select fields">
 		$select = array();
 
@@ -442,17 +457,58 @@ try
 				if ($subFilter['type'] == 'field')
 				{
 					// validate field and calc
-					if (
-						array_key_exists($subFilter['name'], $fieldList)
-						&& CReport::isValidFilterCompareVariation(
+					if (array_key_exists($subFilter['name'], $fieldList))
+					{
+						$fieldDataType = call_user_func(
+							array($arParams['REPORT_HELPER_CLASS'], 'getFieldDataType'),
+							$fieldList[$subFilter['name']]
+						);
+
+						if (CReport::isValidFilterCompareVariation(
 								$subFilter['name'],
-								call_user_func(array($arParams['REPORT_HELPER_CLASS'], 'getFieldDataType'), $fieldList[$subFilter['name']]),
+								$fieldDataType,
 								$subFilter['compare'],
 								$compareVariations
-							)
-					)
-					{
-						$iFilterItems[] = $subFilter;
+							))
+						{
+							// Do not persist an out-of-DB-range filter date: it would
+							// degrade to an empty SQL date literal and fatal the report
+							// on every open. A BETWEEN value is an array of bounds, so
+							// every bound is checked. Relative keywords stay valid.
+							if (empty($formErr) && $fieldDataType === 'datetime' && isset($subFilter['value']))
+							{
+								$dateFormat = CSite::GetDateFormat('SHORT');
+								$dateBounds = is_array($subFilter['value'])
+									? $subFilter['value']
+									: [$subFilter['value']];
+								foreach ($dateBounds as $dateBound)
+								{
+									if (!is_scalar($dateBound) || (string) $dateBound === '')
+									{
+										continue;
+									}
+
+									// The field type is known to be datetime here, so besides
+									// an out-of-DB-range date (INVALID) an unrecognised string
+									// is broken too - e.g. a year beyond 32767 that
+									// MakeTimeStamp cannot parse (UNRESOLVED). But a resolvable
+									// relative keyword (today / -1 week) stays valid, so only
+									// reject UNRESOLVED when strtotime() cannot resolve it -
+									// mirroring the report.view field path.
+									$dateType = CReport::classifyFilterDate((string) $dateBound, $dateFormat)['type'];
+									if ($dateType === CReport::FILTER_DATE_INVALID
+										|| ($dateType === CReport::FILTER_DATE_UNRESOLVED
+											&& strtotime((string) $dateBound) === false))
+									{
+										$formErr = GetMessage('REPORT_ERR_FILTER_DATE_INVALID');
+										break;
+									}
+								}
+								unset($dateBounds, $dateBound, $dateFormat);
+							}
+
+							$iFilterItems[] = $subFilter;
+						}
 					}
 				}
 				else if ($subFilter['type'] == 'filter')

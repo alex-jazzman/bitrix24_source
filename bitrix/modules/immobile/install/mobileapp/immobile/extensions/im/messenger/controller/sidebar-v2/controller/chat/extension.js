@@ -35,6 +35,9 @@ jn.define('im/messenger/controller/sidebar-v2/controller/chat', (require, export
 
 	class ChatSidebarController extends SidebarBaseController
 	{
+		/** @type {ChatSidebarPermissionManager} */
+		permissionManager;
+
 		/**
 		 * @protected
 		 * @return {Object[]}
@@ -67,7 +70,7 @@ jn.define('im/messenger/controller/sidebar-v2/controller/chat', (require, export
 			return {
 				...super.prepareViewProps(),
 				callbacks: {
-					callUserProfile: this.callUserProfile,
+					callUserProfile: this.permissionManager.canOpenProfile() ? this.callUserProfile : () => {},
 				},
 			};
 		}
@@ -97,9 +100,11 @@ jn.define('im/messenger/controller/sidebar-v2/controller/chat', (require, export
 
 		getHeaderContextMenuItems()
 		{
-			return [
-				...super.getHeaderContextMenuItems(),
-				{
+			const items = [...super.getHeaderContextMenuItems()];
+
+			if (this.permissionManager.canAddParticipants())
+			{
+				items.push({
 					id: SidebarContextMenuActionId.ADD_PARTICIPANTS,
 					title: Loc.getMessage('IMMOBILE_SIDEBAR_V2_COMMON_ACTION_ADD_PARTICIPANTS'),
 					icon: Icon.ADD_PERSON,
@@ -113,16 +118,24 @@ jn.define('im/messenger/controller/sidebar-v2/controller/chat', (require, export
 							this.logger.log(`${this.constructor.name}.onAddParticipants`, error);
 						});
 					},
-				},
-				{
+				});
+			}
+
+			if (this.permissionManager.canOpenProfile())
+			{
+				items.push({
 					id: SidebarContextMenuActionId.OPEN_PROFILE,
 					title: Loc.getMessage('IMMOBILE_SIDEBAR_V2_COMMON_ACTION_OPEN_PROFILE'),
 					icon: Icon.PERSON,
 					testId: 'sidebar-context-menu-open-profile',
 					sort: SidebarContextMenuActionPosition.MIDDLE,
 					onItemSelected: () => this.callUserProfile(),
-				},
-				{
+				});
+			}
+
+			if (this.permissionManager.canOpenCalendar())
+			{
+				items.push({
 					id: SidebarContextMenuActionId.OPEN_CALENDAR,
 					title: Loc.getMessage('IMMOBILE_SIDEBAR_V2_COMMON_ACTION_OPEN_CALENDAR'),
 					icon: Icon.CALENDAR,
@@ -142,8 +155,10 @@ jn.define('im/messenger/controller/sidebar-v2/controller/chat', (require, export
 							this.logger.error('openUserCalendarView', err);
 						}
 					},
-				},
-			];
+				});
+			}
+
+			return items;
 		}
 
 		// endregion

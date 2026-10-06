@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Call = this.BX.Call || {};
-(function (exports, im_call_compatible, main_core_events, im_public, im_v2_application_core, im_v2_const, im_v2_lib_desktopApi, im_v2_lib_logger, im_v2_lib_promo, im_v2_lib_slider, im_v2_lib_soundNotification, im_v2_provider_service_chat, call_core, call_lib_callSliderManager, main_core, ui_buttons, im_v2_lib_access) {
+(function (exports, im_call_compatible, main_core, main_core_events, im_public, im_v2_application_core, im_v2_const, im_v2_lib_desktopApi, im_v2_lib_logger, im_v2_lib_promo, im_v2_lib_slider, im_v2_lib_soundNotification, im_v2_provider_service_chat, call_const, call_core, call_lib_callSliderManager, ui_buttons, im_v2_lib_access) {
 	'use strict';
 
 	const openCallUserSelector = async params => {
@@ -123,6 +123,9 @@ this.BX.Call = this.BX.Call || {};
 				timeout: 100
 			});
 		}
+		setNextCallOptions(options) {
+			this.#nextCallOptions = options;
+		}
 		startCall(dialogId, withVideo = true) {
 			im_v2_lib_logger.Logger.warn('CallManager: startCall', dialogId, withVideo);
 			this.#sliderManager.setTopSliderId();
@@ -221,6 +224,9 @@ this.BX.Call = this.BX.Call || {};
 		hasActiveAnotherCall(dialogId) {
 			return im_v2_application_core.Core.getStore().getters['recent/calls/hasActiveCall']() && !this.hasActiveCurrentCall(dialogId);
 		}
+		hasActiveCallInDialog(dialogId) {
+			return Boolean(im_v2_application_core.Core.getStore().getters['recent/calls/getCallByDialog'](dialogId));
+		}
 		getCallUserLimit() {
 			return BX.Call.Util.getUserLimit();
 		}
@@ -291,7 +297,8 @@ this.BX.Call = this.BX.Call || {};
 					stopRepeatSound: soundType => {
 						im_v2_lib_soundNotification.SoundNotificationManager.getInstance().stop(soundType);
 					},
-					showUserSelector: openCallUserSelector
+					showUserSelector: openCallUserSelector,
+					getCurrentUser: () => this.getCurrentUser()
 				},
 				events: {
 					[call_core.Controller.Events.onPromoViewed]: event => {
@@ -323,6 +330,62 @@ this.BX.Call = this.BX.Call || {};
 			main_core_events.EventEmitter.subscribe(im_v2_const.EventType.layout.onOpenNotifications, this.foldCurrentCall.bind(this));
 			main_core_events.EventEmitter.subscribe(im_v2_const.EventType.call.onJoinFromRecentItem, this.onJoinFromRecentItem.bind(this));
 			main_core_events.EventEmitter.subscribe('CallEvents::callCreated', this.#onCallCreated.bind(this));
+			const guestIdentifiedEvent = call_const.EventType?.callEvents?.guestIdentified;
+			if (guestIdentifiedEvent) {
+				main_core_events.EventEmitter.subscribe(guestIdentifiedEvent, this.#onGuestIdentified.bind(this));
+			} else {
+				im_v2_lib_logger.Logger.warn('CallManager: call.const EventType is unavailable, skipping guestIdentified subscription');
+			}
+			const guestInitialChatOpenEvent = call_const.EventType?.callEvents?.guestInitialChatOpen;
+			if (guestInitialChatOpenEvent) {
+				main_core_events.EventEmitter.subscribe(guestInitialChatOpenEvent, this.#onGuestIdentified.bind(this));
+			} else {
+				im_v2_lib_logger.Logger.warn('CallManager: call.const EventType is unavailable, skipping guestInitialChatOpen subscription');
+			}
+		}
+		async #onGuestIdentified(event) {
+			const {
+				dialogId
+			} = event.getData();
+			if (!dialogId || typeof dialogId !== 'string' && typeof dialogId !== 'number') {
+				im_v2_lib_logger.Logger.warn('CallManager: guestIdentified: invalid payload', event.getData());
+				return;
+			}
+			const normalizedDialogId = String(dialogId);
+			if (this.hasActiveCurrentCall(normalizedDialogId)) {
+				return;
+			}
+			const callItem = im_v2_application_core.Core.getStore().getters['recent/calls/getCallByDialog'](normalizedDialogId);
+			if (callItem !== null && callItem !== undefined) {
+				this.joinCall(callItem.call.id, callItem.call.uuid, normalizedDialogId, true);
+				return;
+			}
+			let response;
+			try {
+				response = await main_core.ajax.runAction('call.Call.tryJoinCall', {
+					data: {
+						entityType: 'chat',
+						entityId: normalizedDialogId,
+						provider: call_core.Provider.Bitrix,
+						callType: call_core.Type.Instant
+					}
+				});
+			} catch (error) {
+				im_v2_lib_logger.Logger.warn('CallManager: guestIdentified: tryJoinCall request failed', error);
+				return;
+			}
+			const data = response?.data;
+			if (!data?.success) {
+				im_v2_lib_logger.Logger.warn('CallManager: guestIdentified: no active call for dialog', normalizedDialogId);
+				return;
+			}
+			const isLegacy = call_core.Util.isLegacyCall(data.call?.PROVIDER, data.call?.SCHEME);
+			if (isLegacy) {
+				call_core.EngineLegacy.instantiateCall(data.call, data.users, data.logToken, data.connectionData, data.userData);
+			} else {
+				call_core.Engine.instantiateCall(data.call, data.callToken, data.logToken, data.userData);
+			}
+			this.joinCall(String(data.call?.ID), data.call?.UUID, normalizedDialogId, true);
 		}
 		#subscribeToCallEvents(call) {
 			call.addEventListener(BX.Call.Event.onJoin, this.#onCallJoinHandler);
@@ -404,7 +467,13 @@ this.BX.Call = this.BX.Call || {};
 			const dialog = im_v2_application_core.Core.getStore().getters['chats/get'](dialogId);
 			return dialog.type === im_v2_const.ChatType.videoconf;
 		}
+		#isCurrentUserGuest() {
+			return im_v2_application_core.Core.getStore().getters['users/isGuest'](im_v2_application_core.Core.getUserId());
+		}
 		#checkCallSupport(dialogId) {
+			if (this.#isCurrentUserGuest()) {
+				return false;
+			}
 			if (!this.#pushServerIsActive() || !BX.Call.Util.isWebRTCSupported()) {
 				return false;
 			}
@@ -507,5 +576,5 @@ this.BX.Call = this.BX.Call || {};
 
 	exports.CallManager = CallManager;
 
-})(this.BX.Call.Lib = this.BX.Call.Lib || {}, BX, BX.Event, BX.Messenger.v2.Lib, BX.Messenger.v2.Application, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Service, BX.Call, BX.Call.Lib, BX, BX.UI, BX.Messenger.v2.Lib);
+})(this.BX.Call.Lib = this.BX.Call.Lib || {}, BX, BX, BX.Event, BX.Messenger.v2.Lib, BX.Messenger.v2.Application, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Service, BX.Call.Const, BX.Call, BX.Call.Lib, BX.UI, BX.Messenger.v2.Lib);
 //# sourceMappingURL=call-manager.bundle.js.map

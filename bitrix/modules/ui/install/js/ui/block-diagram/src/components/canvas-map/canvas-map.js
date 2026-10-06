@@ -1,7 +1,7 @@
 import './canvas-map.css';
 import { Type } from 'main.core';
 import { toValue, computed, toRefs, useTemplateRef, reactive } from 'ui.vue3';
-import { useBlockDiagram, useCanvas } from '../../composables';
+import { useBlockDiagram, useCanvas, useLoc } from '../../composables';
 import type { DiagramBlockDimensions } from '../../types';
 import type { DiagramBlock } from '../../types';
 
@@ -21,13 +21,16 @@ type CanvasMapSetup = {
 	contentOffsetY: number;
 	renderScale: number;
 	viewportIndicator: ViewportIndicatorRect;
+	mapLabel: string;
 	onMapMouseDown: (event: MouseEvent) => void;
 	onMapMouseMove: (event: MouseEvent) => void;
 	onMapMouseUp: (event: MouseEvent) => void;
+	onMapKeyDown: (event: KeyboardEvent) => void;
 	getBlockColor: (block: ?DiagramBlock) => string;
 };
 
 const MAP_PADDING: number = 50;
+const KEYBOARD_PAN_STEP: number = 50;
 
 const DEFAULT_BLOCK_COLOR = 'var(--ui-color-palette-gray-15)';
 const DEFAULT_FRAME_BLOCK_COLOR = 'rgba(0,0,0,0.05)';
@@ -55,7 +58,7 @@ export const CanvasMap = {
 		},
 	},
 	// eslint-disable-next-line max-lines-per-function
-	setup(props, { emit }): CanvasMapSetup
+	setup(props, { expose }): CanvasMapSetup
 	{
 		const {
 			blocks,
@@ -67,8 +70,11 @@ export const CanvasMap = {
 			zoom,
 		} = useBlockDiagram();
 		const { setCamera } = useCanvas();
+		const loc = useLoc();
 		const { mapWidth, mapHeight, blockColors } = toRefs(props);
 		const mapEl = useTemplateRef('map');
+		const mapRootEl = useTemplateRef('mapRoot');
+		const mapLabel = loc.getMessage('UI_BLOCK_DIAGRAM_CANVAS_MAP_LABEL');
 
 		const interactionState = reactive({
 			isDragging: false,
@@ -272,6 +278,47 @@ export const CanvasMap = {
 			interactionState.mode = null;
 		}
 
+		function onMapKeyDown(event: KeyboardEvent): void
+		{
+			let deltaX = 0;
+			let deltaY = 0;
+
+			switch (event.key)
+			{
+				case 'ArrowLeft':
+					deltaX = -1;
+					break;
+				case 'ArrowRight':
+					deltaX = 1;
+					break;
+				case 'ArrowUp':
+					deltaY = -1;
+					break;
+				case 'ArrowDown':
+					deltaY = 1;
+					break;
+				default:
+					return;
+			}
+
+			event.preventDefault();
+			event.stopPropagation();
+
+			const currentZoom = toValue(zoom) || 1;
+			setCamera({
+				x: toValue(transformX) + (deltaX * KEYBOARD_PAN_STEP / currentZoom),
+				y: toValue(transformY) + (deltaY * KEYBOARD_PAN_STEP / currentZoom),
+				zoom: currentZoom,
+			});
+		}
+
+		function focus(): void
+		{
+			toValue(mapRootEl)?.focus({ preventScroll: true });
+		}
+
+		expose({ focus });
+
 		function getBlockColor(block: ?DiagramBlock): string
 		{
 			const blockType = block?.node?.type;
@@ -318,17 +365,30 @@ export const CanvasMap = {
 			contentOffsetY,
 			renderScale,
 			viewportIndicator,
+			mapLabel,
 			onMapMouseDown,
 			onMapMouseMove,
 			onMapMouseUp,
+			onMapKeyDown,
 			getBlockColor,
 		};
 	},
 	template: `
-		<div :style="canvasMapStyle">
+		<div
+			ref="mapRoot"
+			:data-test-id="$blockDiagramTestId('zoomCanvasMap')"
+			:style="canvasMapStyle"
+			class="ui-block-diagram-canvas-map__container"
+			role="region"
+			tabindex="0"
+			:aria-label="mapLabel"
+			@keydown="onMapKeyDown"
+		>
 			<svg
 				:width="mapWidth"
 				:height="mapHeight"
+				aria-hidden="true"
+				focusable="false"
 				ref="map"
 				class="ui-block-diagram-canvas-map"
 				@mousedown="onMapMouseDown"

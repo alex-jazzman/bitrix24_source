@@ -146,3 +146,14 @@ Toolbar::addButton([
 	"link" => $arResult['PATH_TO_TRASHCAN_LIST'],
 	"text" => Loc::getMessage('DISK_DOCUMENTS_TOOLBAR_TRASH'),
 ]);
+
+if ($arResult['VARIANT'] !== Disk\Type\DocumentGridVariant::FlipchartList)
+{
+	\Bitrix\Main\UI\Extension::load('ui.icon-set.solid');
+	Toolbar::addButton([
+		"className" => 'js-disk-promo-boost-button --style-filled-boost',
+		"dataset" => ['testid' => 'disk-documents-toolbar-boost-btn'],
+		"text" => Loc::getMessage('DISK_DOCUMENTS_TOOLBAR_BOOST'),
+		"noCaps" => true,
+	]);
+}

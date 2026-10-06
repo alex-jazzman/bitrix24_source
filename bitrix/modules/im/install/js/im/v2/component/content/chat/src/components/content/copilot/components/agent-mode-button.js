@@ -1,3 +1,4 @@
+import { Analytics } from 'im.v2.lib.analytics';
 import { Button as UiButton, ButtonSize, AirButtonStyle } from 'ui.vue3.components.button';
 import { Outline as OutlineIcons } from 'ui.icon-set.api.core';
 
@@ -29,6 +30,7 @@ export const AgentModeButton = {
 		toggleAgentMode()
 		{
 			this.$store.dispatch('copilot/chats/toggleAgentMode', this.dialogId);
+			Analytics.getInstance().copilot.onChangeAgentMode(this.dialogId);
 		},
 		loc(phraseCode: string): string
 		{

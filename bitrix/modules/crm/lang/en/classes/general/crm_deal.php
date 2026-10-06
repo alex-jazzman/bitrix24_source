@@ -60,6 +60,7 @@ $MESS["CRM_DEAL_NOT_RESPONSIBLE_IM_NOTIFY"] = "You are no longer responsible for
 $MESS["CRM_DEAL_NO_PERMISSIONS_TO_DELETE"] = "Insufficient permission to delete deal \"#DEAL_NAME#\".";
 $MESS["CRM_DEAL_PROGRESS_IM_NOTIFY"] = "Deal \"#title#\" changed status from \"#start_status_title#\" to \"#final_status_title#\"";
 $MESS["CRM_DEAL_PROGRESS_IM_NOTIFY_2"] = "Deal stage \"#title#\" changed from \"#start_status_title#\" to \"#final_status_title#\"";
+$MESS["CRM_DEAL_PROGRESS_IM_NOTIFY_SUBJECT"] = "#AUTHOR# changed the deal stage.";
 $MESS["CRM_DEAL_RESPONSIBLE_IM_NOTIFY"] = "You are now responsible for the deal \"#title#\"";
 $MESS["CRM_DEAL_UPDATE_CANCELED"] = "Deal has not been updated because the operation was canceled by event handler: \"#NAME#\"";
 $MESS["CRM_ERROR_FIELD_INCORRECT"] = "The field \"%FIELD_NAME%\" is incorrect.";

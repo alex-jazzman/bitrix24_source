@@ -4,7 +4,7 @@ require_once $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_ad
 /** @var CDatabase $DB */
 /** @var CUser $USER */
 /** @var CUserTypeManager $USER_FIELD_MANAGER */
-use \Bitrix\Main\Type;
+use Bitrix\Main\Type;
 
 if (!$USER->CanDoOperation('controller_member_view') || !CModule::IncludeModule('controller'))
 {
@@ -39,7 +39,7 @@ if ($ID > 0)
 }
 
 if (
-	(count($USER_FIELD_MANAGER->GetUserFields($ENTITY_ID)) > 0)
+	$USER_FIELD_MANAGER->GetUserFields($ENTITY_ID)
 	|| ($USER_FIELD_MANAGER->GetRights($ENTITY_ID) >= 'W')
 )
 {
@@ -732,54 +732,54 @@ if (method_exists($USER_FIELD_MANAGER, 'showscript'))
 				<?php endif?>
 			</td>
 		</tr>
-	<?php
-	$mb = CControllerGroup::GetByID($str_CONTROLLER_GROUP_ID);
-	$arGroup = $mb->Fetch();
-	if ($arGroup['CHECK_COUNTER_FREE_SPACE'] == 'Y'): ?>
-		<tr>
-			<td align="right" width="40%"><?php echo GetMessage('CTRLR_MEM_EDIT_COUNTERS_FREE') ?></td>
-			<td>
-				<span id="COUNTER_FREE_SPACE"><?php echo $str_COUNTER_FREE_SPACE ?></span><?php echo GetMessage('CTRLR_MEM_EDIT_COUNTERS_FREE_Kb') ?>
-			</td>
-		</tr>
-	<?php endif; ?>
-	<?php if ($arGroup['CHECK_COUNTER_SITES'] == 'Y'): ?>
-		<tr>
-			<td align="right" width="40%"><?php echo GetMessage('CTRLR_MEM_EDIT_COUNTERS_SITES') ?></td>
-			<td><span id="COUNTER_SITES"><?php echo $str_COUNTER_SITES ?></span></td>
-		</tr>
-	<?php endif; ?>
-	<?php if ($arGroup['CHECK_COUNTER_USERS'] == 'Y'): ?>
-		<tr>
-			<td align="right" width="40%"><?php echo GetMessage('CTRLR_MEM_EDIT_COUNTERS_USERS') ?></td>
-			<td><span id="COUNTER_USERS"><?php echo $str_COUNTER_USERS ?></span></td>
-		</tr>
-	<?php endif; ?>
-	<?php if ($arGroup['CHECK_COUNTER_LAST_AUTH'] == 'Y'): ?>
-		<tr>
-			<td align="right" width="40%"><?php echo GetMessage('CTRLR_MEM_EDIT_COUNTERS_LAST_AU') ?></td>
-			<td><span id="COUNTER_LAST_AUTH"><?php echo $str_COUNTER_LAST_AUTH ?></span></td>
-		</tr>
-	<?php endif; ?>
-	<?php
-	$rsCounters = CControllerCounter::GetMemberValues($ID);
-	while ($arCounter = $rsCounters->Fetch())
-	{
-	?>
-		<tr>
-			<td align="right" width="40%"><?php echo htmlspecialcharsEx($arCounter['NAME']) ?>:</td>
-			<td>
-				<span id="COUNTER_<?php echo $arCounter['ID'] ?>"><?php echo htmlspecialcharsEx($arCounter['DISPLAY_VALUE']) ?></span>
-			</td>
-		</tr>
 		<?php
-	}
+		$mb = CControllerGroup::GetByID($str_CONTROLLER_GROUP_ID);
+		$arGroup = $mb->Fetch();
+		if ($arGroup['CHECK_COUNTER_FREE_SPACE'] == 'Y'): ?>
+			<tr>
+				<td align="right" width="40%"><?php echo GetMessage('CTRLR_MEM_EDIT_COUNTERS_FREE') ?></td>
+				<td>
+					<span id="COUNTER_FREE_SPACE"><?php echo $str_COUNTER_FREE_SPACE ?></span><?php echo GetMessage('CTRLR_MEM_EDIT_COUNTERS_FREE_Kb') ?>
+				</td>
+			</tr>
+		<?php endif; ?>
+		<?php if ($arGroup['CHECK_COUNTER_SITES'] == 'Y'): ?>
+			<tr>
+				<td align="right" width="40%"><?php echo GetMessage('CTRLR_MEM_EDIT_COUNTERS_SITES') ?></td>
+				<td><span id="COUNTER_SITES"><?php echo $str_COUNTER_SITES ?></span></td>
+			</tr>
+		<?php endif; ?>
+		<?php if ($arGroup['CHECK_COUNTER_USERS'] == 'Y'): ?>
+			<tr>
+				<td align="right" width="40%"><?php echo GetMessage('CTRLR_MEM_EDIT_COUNTERS_USERS') ?></td>
+				<td><span id="COUNTER_USERS"><?php echo $str_COUNTER_USERS ?></span></td>
+			</tr>
+		<?php endif; ?>
+		<?php if ($arGroup['CHECK_COUNTER_LAST_AUTH'] == 'Y'): ?>
+			<tr>
+				<td align="right" width="40%"><?php echo GetMessage('CTRLR_MEM_EDIT_COUNTERS_LAST_AU') ?></td>
+				<td><span id="COUNTER_LAST_AUTH"><?php echo $str_COUNTER_LAST_AUTH ?></span></td>
+			</tr>
+		<?php endif; ?>
+		<?php
+		$rsCounters = CControllerCounter::GetMemberValues($ID);
+		while ($arCounter = $rsCounters->Fetch())
+		{
+		?>
+			<tr>
+				<td align="right" width="40%"><?php echo htmlspecialcharsEx($arCounter['NAME']) ?>:</td>
+				<td>
+					<span id="COUNTER_<?php echo $arCounter['ID'] ?>"><?php echo htmlspecialcharsEx($arCounter['DISPLAY_VALUE']) ?></span>
+				</td>
+			</tr>
+			<?php
+		}
 		?>
 	<?php endif;
 
 	if (
-		(count($USER_FIELD_MANAGER->GetUserFields($ENTITY_ID)) > 0) ||
-		($USER_FIELD_MANAGER->GetRights($ENTITY_ID) >= 'W')
+		$USER_FIELD_MANAGER->GetUserFields($ENTITY_ID)
+		|| ($USER_FIELD_MANAGER->GetRights($ENTITY_ID) >= 'W')
 	)
 	{
 		$tabControl->BeginNextTab();
@@ -789,7 +789,7 @@ if (method_exists($USER_FIELD_MANAGER, 'showscript'))
 		}
 
 		$arUserFields = $USER_FIELD_MANAGER->GetUserFields($ENTITY_ID, ($_REQUEST['reconnect_id'] > 0) ? $_REQUEST['reconnect_id'] : $ID, LANGUAGE_ID);
-		if (count($arUserFields) > 0)
+		if ($arUserFields)
 		{
 			foreach ($arUserFields as $FIELD_NAME => $arUserField)
 			{

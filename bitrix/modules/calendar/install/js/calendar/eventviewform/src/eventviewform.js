@@ -491,6 +491,14 @@ export class EventViewForm
 			alwaysBlue: true,
 		});
 
+		if (Type.isDate(this.entry.from))
+		{
+			this.planner.currentFromDate = new Date(this.entry.from.getTime());
+			this.planner.currentToDate = this.entry.isLongWithTime()
+				? new Date(this.entry.from.getTime())
+				: new Date(this.entry.to.getTime());
+		}
+
 		this.planner.show();
 		this.planner.showLoader();
 		this.planner.setEntriesCount(this.attendees.length);
@@ -655,7 +663,8 @@ export class EventViewForm
 							}
 
 							EventEmitter.emit(`MeetingStatusControl_${uid}:onSetStatus`, event);
-						});
+						})
+						.catch(() => {});
 				}
 			});
 		}

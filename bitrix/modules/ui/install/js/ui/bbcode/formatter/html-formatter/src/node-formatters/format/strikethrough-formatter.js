@@ -11,7 +11,6 @@ export class StrikethroughNodeFormatter extends NodeFormatter
 				return Dom.create({
 					tag: 's',
 					attrs: {
-						...node.getAttributes(),
 						className: 'ui-typography-text-strikethrough',
 					},
 				});

@@ -3,6 +3,7 @@
 	flex-direction: column;
 	gap: 15px;
 	padding: 8px 0 0;
+	border: unset;
 }
 
 .socialnetwork--auto-delete-popup-radio__option {
@@ -10,12 +11,6 @@
 	align-items: center;
 	cursor: pointer;
 	gap: 10px;
-}
-
-.socialnetwork--auto-delete-popup-radio__input {
-	width: 18px;
-	height: 18px;
-	cursor: pointer;
 }
 
 .socialnetwork--auto-delete-popup-radio__label {

@@ -4,12 +4,13 @@
 jn.define(
 	'im/messenger/controller/sidebar-v2/user-actions/participants/src/rest-service',
 	(require, exports, module) => {
-		const { runAction } = require('im/messenger/lib/rest');
-		const { LoggerManager } = require('im/messenger/lib/logger');
+		const { getLogger } = require('im/messenger/lib/logger');
 		const { MessengerEmitter } = require('im/messenger/lib/emitter');
 		const { ChatService } = require('im/messenger/provider/services/chat');
-		const logger = LoggerManager.getInstance().getLogger('sidebar--sidebar-rest-service');
-		const { RestMethod, EventType, ComponentCode } = require('im/messenger/const');
+		const { serviceLocator } = require('im/messenger/lib/di/service-locator');
+		const { EventType, ComponentCode } = require('im/messenger/const');
+
+		const logger = getLogger('sidebar--sidebar-rest-service');
 
 		/**
 		 * @desc Rest call add participant
@@ -19,19 +20,23 @@ jn.define(
 		 */
 		async function addParticipants(dialogId, userIds)
 		{
+			const dialog = serviceLocator.get('core').getStore().getters['dialoguesModel/getById'](dialogId);
+			if (!dialog)
+			{
+				logger.error('ParticipantsRestService.addParticipants: unknown dialog', dialogId);
+
+				return null;
+			}
+
 			const chatSettings = Application.storage.getObject('settings.chat', {
 				historyShow: true,
 			});
 
-			const addUserData = {
-				id: dialogId.replace('chat', ''),
-				userIds,
-				hideHistory: chatSettings.historyShow ? 'N' : 'Y',
-			};
-
-			const response = await runAction(RestMethod.imV2ChatAddUsers, { data: addUserData }).catch((error) => {
-				logger.error('ParticipantsRestService.addParticipants.catch:', error);
-			});
+			const response = await new ChatService()
+				.addToChat(dialog.chatId, userIds, chatSettings.historyShow)
+				.catch((error) => {
+					logger.error('ParticipantsRestService.addParticipants.catch:', error);
+				});
 
 			if (response)
 			{
@@ -42,22 +47,21 @@ jn.define(
 		}
 
 		/**
-		 * @desc Rest call add chat from private dialog
+		 * @desc Rest call add chat from private dialog. Opens the new chat after creation.
 		 * @param {Array<numbers>} userIds
-		 * @return {Promise}
+		 * @return {Promise<{chatId: number, dialogId: string}|null>}
 		 */
 		async function addChat(userIds)
 		{
-			const result = await BX.rest.callMethod(RestMethod.imChatAdd, { USERS: userIds })
-				.catch((error) => logger.error('ParticipantsRestService.addChat.catch:', error));
+			const newChat = await new ChatService()
+				.createChatFromPrivate(userIds)
+				.catch((error) => {
+					logger.error('ParticipantsRestService.addChat.catch:', error);
 
-			const chatId = parseInt(result.data(), 10);
-			if (result?.answer?.error)
-			{
-				logger.error('ParticipantsRestService.addChat.error', result.answer.error_description);
-			}
+					return null;
+				});
 
-			if (!chatId)
+			if (!newChat)
 			{
 				return null;
 			}
@@ -65,12 +69,12 @@ jn.define(
 			setTimeout(() => {
 				MessengerEmitter.emit(
 					EventType.messenger.openDialog,
-					{ dialogId: `chat${chatId}` },
+					{ dialogId: newChat.dialogId },
 					ComponentCode.imMessenger,
 				);
 			}, 500);
 
-			return result;
+			return newChat;
 		}
 
 		/**

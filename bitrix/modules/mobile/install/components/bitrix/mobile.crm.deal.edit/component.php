@@ -1,4 +1,7 @@
 <?php
+
+use Bitrix\Main\Web\Uri;
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
 if (!CModule::IncludeModule('crm'))
@@ -1074,9 +1077,7 @@ if (CCrmContact::CheckReadPermission($arResult['ELEMENT']['CONTACT_ID']))
 
 	$arResult["ON_SELECT_CONTACT_EVENT_NAME"] = "onCrmContactSelectForDeal_".$arParams['ELEMENT_ID'];
 
-	$contactPath = CHTTP::urlAddParams($arParams['CONTACT_SELECTOR_URL_TEMPLATE'], array(
-		"event" => $arResult["ON_SELECT_CONTACT_EVENT_NAME"]
-	));
+	$contactPath = (string)(new Uri($arParams['CONTACT_SELECTOR_URL_TEMPLATE']))->addParams(["event" => $arResult["ON_SELECT_CONTACT_EVENT_NAME"]]);
 
 	if (!$arParams["RESTRICTED_MODE"] || $arResult['ELEMENT']['CONTACT_ID'])
 	{
@@ -1135,9 +1136,7 @@ if (CCrmCompany::CheckReadPermission($arResult['ELEMENT']['COMPANY_ID']))
 	$arResult["ON_SELECT_COMPANY_EVENT_NAME"] = "onCrmCompanySelectForDeal_".$arParams['ELEMENT_ID'];
 	$arResult["ON_DELETE_COMPANY_EVENT_NAME"] = "onCrmCompanyDeleteForDeal_".$arParams['ELEMENT_ID'];
 
-	$companyPath = CHTTP::urlAddParams($arParams['COMPANY_SELECTOR_URL_TEMPLATE'], array(
-		"event" => $arResult["ON_SELECT_COMPANY_EVENT_NAME"]
-	));
+	$companyPath = (string)(new Uri($arParams['COMPANY_SELECTOR_URL_TEMPLATE']))->addParams(["event" => $arResult["ON_SELECT_COMPANY_EVENT_NAME"]]);
 
 	if (!$arParams["RESTRICTED_MODE"] || $arResult['ELEMENT']['COMPANY_ID'])
 	{
@@ -1171,10 +1170,10 @@ $arResult['FIELDS'][] = array(
 // Product rows
 $arResult["PAGEID_PRODUCT_SELECTOR_BACK"] = "crmDealEditPage";
 $arResult["ON_PRODUCT_SELECT_EVENT_NAME"] = "onCrmSelectProductForDeal_".$arParams['ELEMENT_ID'];
-$arParams['PRODUCT_SELECTOR_URL_TEMPLATE'] = CHTTP::urlAddParams($arParams['PRODUCT_SELECTOR_URL_TEMPLATE'], array(
+$arParams['PRODUCT_SELECTOR_URL_TEMPLATE'] = (string)(new Uri($arParams['PRODUCT_SELECTOR_URL_TEMPLATE']))->addParams([
 	"event" => $arResult["ON_PRODUCT_SELECT_EVENT_NAME"],
 	"pageIdProductSelectorBack" => $arResult["PAGEID_PRODUCT_SELECTOR_BACK"]
-));
+]);
 $arResult['PRODUCT_ROW_EDITOR_ID'] = ($arParams['ELEMENT_ID'] > 0 ? 'deal_'.strval($arParams['ELEMENT_ID']) : 'new_deal').'_product_editor';
 
 // Determine person type

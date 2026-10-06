@@ -25,9 +25,13 @@ jn.define('im/messenger/controller/sidebar-v2/controller/collab', (require, expo
 	} = require('im/messenger/controller/sidebar-v2/ui/primary-button/factory');
 	const { Notification } = require('im/messenger/lib/ui/notification');
 	const { CollabEntity } = require('im/messenger/const');
+	const { Type } = require('type');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { Feature } = require('im/messenger/lib/feature');
 	const { Icon } = require('assets/icons');
 	const { Haptics } = require('haptics');
+	const { DialogTextHelper } = require('im/messenger/controller/dialog/lib/helper/text');
+	const { Color } = require('tokens');
 
 	class CollabSidebarController extends SidebarBaseController
 	{
@@ -92,6 +96,17 @@ jn.define('im/messenger/controller/sidebar-v2/controller/collab', (require, expo
 			return this.getCollabInfo()?.collabId;
 		}
 
+		get projectOpenParams()
+		{
+			return {
+				projectId: this.collabId,
+				hasCollabers: this.dialogHelper?.hasCollaber,
+				color: this.dialogHelper?.hasCollaber
+					? Color.collabAccentPrimary.toHex()
+					: this.dialogHelper?.dialogModel?.color,
+			};
+		}
+
 		createView(defaultProps)
 		{
 			return new CollabSidebarView(defaultProps);
@@ -111,7 +126,7 @@ jn.define('im/messenger/controller/sidebar-v2/controller/collab', (require, expo
 
 		getHeaderContextMenuItems()
 		{
-			return [
+			const items = [
 				{
 					id: SidebarContextMenuActionId.ADD_PARTICIPANTS,
 					title: Loc.getMessage('IMMOBILE_SIDEBAR_V2_COMMON_ACTION_ADD_PARTICIPANTS'),
@@ -127,8 +142,74 @@ jn.define('im/messenger/controller/sidebar-v2/controller/collab', (require, expo
 						});
 					},
 				},
-				...super.getHeaderContextMenuItems(),
 			];
+
+			if (this.#shouldShowCopyProjectLinkItem())
+			{
+				items.push(this.#getHeaderContextMenuItemCopyProjectLink());
+			}
+
+			items.push(...super.getHeaderContextMenuItems());
+
+			return items;
+		}
+
+		/**
+		 * @return {boolean}
+		 */
+		#shouldShowCopyProjectLinkItem()
+		{
+			return this.dialogHelper?.isCollab === true && this.dialogHelper?.isNested === false;
+		}
+
+		/**
+		 * @return {SidebarContextMenuItem}
+		 */
+		#getHeaderContextMenuItemCopyProjectLink()
+		{
+			return {
+				id: SidebarContextMenuActionId.COPY_PROJECT_LINK,
+				title: Loc.getMessage('IMMOBILE_SIDEBAR_V2_COMMON_ACTION_COPY_PROJECT_LINK'),
+				icon: Icon.COPY,
+				testId: 'project-permalink-copy-item',
+				sort: SidebarContextMenuActionPosition.MIDDLE,
+				onItemSelected: () => this.#handleCopyProjectLinkAction(),
+			};
+		}
+
+		/**
+		 * @return {void}
+		 */
+		#handleCopyProjectLinkAction()
+		{
+			const host = serviceLocator.get('core').getHost();
+			if (!Type.isStringFilled(host))
+			{
+				Haptics.notifyWarning();
+				this.logger.warn('handleCopyProjectLinkAction: empty host, cannot build absolute link');
+
+				return;
+			}
+
+			const link = this.dialogHelper?.chatLink;
+			if (!link)
+			{
+				Haptics.notifyWarning();
+				this.logger.error('handleCopyProjectLinkAction: empty chatLink', this.dialogId);
+
+				return;
+			}
+
+			DialogTextHelper.copyToClipboard(
+				link,
+				{
+					notificationText: Loc.getMessage('IMMOBILE_SIDEBAR_V2_COMMON_COPY_LINK_SUCCESS'),
+					notificationIcon: Icon.COPY,
+					toastOffset: SIDEBAR_DEFAULT_TOAST_OFFSET,
+				},
+				true,
+			);
+			Haptics.notifySuccess();
 		}
 
 		handleDeleteDialogAction()
@@ -376,7 +457,7 @@ jn.define('im/messenger/controller/sidebar-v2/controller/collab', (require, expo
 			{
 				const { ProjectOpener } = await requireLazy('project/opener');
 
-				await ProjectOpener.openDisk({ projectId: this.collabId });
+				await ProjectOpener.openDisk(this.projectOpenParams);
 			}
 			catch (error)
 			{
@@ -392,7 +473,7 @@ jn.define('im/messenger/controller/sidebar-v2/controller/collab', (require, expo
 			{
 				const { ProjectOpener } = await requireLazy('project/opener');
 
-				await ProjectOpener.openTasks({ projectId: this.collabId });
+				await ProjectOpener.openTasks(this.projectOpenParams);
 			}
 			catch (error)
 			{
@@ -408,7 +489,7 @@ jn.define('im/messenger/controller/sidebar-v2/controller/collab', (require, expo
 			{
 				const { ProjectOpener } = await requireLazy('project/opener');
 
-				await ProjectOpener.openCalendar({ projectId: this.collabId });
+				await ProjectOpener.openCalendar(this.projectOpenParams);
 			}
 			catch (error)
 			{

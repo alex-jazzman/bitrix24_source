@@ -17,6 +17,7 @@ return [
 		'crm.activity.adding-popup',
 		'crm.autorun',
 		'crm.badge',
+		'crm.dialog',
 		'crm.integration.analytics',
 		'crm.kanban.restriction',
 		'crm.kanban.sort',

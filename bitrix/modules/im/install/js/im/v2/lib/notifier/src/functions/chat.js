@@ -1,11 +1,12 @@
 import { Loc } from 'main.core';
 
 import { ChatType, ErrorCode, type ChatTypeItem } from 'im.v2.const';
+import { type RunActionError } from 'im.v2.lib.rest';
 
-import { showNotification } from '../utils/notification';
 import { extractRestErrorCode, type RestError } from '../utils/error';
+import { showNotification } from '../utils/notification';
 
-import type { RunActionError } from 'im.v2.lib.rest';
+const CHAT_ACCESS_ERROR_NOTIFICATION_ID = 'im-chat-access-error';
 
 export const ChatNotifier = {
 	handleLoadError(error: RunActionError): void
@@ -56,7 +57,7 @@ export const ChatNotifier = {
 
 	onAccessDeniedError(): void
 	{
-		showNotification(Loc.getMessage('IM_NOTIFIER_CHAT_ACCESS_ERROR'));
+		showNotification(Loc.getMessage('IM_NOTIFIER_CHAT_ACCESS_ERROR'), { id: CHAT_ACCESS_ERROR_NOTIFICATION_ID });
 	},
 
 	onContextMessageNotFoundError(): void

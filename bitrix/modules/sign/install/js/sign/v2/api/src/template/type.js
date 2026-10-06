@@ -23,6 +23,12 @@ export type AddressField = GeneralField & {
 
 export type TemplateField = GeneralField | ListField | AddressField;
 
+export type TemplateFieldsResponse = {
+	fields: TemplateField[],
+	hasRegistrationNumberPlaceholder: boolean,
+	hasCreationDatePlaceholder: boolean,
+};
+
 export type Template = {
 	uid: string,
 	title: string,

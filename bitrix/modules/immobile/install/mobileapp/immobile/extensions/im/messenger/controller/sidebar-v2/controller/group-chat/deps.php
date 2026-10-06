@@ -23,6 +23,7 @@ return [
 		'im:messenger/controller/sidebar-v2/user-actions/participants',
 		'im:messenger/controller/sidebar-v2/user-actions/user',
 		'im:messenger/controller/sidebar-v2/user-actions/chat',
+		'im:messenger/controller/sidebar-v2/user-actions/attach-chat',
 		'im:messenger/controller/sidebar-v2/ui/primary-button/factory',
 		'im:messenger/controller/sidebar-v2/user-actions/chat',
 	],

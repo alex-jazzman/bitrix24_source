@@ -1,5 +1,5 @@
-import { Loc } from 'main.core';
-import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
+import { confirm } from 'crm.timeline.dialog';
+import { Loc, Tag, Text } from 'main.core';
 
 export async function tryToResendWithMessage(params): Promise<boolean>
 {
@@ -18,8 +18,13 @@ export async function tryToResendWithMessage(params): Promise<boolean>
 	if (await messageItem.shouldConfirmStateChange(params))
 	{
 		// eslint-disable-next-line @bitrix24/bitrix24-rules/no-native-dialogs
-		const { isCancelled } = await confirmStateChange();
-		if (isCancelled)
+		const result = await confirm({
+			title: Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_MESSAGE_RESEND_CONFIRM_DIALOG_TITLE'),
+			content: Tag.render`<div>${Text.encode(Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_MESSAGE_RESEND_CONFIRM_DIALOG_MESSAGE'))}</div>`,
+			preset: 'OK_CANCEL',
+			confirmText: Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_SMS_RESEND_CONFIRM_DIALOG_OK_BTN'),
+		});
+		if (result !== 'confirm')
 		{
 			return true;
 		}
@@ -30,25 +35,4 @@ export async function tryToResendWithMessage(params): Promise<boolean>
 	void messageItem.tryToResend(params);
 
 	return true;
-}
-
-function confirmStateChange(): Promise<{ isCancelled: boolean }>
-{
-	return new Promise((resolve) => {
-		MessageBox.show({
-			modal: true,
-			title: Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_MESSAGE_RESEND_CONFIRM_DIALOG_TITLE'),
-			message: Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_MESSAGE_RESEND_CONFIRM_DIALOG_MESSAGE'),
-			buttons: MessageBoxButtons.OK_CANCEL,
-			okCaption: Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_SMS_RESEND_CONFIRM_DIALOG_OK_BTN'),
-			onOk: (messageBox) => {
-				messageBox.close();
-				resolve({ isCancelled: false });
-			},
-			onCancel: (messageBox) => {
-				messageBox.close();
-				resolve({ isCancelled: true });
-			},
-		});
-	});
 }

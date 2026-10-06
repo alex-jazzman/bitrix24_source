@@ -31,7 +31,7 @@ export type BookingModel = {
 	visitStatus: string,
 	note: string | null,
 	externalData: DealData[],
-	messages: MessageModel[],
+	isConfirmationSent: boolean,
 	skus: SkuModel[],
 	payment: PaymentModel,
 	source: $Values<typeof BookingSource>,

@@ -7,6 +7,7 @@ use Bitrix\Main\ORM\Data\Internal\DeleteByFilterTrait;
 use Bitrix\Main\ORM\Fields\IntegerField;
 use Bitrix\Main\ORM\Fields\StringField;
 use Bitrix\Sign\File;
+use Bitrix\Sign\Trait\ORM\UpdateByFilterTrait;
 
 /**
  * Class MemberTable
@@ -27,6 +28,7 @@ use Bitrix\Sign\File;
 class MemberTable extends Entity\DataManager
 {
 	use DeleteByFilterTrait;
+	use UpdateByFilterTrait;
 
 	public static function getObjectClass(): string
 	{
@@ -203,6 +205,20 @@ class MemberTable extends Entity\DataManager
 			,
 			'DATE_STATUS_CHANGED' => (new Entity\DatetimeField('DATE_STATUS_CHANGED'))
 				->configureTitle('Status change date')
+				->configureNullable()
+			,
+			'ANNULLED' => (new Entity\BooleanField('ANNULLED'))
+				->configureTitle('Annulled')
+				->configureValues(0, 1)
+				->configureDefaultValue(false)
+				->configureNullable(false)
+			,
+			'ANNULLED_BY_ID' => (new IntegerField('ANNULLED_BY_ID'))
+				->configureTitle('Annulment last switched by id')
+				->configureNullable()
+			,
+			'DATE_ANNULLED' => (new Entity\DatetimeField('DATE_ANNULLED'))
+				->configureTitle('Annulment last switch date')
 				->configureNullable()
 			,
 		];

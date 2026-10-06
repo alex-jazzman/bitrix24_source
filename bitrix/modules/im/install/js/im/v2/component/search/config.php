@@ -19,6 +19,7 @@ return [
 		'im.v2.component.elements.loader',
 		'im.v2.component.elements.scroll-with-gradient',
 		'im.v2.component.elements.search-input',
+		'im.v2.component.elements.search-item-layout',
 		'im.v2.const',
 		'im.v2.lib.analytics',
 		'im.v2.lib.collab',

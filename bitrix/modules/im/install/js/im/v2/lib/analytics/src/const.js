@@ -93,10 +93,15 @@ export const AnalyticsEvent = Object.freeze({
 	addUser: 'add_mentioned_user',
 	openUnreadMode: 'show_unread',
 	readAllChats: 'read_all',
+	viewJoinPopup: 'view_join_popup',
+	copyGuestLink: 'copy_guest_link',
 	openMiniChat: 'open_mini_chat',
 	bitrixGptAgentPromoView: 'banner_view',
 	bitrixGptAgentPromoButtonClick: 'button_click',
 	bitrixGptAgentPromoClose: 'banner_close',
+	suggestsShow: 'suggests_show',
+	suggestsClick: 'suggests_click',
+	modeChange: 'mode_change',
 });
 
 export const AnalyticsTool = Object.freeze({

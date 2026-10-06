@@ -34,6 +34,10 @@ import { ViewEvent as OldEntityViewOldInvoiceReadonlyViewBuilder } from './build
 import { ClickEvent as OldEntityViewOldInvoiceReadonlyClickBuilder } from './builders/old-entity-view/old-invoice-readonly/click-event';
 import { CloseEvent as OldEntityViewOldInvoiceReadonlyCloseBuilder } from './builders/old-entity-view/old-invoice-readonly/close-event';
 
+import { ViewEvent as EInvoicePromoViewBuilder } from './builders/einvoice-promo/view-event';
+import { ClickEvent as EInvoicePromoClickBuilder } from './builders/einvoice-promo/click-event';
+import { CloseEvent as EInvoicePromoCloseBuilder } from './builders/einvoice-promo/close-event';
+
 import { ViewEvent as ImportViewEventBuilder } from './builders/import/view-event';
 import { EditEvent as ImportEditEventBuilder } from './builders/import/edit-event';
 import { CreateEvent as ImportCreateEventBuilder } from './builders/import/create-event';
@@ -63,6 +67,9 @@ import type {
 	OldEntityViewOldInvoiceReadonlyViewEvent,
 	OldEntityViewOldInvoiceReadonlyClickEvent,
 	OldEntityViewOldInvoiceReadonlyCloseEvent,
+	EInvoicePromoViewEvent,
+	EInvoicePromoClickEvent,
+	EInvoicePromoCloseEvent,
 	ImportViewEvent,
 	ImportCreateEvent,
 	ImportEditEvent,
@@ -129,6 +136,11 @@ const Builder = Object.freeze({
 			CloseEvent: OldEntityViewOldInvoiceReadonlyCloseBuilder,
 		},
 	},
+	EInvoicePromo: {
+		ViewEvent: EInvoicePromoViewBuilder,
+		ClickEvent: EInvoicePromoClickBuilder,
+		CloseEvent: EInvoicePromoCloseBuilder,
+	},
 	Import: {
 		ViewEvent: ImportViewEventBuilder,
 		EditEvent: ImportEditEventBuilder,
@@ -164,6 +176,9 @@ export type {
 	OldEntityViewOldInvoiceReadonlyViewEvent,
 	OldEntityViewOldInvoiceReadonlyClickEvent,
 	OldEntityViewOldInvoiceReadonlyCloseEvent,
+	EInvoicePromoViewEvent,
+	EInvoicePromoClickEvent,
+	EInvoicePromoCloseEvent,
 	ImportViewEvent,
 	ImportCreateEvent,
 	ImportEditEvent,

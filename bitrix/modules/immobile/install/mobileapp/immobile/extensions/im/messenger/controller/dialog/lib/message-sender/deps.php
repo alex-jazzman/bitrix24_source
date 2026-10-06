@@ -2,6 +2,7 @@
 
 return [
 	'extensions' => [
+		'debug/prism',
 		'type',
 		'utils/object',
 		'utils/uuid',

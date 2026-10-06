@@ -1,0 +1,11 @@
+.crm-call-assessment-v2-action-bar {
+	flex: 0 0 auto;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: var(--ui-space-inline-sm);
+	padding: var(--ui-space-inset-md) var(--ui-space-inset-xl);
+	background: var(--ui-color-bg-content-primary);
+	border-top: 1px solid var(--ui-color-divider-less);
+	box-shadow: var(--ui-shadow-top-xs);
+}

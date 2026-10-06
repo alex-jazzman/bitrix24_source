@@ -1,0 +1,42 @@
+.bizprocdesigner-readable-expression-popover__content {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-xs);
+	padding: var(--ui-space-inset-md);
+	max-width: 367px;
+	box-sizing: border-box;
+	font-size: var(--ui-font-size-sm);
+}
+
+.bizprocdesigner-readable-expression-popover .popup-window-buttons {
+	padding: var(--ui-space-inset-lg) var(--ui-space-inset-md) var(--ui-space-inset-xs2);
+}
+
+.bizprocdesigner-readable-expression-popover__row {
+	display: flex;
+	align-items: baseline;
+	gap: var(--ui-space-inline-xs);
+}
+
+.bizprocdesigner-readable-expression-popover__label {
+	flex: 0 0 auto;
+	color: var(--ui-color-base-3);
+}
+
+.bizprocdesigner-readable-expression-popover__value {
+	flex: 1 1 auto;
+	overflow-wrap: anywhere;
+}
+
+.bizprocdesigner-readable-expression-popover__unknown {
+	color: var(--ui-color-accent-main-warning);
+}
+
+.bizprocdesigner-readable-expression-popover__code {
+	padding: var(--ui-space-inset-xs);
+	border-radius: var(--ui-border-radius-xs);
+	background: var(--ui-color-bg-content-secondary);
+	color: var(--ui-color-base-2);
+	font-family: var(--ui-font-family-system-mono);
+	overflow-wrap: anywhere;
+}

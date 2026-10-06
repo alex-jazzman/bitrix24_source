@@ -1,0 +1,4 @@
+.crm-large-attachment-notification .ui-btn
+{
+	margin-inline-start: var(--ui-space-inline-2xs);
+}

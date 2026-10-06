@@ -3,6 +3,9 @@
 	const { isModuleInstalled } = require('module');
 
 	const { AvaMenu } = require('ava-menu');
+	const { registerPushNotificationHandlers } = require('push/notifications-register');
+	void registerPushNotificationHandlers();
+
 	AvaMenu.init();
 
 	try
@@ -30,15 +33,6 @@
 
 	const { registerDeeplink } = require('in-app-url/deeplink');
 	registerDeeplink();
-
-	const { OpenDesktopNotification } = require('background/notifications/open-desktop');
-	OpenDesktopNotification.bindOpenDesktopEvent();
-
-	const { OpenHelpdeskNotification } = require('background/notifications/open-helpdesk');
-	OpenHelpdeskNotification.bindOpenHelpdeskEvent();
-
-	const { OpenPromotionNotification } = require('background/notifications/promotion');
-	OpenPromotionNotification.bindPromotionEvent();
 
 	const { AppRatingBackgroundClient } = require('app-rating-background-client');
 	AppRatingBackgroundClient.subscribeToUserEvents();

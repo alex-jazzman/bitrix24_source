@@ -12,6 +12,7 @@ jn.define('bizproc/task/buttons', (require, exports, module) => {
 	const { useCallback } = require('utils/function');
 	const { PureComponent } = require('layout/pure-component');
 
+	const { handleNetworkError } = require('bizproc/helper/network-error');
 	const { TaskUserStatus } = require('bizproc/task/task-constants');
 
 	const { ButtonsWrapper } = require('bizproc/task/buttons/buttons-wrapper');
@@ -299,6 +300,11 @@ jn.define('bizproc/task/buttons', (require, exports, module) => {
 				}
 				else
 				{
+					if (handleNetworkError(errors, this.props.layout))
+					{
+						return;
+					}
+
 					Alert.alert(errors.pop().message);
 				}
 			};

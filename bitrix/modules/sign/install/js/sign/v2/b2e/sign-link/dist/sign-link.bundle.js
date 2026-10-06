@@ -321,11 +321,17 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 				return;
 			}
 			const message = event.data;
-			if (message.type === 'BX:SidePanel:close') {
-				this.#closeSlider();
-			} else if (message.type === 'BX:Sign:processDone') {
-				this.#closeSlider();
-				this.#showProcessDoneNotification(message.role);
+			switch (message.type) {
+				case 'BX:SidePanel:onEscapePress':
+					this.#slider?.firePageEvent('onEscapePress');
+					break;
+				case 'BX:SidePanel:close':
+					this.#closeSlider();
+					break;
+				case 'BX:Sign:processDone':
+					this.#closeSlider();
+					this.#showProcessDoneNotification(message.role);
+					break;
 			}
 		}
 		#closeSlider() {
@@ -379,5 +385,5 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 
 	exports.SignLink = SignLink;
 
-})(this.BX.Sign.V2.B2e = this.BX.Sign.V2.B2e || {}, BX.UI, BX.UI.Sidepanel.Content, BX, BX.Main, BX, BX.Sign.V2, BX.Sign.V2.B2e);
+})(this.BX.Sign.V2.B2e = this.BX.Sign.V2.B2e || {}, BX.UI, BX.UI.Sidepanel.Content, window, BX.Main, BX, BX.Sign.V2, BX.Sign.V2.B2e);
 //# sourceMappingURL=sign-link.bundle.js.map

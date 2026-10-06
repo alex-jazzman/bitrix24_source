@@ -324,7 +324,7 @@ class CallManager extends Engine\Controller
 	 * @param string $entityId
 	 * @return array|null
 	 */
-	public function tryJoinCallAction($type, $provider, $entityType, $entityId): ?array
+	public function tryJoinCallAction(int $type, string $provider, string $entityType, string $entityId): ?array
 	{
 		$call = CallFactory::searchActive($type, $provider, $entityType, $entityId);
 		if (!$call)
@@ -1155,14 +1155,17 @@ class CallManager extends Engine\Controller
 
 	/**
 	 * @restMethod call.CallManager.getUserState
-	 * @param int $callId
+	 * @param int|null $callId
+	 * @param string|null $callUuid
 	 * @param int $userId
 	 * @return null|array
 	 */
-	public function getUserStateAction(int $callId, int $userId = 0)
+	public function getUserStateAction(?int $callId = null, ?string $callUuid = null, int $userId = 0)
 	{
 		$currentUserId = (int)$this->getCurrentUser()->getId();
-		$call = Registry::getCallWithId($callId);
+		$call = $callId
+			? Registry::getCallWithId($callId)
+			: ($callUuid ? Registry::getCallWithUuid($callUuid) : null);
 
 		if (!$call || !$this->checkCallAccess($call, $currentUserId))
 		{

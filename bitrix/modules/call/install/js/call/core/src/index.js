@@ -46,6 +46,8 @@ import { FloatingWindowService } from './services/floating-window-service';
 import { FeedbackUiService } from './services/feedback-ui-service';
 import { HangupOptionsUiService } from './services/hangup-options-ui-service';
 import { MediaStreamRegistry } from 'call.lib.media-registry';
+import { getUnknownErrorType } from './utils/get-unknown-error-type';
+import { sendPendingAccidentLogs } from './send-pending-accident-logs';
 
 import 'loader';
 import 'resize_observer';
@@ -55,6 +57,7 @@ import 'ui.hint';
 import 'voximplant';
 
 applyHacks();
+sendPendingAccidentLogs();
 
 export {
 	JoinResponseError,
@@ -109,6 +112,7 @@ export {
 	FeedbackUiService,
 	HangupOptionsUiService,
 	MediaStreamRegistry,
+	getUnknownErrorType,
 };
 
 export type { CallView };

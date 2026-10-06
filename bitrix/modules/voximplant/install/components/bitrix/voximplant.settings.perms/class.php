@@ -5,6 +5,8 @@ use Bitrix\Main\Application;
 use Bitrix\Main\Error;
 use Bitrix\Main\ErrorCollection;
 use Bitrix\Voximplant\Model;
+use Bitrix\Voximplant\Security\AccessCodeFilter;
+use Bitrix\Voximplant\Security\AccessCodeLabel;
 use Bitrix\Voximplant\Security\Permissions;
 use Bitrix\Main\Localization\Loc;
 
@@ -42,8 +44,7 @@ class CVoximplantPermsComponent extends CBitrixComponent
 		$roleAccessCodes = array();
 
 		$roleAccess = \Bitrix\Voximplant\Security\RoleManager::getRoleAccess() ?? [];
-		$accessManager = new CAccess();
-		$resolvedAccessCodes = $accessManager->GetNames(array_keys($roleAccess));
+		$resolvedAccessCodes = AccessCodeLabel::resolveNames(array_keys($roleAccess));
 
 		foreach($roleAccess as $accessCode => $accessRoles)
 		{
@@ -60,6 +61,8 @@ class CVoximplantPermsComponent extends CBitrixComponent
 
 		$this->arResult['ROLES'] = $roles;
 		$this->arResult['ROLE_ACCESS_CODES'] = $roleAccessCodes;
+		$this->arResult['ACCESS_PROVIDER_NAMES'] = AccessCodeLabel::getEntityProviderNames();
+		$this->arResult['HAS_STRUCTURE_ROLES'] = $this->hasHumanResourcesEntities();
 		$this->arResult['ADD_URL'] = CVoxImplantMain::GetPublicFolder().'editrole.php?ID=0';
 		$this->arResult['CAN_EDIT'] = \Bitrix\Voximplant\Security\Helper::canUse();
 		if(!$this->arResult['CAN_EDIT'])
@@ -74,15 +77,23 @@ class CVoximplantPermsComponent extends CBitrixComponent
 		$roleAccessCodes = $request['PERMS'];
 		\Bitrix\Voximplant\Security\Helper::clearMenuCache();
 
-		\Bitrix\Voximplant\Security\RoleManager::clearRoleAccess();
-
 		if(!is_array($roleAccessCodes))
 		{
+			\Bitrix\Voximplant\Security\RoleManager::clearRoleAccess();
 			return true;
 		}
 
+		// The current set has to be read before it is dropped.
+		$accessCodeFilter = AccessCodeFilter::createForCurrentSet();
+		\Bitrix\Voximplant\Security\RoleManager::clearRoleAccess();
+
 		foreach ($roleAccessCodes as $roleAccessCode => $roleId)
 		{
+			if(!$accessCodeFilter->isAcceptable((string)$roleAccessCode))
+			{
+				continue;
+			}
+
 			$insertResult = Model\RoleAccessTable::add(array(
 				'ROLE_ID' => $roleId,
 				'ACCESS_CODE' => $roleAccessCode
@@ -96,7 +107,19 @@ class CVoximplantPermsComponent extends CBitrixComponent
 
 		return true;
 	}
-	
+
+	/**
+	 * Turns on both humanresources backed entities of the selection dialog: structure-role and user-groups.
+	 * Whether their providers are available to the current user is decided by ui.entity-selector itself,
+	 * it drops an unavailable provider from the dialog.
+	 */
+	private function hasHumanResourcesEntities(): bool
+	{
+		return \Bitrix\Main\Loader::includeModule('ui')
+			&& \Bitrix\Main\Loader::includeModule('humanresources');
+	}
+
+
 	public function executeComponent()
 	{
 		$permissions = Permissions::createWithCurrentUser();

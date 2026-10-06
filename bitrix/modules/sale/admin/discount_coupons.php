@@ -7,6 +7,7 @@ use Bitrix\Main;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Sale\Internals;
+use Bitrix\Main\Web\Uri;
 
 require_once($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_before.php');
 require_once($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/sale/prolog.php');
@@ -558,7 +559,7 @@ while ($coupon = $couponIterator->Fetch())
 		$actions[] = array(
 			'ICON' => 'copy',
 			'TEXT' => Loc::getMessage('BT_SALE_DISCOUNT_COUPON_LIST_CONTEXT_COPY'),
-			'LINK' => CHTTP::urlAddParams($urlEdit, array("action" => "copy")),
+			'LINK' => (string)(new Uri($urlEdit))->addParams(["action" => "copy"]),
 			'DEFAULT' => false,
 		);
 		if ($coupon['ACTIVE'] == 'Y')

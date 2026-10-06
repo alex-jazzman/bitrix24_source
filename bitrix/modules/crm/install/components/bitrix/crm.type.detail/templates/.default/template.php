@@ -459,7 +459,7 @@ $renderFieldSelector = static function (?string $title, bool $isActive, string $
 					: null
 			);
 			echo $renderCheckbox(
-				Loc::getMessage('CRM_TYPE_TYPE_IS_COUNTERS_ENABLED_TITLE'),
+				Loc::getMessage('CRM_TYPE_TYPE_IS_COUNTERS_ENABLED_TITLE_MSGVER_1'),
 				'isCountersEnabled',
 				$type->getIsCountersEnabled(),
 			);

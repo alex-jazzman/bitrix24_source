@@ -5,12 +5,20 @@ import { Type } from 'main.core';
 import { type UploaderFile } from 'ui.uploader.core';
 import { createNamespacedHelpers, mapGetters } from 'ui.vue3.vuex';
 
-import { Model } from 'booking.const';
+import { Model, NotificationFieldsMap, NotificationTemplateType } from 'booking.const';
+import { type TemplateTypePreselectionContext } from 'booking.model.resource-creation-wizard';
 import { type ResourceTypeModel } from 'booking.model.resource-types';
 import { type SlotRange } from 'booking.model.resources';
 import { resourceCreationWizardService } from 'booking.provider.service.resource-creation-wizard-service';
 
-import { normalizeSlotLength } from '../../lib/slot-length';
+import {
+	isMultidayTemplateAvailable,
+	normalizeSlotLength,
+	resolvePreselectedTemplateTypes,
+	shouldPreselectTemplateTypes,
+	type MultidayTemplateAvailability,
+	type TemplateTypeSelection,
+} from '../../lib/slot-length';
 
 import { BaseFields } from './base-fields/base-fields';
 import { Integration } from './integration/integration';
@@ -51,6 +59,7 @@ export const ResourceSettingsCard = {
 			isCompanyScheduleAccess: 'isCompanyScheduleAccess',
 			companyScheduleUrl: 'companyScheduleUrl',
 			isGlobalSchedule: 'isGlobalSchedule',
+			templateTypePreselectionContext: 'templateTypePreselectionContext',
 		}),
 		resourceName(): string
 		{
@@ -107,6 +116,28 @@ export const ResourceSettingsCard = {
 		{
 			return this.resource.id !== null;
 		},
+		resourceTypeTemplateDefaults(): TemplateTypeSelection
+		{
+			const resourceType: ?ResourceTypeModel = this.$store
+				.getters[`${Model.ResourceTypes}/getById`](this.resource.typeId)
+			;
+
+			return {
+				templateTypeInfo: resourceType?.[NotificationFieldsMap.TemplateType.info]
+					?? NotificationTemplateType.Animate,
+				templateTypeConfirmation: resourceType?.[NotificationFieldsMap.TemplateType.confirmation]
+					?? NotificationTemplateType.Animate,
+			};
+		},
+		multidayTemplateAvailability(): MultidayTemplateAvailability
+		{
+			const dictionary = this.$store.getters[`${Model.Dictionary}/getNotifications`];
+
+			return {
+				templateTypeInfo: this.hasMultidayTemplate(dictionary?.Info?.value),
+				templateTypeConfirmation: this.hasMultidayTemplate(dictionary?.Confirmation?.value),
+			};
+		},
 	},
 	created(): void
 	{
@@ -120,6 +151,7 @@ export const ResourceSettingsCard = {
 		);
 
 		this.updateSlotRanges(slotRanges);
+		this.applyPreselectedTemplateTypes();
 	},
 	methods: {
 		...mapActions([
@@ -130,6 +162,7 @@ export const ResourceSettingsCard = {
 		]),
 		...mapMutations([
 			'setGlobalSchedule',
+			'setTemplateTypePreselectionContext',
 		]),
 		updateResourceName(name): void
 		{
@@ -141,11 +174,50 @@ export const ResourceSettingsCard = {
 		},
 		updateResourceType(typeId): void
 		{
-			this.updateResource({ typeId });
+			if (typeId !== this.resource.typeId)
+			{
+				this.updateResource({ typeId });
+				this.applyPreselectedTemplateTypes();
+			}
+
 			if (typeId)
 			{
 				this.setInvalidResourceType(false);
 			}
+		},
+		hasMultidayTemplate(notificationType: ?string): boolean
+		{
+			if (!notificationType)
+			{
+				return false;
+			}
+
+			const notification = this.$store.getters[`${Model.Notifications}/getByType`](notificationType);
+
+			return isMultidayTemplateAvailable(notification?.templates);
+		},
+		applyPreselectedTemplateTypes(): void
+		{
+			const currentContext: TemplateTypePreselectionContext = {
+				resourceTypeId: this.resource.typeId,
+				slotLength: this.selectedSlotLength,
+			};
+
+			if (!shouldPreselectTemplateTypes(
+				this.isEditForm,
+				this.templateTypePreselectionContext,
+				currentContext,
+			))
+			{
+				return;
+			}
+
+			this.updateResource(resolvePreselectedTemplateTypes(
+				this.selectedSlotLength,
+				this.resourceTypeTemplateDefaults,
+				this.multidayTemplateAvailability,
+			));
+			this.setTemplateTypePreselectionContext(currentContext);
 		},
 		updateResourceDescription(description): void
 		{
@@ -175,7 +247,9 @@ export const ResourceSettingsCard = {
 		},
 		updateSlotLength(value): void
 		{
-			this.selectedSlotLength = normalizeSlotLength(value, this.isMultidayFeatureEnabled);
+			const selectedSlotLength = normalizeSlotLength(value, this.isMultidayFeatureEnabled);
+			this.selectedSlotLength = selectedSlotLength;
+			this.applyPreselectedTemplateTypes();
 
 			if (this.resource.slotRanges.length === 0)
 			{

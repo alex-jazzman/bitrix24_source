@@ -1,12 +1,13 @@
 import { Core } from 'im.v2.application.core';
 import { UserType } from 'im.v2.const';
 
-import type { ImModelUser } from 'im.v2.model';
+import { type ImModelUser } from 'im.v2.model';
 
 const AnalyticUserType = Object.freeze({
 	userIntranet: 'user_intranet',
 	userExtranet: 'user_extranet',
 	userCollaber: 'user_collaber',
+	userGuest: 'user_guest',
 });
 
 export function getUserType(): $Values<typeof AnalyticUserType>
@@ -21,6 +22,8 @@ export function getUserType(): $Values<typeof AnalyticUserType>
 			return AnalyticUserType.userExtranet;
 		case UserType.collaber:
 			return AnalyticUserType.userCollaber;
+		case UserType.guest:
+			return AnalyticUserType.userGuest;
 		default:
 			return AnalyticUserType.userIntranet;
 	}

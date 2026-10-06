@@ -4856,6 +4856,9 @@ if(typeof(BX.CrmDupCtrlField) === "undefined")
 		},
 		release: function()
 		{
+			// A pending delay must not outlive the field: it would search on a detached element.
+			this._clearElementTimeout();
+
 			BX.unbind(this._element, "keyup", this._elementKeyUpHandler);
 			BX.unbind(this._element, "focus", this._elementFocusHandler);
 			BX.unbind(this._element, "blur", this._elementBlurHandler);
@@ -4891,7 +4894,7 @@ if(typeof(BX.CrmDupCtrlField) === "undefined")
 		},
 		getValue: function()
 		{
-			return this._element.value;
+			return this._element ? this._element.value : "";
 		},
 		isSingleMode: function()
 		{
@@ -5307,6 +5310,21 @@ if(typeof(BX.CrmDupCtrlSingleField) === "undefined")
 		}
 		return this._field;
 	};
+	BX.CrmDupCtrlSingleField.prototype.removeField = function(field)
+	{
+		BX.CrmDupCtrlSingleField.superclass.removeField.apply(this, [field]);
+
+		if(this._field === field)
+		{
+			this._field = null;
+		}
+	};
+	BX.CrmDupCtrlSingleField.prototype.clearFields = function()
+	{
+		BX.CrmDupCtrlSingleField.superclass.clearFields.apply(this);
+
+		this._field = null;
+	};
 	BX.CrmDupCtrlSingleField.prototype.getValue = function()
 	{
 		return this._field ? BX.util.trim(this._field.getValue()) : "";
@@ -5422,6 +5440,32 @@ if(typeof(BX.CrmDupCtrlFullName) === "undefined")
 		}
 
 		return field;
+	};
+	BX.CrmDupCtrlFullName.prototype.removeField = function(field)
+	{
+		BX.CrmDupCtrlFullName.superclass.removeField.apply(this, [field]);
+
+		var fieldId = field.getId();
+		if(fieldId === "NAME")
+		{
+			this._nameField = null;
+		}
+		else if(fieldId === "SECOND_NAME")
+		{
+			this._secondNameField = null;
+		}
+		else if(fieldId === "LAST_NAME")
+		{
+			this._lastNameField = null;
+		}
+	};
+	BX.CrmDupCtrlFullName.prototype.clearFields = function()
+	{
+		BX.CrmDupCtrlFullName.superclass.clearFields.apply(this);
+
+		this._nameField = null;
+		this._secondNameField = null;
+		this._lastNameField = null;
 	};
 	BX.CrmDupCtrlFullName.prototype.getName = function()
 	{

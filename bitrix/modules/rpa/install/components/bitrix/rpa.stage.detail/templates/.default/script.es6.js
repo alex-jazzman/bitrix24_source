@@ -113,14 +113,14 @@ class StageComponent extends Component
 			return;
 		}
 		let title = Loc.getMessage('RPA_STAGE_DETAIL_TITLE').replace('#TITLE#', result.data.stage.name);
-		if(this.method === 'rpa.stage.add')
+		if(this.method === 'rpa.Stage.add')
 		{
 			let stageId = result.data.stage.id;
 			let url = new Uri(location.href);
 			url.setQueryParam('id', result.data.stage.id);
 			window.history.pushState({}, title, url.toString());
 			this.form.querySelector('[name="id"]').value = stageId;
-			this.method = 'rpa.stage.update';
+			this.method = 'rpa.Stage.update';
 			this.analyticsLabel = 'rpaStageUpdate';
 		}
 		this.adjustDeleteButtonVisibility();
@@ -148,7 +148,7 @@ class StageComponent extends Component
 		if(confirm(Loc.getMessage('RPA_STAGE_DELETE_CONFIRM')))
 		{
 			this.startProgress();
-			Ajax.runAction('rpa.stage.delete', {
+			Ajax.runAction('rpa.Stage.delete', {
 				analyticsLabel: 'rpaStageDelete',
 				data: data,
 			}).then((result) =>

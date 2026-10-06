@@ -61,8 +61,37 @@ class Router
 		});
 
 		localRule.condition = modifiedConditions;
+		localRule.options = this.wrapRuleOptions(localRule.options);
 
 		return localRule;
+	}
+
+	// It adds newWindowUrl to the options if copyLinkLabel is true and newWindowUrl is not set
+	static wrapRuleOptions(
+		ruleOptions: BX.SidePanel.Options | ((link: BX.SidePanel.Link) => BX.SidePanel.Options),
+	): BX.SidePanel.Options | ((link: BX.SidePanel.Link) => BX.SidePanel.Options)
+	{
+		return (link: BX.SidePanel.Link): BX.SidePanel.Options => {
+			const preparedOptions = Type.isFunction(ruleOptions) ? ruleOptions(link) : ruleOptions;
+			if (!Type.isPlainObject(preparedOptions))
+			{
+				return preparedOptions;
+			}
+
+			if (
+				preparedOptions.copyLinkLabel === true
+				&& !Type.isStringFilled(preparedOptions.newWindowUrl)
+				&& Type.isStringFilled(link?.url)
+			)
+			{
+				return {
+					...preparedOptions,
+					newWindowUrl: link.url,
+				};
+			}
+
+			return preparedOptions;
+		};
 	}
 }
 

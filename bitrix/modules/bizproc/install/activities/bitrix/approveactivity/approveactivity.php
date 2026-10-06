@@ -11,6 +11,7 @@ use Bitrix\Main\Error;
 use Bitrix\Main\ErrorCollection;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Bizproc\Activity\Mixins\ErrorHandling;
+use Bitrix\Bizproc\UI\Helpers\TaskTextDecoder;
 use Bitrix\Main\Type\DateTime;
 
 class CBPApproveActivity extends CBPCompositeActivity implements
@@ -857,9 +858,14 @@ class CBPApproveActivity extends CBPCompositeActivity implements
 				}
 			}
 
+			$commentLabel = TaskTextDecoder::decode(
+				$arTask['PARAMETERS']['CommentLabelMessage'] ?? '',
+				(string)Loc::getMessage('BPAA_ACT_COMMENT_1'),
+			);
+
 			$form .=
 				'<tr><td valign="top" width="40%" align="right" class="bizproc-field-name">'
-					.($arTask['PARAMETERS']['CommentLabelMessage'] <> '' ? $arTask['PARAMETERS']['CommentLabelMessage'] : Loc::getMessage('BPAA_ACT_COMMENT_1'))
+					.htmlspecialcharsbx($commentLabel)
 					.$required
 				.':</td>'.
 				'<td valign="top" width="60%" class="bizproc-field-value">'.
@@ -908,7 +914,10 @@ class CBPApproveActivity extends CBPCompositeActivity implements
 				[
 					'Id' => 'task_comment',
 					'Type' => 'text',
-					'Name' => $task['PARAMETERS']['CommentLabelMessage'] ?: Loc::getMessage('BPAA_ACT_COMMENT_1'),
+					'Name' => TaskTextDecoder::decode(
+						$task['PARAMETERS']['CommentLabelMessage'] ?? '',
+						(string)Loc::getMessage('BPAA_ACT_COMMENT_1'),
+					),
 					'Required' => (($task['PARAMETERS']['CommentRequired'] ?? '') === 'Y'),
 					'Description' => $description,
 				],
@@ -969,12 +978,10 @@ class CBPApproveActivity extends CBPCompositeActivity implements
 				)
 			)
 			{
-				$label =
-					$arTask['PARAMETERS']['CommentLabelMessage'] <> ''
-						? $arTask['PARAMETERS']['CommentLabelMessage']
-						: Loc::getMessage('BPAA_ACT_COMMENT_1'
-					)
-				;
+				$label = TaskTextDecoder::decode(
+					$arTask['PARAMETERS']['CommentLabelMessage'] ?? '',
+					(string)Loc::getMessage('BPAA_ACT_COMMENT_1'),
+				);
 				self::$errors->setError(
 					new Error(
 						Loc::getMessage('BPAA_ACT_COMMENT_ERROR', ['#COMMENT_LABEL#' => $label]),

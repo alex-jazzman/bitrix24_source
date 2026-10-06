@@ -1,6 +1,29 @@
+/*
+	No explicit width — the container stretches to the bubble. Its preferred width
+	(<= 354px) comes from the invisible width-anchor below; `contain` on the text keeps
+	long text from stretching the bubble. So the block grows the bubble up to 354px,
+	follows the bubble when a sibling widened it, and shrinks in a narrow chat panel.
+*/
 .bx-im-message-block-ai-assistant-search__container {
 	padding: 6px 0;
 	font: var(--ui-font-size-lg)/20px var(--ui-font-family-primary);
+}
+
+/*
+	Invisible (height: 0) width anchor: gives the container max-content = 354px, while
+	overflow: hidden + min-width: 0 keep its min-content = 0 — so the block shrinks in a
+	narrow panel and never pushes the bubble past 354px.
+*/
+.bx-im-message-block-ai-assistant-search__width-anchor {
+	height: 0;
+	min-width: 0;
+	overflow: hidden;
+}
+
+.bx-im-message-block-ai-assistant-search__width-anchor::after {
+	content: '';
+	display: block;
+	width: 354px;
 }
 
 .bx-im-message-block-ai-assistant-search__title-container {
@@ -20,7 +43,48 @@
 	color: var(--ui-color-base-1);
 }
 
-.bx-im-message-block-ai-assistant-search__text {
+.bx-im-message-block-ai-assistant-search__text-container {
+	display: flex;
+	align-items: flex-end;
 	padding: 2px 0;
+	/* excludes text from the bubble width calc so long text can't stretch the block past 354px */
+	contain: inline-size;
+}
+
+.bx-im-message-block-ai-assistant-search__text {
+	flex: 1;
+	min-width: 0;
 	color: var(--ui-color-base-4);
+}
+
+.bx-im-message-block-ai-assistant-search__text.--has-chevron {
+	-webkit-mask-image: linear-gradient(to right, black calc(100% - 42px), transparent 100%);
+	mask-image: linear-gradient(to right, black calc(100% - 42px), transparent 100%);
+}
+
+.bx-im-message-block-ai-assistant-search__text.--expanded {
+	white-space: normal;
+	overflow: visible;
+	text-overflow: clip;
+	overflow-wrap: anywhere;
+}
+
+.bx-im-message-block-ai-assistant-search__chevron {
+	--ui-icon-set__icon-size: 20px;
+	--ui-icon-set__icon-color: var(--ui-color-base-2);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+	padding: 0;
+	border: none;
+	background: none;
+	cursor: pointer;
+	width: 20px;
+	height: 20px;
+}
+
+.bx-im-message-block-ai-assistant-search__chevron:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
 }

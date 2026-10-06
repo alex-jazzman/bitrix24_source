@@ -8,6 +8,7 @@
 	const { CalendarEventListView } = require('calendar/event-list-view');
 	const { EventAjax } = require('calendar/ajax');
 	const { CalendarType, ViewMode } = require('calendar/enums');
+	const { CalendarNavigator } = require('calendar/navigator');
 
 	/**
 	 * @class CalendarEventList
@@ -203,6 +204,10 @@
 			);
 		}
 	}
+
+	const calendarNavigator = new CalendarNavigator();
+	calendarNavigator.unsubscribeFromPushNotifications();
+	calendarNavigator.subscribeToPushNotifications();
 
 	BX.onViewLoaded(() => {
 		const ownerId = BX.componentParameters.get('OWNER_ID', env.userId);

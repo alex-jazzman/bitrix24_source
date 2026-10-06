@@ -2,6 +2,7 @@ import { Loc } from 'main.core';
 import { type MenuItemOptions } from 'ui.system.menu';
 
 import { Analytics } from 'im.v2.lib.analytics';
+import { Feature, FeatureManager } from 'im.v2.lib.feature';
 import { RecentMenu } from 'im.v2.lib.menu';
 import { CopilotRecentService } from 'im.v2.provider.service.copilot';
 
@@ -12,10 +13,21 @@ export class CopilotRecentMenu extends RecentMenu
 		return [
 			this.getUnreadMessageItem(),
 			this.getPinMessageItem(),
+			this.getAddToFolderItem(),
 			this.getMuteItem(),
 			this.getHideItem(),
 			this.getLeaveItem(),
 		];
+	}
+
+	getAddToFolderItem(): ?MenuItemOptions
+	{
+		if (!FeatureManager.isFeatureAvailable(Feature.copilotActive))
+		{
+			return null;
+		}
+
+		return super.getAddToFolderItem();
 	}
 
 	getHideItem(): MenuItemOptions

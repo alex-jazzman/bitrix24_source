@@ -387,6 +387,24 @@ export class SidebarRouteSyncService
 			return;
 		}
 
+		// The route name above is the one this pass started with, and selecting the collection is a
+		// round trip: a knowledge base opened, a document opened or a search made while it was in
+		// flight would be overridden by the redirect below. Asked again, of the router itself.
+		if (this.#router?.currentRoute?.value?.name !== this.#homeRouteName)
+		{
+			return;
+		}
+
+		// And the list is read again for the same reason: the base picked before the round trip may
+		// have been deleted or lost its access meanwhile, and redirecting onto it lands the reader on
+		// "no rights or deleted" instead of a knowledge base.
+		const stillListed = this.#store.state.collections.value
+			.some((item) => Number(item?.id) === firstId);
+		if (!stillListed)
+		{
+			return;
+		}
+
 		await this.#router.replace({
 			name: this.#workspaceRouteName,
 			params: { id: String(firstId) },

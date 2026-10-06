@@ -25,4 +25,5 @@ export const PopupType = Object.freeze({
 	mentionAddToChatDropdown: 'im-mention-add-to-chat-dropdown',
 	collabCardPromo: 'im-collab-card-promo-popup',
 	collabCreateChatPromo: 'im-collab-create-chat-promo-popup',
+	taskSideCardPromo: 'im-task-side-card-promo-popup',
 });

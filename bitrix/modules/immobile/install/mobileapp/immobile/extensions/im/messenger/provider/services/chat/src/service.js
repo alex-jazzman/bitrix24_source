@@ -15,6 +15,7 @@ jn.define('im/messenger/provider/services/chat/service', (require, exports, modu
 	const { HealthCheckService } = require('im/messenger/provider/services/chat/health-check');
 	const { ChatGetService } = require('im/messenger/provider/services/chat/get');
 	const { MemberService } = require('im/messenger/provider/services/chat/src/member');
+	const { AttachService } = require('im/messenger/provider/services/chat/attach');
 
 	/**
 	 * @class ChatService
@@ -45,6 +46,8 @@ jn.define('im/messenger/provider/services/chat/service', (require, exports, modu
 		#getService;
 		/** @type {MemberService} */
 		#memberService;
+		/** @type {AttachService} */
+		#attachService;
 
 		constructor()
 		{
@@ -135,6 +138,13 @@ jn.define('im/messenger/provider/services/chat/service', (require, exports, modu
 			return this.#memberService;
 		}
 
+		get attachService()
+		{
+			this.#attachService = this.#attachService ?? new AttachService();
+
+			return this.#attachService;
+		}
+
 		/**
 		 * @param {string} dialogId
 		 * @param {object} [options]
@@ -214,6 +224,15 @@ jn.define('im/messenger/provider/services/chat/service', (require, exports, modu
 		addToChat(chatId, members, showHistory)
 		{
 			return this.userService.addToChat(chatId, members, showHistory);
+		}
+
+		/**
+		 * @param {Array<number>} userIds
+		 * @return {Promise<{chatId: number, dialogId: string}|null>}
+		 */
+		createChatFromPrivate(userIds)
+		{
+			return this.userService.createChatFromPrivate(userIds);
 		}
 
 		/**

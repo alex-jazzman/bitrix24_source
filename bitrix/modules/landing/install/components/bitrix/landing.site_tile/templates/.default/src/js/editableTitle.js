@@ -1,6 +1,9 @@
 import { Tag, Event, Text } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 
+import { Icon, Outline } from 'ui.icon-set.api.core';
+import 'ui.icon-set.outline';
+
 export default class EditableTitle {
 	constructor(options)
 	{
@@ -30,7 +33,17 @@ export default class EditableTitle {
 	{
 		if(!this.$containerEditIcon)
 		{
-			this.$containerEditIcon = Tag.render`<div class="landing-sites__title-edit"></div>`;
+			const iconColor = this.type === 'url'
+				? 'var(--ui-color-design-outline-a1-content)'
+				: 'var(--ui-color-base-80)';
+
+			const iconEdit = new Icon({
+				icon: Outline.EDIT_M,
+				color: iconColor,
+				size: 18,
+			});
+			this.$containerEditIcon = iconEdit.render();
+			this.$containerEditIcon.classList.add('landing-sites__title-edit');
 			// Event.bind(this.$containerEditIcon, 'click', this.adjustEditMode.bind(this));
 		}
 
@@ -63,7 +76,7 @@ export default class EditableTitle {
 		}
 
 		if(	ev.target !== this.getContainerInput()
-			&& ev.target !== this.getContainerEdit())
+			&& ev.target !== this.$containerEditIcon)
 		{
 			this.closeEdit();
 		}
@@ -159,7 +172,6 @@ export default class EditableTitle {
 			{
 				this.$container = Tag.render`
 					<span class="landing-sites__title">
-						${this.getContainerInput()}
 						${this.getContainerTitle()}
 					</span>
 				`;
@@ -167,11 +179,13 @@ export default class EditableTitle {
 			else
 			{
 				this.$container = Tag.render`
-					<a href="${this.url}" class="landing-sites__title">
+					<span class="landing-sites__title">
 						${this.getContainerInput()}
-						${this.getContainerTitle()}
-						${this.getContainerEdit()}
-					</a>
+						<a href="${this.url}" class="landing-sites__title-link">
+							${this.getContainerTitle()}
+							${this.getContainerEdit()}
+						</a>
+					</span>
 				`;
 			}
 		}

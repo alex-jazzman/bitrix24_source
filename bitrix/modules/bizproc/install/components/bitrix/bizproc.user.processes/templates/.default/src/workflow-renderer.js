@@ -1,4 +1,4 @@
-import { Text, Tag, Type, Dom, Uri, Loc } from 'main.core';
+import { Text, Tag, Type, Dom, Uri, Loc, Event } from 'main.core';
 import { Task, InlineTaskView } from 'bizproc.task';
 import type { UserProcesses } from './user-processes';
 import 'ui.hint';
@@ -71,19 +71,36 @@ export class WorkflowRenderer
 
 		BX.UI.Hint.init(descriptionNode);
 
+		const descriptionBox = Tag.render`
+			<div class="bp-user-processes__description-box ${collapsed ? '' : '--expanded'}">
+				<span class="bp-user-processes__short_description">
+					${Text.encode(collapsedDescription)}
+					...<a href="#" aria-expanded="false" class="bp-user-processes__description-link" data-testid="user-processes-description-more">${Loc.getMessage('BIZPROC_USER_PROCESSES_TEMPLATE_DESCRIPTION_MORE')}</a>
+				</span>
+				${descriptionNode}
+			</div>
+		`;
+
+		const moreLink = descriptionBox.querySelector('.bp-user-processes__description-link');
+		if (moreLink)
+		{
+			Event.bind(moreLink, 'click', (event) => {
+				event.preventDefault();
+				Dom.attr(moreLink, 'aria-expanded', 'true');
+				Dom.addClass(descriptionBox, '--expanded');
+				// the link gets hidden by CSS, move focus to the expanded text
+				Dom.attr(descriptionNode, 'tabindex', '-1');
+				descriptionNode.focus();
+			});
+		}
+
 		return Tag.render`
 				<div class="bp-user-processes">
 					<a class="bp-user-processes__title-link ui-typography-text-lg"
 						href="${Text.encode(documentUrl)}">${Text.encode(itemName)}
 					</a>
 					<div class="bp-user-processes__appointment">${Text.encode(typeName.toUpperCase())}</div>
-					<div class="bp-user-processes__description-box ${collapsed ? '' : '--expanded'}">
-						<span class="bp-user-processes__short_description">
-							${Text.encode(collapsedDescription)}
-							...<a href="#" onclick="this.closest('div').classList.add('--expanded'); return false;" class="bp-user-processes__description-link">${Loc.getMessage('BIZPROC_USER_PROCESSES_TEMPLATE_DESCRIPTION_MORE')}</a>
-						</span>
-						${descriptionNode}
-					</div>
+					${descriptionBox}
 			</div>
 		`;
 	}

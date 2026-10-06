@@ -13,6 +13,10 @@ import type { UserDto } from 'tasks.v2.provider.service.user-service';
 
 import type { TagDto, TaskDto, TaskSliderData, EmailDto, ReplicateParamsDto } from './types';
 
+type MapSliderDataOptions = {
+	decodeUriParams?: boolean,
+};
+
 export function mapModelToDto(task: TaskModel): TaskDto
 {
 	const user = Core.getParams().currentUser;
@@ -211,15 +215,16 @@ export function mapModelToSliderData(task: TaskModel, checkLists: CheckListModel
 	return Object.fromEntries(Object.entries(data).filter(([, value]) => !Type.isNil(value)));
 }
 
-export function mapSliderDataToModel(data: TaskSliderData): TaskModel
+export function mapSliderDataToModel(data: TaskSliderData, options: MapSliderDataOptions = {}): TaskModel
 {
+	const decodeUriParams = options.decodeUriParams ?? true;
 	const task: TaskModel = {
-		title: data.TITLE ? decodeURIComponent(data.TITLE) : null,
+		title: data.TITLE ? mapSliderParam(data.TITLE, decodeUriParams) : null,
 		description: Text.decode(data.DESCRIPTION),
 		fileIds: data.UF_TASK_WEBDAV_FILES,
 		parentId: Number(data.PARENT_ID) || mapValue(data.BASE_TEMPLATE, idUtils.boxTemplate(data.BASE_TEMPLATE)),
 		crmItemIds: data.UF_CRM_TASK ? data.UF_CRM_TASK.split(';').filter((id) => id.trim()) : undefined,
-		email: data.UF_MAIL_MESSAGE ? mapEmail(data) : undefined,
+		email: data.UF_MAIL_MESSAGE ? mapEmail(data, decodeUriParams) : undefined,
 		tags: data.TAGS ? data.TAGS.split(',').map((tag) => tag.trim()) : undefined,
 		groupId: Number(data.GROUP_ID) || undefined,
 		flowId: Number(data.FLOW_ID) || undefined,
@@ -234,6 +239,28 @@ export function mapSliderDataToModel(data: TaskSliderData): TaskModel
 	};
 
 	return Object.fromEntries(Object.entries(task).filter(([, value]) => !Type.isNil(value)));
+}
+
+function mapSliderParam(value: string, decodeUriParams: boolean): string
+{
+	return decodeUriParams ? decodeSliderParam(value) : value;
+}
+
+function decodeSliderParam(value: string): string
+{
+	try
+	{
+		return decodeURIComponent(value);
+	}
+	catch (error)
+	{
+		if (error instanceof URIError)
+		{
+			return value;
+		}
+
+		throw error;
+	}
 }
 
 function mapValue(value: any, mappedValue: any): any | undefined
@@ -262,11 +289,11 @@ function mapGanttLinks(taskId: number, taskIds: number[]): { [taskId: number]: s
 	);
 }
 
-function mapEmail(data: Object): EmailDto
+function mapEmail(data: Object, decodeUriParams: boolean): EmailDto
 {
 	const id = Number(data.UF_MAIL_MESSAGE);
-	const title = decodeURIComponent(data.MAIL_SUBJECT);
-	const from = decodeURIComponent(data.MAIL_FROM);
+	const title = mapSliderParam(data.MAIL_SUBJECT, decodeUriParams);
+	const from = mapSliderParam(data.MAIL_FROM, decodeUriParams);
 	const dateTs = data.MAIL_DATE ? parseInt(data.MAIL_DATE, 10) * 1000 : null;
 
 	return {

@@ -89,3 +89,43 @@ export function showSyncFailureGuide(options: SyncFailureGuideOptions): GuideIns
 
 	return guide;
 }
+
+export type OauthDeniedGuideOptions = {
+	targetSelector: string;
+	title: string;
+	text: string;
+};
+
+/**
+ * Shows the provider refusal right where the user pressed the button.
+ *
+ * Unlike the modes above, the wording is not taken from the language file: the server
+ * classifies the refusal and sends the ready title and text, so the phrases live in one
+ * place. Returns null when the anchor is missing: the caller then falls back to a
+ * notification, otherwise the message would silently disappear.
+ */
+export function showOauthDeniedGuide(options: OauthDeniedGuideOptions): GuideInstance | null
+{
+	if (!findTargetElement(options.targetSelector))
+	{
+		return null;
+	}
+
+	const guide = new Guide({
+		id: 'mail-config-form-oauth-denied-tour',
+		simpleMode: true,
+		steps: [
+			{
+				target: options.targetSelector,
+				title: options.title,
+				text: options.text,
+				position: 'bottom',
+				article: HELPDESK_ARTICLE_ID,
+			},
+		],
+	}) as GuideInstance;
+
+	guide.start();
+
+	return guide;
+}

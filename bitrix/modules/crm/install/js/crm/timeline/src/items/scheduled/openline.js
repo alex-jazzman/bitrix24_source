@@ -1,3 +1,6 @@
+import { Tag } from 'main.core';
+import { alert } from 'crm.timeline.dialog';
+
 import Activity from "./activity";
 import {OpenLine as OpenLineAction} from "../../actions/openline";
 
@@ -100,7 +103,10 @@ export default class OpenLine extends Activity
 	{
 		if(typeof(window.top['BXIM']) === 'undefined')
 		{
-			window.alert(this.getMessage("openLineNotSupported"));
+			// eslint-disable-next-line @bitrix24/bitrix24-rules/no-native-dialogs
+			alert({
+				content: Tag.render`<div>${this.getMessage("openLineNotSupported")}</div>`,
+			});
 			return;
 		}
 

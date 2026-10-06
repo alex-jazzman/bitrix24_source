@@ -457,10 +457,10 @@
 	position: absolute;
 	height: 40px;
 	width: 30px;
-	cursor: pointer;
 	right:50px;
 	top:50%;
 	margin-top:-20px;
+	pointer-events: none;
 }
 .im-phone-call-btn-signal-icon-container{
 	position: absolute;
@@ -483,7 +483,6 @@
 	background: url(images/sprite.svg) no-repeat 0 -72px;
 	opacity: .3;
 	z-index:5;
-	width:25px;
 }
 
 .im-phone-call-btn-signal-active {
@@ -491,11 +490,6 @@
 	opacity: .7;
 	z-index:10;
 }
-
-.im-phone-call-btn-signal:hover .im-phone-call-btn-signal-background{ opacity:.7;}
-
-.im-phone-call-btn-signal:hover .im-phone-call-btn-signal-active{ opacity: 1;}
-
 
 .im-phone-call-btn-phone,
 .im-phone-call-btn-hold,
@@ -1236,65 +1230,6 @@
 }
 
 /* END OF COMMENTS */
-
-/* QUALITY GRADE POPUP */
-.im-phone-popup-rating {
-	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
-	padding: 8px 15px;
-	max-width: 112px;
-	box-shadow: 0 -6px 21px 0 rgba(83,92,105,0.2);
-	border-radius: 1px;
-	text-align: center;
-}
-.im-phone-popup-rating-title {
-	text-align: center;
-	color: #fff;
-	font-size: 13px;
-	line-height: 13px;
-	margin: 0 0 7px 0;
-}
-.im-phone-popup-rating-stars {
-	display: inline-block;
-	position: relative;
-	text-align: center;
-	width: 115px;
-	height: 17px;
-	font-size: 0;
-	white-space: nowrap;
-	background: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2020%2015%22%3E%3Cpolygon%20fill%3D%22%2355585b%22%20fill-rule%3D%22evenodd%22%20points%3D%2210.133%2012.25%205.725%2014.568%206.566%209.659%203%206.182%207.929%205.466%2010.133%201%2012.337%205.466%2017.266%206.182%2013.699%209.659%2014.541%2014.568%22/%3E%3C/svg%3E%0A') repeat-x;
-}
-.im-phone-popup-rating-stars-item {
-	display: inline-block;
-	width: 23px;
-	height: 17px;
-	background: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2020%2015%22%3E%3Cpolygon%20fill%3D%22%23F6A623%22%20fill-rule%3D%22evenodd%22%20points%3D%2210.133%2012.25%205.725%2014.568%206.566%209.659%203%206.182%207.929%205.466%2010.133%201%2012.337%205.466%2017.266%206.182%2013.699%209.659%2014.541%2014.568%22/%3E%3C/svg%3E%0A') repeat-x;
-	position: absolute;
-	top: 0;
-	left: 0;
-	opacity: 0;
-	z-index: 99999;
-	cursor: pointer;
-}
-.im-phone-popup-rating-stars-item:nth-child(2) {
-	width: 46px;
-	z-index: 9999;
-}
-.im-phone-popup-rating-stars-item:nth-child(3) {
-	width: 69px;
-	z-index: 999;
-}
-.im-phone-popup-rating-stars-item:nth-child(4) {
-	width: 92px;
-	z-index: 99;
-}
-.im-phone-popup-rating-stars-item:nth-child(5) {
-	width: 115px;
-	z-index: 9;
-}
-.im-phone-popup-rating-stars-item-active,
-.im-phone-popup-rating-stars-item:hover {
-	opacity: 1;
-}
 
 /* <Keypad> */
 

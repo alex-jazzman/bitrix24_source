@@ -7,7 +7,6 @@ this.BX.Call = this.BX.Call || {};
 	class CallSettings {
 		#accidentLogSendIntervalSecs = 0;
 		#accidentLogGroupMaxAgeSecs = 0;
-		#noiseSuppressionEnabled = false;
 		#jwtCallsEnabled = false;
 		#plainCallsUseJwt = false;
 		#callBalancerUrl = '';
@@ -21,9 +20,6 @@ this.BX.Call = this.BX.Call || {};
 		setup(settings) {
 			if (settings.jwtCallsEnabled !== undefined) {
 				this.jwtCallsEnabled = settings.jwtCallsEnabled;
-			}
-			if (settings.noiseSuppressionEnabled !== undefined) {
-				this.noiseSuppressionEnabled = settings.noiseSuppressionEnabled;
 			}
 			if (settings.plainCallsUseJwt !== undefined) {
 				this.plainCallsUseJwt = settings.plainCallsUseJwt;
@@ -77,12 +73,6 @@ this.BX.Call = this.BX.Call || {};
 		isJwtInPlainCallsEnabled() {
 			return this.jwtCallsEnabled && this.plainCallsUseJwt;
 		}
-		get noiseSuppressionEnabled() {
-			return this.#noiseSuppressionEnabled;
-		}
-		set noiseSuppressionEnabled(value) {
-			this.#noiseSuppressionEnabled = value;
-		}
 		get accidentLogSendIntervalSecs() {
 			return this.#accidentLogSendIntervalSecs || 0;
 		}
@@ -97,7 +87,12 @@ this.BX.Call = this.BX.Call || {};
 		}
 	}
 	const CallSettingsManager = new CallSettings();
+	const AccidentLogStorageKeys = Object.freeze({
+		dbName: 'bx_call_accidentLogDB',
+		storeName: 'bx_call_accidentLogs'
+	});
 
+	exports.AccidentLogStorageKeys = AccidentLogStorageKeys;
 	exports.CallSettingsManager = CallSettingsManager;
 
 })(this.BX.Call.Lib = this.BX.Call.Lib || {}, BX);

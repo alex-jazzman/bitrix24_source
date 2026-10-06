@@ -1,4 +1,8 @@
-<?if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+<?php
+
+use Bitrix\Main\Web\Uri;
+
+if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 $arResult["ITEM"] = htmlspecialcharsEx($arResult["ITEM"]);
 
 
@@ -30,7 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_REQUEST['mfi_mode']))
 			if (!empty($arFields))
 			{
 				$arFile = CFile::GetFileArray($arCustomFile['fileID']);
-				$arCustomFile["fileURL"] = CHTTP::URN2URI($arFile["SRC"]);
+				$arCustomFile["fileURL"] = (string)(new Uri($arFile["SRC"]))->toAbsolute();
 
 				Bitrix\Voximplant\ConfigTable::update($arParams["ID"], $arFields);
 				$viHttp = new CVoxImplantHttp();

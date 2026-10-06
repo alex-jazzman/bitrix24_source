@@ -413,6 +413,14 @@ class CrmChannelSelectorComponent extends Base
 	{
 		$identifiers = [$this->itemIdentifier];
 
+		// A client item is its own client: building Company/Contact relations for it would ask for a
+		// self-relation, which RelationIdentifier rejects. Deliberately duplicates the isClientEnabled()
+		// gate below, so the component stays safe if that flag changes again.
+		if (Service\Communication\Utils\Common::isClientEntityTypeId($this->itemIdentifier->getEntityTypeId()))
+		{
+			return $identifiers;
+		}
+
 		$factory = Service\Container::getInstance()->getFactory($this->itemIdentifier->getEntityTypeId());
 		$isClientEnabled = !$factory || ($factory && $factory->isClientEnabled());
 		if ($isClientEnabled)

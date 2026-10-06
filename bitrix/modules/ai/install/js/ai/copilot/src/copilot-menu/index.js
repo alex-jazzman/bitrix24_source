@@ -11,6 +11,7 @@ export {
 	CopilotMenu,
 	CopilotMenuCommand,
 	CopilotMenuEvents,
-	CopilotMenuOptions,
 	BaseMenuItem,
 };
+
+export type { CopilotMenuOptions };

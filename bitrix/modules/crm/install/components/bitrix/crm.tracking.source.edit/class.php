@@ -15,6 +15,7 @@ use Bitrix\Bitrix24\Feature;
 
 use Bitrix\Seo;
 use Bitrix\Intranet;
+use Bitrix\Crm\Engine\ActionFilter\CheckSomeItemsReadPermission;
 use Bitrix\Crm\Tracking;
 use Bitrix\Crm\UI\Webpack;
 
@@ -104,12 +105,24 @@ class CrmTrackingSourceEditComponent  extends \CBitrixComponent implements Contr
 	{
 		$name = $this->request->get('NAME');
 		$currentUserId = CurrentUser::get()->getId();
+
+		$hasCode = (bool)$this->arParams['CODE'];
+		if (
+			$hasCode
+			&& !$this->isSeoTypeAvailable(Tracking\Analytics\Ad::getSeoCodeByCode($this->arParams['CODE']))
+		)
+		{
+			$this->errors->setError(new Error(Loc::getMessage('CRM_ANALYTICS_SOURCE_EDIT_ERR_VK_REGION_UNAVAILABLE') ?: 'VKontakte integration is not available in the current portal region.'));
+
+			return;
+		}
+
 		$data = [
 			'NAME' => $name,
-			'ICON_COLOR' => $this->arParams['CODE'] ? '' : $this->request->get('ICON_COLOR'),
+			'ICON_COLOR' => $hasCode ? '' : $this->request->get('ICON_COLOR'),
 			'TAGS' => [],
-			'AD_CLIENT_ID' => $this->arParams['CODE'] ? $this->request->get('AD_CLIENT_ID') : null,
-			'AD_ACCOUNT_ID' => $this->arParams['CODE'] ? $this->request->get('AD_ACCOUNT_ID') : null,
+			'AD_CLIENT_ID' => $hasCode ? $this->request->get('AD_CLIENT_ID') : null,
+			'AD_ACCOUNT_ID' => $hasCode ? $this->request->get('AD_ACCOUNT_ID') : null,
 			'UPDATED_BY_ID' => $currentUserId,
 		];
 
@@ -184,16 +197,19 @@ class CrmTrackingSourceEditComponent  extends \CBitrixComponent implements Contr
 			'disconnect' => [
 				'+prefilters' => [
 					new Intranet\ActionFilter\IntranetUser(),
+					new CheckSomeItemsReadPermission(),
 				]
 			],
 			'getAccounts' => [
 				'+prefilters' => [
 					new Intranet\ActionFilter\IntranetUser(),
+					new CheckSomeItemsReadPermission(),
 				]
 			],
 			'getProvider' => [
 				'+prefilters' => [
 					new Intranet\ActionFilter\IntranetUser(),
+					new CheckSomeItemsReadPermission(),
 				]
 			],
 		];
@@ -444,7 +460,7 @@ class CrmTrackingSourceEditComponent  extends \CBitrixComponent implements Contr
 	public function getAccountsAction($type, $clientId)
 	{
 		$data = [];
-		if (Loader::includeModule('seo'))
+		if (Loader::includeModule('seo') && $this->isSeoTypeAvailable($type))
 		{
 			$data = Seo\Analytics\Service::getInstance()
 				->setClientId($clientId)
@@ -452,6 +468,16 @@ class CrmTrackingSourceEditComponent  extends \CBitrixComponent implements Contr
 		}
 
 		return $this->prepareAjaxAnswer($data);
+	}
+
+	private function isSeoTypeAvailable($type): bool
+	{
+		if (!in_array($type, [Seo\Analytics\Service::TYPE_VKONTAKTE, Seo\Analytics\Service::TYPE_VKADS], true))
+		{
+			return true;
+		}
+
+		return \Bitrix\Crm\Integration\Bitrix24\Product::isVkAvailable();
 	}
 
 	public function disconnectAction($type, $clientId)

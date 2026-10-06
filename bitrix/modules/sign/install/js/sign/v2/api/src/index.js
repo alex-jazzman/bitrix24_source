@@ -4,6 +4,8 @@ import { TemplateApi } from './template/template-api';
 import { TemplateFolderApi } from './template/template-folder-api';
 import { SignersListApi } from './signers-list-api';
 import { PlaceholderApi } from './document/placeholder-api';
+import { MyDocumentsApi } from './document/my-documents-api';
+import { SafeFolderApi } from './document/safe-folder-api';
 import type {
 	B2eCompanyList,
 	BlockData,
@@ -18,6 +20,7 @@ import { CountMember, SetupMember } from './type';
 
 export * from './type';
 export * from './template/type';
+export { BulkActionType } from './document/my-documents-api';
 
 export class Api
 {
@@ -25,6 +28,8 @@ export class Api
 	templateFolder: TemplateFolderApi = new TemplateFolderApi();
 	signersList: SignersListApi = new SignersListApi();
 	placeholder: PlaceholderApi = new PlaceholderApi();
+	myDocuments: MyDocumentsApi = new MyDocumentsApi();
+	safeFolder: SafeFolderApi = new SafeFolderApi();
 
 	#post(endpoint: string, data: Object | null = null, notifyError: boolean = true): $Call<typeof post>
 	{
@@ -485,10 +490,17 @@ export class Api
 		return this.#post('sign.api_v1.b2e.member.communication.setAgreementDecision', {});
 	}
 
-	createDocumentChat(chatType: number, documentId: number, isEntityId: boolean): Promise<{ chatId: number }>
+	createDocumentChat(chatType: number, documentId: number): Promise<{ chatId: number }>
 	{
 		return this.#post('sign.api_v1.integration.im.groupChat.createDocumentChat', {
-			chatType, documentId, isEntityId,
+			chatType, documentId,
+		});
+	}
+
+	createDocumentChatByEntity(chatType: number, entityId: number): Promise<{ chatId: number }>
+	{
+		return this.#post('sign.api_v1.integration.im.groupChat.createDocumentChatByEntity', {
+			chatType, entityId,
 		});
 	}
 
@@ -515,6 +527,20 @@ export class Api
 	removeDocument(uid: string): Promise<Array>
 	{
 		return this.#post('sign.api_v1.document.remove', { uid });
+	}
+
+	annulMember(uid: string, annul: boolean): Promise<Object>
+	{
+		return this.#post('sign.api_v1.document.member.annul', { uid, annul });
+	}
+
+	annulMembersBatch(uids: string[], annul: boolean): Promise<{
+		changed: number,
+		unchanged: number,
+		forbidden: number,
+	}>
+	{
+		return this.#post('sign.api_v1.document.member.annulBatch', { uids, annul });
 	}
 
 	attachGroupToDocument(documentUid: string, groupId: number): Promise<Array>

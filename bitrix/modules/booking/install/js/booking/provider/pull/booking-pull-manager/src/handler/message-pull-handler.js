@@ -1,7 +1,7 @@
-import type { Store } from 'ui.vue3.vuex';
+import { type Store } from 'ui.vue3.vuex';
 import { Core } from 'booking.core';
 import { Model } from 'booking.const';
-import type { MessageModel } from 'booking.model.bookings';
+import { type MessageModel } from 'booking.model.bookings';
 
 import { BasePullHandler } from './base-pull-handler';
 
@@ -21,11 +21,14 @@ export class MessagePullHandler extends BasePullHandler
 			return;
 		}
 
+		const notifications = this.$store.getters[`${Model.Dictionary}/getNotifications`];
+		const isConfirmation = message.notificationType === notifications.Confirmation?.value;
+
 		void this.$store.dispatch(`${Model.Bookings}/update`, {
 			id: booking.id,
 			booking: {
 				...booking,
-				messages: [...(booking.messages ?? []), message],
+				isConfirmationSent: booking.isConfirmationSent || isConfirmation,
 			},
 		});
 	};

@@ -65,12 +65,17 @@ this.BX.Call = this.BX.Call || {};
 		userScreenshareOff: 'user_screenshare_off',
 		deleteUser: 'delete_user',
 		denyRequest: 'deny_request',
-		approveRequest: 'approve_request'
+		approveRequest: 'approve_request',
+		joinCall: 'join_call',
+		clickOpenSlots: 'click_open_slots',
+		clickBooking: 'click_booking',
+		openSection: 'open_section'
 	});
 	const AnalyticsTool = Object.freeze({
 		im: 'im',
 		ai: 'ai',
-		task: 'task'
+		task: 'task',
+		sync: 'sync'
 	});
 	const AnalyticsCategory = Object.freeze({
 		call: 'call',
@@ -80,7 +85,8 @@ this.BX.Call = this.BX.Call || {};
 		chatOperations: 'chat_operations',
 		callFollowup: 'call_followup',
 		callRecord: 'call_record',
-		collabCall: 'collab_call'
+		collabCall: 'collab_call',
+		sync: 'sync'
 	});
 	const AnalyticsType = Object.freeze({
 		private: 'private',
@@ -95,7 +101,8 @@ this.BX.Call = this.BX.Call || {};
 		privateCall: 'private',
 		groupCall: 'group',
 		aiOn: 'ai_on',
-		turnOnAi: 'turn_on_ai'
+		turnOnAi: 'turn_on_ai',
+		sync: 'sync'
 	});
 	const AnalyticsSection = Object.freeze({
 		callWindow: 'call_window',
@@ -107,13 +114,15 @@ this.BX.Call = this.BX.Call || {};
 		chatTasks: 'chat_tasks',
 		callMessage: 'call_message',
 		callFollowup: 'call_followup',
-		call: 'call'
+		call: 'call',
+		syncPage: 'sync_page'
 	});
 	const AnalyticsSubSection = Object.freeze({
 		finishButton: 'finish_button',
 		contextMenu: 'context_menu',
 		window: 'window',
-		taskCard: 'task_card'
+		taskCard: 'task_card',
+		mainButton: 'main_button'
 	});
 	const AnalyticsElement = Object.freeze({
 		answerButton: 'answer_button',
@@ -158,6 +167,77 @@ this.BX.Call = this.BX.Call || {};
 		vpnOff: 'vpn_off'
 	});
 
+	const PRESET_TOOL_MAP = {
+		sync: AnalyticsTool.sync
+	};
+	function getCallTool() {
+		const presetCode = main_core.Extension.getSettings('call.core')?.activePresetCode ?? '';
+		return PRESET_TOOL_MAP[presetCode] ?? AnalyticsTool.im;
+	}
+
+	class Sync {
+		onOpenSection() {
+			ui_analytics.sendData({
+				tool: getCallTool(),
+				category: AnalyticsCategory.sync,
+				event: AnalyticsEvent.openSection,
+				type: AnalyticsType.sync
+			});
+		}
+		onStartCallClick() {
+			ui_analytics.sendData({
+				tool: getCallTool(),
+				category: AnalyticsCategory.sync,
+				event: AnalyticsEvent.clickCallButton,
+				type: AnalyticsType.video,
+				c_section: AnalyticsSection.syncPage,
+				c_sub_section: AnalyticsSubSection.mainButton
+			});
+		}
+		onJoinClick() {
+			ui_analytics.sendData({
+				tool: getCallTool(),
+				category: AnalyticsCategory.sync,
+				event: AnalyticsEvent.clickJoin,
+				type: AnalyticsType.video,
+				c_section: AnalyticsSection.syncPage
+			});
+		}
+		onJoinCall() {
+			ui_analytics.sendData({
+				tool: getCallTool(),
+				category: AnalyticsCategory.sync,
+				event: AnalyticsEvent.joinCall,
+				type: AnalyticsType.video,
+				c_section: AnalyticsSection.syncPage
+			});
+		}
+		onCreateEventClick() {
+			ui_analytics.sendData({
+				tool: getCallTool(),
+				category: AnalyticsCategory.sync,
+				event: AnalyticsEvent.clickCreateEvent,
+				c_section: AnalyticsSection.syncPage
+			});
+		}
+		onOpenSlotsClick() {
+			ui_analytics.sendData({
+				tool: getCallTool(),
+				category: AnalyticsCategory.sync,
+				event: AnalyticsEvent.clickOpenSlots,
+				c_section: AnalyticsSection.syncPage
+			});
+		}
+		onBookingClick() {
+			ui_analytics.sendData({
+				tool: getCallTool(),
+				category: AnalyticsCategory.sync,
+				event: AnalyticsEvent.clickBooking,
+				c_section: AnalyticsSection.syncPage
+			});
+		}
+	}
+
 	class Copilot {
 		#callAutoStartRecordSent = [];
 		onAIRecordStart(params) {
@@ -189,7 +269,7 @@ this.BX.Call = this.BX.Call || {};
 		}
 		onAIRecordStatusChanged(params) {
 			ui_analytics.sendData({
-				tool: AnalyticsTool.im,
+				tool: getCallTool(),
 				category: AnalyticsCategory.call,
 				event: params.isAIOn ? AnalyticsEvent.aiOn : AnalyticsEvent.aiOff,
 				type: params.callType,
@@ -199,7 +279,7 @@ this.BX.Call = this.BX.Call || {};
 		}
 		onOpenFollowUpTab(params) {
 			ui_analytics.sendData({
-				tool: AnalyticsTool.im,
+				tool: getCallTool(),
 				category: AnalyticsCategory.callFollowup,
 				event: AnalyticsEvent.openTab,
 				type: params.tabName,
@@ -208,7 +288,7 @@ this.BX.Call = this.BX.Call || {};
 		}
 		onOpenFollowUpSlider(params) {
 			ui_analytics.sendData({
-				tool: AnalyticsTool.im,
+				tool: getCallTool(),
 				category: AnalyticsCategory.callFollowup,
 				event: AnalyticsEvent.openSlider,
 				p5: `callId_${params.callId}`
@@ -216,7 +296,7 @@ this.BX.Call = this.BX.Call || {};
 		}
 		onFollowUpCreateEventClick(params) {
 			ui_analytics.sendData({
-				tool: AnalyticsTool.im,
+				tool: getCallTool(),
 				category: AnalyticsCategory.callFollowup,
 				event: AnalyticsEvent.clickCreateEvent,
 				p5: `callId_${params.callId}`
@@ -224,7 +304,7 @@ this.BX.Call = this.BX.Call || {};
 		}
 		onFollowUpCreateTaskClick(params) {
 			ui_analytics.sendData({
-				tool: AnalyticsTool.im,
+				tool: getCallTool(),
 				category: AnalyticsCategory.callFollowup,
 				event: AnalyticsEvent.clickCreateTask,
 				p5: `callId_${params.callId}`
@@ -232,7 +312,7 @@ this.BX.Call = this.BX.Call || {};
 		}
 		onAIRestrictionsPopupShow(params) {
 			ui_analytics.sendData({
-				tool: AnalyticsTool.im,
+				tool: getCallTool(),
 				category: AnalyticsCategory.call,
 				event: AnalyticsEvent.viewPopup,
 				type: params.popupType,
@@ -241,7 +321,7 @@ this.BX.Call = this.BX.Call || {};
 		}
 		onCopilotNotifyShow(params) {
 			ui_analytics.sendData({
-				tool: AnalyticsTool.im,
+				tool: getCallTool(),
 				category: AnalyticsCategory.call,
 				event: AnalyticsEvent.viewNotification,
 				type: params.isCopilotActive ? AnalyticsType.aiOn : AnalyticsType.turnOnAi,
@@ -250,7 +330,7 @@ this.BX.Call = this.BX.Call || {};
 		}
 		onAIRecordTimeCodeClick(params) {
 			ui_analytics.sendData({
-				tool: AnalyticsTool.im,
+				tool: getCallTool(),
 				category: AnalyticsCategory.callFollowup,
 				event: AnalyticsEvent.clickTimeCode,
 				p5: `callId_${params.callId}`
@@ -258,7 +338,7 @@ this.BX.Call = this.BX.Call || {};
 		}
 		onAIPlayRecord(params) {
 			ui_analytics.sendData({
-				tool: AnalyticsTool.im,
+				tool: getCallTool(),
 				category: AnalyticsCategory.callFollowup,
 				event: AnalyticsEvent.playRecord,
 				p5: `callId_${params.callId}`
@@ -266,7 +346,7 @@ this.BX.Call = this.BX.Call || {};
 		}
 		onClickAIOff(params) {
 			ui_analytics.sendData({
-				tool: AnalyticsTool.im,
+				tool: getCallTool(),
 				category: AnalyticsCategory.call,
 				event: AnalyticsEvent.clickAiOff,
 				type: params.callType,
@@ -275,7 +355,7 @@ this.BX.Call = this.BX.Call || {};
 		}
 		onSelectAIOff(params) {
 			ui_analytics.sendData({
-				tool: AnalyticsTool.im,
+				tool: getCallTool(),
 				category: AnalyticsCategory.call,
 				event: AnalyticsEvent.aiOff,
 				type: params.callType,
@@ -284,7 +364,7 @@ this.BX.Call = this.BX.Call || {};
 		}
 		onSelectAIDelete(params) {
 			ui_analytics.sendData({
-				tool: AnalyticsTool.im,
+				tool: getCallTool(),
 				category: AnalyticsCategory.callFollowup,
 				event: AnalyticsEvent.delete,
 				type: params.callType,
@@ -294,6 +374,13 @@ this.BX.Call = this.BX.Call || {};
 		}
 	}
 
+	const CALL_ALREADY_FINISHED_STATUS = 'call_already_finished';
+	function buildCallIdParam(callId) {
+		const hasIdentifier = !main_core.Type.isNil(callId) && callId !== '' && callId !== 0;
+		return hasIdentifier ? {
+			p5: `callId_${callId}`
+		} : {};
+	}
 	class Analytics {
 		static #instance;
 		static AnalyticsType = AnalyticsType;
@@ -302,6 +389,7 @@ this.BX.Call = this.BX.Call || {};
 		static AnalyticsElement = AnalyticsElement;
 		static AnalyticsSubSection = AnalyticsSubSection;
 		copilot = new Copilot();
+		sync = new Sync();
 		#screenShareStarted = false;
 		static getInstance() {
 			if (!this.#instance) {
@@ -326,6 +414,9 @@ this.BX.Call = this.BX.Call || {};
 				return str;
 			}
 		}
+		#buildErrorStatus(errorCode) {
+			return this.safeDecode(`error_${errorCode}`).replaceAll(/\s+/g, '_');
+		}
 		onScreenShareBtnClick({
 			callId,
 			callType
@@ -334,7 +425,7 @@ this.BX.Call = this.BX.Call || {};
 				return;
 			}
 			ui_analytics.sendData({
-				tool: AnalyticsTool.im,
+				tool: getCallTool(),
 				category: AnalyticsCategory.call,
 				event: AnalyticsEvent.clickScreenshare,
 				type: callType,
@@ -348,7 +439,7 @@ this.BX.Call = this.BX.Call || {};
 		}) {
 			this.#screenShareStarted = true;
 			ui_analytics.sendData({
-				tool: AnalyticsTool.im,
+				tool: getCallTool(),
 				category: AnalyticsCategory.call,
 				event: AnalyticsEvent.startScreenshare,
 				type: callType,
@@ -367,7 +458,7 @@ this.BX.Call = this.BX.Call || {};
 			}
 			this.#screenShareStarted = false;
 			ui_analytics.sendData({
-				tool: AnalyticsTool.im,
+				tool: getCallTool(),
 				category: AnalyticsCategory.call,
 				event: AnalyticsEvent.finishScreenshare,
 				type: callType,
@@ -379,7 +470,7 @@ this.BX.Call = this.BX.Call || {};
 		}
 		onAnswerConference(params) {
 			ui_analytics.sendData({
-				tool: AnalyticsTool.im,
+				tool: getCallTool(),
 				category: AnalyticsCategory.call,
 				event: AnalyticsEvent.clickAnswer,
 				type: AnalyticsType.videoconf,
@@ -389,7 +480,7 @@ this.BX.Call = this.BX.Call || {};
 		}
 		onDeclineConference(params) {
 			ui_analytics.sendData({
-				tool: AnalyticsTool.im,
+				tool: getCallTool(),
 				category: AnalyticsCategory.call,
 				event: AnalyticsEvent.clickDeny,
 				type: AnalyticsType.videoconf,
@@ -399,7 +490,7 @@ this.BX.Call = this.BX.Call || {};
 		}
 		onStartVideoconf(params) {
 			ui_analytics.sendData({
-				tool: AnalyticsTool.im,
+				tool: getCallTool(),
 				category: AnalyticsCategory.call,
 				event: AnalyticsEvent.startCall,
 				type: AnalyticsType.videoconf,
@@ -414,7 +505,7 @@ this.BX.Call = this.BX.Call || {};
 		}
 		onJoinVideoconf(params) {
 			ui_analytics.sendData({
-				tool: AnalyticsTool.im,
+				tool: getCallTool(),
 				category: AnalyticsCategory.call,
 				event: AnalyticsEvent.connect,
 				type: AnalyticsType.videoconf,
@@ -429,7 +520,7 @@ this.BX.Call = this.BX.Call || {};
 		onStartCall(params) {
 			const chatType = params.associatedEntity?.advanced?.chatType;
 			const resultData = {
-				tool: AnalyticsTool.im,
+				tool: getCallTool(),
 				category: AnalyticsCategory.call,
 				event: AnalyticsEvent.startCall,
 				type: params.callType,
@@ -442,7 +533,7 @@ this.BX.Call = this.BX.Call || {};
 			};
 			if (chatType === im_v2_const.ChatType.collab && params.status === AnalyticsStatus.success) {
 				const resultDataCollab = {
-					tool: AnalyticsTool.im,
+					tool: getCallTool(),
 					category: AnalyticsCategory.collabCall,
 					event: AnalyticsEvent.startCallCollab,
 					type: params.callType,
@@ -458,21 +549,21 @@ this.BX.Call = this.BX.Call || {};
 		}
 		onStartCallError(params) {
 			const resultData = {
-				tool: AnalyticsTool.im,
+				tool: getCallTool(),
 				category: AnalyticsCategory.call,
 				event: AnalyticsEvent.startCall,
 				type: params.callType,
-				status: this.safeDecode(`error_${params.errorCode}`),
+				status: this.#buildErrorStatus(params.errorCode),
 				p3: params.errorMessage ? `msg_${params.errorMessage}`.slice(0, 100) : undefined,
 				p4: params.isVpnActive ? AnalyticsVpnStatus.vpnOn : AnalyticsVpnStatus.vpnOff,
-				p5: 'callId_0'
+				...buildCallIdParam(params.callId)
 			};
 			ui_analytics.sendData(resultData);
 		}
 		onJoinCall(params) {
 			const chatType = params.associatedEntity?.advanced?.chatType;
 			const sendParams = {
-				tool: AnalyticsTool.im,
+				tool: getCallTool(),
 				category: AnalyticsCategory.call,
 				event: AnalyticsEvent.connect,
 				type: params.callType,
@@ -494,7 +585,7 @@ this.BX.Call = this.BX.Call || {};
 			if (chatType === im_v2_const.ChatType.collab && params.status === AnalyticsStatus.success) {
 				const collabId = params.associatedEntity.advanced.entityId;
 				const resultDataCollab = {
-					tool: AnalyticsTool.im,
+					tool: getCallTool(),
 					category: AnalyticsCategory.collabCall,
 					event: AnalyticsEvent.connectCallCollab,
 					type: params.callType,
@@ -510,21 +601,21 @@ this.BX.Call = this.BX.Call || {};
 		}
 		onJoinCallError(params) {
 			const resultData = {
-				tool: AnalyticsTool.im,
+				tool: getCallTool(),
 				category: AnalyticsCategory.call,
 				event: AnalyticsEvent.connect,
 				type: params.callType,
-				status: this.safeDecode(`error_${params.errorCode}`),
+				status: params.isRoomClosed ? CALL_ALREADY_FINISHED_STATUS : this.#buildErrorStatus(params.errorCode),
 				p3: params.errorMessage ? `msg_${params.errorMessage}`.slice(0, 100) : undefined,
 				p4: params.isVpnActive ? AnalyticsVpnStatus.vpnOn : AnalyticsVpnStatus.vpnOff,
-				p5: `callId_${params.callId}`
+				...buildCallIdParam(params.callId)
 			};
 			ui_analytics.sendData(resultData);
 		}
 		onReconnect(params) {
 			const reconnectionReasonInfo = params.reconnectionReasonInfo?.replace('Handling a remote offer failed: InvalidAccessError: ', '*').replaceAll('_', '').slice(0, 100);
 			ui_analytics.sendData({
-				tool: AnalyticsTool.im,
+				tool: getCallTool(),
 				category: AnalyticsCategory.call,
 				event: AnalyticsEvent.reconnect,
 				type: params.callType,
@@ -538,11 +629,11 @@ this.BX.Call = this.BX.Call || {};
 		}
 		onReconnectError(params) {
 			ui_analytics.sendData({
-				tool: AnalyticsTool.im,
+				tool: getCallTool(),
 				category: AnalyticsCategory.call,
 				event: AnalyticsEvent.reconnect,
 				type: params.callType,
-				status: this.safeDecode(`error_${params.errorCode}`),
+				status: this.#buildErrorStatus(params.errorCode),
 				p3: params.errorMessage ? `msg_${params.errorMessage}`.slice(0, 100) : undefined,
 				p4: params.isVpnActive ? AnalyticsVpnStatus.vpnOn : AnalyticsVpnStatus.vpnOff,
 				p5: `callId_${params.callId}`
@@ -550,7 +641,7 @@ this.BX.Call = this.BX.Call || {};
 		}
 		onInviteUser(params) {
 			ui_analytics.sendData({
-				tool: AnalyticsTool.im,
+				tool: getCallTool(),
 				category: AnalyticsCategory.call,
 				event: AnalyticsEvent.addUser,
 				type: params.callType,
@@ -561,7 +652,7 @@ this.BX.Call = this.BX.Call || {};
 		}
 		onDisconnectCall(params) {
 			ui_analytics.sendData({
-				tool: AnalyticsTool.im,
+				tool: getCallTool(),
 				category: AnalyticsCategory.call,
 				event: AnalyticsEvent.disconnect,
 				type: params.callType,
@@ -575,7 +666,7 @@ this.BX.Call = this.BX.Call || {};
 		}
 		onFinishCall(params) {
 			ui_analytics.sendData({
-				tool: AnalyticsTool.im,
+				tool: getCallTool(),
 				category: AnalyticsCategory.call,
 				event: AnalyticsEvent.finishCall,
 				type: params.callType,
@@ -589,7 +680,7 @@ this.BX.Call = this.BX.Call || {};
 		}
 		onRecordBtnClick(params) {
 			ui_analytics.sendData({
-				tool: AnalyticsTool.im,
+				tool: getCallTool(),
 				category: AnalyticsCategory.call,
 				event: AnalyticsEvent.clickRecord,
 				type: params.callType,
@@ -600,51 +691,51 @@ this.BX.Call = this.BX.Call || {};
 		}
 		onRecordStart(params) {
 			ui_analytics.sendData({
-				tool: AnalyticsTool.im,
+				tool: getCallTool(),
 				category: AnalyticsCategory.call,
 				event: AnalyticsEvent.recordStart,
 				type: params.callType,
 				c_section: AnalyticsSection.callWindow,
-				status: params.errorCode ? this.safeDecode(`error_${params.errorCode}`) : AnalyticsStatus.success,
+				status: params.errorCode ? this.#buildErrorStatus(params.errorCode) : AnalyticsStatus.success,
 				p1: `recordType_${params.recordType}`,
 				p5: `callId_${params.callId}`
 			});
 		}
 		onRecordPaused(params) {
 			ui_analytics.sendData({
-				tool: AnalyticsTool.im,
+				tool: getCallTool(),
 				category: AnalyticsCategory.call,
 				event: AnalyticsEvent.recordPaused,
 				type: params.callType,
 				c_section: AnalyticsSection.callWindow,
-				status: params.errorCode ? this.safeDecode(`error_${params.errorCode}`) : AnalyticsStatus.success,
+				status: params.errorCode ? this.#buildErrorStatus(params.errorCode) : AnalyticsStatus.success,
 				p5: `callId_${params.callId}`
 			});
 		}
 		onRecordResumed(params) {
 			ui_analytics.sendData({
-				tool: AnalyticsTool.im,
+				tool: getCallTool(),
 				category: AnalyticsCategory.call,
 				event: AnalyticsEvent.recordResumed,
 				type: params.callType,
 				c_section: AnalyticsSection.callWindow,
-				status: params.errorCode ? this.safeDecode(`error_${params.errorCode}`) : AnalyticsStatus.success,
+				status: params.errorCode ? this.#buildErrorStatus(params.errorCode) : AnalyticsStatus.success,
 				p5: `callId_${params.callId}`
 			});
 		}
 		onRecordDelete(params) {
 			ui_analytics.sendData({
-				tool: AnalyticsTool.im,
+				tool: getCallTool(),
 				category: AnalyticsCategory.call,
 				event: AnalyticsEvent.recordDelete,
 				type: params.callType,
-				status: params.errorCode ? this.safeDecode(`error_${params.errorCode}`) : AnalyticsStatus.success,
+				status: params.errorCode ? this.#buildErrorStatus(params.errorCode) : AnalyticsStatus.success,
 				p5: `callId_${params.callId}`
 			});
 		}
 		onRecordStop(params) {
 			ui_analytics.sendData({
-				tool: AnalyticsTool.im,
+				tool: getCallTool(),
 				category: AnalyticsCategory.call,
 				event: AnalyticsEvent.recordStop,
 				type: params.callType,
@@ -657,7 +748,7 @@ this.BX.Call = this.BX.Call || {};
 		}
 		onCloudRecordPopupShow(params) {
 			ui_analytics.sendData({
-				tool: AnalyticsTool.im,
+				tool: getCallTool(),
 				category: AnalyticsCategory.callRecord,
 				event: AnalyticsEvent.viewPopup,
 				type: params.popupType,
@@ -666,7 +757,7 @@ this.BX.Call = this.BX.Call || {};
 		}
 		onToggleCamera(params) {
 			ui_analytics.sendData({
-				tool: AnalyticsTool.im,
+				tool: getCallTool(),
 				category: AnalyticsCategory.call,
 				event: params.video ? AnalyticsEvent.cameraOn : AnalyticsEvent.cameraOff,
 				type: params.callType,
@@ -676,7 +767,7 @@ this.BX.Call = this.BX.Call || {};
 		}
 		onToggleMicrophone(params) {
 			ui_analytics.sendData({
-				tool: AnalyticsTool.im,
+				tool: getCallTool(),
 				category: AnalyticsCategory.call,
 				event: params.muted ? AnalyticsEvent.micOff : AnalyticsEvent.micOn,
 				type: params.callType,
@@ -686,7 +777,7 @@ this.BX.Call = this.BX.Call || {};
 		}
 		onClickUser(params) {
 			ui_analytics.sendData({
-				tool: AnalyticsTool.im,
+				tool: getCallTool(),
 				category: AnalyticsCategory.call,
 				event: AnalyticsEvent.clickUserFrame,
 				type: params.callType,
@@ -697,7 +788,7 @@ this.BX.Call = this.BX.Call || {};
 		}
 		onFloorRequest(params) {
 			ui_analytics.sendData({
-				tool: AnalyticsTool.im,
+				tool: getCallTool(),
 				category: AnalyticsCategory.call,
 				event: AnalyticsEvent.handOn,
 				type: params.callType,
@@ -707,7 +798,7 @@ this.BX.Call = this.BX.Call || {};
 		}
 		onShowChat(params) {
 			ui_analytics.sendData({
-				tool: AnalyticsTool.im,
+				tool: getCallTool(),
 				category: AnalyticsCategory.call,
 				event: AnalyticsEvent.clickChat,
 				type: params.callType,
@@ -717,7 +808,7 @@ this.BX.Call = this.BX.Call || {};
 		}
 		onDocumentBtnClick(params) {
 			ui_analytics.sendData({
-				tool: AnalyticsTool.im,
+				tool: getCallTool(),
 				category: AnalyticsCategory.callDocs,
 				event: AnalyticsEvent.click,
 				p4: `callType_${params.callType}`,
@@ -726,7 +817,7 @@ this.BX.Call = this.BX.Call || {};
 		}
 		onDocumentCreate(params) {
 			ui_analytics.sendData({
-				tool: AnalyticsTool.im,
+				tool: getCallTool(),
 				category: AnalyticsCategory.callDocs,
 				event: AnalyticsEvent.create,
 				type: params.type,
@@ -736,7 +827,7 @@ this.BX.Call = this.BX.Call || {};
 		}
 		onDocumentClose(params) {
 			ui_analytics.sendData({
-				tool: AnalyticsTool.im,
+				tool: getCallTool(),
 				category: AnalyticsCategory.callDocs,
 				event: AnalyticsEvent.save,
 				type: params.type,
@@ -746,7 +837,7 @@ this.BX.Call = this.BX.Call || {};
 		}
 		onDocumentUpload(params) {
 			ui_analytics.sendData({
-				tool: AnalyticsTool.im,
+				tool: getCallTool(),
 				category: AnalyticsCategory.callDocs,
 				event: AnalyticsEvent.upload,
 				type: params.type,
@@ -756,7 +847,7 @@ this.BX.Call = this.BX.Call || {};
 		}
 		onLastResumeOpen(params) {
 			ui_analytics.sendData({
-				tool: AnalyticsTool.im,
+				tool: getCallTool(),
 				category: AnalyticsCategory.callDocs,
 				event: AnalyticsEvent.openResume,
 				p4: `callType_${params.callType}`,
@@ -771,7 +862,7 @@ this.BX.Call = this.BX.Call || {};
 		}
 		onChatHeaderStartCallClick(params) {
 			const resultData = {
-				tool: AnalyticsTool.im,
+				tool: getCallTool(),
 				category: AnalyticsCategory.messenger,
 				event: AnalyticsEvent.clickCallButton,
 				c_section: this.#getSectionParamByChatType(params.dialog.type),
@@ -788,7 +879,7 @@ this.BX.Call = this.BX.Call || {};
 		}
 		onContextMenuStartCallClick(params) {
 			const resultData = {
-				tool: AnalyticsTool.im,
+				tool: getCallTool(),
 				category: AnalyticsCategory.messenger,
 				event: AnalyticsEvent.clickCallButton,
 				c_section: this.#getSectionParamByChatType(params.context.type),
@@ -857,7 +948,7 @@ this.BX.Call = this.BX.Call || {};
 		}
 		onStartConferenceClick(params) {
 			ui_analytics.sendData({
-				tool: AnalyticsTool.im,
+				tool: getCallTool(),
 				category: AnalyticsCategory.call,
 				event: AnalyticsEvent.clickStartConf,
 				type: AnalyticsType.videoconf,
@@ -868,7 +959,7 @@ this.BX.Call = this.BX.Call || {};
 		}
 		onChatCreationMessageStartCallClick(params) {
 			ui_analytics.sendData({
-				tool: AnalyticsTool.im,
+				tool: getCallTool(),
 				category: AnalyticsCategory.messenger,
 				event: AnalyticsEvent.clickCallButton,
 				type: AnalyticsType.groupCall,
@@ -878,9 +969,21 @@ this.BX.Call = this.BX.Call || {};
 				p5: `chatId_${params.chatId}`
 			});
 		}
+		onRecentStartCallClick(params) {
+			ui_analytics.sendData({
+				tool: getCallTool(),
+				category: AnalyticsCategory.messenger,
+				event: AnalyticsEvent.clickCallButton,
+				type: params.isGroupChat ? AnalyticsType.groupCall : AnalyticsType.privateCall,
+				c_section: AnalyticsSection.chatList,
+				c_sub_section: AnalyticsSubSection.contextMenu,
+				c_element: AnalyticsElement.videocall,
+				p5: `chatId_${params.chatId}`
+			});
+		}
 		onChatStartConferenceClick(params) {
 			ui_analytics.sendData({
-				tool: AnalyticsTool.im,
+				tool: getCallTool(),
 				category: AnalyticsCategory.call,
 				event: AnalyticsEvent.clickStartConf,
 				type: AnalyticsType.videoconf,
@@ -891,7 +994,7 @@ this.BX.Call = this.BX.Call || {};
 		}
 		onJoinConferenceClick(params) {
 			ui_analytics.sendData({
-				tool: AnalyticsTool.im,
+				tool: getCallTool(),
 				category: AnalyticsCategory.call,
 				event: AnalyticsEvent.clickJoin,
 				type: AnalyticsType.videoconf,
@@ -907,9 +1010,18 @@ this.BX.Call = this.BX.Call || {};
 		}
 		onOpenCallSettings(params) {
 			ui_analytics.sendData({
-				tool: AnalyticsTool.im,
+				tool: getCallTool(),
 				category: AnalyticsCategory.call,
 				event: AnalyticsEvent.openSettings,
+				type: params.callType,
+				p5: `callId_${params.callId}`
+			});
+		}
+		onDeleteUser(params) {
+			ui_analytics.sendData({
+				tool: getCallTool(),
+				category: AnalyticsCategory.call,
+				event: AnalyticsEvent.deleteUser,
 				type: params.callType,
 				p5: `callId_${params.callId}`
 			});
@@ -929,7 +1041,7 @@ this.BX.Call = this.BX.Call || {};
 			}
 			if (event) {
 				ui_analytics.sendData({
-					tool: AnalyticsTool.im,
+					tool: getCallTool(),
 					category: AnalyticsCategory.call,
 					event,
 					type: params.callType,
@@ -952,7 +1064,7 @@ this.BX.Call = this.BX.Call || {};
 			}
 			if (event) {
 				ui_analytics.sendData({
-					tool: AnalyticsTool.im,
+					tool: getCallTool(),
 					category: AnalyticsCategory.call,
 					event,
 					type: params.callType,
@@ -975,7 +1087,7 @@ this.BX.Call = this.BX.Call || {};
 			}
 			if (event) {
 				ui_analytics.sendData({
-					tool: AnalyticsTool.im,
+					tool: getCallTool(),
 					category: AnalyticsCategory.call,
 					event,
 					type: params.callType,
@@ -985,7 +1097,7 @@ this.BX.Call = this.BX.Call || {};
 		}
 		onAllowPermissionToSpeakResponse(params) {
 			ui_analytics.sendData({
-				tool: AnalyticsTool.im,
+				tool: getCallTool(),
 				category: AnalyticsCategory.call,
 				event: AnalyticsEvent.approveRequest,
 				type: params.callType,
@@ -994,7 +1106,7 @@ this.BX.Call = this.BX.Call || {};
 		}
 		onDisallowPermissionToSpeakResponse(params) {
 			ui_analytics.sendData({
-				tool: AnalyticsTool.im,
+				tool: getCallTool(),
 				category: AnalyticsCategory.call,
 				event: AnalyticsEvent.denyRequest,
 				type: params.callType,

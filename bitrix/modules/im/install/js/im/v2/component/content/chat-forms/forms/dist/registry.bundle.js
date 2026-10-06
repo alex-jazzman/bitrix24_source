@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports, im_v2_const, im_v2_lib_createChat, main_core_events, main_popup, im_public, im_v2_component_content_chatForms_elements, im_v2_component_elements_avatar, im_v2_lib_permission, im_v2_provider_service_chat, im_v2_lib_feature, socialnetwork_v2_application_projectWizard, socialnetwork_v2_model_interface, im_v2_lib_utils, im_v2_application_core, main_core, im_v2_lib_helpdesk, socialnetwork_collab_accessRights, ui_iconSet_api_vue, im_v2_lib_promo, im_v2_lib_notifier, im_v2_lib_analytics, im_v2_lib_confirm) {
+(function (exports, im_v2_const, im_v2_lib_createChat, main_core_events, main_popup, im_v2_component_content_chatForms_elements, im_v2_component_elements_avatar, im_v2_lib_permission, im_v2_provider_service_chat, im_v2_lib_feature, socialnetwork_v2_application_projectWizard, socialnetwork_v2_model_interface, im_v2_lib_utils, im_v2_lib_layout, im_public, im_v2_application_core, main_core, im_v2_lib_helpdesk, socialnetwork_collab_accessRights, ui_iconSet_api_vue, im_v2_lib_promo, im_v2_lib_notifier, im_v2_lib_analytics, im_v2_lib_confirm) {
 	'use strict';
 
 	// @vue/component
@@ -113,13 +113,11 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				});
 				this.isCreating = false;
 				this.exitByCreation = true;
-				im_v2_lib_createChat.CreateChatManager.getInstance().setCreationStatus(false);
-				void im_public.Messenger.openChat(newDialogId);
+				void im_v2_lib_createChat.CreateChatManager.getInstance().completeChatCreation(newDialogId);
 			},
 			onCancelClick() {
 				this.exitByCancel = true;
-				im_v2_lib_createChat.CreateChatManager.getInstance().setCreationStatus(false);
-				void im_public.Messenger.openChat();
+				void im_v2_lib_createChat.CreateChatManager.getInstance().cancelChatCreation();
 			},
 			onAvatarChange(newAvatarFile) {
 				this.avatarFile = newAvatarFile;
@@ -253,7 +251,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			this.createForm = new socialnetwork_v2_application_projectWizard.ProjectWizard({
 				action: socialnetwork_v2_model_interface.TYPES_PROJECT_WIZARD_ACTION.CREATE,
 				container: this.$refs['form-container'],
-				onCancel: () => this.openChatLayout(),
+				onCancel: () => this.restoreOriginLayout(),
 				onSave: ({
 					chatId
 				}) => this.openCollab(chatId)
@@ -264,8 +262,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			this.createForm?.unmount();
 		},
 		methods: {
-			openChatLayout() {
-				void im_public.Messenger.openChat();
+			restoreOriginLayout() {
+				void im_v2_lib_layout.LayoutManager.getInstance().restoreOriginLayout();
 			},
 			openCollab(chatId) {
 				const dialogId = im_v2_lib_utils.Utils.dialog.buildChatDialogId(chatId);
@@ -499,8 +497,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 					});
 					this.isCreating = false;
 					this.exitByCreation = true;
-					im_v2_lib_createChat.CreateChatManager.getInstance().setCreationStatus(false);
-					await im_public.Messenger.openChat(newDialogId);
+					await im_v2_lib_createChat.CreateChatManager.getInstance().completeChatCreation(newDialogId);
 					this.getEmitter().emit(im_v2_const.EventType.header.openAddToChatPopup);
 				} catch {
 					this.isCreating = false;
@@ -508,8 +505,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			},
 			onCancelClick() {
 				this.exitByCancel = true;
-				im_v2_lib_createChat.CreateChatManager.getInstance().setCreationStatus(false);
-				im_public.Messenger.openChat();
+				void im_v2_lib_createChat.CreateChatManager.getInstance().cancelChatCreation();
 			},
 			onAvatarChange(newAvatarFile) {
 				this.avatarFile = newAvatarFile;
@@ -764,13 +760,11 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				});
 				this.isCreating = false;
 				this.exitByCreation = true;
-				im_v2_lib_createChat.CreateChatManager.getInstance().setCreationStatus(false);
-				void im_public.Messenger.openChat(newDialogId);
+				void im_v2_lib_createChat.CreateChatManager.getInstance().completeChatCreation(newDialogId);
 			},
 			onCancelClick() {
 				this.exitByCancel = true;
-				im_v2_lib_createChat.CreateChatManager.getInstance().setCreationStatus(false);
-				void im_public.Messenger.openChat();
+				void im_v2_lib_createChat.CreateChatManager.getInstance().cancelChatCreation();
 			},
 			onAvatarChange(newAvatarFile) {
 				this.avatarFile = newAvatarFile;
@@ -1006,13 +1000,11 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 					newDialogId
 				} = result;
 				this.isCreating = false;
-				im_v2_lib_createChat.CreateChatManager.getInstance().setCreationStatus(false);
-				void im_public.Messenger.openChat(newDialogId);
+				void im_v2_lib_createChat.CreateChatManager.getInstance().completeChatCreation(newDialogId);
 			},
 			onCancelClick() {
 				this.exitByCancel = true;
-				im_v2_lib_createChat.CreateChatManager.getInstance().setCreationStatus(false);
-				im_public.Messenger.openChat();
+				void im_v2_lib_createChat.CreateChatManager.getInstance().cancelChatCreation();
 			},
 			onScroll() {
 				main_popup.MenuManager.getMenuById(im_v2_const.PopupType.createChatManageUsersAddMenu)?.close();
@@ -1244,13 +1236,11 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				});
 				this.isCreating = false;
 				this.exitByCreation = true;
-				im_v2_lib_createChat.CreateChatManager.getInstance().setCreationStatus(false);
-				void im_public.Messenger.openChat(newDialogId);
+				void im_v2_lib_createChat.CreateChatManager.getInstance().completeChatCreation(newDialogId);
 			},
 			onCancelClick() {
 				this.exitByCancel = true;
-				im_v2_lib_createChat.CreateChatManager.getInstance().setCreationStatus(false);
-				im_public.Messenger.openChat();
+				void im_v2_lib_createChat.CreateChatManager.getInstance().cancelChatCreation();
 			},
 			onAvatarChange(newAvatarFile) {
 				this.avatarFile = newAvatarFile;
@@ -2489,6 +2479,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	exports.CollabV2CopyContent = CollabV2CopyContent;
 	exports.CreateChatContent = CreateChatContent;
 	exports.UpdateChatContent = UpdateChatContent;
-
-})(this.BX.Messenger.v2.Component.Content = this.BX.Messenger.v2.Component.Content || {}, BX?.Messenger?.v2?.Const??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Event??{}, BX?.Main??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Component?.Content??{}, BX?.Messenger?.v2?.Component?.Elements??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Service??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Socialnetwork?.V2?.Application??{}, BX?.Socialnetwork?.V2?.Model??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Application??{}, BX??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Socialnetwork?.Collab??{}, BX?.UI?.IconSet??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{});
+})(this.BX.Messenger.v2.Component.Content = this.BX.Messenger.v2.Component.Content || {}, BX?.Messenger?.v2?.Const??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Event??{}, BX?.Main??{}, BX?.Messenger?.v2?.Component?.Content??{}, BX?.Messenger?.v2?.Component?.Elements??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Service??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Socialnetwork?.V2?.Application??{}, BX?.Socialnetwork?.V2?.Model??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Application??{}, BX??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Socialnetwork?.Collab??{}, BX?.UI?.IconSet??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{});;
 //# sourceMappingURL=registry.bundle.js.map

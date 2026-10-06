@@ -22,6 +22,7 @@ class CBPScheduledTrigger extends \Bitrix\Bizproc\Activity\BaseTrigger
 	public const PROPERTY_WEEK_DAYS = 'WeekDays';
 	public const PROPERTY_MONTH_DAY = 'MonthDay';
 	public const PROPERTY_YEAR_MONTH = 'YearMonth';
+	public const RETURN_PROPERTY_SCHEDULED_AT = 'ScheduledAt';
 
 	public function __construct($name)
 	{
@@ -35,12 +36,23 @@ class CBPScheduledTrigger extends \Bitrix\Bizproc\Activity\BaseTrigger
 			self::PROPERTY_WEEK_DAYS => [],
 			self::PROPERTY_MONTH_DAY => null,
 			self::PROPERTY_YEAR_MONTH => null,
+			self::RETURN_PROPERTY_SCHEDULED_AT => null,
 		];
+
+		$this->setPropertiesTypes([
+			self::RETURN_PROPERTY_SCHEDULED_AT => [
+				'Type' => FieldType::DATETIME,
+			],
+		]);
 	}
 
 	public function execute(): int
 	{
-		return CBPActivityExecutionStatus::Closed;
+		$context = $this->getEventData();
+
+		$this->{self::RETURN_PROPERTY_SCHEDULED_AT} = $this->createScheduledAtValue($context['scheduledAt'] ?? null);
+
+		return \CBPActivityExecutionStatus::Closed;
 	}
 
 	public static function getPropertiesDialogValues(
@@ -50,7 +62,7 @@ class CBPScheduledTrigger extends \Bitrix\Bizproc\Activity\BaseTrigger
 		&$workflowParameters,
 		&$workflowVariables,
 		$currentValues,
-		&$errors
+		&$errors,
 	): bool
 	{
 		$errors = [];
@@ -146,7 +158,7 @@ class CBPScheduledTrigger extends \Bitrix\Bizproc\Activity\BaseTrigger
 		];
 	}
 
-	public static function validateProperties($arTestProperties = [], CBPWorkflowTemplateUser $user = null): array
+	public static function validateProperties($arTestProperties = [], ?CBPWorkflowTemplateUser $user = null): array
 	{
 		$errors = [];
 
@@ -205,21 +217,45 @@ class CBPScheduledTrigger extends \Bitrix\Bizproc\Activity\BaseTrigger
 	}
 
 	/**
+	 * The queue may still hold messages stamped in the culture format by the previous version, so only a
+	 * strict DATE_ATOM match is read as an absolute moment; anything else goes to the culture-format parser.
+	 */
+	private function createScheduledAtValue(mixed $value): ?\Bitrix\Main\Type\DateTime
+	{
+		if (!is_string($value) || $value === '')
+		{
+			return $this->createDateTimeValue($value);
+		}
+
+		$scheduledAt = \DateTimeImmutable::createFromFormat(DATE_ATOM, $value);
+		if ($scheduledAt === false)
+		{
+			return $this->createDateTimeValue($value);
+		}
+
+		return \Bitrix\Main\Type\DateTime::createFromTimestamp($scheduledAt->getTimestamp());
+	}
+
+	private function createDateTimeValue(mixed $value): ?\Bitrix\Main\Type\DateTime
+	{
+		// CBPHelper reads every form a dispatcher may send, including the serialized bizproc datetime
+		// whose trailing offset a plain DateTime constructor would drop.
+		$timestamp = CBPHelper::makeTimestamp($value);
+
+		return $timestamp > 0 ? \Bitrix\Main\Type\DateTime::createFromTimestamp($timestamp) : null;
+	}
+
+	/**
 	 * @return array
 	 */
 	protected static function getScheduleTypes(): array
 	{
 		return [
-			\Bitrix\Bizproc\Internal\Service\Trigger\Schedule\ScheduleType::Hourly->value =>
-				Loc::getMessage('BPSCT_SCHEDULE_TYPE_HOURLY'),
-			\Bitrix\Bizproc\Internal\Service\Trigger\Schedule\ScheduleType::Daily->value =>
-				Loc::getMessage('BPSCT_SCHEDULE_TYPE_DAILY'),
-			\Bitrix\Bizproc\Internal\Service\Trigger\Schedule\ScheduleType::Weekly->value =>
-				Loc::getMessage('BPSCT_SCHEDULE_TYPE_WEEKLY'),
-			\Bitrix\Bizproc\Internal\Service\Trigger\Schedule\ScheduleType::Monthly->value =>
-				Loc::getMessage('BPSCT_SCHEDULE_TYPE_MONTHLY'),
-			\Bitrix\Bizproc\Internal\Service\Trigger\Schedule\ScheduleType::Yearly->value =>
-				Loc::getMessage('BPSCT_SCHEDULE_TYPE_YEARLY'),
+			\Bitrix\Bizproc\Internal\Service\Trigger\Schedule\ScheduleType::Hourly->value => Loc::getMessage('BPSCT_SCHEDULE_TYPE_HOURLY'),
+			\Bitrix\Bizproc\Internal\Service\Trigger\Schedule\ScheduleType::Daily->value => Loc::getMessage('BPSCT_SCHEDULE_TYPE_DAILY'),
+			\Bitrix\Bizproc\Internal\Service\Trigger\Schedule\ScheduleType::Weekly->value => Loc::getMessage('BPSCT_SCHEDULE_TYPE_WEEKLY'),
+			\Bitrix\Bizproc\Internal\Service\Trigger\Schedule\ScheduleType::Monthly->value => Loc::getMessage('BPSCT_SCHEDULE_TYPE_MONTHLY'),
+			\Bitrix\Bizproc\Internal\Service\Trigger\Schedule\ScheduleType::Yearly->value => Loc::getMessage('BPSCT_SCHEDULE_TYPE_YEARLY'),
 		];
 	}
 

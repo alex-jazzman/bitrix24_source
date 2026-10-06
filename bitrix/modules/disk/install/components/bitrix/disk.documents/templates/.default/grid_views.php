@@ -28,15 +28,11 @@ $activeButtonId = match (true) {
 
 $switcherId = 'disk-documents-grid-view-switcher-target';
 $isDocumentsPage = $arResult['VARIANT'] !== DocumentGridVariant::FlipchartList;
-$boostButtonContainerId = 'document-list-boost-button-container';
 ?>
 <div class="disk-documents-grid-view-switcher">
 	<div class="ui-actions-bar">
 		<div class="ui-actions-bar__panel" id="<?= $switcherId?>">
 		</div>
-		<?php if ($isDocumentsPage): ?>
-			<div id="<?= $boostButtonContainerId?>" style="margin-left: auto;"> </div>
-		<?php endif; ?>
 	</div>
 </div>
 <?php
@@ -52,6 +48,8 @@ $isBitrix24Template && $this->endViewTarget();
 </script>
 <?php if ($isDocumentsPage): ?>
 <script>
-	BX.Disk.PromoBoost.Factory.getSessionBoostButton('<?= $boostButtonContainerId?>').init();
+	BX.ready(function() {
+		BX.Disk.PromoBoost.Factory.getToolbarSessionBoostButton('.js-disk-promo-boost-button').init();
+	});
 </script>
 <?php endif; ?>

@@ -25,6 +25,11 @@ jn.define('sign/grid/item-factory/document', (require, exports, module) => {
 	const { useCallback } = require('utils/function');
 	const { Loc } = require('loc');
 	const { UserProfile } = require('user-profile');
+	const { showConfirm } = require('sign/dialog/banners/template');
+	const { annul: annulDocument, cancelAnnulment } = require('sign/connector');
+	const { NotifyManager } = require('notify-manager');
+	const { showToast, showErrorToast, Position } = require('toast');
+	const { Icon: AssetsIcon } = require('assets/icons');
 
 	const DOCUMENT_IMAGE_NAMES = { default: 'sign-doc.svg', pdf: 'pdf-doc.svg', zip: 'zip-doc.svg' };
 
@@ -59,6 +64,7 @@ jn.define('sign/grid/item-factory/document', (require, exports, module) => {
 					this.renderDownloadButton(),
 				),
 				this.renderActionButton(),
+				this.renderAnnulButton(),
 				this.renderBadge(),
 			);
 		}
@@ -252,11 +258,53 @@ jn.define('sign/grid/item-factory/document', (require, exports, module) => {
 			});
 		}
 
+		renderAnnulButton()
+		{
+			// The mark lives on the current user's own member record, so the predicate
+			// mirrors the backend one (SIGNER role, DONE status) instead of the whole
+			// document status: a signing already completed inside a still-running
+			// document is annullable, exactly as in the web grids. canAnnul is
+			// owner-scope only (true even for in-progress docs the user created), so
+			// the per-record guard has to stay here.
+			if (!this.isDocumentAnnulAvailable()
+				|| !this.canAnnul()
+				|| this.getMyMemberRole() !== MemberRole.SIGNER.value
+				|| !MemberStatus.isDoneStatus(this.getMyMemberStatus()))
+			{
+				return View();
+			}
+
+			const buttonText = this.isDocumentAnnulled()
+				? Loc.getMessage('SIGN_MOBILE_GRID_CANCEL_ANNULMENT_BUTTON_TEXT')
+				: Loc.getMessage('SIGN_MOBILE_GRID_ANNUL_BUTTON_TEXT');
+
+			return Button({
+				text: buttonText,
+				testId: `document-${this.getMemberId(0)}-annulButton`,
+				size: ButtonSize.M,
+				design: ButtonDesign.OUTLINE_NO_ACCENT,
+				stretched: true,
+				onClick: this.#onAnnulButtonClickHandler,
+				style: {
+					marginTop: 10,
+				},
+			});
+		}
+
 		prepareSecondSideData()
 		{
 			let secondSideText = '';
 			let SecondSideDesign = ChipStatusDesign.NEUTRAL;
 			let secondSideMemberId = this.getMemberUserId(0);
+
+			if (this.isDocumentAnnulAvailable() && this.isDocumentAnnulled())
+			{
+				return {
+					secondSideText: Loc.getMessage('SIGN_MOBILE_GRID_SECOND_SIDE_STATUS_ANNULLED'),
+					SecondSideDesign: ChipStatusDesign.NEUTRAL,
+					secondSideMemberId,
+				};
+			}
 
 			if (InitiatedByType.isInitiatedByEmployee(this.getDocumentInitiatedType())
 				&& this.isInitiatorCurrentUser()
@@ -447,6 +495,69 @@ jn.define('sign/grid/item-factory/document', (require, exports, module) => {
 			});
 		};
 
+		#onAnnulButtonClickHandler = () => {
+			const isAnnulled = this.isDocumentAnnulled();
+
+			showConfirm({
+				title: Loc.getMessage(
+					isAnnulled
+						? 'SIGN_MOBILE_GRID_CANCEL_ANNULMENT_CONFIRM_TITLE'
+						: 'SIGN_MOBILE_GRID_ANNUL_CONFIRM_TITLE',
+				),
+				description: Loc.getMessage(
+					isAnnulled
+						? 'SIGN_MOBILE_GRID_CANCEL_ANNULMENT_CONFIRM_DESCRIPTION'
+						: 'SIGN_MOBILE_GRID_ANNUL_CONFIRM_DESCRIPTION',
+				),
+				confirmTitle: Loc.getMessage(
+					isAnnulled
+						? 'SIGN_MOBILE_GRID_CANCEL_ANNULMENT_BUTTON_TEXT'
+						: 'SIGN_MOBILE_GRID_ANNUL_BUTTON_TEXT',
+				),
+				cancelTitle: Loc.getMessage('SIGN_MOBILE_GRID_ANNUL_CONFIRM_CANCEL_BUTTON_TEXT'),
+				onConfirm: () => this.#runAnnulRequest(isAnnulled),
+			});
+		};
+
+		#runAnnulRequest(isAnnulled)
+		{
+			// The row's members collection carries the displayed counterparty, which
+			// for an employee-initiated document is the company representative, not
+			// the current user. The mark belongs to the current user's own record, so
+			// the request is always addressed to myMemberInProcess.
+			const memberId = this.getMyMemberId();
+			const request = isAnnulled ? cancelAnnulment : annulDocument;
+
+			NotifyManager.showLoadingIndicator();
+			request(memberId).then(() => {
+				NotifyManager.hideLoadingIndicatorWithoutFallback();
+				showToast(
+					{
+						message: Loc.getMessage(
+							isAnnulled
+								? 'SIGN_MOBILE_GRID_CANCEL_ANNULMENT_SUCCESS_TEXT'
+								: 'SIGN_MOBILE_GRID_ANNUL_SUCCESS_TEXT',
+						),
+						icon: AssetsIcon.CHECK,
+						position: Position.BOTTOM,
+						offset: 120,
+					},
+				);
+				BX.postComponentEvent('sign.grid:reload');
+			}).catch((response) => {
+				NotifyManager.hideLoadingIndicatorWithoutFallback();
+				// The backend explains why the action was rejected (no rights, feature
+				// off, not a b2e document, not done): show that instead of the generic
+				// text whenever the response carries a message.
+				const serverMessage = response?.errors?.[0]?.message;
+				showErrorToast({
+					message: serverMessage || Loc.getMessage('SIGN_MOBILE_GRID_ANNUL_ERROR_TEXT'),
+					position: Position.BOTTOM,
+					offset: 120,
+				});
+			});
+		}
+
 		getFileExtension()
 		{
 			return this.props.item?.file?.ext;
@@ -460,6 +571,21 @@ jn.define('sign/grid/item-factory/document', (require, exports, module) => {
 		getDocumentInitiatedType()
 		{
 			return this.props.item?.document?.initiatedByType;
+		}
+
+		isDocumentAnnulled()
+		{
+			return this.props.item?.document?.isAnnulled === true;
+		}
+
+		canAnnul()
+		{
+			return this.props.item?.document?.canAnnul === true;
+		}
+
+		isDocumentAnnulAvailable()
+		{
+			return this.params?.isDocumentAnnulAvailable === true;
 		}
 
 		getDocumentSendDate()
@@ -531,6 +657,16 @@ jn.define('sign/grid/item-factory/document', (require, exports, module) => {
 		getMyMemberUserId()
 		{
 			return this.props.item?.myMemberInProcess?.userId;
+		}
+
+		getMyMemberId()
+		{
+			return this.props.item?.myMemberInProcess?.id;
+		}
+
+		getMyMemberRole()
+		{
+			return this.props.item?.myMemberInProcess?.role;
 		}
 
 		getMemberRole(id)

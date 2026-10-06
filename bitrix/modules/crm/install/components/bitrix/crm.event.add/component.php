@@ -2,6 +2,8 @@
 
 if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
+use Bitrix\Main\Web\Uri;
+
 if (!CModule::IncludeModule('crm'))
 	return;
 
@@ -54,10 +56,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST')
 		$formID = 'CRM_'.trim($_POST['ENTITY_TYPE']).'_'.trim($_POST['FORM_TYPE']).'_V12';
 	}
 
-	$arResult['EVENT_PAGE'] = CHTTP::urlAddParams(
-		$eventPage,
-		array($formID.'_active_tab' => (!empty($_POST['TAB_ID']) ? $_POST['TAB_ID'] : 'tab_event'))
-	);
+	$arResult['EVENT_PAGE'] = (string)(new Uri($eventPage))->addParams(array($formID.'_active_tab' => (!empty($_POST['TAB_ID']) ? $_POST['TAB_ID'] : 'tab_event')));
 
 	if (check_bitrix_sessid())
 	{

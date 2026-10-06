@@ -8,5 +8,7 @@ $MESS['IM_LIST_COLLAB_V2_EMPTY_CHAT_TITLE'] = "В проекте пока нет
 $MESS['IM_LIST_COLLAB_V2_EMPTY_CHAT_SUBTITLE'] = "Создайте чат, чтобы начать обсуждение";
 $MESS['IM_LIST_COLLAB_V2_EMPTY_CALENDAR_TITLE'] = "Чатов по встречам пока нет";
 $MESS['IM_LIST_COLLAB_V2_EMPTY_CALENDAR_SUBTITLE'] = "Как только вы станете участником встречи, здесь появится чат";
+$MESS['IM_LIST_COLLAB_V2_EMPTY_COPILOT_TITLE'] = "Чатов с #COPILOT_NAME# пока нет";
+$MESS['IM_LIST_COLLAB_V2_EMPTY_COPILOT_SUBTITLE'] = "Они появятся, когда вы их создадите";
 $MESS['IM_LIST_COLLAB_UNREAD_EMPTY_STATE_TITLE'] = "Непрочитанных сообщений нет";
 $MESS['IM_LIST_COLLAB_UNREAD_EMPTY_STATE_SUBTITLE'] = "Все непрочитанные сообщения будут отображаться здесь";

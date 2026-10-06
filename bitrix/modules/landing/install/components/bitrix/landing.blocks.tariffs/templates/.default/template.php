@@ -5,6 +5,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 /** @var array $arParams */
+/** @var array $arResult */
 /** @var LandingBlocksTariffsComponent $component */
 /** @var \Bitrix\Landing\Landing $landing */
 /** @var \CMain $APPLICATION */
@@ -19,83 +20,220 @@ Loc::loadMessages(__FILE__);
 
 <div class="landing-block-table-container"></div>
 
-<script class="landing-block-tariff-script">
+<script class="landing-block-tariff-script" data-tariff-instance="<?= htmlspecialcharsbx($arResult['INSTANCE_ID']) ?>">
 	(function() {
+		// document.currentScript is not usable here: when the block is added in the editor, landing
+		// evaluates this code with BX.evalGlobal from a temporary script of <head>, while the script
+		// node of the block stays in the block markup carrying the instance attribute
+		const instanceId = '<?= CUtil::JSEscape($arResult['INSTANCE_ID']) ?>';
+		const instanceScripts = document.querySelectorAll(
+			'script.landing-block-tariff-script[data-tariff-instance="' + instanceId + '"]'
+		);
+		const script = Array.from(instanceScripts).find((node) => !node.landingTariffInited);
+		if (!script)
+		{
+			return;
+		}
+		script.landingTariffInited = true;
+
 		BX.ready(() => {
+			const block = script.closest('.landing-block') || script.parentElement;
+			if (!block)
+			{
+				return;
+			}
+
+			const container = block.querySelector('.landing-block-table-container');
+			let tableNode = null;
+
 			function isValidLink(link)
 			{
 				const reg = /#landing\d+|#block\d+|#crmFormPopup\d+|#crmPhone\d+/i;
+
 				return !reg.test(link);
 			}
 
+			function getValidHref(link)
+			{
+				if (!link)
+				{
+					return null;
+				}
+
+				const href = link.getAttribute('href');
+
+				return (href && isValidLink(href)) ? href : null;
+			}
+
+			const orderLinks = {
+				BASIC: block.querySelector('.landing-block-link-1'),
+				STD: block.querySelector('.landing-block-link-2'),
+				PRO: block.querySelector('.landing-block-link-3'),
+				ENT: block.querySelector('.landing-block-link-4'),
+			};
+
+			//button compare tariff
+			const compareLink = block.querySelector('.landing-block-link-5');
+
+			function getOrderLinkByCode(code)
+			{
+				if (!BX.Type.isString(code))
+				{
+					return null;
+				}
+				if (code === 'BASIC' || code === 'STD')
+				{
+					return orderLinks[code];
+				}
+				if (code === 'PRO100')
+				{
+					return orderLinks.PRO;
+				}
+				if (code.indexOf('ENT') === 0)
+				{
+					//all tariffs of the ENT line
+					return orderLinks.ENT;
+				}
+
+				return null;
+			}
+
+			function getEventData(event)
+			{
+				if (!event)
+				{
+					return null;
+				}
+
+				// a non array-like payload of BX.onCustomEvent reaches the handler as a BaseEvent
+				return BX.Type.isFunction(event.getData) ? event.getData() : event;
+			}
+
+			function isTheOnlyBlockOnPage()
+			{
+				return document.querySelectorAll('script.landing-block-tariff-script').length <= 1;
+			}
+
+			function isOwnTableClick(event)
+			{
+				if (!event || !tableNode || !container)
+				{
+					return false;
+				}
+
+				const target = event.event ? event.event.target : null;
+				if (!target || !BX.Type.isDomNode(target) || !target.closest)
+				{
+					// the producer does not mark clicks with the block, so a click that cannot be
+					// attributed is handled only while there is no other block to confuse it with
+					return isTheOnlyBlockOnPage();
+				}
+
+				if (container.contains(target))
+				{
+					return true;
+				}
+
+				return target.closest('.landing-block-table-container') === null && isTheOnlyBlockOnPage();
+			}
+
 			const option = <?= CUtil::PhpToJsObject($arParams['OPTION']) ?>;
-			if (option.partnerId && option.partnerId === 0)
+			if (option.partnerId === 0)
 			{
 				delete option.partnerId;
 			}
 			option.host = window.location.host;
+			option.replace = {
+				'order': {
+					'url': {},
+				},
+			};
 
-			const link1 = document.querySelector('.landing-block-link-1');
-			if (link1)
-			{
-				const href1 = link1.getAttribute("href");
-				if (href1 && isValidLink(href1))
+			Object.keys(orderLinks).forEach((code) => {
+				const href = getValidHref(orderLinks[code]);
+				if (href)
 				{
-					option.replace.order.url.BASIC = href1;
+					option.replace.order.url[code] = href;
 				}
-			}
+			});
 
-			const link2 = document.querySelector('.landing-block-link-2');
-			if (link2)
+			const compareHref = getValidHref(compareLink);
+			if (compareHref)
 			{
-				const href2 = link2.getAttribute("href");
-				if (href2 && isValidLink(href2))
-				{
-					option.replace.order.url.STD = href2;
-				}
-			}
-
-			const link3 = document.querySelector('.landing-block-link-3');
-			if (link3)
-			{
-				const href3 = link3.getAttribute("href");
-				if (href3 && isValidLink(href3))
-				{
-					option.replace.order.url.PRO = href3;
-				}
-			}
-
-			const link4 = document.querySelector('.landing-block-link-4');
-			if (link4)
-			{
-				const href4 = link4.getAttribute("href");
-				if (href4 && isValidLink(href4))
-				{
-					option.replace.order.url.ENT = href4;
-				}
-			}
-
-			//button compare tariff
-			const link5 = document.querySelector('.landing-block-link-5');
-			if (link5)
-			{
-				const href5 = link5.getAttribute("href");
-				if (href5 && isValidLink(href5))
-				{
-					option.replace.template = {
-						'message': {
-							'COMPARE': {
-								'BUTTON': {
-									'HREF': link5.getAttribute("href"),
-								},
+				option.replace.template = {
+					'message': {
+						'COMPARE': {
+							'BUTTON': {
+								'HREF': compareHref,
 							},
 						},
-					};
-				}
+					},
+				};
 			}
 
-			const script = document.querySelector('.landing-block-tariff-script');
 			script.setAttribute('data-sb-b24-table', JSON.stringify(option));
+
+			BX.addCustomEvent('BX.SB.Price.Application:onAfterLoadFromHtml', (event) => {
+				const data = getEventData(event);
+				if (!data || data.target !== script || !container)
+				{
+					return;
+				}
+
+				const application = data.Application;
+				const main = (application && application.nodes) ? application.nodes.main : null;
+				if (!BX.Type.isDomNode(main))
+				{
+					return;
+				}
+
+				container.append(main);
+				tableNode = main;
+
+				const infoElement = block.querySelector('.landing-block-info');
+				if (infoElement)
+				{
+					infoElement.hidden = true;
+				}
+			});
+
+			BX.addCustomEvent('BX.SB.Price.Order.Button:onClick', (event) => {
+				const data = getEventData(event);
+				if (!isOwnTableClick(data))
+				{
+					return;
+				}
+				if (data.event)
+				{
+					data.event.preventDefault();
+				}
+
+				const link = getOrderLinkByCode(data.code);
+				if (link)
+				{
+					link.click();
+				}
+			});
+
+			BX.addCustomEvent('BX.SB.Price.Compare.Button:onClick', (event) => {
+				const data = getEventData(event);
+				if (!isOwnTableClick(data) || !compareLink)
+				{
+					return;
+				}
+
+				const href = compareLink.getAttribute('href');
+				if (href === null || href === 'selectActions:')
+				{
+					return;
+				}
+
+				if (data.event)
+				{
+					data.event.preventDefault();
+				}
+				compareLink.click();
+			});
 
 			function getDomainZone(zone)
 			{
@@ -158,63 +296,19 @@ Loc::loadMessages(__FILE__);
 			(function(d, n, u) {
 				let s = d.createElement('script'), r = (Date.now() / 3600000 | 0);
 				s.async = 1;
+				// the external loader is a page singleton and exits at once on every run after the
+				// first, so a block added later has to ask the manager for its table itself;
+				// initFromScript skips the nodes already marked with data-sb-b24-loaded
+				s.onload = () => {
+					const table = BX.namespace('BX.SB.Landing.Prices.Intranet.Table');
+					if (table.Manager)
+					{
+						table.Manager.initFromScript();
+					}
+				};
 				s.src = u + '?' + r;
 				n.after(s);
 			})(document, script, url);
-			BX.addCustomEvent("BX.SB.Price.Application:onAfterLoadFromHtml", () => {
-				const table = document.querySelector('.bx-sb-b24-price-table');
-				if (table !== null)
-				{
-					const container = document.querySelector('.landing-block-table-container');
-					container.append(table);
-
-					const infoElement = document.querySelector('.landing-block-info');
-					infoElement.hidden = true;
-				}
-			});
-
-			BX.addCustomEvent('BX.SB.Price.Order.Button:onClick', function(event) {
-				event = event || window.event;
-				if (!!event.event)
-				{
-					event.event.preventDefault();
-				}
-				if (!BX.Type.isUndefined(event.code))
-				{
-					if (event.code === 'BASIC')
-					{
-						link1.click();
-					}
-					if (event.code === 'STD')
-					{
-						link2.click();
-					}
-					if (event.code === 'PRO100')
-					{
-						link3.click();
-					}
-					if (event.code.indexOf('ENT') === 0)
-					{
-						//all tariffs of the ENT line
-						link4.click();
-					}
-				}
-			});
-
-			BX.addCustomEvent('BX.SB.Price.Compare.Button:onClick', function(event) {
-				if (
-					link5.getAttribute("href") !== null
-					&& link5.getAttribute("href") !== 'selectActions:'
-				)
-				{
-					event = event || window.event;
-					if (!!event.event)
-					{
-						event.event.preventDefault();
-					}
-					link5.click();
-				}
-			});
 		});
 
 	})();

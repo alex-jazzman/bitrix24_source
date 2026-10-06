@@ -6,9 +6,9 @@ html{
 	}
 body{
 	font-family: "Helvetica Neue",Helvetica,sans-serif;
-			background: url(images/bg.png);
+	background: url(images/bg.png);
 	-webkit-background-size:7px;
-			background-size:7px;
+	background-size:7px;
 	height: 100%;
 	position: relative;
 	padding: 0;
@@ -169,26 +169,26 @@ body{
 
 .sitestatus{}
 .sitestatus.good{
-			background: url(images/sprite.png) no-repeat 96% -224px;
+	background: url(images/sprite.webp) no-repeat 96% -224px;
 	-webkit-background-size:auto 250px;
-			background-size:auto 250px;
+	background-size:auto 250px;
 }
 .goodicon{
 	margin: 0 auto;
 	height: 97px;
 	width: 96px;
-			background: url(images/sprite.png) no-repeat 0 -99px;
+	background: url(images/sprite.webp) no-repeat 0 -99px;
 	-webkit-background-size:auto 250px;
-			background-size:auto 250px;
-	}
+	background-size:auto 250px;
+}
 @media (max-height: 480px)
 {
 	.goodicon{display: none;}
 }
 .goodicon.imgtoleft{
-			background: url(images/sprite.png) no-repeat 0 -82px;
+	background: url(images/sprite.webp) no-repeat 0 -82px;
 	-webkit-background-size: 79px auto;
-			background-size: 79px auto;
+	background-size: 79px auto;
 	height: 82px;
 	width: 79px;
 	margin: auto;
@@ -199,18 +199,18 @@ body{
 	margin: 0 auto;
 	height: 99px;
 	width: 96px;
-			background: url(images/sprite.png) no-repeat 0 0;
+	background: url(images/sprite.webp) no-repeat 0 0;
 	-webkit-background-size:auto 250px;
-			background-size:auto 250px;
-	}
+	background-size:auto 250px;
+}
 @media (max-height: 480px)
 {
 	.badicon{display: none;}
 }
 .badicon.imgtoleft{
-			background: url(images/sprite.png) no-repeat 0 0;
+	background: url(images/sprite.webp) no-repeat 0 0;
 	-webkit-background-size: 79px auto;
-			background-size: 79px auto;
+	background-size: 79px auto;
 	height: 82px;
 	width: 79px;
 	margin: auto;
@@ -239,9 +239,9 @@ body{
 	box-shadow: inset 0 1px 0 0 #a6aeb4
 }
 .more_button.blue span{
-			background: url(images/sprite.png) no-repeat 0 -194px;
+	background: url(images/sprite.webp) no-repeat 0 -194px;
 	-webkit-background-size:auto 250px;
-			background-size:auto 250px;
+	background-size:auto 250px;
 	display: inline-block;
 	width: 13px;
 	height:37px;
@@ -280,9 +280,9 @@ body{
 	box-shadow: 0 1px 1px 0 #d2a21d
 }
 .more_button.yellow span{
-			background: url(images/sprite.png) no-repeat 100% -194px;
+	background: url(images/sprite.webp) no-repeat 100% -194px;
 	-webkit-background-size:auto 250px;
-			background-size:auto 250px;
+	background-size:auto 250px;
 	display: inline-block;
 	width: 14px;
 	height:37px;

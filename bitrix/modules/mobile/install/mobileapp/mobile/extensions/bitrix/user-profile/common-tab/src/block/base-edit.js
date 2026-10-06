@@ -23,7 +23,7 @@ jn.define('user-profile/common-tab/src/block/base-edit', (require, exports, modu
 					marginBottom: Indent.XL2.toNumber(),
 					paddingHorizontal: Component.areaPaddingLr.toNumber(),
 					borderRadius: 12,
-					backgroundColor: Color.bgContentPrimary.toHex(),
+					backgroundColor: Color.bgContentSecondaryInvert.toHex(),
 					paddingBottom: Indent.L.toNumber(),
 					...style,
 				},

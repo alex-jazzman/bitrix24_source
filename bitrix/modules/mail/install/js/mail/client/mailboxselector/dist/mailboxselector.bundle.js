@@ -63,6 +63,9 @@ this.BX.Mail = this.BX.Mail || {};
 				if (!row || !row.dataset || !row.dataset.id) {
 					return;
 				}
+				if (BX.Mail.Home.MessageList?.shouldRefuseMigrationActionForMessageIds?.([row.dataset.id]) === true) {
+					return;
+				}
 				if (row.getElementsByClassName('mail-msg-list-cell-unseen').length === 0) {
 					return;
 				}

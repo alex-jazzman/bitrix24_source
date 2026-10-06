@@ -6,6 +6,7 @@ $MESS["AI_ENGINE_ERROR_LIMIT_BAAS"] = "You're out of free training queries. You 
 $MESS["AI_ENGINE_ERROR_LIMIT_BAAS_MARKET"] = "You're out of free queries. [URL=#LINK#]Buy a Market subscription[/URL] and get unlimited CoPilot queries! This also includes unlimited access to 4200+ solutions for your business.";
 $MESS["AI_ENGINE_ERROR_LIMIT_BAAS_MARKET_MSGVER_1"] = "You're out of free queries. [URL=#LINK#]Buy a Market subscription[/URL] and get unlimited #COPILOT_NAME# queries! This also includes unlimited access to 4200+ solutions for your business.";
 $MESS["AI_ENGINE_ERROR_LIMIT_BAAS_MARKET_MSGVER_2"] = "You're out of free queries. [URL=#LINK#]Buy a #COPILOT_NAME# + Market subscription[/URL] to communicate with AI as much as you require. This also includes unlimited access to various solutions for your business.";
+$MESS["AI_ENGINE_ERROR_LIMIT_BAAS_MARKET_MSGVER_3"] = "You're out of free queries. [URL=#LINK#]Buy a #COPILOT_NAME# + Market subscription[/URL] and get unlimited AI queries! This also includes unlimited access to over 5000 solutions for your business, and the Bitrix24 Vibecode platform to have AI create your own solutions in no time.";
 $MESS["AI_ENGINE_ERROR_LIMIT_BAAS_MSGVER_1"] = "You're out of free training queries. You can upgrade by purchasing [URL=#LINK#]#COPILOT_NAME# credits[/URL].";
 $MESS["AI_ENGINE_ERROR_LIMIT_IS_EXCEEDED"] = "You have exceeded your service usage limit.";
 $MESS["AI_ENGINE_ERROR_LIMIT_IS_EXCEEDED_WITH_MORE"] = "You have exceeded your service usage limit. [URL=#LINK#]Learn more[/URL]";

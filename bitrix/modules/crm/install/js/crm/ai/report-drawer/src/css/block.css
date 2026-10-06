@@ -1,0 +1,203 @@
+.crm-ai-report-drawer__content-block {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	align-self: stretch;
+	padding: var(--ui-space-inset-xl, 24px);
+	border-radius: var(--ui-border-radius-3xl, 20px);
+	background: var(--ui-color-background-primary, #FFF);
+	box-shadow: var(--ui-shadow-bottom-2xs, 0px 1px 1px rgba(0, 0, 0, 0.06));
+}
+
+.crm-ai-report-drawer__content-block-header {
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+	align-items: flex-start;
+	width: 100%;
+	margin-bottom: var(--ui-space-stack-md, 16px);
+}
+
+.crm-ai-report-drawer__content-block-header.--minimized {
+	margin-bottom: 0;
+}
+
+.crm-ai-report-drawer__content-block-header-title-block,
+.crm-ai-report-drawer__content-block-header-search-block {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+}
+
+.crm-ai-report-drawer__content-block-header-main {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+}
+
+.crm-ai-report-drawer__content-block-header-title-block {
+	gap: var(--ui-space-inline-2xs2, 6px);
+}
+
+.crm-ai-report-drawer__content-block-header-meta {
+	margin-top: var(--ui-space-stack-2xs2, 6px);
+	min-width: 0;
+}
+
+.crm-ai-report-drawer__content-block-header-search-block {
+	justify-content: end;
+	gap: var(--ui-space-inline-sm, 12px);
+}
+
+.crm-ai-report-drawer__content-block-header-control {
+	display: flex;
+	align-items: center;
+	flex-shrink: 0;
+}
+
+.crm-ai-report-drawer__content-block-header-search {
+	overflow: hidden;
+}
+
+.crm-ai-report-drawer__content-block-header-search input {
+	border-radius: var(--ui-border-radius-sm, 8px);
+}
+
+.crm-ai-report-drawer__content-block-header-search .ui-ctl-icon.ui-ctl-icon-search.ui-ctl-after {
+	opacity: 0.3;
+}
+
+.crm-ai-report-drawer__content-block-header-search button.ui-ctl-after:active {
+	background-color: transparent;
+}
+
+.crm-ai-report-drawer__content-block-header-title {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	margin: 0;
+	gap: var(--ui-space-inline-2xs, 4px);
+	font-weight: var(--ui-font-weight-medium);
+	color: var(--ui-color-base-0);
+}
+
+.crm-ai-report-drawer__content-block-body {
+	letter-spacing: var(--ui-text-letter-spacing-neg-3);
+	color: var(--ui-color-base-1);
+}
+
+.crm-ai-report-drawer__content-block-content-meta {
+	margin-bottom: var(--ui-space-stack-xs, 8px);
+}
+
+.crm-ai-report-drawer__content-block-body .crm-ai-report-drawer__text-transcription {
+	white-space: pre-line;
+}
+
+.crm-ai-report-drawer__content-block-footer {
+	display: flex;
+	align-items: baseline;
+	width: 100%;
+	gap: var(--ui-space-inline-sm, 12px);
+	margin-top: var(--ui-space-stack-lg, 20px);
+}
+
+.crm-ai-report-drawer__content-block-message {
+	color: var(--ui-color-base-3);
+	min-width: 0;
+}
+
+.crm-ai-report-drawer__content-block-message span,
+.crm-ai-report-drawer__ai-alert span {
+	cursor: pointer;
+	text-decoration: underline;
+}
+
+.crm-ai-report-drawer__content-block-date {
+	margin-left: auto;
+	flex-shrink: 0;
+	white-space: nowrap;
+	color: var(--ui-color-base-4);
+}
+
+.crm-ai-report-drawer__content-block-body p {
+	padding-right: var(--ui-space-inset-6xl, 50px);
+	margin: 0;
+}
+
+.crm-ai-report-drawer__content-block-script-name {
+	color: var(--ui-color-base-2, rgba(82, 92, 105, 0.8));
+	font-weight: var(--ui-font-weight-bold, 500);
+}
+
+.crm-ai-report-drawer__content-block-script-name-highlight {
+	cursor: pointer;
+	color: var(--ui-color-blue-40, #7FDEFC);
+}
+
+.crm-ai-report-drawer__content-block-script-name.--legacy-assessment .crm-ai-report-drawer__content-block-script-name-highlight {
+	color: var(--ui-color-blue-90, #0075FF);
+}
+
+.crm-ai-report-drawer__content-block-header-transcription-icon {
+	display: inline-block;
+	-webkit-mask: var(--o-ui-icon-set__path_transcription) no-repeat center / 100% 100%;
+	mask: var(--o-ui-icon-set__path_transcription) no-repeat center / 100% 100%;
+	background:
+		linear-gradient(
+			to right,
+			var(--ui-color-design-tinted-bitrix-gpt-content-gradient-1) 25%,
+			var(--ui-color-design-tinted-bitrix-gpt-content-gradient-2) 35%,
+			var(--ui-color-design-tinted-bitrix-gpt-content-gradient-3) 50%,
+			var(--ui-color-design-tinted-bitrix-gpt-content-gradient-4) 75%,
+			var(--ui-color-design-tinted-bitrix-gpt-content-gradient-5) 90%
+		)
+		no-repeat
+	;
+	background-size: 100% 100%;
+	margin-left: -2px; /* .svg-file contains icon with offset from left border */
+	height: 24px;
+	width: 24px;
+}
+
+.crm-ai-report-drawer__content-block-header-summary-icon {
+	display: inline-block;
+	-webkit-mask: var(--o-ui-icon-set__path_file) no-repeat center / 100% 100%;
+	mask: var(--o-ui-icon-set__path_file) no-repeat center / 100% 100%;
+	background:
+		linear-gradient(
+			to right,
+			var(--ui-color-design-tinted-bitrix-gpt-content-gradient-1) 25%,
+			var(--ui-color-design-tinted-bitrix-gpt-content-gradient-2) 35%,
+			var(--ui-color-design-tinted-bitrix-gpt-content-gradient-3) 50%,
+			var(--ui-color-design-tinted-bitrix-gpt-content-gradient-4) 75%,
+			var(--ui-color-design-tinted-bitrix-gpt-content-gradient-5) 90%
+		)
+		no-repeat
+	;
+	background-size: 100% 100%;
+	margin-left: -6px; /* .svg-file contains icon with offset from left border */
+	height: 24px;
+	width: 24px;
+}
+
+.crm-ai-report-drawer__content-block-header-legacy-assessment-icon {
+	display: inline-block;
+	-webkit-mask: var(--o-ui-icon-set__path_copilot) no-repeat center / 100% 100%;
+	mask: var(--o-ui-icon-set__path_copilot) no-repeat center / 100% 100%;
+	background:
+		linear-gradient(
+			to right,
+			var(--ui-color-design-tinted-bitrix-gpt-content-gradient-1) 25%,
+			var(--ui-color-design-tinted-bitrix-gpt-content-gradient-2) 35%,
+			var(--ui-color-design-tinted-bitrix-gpt-content-gradient-3) 50%,
+			var(--ui-color-design-tinted-bitrix-gpt-content-gradient-4) 75%,
+			var(--ui-color-design-tinted-bitrix-gpt-content-gradient-5) 90%
+		)
+		no-repeat
+	;
+	background-size: 100% 100%;
+	margin-left: -5px; /* .svg-file contains icon with offset from left border */
+	height: 24px;
+	width: 24px;
+}

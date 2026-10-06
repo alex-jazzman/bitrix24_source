@@ -4,9 +4,12 @@ use Bitrix\Crm;
 use Bitrix\Crm\Component\EntityList\FieldRestrictionManager;
 use Bitrix\Crm\Component\EntityList\FieldRestrictionManagerTypes;
 use Bitrix\Crm\Component\EntityList\UserField\GridHeaders;
+use Bitrix\Crm\Filter\RelatedEntity;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Tracking;
 use Bitrix\Crm\WebForm\Manager as WebFormManager;
 use Bitrix\Main;
+use Bitrix\Main\Web\Uri;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
@@ -440,6 +443,11 @@ if($_SERVER['REQUEST_METHOD'] === 'GET')
 }
 
 $arFilter += $filterOptions->GetFilter($arResult['FILTER']);
+
+$relatedEntitiesParameters = ['filter' => $arFilter];
+RelatedEntity\GridFilterApplier::getDefault()->apply($relatedEntitiesParameters, CCrmOwnerType::Quote);
+$arFilter = $relatedEntitiesParameters['filter'];
+
 $CCrmUserType->PrepareListFilterValues($arResult['FILTER'], $arFilter, $arResult['GRID_ID']);
 $USER_FIELD_MANAGER->AdminListAddFilter(CCrmQuote::$sUFEntityID, $arFilter);
 
@@ -671,21 +679,18 @@ if ($CCrmUserType->NormalizeFields($arSelect))
 $arResult['ENABLE_TASK'] = IsModuleInstalled('tasks');
 if($arResult['ENABLE_TASK'])
 {
-	$arResult['TASK_CREATE_URL'] = CHTTP::urlAddParams(
-		CComponentEngine::MakePathFromTemplate(
+	$arResult['TASK_CREATE_URL'] = str_replace('__ENTITY_KEYS__', '#ENTITY_KEYS#', (string)(new Uri(CComponentEngine::MakePathFromTemplate(
 			COption::GetOptionString('tasks', 'paths_task_user_edit', ''),
 			array(
 				'task_id' => 0,
 				'user_id' => $userID
 			)
-		),
-		array(
-			'UF_CRM_TASK' => '#ENTITY_KEYS#',
-			'TITLE' => urlencode(GetMessage('CRM_TASK_TITLE_PREFIX')),
-			'TAGS' => urlencode(GetMessage('CRM_TASK_TAG')),
-			'back_url' => urlencode($arParams['PATH_TO_QUOTE_LIST'])
-		)
-	);
+		)))->addParams(array(
+			'UF_CRM_TASK' => '__ENTITY_KEYS__',
+			'TITLE' => GetMessage('CRM_TASK_TITLE_PREFIX'),
+			'TAGS' => GetMessage('CRM_TASK_TAG'),
+			'back_url' => $arParams['PATH_TO_QUOTE_LIST'],
+		)));
 }
 
 // Export all fields
@@ -1170,14 +1175,11 @@ if (!$preFetchWasEmpty)
 				])
 				->getUri()
 		;
-		$arQuote['PATH_TO_QUOTE_DELETE'] =  CHTTP::urlAddParams(
-			$bInternal ? $APPLICATION->GetCurPage() : $arParams['PATH_TO_QUOTE_LIST'],
-			[
+		$arQuote['PATH_TO_QUOTE_DELETE'] =  (string)(new Uri($bInternal ? $APPLICATION->GetCurPage() : $arParams['PATH_TO_QUOTE_LIST']))->addParams([
 				'action_' . $arResult['GRID_ID'] => 'delete',
 				'ID' => $entityID,
 				'sessid' => bitrix_sessid(),
-			]
-		);
+			]);
 		//region Contact
 		$contactID = isset($arQuote['~CONTACT_ID']) ? (int)$arQuote['~CONTACT_ID'] : 0;
 		$arQuote['PATH_TO_CONTACT_SHOW'] = $contactID <= 0
@@ -1440,29 +1442,24 @@ if (!$preFetchWasEmpty)
 
 		if ($arResult['ENABLE_TASK'])
 		{
-			$arQuote['PATH_TO_TASK_EDIT'] = CHTTP::urlAddParams(
-				CComponentEngine::MakePathFromTemplate(COption::GetOptionString('tasks', 'paths_task_user_edit', ''),
+			$arQuote['PATH_TO_TASK_EDIT'] = (string)(new Uri(CComponentEngine::MakePathFromTemplate(COption::GetOptionString('tasks', 'paths_task_user_edit', ''),
 					array(
 						'task_id' => 0,
 						'user_id' => $userID
 					)
-				),
-				array(
+				)))->addParams(array(
 					'UF_CRM_TASK' => 'D_'.$entityID,
-					'TITLE' => urlencode(GetMessage('CRM_TASK_TITLE_PREFIX').' '),
-					'TAGS' => urlencode(GetMessage('CRM_TASK_TAG')),
-					'back_url' => urlencode($arParams['PATH_TO_QUOTE_LIST'])
-				)
-			);
+					'TITLE' => GetMessage('CRM_TASK_TITLE_PREFIX').' ',
+					'TAGS' => GetMessage('CRM_TASK_TAG'),
+					'back_url' => $arParams['PATH_TO_QUOTE_LIST'],
+				));
 		}
 
 		if (IsModuleInstalled('sale'))
 		{
 			$arQuote['PATH_TO_INVOICE_ADD'] =
-				CHTTP::urlAddParams(CComponentEngine::makePathFromTemplate(
-					$arParams['PATH_TO_INVOICE_EDIT'], array('invoice_id' => 0)),
-					array('quote' => $entityID)
-				);
+				(string)(new Uri(CComponentEngine::makePathFromTemplate(
+					$arParams['PATH_TO_INVOICE_EDIT'], array('invoice_id' => 0))))->addParams(array('quote' => $entityID));
 		}
 
 		$arQuote['ASSIGNED_BY_ID'] = $arQuote['~ASSIGNED_BY_ID'] = intval($arQuote['ASSIGNED_BY']);
@@ -1632,10 +1629,7 @@ if($arResult['ENABLE_TOOLBAR'])
 
 	if(!empty($addParams))
 	{
-		$arResult['PATH_TO_QUOTE_ADD'] = CHTTP::urlAddParams(
-			$arResult['PATH_TO_QUOTE_ADD'],
-			$addParams
-		);
+		$arResult['PATH_TO_QUOTE_ADD'] = (string)(new Uri($arResult['PATH_TO_QUOTE_ADD']))->addParams($addParams);
 	}
 }
 

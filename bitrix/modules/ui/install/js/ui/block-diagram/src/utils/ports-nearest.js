@@ -5,6 +5,8 @@ import type {
 	Point,
 	DiagramPort,
 	DiagramBlockId,
+	DiagramPortId,
+	DiagramPortRect,
 	DiagramPortsMap,
 	State,
 	DiagramInstancesContext,
@@ -24,6 +26,8 @@ export class PortsNearest
 		this.#state = ctx.state;
 	}
 
+	// Builds the index from scratch for the given set. This is also the rebuild path: insertion
+	// does not rebalance, so a gesture that accumulated enough inserts comes back here.
 	init(portsMap: DiagramPortsMap): void
 	{
 		const { portsRectMap } = this.#state;
@@ -33,9 +37,15 @@ export class PortsNearest
 		{
 			for (const [portId, port] of ports.entries())
 			{
-				const { x = 0, y = 0 } = toValue(portsRectMap)
-					?.[blockId]
-					?.[portId] ?? {};
+				// Same invariant as addPort: an unmeasured port stays out of the index.
+				const portRect = toValue(portsRectMap)?.[blockId]?.[portId] ?? null;
+
+				if (portRect === null)
+				{
+					continue;
+				}
+
+				const { x = 0, y = 0 } = portRect;
 
 				portsPoint.push({
 					x,
@@ -52,6 +62,38 @@ export class PortsNearest
 			distance,
 			[PORT_X_KEY, PORT_Y_KEY],
 		);
+	}
+
+	// A port joins the visible set before its geometry is measured. Adding an unmeasured port
+	// would plant a phantom target at the world origin, so it is refused here and picked up by a
+	// later pass instead. A caller that has already resolved the rect passes it in; the lookup
+	// here is the fallback, not a second check.
+	addPort(
+		blockId: DiagramBlockId,
+		portId: DiagramPortId,
+		port: DiagramPort,
+		rect: DiagramPortRect | null = null,
+	): boolean
+	{
+		const { portsRectMap } = this.#state;
+		const portRect = rect ?? (toValue(portsRectMap)?.[blockId]?.[portId] ?? null);
+
+		if (portRect === null || this.#portsKdTree === null)
+		{
+			return false;
+		}
+
+		const { x = 0, y = 0 } = portRect;
+
+		this.#portsKdTree.insert({
+			x,
+			y,
+			blockId,
+			portId,
+			port: { ...port },
+		});
+
+		return true;
 	}
 
 	insert(point: Point, blockId: DiagramBlockId, port: DiagramPort): void

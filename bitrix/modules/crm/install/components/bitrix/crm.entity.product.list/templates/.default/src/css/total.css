@@ -1,6 +1,6 @@
 :root {
 	--crm-product-list-dark-color: #525c69;
-	--crm-product-list-light-color: rgba(82,92,105,.5);
+	--crm-product-list-light-color: #6a737f;
 }
 
 .crm-product-list-payment-side-table {
@@ -79,7 +79,7 @@
 
 .crm-product-list-result-grid-benefit,
 .crm-product-list-result-grid-benefit .crm-product-list-result-grid-total {
-	color: #6e881a;
+	color: #5c7010;
 }
 
 .crm-product-list-result-grid-benefit .crm-product-list-result-grid-item {

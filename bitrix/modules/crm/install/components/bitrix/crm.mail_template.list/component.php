@@ -1,5 +1,15 @@
 <?php
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
+
+use Bitrix\Main\Web\Uri;
+use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\MailTemplate\MailTemplateAccess;
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)
+	die();
+
+/**
+ * @var array $arParams
+ */
 
 if (!CModule::IncludeModule('crm'))
 {
@@ -29,16 +39,16 @@ if($userID <= 0)
 $arResult['USER_ID'] = $userID;
 
 $userAccessCodes = array();
-$res = \CAccess::getUserCodes($userID, array('PROVIDER_ID' => 'intranet'));
+$res = CAccess::getUserCodes($userID, array('PROVIDER_ID' => 'intranet'));
 while ($item = $res->fetch())
 	$userAccessCodes[] = $item['ACCESS_CODE'];
 
 $checkIfCanEdit = function ($ownerId, $scope) use (&$userID, &$userAccessCodes)
 {
-	if (\CCrmPerms::isAdmin() || $ownerId == $userID)
+	if (CCrmPerms::isAdmin() || $ownerId == $userID)
 		return true;
 
-	if (\CCrmMailTemplateScope::Common == $scope && in_array(sprintf('IU%u', $ownerId), $userAccessCodes))
+	if (CCrmMailTemplateScope::Common == $scope && in_array(sprintf('IU%u', $ownerId), $userAccessCodes))
 		return true;
 
 	return false;
@@ -46,15 +56,15 @@ $checkIfCanEdit = function ($ownerId, $scope) use (&$userID, &$userAccessCodes)
 
 $checkIfCanDelete = function ($ownerId, $scope) use (&$userID, &$userAccessCodes)
 {
-	if (\CCrmPerms::isAdmin() || $ownerId == $userID)
+	if (CCrmPerms::isAdmin() || $ownerId == $userID)
 		return true;
 
 	return false;
 };
 
 $arResult['GRID_ID'] = 'CRM_MAIL_TEMPLATE_LIST';
-$arResult['FORM_ID'] = isset($arParams['FORM_ID']) ? $arParams['FORM_ID'] : '';
-$arResult['TAB_ID'] = isset($arParams['TAB_ID']) ? $arParams['TAB_ID'] : '';
+$arResult['FORM_ID'] = $arParams['FORM_ID'] ?? '';
+$arResult['TAB_ID'] = $arParams['TAB_ID'] ?? '';
 
 $arResult['HEADERS'] = array(
 	array('id' => 'ID', 'name' => GetMessage('CRM_COLUMN_MAIL_TEMPLATE_ID'), 'sort' => 'ID', 'default' => false, 'editable' => false),
@@ -95,7 +105,7 @@ if(check_bitrix_sessid())
 			}
 			else
 			{
-				$IDs = isset($_POST['ID']) ? $_POST['ID'] : array();
+				$IDs = $_POST['ID'] ?? [];
 				foreach($IDs as $ID)
 				{
 					$dbResult = CCrmMailTemplate::GetList(array(), array('=ID' => $ID), false, false, array('OWNER_ID', 'TITLE', 'SCOPE'));
@@ -122,7 +132,7 @@ if(check_bitrix_sessid())
 		elseif($arResult['CAN_EDIT'] && $action === 'edit' && isset($_POST['FIELDS']) && is_array($_POST['FIELDS']))
 		{
 			$errors = array();
-			foreach($_POST['FIELDS'] as $ID => &$data)
+			foreach($_POST['FIELDS'] as $ID => $data)
 			{
 				$dbResult = CCrmMailTemplate::GetList(array(), array('=ID' => $ID), false, false, array('OWNER_ID', 'SCOPE'));
 				$curFields = $dbResult->Fetch();
@@ -252,7 +262,7 @@ if(check_bitrix_sessid())
 			}
 		}
 
-		LocalRedirect(CHTTP::urlDeleteParams($curPageUrl, array('conv')));
+		LocalRedirect((string)(new Uri($curPageUrl))->deleteParams(['conv']));
 	}
 }
 
@@ -267,7 +277,7 @@ $gridSorting = $gridOptions->GetSorting(
 $sort = $arResult['SORT'] = $gridSorting['sort'];
 $arResult['SORT_VARS'] = $gridSorting['vars'];
 
-if(\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->isAdmin())
+if(Container::getInstance()->getUserPermissions()->isAdmin())
 {
 	$filter = [
 		'LOGIC' => 'OR',
@@ -285,7 +295,7 @@ else
 		'LOGIC' => 'OR',
 		'=OWNER_ID' => $userID,
 		'=SCOPE' => CCrmMailTemplateScope::Common,
-		'@ID' => \Bitrix\Crm\MailTemplate\MailTemplateAccess::getAllAvailableSharedTemplatesId((int)$userID),
+		'@ID' => MailTemplateAccess::getAllAvailableSharedTemplatesId((int)$userID),
 	];
 }
 
@@ -322,14 +332,13 @@ while($fields = $dbResult->GetNext())
 
 	if($fields['CAN_DELETE'])
 	{
-		$fields['PATH_TO_DELETE'] =
-			CHTTP::urlAddParams(
-				CComponentEngine::MakePathFromTemplate(
-					$arParams['PATH_TO_MAIL_TEMPLATE_LIST'],
-					array('element_id' => $ID)
-				),
-				array('action_'.$arResult['GRID_ID'] => 'delete', 'ID' => $ID, 'sessid' => bitrix_sessid())
-			);
+		$path = CComponentEngine::MakePathFromTemplate(
+			$arParams['PATH_TO_MAIL_TEMPLATE_LIST'],
+			array('element_id' => $ID)
+		);
+		$fields['PATH_TO_DELETE'] = (string)(new Uri($path))
+			->addParams(['action_'.$arResult['GRID_ID'] => 'delete', 'ID' => $ID, 'sessid' => bitrix_sessid()])
+		;
 	}
 
 	$items[] = $fields;
@@ -342,16 +351,17 @@ $arResult['ITEMS'] = &$items;
 $arResult['NEED_FOR_CONVERTING'] = false;
 if(CCrmPerms::IsAdmin())
 {
-	$curPage = $APPLICATION->GetCurPage();
 	if(COption::GetOptionString('crm', '~CRM_MAIL_TEMPLATE_LIST_CONVERTING', 'N') !== 'Y'
 		&& COption::GetOptionString('crm', 'email_from') !== '')
 	{
 		$arResult['NEED_FOR_CONVERTING'] = true;
+		$curPage = $APPLICATION->GetCurPage();
 		$sessid = bitrix_sessid();
-		$arResult['CONV_EXEC_URL'] = CHTTP::urlAddParams($curPage, array('conv' => 'exec', 'sessid' => $sessid));
-		$arResult['CONV_SKIP_URL'] = CHTTP::urlAddParams($curPage, array('conv' => 'skip', 'sessid' => $sessid));
+		$arResult['CONV_EXEC_URL'] = (string)(new Uri($curPage))->addParams(['conv' => 'exec', 'sessid' => $sessid]);
+		$arResult['CONV_SKIP_URL'] = (string)(new Uri($curPage))->addParams(['conv' => 'skip', 'sessid' => $sessid]);
 	}
 }
 
-$arResult['MESSAGE_VIEW_ID'] = isset($arParams['MESSAGE_VIEW_ID']) ? $arParams['MESSAGE_VIEW_ID'] : '';
+$arResult['MESSAGE_VIEW_ID'] = $arParams['MESSAGE_VIEW_ID'] ?? '';
+
 $this->IncludeComponentTemplate();

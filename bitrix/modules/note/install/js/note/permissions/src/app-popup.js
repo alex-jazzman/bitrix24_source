@@ -1,14 +1,17 @@
-import { Dom, Event, Loc, Tag, Type } from 'main.core';
+import { Dom, Event, Loc, Tag, Text, Type } from 'main.core';
 import { PopupManager } from 'main.popup';
 import { AirButtonStyle, Button, ButtonSize } from 'ui.buttons';
 import { TagSelector } from 'ui.entity-selector';
 import { Hint } from 'ui.hint';
+import { Checkbox, CheckboxSize } from 'ui.system.checkbox';
 import { Dialog } from 'ui.system.dialog';
 import { NoteThemeContext } from 'note.ui.theme-context';
 import { NotePermissionsMembers } from './app-members';
 import {
 	ENTITY_TYPE_META_USER,
 	META_USER_ALL_USERS,
+	SCOPE_DOCUMENT,
+	SCOPE_SUBTREE,
 } from './constants';
 import type { LevelSection, Member, PermissionLevel } from './type';
 
@@ -24,6 +27,9 @@ export class NotePermissionsPopup extends NotePermissionsMembers
 			useAirDesign: true,
 			text: this.popupConfig.primaryButtonText
 				|| this.getMessage('NOTE_PERMISSIONS_POPUP_SAVE'),
+			// Identity for tests: the footer buttons are otherwise reachable only through
+			// ui.system.dialog internals (`.ui-system-dialog__footer button.--style-filled`).
+			dataset: { testid: 'note-permissions-save' },
 			onclick: () => {
 				if (!this.canSavePermissions)
 				{
@@ -42,6 +48,7 @@ export class NotePermissionsPopup extends NotePermissionsMembers
 			style: AirButtonStyle.PLAIN,
 			useAirDesign: true,
 			text: this.getMessage('NOTE_PERMISSIONS_POPUP_CANCEL'),
+			dataset: { testid: 'note-permissions-cancel' },
 			onclick: () => this.popup?.hide(),
 		});
 
@@ -215,9 +222,67 @@ export class NotePermissionsPopup extends NotePermissionsMembers
 			this.popupNameInput = null;
 		}
 
+		const scopeBlock = this.buildScopeBlock();
+		if (scopeBlock)
+		{
+			// Scope control sits above the level sections, next to the document identity.
+			Dom.prepend(scopeBlock, container);
+		}
+
 		this.sectionsContainer = container.querySelector('.note-permissions-popup__sections');
 
 		return container;
+	}
+
+	// Subtree-scope checkbox: document mode only and only once the server confirms the
+	// feature is available. A single toggle drives every editable grant uniformly.
+	// `ui.system.checkbox` wraps a real <input type="checkbox">, so keyboard access and the
+	// accessible name come from the platform — no ARIA augmentation needed here.
+	buildScopeBlock(): HTMLElement | null
+	{
+		this.scopeCheckbox = null;
+
+		if (this.popupConfig?.kind !== 'document' || !this.subtreeAvailable)
+		{
+			return null;
+		}
+
+		// Reflect an existing subtree grant so the initial state matches the data; a
+		// mixed hydrated state stays untouched until the user explicitly flips the toggle.
+		this.subtreeScopeEnabled = this.hasSubtreeMember();
+
+		const inputId = `note-permissions-scope-${Number(this.popupConfig?.targetId) || 0}`;
+		const titleText = this.getMessage('NOTE_PERMISSIONS_POPUP_SCOPE_TITLE');
+		const hintText = this.getMessage('NOTE_PERMISSIONS_POPUP_SCOPE_HINT');
+
+		const checkbox = new Checkbox({
+			checked: this.subtreeScopeEnabled,
+			size: CheckboxSize.Md,
+			attributes: { id: inputId },
+			onChange: ({ checked }) => this.handleScopeToggle(checked === true),
+		});
+
+		// The checkbox renders its own <label> around the box, so the caption is a sibling
+		// <label for>, not a wrapper — nesting labels would be invalid markup.
+		const block = Tag.render`
+			<div class="note-permissions-popup__scope">
+				${checkbox.render()}
+				<label class="note-permissions-popup__scope-text" for="${inputId}">
+					<span class="note-permissions-popup__scope-title">${titleText}</span>
+					<span class="note-permissions-popup__scope-hint">${hintText}</span>
+				</label>
+			</div>
+		`;
+
+		this.scopeCheckbox = checkbox;
+
+		return block;
+	}
+
+	handleScopeToggle(enabled: boolean): void
+	{
+		this.subtreeScopeEnabled = enabled === true;
+		this.applyScopeToEditableMembers(this.subtreeScopeEnabled ? SCOPE_SUBTREE : SCOPE_DOCUMENT);
 	}
 
 	mountSections(): void
@@ -279,6 +344,8 @@ export class NotePermissionsPopup extends NotePermissionsMembers
 		const selector = this.createSectionSelector(section);
 		selector.renderTo(selectorContainer);
 		this.applyThemeToSelector(selector);
+		// Covers tags that were already materialised before `onAfterTagAdd` was subscribed.
+		this.decorateInheritedTags(selector, section.level);
 
 		this.sectionSelectors[section.level] = selector;
 
@@ -303,6 +370,10 @@ export class NotePermissionsPopup extends NotePermissionsMembers
 	createSectionSelector(section: LevelSection): Object
 	{
 		const preselectedItems = this.buildPreselectedItems(section.level);
+		// Inherited grants ride in as ordinary preselected items — that is what resolves their
+		// real names through the entity providers — but `undeselectedItems` makes the platform
+		// render them without a remove cross and refuse deselection.
+		const undeselectedItems = this.buildInheritedItems(section.level);
 		const entities = this.buildEntitiesForSection();
 
 		const isMobile = document.documentElement.classList.contains('note-mobile');
@@ -316,6 +387,7 @@ export class NotePermissionsPopup extends NotePermissionsMembers
 				context: `${this.popupConfig.tagSelectorContext}_${String(section.level).toUpperCase()}`,
 				entities,
 				preselectedItems,
+				undeselectedItems,
 				height: isMobile ? 280 : 420,
 				// Disable keyboard-focus on the first list item: after every ajax load and on tab change
 				// Dialog calls focusOnFirstNode() → itemNode.focus(), which blurs the textbox and
@@ -370,6 +442,13 @@ export class NotePermissionsPopup extends NotePermissionsMembers
 					},
 				},
 			},
+			events: {
+				// Preselected items resolve asynchronously through the providers, so inherited
+				// tags appear after construction — this is where their "inherited" hint is attached.
+				onAfterTagAdd: (event) => {
+					this.decorateInheritedTag(section.level, event?.getData?.()?.tag);
+				},
+			},
 		});
 
 		if (isMobile)
@@ -390,13 +469,42 @@ export class NotePermissionsPopup extends NotePermissionsMembers
 	{
 		const items: [string, string][] = [];
 		const map = this.byLevel?.[level];
-		if (!map)
+		if (map)
 		{
-			return items;
+			for (const member of map.values())
+			{
+				if (member.entityId && member.entityItemId)
+				{
+					items.push([member.entityId, member.entityItemId]);
+				}
+			}
 		}
 
-		for (const member of map.values())
+		// Inherited grants are shown inside the selector rather than in a separate list, so they
+		// are preselected too. They stay out of `byLevel`, hence out of the save payload.
+		for (const item of this.buildInheritedItems(level))
 		{
+			items.push(item);
+		}
+
+		return items;
+	}
+
+	// A subject can hold both an inherited grant from an ancestor and an explicit grant of its own
+	// at the same level — different rows, same tag in the selector. The explicit one wins here: it
+	// is the row this popup owns, and listing the subject as inherited would preselect it twice and
+	// lock the tag through `undeselectedItems`, leaving the moderator unable to revoke their own
+	// grant. Revoking it uncovers the inherited grant, which reappears as read-only on reopen.
+	buildInheritedItems(level: PermissionLevel): [string, string][]
+	{
+		const items: [string, string][] = [];
+		for (const member of this.getInheritedMembers(level))
+		{
+			if (this.hasExplicitMember(level, member.subjectCode))
+			{
+				continue;
+			}
+
 			if (member.entityId && member.entityItemId)
 			{
 				items.push([member.entityId, member.entityItemId]);
@@ -404,6 +512,74 @@ export class NotePermissionsPopup extends NotePermissionsMembers
 		}
 
 		return items;
+	}
+
+	// Is this subject covered by a grant made ON this document (as opposed to an inherited one)?
+	hasExplicitMember(level: PermissionLevel, subjectCode: string): boolean
+	{
+		return this.byLevel?.[level]?.has(String(subjectCode || '')) === true;
+	}
+
+	// The hint names the document the grant comes from whenever the server reported it: the tag is
+	// read-only here, so without the source name a moderator has no way to find where to revoke.
+	buildInheritedHint(member: Object): string
+	{
+		const sourceTitle = String(member?.sourceDocumentTitle || '').trim();
+		if (sourceTitle === '')
+		{
+			return this.getMessage('NOTE_PERMISSIONS_POPUP_INHERITED_HINT');
+		}
+
+		return this.getMessage('NOTE_PERMISSIONS_POPUP_INHERITED_HINT_FROM')
+			.replace('#DOCUMENT#', Text.encode(sourceTitle))
+		;
+	}
+
+	// Marks a tag that stands for an inherited grant with the "inherited from the parent document"
+	// hint. Non-removability itself comes from `undeselectedItems`, not from here.
+	decorateInheritedTag(level: PermissionLevel, tag: Object | null): void
+	{
+		if (!tag || typeof tag.getContainer !== 'function')
+		{
+			return;
+		}
+
+		const subjectCode = this.encodeSubjectCode(
+			String(tag.getEntityId?.() || ''),
+			String(tag.getId?.() || ''),
+		);
+		const member = this.inheritedByLevel?.[level]?.get(subjectCode);
+		// An own grant on the same subject keeps the tag removable, so it must not be dressed up as
+		// read-only inherited either.
+		if (!subjectCode || !member || this.hasExplicitMember(level, subjectCode))
+		{
+			return;
+		}
+
+		const container = tag.getContainer();
+		if (!container)
+		{
+			return;
+		}
+
+		Dom.addClass(container, 'note-permissions-popup__inherited-tag');
+		container.setAttribute('data-hint', this.buildInheritedHint(member));
+		container.setAttribute('data-hint-no-icon', 'Y');
+		Hint.initNode(container);
+	}
+
+	decorateInheritedTags(selector: Object, level: PermissionLevel): void
+	{
+		const tags = selector?.getTags?.();
+		if (!Array.isArray(tags))
+		{
+			return;
+		}
+
+		for (const tag of tags)
+		{
+			this.decorateInheritedTag(level, tag);
+		}
 	}
 
 	buildEntitiesForSection(): Array<Object>
@@ -490,6 +666,14 @@ export class NotePermissionsPopup extends NotePermissionsMembers
 			return;
 		}
 
+		// Inherited grants live outside byLevel; `undeselectedItems` should already block this,
+		// so the guard only keeps a stray deselect from silently doing nothing meaningful. A subject
+		// that ALSO holds an own grant is not blocked — that grant is exactly what is being revoked.
+		if (!this.hasExplicitMember(level, subjectCode) && this.inheritedByLevel?.[level]?.has(subjectCode))
+		{
+			return;
+		}
+
 		this.removeMemberFromLevel(level, subjectCode);
 		this.updateValidationState();
 	}
@@ -537,6 +721,10 @@ export class NotePermissionsPopup extends NotePermissionsMembers
 			title,
 			entityId,
 			entityItemId,
+			// A newly added grant follows the current scope toggle.
+			scope: this.subtreeScopeEnabled ? SCOPE_SUBTREE : SCOPE_DOCUMENT,
+			inherited: false,
+			sourceDocumentId: null,
 		};
 	}
 

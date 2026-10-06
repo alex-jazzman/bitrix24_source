@@ -51,7 +51,7 @@ export class UserService
 		catch (errors)
 		{
 			console.error('UserService: leave collab error', errors[0]);
-			Notifier.collab.onLeaveError();
+			Notifier.collab.onLeaveError(errors[0]);
 		}
 	}
 
@@ -68,7 +68,6 @@ export class UserService
 	async kickUserFromCollab(dialogId: string, userId: number): void
 	{
 		const members = Utils.user.prepareSelectorIds(userId);
-
 		const payload = {
 			data: { dialogId, members },
 		};
@@ -76,7 +75,7 @@ export class UserService
 		await runAction(RestMethod.socialnetworkMemberDelete, payload)
 			.catch(([error]) => {
 				console.error('UserService: error kicking from collab', error);
-				Notifier.collab.onKickUserError();
+				Notifier.collab.onKickUserError(error);
 			});
 	}
 

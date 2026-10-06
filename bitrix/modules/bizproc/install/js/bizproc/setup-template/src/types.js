@@ -3,7 +3,7 @@ export type Block = {
 };
 
 export type ItemType = 'delimiter' | 'title' | 'description' | 'constant';
-export type ConstantType = 'string' | 'int' | 'user' | 'file' | 'time';
+export type ConstantType = 'string' | 'int' | 'user' | 'file' | 'time' | 'date' | 'datetime' | 'bool';
 export type DelimiterType = 'line';
 
 export type Item = {
@@ -45,4 +45,17 @@ export type SetupTemplateData = {
 	instanceId: string,
 	blocks: ?Array<Block>,
 	userId: number,
+};
+
+/**
+ * Repeated needs_review payload for the callback fill flow: the blocks to
+ * re-render (already prefilled with the values the server echoed) plus the
+ * constant codes the server still reports as missing (`requiredConstants`) or
+ * invalid (`invalidConstants`), so the form can highlight fields and explain
+ * why the panel stayed open.
+ */
+export type FieldsSubmitReview = {
+	blocks: Array<Block>,
+	requiredConstants?: Array<string>,
+	invalidConstants?: Array<string>,
 };

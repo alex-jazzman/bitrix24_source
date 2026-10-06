@@ -19,9 +19,11 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	'ui.alerts',
 	'ui.buttons',
 	'ui.entity-selector',
+	'ui.dialogs.messagebox',
 	'calendar.util',
 	'ui.tour',
 	'ui.mail.sender-selector',
+	'ui.system.chip',
 ]);
 
 \CJSCore::Init("loader");
@@ -87,79 +89,103 @@ $renderField = function($htmlFormId, $field, $isExt = false, $version, $renderFi
 				break;
 
 			case 'from':
+				$senderContainerId = sprintf('%s_container', $htmlFieldId);
 				?>
 				<td class="main-mail-form-fields-table-cell <?=$titleSubClass ?>">
 					<span class="main-mail-form-field-spacer-25"></span>
 					<label class="main-mail-form-field-title" id="<?=$htmlFieldId ?>_label"><?=preg_replace('/[\r\n]+/', '<br>', htmlspecialcharsbx($field['title'])) ?>:</label>
 				</td>
-				<td class="main-mail-form-fields-table-cell <?=$valueSubClass ?>" id="main-mail-from-field">
+				<td class="main-mail-form-fields-table-cell <?=$valueSubClass ?>" id="<?=$senderContainerId ?>">
 					<?php $mailboxes = $APPLICATION->includeComponent('bitrix:main.mail.confirm', '', []); ?>
+					<?php if (!empty($field['senderIdName'])): ?>
+						<input
+							type="hidden"
+							id="<?=$htmlFieldId ?>_sender_id"
+							name="<?=htmlspecialcharsbx($field['senderIdName']) ?>"
+							value=""
+							disabled
+						>
+					<?php endif; ?>
+					<?php if (!empty($field['mailboxIdName'])): ?>
+						<input
+							type="hidden"
+							id="<?=$htmlFieldId ?>_mailbox_id"
+							name="<?=htmlspecialcharsbx($field['mailboxIdName']) ?>"
+							value=""
+							disabled
+						>
+					<?php endif; ?>
 					<script>
-						fieldId = '<?= CUtil::JSEscape($htmlFieldId) ?>_value';
-						if (BX.UI.Mail?.SenderSelector && !fieldId.includes('crm_mail_template_edit_form'))
 						{
-							const senderSelector = new BX.UI.Mail.SenderSelector({
-								fieldId: '<?= CUtil::JSEscape($htmlFieldId) ?>_value',
-								fieldName: '<?= CUtil::JSEscape(htmlspecialcharsbx($field['name'])) ?>',
-								fieldValue: '<?= CUtil::JSEscape(htmlspecialcharsbx($field['value'])) ?>',
-								mailboxes: <?= Json::encode($field['mailboxes']) ?>,
-								isSenderAvailable: <?= Json::encode($renderFieldOptions['isSenderAvailable']) ?>,
-							});
-							senderSelector.renderTo(BX('main-mail-from-field'));
-							var senderButton = BX('main-mail-from-field').querySelector('.sender-selector-button');
-							if (senderButton)
+							const senderContainer = BX('<?= CUtil::JSEscape($senderContainerId) ?>');
+							const fieldId = '<?= CUtil::JSEscape($htmlFieldId) ?>_value';
+							if (BX.UI.Mail?.SenderSelector && !fieldId.includes('crm_mail_template_edit_form'))
 							{
-								senderButton.setAttribute('tabindex', '0');
-								senderButton.setAttribute('aria-haspopup', 'dialog');
-								senderButton.setAttribute('aria-expanded', 'false');
-								senderButton.setAttribute('aria-labelledby', '<?= CUtil::JSEscape($htmlFieldId) ?>_label');
-								<?php if (!empty($field['required'])): ?>
-								senderButton.setAttribute('aria-required', 'true');
-								<?php endif; ?>
-								senderButton.addEventListener('keydown', function(e) {
-									if (e.key === 'Enter' || e.key === ' ')
-									{
-										e.preventDefault();
-										senderButton.click();
-									}
+								const senderSelector = new BX.UI.Mail.SenderSelector({
+									fieldId: '<?= CUtil::JSEscape($htmlFieldId) ?>_value',
+									fieldName: '<?= CUtil::JSEscape(htmlspecialcharsbx($field['name'])) ?>',
+									fieldValue: '<?= CUtil::JSEscape(htmlspecialcharsbx($field['value'])) ?>',
+									initialSenderId: <?= Json::encode((int)($field['senderId'] ?? 0) ?: null) ?>,
+									initialMailboxId: <?= Json::encode((int)($field['mailboxId'] ?? 0) ?: null) ?>,
+									mailboxes: <?= Json::encode($field['mailboxes']) ?>,
+									isSenderAvailable: <?= Json::encode($renderFieldOptions['isSenderAvailable']) ?>,
 								});
-								senderSelector.senderDialog?.subscribe('onShow', function() {
-									senderButton.setAttribute('aria-expanded', 'true');
-								});
-								senderSelector.senderDialog?.subscribe('onHide', function() {
+								senderSelector.renderTo(senderContainer);
+								const senderButton = senderContainer.querySelector('.sender-selector-button');
+								if (senderButton)
+								{
+									senderButton.setAttribute('tabindex', '0');
+									senderButton.setAttribute('aria-haspopup', 'dialog');
 									senderButton.setAttribute('aria-expanded', 'false');
-								});
-							}
-						}
-						else
-						{
-							const oldSelector = BX.Tag.render`
-								<div>
-									<input type="hidden"
-										id="<?= $htmlFieldId ?>_value"
-										name="<?= htmlspecialcharsbx($field['name']) ?>"
-										value="<?= htmlspecialcharsbx($field['value']) ?>"
-									>
-									<span class="main-mail-form-field-spacer-25"></span>
-									<span class="main-mail-form-field-from-icon"></span>
-									<button type="button" class="main-mail-form-field-title main-mail-form-field-value-menu"
-										aria-labelledby="<?= $htmlFieldId ?>_label"
-										aria-haspopup="listbox"
-										aria-expanded="false"
-										<?php if (!empty($field['required'])): ?> aria-required="true"<?php endif; ?>>
-										<?= htmlspecialcharsbx($field['value'] ?: $field['placeholder']); ?>
-									</button>
-									<?php if (!empty($field['copy'])): ?>
-										<label class="main-mail-form-field-from-copy">
-											<span class="main-mail-form-field-spacer-25"></span>
-											<input class="main-mail-form-field-from-copy-checkbox" type="checkbox"
-												name="<?=htmlspecialcharsbx($field['copy']) ?>" value="Y" id="<?=$htmlFieldId ?>_copy">
-											<span class="main-mail-form-field-title main-mail-form-field-from-copy-text"><?=getMessage('MAIN_MAIL_FORM_FROM_FIELD_COPY') ?></span>
-										</label>
+									senderButton.setAttribute('aria-labelledby', '<?= CUtil::JSEscape($htmlFieldId) ?>_label');
+									<?php if (!empty($field['required'])): ?>
+									senderButton.setAttribute('aria-required', 'true');
 									<?php endif; ?>
-								</div>
-							`;
-							BX.Dom.append(oldSelector, BX('main-mail-from-field'))
+									senderButton.addEventListener('keydown', function(e) {
+										if (e.key === 'Enter' || e.key === ' ')
+										{
+											e.preventDefault();
+											senderButton.click();
+										}
+									});
+									senderSelector.senderDialog?.subscribe('onShow', function() {
+										senderButton.setAttribute('aria-expanded', 'true');
+									});
+									senderSelector.senderDialog?.subscribe('onHide', function() {
+										senderButton.setAttribute('aria-expanded', 'false');
+									});
+								}
+							}
+							else
+							{
+								const oldSelector = BX.Tag.render`
+									<div>
+										<input type="hidden"
+											id="<?= $htmlFieldId ?>_value"
+											name="<?= htmlspecialcharsbx($field['name']) ?>"
+											value="<?= htmlspecialcharsbx($field['value']) ?>"
+										>
+										<span class="main-mail-form-field-spacer-25"></span>
+										<span class="main-mail-form-field-from-icon"></span>
+										<button type="button" class="main-mail-form-field-title main-mail-form-field-value-menu"
+											aria-labelledby="<?= $htmlFieldId ?>_label"
+											aria-haspopup="listbox"
+											aria-expanded="false"
+											<?php if (!empty($field['required'])): ?> aria-required="true"<?php endif; ?>>
+											<?= htmlspecialcharsbx($field['value'] ?: $field['placeholder']); ?>
+										</button>
+										<?php if (!empty($field['copy'])): ?>
+											<label class="main-mail-form-field-from-copy">
+												<span class="main-mail-form-field-spacer-25"></span>
+												<input class="main-mail-form-field-from-copy-checkbox" type="checkbox"
+													name="<?=htmlspecialcharsbx($field['copy']) ?>" value="Y" id="<?=$htmlFieldId ?>_copy">
+												<span class="main-mail-form-field-title main-mail-form-field-from-copy-text"><?=getMessage('MAIN_MAIL_FORM_FROM_FIELD_COPY') ?></span>
+											</label>
+										<?php endif; ?>
+									</div>
+								`;
+								BX.Dom.append(oldSelector, senderContainer);
+							}
 						}
 					</script>
 				</td>
@@ -303,8 +329,14 @@ $renderField = function($htmlFormId, $field, $isExt = false, $version, $renderFi
 
 	?></tr><?
 };
+
+$isDraftLoading = !empty($arParams['DRAFT_LOADING']);
 ?>
-<div class="main-mail-form-wrapper" id="<?=$htmlFormId ?>">
+<div
+	class="main-mail-form-wrapper<?=$isDraftLoading ? ' main-mail-form-draft-loading' : '' ?>"
+	id="<?=$htmlFormId ?>"
+	<?=$isDraftLoading ? 'inert aria-busy="true"' : '' ?>
+>
 	<div class="main-mail-form-fields-wrapper">
 		<table class="main-mail-form-fields-table" role="presentation">
 			<?php
@@ -364,7 +396,10 @@ $renderField = function($htmlFormId, $field, $isExt = false, $version, $renderFi
 		{
 			if($mailbox['formated'] == $fromField['value'] && !empty($mailbox['signature']))
 			{
-				$editorValue = '<div id="main-mail-form-signature"><br />--<br />'.$mailbox['signature'].'</div>';
+				$editorValue = '<div id="main-mail-form-signature" class="main-mail-form-signature"><br />--<br />'
+					. $mailbox['signature']
+					. '</div>'
+				;
 				break;
 			}
 		}
@@ -493,7 +528,7 @@ $renderField = function($htmlFormId, $field, $isExt = false, $version, $renderFi
 
 	<div class="main-mail-form-error" role="alert" aria-live="assertive"></div>
 	<div class="main-mail-form-footer-wrapper">
-		<div class="main-mail-form-footer">
+		<div class="main-mail-form-footer<?=$isDraftLoading ? ' main-mail-form-draft-loading-footer' : '' ?>">
 			<div class="main-mail-form-footer-buttons-wrapper">
 				<?php foreach ($arParams['BUTTONS'] as $type => $item)
 				{
@@ -550,6 +585,12 @@ BX.ready(function()
 			'version'  => $arParams['VERSION'],
 			'calendarSharingTourId' => $arParams['CALENDAR_SHARING_TOUR_ID'],
 			'userCalendarPath' => $arParams['USER_CALENDAR_PATH'],
+			'composeClientId' => $arParams['DRAFT_CLIENT_ID'] ?? '',
+			'composeMode' => $arParams['DRAFT_MODE'] ?? 'new',
+			'composeParentMessageId' => isset($arParams['DRAFT_PARENT_MESSAGE_ID'])
+				? (int)$arParams['DRAFT_PARENT_MESSAGE_ID']
+				: null,
+			'attachmentReminderEnabled' => $arParams['ATTACHMENT_REMINDER_ENABLED'],
 		)) ?>
 	);
 	<?php if (empty($arParams['LAYOUT_ONLY'])): ?>

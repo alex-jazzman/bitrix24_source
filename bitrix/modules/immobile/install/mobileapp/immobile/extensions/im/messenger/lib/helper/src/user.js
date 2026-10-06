@@ -6,6 +6,7 @@ jn.define('im/messenger/lib/helper/user', (require, exports, module) => {
 	const { Type } = require('type');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { LoggerManager } = require('im/messenger/lib/logger');
+	const { MessengerParams } = require('im/messenger/lib/params');
 	const { UserType, BotCode } = require('im/messenger/const');
 
 	const logger = LoggerManager.getInstance().getLogger('helpers--user');
@@ -70,6 +71,14 @@ jn.define('im/messenger/lib/helper/user', (require, exports, module) => {
 		}
 
 		/**
+		 * @return {boolean}
+		 */
+		static isCurrentUserGuest()
+		{
+			return MessengerParams.getUserInfo()?.type === UserType.guest;
+		}
+
+		/**
 		 * @param {UsersModelState} userModel
 		 */
 		constructor(userModel)
@@ -85,6 +94,11 @@ jn.define('im/messenger/lib/helper/user', (require, exports, module) => {
 		get isCollaber()
 		{
 			return this.userModel.type === UserType.collaber;
+		}
+
+		get isGuest()
+		{
+			return this.userModel.type === UserType.guest;
 		}
 
 		get isExtranet()

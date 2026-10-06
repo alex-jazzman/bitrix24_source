@@ -96,33 +96,18 @@ export default class Toolbar
 	static createBoard(analyticsElement = null)
 	{
 		const newTab = window.open('', '_blank');
-		const config = {};
-		if (analyticsElement)
-		{
-			config.analytics = {
-				event: 'create',
-				tool: 'boards',
-				category: 'boards',
-				c_element: analyticsElement,
-			};
-		}
-		BX.ajax.runAction('disk.integration.flipchart.createDocument', config)
-			.then((response) => {
-				if (response.status === 'success' && response.data.file)
+		BX.Disk.BoardCreate.createBoard({
+			newTab,
+			analyticsElement,
+			onSuccess: () => {
+				const manager = BX.Main.gridManager || BX.Main.tileGridManager;
+				const grid = manager.getById('diskDocumentsGrid')?.instance;
+				if (grid)
 				{
-					const manager = BX.Main.gridManager || BX.Main.tileGridManager;
-					const grid = manager.getById('diskDocumentsGrid')?.instance;
-					if (grid)
-					{
-						grid.reload();
-					}
-
-					if (response.data.viewUrl)
-					{
-						newTab.location.href = response.data.viewUrl;
-					}
+					grid.reload();
 				}
-			});
+			},
+		});
 	}
 
 	static createDocx(service, element, nodeName, analytics)

@@ -3,6 +3,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
 }
+use \Bitrix\Landing\Sanitizer;
 use \Bitrix\Main\Localization\Loc;
 Loc::loadLanguageFile(__FILE__);
 
@@ -24,7 +25,7 @@ $currentLanding = $arResult['LANDINGS'][$arParams['LANDING_ID']] ?? null;
 		?>data-hint="<?=Loc::getMessage('LANDING_SELECTOR_HINT_SEARCH_PAGE')?>" <?
 		?>data-hint-no-icon class="landing-selector-result-picture" <?
 		?>id="landing-selector-picture" <?
-		?>style="background-image: url(<?= $currentLanding ? \htmlspecialcharsbx($currentLanding->getAvatar()) : '/bitrix/images/landing/nopreview.jpg'?>);"></div>
+		?>style="background-image: url(<?= $currentLanding ? \htmlspecialcharsbx(Sanitizer::sanitizeCssUrl((string)$currentLanding->getAvatar())) : '/bitrix/images/landing/nopreview.jpg'?>);"></div>
 	<input class="landing-selector-input-text" id="landing-selector-input" value="<?= $arParams['INPUT_VALUE']?>" />
 </label>
 

@@ -1,0 +1,141 @@
+.crm-ai-report-drawer__slider-wrapper {
+	height: 100%;
+	position: relative;
+}
+
+.crm-ai-report-drawer__slider-wrapper.--content-hidden .crm-ai-report-drawer {
+	visibility: hidden;
+}
+
+.crm-ai-report-drawer__bottom-player {
+	position: absolute;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	height: 60px;
+	padding: 0 var(--ui-space-inset-lg2, 22px);
+	background: white;
+	backdrop-filter: blur(8px);
+	border-top: 1px solid rgba(255, 255, 255, 0.12);
+	z-index: 10;
+}
+
+.crm-ai-report-drawer__bottom-player .ui-vue-audioplayer-container {
+	flex: 1;
+}
+
+.crm-ai-report-drawer__bottom-player-close {
+	width: 34px;
+	height: 34px;
+	cursor: pointer;
+	background-repeat: no-repeat;
+	background-position: center;
+	background-size: 34px 34px;
+	background-image: var(--o-ui-icon-set__path_cross-m);
+	opacity: 0.7;
+}
+
+.crm-ai-report-drawer__bottom-player-close:hover {
+	opacity: 1;
+}
+
+.crm-ai-report-drawer {
+	height: 100%;
+	box-sizing: border-box;
+	display: flex;
+	flex-direction: column;
+	padding: var(--ui-space-inset-lg2) var(--ui-space-inset-lg2) 0;
+}
+
+.crm-ai-report-drawer__content {
+	height: 100%;
+	overflow-y: auto;
+	scrollbar-width: none;
+	-ms-overflow-style: none;
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-md2, 18px);
+	border-bottom-right-radius: 24px;
+	border-bottom-left-radius: 24px;
+}
+
+.crm-ai-report-drawer__content::-webkit-scrollbar {
+	display: none;
+}
+
+.crm-ai-report-drawer__trailing-spacer {
+	flex-shrink: 0;
+	pointer-events: none;
+}
+
+/* Fix for black buttons */
+.crm-ai-report-drawer .ui-btn.--style-outline {
+	background: rgba(255, 255, 255, 0.2);
+}
+
+.crm-ai-report-drawer .ui-btn.--style-outline-no-accent {
+	background: rgba(255, 255, 255, 0.14);
+}
+
+/* region spoiler */
+.crm-ai-report-drawer__spoiler-chevron {
+	grid-area: chevron;
+	-webkit-mask-image: var(--o-ui-icon-set__path_chevron-down-m);
+	mask-image: var(--o-ui-icon-set__path_chevron-down-m);
+	-webkit-mask-size: 100% 100%;
+	mask-size: 100% 100%;
+	background-color: var(--ui-color-base-3);
+	flex-shrink: 0;
+	height: 18px;
+	width: 18px;
+	cursor: pointer;
+}
+
+.crm-ai-report-drawer__spoiler-toggle-trigger {
+	cursor: pointer;
+}
+
+.crm-ai-report-drawer__spoiler-toggle-trigger .crm-ai-report-drawer__content-block-header-search,
+.crm-ai-report-drawer__spoiler-toggle-trigger .crm-ai-report-drawer__content-block-header-search * {
+	cursor: auto;
+}
+
+.crm-ai-report-drawer__spoiler-content {
+	width: 100%;
+	display: grid;
+	grid-template-rows: 1fr;
+	transition: grid-template-rows 0.3s ease, margin 0.3s ease;
+}
+
+.crm-ai-report-drawer__spoiler-content.--hidden {
+	grid-template-rows: 0fr;
+	margin: 0;
+}
+
+.crm-ai-report-drawer__spoiler-content-inner {
+	min-height: 0;
+	overflow: hidden;
+	opacity: 1;
+	transform: translateY(0);
+	transition: opacity 0.15s ease-out, transform 0.3s ease-out;
+}
+
+.crm-ai-report-drawer__spoiler-content.--hidden .crm-ai-report-drawer__spoiler-content-inner {
+	opacity: 0;
+	transform: translateY(-8px);
+}
+/* endregion */
+
+.crm-ai-report-drawer__ai-alert {
+	color: var(--ui-color-base-3);
+	text-align: center;
+	padding: var(--ui-space-inset-2xs2, 6px) var(--ui-space-inset-2xs, 4px);
+}
+
+.crm-ai-report-drawer__not-found {
+	color: var(--ui-color-accent-main-alert);
+	padding: var(--ui-space-inset-lg2) var(--ui-space-inset-lg2) 0;
+}

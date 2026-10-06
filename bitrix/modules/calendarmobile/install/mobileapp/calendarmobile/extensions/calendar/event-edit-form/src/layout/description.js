@@ -6,6 +6,7 @@ jn.define('calendar/event-edit-form/layout/description', (require, exports, modu
 	const { Loc } = require('loc');
 	const { TextEditor } = require('text-editor');
 	const { Card } = require('ui-system/layout/card');
+	const { BBCodeText } = require('ui-system/typography/bbcodetext');
 	const { FileField } = require('layout/ui/fields/file/theme/air');
 
 	const { State, observeState } = require('calendar/event-edit-form/state');
@@ -35,14 +36,13 @@ jn.define('calendar/event-edit-form/layout/description', (require, exports, modu
 		{
 			return BBCodeText({
 				testId: 'calendar-event-edit-form-description-input',
+				size: 4,
 				value: this.getTextToShow(),
 				ellipsize: 'end',
 				numberOfLines: 5,
+				color: this.props.description.length > 0 ? Color.base1 : Color.base5,
 				style: {
 					lineSpacing: 1.2,
-					fontSize: 15,
-					fontWeight: '400',
-					color: this.props.description.length > 0 ? Color.base1.toHex() : Color.base5.toHex(),
 				},
 			});
 		}

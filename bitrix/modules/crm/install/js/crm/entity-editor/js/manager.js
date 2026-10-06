@@ -145,6 +145,7 @@ if(typeof BX.Crm.EntityBizprocManager === "undefined")
 		this._entity = "";
 		this._documentType = "";
 		this._autoExecuteType = 0;
+		this._categoryId = null;
 
 		this._containerId = null;
 		this._fieldName = null;
@@ -162,22 +163,18 @@ if(typeof BX.Crm.EntityBizprocManager === "undefined")
 				this._id = BX.type.isNotEmptyString(id) ? id : BX.util.getRandomString(4);
 				this._settings = settings ? settings : {};
 				this._hasParameters = BX.prop.getBoolean(this._settings, "hasParameters", false);
-				this._moduleId = BX.prop.getString(this._settings, "moduleId", "");
-				this._entity = BX.prop.getString(this._settings, "entity", "");
-				this._documentType = BX.prop.getString(this._settings, "documentType", "");
 				this._autoExecuteType = BX.prop.getInteger(this._settings, "autoExecuteType", 0);
+				this._categoryId = this.resolveCategoryId(BX.prop.get(this._settings, 'categoryId', null));
 				this._containerId = BX.prop.getString(this._settings, "containerId", '');
 				this._fieldName = BX.prop.getString(this._settings, "fieldName", '');
 				this._contentNode = this._containerId ? BX(this._containerId) : null;
 
-				if (this._hasParameters)
+				if (this._hasParameters || this.canCheckAutoStartParameters())
 				{
 					this._starter = new BX.Bizproc.Starter({
-						moduleId: this._moduleId,
-						entity: this._entity,
-						documentType: this._documentType,
 						signedDocumentType: BX.prop.getString(this._settings, 'signedDocumentType', ''),
 						signedDocumentId: BX.prop.getString(this._settings, 'signedDocumentId', ''),
+						categoryId: this._categoryId,
 					});
 				}
 			},
@@ -204,18 +201,70 @@ if(typeof BX.Crm.EntityBizprocManager === "undefined")
 					);
 				};
 
-				if(result.getStatus() && this._hasParameters && this._validParameters === null)
+				if (
+					this._validParameters !== null
+					&& this.canCheckAutoStartParameters()
+					&& this.getCurrentCategoryId() !== this._categoryId
+				)
 				{
+					this._validParameters = null;
+					if (this._formInput)
+					{
+						BX.remove(this._formInput);
+						this._formInput = null;
+					}
+				}
+
+				if(result.getStatus() && this._validParameters === null && this._starter)
+				{
+					var currentCategoryId = this.getCurrentCategoryId();
+
 					try
 					{
-						this._starter.showAutoStartParametersPopup(
-							this._autoExecuteType,
-							{
-								contentNode: this._contentNode,
-								callback: this.onFillParameters.bind(this, promise)
-							}
-						);
-						this._contentNode = null;
+						var showPopup = () => {
+							this._starter.showAutoStartParametersPopup(
+								this._autoExecuteType,
+								{
+									categoryId: this.getCurrentCategoryId(),
+									contentNode: this._contentNode,
+									callback: this.onFillParameters.bind(this, promise)
+								}
+							);
+							this._contentNode = null;
+						};
+
+						if (this.canCheckAutoStartParameters() && currentCategoryId !== this._categoryId)
+						{
+							this._starter.hasAutoStartParameters(
+								this._autoExecuteType,
+									{ categoryId: currentCategoryId }
+							)
+								.then((hasParameters) => {
+									this._categoryId = currentCategoryId;
+									this._hasParameters = hasParameters;
+
+									if (hasParameters)
+									{
+										showPopup();
+
+										return;
+									}
+
+									deferredWaiter();
+								})
+								.catch(() => {
+									deferredWaiter();
+								})
+							;
+						}
+						else if (this._hasParameters)
+						{
+							showPopup();
+						}
+						else
+						{
+							deferredWaiter();
+						}
 					}
 					catch (e)
 					{
@@ -234,14 +283,71 @@ if(typeof BX.Crm.EntityBizprocManager === "undefined")
 				return promise;
 			},
 
+			canCheckAutoStartParameters: function()
+			{
+				return (
+					typeof BX.Bizproc !== 'undefined'
+					&& BX.Bizproc.Starter
+					&& BX.type.isFunction(BX.Bizproc.Starter.prototype.hasAutoStartParameters)
+				);
+			},
+
 			onAfterSave: function()
 			{
 				this._validParameters = null;
 			},
 
+			getCurrentCategoryId: function()
+			{
+				if (!this._editor || !BX.type.isFunction(this._editor.getModel))
+				{
+					return this._categoryId;
+				}
+
+				var model = this._editor.getModel();
+				if (!model || !BX.type.isFunction(model.getField))
+				{
+					return this._categoryId;
+				}
+
+				var value = model.getField('CATEGORY_ID', this._categoryId);
+
+				return this.resolveCategoryId(value);
+			},
+
+			resolveCategoryId: function(value)
+			{
+				if (
+					BX.Type.isNil(value)
+					|| (BX.Type.isString(value) && !BX.Type.isStringFilled(value))
+					|| (!BX.Type.isNumber(value) && !BX.Type.isString(value))
+				)
+				{
+					return null;
+				}
+
+				var categoryId = parseInt(value, 10);
+
+				return isNaN(categoryId) ? null : categoryId;
+			},
+
 			onFillParameters: function(promise, data)
 			{
-				this._validParameters = data.parameters;
+				this._validParameters = data ? data.parameters : null;
+
+				if (!BX.Type.isString(this._validParameters))
+				{
+					this._validParameters = null;
+					if (this._formInput)
+					{
+						BX.remove(this._formInput);
+						this._formInput = null;
+					}
+
+					promise.fulfill();
+
+					return;
+				}
 
 				if (!this._formInput && this._editor)
 				{

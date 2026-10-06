@@ -1,0 +1,110 @@
+/*
+
+//ES6
+import { Popup, PopupManager, CloseIconSize } from 'main.popup';
+const popup = new Popup();
+PopupManager.create();
+
+//ES5
+var popup = new BX.Main.Popup();
+BX.Main.PopupManager.create();
+BX.Main.Popup.CloseIconSize;
+
+//ES6
+import { Menu, MenuItem, MenuManager } from 'main.popup';
+const menu = new Menu();
+const item = new MenuItem();
+MenuManager.create();
+
+//ES5
+var menu = new BX.Main.Menu();
+var item = new BX.Main.MenuItem();
+BX.Main.MenuManager.create();
+
+ */
+
+import { Reflection } from 'main.core';
+import 'ui.design-tokens';
+import 'ui.fonts.opensans';
+
+import { Menu } from './menu/menu';
+import { MenuItem } from './menu/menu-item';
+import { MenuManager } from './menu/menu-manager';
+import { type MenuOptions, type MenuItemOptions } from './menu/menu-types';
+import { Popup } from './popup/popup';
+import { CloseIconSize } from './popup/popup-close-icon-size';
+import { PopupManager } from './popup/popup-manager';
+import {
+	type PopupOptions,
+	type PopupTarget,
+	type PopupTargetOptions,
+	type PopupAnimationOptions,
+} from './popup/popup-types';
+
+import { type PositionEvent } from './popup/position-event';
+
+import { Button } from './compatibility/button';
+import { ButtonLink } from './compatibility/buttonlink';
+import { CustomButton } from './compatibility/custombutton';
+import { InputPopup } from './compatibility/input-popup';
+import { PopupMenuItem } from './compatibility/popup-menu-item';
+import { PopupMenuWindow } from './compatibility/popup-menu-window';
+import { PopupWindow } from './compatibility/popup-window';
+import { PopupWindowButton } from './compatibility/popup-window-button';
+import { PopupWindowButtonLink } from './compatibility/popup-window-button-link';
+import { PopupWindowCustomButton } from './compatibility/popup-window-custom-button';
+
+import './css/popup.css';
+
+export { Popup, Menu, MenuItem, PopupManager, MenuManager, CloseIconSize };
+
+export type {
+	PopupOptions,
+	PopupTarget,
+	PopupTargetOptions,
+	PopupAnimationOptions,
+	MenuOptions,
+	MenuItemOptions,
+	PositionEvent,
+};
+
+// Compatibility
+export {
+	PopupWindow,
+	PopupMenuWindow,
+	PopupMenuItem,
+	PopupManager as PopupWindowManager,
+	MenuManager as PopupMenu,
+	PopupWindowButton,
+	PopupWindowButtonLink,
+	PopupWindowCustomButton,
+};
+
+const BX = Reflection.namespace('BX') as Record<string, any>;
+
+/** @deprecated use BX.Main.Popup or import { Popup } from 'main.popup' */
+BX.PopupWindow = Popup;
+
+/** @deprecated use BX.Main.PopupManager or import { PopupManager } from 'main.popup' */
+BX.PopupWindowManager = PopupManager;
+
+/** @deprecated use BX.Main.Menu or import { Menu } from 'main.popup' */
+BX.PopupMenuWindow = Menu;
+
+/** @deprecated use BX.Main.MenuManager or import { MenuManager } from 'main.popup' */
+BX.PopupMenu = MenuManager;
+
+/** @deprecated use BX.Main.MenuItem or import { MenuItem } from 'main.popup' */
+BX.PopupMenuItem = MenuItem;
+
+/** @deprecated use BX.UI.Button */
+BX.PopupWindowButton = Button;
+
+/** @deprecated use BX.UI.Button */
+BX.PopupWindowButtonLink = ButtonLink;
+
+/** @deprecated use BX.UI.Button */
+BX.PopupWindowCustomButton = CustomButton;
+
+/** @deprecated use another API */
+(window as any).BXInputPopup = InputPopup;

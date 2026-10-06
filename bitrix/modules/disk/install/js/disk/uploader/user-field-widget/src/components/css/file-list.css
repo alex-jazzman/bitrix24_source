@@ -1,0 +1,120 @@
+.disk-user-field-file-list {
+	display: flex;
+	flex-direction: column;
+	align-items: stretch;
+	gap: var(--ui-space-stack-xs, 8px);
+	width: 100%;
+}
+
+.disk-user-field-file-list-item {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-2xs2, 6px);
+	height: var(--ui-size-xl, 24px);
+	width: 100%;
+}
+
+.disk-user-field-file-list-item-preview-container {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex: 0 0 auto;
+
+	width: var(--ui-size-xl, 24px);
+	height: var(--ui-size-xl, 24px);
+}
+
+.disk-user-field-file-list-item-preview.--image {
+	width: 100%;
+	height: 100%;
+	overflow: hidden;
+	border: var(--ui-border-width-thin, 1px) solid var(--ui-color-divider-default, rgba(0, 0, 0, .12));
+	border-radius: var(--ui-border-radius-xs, 6px);
+}
+
+.disk-user-field-file-list-item-image {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+
+/* Clamp icon SVG to row height; max-width overrides inline width without !important */
+.disk-user-field-file-list-item-preview.--icon svg {
+	max-width: var(--ui-size-xl, 24px);
+	max-height: var(--ui-size-xl, 24px);
+}
+
+.disk-user-field-file-list-item-openable {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-2xs2, 6px);
+	flex: 0 1 auto;
+	min-width: 0;
+}
+
+.disk-user-field-file-list-item-openable.--clickable {
+	cursor: pointer;
+}
+
+.disk-user-field-file-list-item-openable.--clickable:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link, #0154c8);
+	outline-offset: 2px;
+	border-radius: 4px;
+}
+
+.disk-user-field-file-list-item-info {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-2xs2, 6px);
+	flex: 0 1 auto;
+	min-width: 0;
+}
+
+.disk-user-field-file-list-item-filename-container {
+	display: flex;
+	flex: 0 1 auto;
+	min-width: 0;
+	white-space: nowrap;
+	overflow: hidden;
+
+	font-size: var(--ui-font-size-md, 14px);
+	line-height: 19px;
+	color: var(--ui-color-accent-main-link, #0154c8);
+}
+
+.disk-user-field-file-list-item-filename {
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.disk-user-field-file-list-item-extension {
+	flex: 0 0 auto;
+	opacity: var(--ui-opacity-50, .5);
+}
+
+.disk-user-field-file-list-item-size {
+	flex: 0 0 auto;
+	white-space: nowrap;
+	font-size: var(--ui-font-size-xs, 12px);
+	color: var(--ui-color-base-4, #a8adb4);
+}
+
+.disk-user-field-file-list-item-menu {
+	flex: 0 0 auto;
+	cursor: pointer;
+	opacity: 0;
+	transition: opacity 200ms ease;
+}
+
+.disk-user-field-file-list-item:hover .disk-user-field-file-list-item-menu,
+.disk-user-field-file-list-item-menu:focus-visible,
+.disk-user-field-file-list-item-menu[aria-expanded="true"] {
+	opacity: 1;
+}
+
+.disk-user-field-file-list-item-menu:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link, #0154c8);
+	outline-offset: 2px;
+	border-radius: 4px;
+}

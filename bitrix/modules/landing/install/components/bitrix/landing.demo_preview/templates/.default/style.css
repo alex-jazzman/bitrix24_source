@@ -162,8 +162,19 @@ body {
 	cursor: pointer;
 }
 
-input {
-	outline: none;
+/* ===== a11y: semantic retrofit (WCAG 2.1 AA) ===== */
+
+.landing-template-preview-visually-hidden {
+	position: absolute !important;
+	width: 1px;
+	height: 1px;
+	margin: -1px;
+	padding: 0;
+	border: 0;
+	overflow: hidden;
+	clip: rect(0 0 0 0);
+	clip-path: inset(50%);
+	white-space: nowrap;
 }
 
 /* new-preview-mod */
@@ -248,11 +259,11 @@ input {
 	margin-left: 10px;
 }
 
+/* h1: the browser defaults for size and margin would push the header apart */
 .landing-template-demo-preview-header .landing-template-demo-preview-header-title {
-	margin-left: 20px;
-	margin-right: 20px;
+	margin: 0 20px;
 	font-size: 18px;
-	font-weight: 600;
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	cursor: default;
 }
 

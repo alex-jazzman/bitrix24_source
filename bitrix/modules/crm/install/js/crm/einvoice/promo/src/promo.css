@@ -1,0 +1,123 @@
+.crm__einvoice-promo {
+	position: relative;
+	display: flex;
+	box-sizing: border-box;
+	width: 820px;
+	min-height: 515px;
+	border-radius: var(--ui-border-radius-4xl, 32px);
+	background: linear-gradient(205.9deg, #c4e6ff -5.86%, #ffffff 34.47%);
+}
+
+.crm__einvoice-promo_close {
+	position: absolute;
+	top: 24px;
+	right: 26px;
+	z-index: 1;
+	display: flex;
+	cursor: pointer;
+}
+
+/* Left column */
+
+.crm__einvoice-promo_content {
+	display: flex;
+	flex-direction: column;
+	box-sizing: border-box;
+	flex: 0 0 455px;
+	width: 455px;
+	padding: 40px 0 40px 40px;
+}
+
+.crm__einvoice-promo_title {
+	padding-left: 4px;
+	font-weight: var(--ui-font-weight-semi-bold, 600);
+	font-size: 28px;
+	line-height: var(--ui-font-line-height-3xs, 1.2);
+	color: var(--ui-color-base-1);
+}
+
+.crm__einvoice-promo_description {
+	display: flex;
+	flex-direction: column;
+	gap: 24px;
+	width: 400px;
+	padding-top: var(--ui-space-inset-md, 16px);
+}
+
+.crm__einvoice-promo_lead {
+	padding-left: 5px;
+	font-weight: var(--ui-font-weight-regular, 400);
+	font-size: var(--ui-font-size-xl, 16px);
+	line-height: var(--ui-font-line-height-xl, 1.62);
+	color: var(--ui-color-base-1);
+}
+
+.crm__einvoice-promo_benefits {
+	display: flex;
+	flex-direction: column;
+	gap: 17px;
+	margin-bottom: 17px;
+}
+
+.crm__einvoice-promo_benefit {
+	display: flex;
+	flex-direction: row;
+	align-items: flex-start;
+	gap: 15px;
+}
+
+.crm__einvoice-promo_benefit-icon {
+	display: flex;
+	flex-shrink: 0;
+}
+
+.crm__einvoice-promo_benefit-text {
+	font-weight: var(--ui-font-weight-normal, 400);
+	font-size: var(--ui-font-size-xl, 16px);
+	line-height: var(--ui-font-line-height-xl, 1.62);
+	color: var(--ui-color-base-1);
+}
+
+.crm__einvoice-promo_controls {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	gap: 14px;
+	margin-top: auto;
+	padding-left: 4px;
+}
+
+/* Right column */
+
+.crm__einvoice-promo_aside {
+	position: absolute;
+	inset: 0;
+	pointer-events: none;
+}
+
+.crm__einvoice-promo_preview {
+	position: absolute;
+	top: 116px;
+	left: 469px;
+	width: 400px;
+	height: 250px;
+	overflow: hidden;
+	border-radius: 17px;
+	box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.crm__einvoice-promo_video {
+	display: block;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+
+.crm__einvoice-promo_mascot {
+	position: absolute;
+	top: 162px;
+	left: 477px;
+	width: 220px;
+	height: 330px;
+	background: url('../images/mascot.webp') center bottom / contain no-repeat;
+}

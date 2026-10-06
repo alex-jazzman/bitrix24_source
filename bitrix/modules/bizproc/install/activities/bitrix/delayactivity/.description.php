@@ -22,7 +22,7 @@ $arActivityDescription = (new ActivityDescription(
 	])
 	->setClass('DelayActivity')
 	->setJsClass('DelayActivity')
-	->setGroups([ ActivityGroup::WORKFLOW->value ])
+	->setGroups([ ActivityGroup::WORKFLOW->value, ActivityGroup::WORKFLOW_STATE->value ])
 	->setColorIndex(ActivityColorIndex::GREY->value)
 	->setIcon(Outline::PAUSE_M->name)
 	->set('AI_DESCRIPTION', 'Suspends the process for the specified time, delaying the next activity.')

@@ -1,3 +1,19 @@
+/* Native-button reset: the delete affordance is a <button> for a11y,
+   the visual stays the bare cross icon inside it */
 .editor-chart-node-settings-delete-construction {
+	appearance: none;
+	margin: 0;
+	padding: 0;
+	border: none;
+	background: none;
+	font: inherit;
+	color: inherit;
 	cursor: pointer;
+	display: flex;
+	align-items: center;
+}
+
+.editor-chart-node-settings-delete-construction:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: 2px;
 }

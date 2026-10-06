@@ -1,0 +1,52 @@
+.landing-ui-panel-floating-node {
+	position: absolute;
+	z-index: 320;
+	display: flex;
+	align-items: center;
+	height: 42px;
+	gap: 4px;
+	padding: 0 5px;
+	background: var(--ui-color-background-primary, #ffffff);
+	border-radius: var(--ui-border-radius-lg, 16px);
+	box-shadow: 0 7px 14px 0 rgba(0, 0, 0, .11);
+}
+
+.landing-ui-panel-floating-node.landing-ui-hide {
+	display: none;
+}
+
+.landing-ui-panel-floating-node__button {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 32px;
+	height: 32px;
+	padding: 0;
+	margin: 0;
+	border: none;
+	border-radius: var(--ui-border-radius-sm, 4px);
+	background: transparent;
+	cursor: pointer;
+	transition: background-color 200ms ease;
+}
+
+.landing-ui-panel-floating-node__button:hover {
+	background: var(--ui-color-bg-content-secondary, #f5f7f8);
+}
+
+.landing-ui-panel-floating-node__button:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary, #0075ff);
+	outline-offset: 2px;
+}
+
+.landing-ui-panel-floating-node__icon {
+	--ui-icon-set__icon-size: 24px;
+	--ui-icon-set__icon-color: var(--ui-color-icon-secondary, #757d87);
+}
+
+/* AI (bitrix-gpt) icon: the mask clips a gradient background to the glyph shape
+   (mirrors the compact editor and simple link panel styling of the same icon) */
+.landing-ui-panel-floating-node__icon.--bitrix-gpt {
+	--ui-icon-set__icon-color: initial;
+	background: linear-gradient(264.09deg, #F96269 1.67%, #F046B7 21.82%, #9D48FF 52.44%, #3F68FF 76.41%, #0098EA 97.21%);
+}

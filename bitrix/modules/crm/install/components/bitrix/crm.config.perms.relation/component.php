@@ -1,5 +1,9 @@
 <?php
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
+
+use Bitrix\Main\Web\Uri;
+
 if (!CModule::IncludeModule('crm'))
 {
 	ShowError(GetMessage('CRM_MODULE_NOT_INSTALLED'));
@@ -58,12 +62,10 @@ while ($arRole = $obRes->Fetch())
 			'role_id' => $arRole['ID']
 		)
 	);
-	$arRole['PATH_TO_DELETE'] = CHTTP::urlAddParams(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_ROLE_EDIT'],
+	$arRole['PATH_TO_DELETE'] = (string)(new Uri(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_ROLE_EDIT'],
 		array(
 			'role_id' => $arRole['ID']
-		)),
-		array('delete' => '1', 'sessid' => bitrix_sessid())
-	);
+		))))->addParams(array('delete' => '1', 'sessid' => bitrix_sessid()));
 	$arRole['NAME'] = htmlspecialcharsbx($arRole['NAME']);
 	$arResult['ROLE'][$arRole['ID']] = $arRole;
 }

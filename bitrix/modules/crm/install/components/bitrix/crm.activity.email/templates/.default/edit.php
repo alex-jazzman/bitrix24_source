@@ -2,7 +2,7 @@
 
 use Bitrix\Crm\Activity\Mail\Message;
 use Bitrix\Crm\Tour;
-use Bitrix\Mail\Helper;
+use Bitrix\Mail\Helper\Message as MailHelperMessage;
 use Bitrix\Main\Loader;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
@@ -43,10 +43,53 @@ $rcptLast = array(
 	'leads' => array(),
 );
 
-Bitrix\Main\UI\Extension::load([
-	"crm.integration.ui.banner-dispatcher",
-	"mail.message-body",
-]);
+$largeAttachmentFeatureAvailable = false;
+$largeAttachmentMaxSize = 0;
+$maxAttachedFilesSize = 0;
+$maxAttachedFilesSizeAfterEncoding = 0;
+if (Loader::includeModule('mail') && class_exists(MailHelperMessage::class))
+{
+	$maxAttachedFilesSize = MailHelperMessage::getMaxAttachedFilesSize();
+	$maxAttachedFilesSizeAfterEncoding = MailHelperMessage::getMaxAttachedFilesSizeAfterEncoding();
+}
+$largeAttachmentEnabled = \Bitrix\Crm\Integration\Mail\LargeAttachment\SendPreparation::isAvailable();
+if ($largeAttachmentEnabled)
+{
+	$largeAttachmentFeatureAvailable = \Bitrix\Mail\Helper\LicenseManager::isLargeAttachmentAutoUploadEnabled();
+	$largeAttachmentMaxSize = \Bitrix\Mail\Helper\Message::getMaxAttachedFilesSize();
+}
+
+$extensions = [
+	'crm.integration.ui.banner-dispatcher',
+	'mail.message-body',
+];
+if ($largeAttachmentEnabled)
+{
+	$extensions[] = 'crm.mail.large-attachment';
+}
+Bitrix\Main\UI\Extension::load($extensions);
+
+$draftClientId = \Bitrix\Main\UuidGenerator::generateV4();
+// The draft belongs to the entity the message itself is bound to, the very pair that goes to
+// DATA[ownerType]/DATA[ownerID] below: a reply and a forward take the owner of the parent letter, so
+// the inline reply form of that letter resolves the same draft as this form.
+$draftEntityTypeId = (int)$activity['OWNER_TYPE_ID'];
+$draftEntityId = (int)$activity['OWNER_ID'];
+// Repeats as much of the draft boundary of the controller as a render can afford: an entity type
+// that has an item factory (old invoices and recurring deals have none) plus the update permission
+// on it. Existence of the entity is left to the controller, to keep a select off every render.
+// Without the permission the mechanics must not be mounted at all: every autosave would be refused,
+// leaving the user with a blocking dialog on every close.
+$draftAvailable =
+	$draftEntityId > 0
+	&& \Bitrix\Crm\Integration\Mail\Draft::isAvailable()
+	&& \Bitrix\Crm\Service\Container::getInstance()->getFactory($draftEntityTypeId) !== null
+	&& \CCrmActivity::CheckUpdatePermission($draftEntityTypeId, $draftEntityId)
+;
+if ($draftAvailable)
+{
+	Bitrix\Main\UI\Extension::load('mail.draft');
+}
 
 echo (Tour\AhaMomentSaveLastTemplate::getInstance())->build();
 
@@ -178,12 +221,15 @@ foreach ($arParams['DOCS_BINDINGS'] as $item)
 ?>
 
 <form id="<?=htmlspecialcharsbx($formId) ?>" method="POST"
+	data-testid="crm-mail-compose-form"
 	action="/bitrix/components/bitrix/crm.activity.editor/ajax.php?action=save_email&context=<?=rawurlencode($_REQUEST['context']) ?>">
 	<span id="crm_act_email_create_hidden" style="display: none; "></span>
 	<?=bitrix_sessid_post() ?>
 	<input type="hidden" name="ACTION" value="SAVE_EMAIL">
 	<input type="hidden" name="DATA[ownerType]" value="<?=\CCrmOwnerType::resolveName($activity['OWNER_TYPE_ID']) ?>">
 	<input type="hidden" name="DATA[ownerID]" value="<?=$activity['OWNER_ID'] ?>">
+	<input type="hidden" name="DATA[draftId]" value="" data-role="mail-draft-id" data-testid="crm-mail-compose-draft-id-field">
+	<input type="hidden" name="DATA[draftRevision]" value="" data-role="mail-draft-revision">
 	<input id="crm_act_email_create_last_used_template_id" type="hidden" name="DATA[lastUsedTemplateID]" value="<?=(int)$arParams['LAST_USED_TEMPLATE_ID']?>">
 	<? if (preg_grep(sprintf('/^%s:/i', preg_quote($ownerUid, '/')), array_keys($rcptSelected + $rcptCcSelected))): ?>
 		<input type="hidden" name="DATA[ownerRcpt]" value="Y">
@@ -317,6 +363,14 @@ foreach ($arParams['DOCS_BINDINGS'] as $item)
 			'COPILOT_PARAMS' => $arParams['COPILOT_PARAMS'],
 			'OWNER_TYPE_ID' => $ownerTypeId,
 			'OWNER_ID' => $ownerId,
+			'DRAFT_CLIENT_ID' => $draftClientId,
+			'DRAFT_LOADING' => $draftAvailable,
+			'DRAFT_MODE' => match ($activity['__message_type'] ?? '') {
+				'FWD' => 'forward',
+				'RE' => 'reply',
+				default => 'new',
+			},
+			'DRAFT_PARENT_MESSAGE_ID' => (int)($activity['FORWARDED_ID'] ?? $activity['REPLIED_ID'] ?? 0) ?: null,
 			'SELECTED_RECIPIENTS_JSON' => Message::getSelectedRecipientsForDialog($activity['COMMUNICATIONS'], $activity['INITIAL_OWNER_TYPE'], (int) $activity['INITIAL_OWNER_ID'], true)->toJsObject(),
 			'FIELDS' => array(
 				array(
@@ -327,6 +381,8 @@ foreach ($arParams['DOCS_BINDINGS'] as $item)
 					'isFormatted' => true,
 					'required' => true,
 					'copy' => 'DATA[from_copy]',
+					'senderIdName' => 'DATA[senderId]',
+					'mailboxIdName' => 'DATA[mailboxId]',
 				),
 				array(
 					'type' => 'separator',
@@ -437,16 +493,18 @@ if(BX.SidePanel)
 BX.message({
 	CRM_ACT_EMAIL_REPLY_EMPTY_RCPT: '<?=\CUtil::jsEscape(getMessage('CRM_ACT_EMAIL_REPLY_EMPTY_RCPT')) ?>',
 	CRM_ACT_EMAIL_REPLY_UPLOADING: '<?=\CUtil::jsEscape(getMessage('CRM_ACT_EMAIL_REPLY_UPLOADING')) ?>',
-	CRM_ACT_EMAIL_MAX_SIZE: <?=Helper\Message::getMaxAttachedFilesSize();?>,
+	CRM_ACT_EMAIL_MAX_SIZE: <?= $maxAttachedFilesSize ?>,
+	CRM_LARGE_ATTACHMENT_LOCAL_FEATURE_AVAILABLE: <?= $largeAttachmentEnabled ? 'true' : 'false' ?>,
 	CRM_ACT_EMAIL_MAX_SIZE_EXCEED: '<?=\CUtil::jsEscape(getMessage(
 		'CRM_ACTIVITY_EMAIL_MAX_SIZE_EXCEED',
-		['#SIZE#' => \CFile::formatSize(Helper\Message::getMaxAttachedFilesSizeAfterEncoding(),1)]
+		['#SIZE#' => \CFile::formatSize($maxAttachedFilesSizeAfterEncoding, 1)]
 	)) ?>',
 	CRM_ACT_EMAIL_CREATE_NOTEMPLATE: '<?=\CUtil::jsEscape(getMessage('CRM_ACT_EMAIL_CREATE_NOTEMPLATE')) ?>',
 	CRM_ACT_EMAIL_TEMPLATE_SETTINGS: '<?=\CUtil::jsEscape(\Bitrix\Main\Localization\Loc::getMessage('CRM_ACT_EMAIL_TEMPLATE_SETTINGS_MSGVER_1')) ?>',
 	CRM_ACT_EMAIL_TEMPLATE_SAVE_LAST_TEMPLATE: '<?=\CUtil::jsEscape(\Bitrix\Main\Localization\Loc::getMessage('CRM_ACT_EMAIL_TEMPLATE_SAVE_LAST_TEMPLATE')) ?>',
 	CRM_ACT_EMAIL_TEMPLATE_LIST_TITLE: '<?=\CUtil::jsEscape(\Bitrix\Main\Localization\Loc::getMessage('CRM_ACT_EMAIL_TEMPLATE_LIST_TITLE')) ?>',
-	CRM_ACT_EMAIL_TEMPLATE_SETTINGS_TITLE: '<?=\CUtil::jsEscape(\Bitrix\Main\Localization\Loc::getMessage('CRM_ACT_EMAIL_TEMPLATE_SETTINGS_TITLE_MSGVER_1')) ?>'
+	CRM_ACT_EMAIL_TEMPLATE_SETTINGS_TITLE: '<?=\CUtil::jsEscape(\Bitrix\Main\Localization\Loc::getMessage('CRM_ACT_EMAIL_TEMPLATE_SETTINGS_TITLE_MSGVER_1')) ?>',
+	CRM_ACT_EMAIL_DRAFT_LOAD_ERROR: '<?=\CUtil::jsEscape(getMessage('CRM_ACT_EMAIL_DRAFT_LOAD_ERROR')) ?>'
 });
 
 BX.ready(function ()
@@ -469,7 +527,24 @@ BX.ready(function ()
 			source: 'crm',
 			action: '<?= $activity['__message_type']  === 'FWD' ? 'forward' : 'compose_button' ?>',
 		},
+		draft: <?= \Bitrix\Main\Web\Json::encode([
+			'available' => $draftAvailable,
+			'clientId' => $draftClientId,
+			'entityTypeId' => $draftEntityTypeId,
+			'entityId' => $draftEntityId,
+		]) ?>,
 	});
+
+	<?php if ($largeAttachmentEnabled): ?>
+	BX.Crm.Mail.LargeAttachment.init({
+		formId: '<?=\CUtil::jsEscape($formId) ?>',
+		uploaderControlId: 'main_mail_form_<?=\CUtil::jsEscape($formId) ?>',
+		messageId: <?=intval($activity['ID'] ?? 0) ?>,
+		featureAvailable: <?=$largeAttachmentFeatureAvailable ? 'true' : 'false' ?>,
+		folderName: BX.Loc.getMessage('CRM_LARGE_ATTACHMENT_FOLDER_NAME') || '',
+		maxSize: <?=intval($largeAttachmentMaxSize) ?>
+	});
+	<?php endif ?>
 
 	setTimeout(function ()
 	{
@@ -478,6 +553,7 @@ BX.ready(function ()
 		mailForm.init({
 			hideEmptyContactError: <?= !empty($activity['HIDE_EMPTY_CONTACT_ERROR']) ? 1 : 0 ?>,
 		});
+		instance.initDraft(mailForm);
 
 		BX.bind(BX('crm_act_email_create_batch'), 'change', function ()
 		{

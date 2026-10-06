@@ -17,6 +17,8 @@ export const StorageFieldSelector = {
 		const initialItems = Array.isArray(field?.value) ? [...field.value] : [];
 		const items = ref(initialItems);
 		const options = field?.property?.Options || {};
+		const title = field?.property?.Name ?? '';
+		const required = Boolean(field?.property?.Required);
 
 		const onRemoveField = (index: number): void => {
 			items.value.splice(index, 1);
@@ -56,11 +58,13 @@ export const StorageFieldSelector = {
 
 		const jsonStringify = (val: Object): string => JSON.stringify(val);
 
-		return { items, options, onAddFieldClick, onRemoveField, onCopyCode, jsonStringify };
+		return { items, options, title, required, onAddFieldClick, onRemoveField, onCopyCode, jsonStringify };
 	},
 	template: `
 		<div class="storage-fields">
 			<div class="bizproc-create-storage__outer-block">
+
+				<div class="bizproc-create-storage__fields-title" :class="{ '--required': required }">{{ title }}</div>
 
 				<div class="bizproc-create-storage__fields-container">
 					<div v-for="(item, index) in items" :key="index" class="bizproc-create-storage__field-row">
@@ -89,8 +93,8 @@ export const StorageFieldSelector = {
 				</div>
 
 				<div class="node-settings-add-field-button" @click="onAddFieldClick">
-					<div class="ui-icon-set --plus-m bizproc-create-storage__icon-plus"></div>
-					<span>{{ field.property.Name }}</span>
+					<div class="ui-icon-set --plus-l bizproc-create-storage__icon-plus"></div>
+					<span>{{ options.addFieldButton ?? '' }}</span>
 				</div>
 
 			</div>

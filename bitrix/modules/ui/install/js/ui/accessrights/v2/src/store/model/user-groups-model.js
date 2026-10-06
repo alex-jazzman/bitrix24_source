@@ -22,6 +22,7 @@ export type UserGroup = {
 	title: string,
 	accessRights: Map<string, AccessRightValue>,
 	members: MemberCollection, // access code => member
+	isReadOnly: boolean, // the host module forbids any change of this group
 };
 
 export type AccessRightValue = {
@@ -116,6 +117,7 @@ export class UserGroupsModel extends BuilderModel
 			title: Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_ROLE_NAME'),
 			accessRights: new Map(),
 			members: new Map(),
+			isReadOnly: false,
 		};
 	}
 
@@ -323,6 +325,12 @@ export class UserGroupsModel extends BuilderModel
 		{
 			console.warn('ui.accessrights.v2: Attempt to set value to a user group that dont exists', payload);
 
+			return;
+		}
+
+		if (this.#isUserGroupReadOnly(store, payload.userGroupId))
+		{
+			// mass actions legally target every shown group, so a read-only one is skipped without a warning
 			return;
 		}
 
@@ -594,6 +602,14 @@ export class UserGroupsModel extends BuilderModel
 			return;
 		}
 
+		if (this.#isUserGroupReadOnly(store, payload.userGroupId))
+		{
+			// eslint-disable-next-line no-console
+			console.warn('ui.accessrights.v2: Attempt to rename a read only user group', payload);
+
+			return;
+		}
+
 		store.commit('setRoleTitle', payload);
 	}
 
@@ -602,6 +618,14 @@ export class UserGroupsModel extends BuilderModel
 		if (!this.#isUserGroupExists(store, payload.userGroupId))
 		{
 			console.warn('ui.accessrights.v2: Attempt to add member to a user group that dont exists', payload);
+
+			return;
+		}
+
+		if (this.#isUserGroupReadOnly(store, payload.userGroupId))
+		{
+			// eslint-disable-next-line no-console
+			console.warn('ui.accessrights.v2: Attempt to add member to a read only user group', payload);
 
 			return;
 		}
@@ -636,6 +660,14 @@ export class UserGroupsModel extends BuilderModel
 			return;
 		}
 
+		if (this.#isUserGroupReadOnly(store, payload.userGroupId))
+		{
+			// eslint-disable-next-line no-console
+			console.warn('ui.accessrights.v2: Attempt to remove member from a read only user group', payload);
+
+			return;
+		}
+
 		if (!Type.isStringFilled(payload.accessCode))
 		{
 			console.warn('ui.accessrights.v2: Attempt to remove member with invalid payload', payload);
@@ -651,6 +683,14 @@ export class UserGroupsModel extends BuilderModel
 		if (!this.#isUserGroupExists(store, payload.userGroupId))
 		{
 			console.warn('ui.accessrights.v2: Attempt to remove member from a user group that dont exists', payload);
+
+			return;
+		}
+
+		if (this.#isUserGroupReadOnly(store, payload.userGroupId))
+		{
+			// eslint-disable-next-line no-console
+			console.warn('ui.accessrights.v2: Attempt to update members of a read only user group', payload);
 
 			return;
 		}
@@ -699,6 +739,7 @@ export class UserGroupsModel extends BuilderModel
 			}),
 			isNew: true,
 			isModified: true,
+			isReadOnly: false,
 		};
 
 		for (const value of copy.accessRights.values())
@@ -752,6 +793,14 @@ export class UserGroupsModel extends BuilderModel
 		if (!userGroup)
 		{
 			console.warn('ui.accessrights.v2: Attempt to remove user group that dont exists', { userGroupId });
+
+			return;
+		}
+
+		if (userGroup.isReadOnly)
+		{
+			// eslint-disable-next-line no-console
+			console.warn('ui.accessrights.v2: Attempt to remove a read only user group', { userGroupId });
 
 			return;
 		}
@@ -860,6 +909,11 @@ export class UserGroupsModel extends BuilderModel
 		const group = this.#getUserGroup(store.state, userGroupId);
 
 		return Boolean(group);
+	}
+
+	#isUserGroupReadOnly(store, userGroupId: string): boolean
+	{
+		return this.#getUserGroup(store.state, userGroupId)?.isReadOnly === true;
 	}
 
 	#isValidSortConfigForSelectedMember(config: Record<string, number>): boolean {

@@ -14,6 +14,7 @@ return [
 		'booking.lib.busy-slots',
 		'booking.lib.duration',
 		'booking.lib.is-real-id',
+		'booking.lib.limit',
 		'booking.provider.service.booking-service',
 		'booking.provider.service.wait-list-service',
 		'main.core',

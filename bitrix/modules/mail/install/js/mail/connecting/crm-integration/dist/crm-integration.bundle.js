@@ -278,6 +278,10 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 			showVcfOption: {
 				type: Boolean,
 				default: false
+			},
+			showEnableSwitcher: {
+				type: Boolean,
+				default: true
 			}
 		},
 		emits: ['update:modelValue'],
@@ -370,6 +374,7 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 					<HeadlineSm>{{ loc('MAIL_MASSCONNECT_FORM_MAILBOX_SETTINGS_INTEGRATION_CRM_TITLE') }}</HeadlineSm>
 				</div>
 				<div
+					v-if="showEnableSwitcher"
 					class="mail_massconnect__integration-block_switcher-container"
 					data-test-id="mail_massconnect__settings_crm-integration_switcher"
 				>

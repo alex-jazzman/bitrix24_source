@@ -81,6 +81,7 @@ jn.define('call/calls/bitrix-jwt', (require, exports, module) => {
 			this.microphoneId = params.microphoneId || '';
 
 			this.muted = params.muted === true;
+			this.invitePeriod = params.invitePeriod;
 
 			this.logToken = params.logToken || '';
 			this.addLogToken(this.logToken);
@@ -152,8 +153,6 @@ jn.define('call/calls/bitrix-jwt', (require, exports, module) => {
 				onSwitchMicrophonesStatus: () => this.eventEmitter.emit(BX.Call.Event.onActiveCallNotificationSwitchMicrophoneStatusPress),
 				onHangup: () => this.eventEmitter.emit(BX.Call.Event.onActiveCallNotificationHangupButtonPress)
 			});
-
-			this.invitePeriod = params.invitePeriod;
 		}
 
 		get provider()

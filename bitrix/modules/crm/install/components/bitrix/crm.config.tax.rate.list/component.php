@@ -1,4 +1,8 @@
-<?if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
+<?php
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
+
+use Bitrix\Main\Web\Uri;
 
 if (!CModule::IncludeModule('crm'))
 {
@@ -220,18 +224,15 @@ foreach($arRates as $k => $v)
 		);
 
 	$rate['PATH_TO_TAXRATE_DELETE'] =
-		CHTTP::urlAddParams(
-			CComponentEngine::MakePathFromTemplate(
+		(string)(new Uri(CComponentEngine::MakePathFromTemplate(
 				$arParams['PATH_TO_TAXRATE_LIST'],
 				array( 'taxrate_id' => $k)
-			),
-			array(
+			)))->addParams(array(
 				'action_'.$arResult['GRID_ID'] => 'delete',
 				'ID' => $k,
 				'sessid' => bitrix_sessid(),
 				$arResult['TAX_FORM_ID'].'_active_tab' => 'tab_rateslist'
-				)
-		);
+				));
 
 	$rate['~VALUE'] = $v['VALUE'];
 	$rate['~APPLY_ORDER'] = $v['APPLY_ORDER'];

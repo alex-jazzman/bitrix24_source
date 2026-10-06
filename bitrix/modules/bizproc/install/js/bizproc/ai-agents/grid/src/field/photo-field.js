@@ -21,6 +21,9 @@ export class PhotoField extends BaseField
 
 		Dom.addClass(this.getFieldNode(), 'agent-grid_user-photo');
 
+		// decorative: avatar is not a real trigger (hover-only mini-profile), profile is reachable via the adjacent name link / used-by popup
+		Dom.attr(this.getFieldNode(), 'aria-hidden', 'true');
+
 		if (!params?.user?.id)
 		{
 			Dom.addClass(this.getFieldNode(), 'agent-grid_user-photo-stub');

@@ -12,6 +12,7 @@ $APPLICATION->IncludeComponent(
 		'POPUP_COMPONENT_PARAMS' => $arResult,
 		'USE_UI_TOOLBAR' => 'Y',
 		'USE_PADDING' => false,
+		'USE_BACKGROUND_CONTENT' => false,
 		'PLAIN_VIEW' => false,
 		'PAGE_MODE' => false,
 		'PAGE_MODE_OFF_BACK_URL' => "/stream/",

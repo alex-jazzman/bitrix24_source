@@ -1,15 +1,16 @@
 import { Core } from 'im.v2.application.core';
-import { type ChatTypeItem } from 'im.v2.const';
-import { CounterClearHandlersByChatType, CounterClearActions } from 'im.v2.lib.counter';
+import {
+	CounterManager,
+} from 'im.v2.lib.counter';
 import { Logger } from 'im.v2.lib.logger';
 import { UuidManager } from 'im.v2.lib.uuid';
 import { type ImModelCounter } from 'im.v2.model';
 
 import { NewMessageManager } from './classes/new-message-manager';
-import { type ChatUnreadParams, type ChatDeleteParams } from './types/chat';
+import { type ChatUnreadParams, type ChatDeleteParams, type ChatReadAllParams } from './types/chat';
 import { type ReadAllChannelCommentsParams } from './types/comments';
 import { type PullExtraParams } from './types/common';
-import { type RecentUpdateParams } from './types/recent';
+import { type RecentUpdateParams, type RecentPinChatParams } from './types/recent';
 import { type MessageAddParams, type ReadMessageParams, type MultipleMessageDeleteParams } from './types/message';
 
 export class CounterPullHandler
@@ -114,12 +115,41 @@ export class CounterPullHandler
 
 	handleRecentUpdate(params: RecentUpdateParams)
 	{
-		const { chat, recentConfig } = params;
+		const { chat, recentConfig, lastActivityDate } = params;
+
+		const needToUpdate = lastActivityDate !== null;
+
+		if (!needToUpdate)
+		{
+			return;
+		}
+
 		const { id: chatId, parent_chat_id: parentChatId, mute_list: muteList } = chat;
 
 		const isMuted = muteList[Core.getUserId()] === true;
 
 		// recentUpdate is emitted for parent chat, we add parent item for children counters to work properly
+		const counterItem: Partial<ImModelCounter> = {
+			chatId,
+			parentChatId,
+			recentSections: recentConfig.sections,
+			isMuted,
+		};
+
+		void Core.getStore().dispatch('counters/setCounters', [counterItem]);
+	}
+
+	handleChatPin(params: RecentPinChatParams)
+	{
+		const { chat, recentConfig } = params;
+		const { id: chatId, parent_chat_id: parentChatId, mute_list: muteList } = chat;
+
+		const isMuted = muteList[Core.getUserId()] === true;
+
+		// Pinning puts a chat (back) into the recent list. Its recentSections are emptied server-side
+		// while a chat is hidden from recent, and only handleRecentUpdate restores them - but pin emits
+		// its own event without a fresh activity date, so we restore them here too. Otherwise child
+		// counters can't bubble into the section badge through this (now visible) parent until reload.
 		const counterItem: Partial<ImModelCounter> = {
 			chatId,
 			parentChatId,
@@ -139,24 +169,14 @@ export class CounterPullHandler
 
 	handleReadAllChats()
 	{
-		CounterClearActions.forEach((actionHandler) => {
-			void actionHandler();
-		});
+		CounterManager.clearAllCounters();
 	}
 
-	handleReadAllChatsByType(params: { type: ChatTypeItem })
+	handleReadAllChatsByRecentSection(params: ChatReadAllParams)
 	{
-		const { type } = params;
+		const { recentSection, parentChatId } = params;
 
-		const counterClearHandlers = CounterClearHandlersByChatType[type];
-		if (!counterClearHandlers)
-		{
-			return;
-		}
-
-		counterClearHandlers.forEach((handler) => {
-			handler(type);
-		});
+		CounterManager.clearCountersByRecentType(recentSection, parentChatId);
 	}
 
 	handleReadChildren(params: ReadAllChannelCommentsParams)

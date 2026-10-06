@@ -1,7 +1,8 @@
-import {Dom, Type, Tag} from 'main.core';
+import {Dom, Type, Tag, Event} from 'main.core';
 import {Loc} from 'landing.loc';
 import {Env} from 'landing.env';
 import {Main} from 'landing.main';
+import {A11y} from 'landing.ui.a11y';
 import {BaseForm} from 'landing.ui.form.baseform';
 import {MenuItemForm} from 'landing.ui.form.menuitemform';
 import {Draggable} from 'ui.draganddrop.draggable';
@@ -41,6 +42,9 @@ export class MenuForm extends BaseForm
 			},
 		});
 
+		this.onDragHandleKeyDown = this.onDragHandleKeyDown.bind(this);
+		Event.bind(this.getBody(), 'keydown', this.onDragHandleKeyDown);
+
 		this.onMenuItemRemove = this.onMenuItemRemove.bind(this);
 
 		Dom.append(this.getAddItemLayout(), this.layout);
@@ -71,6 +75,118 @@ export class MenuForm extends BaseForm
 
 		this.forms.remove(event.data.form);
 		this.draggable.invalidateCache();
+	}
+
+	onDragHandleKeyDown(event: KeyboardEvent)
+	{
+		if (!event.altKey || (event.key !== 'ArrowUp' && event.key !== 'ArrowDown'))
+		{
+			return;
+		}
+
+		const handle = event.target.closest('.landing-ui-form-header-drag-button');
+		if (!handle)
+		{
+			return;
+		}
+
+		const itemLayout = handle.closest('.landing-ui-form-menuitem');
+		const form = itemLayout ? this.forms.getByLayout(itemLayout) : null;
+		if (!form)
+		{
+			return;
+		}
+
+		event.preventDefault();
+		this.moveMenuItem(form, event.key === 'ArrowUp' ? 'up' : 'down');
+	}
+
+	moveMenuItem(form: MenuItemForm, direction: 'up' | 'down')
+	{
+		const elements = this.draggable.getDraggableElements();
+		const sourceElement = form.layout;
+		const sourceIndex = elements.indexOf(sourceElement);
+
+		if (sourceIndex === -1)
+		{
+			return;
+		}
+
+		const depth = this.draggable.getElementDepth(sourceElement);
+		const sourceBlock = this.getSiblingBlockRange(elements, sourceIndex, depth);
+
+		const targetStart = (direction === 'up')
+			? this.findPreviousSiblingStart(elements, sourceBlock.start, depth)
+			: this.findNextSiblingStart(elements, sourceBlock.end, depth);
+
+		if (targetStart === -1)
+		{
+			A11y.announce(Loc.getMessage(
+				direction === 'up' ? 'LANDING_MENUITEM_MOVE_BLOCKED_TOP' : 'LANDING_MENUITEM_MOVE_BLOCKED_BOTTOM',
+			).replace('#TITLE#', () => form.title));
+
+			return;
+		}
+
+		const sourceElements = elements.slice(sourceBlock.start, sourceBlock.end + 1);
+
+		if (direction === 'up')
+		{
+			const anchor = elements[targetStart];
+			sourceElements.forEach((element) => {
+				Dom.insertBefore(element, anchor);
+			});
+		}
+		else
+		{
+			const targetBlock = this.getSiblingBlockRange(elements, targetStart, depth);
+			let cursor = elements[targetBlock.end];
+			sourceElements.forEach((element) => {
+				Dom.insertAfter(element, cursor);
+				cursor = element;
+			});
+		}
+
+		this.draggable.invalidateCache();
+
+		const handle = sourceElement.querySelector('.landing-ui-form-header-drag-button');
+		if (handle)
+		{
+			handle.focus();
+		}
+
+		A11y.announce(Loc.getMessage(
+			direction === 'up' ? 'LANDING_MENUITEM_MOVED_UP' : 'LANDING_MENUITEM_MOVED_DOWN',
+		).replace('#TITLE#', () => form.title));
+	}
+
+	getSiblingBlockRange(elements: Array<HTMLElement>, index: number, depth: number): {start: number, end: number}
+	{
+		let end = index;
+		while (end + 1 < elements.length && this.draggable.getElementDepth(elements[end + 1]) > depth)
+		{
+			end += 1;
+		}
+
+		return {start: index, end};
+	}
+
+	findPreviousSiblingStart(elements: Array<HTMLElement>, blockStart: number, depth: number): number
+	{
+		let i = blockStart - 1;
+		while (i >= 0 && this.draggable.getElementDepth(elements[i]) > depth)
+		{
+			i -= 1;
+		}
+
+		return (i >= 0 && this.draggable.getElementDepth(elements[i]) === depth) ? i : -1;
+	}
+
+	findNextSiblingStart(elements: Array<HTMLElement>, blockEnd: number, depth: number): number
+	{
+		const next = blockEnd + 1;
+
+		return (next < elements.length && this.draggable.getElementDepth(elements[next]) === depth) ? next : -1;
 	}
 
 	serialize()

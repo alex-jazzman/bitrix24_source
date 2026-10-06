@@ -11,7 +11,15 @@ jn.define('im/messenger/lib/parser/elements/dialog/message/quote-active', (requi
 	 */
 	class QuoteActive
 	{
-		constructor(title, text, dialogId, messageId)
+		/**
+		 * @param {string} title
+		 * @param {string} text
+		 * @param {string|number} dialogId
+		 * @param {string} messageId
+		 * @param {QuotePreview|null} [preview] — structured media preview; native renders this if supported,
+		 *   falls back to text if not. Never null-assigned — omit if no preview.
+		 */
+		constructor(title, text, dialogId, messageId, preview = null)
 		{
 			this.type = QuoteActive.getType();
 
@@ -36,6 +44,11 @@ jn.define('im/messenger/lib/parser/elements/dialog/message/quote-active', (requi
 			}
 
 			this.displayLinesNumber = 4;
+
+			if (preview !== null && Type.isPlainObject(preview))
+			{
+				this.preview = preview;
+			}
 		}
 
 		static getType()

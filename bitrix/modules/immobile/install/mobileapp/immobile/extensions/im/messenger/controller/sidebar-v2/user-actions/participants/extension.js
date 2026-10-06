@@ -15,6 +15,8 @@ jn.define('im/messenger/controller/sidebar-v2/user-actions/participants', (requi
 	const { DialogType } = require('im/messenger/const');
 	const { ProjectAccessGuard } = require('im/messenger/lib/project-access-guard');
 	const { Type } = require('type');
+	const { Feature } = require('im/messenger/lib/feature');
+	const { ChatPermission } = require('im/messenger/lib/permission-manager');
 
 	/**
 	 * @param {DialogId} dialogId
@@ -50,9 +52,22 @@ jn.define('im/messenger/controller/sidebar-v2/user-actions/participants', (requi
 			return Promise.resolve();
 		}
 
+		const isGuestInviteAvailableChat = dialog.type === DialogType.chat || dialog.type === DialogType.calendar;
+		if (isGuestInviteAvailableChat && Feature.isChatWithGuestsAvailable && ChatPermission.canInviteGuests(dialogId))
+		{
+			const { ChatInviteController } = await requireLazy('im:messenger/controller/chat-invite');
+			ChatInviteController.open({
+				dialogId,
+				store,
+			});
+
+			return Promise.resolve();
+		}
+
 		return new Promise((resolve, reject) => {
 			const memberSelector = new MemberSelector({
 				title: widgetTitle,
+				excludeGuests: true,
 				onSelectMembers: async (selectedUsersIds) => {
 					try
 					{

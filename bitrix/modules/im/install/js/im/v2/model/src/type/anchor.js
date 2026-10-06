@@ -1,4 +1,4 @@
-import { type AnchorType } from 'im.v2.const';
+import { type AnchorType, type RecentTypeItem } from 'im.v2.const';
 
 export type Anchor = {
 	chatId: number;
@@ -8,4 +8,5 @@ export type Anchor = {
 	parentMessageId: number;
 	type: AnchorType;
 	subType: string | null;
+	recentSections: RecentTypeItem[]
 };

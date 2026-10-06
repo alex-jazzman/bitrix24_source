@@ -1,1 +1,1 @@
-export type UserType = 'user' | 'bot' | 'extranet' | 'collaber';
+export type UserType = 'user' | 'bot' | 'extranet' | 'collaber' | 'guest';

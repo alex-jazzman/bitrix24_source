@@ -1,7 +1,7 @@
 import { createNamespacedHelpers } from 'ui.vue3.vuex';
 
 import { BusySlot as BusySlotType, Model } from 'booking.const';
-import { gridFactory } from 'booking.lib.grid';
+import { GridFactory, type GridBase } from 'booking.lib.grid';
 
 import { UiBusySlot } from '../../../grid/bookings/ui-busy-slot/ui-busy-slot';
 import './busy-slot.css';
@@ -14,6 +14,11 @@ export const BusySlot = {
 	name: 'BusySlot',
 	components: {
 		UiBusySlot,
+	},
+	inject: {
+		gridContext: {
+			default: null,
+		},
 	},
 	props: {
 		busySlot: {
@@ -32,7 +37,7 @@ export const BusySlot = {
 		}),
 		grid(): GridBase
 		{
-			return gridFactory.getGrid();
+			return GridFactory.getGrid(this.gridContext);
 		},
 		enabledOverbookingFeature(): boolean
 		{
@@ -53,9 +58,9 @@ export const BusySlot = {
 		positionStyle(): Object
 		{
 			return {
-				'--left': this.left + 'px',
-				'--top': this.top + 'px',
-				'--height': this.height + 'px',
+				'--left': `${this.left}px`,
+				'--top': `${this.top}px`,
+				'--height': `${this.height}px`,
 			};
 		},
 		isVisible(): boolean

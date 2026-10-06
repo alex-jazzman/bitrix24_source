@@ -16,6 +16,7 @@ jn.define('im/messenger/controller/recent/config', (require, exports, module) =>
 	const { CollabDefaultConfig } = require('im/messenger/controller/recent/config/src/nested/collab-default');
 	const { TasksTasksConfig } = require('im/messenger/controller/recent/config/src/nested/tasks-tasks');
 	const { CollabChatConfig } = require('im/messenger/controller/recent/config/src/nested/collab-chat');
+	const { CollabCopilotConfig } = require('im/messenger/controller/recent/config/src/nested/collab-copilot');
 	const { CalendarConfig } = require('im/messenger/controller/recent/config/src/nested/calendar');
 
 	const RecentConfig = {
@@ -31,6 +32,7 @@ jn.define('im/messenger/controller/recent/config', (require, exports, module) =>
 		[NavigationTabId.collabDefault]: CollabDefaultConfig,
 		[NavigationTabId.task]: TasksTasksConfig,
 		[NavigationTabId.collabChat]: CollabChatConfig,
+		[NavigationTabId.collabCopilot]: CollabCopilotConfig,
 		[NavigationTabId.calendar]: CalendarConfig,
 	};
 

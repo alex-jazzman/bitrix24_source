@@ -1,4 +1,7 @@
 <?php
+
+use Bitrix\Main\Web\Uri;
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
 if (!CModule::IncludeModule('crm'))
@@ -58,10 +61,10 @@ if ($canDelete && ($arParams['TYPE'] === 'edit' && $arParams['ELEMENT_ID'] > 0))
 	$arResult['BUTTONS'][] = array(
 		'TEXT' => GetMessage('CRM_MEASURE_DELETE'),
 		'TITLE' => GetMessage('CRM_MEASURE_DELETE_TITLE'),
-		'LINK' => "javascript:measure_delete('".GetMessage('CRM_MEASURE_DELETE_DLG_TITLE')."', '".GetMessage('CRM_MEASURE_DELETE_DLG_MESSAGE')."', '".GetMessage('CRM_MEASURE_DELETE_DLG_BTNTITLE')."', '".CHTTP::urlAddParams(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_MEASURE_EDIT'],
-				array('measure_id' => $arParams['ELEMENT_ID'])),
-			array('delete' => '', 'sessid' => bitrix_sessid())
-		)."')",
+		'LINK' => "javascript:measure_delete('".GetMessage('CRM_MEASURE_DELETE_DLG_TITLE')."', '".GetMessage('CRM_MEASURE_DELETE_DLG_MESSAGE')."', '".GetMessage('CRM_MEASURE_DELETE_DLG_BTNTITLE')."', '"
+			. (new Uri(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_MEASURE_EDIT'], array('measure_id' => $arParams['ELEMENT_ID']))))
+				->addParams(array('delete' => '', 'sessid' => bitrix_sessid()))
+			. "')",
 		'ICON' => 'btn-delete'
 	);
 }

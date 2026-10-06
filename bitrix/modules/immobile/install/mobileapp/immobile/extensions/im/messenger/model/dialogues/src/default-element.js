@@ -18,6 +18,7 @@ jn.define('im/messenger/model/dialogues/default-element', (require, exports, mod
 		userCounter: 0,
 		participants: [],
 		lastLoadParticipantId: 0,
+		participantsCursor: null,
 		lastReadId: 0,
 		markedId: 0,
 		lastMessageId: 0,
@@ -57,6 +58,8 @@ jn.define('im/messenger/model/dialogues/default-element', (require, exports, mod
 			manageUsersDelete: UserRole.none,
 			manageUi: UserRole.none,
 			manageSettings: UserRole.none,
+			manageGuestInvites: UserRole.none,
+			manageDelete: UserRole.member,
 		},
 		tariffRestrictions: {
 			isHistoryLimitExceeded: false,
@@ -73,6 +76,7 @@ jn.define('im/messenger/model/dialogues/default-element', (require, exports, mod
 			sections: [],
 		},
 		containsCollaber: false,
+		guestCount: 0,
 	});
 
 	module.exports = {

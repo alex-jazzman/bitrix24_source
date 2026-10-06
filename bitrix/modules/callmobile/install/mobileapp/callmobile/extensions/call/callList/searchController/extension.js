@@ -18,7 +18,7 @@ jn.define('call/callList/searchController', (require, exports, module) => {
 			this.searchAnalyticsSent = false;
 		}
 
-		setupSearch()
+		setupSearch(extraButtons = [])
 		{
 			BX.onViewLoaded(() => {
 				const mainLayout = this.component.layout || layout;
@@ -35,6 +35,7 @@ jn.define('call/callList/searchController', (require, exports, module) => {
 							id: 'search',
 							callback: () => this.openSearch(mainLayout),
 						},
+						...extraButtons,
 					]);
 				}
 			});

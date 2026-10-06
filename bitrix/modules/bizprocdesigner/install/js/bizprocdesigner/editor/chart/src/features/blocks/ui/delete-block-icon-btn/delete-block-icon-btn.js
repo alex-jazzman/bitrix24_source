@@ -1,5 +1,5 @@
 import { Outline } from 'ui.icon-set.api.vue';
-import { useHistory, useBlockDiagram } from 'ui.block-diagram';
+import { useBlockDiagram } from 'ui.block-diagram';
 
 import { IconButton } from '../../../../shared/ui';
 // eslint-disable-next-line no-unused-vars
@@ -7,8 +7,32 @@ import { type BlockId } from '../../../../shared/types';
 import { diagramStore as useDiagramStore } from '../../../../entities/blocks';
 
 type DeleteBlockIconBtnSetup = {
-	onDeleteBlock: () => void;
+	onDeleteBlock: () => Promise<void>;
 };
+
+type BeginSaveRun = () => number;
+type PublicDraft = () => Promise<boolean>;
+type UpdateStatus = (isSaved: boolean, runId: number) => void;
+
+async function tryPublicDraft(
+	beginSaveRun: BeginSaveRun,
+	publicDraft: PublicDraft,
+	updateStatus: UpdateStatus,
+): Promise<void>
+{
+	// Reserved before the request: a save started after this one owns the status, so a late
+	// answer here must not overwrite it.
+	const runId = beginSaveRun();
+	try
+	{
+		const isSaved = await publicDraft();
+		updateStatus(isSaved, runId);
+	}
+	catch
+	{
+		updateStatus(false, runId);
+	}
+}
 
 // @vue/component
 export const DeleteBlockIconBtn = {
@@ -34,24 +58,10 @@ export const DeleteBlockIconBtn = {
 	emits: ['deletedBlock'],
 	setup(props, { emit }): DeleteBlockIconBtnSetup
 	{
-		const history = useHistory();
 		const { deleteBlockById } = useBlockDiagram();
-		const { publicDraft, updateStatus } = useDiagramStore();
+		const { beginSaveRun, publicDraft, updateStatus } = useDiagramStore();
 
-		function tryPublicDraft(): void
-		{
-			try
-			{
-				publicDraft();
-				updateStatus(true);
-			}
-			catch
-			{
-				updateStatus(false);
-			}
-		}
-
-		function onDeleteBlock(): Promise<void>
+		async function onDeleteBlock(): Promise<void>
 		{
 			if (props.disabled)
 			{
@@ -59,9 +69,8 @@ export const DeleteBlockIconBtn = {
 			}
 
 			deleteBlockById(props.blockId);
-			history.makeSnapshot();
 			emit('deletedBlock', props.blockId);
-			tryPublicDraft();
+			await tryPublicDraft(beginSaveRun, publicDraft, updateStatus);
 		}
 
 		return {

@@ -1,10 +1,10 @@
 (() => {
 	const require = (extension) => jn.require(extension);
-	const { UnsupportedFeature, UnsupportedFeatureType } = require('tasks/unsupported-feature');
+	const { UnsupportedFeature, UnsupportedFeaturePreset } = require('tasks/unsupported-feature');
 
 	const component = new UnsupportedFeature({
 		layout,
-		type: UnsupportedFeatureType.SCRUM,
+		type: UnsupportedFeaturePreset.SCRUM,
 	});
 
 	BX.onViewLoaded(() => {

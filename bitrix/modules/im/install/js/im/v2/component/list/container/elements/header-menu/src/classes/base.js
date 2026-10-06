@@ -3,7 +3,6 @@ import { Outline as OutlineIcons } from 'ui.icon-set.api.core';
 import { type MenuItemOptions, type MenuOptions, type MenuSectionOptions } from 'ui.system.menu';
 
 import { PopupType } from 'im.v2.const';
-import { Feature, FeatureManager } from 'im.v2.lib.feature';
 import { BaseMenu } from 'im.v2.lib.menu';
 
 const MenuSectionCode = {
@@ -36,21 +35,9 @@ export class BaseRecentHeaderMenu extends BaseMenu
 
 	getMenuItems(): MenuItemOptions
 	{
-		const isUnreadRecentModeAvailable = FeatureManager.isFeatureAvailable(Feature.unreadRecentModeAvailable);
-
-		if (!isUnreadRecentModeAvailable)
-		{
-			return [this.getReadAllItem()];
-		}
-
 		const firstGroupItems = [this.getDefaultModeItem(), this.getUnreadModeItem()];
 
 		const secondGroupItems = [this.getReadAllItem()];
-
-		if (this.context.parentChatId > 0)
-		{
-			return this.groupItems(firstGroupItems, MenuSectionCode.first);
-		}
 
 		return [
 			...this.groupItems(firstGroupItems, MenuSectionCode.first),

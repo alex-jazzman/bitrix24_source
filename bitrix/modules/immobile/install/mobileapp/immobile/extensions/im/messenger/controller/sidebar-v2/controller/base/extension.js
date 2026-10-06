@@ -7,7 +7,7 @@ jn.define('im/messenger/controller/sidebar-v2/controller/base', (require, export
 	const { LoggerManager } = require('im/messenger/lib/logger');
 	const { EventType, Analytics } = require('im/messenger/const');
 	const { MessengerParams } = require('im/messenger/lib/params');
-	const { DialogHelper } = require('im/messenger/lib/helper');
+	const { DialogHelper, UserHelper } = require('im/messenger/lib/helper');
 	const { ChatService } = require('im/messenger/provider/services/chat');
 	const { RecentService } = require('im/messenger/provider/services/recent');
 	const { AnalyticsService } = require('im/messenger/provider/services/analytics');
@@ -36,6 +36,20 @@ jn.define('im/messenger/controller/sidebar-v2/controller/base', (require, export
 
 	class SidebarBaseController
 	{
+		/**
+		 * Dialog fields that influence header context menu rendering. Update when a new
+		 * menu item becomes sensitive to a different dialog field.
+		 *
+		 * @type {ReadonlyArray<string>}
+		 */
+		static HEADER_CONTEXT_MENU_SENSITIVE_FIELDS = Object.freeze([
+			'parentChatId',
+			'role',
+			'permissions',
+			'muteList',
+			'pinned',
+		]);
+
 		// region initialization
 
 		/**
@@ -303,8 +317,43 @@ jn.define('im/messenger/controller/sidebar-v2/controller/base', (require, export
 		 */
 		getHeaderContextMenuItems()
 		{
-			const copyLinkItem = this.permissionManager.canCopyLink()
-				? this.#getCopyLinkOrChatIdItem()
+			// Openlines is excluded from the copy-menu parity change — keep the legacy single copy item.
+			// Legacy XOR logic: one item gated by canCopyLink(); copy-ID when flag is on, copy-link otherwise.
+			if (this.dialogHelper.isOpenlines)
+			{
+				const copyLinkItem = this.permissionManager.canCopyLink()
+					? (
+						Feature.isChatSharingLinkAvailable
+							? this.getHeaderContextMenuItemCopyChatId()
+							: this.getHeaderContextMenuItemCopyLink()
+					)
+					: null
+				;
+				const copyChatIdItem = null;
+
+				const items = [
+					this.permissionManager.canPin() ? this.getHeaderContextMenuItemPin() : null,
+					this.permissionManager.canEdit() ? this.getHeaderContextMenuItemEdit() : null,
+					copyLinkItem,
+					copyChatIdItem,
+					this.permissionManager.canLeave() ? this.getHeaderContextMenuItemLeave() : null,
+					this.permissionManager.canClearHistory() ? this.getHeaderContextMenuItemClearHistory() : null,
+					this.permissionManager.canDelete() ? this.getHeaderContextMenuItemDelete() : null,
+					this.permissionManager.canHide() ? this.getHeaderContextMenuItemHide() : null,
+				];
+
+				return items.filter(Boolean);
+			}
+
+			// Show copy-link only when the gate allows (non-collab, non-copilot, non-direct chats) and not for guests.
+			const copyLinkItem = this.permissionManager.canCopyLink() && !UserHelper.isCurrentUserGuest()
+				? this.getHeaderContextMenuItemCopyLink()
+				: null
+			;
+
+			// Show copy-ID whenever the feature flag is on (independently of canCopyLink()) and not for guests.
+			const copyChatIdItem = Feature.isChatSharingLinkAvailable && !UserHelper.isCurrentUserGuest()
+				? this.getHeaderContextMenuItemCopyChatId()
 				: null
 			;
 
@@ -312,6 +361,7 @@ jn.define('im/messenger/controller/sidebar-v2/controller/base', (require, export
 				this.permissionManager.canPin() ? this.getHeaderContextMenuItemPin() : null,
 				this.permissionManager.canEdit() ? this.getHeaderContextMenuItemEdit() : null,
 				copyLinkItem,
+				copyChatIdItem,
 				this.permissionManager.canLeave() ? this.getHeaderContextMenuItemLeave() : null,
 				this.permissionManager.canClearHistory() ? this.getHeaderContextMenuItemClearHistory() : null,
 				this.permissionManager.canDelete() ? this.getHeaderContextMenuItemDelete() : null,
@@ -319,19 +369,6 @@ jn.define('im/messenger/controller/sidebar-v2/controller/base', (require, export
 			];
 
 			return items.filter(Boolean);
-		}
-
-		/**
-		 * @return {SidebarContextMenuItem}
-		 */
-		#getCopyLinkOrChatIdItem()
-		{
-			if (Feature.isChatSharingLinkAvailable)
-			{
-				return this.getHeaderContextMenuItemCopyChatId();
-			}
-
-			return this.getHeaderContextMenuItemCopyLink();
 		}
 
 		/**
@@ -560,7 +597,7 @@ jn.define('im/messenger/controller/sidebar-v2/controller/base', (require, export
 				link,
 				{
 					notificationText: Loc.getMessage('IMMOBILE_SIDEBAR_V2_COMMON_COPY_LINK_SUCCESS'),
-					notificationIcon: Icon.LINK,
+					notificationIcon: Icon.COPY,
 					toastOffset: SIDEBAR_DEFAULT_TOAST_OFFSET,
 				},
 				true,
@@ -889,11 +926,37 @@ jn.define('im/messenger/controller/sidebar-v2/controller/base', (require, export
 		{
 			this.logger.info('onStoreUpdate', event);
 			const updatedDialogId = event?.payload?.data?.dialogId;
-			if (this.dialogId === updatedDialogId)
+			if (this.dialogId !== updatedDialogId)
 			{
-				this.dialogHelper = DialogHelper.createByDialogId(this.dialogId);
-				this.refreshView();
+				return;
 			}
+
+			this.dialogHelper = DialogHelper.createByDialogId(this.dialogId);
+			this.refreshView();
+
+			if (this.#shouldRebuildHeaderContextMenu(event))
+			{
+				this.#updateHeaderContextMenuItems();
+			}
+		}
+
+		/**
+		 * Header context menu depends on a small set of dialog fields. For non-dialog events
+		 * (sidebarModel/update) or unknown shapes — rebuild defensively.
+		 *
+		 * @param {object} event
+		 * @return {boolean}
+		 */
+		#shouldRebuildHeaderContextMenu(event)
+		{
+			const fields = event?.payload?.data?.fields;
+			if (!Type.isPlainObject(fields))
+			{
+				return true;
+			}
+
+			return SidebarBaseController.HEADER_CONTEXT_MENU_SENSITIVE_FIELDS
+				.some((field) => field in fields);
 		}
 
 		// endregion

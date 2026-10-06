@@ -17,8 +17,27 @@ div[data-role="start-storage-selector"]
 .bizproc-write-activity__outer-block {
 	border: 1px solid var(--ui-color-base-20, #e0e2e4);
 	border-radius: var(--ui-border-radius-lg, 12px);
-	background: var(--ui-color-background-primary, #fff);
+	background: transparent;
 	padding: 12px;
+}
+
+/* the dialog draws its own caption for the property, the visible title lives inside the block */
+#row_write_fields .node-settings-edit-caption {
+	display: none;
+}
+
+.bizproc-write-activity__fields-title {
+	color: var(--ui-color-base-1);
+	font-size: var(--ui-font-size-xl);
+	font-weight: var(--ui-font-weight-medium);
+	line-height: var(--ui-font-line-height-xl);
+	margin-bottom: var(--ui-space-stack-xs);
+}
+
+.bizproc-write-activity__fields-title.--required:after {
+	content: '*';
+	margin-left: 2px;
+	color: var(--ui-color-palette-red-60);
 }
 
 .bizproc-write-activity__fields-container {
@@ -57,7 +76,54 @@ div[data-role="start-storage-selector"]
 	min-width: 0;
 }
 
-.bizproc-write-activity__outer-block .add-construction-field {
+.bizproc-write-activity__outer-block .bizproc-automation-popup-settings__condition-item_close {
+	cursor: pointer;
+	--ui-icon-set__icon-color: var(--ui-color-base-3);
+}
+
+.bizproc-write-activity__hidden {
+	display: none;
+}
+
+/* the footer is appended below the menu items, so the menu keeps padding at the top only */
+.bizproc-write-activity__field-menu {
+	--menu-popup-padding: var(--ui-space-inset-xs) 0 0;
+}
+
+.bizproc-write-activity__menu-footer {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-2xs);
+	padding: var(--ui-space-inset-sm2) var(--ui-space-inset-md2);
+	color: var(--ui-color-base-1);
+	font-size: var(--ui-font-size-xs);
+	line-height: var(--ui-font-line-height-3xs);
+	background-color: var(--ui-color-accent-soft-blue-2);
+	border-radius: 0 0 var(--popup-window-border-radius) var(--popup-window-border-radius);
+	cursor: pointer;
+}
+
+.bizproc-write-activity__menu-footer-icon {
+	--ui-icon-set__icon-size: 24px;
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary);
+}
+
+.bizproc-write-activity__menu-footer-text {
+	border-bottom: 1px dashed var(--ui-color-base-4);
+}
+
+.bizproc-write-activity__icon-plus {
+	--ui-icon-set__icon-size: 24px;
+	--ui-icon-set__icon-color: var(--ui-color-base-3);
+	margin-right: 2px;
+}
+
+.node-settings-edit-box .node-settings-add-field-button {
+	border: 1px solid rgba(0, 0, 0, 0.08);
+	border-radius: 8px;
+	margin-top: 16px;
+	justify-content: center;
+	padding: 5px 0;
 	font-size: 14px;
 	line-height: normal;
 	color: var(--ui-color-palette-gray-70);
@@ -66,48 +132,8 @@ div[data-role="start-storage-selector"]
 	cursor: pointer;
 }
 
-.bizproc-write-activity__outer-block .add-construction-field[hidden] {
-	display: none;
-}
-
-.bizproc-write-activity__outer-block .bizproc-automation-popup-settings__condition-item_close {
-	cursor: pointer;
-	--ui-icon-set__icon-color: var(--ui-color-base-3);
-}
-
-.bizproc-write-activity__outer-block .create-field-card {
-	border: 1px solid rgba(0, 0, 0, 0.08);
-	border-radius: 8px;
-	margin-top: 12px;
-	justify-content: center;
-	padding: 5px 0;
-	width: 100%;
-}
-
-.bizproc-write-activity__hidden {
-	display: none;
-}
-
-.bizproc-write-activity__icon-plus {
-	--ui-icon-set__icon-size: 20px;
-	--ui-icon-set__icon-color: var(--ui-color-base-3);
-}
-
-.node-settings-edit-box .node-settings-add-item-button {
-	width: 100%;
-	display: flex;
-	align-items: center;
-	color: var(--ui-color-palette-gray-70);
-	margin-bottom: 0;
-	cursor: pointer;
-	font-weight: 500;
-	font-size: 13px;
-	margin-left: 4px;
-	text-decoration: none;
-	margin-top: 0;
-}
-
-.node-settings-edit-box .node-settings-add-item-button[hidden] {
+/* Dom.hide sets the hidden attribute, so it has to beat the display: flex above */
+.node-settings-edit-box .node-settings-add-field-button[hidden] {
 	display: none;
 }
 

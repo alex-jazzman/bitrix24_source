@@ -1,0 +1,152 @@
+/*
+ * Separate cards on the page background, as on the mailbox management screen
+ * (mail.connecting/config-form: .mail-config-form + .mail-config-form__section).
+ */
+.mail-signature-editor-wrapper {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-lg);
+}
+
+.mail-signature-editor-wrapper__macro-action {
+	display: flex;
+	align-items: center;
+}
+
+.mail-signature-editor-wrapper__editor,
+.mail-signature-editor-wrapper__settings,
+.mail-signature-editor-wrapper__scope {
+	background-color: var(--ui-color-bg-content-primary);
+	border-radius: var(--ui-border-radius-2xl);
+	box-shadow: 0 1px 1px 0 rgba(0, 0, 0, 0.04);
+}
+
+.mail-signature-editor-wrapper__editor {
+	padding: var(--ui-space-inset-md) var(--ui-space-inset-md) var(--ui-space-inset-lg);
+}
+
+.mail-signature-editor-wrapper__settings {
+	padding: var(--ui-space-inset-lg) var(--ui-space-inset-2xl) var(--ui-space-inset-2xl);
+}
+
+.mail-signature-editor-wrapper__editor .bx-html-editor {
+	border-color: transparent;
+}
+
+/*
+ * Third card: the padding belongs to the header and to the content, so that the header keeps its
+ * place while the content is hidden — as the settings cards of the mailbox management screen do.
+ */
+.mail-signature-shared-scope__header {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-sm2);
+	min-height: 38px;
+	padding: var(--ui-space-inset-lg) var(--ui-space-inset-2xl);
+}
+
+.mail-signature-shared-scope__content {
+	padding: 0 var(--ui-space-inset-2xl) var(--ui-space-inset-2xl);
+}
+
+.mail-signature-shared-scope__title-block {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-3xs);
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+.mail-signature-shared-scope__title {
+	color: var(--ui-color-base-1);
+	font-size: var(--ui-font-size-lg);
+	font-weight: var(--ui-font-weight-semi-bold);
+	line-height: var(--ui-font-line-height-lg);
+}
+
+.mail-signature-shared-scope__subtitle {
+	color: var(--ui-color-base-4);
+	font-size: var(--ui-font-size-sm);
+	line-height: var(--ui-font-line-height-2xs);
+}
+
+.mail-signature-shared-scope__switcher {
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+	flex: 0 0 auto;
+	padding: 0;
+	border: 0;
+	font: inherit;
+}
+
+/* Field caption: matches the label of ui.system.input used on the mailbox settings screen. */
+.mail-signature-assignment-type__label,
+.mail-signature-sender-binding__label {
+	margin-bottom: var(--ui-space-stack-2xs2);
+	color: var(--ui-color-base-3);
+	font-size: var(--ui-font-size-sm);
+	line-height: var(--ui-font-line-height-2xs);
+}
+
+/* Vertical radio group, as in socialnetwork auto-delete-popup radio-group-fieldset. */
+.mail-signature-assignment-type__options {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: var(--ui-space-stack-sm);
+}
+
+.mail-signature-assignment-type__option {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--ui-space-inline-2xs);
+	cursor: pointer;
+}
+
+.mail-signature-assignment-type__option-text {
+	color: var(--ui-color-base-1);
+	font-size: var(--ui-font-size-md);
+	line-height: var(--ui-font-line-height-md);
+	-webkit-user-select: none;
+	        user-select: none;
+}
+
+/* Gap between fields must read as larger than the gap inside the radio column. */
+.mail-signature-assignment-type__panel {
+	margin-top: var(--ui-space-stack-xl);
+}
+
+/* Says what the card is missing, in the colour ui.system.input marks an invalid field with. */
+.mail-signature-assignment-type__error {
+	margin-top: var(--ui-space-stack-xs);
+	color: var(--ui-color-accent-main-alert);
+	font-size: var(--ui-font-size-sm);
+	line-height: var(--ui-font-line-height-2xs);
+}
+
+.mail-signature-assignment-type__error:empty {
+	display: none;
+}
+
+/* Block of assignment targets: empty for "all mailboxes", a tag selector for the other two ways. */
+.mail-signature-assignment-block__selector {
+	margin-top: var(--ui-space-stack-xs);
+}
+
+/* Height comes from the tag selector itself; only the field width is ours to constrain. */
+.mail-signature-sender-binding__selector {
+	min-width: 240px;
+	max-width: 480px;
+}
+
+/*
+ * The selector always holds exactly one binding, so its button replaces the value
+ * instead of adding one — the DS "plus" glyph would be misleading here.
+ * Nested outer-container keeps this above the .--air rule of the design system.
+ */
+.mail-signature-sender-binding__selector .ui-tag-selector-outer-container .ui-tag-selector-add-button-caption:before {
+	display: none;
+	content: none;
+	margin: 0;
+}

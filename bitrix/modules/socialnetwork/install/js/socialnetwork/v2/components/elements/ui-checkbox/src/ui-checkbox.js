@@ -19,6 +19,10 @@ export const UiCheckbox = {
 			type: String,
 			default: 'label',
 		},
+		inputId: {
+			type: String,
+			default: '',
+		},
 	},
 	emits: [
 		'change',
@@ -64,6 +68,7 @@ export const UiCheckbox = {
 				v-model="isCheckedInner"
 				class="socnet-checkbox__native"
 				type="checkbox"
+				:id="inputId || null"
 				:disabled="isDisabled"
 			>
 			<span

@@ -90,7 +90,8 @@ export default class Activity extends Scheduled
 				this._detetionConfirmDlgId,
 				{
 					title: this.getMessage("removeConfirmTitle"),
-					content: this.getRemoveMessage()
+					content: this.getRemoveMessage(),
+					background: 'vibrant',
 				}
 			);
 		}

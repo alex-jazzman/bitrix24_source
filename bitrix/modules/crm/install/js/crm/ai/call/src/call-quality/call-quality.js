@@ -1,5 +1,4 @@
 import { Loc, Tag, Type } from 'main.core';
-import { EventEmitter } from 'main.core.events';
 import { BitrixVue } from 'ui.vue3';
 import type { aiData } from '../base.js';
 import { ActivityProvider, Base } from '../base.js';
@@ -49,7 +48,8 @@ export class CallQuality extends Base
 		this.id = 'crm-copilot-call-quality';
 		this.sliderTitle = Loc.getMessage('CRM_COPILOT_CALL_QUALITY_SLIDER_TITLE');
 
-		const width = Math.round(BX.SidePanel.Instance.getTopSlider().getWidth() * 0.75);
+		const topSlider = BX.SidePanel.Instance.getTopSlider();
+		const width = topSlider ? Math.round(topSlider.getWidth() * 0.75) : 0;
 		this.sliderWidth = width > 0 ? width : Math.round(window.screen.width * 0.75);
 
 		this.textboxTitle = Loc.getMessage('CRM_COPILOT_CALL_TRANSCRIPT_TITLE');
@@ -134,11 +134,6 @@ export class CallQuality extends Base
 
 					const container = Tag.render`<div class="call-quality__container"></div>`;
 					this.#layoutComponent = this.#app.mount(container);
-
-					EventEmitter.subscribe('crm.ai.callQuality:doAssessment', () => {
-						// @todo will the slider close?
-						//this.wrapperSlider?.close();
-					});
 
 					resolve(container);
 				})

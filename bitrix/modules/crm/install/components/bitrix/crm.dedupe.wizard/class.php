@@ -8,6 +8,7 @@ use Bitrix\Main\Engine\Router;
 use Bitrix\Main\Engine\UrlManager;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm;
+use Bitrix\Main\Web\Uri;
 
 if(!Main\Loader::includeModule('crm'))
 {
@@ -268,10 +269,7 @@ class CCrmDedupeWizardComponent extends CBitrixComponent
 		$this->arResult['PATH_TO_MERGER'] = $this->arParams['PATH_TO_MERGER'] ?? '';
 		if($this->arResult['PATH_TO_MERGER'] !== '')
 		{
-			$this->arResult['PATH_TO_MERGER'] = CHTTP::urlAddParams(
-				$this->arResult['PATH_TO_MERGER'],
-				['queue' => mb_strtolower($this->entityTypeName).'_dedupe_queue'],
-			);
+			$this->arResult['PATH_TO_MERGER'] = (string)(new Uri($this->arResult['PATH_TO_MERGER']))->addParams(['queue' => mb_strtolower($this->entityTypeName).'_dedupe_queue']);
 		}
 
 		$this->arResult['PATH_TO_DEDUPE_LIST'] = $this->arParams['PATH_TO_DEDUPE_LIST'] ?? '';

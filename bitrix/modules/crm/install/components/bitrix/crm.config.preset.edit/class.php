@@ -3,8 +3,8 @@
 namespace Bitrix\Crm;
 
 use Bitrix\Crm\Communication\Validator;
-use \Bitrix\Main\Application;
-use \Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Application;
+use Bitrix\Main\Localization\Loc;
 
 if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)
 	die();

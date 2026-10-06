@@ -151,6 +151,7 @@ $migration->table('b_crm_deal')->create(function (\Bitrix\Main\UpdateSystem\Migr
 	$table->addIndex('IX_DEAL_34', ['STAGE_ID', 'LAST_ACTIVITY_TIME']);
 	$table->addIndex('IX_DEAL_35', ['ASSIGNED_BY_ID', 'STAGE_SEMANTIC_ID', 'CATEGORY_ID', 'IS_RECURRING']);
 	$table->addIndex('IX_DEAL_36', ['BEGINDATE', 'STAGE_SEMANTIC_ID']);
+	$table->addIndex('IX_DEAL_QUOTE_ID', ['QUOTE_ID']);
 	$table->addFulltextIndex('IX_B_CRM_DEAL_SEARCH', ['SEARCH_CONTENT']);
 });
 
@@ -208,6 +209,7 @@ $migration->table('b_crm_contact')->create(function (\Bitrix\Main\UpdateSystem\M
 	$table->addIndex('IX_CONTACT_LAST_NAME_AND_NAME', ['LAST_NAME', 'NAME']);
 	$table->addIndex('IX_CONTACT_CATEGORY', ['CATEGORY_ID']);
 	$table->addIndex('IX_CONTACT_LAST_ACTIVITY_TIME', ['LAST_ACTIVITY_TIME']);
+	$table->addIndex('IX_CONTACT_DATE_MODIFY', ['DATE_MODIFY']);
 	$table->addFulltextIndex('IX_B_CRM_CONTACT_SEARCH', ['SEARCH_CONTENT']);
 });
 
@@ -458,6 +460,7 @@ $migration->table('b_crm_product_row')->create(function (\Bitrix\Main\UpdateSyst
 	$columns->int('SORT');
 	$columns->varchar('XML_ID', 255);
 	$columns->int('TYPE')->notNull()->default('1');
+	$columns->varchar('TAX_NAME', 50)->notNull()->default('');
 	$table->addPrimaryKey('ID');
 	$table->addIndex('IX_B_CRM_PROD_ROW_2', ['OWNER_ID', 'OWNER_TYPE', 'SORT']);
 	$table->addIndex('IX_B_CRM_PROD_PRODUCT', ['PRODUCT_ID']);
@@ -2308,8 +2311,13 @@ $migration->table('b_crm_timeline_bind')->create(function (\Bitrix\Main\UpdateSy
 	$columns->int('ENTITY_ID')->notNull();
 	$columns->int('ENTITY_TYPE_ID')->notNull();
 	$columns->char('IS_FIXED', 1);
+	$columns->datetime('CREATED');
 	$table->addPrimaryKeys(['OWNER_ID', 'ENTITY_ID', 'ENTITY_TYPE_ID']);
 	$table->addIndex('IX_B_CRM_TIMELINE_BIND_2', ['ENTITY_ID', 'ENTITY_TYPE_ID', 'IS_FIXED']);
+	$table->addIndex(
+		'IX_B_CRM_TIMELINE_BIND_3',
+		['ENTITY_ID', 'ENTITY_TYPE_ID', 'CREATED', 'OWNER_ID']
+	);
 });
 
 $migration->table('b_crm_timeline_search')->create(function (\Bitrix\Main\UpdateSystem\Migration\CreateTableBuilder $table) {
@@ -4033,11 +4041,13 @@ $migration->table('b_crm_ai_quality_assessment')->create(function (\Bitrix\Main\
 	$columns->bigInt('MANAGER_USER_ID')->notNull()->default('0');
 	$columns->bigInt('RATED_USER_CHAT_ID')->notNull()->default('0');
 	$columns->bigInt('MANAGER_USER_CHAT_ID')->notNull()->default('0');
+	$columns->mediumText('CRITERIA_DATA');
 	$table->addPrimaryKey('ID');
-	$table->addIndex('IX_CRM_AI_QA_RATED_USER', ['RATED_USER_ID']);
+	$table->addIndex('IX_CRM_AI_QA_RUI_A', ['RATED_USER_ID', 'ASSESSMENT']);
 	$table->addIndex('IX_CRM_AI_QA_MANAGER_USER', ['MANAGER_USER_ID']);
 	$table->addIndex('IX_CRM_AI_QA_CREATED_AT', ['CREATED_AT']);
 	$table->addIndex('IX_CRM_AI_QA_ACTIVITY', ['ACTIVITY_TYPE', 'ACTIVITY_ID']);
+	$table->addIndex('IX_CRM_AI_QA_SETTING_RATING_TYPE', ['ASSESSMENT_SETTING_ID', 'USE_IN_RATING', 'ACTIVITY_TYPE']);
 });
 
 $migration->table('b_crm_terminal_payment')->create(function (\Bitrix\Main\UpdateSystem\Migration\CreateTableBuilder $table) {
@@ -4120,12 +4130,14 @@ $migration->table('b_crm_copilot_call_assessment')->create(function (\Bitrix\Mai
 	$table->addId();
 	$columns = $table->addColumn();
 	$columns->varchar('TITLE', 255)->notNull();
+	$columns->varchar('DESCRIPTION', 2000)->notNull()->default('');
 	$columns->text('PROMPT')->notNull();
 	$columns->text('GIST');
 	$columns->tinyInt('CALL_TYPE')->notNull();
 	$columns->tinyInt('AUTO_CHECK_TYPE')->notNull();
 	$columns->char('IS_ENABLED', 1)->notNull()->default('Y');
 	$columns->char('IS_DEFAULT', 1)->notNull()->default('Y');
+	$columns->char('IS_AI_IMPROVEMENT_ENABLED', 1)->notNull()->default('Y');
 	$columns->bigInt('JOB_ID')->notNull()->default('0');
 	$columns->varchar('STATUS', 100)->notNull()->default('');
 	$columns->varchar('CODE', 30);
@@ -4158,6 +4170,82 @@ $migration->table('b_crm_copilot_call_assessment_availability')->create(function
 	$columns->varchar('WEEKDAY_TYPE', 20);
 	$columns->datetime('CREATED_AT')->notNull()->defaultCurrentTimestamp();
 	$table->addIndex('IX_B_CRM_CCAA_ASSESSMENT_ID', ['ASSESSMENT_ID']);
+});
+
+$migration->table('b_crm_copilot_call_assessment_criteria')->create(function (\Bitrix\Main\UpdateSystem\Migration\CreateTableBuilder $table) {
+	$table->addId();
+	$columns = $table->addColumn();
+	$columns->int('ASSESSMENT_ID')->notNull();
+	$columns->varchar('TITLE', 255)->notNull();
+	$columns->varchar('DESCRIPTION', 600)->notNull();
+	$columns->smallInt('SORT')->notNull()->default('0');
+	$columns->int('CREATED_BY_ID')->notNull();
+	$columns->int('UPDATED_BY_ID')->notNull();
+	$columns->datetime('CREATED_AT')->notNull()->defaultCurrentTimestamp();
+	$columns->datetime('UPDATED_AT')->notNull()->defaultCurrentTimestamp();
+	$table->addIndex('IX_B_CRM_CCAC_ASSESSMENT_ID', ['ASSESSMENT_ID']);
+});
+
+$migration->table('b_crm_ai_call_summary')->create(function (\Bitrix\Main\UpdateSystem\Migration\CreateTableBuilder $table) {
+	$table->addId();
+	$columns = $table->addColumn();
+	$columns->int('ACTIVITY_ID')->notNull();
+	$columns->int('JOB_ID')->notNull();
+	$columns->varchar('THEME', 255);
+	$columns->varchar('PRODUCT', 255);
+	$columns->varchar('INTENT', 255);
+	$columns->datetime('CREATED_AT')->notNull()->defaultCurrentTimestamp();
+	$columns->datetime('UPDATED_AT')->notNull()->defaultCurrentTimestamp();
+	$table->addUniqueIndex('UX_B_CRM_AI_CALL_SUMMARY_ACTIVITY_ID', ['ACTIVITY_ID']);
+});
+
+$migration->table('b_crm_ai_call_script_edit_review')->create(function (\Bitrix\Main\UpdateSystem\Migration\CreateTableBuilder $table) {
+	$table->addId();
+	$columns = $table->addColumn();
+	$columns->int('ASSESSMENT_ID')->notNull();
+	$columns->int('JOB_ID')->notNull();
+	$columns->datetime('CREATED_AT')->notNull()->defaultCurrentTimestamp();
+	$table->addUniqueIndex('UX_B_CRM_AI_CALL_SCRIPT_EDIT_REVIEW_ASSESSMENT_ID', ['ASSESSMENT_ID']);
+});
+
+$migration->table('b_crm_ai_call_script_selection')->create(function (\Bitrix\Main\UpdateSystem\Migration\CreateTableBuilder $table) {
+	$table->addId();
+	$columns = $table->addColumn();
+	$columns->int('ACTIVITY_ID')->notNull();
+	$columns->int('ASSESSMENT_SETTING_ID')->notNull();
+	$columns->int('JOB_ID')->notNull();
+	$columns->tinyInt('CONFIDENCE')->notNull();
+	$columns->varchar('RATIONALE', 1000);
+	$columns->datetime('CREATED_AT')->notNull()->defaultCurrentTimestamp();
+	$columns->datetime('GROUPED_AT');
+	$columns->datetime('ENRICHED_AT');
+	$table->addIndex('IX_B_CRM_AI_CSS_ACTIVITY_ID', ['ACTIVITY_ID']);
+	$table->addIndex('IX_B_CRM_AI_CSS_JOB_ID', ['JOB_ID']);
+	$table->addIndex('IX_B_CRM_AI_CSS_CONFIDENCE_CREATED_AT', ['CONFIDENCE', 'CREATED_AT']);
+	$table->addIndex('IX_B_CRM_AI_CSS_GROUPED', ['GROUPED_AT', 'CONFIDENCE']);
+	$table->addIndex('IX_B_CRM_AI_CSS_ENRICHED', ['ENRICHED_AT', 'CONFIDENCE', 'ASSESSMENT_SETTING_ID']);
+});
+
+$migration->table('b_crm_ai_call_script_maintenance_context')->create(function (\Bitrix\Main\UpdateSystem\Migration\CreateTableBuilder $table) {
+	$table->addId();
+	$columns = $table->addColumn();
+	$columns->int('JOB_ID')->notNull();
+	$columns->varchar('TYPE', 32)->notNull();
+	$columns->text('DATA');
+	$columns->datetime('CREATED_AT')->notNull()->defaultCurrentTimestamp();
+	$table->addUniqueIndex('UX_B_CRM_AI_CSMC_JOB_ID', ['JOB_ID']);
+	$table->addIndex('IX_B_CRM_AI_CSMC_CREATED_AT', ['CREATED_AT']);
+});
+
+$migration->table('b_crm_copilot_call_assessment_summary_state')->create(function (\Bitrix\Main\UpdateSystem\Migration\CreateTableBuilder $table) {
+	$table->addId();
+	$columns = $table->addColumn();
+	$columns->int('MANAGER_ID')->notNull();
+	$columns->varchar('SITUATION_TYPE', 32)->notNull();
+	$columns->int('LAST_ANCHOR_ID');
+	$columns->varchar('STATE', 16);
+	$columns->datetime('NOTIFIED_AT')->notNull()->defaultCurrentTimestamp();
+	$table->addUniqueIndex('UX_B_CRM_CCASS_MGR_SITUATION', ['MANAGER_ID', 'SITUATION_TYPE']);
 });
 
 $migration->table('b_crm_communication_category')->create(function (\Bitrix\Main\UpdateSystem\Migration\CreateTableBuilder $table) {
@@ -4268,6 +4356,7 @@ $migration->table('b_crm_repeat_sale_segment')->create(function (\Bitrix\Main\Up
 	$columns->varchar('TITLE', 255)->notNull();
 	$columns->text('PROMPT')->notNull();
 	$columns->char('IS_ENABLED', 1)->notNull()->default('Y');
+	$columns->char('IS_AUTO_DISABLED', 1)->notNull()->default('N');
 	$columns->char('IS_SYSTEM', 1)->notNull()->default('N');
 	$columns->varchar('CODE', 30);
 	$columns->varchar('BASE_SEGMENT_CODE', 30);
@@ -4471,4 +4560,3 @@ $migration->table('b_crm_act_mail_body_bind')->create(function (\Bitrix\Main\Upd
 	$table->addIndex('IX_B_CRM_ACT_MAIL_BODY_BIND_1', ['BODY_ID']);
 	$table->addIndex('IX_B_CRM_ACT_MAIL_BODY_BIND_2', ['OWNER_ID', 'OWNER_TYPE_ID']);
 });
-

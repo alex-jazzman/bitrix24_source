@@ -5,7 +5,17 @@ jn.define('im/messenger/lib/parser/markdown/rules/table-rules', (require, export
 	const { Loc } = require('im/messenger/loc');
 	const { MARKDOWN_TABLE_URL_PREFIX } = require('im/messenger/lib/parser/const');
 
-	const SEPARATOR_PATTERN = /^\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)*\|?\s*$/;
+	// GFM allows one or more dashes per delimiter cell (`| - |` is valid), so accept `-+`
+	// rather than `-{3,}`. Only tested as the row directly under a pipe header with matching
+	// column count, so no false positives.
+	const SEPARATOR_PATTERN = /^\|?\s*:?-+:?\s*(\|\s*:?-+:?\s*)*\|?\s*$/;
+
+	// Hard caps (mirrors the web parser): a table over either limit is left as raw GFM
+	// text instead of being converted, so a crafted table cannot inflate the inline URL
+	// payload or the WebView grid. dialog.openMarkdownTable enforces the same ceiling
+	// defensively on the decoded payload.
+	const MAX_TABLE_ROWS = 200;
+	const MAX_TABLE_COLUMNS = 24;
 
 	/**
 	 * @param {string} line
@@ -66,15 +76,17 @@ jn.define('im/messenger/lib/parser/markdown/rules/table-rules', (require, export
 			return null;
 		}
 
+		// Over-wide table: bail to raw text rather than convert (see MAX_TABLE_COLUMNS).
+		if (headers.length > MAX_TABLE_COLUMNS)
+		{
+			return null;
+		}
+
 		const rows = [];
 		let i = startIndex + 2;
 		while (i < lines.length && lines[i].includes('|'))
 		{
 			const cells = parseRow(lines[i]);
-			if (cells.length === 1 && headers.length > 1)
-			{
-				break;
-			}
 
 			while (cells.length < headers.length)
 			{
@@ -83,9 +95,26 @@ jn.define('im/messenger/lib/parser/markdown/rules/table-rules', (require, export
 
 			rows.push(cells.slice(0, headers.length));
 			i++;
+
+			// Over-tall table: bail to raw text rather than convert (see MAX_TABLE_ROWS).
+			if (rows.length > MAX_TABLE_ROWS)
+			{
+				return null;
+			}
 		}
 
 		return { headers, rows, endIndex: i };
+	}
+
+	// Encode a value into a token inert to Markdown and Text.encode: encodeURIComponent
+	// already removes < > & " ' and whitespace; the remaining Markdown-significant chars
+	// (! ' ( ) * _ ~) are percent-escaped too, so the alphabet is [A-Za-z0-9.%-] and the
+	// payload cannot be mangled by the inline rules or break the [URL=…] tag.
+	function toInertToken(value)
+	{
+		return encodeURIComponent(value).replace(/[!'()*_~]/g, (char) => {
+			return `%${char.charCodeAt(0).toString(16).toUpperCase()}`;
+		});
 	}
 
 	/**
@@ -94,47 +123,45 @@ jn.define('im/messenger/lib/parser/markdown/rules/table-rules', (require, export
 	 * @param {{ headers: string[], rows: string[][] }} tableData
 	 * @param {object} options
 	 * @param {string} options.mode
-	 * @param {number|string} options.messageId
-	 * @param {number} options.tableIndex
-	 * @param {function|null} options.storeTableData
 	 * @returns {string}
 	 */
 	function formatTable(tableData, options)
 	{
-		const { mode, storeTableData, messageId, tableIndex } = options;
+		const { mode } = options;
 
-		if (mode === 'simplify' || !storeTableData)
+		if (mode === 'simplify')
 		{
 			return `[${Loc.getMessage('IMMOBILE_PARSER_MARKDOWN_TABLE_PLACEHOLDER')}]`;
 		}
 
-		const key = storeTableData(messageId, tableIndex, tableData);
+		// Interim (M1): the table data travels inline in the link payload, not an
+		// in-memory store — so it survives session reloads. The tap handler
+		// (dialog.openMarkdownTable) decodes it back and shows the WebView.
+		const payload = toInertToken(JSON.stringify(tableData));
 		const linkText = Loc.getMessage('IMMOBILE_PARSER_MARKDOWN_TABLE_SHOW');
 
-		return `[URL=${MARKDOWN_TABLE_URL_PREFIX}${key}]${linkText}[/URL]`;
+		return `[URL=${MARKDOWN_TABLE_URL_PREFIX}${payload}]${linkText}[/URL]`;
 	}
 
 	/**
 	 * Find and convert GFM tables in text.
 	 *
 	 * @param {string} text
-	 * @param {object} options
-	 * @param {string} options.mode - 'decode' or 'simplify'
-	 * @param {number|string} options.messageId - message ID for key generation
-	 * @param {function} options.storeTableData - function(messageId, tableIndex, data) => key
+	 * @param {object} [options]
+	 * @param {string} [options.mode] - 'decode' or 'simplify'
 	 * @returns {string}
 	 */
 	function convertTables(text, options = {})
 	{
-		const {
-			mode = 'decode',
-			messageId = 0,
-			storeTableData = null,
-		} = options;
+		const { mode = 'decode' } = options;
+
+		if (!text.includes('|'))
+		{
+			return text;
+		}
 
 		const lines = text.split('\n');
 		const result = [];
-		let tableIndex = 0;
 		let i = 0;
 
 		while (i < lines.length)
@@ -144,9 +171,8 @@ jn.define('im/messenger/lib/parser/markdown/rules/table-rules', (require, export
 			{
 				result.push(formatTable(
 					{ headers: table.headers, rows: table.rows },
-					{ mode, storeTableData, messageId, tableIndex },
+					{ mode },
 				));
-				tableIndex++;
 				i = table.endIndex;
 			}
 			else

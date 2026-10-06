@@ -1,6 +1,10 @@
 import { Type } from 'main.core';
 import { DocumentMode } from 'sign.type';
 
+type WizardLike = {
+	toggleBtnActiveState: (buttonId: string, isDisabled: boolean) => void,
+};
+
 export function decorateResultBeforeCompletion(
 	innerCallback: () => Promise<boolean>,
 	onSuccess: () => void | Promise<void>,
@@ -40,4 +44,9 @@ export function isTemplateMode(mode: string): boolean
 export function getFilledStringOrUndefined(value: string): string | undefined
 {
 	return Type.isStringFilled(value) ? value : undefined;
+}
+
+export function setInitialNextButtonState(wizard: WizardLike, uid?: string): void
+{
+	wizard.toggleBtnActiveState('next', !Type.isStringFilled(uid));
 }

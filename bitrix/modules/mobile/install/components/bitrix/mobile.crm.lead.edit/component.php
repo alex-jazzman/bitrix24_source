@@ -1,4 +1,7 @@
 <?php
+
+use Bitrix\Main\Web\Uri;
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
 if (!CModule::IncludeModule('crm'))
@@ -637,8 +640,8 @@ $arResult['LEAD_EDIT_PATH'] = CComponentEngine::MakePathFromTemplate($arParams['
 	array('lead_id' => $entityID)
 );
 
-$arParams['CONTACT_SELECTOR_URL_TEMPLATE'] = CHTTP::urlAddParams($arParams['CONTACT_SELECTOR_URL_TEMPLATE'], array("event" => "onCrmConvertSelectContactForLead_".$entityID));
-$arParams['COMPANY_SELECTOR_URL_TEMPLATE'] = CHTTP::urlAddParams($arParams['COMPANY_SELECTOR_URL_TEMPLATE'], array("event" => "onCrmConvertSelectContactForLead_".$entityID));
+$arParams['CONTACT_SELECTOR_URL_TEMPLATE'] = (string)(new Uri($arParams['CONTACT_SELECTOR_URL_TEMPLATE']))->addParams(["event" => "onCrmConvertSelectContactForLead_".$entityID]);
+$arParams['COMPANY_SELECTOR_URL_TEMPLATE'] = (string)(new Uri($arParams['COMPANY_SELECTOR_URL_TEMPLATE']))->addParams(["event" => "onCrmConvertSelectContactForLead_".$entityID]);
 
 /*============= fields for main.interface.form =========*/
 $arResult['FIELDS'] = array();
@@ -1010,10 +1013,10 @@ $arResult['FIELDS'][] = array(
 // Product rows
 $arResult["PAGEID_PRODUCT_SELECTOR_BACK"] = "crmLeadEditPage";
 $arResult["ON_PRODUCT_SELECT_EVENT_NAME"] = "onCrmSelectProductForLead_".$arParams['ELEMENT_ID'];
-$arParams['PRODUCT_SELECTOR_URL_TEMPLATE'] = CHTTP::urlAddParams($arParams['PRODUCT_SELECTOR_URL_TEMPLATE'], array(
+$arParams['PRODUCT_SELECTOR_URL_TEMPLATE'] = (string)(new Uri($arParams['PRODUCT_SELECTOR_URL_TEMPLATE']))->addParams([
 	"event" => $arResult["ON_PRODUCT_SELECT_EVENT_NAME"],
 	"pageIdProductSelectorBack" => $arResult["PAGEID_PRODUCT_SELECTOR_BACK"]
-));
+]);
 $arResult['PRODUCT_ROW_EDITOR_ID'] = ($arParams['ELEMENT_ID'] > 0 ? 'lead_'.strval($arParams['ELEMENT_ID']) : 'new_lead').'_product_editor';
 
 $bTaxMode = CCrmTax::isTaxMode();

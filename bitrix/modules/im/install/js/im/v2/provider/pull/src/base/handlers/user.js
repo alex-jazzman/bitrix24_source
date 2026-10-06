@@ -1,14 +1,11 @@
 import { type Store } from 'ui.vue3.vuex';
-import { Type, Http } from 'main.core';
 
 import { Core } from 'im.v2.application.core';
 import { UserManager } from 'im.v2.lib.user';
 import { Utils } from 'im.v2.lib.utils';
 
-import { UserLogoutParams, type UserShowInRecentParams } from '../../types/recent';
+import { type UserShowInRecentParams } from '../../types/recent';
 import { type UserInviteParams } from '../../types/user';
-
-const GUEST_INVITE_CODE_COOKIE = 'BITRIX_IM_GUEST_INVITE_CODE';
 
 export class UserPullHandler
 {
@@ -43,13 +40,10 @@ export class UserPullHandler
 		userManager.setUsersToModel(usersToStore);
 	}
 
-	handleUserLogout(params: UserLogoutParams)
+	handleUserLogout()
 	{
-		const { deactivatedCodes } = params;
-		const inviteCode = Http.Cookie.get(GUEST_INVITE_CODE_COOKIE);
-		if (!Type.isArrayFilled(deactivatedCodes) || deactivatedCodes.includes(inviteCode))
-		{
-			Utils.browser.redirectTo('/');
-		}
+		// Server targets UserLogout only at guests that must fully log out; per-chat loss
+		// arrives as the member-removed pull. Redirect unconditionally.
+		Utils.browser.redirectTo('/');
 	}
 }

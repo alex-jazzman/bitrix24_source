@@ -98,3 +98,15 @@
 	pointer-events: none;
 	cursor: not-allowed;
 }
+
+.bx-2-call-view-video-quality-thumb:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link, #3bc8f5);
+	outline-offset: 3px;
+	border-radius: 50%;
+}
+
+.bx-2-call-view-video-quality-label:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link, #3bc8f5);
+	outline-offset: 2px;
+	border-radius: 2px;
+}

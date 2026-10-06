@@ -37,7 +37,8 @@ Extension::load([
 	'ui.common', 'ui.alerts',
 	'ui.forms', 'ui.buttons',
 	'ui.dialogs.messagebox',
-	'ui.info-helper', 'ui.hint'
+	'ui.info-helper', 'ui.hint',
+	'ui.a11y', 'landing.ui.a11y'
 ]);
 Manager::setPageTitle(Loc::getMessage('LANDING_TPL_TITLE'));
 Toolbar::deleteFavoriteStar();
@@ -45,10 +46,12 @@ Toolbar::deleteFavoriteStar();
 // errors
 if ($arResult['ERRORS'])
 {
-	?><div class="ui-alert ui-alert-danger" id="domain-error-alert"><?
+	// the block takes the focus because the field owner makes it the reading point of the loaded page,
+	// see Helper.focusLoadTarget()
+	?><div class="ui-alert ui-alert-danger" id="domain-error-alert" tabindex="-1" data-testid="landing-domain-errors"><?
 	foreach ($arResult['ERRORS'] as $error)
 	{
-		echo $error . '<br/>';
+		echo \htmlspecialcharsbx($error) . '<br/>';
 	}
 	?></div><?
 }
@@ -74,7 +77,8 @@ $menuItems = [
 		'NAME' => Loc::getMessage('LANDING_TPL_TITLE_MENU_FREE'),
 		'ATTRIBUTES' => [
 			'href' => $this->getComponent()->getUri(['tab' => 'provider'], ['save']),
-			'data-slider-ignore-autobinding' => 'true'
+			'data-slider-ignore-autobinding' => 'true',
+			'data-testid' => 'landing-domain-tab-provider'
 		],
 		'HELP_CODE' => 'DOMAIN_FREE'
 	],
@@ -82,7 +86,8 @@ $menuItems = [
 		'NAME' => Loc::getMessage('LANDING_TPL_TITLE_MENU_BITRIX24'),
 		'ATTRIBUTES' => [
 			'href' => $this->getComponent()->getUri(['tab' => 'bitrix24'], ['save']),
-			'data-slider-ignore-autobinding' => 'true'
+			'data-slider-ignore-autobinding' => 'true',
+			'data-testid' => 'landing-domain-tab-bitrix24'
 		],
 		'HELP_CODE' => 'DOMAIN_BITRIX24'
 	],
@@ -90,7 +95,8 @@ $menuItems = [
 		'NAME' => Loc::getMessage('LANDING_TPL_TITLE_MENU_PRIVATE'),
 		'ATTRIBUTES' => [
 			'href' => $this->getComponent()->getUri(['tab' => 'private'], ['save']),
-			'data-slider-ignore-autobinding' => 'true'
+			'data-slider-ignore-autobinding' => 'true',
+			'data-testid' => 'landing-domain-tab-private'
 		],
 		'HELP_CODE' => 'DOMAIN_EDIT'
 	]
@@ -118,6 +124,7 @@ if (!$tab)
 if (isset($menuItems[$tab]))
 {
 	$menuItems[$tab]['ACTIVE'] = true;
+	$menuItems[$tab]['ATTRIBUTES']['aria-current'] = 'page';
 }
 $this->setViewTarget('left-panel');
 $APPLICATION->includeComponent(
@@ -142,7 +149,7 @@ if ($menuItems[$tab]['HELP_CODE'])
 		$helpText = Loc::getMessage('LANDING_TPL_HELP_LINK');
 		$helpHint = Loc::getMessage('LANDING_TPL_HELP_LINK_HINT');
 		$helpLink = <<<HTML
-			<a class="landing-domain-link" href="$helpUrl" target="_blank">
+			<a class="landing-domain-link" href="$helpUrl" target="_blank" data-testid="landing-domain-help-link">
 				$helpText
 				<span data-hint="$helpHint" class="ui-hint"></span>
 			</a>
@@ -163,8 +170,8 @@ if (isset($menuItems[$tab]))
 	{
 		$anotherSite = array_shift($arResult['PROVIDER_SITES']);
 		$replace = [
-			'#SITE_NAME#' => $anotherSite['TITLE'],
-			'#DOMAIN_NAME#' => $anotherSite['DOMAIN_NAME']
+			'#SITE_NAME#' => \htmlspecialcharsbx($anotherSite['TITLE']),
+			'#DOMAIN_NAME#' => \htmlspecialcharsbx($anotherSite['DOMAIN_NAME'])
 		];
 	}
 	if ($tab == 'provider' && $arResult['IS_FREE_DOMAIN'])
@@ -181,7 +188,7 @@ if (isset($menuItems[$tab]))
 					<div class="landing-domain-state-free-text"><?= Loc::getMessage('LANDING_TPL_DOMAIN_FREE_SUSPENDED_NOTICE');?></div>
 					<br/>
 				</div>
-				<a href="<?= SITE_DIR?>settings/license_all.php" class="ui-btn ui-btn-light-border" target="_blank">
+				<a href="<?= SITE_DIR?>settings/license_all.php" class="ui-btn ui-btn-light-border" target="_blank" data-testid="landing-domain-tariff-link">
 					<?= Loc::getMessage('LANDING_TPL_TARIFF');?>
 				</a>
 			</div>
@@ -193,7 +200,7 @@ if (isset($menuItems[$tab]))
 			<div class="landing-domain-state landing-domain-state-success">
 				<div class="landing-domain-state-title"><?= Loc::getMessage('LANDING_TPL_DOMAIN_FREE_AVAILABLE_TITLE');?></div>
 				<div class="landing-domain-state-info">
-					<span class="landing-domain-state-info-text"><?= Loc::getMessage('LANDING_TPL_DOMAIN_FREE_AVAILABLE_LABEL', ['#DOMAIN_NAME#' => $arResult['DOMAIN_NAME']]);?></span>
+					<span class="landing-domain-state-info-text"><?= Loc::getMessage('LANDING_TPL_DOMAIN_FREE_AVAILABLE_LABEL', ['#DOMAIN_NAME#' => \htmlspecialcharsbx($arResult['DOMAIN_NAME'])]);?></span>
 				</div>
 				<div class="landing-domain-state-image">
 					<div class="landing-domain-state-image-value"></div>
@@ -207,7 +214,7 @@ if (isset($menuItems[$tab]))
 			<div class="landing-domain-state landing-domain-state-wait">
 				<div class="landing-domain-state-title"><?= Loc::getMessage('LANDING_TPL_DOMAIN_FREE_NOT_AVAILABLE_TITLE');?></div>
 				<div class="landing-domain-state-info">
-					<span class="landing-domain-state-info-text"><?= Loc::getMessage('LANDING_TPL_DOMAIN_FREE_NOT_AVAILABLE_LABEL', ['#DOMAIN_NAME#' => $arResult['DOMAIN_NAME']]);?></span>
+					<span class="landing-domain-state-info-text"><?= Loc::getMessage('LANDING_TPL_DOMAIN_FREE_NOT_AVAILABLE_LABEL', ['#DOMAIN_NAME#' => \htmlspecialcharsbx($arResult['DOMAIN_NAME'])]);?></span>
 				</div>
 				<div class="landing-domain-state-image">
 					<div class="landing-domain-state-image-value"></div>
@@ -221,9 +228,9 @@ if (isset($menuItems[$tab]))
 	else if ($tab == 'provider' && !$arResult['FEATURE_FREE_AVAILABLE'] && $arResult['PROVIDER_SITES'])
 	{
 		?>
-		<form action="<?= \htmlspecialcharsbx($uriSave->getUri());?>" method="post">
+		<form action="<?= \htmlspecialcharsbx($uriSave->getUri());?>" method="post" data-testid="landing-domain-switch-form">
 			<input type="hidden" name="action" value="switchToThis">
-			<input type="hidden" name="param" value="<?= $anotherSite['ID'];?>">
+			<input type="hidden" name="param" value="<?= (int)$anotherSite['ID'];?>">
 			<?= bitrix_sessid_post();?>
 			<div class="landing-domain-state landing-domain-state-free">
 				<div class="landing-domain-state-title"><?= Loc::getMessage('LANDING_TPL_DOMAIN_FREE_ANOTHER_SITE_H1', $replace);?></div>
@@ -233,7 +240,7 @@ if (isset($menuItems[$tab]))
 					<div class="landing-domain-state-free-text"><?= Loc::getMessage('LANDING_TPL_DOMAIN_FREE_ANOTHER_SITE_ALERT', $replace);?></div>
 					<div class="landing-domain-state-detail-text"><?= Loc::getMessage('LANDING_TPL_DOMAIN_FREE_ANOTHER_SITE_NOTICE');?></div>
 				</div>
-				<button type="submit" class="ui-btn ui-btn-light-border">
+				<button type="submit" class="ui-btn ui-btn-light-border" data-testid="landing-domain-switch-btn">
 					<?= Loc::getMessage('LANDING_TPL_SWITCH');?>
 				</button>
 			</div>
@@ -262,12 +269,12 @@ if (isset($menuItems[$tab]))
 		$puny = new \CBXPunycode;
 		$currentDomain = $puny->decode(array_shift($currentDomain));
 		$replace = [
-			'#DOMAIN_NAME#' => $currentDomain
+			'#DOMAIN_NAME#' => \htmlspecialcharsbx($currentDomain)
 		];
 		?>
-		<form action="<?= \htmlspecialcharsbx($uriSave->getUri());?>" method="post">
+		<form action="<?= \htmlspecialcharsbx($uriSave->getUri());?>" method="post" data-testid="landing-domain-getfree-form">
 			<input type="hidden" name="action" value="SaveProvider">
-			<input type="hidden" name="param" value="<?= $currentDomain;?>">
+			<input type="hidden" name="param" value="<?= \htmlspecialcharsbx($currentDomain);?>">
 			<?= bitrix_sessid_post();?>
 			<div class="landing-domain-state landing-domain-state-free">
 				<div class="landing-domain-state-title"><?= Loc::getMessage('LANDING_TPL_DOMAIN_FREE_ALREADY_EXIST_DOMAIN_H1');?></div>
@@ -277,7 +284,7 @@ if (isset($menuItems[$tab]))
 					<div class="landing-domain-state-free-text"><?= Loc::getMessage('LANDING_TPL_DOMAIN_FREE_ALREADY_EXIST_DOMAIN_ALERT', $replace);?></div>
 					<div class="landing-domain-state-detail-text"><?= Loc::getMessage('LANDING_TPL_DOMAIN_FREE_ANOTHER_SITE_NOTICE');?></div>
 				</div>
-				<button type="submit" class="ui-btn ui-btn-light-border">
+				<button type="submit" class="ui-btn ui-btn-light-border" data-testid="landing-domain-getfree-btn">
 					<?= Loc::getMessage('LANDING_TPL_GET_FREE');?>
 				</button>
 			</div>
@@ -298,15 +305,19 @@ if (isset($menuItems[$tab]))
 				LANDING_TPL_ERROR_DOMAIN_WRONG_SYMBOL_COMBINATIONS: '<?= \CUtil::jsEscape(Loc::getMessage('LANDING_TPL_ERROR_DOMAIN_WRONG_SYMBOL_COMBINATIONS')) ?>',
 				LANDING_TPL_ERROR_DOMAIN_WRONG_DOMAIN_LEVEL: '<?= \CUtil::jsEscape(Loc::getMessage('LANDING_TPL_ERROR_DOMAIN_WRONG_DOMAIN_LEVEL')) ?>',
 				LANDING_TPL_DOMAIN_LENGTH_LIMIT: '<?= \CUtil::jsEscape(Loc::getMessage('LANDING_TPL_DOMAIN_LENGTH_LIMIT')) ?>',
-				LANDING_TPL_ALERT_TITLE: '<?= \CUtil::jsEscape(Loc::getMessage('LANDING_TPL_ALERT_TITLE')) ?>',
 				LANDING_TPL_DOMAIN_AVAILABLE: '<?= \CUtil::jsEscape(Loc::getMessage('LANDING_TPL_DOMAIN_AVAILABLE')) ?>',
 				LANDING_TPL_ERROR_DOMAIN_INCORRECT: '<?= \CUtil::jsEscape(Loc::getMessage('LANDING_TPL_ERROR_DOMAIN_INCORRECT')) ?>',
 				LANDING_TPL_ERROR_DOMAIN_CHECK_DASH: '<?= \CUtil::jsEscape(Loc::getMessage('LANDING_TPL_ERROR_DOMAIN_CHECK_DASH')) ?>',
-				LANDING_TPL_ERROR_DOMAIN_CHECK: '<?= \CUtil::jsEscape(Loc::getMessage('LANDING_TPL_ERROR_DOMAIN_CHECK', ['#TLD#' => strtolower($arResult['TLD'][0])])) ?>'
+				LANDING_TPL_ERROR_DOMAIN_CHECK: '<?= \CUtil::jsEscape(Loc::getMessage('LANDING_TPL_ERROR_DOMAIN_CHECK', ['#TLD#' => strtolower($arResult['TLD'][0])])) ?>',
+				LANDING_TPL_DOMAIN_CHECKING: '<?= \CUtil::jsEscape(Loc::getMessage('LANDING_TPL_DOMAIN_CHECKING')) ?>',
+				LANDING_TPL_DOMAIN_CHECKING_SUBMIT: '<?= \CUtil::jsEscape(Loc::getMessage('LANDING_TPL_DOMAIN_CHECKING_SUBMIT')) ?>',
+				LANDING_TPL_DOMAIN_MESSAGE_SUCCESS: '<?= \CUtil::jsEscape(Loc::getMessage('LANDING_TPL_DOMAIN_MESSAGE_SUCCESS')) ?>',
+				LANDING_TPL_DOMAIN_MESSAGE_ERROR: '<?= \CUtil::jsEscape(Loc::getMessage('LANDING_TPL_DOMAIN_MESSAGE_ERROR')) ?>',
+				LANDING_TPL_ERROR_DOMAIN_PROCESSING: '<?= \CUtil::jsEscape(Loc::getMessage('LANDING_TPL_ERROR_DOMAIN_PROCESSING')) ?>'
 			});
 		});
 	</script>
-	<form action="<?= \htmlspecialcharsbx($uriSave->getUri());?>" method="post" class="ui-form landing-form-gray-padding">
+	<form action="<?= \htmlspecialcharsbx($uriSave->getUri());?>" method="post" class="ui-form landing-form-gray-padding" data-testid="landing-domain-form">
 		<input type="hidden" name="action" value="save<?= $tab;?>">
 		<?= bitrix_sessid_post();?>
 		<?

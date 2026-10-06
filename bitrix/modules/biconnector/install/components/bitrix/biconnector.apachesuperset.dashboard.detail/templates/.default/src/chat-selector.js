@@ -1,5 +1,4 @@
 import { ajax as Ajax, Loc, Tag, Type } from 'main.core';
-import type { BaseEvent } from 'main.core.events';
 import { ApacheSupersetAnalytics } from 'biconnector.apache-superset-analytics';
 import { Dialog, Item } from 'ui.entity-selector';
 

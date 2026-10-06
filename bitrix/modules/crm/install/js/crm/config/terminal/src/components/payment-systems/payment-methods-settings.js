@@ -369,7 +369,9 @@ export const PaymentMethodsSettings = {
 						/>
 						<div class="payment-system-status-container">
 							<span v-html="getStatusLabel(this.getIsSbpConnected)"></span>
-							<span
+							<button
+								type="button"
+								data-testid="terminal-paysystem-sbp-set-btn"
 								class="payment-system-set"
 								:class="getIsSbpConnected ? 'payment-system-set-connected' : 'payment-system-set-not-connected'"
 								v-on:click="openPaysystemSlider(getRequiredPaysystemCodes.sbp)"
@@ -377,7 +379,7 @@ export const PaymentMethodsSettings = {
 								{{ $Bitrix.Loc.getMessage(this.getIsSbpConnected
 								? 'CRM_CFG_TERMINAL_SETTINGS_SECTION_PS_SET'
 								: 'CRM_CFG_TERMINAL_SETTINGS_SECTION_PS_CONNECT') }}
-							</span>
+							</button>
 						</div>
 					</div>
 
@@ -392,7 +394,9 @@ export const PaymentMethodsSettings = {
 						/>
 						<div class="payment-system-status-container">
 							<span v-html="getStatusLabel(this.getIsSberQrConnected)"></span>
-							<span
+							<button
+								type="button"
+								data-testid="terminal-paysystem-sberqr-set-btn"
 								class="payment-system-set"
 								:class="getIsSberQrConnected ? 'payment-system-set-connected' : 'payment-system-set-not-connected'"
 								v-on:click="openPaysystemSlider(getRequiredPaysystemCodes.sberQr)"
@@ -400,7 +404,7 @@ export const PaymentMethodsSettings = {
 								{{ $Bitrix.Loc.getMessage(this.getIsSberQrConnected
 								? 'CRM_CFG_TERMINAL_SETTINGS_SECTION_PS_SET'
 								: 'CRM_CFG_TERMINAL_SETTINGS_SECTION_PS_CONNECT') }}
-							</span>
+							</button>
 						</div>
 					</div>
 
@@ -418,7 +422,9 @@ export const PaymentMethodsSettings = {
 						/>
 						<div class="payment-system-status-container">
 							<span v-html="getStatusLabel(paysystem.isConnected)"></span>
-							<span
+							<button
+								type="button"
+								:data-testid="'terminal-paysystem-set-btn-' + paysystem.type"
 								class="payment-system-set"
 								:class="paysystem.isConnected ? 'payment-system-set-connected' : 'payment-system-set-not-connected'"
 								v-on:click="openPaysystemSlider(getRequiredPaysystemCodes.rest, paysystem.path)"
@@ -426,7 +432,7 @@ export const PaymentMethodsSettings = {
 								{{ $Bitrix.Loc.getMessage(paysystem.isConnected
 								? 'CRM_CFG_TERMINAL_SETTINGS_SECTION_PS_SET'
 								: 'CRM_CFG_TERMINAL_SETTINGS_SECTION_PS_CONNECT') }}
-							</span>
+							</button>
 						</div>
 					</div>
 
@@ -440,20 +446,24 @@ export const PaymentMethodsSettings = {
 						/>
 						<div class="payment-system-status-container">
 							<span v-html="getStatusLabel(this.getIsAnyPaysystemActive && this.getIsConnectedSitePublished && getIsPhoneConfirmed)"></span>
-							<span
+							<button
+								type="button"
+								data-testid="terminal-paysystem-panel-set-btn"
 								class="payment-system-set payment-system-set-connected"
 								v-on:click="openPaysystemSlider(getRequiredPaysystemCodes.paysystemPanel)"
 								v-if="getIsConnectedSitePublished && getIsPhoneConfirmed"
 							>
 								{{ $Bitrix.Loc.getMessage('CRM_CFG_TERMINAL_SETTINGS_SECTION_PS_PAYMENT_METHOD') }}
-							</span>
-							<span
+							</button>
+							<button
+								type="button"
+								data-testid="terminal-paysystem-connect-site-btn"
 								class="payment-system-set payment-system-set-not-connected"
 								v-on:click="connectSite()"
 								v-else
 							>
 								{{ $Bitrix.Loc.getMessage('CRM_CFG_TERMINAL_SETTINGS_SECTION_PS_CONNECT') }}
-							</span>
+							</button>
 						</div>
 					</div>
 				</div>

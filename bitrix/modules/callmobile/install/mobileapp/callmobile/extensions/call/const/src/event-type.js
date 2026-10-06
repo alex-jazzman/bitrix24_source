@@ -7,6 +7,7 @@ jn.define('call/const/event-type', (require, exports, module) => {
 			activeCallsReceived: 'ImMobile.CallManager:activeCallsReceived',
 			updateCallToken: 'ImMobile.CallManager:updateCallToken',
 			setCurrentUser:  'ImMobile.CallManager:setCurrentUser',
+			guestIdentified: 'ImMobile.CallManager:guestIdentified',
 		},
 		callMobile: {
 			chatUserChanged: 'CallMobile.CallManager:chatUserChanged',

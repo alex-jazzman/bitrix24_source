@@ -2,6 +2,9 @@
 
 use Bitrix\BIConnector;
 use Bitrix\BIConnector\Configuration\Feature;
+use Bitrix\BIConnector\Superset\Logger\Logger;
+use Bitrix\BIConnector\Superset\Selfhost\License\LicenseOption;
+use Bitrix\BIConnector\Superset\Selfhost\License\SelfHostedAvailability;
 use Bitrix\Main;
 use Bitrix\Main\Web\Json;
 
@@ -121,6 +124,26 @@ elseif (!$limitManager->isSuperset())
 elseif (!Feature::isBuilderEnabled())
 {
 	echo Json::encode(['error' => 'DISABLED']);
+}
+// Rows reach the instance through Trino, bypassing the integrator, so the license barrier is repeated here.
+// The same answer the control calls are blocked by: an instance is on the side of the client, so a state the
+// portal refuses on must stop the rows here and not only on the instance.
+elseif (SelfHostedAvailability::getInstance()->isBlocked())
+{
+	// One record a day and not one per request: the instance goes on asking for rows after a refusal. Parallel
+	// requests may pass the window together and write a record each - taken without a lock on purpose.
+	$refusalLogInterval = 86400;
+	$lastRefusalLog = (int)Main\Config\Option::get('biconnector', LicenseOption::DATA_REFUSAL_LOGGED, '0');
+	if (time() - $lastRefusalLog >= $refusalLogInterval)
+	{
+		Main\Config\Option::set('biconnector', LicenseOption::DATA_REFUSAL_LOGGED, (string)time());
+		Logger::logWarning(
+			[new Main\Error('Data request blocked: self-hosted licensing does not allow work')],
+			['availability_state' => SelfHostedAvailability::getInstance()->getState()->value],
+		);
+	}
+
+	echo Json::encode(['error' => 'LICENSE_EXPIRED']);
 }
 elseif (isset($_GET['show_tables']))
 {

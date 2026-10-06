@@ -2,6 +2,10 @@ export const ErrorCode = Object.freeze({
 	collabV2: {
 		tariffRestricted: 'COLLAB_TARIFF_RESTRICTED',
 	},
+	collab: {
+		excludeFromStructure: 'EXCLUDE_DENIED_FROM_STRUCTURE',
+		leaveFromStructure: 'LEAVE_DENIED_FROM_STRUCTURE',
+	},
 	chat: {
 		accessDenied: 'ACCESS_DENIED',
 		notFound: 'CHAT_NOT_FOUND',

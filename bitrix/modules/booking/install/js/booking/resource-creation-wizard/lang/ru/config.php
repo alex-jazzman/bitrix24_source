@@ -157,6 +157,7 @@ $MESS['BRCW_METHODS_COMMUNICATION_AI_SETTINGS_TITLE'] = 'Настройки AI-�
 $MESS['BRCW_METHODS_COMMUNICATION_AI_SETTINGS_SUBTITLE'] = 'AI-звонки вместо ручных обзвонов';
 $MESS['BRCW_METHODS_COMMUNICATION_AI_SETTINGS_DESCRIPTION'] = 'Позвольте менеджерам сосредоточиться на более важных задачах, а AI‑агент возьмёт на себя однообразные звонки и уведомления';
 $MESS['BRCW_METHODS_COMMUNICATION_AI_SETTINGS_BTN'] = 'Настроить';
+$MESS['BRCW_METHODS_COMMUNICATION_AI_SETTINGS_ACCESS_DENIED'] = 'Недостаточно прав для настройки. Напишите администратору вашего Битрикс24';
 
 $MESS['BRCW_NOTIFICATION_CARD_MESSAGE_AI'] = 'Звонок клиенту';
 $MESS['BRCW_NOTIFICATION_CARD_MESSAGE_AI_TEXT'] = 'Сценарий звонка';

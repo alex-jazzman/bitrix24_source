@@ -80,6 +80,14 @@ export class PermissionManager
 		this.#init(permissions);
 	}
 
+	canManageUsersAdd(dialogId: string): boolean
+	{
+		const canPerformActionByRole = this.canPerformActionByRole(ActionByRole.extend, dialogId);
+		const canPerformActionByUserType = this.canPerformActionByUserType(ActionByUserType.extend);
+
+		return canPerformActionByRole && canPerformActionByUserType;
+	}
+
 	canPerformActionByRole(actionType: ActionTypeItem, dialogId: string): boolean
 	{
 		return this.#canPerformActionByRole(actionType, dialogId)

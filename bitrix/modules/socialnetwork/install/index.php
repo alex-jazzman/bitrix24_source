@@ -397,10 +397,75 @@ Class socialnetwork extends CModule
 
 		$eventManager->registerEventHandler(
 			'im',
+			'OnAfterAttachChildExternalChatSonetGroup',
+			'socialnetwork',
+			'\Bitrix\Socialnetwork\V2\Internal\Integration\Im\EventHandler\OnAfterAttachChildEvent\SendChildAttachedMessage',
+			'execute',
+		);
+
+		$eventManager->registerEventHandler(
+			'im',
+			'OnAfterDetachChildExternalChatSonetGroup',
+			'socialnetwork',
+			'\Bitrix\Socialnetwork\V2\Internal\Integration\Im\EventHandler\OnAfterDetachChildEvent\SendChildDetachedMessage',
+			'execute',
+		);
+
+		$eventManager->registerEventHandler(
+			'im',
 			'OnCollectTariffRestrictions',
 			'socialnetwork',
 			'\Bitrix\Socialnetwork\V2\Internal\Integration\Im\EventHandler\OnCollectTariffRestrictions\TariffRestrictionHandler',
 			'execute',
+		);
+
+		// project feed counter sync (IM -> feed): reading the collab chat clears the feed counter.
+		/** @see \Bitrix\Im\V2\Chat\ExternalChat\Event\AfterReadMessagesEvent */
+		$eventManager->registerEventHandler(
+			'im',
+			'OnAfterReadMessagesExternalChatSonetGroup',
+			'socialnetwork',
+			'\Bitrix\Socialnetwork\V2\Internal\EventDispatcher\EventDispatcher',
+			'dispatch',
+		);
+
+		/** @see \Bitrix\Im\V2\Chat\ExternalChat\Event\AfterReadAllMessagesEvent */
+		$eventManager->registerEventHandler(
+			'im',
+			'OnAfterReadAllMessagesExternalChatSonetGroup',
+			'socialnetwork',
+			'\Bitrix\Socialnetwork\V2\Internal\EventDispatcher\EventDispatcher',
+			'dispatch',
+		);
+
+		// Global "read all chats": the bulk Reader::readAll path skips the per-chat
+		// read-all event, so the feed counter sync hooks the shared event here.
+		/** @see \Bitrix\Im\V2\Message\Event\AfterReadAllChatsEvent */
+		$eventManager->registerEventHandler(
+			'im',
+			'OnAfterReadAllChats',
+			'socialnetwork',
+			'\Bitrix\Socialnetwork\V2\Internal\EventDispatcher\EventDispatcher',
+			'dispatch',
+		);
+
+		// project feed counter sync: deleting a feed post clears IM unread on the linked message.
+		// Classic event (ExecuteModuleEventEx, scalar params) — NOT through the typed EventDispatcher.
+		$eventManager->registerEventHandler(
+			'socialnetwork',
+			'OnSocNetLogDelete',
+			'socialnetwork',
+			'\Bitrix\Socialnetwork\V2\Internal\Integration\Im\EventHandler\OnLogDelete\ClearImUnread',
+			'onLogDelete',
+		);
+
+		// project feed counter sync: deleting a group/project cleans up orphaned links.
+		$eventManager->registerEventHandler(
+			'socialnetwork',
+			'OnSocNetGroupDelete',
+			'socialnetwork',
+			'\Bitrix\Socialnetwork\V2\Internal\Integration\Im\EventHandler\OnGroupDelete\ClearImLinks',
+			'onGroupDelete',
 		);
 
 		CAgent::AddAgent("CSocNetMessages::SendEventAgent();", "socialnetwork", "N", 600);
@@ -866,10 +931,67 @@ Class socialnetwork extends CModule
 
 		$eventManager->unRegisterEventHandler(
 			'im',
+			'OnAfterAttachChildExternalChatSonetGroup',
+			'socialnetwork',
+			'\Bitrix\Socialnetwork\V2\Internal\Integration\Im\EventHandler\OnAfterAttachChildEvent\SendChildAttachedMessage',
+			'execute',
+		);
+
+		$eventManager->unRegisterEventHandler(
+			'im',
+			'OnAfterDetachChildExternalChatSonetGroup',
+			'socialnetwork',
+			'\Bitrix\Socialnetwork\V2\Internal\Integration\Im\EventHandler\OnAfterDetachChildEvent\SendChildDetachedMessage',
+			'execute',
+		);
+
+		$eventManager->unRegisterEventHandler(
+			'im',
 			'OnCollectTariffRestrictions',
 			'socialnetwork',
 			'\Bitrix\Socialnetwork\V2\Internal\Integration\Im\EventHandler\OnCollectTariffRestrictions\TariffRestrictionHandler',
 			'execute',
+		);
+
+		// project feed counter sync (IM -> feed)
+		$eventManager->unRegisterEventHandler(
+			'im',
+			'OnAfterReadMessagesExternalChatSonetGroup',
+			'socialnetwork',
+			'\Bitrix\Socialnetwork\V2\Internal\EventDispatcher\EventDispatcher',
+			'dispatch',
+		);
+
+		$eventManager->unRegisterEventHandler(
+			'im',
+			'OnAfterReadAllMessagesExternalChatSonetGroup',
+			'socialnetwork',
+			'\Bitrix\Socialnetwork\V2\Internal\EventDispatcher\EventDispatcher',
+			'dispatch',
+		);
+
+		$eventManager->unRegisterEventHandler(
+			'im',
+			'OnAfterReadAllChats',
+			'socialnetwork',
+			'\Bitrix\Socialnetwork\V2\Internal\EventDispatcher\EventDispatcher',
+			'dispatch',
+		);
+
+		$eventManager->unRegisterEventHandler(
+			'socialnetwork',
+			'OnSocNetLogDelete',
+			'socialnetwork',
+			'\Bitrix\Socialnetwork\V2\Internal\Integration\Im\EventHandler\OnLogDelete\ClearImUnread',
+			'onLogDelete',
+		);
+
+		$eventManager->unRegisterEventHandler(
+			'socialnetwork',
+			'OnSocNetGroupDelete',
+			'socialnetwork',
+			'\Bitrix\Socialnetwork\V2\Internal\Integration\Im\EventHandler\OnGroupDelete\ClearImLinks',
+			'onGroupDelete',
 		);
 
 		UnRegisterModule("socialnetwork");

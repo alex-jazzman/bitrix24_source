@@ -442,6 +442,8 @@ class Model
 }
 
 export {
-	Options,
 	Model
+}
+export type {
+	Options
 }

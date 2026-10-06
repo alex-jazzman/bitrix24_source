@@ -11,6 +11,7 @@ jn.define('im/messenger/controller/messenger-header/src/button', (require, expor
 	const { Notification } = require('im/messenger/lib/ui/notification');
 	const { RecentFilterId, RecentMenuSection } = require('im/messenger/const');
 	const { Feature } = require('im/messenger/lib/feature');
+	const { UserHelper } = require('im/messenger/lib/helper');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { showNotificationList } = require('im/messenger/api/notifications-opener');
 	const { RecentActionsMenu, NestedRecentActionsMenu } = require('im/messenger/lib/popup-menu/recent-actions');
@@ -53,6 +54,7 @@ jn.define('im/messenger/controller/messenger-header/src/button', (require, expor
 		testId: 'notification_badge',
 		iconName: Icon.NOTIFICATION.getIconName(),
 		badgeCode: ButtonBadgeCode.notifications,
+		shouldShow: () => !UserHelper.isCurrentUserGuest(),
 		callback: async () => showNotificationList(),
 	});
 

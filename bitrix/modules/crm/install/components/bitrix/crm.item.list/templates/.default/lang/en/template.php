@@ -6,3 +6,4 @@ $MESS["CRM_ITEM_EXPORT_EXCEL_SUMMARY"] = "This will create an SPA item export fi
 Exporting a considerable amount of data may take some time.";
 $MESS["CRM_ITEM_EXPORT_EXCEL_TITLE"] = "Export to Microsoft Excel";
 $MESS["CRM_ITEM_EXPORT_OPTION_EXPORT_PRODUCT_FIELDS"] = "Export details for each product item";
+$MESS["CRM_KANBAN_MODE_ACTIVITIES_DISABLED"] = "\"Activities\" view mode disabled by your Bitrix24 administrator.";

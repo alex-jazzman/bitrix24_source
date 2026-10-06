@@ -21,10 +21,17 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			recentSection: {
 				type: String,
 				default: ''
+			},
+			imageModifier: {
+				type: String,
+				default: ''
 			}
 		},
 		computed: {
 			imageClasses() {
+				if (this.imageModifier) {
+					return `--${this.imageModifier}`;
+				}
 				if (!this.recentSection) {
 					return '--base';
 				}

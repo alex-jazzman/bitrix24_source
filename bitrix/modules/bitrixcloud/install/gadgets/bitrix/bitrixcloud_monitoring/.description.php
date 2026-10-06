@@ -16,12 +16,14 @@ if (CModule::IncludeModule('bitrixcloud'))
 			$monitoringAlertsCurrent = $monitoring->getAlertsCurrentResult();
 			$monitoringAlertsStored = $monitoring->getAlertsStored();
 			if ($monitoringAlertsStored != $monitoringAlertsCurrent)
+			{
 				$bAlertColored = true;
+			}
 		}
 	}
 }
 
-$arDescription =[
+$arDescription = [
 	'NAME' => GetMessage('GD_BITRIXCLOUD_MONITOR_NAME'),
 	'DESCRIPTION' => GetMessage('GD_BITRIXCLOUD_MONITOR_DESC'),
 	'ICON' => '',

@@ -1,5 +1,6 @@
 import { Type } from 'main.core';
 import { BuilderModel, type ActionTree, type GetterTree, type MutationTree } from 'ui.vue3.vuex';
+
 import { type ContentProviderData, type Layout, type PromoBanner, type Scene } from '../editor';
 import { type Logger } from '../service/logger';
 import { makeFrozenClone } from './helpers';
@@ -58,8 +59,9 @@ export class ApplicationModel extends BuilderModel
 				isChannelSelectorShown: true,
 				isMessageTextReadOnly: false,
 				padding: 'var(--ui-space-inset-lg)',
+				contentMarginBottom: null,
 			})),
-			scene: makeFrozenClone(this.getVariable('scene', { id: '' })),
+			scene: makeFrozenClone(this.getVariable('scene', { id: '', templateBinding: null })),
 			progress: {
 				isSending: false,
 				isLoading: false,

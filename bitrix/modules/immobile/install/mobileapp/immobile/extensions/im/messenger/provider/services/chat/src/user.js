@@ -9,7 +9,7 @@ jn.define('im/messenger/provider/services/chat/user', (require, exports, module)
 		DialogType,
 	} = require('im/messenger/const');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
-	const { runAction } = require('im/messenger/lib/rest');
+	const { runAction, callMethod } = require('im/messenger/lib/rest');
 	const { getLogger } = require('im/messenger/lib/logger');
 
 	const logger = getLogger('dialog--chat-service');
@@ -58,6 +58,42 @@ jn.define('im/messenger/provider/services/chat/user', (require, exports, module)
 					},
 				});
 			});
+		}
+
+		/**
+		 * @desc Create a group chat from a private dialog (legacy im.chat.add).
+		 * Logs and returns null on any failure (empty input, REST error, invalid response).
+		 * @param {Array<number>} userIds
+		 * @return {Promise<{chatId: number, dialogId: string}|null>}
+		 */
+		async createChatFromPrivate(userIds)
+		{
+			if (!Type.isArrayFilled(userIds))
+			{
+				logger.error('UserService.createChatFromPrivate: userIds is not provided');
+
+				return null;
+			}
+
+			const result = await callMethod(RestMethod.imChatAdd, { USERS: userIds });
+
+			const error = result.error();
+			if (error)
+			{
+				logger.error('UserService.createChatFromPrivate: error', error);
+
+				return null;
+			}
+
+			const chatId = parseInt(String(result.data()), 10);
+			if (!chatId)
+			{
+				logger.error('UserService.createChatFromPrivate: invalid chatId in response', result.data());
+
+				return null;
+			}
+
+			return { chatId, dialogId: `chat${chatId}` };
 		}
 
 		/**

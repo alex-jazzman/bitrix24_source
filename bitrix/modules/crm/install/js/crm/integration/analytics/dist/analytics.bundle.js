@@ -69,6 +69,9 @@ this.BX.Crm.Integration = this.BX.Crm.Integration || {};
 		EVENT_OLD_INVOICE_READONLY_ALERT_VIEW: 'banner_view',
 		EVENT_OLD_INVOICE_READONLY_ALERT_CLICK: 'banner_click',
 		EVENT_OLD_INVOICE_READONLY_ALERT_CLOSE: 'banner_close',
+		EVENT_EINVOICE_PROMO_VIEW: 'banner_view',
+		EVENT_EINVOICE_PROMO_CLICK: 'banner_click',
+		EVENT_EINVOICE_PROMO_CLOSE: 'banner_close',
 		EVENT_IMPORT_VIEW: 'view',
 		EVENT_IMPORT_EDIT: 'edit',
 		EVENT_IMPORT_CREATE: 'create',
@@ -96,6 +99,7 @@ this.BX.Crm.Integration = this.BX.Crm.Integration || {};
 		TYPE_REPEAT_SALE_BANNER_START_FORCE: 'repeat_sale_force_start',
 		TYPE_REPEAT_SALE_BANNER_STATISTICS: 'repeat_sale_statistics',
 		TYPE_OLD_INVOICE_READONLY_ALERT: 'old_invoice',
+		TYPE_EINVOICE_PROMO: 'einvoice_promo',
 		// endregion
 
 		// region Section const
@@ -611,7 +615,7 @@ this.BX.Crm.Integration = this.BX.Crm.Integration || {};
 	/**
 	 * @memberof BX.Crm.Integration.Analytics.Builder.Block
 	 */
-	let CloseEvent$3 = class CloseEvent {
+	let CloseEvent$4 = class CloseEvent {
 		#entityType;
 		#subSection = Dictionary.SUB_SECTION_KANBAN;
 		#element;
@@ -1170,7 +1174,7 @@ this.BX.Crm.Integration = this.BX.Crm.Integration || {};
 	/**
 	 * @memberof BX.Crm.Integration.Analytics.Builder.Entity
 	 */
-	let CloseEvent$2 = class CloseEvent {
+	let CloseEvent$3 = class CloseEvent {
 		#entityType;
 		#subSection;
 		#element;
@@ -1320,7 +1324,7 @@ this.BX.Crm.Integration = this.BX.Crm.Integration || {};
 	/**
 	 * @memberof BX.Crm.Integration.Analytics.Builder.RepeatSale.Banner
 	 */
-	let ClickEvent$1 = class ClickEvent {
+	let ClickEvent$2 = class ClickEvent {
 		#type;
 		#section = Dictionary.SECTION_DEAL;
 		#subSection = Dictionary.SUB_SECTION_KANBAN;
@@ -1362,7 +1366,7 @@ this.BX.Crm.Integration = this.BX.Crm.Integration || {};
 	/**
 	 * @memberof BX.Crm.Integration.Analytics.Builder.RepeatSale.Banner
 	 */
-	let CloseEvent$1 = class CloseEvent {
+	let CloseEvent$2 = class CloseEvent {
 		#type;
 		#section = Dictionary.SECTION_DEAL;
 		#subSection = Dictionary.SUB_SECTION_KANBAN;
@@ -1394,7 +1398,7 @@ this.BX.Crm.Integration = this.BX.Crm.Integration || {};
 	/**
 	 * @memberof BX.Crm.Integration.Analytics.Builder.RepeatSale.Banner
 	 */
-	let ViewEvent$3 = class ViewEvent {
+	let ViewEvent$4 = class ViewEvent {
 		#section = Dictionary.SECTION_DEAL;
 		#subSection = Dictionary.SUB_SECTION_KANBAN;
 		#type;
@@ -1485,6 +1489,12 @@ this.BX.Crm.Integration = this.BX.Crm.Integration || {};
 					return 'deal-semiannual';
 				case 'deal_every_month_year':
 					return 'deal-month-yr';
+				case 'ai_screening':
+					return 'deal-ai-screening';
+				case 'ai_approve':
+					return 'deal-ai-approve';
+				case 'remaining':
+					return 'deal-remaining';
 				default:
 					return null;
 			}
@@ -1513,7 +1523,7 @@ this.BX.Crm.Integration = this.BX.Crm.Integration || {};
 	/**
 	 * @memberof BX.Crm.Integration.Analytics.Builder.RepeatSale.Segment
 	 */
-	let ViewEvent$2 = class ViewEvent {
+	let ViewEvent$3 = class ViewEvent {
 		#section = Dictionary.SECTION_DEAL;
 		static createDefault(section) {
 			const self = new ViewEvent();
@@ -1536,7 +1546,7 @@ this.BX.Crm.Integration = this.BX.Crm.Integration || {};
 	 * @memberof BX.Crm.Integration.Analytics.Builder.OldEntityView.OldInvoiceReadonly
 	 */
 
-	let ViewEvent$1 = class ViewEvent {
+	let ViewEvent$2 = class ViewEvent {
 		static buildData() {
 			return {
 				tool: Dictionary.TOOL_CRM,
@@ -1553,7 +1563,7 @@ this.BX.Crm.Integration = this.BX.Crm.Integration || {};
 	 * @memberof BX.Crm.Integration.Analytics.Builder.OldEntityView.OldInvoiceReadonly
 	 */
 
-	class ClickEvent {
+	let ClickEvent$1 = class ClickEvent {
 		static buildData() {
 			return {
 				tool: Dictionary.TOOL_CRM,
@@ -1565,13 +1575,13 @@ this.BX.Crm.Integration = this.BX.Crm.Integration || {};
 				p1: getCrmMode()
 			};
 		}
-	}
+	};
 
 	/**
 	 * @memberof BX.Crm.Integration.Analytics.Builder.OldEntityView.OldInvoiceReadonly
 	 */
 
-	class CloseEvent {
+	let CloseEvent$1 = class CloseEvent {
 		static buildData() {
 			return {
 				tool: Dictionary.TOOL_CRM,
@@ -1582,6 +1592,81 @@ this.BX.Crm.Integration = this.BX.Crm.Integration || {};
 				c_element: Dictionary.ELEMENT_CLOSE_BUTTON,
 				p1: getCrmMode()
 			};
+		}
+	};
+
+	/**
+	 * @memberof BX.Crm.Integration.Analytics.Builder.EInvoicePromo
+	 */
+	let ViewEvent$1 = class ViewEvent {
+		#section;
+		#subSection;
+		static createDefault(section, subSection) {
+			const self = new ViewEvent();
+			self.#section = section;
+			self.#subSection = subSection;
+			return self;
+		}
+		buildData() {
+			return filterOutNilValues({
+				tool: Dictionary.TOOL_CRM,
+				category: Dictionary.CATEGORY_BANNERS,
+				event: Dictionary.EVENT_EINVOICE_PROMO_VIEW,
+				type: Dictionary.TYPE_EINVOICE_PROMO,
+				c_section: this.#section,
+				c_sub_section: this.#subSection,
+				p1: getCrmMode()
+			});
+		}
+	};
+
+	/**
+	 * @memberof BX.Crm.Integration.Analytics.Builder.EInvoicePromo
+	 */
+	class ClickEvent {
+		#section;
+		#subSection;
+		static createDefault(section, subSection) {
+			const self = new ClickEvent();
+			self.#section = section;
+			self.#subSection = subSection;
+			return self;
+		}
+		buildData() {
+			return filterOutNilValues({
+				tool: Dictionary.TOOL_CRM,
+				category: Dictionary.CATEGORY_BANNERS,
+				event: Dictionary.EVENT_EINVOICE_PROMO_CLICK,
+				type: Dictionary.TYPE_EINVOICE_PROMO,
+				c_section: this.#section,
+				c_sub_section: this.#subSection,
+				p1: getCrmMode()
+			});
+		}
+	}
+
+	/**
+	 * @memberof BX.Crm.Integration.Analytics.Builder.EInvoicePromo
+	 */
+	class CloseEvent {
+		#section;
+		#subSection;
+		static createDefault(section, subSection) {
+			const self = new CloseEvent();
+			self.#section = section;
+			self.#subSection = subSection;
+			return self;
+		}
+		buildData() {
+			return filterOutNilValues({
+				tool: Dictionary.TOOL_CRM,
+				category: Dictionary.CATEGORY_BANNERS,
+				event: Dictionary.EVENT_EINVOICE_PROMO_CLOSE,
+				type: Dictionary.TYPE_EINVOICE_PROMO,
+				c_section: this.#section,
+				c_sub_section: this.#subSection,
+				p1: getCrmMode()
+			});
 		}
 	}
 
@@ -1778,7 +1863,7 @@ this.BX.Crm.Integration = this.BX.Crm.Integration || {};
 			AddEvent: AddEvent,
 			ConvertEvent: ConvertEvent,
 			ConvertBatchEvent: ConvertBatchEvent,
-			CloseEvent: CloseEvent$2,
+			CloseEvent: CloseEvent$3,
 			ChangeStageEvent: ChangeStageEvent
 		},
 		AI: {
@@ -1797,7 +1882,7 @@ this.BX.Crm.Integration = this.BX.Crm.Integration || {};
 			}
 		},
 		Block: {
-			CloseEvent: CloseEvent$3,
+			CloseEvent: CloseEvent$4,
 			EnableEvent: EnableEvent,
 			LinkEvent: LinkEvent
 		},
@@ -1816,22 +1901,27 @@ this.BX.Crm.Integration = this.BX.Crm.Integration || {};
 		},
 		RepeatSale: {
 			Banner: {
-				ViewEvent: ViewEvent$3,
-				ClickEvent: ClickEvent$1,
-				CloseEvent: CloseEvent$1
+				ViewEvent: ViewEvent$4,
+				ClickEvent: ClickEvent$2,
+				CloseEvent: CloseEvent$2
 			},
 			Segment: {
-				ViewEvent: ViewEvent$2,
+				ViewEvent: ViewEvent$3,
 				CancelEvent: CancelEvent$1,
 				EditEvent: EditEvent$1
 			}
 		},
 		OldEntityView: {
 			OldInvoiceReadonly: {
-				ViewEvent: ViewEvent$1,
-				ClickEvent: ClickEvent,
-				CloseEvent: CloseEvent
+				ViewEvent: ViewEvent$2,
+				ClickEvent: ClickEvent$1,
+				CloseEvent: CloseEvent$1
 			}
+		},
+		EInvoicePromo: {
+			ViewEvent: ViewEvent$1,
+			ClickEvent: ClickEvent,
+			CloseEvent: CloseEvent
 		},
 		Import: {
 			ViewEvent: ViewEvent,

@@ -10,6 +10,7 @@ use Bitrix\Main\Error;
 use Bitrix\Main\ErrorCollection;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Bizproc\Activity\Mixins\ErrorHandling;
+use Bitrix\Bizproc\UI\Helpers\TaskTextDecoder;
 use Bitrix\Main\Type\DateTime;
 
 class CBPRequestInformationActivity extends CBPCompositeActivity implements
@@ -493,9 +494,14 @@ class CBPRequestInformationActivity extends CBPCompositeActivity implements
 				';
 			}
 
+			$commentLabel = TaskTextDecoder::decode(
+				$arTask['PARAMETERS']['CommentLabelMessage'] ?? '',
+				(string)Loc::getMessage('BPRIA_ACT_COMMENT_1'),
+			);
+
 			$form .= sprintf(
 				$rowHtml,
-				$arTask['PARAMETERS']['CommentLabelMessage'] ?: Loc::getMessage('BPRIA_ACT_COMMENT_1'),
+				htmlspecialcharsbx($commentLabel),
 				$required,
 				htmlspecialcharsbx($commentText)
 			);
@@ -569,7 +575,10 @@ class CBPRequestInformationActivity extends CBPCompositeActivity implements
 			$fields[] = [
 				'Id' => 'task_comment',
 				'Type' => 'text',
-				'Name' => $task['PARAMETERS']['CommentLabelMessage'] ?: Loc::getMessage('BPRIA_ACT_COMMENT_1'),
+				'Name' => TaskTextDecoder::decode(
+					$task['PARAMETERS']['CommentLabelMessage'] ?? '',
+					(string)Loc::getMessage('BPRIA_ACT_COMMENT_1'),
+				),
 				'Required' => (($task['PARAMETERS']['CommentRequired'] ?? '') === 'Y'),
 				'Description' => $description,
 			];
@@ -738,11 +747,10 @@ class CBPRequestInformationActivity extends CBPCompositeActivity implements
 			&& $arTask['PARAMETERS']['CommentRequired'] === 'Y'
 		)
 		{
-			$label =
-				$arTask["PARAMETERS"]["CommentLabelMessage"] <> ''
-					? $arTask["PARAMETERS"]["CommentLabelMessage"]
-					: Loc::getMessage("BPAR_ACT_COMMENT")
-			;
+			$label = TaskTextDecoder::decode(
+				$arTask['PARAMETERS']['CommentLabelMessage'] ?? '',
+				(string)Loc::getMessage('BPAR_ACT_COMMENT'),
+			);
 			self::$errors->setError(
 				new Error(
 					Loc::getMessage('BPRIA_ACT_COMMENT_ERROR', ['#COMMENT_LABEL#' => $label]),

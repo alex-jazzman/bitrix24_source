@@ -2,10 +2,10 @@ import { type Store } from 'ui.vue3.vuex';
 
 import { Core } from 'im.v2.application.core';
 import { ChatType } from 'im.v2.const';
-import { EntitySearch } from 'im.v2.lib.search';
 import { Utils } from 'im.v2.lib.utils';
 import { type ImModelChat } from 'im.v2.model';
 
+import { EntitySearch } from './const/const.js';
 import { getRecentListItems } from './helpers/get-recent-items';
 import { type SearchResultItem, type LocalSearchItem, type SearchConfig } from './types/types';
 
@@ -54,6 +54,7 @@ export class LocalSearch
 			withFakeUsers: true,
 			searchRecentSection: this.#searchConfig.searchRecentSection,
 			parentChatId: this.#searchConfig.parentId,
+			onlyAttachableToCollab: this.#searchConfig.onlyWithManageUsersAddRight || this.#searchConfig.onlyWithOwnerRight,
 		});
 
 		return recentListItems.map((item) => {
@@ -170,9 +171,10 @@ export class LocalSearch
 
 	#excludeByConfig(items: SearchResultItem[]): SearchResultItem[]
 	{
-		const exclude = this.#searchConfig?.exclude;
+		const { exclude, excludeGuests } = this.#searchConfig;
 
-		if (!exclude || exclude.length === 0)
+		const hasExcludeList = Array.isArray(exclude) && exclude.length > 0;
+		if (!hasExcludeList && !excludeGuests)
 		{
 			return items;
 		}
@@ -181,18 +183,19 @@ export class LocalSearch
 			const isUser = this.#isUser(item.dialogId);
 			const isChat = !isUser;
 
-			if (isChat && exclude.includes(EntitySearch.chats))
+			if (isChat && hasExcludeList && exclude.includes(EntitySearch.chats))
 			{
 				return false;
 			}
 
-			// eslint-disable-next-line sonarjs/prefer-single-boolean-return
-			if (isUser && exclude.includes(EntitySearch.users))
+			if (isUser && hasExcludeList && exclude.includes(EntitySearch.users))
 			{
 				return false;
 			}
 
-			return true;
+			const isGuestToExclude = excludeGuests && this.#store.getters['users/isGuest'](item.dialogId);
+
+			return !isGuestToExclude;
 		});
 	}
 

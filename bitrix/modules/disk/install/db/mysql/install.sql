@@ -399,6 +399,18 @@ CREATE TABLE IF NOT EXISTS b_disk_document_restriction_log
 	KEY IX_DISK_O_RL_USAGE(EXTERNAL_HASH, USER_ID)
 );
 
+CREATE TABLE IF NOT EXISTS b_disk_vibeoffice_delivery
+(
+    ID bigint NOT NULL AUTO_INCREMENT,
+    DELIVERY_ID bigint NOT NULL,
+    EXTERNAL_HASH varchar(128) NULL,
+    EVENT varchar(64) NOT NULL,
+    PROCESSED_TIME datetime NOT NULL,
+    PRIMARY KEY (ID),
+    UNIQUE KEY UX_DISK_VO_DELIVERY (DELIVERY_ID),
+    KEY IX_DISK_VO_DELIVERY_PROCESSED_TIME (PROCESSED_TIME)
+);
+
 CREATE TABLE b_disk_edit_session
 (
 	ID int(11) not null auto_increment,

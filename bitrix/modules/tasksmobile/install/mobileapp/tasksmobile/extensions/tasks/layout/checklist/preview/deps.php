@@ -7,6 +7,7 @@ return [
 		'tokens',
 		'toast',
 		'ui-system/blocks/icon',
+		'ui-system/typography/bbcodetext',
 		'ui-system/typography/text',
 		'utils/validation',
 		'utils/skeleton',

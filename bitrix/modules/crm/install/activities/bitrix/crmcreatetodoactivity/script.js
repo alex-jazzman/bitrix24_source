@@ -339,6 +339,11 @@
 			}
 		}
 		#openDiskFileDialog() {
+			const DiskPicker = main_core.Reflection.getClass('BX.Disk.DiskPicker');
+			if (main_core.Type.isFunction(DiskPicker?.isEnabled) && DiskPicker.isEnabled()) {
+				this.#openUniversalDiskPicker(DiskPicker);
+				return;
+			}
 			const urlSelect = `/bitrix/tools/disk/uf.php?action=selectFile&dialog2=Y&SITE_ID=${main_core.Loc.getMessage('SITE_ID')}`;
 			const dialogName = 'BPMA';
 			BX.ajax.get(urlSelect, `multiselect=Y&dialogName=${dialogName}`, () => {
@@ -348,6 +353,20 @@
 					};
 					BX.DiskFileDialog.openDialog(dialogName);
 				}, 10);
+			});
+		}
+		#openUniversalDiskPicker(DiskPicker) {
+			const picker = new DiskPicker();
+			picker.open({
+				selectionMode: 'multiple',
+				onSelect: result => {
+					const selected = result.items.map(item => ({
+						id: `n${item.objectId}`,
+						name: item.name,
+						type: 'file'
+					}));
+					this.#onSaveButtonClickHandler(null, null, selected);
+				}
 			});
 		}
 		#onSaveButtonClickHandler(tab, path, selected) {

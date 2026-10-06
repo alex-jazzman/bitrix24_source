@@ -2,11 +2,10 @@
 
 return [
 	'extensions' => [
+		'type',
 		'im:messenger/lib/di/service-locator',
 		'im:messenger/lib/logger',
-	],
-	'bundle' => [
-		'./src/base',
-		'./src/group',
+		'im:messenger/lib/uuid-manager',
+		'im:messenger/provider/data',
 	],
 ];

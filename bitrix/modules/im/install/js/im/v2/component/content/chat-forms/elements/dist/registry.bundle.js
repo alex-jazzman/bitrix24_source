@@ -20,6 +20,10 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				type: String,
 				required: true
 			},
+			createButtonDisabled: {
+				type: Boolean,
+				default: false
+			},
 			createButtonColorScheme: {
 				type: [Object, null],
 				required: false,
@@ -44,7 +48,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				:customColorScheme="createButtonColorScheme"
 				:text="createButtonTitle"
 				:isLoading="isCreating"
-				:isDisabled="isCreating"
+				:isDisabled="isCreating || createButtonDisabled"
 				@click="$emit('create')"
 				class="bx-im-chat-forms-button-panel__create-button"
 			/>
@@ -394,6 +398,10 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			placeholder: {
 				type: String,
 				required: true
+			},
+			maxLength: {
+				type: [Number, null],
+				default: null
 			}
 		},
 		emits: ['update:modelValue'],
@@ -411,6 +419,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				:value="modelValue"
 				:placeholder="placeholder"
 				@input="onInput"
+				:maxlength="maxLength"
 				class="bx-im-chat-forms-title-input__input"
 				ref="titleInput"
 			/>

@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Mail = this.BX.Mail || {};
 this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
-(function (exports, main_core, ui_vue3, main_core_events, ui_dialogs_messagebox, ui_system_typography_vue, ui_iconSet_api_vue, mail_connecting_crmIntegration, mail_connecting_calendarIntegration, mail_connecting_mailSyncSettings, ui_system_input, ui_system_input_vue, mail_connecting_settingsConfig, ui_vue3_components_button, ui_vue3_components_switcher, ui_switcher, ui_vue3_directives_hint, ui_entitySelector, ui_tour) {
+(function (exports, main_core, ui_vue3, main_core_events, ui_dialogs_messagebox, ui_system_typography_vue, ui_iconSet_api_vue, ui_vue3_components_button, mail_connecting_crmIntegration, mail_connecting_calendarIntegration, mail_connecting_mailSyncSettings, mail_migrationState, ui_system_input, ui_system_input_vue, mail_connecting_settingsConfig, ui_vue3_components_switcher, ui_switcher, ui_vue3_directives_hint, ui_entitySelector, mail_lib_entitySelector, ui_tour, ui_buttons) {
 	'use strict';
 
 	const formStateKey = Symbol('mailbox-config-form-state');
@@ -34,6 +34,7 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 			canEditCrm: rawPermissions?.canEditCrm ?? false,
 			canEditAccess: rawPermissions?.canEditAccess ?? false,
 			canChangeOwner: rawPermissions?.canChangeOwner ?? false,
+			canViewMailboxList: rawPermissions?.canViewMailboxList ?? false,
 			isSmtpAvailable: rawPermissions?.isSmtpAvailable ?? false,
 			isCrmAvailable: rawPermissions?.isCrmAvailable ?? mapped.crmAvailable,
 			isCalendarAvailable: rawPermissions?.isCalendarAvailable ?? false,
@@ -55,6 +56,7 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 			mailboxId: initialData.mailboxId ?? null,
 			connectionRequestId,
 			lastMailCheck: null,
+			providerRestriction: null,
 			settingsConfig: rawConfig,
 			settingsOptions: {
 				mailSync: mapped.mailSyncOptions,
@@ -72,14 +74,14 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 				isOAuth: Boolean(service?.oauth),
 				oauthUid: null,
 				oauthUser: null,
-				userPrincipalName: '',
+				userPrincipalName: null,
 				oauthEmailNeedsConfirmation: false,
 				oauthEmailCheckStatus: 'idle'
 			},
 			smtp: {
 				enabled: true,
 				server: service?.smtp?.server ?? '',
-				port: service?.smtp?.port !== undefined && service?.smtp?.port !== null ? Number(service.smtp.port) || 587 : 587,
+				port: service?.smtp?.port !== undefined && service?.smtp?.port !== null ? Number(service.smtp.port) || null : null,
 				ssl: true,
 				login: '',
 				password: '',
@@ -129,6 +131,7 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 				configDirs: initialData.paths?.configDirs ?? '/mail/config/dirs'
 			},
 			changedDirs: false,
+			migrationActive: false,
 			permissions: createPermissions(initialData, mapped),
 			loading: false,
 			isDataReady: initialData.mode !== 'edit',
@@ -176,6 +179,9 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 		computed: {
 			isEditMode() {
 				return this.state.mode === 'edit';
+			},
+			credentialsReadOnly() {
+				return this.state.migrationActive;
 			},
 			isOAuthService() {
 				return Boolean(this.state.service?.oauth) || Boolean(this.state.connection.isOAuth);
@@ -293,6 +299,8 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 					:label="loc('MAIL_CONFIG_FORM_EMAIL_LABEL')"
 					:size="InputSize.Md"
 					v-model="state.connection.email"
+					:disabled="credentialsReadOnly"
+					:design="credentialsReadOnly ? InputDesign.Disabled : InputDesign.DEFAULT"
 					:error="state.errors.email"
 					:placeholder="loc('MAIL_CONFIG_FORM_EMAIL_LABEL_PLACEHOLDER')"
 					data-test-id="mail_config-form__connection-email_field"
@@ -317,6 +325,7 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 						:size="InputSize.Md"
 						:design="InputDesign.DEFAULT"
 						v-model="state.connection.server"
+						:disabled="credentialsReadOnly"
 						:placeholder="loc('MAIL_CONFIG_FORM_SERVER_LABEL_PLACEHOLDER')"
 						data-test-id="mail_config-form__connection-server_field"
 					/>
@@ -327,6 +336,7 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 						:size="InputSize.Md"
 						:design="InputDesign.DEFAULT"
 						v-model="portModel"
+						:disabled="credentialsReadOnly"
 						:placeholder="loc('MAIL_CONFIG_FORM_PORT_PLACEHOLDER')"
 						data-test-id="mail_config-form__connection-port_field"
 					/>
@@ -337,6 +347,7 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 						id="mail-config-imap-ssl"
 						class="mail-config-form__checkbox"
 						v-model="state.connection.ssl"
+						:disabled="credentialsReadOnly"
 						data-test-id="mail_config-form__connection-ssl_checkbox"
 					/>
 					<label class="mail-config-form__checkbox-label --connection-settings" for="mail-config-imap-ssl">
@@ -348,9 +359,9 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 				v-if="!isOAuthService"
 				:label="loc('MAIL_CONFIG_FORM_LOGIN_LABEL')"
 				:size="InputSize.Md"
-				:design="isEditMode ? InputDesign.Disabled : InputDesign.DEFAULT"
+				:design="isEditMode || credentialsReadOnly ? InputDesign.Disabled : InputDesign.DEFAULT"
 				:model-value="state.connection.login"
-				:disabled="isEditMode"
+				:disabled="isEditMode || credentialsReadOnly"
 				:error="state.errors.login"
 				data-test-id="mail_config-form__connection-login_field"
 				@update:model-value="onLoginChange"
@@ -367,8 +378,10 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 					:size="InputSize.Md"
 					:design="InputDesign.DEFAULT"
 					v-model="state.connection.password"
+					:disabled="credentialsReadOnly"
 					:placeholder="isEditMode ? passwordPlaceholder : ''"
 					:error="state.errors.password"
+					data-test-id="mail_config-form__connection-password_field"
 				/>
 			</div>
 			<a v-if="isEditMode && state.mailboxId"
@@ -450,13 +463,24 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 				loc
 			};
 		},
+		computed: {
+			userPrincipalName: {
+				get() {
+					return this.state.connection.userPrincipalName ?? '';
+				},
+				set(value) {
+					this.state.connection.userPrincipalName = value;
+				}
+			}
+		},
 		template: `
 		<div v-if="state.connection.isOAuth" data-test-id="mail_config-form__microsoft-connection">
 			<BInput
 				:label="loc('MAIL_CONFIG_FORM_UPN_LABEL')"
 				:size="InputSize.Lg"
 				:design="InputDesign.DEFAULT"
-				v-model="state.connection.userPrincipalName"
+				v-model="userPrincipalName"
+				:disabled="state.migrationActive"
 				data-test-id="mail_config-form__microsoft-upn_field"
 			/>
 			<div
@@ -600,6 +624,9 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 			isEditMode() {
 				return this.state.mode === 'edit';
 			},
+			credentialsReadOnly() {
+				return this.state.migrationActive;
+			},
 			isOAuthService() {
 				return Boolean(this.state.service?.oauth) || Boolean(this.state.connection.isOAuth);
 			},
@@ -642,6 +669,11 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 			}
 		},
 		methods: {
+			toggleSmtp() {
+				if (!this.credentialsReadOnly) {
+					this.state.smtp.enabled = !this.state.smtp.enabled;
+				}
+			},
 			onSmtpLoginChange(value) {
 				this.state.smtp.login = value;
 				this.state.fieldSyncFlags.smtpLoginManual = true;
@@ -666,8 +698,9 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 					<Switcher
 						v-if="isEditMode || !isOAuthService"
 						:isChecked="state.smtp.enabled"
+						:is-disabled="credentialsReadOnly"
 						:options="switcherOptions"
-						@click="state.smtp.enabled = !state.smtp.enabled"
+						@click="toggleSmtp"
 						data-test-id="mail_config-form__smtp-switcher"
 					/>
 				</div>
@@ -745,15 +778,19 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 							:size="InputSize.Md"
 							:design="InputDesign.DEFAULT"
 							v-model="state.smtp.server"
+							:disabled="credentialsReadOnly"
 							data-test-id="mail_config-form__smtp-server_field"
 						/>
 						<BInput
 							class="mail-config-form__input-group_port"
 							:label="loc('MAIL_CONFIG_FORM_SMTP_PORT_LABEL')"
+							:aria-label="loc('MAIL_CONFIG_FORM_SMTP_PORT_LABEL')"
 							type="number"
 							:size="InputSize.Md"
 							:design="InputDesign.DEFAULT"
 							v-model="smtpPortModel"
+							:disabled="credentialsReadOnly"
+							placeholder="587"
 							data-test-id="mail_config-form__smtp-port_field"
 						/>
 					</div>
@@ -763,6 +800,7 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 							id="mail-config-smtp-ssl"
 							class="mail-config-form__checkbox"
 							v-model="state.smtp.ssl"
+							:disabled="credentialsReadOnly"
 							data-test-id="mail_config-form__smtp-ssl_checkbox"
 						/>
 						<label class="mail-config-form__checkbox-label --smtp-settings" for="mail-config-smtp-ssl">
@@ -773,8 +811,9 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 						v-if="showLoginField"
 						:label="loc('MAIL_CONFIG_FORM_SMTP_LOGIN_LABEL')"
 						:size="InputSize.Md"
-						:design="InputDesign.DEFAULT"
+						:design="credentialsReadOnly ? InputDesign.Disabled : InputDesign.DEFAULT"
 						:model-value="state.smtp.login"
+						:disabled="credentialsReadOnly"
 						data-test-id="mail_config-form__smtp-login_field"
 						@update:model-value="onSmtpLoginChange"
 					/>
@@ -783,8 +822,9 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 						:label="loc('MAIL_CONFIG_FORM_SMTP_PASSWORD_LABEL')"
 						type="password"
 						:size="InputSize.Md"
-						:design="InputDesign.DEFAULT"
+						:design="credentialsReadOnly ? InputDesign.Disabled : InputDesign.DEFAULT"
 						:model-value="state.smtp.password"
+						:disabled="credentialsReadOnly"
 						:placeholder="isEditMode ? passwordPlaceholder : ''"
 						data-test-id="mail_config-form__smtp-password_field"
 						@update:model-value="onSmtpPasswordChange"
@@ -814,48 +854,6 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 		</div>
 	`
 	});
-
-	function getAccessUserOptions() {
-		return {
-			intranetUsersOnly: true,
-			emailUsers: false,
-			inviteEmployeeLink: false,
-			inviteGuestLink: false
-		};
-	}
-	function getSelectorItemByAccessCode(code) {
-		const userMatch = code.match(/^U(\d+)$/);
-		if (userMatch) {
-			return ['user', userMatch[1]];
-		}
-		const recursiveDepartmentMatch = code.match(/^DR(\d+)$/);
-		if (recursiveDepartmentMatch) {
-			return ['department', recursiveDepartmentMatch[1]];
-		}
-		const flatDepartmentMatch = code.match(/^D(\d+)$/);
-		if (flatDepartmentMatch) {
-			return ['department', `${flatDepartmentMatch[1]}:F`];
-		}
-		return null;
-	}
-	function getAccessCodeBySelectorTag(tag) {
-		const entityId = tag.getEntityId();
-		const itemId = String(tag.getId());
-		if (entityId === 'user') {
-			return `U${itemId}`;
-		}
-		if (entityId === 'department') {
-			const flatDepartmentMatch = itemId.match(/^(\d+):F$/);
-			if (flatDepartmentMatch) {
-				return `D${flatDepartmentMatch[1]}`;
-			}
-			const recursiveDepartmentMatch = itemId.match(/^\d+$/);
-			if (recursiveDepartmentMatch) {
-				return `DR${itemId}`;
-			}
-		}
-		return null;
-	}
 
 	function resolvePopupTargetContainer$2(element) {
 		return element?.closest('.side-panel-content-container, .ui-slider-content-box') ?? document.body;
@@ -914,7 +912,7 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 			const selectorContainer = this.$refs.selectorContainer;
 			const ownerId = this.state.access.ownerId;
 			const undeselectedItems = ownerId ? [['user', ownerId]] : [];
-			const userOptions = getAccessUserOptions();
+			const userOptions = mail_lib_entitySelector.getIntranetUserSelectorOptions();
 			this.selectorInstance = ui_vue3.markRaw(new ui_entitySelector.TagSelector({
 				multiple: true,
 				dialogOptions: {
@@ -923,7 +921,7 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 						targetContainer: resolvePopupTargetContainer$2(selectorContainer)
 					},
 					context: 'MAIL_SHARE_ACCESS',
-					preselectedItems: this.state.access.sharedWith.map(code => getSelectorItemByAccessCode(code)).filter(item => item !== null),
+					preselectedItems: this.state.access.sharedWith.map(code => mail_lib_entitySelector.getSelectorItemByAccessCode(code)).filter(item => item !== null),
 					undeselectedItems,
 					entities: [{
 						id: 'user',
@@ -968,7 +966,7 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 				if (!this.selectorInstance) {
 					return;
 				}
-				this.state.access.sharedWith = this.selectorInstance.getTags().map(tag => getAccessCodeBySelectorTag(tag)).filter(code => code !== null);
+				this.state.access.sharedWith = this.selectorInstance.getTags().map(tag => mail_lib_entitySelector.getAccessCodeBySelectorTag(tag)).filter(code => code !== null);
 			},
 			applyLockState() {
 				if (!this.selectorInstance) {
@@ -1232,6 +1230,11 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 				mailboxId
 			});
 		},
+		getOauthUser(mailboxId) {
+			return runAction('getOauthUser', {
+				mailboxId
+			});
+		},
 		getOauthUrl(serviceName, type = 'web') {
 			return runAction('getUrlOauth', {
 				serviceName,
@@ -1436,11 +1439,118 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 		guide.start();
 		return guide;
 	}
+	function showOauthDeniedGuide(options) {
+		if (!findTargetElement(options.targetSelector)) {
+			return null;
+		}
+		const guide = new ui_tour.Guide({
+			id: 'mail-config-form-oauth-denied-tour',
+			simpleMode: true,
+			steps: [{
+				target: options.targetSelector,
+				title: options.title,
+				text: options.text,
+				position: 'bottom',
+				article: HELPDESK_ARTICLE_ID
+			}]
+		});
+		guide.start();
+		return guide;
+	}
+
+	function showProviderRestrictionPopup(providerName, onConfirm) {
+		const replace = {
+			'#PROVIDER#': providerName
+		};
+		const message = key => main_core.Loc.getMessage(key, replace) ?? '';
+		const content = main_core.Tag.render`
+		<div class="mail-provider-restriction-popup__content">
+			<div class="mail-provider-restriction-popup__icon"></div>
+			<div class="mail-provider-restriction-popup__title">${message('MAIL_CONFIG_FORM_PROVIDER_RESTRICTION_TITLE')}</div>
+			<p class="mail-provider-restriction-popup__text">${message('MAIL_CONFIG_FORM_PROVIDER_RESTRICTION_TEXT_1')}</p>
+			<p class="mail-provider-restriction-popup__text">${message('MAIL_CONFIG_FORM_PROVIDER_RESTRICTION_TEXT_2')}</p>
+			<div class="mail-provider-restriction-popup__subtitle">${message('MAIL_CONFIG_FORM_PROVIDER_RESTRICTION_WHAT_TODO')}</div>
+			<ul class="mail-provider-restriction-popup__list">
+				<li>${message('MAIL_CONFIG_FORM_PROVIDER_RESTRICTION_STEP_1')}</li>
+				<li>${message('MAIL_CONFIG_FORM_PROVIDER_RESTRICTION_STEP_2')}</li>
+			</ul>
+			<p class="mail-provider-restriction-popup__note">${message('MAIL_CONFIG_FORM_PROVIDER_RESTRICTION_NOTE')}</p>
+		</div>
+	`;
+		let box;
+		const okButton = new ui_buttons.Button({
+			text: message('MAIL_CONFIG_FORM_PROVIDER_RESTRICTION_OK'),
+			useAirDesign: true,
+			style: ui_buttons.AirButtonStyle.FILLED,
+			onclick: () => {
+				box.close();
+				onConfirm?.();
+				return {};
+			}
+		});
+		box = new ui_dialogs_messagebox.MessageBox({
+			message: content,
+			minWidth: 620,
+			maxWidth: 620,
+			buttons: [okButton],
+			popupOptions: {
+				className: 'mail-provider-restriction-popup'
+			}
+		});
+		box.show();
+	}
 
 	const SYNC_FAILURE_GUIDE_TARGETS = {
 		oauth: '[data-id="mail-config-form-provider-action"]',
 		password: '[data-id="mail-config-form-password-field"]'
 	};
+	const OAUTH_DENIED_ADMIN_CONSENT_SCENARIO = 'admin_consent';
+	async function notifyFallback(text) {
+		const topBX = getTopBX();
+		let center = topBX?.UI?.Notification?.Center ?? getRootBX().UI?.Notification?.Center ?? null;
+		if (!center) {
+			const loader = topBX?.Runtime ?? getRootBX().Runtime;
+			if (loader) {
+				await loader.loadExtension('ui.notification');
+			} else {
+				await main_core.Runtime.loadExtension('ui.notification');
+			}
+			center = getTopBX()?.UI?.Notification?.Center ?? getRootBX().UI?.Notification?.Center ?? null;
+		}
+		center?.notify({
+			content: text
+		});
+	}
+	function toSpokenLines(title, text) {
+		const plainText = text.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]*>/g, '');
+		return [title, ...plainText.split('\n')].flatMap(block => block.replace(/([.!?])\s+/g, '$1\n').split('\n')).map(line => line.trim()).filter(Boolean).map(line => /[.!?:;]$/.test(line) ? line : `${line}.`);
+	}
+	async function announceRefusal(title, text) {
+		const lines = toSpokenLines(title, text);
+		if (lines.length === 0) {
+			return;
+		}
+		const topBX = getTopBX();
+		let announcer = topBX?.UI?.Accessibility?.LiveAnnouncer ?? getRootBX().UI?.Accessibility?.LiveAnnouncer ?? null;
+		if (!announcer) {
+			const loader = topBX?.Runtime ?? getRootBX().Runtime;
+			if (loader) {
+				await loader.loadExtension('ui.a11y');
+			} else {
+				await main_core.Runtime.loadExtension('ui.a11y');
+			}
+			announcer = getTopBX()?.UI?.Accessibility?.LiveAnnouncer ?? getRootBX().UI?.Accessibility?.LiveAnnouncer ?? null;
+		}
+		const [reason, ...rest] = lines;
+		announcer?.announce(reason, 'assertive');
+		rest.forEach(line => announcer?.announce(line, 'polite'));
+	}
+	function sanitizeAnalyticsValue(value) {
+		return value.replace(/[^a-zA-Z0-9_.-]/g, '').slice(0, 50);
+	}
+	const PORTAL_EMAIL_CONFLICT_ERROR_CODE = 'EXISTS_ON_PORTAL_ERROR';
+	const MAILBOX_LIST_PATH = '/mail/mailbox-list';
+	const OAUTH_USER_PROFILE_WAIT_TIMEOUT = 3000;
 	const providerDisplayNameMap = {
 		gmail: 'Gmail',
 		yandex: 'Яндекс',
@@ -1487,12 +1597,25 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 		}
 		return value;
 	}
-	function createGeneralErrorItem(message, customData = null) {
+	function createGeneralErrorItem(message, customData = null, occupiedEmail = '') {
 		return {
 			message,
 			customData: normalizeCustomData(customData),
-			expanded: false
+			expanded: false,
+			occupiedEmail
 		};
+	}
+	function extractOccupiedEmail(error) {
+		if (error.code !== PORTAL_EMAIL_CONFLICT_ERROR_CODE) {
+			return '';
+		}
+		const email = error.customData?.email;
+		return main_core.Type.isStringFilled(email) ? email : '';
+	}
+	function createServerErrorItem(error) {
+		const occupiedEmail = extractOccupiedEmail(error);
+		return createGeneralErrorItem(error.message || main_core.Loc.getMessage('MAIL_CONFIG_FORM_ERROR_GENERAL') || '',
+		occupiedEmail === '' ? error.customData : null, occupiedEmail);
 	}
 	function mapOauthUser(user) {
 		if (!user) {
@@ -1533,17 +1656,21 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 			ConnectionRequestOwner,
 			FormActions,
 			HeadlineSm: ui_system_typography_vue.HeadlineSm,
-			BIcon: ui_iconSet_api_vue.BIcon
+			BIcon: ui_iconSet_api_vue.BIcon,
+			UiButton: ui_vue3_components_button.Button
 		},
 		setup() {
 			return {
 				state: useFormState(),
-				loc
+				loc,
+				AirButtonStyle: ui_vue3_components_button.AirButtonStyle,
+				ButtonSize: ui_vue3_components_button.ButtonSize
 			};
 		},
 		data() {
 			return {
 				passwordPlaceholder: '••••••••••••',
+				oauthUserProfileWaitTimeout: OAUTH_USER_PROFILE_WAIT_TIMEOUT,
 				oauthPending: false,
 				warningIconName: ui_iconSet_api_vue.Set.WARNING,
 				boundSlider: null,
@@ -1552,8 +1679,17 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 				syncFailureGuide: null,
 				lastMailSyncPeriodValue: '7',
 				verifyEmailRequestSeq: 0,
-				oauthPopup: null,
-				oauthPopupWatcher: null
+				migrationStateHolder: ui_vue3.markRaw({
+					current: null
+				}),
+				migrationStateUnsubscribe: null,
+				oauthPopupHolder: ui_vue3.markRaw({
+					current: null
+				}),
+				oauthPopupWatcher: null,
+				oauthUserProfileRequest: ui_vue3.markRaw({
+					current: null
+				})
 			};
 		},
 		computed: {
@@ -1581,9 +1717,7 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 				if (!date) {
 					return main_core.Loc.getMessage('MAIL_CONFIG_FORM_LAST_CHECK_NO_DATA') ?? '';
 				}
-				return main_core.Loc.getMessage('MAIL_CONFIG_FORM_LAST_CHECK_TITLE', {
-					'#TIME_AGO#': this.formatTimeAgo(Number(date))
-				}) ?? '';
+				return this.formatLastCheck(Number(date));
 			},
 			mailSyncModel: {
 				get() {
@@ -1666,6 +1800,9 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 				const items = this.state.errors.generalItems;
 				return Array.isArray(items) ? items : [];
 			},
+			canViewMailboxList() {
+				return this.state.permissions.canViewMailboxList;
+			},
 			providerButtonText() {
 				if (this.isEditMode || this.isOAuthConnected) {
 					return main_core.Loc.getMessage('MAIL_CONFIG_FORM_OAUTH_DISCONNECT') ?? '';
@@ -1679,41 +1816,71 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 		mounted() {
 			this.state.calendarSettings.enabled = true;
 			if (this.isEditMode && this.state.mailboxId) {
+				this.bindMigrationState();
 				void this.loadMailboxData();
 			}
 			this.bindSidePanelListeners();
 		},
 		beforeUnmount() {
 			main_core_events.EventEmitter.unsubscribe('OnMailOAuthBCompleted', this.onOAuthCompleted);
+			main_core_events.EventEmitter.unsubscribe('OnMailOAuthBError', this.onOAuthDenied);
 			this.stopOauthPopupWatcher();
-			this.oauthPopup = null;
+			this.oauthPopupHolder.current = null;
 			this.unbindSidePanelListeners();
 			this.closeSyncFailureGuide();
+			this.unbindMigrationState();
 		},
 		methods: {
-			formatTimeAgo(timestamp) {
+			getMailboxMigrationState(mailboxId) {
+				return mail_migrationState.getMigrationState(mailboxId);
+			},
+			bindMigrationState() {
+				const mailboxId = Number(this.state.mailboxId);
+				if (!Number.isInteger(mailboxId) || mailboxId <= 0) {
+					return;
+				}
+				this.unbindMigrationState();
+				const migrationState = this.getMailboxMigrationState(mailboxId);
+				this.migrationStateHolder.current = migrationState;
+				this.migrationStateUnsubscribe = migrationState.subscribe(({
+					active
+				}) => {
+					this.state.migrationActive = active;
+				});
+				void migrationState.initialize().then(() => {
+					if (this.migrationStateHolder.current === migrationState && migrationState.isInitialized()) {
+						this.state.migrationActive = migrationState.isActive();
+					}
+				});
+			},
+			unbindMigrationState() {
+				this.migrationStateUnsubscribe?.();
+				this.migrationStateUnsubscribe = null;
+				this.migrationStateHolder.current = null;
+			},
+			formatLastCheck(timestamp) {
 				const diffSeconds = Math.max(0, Math.floor(Date.now() / 1000 - timestamp));
 				if (diffSeconds < 60) {
 					return main_core.Loc.getMessagePlural('MAIL_CONFIG_FORM_TIME_AGO_SECONDS', diffSeconds, {
 						'#COUNT#': String(diffSeconds)
-					}) ?? `${diffSeconds} сек назад`;
+					}) ?? '';
 				}
 				if (diffSeconds < 3600) {
 					const minutes = Math.floor(diffSeconds / 60);
 					return main_core.Loc.getMessagePlural('MAIL_CONFIG_FORM_TIME_AGO_MINUTES', minutes, {
 						'#COUNT#': String(minutes)
-					}) ?? `${minutes} мин назад`;
+					}) ?? '';
 				}
 				if (diffSeconds < 86400) {
 					const hours = Math.floor(diffSeconds / 3600);
 					return main_core.Loc.getMessagePlural('MAIL_CONFIG_FORM_TIME_AGO_HOURS', hours, {
 						'#COUNT#': String(hours)
-					}) ?? `${hours} ч назад`;
+					}) ?? '';
 				}
 				const days = Math.floor(diffSeconds / 86400);
 				return main_core.Loc.getMessagePlural('MAIL_CONFIG_FORM_TIME_AGO_DAYS', days, {
 					'#COUNT#': String(days)
-				}) ?? `${days} дн назад`;
+				}) ?? '';
 			},
 			async loadMailboxData() {
 				const mailboxId = this.state.mailboxId;
@@ -1729,8 +1896,40 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 				} finally {
 					this.state.loading = false;
 				}
+				this.oauthUserProfileRequest.current = this.loadOauthUserProfile();
+			},
+			async loadOauthUserProfile() {
+				const mailboxId = this.state.mailboxId;
+				const oauthUid = this.state.connection.oauthUid;
+				if (!mailboxId || !this.state.connection.isOAuth || !oauthUid) {
+					return;
+				}
+				const principalNameBeforeRequest = this.state.connection.userPrincipalName;
+				try {
+					const response = await Api.getOauthUser(mailboxId);
+					this.applyOauthUserProfile(response.data, {
+						oauthUid,
+						principalName: principalNameBeforeRequest
+					});
+				} catch (error) {
+					console.error('Failed to load OAuth user profile:', error);
+				}
+			},
+			applyOauthUserProfile(profile, requested) {
+				if (this.state.connection.oauthUid !== requested.oauthUid) {
+					return;
+				}
+				if (profile === null) {
+					return;
+				}
+				this.state.connection.oauthUser = mapOauthUser(profile);
+				if (this.state.connection.userPrincipalName === requested.principalName) {
+					this.state.connection.userPrincipalName = profile.userPrincipalName ?? '';
+				}
 			},
 			mapMailboxData(data) {
+				const migrationState = this.migrationStateHolder?.current;
+				this.state.migrationActive = migrationState?.isInitialized() ? migrationState.isActive() : data.migrationActive === true;
 				this.state.connection.email = data.imap.email || '';
 				this.state.connection.login = data.imap.login || '';
 				this.state.connection.server = data.imap.server || '';
@@ -1738,7 +1937,8 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 				this.state.connection.ssl = data.imap.ssl === 'Y';
 				this.state.connection.isOAuth = Boolean(data.imap.isOAuth);
 				this.state.connection.oauthUid = data.imap.oauthUid || null;
-				this.state.connection.oauthUser = mapOauthUser(data.imap.oauthUser);
+				this.state.connection.oauthUser = null;
+				this.state.connection.userPrincipalName = null;
 				this.state.smtp.enabled = data.smtp.enabled === 'Y';
 				this.state.smtp.server = data.smtp.server || '';
 				this.state.smtp.port = Number(data.smtp.port) || 587;
@@ -1773,6 +1973,7 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 				}
 				this.state.access.ownerId = data.userId || null;
 				this.state.lastMailCheck = data.lastMailCheck || null;
+				this.state.providerRestriction = data.providerRestriction ?? null;
 				this.state.isDataReady = true;
 				this.state.fieldSyncFlags.loginManual = true;
 				this.state.fieldSyncFlags.nameManual = true;
@@ -1788,6 +1989,15 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 					return;
 				}
 				if (this.syncFailureGuide) {
+					return;
+				}
+				const providerCode = this.state.providerRestriction;
+				if (providerCode) {
+					const providerName = main_core.Loc.getMessage(`MAIL_CONFIG_FORM_PROVIDER_NAME_${providerCode.toUpperCase()}`) ?? providerCode;
+					this.sendProviderRestrictionAnalytics(providerCode, 'popup_view');
+					showProviderRestrictionPopup(providerName, () => {
+						this.sendProviderRestrictionAnalytics(providerCode, 'popup_ok_button');
+					});
 					return;
 				}
 				const mode = this.state.connection.isOAuth ? 'oauth' : 'password';
@@ -1852,7 +2062,7 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 			},
 			buildBasePayload() {
 				const state = this.state;
-				return {
+				const payload = {
 					email: state.connection.email,
 					login: state.connection.login || state.connection.email,
 					server: state.connection.server,
@@ -1876,6 +2086,10 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 					link: state.mailbox.link,
 					shareAccess: state.access.sharedWith
 				};
+				if (state.connection.userPrincipalName !== null) {
+					payload.userPrincipalName = state.connection.userPrincipalName;
+				}
+				return payload;
 			},
 			buildCreatePayload() {
 				const state = this.state;
@@ -1894,10 +2108,15 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 			buildUpdatePayload() {
 				const state = this.state;
 				const payload = this.buildBasePayload();
-				if (state.connection.password && state.connection.password !== this.passwordPlaceholder) {
+				if (state.migrationActive) {
+					const connectionFields = ['email', 'userPrincipalName', 'login', 'server', 'port', 'ssl', 'serviceId', 'storageOauthUid', 'useSmtp', 'serverSmtp', 'portSmtp', 'sslSmtp', 'loginSmtp'];
+					connectionFields.forEach(field => {
+						delete payload[field];
+					});
+				} else if (state.connection.password && state.connection.password !== this.passwordPlaceholder) {
 					payload.password = state.connection.password;
 				}
-				if (state.smtp.password && state.smtp.password !== this.passwordPlaceholder) {
+				if (!state.migrationActive && state.smtp.password && state.smtp.password !== this.passwordPlaceholder) {
 					payload.passwordSMTP = state.smtp.password;
 				}
 				if (state.access.ownerId) {
@@ -1906,6 +2125,18 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 				return payload;
 			},
 			async submitSave() {
+				if (this.isMicrosoftService && this.oauthUserProfileRequest.current) {
+					let timeoutId = null;
+					try {
+						await Promise.race([this.oauthUserProfileRequest.current, new Promise(resolve => {
+							timeoutId = setTimeout(resolve, this.oauthUserProfileWaitTimeout);
+						})]);
+					} finally {
+						if (timeoutId !== null) {
+							clearTimeout(timeoutId);
+						}
+					}
+				}
 				if (this.state.mode === 'edit') {
 					const mailboxId = this.state.mailboxId;
 					if (!mailboxId) {
@@ -1942,6 +2173,36 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 				} finally {
 					this.state.loading = false;
 				}
+			},
+			sendOauthDeniedAnalytics(errorCode) {
+				const analytics = getRootBX().UI?.Analytics;
+				if (!analytics?.sendData) {
+					return;
+				}
+				analytics.sendData({
+					tool: 'mail',
+					event: this.isEditMode ? 'mailbox_edit' : 'mailbox_connect',
+					type: this.state.service?.name ?? '',
+					category: 'mail_general_ops',
+					c_section: 'menu',
+					status: 'error',
+					p1: `oauthDenied_${OAUTH_DENIED_ADMIN_CONSENT_SCENARIO}`,
+					p2: `errorCode_${sanitizeAnalyticsValue(errorCode)}`
+				});
+			},
+			sendProviderRestrictionAnalytics(providerCode, element) {
+				const analytics = getRootBX().UI?.Analytics;
+				if (!analytics?.sendData) {
+					return;
+				}
+				analytics.sendData({
+					tool: 'mail',
+					event: 'provider_restriction_notice',
+					type: providerCode,
+					category: 'mail_general_ops',
+					c_section: 'mailbox_edit',
+					c_element: element
+				});
 			},
 			sendAnalytics(status) {
 				const analytics = getRootBX().UI?.Analytics;
@@ -1997,9 +2258,7 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 				this.sendAnalytics('error');
 				const serverErrors = extractAjaxErrors(error);
 				if (serverErrors.length > 0) {
-					this.state.errors.generalItems = serverErrors.map(item => {
-						return createGeneralErrorItem(item.message || main_core.Loc.getMessage('MAIL_CONFIG_FORM_ERROR_GENERAL') || '', item.customData || null);
-					});
+					this.state.errors.generalItems = serverErrors.map(item => createServerErrorItem(item));
 				} else {
 					this.state.errors.generalItems = [createGeneralErrorItem(main_core.Loc.getMessage('MAIL_CONFIG_FORM_ERROR_AJAX') ?? '')];
 				}
@@ -2045,6 +2304,18 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 				} finally {
 					this.state.loading = false;
 				}
+			},
+			openMailboxListWithFilter(email) {
+				const params = new URLSearchParams({
+					EMAIL: email,
+					apply_filter: 'Y'
+				});
+				getCurrentSidePanel()?.open(`${MAILBOX_LIST_PATH}?${params.toString()}`, {
+					cacheable: false,
+					data: {
+						resetFilterOnClose: true
+					}
+				});
 			},
 			openDirsSlider(mailboxId) {
 				const url = getRootBX().util.add_url_param(this.state.paths.configDirs || '/mail/config/dirs', {
@@ -2119,6 +2390,9 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 				this.closeForm(0);
 			},
 			onProviderButtonClick() {
+				if (this.state.migrationActive) {
+					return;
+				}
 				if (this.isEditMode) {
 					this.confirmDelete();
 					return;
@@ -2148,8 +2422,11 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 					if (url) {
 						const popup = getRootBX().util.popup(url, 800, 600);
 						this.oauthPending = true;
-						this.oauthPopup = popup;
+						this.oauthPopupHolder.current = popup;
 						main_core_events.EventEmitter.subscribe('OnMailOAuthBCompleted', this.onOAuthCompleted, {
+							compatMode: true
+						});
+						main_core_events.EventEmitter.subscribe('OnMailOAuthBError', this.onOAuthDenied, {
 							compatMode: true
 						});
 						this.startOauthPopupWatcher();
@@ -2161,7 +2438,7 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 			startOauthPopupWatcher() {
 				this.stopOauthPopupWatcher();
 				this.oauthPopupWatcher = setInterval(() => {
-					const popup = this.oauthPopup;
+					const popup = this.oauthPopupHolder.current;
 					if (!popup || popup.closed) {
 						this.handleOauthAborted();
 					}
@@ -2178,14 +2455,45 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 					return;
 				}
 				main_core_events.EventEmitter.unsubscribe('OnMailOAuthBCompleted', this.onOAuthCompleted);
+				main_core_events.EventEmitter.unsubscribe('OnMailOAuthBError', this.onOAuthDenied);
 				this.oauthPending = false;
-				this.oauthPopup = null;
+				this.oauthPopupHolder.current = null;
 				this.stopOauthPopupWatcher();
+			},
+			onOAuthDenied(_uid, scenario, title, text, errorCode) {
+				main_core_events.EventEmitter.unsubscribe('OnMailOAuthBCompleted', this.onOAuthCompleted);
+				main_core_events.EventEmitter.unsubscribe('OnMailOAuthBError', this.onOAuthDenied);
+				this.stopOauthPopupWatcher();
+				this.oauthPopupHolder.current = null;
+				this.oauthPending = false;
+				if (scenario === OAUTH_DENIED_ADMIN_CONSENT_SCENARIO) {
+					this.sendOauthDeniedAnalytics(errorCode ?? '');
+				}
+				if (!text) {
+					return;
+				}
+				this.closeSyncFailureGuide();
+				announceRefusal(title ?? '', text).catch(error => {
+					console.error('Mail: cannot announce the OAuth refusal', error);
+				});
+				const guide = showOauthDeniedGuide({
+					targetSelector: SYNC_FAILURE_GUIDE_TARGETS.oauth,
+					title: title ?? '',
+					text
+				});
+				if (guide) {
+					this.syncFailureGuide = ui_vue3.markRaw(guide);
+					return;
+				}
+				notifyFallback(text).catch(error => {
+					console.error('Mail: cannot show the OAuth refusal notification', error);
+				});
 			},
 			onOAuthCompleted(uid, _url, user) {
 				main_core_events.EventEmitter.unsubscribe('OnMailOAuthBCompleted', this.onOAuthCompleted);
+				main_core_events.EventEmitter.unsubscribe('OnMailOAuthBError', this.onOAuthDenied);
 				this.stopOauthPopupWatcher();
-				this.oauthPopup = null;
+				this.oauthPopupHolder.current = null;
 				this.oauthPending = false;
 				if (!uid || !user) {
 					return;
@@ -2258,6 +2566,7 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 				this.state.connection.oauthUid = null;
 				this.state.connection.isOAuth = false;
 				this.state.connection.oauthUser = null;
+				this.state.connection.userPrincipalName = '';
 				this.state.connection.oauthEmailNeedsConfirmation = false;
 				this.state.connection.oauthEmailCheckStatus = 'idle';
 			}
@@ -2265,6 +2574,20 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 		template: `
 		<template v-if="state.isDataReady">
 			<div class="mail-config-form" data-test-id="mail_config-form__root">
+				<div
+					v-if="state.migrationActive"
+					class="mail-config-form__alert-container --warning"
+					data-test-id="mail_config-form__migration-warning"
+				>
+					<BIcon
+						class="mail-config-form__alert-icon"
+						:name="warningIconName"
+						:size="24"
+					/>
+					<span class="mail-config-form__alert-message">
+						{{ loc('MAIL_CONFIG_FORM_MIGRATION_CREDENTIALS_LOCKED') }}
+					</span>
+				</div>
 				<div
 					class="mail-config-form__section"
 					data-test-id="mail_config-form__connection-section"
@@ -2291,7 +2614,7 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 							:email="providerEmail"
 							:avatar="providerAvatar"
 							:button-text="providerButtonText"
-							:button-disabled="oauthPending"
+							:button-disabled="oauthPending || state.migrationActive"
 							@button-click="onProviderButtonClick"
 						/>
 						<ConnectionRequestOwner v-if="isConnectionRequestMode" />
@@ -2358,6 +2681,15 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 							:data-test-id="'mail_config-form__error-item_' + index"
 						>
 							<span>{{ item.message }}</span>
+							<UiButton
+								v-if="item.occupiedEmail && canViewMailboxList"
+								class="mail-config-form__alert-action"
+								:text="loc('MAIL_CONFIG_FORM_ERROR_FIND_MAILBOX')"
+								:style="AirButtonStyle.PLAIN_ACCENT"
+								:size="ButtonSize.EXTRA_SMALL"
+								:dataset="{ testId: 'mail_config-form__error-find-mailbox_' + index }"
+								@click="openMailboxListWithFilter(item.occupiedEmail)"
+							/>
 							<template v-if="item.customData">
 								<button
 									v-if="!item.expanded"
@@ -2449,5 +2781,5 @@ this.BX.Mail.Connecting = this.BX.Mail.Connecting || {};
 
 	exports.MailboxConfigForm = MailboxConfigForm;
 
-})(this.BX.Mail.Connecting.ConfigForm = this.BX.Mail.Connecting.ConfigForm || {}, BX, BX.Vue3, BX.Event, BX.UI.Dialogs, BX.UI.System.Typography.Vue, BX.UI.IconSet, BX.Mail.Connecting.CrmIntegration, BX.Mail.Connecting.CalendarIntegration, BX.Mail.Connecting.MailSyncSettings, BX.UI.System.Input, BX.UI.System.Input.Vue, BX.Mail.Connecting.SettingsConfig, BX.Vue3.Components, BX.UI.Vue3.Components, BX.UI, BX.Vue3.Directives, BX.UI.EntitySelector, BX.UI.Tour);
+})(this.BX.Mail.Connecting.ConfigForm = this.BX.Mail.Connecting.ConfigForm || {}, BX, BX.Vue3, BX.Event, BX.UI.Dialogs, BX.UI.System.Typography.Vue, BX.UI.IconSet, BX.Vue3.Components, BX.Mail.Connecting.CrmIntegration, BX.Mail.Connecting.CalendarIntegration, BX.Mail.Connecting.MailSyncSettings, BX.Mail, BX.UI.System.Input, BX.UI.System.Input.Vue, BX.Mail.Connecting.SettingsConfig, BX.UI.Vue3.Components, BX.UI, BX.Vue3.Directives, BX.UI.EntitySelector, BX.Mail.Lib.EntitySelector, BX.UI.Tour, BX.UI);
 //# sourceMappingURL=config-form.bundle.js.map

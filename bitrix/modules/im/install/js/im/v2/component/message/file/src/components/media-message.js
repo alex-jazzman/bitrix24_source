@@ -6,6 +6,7 @@ import {
 	DefaultMessageContent,
 	MessageHeader,
 	MessageFooter,
+	Reply,
 } from 'im.v2.component.message.elements';
 import { BaseMessage } from 'im.v2.component.message.base';
 import { ChatType } from 'im.v2.const';
@@ -31,6 +32,7 @@ export const MediaMessage = {
 		MessageHeader,
 		MessageFooter,
 		MediaContent,
+		Reply,
 	},
 	props: {
 		item: {
@@ -87,7 +89,7 @@ export const MediaMessage = {
 		},
 		showBottomContainer(): boolean
 		{
-			return this.hasText || this.hasAttach || this.hasReply;
+			return this.hasText || this.hasAttach;
 		},
 		isForward(): boolean
 		{
@@ -95,6 +97,9 @@ export const MediaMessage = {
 		},
 		needBackground(): boolean
 		{
+			// A reply with media (image/gallery) renders without the common bubble — like a sticker reply:
+			// the quote is a self-contained chip above the media, the media sits below with no background.
+			// The bubble is still needed for a caption/attach (showBottomContainer), a channel post or a forward.
 			return this.showBottomContainer || this.isChannelPost || this.isForward;
 		},
 		isChannelPost(): boolean
@@ -119,12 +124,20 @@ export const MediaMessage = {
 		},
 	},
 	template: `
-		<BaseMessage 
-			:item="item" 
-			:dialogId="dialogId" 
+		<BaseMessage
+			:item="item"
+			:dialogId="dialogId"
 			:withBackground="needBackground"
 		>
-			<div 
+			<template v-if="hasReply && !isForward" #before-message>
+				<Reply
+					class="bx-im-message-image__quote"
+					:dialogId="dialogId"
+					:replyId="message.replyId"
+					:isForward="isForward"
+				/>
+			</template>
+			<div
 				class="bx-im-message-image__container"
 				:class="{
 					'--has-text': hasText,
@@ -132,7 +145,8 @@ export const MediaMessage = {
 				:style="imageContainerStyles"
 			>
 				<MessageHeader :withTitle="false" :item="item" class="bx-im-message-image__header" />
-				<MediaContent 
+				<Reply v-if="hasReply && isForward" :dialogId="dialogId" :replyId="message.replyId" :isForward="isForward" />
+				<MediaContent
 					:item="message"
 					:containerHeight="containerHeight"
 					@cancelClick="onCancel"
@@ -143,6 +157,7 @@ export const MediaMessage = {
 						:dialogId="dialogId"
 						:withText="hasText"
 						:withAttach="hasAttach"
+						:withReply="false"
 					/>
 				</div>
 				<MessageFooter :item="item" :dialogId="dialogId" />

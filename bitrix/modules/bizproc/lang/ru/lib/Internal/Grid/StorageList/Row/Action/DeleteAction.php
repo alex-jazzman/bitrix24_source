@@ -1,0 +1,3 @@
+<?php
+
+$MESS['BIZPROC_STORAGE_LIST_GRID_ACTION_DELETE'] = 'Удалить';

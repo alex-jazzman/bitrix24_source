@@ -1,6 +1,5 @@
 <?php
 use Bitrix\Main;
-use Bitrix\Main\EventManager;
 use Bitrix\Main\Localization\Loc;
 use	Bitrix\Main\ModuleManager;
 
@@ -82,185 +81,15 @@ class catalog extends CModule
 	{
 		global $APPLICATION;
 		global $DB;
-		$connection = \Bitrix\Main\Application::getConnection();
 
-		$errors = null;
-
-		if (!$DB->TableExists('b_catalog_group'))
+		$migrationResult = $this->installMigrations();
+		if (!$migrationResult->isSuccess())
 		{
-			$errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/catalog/install/db/' . $connection->getType() . '/install.sql');
-		}
-
-		if (!empty($errors))
-		{
-			$APPLICATION->ThrowException(implode('. ', $errors));
+			$APPLICATION->ThrowException(implode('. ', $migrationResult->getErrorMessages()));
 			return false;
 		}
 
 		ModuleManager::registerModule('catalog');
-
-		$eventManager = EventManager::getInstance();
-		$eventManager->registerEventHandler('sale', 'onBuildCouponProviders', 'catalog', '\Bitrix\Catalog\DiscountCouponTable', 'couponManager');
-		$eventManager->registerEventHandler('sale', 'onBuildDiscountProviders', 'catalog', '\Bitrix\Catalog\Discount\DiscountManager', 'catalogDiscountManager');
-		$eventManager->registerEventHandler('sale', 'onExtendOrderData', 'catalog', '\Bitrix\Catalog\Discount\DiscountManager', 'extendOrderData');
-		$eventManager->registerEventHandler('currency', 'onAfterUpdateCurrencyBaseRate', 'catalog', '\Bitrix\Catalog\Product\Price', 'handlerAfterUpdateCurrencyBaseRate');
-		$eventManager->registerEventHandler('iblock', 'Bitrix\Iblock\Model\PropertyFeature::OnPropertyFeatureBuildList', 'catalog', '\Bitrix\Catalog\Product\PropertyCatalogFeature', 'handlerPropertyFeatureBuildList');
-		$eventManager->registerEventHandler(
-			'pull',
-			'onGetDependentModule',
-			$this->MODULE_ID,
-			'\Bitrix\Catalog\Integration\PullManager',
-			'onGetDependentModule'
-		);
-
-		$eventManager->registerEventHandler('report', 'onAnalyticPageBatchCollect', 'catalog', '\Bitrix\Catalog\Integration\Report\EventHandler', 'onAnalyticPageBatchCollect');
-		$eventManager->registerEventHandler('report', 'onAnalyticPageCollect', 'catalog', '\Bitrix\Catalog\Integration\Report\EventHandler', 'onAnalyticPageCollect');
-		$eventManager->registerEventHandler('report', 'onDefaultBoardsCollect', 'catalog', '\Bitrix\Catalog\Integration\Report\EventHandler', 'onDefaultBoardsCollect');
-		$eventManager->registerEventHandler('report', 'onReportsCollect', 'catalog', '\Bitrix\Catalog\Integration\Report\EventHandler', 'onReportHandlerCollect');
-		$eventManager->registerEventHandler('report', 'onReportViewCollect', 'catalog', '\Bitrix\Catalog\Integration\Report\EventHandler', 'onViewsCollect');
-
-		$eventManager->registerEventHandlerCompatible('main', 'onUserDelete', 'catalog', '\Bitrix\Catalog\SubscribeTable', 'onUserDelete');
-		$eventManager->registerEventHandlerCompatible('catalog', 'onAddContactType', 'catalog', '\Bitrix\Catalog\SubscribeTable', 'onAddContactType');
-		$eventManager->registerEventHandler('sale', 'OnSaleOrderSaved', 'catalog', '\Bitrix\Catalog\SubscribeTable', 'onSaleOrderSaved');
-
-		$eventManager->registerEventHandlerCompatible("iblock", "OnBeforeIBlockUpdate", "catalog", "CCatalog", "OnBeforeIBlockUpdate");
-		$eventManager->registerEventHandlerCompatible("iblock", "OnAfterIBlockUpdate", "catalog", "CCatalog", "OnAfterIBlockUpdate");
-		$eventManager->registerEventHandlerCompatible("iblock", "OnIBlockDelete", "catalog", "CCatalog", "OnIBlockDelete");
-		$eventManager->registerEventHandlerCompatible("iblock", "OnIBlockElementDelete", "catalog", "CCatalogProduct", "OnIBlockElementDelete");
-		$eventManager->registerEventHandlerCompatible("iblock", "OnIBlockElementDelete", "catalog", "CCatalogDocs", "OnIBlockElementDelete");
-		$eventManager->registerEventHandlerCompatible("iblock", "OnBeforeIBlockElementDelete", "catalog", "CCatalogDocs", "OnBeforeIBlockElementDelete");
-		$eventManager->registerEventHandlerCompatible("currency", "OnCurrencyDelete", "catalog", "CPrice", "OnCurrencyDelete");
-		$eventManager->registerEventHandlerCompatible("main", "OnGroupDelete", "catalog", "CCatalogProductGroups", "OnGroupDelete");
-		$eventManager->registerEventHandlerCompatible("currency", "OnModuleUnInstall", "catalog", "", "CurrencyModuleUnInstallCatalog");
-		$eventManager->registerEventHandlerCompatible("iblock", "OnBeforeIBlockDelete", "catalog", "CCatalog", "OnBeforeCatalogDelete", 300);
-		$eventManager->registerEventHandlerCompatible("iblock", "OnBeforeIBlockElementDelete", "catalog", "CCatalog", "OnBeforeIBlockElementDelete", 10000);
-		$eventManager->registerEventHandlerCompatible("main", "OnEventLogGetAuditTypes", "catalog", "CCatalogEvent", "GetAuditTypes");
-		$eventManager->registerEventHandlerCompatible('main', 'OnBuildGlobalMenu', 'catalog', 'CCatalogAdmin', 'OnBuildGlobalMenu');
-		$eventManager->registerEventHandlerCompatible('main', 'OnBuildGlobalMenu', 'catalog', 'CCatalogAdmin', 'OnBuildSaleMenu');
-		$eventManager->registerEventHandlerCompatible("catalog", "OnCondCatControlBuildList", "catalog", "CCatalogCondCtrlGroup", "GetControlDescr", 100);
-		$eventManager->registerEventHandlerCompatible("catalog", "OnCondCatControlBuildList", "catalog", "CCatalogCondCtrlIBlockFields", "GetControlDescr", 200);
-		$eventManager->registerEventHandlerCompatible("catalog", "OnCondCatControlBuildList", "catalog", "CCatalogCondCtrlIBlockProps", "GetControlDescr", 300);
-		$eventManager->registerEventHandlerCompatible("catalog", "OnCatalogStoreDelete", "catalog", "CCatalogDocs", "OnCatalogStoreDelete");
-		$eventManager->registerEventHandlerCompatible("iblock", "OnBeforeIBlockPropertyUpdate", "catalog", "CCatalog", "OnBeforeIBlockPropertyUpdate");
-		$eventManager->registerEventHandlerCompatible("iblock", "OnBeforeIBlockPropertyDelete", "catalog", "CCatalog", "OnBeforeIBlockPropertyDelete");
-
-		$eventManager->registerEventHandlerCompatible("sale", "OnCondSaleControlBuildList", "catalog", "CCatalogCondCtrlBasketProductFields", "GetControlDescr", 1100);
-		$eventManager->registerEventHandlerCompatible("sale", "OnCondSaleControlBuildList", "catalog", "CCatalogCondCtrlBasketProductProps", "GetControlDescr", 1200);
-		$eventManager->registerEventHandlerCompatible("sale", "OnCondSaleActionsControlBuildList", "catalog", "CCatalogActionCtrlBasketProductFields", "GetControlDescr", 1200);
-		$eventManager->registerEventHandlerCompatible("sale", "OnCondSaleActionsControlBuildList", "catalog", "CCatalogActionCtrlBasketProductProps", "GetControlDescr", 1300);
-		$eventManager->registerEventHandlerCompatible("sale", "OnCondSaleActionsControlBuildList", "catalog", "CCatalogGifterProduct", "GetControlDescr", 200);
-		$eventManager->registerEventHandlerCompatible("sale", "OnExtendBasketItems", "catalog", "CCatalogDiscount", "ExtendBasketItems", 100);
-
-		$eventManager->registerEventHandlerCompatible('iblock', 'OnModuleUnInstall', 'catalog', 'CCatalog', 'OnIBlockModuleUnInstall');
-
-		$eventManager->registerEventHandlerCompatible('iblock', 'OnIBlockElementAdd', 'catalog', '\Bitrix\Catalog\Product\Sku', 'handlerIblockElementAdd');
-		$eventManager->registerEventHandlerCompatible('iblock', 'OnAfterIBlockElementAdd', 'catalog', '\Bitrix\Catalog\Product\Sku', 'handlerAfterIblockElementAdd');
-		$eventManager->registerEventHandlerCompatible('iblock', 'OnIBlockElementUpdate', 'catalog', '\Bitrix\Catalog\Product\Sku', 'handlerIblockElementUpdate');
-		$eventManager->registerEventHandlerCompatible('iblock', 'OnAfterIBlockElementUpdate', 'catalog', '\Bitrix\Catalog\Product\Sku', 'handlerAfterIblockElementUpdate');
-		$eventManager->registerEventHandlerCompatible('iblock', 'OnIBlockElementDelete', 'catalog', '\Bitrix\Catalog\Product\Sku', 'handlerIblockElementDelete');
-		$eventManager->registerEventHandlerCompatible('iblock', 'OnAfterIBlockElementDelete', 'catalog', '\Bitrix\Catalog\Product\Sku', 'handlerAfterIblockElementDelete');
-		$eventManager->registerEventHandlerCompatible('iblock', 'OnIBlockElementSetPropertyValues', 'catalog', '\Bitrix\Catalog\Product\Sku', 'handlerIblockElementSetPropertyValues');
-		$eventManager->registerEventHandlerCompatible('iblock', 'OnAfterIBlockElementSetPropertyValues', 'catalog', '\Bitrix\Catalog\Product\Sku', 'handlerAfterIBlockElementSetPropertyValues');
-		$eventManager->registerEventHandlerCompatible('iblock', 'OnIBlockElementSetPropertyValuesEx', 'catalog', '\Bitrix\Catalog\Product\Sku', 'handlerIblockElementSetPropertyValuesEx');
-		$eventManager->registerEventHandlerCompatible('iblock', 'OnAfterIBlockElementSetPropertyValuesEx', 'catalog', '\Bitrix\Catalog\Product\Sku', 'handlerAfterIblockElementSetPropertyValuesEx');
-
-		$eventManager->registerEventHandlerCompatible('iblock', 'OnBeforeIBlockElementAdd', 'catalog', '\Bitrix\Catalog\Config\State', 'handlerBeforeIblockElementAdd');
-		$eventManager->registerEventHandlerCompatible("iblock", "OnBeforeIBlockElementUpdate", "catalog", "\Bitrix\Catalog\Config\State", "handlerBeforeIblockElementUpdate");
-		$eventManager->registerEventHandlerCompatible('iblock', 'OnBeforeIBlockSectionUpdate', 'catalog', '\Bitrix\Catalog\Config\State', 'handlerBeforeIblockSectionUpdate');
-		$eventManager->registerEventHandlerCompatible('iblock', 'OnAfterIBlockElementAdd', 'catalog', '\Bitrix\Catalog\Config\State', 'handlerAfterIblockElementAdd');
-		$eventManager->registerEventHandlerCompatible('iblock', 'OnAfterIBlockElementUpdate', 'catalog', '\Bitrix\Catalog\Config\State', 'handlerAfterIblockElementUpdate');
-		$eventManager->registerEventHandlerCompatible('iblock', 'OnAfterIBlockElementDelete', 'catalog', '\Bitrix\Catalog\Config\State', 'handlerAfterIblockElementDelete');
-		$eventManager->registerEventHandlerCompatible('iblock', 'OnAfterIBlockSectionAdd', 'catalog', '\Bitrix\Catalog\Config\State', 'handlerAfterIblockSectionAdd');
-		$eventManager->registerEventHandlerCompatible('iblock', 'OnAfterIBlockSectionUpdate', 'catalog', '\Bitrix\Catalog\Config\State', 'handlerAfterIblockSectionUpdate');
-		$eventManager->registerEventHandlerCompatible('iblock', 'OnAfterIBlockSectionDelete', 'catalog', '\Bitrix\Catalog\Config\State', 'handlerAfterIblockSectionDelete');
-
-		$eventManager->registerEventHandlerCompatible('perfmon', 'OnGetTableSchema', 'catalog', 'catalog', 'getTableSchema');
-
-		$eventManager->registerEventHandler(
-			'highloadblock',
-			'\Bitrix\Highloadblock\Highloadblock::'.Main\ORM\Data\DataManager::EVENT_ON_BEFORE_DELETE,
-			'catalog',
-			'\Bitrix\Catalog\Product\SystemField',
-			'handlerHighloadBlockBeforeDelete'
-		);
-		$eventManager->registerEventHandler(
-			'highloadblock',
-			'\Bitrix\Highloadblock\Highloadblock::'.Main\ORM\Data\DataManager::EVENT_ON_BEFORE_UPDATE,
-			'catalog',
-			'\Bitrix\Catalog\Product\SystemField',
-			'handlerHighloadBlockBeforeUpdate'
-		);
-		$eventManager->registerEventHandler(
-			'highloadblock',
-			'OnBeforeModuleUninstall',
-			'catalog',
-			'\Bitrix\Catalog\Product\SystemField',
-			'handlerHighloadBlockBeforeUninstall'
-		);
-
-		$eventManager->registerEventHandler(
-			'iblock',
-			'onGetUrlBuilders',
-			'catalog',
-			'\Bitrix\Catalog\Url\Registry',
-			'getBuilderList'
-		);
-
-		$eventManager->registerEventHandler(
-			'sale',
-			'OnSaleCheckPrepareData',
-			'catalog',
-			'\Bitrix\Catalog\Integration\Sale\Cashbox\EventHandlers\Check',
-			'onSaleCheckPrepareData'
-		);
-
-		$eventManager->registerEventHandlerCompatible(
-			'iblock',
-			'OnBeforeIBlockElementDelete',
-			'catalog',
-			'\Bitrix\Catalog\v2\AgentContract\EventHandlers\IblockElement',
-			'onBeforeIBlockElementDelete'
-		);
-
-		$eventManager->registerEventHandlerCompatible(
-			'rest',
-			'OnRestServiceBuildDescription',
-			'catalog',
-			'\Bitrix\Catalog\EventDispatcher\EventDispatcher',
-			'onRestServiceBuildDescription'
-		);
-
-		$eventManager->registerEventHandlerCompatible(
-			'rest',
-			'OnRestAppInstall',
-			'catalog',
-			'\Bitrix\Catalog\Store\EnableWizard\OnecAppManager',
-			'onRestAppInstall'
-		);
-
-		$eventManager->registerEventHandler(
-			'ai',
-			'onTuningLoad',
-			'catalog',
-			'\Bitrix\Catalog\Integration\AI\Settings',
-			'onTuningLoad',
-		);
-
-		$eventManager->registerEventHandler(
-			'crm',
-			'OnCrmDealRecoverFromRecycleBin',
-			'catalog',
-			'\Bitrix\Catalog\Integration\Crm\EventsHandler',
-			'OnCrmDealRecoverFromRecycleBin'
-		);
-
-		$eventManager->registerEventHandler(
-			'crm',
-			'OnCrmDealEraseFromRecycleBin',
-			'catalog',
-			'\Bitrix\Catalog\Integration\Crm\EventsHandler',
-			'OnCrmDealEraseFromRecycleBin'
-		);
 
 		if ($this->bitrix24mode)
 		{
@@ -269,7 +98,8 @@ class catalog extends CModule
 			Main\Config\Option::set('catalog', 'viewed_count', '10');
 			Main\Config\Option::set('catalog', 'viewed_period', '1');
 		}
-		CAgent::AddAgent(
+
+		\CAgent::AddAgent(
 			'\Bitrix\Catalog\CatalogViewedProductTable::clearAgent();',
 			'catalog',
 			'N',
@@ -313,21 +143,6 @@ class catalog extends CModule
 				\Bitrix\Catalog\Compatible\EventCompatibility::registerEvents();
 			}
 		}
-
-		\CTimeZone::Disable();
-		\CAgent::AddAgent(
-			'\Bitrix\Catalog\Product\SystemField::execAgent();',
-			'catalog',
-			'Y',
-			1,
-			'',
-			'Y',
-			\ConvertTimeStamp(time()+ 60, 'FULL'),
-			100,
-			false,
-			false
-		);
-		\CTimeZone::Enable();
 
 		$this->InstallTasks();
 
@@ -387,190 +202,29 @@ class catalog extends CModule
 
 	function UnInstallDB($arParams = array())
 	{
-		global $APPLICATION, $DB, $errors;
+		global $APPLICATION;
 		global $USER_FIELD_MANAGER;
-		$connection = \Bitrix\Main\Application::getConnection();
 
 		if (!defined('BX_CATALOG_UNINSTALLED'))
 			define('BX_CATALOG_UNINSTALLED', true);
 
 		$enableDeprecatedEvents = Main\Config\Option::get('catalog', 'enable_processing_deprecated_events') === 'Y';
-		if (!isset($arParams["savedata"]) || $arParams["savedata"] != "Y")
+
+		$dropTables = !isset($arParams["savedata"]) || $arParams["savedata"] != "Y";
+
+		$migrationResult = $this->uninstallMigrations($dropTables);
+		if (!$migrationResult->isSuccess())
 		{
-			$errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT']."/bitrix/modules/catalog/install/db/".$connection->getType()."/uninstall.sql");
-			if (!empty($errors))
-			{
-				$APPLICATION->ThrowException(implode("", $errors));
-				return false;
-			}
+			$APPLICATION->ThrowException(implode('. ', $migrationResult->getErrorMessages()));
+			return false;
+		}
+
+		if ($dropTables)
+		{
 			$USER_FIELD_MANAGER->OnEntityDelete('PRODUCT');
 			$this->UnInstallTasks();
 			COption::RemoveOption("catalog");
 		}
-
-		$eventManager = EventManager::getInstance();
-
-		$eventManager->unRegisterEventHandler("iblock", "OnBeforeIBlockUpdate", "catalog", "CCatalog", "OnBeforeIBlockUpdate");
-		$eventManager->unRegisterEventHandler("iblock", "OnAfterIBlockUpdate", "catalog", "CCatalog", "OnAfterIBlockUpdate");
-		$eventManager->unRegisterEventHandler("iblock", "OnIBlockDelete", "catalog", "CCatalog", "OnIBlockDelete");
-		$eventManager->unRegisterEventHandler("iblock", "OnIBlockElementDelete", "catalog", "CProduct", "OnIBlockElementDelete");
-		$eventManager->unRegisterEventHandler("iblock", "OnIBlockElementDelete", "catalog", "CCatalogDocs", "OnIBlockElementDelete");
-		$eventManager->unRegisterEventHandler("iblock", "OnBeforeIBlockElementDelete", "catalog", "CCatalogDocs", "OnBeforeIBlockElementDelete");
-		$eventManager->unRegisterEventHandler("currency", "OnCurrencyDelete", "catalog", "CPrice", "OnCurrencyDelete");
-		$eventManager->unRegisterEventHandler("currency", "OnModuleUnInstall", "catalog", "", "CurrencyModuleUnInstallCatalog");
-		$eventManager->unRegisterEventHandler("iblock", "OnBeforeIBlockDelete", "catalog", "CCatalog", "OnBeforeCatalogDelete");
-		$eventManager->unRegisterEventHandler("iblock", "OnBeforeIBlockElementDelete", "catalog", "CCatalog", "OnBeforeIBlockElementDelete");
-		$eventManager->unRegisterEventHandler("main", "OnEventLogGetAuditTypes", "catalog", "CCatalogEvent", "GetAuditTypes");
-		$eventManager->unRegisterEventHandler('main', 'OnBuildGlobalMenu', 'catalog', 'CCatalogAdmin', 'OnBuildGlobalMenu');
-		$eventManager->unRegisterEventHandler('main', 'OnBuildGlobalMenu', 'catalog', 'CCatalogAdmin', 'OnBuildSaleMenu');
-		$eventManager->unRegisterEventHandler("catalog", "OnCondCatControlBuildList", "catalog", "CCatalogCondCtrlGroup", "GetControlDescr");
-		$eventManager->unRegisterEventHandler("catalog", "OnCondCatControlBuildList", "catalog", "CCatalogCondCtrlIBlockFields", "GetControlDescr");
-		$eventManager->unRegisterEventHandler("catalog", "OnCondCatControlBuildList", "catalog", "CCatalogCondCtrlIBlockProps", "GetControlDescr");
-		$eventManager->unRegisterEventHandler("catalog", "OnCatalogStoreDelete", "catalog", "CCatalogDocs", "OnCatalogStoreDelete");
-		$eventManager->unRegisterEventHandler("iblock", "OnBeforeIBlockPropertyUpdate", "catalog", "CCatalog", "OnBeforeIBlockPropertyUpdate");
-		$eventManager->unRegisterEventHandler("iblock", "OnBeforeIBlockPropertyDelete", "catalog", "CCatalog", "OnBeforeIBlockPropertyDelete");
-
-		$eventManager->unRegisterEventHandler("sale", "OnCondSaleControlBuildList", "catalog", "CCatalogCondCtrlBasketProductFields", "GetControlDescr");
-		$eventManager->unRegisterEventHandler("sale", "OnCondSaleControlBuildList", "catalog", "CCatalogCondCtrlBasketProductProps", "GetControlDescr");
-		$eventManager->unRegisterEventHandler("sale", "OnCondSaleActionsControlBuildList", "catalog", "CCatalogActionCtrlBasketProductFields", "GetControlDescr");
-		$eventManager->unRegisterEventHandler("sale", "OnCondSaleActionsControlBuildList", "catalog", "CCatalogActionCtrlBasketProductProps", "GetControlDescr");
-		$eventManager->unRegisterEventHandler("sale", "OnCondSaleActionsControlBuildList", "catalog", "CCatalogGifterProduct", "GetControlDescr");
-		$eventManager->unRegisterEventHandler("sale", "OnExtendBasketItems", "catalog", "CCatalogDiscount", "ExtendBasketItems");
-
-		$eventManager->unRegisterEventHandler('iblock', 'OnModuleUnInstall', 'catalog', 'CCatalog', 'OnIBlockModuleUnInstall');
-
-		$eventManager->unRegisterEventHandler('iblock', 'OnIBlockElementAdd', 'catalog', '\Bitrix\Catalog\Product\Sku', 'handlerIblockElementAdd');
-		$eventManager->unRegisterEventHandler('iblock', 'OnAfterIBlockElementAdd', 'catalog', '\Bitrix\Catalog\Product\Sku', 'handlerAfterIblockElementAdd');
-		$eventManager->unRegisterEventHandler('iblock', 'OnIBlockElementUpdate', 'catalog', '\Bitrix\Catalog\Product\Sku', 'handlerIblockElementUpdate');
-		$eventManager->unRegisterEventHandler('iblock', 'OnAfterIBlockElementUpdate', 'catalog', '\Bitrix\Catalog\Product\Sku', 'handlerAfterIblockElementUpdate');
-		$eventManager->unRegisterEventHandler('iblock', 'OnIBlockElementDelete', 'catalog', '\Bitrix\Catalog\Product\Sku', 'handlerIblockElementDelete');
-		$eventManager->unRegisterEventHandler('iblock', 'OnAfterIBlockElementDelete', 'catalog', '\Bitrix\Catalog\Product\Sku', 'handlerAfterIblockElementDelete');
-		$eventManager->unRegisterEventHandler('iblock', 'OnIBlockElementSetPropertyValues', 'catalog', '\Bitrix\Catalog\Product\Sku', 'handlerIblockElementSetPropertyValues');
-		$eventManager->unRegisterEventHandler('iblock', 'OnAfterIBlockElementSetPropertyValues', 'catalog', '\Bitrix\Catalog\Product\Sku', 'handlerAfterIBlockElementSetPropertyValues');
-		$eventManager->unRegisterEventHandler('iblock', 'OnIBlockElementSetPropertyValuesEx', 'catalog', '\Bitrix\Catalog\Product\Sku', 'handlerIblockElementSetPropertyValuesEx');
-		$eventManager->unRegisterEventHandler('iblock', 'OnAfterIBlockElementSetPropertyValuesEx', 'catalog', '\Bitrix\Catalog\Product\Sku', 'handlerAfterIblockElementSetPropertyValuesEx');
-
-		$eventManager->unRegisterEventHandler('iblock', 'OnBeforeIBlockElementAdd', 'catalog', '\Bitrix\Catalog\Config\State', 'handlerBeforeIblockElementAdd');
-		$eventManager->unRegisterEventHandler("iblock", "OnBeforeIBlockElementUpdate", "catalog", "\Bitrix\Catalog\Config\State", "handlerBeforeIblockElementUpdate");
-		$eventManager->unRegisterEventHandler('iblock', 'OnBeforeIBlockSectionUpdate', 'catalog', '\Bitrix\Catalog\Config\State', 'handlerBeforeIblockSectionUpdate');
-		$eventManager->unRegisterEventHandler('iblock', 'OnAfterIBlockElementAdd', 'catalog', '\Bitrix\Catalog\Config\State', 'handlerAfterIblockElementAdd');
-		$eventManager->unRegisterEventHandler('iblock', 'OnAfterIBlockElementUpdate', 'catalog', '\Bitrix\Catalog\Config\State', 'handlerAfterIblockElementUpdate');
-		$eventManager->unRegisterEventHandler('iblock', 'OnAfterIBlockElementDelete', 'catalog', '\Bitrix\Catalog\Config\State', 'handlerAfterIblockElementDelete');
-		$eventManager->unRegisterEventHandler('iblock', 'OnAfterIBlockSectionAdd', 'catalog', '\Bitrix\Catalog\Config\State', 'handlerAfterIblockSectionAdd');
-		$eventManager->unRegisterEventHandler('iblock', 'OnAfterIBlockSectionUpdate', 'catalog', '\Bitrix\Catalog\Config\State', 'handlerAfterIblockSectionUpdate');
-		$eventManager->unRegisterEventHandler('iblock', 'OnAfterIBlockSectionDelete', 'catalog', '\Bitrix\Catalog\Config\State', 'handlerAfterIblockSectionDelete');
-
-		$eventManager->unRegisterEventHandler('perfmon', 'OnGetTableSchema', 'catalog', 'catalog', 'getTableSchema');
-
-		$eventManager->unRegisterEventHandler('sale', 'onBuildCouponProviders', 'catalog', '\Bitrix\Catalog\DiscountCouponTable', 'couponManager');
-		$eventManager->unRegisterEventHandler('sale', 'onBuildDiscountProviders', 'catalog', '\Bitrix\Catalog\Discount\DiscountManager', 'catalogDiscountManager');
-		$eventManager->unRegisterEventHandler('sale', 'onExtendOrderData', 'catalog', '\Bitrix\Catalog\Discount\DiscountManager', 'extendOrderData');
-		$eventManager->unRegisterEventHandler('currency', 'onAfterUpdateCurrencyBaseRate', 'catalog', '\Bitrix\Catalog\Product\Price', 'handlerAfterUpdateCurrencyBaseRate');
-		$eventManager->registerEventHandler('iblock', 'Bitrix\Iblock\Model\PropertyFeature::OnPropertyFeatureBuildList', 'catalog', '\Bitrix\Catalog\Product\PropertyCatalogFeature', 'handlerPropertyFeatureBuildList');
-
-		$eventManager->unRegisterEventHandler('main', 'onUserDelete', 'catalog', '\Bitrix\Catalog\SubscribeTable', 'onUserDelete');
-		$eventManager->unRegisterEventHandler('catalog', 'onAddContactType', 'catalog', '\Bitrix\Catalog\SubscribeTable', 'onAddContactType');
-		$eventManager->unRegisterEventHandler('sale', 'OnSaleOrderSaved', 'catalog', '\Bitrix\Catalog\SubscribeTable', 'onSaleOrderSaved');
-
-		$eventManager->unRegisterEventHandler(
-			'highloadblock',
-			'\Bitrix\Highloadblock\Highloadblock::'.Main\ORM\Data\DataManager::EVENT_ON_BEFORE_DELETE,
-			'catalog',
-			'\Bitrix\Catalog\Product\SystemField',
-			'handlerHighloadBlockBeforeDelete'
-		);
-		$eventManager->unRegisterEventHandler(
-			'highloadblock',
-			'\Bitrix\Highloadblock\Highloadblock::'.Main\ORM\Data\DataManager::EVENT_ON_BEFORE_UPDATE,
-			'catalog',
-			'\Bitrix\Catalog\Product\SystemField',
-			'handlerHighloadBlockBeforeUpdate'
-		);
-		$eventManager->unRegisterEventHandler(
-			'highloadblock',
-			'OnBeforeModuleUninstall',
-			'catalog',
-			'\Bitrix\Catalog\Product\SystemField',
-			'handlerHighloadBlockBeforeUninstall'
-		);
-
-		$eventManager->unRegisterEventHandler(
-			'iblock',
-			'onGetUrlBuilders',
-			'catalog',
-			'\Bitrix\Catalog\Url\Registry',
-			'getBuilderList'
-		);
-
-		$eventManager->unRegisterEventHandler(
-			'pull',
-			'onGetDependentModule',
-			$this->MODULE_ID,
-			'\Bitrix\Catalog\Integration\PullManager',
-			'onGetDependentModule'
-		);
-
-		$eventManager->unRegisterEventHandler(
-			'ai',
-			'onTuningLoad',
-			'catalog',
-			'\Bitrix\Catalog\Integration\AI\Settings',
-			'onTuningLoad',
-		);
-
-		$eventManager->unregisterEventHandler(
-			'crm',
-			'OnCrmDealRecoverFromRecycleBin',
-			'catalog',
-			'\Bitrix\Catalog\Integration\Crm\EventsHandler',
-			'OnCrmDealRecoverFromRecycleBin'
-		);
-
-		$eventManager->unregisterEventHandler(
-			'crm',
-			'OnCrmDealEraseFromRecycleBin',
-			'catalog',
-			'\Bitrix\Catalog\Integration\Crm\EventsHandler',
-			'OnCrmDealEraseFromRecycleBin'
-		);
-
-		$eventManager->unRegisterEventHandler('report', 'onAnalyticPageBatchCollect', 'catalog', '\Bitrix\Catalog\Integration\Report\EventHandler', 'onAnalyticPageBatchCollect');
-		$eventManager->unRegisterEventHandler('report', 'onAnalyticPageCollect', 'catalog', '\Bitrix\Catalog\Integration\Report\EventHandler', 'onAnalyticPageCollect');
-		$eventManager->unRegisterEventHandler('report', 'onDefaultBoardsCollect', 'catalog', '\Bitrix\Catalog\Integration\Report\EventHandler', 'onDefaultBoardsCollect');
-		$eventManager->unRegisterEventHandler('report', 'onReportsCollect', 'catalog', '\Bitrix\Catalog\Integration\Report\EventHandler', 'onReportHandlerCollect');
-		$eventManager->unRegisterEventHandler('report', 'onReportViewCollect', 'catalog', '\Bitrix\Catalog\Integration\Report\EventHandler', 'onViewsCollect');
-
-		$eventManager->unRegisterEventHandler(
-			'sale',
-			'OnSaleCheckPrepareData',
-			'catalog',
-			'\Bitrix\Catalog\Integration\Sale\Cashbox\EventHandlers\Check',
-			'onSaleCheckPrepareData'
-		);
-
-		$eventManager->unRegisterEventHandler(
-			'iblock',
-			'OnBeforeIBlockElementDelete',
-			'catalog',
-			'\Bitrix\Catalog\v2\AgentContract\EventHandlers\IblockElement',
-			'onBeforeIBlockElementDelete'
-		);
-
-		$eventManager->unRegisterEventHandler(
-			'rest',
-			'OnRestServiceBuildDescription',
-			'catalog',
-			'\Bitrix\Catalog\EventDispatcher\EventDispatcher',
-			'onRestServiceBuildDescription'
-		);
-
-		$eventManager->unRegisterEventHandler(
-			'rest',
-			'OnRestAppInstall',
-			'catalog',
-			'\Bitrix\Catalog\Store\EnableWizard\OnecAppManager',
-			'onRestAppInstall'
-		);
 
 		if (Main\Loader::includeModule('catalog'))
 		{
@@ -583,8 +237,6 @@ class catalog extends CModule
 				\Bitrix\Catalog\Compatible\EventCompatibility::unRegisterEvents();
 			}
 		}
-
-		CAgent::RemoveModuleAgents('catalog');
 
 		ModuleManager::unRegisterModule('catalog');
 

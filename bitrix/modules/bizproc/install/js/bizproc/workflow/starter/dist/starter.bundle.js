@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Bizproc = this.BX.Bizproc || {};
-(function (exports, main_core, main_core_events, sidepanel, ui_entitySelector, ui_notification, bizproc_router, ui_dialogs_messagebox) {
+(function (exports, bizproc_router, main_core, main_core_events, sidepanel, ui_entitySelector, ui_notification, ui_dialogs_messagebox) {
 	'use strict';
 
 	const ACTION_AJAX_MAP = Object.freeze({
@@ -49,6 +49,9 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 			}
 			if (!main_core.Type.isNil(data.complexDocumentId?.documentId)) {
 				this.#defaultData.document_id = data.complexDocumentId.documentId;
+			}
+			if (!main_core.Type.isNil(data.categoryId)) {
+				this.#defaultData.category_id = data.categoryId;
 			}
 			if (!main_core.Type.isNil(data.triggerType)) {
 				this.#defaultData.trigger_type = data.triggerType;
@@ -151,10 +154,24 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 		}
 	}
 
+	function normalizeCategoryId(categoryId) {
+		if (main_core.Type.isNil(categoryId) || categoryId === '') {
+			return null;
+		}
+		if (main_core.Type.isNumber(categoryId)) {
+			return main_core.Text.toInteger(categoryId);
+		}
+		if (!main_core.Type.isStringFilled(categoryId) || Number.isNaN(Number(categoryId))) {
+			return null;
+		}
+		return main_core.Text.toInteger(categoryId);
+	}
+
 	class ComplexDocumentType {
 		#moduleId;
 		#entity;
 		#documentType;
+		#categoryId;
 		static tryCreate(documentType) {
 			if (documentType instanceof ComplexDocumentType) {
 				return documentType;
@@ -165,15 +182,23 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 			if (!main_core.Type.isStringFilled(documentType.moduleId) || !main_core.Type.isStringFilled(documentType.entity) || !main_core.Type.isStringFilled(documentType.documentType)) {
 				return null;
 			}
-			return new ComplexDocumentType(documentType.moduleId, documentType.entity, documentType.documentType);
+			return new ComplexDocumentType(documentType.moduleId, documentType.entity, documentType.documentType, documentType.categoryId ?? null);
 		}
-		constructor(moduleId, entity, documentType) {
+		withCategoryId(categoryId) {
+			const normalizedCategoryId = normalizeCategoryId(categoryId);
+			if (normalizedCategoryId === this.#categoryId) {
+				return this;
+			}
+			return new ComplexDocumentType(this.#moduleId, this.#entity, this.#documentType, normalizedCategoryId);
+		}
+		constructor(moduleId, entity, documentType, categoryId = null) {
 			if (!main_core.Type.isStringFilled(moduleId) || !main_core.Type.isStringFilled(entity) || !main_core.Type.isStringFilled(documentType)) {
 				throw new TypeError('incorrect complex document type');
 			}
 			this.#moduleId = moduleId;
 			this.#entity = entity;
 			this.#documentType = documentType;
+			this.#categoryId = normalizeCategoryId(categoryId);
 		}
 		get moduleId() {
 			return this.#moduleId;
@@ -183,6 +208,9 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 		}
 		get documentType() {
 			return this.#documentType;
+		}
+		get categoryId() {
+			return this.#categoryId;
 		}
 		isEqual(targetDocumentType) {
 			if (main_core.Type.isString(targetDocumentType)) {
@@ -205,7 +233,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 			if (!main_core.Type.isPlainObject(document)) {
 				return null;
 			}
-			const documentType = ComplexDocumentType.tryCreate(document.documentType);
+			const documentType = ComplexDocumentType.tryCreate(document.documentType)?.withCategoryId(document.categoryId ?? null);
 			const documentId = ComplexDocumentId.tryCreate(document.documentId);
 			if (!documentType || !documentId) {
 				return null;
@@ -229,7 +257,10 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 			return this.#documentId;
 		}
 		get key() {
-			return [this.documentType.moduleId, this.documentType.entity, this.documentType.documentType, String(this.documentId.documentId)].join('@');
+			return [this.documentType.moduleId, this.documentType.entity, this.documentType.documentType, String(this.documentId.documentId), String(this.categoryId)].join('@');
+		}
+		get categoryId() {
+			return this.#documentType.categoryId;
 		}
 	}
 
@@ -276,12 +307,52 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 		}
 	}
 
+	class Manager {
+		#instances = new Set();
+		put(starter) {
+			this.#instances.add(starter);
+			return this;
+		}
+		remove(starter) {
+			this.#instances.delete(starter);
+		}
+		fireEvent(starter, eventName, parameters) {
+			const instances = this.#findSimilar(starter);
+			instances.forEach(target => {
+				target.emit(eventName, parameters);
+				main_core_events.EventEmitter.emit(target, eventName, parameters, {
+					useGlobalNaming: true
+				}); // compatibility
+			});
+		}
+		#findSimilar(target) {
+			const result = [target];
+			this.#instances.forEach(starter => {
+				if (starter !== target && this.#isEqual(target, starter)) {
+					result.push(starter);
+				}
+			});
+			return result;
+		}
+		#isEqual(target, starter) {
+			if (target.signedDocumentType && starter.signedDocumentType) {
+				return target.signedDocumentType === starter.signedDocumentType;
+			}
+			if (target.complexDocumentType) {
+				return target.complexDocumentType.isEqual(starter.complexDocumentType || starter.signedDocumentType);
+			}
+			return starter.complexDocumentType.isEqual(target.complexDocumentType || target.signedDocumentType);
+		}
+	}
+	const managerInstance = new Manager();
+
 	class Starter extends main_core_events.EventEmitter {
 		#templates = null;
 		#signedDocumentType = null;
 		#signedDocumentId = null;
 		#complexDocumentType = null;
 		#complexDocumentId = null;
+		#categoryId = null;
 		#triggerType = null;
 		#templatesSelector = null;
 		#callActionHelper;
@@ -290,6 +361,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 			super();
 			this.setEventNamespace('BX.Bizproc.Workflow.Starter');
 			this.#setDocumentType(data);
+			this.#categoryId = normalizeCategoryId(data.categoryId);
 			this.#triggerType = data.triggerType || null;
 			if (main_core.Type.isNil(this.#complexDocumentType) && main_core.Type.isNil(this.#signedDocumentType)) {
 				throw new TypeError('document type is empty');
@@ -304,6 +376,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 				signedDocumentType: this.#signedDocumentType,
 				complexDocumentId: this.#complexDocumentId,
 				signedDocumentId: this.#signedDocumentId,
+				categoryId: this.#categoryId,
 				triggerType: data.triggerType || '',
 				customAjaxUrl: this.#hasCustomAjaxUrl ? data.ajaxUrl : null
 			});
@@ -339,6 +412,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 					documentId: config.documentId,
 					signedDocumentType: config.signedDocumentType,
 					signedDocumentId: config.signedDocumentId,
+					categoryId: config.categoryId ?? null,
 					templates: config.templates || null,
 					triggerType: config.triggerType || null,
 					ajaxUrl: config.ajaxUrl || ''
@@ -411,7 +485,7 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 				if (!normalizedDocumentType) {
 					return;
 				}
-				uniqueDocumentTypes.set([normalizedDocumentType.moduleId, normalizedDocumentType.entity, normalizedDocumentType.documentType].join('@'), normalizedDocumentType);
+				uniqueDocumentTypes.set([normalizedDocumentType.moduleId, normalizedDocumentType.entity, normalizedDocumentType.documentType, String(normalizedDocumentType.categoryId)].join('@'), normalizedDocumentType);
 			});
 			return [...uniqueDocumentTypes.values()];
 		}
@@ -419,10 +493,14 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 			return ComplexDocumentType.tryCreate(documentType);
 		}
 		static #createDocumentPayload(document) {
-			return {
+			const payload = {
 				documentType: [document.documentType.moduleId, document.documentType.entity, document.documentType.documentType],
 				documentId: [document.documentId.moduleId, document.documentId.entity, document.documentId.documentId]
 			};
+			if (!main_core.Type.isNil(document.categoryId)) {
+				payload.categoryId = document.categoryId;
+			}
+			return payload;
 		}
 		static #createDocumentTypePayload(documentType) {
 			return [documentType.moduleId, documentType.entity, documentType.documentType];
@@ -437,15 +515,24 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 				payload.documentId.forEach((value, valueIndex) => {
 					requestParams[`documents[${documentIndex}][documentId][${valueIndex}]`] = value;
 				});
+				if (!main_core.Type.isNil(payload.categoryId)) {
+					requestParams[`documents[${documentIndex}][categoryId]`] = payload.categoryId;
+				}
 			});
 			return requestParams;
 		}
 		static #createAutoStartRequestParams(documentTypes, autoExecuteType) {
 			return {
 				autoExecuteType,
-				documents: documentTypes.map(documentType => ({
-					documentType: this.#createDocumentTypePayload(documentType)
-				}))
+				documents: documentTypes.map(documentType => {
+					const payload = {
+						documentType: this.#createDocumentTypePayload(documentType)
+					};
+					if (!main_core.Type.isNil(documentType.categoryId)) {
+						payload.categoryId = documentType.categoryId;
+					}
+					return payload;
+				})
 			};
 		}
 		static #createAutoStartOnCloseCompleteHandler(callback) {
@@ -495,7 +582,8 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 				requestMethod: 'get',
 				requestParams: {
 					signedDocumentType: this.#signedDocumentType,
-					signedDocumentId: this.#signedDocumentId
+					signedDocumentId: this.#signedDocumentId,
+					categoryId: this.#categoryId
 				},
 				events: {
 					onCloseComplete: main_core.Type.isFunction(callback) ? callback : () => {}
@@ -610,9 +698,11 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 
 		// compatibility
 		showAutoStartParametersPopup(autoExecuteType, config = {}) {
+			const categoryId = Object.hasOwn(config, 'categoryId') ? normalizeCategoryId(config.categoryId) : this.#categoryId;
 			this.#showStepByStepSlider({
 				templateId: null,
-				autoExecuteType
+				autoExecuteType,
+				categoryId
 			}).then(data => {
 				if (main_core.Type.isFunction(config?.callback)) {
 					if (main_core.Type.isString(data.signedParameters)) {
@@ -626,6 +716,26 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 					});
 				}
 			}).catch(() => {});
+		}
+		hasAutoStartParameters(autoExecuteType, config = {}) {
+			const categoryId = Object.hasOwn(config, 'categoryId') ? normalizeCategoryId(config.categoryId) : this.#categoryId;
+			const data = {
+				autoExecuteType,
+				categoryId
+			};
+			if (this.#signedDocumentType) {
+				data.signedDocumentType = this.#signedDocumentType;
+			} else if (this.#complexDocumentType) {
+				data.documentType = [this.#complexDocumentType.moduleId, this.#complexDocumentType.entity, this.#complexDocumentType.documentType];
+			}
+			if (this.#signedDocumentId) {
+				data.signedDocumentId = this.#signedDocumentId;
+			} else if (this.#complexDocumentId) {
+				data.documentId = [this.#complexDocumentId.moduleId, this.#complexDocumentId.entity, this.#complexDocumentId.documentId];
+			}
+			return main_core.ajax.runAction('bizproc.workflow.starter.hasAutoStartParameters', {
+				data
+			}).then(response => response.data?.hasParameters === true);
 		}
 		#showStepByStepSlider(componentParams) {
 			return new Promise(resolve => {
@@ -695,6 +805,12 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 					triggerType: this.#triggerType
 				});
 			}
+			const categoryId = Object.hasOwn(componentParams, 'categoryId') ? componentParams.categoryId : this.#categoryId;
+			if (!main_core.Type.isNil(categoryId)) {
+				url = main_core.Uri.addParam(url, {
+					categoryId
+				});
+			}
 			return url;
 		}
 		#callAction(action, formData = {}, addData = {}) {
@@ -707,48 +823,8 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 		}
 	}
 
-	class Manager {
-		#instances = new Set();
-		put(starter) {
-			this.#instances.add(starter);
-			return this;
-		}
-		remove(starter) {
-			this.#instances.delete(starter);
-		}
-		fireEvent(starter, eventName, parameters) {
-			const instances = this.#findSimilar(starter);
-			instances.forEach(target => {
-				target.emit(eventName, parameters);
-				main_core_events.EventEmitter.emit(target, eventName, parameters, {
-					useGlobalNaming: true
-				}); // compatibility
-			});
-		}
-		#findSimilar(target) {
-			const result = [target];
-			this.#instances.forEach(starter => {
-				if (starter !== target && this.#isEqual(target, starter)) {
-					result.push(starter);
-				}
-			});
-			return result;
-		}
-		#isEqual(target, starter) {
-			if (target.signedDocumentType && starter.signedDocumentType) {
-				return target.signedDocumentType === starter.signedDocumentType;
-			}
-			if (target.complexDocumentType) {
-				return target.complexDocumentType.isEqual(starter.complexDocumentType || starter.signedDocumentType);
-			}
-			return starter.complexDocumentType.isEqual(target.complexDocumentType || target.signedDocumentType);
-		}
-	}
-
-	const managerInstance = new Manager();
-
 	exports.Starter = Starter;
 	exports.managerInstance = managerInstance;
 
-})(this.BX.Bizproc.Workflow = this.BX.Bizproc.Workflow || {}, BX, BX.Event, BX, BX.UI.EntitySelector, BX, BX.Bizproc, BX.UI.Dialogs);
+})(this.BX.Bizproc.Workflow = this.BX.Bizproc.Workflow || {}, BX.Bizproc, BX, BX.Event, BX, BX.UI.EntitySelector, BX.UI.Notification, BX.UI.Dialogs);
 //# sourceMappingURL=starter.bundle.js.map

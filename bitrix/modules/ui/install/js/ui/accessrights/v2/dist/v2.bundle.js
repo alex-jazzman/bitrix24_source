@@ -559,10 +559,21 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 			},
 			bindNode() {
 				return this.$refs.container;
+			},
+			isReadOnly() {
+				return this.userGroup.isReadOnly === true;
+			}
+		},
+		methods: {
+			handleClick() {
+				if (this.isReadOnly) {
+					return;
+				}
+				this.isSelectorShown = true;
 			}
 		},
 		template: `
-		<div ref="container" class="ui-access-rights-v2-members-container"  @click="isSelectorShown = true">
+		<div ref="container" class="ui-access-rights-v2-members-container" @click="handleClick">
 			<div v-if="userGroup.members.size > 0" class='ui-access-rights-v2-members'>
 				<SingleMember v-for="[accessCode, member] in shownMembers" :key="accessCode" :member="member"/>
 				<span v-if="notShownMembersCount > 0" class="ui-access-rights-v2-members-more">
@@ -570,6 +581,7 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 				</span>
 			</div>
 			<div
+				v-if="!isReadOnly"
 				class='ui-access-rights-v2-members-item ui-access-rights-v2-members-item-add'
 				:class="{
 					'--show-always': userGroup.members.size <= 0,
@@ -619,6 +631,9 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 				isMaxValueSetForAny: 'accessRights/isMaxValueSetForAny',
 				isMinValueSetForAny: 'accessRights/isMinValueSetForAny'
 			}),
+			isReadOnly() {
+				return this.userGroup.isReadOnly === true;
+			},
 			title: {
 				get() {
 					return this.userGroup.title;
@@ -731,6 +746,9 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 			},
 			onEnableEditClick() {
 				this.isPopupShown = false;
+				if (this.isReadOnly) {
+					return;
+				}
 				this.isEdit = true;
 			},
 			onCopyRoleClick() {
@@ -744,6 +762,9 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 			},
 			onDeleteRoleClick() {
 				this.isPopupShown = false;
+				if (this.isReadOnly) {
+					return;
+				}
 				this.showDeleteConfirmation();
 			}
 		},
@@ -751,7 +772,7 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 		<div ref="container" class='ui-access-rights-v2-role'>
 			<div class="ui-access-rights-v2-role-value-container">
 				<input
-					v-if="isEdit && !isProgress"
+					v-if="isEdit && !isProgress && !isReadOnly"
 					ref="input"
 					type='text'
 					class='ui-access-rights-v2-role-input'
@@ -769,20 +790,21 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 			>
 				<RichMenuPopup v-if="isPopupShown" @close="isPopupShown = false" :popup-options="{bindElement: $refs.menu}">
 					<RichMenuItem
-						v-if="isMaxValueSetForAny"
+						v-if="isMaxValueSetForAny && !isReadOnly"
 						:icon="RichMenuItemIcon.check"
 						:title="$Bitrix.Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_SET_MAX_ACCESS_RIGHTS')"
 						:subtitle="$Bitrix.Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_SET_MAX_ACCESS_RIGHTS_SUBTITLE')"
 						@click="onSetMaxValuesClick"
 					/>
 					<RichMenuItem
-						v-if="isMinValueSetForAny"
+						v-if="isMinValueSetForAny && !isReadOnly"
 						:icon="RichMenuItemIcon['red-lock']"
 						:title="$Bitrix.Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_SET_MIN_ACCESS_RIGHTS')"
 						:subtitle="$Bitrix.Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_SET_MIN_ACCESS_RIGHTS_SUBTITLE')"
 						@click="onSetMinValuesClick"
 					/>
 					<RichMenuItem
+						v-if="!isReadOnly"
 						:icon="RichMenuItemIcon.pencil"
 						:title="$Bitrix.Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_RENAME')"
 						:subtitle="$Bitrix.Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_RENAME_SUBTITLE')"
@@ -803,6 +825,7 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 						@click="onCopyRoleClick"
 					/>
 					<RichMenuItem
+						v-if="!isReadOnly"
 						:icon="RichMenuItemIcon['trash-bin']"
 						:title="$Bitrix.Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_REMOVE')"
 						:subtitle="$Bitrix.Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_REMOVE_SUBTITLE')"
@@ -883,7 +906,8 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 				isModified: true,
 				title: main_core.Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_ROLE_NAME'),
 				accessRights: new Map(),
-				members: new Map()
+				members: new Map(),
+				isReadOnly: false
 			};
 		}
 		#getUserGroupsCollectionBySelectedMember(state) {
@@ -1043,6 +1067,10 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 			}
 			if (!this.#isUserGroupExists(store, payload.userGroupId)) {
 				console.warn('ui.accessrights.v2: Attempt to set value to a user group that dont exists', payload);
+				return;
+			}
+			if (this.#isUserGroupReadOnly(store, payload.userGroupId)) {
+				// mass actions legally target every shown group, so a read-only one is skipped without a warning
 				return;
 			}
 			if (!this.#isValueExistsInStructure(store, payload.sectionCode, payload.valueId)) {
@@ -1250,11 +1278,21 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 				console.warn('ui.accessrights.v2: Attempt to update user group that dont exists', payload);
 				return;
 			}
+			if (this.#isUserGroupReadOnly(store, payload.userGroupId)) {
+				// eslint-disable-next-line no-console
+				console.warn('ui.accessrights.v2: Attempt to rename a read only user group', payload);
+				return;
+			}
 			store.commit('setRoleTitle', payload);
 		}
 		#addMemberAction(store, payload) {
 			if (!this.#isUserGroupExists(store, payload.userGroupId)) {
 				console.warn('ui.accessrights.v2: Attempt to add member to a user group that dont exists', payload);
+				return;
+			}
+			if (this.#isUserGroupReadOnly(store, payload.userGroupId)) {
+				// eslint-disable-next-line no-console
+				console.warn('ui.accessrights.v2: Attempt to add member to a read only user group', payload);
 				return;
 			}
 			if (!main_core.Type.isStringFilled(payload.accessCode) || !this.#isMemberValid(payload)) {
@@ -1271,6 +1309,11 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 				console.warn('ui.accessrights.v2: Attempt to remove member from a user group that dont exists', payload);
 				return;
 			}
+			if (this.#isUserGroupReadOnly(store, payload.userGroupId)) {
+				// eslint-disable-next-line no-console
+				console.warn('ui.accessrights.v2: Attempt to remove member from a read only user group', payload);
+				return;
+			}
 			if (!main_core.Type.isStringFilled(payload.accessCode)) {
 				console.warn('ui.accessrights.v2: Attempt to remove member with invalid payload', payload);
 				return;
@@ -1280,6 +1323,11 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 		#updateMembersForUserGroupAction(store, payload) {
 			if (!this.#isUserGroupExists(store, payload.userGroupId)) {
 				console.warn('ui.accessrights.v2: Attempt to remove member from a user group that dont exists', payload);
+				return;
+			}
+			if (this.#isUserGroupReadOnly(store, payload.userGroupId)) {
+				// eslint-disable-next-line no-console
+				console.warn('ui.accessrights.v2: Attempt to update members of a read only user group', payload);
 				return;
 			}
 			const memberCollection = new Map();
@@ -1313,7 +1361,8 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 					'#ORIGINAL#': sourceGroup.title
 				}),
 				isNew: true,
-				isModified: true
+				isModified: true,
+				isReadOnly: false
 			};
 			for (const value of copy.accessRights.values()) {
 				// is a new group all values are modified
@@ -1350,6 +1399,13 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 			const userGroup = this.#getUserGroup(store.state, userGroupId);
 			if (!userGroup) {
 				console.warn('ui.accessrights.v2: Attempt to remove user group that dont exists', {
+					userGroupId
+				});
+				return;
+			}
+			if (userGroup.isReadOnly) {
+				// eslint-disable-next-line no-console
+				console.warn('ui.accessrights.v2: Attempt to remove a read only user group', {
 					userGroupId
 				});
 				return;
@@ -1444,6 +1500,9 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 		#isUserGroupExists(store, userGroupId) {
 			const group = this.#getUserGroup(store.state, userGroupId);
 			return Boolean(group);
+		}
+		#isUserGroupReadOnly(store, userGroupId) {
+			return this.#getUserGroup(store.state, userGroupId)?.isReadOnly === true;
 		}
 		#isValidSortConfigForSelectedMember(config) {
 			return Object.values(config).every(value => main_core.Type.isNumber(value));
@@ -2395,14 +2454,21 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 					offsetLeft: -Math.floor(width / 2) + 9
 				};
 			},
-			shownUserGroupsWithoutCurrent() {
+			applyTargetUserGroups() {
 				const shown = this.$store.getters['userGroups/shown'];
-				const shownWithoutCurrent = main_core.Runtime.clone(shown);
-				shownWithoutCurrent.delete(this.userGroup.id);
-				return shownWithoutCurrent;
+				const targets = new Map();
+				for (const [userGroupId, userGroup] of shown) {
+					if (userGroupId !== this.userGroup.id && !userGroup.isReadOnly) {
+						targets.set(userGroupId, userGroup);
+					}
+				}
+				return main_core.Runtime.clone(targets);
 			},
 			applyDialogItems() {
-				return ItemsMapper.mapUserGroups(this.shownUserGroupsWithoutCurrent);
+				return ItemsMapper.mapUserGroups(this.applyTargetUserGroups);
+			},
+			isReadOnly() {
+				return this.userGroup.isReadOnly === true;
 			}
 		},
 		methods: {
@@ -2461,7 +2527,7 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 					:popup-options="menuPopupOptions"
 				>
 					<RichMenuItem
-						v-if="isMaxValueSetForAny"
+						v-if="isMaxValueSetForAny && !isReadOnly"
 						:icon="RichMenuItemIcon.check"
 						:title="$Bitrix.Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_SET_MAX_ACCESS_RIGHTS')"
 						:subtitle="$Bitrix.Loc.getMessage(
@@ -2473,7 +2539,7 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 						@click="setMaxValuesInSection"
 					/>
 					<RichMenuItem
-						v-if="isMinValueSetForAny"
+						v-if="isMinValueSetForAny && !isReadOnly"
 						:icon="RichMenuItemIcon['red-lock']"
 						:title="$Bitrix.Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_SET_MIN_ACCESS_RIGHTS')"
 						:subtitle="$Bitrix.Loc.getMessage(
@@ -3583,6 +3649,9 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 		computed: {
 			isChecked() {
 				return this.value.values.has('1');
+			},
+			isReadOnly() {
+				return this.userGroup.isReadOnly === true;
 			}
 		},
 		methods: {
@@ -3599,6 +3668,7 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 		template: `
 		<Switcher
 			:is-checked="isChecked"
+			:is-disabled="isReadOnly"
 			@check="setValue('1')"
 			@uncheck="setValue('0')"
 			:options="{
@@ -3769,6 +3839,9 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 			},
 			cellComponent() {
 				return getValueComponent(this.right);
+			},
+			isReadOnly() {
+				return this.userGroup.isReadOnly === true;
 			}
 		},
 		// data attributes are needed for e2e automated tests
@@ -3776,9 +3849,10 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 		<CellLayout
 			:class="{
 				'ui-access-rights-v2-group-children': right.group,
-				'--modified': value.isModified
+				'--modified': value.isModified,
+				'--read-only': isReadOnly
 			}"
-			v-memo="[userGroup.id, value.values, value.isModified]"
+			v-memo="[userGroup.id, value.values, value.isModified, isReadOnly]"
 		>
 			<Component
 				:is="cellComponent"
@@ -5598,7 +5672,8 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 				isModified: false,
 				title: String(externalGroup.title),
 				accessRights: new Map(),
-				members: new Map()
+				members: new Map(),
+				isReadOnly: main_core.Type.isBoolean(externalGroup.isReadOnly) ? externalGroup.isReadOnly : false
 			};
 			for (const externalValue of externalGroup.accessRights) {
 				const internalizedValue = this.#internalizeExternalAccessRightsValue(externalValue);
@@ -6041,5 +6116,5 @@ this.BX.UI.AccessRights = this.BX.UI.AccessRights || {};
 
 	exports.App = App;
 
-})(this.BX.UI.AccessRights.V2 = this.BX.UI.AccessRights.V2 || {}, BX, BX.Event, BX.UI, BX.UI.Dialogs, BX.Vue3, BX.Vue3.Vuex, BX.UI.EntitySelector, BX.Main, BX.UI.Vue3.Components, BX.UI.AccessRights.V2, BX.Vue3.Directives, BX.UI.System.Chip.Vue, BX, window, BX.UI.Vue3.Components, BX.UI.IconSet, BX.UI.Vue3.Components, BX.UI, BX.UI, BX, BX.UI.Analytics, BX);
+})(this.BX.UI.AccessRights.V2 = this.BX.UI.AccessRights.V2 || {}, BX, BX.Event, BX.UI, BX.UI.Dialogs, BX.Vue3, BX.Vue3.Vuex, BX.UI.EntitySelector, BX.Main, BX.UI.Vue3.Components, BX.UI.AccessRights.V2, BX.Vue3.Directives, BX.UI.System.Chip.Vue, BX, window, BX.UI.Vue3.Components, BX.UI.IconSet, BX.UI.Vue3.Components, BX.UI, BX.UI, BX.UI.Notification, BX.UI.Analytics, BX);
 //# sourceMappingURL=v2.bundle.js.map

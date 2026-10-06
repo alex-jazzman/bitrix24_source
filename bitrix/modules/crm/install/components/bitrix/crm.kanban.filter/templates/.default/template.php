@@ -1,6 +1,6 @@
 <?php if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
 
-use \Bitrix\Crm\Kanban\Helper;
+use Bitrix\Crm\Kanban\Helper;
 
 \Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/interface_grid.js');
 

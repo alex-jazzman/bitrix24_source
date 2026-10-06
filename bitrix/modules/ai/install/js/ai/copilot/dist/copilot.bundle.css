@@ -34,7 +34,7 @@
 	overflow-y: auto;
 }
 
-.ai__copilot-result:not(:empty) {
+.ai__copilot-result.--has-content {
 	box-shadow: inset 0 -7px 9px -9px var(--ui-color-base-40);
 }
 
@@ -45,6 +45,111 @@
 .ai__copilot .ai__copilot_waning-field.--expanded {
 	border-color: var(--ai__copilot_color-pastel);
 	padding: 6px 10px;
+}
+
+/* === BitrixGPT redesign overrides — every rule scoped to .--bitrixgpt-redesign === */
+
+/* Brand-token aliases + central colour-variable override */
+.ai__copilot-scope.--bitrixgpt-redesign {
+	--Bitrix-GPT-filled: linear-gradient(264deg,
+		var(--ui-color-design-filled-bitrix-gpt-bg-gradient-5, #F96269) 1.67%,
+		var(--ui-color-design-filled-bitrix-gpt-bg-gradient-4, #F046B7) 21.82%,
+		var(--ui-color-design-filled-bitrix-gpt-bg-gradient-3, #9D48FF) 52.44%,
+		var(--ui-color-design-filled-bitrix-gpt-bg-gradient-2, #3F68FF) 76.41%,
+		var(--ui-color-design-filled-bitrix-gpt-bg-gradient-1, #0098EA) 97.21%
+	);
+	/* Bar stroke = the saturated BitrixGPT outline-content gradient: same colours as filled, but
+	 * semantically outline-content (themed tokens that adapt to dark theme). ~250deg matches the
+	 * gradient "BitrixGPT" wordmark. */
+	--Bitrix-GPT-outline: linear-gradient(250deg,
+		var(--ui-color-design-outline-bitrix-gpt-content-gradient-5, #F96269) 1.67%,
+		var(--ui-color-design-outline-bitrix-gpt-content-gradient-4, #F046B7) 21.82%,
+		var(--ui-color-design-outline-bitrix-gpt-content-gradient-3, #9D48FF) 52.44%,
+		var(--ui-color-design-outline-bitrix-gpt-content-gradient-2, #3F68FF) 76.41%,
+		var(--ui-color-design-outline-bitrix-gpt-content-gradient-1, #0098EA) 97.21%
+	);
+
+	/*
+	 * Remap the three central brand variables to BitrixGPT tokens.
+	 * These are solid values — safe for color:/border-color: consumers.
+	 * Concern: mapping tinted-bg-gradient-1 → pastel and stroke-gradient-1 → soft —
+	 * verify the exact token choice against Figma.
+	 */
+	--ai__copilot_color-pastel: var(--ui-color-design-tinted-bitrix-gpt-bg-gradient-1, #FEF5F4);
+	--ai__copilot_color-soft: var(--ui-color-design-outline-bitrix-gpt-stroke-gradient-1, #73C6F3);
+	--ai__copilot_color-main: var(--ui-color-accent-main-primary, #0075FF);
+
+	/* BitrixGPT avatar (vector, no raster). Declared once and reused via var in both consumer
+	 * rules (menu header + input icon) so chef inlines the asset a single time, not twice. */
+	--ai-copilot-avatar: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' fill='none' viewBox='-0.923 1.077 29.846 29.846'%3E%3Cg filter='url(%23a)'%3E%3Ccircle cx='14' cy='14' r='12.923' fill='url(%23b)'/%3E%3C/g%3E%3Cpath fill='url(%23c)' d='M10.86 22.272c-.8-1.904-.7-3.89-.498-5.156.14-.87.771-1.538 1.647-1.625.807-.08 2.012-.088 3.704.158 2.022.295 4.08 1 5.518 1.573.809.322.83 1.407.061 1.815-.253.135-.522.278-.798.427-.884.476-2.034 1.11-2.476 1.389-1.162.733-1.896 1.29-2.41 1.667-.513.376-3.428 2.89-4.747-.248'/%3E%3Cpath fill='url(%23d)' d='M20.83 19.72c-2.057.186-3.919-.51-5.065-1.087-.786-.395-1.232-1.2-1.05-2.061.169-.794.526-1.945 1.273-3.482.894-1.839 2.19-3.586 3.17-4.783.553-.673 1.593-.364 1.75.492q.076.425.164.89c.186.987.441 2.274.574 2.78.347 1.33.656 2.198.858 2.8.203.604 1.715 4.144-1.674 4.451'/%3E%3Cpath fill='url(%23e)' d='M21.543 9.42c-.455 2.015-1.69 3.573-2.591 4.486-.618.627-1.522.803-2.285.365-.703-.404-1.688-1.098-2.922-2.281-1.474-1.416-2.739-3.186-3.576-4.488-.47-.732.143-1.627 1.006-1.512l.897.117c.997.126 2.3.279 2.822.308 1.372.079 2.293.052 2.93.044.636-.007 4.47-.358 3.72 2.962'/%3E%3Cpath fill='url(%23f)' d='M12.078 5.584c1.763 1.077 2.842 2.746 3.418 3.892.396.787.274 1.699-.386 2.281-.608.537-1.581 1.248-3.097 2.037-1.814.943-3.896 1.574-5.398 1.95-.844.21-1.495-.658-1.11-1.438l.399-.812c.439-.904 1-2.09 1.197-2.575.513-1.274.783-2.155.98-2.76.197-.606 1.093-4.35 3.997-2.575'/%3E%3Cpath fill='url(%23g)' d='M5.424 13.5c1.562-1.351 3.48-1.872 4.748-2.072.87-.138 1.701.256 2.055 1.062.327.742.708 1.886.998 3.57.347 2.015.314 4.19.215 5.735-.056.868-1.081 1.224-1.707.62q-.31-.3-.653-.627c-.727-.693-1.685-1.59-2.088-1.923-1.058-.877-1.815-1.402-2.331-1.774-.517-.372-3.81-2.365-1.237-4.591'/%3E%3Cg filter='url(%23h)'%3E%3Cpath fill='%23000' fill-opacity='.09' d='M13.245 10.547c.14-.502.852-.502.992 0l.396 1.41a3.05 3.05 0 0 0 2.115 2.114l1.41.396c.5.14.5.851 0 .992l-1.41.396a3.05 3.05 0 0 0-2.115 2.115l-.396 1.41c-.14.5-.851.5-.992 0l-.396-1.41a3.05 3.05 0 0 0-2.114-2.115l-1.41-.396c-.502-.14-.502-.851 0-.992l1.41-.396a3.05 3.05 0 0 0 2.114-2.114z'/%3E%3C/g%3E%3Cg filter='url(%23i)'%3E%3Cpath fill='%23000' fill-opacity='.09' d='M17.21 9.5c.096-.341.58-.341.675 0l.035.125c.11.392.416.698.808.808l.125.035c.34.096.34.579 0 .674l-.125.035c-.392.11-.698.416-.808.808l-.035.126c-.096.34-.579.34-.674 0l-.035-.126a1.17 1.17 0 0 0-.808-.808l-.126-.035c-.34-.095-.34-.578 0-.674l.126-.035c.392-.11.698-.416.808-.808z'/%3E%3C/g%3E%3Cpath fill='%23fff' d='M13.245 10.027c.14-.501.852-.501.992 0l.396 1.41a3.05 3.05 0 0 0 2.115 2.115l1.41.395c.5.141.5.852 0 .993l-1.41.395a3.05 3.05 0 0 0-2.115 2.115l-.396 1.41c-.14.501-.851.501-.992 0l-.396-1.41a3.05 3.05 0 0 0-2.114-2.115l-1.41-.396c-.502-.14-.502-.851 0-.992l1.41-.395a3.05 3.05 0 0 0 2.114-2.115zm3.966-1.053c.096-.34.578-.34.674 0l.074.266c.11.391.416.697.808.807l.265.075c.34.095.34.578 0 .674l-.265.074c-.392.11-.698.416-.808.808l-.074.265c-.096.34-.578.34-.674 0l-.074-.265a1.17 1.17 0 0 0-.808-.808l-.265-.074c-.34-.096-.34-.579 0-.674l.265-.075c.392-.11.698-.416.808-.807z'/%3E%3Cdefs%3E%3ClinearGradient id='b' x1='14' x2='14' y1='1.077' y2='26.923' gradientUnits='userSpaceOnUse'%3E%3Cstop stop-color='%23fff'/%3E%3Cstop offset='1' stop-color='%23e9f5ff'/%3E%3C/linearGradient%3E%3ClinearGradient id='c' x1='10.03' x2='22.695' y1='19.389' y2='21.233' gradientUnits='userSpaceOnUse'%3E%3Cstop offset='.226' stop-color='%233b76ff'/%3E%3Cstop offset='1' stop-color='%234e80ff' stop-opacity='.1'/%3E%3C/linearGradient%3E%3ClinearGradient id='d' x1='17.831' x2='23.425' y1='19.638' y2='8.127' gradientUnits='userSpaceOnUse'%3E%3Cstop offset='.227' stop-color='%23da5dff'/%3E%3Cstop offset='1' stop-color='%23c753e9' stop-opacity='0'/%3E%3C/linearGradient%3E%3ClinearGradient id='e' x1='20.54' x2='11.306' y1='12.252' y2='3.39' gradientUnits='userSpaceOnUse'%3E%3Cstop offset='.162' stop-color='%23ffa600'/%3E%3Cstop offset='.814' stop-color='%23ffa600' stop-opacity='.3'/%3E%3C/linearGradient%3E%3ClinearGradient id='f' x1='14.437' x2='3.083' y1='7.438' y2='13.344' gradientUnits='userSpaceOnUse'%3E%3Cstop offset='.217' stop-color='%2362d7fe'/%3E%3Cstop offset='1' stop-color='%2362d7fe' stop-opacity='.4'/%3E%3C/linearGradient%3E%3ClinearGradient id='g' x1='7.908' x2='10.08' y1='11.817' y2='24.43' gradientUnits='userSpaceOnUse'%3E%3Cstop offset='.217' stop-color='%2344a8ff'/%3E%3Cstop offset='1' stop-color='%23447cff' stop-opacity='.4'/%3E%3C/linearGradient%3E%3Cfilter id='a' width='29.846' height='29.846' x='-.923' y='1.077' color-interpolation-filters='sRGB' filterUnits='userSpaceOnUse'%3E%3CfeFlood flood-opacity='0' result='BackgroundImageFix'/%3E%3CfeColorMatrix in='SourceAlpha' result='hardAlpha' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0'/%3E%3CfeOffset dy='2'/%3E%3CfeGaussianBlur stdDeviation='1'/%3E%3CfeComposite in2='hardAlpha' operator='out'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.08 0'/%3E%3CfeBlend in2='BackgroundImageFix' result='effect1_dropShadow_777_8120'/%3E%3CfeBlend in='SourceGraphic' in2='effect1_dropShadow_777_8120' result='shape'/%3E%3C/filter%3E%3Cfilter id='h' width='17.417' height='17.417' x='5.033' y='6.255' color-interpolation-filters='sRGB' filterUnits='userSpaceOnUse'%3E%3CfeFlood flood-opacity='0' result='BackgroundImageFix'/%3E%3CfeBlend in='SourceGraphic' in2='BackgroundImageFix' result='shape'/%3E%3CfeGaussianBlur result='effect1_foregroundBlur_777_8120' stdDeviation='1.958'/%3E%3C/filter%3E%3Cfilter id='i' width='10.954' height='10.954' x='12.071' y='5.328' color-interpolation-filters='sRGB' filterUnits='userSpaceOnUse'%3E%3CfeFlood flood-opacity='0' result='BackgroundImageFix'/%3E%3CfeBlend in='SourceGraphic' in2='BackgroundImageFix' result='shape'/%3E%3CfeGaussianBlur result='effect1_foregroundBlur_777_8120' stdDeviation='1.958'/%3E%3C/filter%3E%3C/defs%3E%3C/svg%3E");
+}
+
+/* Keep gradient painting on the content element rather than the scroll container.
+ * Microsoft Edge otherwise changes the scroll geometry without repainting the clipped text. */
+.ai__copilot-scope.--bitrixgpt-redesign .ai__copilot-result-content {
+	color: var(--ui-color-accent-main-primary, #0075ff);
+}
+
+.ai__copilot-scope.--bitrixgpt-redesign .ai__copilot_loader-text {
+	color: var(--ui-color-accent-main-primary, #0075ff);
+}
+
+@supports (((-webkit-background-clip: text) or (background-clip: text)) or (-webkit-background-clip: text)) {
+	.ai__copilot-scope.--bitrixgpt-redesign .ai__copilot-result-content,
+	.ai__copilot-scope.--bitrixgpt-redesign .ai__copilot_loader-text {
+		background: linear-gradient(90deg,
+			var(--ui-color-design-outline-bitrix-gpt-content-gradient-1, #0098ea) 0%,
+			var(--ui-color-design-outline-bitrix-gpt-content-gradient-2, #3f68ff) 25%,
+			var(--ui-color-design-outline-bitrix-gpt-content-gradient-3, #9d48ff) 50%,
+			var(--ui-color-design-outline-bitrix-gpt-content-gradient-4, #f046b7) 75%,
+			var(--ui-color-design-outline-bitrix-gpt-content-gradient-5, #f96269) 100%
+		);
+		-webkit-background-clip: text;
+		background-clip: text;
+		color: transparent;
+		-webkit-text-fill-color: transparent;
+	}
+}
+
+/* Control border: gradient stroke via the padding-box/border-box technique.
+ * NB: .ai__copilot IS the scope element (class="ai__copilot ai__copilot-scope --bitrixgpt-redesign",
+ * see copilot.js render()), so this is a compound selector on the same element, not a descendant.
+ * The base layer has no background on .ai__copilot, so the white padding-box fill is safe;
+ * overflow:hidden and border-radius come from the base rule (intentionally not overridden).
+ * Stroke colours come from the saturated --Bitrix-GPT-outline (outline-content tokens). */
+.ai__copilot.--bitrixgpt-redesign {
+	border: var(--ui-border-width-thin) solid transparent;
+	background:
+		linear-gradient(var(--ui-color-bg-content-primary, #fff), var(--ui-color-bg-content-primary, #fff)) padding-box,
+		var(--Bitrix-GPT-outline) border-box;
+	box-shadow:
+		var(--ui-box-shadow-popup-secondary-x, 0)
+		var(--ui-box-shadow-popup-secondary-y, 7px)
+		14px
+		var(--ui-box-shadow-popup-secondary-spread, 0)
+		var(--ui-box-shadow-popup-secondary-color, #0000001C);
+}
+
+/* Error state under redesign: the gradient border above would otherwise win over the base
+ * .ai__copilot.--error red border (equal specificity, later in source). Restore the solid red
+ * border and drop the gradient background. Base --error rule (red) stays untouched. */
+.ai__copilot.--bitrixgpt-redesign.--error {
+	border: var(--ui-border-width-thin) solid var(--ui-color-palette-red-40);
+	background: none;
+}
+
+/* dot-flashing animation: @keyframes can't be scoped, but it references the brand variables
+   overridden on the scope root above, so it picks up the new values automatically. */
+
+/* Override the hardcoded colour on the base dot-flashing rule */
+.ai__copilot-scope.--bitrixgpt-redesign .dot-flashing,
+.ai__copilot-scope.--bitrixgpt-redesign .dot-flashing::before,
+.ai__copilot-scope.--bitrixgpt-redesign .dot-flashing::after {
+	--ai__copilot_color-pastel: var(--ui-color-design-outline-bitrix-gpt-content-gradient-3, #9d48ff);
+	--ai__copilot_color-soft: var(--ui-color-design-outline-bitrix-gpt-content-gradient-4, #f046b7);
+	--ai__copilot_color-main: var(--ui-color-design-outline-bitrix-gpt-content-gradient-5, #f96269);
+	background-color: var(--ui-color-design-outline-bitrix-gpt-content-gradient-5, #f96269);
+	color: var(--ui-color-design-outline-bitrix-gpt-content-gradient-5, #f96269);
 }
 
 .ai__copilot-menu-popup {
@@ -270,6 +375,270 @@
 	position: absolute;
 	top: 5px;
 	right: 0;
+}
+
+/* === BitrixGPT redesign overrides — every rule scoped to .--bitrixgpt-redesign === */
+
+/* The popup root carries both ai__copilot-menu-popup and --bitrixgpt-redesign on the same
+ * element, so the root override is a compound selector; inner items are descendants. */
+.ai__copilot-menu-popup.--bitrixgpt-redesign {
+	background-color: var(--ui-color-bg-content-primary, #fff);
+	border-radius: var(--ui-border-radius-3xl, 20px);
+	/* Clip the root by its radius so the scrollbar overhang at the rounded corners is cut off. */
+	overflow: hidden;
+	box-shadow:
+		var(--ui-box-shadow-popup-secondary-x, 0)
+		var(--ui-box-shadow-popup-secondary-y, 7px)
+		14px
+		var(--ui-box-shadow-popup-secondary-spread, 0)
+		var(--ui-box-shadow-popup-secondary-color, #0000001C);
+}
+
+/* Section divider color (Figma #f0f0f0 → --ui-color-divider-default) */
+.ai__copilot-menu-popup.--bitrixgpt-redesign .popup-window-delimiter {
+	--popup-window-delimiter-bg-color: var(--ui-color-divider-default, #F0F0F0);
+}
+
+/* "NEW" labels (item-level and section separator) are dropped in JS (copilot-menu.js) under the
+ * flag — not rendered into the DOM at all, so no CSS is needed for them. */
+
+/* Icon is moved to item-right in JS; give it correct spacing there. */
+.ai__copilot-menu-popup.--bitrixgpt-redesign .ai__copilot-menu_item-right .ai__copilot-menu_item-icon {
+	margin-left: 8px;
+	--ui-icon-set__icon-color: var(--ui-color-base-50, #a8adb4);
+}
+
+/* Paint the glyph itself (the icon lives directly in .ai__copilot-menu_item-icon, not
+ * always inside .ai__copilot-menu_item-right). The accent colour leaks in via an inherited
+ * variable, so override on the glyph with !important. Check/favourite icons are NOT inside
+ * .ai__copilot-menu_item-icon and stay untouched. */
+.ai__copilot-menu-popup.--bitrixgpt-redesign .ai__copilot-menu_item-icon .ui-icon-set {
+	--ui-icon-set__icon-color: var(--ui-color-base-50, #a8adb4) !important;
+}
+
+/* item-left no longer has an icon: remove its right margin when only text is inside */
+.ai__copilot-menu-popup.--bitrixgpt-redesign .ai__copilot-menu_item-left {
+	margin-right: 0;
+}
+
+/* Thin outline chevron. The AIR theme (.popup-window) hardcodes a large filled 24×25 chevron
+ * via top/bottom on ::after, so we set our own glyph and override the ::after geometry directly
+ * (not through variables). Reused via a custom property. */
+.ai__copilot-menu-popup.--bitrixgpt-redesign {
+	--ai-copilot-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='5' height='9' viewBox='0 0 5 9' fill='none'%3E%3Cpath d='M1 1L4 4.5L1 8' stroke='%23a8adb4' stroke-width='1.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+
+/* Submenu item chevron sits in the gap between the icon and the row edge (~8px from the edge);
+ * vertically centred via top/translateY instead of the AIR hardcoded top/bottom. */
+.ai__copilot-menu-popup.--bitrixgpt-redesign .menu-popup-item-submenu:not(.--role-item)::after {
+	right: 8px;
+	top: 50%;
+	bottom: auto;
+	transform: translateY(-50%);
+	width: 5px;
+	height: 9px;
+	-webkit-mask: none;
+	mask: none;
+	background-color: transparent;
+	background-image: var(--ai-copilot-chevron);
+	background-size: contain;
+	background-repeat: no-repeat;
+}
+
+/* === Role header === */
+
+/* Pull the header flush to the rounded top: .menu-popup has padding-top:10px, so a negative
+ * margin-top cancels it and lets the glow reach the top edge. Header only (--role-item). */
+.ai__copilot-menu-popup.--bitrixgpt-redesign .menu-popup-item.--role-item {
+	position: relative;
+	overflow: hidden;
+	margin-top: -10px;
+	border-bottom: 1px solid var(--ui-color-divider-vibrant-less, rgba(0, 0, 0, 0.03));
+}
+
+.ai__copilot-menu-popup.--bitrixgpt-redesign .ai__copilot-menu_role.--bitrixgpt-redesign {
+	position: relative;
+	overflow: hidden;
+}
+
+/* Soft multi-colour bloom from the top-right corner. The real glow is an inline SVG
+ * (conic-gradient inside a foreignObject) injected by JS; foreignObject is fragile in
+ * WebKit/Safari, so this CSS radial gradient renders underneath as a fallback and shows
+ * through if the SVG fails to paint. */
+.ai__copilot-menu-popup.--bitrixgpt-redesign .ai__copilot-menu_role-glow {
+	position: absolute;
+	inset: 0;
+	pointer-events: none;
+	z-index: 0;
+	overflow: hidden;
+	/* Fallback fades out within the top ~60% of the header, so the colour never reaches the
+	 * bottom border (matches Figma). Kept faint so it barely adds to the SVG glow where the
+	 * foreignObject renders (Chrome) but still shows a soft glow where it does not (Safari). */
+	background: radial-gradient(
+		125% 60% at 100% 0%,
+		rgba(249, 98, 105, 0.16) 0%,
+		rgba(239, 70, 183, 0.10) 32%,
+		rgba(157, 71, 255, 0.05) 60%,
+		rgba(255, 255, 255, 0) 100%
+	);
+}
+
+.ai__copilot-menu-popup.--bitrixgpt-redesign .ai__copilot-menu_role-glow svg {
+	display: block;
+	width: 100%;
+	height: 100%;
+}
+
+/* Keep header content above the glow */
+.ai__copilot-menu-popup.--bitrixgpt-redesign .ai__copilot-menu_role.--bitrixgpt-redesign {
+	z-index: 1;
+}
+
+/* Avatar: round 48px with BitrixGPT gradient circle (same asset as the input field).
+ * The role <img> stays on top; for the default role it is the logo glyph that sits on
+ * the gradient circle, for a custom role its own picture covers the background. */
+.ai__copilot-menu-popup.--bitrixgpt-redesign .ai__copilot-menu_role.--bitrixgpt-redesign .ai__copilot-menu_role-left {
+	width: 48px;
+	min-width: 48px;
+	height: 48px;
+	border-radius: 50%;
+	background-image: var(--ai-copilot-avatar);
+	background-size: contain;
+	background-repeat: no-repeat;
+	background-position: center;
+}
+
+.ai__copilot-menu-popup.--bitrixgpt-redesign .ai__copilot-menu_role.--bitrixgpt-redesign .ai__copilot-menu_role-avatar {
+	width: 48px;
+	min-width: 48px;
+	height: 48px;
+	background-color: transparent;
+}
+
+/* Default role: hide the <img> (it is the grey rounded logo png) so the gradient SVG
+ * background on .ai__copilot-menu_role-left shows through. Custom roles keep their <img>. */
+.ai__copilot-menu-popup.--bitrixgpt-redesign .ai__copilot-menu_role-left.--bitrixgpt-default-avatar .ai__copilot-menu_role-avatar {
+	display: none;
+}
+
+/* Text block: subtitle on top (grey 13px), name below (15px medium, gradient text) */
+.ai__copilot-menu-popup.--bitrixgpt-redesign .ai__copilot-menu_role.--bitrixgpt-redesign .ai__copilot-menu_role-subtitle {
+	font-size: 13px;
+	line-height: 17px;
+	color: var(--ui-color-base-5, #c9ccd0);
+}
+
+.ai__copilot-menu-popup.--bitrixgpt-redesign .ai__copilot-menu_role.--bitrixgpt-redesign .ai__copilot-menu_role-title {
+	margin-bottom: 0;
+	font-size: 15px;
+	line-height: 20px;
+	font-weight: var(--ui-font-weight-medium);
+	background: linear-gradient(
+		264.09deg,
+		var(--ui-color-design-outline-bitrix-gpt-content-gradient-5, #f96269) 1.67%,
+		var(--ui-color-design-outline-bitrix-gpt-content-gradient-4, #f046b7) 21.82%,
+		var(--ui-color-design-outline-bitrix-gpt-content-gradient-3, #9d48ff) 52.44%,
+		var(--ui-color-design-outline-bitrix-gpt-content-gradient-2, #3f68ff) 76.41%,
+		var(--ui-color-design-outline-bitrix-gpt-content-gradient-1, #0098ea) 97.21%
+	);
+	-webkit-background-clip: text;
+	background-clip: text;
+	color: transparent;
+}
+
+/* Row highlight spans the full row (edge-to-edge), no inset plate. Overrides the base #f7f7f7
+ * (items) and #fff (header). For the header it paints under the glow and content (higher
+ * z-index children), so the 3%-black reads as a light row highlight. */
+.ai__copilot-menu-popup.--bitrixgpt-redesign.--keyboard-control .menu-popup-item.--highlight,
+.ai__copilot-menu-popup.--bitrixgpt-redesign.--keyboard-control .menu-popup-item.--highlight:hover,
+.ai__copilot-menu-popup.--bitrixgpt-redesign.--keyboard-control .menu-popup-item.--role-item.--highlight,
+.ai__copilot-menu-popup.--bitrixgpt-redesign.--keyboard-control .menu-popup-item.--role-item.--highlight:hover {
+	background-color: var(--ui-color-bg-state-hover-default, rgba(0, 0, 0, 0.03));
+}
+
+/* Keep the role subtitle grey (base-5) on hover/highlight — base turns it purple via copilot-secondary. */
+.ai__copilot-menu-popup.--bitrixgpt-redesign.--keyboard-control .menu-popup-item-submenu.menu-popup-item.--role-item.--highlight .ai__copilot-menu_role-subtitle,
+.ai__copilot-menu-popup.--bitrixgpt-redesign.--keyboard-control .menu-popup-item-submenu.menu-popup-item.--role-item.--highlight:hover .ai__copilot-menu_role-subtitle {
+	color: var(--ui-color-base-5, #c9ccd0);
+}
+
+/* Header chevron: same thin outline glyph as items. Base draws it via mask + background-color
+ * (purple on hover); drop the mask, draw a background-image, keep the background transparent in
+ * every state so there is no purple. */
+.ai__copilot-menu-popup.--bitrixgpt-redesign .menu-popup-item.--role-item.menu-popup-item-submenu::after,
+.ai__copilot-menu-popup.--bitrixgpt-redesign.--keyboard-control .menu-popup-item.--role-item.menu-popup-item-submenu.--highlight::after,
+.ai__copilot-menu-popup.--bitrixgpt-redesign.--keyboard-control .menu-popup-item.--role-item.menu-popup-item-submenu.--highlight:hover::after {
+	right: 18px;
+	top: 50%;
+	bottom: auto;
+	transform: translateY(-50%);
+	width: 5px;
+	height: 9px;
+	-webkit-mask: none;
+	mask: none;
+	background-color: transparent;
+	background-image: var(--ai-copilot-chevron);
+	background-size: contain;
+	background-repeat: no-repeat;
+}
+
+/* Hide the scrollbar (Figma has none) so content and glow reach the card edge; wheel/trackpad
+ * scrolling still works (overflow-y stays auto). */
+.ai__copilot-menu-popup.--bitrixgpt-redesign .popup-window-content {
+	border-radius: var(--ui-border-radius-3xl, 20px);
+	overflow-x: hidden;
+	scrollbar-width: none;
+}
+
+.ai__copilot-menu-popup.--bitrixgpt-redesign .popup-window-content::-webkit-scrollbar {
+	display: none;
+}
+
+/* Prompt library keeps the regular menu-item treatment in the redesign. */
+.ai__copilot-menu-popup.--bitrixgpt-redesign .ai__copilot-menu_item.--highlight-text .ai__copilot-menu_item-text {
+	color: var(--ui-color-base-1, #333);
+	font-weight: var(--ui-font-weight-regular, 400);
+}
+
+/* Menu item horizontal padding 18px. The Bitrix default on .menu-popup-item-text is
+ * line-height:36px + 8/8 vertical padding, which bloats every row; reset it and set the
+ * vertical rhythm on the inner left column instead. */
+.ai__copilot-menu-popup.--bitrixgpt-redesign .menu-popup-item .menu-popup-item-text {
+	padding: 0 18px;
+	line-height: normal;
+}
+
+.ai__copilot-menu-popup.--bitrixgpt-redesign .ai__copilot-menu_item-left {
+	padding-top: 8px;
+	padding-bottom: 8px;
+}
+
+.ai__copilot-menu-popup.--bitrixgpt-redesign .ai__copilot-menu_item-text {
+	margin-left: 0;
+	line-height: 19px;
+}
+
+/* Role header: drop the wrapper padding (the .._role element sets pl 12 / pr 18); otherwise the
+ * avatar shifts and the row grows to 94px instead of 78px. */
+.ai__copilot-menu-popup.--bitrixgpt-redesign .menu-popup-item.--role-item .menu-popup-item-text {
+	padding: 0;
+}
+
+.ai__copilot-menu-popup.--bitrixgpt-redesign .ai__copilot-menu_role.--bitrixgpt-redesign {
+	height: 78px;
+	padding-left: 12px;
+	padding-right: 18px;
+	gap: 8px;
+}
+
+.ai__copilot-menu-popup.--bitrixgpt-redesign .ai__copilot-menu_role.--bitrixgpt-redesign .ai__copilot-menu_role-right {
+	margin-left: 0;
+	gap: 3px;
+}
+
+.ai__copilot-menu-popup.--bitrixgpt-redesign .popup-window-delimiter-text {
+	font-size: 12px;
+	color: var(--ui-color-base-50, #a8adb4);
 }
 
 .ai__copilot {
@@ -689,6 +1058,71 @@
 	z-index: -1;
 }
 
+/* ======================================================
+ * BitrixGPT Redesign overrides (Phase 2)
+ * All rules MUST stay under .ai__copilot-scope.--bitrixgpt-redesign
+ * ====================================================== */
+
+/* P2.T1/T2 — Cancel button: replace hardcoded purple #A482D1 */
+.ai__copilot-scope.--bitrixgpt-redesign .ai__copilot_loader-cancel-btn {
+	color: var(--ui-color-base-2, #525c69);
+}
+
+.ai__copilot-scope.--bitrixgpt-redesign .ai__copilot_loader-cancel-btn:hover {
+	color: var(--ui-color-base-1, #333333);
+}
+
+.ai__copilot-scope.--bitrixgpt-redesign .ai__copilot_loader-cancel-btn:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary, #0075ff);
+	outline-offset: 2px;
+	border-radius: 2px;
+}
+
+/* P2.T2 — template text highlight (strong inside input) */
+.ai__copilot-scope.--bitrixgpt-redesign .ai__copilot_input strong {
+	color: var(--ui-color-accent-main-primary, #0075FF);
+}
+
+/* ======================================================
+ * P3/P5 — BitrixGPT avatar.
+ * Logo on a soft white→#E9F5FF gradient circle (per Figma), composed in
+ * bitrixgpt-avatar.svg. Idle is static; generating uses the local chat-style
+ * flower animation rendered by ui.lottie.
+ * ====================================================== */
+.ai__copilot-scope.--bitrixgpt-redesign .ai__copilot_static-icon {
+	width: 28px;
+	height: 28px;
+	mask-image: none;
+	-webkit-mask-image: none;
+	background-color: transparent;
+	background-image: var(--ai-copilot-avatar);
+	background-size: contain;
+	background-repeat: no-repeat;
+	background-position: center;
+}
+
+.ai__copilot-scope.--bitrixgpt-redesign .ai__copilot_input-field.--loading .ai__copilot_static-icon-wrapper {
+	opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.ai__copilot-scope.--bitrixgpt-redesign .ai__copilot_input-field.--loading .ai__copilot_static-icon-wrapper {
+		opacity: 1;
+	}
+
+	.ai__copilot-scope.--bitrixgpt-redesign .ai__copilot_input-field.--loading .ai__copilot_loading-icon-wrapper {
+		opacity: 0;
+	}
+}
+
+/* Input placeholder: base-50, 15px / line-height 20px, letter-spacing -0.05px (Inter Regular). */
+.ai__copilot-scope.--bitrixgpt-redesign .ai_copilot_placeholder {
+	color: var(--ui-color-base-50, #a8adb4);
+	font-size: 15px;
+	line-height: 20px;
+	letter-spacing: -0.05px;
+}
+
 .ai__copilot-voice-input-btn-container {
 	position: relative;
 	display: flex;
@@ -791,6 +1225,57 @@
 	opacity: 0;
 	z-index: -1;
 }
+
+/* ======================================================
+ * BitrixGPT Redesign overrides (Phase 2)
+ * All rules MUST stay under .ai__copilot-scope.--bitrixgpt-redesign
+ * ====================================================== */
+
+/* P2.T1/T3 — Voice input button: replace hardcoded purple values */
+
+/* Pulse ring on recording: replace #DED0F4 */
+.ai__copilot-scope.--bitrixgpt-redesign .ai__copilot-voice-input-btn-container.--recording::before {
+	background-color: var(--ui-color-design-tinted-bitrix-gpt-bg-gradient-1, #FEF5F4);
+}
+
+/* Available start button: blue microphone (accent-main-primary #0075FF), replacing #8E52EC. */
+.ai__copilot-scope.--bitrixgpt-redesign .ai__copilot-voice-input-btn.--start .ui-icon-set {
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary, #0075FF);
+}
+
+/* Hover/active: no dark-accent token exists, so keep accent-main-primary to avoid the base
+ * purple (#A977FA / #8447E4) showing through under the flag. */
+.ai__copilot-scope.--bitrixgpt-redesign .ai__copilot-voice-input-btn.--start:hover .ui-icon-set,
+.ai__copilot-scope.--bitrixgpt-redesign .ai__copilot-voice-input-btn.--start:active .ui-icon-set {
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary, #0075FF);
+}
+
+/* Disabled start button: neutral microphone shown when the input contains text. */
+.ai__copilot-scope.--bitrixgpt-redesign .ai__copilot-voice-input-btn.--start[disabled] .ui-icon-set {
+	--ui-icon-set__icon-color: var(--ui-color-base-4, #a8adb4);
+}
+
+/* Stop button bg: replaces #8E52EC. Concern: verify the exact stop-button bg against Figma. */
+.ai__copilot-scope.--bitrixgpt-redesign {
+	--ai-copilot-stop-gradient: var(--Bitrix-GPT-filled, linear-gradient(264deg, #F96269 1.67%, #F046B7 21.82%, #9D48FF 52.44%, #3F68FF 76.41%, #0098EA 97.21%));
+}
+
+.ai__copilot-scope.--bitrixgpt-redesign .ai__copilot-voice-input-btn.--stop {
+	background: var(--ai-copilot-stop-gradient);
+}
+
+/* Stop button hover: replace #A977FA */
+.ai__copilot-scope.--bitrixgpt-redesign .ai__copilot-voice-input-btn.--stop:hover {
+	background: var(--ai-copilot-stop-gradient);
+	opacity: 0.85;
+}
+
+/* Stop button active: replace #8447E4 */
+.ai__copilot-scope.--bitrixgpt-redesign .ai__copilot-voice-input-btn.--stop:active {
+	background: var(--ai-copilot-stop-gradient);
+	opacity: 0.7;
+}
+
 .ai__copilot_input-submit-btn-container {
 	display: flex;
 	flex-direction: row;
@@ -851,6 +1336,53 @@
 .ai__copilot_input-submit-btn:hover {
 	cursor: pointer;
 }
+
+/* ======================================================
+ * BitrixGPT Redesign overrides (Phase 2)
+ * All rules MUST stay under .ai__copilot-scope.--bitrixgpt-redesign
+ * ====================================================== */
+
+/* P2.T3 — Submit button: brand gradient fill + rounded-square shape (Figma «Button filled bitrix gpt»)
+ * Figma: 28x28, radius 8px (button-S-radius), filled-bitrix-gpt gradient 263.02deg.
+ * Gradient extracted into a local custom property to avoid literal duplication across states. */
+.ai__copilot-scope.--bitrixgpt-redesign {
+	--ai-copilot-submit-gradient: linear-gradient(
+		263.02deg,
+		var(--ui-color-design-filled-bitrix-gpt-bg-gradient-5, #f96269) 2.92%,
+		var(--ui-color-design-filled-bitrix-gpt-bg-gradient-4, #f046b7) 25.99%,
+		var(--ui-color-design-filled-bitrix-gpt-bg-gradient-3, #9d48ff) 49.07%,
+		var(--ui-color-design-filled-bitrix-gpt-bg-gradient-2, #3f68ff) 76.77%,
+		var(--ui-color-design-filled-bitrix-gpt-bg-gradient-1, #0098ea) 86%
+	);
+}
+
+.ai__copilot-scope.--bitrixgpt-redesign .ai__copilot_input-submit-btn {
+	width: 28px;
+	height: 28px;
+	border-radius: var(--ui-border-radius-sm, 8px);
+	background: var(--ai-copilot-submit-gradient);
+	transition: 0.2s ease-out opacity;
+}
+
+.ai__copilot-scope.--bitrixgpt-redesign .ai__copilot_input-submit-btn:hover {
+	background: var(--ai-copilot-submit-gradient);
+	opacity: 0.85;
+}
+
+.ai__copilot-scope.--bitrixgpt-redesign .ai__copilot_input-submit-btn:active {
+	background: var(--ai-copilot-submit-gradient);
+	opacity: 0.7;
+}
+
+/* P5.5c — Enter hint: grey text, hide the arrow glyph next to it (Figma shows only "Enter") */
+.ai__copilot-scope.--bitrixgpt-redesign .ai__copilot_input-submit-hotkey-text {
+	color: var(--ui-color-base-4, #a8adb4);
+}
+
+.ai__copilot-scope.--bitrixgpt-redesign .ai__copilot_input-submit-hotkey-icon {
+	display: none;
+}
+
 
 .ai__copilot_waning-field {
 	box-sizing: border-box;
@@ -925,6 +1457,41 @@
 .ai__copilot-context-menu_result-popup-warning {
 	margin-top: 10px;
 }
+
+/* ======================================================
+ * BitrixGPT Redesign overrides (Phase 2)
+ * All rules MUST stay under .ai__copilot-scope.--bitrixgpt-redesign
+ * ====================================================== */
+
+/* P2.T5 — Result popup: border + bg.
+ * NB: the popup-window root carries ai__copilot-scope, --bitrixgpt-redesign AND
+ * ai__copilot-context-menu__result-popup on the SAME element (see result-popup.js className),
+ * so the popup-root override is a COMPOUND selector; -popup-text is a true descendant. */
+.ai__copilot-context-menu__result-popup.--bitrixgpt-redesign {
+	border-color: var(--ui-color-design-outline-bitrix-gpt-stroke-gradient-1, #73C6F3);
+	background-color: var(--ui-color-bg-content-primary, #fff);
+}
+
+.ai__copilot-context-menu__result-popup.--bitrixgpt-redesign .ai__copilot-context-menu__result-popup-text-content {
+	color: var(--ui-color-accent-main-primary, #0075ff);
+}
+
+@supports (((-webkit-background-clip: text) or (background-clip: text)) or (-webkit-background-clip: text)) {
+	.ai__copilot-context-menu__result-popup.--bitrixgpt-redesign .ai__copilot-context-menu__result-popup-text-content {
+		background: linear-gradient(90deg,
+			var(--ui-color-design-outline-bitrix-gpt-content-gradient-1, #0098ea) 0%,
+			var(--ui-color-design-outline-bitrix-gpt-content-gradient-2, #3f68ff) 25%,
+			var(--ui-color-design-outline-bitrix-gpt-content-gradient-3, #9d48ff) 50%,
+			var(--ui-color-design-outline-bitrix-gpt-content-gradient-4, #f046b7) 75%,
+			var(--ui-color-design-outline-bitrix-gpt-content-gradient-5, #f96269) 100%
+		);
+		-webkit-background-clip: text;
+		background-clip: text;
+		color: transparent;
+		-webkit-text-fill-color: transparent;
+	}
+}
+
 .ai__copilot-context-menu_loader-popup {
 	border: var(--ui-border-width-thin) solid var(--ui-color-base-30);
 	font-size: var(--ui-font-size-md);
@@ -966,6 +1533,22 @@
 	margin-left: 8px;
 	margin-top: 3px;
 }
+
+/* ======================================================
+ * BitrixGPT Redesign overrides (Phase 2)
+ * All rules MUST stay under .ai__copilot-scope.--bitrixgpt-redesign
+ * ====================================================== */
+
+/* P2.T5 — Loader popup: border + bg.
+ * NB: scope + --bitrixgpt-redesign + ai__copilot-context-menu_loader-popup are on the SAME
+ * popup-window root (see loader.js className) → COMPOUND selector for the root.
+ * dot-flashing / cancel-btn colors are descendants and inherit the scope-root var overrides
+ * (main.css / copilot-input.css). */
+.ai__copilot-context-menu_loader-popup.--bitrixgpt-redesign {
+	border-color: var(--ui-color-design-outline-bitrix-gpt-stroke-gradient-1, #73C6F3);
+	background-color: var(--ui-color-bg-content-primary, #fff);
+}
+
 .ai__copilot-context-menu_error-popup {
 	border: var(--ui-border-width-thin) solid var(--ui-color-palette-red-40);
 }
@@ -991,4 +1574,16 @@
 	width: 24px;
 	height: 24px;
 	margin-right: 2px;
+}
+
+/* ======================================================
+ * BitrixGPT Redesign overrides (Phase 2)
+ * All rules MUST stay under .ai__copilot-scope.--bitrixgpt-redesign
+ * ====================================================== */
+
+/* P2.T5 — Error popup: background only (border stays red — --ui-color-palette-red-40, intentional).
+ * NB: scope + --bitrixgpt-redesign + ai__copilot-context-menu_error-popup are on the SAME
+ * popup-window root (see error-popup.js className) → COMPOUND selector. */
+.ai__copilot-context-menu_error-popup.--bitrixgpt-redesign {
+	background-color: var(--ui-color-bg-content-primary, #fff);
 }

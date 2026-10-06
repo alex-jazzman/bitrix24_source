@@ -1,110 +1,128 @@
 /* eslint-disable */
-(function (exports,main_core,ui_entitySelector) {
+(function (main_core, ui_entitySelector, bizproc_a11y) {
 	'use strict';
 
-	function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration(obj, privateSet); privateSet.add(obj); }
-	function _classPrivateFieldInitSpec(obj, privateMap, value) { _checkPrivateRedeclaration(obj, privateMap); privateMap.set(obj, value); }
-	function _checkPrivateRedeclaration(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
-	function _classPrivateMethodGet(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
-	var namespace = main_core.Reflection.namespace('BX.Bizproc.Component');
-	var _gridId = /*#__PURE__*/new WeakMap();
-	var _delegateToSelector = /*#__PURE__*/new WeakMap();
-	var _delegateToUserId = /*#__PURE__*/new WeakMap();
-	var _initSelectors = /*#__PURE__*/new WeakSet();
-	var TaskList = /*#__PURE__*/function () {
-	  function TaskList(options) {
-	    babelHelpers.classCallCheck(this, TaskList);
-	    _classPrivateMethodInitSpec(this, _initSelectors);
-	    _classPrivateFieldInitSpec(this, _gridId, {
-	      writable: true,
-	      value: void 0
-	    });
-	    _classPrivateFieldInitSpec(this, _delegateToSelector, {
-	      writable: true,
-	      value: void 0
-	    });
-	    _classPrivateFieldInitSpec(this, _delegateToUserId, {
-	      writable: true,
-	      value: 0
-	    });
-	    babelHelpers.classPrivateFieldSet(this, _gridId, options.gridId);
-	    _classPrivateMethodGet(this, _initSelectors, _initSelectors2).call(this);
-	  }
-	  babelHelpers.createClass(TaskList, [{
-	    key: "init",
-	    value: function init() {
-	      var delegateToWrapper = document.getElementById('ACTION_DELEGATE_TO_WRAPPER');
-	      if (delegateToWrapper) {
-	        babelHelpers.classPrivateFieldGet(this, _delegateToSelector).renderTo(delegateToWrapper);
-	      }
-	    }
-	  }, {
-	    key: "applyActionPanelValues",
-	    value: function applyActionPanelValues() {
-	      var _this = this;
-	      var grid = this.getGrid();
-	      var actionsPanel = grid === null || grid === void 0 ? void 0 : grid.getActionsPanel();
-	      if (grid && actionsPanel) {
-	        var _actionsPanel$getForA, _data, _this$getGrid;
-	        var data = (_data = {}, babelHelpers.defineProperty(_data, 'action_all_rows_' + babelHelpers.classPrivateFieldGet(this, _gridId), (_actionsPanel$getForA = actionsPanel.getForAllCheckbox()) !== null && _actionsPanel$getForA !== void 0 && _actionsPanel$getForA.checked ? 'Y' : 'N'), babelHelpers.defineProperty(_data, "ACTION_DELEGATE_TO_ID", babelHelpers.classPrivateFieldGet(this, _delegateToUserId)), babelHelpers.defineProperty(_data, "ID", grid.getRows().getSelectedIds()), _data);
-	        for (var _i = 0, _Object$entries = Object.entries(actionsPanel.getValues()); _i < _Object$entries.length; _i++) {
-	          var _Object$entries$_i = babelHelpers.slicedToArray(_Object$entries[_i], 2),
-	            key = _Object$entries$_i[0],
-	            value = _Object$entries$_i[1];
-	          data[key] = main_core.Type.isString(value) ? value.trim().replace(/^['"]+|['"]+$/g, '') : value;
-	        }
-	        (_this$getGrid = this.getGrid()) === null || _this$getGrid === void 0 ? void 0 : _this$getGrid.reloadTable('POST', data, function () {
-	          return _this.init();
-	        });
-	      }
-	    }
-	  }, {
-	    key: "reloadGrid",
-	    value: function reloadGrid() {
-	      var grid = this.getGrid();
-	      if (grid) {
-	        grid.reload();
-	      }
-	    }
-	  }, {
-	    key: "getGrid",
-	    value: function getGrid() {
-	      if (babelHelpers.classPrivateFieldGet(this, _gridId)) {
-	        return BX.Main.gridManager && BX.Main.gridManager.getInstanceById(babelHelpers.classPrivateFieldGet(this, _gridId));
-	      }
-	      return null;
-	    }
-	  }]);
-	  return TaskList;
-	}();
-	function _initSelectors2() {
-	  var self = this;
-	  babelHelpers.classPrivateFieldSet(this, _delegateToSelector, new ui_entitySelector.TagSelector({
-	    multiple: false,
-	    tagMaxWidth: 180,
-	    events: {
-	      onTagAdd: function onTagAdd(event) {
-	        babelHelpers.classPrivateFieldSet(self, _delegateToUserId, parseInt(event.getData().tag.getId()));
-	        if (!main_core.Type.isInteger(babelHelpers.classPrivateFieldGet(self, _delegateToUserId))) {
-	          babelHelpers.classPrivateFieldSet(self, _delegateToUserId, 0);
-	        }
-	      },
-	      onTagRemove: function onTagRemove() {
-	        babelHelpers.classPrivateFieldSet(self, _delegateToUserId, 0);
-	      }
-	    },
-	    dialogOptions: {
-	      entities: [{
-	        id: 'user',
-	        options: {
-	          intranetUsersOnly: true,
-	          inviteEmployeeLink: false
-	        }
-	      }]
-	    }
-	  }));
+	const namespace = main_core.Reflection.namespace('BX.Bizproc.Component');
+	class TaskList {
+		#gridId;
+		#delegateToSelector;
+		#delegateToUserId = 0;
+		constructor(options) {
+			this.#gridId = options.gridId;
+			this.#initSelectors();
+		}
+		#initSelectors() {
+			const self = this;
+			this.#delegateToSelector = new ui_entitySelector.TagSelector({
+				multiple: false,
+				tagMaxWidth: 180,
+				events: {
+					onTagAdd(event) {
+						self.#delegateToUserId = parseInt(event.getData().tag.getId());
+						if (!main_core.Type.isInteger(self.#delegateToUserId)) {
+							self.#delegateToUserId = 0;
+						}
+					},
+					onTagRemove() {
+						self.#delegateToUserId = 0;
+					}
+				},
+				dialogOptions: {
+					entities: [{
+						id: 'user',
+						options: {
+							intranetUsersOnly: true,
+							inviteEmployeeLink: false
+						}
+					}]
+				}
+			});
+		}
+		init() {
+			const delegateToWrapper = document.getElementById('ACTION_DELEGATE_TO_WRAPPER');
+			if (delegateToWrapper) {
+				this.#delegateToSelector.renderTo(delegateToWrapper);
+				main_core.Dom.attr(delegateToWrapper, {
+					role: 'group',
+					'aria-label': main_core.Loc.getMessage('BPATL_A11Y_DELEGATE_TO_LABEL')
+				});
+			}
+			this.#enhanceRows();
+			this.subscribeGridEvents();
+		}
+
+		// init() runs on every Grid::updated and from the reloadTable() callback, so
+		// announcing there would speak twice per group action. A single filtered
+		// subscription announces the update once, and only for this grid.
+		#gridSubscription = null;
+		subscribeGridEvents() {
+			this.unsubscribeGridEvents();
+			this.#gridSubscription = bizproc_a11y.subscribeGridUpdated(this.#gridId, () => bizproc_a11y.announce(main_core.Loc.getMessage('BPATL_A11Y_GRID_UPDATED')));
+		}
+		unsubscribeGridEvents() {
+			this.#gridSubscription?.destroy();
+			this.#gridSubscription = null;
+		}
+		destroy() {
+			this.unsubscribeGridEvents();
+		}
+		#enhanceRows() {
+			const container = this.getGrid()?.getContainer();
+			if (!main_core.Type.isDomNode(container)) {
+				return;
+			}
+			bizproc_a11y.enhanceGrid(container, {
+				gridId: this.#gridId,
+				rowActionsLabel: main_core.Loc.getMessage('BPATL_A11Y_ROW_ACTIONS_LABEL'),
+				checkboxesFromTitle: true
+			});
+			const links = container.querySelectorAll('.bp-task a, .bp-comments a, .bp-btn-panel a');
+			links.forEach(link => {
+				if (main_core.Dom.hasClass(link, 'bizproc-a11y-focusable')) {
+					return;
+				}
+				// rows bind their own inline click; empty handler adds only focus-visible styling
+				bizproc_a11y.makeActivatable(link, () => {});
+			});
+			container.querySelectorAll('.bp-short-process-step').forEach(step => {
+				if (!step.getAttribute('aria-label')) {
+					main_core.Dom.attr(step, 'aria-label', main_core.Loc.getMessage('BPATL_A11Y_PROCESS_FACES_LABEL'));
+				}
+			});
+			container.querySelectorAll('img:not([alt])').forEach(image => {
+				// row images are decorative document icons, adjacent text carries the meaning
+				main_core.Dom.attr(image, 'alt', '');
+			});
+		}
+		applyActionPanelValues() {
+			const grid = this.getGrid();
+			const actionsPanel = grid?.getActionsPanel();
+			if (grid && actionsPanel) {
+				const data = {
+					['action_all_rows_' + this.#gridId]: actionsPanel.getForAllCheckbox()?.checked ? 'Y' : 'N',
+					ACTION_DELEGATE_TO_ID: this.#delegateToUserId,
+					ID: grid.getRows().getSelectedIds()
+				};
+				for (const [key, value] of Object.entries(actionsPanel.getValues())) {
+					data[key] = main_core.Type.isString(value) ? value.trim().replace(/^['"]+|['"]+$/g, '') : value;
+				}
+				this.getGrid()?.reloadTable('POST', data, () => this.init());
+			}
+		}
+		reloadGrid() {
+			const grid = this.getGrid();
+			if (grid) {
+				grid.reload();
+			}
+		}
+		getGrid() {
+			if (this.#gridId) {
+				return BX.Main.gridManager && BX.Main.gridManager.getInstanceById(this.#gridId);
+			}
+			return null;
+		}
 	}
 	namespace.TaskList = TaskList;
 
-}((this.window = this.window || {}),BX,BX.UI.EntitySelector));
+})(BX, BX.UI.EntitySelector, BX.Bizproc.A11y);
 //# sourceMappingURL=script.js.map

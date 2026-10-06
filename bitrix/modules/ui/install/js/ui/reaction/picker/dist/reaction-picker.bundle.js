@@ -2,493 +2,710 @@
 this.BX = this.BX || {};
 this.BX.UI = this.BX.UI || {};
 this.BX.UI.Reaction = this.BX.UI.Reaction || {};
-(function (exports,main_core_events,main_core_zIndexManager,ui_iconSet_api_core,ui_iconSet_outline,main_core,ui_reaction_item) {
+(function (exports, main_core, main_core_events, main_core_zIndexManager, main_popup, ui_a11y, ui_iconSet_api_core, ui_designTokens, ui_designTokens_air, ui_iconSet_outline, ui_reaction_item) {
 	'use strict';
 
-	var _STORAGE_KEY = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("STORAGE_KEY");
-	var _INITIAL_COUNTER_VALUE = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("INITIAL_COUNTER_VALUE");
-	var _counters = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("counters");
-	var _loadCounters = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("loadCounters");
-	var _saveCounters = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("saveCounters");
-	var _initializeDefaultCounters = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initializeDefaultCounters");
-	var _sortReactionsByRank = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sortReactionsByRank");
-	var _isValidReaction = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isValidReaction");
 	class ReactionPickerRanking {
-	  constructor() {
-	    Object.defineProperty(this, _isValidReaction, {
-	      value: _isValidReaction2
-	    });
-	    Object.defineProperty(this, _sortReactionsByRank, {
-	      value: _sortReactionsByRank2
-	    });
-	    Object.defineProperty(this, _initializeDefaultCounters, {
-	      value: _initializeDefaultCounters2
-	    });
-	    Object.defineProperty(this, _saveCounters, {
-	      value: _saveCounters2
-	    });
-	    Object.defineProperty(this, _loadCounters, {
-	      value: _loadCounters2
-	    });
-	    Object.defineProperty(this, _counters, {
-	      writable: true,
-	      value: void 0
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _counters)[_counters] = babelHelpers.classPrivateFieldLooseBase(this, _loadCounters)[_loadCounters]();
-	    babelHelpers.classPrivateFieldLooseBase(this, _initializeDefaultCounters)[_initializeDefaultCounters]();
-	  }
-	  getRankedReactionsNames() {
-	    const allReactions = Object.values(ui_reaction_item.ReactionName);
-	    const sortedReactions = babelHelpers.classPrivateFieldLooseBase(this, _sortReactionsByRank)[_sortReactionsByRank](allReactions);
-	    const likeIndex = sortedReactions.indexOf(ui_reaction_item.ReactionName.like);
-	    if (likeIndex > 0) {
-	      sortedReactions.splice(likeIndex, 1);
-	      sortedReactions.unshift(ui_reaction_item.ReactionName.like);
-	    }
-	    return sortedReactions;
-	  }
-	  incrementReactionCounter(reactionName) {
-	    if (!babelHelpers.classPrivateFieldLooseBase(this, _isValidReaction)[_isValidReaction](reactionName)) {
-	      return;
-	    }
-	    const currentCount = babelHelpers.classPrivateFieldLooseBase(this, _counters)[_counters].get(reactionName) || 0;
-	    babelHelpers.classPrivateFieldLooseBase(this, _counters)[_counters].set(reactionName, currentCount + 1);
-	    babelHelpers.classPrivateFieldLooseBase(this, _saveCounters)[_saveCounters]();
-	  }
-	  getReactionCounter(reactionName) {
-	    if (!babelHelpers.classPrivateFieldLooseBase(this, _isValidReaction)[_isValidReaction](reactionName)) {
-	      return 0;
-	    }
-	    return babelHelpers.classPrivateFieldLooseBase(this, _counters)[_counters].get(reactionName) || 0;
-	  }
-	  resetCounters() {
-	    babelHelpers.classPrivateFieldLooseBase(this, _counters)[_counters].clear();
-	    babelHelpers.classPrivateFieldLooseBase(this, _initializeDefaultCounters)[_initializeDefaultCounters]();
-	    babelHelpers.classPrivateFieldLooseBase(this, _saveCounters)[_saveCounters]();
-	  }
+		static #STORAGE_KEY = 'ui-reaction-picker-ranking';
+		static #INITIAL_COUNTER_VALUE = 2;
+		#counters;
+		constructor() {
+			this.#counters = this.#loadCounters();
+			this.#initializeDefaultCounters();
+		}
+		getRankedReactionsNames() {
+			const allReactions = Object.values(ui_reaction_item.ReactionName);
+			const sortedReactions = this.#sortReactionsByRank(allReactions);
+			const likeIndex = sortedReactions.indexOf(ui_reaction_item.ReactionName.like);
+			if (likeIndex > 0) {
+				sortedReactions.splice(likeIndex, 1);
+				sortedReactions.unshift(ui_reaction_item.ReactionName.like);
+			}
+			return sortedReactions;
+		}
+		incrementReactionCounter(reactionName) {
+			if (!this.#isValidReaction(reactionName)) {
+				return;
+			}
+			const currentCount = this.#counters.get(reactionName) || 0;
+			this.#counters.set(reactionName, currentCount + 1);
+			this.#saveCounters();
+		}
+		getReactionCounter(reactionName) {
+			if (!this.#isValidReaction(reactionName)) {
+				return 0;
+			}
+			return this.#counters.get(reactionName) || 0;
+		}
+		resetCounters() {
+			this.#counters.clear();
+			this.#initializeDefaultCounters();
+			this.#saveCounters();
+		}
+		#loadCounters() {
+			try {
+				const stored = localStorage.getItem(ReactionPickerRanking.#STORAGE_KEY);
+				if (!stored) {
+					return new Map();
+				}
+				const parsed = JSON.parse(stored);
+				if (!main_core.Type.isObject(parsed) || parsed === null) {
+					return new Map();
+				}
+				return new Map(Object.entries(parsed));
+			} catch (error) {
+				// eslint-disable-next-line no-console
+				console.warn('Failed to load reaction counters from localStorage:', error);
+				return new Map();
+			}
+		}
+		#saveCounters() {
+			try {
+				const countersObject = Object.fromEntries(this.#counters);
+				localStorage.setItem(ReactionPickerRanking.#STORAGE_KEY, JSON.stringify(countersObject));
+			} catch (error) {
+				// eslint-disable-next-line no-console
+				console.warn('Failed to save reaction counters to localStorage:', error);
+			}
+		}
+		#initializeDefaultCounters() {
+			const allReactions = Object.values(ui_reaction_item.ReactionName);
+			const topReactions = [ui_reaction_item.ReactionName.like, ui_reaction_item.ReactionName.faceWithTearsOfJoy, ui_reaction_item.ReactionName.redHeart, ui_reaction_item.ReactionName.neutralFace, ui_reaction_item.ReactionName.fire, ui_reaction_item.ReactionName.cry];
+			for (const reaction of topReactions) {
+				if (!this.#counters.has(reaction)) {
+					this.#counters.set(reaction, ReactionPickerRanking.#INITIAL_COUNTER_VALUE);
+				}
+			}
+			for (const reaction of allReactions) {
+				if (!this.#counters.has(reaction)) {
+					this.#counters.set(reaction, 0);
+				}
+			}
+		}
+		#sortReactionsByRank(reactions) {
+			return reactions.toSorted((a, b) => {
+				const countA = this.#counters.get(a) || 0;
+				const countB = this.#counters.get(b) || 0;
+				if (countA !== countB) {
+					return countB - countA;
+				}
+				return 0;
+			});
+		}
+		#isValidReaction(reactionName) {
+			return Object.values(ui_reaction_item.ReactionName).includes(reactionName);
+		}
 	}
-	function _loadCounters2() {
-	  try {
-	    const stored = localStorage.getItem(babelHelpers.classPrivateFieldLooseBase(ReactionPickerRanking, _STORAGE_KEY)[_STORAGE_KEY]);
-	    if (!stored) {
-	      return new Map();
-	    }
-	    const parsed = JSON.parse(stored);
-	    if (!main_core.Type.isObject(parsed) || parsed === null) {
-	      return new Map();
-	    }
-	    return new Map(Object.entries(parsed));
-	  } catch (error) {
-	    // eslint-disable-next-line no-console
-	    console.warn('Failed to load reaction counters from localStorage:', error);
-	    return new Map();
-	  }
-	}
-	function _saveCounters2() {
-	  try {
-	    const countersObject = Object.fromEntries(babelHelpers.classPrivateFieldLooseBase(this, _counters)[_counters]);
-	    localStorage.setItem(babelHelpers.classPrivateFieldLooseBase(ReactionPickerRanking, _STORAGE_KEY)[_STORAGE_KEY], JSON.stringify(countersObject));
-	  } catch (error) {
-	    // eslint-disable-next-line no-console
-	    console.warn('Failed to save reaction counters to localStorage:', error);
-	  }
-	}
-	function _initializeDefaultCounters2() {
-	  const allReactions = Object.values(ui_reaction_item.ReactionName);
-	  const topReactions = [ui_reaction_item.ReactionName.like, ui_reaction_item.ReactionName.faceWithTearsOfJoy, ui_reaction_item.ReactionName.redHeart, ui_reaction_item.ReactionName.neutralFace, ui_reaction_item.ReactionName.fire, ui_reaction_item.ReactionName.cry];
-	  for (const reaction of topReactions) {
-	    if (!babelHelpers.classPrivateFieldLooseBase(this, _counters)[_counters].has(reaction)) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _counters)[_counters].set(reaction, babelHelpers.classPrivateFieldLooseBase(ReactionPickerRanking, _INITIAL_COUNTER_VALUE)[_INITIAL_COUNTER_VALUE]);
-	    }
-	  }
-	  for (const reaction of allReactions) {
-	    if (!babelHelpers.classPrivateFieldLooseBase(this, _counters)[_counters].has(reaction)) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _counters)[_counters].set(reaction, 0);
-	    }
-	  }
-	}
-	function _sortReactionsByRank2(reactions) {
-	  return reactions.toSorted((a, b) => {
-	    const countA = babelHelpers.classPrivateFieldLooseBase(this, _counters)[_counters].get(a) || 0;
-	    const countB = babelHelpers.classPrivateFieldLooseBase(this, _counters)[_counters].get(b) || 0;
-	    if (countA !== countB) {
-	      return countB - countA;
-	    }
-	    return 0;
-	  });
-	}
-	function _isValidReaction2(reactionName) {
-	  return Object.values(ui_reaction_item.ReactionName).includes(reactionName);
-	}
-	Object.defineProperty(ReactionPickerRanking, _STORAGE_KEY, {
-	  writable: true,
-	  value: 'ui-reaction-picker-ranking'
-	});
-	Object.defineProperty(ReactionPickerRanking, _INITIAL_COUNTER_VALUE, {
-	  writable: true,
-	  value: 2
-	});
 
-	let _ = t => t,
-	  _t,
-	  _t2,
-	  _t3,
-	  _t4,
-	  _t5,
-	  _t6;
 	const ReactionPickerEvents = {
-	  show: 'show',
-	  hide: 'hide',
-	  expand: 'expand',
-	  select: 'select',
-	  mouseenter: 'mouseenter',
-	  mouseleave: 'mouseleave'
+		show: 'show',
+		hide: 'hide',
+		expand: 'expand',
+		select: 'select',
+		mouseenter: 'mouseenter',
+		mouseleave: 'mouseleave'
 	};
-	var _target = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("target");
-	var _popover = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("popover");
-	var _isShown = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isShown");
-	var _listContainer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("listContainer");
-	var _expandedListContainer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("expandedListContainer");
-	var _reactions = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("reactions");
-	var _allowedReactions = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("allowedReactions");
-	var _ranking = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("ranking");
-	var _mouseenterHandler = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("mouseenterHandler");
-	var _mouseleaveHandler = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("mouseleaveHandler");
-	var _rowSize = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("rowSize");
-	var _minHeight = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("minHeight");
-	var _offsetBetweenTargetElement = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("offsetBetweenTargetElement");
-	var _adjustPositionToElement = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("adjustPositionToElement");
-	var _adjustPositionToCoordinates = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("adjustPositionToCoordinates");
-	var _initPopover = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("initPopover");
-	var _renderReactionsList = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderReactionsList");
-	var _renderReactionElement = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderReactionElement");
-	var _renderExpandButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderExpandButton");
-	var _destroyPopover = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("destroyPopover");
-	var _destroyReactions = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("destroyReactions");
-	var _expand = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("expand");
-	var _isEnoughSpaceBelowTargetElement = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isEnoughSpaceBelowTargetElement");
-	var _isEnoughSpaceAboveTargetElement = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isEnoughSpaceAboveTargetElement");
-	var _getReactionsNames = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getReactionsNames");
 	class ReactionPicker extends main_core_events.EventEmitter {
-	  constructor(options) {
-	    super();
-	    Object.defineProperty(this, _getReactionsNames, {
-	      value: _getReactionsNames2
-	    });
-	    Object.defineProperty(this, _isEnoughSpaceAboveTargetElement, {
-	      value: _isEnoughSpaceAboveTargetElement2
-	    });
-	    Object.defineProperty(this, _isEnoughSpaceBelowTargetElement, {
-	      value: _isEnoughSpaceBelowTargetElement2
-	    });
-	    Object.defineProperty(this, _expand, {
-	      value: _expand2
-	    });
-	    Object.defineProperty(this, _destroyReactions, {
-	      value: _destroyReactions2
-	    });
-	    Object.defineProperty(this, _destroyPopover, {
-	      value: _destroyPopover2
-	    });
-	    Object.defineProperty(this, _renderExpandButton, {
-	      value: _renderExpandButton2
-	    });
-	    Object.defineProperty(this, _renderReactionElement, {
-	      value: _renderReactionElement2
-	    });
-	    Object.defineProperty(this, _renderReactionsList, {
-	      value: _renderReactionsList2
-	    });
-	    Object.defineProperty(this, _initPopover, {
-	      value: _initPopover2
-	    });
-	    Object.defineProperty(this, _adjustPositionToCoordinates, {
-	      value: _adjustPositionToCoordinates2
-	    });
-	    Object.defineProperty(this, _adjustPositionToElement, {
-	      value: _adjustPositionToElement2
-	    });
-	    Object.defineProperty(this, _target, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _popover, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _isShown, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _listContainer, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _expandedListContainer, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _reactions, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _allowedReactions, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _ranking, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _mouseenterHandler, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _mouseleaveHandler, {
-	      writable: true,
-	      value: null
-	    });
-	    this.setEventNamespace('UI.ReactionPicker.V2');
-	    babelHelpers.classPrivateFieldLooseBase(this, _target)[_target] = options.target;
-	    babelHelpers.classPrivateFieldLooseBase(this, _allowedReactions)[_allowedReactions] = main_core.Type.isArrayFilled(options.reactions) ? options.reactions : null;
-	    babelHelpers.classPrivateFieldLooseBase(this, _listContainer)[_listContainer] = null;
-	    babelHelpers.classPrivateFieldLooseBase(this, _expandedListContainer)[_expandedListContainer] = null;
-	    babelHelpers.classPrivateFieldLooseBase(this, _isShown)[_isShown] = false;
-	    babelHelpers.classPrivateFieldLooseBase(this, _reactions)[_reactions] = [];
-	    babelHelpers.classPrivateFieldLooseBase(this, _ranking)[_ranking] = new ReactionPickerRanking();
-	  }
-	  show() {
-	    if (!babelHelpers.classPrivateFieldLooseBase(this, _popover)[_popover]) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _initPopover)[_initPopover]();
-	    }
-	    main_core.Dom.append(babelHelpers.classPrivateFieldLooseBase(this, _popover)[_popover], document.body);
-	    this.adjustPosition();
-	    main_core_zIndexManager.ZIndexManager.register(babelHelpers.classPrivateFieldLooseBase(this, _popover)[_popover]);
-	    main_core_zIndexManager.ZIndexManager.bringToFront(babelHelpers.classPrivateFieldLooseBase(this, _popover)[_popover]);
-	    requestAnimationFrame(() => {
-	      main_core.Dom.addClass(babelHelpers.classPrivateFieldLooseBase(this, _popover)[_popover], '--visible');
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _isShown)[_isShown] = true;
-	    this.emit(ReactionPickerEvents.show);
-	  }
-	  hide() {
-	    if (!babelHelpers.classPrivateFieldLooseBase(this, _popover)[_popover]) {
-	      return;
-	    }
-	    main_core.Dom.addClass(babelHelpers.classPrivateFieldLooseBase(this, _popover)[_popover], '--hiding');
-	    main_core.Dom.removeClass(babelHelpers.classPrivateFieldLooseBase(this, _popover)[_popover], '--visible');
-	    setTimeout(() => {
-	      babelHelpers.classPrivateFieldLooseBase(this, _destroyReactions)[_destroyReactions]();
-	      babelHelpers.classPrivateFieldLooseBase(this, _destroyPopover)[_destroyPopover]();
-	    }, 150);
-	    babelHelpers.classPrivateFieldLooseBase(this, _isShown)[_isShown] = false;
-	    this.emit(ReactionPickerEvents.hide);
-	  }
-	  isShown() {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _isShown)[_isShown];
-	  }
-	  adjustPosition() {
-	    if (!babelHelpers.classPrivateFieldLooseBase(this, _popover)[_popover]) {
-	      return;
-	    }
-	    if (main_core.Type.isNumber(babelHelpers.classPrivateFieldLooseBase(this, _target)[_target].top) && main_core.Type.isNumber(babelHelpers.classPrivateFieldLooseBase(this, _target)[_target].left)) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _adjustPositionToCoordinates)[_adjustPositionToCoordinates](babelHelpers.classPrivateFieldLooseBase(this, _target)[_target]);
-	    } else if (babelHelpers.classPrivateFieldLooseBase(this, _target)[_target] instanceof HTMLElement) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _adjustPositionToElement)[_adjustPositionToElement](babelHelpers.classPrivateFieldLooseBase(this, _target)[_target]);
-	    }
-	  }
-	  getPopoverRect() {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _popover)[_popover] ? main_core.Dom.getPosition(babelHelpers.classPrivateFieldLooseBase(this, _popover)[_popover]) : undefined;
-	  }
-	}
-	function _adjustPositionToElement2(target) {
-	  const elementRect = main_core.Dom.getPosition(target);
-	  const popoverRect = main_core.Dom.getPosition(babelHelpers.classPrivateFieldLooseBase(this, _popover)[_popover]);
-	  let top = 0;
-	  const isEnoughSpaceBelowTargetElement = babelHelpers.classPrivateFieldLooseBase(this, _isEnoughSpaceBelowTargetElement)[_isEnoughSpaceBelowTargetElement]();
-	  if (isEnoughSpaceBelowTargetElement === false) {
-	    top = elementRect.top - popoverRect.height - babelHelpers.classPrivateFieldLooseBase(ReactionPicker, _offsetBetweenTargetElement)[_offsetBetweenTargetElement];
-	  } else if (babelHelpers.classPrivateFieldLooseBase(this, _isEnoughSpaceAboveTargetElement)[_isEnoughSpaceAboveTargetElement]()) {
-	    top = elementRect.top - babelHelpers.classPrivateFieldLooseBase(ReactionPicker, _minHeight)[_minHeight] - babelHelpers.classPrivateFieldLooseBase(ReactionPicker, _offsetBetweenTargetElement)[_offsetBetweenTargetElement];
-	  } else if (isEnoughSpaceBelowTargetElement) {
-	    top = elementRect.top + elementRect.height + babelHelpers.classPrivateFieldLooseBase(ReactionPicker, _offsetBetweenTargetElement)[_offsetBetweenTargetElement];
-	  }
-	  let left = elementRect.left - 53;
-	  const rightEdge = left + popoverRect.width;
-	  const windowWidth = window.innerWidth;
-	  const rightPadding = 40;
-	  if (rightEdge + rightPadding > windowWidth) {
-	    left = windowWidth - popoverRect.width - rightPadding;
-	  }
-	  main_core.Dom.style(babelHelpers.classPrivateFieldLooseBase(this, _popover)[_popover], {
-	    top: `${top}px`,
-	    left: `${left}px`
-	  });
-	}
-	function _adjustPositionToCoordinates2(position) {
-	  main_core.Dom.style(babelHelpers.classPrivateFieldLooseBase(this, _popover)[_popover], {
-	    top: `${position.top}px`,
-	    left: `${position.left}px`
-	  });
-	}
-	function _initPopover2() {
-	  if (!babelHelpers.classPrivateFieldLooseBase(this, _popover)[_popover]) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _listContainer)[_listContainer] = babelHelpers.classPrivateFieldLooseBase(this, _renderReactionsList)[_renderReactionsList](babelHelpers.classPrivateFieldLooseBase(this, _getReactionsNames)[_getReactionsNames]().slice(0, babelHelpers.classPrivateFieldLooseBase(ReactionPicker, _rowSize)[_rowSize] - 1));
-	    babelHelpers.classPrivateFieldLooseBase(this, _expandedListContainer)[_expandedListContainer] = main_core.Tag.render(_t || (_t = _`
-				<div class="reactions-select-popover__expanded-list"></div>
-			`));
-	    const showExpandButton = babelHelpers.classPrivateFieldLooseBase(this, _getReactionsNames)[_getReactionsNames]().length > babelHelpers.classPrivateFieldLooseBase(ReactionPicker, _rowSize)[_rowSize];
-	    babelHelpers.classPrivateFieldLooseBase(this, _popover)[_popover] = main_core.Tag.render(_t2 || (_t2 = _`
-				<div class="reactions-select-popover --ui-context-content-light">
-					<div class="reactions-select-popover__inner">
-						${0}
-						${0}
-						${0}
-					</div>
+		#target;
+		#popover = null;
+		#isShown;
+		#menuContainer;
+		#listContainer;
+		#expandedListContainer;
+		#reactions;
+		#priority;
+		#contextAction;
+		#contextMenu = null;
+		#allowedReactions;
+		#ranking;
+		#focusZone = null;
+		#focusTrap = null;
+		#restoreFocusTarget;
+		#mouseenterHandler = null;
+		#mouseleaveHandler = null;
+		#keydownHandler = null;
+		#mousedownHandler = null;
+		#focusinHandler = null;
+		#stampedTargetAttributes = null;
+		#destroyTimeoutId = null;
+		#showToken = 0;
+		static #rowSize = 7;
+		static #minHeight = 56;
+		static #offsetBetweenTargetElement = 8;
+
+		/**
+		 * `aria-expanded` is only honoured on an element whose role supports it, and an element no
+		 * keyboard can reach is not a control to report a state of. The public contract takes any
+		 * element - an owner may hang the picker on a plain div - and on one of those the states are
+		 * left unwritten rather than written where nothing reads them.
+		 */
+		static #menuStateTargetSelector = ['button', 'a[href]', 'summary', '[tabindex]', '[role="button"]', '[role="link"]', '[role="combobox"]', '[role="menuitem"]', '[role="tab"]', '[role="treeitem"]'].join(', ');
+		constructor(options) {
+			super();
+			this.setEventNamespace('UI.ReactionPicker.V2');
+			this.#target = options.target;
+			this.#allowedReactions = main_core.Type.isArrayFilled(options.reactions) ? options.reactions : null;
+			this.#priority = main_core.Type.isStringFilled(options.priorityReaction) ? options.priorityReaction : null;
+			this.#contextAction = main_core.Type.isPlainObject(options.contextAction) && main_core.Type.isStringFilled(options.contextAction.title) && main_core.Type.isFunction(options.contextAction.onClick) ? options.contextAction : null;
+			this.#menuContainer = null;
+			this.#listContainer = null;
+			this.#expandedListContainer = null;
+			this.#isShown = false;
+			this.#reactions = [];
+			this.#ranking = new ReactionPickerRanking();
+			this.#restoreFocusTarget = () => this.#target instanceof HTMLElement ? this.#target : null;
+		}
+		show(options = {}) {
+			// A picker shown again inside the teardown window of hide() keeps the popover it
+			// already has, and the pending timer would destroy the one just put on the screen.
+			this.#clearDestroyTimeout();
+			if (!this.#popover) {
+				this.#initPopover();
+			}
+
+			// Dom.append() is an appendChild(): moving a popover that is already in the body would send
+			// it past the guards of its focus trap, which are put around it once and never moved again.
+			if (this.#popover.parentElement !== document.body) {
+				main_core.Dom.append(this.#popover, document.body);
+			}
+			main_core.Dom.removeClass(this.#popover, '--hiding');
+			main_core.Dom.attr(this.#popover, 'inert', null);
+			this.adjustPosition();
+			if (!main_core_zIndexManager.ZIndexManager.getComponent(this.#popover)) {
+				main_core_zIndexManager.ZIndexManager.register(this.#popover);
+			}
+			main_core_zIndexManager.ZIndexManager.bringToFront(this.#popover);
+			this.#isShown = true;
+			const takesFocus = options.focus === true || this.#isOpenedFromFocusedTarget();
+			if (takesFocus) {
+				this.#skipFadeIn();
+			}
+
+			// The keydown handler of the menu belongs to the zone, so the zone goes on before the focus
+			// does - a key pressed in the first frames of a keyboard opening used to reach nothing.
+			this.#focusZone?.activate();
+			if (takesFocus) {
+				this.focus();
+			}
+			const showToken = ++this.#showToken;
+			requestAnimationFrame(async () => {
+				if (!this.#popover) {
+					return;
+				}
+				main_core.Dom.addClass(this.#popover, '--visible');
+
+				// A fully transparent element is not focusable, so the set collected by a zone activated
+				// over a popover that is still fading in is empty. getAnimations() flushes the pending
+				// style change, so the transition it returns is the one the class has just started, and
+				// the end of it is the only boundary that is not a guess at when transparency is over.
+				const fadeIn = this.#popover.getAnimations().map(animation => animation.finished);
+				await Promise.allSettled(fadeIn);
+
+				// A fade-in outlives the picker being hidden - or hidden and shown again - while it
+				// runs, and a set collected for a superseded show would belong to a popover that is
+				// transparent again.
+				if (this.#isShown && showToken === this.#showToken) {
+					this.#focusZone?.refreshElements();
+				}
+			});
+			this.#syncTargetMenuState(true);
+			this.emit(ReactionPickerEvents.show);
+		}
+		focus() {
+			this.#menuContainer?.querySelector('[role="menuitem"]')?.focus();
+		}
+		hide() {
+			// Hiding a picker that is already hidden would lose the teardown timer of the first hide():
+			// the lost timer goes on to tear down whatever show() puts on the screen in the meantime,
+			// and the consumer subscribed to `hide` is told to close a picker that is already closing.
+			if (!this.#isShown || !this.#popover) {
+				return;
+			}
+			this.#contextMenu?.destroy();
+			this.#contextMenu = null;
+			this.#focusZone?.deactivate();
+			this.#deactivateFocusTrap();
+
+			// Only after the focus has been handed back: inert on an ancestor of the focused element
+			// drops the focus on <body>, and there would be nothing left to hand back from.
+			main_core.Dom.attr(this.#popover, 'inert', true);
+			main_core.Dom.addClass(this.#popover, '--hiding');
+			main_core.Dom.removeClass(this.#popover, '--visible');
+			this.#destroyTimeoutId = setTimeout(() => {
+				this.#destroyTimeoutId = null;
+				this.#destroyReactions();
+				this.#destroyPopover();
+			}, 150);
+			this.#isShown = false;
+			this.#syncTargetMenuState(false);
+			this.emit(ReactionPickerEvents.hide);
+		}
+
+		/**
+		 * Tears the picker down at once, for an owner that goes away without hiding it first: the
+		 * popover of an orphaned picker keeps its focus trap, and a trap left behind takes over the
+		 * Tab navigation of the whole page.
+		 */
+		destroy() {
+			this.#clearDestroyTimeout();
+			this.#contextMenu?.destroy();
+			this.#contextMenu = null;
+			this.#deactivateFocusTrap();
+			this.#destroyReactions();
+			this.#destroyPopover();
+			this.#isShown = false;
+			this.#clearTargetMenuState();
+		}
+		isShown() {
+			return this.#isShown;
+		}
+		adjustPosition() {
+			if (!this.#popover) {
+				return;
+			}
+			if (main_core.Type.isNumber(this.#target.top) && main_core.Type.isNumber(this.#target.left)) {
+				this.#adjustPositionToCoordinates(this.#target);
+			} else if (this.#target instanceof HTMLElement) {
+				this.#adjustPositionToElement(this.#target);
+			}
+		}
+		getPopoverRect() {
+			return this.#popover ? main_core.Dom.getPosition(this.#popover) : undefined;
+		}
+		#adjustPositionToElement(target) {
+			const elementRect = main_core.Dom.getPosition(target);
+			const popoverRect = main_core.Dom.getPosition(this.#popover);
+			let top = 0;
+			const isEnoughSpaceBelowTargetElement = this.#isEnoughSpaceBelowTargetElement();
+			if (isEnoughSpaceBelowTargetElement === false) {
+				top = elementRect.top - popoverRect.height - ReactionPicker.#offsetBetweenTargetElement;
+			} else if (this.#isEnoughSpaceAboveTargetElement()) {
+				top = elementRect.top - ReactionPicker.#minHeight - ReactionPicker.#offsetBetweenTargetElement;
+			} else if (isEnoughSpaceBelowTargetElement) {
+				top = elementRect.top + elementRect.height + ReactionPicker.#offsetBetweenTargetElement;
+			}
+			let left = elementRect.left - 53;
+			const rightEdge = left + popoverRect.width;
+			const windowWidth = window.innerWidth;
+			const rightPadding = 40;
+			if (rightEdge + rightPadding > windowWidth) {
+				left = windowWidth - popoverRect.width - rightPadding;
+			}
+			main_core.Dom.style(this.#popover, {
+				top: `${top}px`,
+				left: `${left}px`
+			});
+		}
+		#adjustPositionToCoordinates(position) {
+			main_core.Dom.style(this.#popover, {
+				top: `${position.top}px`,
+				left: `${position.left}px`
+			});
+		}
+		#initPopover() {
+			if (!this.#popover) {
+				this.#listContainer = this.#renderReactionsList(this.#getReactionsNames().slice(0, ReactionPicker.#rowSize - 1));
+				this.#expandedListContainer = main_core.Tag.render`
+				<div class="reactions-select-popover__expanded-list" role="none"></div>
+			`;
+				const showExpandButton = this.#getReactionsNames().length > ReactionPicker.#rowSize;
+				this.#menuContainer = main_core.Tag.render`
+				<div class="reactions-select-popover__inner" role="menu">
+					${this.#listContainer}
+					${showExpandButton ? this.#renderExpandButton() : null}
+					${this.#expandedListContainer}
 				</div>
-			`), babelHelpers.classPrivateFieldLooseBase(this, _listContainer)[_listContainer], showExpandButton ? babelHelpers.classPrivateFieldLooseBase(this, _renderExpandButton)[_renderExpandButton]() : null, babelHelpers.classPrivateFieldLooseBase(this, _expandedListContainer)[_expandedListContainer]);
-	    babelHelpers.classPrivateFieldLooseBase(this, _mouseenterHandler)[_mouseenterHandler] = () => {
-	      this.emit(ReactionPickerEvents.mouseenter);
-	    };
-	    babelHelpers.classPrivateFieldLooseBase(this, _mouseleaveHandler)[_mouseleaveHandler] = () => {
-	      this.emit(ReactionPickerEvents.mouseleave);
-	    };
-	    main_core.bind(babelHelpers.classPrivateFieldLooseBase(this, _popover)[_popover], 'mouseenter', babelHelpers.classPrivateFieldLooseBase(this, _mouseenterHandler)[_mouseenterHandler]);
-	    main_core.bind(babelHelpers.classPrivateFieldLooseBase(this, _popover)[_popover], 'mouseleave', babelHelpers.classPrivateFieldLooseBase(this, _mouseleaveHandler)[_mouseleaveHandler]);
-	  }
-	}
-	function _renderReactionsList2(reactionsIds, isExpanded = false) {
-	  const list = main_core.Tag.render(_t3 || (_t3 = _`
-			<div class="reactions-select__list"></div>
-		`));
-	  if (isExpanded) {
-	    main_core.Dom.addClass(list, '--expanded');
-	  }
-	  reactionsIds.forEach(reactionId => {
-	    main_core.Dom.append(babelHelpers.classPrivateFieldLooseBase(this, _renderReactionElement)[_renderReactionElement](reactionId), list);
-	  });
-	  return list;
-	}
-	function _renderReactionElement2(reactionName) {
-	  const reactionTitle = ui_reaction_item.ReactionTitle[reactionName];
-	  const reaction = new ui_reaction_item.Reaction({
-	    name: reactionName,
-	    size: 32,
-	    animation: {
-	      animate: true,
-	      infinite: true
-	    }
-	  });
-	  babelHelpers.classPrivateFieldLooseBase(this, _reactions)[_reactions].push(reaction);
-	  const element = main_core.Tag.render(_t4 || (_t4 = _`
-			<div class="reactions-select__list-elem" title="${0}">
-				<div ref="inner" class="reactions-select__list-elem-inner">
-					${0}
+			`;
+				this.#popover = main_core.Tag.render`
+				<div
+					class="reactions-select-popover --ui-context-content-light"
+					data-testid="ui-reaction-picker"
+				>
+					${this.#menuContainer}
 				</div>
-			</div>
-		`), reactionTitle, reaction.render());
-	  main_core.bind(element.inner, 'mouseenter', () => {
-	    // reaction.playAnimation(true);
-	  });
-	  main_core.bind(element.inner, 'mouseleave', () => {
-	    // reaction.pauseAnimation(false);
-	  });
-	  main_core.bind(element.root, 'click', () => {
-	    this.emit(ReactionPickerEvents.select, {
-	      reaction: reactionName
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _ranking)[_ranking].incrementReactionCounter(reactionName);
-	  });
-	  return element.root;
-	}
-	function _renderExpandButton2() {
-	  const icon = new ui_iconSet_api_core.Icon({
-	    icon: ui_iconSet_api_core.Outline.CHEVRON_DOWN_M,
-	    size: 24
-	  });
-	  const button = main_core.Tag.render(_t5 || (_t5 = _`
+			`;
+				this.#mouseenterHandler = () => {
+					this.emit(ReactionPickerEvents.mouseenter);
+				};
+				this.#mouseleaveHandler = () => {
+					this.emit(ReactionPickerEvents.mouseleave);
+				};
+				this.#keydownHandler = event => {
+					if (event.key === 'Escape') {
+						event.preventDefault();
+						event.stopPropagation();
+						this.hide();
+					}
+				};
+
+				// A menu item is a button, and pressing a button with the mouse hands it the focus -
+				// out of the message the user was in the middle of writing. Dropping the default of
+				// that press is the whole of what is needed: the click still arrives, so the reaction
+				// is still picked and the list still expands, and the caret never leaves the input.
+				// Only the items are covered, so a control that does need the focus can still be put
+				// in the popover later.
+				this.#mousedownHandler = event => {
+					if (main_core.Type.isElementNode(event.target) && event.target.closest('[role="menuitem"]')) {
+						event.preventDefault();
+					}
+				};
+
+				// The picker is opened by hover as well, and a trap activated then would stand two tab
+				// stops of its own around a popover the user never asked for and catch them on the way
+				// past it. What the trap is for is keeping a focus that is already inside, so it is
+				// started by the focus arriving - be it the one show() hands over or a Tab from the page.
+				this.#focusinHandler = () => {
+					if (this.#isShown) {
+						this.#focusTrap?.activate({
+							initialFocus: false
+						});
+					}
+				};
+				main_core.bind(this.#popover, 'mouseenter', this.#mouseenterHandler);
+				main_core.bind(this.#popover, 'mouseleave', this.#mouseleaveHandler);
+				main_core.bind(this.#popover, 'keydown', this.#keydownHandler);
+				main_core.bind(this.#popover, 'mousedown', this.#mousedownHandler);
+				main_core.bind(this.#popover, 'focusin', this.#focusinHandler);
+				this.#focusTrap = new ui_a11y.FocusTrap(this.#popover, {
+					looped: true,
+					preventScroll: true,
+					restoreFocus: this.#restoreFocusTarget
+				});
+				this.#focusZone = new ui_a11y.FocusZone(this.#menuContainer, {
+					bindKeys: ui_a11y.FocusKeys.ArrowAll | ui_a11y.FocusKeys.HomeAndEnd,
+					focusOutBehavior: 'wrap',
+					focusInStrategy: 'previous',
+					focusableElementFilter: element => element.matches('[role="menuitem"]'),
+					getNextFocusable: (direction, from, event) => {
+						return this.#getNextFocusableInRow(from, event);
+					}
+				});
+			}
+		}
+		#renderReactionsList(reactionsIds, isExpanded = false) {
+			const list = main_core.Tag.render`
+			<div class="reactions-select__list" role="none"></div>
+		`;
+			if (isExpanded) {
+				main_core.Dom.addClass(list, '--expanded');
+			}
+			reactionsIds.forEach(reactionId => {
+				main_core.Dom.append(this.#renderReactionElement(reactionId), list);
+			});
+			return list;
+		}
+		#renderReactionElement(reactionName) {
+			const reactionTitle = ui_reaction_item.ReactionTitle[reactionName];
+			const reaction = new ui_reaction_item.Reaction({
+				name: reactionName,
+				size: 32,
+				animation: {
+					animate: true,
+					infinite: true
+				}
+			});
+			this.#reactions.push(reaction);
+
+			// A menu is entered once and walked with the arrows, and the zone that writes the roving
+			// tabindex is only activated once the popover has faded in - and gives this value back when
+			// it is deactivated. A menu item nobody manages must not be a tab stop of its own.
+			const element = main_core.Tag.render`
 			<button
-				class="reactions-select__expand-button --ui-hoverable"
-				title="${0}"
+				type="button"
+				class="reactions-select__list-elem"
+				role="menuitem"
+				tabindex="-1"
+				aria-label="${reactionTitle}"
+				title="${reactionTitle}"
+				data-testid="ui-reaction-picker-item-${reactionName}"
 			>
-				${0}
+				<div ref="inner" class="reactions-select__list-elem-inner" aria-hidden="true">
+					${reaction.render()}
+				</div>
 			</button>
-		`), main_core.Loc.getMessage('UI_REACTIONS_LIST_EXPAND_BUTTON_TITLE'), icon.render());
-	  const wrapper = main_core.Tag.render(_t6 || (_t6 = _`
-			<div class="reactions-select__expand-button-wrapper">
-				${0}
+		`;
+			main_core.bind(element.inner, 'mouseenter', () => {
+				// reaction.playAnimation(true);
+			});
+			main_core.bind(element.inner, 'mouseleave', () => {
+				// reaction.pauseAnimation(false);
+			});
+			main_core.bind(element.root, 'click', () => {
+				this.emit(ReactionPickerEvents.select, {
+					reaction: reactionName
+				});
+				this.#ranking.incrementReactionCounter(reactionName);
+			});
+			if (this.#contextAction) {
+				main_core.bind(element.root, 'contextmenu', event => {
+					this.#showContextMenu(event, element.root, reactionName);
+				});
+			}
+			return element.root;
+		}
+		#showContextMenu(event, bindElement, reactionName) {
+			event.preventDefault();
+			event.stopPropagation();
+			this.#contextMenu?.destroy();
+			const menu = new main_popup.Menu({
+				bindElement,
+				bindOptions: {
+					position: 'top'
+				},
+				autoHide: true,
+				cacheable: false,
+				events: {
+					onShow: () => {
+						const popupContainer = menu.getPopupWindow().getPopupContainer();
+						main_core.bind(popupContainer, 'mouseenter', () => {
+							this.emit(ReactionPickerEvents.mouseenter);
+						});
+						main_core.bind(popupContainer, 'mouseleave', () => {
+							this.emit(ReactionPickerEvents.mouseleave);
+						});
+					}
+				},
+				items: [{
+					text: this.#contextAction.title,
+					onclick: () => {
+						this.#contextAction?.onClick(reactionName);
+						this.hide();
+					}
+				}]
+			});
+			menu.getPopupWindow().subscribe('onDestroy', () => {
+				if (this.#contextMenu === menu) {
+					this.#contextMenu = null;
+				}
+			});
+			this.#contextMenu = menu;
+			menu.show();
+		}
+		#renderExpandButton() {
+			const icon = new ui_iconSet_api_core.Icon({
+				icon: ui_iconSet_api_core.Outline.CHEVRON_DOWN_M,
+				size: 24
+			});
+			const iconElement = icon.render();
+			main_core.Dom.attr(iconElement, 'aria-hidden', 'true');
+			const expandTitle = main_core.Loc.getMessage('UI_REACTIONS_LIST_EXPAND_BUTTON_TITLE');
+			const button = main_core.Tag.render`
+			<button
+				type="button"
+				class="reactions-select__expand-button --ui-hoverable"
+				role="menuitem"
+				tabindex="-1"
+				aria-label="${expandTitle}"
+				title="${expandTitle}"
+				data-testid="ui-reaction-picker-expand-btn"
+			>
+				${iconElement}
+			</button>
+		`;
+			const wrapper = main_core.Tag.render`
+			<div class="reactions-select__expand-button-wrapper" role="none">
+				${button}
 			</div>
-		`), button);
-	  main_core.bind(button, 'click', () => {
-	    main_core.Dom.remove(wrapper);
-	    main_core.Dom.append(babelHelpers.classPrivateFieldLooseBase(this, _renderReactionElement)[_renderReactionElement](babelHelpers.classPrivateFieldLooseBase(this, _getReactionsNames)[_getReactionsNames]()[babelHelpers.classPrivateFieldLooseBase(ReactionPicker, _rowSize)[_rowSize] - 1]), babelHelpers.classPrivateFieldLooseBase(this, _listContainer)[_listContainer]);
-	    babelHelpers.classPrivateFieldLooseBase(this, _expand)[_expand]();
-	  });
-	  return wrapper;
-	}
-	function _destroyPopover2() {
-	  if (!babelHelpers.classPrivateFieldLooseBase(this, _popover)[_popover]) {
-	    return;
-	  }
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _mouseenterHandler)[_mouseenterHandler]) {
-	    main_core.unbind(babelHelpers.classPrivateFieldLooseBase(this, _popover)[_popover], 'mouseenter', babelHelpers.classPrivateFieldLooseBase(this, _mouseenterHandler)[_mouseenterHandler]);
-	    babelHelpers.classPrivateFieldLooseBase(this, _mouseenterHandler)[_mouseenterHandler] = null;
-	  }
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _mouseleaveHandler)[_mouseleaveHandler]) {
-	    main_core.unbind(babelHelpers.classPrivateFieldLooseBase(this, _popover)[_popover], 'mouseleave', babelHelpers.classPrivateFieldLooseBase(this, _mouseleaveHandler)[_mouseleaveHandler]);
-	    babelHelpers.classPrivateFieldLooseBase(this, _mouseleaveHandler)[_mouseleaveHandler] = null;
-	  }
-	  main_core_zIndexManager.ZIndexManager.unregister(babelHelpers.classPrivateFieldLooseBase(this, _popover)[_popover]);
-	  babelHelpers.classPrivateFieldLooseBase(this, _popover)[_popover].remove();
-	  babelHelpers.classPrivateFieldLooseBase(this, _popover)[_popover] = null;
-	  babelHelpers.classPrivateFieldLooseBase(this, _listContainer)[_listContainer] = null;
-	  babelHelpers.classPrivateFieldLooseBase(this, _expandedListContainer)[_expandedListContainer] = null;
-	}
-	function _destroyReactions2() {
-	  babelHelpers.classPrivateFieldLooseBase(this, _reactions)[_reactions].forEach(reaction => {
-	    reaction.destroy();
-	  });
-	  babelHelpers.classPrivateFieldLooseBase(this, _reactions)[_reactions] = [];
-	}
-	function _expand2() {
-	  main_core.Dom.addClass(babelHelpers.classPrivateFieldLooseBase(this, _popover)[_popover], '--expanded');
-	  main_core.Dom.append(babelHelpers.classPrivateFieldLooseBase(this, _renderReactionsList)[_renderReactionsList](babelHelpers.classPrivateFieldLooseBase(this, _getReactionsNames)[_getReactionsNames]().slice(babelHelpers.classPrivateFieldLooseBase(ReactionPicker, _rowSize)[_rowSize]), true), babelHelpers.classPrivateFieldLooseBase(this, _expandedListContainer)[_expandedListContainer]);
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _isEnoughSpaceBelowTargetElement)[_isEnoughSpaceBelowTargetElement]() === false) {
-	    this.adjustPosition();
-	  }
-	}
-	function _isEnoughSpaceBelowTargetElement2() {
-	  const popoverRect = main_core.Dom.getPosition(babelHelpers.classPrivateFieldLooseBase(this, _popover)[_popover]);
-	  const targetRect = main_core.Dom.getPosition(babelHelpers.classPrivateFieldLooseBase(this, _target)[_target]);
-	  return targetRect.bottom + popoverRect.height + babelHelpers.classPrivateFieldLooseBase(ReactionPicker, _offsetBetweenTargetElement)[_offsetBetweenTargetElement] < window.innerHeight;
-	}
-	function _isEnoughSpaceAboveTargetElement2() {
-	  const elementRect = main_core.Dom.getPosition(babelHelpers.classPrivateFieldLooseBase(this, _target)[_target]);
-	  return elementRect.top - babelHelpers.classPrivateFieldLooseBase(ReactionPicker, _minHeight)[_minHeight] - window.scrollY - babelHelpers.classPrivateFieldLooseBase(ReactionPicker, _offsetBetweenTargetElement)[_offsetBetweenTargetElement] > 0;
-	}
-	function _getReactionsNames2() {
-	  const rankedReactions = babelHelpers.classPrivateFieldLooseBase(this, _ranking)[_ranking].getRankedReactionsNames();
-	  const excludedReactions = new Set([ui_reaction_item.ReactionName.signHorns, ui_reaction_item.ReactionName.faceWithStuckOutTongue]);
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _allowedReactions)[_allowedReactions]) {
-	    return rankedReactions.filter(reaction => babelHelpers.classPrivateFieldLooseBase(this, _allowedReactions)[_allowedReactions].includes(reaction));
-	  }
-	  return rankedReactions.filter(reaction => !excludedReactions.has(reaction));
-	}
-	Object.defineProperty(ReactionPicker, _rowSize, {
-	  writable: true,
-	  value: 7
-	});
-	Object.defineProperty(ReactionPicker, _minHeight, {
-	  writable: true,
-	  value: 56
-	});
-	Object.defineProperty(ReactionPicker, _offsetBetweenTargetElement, {
-	  writable: true,
-	  value: 8
-	});
+		`;
+			main_core.bind(button, 'click', () => {
+				// Read before the button leaves the DOM: removing the focused element drops the
+				// focus onto <body>, and then there is no telling where it came from.
+				const shouldMoveFocus = this.#hasFocusInside();
+				const lastRowReaction = this.#renderReactionElement(this.#getReactionsNames()[ReactionPicker.#rowSize - 1]);
+				main_core.Dom.append(lastRowReaction, this.#listContainer);
+				main_core.Dom.remove(wrapper);
+				this.#expand();
+				this.#focusZone?.refreshElements();
+				if (shouldMoveFocus) {
+					lastRowReaction.focus();
+				}
+			});
+			return wrapper;
+		}
+		#destroyPopover() {
+			if (!this.#popover) {
+				return;
+			}
+			if (this.#mouseenterHandler) {
+				main_core.unbind(this.#popover, 'mouseenter', this.#mouseenterHandler);
+				this.#mouseenterHandler = null;
+			}
+			if (this.#mouseleaveHandler) {
+				main_core.unbind(this.#popover, 'mouseleave', this.#mouseleaveHandler);
+				this.#mouseleaveHandler = null;
+			}
+			if (this.#keydownHandler) {
+				main_core.unbind(this.#popover, 'keydown', this.#keydownHandler);
+				this.#keydownHandler = null;
+			}
+			if (this.#mousedownHandler) {
+				main_core.unbind(this.#popover, 'mousedown', this.#mousedownHandler);
+				this.#mousedownHandler = null;
+			}
 
-	exports.ReactionPickerEvents = ReactionPickerEvents;
+			// hide() leaves the listener in place: the popover it is bound to is inert by then, so no
+			// focus reaches it, and a picker shown again inside the teardown window needs it back.
+			if (this.#focusinHandler) {
+				main_core.unbind(this.#popover, 'focusin', this.#focusinHandler);
+				this.#focusinHandler = null;
+			}
+			this.#focusZone?.deactivate();
+			this.#focusZone = null;
+			this.#focusTrap?.destroy();
+			this.#focusTrap = null;
+			main_core_zIndexManager.ZIndexManager.unregister(this.#popover);
+			this.#popover.remove();
+			this.#popover = null;
+			this.#menuContainer = null;
+			this.#listContainer = null;
+			this.#expandedListContainer = null;
+		}
+		#clearDestroyTimeout() {
+			clearTimeout(this.#destroyTimeoutId);
+			this.#destroyTimeoutId = null;
+		}
+
+		/**
+		 * A menu about to be handed to the keyboard has to be navigable at once, and a transparent
+		 * popover has nothing to navigate: opacity 0 counts as invisible, and a transition reports the
+		 * value it starts from until it ends. The fade-in is jumped to its end rather than waited out,
+		 * which costs the keyboard path its 0.1s of animation and buys the arrows working from the
+		 * first key press. A picker opened with the mouse fades in as before.
+		 */
+		#skipFadeIn() {
+			main_core.Dom.addClass(this.#popover, '--visible');
+			this.#popover.getAnimations().forEach(animation => {
+				animation.finish();
+			});
+		}
+		#deactivateFocusTrap() {
+			if (!this.#focusTrap) {
+				return;
+			}
+
+			// A picker opened and closed with the mouse never held the focus, and handing it
+			// to the target would move the focus the user did not touch.
+			this.#focusTrap.setRestoreFocus(this.#hasFocusInside() ? this.#restoreFocusTarget : false);
+			this.#focusTrap.deactivate();
+		}
+		#destroyReactions() {
+			this.#reactions.forEach(reaction => {
+				reaction.destroy();
+			});
+			this.#reactions = [];
+		}
+		#expand() {
+			main_core.Dom.addClass(this.#popover, '--expanded');
+			main_core.Dom.append(this.#renderReactionsList(this.#getReactionsNames().slice(ReactionPicker.#rowSize), true), this.#expandedListContainer);
+			if (this.#isEnoughSpaceBelowTargetElement() === false) {
+				this.adjustPosition();
+			}
+			this.emit(ReactionPickerEvents.expand, {
+				expandedListContainer: this.#expandedListContainer
+			});
+		}
+
+		/**
+		 * A target given as coordinates has no element to speak for it, and an element that is not a
+		 * control of any kind has no state to be in: the picker is then a menu nothing announces.
+		 */
+		#syncTargetMenuState(isExpanded) {
+			if (!this.#isMenuStateTarget()) {
+				return;
+			}
+			this.#stampTargetAttribute('aria-haspopup', 'menu');
+			this.#stampTargetAttribute('aria-expanded', isExpanded ? 'true' : 'false');
+		}
+		#isMenuStateTarget() {
+			return this.#target instanceof HTMLElement && this.#target.matches(ReactionPicker.#menuStateTargetSelector);
+		}
+
+		/**
+		 * The target is the owner's, and it may already speak for a widget of its own - one that opens
+		 * a dialog, say. The value it had before the picker wrote over it is the one it goes back to.
+		 */
+		#stampTargetAttribute(name, value) {
+			if (!this.#stampedTargetAttributes) {
+				this.#stampedTargetAttributes = new Map();
+			}
+			if (!this.#stampedTargetAttributes.has(name)) {
+				this.#stampedTargetAttributes.set(name, this.#target.getAttribute(name));
+			}
+			main_core.Dom.attr(this.#target, name, value);
+		}
+
+		/**
+		 * A target outlives the picker it opened - it is the picker that belongs to a message, not the
+		 * other way round. Left with the attributes, it would go on announcing a menu it no longer has.
+		 */
+		#clearTargetMenuState() {
+			this.#stampedTargetAttributes?.forEach((value, name) => {
+				main_core.Dom.attr(this.#target, name, value);
+			});
+			this.#stampedTargetAttributes = null;
+		}
+		#hasFocusInside() {
+			return this.#popover !== null && this.#popover.contains(document.activeElement);
+		}
+
+		/**
+		 * The picker also opens on hover, and the input modality alone does not tell hover apart
+		 * from a key press: hovering fires no pointerdown, so a user who typed and then moved the
+		 * mouse still counts as keyboard. Taking the focus is only right when the element the
+		 * picker is anchored to holds it - that is what a keyboard-driven opening looks like.
+		 */
+		#isOpenedFromFocusedTarget() {
+			return ui_a11y.FocusMonitor.Instance.getModalityTracker().getLastModality() === 'keyboard' && this.#target instanceof HTMLElement && this.#target.contains(document.activeElement);
+		}
+
+		/**
+		 * Expanded, the reactions are laid out as a grid of `#rowSize` columns, so the vertical
+		 * arrows move a whole row at a time. Returning null hands the key back to the linear
+		 * navigation of the zone, which is what the horizontal arrows need.
+		 */
+		#getNextFocusableInRow(from, event) {
+			if (event.key !== 'ArrowUp' && event.key !== 'ArrowDown') {
+				return null;
+			}
+
+			// Collapsed, the menu is the single row a `role="menu"` is read as anyway, and a step of a
+			// whole row has nowhere to land: answering with the item the user started from moves
+			// nothing and tells a screen reader nothing. The linear navigation of the zone does both.
+			if (!main_core.Dom.hasClass(this.#popover, '--expanded')) {
+				return null;
+			}
+			const items = [...this.#menuContainer.querySelectorAll('[role="menuitem"]')];
+			const currentIndex = items.indexOf(from);
+			if (currentIndex === -1) {
+				return null;
+			}
+			const offset = event.key === 'ArrowDown' ? ReactionPicker.#rowSize : -ReactionPicker.#rowSize;
+
+			// No reaction in that row - the focus stays where it is instead of leaving the set.
+			return items[currentIndex + offset] ?? items[currentIndex];
+		}
+		#isEnoughSpaceBelowTargetElement() {
+			const popoverRect = main_core.Dom.getPosition(this.#popover);
+			const targetRect = main_core.Dom.getPosition(this.#target);
+			return targetRect.bottom + popoverRect.height + ReactionPicker.#offsetBetweenTargetElement < window.innerHeight;
+		}
+		#isEnoughSpaceAboveTargetElement() {
+			const elementRect = main_core.Dom.getPosition(this.#target);
+			return elementRect.top - ReactionPicker.#minHeight - window.scrollY - ReactionPicker.#offsetBetweenTargetElement > 0;
+		}
+		#getReactionsNames() {
+			const rankedReactions = this.#ranking.getRankedReactionsNames();
+			const excludedReactions = new Set([ui_reaction_item.ReactionName.signHorns, ui_reaction_item.ReactionName.faceWithStuckOutTongue]);
+			const reactions = this.#allowedReactions ? rankedReactions.filter(reaction => this.#allowedReactions.includes(reaction)) : rankedReactions.filter(reaction => !excludedReactions.has(reaction));
+			if (!this.#priority || !reactions.includes(this.#priority)) {
+				return reactions;
+			}
+			return [this.#priority, ...reactions.filter(reaction => reaction !== this.#priority)];
+		}
+	}
+
 	exports.ReactionPicker = ReactionPicker;
+	exports.ReactionPickerEvents = ReactionPickerEvents;
 
-}((this.BX.UI.Reaction.Picker = this.BX.UI.Reaction.Picker || {}),BX.Event,BX,BX.UI.IconSet,BX,BX,BX.UI.Reaction.Item));
+})(this.BX.UI.Reaction.Picker = this.BX.UI.Reaction.Picker || {}, BX, BX.Event, BX, BX.Main, BX.UI.Accessibility, BX.UI.IconSet, window, window, window, BX.UI.Reaction.Item);
 //# sourceMappingURL=reaction-picker.bundle.js.map

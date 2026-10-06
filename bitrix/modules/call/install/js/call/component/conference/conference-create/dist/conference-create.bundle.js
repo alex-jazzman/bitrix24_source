@@ -350,5 +350,5 @@
 	`
 	});
 
-})(BX, BX, BX, BX, BX.Messenger.Lib, BX.Messenger.Lib);
+})(window, BX, BX, BX, BX.Messenger.Lib, BX.Messenger.Lib);
 //# sourceMappingURL=conference-create.bundle.js.map

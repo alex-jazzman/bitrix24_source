@@ -113,6 +113,15 @@ elseif($action === 'SAVE')
 
 	$isNew = $ID === 0;
 	$isCopyMode = $isNew && $sourceEntityID > 0;
+
+	if (
+		$sourceEntityID > 0
+		&& !Container::getInstance()->getUserPermissions()->item()->canRead(\CCrmOwnerType::Lead, $sourceEntityID)
+	)
+	{
+		__CrmLeadDetailsEndJsonResponse(['ERROR' => \Bitrix\Main\Localization\Loc::getMessage('CRM_COMMON_ERROR_ACCESS_DENIED')]);
+	}
+
 	//TODO: Implement external mode
 	$isExternal = false;
 
@@ -721,20 +730,6 @@ elseif($action === 'SAVE')
 				$responseData['ERROR'] = $errorMessage;
 			}
 			__CrmLeadDetailsEndJsonResponse($responseData);
-		}
-
-		if (
-			!$isExternal
-			&& $enableProductRows
-			&& (!$isNew || !empty($productRows))
-			// if factory was used, product rows were saved already on lead save
-			&& !Crm\Settings\LeadSettings::getCurrent()->isFactoryEnabled()
-		)
-		{
-			if(!\CCrmLead::SaveProductRows($ID, $productRows, true, true, false))
-			{
-				__CrmLeadDetailsEndJsonResponse(array('ERROR' => GetMessage('CRM_LEAD_PRODUCT_ROWS_SAVING_ERROR')));
-			}
 		}
 
 		if(!empty($productRowSettings))

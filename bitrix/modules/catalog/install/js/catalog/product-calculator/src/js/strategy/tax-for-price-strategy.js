@@ -473,4 +473,34 @@ export class TaxForPriceStrategy
 		// Tax is included in price
 		return price + price * taxRate / 100;
 	}
+
+	convertBasePriceForTaxIncluded(
+		value: number,
+		taxRate: number,
+		fromTaxIncluded: 'Y' | 'N',
+		toTaxIncluded: 'Y' | 'N',
+	): {converted: boolean, price: number}
+	{
+		if (
+			!fromTaxIncluded
+			|| !toTaxIncluded
+			|| fromTaxIncluded === toTaxIncluded
+			|| !(taxRate > 0)
+		)
+		{
+			return {converted: false, price: value};
+		}
+
+		if (fromTaxIncluded === 'Y' && toTaxIncluded === 'N')
+		{
+			return {converted: true, price: this.calculatePriceWithoutTax(value, taxRate)};
+		}
+
+		if (fromTaxIncluded === 'N' && toTaxIncluded === 'Y')
+		{
+			return {converted: true, price: this.calculatePriceWithTax(value, taxRate)};
+		}
+
+		return {converted: false, price: value};
+	}
 }

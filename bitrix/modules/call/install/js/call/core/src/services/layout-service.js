@@ -3,6 +3,7 @@ import { EventEmitter } from 'main.core.events';
 import { Menu } from 'main.popup';
 
 import Util from '../util';
+import { STREAM_MANAGER_SUPERSEDED } from '../media-stream-manager';
 
 /**
  * Manages call window layout: fold/unfold, fullscreen, detached mode, chat visibility, and window focus.
@@ -701,6 +702,14 @@ export class LayoutService extends EventEmitter
 
 			return stream;
 		}).catch((error) => {
+			if (error?.name === STREAM_MANAGER_SUPERSEDED)
+			{
+				// Superseded by a newer device selection - not a media failure. Don't retry with fallback
+				// constraints; that capture would register after the newest request and unseat the selected
+				// device. Rethrow: callers already handle a prepareLocalStream rejection.
+				throw error;
+			}
+
 			if (!fallback)
 			{
 				return this.prepareLocalStream({

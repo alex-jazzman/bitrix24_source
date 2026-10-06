@@ -2,6 +2,7 @@
 
 $MESS["MAIL_CLIENT_CONFIG_TITLE"] = 'Подключение почтового ящика';
 $MESS["MAIL_CLIENT_CONFIG_EDIT_TITLE"] = 'Управление почтовым ящиком';
+$MESS["MAIL_CLIENT_CRM_MASS_TITLE"] = 'Настройки CRM для ящиков';
 
 $MESS["MAIL_CLIENT_CONFIG_PROMPT"] = 'Работайте с почтой внутри Битрикс24';
 

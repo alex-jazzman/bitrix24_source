@@ -206,11 +206,7 @@ export class RowFieldUiBinder
 				}
 				else if (field === 'TAX_RATE')
 				{
-					value =
-						Type.isNil(value) || value === ''
-							? ''
-							: row.parseFloat(value, row.getCommonPrecision())
-					;
+					value = row.getField('TAX_ID');
 				}
 				else if (value === 0)
 				{

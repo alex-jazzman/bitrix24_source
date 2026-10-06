@@ -54,12 +54,15 @@ export type EntitySelectorRequestConfig = {
 };
 
 type RecentSectionSearchConfigType = {
-	searchRecentSection: $Values<typeof RecentType>,
+	searchRecentSection: ?$Values<typeof RecentType>,
 	parentId: number,
+	onlyWithManageUsersAddRight?: boolean,
+	onlyWithOwnerRight?: boolean,
 };
 
 export type EntitySearchConfigType = {
 	exclude: $Values<typeof EntitySearch>[],
+	excludeGuests?: boolean,
 }
 
 export type MentionSearchConfigType = {

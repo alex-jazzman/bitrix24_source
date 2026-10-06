@@ -12,8 +12,8 @@
 	--im-keyboard__border-radius: var(--im-border-radius-2xl);
 
 	display: block;
+	min-width: 0;
 	text-align: left;
-	word-break: break-all;
 	margin-top: 2px;
 	margin-bottom: 7px;
 }
@@ -21,6 +21,7 @@
 .bx-im-keyboard-button__container {
 	display: block;
 	min-width: 37px;
+	max-width: 100%;
 	margin-top: 5px;
 	padding: 4px 10px;
 
@@ -95,21 +96,9 @@
 			var(--ui-color-design-tinted-bitrix-gpt-bg-gradient-3, #F1F0FF) 48.82%,
 			var(--ui-color-design-tinted-bitrix-gpt-bg-gradient-4, #F0F7FF) 98.35%
 	);
-	color: transparent;
-	white-space: nowrap;
 }
 
-.bx-im-keyboard-button__container.ai-assistant::after {
-	content: attr(data-text);
-	position: absolute;
-	inset: 0;
-	padding: inherit;
-	box-sizing: border-box;
-	display: block;
-	text-align: center;
-	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis;
+.bx-im-keyboard-button__container.ai-assistant .bx-im-keyboard-button__text {
 	background: linear-gradient(
 			251deg,
 			var(--ui-color-design-tinted-bitrix-gpt-content-gradient-5, #F96269) 1.67%,
@@ -120,6 +109,7 @@
 	);
 	-webkit-background-clip: text;
 	-webkit-text-fill-color: transparent;
+	color: transparent;
 	background-clip: text;
 }
 

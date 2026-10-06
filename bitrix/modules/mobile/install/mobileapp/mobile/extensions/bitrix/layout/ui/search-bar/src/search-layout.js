@@ -129,10 +129,12 @@ jn.define('layout/ui/search-bar/search-layout', (require, exports, module) => {
 		}
 
 		getSearchButton = () => {
+			const { badgeCode } = this.props;
+
 			return {
 				type: 'search',
 				id: 'search',
-				badgeCode: 'tasks_search',
+				badgeCode,
 				testId: 'search',
 				callback: this.show,
 				accent: this.hasChanges(),

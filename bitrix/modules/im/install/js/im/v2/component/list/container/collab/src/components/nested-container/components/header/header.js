@@ -2,9 +2,10 @@ import { CreateChatButton } from 'im.v2.component.list.container.elements.create
 import { ChatSearchInput } from 'im.v2.component.search';
 import { PermissionManager } from 'im.v2.lib.permission';
 import { Utils } from 'im.v2.lib.utils';
-import { ActionByRole, ActionByUserType } from 'im.v2.const';
+import { ActionByRole, ActionByUserType, RecentType } from 'im.v2.const';
 import { HeaderMenu } from 'im.v2.component.list.container.elements.header-menu';
 import { type ImModelCollabInfo } from 'im.v2.model';
+import { AttachToCollabV2 } from 'im.v2.component.entity-selector';
 
 import { CreateMenu } from './classes/create-menu';
 import { CreateChatPromo } from './components/create-chat-promo';
@@ -13,7 +14,7 @@ import { CollabPromoManager, type ShowPromoEvent } from '../../classes/promo-man
 // @vue/component
 export const CollabHeader = {
 	name: 'CollabHeader',
-	components: { CreateChatButton, ChatSearchInput, CreateChatPromo, HeaderMenu },
+	components: { CreateChatButton, ChatSearchInput, CreateChatPromo, HeaderMenu, AttachToCollabV2 },
 	inject: ['promoManager'],
 	props: {
 		parentChatId: {
@@ -42,9 +43,11 @@ export const CollabHeader = {
 	{
 		return {
 			showCreateChatPromo: false,
+			showAttachToCollabV2Popup: false,
 		};
 	},
 	computed: {
+		RecentType: () => RecentType,
 		parentDialogId(): string
 		{
 			return Utils.dialog.buildChatDialogId(this.parentChatId);
@@ -75,12 +78,20 @@ export const CollabHeader = {
 	mounted()
 	{
 		this.contextMenuManager = new CreateMenu();
+
+		this.contextMenuManager.subscribe(CreateMenu.events.onAttachToCollabV2Show, this.onAttachToCollabV2Show);
 	},
 	beforeUnmount()
 	{
+		this.contextMenuManager.unsubscribe(CreateMenu.events.onAttachToCollabV2Show, this.onAttachToCollabV2Show);
+
 		this.contextMenuManager.destroy();
 	},
 	methods: {
+		onAttachToCollabV2Show()
+		{
+			this.showAttachToCollabV2Popup = true;
+		},
 		bindPromoEvent()
 		{
 			this.promoManager.subscribe(CollabPromoManager.events.showCreateChatPromo, (event: ShowPromoEvent) => {
@@ -128,6 +139,13 @@ export const CollabHeader = {
 				<CreateChatButton v-if="canCreateEntities" @click="onCreateClick" />
 			</div>
 			<CreateChatPromo v-if="showCreateChatPromo" :bindElement="$refs['create-chat-button']" @close="onCloseCreateChatPromo" />
+			<AttachToCollabV2
+				v-if="showAttachToCollabV2Popup"
+				:popupTitle="loc('IM_LIST_CONTAINER_COLLAB_ATTACH_TO_COLLAB_V2_POPUP_TITLE')"
+				:searchParams="{ onlyWithOwnerRight: true, searchChatTypes: ['C'], onlyWithNullEntityType: true }"
+				:dialogId="parentDialogId"
+				@close="showAttachToCollabV2Popup = false"
+			/>
 		</div>
 	`,
 };

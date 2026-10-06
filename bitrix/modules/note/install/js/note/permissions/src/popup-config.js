@@ -8,6 +8,8 @@ import {
 	LEVEL_MODERATE,
 	LEVEL_NONE,
 	LEVEL_VIEW,
+	SCOPE_DOCUMENT,
+	SCOPE_SUBTREE,
 } from './constants';
 import type {
 	CollectionPermissionsPayload,
@@ -103,7 +105,7 @@ function flattenStateForCollection(state: PopupSaveState): { policyLevel: string
 	return { policyLevel, permissions };
 }
 
-function flattenStateForDocument(state: PopupSaveState): Array<{ subjectCode: string, level: string }>
+function flattenStateForDocument(state: PopupSaveState): Array<{ subjectCode: string, level: string, scope: string }>
 {
 	const permissions = [];
 	for (const level of Object.keys(state.byLevel))
@@ -116,7 +118,13 @@ function flattenStateForDocument(state: PopupSaveState): Array<{ subjectCode: st
 				continue;
 			}
 
-			permissions.push({ subjectCode: member.subjectCode, level });
+			// Subtree scope is valid only for positive levels; mirror the backend guard
+			// so a malformed level never ships an invalid scope pairing.
+			const scope = (member.scope === SCOPE_SUBTREE && (level === LEVEL_VIEW || level === LEVEL_EDIT))
+				? SCOPE_SUBTREE
+				: SCOPE_DOCUMENT;
+
+			permissions.push({ subjectCode: member.subjectCode, level, scope });
 		}
 	}
 

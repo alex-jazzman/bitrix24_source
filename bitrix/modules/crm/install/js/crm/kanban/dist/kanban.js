@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.CRM = this.BX.CRM || {};
-(function (exports, crm_kanban_restriction, crm_toolbarComponent, main_core, main_kanban, main_popup, ui_designTokens, ui_fonts_opensans, ls, ui_entitySelector, ui_tour, ui_notification, crm_integration_analytics, pull_queuemanager, crm_autorun, ui_analytics, main_date, crm_activity_addingPopup, crm_badge, main_loader, main_sidepanel, ui_system_label, ui_hint, crm_activity_planner, currency_currencyCore, ui_buttons, crm_kanban_sort) {
+(function (exports, crm_kanban_restriction, crm_toolbarComponent, main_core, main_kanban, main_popup, ui_designTokens, ui_fonts_opensans, ls, ui_entitySelector, ui_tour, ui_notification, crm_integration_analytics, pull_queuemanager, crm_autorun, ui_analytics, crm_activity_addingPopup, crm_badge, main_date, main_sidepanel, ui_system_label, ui_hint, crm_activity_planner, currency_currencyCore, main_loader, ui_buttons, crm_dialog, crm_kanban_sort) {
 	'use strict';
 
 	const NAMESPACE$3 = main_core.Reflection.namespace('BX.CRM.Kanban.Actions');
@@ -1928,6 +1928,10 @@ this.BX.CRM = this.BX.CRM || {};
 			return main_core.Type.isString(response.error);
 		}
 		showResponseError(response) {
+			if (response.errorCode === 'MODE_NOT_AVAILABLE') {
+				this.handleModeNotAvailable();
+				return;
+			}
 			const errorText = response.error;
 			if (response.fatal) {
 				BX.Kanban.Utils.showErrorDialog(errorText, true);
@@ -1936,6 +1940,25 @@ this.BX.CRM = this.BX.CRM || {};
 					content: errorText,
 					autoHideDelay: 5000
 				});
+			}
+		}
+		handleModeNotAvailable() {
+			if (this._modeNotAvailableHandled) {
+				return;
+			}
+			this._modeNotAvailableHandled = true;
+			BX.UI.Notification.Center.notify({
+				content: main_core.Loc.getMessage('CRM_KANBAN_MODE_ACTIVITIES_DISABLED'),
+				autoHideDelay: 5000
+			});
+			const gridData = this.getData();
+			const entityTypeId = gridData.hasOwnProperty('entityTypeInt') ? main_core.Text.toInteger(gridData.entityTypeInt) : 0;
+			const categoryId = gridData.params && gridData.params.hasOwnProperty('CATEGORY_ID') ? main_core.Text.toInteger(gridData.params.CATEGORY_ID) : 0;
+			if (entityTypeId > 0 && BX.Crm.Router && BX.Crm.Router.Instance) {
+				const listUri = BX.Crm.Router.Instance.getItemListUrl(entityTypeId, categoryId);
+				if (listUri) {
+					window.location = listUri.toString();
+				}
 			}
 		}
 		showItemPlannerMenu(item) {
@@ -2046,6 +2069,7 @@ this.BX.CRM = this.BX.CRM || {};
 				this.setData(gridData);
 				this.destroyFieldsSelectPopup();
 				this.destroyHideColumnSumPopups();
+				this.destroyUnavailableFieldsPopup();
 				const exist = [];
 				let id = null;
 				let columns = this.getColumns();
@@ -2562,6 +2586,9 @@ this.BX.CRM = this.BX.CRM || {};
 				main_popup.PopupManager.getPopupById(column.getHideColumnSumPopupId())?.destroy();
 			});
 		}
+		destroyUnavailableFieldsPopup() {
+			main_popup.PopupManager.getPopupById('crm-unavailable-fields-checker-popup')?.destroy();
+		}
 
 		/**
 		 * Handler partial editor close.
@@ -2766,6 +2793,12 @@ this.BX.CRM = this.BX.CRM || {};
 					this.onPopupClose();
 				}
 				this.handleScrollWithOpenPopupInKanbanColumn = e => {
+					// Sticky popups (e.g. the "not enough rights" popup) must follow the
+					// bound button on scroll instead of being closed.
+					if (this.isStickyKanbanColumnPopup(popupWindow)) {
+						this.updateStickyPopupPosition(popupWindow);
+						return;
+					}
 					popupWindow.close();
 				};
 				BX.Event.EventEmitter.subscribe(this, 'Kanban.Column:onScroll', this.handleScrollWithOpenPopupInKanbanColumn);
@@ -2831,6 +2864,62 @@ this.BX.CRM = this.BX.CRM || {};
 				kanbanColumnElem = kanbanColumnElem.parentNode;
 			}
 			return !!kanbanColumnElem;
+		}
+
+		/**
+		 * Sticky popups must follow their bound element while the column is scrolled
+		 * instead of being closed on scroll (e.g. the "not enough rights" popup
+		 * anchored to the quick create save button).
+		 * @param {BX.PopupWindow} popupWindow
+		 * @returns {boolean}
+		 */
+		isStickyKanbanColumnPopup(popupWindow) {
+			return popupWindow.uniquePopupId === 'crm-unavailable-fields-checker-popup';
+		}
+
+		/**
+		 * Keeps a sticky popup glued to its bound element while the column scrolls,
+		 * but hides it once the bound element is scrolled out of the visible area of
+		 * its scroll container (so a fixed popup does not float over the top menu).
+		 * @param {BX.PopupWindow} popupWindow
+		 * @returns {void}
+		 */
+		updateStickyPopupPosition(popupWindow) {
+			const bindElement = popupWindow.bindElement;
+			const container = popupWindow.popupContainer;
+			if (!bindElement || !container) {
+				return;
+			}
+			const scrollContainer = this.getScrollableParent(bindElement);
+			let isBindElementVisible = true;
+			if (scrollContainer) {
+				const bindRect = bindElement.getBoundingClientRect();
+				const scrollRect = scrollContainer.getBoundingClientRect();
+				isBindElementVisible = bindRect.bottom > scrollRect.top && bindRect.top < scrollRect.bottom;
+			}
+			if (isBindElementVisible) {
+				container.style.visibility = '';
+				popupWindow.adjustPosition();
+			} else {
+				container.style.visibility = 'hidden';
+			}
+		}
+
+		/**
+		 * Nearest vertically scrollable ancestor of the node (or null).
+		 * @param {HTMLElement} node
+		 * @returns {?HTMLElement}
+		 */
+		getScrollableParent(node) {
+			let current = node.parentElement;
+			while (current) {
+				const overflowY = getComputedStyle(current).overflowY;
+				if ((overflowY === 'auto' || overflowY === 'scroll') && current.scrollHeight > current.clientHeight) {
+					return current;
+				}
+				current = current.parentElement;
+			}
+			return null;
 		}
 
 		/**
@@ -3853,9 +3942,9 @@ this.BX.CRM = this.BX.CRM || {};
 			if (fieldConfig.type === 'text' || fieldConfig.type === 'string') {
 				this.addTextExpander(fieldsElement);
 			}
-			if (code === 'COMMENTS' && BX.Type.isStringFilled(this.getGrid().getData().copilotName)) {
+			if (code === 'COMMENTS' && main_core.Type.isStringFilled(this.getGrid().getData().copilotName)) {
 				const copilot = `${this.getGrid().getData().copilotName}`;
-				const escapedCopilot = BX.Type.isFunction(RegExp.escape) ? RegExp.escape(copilot) : copilot.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+				const escapedCopilot = main_core.Type.isFunction(RegExp.escape) ? RegExp.escape(copilot) : copilot.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 				const regex = new RegExp(`(^|<br>)${escapedCopilot}`, 'gim');
 				const valueElements = fieldsElement.querySelectorAll('p');
 				valueElements.forEach(valueElement => {
@@ -3874,7 +3963,7 @@ this.BX.CRM = this.BX.CRM || {};
 			BX.UI.Hint.init(BX(this.fieldsWrapper));
 		}
 		addTextExpander(fieldElement) {
-			if (!BX.Type.isDomNode(fieldElement)) {
+			if (!main_core.Type.isDomNode(fieldElement)) {
 				return;
 			}
 			BX.Dom.addClass(fieldElement, '--text');
@@ -4050,26 +4139,24 @@ this.BX.CRM = this.BX.CRM || {};
 			const badges = this.getBadges();
 			for (let i = 0; i < badges.length; i++) {
 				const badgeData = badges[i];
-				const badgeValueClass = 'crm-kanban-item-badges-item-value crm-kanban-item-badges-status';
-				const badgeValueStyle = `
-				background-color: ${badgeData.backgroundColor};
-				border-color: ${badgeData.backgroundColor};
-				color: ${badgeData.textColor};
-			`;
-				const badgeTextItem = main_core.Tag.render`
-				<div class="${badgeValueClass}" style="${badgeValueStyle}">${badgeData.textValue}</div>
+				const labelNode = new ui_system_label.Label({
+					value: badgeData.textValue,
+					style: badgeData.style
+				}).render();
+				const valueWrapper = main_core.Tag.render`
+				<div class="crm-kanban-item-badges-item-value">${labelNode}</div>
 			`;
 				const item = main_core.Tag.render`
 				<div class="crm-kanban-item-badges-item">
 					<div class="crm-kanban-item-badges-item-title">
 						<div class="crm-kanban-item-badges-item-title-text">${badgeData.fieldName}</div>
 					</div>
-					${badgeTextItem}
+					${valueWrapper}
 				</div>
 			`;
 				main_core.Dom.append(item, this.badgesWrapper);
 				if (main_core.Type.isStringFilled(badgeData?.hint)) {
-					const badge = new crm_badge.Badge(badgeTextItem);
+					const badge = new crm_badge.Badge(valueWrapper);
 					badge.init({
 						hint: badgeData.hint
 					});
@@ -4463,15 +4550,30 @@ this.BX.CRM = this.BX.CRM || {};
 				this.showSingleContact(contactInfo, type);
 			}
 		}
+
+		// The default communication entity is the card owner: type and id must belong to the same CRM entity (Mantis 142500).
+		getDefaultCommunicationEntity() {
+			const type = this.getContactType();
+			const id = type === 'CRM_COMPANY' ? this.getCompanyId() : this.getContactId();
+			return {
+				type,
+				id
+			};
+		}
 		clickContactItem(item) {
 			const data = this.getData();
 
 			// eslint-disable-next-line no-undef
 			if (item.type === 'phone' && !main_core.Type.isUndefined(BXIM)) {
+				const entity = item.clientType ? {
+					type: item.clientType,
+					id: item.clientId
+				} : this.getDefaultCommunicationEntity();
+
 				// eslint-disable-next-line no-undef
 				BXIM.phoneTo(item.value, {
-					ENTITY_TYPE: item.clientType === undefined ? this.getContactType() : item.clientType,
-					ENTITY_ID: item.clientId === undefined ? this.getContactId() : item.clientId
+					ENTITY_TYPE: entity.type,
+					ENTITY_ID: entity.id
 				});
 			}
 			// eslint-disable-next-line no-undef
@@ -4542,7 +4644,9 @@ this.BX.CRM = this.BX.CRM || {};
 						text: `${field.value} (${field.title})`,
 						onclick: this.clickContactItem.bind(this, {
 							value: field.value,
-							type
+							type,
+							clientType,
+							clientId
 						})
 					});
 				});
@@ -4564,17 +4668,23 @@ this.BX.CRM = this.BX.CRM || {};
 			BX.bind(window, 'scroll', BX.proxy(this.adjustPopup, this));
 		}
 		showSingleContact(contactInfo, type) {
-			let fields = this.getSingleContactCategory(contactInfo);
+			const category = main_core.Type.isObjectLike(contactInfo) ? Object.keys(contactInfo)[0] : '';
+			let fields = main_core.Type.isObjectLike(contactInfo) ? contactInfo[category] : contactInfo;
 			if (!Array.isArray(fields)) {
 				fields = [fields];
 			}
-			this.clickContactItem({
+			const item = {
 				value: main_core.Type.isUndefined(fields[0].value) ? fields[0] : fields[0].value,
 				type
-			});
-		}
-		getSingleContactCategory(contactInfo) {
-			return main_core.Type.isObjectLike(contactInfo) ? contactInfo[Object.keys(contactInfo)[0]] : contactInfo;
+			};
+			if (category === 'company') {
+				item.clientType = 'CRM_COMPANY';
+				item.clientId = this.getCompanyId();
+			} else if (category === 'contact') {
+				item.clientType = 'CRM_CONTACT';
+				item.clientId = this.getContactId();
+			}
+			this.clickContactItem(item);
 		}
 
 		/**
@@ -5859,6 +5969,7 @@ this.BX.CRM = this.BX.CRM || {};
 					}
 				});
 				BX.addCustomEvent(window, "BX.CRM.Kanban.Item.select", this.closeQuickFormEditor.bind(this));
+				BX.addCustomEvent(window, "BX.CRM.Kanban.Item.select", this.enabledAddButton.bind(this));
 				//BX.addCustomEvent(window, "Kanban.Column:render", this.hideQuickFormEditor.bind(this));
 				BX.addCustomEvent(window, "onCrmEntityCreate", this.hideQuickFormEditor.bind(this));
 				BX.addCustomEvent(window, "Kanban.Column:render", this.enabledAddButton.bind(this));
@@ -6055,8 +6166,10 @@ this.BX.CRM = this.BX.CRM || {};
 					useAirDesign: true,
 					style: ui_buttons.AirButtonStyle.FILLED,
 					onclick: () => {
-						this.processQuickEditor();
-						this.showQuickEditorLoader();
+						if (!this.editor.hasUnavailableFieldsByStage(this.getId().toString())) {
+							this.processQuickEditor();
+							this.showQuickEditorLoader();
+						}
 					}
 				});
 				this.quickFormCancelButtonInstance = new ui_buttons.Button({
@@ -6065,6 +6178,7 @@ this.BX.CRM = this.BX.CRM || {};
 					useAirDesign: true,
 					style: ui_buttons.AirButtonStyle.OUTLINE,
 					onclick: () => {
+						this.editor?.hideUnavailableFieldsPopup();
 						this.enabledAddButton();
 						this.hideQuickFormEditor();
 						this.cleanEditor();
@@ -6112,6 +6226,7 @@ this.BX.CRM = this.BX.CRM || {};
 									for (let i = 0; i < columns.length; i++) {
 										if (columns[i] !== this) {
 											if (columns[i].editor) {
+												columns[i].editor.hideUnavailableFieldsPopup();
 												columns[i].editor.release();
 												columns[i].editor = null;
 												columns[i].editorOpen = false;
@@ -6152,6 +6267,10 @@ this.BX.CRM = this.BX.CRM || {};
 									const autoHideEditor = () => {
 										this.editorNode.style.height = null;
 										main_core.Event.unbind(this.editorNode, 'transitionend', autoHideEditor);
+										if (this.editor.hasUnavailableFieldsByStage(this.getId().toString())) {
+											this.editor.showUnavailableFieldsPopup(this.editorNodeCreate.firstChild, this.getId().toString());
+											main_core.Dom.addClass(this.editorNodeCreate.firstChild, 'ui-btn-disabled');
+										}
 									};
 									main_core.Event.bind(this.editorNode, 'transitionend', autoHideEditor);
 									if (this.editor) {
@@ -6394,7 +6513,6 @@ this.BX.CRM = this.BX.CRM || {};
 		}
 
 		/**
-		 *
 		 * @param {BX.CRM.Kanban.Item} itemToRemove
 		 */
 		removeItem(itemToRemove) {
@@ -6435,7 +6553,6 @@ this.BX.CRM = this.BX.CRM || {};
 		}
 
 		/**
-		 *
 		 * @param {BX.CRM.Kanban.Item} item
 		 * @param {string} backgroundColor
 		 */
@@ -6925,45 +7042,23 @@ this.BX.CRM = this.BX.CRM || {};
 		 * @param {String} message
 		 * @param {Function} acceptFunc
 		 * @param {Object} params
-		 * @return {BX.PopupWindowManager}
 		 */
 		confirm(message, acceptFunc, params = {}) {
-			var dialog = main_popup.PopupManager.create("crm-kanban-confirm-dialog", null, {
-				titleBar: main_core.Loc.getMessage("CRM_KANBAN_CONFIRM_TITLE"),
-				content: "",
-				width: 400,
-				autoHide: false,
-				overlay: true,
-				closeByEsc: true,
-				closeIcon: true,
-				draggable: {
-					restrict: true
-				}
+			const dialog = BX.Crm.ConfirmationDialog.create('crm-kanban-confirm-dialog', {
+				title: main_core.Loc.getMessage('CRM_KANBAN_CONFIRM_TITLE'),
+				content: message,
+				acceptButtonTitle: main_core.Loc.getMessage('CRM_KANBAN_CONFIRM_Y'),
+				cancelButtonTitle: main_core.Loc.getMessage('CRM_KANBAN_CONFIRM_N')
 			});
-			dialog.setContent(message);
-			dialog.setButtons([, new main_popup.PopupWindowButton({
-				text: main_core.Loc.getMessage("CRM_KANBAN_CONFIRM_Y"),
-				className: "popup-window-button-accept",
-				events: {
-					click: function () {
-						acceptFunc();
-						this.popupWindow.close();
+			dialog.open().then(result => {
+				if (BX.prop.getBoolean(result, 'cancel', true)) {
+					if (params.grid instanceof BX.CRM.Kanban.Grid) {
+						params.grid.resetMultiSelectMode();
 					}
+					return;
 				}
-			}), new main_popup.PopupWindowButton({
-				text: main_core.Loc.getMessage("CRM_KANBAN_CONFIRM_N"),
-				className: "popup-window-button-cancel",
-				events: {
-					click: function () {
-						if (params.grid instanceof BX.CRM.Kanban.Grid) {
-							params.grid.resetMultiSelectMode();
-						}
-						this.popupWindow.close();
-					}
-				}
-			})]);
-			dialog.show();
-			return dialog;
+				acceptFunc();
+			});
 		}
 	};
 
@@ -7593,6 +7688,11 @@ this.BX.CRM = this.BX.CRM || {};
 			} = event.data;
 			const item = this.grid.getItem(params.item.id);
 			if (item) {
+				if (this.grid.getData().viewMode === ViewMode.MODE_ACTIVITIES) {
+					event.preventDefault();
+					void this.grid.loadNew([params.item.id], false, true, true, true);
+					return;
+				}
 				promises.push(Promise.resolve({
 					data: this.#getPullData('updateItem', params)
 				}));
@@ -7700,5 +7800,5 @@ this.BX.CRM = this.BX.CRM || {};
 	exports.StageLabels = StageLabels;
 	exports.ViewMode = ViewMode;
 
-})(this.BX.CRM.Kanban = this.BX.CRM.Kanban || {}, BX.CRM.Kanban, BX.Crm, BX, BX, BX.Main, BX, BX, BX, BX.UI.EntitySelector, BX.UI.Tour, BX.UI.Notification, BX.Crm.Integration.Analytics, BX.Pull, BX.Crm.Autorun, BX.UI.Analytics, BX.Main, BX.Crm.Activity, BX.Crm, BX, BX.SidePanel, BX.UI.System.Label, BX.UI, BX, BX.Currency, BX.UI, BX.CRM.Kanban);
+})(this.BX.CRM.Kanban = this.BX.CRM.Kanban || {}, BX.CRM.Kanban, BX.Crm, BX, BX, BX.Main, window, BX, BX, BX.UI.EntitySelector, BX.UI.Tour, BX.UI.Notification, BX.Crm.Integration.Analytics, BX.Pull, BX.Crm.Autorun, BX.UI.Analytics, BX.Crm.Activity, BX.Crm, BX.Main, BX.SidePanel, BX.UI.System.Label, BX.UI, BX, BX.Currency, BX, BX.UI, BX.Crm, BX.CRM.Kanban);
 //# sourceMappingURL=kanban.js.map

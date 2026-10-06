@@ -1,4 +1,8 @@
-<?
+<?php
+
+use Bitrix\Main\Web\Uri;
+use Bitrix\Main\Data\AppCacheManifest;
+
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 {
 	die();
@@ -221,11 +225,10 @@ else
 
 if ($arResult["USER"]["AVATAR"])
 {
-	$file = CHTTP::urnEncode($arResult["USER"]["AVATAR"]["src"], "UTF-8");
-	\Bitrix\Main\Data\AppCacheManifest::getInstance()->addFile($file);
+	$file = Uri::urnEncode($arResult["USER"]["AVATAR"]["src"]);
+	AppCacheManifest::getInstance()->addFile($file);
 }
 
 
 unset($obCache);
 $this->IncludeComponentTemplate();
-?>

@@ -1,6 +1,7 @@
 import { DatetimeConverter } from 'crm.timeline.tools';
 import { Runtime, Type } from 'main.core';
 import { DateTimeFormat, Timezone } from 'main.date';
+import { UI } from 'ui.notification';
 import { Action } from '../../action';
 
 export const DatePillColor = Object.freeze({
@@ -33,6 +34,11 @@ export default {
 		},
 		action: Object | null,
 		styleValue: String,
+		canChangeDeadline: {
+			type: Boolean,
+			required: false,
+			default: true,
+		},
 	},
 	inject: ['isReadOnly'],
 	data(): Object
@@ -40,6 +46,11 @@ export default {
 		return {
 			currentTimestamp: this.value,
 			initialTimestamp: this.value,
+			// deadline writes are serialized on this chain, so a later pick never starts before the
+			// previous request has settled and committed its authoritative value
+			requestChain: Promise.resolve(),
+			// bumped by a push update; invalidates own in-flight writes, since the push is authoritative
+			pushGeneration: 0,
 		};
 	},
 	computed: {
@@ -89,12 +100,7 @@ export default {
 		},
 		currentDateInSiteFormat(): ?string
 		{
-			return DateTimeFormat.format(
-				this.withTime
-					? DatetimeConverter.getSiteDateTimeFormat()
-					: DatetimeConverter.getSiteDateFormat(),
-				this.getDatetimeConverter().getValue()
-			);
+			return this.formatTimestampForSite(this.currentTimestamp);
 		},
 
 		calendarParams(): Object {
@@ -115,6 +121,8 @@ export default {
 		{
 			this.initialTimestamp = newDate;
 			this.currentTimestamp = newDate;
+			// the push carries the authoritative date: drop the outcome of any own in-flight write
+			this.pushGeneration += 1;
 		}
 	},
 	methods: {
@@ -122,6 +130,16 @@ export default {
 		{
 			if (this.isPillReadonly)
 			{
+				return;
+			}
+
+			if (!this.canChangeDeadline)
+			{
+				UI.Notification.Center.notify({
+					content: this.$Bitrix.Loc.getMessage('CRM_TIMELINE_ITEM_DATE_PILL_CALENDAR_EVENT_ACCESS_DENIED'),
+					autoHideDelay: 5000,
+				});
+
 				return;
 			}
 
@@ -149,19 +167,85 @@ export default {
 				return;
 			}
 
+			const attemptedTimestamp = this.currentTimestamp;
+			const generation = this.pushGeneration;
+
+			// serialize writes: a later pick waits for the previous request to settle, so a successful
+			// write always commits its timestamp before the next one can revert on error. Without this,
+			// an older success followed by a newer failure would revert the UI to a stale value while
+			// the server already holds the older date.
+			this.requestChain = this.requestChain.then(
+				() => this.performDeadlineChange(attemptedTimestamp, generation),
+			);
+		},
+		performDeadlineChange(attemptedTimestamp: number, generation: number): Promise
+		{
+			// a newer pick already committed this exact value, or a push replaced it: nothing to send
+			if (!this.action || attemptedTimestamp === this.initialTimestamp)
+			{
+				return Promise.resolve();
+			}
+
 			// to avoid unintended props mutation
 			const actionDescription = Runtime.clone(this.action);
 
 			actionDescription.actionParams ??= {};
-			actionDescription.actionParams.value = this.currentDateInSiteFormat;
-			actionDescription.actionParams.valueTs = this.currentTimestamp;
+			actionDescription.actionParams.value = this.formatTimestampForSite(attemptedTimestamp);
+			actionDescription.actionParams.valueTs = attemptedTimestamp;
+
+			// a push update between scheduling and settling makes the push authoritative: neither commit
+			// nor revert this write's outcome
+			const isStaleRequest = () => this.pushGeneration !== generation;
+
+			// revert to the last committed timestamp, unless the user has already picked a newer one;
+			// reading initialTimestamp here (not a value captured before the request) keeps overlapping
+			// requests from reverting past the last actually committed timestamp
+			const revertShownDate = () => {
+				if (this.currentTimestamp === attemptedTimestamp)
+				{
+					this.currentTimestamp = this.initialTimestamp;
+				}
+			};
 
 			const action = new Action(actionDescription);
-			action.execute(this);
 
-			this.initialTimestamp = this.currentTimestamp;
+			return action.execute(this).then((response: ?Object) => {
+				if (isStaleRequest())
+				{
+					return;
+				}
 
-			this.$emit('onChange', this.initialTimestamp);
+				// backend rejected the change (e.g. no rights on the linked calendar event)
+				if (Type.isArrayFilled(response?.errors))
+				{
+					revertShownDate();
+
+					return;
+				}
+
+				// the server now holds this value; record it as the last committed one even if a newer
+				// pick already moved the shown date, so a later failing write reverts to THIS date
+				this.initialTimestamp = attemptedTimestamp;
+
+				this.$emit('onChange', this.initialTimestamp);
+			}).catch(() => {
+				if (isStaleRequest())
+				{
+					return;
+				}
+
+				// a rejected action promise is treated as a rejection as well
+				revertShownDate();
+			});
+		},
+		formatTimestampForSite(timestamp: ?number): ?string
+		{
+			return DateTimeFormat.format(
+				this.withTime
+					? DatetimeConverter.getSiteDateTimeFormat()
+					: DatetimeConverter.getSiteDateFormat(),
+				DatetimeConverter.createFromServerTimestamp(timestamp).toUserTime().getValue(),
+			);
 		},
 		getDatetimeConverter(): DatetimeConverter
 		{

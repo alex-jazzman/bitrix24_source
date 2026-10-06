@@ -39,3 +39,18 @@
 	margin-left: 8px;
 	margin-top: 3px;
 }
+
+/* ======================================================
+ * BitrixGPT Redesign overrides (Phase 2)
+ * All rules MUST stay under .ai__copilot-scope.--bitrixgpt-redesign
+ * ====================================================== */
+
+/* P2.T5 — Loader popup: border + bg.
+ * NB: scope + --bitrixgpt-redesign + ai__copilot-context-menu_loader-popup are on the SAME
+ * popup-window root (see loader.js className) → COMPOUND selector for the root.
+ * dot-flashing / cancel-btn colors are descendants and inherit the scope-root var overrides
+ * (main.css / copilot-input.css). */
+.ai__copilot-context-menu_loader-popup.--bitrixgpt-redesign {
+	border-color: var(--ui-color-design-outline-bitrix-gpt-stroke-gradient-1, #73C6F3);
+	background-color: var(--ui-color-bg-content-primary, #fff);
+}

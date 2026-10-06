@@ -7,8 +7,11 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Bizproc\Public\Activity\Structure\FlowListenerTrait;
+
 class CBPListenActivity extends CBPCompositeActivity implements IBPActivityEventListener
 {
+	use FlowListenerTrait;
 	public $isListenTrigerred = false;
 	public $arActivityState = [];
 
@@ -72,16 +75,7 @@ class CBPListenActivity extends CBPCompositeActivity implements IBPActivityEvent
 			return null;
 		}
 
-		$names = $rootNode->getOutputNames($this->getName());
-
-		foreach ($names as $activityName)
-		{
-			$activity = $this->workflow->getActivityByName($activityName);
-			if ($activity instanceof IBPEventDrivenActivity)
-			{
-				$activity->addStatusChangeHandler(self::ClosedEvent, $this);
-			}
-		}
+		$this->subscribeOutputFlow();
 
 		return CBPActivityExecutionStatus::Closed;
 	}
@@ -101,26 +95,7 @@ class CBPListenActivity extends CBPCompositeActivity implements IBPActivityEvent
 			return;
 		}
 
-		$senderName = $sender->getName();
-		$names = $rootNode->getOutputNames($this->getName());
-
-		foreach ($names as $activityName)
-		{
-			if ($activityName === $senderName)
-			{
-				continue;
-			}
-
-			$activity = $this->workflow->getActivityByName($activityName);
-			if (
-				$activity instanceof IBPEventDrivenActivity
-				&& $activity->executionStatus === CBPActivityExecutionStatus::Executing
-			)
-			{
-				$sender->removeStatusChangeHandler(self::ClosedEvent, $this);
-				$this->workflow->cancelActivity($activity);
-			}
-		}
+		$this->onFlowEvent($sender);
 	}
 
 	public function cancel()

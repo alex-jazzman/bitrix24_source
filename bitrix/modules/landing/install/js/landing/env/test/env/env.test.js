@@ -1,6 +1,42 @@
-import {Env} from '../../src/env';
+const merge = (target = {}, source = {}) => {
+	return {
+		...target,
+		...source,
+		params: {
+			...(target.params || {}),
+			...(source.params || {}),
+		},
+	};
+};
+
+const bx = {
+	Runtime: {
+		merge,
+	},
+	Reflection: {
+		getClass: () => null,
+	},
+};
+
+Object.defineProperty(globalThis, 'BX', {
+	value: bx,
+	writable: true,
+	configurable: true,
+});
+
+Object.defineProperty(globalThis.window, 'BX', {
+	value: bx,
+	writable: true,
+	configurable: true,
+});
+
+const {Env} = require('../../src/env');
 
 describe('landing.env', () => {
+	beforeEach(() => {
+		Env.instance = null;
+	});
+
 	it('Should be exported Env function', () => {
 		assert(typeof Env === 'function');
 	});

@@ -3,6 +3,7 @@ import { Text, Loc } from 'main.core';
 import { type ApplicationContext } from 'im.v2.const';
 import { type ImModelMessage } from 'im.v2.model';
 
+import { MarkdownConverter } from './markdown/converter.js';
 import { Purifier } from './classes/purifier';
 import { Decoder } from './classes/decoder';
 import { ParserAction } from './functions/action';
@@ -12,7 +13,7 @@ import { ParserLines } from './functions/lines';
 import { ParserMention } from './functions/mention';
 import { ParserQuote } from './functions/quote';
 import { ParserUrl } from './functions/url';
-import { getCore } from './utils/core-proxy';
+import { getCore, isMarkdownFeatureEnabled } from './utils/core-proxy';
 import { ParserUtils } from './utils/utils';
 import { ParserInlineSourceLink, type ParserInlineSourceLinkSegments } from './functions/inline-source-link.js';
 
@@ -29,6 +30,7 @@ export const Parser = {
 
 	decode: (config) => Decoder.decode(config),
 	decodeText: (text) => Decoder.decodeText(text),
+	decodeInlineText: (text) => Decoder.decodeInlineText(text),
 	decodeMessage: (message) => Decoder.decodeMessage(message),
 	decodeNotification: (notification) => Decoder.decodeNotification(notification),
 	decodeNotificationParam: (text) => Decoder.decodeNotificationParam(text),
@@ -45,7 +47,18 @@ export const Parser = {
 		const files = getCore().getStore().getters['messages/getMessageFiles'](id);
 		const isSticker = getCore().getStore().getters['stickers/messages/isSticker'](id);
 
+		const isMarkdownAvailable = isMarkdownFeatureEnabled();
+		if (isMarkdownAvailable)
+		{
+			text = MarkdownConverter.simplify(text);
+		}
+
 		text = Text.encode(text.trim());
+
+		if (isMarkdownAvailable)
+		{
+			text = ParserQuote.purifyInlineCode(text);
+		}
 
 		text = ParserMention.purify(text);
 		text = ParserCall.purify(text);

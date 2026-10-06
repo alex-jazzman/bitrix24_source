@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
-(function (exports, crm_ai_nameService, crm_timeline_tools, main_core, main_core_events, main_date, ui_notification, ui_textEditor, ui_vue3, main_popup, ui_infoHelper, ui_analytics, location_core, location_widget, calendar_controls, calendar_planner, calendar_util, ui_designTokens, ui_entitySelector, calendar_sectionmanager, ui_sidepanel, crm_clientSelector, ui_uploader_tileWidget, crm_field_colorSelector, ui_vue3_directives_hint, crm_field_pingSelector) {
+(function (exports, crm_ai_nameService, crm_timeline_tools, main_core, main_core_events, main_date, ui_notification, ui_textEditor, ui_vue3, main_popup, ui_infoHelper, ui_analytics, location_core, location_widget, calendar_controls, calendar_planner, calendar_util, ui_designTokens, ui_entitySelector, ui_system_alert, ui_system_alert_vue, calendar_sectionmanager, ui_sidepanel, crm_clientSelector, ui_uploader_tileWidget, crm_field_colorSelector, ui_vue3_directives_hint, crm_field_pingSelector) {
 	'use strict';
 
 	BX.Location = BX.Location || {};
@@ -891,8 +891,142 @@ this.BX.Crm = this.BX.Crm || {};
 	`
 	};
 
+	function invalidatePlannerRequests(context) {
+		context.destroyed = true;
+		context.plannerRequestId += 1;
+	}
+	function normalizeUserId(userId) {
+		const normalizedUserId = Number(userId);
+		return Number.isInteger(normalizedUserId) && normalizedUserId > 0 ? normalizedUserId : 0;
+	}
+	function createSelectedUserIds(userIds, hostId) {
+		const selectedUserIds = new Set();
+		const normalizedHostId = normalizeUserId(hostId);
+		if (normalizedHostId > 0) {
+			selectedUserIds.add(normalizedHostId);
+		}
+		if (userIds?.[Symbol.iterator]) {
+			for (const userId of userIds) {
+				const normalizedUserId = normalizeUserId(userId);
+				if (normalizedUserId > 0) {
+					selectedUserIds.add(normalizedUserId);
+				}
+			}
+		}
+		return selectedUserIds;
+	}
+	function prepareCalendarBlockForCopy(calendarBlock, hostId, from) {
+		calendarBlock.data.calendarEventId = 0;
+		calendarBlock.data.hostId = normalizeUserId(hostId);
+		calendarBlock.data.from = from;
+	}
+	function requestPlannerUpdate(context, data) {
+		if (context.destroyed) {
+			return Promise.resolve();
+		}
+		const requestId = ++context.plannerRequestId;
+		context.getPlanner().showLoader();
+
+		// wrap BX.Promise in native js promise
+		return new Promise((resolve, reject) => {
+			main_core.ajax.runAction('calendar.api.calendarajax.updatePlanner', {
+				data
+			}).then(resolve).catch(reject);
+		}).then(response => {
+			if (requestId !== context.plannerRequestId) {
+				return response;
+			}
+			context.plannerLoadError = false;
+			context.plannerLimitState = {
+				exceeded: response.data.plannerLimitExceeded === true,
+				maxPlannerUsers: parseInt(response.data.maxPlannerUsers, 10) || 0,
+				peopleCount: parseInt(response.data.plannerLimitPeopleCount ?? response.data.plannerPeopleCount, 10) || 0
+			};
+			context.getPlanner().update(main_core.Type.isArray(response.data.entries) ? response.data.entries : [], main_core.Type.isObject(response.data.accessibility) ? response.data.accessibility : {});
+			context.onDataUpdate();
+			return response;
+		}, response => {
+			if (requestId === context.plannerRequestId) {
+				context.plannerLoadError = true;
+			}
+			return response;
+		}).catch(errors => {
+			if (requestId === context.plannerRequestId) {
+				context.plannerLoadError = true;
+			}
+			return errors;
+		}).finally(() => {
+			if (requestId === context.plannerRequestId) {
+				context.plannerInstance?.hideLoader();
+			}
+		});
+	}
+	function teardownCalendar(context) {
+		invalidatePlannerRequests(context);
+		context.$Bitrix.eventEmitter.unsubscribe(Events.EVENT_RESPONSIBLE_USER_CHANGE, context.onResponsibleUserChange);
+		context.$Bitrix.eventEmitter.unsubscribe(Events.EVENT_DEADLINE_CHANGE, context.onDeadlineChange);
+		context.plannerInstance?.selector?.unsubscribe('onChange', context.plannerSelectorChangeHandler);
+	}
+	const calendarMethods = {
+		normalizeCalendarConfig(config) {
+			const normalizedConfig = main_core.Type.isObject(config) ? config : {};
+			return {
+				...normalizedConfig,
+				sections: main_core.Type.isArray(normalizedConfig.sections) ? normalizedConfig.sections : []
+			};
+		},
+		loadConfig(data) {
+			// wrap BX.Promise in native js promise
+			return new Promise((resolve, reject) => {
+				this.fetchConfig().then(resolve).catch(reject);
+			}).then(response => {
+				if (this.destroyed) {
+					return;
+				}
+				this.config = this.normalizeCalendarConfig(response.data);
+				this.sectionSelectorReadOnly = this.config.readOnly ?? false;
+				this.applyCalendarUserSettings(this.config);
+				if (main_core.Type.isNil(data.sectionId)) {
+					const defaultSection = this.config.sections.find(section => section.DEFAULT === true);
+					if (main_core.Type.isObject(defaultSection)) {
+						this.sectionId = defaultSection.ID;
+					} else {
+						const firstUserSection = this.config.sections.find(section => section.OWNER_ID === data.ownerId);
+						this.sectionId = firstUserSection?.ID ?? 0;
+					}
+				}
+			}).catch(error => {
+				return error;
+			}).finally(() => {
+				if (!this.destroyed) {
+					void this.$nextTick(() => this.initPlanner());
+				}
+			});
+		},
+		updatePlannerForSelectedUsers() {
+			const data = this.prepareUpdatePlannerData([...this.selectedUserIds]);
+			return this.updatePlanner(data);
+		},
+		onResponsibleUserChange(event) {
+			const {
+				responsibleUserId
+			} = event.getData();
+			this.ownerId = responsibleUserId;
+			this.selectedUserIds.add(responsibleUserId);
+			void this.updatePlannerForSelectedUsers();
+		},
+		onDeadlineChange(event) {
+			const data = event.getData();
+			if (data) {
+				const deadline = data.deadline.getTime();
+				this.from = deadline;
+				this.to = this.from + this.duration;
+			}
+		}
+	};
 	const TodoEditorBlocksCalendar = {
 		components: {
+			Alert: ui_system_alert_vue.Alert,
 			LocationSelector,
 			SectionSelector
 		},
@@ -927,8 +1061,8 @@ this.BX.Crm = this.BX.Crm || {};
 		emits: ['close', 'updateFilledValues'],
 		data() {
 			const ownerId = this.settings.ownerId || this.context.userId;
-			const selectedUserIds = new Set([this.settings.userId]);
-			selectedUserIds.add(ownerId);
+			const hostId = normalizeUserId(this.settings.hostId) || normalizeUserId(this.settings.userId);
+			const selectedUserIds = createSelectedUserIds([ownerId], hostId);
 			const timestamp = (this.settings.from || main_date.Timezone.UserTime.getTimestamp()) * 1000;
 			const millisecondsInFiveMinutes = 5 * 60 * 1000;
 
@@ -945,10 +1079,18 @@ this.BX.Crm = this.BX.Crm || {};
 				locationId: null,
 				timezoneName: this.settings.timezoneName,
 				ownerId,
+				hostId,
+				calendarEventId: normalizeUserId(this.settings.calendarEventId),
 				sectionId: this.settings.sectionId || null,
 				config: {},
 				canUseCalendarSectionSelector: main_core.Type.isFunction(calendar_controls.SectionSelector.getModes) && calendar_controls.SectionSelector.getModes().includes('inline'),
-				sectionSelectorReadOnly: this.settings.sectionSelectorReadOnly ?? false
+				sectionSelectorReadOnly: this.settings.sectionSelectorReadOnly ?? false,
+				plannerLimitState: {
+					exceeded: false,
+					maxPlannerUsers: 0,
+					peopleCount: 0
+				},
+				plannerLoadError: false
 			};
 			return this.getPreparedData(data);
 		},
@@ -960,83 +1102,86 @@ this.BX.Crm = this.BX.Crm || {};
 			}
 		},
 		beforeUnmount() {
-			this.$Bitrix.eventEmitter.unsubscribe(Events.EVENT_DEADLINE_CHANGE, this.onDeadlineChange);
+			teardownCalendar(this);
 		},
 		methods: {
-			/* eslint-disable no-param-reassign */
+			...calendarMethods,
 			getPreparedData(data) {
 				const {
 					filledValues
 				} = this;
-				if (main_core.Type.isObject(filledValues)) {
-					if (main_core.Type.isObject(filledValues.attendeesEntityList)) {
-						Object.values(filledValues.attendeesEntityList).filter(({
-							entityId
-						}) => entityId === 'user').forEach(({
-							id
-						}) => data.selectedUserIds.add(id));
-					}
-					if (main_core.Type.isStringFilled(filledValues.location)) {
-						data.showLocation = true;
-						data.locationId = Number(filledValues.location.split('_')[1]); //calendar_7_123, need 7 as id
-					}
-					if (main_core.Type.isObject(filledValues.selectedUserIds)) {
-						data.selectedUserIds = filledValues.selectedUserIds;
-					}
-					data.from = Number(filledValues.from);
-					data.to = Number(filledValues.to);
-					data.duration = Number(filledValues.duration);
-					data.timezoneName = filledValues.timezoneFrom;
-					data.sectionId = filledValues.sectionId;
-					data.calendarEventId = filledValues.calendarEventId ?? 0;
-					if (!main_core.Type.isNil(filledValues.ownerId)) {
-						data.ownerId = filledValues.ownerId;
-					}
-					if (!main_core.Type.isNil(filledValues.sectionId)) {
-						data.sectionId = Number(filledValues.sectionId);
-					}
-				}
-				data.config = {};
-				data.sectionSelectorReadOnly = false;
+				let preparedData = {
+					...this.applyFilledValues(data, filledValues),
+					config: {},
+					sectionSelectorReadOnly: false
+				};
 				if (main_core.Type.isObject(filledValues?.config)) {
-					data.config = filledValues.config;
+					const config = this.normalizeCalendarConfig(filledValues.config);
+					preparedData = {
+						...preparedData,
+						config,
+						sectionSelectorReadOnly: config.readOnly ?? false
+					};
+					this.applyCalendarUserSettings(config);
 					void this.$nextTick(() => this.initPlanner());
-				} else if (data.canUseCalendarSectionSelector) {
-					void this.fetchConfig().then(response => {
-						this.config = response.data ?? {};
-						this.sectionSelectorReadOnly = data.config.readOnly ?? false;
-						calendar_util.Util.setUserSettings(this.config.userSettings);
-						const hasSelectedSection = this.config.sections.some(section => section.ID === this.sectionId);
-						if (this.sectionSelectorReadOnly && !hasSelectedSection) {
-							this.plannerInstance?.setReadonly();
-						}
-						if (main_core.Type.isNil(data.sectionId)) {
-							const defaultSection = data.config.sections.find(section => section.DEFAULT === true);
-							if (main_core.Type.isObject(defaultSection)) {
-								this.sectionId = defaultSection.ID;
-							} else {
-								const firstUserSection = data.config.sections.find(section => section.OWNER_ID === data.ownerId);
-								this.sectionId = firstUserSection?.ID ?? 0;
-							}
-						}
-						void this.$nextTick(() => this.initPlanner());
-					});
+				} else if (preparedData.canUseCalendarSectionSelector) {
+					void this.loadConfig(preparedData);
 				} else {
 					void this.$nextTick(() => this.initPlanner());
 				}
-				return data;
+				return preparedData;
+			},
+			applyFilledValues(data, filledValues) {
+				if (!main_core.Type.isObject(filledValues)) {
+					return data;
+				}
+				let selectedUsers = data.selectedUserIds;
+				if (main_core.Type.isObject(filledValues.selectedUserIds)) {
+					selectedUsers = filledValues.selectedUserIds;
+				} else if (main_core.Type.isObject(filledValues.attendeesEntityList)) {
+					selectedUsers = Object.values(filledValues.attendeesEntityList).filter(({
+						entityId
+					}) => entityId === 'user').map(({
+						id
+					}) => id);
+				}
+				const isExistingEvent = normalizeUserId(filledValues.calendarEventId ?? data.calendarEventId) > 0;
+				const hostId = normalizeUserId(filledValues.hostId) || (isExistingEvent ? 0 : data.hostId);
+				const selectedUserIds = createSelectedUserIds(selectedUsers, hostId);
+				return {
+					...data,
+					selectedUserIds,
+					hostId,
+					from: Number(filledValues.from),
+					to: Number(filledValues.to),
+					duration: Number(filledValues.duration),
+					timezoneName: filledValues.timezoneFrom,
+					sectionId: main_core.Type.isNil(filledValues.sectionId) ? filledValues.sectionId : Number(filledValues.sectionId),
+					calendarEventId: filledValues.calendarEventId ?? 0,
+					...(main_core.Type.isStringFilled(filledValues.location) ? {
+						showLocation: true,
+						locationId: Number(filledValues.location.split('_')[1]) // calendar_7_123, need 7 as id
+					} : {}),
+					...(!main_core.Type.isNil(filledValues.ownerId) ? {
+						ownerId: filledValues.ownerId
+					} : {})
+				};
+			},
+			applyCalendarUserSettings(config) {
+				if (main_core.Type.isObject(config.userSettings)) {
+					calendar_util.Util.setUserSettings(config.userSettings);
+				}
 			},
 			initPlanner() {
-				if (this.plannerInstance) {
+				if (this.destroyed || this.plannerInstance) {
 					return;
 				}
 				this.showPlanner();
-				this.getPlanner().selector.subscribe('onChange', this.handlePlannerSelectorChanges.bind(this));
+				this.getPlanner().selector.subscribe('onChange', this.plannerSelectorChangeHandler);
 				const userIds = [...this.selectedUserIds];
 				const data = this.prepareUpdatePlannerData(userIds);
-				this.updatePlanner(userIds, data);
+				void this.updatePlanner(data);
 			},
-			/* eslint-enable no-param-reassign */
 			getId() {
 				return 'calendar';
 			},
@@ -1054,16 +1199,24 @@ this.BX.Crm = this.BX.Crm || {};
 						height: 104,
 						width: 770,
 						entryTimezone: this.config.userSettings?.timezoneName ?? this.timezoneName,
-						readonly: !this.selectedUserIds.has(this.context.userId) && this.sectionSelectorReadOnly
+						readonly: this.isPlannerReadOnly()
 					});
 				}
 				return this.plannerInstance;
 			},
-			prepareUpdatePlannerData(newUserIds, oldUserIds = []) {
+			isPlannerReadOnly() {
+				if (!this.sectionSelectorReadOnly) {
+					return false;
+				}
+				const hasSelectedSection = main_core.Type.isArray(this.config.sections) && this.config.sections.some(section => section.ID === this.sectionId);
+				return !hasSelectedSection || !this.selectedUserIds.has(this.context.userId);
+			},
+			prepareUpdatePlannerData(newUserIds) {
 				const location = this.locationId ? this.location : '';
 				const data = {
 					entryId: this.calendarEventId ?? 0,
 					ownerId: this.ownerId,
+					hostId: this.hostId,
 					type: 'user',
 					entityList: [],
 					dateFrom: this.getFormattedDate('beforeOneWeek'),
@@ -1071,7 +1224,7 @@ this.BX.Crm = this.BX.Crm || {};
 					timezone: this.timezoneName,
 					location,
 					entries: false,
-					prevUserList: oldUserIds,
+					prevUserList: [],
 					skipFeatureCheck: 'Y'
 				};
 				newUserIds.forEach(userId => {
@@ -1083,31 +1236,8 @@ this.BX.Crm = this.BX.Crm || {};
 				});
 				return data;
 			},
-			updatePlanner(userIds, data) {
-				this.getPlanner().showLoader();
-				main_core.ajax.runAction('calendar.api.calendarajax.updatePlanner', {
-					data
-				}).then(response => {
-					const accessibility = {};
-					userIds.forEach(userId => {
-						if (response.data.accessibility[userId]) {
-							accessibility[userId] = response.data.accessibility[userId];
-						} else {
-							accessibility[userId] = [];
-						}
-					});
-					if (this.locationId) {
-						const roomId = `room_${this.locationId}`;
-						accessibility[roomId] = response.data.accessibility[roomId];
-					}
-					this.getPlanner().hideLoader();
-					this.getPlanner().update(response.data.entries, accessibility);
-					this.onDataUpdate();
-				}, response => {
-					console.error(response);
-				}).catch(errors => {
-					console.error(errors);
-				});
+			updatePlanner(data) {
+				return requestPlannerUpdate(this, data);
 			},
 			onDataUpdate() {
 				this.updatePlannerSelector();
@@ -1128,6 +1258,7 @@ this.BX.Crm = this.BX.Crm || {};
 					location,
 					selectedUserIds,
 					ownerId,
+					hostId,
 					sectionId,
 					config
 				} = this;
@@ -1138,6 +1269,7 @@ this.BX.Crm = this.BX.Crm || {};
 					location,
 					selectedUserIds,
 					ownerId,
+					hostId,
 					sectionId,
 					config
 				};
@@ -1217,7 +1349,7 @@ this.BX.Crm = this.BX.Crm || {};
 				this.selectedUsersIdsArray.forEach(id => {
 					preselectedItems.push(['user', id]);
 				});
-				const undeselectedItems = [['user', this.context.userId], ['user', this.settings.userId]];
+				const undeselectedItems = this.hostId > 0 ? [['user', this.hostId]] : [];
 				return new ui_entitySelector.Dialog({
 					id: 'todo-editor-calendar-user-selector-dialog',
 					targetNode: this.$refs.userSelector,
@@ -1244,6 +1376,10 @@ this.BX.Crm = this.BX.Crm || {};
 			onBeforeSelectUser(event) {
 				if (this.sectionSelectorReadOnly) {
 					event.preventDefault();
+					ui_notification.UI.Notification.Center.notify({
+						content: main_core.Loc.getMessage('CRM_ACTIVITY_TODO_CALENDAR_PARTICIPANTS_AUTHOR_ONLY'),
+						autoHideDelay: 5000
+					});
 				}
 			},
 			onSelectUser({
@@ -1251,32 +1387,25 @@ this.BX.Crm = this.BX.Crm || {};
 					item
 				}
 			}) {
+				if (this.selectedUserIds.has(item.id)) {
+					return;
+				}
 				this.selectedUserIds.add(item.id);
+				void this.updatePlannerForSelectedUsers();
 			},
 			onDeselectUser({
 				data: {
 					item
 				}
 			}) {
+				if (item.id === this.hostId || !this.selectedUserIds.has(item.id)) {
+					return;
+				}
 				this.selectedUserIds.delete(item.id);
+				void this.updatePlannerForSelectedUsers();
 			},
 			getSelectedUserIds() {
 				return this.selectedUserIds ?? [];
-			},
-			onResponsibleUserChange(event) {
-				const {
-					responsibleUserId
-				} = event.getData();
-				this.ownerId = responsibleUserId;
-				this.selectedUserIds.add(responsibleUserId);
-			},
-			onDeadlineChange(event) {
-				const data = event.getData();
-				if (data) {
-					const deadline = data.deadline.getTime();
-					this.from = deadline;
-					this.to = this.from + deadline;
-				}
 			},
 			handlePlannerSelectorChanges({
 				data: {
@@ -1312,9 +1441,14 @@ this.BX.Crm = this.BX.Crm || {};
 					sectionId
 				} = this;
 				const microsecondsInSecond = 1000;
+
+				// `from`/`to` are absolute UTC timestamps and the server consumes them as such
+				// (DateTime::createFromTimestamp). Passing them through UserTime.toBrowser shifted the
+				// moment whenever the browser timezone differed from the user's Bitrix profile timezone,
+				// which silently moved the linked calendar event and tripped the deadline edit guard.
 				return {
-					from: main_date.Timezone.UserTime.toBrowser(from / microsecondsInSecond),
-					to: main_date.Timezone.UserTime.toBrowser((from + duration) / microsecondsInSecond),
+					from: from / microsecondsInSecond,
+					to: (from + duration) / microsecondsInSecond,
 					duration: duration / microsecondsInSecond,
 					selectedUserIds: [...this.getSelectedUserIds()],
 					sectionId,
@@ -1330,6 +1464,9 @@ this.BX.Crm = this.BX.Crm || {};
 
 				// eslint-disable-next-line no-param-reassign
 				data.settings.userId = params.userId;
+
+				// eslint-disable-next-line no-param-reassign
+				data.settings.hostId = params.userId;
 			},
 			fetchConfig() {
 				const data = {
@@ -1337,12 +1474,8 @@ this.BX.Crm = this.BX.Crm || {};
 					entityTypeId: this.context.itemIdentifier?.entityTypeId,
 					entityId: this.context.itemIdentifier?.entityId
 				};
-				return new Promise(resolve => {
-					void main_core.ajax.runAction('crm.activity.todo.getCalendarConfig', {
-						data
-					}).then(response => {
-						resolve(response);
-					});
+				return main_core.ajax.runAction('crm.activity.todo.getCalendarConfig', {
+					data
 				});
 			},
 			onChangeSection(sectionId) {
@@ -1391,23 +1524,25 @@ this.BX.Crm = this.BX.Crm || {};
 			},
 			changeTitle() {
 				return this.$Bitrix.Loc.getMessage('CRM_ACTIVITY_TODO_CALENDAR_BLOCK_CHANGE_ACTION');
+			},
+			plannerWarningText() {
+				if (this.plannerLoadError) {
+					return main_core.Loc.getMessage('CRM_ACTIVITY_TODO_CALENDAR_PLANNER_LOAD_ERROR');
+				}
+				return main_core.Loc.getMessage('CRM_ACTIVITY_TODO_CALENDAR_PLANNER_LIMIT_WARNING', {
+					'#COUNT#': this.plannerLimitState.peopleCount,
+					'#MAX#': this.plannerLimitState.maxPlannerUsers
+				});
+			},
+			plannerWarningDesign() {
+				return this.plannerLoadError ? ui_system_alert.AlertDesign.tintedAlert : ui_system_alert.AlertDesign.tintedWarning;
 			}
 		},
 		created() {
 			this.plannerInstance = null;
-			this.$watch('ownerId', (newOwnerId, oldOwnerId) => {
-				if (this.selectedUserIds.has(newOwnerId)) {
-					const userIds = this.selectedUsersIdsArray;
-					const data = this.prepareUpdatePlannerData(userIds);
-					this.updatePlanner(userIds, data);
-				}
-			});
-			this.$watch('selectedUserIds', (newUserIds, oldUserIds) => {
-				const data = this.prepareUpdatePlannerData(newUserIds, oldUserIds);
-				this.updatePlanner(newUserIds, data);
-			}, {
-				deep: true
-			});
+			this.plannerRequestId = 0;
+			this.destroyed = false;
+			this.plannerSelectorChangeHandler = this.handlePlannerSelectorChanges.bind(this);
 			this.$watch('settings', (newSettings, oldSettings) => {
 				const showLocation = Boolean(newSettings.showLocation ?? false);
 				this.showLocation = main_core.Type.isStringFilled(this.filledValues?.location) || showLocation;
@@ -1431,7 +1566,7 @@ this.BX.Crm = this.BX.Crm || {};
 			locationId(newLocationId, oldLocationId) {
 				const newUserIds = this.selectedUsersIdsArray;
 				const data = this.prepareUpdatePlannerData(newUserIds);
-				this.updatePlanner(newUserIds, data);
+				void this.updatePlanner(data);
 			}
 		},
 		template: `
@@ -1479,6 +1614,17 @@ this.BX.Crm = this.BX.Crm || {};
 		</div>
 		<div class="crm-activity__todo-editor-v2_block-body">
 			<div class="crm-activity__settings_popup__calendar-container">
+				<div
+					v-if="plannerLimitState.exceeded || plannerLoadError"
+					class="crm-activity__todo-editor-v2_calendar-warning"
+					role="status"
+					aria-live="polite"
+					aria-atomic="true"
+				>
+					<Alert :design="plannerWarningDesign">
+						{{ plannerWarningText }}
+					</Alert>
+				</div>
 				<div ref="plannerContainer" class="crm-activity__settings_popup__calendar__planner-container"></div>
 			</div>
 		</div>
@@ -2713,7 +2859,8 @@ this.BX.Crm = this.BX.Crm || {};
 				default: null,
 				required: false
 			},
-			textEditor: ui_textEditor.TextEditor
+			textEditor: ui_textEditor.TextEditor,
+			onEditStart: Function
 		},
 		data() {
 			const currentDeadline = this.deadline ?? new Date();
@@ -2736,10 +2883,15 @@ this.BX.Crm = this.BX.Crm || {};
 				wasUsed: false,
 				blocksData,
 				modeData: this.mode,
-				currentUserData: this.currentUser
+				currentUserData: this.currentUser,
+				canChangeDeadline: true,
+				isEdit: this.mode !== ADD_MODE
 			};
 		},
 		computed: {
+			deadlineTabIndex() {
+				return this.isEdit ? 0 : -1;
+			},
 			deadlineFormatted() {
 				let converter = new crm_timeline_tools.DatetimeConverter(this.currentDeadline);
 				let deadlineFormatted = converter.toDatetimeString({
@@ -2805,12 +2957,14 @@ this.BX.Crm = this.BX.Crm || {};
 				id,
 				colorId,
 				currentUser,
-				pingOffsets
+				pingOffsets,
+				canChangeDeadline
 			}) {
 				this.title = title;
 				this.textEditor.setText(description);
 				this.currentDeadline = new Date(deadline);
 				this.currentActivityId = id;
+				this.canChangeDeadline = canChangeDeadline ?? true;
 				this.currentUserData = currentUser;
 				this.responsibleUserId = currentUser.userId;
 				void this.$nextTick(() => {
@@ -2822,6 +2976,7 @@ this.BX.Crm = this.BX.Crm || {};
 			},
 			setMode(mode) {
 				this.modeData = mode;
+				this.isEdit = mode !== ADD_MODE;
 			},
 			resetCurrentActivityId() {
 				this.currentActivityId = null;
@@ -2846,6 +3001,14 @@ this.BX.Crm = this.BX.Crm || {};
 				this.title = title;
 			},
 			onDeadlineClick() {
+				if (!this.canChangeDeadline) {
+					ui_notification.UI.Notification.Center.notify({
+						content: this.$Bitrix.Loc.getMessage('CRM_ACTIVITY_TODO_EDITOR_V2_CALENDAR_EVENT_ACCESS_DENIED'),
+						autoHideDelay: 5000
+					});
+					return;
+				}
+
 				// eslint-disable-next-line @bitrix24/bitrix24-rules/no-bx
 				BX.calendar({
 					node: this.$refs.deadline,
@@ -2855,6 +3018,12 @@ this.BX.Crm = this.BX.Crm || {};
 					value: main_date.DateTimeFormat.format(crm_timeline_tools.DatetimeConverter.getSiteDateTimeFormat(), this.currentDeadline),
 					callback: this.onSetDeadlineByCalendar.bind(this)
 				});
+			},
+			onDeadlineKeydown(event) {
+				if (event.key === 'Enter' || event.key === ' ') {
+					event.preventDefault();
+					this.onDeadlineClick();
+				}
 			},
 			onSetDeadlineByCalendar(deadline) {
 				this.setDeadline(deadline);
@@ -2983,6 +3152,7 @@ this.BX.Crm = this.BX.Crm || {};
 				}
 			},
 			handleTextEditorFocus(event) {
+				this.isEdit = true;
 				this.descriptionBeforeFocus = this.textEditor.getText();
 			},
 			handleTextEditorBlur(event) {
@@ -3007,6 +3177,9 @@ this.BX.Crm = this.BX.Crm || {};
 					block.focused = false;
 				});
 				const block = this.getBlockDataById(actionId);
+				if (!main_core.Type.isObject(block)) {
+					return;
+				}
 				if (main_core.Type.isPlainObject(componentParams)) {
 					block.settings = {
 						...componentParams,
@@ -3021,6 +3194,10 @@ this.BX.Crm = this.BX.Crm || {};
 				block.active = true;
 				block.focused = true;
 				block.sort = this.getNextBlockSortValue();
+				if (main_core.Type.isFunction(this.onEditStart)) {
+					this.onEditStart();
+				}
+				this.isEdit = true;
 				this.textEditor.focus();
 				if (!this.addBlockSended) {
 					this.addBlockSended = true;
@@ -3044,6 +3221,7 @@ this.BX.Crm = this.BX.Crm || {};
 				this.resetBlock(block);
 			},
 			closeBlocks() {
+				this.isEdit = false;
 				this.blocksData.forEach(block => {
 					this.resetBlock(block);
 				});
@@ -3146,7 +3324,10 @@ this.BX.Crm = this.BX.Crm || {};
 							<div class="crm-activity__todo-editor-v2_left_tools">
 								<div
 									ref="deadline"
+									role="button"
+									:tabindex="deadlineTabIndex"
 									@click="onDeadlineClick"
+									@keydown="onDeadlineKeydown"
 									class="crm-activity__todo-editor-v2_deadline"
 								>
 								<span class="crm-activity__todo-editor-v2_deadline-pill">
@@ -3325,6 +3506,7 @@ this.BX.Crm = this.BX.Crm || {};
 				mode: this.#mode,
 				analytics: this.#getAnalyticsInstance(),
 				textEditor: this.getTextEditor(),
+				onEditStart: () => main_core.Dom.addClass(this.#container, '--is-edit'),
 				itemIdentifier: {
 					entityTypeId: this.#ownerTypeId,
 					entityId: this.#ownerId
@@ -3505,9 +3687,11 @@ this.BX.Crm = this.BX.Crm || {};
 			this.#setActiveMenuBarItem();
 			this.setActivityId(null).setCurrentUser(entityData.currentUser).setDefaultDeadLine();
 			entityData.deadline = this.#deadline;
+			// a copy is not linked to the source calendar event, so its deadline is always editable
+			entityData.canChangeDeadline = true;
 			const calendar = blocksData?.find(blockData => blockData.id === 'calendar');
 			if (main_core.Type.isObject(calendar)) {
-				calendar.data.from = this.#deadline.getTime();
+				prepareCalendarBlockForCopy(calendar, this.#user.userId, this.#deadline.getTime());
 			}
 			await this.#showPrefilledComponent(entityData, blocksData, TodoEditorMode.COPY);
 		}
@@ -3910,5 +4094,5 @@ this.BX.Crm = this.BX.Crm || {};
 	exports.TodoEditorMode = TodoEditorMode;
 	exports.TodoEditorV2 = TodoEditorV2;
 
-})(this.BX.Crm.Activity = this.BX.Crm.Activity || {}, BX.Crm.AI, BX.Crm.Timeline, BX, BX.Event, BX.Main, BX, BX.UI.TextEditor, BX.Vue3, BX.Main, BX.UI, BX.UI.Analytics, BX.Location.Core, BX.Location.Widget, BX.Calendar.Controls, BX.Calendar, BX.Calendar, BX, BX.UI.EntitySelector, BX.Calendar, BX, BX.Crm, BX.UI.Uploader, BX.Crm.Field, BX.Vue3.Directives, BX.Crm.Field);
+})(this.BX.Crm.Activity = this.BX.Crm.Activity || {}, BX.Crm.AI, BX.Crm.Timeline, BX, BX.Event, BX.Main, BX.UI.Notification, BX.UI.TextEditor, BX.Vue3, BX.Main, BX.UI, BX.UI.Analytics, BX.Location.Core, BX.Location.Widget, BX.Calendar.Controls, BX.Calendar, BX.Calendar, window, BX.UI.EntitySelector, BX.UI.System.Alert, BX.UI.System.Alert.Vue, BX.Calendar, BX, BX.Crm, BX.UI.Uploader, BX.Crm.Field, BX.Vue3.Directives, BX.Crm.Field);
 //# sourceMappingURL=todo-editor-v2.bundle.js.map

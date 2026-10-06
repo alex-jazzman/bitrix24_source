@@ -23,6 +23,7 @@ type exportLinkType = {
 	hasDeathTime: ?boolean,
 	availableEdit: ?boolean,
 	canEditDocument: ?boolean,
+	canEditSettings: ?boolean,
 	deathTime: ?string,
 	deathTimeTimestamp ?: number,
 	isBoard: boolean,
@@ -66,6 +67,7 @@ export default class Input
 				hasDeathTime: null,
 				availableEdit: null,
 				canEditDocument: null,
+				canEditSettings: null,
 				deathTime: null,
 				deathTimeTimestamp: null,
 			};
@@ -150,7 +152,17 @@ export default class Input
 
 	openSettingsPopup(): mixed
 	{
+		if (!this.canEditSettings())
+		{
+			return null;
+		}
+
 		return this.constructor.showPopup(this.objectId, this.data);
+	}
+
+	canEditSettings(): boolean
+	{
+		return this.data.canEditSettings !== false;
 	}
 
 	getContainer(): HTMLElement

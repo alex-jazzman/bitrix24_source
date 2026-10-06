@@ -7,7 +7,8 @@ import {Hardware} from '../call_hardware';
 import Util from '../util'
 import {MediaStreamsKinds} from '../call_api';
 import { DesktopApi } from 'im.v2.lib.desktop-api';
-import { CallStreamManager } from '../media-stream-manager';
+import { CallStreamManager, STREAM_MANAGER_SUPERSEDED } from '../media-stream-manager';
+import { ReconnectTarget } from 'call.lib.reconnect-history';
 
 const ajaxActions = {
 	invite: 'call.CallManager.invite',
@@ -51,6 +52,7 @@ const signalingWaitReplyPeriod = 10000;
 const pingPeriod = 5000;
 const backendPingPeriod = 25000;
 const reinvitePeriod = 5500;
+
 /**
  * Implements Call interface
  * Public methods:
@@ -229,7 +231,13 @@ export class PlainCall extends AbstractCall
 			},
 			onReconnecting: (e) =>
 			{
+				this.isReconnecting = true;
 				this._reconnectionEventCount++;
+				this.reconnectHistory.startEntry(
+					e.reconnectionReason ?? null,
+					ReconnectTarget.Provider,
+					e.userId,
+				);
 				this.runCallback(CallEvent.onReconnecting, {
 					reconnectionEventCount: this._reconnectionEventCount,
 					reconnectionReason: e.reconnectionReason,
@@ -238,7 +246,9 @@ export class PlainCall extends AbstractCall
 			},
 			onReconnected: () =>
 			{
+				this.isReconnecting = false;
 				this._reconnectionEventCount = 0;
+				this.reconnectHistory.updateLastEntry(ReconnectTarget.Provider, true);
 				this.runCallback(CallEvent.onReconnected);
 			},
 			onUpdateLastUsedCameraId: () =>
@@ -574,6 +584,14 @@ export class PlainCall extends AbstractCall
 		}
 		catch (error)
 		{
+			if (error?.name === STREAM_MANAGER_SUPERSEDED)
+			{
+				// Superseded by a newer device selection - not a media failure. Don't fall back through the
+				// remaining constraints; a fallback capture would register after the newest request and
+				// unseat the selected device. Rethrow: callers already handle a getUserMedia rejection.
+				throw error;
+			}
+
 			this.log('getUserMedia error: ', error);
 			this.log('Current constraints', currentConstraints);
 
@@ -675,6 +693,11 @@ export class PlainCall extends AbstractCall
 					error: e
 				});
 				reject(e);
+			}).finally(() => {
+				if (!Object.values(this.peers).some((peer) => peer.calculatedState === UserState.Connected))
+				{
+					this.setPublishingState(MediaStreamsKinds.Camera, false);
+				}
 			});
 		})
 	};
@@ -1833,6 +1856,12 @@ export class PlainCall extends AbstractCall
 		clearInterval(this.microphoneLevelInterval);
 		clearTimeout(this.reinviteTimeout);
 	};
+
+	testReconnect(): void
+	{
+		const peer: Peer = Object.values(this.peers)[0];
+		peer?.reconnect({ reconnectionReason: 'TEST_RECONNECTION' });
+	}
 
 	destroy()
 	{
@@ -3058,6 +3087,7 @@ class Peer
 
 		if (this.peerConnection.connectionState === "connected" || this.peerConnection.connectionState === "completed")
 		{
+			this.isReconnecting = false;
 			this.connectionAttempt = 0;
 			this.callbacks.onReconnected();
 			clearTimeout(this.reconnectAfterDisconnectTimeout);
@@ -3602,6 +3632,7 @@ class Peer
 	{
 		clearTimeout(this.reconnectAfterDisconnectTimeout);
 
+		this.isReconnecting = true;
 		this.connectionAttempt++;
 
 		if (this.connectionAttempt > 3)
@@ -3612,9 +3643,12 @@ class Peer
 			return;
 		}
 
+		const reconnectionReason = reconnectInfoObject?.reconnectionReason || 'TRYING_RESTORE_ICE_CONNECTION';
+
 		this.callbacks.onReconnecting({
-			reconnectionReason: reconnectInfoObject?.reconnectionReason || 'TRYING_RESTORE_ICE_CONNECTION',
+			reconnectionReason,
 			reconnectionReasonInfo: reconnectInfoObject?.reconnectionReasonInfo || '',
+			userId: this.userId,
 		});
 
 		if (reconnectInfoObject && reconnectInfoObject.reconnectionReasonInfo)

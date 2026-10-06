@@ -1,5 +1,5 @@
 <?php
-$MESS['LANDING_TABLE_FIELD_XML_ID'] = 'Внещний код';
+$MESS['LANDING_TABLE_FIELD_XML_ID'] = 'Внешний код';
 $MESS['LANDING_TABLE_FIELD_APP_CODE'] = 'Код приложения';
 $MESS['LANDING_TABLE_FIELD_ACTIVE'] = 'Флаг активности';
 $MESS['LANDING_TABLE_FIELD_NAME'] = 'Название';

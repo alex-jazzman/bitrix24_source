@@ -64,7 +64,8 @@ export const BxLinkProcessor = {
 		}
 		else if (command === DesktopBxLink.collab)
 		{
-			void Messenger.openCollab(params.dialogId);
+			const { dialogId, compactMode, recentType } = params;
+			void Messenger.openCollab(dialogId, { compactMode: Encoder.decodeParamsJson(compactMode), recentType });
 		}
 		else if (command === DesktopBxLink.channel)
 		{

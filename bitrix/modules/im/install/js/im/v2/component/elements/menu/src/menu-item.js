@@ -25,6 +25,7 @@ export const MenuItemIcon = {
 	b24: 'b24',
 	aiAssistant: 'ai-assistant',
 	lock: 'lock',
+	folder: 'folder',
 };
 
 // @vue/component

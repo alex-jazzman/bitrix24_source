@@ -4,9 +4,8 @@ this.BX.Booking = this.BX.Booking || {};
 (function (exports, main_core, booking_component_mixin_locMixin, booking_const, booking_lib_segments, booking_lib_slotRanges, main_date, ui_datePicker, main_loader) {
 	'use strict';
 
-	const ALL_RESOURCES_ID = -1;
 	const AllResource = {
-		id: ALL_RESOURCES_ID,
+		id: -1,
 		name: '',
 		typeName: '',
 		slotRanges: []
@@ -897,11 +896,8 @@ this.BX.Booking = this.BX.Booking || {};
 					'#BR#': '<br />'
 				});
 			},
-			hasResourceAvatar() {
-				return Boolean(this.resource?.avatarUrl);
-			},
 			resourceAvatarUrl() {
-				return this.hasResourceAvatar ? this.resource.avatarUrl : '/bitrix/js/booking/crm-forms/field/images/resource-icon.svg';
+				return this.resource?.avatarUrl || '';
 			},
 			resourceDescription() {
 				return this.resource?.description || '';
@@ -1494,6 +1490,9 @@ this.BX.Booking = this.BX.Booking || {};
 				return this.form.date && !this.visibleCalendar && this.form.resourceId && this.isAutoSelectionOn;
 			},
 			showedCalendarBlock() {
+				if (!this.form.resourceId) {
+					return false;
+				}
 				return this.form.resourceId && !this.form.date || this.form.date !== null || this.visibleCalendar;
 			},
 			showedSlotsBlock() {
@@ -1531,7 +1530,7 @@ this.BX.Booking = this.BX.Booking || {};
 				this.occupancyManager = createOccupancy(this.runAction);
 				this.occupancyManager.setTimezone(this.timezone);
 				this.form.skuId = 0;
-				this.form.resourceId = this.hasSlotsAllAvailableResources ? AllResource.id : 0;
+				this.form.resourceId = 0;
 				this.form.date = new Date();
 				this.form.slot = null;
 			},

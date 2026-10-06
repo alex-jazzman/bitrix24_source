@@ -8,8 +8,8 @@ import { Loader, LoaderType } from 'booking.component.loader';
 
 import { MapsBlock } from './maps-block/maps-block';
 import { OptionCard } from '../../option-card/option-card';
-import imgSrcVisual from '../../../images/calendar_geo_message_pads_2.png';
-import imgSrcGrad from '../../../images/gradient_copilot_complex_2.png';
+import imgSrcVisual from '../../../images/calendar_geo_message_pads_2.webp';
+import imgSrcGrad from '../../../images/gradient_copilot_complex_2.webp';
 import imgIconPopup from '../../../images/icon_popup_checked_square_rounded.svg';
 
 import './integrations-popup.css';

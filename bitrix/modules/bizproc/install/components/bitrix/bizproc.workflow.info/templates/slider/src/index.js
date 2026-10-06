@@ -2,6 +2,7 @@ import { Event, Dom, ajax, Loc, Runtime, Tag, Text, Type } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import { Button, ButtonSize, ButtonColor } from 'ui.buttons';
 import { UserStatus } from 'bizproc.task';
+import { makeActivatable } from 'bizproc.a11y';
 import { MessageBox } from 'ui.dialogs.messagebox';
 import { TaskField, TaskFieldError } from './types';
 import { ValidateHelper } from './validate-helper';
@@ -16,6 +17,13 @@ type TaskButton = {
 	VALUE: string,
 	TEXT: string,
 };
+
+const VISUALLY_HIDDEN_STYLE =
+	'position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;'
+	+ 'clip:rect(0 0 0 0);white-space:nowrap;border:0;';
+const FOCUSABLE_CONTROL_SELECTOR = 'input:not([type="hidden"]), select, textarea, button, [tabindex]';
+
+let fieldDescriptionSeq = 0;
 
 export class WorkflowInfo
 {
@@ -75,6 +83,59 @@ export class WorkflowInfo
 
 		this.handleMarkAsRead = Runtime.debounce(this.#sendMarkAsRead, 100, this);
 		this.#workflowResult = Type.isNil(options.workflowResult) ? null : options.workflowResult;
+
+		this.#setupTabsAccessibility();
+	}
+
+	#setupTabsAccessibility(): void
+	{
+		const timelineTab = this.workflowContent?.querySelector('[data-role="wfi-timeline-tab"]');
+		if (timelineTab)
+		{
+			// inline onclick opens Timeline; empty handler adds keyboard-only
+			// activation (mouse works even if this extension fails to load)
+			makeActivatable(timelineTab, () => {});
+		}
+	}
+
+	#setupTaskFormA11y(): void
+	{
+		if (!this.taskForm)
+		{
+			return;
+		}
+
+		this.taskForm.querySelectorAll('.ui-form-row').forEach((row) => {
+			const labelNode = row.querySelector('.ui-ctl-label-text');
+			if (!labelNode)
+			{
+				return;
+			}
+
+			const label = labelNode.textContent.replaceAll('*', '').replace(/:\s*$/, '').trim();
+			if (label === '')
+			{
+				return;
+			}
+
+			const content = row.querySelector('.ui-form-content');
+			if (!content)
+			{
+				return;
+			}
+
+			content.querySelectorAll('input:not([type="hidden"]), select, textarea').forEach((control) => {
+				const hasName = (
+					control.getAttribute('aria-label')
+					|| control.getAttribute('aria-labelledby')
+					|| (control.labels && control.labels.length > 0)
+				);
+				if (!hasName)
+				{
+					control.setAttribute('aria-label', label);
+				}
+			});
+		});
 	}
 
 	init(): void
@@ -178,7 +239,12 @@ export class WorkflowInfo
 					}
 				}
 			});
+
+			BX.UI.Hint.init(this.taskForm);
+			this.#applyFieldDescriptions();
 		}
+
+		this.#setupTaskFormA11y();
 
 		const desc = this.workflowContent.querySelector('.bp-workflow-info__desc-inner');
 		if (desc)
@@ -199,6 +265,68 @@ export class WorkflowInfo
 				.catch(() => {})
 			;
 		}
+	}
+
+	// Links each field's description to its focusable control via aria-describedby so screen readers
+	// announce it on focus. The visual ui.hint stays mouse-only, so this is the AT-facing channel.
+	#applyFieldDescriptions(): void
+	{
+		if (!this.taskForm || !Type.isArrayFilled(this.taskFields))
+		{
+			return;
+		}
+
+		const fieldRows = [...this.taskForm.querySelectorAll('.ui-form-row[data-cid]')];
+
+		this.taskFields.forEach((field) => {
+			const description = Type.isStringFilled(field.Description) ? field.Description.trim() : '';
+			if (description === '')
+			{
+				return;
+			}
+
+			// The server template renders data-cid without the `[]` suffix, but the client re-render
+			// (#renderTaskFields) keeps the full Id, so multi-value rows may use either form.
+			const fullId = String(field.Id);
+			const cid = fullId.replace('[]', '');
+			const row = fieldRows.find((candidate) => candidate.getAttribute('data-cid') === cid)
+				?? (cid === fullId
+					? null
+					: fieldRows.find((candidate) => candidate.getAttribute('data-cid') === fullId));
+			const content = row?.querySelector('.ui-form-content');
+			if (!content)
+			{
+				return;
+			}
+
+			const control = content.querySelector(FOCUSABLE_CONTROL_SELECTOR);
+			if (!control)
+			{
+				return;
+			}
+
+			let descNode = content.querySelector('[data-role="field-description"]');
+			if (!descNode)
+			{
+				fieldDescriptionSeq += 1;
+				const descId = `bp-wfi-field-desc-${fieldDescriptionSeq}`;
+				descNode = Tag.render`<span
+					id="${descId}"
+					data-role="field-description"
+					style="${VISUALLY_HIDDEN_STYLE}"
+				>${Text.encode(description)}</span>`;
+				content.appendChild(descNode);
+			}
+
+			const describedBy = (control.getAttribute('aria-describedby') || '')
+				.split(/\s+/)
+				.filter((id) => id !== '');
+			if (!describedBy.includes(descNode.id))
+			{
+				describedBy.push(descNode.id);
+				control.setAttribute('aria-describedby', describedBy.join(' '));
+			}
+		});
 	}
 
 	#renderButtons(): void
@@ -590,10 +718,14 @@ export class WorkflowInfo
 				if (fieldData)
 				{
 					const labelClass = fieldData.Required ? 'ui-form-label --required' : 'ui-form-label';
+					const description = Type.isStringFilled(fieldData.Description) ? fieldData.Description.trim() : '';
+					const hintNode = description !== ''
+						? Tag.render`<span class="bp-workflow-info__field-hint" data-testid="task-field-hint" data-hint="${Text.encode(description)}"></span>`
+						: '';
 					const node = Tag.render`
 						<div class="ui-form-row" data-cid="${Text.encode(fieldData.Id)}">
 							<div class="${labelClass}">
-								<div class="ui-ctl-label-text">${Text.encode(fieldData.Name)}</div>
+								<div class="ui-ctl-label-text">${Text.encode(fieldData.Name)}${hintNode}</div>
 							</div>
 							<div class="ui-form-content"></div>
 						</div>

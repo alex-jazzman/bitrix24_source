@@ -7,6 +7,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Bizproc\Public\Activity\Interface\ActivityContentBlockProviderInterface;
+use Bitrix\Bizproc\Public\Activity\Interface\ContentBlockScopeConsumerInterface;
+use Bitrix\Bizproc\Activity\Dto\ContentBlock;
 use Bitrix\Bizproc\Automation\Engine\ConditionGroup;
 use Bitrix\Bizproc\Activity\PropertiesDialog;
 use Bitrix\Bizproc\Public\Provider\StorageItemProvider;
@@ -23,9 +26,8 @@ use Bitrix\Bizproc\Internal\Service\StorageActivity\StorageActivityService;
  * @property-write int ItemId
  * @property-write string DeleteMode
  * @property-write string StorageCode
- * @property-write string IsExpanded
  */
-class CBPDeleteDataStorageActivity extends BaseActivity implements IBPConfigurableActivity, IBPEventActivity, IBPActivityExternalEventListener
+class CBPDeleteDataStorageActivity extends BaseActivity implements IBPConfigurableActivity, IBPEventActivity, IBPActivityExternalEventListener, ActivityContentBlockProviderInterface, ContentBlockScopeConsumerInterface
 {
 	use \Bitrix\Bizproc\Activity\Mixins\EntityFilter;
 
@@ -44,7 +46,6 @@ class CBPDeleteDataStorageActivity extends BaseActivity implements IBPConfigurab
 			'ItemId' => 0,
 			'DeleteMode' => static::DELETE_MODE_MULTIPLE,
 			'StorageCode' => '',
-			'IsExpanded' => 'Y',
 		];
 
 		$this->setPropertiesTypes([
@@ -226,16 +227,16 @@ class CBPDeleteDataStorageActivity extends BaseActivity implements IBPConfigurab
 
 	protected static function extractPropertiesValues(PropertiesDialog $dialog, array $fieldsMap): Result
 	{
-		$simpleMap = $fieldsMap;
-		unset($simpleMap['DynamicFilterFields']);
-		$result = parent::extractPropertiesValues($dialog, $simpleMap);
+		// DynamicFilterFields is a standard `conditiongroup` field now: the base extraction
+		// routes it through BaseType\ConditionGroup::extractValue (same request prefix
+		// `filter_fields_`, same Engine\ConditionGroup value format). Only scalar post-casts remain.
+		$result = parent::extractPropertiesValues($dialog, $fieldsMap);
 
 		if ($result->isSuccess())
 		{
 			$currentValues = $result->getData();
 			$currentValues['StorageId'] = (int)$currentValues['StorageId'];
-			$currentValues['DynamicFilterFields'] = static::extractFilterFromProperties($dialog, $fieldsMap)->getData();
-			$currentValues['DeleteMode'] = (string)($currentValues['DeleteMode'] ?: self::DELETE_MODE_MULTIPLE);
+			$currentValues['DeleteMode'] = (string)($currentValues['DeleteMode'] ?? '');
 
 			$result->setData($currentValues);
 		}
@@ -243,10 +244,18 @@ class CBPDeleteDataStorageActivity extends BaseActivity implements IBPConfigurab
 		return $result;
 	}
 
+	public static function getContentBlock(array $properties, ?\Bitrix\Bizproc\Activity\Dto\ContentBlockContext $context = null): ?ContentBlock
+	{
+		return StorageActivityService::getContentBlock($properties, $context);
+	}
+
+	public static function getScopeConsumption(): array
+	{
+		return StorageActivityService::getScopeConsumption();
+	}
+
 	public static function getPropertiesMap(array $documentType, array $context = []): array
 	{
-		$dynamicFilterFields = $context['Properties']['DynamicFilterFields'] ?? null;
-
 		$storages = StorageActivityService::getStorageTypes();
 		$storageIds = array_map('intval', array_keys($storages));
 
@@ -273,6 +282,7 @@ class CBPDeleteDataStorageActivity extends BaseActivity implements IBPConfigurab
 					],
 				],
 				'Required' => false,
+				'RequiredMark' => true,
 				'AllowSelection' => false,
 			],
 			'StorageCode' => [
@@ -297,26 +307,24 @@ class CBPDeleteDataStorageActivity extends BaseActivity implements IBPConfigurab
 			'DynamicFilterFields' => [
 				'Name' => Loc::getMessage('BIZPROC_SDA_FILTER_FIELDS_PROPERTY'),
 				'FieldName' => 'filter_fields',
-				'Type' => \Bitrix\Bizproc\FieldType::CUSTOM,
+				'Type' => FieldType::CONDITIONGROUP,
 				'Required' => false,
-				'AllowSelection' => true,
-				'CustomType' => 'filterFields',
-				'Options' => [
+				'Settings' => [
+					// Standard `conditiongroup` field: the control renders itself server-side
+					// and mounts from data-config. The BaseType reads only Fields/documentType/Prefix
+					// (DTO-01); the starting field set is the virtual storage (id 0).
+					'Fields' => $filteringFieldsMap[0],
 					'documentType' => \Bitrix\Bizproc\Public\Entity\Document\Workflow::getComplexType(),
-					'filteringFieldsPrefix' => 'filter_fields_',
+					'Prefix' => 'filter_fields_',
+					// Pilot-private (NOT part of DTO-01, ignored by the BaseType render): the full
+					// per-storage field map is delivered to the activity JS via `activityFields`
+					// (afterFormRender) and re-fed with setFields() when the storage changes.
 					'filterFieldsMap' => $filteringFieldsMap,
-					'conditions' => $dynamicFilterFields,
-					'collapsedCaption' => Loc::getMessage('BIZPROC_SDA_FILTER_FIELDS_COLLAPSED_TEXT'),
-				]
-			],
-			'IsExpanded' => [
-				'Name' => '',
-				'FieldName' => 'is_expanded',
-				'Type' => FieldType::STRING,
-				'Required' => false,
-				'AllowSelection' => false,
-				'Hidden' => true,
-				'Default' => 'Y',
+					'caption' => [
+						'head' => Loc::getMessage('BIZPROC_SDA_FILTER_FIELDS_PROPERTY'),
+						'collapsed' => Loc::getMessage('BIZPROC_SDA_FILTER_FIELDS_COLLAPSED_TEXT'),
+					],
+				],
 			],
 		];
 	}
@@ -357,7 +365,7 @@ class CBPDeleteDataStorageActivity extends BaseActivity implements IBPConfigurab
 			$errors[] = [
 				'code' => 'NotExist',
 				'parameter' => 'FieldValue',
-				'message' => Loc::getMessage('BIZPROC_SDA_EMPTY_STORAGE_ID_OR_CODE'),
+				'message' => Loc::getMessage('BIZPROC_SDA_EMPTY_STORAGE_ID_OR_CODE_MSGVER_1'),
 			];
 		}
 

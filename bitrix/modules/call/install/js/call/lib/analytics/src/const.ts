@@ -61,12 +61,17 @@ export const AnalyticsEvent = Object.freeze({
 	deleteUser: 'delete_user',
 	denyRequest: 'deny_request',
 	approveRequest: 'approve_request',
+	joinCall: 'join_call',
+	clickOpenSlots: 'click_open_slots',
+	clickBooking: 'click_booking',
+	openSection: 'open_section',
 });
 
 export const AnalyticsTool = Object.freeze({
 	im: 'im',
 	ai: 'ai',
 	task: 'task',
+	sync: 'sync',
 });
 
 export const AnalyticsCategory = Object.freeze({
@@ -78,6 +83,7 @@ export const AnalyticsCategory = Object.freeze({
 	callFollowup: 'call_followup',
 	callRecord: 'call_record',
 	collabCall: 'collab_call',
+	sync: 'sync',
 });
 
 export const AnalyticsType = Object.freeze({
@@ -94,6 +100,7 @@ export const AnalyticsType = Object.freeze({
 	groupCall: 'group',
 	aiOn: 'ai_on',
 	turnOnAi: 'turn_on_ai',
+	sync: 'sync',
 });
 
 export const AnalyticsSection = Object.freeze({
@@ -107,6 +114,7 @@ export const AnalyticsSection = Object.freeze({
 	callMessage: 'call_message',
 	callFollowup: 'call_followup',
 	call: 'call',
+	syncPage: 'sync_page',
 });
 
 export const AnalyticsSubSection = Object.freeze({
@@ -114,6 +122,7 @@ export const AnalyticsSubSection = Object.freeze({
 	contextMenu: 'context_menu',
 	window: 'window',
 	taskCard: 'task_card',
+	mainButton: 'main_button',
 });
 
 export const AnalyticsElement = Object.freeze({

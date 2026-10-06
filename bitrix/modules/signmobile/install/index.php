@@ -1,7 +1,5 @@
 <?php
 
-use Bitrix\SignMobile\Workspace;
-use Bitrix\Main\EventManager;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
 
@@ -14,8 +12,6 @@ class SignMobile extends CModule
 	public $MODULE_VERSION_DATE;
 	public $MODULE_NAME;
 	public $MODULE_DESCRIPTION;
-
-	private $workspaceClass = Workspace::class;
 
 	public function __construct()
 	{
@@ -34,97 +30,32 @@ class SignMobile extends CModule
 
 	public function installDB()
 	{
-		global $DB, $APPLICATION;
+		global $APPLICATION;
 
-		$connection = \Bitrix\Main\Application::getConnection();
-
-		// db
-		$errors = $DB->runSQLBatch(
-			$this->getDocumentRoot().'/bitrix/modules/signmobile/install/db/' . $connection->getType() . '/install.sql'
-		);
-		if ($errors !== false)
+		$migrationResult = $this->installMigrations();
+		if (!$migrationResult->isSuccess())
 		{
-			$APPLICATION->throwException(implode('', $errors));
+			$APPLICATION->throwException(implode('', $migrationResult->getErrorMessages()));
 			return false;
 		}
 
 		ModuleManager::registerModule($this->MODULE_ID);
-
-		$eventManager = EventManager::getInstance();
-
-		$eventManager->registerEventHandler(
-			'mobileapp',
-			'onJNComponentWorkspaceGet',
-			$this->MODULE_ID,
-			$this->workspaceClass,
-			'getPath',
-		);
-
-		$eventManager->registerEventHandler(
-			'mobile',
-			'onBeforeTabsGet',
-			$this->MODULE_ID,
-			Bitrix\SignMobile\SignTab::class,
-			'onBeforeTabsGet',
-		);
-
-		$eventManager->registerEventHandler(
-			'mobile',
-			'onMobileMenuStructureBuilt',
-			'signmobile',
-			'Bitrix\SignMobile\MobileMenuManager',
-			'onMobileMenuStructureBuilt',
-		);
 
 		return true;
 	}
 
 	public function uninstallDB($arParams = [])
 	{
-		global $APPLICATION, $DB;
+		global $APPLICATION;
 
-		$connection = \Bitrix\Main\Application::getConnection();
+		$dropTables = isset($arParams['savedata']) && !$arParams['savedata'];
 
-		$errors = false;
-
-		// db
-		if (isset($arParams['savedata']) && !$arParams['savedata'])
+		$migrationResult = $this->uninstallMigrations($dropTables);
+		if (!$migrationResult->isSuccess())
 		{
-			$errors = $DB->runSQLBatch(
-				$this->getDocumentRoot().'/bitrix/modules/signmobile/install/db/' . $connection->getType() . '/uninstall.sql'
-			);
-		}
-		if ($errors !== false)
-		{
-			$APPLICATION->throwException(implode('', $errors));
+			$APPLICATION->throwException(implode('', $migrationResult->getErrorMessages()));
 			return false;
 		}
-
-		$eventManager = EventManager::getInstance();
-
-		$eventManager->unRegisterEventHandler(
-			'mobileapp',
-			'onJNComponentWorkspaceGet',
-			$this->MODULE_ID,
-			$this->workspaceClass,
-			'getPath',
-		);
-
-		$eventManager->unRegisterEventHandler(
-			'mobile',
-			'onBeforeTabsGet',
-			$this->MODULE_ID,
-			Bitrix\SignMobile\SignTab::class,
-			'onBeforeTabsGet',
-		);
-
-		$eventManager->unRegisterEventHandler(
-			'mobile',
-			'onMobileMenuStructureBuilt',
-			'signmobile',
-			'Bitrix\SignMobile\MobileMenuManager',
-			'onMobileMenuStructureBuilt',
-		);
 
 		ModuleManager::unRegisterModule($this->MODULE_ID);
 
@@ -239,16 +170,5 @@ class SignMobile extends CModule
 				$_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/' . $this->MODULE_ID . '/install/unstep2.php'
 			);
 		}
-	}
-
-	private function getDocumentRoot(): string
-	{
-		$context =
-			\Bitrix\Main\Application::getInstance()
-				->getContext()
-		;
-
-		return $context ? $context->getServer()
-			->getDocumentRoot() : $_SERVER['DOCUMENT_ROOT'];
 	}
 }

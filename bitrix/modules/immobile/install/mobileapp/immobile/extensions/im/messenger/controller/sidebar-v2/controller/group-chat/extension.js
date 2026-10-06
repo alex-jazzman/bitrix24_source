@@ -5,7 +5,6 @@ jn.define('im/messenger/controller/sidebar-v2/controller/group-chat', (require, 
 	const { Type } = require('type');
 	const { inAppUrl } = require('in-app-url');
 	const { isOnline } = require('device/connection');
-	const { DialogType } = require('im/messenger/const');
 	const { Loc } = require('im/messenger/controller/sidebar-v2/loc');
 	const { SidebarBaseController } = require('im/messenger/controller/sidebar-v2/controller/base');
 	const { GroupChatSidebarView } = require('im/messenger/controller/sidebar-v2/controller/group-chat/src/view');
@@ -24,6 +23,7 @@ jn.define('im/messenger/controller/sidebar-v2/controller/group-chat', (require, 
 	const { onAddParticipants } = require('im/messenger/controller/sidebar-v2/user-actions/participants');
 	const { onLeaveChat } = require('im/messenger/controller/sidebar-v2/user-actions/user');
 	const { onDeleteChat, onClearHistoryChat } = require('im/messenger/controller/sidebar-v2/user-actions/chat');
+	const { getAttachChatMenuItem } = require('im/messenger/controller/sidebar-v2/user-actions/attach-chat');
 	const {
 		createEntityButton,
 		createSearchButton,
@@ -50,8 +50,12 @@ jn.define('im/messenger/controller/sidebar-v2/controller/group-chat', (require, 
 
 		getHeaderContextMenuItems()
 		{
-			return [
-				{
+			const dialog = this.store.getters['dialoguesModel/getById'](this.dialogId);
+			const items = [];
+
+			if (this.permissionManager.canAddParticipants())
+			{
+				items.push({
 					id: SidebarContextMenuActionId.ADD_PARTICIPANTS,
 					title: Loc.getMessage('IMMOBILE_SIDEBAR_V2_COMMON_ACTION_ADD_PARTICIPANTS'),
 					icon: Icon.ADD_PERSON,
@@ -65,9 +69,14 @@ jn.define('im/messenger/controller/sidebar-v2/controller/group-chat', (require, 
 							this.logger.error('onAddParticipants', error);
 						});
 					},
-				},
-				...super.getHeaderContextMenuItems(),
-			];
+				});
+			}
+
+			items.push(getAttachChatMenuItem(dialog, this.widget));
+
+			items.push(...super.getHeaderContextMenuItems());
+
+			return items.filter(Boolean);
 		}
 
 		handleDeleteDialogAction()

@@ -1762,6 +1762,11 @@ a.crm-info-wrapper {
 	--ui-typography-line-height: normal;
 }
 
+.crm-bbcode-container img {
+	max-width: 100%;
+	height: auto;
+}
+
 tr.bx-over a.crm-info-wrapper { border-color: #f5f5f5; }
 
 tr.bx-over a.crm-info-wrapper:hover { border-color: #bbd7f2; }

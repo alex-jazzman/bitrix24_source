@@ -119,8 +119,3 @@ export type EnabledFeatures = {
 	bookingNotificationsAiCall: boolean;
 	bookingLong: boolean;
 }
-
-export type GoToDayPayload = {
-	selectedDateTs: number,
-	resourceId?: number,
-};

@@ -138,6 +138,14 @@ export const NoteMentionNode = Node.create({
 				default: false,
 				rendered: false,
 			},
+
+			// [version-diff] 'added' | 'removed' | null — tags the chip in the read-only version diff.
+			// The NodeView turns it into a CSS class; the mention resolver preserves it (it spreads
+			// node.attrs), so it survives resolve. Not serialised to markdown (rendered: false).
+			diffState: {
+				default: null,
+				rendered: false,
+			},
 		};
 	},
 

@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
-(function (exports, crm_timeline_item, main_core, main_date, crm_timeline_tools, ui_vue3, main_loader, rest_client, ui_analytics, ui_notification, ui_infoHelper, ui_system_menu, ui_iconSet_api_vue, ui_buttons, ui_vue3_directives_hint, main_popup, crm_field_colorSelector, main_core_events, ui_iconSet_api_core) {
+(function (exports, crm_timeline_item, main_core, main_date, crm_timeline_tools, ui_vue3, main_loader, ui_iconSet_api_vue, rest_client, ui_analytics, ui_notification, ui_infoHelper, ui_system_menu, ui_buttons, ui_vue3_directives_hint, main_popup, ui_iconSet_api_core, ui_vue3_components_button, crm_field_colorSelector, main_core_events, ui_designTokens, ui_system_label, ui_cnt, crm_timeline_dialog) {
 	'use strict';
 
 	/** @memberof BX.Crm.Timeline.Animation */
@@ -2109,7 +2109,6 @@ this.BX.Crm = this.BX.Crm || {};
 	const ICON_TO_BICON_MAP = Object.freeze({
 		'call': ui_iconSet_api_vue.Outline.PHONE_UP,
 		'call-default': ui_iconSet_api_vue.Outline.PHONE_UP,
-		'call-play-record': ui_iconSet_api_vue.Outline.PARTS_RECORD_PLAY,
 		'call-incoming': ui_iconSet_api_vue.Outline.PHONE_IN,
 		'call-outgoing': ui_iconSet_api_vue.Outline.PHONE_OUT,
 		'mail-income-unread': ui_iconSet_api_vue.Outline.MAIL,
@@ -2637,7 +2636,7 @@ this.BX.Crm = this.BX.Crm || {};
 					[ButtonType.SECONDARY]: ui_buttons.Button.AirStyle.OUTLINE,
 					[ButtonType.LIGHT]: ui_buttons.Button.AirStyle.PLAIN,
 					[ButtonType.ICON]: ui_buttons.Button.AirStyle.PLAIN_NO_ACCENT,
-					[ButtonType.AI]: ui_buttons.Button.AirStyle.FILLED_COPILOT
+					[ButtonType.AI]: ui_buttons.Button.AirStyle.FILLED_BITRIX_GPT
 				};
 			},
 			buttonContainerRef() {
@@ -2789,69 +2788,36 @@ this.BX.Crm = this.BX.Crm || {};
 
 	const AdditionalButtonIcon = Object.freeze({
 		NOTE: 'note',
-		SCRIPT: 'script',
 		PRINT: 'print',
+		SCRIPT: 'script',
+		QR_CODE: 'qr-code',
+		VIDEOCONFERENCE: 'videoconference',
 		DOTS: 'dots'
 	});
 	const AdditionalButtonColor = Object.freeze({
 		DEFAULT: 'default',
 		PRIMARY: 'primary'
 	});
-	ui_vue3.BitrixVue.cloneComponent(BaseButton, {
-		props: {
-			iconName: {
-				type: String,
-				required: false,
-				default: '',
-				validator(value) {
-					return Object.values(AdditionalButtonIcon).indexOf(value) > -1;
-				}
-			},
-			color: {
-				type: String,
-				required: false,
-				default: AdditionalButtonColor.DEFAULT,
-				validator(value) {
-					return Object.values(AdditionalButtonColor).indexOf(value) > -1;
-				}
-			}
-		},
-		computed: {
-			className() {
-				return ['crm-timeline__card_add-button', {
-					[`--icon-${this.iconName}`]: this.iconName,
-					[`--color-${this.color}`]: this.color,
-					[`--state-${this.currentState}`]: this.currentState
-				}];
-			},
-			ButtonState() {
-				return ButtonState;
-			},
-			loaderHtml() {
-				const loader = new main_loader.Loader({
-					mode: 'inline',
-					size: 20
-				});
-				loader.show();
-				return loader.layout.outerHTML;
-			}
-		},
-		template: `
-		<transition name="crm-timeline__card_add-button-fade" mode="out-in">
-			<div
-				v-if="currentState === ButtonState.LOADING"
-				v-html="loaderHtml"
-				class="crm-timeline__card_add-button"
-			></div>
-			<div
-				v-else
-				:title="title"
-				@click="executeAction"
-				:class="className">
-			</div>
-		</transition>
-	`
+	Object.freeze({
+		[AdditionalButtonIcon.NOTE]: ui_iconSet_api_core.Outline.NOTE,
+		[AdditionalButtonIcon.PRINT]: ui_iconSet_api_core.Outline.PRINTER,
+		[AdditionalButtonIcon.SCRIPT]: ui_iconSet_api_core.Outline.TRANSCRIPTION,
+		[AdditionalButtonIcon.QR_CODE]: ui_iconSet_api_core.Outline.QR_CODE,
+		[AdditionalButtonIcon.VIDEOCONFERENCE]: ui_iconSet_api_core.Outline.RECORD_VIDEO,
+		[AdditionalButtonIcon.DOTS]: ui_iconSet_api_core.Outline.MORE_L
 	});
+	Object.freeze({
+		[AdditionalButtonColor.DEFAULT]: ui_vue3_components_button.AirButtonStyle.PLAIN_NO_ACCENT,
+		[AdditionalButtonColor.PRIMARY]: ui_vue3_components_button.AirButtonStyle.PLAIN_ACCENT
+	});
+	Object.freeze({
+		[ButtonState.LOADING]: ui_vue3_components_button.ButtonState.WAITING,
+		[ButtonState.AI_LOADING]: ui_vue3_components_button.ButtonState.AI_WAITING
+	});
+	({
+		props: {
+			color: {
+				default: AdditionalButtonColor.DEFAULT}}});
 
 	Object.freeze({
 		'email': ui_iconSet_api_core.Outline.MAIL,
@@ -4365,7 +4331,8 @@ this.BX.Crm = this.BX.Crm || {};
 			if (!dlg) {
 				dlg = BX.Crm.ConfirmationDialog.create(this._detetionConfirmDlgId, {
 					title: this.getMessage("removeConfirmTitle"),
-					content: this.getRemoveMessage()
+					content: this.getRemoveMessage(),
+					background: 'vibrant'
 				});
 			}
 			dlg.open().then(BX.delegate(this.onRemovalConfirm, this), BX.delegate(this.onRemovalCancel, this));
@@ -4669,7 +4636,10 @@ this.BX.Crm = this.BX.Crm || {};
 		}
 		onClick(e) {
 			if (typeof window.top['BXIM'] === 'undefined') {
-				window.alert(this.getMessage("telephonyNotSupported"));
+				// eslint-disable-next-line @bitrix24/bitrix24-rules/no-native-dialogs
+				crm_timeline_dialog.alert({
+					content: main_core.Tag.render`<div>${this.getMessage("telephonyNotSupported")}</div>`
+				});
 				return;
 			}
 			let phone = "";
@@ -5660,7 +5630,10 @@ this.BX.Crm = this.BX.Crm || {};
 		}
 		onClick() {
 			if (typeof window.top['BXIM'] === 'undefined') {
-				window.alert(this.getMessage("openLineNotSupported"));
+				// eslint-disable-next-line @bitrix24/bitrix24-rules/no-native-dialogs
+				crm_timeline_dialog.alert({
+					content: main_core.Tag.render`<div>${this.getMessage("openLineNotSupported")}</div>`
+				});
 				return;
 			}
 			let slug = "";
@@ -5859,7 +5832,10 @@ this.BX.Crm = this.BX.Crm || {};
 		}
 		view() {
 			if (typeof window.top['BXIM'] === 'undefined') {
-				window.alert(this.getMessage("openLineNotSupported"));
+				// eslint-disable-next-line @bitrix24/bitrix24-rules/no-native-dialogs
+				crm_timeline_dialog.alert({
+					content: main_core.Tag.render`<div>${this.getMessage("openLineNotSupported")}</div>`
+				});
 				return;
 			}
 			let slug = "";
@@ -8303,7 +8279,8 @@ this.BX.Crm = this.BX.Crm || {};
 			if (!dlg) {
 				dlg = BX.Crm.ConfirmationDialog.create(this._detetionConfirmDlgId, {
 					title: this.getMessage("removeConfirmTitle"),
-					content: this.getMessage('commentRemove')
+					content: this.getMessage('commentRemove'),
+					background: 'vibrant'
 				});
 			}
 			dlg.open().then(BX.delegate(this.onRemovalConfirm, this), BX.delegate(this.onRemovalCancel, this));
@@ -8700,7 +8677,8 @@ this.BX.Crm = this.BX.Crm || {};
 			if (!dlg) {
 				dlg = BX.Crm.ConfirmationDialog.create(this._detetionConfirmDlgId, {
 					title: this.getMessage("removeConfirmTitle"),
-					content: this.getMessage('documentRemove')
+					content: this.getMessage('documentRemove'),
+					background: 'vibrant'
 				});
 			}
 			dlg.open().then(BX.delegate(this.onConfirmDelete, this), BX.DoNothing);
@@ -8729,7 +8707,10 @@ this.BX.Crm = this.BX.Crm || {};
 				onsuccess: BX.delegate(function (result) {
 					this._isRequestRunning = false;
 					if (BX.type.isNotEmptyString(result.ERROR)) {
-						alert(result.ERROR);
+						// eslint-disable-next-line @bitrix24/bitrix24-rules/no-native-dialogs
+						crm_timeline_dialog.alert({
+							content: main_core.Tag.render`<div>${main_core.Text.encode(result.ERROR)}</div>`
+						});
 					} else {
 						const deleteItem = this._history.findItemById(this._id);
 						if (deleteItem instanceof Document) {
@@ -10014,7 +9995,8 @@ this.BX.Crm = this.BX.Crm || {};
 			if (!dlg) {
 				dlg = BX.Crm.ConfirmationDialog.create(this._detetionConfirmDlgId, {
 					title: this.getMessage("removeConfirmTitle"),
-					content: this.getRemoveMessage()
+					content: this.getRemoveMessage(),
+					background: 'vibrant'
 				});
 			}
 			dlg.open().then(BX.delegate(this.onRemovalConfirm, this), BX.delegate(this.onRemovalCancel, this));
@@ -10588,7 +10570,10 @@ this.BX.Crm = this.BX.Crm || {};
 		}
 		view() {
 			if (typeof window.top['BXIM'] === 'undefined') {
-				window.alert(this.getMessage("openLineNotSupported"));
+				// eslint-disable-next-line @bitrix24/bitrix24-rules/no-native-dialogs
+				crm_timeline_dialog.alert({
+					content: main_core.Tag.render`<div>${this.getMessage("openLineNotSupported")}</div>`
+				});
 				return;
 			}
 			let slug = "";
@@ -12823,5 +12808,5 @@ this.BX.Crm = this.BX.Crm || {};
 	exports.Tools = Tools;
 	exports.Types = types;
 
-})(this.BX.Crm.Timeline = this.BX.Crm.Timeline || {}, BX.Crm.Timeline, BX, BX.Main, BX.Crm.Timeline, BX.Vue3, BX, BX, BX.UI.Analytics, BX.UI.Notification, BX.UI, BX.UI.System, BX.UI.IconSet, BX.UI, BX.Vue3.Directives, BX.Main, BX.Crm.Field, BX.Event, BX.UI.IconSet);
+})(this.BX.Crm.Timeline = this.BX.Crm.Timeline || {}, BX.Crm.Timeline, BX, BX.Main, BX.Crm.Timeline, BX.Vue3, BX, BX.UI.IconSet, BX, BX.UI.Analytics, BX.UI.Notification, BX.UI, BX.UI.System, BX.UI, BX.Vue3.Directives, BX.Main, BX.UI.IconSet, BX.Vue3.Components, BX.Crm.Field, BX.Event, window, BX.UI.System.Label, BX.UI, BX.Crm.Timeline);
 //# sourceMappingURL=timeline.bundle.js.map

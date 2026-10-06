@@ -2,6 +2,7 @@ import {Tag, Text, Loc, Event as EventBinder, Cache, Runtime, Dom} from 'main.co
 import {EventEmitter} from 'main.core.events';
 import type {Row} from '../row/product-list-row';
 import {ModeList} from 'catalog.store-enable-wizard';
+import {FocusNavigator} from 'ui.a11y';
 
 declare const BX: any;
 
@@ -83,6 +84,7 @@ export default class ReserveControl
 			Dom.append(this.getDateNode(), this.wrapper);
 
 			EventBinder.bind(this.getDateNode(), 'click', ReserveControl.onDateInputClick.bind(this));
+			EventBinder.bind(this.getDateNode().querySelector('button')!, 'keydown', ReserveControl.onDateInputKeyDown.bind(this));
 			EventBinder.bind(this.getDateNode().querySelector('input')!, 'change', this.onDateChange.bind(this));
 		}
 	}
@@ -200,11 +202,41 @@ export default class ReserveControl
 	private static onDateInputClick(event: Event): void
 	{
 		const target = event.target as HTMLElement;
-		BX.calendar({
+		// BX.calendar returns the JCCalendar singleton; its popup is a BX.PopupWindow created
+		// with focusTrap:false and bSetFocus that only blurs the button, so focus never enters
+		// the calendar. Move focus into the popup on open and restore it to the date button on
+		// any close (date pick / Esc / outside click).
+		const cal = BX.calendar({
 			node: target,
 			field: target.parentNode!.querySelector('input'),
 			bTime: false,
 		});
+
+		const container = cal?.popup?.getPopupContainer?.();
+		if (container)
+		{
+			FocusNavigator.focusFirst(container);
+		}
+
+		cal?.popup?.subscribeOnce?.('onPopupClose', () => {
+			FocusNavigator.focusTarget(target);
+		});
+	}
+
+	private static onDateInputKeyDown(event: KeyboardEvent): void
+	{
+		if (event.key !== 'Enter')
+		{
+			// Space keeps the native button activation (click on keyup) - no handling needed.
+			return;
+		}
+
+		// The grid intercepts Enter on a bubbling ancestor and preventDefault()'s the native
+		// button activation. Stop propagation so the interceptor never runs, and open the
+		// calendar via the same path as click. Space is left to native activation.
+		event.preventDefault();
+		event.stopPropagation();
+		ReserveControl.onDateInputClick(event);
 	}
 
 	public onDateChange(event: Event): void
@@ -230,7 +262,7 @@ export default class ReserveControl
 		return this.cache.remember('dateInput', () => {
 			return Tag.render`
 				<div>
-					<a class="crm-entity-product-list-reserve-date"></a>
+					<button type="button" class="crm-entity-product-list-reserve-date" hidden></button>
 					<input
 						data-name="${this.dateFieldName}"
 						name="${this.dateFieldName}"
@@ -305,10 +337,11 @@ export default class ReserveControl
 					},
 				) ?? '')
 		;
-		const link = this.getDateNode().querySelector('a');
+		const link = this.getDateNode().querySelector('button');
 		if (link)
 		{
 			link.innerText = linkText;
+			link.hidden = (linkText === '');
 		}
 
 		const hiddenInput = this.getDateNode().querySelector('input');

@@ -46,13 +46,6 @@ class CBPSignB2EDocumentActivity extends CBPActivity implements IBPEventActivity
 	public const RETURN_PARAM_DOCUMENT_STATUS = 'documentStatus';
 	public const RETURN_STATUS_SUCCESS = 'SUCCESS';
 	public const RETURN_STATUS_FAIL = 'FAIL';
-	private const SIGN_B2E_EVENT_TYPE_LIST = [
-		EventData::TYPE_ON_DONE,
-		EventData::TYPE_ON_STOPPED,
-		EventData::TYPE_ON_CANCELED_BY_RESPONSIBILITY_PERSON,
-		EventData::TYPE_ON_CANCELED_BY_REVIEWER,
-		EventData::TYPE_ON_CANCELED_BY_EDITOR,
-	];
 	private const EVENT_MODULE_NAME = 'sign';
 
 	private bool $isInEventActivityMode = false;
@@ -884,7 +877,8 @@ class CBPSignB2EDocumentActivity extends CBPActivity implements IBPEventActivity
 
 		$this->isInEventActivityMode = true;
 		$schedulerService = $this->workflow->GetService('SchedulerService');
-		foreach (self::SIGN_B2E_EVENT_TYPE_LIST as $eventType)
+		$eventTypeList = self::getSignB2eEventTypeList();
+		foreach ($eventTypeList as $eventType)
 		{
 			$schedulerService->SubscribeOnEvent(
 				$this->workflow->GetInstanceId(),
@@ -895,7 +889,11 @@ class CBPSignB2EDocumentActivity extends CBPActivity implements IBPEventActivity
 			);
 		}
 		$this->workflow->AddEventHandler($this->name, $eventHandler);
-		$this->WriteToTrackingService(Loc::getMessage('SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_WAITING_FOR_SIGN'));
+		$this->WriteToTrackingService(
+			$eventTypeList === []
+				? Loc::getMessage('SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_ERROR_UNABLE_TO_SUBSCRIBE')
+				: Loc::getMessage('SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_WAITING_FOR_SIGN'),
+		);
 	}
 
 	public function unsubscribe(IBPActivityExternalEventListener $eventHandler): void
@@ -906,10 +904,11 @@ class CBPSignB2EDocumentActivity extends CBPActivity implements IBPEventActivity
 		}
 
 		$schedulerService = $this->workflow->GetService("SchedulerService");
-		foreach (self::SIGN_B2E_EVENT_TYPE_LIST as $eventType)
+		foreach (self::getSignB2eEventTypeList() as $eventType)
 		{
 			$schedulerService->UnSubscribeOnEvent(
 				$this->workflow->GetInstanceId(),
+				$this->name,
 				self::EVENT_MODULE_NAME,
 				$eventType,
 				$this->createdDocumentId,
@@ -931,7 +930,7 @@ class CBPSignB2EDocumentActivity extends CBPActivity implements IBPEventActivity
 		}
 
 		$eventName = $arEventParameters['eventName'] ?? '';
-		if (!in_array($eventName, self::SIGN_B2E_EVENT_TYPE_LIST, true))
+		if (!in_array($eventName, self::getSignB2eEventTypeList(), true))
 		{
 			$this->writeToTrackingService(Loc::getMessage('SIGN_ACTIVITIES_SIGN_B2E_DOCUMENT_INVALID_EVENT_TYPE'));
 
@@ -946,6 +945,29 @@ class CBPSignB2EDocumentActivity extends CBPActivity implements IBPEventActivity
 		$this->workflow->closeActivity($this);
 
 		return true;
+	}
+
+	/**
+	 * Deliberately not a class constant: constants are evaluated on object creation, so unserializing
+	 * a workflow stream would resolve sign classes even where the module is not included, e.g. in cron agents.
+	 *
+	 * @return string[]
+	 * @throws Main\LoaderException
+	 */
+	private static function getSignB2eEventTypeList(): array
+	{
+		if (!Main\Loader::includeModule(self::EVENT_MODULE_NAME))
+		{
+			return [];
+		}
+
+		return [
+			EventData::TYPE_ON_DONE,
+			EventData::TYPE_ON_STOPPED,
+			EventData::TYPE_ON_CANCELED_BY_RESPONSIBILITY_PERSON,
+			EventData::TYPE_ON_CANCELED_BY_REVIEWER,
+			EventData::TYPE_ON_CANCELED_BY_EDITOR,
+		];
 	}
 
 	private function isSubscriptionEnabled(): bool

@@ -138,6 +138,46 @@ export function openViaMobileApp(url: string): boolean
 }
 
 /**
+ * Downloads/opens a file URL through the mobile app's native document viewer.
+ *
+ * Inside the classic webview a plain `<a download>` click is silently ignored and
+ * `window.open` escapes to the session-less OS browser (auth'd download URLs then
+ * fail with "please sign in"). The native `BXMobileApp.UI.Document.open` fetches the
+ * URL WITH the app session and hands the file to the native viewer — the same path
+ * the disk module uses. `app.openDocument` is the legacy fallback for older webviews.
+ *
+ * No-op returning false outside the app (desktop keeps its own download path).
+ *
+ * @param {string} url authenticated file URL
+ * @param {string} filename display name hint for the native viewer
+ * @returns {boolean} true if handed off to the native document viewer
+ */
+export function openFileNative(url: string, filename: string): boolean
+{
+	if (!url || !isAllowedUrl(url) || !isMobileApp())
+	{
+		return false;
+	}
+
+	const nativeDocument = window.BXMobileApp?.UI?.Document;
+	if (nativeDocument && typeof nativeDocument.open === 'function')
+	{
+		nativeDocument.open({ url, filename });
+
+		return true;
+	}
+
+	if (typeof window.app?.openDocument === 'function')
+	{
+		window.app.openDocument({ url, filename });
+
+		return true;
+	}
+
+	return false;
+}
+
+/**
  * Opens a URL: natively inside the mobile app when possible, otherwise in a new
  * browser tab. Use for entry points that open a new tab on desktop by design
  * (e.g. mention chips), not for plain in-content anchors.

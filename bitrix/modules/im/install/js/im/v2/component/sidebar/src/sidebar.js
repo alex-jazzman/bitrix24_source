@@ -1,9 +1,10 @@
 import { type JsonObject } from 'main.core';
 import { type BaseEvent, type EventEmitter } from 'main.core.events';
 
-import { EventType, LocalStorageKey, SidebarDetailBlock, DialogIdChatPrefix } from 'im.v2.const';
+import { ChatType, EventType, LocalStorageKey, SidebarDetailBlock, DialogIdChatPrefix } from 'im.v2.const';
 import { LocalStorageManager } from 'im.v2.lib.local-storage';
 import { Logger } from 'im.v2.lib.logger';
+import { type ImModelChat } from 'im.v2.model';
 
 import { SidebarPanel } from './components/sidebar-panel';
 
@@ -11,6 +12,12 @@ import './css/icons.css';
 import './css/sidebar.css';
 
 type SidebarPanelType = $Values<typeof SidebarDetailBlock>;
+type LocalStorageKeyType = $Values<typeof LocalStorageKey>;
+
+const LocalStorageKeyByChatType: Record<string, LocalStorageKeyType> = {
+	[ChatType.taskComments]: LocalStorageKey.taskCommentsSidebarOpened,
+	default: LocalStorageKey.sidebarOpened,
+};
 
 // @vue/component
 export const ChatSidebar = {
@@ -47,6 +54,14 @@ export const ChatSidebar = {
 	computed:
 	{
 		SidebarDetailBlock: () => SidebarDetailBlock,
+		dialog(): ImModelChat
+		{
+			return this.$store.getters['chats/get'](this.originDialogId, true);
+		},
+		sidebarOpenedStorageKey(): LocalStorageKeyType
+		{
+			return LocalStorageKeyByChatType[this.dialog.type] ?? LocalStorageKeyByChatType.default;
+		},
 		topLevelTransitionName(): string
 		{
 			return this.needTopLevelTransition ? 'top-level-panel' : '';
@@ -176,7 +191,7 @@ export const ChatSidebar = {
 		},
 		restoreOpenState()
 		{
-			const sidebarOpenState = LocalStorageManager.getInstance().get(LocalStorageKey.sidebarOpened);
+			const sidebarOpenState = LocalStorageManager.getInstance().get(this.sidebarOpenedStorageKey);
 			if (!sidebarOpenState)
 			{
 				return;
@@ -189,7 +204,7 @@ export const ChatSidebar = {
 			const WRITE_TO_STORAGE_TIMEOUT = 200;
 			clearTimeout(this.saveSidebarStateTimeout);
 			this.saveSidebarStateTimeout = setTimeout(() => {
-				LocalStorageManager.getInstance().set(LocalStorageKey.sidebarOpened, sidebarOpened);
+				LocalStorageManager.getInstance().set(this.sidebarOpenedStorageKey, sidebarOpened);
 			}, WRITE_TO_STORAGE_TIMEOUT);
 		},
 		openTopPanel(type, dialogId, standalone = false)

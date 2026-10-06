@@ -1,5 +1,6 @@
 <?php
 $MESS["DISK_FOLDER_BTN_CREATE_FOLDER"] = "Create";
+$MESS["DISK_FOLDER_ERROR_EMPTY_NAME_CREATE_FOLDER"] = "Enter a folder name.";
 $MESS["DISK_FOLDER_LABEL_NAME_CREATE_FOLDER"] = "Name";
 $MESS["DISK_FOLDER_LIST_BIZPROC_LABEL"] = "Activate business processes";
 $MESS["DISK_FOLDER_LIST_BIZPROC_TITLE_MODAL"] = "Configure business processes";

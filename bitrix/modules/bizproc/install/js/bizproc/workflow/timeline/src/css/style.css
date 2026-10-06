@@ -395,19 +395,51 @@ a.bizproc-timeline-popup-text {
 }
 
 .bizproc-timeline-popup-logo.--fast, .bizproc-workflow-timeline-eff-icon {
-	background-image: url('../../img/fast-icon.png');
+	background-image: url('../../img/fast-icon.webp');
+	background-image: -webkit-image-set(
+		url('../../img/fast-icon.webp') 1x,
+		url('../../img/fast-icon@2x.webp') 2x
+	);
+	background-image: image-set(
+		url('../../img/fast-icon.webp') 1x,
+		url('../../img/fast-icon@2x.webp') 2x
+	);
 }
 
 .bizproc-timeline-popup-logo.--slow, .bizproc-workflow-timeline-eff-icon.--slow {
-	background-image: url('../../img/slow-icon.png');
+	background-image: url('../../img/slow-icon.webp');
+	background-image: -webkit-image-set(
+		url('../../img/slow-icon.webp') 1x,
+		url('../../img/slow-icon@2x.webp') 2x
+	);
+	background-image: image-set(
+		url('../../img/slow-icon.webp') 1x,
+		url('../../img/slow-icon@2x.webp') 2x
+	);
 }
 
 .bizproc-timeline-popup-logo.--stopped, .bizproc-workflow-timeline-eff-icon.--stopped {
-	background-image: url('../../img/stopped-icon.png');
+	background-image: url('../../img/stopped-icon.webp');
+	background-image: -webkit-image-set(
+		url('../../img/stopped-icon.webp') 1x,
+		url('../../img/stopped-icon@2x.webp') 2x
+	);
+	background-image: image-set(
+		url('../../img/stopped-icon.webp') 1x,
+		url('../../img/stopped-icon@2x.webp') 2x
+	);
 }
 
 .bizproc-timeline-popup-logo.--first, .bizproc-workflow-timeline-eff-icon.--first {
-	background-image: url('../../img/first-icon.png');
+	background-image: url('../../img/first-icon.webp');
+	background-image: -webkit-image-set(
+		url('../../img/first-icon.webp') 1x,
+		url('../../img/first-icon@2x.webp') 2x
+	);
+	background-image: image-set(
+		url('../../img/first-icon.webp') 1x,
+		url('../../img/first-icon@2x.webp') 2x
+	);
 }
 
 .bizproc-timeline-popup-footer {
@@ -427,6 +459,11 @@ a.bizproc-timeline-popup-text {
 }
 
 .popup-window.--bizproc-timeline-popup:hover .popup-window-close-icon:hover {
+	opacity: 1;
+}
+
+/* Keyboard focus lands on the close icon, so it must be visible without hover. */
+.popup-window.--bizproc-timeline-popup .popup-window-close-icon:focus-visible {
 	opacity: 1;
 }
 

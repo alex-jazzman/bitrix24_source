@@ -21,45 +21,6 @@ class sign extends CModule
 	public $MODULE_NAME;
 	public $MODULE_DESCRIPTION;
 
-	/** @var array[][][]  */
-	public array $eventsData = [
-		'crm' => [
-			'onSiteFormFillSign' => [[\Bitrix\Sign\Integration\CRM\Form::class, 'onSiteFormFillSign']],
-		],
-		'bitrix24' => [
-			'onDomainChange' => [[\Bitrix\Sign\Integration\Bitrix24\Domain::class, 'onChangeDomain']],
-		],
-		'main' => [
-			'OnUserTypeBuildList' => [[\Bitrix\Sign\UserFields\SnilsUserType::class, 'OnUserTypeBuildList']],
-			'OnUISelectorGetProviderByEntityType' => [[\Bitrix\Sign\Integration\Main\UiSelector\EventHandler::class, 'OnUISelectorGetProviderByEntityType']],
-			'OnAfterUserUpdate' => [[\Bitrix\Sign\Integration\Main\SignersListEventHandler::class, 'OnAfterUserUpdate']],
-			'OnAfterUserDelete' => [[\Bitrix\Sign\Integration\Main\SignersListEventHandler::class, 'OnAfterUserDelete']],
-			'OnAfterUserTypeAdd' => [[\Bitrix\Sign\Integration\Main\DocumentPlaceholderCacheEventHandler::class, 'onAfterAddField']],
-			'OnAfterUserTypeDelete' => [[\Bitrix\Sign\Integration\Main\DocumentPlaceholderCacheEventHandler::class, 'onAfterDeleteField']],
-		],
-		'pull' => [
-			'OnGetDependentModule' => [[\Bitrix\Sign\SignPullSchema::class, 'OnGetDependentModule']],
-		],
-		'intranet' => [
-			'onProfileConfigAdditionalBlocks' => [[\Bitrix\Sign\Config\LegalInfo::class, 'onProfileConfigAdditionalBlocks']],
-		],
-		'rest' => [
-			'OnRestServiceBuildDescription' => [
-				[\Bitrix\Sign\Rest\B2e\MySafe::class, 'onRestServiceBuildDescription'],
-				[\Bitrix\Sign\Rest\B2e\Provider::class, 'onRestServiceBuildDescription'],
-				[\Bitrix\Sign\Rest\B2e\HcmLink\SignedFile::class, 'onRestServiceBuildDescription'],
-				[\Bitrix\Sign\Rest\B2e\CompanyProvider::class, 'onRestServiceBuildDescription'],
-				[\Bitrix\Sign\Rest\B2e\Document::class, 'onRestServiceBuildDescription'],
-			]
-		],
-		'im' => [
-			'OnGetNotifySchema' => [
-				[\Bitrix\Sign\Integration\Im\NotificationEventHandler::class, 'onGetNotifySchema']
-			],
-		],
-	];
-
-
 	public $installDirs = [
 		'components' => 'bitrix',
 		'js' => 'sign',
@@ -156,24 +117,17 @@ class sign extends CModule
 	 */
 	public function installDB()
 	{
-		global $DB, $APPLICATION;
+		global $APPLICATION;
 
-		$connection = \Bitrix\Main\Application::getConnection();
-
-		// db
-		$errors = $DB->runSQLBatch(
-			$this->getDocumentRoot().'/bitrix/modules/sign/install/db/' . $connection->getType() . '/install.sql'
-		);
-		if ($errors !== false)
+		$migrationResult = $this->installMigrations();
+		if (!$migrationResult->isSuccess())
 		{
-			$APPLICATION->throwException(implode('', $errors));
+			$APPLICATION->throwException(implode('', $migrationResult->getErrorMessages()));
 			return false;
 		}
 
 		// module
 		registerModule($this->MODULE_ID);
-		$this->InstallEvents();
-		$this->installAgents();
 
 		return true;
 	}
@@ -199,31 +153,23 @@ class sign extends CModule
 	 */
 	public function uninstallDB(array $arParams = [])
 	{
-		global $APPLICATION, $DB;
-		$connection = \Bitrix\Main\Application::getConnection();
+		global $APPLICATION;
 
-		$errors = false;
+		$dropTables = isset($arParams['savedata']) && !$arParams['savedata'];
 
-		if (isset($arParams['savedata']) && !$arParams['savedata'])
+		$migrationResult = $this->uninstallMigrations($dropTables);
+		if (!$migrationResult->isSuccess())
 		{
-			$errors = $DB->runSQLBatch(
-				$this->getDocumentRoot().'/bitrix/modules/sign/install/db/' . $connection->getType() . '/uninstall.sql'
-			);
-		}
-		if ($errors !== false)
-		{
-			$APPLICATION->throwException(implode('', $errors));
+			$APPLICATION->throwException(implode('', $migrationResult->getErrorMessages()));
 			return false;
 		}
-
-		\CAgent::removeModuleAgents($this->MODULE_ID);
 
 		if (empty($arParams['savedata']))
 		{
 			$this->uninstallUserLegalFields();
 		}
 
-		$this->UnInstallEvents();
+		// module
 		unregisterModule($this->MODULE_ID);
 
 		return true;
@@ -268,74 +214,4 @@ class sign extends CModule
 		}
 	}
 
-	public function InstallEvents(): void
-	{
-		$eventManager = \Bitrix\Main\EventManager::getInstance();
-		foreach ($this->eventsData as $module => $events)
-		{
-			foreach ($events as $eventCode => $handlers)
-			{
-				foreach ($handlers as $callback) {
-					[$class, $method] = $callback;
-					$eventManager->registerEventHandler(
-						$module,
-						$eventCode,
-						$this->MODULE_ID,
-						$class,
-						$method
-					);
-				}
-			}
-		}
-	}
-
-	public function UnInstallEvents(): void
-	{
-		$eventManager = \Bitrix\Main\EventManager::getInstance();
-		foreach ($this->eventsData as $module => $events)
-		{
-			foreach ($events as $eventCode => $handlers)
-			{
-				foreach ($handlers as $callback) {
-					[$class, $method] = $callback;
-					$eventManager->unregisterEventHandler(
-						$module,
-						$eventCode,
-						$this->MODULE_ID,
-						$class,
-						$method
-					);
-				}
-			}
-		}
-	}
-
-	public function installAgents(): void
-	{
-		$startTime = ConvertTimeStamp(time() + \CTimeZone::GetOffset() + 60, 'FULL');
-		\CAgent::AddAgent(
-			name: '\\Bitrix\\Sign\\Service\\Providers\\LegalInfoProviderAgentService::installLegalConfig();',
-			module: 'sign',
-			period: 'N',
-			interval: 3600,
-			next_exec: $startTime,
-			existError: false
-		);
-		\CAgent::AddAgent(
-			'Bitrix\\Sign\\Agent\\Converter\\ConvertProviderSchemesAgent::run();',
-			'sign',
-			period: 'N',
-			interval: 900,
-			next_exec: \ConvertTimeStamp(time() + \CTimeZone::GetOffset() + 3600, 'FULL'),
-			existError: false,
-		);
-
-		\CAgent::AddAgent(
-			name: '\\Bitrix\\Sign\\Agent\\Permission\\ReinstallAccessPermissionsAgent::run();',
-			module: 'sign',
-			interval: 60,
-			next_exec: \ConvertTimeStamp(time() + \CTimeZone::GetOffset() + 960, 'FULL'),
-			existError: false,
-		);
-	}
 }

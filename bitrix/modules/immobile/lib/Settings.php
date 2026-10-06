@@ -91,22 +91,18 @@ class Settings
 
 	public static function isMarkdownParserEnabled(): bool
 	{
-		return \Bitrix\Main\Config\Option::get('immobile', 'markdown_parser_enabled', 'N') === 'Y';
+		// Unified flag with the web messenger: im.markdown_available (see Im\V2\Application\Features)
+		if (!\Bitrix\Main\Loader::includeModule('im'))
+		{
+			return false;
+		}
+
+		return Features::isMarkdownAvailable();
 	}
 
 	public static function isOpenlinesInMessengerV2Available(): bool
 	{
 		return \Bitrix\Main\Config\Option::get('immobile', 'openlines_in_messenger_v2_available', 'Y') === 'Y';
-	}
-
-	public static function isRecentFilterAvailable(): bool
-	{
-		return \Bitrix\Main\Config\Option::get('immobile', 'recent_filter_available', 'N') === 'Y';
-	}
-
-	public static function isExternalChatMessageForwardingAvailable(): bool
-	{
-		return \Bitrix\Main\Config\Option::get('immobile', 'external_chat_message_forwarding_available', 'N') === 'Y';
 	}
 
 	public static function isAutoTaskEnabled(): bool

@@ -13,6 +13,7 @@ import type {
 	InitPayload,
 	ResourceModel,
 	AdvertisingResourceType,
+	TemplateTypePreselectionContext,
 } from './types';
 
 export class ResourceCreationWizardModel extends BuilderModel
@@ -29,6 +30,7 @@ export class ResourceCreationWizardModel extends BuilderModel
 			resourceName: '',
 			resourceAvatarFile: null,
 			resource: getEmptyResource(),
+			templateTypePreselectionContext: null,
 			advertisingResourceTypes: [],
 			companyScheduleSlots: [],
 			fetching: false,
@@ -56,6 +58,10 @@ export class ResourceCreationWizardModel extends BuilderModel
 			getResource: (state): ResourceModel => state.resource,
 			/** @function resource-creation-wizard/getResourceAvatarFile */
 			getResourceAvatarFile: (state): File | null => state.resourceAvatarFile,
+			/** @function resource-creation-wizard/templateTypePreselectionContext */
+			templateTypePreselectionContext: (state): ?TemplateTypePreselectionContext => {
+				return state.templateTypePreselectionContext;
+			},
 			/** @function resource-creation-wizard/isSaving */
 			isSaving: (state): boolean => state.isSaving,
 			/** @function resource-creation-wizard/getCompanyScheduleSlots */
@@ -345,6 +351,13 @@ export class ResourceCreationWizardModel extends BuilderModel
 			setResourceAvatarFile(state: ResourceCreationWizardState, file: File | null): void
 			{
 				state.resourceAvatarFile = file;
+			},
+			setTemplateTypePreselectionContext(
+				state: ResourceCreationWizardState,
+				context: TemplateTypePreselectionContext,
+			): void
+			{
+				state.templateTypePreselectionContext = context;
 			},
 			setAdvertisingTypes(state: ResourceCreationWizardState, types: AdvertisingResourceType[]): void
 			{

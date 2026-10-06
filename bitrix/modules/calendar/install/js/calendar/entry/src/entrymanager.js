@@ -396,7 +396,7 @@ export class EntryManager
 
 	static setMeetingStatus(entry, status, params = {})
 	{
-		return new Promise(resolve => {
+		return new Promise((resolve, reject) => {
 			if (!Type.isPlainObject(params))
 			{
 				params = {};
@@ -407,8 +407,8 @@ export class EntryManager
 			{
 				if (entry.isRecursive() && !entry.isOpenEvent())
 				{
-					this.showConfirmStatusDialog(entry, resolve);
-					return false;
+					this.showConfirmStatusDialog(entry, resolve, reject);
+					return;
 				}
 			}
 
@@ -447,11 +447,13 @@ export class EntryManager
 						currentDateFrom: entry.from
 					});
 				}
-			);
+			).catch((error) => {
+				reject(error);
+			});
 		});
 	}
 
-	static showConfirmStatusDialog(entry, resolvePromiseCallback = null)
+	static showConfirmStatusDialog(entry, resolvePromiseCallback = null, rejectPromiseCallback = null)
 	{
 		if (!this.confirmDeclineDialog)
 		{
@@ -460,6 +462,7 @@ export class EntryManager
 
 		this.confirmDeclineDialog.show();
 		this.confirmDeclineDialog.unsubscribeAll('onDecline');
+		this.confirmDeclineDialog.unsubscribeAll('onCancel');
 		this.confirmDeclineDialog.subscribe('onDecline', function(event)
 		{
 			if (event && Type.isFunction(event.getData))
@@ -468,12 +471,27 @@ export class EntryManager
 					entry,
 					'N',
 					{recursionMode: event.getData().recursionMode, confirmed: true}
-				).then(() => {
-					if (Type.isFunction(resolvePromiseCallback))
-					{
-						resolvePromiseCallback();
+				).then(
+					() => {
+						if (Type.isFunction(resolvePromiseCallback))
+						{
+							resolvePromiseCallback();
+						}
+					},
+					(error) => {
+						if (Type.isFunction(rejectPromiseCallback))
+						{
+							rejectPromiseCallback(error);
+						}
 					}
-				});
+				);
+			}
+		});
+		this.confirmDeclineDialog.subscribe('onCancel', function()
+		{
+			if (Type.isFunction(rejectPromiseCallback))
+			{
+				rejectPromiseCallback(new Error('cancelled'));
 			}
 		});
 	}

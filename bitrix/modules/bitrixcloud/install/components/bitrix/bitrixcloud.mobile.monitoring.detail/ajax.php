@@ -4,8 +4,8 @@ define('NO_AGENT_STATISTIC', true);
 define('NOT_CHECK_PERMISSIONS', true);
 
 require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_before.php';
-/* @var CUser $USER */
-/* @var CMain $APPLICATION */
+/** @var CUser $USER */
+/** @var CMain $APPLICATION */
 CComponentUtil::__IncludeLang(dirname($_SERVER['SCRIPT_NAME']), '/ajax.php');
 
 $arResult = [];

@@ -12,6 +12,7 @@ import { type ImModelMessage } from '../registry';
 import { type RecentItem as ImModelRecentItem } from '../type/recent-item';
 import { recentFieldsConfig } from './format/field-config';
 import { CallsModel } from './nested-modules/calls';
+import { FoldersModel } from './nested-modules/folders/folders';
 import {
 	type RawSetPayload,
 	type SetPayload,
@@ -23,12 +24,15 @@ import {
 	type SetDraftPayload,
 } from './types/payload-types.js';
 
+const HIDE_EXCLUDED_SECTIONS = [RecentType.openChannel];
+
 type RecentStore = Store<RecentState>;
 
 type RecentState = {
 	collection: { [dialogId: string]: ImModelRecentItem },
 	recentIndex: IndexByParentAndType,
 	unreadIndex: IndexByParentAndType,
+	hiddenChats: Set<string>,
 };
 
 type IndexByParentAndType = {
@@ -48,6 +52,7 @@ export class RecentModel extends BuilderModel
 	{
 		return {
 			calls: CallsModel,
+			folders: FoldersModel,
 		};
 	}
 
@@ -57,6 +62,7 @@ export class RecentModel extends BuilderModel
 			collection: {},
 			recentIndex: {},
 			unreadIndex: {},
+			hiddenChats: new Set(),
 		};
 	}
 
@@ -65,6 +71,7 @@ export class RecentModel extends BuilderModel
 		return {
 			dialogId: '0',
 			messageId: 0,
+			ownMessageId: 0,
 			draft: {
 				text: '',
 				date: null,
@@ -82,7 +89,6 @@ export class RecentModel extends BuilderModel
 		};
 	}
 
-	// eslint-disable-next-line max-lines-per-function
 	getGetters(): GetterTree
 	{
 		return {
@@ -115,21 +121,19 @@ export class RecentModel extends BuilderModel
 			getSortedCollection: () => (payload: GetPayload & { unread?: boolean }): ImModelRecentItem[] => {
 				const collection: ImModelRecentItem[] = this.store.getters['recent/getCollection'](payload);
 
-				return [...collection].sort((a, b) => {
-					const dateA = RecentManager.getSortDate(a.dialogId);
-					const dateB = RecentManager.getSortDate(b.dialogId);
-
-					if (dateA?.getTime() === dateB?.getTime())
-					{
-						return a.dialogId > b.dialogId ? 1 : -1;
-					}
-
-					return dateB - dateA;
-				});
+				return [...collection].sort(this.#compareByDate);
 			},
 			/** @function recent/getSortedUnreadCollection */
 			getSortedUnreadCollection: () => (payload: GetPayload): ImModelRecentItem[] => {
 				return this.store.getters['recent/getSortedCollection']({ ...payload, unread: true });
+			},
+			/** @function recent/getCollectionByIds */
+			getCollectionByIds: (state: RecentState) => (dialogIds: string[]): ImModelRecentItem[] => {
+				const collection = dialogIds
+					.map((dialogId: string) => state.collection[dialogId])
+					.filter((item: ?ImModelRecentItem) => Boolean(item) && !state.hiddenChats.has(item.dialogId));
+
+				return [...collection].sort(this.#compareByDate);
 			},
 			/** @function recent/get */
 			get: (state: RecentState) => (dialogId: string): ?ImModelRecentItem => {
@@ -149,6 +153,16 @@ export class RecentModel extends BuilderModel
 				}
 
 				return this.#getMessage(element.messageId);
+			},
+			/** @function recent/getOwnMessage */
+			getOwnMessage: (state: RecentState) => (dialogId: string): ?ImModelMessage => {
+				const element = state.collection[dialogId];
+				if (!element)
+				{
+					return null;
+				}
+
+				return this.#getMessage(element.ownMessageId);
 			},
 			/** @function recent/hasInCollection */
 			hasInCollection: (state: RecentState) => (payload: GetPayload & { dialogId: string }): boolean => {
@@ -190,6 +204,8 @@ export class RecentModel extends BuilderModel
 				{
 					store.commit('setIndex', { ...setPayload, parentChatId: ParentChatScope.topLevel });
 				}
+
+				this.#restoreHiddenOnReappear(store, type, itemIds);
 			},
 			/** @function recent/setUnreadCollection */
 			setUnreadCollection: async (store: RecentStore, payload: RawSetPayload) => {
@@ -344,6 +360,11 @@ export class RecentModel extends BuilderModel
 				}
 
 				store.commit('removeFromCollections', { dialogId });
+				store.commit('setHiddenStatus', { ids: [existingItem.dialogId], hidden: true });
+			},
+			/** @function recent/setHiddenStatus */
+			setHiddenStatus: (store: RecentStore, payload: { ids: string[], hidden: boolean }) => {
+				store.commit('setHiddenStatus', payload);
 			},
 			/** @function recent/delete */
 			delete: (store: RecentStore, payload: { dialogId: string | number }) => {
@@ -421,10 +442,23 @@ export class RecentModel extends BuilderModel
 					state.collection[dialogId] = { ...currentElement, ...fields };
 				});
 			},
+			setHiddenStatus: (state: RecentState, payload: { ids: string[], hidden: boolean }) => {
+				const { ids, hidden } = payload;
+				ids.forEach((dialogId) => {
+					if (hidden)
+					{
+						state.hiddenChats.add(dialogId);
+					}
+					else
+					{
+						state.hiddenChats.delete(dialogId);
+					}
+				});
+			},
 			removeFromCollections: (state: RecentState, payload: { dialogId: string }) => {
 				const { dialogId } = payload;
 
-				const collections = this.#getAllCollections(state, [RecentType.openChannel]);
+				const collections = this.#getAllCollections(state, HIDE_EXCLUDED_SECTIONS);
 
 				collections.forEach((idSet) => idSet.delete(dialogId));
 			},
@@ -465,6 +499,16 @@ export class RecentModel extends BuilderModel
 		}
 
 		return Boolean(fields.invitation);
+	}
+
+	#restoreHiddenOnReappear(store: RecentStore, type: RecentTypeItem, itemIds: string[]): void
+	{
+		if (HIDE_EXCLUDED_SECTIONS.includes(type))
+		{
+			return;
+		}
+
+		store.commit('setHiddenStatus', { ids: itemIds, hidden: false });
 	}
 
 	#getAllCollections(state: RecentState, excludeTypes: RecentTypeItem[] = []): Set<string>[]
@@ -530,5 +574,18 @@ export class RecentModel extends BuilderModel
 			&& !Type.isStringFilled(payload.text)
 			&& existingItem.messageId.toString().startsWith(FakeDraftMessagePrefix)
 		;
+	}
+
+	#compareByDate(a: ImModelRecentItem, b: ImModelRecentItem): number
+	{
+		const dateA = RecentManager.getSortDate(a.dialogId);
+		const dateB = RecentManager.getSortDate(b.dialogId);
+
+		if (dateA?.getTime() === dateB?.getTime())
+		{
+			return a.dialogId > b.dialogId ? 1 : -1;
+		}
+
+		return dateB - dateA;
 	}
 }

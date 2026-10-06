@@ -69,7 +69,6 @@ export class CreateChatManager extends EventEmitter
 		{
 			this.setCreationStatus(false);
 		}
-
 		this.#parentChatId = parentChatId;
 		this.#preselectedMembers = preselectedMembers;
 		this.#includeCurrentUser = includeCurrentUser;
@@ -79,6 +78,25 @@ export class CreateChatManager extends EventEmitter
 			name: Layout.createChat,
 			entityId: chatTypeToCreate,
 		});
+	}
+
+	cancelChatCreation(): Promise
+	{
+		this.setCreationStatus(false);
+
+		return LayoutManager.getInstance().restoreOriginLayout();
+	}
+
+	completeChatCreation(newDialogId?: string): Promise
+	{
+		this.setCreationStatus(false);
+
+		if (!newDialogId)
+		{
+			return Promise.resolve();
+		}
+
+		return LayoutManager.getInstance().restoreOriginLayout(newDialogId);
 	}
 
 	isCreating(): boolean
@@ -187,4 +205,5 @@ export class CreateChatManager extends EventEmitter
 		this.#includeCurrentUser = true;
 		this.#preselectedMembers = [];
 	}
+
 }

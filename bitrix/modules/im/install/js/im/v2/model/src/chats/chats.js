@@ -2,7 +2,7 @@ import { Type, type JsonObject } from 'main.core';
 import { BuilderModel, type GetterTree, type ActionTree, type MutationTree } from 'ui.vue3.vuex';
 
 import { Core } from 'im.v2.application.core';
-import { Color, ChatType, UserRole, type ChatTypeItem } from 'im.v2.const';
+import { Color, ChatType, UserRole, type RecentTypeItem, ParentChatScope } from 'im.v2.const';
 import { Utils } from 'im.v2.lib.utils';
 import { formatFieldsWithConfig } from 'im.v2.model';
 
@@ -14,6 +14,11 @@ import { InputActionsModel } from './nested-modules/input-actions';
 
 type ChatState = {
 	collection: {[dialogId: string]: ImModelChat},
+};
+
+type ClearMarkedPayload = {
+	recentType: RecentTypeItem,
+	parentChatId: number,
 };
 
 /* eslint-disable no-param-reassign */
@@ -87,7 +92,10 @@ export class ChatsModel extends BuilderModel
 				manageUsersDelete: UserRole.none,
 				manageMessages: UserRole.member,
 				manageGuestInvites: UserRole.none,
+				manageDelete: UserRole.none,
 			},
+			// Phase 0 (task 718250): superadmin project chat access
+			hasManageCapability: false,
 			tariffRestrictions: {
 				isHistoryLimitExceeded: false,
 			},
@@ -184,10 +192,15 @@ export class ChatsModel extends BuilderModel
 
 				return collectionItem.backgroundId;
 			},
-			/** @function chats/getCollectionByChatType */
-			getCollectionByChatType: (state: ChatState) => (type: ChatTypeItem): ImModelChat[] => {
+			/** @function chats/getCollectionByParentChatId */
+			getCollectionByParentChatId: (state: ChatState) => (parentChatId: number): ImModelChat[] => {
+				if (parentChatId === ParentChatScope.all)
+				{
+					return Object.values(state.collection);
+				}
+
 				return Object.values(state.collection).filter((item) => {
-					return item.type === type;
+					return item.parentChatId === parentChatId;
 				});
 			},
 			/** @function chats/getParent */
@@ -303,9 +316,9 @@ export class ChatsModel extends BuilderModel
 
 				store.commit('delete', { dialogId: payload.dialogId });
 			},
-			/** @function chats/clearMarkedChatsByType */
-			clearMarkedChatsByType: (store, payload: { type: ChatTypeItem }) => {
-				store.commit('clearMarkedChatsByType', payload);
+			/** @function chats/clearMarkedChatsByRecentType */
+			clearMarkedChatsByRecentType: (store, payload: ClearMarkedPayload) => {
+				store.commit('clearMarkedChatsByRecentType', payload);
 			},
 			/** @function chats/clearMarkedChats */
 			clearMarkedChats: (store) => {
@@ -319,7 +332,7 @@ export class ChatsModel extends BuilderModel
 					return;
 				}
 
-				this.store.dispatch('counters/setMuteStatus', { chatId: existingItem.chatId, status: true })
+				this.store.dispatch('counters/setMuteStatus', { chatId: existingItem.chatId, status: true });
 
 				store.commit('update', {
 					actionName: 'mute',
@@ -335,7 +348,7 @@ export class ChatsModel extends BuilderModel
 					return;
 				}
 
-				this.store.dispatch('counters/setMuteStatus', { chatId: existingItem.chatId, status: false })
+				this.store.dispatch('counters/setMuteStatus', { chatId: existingItem.chatId, status: false });
 
 				store.commit('update', {
 					actionName: 'unmute',
@@ -429,11 +442,18 @@ export class ChatsModel extends BuilderModel
 			delete: (state: ChatState, payload) => {
 				delete state.collection[payload.dialogId];
 			},
-			clearMarkedChatsByType: (state: ChatState, payload: { type: ChatTypeItem }) => {
-				const { type } = payload;
-				const items = this.store.getters['chats/getCollectionByChatType'](type);
+			clearMarkedChatsByRecentType: (state: ChatState, payload: ClearMarkedPayload) => {
+				const { recentType, parentChatId } = payload;
+				const items = this.store.getters['chats/getCollectionByParentChatId'](parentChatId);
 
 				items.forEach((item: ImModelChat) => {
+					const recentSections = Core.getStore().getters['counters/getRecentSectionsByChatId'](item.chatId);
+
+					if (!recentSections.includes(recentType))
+					{
+						return;
+					}
+
 					state.collection[item.dialogId].markedId = 0;
 				});
 			},

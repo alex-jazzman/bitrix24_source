@@ -97,12 +97,62 @@ html.note-mobile .note-permissions-dialog {
 	--ui-icon-set__icon-size: 20px;
 }
 
+.note-permissions-popup__scope {
+	display: flex;
+	align-items: flex-start;
+	gap: 10px;
+	padding-bottom: 16px;
+	border-bottom: 1px solid var(--ui-color-divider-default);
+}
+
+/* Nudge the box onto the caption's first-line baseline — the caption block is two lines tall. */
+.note-permissions-popup__scope .ui-checkbox {
+	flex-shrink: 0;
+	margin-top: 2px;
+}
+
+/* The platform's unchecked box is base-7 on white, which reads as almost invisible on the popup's
+ * own white surface. One step darker in the same palette, unchecked only — hover and checked keep
+ * their accent colours. */
+.note-permissions-popup__scope .ui-checkbox:not(.--checked):not(:hover) {
+	--ui-checkbox-border-color: var(--ui-color-base-5);
+}
+
+.note-permissions-popup__scope-text {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	min-width: 0;
+	cursor: pointer;
+}
+
+.note-permissions-popup__scope-title {
+	font-size: 14px;
+	font-weight: 500;
+	line-height: 20px;
+	color: var(--ui-color-base-1);
+}
+
+/* base-4 is a decorative grey: at 13px it gives 2.25:1 on the popup surface, far below the 4.5:1
+ * WCAG AA floor for body text. base-2 is the palette's secondary-text step and is themed for both
+ * light and dark. */
+.note-permissions-popup__scope-hint {
+	font-size: 13px;
+	line-height: 18px;
+	color: var(--ui-color-base-2);
+}
+
 .note-permissions-popup__sections {
 	display: flex;
 	flex-direction: column;
 	gap: 16px;
 }
 
+/* Inherited grants sit among the editable tags, so they need to read as "not yours to remove":
+   dashed outline instead of the solid one, and a help cursor announcing the hover hint.
+   The remove cross is already hidden by the platform's .ui-tag-selector-tag-readonly. */
+/* Marker class only: the tag keeps the platform look and cursor — its inherited nature is told by
+ * the hint and by the missing remove icon, not by a decoration. */
 .note-permissions-popup__section {
 	display: flex;
 	flex-direction: column;

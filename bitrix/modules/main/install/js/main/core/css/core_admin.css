@@ -30,7 +30,7 @@
 #bx-panel #bx-panel-top
 {
     height: 29px !important;
-    background: scroll #515151 url(../images/panel/sprite04.png) repeat-x 0 -119px !important;
+    background: scroll #515151 url(../images/panel/sprite04.webp) repeat-x 0 -119px !important;
     position:relative !important;
     overflow:hidden !important;
     margin:0 !important;
@@ -45,7 +45,7 @@
     top: 0 !important;
     left:0 !important;
     z-index:1 !important;
-    background: scroll #515151 url(../images/panel/sprite04.png) repeat-x 0 -119px !important;
+    background: scroll #515151 url(../images/panel/sprite04.webp) repeat-x 0 -119px !important;
     margin:0 !important;
     padding:0 !important;
     font: normal normal normal 11px/normal Tahoma,sans-serif !important;
@@ -55,7 +55,7 @@
 {
     display: inline-block !important;
     height: 22px !important;
-    background: scroll transparent url(../images/panel/sprite04.png) 0 -63px !important;
+    background: scroll transparent url(../images/panel/sprite04.webp) 0 -63px !important;
     text-decoration: none !important;
     outline: none !important;
     padding: 0 0 0 1px !important;
@@ -68,20 +68,20 @@
 {
     display: inline-block !important;
     height: 22px !important;
-    background: scroll transparent url(../images/panel/sprite04.png) right -63px !important;
+    background: scroll transparent url(../images/panel/sprite04.webp) right -63px !important;
     padding:0 13px 0 11px !important;
     font: normal normal bold 11px/20px Tahoma,sans-serif !important;
     color:#D6D6D6 !important;
 }
 
-#bx-panel #bx-panel-menu:hover, #bx-panel #bx-panel-menu.bx-pressed { background: scroll transparent url(../images/panel/sprite04.png) 0 -88px !important;}
-#bx-panel #bx-panel-menu:hover span, #bx-panel #bx-panel-menu.bx-pressed span {  background: scroll transparent url(../images/panel/sprite04.png) right -88px !important; color:#eee !important;}
+#bx-panel #bx-panel-menu:hover, #bx-panel #bx-panel-menu.bx-pressed { background: scroll transparent url(../images/panel/sprite04.webp) 0 -88px !important;}
+#bx-panel #bx-panel-menu:hover span, #bx-panel #bx-panel-menu.bx-pressed span {  background: scroll transparent url(../images/panel/sprite04.webp) right -88px !important; color:#eee !important;}
 
 #bx-panel #bx-panel-view-tab
 {
     display: inline-block !important;
     height: 29px !important;
-    background: scroll transparent url(../images/panel/sprite04.png) 0 -1px !important;
+    background: scroll transparent url(../images/panel/sprite04.webp) 0 -1px !important;
 
     text-decoration: none !important;
     outline: none !important;
@@ -97,7 +97,7 @@
 {
     display: inline-block !important;
     height: 29px !important;
-    background: scroll transparent url(../images/panel/sprite04.png) right -1px !important;
+    background: scroll transparent url(../images/panel/sprite04.webp) right -1px !important;
     padding:0 18px 0 16px !important;
     font: normal normal bold 12px/30px Tahoma, sans-serif !important;
     color:#333333 !important;
@@ -107,7 +107,7 @@
 {
     display: inline-block !important;
     height: 29px !important;
-    background: scroll transparent url(../images/panel/sprite04.png) repeat-x 0 -31px !important;
+    background: scroll transparent url(../images/panel/sprite04.webp) repeat-x 0 -31px !important;
     text-decoration: none !important;
     outline: none !important;
     padding-left: 2px !important;
@@ -151,7 +151,7 @@
     display: inline-block !important;
     width:14px !important;
     height:29px !important;
-    background: scroll transparent url(../images/panel/sprite04.png) no-repeat -283px -314px !important;
+    background: scroll transparent url(../images/panel/sprite04.webp) no-repeat -283px -314px !important;
     margin:0 !important;
     padding:0 !important;
 }
@@ -210,7 +210,7 @@
     display:inline-block !important;
     margin: 0  !important;
     padding:0 16px !important;
-    background: scroll transparent url(../images/panel/sprite04.png) no-repeat -278px -261px  !important;
+    background: scroll transparent url(../images/panel/sprite04.webp) no-repeat -278px -261px  !important;
     width: auto !important;
     height:29px !important;
     outline: none  !important;
@@ -222,7 +222,7 @@
     display:inline-block !important;
     margin: 0 !important;
     padding:0 16px !important;
-    background: scroll transparent url(../images/panel/sprite04.png) no-repeat -264px -999px  !important;
+    background: scroll transparent url(../images/panel/sprite04.webp) no-repeat -264px -999px  !important;
     width: auto !important;
     height:29px !important;
     outline: none  !important;
@@ -230,7 +230,7 @@
 }
 
 
-#bx-panel #bx-panel-pin.bx-panel-pin-fixed { background: scroll transparent url(../images/panel/sprite04.png) no-repeat -278px -231px !important; }
+#bx-panel #bx-panel-pin.bx-panel-pin-fixed { background: scroll transparent url(../images/panel/sprite04.webp) no-repeat -278px -231px !important; }
 
 #bx-panel #bx-panel-logout, #bx-panel #bx-panel-user, #bx-panel #bx-panel-small-toggle, #bx-panel #bx-panel-expander
 {
@@ -259,7 +259,7 @@
 }
 #bx-panel .bx-panel-toggle-on #bx-panel-small-toggle-caption { color: #1CBA1C !important;}
 #bx-panel #bx-panel-expander { display: none !important; margin: 0 8px 0 8px !important; cursor:pointer !important;}
-#bx-panel #bx-panel-expander-arrow { display:none !important; width:10px !important; height:18px !important; background: scroll transparent url(../images/panel/sprite04.png) no-repeat -266px -299px !important; vertical-align:top !important;}
+#bx-panel #bx-panel-expander-arrow { display:none !important; width:10px !important; height:18px !important; background: scroll transparent url(../images/panel/sprite04.webp) no-repeat -266px -299px !important; vertical-align:top !important;}
 #bx-panel #bx-panel-expander-text
 {
     display:inline-block !important;
@@ -276,7 +276,7 @@
     display: inline-block !important;
     width: 1px !important;
     height: 29px !important;
-    background: scroll transparent url(../images/panel/sprite04.png) no-repeat -260px -231px !important;
+    background: scroll transparent url(../images/panel/sprite04.webp) no-repeat -260px -231px !important;
     margin: 0 !important;
     padding:0 !important;
 }
@@ -285,7 +285,7 @@
 {
     height:79px !important;
     position:relative !important;
-    background: scroll #FBFBF9 url(../images/panel/sprite04.png) repeat-x 0 -148px !important;
+    background: scroll #FBFBF9 url(../images/panel/sprite04.webp) repeat-x 0 -148px !important;
     margin:0 !important;
     padding:0 !important;
     display: block !important;
@@ -392,27 +392,27 @@
     display: inline-block !important;
     width: 14px !important;
     height: 22px !important;
-    background: scroll transparent url(../images/panel/sprite04.png) no-repeat -267px -257px !important;
+    background: scroll transparent url(../images/panel/sprite04.webp) no-repeat -267px -257px !important;
     vertical-align:top !important;
 }
 #bx-panel span.bx-panel-small-single-button-arrow { margin-right: -6px !important; }
 #bx-panel a.bx-panel-small-button-arrow { margin: 0 -7px 0 0 !important; width:14px !important; display:inline-block !important; }
 
 /* Big Buttons */
-#bx-panel .bx-panel-button-hover { background: scroll transparent url(../images/panel/sprite04.png) no-repeat 0 -421px !important;}
-#bx-panel .bx-panel-button-hover .bx-panel-button-inner { background: scroll transparent url(../images/panel/sprite04.png) no-repeat right -421px !important;}
-#bx-panel .bx-panel-button-icon-hover { background: scroll transparent url(../images/panel/sprite04.png) no-repeat 0 -494px !important; }
-#bx-panel .bx-panel-button-icon-hover .bx-panel-button-inner { background: scroll transparent url(../images/panel/sprite04.png) no-repeat right -494px !important; }
-#bx-panel .bx-panel-button-text-hover {background: scroll transparent url(../images/panel/sprite04.png) no-repeat 0 -568px !important;}
-#bx-panel .bx-panel-button-text-hover .bx-panel-button-inner {background: scroll transparent url(../images/panel/sprite04.png) no-repeat right -568px !important;}
+#bx-panel .bx-panel-button-hover { background: scroll transparent url(../images/panel/sprite04.webp) no-repeat 0 -421px !important;}
+#bx-panel .bx-panel-button-hover .bx-panel-button-inner { background: scroll transparent url(../images/panel/sprite04.webp) no-repeat right -421px !important;}
+#bx-panel .bx-panel-button-icon-hover { background: scroll transparent url(../images/panel/sprite04.webp) no-repeat 0 -494px !important; }
+#bx-panel .bx-panel-button-icon-hover .bx-panel-button-inner { background: scroll transparent url(../images/panel/sprite04.webp) no-repeat right -494px !important; }
+#bx-panel .bx-panel-button-text-hover {background: scroll transparent url(../images/panel/sprite04.webp) no-repeat 0 -568px !important;}
+#bx-panel .bx-panel-button-text-hover .bx-panel-button-inner {background: scroll transparent url(../images/panel/sprite04.webp) no-repeat right -568px !important;}
 
 /* Small Buttons */
-#bx-panel .bx-panel-small-button-hover { background: scroll transparent url(../images/panel/sprite04.png) no-repeat 0 -697px !important;}
-#bx-panel .bx-panel-small-button-hover .bx-panel-small-button-inner{ background: scroll transparent url(../images/panel/sprite04.png) no-repeat right -697px !important;}
-#bx-panel .bx-panel-small-button-arrow-hover { background: scroll transparent url(../images/panel/sprite04.png) no-repeat 0 -671px !important; }
-#bx-panel .bx-panel-small-button-arrow-hover .bx-panel-small-button-inner { background: scroll transparent url(../images/panel/sprite04.png) no-repeat right -671px !important; }
-#bx-panel .bx-panel-small-button-text-hover {background: scroll transparent url(../images/panel/sprite04.png) no-repeat 0 -644px !important;}
-#bx-panel .bx-panel-small-button-text-hover .bx-panel-small-button-inner {background: scroll transparent url(../images/panel/sprite04.png) no-repeat right -644px !important;}
+#bx-panel .bx-panel-small-button-hover { background: scroll transparent url(../images/panel/sprite04.webp) no-repeat 0 -697px !important;}
+#bx-panel .bx-panel-small-button-hover .bx-panel-small-button-inner{ background: scroll transparent url(../images/panel/sprite04.webp) no-repeat right -697px !important;}
+#bx-panel .bx-panel-small-button-arrow-hover { background: scroll transparent url(../images/panel/sprite04.webp) no-repeat 0 -671px !important; }
+#bx-panel .bx-panel-small-button-arrow-hover .bx-panel-small-button-inner { background: scroll transparent url(../images/panel/sprite04.webp) no-repeat right -671px !important; }
+#bx-panel .bx-panel-small-button-text-hover {background: scroll transparent url(../images/panel/sprite04.webp) no-repeat 0 -644px !important;}
+#bx-panel .bx-panel-small-button-text-hover .bx-panel-small-button-inner {background: scroll transparent url(../images/panel/sprite04.webp) no-repeat right -644px !important;}
 
 #bx-panel span.bx-panel-button-text
 {
@@ -427,7 +427,7 @@
 #bx-panel .bx-panel-button-arrow
 {
     display: inline-block !important;
-    background: scroll transparent url(../images/panel/sprite04.png) no-repeat -270px -262px !important;
+    background: scroll transparent url(../images/panel/sprite04.webp) no-repeat -270px -262px !important;
     margin:0 !important;
     padding:0 !important;
     width:5px !important;
@@ -439,39 +439,39 @@
     display: inline-block !important;
     height: 69px !important;
     width: 1px !important;
-    background: scroll transparent url(../images/panel/sprite04.png) no-repeat -256px -231px !important;
+    background: scroll transparent url(../images/panel/sprite04.webp) no-repeat -256px -231px !important;
 }
-#bx-panel .bx-panel-create-page-icon { background: scroll transparent url(../images/panel/sprite04.png) no-repeat -2px -231px !important;}
-#bx-panel .bx-panel-create-section-icon { background: scroll transparent url(../images/panel/sprite04.png) no-repeat -41px -231px !important; }
-#bx-panel .bx-panel-edit-page-icon { background: scroll transparent url(../images/panel/sprite04.png) no-repeat -78px -231px !important;}
-#bx-panel .bx-panel-edit-section-icon { background: scroll transparent url(../images/panel/sprite04.png) no-repeat -115px -231px !important;}
-#bx-panel .bx-panel-edit-secret-page-icon { background: scroll transparent url(../images/panel/sprite04.png) no-repeat -161px -926px !important;}
-#bx-panel .bx-panel-edit-secret-section-icon { background: scroll transparent url(../images/panel/sprite04.png) no-repeat -208px -926px !important;}
-#bx-panel .bx-panel-clear-cache-icon { background: scroll transparent url(../images/panel/sprite04.png) no-repeat -153px -231px !important;}
-#bx-panel .bx-panel-site-wizard-icon, #bx-panel .icon-wizard { background: scroll transparent url(../images/panel/sprite04.png) no-repeat -5px -269px !important;}
+#bx-panel .bx-panel-create-page-icon { background: scroll transparent url(../images/panel/sprite04.webp) no-repeat -2px -231px !important;}
+#bx-panel .bx-panel-create-section-icon { background: scroll transparent url(../images/panel/sprite04.webp) no-repeat -41px -231px !important; }
+#bx-panel .bx-panel-edit-page-icon { background: scroll transparent url(../images/panel/sprite04.webp) no-repeat -78px -231px !important;}
+#bx-panel .bx-panel-edit-section-icon { background: scroll transparent url(../images/panel/sprite04.webp) no-repeat -115px -231px !important;}
+#bx-panel .bx-panel-edit-secret-page-icon { background: scroll transparent url(../images/panel/sprite04.webp) no-repeat -161px -926px !important;}
+#bx-panel .bx-panel-edit-secret-section-icon { background: scroll transparent url(../images/panel/sprite04.webp) no-repeat -208px -926px !important;}
+#bx-panel .bx-panel-clear-cache-icon { background: scroll transparent url(../images/panel/sprite04.webp) no-repeat -153px -231px !important;}
+#bx-panel .bx-panel-site-wizard-icon, #bx-panel .icon-wizard { background: scroll transparent url(../images/panel/sprite04.webp) no-repeat -5px -269px !important;}
 
-#bx-panel .bx-panel-menu-icon { background: scroll transparent url(../images/panel/sprite04.png) no-repeat -9px -317px !important; }
-#bx-panel .bx-panel-site-structure-icon { background: scroll transparent url(../images/panel/sprite04.png) no-repeat -35px -317px !important; }
-#bx-panel .bx-panel-seo-icon { background: scroll transparent url(../images/panel/sprite04.png) no-repeat -59px -316px !important; }
-#bx-panel .bx-panel-components-icon { background: scroll transparent url(../images/panel/sprite04.png) no-repeat -86px -316px !important; }
-#bx-panel .bx-panel-site-template-icon { background: scroll transparent url(../images/panel/sprite04.png) no-repeat -111px -317px !important; }
-#bx-panel .bx-panel-performance-icon { background: scroll transparent url(../images/panel/sprite04.png) no-repeat -138px -317px !important; }
-#bx-panel .bx-panel-install-solution-icon { background: scroll transparent url(../images/panel/sprite04.png) no-repeat -170px -273px !important; }
+#bx-panel .bx-panel-menu-icon { background: scroll transparent url(../images/panel/sprite04.webp) no-repeat -9px -317px !important; }
+#bx-panel .bx-panel-site-structure-icon { background: scroll transparent url(../images/panel/sprite04.webp) no-repeat -35px -317px !important; }
+#bx-panel .bx-panel-seo-icon { background: scroll transparent url(../images/panel/sprite04.webp) no-repeat -59px -316px !important; }
+#bx-panel .bx-panel-components-icon { background: scroll transparent url(../images/panel/sprite04.webp) no-repeat -86px -316px !important; }
+#bx-panel .bx-panel-site-template-icon { background: scroll transparent url(../images/panel/sprite04.webp) no-repeat -111px -317px !important; }
+#bx-panel .bx-panel-performance-icon { background: scroll transparent url(../images/panel/sprite04.webp) no-repeat -138px -317px !important; }
+#bx-panel .bx-panel-install-solution-icon { background: scroll transparent url(../images/panel/sprite04.webp) no-repeat -170px -273px !important; }
 
-#bx-panel .bx-panel-translate-icon { background: scroll transparent url(../images/panel/sprite04.png) no-repeat -158px -324px !important; }
-#bx-panel .bx-panel-statistics-icon { background: scroll transparent url(../images/panel/sprite04.png) no-repeat -179px -325px !important; }
-#bx-panel .bx-panel-reindex-icon { background: scroll transparent url(../images/panel/sprite04.png) no-repeat -205px -325px !important; }
-#bx-panel .bx-panel-iblock-icon { background: scroll transparent url(../images/panel/sprite04.png) no-repeat -228px -324px !important; }
+#bx-panel .bx-panel-translate-icon { background: scroll transparent url(../images/panel/sprite04.webp) no-repeat -158px -324px !important; }
+#bx-panel .bx-panel-statistics-icon { background: scroll transparent url(../images/panel/sprite04.webp) no-repeat -179px -325px !important; }
+#bx-panel .bx-panel-reindex-icon { background: scroll transparent url(../images/panel/sprite04.webp) no-repeat -205px -325px !important; }
+#bx-panel .bx-panel-iblock-icon { background: scroll transparent url(../images/panel/sprite04.webp) no-repeat -228px -324px !important; }
 
-#bx-panel .bx-panel-stickers-icon { background: scroll transparent url(../images/panel/sprite04.png) no-repeat -165px -966px !important;}
-#bx-panel .bx-panel-short-url-icon { background: scroll transparent url(../images/panel/sprite04.png) no-repeat -200px -967px !important; }
+#bx-panel .bx-panel-stickers-icon { background: scroll transparent url(../images/panel/sprite04.webp) no-repeat -165px -966px !important;}
+#bx-panel .bx-panel-short-url-icon { background: scroll transparent url(../images/panel/sprite04.webp) no-repeat -200px -967px !important; }
 
 #bx-panel #bx-panel-switcher
 {
     position:relative !important;
     float:right !important;
     height:79px !important;
-    background: scroll #FBFBF9 url(../images/panel/sprite04.png) repeat-x 0 -148px !important;
+    background: scroll #FBFBF9 url(../images/panel/sprite04.webp) repeat-x 0 -148px !important;
     margin:0 !important;
     padding:0 !important;
 }
@@ -488,16 +488,16 @@
 }
 
 #bx-panel #bx-panel-toggle span { font: normal normal normal 11px/11px Tahoma, sans-serif !important; color: #4B4B4B !important;}
-#bx-panel #bx-panel-toggle-icon { width:41px !important; height:13px !important;  display:inline-block !important; background: scroll transparent url(../images/panel/sprite04.png) no-repeat -193px -242px !important;}
-#bx-panel #bx-panel-toggle-icon-overlay { width:41px !important; height:13px !important;  display:inline-block !important; background: scroll transparent url(../images/panel/sprite04.png) no-repeat -193px -228px !important;}
+#bx-panel #bx-panel-toggle-icon { width:41px !important; height:13px !important;  display:inline-block !important; background: scroll transparent url(../images/panel/sprite04.webp) no-repeat -193px -242px !important;}
+#bx-panel #bx-panel-toggle-icon-overlay { width:41px !important; height:13px !important;  display:inline-block !important; background: scroll transparent url(../images/panel/sprite04.webp) no-repeat -193px -228px !important;}
 
-#bx-panel .bx-panel-toggle-on #bx-panel-toggle-icon { background: scroll transparent url(../images/panel/sprite04.png) repeat-x -193px -242px !important;}
-#bx-panel .bx-panel-toggle-off #bx-panel-toggle-icon { background: scroll transparent url(../images/panel/sprite04.png) repeat-x -193px -256px !important;}
+#bx-panel .bx-panel-toggle-on #bx-panel-toggle-icon { background: scroll transparent url(../images/panel/sprite04.webp) repeat-x -193px -242px !important;}
+#bx-panel .bx-panel-toggle-off #bx-panel-toggle-icon { background: scroll transparent url(../images/panel/sprite04.webp) repeat-x -193px -256px !important;}
 #bx-panel .bx-panel-toggle-off #bx-panel-toggle-icon-overlay { background: scroll transparent none 0 0 !important;}
 
-#bx-panel .bx-panel-toggle-on #bx-panel-small-toggle-icon { background: scroll transparent url(../images/panel/sprite04.png) repeat-x -249px -943px !important;}
-#bx-panel .bx-panel-toggle-off #bx-panel-small-toggle-icon { background: scroll transparent url(../images/panel/sprite04.png) repeat-x -249px -960px !important;}
-#bx-panel #bx-panel-small-toggle-icon-overlay { width:37px !important; height:18px !important;  display:inline-block !important; background: scroll transparent url(../images/panel/sprite04.png) no-repeat -249px -926px !important;}
+#bx-panel .bx-panel-toggle-on #bx-panel-small-toggle-icon { background: scroll transparent url(../images/panel/sprite04.webp) repeat-x -249px -943px !important;}
+#bx-panel .bx-panel-toggle-off #bx-panel-small-toggle-icon { background: scroll transparent url(../images/panel/sprite04.webp) repeat-x -249px -960px !important;}
+#bx-panel #bx-panel-small-toggle-icon-overlay { width:37px !important; height:18px !important;  display:inline-block !important; background: scroll transparent url(../images/panel/sprite04.webp) no-repeat -249px -926px !important;}
 #bx-panel .bx-panel-toggle-off #bx-panel-small-toggle-icon-overlay {background: scroll transparent none 0 0 !important; }
 
 #bx-panel #bx-panel-toggle-caption { display:inline-block !important; padding: 2px 0 0 0 !important;}
@@ -528,19 +528,19 @@
     position:absolute !important;
     right:0 !important;
     top:6px !important;
-    background: scroll transparent url(../images/panel/sprite04.png) no-repeat -270px -286px !important;
+    background: scroll transparent url(../images/panel/sprite04.webp) no-repeat -270px -286px !important;
 }
 
 #bx-panel.bx-panel-folded #bx-panel-top a { color: #50504F !important;  font:normal normal normal 10px/16px Tahoma,sans-serif !important;}
 #bx-panel.bx-panel-folded #bx-panel-top #bx-panel-menu { color: #D6D6D6 !important; font:normal normal normal 10px/14px Tahoma,sans-serif !important;}
-#bx-panel.bx-panel-folded #bx-panel-top { height:18px !important; background:scroll #F5F5F0 url(../images/panel/sprite04.png) repeat-x 0 -354px !important; }
+#bx-panel.bx-panel-folded #bx-panel-top { height:18px !important; background:scroll #F5F5F0 url(../images/panel/sprite04.webp) repeat-x 0 -354px !important; }
 #bx-panel.bx-panel-folded #bx-panel-userinfo { height:18px !important;  font: normal normal normal 11px/16px Tahoma, sans-serif  !important;}
-#bx-panel.bx-panel-folded #bx-panel-tabs { height:18px !important; background: scroll #F5F5F0 url(../images/panel/sprite04.png) repeat-x 0 -354px !important; }
+#bx-panel.bx-panel-folded #bx-panel-tabs { height:18px !important; background: scroll #F5F5F0 url(../images/panel/sprite04.webp) repeat-x 0 -354px !important; }
 
-#bx-panel.bx-panel-folded #bx-panel-menu {height:16px !important; background: scroll transparent url(../images/panel/sprite04.png) 0 -379px !important; padding:0 !important;}
-#bx-panel.bx-panel-folded #bx-panel-menu span {height:16px !important; background: scroll transparent url(../images/panel/sprite04.png) right -379px !important; line-height: 13px !important;}
-#bx-panel.bx-panel-folded #bx-panel-menu:hover, #bx-panel.bx-panel-folded #bx-panel-menu.bx-pressed {background:scroll transparent url(../images/panel/sprite04.png) 0 -379px !important; }
-#bx-panel.bx-panel-folded #bx-panel-menu:hover span, #bx-panel.bx-panel-folded #bx-panel-menu.bx-pressed span {background:scroll transparent url(../images/panel/sprite04.png) right -397px !important; color:#eee !important;}
+#bx-panel.bx-panel-folded #bx-panel-menu {height:16px !important; background: scroll transparent url(../images/panel/sprite04.webp) 0 -379px !important; padding:0 !important;}
+#bx-panel.bx-panel-folded #bx-panel-menu span {height:16px !important; background: scroll transparent url(../images/panel/sprite04.webp) right -379px !important; line-height: 13px !important;}
+#bx-panel.bx-panel-folded #bx-panel-menu:hover, #bx-panel.bx-panel-folded #bx-panel-menu.bx-pressed {background:scroll transparent url(../images/panel/sprite04.webp) 0 -379px !important; }
+#bx-panel.bx-panel-folded #bx-panel-menu:hover span, #bx-panel.bx-panel-folded #bx-panel-menu.bx-pressed span {background:scroll transparent url(../images/panel/sprite04.webp) right -397px !important; color:#eee !important;}
 
 #bx-panel .bx-panel-folded-mode-only { display: none !important; }
 #bx-panel.bx-panel-folded .bx-panel-folded-mode-only { display:inline-block !important;}
@@ -556,20 +556,20 @@
     color: #50504F !important;
 }
 #bx-panel.bx-panel-folded #bx-panel-updates {line-height: 17px !important; margin: 0 10px 0 2px !important; height:18px !important; cursor:pointer !important;}
-#bx-panel.bx-panel-folded #bx-panel-updates-icon {background: scroll transparent url(../images/panel/sprite04.png) no-repeat -284px -291px !important; height: 18px !important; }
+#bx-panel.bx-panel-folded #bx-panel-updates-icon {background: scroll transparent url(../images/panel/sprite04.webp) no-repeat -284px -291px !important; height: 18px !important; }
 #bx-panel.bx-panel-folded #bx-panel-updates-text { display:inline-block !important; height:18px !important; vertical-align:top !important; margin: 0 0 0 1px !important}
-#bx-panel.bx-panel-folded #bx-panel-updates:hover #bx-panel-updates-icon { background: scroll transparent url(../images/panel/sprite04.png) no-repeat -249px -979px !important; }
+#bx-panel.bx-panel-folded #bx-panel-updates:hover #bx-panel-updates-icon { background: scroll transparent url(../images/panel/sprite04.webp) no-repeat -249px -979px !important; }
 
 #bx-panel.bx-panel-folded #bx-panel-clear-cache { display: inline-block !important; cursor:pointer !important;}
-#bx-panel.bx-panel-folded #bx-panel-clear-cache-icon { display: inline-block !important; width:14px !important; background: scroll transparent url(../images/panel/sprite04.png) no-repeat -265px -979px !important; height: 18px !important; margin:0 !important;padding:0 !important;}
+#bx-panel.bx-panel-folded #bx-panel-clear-cache-icon { display: inline-block !important; width:14px !important; background: scroll transparent url(../images/panel/sprite04.webp) no-repeat -265px -979px !important; height: 18px !important; margin:0 !important;padding:0 !important;}
 #bx-panel.bx-panel-folded #bx-panel-clear-cache-text { display:inline-block !important; height:18px !important; vertical-align:top !important; margin: 0 0 0 1px !important; }
-#bx-panel.bx-panel-folded #bx-panel-clear-cache:hover #bx-panel-clear-cache-icon { background: scroll transparent url(../images/panel/sprite04.png) no-repeat -281px -979px !important; }
+#bx-panel.bx-panel-folded #bx-panel-clear-cache:hover #bx-panel-clear-cache-icon { background: scroll transparent url(../images/panel/sprite04.webp) no-repeat -281px -979px !important; }
 #bx-panel.bx-panel-folded #bx-panel-clear-cache:hover #bx-panel-clear-cache-text { text-decoration: underline !important; }
 
-#bx-panel.bx-panel-folded .bx-panel-userinfo-separator { height:18px !important; background: scroll transparent url(../images/panel/sprite04.png) no-repeat -256px -318px !important; vertical-align:top !important;}
-#bx-panel.bx-panel-folded #bx-panel-hotkeys {background: scroll transparent url(../images/panel/sprite04.png) no-repeat -239px -1004px !important; height:18px !important; width:28px !important; margin:0 !important; padding:0 !important;}
-#bx-panel.bx-panel-folded #bx-panel-pin {background: scroll transparent url(../images/panel/sprite04.png) no-repeat -226px -302px !important; height:18px !important; width:22px !important; margin:0 !important; padding:0 !important;}
-#bx-panel.bx-panel-folded #bx-panel-pin.bx-panel-pin-fixed {  background: scroll transparent url(../images/panel/sprite04.png) no-repeat -204px -302px !important; }
+#bx-panel.bx-panel-folded .bx-panel-userinfo-separator { height:18px !important; background: scroll transparent url(../images/panel/sprite04.webp) no-repeat -256px -318px !important; vertical-align:top !important;}
+#bx-panel.bx-panel-folded #bx-panel-hotkeys {background: scroll transparent url(../images/panel/sprite04.webp) no-repeat -239px -1004px !important; height:18px !important; width:28px !important; margin:0 !important; padding:0 !important;}
+#bx-panel.bx-panel-folded #bx-panel-pin {background: scroll transparent url(../images/panel/sprite04.webp) no-repeat -226px -302px !important; height:18px !important; width:22px !important; margin:0 !important; padding:0 !important;}
+#bx-panel.bx-panel-folded #bx-panel-pin.bx-panel-pin-fixed {  background: scroll transparent url(../images/panel/sprite04.webp) no-repeat -204px -302px !important; }
 #bx-panel.bx-panel-folded #bx-panel-site-toolbar, #bx-panel.bx-panel-folded #bx-panel-view-tab, #bx-panel.bx-panel-folded #bx-panel-quota { display: none !important;}
 #bx-panel.bx-panel-folded #bx-panel-small-toggle { display:inline-block !important;}
 #bx-panel.bx-panel-folded #bx-panel-expander, #bx-panel.bx-panel-folded #bx-panel-expander-arrow { display: inline-block !important;}
@@ -578,37 +578,37 @@
 #bx-panel .bx-panel-notification-text { text-align:center !important; padding: 3px 20px 5px  !important; margin:0 !important; color: #000 !important;}
 #bx-panel .bx-panel-notification-text, #bx-panel .bx-panel-notification-text a {font: normal normal normal 12px/normal Tahoma, sans-serif !important; }
 #bx-panel .bx-panel-notification-close { position:absolute !important; display:block !important; top:5px !important; right: 5px !important; width: 12px !important; height:12px !important; margin:0 !important; padding:0 !important;}
-#bx-panel .bx-panel-notification-close a { background: scroll transparent url(../images/panel/sprite04.png) no-repeat -268px -243px !important; width:12px !important; height:12px !important; display: block !important; }
+#bx-panel .bx-panel-notification-close a { background: scroll transparent url(../images/panel/sprite04.webp) no-repeat -268px -243px !important; width:12px !important; height:12px !important; display: block !important; }
 #bx-panel .bx-panel-notification-text a, #bx-panel .bx-panel-notification-text a:hover { color: #0041d2 !important; text-decoration: underline !important;}
 
 #bx-panel .bx-panel-notification.bx-panel-notification-hidden {display: none !important}
 
 #bx-panel.bx-panel-admin-mode #bx-panel-site-toolbar { display: none !important;}
-#bx-panel.bx-panel-admin-mode #bx-panel-top { background:url(../images/panel/sprite04.png) repeat-x 0 -836px/* #515151*/ !important; margin-bottom:-1px !important; }
-#bx-panel.bx-panel-admin-mode #bx-panel-tabs { background: scroll /*#515151*/ url(../images/panel/sprite04.png) repeat-x 0 -836px !important;}
+#bx-panel.bx-panel-admin-mode #bx-panel-top { background:url(../images/panel/sprite04.webp) repeat-x 0 -836px/* #515151*/ !important; margin-bottom:-1px !important; }
+#bx-panel.bx-panel-admin-mode #bx-panel-tabs { background: scroll /*#515151*/ url(../images/panel/sprite04.webp) repeat-x 0 -836px !important;}
 #bx-panel .bx-panel-admin-tab-left {background:none !important; height:26px !important; padding:0 !important; vertical-align:bottom !important; width:3px !important;}
-* html #bx-panel.bx-panel-admin-mode .bx-panel-admin-tab-left {/*background:url("../images/panel/sprite04.png") no-repeat -95px -1011px !important;*/ height:27px !important; margin-top:0 !important;  font-size:0 !important;}
-#bx-panel.bx-panel-admin-mode .bx-panel-admin-tab-left {background:url("../images/panel/sprite04.png") no-repeat -95px -1012px !important; display:inline-block !important;}
-#bx-panel .bx-panel-admin-tab-right {background: url(../images/panel/sprite04.png) right -31px !important; height:26px!important; vertical-align:top !important; width:3px!important; padding:0!important; line-height:0 !important; font-size:0 !important; }
-* html  #bx-panel.bx-panel-admin-mode .bx-panel-admin-tab-right {/*background:url("../images/panel/sprite04.png") no-repeat -101px -1011px !important;*/ font-size:0 !important; height:27px !important; margin-top:0 !important;}
-#bx-panel.bx-panel-admin-mode .bx-panel-admin-tab-right {background:url("../images/panel/sprite04.png") no-repeat -101px -1012px !important; display:inline-block !important; }
+* html #bx-panel.bx-panel-admin-mode .bx-panel-admin-tab-left {/*background:url("../images/panel/sprite04.webp") no-repeat -95px -1011px !important;*/ height:27px !important; margin-top:0 !important;  font-size:0 !important;}
+#bx-panel.bx-panel-admin-mode .bx-panel-admin-tab-left {background:url("../images/panel/sprite04.webp") no-repeat -95px -1012px !important; display:inline-block !important;}
+#bx-panel .bx-panel-admin-tab-right {background: url(../images/panel/sprite04.webp) right -31px !important; height:26px!important; vertical-align:top !important; width:3px!important; padding:0!important; line-height:0 !important; font-size:0 !important; }
+* html  #bx-panel.bx-panel-admin-mode .bx-panel-admin-tab-right {/*background:url("../images/panel/sprite04.webp") no-repeat -101px -1011px !important;*/ font-size:0 !important; height:27px !important; margin-top:0 !important;}
+#bx-panel.bx-panel-admin-mode .bx-panel-admin-tab-right {background:url("../images/panel/sprite04.webp") no-repeat -101px -1012px !important; display:inline-block !important; }
 #bx-panel .bx-panel-admin-tab-center {line-height:30px !important;}
 * html #bx-panel.bx-panel-admin-mode .bx-panel-admin-tab-center {line-height:26px !important; height:27px !important;}
-#bx-panel.bx-panel-admin-mode .bx-panel-admin-tab-center {background:url("../images/panel/sprite04.png") repeat-x 0 -725px !important; color:#fff !important; /*line-height:26px !important;*/ vertical-align:bottom !important;}
+#bx-panel.bx-panel-admin-mode .bx-panel-admin-tab-center {background:url("../images/panel/sprite04.webp") repeat-x 0 -725px !important; color:#fff !important; /*line-height:26px !important;*/ vertical-align:bottom !important;}
 #bx-panel.bx-panel-admin-mode .bx-panel-menu-opacity {background:none !important; color:#fff !important; display:inline !important; line-height:26px !important; opacity:0.7 !important; filter:alpha(opacity=70)!important; padding:0 !important;}
 #bx-panel .bx-panel-menu-opacity {background:none !important; padding:0 !important;}
 #bx-panel #bx-panel-admin-tab .bx-panel-admin-tab-background {background:none !important; padding:0 !important; }
 #bx-panel.bx-panel-admin-mode #bx-panel-admin-tab .bx-panel-admin-tab-background {background:none!important; height:26px!important; margin-top:3px!important; padding:0!important; zoom:1; overflow:visible;}
 * html #bx-panel.bx-panel-admin-mode #bx-panel-admin-tab .bx-panel-admin-tab-background  {height:27px !important; margin-top:3px!important;}
 #bx-panel.bx-panel-admin-mode #bx-panel-admin-tab .bx-panel-admin-tab-background {background:#22478d !important; display:inline-block !important;}
-#bx-panel.bx-panel-admin-mode #bx-panel-view-tab { background: scroll transparent url(../images/panel/sprite04.png) repeat-x 0 -31px !important; }
-#bx-panel.bx-panel-admin-mode #bx-panel-view-tab span { background: scroll transparent url(../images/panel/sprite04.png) right -31px !important; color: #666666 !important; line-height:32px !important;}
+#bx-panel.bx-panel-admin-mode #bx-panel-view-tab { background: scroll transparent url(../images/panel/sprite04.webp) repeat-x 0 -31px !important; }
+#bx-panel.bx-panel-admin-mode #bx-panel-view-tab span { background: scroll transparent url(../images/panel/sprite04.webp) right -31px !important; color: #666666 !important; line-height:32px !important;}
 #bx-panel.bx-panel-admin-mode #bx-panel-admin-toolbar { display: block !important;}
 
 #bx-panel #bx-panel-admin-toolbar
 {
     height:32px !important;
-    background:scroll #22478d url(../images/panel/sprite04.png) repeat-x 0 -754px !important;
+    background:scroll #22478d url(../images/panel/sprite04.webp) repeat-x 0 -754px !important;
     overflow:hidden !important;
     margin:0 !important;
     padding:0 !important;
@@ -634,15 +634,15 @@
 
 #bx-panel .bx-panel-admin-button .bx-panel-admin-button-lb,
 #bx-panel .bx-panel-admin-button .bx-panel-admin-button-rb { display:inline-block!important; height:24px!important; width:3px!important;}
-#bx-panel .bx-panel-admin-button-hover .bx-panel-admin-button-lb {background:url("../images/panel/sprite04.png") no-repeat 0 -1043px!important;}
-#bx-panel .bx-panel-admin-button-hover .bx-panel-admin-button-text {background:url("../images/panel/sprite04.png") repeat-x left -1070px!important;}
-#bx-panel .bx-panel-admin-button-hover .bx-panel-admin-button-rb {background:url("../images/panel/sprite04.png") repeat-x -6px -1043px!important;}
+#bx-panel .bx-panel-admin-button-hover .bx-panel-admin-button-lb {background:url("../images/panel/sprite04.webp") no-repeat 0 -1043px!important;}
+#bx-panel .bx-panel-admin-button-hover .bx-panel-admin-button-text {background:url("../images/panel/sprite04.webp") repeat-x left -1070px!important;}
+#bx-panel .bx-panel-admin-button-hover .bx-panel-admin-button-rb {background:url("../images/panel/sprite04.webp") repeat-x -6px -1043px!important;}
 
 
-#bx-panel .bx-panel-admin-button-selected .bx-panel-admin-button-lb {background:url("../images/panel/sprite04.png") no-repeat 0 -1043px!important;}
-#bx-panel .bx-panel-admin-button-selected .bx-panel-admin-button-text {background:url("../images/panel/sprite04.png") repeat-x left -1070px!important;}
+#bx-panel .bx-panel-admin-button-selected .bx-panel-admin-button-lb {background:url("../images/panel/sprite04.webp") no-repeat 0 -1043px!important;}
+#bx-panel .bx-panel-admin-button-selected .bx-panel-admin-button-text {background:url("../images/panel/sprite04.webp") repeat-x left -1070px!important;}
 #bx-panel .bx-panel-admin-button-selected .bx-admin-opacity-text {opacity:1 !important; filter: alpha(opacity=100);}
-#bx-panel .bx-panel-admin-button-selected .bx-panel-admin-button-rb {background:url("../images/panel/sprite04.png") repeat-x -6px -1043px!important;}
+#bx-panel .bx-panel-admin-button-selected .bx-panel-admin-button-rb {background:url("../images/panel/sprite04.webp") repeat-x -6px -1043px!important;}
 
 #bx-panel .bx-panel-admin-button-icon { display: inline-block !important; width: 22px !important; height:24px !important; vertical-align:top !important;}
 #bx-panel .bx-panel-admin-button-text
@@ -657,20 +657,20 @@
 }
 .bx-admin-opacity-text {opacity:0.7; filter: alpha(opacity=70); vertical-align:middle!important; height:24px !important;}
 
-#bx-panel .bx-panel-admin-button-arrow { display: inline-block !important; height:24px !important; width:9px !important; vertical-align:top !important; background: scroll transparent url(../images/panel/sprite04.png) no-repeat -267px -316px !important;}
-#bx-panel .bx-panel-admin-button-separator { display: inline-block !important; height:32px !important; width:10px !important; vertical-align:top !important; background:scroll transparent url(../images/panel/sprite04.png) no-repeat -257px -264px !important;}
+#bx-panel .bx-panel-admin-button-arrow { display: inline-block !important; height:24px !important; width:9px !important; vertical-align:top !important; background: scroll transparent url(../images/panel/sprite04.webp) no-repeat -267px -316px !important;}
+#bx-panel .bx-panel-admin-button-separator { display: inline-block !important; height:32px !important; width:10px !important; vertical-align:top !important; background:scroll transparent url(../images/panel/sprite04.webp) no-repeat -257px -264px !important;}
 
-#bx-panel .bx-panel-admin-button-favorites-icon {  background:scroll transparent url(../images/panel/sprite04.png) no-repeat -90px -282px !important;}
-#bx-panel .bx-panel-admin-button-settings-icon { background:scroll transparent url(../images/panel/sprite04.png) no-repeat -120px -282px !important;}
-.bx-panel-admin-button-settings-icon .menu-popup-item-icon { background:scroll transparent url(../images/panel/sprite04.png) no-repeat -120px -286px !important;}
-#bx-panel .bx-panel-admin-button-help-icon { background:scroll transparent url(../images/panel/sprite04.png) no-repeat -149px -282px !important;}
-#bx-panel .bx-panel-admin-button-updates-icon { background:scroll transparent url(../images/panel/sprite04.png) no-repeat -57px -283px !important;}
-#bx-panel .bx-panel-admin-button-new-updates-icon { background:url(../images/panel/sprite04.png) no-repeat -3px -978px !important;}
-#bx-panel .bx-panel-admin-button-biz-proc-icon-wrap {background:url(../images/panel/sprite04.png) no-repeat -118px -976px !important; display:inline-block !important; vertical-align: top !important;}
+#bx-panel .bx-panel-admin-button-favorites-icon {  background:scroll transparent url(../images/panel/sprite04.webp) no-repeat -90px -282px !important;}
+#bx-panel .bx-panel-admin-button-settings-icon { background:scroll transparent url(../images/panel/sprite04.webp) no-repeat -120px -282px !important;}
+.bx-panel-admin-button-settings-icon .menu-popup-item-icon { background:scroll transparent url(../images/panel/sprite04.webp) no-repeat -120px -286px !important;}
+#bx-panel .bx-panel-admin-button-help-icon { background:scroll transparent url(../images/panel/sprite04.webp) no-repeat -149px -282px !important;}
+#bx-panel .bx-panel-admin-button-updates-icon { background:scroll transparent url(../images/panel/sprite04.webp) no-repeat -57px -283px !important;}
+#bx-panel .bx-panel-admin-button-new-updates-icon { background:url(../images/panel/sprite04.webp) no-repeat -3px -978px !important;}
+#bx-panel .bx-panel-admin-button-biz-proc-icon-wrap {background:url(../images/panel/sprite04.webp) no-repeat -118px -976px !important; display:inline-block !important; vertical-align: top !important;}
 #bx-panel .bx-panel-admin-button-biz-proc-icon { background: url(../images/panel/bp.gif) no-repeat 3px 4px !important;}
 
 #bx-panel .bx-panel-break { display:block !important;}
-#bx-panel-error { padding: 10px !important;  background:scroll #FFEB8D url(../images/panel/sprite04.png) repeat-x 0 -868px !important; color: #000 !important;}
+#bx-panel-error { padding: 10px !important;  background:scroll #FFEB8D url(../images/panel/sprite04.webp) repeat-x 0 -868px !important; color: #000 !important;}
 
 #bx-panel .bx-search-box {background:url("../images/panel/search1.png") no-repeat 0 0 !important; height:19px !important; position:absolute !important; top:6px !important; right:8px !important; padding-left:5px!important; }
 #bx-panel .bx-search-box-inner { width:150px !important; }

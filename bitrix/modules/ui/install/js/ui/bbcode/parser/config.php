@@ -8,11 +8,11 @@ return [
 	'css' => 'dist/parser.bundle.css',
 	'js' => 'dist/parser.bundle.js',
 	'rel' => [
+		'main.core',
 		'ui.bbcode.ast-processor',
 		'ui.bbcode.encoder',
-		'ui.linkify',
 		'ui.bbcode.model',
-		'main.core',
+		'ui.linkify',
 	],
 	'skip_core' => false,
 ];

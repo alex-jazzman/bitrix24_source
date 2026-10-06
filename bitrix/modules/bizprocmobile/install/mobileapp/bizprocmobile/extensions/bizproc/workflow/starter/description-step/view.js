@@ -8,6 +8,8 @@ jn.define('bizproc/workflow/starter/description-step/view', (require, exports, m
 	const { EmptyScreen } = require('layout/ui/empty-screen');
 	const { PureComponent } = require('layout/pure-component');
 	const { inAppUrl } = require('in-app-url');
+	const { Text3, Text4, Text5 } = require('ui-system/typography/text');
+	const { Color, Typography } = require('tokens');
 
 	class DescriptionStepView extends PureComponent
 	{
@@ -51,21 +53,18 @@ jn.define('bizproc/workflow/starter/description-step/view', (require, exports, m
 		{
 			return View(
 				{ style: { marginHorizontal: 16, marginVertical: 12 } },
-				Text({
+				Text3({
 					testId: 'workflowStarter_descriptionStep_title',
 					text: this.props.name,
-					style: {
-						fontSize: 16,
-						fontWeight: '500',
-						color: AppTheme.colors.base1,
-					},
+					accent: true,
+					color: Color.base1,
 				}),
 				this.description && BBCodeText({
 					testId: 'workflowStarter_descriptionStep_description',
 					value: this.description,
 					style: {
 						marginTop: 10,
-						fontSize: 14,
+						fontSize: Typography.text4.getValue().fontSize,
 						fontWeight: '400',
 						color: AppTheme.colors.base2,
 						lineHeightMultiple: 1.1,
@@ -166,14 +165,13 @@ jn.define('bizproc/workflow/starter/description-step/view', (require, exports, m
 						flexDirection: 'row',
 					},
 				},
-				Text({
+				Text4({
 					style: {
-						fontWeight: '500',
-						fontSize: 14,
-						color: AppTheme.colors.base2,
 						lineHeightMultiple: 1.1,
 						flexShrink: 1,
 					},
+					accent: true,
+					color: Color.base2,
 					text: Loc.getMessage('M_BP_WORKFLOW_STARTER_DESCRIPTION_STEP_AVERAGE_EXECUTION_TIME_TITLE'),
 				}),
 				View(
@@ -187,13 +185,12 @@ jn.define('bizproc/workflow/starter/description-step/view', (require, exports, m
 							justifyContent: 'flex-end',
 						},
 					},
-					Text({
+					Text5({
 						style: {
 							flexShrink: 1,
-							color: formattedTime ? AppTheme.colors.base2 : AppTheme.colors.base4,
-							fontSize: 14,
-							fontWeight: '500',
 						},
+						accent: true,
+						color: formattedTime ? Color.base2 : Color.base4,
 						text: (formattedTime || Loc.getMessage('M_BP_WORKFLOW_STARTER_DESCRIPTION_STEP_AVERAGE_EXECUTION_TIME_NO_DATA')),
 						numberOfLines: 1,
 						ellipsize: 'end',
@@ -236,14 +233,12 @@ jn.define('bizproc/workflow/starter/description-step/view', (require, exports, m
 
 		renderExecuteTimeDescription()
 		{
-			return Text({
+			return Text4({
 				style: {
 					marginTop: 10,
-					color: AppTheme.colors.base2,
-					fontWeight: '400',
-					fontSize: 14,
 					lineHeightMultiple: 1.1,
 				},
+				color: Color.base2,
 				text: (
 					this.props.formattedTime
 						? Loc.getMessage('M_BP_WORKFLOW_STARTER_DESCRIPTION_STEP_AVERAGE_EXECUTION_TIME_DESCRIPTION')
@@ -260,14 +255,12 @@ jn.define('bizproc/workflow/starter/description-step/view', (require, exports, m
 						helpdesk.openHelpArticle('18783714');
 					},
 				},
-				Text({
+				Text4({
 					style: {
 						marginTop: 10,
-						fontWeight: '400',
-						fontSize: 14,
-						color: AppTheme.colors.accentMainLinks,
 						lineHeightMultiple: 1.1,
 					},
+					color: Color.accentMainLinks,
 					text: Loc.getMessage('M_BP_WORKFLOW_STARTER_DESCRIPTION_STEP_AVERAGE_EXECUTION_TIME_LINK_TITLE'),
 				}),
 			);

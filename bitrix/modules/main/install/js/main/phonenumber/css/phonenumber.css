@@ -22,17 +22,17 @@
 .bx-flag-16 {
 	height: 16px;
 	width: 16px;
-	background: url("../flag/sprite-16.png") 0 -4128px;
+	background: url("../flag/sprite-16.webp") 0 -4128px;
 }
 .bx-flag-24 {
 	height: 24px;
 	width: 24px;
-	background: url("../flag/sprite-24.png") 0 -6192px;
+	background: url("../flag/sprite-24.webp") 0 -6192px;
 }
 .bx-flag-32 {
 	height: 32px;
 	width: 32px;
-	background: url("../flag/sprite-32.png") 0 -8256px;
+	background: url("../flag/sprite-32.webp") 0 -8256px;
 }
 
 /**************** 16x16 *************/

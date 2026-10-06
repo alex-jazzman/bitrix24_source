@@ -8,6 +8,15 @@
 {
 	margin-bottom: 11px;
 	cursor: pointer;
+	/* div -> button: neutralize UA chrome, keep heading appearance */
+	appearance: none;
+	-webkit-appearance: none;
+	background: none;
+	border: none;
+	padding: 0 0 17px;
+	width: 100%;
+	text-align: left;
+	color: inherit;
 }
 
 .settings-container-title::after
@@ -108,7 +117,7 @@
 }
 
 .sms-link-plug {
-	color: rgba(128, 134, 142, .7);
+	color: var(--ui-color-base-2, #525c69);
 }
 
 .sms-message-info {
@@ -134,10 +143,19 @@
 
 .sms-provider-selector {
 	text-decoration: none;
-	border-bottom: 1px dashed #828b95;
+	border-bottom: 1px dashed var(--ui-color-base-2, #525c69);
 	cursor: pointer;
-	color: #828b95;
+	color: var(--ui-color-base-2, #525c69);
 	font-size: 15px;
+	/* span/a -> button: neutralize UA chrome, keep dashed-underline look */
+	background: none;
+	border-top: none;
+	border-right: none;
+	border-left: none;
+	padding: 0;
+	font-family: inherit;
+	line-height: inherit;
+	text-align: left;
 }
 
 .sms-provider-selector-hided-list {
@@ -165,7 +183,6 @@
 	align-items: center;
 	height: 36px;
 	text-decoration: none;
-	outline: none;
 	white-space: nowrap;
 
 	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
@@ -176,6 +193,20 @@
 
 .sms-provider-selector-list li:hover {
 	background-color: #f5f5f6;
+}
+
+.sms-provider-selector-item {
+	display: block;
+	width: 100%;
+	box-sizing: border-box;
+	background: none;
+	border: none;
+	padding: 0;
+	font: inherit;
+	color: inherit;
+	line-height: inherit;
+	text-align: left;
+	cursor: pointer;
 }
 
 .sms-provider-empty-provider-list-text {
@@ -202,15 +233,14 @@
 }
 
 .sms-provider-name {
-	color: #a8adb4;
+	color: var(--ui-color-base-2, #525c69);
 	font-size: 15px;
 }
 
 .sms-provider-message-title {
-	color: #525c69;
+	color: var(--ui-color-base-2, #525c69);
 	font-size: 13px;
 	padding-bottom: 8px;
-	opacity: 50%;
 	padding-top: 6px;
 }
 
@@ -389,13 +419,19 @@
 
 .payment-system-set {
 	font-size: 15px;
-	color: #828b95;
+	color: var(--ui-color-base-2, #525c69);
 	cursor: pointer;
+	/* span -> button: neutralize UA chrome (border-bottom set by modifier classes) */
+	background: none;
+	border: none;
+	padding: 0;
+	font-family: inherit;
+	text-align: left;
 }
 
 .payment-system-set-connected {
-	color: #828b95;
-	border-bottom: 1px #828b95 solid;
+	color: var(--ui-color-base-2, #525c69);
+	border-bottom: 1px var(--ui-color-base-2, #525c69) solid;
 }
 
 .payment-system-set-not-connected {
@@ -403,3 +439,42 @@
 	border-bottom: 1px #0065a3 solid;
 }
 
+/* a -> button: inline text-style action ("Details") */
+.crm-terminal-inline-button {
+	background: none;
+	border: none;
+	padding: 0;
+	font: inherit;
+	color: inherit;
+	cursor: pointer;
+}
+
+/*region a11y focus (TPL-01) */
+/* Visible focus for the new native terminal controls: air outline on :focus-visible
+   of their own selectors (unique to this app). Values are air tokens with fallbacks. */
+.settings-container-title:focus-visible,
+.payment-system-set:focus-visible,
+.sms-provider-selector:focus-visible,
+.sms-provider-selector-item:focus-visible,
+.crm-terminal-inline-button:focus-visible,
+.settings-setction-switcher-container .ui-switcher:focus-visible,
+html[data-input-modality="keyboard"] .settings-container-title:focus:not(:focus-visible),
+html[data-input-modality="keyboard"] .payment-system-set:focus:not(:focus-visible),
+html[data-input-modality="keyboard"] .sms-provider-selector:focus:not(:focus-visible),
+html[data-input-modality="keyboard"] .sms-provider-selector-item:focus:not(:focus-visible),
+html[data-input-modality="keyboard"] .crm-terminal-inline-button:focus:not(:focus-visible),
+html[data-input-modality="keyboard"] .settings-setction-switcher-container .ui-switcher:focus:not(:focus-visible) {
+	outline-style: solid;
+	outline-color: var(--ui-color-focus-outline, #4A9DFF);
+	outline-width: var(--ui-focus-outline-width, 2px);
+	outline-offset: var(--ui-focus-outline-offset, 2px);
+}
+html[data-input-modality="pointer"] .settings-container-title:focus-visible,
+html[data-input-modality="pointer"] .payment-system-set:focus-visible,
+html[data-input-modality="pointer"] .sms-provider-selector:focus-visible,
+html[data-input-modality="pointer"] .sms-provider-selector-item:focus-visible,
+html[data-input-modality="pointer"] .crm-terminal-inline-button:focus-visible,
+html[data-input-modality="pointer"] .settings-setction-switcher-container .ui-switcher:focus-visible {
+	outline: none;
+}
+/*endregion*/

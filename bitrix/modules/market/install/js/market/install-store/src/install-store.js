@@ -1,5 +1,32 @@
 import { defineStore } from 'ui.vue3.pinia';
 import { nextTick } from "ui.vue3";
+import { Runtime } from 'main.core';
+
+const MARKET_APPLICATION_LIMIT_EXCEEDED = 'MARKET_APPLICATION_LIMIT_EXCEEDED';
+let vibePlusApplicationLimitPopupPromise = null;
+
+async function showVibePlusApplicationLimitPopup(projection)
+{
+	try
+	{
+		vibePlusApplicationLimitPopupPromise ??= Runtime.loadExtension(
+			'market.vibe-plus-application-limit-popup',
+		).catch((error) => {
+			vibePlusApplicationLimitPopupPromise = null;
+			throw error;
+		});
+		const loadedExtension = await vibePlusApplicationLimitPopupPromise;
+		const extension = Array.isArray(loadedExtension)
+			? loadedExtension[0]
+			: loadedExtension;
+
+		return extension.showVibePlusApplicationLimitPopup(projection);
+	}
+	catch
+	{
+		return false;
+	}
+}
 
 export const marketInstallState = defineStore('market-install', {
 	state: () => ({
@@ -177,7 +204,7 @@ export const marketInstallState = defineStore('market-install', {
 			).then((response) => this.installFinish(response))
 		},
 
-		installFinish(response) {
+		async installFinish(response) {
 			const result = !!response.data ? response.data : response;
 			this.installResult = result;
 
@@ -188,6 +215,14 @@ export const marketInstallState = defineStore('market-install', {
 			}
 
 			if (!!result.error) {
+				if (
+					result.error === MARKET_APPLICATION_LIMIT_EXCEEDED
+					&& await showVibePlusApplicationLimitPopup(result.vibePlusApplicationLimit)
+				) {
+					this.installError = true;
+					return;
+				}
+
 				if (!!result.helperCode && result.helperCode !== '') {
 					top.BX.UI.InfoHelper.show(result.helperCode);
 				} else {

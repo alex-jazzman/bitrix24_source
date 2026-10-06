@@ -38,6 +38,11 @@
 		this.breakTimeContainer = this.selectOneByRole('break-time-container');
 		this.durationTimeSpan = this.selectOneByRole('duration-time');
 		this.edited = false;
+		// Snapshot of the editable start/end/break time and start/end date "as recorded". The picker Save
+		// button flips `edited` only when this snapshot actually changes, so a no-op save (opening the time
+		// popup and pressing Save without touching anything) does NOT trigger a request. This is a UX guard
+		// only; server-side idempotency (WorktimeRecord::updateByForm) is authoritative regardless.
+		this.initialState = this.collectEditableState();
 		BX.UI.Hint.init(this.container);
 		this.addEventHandlers();
 	};
@@ -339,16 +344,30 @@
 						events: {
 							click: BX.delegate(function ()
 							{
-								this.edited = true;
+								this.edited = this.isEditableStateChanged();
 
 								if (this.saveButton)
 								{
-									this.saveButton.classList.remove('ui-btn-disabled');
+									if (this.edited)
+									{
+										this.saveButton.classList.remove('ui-btn-disabled');
+									}
+									else
+									{
+										this.saveButton.classList.add('ui-btn-disabled');
+									}
 								}
 
 								if (this.changeButton)
 								{
-									this.changeButton.classList.remove('ui-btn-disabled');
+									if (this.edited)
+									{
+										this.changeButton.classList.remove('ui-btn-disabled');
+									}
+									else
+									{
+										this.changeButton.classList.add('ui-btn-disabled');
+									}
 								}
 
 								this._workTimePickerPopup.close();
@@ -367,6 +386,46 @@
 					})
 				],
 			});
+		},
+
+		collectEditableState: function ()
+		{
+			var stateStartDate = this.selectOneByRole('state-start-date');
+			var stateEndDate = this.selectOneByRole('state-end-date');
+			return {
+				startSecs: this.readTimeSecs(this.timeStartClockHiddenInput, this.formStartInput),
+				endSecs: this.readTimeSecs(this.timeEndClockHiddenInput, this.formEndInput),
+				breakSecs: this.readTimeSecs(this.breakLengthClockHiddenInput, this.formBreakInput),
+				startDate: stateStartDate ? stateStartDate.value : '',
+				endDate: stateEndDate ? stateEndDate.value : ''
+			};
+		},
+
+		// Reads a time value from the picker's live clock input, falling back to the server-rendered form
+		// input when the picker has not populated the clock input yet (e.g. at construction). Comparing
+		// seconds (not the raw string) makes the check independent of "8:00" vs "08:00"/am-pm formatting.
+		readTimeSecs: function (primaryInput, fallbackInput)
+		{
+			var value = primaryInput && primaryInput.value
+				? primaryInput.value
+				: (fallbackInput ? fallbackInput.value : '');
+			if (!value)
+			{
+				return null;
+			}
+			var secs = this.convertFormattedTimeToSecs(value);
+			return isNaN(secs) ? null : secs;
+		},
+
+		isEditableStateChanged: function ()
+		{
+			var current = this.collectEditableState();
+			var initial = this.initialState || {};
+			return current.startSecs !== initial.startSecs
+				|| current.endSecs !== initial.endSecs
+				|| current.breakSecs !== initial.breakSecs
+				|| current.startDate !== initial.startDate
+				|| current.endDate !== initial.endDate;
 		},
 
 		convertFormattedTimeToSecs: function (time)

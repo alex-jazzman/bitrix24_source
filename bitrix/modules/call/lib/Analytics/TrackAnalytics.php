@@ -19,6 +19,7 @@ class TrackAnalytics extends AbstractAnalytics
 	 * @param string|null $errorCode
 	 * @param string $event Event type identifier.
 	 * @param Error|null $error
+	 * @param array $context Extra event-specific payload merged into the telemetry data.
 	 * @return self
 	 */
 	public function sendTelemetry(
@@ -26,7 +27,8 @@ class TrackAnalytics extends AbstractAnalytics
 		string $status,
 		?string $errorCode = null,
 		string $event = 'track_status',
-		Error|null $error = null
+		Error|null $error = null,
+		array $context = []
 	): self
 	{
 		$sourceData = [
@@ -34,6 +36,11 @@ class TrackAnalytics extends AbstractAnalytics
 			'externalTrackId' => $source->getExternalTrackId(),
 			'trackType' => $source->getType(),
 		];
+
+		if ($context)
+		{
+			$sourceData += $context;
+		}
 
 		$this->baseSendTelemetry($sourceData, $status, $errorCode, $event, $error);
 

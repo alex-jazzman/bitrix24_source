@@ -23,6 +23,7 @@ type CopilotImageControllerOptions = {
 	popupWithoutBackBtn: boolean;
 	useInsertAboveAndUnderMenuItems: boolean;
 	analytics: CopilotAnalytics;
+	isBitrixGptV2Available?: boolean;
 }
 
 export class CopilotImageController extends EventEmitter
@@ -47,6 +48,7 @@ export class CopilotImageController extends EventEmitter
 	#inputFieldCancelLoadingEventHandler: Function;
 	#inputFieldSubmitEventHandler: Function;
 	#inputFieldAdjustHeightEventHandler: Function;
+	#isBitrixGptV2Available: boolean;
 
 	constructor(options: CopilotImageControllerOptions)
 	{
@@ -63,6 +65,7 @@ export class CopilotImageController extends EventEmitter
 		this.#popupWithoutBackBtn = options.popupWithoutBackBtn === true;
 		this.#useInsertAboveAndUnderTextMenuItems = options.useInsertAboveAndUnderMenuItems;
 		this.#analytics = options.analytics;
+		this.#isBitrixGptV2Available = options.isBitrixGptV2Available === true;
 
 		this.#inputFieldSubmitEventHandler = this.#handleInputFieldSubmitEvent.bind(this);
 		this.#inputFieldCancelLoadingEventHandler = this.#handleInputFieldCancelLoadingEvent.bind(this);
@@ -128,6 +131,7 @@ export class CopilotImageController extends EventEmitter
 				formats: this.#formats,
 				engines: this.#engines,
 			},
+			isBitrixGptV2Available: this.#isBitrixGptV2Available,
 		});
 
 		if (!this.#inputField.getValue())
@@ -337,7 +341,21 @@ export class CopilotImageController extends EventEmitter
 			|| firstError.code === 'SERVICE_IS_NOT_AVAILABLE_BY_TARIFF'
 		))
 		{
-			this.emit('close');
+			// A technical limit opens no slider, so closing CoPilot would leave the user without any
+			// explanation: keep it open with the message instead.
+			const technicalLimitMessage = AjaxErrorHandler.getVibePlusTechnicalLimitMessage(firstError?.customData);
+
+			if (technicalLimitMessage)
+			{
+				this.#inputField.setErrors([{
+					code: firstError.code,
+					message: technicalLimitMessage,
+				}]);
+			}
+			else
+			{
+				this.emit('close');
+			}
 		}
 		else if (firstError)
 		{
@@ -366,6 +384,7 @@ export class CopilotImageController extends EventEmitter
 			errorCode: firstError?.code,
 			showSliderWithMsg: firstError?.customData?.showSliderWithMsg,
 			sliderCode: firstError?.customData?.sliderCode,
+			vibePlusLimitState: firstError?.customData?.vibePlusLimitState,
 			forceCodeRules: ['sliderCode', 'msgWithHtmlLink'],
 			forceOption: firstError?.customData,
 			bindElement: this.#inputField,

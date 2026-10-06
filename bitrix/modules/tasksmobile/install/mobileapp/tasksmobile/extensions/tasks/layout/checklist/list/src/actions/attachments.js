@@ -16,6 +16,8 @@ jn.define('tasks/layout/checklist/list/src/actions/attachments', (require, expor
 
 	/**
 	 * @class ItemAttachments
+	 * @extends LayoutComponent
+	 * @param {ItemAttachmentsProps} props
 	 */
 	class ItemAttachments extends LayoutComponent
 	{
@@ -24,6 +26,7 @@ jn.define('tasks/layout/checklist/list/src/actions/attachments', (require, expor
 			this.removeAttachmentRef();
 		}
 
+		/** @return {Promise<AttachmentFileInfo[]>} */
 		async getAttachmentsInfo()
 		{
 			const { item } = this.props;
@@ -66,6 +69,11 @@ jn.define('tasks/layout/checklist/list/src/actions/attachments', (require, expor
 			return [...attachmentsInfo, ...attachmentsData];
 		}
 
+		/**
+		 * @private
+		 * @param {Object[]} attachments
+		 * @return {AttachmentFileInfo[]}
+		 */
 		prepareAttachmentData(attachments)
 		{
 			return attachments.map((attachment) => {
@@ -76,6 +84,10 @@ jn.define('tasks/layout/checklist/list/src/actions/attachments', (require, expor
 			});
 		}
 
+		/**
+		 * @private
+		 * @param {Object[] | number[]} files
+		 */
 		handleUpdateAttachedFiles = (files) => {
 			const fileInfo = this.getFileInfo();
 			const attachedFiles = Array.isArray(files) ? files : [];
@@ -97,6 +109,11 @@ jn.define('tasks/layout/checklist/list/src/actions/attachments', (require, expor
 			void this.handleOnChangeInfo(attachedFilesInfo);
 		};
 
+		/**
+		 * @private
+		 * @param {Object} fileInfo
+		 * @return {boolean}
+		 */
 		isChangedFiles(fileInfo)
 		{
 			const stateFileInfo = this.getFileInfo();
@@ -104,11 +121,21 @@ jn.define('tasks/layout/checklist/list/src/actions/attachments', (require, expor
 			return !isEqual(this.prepareUploadingInfo(fileInfo), this.prepareUploadingInfo(stateFileInfo));
 		}
 
+		/**
+		 * @private
+		 * @param {Object} info
+		 * @return {AttachmentUploadingInfo[]}
+		 */
 		prepareUploadingInfo = (info) => Object.values(info).map((file) => ({
 			id: file?.id,
 			isUploading: file?.isUploading,
 		}));
 
+		/**
+		 * @private
+		 * @param {Object} fileInfo
+		 * @return {Promise<void>}
+		 */
 		async handleOnChangeInfo(fileInfo)
 		{
 			const isChanged = this.isChangedFiles(fileInfo);
@@ -124,6 +151,11 @@ jn.define('tasks/layout/checklist/list/src/actions/attachments', (require, expor
 			}
 		}
 
+		/**
+		 * @private
+		 * @param {boolean} [shouldRender]
+		 * @return {Promise<void>}
+		 */
 		handleOnChange(shouldRender = true)
 		{
 			const { item, onChange } = this.props;
@@ -164,6 +196,10 @@ jn.define('tasks/layout/checklist/list/src/actions/attachments', (require, expor
 			void this.handleOnChangeInfo(fileInfo);
 		};
 
+		/**
+		 * @private
+		 * @return {number}
+		 */
 		getFilesCount()
 		{
 			const { item } = this.props;
@@ -171,6 +207,10 @@ jn.define('tasks/layout/checklist/list/src/actions/attachments', (require, expor
 			return item.getAttachmentsCount();
 		}
 
+		/**
+		 * @private
+		 * @return {Object}
+		 */
 		getFileInfo()
 		{
 			const { item } = this.props;
@@ -178,6 +218,10 @@ jn.define('tasks/layout/checklist/list/src/actions/attachments', (require, expor
 			return item.getAttachments();
 		}
 
+		/**
+		 * @private
+		 * @param {Object} fileInfo
+		 */
 		setFileInfo(fileInfo)
 		{
 			const { item } = this.props;
@@ -185,6 +229,10 @@ jn.define('tasks/layout/checklist/list/src/actions/attachments', (require, expor
 			return item.setAttachments(fileInfo);
 		}
 
+		/**
+		 * @private
+		 * @return {string}
+		 */
 		getAttachmentsCount()
 		{
 			const count = this.getFilesCount();
@@ -197,6 +245,10 @@ jn.define('tasks/layout/checklist/list/src/actions/attachments', (require, expor
 			return String(count);
 		}
 
+		/**
+		 * @private
+		 * @param {Object} ref
+		 */
 		setAttachmentRef = (ref) => {
 			const { item } = this.props;
 
@@ -209,6 +261,7 @@ jn.define('tasks/layout/checklist/list/src/actions/attachments', (require, expor
 		};
 
 		/**
+		 * @private
 		 * @return {FileField}
 		 */
 		getAttachmentRef()
@@ -218,6 +271,7 @@ jn.define('tasks/layout/checklist/list/src/actions/attachments', (require, expor
 			return attachmentsRefMap.get(item.getNodeId());
 		}
 
+		/** @private */
 		removeAttachmentRef()
 		{
 			const { item } = this.props;
@@ -225,6 +279,7 @@ jn.define('tasks/layout/checklist/list/src/actions/attachments', (require, expor
 			attachmentsRefMap.delete(item.getNodeId());
 		}
 
+		/** @return {Object} */
 		render()
 		{
 			const { testId } = this.props;
@@ -240,6 +295,10 @@ jn.define('tasks/layout/checklist/list/src/actions/attachments', (require, expor
 			);
 		}
 
+		/**
+		 * @private
+		 * @return {Object}
+		 */
 		renderFileField()
 		{
 			const { parentWidget, diskConfig, readOnly } = this.props;
@@ -285,6 +344,10 @@ jn.define('tasks/layout/checklist/list/src/actions/attachments', (require, expor
 			});
 		}
 
+		/**
+		 * @private
+		 * @return {Object | null}
+		 */
 		renderFileCounter()
 		{
 			if (!this.getFilesCount())

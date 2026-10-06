@@ -1,7 +1,7 @@
 import { AttachmentNodeViewBaseComponent } from './attachment-base';
 import { ResizableMediaMixin } from './resizable-media-mixin';
 import { MediaResizeControls } from './media-resize-controls';
-import { Loc, Text, Type } from 'main.core';
+import { Loc, Type } from 'main.core';
 
 export const ImageAttachmentNodeViewComponent = {
 	extends: AttachmentNodeViewBaseComponent,
@@ -35,18 +35,8 @@ export const ImageAttachmentNodeViewComponent = {
 		},
 		imageViewerAttrs(): Object
 		{
-			const attrs = {};
-			if (Type.isPlainObject(this.viewerAttrs))
-			{
-				Object.entries(this.viewerAttrs).forEach(([key, value]) => {
-					const normalizedKey = String(key).startsWith('data-')
-						? String(key)
-						: `data-${Text.toKebabCase(key)}`
-					;
-
-					attrs[normalizedKey] = value;
-				});
-			}
+			// Component-owned attributes go last so node data can never override them.
+			const attrs = { ...this.viewerDataAttrs };
 
 			attrs['data-viewer'] = true;
 			if (Type.isStringFilled(this.fileName))
@@ -58,6 +48,7 @@ export const ImageAttachmentNodeViewComponent = {
 			if (this.hasImage)
 			{
 				attrs['data-viewer-preview'] = this.imageUrl;
+				attrs['data-src'] = this.imageUrl;
 			}
 			attrs.target = '_blank';
 			attrs.rel = 'noopener noreferrer';

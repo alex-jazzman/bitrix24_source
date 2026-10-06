@@ -134,12 +134,28 @@ $fileRefreshButtonId = "mail_msg_{$messageId}_refresh_files_button";
 					foreach (\Bitrix\Mail\Helper\Message::parseAddressList($field) as $item)
 					{
 						$address = new \Bitrix\Main\Mail\Address($item);
-						$avatarParams = $address->validate() && !empty($arResult['avatarParams'][trim($address->getEmail())]) ? $arResult['avatarParams'][trim($address->getEmail())] : ['avatarSize' => 23];
+						$isAddressValid = $address->validate();
+						$email = $isAddressValid ? trim($address->getEmail()) : null;
+						$avatarParams =
+							$isAddressValid && !empty($arResult['avatarParams'][$email])
+								? $arResult['avatarParams'][$email]
+								: ['avatarSize' => 23]
+						;
+						$title = $item;
+						if ($isAddressValid)
+						{
+							$name = \Bitrix\Mail\Message::stripQuotes($address->getName());
+							if ($name === '' || strcasecmp($name, $email) === 0)
+							{
+								$name = !empty($avatarParams['name']) ? $avatarParams['name'] : $email;
+							}
+							$title = $name;
+						}
 						$result[] = array(
-							'URL' => $address->validate() ? sprintf('mailto:%s', $address->getEmail()) : null,
-							'TITLE' => $address->validate() ? $avatarParams['mailContact']['NAME'] : $item,
+							'URL' => $isAddressValid ? sprintf('mailto:%s', $email) : null,
+							'TITLE' => $title,
 							'AVATAR_PARAMS' => $avatarParams,
-							'HREF_TITLE' => $address->validate() ? $address->getEmail() : $item,
+							'HREF_TITLE' => $isAddressValid ? $email : $item,
 							'IMAGE' => $address->getEmail() == $message['__email'] ? $arResult['USER_IMAGE'] : '',
 						);
 					}
@@ -217,6 +233,15 @@ $fileRefreshButtonId = "mail_msg_{$messageId}_refresh_files_button";
 				<button type="button" class="mail-msg-view-control mail-msg-view-control-forward js-msg-view-control-forward"><?=Loc::getMessage('MAIL_MESSAGE_BTN_FWD') ?></button>
 				<button type="button" class="mail-msg-view-control mail-msg-view-control-discuss js-msg-view-control-discuss js-mail-discuss-in-chat"
 					 data-message-id="<?= (int)$message['ID'] ?>"><?=Loc::getMessage('MAIL_MESSAGE_DISCUSS_IN_CHAT_BTN') ?></button>
+				<? if (!empty($renderLabelControl)): ?>
+					<button type="button" class="mail-msg-view-control mail-msg-view-control-label"
+						 data-role="mail-label-assign"
+						 data-testid="mail_label-view__assign"
+						 aria-haspopup="dialog"
+						 aria-expanded="false"
+						 data-uid-key="<?= htmlspecialcharsbx($arResult['MESSAGE_UID_KEY']) ?>"
+						 data-label-ids="<?= htmlspecialcharsbx(\Bitrix\Main\Web\Json::encode($arResult['MESSAGE_LABEL_IDS'] ?? [])) ?>"><?=Loc::getMessage('MAIL_MESSAGE_BTN_LABELS') ?></button>
+				<? endif ?>
 				<? if ($message['__access_level'] == 'full'): ?>
 					<button type="button" class="mail-msg-view-control mail-msg-view-control-skip js-msg-view-control-skip"
 						<? if (!preg_grep('/CRM_ACTIVITY-\d+/', $message['BIND']) || !$isCrmEnabled): ?> style="display: none; "<? endif ?>><?=Loc::getMessage('MAIL_MESSAGE_BTN_SKIP') ?></button>
@@ -459,7 +484,11 @@ var mailto = function ()
 			}
 		),
 		{
-			width: 960,
+<?php
+// The width is passed explicitly: intranet binds a rule of its own to this very address and wins as
+// the earlier one, so a rule of ours would never be reached.
+?>
+			width: <?=\Bitrix\Mail\Helper\Config\Feature::isComposeRedesignAvailable() ? 820 : 960 ?>,
 			cacheable: false,
 			loader: 'create-mail-loader'
 		}
@@ -494,6 +523,7 @@ BX.ready(function()
 {
 	var message = new BXMailMessage({
 		messageId: <?=intval($message['ID']) ?>,
+		mailboxId: <?= (int)($message['MAILBOX_ID'] ?? 0) ?>,
 		formId: '<?=\CUtil::jsEscape($formId) ?>',
 		rcptSelected: <?=\Bitrix\Main\Web\Json::encode($rcptSelected) ?>,
 		rcptAllSelected: <?=\Bitrix\Main\Web\Json::encode($rcptAllSelected) ?>,

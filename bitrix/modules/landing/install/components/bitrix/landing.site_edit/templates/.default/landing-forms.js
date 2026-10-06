@@ -10,6 +10,18 @@
 	const removeClass = BX.Landing.Utils.removeClass;
 	const data = BX.Landing.Utils.data;
 	const onTransitionEnd = BX.Landing.Utils.onTransitionEnd;
+	// a ring is drawn for the keyboard only; where the selector is unknown, it is drawn anyway —
+	// an extra ring costs a mouse user nothing, a missing one costs the keyboard its place
+	const isKeyboardFocus = function(element) {
+		try
+		{
+			return element.matches(':focus-visible');
+		}
+		catch (error)
+		{
+			return true;
+		}
+	};
 	const getCopilotPosition = function(copilot) {
 		const bodyPosition = BX.Dom.getPosition(document.body);
 		const differenceWidthWindowSlider = top.window.innerWidth - bodyPosition.width;
@@ -44,8 +56,12 @@
 		this.label = this.node.querySelector('.landing-editable-field-label-js');
 		this.input = this.node.querySelector('.landing-editable-field-input-js');
 
-		this.hideInput = this.hideInput.bind(this);
+		this.active = false;
+		this.originalValue = '';
+
 		this.showInput = this.showInput.bind(this);
+		this.onKeyDown = this.onKeyDown.bind(this);
+		this.onFocusOut = this.onFocusOut.bind(this);
 		this.adjustInputHeight = this.adjustInputHeight.bind(this);
 
 		BX.bind(this.input, 'input', this.adjustInputHeight);
@@ -66,10 +82,10 @@
 	BX.Landing.EditTitleForm.prototype = {
 		initCopilotBtn()
 		{
-			const copilotButton = BX.Tag.render`
-				<div class="ui-title-input-btn">
-					<div class="ui-icon-set --copilot-ai"></div>
-				</div>
+			const copilotIcon = BX.Tag.render`
+				<span class="ui-title-input-btn --icon-gradient" aria-hidden="true">
+					<span class="ui-icon-set --bitrix-gpt"></span>
+				</span>
 			`;
 			if (this.input.value === '')
 			{
@@ -91,7 +107,7 @@
 			BX.Event.bind(document, 'click', this.onClickHandler.bind(this));
 			this.copilot.init();
 
-			BX.bind(copilotButton, 'click', () => {
+			BX.bind(this.aiCopilotContainer, 'click', () => {
 				if (this.isAiActive)
 				{
 					if (this.finishInit)
@@ -115,7 +131,7 @@
 				}
 			});
 
-			BX.Dom.append(copilotButton, this.aiCopilotContainer);
+			BX.Dom.append(copilotIcon, this.aiCopilotContainer);
 		},
 		adjustInputHeight()
 		{
@@ -138,11 +154,24 @@
 		{
 			event.stopPropagation();
 
+			if (this.active)
+			{
+				return;
+			}
+
+			// label content is indented by the template, the form field must not inherit that
+			this.originalValue = this.label.textContent.trim();
+			this.input.value = this.originalValue;
+
 			BX.Dom.style(this.label, 'display', 'none');
 			BX.Dom.addClass(this.controlButtonContainer, '--hidden');
 			BX.Dom.style(this.input, 'display', 'block');
 
 			this.adjustInputHeight();
+
+			BX.bind(this.input, 'keydown', this.onKeyDown);
+			BX.bind(this.input, 'focusout', this.onFocusOut);
+			this.active = true;
 
 			this.input.focus();
 			if (!BX.Dom.hasClass(this.input, 'landing-editable-field-input-js-init'))
@@ -150,18 +179,55 @@
 				this.input.selectionStart = this.input.value.length;
 				BX.Dom.addClass(this.input, 'landing-editable-field-input-js-init');
 			}
-
-			BX.bind(this.input, 'focusout', this.hideInput);
 		},
-		hideInput()
+		hideInput(applyValue)
 		{
-			this.label.textContent = this.input.value;
+			if (!this.active)
+			{
+				return;
+			}
 
-			BX.Dom.style(this.label, 'display', null);
+			this.active = false;
+			// unbind before returning focus, otherwise the focusout of the input would leave the mode twice
+			BX.unbind(this.input, 'keydown', this.onKeyDown);
+			BX.unbind(this.input, 'focusout', this.onFocusOut);
+
+			if (applyValue)
+			{
+				this.label.textContent = this.input.value;
+			}
+			else
+			{
+				this.input.value = this.originalValue;
+			}
+
 			BX.Dom.style(this.input, 'display', null);
+			BX.Dom.style(this.label, 'display', null);
 			BX.Dom.removeClass(this.controlButtonContainer, '--hidden');
 
-			BX.unbind(document, 'focusout', this.hideInput);
+			if (this.btn)
+			{
+				this.btn.focus();
+			}
+		},
+		onKeyDown(event)
+		{
+			if (event.key === 'Escape')
+			{
+				this.hideInput(false);
+				event.stopPropagation();
+			}
+			// a multiline field keeps Enter for the line break, it leaves the mode by Escape or focus loss
+			else if (event.key === 'Enter' && this.input.tagName !== 'TEXTAREA')
+			{
+				this.hideInput(true);
+				event.stopPropagation();
+				event.preventDefault();
+			}
+		},
+		onFocusOut()
+		{
+			this.hideInput(true);
 		},
 		copilotSaveHandler(event)
 		{
@@ -245,10 +311,10 @@
 			{
 				this.context = ' ';
 			}
-			const copilotButton = BX.Tag.render`
-				<div class="ui-title-input-btn">
-					<div class="ui-icon-set --copilot-ai"></div>
-				</div>
+			const copilotIcon = BX.Tag.render`
+				<span class="ui-title-input-btn --icon-gradient" aria-hidden="true">
+					<span class="ui-icon-set --bitrix-gpt"></span>
+				</span>
 			`;
 			const Copilot = (top.BX.AI && top.BX.AI.Copilot) ? top.BX.AI.Copilot : BX.AI.Copilot;
 			this.copilot = new Copilot({
@@ -262,7 +328,7 @@
 			BX.Event.bind(document, 'click', this.onClickHandler.bind(this));
 			this.copilot.init();
 
-			BX.bind(copilotButton, 'click', () => {
+			BX.bind(this.aiCopilotContainer, 'click', () => {
 				if (this.isAiActive)
 				{
 					if (this.finishInit)
@@ -286,7 +352,7 @@
 				}
 			});
 
-			BX.Dom.append(copilotButton, this.aiCopilotContainer);
+			BX.Dom.append(copilotIcon, this.aiCopilotContainer);
 		},
 		copilotFinishInitHandler()
 		{
@@ -357,9 +423,11 @@
 
 	/**
 	 * Favicon change.
+	 * @param object params
 	 */
-	BX.Landing.Favicon = function()
+	BX.Landing.Favicon = function(params)
 	{
+		const messages = (params && params.messages) || {};
 		const editLink = BX('landing-form-favicon-change');
 		const editInput = BX('landing-form-favicon-input');
 		const editValue = BX('landing-form-favicon-value');
@@ -371,6 +439,21 @@
 		{
 			return;
 		}
+
+		// The node is the description of the button and a live region at once: a colour is neither
+		// announced nor a way to tell what went wrong, so the failure has to reach it as text.
+		const formatHint = editError ? editError.textContent : '';
+		let failed = false;
+		const declareFailure = (next) => {
+			if (!editError || next === failed)
+			{
+				return;
+			}
+
+			failed = next;
+			editError.textContent = next ? (messages.error || formatHint) : formatHint;
+			editError.style.color = next ? 'red' : '';
+		};
 
 		// open file dialog
 		BX.bind(editLink, 'click', (e) => {
@@ -391,10 +474,11 @@
 					{
 						editValue.value = data.result.id;
 						editSrc.setAttribute('src', data.result.src);
+						declareFailure(false);
 					}
 					else
 					{
-						editError.style.color = 'red';
+						declareFailure(true);
 					}
 				},
 			});
@@ -455,7 +539,7 @@
 		this.table = params.table;
 		const name = 'RIGHTS';
 		const form = params.form;
-		const select = params.select;
+		const rowTemplate = params.rowTemplate;
 		let inc = params.inc;
 
 		BX.Access.Init({
@@ -483,16 +567,16 @@
 									row.classList.add('landing-form-rights');
 
 									BX.Landing.Access.selected[id] = true;
-									row.insertCell(-1);
-									row.insertCell(-1);
-									row.cells[0].innerHTML = `${BX.Access.GetProviderName(provider)} ${
-										BX.util.htmlspecialchars(obSelected[provider][id].name)}:`
-										+ `<input type="hidden" name="fields[${name}][ACCESS_CODE][${inc}]" value="${id}">`;
-									row.cells[0].classList.add('landing-form-rights-right');
-									row.cells[1].classList.add('landing-form-rights-left');
-									row.cells[1].innerHTML =										`${select.replace('#inc#', inc)
-										 } <a href="javascript:void(0);" onclick="BX.Landing.Access.onRowDelete(this);"`
-										+ ` data-id="${id}" class="landing-form-rights-delete"></a>`;
+									// the provider is separated the same way the server rows separate it
+									const providerName = BX.Access.GetProviderName(provider);
+									const roleName = BX.util.htmlspecialchars(
+										(providerName ? `${providerName}: ` : '') + obSelected[provider][id].name,
+									);
+									// The markup comes from the template, next to the server rendered rows.
+									row.innerHTML = rowTemplate
+										.replace(/#inc#/g, inc)
+										.replace(/#code#/g, () => BX.util.htmlspecialchars(id))
+										.replace(/#role#/g, () => roleName);
 									inc++;
 								}
 							}
@@ -522,6 +606,7 @@
 		this.params.messages = this.params.messages || {};
 		this.container = this.params.container;
 		this.areaFields = [];
+		this.builtAreasCount = null;
 		this.valueField = this.params.valueField;
 
 		this.values = [];
@@ -535,8 +620,12 @@
 		}
 
 		const layouts = [].slice.call(this.container.querySelectorAll('.landing-form-layout-item'));
-		layouts.forEach((item) => {
-			item.addEventListener('click', this.onLayoutClick.bind(this));
+		// the switcher, not the tile: arrow keys of a radio group change the choice without any click
+		const switchers = [].slice.call(this.container.querySelectorAll('.layout-switcher'));
+		switchers.forEach((switcher) => {
+			switcher.addEventListener('change', this.onLayoutChange.bind(this));
+			switcher.addEventListener('focus', this.onLayoutFocus.bind(this));
+			switcher.addEventListener('blur', this.onLayoutBlur.bind(this));
 		});
 		this.createBlocks(layouts[0].dataset.block);
 
@@ -566,6 +655,8 @@
 			});
 		}
 	};
+
+	BX.Landing.Layout.CLASS_ITEM_FOCUS = '--focus';
 
 	BX.Landing.Layout.prototype = {
 		/**
@@ -606,6 +697,15 @@
 		createBlocks(count)
 		{
 			count = parseInt(count);
+			// Most layouts of the gallery ask for the same number of areas, and a step of the arrow
+			// key walks through several of them: the fields hold their values themselves, so building
+			// the same set again would only throw them away and build them back.
+			if (count === this.builtAreasCount)
+			{
+				return;
+			}
+
+			this.builtAreasCount = count;
 			this.areaFields = [];
 			const layoutBlockContainer = this.container.querySelector('.landing-form-layout-block-container');
 			layoutBlockContainer.innerHTML = '';
@@ -672,9 +772,13 @@
 			this.valueField.value = values.join(',');
 		},
 
-		onLayoutClick(event)
+		onLayoutChange(event)
 		{
-			const layoutItem = event.target.parentNode;
+			const layoutItem = this.getLayoutItem(event.target);
+			if (!layoutItem)
+			{
+				return;
+			}
 
 			const layoutItemSelected = this.container.querySelector('.landing-form-layout-item-selected');
 			if (layoutItemSelected)
@@ -683,6 +787,72 @@
 			}
 
 			this.changeLayout(layoutItem.dataset.block, layoutItem.dataset.layout);
+		},
+
+		/**
+		 * The switcher is out of sight, so the focus is drawn on the item it is bound to, and the
+		 * gallery shows five items of seven behind its own clipping: the item is slid into sight as
+		 * well, or the choice is made behind the edge.
+		 */
+		onLayoutFocus(event)
+		{
+			const layoutItem = this.getLayoutItem(event.target);
+			if (!layoutItem)
+			{
+				return;
+			}
+
+			if (isKeyboardFocus(event.target))
+			{
+				BX.Dom.addClass(layoutItem, BX.Landing.Layout.CLASS_ITEM_FOCUS);
+			}
+
+			this.showLayoutItem(layoutItem);
+		},
+
+		onLayoutBlur(event)
+		{
+			const layoutItem = this.getLayoutItem(event.target);
+			if (layoutItem)
+			{
+				BX.Dom.removeClass(layoutItem, BX.Landing.Layout.CLASS_ITEM_FOCUS);
+			}
+		},
+
+		/**
+		 * @param {HTMLInputElement} switcher
+		 * @return {HTMLElement|null}
+		 */
+		getLayoutItem(switcher)
+		{
+			return switcher.labels ? switcher.labels[0] : null;
+		},
+
+		/**
+		 * The strip is moved by its own buttons and clips the rest, so a tile reached by the keyboard
+		 * stays out of sight until the strip follows the focus.
+		 * @param {HTMLElement} layoutItem
+		 */
+		showLayoutItem(layoutItem)
+		{
+			const strip = this.container.querySelector('.landing-form-list-inner');
+			const viewport = this.container.querySelector('.landing-form-list-container');
+			if (!strip || !viewport)
+			{
+				return;
+			}
+
+			const itemPosition = layoutItem.getBoundingClientRect();
+			const viewportPosition = viewport.getBoundingClientRect();
+
+			if (itemPosition.right > viewportPosition.right)
+			{
+				strip.classList.add('--prev');
+			}
+			else if (itemPosition.left < viewportPosition.left)
+			{
+				strip.classList.remove('--prev');
+			}
 		},
 
 		changeLayout(block, layout)
@@ -729,6 +899,7 @@
 		);
 
 		this.toggleContainer = this.form.querySelector(BX.Landing.ToggleAdditionalFields.SELECTOR_CONTAINER);
+		this.toggleButton = this.form.querySelector(BX.Landing.ToggleAdditionalFields.SELECTOR_TOGGLE);
 		BX.Event.bind(this.toggleContainer, 'click', this.onToggleClick.bind(this));
 
 		if (window.location.hash)
@@ -755,6 +926,9 @@
 
 	BX.Landing.ToggleAdditionalFields.SELECTOR_ROWS = '.landing-form-additional-row';
 	BX.Landing.ToggleAdditionalFields.SELECTOR_CONTAINER = '.landing-form-additional-fields-js';
+	// the toggle of both settings forms declares its state in the markup, and this script keeps that
+	// state in step: a toggle without the attribute is not one it drives
+	BX.Landing.ToggleAdditionalFields.SELECTOR_TOGGLE = '.landing-form-collapse-label[aria-expanded]';
 	BX.Landing.ToggleAdditionalFields.DATA_OPTION = 'landingAdditionalOption';
 	BX.Landing.ToggleAdditionalFields.DATA_ROW_OPTION = 'landingAdditionalDetail';
 	BX.Landing.ToggleAdditionalFields.DATA_ROW_OPTION_NAME = 'data-landing-additional-detail';
@@ -792,6 +966,7 @@
 
 			BX.Dom.removeClass(this.form, 'landing-form-additional-open');
 			this.isOpen = false;
+			this.setToggleExpanded(false);
 
 			return Promise.all(promises);
 		},
@@ -809,8 +984,14 @@
 
 			BX.Dom.addClass(this.form, 'landing-form-additional-open');
 			this.isOpen = true;
+			this.setToggleExpanded(true);
 
 			return Promise.all(promises);
+		},
+
+		setToggleExpanded(expanded)
+		{
+			BX.Dom.attr(this.toggleButton, 'aria-expanded', expanded ? 'true' : 'false');
 		},
 
 		onHeaderClick(event) {
@@ -838,6 +1019,9 @@
 		{
 			BX.Dom.addClass(node, BX.Landing.ToggleAdditionalFields.CLASS_HIGHLIGHT);
 
+			// the row scrolls smoothly on its own, the browser must not jump to it on focus
+			node.focus({ preventScroll: true });
+
 			window.scrollTo({
 				top: BX.pos(node).top,
 				behavior: 'smooth',
@@ -846,6 +1030,135 @@
 			setTimeout(() => {
 				BX.Dom.removeClass(node, BX.Landing.ToggleAdditionalFields.CLASS_HIGHLIGHT);
 			}, 2500);
+		},
+	};
+
+	/**
+	 * Keyboard and declared state for the checkbox blocks of BX.UI.LayoutForm.
+	 *
+	 * LayoutForm cancels the native activation of the checkbox and reimplements it on the click of
+	 * the whole row, which only a mouse produces: pressed from the keyboard, the native toggle and
+	 * the reimplemented one cancel each other out and the block never opens. The key is turned into
+	 * the click the row expects instead.
+	 *
+	 * Enter is taken over as well, unlike on a plain checkbox: the row acts as a disclosure, and the
+	 * implicit submission it would trigger instead saves the whole form.
+	 *
+	 * The checkbox is also the only handle of the block it opens, so it names that block and
+	 * declares whether the block is open. The state is set here and not in the markup because
+	 * LayoutForm owns the toggle and the blocks are printed by three different places of the two
+	 * settings forms.
+	 * @param HTMLElement container
+	 */
+	BX.Landing.FormRowToggleKeyboard = function(container)
+	{
+		this.container = container;
+		BX.Event.bind(this.container, 'keydown', this.onKeyDown.bind(this));
+		// the row toggles the block in a handler of its own, and a click reaches the container only
+		// after that handler is through
+		BX.Event.bind(this.container, 'click', this.onFormEvent.bind(this));
+		// a row is also marked without a click: a page chosen in the 404 or 503 list checks the
+		// checkbox itself, and LayoutForm reports its own toggle by a custom event
+		BX.Event.bind(this.container, 'change', this.onFormEvent.bind(this));
+		BX.addCustomEvent('BX.UI.LayoutForm:onToggle', this.onLayoutToggle.bind(this));
+		this.declareBlocks();
+	};
+
+	BX.Landing.FormRowToggleKeyboard.SELECTOR_ROW = '[data-form-row-hidden]';
+	BX.Landing.FormRowToggleKeyboard.SELECTOR_CHECKBOX = '.ui-ctl-element[type="checkbox"]';
+
+	BX.Landing.FormRowToggleKeyboard.prototype = {
+		onKeyDown(event)
+		{
+			if (event.key !== ' ' && event.key !== 'Enter')
+			{
+				return;
+			}
+
+			const checkbox = event.target;
+			if (!checkbox.matches || !checkbox.matches(BX.Landing.FormRowToggleKeyboard.SELECTOR_CHECKBOX))
+			{
+				return;
+			}
+
+			const row = this.rowOf(checkbox);
+			if (!row)
+			{
+				return;
+			}
+
+			event.preventDefault();
+			row.click();
+		},
+
+		onFormEvent(event)
+		{
+			this.declareStateOf(event.target);
+		},
+
+		onLayoutToggle(event)
+		{
+			this.declareStateOf(event.getData().checkbox);
+		},
+
+		declareStateOf(node)
+		{
+			const row = this.rowOf(node) || this.rowOwningBlockOf(node);
+			if (row)
+			{
+				this.declareState(row);
+			}
+		},
+
+		rowOf(node)
+		{
+			const row = node && node.closest
+				? node.closest(BX.Landing.FormRowToggleKeyboard.SELECTOR_ROW)
+				: null;
+
+			return row && this.container.contains(row) ? row : null;
+		},
+
+		// a field of the block reports the row that opens it: the 404 and 503 lists mark the checkbox
+		// of their row on a change of their own, and no event of the row itself follows
+		rowOwningBlockOf(node)
+		{
+			const block = node && node.closest
+				? node.closest(`${BX.Landing.FormRowToggleKeyboard.SELECTOR_ROW} + *`)
+				: null;
+
+			return block ? this.rowOf(block.previousElementSibling) : null;
+		},
+
+		declareBlocks()
+		{
+			const rows = this.container.querySelectorAll(BX.Landing.FormRowToggleKeyboard.SELECTOR_ROW);
+			[].slice.call(rows).forEach((row) => {
+				const checkbox = row.querySelector(BX.Landing.FormRowToggleKeyboard.SELECTOR_CHECKBOX);
+				// the block of a row is its next sibling: the pairing LayoutForm itself toggles by
+				const block = row.nextElementSibling;
+				if (!checkbox || !block)
+				{
+					return;
+				}
+
+				if (block.id === '')
+				{
+					block.id = `${checkbox.id || BX.util.getRandomString(8)}-block`;
+				}
+
+				BX.Dom.attr(checkbox, 'aria-controls', block.id);
+				this.declareState(row);
+			});
+		},
+
+		declareState(row)
+		{
+			const checkbox = row.querySelector(BX.Landing.FormRowToggleKeyboard.SELECTOR_CHECKBOX);
+			if (checkbox && checkbox.hasAttribute('aria-controls'))
+			{
+				BX.Dom.attr(checkbox, 'aria-expanded', checkbox.checked ? 'true' : 'false');
+			}
 		},
 	};
 
@@ -906,6 +1219,7 @@
 		this.simplePreview = document.querySelector('.landing-form-cookies-settings-type-simple');
 		this.advancedPreview = document.querySelector('.landing-form-cookies-settings-type-advanced');
 		this.positions = document.querySelectorAll('.landing-form-cookies-position-item');
+		this.positionSwitchers = document.querySelectorAll('.landing-form-cookies-position-input');
 		this.inputApp = document.querySelector('#radio-cookies-mode-A');
 		this.inputInfo = document.querySelector('#radio-cookies-mode-I');
 		this.settings = document.querySelector('.landing-form-cookies-settings-wrapper');
@@ -931,11 +1245,17 @@
 		this.bindEvents();
 	};
 
+	BX.Landing.Cookies.CLASS_ITEM_FOCUS = '--focus';
+
 	BX.Landing.Cookies.prototype = {
 
 		bindEvents() {
-			this.positions.forEach((position) => {
-				position.addEventListener('click', this.onSelectCookiesPosition.bind(this));
+			// A click on the corner and an arrow key inside the radiogroup both check the switcher, so
+			// the change event of the switcher covers the mouse and the keyboard alike.
+			this.positionSwitchers.forEach((switcher) => {
+				switcher.addEventListener('change', this.onSelectCookiesPosition.bind(this));
+				switcher.addEventListener('focus', this.onPositionFocus.bind(this));
+				switcher.addEventListener('blur', this.onPositionBlur.bind(this));
 			});
 
 			this.bgPickerBtn.addEventListener('click', this.showBgPicker.bind(this));
@@ -955,13 +1275,43 @@
 		},
 
 		onSelectCookiesPosition(event) {
+			const item = this.getPositionItem(event.target);
+			if (!item)
+			{
+				return;
+			}
+
 			this.positions.forEach((position) => {
 				if (position.classList.contains('landing-form-cookies-position-item-selected'))
 				{
 					position.classList.remove('landing-form-cookies-position-item-selected');
 				}
 			});
-			event.currentTarget.classList.add('landing-form-cookies-position-item-selected');
+			item.classList.add('landing-form-cookies-position-item-selected');
+		},
+
+		/**
+		 * The switcher is out of sight, so the focus is drawn on the corner it is bound to. The pair
+		 * is resolved here: CSS cannot pair a switcher with its own label by itself.
+		 */
+		onPositionFocus(event) {
+			const item = this.getPositionItem(event.target);
+			if (item && isKeyboardFocus(event.target))
+			{
+				BX.Dom.addClass(item, BX.Landing.Cookies.CLASS_ITEM_FOCUS);
+			}
+		},
+
+		onPositionBlur(event) {
+			const item = this.getPositionItem(event.target);
+			if (item)
+			{
+				BX.Dom.removeClass(item, BX.Landing.Cookies.CLASS_ITEM_FOCUS);
+			}
+		},
+
+		getPositionItem(switcher) {
+			return [].slice.call(this.positions).find((item) => item.getAttribute('for') === switcher.id) ?? null;
 		},
 
 		showBgPicker() {

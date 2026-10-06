@@ -11,10 +11,20 @@ import {
 } from '../../../shared/types';
 
 import { SchemeItemType, SchemeViewGroupConfig, SchemeViewGroupKey } from '../ui/node-data-inspector/const';
-import { DataTypeLabelMap, type InspectorViewItemBase, type InspectorViewItemData } from '../../../entities/node-data-inspector';
+import {
+	DataTypeLabelMap,
+	type InspectorViewItemBase,
+	type InspectorViewItemData,
+	type InspectorViewItemType,
+} from '../../../entities/node-data-inspector';
+import { type LastRunValue } from '../../../shared/stores/node-data-inspector-store';
+
+import { formatLastValue } from './format-last-value';
+
+type LastValuesMap = { [expression: string]: LastRunValue };
 
 type NodeItem = {
-	type: $Values<typeof SchemeItemType>,
+	type: InspectorViewItemType,
 	text: string,
 	icon: string,
 	items: Array<InspectorViewItemData>,
@@ -40,23 +50,28 @@ const GroupPortLabels = {
 export function mapTemplateGroupsToView(items: {
 	templateItems: Array<TemplateDataTemplateGroup>,
 	incomingItems: Array<TemplateDataNodeGroup>,
+	filterItems: Array<TemplateDataNodeGroup>,
 	outgoingItems: Array<TemplateDataNodeGroup>
-}, ports: Array<Port>): Array
+}, ports: Array<Port>, lastValues: ?LastValuesMap = null): Array
 {
 	const templateSections = (Array.isArray(items?.templateItems) ? items.templateItems : [])
-		.map((group) => createTemplateSection(group))
+		.map((group) => createTemplateSection(group, lastValues))
 		.filter(Boolean)
 	;
 	const incomingNodes = (Array.isArray(items?.incomingItems) ? items.incomingItems : [])
-		.map((group) => createNodeItem(group))
+		.map((group) => createNodeItem(group, lastValues))
 		.filter(Boolean)
 	;
 	const areUntitledPorts = ports.every((port) => !port.title);
 	const groupedIncomingNodes = areUntitledPorts
 		? incomingNodes
 		: groupNodesByPort(incomingNodes, ports, GroupPortLabels.INCOMING);
+	const filterNodes = (Array.isArray(items?.filterItems) ? items.filterItems : [])
+		.map((group) => createNodeItem(group, lastValues))
+		.filter(Boolean)
+	;
 	const outgoingNodes = (Array.isArray(items?.outgoingItems) ? items.outgoingItems : [])
-		.map((group) => createNodeItem(group))
+		.map((group) => createNodeItem(group, lastValues))
 		.filter(Boolean)
 	;
 	const groupedOutgoingNodes = areUntitledPorts
@@ -69,6 +84,7 @@ export function mapTemplateGroupsToView(items: {
 			[...groupedIncomingNodes.values()],
 			SchemeViewGroupKey.INBOUND,
 		),
+		createGroup(SchemeViewGroupConfig[SchemeViewGroupKey.FILTER], filterNodes, SchemeViewGroupKey.FILTER),
 		createGroup(
 			SchemeViewGroupConfig[SchemeViewGroupKey.OUTBOUND],
 			[...groupedOutgoingNodes.values()],
@@ -107,10 +123,10 @@ function groupNodesByPort(nodes: Array<NodeItem>, ports: Array<Port>, label: str
 	return groupedNodes;
 }
 
-function createTemplateSection(group: TemplateDataTemplateGroup): ?Object
+function createTemplateSection(group: TemplateDataTemplateGroup, lastValues: ?LastValuesMap): ?Object
 {
 	const title = getTemplateGroupTitle(group?.type);
-	const items = mapTemplateItems(group?.items ?? []);
+	const items = mapTemplateItems(group?.items ?? [], lastValues);
 
 	return createSection(title, items, group?.type);
 }
@@ -130,10 +146,10 @@ function getTemplateGroupTitle(type: ?string): string
 	return '';
 }
 
-function createNodeItem(nodeGroup: TemplateDataNodeGroup): NodeItem | null
+function createNodeItem(nodeGroup: TemplateDataNodeGroup, lastValues: ?LastValuesMap): NodeItem | null
 {
 	const nodeTitle = nodeGroup?.name ?? '';
-	const dataItems = mapTemplateItems(nodeGroup?.items ?? []);
+	const dataItems = mapTemplateItems(nodeGroup?.items ?? [], lastValues);
 
 	if (!nodeTitle || dataItems.length === 0)
 	{
@@ -190,7 +206,10 @@ function createSection(
 	};
 }
 
-function mapTemplateItems(items: TemplateDataGeneralGroup | Array<TemplateDataItem>): Array<InspectorViewItemData>
+function mapTemplateItems(
+	items: TemplateDataGeneralGroup | Array<TemplateDataItem>,
+	lastValues: ?LastValuesMap,
+): Array<InspectorViewItemData>
 {
 	return (Array.isArray(items) ? items : [])
 		.map((item) => {
@@ -199,17 +218,17 @@ function mapTemplateItems(items: TemplateDataGeneralGroup | Array<TemplateDataIt
 				return {
 					...item,
 					text: item.name,
-					items: item.items.map((i) => createDataItem(i)),
+					items: mapTemplateItems(item.items, lastValues),
 				};
 			}
 
-			return createDataItem(item);
+			return createDataItem(item, lastValues);
 		})
 		.filter(Boolean)
 	;
 }
 
-function createDataItem(item: TemplateDataItem): ?InspectorViewItemData
+function createDataItem(item: TemplateDataItem, lastValues: ?LastValuesMap): ?InspectorViewItemData
 {
 	const title = item?.name ?? '';
 
@@ -218,10 +237,16 @@ function createDataItem(item: TemplateDataItem): ?InspectorViewItemData
 		return null;
 	}
 
+	const expression = item?.computeValue ?? '';
+	const lastValue = formatLastValue(lastValues?.[expression]);
+
 	return {
 		type: SchemeItemType.DATA,
 		text: title,
 		dataType: DataTypeLabelMap[item?.type] ?? item?.type ?? '',
-		value: item?.computeValue ?? '',
+		value: expression,
+		exampleValue: lastValue.text,
+		exampleValueItems: lastValue.items,
+		exampleValueMoreCount: lastValue.moreCount,
 	};
 }

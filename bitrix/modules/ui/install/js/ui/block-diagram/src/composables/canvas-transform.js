@@ -1,7 +1,8 @@
 import { ref, toValue, markRaw } from 'ui.vue3';
 import { Dom, Browser } from 'main.core';
+
 import { useBlockDiagram } from './block-diagram';
-import { Canvas, Grid } from '../utils';
+import { Canvas, Grid, GRID_DEFAULT_SIZE, GRID_DEFAULT_ZOOM_STEPS } from '../utils';
 
 export type UseCanvasTransform = {
 	isDragging: boolean,
@@ -16,45 +17,19 @@ export type UseCanvasTransformOptions = {
 	canvasStyle: newCanvasStyle,
 };
 
+export type CanvasStyleZoomStep = {
+	zoom: number,
+	size?: number,
+	gridColor?: string,
+};
+
 const CANVAS_STYLE_DEFAULT_OPTIONS: {...} = {
 	grid: {
 		options: {
-			size: 64,
+			size: GRID_DEFAULT_SIZE,
 			gridColor: '#A1B8D9',
 			backgroundColor: '#ECF0F2',
-			zoomStep: 4,
-			zoomSteps: [
-				{
-					zoom: 1.1,
-					size: 64,
-					zoomStep: 4,
-				},
-				{
-					zoom: 1,
-					size: 64,
-					zoomStep: 4,
-				},
-				{
-					zoom: 0.99,
-					size: 64,
-					zoomStep: 4,
-				},
-				{
-					zoom: 0.5,
-					size: 64 * 5,
-					zoomStep: 0.5,
-				},
-				{
-					zoom: 0.25,
-					size: 64 * 25,
-					zoomStep: 0.25,
-				},
-				{
-					zoom: 0.125,
-					size: 64 * 125,
-					zoomStep: 0.125,
-				},
-			],
+			zoomSteps: GRID_DEFAULT_ZOOM_STEPS,
 		},
 		instance: Grid,
 	},
@@ -84,7 +59,6 @@ export function useCanvasTransfrom(options: UseCanvasTransformOptions): UseCanva
 		canvasHeight,
 		canvasInstance,
 		blockIntersections,
-		waitForTransformEnd,
 	} = useBlockDiagram();
 
 	const dragOn = ref(false);
@@ -92,7 +66,6 @@ export function useCanvasTransfrom(options: UseCanvasTransformOptions): UseCanva
 	const zooming = ref(false);
 
 	let requestAnimationId = null;
-	let transformEndTimer = null;
 
 	function getCanvasStyleOptions(canvasStyle: CanvasStyle): CanvasStyle | null
 	{
@@ -129,28 +102,10 @@ export function useCanvasTransfrom(options: UseCanvasTransformOptions): UseCanva
 			canvasWidth.value = payload.width;
 			canvasHeight.value = payload.height;
 			blockIntersections.selectVisibleBlocks();
-			waitTransformEnd();
+			blockIntersections.selectVisibleConnections();
 		});
 
 		render();
-	}
-
-	function waitTransformEnd(): void
-	{
-		if (!waitForTransformEnd.value)
-		{
-			waitForTransformEnd.value = Promise.withResolvers();
-		}
-
-		if (transformEndTimer)
-		{
-			clearTimeout(transformEndTimer);
-		}
-
-		transformEndTimer = setTimeout(() => {
-			waitForTransformEnd.value?.resolve();
-			waitForTransformEnd.value = null;
-		}, 150);
 	}
 
 	function onUnmounted(): void

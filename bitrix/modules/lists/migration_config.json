@@ -1,0 +1,10 @@
+{
+    "defaultTableName": "b_lists_permission",
+    "installDirectoriesMapping": {
+        "install/activities": "activities",
+        "install/admin": "admin",
+        "install/components": "components",
+        "install/images": "images/lists",
+        "install/js": "js"
+    }
+}

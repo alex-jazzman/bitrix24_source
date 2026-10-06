@@ -1,0 +1,72 @@
+.ui-progressround.--air {
+	--ui-progressround-air-gradient-1: var(--ui-color-pie-diagram-gradient-primary-1);
+	--ui-progressround-air-gradient-2: var(--ui-color-pie-diagram-gradient-primary-2);
+}
+
+.ui-progressround.--air.ui-progressround-success {
+	--ui-progressround-air-gradient-1: var(--ui-color-pie-diagram-gradient-success-1);
+	--ui-progressround-air-gradient-2: var(--ui-color-pie-diagram-gradient-success-2);
+}
+
+.ui-progressround.--air.ui-progressround-warning {
+	--ui-progressround-air-gradient-1: var(--ui-color-pie-diagram-gradient-warning-1);
+	--ui-progressround-air-gradient-2: var(--ui-color-pie-diagram-gradient-warning-2);
+}
+
+.ui-progressround.--air.ui-progressround-danger {
+	--ui-progressround-air-gradient-1: var(--ui-color-pie-diagram-gradient-alert-1);
+	--ui-progressround-air-gradient-2: var(--ui-color-pie-diagram-gradient-alert-2);
+}
+
+.ui-progressround.--air .ui-progressround-air-stop-1 {
+	stop-color: var(--ui-progressround-air-gradient-1);
+}
+
+.ui-progressround.--air .ui-progressround-air-stop-2 {
+	stop-color: var(--ui-progressround-air-gradient-2);
+}
+
+.ui-progressround.--air .ui-progressround-air-track-stop-1 {
+	stop-color: var(--ui-color-pie-diagram-gradient-grey-1);
+}
+
+.ui-progressround.--air .ui-progressround-air-track-stop-2 {
+	stop-color: var(--ui-color-pie-diagram-gradient-grey-2);
+}
+
+.ui-progressround.--air .ui-progressround-track-bar-progress {
+	stroke: var(--ui-progressround-air-bar-stroke) !important;
+	stroke-linecap: round;
+}
+
+.ui-progressround.--air .ui-progressround-track-bar-bg,
+.ui-progressround.--air.ui-progressround-bg .ui-progressround-track-bar-bg {
+	stroke: var(--ui-progressround-air-track-stroke) !important;
+}
+
+.ui-progressround.--air .ui-progressround-track::before {
+	content: '';
+	position: absolute;
+	inset: var(--ui-progressround-air-bg-inset, 12px);
+	border-radius: 50%;
+	background: transparent;
+	box-shadow:
+		var(--ui-pie-diagram-bg-box-shadow-x)
+		var(--ui-pie-diagram-bg-box-shadow-y)
+		8px
+		var(--ui-color-pie-diagram-bg-box-shadow-color);
+}
+
+.ui-progressround.--air .ui-progressround-status-divider {
+	margin-inline: 0.25em;
+}
+
+.ui-progressround.--air .ui-progressround-status-divider,
+.ui-progressround.--air .ui-progressround-status-symbol {
+	color: var(--ui-color-base-2);
+}
+
+.ui-progressround.--air .ui-progressround-text-before,
+.ui-progressround.--air .ui-progressround-text-after {
+	color: var(--ui-color-base-2);
+}

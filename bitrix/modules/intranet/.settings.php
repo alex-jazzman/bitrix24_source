@@ -139,6 +139,11 @@ return [
 				'className' => \Bitrix\Intranet\Internal\Integration\IBlock\AbsenceRepository::class,
 				'constructorParams' => [],
 			],
+			'intranet.profile.view.resolver' => [
+				'constructor' => static fn() => new \Bitrix\Intranet\Profile\View\ProfileViewResolver(
+					new \Bitrix\Intranet\Profile\View\Rule\SystemUserProfileRule(),
+				),
+			],
 		],
 		'readonly' => true,
 	],
@@ -146,11 +151,13 @@ return [
 		'value' => [
 			'agents' => [
 				\Bitrix\Intranet\Internal\Integration\AiAssistant\Agents\UserInviteAgent::class,
+				\Bitrix\Intranet\Internal\Integration\AiAssistant\Agents\CollabInviteAgent::class
 			],
 			'toolSets' => [
 				\Bitrix\Intranet\Internal\Integration\AiAssistant\ToolSets\UserToolSet::class,
 				\Bitrix\Intranet\Internal\Integration\AiAssistant\ToolSets\DepartmentToolSet::class,
 				\Bitrix\Intranet\Internal\Integration\AiAssistant\ToolSets\InviteLinkToolSet::class,
+				\Bitrix\Intranet\Internal\Integration\AiAssistant\ToolSets\CollabToolSet::class,
 			],
 		],
 		'readonly' => true,

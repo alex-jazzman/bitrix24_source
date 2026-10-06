@@ -1,7 +1,6 @@
 <?php
 
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Main\EventManager;
 use Bitrix\Main\Config\Option;
 
 Loc::loadMessages(__FILE__);
@@ -109,28 +108,21 @@ class booking extends CModule
 	{
 		global $DB, $APPLICATION;
 
-		$connection = \Bitrix\Main\Application::getConnection();
-
 		if (!$DB->Query('SELECT 1 FROM b_booking_scorer WHERE 1=0', true))
 		{
 			$this->cleanCounters();
 		}
 
-		// db
-		$errors = $DB->runSQLBatch(
-			$this->getDocumentRoot().'/bitrix/modules/booking/install/db/' . $connection->getType() . '/install.sql'
-		);
-		if ($errors !== false)
+		$migrationResult = $this->installMigrations();
+		if (!$migrationResult->isSuccess())
 		{
+			$errors = $migrationResult->getErrorMessages();
 			$APPLICATION->throwException(implode('', $errors));
 
 			return false;
 		}
 
-		// module
 		registerModule($this->MODULE_ID);
-		$this->InstallEvents();
-		$this->InstallAgents();
 		$this->installTemplateRules();
 
 		return true;
@@ -202,32 +194,31 @@ class booking extends CModule
 	 */
 	public function UninstallDB(array $arParams = [])
 	{
-		global $APPLICATION, $DB;
-		$connection = \Bitrix\Main\Application::getConnection();
+		global $APPLICATION;
 
-		$errors = false;
+		$dropTables = isset($arParams['savedata']) && !$arParams['savedata'];
 
-		// db
-		if (isset($arParams['savedata']) && !$arParams['savedata'])
+		if ($dropTables)
 		{
 			$this->cleanCounters();
-
-			$errors = $DB->runSQLBatch(
-				$this->getDocumentRoot().'/bitrix/modules/booking/install/db/' . $connection->getType() . '/uninstall.sql'
-			);
-
-			Option::delete($this->MODULE_ID);
 		}
-		if ($errors !== false)
+
+		$migrationResult = $this->uninstallMigrations($dropTables);
+		if (!$migrationResult->isSuccess())
 		{
+			$errors = $migrationResult->getErrorMessages();
 			$APPLICATION->throwException(implode('', $errors));
+
 			return false;
 		}
 
-		$this->UnInstallEvents();
+		if ($dropTables)
+		{
+			Option::delete($this->MODULE_ID);
+		}
+
 		$this->deleteTemplateRules();
 
-		// module
 		unregisterModule($this->MODULE_ID);
 
 		return true;
@@ -238,216 +229,6 @@ class booking extends CModule
 		DeleteDirFilesEx('/bitrix/js/booking/');
 
 		return true;
-	}
-
-	public function InstallEvents(): void
-	{
-		EventManager::getInstance()->registerEventHandler(
-			'crm',
-			'OnAfterCrmContactDelete',
-			'booking',
-			'\Bitrix\Booking\Internals\Integration\Crm\EventsHandler',
-			'onContactDelete'
-		);
-
-		EventManager::getInstance()->registerEventHandler(
-			'crm',
-			'OnAfterCrmCompanyDelete',
-			'booking',
-			'\Bitrix\Booking\Internals\Integration\Crm\EventsHandler',
-			'onCompanyDelete'
-		);
-
-		EventManager::getInstance()->registerEventHandler(
-			'crm',
-			'OnAfterCrmDealDelete',
-			'booking',
-			'\Bitrix\Booking\Internals\Integration\Crm\EventsHandler',
-			'onDealDelete'
-		);
-
-		EventManager::getInstance()->registerEventHandler(
-			'crm',
-			'OnCrmBookingFormSubmitted',
-			'booking',
-			'\Bitrix\Booking\Internals\Integration\Crm\EventsHandler',
-			'onCrmBookingFormFilled'
-		);
-
-		EventManager::getInstance()->registerEventHandler(
-			'crm',
-			'onCrmDynamicItemDelete',
-			'booking',
-			'\Bitrix\Booking\Internals\Integration\Crm\EventsHandler',
-			'onDynamicItemDelete'
-		);
-
-		EventManager::getInstance()->registerEventHandler(
-			'rest',
-			'OnRestServiceBuildDescription',
-			'booking',
-			'\Bitrix\Booking\Rest\V1\Event\RestEventHandler',
-			'onRestServiceBuildDescription',
-		);
-
-		EventManager::getInstance()->registerEventHandlerCompatible(
-			'im',
-			'OnGetNotifySchema',
-			'booking',
-			'\Bitrix\Booking\Internals\Integration\Im\NotifySchema',
-			'onGetNotifySchema',
-		);
-
-		EventManager::getInstance()->registerEventHandlerCompatible(
-			'iblock',
-			'OnBeforeIBlockElementDelete',
-			'booking',
-			'\Bitrix\Booking\Internals\Integration\Catalog\SkuDeleteEventHandler',
-			'onBeforeIBlockElementDelete',
-		);
-
-		EventManager::getInstance()->registerEventHandler(
-			'catalog',
-			'onBeforeConvertProductsType',
-			'booking',
-			'\Bitrix\Booking\Internals\Integration\Catalog\SkuTypeChangeEventHandler',
-			'onBeforeConvertProductsType',
-		);
-
-		EventManager::getInstance()->registerEventHandler(
-			'notifications',
-			'onMessageSuccessfullyUpdated',
-			'booking',
-			'\Bitrix\Booking\Internals\Integration\Notifications\EventHandler',
-			'onMessageStatusUpdate'
-		);
-	}
-
-	public function InstallAgents(): void
-	{
-		\CAgent::AddAgent(
-			name: '\\Bitrix\\Booking\\Internals\\Service\\Notifications\\Agent\\NotificationAgentWatchdog::execute();',
-			module: 'booking',
-			interval: 3600,
-			next_exec: ConvertTimeStamp(time() + \CTimeZone::GetOffset() + 3600, 'FULL'),
-			existError: false,
-		);
-
-		\CAgent::AddAgent(
-			name: '\\Bitrix\\Booking\\Internals\\Service\\Agent\\ClearOldCountersAgent::execute();',
-			module: 'booking',
-			interval: 60 * 60, // 1 hour
-			next_exec: ConvertTimeStamp(time() + \CTimeZone::GetOffset() + 12 * 60 * 60, 'FULL'),
-			existError: false
-		);
-
-		\CAgent::AddAgent(
-			name: '\\Bitrix\\Booking\\Internals\\Service\\InstallAgent::execute();',
-			module: 'booking',
-			interval: 60,
-			next_exec: ConvertTimeStamp(time() + \CTimeZone::GetOffset() + 60, 'FULL'),
-			existError: false
-		);
-
-		\CAgent::AddAgent(
-			name: '\\Bitrix\\Booking\\Internals\\Service\\Agent\\ProcessDelayedTaskAgent::execute();',
-			module: 'booking',
-			interval: 60,
-			next_exec: ConvertTimeStamp(time() + \CTimeZone::GetOffset() + 600, 'FULL'),
-			existError: false
-		);
-
-		\CAgent::AddAgent(
-			name: '\\Bitrix\\Booking\\Internals\\Service\\Agent\\UpYandexMapsCounter::execute();',
-			module: 'booking',
-			interval: 60,
-			next_exec: \ConvertTimeStamp(time() + \CTimeZone::GetOffset() + 600, 'FULL'),
-			existError: false
-		);
-
-	}
-
-	public function UnInstallEvents(): void
-	{
-		EventManager::getInstance()->unRegisterEventHandler(
-			'crm',
-			'OnAfterCrmContactDelete',
-			'booking',
-			'\Bitrix\Booking\Internals\Integration\Crm\EventsHandler',
-			'onContactDelete'
-		);
-
-		EventManager::getInstance()->unRegisterEventHandler(
-			'crm',
-			'OnAfterCrmCompanyDelete',
-			'booking',
-			'\Bitrix\Booking\Internals\Integration\Crm\EventsHandler',
-			'onCompanyDelete'
-		);
-
-		EventManager::getInstance()->unRegisterEventHandler(
-			'crm',
-			'OnAfterCrmDealDelete',
-			'booking',
-			'\Bitrix\Booking\Internals\Integration\Crm\EventsHandler',
-			'onDealDelete'
-		);
-
-		EventManager::getInstance()->unRegisterEventHandler(
-			'crm',
-			'OnCrmBookingFormSubmitted',
-			'booking',
-			'\Bitrix\Booking\Internals\Integration\Crm\EventsHandler',
-			'onCrmBookingFormFilled'
-		);
-
-		EventManager::getInstance()->unRegisterEventHandler(
-			'crm',
-			'onCrmDynamicItemDelete',
-			'booking',
-			'\Bitrix\Booking\Internals\Integration\Crm\EventsHandler',
-			'onDynamicItemDelete'
-		);
-
-		EventManager::getInstance()->unRegisterEventHandler(
-			'rest',
-			'OnRestServiceBuildDescription',
-			'booking',
-			'\Bitrix\Booking\Rest\V1\Event\RestEventHandler',
-			'onRestServiceBuildDescription',
-		);
-
-		EventManager::getInstance()->unRegisterEventHandler(
-			'im',
-			'OnGetNotifySchema',
-			'booking',
-			'\Bitrix\Booking\Internals\Integration\Im\NotifySchema',
-			'onGetNotifySchema',
-		);
-
-		EventManager::getInstance()->unRegisterEventHandler(
-			'iblock',
-			'OnBeforeIBlockElementDelete',
-			'booking',
-			'\Bitrix\Booking\Internals\Integration\Catalog\SkuDeleteEventHandler',
-			'onBeforeIBlockElementDelete',
-		);
-
-		EventManager::getInstance()->unRegisterEventHandler(
-			'catalog',
-			'onBeforeConvertProductsType',
-			'booking',
-			'\Bitrix\Booking\Internals\Integration\Catalog\SkuTypeChangeEventHandler',
-			'onBeforeConvertProductsType',
-		);
-
-		EventManager::getInstance()->unRegisterEventHandler(
-			'notifications',
-			'onMessageSuccessfullyUpdated',
-			'booking',
-			'\Bitrix\Booking\Internals\Integration\Notifications\EventHandler',
-			'onMessageStatusUpdate'
-		);
 	}
 
 	private function cleanCounters(): void

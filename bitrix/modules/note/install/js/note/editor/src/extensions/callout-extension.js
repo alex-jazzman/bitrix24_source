@@ -1,7 +1,8 @@
-import { mergeAttributes, Node } from '@tiptap/core';
+import { Extension, mergeAttributes, Node, wrappingInputRule } from '@tiptap/core';
 import { sharedMarked } from './shared-marked';
 import { splitInlineAssets } from './attachments/enriched-asset-parser';
 import { findCalloutStart, parseCalloutBlock } from './callout-parser';
+import { CALLOUT_INPUT_REGEX, resolveCalloutInputType, matchCalloutEnterType, hasCalloutAncestor } from './callout-input-rule';
 
 const CALLOUT_ICON_CLASS = {
 	info: '--o-info-circle',
@@ -63,9 +64,6 @@ export const Callout = Node.create({
 	addCommands()
 	{
 		return {
-			setCallout: ({ type }) => ({ commands }) => {
-				return commands.wrapIn(this.name, { type });
-			},
 			toggleCallout: ({ type }) => ({ editor, commands }) => {
 				if (editor.isActive(this.name, { type }))
 				{
@@ -83,6 +81,36 @@ export const Callout = Node.create({
 				return commands.lift(this.name);
 			},
 		};
+	},
+
+	// `:::info ` and friends wrap the current block into a callout as you type (see
+	// callout-input-rule.js). The only live-typed note markdown token — mentions/assets can't be.
+	addInputRules()
+	{
+		const rule = wrappingInputRule({
+			find: CALLOUT_INPUT_REGEX,
+			type: this.type,
+			getAttributes: (match) => ({ type: resolveCalloutInputType(match) }),
+			// Never merge into the callout above: wrappingInputRule joins a same-type previous sibling
+			// without comparing attributes, so `:::warning ` typed right after an info callout would be
+			// swallowed by it and keep the info type. Each typed token makes its own callout.
+			joinPredicate: () => false,
+		});
+
+		// Refuse to nest: skip the wrap when the caret already sits inside a callout, so `:::info ` typed
+		// inside a callout stays literal text instead of producing callout-in-callout (which the toolbar
+		// can't create). Wrapping the handler keeps wrappingInputRule's wrap logic intact.
+		const wrap = rule.handler.bind(rule);
+		rule.handler = (props) => {
+			if (hasCalloutAncestor(props.state.selection.$from))
+			{
+				return null;
+			}
+
+			return wrap(props);
+		};
+
+		return [rule];
 	},
 
 	markdownTokenizer: {
@@ -137,5 +165,54 @@ export const Callout = Node.create({
 		const inner = helpers.renderChildren(node, '\n\n');
 
 		return `:::${calloutType}\n${inner}\n:::`;
+	},
+});
+
+// Enter counterpart to the `:::info ` input rule. Input rules only fire on text input, never on
+// Enter, so a `:::info` line finished with Enter wouldn't convert without this. A standalone
+// high-priority Extension (not the Node) keeps the schema's node order untouched — same reasoning
+// as HeadingCollapseEnter. Returns false unless the caret sits in an empty-selection paragraph whose
+// entire text is a bare `:::type`, so any other Enter falls through to the default split.
+export const CalloutInputEnter = Extension.create({
+	name: 'calloutInputEnter',
+	priority: 1000,
+	addKeyboardShortcuts()
+	{
+		return {
+			Enter: ({ editor }) => {
+				const { selection } = editor.state;
+				if (!selection.empty)
+				{
+					return false;
+				}
+
+				const { $from } = selection;
+				if ($from.parent.type.name !== 'paragraph')
+				{
+					return false;
+				}
+
+				// Refuse to nest: a `:::type` line finished with Enter inside a callout must not wrap a
+				// second callout — let the default Enter split the paragraph instead.
+				if (hasCalloutAncestor($from))
+				{
+					return false;
+				}
+
+				const type = matchCalloutEnterType($from.parent.textContent);
+				if (!type)
+				{
+					return false;
+				}
+
+				// Clear the `:::type` text, then wrap the now-empty paragraph into a callout — the
+				// caret lands inside it, ready for the body.
+				return editor
+					.chain()
+					.deleteRange({ from: $from.start(), to: $from.end() })
+					.wrapIn('callout', { type })
+					.run();
+			},
+		};
 	},
 });

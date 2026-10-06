@@ -161,6 +161,8 @@ jn.define('im/messenger/controller/recent/service/vuex/nested-list', (require, e
 				return;
 			}
 
+			this.logger.log('#upsertParentChatFakeItem: upsert');
+
 			render.upsertItems([item]);
 		}
 
@@ -277,6 +279,8 @@ jn.define('im/messenger/controller/recent/service/vuex/nested-list', (require, e
 		recentAddHandler = ({ payload }) => {
 			this.logger.log('recentAddHandler', payload);
 
+			this.#refreshParentFakeIfPayloadContainsParentChat(payload);
+
 			const recentItems = this.#validateAndGetRecentItems(payload);
 			if (!recentItems)
 			{
@@ -293,6 +297,8 @@ jn.define('im/messenger/controller/recent/service/vuex/nested-list', (require, e
 		recentUpdateHandler = ({ payload }) => {
 			this.logger.log('recentUpdateHandler', payload);
 
+			this.#refreshParentFakeIfPayloadContainsParentChat(payload);
+
 			const recentItems = this.#validateAndGetRecentItems(payload);
 			if (!recentItems)
 			{
@@ -302,6 +308,56 @@ jn.define('im/messenger/controller/recent/service/vuex/nested-list', (require, e
 			this.#updateItems(recentItems);
 			this.#refreshParentFakeIfPinnedToggled();
 		};
+
+		/**
+		 * recentModel/set of the parent expands into add/update, but #filterByNestedCollection drops it
+		 * (the parent is intentionally outside nestedIdCollection) — so refresh the fixed row here.
+		 *
+		 * @param {MutationPayload<RecentAddData|RecentUpdateData>} payload
+		 */
+		#refreshParentFakeIfPayloadContainsParentChat(payload)
+		{
+			if (this.#isFirstPageByTabAction(payload))
+			{
+				return;
+			}
+
+			if (!this.#payloadContainsParentChat(payload))
+			{
+				return;
+			}
+
+			this.logger.log('#refreshParentFakeIfPayloadContainsParentChat: parent chat record in payload, upsert fake item');
+			this.#upsertParentChatFakeItem();
+		}
+
+		/**
+		 * @param {MutationPayload<RecentAddData|RecentUpdateData>} payload
+		 * @return {boolean}
+		 */
+		#payloadContainsParentChat(payload)
+		{
+			if (this.recentLocator.get('id') !== NavigationTabId.collabDefault)
+			{
+				return false;
+			}
+
+			const recentItemList = payload?.data?.recentItemList;
+			if (!Type.isArrayFilled(recentItemList))
+			{
+				return false;
+			}
+
+			const parentChatId = this.recentLocator.get('parentChatId');
+			if (!parentChatId)
+			{
+				return false;
+			}
+
+			const parentRecentId = `chat${parentChatId}`;
+
+			return recentItemList.some((item) => String(item.fields?.id) === parentRecentId);
+		}
 
 		/**
 		 * @param {MutationPayload<RecentStoreNestedIdCollectionData>} payload
@@ -672,7 +728,7 @@ jn.define('im/messenger/controller/recent/service/vuex/nested-list', (require, e
 				return;
 			}
 
-			const { counterList } = payload.data;
+			const { counterList, previousParentChatIdList = [] } = payload.data;
 			if (!Type.isArrayFilled(counterList))
 			{
 				return;
@@ -691,7 +747,10 @@ jn.define('im/messenger/controller/recent/service/vuex/nested-list', (require, e
 				this.#updateItems(items);
 			}
 
-			const parentAffected = counterList.some((c) => c.chatId === parentChatId && !c.parentChatId);
+			// previousParentChatIdList covers a child detached from this project: its parent
+			// fake item badge must be recomputed even though the child now points elsewhere.
+			const parentAffected = previousParentChatIdList.includes(parentChatId)
+				|| counterList.some((c) => c.chatId === parentChatId && !c.parentChatId);
 			if (parentAffected)
 			{
 				this.logger.log('#counterSetHandler: parent chat counter changed, upsert fake item');

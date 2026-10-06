@@ -1,12 +1,11 @@
-import { Core } from 'booking.core';
-import { Grid, Model } from 'booking.const';
+import { Grid } from 'booking.const';
 import { Duration } from 'booking.lib.duration';
 
 import { GridBase } from './grid-base';
 import { gridTokens } from './grid-tokens';
 import { GridTokenKey } from './const';
 
-class GridWeek extends GridBase
+export class GridWeek extends GridBase
 {
 	calculateLeft(dayIndex: number, fromTs: number): number
 	{
@@ -84,23 +83,21 @@ class GridWeek extends GridBase
 
 	get #weekStartTs(): number
 	{
-		return Core.getStore().getters[`${Model.Interface}/selectedFirstDayPeriodTs`] + this.#offset;
+		return this.getParamValue('selectedFirstDayPeriodTs') + this.#offset;
 	}
 
 	get #offset(): number
 	{
-		return Core.getStore().getters[`${Model.Interface}/offset`];
+		return this.getParamValue('offset');
 	}
 
 	get #zoom(): number
 	{
-		return Core.getStore().getters[`${Model.Interface}/zoom`];
+		return this.getParamValue('zoom');
 	}
 
 	get #resourcesIds(): number[]
 	{
-		return Core.getStore().getters[`${Model.Interface}/resourcesIds`];
+		return this.getParamValue('resourcesIds');
 	}
 }
-
-export const gridWeek = new GridWeek();

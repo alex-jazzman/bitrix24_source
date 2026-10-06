@@ -1,0 +1,2 @@
+<?php
+$MESS["MOBILE_MARKET_INSTALL_OPENER_TITLE"] = "Install app";

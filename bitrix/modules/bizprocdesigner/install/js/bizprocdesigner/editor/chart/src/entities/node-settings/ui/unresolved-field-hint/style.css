@@ -1,0 +1,14 @@
+.editor-chart-unresolved-field-hint {
+	display: flex;
+	flex-shrink: 0;
+	align-items: center;
+	padding: 0;
+	border: 0;
+	background: none;
+	cursor: pointer;
+}
+
+.editor-chart-unresolved-field-hint:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: 2px;
+}

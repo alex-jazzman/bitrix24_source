@@ -9,6 +9,7 @@ return [
 		],
 		'readonly' => true
 	],
+	'aiassistant.marta' => require __DIR__ . '/config/marta.php',
 	'ui.entity-selector' => [
 		'value' => [
 			'entities' => [

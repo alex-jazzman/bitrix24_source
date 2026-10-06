@@ -38,6 +38,23 @@
 	padding: var(--im-message-base__padding_body);
 }
 
+/*
+ * The outside quote must not set the column width (its own cap is 460px) — a narrow vertical
+ * image would visually fall apart from a wide quote above it. Zero intrinsic width excludes
+ * the quote from the column sizing, min-width stretches it back to the media width.
+ */
+.bx-im-message-base__content-main > .bx-im-message-quote.bx-im-message-image__quote {
+	width: 0;
+	min-width: 100%;
+}
+
+.bx-im-message-image__container > .bx-im-message-quote {
+	padding-right: var(--im-message-base__padding-right_body);
+	padding-left: var(--im-message-base__padding-left_body);
+	margin-top: 0;
+	margin-bottom: 12px;
+}
+
 /* External reaction list */
 .bx-im-message-image__reaction-list-container {
 	display: flex;

@@ -20,6 +20,7 @@ type CopilotReadonlyResultPopupOptions = {
 	additionalResultMenuItems: CopilotItem[];
 	engine: CopilotTextControllerEngine;
 	analytics: CopilotAnalytics;
+	isBitrixGptV2Available?: boolean;
 }
 
 export const CopilotContextMenuResultPopupEvents = {
@@ -34,11 +35,13 @@ export class CopilotContextMenuResultPopup extends EventEmitter
 	#popup: Popup | null = null;
 	#bindElement: HTMLElement;
 	#resultContainer: HTMLElement;
+	#resultContent: HTMLElement;
 	#resultText: string = '';
 	#resultMenu: CopilotMenu;
 	#additionalResultMenuItems: CopilotMenuItem[] = [];
 	#engine: CopilotTextControllerEngine;
 	#analytics: CopilotAnalytics;
+	#isBitrixGptV2Available: boolean;
 
 	constructor(options: CopilotReadonlyResultPopupOptions)
 	{
@@ -56,6 +59,7 @@ export class CopilotContextMenuResultPopup extends EventEmitter
 
 		this.#analytics = options.analytics;
 		this.#engine = options.engine;
+		this.#isBitrixGptV2Available = options.isBitrixGptV2Available === true;
 	}
 
 	show(): void
@@ -99,6 +103,7 @@ export class CopilotContextMenuResultPopup extends EventEmitter
 		this.#resultMenu?.close();
 		this.#resultMenu = null;
 		this.#resultContainer = null;
+		this.#resultContent = null;
 	}
 
 	setBindElement(bindElement): void
@@ -116,9 +121,9 @@ export class CopilotContextMenuResultPopup extends EventEmitter
 	{
 		this.#resultText = text;
 
-		if (this.#resultContainer)
+		if (this.#resultContent)
 		{
-			this.#resultContainer.innerText = text;
+			this.#resultContent.innerText = text;
 		}
 	}
 
@@ -128,7 +133,7 @@ export class CopilotContextMenuResultPopup extends EventEmitter
 			content: this.#renderPopupContent(),
 			bindElement: this.#bindElement,
 			cacheable: false,
-			className: 'ai__copilot-scope ai__copilot-context-menu__result-popup',
+			className: `ai__copilot-scope${this.#isBitrixGptV2Available ? ' --bitrixgpt-redesign' : ''} ai__copilot-context-menu__result-popup`,
 			width: 530,
 			closeIcon: true,
 			closeIconSize: 'large',
@@ -203,8 +208,11 @@ export class CopilotContextMenuResultPopup extends EventEmitter
 
 	#renderResultContainer(): HTMLElement
 	{
+		this.#resultContent = Tag.render`
+			<div class="ai__copilot-context-menu__result-popup-text-content">${this.#resultText}</div>
+		`;
 		this.#resultContainer = Tag.render`
-			<div class="ai__copilot-context-menu__result-popup-text">${this.#resultText}</div>
+			<div class="ai__copilot-context-menu__result-popup-text">${this.#resultContent}</div>
 		`;
 
 		return this.#resultContainer;

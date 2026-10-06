@@ -65,7 +65,6 @@ export type ImapData = {
 	ssl: YesNoFlag;
 	isOAuth: boolean;
 	oauthUid: string | null;
-	oauthUser?: InitialOauthUser | null;
 };
 
 export type SmtpData = {
@@ -115,6 +114,8 @@ export type MailboxData = {
 		date: number | null;
 		isSuccess: boolean;
 	};
+	providerRestriction?: string | null;
+	migrationActive?: boolean;
 };
 
 export type CrmOptionsPayload = {
@@ -138,6 +139,9 @@ export type ServiceConfigPayload = {
 
 export type BaseMailboxPayload = {
 	email: string;
+	// Absent means the form states nothing about it and the stored value keeps applying. An empty
+	// string is a statement: this mailbox has no user principal name.
+	userPrincipalName?: string;
 	login: string;
 	server: string;
 	port: string;
@@ -169,7 +173,24 @@ export type CreateMailboxPayload = BaseMailboxPayload & {
 	serviceConfig: ServiceConfigPayload;
 };
 
-export type UpdateMailboxPayload = BaseMailboxPayload & {
+type ConnectionPayloadKey =
+	| 'email'
+	| 'userPrincipalName'
+	| 'login'
+	| 'server'
+	| 'port'
+	| 'ssl'
+	| 'serviceId'
+	| 'storageOauthUid'
+	| 'useSmtp'
+	| 'serverSmtp'
+	| 'portSmtp'
+	| 'sslSmtp'
+	| 'loginSmtp';
+
+export type UpdateMailboxPayload = Omit<BaseMailboxPayload, ConnectionPayloadKey>
+	& Partial<Pick<BaseMailboxPayload, ConnectionPayloadKey>>
+	& {
 	password?: string;
 	passwordSMTP?: string;
 	userIdToConnect?: number;
@@ -201,6 +222,13 @@ export const Api = {
 	getMailbox(mailboxId: number): Promise<AjaxResponse<MailboxData>>
 	{
 		return runAction<MailboxData>('getMailbox', { mailboxId });
+	},
+
+	// Goes to the OAuth provider, so it is a request of its own: the payload of the settings screen
+	// must not wait for it.
+	getOauthUser(mailboxId: number): Promise<AjaxResponse<InitialOauthUser | null>>
+	{
+		return runAction<InitialOauthUser | null>('getOauthUser', { mailboxId });
 	},
 
 	getOauthUrl(serviceName: string, type: OauthUrlType = 'web'): Promise<AjaxResponse<string>>

@@ -3,6 +3,8 @@ import type { DiagramNewConnection, DiagramAddConnection } from 'ui.block-diagra
 
 const AUX = 'aux';
 
+const OUTPUT_SIDE_PORT_TYPES = new Set([PORT_TYPES.output, PORT_TYPES.outputRelation]);
+
 export function normalyzeInputOutputConnection(newConnection: DiagramNewConnection): DiagramAddConnection
 {
 	const {
@@ -14,7 +16,7 @@ export function normalyzeInputOutputConnection(newConnection: DiagramNewConnecti
 		targetPortId,
 	} = newConnection;
 
-	if (sourcePort.type === PORT_TYPES.output)
+	if (OUTPUT_SIDE_PORT_TYPES.has(sourcePort.type))
 	{
 		return {
 			id,

@@ -1,5 +1,13 @@
 <?php
 
+use Bitrix\Disk\Integration\Fileman\CommonStorageCreationContext;
+use Bitrix\Disk\Integration\Fileman\CommonStoragePathNormalizer;
+use Bitrix\Disk\ProxyType\Common;
+use Bitrix\Disk\Storage;
+use Bitrix\Disk\SystemUser;
+use Bitrix\Main\Application;
+use Bitrix\Main\Diag\ExceptionHandlerLog;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Json;
 
@@ -11,6 +19,13 @@ require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_bef
  */
 
 //Functions
+function BXIsDiskCommonLegacyPathRoute(string $backUrl): bool
+{
+	$path = (string)parse_url($backUrl, PHP_URL_PATH);
+
+	return (bool)preg_match('#/path(?:/|$)#', $path);
+}
+
 function BXCreateSection(&$fileContent, &$sectionFileContent, &$absoluteFilePath, &$sectionPath)
 {
 	//Check quota
@@ -47,6 +62,52 @@ function BXCreateSection(&$fileContent, &$sectionFileContent, &$absoluteFilePath
 	}
 
 	return true;
+}
+
+function BXRollbackDiskCommonStorageCreation($success, string $wizTemplate): void
+{
+	if ($wizTemplate !== 'disk_common' || !Loader::includeModule('disk'))
+	{
+		return;
+	}
+
+	if ($success !== false)
+	{
+		CommonStorageCreationContext::clear();
+
+		return;
+	}
+
+	$storageCreation = CommonStorageCreationContext::consume();
+	if ($storageCreation === null)
+	{
+		return;
+	}
+
+	try
+	{
+		$storage = Storage::loadById($storageCreation['storageId']);
+		if (!$storage)
+		{
+			return;
+		}
+
+		$proxyType = $storage->getProxyType();
+		if (
+			$proxyType instanceof Common
+			&& $proxyType->getStorageBaseUrl() === $storageCreation['mountPoint']
+		)
+		{
+			$storage->delete(SystemUser::SYSTEM_USER_ID);
+		}
+	}
+	catch (Throwable $exception)
+	{
+		Application::getInstance()->getExceptionHandler()->writeToLog(
+			$exception,
+			ExceptionHandlerLog::CAUGHT_EXCEPTION,
+		);
+	}
 }
 
 //2 wizards: create page and create section
@@ -90,11 +151,15 @@ if(isset($_REQUEST["path"]) && $_REQUEST["path"] <> '')
 
 //Site ID
 $site = SITE_ID;
+$siteDir = SITE_DIR;
 if(isset($_REQUEST["site"]) && $_REQUEST["site"] <> '')
 {
 	$obSite = CSite::GetByID($_REQUEST["site"]);
 	if($arSite = $obSite->Fetch())
+	{
 		$site = $arSite["ID"];
+		$siteDir = $arSite["DIR"];
+	}
 }
 
 $documentRoot = CSite::GetSiteDocRoot($site);
@@ -169,6 +234,41 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_REQUEST["save"]))
 	$pageTags = ($_REQUEST["pageTags"] ?? false);
 	$menuItemPosition = (isset($_REQUEST["menuItemPosition"]) ? intval($_REQUEST["menuItemPosition"]) : 0);
 
+	$allowLegacyDuplicateCollapse = BXIsDiskCommonLegacyPathRoute($back_url);
+	if (
+		$createNewFolder
+		&& ($_REQUEST['wiz_template'] ?? '') === 'disk_common'
+		&& Loader::includeModule('disk')
+	)
+	{
+		$mountPoint = CommonStoragePathNormalizer::normalizeCommonStorageMountPoint(
+			$io->CombinePath("/", $path, $fileName) . "/",
+			$siteDir,
+			$allowLegacyDuplicateCollapse,
+		);
+		$mountPointSegments = explode('/', trim($mountPoint, '/'));
+		$normalizedFileName = array_pop($mountPointSegments);
+		if ($normalizedFileName !== null && $normalizedFileName !== '')
+		{
+			$fileName = $normalizedFileName;
+			$path = '/' . implode('/', $mountPointSegments);
+			if ($path !== '/')
+			{
+				$path .= '/';
+			}
+		}
+	}
+
+	if($createNewFolder && (!$USER->CanDoFileOperation("fm_create_new_folder", Array($site, $path)) || !$USER->CanDoFileOperation("fm_create_new_file", Array($site, $path))) )
+		$strWarning = GetMessage("PAGE_NEW_ACCESS_DENIED");
+	elseif(!$USER->CanDoFileOperation("fm_create_new_file", Array($site, $path)))
+		$strWarning = GetMessage("PAGE_NEW_ACCESS_DENIED");
+	elseif (!$io->DirectoryExists($documentRoot.$path))
+		$strWarning = GetMessage("PAGE_NEW_FOLDER_NOT_FOUND")." (".htmlspecialcharsbx($path).")";
+
+	$bAdmin = $USER->CanDoFileOperation("fm_edit_permission", Array($site, $path));
+	$canEditNewPage = $USER->CanDoFileOperation("fm_edit_existent_file", Array($site, $path));
+
 	$absoluteFilePath = $io->CombinePath($documentRoot, $path, $fileName);
 
 	//Check filename
@@ -184,6 +284,8 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && isset($_REQUEST["save"]))
 		$strWarning = GetMessage("PAGE_NEW_FILE_EXISTS");
 	elseif ($io->DirectoryExists($absoluteFilePath))
 		$strWarning = GetMessage("PAGE_NEW_FOLDER_EXISTS");
+	elseif (!$io->DirectoryExists($documentRoot.$path))
+		$strWarning = GetMessage("PAGE_NEW_FOLDER_NOT_FOUND")." (".htmlspecialcharsbx($path).")";
 
 	if (!check_bitrix_sessid())
 		$strWarning = GetMessage("MAIN_SESSION_EXPIRED");
@@ -279,7 +381,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_REQUEST["save"]) && $strWarn
 		$arParams = array(
 			"path"=>($createNewFolder? $io->CombinePath("/", $path, $fileName)."/" : $path),
 			"file"=>($createNewFolder? "index.php" : $fileName),
-			"site"=>$site
+			"site"=>$site,
+			"siteDir"=>$siteDir,
+			"allowLegacyDuplicateCollapse"=>$allowLegacyDuplicateCollapse,
 		);
 		$fileContent = $obPageTemplate->GetContent($arParams);
 	}
@@ -343,6 +447,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_REQUEST["save"]) && $strWarn
 		$sectionFileContent = "<"."?\n".$strSectionName."\$arDirProperties = Array(\n".$strDirProperties."\n);\n"."?".">";
 		$sectionPath = mb_substr($path, 1).$fileName;
 		$success = BXCreateSection($fileContent, $sectionFileContent, $absoluteFilePath, $sectionPath);
+		$creationException = ($success === false ? $APPLICATION->GetException() : null);
+		BXRollbackDiskCommonStorageCreation($success, ($_REQUEST['wiz_template'] ?? ''));
 
 		$arUndoParams = array(
 			'module' => 'fileman',
@@ -374,9 +480,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_REQUEST["save"]) && $strWarn
 		);
 
 		$success = $APPLICATION->SaveFileContent($absoluteFilePath, $fileContent);
+		$creationException = null;
 	}
 
-	if ($success === false && ($exception = $APPLICATION->GetException()))
+	if ($success === false && ($exception = ($creationException ?: $APPLICATION->GetException())))
 	{
 		$strWarning = $exception->msg;
 	}

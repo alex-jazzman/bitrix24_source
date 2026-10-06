@@ -24,96 +24,197 @@ BX.Disk.FolderToolbarClass = (function () {
 	};
 
 	FolderToolbarClass.prototype.createFolder = function () {
-		BX.Disk.modalWindow({
-			modalId: 'bx-disk-create-folder',
-			title: BX.message('DISK_FOLDER_TOOLBAR_TITLE_CREATE_FOLDER'),
-			contentClassName: '',
-			contentStyle: {
-				paddingTop: '30px',
-				paddingBottom: '70px'
+		var self = this;
+		var idSuffix = BX.util.getRandomString(6);
+		var inputId = 'disk-new-create-filename-' + idSuffix;
+		var errorId = 'disk-new-create-folder-error-' + idSuffix;
+
+		var errorNode = BX.create('div', {
+			props: {
+				id: errorId,
+				className: 'bx-disk-popup-error'
 			},
-			events: {
-				onAfterPopupShow: function () {
-					BX.focus(BX('disk-new-create-filename'));
-				},
-				onPopupClose: function () {
-					this.destroy();
-				}
+			attrs: {
+				role: 'alert',
+				'data-testid': 'disk-folder-create-error'
 			},
-			content: [
+			style: {
+				marginTop: '8px',
+				color: 'var(--ui-color-accent-main-alert, #f76d63)',
+				fontSize: '13px'
+			}
+		});
+
+		var input = BX.create('input', {
+			props: {
+				id: inputId,
+				className: 'bx-disk-popup-input',
+				type: 'text',
+				value: ''
+			},
+			attrs: {
+				required: 'required',
+				'aria-required': 'true',
+				'aria-invalid': 'false',
+				'aria-describedby': errorId,
+				'data-testid': 'disk-folder-create-name-input'
+			},
+			style: {
+				fontSize: '16px',
+				marginTop: '10px'
+			}
+		});
+
+		var clearError = function () {
+			if (errorNode.textContent === '') {
+				return;
+			}
+			errorNode.textContent = '';
+			input.setAttribute('aria-invalid', 'false');
+		};
+
+		var showError = function () {
+			errorNode.textContent = BX.message('DISK_FOLDER_TOOLBAR_ERROR_EMPTY_NAME_CREATE_FOLDER');
+			input.setAttribute('aria-invalid', 'true');
+			BX.focus(input);
+		};
+
+		BX.bind(input, 'input', clearError);
+
+		var content = BX.create('div', {
+			children: [
 				BX.create('label', {
 					props: {
-						className: 'bx-disk-popup-label',
-						"for": 'disk-new-create-filename'
+						className: 'bx-disk-popup-label'
+					},
+					attrs: {
+						'for': inputId
 					},
 					children: [
 						BX.create('span', {
 							props: {
 								className: 'req'
 							},
+							attrs: {
+								'aria-hidden': 'true'
+							},
 							text: '*'
 						}),
-						BX.message('DISK_FOLDER_TOOLBAR_LABEL_NAME_CREATE_FOLDER')
+						BX.create('span', {
+							text: BX.message('DISK_FOLDER_TOOLBAR_LABEL_NAME_CREATE_FOLDER')
+						})
 					]
 				}),
-				BX.create('input', {
-					props: {
-						id: 'disk-new-create-filename',
-						className: 'bx-disk-popup-input',
-						type: 'text',
-						value: ''
-					},
-					style: {
-						fontSize: '16px',
-						marginTop: '10px'
+				input,
+				errorNode
+			]
+		});
+
+		this.showAirMessageBox({
+			title: BX.message('DISK_FOLDER_TOOLBAR_TITLE_CREATE_FOLDER'),
+			message: content,
+			popupOptions: {
+				closeByEsc: true,
+				focusTrap: true,
+				events: {
+					onAfterPopupShow: function () {
+						BX.focus(input);
 					}
-				})
-			],
-			buttons: [
-				new BX.PopupWindowButton({
-					text: BX.message('DISK_FOLDER_TOOLBAR_BTN_CREATE_FOLDER'),
-					className: "popup-window-button-accept",
-					events: {
-						click: BX.delegate(function () {
-							var newName = BX('disk-new-create-filename').value;
-							if (!newName) {
-								BX.focus(BX('disk-new-create-filename'));
+				}
+			},
+			buttonsFactory: function (messageBox) {
+				var submitting = false;
+
+				var submit = function (button) {
+					if (submitting) {
+						return;
+					}
+
+					var newName = input.value;
+					if (!newName) {
+						showError();
+						return;
+					}
+
+					submitting = true;
+					button.setWaiting(true);
+
+					BX.Disk.ajax({
+						method: 'POST',
+						dataType: 'json',
+						url: BX.Disk.addToLinkParam(self.ajaxUrl, 'action', 'addFolder'),
+						data: {
+							targetFolderId: self.targetFolderId,
+							name: newName
+						},
+						onsuccess: function (data) {
+							if (!data) {
+								submitting = false;
+								button.setWaiting(false);
 								return;
 							}
 
-							BX.Disk.ajax({
-								method: 'POST',
-								dataType: 'json',
-								url: BX.Disk.addToLinkParam(this.ajaxUrl, 'action', 'addFolder'),
-								data: {
-									targetFolderId: this.targetFolderId,
-									name: newName
-								},
-								onsuccess: function (data) {
-									if (!data) {
-										return;
-									}
-									if (data.status && data.status == 'success') {
-										document.location = BX.Disk.getUrlToShowObjectInGrid(data.folder.id);
-									}
-									else
-									{
-										BX.Disk.showModalWithStatusAction(data);
-									}
-								}
-							});
-						}, this)
-					}
-				}),
-				new BX.PopupWindowButton({
-					text: BX.message('DISK_FOLDER_TOOLBAR_BTN_CLOSE'),
-					events: {
-						click: function () {
-							BX.PopupWindowManager.getCurrentPopup().close();
+							if (data.status && data.status === 'success') {
+								document.location = BX.Disk.getUrlToShowObjectInGrid(data.folder.id);
+							}
+							else
+							{
+								submitting = false;
+								button.setWaiting(false);
+								BX.Disk.showModalWithStatusAction(data);
+							}
 						}
+					});
+				};
+
+				var createButton = new BX.UI.Button({
+					text: BX.message('DISK_FOLDER_TOOLBAR_BTN_CREATE_FOLDER'),
+					useAirDesign: true,
+					style: BX.UI.AirButtonStyle.FILLED,
+					wide: true,
+					onclick: function (button) {
+						submit(button);
 					}
-				})
-			]
+				});
+				createButton.getContainer().setAttribute('data-testid', 'disk-folder-create-submit-btn');
+
+				BX.bind(input, 'keydown', function (event) {
+					if (event.key === 'Enter') {
+						event.preventDefault();
+						submit(createButton);
+					}
+				});
+
+				var cancelButton = messageBox.getCancelButton({
+					style: BX.UI.AirButtonStyle.PLAIN_NO_ACCENT
+				});
+				cancelButton.setText(BX.message('DISK_FOLDER_TOOLBAR_BTN_CLOSE'));
+				cancelButton.setWide(true);
+				cancelButton.getContainer().setAttribute('data-testid', 'disk-folder-create-cancel-btn');
+
+				return [createButton, cancelButton];
+			}
+		});
+	};
+
+	FolderToolbarClass.prototype.showAirMessageBox = function (options) {
+		BX.Runtime.loadExtension('ui.dialogs.messagebox').then(function () {
+			var messageBox = BX.UI.Dialogs.MessageBox.create({
+				title: options.title,
+				message: options.message,
+				modal: true,
+				useAirDesign: true,
+				maxWidth: options.maxWidth || 650,
+				popupOptions: options.popupOptions || {}
+			});
+
+			if (BX.type.isFunction(options.buttonsFactory)) {
+				messageBox.setButtons(options.buttonsFactory(messageBox));
+			}
+
+			messageBox.getPopupWindow().getPopupContainer().classList.add('disk-air-message-box-fit-content', '--content-text');
+
+			messageBox.show();
 		});
 	};
 

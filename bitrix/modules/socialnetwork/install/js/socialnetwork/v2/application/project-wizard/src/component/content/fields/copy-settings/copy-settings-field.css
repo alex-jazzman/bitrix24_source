@@ -53,6 +53,11 @@
 	color: var(--ui-color-base-2);
 }
 
+.scn-pw-copy-settings__option-head-label {
+	align-self: flex-start;
+	cursor: pointer;
+}
+
 .scn-pw-copy-settings__option-head-text {}
 
 .scn-pw-copy-settings__option-head-action {

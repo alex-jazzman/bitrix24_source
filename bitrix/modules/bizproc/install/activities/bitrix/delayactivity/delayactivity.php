@@ -1,6 +1,7 @@
 <?php
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Bizproc\Activity\Enum\ResumeWorkflowQueue;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
@@ -116,7 +117,8 @@ class CBPDelayActivity extends CBPActivity implements
 			$schedulerService->sendResumeWorkflowMessage(
 				$this->workflow->getInstanceId(),
 				$this->name,
-				(int)$timeoutDurationValue
+				(int)$timeoutDurationValue,
+				ResumeWorkflowQueue::Delay,
 			);
 		}
 		else

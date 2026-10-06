@@ -87,6 +87,7 @@ BX.ready(function () {
 						name="<?=htmlspecialcharsbx($item['NAME'])?>"
 						value="<?=htmlspecialcharsbx($item['VALUE'])?>"
 						class="ui-btn ui-btn-no-caps ui-btn-lg --air <?=htmlspecialcharsbx($item['CLASS_NAME'])?>"
+						data-testid="ui-button-panel-<?=htmlspecialcharsbx($item['TYPE'])?>-btn"
 						<?if(!empty($item['ONCLICK'])):?>onclick="<?=htmlspecialcharsbx($item['ONCLICK'])?>"<?endif?>
 					><span class="ui-btn-text"><?=htmlspecialcharsbx($item['CAPTION'])?></span></button>
 					<?
@@ -100,6 +101,7 @@ BX.ready(function () {
 						id="<?=htmlspecialcharsbx($item['ID'])?>"
 						name="<?=htmlspecialcharsbx($item['NAME'])?>"
 						class="ui-btn ui-btn-no-caps ui-btn-lg --air <?=htmlspecialcharsbx($item['CLASS_NAME'])?>"
+						data-testid="ui-button-panel-<?=htmlspecialcharsbx($item['TYPE'])?>-btn"
 						<?if(!empty($item['LINK'])):?>data-link="<?=htmlspecialcharsbx(\CUtil::JSEscape($item['LINK']))?>"<?endif?>
 						<?if(!empty($item['ONCLICK'])):?>onclick="<?=htmlspecialcharsbx($item['ONCLICK'])?>"<?endif?>
 					><span class="ui-btn-text"><?=htmlspecialcharsbx($item['CAPTION'])?></span></button>
@@ -118,6 +120,7 @@ BX.ready(function () {
 							id="<?= htmlspecialcharsbx($item['ID']) ?>"
 							name="<?= htmlspecialcharsbx($item['NAME']) ?>"
 							value="Y"
+							data-testid="ui-button-panel-<?= htmlspecialcharsbx($item['TYPE']) ?>-btn"
 							<?if (!empty($item['ONCLICK'])): ?>onclick="<?= htmlspecialcharsbx($item['ONCLICK']) ?>"<?endif ?>
 						><span class="ui-btn-text"><?= htmlspecialcharsbx($item['CAPTION']) ?></span></button>
 						<?

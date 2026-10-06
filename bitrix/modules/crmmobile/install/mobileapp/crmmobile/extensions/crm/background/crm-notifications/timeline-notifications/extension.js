@@ -2,9 +2,10 @@
  * @module crm/background/crm-notifications/timeline-notifications
  */
 jn.define('crm/background/crm-notifications/timeline-notifications', (require, exports, module) => {
-	const { PushListener } = require('push/listeners');
+	const { pushListener } = require('push/listener');
 	const { TabType } = require('layout/ui/detail-card/tabs/factory/type');
 	const { AnalyticsEvent } = require('analytics');
+	const { requireLazy } = require('require-lazy');
 
 	const PING_CREATED_MESSAGE_TYPE = 'CRM_TIMELINE_PING_CREATED';
 
@@ -15,7 +16,7 @@ jn.define('crm/background/crm-notifications/timeline-notifications', (require, e
 	{
 		constructor()
 		{
-			PushListener.subscribe(PING_CREATED_MESSAGE_TYPE, this.handlePingCreatedMessage.bind(this));
+			pushListener.subscribe(PING_CREATED_MESSAGE_TYPE, this.handlePingCreatedMessage.bind(this));
 		}
 
 		async handlePingCreatedMessage(message)

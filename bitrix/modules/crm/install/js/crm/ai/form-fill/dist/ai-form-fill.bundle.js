@@ -1,6 +1,6 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports, crm_ai_call, crm_ai_nameService, crm_integration_ui_settings, main_core, ui_buttons, ui_vue3, ui_vue3_vuex, ui_dialogs_messagebox, crm_ai_feedback, crm_integration_analytics, ui_analytics, ui_notification) {
+(function (exports, crm_ai_call, crm_ai_nameService, crm_integration_ui_settings, main_core, ui_buttons, ui_vue3, ui_vue3_vuex, ui_notification, ui_dialogs_messagebox, crm_ai_feedback, crm_integration_analytics, ui_analytics) {
 	'use strict';
 
 	const timeout = ms => {
@@ -417,7 +417,7 @@ this.BX = this.BX || {};
 		},
 		methods: {
 			...ui_vue3_vuex.mapActions(['initialize', 'saveFormFieldsToMerge', 'updateControlPositionInfo', 'updateSliderFooter', 'closeFormWithoutConfirm', 'sendAiCallParsingData']),
-			...ui_vue3_vuex.mapMutations(['changeMainLayoutScrollPosition', 'startLoading', 'stopLoading', 'setMainLayoutScrollHeight']),
+			...ui_vue3_vuex.mapMutations(['changeMainLayoutScrollPosition', 'startLoading', 'stopLoading', 'setMainLayoutScrollHeight', 'setAiFeedbackShowBeforeClose']),
 			onFooterSaveBtn() {
 				this.saveFormFieldsToMerge().then(() => this.sendAiCallParsingData('conflict_accept_changes')).catch(() => {});
 			},
@@ -456,6 +456,16 @@ this.BX = this.BX || {};
 				this.$Bitrix.eventEmitter.unsubscribe('crm:ai:form-fill:close-confirm:confirmClose', this.onCloseConfirm);
 				this.$Bitrix.eventEmitter.unsubscribe('crm:ai:form-fill:close-confirm:cancelClose', this.scrollToNext);
 			},
+			onInitializeFailed(error) {
+				// staying in the loading state denies closing the slider, see ai-form-fill-app.js
+				this.stopLoading();
+				this.setAiFeedbackShowBeforeClose(false);
+				console.error(error);
+				ui_notification.UI.Notification.Center.notify({
+					content: main_core.Loc.getMessage('CRM_AI_FORM_FILL_MERGER_LOAD_ERROR'),
+					autoHideDelay: 5000
+				});
+			},
 			autoScrollToFirst() {
 				const height = this.$refs.layout.getBoundingClientRect().height;
 				const firstPosY = this.getFirstUnseenFieldPosition;
@@ -470,7 +480,12 @@ this.BX = this.BX || {};
 			this.handleScroll = main_core.Runtime.throttle(() => {
 				this.positionChanged();
 			}, 300);
-			await this.initialize();
+			try {
+				await this.initialize();
+			} catch (error) {
+				this.onInitializeFailed(error);
+				return;
+			}
 			this.positionChanged();
 			this.subscribeInternalEvents();
 			await this.$nextTick(() => {
@@ -856,7 +871,7 @@ this.BX = this.BX || {};
 			state.isNeededShowCloseConfirm = isNeededShowCloseConfirm;
 		},
 		showFeedbackMessageIfNeeded(state, source) {
-			if (state.aiFeedback.feedbackWasSent || source === FEEDBACK_TRIGGER_CONTROL && state.aiFeedback.isShownByReturnBtn || state.activityProvider === crm_ai_call.ActivityProvider.openLine) {
+			if (state.aiFeedback.feedbackWasSent || source === FEEDBACK_TRIGGER_CONTROL && state.aiFeedback.isShownByReturnBtn || state.activityProvider !== crm_ai_call.ActivityProvider.call) {
 				return;
 			}
 			state.aiFeedback.lastTriggeredBy = source;
@@ -880,38 +895,65 @@ this.BX = this.BX || {};
 	};
 	/* eslint no-param-reassign: 2 */
 
+	const EDITOR_DEPLOYED_EVENT = 'BX.Crm.EntityEditor:onUserFieldsDeployed';
+
+	// Entity types whose details component still keeps its own ajax.php with PREPARE_EDITOR_HTML.
+	// Every other Factory based type (quote, smart invoice, smart document, smart process) is rendered
+	// by the universal crm.api.item.getEditor controller.
+	const DETAILS_COMPONENT_SERVICE_URLS = new Map([['LEAD', '/bitrix/components/bitrix/crm.lead.details/ajax.php'], ['DEAL', '/bitrix/components/bitrix/crm.deal.details/ajax.php'], ['CONTACT', '/bitrix/components/bitrix/crm.contact.details/ajax.php'], ['COMPANY', '/bitrix/components/bitrix/crm.company.details/ajax.php']]);
+
+	/**
+	 * A details component answers a rejected request (access denied, entity not found) with a json body
+	 * instead of the editor html, keeping the http status 200. Such a response carries no editor scripts,
+	 * so it never deploys the editor and must be treated as a failure.
+	 */
+	const getDetailsComponentError = response => {
+		if (!main_core.Type.isStringFilled(response)) {
+			return 'Empty response of the details component';
+		}
+		let payload = null;
+		try {
+			payload = JSON.parse(response);
+		} catch {
+			return null; // the editor html is not json
+		}
+		return main_core.Type.isPlainObject(payload) && main_core.Type.isStringFilled(payload.ERROR) ? payload.ERROR : null;
+	};
 	class EntityEditorRender {
 		#params;
 		constructor(params) {
 			this.#params = params;
 		}
 		async render() {
-			this.#fetchEntityEditor(this.#params);
-			return new Promise(resolve => {
-				main_core.addCustomEvent(window, 'BX.Crm.EntityEditor:onUserFieldsDeployed', async editor => {
+			let onDeployed = null;
+
+			// subscribe before the request: the editor may deploy while #fetchEntityEditor is awaited
+			const deployed = new Promise(resolve => {
+				onDeployed = editor => {
 					if (editor.getId() !== this.#params.domContainerId) {
 						return;
 					}
+					main_core.removeCustomEvent(window, EDITOR_DEPLOYED_EVENT, onDeployed);
 					resolve(editor);
-				});
+				};
+				main_core.addCustomEvent(window, EDITOR_DEPLOYED_EVENT, onDeployed);
 			});
-		}
-		#fetchEntityEditor(params) {
-			let eeUrl = '';
-			switch (params.entityTypeName) {
-				case 'DEAL':
-					eeUrl = '/bitrix/components/bitrix/crm.deal.details/ajax.php';
-					break;
-				case 'LEAD':
-					eeUrl = '/bitrix/components/bitrix/crm.lead.details/ajax.php';
-					break;
-				default:
-					throw new Error(`Unknown entity type: ${params.entityTypeName}`);
+			try {
+				await this.#fetchEntityEditor(this.#params);
+			} catch (error) {
+				main_core.removeCustomEvent(window, EDITOR_DEPLOYED_EVENT, onDeployed);
+				throw error;
 			}
-
+			return deployed;
+		}
+		async #fetchEntityEditor(params) {
+			const serviceUrl = DETAILS_COMPONENT_SERVICE_URLS.get(params.entityTypeName);
+			return serviceUrl === undefined ? this.#requestEditorByItemController(params) : this.#requestEditorByDetailsComponent(serviceUrl, params);
+		}
+		async #requestEditorByDetailsComponent(serviceUrl, params) {
 			// eslint-disable-next-line @bitrix24/bitrix24-rules/no-bx
-			eeUrl = `${eeUrl}?sessid=${BX.bitrix_sessid()}`;
-			BX.ajax.post(eeUrl, {
+			const eeUrl = `${serviceUrl}?sessid=${BX.bitrix_sessid()}`;
+			const data = {
 				ACTION: 'PREPARE_EDITOR_HTML',
 				ACTION_ENTITY_TYPE_NAME: params.entityTypeName,
 				ACTION_ENTITY_ID: params.entityId,
@@ -927,7 +969,51 @@ this.BX = this.BX || {};
 				CONTEXT: {},
 				READ_ONLY: 'Y',
 				MODULE_ID: 'crm'
-			}, () => {});
+			};
+
+			// ajax.post has no failure branch at all, and a silently lost request leaves render()
+			// waiting for the deploy event forever
+			let response = null;
+			try {
+				response = await main_core.ajax.promise({
+					method: 'POST',
+					dataType: 'html',
+					url: eeUrl,
+					data: main_core.ajax.prepareData(data)
+				});
+			} catch (failure) {
+				throw new Error(`Entity editor request failed: ${failure?.reason ?? 'unknown reason'}`);
+			}
+			const error = getDetailsComponentError(response);
+			if (error !== null) {
+				throw new Error(`Entity editor request rejected: ${error}`);
+			}
+		}
+		async #requestEditorByItemController(params) {
+			const response = await main_core.ajax.runAction('crm.api.item.getEditor', {
+				data: {
+					entityTypeId: params.entityTypeId,
+					id: params.entityId,
+					categoryId: params.categoryId,
+					guid: params.domContainerId,
+					configId: params.configId,
+					params: {
+						forceDefaultConfig: 'N',
+						enableSingleSectionCombining: 'N',
+						IS_EMBEDDED: 'Y',
+						READ_ONLY: 'Y',
+						ENABLE_CONFIG_SCOPE_TOGGLE: 'N',
+						ENABLE_CONFIGURATION_UPDATE: 'N',
+						ENABLE_REQUIRED_USER_FIELD_CHECK: 'N',
+						ENABLE_FIELDS_CONTEXT_MENU: 'N',
+						ENABLE_VISIBILITY_POLICY: 'N'
+					}
+				}
+			});
+
+			// the editor markup is built by its own scripts inside the already rendered container,
+			// so only the scripts of the response are deployed
+			await main_core.Runtime.html(null, response.data.html);
 		}
 	}
 
@@ -1060,6 +1146,8 @@ this.BX = this.BX || {};
 				entityId: getEntityInfo.entityId,
 				configId: getEntityInfo.editorId,
 				entityTypeName: getEntityInfo.entityTypeName,
+				entityTypeId: getEntityInfo.entityTypeId,
+				categoryId: getEntityInfo.categoryId,
 				domContainerId: `crm-ai-merge-fields__container__${getters.mergeUuid}`
 			});
 			const editor = await entityEditorRender.render();
@@ -1511,10 +1599,10 @@ this.BX = this.BX || {};
 		if (main_core.Type.isFunction(BX?.Crm?.AI?.Slider)) {
 			makeApp(BX.Crm.AI.Slider);
 		} else {
-			top.BX.Runtime.loadExtension('crm.ai.slider').then(exports$1 => {
+			top.BX.Runtime.loadExtension('crm.ai.slider').then(exports => {
 				const {
 					Slider
-				} = exports$1;
+				} = exports;
 				makeApp(Slider);
 			}).catch(() => {
 				throw new Error('Cant load Crm.AI.Slider extension');
@@ -1524,5 +1612,5 @@ this.BX = this.BX || {};
 
 	exports.createAiFormFillApplicationInsideSlider = createAiFormFillApplicationInsideSlider;
 
-})(this.BX.Crm = this.BX.Crm || {}, BX.Crm.AI, BX.Crm.AI, BX.Crm.Integration.UI, BX, BX.UI, BX.Vue3, BX.Vue3.Vuex, BX.UI.Dialogs, BX.Crm.AI.Feedback, BX.Crm.Integration.Analytics, BX.UI.Analytics, BX);
+})(this.BX.Crm = this.BX.Crm || {}, BX.Crm.AI, BX.Crm.AI, BX.Crm.Integration.UI, BX, BX.UI, BX.Vue3, BX.Vue3.Vuex, BX.UI.Notification, BX.UI.Dialogs, BX.Crm.AI.Feedback, BX.Crm.Integration.Analytics, BX.UI.Analytics);
 //# sourceMappingURL=ai-form-fill.bundle.js.map

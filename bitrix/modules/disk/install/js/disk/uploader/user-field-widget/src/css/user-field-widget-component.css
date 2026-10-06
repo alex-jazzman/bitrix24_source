@@ -41,3 +41,68 @@
 	background-repeat: no-repeat;
 	background-position: center;
 }
+
+.disk-picker-popup .disk-picker-item-table__row.--selected {
+	background: none;
+}
+
+.disk-picker-popup .disk-picker-item-table__row.--selected .disk-picker-item-table__cell {
+	background: var(--ui-color-accent-soft-blue-2);
+}
+
+.disk-picker-popup .disk-picker-item-table__row.--selected .disk-picker-item-table__cell:first-child {
+	border-radius: var(--ui-border-radius-sm) 0 0 var(--ui-border-radius-sm);
+}
+
+.disk-picker-popup .disk-picker-item-table__row.--selected .disk-picker-item-table__cell:last-child {
+	border-radius: 0 var(--ui-border-radius-sm) var(--ui-border-radius-sm) 0;
+}
+
+.disk-picker-popup .disk-picker-item-table__row:focus-within {
+	outline: none;
+}
+
+.disk-picker-popup .disk-picker-item-table__row.--active {
+	box-shadow: none;
+}
+
+.disk-picker-popup .disk-picker-item-table__action:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: -2px;
+	border-radius: var(--ui-border-radius-2xs);
+}
+
+@supports selector(:has(*)) {
+	.disk-picker-popup .disk-picker-item-table__action:focus-visible {
+		outline: 2px solid transparent;
+		outline-offset: -2px;
+	}
+
+	.disk-picker-popup
+		.disk-picker-item-table__row:has(.disk-picker-item-table__action:focus-visible)
+		.disk-picker-item-table__cell {
+		box-shadow:
+			inset 0 2px 0 var(--ui-color-accent-main-primary),
+			inset 0 -2px 0 var(--ui-color-accent-main-primary);
+	}
+
+	.disk-picker-popup
+		.disk-picker-item-table__row:has(.disk-picker-item-table__action:focus-visible)
+		.disk-picker-item-table__cell:first-child {
+		border-radius: var(--ui-border-radius-sm) 0 0 var(--ui-border-radius-sm);
+		box-shadow:
+			inset 2px 0 0 var(--ui-color-accent-main-primary),
+			inset 0 2px 0 var(--ui-color-accent-main-primary),
+			inset 0 -2px 0 var(--ui-color-accent-main-primary);
+	}
+
+	.disk-picker-popup
+		.disk-picker-item-table__row:has(.disk-picker-item-table__action:focus-visible)
+		.disk-picker-item-table__cell:last-child {
+		border-radius: 0 var(--ui-border-radius-sm) var(--ui-border-radius-sm) 0;
+		box-shadow:
+			inset -2px 0 0 var(--ui-color-accent-main-primary),
+			inset 0 2px 0 var(--ui-color-accent-main-primary),
+			inset 0 -2px 0 var(--ui-color-accent-main-primary);
+	}
+}

@@ -22,6 +22,7 @@ UI\Extension::load([
 	'ui.fonts.opensans',
 	'ui.tooltip',
 	'ui.viewer',
+	'ui.icon-set.main',
 	'disk.document',
 	'disk.viewer.actions',
 	'disk.viewer.document-item',
@@ -206,7 +207,11 @@ include_once(str_replace(array("\\", "//"), "/", __DIR__."/messages.php"));
 								return e.preventDefault();
 							}},
 							<? if($file['EDITABLE'] && $file['CAN_UPDATE'] && (!$file['IS_LOCKED'] || $file['IS_LOCKED_BY_SELF']) && !$arParams['DISABLE_LOCAL_EDIT']){ ?>
-							{text : BX.message('JS_CORE_VIEWER_EDIT'), className : "bx-viewer-popup-item item-edit", href : "#", onclick: function(e){
+							{
+								className : 'disk-uf-file__popup-menu_item menu-popup-no-icon',
+								html : '<span class="ui-icon-set --edit-pencil"></span><span>' + BX.message('JS_CORE_VIEWER_EDIT') + '</span>',
+								href : "#",
+								onclick: function(e){
 								top.BX.UI.Viewer.Instance.runActionByNode(BX("disk-attach-<?=$file['ID']?>"), 'edit', {
 								modalWindow: BX.Disk.openBlankDocumentPopup()
 							});

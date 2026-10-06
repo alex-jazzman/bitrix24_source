@@ -98,7 +98,14 @@ export const AutoDeleteMessageDropdown = {
 					'--enabled': isEnabled
 				}
 			]"
+			role="button"
+			aria-haspopup="menu"
+			:tabindex="isEnabled ? 0 : -1"
+			:aria-expanded="menuOpened ? 'true' : 'false'"
+			:aria-disabled="isEnabled ? null : 'true'"
 			@click.stop="toggleMenu"
+			@keydown.enter.prevent="toggleMenu"
+			@keydown.space.prevent="toggleMenu"
 		>
 			{{ autoDeleteText }}
 			<BIcon

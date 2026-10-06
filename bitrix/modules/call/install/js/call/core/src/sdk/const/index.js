@@ -19,6 +19,12 @@ export const VIDEO_QUEUE = {
 	DISABLE: 'disable',
 };
 
+export const AUDIO_QUEUE = {
+	INITIAL: '',
+	ENABLE: 'enable',
+	DISABLE: 'disable',
+};
+
 export const MONITORING_METRICS = {
 	COUNT_TRACKS: 'COUNT_TRACKS',
 	COUNT_VIDEO_TRACKS: 'COUNT_VIDEO_TRACKS',

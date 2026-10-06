@@ -10,7 +10,10 @@
 	const { NotifyManager } = require('notify-manager');
 	const { Loc } = require('loc');
 	const { RequestExecutor } = require('rest');
+	const { Color } = require('tokens');
+	const { AvatarAccentType, AvatarShape } = require('ui-system/blocks/avatar');
 	const { guid } = require('utils/guid');
+	const { withCurrentDomain } = require('utils/url');
 
 	const pathToExtension = '/bitrix/mobileapp/mobile/extensions/bitrix/project/utils';
 	const projectCache = new Map();
@@ -26,6 +29,7 @@
 		'ADDITIONAL_DATA',
 		'TYPE',
 		'DIALOG_ID',
+		'COLOR',
 	]);
 
 	class WorkgroupUtil
@@ -73,7 +77,10 @@
 			if (availableFeatures.includes('blog'))
 			{
 				tabs.push(
-					WorkgroupUtil.getNewsTab(projectNewsPathTemplate.replace('#group_id#', item.id)),
+					WorkgroupUtil.getNewsTab({
+						newsWebPath: projectNewsPathTemplate.replace('#group_id#', item.id),
+						item,
+					}),
 				);
 			}
 
@@ -92,7 +99,7 @@
 			return tabs;
 		}
 
-		static getNewsTab(newsWebPath)
+		static getNewsTab({ newsWebPath, item })
 		{
 			return {
 				id: WorkgroupUtil.tabNames.news,
@@ -108,6 +115,10 @@
 								url: newsWebPath,
 								useSearchBar: true,
 							},
+							titleParams: WorkgroupUtil.getProjectTitleParams(
+								item,
+								WorkgroupUtil.getSubtitle(item.params.membersCount),
+							),
 							cache: false,
 						},
 					},
@@ -137,6 +148,10 @@
 							objectName: 'layout',
 							useSearch: true,
 							useLargeTitleMode: true,
+							titleParams: WorkgroupUtil.getProjectTitleParams(
+								item,
+								WorkgroupUtil.getSubtitle(item.params.membersCount),
+							),
 						},
 					},
 					params: {
@@ -184,6 +199,10 @@
 							objectName: 'layout',
 							useSearch: true,
 							useLargeTitleMode: true,
+							titleParams: WorkgroupUtil.getProjectTitleParams(
+								item,
+								WorkgroupUtil.getSubtitle(item.params.membersCount),
+							),
 						},
 					},
 					params: {
@@ -210,6 +229,10 @@
 							name: 'layout',
 							settings: {
 								objectName: 'layout',
+								titleParams: WorkgroupUtil.getProjectTitleParams(
+									item,
+									WorkgroupUtil.getSubtitle(item.params.membersCount),
+								),
 							},
 						},
 						params: {
@@ -258,22 +281,92 @@
 			return '';
 		}
 
-		static getAvatarUrl(data)
+		static getTitleAvatarUrl(data)
 		{
-			let image = `${pathToExtension}/images/default-group-avatar.png`;
-			if (data.AVATAR)
+			return data.AVATAR || null;
+		}
+
+		static getProjectTitleAvatarParams(itemParams = {})
+		{
+			const hasCollabers = WorkgroupUtil.resolveProjectHasCollabers(itemParams);
+			const accentType = hasCollabers ? AvatarAccentType.GREEN : AvatarAccentType.BLUE;
+			const accentColor = hasCollabers ? Color.accentMainSuccess : Color.accentMainPrimary;
+
+			return {
+				accentType: accentType.value,
+				accentColor: accentColor.toHex(),
+				type: AvatarShape.HEXAGON.value,
+			};
+		}
+
+		static getProjectTitleAvatarPlaceholderParams(itemParams = {})
+		{
+			return {
+				type: 'auto',
+				backgroundColor: WorkgroupUtil.getProjectTitleAvatarPlaceholderBackgroundColor(itemParams),
+				letters: {
+					fontSize: 12,
+				},
+			};
+		}
+
+		static getProjectTitleAvatarPlaceholderBackgroundColor(itemParams = {})
+		{
+			const color = BX.prop.getString(
+				itemParams,
+				'color',
+				BX.prop.getString(itemParams, 'COLOR', ''),
+			);
+
+			if (color)
 			{
-				image = data.AVATAR;
-			}
-			else if (
-				data.AVATAR_TYPE
-				&& data.AVATAR_TYPES
-			)
-			{
-				image = data.AVATAR_TYPES[data.AVATAR_TYPE].mobileUrl;
+				return color;
 			}
 
-			return image;
+			const hasCollabers = WorkgroupUtil.resolveProjectHasCollabers(itemParams);
+
+			return hasCollabers
+				? Color.collabAccentPrimary.toHex()
+				: Color.accentMainPrimary.toHex()
+			;
+		}
+
+		static getProjectTitleParams(item, subtitle = '')
+		{
+			const avatarUri = item.params.avatar ? withCurrentDomain(item.params.avatar) : null;
+
+			return {
+				text: item.title,
+				detailText: subtitle,
+				type: 'common',
+				imageUrl: avatarUri,
+				avatar: {
+					uri: avatarUri,
+					title: item.title,
+					polygonAngle: 30,
+					radius: 0,
+					backBorderWidth: 2,
+					backColor: Color.baseWhiteFixed.toHex(),
+					hideOutline: false,
+					placeholder: WorkgroupUtil.getProjectTitleAvatarPlaceholderParams(item.params),
+					...WorkgroupUtil.getProjectTitleAvatarParams(item.params),
+				},
+				userLargeTitleMode: true,
+			};
+		}
+
+		static resolveProjectHasCollabers(itemParams = {}, hasCollabers = undefined)
+		{
+			if (typeof hasCollabers === 'boolean')
+			{
+				return hasCollabers;
+			}
+
+			return BX.prop.getBoolean(
+				itemParams,
+				'hasCollabers',
+				BX.prop.getBoolean(itemParams, 'HAS_COLLABERS', false),
+			);
 		}
 
 		static getGroupData(groupId)
@@ -284,7 +377,6 @@
 						groupId,
 						select: [
 							'AVATAR',
-							'AVATAR_TYPES',
 						],
 					},
 				}))
@@ -339,6 +431,8 @@
 				newsPathTemplate: initialParams.newsPathTemplate || '',
 				calendarWebPathTemplate: initialParams.calendarWebPathTemplate || '',
 				currentUserId: initialParams.currentUserId || env.userId,
+				hasCollabers: initialParams.hasCollabers,
+				color: initialParams.color || '',
 				analyticsLabel: {
 					c_section: 'project',
 				},
@@ -370,7 +464,21 @@
 			if (item?.params)
 			{
 				return {
-					item,
+					item: {
+						...item,
+						params: {
+							...item.params,
+							hasCollabers: WorkgroupUtil.resolveProjectHasCollabers(
+								item.params,
+								params.hasCollabers,
+							),
+							color: params.color || BX.prop.getString(
+								item.params,
+								'color',
+								BX.prop.getString(item.params, 'COLOR', ''),
+							),
+						},
+					},
 					params,
 				};
 			}
@@ -398,18 +506,25 @@
 				params.newsPathTemplate = (data.ADDITIONAL_DATA.projectNewsPathTemplate || '');
 				params.calendarWebPathTemplate = (data.ADDITIONAL_DATA.projectCalendarWebPathTemplate || '');
 
+				const hasCollabers = WorkgroupUtil.resolveProjectHasCollabers(
+					data.ADDITIONAL_DATA,
+					params.hasCollabers,
+				);
+
 				return {
 					item: {
 						id: params.projectId,
 						title: (data.NAME || item?.title || ''),
 						params: {
-							avatar: WorkgroupUtil.getAvatarUrl(data),
+							avatar: WorkgroupUtil.getTitleAvatarUrl(data),
 							initiatedByType: data.ADDITIONAL_DATA.INITIATED_BY_TYPE,
 							features: data.ADDITIONAL_DATA.FEATURES,
 							membersCount: parseInt(data.NUMBER_OF_MEMBERS || 0, 10),
 							role: data.ADDITIONAL_DATA.ROLE,
 							opened: (data.OPENED || 'N'),
 							isCollab: data.TYPE === 'collab',
+							hasCollabers,
+							color: params.color || '',
 							dialogId: data.DIALOG_ID,
 							isScrum: data.TYPE === 'scrum',
 						},
@@ -479,12 +594,7 @@
 					name: 'tabs',
 					settings: {
 						objectName: 'tabs',
-						titleParams: {
-							text: item.title,
-							detailText: subtitle,
-							imageUrl: item.params.avatar,
-							userLargeTitleMode: true,
-						},
+						titleParams: WorkgroupUtil.getProjectTitleParams(item, subtitle),
 						grabTitle: false,
 						tabs: {
 							items: tabs,
@@ -517,6 +627,8 @@
 								groupId: projectId,
 								mode: 'mobile',
 								select: ['AVATAR', 'AVATAR_TYPES'],
+								shouldSelectHasCollabers: 'Y',
+								shouldEnsureHasCollabers: 'Y',
 								features: [
 									'tasks',
 									'blog',
@@ -582,6 +694,7 @@
 				}
 			});
 		}
+
 	}
 
 	this.WorkgroupUtil = WorkgroupUtil;

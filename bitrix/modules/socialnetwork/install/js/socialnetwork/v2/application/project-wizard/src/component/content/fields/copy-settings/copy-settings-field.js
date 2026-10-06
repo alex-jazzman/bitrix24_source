@@ -195,6 +195,7 @@ export const CopySettingsField = {
 					<div class="scn-pw-copy-settings__option-vis">
 						<UiCheckbox
 							class="scn-pw-copy-settings__option-checkbox"
+							inputId="sonet-pw-copy-tasks"
 							:isChecked="isCheckedTasks"
 							:isDisabled="false"
 							:isHighlighted="true"
@@ -203,9 +204,11 @@ export const CopySettingsField = {
 						/>
 					</div>
 					<div class="scn-pw-copy-settings__option-text">
-						<TextMd
-							class="scn-pw-copy-settings__option-head"
-						>{{ loc('SONET_EXT_PROJECT_WIZARD_COPY_OPTION_TASKS_TITLE') }}</TextMd>
+						<label class="scn-pw-copy-settings__option-head-label" for="sonet-pw-copy-tasks">
+							<TextMd
+								class="scn-pw-copy-settings__option-head"
+							>{{ loc('SONET_EXT_PROJECT_WIZARD_COPY_OPTION_TASKS_TITLE') }}</TextMd>
+						</label>
 						<TextXs
 							class="scn-pw-copy-settings__option-descr"
 						>{{ loc('SONET_EXT_PROJECT_WIZARD_COPY_OPTION_TASKS_DESCR') }}</TextXs>
@@ -220,6 +223,7 @@ export const CopySettingsField = {
 					<div class="scn-pw-copy-settings__option-vis">
 						<UiCheckbox
 							class="scn-pw-copy-settings__checkbox"
+							inputId="sonet-pw-copy-robots"
 							:isChecked="isCheckedRobots"
 							:isDisabled="!isCheckedTasks"
 							:isHighlighted="true"
@@ -229,9 +233,11 @@ export const CopySettingsField = {
 					</div>
 					<div class="scn-pw-copy-settings__option-text">
 						<div class="scn-pw-copy-settings__option-text">
-							<TextMd
-								class="scn-pw-copy-settings__option-head"
-							>{{ loc('SONET_EXT_PROJECT_WIZARD_COPY_OPTION_ROBOTS_TITLE') }}</TextMd>
+							<label class="scn-pw-copy-settings__option-head-label" for="sonet-pw-copy-robots">
+								<TextMd
+									class="scn-pw-copy-settings__option-head"
+								>{{ loc('SONET_EXT_PROJECT_WIZARD_COPY_OPTION_ROBOTS_TITLE') }}</TextMd>
+							</label>
 							<TextXs
 								class="scn-pw-copy-settings__option-descr"
 							>{{ loc('SONET_EXT_PROJECT_WIZARD_COPY_OPTION_ROBOTS_DESCR') }}</TextXs>
@@ -247,6 +253,7 @@ export const CopySettingsField = {
 					<div class="scn-pw-copy-settings__option-vis">
 						<UiCheckbox
 							class="scn-pw-copy-settings__checkbox"
+							inputId="sonet-pw-copy-folders"
 							:isChecked="isCheckedFolders"
 							:isDisabled="false"
 							:isHighlighted="true"
@@ -256,9 +263,11 @@ export const CopySettingsField = {
 					</div>
 					<div class="scn-pw-copy-settings__option-text">
 						<TextMd class="scn-pw-copy-settings__option-head">
-							<span
-								class="scn-pw-copy-settings__option-head-text"
-							>{{ loc('SONET_EXT_PROJECT_WIZARD_COPY_OPTION_FOLDERS_TITLE') }}</span>
+							<label class="scn-pw-copy-settings__option-head-label" for="sonet-pw-copy-folders">
+								<span
+									class="scn-pw-copy-settings__option-head-text"
+								>{{ loc('SONET_EXT_PROJECT_WIZARD_COPY_OPTION_FOLDERS_TITLE') }}</span>
+							</label>
 							<button
 								id="selectorFoldersCopyType"
 								ref="selectorFoldersCopyType"
@@ -268,6 +277,8 @@ export const CopySettingsField = {
 									'scn-pw-copy-settings__option-head-action_opened': isOpenedSelectorFoldersCopyType,
 								}"
 								:disabled="!isCheckedFolders"
+								aria-haspopup="menu"
+								:aria-expanded="isOpenedSelectorFoldersCopyType ? 'true' : 'false'"
 								@click="handleClickSelectorFoldersCopyType"
 							>{{ titleSelectorFoldersCopyType }}</button>
 						</TextMd>

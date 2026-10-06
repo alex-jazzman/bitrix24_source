@@ -13,25 +13,33 @@ const ARTICLE_CODE = '20412666';
 export const ChatContentDisclaimer = {
 	name: 'ChatContentDisclaimer',
 	components: { RichLoc },
-	computed: {
+	props:
+	{
+		dialogId: {
+			type: String,
+			default: '',
+		},
+	},
+	computed:
+	{
 		warningText(): string
 		{
 			return Loc.getMessage('IM_CONTENT_COPILOT_DISCLAIMER_MSGVER_1', {
 				'#COPILOT_NAME#': this.copilotManager.getName(),
 			});
 		},
-		shouldShowDisclaimer(): boolean
+		shouldShow(): boolean
 		{
 			return FeatureManager.isFeatureAvailable(Feature.isBitrixGptV2Available)
 				&& FeatureManager.isFeatureAvailable(Feature.copilotAvailable)
-				&& FeatureManager.isFeatureAvailable(Feature.copilotActive);
+				&& FeatureManager.isFeatureAvailable(Feature.copilotActive)
+				&& this.$store.getters['copilot/chats/hasAiGeneratedContent'](this.dialogId);
 		},
 	},
 	created()
 	{
 		this.copilotManager = new CopilotManager();
 	},
-
 	methods: {
 		onLinkClick()
 		{
@@ -39,7 +47,7 @@ export const ChatContentDisclaimer = {
 		},
 	},
 	template: `
-		<div v-if="shouldShowDisclaimer" class="bx-im-chat-content-disclaimer__container --ui-context-content-dark">
+		<div v-if="shouldShow" class="bx-im-chat-content-disclaimer__container">
 			<RichLoc
 				:text="warningText"
 				placeholder="[link]"

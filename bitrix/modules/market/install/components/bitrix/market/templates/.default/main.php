@@ -19,10 +19,10 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
 
 $APPLICATION->includeComponent(
 	'bitrix:market.main',
-	'',
+	'.default',
 	[
 		'FROM' => 'main',
 		'VARIABLES' => $arResult['VARIABLES'],
 		'CURRENT_PAGE' => $arResult['CURRENT_PAGE'],
-	]
+	],
 );

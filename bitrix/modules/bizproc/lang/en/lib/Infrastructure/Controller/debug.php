@@ -1,0 +1,3 @@
+<?php
+$MESS["BIZPROC_INFRASTRUCTURE_CONTROLLER_DEBUG_ERROR"] = "Error changing debug mode.";
+$MESS["BIZPROC_INFRASTRUCTURE_CONTROLLER_DEBUG_INVALID_DOCUMENT"] = "Invalid workflow element ID format.";

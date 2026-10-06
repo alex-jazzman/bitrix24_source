@@ -4,6 +4,7 @@ $MESS["MENU_LIVE_FEED2"] = "Новости";
 $MESS["MENU_LIVE_FEED3"] = "Лента";
 $MESS["MENU_IM_MESSENGER_NEW"] = "Мессенджер";
 $MESS["MENU_IM_MESSENGER_COLLAB"] = "Коллабы";
+$MESS["MENU_SYNC"] = "Синк";
 $MESS["MENU_TASKS"] = "Задачи";
 $MESS["MENU_BLOG"] = "Сообщения";
 $MESS["MENU_FILES"] = "Мой Диск";

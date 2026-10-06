@@ -6,7 +6,7 @@ import { BaseRecentList } from 'im.v2.component.list.items.base';
 import { CreateChatStatus } from 'im.v2.component.list.items.elements.create-chat-status';
 import { DraftManager } from 'im.v2.lib.draft';
 import { type ImModelRecentItem } from 'im.v2.model';
-import { TaskRecentService, CalendarRecentService, type BaseRecentService } from 'im.v2.provider.service.recent';
+import { TaskRecentService, CalendarRecentService, CopilotRecentV2Service, type BaseRecentService } from 'im.v2.provider.service.recent';
 import { CreateChatManager } from 'im.v2.lib.create-chat';
 import { Notifier } from 'im.v2.lib.notifier';
 
@@ -20,6 +20,7 @@ export const ServiceByRecentType = {
 	[RecentType.taskComments]: TaskRecentService,
 	[RecentType.collabChat]: CollabChatService,
 	[RecentType.calendar]: CalendarRecentService,
+	[RecentType.copilot]: CopilotRecentV2Service,
 };
 
 // @vue/component

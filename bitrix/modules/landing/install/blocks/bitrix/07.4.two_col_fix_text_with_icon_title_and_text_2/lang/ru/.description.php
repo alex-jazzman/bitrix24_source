@@ -1,5 +1,5 @@
 <?php
-$MESS['LANDING_BLOCK_4_TWO_COL_FIX_TEXT_WITH_ICON_WITH_TITLE_NAME'] = 'Этапы в 2 колонки фиксированный ширины с кнопкой';
+$MESS['LANDING_BLOCK_4_TWO_COL_FIX_TEXT_WITH_ICON_WITH_TITLE_NAME'] = 'Этапы в 2 колонки фиксированной ширины с кнопкой';
 $MESS['LANDING_BLOCK_4_TWO_COL_FIX_TEXT_WITH_ICON_WITH_TITLE_NAME_DESC'] = 'Заголовок, текст, два блока с иконками, текст и кнопка снизу';
 $MESS['LANDING_BLOCK_4_TWO_COL_FIX_TEXT_WITH_ICON_NODES_LANDINGBLOCK_CARD'] = 'Колонка';
 $MESS['LANDING_BLOCK_4_TWO_COL_FIX_TEXT_WITH_ICON_NODES_LANDINGBLOCK_INNER'] = 'Блок';

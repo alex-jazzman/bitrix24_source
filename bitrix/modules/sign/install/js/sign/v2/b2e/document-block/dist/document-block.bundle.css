@@ -140,21 +140,28 @@
 	box-shadow: none;
 	cursor: pointer;
 	padding: 0;
-	min-width: var(--ui-size-xl);
-	width: var(--ui-size-xl);
-	height: var(--ui-size-xl);
+	min-width: 44px;
+	width: 44px;
+	height: 44px;
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
+	transition: background-color .2s ease;
 }
 
 .sign-b2e-document-setup__menu-btn:hover,
-.sign-b2e-document-setup__menu-btn:active,
+.sign-b2e-document-setup__menu-btn:active {
+	border-color: transparent;
+	background: var(--ui-color-bg-state-hover-default);
+	box-shadow: none;
+}
+
 .sign-b2e-document-setup__menu-btn:focus,
 .sign-b2e-document-setup__menu-btn:focus-visible {
 	border-color: transparent;
-	background: transparent;
-	box-shadow: none;
+	background: var(--ui-color-bg-state-hover-default);
+	box-shadow: 0 0 0 2px var(--ui-color-design-outline-focused-stroke);
+	outline: none;
 }
 
 .sign-b2e-document-setup__menu-btn-icon {

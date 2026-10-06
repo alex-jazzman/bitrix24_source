@@ -49,6 +49,7 @@
 		openInNewTab: function ()
 		{
 			const newTab = window.open('', '_blank');
+			let hasNavigated = false;
 
 			const data = {
 				serviceCode: this.serviceCode,
@@ -61,10 +62,30 @@
 			BX.ajax.runAction('disk.api.documentService.goToCreate', {
 				data,
 			}).then((response) => {
-				newTab.location.href = response.data.openUrl;
+				const openUrl = response?.data?.openUrl;
+				if (!openUrl)
+				{
+					newTab?.close();
 
-				this.onAfterCreateFile(response);
+					return;
+				}
+
+				if (newTab && !newTab.closed)
+				{
+					newTab.location.href = new URL(openUrl, window.location.href).href;
+					hasNavigated = true;
+				}
+
+				if (BX.type.isFunction(this.onAfterCreateFile))
+				{
+					this.onAfterCreateFile(response);
+				}
 			}).catch((error) => {
+				if (!hasNavigated)
+				{
+					newTab?.close();
+				}
+
 				console.error(error);
 			});
 		},

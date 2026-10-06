@@ -52,6 +52,7 @@ final class MailboxConnectDTO
 		public ?array $service = null,
 		public ?array $site = null,
 		public bool $skipConnectionValidation = false,
+		public ?string $userPrincipalName = null,
 	)
 	{
 	}
@@ -123,6 +124,9 @@ final class MailboxConnectDTO
 			link: isset($fields['link']) ? (string)$fields['link'] : null,
 			shareAccess: $shareAccess,
 			useSenderName: ($fields['use_sender_name'] ?? 'N') === 'Y',
+			userPrincipalName: array_key_exists('user_principal_name', $fields)
+				? (string)$fields['user_principal_name']
+				: null,
 		);
 	}
 
@@ -142,7 +146,7 @@ final class MailboxConnectDTO
 			serviceId: (int)($fields['service_id'] ?? 0),
 			server: (string)($fields['server_imap'] ?? ''),
 			port: (string)($fields['port_imap'] ?? MailboxConnector::DEFAULT_IMAP_PORT),
-			ssl: ($fields['ssl_imap'] ?? 'Y') === 'Y',
+			ssl: self::resolveImapSslForConnect($fields),
 			storageOauthUid: (string)($fields['oauth_uid'] ?? ''),
 			syncAfterConnection: ($fields['sync_after_connection'] ?? 'N') === 'Y',
 			useSmtp: (int)($fields['use_smtp'] ?? 0) === 1,
@@ -164,6 +168,9 @@ final class MailboxConnectDTO
 			shareAccess: $shareAccess,
 			useSenderName: ($fields['use_sender_name'] ?? 'N') === 'Y',
 			site: $site,
+			userPrincipalName: array_key_exists('user_principal_name', $fields)
+				? (string)$fields['user_principal_name']
+				: null,
 		);
 	}
 
@@ -213,6 +220,9 @@ final class MailboxConnectDTO
 			link: $request->get('link') !== null ? (string)$request->get('link') : null,
 			shareAccess: $request->get('shareAccess'),
 			useSenderName: self::toBoolFlag($request->get('useSenderName')),
+			userPrincipalName: $request->get('userPrincipalName') !== null
+				? (string)$request->get('userPrincipalName')
+				: null,
 		);
 	}
 
@@ -248,6 +258,9 @@ final class MailboxConnectDTO
 			shareAccess: $mailbox['shareAccess'] ?? null,
 			service: $mailbox['service'] ?? null,
 			site: $mailbox['site'] ?? null,
+			userPrincipalName: array_key_exists('userPrincipalName', $mailbox)
+				? (string)$mailbox['userPrincipalName']
+				: null,
 		);
 	}
 
@@ -274,15 +287,20 @@ final class MailboxConnectDTO
 		return (bool)$value;
 	}
 
-	private static function prepareCrmOptions(array $fields): CrmOptions
+	private static function prepareCrmOptions(array $fields): ?CrmOptions
 	{
+		if (!self::hasCrmFields($fields))
+		{
+			return null;
+		}
+
 		if (empty($fields[CrmFormField::UseCrm->value]) || $fields[CrmFormField::UseCrm->value] !== 'Y')
 		{
 			return CrmOptions::disabled();
 		}
 
 		$syncDays = null;
-		if ($fields[CrmFormField::SyncOld->value] === 'Y' && isset($fields[CrmFormField::MaxAge->value]))
+		if (($fields[CrmFormField::SyncOld->value] ?? '') === 'Y' && isset($fields[CrmFormField::MaxAge->value]))
 		{
 			$maxAge = (int)$fields[CrmFormField::MaxAge->value];
 			if ($maxAge >= 0)
@@ -322,6 +340,24 @@ final class MailboxConnectDTO
 			vcf: ($fields[CrmFormField::Vcf->value] ?? 'N') === 'Y',
 			syncDays: $syncDays,
 		);
+	}
+
+	/**
+	 * The form renders the CRM block as a whole or not at all, and the block always submits fields
+	 * that are not the switch itself. So no CRM field at all means the block was never shown and the
+	 * client is not asking to change CRM settings, while a missing switch alone means it was cleared.
+	 */
+	private static function hasCrmFields(array $fields): bool
+	{
+		foreach (CrmFormField::cases() as $field)
+		{
+			if (array_key_exists($field->value, $fields))
+			{
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	private static function normalizeCrmOptions(mixed $options): ?CrmOptions
@@ -431,5 +467,15 @@ final class MailboxConnectDTO
 		}
 
 		return null;
+	}
+
+	private static function resolveImapSslForConnect(array $fields): bool
+	{
+		if (array_key_exists('ssl_imap', $fields))
+		{
+			return $fields['ssl_imap'] === 'Y';
+		}
+
+		return !array_key_exists('server_imap', $fields);
 	}
 }

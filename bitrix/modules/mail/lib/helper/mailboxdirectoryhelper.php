@@ -2,6 +2,7 @@
 
 namespace Bitrix\Mail\Helper;
 
+use Bitrix\Mail\Internal\Service\SourceGeneration\GenerationScope;
 use Bitrix\Mail\Internals\MailboxDirectoryStorage;
 use Bitrix\Mail\Internals\MailboxDirectoryTable;
 use Bitrix\Mail\Internals\Entity\MailboxDirectory as MailboxDirectoryEntity;
@@ -12,17 +13,26 @@ use Bitrix\Main\Text\Emoji;
 class MailboxDirectoryHelper
 {
 	private int $mailboxId;
+	private ?int $userId;
+	private GenerationScope $generationScope;
 	private $storage = null;
 	/** @var  ErrorCollection */
 	private $errors = [];
 	private ?DirSortingHelper $sortingHelper = null;
 	private ?array $treeDirsCache = null;
 
-	public function __construct($mailboxId)
+	public function __construct($mailboxId, ?int $userId = null, ?GenerationScope $generationScope = null)
 	{
 		$this->mailboxId = (int)$mailboxId;
-		$this->storage = new MailboxDirectoryStorage($mailboxId);
+		$this->userId = $userId;
+		$this->generationScope = $generationScope ?? GenerationScope::forMailbox($this->mailboxId);
+		$this->storage = new MailboxDirectoryStorage($mailboxId, $this->generationScope);
 		$this->errors = new ErrorCollection();
+	}
+
+	public function getGenerationScope(): GenerationScope
+	{
+		return $this->generationScope;
 	}
 
 	public function getDirs()
@@ -279,9 +289,37 @@ class MailboxDirectoryHelper
 			}
 
 			$outcome = $helper->getDirsHelper()->getOutcome();
-			if ($outcome !== null)
+			if ($outcome)
 			{
 				$result[] = $outcome->getDirMd5();
+			}
+		}
+
+		return array_values(array_unique($result));
+	}
+
+	/**
+	 * @param int[] $mailboxIds
+	 * @return string[]
+	 */
+	public static function getSpamAndTrashDirsMd5ForMailboxes(array $mailboxIds): array
+	{
+		$result = [];
+		foreach ($mailboxIds as $mailboxId)
+		{
+			$helper = Mailbox::createInstance((int)$mailboxId, false);
+			if (!($helper instanceof Mailbox))
+			{
+				continue;
+			}
+
+			$dirsHelper = $helper->getDirsHelper();
+			foreach ([$dirsHelper->getSpam(), $dirsHelper->getTrash()] as $dir)
+			{
+				if ($dir)
+				{
+					$result[] = $dir->getDirMd5();
+				}
 			}
 		}
 
@@ -519,6 +557,7 @@ class MailboxDirectoryHelper
 			$this->sortingHelper = new DirSortingHelper(
 				$this->mailboxId,
 				$this->getProviderCode(),
+				$this->userId,
 			);
 		}
 
@@ -648,10 +687,11 @@ class MailboxDirectoryHelper
 		{
 			$removeRows = array_merge(['LOGIC' => 'OR'], $removeRows);
 
-			$filter = array_merge([
+			// The subtree removal stays inside its own generation: G2 never deletes G1
+			$filter = array_merge($this->generationScope->apply([
 				'LOGIC'       => 'AND',
 				'=MAILBOX_ID' => $this->mailboxId,
-			], [$removeRows]);
+			]), [$removeRows]);
 
 			MailboxDirectory::deleteList($filter);
 		}
@@ -731,10 +771,18 @@ class MailboxDirectoryHelper
 		return $this->treeDirsCache;
 	}
 
-	public function syncChildren($parent)
+	/**
+	 * Lists one level below the folder over a live connection and stores it in the
+	 * generation of this helper.
+	 *
+	 * @param Mailbox|null $engine The connection to list over. Only the active generation
+	 *        is projected into the connection fields of the mailbox, so a helper working
+	 *        in another generation cannot build its engine from there and receives it.
+	 */
+	public function syncChildren($parent, ?Mailbox $engine = null)
 	{
 		$pattern = sprintf('%s%s%%', $parent->getPath(), $parent->getDelimiter());
-		$mailboxHelper = Mailbox::createInstance($this->mailboxId);
+		$mailboxHelper = $engine ?? Mailbox::createInstance($this->mailboxId);
 		$dirs = $mailboxHelper->listDirs($pattern);
 
 		if ($dirs === false)
@@ -778,7 +826,8 @@ class MailboxDirectoryHelper
 		return MailboxDirectory::fetchOneLevelByParentId(
 			$this->mailboxId,
 			$parent->getId(),
-			$parent->getLevel() + 1
+			$parent->getLevel() + 1,
+			$this->generationScope
 		);
 	}
 
@@ -787,7 +836,8 @@ class MailboxDirectoryHelper
 		return MailboxDirectory::fetchAllLevelByParentId(
 			$this->mailboxId,
 			$parent->getPath(true) . $parent->getDelimiter() . '%',
-			$parent->getLevel() + 1
+			$parent->getLevel() + 1,
+			$this->generationScope
 		);
 	}
 
@@ -805,6 +855,8 @@ class MailboxDirectoryHelper
 
 				return [
 					'MAILBOX_ID'  => $this->mailboxId,
+					// A new folder always belongs to the generation this helper works in
+					'GENERATION_ID' => $this->generationScope->getStampGenerationId(),
 					'NAME'        => Emoji::encode($dir['name']),
 					'PATH'        => Emoji::encode($dir['path']),
 					'LEVEL'       => isset($dir['level']) ? $dir['level'] : 1,
@@ -887,8 +939,8 @@ class MailboxDirectoryHelper
 		$mailboxId = (int)$this->mailboxId;
 		if ($mailboxId > 0)
 		{
-			MailboxDirectory::invalidateCache($mailboxId);
-			MailboxDirectory::fetchAll($mailboxId);
+			MailboxDirectory::invalidateCache($mailboxId, $this->generationScope->getStampGenerationId());
+			MailboxDirectory::fetchAll($mailboxId, $this->generationScope);
 		}
 	}
 
@@ -919,12 +971,12 @@ class MailboxDirectoryHelper
 
 		if (!empty($enableRows))
 		{
-			MailboxDirectory::updateSyncDirs($enableRows, MailboxDirectoryTable::ACTIVE, $this->mailboxId);
+			MailboxDirectory::updateSyncDirs($enableRows, MailboxDirectoryTable::ACTIVE, $this->mailboxId, $this->generationScope);
 		}
 
 		if (!empty($disableRows))
 		{
-			MailboxDirectory::updateSyncDirs($disableRows, MailboxDirectoryTable::INACTIVE, $this->mailboxId);
+			MailboxDirectory::updateSyncDirs($disableRows, MailboxDirectoryTable::INACTIVE, $this->mailboxId, $this->generationScope);
 		}
 
 		$mailboxHelper = Mailbox::createInstance($this->mailboxId);
@@ -943,11 +995,11 @@ class MailboxDirectoryHelper
 				continue;
 			}
 
-			$result = MailboxDirectory::fetchOneByMailboxIdAndHash($this->mailboxId, $hash);
+			$result = MailboxDirectory::fetchOneByMailboxIdAndHash($this->mailboxId, $hash, $this->generationScope);
 
 			if ($result != null)
 			{
-				MailboxDirectory::resetDirsTypes($this->mailboxId, $type);
+				MailboxDirectory::resetDirsTypes($this->mailboxId, $type, $this->generationScope);
 
 				MailboxDirectory::update(
 					$result->getId(),

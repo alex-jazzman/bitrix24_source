@@ -1,55 +1,55 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports, main_core, main_core_events, main_core_cache, main_core_zIndexManager, ui_a11y, ui_system_skeleton, clipboard, main_popup) {
+(function (exports, main_core, ui_designTokens_air, ui_iconSet_actions, ui_iconSet_main, ui_iconSet_outline, main_core_events, main_popup, main_core_cache, main_core_zIndexManager, ui_a11y, ui_system_skeleton) {
 	'use strict';
 
-	function _classPrivateFieldInitSpec$1(e, t, a) { _checkPrivateRedeclaration$3(e, t), t.set(e, a); }
+	function _classPrivateFieldInitSpec$2(e, t, a) { _checkPrivateRedeclaration$3(e, t), t.set(e, a); }
 	function _checkPrivateRedeclaration$3(e, t) { if (t.has(e)) throw new TypeError("Cannot initialize the same private elements twice on an object"); }
-	function _classPrivateFieldGet$1(s, a) { return s.get(_assertClassBrand$3(s, a)); }
-	function _classPrivateFieldSet$1(s, a, r) { return s.set(_assertClassBrand$3(s, a), r), r; }
+	function _classPrivateFieldGet$2(s, a) { return s.get(_assertClassBrand$3(s, a)); }
+	function _classPrivateFieldSet$2(s, a, r) { return s.set(_assertClassBrand$3(s, a), r), r; }
 	function _assertClassBrand$3(e, t, n) { if ("function" == typeof e ? e === t : e.has(t)) return arguments.length < 3 ? t : n; throw new TypeError("Private element is not present on this object"); }
-	var _data = /*#__PURE__*/new WeakMap();
-	let Dictionary = /*#__PURE__*/function () {
+	var _data = new WeakMap();
+	let Dictionary = function () {
 		function Dictionary(data) {
 			babelHelpers.classCallCheck(this, Dictionary);
-			_classPrivateFieldInitSpec$1(this, _data, null);
+			_classPrivateFieldInitSpec$2(this, _data, void 0);
 			if (!main_core.Type.isPlainObject(data)) {
 				throw new TypeError('The argument must be a plain object.');
 			}
-			_classPrivateFieldSet$1(_data, this, data);
+			_classPrivateFieldSet$2(_data, this, data);
 		}
 		return babelHelpers.createClass(Dictionary, [{
 			key: "set",
 			value: function set(key, value) {
 				if (!main_core.Type.isStringFilled(key)) {
-					throw new Error('The \'key\' must be a string.');
+					throw new Error("The 'key' must be a string.");
 				}
-				_classPrivateFieldGet$1(_data, this)[key] = value;
+				_classPrivateFieldGet$2(_data, this)[key] = value;
 			}
 		}, {
 			key: "get",
 			value: function get(key) {
-				return _classPrivateFieldGet$1(_data, this)[key];
+				return _classPrivateFieldGet$2(_data, this)[key];
 			}
 		}, {
 			key: "delete",
 			value: function _delete(key) {
-				delete _classPrivateFieldGet$1(_data, this)[key];
+				delete _classPrivateFieldGet$2(_data, this)[key];
 			}
 		}, {
 			key: "has",
 			value: function has(key) {
-				return key in _classPrivateFieldGet$1(_data, this);
+				return key in _classPrivateFieldGet$2(_data, this);
 			}
 		}, {
 			key: "clear",
 			value: function clear() {
-				_classPrivateFieldSet$1(_data, this, {});
+				_classPrivateFieldSet$2(_data, this, {});
 			}
 		}, {
 			key: "entries",
 			value: function entries() {
-				return _classPrivateFieldGet$1(_data, this);
+				return _classPrivateFieldGet$2(_data, this);
 			}
 		}]);
 	}();
@@ -57,12 +57,12 @@ this.BX = this.BX || {};
 	function _classPrivateMethodInitSpec$2(e, a) { _checkPrivateRedeclaration$2(e, a), a.add(e); }
 	function _checkPrivateRedeclaration$2(e, t) { if (t.has(e)) throw new TypeError("Cannot initialize the same private elements twice on an object"); }
 	function _assertClassBrand$2(e, t, n) { if ("function" == typeof e ? e === t : e.has(t)) return arguments.length < 3 ? t : n; throw new TypeError("Private element is not present on this object"); }
-	var _Label_brand = /*#__PURE__*/new WeakSet();
-	let Label = /*#__PURE__*/function () {
+	var _Label_brand = new WeakSet();
+	let Label = function () {
 		function Label(slider, labelOptions) {
 			babelHelpers.classCallCheck(this, Label);
 			_classPrivateMethodInitSpec$2(this, _Label_brand);
-			babelHelpers.defineProperty(this, "slider", null);
+			babelHelpers.defineProperty(this, "slider", void 0);
 			babelHelpers.defineProperty(this, "color", null);
 			babelHelpers.defineProperty(this, "bgColor", null);
 			babelHelpers.defineProperty(this, "className", '');
@@ -72,11 +72,13 @@ this.BX = this.BX || {};
 			babelHelpers.defineProperty(this, "text", null);
 			babelHelpers.defineProperty(this, "hidden", false);
 			babelHelpers.defineProperty(this, "visible", true);
-			babelHelpers.defineProperty(this, "cache", new main_core.Cache.MemoryCache());
+			babelHelpers.defineProperty(this, "testId", null);
+			babelHelpers.defineProperty(this, "cache", new main_core_cache.MemoryCache());
 			this.slider = slider;
 			const options = main_core.Type.isPlainObject(labelOptions) ? labelOptions : {};
 			this.hidden = main_core.Type.isBoolean(options.hidden) ? options.hidden : this.hidden;
 			this.visible = main_core.Type.isBoolean(options.visible) ? options.visible : this.visible;
+			this.testId = main_core.Type.isStringFilled(options.testId) ? options.testId : null;
 			this.setColor(options.color);
 			this.setBgColor(options.bgColor);
 			this.setText(options.text);
@@ -105,7 +107,8 @@ this.BX = this.BX || {};
 						},
 						attrs: {
 							type: 'button',
-							tabIndex: this.isHidden() ? '-1' : '0'
+							tabIndex: this.isHidden() ? '-1' : '0',
+							'data-testid': this.getTestId() ?? ''
 						},
 						children: [this.getIconBox(), this.getTextContainer()],
 						events: {
@@ -125,7 +128,7 @@ this.BX = this.BX || {};
 				} else {
 					this.showText();
 				}
-				main_core.Dom.style(this.getContainer(), 'max-width', `${maxWidth - this.constructor.MIN_LEFT_OFFSET}px`);
+				main_core.Dom.style(this.getContainer(), 'max-width', `${maxWidth - Label.MIN_LEFT_OFFSET}px`);
 			}
 		}, {
 			key: "getIconBox",
@@ -267,7 +270,7 @@ this.BX = this.BX || {};
 					main_core.Dom.addClass(this.getContainer(), this.className);
 				} else if (className === null) {
 					main_core.Dom.removeClass(this.getContainer(), this.className);
-					this.className = className;
+					this.className = '';
 				}
 			}
 		}, {
@@ -284,7 +287,7 @@ this.BX = this.BX || {};
 					main_core.Dom.addClass(this.getIconContainer(), this.iconClass);
 				} else if (iconClass === null) {
 					main_core.Dom.removeClass(this.getIconContainer(), this.iconClass);
-					this.iconClass = iconClass;
+					this.iconClass = '';
 				}
 			}
 		}, {
@@ -348,6 +351,11 @@ this.BX = this.BX || {};
 				return this.onclick;
 			}
 		}, {
+			key: "getTestId",
+			value: function getTestId() {
+				return this.testId;
+			}
+		}, {
 			key: "getSlider",
 			value: function getSlider() {
 				return this.slider;
@@ -356,7 +364,7 @@ this.BX = this.BX || {};
 			key: "moveAt",
 			value: function moveAt(position) {
 				if (main_core.Type.isNumber(position) && position >= 0) {
-					main_core.Dom.style(this.getSlider().getLabelsContainer(), 'top', `${this.constructor.MIN_TOP_OFFSET + position * this.constructor.INTERVAL_TOP_OFFSET}px`);
+					main_core.Dom.style(this.getSlider().getLabelsContainer(), 'top', `${Label.MIN_TOP_OFFSET + position * Label.INTERVAL_TOP_OFFSET}px`);
 				}
 			}
 		}]);
@@ -372,9 +380,16 @@ this.BX = this.BX || {};
 	babelHelpers.defineProperty(Label, "MIN_TOP_OFFSET", 17);
 	babelHelpers.defineProperty(Label, "INTERVAL_TOP_OFFSET", 50);
 
-	let SliderEvent = /*#__PURE__*/function () {
+	function isSlider(slider) {
+		return slider instanceof Slider;
+	}
+
+	let SliderEvent = function () {
 		function SliderEvent() {
 			babelHelpers.classCallCheck(this, SliderEvent);
+			babelHelpers.defineProperty(this, "slider", null);
+			babelHelpers.defineProperty(this, "action", true);
+			babelHelpers.defineProperty(this, "name", null);
 			this.slider = null;
 			this.action = true;
 			this.name = null;
@@ -394,10 +409,6 @@ this.BX = this.BX || {};
 			value: function isActionAllowed() {
 				return this.action;
 			}
-
-			/**
-			 * @deprecated use getSlider method
-			 */
 		}, {
 			key: "getSliderPage",
 			value: function getSliderPage() {
@@ -437,14 +448,17 @@ this.BX = this.BX || {};
 
 	function _callSuper$2(t, o, e) { return o = babelHelpers.getPrototypeOf(o), babelHelpers.possibleConstructorReturn(t, _isNativeReflectConstruct$2() ? Reflect.construct(o, [], babelHelpers.getPrototypeOf(t).constructor) : o.apply(t, e)); }
 	function _isNativeReflectConstruct$2() { try { var t = !Boolean.prototype.valueOf.call(Reflect.construct(Boolean, [], function () {})); } catch (t) {} return (_isNativeReflectConstruct$2 = function () { return !!t; })(); }
-	let MessageEvent = /*#__PURE__*/function (_SliderEvent) {
+	let MessageEvent = function (_SliderEvent) {
 		function MessageEvent(eventOptions) {
 			var _this;
 			babelHelpers.classCallCheck(this, MessageEvent);
 			_this = _callSuper$2(this, MessageEvent);
+			babelHelpers.defineProperty(_this, "sender", void 0);
+			babelHelpers.defineProperty(_this, "data", null);
+			babelHelpers.defineProperty(_this, "eventId", null);
 			const options = main_core.Type.isPlainObject(eventOptions) ? eventOptions : {};
-			if (!(options.sender instanceof Slider)) {
-				throw new TypeError('\'sender\' is not an instance of BX.SidePanel.Slider');
+			if (!isSlider(options.sender)) {
+				throw new TypeError("'sender' is not an instance of BX.SidePanel.Slider");
 			}
 			_this.setName('onMessage');
 			_this.setSlider(options.slider);
@@ -479,44 +493,223 @@ this.BX = this.BX || {};
 
 	var _Slider;
 	function _classPrivateMethodInitSpec$1(e, a) { _checkPrivateRedeclaration$1(e, a), a.add(e); }
-	function _classPrivateFieldInitSpec(e, t, a) { _checkPrivateRedeclaration$1(e, t), t.set(e, a); }
+	function _classPrivateFieldInitSpec$1(e, t, a) { _checkPrivateRedeclaration$1(e, t), t.set(e, a); }
 	function _checkPrivateRedeclaration$1(e, t) { if (t.has(e)) throw new TypeError("Cannot initialize the same private elements twice on an object"); }
-	function _classPrivateFieldGet(s, a) { return s.get(_assertClassBrand$1(s, a)); }
-	function _classPrivateFieldSet(s, a, r) { return s.set(_assertClassBrand$1(s, a), r), r; }
+	function _classPrivateFieldGet$1(s, a) { return s.get(_assertClassBrand$1(s, a)); }
+	function _classPrivateFieldSet$1(s, a, r) { return s.set(_assertClassBrand$1(s, a), r), r; }
 	function _assertClassBrand$1(e, t, n) { if ("function" == typeof e ? e === t : e.has(t)) return arguments.length < 3 ? t : n; throw new TypeError("Private element is not present on this object"); }
-	var _refs = /*#__PURE__*/new WeakMap();
-	var _options = /*#__PURE__*/new WeakMap();
-	var _startPosition = /*#__PURE__*/new WeakMap();
-	var _startAnimationState = /*#__PURE__*/new WeakMap();
-	var _endAnimationState = /*#__PURE__*/new WeakMap();
-	var _currentAnimationState = /*#__PURE__*/new WeakMap();
-	var _outerBoundary = /*#__PURE__*/new WeakMap();
-	var _hideToolbarOnOpen = /*#__PURE__*/new WeakMap();
-	var _designSystemContext = /*#__PURE__*/new WeakMap();
-	var _zIndexComponent = /*#__PURE__*/new WeakMap();
-	var _autoOffset = /*#__PURE__*/new WeakMap();
-	var _focusTrap = /*#__PURE__*/new WeakMap();
-	var _targetContainer = /*#__PURE__*/new WeakMap();
-	var _Slider_brand = /*#__PURE__*/new WeakSet();
-	let Slider = /*#__PURE__*/function () {
+	var _refs = new WeakMap();
+	var _options = new WeakMap();
+	var _startPosition = new WeakMap();
+	var _startAnimationState = new WeakMap();
+	var _endAnimationState = new WeakMap();
+	var _currentAnimationState = new WeakMap();
+	var _outerBoundary = new WeakMap();
+	var _hideToolbarOnOpen = new WeakMap();
+	var _designSystemContext = new WeakMap();
+	var _zIndexComponent = new WeakMap();
+	var _autoOffset = new WeakMap();
+	var _focusTrap = new WeakMap();
+	var _targetContainer = new WeakMap();
+	var _Slider_brand = new WeakSet();
+	var _handleCrossOriginWindowMessage = new WeakMap();
+	var _handleFrameUnload = new WeakMap();
+	var _handleFrameKeyDown = new WeakMap();
+	var _handlePopupInit = new WeakMap();
+	var _handleFrameFocus = new WeakMap();
+	var _handleOverlayClick = new WeakMap();
+	var _handlePrintBtnClick = new WeakMap();
+	let Slider = function () {
 		function Slider(url, sliderOptions) {
 			babelHelpers.classCallCheck(this, Slider);
 			_classPrivateMethodInitSpec$1(this, _Slider_brand);
-			_classPrivateFieldInitSpec(this, _refs, new main_core_cache.MemoryCache());
-			_classPrivateFieldInitSpec(this, _options, {});
-			_classPrivateFieldInitSpec(this, _startPosition, 'right');
-			_classPrivateFieldInitSpec(this, _startAnimationState, null);
-			_classPrivateFieldInitSpec(this, _endAnimationState, null);
-			_classPrivateFieldInitSpec(this, _currentAnimationState, null);
-			_classPrivateFieldInitSpec(this, _outerBoundary, {});
-			_classPrivateFieldInitSpec(this, _hideToolbarOnOpen, false);
-			_classPrivateFieldInitSpec(this, _designSystemContext, '--ui-context-content-light');
-			_classPrivateFieldInitSpec(this, _zIndexComponent, null);
-			_classPrivateFieldInitSpec(this, _autoOffset, true);
-			_classPrivateFieldInitSpec(this, _focusTrap, null);
-			_classPrivateFieldInitSpec(this, _targetContainer, null);
+			_classPrivateFieldInitSpec$1(this, _refs, new main_core_cache.MemoryCache());
+			_classPrivateFieldInitSpec$1(this, _options, void 0);
+			_classPrivateFieldInitSpec$1(this, _startPosition, 'right');
+			_classPrivateFieldInitSpec$1(this, _startAnimationState, null);
+			_classPrivateFieldInitSpec$1(this, _endAnimationState, null);
+			_classPrivateFieldInitSpec$1(this, _currentAnimationState, null);
+			_classPrivateFieldInitSpec$1(this, _outerBoundary, {});
+			_classPrivateFieldInitSpec$1(this, _hideToolbarOnOpen, false);
+			_classPrivateFieldInitSpec$1(this, _designSystemContext, '--ui-context-content-light');
+			_classPrivateFieldInitSpec$1(this, _zIndexComponent, null);
+			_classPrivateFieldInitSpec$1(this, _autoOffset, true);
+			_classPrivateFieldInitSpec$1(this, _focusTrap, null);
+			_classPrivateFieldInitSpec$1(this, _targetContainer, null);
+			babelHelpers.defineProperty(this, "url", void 0);
+			babelHelpers.defineProperty(this, "offset", null);
+			babelHelpers.defineProperty(this, "width", null);
+			babelHelpers.defineProperty(this, "title", null);
+			babelHelpers.defineProperty(this, "data", void 0);
+			babelHelpers.defineProperty(this, "contentCallback", null);
+			babelHelpers.defineProperty(this, "contentCallbackInvoved", false);
+			babelHelpers.defineProperty(this, "contentClassName", null);
+			babelHelpers.defineProperty(this, "containerClassName", null);
+			babelHelpers.defineProperty(this, "overlayClassName", null);
+			babelHelpers.defineProperty(this, "hideControls", false);
+			babelHelpers.defineProperty(this, "cacheable", true);
+			babelHelpers.defineProperty(this, "autoFocus", true);
+			babelHelpers.defineProperty(this, "printable", false);
+			babelHelpers.defineProperty(this, "allowChangeHistory", null);
+			babelHelpers.defineProperty(this, "allowChangeTitle", null);
+			babelHelpers.defineProperty(this, "allowCrossOrigin", false);
+			babelHelpers.defineProperty(this, "customLeftBoundary", null);
+			babelHelpers.defineProperty(this, "customRightBoundary", null);
+			babelHelpers.defineProperty(this, "iframe", null);
+			babelHelpers.defineProperty(this, "iframeSrc", null);
+			babelHelpers.defineProperty(this, "iframeId", null);
+			babelHelpers.defineProperty(this, "requestMethod", 'get');
+			babelHelpers.defineProperty(this, "requestParams", {});
+			babelHelpers.defineProperty(this, "opened", false);
+			babelHelpers.defineProperty(this, "hidden", false);
+			babelHelpers.defineProperty(this, "destroyed", false);
+			babelHelpers.defineProperty(this, "loaded", false);
+			babelHelpers.defineProperty(this, "loadedCnt", 0);
+			babelHelpers.defineProperty(this, "minimizing", false);
+			babelHelpers.defineProperty(this, "maximizing", false);
+			babelHelpers.defineProperty(this, "layout", void 0);
+			babelHelpers.defineProperty(this, "skeleton", void 0);
+			babelHelpers.defineProperty(this, "loader", void 0);
+			babelHelpers.defineProperty(this, "animation", null);
+			babelHelpers.defineProperty(this, "animationDuration", 200);
+			babelHelpers.defineProperty(this, "animationName", 'sliding');
+			babelHelpers.defineProperty(this, "animationOptions", {});
+			babelHelpers.defineProperty(this, "overlayBgColor", '#000000');
+			babelHelpers.defineProperty(this, "overlayOpacity", 40);
+			babelHelpers.defineProperty(this, "overlayBgCallback", null);
+			babelHelpers.defineProperty(this, "overlayAnimation", false);
+			babelHelpers.defineProperty(this, "minimizeOptions", null);
+			babelHelpers.defineProperty(this, "label", void 0);
+			babelHelpers.defineProperty(this, "minimizeLabel", void 0);
+			babelHelpers.defineProperty(this, "newWindowLabel", null);
+			babelHelpers.defineProperty(this, "copyLinkLabel", null);
+			babelHelpers.defineProperty(this, "printLabel", null);
+			_classPrivateFieldInitSpec$1(this, _handleCrossOriginWindowMessage, event => {
+				const frameUrl = new URL(this.url);
+				const eventUrl = new URL(event.origin);
+				if (eventUrl.origin !== frameUrl.origin) {
+					return;
+				}
+				const message = {
+					type: '',
+					data: undefined
+				};
+				if (main_core.Type.isString(event.data)) {
+					message.type = event.data;
+				} else if (main_core.Type.isPlainObject(event.data)) {
+					message.type = event.data.type;
+					message.data = event.data.data;
+				}
+				switch (message.type) {
+					case 'BX:SidePanel:close':
+						{
+							this.close();
+							break;
+						}
+					case 'BX:SidePanel:load:force':
+						{
+							if (!this.isLoaded() && !this.isDestroyed()) {
+								this.handleFrameLoad();
+							}
+							break;
+						}
+					case 'BX:SidePanel:data:send':
+						{
+							const pageEvent = new MessageEvent({
+								sender: this,
+								data: message.data
+							});
+							pageEvent.setName('onXDomainMessage');
+							this.firePageEvent(pageEvent);
+							break;
+						}
+				}
+			});
+			_classPrivateFieldInitSpec$1(this, _handleFrameUnload, () => {
+				this.loaded = false;
+				_assertClassBrand$1(_Slider_brand, this, _listenIframeLoading).call(this);
+			});
+			_classPrivateFieldInitSpec$1(this, _handleFrameKeyDown, event => {
+				if (event.keyCode !== 27) {
+					return;
+				}
+				const framePopupManager = this.getWindow().BX?.Main?.PopupManager;
+				if (framePopupManager) {
+					const popups = framePopupManager.getPopups();
+					for (const popup of popups) {
+						if (popup.isShown()) {
+							return;
+						}
+					}
+				}
+				const centerX = this.getWindow().document.documentElement.clientWidth / 2;
+				const centerY = this.getWindow().document.documentElement.clientHeight / 2;
+				const element = this.getWindow().document.elementFromPoint(centerX, centerY);
+				if (main_core.Dom.hasClass(element, 'bx-core-dialog-overlay') || main_core.Dom.hasClass(element, 'bx-core-window')) {
+					return;
+				}
+				if (element.closest('.bx-core-window')) {
+					return;
+				}
+				this.firePageEvent('onEscapePress');
+				this.fireFrameEvent('onEscapePress');
+			});
+			_classPrivateFieldInitSpec$1(this, _handlePopupInit, event => {
+				const data = event.getCompatData();
+				const bindElement = data[1];
+				const params = data[2];
+				if (!main_core.Type.isElementNode(params.targetContainer) && main_core.Type.isElementNode(bindElement) && this.getContentContainer().contains(bindElement)) {
+					params.targetContainer = this.getContentContainer();
+				}
+			});
+			_classPrivateFieldInitSpec$1(this, _handleFrameFocus, event => {
+				this.firePageEvent('onFrameFocus');
+			});
+			_classPrivateFieldInitSpec$1(this, _handleOverlayClick, event => {
+				if (event.target === this.getOverlay()) {
+					if (this.animation === null) {
+						this.close();
+						event.stopPropagation();
+					} else {
+						event.preventDefault();
+					}
+				}
+			});
+			_classPrivateFieldInitSpec$1(this, _handlePrintBtnClick, () => {
+				if (this.isSelfContained()) {
+					const frame = document.createElement('iframe');
+					frame.src = 'about:blank';
+					frame.name = 'sidepanel-print-frame';
+					main_core.Dom.style(frame, 'display', 'none');
+					main_core.Dom.append(frame, document.body);
+					const frameWindow = frame.contentWindow;
+					const frameDoc = frameWindow.document;
+					frameDoc.open();
+					frameDoc.write('<html><head>');
+					let headTags = '';
+					const links = document.head.querySelectorAll('link, style');
+					for (const link of links) {
+						headTags += link.outerHTML;
+					}
+					headTags += '<style>html, body { background: #fff !important; height: 100%; }</style>';
+					frameDoc.write(headTags);
+					frameDoc.write('</head><body>');
+					frameDoc.write(this.getContentContainer().innerHTML);
+					frameDoc.write('</body></html>');
+					frameDoc.close();
+					frameWindow.focus();
+					frameWindow.print();
+					setTimeout(() => {
+						main_core.Dom.remove(frame);
+						window.focus();
+					}, 1000);
+				} else {
+					this.focus();
+					this.getFrameWindow().print();
+				}
+			});
 			const options = main_core.Type.isPlainObject(sliderOptions) ? sliderOptions : {};
-			_classPrivateFieldSet(_options, this, options);
+			_classPrivateFieldSet$1(_options, this, options);
 			this.contentCallback = main_core.Type.isFunction(options.contentCallback) ? options.contentCallback : null;
 			this.contentCallbackInvoved = false;
 			this.contentClassName = main_core.Type.isStringFilled(options.contentClassName) ? options.contentClassName : null;
@@ -539,10 +732,6 @@ this.BX = this.BX || {};
 			this.setCustomRightBoundary(options.customRightBoundary);
 			this.title = null;
 			this.setTitle(options.title);
-			/**
-			 *
-			 * @type {HTMLIFrameElement}
-			 */
 			this.iframe = null;
 			this.iframeSrc = null;
 			this.iframeId = null;
@@ -555,11 +744,6 @@ this.BX = this.BX || {};
 			this.loadedCnt = 0;
 			this.minimizing = false;
 			this.maximizing = false;
-			this.handleFrameKeyDown = this.handleFrameKeyDown.bind(this);
-			this.handleFrameFocus = this.handleFrameFocus.bind(this);
-			this.handleFrameUnload = this.handleFrameUnload.bind(this);
-			this.handlePopupInit = this.handlePopupInit.bind(this);
-			this.handleCrossOriginWindowMessage = this.handleCrossOriginWindowMessage.bind(this);
 			this.layout = {
 				overlay: null,
 				container: null,
@@ -573,11 +757,11 @@ this.BX = this.BX || {};
 			this.overlayBgColor = main_core.Type.isStringFilled(options.overlayBgColor) && /^#[\dA-Za-f]{6}$/.test(options.overlayBgColor) ? options.overlayBgColor : '#000000';
 			this.overlayOpacity = main_core.Type.isNumber(options.overlayOpacity) ? Math.min(Math.max(options.overlayOpacity, 0), 100) : 40;
 			this.overlayBgCallback = main_core.Type.isFunction(options.overlayBgCallback) ? options.overlayBgCallback : null;
-			_classPrivateFieldSet(_startPosition, this, ['right', 'bottom', 'top'].includes(options.startPosition) ? options.startPosition : _classPrivateFieldGet(_startPosition, this));
-			_classPrivateFieldSet(_outerBoundary, this, main_core.Type.isPlainObject(options.outerBoundary) ? options.outerBoundary : {});
-			_classPrivateFieldSet(_startAnimationState, this, _assertClassBrand$1(_Slider_brand, this, _getAnimationState).call(this, 'start'));
-			_classPrivateFieldSet(_endAnimationState, this, _assertClassBrand$1(_Slider_brand, this, _getAnimationState).call(this, 'end'));
-			_classPrivateFieldSet(_currentAnimationState, this, null);
+			_classPrivateFieldSet$1(_startPosition, this, ['right', 'bottom', 'top'].includes(options.startPosition) ? options.startPosition : _classPrivateFieldGet$1(_startPosition, this));
+			_classPrivateFieldSet$1(_outerBoundary, this, main_core.Type.isPlainObject(options.outerBoundary) ? options.outerBoundary : {});
+			_classPrivateFieldSet$1(_startAnimationState, this, _assertClassBrand$1(_Slider_brand, this, _getAnimationState).call(this, 'start'));
+			_classPrivateFieldSet$1(_endAnimationState, this, _assertClassBrand$1(_Slider_brand, this, _getAnimationState).call(this, 'end'));
+			_classPrivateFieldSet$1(_currentAnimationState, this, null);
 			this.overlayAnimation = false;
 			this.animationName = 'sliding';
 			this.animationOptions = {};
@@ -590,6 +774,7 @@ this.BX = this.BX || {};
 				className: '--close-label --ui-hoverable',
 				iconClass: 'side-panel-label-icon-close ui-icon-set --cross-l',
 				iconTitle: main_core.Loc.getMessage('MAIN_SIDEPANEL_CLOSE'),
+				testId: 'main-sidepanel-close',
 				onclick(label, slider) {
 					slider.close();
 				}
@@ -602,6 +787,7 @@ this.BX = this.BX || {};
 				className: '--ui-hoverable',
 				iconClass: 'side-panel-label-icon-minimize ui-icon-set --o-minimize',
 				iconTitle: main_core.Loc.getMessage('MAIN_SIDEPANEL_MINIMIZE'),
+				testId: 'main-sidepanel-minimize',
 				onclick: (label, slider) => {
 					if (this.isLoaded()) {
 						this.minimize();
@@ -617,6 +803,7 @@ this.BX = this.BX || {};
 					className: '--ui-hoverable',
 					iconClass: 'side-panel-label-icon-new-window ui-icon-set --go-to-l',
 					iconTitle: main_core.Loc.getMessage('MAIN_SIDEPANEL_NEW_WINDOW'),
+					testId: 'main-sidepanel-new-window',
 					onclick(label, slider) {
 						const newWindowUrl = main_core.Type.isStringFilled(options.newWindowUrl) ? options.newWindowUrl : slider.getUrl();
 						Object.assign(document.createElement('a'), {
@@ -630,9 +817,11 @@ this.BX = this.BX || {};
 				this.copyLinkLabel = new Label(this, {
 					className: '--ui-hoverable',
 					iconClass: 'side-panel-label-icon-copy-link ui-icon-set --o-link',
-					iconTitle: main_core.Loc.getMessage('MAIN_SIDEPANEL_COPY_LINK')
+					iconTitle: main_core.Loc.getMessage('MAIN_SIDEPANEL_COPY_LINK'),
+					testId: 'main-sidepanel-copy-link'
 				});
-				BX.clipboard.bindCopyClick(this.copyLinkLabel.getContainer(), {
+				const clipboard = main_core.Reflection.getClass('BX.clipboard');
+				clipboard?.bindCopyClick(this.copyLinkLabel.getContainer(), {
 					text: () => {
 						const link = document.createElement('a');
 						link.href = main_core.Type.isStringFilled(options.newWindowUrl) ? options.newWindowUrl : this.getUrl();
@@ -645,10 +834,11 @@ this.BX = this.BX || {};
 				className: '--side-panel-label-print --ui-hoverable',
 				iconClass: 'side-panel-label-icon-print ui-icon-set --o-printer',
 				iconTitle: main_core.Loc.getMessage('MAIN_SIDEPANEL_PRINT'),
-				onclick: this.handlePrintBtnClick.bind(this)
+				testId: 'main-sidepanel-print',
+				onclick: _classPrivateFieldGet$1(_handlePrintBtnClick, this)
 			});
 			if (main_core.Type.isStringFilled(options.targetContainer) || main_core.Type.isElementNode(options.targetContainer)) {
-				_classPrivateFieldSet(_targetContainer, this, options.targetContainer);
+				_classPrivateFieldSet$1(_targetContainer, this, options.targetContainer);
 			}
 			[options.events].flat().forEach(events => _assertClassBrand$1(_Slider_brand, this, _subscribeEvents).call(this, events));
 		}
@@ -671,7 +861,7 @@ this.BX = this.BX || {};
 				main_core.Dom.removeClass(this.getOverlay(), '--closing');
 				main_core.Dom.addClass(this.getOverlay(), '--opening');
 				this.adjustLayout();
-				_classPrivateFieldGet(_zIndexComponent, this).getStack().bringToFront(this.getOverlay());
+				_classPrivateFieldGet$1(_zIndexComponent, this).getStack().bringToFront(this.getOverlay());
 				this.opened = true;
 				this.fireEvent('onOpenStart');
 				if (this.isLoaded()) {
@@ -684,7 +874,7 @@ this.BX = this.BX || {};
 						preventScroll: true
 					});
 				}
-				this.animateOpening();
+				_assertClassBrand$1(_Slider_brand, this, _animateOpening).call(this);
 				return true;
 			}
 		}, {
@@ -711,23 +901,21 @@ this.BX = this.BX || {};
 				main_core.Dom.addClass(this.getOverlay(), '--closing');
 				this.fireEvent('onClosing');
 				if (immediately === true || main_core.Browser.isMobile()) {
-					_classPrivateFieldSet(_currentAnimationState, this, _classPrivateFieldGet(_startAnimationState, this));
-					this.completeAnimation(callback);
+					_classPrivateFieldSet$1(_currentAnimationState, this, _classPrivateFieldGet$1(_startAnimationState, this));
+					_assertClassBrand$1(_Slider_brand, this, _completeAnimation).call(this, callback);
 				} else {
 					this.animation = new main_core.Easing({
 						duration: this.animationDuration,
-						start: _classPrivateFieldGet(_currentAnimationState, this),
-						finish: _classPrivateFieldGet(_startAnimationState, this),
+						start: _classPrivateFieldGet$1(_currentAnimationState, this),
+						finish: _classPrivateFieldGet$1(_startAnimationState, this),
 						step: state => {
-							_classPrivateFieldSet(_currentAnimationState, this, state);
-							this.animateStep(state);
+							_classPrivateFieldSet$1(_currentAnimationState, this, state);
+							_assertClassBrand$1(_Slider_brand, this, _animateStep).call(this, state);
 						},
 						complete: () => {
-							this.completeAnimation(callback);
+							_assertClassBrand$1(_Slider_brand, this, _completeAnimation).call(this, callback);
 						}
 					});
-
-					// Chrome rendering bug
 					main_core.Dom.style(this.getContainer(), 'opacity', 0.96);
 					if (this.animationName === 'scale' && main_core.Type.isStringFilled(this.animationOptions.origin)) {
 						main_core.Dom.style(this.getContainer(), 'transform-origin', this.animationOptions.origin);
@@ -793,28 +981,28 @@ this.BX = this.BX || {};
 			key: "setToolbarOnOpen",
 			value: function setToolbarOnOpen(flag) {
 				if (main_core.Type.isBoolean(flag)) {
-					_classPrivateFieldSet(_hideToolbarOnOpen, this, flag);
+					_classPrivateFieldSet$1(_hideToolbarOnOpen, this, flag);
 				}
 			}
 		}, {
 			key: "shouldHideToolbarOnOpen",
 			value: function shouldHideToolbarOnOpen() {
-				return _classPrivateFieldGet(_hideToolbarOnOpen, this);
+				return _classPrivateFieldGet$1(_hideToolbarOnOpen, this);
 			}
 		}, {
 			key: "getDesignSystemContext",
 			value: function getDesignSystemContext() {
-				return _classPrivateFieldGet(_designSystemContext, this);
+				return _classPrivateFieldGet$1(_designSystemContext, this);
 			}
 		}, {
 			key: "setDesignSystemContext",
 			value: function setDesignSystemContext(context) {
 				if (main_core.Type.isString(context)) {
 					if (this.layout.container !== null) {
-						main_core.Dom.removeClass(this.layout.container, _classPrivateFieldGet(_designSystemContext, this));
+						main_core.Dom.removeClass(this.layout.container, _classPrivateFieldGet$1(_designSystemContext, this));
 						main_core.Dom.addClass(this.layout.container, context);
 					}
-					_classPrivateFieldSet(_designSystemContext, this, context);
+					_classPrivateFieldSet$1(_designSystemContext, this, context);
 				}
 			}
 		}, {
@@ -833,12 +1021,6 @@ this.BX = this.BX || {};
 			key: "focus",
 			value: function focus() {
 				this.getWindow().focus();
-
-				// if (this.isSelfContained())
-				// {
-				// 	this.getContentContainer().setAttribute("tabindex", "0");
-				// 	this.getContentContainer().focus();
-				// }
 			}
 		}, {
 			key: "isOpen",
@@ -848,20 +1030,11 @@ this.BX = this.BX || {};
 		}, {
 			key: "getStartPosition",
 			value: function getStartPosition() {
-				return _classPrivateFieldGet(_startPosition, this);
+				return _classPrivateFieldGet$1(_startPosition, this);
 			}
-
-			/**
-			 * @deprecated
-			 */
 		}, {
 			key: "setZindex",
 			value: function setZindex(zIndex) {}
-
-			/**
-			 * @public
-			 * @returns {number}
-			 */
 		}, {
 			key: "getZindex",
 			value: function getZindex() {
@@ -870,7 +1043,7 @@ this.BX = this.BX || {};
 		}, {
 			key: "getZIndexComponent",
 			value: function getZIndexComponent() {
-				return _classPrivateFieldGet(_zIndexComponent, this);
+				return _classPrivateFieldGet$1(_zIndexComponent, this);
 			}
 		}, {
 			key: "setOffset",
@@ -888,13 +1061,13 @@ this.BX = this.BX || {};
 			key: "setAutoOffset",
 			value: function setAutoOffset(autoOffset) {
 				if (main_core.Type.isBoolean(autoOffset)) {
-					_classPrivateFieldSet(_autoOffset, this, autoOffset);
+					_classPrivateFieldSet$1(_autoOffset, this, autoOffset);
 				}
 			}
 		}, {
 			key: "shouldUseAutoOffset",
 			value: function shouldUseAutoOffset() {
-				return _classPrivateFieldGet(_autoOffset, this);
+				return _classPrivateFieldGet$1(_autoOffset, this);
 			}
 		}, {
 			key: "setWidth",
@@ -931,6 +1104,11 @@ this.BX = this.BX || {};
 				return this.contentCallback !== null;
 			}
 		}, {
+			key: "isCrossOriginAllowed",
+			value: function isCrossOriginAllowed() {
+				return this.allowCrossOrigin;
+			}
+		}, {
 			key: "isPostMethod",
 			value: function isPostMethod() {
 				return this.requestMethod === 'post';
@@ -940,11 +1118,6 @@ this.BX = this.BX || {};
 			value: function getRequestParams() {
 				return this.requestParams;
 			}
-
-			/**
-			 * @public
-			 * @returns {string}
-			 */
 		}, {
 			key: "getFrameId",
 			value: function getFrameId() {
@@ -1025,11 +1198,6 @@ this.BX = this.BX || {};
 			value: function setAutoFocus(autoFocus = true) {
 				this.autoFocus = autoFocus !== false;
 			}
-
-			/**
-			 * @public
-			 * @param {boolean} printable
-			 */
 		}, {
 			key: "setPrintable",
 			value: function setPrintable(printable = true) {
@@ -1172,32 +1340,24 @@ this.BX = this.BX || {};
 		}, {
 			key: "applyHacks",
 			value: function applyHacks() {
-				// You can override this method in a derived class
 			}
 		}, {
 			key: "applyPostHacks",
 			value: function applyPostHacks() {
-				// You can override this method in a derived class
 			}
 		}, {
 			key: "resetHacks",
 			value: function resetHacks() {
-				// You can override this method in a derived class
 			}
 		}, {
 			key: "resetPostHacks",
 			value: function resetPostHacks() {
-				// You can override this method in a derived class
 			}
 		}, {
 			key: "getTopBoundary",
 			value: function getTopBoundary() {
 				return 0;
 			}
-
-			/**
-			 * @protected
-			 */
 		}, {
 			key: "calculateLeftBoundary",
 			value: function calculateLeftBoundary() {
@@ -1218,10 +1378,6 @@ this.BX = this.BX || {};
 			value: function getMinLeftBoundary() {
 				return this.hideControls && this.getCustomLeftBoundary() !== null ? 0 : 65;
 			}
-
-			/**
-			 * @internal
-			 */
 		}, {
 			key: "getLeftBoundaryOffset",
 			value: function getLeftBoundaryOffset() {
@@ -1252,10 +1408,6 @@ this.BX = this.BX || {};
 			value: function getCustomRightBoundary() {
 				return this.customRightBoundary;
 			}
-
-			/**
-			 * @protected
-			 */
 		}, {
 			key: "calculateRightBoundary",
 			value: function calculateRightBoundary() {
@@ -1273,12 +1425,12 @@ this.BX = this.BX || {};
 		}, {
 			key: "getOuterBoundary",
 			value: function getOuterBoundary() {
-				return _classPrivateFieldGet(_outerBoundary, this);
+				return _classPrivateFieldGet$1(_outerBoundary, this);
 			}
 		}, {
 			key: "calculateOuterBoundary",
 			value: function calculateOuterBoundary() {
-				// You can override this method in a derived class
+				return undefined;
 			}
 		}, {
 			key: "destroy",
@@ -1290,37 +1442,33 @@ this.BX = this.BX || {};
 				this.fireFrameEvent('onDestroy');
 				const frameWindow = this.getFrameWindow();
 				if (frameWindow && !this.allowCrossOrigin) {
-					main_core.Event.unbind(frameWindow, 'keydown', this.handleFrameKeyDown);
-					main_core.Event.unbind(frameWindow, 'focus', this.handleFrameFocus);
-					main_core.Event.unbind(frameWindow, 'unload', this.handleFrameUnload);
+					main_core.Event.unbind(frameWindow, 'keydown', _classPrivateFieldGet$1(_handleFrameKeyDown, this));
+					main_core.Event.unbind(frameWindow, 'focus', _classPrivateFieldGet$1(_handleFrameFocus, this));
+					main_core.Event.unbind(frameWindow, 'unload', _classPrivateFieldGet$1(_handleFrameUnload, this));
 				} else if (this.allowCrossOrigin) {
-					main_core.Event.unbind(window, 'message', this.handleCrossOriginWindowMessage);
+					main_core.Event.unbind(window, 'message', _classPrivateFieldGet$1(_handleCrossOriginWindowMessage, this));
 				}
-				main_core_events.EventEmitter.unsubscribe('BX.Main.Popup:onInit', this.handlePopupInit);
+				main_core_events.EventEmitter.unsubscribe('BX.Main.Popup:onInit', _classPrivateFieldGet$1(_handlePopupInit, this));
 				main_core_zIndexManager.ZIndexManager.unregister(this.layout.overlay);
-				_classPrivateFieldSet(_zIndexComponent, this, null);
+				_classPrivateFieldSet$1(_zIndexComponent, this, null);
 				ui_a11y.FocusMonitor.Instance.detachIframe(this.getFrame());
-				if (_classPrivateFieldGet(_focusTrap, this) !== null) {
-					_classPrivateFieldGet(_focusTrap, this).destroy();
+				if (_classPrivateFieldGet$1(_focusTrap, this) !== null) {
+					_classPrivateFieldGet$1(_focusTrap, this).destroy();
 				}
-				_classPrivateFieldSet(_focusTrap, this, null);
+				_classPrivateFieldSet$1(_focusTrap, this, null);
 				main_core.Dom.remove(this.layout.overlay);
 				this.layout.container = null;
 				this.layout.overlay = null;
 				this.layout.content = null;
 				this.layout.closeBtn = null;
 				this.layout.loader = null;
-				_classPrivateFieldSet(_refs, this, null);
+				_classPrivateFieldSet$1(_refs, this, new main_core_cache.MemoryCache());
 				this.iframe = null;
 				this.destroyed = true;
 				main_core_events.EventEmitter.unsubscribeAll(this);
 				this.firePageEvent('onDestroyComplete');
 				return true;
 			}
-
-			/**
-			 * @internal
-			 */
 		}, {
 			key: "hide",
 			value: function hide() {
@@ -1328,10 +1476,6 @@ this.BX = this.BX || {};
 				main_core.Dom.style(this.getContainer(), 'display', 'none');
 				main_core.Dom.style(this.getOverlay(), 'display', 'none');
 			}
-
-			/**
-			 * @internal
-			 */
 		}, {
 			key: "unhide",
 			value: function unhide() {
@@ -1339,10 +1483,6 @@ this.BX = this.BX || {};
 				main_core.Dom.style(this.getContainer(), 'display', null);
 				main_core.Dom.style(this.getOverlay(), 'display', null);
 			}
-
-			/**
-			 * @public
-			 */
 		}, {
 			key: "reload",
 			value: function reload() {
@@ -1356,10 +1496,6 @@ this.BX = this.BX || {};
 					this.getFrameWindow().location.reload();
 				}
 			}
-
-			/**
-			 * @public
-			 */
 		}, {
 			key: "adjustLayout",
 			value: function adjustLayout() {
@@ -1368,7 +1504,7 @@ this.BX = this.BX || {};
 				let topBoundary = this.getTopBoundary();
 				const isTopBoundaryVisible = topBoundary - scrollTop > 0;
 				topBoundary = isTopBoundaryVisible ? topBoundary : scrollTop;
-				const height = isTopBoundaryVisible > 0 ? windowHeight - topBoundary + scrollTop : windowHeight;
+				const height = isTopBoundaryVisible ? windowHeight - topBoundary + scrollTop : windowHeight;
 				const leftBoundary = this.getLeftBoundaryOffset();
 				const rightBoundary = this.calculateRightBoundary();
 				main_core.Dom.style(this.getOverlay(), {
@@ -1388,15 +1524,10 @@ this.BX = this.BX || {};
 					right: right === null ? null : `${right}px`,
 					top: top === null ? null : `${top}px`,
 					bottom: bottom === null ? null : `${bottom}px`
-					// height: `${height}px`, // height: '100%',
 				});
 				this.getLabel().adjustLayout();
 				this.fireEvent('onLayout');
 			}
-
-			/**
-			 * @private
-			 */
 		}, {
 			key: "createLayout",
 			value: function createLayout() {
@@ -1411,25 +1542,25 @@ this.BX = this.BX || {};
 					main_core.Dom.addClass(this.getOverlay(), '--self-contained');
 					main_core.Dom.append(this.getOverlay(), this.getTargetContainer());
 					this.setContent();
-					main_core_events.EventEmitter.subscribe('BX.Main.Popup:onInit', this.handlePopupInit);
+					main_core_events.EventEmitter.subscribe('BX.Main.Popup:onInit', _classPrivateFieldGet$1(_handlePopupInit, this));
 				} else {
 					main_core.Dom.append(this.getFrame(), this.getContentContainer());
 					main_core.Dom.append(this.getOverlay(), this.getTargetContainer());
-					this.setFrameSrc(); // setFrameSrc must be below than appendChild, otherwise POST method fails.
+					this.setFrameSrc();
 				}
 				const stack = main_core_zIndexManager.ZIndexManager.getOrAddStack(document.body);
-				_classPrivateFieldSet(_zIndexComponent, this, stack.register(this.getOverlay()));
+				_classPrivateFieldSet$1(_zIndexComponent, this, stack.register(this.getOverlay()));
 			}
 		}, {
 			key: "getTargetContainer",
 			value: function getTargetContainer() {
-				if (_classPrivateFieldGet(_targetContainer, this) === null) {
+				if (_classPrivateFieldGet$1(_targetContainer, this) === null) {
 					return document.body;
 				}
-				if (main_core.Type.isElementNode(_classPrivateFieldGet(_targetContainer, this))) {
-					return _classPrivateFieldGet(_targetContainer, this);
+				if (main_core.Type.isElementNode(_classPrivateFieldGet$1(_targetContainer, this))) {
+					return _classPrivateFieldGet$1(_targetContainer, this);
 				}
-				const container = document.querySelector(_classPrivateFieldGet(_targetContainer, this));
+				const container = document.querySelector(_classPrivateFieldGet$1(_targetContainer, this));
 				if (main_core.Type.isElementNode(container)) {
 					return container;
 				}
@@ -1445,7 +1576,8 @@ this.BX = this.BX || {};
 					attrs: {
 						referrerpolicy: this.allowCrossOrigin ? 'strict-origin' : false,
 						src: 'about:blank',
-						frameborder: '0'
+						frameborder: '0',
+						'data-testid': 'main-sidepanel-iframe'
 					},
 					props: {
 						className: 'side-panel-iframe',
@@ -1469,8 +1601,11 @@ this.BX = this.BX || {};
 					props: {
 						className: `side-panel side-panel-overlay${overlayClass}`
 					},
+					attrs: {
+						'data-testid': 'main-sidepanel-overlay'
+					},
 					events: {
-						mousedown: this.handleOverlayClick.bind(this)
+						mousedown: _classPrivateFieldGet$1(_handleOverlayClick, this)
 					},
 					children: [this.getContainer()]
 				});
@@ -1539,7 +1674,7 @@ this.BX = this.BX || {};
 			<div class="side-panel-content-wrapper">${this.getContentContainer()}</div>
 		`;
 				this.layout.container = main_core.Tag.render`
-			<div class="side-panel side-panel-container" role="dialog" aria-busy="true">
+			<div class="side-panel side-panel-container" role="dialog" aria-busy="true" data-testid="main-sidepanel-container">
 				${this.hideControls ? content : [content, this.getLabelsContainer()]}
 			</div>
 		`;
@@ -1557,6 +1692,9 @@ this.BX = this.BX || {};
 				this.layout.content = main_core.Dom.create('div', {
 					props: {
 						className: `side-panel-content-container${contentClass}`
+					},
+					attrs: {
+						'data-testid': 'main-sidepanel-content'
 					}
 				});
 				return this.layout.content;
@@ -1564,7 +1702,7 @@ this.BX = this.BX || {};
 		}, {
 			key: "getLabelsContainer",
 			value: function getLabelsContainer() {
-				return _classPrivateFieldGet(_refs, this).remember('labels-container', () => {
+				return _classPrivateFieldGet$1(_refs, this).remember('labels-container', () => {
 					return main_core.Dom.create('div', {
 						props: {
 							className: 'side-panel-labels'
@@ -1576,7 +1714,7 @@ this.BX = this.BX || {};
 		}, {
 			key: "getExtraLabelsContainer",
 			value: function getExtraLabelsContainer() {
-				return _classPrivateFieldGet(_refs, this).remember('icon-labels', () => {
+				return _classPrivateFieldGet$1(_refs, this).remember('icon-labels', () => {
 					return main_core.Dom.create('div', {
 						props: {
 							className: 'side-panel-extra-labels'
@@ -1615,10 +1753,6 @@ this.BX = this.BX || {};
 			value: function getPrintLabel() {
 				return this.printLabel;
 			}
-
-			/**
-			 * @private
-			 */
 		}, {
 			key: "setContent",
 			value: function setContent() {
@@ -1662,10 +1796,6 @@ this.BX = this.BX || {};
 					this.getContentContainer().innerHTML = reason;
 				});
 			}
-
-			/**
-			 * @private
-			 */
 		}, {
 			key: "setFrameSrc",
 			value: function setFrameSrc() {
@@ -1691,12 +1821,8 @@ this.BX = this.BX || {};
 					this.iframe.src = url;
 				}
 				this.loaded = false;
-				this.listenIframeLoading();
+				_assertClassBrand$1(_Slider_brand, this, _listenIframeLoading).call(this);
 			}
-
-			/**
-			 * @private
-			 */
 		}, {
 			key: "createLoader",
 			value: function createLoader(sliderLoader, skeleton) {
@@ -1757,10 +1883,6 @@ this.BX = this.BX || {};
 					})]
 				});
 			}
-
-			/**
-			 * @private
-			 */
 		}, {
 			key: "createOldLoader",
 			value: function createOldLoader(loader) {
@@ -1824,10 +1946,6 @@ this.BX = this.BX || {};
 					})]
 				});
 			}
-
-			/**
-			 * @private
-			 */
 		}, {
 			key: "createHTMLLoader",
 			value: function createHTMLLoader(loader) {
@@ -1864,10 +1982,6 @@ this.BX = this.BX || {};
 				}
 				return false;
 			}
-
-			/**
-			 * @private
-			 */
 		}, {
 			key: "removeLoader",
 			value: function removeLoader() {
@@ -1877,177 +1991,47 @@ this.BX = this.BX || {};
 		}, {
 			key: "getFocusTrap",
 			value: function getFocusTrap() {
-				if (_classPrivateFieldGet(_focusTrap, this) === null) {
+				if (_classPrivateFieldGet$1(_focusTrap, this) === null) {
 					const defaultFocusTrapOptions = {
 						isolateOutside: true,
 						initialFocus: ['[data-autofocus]', 'container']
 					};
-					const focusTrapOptions = main_core.Type.isPlainObject(_classPrivateFieldGet(_options, this).focusTrap) ? _classPrivateFieldGet(_options, this).focusTrap : {};
-					_classPrivateFieldSet(_focusTrap, this, new ui_a11y.FocusTrap(this.getContainer(), main_core.Runtime.merge(defaultFocusTrapOptions, focusTrapOptions)));
+					const focusTrapOptions = main_core.Type.isPlainObject(_classPrivateFieldGet$1(_options, this).focusTrap) ? _classPrivateFieldGet$1(_options, this).focusTrap : {};
+					_classPrivateFieldSet$1(_focusTrap, this, new ui_a11y.FocusTrap(this.getContainer(), main_core.Runtime.merge(defaultFocusTrapOptions, focusTrapOptions)));
 				}
-				return _classPrivateFieldGet(_focusTrap, this);
+				return _classPrivateFieldGet$1(_focusTrap, this);
 			}
-
-			/**
-			 * @private
-			 */
-		}, {
-			key: "animateOpening",
-			value: function animateOpening() {
-				if (this.animation) {
-					this.animation.stop();
-				}
-				this.fireEvent('onOpening');
-				if (main_core.Browser.isMobile()) {
-					_classPrivateFieldSet(_currentAnimationState, this, _classPrivateFieldGet(_endAnimationState, this));
-					this.animateStep(_classPrivateFieldGet(_currentAnimationState, this));
-					this.completeAnimation();
-					return;
-				}
-				_classPrivateFieldSet(_currentAnimationState, this, _classPrivateFieldGet(_currentAnimationState, this) === null ? _classPrivateFieldGet(_startAnimationState, this) : _classPrivateFieldGet(_currentAnimationState, this));
-				if (this.skeleton) {
-					this.showLoader();
-				}
-				this.animation = new main_core.Easing({
-					duration: this.animationDuration,
-					start: _classPrivateFieldGet(_currentAnimationState, this),
-					finish: _classPrivateFieldGet(_endAnimationState, this),
-					step: state => {
-						_classPrivateFieldSet(_currentAnimationState, this, state);
-						this.animateStep(state);
-					},
-					complete: () => {
-						this.completeAnimation();
-					}
-				});
-				if (this.animationName === 'scale' && main_core.Type.isStringFilled(this.animationOptions.origin)) {
-					main_core.Dom.style(this.getContainer(), 'transform-origin', this.animationOptions.origin);
-				}
-				this.animation.animate();
-			}
-
-			/**
-			 * @private
-			 * @param {object} state
-			 */
-		}, {
-			key: "animateStep",
-			value: function animateStep(state) {
-				if (this.animationName === 'scale') {
-					main_core.Dom.style(this.getContainer(), 'transform', `scale(${state.scale / 100})`);
-				} else {
-					main_core.Dom.style(this.getContainer(), 'transform', `translate(${state.translateX}%, ${state.translateY}%)`);
-				}
-				if (this.getOverlayAnimation()) {
-					if (this.overlayBgCallback === null) {
-						const opacity = parseInt(state.opacity / 100 * 255, 10).toString(16).padStart(2, 0);
-						main_core.Dom.style(this.getOverlay(), 'background-color', `${this.overlayBgColor}${opacity}`);
-					} else {
-						main_core.Dom.style(this.getOverlay(), 'background', this.overlayBgCallback(state, this));
-					}
-				}
-			}
-
-			/**
-			 * @private
-			 * @param callback
-			 */
-		}, {
-			key: "completeAnimation",
-			value: function completeAnimation(callback) {
-				this.animation = null;
-				if (this.isOpen()) {
-					_classPrivateFieldSet(_currentAnimationState, this, _classPrivateFieldGet(_endAnimationState, this));
-					this.maximizing = false;
-					main_core.Dom.removeClass(this.getOverlay(), '--opening');
-					main_core.Dom.addClass(this.getOverlay(), '--open');
-					if (this.animationName === 'scale') {
-						const state = _assertClassBrand$1(_Slider_brand, this, _getAnimationState).call(this, 'end');
-						main_core.Dom.style(this.getContainer(), {
-							'transform-origin': null,
-							transform: `translate(${state.translateX}%, ${state.translateY}%)`
-						});
-					}
-					this.firePageEvent('onBeforeOpenComplete');
-					this.fireFrameEvent('onBeforeOpenComplete');
-					this.firePageEvent('onOpenComplete');
-					this.fireFrameEvent('onOpenComplete');
-					if (!this.isLoaded()) {
-						this.showLoader();
-					}
-				} else {
-					_classPrivateFieldSet(_currentAnimationState, this, _classPrivateFieldGet(_startAnimationState, this));
-					this.minimizing = false;
-					main_core.Dom.removeClass(this.getOverlay(), '--open --opening --closing');
-					if (this.animationName === 'scale') {
-						const state = _assertClassBrand$1(_Slider_brand, this, _getAnimationState).call(this, 'start');
-						main_core.Dom.style(this.getContainer(), {
-							'transform-origin': null,
-							transform: `translate(${state.translateX}%, ${state.translateY}%)`
-						});
-					}
-					main_core.Dom.style(this.getContainer(), {
-						width: null,
-						right: null,
-						opacity: null,
-						'max-width': null,
-						'min-width': null
-					});
-					main_core.Dom.style(this.getCloseBtn(), 'opacity', null);
-					this.firePageEvent('onBeforeCloseComplete');
-					this.fireFrameEvent('onBeforeCloseComplete');
-					this.firePageEvent('onCloseComplete');
-					this.fireFrameEvent('onCloseComplete');
-					if (main_core.Type.isFunction(callback)) {
-						callback(this);
-					}
-					if (!this.isDestroyed()) {
-						this.getFocusTrap().deactivate();
-					}
-					if (!this.isCacheable()) {
-						this.destroy();
-					}
-				}
-			}
-
-			/**
-			 * @internal
-			 */
 		}, {
 			key: "firePageEvent",
-			value: function firePageEvent(eventName) {
+			value:
+			function firePageEvent(eventName) {
 				const sliderEvent = this.getEvent(eventName);
 				if (sliderEvent === null) {
-					throw new Error('\'eventName\' is invalid.');
+					throw new Error("'eventName' is invalid.");
 				}
 				main_core_events.EventEmitter.emit(this, sliderEvent.getFullName().toLowerCase(), new main_core_events.BaseEvent({
 					data: [sliderEvent],
 					compatData: [sliderEvent]
 				}));
-
-				// Events for compatibility
-				if (['onClose', 'onOpen'].includes(eventName)) {
-					main_core_events.EventEmitter.emit(`BX.Bitrix24.PageSlider:${eventName}`, new main_core_events.BaseEvent({
+				const compatName = main_core.Type.isString(eventName) ? eventName : null;
+				if (compatName !== null && ['onClose', 'onOpen'].includes(compatName)) {
+					main_core_events.EventEmitter.emit(`BX.Bitrix24.PageSlider:${compatName}`, new main_core_events.BaseEvent({
 						data: [this],
 						compatData: [this]
 					}));
-					main_core_events.EventEmitter.emit(`Bitrix24.Slider:${eventName}`, new main_core_events.BaseEvent({
+					main_core_events.EventEmitter.emit(`Bitrix24.Slider:${compatName}`, new main_core_events.BaseEvent({
 						data: [this],
 						compatData: [this]
 					}));
 				}
 				return sliderEvent;
 			}
-
-			/**
-			 * @internal
-			 */
 		}, {
 			key: "fireFrameEvent",
 			value: function fireFrameEvent(eventName) {
 				const sliderEvent = this.getEvent(eventName);
 				if (sliderEvent === null) {
-					throw new Error('\'eventName\' is invalid.');
+					throw new Error("'eventName' is invalid.");
 				}
 				if (this.allowCrossOrigin) {
 					return null;
@@ -2055,11 +2039,10 @@ this.BX = this.BX || {};
 				const frameWindow = this.getFrameWindow();
 				if (frameWindow && frameWindow.BX && frameWindow.BX.onCustomEvent) {
 					frameWindow.BX.onCustomEvent(this, sliderEvent.getFullName(), [sliderEvent]);
-
-					// Events for compatibility
-					if (['onClose', 'onOpen'].includes(eventName)) {
-						frameWindow.BX.onCustomEvent(`BX.Bitrix24.PageSlider:${eventName}`, [this]);
-						frameWindow.BX.onCustomEvent(`Bitrix24.Slider:${eventName}`, [this]); // Compatibility
+					const compatName = main_core.Type.isString(eventName) ? eventName : null;
+					if (compatName !== null && ['onClose', 'onOpen'].includes(compatName)) {
+						frameWindow.BX.onCustomEvent(`BX.Bitrix24.PageSlider:${compatName}`, [this]);
+						frameWindow.BX.onCustomEvent(`Bitrix24.Slider:${compatName}`, [this]);
 					}
 				}
 				return sliderEvent;
@@ -2070,10 +2053,6 @@ this.BX = this.BX || {};
 				this.firePageEvent(eventName);
 				this.fireFrameEvent(eventName);
 			}
-
-			/**
-			 * @private
-			 */
 		}, {
 			key: "getEvent",
 			value: function getEvent(eventName) {
@@ -2087,40 +2066,21 @@ this.BX = this.BX || {};
 				}
 				return event;
 			}
-
-			/**
-			 * @private
-			 */
 		}, {
 			key: "canOpen",
 			value: function canOpen() {
 				return this.canAction('open');
 			}
-
-			/**
-			 * @private
-			 */
 		}, {
 			key: "canClose",
 			value: function canClose() {
 				return this.canAction('close');
 			}
-
-			/**
-			 * @package
-			 * @returns {boolean}
-			 */
 		}, {
 			key: "canCloseByEsc",
 			value: function canCloseByEsc() {
 				return this.canAction('closeByEsc');
 			}
-
-			/**
-			 * @private
-			 * @param {string} action
-			 * @returns {boolean}
-			 */
 		}, {
 			key: "canAction",
 			value: function canAction(action) {
@@ -2132,59 +2092,6 @@ this.BX = this.BX || {};
 				const frameEvent = this.fireFrameEvent(eventName);
 				return pageEvent.isActionAllowed() && (!frameEvent || frameEvent.isActionAllowed());
 			}
-
-			/**
-			 * @private
-			 */
-		}, {
-			key: "handleCrossOriginWindowMessage",
-			value: function handleCrossOriginWindowMessage(event) {
-				const frameUrl = new URL(this.url);
-				const eventUrl = new URL(event.origin);
-				if (eventUrl.origin !== frameUrl.origin) {
-					return;
-				}
-				const message = {
-					type: '',
-					data: undefined
-				};
-				if (main_core.Type.isString(event.data)) {
-					message.type = event.data;
-				} else if (main_core.Type.isPlainObject(event.data)) {
-					message.type = event.data.type;
-					message.data = event.data.data;
-				}
-				switch (message.type) {
-					case 'BX:SidePanel:close':
-						{
-							this.close();
-							break;
-						}
-					case 'BX:SidePanel:load:force':
-						{
-							if (!this.isLoaded() && !this.isDestroyed()) {
-								this.handleFrameLoad();
-							}
-							break;
-						}
-					case 'BX:SidePanel:data:send':
-						{
-							const pageEvent = new MessageEvent({
-								sender: this,
-								data: message.data
-							});
-							pageEvent.setName('onXDomainMessage');
-							this.firePageEvent(pageEvent);
-							break;
-						}
-					// No default
-				}
-			}
-
-			/**
-			 * @private
-			 * @param {Event} event
-			 */
 		}, {
 			key: "handleFrameLoad",
 			value: function handleFrameLoad(event) {
@@ -2194,7 +2101,7 @@ this.BX = this.BX || {};
 				const frameWindow = this.iframe.contentWindow;
 				const iframeLocation = frameWindow.location;
 				if (this.allowCrossOrigin) {
-					main_core.Event.bind(window, 'message', this.handleCrossOriginWindowMessage);
+					main_core.Event.bind(window, 'message', _classPrivateFieldGet$1(_handleCrossOriginWindowMessage, this));
 				}
 				try {
 					if (iframeLocation.toString() === 'about:blank') {
@@ -2206,14 +2113,12 @@ this.BX = this.BX || {};
 						this.closeLoader();
 						return;
 					}
-
-					// eslint-disable-next-line no-console
 					console.warn('SidePanel: Try to use "allowCrossOrigin: true" option.');
 					throw e;
 				}
-				main_core.Event.bind(frameWindow, 'keydown', this.handleFrameKeyDown);
-				main_core.Event.bind(frameWindow, 'focus', this.handleFrameFocus);
-				main_core.Event.bind(frameWindow, 'unload', this.handleFrameUnload);
+				main_core.Event.bind(frameWindow, 'keydown', _classPrivateFieldGet$1(_handleFrameKeyDown, this));
+				main_core.Event.bind(frameWindow, 'focus', _classPrivateFieldGet$1(_handleFrameFocus, this));
+				main_core.Event.bind(frameWindow, 'unload', _classPrivateFieldGet$1(_handleFrameUnload, this));
 				if (main_core.Browser.isMobile()) {
 					frameWindow.document.body.style.paddingBottom = `${window.innerHeight * 2 / 3}px`;
 				}
@@ -2221,20 +2126,19 @@ this.BX = this.BX || {};
 				this.iframeSrc = this.refineUrl(iframeUrl);
 				this.url = this.iframeSrc;
 				if (this.isPrintable()) {
-					this.injectPrintStyles();
+					_assertClassBrand$1(_Slider_brand, this, _injectPrintStyles).call(this);
 				}
 				this.loaded = true;
 				this.loadedCnt++;
 				ui_a11y.FocusMonitor.Instance.detachIframe(this.getFrame());
 				ui_a11y.FocusMonitor.Instance.attachIframe(this.getFrame());
 				if (this.getTitle() === null) {
-					// fallback
 					const title = this.getFrameWindow() ? this.getFrameWindow()?.document?.title : null;
 					if (main_core.Type.isStringFilled(title)) {
 						this.getContainer().ariaLabel = main_core.Type.isStringFilled(title) ? title : '';
 					}
 				}
-				this.getContainer().ariaBusy = false;
+				this.getContainer().ariaBusy = 'false';
 				this.getFocusTrap().applyInitialFocus();
 				if (this.loadedCnt > 1) {
 					this.firePageEvent('onLoad');
@@ -2247,73 +2151,6 @@ this.BX = this.BX || {};
 				}
 				this.closeLoader();
 			}
-
-			/**
-			 * @private
-			 */
-		}, {
-			key: "listenIframeLoading",
-			value: function listenIframeLoading() {
-				if (this.allowCrossOrigin) {
-					return;
-				}
-				const isLoaded = setInterval(() => {
-					if (this.isLoaded() || this.isDestroyed()) {
-						clearInterval(isLoaded);
-						return;
-					}
-					if (this.iframe.contentWindow.location.toString() === 'about:blank') {
-						return;
-					}
-					if (this.iframe.contentWindow.document.readyState === 'complete' || this.iframe.contentWindow.document.readyState === 'interactive') {
-						clearInterval(isLoaded);
-						this.handleFrameLoad();
-					}
-				}, 200);
-			}
-
-			/**
-			 * @private
-			 * @param {Event} event
-			 */
-		}, {
-			key: "handleFrameUnload",
-			value: function handleFrameUnload(event) {
-				this.loaded = false;
-				this.listenIframeLoading();
-			}
-
-			/**
-			 * @private
-			 * @param {Event} event
-			 */
-		}, {
-			key: "handleFrameKeyDown",
-			value: function handleFrameKeyDown(event) {
-				if (event.keyCode !== 27) {
-					return;
-				}
-				const framePopupManager = this.getWindow().BX?.Main?.PopupManager;
-				if (framePopupManager) {
-					const popups = framePopupManager.getPopups();
-					for (const popup of popups) {
-						if (popup.isShown()) {
-							return;
-						}
-					}
-				}
-				const centerX = this.getWindow().document.documentElement.clientWidth / 2;
-				const centerY = this.getWindow().document.documentElement.clientHeight / 2;
-				const element = this.getWindow().document.elementFromPoint(centerX, centerY);
-				if (main_core.Dom.hasClass(element, 'bx-core-dialog-overlay') || main_core.Dom.hasClass(element, 'bx-core-window')) {
-					return;
-				}
-				if (element.closest('.bx-core-window')) {
-					return;
-				}
-				this.firePageEvent('onEscapePress');
-				this.fireFrameEvent('onEscapePress');
-			}
 		}, {
 			key: "isOnTopOfPopup",
 			value: function isOnTopOfPopup(popup) {
@@ -2324,111 +2161,6 @@ this.BX = this.BX || {};
 					popupInside = this.getFrameWindow().document.contains(popup.getPopupContainer());
 				}
 				return !(popup.isShown() && (popupOnTop || popupInside));
-			}
-
-			/**
-			 * @private
-			 * @param {BaseEvent} event
-			 */
-		}, {
-			key: "handlePopupInit",
-			value: function handlePopupInit(event) {
-				const data = event.getCompatData();
-				const bindElement = data[1];
-				const params = data[2];
-				if (!main_core.Type.isElementNode(params.targetContainer) && main_core.Type.isElementNode(bindElement) && this.getContentContainer().contains(bindElement)) {
-					params.targetContainer = this.getContentContainer();
-				}
-			}
-
-			/**
-			 * @private
-			 * @param {Event} event
-			 */
-		}, {
-			key: "handleFrameFocus",
-			value: function handleFrameFocus(event) {
-				this.firePageEvent('onFrameFocus');
-			}
-
-			/**
-			 * @private
-			 * @param {MouseEvent} event
-			 */
-		}, {
-			key: "handleOverlayClick",
-			value: function handleOverlayClick(event) {
-				if (event.target === this.getOverlay()) {
-					if (this.animation === null) {
-						this.close();
-						event.stopPropagation();
-					} else {
-						event.preventDefault();
-					}
-				}
-			}
-
-			/**
-			 * @private
-			 * @param {MouseEvent} event
-			 */
-		}, {
-			key: "handlePrintBtnClick",
-			value: function handlePrintBtnClick(event) {
-				if (this.isSelfContained()) {
-					const frame = document.createElement('iframe');
-					frame.src = 'about:blank';
-					frame.name = 'sidepanel-print-frame';
-					main_core.Dom.style(frame, 'display', 'none');
-					main_core.Dom.append(frame, document.body);
-					const frameWindow = frame.contentWindow;
-					const frameDoc = frameWindow.document;
-					frameDoc.open();
-					frameDoc.write('<html><head>');
-					let headTags = '';
-					const links = document.head.querySelectorAll('link, style');
-					for (const link of links) {
-						headTags += link.outerHTML;
-					}
-					headTags += '<style>html, body { background: #fff !important; height: 100%; }</style>';
-					frameDoc.write(headTags);
-					frameDoc.write('</head><body>');
-					frameDoc.write(this.getContentContainer().innerHTML);
-					frameDoc.write('</body></html>');
-					frameDoc.close();
-					frameWindow.focus();
-					frameWindow.print();
-					setTimeout(() => {
-						main_core.Dom.remove(frame);
-						window.focus();
-					}, 1000);
-				} else {
-					this.focus();
-					this.getFrameWindow().print();
-				}
-			}
-
-			/**
-			 * @private
-			 */
-		}, {
-			key: "injectPrintStyles",
-			value: function injectPrintStyles() {
-				const frameDocument = this.getFrameWindow().document;
-				let bodyClass = '';
-				const classList = frameDocument.body.classList;
-				for (const className of classList) {
-					bodyClass += `.${className}`;
-				}
-				const bodyStyle = `@media print { body${bodyClass} { ` + 'background: #fff !important; ' + '-webkit-print-color-adjust: exact;' + 'color-adjust: exact; ' + '} }';
-				const style = frameDocument.createElement('style');
-				style.type = 'text/css';
-				if (style.styleSheet) {
-					style.styleSheet.cssText = bodyStyle;
-				} else {
-					style.appendChild(frameDocument.createTextNode(bodyStyle));
-				}
-				frameDocument.head.appendChild(style);
 			}
 		}, {
 			key: "refineUrl",
@@ -2514,20 +2246,165 @@ this.BX = this.BX || {};
 				}
 			}
 		};
-		return states[_classPrivateFieldGet(_startPosition, this)][mode];
+		return states[_classPrivateFieldGet$1(_startPosition, this)][mode];
 	}
 	function _calculateOuterBoundary() {
 		const outerBoundary = this.calculateOuterBoundary();
 		return main_core.Runtime.merge(main_core.Type.isPlainObject(outerBoundary) ? outerBoundary : {}, this.getOuterBoundary());
 	}
+	function _animateOpening() {
+		if (this.animation) {
+			this.animation.stop();
+		}
+		this.fireEvent('onOpening');
+		if (main_core.Browser.isMobile()) {
+			_classPrivateFieldSet$1(_currentAnimationState, this, _classPrivateFieldGet$1(_endAnimationState, this));
+			_assertClassBrand$1(_Slider_brand, this, _animateStep).call(this, _classPrivateFieldGet$1(_currentAnimationState, this));
+			_assertClassBrand$1(_Slider_brand, this, _completeAnimation).call(this);
+			return;
+		}
+		_classPrivateFieldSet$1(_currentAnimationState, this, _classPrivateFieldGet$1(_currentAnimationState, this) === null ? _classPrivateFieldGet$1(_startAnimationState, this) : _classPrivateFieldGet$1(_currentAnimationState, this));
+		if (this.skeleton) {
+			this.showLoader();
+		}
+		this.animation = new main_core.Easing({
+			duration: this.animationDuration,
+			start: _classPrivateFieldGet$1(_currentAnimationState, this),
+			finish: _classPrivateFieldGet$1(_endAnimationState, this),
+			step: state => {
+				_classPrivateFieldSet$1(_currentAnimationState, this, state);
+				_assertClassBrand$1(_Slider_brand, this, _animateStep).call(this, state);
+			},
+			complete: () => {
+				_assertClassBrand$1(_Slider_brand, this, _completeAnimation).call(this);
+			}
+		});
+		if (this.animationName === 'scale' && main_core.Type.isStringFilled(this.animationOptions.origin)) {
+			main_core.Dom.style(this.getContainer(), 'transform-origin', this.animationOptions.origin);
+		}
+		this.animation.animate();
+	}
+	function _animateStep(state) {
+		if (this.animationName === 'scale') {
+			main_core.Dom.style(this.getContainer(), 'transform', `scale(${state.scale / 100})`);
+		} else {
+			main_core.Dom.style(this.getContainer(), 'transform', `translate(${state.translateX}%, ${state.translateY}%)`);
+		}
+		if (this.getOverlayAnimation()) {
+			if (this.overlayBgCallback === null) {
+				const opacity = parseInt(state.opacity / 100 * 255, 10).toString(16).padStart(2, 0);
+				main_core.Dom.style(this.getOverlay(), 'background-color', `${this.overlayBgColor}${opacity}`);
+			} else {
+				main_core.Dom.style(this.getOverlay(), 'background', this.overlayBgCallback(state, this));
+			}
+		}
+	}
+	function _completeAnimation(callback) {
+		this.animation = null;
+		if (this.isOpen()) {
+			_classPrivateFieldSet$1(_currentAnimationState, this, _classPrivateFieldGet$1(_endAnimationState, this));
+			this.maximizing = false;
+			main_core.Dom.removeClass(this.getOverlay(), '--opening');
+			main_core.Dom.addClass(this.getOverlay(), '--open');
+			if (this.animationName === 'scale') {
+				const state = _assertClassBrand$1(_Slider_brand, this, _getAnimationState).call(this, 'end');
+				main_core.Dom.style(this.getContainer(), {
+					'transform-origin': null,
+					transform: `translate(${state.translateX}%, ${state.translateY}%)`
+				});
+			}
+			this.firePageEvent('onBeforeOpenComplete');
+			this.fireFrameEvent('onBeforeOpenComplete');
+			this.firePageEvent('onOpenComplete');
+			this.fireFrameEvent('onOpenComplete');
+			if (!this.isLoaded()) {
+				this.showLoader();
+			}
+		} else {
+			_classPrivateFieldSet$1(_currentAnimationState, this, _classPrivateFieldGet$1(_startAnimationState, this));
+			this.minimizing = false;
+			main_core.Dom.removeClass(this.getOverlay(), '--open --opening --closing');
+			if (this.animationName === 'scale') {
+				const state = _assertClassBrand$1(_Slider_brand, this, _getAnimationState).call(this, 'start');
+				main_core.Dom.style(this.getContainer(), {
+					'transform-origin': null,
+					transform: `translate(${state.translateX}%, ${state.translateY}%)`
+				});
+			}
+			main_core.Dom.style(this.getContainer(), {
+				width: null,
+				right: null,
+				opacity: null,
+				'max-width': null,
+				'min-width': null
+			});
+			main_core.Dom.style(this.getCloseBtn(), 'opacity', null);
+			this.firePageEvent('onBeforeCloseComplete');
+			this.fireFrameEvent('onBeforeCloseComplete');
+			this.firePageEvent('onCloseComplete');
+			this.fireFrameEvent('onCloseComplete');
+			if (main_core.Type.isFunction(callback)) {
+				callback(this);
+			}
+			if (!this.isDestroyed()) {
+				this.getFocusTrap().deactivate();
+			}
+			if (!this.isCacheable()) {
+				this.destroy();
+			}
+		}
+	}
+	function _listenIframeLoading() {
+		if (this.allowCrossOrigin) {
+			return;
+		}
+		const isLoaded = setInterval(() => {
+			if (this.isLoaded() || this.isDestroyed()) {
+				clearInterval(isLoaded);
+				return;
+			}
+			if (this.iframe.contentWindow.location.toString() === 'about:blank') {
+				return;
+			}
+			if (this.iframe.contentWindow.document.readyState === 'complete' || this.iframe.contentWindow.document.readyState === 'interactive') {
+				clearInterval(isLoaded);
+				this.handleFrameLoad();
+			}
+		}, 200);
+	}
+	function _injectPrintStyles() {
+		const frameDocument = this.getFrameWindow().document;
+		let bodyClass = '';
+		const classList = frameDocument.body.classList;
+		for (const className of classList) {
+			bodyClass += `.${className}`;
+		}
+		const bodyStyle = `@media print { body${bodyClass} { ` + 'background: #fff !important; ' + '-webkit-print-color-adjust: exact;' + 'color-adjust: exact; ' + '} }';
+		const style = frameDocument.createElement('style');
+		style.type = 'text/css';
+		if (style.styleSheet) {
+			style.styleSheet.cssText = bodyStyle;
+		} else {
+			style.appendChild(frameDocument.createTextNode(bodyStyle));
+		}
+		frameDocument.head.appendChild(style);
+	}
 
 	function _callSuper$1(t, o, e) { return o = babelHelpers.getPrototypeOf(o), babelHelpers.possibleConstructorReturn(t, _isNativeReflectConstruct$1() ? Reflect.construct(o, [], babelHelpers.getPrototypeOf(t).constructor) : o.apply(t, e)); }
 	function _isNativeReflectConstruct$1() { try { var t = !Boolean.prototype.valueOf.call(Reflect.construct(Boolean, [], function () {})); } catch (t) {} return (_isNativeReflectConstruct$1 = function () { return !!t; })(); }
-	let ToolbarItem = /*#__PURE__*/function (_EventEmitter) {
+	let ToolbarItem = function (_EventEmitter) {
 		function ToolbarItem(itemOptions) {
 			var _this;
 			babelHelpers.classCallCheck(this, ToolbarItem);
 			_this = _callSuper$1(this, ToolbarItem);
+			babelHelpers.defineProperty(_this, "id", void 0);
+			babelHelpers.defineProperty(_this, "title", void 0);
+			babelHelpers.defineProperty(_this, "url", void 0);
+			babelHelpers.defineProperty(_this, "entityType", void 0);
+			babelHelpers.defineProperty(_this, "entityId", void 0);
+			babelHelpers.defineProperty(_this, "entityName", void 0);
+			babelHelpers.defineProperty(_this, "refs", new main_core_cache.MemoryCache());
+			babelHelpers.defineProperty(_this, "rendered", void 0);
 			_this.setEventNamespace('BX.Main.SidePanel.ToolbarItem');
 			const options = main_core.Type.isPlainObject(itemOptions) ? itemOptions : {};
 			_this.id = main_core.Type.isStringFilled(options.id) ? options.id : `toolbar-item-${main_core.Text.getRandom().toLowerCase()}`;
@@ -2536,7 +2413,6 @@ this.BX = this.BX || {};
 			_this.entityType = '';
 			_this.entityId = '0';
 			_this.entityName = '';
-			_this.refs = new main_core.Cache.MemoryCache();
 			_this.rendered = false;
 			_this.setTitle(options.title);
 			_this.setUrl(options.url);
@@ -2621,8 +2497,9 @@ this.BX = this.BX || {};
 			value: function getContainer() {
 				return this.refs.remember('container', () => {
 					return main_core.Tag.render`
-				<div 
+				<div
 					class="side-panel-toolbar-item"
+					data-testid="main-sidepanel-toolbar-item-${this.getId()}"
 					onmouseenter="${this.handleMouseEnter.bind(this)}"
 					onmouseleave="${this.handleMouseLeave.bind(this)}"
 				>
@@ -2630,7 +2507,8 @@ this.BX = this.BX || {};
 					<button
 						type="button"
 						tabindex="0"
-						class="side-panel-toolbar-item-remove-btn" 
+						class="side-panel-toolbar-item-remove-btn"
+						data-testid="main-sidepanel-toolbar-item-remove"
 						onclick="${this.handleRemoveBtnClick.bind(this)}"
 						title="${main_core.Loc.getMessage('MAIN_SIDEPANEL_TOOLBAR_REMOVE_ITEM')}"
 						aria-label="${main_core.Loc.getMessage('MAIN_SIDEPANEL_TOOLBAR_REMOVE_ITEM')}"
@@ -2652,9 +2530,10 @@ this.BX = this.BX || {};
 			value: function getTitleContainer() {
 				return this.refs.remember('title', () => {
 					return main_core.Tag.render`
-				<a 
+				<a
 					id="${main_core.Text.getRandom().toLowerCase()}"
 					class="side-panel-toolbar-item-title"
+					data-testid="main-sidepanel-toolbar-item-title"
 					href="${encodeURI(this.getUrl())}"
 					tabindex="0"
 					data-slider-maximize="true"
@@ -2781,25 +2660,24 @@ this.BX = this.BX || {};
 		}]);
 	}(main_core_events.EventEmitter);
 
-	let instance = null;
-	function getInstance() {
-		const topWindow = main_core.Page.getRootWindow();
-		if (topWindow !== window) {
-			return topWindow.BX.SidePanel.Instance;
-		}
-		if (instance === null) {
-			instance = new SliderManager();
-		}
-		return instance;
-	}
-
 	function _callSuper(t, o, e) { return o = babelHelpers.getPrototypeOf(o), babelHelpers.possibleConstructorReturn(t, _isNativeReflectConstruct() ? Reflect.construct(o, [], babelHelpers.getPrototypeOf(t).constructor) : o.apply(t, e)); }
 	function _isNativeReflectConstruct() { try { var t = !Boolean.prototype.valueOf.call(Reflect.construct(Boolean, [], function () {})); } catch (t) {} return (_isNativeReflectConstruct = function () { return !!t; })(); }
-	let Toolbar = /*#__PURE__*/function (_EventEmitter) {
+	let Toolbar = function (_EventEmitter) {
 		function Toolbar(toolbarOptions) {
 			var _this;
 			babelHelpers.classCallCheck(this, Toolbar);
 			_this = _callSuper(this, Toolbar);
+			babelHelpers.defineProperty(_this, "context", void 0);
+			babelHelpers.defineProperty(_this, "items", void 0);
+			babelHelpers.defineProperty(_this, "rendered", void 0);
+			babelHelpers.defineProperty(_this, "refs", new main_core_cache.MemoryCache());
+			babelHelpers.defineProperty(_this, "lsKey", void 0);
+			babelHelpers.defineProperty(_this, "initialPosition", void 0);
+			babelHelpers.defineProperty(_this, "shiftedPosition", void 0);
+			babelHelpers.defineProperty(_this, "collapsed", void 0);
+			babelHelpers.defineProperty(_this, "muted", void 0);
+			babelHelpers.defineProperty(_this, "shifted", void 0);
+			babelHelpers.defineProperty(_this, "maxVisibleItems", void 0);
 			_this.setEventNamespace('BX.Main.SidePanel.Toolbar');
 			const options = main_core.Type.isPlainObject(toolbarOptions) ? toolbarOptions : {};
 			if (!main_core.Type.isStringFilled(options.context)) {
@@ -2808,8 +2686,6 @@ this.BX = this.BX || {};
 			_this.context = options.context;
 			_this.items = [];
 			_this.rendered = false;
-			_this.refs = new main_core.Cache.MemoryCache();
-			_this.container = null;
 			_this.lsKey = 'bx.sidepanel.toolbar.item';
 			_this.initialPosition = {
 				right: '5px',
@@ -2954,7 +2830,7 @@ this.BX = this.BX || {};
 					main_core.Dom.style(this.getContentContainer(), 'width', null);
 					main_core.Dom.attr(this.getToggleButton(), 'aria-expanded', 'false');
 				};
-				if (immediately === true) {
+				if (immediately) {
 					finalize();
 				} else {
 					const width = this.getContentContainer().scrollWidth;
@@ -2977,7 +2853,7 @@ this.BX = this.BX || {};
 				if (!this.collapsed) {
 					return;
 				}
-				if (immediately === true) {
+				if (immediately) {
 					main_core.Dom.removeClass(this.getContainer(), '--collapsed');
 					main_core.Dom.attr(this.getToggleButton(), 'aria-expanded', 'true');
 					main_core.Dom.style(this.getContentContainer(), 'width', null);
@@ -3046,12 +2922,6 @@ this.BX = this.BX || {};
 				}
 				return item;
 			}
-
-			/**
-			 *
-			 * @param itemOptions
-			 * @returns {ToolbarItem|null}
-			 */
 		}, {
 			key: "prependItem",
 			value: function prependItem(itemOptions) {
@@ -3082,10 +2952,6 @@ this.BX = this.BX || {};
 				item.subscribe('onRemove', this.handleItemRemove.bind(this));
 				return item;
 			}
-
-			/**
-			 * @private
-			 */
 		}, {
 			key: "minimizeItem",
 			value: function minimizeItem(itemOptions) {
@@ -3242,7 +3108,6 @@ this.BX = this.BX || {};
 							if (previousItem) {
 								item.insertAfter(previousItem.getContainer());
 							} else if (nextItem) {
-								// eslint-disable-next-line @bitrix24/bitrix24-rules/no-native-dom-methods
 								item.insertBefore(nextItem.getContainer());
 							} else {
 								item.appendTo(this.getItemsContainer());
@@ -3285,7 +3150,7 @@ this.BX = this.BX || {};
 						classes.push('--collapsed');
 					}
 					const container = main_core.Tag.render`
-				<div class="side-panel-toolbar ${classes.join(' ')}">
+				<div class="side-panel-toolbar ${classes.join(' ')}" data-testid="main-sidepanel-toolbar">
 					${this.getToggleButton()}
 					${this.getContentContainer()}
 				</div>
@@ -3344,10 +3209,11 @@ this.BX = this.BX || {};
 			value: function getToggleButton() {
 				return this.refs.remember('toggle-button', () => {
 					return main_core.Tag.render`
-				<button 
-					type="button" 
-					tabindex="0" 
+				<button
+					type="button"
+					tabindex="0"
 					class="side-panel-toolbar-toggle"
+					data-testid="main-sidepanel-toolbar-toggle"
 					aria-label="${main_core.Loc.getMessage('MAIN_SIDEPANEL_TOOLBAR_TITLE')}"
 					aria-expanded="${!this.collapsed}"
 					onclick="${this.handleToggleClick.bind(this)}"
@@ -3365,6 +3231,7 @@ this.BX = this.BX || {};
 						type="button"
 						tabindex="0"
 						class="side-panel-toolbar-collapse-btn"
+						data-testid="main-sidepanel-toolbar-collapse"
 						aria-label="${main_core.Loc.getMessage('MAIN_SIDEPANEL_TOOLBAR_COLLAPSE')}"
 						onclick="${this.handleToggleClick.bind(this)}"
 					>
@@ -3380,7 +3247,7 @@ this.BX = this.BX || {};
 			key: "getItemsContainer",
 			value: function getItemsContainer() {
 				return this.refs.remember('items-container', () => {
-					const container = main_core.Tag.render`<div class="side-panel-toolbar-items"></div>`;
+					const container = main_core.Tag.render`<div class="side-panel-toolbar-items" data-testid="main-sidepanel-toolbar-items"></div>`;
 					[...this.items].slice(0, this.maxVisibleItems).forEach(item => {
 						item.appendTo(container);
 					});
@@ -3392,8 +3259,9 @@ this.BX = this.BX || {};
 			value: function getMoreButton() {
 				return this.refs.remember('more-button', () => {
 					return main_core.Tag.render`
-				<button 
-					class="side-panel-toolbar-more-btn" 
+				<button
+					class="side-panel-toolbar-more-btn"
+					data-testid="main-sidepanel-toolbar-more"
 					onclick="${this.handleMoreBtnClick.bind(this)}"
 					type="button"
 					tabindex="0"
@@ -3406,7 +3274,7 @@ this.BX = this.BX || {};
 			}
 		}, {
 			key: "handleMoreBtnClick",
-			value: function handleMoreBtnClick(event) {
+			value: function handleMoreBtnClick() {
 				const targetNode = this.getMoreButton();
 				const rect = targetNode.getBoundingClientRect();
 				const targetNodeWidth = rect.width;
@@ -3480,7 +3348,8 @@ this.BX = this.BX || {};
 						return false;
 					}
 				}
-				if (main_core.Reflection.getClass('BX.UI.Viewer.Instance') && BX.UI.Viewer.Instance.isOpen()) {
+				const viewer = main_core.Reflection.getClass('BX.UI.Viewer.Instance');
+				if (viewer && viewer.isOpen()) {
 					return false;
 				}
 				const sliders = getInstance().getOpenSliders();
@@ -3534,22 +3403,264 @@ this.BX = this.BX || {};
 	}(main_core_events.EventEmitter);
 
 	var _SliderManager;
+	function _classPrivateFieldInitSpec(e, t, a) { _checkPrivateRedeclaration(e, t), t.set(e, a); }
 	function _classPrivateMethodInitSpec(e, a) { _checkPrivateRedeclaration(e, a), a.add(e); }
 	function _checkPrivateRedeclaration(e, t) { if (t.has(e)) throw new TypeError("Cannot initialize the same private elements twice on an object"); }
+	function _classPrivateFieldGet(s, a) { return s.get(_assertClassBrand(s, a)); }
+	function _classPrivateFieldSet(s, a, r) { return s.set(_assertClassBrand(s, a), r), r; }
 	function _assertClassBrand(e, t, n) { if ("function" == typeof e ? e === t : e.has(t)) return arguments.length < 3 ? t : n; throw new TypeError("Private element is not present on this object"); }
 	let sliderClassName = null;
 	let sliderDefaultOptions = null;
 	let sliderPriorityOptions = null;
-
-	/**
-	 * @namespace BX.SidePanel
-	 * @alias Manager
-	 */
-	var _SliderManager_brand = /*#__PURE__*/new WeakSet();
-	let SliderManager = /*#__PURE__*/function () {
+	var _SliderManager_brand = new WeakSet();
+	var _handleFullScreenChange = new WeakMap();
+	var _handleSliderOpenStart = new WeakMap();
+	var _handleSliderOpenComplete = new WeakMap();
+	var _handleSliderCloseStart = new WeakMap();
+	var _handleSliderMaximizeStart = new WeakMap();
+	var _handleSliderMinimizeStart = new WeakMap();
+	var _handleSliderCloseComplete = new WeakMap();
+	var _handleSliderDestroy = new WeakMap();
+	var _handleEscapePress = new WeakMap();
+	var _handleSliderLoad = new WeakMap();
+	var _handlePostMessageCompatible = new WeakMap();
+	var _handleDocumentKeyDown = new WeakMap();
+	var _handleWindowResize = new WeakMap();
+	var _handleWindowScroll = new WeakMap();
+	var _handleTouchMove = new WeakMap();
+	let SliderManager = function () {
 		function SliderManager() {
 			babelHelpers.classCallCheck(this, SliderManager);
 			_classPrivateMethodInitSpec(this, _SliderManager_brand);
+			babelHelpers.defineProperty(this, "anchorRules", void 0);
+			babelHelpers.defineProperty(this, "anchorBinding", void 0);
+			babelHelpers.defineProperty(this, "openSliders", void 0);
+			babelHelpers.defineProperty(this, "lastOpenSlider", void 0);
+			babelHelpers.defineProperty(this, "opened", void 0);
+			babelHelpers.defineProperty(this, "hidden", void 0);
+			babelHelpers.defineProperty(this, "hacksApplied", void 0);
+			babelHelpers.defineProperty(this, "pageUrl", void 0);
+			babelHelpers.defineProperty(this, "pageTitle", void 0);
+			babelHelpers.defineProperty(this, "titleChanged", void 0);
+			babelHelpers.defineProperty(this, "toolbar", void 0);
+			babelHelpers.defineProperty(this, "fullScreenSlider", void 0);
+			babelHelpers.defineProperty(this, "pageScrollTop", 0);
+			_classPrivateFieldInitSpec(this, _handleFullScreenChange, event => {
+				if (this.getFullScreenElement()) {
+					this.fullScreenSlider = this.getTopSlider();
+					main_core.Dom.addClass(this.fullScreenSlider.getOverlay(), 'side-panel-fullscreen');
+					this.fullScreenSlider.fireEvent('onFullScreenEnter');
+				} else {
+					if (this.getFullScreenSlider()) {
+						main_core.Dom.removeClass(this.getFullScreenSlider().getOverlay(), 'side-panel-fullscreen');
+						this.fullScreenSlider.fireEvent('onFullScreenExit');
+						this.fullScreenSlider = null;
+					}
+					main_core.Event.unbind(document, event.type, _classPrivateFieldGet(_handleFullScreenChange, this));
+					window.scrollTo(0, this.pageScrollTop);
+					setTimeout(() => {
+						this.adjustLayout();
+						const resizeEvent = document.createEvent('Event');
+						resizeEvent.initEvent('resize', true, true);
+						window.dispatchEvent(resizeEvent);
+					}, 1000);
+				}
+			});
+			_classPrivateFieldInitSpec(this, _handleSliderOpenStart, event => {
+				if (!event.isActionAllowed()) {
+					return;
+				}
+				const slider = event.getSlider();
+				if (slider.isDestroyed()) {
+					return;
+				}
+				const topSlider = this.getTopSlider();
+				if (topSlider) {
+					this.exitFullScreen();
+					topSlider.hideOverlay();
+					slider.setOverlayBackground();
+					const sameWidth = topSlider.getOffset() === slider.getOffset() && topSlider.getWidth() === slider.getWidth() && topSlider.getCustomLeftBoundary() === slider.getCustomLeftBoundary();
+					if (!sameWidth) {
+						topSlider.showShadow();
+					}
+					topSlider.hideCloseBtn();
+					topSlider.hideExtraLabels();
+				} else {
+					slider.setOverlayAnimation(true);
+				}
+				_assertClassBrand(_SliderManager_brand, this, _addOpenSlider).call(this, slider);
+				if (!this.opened) {
+					this.pageUrl = this.getCurrentUrl();
+					this.pageTitle = this.getCurrentTitle();
+				}
+				this.opened = true;
+				_assertClassBrand(_SliderManager_brand, this, _resetLastOpenSlider).call(this);
+			});
+			_classPrivateFieldInitSpec(this, _handleSliderOpenComplete, event => {
+				this.setBrowserHistory(event.getSlider());
+				this.updateBrowserTitle();
+				event.getSlider().setAnimation('sliding');
+				const openSliders = this.getOpenSliders();
+				const topSlider = event.getSlider();
+				for (let i = openSliders.length - 1; i >= 0; i--) {
+					const slider = openSliders[i];
+					if (topSlider === slider) {
+						continue;
+					}
+					if (topSlider.getContainer().offsetLeft <= slider.getContainer().offsetLeft) {
+						main_core.Dom.addClass(slider.getOverlay(), '--invisible');
+					} else {
+						break;
+					}
+				}
+			});
+			_classPrivateFieldInitSpec(this, _handleSliderCloseStart, event => {
+				if (!event.isActionAllowed()) {
+					return;
+				}
+				if (event.getSlider() && event.getSlider()?.isDestroyed()) {
+					return;
+				}
+				const previousSlider = this.getPreviousSlider();
+				const topSlider = this.getTopSlider();
+				this.exitFullScreen();
+				let visibleSlider = null;
+				const openSliders = this.getOpenSliders();
+				for (let i = openSliders.length - 1; i >= 0; i--) {
+					const slider = openSliders[i];
+					if (event.getSlider() === slider) {
+						continue;
+					}
+					if (visibleSlider === null || slider.getContainer().offsetLeft < visibleSlider.getContainer().offsetLeft) {
+						main_core.Dom.removeClass(slider.getOverlay(), '--invisible');
+						visibleSlider = slider;
+					}
+				}
+				if (previousSlider) {
+					previousSlider.unhideOverlay();
+					previousSlider.hideShadow();
+					previousSlider.showCloseBtn();
+					previousSlider.showExtraLabels();
+					if (topSlider) {
+						topSlider.hideOverlay();
+						topSlider.hideShadow();
+					}
+				}
+			});
+			_classPrivateFieldInitSpec(this, _handleSliderMaximizeStart, event => {
+				if (!event.isActionAllowed() || this.getToolbar() === null) {
+					return;
+				}
+				const slider = event.getSlider();
+				if (slider && slider.isDestroyed()) {
+					return;
+				}
+				const {
+					entityType,
+					entityId
+				} = slider.getMinimizeOptions() || {};
+				const item = this.getToolbar().getItem(entityType, entityId);
+				this.getToolbar().request('maximize', item);
+				const origin = _assertClassBrand(_SliderManager_brand, this, _getItemOrigin).call(this, slider, item);
+				slider.setAnimation('scale', {
+					origin
+				});
+			});
+			_classPrivateFieldInitSpec(this, _handleSliderMinimizeStart, event => {
+				if (!event.isActionAllowed() || this.getToolbar() === null) {
+					return;
+				}
+				const slider = event.getSlider();
+				if (slider && slider.isDestroyed()) {
+					return;
+				}
+				if (!this.getToolbar().isShown()) {
+					this.getToolbar().show();
+				}
+				let title = slider.getTitle();
+				if (!title) {
+					title = slider.getFrameWindow() ? slider.getFrameWindow().document.title : null;
+				}
+				this.getToolbar().expand(true);
+				const minimizeOptions = this.getMinimizeOptions(slider.getUrl());
+				const {
+					entityType,
+					entityId,
+					url
+				} = slider.getMinimizeOptions() || minimizeOptions || {};
+				const item = this.getToolbar().minimizeItem({
+					title: title,
+					url: main_core.Type.isStringFilled(url) ? url : slider.getUrl(),
+					entityType,
+					entityId
+				});
+				const origin = _assertClassBrand(_SliderManager_brand, this, _getItemOrigin).call(this, slider, item);
+				slider.setAnimation('scale', {
+					origin
+				});
+			});
+			_classPrivateFieldInitSpec(this, _handleSliderCloseComplete, event => {
+				const slider = event.getSlider();
+				if (slider === this.getTopSlider()) {
+					_assertClassBrand(_SliderManager_brand, this, _setLastOpenSlider).call(this, slider);
+				}
+				event.getSlider().setAnimation('sliding');
+				this.cleanUpClosedSlider(slider);
+			});
+			_classPrivateFieldInitSpec(this, _handleSliderDestroy, event => {
+				const slider = event.getSlider();
+				main_core_events.EventEmitter.unsubscribe(slider, 'SidePanel.Slider:onOpenStart', _classPrivateFieldGet(_handleSliderOpenStart, this));
+				main_core_events.EventEmitter.unsubscribe(slider, 'SidePanel.Slider:onBeforeOpenComplete', _classPrivateFieldGet(_handleSliderOpenComplete, this));
+				main_core_events.EventEmitter.unsubscribe(slider, 'SidePanel.Slider:onMaximizeStart', _classPrivateFieldGet(_handleSliderMaximizeStart, this));
+				main_core_events.EventEmitter.unsubscribe(slider, 'SidePanel.Slider:onCloseStart', _classPrivateFieldGet(_handleSliderCloseStart, this));
+				main_core_events.EventEmitter.unsubscribe(slider, 'SidePanel.Slider:onBeforeCloseComplete', _classPrivateFieldGet(_handleSliderCloseComplete, this));
+				main_core_events.EventEmitter.unsubscribe(slider, 'SidePanel.Slider:onMinimizeStart', _classPrivateFieldGet(_handleSliderMinimizeStart, this));
+				main_core_events.EventEmitter.unsubscribe(slider, 'SidePanel.Slider:onLoad', _classPrivateFieldGet(_handleSliderLoad, this));
+				main_core_events.EventEmitter.unsubscribe(slider, 'SidePanel.Slider:onDestroy', _classPrivateFieldGet(_handleSliderDestroy, this));
+				main_core_events.EventEmitter.unsubscribe(slider, 'SidePanel.Slider:onEscapePress', _classPrivateFieldGet(_handleEscapePress, this));
+				const frameWindow = event.getSlider().getFrameWindow();
+				if (frameWindow && !event.getSlider().isCrossOriginAllowed()) {
+					this.unregisterAnchorListener(frameWindow.document);
+				}
+				if (slider === this.getLastOpenSlider()) {
+					this.lastOpenSlider = null;
+				}
+				this.cleanUpClosedSlider(slider);
+			});
+			_classPrivateFieldInitSpec(this, _handleEscapePress, event => {
+				const topSlider = this.getTopSlider();
+				if (topSlider?.canCloseByEsc() && this.isOnTop(topSlider)) {
+					topSlider.close();
+				}
+			});
+			_classPrivateFieldInitSpec(this, _handleSliderLoad, event => {
+				const frameWindow = event.getSlider().getFrameWindow();
+				if (frameWindow) {
+					this.registerAnchorListener(frameWindow.document);
+				}
+				this.setBrowserHistory(event.getSlider());
+				this.updateBrowserTitle();
+			});
+			_classPrivateFieldInitSpec(this, _handlePostMessageCompatible, (source, data) => {
+				this.postMessage(source, '', data);
+			});
+			_classPrivateFieldInitSpec(this, _handleDocumentKeyDown, event => {
+				if (event.keyCode !== 27) {
+					return;
+				}
+				event.preventDefault();
+				_classPrivateFieldGet(_handleEscapePress, this).call(this);
+			});
+			_classPrivateFieldInitSpec(this, _handleWindowResize, () => {
+				this.adjustLayout();
+			});
+			_classPrivateFieldInitSpec(this, _handleWindowScroll, () => {
+				window.scrollTo(0, this.pageScrollTop);
+				this.adjustLayout();
+			});
+			_classPrivateFieldInitSpec(this, _handleTouchMove, event => {
+				event.preventDefault();
+			});
 			this.anchorRules = [];
 			this.anchorBinding = true;
 			this.openSliders = [];
@@ -3563,20 +3674,7 @@ this.BX = this.BX || {};
 			this.toolbar = null;
 			this.fullScreenSlider = null;
 			this.handleAnchorClick = this.handleAnchorClick.bind(this);
-			this.handleDocumentKeyDown = this.handleDocumentKeyDown.bind(this);
-			this.handleWindowResize = main_core.Runtime.throttle(this.handleWindowResize, 300, this);
-			this.handleWindowScroll = this.handleWindowScroll.bind(this);
-			this.handleTouchMove = this.handleTouchMove.bind(this);
-			this.handleSliderOpenStart = this.handleSliderOpenStart.bind(this);
-			this.handleSliderOpenComplete = this.handleSliderOpenComplete.bind(this);
-			this.handleSliderMaximizeStart = this.handleSliderMaximizeStart.bind(this);
-			this.handleSliderCloseStart = this.handleSliderCloseStart.bind(this);
-			this.handleSliderCloseComplete = this.handleSliderCloseComplete.bind(this);
-			this.handleSliderMinimizeStart = this.handleSliderMinimizeStart.bind(this);
-			this.handleSliderLoad = this.handleSliderLoad.bind(this);
-			this.handleSliderDestroy = this.handleSliderDestroy.bind(this);
-			this.handleEscapePress = this.handleEscapePress.bind(this);
-			this.handleFullScreenChange = this.handleFullScreenChange.bind(this);
+			_classPrivateFieldSet(_handleWindowResize, this, main_core.Runtime.throttle(_classPrivateFieldGet(_handleWindowResize, this), 300, this));
 			main_core_events.EventEmitter.subscribe('SidePanel:open', this.open.bind(this), {
 				compatMode: true
 			});
@@ -3604,18 +3702,16 @@ this.BX = this.BX || {};
 			main_core_events.EventEmitter.subscribe('SidePanel:postMessageTop', this.postMessageTop.bind(this), {
 				compatMode: true
 			});
-
-			// Compatibility
 			main_core_events.EventEmitter.subscribe('BX.Bitrix24.PageSlider:close', this.close.bind(this), {
 				compatMode: true
 			});
-			main_core_events.EventEmitter.subscribe('Bitrix24.Slider:postMessage', this.handlePostMessageCompatible.bind(this), {
+			main_core_events.EventEmitter.subscribe('Bitrix24.Slider:postMessage', _classPrivateFieldGet(_handlePostMessageCompatible, this), {
 				compatMode: true
 			});
 		}
 		return babelHelpers.createClass(SliderManager, [{
 			key: "open",
-			value: function open(url, options) {
+			value: function open(url, options = {}) {
 				const slider = _assertClassBrand(_SliderManager_brand, this, _createSlider).call(this, url, options);
 				if (slider === null) {
 					return false;
@@ -3725,8 +3821,8 @@ this.BX = this.BX || {};
 				}
 				const url = this.refineUrl(sliderUrl);
 				const sliderToDestroy = this.getSlider(url);
-				if (this.getLastOpenSlider() && (sliderToDestroy || this.getLastOpenSlider().getUrl() === url)) {
-					this.getLastOpenSlider().destroy();
+				if (this.getLastOpenSlider() && (sliderToDestroy || this.getLastOpenSlider()?.getUrl() === url)) {
+					this.getLastOpenSlider()?.destroy();
 				}
 				if (sliderToDestroy !== null) {
 					const openSliders = this.getOpenSliders();
@@ -3755,10 +3851,10 @@ this.BX = this.BX || {};
 			}
 		}, {
 			key: "getPreviousSlider",
-			value: function getPreviousSlider(currentSlider) {
+			value: function getPreviousSlider(fromSlider) {
 				let previousSlider = null;
 				const openSliders = this.getOpenSliders();
-				currentSlider = currentSlider || this.getTopSlider();
+				const currentSlider = fromSlider || this.getTopSlider();
 				for (let i = openSliders.length - 1; i >= 0; i--) {
 					const slider = openSliders[i];
 					if (slider === currentSlider) {
@@ -3801,10 +3897,6 @@ this.BX = this.BX || {};
 			value: function getOpenSlidersCount() {
 				return this.openSliders.length;
 			}
-
-			/**
-			 * @private
-			 */
 		}, {
 			key: "getLastOpenSlider",
 			value: function getLastOpenSlider() {
@@ -3858,7 +3950,7 @@ this.BX = this.BX || {};
 			value: function getCurrentTitle() {
 				let title = document.title;
 				if (!main_core.Type.isUndefined(window.BXIM)) {
-					title = title.replace(/^\(\d+\) /, ''); // replace a messenger counter.
+					title = title.replace(/^\(\d+\) /, '');
 				}
 				return title;
 			}
@@ -3870,16 +3962,16 @@ this.BX = this.BX || {};
 				}
 				const container = document.body;
 				if (container.requestFullscreen) {
-					main_core.Event.bind(document, 'fullscreenchange', this.handleFullScreenChange);
+					main_core.Event.bind(document, 'fullscreenchange', _classPrivateFieldGet(_handleFullScreenChange, this));
 					container.requestFullscreen();
 				} else if (container.webkitRequestFullScreen) {
-					main_core.Event.bind(document, 'webkitfullscreenchange', this.handleFullScreenChange);
+					main_core.Event.bind(document, 'webkitfullscreenchange', _classPrivateFieldGet(_handleFullScreenChange, this));
 					container.webkitRequestFullScreen();
 				} else if (container.msRequestFullscreen) {
-					main_core.Event.bind(document, 'MSFullscreenChange', this.handleFullScreenChange);
+					main_core.Event.bind(document, 'MSFullscreenChange', _classPrivateFieldGet(_handleFullScreenChange, this));
 					container.msRequestFullscreen();
 				} else if (container.mozRequestFullScreen) {
-					main_core.Event.bind(document, 'mozfullscreenchange', this.handleFullScreenChange);
+					main_core.Event.bind(document, 'mozfullscreenchange', _classPrivateFieldGet(_handleFullScreenChange, this));
 					container.mozRequestFullScreen();
 				} else {
 					console.log('Slider: Full Screen mode is not supported.');
@@ -3912,29 +4004,6 @@ this.BX = this.BX || {};
 				return this.fullScreenSlider;
 			}
 		}, {
-			key: "handleFullScreenChange",
-			value: function handleFullScreenChange(event) {
-				if (this.getFullScreenElement()) {
-					this.fullScreenSlider = this.getTopSlider();
-					main_core.Dom.addClass(this.fullScreenSlider.getOverlay(), 'side-panel-fullscreen');
-					this.fullScreenSlider.fireEvent('onFullScreenEnter');
-				} else {
-					if (this.getFullScreenSlider()) {
-						main_core.Dom.removeClass(this.getFullScreenSlider().getOverlay(), 'side-panel-fullscreen');
-						this.fullScreenSlider.fireEvent('onFullScreenExit');
-						this.fullScreenSlider = null;
-					}
-					main_core.Event.unbind(document, event.type, this.handleFullScreenChange);
-					window.scrollTo(0, this.pageScrollTop);
-					setTimeout(() => {
-						this.adjustLayout();
-						const resizeEvent = document.createEvent('Event');
-						resizeEvent.initEvent('resize', true, true);
-						window.dispatchEvent(resizeEvent);
-					}, 1000);
-				}
-			}
-		}, {
 			key: "postMessage",
 			value: function postMessage(source, eventId, data) {
 				const sender = this.getSliderFromSource(source);
@@ -3951,8 +4020,7 @@ this.BX = this.BX || {};
 					}
 				}
 				const sliderWindow = previousSlider ? previousSlider.getWindow() : window;
-				sliderWindow.BX.onCustomEvent('Bitrix24.Slider:onMessage', [sender, data]); // Compatibility
-
+				sliderWindow.BX.onCustomEvent('Bitrix24.Slider:onMessage', [sender, data]);
 				const event = new MessageEvent({
 					sender,
 					slider: previousSlider || null,
@@ -4035,15 +4103,18 @@ this.BX = this.BX || {};
 					console.trace();
 				}
 				parameters.rules.forEach(rule => {
-					if (main_core.Type.isArray(rule.condition)) {
-						for (let m = 0; m < rule.condition.length; m++) {
-							if (main_core.Type.isString(rule.condition[m])) {
-								rule.condition[m] = new RegExp(rule.condition[m], 'i');
+					const normalizedRule = {
+						...rule
+					};
+					if (main_core.Type.isArray(normalizedRule.condition)) {
+						for (let m = 0; m < normalizedRule.condition.length; m++) {
+							if (main_core.Type.isString(normalizedRule.condition[m])) {
+								normalizedRule.condition[m] = new RegExp(normalizedRule.condition[m], 'i');
 							}
 						}
 					}
-					rule.options ??= {};
-					this.anchorRules.push(rule);
+					normalizedRule.options ??= {};
+					this.anchorRules.push(normalizedRule);
 				});
 			}
 		}, {
@@ -4071,241 +4142,20 @@ this.BX = this.BX || {};
 			value: function unregisterAnchorListener(targetDocument) {
 				main_core.Event.unbind(targetDocument, 'click', this.handleAnchorClick, true);
 			}
-
-			/**
-			 * @private
-			 */
-		}, {
-			key: "handleSliderOpenStart",
-			value: function handleSliderOpenStart(event) {
-				if (!event.isActionAllowed()) {
-					return;
-				}
-				const slider = event.getSlider();
-				if (slider.isDestroyed()) {
-					return;
-				}
-				if (this.getTopSlider()) {
-					this.exitFullScreen();
-					this.getTopSlider().hideOverlay();
-					slider.setOverlayBackground();
-					const sameWidth = this.getTopSlider().getOffset() === slider.getOffset() && this.getTopSlider().getWidth() === slider.getWidth() && this.getTopSlider().getCustomLeftBoundary() === slider.getCustomLeftBoundary();
-					if (!sameWidth) {
-						this.getTopSlider().showShadow();
-					}
-					this.getTopSlider().hideCloseBtn();
-					this.getTopSlider().hideExtraLabels();
-				} else {
-					slider.setOverlayAnimation(true);
-				}
-				_assertClassBrand(_SliderManager_brand, this, _addOpenSlider).call(this, slider);
-
-				// this.getOpenSliders().forEach((currentSlider: Slider, index: number, openSliders: Slider[]) => {
-				// 	currentSlider.getLabel().moveAt(openSliders.length - index - 1); // move down
-				// });
-
-				// this.losePageFocus();
-
-				if (!this.opened) {
-					this.pageUrl = this.getCurrentUrl();
-					this.pageTitle = this.getCurrentTitle();
-				}
-				this.opened = true;
-				_assertClassBrand(_SliderManager_brand, this, _resetLastOpenSlider).call(this);
-			}
-
-			/**
-			 * @private
-			 */
-		}, {
-			key: "handleSliderOpenComplete",
-			value: function handleSliderOpenComplete(event) {
-				this.setBrowserHistory(event.getSlider());
-				this.updateBrowserTitle();
-				event.getSlider().setAnimation('sliding');
-				const openSliders = this.getOpenSliders();
-				const topSlider = event.getSlider();
-				for (let i = openSliders.length - 1; i >= 0; i--) {
-					const slider = openSliders[i];
-					if (topSlider === slider) {
-						continue;
-					}
-					if (topSlider.getContainer().offsetLeft <= slider.getContainer().offsetLeft) {
-						main_core.Dom.addClass(slider.getOverlay(), '--invisible');
-					} else {
-						break;
-					}
-				}
-			}
-
-			/**
-			 * @private
-			 */
-		}, {
-			key: "handleSliderCloseStart",
-			value: function handleSliderCloseStart(event) {
-				if (!event.isActionAllowed()) {
-					return;
-				}
-				if (event.getSlider() && event.getSlider().isDestroyed()) {
-					return;
-				}
-				const previousSlider = this.getPreviousSlider();
-				const topSlider = this.getTopSlider();
-				this.exitFullScreen();
-
-				// this.getOpenSliders().forEach((slider, index, openSliders) => {
-				// 	slider.getLabel().moveAt(openSliders.length - index - 2); // move up
-				// });
-
-				let visibleSlider = null;
-				const openSliders = this.getOpenSliders();
-				for (let i = openSliders.length - 1; i >= 0; i--) {
-					const slider = openSliders[i];
-					if (event.getSlider() === slider) {
-						continue;
-					}
-					if (visibleSlider === null || slider.getContainer().offsetLeft < visibleSlider.getContainer().offsetLeft) {
-						main_core.Dom.removeClass(slider.getOverlay(), '--invisible');
-						visibleSlider = slider;
-					}
-				}
-				if (previousSlider) {
-					previousSlider.unhideOverlay();
-					previousSlider.hideShadow();
-					previousSlider.showCloseBtn();
-					previousSlider.showExtraLabels();
-					if (topSlider) {
-						topSlider.hideOverlay();
-						topSlider.hideShadow();
-					}
-				}
-			}
-		}, {
-			key: "handleSliderMaximizeStart",
-			value: function handleSliderMaximizeStart(event) {
-				if (!event.isActionAllowed() || this.getToolbar() === null) {
-					return;
-				}
-				const slider = event.getSlider();
-				if (slider && slider.isDestroyed()) {
-					return;
-				}
-				const {
-					entityType,
-					entityId
-				} = slider.getMinimizeOptions() || {};
-				const item = this.getToolbar().getItem(entityType, entityId);
-				this.getToolbar().request('maximize', item);
-				const origin = _assertClassBrand(_SliderManager_brand, this, _getItemOrigin).call(this, slider, item);
-				slider.setAnimation('scale', {
-					origin
-				});
-			}
-		}, {
-			key: "handleSliderMinimizeStart",
-			value: function handleSliderMinimizeStart(event) {
-				if (!event.isActionAllowed() || this.getToolbar() === null) {
-					return;
-				}
-				const slider = event.getSlider();
-				if (slider && slider.isDestroyed()) {
-					return;
-				}
-				if (!this.getToolbar().isShown()) {
-					this.getToolbar().show();
-				}
-				let title = slider.getTitle();
-				if (!title) {
-					title = slider.getFrameWindow() ? slider.getFrameWindow().document.title : null;
-				}
-				this.getToolbar().expand(true);
-				const minimizeOptions = this.getMinimizeOptions(slider.getUrl());
-				const {
-					entityType,
-					entityId,
-					url
-				} = slider.getMinimizeOptions() || minimizeOptions || {};
-				const item = this.getToolbar().minimizeItem({
-					title,
-					url: main_core.Type.isStringFilled(url) ? url : slider.getUrl(),
-					entityType,
-					entityId
-				});
-				const origin = _assertClassBrand(_SliderManager_brand, this, _getItemOrigin).call(this, slider, item);
-				slider.setAnimation('scale', {
-					origin
-				});
-			}
-		}, {
-			key: "handleSliderCloseComplete",
-			value:
-			/**
-			 * @private
-			 */
-			function handleSliderCloseComplete(event) {
-				const slider = event.getSlider();
-				if (slider === this.getTopSlider()) {
-					_assertClassBrand(_SliderManager_brand, this, _setLastOpenSlider).call(this, slider);
-				}
-				event.getSlider().setAnimation('sliding');
-				this.cleanUpClosedSlider(slider);
-			}
-
-			/**
-			 * @private
-			 */
-		}, {
-			key: "handleSliderDestroy",
-			value: function handleSliderDestroy(event) {
-				const slider = event.getSlider();
-				main_core_events.EventEmitter.unsubscribe(slider, 'SidePanel.Slider:onOpenStart', this.handleSliderOpenStart);
-				main_core_events.EventEmitter.unsubscribe(slider, 'SidePanel.Slider:onBeforeOpenComplete', this.handleSliderOpenComplete);
-				main_core_events.EventEmitter.unsubscribe(slider, 'SidePanel.Slider:onMaximizeStart', this.handleSliderMaximizeStart);
-				main_core_events.EventEmitter.unsubscribe(slider, 'SidePanel.Slider:onCloseStart', this.handleSliderCloseStart);
-				main_core_events.EventEmitter.unsubscribe(slider, 'SidePanel.Slider:onBeforeCloseComplete', this.handleSliderCloseComplete);
-				main_core_events.EventEmitter.unsubscribe(slider, 'SidePanel.Slider:onMinimizeStart', this.handleSliderMinimizeStart);
-				main_core_events.EventEmitter.unsubscribe(slider, 'SidePanel.Slider:onLoad', this.handleSliderLoad);
-				main_core_events.EventEmitter.unsubscribe(slider, 'SidePanel.Slider:onDestroy', this.handleSliderDestroy);
-				main_core_events.EventEmitter.unsubscribe(slider, 'SidePanel.Slider:onEscapePress', this.handleEscapePress);
-				const frameWindow = event.getSlider().getFrameWindow();
-				if (frameWindow && !event.getSlider().allowCrossOrigin) {
-					this.unregisterAnchorListener(frameWindow.document);
-				}
-				if (slider === this.getLastOpenSlider()) {
-					this.lastOpenSlider = null;
-				}
-				this.cleanUpClosedSlider(slider);
-			}
-		}, {
-			key: "handleEscapePress",
-			value: function handleEscapePress(event) {
-				const topSlider = this.getTopSlider();
-				if (topSlider?.canCloseByEsc() && this.isOnTop(topSlider)) {
-					topSlider.close();
-				}
-			}
-
-			/**
-			 * @private
-			 */
 		}, {
 			key: "cleanUpClosedSlider",
-			value: function cleanUpClosedSlider(slider) {
+			value:
+			function cleanUpClosedSlider(slider) {
 				_assertClassBrand(_SliderManager_brand, this, _removeOpenSlider).call(this, slider);
 				slider.unhideOverlay();
 				slider.hideShadow();
-
-				// this.getOpenSliders().forEach((slider, index, openSliders) => {
-				// 	slider.getLabel().moveAt(openSliders.length - index - 1); //update position
-				// });
-
-				if (this.getTopSlider()) {
-					this.getTopSlider().unhideOverlay();
-					this.getTopSlider().hideShadow();
-					this.getTopSlider().showCloseBtn();
-					this.getTopSlider().showExtraLabels();
-					this.getTopSlider().focus();
+				const topSlider = this.getTopSlider();
+				if (topSlider) {
+					topSlider.unhideOverlay();
+					topSlider.hideShadow();
+					topSlider.showCloseBtn();
+					topSlider.showExtraLabels();
+					topSlider.focus();
 				} else {
 					window.focus();
 				}
@@ -4316,36 +4166,10 @@ this.BX = this.BX || {};
 				this.resetBrowserHistory();
 				this.updateBrowserTitle();
 			}
-
-			/**
-			 * @private
-			 */
-		}, {
-			key: "handleSliderLoad",
-			value: function handleSliderLoad(event) {
-				const frameWindow = event.getSlider().getFrameWindow();
-				if (frameWindow) {
-					this.registerAnchorListener(frameWindow.document);
-				}
-				this.setBrowserHistory(event.getSlider());
-				this.updateBrowserTitle();
-			}
-
-			/**
-			 * @private
-			 */
-		}, {
-			key: "handlePostMessageCompatible",
-			value: function handlePostMessageCompatible(source, data) {
-				this.postMessage(source, '', data);
-			}
-
-			/**
-			 * @private
-			 */
 		}, {
 			key: "getSliderFromSource",
-			value: function getSliderFromSource(source) {
+			value:
+			function getSliderFromSource(source) {
 				if (source instanceof Slider) {
 					return source;
 				}
@@ -4357,10 +4181,6 @@ this.BX = this.BX || {};
 				}
 				return null;
 			}
-
-			/**
-			 * @private
-			 */
 		}, {
 			key: "applyHacks",
 			value: function applyHacks(slider) {
@@ -4378,10 +4198,6 @@ this.BX = this.BX || {};
 				this.hacksApplied = true;
 				return true;
 			}
-
-			/**
-			 * @private
-			 */
 		}, {
 			key: "resetHacks",
 			value: function resetHacks(slider) {
@@ -4399,52 +4215,35 @@ this.BX = this.BX || {};
 				this.hacksApplied = false;
 				return true;
 			}
-
-			/**
-			 * @private
-			 */
 		}, {
 			key: "bindEvents",
 			value: function bindEvents() {
-				main_core.Event.bind(document, 'keydown', this.handleDocumentKeyDown);
-				main_core.Event.bind(window, 'resize', this.handleWindowResize);
-				main_core.Event.bind(window, 'scroll', this.handleWindowScroll); // Live Comments can change scrollTop
-
+				main_core.Event.bind(document, 'keydown', _classPrivateFieldGet(_handleDocumentKeyDown, this));
+				main_core.Event.bind(window, 'resize', _classPrivateFieldGet(_handleWindowResize, this));
+				main_core.Event.bind(window, 'scroll', _classPrivateFieldGet(_handleWindowScroll, this));
 				if (main_core.Browser.isMobile()) {
-					main_core.Event.bind(document.body, 'touchmove', this.handleTouchMove);
+					main_core.Event.bind(document.body, 'touchmove', _classPrivateFieldGet(_handleTouchMove, this));
 				}
 			}
-
-			/**
-			 * @private
-			 */
 		}, {
 			key: "unbindEvents",
 			value: function unbindEvents() {
-				main_core.Event.unbind(document, 'keydown', this.handleDocumentKeyDown);
-				main_core.Event.unbind(window, 'resize', this.handleWindowResize);
-				main_core.Event.unbind(window, 'scroll', this.handleWindowScroll);
+				main_core.Event.unbind(document, 'keydown', _classPrivateFieldGet(_handleDocumentKeyDown, this));
+				main_core.Event.unbind(window, 'resize', _classPrivateFieldGet(_handleWindowResize, this));
+				main_core.Event.unbind(window, 'scroll', _classPrivateFieldGet(_handleWindowScroll, this));
 				if (main_core.Browser.isMobile()) {
-					main_core.Event.unbind(document.body, 'touchmove', this.handleTouchMove);
+					main_core.Event.unbind(document.body, 'touchmove', _classPrivateFieldGet(_handleTouchMove, this));
 				}
 			}
-
-			/**
-			 * @private
-			 */
 		}, {
 			key: "disablePageScrollbar",
 			value: function disablePageScrollbar() {
 				const scrollWidth = window.innerWidth - document.documentElement.clientWidth;
-				document.body.style.paddingRight = scrollWidth + 'px';
+				document.body.style.paddingRight = `${scrollWidth}px`;
 				main_core.Dom.style(document.body, '--scroll-shift-width', `${scrollWidth}px`);
 				main_core.Dom.addClass(document.body, 'side-panel-disable-scrollbar');
 				this.pageScrollTop = window.pageYOffset || document.documentElement.scrollTop;
 			}
-
-			/**
-			 * @private
-			 */
 		}, {
 			key: "enablePageScrollbar",
 			value: function enablePageScrollbar() {
@@ -4452,10 +4251,6 @@ this.BX = this.BX || {};
 				main_core.Dom.style(document.body, '--scroll-shift-width', null);
 				main_core.Dom.removeClass(document.body, 'side-panel-disable-scrollbar');
 			}
-
-			/**
-			 * @private
-			 */
 		}, {
 			key: "losePageFocus",
 			value: function losePageFocus() {
@@ -4463,57 +4258,10 @@ this.BX = this.BX || {};
 					document.activeElement.blur();
 				}
 			}
-
-			/**
-			 * @private
-			 * @param {Event} event
-			 */
-		}, {
-			key: "handleDocumentKeyDown",
-			value: function handleDocumentKeyDown(event) {
-				if (event.keyCode !== 27) {
-					return;
-				}
-				event.preventDefault(); // otherwise an iframe loading can be cancelled by a browser
-
-				this.handleEscapePress();
-			}
-
-			/**
-			 * @private
-			 */
-		}, {
-			key: "handleWindowResize",
-			value: function handleWindowResize() {
-				this.adjustLayout();
-			}
-
-			/**
-			 * @private
-			 */
-		}, {
-			key: "handleWindowScroll",
-			value: function handleWindowScroll() {
-				window.scrollTo(0, this.pageScrollTop);
-				this.adjustLayout();
-			}
-
-			/**
-			 * @private
-			 * @param {Event} event
-			 */
-		}, {
-			key: "handleTouchMove",
-			value: function handleTouchMove(event) {
-				event.preventDefault();
-			}
-
-			/**
-			 * @private
-			 */
 		}, {
 			key: "isOnTop",
-			value: function isOnTop(slider) {
+			value:
+			function isOnTop(slider) {
 				if (slider) {
 					const popups = main_popup.PopupManager.getPopups();
 					const isOnTopOfAllPopups = popups.every(popup => slider.isOnTopOfPopup(popup));
@@ -4521,17 +4269,11 @@ this.BX = this.BX || {};
 						return false;
 					}
 				}
-
-				// Photo Slider or something else can cover Side Panel.
 				const centerX = document.documentElement.clientWidth / 2;
 				const centerY = document.documentElement.clientHeight / 2;
 				const element = document.elementFromPoint(centerX, centerY);
 				return main_core.Dom.hasClass(element, 'side-panel') || element.closest('.side-panel') !== null;
 			}
-
-			/**
-			 * @private
-			 */
 		}, {
 			key: "extractLinkFromEvent",
 			value: function extractLinkFromEvent(event) {
@@ -4546,8 +4288,6 @@ this.BX = this.BX || {};
 				if (!main_core.Type.isDomNode(a)) {
 					return null;
 				}
-
-				// do not use a.href here, the code will fail on links like <a href="#SG13"></a>
 				const href = a.getAttribute('href');
 				if (href) {
 					return {
@@ -4558,11 +4298,6 @@ this.BX = this.BX || {};
 				}
 				return null;
 			}
-
-			/**
-			 * @private
-			 * @param {MouseEvent} event
-			 */
 		}, {
 			key: "handleAnchorClick",
 			value: function handleAnchorClick(event) {
@@ -4584,14 +4319,13 @@ this.BX = this.BX || {};
 					return;
 				}
 				if (link.anchor !== event.target) {
-					// click was inside a link
 					try {
-						link.anchor.focus({
+						const focusOptions = {
 							preventScroll: true,
 							focusVisible: false
-						});
+						};
+						link.anchor.focus(focusOptions);
 					} catch {
-						// silently failed
 					}
 				}
 				if (main_core.Type.isFunction(rule.handler)) {
@@ -4605,11 +4339,6 @@ this.BX = this.BX || {};
 					}
 				}
 			}
-
-			/**
-			 * @public
-			 * @param {string} url
-			 */
 		}, {
 			key: "emulateAnchorClick",
 			value: function emulateAnchorClick(url) {
@@ -4620,7 +4349,7 @@ this.BX = this.BX || {};
 				};
 				const rule = this.getUrlRule(url, link);
 				if (!this.isValidLink(rule, link)) {
-					BX.reload(url);
+					main_core.Page.getRootWindow().BX.reload(url);
 				} else if (main_core.Type.isFunction(rule.handler)) {
 					rule.handler(new MouseEvent('slider', {
 						bubbles: false,
@@ -4630,20 +4359,17 @@ this.BX = this.BX || {};
 					this.open(link.url, rule.options);
 				}
 			}
-
-			/**
-			 * @private
-			 */
 		}, {
 			key: "getUrlRule",
 			value: function getUrlRule(href, link) {
 				if (!main_core.Type.isStringFilled(href)) {
 					return null;
 				}
-				if (!main_core.Type.isPlainObject(link)) {
+				let resolvedLink = main_core.Type.isPlainObject(link) ? link : undefined;
+				if (!resolvedLink) {
 					const a = document.createElement('a');
 					a.href = href;
-					link = {
+					resolvedLink = {
 						url: href,
 						anchor: a,
 						target: ''
@@ -4657,9 +4383,9 @@ this.BX = this.BX || {};
 					for (let m = 0; m < rule.condition.length; m++) {
 						const matches = href.match(rule.condition[m]);
 						if (matches && !this.hasStopParams(href, rule.stopParameters)) {
-							link.matches = matches;
-							let options = main_core.Type.isFunction(rule.options) ? rule.options(link) : rule.options;
-							const minimizeOptions = main_core.Type.isFunction(rule.minimizeOptions) ? rule.minimizeOptions(link) : null;
+							resolvedLink.matches = matches;
+							let options = main_core.Type.isFunction(rule.options) ? rule.options(resolvedLink) : rule.options;
+							const minimizeOptions = main_core.Type.isFunction(rule.minimizeOptions) ? rule.minimizeOptions(resolvedLink) : null;
 							if (main_core.Type.isPlainObject(minimizeOptions)) {
 								if (main_core.Type.isPlainObject(options)) {
 									options.minimizeOptions = minimizeOptions;
@@ -4682,10 +4408,6 @@ this.BX = this.BX || {};
 				}
 				return null;
 			}
-
-			/**
-			 * @private
-			 */
 		}, {
 			key: "isValidLink",
 			value: function isValidLink(rule, link) {
@@ -4700,11 +4422,6 @@ this.BX = this.BX || {};
 				}
 				return !main_core.Type.isFunction(rule.validate) || rule.validate(link);
 			}
-
-			/**
-			 * @private
-			 * @param {BX.SidePanel.Slider} slider
-			 */
 		}, {
 			key: "setBrowserHistory",
 			value: function setBrowserHistory(slider) {
@@ -4715,10 +4432,6 @@ this.BX = this.BX || {};
 					window.history.replaceState({}, '', slider.getUrl());
 				}
 			}
-
-			/**
-			 * @private
-			 */
 		}, {
 			key: "resetBrowserHistory",
 			value: function resetBrowserHistory() {
@@ -4736,10 +4449,6 @@ this.BX = this.BX || {};
 					window.history.replaceState({}, '', url);
 				}
 			}
-
-			/**
-			 * @public
-			 */
 		}, {
 			key: "updateBrowserTitle",
 			value: function updateBrowserTitle() {
@@ -4759,10 +4468,6 @@ this.BX = this.BX || {};
 					this.titleChanged = false;
 				}
 			}
-
-			/**
-			 * @private
-			 */
 		}, {
 			key: "getBrowserTitle",
 			value: function getBrowserTitle(slider) {
@@ -4775,10 +4480,6 @@ this.BX = this.BX || {};
 				}
 				return main_core.Type.isStringFilled(title) ? title : null;
 			}
-
-			/**
-			 * @private
-			 */
 		}, {
 			key: "hasStopParams",
 			value: function hasStopParams(url, params) {
@@ -4797,19 +4498,11 @@ this.BX = this.BX || {};
 				}
 				return false;
 			}
-
-			/**
-			 * @deprecated use getLastOpenSlider method
-			 */
 		}, {
 			key: "getLastOpenPage",
 			value: function getLastOpenPage() {
 				return this.getLastOpenSlider();
 			}
-
-			/**
-			 * @deprecated use getTopSlider method
-			 */
 		}, {
 			key: "getCurrentPage",
 			value: function getCurrentPage() {
@@ -4859,7 +4552,7 @@ this.BX = this.BX || {};
 		if (topSlider && topSlider.isOpen() && topSlider.getUrl() === url) {
 			return null;
 		}
-		if (this.getLastOpenSlider() && this.getLastOpenSlider().getUrl() === url) {
+		if (this.getLastOpenSlider()?.getUrl() === url) {
 			return this.getLastOpenSlider();
 		}
 		const rule = this.getUrlRule(url);
@@ -4890,31 +4583,31 @@ this.BX = this.BX || {};
 				slider.setCustomRightBoundary(topSlider.getCustomRightBoundary());
 			}
 		}
-		main_core_events.EventEmitter.subscribe(slider, 'SidePanel.Slider:onOpenStart', this.handleSliderOpenStart, {
+		main_core_events.EventEmitter.subscribe(slider, 'SidePanel.Slider:onOpenStart', _classPrivateFieldGet(_handleSliderOpenStart, this), {
 			compatMode: true
 		});
-		main_core_events.EventEmitter.subscribe(slider, 'SidePanel.Slider:onBeforeOpenComplete', this.handleSliderOpenComplete, {
+		main_core_events.EventEmitter.subscribe(slider, 'SidePanel.Slider:onBeforeOpenComplete', _classPrivateFieldGet(_handleSliderOpenComplete, this), {
 			compatMode: true
 		});
-		main_core_events.EventEmitter.subscribe(slider, 'SidePanel.Slider:onMaximizeStart', this.handleSliderMaximizeStart, {
+		main_core_events.EventEmitter.subscribe(slider, 'SidePanel.Slider:onMaximizeStart', _classPrivateFieldGet(_handleSliderMaximizeStart, this), {
 			compatMode: true
 		});
-		main_core_events.EventEmitter.subscribe(slider, 'SidePanel.Slider:onCloseStart', this.handleSliderCloseStart, {
+		main_core_events.EventEmitter.subscribe(slider, 'SidePanel.Slider:onCloseStart', _classPrivateFieldGet(_handleSliderCloseStart, this), {
 			compatMode: true
 		});
-		main_core_events.EventEmitter.subscribe(slider, 'SidePanel.Slider:onBeforeCloseComplete', this.handleSliderCloseComplete, {
+		main_core_events.EventEmitter.subscribe(slider, 'SidePanel.Slider:onBeforeCloseComplete', _classPrivateFieldGet(_handleSliderCloseComplete, this), {
 			compatMode: true
 		});
-		main_core_events.EventEmitter.subscribe(slider, 'SidePanel.Slider:onMinimizeStart', this.handleSliderMinimizeStart, {
+		main_core_events.EventEmitter.subscribe(slider, 'SidePanel.Slider:onMinimizeStart', _classPrivateFieldGet(_handleSliderMinimizeStart, this), {
 			compatMode: true
 		});
-		main_core_events.EventEmitter.subscribe(slider, 'SidePanel.Slider:onLoad', this.handleSliderLoad, {
+		main_core_events.EventEmitter.subscribe(slider, 'SidePanel.Slider:onLoad', _classPrivateFieldGet(_handleSliderLoad, this), {
 			compatMode: true
 		});
-		main_core_events.EventEmitter.subscribe(slider, 'SidePanel.Slider:onDestroy', this.handleSliderDestroy, {
+		main_core_events.EventEmitter.subscribe(slider, 'SidePanel.Slider:onDestroy', _classPrivateFieldGet(_handleSliderDestroy, this), {
 			compatMode: true
 		});
-		main_core_events.EventEmitter.subscribe(slider, 'SidePanel.Slider:onEscapePress', this.handleEscapePress, {
+		main_core_events.EventEmitter.subscribe(slider, 'SidePanel.Slider:onEscapePress', _classPrivateFieldGet(_handleEscapePress, this), {
 			compatMode: true
 		});
 		return slider;
@@ -4925,9 +4618,6 @@ this.BX = this.BX || {};
 		}
 		this.openSliders.push(slider);
 	}
-	/**
-	 * @private
-	 */
 	function _removeOpenSlider(slider) {
 		const openSliders = [...this.getOpenSliders()];
 		for (const [i, openSlider] of openSliders.entries()) {
@@ -4978,6 +4668,18 @@ this.BX = this.BX || {};
 		return '50% 100%';
 	}
 
+	let instance = null;
+	function getInstance() {
+		const topWindow = main_core.Page.getRootWindow();
+		if (topWindow !== window) {
+			return topWindow.BX.SidePanel.Instance;
+		}
+		if (instance === null) {
+			instance = new SliderManager();
+		}
+		return instance;
+	}
+
 	const SidePanel = {};
 	Object.defineProperty(SidePanel, 'Instance', {
 		enumerable: false,
@@ -4988,11 +4690,13 @@ this.BX = this.BX || {};
 		enumerable: false,
 		get: getInstance
 	});
+	const Manager = SliderManager;
+	const Event = SliderEvent;
 
 	exports.Dictionary = Dictionary;
-	exports.Event = SliderEvent;
+	exports.Event = Event;
 	exports.Label = Label;
-	exports.Manager = SliderManager;
+	exports.Manager = Manager;
 	exports.MessageEvent = MessageEvent;
 	exports.SidePanel = SidePanel;
 	exports.Slider = Slider;
@@ -5001,5 +4705,5 @@ this.BX = this.BX || {};
 	exports.Toolbar = Toolbar;
 	exports.ToolbarItem = ToolbarItem;
 
-})(this.BX.SidePanel = this.BX.SidePanel || {}, BX, BX.Event, BX.Cache, BX, BX.UI.Accessibility, BX.UI.System, BX, BX.Main);
+})(this.BX.SidePanel = this.BX.SidePanel || {}, BX, window, window, window, window, BX.Event, BX.Main, BX.Cache, BX, BX.UI.Accessibility, BX.UI.System);
 //# sourceMappingURL=side-panel.bundle.js.map

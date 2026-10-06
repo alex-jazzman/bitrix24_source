@@ -11,6 +11,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 /** @var $APPLICATION */
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Grid\Panel\Actions;
+use Bitrix\Main\Grid\Panel\Types;
 use Bitrix\Main\Web\Json;
 use Bitrix\Sign\Helper\JsonHelper;
 use Bitrix\Sign\Ui\MyDocumentsGrid\TextGenerator;
@@ -26,20 +28,79 @@ $APPLICATION->SetTitle($arResult['TITLE']);
 	'applayout',
 ]);
 
+$isAnnulMarkEnabled = (bool)($arParams['IS_ANNUL_MARK_ENABLED'] ?? false);
+
 $gridRows = [];
+$isBulkActionAvailable = (bool)($arParams['IS_BULK_ACTION_AVAILABLE'] ?? false);
 
 $rows = $arResult['DOCUMENTS']->rows ?? [];
 foreach ($rows as $row)
 {
 	$textGenerator = new TextGenerator($row);
-	$template = new Template($textGenerator, $row);
+	$template = new Template($textGenerator, $row, $isAnnulMarkEnabled);
+	$bulkActions = $arResult['BULK_ACTIONS'][$row->id] ?? [];
 
-	$gridRows[] = [
+	$gridRow = [
+		'id' => $row->id,
 		'data' => [
 			'ID' => $row->id,
 			'TITLE' => $template->getDocumentTitle(),
 			'MEMBERS' => $template->getParticipants(),
 			'ACTION' => $template->getAction(),
+		],
+	];
+	if ($isBulkActionAvailable)
+	{
+		// every row stays selectable: what the selection allows is said by the action buttons of the
+		// panel, so a row without actions blocks them with a reason instead of refusing the checkbox.
+		// the key itself has to stay: the grid template reads it without checking that it is there
+		$gridRow['attrs'] = ['data-bulk-actions' => implode(',', $bulkActions)];
+		$gridRow['editable'] = true;
+	}
+
+	$gridRows[] = $gridRow;
+}
+
+// The panel is anchored to the toolbar strip, and this grid has two of them: a page keeps
+// `.page__toolbar`, a side panel replaces it with `.ui-side-panel-toolbar`. An anchor absent from the
+// current view leaves main.ui.grid throwing over a null node, taking the whole grid script with it.
+$actionPanelRenderTo = $isBulkActionAvailable ? '.ui-side-panel-toolbar, .page__toolbar' : null;
+
+$actionPanel = [];
+if ($isBulkActionAvailable)
+{
+	$actionPanel = [
+		'GROUPS' => [
+			[
+				'ITEMS' => [
+					[
+						'TYPE' => Types::BUTTON,
+						'ID' => 'sign-my-documents-bulk-action-approve',
+						'TEXT' => Loc::getMessage('SIGN_MY_DOCUMENTS_BULK_ACTION_APPROVE'),
+						'ONCHANGE' => [
+							[
+								'ACTION' => Actions::CALLBACK,
+								'DATA' => [
+									['JS' => 'myDocumentsGrid.applyBulkAction(\'approve\');'],
+								],
+							],
+						],
+					],
+					[
+						'TYPE' => Types::BUTTON,
+						'ID' => 'sign-my-documents-bulk-action-reject',
+						'TEXT' => Loc::getMessage('SIGN_MY_DOCUMENTS_BULK_ACTION_REJECT'),
+						'ONCHANGE' => [
+							[
+								'ACTION' => Actions::CALLBACK,
+								'DATA' => [
+									['JS' => 'myDocumentsGrid.applyBulkAction(\'reject\');'],
+								],
+							],
+						],
+					],
+				],
+			],
 		],
 	];
 }
@@ -74,8 +135,11 @@ $APPLICATION->IncludeComponent(
 		'COLUMNS' => $arParams['COLUMNS'] ?? '',
 		'ROWS' => $gridRows,
 		'NAV_OBJECT' => $arResult['PAGE_NAVIGATION'] ?? null,
-		'SHOW_ROW_CHECKBOXES' => false,
+		'SHOW_ROW_CHECKBOXES' => $isBulkActionAvailable,
 		'SHOW_TOTAL_COUNTER' => true,
+		'SHOW_PAGESIZE' => (bool)($arParams['SHOW_PAGESIZE'] ?? false),
+		'PAGE_SIZES' => $arParams['PAGE_SIZES'] ?? [],
+		'DEFAULT_PAGE_SIZE' => $arParams['DEFAULT_PAGE_SIZE'] ?? null,
 		'TOTAL_ROWS_COUNT' => $arResult['TOTAL_COUNT'] ?? 0,
 		'ALLOW_COLUMNS_SORT' => true,
 		'ALLOW_SORT' => true,
@@ -84,17 +148,28 @@ $APPLICATION->IncludeComponent(
 		'AJAX_OPTION_HISTORY' => 'N',
 		'AJAX_OPTION_JUMP' => 'N',
 		'SHOW_ACTION_PANEL' => false,
-		'ACTION_PANEL' => [],
+		'TOP_ACTION_PANEL_RENDER_TO' => $actionPanelRenderTo,
+		'TOP_ACTION_PANEL_CLASS' => $isBulkActionAvailable ? 'sign-my-documents-bulk-action-panel' : null,
+		'ACTION_PANEL' => $actionPanel,
 	]
 );
 ?>
 
 <script>
 	const myDocumentsGrid = new BX.Sign.V2.Grid.B2e.MyDocuments({
+		gridId: '<?= CUtil::JSEscape($arParams['GRID_ID'] ?? '') ?>',
+		bulkActionAvailable: <?= $isBulkActionAvailable ? 'true' : 'false' ?>,
+		bulkActionLabels: {
+			disabledHint: {
+				approve: '<?= CUtil::JSEscape(Loc::getMessage('SIGN_MY_DOCUMENTS_BULK_ACTION_APPROVE_DISABLED_HINT') ?? '') ?>',
+				reject: '<?= CUtil::JSEscape(Loc::getMessage('SIGN_MY_DOCUMENTS_BULK_ACTION_REJECT_DISABLED_HINT') ?? '') ?>',
+			},
+		},
 		needActionCounterId: '<?= CUtil::JSEscape($arResult['NEED_ACTION_COUNTER_ID'] ?? '') ?>',
 		counterPullEventName: '<?= CUtil::JSEscape($arResult['COUNTER_PULL_EVENT_NAME'] ?? '') ?>',
 	});
 	myDocumentsGrid.openSignSliderByGridId('#<?= CUtil::JSEscape($arParams['GRID_ID']) ?>');
+	myDocumentsGrid.subscribeOnGridEvents();
 	myDocumentsGrid.subscribeOnPullEvents();
 </script>
 

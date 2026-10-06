@@ -289,6 +289,12 @@
 		this.lid = data(element.parentElement, "data-landing");
 		this.id = isNumber(parseInt(options.id)) ? parseInt(options.id) : 0;
 		this.selector = join("#block", (isNumber(options.id) ? options.id : 0), " > :first-child");
+		// Live selector of the block content root that stays valid when action panels are moved
+		// ahead of the content in the DOM (WCAG 2.4.3 focus order). Persistence keys keep using this.selector.
+		// The invariant: this.selector ("> :first-child") is the persistence and history key and the selector
+		// of the published page, where there are no panels at all; this.contentSelector is the only correct
+		// way to find the block content in the live DOM of the editor.
+		this.contentSelector = join("#block", (isNumber(options.id) ? options.id : 0), " > :not([class*='landing-ui-panel-'])");
 		this.repoId = isNumber(options.repoId) ? options.repoId : null;
 		this.active = isBoolean(options.active) ? options.active : true;
 		this.allowedByTariff = isBoolean(options.allowedByTariff) ? options.allowedByTariff : true;
@@ -399,8 +405,9 @@
 		if (this.requiredUserActionIsShown)
 		{
 			eventData.requiredUserActionIsShown = true;
-			eventData.layout = this.node.firstElementChild;
-			eventData.button = this.node.firstElementChild.querySelector(".ui-btn");
+			var userActionLayout = this.node.querySelector(".landing-block-user-action");
+			eventData.layout = userActionLayout;
+			eventData.button = userActionLayout ? userActionLayout.querySelector(".ui-btn") : null;
 		}
 
 		fireCustomEvent(window, "BX.Landing.Block:init", [this.createEvent({data: eventData})]);
@@ -703,6 +710,11 @@
 		 */
 		initPanels: function()
 		{
+			if (!this.isBlockControlsEnabled())
+			{
+				return;
+			}
+
 			// Make "add block after this block" button
 			if (!this.panels.get("create_action"))
 			{
@@ -736,7 +748,7 @@
 					);
 
 					createBeforePanel.show();
-					this.addPanel(createBeforePanel);
+					this.addPanel(createBeforePanel, this.getActionPanelTarget());
 				}
 
 				createPanel.buttons[0].on("mouseover", this.onCreateButtonMouseover.bind(this));
@@ -847,10 +859,11 @@
 				sidebarActionsPanel.addButton(
 					new ActionButton("showSidebarActions", {
 						onClick: this.onShowSidebarActionsClick.bind(this),
+						ariaLabel: BX.Landing.Loc.getMessage("LANDING_TITLE_OF_BLOCK_ACTION_ADDITIONAL_ACTIONS"),
 					})
 				);
 
-				this.addPanel(sidebarActionsPanel);
+				this.addPanel(sidebarActionsPanel, this.getActionPanelTarget());
 				sidebarActionsPanel.show();
 			}
 		},
@@ -1126,12 +1139,23 @@
 		 */
 		lazyInitPanels: function()
 		{
+			if (!this.isBlockControlsEnabled())
+			{
+				return;
+			}
+
 			if (this.isInSidebar())
 			{
 				this.initSidebarActionPanel();
 			}
 
 			var allPlacements = BX.Landing.Main.getInstance().options.placements.blocks;
+
+			// Accessible names for block action groups, contextualized with block name when available
+			var blockName = (this.manifest.block && this.manifest.block.name) ? this.manifest.block.name : "";
+			var blockNameSuffix = blockName ? " «" + blockName + "»" : "";
+			var contentActionsLabel = BX.Landing.Loc.getMessage("LANDING_CONTENT_ACTIONS_PANEL_LABEL") + blockNameSuffix;
+			var blockActionsLabel = BX.Landing.Loc.getMessage("LANDING_BLOCK_ACTIONS_PANEL_LABEL") + blockNameSuffix;
 
 			// Make content actions panel
 			if (
@@ -1153,6 +1177,7 @@
 						html: "<span class='fas fa-caret-right'></span>",
 						onClick: this.onCollapseActionPanel.bind(this),
 						attrs: {title: BX.Landing.Loc.getMessage("LANDING_TITLE_OF_BLOCK_ACTION_COLLAPSE")},
+						ariaLabel: BX.Landing.Loc.getMessage("LANDING_TITLE_OF_BLOCK_ACTION_COLLAPSE"),
 						separate: true,
 					})
 				);
@@ -1269,6 +1294,7 @@
 						html: "&nbsp;",
 						separate: true,
 						onClick: this.onStyleShow.bind(this),
+						ariaLabel: BX.Landing.Loc.getMessage("LANDING_BLOCK_DISPLAY_SETTINGS"),
 					});
 
 					bind(blockDisplay.layout, "mouseenter", this.onBlockDisplayMouseenter.bind(this));
@@ -1279,8 +1305,11 @@
 					);
 				}
 
+				contentPanel.layout.setAttribute("role", "group");
+				contentPanel.layout.setAttribute("aria-label", contentActionsLabel);
+
 				contentPanel.show();
-				this.addPanel(contentPanel);
+				this.addPanel(contentPanel, this.getActionPanelTarget());
 			}
 
 
@@ -1300,6 +1329,7 @@
 						html: "!",
 						className: "landing-ui-block-restricted-button",
 						onClick: this.onRestrictedButtonClick.bind(this),
+						ariaLabel: BX.Landing.Loc.getMessage("LANDING_TITLE_OF_BLOCK_ACTION_RESTRICTED"),
 						separate: true
 					});
 
@@ -1313,7 +1343,8 @@
 					new ActionButton("down", {
 						html: BX.Landing.Loc.getMessage("ACTION_BUTTON_DOWN"),
 						onClick: this.moveDown.bind(this),
-						attrs: {title: BX.Landing.Loc.getMessage("LANDING_TITLE_OF_BLOCK_ACTION_SORT_DOWN")}
+						attrs: {title: BX.Landing.Loc.getMessage("LANDING_TITLE_OF_BLOCK_ACTION_SORT_DOWN")},
+						ariaLabel: BX.Landing.Loc.getMessage("LANDING_TITLE_OF_BLOCK_ACTION_SORT_DOWN")
 					})
 				);
 
@@ -1321,7 +1352,8 @@
 					new ActionButton("up", {
 						html: BX.Landing.Loc.getMessage("ACTION_BUTTON_UP"),
 						onClick: this.moveUp.bind(this),
-						attrs: {title: BX.Landing.Loc.getMessage("LANDING_TITLE_OF_BLOCK_ACTION_SORT_UP")}
+						attrs: {title: BX.Landing.Loc.getMessage("LANDING_TITLE_OF_BLOCK_ACTION_SORT_UP")},
+						ariaLabel: BX.Landing.Loc.getMessage("LANDING_TITLE_OF_BLOCK_ACTION_SORT_UP")
 					})
 				);
 
@@ -1329,7 +1361,8 @@
 					new ActionButton("actions", {
 						html: BX.Landing.Loc.getMessage("ACTION_BUTTON_ACTIONS"),
 						onClick: this.showBlockActionsMenu.bind(this),
-						attrs: {title: BX.Landing.Loc.getMessage("LANDING_TITLE_OF_BLOCK_ACTION_ADDITIONAL_ACTIONS")}
+						attrs: {title: BX.Landing.Loc.getMessage("LANDING_TITLE_OF_BLOCK_ACTION_ADDITIONAL_ACTIONS")},
+						ariaLabel: BX.Landing.Loc.getMessage("LANDING_TITLE_OF_BLOCK_ACTION_ADDITIONAL_ACTIONS")
 					})
 				);
 
@@ -1338,7 +1371,8 @@
 						html: BX.Landing.Loc.getMessage("ACTION_BUTTON_REMOVE"),
 						disabled: !this.isRemoveBlockAllowed(),
 						onClick: this.deleteBlock.bind(this),
-						attrs: {title: BX.Landing.Loc.getMessage("LANDING_TITLE_OF_BLOCK_ACTION_REMOVE")}
+						attrs: {title: BX.Landing.Loc.getMessage("LANDING_TITLE_OF_BLOCK_ACTION_REMOVE")},
+						ariaLabel: BX.Landing.Loc.getMessage("LANDING_TITLE_OF_BLOCK_ACTION_REMOVE")
 					})
 				);
 
@@ -1347,12 +1381,16 @@
 						html: "<span class='fas fa-caret-right'></span>",
 						onClick: this.onCollapseActionPanel.bind(this),
 						attrs: {title: BX.Landing.Loc.getMessage("LANDING_TITLE_OF_BLOCK_ACTION_COLLAPSE")},
+						ariaLabel: BX.Landing.Loc.getMessage("LANDING_TITLE_OF_BLOCK_ACTION_COLLAPSE"),
 						separate: true
 					})
 				);
 
+				blockPanel.layout.setAttribute("role", "group");
+				blockPanel.layout.setAttribute("aria-label", blockActionsLabel);
+
 				blockPanel.show();
-				this.addPanel(blockPanel);
+				this.addPanel(blockPanel, this.getActionPanelTarget());
 			}
 
 			this.adjustPanelsPosition();
@@ -1953,6 +1991,19 @@
 
 
 		/**
+		 * Returns the insertion anchor that keeps block action panels ahead of the block content
+		 * in the DOM, so the Tab order matches their visual position on top of the block (WCAG 2.4.3).
+		 * Falls back to appending when the block has no content root.
+		 * @return {?HTMLElement}
+		 */
+		getActionPanelTarget: function()
+		{
+			return (BX.Type.isDomNode(this.content) && this.content.parentElement === this.node)
+				? this.content
+				: undefined;
+		},
+
+		/**
 		 * Adds panel into this block
 		 * @param {BX.Landing.UI.Panel.BasePanel} panel
 		 * @param {*} [target = this.node]
@@ -2091,6 +2142,11 @@
 		isCrmFormPage: function()
 		{
 			return BX.Landing.Env.getInstance().getSpecialType() === 'crm_forms';
+		},
+
+		isBlockControlsEnabled: function()
+		{
+			return BX.Landing.Env.getInstance().isBlockControlsEnabled();
 		},
 
 		/**
@@ -3306,10 +3362,24 @@
 			{
 				var styleFactory = new StyleFactory({frame: window, postfix: this.getPostfix()});
 
+				// The form resolves its selector by itself, but for the block level this.selector
+				// resolves an action panel, so the content node is passed explicitly. The first
+				// non-panel child and not all of them: the fields of the form style exactly that node
+				// (resolveSingleNode in style_factory.js), so the highlight of the section has to
+				// outline exactly what a click on a setting changes.
+				var contentNode = isBlock
+					? window.document.querySelector(this.contentSelector)
+					: null;
+
 				form = new StyleForm({
 					id: selector,
 					title: name,
 					selector,
+					// An empty array is truthy and would suppress the own fallback of the form,
+					// so the form gets a node only when there is something to highlight. The own
+					// fallback of the form resolves this.selector, which at the block level is the
+					// action panel again, so a block without content highlights its own node instead.
+					node: contentNode ? [contentNode] : (isBlock ? [this.node] : null),
 					iframe: window,
 					collapsed: collapsed,
 					currentTarget: currentTarget,
@@ -3335,6 +3405,12 @@
 						block: this,
 						styleNode: styleNode,
 						selector: !isBlock ? this.makeRelativeSelector(selector) : selector,
+						// Selector for resolving live nodes in the editor. Block level styles must not use
+						// this.selector here: its ":first-child" now resolves an action panel, not the content.
+						elementsSelector: !isBlock ? this.makeRelativeSelector(selector) : this.contentSelector,
+						// The form of the block itself, not of a style node. It addresses the single
+						// content root of the block and its fields are the only ones with stable test ids.
+						blockLevel: isBlock,
 						property: typeSettings.property,
 						multiple: typeSettings.multiple === true,
 						style: type,
@@ -3511,7 +3587,7 @@
 				id: this.selector,
 				iframe: window,
 				selector: this.selector,
-				relativeSelector: this.selector,
+				relativeSelector: this.contentSelector,
 				onClick: this.onStyleClick.bind(this, this.selector)
 			});
 
@@ -3683,7 +3759,7 @@
 		 */
 		makeRelativeSelector: function(selector)
 		{
-			return join(this.selector, " ", selector);
+			return join(this.contentSelector, " ", selector);
 		},
 
 
@@ -3696,7 +3772,7 @@
 		{
 			selector = selector || this.selector;
 			selector = trim(selector);
-			var find = selector === this.selector ? " > :first-child" : this.selector;
+			var find = selector === this.selector ? " > :first-child" : this.contentSelector;
 			return trim(selector.replace(find, "").replace("!", ""));
 		},
 

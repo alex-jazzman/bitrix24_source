@@ -94,7 +94,7 @@ jn.define('user-profile/common-tab', (require, exports, module) => {
 
 		async componentDidMount()
 		{
-			const { parentWidget, canUpdate, ownerId, data } = this.props;
+			const { parentWidget, canUpdate, ownerId, data, tabsWidget } = this.props;
 
 			if (canUpdate)
 			{
@@ -116,7 +116,20 @@ jn.define('user-profile/common-tab', (require, exports, module) => {
 
 			Keyboard.on(Keyboard.Event.Hidden, this.#onKeyboardHidden);
 			Keyboard.on(Keyboard.Event.Shown, this.#onKeyboardShown);
+			tabsWidget?.on('swipeDown', this.#onTabsSwipeDown);
 		}
+
+		#onTabsSwipeDown = () => {
+			const { tabsWidget } = this.props;
+			if (this.state.isEditMode)
+			{
+				void this.onEditScreenClose();
+
+				return;
+			}
+
+			tabsWidget?.close();
+		};
 
 		componentDidUpdate()
 		{
@@ -140,8 +153,11 @@ jn.define('user-profile/common-tab', (require, exports, module) => {
 
 		componentWillUnmount()
 		{
+			const { tabsWidget } = this.props;
+
 			Keyboard.off(Keyboard.Event.Hidden, this.#onKeyboardHidden);
 			Keyboard.off(Keyboard.Event.Shown, this.#onKeyboardShown);
+			tabsWidget?.off('swipeDown', this.#onTabsSwipeDown);
 		}
 
 		#onKeyboardHidden = () => {
@@ -236,6 +252,7 @@ jn.define('user-profile/common-tab', (require, exports, module) => {
 						{
 							style: {
 								opacity: this.contentOpacity,
+								backgroundColor: Color.bgContentPrimary.toHex(),
 							},
 						},
 						() => ([

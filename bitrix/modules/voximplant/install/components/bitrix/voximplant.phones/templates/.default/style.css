@@ -22,9 +22,29 @@
 	padding-top: 30px;
 	font-size: 18px;
 }
-.bx-vi-phones-connect { width: 527px; height: 264px; border-radius: 3px; background: url(./images/connect_en.png)}
-.bx-vi-phones-connect-ru { background: url(./images/connect_ru.png)}
-.bx-vi-phones-connect-de { background: url(./images/connect_de.png)}
-.bx-vi-phones-call-without-browser { width: 399px; height: 296px; border-radius: 3px; background: url(./images/browser_en.png)}
-.bx-vi-phones-call-without-browser-ru { background: url(./images/browser_ru.png) }
-.bx-vi-phones-call-without-browser-de { background: url(./images/browser_de.png) }
+.bx-vi-phones-connect {
+	width: 527px; height: 264px; border-radius: 3px;
+	background-image: url(./images/connect_en.png); /* fallback for engines without image-set */
+	background-image: image-set(url(./images/connect_en.webp) type("image/webp") 1x);
+}
+.bx-vi-phones-connect-ru {
+	background-image: url(./images/connect_ru.png); /* fallback for engines without image-set */
+	background-image: image-set(url(./images/connect_ru.webp) type("image/webp") 1x);
+}
+.bx-vi-phones-connect-de {
+	background-image: url(./images/connect_de.png); /* fallback for engines without image-set */
+	background-image: image-set(url(./images/connect_de.webp) type("image/webp") 1x);
+}
+.bx-vi-phones-call-without-browser {
+	width: 399px; height: 296px; border-radius: 3px;
+	background-image: url(./images/browser_en.png); /* fallback for engines without image-set */
+	background-image: image-set(url(./images/browser_en.webp) type("image/webp") 1x);
+}
+.bx-vi-phones-call-without-browser-ru {
+	background-image: url(./images/browser_ru.png); /* fallback for engines without image-set */
+	background-image: image-set(url(./images/browser_ru.webp) type("image/webp") 1x);
+}
+.bx-vi-phones-call-without-browser-de {
+	background-image: url(./images/browser_de.png); /* fallback for engines without image-set */
+	background-image: image-set(url(./images/browser_de.webp) type("image/webp") 1x);
+}

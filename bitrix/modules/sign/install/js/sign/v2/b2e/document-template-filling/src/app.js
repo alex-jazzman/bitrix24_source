@@ -351,12 +351,29 @@ export const DocumentFillingApp = {
 		},
 		isGosKeyProvider(doc?: LoadedDocumentData): boolean
 		{
+			const isGoskey = (providerCode: string): boolean => {
+				return providerCode === ProviderCode.goskey;
+			};
+
 			if (doc)
 			{
-				return doc.providerCode === ProviderCode.goskey;
+				return isGoskey(doc.providerCode);
 			}
 
-			return this.documents.some((item: LoadedDocumentData) => item.providerCode === ProviderCode.goskey);
+			return this.documents.some((item: LoadedDocumentData) => isGoskey(item.providerCode));
+		},
+		isGoskeyLiteProvider(doc?: LoadedDocumentData): boolean
+		{
+			const isLite = (providerCode: string): boolean => {
+				return providerCode === ProviderCode.goskeyLite;
+			};
+
+			if (doc)
+			{
+				return isLite(doc.providerCode);
+			}
+
+			return this.documents.some((item: LoadedDocumentData) => isLite(item.providerCode));
 		},
 	},
 	template: `
@@ -434,7 +451,7 @@ export const DocumentFillingApp = {
 								{{ signUntilDateErrorCommon }}
 							</div>
 						</div>
-						<p v-if="isGosKeyProvider()" class="sign-b2e-document-filling__notice">
+						<p v-if="isGosKeyProvider() || isGoskeyLiteProvider()" class="sign-b2e-document-filling__notice">
 							{{ loc('SIGN_DOCUMENT_SEND_DATETIME_LIMIT_SELECTOR_GOSKEY_ALERT') }}
 						</p>
 					</div>
@@ -521,7 +538,7 @@ export const DocumentFillingApp = {
 								/>
 							</div>
 						</div>
-						<p v-if="isGosKeyProvider(doc)" class="sign-b2e-document-filling__notice">
+						<p v-if="isGosKeyProvider(doc) || isGoskeyLiteProvider(doc)" class="sign-b2e-document-filling__notice">
 							{{ loc('SIGN_DOCUMENT_SEND_DATETIME_LIMIT_SELECTOR_GOSKEY_ALERT') }}
 						</p>
 						<div v-if="signUntilDateErrorByDoc[doc.uid]" class="sign-b2e-settings__date-error --individual">

@@ -5,7 +5,7 @@ import { type BitrixVueComponentProps } from 'ui.vue3';
 import { ChatAvatar, AvatarSize } from 'im.v2.component.elements.avatar';
 import { ChatButton, ButtonSize, ButtonColor } from 'im.v2.component.elements.button';
 import { AddToChat, AddToCollab } from 'im.v2.component.entity-selector';
-import { ActionByRole, ActionByUserType, ChatType, EventType, SidebarDetailBlock } from 'im.v2.const';
+import { ActionByRole, ChatType, EventType, SidebarDetailBlock } from 'im.v2.const';
 import { Analytics } from 'im.v2.lib.analytics';
 import { PermissionManager } from 'im.v2.lib.permission';
 import { CollabManager } from 'im.v2.lib.collab';
@@ -60,12 +60,7 @@ export const ChatMembersAvatars = {
 		},
 		canInviteMembers(): boolean
 		{
-			const permissionManager = PermissionManager.getInstance();
-
-			const canPerformActionByRole = permissionManager.canPerformActionByRole(ActionByRole.extend, this.dialogId);
-			const canPerformActionByUserType = permissionManager.canPerformActionByUserType(ActionByUserType.extend);
-
-			return canPerformActionByRole && canPerformActionByUserType;
+			return PermissionManager.getInstance().canManageUsersAdd(this.dialogId);
 		},
 		usersInChatCount(): number
 		{

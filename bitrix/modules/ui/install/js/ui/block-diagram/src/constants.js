@@ -5,8 +5,15 @@ export const CONNECTION_OFFSET = 30;
 export const CONNECTION_BEND_OFFSET = 30;
 export const CONNECTION_BORDER_RADIUS = 10;
 export const DELETE_BUTTON_SIZE = 22;
-export const GRID_SIZE = 100;
-export const STICKING_DISTANCE = 5;
+
+// Screen distance the pointer has to travel before a press on a block turns into a drag.
+// A press below it stays a selection: with snapping on, treating the shake of a hand as a
+// drag would move a block of an old scheme to the nearest node and dirty the draft.
+export const DRAG_START_THRESHOLD = 4;
+
+// Max never-measured connection ends mounted for measurement per render cycle, so a
+// large off-screen set drains over several frames instead of one long main-thread task.
+export const FIRST_MEASURE_BATCH_SIZE = 12;
 
 export const HOOK_NAMES = {
 	CHANGED_BLOCKS: 'changedBlocks',

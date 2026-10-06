@@ -365,7 +365,7 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 		{
 			console.error(error);
 
-			new AnalyticsEvent(this.analyticsLabel).setStatus('error').send();
+			new AnalyticsEvent(this.analyticsLabel).setStatus('error').setP1(`taskId_${this.#taskId}`).send();
 		}
 
 		#onDataFetchSuccess(results, shouldOpenComments = false)
@@ -374,13 +374,13 @@ jn.define('tasks/layout/task/view-new', (require, exports, module) => {
 
 			if (isForbidden)
 			{
-				new AnalyticsEvent(this.analyticsLabel).setStatus('error').send();
+				new AnalyticsEvent(this.analyticsLabel).setStatus('error').setP1(`taskId_${this.#taskId}`).send();
 				this.#setForbiddenState();
 			}
 			else
 			{
 				this.markedAsViewed = false;
-				new AnalyticsEvent(this.analyticsLabel).setStatus('success').send();
+				new AnalyticsEvent(this.analyticsLabel).setStatus('success').setP1(`taskId_${this.#taskId}`).send();
 				this.layout.setTitle({ useProgress: false }, true);
 
 				if (Type.isArrayFilled(results[0].value?.ahaMoments))

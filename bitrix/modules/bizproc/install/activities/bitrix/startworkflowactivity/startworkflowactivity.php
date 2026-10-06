@@ -1,6 +1,9 @@
 <?php
 
 use Bitrix\Bizproc\FieldType;
+use Bitrix\Bizproc\Api\Enum\ErrorMessage;
+use Bitrix\Bizproc\Api\Enum\Template\WorkflowTemplateType;
+use Bitrix\Bizproc\Internal\Service\Container;
 use Bitrix\Bizproc\Public\Service\Workflow\StarterService;
 use Bitrix\Bizproc\Starter\Dto\ContextDto;
 use Bitrix\Bizproc\Starter\Dto\DocumentDto;
@@ -11,6 +14,7 @@ use Bitrix\Bizproc\Starter\Result\StartResult;
 use Bitrix\Crm\Integration\Analytics\Dictionary;
 
 use Bitrix\Main\Loader;
+use Bitrix\Main\Type\Collection;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
@@ -254,33 +258,38 @@ class CBPStartWorkflowActivity extends CBPActivity implements IBPEventActivity, 
 		$workflowIds = $result->getWorkflowIds();
 		$this->wfId = (string)($workflowIds[0] ?? '');
 		$this->WorkflowId = $this->wfId !== '' ? $this->wfId : null;
-		$workflowIsCompleted = false;
 
-		if ($this->wfId && !$errors)
-		{
-			$info = CBPRuntime::GetRuntime()->GetService('StateService')->getWorkflowStateInfo($this->wfId);
-			if ($info['WORKFLOW_STATUS'] === null)
-			{
-				$workflowIsCompleted = true;
-			}
-		}
-
+		$errorMessage = null;
 		if ($errors)
 		{
 			$errorMessage = $errors[0]->getMessage();
+		}
+		elseif ($this->wfId === '')
+		{
+			$errorMessage = ErrorMessage::CREATE_WORKFLOW->get();
+		}
 
-			if ($this->UseSubscription == 'Y')
+		if ($errorMessage !== null)
+		{
+			if ($this->UseSubscription === 'Y')
 			{
 				throw new Exception($errorMessage);
 			}
 
 			$this->WriteToTrackingService(
-				Bitrix\Main\Localization\Loc::getMessage("BPSWFA_START_ERROR", ['#MESSAGE#' => $errorMessage]),
+				Bitrix\Main\Localization\Loc::getMessage('BPSWFA_START_ERROR', ['#MESSAGE#' => $errorMessage]),
 				0,
-				CBPTrackingType::Error
+				CBPTrackingType::Error,
 			);
 
 			return CBPActivityExecutionStatus::Closed;
+		}
+
+		$workflowIsCompleted = false;
+		$info = CBPRuntime::GetRuntime()->GetService('StateService')->getWorkflowStateInfo($this->wfId);
+		if ($info['WORKFLOW_STATUS'] === null)
+		{
+			$workflowIsCompleted = true;
 		}
 
 		if (
@@ -311,6 +320,20 @@ class CBPStartWorkflowActivity extends CBPActivity implements IBPEventActivity, 
 		array $parameters,
 	): StartResult
 	{
+		if (
+			($template['TYPE'] ?? null) === WorkflowTemplateType::Nodes->value
+			&& !in_array(
+				(int)$template['ID'],
+				Container::instance()
+					->getManualStartTemplateAvailabilityService()
+					->getAvailableTemplateIds([(int)$template['ID'] => $template['DOCUMENT_TYPE']]),
+				true,
+			)
+		)
+		{
+			return new StartResult();
+		}
+
 		$rootActivity = $this->getRootActivity();
 		$targetUser = $rootActivity->{CBPDocument::PARAM_TAGRET_USER} ?? null;
 		$parentTemplateId =
@@ -663,20 +686,50 @@ class CBPStartWorkflowActivity extends CBPActivity implements IBPEventActivity, 
 	private static function getTemplatesList($document)
 	{
 		$result = [];
+		$documentType = explode('@', $document);
 
 		$iterator = CBPWorkflowTemplateLoader::GetList(
 			['NAME' => 'ASC'],
 			[
-				'DOCUMENT_TYPE' => explode('@', $document),
+				'DOCUMENT_TYPE' => $documentType,
 				'<AUTO_EXECUTE' => CBPDocumentEventType::Automation,
 			],
 			false,
 			false,
-			['ID', 'NAME']
+			['ID', 'NAME', 'TYPE']
 		);
+		$templates = [];
 		while ($row = $iterator->fetch())
 		{
-			$result[] = ['name' => $row['NAME'], 'id' => $row['ID']];
+			$templates[] = $row;
+		}
+
+		$nodeDocumentTypes = [];
+		foreach ($templates as $template)
+		{
+			if (($template['TYPE'] ?? null) === WorkflowTemplateType::Nodes->value)
+			{
+				$nodeDocumentTypes[(int)$template['ID']] = $documentType;
+			}
+		}
+		$availableNodeTemplateIds = Container::instance()
+			->getManualStartTemplateAvailabilityService()
+			->getAvailableTemplateIds($nodeDocumentTypes)
+		;
+		Collection::normalizeArrayValuesByInt($availableNodeTemplateIds, false);
+		$availableNodeTemplateIdSet = array_fill_keys($availableNodeTemplateIds, true);
+
+		foreach ($templates as $template)
+		{
+			if (
+				($template['TYPE'] ?? null) === WorkflowTemplateType::Nodes->value
+				&& !isset($availableNodeTemplateIdSet[(int)$template['ID']])
+			)
+			{
+				continue;
+			}
+
+			$result[] = ['name' => $template['NAME'], 'id' => $template['ID']];
 		}
 
 		return $result;
@@ -687,7 +740,13 @@ class CBPStartWorkflowActivity extends CBPActivity implements IBPEventActivity, 
 		$id = (int)$id;
 		if (!isset(self::$templatesCache[$id]))
 		{
-			$iterator = CBPWorkflowTemplateLoader::GetList([], ["ID" => $id], false, false, ["ID", 'NAME', "MODULE_ID", "ENTITY", "DOCUMENT_TYPE", 'PARAMETERS']);
+			$iterator = CBPWorkflowTemplateLoader::GetList(
+				[],
+				["ID" => $id],
+				false,
+				false,
+				["ID", 'NAME', "MODULE_ID", "ENTITY", "DOCUMENT_TYPE", 'PARAMETERS', 'TYPE'],
+			);
 			self::$templatesCache[$id] = $iterator->fetch();
 		}
 

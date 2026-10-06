@@ -322,6 +322,11 @@
 	color: var(--ui-color-primary-alt, #1a578f);
 }
 
+.mail-config-form__alert-action {
+	margin-left: 4px;
+	vertical-align: middle;
+}
+
 .mail-config-form__alert-details {
 	margin-top: 4px;
 	color: var(--ui-color-base-3, #828B95);
@@ -606,4 +611,70 @@
 	background-image: url("data:image/svg+xml,%3Csvg width='22' height='22' viewBox='0 0 22 22' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='22' height='22' rx='11' fill='url(%23paint0_linear_285_32151)'/%3E%3Cpath d='M7.02002 15.1396C5.00049 15.1396 3.68457 13.9956 3.68457 12.25V7.24951H5.65576V12.062C5.65576 12.9644 6.13916 13.5068 7.02539 13.5068C7.90625 13.5068 8.38965 12.9644 8.38965 12.062V7.24951H10.3608V12.25C10.3608 13.9902 9.05566 15.1396 7.02002 15.1396ZM11.5371 15V7.24951H13.2075L16.3066 11.7236H16.3442V7.24951H18.3101V15H16.6558L13.5405 10.4775H13.5029V15H11.5371Z' fill='white'/%3E%3Cdefs%3E%3ClinearGradient id='paint0_linear_285_32151' x1='3.82185' y1='-1.43227' x2='18.1782' y2='23.4323' gradientUnits='userSpaceOnUse'%3E%3Cstop stop-color='%2317C2D9'/%3E%3Cstop offset='0.5' stop-color='%2310D5D5'/%3E%3Cstop offset='1' stop-color='%231B87B6'/%3E%3C/linearGradient%3E%3C/defs%3E%3C/svg%3E");
 	height: 22px;
 	width: 22px;
+}
+
+.mail-provider-restriction-popup .popup-window-content {
+	padding: 32px 36px 24px;
+}
+.mail-provider-restriction-popup__content {
+	text-align: left;
+}
+.mail-provider-restriction-popup__icon {
+	width: 90px;
+	height: 90px;
+	margin: 4px auto 24px;
+	background-image: url("../../images/provider-restriction.webp");
+	background-image: -webkit-image-set(
+		url("../../images/provider-restriction.webp") 1x,
+		url("../../images/provider-restriction-2x.webp") 2x
+	);
+	background-image: image-set(
+		url("../../images/provider-restriction.webp") 1x,
+		url("../../images/provider-restriction-2x.webp") 2x
+	);
+	background-repeat: no-repeat;
+	background-position: center;
+	background-size: contain;
+}
+.mail-provider-restriction-popup .popup-window-buttons {
+	padding: 0 36px 24px;
+}
+.mail-provider-restriction-popup__title {
+	margin: 0 0 24px;
+	text-align: center;
+	font-size: 21px;
+	font-weight: 600;
+	line-height: 1.3;
+	color: #333333;
+}
+.mail-provider-restriction-popup__text {
+	margin: 0 0 16px;
+	font-size: 15px;
+	line-height: 1.5;
+	color: #525c69;
+}
+.mail-provider-restriction-popup__subtitle {
+	margin: 4px 0 12px;
+	font-size: 15px;
+	font-weight: 600;
+	color: #333333;
+}
+.mail-provider-restriction-popup__list {
+	margin: 0 0 16px;
+	padding-left: 20px;
+	font-size: 15px;
+	line-height: 1.5;
+	color: #525c69;
+}
+.mail-provider-restriction-popup__list li {
+	margin-bottom: 10px;
+}
+.mail-provider-restriction-popup__note {
+	margin: 0;
+	font-size: 14px;
+	line-height: 1.45;
+	color: #a0a6ad;
+}
+.mail-provider-restriction-popup .ui-btn {
+	text-transform: none;
 }

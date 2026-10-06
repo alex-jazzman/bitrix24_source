@@ -51,7 +51,15 @@
 .salescenter-businessru-atol-icon { width: 97px; }
 
 .salescenter-businessru-atol-icon i {
-	background-image: url(images/businessru_atol.svg);
+	background-image: url(images/businessru_atol.webp);
+	background-image: -webkit-image-set(
+		url(images/businessru_atol.webp) 1x,
+		url(images/businessru_atol-2x.webp) 2x
+	);
+	background-image: image-set(
+		url(images/businessru_atol.webp) 1x,
+		url(images/businessru_atol-2x.webp) 2x
+	);
 	background-size: 70% auto;
 	background-color: #FF142C;
 }
@@ -59,7 +67,15 @@
 .salescenter-businessru-evotor-icon { width: 97px; }
 
 .salescenter-businessru-evotor-icon i {
-	background-image: url(images/businessru_evotor.svg);
+	background-image: url(images/businessru_evotor.webp);
+	background-image: -webkit-image-set(
+		url(images/businessru_evotor.webp) 1x,
+		url(images/businessru_evotor-2x.webp) 2x
+	);
+	background-image: image-set(
+		url(images/businessru_evotor.webp) 1x,
+		url(images/businessru_evotor-2x.webp) 2x
+	);
 	background-size: 70% auto;
 	background-color: #E44A21;
 }
@@ -67,7 +83,15 @@
 .salescenter-businessru-shtrihm-icon { width: 97px; }
 
 .salescenter-businessru-shtrihm-icon i {
-	background-image: url(images/businessru_shtrihm.svg);
+	background-image: url(images/businessru_shtrihm.webp);
+	background-image: -webkit-image-set(
+		url(images/businessru_shtrihm.webp) 1x,
+		url(images/businessru_shtrihm-2x.webp) 2x
+	);
+	background-image: image-set(
+		url(images/businessru_shtrihm.webp) 1x,
+		url(images/businessru_shtrihm-2x.webp) 2x
+	);
 	background-size: 70% auto;
 	background-color: #8F7B66;
 }

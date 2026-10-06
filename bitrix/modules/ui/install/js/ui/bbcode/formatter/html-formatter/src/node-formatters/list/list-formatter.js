@@ -13,7 +13,6 @@ export class ListNodeFormatter extends NodeFormatter
 				return Dom.create({
 					tag: tagName,
 					attrs: {
-						...node.getAttributes(),
 						className: `ui-typography-${tagName}`,
 					},
 				});

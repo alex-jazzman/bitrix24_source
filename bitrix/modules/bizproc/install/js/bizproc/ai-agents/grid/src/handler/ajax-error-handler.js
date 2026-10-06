@@ -3,6 +3,7 @@ import type { GridApiAction, BaseAjaxResponse, BaseAjaxError } from '../types';
 import type { HandlerInterface } from './error/handler-interface';
 import { ErrorCode } from './error/error-codes';
 import { TariffLimit } from './error/tariff-limit';
+import { TemplateStale } from './error/template-stale';
 import { UndefinedError } from './error/undefined-error';
 import { Base } from './error/base';
 
@@ -42,6 +43,11 @@ export class AjaxErrorHandler
 			case ErrorCode.TARIFF_LIMIT:
 			{
 				return new TariffLimit();
+			}
+
+			case ErrorCode.TEMPLATE_STALE:
+			{
+				return new TemplateStale();
 			}
 
 			default:

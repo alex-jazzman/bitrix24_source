@@ -1,9 +1,10 @@
 <?php
 
-use Bitrix\Main\Web\Uri;
-use Bitrix\Main\Localization\Loc;
-use Bitrix\UI\Toolbar\ButtonLocation;
 use Bitrix\Main\Grid\Panel;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Web\Uri;
+use Bitrix\UI\Buttons\BaseButton;
+use Bitrix\UI\Toolbar\ButtonLocation;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
@@ -15,11 +16,16 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 /** @var $APPLICATION */
 
 \CJSCore::Init("loader");
-\Bitrix\Main\UI\Extension::load([
+$extensions = [
 	'sign.v2.grid.b2e.signers',
 	'sign.v2.ui.tokens',
 	'ui.avatar',
-]);
+];
+if (!empty($arResult['EXPORT_ERROR']))
+{
+	$extensions[] = 'ui.notification';
+}
+\Bitrix\Main\UI\Extension::load($extensions);
 
 $APPLICATION->SetTitle($arResult['LIST_TITLE'] ?? '');
 
@@ -42,6 +48,11 @@ $createButton = (new \Bitrix\UI\Buttons\CreateButton([]))
 if ($arResult['CAN_ADD_SIGNER'] ?? false)
 {
 	\Bitrix\UI\Toolbar\Facade\Toolbar::addButton($createButton, ButtonLocation::AFTER_TITLE);
+}
+
+if (($arResult['TOOLBAR_MENU'] ?? null) instanceof BaseButton)
+{
+	\Bitrix\UI\Toolbar\Facade\Toolbar::addButton($arResult['TOOLBAR_MENU']);
 }
 
 $getUserInfoTemplate = static function (
@@ -139,6 +150,17 @@ foreach ($signers as $listData)
 		],
 	];
 
+	// Row actions feed the single-row selection panel (BX.UI.ActionPanel::buildPanelByItem);
+	// ACTION_PANEL GROUPS below feed the multi-row panel. Export is available to everyone, delete only with CAN_DELETE_SIGNER.
+	$gridRow['actions'][] = [
+		'text' => (string)Loc::getMessage('SIGN_B2E_SIGNERS_EDIT_EXPORT_TO_EXCEL'),
+		'onclick' => "(new BX.Sign.V2.Grid.B2e.Signers()).exportToExcel('"
+			. CUtil::JSEscape($arResult['EXPORT_URL'] ?? '')
+			. "', [{$userId}])",
+		'icon' => '/bitrix/js/ui/actionpanel/images/ui_icon_actionpanel_download.svg',
+		'dataset' => ['testId' => 'sign-b2e-signers-edit-row-export'],
+	];
+
 	if ($arResult['CAN_DELETE_SIGNER'] ?? false)
 	{
 		$gridRow['actions'][] = [
@@ -170,33 +192,53 @@ $gridComponentParams = [
 	'SHOW_NAVIGATION_PANEL' => true,
 ];
 
+// Export is available to anyone who can see the list (no separate right), delete requires CAN_DELETE_SIGNER.
+$actionPanelItems = [
+	[
+		'ID' => 'sign-b2e-signers-edit-grid-export-button',
+		'TYPE' => Panel\Types::BUTTON,
+		'TEXT' => Loc::getMessage('SIGN_B2E_SIGNERS_EDIT_EXPORT_TO_EXCEL'),
+		'ICON' => '/bitrix/js/ui/actionpanel/images/ui_icon_actionpanel_download.svg',
+		'ONCHANGE' => [
+			[
+				'ACTION' => Bitrix\Main\Grid\Panel\Actions::CALLBACK,
+				'DATA' => [
+					[
+						'JS' => $arResult['EXPORT_ONCLICK'] ?? '',
+					]
+				]
+			]
+		]
+	],
+];
+
 if ($arResult['CAN_DELETE_SIGNER'] ?? false)
 {
-	$gridComponentParams['ACTION_PANEL'] = [
-		'GROUPS' => [
+	$actionPanelItems[] = [
+		'ID' => 'sign-b2e-signers-edit-grid-delete-button',
+		'TYPE' => Panel\Types::BUTTON,
+		'TEXT' => Loc::getMessage('SIGN_B2E_SIGNERS_LIST_ACTION_DELETE'),
+		'ICON' => '/bitrix/js/ui/actionpanel/images/ui_icon_actionpanel_remove.svg',
+		'ONCHANGE' => [
 			[
-				'ITEMS' => [
+				'ACTION' => Bitrix\Main\Grid\Panel\Actions::CALLBACK,
+				'DATA' => [
 					[
-						'ID' => 'sign-b2e-signers-edit-grid-delete-button',
-						'TYPE' => Panel\Types::BUTTON,
-						'TEXT' => Loc::getMessage('SIGN_B2E_SIGNERS_LIST_ACTION_DELETE'),
-						'ICON' => '/bitrix/js/ui/actionpanel/images/ui_icon_actionpanel_remove.svg',
-						'ONCHANGE' => [
-							[
-								'ACTION' => Bitrix\Main\Grid\Panel\Actions::CALLBACK,
-								'DATA' => [
-									[
-										'JS' => "(new BX.Sign.V2.Grid.B2e.Signers()).deleteSelectedSigners(" . ((int)$arResult['LIST_ID']) . ")",
-									]
-								]
-							]
-						]
+						'JS' => "(new BX.Sign.V2.Grid.B2e.Signers()).deleteSelectedSigners(" . ((int)$arResult['LIST_ID']) . ")",
 					]
 				]
 			]
 		]
 	];
 }
+
+$gridComponentParams['ACTION_PANEL'] = [
+	'GROUPS' => [
+		[
+			'ITEMS' => $actionPanelItems,
+		]
+	]
+];
 
 $APPLICATION->IncludeComponent(
 	'bitrix:main.ui.grid',
@@ -213,3 +255,12 @@ $APPLICATION->IncludeComponent(
 		}).renderTo(container);
     }
 </script>
+<?php if (!empty($arResult['EXPORT_ERROR'])): ?>
+<script>
+	BX.ready(function() {
+		window.top.BX.UI.Notification.Center.notify({
+			content: '<?= CUtil::JSEscape($arResult['EXPORT_ERROR']) ?>',
+		});
+	});
+</script>
+<?php endif; ?>

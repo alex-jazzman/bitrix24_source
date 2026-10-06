@@ -1,6 +1,5 @@
 .editor-chart-dropdown-menu-option {
 	position: relative;
-	padding: 10px 10px 10px 10px;
 	border-radius: 8px;
 	cursor: pointer;
 	transition: background 0.2s;
@@ -16,6 +15,33 @@
 
 .editor-chart-dropdown-menu-option:hover {
 	background: rgba(0, 0, 0, 0.03);
+}
+
+/*
+ * The whole row is one control, so the padding it used to carry belongs to the control: the focus
+ * ring then goes around the row and not around its text. The group below is the reset of the
+ * native button - the row must look exactly as it did before it became one.
+ */
+.editor-chart-dropdown-menu-option__control {
+	display: flex;
+	align-items: center;
+	flex: 1;
+	min-width: 0;
+	padding: 10px;
+	margin: 0;
+	border: 0;
+	border-radius: 8px;
+	background: none;
+	font: inherit;
+	color: inherit;
+	text-align: left;
+	cursor: inherit;
+	box-sizing: border-box;
+}
+
+.editor-chart-dropdown-menu-option__control:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: -1px;
 }
 
 .editor-chart-dropdown-menu-option__content {

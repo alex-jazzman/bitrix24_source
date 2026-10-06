@@ -1,8 +1,8 @@
 import './style.css';
 
 import { Loc } from 'main.core';
-import { formatTimestamp } from '../../utils';
 import { DEBUG_BAR_LABELS } from '../../constants';
+import { formatTimestamp } from '../../utils';
 
 export const DebugSession = {
 	name: 'debug-session',
@@ -38,7 +38,7 @@ export const DebugSession = {
 			{
 				return this.Loc.getMessage(
 					this.labels.SESSION_FINISHED,
-					{ TIME: this.formatTimestamp(this.session.end_time) },
+					{ '#TIME#': this.formatTimestamp(this.session.end_time) },
 				);
 			}
 

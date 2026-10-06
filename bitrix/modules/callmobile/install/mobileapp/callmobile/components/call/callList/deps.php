@@ -21,6 +21,7 @@ return [
 		'call:callList/analyticsController',
 		'call:callList/emptyView',
 		'call:callList/fastCallView',
+		'call:callList/core',
 		'call:const',
 		'pull/client/events',
 	],

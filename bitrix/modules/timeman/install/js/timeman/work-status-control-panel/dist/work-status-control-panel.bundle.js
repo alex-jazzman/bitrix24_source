@@ -482,6 +482,83 @@ this.BX = this.BX || {};
 		return currentTimestamp - dateStartTimestamp < durationMs;
 	}
 
+	// Pure timer math for the work-day control panel, extracted from the
+	// component so the elapsed/pause calculations can be unit-tested without the
+	// heavy Vue dependency chain of app.js.
+	//
+	// All values are in milliseconds. The anchors dateStartMs/dateStopMs are
+	// ABSOLUTE instants (INFO.DISPLAY_START_TIMESTAMP / DISPLAY_STOP_TIMESTAMP),
+	// NOT the wall-coordinate INFO.DATE_START/DATE_FINISH (absolute minus the
+	// employee offset). Comparing an absolute anchor against nowMs is what makes an
+	// OPENED day start the working-day timer at ~0 instead of +offset.
+
+	/**
+	 * Compute the working-day and pause timer values for the control panel.
+	 *
+	 * @param {Object} params
+	 * @param {string} params.workStatus current work day status (OPENED|PAUSED|CLOSED|EXPIRED)
+	 * @param {string} params.canOpen open action for a closed day (''|'OPEN'|'REOPEN')
+	 * @param {boolean} params.isCanOpen whether a brand new day can be started (canOpen === 'OPEN')
+	 * @param {number} params.dateStartMs absolute start instant, ms epoch (0 if unknown)
+	 * @param {number} params.dateStopMs absolute displayed-finish instant, ms epoch (0 if unknown)
+	 * @param {number} params.durationMs persisted worked time (RECORDED_DURATION), ms
+	 * @param {number} params.timeLeaksMs persisted accumulated break time (TIME_LEAKS), ms
+	 * @param {number} params.nowMs current time, ms epoch
+	 * @returns {{ workingDayMs: number, pauseMs: number }}
+	 */
+	function computeWorkdayTimers({
+		workStatus,
+		canOpen,
+		isCanOpen,
+		dateStartMs,
+		dateStopMs,
+		durationMs,
+		timeLeaksMs,
+		nowMs
+	}) {
+		if (workStatus === 'CLOSED') {
+			if (isCanOpen) {
+				return {
+					workingDayMs: 0,
+					pauseMs: 0
+				};
+			}
+			if (canOpen === 'REOPEN') {
+				// A reopened closed day shows only persisted values:
+				// worked time is RECORDED_DURATION, the break is accumulated leaks.
+				return {
+					workingDayMs: durationMs,
+					pauseMs: timeLeaksMs
+				};
+			}
+
+			// Closed and not reopenable: no live timer, values stay at zero.
+			return {
+				workingDayMs: 0,
+				pauseMs: 0
+			};
+		}
+		if (workStatus === 'PAUSED') {
+			// Worked time is frozen on persisted DURATION; the current
+			// break grows from the absolute pause moment (dateStopMs) plus the
+			// leaks accumulated before this pause.
+			return {
+				workingDayMs: durationMs,
+				pauseMs: nowMs - dateStopMs + timeLeaksMs
+			};
+		}
+		if (workStatus === 'OPENED' || workStatus === 'EXPIRED') {
+			return {
+				workingDayMs: nowMs - dateStartMs - timeLeaksMs,
+				pauseMs: timeLeaksMs
+			};
+		}
+		return {
+			workingDayMs: 0,
+			pauseMs: 0
+		};
+	}
+
 	const settings = main_core.Extension.getSettings('timeman.work-status-control-panel');
 
 	// @vue/component
@@ -915,7 +992,9 @@ this.BX = this.BX || {};
 				return window.BXTIMEMAN.DATA.CAN_EDIT || '';
 			},
 			getDateStart() {
-				return parseInt(window.BXTIMEMAN?.DATA?.INFO?.DATE_START, 10) * 1000 || 0;
+				// Absolute start anchor (not wall-coordinate DATE_START): used both as the
+				// timer origin and by isStartState's "< 1h after start" window.
+				return parseInt(window.BXTIMEMAN?.DATA?.INFO?.DISPLAY_START_TIMESTAMP, 10) * 1000 || 0;
 			},
 			setBindOptions() {
 				window.BXTIMEMAN.setBindOptions({
@@ -972,31 +1051,22 @@ this.BX = this.BX || {};
 				const timerInfo = {
 					...window.BXTIMEMAN.DATA.INFO
 				};
-				const dateStart = this.getDateStart();
-				const dateWorkingDayStopped = parseInt(timerInfo.DATE_FINISH) * 1000;
-				const timeTimeLeaks = parseInt(timerInfo.TIME_LEAKS) * 1000;
-				const delta = dateNow - dateStart;
-				const deltaPast = dateWorkingDayStopped - dateStart;
-				const deltaPause = dateNow - dateWorkingDayStopped;
 				this.updateDayStateIfNewHour();
-				if (this.isClosed) {
-					if (this.isCanOpen) {
-						this.timerWorkingDayValue = 0;
-						this.timerPauseValue = 0;
-					} else if (this.canOpen === 'REOPEN') {
-						this.timerWorkingDayValue = deltaPast - timeTimeLeaks;
-						this.timerPauseValue = timeTimeLeaks;
-					}
-				} else if (this.workStatus === 'OPENED') {
-					this.timerWorkingDayValue = delta - timeTimeLeaks;
-					this.timerPauseValue = timeTimeLeaks;
-				} else if (this.workStatus === 'PAUSED') {
-					this.timerWorkingDayValue = deltaPast - timeTimeLeaks;
-					this.timerPauseValue = deltaPause + timeTimeLeaks;
-				} else if (this.workStatus === 'EXPIRED') {
-					this.timerWorkingDayValue = delta - timeTimeLeaks;
-					this.timerPauseValue = timeTimeLeaks;
-				}
+				const {
+					workingDayMs,
+					pauseMs
+				} = computeWorkdayTimers({
+					workStatus: this.workStatus,
+					canOpen: this.canOpen,
+					isCanOpen: this.isCanOpen,
+					dateStartMs: this.getDateStart(),
+					dateStopMs: parseInt(timerInfo.DISPLAY_STOP_TIMESTAMP, 10) * 1000 || 0,
+					durationMs: parseInt(timerInfo.DURATION, 10) * 1000 || 0,
+					timeLeaksMs: parseInt(timerInfo.TIME_LEAKS, 10) * 1000 || 0,
+					nowMs: dateNow
+				});
+				this.timerWorkingDayValue = workingDayMs;
+				this.timerPauseValue = pauseMs;
 			},
 			openDay(event) {
 				window.BXTIMEMAN.WND.ACTIONS.OPEN(event);

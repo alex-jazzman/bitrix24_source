@@ -10,7 +10,7 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die;
 /** @var CBitrixComponentTemplate $this */
 /** @var CCrmEntityPopupComponent $component */
 
-use \Bitrix\Crm\Component\EntityDetails\Error;
+use Bitrix\Crm\Component\EntityDetails\Error;
 
 \Bitrix\Main\UI\Extension::load("sidepanel");
 ?>

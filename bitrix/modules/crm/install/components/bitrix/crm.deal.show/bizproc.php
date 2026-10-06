@@ -1,4 +1,7 @@
 <?php
+
+use Bitrix\Main\Web\Uri;
+
 define('NO_KEEP_STATISTIC', 'Y');
 define('NO_AGENT_STATISTIC','Y');
 define('NO_AGENT_CHECK', true);
@@ -62,11 +65,11 @@ if($action === 'INDEX')
 			'ENTITY' => 'CCrmDocumentDeal',
 			'DOCUMENT_TYPE' => 'DEAL',
 			'DOCUMENT_ID' => "DEAL_{$entityID}",
-			'TASK_EDIT_URL' => CHTTP::urlAddParams($showUrl, array('bizproc_task' => '#ID#', $tabKey => 'tab_bizproc')),
-			'WORKFLOW_LOG_URL' => CHTTP::urlAddParams($showUrl, array('bizproc_log' => '#ID#', $tabKey => 'tab_bizproc')),
-			'WORKFLOW_START_URL' => CHTTP::urlAddParams($showUrl, array('bizproc_start' => 1, $tabKey => 'tab_bizproc')),
-			'POST_FORM_URI' => isset($_REQUEST['post_form_uri']) ? CHTTP::urlAddParams($_REQUEST['post_form_uri'], array($tabKey => 'tab_bizproc')) : '',
-			'back_url' => CHTTP::urlAddParams($showUrl, array($tabKey => 'tab_bizproc')),
+			'TASK_EDIT_URL' => str_replace('__ID__', '#ID#', (string)(new Uri($showUrl))->addParams(array('bizproc_task' => '__ID__', $tabKey => 'tab_bizproc'))),
+			'WORKFLOW_LOG_URL' => str_replace('__ID__', '#ID#', (string)(new Uri($showUrl))->addParams(array('bizproc_log' => '__ID__', $tabKey => 'tab_bizproc'))),
+			'WORKFLOW_START_URL' => (string)(new Uri($showUrl))->addParams(array('bizproc_start' => 1, $tabKey => 'tab_bizproc')),
+			'POST_FORM_URI' => isset($_REQUEST['post_form_uri']) ? (string)(new Uri($_REQUEST['post_form_uri']))->addParams(array($tabKey => 'tab_bizproc')) : '',
+			'back_url' => (string)(new Uri($showUrl))->addParams(array($tabKey => 'tab_bizproc')),
 			'SET_TITLE' => 'Y'
 		),
 		'',

@@ -6,8 +6,6 @@ import './content-separator.css';
 
 type ContentSeparatorData = {
 	isResizing: boolean,
-	containerWidth: number,
-	containerHeight: number,
 	containerX: number,
 	containerY: number,
 	firstPartSize: number,
@@ -22,11 +20,13 @@ const CONTENT_SEPARATOR_CLASS_NAMES = {
 const CONTENT_WRAPPER_CLASS_NAMES = {
 	base: 'chart-editor-content-separator__wrapper',
 	column: '--column',
+	resizing: '--resizing',
 };
 
 const SEPARATOR_CLASS_NAMES = {
 	base: 'chart-editor-content-separator__separator',
 	column: '--column',
+	resizing: '--resizing',
 };
 
 const SLOT_NAMES = {
@@ -34,7 +34,31 @@ const SLOT_NAMES = {
 	VIEW: 'view',
 };
 
-const SEPARATOR_SIZE = 13;
+const FIRST_PART_CLASS_NAMES = {
+	base: 'chart-editor-content-separator__first-part',
+	resizing: '--resizing',
+	column: '--column',
+};
+
+const SECOND_PART_CLASS_NAMES = {
+	base: 'chart-editor-content-separator__second-part',
+	resizing: '--resizing',
+	column: '--column',
+};
+
+const FIRST_PART_SEPARATOR_TMP_CLASS_NAMES = {
+	base: 'chart-editor-content-separator__first-part-separator-tmp',
+	show: '--show',
+	column: '--column',
+};
+
+const SECOND_PART_SEPARATOR_TMP_CLASS_NAMES = {
+	base: 'chart-editor-content-separator__second-part-separator-tmp',
+	show: '--show',
+	column: '--column',
+};
+
+export const SEPARATOR_SIZE = 13;
 
 // @vue/component
 export const ContentSeparator = {
@@ -52,14 +76,34 @@ export const ContentSeparator = {
 			type: Number,
 			default: 100,
 		},
+		minContentWidth: {
+			type: Number,
+			default: 380,
+		},
+		minContentHeight: {
+			type: Number,
+			default: 380,
+		},
 		contentPosition: {
 			type: String,
-			default: FRAME_TEXT_ALIGN_OPTIONS.RIGHT,
+			default: FRAME_TEXT_ALIGN_OPTIONS.LEFT,
 			required: true,
 		},
 		separatorPosition: {
 			type: Number,
 			default: 0,
+		},
+		contentScrollable: {
+			type: Boolean,
+			default: false,
+		},
+		zoom: {
+			type: Number,
+			default: 1,
+		},
+		resizing: {
+			type: Boolean,
+			default: false,
 		},
 	},
 	emits: ['update:separatorPosition'],
@@ -75,8 +119,11 @@ export const ContentSeparator = {
 	{
 		return {
 			isResizing: false,
-			containerWidth: 0,
-			containerHeight: 0,
+			resizeContainerWidth: 0,
+			resizeContainerHeight: 0,
+			resizeSeparatorPosition: 0,
+			resizeFirstPartSize: 0,
+			resizeSecondPartSize: 0,
 			containerX: 0,
 			containerY: 0,
 			firstPartSize: 0,
@@ -89,6 +136,22 @@ export const ContentSeparator = {
 			return ([
 				FRAME_TEXT_ALIGN_OPTIONS.TOP,
 				FRAME_TEXT_ALIGN_OPTIONS.BOTTOM,
+			])
+				.includes(this.contentPosition);
+		},
+		isFirstContainerActive(): boolean
+		{
+			return ([
+				FRAME_TEXT_ALIGN_OPTIONS.TOP,
+				FRAME_TEXT_ALIGN_OPTIONS.LEFT,
+			])
+				.includes(this.contentPosition);
+		},
+		isSecondContainerActive(): boolean
+		{
+			return ([
+				FRAME_TEXT_ALIGN_OPTIONS.BOTTOM,
+				FRAME_TEXT_ALIGN_OPTIONS.RIGHT,
 			])
 				.includes(this.contentPosition);
 		},
@@ -108,6 +171,7 @@ export const ContentSeparator = {
 			return {
 				[CONTENT_WRAPPER_CLASS_NAMES.base]: true,
 				[CONTENT_WRAPPER_CLASS_NAMES.column]: this.isColumn,
+				[CONTENT_WRAPPER_CLASS_NAMES.resizing]: this.resizing,
 			};
 		},
 		contentSeparatorStyle(): { [string]: string }
@@ -122,6 +186,23 @@ export const ContentSeparator = {
 			return {
 				[SEPARATOR_CLASS_NAMES.base]: true,
 				[SEPARATOR_CLASS_NAMES.column]: this.isColumn,
+				[SEPARATOR_CLASS_NAMES.resizing]: this.resizing,
+			};
+		},
+		firstPartClassNames(): { [string]: boolean }
+		{
+			return {
+				[FIRST_PART_CLASS_NAMES.base]: true,
+				[FIRST_PART_CLASS_NAMES.resizing]: this.resizing && this.isTopOrLeftContentPosition(this.contentPosition),
+				[FIRST_PART_CLASS_NAMES.column]: this.isColumn,
+			};
+		},
+		secondPartClassNames(): { [string]: boolean }
+		{
+			return {
+				[SECOND_PART_CLASS_NAMES.base]: true,
+				[SECOND_PART_CLASS_NAMES.resizing]: this.resizing && this.isBottomOrRightContentPosition(this.contentPosition),
+				[SECOND_PART_CLASS_NAMES.column]: this.isColumn,
 			};
 		},
 		firstPartSlotName(): string {
@@ -142,46 +223,78 @@ export const ContentSeparator = {
 		},
 		firstPartStyle(): { [string]: string }
 		{
+			if (this.resizing)
+			{
+				if (this.isColumn)
+				{
+					return {
+						height: `${this.resizeFirstPartSize}px`,
+						width: '100%',
+					};
+				}
+
+				return {
+					width: `${this.resizeFirstPartSize}px`,
+					height: '100%',
+				};
+			}
+
 			if (this.isColumn)
 			{
 				return {
-					height: `${this.firstPartSize}%`,
+					height: `${this.firstPartSize}px`,
 					width: '100%',
 				};
 			}
 
 			return {
-				width: `${this.firstPartSize}%`,
+				width: `${this.firstPartSize}px`,
 				height: '100%',
 			};
 		},
 		secondPartStyle(): { [string]: string }
 		{
+			if (this.resizing)
+			{
+				if (this.isColumn)
+				{
+					return {
+						height: `${this.resizeSecondPartSize}px`,
+						width: '100%',
+					};
+				}
+
+				return {
+					width: `${this.resizeSecondPartSize}px`,
+					height: '100%',
+				};
+			}
+
 			if (this.isColumn)
 			{
 				return {
-					height: `${this.secondPartSize}%`,
+					height: `${this.secondPartSize}px`,
 					width: '100%',
 				};
 			}
 
 			return {
-				width: `${this.secondPartSize}%`,
+				width: `${this.secondPartSize}px`,
 				height: '100%',
 			};
 		},
 		contentNoneStyle(): { [string]: string }
 		{
 			return {
-				width: `${this.containerWidth}px`,
-				height: `${this.containerHeight}px`,
+				width: `${this.width}px`,
+				height: `${this.height}px`,
 			};
 		},
 		firstPartSlotWidthProp(): number
 		{
 			if (this.isColumn)
 			{
-				return this.containerWidth;
+				return this.width;
 			}
 
 			return this.firstPartSize;
@@ -193,13 +306,13 @@ export const ContentSeparator = {
 				return this.firstPartSize;
 			}
 
-			return this.containerHeight;
+			return this.height;
 		},
 		secondPartSlotWidthProp(): number
 		{
 			if (this.isColumn)
 			{
-				return this.containerWidth;
+				return this.width;
 			}
 
 			return this.secondPartSize;
@@ -211,44 +324,40 @@ export const ContentSeparator = {
 				return this.secondPartSize;
 			}
 
-			return this.containerHeight;
+			return this.height;
+		},
+		firstPartSeparatorTmpClassNames(): { [string]: boolean }
+		{
+			return {
+				[FIRST_PART_SEPARATOR_TMP_CLASS_NAMES.base]: true,
+				[FIRST_PART_SEPARATOR_TMP_CLASS_NAMES.show]: this.resizing && this.isFirstContainerActive,
+				[FIRST_PART_SEPARATOR_TMP_CLASS_NAMES.column]: this.isColumn,
+			};
+		},
+		secondPartSeparatorTmpClassNames(): { [string]: boolean }
+		{
+			return {
+				[SECOND_PART_SEPARATOR_TMP_CLASS_NAMES.base]: true,
+				[SECOND_PART_SEPARATOR_TMP_CLASS_NAMES.show]: this.resizing && this.isSecondContainerActive,
+				[SECOND_PART_SEPARATOR_TMP_CLASS_NAMES.column]: this.isColumn,
+			};
 		},
 	},
 	watch: {
-		width(newWidth: number, oldWidth: number): void
+		width(): void
 		{
-			this.containerWidth = newWidth;
-
-			if (this.isColumn)
-			{
-				return;
-			}
-
-			const newPercent = newWidth / 100;
-			const oldPercent = oldWidth / 100;
-			const oldSeparatorPositionPercent = this.separatorPosition / oldPercent;
-
-			this.$emit('update:separatorPosition', oldSeparatorPositionPercent * newPercent);
+			this.recomputeParts();
 		},
-		height(newHeight: number, oldHeight: number): void
+		height(): void
 		{
-			this.containerHeight = newHeight;
-
-			if (!this.isColumn)
-			{
-				return;
-			}
-
-			const newPercent = newHeight / 100;
-			const oldPercent = oldHeight / 100;
-			const oldSeparatorPositionPercent = this.separatorPosition / oldPercent;
-
-			this.$emit('update:separatorPosition', oldSeparatorPositionPercent * newPercent);
+			this.recomputeParts();
 		},
 		contentPosition(newContentPosition: string): void
 		{
+			this.recomputeParts();
+
 			this.$nextTick(() => {
-				this.setPartWheelHandlers(newContentPosition);
+				this.setPartWheelHandlers(newContentPosition, this.contentScrollable);
 			});
 		},
 		isResizing(value: boolean): void
@@ -259,15 +368,49 @@ export const ContentSeparator = {
 				this.highlightedBlocks.add(this.blockId);
 			}
 		},
+		contentScrollable(isScrollable: boolean): void
+		{
+			this.$nextTick(() => {
+				this.setPartWheelHandlers(this.contentPosition, isScrollable);
+			});
+		},
+		resizing(newValue: boolean, oldValue: boolean): void
+		{
+			if (newValue)
+			{
+				this.resizeContainerWidth = this.width;
+				this.resizeContainerHeight = this.height;
+				this.resizeSeparatorPosition = this.separatorPosition;
+
+				this.resizeFirstPartSize = this.firstPartSize;
+				this.resizeSecondPartSize = this.secondPartSize;
+
+				console.table({
+					resizeContainerWidth: this.resizeContainerWidth,
+					resizeContainerHeight: this.resizeContainerHeight,
+					resizeSeparatorPosition: this.resizeSeparatorPosition,
+					firstPartSize: this.firstPartSize,
+					secondPartSize: this.secondPartSize,
+					bottomContent: this.resizeContainerHeight - this.resizeSeparatorPosition,
+					preSecondPathColumn: this.resizeContainerHeight - this.resizeSeparatorPosition - SEPARATOR_SIZE,
+					preSecondPath: this.resizeContainerWidth - this.resizeSeparatorPosition - SEPARATOR_SIZE,
+				});
+			}
+		},
 	},
 	mounted(): void
 	{
 		this.updateContainerRect();
-		this.resize(
-			this.isColumn ? this.containerHeight : this.containerWidth,
-			this.separatorPosition,
-		);
-		this.setPartWheelHandlers(this.contentPosition);
+		this.recomputeParts();
+		this.setPartWheelHandlers(this.contentPosition, this.contentScrollable);
+
+		console.table({
+			width: this.width,
+			height: this.height,
+			firstPartSize: this.firstPartSize,
+			secondPartSize: this.secondPartSize,
+			separatorPosition: this.separatorPosition,
+		});
 	},
 	unmounted(): void
 	{
@@ -276,7 +419,17 @@ export const ContentSeparator = {
 		Event.unbind(this.$refs.noneAlignPartContainer, 'wheel', this.onWheelContent);
 	},
 	methods: {
-		setPartWheelHandlers(contentPosition: string): void
+		isTopOrLeftContentPosition(position: string): boolean
+		{
+			return ([FRAME_TEXT_ALIGN_OPTIONS.TOP, FRAME_TEXT_ALIGN_OPTIONS.LEFT])
+				.includes(position);
+		},
+		isBottomOrRightContentPosition(position: string): boolean
+		{
+			return ([FRAME_TEXT_ALIGN_OPTIONS.BOTTOM, FRAME_TEXT_ALIGN_OPTIONS.RIGHT])
+				.includes(position);
+		},
+		setPartWheelHandlers(contentPosition: string, isScrollable: boolean = true): void
 		{
 			const {
 				firstPartContainer = null,
@@ -299,96 +452,103 @@ export const ContentSeparator = {
 			Event.unbind(secondPartContainer, 'wheel', this.onWheelContent);
 			Event.unbind(noneAlignPartContainer, 'wheel', this.onWheelContent);
 
-			if (isFirstPartContainer)
+			if (isScrollable && isFirstPartContainer)
 			{
 				Event.bind(firstPartContainer, 'wheel', this.onWheelContent);
 			}
-			else if (isSecondPartContainer)
+			else if (isScrollable && isSecondPartContainer)
 			{
 				Event.bind(secondPartContainer, 'wheel', this.onWheelContent);
-			}
-			else
-			{
-				Event.bind(noneAlignPartContainer, 'wheel', this.onWheelContent);
 			}
 		},
 		onWheelContent(event: MouseEvent): void
 		{
 			event.stopPropagation();
 		},
-		resize(containerSize: number, cursorPosition: number): void
+		getAxisSize(): number
 		{
-			const percent = containerSize / 100;
-			const separatorSizeAsPercent = SEPARATOR_SIZE / percent;
+			return this.isColumn ? this.height : this.width;
+		},
+		getMinContentSize(): number
+		{
+			return this.isColumn ? this.minContentHeight : this.minContentWidth;
+		},
+		recomputeParts(rawTextSize: number = this.separatorPosition): void
+		{
+			const axisSize = this.getAxisSize();
+			const minContentSize = this.getMinContentSize();
 
-			let preparedCursorPosition = cursorPosition < SEPARATOR_SIZE
-				? SEPARATOR_SIZE
-				: cursorPosition;
+			let textSize = Math.max(minContentSize, rawTextSize);
+			textSize = Math.min(textSize, axisSize - SEPARATOR_SIZE);
+			const emptySize = axisSize - SEPARATOR_SIZE - textSize;
 
-			preparedCursorPosition = cursorPosition > containerSize
-				? containerSize
-				: preparedCursorPosition;
+			if (this.isFirstContainerActive)
+			{
+				this.firstPartSize = textSize;
+				this.secondPartSize = emptySize;
+			}
+			else
+			{
+				this.firstPartSize = emptySize;
+				this.secondPartSize = textSize;
+			}
 
-			this.firstPartSize = (preparedCursorPosition / percent) - (separatorSizeAsPercent / 2);
-			this.secondPartSize = 100 - this.firstPartSize - (separatorSizeAsPercent / 2);
+			this.resizeFirstPartSize = this.firstPartSize;
+			this.resizeSecondPartSize = this.secondPartSize;
+		},
+		getTextSizeFromEvent(event: MouseEvent): number
+		{
+			const axisSize = this.getAxisSize();
+			const minContentSize = this.getMinContentSize();
+			const cursorPosition = (
+				this.isColumn
+					? event.clientY - this.containerY
+					: event.clientX - this.containerX
+			) / this.zoom;
+
+			const textSize = this.isFirstContainerActive
+				? cursorPosition
+				: axisSize - SEPARATOR_SIZE - cursorPosition;
+
+			return Math.min(
+				Math.max(textSize, minContentSize),
+				axisSize - SEPARATOR_SIZE,
+			);
 		},
 		updateContainerRect(): void
 		{
 			const {
 				x = 0,
 				y = 0,
-				width = 0,
-				height = 0,
 			} = this.$refs.containerSeparator?.getBoundingClientRect() ?? {};
 
 			this.containerX = x;
 			this.containerY = y;
-			this.containerWidth = width;
-			this.containerHeight = height;
 		},
-		emitSeparatorPosition(event: MouseEvent): void
+		applySeparatorDrag(event: MouseEvent): void
 		{
-			const containerSize = this.isColumn
-				? this.containerHeight
-				: this.containerWidth;
-			let separatorPosition = this.isColumn
-				? event.clientY - this.containerY
-				: event.clientX - this.containerX;
+			const textSize = this.getTextSizeFromEvent(event);
 
-			separatorPosition = separatorPosition < SEPARATOR_SIZE
-				? SEPARATOR_SIZE
-				: separatorPosition;
-
-			separatorPosition = separatorPosition > containerSize
-				? containerSize
-				: separatorPosition;
-
-			this.$emit(
-				'update:separatorPosition',
-				separatorPosition,
-			);
+			this.recomputeParts(textSize);
+			this.$emit('update:separatorPosition', textSize);
 		},
-		onMouseDownSeparator(event: MouseEvent)
+		onMouseDownSeparator(event: MouseEvent): void
 		{
 			this.isResizing = true;
 			Event.bind(document, 'mousemove', this.onMouseMoveSeparator);
 			Event.bind(document, 'mouseup', this.onMouseUpSeparator);
 
 			this.updateContainerRect();
-			this.emitSeparatorPosition(event);
+			this.applySeparatorDrag(event);
 		},
-		onMouseMoveSeparator(event: MouseEvent)
+		onMouseMoveSeparator(event: MouseEvent): void
 		{
 			if (!this.isResizing)
 			{
 				return;
 			}
 
-			this.resize(
-				this.isColumn ? this.containerHeight : this.containerWidth,
-				this.isColumn ? event.clientY - this.containerY : event.clientX - this.containerX,
-			);
-			this.emitSeparatorPosition(event);
+			this.applySeparatorDrag(event);
 		},
 		onMouseUpSeparator(event: MouseEvent): void
 		{
@@ -410,8 +570,9 @@ export const ContentSeparator = {
 				<div
 					:style="firstPartStyle"
 					ref="firstPartContainer"
-					class="chart-editor-content-separator__first-part"
+					:class="firstPartClassNames"
 				>
+					<div :class="firstPartSeparatorTmpClassNames"/>
 					<slot
 						:name="firstPartSlotName"
 						:width="firstPartSlotWidthProp"
@@ -427,8 +588,9 @@ export const ContentSeparator = {
 				<div
 					:style="secondPartStyle"
 					ref="secondPartContainer"
-					class="chart-editor-content-separator__second-part"
+					:class="secondPartClassNames"
 				>
+					<div :class="secondPartSeparatorTmpClassNames"/>
 					<slot
 						:name="secondPartSlotName"
 						:width="secondPartSlotWidthProp"
@@ -443,9 +605,9 @@ export const ContentSeparator = {
 				class="chart-editor-content-separator__content"
 			>
 				<slot
-					name="content"
-					:width="containerWidth"
-					:height="containerHeight"
+					name="noneContent"
+					:width="width"
+					:height="height"
 				/>
 			</div>
 		</div>

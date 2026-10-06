@@ -1,4 +1,8 @@
 <?php
+$MESS['NOTE_FILE_CONTROLLER_DISK_ERROR_ACCESS'] = 'Insufficient permissions to add files to the article.';
+$MESS['NOTE_FILE_CONTROLLER_DISK_ERROR_DISABLED'] = 'Adding files from Drive is not available.';
+$MESS['NOTE_FILE_CONTROLLER_DISK_ERROR_DOCUMENT'] = 'Article was not found.';
+$MESS['NOTE_FILE_CONTROLLER_DISK_ERROR_PICKER_CONFIG'] = 'Could not open the file selection window. Please try again.';
 $MESS["NOTE_FILE_CONTROLLER_DOWNLOAD_ERROR_ACCESS"] = "Insufficient permissions to access article file. Please contact your Bitrix24 administrator.";
 $MESS["NOTE_FILE_CONTROLLER_DOWNLOAD_ERROR_DOCUMENT"] = "Article was not found.";
 $MESS["NOTE_FILE_CONTROLLER_DOWNLOAD_ERROR_FILE"] = "File was not found in the article.";

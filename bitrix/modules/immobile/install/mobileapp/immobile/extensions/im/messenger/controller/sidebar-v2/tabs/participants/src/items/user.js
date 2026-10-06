@@ -9,7 +9,9 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/participants/src/items/user',
 
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { Loc } = require('im/messenger/loc');
+	const { ActionByUserType } = require('im/messenger/const');
 	const { UserHelper } = require('im/messenger/lib/helper');
+	const { UserPermission } = require('im/messenger/lib/permission-manager');
 	const { ParticipantBaseItem } = require('im/messenger/controller/sidebar-v2/tabs/participants/src/items/base');
 	const { PositionEnum } = require('im/messenger/controller/sidebar-v2/ui/sidebar-avatar');
 
@@ -29,7 +31,7 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/participants/src/items/user',
 		createTitle()
 		{
 			const title = this.chatTitle.getTitle({ isNotes: false });
-			const text = this.isYou()
+			const text = this.isTargetCurrentUser()
 				? `${title} [COLOR=${Color.base4.toHex()}]${Loc.getMessage('IMMOBILE_SIDEBAR_V2_PARTICIPANTS_IS_YOU')}[/COLOR]`
 				: title;
 
@@ -127,11 +129,13 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/participants/src/items/user',
 		 */
 		getCrownStatusIcon()
 		{
-			if (this.isAdmin() || this.isManager())
+			if (this.isTargetAdmin() || this.isTargetManager())
 			{
 				return {
 					named: Icon.SMALL_CROWN.getIconName(),
-					tintColor: Color.accentMainWarningSolid.toHex(),
+					tintColor: this.isTargetAdmin()
+						? Color.accentMainWarningSolid.toHex()
+						: Color.accentMainSuccess.toHex(),
 					position: PositionEnum.TOP_RIGHT,
 				};
 			}
@@ -144,13 +148,19 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/participants/src/items/user',
 			return 'sidebar-tab-participant-item';
 		}
 
-		handleOnClick()
+		canHandleClick()
 		{
 			if (this.userHelper.isBot)
 			{
-				return;
+				return false;
 			}
 
+			return UserPermission.canPerformActionByUserType(ActionByUserType.openProfile)
+				&& UserPermission.canPerformActionByUserType(ActionByUserType.openProfile, this.getUserId());
+		}
+
+		handleOnClick()
+		{
 			void UserProfile.open({
 				ownerId: this.getUserId(),
 				analyticsSection: 'im_sidebar_participants',
@@ -164,7 +174,7 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/participants/src/items/user',
 			return userId;
 		}
 
-		isManager()
+		isTargetManager()
 		{
 			const { isManager } = this.props;
 

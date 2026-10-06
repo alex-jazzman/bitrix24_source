@@ -23,8 +23,81 @@
 	cursor: pointer;
 }
 
-.landing-template-pseudo-link.landing-item {
+/* the pseudo-link moved inside the tile, the unclipped overflow stays on the tile itself */
+.landing-item.landing-item-with-link {
 	overflow: visible;
+}
+
+/* transparent overlay over the whole tile: the focusable, nameable target of the tile */
+.landing-demo-tile-link {
+	position: absolute;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	left: 0;
+	z-index: 1;
+	display: block;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	background: transparent;
+	color: inherit;
+	font: inherit;
+	text-align: inherit;
+	appearance: none;
+	-webkit-appearance: none;
+}
+
+/* inset offset: the grid container clips, an outward ring would be cut off on edge tiles */
+.landing-demo-tile-link:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary, #0075ff);
+	outline-offset: -2px;
+}
+
+/* the description toggle lies outside the overlay and has to stay clickable above it */
+.landing-item-desc-open {
+	z-index: 2;
+	cursor: pointer;
+}
+
+/* span -> button: strip the browser chrome, keep the geometry of the shared landing.sites rule */
+.landing-item .landing-item-desc-open {
+	margin: 0;
+	padding: 2px 14px 0 0;
+	border: 0;
+	background: transparent;
+	appearance: none;
+	-webkit-appearance: none;
+}
+
+.landing-item-desc-open:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary, #0075ff);
+	outline-offset: -2px;
+}
+
+/* the shared rule collapses the toggle to zero height once the description opens, and the user is
+   still standing on it: keep it visible, it is also the way back to the collapsed state */
+.landing-item.landing-tile-title-show .landing-item-desc-open {
+	height: 30px;
+	overflow: visible;
+}
+
+/* the expanded description drops every fade mask, the toggle keeps only its dots */
+.landing-tile-title-show .landing-item-desc-open:before {
+	display: none;
+}
+
+/* the click moved from the tile to the button inside it: only the button may promise a click */
+.landing-item.landing-item-contact {
+	cursor: default;
+}
+
+.landing-item-contact .landing-item-contact-btn {
+	cursor: pointer;
+}
+
+.landing-demo-error {
+	color: var(--ui-color-accent-main-alert, #ff5752);
 }
 
 .landing-license-wrapper {
@@ -107,9 +180,26 @@
 	overflow: hidden;
 	margin: 20px 0 75px;
 	height: 97px;
-	background: #2fc6f6 url(image/landing-license-banner-bg.png) right center no-repeat;
+	background: #2fc6f6 url(image/landing-license-banner-bg.webp) right center no-repeat;
 	text-decoration: none;
 	cursor: pointer;
+}
+
+/* native <button> banner must keep the previous <a> geometry */
+button.landing-license-banner {
+	width: 100%;
+	padding: 0;
+	border: 0;
+	color: inherit;
+	font: inherit;
+	text-align: inherit;
+	appearance: none;
+	-webkit-appearance: none;
+}
+
+.landing-license-banner:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary, #0075ff);
+	outline-offset: -2px;
 }
 
 .landing-license-banner:before {

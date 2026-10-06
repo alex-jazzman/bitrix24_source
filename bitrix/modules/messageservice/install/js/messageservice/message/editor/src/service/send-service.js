@@ -5,6 +5,7 @@ import { type MessageModel } from '../model/message-model';
 import { type AnalyticsService } from './analytics-service';
 import { type Logger } from './logger';
 import { type PreferencesService } from './preferences-service';
+import { type SaveFlowService } from './save-flow-service';
 
 type Params = {
 	logger: Logger,
@@ -13,6 +14,7 @@ type Params = {
 	eventEmitter: EventEmitter,
 	analyticsService: AnalyticsService,
 	preferencesService: PreferencesService,
+	saveFlowService: SaveFlowService,
 };
 
 export class SendService
@@ -23,6 +25,7 @@ export class SendService
 	#emitter: EventEmitter;
 	#analyticsService: AnalyticsService;
 	#preferencesService: PreferencesService;
+	#saveFlowService: SaveFlowService;
 
 	constructor(params: Params)
 	{
@@ -32,6 +35,7 @@ export class SendService
 		this.#emitter = params.eventEmitter;
 		this.#analyticsService = params.analyticsService;
 		this.#preferencesService = params.preferencesService;
+		this.#saveFlowService = params.saveFlowService;
 	}
 
 	sendMessage(): Promise<void>
@@ -44,6 +48,11 @@ export class SendService
 		}
 
 		void this.#store.dispatch('application/setProgress', { isSending: true });
+
+		// Snapshot the save-flow state before transport handlers run, so an
+		// onSend handler can't mutate the editor before it is captured. It is
+		// synchronous, isolates its own errors, and never blocks the async send.
+		this.#saveFlowService.handleSendAttempt();
 
 		return this.#emitter.emitAsync('onSend')
 			.then((eventResults: AjaxResponse[]) => {

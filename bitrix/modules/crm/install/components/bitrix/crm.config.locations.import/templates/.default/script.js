@@ -66,12 +66,7 @@ var crmImportLocations = {
 		return this.getInputValue(document.forms.import_form.locations_csv);
 	},
 
-    getTmpPath: function()
-    {
-        return document.forms.import_form.TMP_PATH.value;
-    },
-
-    getSync: function()
+	getSync: function()
 	{
 		return this.getInputValue(document.forms.import_form.sync);
 	},
@@ -187,7 +182,6 @@ var crmImportLocations = {
 		data = {
 			'STEP': params.STEP ?  params.STEP : 1,
 			'CSVFILE': this.getCSVFileName(),
-            'TMP_PATH': this.getTmpPath(),
 			'LOADZIP': document.forms.import_form.load_zip.checked ? 'Y' : 'N',
 			'SYNC': this.getSync(),
 			'STEP_LENGTH': document.forms.import_form.step_length.value,
@@ -216,7 +210,6 @@ var crmImportLocations = {
 		data = {
 			'STEP': params.STEP ?  params.STEP : 1,
 			'CSVFILE': this.getCSVFileName(),
-            'TMP_PATH': this.getTmpPath(),
 			'LOADZIP': document.forms.import_form.load_zip.checked ? 'Y' : 'N',
 			'sessid': BX.bitrix_sessid()
 		};
@@ -286,4 +279,3 @@ var crmImportLocations = {
 		return retVal;
 	}
 };
-

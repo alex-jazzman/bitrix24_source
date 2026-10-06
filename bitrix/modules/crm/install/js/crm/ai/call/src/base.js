@@ -10,6 +10,7 @@ import 'ui.design-tokens';
 export const ActivityProvider: Object<string, string> = Object.freeze({
 	call: 'VOXIMPLANT_CALL',
 	openLine: 'IMOPENLINES_SESSION',
+	email: 'CRM_EMAIL',
 });
 
 export type aiData = {
@@ -119,6 +120,10 @@ export class Base
 					else if (this.activityProvider === ActivityProvider.openLine)
 					{
 						Dom.append(this.getOpenLineElementNode(response.data.openline), this.topElementNode);
+					}
+					else if (this.activityProvider === ActivityProvider.email && response.data.emailThread)
+					{
+						Dom.append(this.getEmailThreadElementNode(response.data.emailThread), this.topElementNode);
 					}
 
 					const aiJobResult = this.prepareAiJobResult(response);
@@ -240,8 +245,37 @@ export class Base
 		{
 			this.topElementNode = Tag.render`<div id="crm-copilot-textbox__top-container"></div>`;
 		}
+		else if (this.activityProvider === ActivityProvider.email)
+		{
+			this.topElementNode = Tag.render`<div id="crm-copilot-textbox__top-container"></div>`;
+		}
 
 		return this.topElementNode;
+	}
+
+	getEmailThreadElementNode(emailThread: { activityId: number, subject: string, senderName: string }): HTMLElement
+	{
+		const openEmailFn = (activityId) => {
+			return () => {
+				if (Type.isNumber(activityId) && activityId > 0)
+				{
+					BX.CrmActivityEmail.create({ ID: activityId }, BX.CrmActivityEditor.getDefault(), {}).openDialog(BX.CrmDialogMode.view);
+				}
+			};
+		};
+
+		const label = emailThread.senderName
+			? `${Text.encode(emailThread.senderName)}: ${Text.encode(emailThread.subject)}`
+			: Text.encode(emailThread.subject);
+
+		return Tag.render`
+			<a
+				style="cursor: pointer; word-break: break-all;"
+				onclick="${openEmailFn(emailThread.activityId)}"
+			>
+				${label}
+			</a>
+		`;
 	}
 
 	getOpenLineElementNode(openlineData: { dialogId: string, name: string}): HTMLElement

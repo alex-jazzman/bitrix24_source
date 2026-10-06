@@ -7,6 +7,7 @@ import "./panel-compilation";
 import {EventEmitter} from "main.core.events";
 import 'ui.hint';
 import { MessageBox } from 'ui.dialogs.messagebox';
+import { ProductCalculator } from 'catalog.product-calculator';
 
 Vue.component(config.templatePanelButtons,
 {
@@ -22,9 +23,7 @@ Vue.component(config.templatePanelButtons,
 	},
 	data()
 	{
-		return {
-			settings: []
-		};
+		return {};
 	},
 	methods:
 	{
@@ -92,8 +91,60 @@ Vue.component(config.templatePanelButtons,
 			if (index < 0)
 			{
 				const productData = response.data;
-				const basePrice = Text.toNumber(productData.fields.BASE_PRICE);
 				productData.fields = productData.fields || {};
+				const productBasePrice = Text.toNumber(productData.fields.BASE_PRICE);
+				const productTaxRate = Text.toNumber(productData.fields.TAX_RATE);
+				const productTaxIncluded = productData.fields.TAX_INCLUDED
+					|| productData.fields.VAT_INCLUDED
+					|| null;
+				const basket = this.$store.getters['productList/getBasket']();
+				const firstBasketItem = basket[0];
+				const isFirstRealProduct = (
+					basket.length === 0
+					|| (
+						basket.length === 1
+						&& !(Text.toNumber(firstBasketItem?.fields?.productId) > 0)
+						&& !(Text.toNumber(firstBasketItem?.fields?.skuId) > 0)
+					)
+				);
+
+				const taxAware = this.options.showTaxSettingsSwitcher === 'Y';
+
+				let basePrice = productBasePrice;
+				let needsConversion = false;
+				let rowTaxIncluded = null;
+
+				if (taxAware)
+				{
+					if (
+						isFirstRealProduct
+						&& (productTaxIncluded === 'Y' || productTaxIncluded === 'N')
+					)
+					{
+						this.$root.$app.options.taxIncluded = productTaxIncluded;
+					}
+
+					const formTaxIncluded = this.$root.$app.options.taxIncluded;
+					if (!isFirstRealProduct)
+					{
+						const conversion = new ProductCalculator().convertBasePriceForTaxIncluded(
+							productBasePrice,
+							productTaxRate,
+							productTaxIncluded,
+							formTaxIncluded,
+						);
+						needsConversion = conversion.converted;
+						if (needsConversion)
+						{
+							basePrice = conversion.price;
+						}
+					}
+
+					rowTaxIncluded = isFirstRealProduct
+						? (productTaxIncluded || this.options.taxIncluded)
+						: formTaxIncluded;
+				}
+
 				let newItem = this.$store.getters['productList/getBaseProduct']();
 				newItem.fields = Object.assign(newItem.fields, {
 					price: basePrice,
@@ -108,8 +159,15 @@ Vue.component(config.templatePanelButtons,
 					properties: productData.fields.PROPERTIES,
 					offerId: productData.skuId > 0 ? productData.skuId : productData.productId,
 					module: 'catalog',
-					isCustomPrice: Type.isNil(productData.fields.PRICE) ? 'Y' : 'N',
+					isCustomPrice: needsConversion
+						? 'Y'
+						: (Type.isNil(productData.fields.PRICE) ? 'Y' : 'N'),
 					discountType: this.options.defaultDiscountType,
+					...(taxAware ? {
+						taxId: productData.fields.VAT_ID,
+						taxRate: productTaxRate,
+						...(rowTaxIncluded ? { taxIncluded: rowTaxIncluded } : {}),
+					} : {}),
 				});
 
 				delete(productData.fields);
@@ -263,22 +321,27 @@ Vue.component(config.templatePanelButtons,
 		getSettingItems()
 		{
 			const items = [
-				// {
-				// 	id: 'taxIncludedOption',
-				// 	checked: (this.options.taxIncluded === 'Y'),
-				// 	title: this.localize.CATALOG_FORM_ADD_TAX_INCLUDED,
-				// },
 				{
 					id: 'showDiscountInputOption',
 					checked: (this.options.showDiscountBlock !== 'N'),
 					title: this.localize.CATALOG_FORM_ADD_SHOW_DISCOUNTS_OPTION,
 				},
-				// {
-				// 	id: 'showTaxInputOption',
-				// 	checked: (this.options.showTaxBlock !== 'N'),
-				// 	title: this.localize.CATALOG_FORM_ADD_SHOW_TAXES_OPTION,
-				// },
 			];
+
+			if (this.options.showTaxSettingsSwitcher === 'Y')
+			{
+				items.unshift({
+					id: 'taxIncludedOption',
+					checked: (this.options.taxIncluded === 'Y'),
+					title: this.localize.CATALOG_FORM_ADD_TAX_INCLUDED,
+				});
+
+				items.push({
+					id: 'showTaxInputOption',
+					checked: (this.options.showTaxBlock !== 'N'),
+					title: this.localize.CATALOG_FORM_ADD_SHOW_TAXES_OPTION,
+				});
+			}
 
 			return items;
 		},
@@ -289,7 +352,7 @@ Vue.component(config.templatePanelButtons,
 					<div class='catalog-pf-product-config-popup'></div>
 				`;
 
-			this.settings.forEach(item => {
+			this.getSettingItems().forEach(item => {
 				content.append(this.getSettingItem(item));
 			});
 
@@ -363,8 +426,6 @@ Vue.component(config.templatePanelButtons,
 	},
 	mounted()
 	{
-		this.settings = this.getSettingItems();
-
 		BX.UI.Hint.init();
 	},
 	// language=Vue

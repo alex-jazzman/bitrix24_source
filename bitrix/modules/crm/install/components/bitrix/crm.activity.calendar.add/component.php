@@ -1,4 +1,8 @@
-<?if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
+<?php
+
+use Bitrix\Main\Web\Uri;
+
+if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
 global $USER, $APPLICATION;
 
@@ -243,12 +247,7 @@ else
 if (empty($_POST['EVENT_PAGE']))
 	$_POST['EVENT_PAGE'] = $APPLICATION->GetCurPage();
 
-$arResult['EVENT_PAGE'] = CHTTP::urlAddParams(
-	$_POST['EVENT_PAGE'],
-	('LIST' == $arResult['FORM_TYPE'] ? array() :
-	array('CRM_'.trim($arParams['ENTITY_TYPE']).'_'.trim($arParams['FORM_TYPE']).'_active_tab' => (!empty($arResult['RESULT_TAB']) ? $arResult['RESULT_TAB'] : 'tab_activity')))
-);
+$arResult['EVENT_PAGE'] = (string)(new Uri($_POST['EVENT_PAGE']))->addParams(('LIST' == $arResult['FORM_TYPE'] ? array() :
+	array('CRM_'.trim($arParams['ENTITY_TYPE']).'_'.trim($arParams['FORM_TYPE']).'_active_tab' => (!empty($arResult['RESULT_TAB']) ? $arResult['RESULT_TAB'] : 'tab_activity'))));
 
 $this->IncludeComponentTemplate();
-
-?>

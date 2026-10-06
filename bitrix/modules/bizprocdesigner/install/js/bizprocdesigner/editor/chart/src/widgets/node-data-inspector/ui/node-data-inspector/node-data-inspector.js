@@ -7,7 +7,6 @@ import {
 	InspectorViewModeButton,
 	NodeDataInspectorLayout,
 	InspectorSchemeView,
-	InspectorSchemeLoadingView,
 	InspectorGridView,
 	InspectorCloseButton,
 	InspectorEmptyState,
@@ -16,17 +15,30 @@ import {
 import { NavigateGridView, FilterGridView } from '../../../../features/node-data-inspector';
 import { useNodeSettingsStore } from '../../../../entities/node-settings';
 import { useAppStore } from '../../../../entities/app';
+import { diagramStore } from '../../../../entities/blocks/stores';
 
 import { useNodeDataInspectorStore } from '../../../../shared/stores/node-data-inspector-store';
-import { documentFieldsCache } from '../../../../shared/utils';
 import { getTemplateDataProvider } from '../../../../shared/utils/template-data-provider';
-import { type TemplateDataGeneralGroup } from '../../../../shared/types';
+import {
+	type ActivityData,
+	type Block,
+	type TemplateDataGeneralGroup,
+} from '../../../../shared/types';
 
 import { mapTemplateGroupsToView } from '../../utils/map-provider-data-to-view';
 import {
 	ViewMode,
 	ViewModeConfigs,
+	SchemeViewGroupKey,
 } from './const';
+import {
+	createPreparedItemsRequestState,
+	createPreparedItemsRequestVersion,
+	destroyPreparedItemsRequestState,
+	filterWorkflowData,
+	prepareCurrentItems,
+	type PreparedItemsRequestState,
+} from './node-data-inspector-utils';
 
 // @vue/component
 export const NodeDataInspector = {
@@ -38,27 +50,26 @@ export const NodeDataInspector = {
 		InspectorViewModeButton,
 		InspectorSchemeView,
 		InspectorGridView,
-		InspectorSchemeLoadingView,
 		InspectorCloseButton,
 		InspectorEmptyState,
 		NavigateGridView,
 		FilterGridView,
 	},
-	provide(): Object
-	{
-		return {
-			loadDocumentFields: (documentType: string | Array<string>) => this.loadDocumentFields(documentType),
-		};
-	},
 	data(): {
 		searchValue: string,
 		viewMode: $Keys<typeof ViewModeConfigs>,
 		providedItems: ?Object,
+		providedItemsBlockId: ?string,
+		preparedItemsRequestState: PreparedItemsRequestState,
+		updateRafId: ?number,
 		} {
 		return {
 			searchValue: '',
 			viewMode: ViewMode.SCHEME,
 			providedItems: null,
+			providedItemsBlockId: null,
+			preparedItemsRequestState: createPreparedItemsRequestState(),
+			updateRafId: null,
 		};
 	},
 	computed: {
@@ -68,8 +79,10 @@ export const NodeDataInspector = {
 			'countRowsOnPage',
 			'currentPageNumber',
 			'selectedGridViewGroup',
+			'lastValues',
 		]),
 		...mapState(useNodeSettingsStore, ['ports']),
+		...mapState(diagramStore, ['templateId']),
 		templateData(): { groups: Array<TemplateDataGeneralGroup> }
 		{
 			const items = this.providedItems;
@@ -82,7 +95,7 @@ export const NodeDataInspector = {
 			}
 
 			const mappedData = {
-				groups: mapTemplateGroupsToView(items, this.ports ?? []),
+				groups: mapTemplateGroupsToView(items, this.ports ?? [], this.lastValues),
 			};
 
 			const normalizedSearchValue = Type.isStringFilled(this.searchValue)
@@ -104,6 +117,12 @@ export const NodeDataInspector = {
 		isEmpty(): boolean
 		{
 			return !this.templateData?.groups?.length;
+		},
+		gridTemplateData(): { groups: Array<TemplateDataGeneralGroup> }
+		{
+			return {
+				groups: (this.templateData?.groups ?? []).filter((g) => g.id !== SchemeViewGroupKey.FILTER),
+			};
 		},
 		Outline: (): typeof Outline => Outline,
 		ViewMode: (): typeof ViewMode => ViewMode,
@@ -127,112 +146,79 @@ export const NodeDataInspector = {
 	},
 	created()
 	{
-		const provider = getTemplateDataProvider();
-		this.onDocumentFieldsLoadedHandler = () => {
-			this.scheduleProvidedItemsUpdate();
-		};
-		provider.subscribe('onDocumentFieldsLoaded', this.onDocumentFieldsLoadedHandler);
+		// The panel is mounted anew on every open, so one request per mount is
+		// exactly one request per open of the data panel.
+		this.loadLastValues(this.templateId);
 	},
 	beforeUnmount()
 	{
-		cancelAnimationFrame(this.updateRafId);
-
-		const provider = getTemplateDataProvider();
-		provider.unsubscribe('onDocumentFieldsLoaded', this.onDocumentFieldsLoadedHandler);
+		destroyPreparedItemsRequestState(this.preparedItemsRequestState);
+		if (this.updateRafId !== null)
+		{
+			cancelAnimationFrame(this.updateRafId);
+		}
 	},
 	methods: {
 		...mapActions(useAppStore, ['toggleDataInspectorPanel']),
-		...mapActions(useNodeDataInspectorStore, ['resetGridView']),
-		async loadDocumentFields(documentType: string | Array<string>): Promise<Array<Object>>
-		{
-			const fields = await documentFieldsCache.fetchFields(documentType);
-			if (fields.length > 0)
-			{
-				this.scheduleProvidedItemsUpdate();
-			}
-
-			return fields;
-		},
+		...mapActions(useNodeDataInspectorStore, ['resetGridView', 'loadLastValues']),
 		scheduleProvidedItemsUpdate(): void
 		{
-			cancelAnimationFrame(this.updateRafId);
-			this.updateRafId = requestAnimationFrame(() => {
-				this.updateProvidedItems();
-			});
-		},
-		updateProvidedItems(): void
-		{
+			const requestVersion = createPreparedItemsRequestVersion(this.preparedItemsRequestState);
+			if (this.updateRafId !== null)
+			{
+				cancelAnimationFrame(this.updateRafId);
+			}
+
 			if (!this.block)
 			{
 				this.providedItems = null;
+				this.providedItemsBlockId = null;
+				this.updateRafId = null;
 
 				return;
 			}
 
-			const provider = getTemplateDataProvider();
-			this.providedItems = {
-				templateItems: provider.getTemplateItems(),
-				incomingItems: provider.getIncomingProperties(this.block),
-				outgoingItems: provider.getOutgoingProperties(this.block, { activityData: this.activityData }),
-			};
-		},
-		filterWorkflowData(
-			data: { groups: InspectorViewItemBase },
-			searchValue: string,
-		): { groups: InspectorViewItemBase }
-		{
-			const filteredGroups = (Array.isArray(data?.groups) ? data.groups : [])
-				.map((group) => this.filterGroup(group, searchValue))
-				.filter(Boolean)
-			;
-
-			return {
-				...data,
-				groups: filteredGroups,
-			};
-		},
-		filterGroup(group: InspectorViewItemBase, searchValue: string): InspectorViewItemBase | null
-		{
-			const filteredItems = this.filterItems(group?.items, searchValue);
-
-			if (filteredItems.length === 0)
+			const block = this.block;
+			const activityData = this.activityData;
+			if (this.providedItemsBlockId !== block.id)
 			{
-				return null;
+				this.providedItems = null;
+				this.providedItemsBlockId = null;
 			}
 
-			return {
-				...group,
-				items: filteredItems,
-			};
+			this.updateRafId = requestAnimationFrame(() => {
+				this.updateRafId = null;
+				void this.updateProvidedItems(requestVersion, block, activityData);
+			});
 		},
-		filterItems(items: ?InspectorViewItemBase, searchValue: string): InspectorViewItemBase['items']
+		async updateProvidedItems(
+			requestVersion: number,
+			block: Block,
+			activityData: ?ActivityData,
+		): Promise<void>
 		{
-			const normalizedItems = Array.isArray(items) ? items : [];
+			const provider = getTemplateDataProvider();
+			const preparedItems = await prepareCurrentItems(
+				provider,
+				this.preparedItemsRequestState,
+				requestVersion,
+				block,
+				activityData,
+			);
+			if (!preparedItems)
+			{
+				return;
+			}
 
-			return normalizedItems
-				.map((item) => {
-					const itemText = Type.isStringFilled(item?.text) ? item.text.toLowerCase() : '';
-					const isTextMatch = itemText.includes(searchValue);
-
-					if (isTextMatch)
-					{
-						return item;
-					}
-
-					const childItems = this.filterItems(item?.items, searchValue);
-
-					if (childItems.length > 0)
-					{
-						return {
-							...item,
-							items: childItems,
-						};
-					}
-
-					return null;
-				})
-				.filter(Boolean)
-			;
+			this.providedItems = preparedItems;
+			this.providedItemsBlockId = block.id;
+		},
+		filterWorkflowData(
+			data: { groups: Array<InspectorViewItemBase> },
+			searchValue: string,
+		): { groups: Array<InspectorViewItemBase> }
+		{
+			return filterWorkflowData(data, searchValue);
 		},
 		onClose(): void
 		{
@@ -257,7 +243,7 @@ export const NodeDataInspector = {
 			<template #filter>
 				<FilterGridView
 					v-if="viewMode === ViewMode.GRID"
-					:templateData="templateData"
+					:templateData="gridTemplateData"
 				/>
 			</template>
 			<template #search>
@@ -280,11 +266,7 @@ export const NodeDataInspector = {
 				<InspectorSchemeView
 					v-else-if="viewMode === ViewMode.SCHEME"
 					:data="templateData"
-				>
-					<template #loading>
-						<InspectorSchemeLoadingView/>
-					</template>
-				</InspectorSchemeView>
+				/>
 				<InspectorGridView
 					v-else-if="isGridVisible"
 					:countRowsOnPage="countRowsOnPage"

@@ -9,6 +9,7 @@ jn.define('tasks/entry', (require, exports, module) => {
 	const { FeatureId, TaskStatus } = require('tasks/enum');
 	const { getFeatureRestriction, tariffPlanRestrictionsReady } = require('tariff-plan-restriction');
 	const { RunActionExecutor } = require('rest/run-action-executor');
+	const { requireLazy } = require('require-lazy');
 	const { dispatch, getState } = require('statemanager/redux/store');
 	const { showToast } = require('toast');
 	const {
@@ -21,110 +22,17 @@ jn.define('tasks/entry', (require, exports, module) => {
 	} = require('tasks/statemanager/redux/slices/tasks');
 	const { Type } = require('type');
 	const { Notify } = require('notify');
+	const { guid } = require('utils/guid');
 
 	const MS_PER_SECOND = 1000;
-	/**
-	 * @typedef {object} OpenTaskData
-	 * @property {string|number} [id]
-	 * @property {string|number} [taskId]
-	 */
-
-	/**
-	 * @typedef {object} OpenTaskParams
-	 * @property {number} [userId=env.userId]
-	 * @property {PageManager} [parentWidget]
-	 * @property {object} [analyticsLabel]
-	 * @property {boolean} [shouldOpenComments=false]
-	 * @property {string} [view]
-	 * @property {number} [kanbanOwnerId]
-	 */
-
-	/**
-	 * @typedef {object} TaskCreationDataGroupDto
-	 * @property {number} id
-	 * @property {string} name
-	 * @property {string} image
-	 * @property {object} additionalData
-	 */
-
-	/**
-	 * @typedef {object} TaskCreationDataUserDto
-	 * @property {number} id
-	 * @property {string} name
-	 * @property {string?} image
-	 * @property {string?} link
-	 * @property {string?} workPosition
-	 */
-
-	/**
-	 * @typedef {object} TaskCreationDataFileDto
-	 * @property {string} id
-	 * @property {string} name
-	 * @property {string} type
-	 * @property {string} url
-	 */
-
-	/**
-	 * @typedef {object} TaskCreationDataTagDto
-	 * @property {string} id
-	 * @property {string} name
-	 */
-
-	/**
-	 * @typedef {object} TaskCreationDataCrmElementDto
-	 * @property {string} id
-	 * @property {string} title
-	 * @property {string} subtitle
-	 * @property {string} type
-	 * @property {boolean} hidden
-	 */
-
-	/**
-	 * @typedef {object} OpenTaskCreationData
-	 * @property {object} [initialTaskData]
-	 * @property {string} [initialTaskData.guid]
-	 * @property {string} [initialTaskData.title]
-	 * @property {string} [initialTaskData.description]
-	 * @property {Date} [initialTaskData.deadline]
-	 * @property {number} [initialTaskData.groupId]
-	 * @property {TaskCreationDataGroupDto} [initialTaskData.group]
-	 * @property {number} [initialTaskData.flowId]
-	 * @property {number} [initialTaskData.priority] - one of values from {@link tasks/enum.TaskPriority}
-	 * @property {number} [initialTaskData.parentId]
-	 * @property {number} [initialTaskData.relatedTaskId]
-	 * @property {TaskCreationDataUserDto} [initialTaskData.responsible]
-	 * @property {TaskCreationDataUserDto[]} [initialTaskData.accomplices]
-	 * @property {TaskCreationDataUserDto[]} [initialTaskData.auditors]
-	 * @property {TaskCreationDataFileDto[]} [initialTaskData.files]
-	 * @property {TaskCreationDataTagDto[]} [initialTaskData.tags]
-	 * @property {TaskCreationDataCrmElementDto[]} [initialTaskData.crm]
-	 * @property {boolean} [initialTaskData.allowTimeTracking]
-	 * @property {number} [initialTaskData.startDatePlan]
-	 * @property {number} [initialTaskData.endDatePlan]
-	 * @property {number} [initialTaskData.IM_CHAT_ID]
-	 * @property {number} [initialTaskData.IM_MESSAGE_ID]
-	 * @property {number} [initialTaskData.mailMessageId]
-	 * @property {string} [view] - one of values from {@link tasks/enum.ViewMode}
-	 * @property {object} [stage]
-	 * @property {number} [copyId]
-	 * @property {string} [context]
-	 * @property {boolean} [closeAfterSave]
-	 * @property {object} [analyticsLabel]
-	 * @property {PageManager} [layoutWidget]
-	 */
 
 	class Entry
 	{
-		static getGuid()
-		{
-			function s4()
-			{
-				return Math.floor((1 + Math.random()) * 0x10000).toString(16).slice(1);
-			}
-
-			return `${s4() + s4()}-${s4()}-${s4()}-${s4()}-${s4() + s4() + s4()}`;
-		}
-
+		/**
+		 * @param {string} toolId
+		 * @param {string} infoCode
+		 * @returns {Promise<boolean>}
+		 */
 		static async checkToolAvailable(toolId, infoCode)
 		{
 			const toolDisabled = await checkDisabledToolById(toolId);
@@ -139,6 +47,11 @@ jn.define('tasks/entry', (require, exports, module) => {
 			return true;
 		}
 
+		/**
+		 * @param {OpenEfficiencyData} data
+		 * @param {OpenEfficiencyParams} [params]
+		 * @returns {Promise<void>}
+		 */
 		static async openEfficiency(data, params = {})
 		{
 			if (!await Entry.checkToolAvailable('effective', 'limit_tasks_off'))
@@ -195,7 +108,7 @@ jn.define('tasks/entry', (require, exports, module) => {
 				projectId = null,
 			} = params;
 			const taskId = data.id || data.taskId;
-			const guid = Entry.getGuid();
+			const taskGuid = guid();
 			const isFlowToolDisabled = await checkDisabledToolById('flows', false);
 			const isChatFeatureEnabled = await Entry.#isChatFeatureEnabled();
 
@@ -207,7 +120,7 @@ jn.define('tasks/entry', (require, exports, module) => {
 					layoutWidget: parentWidget,
 					userId,
 					taskId,
-					guid,
+					guid: taskGuid,
 					analyticsLabel,
 					shouldOpenComments,
 					view,
@@ -240,7 +153,7 @@ jn.define('tasks/entry', (require, exports, module) => {
 						COMPONENT_CODE: 'tasks.task.view-new',
 						TASK_ID: taskId,
 						USER_ID: (userId || env.userId),
-						GUID: guid,
+						GUID: taskGuid,
 						VIEW: view,
 						SHOULD_OPEN_COMMENTS: shouldOpenComments,
 						analyticsLabel,
@@ -254,10 +167,8 @@ jn.define('tasks/entry', (require, exports, module) => {
 
 		/**
 		 * @public
-		 * @param {object} options
-		 * @param {number} options.taskId
-		 * @param {object} [options.analyticsLabel={}]
-		 * @returns {void}
+		 * @param {OpenCommentsOptions} options
+		 * @returns {Promise<void>}
 		 */
 		static async openComments(options)
 		{
@@ -278,7 +189,11 @@ jn.define('tasks/entry', (require, exports, module) => {
 			opener.openCommentsWidget(taskId);
 		}
 
-		static async openDeadlinePicker(options = {})
+		/**
+		 * @param {OpenDeadlinePickerOptions} options
+		 * @returns {Promise<void>}
+		 */
+		static async openDeadlinePicker(options)
 		{
 			const ctx = await Entry.#prepareTaskContext(options);
 			if (!ctx)
@@ -320,6 +235,10 @@ jn.define('tasks/entry', (require, exports, module) => {
 			;
 		}
 
+		/**
+		 * @param {OpenChecklistOptions} options
+		 * @returns {Promise<void>}
+		 */
 		static async openChecklist(options)
 		{
 			const checklistId = Number(options.entityId);
@@ -355,6 +274,10 @@ jn.define('tasks/entry', (require, exports, module) => {
 			});
 		}
 
+		/**
+		 * @param {OpenResultParams} params
+		 * @returns {Promise<void>}
+		 */
 		static async openResult(params)
 		{
 			const resultId = Number(params?.entityId);
@@ -381,6 +304,10 @@ jn.define('tasks/entry', (require, exports, module) => {
 			);
 		}
 
+		/**
+		 * @param {CompleteTaskParams} params
+		 * @returns {Promise<void>}
+		 */
 		static async completeTask(params)
 		{
 			const ctx = await Entry.#prepareTaskContext(params);
@@ -429,6 +356,10 @@ jn.define('tasks/entry', (require, exports, module) => {
 			}
 		}
 
+		/**
+		 * @param {{ taskId: number, userId?: number }} params
+		 * @param {{ withChecklists?: boolean }} [extra]
+		 */
 		static async #prepareTaskContext(params, extra = {})
 		{
 			if (!await Entry.checkToolAvailable('tasks', 'limit_tasks_off'))
@@ -465,6 +396,9 @@ jn.define('tasks/entry', (require, exports, module) => {
 			});
 		}
 
+		/**
+		 * @returns {Promise<boolean>}
+		 */
 		static async #isChatFeatureEnabled()
 		{
 			return new Promise((resolve) => {
@@ -475,6 +409,11 @@ jn.define('tasks/entry', (require, exports, module) => {
 			});
 		}
 
+		/**
+		 * @param {number|string} taskId
+		 * @param {number|string} userId
+		 * @param {{ withChecklists?: boolean }} [extra]
+		 */
 		static async #getTaskData(taskId, userId, extra = {})
 		{
 			const taskIdNumber = Number(taskId);
@@ -547,6 +486,10 @@ jn.define('tasks/entry', (require, exports, module) => {
 			CreateNew.open({ ...data, isFlowToolDisabled });
 		}
 
+		/**
+		 * @param {OpenTaskListData} data
+		 * @returns {Promise<void>}
+		 */
 		static async openTaskList(data)
 		{
 			if (!await Entry.checkToolAvailable('tasks', 'limit_tasks_off'))

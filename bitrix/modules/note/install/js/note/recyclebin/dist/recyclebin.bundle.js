@@ -1,6 +1,6 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports, main_core, main_core_events, ui_vue3, ui_buttons, ui_system_dialog, ui_notification, note_ui_themeContext, note_ui_documentList, note_ui_actionMenu, note_sidebar, ui_entitySelector) {
+(function (exports, main_core, main_core_events, ui_vue3, ui_buttons, ui_system_dialog, ui_notification, ui_iconSet_api_vue, note_ui_themeContext, note_ui_documentList, note_ui_actionMenu, note_sidebar, note_ui_collectionPicker) {
 	'use strict';
 
 	const ACTION_LIST = 'note.infrastructure.RecycleBinController.list';
@@ -9,11 +9,19 @@ this.BX = this.BX || {};
 	const ACTION_RESTORE_ALL = 'note.infrastructure.RecycleBinController.restoreAll';
 	const ACTION_HARD_DELETE = 'note.infrastructure.RecycleBinController.hardDeleteDocument';
 	const ACTION_EMPTY = 'note.infrastructure.RecycleBinController.empty';
+	const ACTION_RESTORE_MANY = 'note.infrastructure.RecycleBinController.restoreMany';
+	const ACTION_HARD_DELETE_MANY = 'note.infrastructure.RecycleBinController.hardDeleteMany';
 	const ORPHAN_TARGET_REQUIRED_CODE = 'NOTE_RECYCLE_BIN_ORPHAN_TARGET_REQUIRED';
+
+	// DTO-01: outcome of a bulk operation. On limitExceeded the counters are all zero and nothing was applied.
+
 	class RecycleBinServiceError extends Error {
+		// Present on the orphan double-signal: the rejection carries the partial outcome alongside the code.
+
 		constructor(message, code = '') {
 			super(message);
 			this.code = code;
+			this.outcome = null;
 		}
 	}
 	class RecycleBinService {
@@ -120,6 +128,63 @@ this.BX = this.BX || {};
 				throw this.#toServiceError(error);
 			}
 		}
+
+		// API-03. Ids are recycle-bin record ids, NOT document ids.
+		// Orphan double-signal: when targetCollectionId is null and orphans are present the backend both
+		// rejects (code ORPHAN_TARGET_REQUIRED) AND returns the partial outcome; both are surfaced on the error.
+		async restoreMany(recycleBinIds, targetCollectionId = null) {
+			try {
+				const data = {
+					recycleBinIds: this.#normalizeIds(recycleBinIds)
+				};
+				if (targetCollectionId !== null && targetCollectionId !== undefined) {
+					data.targetCollectionId = Number(targetCollectionId);
+				}
+				const response = await main_core.ajax.runAction(ACTION_RESTORE_MANY, {
+					data
+				});
+				return this.#parseOutcome(response?.data?.outcome);
+			} catch (error) {
+				throw this.#toBulkError(error);
+			}
+		}
+
+		// API-04
+		async hardDeleteMany(recycleBinIds) {
+			try {
+				const response = await main_core.ajax.runAction(ACTION_HARD_DELETE_MANY, {
+					data: {
+						recycleBinIds: this.#normalizeIds(recycleBinIds)
+					}
+				});
+				return this.#parseOutcome(response?.data?.outcome);
+			} catch (error) {
+				throw this.#toBulkError(error);
+			}
+		}
+		#parseOutcome(raw) {
+			const outcome = main_core.Type.isPlainObject(raw) ? raw : {};
+			return {
+				processedCount: Number(outcome.processedCount) || 0,
+				skippedCount: Number(outcome.skippedCount) || 0,
+				skippedByAccessCount: Number(outcome.skippedByAccessCount) || 0,
+				skippedOrphanCount: Number(outcome.skippedOrphanCount) || 0,
+				limitExceeded: outcome.limitExceeded === true
+			};
+		}
+		#normalizeIds(ids) {
+			const source = ids instanceof Set ? [...ids] : Array.isArray(ids) ? ids : [];
+			return source.map(id => Number(id)).filter(id => Number.isInteger(id) && id > 0);
+		}
+		#toBulkError(error) {
+			const wrapped = this.#toServiceError(error);
+			// Keep the partial outcome from the rejection so the orphan retry does not discard progress.
+			const rawOutcome = main_core.Type.isPlainObject(error) && main_core.Type.isPlainObject(error.data) ? error.data.outcome : null;
+			if (main_core.Type.isPlainObject(rawOutcome)) {
+				wrapped.outcome = this.#parseOutcome(rawOutcome);
+			}
+			return wrapped;
+		}
 		#normalizeItem(doc) {
 			return {
 				id: Number(doc?.id) || 0,
@@ -168,7 +233,6 @@ this.BX = this.BX || {};
 		}
 	}
 
-	const ENTITY_ID$1 = 'note-collection';
 	function openBulkRestorePopup(options) {
 		const total = Math.max(0, Number(options?.total) || 0);
 		const orphanCount = Math.max(0, Number(options?.orphanCount) || 0);
@@ -176,7 +240,6 @@ this.BX = this.BX || {};
 		return new Promise(resolve => {
 			let isResolved = false;
 			let restoreButton = null;
-			let selector = null;
 			const finish = value => {
 				if (isResolved) {
 					return;
@@ -192,25 +255,9 @@ this.BX = this.BX || {};
 			if (orphanHintNode) {
 				orphanHintNode.textContent = buildOrphanHint(orphanCount);
 			}
-			const selectorContainer = hasOrphans ? main_core.Tag.render`<div class="note-recyclebin-bulk-popup-selector"></div>` : null;
-			const content = main_core.Tag.render`
-			<div class="note-recyclebin-bulk-popup-content">
-				${headlineNode}
-				${orphanHintNode}
-				${selectorContainer}
-			</div>
-		`;
 			const getSelectedCollectionId = () => {
-				if (!selector || !main_core.Type.isFunction(selector.getTags)) {
-					return 0;
-				}
-				const tags = selector.getTags();
-				if (!Array.isArray(tags) || tags.length !== 1) {
-					return 0;
-				}
-				const tag = tags[0];
-				const id = Number(tag?.id ?? tag?.entityId ?? 0);
-				return Number.isInteger(id) && id > 0 ? id : 0;
+				const selected = picker ? picker.getSelectedCollection() : null;
+				return selected ? selected.id : 0;
 			};
 			const updateRestoreState = () => {
 				if (!restoreButton) {
@@ -222,8 +269,25 @@ this.BX = this.BX || {};
 				}
 				restoreButton.setDisabled(getSelectedCollectionId() <= 0);
 			};
+
+			// Selector is only shown when part of the selection has lost its source collection.
+			const picker = hasOrphans ? note_ui_collectionPicker.createCollectionSelector({
+				placeholder: main_core.Loc.getMessage('NOTE_RECYCLEBIN_ORPHAN_POPUP_PLACEHOLDER') || '',
+				mobileDropdownHeight: 240,
+				onSelectionChange: () => updateRestoreState()
+			}) : null;
+			const content = main_core.Tag.render`
+			<div class="note-recyclebin-bulk-popup-content">
+				${headlineNode}
+				${orphanHintNode}
+				${picker ? picker.node : ''}
+			</div>
+		`;
 			restoreButton = new ui_buttons.Button({
 				text: main_core.Loc.getMessage('NOTE_RECYCLEBIN_PAGE_RESTORE_ALL') || '',
+				dataset: {
+					testid: 'note-dialog-confirm'
+				},
 				size: ui_buttons.ButtonSize.LARGE,
 				style: ui_buttons.AirButtonStyle.FILLED,
 				useAirDesign: true,
@@ -249,6 +313,9 @@ this.BX = this.BX || {};
 			});
 			const cancelButton = new ui_buttons.Button({
 				text: main_core.Loc.getMessage('NOTE_RECYCLEBIN_PAGE_CONFIRM_CANCEL') || '',
+				dataset: {
+					testid: 'note-dialog-cancel'
+				},
 				size: ui_buttons.ButtonSize.LARGE,
 				style: ui_buttons.AirButtonStyle.PLAIN,
 				useAirDesign: true,
@@ -269,48 +336,19 @@ this.BX = this.BX || {};
 				centerButtons: [restoreButton, cancelButton],
 				events: {
 					onAfterShow: () => {
-						if (!hasOrphans || !selectorContainer) {
-							return;
-						}
-						const isMobile = document.documentElement.classList.contains('note-mobile');
-						selector = new ui_entitySelector.TagSelector({
-							multiple: false,
-							tagLimit: 1,
-							placeholder: main_core.Loc.getMessage('NOTE_RECYCLEBIN_ORPHAN_POPUP_PLACEHOLDER') || '',
-							dialogOptions: {
-								height: isMobile ? 240 : 340,
-								entities: [{
-									id: ENTITY_ID$1,
-									dynamicLoad: true,
-									dynamicSearch: true,
-									options: {}
-								}]
-							},
-							events: {
-								onAfterTagAdd: () => updateRestoreState(),
-								onAfterTagRemove: () => updateRestoreState(),
-								onAfterTagsClear: () => updateRestoreState()
-							}
-						});
-						selector.renderTo(selectorContainer);
-						const outer = selector.getOuterContainer?.();
-						if (outer) {
-							main_core.Dom.removeClass(outer, '--ui-context-content-light');
-							main_core.Dom.removeClass(outer, '--ui-context-content-dark');
-							main_core.Dom.addClass(outer, note_ui_themeContext.NoteThemeContext.getDesignSystemContext());
+						if (picker) {
+							picker.applyTheme();
 						}
 						updateRestoreState();
 					},
 					onHide: () => {
+						if (picker) {
+							picker.destroy();
+						}
 						finish({
 							confirmed: false,
 							orphanTargetCollectionId: null
 						});
-					},
-					onDestroy: () => {
-						if (selector && main_core.Type.isFunction(selector.destroy)) {
-							selector.destroy();
-						}
 					}
 				}
 			});
@@ -325,11 +363,34 @@ this.BX = this.BX || {};
 		return (main_core.Loc.getMessage('NOTE_RECYCLEBIN_BULK_POPUP_ORPHAN_HINT') || '').replace('#COUNT#', String(orphanCount));
 	}
 
+	function openOrphanRestorePopup(options = {}) {
+		const documentTitle = String(options?.documentTitle || '');
+		const bodyOverride = String(options?.bodyText || '');
+		return note_ui_collectionPicker.openCollectionPicker({
+			title: main_core.Loc.getMessage('NOTE_RECYCLEBIN_ORPHAN_POPUP_TITLE') || '',
+			description: bodyOverride || buildBodyText(documentTitle),
+			placeholder: main_core.Loc.getMessage('NOTE_RECYCLEBIN_ORPHAN_POPUP_PLACEHOLDER') || '',
+			primaryLabel: main_core.Loc.getMessage('NOTE_RECYCLEBIN_PAGE_RESTORE') || '',
+			cancelLabel: main_core.Loc.getMessage('NOTE_RECYCLEBIN_PAGE_CONFIRM_CANCEL') || ''
+		});
+	}
+	function buildBodyText(documentTitle) {
+		return (main_core.Loc.getMessage('NOTE_RECYCLEBIN_ORPHAN_POPUP_TEXT') || '').replace('#DOCUMENT#', documentTitle);
+	}
+
 	const PAGE_SIZE = 50;
 	const NoteRecycleBinPageComponent = {
 		name: 'NoteRecycleBinPage',
 		components: {
-			DocumentList: note_ui_documentList.DocumentList
+			BIcon: ui_iconSet_api_vue.BIcon,
+			DocumentList: note_ui_documentList.DocumentList,
+			BulkActionsBar: note_ui_documentList.BulkActionsBar
+		},
+		inject: {
+			sidebarState: {
+				from: 'noteSidebarState',
+				default: null
+			}
 		},
 		emits: ['open'],
 		data() {
@@ -342,10 +403,25 @@ this.BX = this.BX || {};
 				hasError: false,
 				isAdmin: false,
 				nextCursor: null,
-				requestId: 0
+				requestId: 0,
+				selection: note_ui_documentList.createSelection(),
+				// "Select all" latch: routes bulk restore/hard-delete to the over-section endpoints
+				// (restoreAll/empty). Any manual toggle drops it.
+				allSelected: false,
+				bulkBusy: false
 			};
 		},
 		computed: {
+			Outline: () => ui_iconSet_api_vue.Outline,
+			isMobile() {
+				return Boolean(this.sidebarState?.isMobile);
+			},
+			selectedCount() {
+				return this.selection.count;
+			},
+			showSelectButton() {
+				return !this.hasError && this.hasItems;
+			},
 			listItems() {
 				return this.items.map(item => ({
 					id: item.id,
@@ -386,6 +462,7 @@ this.BX = this.BX || {};
 				items.push({
 					text: main_core.Loc.getMessage('NOTE_RECYCLEBIN_PAGE_RESTORE_ALL') || '',
 					iconModifier: 'o-undo',
+					testId: 'note-trash-menu-restore-all',
 					disabled: this.restoringAll || this.loading,
 					onClick: () => {
 						void this.onRestoreAll();
@@ -394,6 +471,7 @@ this.BX = this.BX || {};
 				items.push({
 					text: main_core.Loc.getMessage('NOTE_RECYCLEBIN_PAGE_EMPTY_ACTION') || '',
 					iconModifier: 'o-trashcan',
+					testId: 'note-trash-menu-delete-all',
 					danger: true,
 					disabled: this.emptyingTrash || this.loading,
 					onClick: () => {
@@ -441,6 +519,12 @@ this.BX = this.BX || {};
 					this.nextCursor = response.nextCursor;
 					this.hasMore = Boolean(response.nextCursor);
 					this.isAdmin = response.isAdmin;
+
+					// In "select all" mode paginated-in items join the selection so they render checked.
+					if (append && this.allSelected && this.selection.mode) {
+						const nextIds = response.items.map(item => Number(item.id) || 0).filter(id => id > 0);
+						this.selection.set([...this.selection.ids, ...nextIds]);
+					}
 				} catch (error) {
 					if (currentRequestId !== this.requestId) {
 						return;
@@ -460,6 +544,230 @@ this.BX = this.BX || {};
 					return;
 				}
 				void this.loadPage(true);
+			},
+			resetSelection() {
+				// Hand focus back to the list when the floating bulk-actions bar (teleported to <body>)
+				// is about to hide, so keyboard/AT focus is not lost (WCAG 2.4.3). A soft exit from
+				// unticking the last card leaves focus on that card and must be left alone.
+				const restoreFocus = this.isFocusInsideBulkBar();
+				this.allSelected = false;
+				this.selection.exit();
+				if (restoreFocus) {
+					void this.$nextTick(() => this.$refs.documentList?.focusRoot());
+				}
+			},
+			isFocusInsideBulkBar() {
+				return document.activeElement?.closest?.('.note-bulk-actions-bar') != null;
+			},
+			onSelect({
+				id,
+				selected,
+				activate
+			}) {
+				// Ids here are recycle-bin record ids (DocumentList item.id === recycleBinId on this page).
+				const key = Number(id) || 0;
+				if (key <= 0) {
+					return;
+				}
+
+				// Desktop hover checkbox: enter selection mode before applying the toggle.
+				if (activate && !this.selection.mode) {
+					this.selection.enter();
+				}
+				if (this.selection.has(key) !== selected) {
+					this.selection.toggle(key);
+				}
+
+				// Deselecting the last item leaves selection mode so the checkboxes do not linger.
+				if (this.selection.count === 0) {
+					this.resetSelection();
+					return;
+				}
+
+				// Keep the "select all" latch in sync with the manual pick: when every loaded item
+				// is ticked and nothing is left to paginate, the manual set IS the whole section, so the
+				// latch (button highlight + action routing) reflects it; otherwise it stays a subset.
+				this.allSelected = !this.hasMore && this.selection.count === this.items.length;
+			},
+			onSelectAll() {
+				if (this.allSelected) {
+					this.resetSelection();
+					return;
+				}
+				this.allSelected = true;
+				this.selection.set(this.items.map(item => Number(item.id) || 0).filter(id => id > 0));
+			},
+			onBulkClear() {
+				this.resetSelection();
+			},
+			onBulkAction({
+				type
+			}) {
+				if (this.bulkBusy) {
+					return;
+				}
+				if (type === 'restore') {
+					void this.runRestore();
+				} else if (type === 'hardDelete') {
+					void this.runHardDelete();
+				}
+			},
+			async runRestore() {
+				// "Select all" reuses the over-section restore (orphan-aware, covers unloaded records).
+				if (this.allSelected) {
+					await this.onRestoreAll();
+					this.resetSelection();
+					return;
+				}
+				const ids = [...this.selection.ids];
+				if (ids.length === 0) {
+					return;
+				}
+				await this.restoreSelection(ids);
+			},
+			// Which of the selected records are orphans (original collection gone) — read from the loaded
+			// items, each of which carries an `orphan` flag. Lets us ask for a target BEFORE restoring.
+			selectionOrphanIds(recycleBinIds) {
+				const orphanById = new Map(this.items.map(item => [Number(item.id), item.orphan === true]));
+				return recycleBinIds.map(id => Number(id)).filter(id => orphanById.get(id) === true);
+			},
+			async restoreSelection(recycleBinIds) {
+				const orphanIds = this.selectionOrphanIds(recycleBinIds);
+				const orphanIdSet = new Set(orphanIds);
+
+				// Orphans need a target collection. Ask for it BEFORE restoring anything, so pressing
+				// Cancel truly cancels — nothing is restored (previously non-orphans were committed first,
+				// then the popup shown, leaving a partial restore on cancel).
+				let target = null;
+				if (orphanIds.length > 0) {
+					target = await openOrphanRestorePopup({
+						bodyText: main_core.Loc.getMessage('NOTE_RECYCLEBIN_BULK_ORPHAN_TARGET_TEXT') || ''
+					});
+					if (!target) {
+						return;
+					}
+				}
+				this.bulkBusy = true;
+				let totalProcessed = 0;
+				let lastOutcome = null;
+				try {
+					// Two phases, because targetCollectionId in the restore service applies to every record
+					// it is given: non-orphans restore to their original collection (target null), orphans
+					// go to the chosen target. Both run only after the popup was confirmed.
+					const nonOrphanIds = recycleBinIds.map(id => Number(id)).filter(id => !orphanIdSet.has(id));
+					if (nonOrphanIds.length > 0) {
+						lastOutcome = await this.service.restoreMany(nonOrphanIds, null);
+						totalProcessed += Number(lastOutcome?.processedCount) || 0;
+					}
+					if (orphanIds.length > 0) {
+						lastOutcome = await this.service.restoreMany(orphanIds, target.collectionId);
+						totalProcessed += Number(lastOutcome?.processedCount) || 0;
+					}
+					this.reportRestoreOutcome({
+						...(lastOutcome || {}),
+						processedCount: totalProcessed
+					}, false);
+					if (totalProcessed > 0) {
+						this.emitBulkRestored();
+					}
+					this.resetSelection();
+				} catch (error) {
+					this.showBulkError(error);
+				} finally {
+					this.bulkBusy = false;
+					await this.loadPage(false);
+				}
+			},
+			async runHardDelete() {
+				if (this.allSelected) {
+					await this.onEmptyTrash();
+					this.resetSelection();
+					return;
+				}
+				const ids = [...this.selection.ids];
+				if (ids.length === 0) {
+					return;
+				}
+
+				// AC-032: reinforced confirm — hard delete is permanent and cannot be undone.
+				const confirmed = await this.confirm({
+					title: main_core.Loc.getMessage('NOTE_RECYCLEBIN_BULK_HARD_DELETE_TITLE') || '',
+					message: main_core.Loc.getMessage('NOTE_RECYCLEBIN_BULK_HARD_DELETE_MESSAGE') || '',
+					okText: main_core.Loc.getMessage('NOTE_RECYCLEBIN_BULK_HARD_DELETE_ACTION') || '',
+					danger: true
+				});
+				if (!confirmed) {
+					return;
+				}
+				this.bulkBusy = true;
+				try {
+					const outcome = await this.service.hardDeleteMany(ids);
+					this.reportRestoreOutcome(outcome, false, 'delete');
+					this.resetSelection();
+				} catch (error) {
+					this.showBulkError(error);
+				} finally {
+					this.bulkBusy = false;
+					await this.loadPage(false);
+				}
+			},
+			emitBulkRestored() {
+				main_core_events.EventEmitter.emit(note_sidebar.NoteEvent.DOCUMENTS_BULK_RESTORED, new main_core_events.BaseEvent({
+					data: {
+						restoredCollections: []
+					}
+				}));
+			},
+			reportRestoreOutcome(outcome, orphanPending, action = 'restore') {
+				if (outcome?.limitExceeded) {
+					this.showErrorToast(main_core.Loc.getMessage('NOTE_DOCUMENT_LIST_BULK_LIMIT') || '');
+					return;
+				}
+				const processed = Number(outcome?.processedCount) || 0;
+				const skipped = Number(outcome?.skippedCount) || 0;
+				const noAccess = Number(outcome?.skippedByAccessCount) || 0;
+				const orphan = Number(outcome?.skippedOrphanCount) || 0;
+				if (processed === 0) {
+					// A pending-orphan restore isn't a failure: nothing landed yet because the user
+					// still has to pick a target — keep the explanatory line instead of "no access".
+					if (orphanPending && orphan > 0) {
+						this.showSuccessToast(main_core.Loc.getMessage('NOTE_RECYCLEBIN_BULK_ORPHAN_PENDING') || '');
+					} else if (skipped > 0 && noAccess === skipped) {
+						this.showErrorToast(main_core.Loc.getMessage('NOTE_DOCUMENT_LIST_BULK_NO_ACCESS_ALL') || '');
+					} else {
+						this.showSuccessToast(main_core.Loc.getMessage('NOTE_DOCUMENT_LIST_BULK_NOTHING') || '');
+					}
+					return;
+				}
+
+				// Full success: one whole line.
+				if (skipped === 0) {
+					const doneKey = action === 'delete' ? 'NOTE_RECYCLEBIN_BULK_DONE_DELETE' : 'NOTE_DOCUMENT_LIST_BULK_DONE_RESTORE';
+					this.showSuccessToast(main_core.Loc.getMessagePlural(doneKey, processed, {
+						'#COUNT#': processed
+					}));
+				} else {
+					// Partial success: a single whole phrase pluralised on the processed count.
+					const partialKey = action === 'delete' ? 'NOTE_RECYCLEBIN_BULK_PARTIAL_DELETE' : 'NOTE_DOCUMENT_LIST_BULK_PARTIAL_RESTORE';
+					this.showSuccessToast(main_core.Loc.getMessagePlural(partialKey, processed, {
+						'#DONE#': processed,
+						'#SKIPPED#': skipped
+					}));
+				}
+
+				// Orphan tail is a self-contained sentence shown as its own toast, never glued onto
+				// the result line. Currently unreachable — all callers pass orphanPending=false.
+				if (orphanPending && orphan > 0) {
+					this.showSuccessToast(main_core.Loc.getMessage('NOTE_RECYCLEBIN_BULK_ORPHAN_PENDING') || '');
+				}
+			},
+			showBulkError(error) {
+				const code = String(error?.code || '');
+				if (code === 'NOTE_BULK_LIMIT_EXCEEDED') {
+					this.showErrorToast(main_core.Loc.getMessage('NOTE_DOCUMENT_LIST_BULK_LIMIT') || '');
+					return;
+				}
+				this.showErrorToast(error?.message || main_core.Loc.getMessage('NOTE_RECYCLEBIN_PAGE_ERROR_GENERIC') || '');
 			},
 			async onRestoreAll() {
 				if (this.restoringAll) {
@@ -599,32 +907,41 @@ this.BX = this.BX || {};
 						${String(message || '')}
 					</div>
 				`;
+					// Destructive actions mirror the single-delete dialog: no red button, inverted
+					// order (prominent Cancel on the left, understated action on the right).
+					const okButton = new ui_buttons.Button({
+						text: String(okText || ''),
+						dataset: {
+							testid: 'note-dialog-confirm'
+						},
+						size: ui_buttons.ButtonSize.LARGE,
+						style: danger ? ui_buttons.AirButtonStyle.PLAIN : ui_buttons.AirButtonStyle.FILLED,
+						useAirDesign: true,
+						onclick: () => {
+							finish(true);
+							dialog.hide();
+						}
+					});
+					const cancelButton = new ui_buttons.Button({
+						text: main_core.Loc.getMessage('NOTE_RECYCLEBIN_PAGE_CONFIRM_CANCEL') || '',
+						dataset: {
+							testid: 'note-dialog-cancel'
+						},
+						size: ui_buttons.ButtonSize.LARGE,
+						style: danger ? ui_buttons.AirButtonStyle.FILLED : ui_buttons.AirButtonStyle.PLAIN,
+						useAirDesign: true,
+						onclick: () => {
+							finish(false);
+							dialog.hide();
+						}
+					});
 					const dialog = new ui_system_dialog.Dialog({
 						title: String(title || ''),
 						content,
 						hasOverlay: true,
 						overlay: true,
 						width: 420,
-						centerButtons: [new ui_buttons.Button({
-							text: main_core.Loc.getMessage('NOTE_RECYCLEBIN_PAGE_CONFIRM_CANCEL') || '',
-							size: ui_buttons.ButtonSize.LARGE,
-							style: ui_buttons.AirButtonStyle.FILLED,
-							useAirDesign: true,
-							onclick: () => {
-								finish(false);
-								dialog.hide();
-							}
-						}), new ui_buttons.Button({
-							text: String(okText || ''),
-							size: ui_buttons.ButtonSize.LARGE,
-							style: ui_buttons.AirButtonStyle.PLAIN,
-							useAirDesign: true,
-							color: danger ? ui_buttons.Button.Color.DANGER : null,
-							onclick: () => {
-								finish(true);
-								dialog.hide();
-							}
-						})],
+						centerButtons: danger ? [cancelButton, okButton] : [okButton, cancelButton],
 						events: {
 							onHide: () => {
 								finish(false);
@@ -659,26 +976,33 @@ this.BX = this.BX || {};
 		template: `
 		<div class="note-recyclebin-page">
 			<teleport to="#note-page-header-slot">
-				<div class="note-page-breadcrumb">
-					<button
-						type="button"
-						class="note-page-breadcrumb-link"
-						@click="goRoot"
-					>{{ breadcrumbRoot }}</button>
+				<div class="note-page-document-header">
+					<div class="note-page-document-titles">
+						<div class="note-page-breadcrumb">
+							<button
+								type="button"
+								class="note-page-breadcrumb-link"
+								@click="goRoot"
+							>{{ breadcrumbRoot }}</button>
+						</div>
+					</div>
+					<div class="note-page-document-header-right">
+						<div class="note-page-document-actions">
+							<button
+								v-if="hasItems"
+								type="button"
+								class="note-page-document-action-icon"
+								:title="moreMenuLabel"
+								:aria-label="moreMenuLabel"
+								data-testid="note-trash-more"
+								@click="openMoreMenu"
+							>
+								<div class="ui-icon-set --more-l"></div>
+							</button>
+						</div>
+					</div>
 				</div>
 			</teleport>
-			<div class="note-recyclebin-page__actions">
-				<button
-					v-if="hasItems"
-					type="button"
-					class="note-recyclebin-page__action-icon"
-					:title="moreMenuLabel"
-					:aria-label="moreMenuLabel"
-					@click="openMoreMenu"
-				>
-					<div class="ui-icon-set --more-l"></div>
-				</button>
-			</div>
 			<div class="note-recyclebin-page__body">
 				<div class="note-recyclebin-page-heading">
 					<h2 class="note-recyclebin-page-title">{{ titleText }}</h2>
@@ -686,13 +1010,19 @@ this.BX = this.BX || {};
 				</div>
 				<DocumentList
 					v-if="!hasError && (loading || hasItems)"
+					ref="documentList"
 					mode="detailed"
 					:items="listItems"
 					:has-more="hasMore"
 					:loading="loading"
+					:selection-enabled="selection.mode"
+					:selectable="showSelectButton"
+					:is-mobile="isMobile"
+					:selected-ids="selection.ids"
 					@open="onOpen"
 					@open-collection="onOpenCollection"
 					@load-more="onLoadMore"
+					@select="onSelect"
 				/>
 				<div
 					v-else-if="!hasError"
@@ -701,149 +1031,21 @@ this.BX = this.BX || {};
 					{{ emptyHint }}
 				</div>
 			</div>
+
+			<teleport to="body">
+				<BulkActionsBar
+					section="recycle"
+					:selected-count="selectedCount"
+					:all-selected="allSelected"
+					:is-mobile="isMobile"
+					@action="onBulkAction"
+					@select-all="onSelectAll"
+					@clear="onBulkClear"
+				/>
+			</teleport>
 		</div>
 	`
 	};
-
-	const ENTITY_ID = 'note-collection';
-	function openOrphanRestorePopup(options = {}) {
-		const documentTitle = String(options?.documentTitle || '');
-		return new Promise(resolve => {
-			let isResolved = false;
-			let restoreButton = null;
-			let selector = null;
-			const finish = value => {
-				if (isResolved) {
-					return;
-				}
-				isResolved = true;
-				resolve(value);
-			};
-			const textNode = main_core.Tag.render`
-			<div class="note-recyclebin-orphan-popup-text"></div>
-		`;
-			textNode.textContent = buildBodyText(documentTitle);
-			const selectorContainer = main_core.Tag.render`
-			<div class="note-recyclebin-orphan-popup-selector"></div>
-		`;
-			const content = main_core.Tag.render`
-			<div class="note-recyclebin-orphan-popup-content">
-				${textNode}
-				${selectorContainer}
-			</div>
-		`;
-			const updateRestoreState = () => {
-				if (!restoreButton || !selector) {
-					return;
-				}
-				const tags = main_core.Type.isFunction(selector.getTags) ? selector.getTags() : [];
-				restoreButton.setDisabled(!Array.isArray(tags) || tags.length !== 1);
-			};
-			const getSelectedTag = () => {
-				if (!selector || !main_core.Type.isFunction(selector.getTags)) {
-					return null;
-				}
-				const tags = selector.getTags();
-				if (!Array.isArray(tags) || tags.length !== 1) {
-					return null;
-				}
-				const tag = tags[0];
-				const id = Number(tag?.id ?? tag?.entityId ?? 0);
-				if (!Number.isInteger(id) || id <= 0) {
-					return null;
-				}
-				return {
-					collectionId: id,
-					collectionTitle: String(tag?.title || tag?.searchable || '')
-				};
-			};
-			restoreButton = new ui_buttons.Button({
-				text: main_core.Loc.getMessage('NOTE_RECYCLEBIN_PAGE_RESTORE') || '',
-				size: ui_buttons.ButtonSize.LARGE,
-				style: ui_buttons.AirButtonStyle.FILLED,
-				useAirDesign: true,
-				disabled: true,
-				onclick: () => {
-					const selected = getSelectedTag();
-					if (!selected) {
-						return;
-					}
-					finish(selected);
-					dialog.hide();
-				}
-			});
-			const cancelButton = new ui_buttons.Button({
-				text: main_core.Loc.getMessage('NOTE_RECYCLEBIN_PAGE_CONFIRM_CANCEL') || '',
-				size: ui_buttons.ButtonSize.LARGE,
-				style: ui_buttons.AirButtonStyle.PLAIN,
-				useAirDesign: true,
-				onclick: () => {
-					finish(null);
-					dialog.hide();
-				}
-			});
-			const dialog = new ui_system_dialog.Dialog({
-				title: main_core.Loc.getMessage('NOTE_RECYCLEBIN_ORPHAN_POPUP_TITLE') || '',
-				content,
-				hasOverlay: true,
-				overlay: true,
-				width: 480,
-				centerButtons: [restoreButton, cancelButton],
-				events: {
-					onAfterShow: () => {
-						const isMobile = document.documentElement.classList.contains('note-mobile');
-						selector = new ui_entitySelector.TagSelector({
-							multiple: false,
-							tagLimit: 1,
-							placeholder: main_core.Loc.getMessage('NOTE_RECYCLEBIN_ORPHAN_POPUP_PLACEHOLDER') || '',
-							dialogOptions: {
-								height: isMobile ? 280 : 340,
-								showAvatars: false,
-								popupOptions: {
-									className: note_ui_themeContext.NoteThemeContext.getDesignSystemContext()
-								},
-								entities: [{
-									id: ENTITY_ID,
-									dynamicLoad: true,
-									dynamicSearch: true,
-									options: {}
-								}]
-							},
-							events: {
-								onAfterTagAdd: () => updateRestoreState(),
-								onAfterTagRemove: () => updateRestoreState(),
-								onAfterTagsClear: () => updateRestoreState()
-							}
-						});
-						note_ui_themeContext.NoteThemeContext.applyToTagSelector(selector);
-						selector.renderTo(selectorContainer);
-						const entityDialog = typeof selector.getDialog === 'function' ? selector.getDialog() : null;
-						if (entityDialog) {
-							note_ui_themeContext.NoteThemeContext.themeEntitySelector(entityDialog);
-						}
-						updateRestoreState();
-					},
-					onHide: () => {
-						const entityDialog = selector && main_core.Type.isFunction(selector.getDialog) ? selector.getDialog() : null;
-						if (entityDialog && main_core.Type.isFunction(entityDialog.hide)) {
-							entityDialog.hide();
-						}
-						finish(null);
-					},
-					onDestroy: () => {
-						if (selector && main_core.Type.isFunction(selector.destroy)) {
-							selector.destroy();
-						}
-					}
-				}
-			});
-			note_ui_themeContext.NoteThemeContext.themeDialog(dialog, content);
-			dialog.show();
-		});
-	}
-	function buildBodyText(documentTitle) {
-		return (main_core.Loc.getMessage('NOTE_RECYCLEBIN_ORPHAN_POPUP_TEXT') || '').replace('#DOCUMENT#', documentTitle);
-	}
 
 	exports.NoteRecycleBinPageComponent = NoteRecycleBinPageComponent;
 	exports.ORPHAN_TARGET_REQUIRED_CODE = ORPHAN_TARGET_REQUIRED_CODE;
@@ -852,5 +1054,5 @@ this.BX = this.BX || {};
 	exports.openBulkRestorePopup = openBulkRestorePopup;
 	exports.openOrphanRestorePopup = openOrphanRestorePopup;
 
-})(this.BX.Note = this.BX.Note || {}, BX, BX.Event, BX.Vue3, BX.UI, BX.UI.System, BX.UI.Notification, BX.Note.Ui, BX.Note.Ui, BX.Note.Ui, BX.Note.Sidebar, BX.UI.EntitySelector);
+})(this.BX.Note = this.BX.Note || {}, BX, BX.Event, BX.Vue3, BX.UI, BX.UI.System, BX.UI.Notification, BX.UI.IconSet, BX.Note.Ui, BX.Note.Ui, BX.Note.Ui, BX.Note.Sidebar, BX.Note.Ui);
 //# sourceMappingURL=recyclebin.bundle.js.map

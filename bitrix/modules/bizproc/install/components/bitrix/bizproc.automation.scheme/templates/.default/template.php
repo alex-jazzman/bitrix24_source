@@ -41,7 +41,7 @@ $component = $this->getComponent();
 		</div>
 		<div class="bizproc-automation-scheme__step-container">
 			<div class="bizproc-automation-scheme__step-head">
-				<div class="bizproc-automation-scheme__step-head--title"><?= Loc::getMessage("BIZPROC_AUTOMATION_SCHEME_DST_TYPE_ACTION_{$arResult['action']}${arResult['locShard']}_MSGVER_1")?></div>
+				<div class="bizproc-automation-scheme__step-head--title"><?= Loc::getMessage("BIZPROC_AUTOMATION_SCHEME_DST_TYPE_ACTION_{$arResult['action']}{$arResult['locShard']}_MSGVER_1")?></div>
 			</div>
 			<div class="bizproc-automation-scheme__step-content">
 				<div class="bizproc-automation-scheme__content --padding-15">

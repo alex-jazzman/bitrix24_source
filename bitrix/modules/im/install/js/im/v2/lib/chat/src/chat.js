@@ -1,5 +1,5 @@
 import { Core } from 'im.v2.application.core';
-import { GetParameter, Path, ChatType } from 'im.v2.const';
+import { GetParameter, Path, ChatType, ParentChatScope, type ParentChatIdType } from 'im.v2.const';
 import { type ImModelChat } from 'im.v2.model';
 
 const GetParameterByChatType = {
@@ -8,6 +8,16 @@ const GetParameterByChatType = {
 };
 
 export const ChatManager = {
+	prepareParentChatId(parentChatId: ParentChatIdType): number
+	{
+		const isAllScope = parentChatId === ParentChatScope.all;
+		if (!parentChatId || isAllScope)
+		{
+			return ParentChatScope.topLevel;
+		}
+
+		return parentChatId;
+	},
 	buildChatLink(dialogId: string): string
 	{
 		const chat: ImModelChat = Core.getStore().getters['chats/get'](dialogId);

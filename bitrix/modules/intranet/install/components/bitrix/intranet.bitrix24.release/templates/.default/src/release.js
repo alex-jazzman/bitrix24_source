@@ -9,6 +9,7 @@ export default class Release
 	#deactivated = false;
 	#id: string = '';
 	#autoLaunch: boolean = false;
+	#showEar: boolean = true;
 
 	constructor(releaseOptions: JsonObject)
 	{
@@ -20,6 +21,7 @@ export default class Release
 		}
 
 		this.#id = Type.isStringFilled(options.id) ? options.id : '';
+		this.#showEar = options.showEar !== false;
 
 		this.slider = new ReleaseSlider({
 			url: options.url,
@@ -30,30 +32,38 @@ export default class Release
 			},
 		});
 
-		this.ear = new ReleaseEar({
-			zone: options.zone,
-			events: {
-				onClick: this.#handleEarClick.bind(this),
-			},
-		});
+		if (this.#showEar)
+		{
+			this.ear = new ReleaseEar({
+				zone: options.zone,
+				events: {
+					onClick: this.#handleEarClick.bind(this),
+				},
+			});
 
-		EventEmitter.subscribe('SidePanel.Slider:onOpen', () => {
-			this.getEar().hide();
-		});
+			EventEmitter.subscribe('SidePanel.Slider:onOpen', () => {
+				this.getEar().hide();
+			});
 
-		const onClose = () => {
-			if (BX.SidePanel.Instance.getOpenSlidersCount() === 0)
-			{
-				this.getEar().show(true);
-			}
-		};
+			const onClose = () => {
+				if (BX.SidePanel.Instance.getOpenSlidersCount() === 0)
+				{
+					this.getEar().show(true);
+				}
+			};
 
-		EventEmitter.subscribe('SidePanel.Slider:onCloseComplete', onClose);
-		EventEmitter.subscribe('SidePanel.Slider:onDestroy', onClose);
+			EventEmitter.subscribe('SidePanel.Slider:onCloseComplete', onClose);
+			EventEmitter.subscribe('SidePanel.Slider:onDestroy', onClose);
+		}
 	}
 
 	show(mode = 'ear'): void
 	{
+		if (mode === 'ear' && !this.#showEar)
+		{
+			return;
+		}
+
 		if (mode === 'slider')
 		{
 			const BannerDispatcher = Reflection.getClass('BX.UI.BannerDispatcher');
@@ -76,7 +86,7 @@ export default class Release
 			this.#autoLaunch = true;
 			void this.#runAction('show', { context: 'auto' });
 		}
-		else
+		else if (this.#showEar)
 		{
 			if (BX.SidePanel.Instance.getOpenSlidersCount() === 0)
 			{
@@ -122,7 +132,7 @@ export default class Release
 
 	#handleSliderClose(): void
 	{
-		if (BX.SidePanel.Instance.getOpenSlidersCount() === 0)
+		if (this.#showEar && BX.SidePanel.Instance.getOpenSlidersCount() === 0)
 		{
 			this.getEar().show(true);
 		}
@@ -138,6 +148,10 @@ export default class Release
 		if (this.#autoLaunch)
 		{
 			void this.#runAction('close');
+			if (!this.#showEar)
+			{
+				this.#deactivate();
+			}
 		}
 		else
 		{

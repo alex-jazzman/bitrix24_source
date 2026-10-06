@@ -1488,6 +1488,54 @@ input.ui-entity-editor-header-title-text {
 	color: #80868e;
 }
 
+/* a11y: product summary - controls moved from span/div to a native button;
+   strip the button UA chrome, the look is preserved pixel-for-pixel by the existing rules above */
+.ui-entity-editor-product-summary-container .ui-enitity-editor-product-summary-tab-link,
+.ui-entity-editor-product-summary-container .ui-entity-editor-product-summary-empty-list-container,
+.ui-entity-editor-content-block .ui-entity-editor-product-list-more-button {
+	appearance: none;
+	-webkit-appearance: none;
+	background: none;
+	text-align: inherit;
+}
+
+.ui-entity-editor-product-summary-container .ui-enitity-editor-product-summary-tab-link {
+	margin: 0;
+	padding: 0;
+	border: 0;
+}
+
+.ui-entity-editor-product-summary-container .ui-entity-editor-product-summary-empty-list-container {
+	display: block;
+	margin: 0;
+}
+
+.ui-entity-editor-content-block .ui-entity-editor-product-list-more-button {
+	padding: 0;
+	border-top: 0;
+	border-left: 0;
+	border-right: 0;
+}
+
+/* a11y focus (TPL-01): visible focus for the new native summary controls - air-outline on :focus-visible
+   of their own selectors, scoped to the block. Values are air tokens with fallback. */
+.ui-entity-editor-product-summary-container .ui-enitity-editor-product-summary-tab-link:focus-visible,
+.ui-entity-editor-product-summary-container .ui-entity-editor-product-summary-empty-list-container:focus-visible,
+.ui-entity-editor-content-block .ui-entity-editor-product-list-more-button:focus-visible,
+html[data-input-modality="keyboard"] .ui-entity-editor-product-summary-container .ui-enitity-editor-product-summary-tab-link:focus:not(:focus-visible),
+html[data-input-modality="keyboard"] .ui-entity-editor-product-summary-container .ui-entity-editor-product-summary-empty-list-container:focus:not(:focus-visible),
+html[data-input-modality="keyboard"] .ui-entity-editor-content-block .ui-entity-editor-product-list-more-button:focus:not(:focus-visible) {
+	outline-style: solid;
+	outline-color: var(--ui-color-focus-outline, #4A9DFF);
+	outline-width: var(--ui-focus-outline-width, 2px);
+	outline-offset: var(--ui-focus-outline-offset, 2px);
+}
+html[data-input-modality="pointer"] .ui-entity-editor-product-summary-container .ui-enitity-editor-product-summary-tab-link:focus-visible,
+html[data-input-modality="pointer"] .ui-entity-editor-product-summary-container .ui-entity-editor-product-summary-empty-list-container:focus-visible,
+html[data-input-modality="pointer"] .ui-entity-editor-content-block .ui-entity-editor-product-list-more-button:focus-visible {
+	outline: none;
+}
+
 /*endregion*/
 
 /*region Popup New Field*/

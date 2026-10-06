@@ -4,7 +4,7 @@ import DashboardLoadingAnimation from './skeleton/biconnector-dashboard-loading.
 import DotsAnimation from './skeleton/biconnector-dots-animation.json';
 import type { SkeletonConfig } from './type/skeleton-config';
 import { DashboardManager } from 'biconnector.apache-superset-dashboard-manager';
-import { BaseEvent, EventEmitter } from 'main.core.events';
+import { EventEmitter } from 'main.core.events';
 import { SkeletonRenderer } from 'biconnector.apache-superset-dashboard-skeleton';
 
 export class Skeleton
@@ -50,7 +50,7 @@ export class Skeleton
 	{
 		// eslint-disable-next-line no-unused-expressions
 		BX.PULL && BX.PULL.extendWatch('superset_dashboard', true);
-		EventEmitter.subscribe('onPullEvent-biconnector', (event: BaseEvent) => {
+		EventEmitter.subscribe('onPullEvent-biconnector', (event) => {
 			const [eventName, eventData] = event.data;
 			if (eventName === 'onSupersetStatusUpdated')
 			{

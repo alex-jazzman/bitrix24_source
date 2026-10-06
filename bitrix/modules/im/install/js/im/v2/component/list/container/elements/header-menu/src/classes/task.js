@@ -1,6 +1,5 @@
 import { Core } from 'im.v2.application.core';
-import { ChatType, RecentType } from 'im.v2.const';
-import { UnreadModeManager } from 'im.v2.lib.unread-mode';
+import { ParentChatScope, RecentType } from 'im.v2.const';
 import { ChatService } from 'im.v2.provider.service.chat';
 import { Analytics } from 'im.v2.lib.analytics';
 
@@ -19,9 +18,14 @@ export class TaskHeaderMenu extends BaseRecentHeaderMenu
 	{
 		Analytics.getInstance().recentHeaderMenu.onReadAllTaskChats();
 
-		UnreadModeManager.removeClosedChats(RecentType.taskComments);
+		if (this.context.parentChatId > 0)
+		{
+			(new ChatService()).readAllByRecentType(RecentType.taskComments, this.context.parentChatId);
 
-		(new ChatService()).readAllByType(ChatType.taskComments);
+			return;
+		}
+
+		(new ChatService()).readAllByRecentType(RecentType.taskComments, ParentChatScope.all);
 	}
 
 	getUnreadCounter(): number

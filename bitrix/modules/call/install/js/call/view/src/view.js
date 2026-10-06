@@ -40,7 +40,6 @@ import { Analytics } from 'call.lib.analytics';
 
 import { TalkingService } from './talking-service';
 
-import { CallSettingsManager } from 'call.lib.settings-manager';
 import {
 	ViewEvent,
 	ViewLayout,
@@ -50,6 +49,7 @@ import {
 	ViewRecordSource,
 } from 'call.mapping';
 import { PipCoordinator } from 'call.feature.pip';
+import { Clipboard } from 'call.adapter.clipboard';
 
 const Layouts = ViewLayout;
 const UiState = ViewUiState;
@@ -133,6 +133,7 @@ export class View
 
 	#commonRecord;
 	#confirmModal;
+	#guestLink = null;
 
 	constructor(config: ViewOptions)
 	{
@@ -1398,6 +1399,17 @@ export class View
 		this.buttons.microphone?.setLevel(level);
 	};
 
+	setGuestLink(link)
+	{
+		if (this.#guestLink === link)
+		{
+			return;
+		}
+
+		this.#guestLink = link;
+		this.updateButtons();
+	};
+
 	setCameraState = (event) =>
 	{
 		if (this.isCameraOn == event.data.isCameraOn)
@@ -1978,7 +1990,7 @@ export class View
 			return;
 		}
 
-		let notification = FloorRequest.create({
+		const notification = FloorRequest.create({
 			userModel,
 			onAllowSpeakPermissionClicked: (_userModel) => {
 				this._onAllowSpeakPermissionClickedHandler(_userModel);
@@ -1989,17 +2001,17 @@ export class View
 		});
 
 		notification.mount(this.elements.notificationPanel);
-		NotificationManager.Instance.addNotification(notification);
+		NotificationManager.addNotification(notification);
 	};
 
 	updateFloorRequestNotification()
 	{
-		if (!NotificationManager?.Instance.notifications.length)
+		if (!NotificationManager.notifications.length)
 		{
 			return;
 		}
 
-		NotificationManager.Instance.notifications.forEach(notification =>
+		NotificationManager.notifications.forEach(notification =>
 		{
 			notification.updatePermissionButtonState();
 		});
@@ -2623,7 +2635,6 @@ export class View
 			cameraId: this.cameraId,
 			speakerEnabled: !this.speakerMuted,
 			speakerId: this.speakerId,
-			noiseSuppressionVisible: CallSettingsManager.noiseSuppressionEnabled ?? false,
 			allowNoiseSuppression: Hardware.enableNoiseSuppression,
 			faceImproveEnabled: Util.isDesktop() && DesktopApi.isDesktop() && DesktopApi.getCameraSmoothingStatus(),
 			allowFaceImprove: false,
@@ -3130,14 +3141,11 @@ export class View
 
 	#isCameraButtonBlocked(): Boolean
 	{
-		const isUiBlocked = this.uiState !== UiState.Preparing && this.uiState !== UiState.Connected;
 		const isForceBlock = this.blockedButtons.camera === true;
 		const noCamPermission = !Util.havePermissionToBroadcast('cam');
 		const isUserConnecting = this.localUser.userModel.state === UserState.Connecting;
-		const hasStream = this.localUser.hasVideo() || this.localUser.hasAudio();
 
-
-		return isUiBlocked || isForceBlock || noCamPermission || isUserConnecting;
+		return isForceBlock || noCamPermission || isUserConnecting;
 	}
 
 	/**
@@ -3513,6 +3521,15 @@ export class View
 		if (this.uiState === UiState.Connected && this.layout != Layouts.Mobile)
 		{
 			result.push('feedback');
+		}
+
+		if (
+			this.uiState === UiState.Connected
+			&& this.layout !== Layouts.Mobile
+			&& this.#guestLink !== null
+		)
+		{
+			result.push('link');
 		}
 
 		if (
@@ -5086,6 +5103,21 @@ export class View
 					if (rerender)
 					{
 						Dom.append(this.buttons.feedback.render(), this.elements.topPanel);
+					}
+					break;
+				case 'link':
+					if (!this.buttons.link)
+					{
+						this.buttons.link = new Buttons.TopButton({
+							iconClass: 'link',
+							text: BX.message('CALL_VIEW_GUEST_LINK_BUTTON_LABEL'),
+							onClick: this._onLinkButtonClick.bind(this),
+						});
+					}
+
+					if (rerender)
+					{
+						Dom.append(this.buttons.link.render(), this.elements.topPanel);
 					}
 					break;
 				case 'callcontrol':
@@ -6909,6 +6941,35 @@ export class View
 		});
 	}
 
+	_onLinkButtonClick()
+	{
+		if (!this.#guestLink)
+		{
+			return;
+		}
+
+		const notifyCopied = () => {
+			BX.UI.Notification.Center.notify({
+				content: BX.message('CALL_VIEW_GUEST_LINK_COPIED'),
+				autoHideDelay: 5000,
+				useAirDesign: true,
+			});
+		};
+
+		const notifyError = () => {
+			BX.UI.Notification.Center.notify({
+				content: BX.message('CALL_VIEW_GUEST_LINK_COPY_ERROR'),
+				autoHideDelay: 5000,
+				useAirDesign: true,
+			});
+		};
+
+		Clipboard.copy(this.#guestLink)
+			.then(notifyCopied)
+			.catch(notifyError)
+		;
+	}
+
 	_onCallcontrolButtonClick(e)
 	{
 		e.stopPropagation();
@@ -7299,6 +7360,5 @@ export class View
 	static RoomState = ViewRoomState;
 	static RecordSource = ViewRecordSource;
 	static DeviceSelector = DeviceSelector;
-	static NotificationManager = NotificationManager;
 	static MIN_WIDTH = MIN_WIDTH;
 }

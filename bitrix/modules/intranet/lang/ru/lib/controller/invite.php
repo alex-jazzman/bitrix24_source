@@ -12,4 +12,6 @@ $MESS["INTRANET_CONTROLLER_INVITE_ERROR_USER_ALREADY_CONFIRMED"] = "Сотруд
 $MESS["INTRANET_CONTROLLER_INVITE_ERROR_USER_LOGIN_ALREADY_EXISTS"] = "Пользователь с таким логином уже существует";
 $MESS["INTRANET_CONTROLLER_INVITE_ERROR_INVALID_RESPONSE"] = "Не удалось отправить приглашение, попробуйте ещё раз";
 $MESS["INTRANET_CONTROLLER_INVITE_ERROR_INVITE_LIMIT"] = "Отправлено максимальное количество приглашений в сутки";
+$MESS["INTRANET_CONTROLLER_INVITE_ERROR_INVITE_LIMIT_SMS"] = "Вы отправили максимальное количество приглашений с помощью СМС за день. Пригласите сотрудников другими способами";
+$MESS["INTRANET_CONTROLLER_INVITE_ERROR_INVITE_LIMIT_EMAIL"] = "Вы отправили максимальное количество приглашений с помощью e-mail за день. Пригласите сотрудников другими способами";
 $MESS["INTRANET_CONTROLLER_INVITE_ERROR_UNKNOWN"] = "Неизвестная ошибка";

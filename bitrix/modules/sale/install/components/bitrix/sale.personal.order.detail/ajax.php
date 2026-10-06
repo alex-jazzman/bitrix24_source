@@ -18,27 +18,29 @@ require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/prolog_befo
 
 $request = Bitrix\Main\Application::getInstance()->getContext()->getRequest();
 
-if (!check_bitrix_sessid() && !$request->isPost())
+if (!check_bitrix_sessid() || !$request->isPost())
 {
 	die();
 }
 
-$orderData = $request->get("orderData");
-$templateName = $request->get("templateName");
+$orderData = array_filter((array)$request->getPost("orderData"), 'is_scalar');
+$templateName = $request->getPost("templateName");
+$templateName = is_scalar($templateName) ? (string)$templateName : "";
 if(empty($templateName))
 {
 	$templateName = "";
 }
 
-$params['ACCOUNT_NUMBER'] = $orderData['order'];
-$params['PAYMENT_NUMBER'] = $orderData['payment'];
-$params['PATH_TO_PAYMENT'] = $orderData['path_to_payment'] <> '' ? htmlspecialcharsbx($orderData['path_to_payment']) : "";
-$params['REFRESH_PRICES'] = ($orderData['refresh_prices'] === 'Y') ? 'Y' : 'N';
-$params['RETURN_URL'] = $orderData['returnUrl'] ?? "";
+$params = [];
+$params['ACCOUNT_NUMBER'] = (string)($orderData['order'] ?? '');
+$params['PAYMENT_NUMBER'] = (string)($orderData['payment'] ?? '');
+$params['PATH_TO_PAYMENT'] = htmlspecialcharsbx((string)($orderData['path_to_payment'] ?? ''));
+$params['REFRESH_PRICES'] = ($orderData['refresh_prices'] ?? 'N') === 'Y' ? 'Y' : 'N';
+$params['RETURN_URL'] = (string)($orderData['returnUrl'] ?? '');
 if (CBXFeatures::IsFeatureEnabled('SaleAccounts'))
 {
-	$params['ALLOW_INNER'] = $orderData['allow_inner'];
-	$params['ONLY_INNER_FULL'] = $orderData['only_inner_full'];
+	$params['ALLOW_INNER'] = (string)($orderData['allow_inner'] ?? '');
+	$params['ONLY_INNER_FULL'] = (string)($orderData['only_inner_full'] ?? '');
 }
 else
 {

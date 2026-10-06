@@ -1,0 +1,62 @@
+.ui-page-slider-wrapper:has(.crm-call-assessment-v2) .ui-side-panel-toolbar {
+	display: none;
+}
+
+.crm-call-assessment-v2-root {
+	flex: 1 1 auto;
+	width: 100%;
+	min-width: 0;
+}
+
+.crm-call-assessment-v2 {
+	--cav2-bitrix-gpt-gradient: linear-gradient(
+		257deg,
+		var(--ui-color-design-outline-bitrix-gpt-content-gradient-5) 1.67%,
+		var(--ui-color-design-outline-bitrix-gpt-content-gradient-4) 21.81%,
+		var(--ui-color-design-outline-bitrix-gpt-content-gradient-3) 52.43%,
+		var(--ui-color-design-outline-bitrix-gpt-content-gradient-2) 76.41%,
+		var(--ui-color-design-outline-bitrix-gpt-content-gradient-1) 97.21%
+	);
+
+	display: flex;
+	flex-direction: column;
+	height: 100vh;
+	width: 100%;
+	background: var(--ui-color-bg-content-secondary);
+}
+
+.crm-call-assessment-v2__body {
+	flex: 1 1 auto;
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	padding: 12px var(--ui-space-inset-xl) var(--ui-space-inset-xl);
+	min-height: 0;
+	overflow-y: auto;
+	overflow-x: hidden;
+}
+
+.crm-call-assessment-v2__body::-webkit-scrollbar-track {
+	background: transparent;
+}
+
+.crm-call-assessment-v2__body::-webkit-scrollbar {
+	width: 3px;
+	background: transparent;
+}
+
+.crm-call-assessment-v2__body::-webkit-scrollbar-thumb {
+	width: 3px;
+	border-radius: 512px;
+	background: rgba(var(--ui-color-palette-black-solid-rgb, 0, 0, 0), 0.2);
+}
+
+.crm-call-assessment-v2__card {
+	display: flex;
+	flex-direction: column;
+	gap: 11px;
+	padding: var(--ui-space-inset-xl);
+	background: var(--ui-color-bg-content-primary);
+	border-radius: var(--ui-border-radius-2xl);
+	box-shadow: 0 1px 2px var(--ui-color-area-box-shadow-secondary-color);
+}

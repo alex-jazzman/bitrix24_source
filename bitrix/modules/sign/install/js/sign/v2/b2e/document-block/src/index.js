@@ -112,7 +112,14 @@ export class DocumentBlock extends EventEmitter
 		const documentIcon = Text.encode(this.#getIcon());
 		const documentType = Text.encode(this.#getDocumentType());
 		const menuButton = Tag.render`
-			<button class="ui-btn ui-btn-round ui-btn-sm ui-btn-light-border sign-b2e-document-setup__menu-btn" type="button" data-test-id="sign-document-block__menu-btn">
+			<button
+				class="ui-btn ui-btn-round ui-btn-sm ui-btn-light-border sign-b2e-document-setup__menu-btn"
+				type="button"
+				aria-haspopup="menu"
+				aria-expanded="false"
+				aria-label="${Text.encode(Loc.getMessage('SIGN_DOCUMENT_BLOCK_EDIT_BUTTON'))}"
+				data-test-id="sign-document-block__menu-btn"
+			>
 				<span class="sign-b2e-document-setup__menu-btn-icon"></span>
 			</button>
 		`;
@@ -352,11 +359,15 @@ export class DocumentBlock extends EventEmitter
 				bindElement,
 				items: this.#getMenuItems(menuId, bindElement),
 				autoHide: true,
+				events: {
+					onPopupClose: () => Dom.attr(bindElement, 'aria-expanded', 'false'),
+				},
 			});
 		}
 
 		menu.getPopupWindow().setBindElement(bindElement);
 
+		Dom.attr(bindElement, 'aria-expanded', menu.getPopupWindow().isShown() ? 'false' : 'true');
 		menu.toggle();
 	}
 

@@ -115,7 +115,7 @@ export default function bindToolbar(editor: Editor, htmlEditor)
 				return;
 			}
 
-			editor.showCopilot();
+			editor.showCopilot(copilot);
 
 			if (isFocusReturnBound)
 			{

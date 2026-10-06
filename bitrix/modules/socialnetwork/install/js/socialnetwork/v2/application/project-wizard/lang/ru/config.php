@@ -13,7 +13,7 @@ $MESS['SONET_EXT_PROJECT_WIZARD_MODERATORS_LABEL'] = 'Модераторы';
 $MESS['SONET_EXT_PROJECT_WIZARD_MODERATORS_HINT'] = 'Модераторы — это помощники владельца с расширенными правами';
 $MESS['SONET_EXT_PROJECT_WIZARD_MEMBERS_LABEL'] = 'Участники проекта';
 $MESS['SONET_EXT_PROJECT_WIZARD_PRIVACY_TYPE_LABEL'] = 'Тип проекта';
-$MESS['SONET_EXT_PROJECT_WIZARD_BASE_FEATURE_LABEL'] = 'Главный инструмент';
+$MESS['SONET_EXT_PROJECT_WIZARD_BASE_FEATURE_LABEL'] = 'Стартовый инструмент';
 $MESS['SONET_EXT_PROJECT_WIZARD_BASE_FEATURE_INFO'] = 'Выберите, какой из инструментов открывать первым при входе в проект';
 
 $MESS['SONET_EXT_PROJECT_WIZARD_PRIVACY_TYPE_OPEN_LABEL'] = 'Открытый';
@@ -91,6 +91,12 @@ $MESS['SONET_EXT_PROJECT_WIZARD_PROJECT_TAGS_LABEL'] = 'Теги';
 $MESS['SONET_EXT_PROJECT_WIZARD_AUTO_REMOVE_LABEL'] = 'Автоудаление сообщений';
 $MESS['SONET_EXT_PROJECT_WIZARD_AUTO_REMOVE_HINT'] = 'Новые сообщения в основном чате проекта будут автоматически удаляться по выбранному расписанию';
 $MESS['SONET_EXT_PROJECT_WIZARD_PUBLICATION_LABEL'] = 'Публикация';
+
+$MESS['SONET_EXT_PROJECT_WIZARD_NOTIFICATIONS_LABEL'] = 'Уведомления в проекте';
+$MESS['SONET_EXT_PROJECT_WIZARD_NOTIFICATIONS_BANNER_TITLE'] = 'Выберите события, которые требуют внимания участников';
+$MESS['SONET_EXT_PROJECT_WIZARD_NOTIFICATIONS_BANNER_BODY'] = 'По ним будут приходить уведомления, а счётчик новых событий будет увеличиваться. Для остальных — только системные сообщения в общем чате проекта';
+$MESS['SONET_EXT_PROJECT_WIZARD_NOTIFICATIONS_DRAWER_SAVE'] = 'Сохранить';
+$MESS['SONET_EXT_PROJECT_WIZARD_NOTIFICATIONS_DRAWER_CANCEL'] = 'Отмена';
 
 $MESS['SONET_EXT_PROJECT_WIZARD_CREATE_BUTTON'] = 'Создать проект';
 $MESS['SONET_EXT_PROJECT_WIZARD_UPDATE_BUTTON'] = 'Сохранить изменения';

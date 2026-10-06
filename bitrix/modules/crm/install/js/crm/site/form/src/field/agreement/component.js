@@ -17,11 +17,7 @@ const FieldAgreement = {
 					@click.capture="requestConsent"
 					onclick="this.blur()"
 				>
-				<span v-if="field.isLink()" 
-					class="b24-form-control-desc"
-					@click.capture="onLinkClick"
-					v-html="link"
-				></span>
+				<span v-if="field.isLink()" class="b24-form-control-desc">{{ linkParts.before }}<a :href="linkUrl" target="_blank" rel="noopener noreferrer" class="b24-form-field-agreement-link">{{ linkParts.text }}</a>{{ linkParts.after }}</span>
 				<span v-else class="b24-form-control-desc">
 					<span class="b24-form-field-agreement-link">{{ field.label }}</span>
 				</span>
@@ -31,34 +27,28 @@ const FieldAgreement = {
 		</div>
 	`,
 	computed: {
-		link()
+		linkUrl()
 		{
 			let url = this.field.options.content.url.trim();
 			if (!/^http:|^https:/.test(url))
 			{
-				url = 'https://' + url;
+				url = `https://${url}`;
 			}
 
-			const node = document.createElement('div');
-			node.textContent = url;
-			url = node.innerHTML;
+			return url;
+		},
+		linkParts()
+		{
+			const parts = String(this.field.label).split('%');
 
-			node.textContent = this.field.label;
-			const label = node.innerHTML;
-
-			return label
-				.replace('%', `<a href="${url}" target="_blank" class="b24-form-field-agreement-link">`)
-				.replace('%', '</a>');
+			return {
+				before: parts[0] || '',
+				text: parts.length > 1 ? parts[1] : '',
+				after: parts.length > 2 ? parts.slice(2).join('%') : '',
+			};
 		},
 	},
 	methods: {
-		onLinkClick(e)
-		{
-			if (e.target.tagName.toUpperCase() === 'A')
-			{
-				return this.requestConsent(e);
-			}
-		},
 		requestConsent(e)
 		{
 			this.field.consentRequested = true;

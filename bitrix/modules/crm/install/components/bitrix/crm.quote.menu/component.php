@@ -18,6 +18,7 @@ use Bitrix\Crm\Integration\DocumentGeneratorManager;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Application;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Web\Uri;
 
 if (!CModule::IncludeModule('crm'))
 {
@@ -68,7 +69,7 @@ $arParams['ELEMENT_ID'] = isset($arParams['ELEMENT_ID']) ? (int)($arParams['ELEM
 $makeEditPathFromDetailsPath = static function(string $pathToDetails): string
 {
 	$templateWithoutConflictingSymbols = str_replace('#quote_id#', 'quote_id', $pathToDetails);
-	$editWithoutConflictingSymbols = CHTTP::urlAddParams($templateWithoutConflictingSymbols, ['init_mode' => 'edit']);
+	$editWithoutConflictingSymbols = (string)(new Uri($templateWithoutConflictingSymbols))->addParams(['init_mode' => 'edit']);
 
 	return str_replace('quote_id', '#quote_id#', $editWithoutConflictingSymbols);
 };
@@ -168,13 +169,10 @@ if ($arParams['TYPE'] === 'details')
 
 	if ($bAdd)
 	{
-		$copyUrl = CHTTP::urlAddParams(
-			CComponentEngine::MakePathFromTemplate(
+		$copyUrl = (string)(new Uri(CComponentEngine::MakePathFromTemplate(
 				$arParams['PATH_TO_QUOTE_DETAILS'],
 				array('quote_id' => $arParams['ELEMENT_ID'])
-			),
-			array('copy' => 1)
-		);
+			)))->addParams(array('copy' => 1));
 
 		$arResult['BUTTONS'][] = array(
 			'TEXT' => Loc::getMessage('QUOTE_COPY'),
@@ -500,12 +498,10 @@ if (($arParams['TYPE'] === 'edit' || $arParams['TYPE'] === 'show') && $bAdd
 	$arResult['BUTTONS'][] = array(
 		'TEXT' => Loc::getMessage('QUOTE_COPY'),
 		'TITLE' => Loc::getMessage('QUOTE_COPY_TITLE_MSGVER_1'),
-		'LINK' => CHTTP::urlAddParams(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_QUOTE_EDIT'],
+		'LINK' => (string)(new Uri(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_QUOTE_EDIT'],
 			array(
 				'quote_id' => $arParams['ELEMENT_ID']
-			)),
-			array('copy' => 1)
-		),
+			))))->addParams(array('copy' => 1)),
 		'ICON' => 'btn-copy'
 	);
 }
@@ -524,12 +520,10 @@ if (($arParams['TYPE'] == 'edit' || $arParams['TYPE'] == 'show') && $bDelete && 
 	$arResult['BUTTONS'][] = array(
 		'TEXT' => Loc::getMessage('QUOTE_DELETE_MSGVER_1'),
 		'TITLE' => Loc::getMessage('QUOTE_DELETE_TITLE_MSGVER_1'),
-		'LINK' => "javascript:quote_delete('".Loc::getMessage('QUOTE_DELETE_DLG_TITLE_MSGVER_1')."', '".Loc::getMessage('QUOTE_DELETE_DLG_MESSAGE_MSGVER_1')."', '".Loc::getMessage('QUOTE_DELETE_DLG_BTNTITLE')."', '".CHTTP::urlAddParams(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_QUOTE_EDIT'],
+		'LINK' => "javascript:quote_delete('".Loc::getMessage('QUOTE_DELETE_DLG_TITLE_MSGVER_1')."', '".Loc::getMessage('QUOTE_DELETE_DLG_MESSAGE_MSGVER_1')."', '".Loc::getMessage('QUOTE_DELETE_DLG_BTNTITLE')."', '".(string)(new Uri(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_QUOTE_EDIT'],
 			array(
 				'quote_id' => $arParams['ELEMENT_ID']
-			)),
-			array('delete' => '', 'sessid' => bitrix_sessid())
-		)."')",
+			))))->addParams(array('delete' => '', 'sessid' => bitrix_sessid()))."')",
 		'ICON' => 'btn-delete'
 	);
 }

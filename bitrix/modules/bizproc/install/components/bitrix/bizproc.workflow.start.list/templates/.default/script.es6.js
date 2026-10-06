@@ -1,6 +1,6 @@
-import { Reflection, Type, Event, Text, Dom, Tag, Loc } from 'main.core';
-import { EventEmitter } from 'main.core.events';
+import { Reflection, Type, Text, Dom, Tag, Loc } from 'main.core';
 import { Alert, AlertColor } from 'ui.alerts';
+import { announce, enhanceGrid, subscribeGridUpdated } from 'bizproc.a11y';
 import { Starter } from 'bizproc.workflow.starter';
 
 import 'sidepanel';
@@ -33,6 +33,8 @@ class WorkflowStartList
 
 	popupHint;
 	hintTimeout;
+
+	#gridSubscription = null;
 
 	constructor(options)
 	{
@@ -78,8 +80,49 @@ class WorkflowStartList
 		{
 			BX.Bizproc.Component.WorkflowStartList.colorPinnedRows(this.getGrid());
 		}
+		this.#applyGridA11y();
 
-		EventEmitter.subscribe('Grid::updated', this.#onAfterGridUpdated.bind(this));
+		this.subscribeGridEvents();
+	}
+
+	subscribeGridEvents()
+	{
+		this.unsubscribeGridEvents();
+		this.#gridSubscription = subscribeGridUpdated(this.gridId, () => this.#onAfterGridUpdated());
+	}
+
+	unsubscribeGridEvents()
+	{
+		this.#gridSubscription?.destroy();
+		this.#gridSubscription = null;
+	}
+
+	destroy()
+	{
+		this.unsubscribeGridEvents();
+	}
+
+	#applyGridA11y(): void
+	{
+		const container = this.getGrid()?.getContainer();
+		if (!Type.isDomNode(container))
+		{
+			return;
+		}
+
+		enhanceGrid(container, {
+			gridId: this.gridId,
+			rowActionsLabel: Loc.getMessage('BIZPROC_CMP_TMP_WORKKFLOW_START_LIST_ROW_ACTIONS_LABEL'),
+			columnLabels: {
+				PIN: Loc.getMessage('BIZPROC_CMP_TMP_WORKKFLOW_START_LIST_PIN_COLUMN_LABEL'),
+			},
+			toggles: [{
+				selector: '.main-grid-cell-content-action-pin',
+				label: Loc.getMessage('BIZPROC_CMP_TMP_WORKKFLOW_START_LIST_PIN_LABEL'),
+				// the helper falls back to the same class value when the grid is not loaded yet
+				activeClass: BX.Grid?.CellActionState?.ACTIVE,
+			}],
+		});
 	}
 
 	editTemplate(
@@ -176,11 +219,15 @@ class WorkflowStartList
 		{
 			BX.Bizproc.Component.WorkflowStartList.action('unpin', templateId, gridId);
 			Dom.removeClass(button, BX.Grid.CellActionState.ACTIVE);
+			Dom.attr(button, 'aria-pressed', 'false');
+			announce(Loc.getMessage('BIZPROC_CMP_TMP_WORKKFLOW_START_LIST_UNPINNED'));
 		}
 		else
 		{
 			BX.Bizproc.Component.WorkflowStartList.action('pin', templateId, gridId);
 			Dom.addClass(button, BX.Grid.CellActionState.ACTIVE);
+			Dom.attr(button, 'aria-pressed', 'true');
+			announce(Loc.getMessage('BIZPROC_CMP_TMP_WORKKFLOW_START_LIST_PINNED'));
 		}
 
 		const grid = BX.Main.gridManager.getInstanceById(gridId);
@@ -348,6 +395,8 @@ class WorkflowStartList
 			BX.UI.Hint.init(this.getGrid().getContainer());
 			BX.Bizproc.Component.WorkflowStartList.colorPinnedRows(this.getGrid());
 		}
+		this.#applyGridA11y();
+		announce(Loc.getMessage('BIZPROC_CMP_TMP_WORKKFLOW_START_LIST_GRID_UPDATED'));
 
 		this.#counters.forEach((value, key) => {
 			const counter = document.querySelector(`[data-role="template-${key}-counter"]`);

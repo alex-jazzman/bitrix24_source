@@ -74,6 +74,7 @@ jn.define('im/messenger/db/table/dialog', (require, exports, module) => {
 				{ name: 'entityLink', type: FieldType.object, defaultValue: FieldDefaultValue.emptyObject },
 				{ name: 'parentChatId', type: FieldType.integer, defaultValue: FieldDefaultValue.zeroInteger },
 				{ name: 'parentMessageId', type: FieldType.integer, defaultValue: FieldDefaultValue.zeroInteger },
+				{ name: 'guestCount', type: FieldType.integer, defaultValue: FieldDefaultValue.zeroInteger },
 			];
 		}
 

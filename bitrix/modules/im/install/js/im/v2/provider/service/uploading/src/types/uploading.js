@@ -28,7 +28,8 @@ export type FileCommitParams = {
 	realFileId: number,
 	fromDisk: boolean,
 	sendAsFile: boolean,
-	messageText: string
+	messageText: string,
+	replyId?: number,
 }
 
 export type UploadFilesParams = {

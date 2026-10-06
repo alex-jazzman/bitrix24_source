@@ -10,6 +10,7 @@ use Bitrix\Crm\Integration\Report\DisablingHelper;
 use Bitrix\Crm\Restriction\AvailabilityManager;
 use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Service\Container;
+use Bitrix\Main\Web\Uri;
 
 if (!CModule::IncludeModule('crm'))
 {
@@ -213,11 +214,6 @@ $arResult = array_merge(
 	$arResult
 );
 
-\CCrmEntityHelper::setEnabledFactoryFlagByRequest(
-	Crm\Settings\LeadSettings::getCurrent(),
-	\Bitrix\Main\Application::getInstance()->getContext()->getRequest()
-);
-
 if (isset($_GET['redirect_to']))
 {
 	$viewName = mb_strtoupper(trim($_GET['redirect_to']));
@@ -233,11 +229,7 @@ if (isset($_GET['redirect_to']))
 
 	if (isset($arResult[$pathKey]))
 	{
-		$redirectUrl = CHTTP::urlAddParams(
-			$arResult[$pathKey],
-			array_diff_key($_GET, array_flip(array('redirect_to'))),
-			array('encode' => true)
-		);
+		$redirectUrl = (string)(new Uri($arResult[$pathKey]))->addParams(array_diff_key($_GET, array_flip(array('redirect_to'))));
 
 		LocalRedirect($redirectUrl);
 	}
@@ -281,7 +273,7 @@ if (
 		parse_str($_SERVER['QUERY_STRING'], $queryParams);
 		if (!empty($queryParams))
 		{
-			$redirectUrl = CHTTP::urlAddParams($redirectUrl, $queryParams, array('encode' => true));
+			$redirectUrl = (string)(new Uri($redirectUrl))->addParams($queryParams);
 		}
 	}
 	LocalRedirect($redirectUrl, false,'301 Moved Permanently');

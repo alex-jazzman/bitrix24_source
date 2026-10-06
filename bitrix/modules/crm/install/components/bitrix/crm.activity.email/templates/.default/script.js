@@ -6,6 +6,8 @@
 	if (window.BXCrmActivityEmailController)
 		return;
 	var BXCrmActivityEmailController = {};
+	const SAVE_LAST_TEMPLATE_INACTIVE_CLASS = 'crm-activity-email-save-last-template-toggle--inactive';
+	const SAVE_LAST_TEMPLATE_MENU_ITEM_ID = 'crm-email-template-save-last-used-toggle';
 
 	BXCrmActivityEmailController.init = function (options)
 	{
@@ -15,6 +17,9 @@
 			return;
 
 		this.options = options;
+		this.isSaveLastTemplateToggleRequestRunning = false;
+		this.isSaveLastTemplateStateSynchronized = true;
+		this.saveLastTemplateMenuIds = new Set();
 
 		this.__dummyNode = document.createElement('DIV');
 
@@ -72,6 +77,107 @@
 		}
 
 		this.__inited = true;
+	};
+
+	BXCrmActivityEmailController.applySaveLastTemplateState = function (isEnabled) {
+		this.options.saveLastUsedTemplate = isEnabled ? 'Y' : 'N';
+
+		this.saveLastTemplateMenuIds.forEach((menuId) => {
+			const menu = BX.PopupMenu.getMenuById(menuId);
+			if (!menu)
+			{
+				this.saveLastTemplateMenuIds.delete(menuId);
+
+				return;
+			}
+
+			const menuItem = menu.getMenuItem(SAVE_LAST_TEMPLATE_MENU_ITEM_ID);
+			const element = menuItem ? menuItem.getContainer() : null;
+			if (!element)
+			{
+				return;
+			}
+
+			if (isEnabled)
+			{
+				BX.removeClass(element, SAVE_LAST_TEMPLATE_INACTIVE_CLASS);
+			}
+			else
+			{
+				BX.addClass(element, SAVE_LAST_TEMPLATE_INACTIVE_CLASS);
+			}
+		});
+	};
+
+	BXCrmActivityEmailController.synchronizeSaveLastTemplateState = function (fallbackSaveLastUsedTemplate) {
+		const stateToRestore = fallbackSaveLastUsedTemplate ?? this.options.saveLastUsedTemplate;
+		this.isSaveLastTemplateStateSynchronized = false;
+		this.isSaveLastTemplateToggleRequestRunning = true;
+
+		return BX.ajax.runAction('crm.api.mail.MailTemplate.getSaveLastUsedTemplate').then(
+			(response) => {
+				this.applySaveLastTemplateState(response.data === true);
+				this.isSaveLastTemplateStateSynchronized = true;
+				this.isSaveLastTemplateToggleRequestRunning = false;
+			},
+			() => {
+				this.applySaveLastTemplateState(stateToRestore === 'Y');
+				this.isSaveLastTemplateToggleRequestRunning = false;
+			},
+		);
+	};
+
+	BXCrmActivityEmailController.setSaveLastTemplateState = function (isEnabled) {
+		if (this.isSaveLastTemplateToggleRequestRunning)
+		{
+			return;
+		}
+
+		const previousSaveLastUsedTemplate = this.options.saveLastUsedTemplate;
+		this.isSaveLastTemplateStateSynchronized = false;
+		this.isSaveLastTemplateToggleRequestRunning = true;
+		this.applySaveLastTemplateState(isEnabled);
+
+		const saveLastUsedTemplate = () => BX.ajax.runAction(
+			'crm.api.mail.MailTemplate.setSaveLastUsedTemplate',
+			{
+				data: {
+					enabled: isEnabled,
+				},
+			},
+		);
+		const completeSaveLastTemplateToggle = (isSuccess) => {
+			if (!isSuccess)
+			{
+				this.applySaveLastTemplateState(previousSaveLastUsedTemplate === 'Y');
+			}
+
+			this.isSaveLastTemplateStateSynchronized = true;
+			this.isSaveLastTemplateToggleRequestRunning = false;
+		};
+
+		saveLastUsedTemplate().then(
+			(response) => {
+				completeSaveLastTemplateToggle(response.data === true);
+			},
+			() => {
+				saveLastUsedTemplate().then(
+					(response) => {
+						if (response.data === true)
+						{
+							completeSaveLastTemplateToggle(true);
+						}
+						else
+						{
+							this.synchronizeSaveLastTemplateState(previousSaveLastUsedTemplate);
+						}
+					},
+					() => {
+						this.synchronizeSaveLastTemplateState(previousSaveLastUsedTemplate);
+					},
+				);
+			},
+		);
 	};
 
 	BXCrmActivityEmailController.initScrollable = function()
@@ -438,10 +544,13 @@
 
 			BX.addCustomEvent(
 				'CrmActivityEmail:replyButtonClick',
-				function (source)
+				function (source, guard)
 				{
 					if (source !== self)
-						self.hideReplyForm();
+					{
+						const closePromise = self.hideReplyForm();
+						guard?.waitUntil(closePromise);
+					}
 				}
 			);
 
@@ -561,7 +670,103 @@
 			});
 		}
 
+		this.messageBodyContainer = container.closest('.crm-task-list-mail-border-bottom');
 		this.messageBody.renderTo(html);
+
+		if (typeof this.messageBody.bindPrintControl !== 'function')
+		{
+			return;
+		}
+
+		const slider = top.BX.SidePanel.Instance.getSliderByWindow(window);
+		if (!slider)
+		{
+			return;
+		}
+
+		slider.setPrintable(true);
+		this.messageBody.bindPrintControl({
+			slider,
+			getHeaderHtml: () => this.collectPrintHeaderHtml(),
+			getHeaderStyles: () => this.getPrintHeaderStyles(),
+		});
+	};
+
+	BXCrmActivityEmail.prototype.collectPrintHeaderHtml = function ()
+	{
+		const esc = BX.util.htmlspecialchars;
+		let html = '';
+
+		const subject = document.querySelector('.crm-activity-planner-slider-header-title');
+		if (subject)
+		{
+			html += '<div class="print-subject">' + esc(subject.textContent.trim()) + '</div>';
+		}
+
+		html += '<div class="print-meta">';
+
+		const senderName = this.messageBodyContainer?.querySelector('.crm-task-list-mail-item-inner-description-name-link, '
+			+ '.crm-task-list-mail-item-inner-description-name');
+		const senderEmail = this.messageBodyContainer?.querySelector('.crm-task-list-mail-item-inner-description-mail');
+		if (senderName || senderEmail)
+		{
+			html += '<div class="print-from">';
+			if (senderName)
+			{
+				html += '<span class="print-from-name">' + esc(senderName.textContent.trim()) + '</span>';
+			}
+			if (senderEmail)
+			{
+				html += (senderName ? ' &lt;' : '&lt;') + esc(senderEmail.textContent.trim()) + '&gt;';
+			}
+			html += '</div>';
+		}
+
+		const recipientLines = this.messageBodyContainer?.querySelectorAll(
+			'.crm-task-list-mail-item-inner-send > span',
+		) ?? [];
+		recipientLines.forEach(function (line) {
+			const label = line.querySelector('.crm-task-list-mail-item-inner-send-item');
+			const recipients = line.querySelectorAll(
+				'.crm-task-list-mail-item-inner-send-mail-link, .crm-task-list-mail-item-inner-send-mail',
+			);
+			if (!label || recipients.length === 0)
+			{
+				return;
+			}
+
+			const names = [];
+			recipients.forEach(function (recipient) {
+				names.push(esc(recipient.textContent.trim()));
+			});
+			html += '<div class="print-rcpt-line">';
+			html += '<span class="print-rcpt-label">' + esc(label.textContent.trim()) + '</span> ';
+			html += names.join(', ');
+			html += '</div>';
+		});
+
+		const date = this.messageBodyContainer?.querySelector('.crm-task-list-mail-item-inner-description-date');
+		if (date)
+		{
+			html += '<div class="print-date">' + esc(date.textContent.trim()) + '</div>';
+		}
+
+		html += '</div>';
+
+		return html;
+	};
+
+	BXCrmActivityEmail.prototype.getPrintHeaderStyles = function ()
+	{
+		return '.print-header { display: none; font-family: Arial, Helvetica, sans-serif; font-size: 14px; color: #333; padding: 10px 20px 0; }'
+			+ '.print-subject { font-size: 18px; font-weight: bold; color: #333; margin-bottom: 12px; }'
+			+ '.print-meta { margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid #e2e3e5; }'
+			+ '.print-from { margin-bottom: 4px; }'
+			+ '.print-from-name { font-size: 15px; font-weight: bold; color: #333; }'
+			+ '.print-rcpt-line { margin-bottom: 2px; color: #80868e; font-size: 13px; }'
+			+ '.print-rcpt-label { color: #80868e; }'
+			+ '.print-date { margin-top: 4px; color: #80868e; font-size: 13px; }'
+			+ '@media print { .print-header { display: block; padding: 0 20px; } }';
 	};
 
 	BXCrmActivityEmail.prototype.insertBodyText = function (html)
@@ -584,7 +789,7 @@
 			}
 			else
 			{
-				this.hideReplyForm();
+				this.hideReplyForm(true, 'cancel');
 			}
 		}
 	};
@@ -629,7 +834,10 @@
 				return BX.PreventDefault(event);
 			}
 
-			if (BX.message('CRM_ACT_EMAIL_MAX_SIZE') > 0)
+			if (
+				!BX.message('CRM_LARGE_ATTACHMENT_LOCAL_FEATURE_AVAILABLE')
+				&& BX.message('CRM_ACT_EMAIL_MAX_SIZE') > 0
+			)
 			{
 				try
 				{
@@ -646,7 +854,11 @@
 			}
 		}
 
-		if (BX.message('CRM_ACT_EMAIL_MAX_SIZE') > 0 && BX.message('CRM_ACT_EMAIL_MAX_SIZE') <= Math.ceil(totalSize / 3) * 4) // base64 coef.
+		if (
+			!BX.message('CRM_LARGE_ATTACHMENT_LOCAL_FEATURE_AVAILABLE')
+			&& BX.message('CRM_ACT_EMAIL_MAX_SIZE') > 0
+			&& BX.message('CRM_ACT_EMAIL_MAX_SIZE') <= Math.ceil(totalSize / 3) * 4
+		) // base64 coef.
 		{
 			form.showError(BX.message('CRM_ACT_EMAIL_MAX_SIZE_EXCEED'));
 			return BX.PreventDefault(event);
@@ -670,6 +882,114 @@
 				}
 			}
 		}
+	};
+
+	BXCrmActivityEmail.prototype.initDraft = function(mailForm)
+	{
+		if (mailForm.__draftCoordinator)
+		{
+			return Promise.resolve(mailForm.__draftCoordinator);
+		}
+		if (mailForm.__draftBootstrapPromise)
+		{
+			return mailForm.__draftBootstrapPromise;
+		}
+		if (!this.options.draft?.available || !BX.Mail?.Draft)
+		{
+			return Promise.resolve(null);
+		}
+
+		const closeCanceledAttempt = () => {
+			mailForm.__draftBootstrapCanceled = true;
+			if ('edit' === this.ctrl.options.type)
+			{
+				top.BX.SidePanel.Instance.getSliderByWindow(window)?.close();
+			}
+			else
+			{
+				this.hideReplyForm(true, 'cancel');
+			}
+		};
+
+		const draftIdNode = this.htmlForm.querySelector('[data-role="mail-draft-id"]');
+		const draftRevisionNode = this.htmlForm.querySelector('[data-role="mail-draft-revision"]');
+		const applyDraftState = (draftId, revision = '') => {
+			if (draftIdNode)
+			{
+				draftIdNode.value = draftId;
+			}
+			if (draftRevisionNode)
+			{
+				draftRevisionNode.value = revision;
+			}
+		};
+		// Only the bootstrap of this very open may fill the fields: until it reports a draft, the state
+		// of the previous open must not stay there for a send or for a failed bootstrap to pick up.
+		applyDraftState('');
+
+		// The inline reply form is reused between opens, so the error of a failed bootstrap has to be
+		// taken back as soon as autosave works again: otherwise the form keeps claiming that it does
+		// not save the message. The mark sits on the alert, not on the error node, because showError()
+		// replaces the content of the node and the mark leaves with the alert it belongs to.
+		const draftErrorMark = 'data-crm-draft-load-error';
+		const getFormErrorAlert = () => {
+			if (!mailForm.formWrapper)
+			{
+				return null;
+			}
+
+			return BX.findChildByClassName(mailForm.formWrapper, 'main-mail-form-error', true)?.firstElementChild;
+		};
+		const showDraftLoadError = () => {
+			mailForm.showError(BX.message('CRM_ACT_EMAIL_DRAFT_LOAD_ERROR'));
+			getFormErrorAlert()?.setAttribute(draftErrorMark, '');
+		};
+		const hideDraftLoadError = () => {
+			const alertNode = getFormErrorAlert();
+			if (alertNode?.hasAttribute(draftErrorMark))
+			{
+				alertNode.remove();
+			}
+		};
+
+		const draftContext = BX.Mail.Draft.resolveCrmDraftContext(this.options.draft);
+		mailForm.__draftBootstrapPromise = BX.Mail.Draft.bootstrapCrmDraft({
+			form: mailForm,
+			clientId: this.options.draft.clientId,
+			context: {
+				contextType: 'crm',
+				crmEntityTypeId: draftContext.entityTypeId,
+				crmEntityId: draftContext.entityId,
+			},
+			onDraftIdChange: applyDraftState,
+			onCancel: closeCanceledAttempt,
+		}).then((coordinator) => {
+			if (coordinator)
+			{
+				mailForm.__draftCoordinator = coordinator;
+				hideDraftLoadError();
+
+				// A restored draft reports no state change: applying its snapshot publishes no change
+				// event, so without this the fields stay empty until the first autosave and sending
+				// right after the restore would not complete the draft.
+				const { draftId, revision } = coordinator.getState();
+				applyDraftState(draftId ?? '', revision ?? '');
+			}
+
+			return coordinator;
+		}).catch((error) => {
+			// A failed bootstrap leaves the form open and usable, just without a coordinator and
+			// without autosave: setDraftLoading(false) is released by bootstrapCrmDraft itself.
+			// Only onCancel closes the form, so the error stays readable in the live region.
+			console.error('CRM mail draft bootstrap failed', error);
+			showDraftLoadError();
+
+			return null;
+		}).finally(() => {
+			mailForm.__draftBootstrapPromise = null;
+		});
+
+		return mailForm.__draftBootstrapPromise;
 	};
 
 	BXCrmActivityEmail.handleFormSubmitSuccess = function (form, data)
@@ -709,7 +1029,7 @@
 
 			if ('edit' != this.ctrl.options.type)
 			{
-				this.hideReplyForm();
+				this.hideReplyForm(true);
 			}
 
 			var slider = top.BX.SidePanel.Instance.getSliderByWindow(window);
@@ -718,45 +1038,124 @@
 		}
 	};
 
-	BXCrmActivityEmail.prototype.showReplyForm = function(isReplyAll)
+	// aria-disabled, not the disabled attribute: the initiator holds the keyboard focus while the
+	// form is opening, and disabling it natively would drop that focus to <body>.
+	BXCrmActivityEmail.prototype.setReplyPending = function (pending)
 	{
-		var mailForm = BXMainMailForm.getForm(this.options.formId);
-		var replyButton = BX.findChildByClassName(this.__wrapper, 'crm-task-list-mail-message-panel', true);
+		this.__replyPending = pending;
 
-		if (this.htmlForm.parentNode === this.__dummyNode)
-			this.htmlForm.__wrapper.appendChild(this.htmlForm);
+		const initiators = [
+			BX.findChildByClassName(this.__wrapper, 'crm-task-list-mail-message-panel', true),
+			BX.findChildByClassName(this.__wrapper, 'crm-task-list-mail-item-control-reply', true),
+			BX.findChildByClassName(this.__wrapper, 'crm-task-list-mail-item-control-icon-answertoall', true),
+		];
 
-		var isInit = mailForm.init({
-			isReplyAll,
+		initiators.forEach((initiator) => {
+			if (!initiator)
+			{
+				return;
+			}
+
+			initiator.setAttribute('aria-busy', pending ? 'true' : 'false');
+			initiator.setAttribute('aria-disabled', pending ? 'true' : 'false');
 		});
-
-		if (isInit === false)
-		{
-			if (isReplyAll === true)
-			{
-				mailForm.fillFieldsForReplyAll();
-			}
-			else
-			{
-				mailForm.fillFieldsForReply();
-			}
-		}
-
-		BX.onCustomEvent('CrmActivityEmail:replyButtonClick', [this]);
-
-		BX.addClass(this.htmlForm, 'crm-activity-email-show-animation');
-		this.htmlForm.style.display = '';
-
-		replyButton.style.display = 'none';
-
-		BX.onCustomEvent(mailForm, 'MailForm:show', []);
-
-		this.ctrl.scrollTo(this.htmlForm);
 	};
 
-	BXCrmActivityEmail.prototype.hideReplyForm = function ()
+	BXCrmActivityEmail.prototype.showReplyForm = async function(isReplyAll)
+	{
+		if (this.__replyPending)
+		{
+			return;
+		}
+
+		var mailForm = BXMainMailForm.getForm(this.options.formId);
+		var replyButton = BX.findChildByClassName(this.__wrapper, 'crm-task-list-mail-message-panel', true);
+		this.setReplyPending(true);
+		try
+		{
+			const switchPromises = [];
+			BX.onCustomEvent('CrmActivityEmail:replyButtonClick', [this, {
+				waitUntil: (promise) => switchPromises.push(Promise.resolve(promise)),
+			}]);
+			const closeResults = await Promise.all(switchPromises);
+			if (closeResults.some((result) => result === false))
+			{
+				return;
+			}
+
+			if (this.htmlForm.parentNode === this.__dummyNode)
+				this.htmlForm.__wrapper.appendChild(this.htmlForm);
+
+			var isInit = mailForm.init({
+				isReplyAll,
+			});
+
+			// The form is shown and takes the focus BEFORE the draft round trip: the loading state
+			// of setDraftLoading has to land on a visible subtree, and the focus has to leave the
+			// initiator before it gets hidden. The focus target is the form element itself, which
+			// stays outside the inert wrapper for the whole waiting time.
+			BX.addClass(this.htmlForm, 'crm-activity-email-show-animation');
+			this.htmlForm.style.display = '';
+			BX.onCustomEvent(mailForm, 'MailForm:show', []);
+			this.ctrl.scrollTo(this.htmlForm);
+			this.htmlForm.tabIndex = -1;
+			this.htmlForm.focus({ preventScroll: true });
+
+			replyButton.style.display = 'none';
+
+			const coordinator = await this.initDraft(mailForm);
+			if (mailForm.__draftBootstrapCanceled)
+			{
+				// closeCanceledAttempt has already hidden the form and returned the focus.
+				mailForm.__draftBootstrapCanceled = false;
+
+				return;
+			}
+			if (this.htmlForm.parentNode === this.__dummyNode)
+			{
+				// Another message took the form over while the draft was loading.
+				return;
+			}
+
+			// Both prefills start with cleanFields(), so running one over an existing draft wipes its
+			// recipients and the next autosave stores the loss. The check is on the draft itself, not
+			// on the moment it appeared: a repeated click on the initiators of an already open form
+			// lands here as well, with the draft either restored on this open or created by autosave
+			// during it.
+			const fieldsBelongToDraft = coordinator?.getState().draftId > 0;
+
+			if (isInit === false && !fieldsBelongToDraft)
+			{
+				if (isReplyAll === true)
+				{
+					mailForm.fillFieldsForReplyAll();
+				}
+				else
+				{
+					mailForm.fillFieldsForReply();
+				}
+			}
+		}
+		finally
+		{
+			this.setReplyPending(false);
+		}
+	};
+
+	BXCrmActivityEmail.prototype.hideReplyForm = function (skipCloseGuard, closeReason)
 	{
 		var mailForm = BXMainMailForm.getForm(this.options.formId);
+		if (!skipCloseGuard)
+		{
+			return mailForm.requestClose('crm-inline-switch', () => this.hideReplyForm(true, closeReason));
+		}
+
+		// Every open has to bootstrap again. A coordinator kept alive across closes would autosave the
+		// field reset of fillFieldsForReply() into the stored draft, and while another message of the
+		// thread edits the same draft it would keep a stale revision, killing autosave on conflict.
+		mailForm.__draftCoordinator?.destroy();
+		mailForm.__draftCoordinator = null;
+
 		var replyButton = BX.findChildByClassName(this.__wrapper, 'crm-task-list-mail-message-panel', true);
 
 		BX.addClass(replyButton, 'crm-activity-email-show-animation-rev');
@@ -767,6 +1166,14 @@
 		BX.onCustomEvent(mailForm, 'MailForm:hide', []);
 
 		this.__dummyNode.appendChild(this.htmlForm);
+
+		this.setReplyPending(false);
+		if (closeReason === 'cancel')
+		{
+			// Only the user closing this very form gets the focus back; a switch to another message
+			// must not pull the focus to the button of the message being left.
+			replyButton.focus();
+		}
 	};
 
 	BXCrmActivityEmail.prototype.bindDiscussInChat = function ()
@@ -966,12 +1373,14 @@
 			});
 		}
 
-		const acceptClass = 'lenta-sort-item-selected';
-		let saveTemplateClassName = 'save-last-template-toggle lenta-sort-item';
+		const acceptClass = 'menu-popup-item-accept';
+		const menuId = 'crm-activity-email-' + this.options.activityId + '-template-menu';
+		this.ctrl.saveLastTemplateMenuIds.add(menuId);
+		let saveTemplateClassName = 'save-last-template-toggle ' + acceptClass;
 
-		if(this.ctrl.options.saveLastUsedTemplate === 'Y')
+		if(this.ctrl.options.saveLastUsedTemplate !== 'Y')
 		{
-			saveTemplateClassName += ' ' + acceptClass;
+			saveTemplateClassName += ' ' + SAVE_LAST_TEMPLATE_INACTIVE_CLASS;
 		}
 
 		this.classSeparator = 'main-buttons-submenu-delimiter';
@@ -995,24 +1404,24 @@
 					].join(' '),
 				},
 				{
+					id: SAVE_LAST_TEMPLATE_MENU_ITEM_ID,
 					text: BX.message('CRM_ACT_EMAIL_TEMPLATE_SAVE_LAST_TEMPLATE'),
 					className: saveTemplateClassName,
+					attrs: {
+						'data-testid': 'crm-email-template-save-last-used-toggle',
+					},
 					onclick: function (e, item){
-						const element = item.getContainer();
-						if(element.classList.contains(acceptClass))
-						{
-							BX.removeClass(element, acceptClass);
-						}
-						else
-						{
-							BX.addClass(element, acceptClass);
-						}
-						BX.ajax.runAction('crm.api.mail.MailTemplate.toggleSaveLastUsedTemplate');
+						self.ctrl.setSaveLastTemplateState(
+							item.getContainer().classList.contains(SAVE_LAST_TEMPLATE_INACTIVE_CLASS),
+						);
 					}
 				},
 				{
 					text: BX.message('CRM_ACT_EMAIL_TEMPLATE_SETTINGS'),
-					className: 'lenta-sort-item',
+					className: 'menu-popup-item-none',
+					attrs: {
+						'data-testid': 'crm-email-template-settings-action',
+					},
 					onclick: function (e){
 						BX.SidePanel.Instance.open("/crm/configs/mailtemplate/", {
 							cacheable: false,
@@ -1085,7 +1494,7 @@
 		}
 
 		BX.PopupMenu.show(
-			'crm-activity-email-'+this.options.activityId+'-template-menu',
+			menuId,
 			selector, items,
 			{
 				maxWidth: 300,
@@ -1103,6 +1512,14 @@
 				}
 			}
 		);
+
+		if (
+			!this.ctrl.isSaveLastTemplateStateSynchronized
+			&& !this.ctrl.isSaveLastTemplateToggleRequestRunning
+		)
+		{
+			this.ctrl.synchronizeSaveLastTemplateState();
+		}
 	};
 
 	BXCrmActivityEmail.prototype.ajaxLoadMessageBody = function ()

@@ -37,7 +37,7 @@ export class Step extends EventEmitter
 	{
 		return Tag.render`
 			<div class="bizproc__ws_start__content-head">
-				<div class="bizproc__ws_start__content-title">
+				<div class="bizproc__ws_start__content-title" role="heading" aria-level="2">
 					${Text.encode(this.name)}
 				</div>
 			</div>
@@ -76,6 +76,11 @@ export class Step extends EventEmitter
 
 	onAfterRender(): void
 	{}
+
+	announcesOwnState(): boolean
+	{
+		return false;
+	}
 
 	canExit(): boolean
 	{

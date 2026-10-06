@@ -9,6 +9,7 @@ jn.define('more-menu/block/company', (require, exports, module) => {
 
 	const { WhatsNewButton } = require('more-menu/block/company/whats-new');
 	const { MoreMenuUsers } = require('more-menu/block/company/users');
+	const { PersonalAccountSection } = require('more-menu/block/company/personal-account');
 	const { SupportButton } = require('more-menu/block/company/support');
 	const { SupportBanners } = require('more-menu/block/company/support-banners');
 
@@ -58,6 +59,8 @@ jn.define('more-menu/block/company', (require, exports, module) => {
 		 * @param {boolean} props.canInvite
 		 * @param {boolean} props.canUseTelephony
 		 * @param {boolean} props.shouldShowWhatsNew
+		 * @param {boolean} props.canUsePersonalAccount
+		 * @param {array} props.personalAccountCompanies
 		 * @param {string} props.testId
 		 * @param {string} props.helpdeskUrl
 		 * @param {object} props.counters
@@ -97,6 +100,7 @@ jn.define('more-menu/block/company', (require, exports, module) => {
 						withScroll: false,
 					},
 					this.#renderMoreMenuUsers(),
+					this.#renderPersonalAccount(),
 					View(
 						{
 							style: {
@@ -160,6 +164,22 @@ jn.define('more-menu/block/company', (require, exports, module) => {
 			});
 		}
 
+		#renderPersonalAccount()
+		{
+			const { canUsePersonalAccount, personalAccountCompanies, layout } = this.props;
+
+			if (!canUsePersonalAccount)
+			{
+				return null;
+			}
+
+			return new PersonalAccountSection({
+				layout,
+				companies: personalAccountCompanies,
+				testId: this.getTestId('personal-account'),
+			});
+		}
+
 		#isIntranetInstalled()
 		{
 			return isModuleInstalled('intranet');
@@ -175,6 +195,8 @@ jn.define('more-menu/block/company', (require, exports, module) => {
 		canInvite: PropTypes.bool,
 		canUseTelephony: PropTypes.bool,
 		shouldShowWhatsNew: PropTypes.bool,
+		canUsePersonalAccount: PropTypes.bool,
+		personalAccountCompanies: PropTypes.array,
 		testId: PropTypes.string,
 		helpdeskUrl: PropTypes.string,
 		counters: PropTypes.object,

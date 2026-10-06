@@ -29,7 +29,7 @@
 }
 
 .adm-composite-btn-select-icon:before {
-	background: url(images/bx-admin-sprite-small-2.png) no-repeat -11px -1501px;
+	background: url(images/bx-admin-sprite-small-2.webp) no-repeat -11px -1501px;
 	content: '';
 	height: 5px;
 	top: 20px;
@@ -263,7 +263,7 @@ only screen and (min-resolution: 2dppx) {
 .adm-composite-blocks-content {
 	width: 100%;
 	padding: 22% 9% 10px;
-	background: url(images/composite/composite_home.png) no-repeat center 15px;
+	background: url(images/composite/composite_home.webp) no-repeat center 15px;
 	background-size: 100% auto;
 	box-sizing: border-box;
 }

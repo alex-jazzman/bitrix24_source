@@ -9,6 +9,8 @@ interface BaseButtonOptions
 	className?: string | Array<string>;
 	active?: boolean;
 	separate?: boolean;
+	ariaLabel?: string;
+	toggle?: boolean;
 }
 
 export default BaseButtonOptions;

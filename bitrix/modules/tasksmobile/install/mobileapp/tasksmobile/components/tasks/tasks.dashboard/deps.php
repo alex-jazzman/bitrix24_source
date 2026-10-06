@@ -13,6 +13,7 @@ return [
 		'layout/ui/menu',
 		'layout/ui/search-bar',
 		'loc',
+		'new-projects-promo/trigger',
 		'notify',
 		'rest',
 		'rest/run-action-executor',

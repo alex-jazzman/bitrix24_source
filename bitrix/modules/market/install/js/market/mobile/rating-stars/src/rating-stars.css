@@ -1,0 +1,11 @@
+.market-mobile-rating-stars {
+	display: inline-flex;
+}
+
+.market-mobile-rating-stars__icon {
+	background-color: var(--ui-color-base-5);
+}
+
+.market-mobile-rating-stars__icon.--active {
+	background-color: var(--ui-color-accent-main-warning);
+}

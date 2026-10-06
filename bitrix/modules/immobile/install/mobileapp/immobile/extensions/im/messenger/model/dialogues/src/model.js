@@ -701,25 +701,28 @@ jn.define('im/messenger/model/dialogues/model', (require, exports, module) => {
 					{
 						participants: newParticipants,
 						lastLoadParticipantId: payload.lastLoadParticipantId,
+						participantsCursor: payload.participantsCursor,
 						hasNextPage: payload.hasNextPage,
 					},
 				);
 				const uniqId = unique(validData.participants
 					.filter((userId) => !existingItem.participants.includes(userId)));
 
-				if (uniqId.length === 0)
-				{
-					return false;
-				}
-
-				const newState = [...existingItem.participants, ...uniqId];
+				const newState = uniqId.length > 0
+					? [...existingItem.participants, ...uniqId]
+					: existingItem.participants;
 				const userCounter = payload.userCounter || existingItem.userCounter;
 
 				const fields = {
 					participants: newState,
 					userCounter,
-					hasNextPage: validData.hasNextPage,
+					hasNextPage: Type.isBoolean(validData.hasNextPage)
+						? validData.hasNextPage
+						: existingItem.hasNextPage,
 					lastLoadParticipantId: validData.lastLoadParticipantId || existingItem.lastLoadParticipantId,
+					participantsCursor: Type.isUndefined(validData.participantsCursor)
+						? existingItem.participantsCursor
+						: validData.participantsCursor,
 				};
 
 				return store.commit('update', {

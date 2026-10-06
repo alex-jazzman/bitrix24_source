@@ -171,6 +171,47 @@
 	border-radius: 10px;
 }
 
+.crm-task-list-mail-message-panel[aria-busy="true"],
+.crm-task-list-mail-item-control[aria-busy="true"] {
+	cursor: progress;
+	opacity: .7;
+}
+
+.crm-task-list-mail-message-panel[aria-busy="true"]::after,
+.crm-task-list-mail-item-control-inner .crm-task-list-mail-item-control[aria-busy="true"]::before {
+	content: "";
+	display: block;
+	width: 12px;
+	height: 12px;
+	border: 2px solid rgba(130, 139, 149, .3);
+	border-top-color: var(--ui-color-base-3, #828b95);
+	border-radius: var(--ui-border-radius-circle, 50%);
+	animation: crm-activity-email-reply-wait .7s linear infinite;
+}
+
+.crm-task-list-mail-message-panel[aria-busy="true"]::after {
+	margin-left: 8px;
+}
+
+/* Both pseudo-elements of the control are already used (icon and separator): the spinner replaces
+the icon, and the wrapper class only lifts specificity above the sprite rules of crm-activity-planner. */
+.crm-task-list-mail-item-control-inner .crm-task-list-mail-item-control[aria-busy="true"]::before {
+	top: 0;
+	left: -19px;
+	background: none;
+}
+
+@keyframes crm-activity-email-reply-wait {
+	to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.crm-task-list-mail-message-panel[aria-busy="true"]::after,
+	.crm-task-list-mail-item-control-inner .crm-task-list-mail-item-control[aria-busy="true"]::before {
+		animation: none;
+	}
+}
+
 .crm-activity-email-create-template {
 	background: none;
 	border: none;
@@ -189,3 +230,6 @@
 	outline-offset: 2px;
 }
 
+.save-last-template-toggle.crm-activity-email-save-last-template-toggle--inactive .menu-popup-item-icon {
+	visibility: hidden;
+}

@@ -16,6 +16,8 @@ return [
 		'toast',
 		'tokens',
 		'qrauth',
+		'ui-system/typography/heading',
+		'ui-system/typography/text',
 
 		'utils/file',
 		'utils/function',
@@ -26,6 +28,7 @@ return [
 		'layout/ui/fields/focus-manager',
 		'selector/widget/factory',
 
+		'bizproc:helper/network-error',
 		'bizproc:workflow/comments',
 		'bizproc:task/task-constants',
 		'bizproc:task/buttons',

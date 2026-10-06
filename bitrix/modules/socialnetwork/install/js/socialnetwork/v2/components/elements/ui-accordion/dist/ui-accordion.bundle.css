@@ -36,6 +36,12 @@
 	opacity: 0.6;
 }
 
+.sonet--ui-accordion-item-head:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+	border-radius: var(--ui-border-radius-2xs, 4px);
+}
+
 .sonet--ui-accordion-item-head-content {
 	align-items: center;
 	display: flex;
@@ -56,12 +62,12 @@
 .sonet--ui-accordion-item-content {
 	border-top: 1px solid var(--ui-color-divider-default, #f0f0f0);
 	margin-top: var(--ui-space-inline-sm, 12px);
-	overflow: hidden;
 	padding-top: var(--ui-space-inline-sm, 12px);
 }
 
 .sonet--ui-accordion-item-enter-active,
 .sonet--ui-accordion-item-leave-active {
+	overflow: hidden;
 	transition: max-height 200ms ease, opacity 200ms ease;
 }
 

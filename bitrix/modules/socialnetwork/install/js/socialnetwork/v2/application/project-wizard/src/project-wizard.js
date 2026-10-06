@@ -1,4 +1,4 @@
-import { Event, Type } from 'main.core';
+import { Event, Runtime, Type } from 'main.core';
 import { type BaseEvent } from 'main.core.events';
 import { type Slider, type SliderOptions } from 'main.sidepanel';
 
@@ -7,13 +7,18 @@ import { locMixin } from 'ui.vue3.mixins.loc-mixin';
 
 import { Core } from 'socialnetwork.v2.core';
 import { EventName } from 'socialnetwork.v2.const';
+import { isCreateProjectWizardAction } from 'socialnetwork.v2.model.interface';
 
 import { App } from './component/app';
+
+let pendingStartupToolScroll = false;
+let projectsTrialBannerProposed = false;
 
 export type ProjectWizardParams = {
 	action?: string,
 	projectId?: number | null,
 	publication?: boolean,
+	scrollToStartupTool?: boolean,
 	container?: HTMLElement,
 	onSave?: ({ id: number, name: string, chatId: number }) => void,
 	onCancel: () => void,
@@ -30,6 +35,11 @@ export class ProjectWizard
 	constructor(params: ProjectWizardParams)
 	{
 		this.#params = this.#sanitizeParams(params || {});
+	}
+
+	static requestStartupToolScroll(): void
+	{
+		pendingStartupToolScroll = true;
 	}
 
 	#sanitizeParams(params = {}): Object
@@ -59,6 +69,12 @@ export class ProjectWizard
 
 	async mount(slider?: Slider): Promise<void>
 	{
+		if (pendingStartupToolScroll)
+		{
+			pendingStartupToolScroll = false;
+			this.#params.scrollToStartupTool = true;
+		}
+
 		if (slider)
 		{
 			if (slider.isOpen())
@@ -136,6 +152,28 @@ export class ProjectWizard
 		this.#slider?.close();
 
 		this.unmount();
+
+		this.#proposeProjectsTrial();
+	}
+
+	#proposeProjectsTrial(): void
+	{
+		if (
+			!isCreateProjectWizardAction(this.#params.action)
+			|| Core.getSettings().canProposeProjectsTrial !== true
+			|| projectsTrialBannerProposed
+		)
+		{
+			return;
+		}
+
+		projectsTrialBannerProposed = true;
+
+		Runtime.loadExtension('socialnetwork.v2.components.popup.projects-trial-banner')
+			.then(({ showProjectsTrialBanner }) => showProjectsTrialBanner())
+			.catch(() => {
+				projectsTrialBannerProposed = false;
+			});
 	}
 
 	async #mountApplication(container: HTMLElement): VueApp

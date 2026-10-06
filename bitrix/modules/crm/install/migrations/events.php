@@ -9,6 +9,8 @@ $event
 	->registerCompatible('main', 'OnUserTypeBuildList', 'CUserTypeCrm', 'GetUserTypeDescription')
 	->registerCompatible('main', 'OnUserTypeBuildList', 'CUserTypeCrmStatus', 'GetUserTypeDescription')
 	->registerCompatible('main', 'OnUserDelete', '\Bitrix\Crm\Kanban\SortTable', 'clearUser')
+	->registerCompatible('main', 'OnUserDelete', '\Bitrix\Crm\RepeatSale\Segment\Controller\RepeatSaleSegmentAssignmentUserController', 'onUserDelete')
+	->registerCompatible('main', 'OnAfterUserUpdate', '\Bitrix\Crm\RepeatSale\Segment\Controller\RepeatSaleSegmentAssignmentUserController', 'onAfterUserUpdate')
 	->registerCompatible('search', 'OnReindex', 'CCrmSearch', 'OnSearchReindex')
 	->registerCompatible('search', 'OnSearchCheckPermissions', 'CCrmSearch', 'OnSearchCheckPermissions')
 	->registerCompatible('report', 'OnReportAdd', 'CCrmReportHelper', 'clearMenuCache')
@@ -54,6 +56,7 @@ $event
 	->registerCompatible('main', 'OnMailEventMailChangeStatus', '\Bitrix\Crm\Integration\Main\EventHandler', 'onMailEventMailChangeStatus')
 	->registerCompatible('main', 'OnMailEventMailChangeStatus', '\Bitrix\Crm\Integration\Main\EventHandler', 'onMailEventSendNotification')
 	->registerCompatible('main', 'OnBeforeUserTypeAdd', '\Bitrix\Crm\Service\EventHandler', 'OnBeforeUserTypeAdd')
+	->registerCompatible('main', 'OnBeforeUserTypeUpdate', '\Bitrix\Crm\Service\EventHandler', 'OnBeforeUserTypeUpdate')
 	->register('main', 'OnAfterSetOption_~crm_webform_max_activated', '\Bitrix\Crm\WebForm\Form', 'onAfterSetOptionCrmWebFormMaxActivated')
 	->register('mail', 'OnMessageObsolete', 'CCrmEMail', 'OnImapEmailMessageObsolete')
 	->register('crm', 'OnActivityModified', 'CCrmEMail', 'OnActivityModified')
@@ -213,6 +216,7 @@ $event
 	->register('ai', 'onQueueJobExecute', '\Bitrix\Crm\Integration\AI\EventHandler', 'onQueueJobExecute')
 	->register('ai', 'onQueueJobFail', '\Bitrix\Crm\Integration\AI\EventHandler', 'onQueueJobFail')
 	->register('ai', 'onTuningLoad', '\Bitrix\Crm\Integration\AI\EventHandler', 'onTuningLoad')
+	->register('ai', '\Bitrix\AI\Model\History::OnBeforeAdd', '\Bitrix\Crm\Integration\AI\EventHandler', 'onBeforeAiHistoryAdd')
 	->register('ui', 'onUIFormResetScope', '\Bitrix\Crm\Component\EntityDetails\Config\Scope', 'onUIFormResetScope')
 	->register('ui', 'onUIFormSetScope', '\Bitrix\Crm\Component\EntityDetails\Config\Scope', 'onUIFormSetScope')
 	->register('sale', 'onSalePsBeforeInitiatePay', '\Bitrix\Crm\Terminal\EventsHandler\OnSalePsBeforeInitiatePay', 'handle')
@@ -224,7 +228,9 @@ $event
 	->register('bizproc', 'onWorkflowCommentDeleted', 'Bitrix\Crm\Integration\BizProc\EventHandler', 'onWorkflowCommentDeleted')
 	->register('bizproc', 'onWorkflowAllCommentViewed', 'Bitrix\Crm\Integration\BizProc\EventHandler', 'onWorkflowAllCommentViewed')
 	->register('bizproc', 'onGetDocumentFieldTypes', 'Bitrix\Crm\Integration\BizProc\EventHandler', 'onGetDocumentFieldTypes')
+	->register('bizproc', 'onGetExternalNodesDirs', 'Bitrix\Crm\Integration\BizProc\EventHandler', 'onGetExternalNodesDirs')
 	->register('rest', 'OnUserFieldPlacementPrepareParams', '\Bitrix\Crm\Integration\Rest\EventHandler', 'onUserFieldPlacementPrepareParams')
+	->register('rest', 'onSubscriptionRenew', '\Bitrix\Crm\Integration\Rest\EventHandler', 'onSubscriptionRenew')
 	->register('booking', 'onBookingAdd', '\Bitrix\Crm\Integration\Booking\EventHandler', 'onBookingAdd')
 	->register('booking', 'onBookingUpdate', '\Bitrix\Crm\Integration\Booking\EventHandler', 'onBookingUpdate')
 	->register('booking', 'onBookingDelete', '\Bitrix\Crm\Integration\Booking\EventHandler', 'onBookingDelete')
@@ -233,6 +239,38 @@ $event
 	->register('booking', 'onWaitListItemDelete', '\Bitrix\Crm\Integration\Booking\EventHandler', 'onWaitListItemDelete')
 	->register('intranet', 'onLicenseHasChanged', '\Bitrix\Crm\RepeatSale\AgentsManager', 'onLicenseHasChanged')
 	->register('booking', 'onBookingStatusUpdated', '\Bitrix\Crm\Integration\Booking\EventHandler', 'onBookingStatusUpdated')
+	->register('ui', 'onRichTextUserFieldGetCopilotOptions', '\Bitrix\Crm\Integration\UI\UserField\RichTextCopilotProvider', 'onGetCopilotOptions')
+	->register('intranet', 'onAfterUserFire', '\Bitrix\Crm\Copilot\CallAssessment\Summary\FiredRecipientHandler', 'onAfterUserFire')
+	->registerCompatible(
+		'crm',
+		'OnAfterCrmDealAdd',
+		\Bitrix\Crm\Ads\Pixel\ConversionEventTriggers\Vk\DealTrigger::class,
+		'onDealChangeStage',
+	)
+	->registerCompatible(
+		'crm',
+		'OnAfterCrmDealUpdate',
+		\Bitrix\Crm\Ads\Pixel\ConversionEventTriggers\Vk\DealTrigger::class,
+		'onDealChangeStage',
+	)
+	->registerCompatible(
+		'crm',
+		'OnAfterCrmLeadAdd',
+		\Bitrix\Crm\Ads\Pixel\ConversionEventTriggers\Vk\LeadTrigger::class,
+		'onLeadStageChange',
+	)
+	->registerCompatible(
+		'crm',
+		'OnAfterCrmLeadUpdate',
+		\Bitrix\Crm\Ads\Pixel\ConversionEventTriggers\Vk\LeadTrigger::class,
+		'onLeadStageChange',
+	)
+	->register(
+		'crm',
+		'onSiteFormFilled',
+		\Bitrix\Crm\Ads\Pixel\ConversionEventTriggers\Vk\WebFormFillHandler::class,
+		'handle',
+	)
 ;
 
 $mode = $migration->context()->getDatabaseUpdateMode();

@@ -6,21 +6,15 @@ jn.define('tasks/layout/checklist/list/src/checkbox/progress', (require, exports
 	const { PureComponent } = require('layout/pure-component');
 	const { CHECKBOX_SIZE } = require('tasks/layout/checklist/list/src/constants');
 
-	/**
-	 * @class ChecklistCheckboxProgress
-	 */
 	class ChecklistCheckboxProgress extends PureComponent
 	{
-		/**
-		 * @param {object} props
-		 * @param {function} [props.onClick]
-		 * @param {number} [props.totalCount]
-		 * @param {number} [props.completedCount]
-		 */
+		/** @param {ChecklistCheckboxProgressProps} props */
 		constructor(props)
 		{
 			super(props);
+			/** @type {Object|null} */
 			this.progressRef = null;
+			/** @type {number} */
 			this.currentProgress = 0;
 
 			this.handleOnClick = this.handleOnClick.bind(this);
@@ -44,7 +38,8 @@ jn.define('tasks/layout/checklist/list/src/checkbox/progress', (require, exports
 		}
 
 		/**
-		 * @returns {Promise}
+		 * @param {ChecklistCheckboxProgressProps} props
+		 * @returns {Promise<void>}
 		 */
 		setProgress(props)
 		{
@@ -86,7 +81,7 @@ jn.define('tasks/layout/checklist/list/src/checkbox/progress', (require, exports
 
 		/**
 		 * @private
-		 * @returns {ProgressView}
+		 * @returns {Object}
 		 */
 		render()
 		{

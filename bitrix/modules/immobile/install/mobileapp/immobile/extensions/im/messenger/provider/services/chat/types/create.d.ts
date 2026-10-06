@@ -15,4 +15,5 @@ declare type CreateChatParams = {
 declare type CreateCopilotParams = {
 	type: 'COPILOT' | string,
 	copilotMainRole: string,
+	parentChatId?: number,
 }

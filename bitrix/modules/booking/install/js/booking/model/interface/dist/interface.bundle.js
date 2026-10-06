@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Booking = this.BX.Booking || {};
-(function (exports, main_core, ui_vue3_vuex, booking_const, booking_lib_grid, booking_lib_timezone, booking_lib_utils) {
+(function (exports, main_core, ui_vue3_vuex, booking_const, booking_lib_timezone, booking_lib_utils) {
 	'use strict';
 
 	function getOverbookingOccupancy(overbookingMap, resources) {
@@ -478,23 +478,6 @@ this.BX.Booking = this.BX.Booking || {};
 				setHoveredPlacementSlotStats: (store, stats) => {
 					store.commit('setHoveredPlacementSlotStats', stats);
 				},
-				/** @function interface/goToDayMode */
-				goToDayMode: (store, payload) => {
-					const {
-						selectedDateTs,
-						resourceId
-					} = payload;
-					void store.dispatch('setGridMode', booking_const.Grid.Mode.Day);
-					store.commit('setSelectedDateTs', selectedDateTs);
-					store.commit('setViewDateTs', booking_lib_utils.Utils.time.getMonthStartTs(selectedDateTs));
-					if (resourceId) {
-						const resourceIndex = store.getters.resourcesIds.indexOf(resourceId);
-						if (resourceIndex > 0) {
-							const dayCellWidth = booking_lib_grid.gridTokens.get(booking_lib_grid.GridTokenKey.DayCellWidth);
-							store.commit('setScroll', resourceIndex * dayCellWidth);
-						}
-					}
-				},
 				/** @function interface/upsertBusySlotMany */
 				upsertBusySlotMany: (store, busySlots) => {
 					busySlots.forEach(busySlot => store.commit('upsertBusySlot', busySlot));
@@ -836,5 +819,5 @@ this.BX.Booking = this.BX.Booking || {};
 
 	exports.Interface = Interface;
 
-})(this.BX.Booking.Model = this.BX.Booking.Model || {}, BX, BX.Vue3.Vuex, BX.Booking.Const, BX.Booking.Lib, BX.Booking.Lib, BX.Booking);
+})(this.BX.Booking.Model = this.BX.Booking.Model || {}, BX, BX.Vue3.Vuex, BX.Booking.Const, BX.Booking.Lib, BX.Booking);
 //# sourceMappingURL=interface.bundle.js.map

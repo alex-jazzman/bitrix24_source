@@ -15,10 +15,11 @@
 /* Header */
 .bx-im-list-container-copilot__header_container {
 	width: 100%;
+	height: var(--im-messenger__list-header_height);
 	display: flex;
 	justify-content: center;
 	align-items: center;
-	padding: var(--im-space-inset-md) 13px 14px 13px;
+	padding: var(--im-messenger__list-header_padding);
 	border-bottom: 1px solid var(--im-list-container-copilot__background-color_separator);
 }
 

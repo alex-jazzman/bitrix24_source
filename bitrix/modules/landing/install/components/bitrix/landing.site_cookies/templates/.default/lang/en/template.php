@@ -11,3 +11,4 @@ $MESS["LANDING_TPL_NEW_COOKIES"] = "New cookie type";
 $MESS["LANDING_TPL_TITLE"] = "Edit cookie descriptions";
 $MESS["LANDING_TPL_TITLE_CUSTOM"] = "Custom cookies";
 $MESS["LANDING_TPL_TITLE_SYSTEM"] = "Analytical cookies";
+$MESS["LANDING_TPL_WARNING_CLOSE"] = "Close";

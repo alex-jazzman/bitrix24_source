@@ -142,6 +142,11 @@ declare namespace BX.UI.Accessibility {
 	class InputModalityTracker {
 		attach(doc: Document): void;
 		detach(doc: Document): void;
+		/**
+		 * A key that only changes the meaning of another one: on its own it says nothing
+		 * about how the user interacts.
+		 */
+		static isBareModifier(key: string): boolean;
 		static enableDebug(): void;
 		static disableDebug(): void;
 		getLastModality(): InputModality;
@@ -192,6 +197,11 @@ declare namespace BX.UI.Accessibility {
 	 */
 	class FocusNavigator {
 		static get FOCUSABLE_SELECTOR(): string;
+		/**
+		 * Whether nothing holds the focus any more: it is either gone or fell back onto
+		 * <body>, which the browser focuses when the focused element goes away.
+		 */
+		static isFocusLost(node?: Node | null): boolean;
 		static getFirst(container: HTMLElement, options?: FocusNavigatorOptions): HTMLElement | null;
 		static getLast(container: HTMLElement, options?: FocusNavigatorOptions): HTMLElement | null;
 		static getNext(container: HTMLElement, options?: FocusNavigatorOptions): HTMLElement | null;
@@ -236,6 +246,17 @@ declare namespace BX.UI.Accessibility {
 	 */
 	class InteractivityChecker {
 		static isDisabled(element: HTMLElement): boolean;
+		/**
+		 * An element the user types text into: moving focus away from it drops the
+		 * caret and the current selection, so a widget must not take focus from it.
+		 */
+		static isTextInput(element: HTMLElement | null | undefined): boolean;
+		/**
+		 * An element that consumes navigation keys itself — text editing, caret moves,
+		 * opening a dropdown — so a widget must not intercept those keys from it. Wider
+		 * than `isTextInput`: a `<select>` has no caret, yet the arrows are its own.
+		 */
+		static isEditable(element: HTMLElement | null): boolean;
 		static isVisible(element: HTMLElement): boolean;
 		static isTabbable(element: HTMLElement): boolean;
 		static hasNegativeTabIndex(element: HTMLElement): boolean;

@@ -2,6 +2,7 @@ import { Router } from 'crm.router';
 import { Type } from 'main.core';
 
 import ConfigurableItem from '../../configurable-item';
+import { openCallScoringResultV2 } from '../../open-call-scoring-result-v2';
 import { type ActionParams, Base } from '../base';
 
 export class CallScoringResult extends Base
@@ -37,6 +38,13 @@ export class CallScoringResult extends Base
 			return;
 		}
 
+		if (actionData.isV2)
+		{
+			await openCallScoringResultV2(actionData);
+
+			return;
+		}
+
 		await top.BX.Runtime.loadExtension('crm.ai.call');
 
 		const callQualityDlg = new top.BX.Crm.AI.Call.CallQuality({
@@ -60,13 +68,7 @@ export class CallScoringResult extends Base
 			return;
 		}
 
-		Router.openSlider(
-			`/crm/copilot-call-assessment/details/${actionData.assessmentSettingId}/`,
-			{
-				width: 700,
-				cacheable: false,
-			},
-		);
+		Router.Instance.openCallAssessmentSlider(actionData.assessmentSettingId, { legacyWidth: 700 });
 	}
 
 	static isItemSupported(item: ConfigurableItem): boolean

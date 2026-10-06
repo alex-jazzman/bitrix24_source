@@ -10,6 +10,12 @@
 	cursor: pointer;
 }
 
+.socialnetwork--auto-delete-message-dropdown:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+	border-radius: var(--ui-border-radius-2xs, 4px);
+}
+
 .socialnetwork--auto-delete-message-dropdown.--enabled:hover {
 	color: var(--dropdown-text-color-hover);
 }

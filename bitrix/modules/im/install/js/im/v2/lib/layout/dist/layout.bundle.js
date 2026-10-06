@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports, main_core, main_core_events, im_v2_application_core, im_v2_const, im_v2_lib_access, im_v2_lib_analytics, im_v2_lib_bulkActions, im_v2_lib_channel, im_v2_lib_feature, im_v2_lib_localStorage, im_v2_lib_logger) {
+(function (exports, main_core, main_core_events, im_v2_application_core, im_v2_const, im_v2_lib_access, im_v2_lib_analytics, im_v2_lib_bulkActions, im_v2_lib_channel, im_v2_lib_feature, im_v2_lib_folder, im_v2_lib_localStorage, im_v2_lib_logger) {
 	'use strict';
 
 	const TypesWithoutContext = new Set([im_v2_const.ChatType.comment]);
@@ -11,6 +11,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		static #instance;
 		#emitter;
 		#lastOpenedElement = {};
+		#originLayout = null;
 		static getInstance() {
 			if (!this.#instance) {
 				this.#instance = new this();
@@ -32,6 +33,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 					return Promise.resolve();
 				}
 			}
+			this.#saveOriginLayout();
 			if (config.entityId) {
 				this.setLastOpenedElement(config.name, config.entityId);
 			}
@@ -43,6 +45,20 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			this.#sendAnalytics(config);
 			return im_v2_application_core.Core.getStore().dispatch('application/setLayout', config);
 		}
+		restoreOriginLayout(newEntityId) {
+			let originLayout = this.#originLayout ?? {
+				name: im_v2_const.Layout.chat
+			};
+			if (newEntityId) {
+				originLayout = {
+					...originLayout,
+					entityId: newEntityId,
+					contextId: 0
+				};
+			}
+			this.#originLayout = null;
+			return this.setLayout(originLayout);
+		}
 		getLayout() {
 			return im_v2_application_core.Core.getStore().getters['application/getLayout'];
 		}
@@ -50,13 +66,14 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			const currentLayout = this.getLayout();
 			im_v2_lib_localStorage.LocalStorageManager.getInstance().set(im_v2_const.LocalStorageKey.layoutConfig, {
 				name: currentLayout.name,
-				entityId: currentLayout.entityId
+				entityId: currentLayout.entityId,
+				params: currentLayout.params
 			});
 		}
 		prepareInitialLayout() {
 			const layoutConfig = im_v2_lib_localStorage.LocalStorageManager.getInstance().get(im_v2_const.LocalStorageKey.layoutConfig);
 			if (!layoutConfig) {
-				return this.setLayout({
+				return this.setLayout(im_v2_lib_folder.FolderManager.getInitialLayout() ?? {
 					name: im_v2_const.Layout.chat
 				});
 			}
@@ -117,12 +134,19 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			return Object.values(im_v2_const.Layout).includes(layoutName);
 		}
 		isChatLayout(layoutName) {
-			const chatLayouts = new Set([im_v2_const.Layout.chat, im_v2_const.Layout.channel, im_v2_const.Layout.copilot, im_v2_const.Layout.openlines, im_v2_const.Layout.openlinesV2, im_v2_const.Layout.collab, im_v2_const.Layout.taskComments]);
+			const chatLayouts = new Set([im_v2_const.Layout.chat, im_v2_const.Layout.channel, im_v2_const.Layout.copilot, im_v2_const.Layout.openlines, im_v2_const.Layout.openlinesV2, im_v2_const.Layout.collab, im_v2_const.Layout.taskComments, im_v2_const.Layout.folder]);
 			return chatLayouts.has(layoutName);
 		}
 		isChatFormLayout(layoutName) {
 			const formLayouts = new Set([im_v2_const.Layout.createChat, im_v2_const.Layout.updateChat]);
 			return formLayouts.has(layoutName);
+		}
+		isFolderFormLayout(layoutName) {
+			const formLayouts = new Set([im_v2_const.Layout.createFolder, im_v2_const.Layout.updateFolder]);
+			return formLayouts.has(layoutName);
+		}
+		isFormLayout(layoutName) {
+			return this.isChatFormLayout(layoutName) || this.isFolderFormLayout(layoutName);
 		}
 		async #onGoToMessageContext(event) {
 			const {
@@ -156,6 +180,15 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				im_v2_lib_analytics.Analytics.getInstance().copilot.onOpenTab();
 			}
 			im_v2_lib_analytics.Analytics.getInstance().onOpenTab(config.name);
+		}
+		#saveOriginLayout() {
+			const currentLayout = this.getLayout();
+			if (this.isFormLayout(currentLayout.name)) {
+				return;
+			}
+			this.#originLayout = {
+				...currentLayout
+			};
 		}
 		#isSameChat(config) {
 			const {
@@ -255,5 +288,5 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	exports.LayoutManager = LayoutManager;
 
-})(this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}, BX, BX.Event, BX.Messenger.v2.Application, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib);
+})(this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}, BX, BX.Event, BX.Messenger.v2.Application, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib);
 //# sourceMappingURL=layout.bundle.js.map

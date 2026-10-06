@@ -7,6 +7,7 @@ import { useNodeSettingsStore } from '../../../../entities/node-settings';
 import { BxControl } from '../../directives/bx-control';
 import { FormInputTracker } from '../../directives/form-input-tracker';
 import { handleBpSelectorButtonClick } from '../../utils/bp-selector-button';
+import { closeExpressionBuilder, mountExpressionBuilders } from '../../utils/expression-builder-mount';
 
 // @vue/component
 export const ConditionValueControl = {
@@ -62,11 +63,18 @@ export const ConditionValueControl = {
 			{
 				BX.Bizproc.Selector.initSelectors(this.renderedNode);
 			}
+			mountExpressionBuilders(this.$refs.form, { block: this.block, portId: this.currentRule?.id });
 		};
 		EventEmitter.subscribe('BX.Bizproc.FieldType.onDesignerRenderControlFinished', this.renderFinishedHandler);
+
+		void this.$nextTick(() => {
+			mountExpressionBuilders(this.$refs.form, { block: this.block, portId: this.currentRule?.id });
+		});
 	},
 	unmounted(): void
 	{
+		closeExpressionBuilder();
+
 		if (this.renderFinishedHandler)
 		{
 			EventEmitter.unsubscribe('BX.Bizproc.FieldType.onDesignerRenderControlFinished', this.renderFinishedHandler);
@@ -95,7 +103,7 @@ export const ConditionValueControl = {
 				form: this.$refs.form,
 				store: diagramStore(),
 				block: this.block,
-				portId: this.currentRule.id,
+				portId: this.currentRule?.id,
 				onChange: () => this.onChange(),
 			});
 		},

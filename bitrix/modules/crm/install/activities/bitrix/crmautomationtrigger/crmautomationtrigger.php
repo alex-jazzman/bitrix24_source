@@ -9,6 +9,7 @@ use Bitrix\Bizproc\Result;
 use Bitrix\Bizproc\Error;
 use Bitrix\Crm\Automation\Target\BaseTarget;
 use Bitrix\Crm\Automation\Trigger\BaseTrigger;
+use Bitrix\Crm\Automation\Trigger\EmailSentTrigger;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
@@ -52,13 +53,14 @@ class CBPCrmAutomationTrigger extends Bitrix\Bizproc\Activity\BaseTrigger
 		if (self::isCrmAutomationTrigger($triggerClass))
 		{
 			$trigger = new $triggerClass();
-			$properties =
-				$trigger
-					->setInputData($context['INPUT_DATA'])
-					->getReturnValues() ?? $properties
-			;
+			$trigger->setInputData($context['INPUT_DATA']);
+			if ($target)
+			{
+				$trigger->setTarget($target);
+			}
+			$properties = $trigger->getReturnValues() ?? $properties;
 
-			$returnProperties = self::transformProperties($trigger::toArray()['RETURN'] ?? []);
+			$returnProperties = self::transformProperties($trigger::getReturnProperties());
 		}
 
 		if ($document)
@@ -96,7 +98,7 @@ class CBPCrmAutomationTrigger extends Bitrix\Bizproc\Activity\BaseTrigger
 			$workflowParameters,
 			$workflowVariables,
 			$currentValues,
-			$errors
+			$errors,
 		);
 
 		if (!$result)
@@ -114,7 +116,7 @@ class CBPCrmAutomationTrigger extends Bitrix\Bizproc\Activity\BaseTrigger
 			$additionalProperties = array_intersect_key($properties, self::getAdditionalProperties($triggerClass));
 			$properties['AdditionalProperties'] = $additionalProperties;
 
-			$returnProperties = self::transformProperties($triggerClass::toArray()['RETURN'] ?? []);
+			$returnProperties = self::transformProperties($triggerClass::getReturnProperties());
 			$properties['Return'] = [...$returnProperties];
 		}
 
@@ -172,6 +174,11 @@ class CBPCrmAutomationTrigger extends Bitrix\Bizproc\Activity\BaseTrigger
 			],
 		];
 
+		if ($triggerClass === EmailSentTrigger::class)
+		{
+			$map['condition']['ShowFieldLabel'] = false;
+		}
+
 		if (!empty($complexDocumentType))
 		{
 			$map['condition']['Settings'] = self::getConditionSettings($complexDocumentType);
@@ -204,7 +211,7 @@ class CBPCrmAutomationTrigger extends Bitrix\Bizproc\Activity\BaseTrigger
 		return  self::transformProperties($trigger['SETTINGS']['Properties'] ?? []);
 	}
 
-	public static function validateProperties($arTestProperties = [], CBPWorkflowTemplateUser $user = null)
+	public static function validateProperties($arTestProperties = [], ?CBPWorkflowTemplateUser $user = null)
 	{
 		$fieldsMap = static::getPropertiesMap([], $arTestProperties);
 
@@ -241,7 +248,7 @@ class CBPCrmAutomationTrigger extends Bitrix\Bizproc\Activity\BaseTrigger
 
 	public function checkApplyRules(
 		array $rules,
-		TriggerParameters $parameters
+		TriggerParameters $parameters,
 	): Result
 	{
 		$properties = $this->getAllProperties();
@@ -263,8 +270,8 @@ class CBPCrmAutomationTrigger extends Bitrix\Bizproc\Activity\BaseTrigger
 		$triggerClass = $this->getAllProperties()['TriggerClass'];
 		if ($target && self::isCrmAutomationTrigger($triggerClass))
 		{
-			$trigger =
-				(new $triggerClass())
+			$trigger
+				= (new $triggerClass())
 					->setInputData($parameters->get('INPUT_DATA'))
 					->setTarget($target)
 			;
@@ -406,8 +413,7 @@ class CBPCrmAutomationTrigger extends Bitrix\Bizproc\Activity\BaseTrigger
 	private static function getReturnDocumentMapType(?array $document = null): array
 	{
 		return [
-			'Name' =>
-				$document
+			'Name' => $document
 					? static::getDocumentName($document)
 					: Loc::getMessage('BP_CRM_CRMAT_DOCUMENT')
 			,

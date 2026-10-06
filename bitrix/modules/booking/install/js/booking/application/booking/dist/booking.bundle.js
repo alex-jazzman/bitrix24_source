@@ -1320,6 +1320,67 @@ this.BX.Booking = this.BX.Booking || {};
 	`
 	};
 
+	// @vue/component
+	const TimeScale = {
+		name: 'TimeScale',
+		props: {
+			fromHour: {
+				type: Number,
+				required: true
+			},
+			toHour: {
+				type: Number,
+				required: true
+			},
+			offHoursExpanded: {
+				type: Boolean,
+				required: true
+			}
+		},
+		setup() {
+			return {
+				HoursInDay: booking_lib_grid.HoursInDay
+			};
+		},
+		computed: {
+			hours() {
+				const timeFormat = main_date.DateTimeFormat.getFormat('SHORT_TIME_FORMAT');
+				const lastHour = this.offHoursExpanded ? booking_lib_grid.HoursInDay : this.toHour;
+				return booking_lib_range.range(0, booking_lib_grid.HoursInDay).map(hour => {
+					const timestamp = new Date().setHours(hour, 0) / 1000;
+					return {
+						value: hour,
+						formatted: main_date.DateTimeFormat.format(timeFormat, timestamp),
+						offHours: hour < this.fromHour || hour >= this.toHour,
+						last: hour === lastHour
+					};
+				});
+			}
+		},
+		template: `
+		<div class="booking-booking-time-scale">
+			<template v-for="hour of hours" :key="hour.value">
+				<div
+					v-if="hour.last"
+					class="booking-booking-time-scale__label"
+				>
+					{{ hour.formatted }}
+				</div>
+				<div
+					v-if="hour.value !== HoursInDay"
+					class="booking-booking-time-scale__row"
+					:class="{ '--off-hours': hour.offHours }"
+				>
+					<div class="booking-booking-time-scale__label">
+						{{ hour.formatted }}
+					</div>
+					<slot name="row" :hour="hour"></slot>
+				</div>
+			</template>
+		</div>
+	`
+	};
+
 	const cellHeight = 50;
 	const cellHeightProperty = '--booking-off-hours-cell-height';
 	const classCollapse = '--booking-booking-collapse';
@@ -1588,26 +1649,13 @@ this.BX.Booking = this.BX.Booking || {};
 	const LeftPanel = {
 		computed: {
 			...ui_vue3_vuex.mapGetters({
-				offHoursHover: 'interface/offHoursHover',
 				offHoursExpanded: 'interface/offHoursExpanded',
 				fromHour: 'interface/fromHour',
 				toHour: 'interface/toHour'
-			}),
-			panelHours() {
-				const timeFormat = main_date.DateTimeFormat.getFormat('SHORT_TIME_FORMAT');
-				const lastHour = this.offHoursExpanded ? 24 : this.toHour;
-				return booking_lib_range.range(0, 24).map(hour => {
-					const timestamp = new Date().setHours(hour, 0) / 1000;
-					return {
-						value: hour,
-						formatted: main_date.DateTimeFormat.format(timeFormat, timestamp),
-						offHours: hour < this.fromHour || hour >= this.toHour,
-						last: hour === lastHour
-					};
-				});
-			}
+			})
 		},
 		components: {
+			TimeScale,
 			OffHours: OffHours$1,
 			QuickFilter
 		},
@@ -1616,24 +1664,15 @@ this.BX.Booking = this.BX.Booking || {};
 			<div class="booking-booking-grid-left-panel">
 				<OffHours/>
 				<OffHours :bottom="true"/>
-				<template v-for="hour of panelHours" :key="hour.value">
-					<div
-						v-if="hour.last"
-						class="booking-booking-grid-left-panel-time-text"
-					>
-						{{ hour.formatted }}
-					</div>
-					<div
-						v-if="hour.value !== 24"
-						class="booking-booking-grid-left-panel-time"
-						:class="{'--off-hours': hour.offHours}"
-					>
-						<div class="booking-booking-grid-left-panel-time-text">
-							{{ hour.formatted }}
-						</div>
+				<TimeScale
+					:fromHour="fromHour"
+					:toHour="toHour"
+					:offHoursExpanded="offHoursExpanded"
+				>
+					<template #row="{ hour }">
 						<QuickFilter :hour="hour.value"/>
-					</div>
-				</template>
+					</template>
+				</TimeScale>
 			</div>
 		</div>
 	`
@@ -2063,6 +2102,11 @@ this.BX.Booking = this.BX.Booking || {};
 		components: {
 			UiBusySlot
 		},
+		inject: {
+			gridContext: {
+				default: null
+			}
+		},
 		props: {
 			busySlot: {
 				type: Object,
@@ -2079,7 +2123,7 @@ this.BX.Booking = this.BX.Booking || {};
 				isFilterMode: 'isFilterMode'
 			}),
 			grid() {
-				return booking_lib_grid.gridFactory.getGrid();
+				return booking_lib_grid.GridFactory.getGrid(this.gridContext);
 			},
 			enabledOverbookingFeature() {
 				return this.$store.state[booking_const.Model.Interface].enabledFeature.bookingOverbooking;
@@ -2095,9 +2139,9 @@ this.BX.Booking = this.BX.Booking || {};
 			},
 			positionStyle() {
 				return {
-					'--left': this.left + 'px',
-					'--top': this.top + 'px',
-					'--height': this.height + 'px'
+					'--left': `${this.left}px`,
+					'--top': `${this.top}px`,
+					'--height': `${this.height}px`
 				};
 			},
 			isVisible() {
@@ -2140,6 +2184,11 @@ this.BX.Booking = this.BX.Booking || {};
 	 * @property {boolean} boundedToBottom
 	 */
 	const BaseCell = {
+		inject: {
+			gridContext: {
+				default: null
+			}
+		},
 		props: {
 			/** @type {Cell} */
 			cell: {
@@ -2187,13 +2236,16 @@ this.BX.Booking = this.BX.Booking || {};
 				embedItems: `${booking_const.Model.Interface}/embedItems`
 			}),
 			grid() {
-				return booking_lib_grid.gridFactory.getGrid();
+				return booking_lib_grid.GridFactory.getGrid(this.gridContext);
+			},
+			multiSelectEnabled() {
+				return this.gridContext?.multiSelectEnabled ?? true;
 			},
 			selected() {
-				return this.cell.id in this.selectedPlacementSlots;
+				return this.multiSelectEnabled && this.cell.id in this.selectedPlacementSlots;
 			},
 			hasSelectedCells() {
-				return Object.keys(this.selectedPlacementSlots).length > 0;
+				return this.multiSelectEnabled && Object.keys(this.selectedPlacementSlots).length > 0;
 			},
 			timeFormatted() {
 				const timeFormat = main_date.DateTimeFormat.getFormat('SHORT_TIME_FORMAT');
@@ -2304,7 +2356,7 @@ this.BX.Booking = this.BX.Booking || {};
 					>
 						<span class="booking-booking-grid-cell-time-inner">
 							<input
-								v-if="!draggedDataTransfer.id"
+								v-if="multiSelectEnabled && !draggedDataTransfer.id"
 								class="booking-booking-grid-cell-checkbox"
 								type="checkbox"
 								:checked="selected"
@@ -2433,6 +2485,11 @@ this.BX.Booking = this.BX.Booking || {};
 			BaseCell,
 			UiRestrictionPopup
 		},
+		inject: {
+			gridContext: {
+				default: null
+			}
+		},
 		props: {
 			/** @type {Cell} */
 			cell: {
@@ -2451,11 +2508,22 @@ this.BX.Booking = this.BX.Booking || {};
 		},
 		computed: {
 			...ui_vue3_vuex.mapGetters({
-				overbookingMap: `${booking_const.Model.Bookings}/overbookingMap`,
-				zoom: `${booking_const.Model.Interface}/zoom`
+				overbookingMap: `${booking_const.Model.Bookings}/overbookingMap`
 			}),
 			grid() {
-				return booking_lib_grid.gridFactory.getGrid();
+				return booking_lib_grid.GridFactory.getGrid(this.gridContext);
+			},
+			isWeekMode() {
+				if (this.gridContext) {
+					return this.gridContext.gridMode === booking_const.Grid.Mode.Week;
+				}
+				return this.$store.getters[`${booking_const.Model.Interface}/isWeekMode`];
+			},
+			zoom() {
+				if (this.gridContext) {
+					return this.gridContext.zoom;
+				}
+				return this.$store.getters[`${booking_const.Model.Interface}/zoom`];
 			},
 			left() {
 				const left = this.grid.calculateLeft(this.cell.resourceId);
@@ -2478,10 +2546,20 @@ this.BX.Booking = this.BX.Booking || {};
 				return this.grid.calculateHeight(fromTs, toTs);
 			},
 			width() {
-				return this.overbookingPositionsInCell.length === 0 ? 280 : 280 / 2;
+				const dayCellWidth = booking_lib_grid.gridTokens.get(booking_lib_grid.GridTokenKey.DayCellWidth);
+				return this.overbookingPositionsInCell.length === 0 ? dayCellWidth : dayCellWidth / 2;
 			},
 			isRestricted() {
 				return this.cell.toTs - this.cell.fromTs > booking_lib_drag.MaxInteractionBookingDurationsMs;
+			},
+			isRestrictionPopupVisible() {
+				return this.restrictionPopupEnabled && this.isRestricted && !this.isWeekMode;
+			},
+			restrictionPopupEnabled() {
+				return this.gridContext?.restrictionPopupEnabled ?? true;
+			},
+			isVisible() {
+				return this.left >= 0 && (!this.isRestricted || this.isRestrictionPopupVisible);
 			},
 			popupId() {
 				return `booking-day-restriction-popup-${this.cell.resourceId}-${this.cell.fromTs}`;
@@ -2515,7 +2593,7 @@ this.BX.Booking = this.BX.Booking || {};
 		},
 		template: `
 		<div
-			v-if="left >= 0"
+			v-if="isVisible"
 			class="booking-booking-selected-cell"
 			:style="{
 				'--left': left + 'px',
@@ -2526,7 +2604,7 @@ this.BX.Booking = this.BX.Booking || {};
 			@mouseleave="$store.dispatch('interface/setHoveredPlacementSlot', null)"
 		>
 			<UiRestrictionPopup
-				v-if="isRestricted"
+				v-if="isRestrictionPopupVisible"
 				:message="loc('BOOKING_BOOKING_DAY_CELL_RESTRICTION')"
 				:popupId="popupId"
 			/>
@@ -2553,13 +2631,13 @@ this.BX.Booking = this.BX.Booking || {};
 				resourcesIds: `${booking_const.Model.Interface}/resourcesIds`
 			}),
 			grid() {
-				return booking_lib_grid.gridFactory.getGrid();
+				return booking_lib_grid.GridFactory.getGrid();
 			},
 			top() {
 				return this.grid.calculateTop(this.fromTs);
 			},
 			width() {
-				return this.resourcesIds.length * 280;
+				return this.resourcesIds.length * booking_lib_grid.gridTokens.get(booking_lib_grid.GridTokenKey.DayCellWidth);
 			},
 			fromTs() {
 				return new Date(this.selectedDateTs).setHours(this.hour);
@@ -3782,6 +3860,11 @@ this.BX.Booking = this.BX.Booking || {};
 			TimeSelector: booking_component_timeSelector.TimeSelector,
 			UiButton: booking_component_button.Button
 		},
+		inject: {
+			autoHideContext: {
+				default: null
+			}
+		},
 		props: {
 			bookingId: {
 				type: [Number, String],
@@ -3813,7 +3896,9 @@ this.BX.Booking = this.BX.Booking || {};
 		},
 		computed: {
 			...ui_vue3_vuex.mapGetters({
-				selectedDateTs: `${booking_const.Model.Interface}/selectedDateTs`
+				selectedDateTs: `${booking_const.Model.Interface}/selectedDateTs`,
+				getBookingById: `${booking_const.Model.Bookings}/getById`,
+				overbookingMap: `${booking_const.Model.Bookings}/overbookingMap`
 			}),
 			popupId() {
 				return `booking-change-time-popup-${this.bookingId}-${this.resourceId}`;
@@ -3862,10 +3947,7 @@ this.BX.Booking = this.BX.Booking || {};
 				return this.$store.getters[`${booking_const.Model.Bookings}/getByDateAndResources`](this.selectedDateTs, this.booking.resourcesIds);
 			},
 			booking() {
-				return this.$store.getters['bookings/getById'](this.bookingId);
-			},
-			overbookingMap() {
-				return this.$store.getters[`${booking_const.Model.Bookings}/overbookingMap`];
+				return this.getBookingById(this.bookingId);
 			}
 		},
 		watch: {
@@ -3883,17 +3965,30 @@ this.BX.Booking = this.BX.Booking || {};
 			}
 		},
 		created() {
+			this.unfreezeAutoHide = null;
 			this.fromTs = this.booking.dateFromTs;
 			this.toTs = this.booking.dateToTs;
 			this.duration = this.toTs - this.fromTs;
 		},
 		mounted() {
+			this.freezeParentAutoHide();
 			main_core.Event.bind(document, 'scroll', this.adjustPosition, true);
 		},
 		beforeUnmount() {
+			this.unfreezeParentAutoHide();
 			main_core.Event.unbind(document, 'scroll', this.adjustPosition, true);
 		},
 		methods: {
+			freezeParentAutoHide() {
+				if (this.unfreezeAutoHide) {
+					return;
+				}
+				this.unfreezeAutoHide = this.autoHideContext?.freeze() ?? null;
+			},
+			unfreezeParentAutoHide() {
+				this.unfreezeAutoHide?.();
+				this.unfreezeAutoHide = null;
+			},
 			adjustPosition() {
 				this.$refs.popup.adjustPosition();
 				this.$refs.timeFrom.adjustMenuPosition();
@@ -4186,6 +4281,11 @@ this.BX.Booking = this.BX.Booking || {};
 			DotCounter,
 			FullCounter
 		},
+		inject: {
+			gridContext: {
+				default: null
+			}
+		},
 		props: {
 			bookingId: {
 				type: [Number, String],
@@ -4197,10 +4297,12 @@ this.BX.Booking = this.BX.Booking || {};
 			}
 		},
 		computed: {
-			...ui_vue3_vuex.mapGetters({
-				isWeekMode: `${booking_const.Model.Interface}/isWeekMode`,
-				notificationTypes: `${booking_const.Model.Dictionary}/getNotifications`
-			}),
+			isWeekMode() {
+				if (this.gridContext) {
+					return this.gridContext.gridMode === booking_const.Grid.Mode.Week;
+				}
+				return this.$store.getters[`${booking_const.Model.Interface}/isWeekMode`];
+			},
 			booking() {
 				return this.$store.getters[`${booking_const.Model.Bookings}/getById`](this.bookingId);
 			},
@@ -4208,13 +4310,7 @@ this.BX.Booking = this.BX.Booking || {};
 				if (this.showCounter || this.isExpiredBooking || this.hasVisitStatus || this.isNotVisited) {
 					return false;
 				}
-				const notificationTypes = Object.fromEntries(Object.entries(this.notificationTypes).map(([type, {
-					value
-				}]) => [type, value]));
-				const confirmationSent = this.booking.messages?.some(({
-					notificationType
-				}) => notificationType === notificationTypes.Confirmation);
-				return !this.booking.isConfirmed && confirmationSent;
+				return !this.booking.isConfirmed && this.booking.isConfirmationSent;
 			},
 			showConfirmed() {
 				if (this.showCounter || this.isExpiredBooking || this.isNotVisited) {
@@ -4399,7 +4495,7 @@ this.BX.Booking = this.BX.Booking || {};
 				overbookingMap: `${booking_const.Model.Bookings}/overbookingMap`
 			}),
 			grid() {
-				return booking_lib_grid.gridFactory.getGrid();
+				return booking_lib_grid.GridFactory.getGrid();
 			},
 			featureOverbookingEnabled() {
 				return this.$store.state[booking_const.Model.Interface].enabledFeature.bookingOverbooking;
@@ -4691,17 +4787,19 @@ this.BX.Booking = this.BX.Booking || {};
 		computed: {
 			...ui_vue3_vuex.mapGetters({
 				isBookingCreatedFromEmbed: `${booking_const.Model.Interface}/isBookingCreatedFromEmbed`,
-				editingBookingId: `${booking_const.Model.Interface}/editingBookingId`,
-				isEditingBookingMode: `${booking_const.Model.Interface}/isEditingBookingMode`,
-				offHoursExpanded: `${booking_const.Model.Interface}/offHoursExpanded`,
+				selectedDateTs: `${booking_const.Model.Interface}/selectedDateTs`,
 				fromHour: `${booking_const.Model.Interface}/fromHour`,
 				toHour: `${booking_const.Model.Interface}/toHour`,
-				selectedDateTs: `${booking_const.Model.Interface}/selectedDateTs`,
+				editingBookingId: `${booking_const.Model.Interface}/editingBookingId`,
+				isEditingBookingMode: `${booking_const.Model.Interface}/isEditingBookingMode`,
 				getResourceById: `${booking_const.Model.Resources}/getById`,
 				isDeletingResourceFilterMode: `${booking_const.Model.Filter}/isDeletingResourceFilterMode`,
 				deletingResource: `${booking_const.Model.Filter}/deletingResource`,
 				isMenuOpenedForBooking: `${booking_const.Model.Interface}/isMenuOpenedForBooking`
 			}),
+			offHoursExpanded() {
+				return this.gridContext?.offHoursExpanded ?? this.$store.getters[`${booking_const.Model.Interface}/offHoursExpanded`];
+			},
 			isReal() {
 				return booking_lib_isRealId.isRealId(this.bookingId);
 			},
@@ -5198,6 +5296,11 @@ this.BX.Booking = this.BX.Booking || {};
 			BookingPreviewPopup
 		},
 		mixins: [visibilityMixin, dropHandlerMixin, lockedAnimationMixin, overbookingLayoutMixin, bookingStatesMixin],
+		inject: {
+			gridContext: {
+				default: null
+			}
+		},
 		props: {
 			bookingId: {
 				type: [Number, String],
@@ -5228,16 +5331,30 @@ this.BX.Booking = this.BX.Booking || {};
 		},
 		computed: {
 			...ui_vue3_vuex.mapGetters({
+				selectedFirstDayPeriodTs: `${booking_const.Model.Interface}/selectedFirstDayPeriodTs`,
 				getBookingById: `${booking_const.Model.Bookings}/getById`,
 				deletingBookingsMap: `${booking_const.Model.Interface}/deletingBookings`,
 				animationPause: `${booking_const.Model.Interface}/animationPause`,
-				zoom: `${booking_const.Model.Interface}/zoom`,
 				scroll: `${booking_const.Model.Interface}/scroll`,
-				resourcesIds: `${booking_const.Model.Interface}/resourcesIds`,
-				isWeekMode: `${booking_const.Model.Interface}/isWeekMode`
+				resourcesIds: `${booking_const.Model.Interface}/resourcesIds`
 			}),
 			grid() {
-				return booking_lib_grid.gridFactory.getGrid();
+				return booking_lib_grid.GridFactory.getGrid(this.gridContext);
+			},
+			zoom() {
+				if (this.gridContext) {
+					return this.gridContext.zoom;
+				}
+				return this.$store.getters[`${booking_const.Model.Interface}/zoom`];
+			},
+			isWeekMode() {
+				if (this.gridContext) {
+					return this.gridContext.gridMode === booking_const.Grid.Mode.Week;
+				}
+				return this.$store.getters[`${booking_const.Model.Interface}/isWeekMode`];
+			},
+			resizeEnabled() {
+				return this.gridContext?.resizeEnabled ?? true;
 			},
 			booking() {
 				return this.getBookingById(this.bookingId);
@@ -5280,18 +5397,32 @@ this.BX.Booking = this.BX.Booking || {};
 			dataAttributes() {
 				return {
 					...this.cardDataService.buildDataAttributes('booking-booking-card-container'),
-					'data-resource-id': this.resourceId
+					'data-booking-id': this.bookingId,
+					'data-resource-id': this.resourceId,
+					'data-from': this.dateFromTs,
+					'data-to': this.dateToTs
 				};
 			},
 			bookingDurationMs() {
 				return this.booking.dateToTs - this.booking.dateFromTs;
 			},
+			visiblePeriod() {
+				if (!this.gridContext) {
+					const visiblePeriod = booking_lib_datePeriod.DatePeriod.createByCurrentGridMode();
+					return {
+						fromTs: visiblePeriod.fromTs * 1000,
+						toTs: visiblePeriod.toTs * 1000
+					};
+				}
+				const fromTs = this.isWeekMode ? this.selectedFirstDayPeriodTs : this.selectedDateTs;
+				const durationMs = this.isWeekMode ? booking_const.Grid.Duration.Week : booking_const.Grid.Duration.Day;
+				return {
+					fromTs,
+					toTs: fromTs + durationMs
+				};
+			},
 			visibleBookingDurationMs() {
-				const visiblePeriod = booking_lib_datePeriod.DatePeriod.createByCurrentGridMode();
-				return booking_lib_booking.bookingService.getVisibleDuration(this.booking, {
-					fromTs: visiblePeriod.fromTs * 1000,
-					toTs: visiblePeriod.toTs * 1000
-				});
+				return booking_lib_booking.bookingService.getVisibleDuration(this.booking, this.visiblePeriod);
 			},
 			isWeekGridDetailed() {
 				return this.visibleBookingDurationMs > MinDetailedBookingDurationMs;
@@ -5349,7 +5480,7 @@ this.BX.Booking = this.BX.Booking || {};
 		},
 		mounted() {
 			setTimeout(() => {
-				if (!this.isReal && booking_lib_mousePosition.mousePosition.isMousePressed()) {
+				if (!this.isReal && this.resizeEnabled && this.$refs.resize && booking_lib_mousePosition.mousePosition.isMousePressed()) {
 					void this.$refs.resize.startResize();
 				}
 			}, 300);
@@ -5433,7 +5564,10 @@ this.BX.Booking = this.BX.Booking || {};
 				/>
 			</template>
 			<template #add-client-button>
-				<BookingAddClient :cardDataService :expired="isExpiredBooking"/>
+				<BookingAddClient
+					:cardDataService
+					:expired="isExpiredBooking"
+				/>
 			</template>
 			<template #actions>
 				<Actions
@@ -5442,7 +5576,7 @@ this.BX.Booking = this.BX.Booking || {};
 					:actionsPopupOptions
 				/>
 			</template>
-			<template #resize v-if="!isWeekMode">
+			<template #resize v-if="!isWeekMode && resizeEnabled">
 				<Resize
 					v-if="!disabled"
 					:bookingId="bookingId"
@@ -5520,10 +5654,11 @@ this.BX.Booking = this.BX.Booking || {};
 		},
 		computed: {
 			...ui_vue3_vuex.mapGetters({
-				selectedDateTs: `${booking_const.Model.Interface}/selectedDateTs`
+				selectedDateTs: `${booking_const.Model.Interface}/selectedDateTs`,
+				isWeekMode: `${booking_const.Model.Interface}/isWeekMode`
 			}),
 			grid() {
-				return booking_lib_grid.gridFactory.getGrid();
+				return booking_lib_grid.GridFactory.getGrid();
 			},
 			resource() {
 				return this.$store.getters[`${booking_const.Model.Resources}/getById`](this.resourceId);
@@ -5564,7 +5699,7 @@ this.BX.Booking = this.BX.Booking || {};
 		},
 		template: `
 		<div
-			v-if="isRestricted && left >= 0"
+			v-if="!isWeekMode && isRestricted && left >= 0"
 			class="booking-booking-create-restriction-overlay"
 			:style="{
 				'--left': left + 'px',
@@ -5603,6 +5738,11 @@ this.BX.Booking = this.BX.Booking || {};
 			BookingDay,
 			CreateRestrictionOverlay
 		},
+		inject: {
+			gridContext: {
+				default: null
+			}
+		},
 		data() {
 			return {
 				nowTs: Date.now()
@@ -5613,9 +5753,8 @@ this.BX.Booking = this.BX.Booking || {};
 				overbookingMap: 'overbookingMap'
 			}),
 			...mapInterfaceGetters$4({
-				resourcesIds: 'resourcesIds',
-				selectedDateTs: 'selectedDateTs',
 				selectedPlacementSlots: 'selectedPlacementSlots',
+				selectedDateTs: 'selectedDateTs',
 				hoveredPlacementSlot: 'hoveredPlacementSlot',
 				busySlots: 'busySlots',
 				isFeatureEnabled: 'isFeatureEnabled',
@@ -5676,11 +5815,26 @@ this.BX.Booking = this.BX.Booking || {};
 				const cells = [...Object.values(this.selectedPlacementSlots), this.hoveredPlacementSlot];
 				const dateFromTs = this.selectedDateTs;
 				const dateToTs = new Date(dateFromTs).setDate(new Date(dateFromTs).getDate() + 1);
-				return cells.filter(cell => cell && cell.toTs > dateFromTs && dateToTs > cell.fromTs);
+				return cells.filter(cell => {
+					return cell && this.resourcesIds.includes(cell.resourceId) && cell.toTs > dateFromTs && dateToTs > cell.fromTs;
+				});
+			},
+			visibleBusySlots() {
+				const dateFromTs = this.selectedDateTs;
+				const dateToTs = new Date(dateFromTs).setDate(new Date(dateFromTs).getDate() + 1);
+				return this.busySlots.filter(busySlot => {
+					return this.resourcesIds.includes(busySlot.resourceId) && busySlot.toTs > dateFromTs && dateToTs > busySlot.fromTs;
+				});
 			},
 			quickFilterHours() {
+				if (!this.quickFilterEnabled) {
+					return [];
+				}
 				const activeHours = new Set(Object.values(this.quickFilter.active));
 				return Object.values(this.quickFilter.hovered).filter(hour => !activeHours.has(hour));
+			},
+			quickFilterEnabled() {
+				return this.gridContext?.quickFilterEnabled ?? true;
 			},
 			resourceBookings() {
 				return splitBookingsByResourceId(this.bookings);
@@ -5698,6 +5852,12 @@ this.BX.Booking = this.BX.Booking || {};
 				return this.bookings.find(({
 					id
 				}) => id === this.draggedBookingId) || null;
+			},
+			resourcesIds() {
+				if (this.gridContext) {
+					return this.gridContext.resourcesIds;
+				}
+				return this.$store.getters[`${booking_const.Model.Interface}/resourcesIds`];
 			}
 		},
 		watch: {
@@ -5735,7 +5895,7 @@ this.BX.Booking = this.BX.Booking || {};
 			}"
 		>
 			<div class="booking-booking-bookings__busy-slots">
-				<template v-for="busySlot of busySlots" :key="busySlot.id">
+				<template v-for="busySlot of visibleBusySlots" :key="busySlot.id">
 					<BusySlot
 						:busySlot="busySlot"
 					/>
@@ -5894,7 +6054,7 @@ this.BX.Booking = this.BX.Booking || {};
 					return;
 				}
 				this.halfOffset = 0;
-				const clientY = event.clientY - window.scrollY;
+				const clientY = event.clientY;
 				const rect = this.$el.getBoundingClientRect();
 				const bottomHalf = clientY > (rect.top + rect.top + rect.height) / 2;
 				const canSubtractHalfHour = this.fromTs >= this.freeSpace.fromTs;
@@ -5984,15 +6144,13 @@ this.BX.Booking = this.BX.Booking || {};
 			}
 		},
 		template: `
-		<div class="booking-booking-grid-padding">
-			<div
-				class="booking-booking-column-off-hours"
-				:class="{'--bottom': bottom, '--hover': offHoursHover}"
-				@click="animateOffHours({ keepScroll: bottom })"
-				@mouseenter="$store.dispatch('interface/setOffHoursHover', true)"
-				@mouseleave="$store.dispatch('interface/setOffHoursHover', false)"
-			></div>
-		</div>
+		<div
+			class="booking-booking-column-off-hours"
+			:class="{'--bottom': bottom, '--hover': offHoursHover}"
+			@click="animateOffHours({ keepScroll: bottom })"
+			@mouseenter="$store.dispatch('interface/setOffHoursHover', true)"
+			@mouseleave="$store.dispatch('interface/setOffHoursHover', false)"
+		></div>
 	`
 	};
 
@@ -6005,6 +6163,11 @@ this.BX.Booking = this.BX.Booking || {};
 		components: {
 			DayGridCell,
 			OffHours
+		},
+		inject: {
+			gridContext: {
+				default: null
+			}
 		},
 		props: {
 			resourceId: {
@@ -6019,18 +6182,24 @@ this.BX.Booking = this.BX.Booking || {};
 		},
 		computed: {
 			...mapInterfaceGetters$3({
-				resourcesIds: 'resourcesIds',
 				zoom: 'zoom',
 				scroll: 'scroll',
-				selectedDateTs: 'selectedDateTs',
-				offHoursHover: 'offHoursHover',
-				offHoursExpanded: 'offHoursExpanded',
+				offset: 'offset',
 				fromHour: 'fromHour',
 				toHour: 'toHour',
-				offset: 'offset'
+				selectedDateTs: 'selectedDateTs'
 			}),
 			resource() {
 				return this.$store.getters['resources/getById'](this.resourceId);
+			},
+			resourcesIds() {
+				if (this.gridContext) {
+					return this.gridContext.resourcesIds;
+				}
+				return this.$store.getters[`${booking_const.Model.Interface}/resourcesIds`];
+			},
+			isOffHoursControlsEnabled() {
+				return this.gridContext?.offHoursControlsEnabled ?? true;
 			},
 			fromMinutes() {
 				return this.fromHour * 60;
@@ -6104,7 +6273,9 @@ this.BX.Booking = this.BX.Booking || {};
 			:data-id="resourceId"
 		>
 			<template v-if="visible">
-				<OffHours/>
+				<div class="booking-booking-grid-padding">
+					<OffHours v-if="isOffHoursControlsEnabled"/>
+				</div>
 				<div class="booking-booking-grid-off-hours-cells">
 					<DayGridCell v-for="cell of offHoursTopCells" :key="cell.id" :cell="cell"/>
 				</div>
@@ -6112,7 +6283,9 @@ this.BX.Booking = this.BX.Booking || {};
 				<div class="booking-booking-grid-off-hours-cells --bottom">
 					<DayGridCell v-for="cell of offHoursBottomCells" :key="cell.id" :cell="cell"/>
 				</div>
-				<OffHours :bottom="true"/>
+				<div class="booking-booking-grid-padding">
+					<OffHours v-if="isOffHoursControlsEnabled" :bottom="true"/>
+				</div>
 			</template>
 		</div>
 	`
@@ -6401,18 +6574,18 @@ this.BX.Booking = this.BX.Booking || {};
 		},
 		computed: {
 			...ui_vue3_vuex.mapGetters({
-				resourcesIds: `${booking_const.Model.Interface}/resourcesIds`,
 				scroll: `${booking_const.Model.Interface}/scroll`,
 				editingBookingId: `${booking_const.Model.Interface}/editingBookingId`,
 				editingWaitListItemId: `${booking_const.Model.Interface}/editingWaitListItemId`,
 				isFeatureEnabled: `${booking_const.Model.Interface}/isFeatureEnabled`,
 				isLoaded: `${booking_const.Model.Interface}/isLoaded`,
 				selectedDateTs: `${booking_const.Model.Interface}/selectedDateTs`,
+				resourcesIds: `${booking_const.Model.Interface}/resourcesIds`,
 				filteredBookingsIds: `${booking_const.Model.Filter}/filteredBookingsIds`,
 				isFilterMode: `${booking_const.Model.Filter}/isFilterMode`
 			}),
 			grid() {
-				return booking_lib_grid.gridFactory.getGrid();
+				return booking_lib_grid.GridFactory.getGrid();
 			},
 			editingBooking() {
 				return this.$store.getters['bookings/getById'](this.editingBookingId) ?? null;
@@ -6420,7 +6593,7 @@ this.BX.Booking = this.BX.Booking || {};
 		},
 		watch: {
 			scroll(value) {
-				this.applyScroll(value);
+				this.$refs.columnsContainer.scrollLeft = value;
 			},
 			editingBooking() {
 				this.scrollToEditingBooking();
@@ -6460,7 +6633,6 @@ this.BX.Booking = this.BX.Booking || {};
 			if (this.isLoaded) {
 				this.setupDrag();
 			}
-			this.applyScroll(this.scroll);
 			main_core_events.EventEmitter.subscribe('BX.Main.Popup:onAfterClose', this.tryShowAhaMoment);
 			main_core_events.EventEmitter.subscribe('BX.Main.Popup:onDestroy', this.tryShowAhaMoment);
 		},
@@ -6469,9 +6641,6 @@ this.BX.Booking = this.BX.Booking || {};
 			main_core_events.EventEmitter.unsubscribe('BX.Main.Popup:onDestroy', this.tryShowAhaMoment);
 		},
 		methods: {
-			applyScroll(value) {
-				this.$refs.columnsContainer.scrollLeft = value;
-			},
 			updateEars() {
 				this.ears.toggleEars();
 				this.tryShowAhaMoment();
@@ -6747,6 +6916,209 @@ this.BX.Booking = this.BX.Booking || {};
 	`
 	};
 
+	const {
+		H: HourDuration,
+		i: MinuteDuration
+	} = booking_lib_duration.Duration.getUnitDurations();
+	const MinutesInHour = HourDuration / MinuteDuration;
+	const DayColumnPopupGridPaddingTop = 7;
+
+	// @vue/component
+	const DayColumnPopup = {
+		name: 'DayColumnPopup',
+		components: {
+			StickyPopup: booking_component_popup.StickyPopup,
+			Bookings: Bookings$1,
+			Column,
+			TimeScale
+		},
+		provide() {
+			return {
+				gridContext: this.dayGridContext,
+				autoHideContext: {
+					freeze: () => this.freezePopupAutoHide()
+				}
+			};
+		},
+		props: {
+			bindElement: {
+				type: HTMLElement,
+				required: true
+			},
+			dateTs: {
+				type: Number,
+				required: true
+			},
+			resourceId: {
+				type: Number,
+				required: true
+			}
+		},
+		emits: ['close'],
+		setup() {
+			return {
+				DayColumnPopupGridPaddingTop
+			};
+		},
+		data() {
+			return {
+				autoHideFreezeCount: 0
+			};
+		},
+		computed: {
+			...ui_vue3_vuex.mapGetters({
+				offset: `${booking_const.Model.Interface}/offset`,
+				fromHour: `${booking_const.Model.Interface}/fromHour`,
+				toHour: `${booking_const.Model.Interface}/toHour`,
+				timezone: `${booking_const.Model.Interface}/timezone`
+			}),
+			dayGridContext() {
+				return {
+					gridMode: booking_const.Grid.Mode.Day,
+					resourcesIds: [this.resourceId],
+					zoom: 1,
+					offHoursExpanded: true,
+					multiSelectEnabled: false,
+					resizeEnabled: false,
+					restrictionPopupEnabled: false,
+					quickFilterEnabled: false,
+					offHoursControlsEnabled: false
+				};
+			},
+			popupId() {
+				return `booking-week-day-column-popup-${this.resourceId}-${this.dateTs}`;
+			},
+			headerDate() {
+				return main_date.DateTimeFormat.format('j F Y', (this.dateTs + this.offset) / 1000);
+			},
+			resource() {
+				return this.$store.getters[`${booking_const.Model.Resources}/getById`](this.resourceId) ?? null;
+			},
+			resourceName() {
+				return this.resource?.name ?? '';
+			},
+			weekDay() {
+				return booking_const.DateFormat.WeekDays[new Date(this.dateTs + this.offset).getDay()];
+			},
+			workingSlotRanges() {
+				return booking_lib_slotRanges.SlotRanges.applyTimezone(this.resource?.slotRanges ?? [], this.dateTs, this.timezone).filter(slotRange => slotRange.weekDays.includes(this.weekDay));
+			},
+			firstWorkingMinutes() {
+				if (this.workingSlotRanges.length === 0) {
+					return 0;
+				}
+				const firstWorkingMinutes = Math.min(...this.workingSlotRanges.map(slotRange => slotRange.from));
+				return Math.max(0, firstWorkingMinutes);
+			},
+			config() {
+				return {
+					className: 'booking-booking-day-column-popup',
+					bindElement: this.bindElement,
+					offsetLeft: this.bindElement.offsetWidth + 6,
+					offsetTop: -56,
+					animation: 'fading-slide'
+				};
+			}
+		},
+		mounted() {
+			this.scrollToFirstWorkingTime();
+		},
+		methods: {
+			closePopup() {
+				this.$emit('close');
+			},
+			scrollToFirstWorkingTime() {
+				void this.$nextTick(() => {
+					if (!this.$refs.grid) {
+						return;
+					}
+					this.$refs.grid.scrollTop = this.getScrollTopByMinutes(this.firstWorkingMinutes);
+				});
+			},
+			getScrollTopByMinutes(minutes) {
+				if (minutes <= 0) {
+					return 0;
+				}
+				const hourHeight = booking_lib_grid.gridTokens.get(booking_lib_grid.GridTokenKey.DayHourHeight);
+				const scrollTop = minutes / MinutesInHour * hourHeight + DayColumnPopupGridPaddingTop - hourHeight / 2;
+				return Math.max(0, scrollTop);
+			},
+			freezePopupAutoHide() {
+				let unfrozen = false;
+				if (this.autoHideFreezeCount === 0) {
+					this.$refs.popup?.freeze();
+				}
+				this.autoHideFreezeCount++;
+				return () => {
+					if (unfrozen) {
+						return;
+					}
+					unfrozen = true;
+					if (this.autoHideFreezeCount === 0) {
+						return;
+					}
+					this.autoHideFreezeCount--;
+					if (this.autoHideFreezeCount === 0) {
+						this.$refs.popup?.unfreeze();
+					}
+				};
+			}
+		},
+		template: `
+		<StickyPopup
+			:id="popupId"
+			:config="config"
+			ref="popup"
+			@close="closePopup"
+		>
+			<div
+				class="booking-booking-day-column-popup__content booking-booking__base-component --ui-context-content-light --day-mode"
+			>
+				<div class="booking-booking-day-column-popup__header">
+					<span
+						v-if="resourceName"
+						class="booking-booking-day-column-popup__resource-name"
+						:title="resourceName"
+					>
+						{{ resourceName }},
+					</span>
+					<span class="booking-booking-day-column-popup__date">{{ headerDate }}</span>
+					<div
+						class="ui-icon-set --cross-45"
+						data-element="booking-day-column-popup-close"
+						@click="closePopup"
+					></div>
+				</div>
+				<div
+					class="booking-booking-day-column-popup__grid booking-vertical-scroll-bar"
+					ref="grid"
+				>
+					<div
+						class="booking-booking-day-column-popup__grid-inner"
+						:style="{
+							'--from-hour': fromHour,
+							'--to-hour': toHour,
+							'--booking-day-column-popup-grid-padding-top': DayColumnPopupGridPaddingTop + 'px',
+						}"
+					>
+						<div class="booking-booking-day-column-popup__time-scale">
+							<TimeScale
+								:fromHour="fromHour"
+								:toHour="toHour"
+								:offHoursExpanded="dayGridContext.offHoursExpanded"
+							/>
+						</div>
+						<div class="booking-booking-day-column-popup__column">
+							<Bookings/>
+							<Column :resourceId="resourceId"/>
+						</div>
+					</div>
+				</div>
+			</div>
+		</StickyPopup>
+	`
+	};
+
 	const MinAvailableZoom = 1;
 	const InsufficientZoomMinVisibleDurationMs = booking_lib_duration.Duration.getUnitDurations().H / 2;
 	const InsufficientZoomThreshold = 2;
@@ -6896,6 +7268,7 @@ this.BX.Booking = this.BX.Booking || {};
 				required: true
 			}
 		},
+		emits: ['openDayColumnPopup'],
 		setup() {
 			return {
 				ButtonColor: ui_vue3_components_button.ButtonColor,
@@ -6916,22 +7289,29 @@ this.BX.Booking = this.BX.Booking || {};
 			}
 		},
 		methods: {
-			goToDayMode() {
-				void this.$store.dispatch(`${booking_const.Model.Interface}/goToDayMode`, {
-					selectedDateTs: this.cell.fromTs + this.offset,
+			openDayColumnPopup() {
+				this.$emit('openDayColumnPopup', {
+					dateTs: this.cell.fromTs + this.offset,
 					resourceId: this.cell.resourceId
 				});
 			}
 		},
 		template: `
-		<div class="booking-booking__week-cell-stats-overlay">
+		<div
+			class="booking-booking__week-cell-stats-overlay"
+			data-element="booking-week-cell-stats-overlay"
+		>
 			<div class="booking-booking__week-cell-stats-overlay__content">
 				<div class="booking-booking__week-cell-stats-overlay__rows">
 					<div class="booking-booking__week-cell-stats-overlay__row">
 						<span class="booking-booking__week-cell-stats-overlay__row_label">
 							{{ loc('BOOKING_BOOKING_WEEK_STATS_CELL_BUSY') }}
 						</span>
-						<div class="booking-booking__week-cell-stats-overlay__row_counter">
+						<div
+							class="booking-booking__week-cell-stats-overlay__row_counter"
+							data-element="booking-week-cell-stats-overlay-busy-counter"
+							:data-value="busyCount"
+						>
 							<UiCounter
 								:value="busyCount"
 								:maxValue="999"
@@ -6944,7 +7324,11 @@ this.BX.Booking = this.BX.Booking || {};
 						<span class="booking-booking__week-cell-stats-overlay__row_label">
 							{{ loc('BOOKING_BOOKING_WEEK_STATS_CELL_FREE') }}
 						</span>
-						<div class="booking-booking__week-cell-stats-overlay__row_counter">
+						<div
+							class="booking-booking__week-cell-stats-overlay__row_counter"
+							data-element="booking-week-cell-stats-overlay-free-counter"
+							:data-value="freeCount"
+						>
 							<UiCounter
 								:value="freeCount"
 								:maxValue="999"
@@ -6957,10 +7341,11 @@ this.BX.Booking = this.BX.Booking || {};
 				<div class="booking-booking__week-cell-stats-overlay__button-container">
 					<UiButton
 						class="booking-booking__week-cell-stats-overlay__button-container_button"
+						:dataset="{ element: 'booking-week-cell-stats-overlay-create-button' }"
 						:text="loc('BOOKING_BOOKING_SELECT')"
 						:size="ButtonSize.EXTRA_EXTRA_SMALL"
 						:color="ButtonColor.PRIMARY"
-						@click="goToDayMode()"
+						@click="openDayColumnPopup"
 					/>
 				</div>
 			</div>
@@ -6984,6 +7369,7 @@ this.BX.Booking = this.BX.Booking || {};
 				required: true
 			}
 		},
+		emits: ['openDayColumnPopup'],
 		data() {
 			return {
 				hoveredHour: 0,
@@ -7117,6 +7503,12 @@ this.BX.Booking = this.BX.Booking || {};
 			clearTimeout(this.cellStatsTimeoutId);
 		},
 		methods: {
+			openDayColumnPopup(params) {
+				this.$emit('openDayColumnPopup', {
+					...params,
+					bindElement: this.$refs.cellContainer
+				});
+			},
 			syncHoveredCell() {
 				if (this.isBookingDragged) {
 					return;
@@ -7286,7 +7678,11 @@ this.BX.Booking = this.BX.Booking || {};
 		},
 		template: `
 		<div
+			ref="cellContainer"
 			class="booking-booking__booking__week-grid_row-cell"
+			data-element="booking-week-grid-day-cell"
+			:data-resource-id="resourceId"
+			:data-date="dayStartTs"
 			@mouseenter="onMouseEnter"
 			@mouseleave="onMouseLeave"
 			@mouseup.capture="onMouseUp"
@@ -7294,6 +7690,7 @@ this.BX.Booking = this.BX.Booking || {};
 			<CellStatsOverlay
 				v-if="needShowStatsOverlay"
 				:cell
+				@openDayColumnPopup="openDayColumnPopup"
 			/>
 		</div>
 	`
@@ -7315,6 +7712,7 @@ this.BX.Booking = this.BX.Booking || {};
 				required: true
 			}
 		},
+		emits: ['openDayColumnPopup'],
 		computed: {
 			...mapInterfaceGetters$2({
 				selectedFirstDayPeriodTs: 'selectedFirstDayPeriodTs',
@@ -7337,15 +7735,21 @@ this.BX.Booking = this.BX.Booking || {};
 				return weekData;
 			}
 		},
+		methods: {
+			openDayColumnPopup(params) {
+				this.$emit('openDayColumnPopup', params);
+			}
+		},
 		template: `
 		<div
 			class="booking-booking__booking__week-grid_row"
 			:data-id="resourceId"
 		>
-			<template v-for="day of week" key="day.id">
+			<template v-for="day of week" :key="day.id">
 				<WeekGridCell
 					:resourceId
 					:dayStartTs="day.dayStartTs"
+					@openDayColumnPopup="openDayColumnPopup"
 				/>
 			</template>
 		</div>
@@ -7385,7 +7789,7 @@ this.BX.Booking = this.BX.Booking || {};
 				isFilterMode: 'isFilterMode'
 			}),
 			grid() {
-				return booking_lib_grid.gridFactory.getGrid();
+				return booking_lib_grid.GridFactory.getGrid();
 			},
 			enabledOverbookingFeature() {
 				return this.$store.state[booking_const.Model.Interface].enabledFeature.bookingOverbooking;
@@ -7510,7 +7914,7 @@ this.BX.Booking = this.BX.Booking || {};
 				overbookingMap: `${booking_const.Model.Bookings}/overbookingMap`
 			}),
 			grid() {
-				return booking_lib_grid.gridFactory.getGrid();
+				return booking_lib_grid.GridFactory.getGrid();
 			},
 			dayIndex() {
 				return this.grid.getDayIndex(this.cell.fromTs);
@@ -7682,7 +8086,7 @@ this.BX.Booking = this.BX.Booking || {};
 				isFilterMode: 'isFilterMode'
 			}),
 			grid() {
-				return booking_lib_grid.gridFactory.getGrid();
+				return booking_lib_grid.GridFactory.getGrid();
 			},
 			resourcesHash() {
 				const resources = this.$store.getters[`${booking_const.Model.Resources}/getByIds`](this.resourcesIds).map(({
@@ -7831,6 +8235,7 @@ this.BX.Booking = this.BX.Booking || {};
 		components: {
 			DaysPanel,
 			NavigationPanel,
+			DayColumnPopup,
 			Row,
 			NowLine,
 			Bookings,
@@ -7838,6 +8243,11 @@ this.BX.Booking = this.BX.Booking || {};
 			DragDelete
 		},
 		mixins: [DragMixin],
+		data() {
+			return {
+				dayColumnPopupParams: null
+			};
+		},
 		computed: {
 			...ui_vue3_vuex.mapGetters({
 				resourcesIds: `${booking_const.Model.Interface}/resourcesIds`,
@@ -7877,9 +8287,22 @@ this.BX.Booking = this.BX.Booking || {};
 				this.setupDrag();
 			}
 		},
+		beforeUnmount() {
+			this.closeDayColumnPopup();
+			this.ears?.destroy();
+			this.ears = null;
+		},
 		methods: {
+			async openDayColumnPopup(params) {
+				await this.$store.dispatch(`${booking_const.Model.Interface}/setSelectedDateTs`, params.dateTs);
+				this.dayColumnPopupParams = params;
+			},
+			closeDayColumnPopup() {
+				this.dayColumnPopupParams = null;
+				void this.$store.dispatch(`${booking_const.Model.Interface}/setHoveredPlacementSlot`, null);
+			},
 			updateEars() {
-				this.ears.toggleEars();
+				this.ears?.toggleEars();
 			}
 		},
 		template: `
@@ -7899,7 +8322,7 @@ this.BX.Booking = this.BX.Booking || {};
 					@after-enter="updateEars"
 				>
 					<template v-for="resourceId of resourcesIds" :key="resourceId">
-						<Row :resourceId="resourceId"/>
+						<Row :resourceId="resourceId" @openDayColumnPopup="openDayColumnPopup"/>
 					</template>
 				</TransitionGroup>
 				<Bookings/>
@@ -7908,6 +8331,13 @@ this.BX.Booking = this.BX.Booking || {};
 			<ScalePanel :withZoom="false"/>
 			<DragDelete/>
 		</div>
+		<DayColumnPopup
+			v-if="dayColumnPopupParams"
+			:bindElement="dayColumnPopupParams.bindElement"
+			:dateTs="dayColumnPopupParams.dateTs"
+			:resourceId="dayColumnPopupParams.resourceId"
+			@close="closeDayColumnPopup"
+		/>
 	`
 	};
 
@@ -9967,6 +10397,7 @@ this.BX.Booking = this.BX.Booking || {};
 				class="booking-booking-header-add-resource"
 				:class="{ '--hover': hovered }"
 				ref="button"
+				data-testid="booking-add-resource-button"
 				@click="addResource"
 				@mouseenter="hovered = true"
 				@mouseleave="hovered = false"
@@ -10002,17 +10433,11 @@ this.BX.Booking = this.BX.Booking || {};
 		},
 		watch: {
 			scroll(value) {
-				this.applyScroll(value);
-			}
-		},
-		mounted() {
-			this.applyScroll(this.scroll);
-		},
-		methods: {
-			applyScroll(value) {
 				this.$refs.container[this.inactiveScrollProperty] = 0;
 				this.$refs.container[this.scrollProperty] = value;
-			},
+			}
+		},
+		methods: {
 			handleScroll() {
 				const scrollValue = this.$refs.container[this.scrollProperty];
 				this.$store.dispatch('interface/setScroll', scrollValue);
@@ -11360,9 +11785,9 @@ this.BX.Booking = this.BX.Booking || {};
 	`
 	};
 
-	var imgLogoYa = "/bitrix/js/booking/application/booking/dist/assets/logo_ya_maps_square_rounded.png";
+	var imgLogoYa = "/bitrix/js/booking/application/booking/dist/assets/logo_ya_maps_square_rounded.svg";
 
-	var imgLogoTwoGis = "/bitrix/js/booking/application/booking/dist/assets/logo_two_gis_square_rounded.png";
+	var imgLogoTwoGis = "/bitrix/js/booking/application/booking/dist/assets/logo_two_gis_square_rounded.webp";
 
 	const OPTIONS_MAPS_STATUSES = [{
 		id: 1,
@@ -11494,9 +11919,9 @@ this.BX.Booking = this.BX.Booking || {};
 	`
 	};
 
-	var imgSrcVisual = "/bitrix/js/booking/application/booking/dist/assets/calendar_geo_message_pads_2.png";
+	var imgSrcVisual = "/bitrix/js/booking/application/booking/dist/assets/calendar_geo_message_pads_2.webp";
 
-	var imgSrcGrad = "/bitrix/js/booking/application/booking/dist/assets/gradient_copilot_complex_2.png";
+	var imgSrcGrad = "/bitrix/js/booking/application/booking/dist/assets/gradient_copilot_complex_2.webp";
 
 	var imgIconPopup = "/bitrix/js/booking/application/booking/dist/assets/icon_popup_checked_square_rounded.svg";
 
@@ -11821,7 +12246,7 @@ this.BX.Booking = this.BX.Booking || {};
 		<div class="booking-booking__switch-view-container" ref="dayWeekButton">
 			<UiButton
 				class="booking-booking__switch-view-button"
-				data-id="booking-booking-switch-view-day-button"
+				:dataset="{ id: 'booking-booking-switch-view-day-button' }"
 				:text="loc('BOOKING_BOOKING_SWITZER_DAY_BUTTON')"
 				:size="ButtonSize.SMALL"
 				:style="AirButtonStyle.OUTLINE_NO_ACCENT"

@@ -23,7 +23,7 @@ export class AiAgentsPage
 		this.isAiAgentsAvailableByTariff = params?.isAiAgentsAvailableByTariff;
 		this.aiAgentsTariffSliderCode = params?.aiAgentsTariffSliderCode;
 
-		this.#initGridManager();
+		this.#initGridManager(params?.isExistingRunsWarningSpent === true);
 		this.#bindEvents();
 	}
 
@@ -32,9 +32,14 @@ export class AiAgentsPage
 		this.#bindAddAgentButtonEvent();
 	}
 
-	#initGridManager(): void
+	#initGridManager(isExistingRunsWarningSpent: boolean): void
 	{
 		this.gridManager = GridManager.getInstance(this.agentsGridId);
+
+		if (isExistingRunsWarningSpent)
+		{
+			this.gridManager.markExistingRunsWarningSpent();
+		}
 	}
 
 	#bindAddAgentButtonEvent(): void

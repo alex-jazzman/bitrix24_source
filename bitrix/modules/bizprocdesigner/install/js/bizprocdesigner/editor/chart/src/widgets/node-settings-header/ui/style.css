@@ -30,3 +30,7 @@
 .ui-chip.editor-chart-data-inspector-toggle {
 	margin-bottom: 7px;
 }
+
+.editor-chart-data-inspector-toggle:hover {
+	background-color: var(--ui-color-bg-state-hover-default);
+}

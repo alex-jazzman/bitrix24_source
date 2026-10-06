@@ -20,6 +20,7 @@ if (IsModuleInstalled('bizproc'))
 
 use Bitrix\Crm\Conversion\LeadConversionDispatcher;
 use Bitrix\Crm\Integrity\DuplicateControl;
+use Bitrix\Main\Web\Uri;
 
 global $USER_FIELD_MANAGER, $DB, $USER, $APPLICATION;
 $CCrmLead = new CCrmLead();
@@ -801,13 +802,10 @@ elseif(isset($_GET['delete']) && check_bitrix_sessid())
 		$_SESSION[$errorID] = $arResult['ERROR_MESSAGE'];
 
 		LocalRedirect(
-			CHTTP::urlAddParams(
-				CComponentEngine::MakePathFromTemplate(
+			(string)(new Uri(CComponentEngine::MakePathFromTemplate(
 					$arParams['PATH_TO_LEAD_EDIT'],
 					array('lead_id' => $arResult['ELEMENT']['ID'])
-				),
-				array('error' => $errorID)
-			)
+				)))->addParams(array('error' => $errorID))
 		);
 	}
 }

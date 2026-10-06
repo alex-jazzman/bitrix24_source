@@ -14,6 +14,7 @@ use Bitrix\Note\Internal\Access\ActionDictionary;
 use Bitrix\Note\Internal\Access\Component\PermissionConfig;
 use Bitrix\Note\Internal\Access\Permission\PermissionDictionary;
 use Bitrix\Note\Internal\Access\Service\RolePermissionService;
+use Bitrix\Note\Internal\Service\License\LicenseService;
 
 if (!Loader::includeModule('note'))
 {
@@ -101,7 +102,18 @@ class NoteConfigPermissionsAjaxController extends Controller
 
 	private function checkAccessPermissions(): bool
 	{
+		// Tariff/tool gate before ACL: same denial as an ACL failure.
+		if ($this->createLicenseService()->isAccessBlocked())
+		{
+			return false;
+		}
+
 		return AccessController::getCurrent()->check(ActionDictionary::ACTION_NOTE_EDIT_PERMISSIONS);
+	}
+
+	protected function createLicenseService(): LicenseService
+	{
+		return new LicenseService();
 	}
 
 }

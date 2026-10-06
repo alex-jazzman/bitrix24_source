@@ -5,3 +5,4 @@ $MESS['CRM_AUTOMATION_TRIGGER_VISIT_NAME_1'] = 'Отследить факт за
 $MESS['CRM_AUTOMATION_TRIGGER_VISIT_DESCRIPTION'] = 'Меняет стадию после того, как менеджер записал разговор с клиентом с помощью визит-трекера';
 
 $MESS['CRM_AUTOMATION_TRIGGER_VISIT_NODE_DESCRIPTION'] = 'Запускает процесс после того, как менеджер записал разговор с клиентом с помощью визит-трекера';
+$MESS['CRM_AUTOMATION_TRIGGER_VISIT_EVENT_DATE_TIME'] = 'Дата и время записи переговоров';

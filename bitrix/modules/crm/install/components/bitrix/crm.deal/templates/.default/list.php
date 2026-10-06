@@ -198,3 +198,5 @@ else
 		['HIDE_ICONS' => 'Y']
 	);
 }
+
+echo (\Bitrix\Crm\Tour\EInvoicePromo::getInstance()->build($analytics));

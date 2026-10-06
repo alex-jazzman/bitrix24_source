@@ -15,7 +15,7 @@ import { EntitySearchType, EntitySearchConfig } from '../../const/const';
 import { getFirstItemFromSearchResults } from '../../helpers/get-first-search-item';
 import { getMinTokenSize } from '../../helpers/get-min-token-size';
 import { mergeSearchItems } from '../../helpers/merge-search-items';
-import { EmptyState } from '../elements/empty-state';
+import { SearchEmptyState } from '../elements/empty-state/search';
 import { SearchItem } from '../elements/search-item';
 
 import '../css/chat-search.css';
@@ -23,7 +23,7 @@ import '../css/chat-search.css';
 // @vue/component
 export const ForwardSearch = {
 	name: 'ForwardSearch',
-	components: { ScrollWithGradient, SearchItem, EmptyState },
+	components: { ScrollWithGradient, SearchItem, SearchEmptyState },
 	props: {
 		query: {
 			type: String,
@@ -218,7 +218,7 @@ export const ForwardSearch = {
 						:query="query"
 						@clickItem="onClickItem($event, index)"
 					/>
-					<EmptyState v-if="isEmptyState" />
+					<SearchEmptyState v-if="isEmptyState" />
 				</template>
 			</div>
 		</ScrollWithGradient> 

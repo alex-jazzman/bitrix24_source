@@ -3,7 +3,6 @@ export * from './inspector-search/inspector-search';
 export * from './inspector-view-mode-button/inspector-view-mode-button';
 export * from './inspector-grid-view/inspector-grid-view';
 export * from './inspector-scheme-view/inspector-scheme-view';
-export * from './inspector-scheme-view/components/inspector-scheme-loading-view/inspector-scheme-loading-view';
 export * from './inspector-close-button/inspector-close-button';
 export * from './node-settings-rules-inspector-toggle-button/node-settings-rules-inspector-toggle-button';
 export * from './inspector-empty-state/inspector-empty-state';

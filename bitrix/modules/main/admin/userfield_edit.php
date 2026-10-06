@@ -594,8 +594,8 @@ else:
 		<td><input type="text" name="LIST[n0][XML_ID]" value="" size="15" maxlength="255"></td>
 		<td><input type="text" name="LIST[n0][VALUE]" value="" size="35" maxlength="255"></td>
 		<td><input type="text" name="LIST[n0][SORT]" value="500" size="5" maxlength="10"></td>
-		<td><input type="<?=($userFieldData['MULTIPLE'] == "Y"? "checkbox": "radio")?>" name="LIST[DEF][]" value="n0"></td>
-		<td><input type="checkbox" name="LIST[n0][DEL]" value="Y"></td>
+		<td><input type="<?=($userFieldData['MULTIPLE'] == "Y"? "checkbox": "radio")?>" name="LIST[DEF][]" value="n0" id="DEF[n0]"></td>
+		<td><input type="checkbox" name="LIST[n0][DEL]" value="Y" id="DEL[n0]"></td>
 	</tr>
 <?php
 endif;

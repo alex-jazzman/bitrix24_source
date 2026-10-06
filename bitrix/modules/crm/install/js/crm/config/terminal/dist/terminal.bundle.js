@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
 this.BX.Crm.Config = this.BX.Crm.Config || {};
-(function (exports, ui_dialogs_messagebox, main_core, ui_vue3, ui_switcher, main_popup, ui_vue3_vuex, rest_client, bitrix24_phoneverify, ui_label, landing_backend) {
+(function (exports, ui_dialogs_messagebox, main_core, ui_vue3, ui_switcher, main_popup, ui_vue3_vuex, ui_a11y, rest_client, bitrix24_phoneverify, ui_label, landing_backend) {
 	'use strict';
 
 	const SettingsContainer = {
@@ -18,16 +18,18 @@ this.BX.Crm.Config = this.BX.Crm.Config || {};
 		},
 		template: `
 	<div class="settings-container">
-		<div
+		<button
+			type="button"
 			class="ui-slider-heading-4 settings-container-title"
 			v-bind:class="{ 'settings-container-title-collapsed': collapsed }"
+			v-bind:aria-expanded="collapsed ? 'false' : 'true'"
 			v-on:click="onTitleClicked"
 		>
-			<div :class="iconStyle"></div>
+			<span :class="iconStyle"></span>
 			{{ title }}
-		</div>
+		</button>
 
-		<div class="settings-section-list" v-bind:class="{ 'settings-section-list-collapsed': collapsed }">
+		<div class="settings-section-list" v-bind:class="{ 'settings-section-list-collapsed': collapsed }" v-bind:inert="collapsed">
 			<slot></slot>
 		</div>
 	</div>
@@ -42,20 +44,26 @@ this.BX.Crm.Config = this.BX.Crm.Config || {};
 			};
 		},
 		mounted() {
-			new BX.UI.Switcher({
+			this.switcher = ui_vue3.markRaw(new BX.UI.Switcher({
 				node: this.$refs.switcher,
 				size: 'small',
 				checked: this.isEnabled,
 				handlers: {
 					toggled: this.onSwitcherToggle.bind(this)
 				}
-			});
+			}));
 			BX.UI.Hint.init(this.$refs.title);
 		},
 		methods: {
 			onSwitcherToggle() {
 				this.isEnabled = !this.isEnabled;
 				this.$emit('toggle', this.isEnabled);
+			},
+			onSwitcherKeydown(event) {
+				if (event.key === 'Enter' || event.key === ' ') {
+					event.preventDefault();
+					this.switcher.toggle();
+				}
 			},
 			onTitleClick() {
 				this.$emit('titleClick');
@@ -85,7 +93,15 @@ this.BX.Crm.Config = this.BX.Crm.Config || {};
 		<div>
 			<div class="ui-slider-heading-4 settings-section-header">
 				<div v-if="switchable" class="settings-setction-switcher-container">
-					<span ref="switcher" class="ui-switcher"></span>
+					<span
+						ref="switcher"
+						class="ui-switcher"
+						role="switch"
+						tabindex="0"
+						:aria-checked="isEnabled ? 'true' : 'false'"
+						:aria-label="title"
+						@keydown="onSwitcherKeydown"
+					></span>
 				</div>
 				<div v-if="leftIconClass" :class="leftIconClass"></div>
 				<div
@@ -125,21 +141,86 @@ this.BX.Crm.Config = this.BX.Crm.Config || {};
 			};
 		},
 		mounted() {
-			main_core.Event.bind(document, 'click', () => {
-				this.isListShowed = false;
-			});
+			main_core.Event.bind(document, 'click', this.onDocumentClick);
+		},
+		beforeUnmount() {
+			main_core.Event.unbind(document, 'click', this.onDocumentClick);
 		},
 		methods: {
+			onDocumentClick() {
+				this.isListShowed = false;
+			},
+			handleFocusOut(event) {
+				if (!this.isListShowed) {
+					return;
+				}
+				const next = event.relatedTarget;
+				if (next && this.$refs.root.contains(next)) {
+					return;
+				}
+
+				// Focus left the component (e.g. via Tab) — close without pulling focus back to
+				// the trigger, otherwise Tab would loop into the selector instead of moving on.
+				this.isListShowed = false;
+			},
 			...ui_vue3_vuex.mapGetters(['getServiceLink', 'getActiveSmsServices']),
 			...ui_vue3_vuex.mapMutations(['selectSMSService']),
 			switchService(serviceId) {
-				this.isListShowed = false;
 				this.selectSMSService(serviceId);
+				this.closeList();
 			},
 			switchVisibility() {
 				this.isListShowed = !this.isListShowed;
 			},
+			closeList() {
+				this.isListShowed = false;
+				const trigger = this.$refs.trigger;
+				this.$nextTick(() => {
+					ui_a11y.FocusNavigator.focusTarget(trigger);
+				});
+			},
+			handleTriggerKeydown(event) {
+				if (event.key === 'Escape') {
+					if (this.isListShowed) {
+						event.preventDefault();
+						this.closeList();
+					}
+					return;
+				}
+				const isOpenKey = event.key === 'ArrowDown' || event.key === 'ArrowUp' || event.key === 'Enter' || event.key === ' ';
+				if (!isOpenKey) {
+					return;
+				}
+				event.preventDefault();
+				this.isListShowed = true;
+				this.$nextTick(() => {
+					ui_a11y.FocusNavigator.focusFirst(this.$refs.list);
+				});
+			},
+			handleListKeydown(event) {
+				if (event.key === 'Escape') {
+					event.preventDefault();
+					this.closeList();
+					return;
+				}
+				if (event.key === 'ArrowDown') {
+					event.preventDefault();
+					ui_a11y.FocusNavigator.focusNext(this.$refs.list, {
+						from: event.target,
+						wrap: true
+					});
+					return;
+				}
+				if (event.key === 'ArrowUp') {
+					event.preventDefault();
+					ui_a11y.FocusNavigator.focusPrevious(this.$refs.list, {
+						from: event.target,
+						wrap: true
+					});
+				}
+			},
 			openSmsServicesSlider() {
+				this.isListShowed = false;
 				const options = {
 					cacheable: false,
 					allowChangeHistory: false,
@@ -165,11 +246,24 @@ this.BX.Crm.Config = this.BX.Crm.Config || {};
 		},
 		// language=Vue
 		template: `
-		<div style="display: inline-block; vertical-align: top; position: relative;">
-			<span class="sms-provider-selector" @click.stop="switchVisibility">{{ $Bitrix.Loc.getMessage('CRM_CFG_TERMINAL_SETTINGS_SECTION_SMS_CHANGE_MSGVER_1') }}</span>
-			<ul :class="getListClassname" @click.stop>
-				<li v-for="provider in getActiveSmsServices()" @click="switchService(provider['ID'])" v-show="provider['ID'] !== getSelectedService['ID']">{{ provider['NAME'] }}</li>
-				<li @click="openSmsServicesSlider">{{ $Bitrix.Loc.getMessage('CRM_CFG_TERMINAL_SETTINGS_SECTION_SMS_SERVICE_PROVIDER_CONNECT_MORE') }}</li>
+		<div ref="root" style="display: inline-block; vertical-align: top; position: relative;" @focusout="handleFocusOut">
+			<button
+				type="button"
+				ref="trigger"
+				data-testid="terminal-sms-provider-trigger"
+				class="sms-provider-selector"
+				aria-haspopup="true"
+				v-bind:aria-expanded="isListShowed ? 'true' : 'false'"
+				@click.stop="switchVisibility"
+				@keydown="handleTriggerKeydown"
+			>{{ $Bitrix.Loc.getMessage('CRM_CFG_TERMINAL_SETTINGS_SECTION_SMS_CHANGE_MSGVER_1') }}</button>
+			<ul ref="list" :class="getListClassname" @click.stop @keydown="handleListKeydown">
+				<li v-for="provider in getActiveSmsServices()" :key="provider['ID']" v-show="provider['ID'] !== getSelectedService['ID']">
+					<button type="button" :data-testid="'terminal-sms-provider-item-' + provider['ID']" class="sms-provider-selector-item" @click="switchService(provider['ID'])">{{ provider['NAME'] }}</button>
+				</li>
+				<li>
+					<button type="button" data-testid="terminal-sms-provider-connect-more" class="sms-provider-selector-item" @click="openSmsServicesSlider">{{ $Bitrix.Loc.getMessage('CRM_CFG_TERMINAL_SETTINGS_SECTION_SMS_SERVICE_PROVIDER_CONNECT_MORE') }}</button>
+				</li>
 			</ul>
 		</div>
 	`
@@ -188,15 +282,15 @@ this.BX.Crm.Config = this.BX.Crm.Config || {};
 			},
 			getSectionHint() {
 				const replacements = {
-					'#LINK_START#': '<a onclick="top.BX.Helper.show(\'redirect=detail&code=17399056\')" style="cursor: pointer">',
-					'#LINK_END#': '</a>'
+					'#LINK_START#': '<button type="button" data-testid="terminal-sms-hint-help-btn" class="crm-terminal-inline-button" onclick="top.BX.Helper.show(\'redirect=detail&code=17399056\')">',
+					'#LINK_END#': '</button>'
 				};
 				return this.$Bitrix.Loc.getMessage('CRM_CFG_TERMINAL_SETTINGS_SECTION_SMS_HINT_TEXT', replacements);
 			},
 			getNotificationConnectHint() {
 				const replacements = {
-					'#LINK_START#': '<span onclick="top.BX.Helper.show(\'redirect=detail&code=17399068\')" class="sms-provider-selector">',
-					'#LINK_END#': '</span>'
+					'#LINK_START#': '<button type="button" data-testid="terminal-sms-connect-help-btn" onclick="top.BX.Helper.show(\'redirect=detail&code=17399068\')" class="sms-provider-selector">',
+					'#LINK_END#': '</button>'
 				};
 				return this.$Bitrix.Loc.getMessage('CRM_CFG_TERMINAL_SETTINGS_SECTION_SMS_SERVICE_PROVIDER_UNC_CONNECTED', replacements);
 			}
@@ -631,7 +725,9 @@ this.BX.Crm.Config = this.BX.Crm.Config || {};
 						/>
 						<div class="payment-system-status-container">
 							<span v-html="getStatusLabel(this.getIsSbpConnected)"></span>
-							<span
+							<button
+								type="button"
+								data-testid="terminal-paysystem-sbp-set-btn"
 								class="payment-system-set"
 								:class="getIsSbpConnected ? 'payment-system-set-connected' : 'payment-system-set-not-connected'"
 								v-on:click="openPaysystemSlider(getRequiredPaysystemCodes.sbp)"
@@ -639,7 +735,7 @@ this.BX.Crm.Config = this.BX.Crm.Config || {};
 								{{ $Bitrix.Loc.getMessage(this.getIsSbpConnected
 								? 'CRM_CFG_TERMINAL_SETTINGS_SECTION_PS_SET'
 								: 'CRM_CFG_TERMINAL_SETTINGS_SECTION_PS_CONNECT') }}
-							</span>
+							</button>
 						</div>
 					</div>
 
@@ -654,7 +750,9 @@ this.BX.Crm.Config = this.BX.Crm.Config || {};
 						/>
 						<div class="payment-system-status-container">
 							<span v-html="getStatusLabel(this.getIsSberQrConnected)"></span>
-							<span
+							<button
+								type="button"
+								data-testid="terminal-paysystem-sberqr-set-btn"
 								class="payment-system-set"
 								:class="getIsSberQrConnected ? 'payment-system-set-connected' : 'payment-system-set-not-connected'"
 								v-on:click="openPaysystemSlider(getRequiredPaysystemCodes.sberQr)"
@@ -662,7 +760,7 @@ this.BX.Crm.Config = this.BX.Crm.Config || {};
 								{{ $Bitrix.Loc.getMessage(this.getIsSberQrConnected
 								? 'CRM_CFG_TERMINAL_SETTINGS_SECTION_PS_SET'
 								: 'CRM_CFG_TERMINAL_SETTINGS_SECTION_PS_CONNECT') }}
-							</span>
+							</button>
 						</div>
 					</div>
 
@@ -680,7 +778,9 @@ this.BX.Crm.Config = this.BX.Crm.Config || {};
 						/>
 						<div class="payment-system-status-container">
 							<span v-html="getStatusLabel(paysystem.isConnected)"></span>
-							<span
+							<button
+								type="button"
+								:data-testid="'terminal-paysystem-set-btn-' + paysystem.type"
 								class="payment-system-set"
 								:class="paysystem.isConnected ? 'payment-system-set-connected' : 'payment-system-set-not-connected'"
 								v-on:click="openPaysystemSlider(getRequiredPaysystemCodes.rest, paysystem.path)"
@@ -688,7 +788,7 @@ this.BX.Crm.Config = this.BX.Crm.Config || {};
 								{{ $Bitrix.Loc.getMessage(paysystem.isConnected
 								? 'CRM_CFG_TERMINAL_SETTINGS_SECTION_PS_SET'
 								: 'CRM_CFG_TERMINAL_SETTINGS_SECTION_PS_CONNECT') }}
-							</span>
+							</button>
 						</div>
 					</div>
 
@@ -702,20 +802,24 @@ this.BX.Crm.Config = this.BX.Crm.Config || {};
 						/>
 						<div class="payment-system-status-container">
 							<span v-html="getStatusLabel(this.getIsAnyPaysystemActive && this.getIsConnectedSitePublished && getIsPhoneConfirmed)"></span>
-							<span
+							<button
+								type="button"
+								data-testid="terminal-paysystem-panel-set-btn"
 								class="payment-system-set payment-system-set-connected"
 								v-on:click="openPaysystemSlider(getRequiredPaysystemCodes.paysystemPanel)"
 								v-if="getIsConnectedSitePublished && getIsPhoneConfirmed"
 							>
 								{{ $Bitrix.Loc.getMessage('CRM_CFG_TERMINAL_SETTINGS_SECTION_PS_PAYMENT_METHOD') }}
-							</span>
-							<span
+							</button>
+							<button
+								type="button"
+								data-testid="terminal-paysystem-connect-site-btn"
 								class="payment-system-set payment-system-set-not-connected"
 								v-on:click="connectSite()"
 								v-else
 							>
 								{{ $Bitrix.Loc.getMessage('CRM_CFG_TERMINAL_SETTINGS_SECTION_PS_CONNECT') }}
-							</span>
+							</button>
 						</div>
 					</div>
 				</div>
@@ -758,7 +862,7 @@ this.BX.Crm.Config = this.BX.Crm.Config || {};
 			}
 		},
 		template: `
-		<div :class="buttonsPanelClass">
+		<div :class="buttonsPanelClass" :inert="!isSettingsChanged">
 			<div class="ui-button-panel ui-button-panel-align-center">
 				<button
 					@click="save"
@@ -766,12 +870,14 @@ this.BX.Crm.Config = this.BX.Crm.Config || {};
 				>
 					{{ $Bitrix.Loc.getMessage('CRM_CFG_TERMINAL_SETTINGS_SAVE_BTN') }}
 				</button>
-				<a
+				<button
+					type="button"
+					data-testid="terminal-settings-cancel-btn"
 					@click="cancel"
 					class="ui-btn ui-btn-link"
 				>
 					{{ $Bitrix.Loc.getMessage('CRM_CFG_TERMINAL_SETTINGS_CANCEL_BTN') }}
-				</a>
+				</button>
 			</div>
 		</div>
 	`
@@ -1142,5 +1248,5 @@ this.BX.Crm.Config = this.BX.Crm.Config || {};
 
 	exports.App = App;
 
-})(this.BX.Crm.Config.Terminal = this.BX.Crm.Config.Terminal || {}, BX.UI.Dialogs, BX, BX.Vue3, BX.UI, BX.Main, BX.Vue3.Vuex, BX, BX.Bitrix24, BX.UI, BX.Landing);
+})(this.BX.Crm.Config.Terminal = this.BX.Crm.Config.Terminal || {}, BX.UI.Dialogs, BX, BX.Vue3, BX.UI, BX.Main, BX.Vue3.Vuex, BX.UI.Accessibility, BX, BX.Bitrix24, BX.UI, BX.Landing);
 //# sourceMappingURL=terminal.bundle.js.map

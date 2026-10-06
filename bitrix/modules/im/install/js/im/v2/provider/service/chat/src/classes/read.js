@@ -2,12 +2,13 @@ import { type Store } from 'ui.vue3.vuex';
 import { type RestClient } from 'rest.client';
 
 import { Core } from 'im.v2.application.core';
-import { RestMethod, type ChatTypeItem } from 'im.v2.const';
+import { RestMethod, type RecentTypeItem, type ParentChatIdType } from 'im.v2.const';
 import { Logger } from 'im.v2.lib.logger';
 import { UuidManager } from 'im.v2.lib.uuid';
 import { runAction } from 'im.v2.lib.rest';
-import { CounterManager, CounterClearHandlersByChatType, CounterClearActions } from 'im.v2.lib.counter';
+import { CounterManager } from 'im.v2.lib.counter';
 import { type ImModelChat } from 'im.v2.model';
+import { UnreadModeManager } from 'im.v2.lib.unread-mode';
 
 type ReadResult = {
 	chatId: number,
@@ -31,30 +32,23 @@ export class ReadService
 		this.#restClient = Core.getRestClient();
 	}
 
-	readAllByType(type: ChatTypeItem)
+	readAllByRecentType(recentType: RecentTypeItem, parentChatId: ParentChatIdType): void
 	{
-		const counterClearHandlers = CounterClearHandlersByChatType[type];
+		CounterManager.clearCountersByRecentType(recentType, parentChatId);
 
-		if (counterClearHandlers)
-		{
-			counterClearHandlers.forEach((handler) => {
-				handler(type);
-			});
-		}
+		UnreadModeManager.removeClosedChats(recentType, parentChatId);
 
-		runAction(RestMethod.imV2ChatReadAllByType, {
-			data: { type },
+		runAction(RestMethod.imV2ChatReadByRecentType, {
+			data: { recentSection: recentType, parentId: parentChatId },
 		}).catch(([error]) => {
-			console.error('ReadService: readAllByType error', error);
+			console.error('ReadService: readAllByRecentType error', error);
 		});
 	}
 
 	readAll(): void
 	{
 		Logger.warn('ReadService: readAll');
-		CounterClearActions.forEach((actionHandler) => {
-			void actionHandler();
-		});
+		CounterManager.clearAllCounters();
 
 		runAction(RestMethod.imV2ChatReadAll)
 			.catch(([error]) => {

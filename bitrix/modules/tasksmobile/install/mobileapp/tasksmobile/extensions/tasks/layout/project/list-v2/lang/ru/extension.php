@@ -1,0 +1,15 @@
+<?php
+
+$MESS['TASKSMOBILE_PROJECT_LIST_MORE_MENU_EXPIRED'] = 'Просроченные';
+$MESS['TASKSMOBILE_PROJECT_LIST_MORE_MENU_COMMENTS'] = 'Новые комментарии';
+$MESS['TASKSMOBILE_PROJECT_LIST_MORE_MENU_MY_COUNTERS_SECTION'] = 'Мои задачи';
+$MESS['TASKSMOBILE_PROJECT_LIST_MORE_MENU_READ_ALL'] = 'Прочитать все';
+$MESS['TASKSMOBILE_PROJECT_LIST_MORE_MENU_READ_ALL_NOTIFICATION'] = 'Все комментарии прочитаны';
+$MESS['TASKSMOBILE_PROJECT_LIST_EMPTY_PORTAL_TITLE'] = 'Создайте первый проект';
+$MESS['TASKSMOBILE_PROJECT_LIST_EMPTY_PORTAL_LIST_ITEM_CHATS'] = 'Чаты и звонки по проекту собраны вместе';
+$MESS['TASKSMOBILE_PROJECT_LIST_EMPTY_PORTAL_LIST_ITEM_TASKS'] = 'Задачи, файлы, доски, календарь внутри проекта';
+$MESS['TASKSMOBILE_PROJECT_LIST_EMPTY_PORTAL_LIST_ITEM_GPT'] = '#COPILOT_NAME# помогает команде и каждому лично';
+$MESS['TASKSMOBILE_PROJECT_LIST_EMPTY_USER_TITLE'] = 'У вас нет проектов';
+$MESS['TASKSMOBILE_PROJECT_LIST_EMPTY_USER_DESCRIPTION'] = 'Создавайте проекты, чтобы видеть общую картину работы над задачами';
+$MESS['TASKSMOBILE_PROJECT_LIST_EMPTY_SEARCH_TITLE'] = 'Таких проектов нет';
+$MESS['TASKSMOBILE_PROJECT_LIST_EMPTY_SEARCH_DESCRIPTION'] = 'Попробуйте изменить параметры поиска';

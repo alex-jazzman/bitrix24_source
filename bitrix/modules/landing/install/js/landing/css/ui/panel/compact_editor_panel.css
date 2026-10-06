@@ -1,0 +1,103 @@
+/* Compact editor panel (AI sites): text formatting toolbar (B / I / U / S / link + AI)
+   that floats above the selection. Visual-only refinements on top of the
+   shared editor_panel.css / editor_action_button.css - scoped strictly under
+   .landing-ui-panel-compact-editor so the classic (non-AI) panel is untouched. */
+
+.landing-ui-panel-compact-editor {
+	/* base .landing-ui-panel-editor pins height:42px and overflow:hidden,
+	   which clips vertical padding and rounded button highlights */
+	height: auto;
+	overflow: visible;
+	padding: 6px 10px;
+	border-radius: var(--ui-border-radius-lg, 12px);
+	box-shadow: 0 7px 14px 0 rgba(0, 0, 0, .11);
+
+	/* horizontal row: vertically centered buttons with a uniform 10px gap */
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+
+.landing-ui-panel-compact-editor .landing-ui-button-compact-editor-action {
+	/* Fixed 24x30 buttons in a 10px-gap row. The whole button is the hover/active
+	   chip, so every button (incl. the shared-padded createLink) is identical.
+	   width/padding override the shared .landing-ui-button-editor-action box. */
+	box-sizing: border-box;
+	width: 24px;
+	height: 30px;
+	padding: 0;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	line-height: normal;
+	border-radius: var(--ui-border-radius-sm, 8px);
+	transition: background-color 200ms ease;
+}
+
+/* The icon lives inside a .landing-ui-button-text span. By default it is an
+   inline-block sitting on the text baseline, so line-height/descender space
+   pushes the glyph off-center vertically - most visible on --o-link and
+   --bitrix-gpt, whose glyphs sit slightly low/high within their viewBox. Make
+   the wrapper a flex box (and the icon a block) so the icon is centered by
+   layout, independent of the inline baseline. */
+.landing-ui-panel-compact-editor .landing-ui-button-compact-editor-action .landing-ui-button-text {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	line-height: 0;
+}
+
+.landing-ui-panel-compact-editor .landing-ui-button-compact-editor-action .ui-icon-set {
+	display: block;
+}
+
+/* hover: rounded background highlight on the whole 24x30 button (uniform chip) */
+.landing-ui-panel-compact-editor .landing-ui-button-compact-editor-action:hover {
+	background: var(--ui-color-bg-state-hover-default, rgba(0, 0, 0, .05));
+}
+
+/* active toggle (e.g. bold applied): selected-format highlight.
+   Overrides the 30x30 / radius-2px .landing-ui-active ::before box from the
+   shared editor_action_button.css to match the rounded panel styling */
+.landing-ui-panel-compact-editor .landing-ui-button-compact-editor-action.landing-ui-active {
+	background: var(--ui-color-bg-state-click-default, rgba(0, 0, 0, .08));
+}
+
+.landing-ui-panel-compact-editor .landing-ui-button-compact-editor-action.landing-ui-active .landing-ui-button-text::before {
+	content: none;
+}
+
+/* Separator before the link button: give it a 10px gap on each side.
+   The 10px flex gap already sits to the left of the link button; an extra 10px
+   left margin widens that space to 20px, and the divider (::after, defined in
+   the shared editor_action_button.css) is re-centered into it (-10px). */
+.landing-ui-panel-compact-editor .landing-ui-button-compact-editor-action.--link {
+	margin-left: 10px;
+	/* neutralize the shared `[data-id="createLink"] { padding: 0 9px !important }`
+	   so the link button keeps the uniform 24x30 box */
+	padding: 0 !important;
+}
+
+.landing-ui-panel-compact-editor .landing-ui-button-compact-editor-action.--link::after {
+	left: -10px;
+}
+
+/* ui.icon-set icons (B / I / U / S / link): 24x24 blocks, #828B95 idle /
+   #525C69 active-hover, matching the former landing-ui-icon-editor-* coloring */
+.landing-ui-panel-compact-editor .landing-ui-button-compact-editor-action .ui-icon-set {
+	--ui-icon-set__icon-size: 24px;
+	--ui-icon-set__icon-color: var(--ui-color-base-50);
+}
+
+.landing-ui-panel-compact-editor .landing-ui-button-compact-editor-action:hover .ui-icon-set,
+.landing-ui-panel-compact-editor .landing-ui-button-compact-editor-action.landing-ui-active .ui-icon-set {
+	--ui-icon-set__icon-color: var(--ui-color-base-50);
+}
+
+/* AI (bitrix-gpt) icon: the mask clips a gradient background to the glyph shape.
+   Higher specificity (.--ai .--bitrix-gpt) keeps the gradient even on button
+   hover/active, which only recolor plain icons via --ui-icon-set__icon-color */
+.landing-ui-panel-compact-editor .landing-ui-button-compact-editor-action.--ai .ui-icon-set.--bitrix-gpt {
+	--ui-icon-set__icon-color: initial;
+	background: linear-gradient(264.09deg, #F96269 1.67%, #F046B7 21.82%, #9D48FF 52.44%, #3F68FF 76.41%, #0098EA 97.21%);
+}

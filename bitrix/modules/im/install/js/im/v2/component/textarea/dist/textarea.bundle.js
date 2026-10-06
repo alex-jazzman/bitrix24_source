@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports, main_core, main_core_events, ui_iconSet_api_vue, ui_iconSet_outline, ui_uploader_core, im_v2_application_core, im_v2_component_elements_sendButton, im_v2_const, im_v2_lib_analytics, im_v2_lib_draft, im_v2_lib_escManager, im_v2_lib_feature, im_v2_lib_hotkey, im_v2_lib_inputAction, im_v2_lib_localStorage, im_v2_lib_logger, im_v2_lib_message, im_v2_lib_parser, im_v2_lib_soundNotification, im_v2_lib_textarea, im_v2_lib_utils, im_v2_provider_service_message, im_v2_provider_service_sending, im_v2_provider_service_uploading, im_v2_lib_rest, im_v2_lib_notifier, im_v2_lib_desktopApi, im_v2_component_elements_autoDelete, im_v2_provider_service_chat, im_v2_lib_autoDelete, im_v2_lib_promo, im_v2_component_elements_pulseAnimation, ui_system_chip_vue, im_v2_component_elements_popup, im_v2_lib_smileManager, main_popup, im_v2_lib_sticker, im_v2_component_sticker, im_v2_provider_service_sticker, im_v2_component_elements_loader, main_polyfill_intersectionobserver, im_v2_lib_menu, im_v2_lib_permission, im_v2_lib_directives, im_v2_lib_quote, ui_system_input_vue, im_v2_lib_copilot, im_v2_lib_channel, im_v2_lib_search, im_v2_lib_collab, im_v2_lib_user, im_v2_component_elements_scrollWithGradient, im_v2_component_elements_avatar, im_v2_component_elements_chatTitle, im_v2_lib_textHighlighter, ui_iconSet_api_core, im_v2_lib_access, im_v2_provider_service_collabInvitation, im_public, ui_vue3_components_richLoc, im_v2_lib_market, calendar_sharing_interface, vote_application, im_v2_component_elements_menu, im_v2_lib_entityCreator, file_dialog, im_v2_component_elements_mediaGallery) {
+(function (exports, main_core, main_core_events, ui_iconSet_api_vue, ui_iconSet_outline, ui_uploader_core, im_v2_application_core, im_v2_component_elements_sendButton, im_v2_const, im_v2_lib_analytics, im_v2_lib_draft, im_v2_lib_escManager, im_v2_lib_feature, im_v2_lib_hotkey, im_v2_lib_inputAction, im_v2_lib_localStorage, im_v2_lib_logger, im_v2_lib_message, im_v2_lib_parser, im_v2_lib_soundNotification, im_v2_lib_textarea, im_v2_lib_utils, im_v2_provider_service_message, im_v2_provider_service_sending, im_v2_provider_service_uploading, im_v2_lib_rest, im_v2_lib_notifier, im_v2_lib_desktopApi, im_v2_component_elements_autoDelete, im_v2_provider_service_chat, im_v2_lib_autoDelete, ui_system_chip_vue, im_v2_component_elements_popup, im_v2_lib_smileManager, main_popup, im_v2_lib_sticker, im_v2_component_sticker, im_v2_provider_service_sticker, im_v2_component_elements_loader, main_polyfill_intersectionobserver, im_v2_lib_menu, im_v2_lib_permission, im_v2_lib_directives, im_v2_lib_quote, ui_system_input_vue, im_v2_lib_copilot, im_v2_lib_channel, im_v2_lib_search, im_v2_lib_collab, im_v2_lib_user, im_v2_component_elements_scrollWithGradient, im_v2_component_elements_avatar, im_v2_component_elements_chatTitle, im_v2_lib_textHighlighter, ui_iconSet_api_core, im_v2_lib_access, im_v2_provider_service_collabInvitation, im_public, ui_vue3_components_richLoc, im_v2_lib_market, calendar_sharing_interface, vote_application, im_v2_component_elements_menu, im_v2_lib_entityCreator, file_dialog, im_v2_component_elements_mediaGallery) {
 	'use strict';
 
 	const EVENT_NAMESPACE$1 = 'BX.Messenger.v2.Textarea.FormatToolbarManager';
@@ -3859,14 +3859,23 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			onStickerClick({
 				sticker
 			}) {
+				const draft = im_v2_lib_draft.DraftManager.getInstance().drafts[this.dialogId] ?? {};
+				const isReplyWithMediaAvailable = im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.isReplyWithMediaAvailable);
+				const replyId = isReplyWithMediaAvailable && draft.panelType === im_v2_const.TextareaPanelType.reply ? draft.panelContext?.messageId : undefined;
 				void im_v2_provider_service_sending.SendingService.getInstance().sendMessageWithSticker({
 					dialogId: this.dialogId,
 					stickerParams: {
 						id: sticker.id,
 						packId: sticker.packId,
 						packType: sticker.packType
-					}
+					},
+					replyId
 				});
+				if (replyId > 0) {
+					main_core_events.EventEmitter.emit(im_v2_const.EventType.textarea.closePanel, {
+						dialogId: this.dialogId
+					});
+				}
 				this.$emit('close');
 			},
 			openPackMenu(event) {
@@ -4419,8 +4428,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			MessengerPopup: im_v2_component_elements_popup.MessengerPopup,
 			TabEmoji,
 			TabStickers,
-			Chip: ui_system_chip_vue.Chip,
-			PulseAnimation: im_v2_component_elements_pulseAnimation.PulseAnimation
+			Chip: ui_system_chip_vue.Chip
 		},
 		props: {
 			bindElement: {
@@ -4435,8 +4443,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		emits: ['close'],
 		data() {
 			return {
-				currentTab: this.getInitialTab(),
-				wasStickerTabOpened: false
+				currentTab: this.getInitialTab()
 			};
 		},
 		computed: {
@@ -4457,17 +4464,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 					contentBorderRadius: '18px',
 					background: 'transparent'
 				};
-			},
-			needToShowPromo() {
-				return im_v2_lib_promo.PromoManager.getInstance().needToShow(im_v2_const.PromoId.stickersAvailable);
-			},
-			needToShowPulse() {
-				return this.needToShowPromo && !this.wasStickerTabOpened;
-			}
-		},
-		created() {
-			if (this.needToShowPromo) {
-				void im_v2_lib_promo.PromoManager.getInstance().markAsWatched(im_v2_const.PromoId.stickersAvailable);
 			}
 		},
 		methods: {
@@ -4481,7 +4477,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				this.currentTab = type;
 				im_v2_lib_localStorage.LocalStorageManager.getInstance().set(im_v2_const.LocalStorageKey.emotePopupTab, type);
 				if (type === TabType.stickers) {
-					this.wasStickerTabOpened = true;
 					im_v2_lib_analytics.Analytics.getInstance().stickers.onOpenStickerTab(this.dialogId);
 				}
 			},
@@ -4513,109 +4508,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 						:rounded="true"
 						@click="selectTab(TabType.emoji)"
 					/>
-					<PulseAnimation
-						:showPulse="needToShowPulse"
-						:innerSize="65"
-						:outerSize="113"
-					>
-						<Chip
-							:size="ChipSize.Sm"
-							:design="getChipDesign(TabType.stickers)"
-							:text="loc('IM_TEXTAREA_STICKER_SELECTOR_STICKER_TAB')"
-							:rounded="true"
-							@click="selectTab(TabType.stickers)"
-						/>
-					</PulseAnimation>
-				</div>
-			</div>
-		</MessengerPopup>
-	`
-	};
-
-	const POPUP_ID$3 = 'im-sticker-promo-popup';
-	const POPUP_CLASSNAME = 'bx-im-sticker-promo-popup__container';
-	const DELAY_OPEN = 1000;
-
-	// @vue/component
-	const StickersPromoPopup = {
-		name: 'StickersPromoPopup',
-		components: {
-			MessengerPopup: im_v2_component_elements_popup.MessengerPopup
-		},
-		props: {
-			bindElement: {
-				type: Object,
-				required: true
-			},
-			dialogId: {
-				type: String,
-				required: true
-			}
-		},
-		emits: ['close'],
-		data() {
-			return {
-				isVisible: false
-			};
-		},
-		computed: {
-			PopupType: () => im_v2_const.PopupType,
-			POPUP_ID: () => POPUP_ID$3,
-			popupConfig() {
-				return {
-					bindElement: this.bindElement,
-					className: POPUP_CLASSNAME,
-					width: 416,
-					height: 122,
-					padding: 12,
-					overlay: false,
-					offsetLeft: -300,
-					autoHide: true,
-					bindOptions: {
-						position: 'bottom'
-					},
-					closeIcon: true,
-					angle: {
-						offset: 335,
-						position: 'bottom'
-					},
-					animation: 'fading',
-					events: {
-						onPopupClose: () => {
-							void im_v2_lib_promo.PromoManager.getInstance().markAsWatched(im_v2_const.PromoId.stickersAvailable);
-							im_v2_lib_analytics.Analytics.getInstance().stickers.onViewPromoPopup(this.dialogId);
-						}
-					}
-				};
-			}
-		},
-		mounted() {
-			this.timer = setTimeout(() => {
-				this.isVisible = true;
-			}, DELAY_OPEN);
-		},
-		beforeUnmount() {
-			clearTimeout(this.timer);
-		},
-		methods: {
-			loc(phraseCode) {
-				return this.$Bitrix.Loc.getMessage(phraseCode);
-			}
-		},
-		template: `
-		<MessengerPopup
-			v-if="isVisible"
-			:config="popupConfig"
-			:id="POPUP_ID"
-			@close="$emit('close')"
-		>
-			<div class="bx-im-sticker-promo-popup__cover"></div>
-			<div class="bx-im-sticker-promo-popup__info">
-				<div class="bx-im-sticker-promo-popup__title">
-					{{ loc('IM_TEXTAREA_EMOTE_POPUP_PROMO_TITLE') }}
-				</div>
-				<div class="bx-im-sticker-promo-popup__description">
-					{{ loc('IM_TEXTAREA_EMOTE_POPUP_PROMO_DESCRIPTION') }}
+					<Chip
+						:size="ChipSize.Sm"
+						:design="getChipDesign(TabType.stickers)"
+						:text="loc('IM_TEXTAREA_STICKER_SELECTOR_STICKER_TAB')"
+						:rounded="true"
+						@click="selectTab(TabType.stickers)"
+					/>
 				</div>
 			</div>
 		</MessengerPopup>
@@ -4629,9 +4528,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		name: 'EmoteSelector',
 		components: {
 			BIcon: ui_iconSet_api_vue.BIcon,
-			EmotePopup,
-			PulseAnimation: im_v2_component_elements_pulseAnimation.PulseAnimation,
-			StickersPromoPopup
+			EmotePopup
 		},
 		props: {
 			dialogId: {
@@ -4641,37 +4538,19 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		},
 		data() {
 			return {
-				showPopup: false,
-				wasSelectorOpened: false,
-				selectorElement: null
+				showPopup: false
 			};
 		},
 		computed: {
 			OutlineIcons: () => ui_iconSet_api_vue.Outline,
 			ICON_SIZE: () => ICON_SIZE$3,
-			needToShowPromo() {
-				return im_v2_lib_promo.PromoManager.getInstance().needToShow(im_v2_const.PromoId.stickersAvailable);
-			},
-			needToShowPulse() {
-				return this.needToShowPromo && !this.wasSelectorOpened;
-			},
 			iconColor() {
-				if (this.needToShowPulse) {
-					return im_v2_const.Color.accentBlue;
-				}
 				return im_v2_const.Color.gray40;
 			}
-		},
-		mounted() {
-			if (!this.needToShowPromo) {
-				return;
-			}
-			this.selectorElement = this.$refs.stickerSelectorIcon;
 		},
 		methods: {
 			openSelector() {
 				this.showPopup = true;
-				this.wasSelectorOpened = true;
 				im_v2_lib_analytics.Analytics.getInstance().stickers.onOpenEmoteSelector(this.dialogId);
 			},
 			loc(phraseCode) {
@@ -4680,16 +4559,14 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		},
 		template: `
 		<div ref="stickerSelectorIcon" class="bx-im-textarea__icon-container">
-			<PulseAnimation :showPulse="needToShowPulse">
-				<BIcon
-					:name="OutlineIcons.SMILE"
-					:title="loc('IM_TEXTAREA_ICON_EMOTE')"
-					:size="ICON_SIZE"
-					:color="iconColor"
-					class="bx-im-textarea__icon"
-					@click="openSelector"
-				/>
-			</PulseAnimation>
+			<BIcon
+				:name="OutlineIcons.SMILE"
+				:title="loc('IM_TEXTAREA_ICON_EMOTE')"
+				:size="ICON_SIZE"
+				:color="iconColor"
+				class="bx-im-textarea__icon"
+				@click="openSelector"
+			/>
 		</div>
 		<EmotePopup
 			v-if="showPopup"
@@ -4697,7 +4574,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			:dialogId="dialogId"
 			@close="showPopup = false"
 		/>
-		<StickersPromoPopup v-if="selectorElement" :dialogId="dialogId" :bindElement="selectorElement" />
 	`
 	};
 
@@ -4816,6 +4692,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				validator(value) {
 					return main_core.Type.isNumber(value.left) && main_core.Type.isNumber(value.top);
 				}
+			},
+			useMarkdown: {
+				type: Boolean,
+				default: false
 			}
 		},
 		emits: ['close', 'updateText'],
@@ -4901,11 +4781,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				this.linkMode = false;
 			},
 			applyDecoration(key) {
-				const newText = im_v2_lib_textarea.Textarea.handleDecorationTag(this.textarea, key);
+				const newText = im_v2_lib_textarea.Textarea.handleDecorationTag(this.textarea, key, this.useMarkdown);
 				this.updateText(newText);
 			},
 			onInsertLink(linkUrl) {
-				const newText = im_v2_lib_textarea.Textarea.addUrlTag(this.textarea, linkUrl);
+				const newText = im_v2_lib_textarea.Textarea.addUrlTag(this.textarea, linkUrl, this.useMarkdown);
 				this.updateText(newText);
 				this.$emit('close');
 			},
@@ -5665,11 +5545,17 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			currentItem() {
 				return this.item;
 			},
-			isAddingUserByMentionAvailable() {
-				return im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.isAddingUserByMentionAvailable);
+			isCurrentUserGuest() {
+				return this.$store.getters['users/isGuest'](im_v2_application_core.Core.getUserId());
+			},
+			isGuestItem() {
+				if (!this.isItemUser) {
+					return false;
+				}
+				return this.$store.getters['users/isGuest'](this.currentItem.id);
 			},
 			canAddToChat() {
-				if (!this.isAddingUserByMentionAvailable) {
+				if (this.isCurrentUserGuest || this.isGuestItem) {
 					return false;
 				}
 				if (!this.isItemUser || this.isParticipant) {
@@ -6292,6 +6178,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	};
 
 	const NAME_MAX_LENGTH = 40;
+	const GALLERY_STACK_MAX = 3;
 
 	// @vue/component
 	const ReplyPanel = {
@@ -6313,14 +6200,52 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			replyTitle() {
 				return this.replyAuthor ? this.replyAuthor.name : this.loc('IM_DIALOG_CHAT_QUOTE_DEFAULT_TITLE');
 			},
+			/** Files attached to the quoted message — read once, reused by the file/gallery computed below */
+			messageFiles() {
+				return this.$store.getters['messages/getMessageFiles'](this.message.id);
+			},
 			messageFile() {
-				return this.$store.getters['messages/getMessageFiles'](this.message.id)[0];
+				return this.messageFiles[0];
+			},
+			galleryCount() {
+				return this.messageFiles.length;
+			},
+			galleryThumbnails() {
+				return this.messageFiles.slice(0, GALLERY_STACK_MAX);
+			},
+			galleryRemainingCount() {
+				return Math.max(this.galleryCount - this.galleryThumbnails.length, 0);
+			},
+			/**
+			 * Count modifier for the gallery stack. The stack items are absolutely positioned, so the
+			 * container cannot size itself to its content; the width is set per shown-thumbnail count to
+			 * keep the stack↔text spacing consistent between 2- and 3-media replies.
+			 */
+			galleryStackModifier() {
+				return `--count-${this.galleryThumbnails.length}`;
+			},
+			isGallery() {
+				return !this.isMessageDeleted && (this.isImage || this.isVideo) && this.galleryCount > 1;
+			},
+			mediaCountText() {
+				return main_core.Loc.getMessagePlural('IM_MESSAGE_REPLY_MEDIA_COUNT', this.galleryCount, {
+					'#COUNT#': this.galleryCount
+				});
 			},
 			isFile() {
 				return this.messageFile && this.messageFile.type === im_v2_const.FileType.file;
 			},
 			isVideo() {
 				return this.messageFile && this.messageFile.type === im_v2_const.FileType.video;
+			},
+			/**
+			 * Video note (round video message). Keeps FileType.video (no separate type); the round-message
+			 * flag lives on the file. Shown as a compact round poster thumbnail (like a single media
+			 * thumbnail) with no textual type label — the round shape conveys the type. The
+			 * IM_PARSER_ICON_TYPE_VIDEO_NOTE phrase is still used as the image alt (a11y).
+			 */
+			isVideoNote() {
+				return Boolean(this.messageFile && this.messageFile.isVideoNote);
 			},
 			isImage() {
 				return this.messageFile && this.messageFile.type === im_v2_const.FileType.image;
@@ -6334,15 +6259,33 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			truncatedFileName() {
 				return im_v2_lib_utils.Utils.file.getShortFileName(this.messageFile.name, NAME_MAX_LENGTH);
 			},
+			fileSize() {
+				if (!this.messageFile?.size) {
+					return '';
+				}
+				return im_v2_lib_utils.Utils.file.formatFileSize(this.messageFile.size);
+			},
 			isMessageDeleted() {
 				return this.message.isDeleted;
 			},
 			isSticker() {
 				return this.$store.getters['stickers/messages/isSticker'](this.message.id);
 			},
+			/** Sticker image URI of the quoted message (null if not a sticker or sticker data is not in store) */
+			stickerImageUri() {
+				if (!this.isSticker) {
+					return null;
+				}
+				const stickerId = this.$store.getters['stickers/messages/getStickerByMessageId'](this.message.id);
+				const sticker = this.$store.getters['stickers/get'](stickerId);
+				return sticker?.uri ?? null;
+			},
 			messageText() {
+				if (this.isGallery) {
+					return `${this.loc('IM_PARSER_ICON_TYPE_GALLERY')}, ${this.mediaCountText}`;
+				}
 				if (this.isFile) {
-					return this.truncatedFileName;
+					return this.fileSize ? `${this.truncatedFileName}, ${this.fileSize}` : this.truncatedFileName;
 				}
 				if (this.isAudio) {
 					return this.loc('IM_TEXTAREA_REPLY_AUDIO_TITLE');
@@ -6351,7 +6294,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 					return this.loc('IM_TEXTAREA_REPLY_DELETED_TITLE');
 				}
 				if (this.isSticker) {
-					return this.loc('IM_TEXTAREA_REPLY_STICKER_TITLE');
+					// The mini-thumbnail already conveys the sticker type, so suppress the redundant
+					// sticker label (IM_TEXTAREA_REPLY_STICKER_TITLE, mirrors the in-bubble quote).
+					// Fall back to the label when the sticker image is not in the store yet.
+					return this.stickerImageUri ? '' : this.loc('IM_TEXTAREA_REPLY_STICKER_TITLE');
 				}
 				return im_v2_lib_parser.Parser.purify(this.message);
 			},
@@ -6361,6 +6307,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			}
 		},
 		methods: {
+			hasPreview(file) {
+				return main_core.Type.isStringFilled(file.urlPreview);
+			},
 			loc(phraseCode) {
 				return this.$Bitrix.Loc.getMessage(phraseCode);
 			}
@@ -6371,17 +6320,51 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			<div v-if="showIcon" class="bx-im-message-panel-file__icon">
 				<div :class="iconClass" class="ui-icon"><i></i></div>
 			</div>
+			<div v-else-if="isGallery" class="bx-im-message-panel__gallery-stack" :class="galleryStackModifier" data-testid="im-textarea-reply-gallery-stack">
+				<div
+					v-for="file in galleryThumbnails"
+					:key="file.id"
+					class="bx-im-message-panel__gallery-stack-item"
+				>
+					<img
+						v-if="hasPreview(file)"
+						class="bx-im-message-panel__gallery-stack-img"
+						:src="file.urlPreview"
+						:alt="file.name"
+					>
+				</div>
+				<span
+					v-if="galleryRemainingCount > 0"
+					class="bx-im-message-panel__gallery-badge"
+					data-testid="im-textarea-reply-gallery-badge"
+				>+{{ galleryRemainingCount }}</span>
+			</div>
+			<div v-else-if="isVideoNote && this.messageFile.urlPreview" class="bx-im-message-panel__video-note" data-testid="im-textarea-reply-video-note">
+				<img
+					v-if="this.messageFile.urlPreview"
+					class="bx-im-message-panel__video-note_img"
+					:src="this.messageFile.urlPreview"
+					:alt="loc('IM_PARSER_ICON_TYPE_VIDEO_NOTE')"
+				>
+			</div>
 			<div v-else-if="isImage || isVideo" class="bx-im-message-panel__image">
-				<img 
-					v-if="this.messageFile.urlPreview" 
-					class="bx-im-message-panel__image_img" 
+				<img
+					v-if="this.messageFile.urlPreview"
+					class="bx-im-message-panel__image_img"
 					:src="this.messageFile.urlPreview"
 											:alt="this.messageFile.name"
 				>
 			</div>
+			<div v-else-if="isSticker && stickerImageUri" class="bx-im-message-panel__sticker" data-testid="im-textarea-reply-sticker">
+				<img
+					class="bx-im-message-panel__sticker_img"
+					:src="stickerImageUri"
+					:alt="loc('IM_TEXTAREA_REPLY_STICKER_TITLE')"
+				>
+			</div>
 			<div class="bx-im-message-panel__content">
 				<div class="bx-im-message-panel__title">{{ replyTitle }}</div>
-				<div class="bx-im-message-panel__text">{{ messageText }}</div>
+				<div class="bx-im-message-panel__text" data-testid="im-textarea-reply-text">{{ messageText }}</div>
 			</div>
 			<div @click="$emit('close')" class="bx-im-message-panel__close"></div>
 		</div>
@@ -8092,6 +8075,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		computed: {
 			OutlineIcons: () => ui_iconSet_api_vue.Outline,
 			ICON_SIZE: () => ICON_SIZE,
+			isMarkdownInputAvailable() {
+				return im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.isMarkdownAvailable);
+			},
 			dialog() {
 				return this.$store.getters['chats/get'](this.dialogId, true);
 			},
@@ -8100,6 +8086,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			},
 			replyMode() {
 				return this.panelType === im_v2_const.TextareaPanelType.reply;
+			},
+			replyIdForContent() {
+				// media/file replies bind to the original only when the server feature is enabled
+				if (!this.replyMode || !im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.isReplyWithMediaAvailable)) {
+					return undefined;
+				}
+				return this.panelContext.messageId;
 			},
 			forwardMode() {
 				return this.panelType === im_v2_const.TextareaPanelType.forward;
@@ -8185,6 +8178,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			main_core_events.EventEmitter.subscribe(im_v2_const.EventType.dialog.onMessageDeleted, this.onMessageDeleted);
 			main_core_events.EventEmitter.subscribe(im_v2_const.EventType.textarea.insertText, this.onInsertText);
 			main_core_events.EventEmitter.subscribe(im_v2_const.EventType.textarea.getText, this.onGetText);
+			main_core_events.EventEmitter.subscribe(im_v2_const.EventType.textarea.closePanel, this.onClosePanelRequest);
 			this.getEmitter().subscribe(im_v2_const.EventType.textarea.sendMessage, this.onSendMessage);
 			this.getEmitter().subscribe(im_v2_const.EventType.textarea.insertText, this.onInsertText);
 			this.getEmitter().subscribe(im_v2_const.EventType.textarea.insertMention, this.onInsertMention);
@@ -8209,6 +8203,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			main_core_events.EventEmitter.unsubscribe(im_v2_const.EventType.dialog.onMessageDeleted, this.onMessageDeleted);
 			main_core_events.EventEmitter.unsubscribe(im_v2_const.EventType.textarea.insertText, this.onInsertText);
 			main_core_events.EventEmitter.unsubscribe(im_v2_const.EventType.textarea.getText, this.onGetText);
+			main_core_events.EventEmitter.unsubscribe(im_v2_const.EventType.textarea.closePanel, this.onClosePanelRequest);
 			this.getEmitter().unsubscribe(im_v2_const.EventType.textarea.sendMessage, this.onSendMessage);
 			this.getEmitter().unsubscribe(im_v2_const.EventType.textarea.insertMention, this.onInsertMention);
 			this.getEmitter().unsubscribe(im_v2_const.EventType.textarea.insertText, this.onInsertText);
@@ -8444,7 +8439,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				const decorationCombination = im_v2_lib_utils.Utils.key.isExactCombination(event, ['Ctrl+b', 'Ctrl+i', 'Ctrl+u', 'Ctrl+s']);
 				if (decorationCombination) {
 					event.preventDefault();
-					this.text = im_v2_lib_textarea.Textarea.handleDecorationTag(this.$refs.textarea, event.code);
+					this.text = im_v2_lib_textarea.Textarea.handleDecorationTag(this.$refs.textarea, event.code, this.isMarkdownInputAvailable);
 					return;
 				}
 				if (this.text === '' && im_v2_lib_utils.Utils.key.isCombination(event, 'ArrowUp')) {
@@ -8508,7 +8503,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			onDiskFileSelect({
 				files
 			}) {
-				this.getUploadingService().uploadFileFromDisk(files, this.dialogId);
+				const replyId = this.replyIdForContent;
+				this.getUploadingService().uploadFileFromDisk(files, this.dialogId, replyId);
+				if (replyId > 0) {
+					this.closePanel();
+				}
 			},
 			onInsertMention(event) {
 				const {
@@ -8562,6 +8561,15 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				}
 				this.openReplyPanel(messageId);
 			},
+			onClosePanelRequest(event) {
+				const {
+					dialogId
+				} = event.getData();
+				if (this.dialogId !== dialogId) {
+					return;
+				}
+				this.closePanel();
+			},
 			onInsertForward(event) {
 				const {
 					messagesIds,
@@ -8573,8 +8581,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				this.openForwardPanel(messagesIds);
 			},
 			async onPaste(event) {
-				this.text = im_v2_lib_textarea.Textarea.handlePasteUrl(this.$refs.textarea, event);
-				if (!this.withUploadMenu) {
+				this.text = im_v2_lib_textarea.Textarea.handlePasteUrl(this.$refs.textarea, event, this.isMarkdownInputAvailable);
+				if (!this.withUploadMenu || !this.dialogReady) {
 					return;
 				}
 				if (!event.clipboardData || !ui_uploader_core.isFilePasted(event.clipboardData)) {
@@ -8768,6 +8776,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				return this.multiUploadingService;
 			},
 			async onSendFilesFromPreviewPopup(event) {
+				const replyId = this.replyIdForContent;
 				this.text = '';
 				const {
 					text,
@@ -8785,9 +8794,13 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				multiUploadingResult.uploaderIds.forEach((uploaderId, index) => {
 					this.getUploadingService().sendMessageWithFiles({
 						uploaderId,
-						text: index === 0 ? textWithMentions : ''
+						text: index === 0 ? textWithMentions : '',
+						replyId
 					});
 				});
+				if (main_core.Type.isArrayFilled(multiUploadingResult.uploaderIds)) {
+					this.closePanel();
+				}
 				this.focus();
 			},
 			closeMentionPopup() {
@@ -8835,12 +8848,18 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				/>
 				<div class="bx-im-textarea__content" ref="textarea-content" @click="focus">
 					<div class="bx-im-textarea__top">
-						<UploadMenu
+						<div
+							:class="{'bx-im-textarea__upload-menu-wrapper': true, 'bx-im-textarea__upload-menu-wrapper--muted': !dialogReady }"
 							v-if="withUploadMenu"
-							:dialogId="dialogId" 
-							@fileSelect="onFileSelect" 
-							@diskFileSelect="onDiskFileSelect" 
-						/>
+							:aria-disabled="!dialogReady ? 'true' : undefined"
+							data-testid="im-textarea-upload-menu-wrapper"
+						>
+							<UploadMenu
+								:dialogId="dialogId"
+								@fileSelect="onFileSelect"
+								@diskFileSelect="onDiskFileSelect"
+							/>
+						</div>
 						<textarea
 							v-model="text"
 							:style="textareaStyle"
@@ -8907,11 +8926,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				@close="closeMentionPopup"
 				@onFocusTextarea="focus"
 			/>
-			<FormatToolbar 
+			<FormatToolbar
 				v-if="showFormatToolbar"
-				:dialogId="dialogId" 
-				:textarea="$refs.textarea" 
+				:dialogId="dialogId"
+				:textarea="$refs.textarea"
 				:targetPosition="formatToolbarPosition"
+				:useMarkdown="isMarkdownInputAvailable"
 				@updateText="onFormatToolbarUpdateText"
 				@close="showFormatToolbar = false"
 			/>
@@ -8921,6 +8941,5 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	exports.BeforeSendMessageAction = BeforeSendMessageAction;
 	exports.ChatTextarea = ChatTextarea;
-
-})(this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {}, BX??{}, BX?.Event??{}, BX?.UI?.IconSet??{}, window??{}, BX?.UI?.Uploader??{}, BX?.Messenger?.v2?.Application??{}, BX?.Messenger?.v2?.Component?.Elements??{}, BX?.Messenger?.v2?.Const??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Service??{}, BX?.Messenger?.v2?.Service??{}, BX?.Messenger?.v2?.Service??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Component?.Elements??{}, BX?.Messenger?.v2?.Service??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Component?.Elements??{}, BX?.UI?.System?.Chip?.Vue??{}, BX?.Messenger?.v2?.Component?.Elements??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Main??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Component??{}, BX?.Messenger?.v2?.Provider?.Service??{}, BX?.Messenger?.v2?.Component?.Elements??{}, BX??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.UI?.System?.Input?.Vue??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Component?.Elements??{}, BX?.Messenger?.v2?.Component?.Elements??{}, BX?.Messenger?.v2?.Component?.Elements??{}, BX?.Messenger?.v2?.Lib??{}, BX?.UI?.IconSet??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Service??{}, BX?.Messenger?.v2?.Lib??{}, BX?.UI?.Vue3?.Components??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Calendar?.Sharing??{}, BX?.Vote??{}, BX?.Messenger?.v2?.Component?.Elements??{}, BX?.Messenger?.v2?.Lib??{}, BX??{}, BX?.Messenger?.v2?.Component?.Elements??{});
+})(this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {}, BX??{}, BX?.Event??{}, BX?.UI?.IconSet??{}, window??{}, BX?.UI?.Uploader??{}, BX?.Messenger?.v2?.Application??{}, BX?.Messenger?.v2?.Component?.Elements??{}, BX?.Messenger?.v2?.Const??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Service??{}, BX?.Messenger?.v2?.Service??{}, BX?.Messenger?.v2?.Service??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Component?.Elements??{}, BX?.Messenger?.v2?.Service??{}, BX?.Messenger?.v2?.Lib??{}, BX?.UI?.System?.Chip?.Vue??{}, BX?.Messenger?.v2?.Component?.Elements??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Main??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Component??{}, BX?.Messenger?.v2?.Provider?.Service??{}, BX?.Messenger?.v2?.Component?.Elements??{}, BX??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.UI?.System?.Input?.Vue??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Component?.Elements??{}, BX?.Messenger?.v2?.Component?.Elements??{}, BX?.Messenger?.v2?.Component?.Elements??{}, BX?.Messenger?.v2?.Lib??{}, BX?.UI?.IconSet??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Service??{}, BX?.Messenger?.v2?.Lib??{}, BX?.UI?.Vue3?.Components??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Calendar?.Sharing??{}, BX?.Vote??{}, BX?.Messenger?.v2?.Component?.Elements??{}, BX?.Messenger?.v2?.Lib??{}, BX??{}, BX?.Messenger?.v2?.Component?.Elements??{});;
 //# sourceMappingURL=textarea.bundle.js.map

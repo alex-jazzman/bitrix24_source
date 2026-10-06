@@ -1,0 +1,117 @@
+/* Bordered card wrapping the whole control (option list + insert zone) as one
+   surface, per the mockup. The field label/legend is rendered ABOVE the card by
+   FieldLayout, so the card styling stays on this container only. */
+.bizproc-fields-select {
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+	background: var(--ui-color-bg-content-primary);
+	border: 1px solid var(--ui-color-base-6);
+	border-radius: var(--ui-border-radius-lg);
+}
+
+.bizproc-fields-select__list {
+	display: flex;
+	flex-direction: column;
+}
+
+/* Option rows are separated by their own padding (no container gap), so every row
+   - including the prepended "[Not set]" option - shares one left edge. The label
+   text inherits color from the row. The radio/checkbox visual is left to ui.forms. */
+.bizproc-fields-select__list .ui-ctl {
+	margin: 0;
+	padding: var(--ui-space-inset-sm) var(--ui-space-inset-md);
+	gap: var(--ui-space-inline-sm);
+	color: var(--ui-color-base-1);
+}
+
+/* ui.forms adds `margin-left: var(--ui-field-spacing)` to `.ui-ctl + .ui-ctl` (for
+   controls in a row). Our rows stack vertically, so reset it (higher specificity)
+   to keep the shared left edge. */
+.bizproc-fields-select__list .ui-ctl + .ui-ctl {
+	margin-left: 0;
+}
+
+/* Fold the ui.forms control-to-label spacing (radio 5px / checkbox 8px) into the
+   row `gap` so the label sits an exact 12px from the control in both modes. Only
+   the horizontal margin is reset - the radio/checkbox visual is untouched. */
+.bizproc-fields-select__list .ui-ctl-element {
+	margin-right: 0;
+}
+
+/* Empty-list placeholder, aligned with the option rows inside the card. */
+.bizproc-fields-select__empty {
+	padding: var(--ui-space-inset-sm) var(--ui-space-inset-md);
+	color: var(--ui-color-base-4);
+}
+
+/* Group subtitle (visual optgroup analogue): a muted non-interactive row above
+   the options of a named Settings.Groups group, aligned with the option rows. */
+.bizproc-fields-select__group-title {
+	padding: var(--ui-space-inset-sm) var(--ui-space-inset-md);
+	color: var(--ui-color-base-4);
+}
+
+/* Inset hairline between the option list and the insert zone. */
+.bizproc-fields-select__divider {
+	/* 1px hairline: ui.design-tokens exposes no 1px size token. */
+	height: 1px;
+	margin: 0 var(--ui-space-inset-md);
+	background: var(--ui-color-base-6);
+}
+
+/* Insert zone inside the card: a bordered stub input + a trailing "..." button
+   sitting outside the input, per the mockup. Padded away from the card edges. */
+.bizproc-fields-select__insert-row {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-xs);
+	padding: var(--ui-space-inset-md);
+}
+
+/* The insert input is the anchor the selection provider wraps, so its wrapper takes the
+   input's place as the flex child of this row and has to carry the stretching below.
+   Same consumer-side compensation as `.bizproc-fields-box > .bizproc-automation-popup-select`
+   in the core stylesheet, which explains why it is ours to do. */
+.bizproc-fields-select__insert-row > .bizproc-automation-popup-select {
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+/* The insert field is a visible bordered control (like a ui.forms text input),
+   matching the mockup: rounded border, content background, inner padding. It is a
+   readonly stub (see #renderInsertRow) - the value arrives via the "..." picker. */
+.bizproc-fields-select__insert-input {
+	box-sizing: border-box;
+	flex: 1 1 auto;
+	min-width: 0;
+	padding: var(--ui-space-inset-xs) var(--ui-space-inset-sm);
+	border: 1px solid var(--ui-color-base-5);
+	border-radius: var(--ui-border-radius-md);
+	outline: none;
+	background: var(--ui-color-bg-content-primary);
+	/* N-1 exception (same as int field): font-family is required to reset the browser
+	   default for <input>; --ui-font-family-primary is not a standard DS token, so
+	   `inherit` is the DS-compliant fallback. */
+	font-family: inherit;
+	font-size: var(--ui-font-size-sm);
+	font-weight: var(--ui-font-weight-normal);
+	/* 20px is the ui.forms control text line-height (same as the sibling int field). */
+	line-height: 20px;
+	color: var(--ui-color-base-1);
+}
+
+.bizproc-fields-select__insert-input::placeholder {
+	color: var(--ui-color-base-4);
+}
+
+/* The stub resets the UA outline and its border keeps the same color on focus, so without
+   this the keyboard focus on it would be invisible (WCAG 2.4.7). */
+.bizproc-fields-select__insert-input:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+}
+
+.bizproc-fields-select--readonly {
+	cursor: default;
+}

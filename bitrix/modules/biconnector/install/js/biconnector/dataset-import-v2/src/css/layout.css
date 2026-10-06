@@ -1,0 +1,85 @@
+body.biconnector-dataset-import-v2-page.ui-page-slider-wrapper-default-theme {
+	background: #f6fafb !important;
+}
+
+body.biconnector-dataset-import-v2-page .ui-side-panel-wrap-workarea {
+	background-color: #f6fafb !important;
+}
+
+.biconnector-dataset-import-v2-save-btn.ui-btn {
+	min-width: 164px;
+}
+
+.biconnector-dataset-import-v2 {
+	display: flex;
+	flex-direction: column;
+	height: calc(100vh - 94px);
+	background: var(--ui-color-bg-content-secondary, #f6fafb);
+	font-family: var(--ui-font-family-primary, 'Helvetica Neue', Arial, sans-serif);
+	color: var(--ui-color-base-1, #333);
+}
+
+.biconnector-dataset-import-v2__body {
+	flex: 1 1 auto;
+	display: grid;
+	grid-template-columns: 500px 1fr;
+	gap: 20px;
+	padding-bottom: 22px;
+	box-sizing: border-box;
+	min-height: 0;
+	overflow: hidden;
+}
+
+.biconnector-dataset-import-v2__cards-column {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	min-height: 0;
+	overflow-y: auto;
+	padding-right: 4px;
+}
+
+.biconnector-dataset-import-v2-readonly-chip {
+	display: inline-flex;
+	align-items: center;
+	gap: 2px;
+	height: 24px;
+	margin-left: 12px;
+	padding: 0 4px 0 10px;
+	box-sizing: border-box;
+	border: 1px solid var(--ui-color-accent-soft-blue-1, #c4e6ff);
+	border-radius: 512px;
+	background: var(--ui-color-base-white-fixed, #fff);
+}
+
+.biconnector-dataset-import-v2-readonly-chip__text {
+	font-size: 13px;
+	line-height: 17px;
+	letter-spacing: -0.05px;
+	color: var(--ui-color-accent-main-primary, #0075ff);
+	white-space: nowrap;
+}
+
+.biconnector-dataset-import-v2-readonly-chip .ui-hint-icon {
+	--ui-icon-set__icon-color: #80baff;
+}
+
+.biconnector-dataset-import-v2__cards-column-placeholder,
+.biconnector-dataset-import-v2__data-panel-placeholder {
+	padding: 24px;
+	border-radius: 16px;
+	background: var(--ui-color-bg-content-primary, #fff);
+	border: 1px dashed var(--ui-color-design-outline-stroke-alt1, #dfe0e3);
+	color: var(--ui-color-base-2, #525c69);
+	font-size: 14px;
+	line-height: 19px;
+}
+
+.biconnector-dataset-import-v2__data-panel {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	min-height: 0;
+	overflow-y: auto;
+	padding-right: 4px;
+}

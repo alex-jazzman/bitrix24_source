@@ -92,6 +92,20 @@ export class PlaceholderService
 		}).join('');
 	}
 
+	serialize(tokens: Array<TextToken>): string
+	{
+		return tokens.map((token) => {
+			if (token.type === 'placeholder')
+			{
+				const { code = '', ...attrs } = token.attrs;
+
+				return this.serializePlaceholder(code, token.caption, attrs);
+			}
+
+			return token.type === 'linebreak' ? '\n' : token.content;
+		}).join('');
+	}
+
 	toDisplayText(text: string): string
 	{
 		return this.scan(text).map((token) => {

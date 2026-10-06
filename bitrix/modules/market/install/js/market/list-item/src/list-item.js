@@ -90,7 +90,7 @@ export const ListItem = {
 				return name;
 			}
 
-			return name.replace(/CoPilot/g, copilotName);
+			return name.replace(/CoPilot|Copilot|BitrixGPT/gi, copilotName);
 		},
 	},
 	mounted: function() {

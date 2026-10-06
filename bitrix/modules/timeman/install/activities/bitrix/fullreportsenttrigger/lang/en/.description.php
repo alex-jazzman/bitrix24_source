@@ -1,4 +1,10 @@
 <?php
-$MESS["FULL_REPORT_SENT_TRIGGER_DESCR"] = "Triggered employee sends their report to their supervisor.";
+$MESS["FULL_REPORT_SENT_TRIGGER_DESCR"] = "Triggered after an employee sends their report to their supervisor.";
 $MESS["FULL_REPORT_SENT_TRIGGER_NAME"] = "Report sent to your supervisor";
+$MESS["FULL_REPORT_SENT_TRIGGER_RETURN_FIELD_MANAGER"] = "Head of department";
+$MESS["FULL_REPORT_SENT_TRIGGER_RETURN_FIELD_PERIOD_PHRASE"] = "Report date";
+$MESS["FULL_REPORT_SENT_TRIGGER_RETURN_FIELD_REPORT"] = "Report text";
+$MESS["FULL_REPORT_SENT_TRIGGER_RETURN_FIELD_REPORT_EXTENDED"] = "Extended report text";
+$MESS["FULL_REPORT_SENT_TRIGGER_RETURN_FIELD_REPORT_ID"] = "Report ID";
+$MESS["FULL_REPORT_SENT_TRIGGER_RETURN_FIELD_SOURCE_TYPE"] = "Report source";
 $MESS["FULL_REPORT_SENT_TRIGGER_RETURN_FIELD_USER"] = "Employee";

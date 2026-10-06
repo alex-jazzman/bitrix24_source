@@ -12,6 +12,7 @@ class im extends \CModule
 {
 	public $MODULE_ID = 'im';
 	public $MODULE_GROUP_RIGHTS = 'Y';
+	public $errors = '';
 
 	public function __construct()
 	{
@@ -40,16 +41,14 @@ class im extends \CModule
 	function InstallDB()
 	{
 		global $DB, $APPLICATION;
-		$connection = \Bitrix\Main\Application::getConnection();
+		$this->errors = false;
 
-		if (!$DB->TableExists('b_im_chat'))
+		$migrationResult = $this->installMigrations();
+		if (!$migrationResult->isSuccess())
 		{
-			$this->errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/im/install/db/' . $connection->getType() . '/install.sql');
-		}
+			$this->errors = $migrationResult->getErrorMessages();
+			$APPLICATION->ThrowException(implode(' ', $this->errors));
 
-		if (!empty($this->errors))
-		{
-			$APPLICATION->ThrowException(implode("", $this->errors));
 			return false;
 		}
 
@@ -57,69 +56,9 @@ class im extends \CModule
 
 		$eventManager = \Bitrix\Main\EventManager::getInstance();
 
-		$eventManager->registerEventHandlerCompatible('main', 'OnAddRatingVote', 'im', 'CIMEvent', 'OnAddRatingVote');
-		$eventManager->registerEventHandlerCompatible('main', 'OnChangeRatingVote', 'im', 'CIMEvent', 'OnAddRatingVote');
-		$eventManager->registerEventHandlerCompatible('main', 'OnCancelRatingVote', 'im', 'CIMEvent', 'OnCancelRatingVote');
-		$eventManager->registerEventHandlerCompatible('main', 'OnAfterUserAdd', 'im', 'CIMEvent', 'OnAfterUserAdd');
-		$eventManager->registerEventHandlerCompatible('main', 'OnAfterUserUpdate', 'im', 'CIMEvent', 'OnAfterUserUpdate');
-		$eventManager->registerEventHandlerCompatible('main', 'OnUserDelete', 'im', 'CIMEvent', 'OnUserDelete');
-		$eventManager->registerEventHandlerCompatible("main", "OnBeforeUserSendPassword", "im", "CIMEvent", "OnBeforeUserSendPassword");
-		$eventManager->registerEventHandlerCompatible("pull", "OnGetDependentModule", "im", "CIMEvent", "OnGetDependentModule");
 		$eventManager->registerEventHandlerCompatible("main", "OnProlog", "main", "", "", 3, "/modules/im/ajax_hit.php");
-		$eventManager->registerEventHandlerCompatible("perfmon", "OnGetTableSchema", "im", "im", "OnGetTableSchema");
-		$eventManager->registerEventHandlerCompatible("im", "OnGetNotifySchema", "im", "CIMNotifySchema", "OnGetNotifySchema");
-		$eventManager->registerEventHandlerCompatible("main", "OnFileDelete", "im", "CIMEvent", "OnFileDelete");
-		$eventManager->registerEventHandlerCompatible("disk", "onAfterDeleteFile", "im", "CIMDisk", "OnAfterDeleteFile");
-		$eventManager->registerEventHandlerCompatible("main", "OnApplicationsBuildList", "im", "DesktopApplication", "OnApplicationsBuildList");
-		$eventManager->registerEventHandlerCompatible("main", "OnUserOnlineStatusGetCustomOnlineStatus", "im", "CIMStatus", "OnUserOnlineStatusGetCustomStatus");
-		$eventManager->registerEventHandlerCompatible("main", "OnUserOnlineStatusGetCustomOfflineStatus", "im", "CIMStatus", "OnUserOnlineStatusGetCustomStatus");
-		$eventManager->registerEventHandlerCompatible('rest', 'OnRestServiceBuildDescription', 'im', 'CIMRestService', 'OnRestServiceBuildDescription');
-		$eventManager->registerEventHandlerCompatible('rest', 'OnRestAppDelete', 'im', 'CIMRestService', 'OnRestAppDelete');
 		$eventManager->registerEventHandlerCompatible('rest', 'onRestCheckAuth', 'im', '\Bitrix\Im\V2\Guest\Auth\GuestRestAuth', 'onRestCheckAuth', 50);
 		$eventManager->registerEventHandlerCompatible('main', 'OnApplicationsBuildList', 'main', '\Bitrix\Im\V2\Guest\Auth\GuestApplication', 'onApplicationsBuildList', 100, 'modules/im/lib/V2/Guest/Auth/GuestApplication.php'); // module 'main' + explicit path: handler must be loadable before im module is included
-		$eventManager->registerEventHandler('main', 'onApplicationScopeError', 'im', '\Bitrix\Im\V2\Guest\Auth\GuestApplication', 'onApplicationScopeError');
-		$eventManager->registerEventHandlerCompatible('main', 'OnAuthProvidersBuildList', 'im', '\Bitrix\Im\Access\ChatAuthProvider', 'getProviders');
-		$eventManager->registerEventHandlerCompatible('main', 'OnAfterUserUpdate', 'im', '\Bitrix\Im\Configuration\EventHandler', 'onAfterUserUpdate');
-		$eventManager->registerEventHandlerCompatible( 'main', 'OnAfterUserDelete', 'im', '\Bitrix\Im\Configuration\EventHandler', 'onAfterUserDelete');
-		$eventManager->registerEventHandlerCompatible('main', 'OnAfterUserAdd', 'im', '\Bitrix\Im\Configuration\EventHandler', 'onAfterUserAdd');
-
-		\CAgent::AddAgent('CIMMail::MailNotifyAgent();', "im", "N", 600); /** @see \CIMMail::MailNotifyAgent */
-		\CAgent::AddAgent('CIMMail::MailMessageAgent();', "im", "N", 600); /** @see \CIMMail::MailMessageAgent */
-		\CAgent::AddAgent('CIMDisk::RemoveTmpFileAgent();', "im", "N", 43200); /** @see \CIMDisk::RemoveTmpFileAgent */
-		\CAgent::AddAgent('Bitrix\Im\Notify::cleanNotifyAgent();', "im", "N", 7200); /** @see \Bitrix\Im\Notify::cleanNotifyAgent */
-		\CAgent::AddAgent('Bitrix\Im\Bot::deleteExpiredTokenAgent();', "im", "N", 86400); /** @see \Bitrix\Im\Bot::deleteExpiredTokenAgent */
-		\CAgent::AddAgent('Bitrix\Im\Disk\NoRelationPermission::cleaningAgent();', "im", "N", 3600); /** @see \Bitrix\Im\Disk\NoRelationPermission::cleaningAgent */
-		\CAgent::AddAgent('Bitrix\Im\Message\Uuid::cleanOldRecords();', 'im', 'N', 86400); /** @see \Bitrix\Im\Message\Uuid::cleanOldRecords */
-		\CAgent::AddAgent('Bitrix\Im\V2\Link\Reminder\ReminderService::remindAgent();', 'im', 'N', 60); /** @see \Bitrix\Im\V2\Link\Reminder\ReminderService::remindAgent */
-		\CAgent::AddAgent('Bitrix\Im\V2\Link\File\TemporaryFileService::cleanAgent();', 'im', 'N', 3600); /** @see \Bitrix\Im\V2\Link\File\TemporaryFileService::cleanAgent */
-		\CAgent::AddAgent('Bitrix\Im\Update\MessageDisappearing::disappearMessagesAgent();', 'im', 'N', 60); /** @see \Bitrix\Im\Update\MessageDisappearing::disappearMessagesAgent */
-		\CAgent::AddAgent('\Bitrix\Im\V2\Integration\HumanResources\Sync\SyncService::syncRelationAgent();', 'im', 'N', 300); /** @see \Bitrix\Im\V2\Integration\HumanResources\Sync\SyncService::syncRelationAgent() */
-		\CAgent::AddAgent('\Bitrix\Im\V2\Integration\HumanResources\Sync\SyncService::syncMemberAgent();', 'im', 'N', 300); /** @see \Bitrix\Im\V2\Integration\HumanResources\Sync\SyncService::syncMemberAgent() */
-		\CAgent::AddAgent('\Bitrix\Im\V2\Recent\Initializer::executeAgent();', 'im', 'N', 300); /** @see \Bitrix\Im\V2\Recent\Initializer::executeAgent() */
-		\CAgent::AddAgent('Bitrix\Im\V2\Message\CounterService\CounterServiceAgent::cleanGhostCountersAgent();', 'im', 'N', 300); /** @see \Bitrix\Im\V2\Message\CounterService\CounterServiceAgent::cleanGhostCountersAgent() */
-		\CAgent::AddAgent('Bitrix\Im\V2\EventLog\EventService::cleanAgent();', 'im', 'N', 3600); /** @see \Bitrix\Im\V2\EventLog\EventService::cleanAgent() */
-		\CAgent::AddAgent('\Bitrix\Im\V2\Guest\CleanupService::cleanInactiveGuestsAgent();', 'im', 'N', 60); /** @see \Bitrix\Im\V2\Guest\CleanupService::cleanInactiveGuestsAgent() */
-
-		$eventManager->registerEventHandler('pull', 'onGetMobileCounter', 'im', '\Bitrix\Im\Counter', 'onGetMobileCounter');
-		$eventManager->registerEventHandler('pull', 'onGetMobileCounterTypes', 'im', '\Bitrix\Im\Counter', 'onGetMobileCounterTypes');
-		$eventManager->registerEventHandler('calendar', 'OnAfterCalendarEntryUpdate', 'im', '\Bitrix\Im\V2\Service\Messenger', 'updateCalendar');
-		$eventManager->registerEventHandler('calendar', 'OnAfterCalendarEventDelete', 'im', '\Bitrix\Im\V2\Service\Messenger', 'unregisterCalendar');
-		$eventManager->registerEventHandler('im', 'OnAfterMessagesAdd', 'im', '\Bitrix\Im\V2\Message\Delete\DisappearService', 'checkDisappearing');
-		$eventManager->registerEventHandler('ai', 'onTuningLoad', 'im', '\Bitrix\Im\V2\Integration\AI\Restriction', 'onTuningLoad');
-		$eventManager->registerEventHandler('humanresources', 'OnRelationAdded', 'im', '\Bitrix\Im\V2\Integration\HumanResources\Sync\SyncService', 'onRelationAdded');
-		$eventManager->registerEventHandler('humanresources', 'OnRelationDeleted', 'im', '\Bitrix\Im\V2\Integration\HumanResources\Sync\SyncService', 'onRelationDeleted');
-		$eventManager->registerEventHandler('humanresources', 'OnRelationPartDeleted', 'im', '\Bitrix\Im\V2\Integration\HumanResources\Sync\SyncService', 'onRelationPartDeleted');
-		$eventManager->registerEventHandler('humanresources', 'OnMemberAdded', 'im', '\Bitrix\Im\V2\Integration\HumanResources\Sync\SyncService', 'onMemberAdded');
-		$eventManager->registerEventHandler('humanresources', 'OnMemberDeleted', 'im', '\Bitrix\Im\V2\Integration\HumanResources\Sync\SyncService', 'onMemberDeleted');
-		$eventManager->registerEventHandler('intranet', 'onLicenseHasChanged', 'im', '\Bitrix\Im\V2\TariffLimit\Limit', 'onLicenseHasChanged');
-		$eventManager->registerEventHandler('humanresources', 'OnMemberUpdated', 'im', '\Bitrix\Im\V2\Integration\HumanResources\Sync\SyncService', 'onMemberUpdated');
-		$eventManager->registerEventHandler('main', 'OnAfterSetOption_isAutoDeleteMessagesEnabled', 'im', '\Bitrix\Im\V2\Message\Delete\DisappearService', 'onAutoDeleteOptionChanged');
-		$eventManager->registerEventHandler('main', 'OnAfterSetOption_chat_with_guests_available', 'im', '\Bitrix\Im\V2\Guest\GuestLinkService', 'onChatWithGuestsOptionChanged');
-		$eventManager->registerEventHandler('ai', 'onQueueJobExecute', 'im', '\Bitrix\Im\V2\Integration\AI\QueueManager', 'onQueueJobExecute');
-		$eventManager->registerEventHandler('ai', 'onQueueJobFail', 'im', '\Bitrix\Im\V2\Integration\AI\QueueManager', 'onQueueJobFail');
-
-		//marketplace
-		$eventManager->registerEventHandler('rest', 'OnRestServiceBuildDescription', 'im','\Bitrix\Im\V2\Marketplace\Placement', 'onRestServiceBuildDescription');
 
 		$solution = \Bitrix\Main\Config\Option::get("main", "wizard_solution", false);
 		if ($solution == 'community')
@@ -131,13 +70,6 @@ class im extends \CModule
 
 		\Bitrix\Im\Integration\Intranet\User::registerEventHandler();
 
-		$errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/im/install/db/' . $connection->getType() . '/install_ft.sql');
-		if ($errors === false)
-		{
-			\Bitrix\Im\Model\MessageIndexTable::getEntity()->enableFullTextIndex("SEARCH_CONTENT");
-			\Bitrix\Im\Model\ChatIndexTable::getEntity()->enableFullTextIndex("SEARCH_CONTENT");
-		}
-
 		if (\CIMConvert::ConvertCount() > 0)
 		{
 			\CAdminNotify::Add([
@@ -146,7 +78,7 @@ class im extends \CModule
 				"MODULE_ID" => "IM",
 				"ENABLE_CLOSE" => "Y"
 			]);
-			\CAgent::AddAgent("CIMConvert::UndeliveredMessageAgent();", "im", "N", 20, "", "Y", ConvertTimeStamp(time()+CTimeZone::GetOffset()+20, "FULL"));
+			\CAgent::AddAgent("CIMConvert::UndeliveredMessageAgent();", "im", "N", 20, next_exec: ConvertTimeStamp(time()+CTimeZone::GetOffset()+20, "FULL"), existError: false);
 		}
 
 		$this->InstallTemplateRules();
@@ -155,9 +87,6 @@ class im extends \CModule
 		$this->installDefaultConfigurationPreset();
 		\Bitrix\Main\Config\Option::set('im', 'im_link_url_migration', 'Y'); /** @see \Bitrix\Im\V2\Link\Url\UrlItem::$migrationOptionName */
 		\Bitrix\Main\Config\Option::set('im', 'im_link_file_migration', 'Y'); /** @see \Bitrix\Im\V2\Link\File\FileItem::$migrationOptionName */
-
-		\CAgent::AddAgent("CIMChat::InstallGeneralChat(true);", "im", "N", 120, "", "Y", ConvertTimeStamp(time()+CTimeZone::GetOffset()+120, "FULL"));
-		\CAgent::AddAgent('\Bitrix\Im\V2\Chat\GeneralChannel::installAgent();', "im", "N", 120, "", "Y", ConvertTimeStamp(time()+CTimeZone::GetOffset()+120, "FULL"));
 
 		return true;
 	}
@@ -377,100 +306,37 @@ class im extends \CModule
 	function UnInstallDB($arParams = [])
 	{
 		global $APPLICATION, $DB;
-		$connection = \Bitrix\Main\Application::getConnection();
 		$this->errors = false;
 
 		\Bitrix\Main\Loader::includeModule('im');
 
-		if (!$arParams['savedata'])
+		$needDropTables = !array_key_exists('savedata', $arParams) || $arParams['savedata'] != 'Y';
+
+		$migrationResult = $this->uninstallMigrations($needDropTables);
+		if (!$migrationResult->isSuccess())
 		{
-			$this->errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/im/install/db/' . $connection->getType() . '/uninstall.sql');
+			$this->errors = $migrationResult->getErrorMessages();
+			$APPLICATION->ThrowException(implode("", $this->errors));
+			return false;
+		}
+
+		if ($needDropTables)
+		{
 			\Bitrix\Main\Config\Option::delete("im", ['name' => "general_chat_id"]);
 			\Bitrix\Im\V2\Chat\GeneralChat::cleanGeneralChatCache(\Bitrix\Im\V2\Chat\GeneralChat::ID_CACHE_ID);
 			\Bitrix\Im\V2\Chat\GeneralChat::cleanGeneralChatCache(\Bitrix\Im\V2\Chat\GeneralChat::MANAGERS_CACHE_ID);
 			\Bitrix\Main\Config\Option::delete('im', ['name' => \Bitrix\Im\Configuration\Configuration::DEFAULT_PRESET_SETTING_NAME]);
 		}
 
-		if (is_array($this->errors))
-		{
-			$arSQLErrors = $this->errors;
-		}
-
-		if (!empty($arSQLErrors))
-		{
-			$this->errors = $arSQLErrors;
-			$APPLICATION->ThrowException(implode("", $arSQLErrors));
-			return false;
-		}
-
 		\Bitrix\Im\Integration\Intranet\User::unRegisterEventHandler();
 
 		\CAdminNotify::DeleteByTag("IM_CONVERT");
 
-		\CAgent::RemoveAgent('CIMMail::MailNotifyAgent();', "im");
-		\CAgent::RemoveAgent('CIMMail::MailMessageAgent();', "im");
-		\CAgent::RemoveAgent('CIMDisk::RemoveTmpFileAgent();', "im");
-		\CAgent::RemoveAgent('Bitrix\Im\Notify::cleanNotifyAgent();', "im");
-		\CAgent::RemoveAgent('Bitrix\Im\Bot::deleteExpiredTokenAgent();', "im");
-		\CAgent::RemoveAgent('Bitrix\Im\Disk\NoRelationPermission::cleaningAgent();', "im");
-		\CAgent::RemoveAgent('Bitrix\Im\Message\Uuid::cleanOldRecords();', "im");
-		\CAgent::RemoveAgent('Bitrix\Im\V2\Link\Reminder\ReminderService::remindAgent();', 'im');
-		\CAgent::RemoveAgent('Bitrix\Im\V2\Link\File\TemporaryFileService::cleanAgent();', 'im');
-		\CAgent::RemoveAgent('Bitrix\Im\Update\MessageDisappearing::disappearMessagesAgent();', 'im');
-		\CAgent::RemoveAgent('\Bitrix\Im\V2\Integration\HumanResources\Sync\SyncService::syncRelationAgent();', 'im');
-		\CAgent::RemoveAgent('\Bitrix\Im\V2\Integration\HumanResources\Sync\SyncService::syncMemberAgent();', 'im');
-		\CAgent::RemoveAgent('\Bitrix\Im\V2\Recent\Initializer::executeAgent();', 'im');
-		\CAgent::RemoveAgent('Bitrix\Im\V2\Message\CounterService\CounterServiceAgent::cleanGhostCountersAgent();', 'im');
-		\CAgent::RemoveAgent('Bitrix\Im\V2\EventLog\EventService::cleanAgent();', 'im');
-		\CAgent::RemoveAgent('\Bitrix\Im\V2\Guest\CleanupService::cleanInactiveGuestsAgent();', 'im');
-
 		$eventManager = \Bitrix\Main\EventManager::getInstance();
 
-		$eventManager->unRegisterEventHandler("im", "OnGetNotifySchema", "im", "CIMNotifySchema", "OnGetNotifySchema");
-		$eventManager->unRegisterEventHandler("main", "OnFileDelete", "im", "CIMEvent", "OnFileDelete");
-		$eventManager->unRegisterEventHandler("disk", "onAfterDeleteFile", "im", "CIMDisk", "OnAfterDeleteFile");
-		$eventManager->unRegisterEventHandler("perfmon", "OnGetTableSchema", "im", "im", "OnGetTableSchema");
-		$eventManager->unRegisterEventHandler('main', 'OnAddRatingVote', 'im', 'CIMEvent', 'OnAddRatingVote');
-		$eventManager->unRegisterEventHandler('main', 'OnChangeRatingVote', 'im', 'CIMEvent', 'OnAddRatingVote');
-		$eventManager->unRegisterEventHandler('main', 'OnAfterUserAdd', 'im', 'CIMEvent', 'OnAfterUserAdd');
-		$eventManager->unRegisterEventHandler('main', 'OnUserDelete', 'im', 'CIMEvent', 'OnUserDelete');
-		$eventManager->unRegisterEventHandler("main", "OnBeforeUserSendPassword", "im", "CIMEvent", "OnBeforeUserSendPassword");
-		$eventManager->unRegisterEventHandler('main', 'OnCancelRatingVote', 'im', 'CIMEvent', 'OnCancelRatingVote');
-		$eventManager->unRegisterEventHandler('main', 'OnAfterUserUpdate', 'im', 'CIMEvent', 'OnAfterUserUpdate');
-		$eventManager->unRegisterEventHandler("main", "OnUserOnlineStatusGetCustomOnlineStatus", "im", "CIMStatus", "OnUserOnlineStatusGetCustomStatus");
-		$eventManager->unRegisterEventHandler("main", "OnUserOnlineStatusGetCustomOfflineStatus", "im", "CIMStatus", "OnUserOnlineStatusGetCustomStatus");
-		$eventManager->unRegisterEventHandler("pull", "OnGetDependentModule", "im", "CIMEvent", "OnGetDependentModule");
 		$eventManager->unRegisterEventHandler("main", "OnProlog", "main", "", "", "/modules/im/ajax_hit.php");
-		$eventManager->unRegisterEventHandler("main", "OnApplicationsBuildList", "im", "DesktopApplication", "OnApplicationsBuildList");
-		$eventManager->unRegisterEventHandler('rest', 'OnRestServiceBuildDescription', 'im', 'CIMRestService', 'OnRestServiceBuildDescription');
-		$eventManager->unRegisterEventHandler('rest', 'OnRestAppDelete', 'im', 'CIMRestService', 'OnRestAppDelete');
 		$eventManager->unRegisterEventHandler('rest', 'onRestCheckAuth', 'im', '\Bitrix\Im\V2\Guest\Auth\GuestRestAuth', 'onRestCheckAuth');
 		$eventManager->unRegisterEventHandler('main', 'OnApplicationsBuildList', 'main', '\Bitrix\Im\V2\Guest\Auth\GuestApplication', 'onApplicationsBuildList', 'modules/im/lib/V2/Guest/Auth/GuestApplication.php');
-		$eventManager->unRegisterEventHandler('main', 'onApplicationScopeError', 'im', '\Bitrix\Im\V2\Guest\Auth\GuestApplication', 'onApplicationScopeError');
-		$eventManager->unRegisterEventHandler('main', 'OnAuthProvidersBuildList', 'im', '\Bitrix\Im\Access\ChatAuthProvider', 'getProviders');
-		$eventManager->unRegisterEventHandler('main', 'OnAfterUserUpdate', 'im', '\Bitrix\Im\Configuration\EventHandler', 'onAfterUserUpdate');
-		$eventManager->unRegisterEventHandler('main', 'OnAfterUserDelete', 'im', '\Bitrix\Im\Configuration\EventHandler', 'onAfterUserDelete');
-		$eventManager->unRegisterEventHandler('main', 'OnAfterUserAdd', 'im', '\Bitrix\Im\Configuration\EventHandler', 'onAfterUserAdd');
-
-		$eventManager->unRegisterEventHandler('pull', 'onGetMobileCounter', 'im', '\Bitrix\Im\Counter', 'onGetMobileCounter');
-		$eventManager->unRegisterEventHandler('pull', 'onGetMobileCounterTypes', 'im', '\Bitrix\Im\Counter', 'onGetMobileCounterTypes');
-
-		$eventManager->unregisterEventHandler('calendar', 'OnAfterCalendarEntryUpdate', 'im', '\Bitrix\Im\V2\Service\Messenger', 'updateCalendar');
-		$eventManager->unregisterEventHandler('calendar', 'OnAfterCalendarEventDelete', 'im', '\Bitrix\Im\V2\Service\Messenger', 'unregisterCalendar');
-		$eventManager->unregisterEventHandler('rest', 'OnRestServiceBuildDescription', 'im','\Bitrix\Im\V2\Marketplace\Placement', 'onRestServiceBuildDescription');
-		$eventManager->unregisterEventHandler('im', 'OnAfterMessagesAdd', 'im', '\Bitrix\Im\V2\Message\Delete\DisappearService', 'checkDisappearing');
-		$eventManager->unRegisterEventHandler('ai', 'onTuningLoad', 'im', '\Bitrix\Im\V2\Integration\AI\Restriction', 'onTuningLoad');
-		$eventManager->unRegisterEventHandler('humanresources', 'OnRelationAdded', 'im', '\Bitrix\Im\V2\Integration\HumanResources\Sync\SyncService', 'onRelationAdded');
-		$eventManager->unRegisterEventHandler('humanresources', 'OnRelationDeleted', 'im', '\Bitrix\Im\V2\Integration\HumanResources\Sync\SyncService', 'onRelationDeleted');
-		$eventManager->unRegisterEventHandler('humanresources', 'OnRelationPartDeleted', 'im', '\Bitrix\Im\V2\Integration\HumanResources\Sync\SyncService', 'onRelationPartDeleted');
-		$eventManager->unRegisterEventHandler('humanresources', 'OnMemberAdded', 'im', '\Bitrix\Im\V2\Integration\HumanResources\Sync\SyncService', 'onMemberAdded');
-		$eventManager->unRegisterEventHandler('humanresources', 'OnMemberDeleted', 'im', '\Bitrix\Im\V2\Integration\HumanResources\Sync\SyncService', 'onMemberDeleted');
-		$eventManager->unRegisterEventHandler('intranet', 'onLicenseHasChanged', 'im', '\Bitrix\Im\V2\TariffLimit\Limit', 'onLicenseHasChanged');
-		$eventManager->unRegisterEventHandler('humanresources', 'OnMemberUpdated', 'im', '\Bitrix\Im\V2\Integration\HumanResources\Sync\SyncService', 'onMemberUpdated');
-		$eventManager->unRegisterEventHandler('main', 'OnAfterSetOption_isAutoDeleteMessagesEnabled', 'im', '\Bitrix\Im\V2\Message\Delete\DisappearService', 'onAutoDeleteOptionChanged');
-		$eventManager->unRegisterEventHandler('main', 'OnAfterSetOption_chat_with_guests_available', 'im', '\Bitrix\Im\V2\Guest\GuestLinkService', 'onChatWithGuestsOptionChanged');
-		$eventManager->unRegisterEventHandler('ai', 'onQueueJobExecute', 'im', '\Bitrix\Im\V2\Integration\AI\QueueManager', 'onQueueJobExecute');
-		$eventManager->unRegisterEventHandler('ai', 'onQueueJobFail', 'im', '\Bitrix\Im\V2\Integration\AI\QueueManager', 'onQueueJobFail');
 
 		$this->UnInstallUserFields($arParams);
 

@@ -1,0 +1,26 @@
+.mail-compose-recipient-field
+{
+	display: flex;
+	flex: 0 1 auto;
+	align-items: center;
+	min-width: 0;
+}
+
+/* An empty selector is opened by the row action and must not leave its bordered shell in the layout. */
+.mail-compose-recipient-field.--empty:not(.--editing)
+{
+	display: none;
+}
+
+.mail-compose-recipient-field .ui-tag-selector-outer-container
+{
+	width: auto;
+	border-color: transparent;
+	background: transparent;
+}
+
+.mail-compose-recipient-field.--editing .ui-tag-selector-outer-container
+{
+	border-color: var(--ui-color-base-5);
+	background: var(--ui-color-bg-content-primary);
+}

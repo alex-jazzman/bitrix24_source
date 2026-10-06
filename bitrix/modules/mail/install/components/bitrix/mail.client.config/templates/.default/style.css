@@ -980,7 +980,15 @@
 .mail-client-config-connect-access-denied-slider-icon {
 	width: 269px;
 	height: 195px;
-	background-image: url(images/access_denied.png);
+	background-image: url(images/access_denied.webp);
+	background-image: -webkit-image-set(
+		url(images/access_denied.webp) 1x,
+		url(images/access_denied-2x.webp) 2x
+	);
+	background-image: image-set(
+		url(images/access_denied.webp) 1x,
+		url(images/access_denied-2x.webp) 2x
+	);
 	background-size: cover;
 }
 

@@ -4,6 +4,7 @@ import {
 	useAppStore,
 } from '../../../../entities/app';
 import { useCatalogStore } from '../../../../entities/catalog';
+import { useDataViewDefinitionStore } from '../../../../features/data-view-editor';
 
 // @vue/component
 export const AppLayout = {
@@ -21,6 +22,9 @@ export const AppLayout = {
 		...mapState(useCatalogStore, [
 			'isExpandedCatalog',
 		]),
+		...mapState(useDataViewDefinitionStore, {
+			isTableSettingsPanelShown: 'isOpen',
+		}),
 	},
 	template: `
 		<AppLayoutEntity
@@ -29,6 +33,7 @@ export const AppLayout = {
 			:showDebugBar="isShownDebugBar"
 			:catalogExpanded="isExpandedCatalog"
 			:isDataInspectorPanelShown="isDataInspectorPanelShown"
+			:isTableSettingsPanelShown="isTableSettingsPanelShown"
 		>
 			<template #skeleton>
 				<slot name="skeleton" />
@@ -68,6 +73,10 @@ export const AppLayout = {
 
 			<template #settings-data-inspector>
 				<slot name="settings-data-inspector"/>
+			</template>
+
+			<template #settings-table-settings>
+				<slot name="settings-table-settings"/>
 			</template>
 
 		</AppLayoutEntity>

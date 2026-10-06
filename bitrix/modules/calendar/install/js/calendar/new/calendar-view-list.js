@@ -1494,7 +1494,7 @@
 				}
 				if (entry && ['Y', 'N'].includes(decision))
 				{
-					BX.Calendar.EntryManager.setMeetingStatus(entry, decision);
+					BX.Calendar.EntryManager.setMeetingStatus(entry, decision).catch(function() {});
 				}
 			}
 			else if (

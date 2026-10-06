@@ -1,0 +1,103 @@
+.crm-call-assessment-v2-info-card {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+}
+
+.crm-call-assessment-v2-info-card__title-row {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-2xs);
+}
+
+.crm-call-assessment-v2-info-card__title-icon {
+	--ui-icon-set__icon-color: var(--cav2-bitrix-gpt-gradient);
+}
+
+.crm-call-assessment-v2-info-card__title {
+	flex: 1 1 auto;
+	min-width: 0;
+	color: var(--ui-color-base-1);
+	letter-spacing: -0.2px;
+}
+
+.crm-call-assessment-v2-info-card__description {
+	color: var(--ui-color-base-2);
+	font-size: var(--ui-font-size-lg);
+	line-height: 20px;
+}
+
+.crm-call-assessment-v2-info-card__info-chips {
+	display: flex;
+	flex-wrap: nowrap;
+	align-items: center;
+	gap: var(--ui-space-inline-xs);
+	min-width: 0;
+}
+
+.crm-call-assessment-v2-info-card__info-chip {
+	display: inline-flex;
+	align-items: center;
+	flex-shrink: 0;
+	height: 36px;
+	gap: var(--ui-space-inline-2xs);
+	padding: 0 var(--ui-space-inset-sm) 0 var(--ui-space-inset-sm);
+	border-radius: var(--ui-border-radius-sm);
+	color: var(--ui-color-design-outline-content);
+	font-size: var(--ui-font-size-sm);
+	font-weight: var(--ui-font-weight-regular);
+	line-height: 20px;
+	letter-spacing: -0.05px;
+	white-space: nowrap;
+}
+
+.crm-call-assessment-v2-info-card__info-chip.--truncate {
+	flex-shrink: 1;
+	min-width: 0;
+}
+
+.crm-call-assessment-v2-info-card__info-chip.--truncate .crm-call-assessment-v2-info-card__info-chip-text {
+	display: block;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	min-width: 0;
+}
+
+.crm-call-assessment-v2-info-card__info-chip.--attribution {
+	padding-left: 0;
+}
+
+.crm-call-assessment-v2-info-card__info-chip-text {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--ui-space-inline-3xs);
+}
+
+.crm-call-assessment-v2-info-card__info-chip-text.--gradient {
+	background: var(--cav2-bitrix-gpt-gradient);
+	-webkit-background-clip: text;
+	background-clip: text;
+	-webkit-text-fill-color: transparent;
+}
+
+.crm-call-assessment-v2-info-card__info-chip-icon.--gradient {
+	--ui-icon-set__icon-color: var(--cav2-bitrix-gpt-gradient);
+}
+
+.crm-call-assessment-v2-info-card__info-chip-link {
+	color: var(--ui-color-accent-main-link);
+	cursor: pointer;
+	text-decoration: none;
+}
+
+.crm-call-assessment-v2-info-card__info-chip-link:hover {
+	text-decoration: underline;
+}
+
+.crm-call-assessment-v2-info-card__chips {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 9px;
+	margin-top: 4px;
+}
+

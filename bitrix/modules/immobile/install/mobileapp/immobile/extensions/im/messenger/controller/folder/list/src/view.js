@@ -13,7 +13,7 @@ jn.define('im/messenger/controller/folder/list/view', (require, exports, module)
 	const { PopupMenu } = require('ui-system/popups/popup-menu');
 	const { Button, ButtonSize } = require('ui-system/form/buttons/button');
 	const { FolderLoadableButton } = require('im/messenger/controller/folder/lib/ui/loadable-button');
-	const { MAX_PERSONAL_FOLDERS } = require('im/messenger/const');
+	const { MAX_PERSONAL_FOLDERS, Analytics } = require('im/messenger/const');
 	const { FolderCreate } = require('im/messenger/controller/folder/create');
 	const { FolderUpdate } = require('im/messenger/controller/folder/update');
 	const { FolderCard } = require('im/messenger/controller/folder/list/card');
@@ -23,6 +23,7 @@ jn.define('im/messenger/controller/folder/list/view', (require, exports, module)
 		showDeleteSuccessToast,
 		showSortSuccessToast,
 	} = require('im/messenger/controller/folder/lib/actions');
+	const { AnalyticsService } = require('im/messenger/provider/services/analytics');
 
 	const logger = getLoggerWithContext('folder--list', 'FolderListView');
 
@@ -44,11 +45,15 @@ jn.define('im/messenger/controller/folder/list/view', (require, exports, module)
 		copilot: 'IMMOBILE_FOLDER_LIST_SYSTEM_DESCRIPTION_COPILOT',
 		openChannel: 'IMMOBILE_FOLDER_LIST_SYSTEM_DESCRIPTION_OPEN_CHANNEL',
 		collab: 'IMMOBILE_FOLDER_LIST_SYSTEM_DESCRIPTION_PROJECT',
-		openlines: 'IMMOBILE_FOLDER_LIST_SYSTEM_DESCRIPTION_OPENLINES',
+		lines: 'IMMOBILE_FOLDER_LIST_SYSTEM_DESCRIPTION_OPENLINES',
 	});
 
 	class FolderListView extends LayoutComponent
 	{
+		/**
+		 * @return {Promise<boolean>} resolves to true on successful widget mount,
+		 *   false on offline/missing-core early return or openWidget failure.
+		 */
 		static open(parentWidget = null)
 		{
 			const opener = parentWidget || PageManager;
@@ -57,7 +62,7 @@ jn.define('im/messenger/controller/folder/list/view', (require, exports, module)
 			{
 				Notification.showOfflineToast({}, opener);
 
-				return;
+				return Promise.resolve(false);
 			}
 
 			if (!serviceLocator.get('core'))
@@ -65,10 +70,10 @@ jn.define('im/messenger/controller/folder/list/view', (require, exports, module)
 				logger.error('open error: messenger core is not ready');
 				Notification.showErrorToast({}, opener);
 
-				return;
+				return Promise.resolve(false);
 			}
 
-			opener.openWidget('layout', {
+			return opener.openWidget('layout', {
 				titleParams: {
 					text: Loc.getMessage('IMMOBILE_FOLDER_LIST_NAV_TITLE'),
 				},
@@ -79,9 +84,13 @@ jn.define('im/messenger/controller/folder/list/view', (require, exports, module)
 						layoutWidget: widget,
 						opener,
 					}));
+
+					return true;
 				})
 				.catch((error) => {
 					logger.error('open error', error);
+
+					return false;
 				})
 			;
 		}
@@ -182,6 +191,7 @@ jn.define('im/messenger/controller/folder/list/view', (require, exports, module)
 					id: 'settings',
 					title: Loc.getMessage('IMMOBILE_FOLDER_LIST_CONTEXT_SETTINGS'),
 					onItemSelected: () => {
+						AnalyticsService.getInstance().sendClickEditFolder(Analytics.SubSection.folderList);
 						new FolderUpdate({ id: folder.id }).open(this.props.layoutWidget);
 					},
 				},
@@ -190,6 +200,10 @@ jn.define('im/messenger/controller/folder/list/view', (require, exports, module)
 					title: Loc.getMessage('IMMOBILE_FOLDER_LIST_CONTEXT_DELETE'),
 					isDestructive: true,
 					onItemSelected: () => {
+						AnalyticsService.getInstance().sendClickDeleteFolder({
+							folderId: folder.id,
+							subSection: Analytics.SubSection.folderList,
+						});
 						this.deleteFolder(folder.id);
 					},
 				},
@@ -325,6 +339,7 @@ jn.define('im/messenger/controller/folder/list/view', (require, exports, module)
 							shadowOffset: { x: 0, y: 2 },
 						},
 						onClick: () => {
+							AnalyticsService.getInstance().sendClickCreateFolder(Analytics.SubSection.folderList);
 							new FolderCreate().openAsBottomSheet(this.props.layoutWidget);
 						},
 					},

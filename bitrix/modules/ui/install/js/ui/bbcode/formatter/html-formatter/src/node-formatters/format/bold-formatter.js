@@ -11,7 +11,6 @@ export class BoldNodeFormatter extends NodeFormatter
 				return Dom.create({
 					tag: 'b',
 					attrs: {
-						...node.getAttributes(),
 						className: 'ui-typography-text-bold',
 					},
 				});

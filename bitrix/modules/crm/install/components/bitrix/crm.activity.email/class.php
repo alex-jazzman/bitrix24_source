@@ -611,9 +611,7 @@ class CrmActivityEmailComponent extends CBitrixComponent
 		$this->arParams['ACTIVITY']  = $activity;
 		$this->arParams['TEMPLATES'] = $templates;
 
-		$templatePage = !empty($activity['__template']) && $activity['__template'] == 'slider' ? 'slider' : '';
-
-		$this->includeComponentTemplate($templatePage);
+		$this->includeComponentTemplate('slider');
 	}
 
 	public static function prepareActivityRcpt(&$activity, $parent = null)

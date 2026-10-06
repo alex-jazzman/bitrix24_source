@@ -2,7 +2,6 @@ import { Analytics } from 'im.v2.lib.analytics';
 import { Feature, FeatureManager } from 'im.v2.lib.feature';
 
 import { ModeButton } from './components/mode-button';
-import { ReasoningButton } from './components/reasoning-button';
 import { CopilotMcpIntegration } from './components/copilot-mcp-integration';
 import { SearchButton } from './components/search-button';
 import { AgentModeButton } from '../agent-mode-button';
@@ -21,7 +20,7 @@ const DEFAULT_EXPANDED = ButtonKey.search;
 // @vue/component
 export const ToolbarButtons = {
 	name: 'ToolbarButtons',
-	components: { ModeButton, ReasoningButton, CopilotMcpIntegration, SearchButton, AgentModeButton },
+	components: { ModeButton, CopilotMcpIntegration, SearchButton, AgentModeButton },
 	props: {
 		dialogId: {
 			type: String,
@@ -107,6 +106,7 @@ export const ToolbarButtons = {
 
 			this.$store.dispatch('copilot/chats/toggleReasoning', this.dialogId);
 			Analytics.getInstance().copilot.onToggleReasoning(this.dialogId);
+			Analytics.getInstance().copilot.onChangeReasoning(this.dialogId);
 		},
 		getResizeObserver(): ResizeObserver
 		{

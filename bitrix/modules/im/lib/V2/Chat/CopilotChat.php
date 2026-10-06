@@ -122,17 +122,16 @@ class CopilotChat extends GroupChat
 	protected function getValidUsersToAdd(array $userIds): array
 	{
 		$filterUserIds = parent::getValidUsersToAdd($userIds);
-		$copilotChatBot = Loader::includeModule('imbot') ? CopilotChatBot::getBotId() : null;
+		$copilotChatBotId = Loader::includeModule('imbot') ? CopilotChatBot::getBotId() : 0;
 
-		if (!isset($copilotChatBot) || !in_array($copilotChatBot, $userIds, true))
+		if ($copilotChatBotId <= 0 || !in_array($copilotChatBotId, $userIds, true))
 		{
 			return $filterUserIds;
 		}
 
-		if (!in_array($copilotChatBot, $filterUserIds, true))
-		{
-			$filterUserIds[] = CopilotChatBot::getBotId();
-		}
+		// Keyed by user id as everywhere in the members composition: the bot is taken out of the
+		// invitation message by key.
+		$filterUserIds[$copilotChatBotId] = $copilotChatBotId;
 
 		return $filterUserIds;
 	}
@@ -194,18 +193,26 @@ class CopilotChat extends GroupChat
 		return;
 	}
 
-	public function sendBanner(?int $authorId = null, ?string $copilotName = null, bool $isUpdate = false): void
+	public function sendBanner(?int $authorId = null, bool $force = false, ?string $copilotName = null, bool $isUpdate = false): void
 	{
-		$roleManager = (new Im\V2\Integration\AI\RoleManager())->setContextUser($this->getContext()->getUser());
+		if (!$authorId)
+		{
+			$authorId = $this->getAuthorId();
+		}
+
+		// The chat can be created in a system context, which names no copilot: the name comes from the author.
+		$roleManager = (new Im\V2\Integration\AI\RoleManager())->setContextUser($authorId);
 		$copilotCode = $roleManager->getValidRoleCode($roleManager->getMainRole($this->getChatId()));
 		$defaultRoleCode = Im\V2\Integration\AI\RoleManager::getDefaultRoleCode();
 
 		if (
 			!$isUpdate
+			&& !$force
 			&& Features::get()->isBitrixGptV2Available
 			&& Features::get()->isCopilotDraftChatAvailable
 			&& $defaultRoleCode !== null
 			&& $copilotCode === $defaultRoleCode
+			&& !($this->hasParent() && $this->getParentChat() instanceof CollabChat)
 		)
 		{
 			return;
@@ -352,9 +359,11 @@ class CopilotChat extends GroupChat
 
 	protected function generateTitle(): string
 	{
-		$copilotChatCounter = \CUserOptions::GetOption('im', self::COUNTER_CHAT_CODE, 1, $this->getContext()->getUserId());
+		// The chat can be created in a system context, which owns no counter: the number is the author's.
+		$counterOwnerId = $this->getContext()->getUserId() ?: (int)$this->getAuthorId();
+		$copilotChatCounter = \CUserOptions::GetOption('im', self::COUNTER_CHAT_CODE, 1, $counterOwnerId);
 		$title = Loc::getMessage('IM_CHAT_COPILOT_CHAT_TITLE', ['#NUMBER#' => $copilotChatCounter]);
-		\CUserOptions::SetOption('im', self::COUNTER_CHAT_CODE, $copilotChatCounter + 1);
+		\CUserOptions::SetOption('im', self::COUNTER_CHAT_CODE, $copilotChatCounter + 1, false, $counterOwnerId);
 
 		return $title;
 	}

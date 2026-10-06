@@ -27,15 +27,10 @@ jn.define('project/widget', (require, exports, module) => {
 
 			const tabsWidget = await PageManager.openWidget('tabs', {
 				objectName: 'tabs',
-				titleParams: {
-					text: item.title,
-					detailText: subtitle,
-					imageUrl: item.params.avatar,
-					userLargeTitleMode: true,
-				},
+				titleParams: WorkgroupUtil.getProjectTitleParams(item, subtitle),
 				grabTitle: false,
 				tabs: {
-					items: tabs,
+					items: ProjectWidget.markActiveTab(tabs, initialTabId),
 				},
 			});
 
@@ -68,6 +63,24 @@ jn.define('project/widget', (require, exports, module) => {
 			{
 				console.error(error);
 			}
+		}
+
+		/**
+		 * Marks the tab matching activeTabId as active in widget tabs data before opening.
+		 * Returns a new array without mutating the input; if activeTabId is empty, returns the original array.
+		 *
+		 * @param {Array<object>} tabs
+		 * @param {string} activeTabId
+		 * @return {Array<object>}
+		 */
+		static markActiveTab(tabs, activeTabId)
+		{
+			if (!activeTabId)
+			{
+				return tabs;
+			}
+
+			return tabs.map((tab) => ({ ...tab, active: tab.id === activeTabId }));
 		}
 
 		static resolveInitialTabId(tabs, selectedTabId = '')

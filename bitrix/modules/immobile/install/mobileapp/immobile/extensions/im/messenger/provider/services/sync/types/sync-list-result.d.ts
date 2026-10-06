@@ -44,6 +44,12 @@ declare type SyncListResult = {
 	recentItems: Array<SyncRawRecentItem>,
 	users: Array<SyncRawUser>,
 	usersShort: Array<SyncRawShortUser>,
+	userSync: {
+		// updatedUsers is informational only; the client relies on the 'users' section
+		// (full profile + active flag) rather than this list. Part of backend DTO-01 contract — do not remove.
+		updatedUsers: number[],
+		deletedUsers: number[],
+	} | null,
 	stickers: Array<StickerState>,
 	recentConfigs: Array<{
 		chatId: number,

@@ -33,6 +33,7 @@ export const EventType = {
 		sendMessage: 'IM:Textarea:sendMessage',
 		openUploadPreview: 'IM:Textarea:openUploadPreview',
 		getText: 'IM:Textarea:getText',
+		closePanel: 'IM:Textarea:closePanel',
 	},
 	sidebar:
 	{
@@ -150,5 +151,12 @@ export const EventType = {
 	guest:
 	{
 		onAfterGuestNamePopupClose: 'IM:Guest:onAfterGuestNamePopupClose',
+		/**
+		 * Emitted when an already identified guest (the guest-name popup will NOT be shown)
+		 * opens a chat. On the first visit — when the popup will be shown — this event is
+		 * NOT emitted: identification is signalled by the popup via `onAfterGuestNamePopupClose`.
+		 * Payload: { dialogId: string }.
+		 */
+		onInitialChatOpen: 'IM:Guest:onInitialChatOpen',
 	},
 };

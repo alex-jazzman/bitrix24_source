@@ -6,7 +6,7 @@
 // region environment initialization
 if (!defined("UPDATE_SYSTEM_VERSION"))
 {
-	define("UPDATE_SYSTEM_VERSION", "26.500.0");
+	define("UPDATE_SYSTEM_VERSION", "26.800.0");
 }
 
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_before.php");
@@ -77,7 +77,7 @@ $strongSystemMessage = "";
 $systemMessage = "";
 
 $stableVersionsOnly = COption::GetOptionString("main", "stable_versions_only", "Y");
-$bLockUpdateSystemKernel = CUpdateSystem::IsInCommonKernel();
+$bLockUpdateSystemKernel = CUpdateClient::IsInCommonKernel();
 
 $arUpdateList = false;
 

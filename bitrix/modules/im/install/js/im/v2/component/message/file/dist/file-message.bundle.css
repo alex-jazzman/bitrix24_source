@@ -40,6 +40,19 @@
 	overflow: hidden;
 }
 
+/*
+ * A reply quote outside the bubble widens it (quote max-width is 460px). The card, time and
+ * download button must follow that width, so the base 285px cap is lifted to the quote limit.
+ */
+.bx-im-message-base__content-main > .bx-im-message-quote ~ .bx-im-message-base__body .bx-im-message-base-file__container {
+	max-width: 460px;
+}
+
+.bx-im-message-base-file__container > .bx-im-message-quote {
+	margin-top: 4px;
+	margin-bottom: 12px;
+}
+
 .bx-im-message-base-file__author-title {
 	padding-bottom: 6px;
 }
@@ -48,6 +61,19 @@
 	position: relative;
 	padding: 8px 12px 6px;
 	max-width: 285px;
+}
+
+/*
+ * A reply quote outside the bubble widens it (quote max-width is 460px). The cards, time and
+ * download buttons must follow that width, so the base 285px cap is lifted to the quote limit.
+ */
+.bx-im-message-base__content-main > .bx-im-message-quote ~ .bx-im-message-base__body .bx-im-message-file-collection__container {
+	max-width: 460px;
+}
+
+.bx-im-message-file-collection__container > .bx-im-message-quote {
+	margin-top: 4px;
+	margin-bottom: 12px;
 }
 
 .--has-error .bx-im-message-file-collection__container .bx-im-progress-bar__container {
@@ -132,6 +158,23 @@
 
 .bx-im-message-image__bottom-container {
 	padding: var(--im-message-base__padding_body);
+}
+
+/*
+ * The outside quote must not set the column width (its own cap is 460px) — a narrow vertical
+ * image would visually fall apart from a wide quote above it. Zero intrinsic width excludes
+ * the quote from the column sizing, min-width stretches it back to the media width.
+ */
+.bx-im-message-base__content-main > .bx-im-message-quote.bx-im-message-image__quote {
+	width: 0;
+	min-width: 100%;
+}
+
+.bx-im-message-image__container > .bx-im-message-quote {
+	padding-right: var(--im-message-base__padding-right_body);
+	padding-left: var(--im-message-base__padding-left_body);
+	margin-top: 0;
+	margin-bottom: 12px;
 }
 
 /* External reaction list */

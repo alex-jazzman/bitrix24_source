@@ -310,6 +310,8 @@
 .ui-viewer-more-btn.--hidden {
 	opacity: 0;
 	width: 0;
+	overflow: hidden;
+	pointer-events: none;
 }
 
 .ui-viewer-more-btn .ui-viewer-more-btn-icon {
@@ -681,9 +683,53 @@
 	background-color: rgba(255, 255, 255, .4);
 }
 
+.ui-viewer-audio {
+	width: 360px;
+	max-width: 100%;
+	font-size: 14px;
+	text-align: center;
+	white-space: normal;
+}
+
+.ui-viewer-audio-error {
+	box-sizing: border-box;
+	padding: 24px;
+	width: 100%;
+	border: 1px solid rgba(255, 255, 255, .24);
+	border-radius: 4px;
+	background: rgba(255, 255, 255, .08);
+	color: #fff;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+}
+
+.ui-viewer-audio-error-message {
+	margin-bottom: 16px;
+	line-height: 20px;
+	overflow-wrap: anywhere;
+}
+
+.ui-viewer-audio-download {
+	color: #fff;
+	font-weight: var(--ui-font-weight-semi-bold);
+	overflow-wrap: anywhere;
+	text-decoration: underline;
+}
+
+.ui-viewer-audio-download:hover {
+	color: #fff;
+	text-decoration: none;
+}
+
+.ui-viewer-audio-download:focus-visible,
+.ui-viewer-audio-error:focus-visible {
+	outline: 2px solid #fff;
+	outline-offset: 3px;
+}
+
 .ui-viewer .vjs-audio.vjs-viewer-audio-player-skin {
 	overflow: hidden;
 	box-sizing: border-box;
+	margin: 0 auto;
 	padding: 0;
 	max-width: 100%;
 	width: 310px;

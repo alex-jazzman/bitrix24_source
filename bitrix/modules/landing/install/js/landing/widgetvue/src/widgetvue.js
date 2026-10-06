@@ -95,6 +95,23 @@ export class WidgetVue
 		;
 	}
 
+	/**
+	 * Remove frame and release all subscriptions
+	 */
+	unmount(): void
+	{
+		Event.unbind(window, 'message', this.#onMessage);
+		BX.removeCustomEvent('BX.Landing.Block:remove', this.#onBlockRemove);
+
+		if (this.#frame)
+		{
+			Dom.remove(this.#frame);
+			this.#frame = null;
+		}
+
+		WidgetVue.runningAppNodes.delete(this.#rootNode);
+	}
+
 	async #getFrameContent(): Promise<string>
 	{
 		let content = '';
@@ -285,12 +302,23 @@ export class WidgetVue
 
 	#bindEvents()
 	{
-		Event.bind(window, 'message', this.#onMessage.bind(this));
+		Event.bind(window, 'message', this.#onMessage);
+		BX.addCustomEvent('BX.Landing.Block:remove', this.#onBlockRemove);
 	}
 
-	#onMessage(event)
-	{
-		// todo: need check origin manually?
+	#onBlockRemove = (event) => {
+		if (this.#blockId > 0 && event?.blockId === this.#blockId)
+		{
+			this.unmount();
+		}
+	};
+
+	#onMessage = (event) => {
+		// Frame is sandboxed without allow-same-origin, its origin is opaque - the sender is checked by window reference
+		if (!this.#frame || event.source !== this.#frame.contentWindow)
+		{
+			return;
+		}
 
 		if (
 			event.data
@@ -351,5 +379,5 @@ export class WidgetVue
 				);
 			}
 		}
-	}
+	};
 }

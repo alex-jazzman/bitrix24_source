@@ -166,14 +166,3 @@
 	flex-direction: row;
 	justify-content: space-between;
 }
-
-.sign__b2e-close-onboarding-signing-warning-popup-content {
-	font-family: var(--ui-font-family-primary, var(--ui-font-family-system));
-	font-size: var(--ui-font-size-xl);
-	color: var(--ui-color-palette-gray-90);
-	overflow-wrap: break-word;
-	word-break: break-word;
-	white-space: normal;
-	font-weight: 400;
-	margin-top: 20px;
-}

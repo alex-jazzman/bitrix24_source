@@ -1,17 +1,18 @@
-import { Runtime, Browser } from 'main.core';
+import { Runtime, Browser, Text } from 'main.core';
+import { EventEmitter, type BaseEvent } from 'main.core.events';
 import { type MenuItemOptions } from 'main.popup';
 import {
-	useAnimationQueue,
 	useHistory,
 	GroupSelectionBox,
 	useKeyboardShortcuts,
 	useBlockDiagram,
+	useCanvas,
 	useHighlightedBlocks,
 	useContextMenu,
 	type Point,
 } from 'ui.block-diagram';
 import { UI } from 'ui.notification';
-import { computed, toValue, inject, watch, nextTick } from 'ui.vue3';
+import { computed, toValue, watch, nextTick, onMounted, onUnmounted, onBeforeUnmount } from 'ui.vue3';
 import { storeToRefs } from 'ui.vue3.pinia';
 
 import { FeatureCode, type FeatureCodeType } from 'bizprocdesigner.feature';
@@ -24,10 +25,18 @@ import {
 	CONNECTION_SLOT_NAMES,
 	useBufferStore,
 } from '../../../../entities/blocks';
+import {
+	READABLE_EXPRESSION_SHOW_SOURCE_EVENT,
+} from '../../../../features/node-settings/ui/readable-expression-popover/readable-expression-popover';
 import { useFeature, useLoc } from '../../../../shared/composables';
 import { PORT_TYPES, BLOCK_TYPES } from '../../../../shared/constants';
 import { type Block, type Connection, type Port } from '../../../../shared/types';
-import { useCopyPaste, BlockMediator, getContextMenuItemHtml } from '../../lib';
+import {
+	useCopyPaste,
+	useInsertNodeIntoConnection,
+	BlockMediator,
+	getContextMenuItemHtml,
+} from '../../lib';
 
 import './block-diagram.css';
 
@@ -38,17 +47,56 @@ type SetupType = {
 	connections: Array<Connection>,
 	blockSlotNames: { [string]: string },
 	connectionSlotNames: { [string]: string },
-	onBlockTransitionEnd: (block: Block) => void,
 	onDropNewBlock: (block: Block) => void,
 	highlitedBlockIds: Array<string>,
 	isFeatureAvailable: (featureCode: FeatureCodeType) => boolean,
 	performPaste: (point: Point) => void,
 	isBufferEmpty: boolean,
+	isWriteLocked: boolean,
 };
 
 const DEFAULT_SELECTION_PADDING = { top: 27, bottom: 25, left: 17, right: 17 };
 const DEFAULT_BLOCK_SIZE = { width: 150, height: 100 };
 const SWITCHER_WIDTH = 17;
+const AUTOSAVE_DELAY = 700;
+
+// mousedown on these elements must not close the settings panel (connection line / its delete button)
+const CONNECTION_ELEMENT_SELECTOR = '.ui-block-diagram-connection, .ui-block-diagram-delete-connection-btn';
+
+type AutosaveScheduler = {
+	schedule: () => void,
+	cancel: () => void,
+};
+
+export function createAutosaveScheduler(
+	autosave: () => mixed,
+	delay: number = AUTOSAVE_DELAY,
+): AutosaveScheduler
+{
+	let timerId = null;
+
+	function cancel(): void
+	{
+		if (timerId === null)
+		{
+			return;
+		}
+
+		clearTimeout(timerId);
+		timerId = null;
+	}
+
+	function schedule(): void
+	{
+		cancel();
+		timerId = setTimeout(() => {
+			timerId = null;
+			void autosave();
+		}, delay);
+	}
+
+	return { schedule, cancel };
+}
 
 // @vue/component
 export const BlockDiagram = {
@@ -68,19 +116,44 @@ export const BlockDiagram = {
 		},
 	},
 	// eslint-disable-next-line max-lines-per-function
-	setup(): SetupType
+	setup(props): SetupType
 	{
-		const showBlockSettings = inject('showBlockSettings');
-		const animationQueue = useAnimationQueue();
 		const diagramStore = useDiagramStore();
 		const bufferStore = useBufferStore();
 		const { blocks: blocksInStore, connections: connectionsInStore } = storeToRefs(diagramStore);
 		const { getMessage } = useLoc();
 		const highlightedBlocks = useHighlightedBlocks();
 		const highlitedBlockIds = highlightedBlocks.highlitedBlockIds;
-		const history = useHistory();
 		const { isFeatureAvailable } = useFeature();
-		const { transformEventToPoint, transformX, transformY, currentSnapshot } = useBlockDiagram();
+		const blockDiagram = useBlockDiagram();
+		const {
+			transformEventToPoint,
+			transformX,
+			transformY,
+			currentSnapshot,
+			movingBlockId,
+			rollbackBlockUpdate,
+		} = blockDiagram;
+		const insertNodeController = useInsertNodeIntoConnection({
+			diagramStore,
+			blockDiagram,
+			selectedBlockIds: highlitedBlockIds,
+			disabled: computed(() => props.disabled),
+			createConnectionId: () => Text.getRandom(),
+			now: () => Date.now(),
+			scheduleSave: () => fetchUpdateDiagram(),
+		});
+		blockDiagram.hooks.startDragBlock.on(insertNodeController.onStartDragBlock);
+		blockDiagram.hooks.moveDragBlock.on(insertNodeController.onMoveDragBlock);
+		blockDiagram.hooks.endDragBlock.on(insertNodeController.onEndDragBlock);
+		onUnmounted(() => {
+			blockDiagram.hooks.startDragBlock.off(insertNodeController.onStartDragBlock);
+			blockDiagram.hooks.moveDragBlock.off(insertNodeController.onMoveDragBlock);
+			blockDiagram.hooks.endDragBlock.off(insertNodeController.onEndDragBlock);
+			insertNodeController.dispose();
+		});
+
+		const history = useHistory();
 		const copyPaste = useCopyPaste();
 		const mediator = new BlockMediator();
 
@@ -112,12 +185,28 @@ export const BlockDiagram = {
 				defaultBlockSize: DEFAULT_BLOCK_SIZE,
 			};
 		});
+		const isWriteLocked = computed((): boolean => diagramStore.isWriteLocked);
+
 		const performPaste = (point: Point): void => {
+			if (toValue(isWriteLocked))
+			{
+				return;
+			}
+
 			try
 			{
 				highlightedBlocks.clear();
 
 				const newBlocks = copyPaste.paste(point);
+				// paste() has already saved the whole group at once, while adding the blocks
+				// raised the `blocks` setter and scheduled a deferred save of the same change.
+				// An empty buffer pastes nothing and saves nothing, so there is no duplicate to
+				// drop: cancelling here would silently throw away the pending save of an earlier
+				// change and leave it only in the browser.
+				if (newBlocks.length > 0)
+				{
+					autosaveScheduler.cancel();
+				}
 
 				nextTick(() => {
 					if (newBlocks.length > 0)
@@ -173,6 +262,11 @@ export const BlockDiagram = {
 		};
 
 		const handleDelete = () => {
+			if (toValue(isWriteLocked))
+			{
+				return;
+			}
+
 			const ids = toValue(highlitedBlockIds);
 			if (ids.length === 0)
 			{
@@ -218,6 +312,17 @@ export const BlockDiagram = {
 			},
 			set(newBlocks: Block[])
 			{
+				if (insertNodeController.interceptBlocksUpdate(newBlocks).handled)
+				{
+					const interceptedBlockId = toValue(movingBlockId);
+					const attemptedBlock = newBlocks.find((block) => block.id === interceptedBlockId);
+					const actualBlock = toValue(blocksInStore).find((block) => block.id === interceptedBlockId);
+
+					rollbackBlockUpdate(attemptedBlock, actualBlock);
+
+					return;
+				}
+
 				diagramStore.setBlocks(newBlocks);
 				fetchUpdateDiagram();
 			},
@@ -234,84 +339,43 @@ export const BlockDiagram = {
 			},
 		});
 
-		const fetchUpdateDiagram = Runtime.debounce(updateDiagramData, 700);
+		const autosaveScheduler = createAutosaveScheduler(diagramStore.autosave);
+		const fetchUpdateDiagram = autosaveScheduler.schedule;
+		onBeforeUnmount(autosaveScheduler.cancel);
 
-		const groupMenuItems = computed(() => [
+		const groupMenuItems = computed(() => {
+			const items = [
+				{
+					id: 'copy-group',
+					html: getContextMenuItemHtml(
+						getMessage('BIZPROCDESIGNER_EDITOR_BLOCK_CONTEXT_MENU_ITEM_COPY'),
+						IS_MAC ? '⌘ C' : 'Ctrl-C',
+					),
+					onclick: handleCopy,
+				},
+			];
+
+			if (!toValue(isWriteLocked))
 			{
-				id: 'copy-group',
-				html: getContextMenuItemHtml(
-					getMessage('BIZPROCDESIGNER_EDITOR_BLOCK_CONTEXT_MENU_ITEM_COPY'),
-					IS_MAC ? '⌘ С' : 'Ctrl-C',
-				),
-				onclick: handleCopy,
-			},
-			{
-				id: 'delete-group',
-				html: getContextMenuItemHtml(
-					getMessage('BIZPROCDESIGNER_EDITOR_BLOCK_CONTEXT_MENU_ITEM_DELETE'),
-					IS_MAC ? '⌫' : 'Del',
-				),
-				onclick: handleDelete,
-			},
-		]);
+				items.push({
+					id: 'delete-group',
+					html: getContextMenuItemHtml(
+						getMessage('BIZPROCDESIGNER_EDITOR_BLOCK_CONTEXT_MENU_ITEM_DELETE'),
+						IS_MAC ? '⌫' : 'Del',
+					),
+					onclick: handleDelete,
+				});
+			}
+
+			return items;
+		});
 
 		const isBufferEmpty = computed(() => bufferStore.isBufferEmpty);
 
-		async function updateDiagramData(): Promise<void>
-		{
-			const maxAttempts = 3;
-			let attempt = 0;
-
-			while (attempt < maxAttempts)
-			{
-				try
-				{
-					// eslint-disable-next-line no-await-in-loop
-					await diagramStore.publicDraft();
-					diagramStore.updateStatus(true);
-
-					return;
-				}
-				catch
-				{
-					attempt++;
-					if (attempt >= maxAttempts)
-					{
-						diagramStore.updateStatus(false);
-
-						UI.Notification.Center.notify({
-							content: getMessage('BIZPROCDESIGNER_EDITOR_TOP_PANEL_AUTOSAVE_STATUS_NOT_SAVED_HINT'),
-							autoHideDelay: 4000,
-						});
-					}
-				}
-			}
-		}
-
 		function onDropNewBlock(block: Block): void
 		{
-			diagramStore.updateBlockPublishStatus(block);
-		}
-
-		async function onBlockTransitionEnd(block: Block): Promise<void>
-		{
-			if (!block || !block.position)
-			{
-				console.warn('Incorrect object for block transition end event', block);
-
-				return;
-			}
-
-			animationQueue.pause();
-			try
-			{
-				// TODO: replace the method showBlockSettings with honey from slices app and settings
-				await showBlockSettings(block, true);
-			}
-			finally
-			{
-				animationQueue.play();
-			}
+			autosaveScheduler.cancel();
+			void diagramStore.updateBlockPublishStatus(block);
 		}
 
 		function onDeleteConnection(connectionId: string): void
@@ -389,9 +453,48 @@ export const BlockDiagram = {
 			mediator.syncSettingsWithDiagram();
 		});
 
+		// A wholesale graph swap (version view, restore, undo) leaves an open settings panel
+		// showing a node of the graph that is gone.
+		watch(() => diagramStore.graphRevision, () => {
+			mediator.hideAllSettings();
+			// The undo stack still describes the replaced graph: redo would write a foreign schema
+			// into the current draft, undo would restore the one loaded with the page. The swapped-in
+			// graph becomes the only base point (makeSnapshot is deferred, so it reads the new state).
+			history.clear();
+			history.makeSnapshot();
+		});
+
+		const { goToBlockById } = useCanvas();
+
+		function onShowExpressionSource(event: BaseEvent): void
+		{
+			const blockId = event.getData()?.blockId;
+			if (!blockId)
+			{
+				return;
+			}
+
+			highlightedBlocks.set([blockId]);
+			goToBlockById(blockId);
+		}
+
+		onMounted(() => {
+			EventEmitter.subscribe(READABLE_EXPRESSION_SHOW_SOURCE_EVENT, onShowExpressionSource);
+		});
+
+		onUnmounted(() => {
+			EventEmitter.unsubscribe(READABLE_EXPRESSION_SHOW_SOURCE_EVENT, onShowExpressionSource);
+		});
+
 		function onCanvasMouseDown(event: MouseEvent): void
 		{
 			if (event.button !== 0)
+			{
+				return;
+			}
+
+			const target = event.target;
+			if (target instanceof Element && target.closest(CONNECTION_ELEMENT_SELECTOR))
 			{
 				return;
 			}
@@ -402,9 +505,9 @@ export const BlockDiagram = {
 		return {
 			blocks,
 			connections,
+			isConnectionRouteHitTestEnabled: insertNodeController.isRouteHitTestActive,
 			blockSlotNames: BLOCK_SLOT_NAMES,
 			connectionSlotNames: CONNECTION_SLOT_NAMES,
-			onBlockTransitionEnd,
 			onDropNewBlock,
 			highlitedBlockIds,
 			isFeatureAvailable,
@@ -416,11 +519,17 @@ export const BlockDiagram = {
 			onCreateConnection,
 			closeContextMenu,
 			onCanvasMouseDown,
+			isWriteLocked,
 		};
 	},
 	computed: {
 		contextMenuItems(): Array<MenuItemOptions>
 		{
+			if (this.isWriteLocked)
+			{
+				return [];
+			}
+
 			return [
 				this.pasteMenuItem,
 			];
@@ -472,11 +581,11 @@ export const BlockDiagram = {
 		<BlockDiagramEntity
 			v-model:blocks="blocks"
 			v-model:connections="connections"
+			:connection-route-hit-test-enabled="isConnectionRouteHitTestEnabled"
 			:disabled="disabled"
 			:enableGrouping="enableGrouping"
 			:contextMenuItems="contextMenuItems"
 			@mousedown="onCanvasMouseDown"
-			@blockTransitionEnd="onBlockTransitionEnd"
 			@dropNewBlock="onDropNewBlock"
 			@createConnection="onCreateConnection"
 			@deleteConnection="onDeleteConnection"

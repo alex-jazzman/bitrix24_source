@@ -69,6 +69,11 @@ jn.define('disk/file-grid/collab-recent-files', (require, exports, module) => {
 			return false;
 		}
 
+		shouldUseStoredSorting()
+		{
+			return false;
+		}
+
 		getListActions()
 		{
 			return {
@@ -100,6 +105,15 @@ jn.define('disk/file-grid/collab-recent-files', (require, exports, module) => {
 		getFolderId()
 		{
 			return this.storage?.rootObjectId || null;
+		}
+
+		/**
+		 * @protected
+		 * @return {boolean} getFolderId() is the collab root storage, but rows come from its subfolders
+		 */
+		shouldReconcileByParentId()
+		{
+			return false;
 		}
 
 		onFloatingButtonLongClick = () => {};

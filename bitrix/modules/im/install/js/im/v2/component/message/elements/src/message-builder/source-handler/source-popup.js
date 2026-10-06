@@ -87,7 +87,7 @@ export const SourcePopup = {
 					>
 						{{ description }}
 					</div>
-					<div class="bx-im-source-popup__url">{{ sourceItem.url }}</div>
+					<div class="bx-im-source-popup__url --ellipsis">{{ sourceItem.url }}</div>
 				</a>
 			</div>
 		</MessengerPopup>

@@ -60,6 +60,17 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				entityId: chatTypeToCreate
 			});
 		}
+		cancelChatCreation() {
+			this.setCreationStatus(false);
+			return im_v2_lib_layout.LayoutManager.getInstance().restoreOriginLayout();
+		}
+		completeChatCreation(newDialogId) {
+			this.setCreationStatus(false);
+			if (!newDialogId) {
+				return Promise.resolve();
+			}
+			return im_v2_lib_layout.LayoutManager.getInstance().restoreOriginLayout(newDialogId);
+		}
 		isCreating() {
 			return this.#isCreating;
 		}

@@ -86,10 +86,13 @@ export class GridManager
 
 			return response;
 		}, (response) => {
-			const errors = response.errors.map((error) => error.message);
-			ErrorCollection.showSystemError(errors.join('<br>'));
+			const errors = (response?.errors ?? []).map((error) => error.message);
+			if (errors.length > 0)
+			{
+				ErrorCollection.showSystemError(errors.join('<br>'));
+			}
 
-			return response;
+			throw response;
 		});
 	}
 
@@ -114,6 +117,14 @@ export class GridManager
 			}
 
 			return response;
+		}, (response) => {
+			const errors = (response?.errors ?? []).map((error) => error.message);
+			if (errors.length > 0)
+			{
+				ErrorCollection.showSystemError(errors.join('<br>'));
+			}
+
+			throw response;
 		});
 	}
 
@@ -312,8 +323,11 @@ export class GridManager
 			row?.update();
 		}).catch((response) => {
 			row?.stateUnload();
-			const errors = response.errors.map((error) => error.message);
-			ErrorCollection.showSystemError(errors.join('<br>'));
+			const errors = (response?.errors ?? []).map((error) => error.message);
+			if (errors.length > 0)
+			{
+				ErrorCollection.showSystemError(errors.join('<br>'));
+			}
 		});
 	}
 
@@ -330,8 +344,11 @@ export class GridManager
 			row?.update();
 		}).catch((response) => {
 			row?.stateUnload();
-			const errors = response.errors.map((error) => error.message);
-			ErrorCollection.showSystemError(errors.join('<br>'));
+			const errors = (response?.errors ?? []).map((error) => error.message);
+			if (errors.length > 0)
+			{
+				ErrorCollection.showSystemError(errors.join('<br>'));
+			}
 		});
 	}
 

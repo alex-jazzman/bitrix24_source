@@ -7,12 +7,20 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Bizproc\Activity\Enum\ActivityType;
 
+$isActivityTypeAvailable = enum_exists('\Bitrix\Bizproc\Activity\Enum\ActivityType');
+
 $arActivityDescription = [
 	'NAME' => GetMessage('CRM_ACTIVITY_CREATE_COMPANY_NAME'),
 	'DESCRIPTION' => GetMessage('CRM_ACTIVITY_CREATE_COMPANY_DESC'),
 	'TYPE' => [
-		ActivityType::ACTIVITY->value,
-		ActivityType::NODE_ACTION->value,
+		$isActivityTypeAvailable
+			? ActivityType::ACTIVITY->value
+			: 'activity'
+		,
+		$isActivityTypeAvailable
+			? ActivityType::NODE_ACTION->value
+			: 'node_action'
+		,
 	],
 	'CLASS' => 'CreateCrmCompanyDocumentActivity',
 	'JSCLASS' => 'BizProcActivity',
@@ -32,3 +40,19 @@ $arActivityDescription = [
 		],
 	],
 ];
+
+if (
+	enum_exists('\Bitrix\Bizproc\Activity\Enum\ActionGroup')
+	&& enum_exists('\Bitrix\Bizproc\Activity\Enum\ActionArea')
+)
+{
+	$arActivityDescription['NODE_ACTION_SETTINGS'] = [
+		'HANDLES_DOCUMENT' => false,
+		'ACTION_GROUP' => \Bitrix\Bizproc\Activity\Enum\ActionGroup::CREATE->value,
+		'ACTION_AREA' => \Bitrix\Bizproc\Activity\Enum\ActionArea::CRM->value,
+		'ACTION_OBJECTS' => [
+			['id' => 'crm_company', 'title' => GetMessage('CRM_ACTIVITY_OBJECT_COMPANY')],
+		],
+		'CREATES_DOCUMENT' => true,
+	];
+}

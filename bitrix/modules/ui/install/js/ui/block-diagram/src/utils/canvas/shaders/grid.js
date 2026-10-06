@@ -18,32 +18,47 @@ export const vertexShader: string = `
 
 export const fragmentShader: string = `
   #extension GL_OES_standard_derivatives : enable
+
+  // Cross-fade needs the coarse grid lines to land exactly on fine ones, and that
+  // survives only while world coordinates keep their precision: a mediump float
+  // (10-bit mantissa) drifts by a noticeable fraction of a cell a few thousand
+  // world units away from the origin. highp in fragment shaders is optional in
+  // GLSL ES 1.00, so it is taken when the implementation reports it.
+  #ifdef GL_FRAGMENT_PRECISION_HIGH
+  precision highp float;
+  #else
   precision mediump float;
+  #endif
 
   uniform vec4 u_BackgroundColor;
-  uniform vec4 u_GridColor;
-  uniform float u_GridSize;
-  uniform float u_ZoomStep;
-  uniform float u_ZoomScale;
+  uniform vec4 u_CoarseColor;
+  uniform vec4 u_FineColor;
+  uniform float u_CoarseSize;
+  uniform float u_FineSize;
+  uniform float u_Blend;
   varying vec2 v_Position;
 
+  const float MAX_LINE_ALPHA = 0.222;
+
+  float line_coverage(vec2 coord, float size) {
+  	vec2 grid = abs(fract(coord / size - 0.5) - 0.5) / fwidth(coord) * size / 0.95;
+
+  	return 1.0 - min(min(grid.x, grid.y), 1.0);
+  }
+
   vec4 render_grid(vec2 coord) {
-  	float alpha = 0.0;
-  	float gridSize1 = u_GridSize;
-  	float gridSize2 = gridSize1 / 4.0;
+  	// Each level is capped before the blend is applied: capping the product
+  	// instead would saturate the fine level once u_Blend reaches MAX_LINE_ALPHA
+  	// and collapse the rest of the fade into the antialiased edges.
+  	float coarse = clamp(line_coverage(coord, u_CoarseSize), 0.0, MAX_LINE_ALPHA);
+  	float fine = clamp(line_coverage(coord, u_FineSize), 0.0, MAX_LINE_ALPHA);
+  	float alpha = max(coarse, fine * u_Blend);
+  	// Coarse lines are a subset of the fine ones, so the visible grid belongs to
+  	// whichever level the blend currently favours - hence a single interpolated
+  	// color rather than one per level. Equal colors reduce to the plain case.
+  	vec4 gridColor = mix(u_CoarseColor, u_FineColor, u_Blend);
 
-  	vec2 grid1 = abs(fract(coord / gridSize1 - 0.5) - 0.5) / fwidth(coord) * gridSize1 / 0.95;
-  	vec2 grid2 = abs(fract(coord / gridSize2 - 0.5) - 0.5) / fwidth(coord) * gridSize2 / 0.75;
-  	float v1 = 1.0 - min(min(grid1.x, grid1.y), 1.0);
-  	float v2 = 1.0 - min(min(grid2.x, grid2.y), 1.0);
-
-  	if (v1 > 0.0) {
-  		alpha = clamp(v1, 0.0, 0.222);
-  	} else {
-  		alpha = v2 * clamp(u_ZoomScale / u_ZoomStep, 0.0, 1.0);
-  	}
-
-  	return mix(u_BackgroundColor, u_GridColor, alpha);
+  	return mix(u_BackgroundColor, gridColor, alpha);
   }
 
   void main() {

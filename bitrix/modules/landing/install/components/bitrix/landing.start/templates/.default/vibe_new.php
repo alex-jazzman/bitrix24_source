@@ -40,7 +40,7 @@ else
 $request = HttpContext::getCurrent()->getRequest();
 $isSlider = $request->get('IFRAME') === 'Y';
 
-if ($vibe->canEdit())
+if ($vibe->canCreate())
 {
 	$template = $request->get('tpl');
 	$notRedirectToEdit = ($request->get('no_redirect') === 'Y') ? 'Y' : 'N';

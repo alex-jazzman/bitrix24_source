@@ -1,5 +1,8 @@
 <?php
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
+
+use Bitrix\Main\Web\Uri;
 
 if (!CModule::IncludeModule('crm'))
 {
@@ -102,13 +105,12 @@ if ($taxDelete && ($arParams['TYPE'] == 'edit' || $arParams['TYPE'] == 'show') &
 	$arResult['BUTTONS'][] = array(
 		'TEXT' => GetMessage('CRM_TAX_DELETE'),
 		'TITLE' => GetMessage('CRM_TAX_DELETE_TITLE'),
-		'LINK' => "javascript:tax_delete('".GetMessage('CRM_TAX_DELETE_DLG_TITLE')."', '".GetMessage('CRM_TAX_DELETE_DLG_MESSAGE')."', '".GetMessage('CRM_TAX_DELETE_DLG_BTNTITLE')."', '".CHTTP::urlAddParams(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_TAX_EDIT'],
-				array('tax_id' => $taxID)),
-			array('delete' => '', 'sessid' => bitrix_sessid())
-		)."')",
+		'LINK' => "javascript:tax_delete('".GetMessage('CRM_TAX_DELETE_DLG_TITLE')."', '".GetMessage('CRM_TAX_DELETE_DLG_MESSAGE')."', '".GetMessage('CRM_TAX_DELETE_DLG_BTNTITLE')."', '"
+			. (new Uri(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_TAX_EDIT'], array('tax_id' => $taxID))))
+				->addParams(array('delete' => '', 'sessid' => bitrix_sessid()))
+			. "')",
 		'ICON' => 'btn-delete'
 	);
 }
 
 $this->IncludeComponentTemplate();
-?>

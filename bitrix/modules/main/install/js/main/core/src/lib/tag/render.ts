@@ -79,10 +79,21 @@ function computeSectionStates(sections: ReadonlyArray<string>): number[]
 	return states;
 }
 
-export default function render(
+/**
+ * Renders an HTML template into DOM nodes.
+ *
+ * The default return type is `HTMLElement` — the common case of a single root
+ * node (`const el = Tag.render\`<div></div>\``). The type parameter `T` lets
+ * callers describe the other shapes the function can produce:
+ * - a specific element type: `Tag.render<HTMLInputElement>\`<input>\``;
+ * - a refs object when the template uses `ref=`:
+ *   `Tag.render<{ root: HTMLElement; title: HTMLElement }>\`...\``;
+ * - an array of nodes for multi-root templates: `Tag.render<HTMLElement[]>\`...\``.
+ */
+export default function render<T = HTMLElement>(
 	sections: TemplateStringsArray,
 	...substitutions: Array<any>
-): any
+): T
 {
 	const sectionStates = computeSectionStates(sections);
 
@@ -124,7 +135,7 @@ export default function render(
 
 		if (Type.isArrayFilled(refs))
 		{
-			return Object.fromEntries([['root', renderedNode], ...refs] as any);
+			return Object.fromEntries([['root', renderedNode], ...refs] as any) as T;
 		}
 
 		return renderedNode;
@@ -143,11 +154,11 @@ export default function render(
 
 		if (Type.isArrayFilled(refs))
 		{
-			return Object.fromEntries([['root', renderedNodes], ...refs] as any);
+			return Object.fromEntries([['root', renderedNodes], ...refs] as any) as T;
 		}
 
-		return renderedNodes;
+		return renderedNodes as T;
 	}
 
-	return false;
+	return false as T;
 }

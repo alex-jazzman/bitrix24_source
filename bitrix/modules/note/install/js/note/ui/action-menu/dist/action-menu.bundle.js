@@ -62,10 +62,11 @@ this.BX.Note = this.BX.Note || {};
 			const iconElement = item?.iconElement instanceof HTMLElement ? item.iconElement : null;
 			const danger = Boolean(item?.danger);
 			const onClick = main_core.Type.isFunction(item?.onClick) ? item.onClick : () => {};
+			const testId = main_core.Type.isStringFilled(item?.testId) ? String(item.testId) : '';
 			const baseClass = `${popupClass}-item`;
 			const className = danger ? `${baseClass} ${baseClass}--danger` : baseClass;
 			return {
-				html: this.#renderItem(text, iconModifier, iconColor, iconElement, popupClass),
+				html: this.#renderItem(text, iconModifier, iconColor, iconElement, popupClass, testId),
 				className,
 				onclick: () => {
 					this.destroy();
@@ -73,15 +74,21 @@ this.BX.Note = this.BX.Note || {};
 				}
 			};
 		}
-		#renderItem(text, iconModifier, iconColor, iconElement, popupClass) {
+		#renderItem(text, iconModifier, iconColor, iconElement, popupClass, testId) {
 			const safeText = String(text || '');
 			const iconNode = iconElement ?? this.#renderIconSetIcon(iconModifier, iconColor, popupClass);
-			return main_core.Tag.render`
+			// Identity for tests: an item is otherwise reachable only by its icon modifier
+			// or its localised label, both of which drift.
+			const row = main_core.Tag.render`
 			<span class="${popupClass}-row">
 				<span class="${popupClass}-text">${safeText}</span>
 				${iconNode}
 			</span>
 		`;
+			if (testId !== '') {
+				row.dataset.testid = testId;
+			}
+			return row;
 		}
 		#renderIconSetIcon(iconModifier, iconColor, popupClass) {
 			const iconClass = iconModifier ? `ui-icon-set --${iconModifier} ${popupClass}-icon` : '';

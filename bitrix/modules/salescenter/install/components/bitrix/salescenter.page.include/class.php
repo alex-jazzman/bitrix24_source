@@ -1,9 +1,11 @@
-<?
+<?php
+
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\IO;
+use Bitrix\Main\Web\Uri;
 
 class SalesCenterAdminPageInclude extends CBitrixComponent
 {
@@ -86,17 +88,17 @@ class SalesCenterAdminPageInclude extends CBitrixComponent
 
 		if ($this->arResult["IS_SIDE_PANEL"])
 		{
-			$this->arResult["REDIRECT_URL"] = \CHTTP::urlAddParams($pagePath,
-				array("IFRAME" => "Y", "IFRAME_TYPE" => "SIDE_SLIDER"));
+			$this->arResult["REDIRECT_URL"] = (string)(new Uri($pagePath))->addParams([
+				"IFRAME" => "Y",
+				"IFRAME_TYPE" => "SIDE_SLIDER",
+			]);
 		}
 		elseif($this->arResult["INTERNAL_PAGE"])
 		{
-			$this->arResult["FRAME_URL"] = \CHTTP::urlAddParams($pagePath,
-				[
-					"IFRAME" => "Y",
-					"IFRAME_TYPE" => "PUBLIC_FRAME",
-				]
-			);
+			$this->arResult["FRAME_URL"] = (string)(new Uri($pagePath))->addParams([
+				"IFRAME" => "Y",
+				"IFRAME_TYPE" => "PUBLIC_FRAME",
+			]);
 		}
 	}
 

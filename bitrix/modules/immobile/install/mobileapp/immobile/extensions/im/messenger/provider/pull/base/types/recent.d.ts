@@ -28,6 +28,8 @@ declare type RecentUpdateParams = {
 	counterType: string,
 	lastActivityDate: string | null,
 	message: RawMessage | null,
+	ownMessageId?: number,
+	ownMessage?: RawMessage | null,
 	additionalMessages: RawMessage[],
 	users: RawUser[],
 	files: RawFile[],

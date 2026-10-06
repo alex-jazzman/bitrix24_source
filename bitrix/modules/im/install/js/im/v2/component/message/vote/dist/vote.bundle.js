@@ -34,6 +34,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	};
 
 	exports.VoteMessage = VoteMessage;
-
-})(this.BX.Messenger.v2.Component.Message = this.BX.Messenger.v2.Component.Message || {}, BX?.Messenger?.v2?.Component?.Message??{}, BX?.Vote?.Component??{});
+})(this.BX.Messenger.v2.Component.Message = this.BX.Messenger.v2.Component.Message || {}, BX?.Messenger?.v2?.Component?.Message??{}, BX?.Vote?.Component??{});;
 //# sourceMappingURL=vote.bundle.js.map

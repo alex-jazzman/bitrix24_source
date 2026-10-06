@@ -29,6 +29,7 @@ use Bitrix\Call\Track\TrackCollection;
 use Bitrix\Call\Integration\AI\CallAIService;
 use Bitrix\Call\Integration\AI\ChatEventLog;
 use Bitrix\Call\Integration\AI\ChatMessage;
+use Bitrix\Call\Integration\AI\Outcome\AISenseContent;
 use Bitrix\Call\Integration\AI\Outcome\Transcription;
 use Bitrix\Call\Integration\AI\Outcome\OutcomeCollection;
 use Bitrix\Call\Model\CallTrackTable;
@@ -484,13 +485,23 @@ class FollowUp extends RestController
 		$outcomeCollection = OutcomeCollection::getOutcomesByCallId($callId);
 		foreach ($outcomeCollection as $outcome)
 		{
-			$content = $outcome->getSenseContent();
-			if ($content)
+			if (isset($outcomes[$outcome->getType()]))
 			{
-				if ($content instanceof Transcription)
-				{
-					$transcription = $content;
-				}
+				continue;// take only the latest outcome with content for each type
+			}
+
+			$content = $outcome->getSenseContent();
+			if (!($content instanceof AISenseContent))
+			{
+				continue;
+			}
+			/** @var Transcription $transcription */
+			if ($content instanceof Transcription)
+			{
+				$transcription = $content;
+			}
+			if ($content->hasContent())
+			{
 				$outcomes[$outcome->getType()] = $content->toRestFormat(mentionFormat: FollowUpReader::MENTION_FORMAT_BB);
 				$outcomes['version'] = max($outcomes['version'], $content->getVersion());
 			}
@@ -501,7 +512,7 @@ class FollowUp extends RestController
 			&& !empty($outcomes['insights']['speakerAnalysis'])
 		)
 		{
-			$speakerList = $transcription->prepareSpeakersList();
+			$speakerList = $transcription?->prepareSpeakersList(0) ?? [];
 			$speakerAnalysis = [];
 			/** @var array{userId: int, efficiencyValue: float} $speaker */
 			foreach ($outcomes['insights']['speakerAnalysis'] as $speaker)

@@ -24,6 +24,8 @@ while (ob_get_length() !== false)
 }
 header('Content-Type:application/json; charset=UTF-8');
 
+// Read the raw body directly: the kernel-parsed json list passes through the proactive
+// WAF filter, which can silently mutate user values (deal names, filter texts) in the export.
 $inputJSON = file_get_contents('php://input');
 try
 {
@@ -151,34 +153,110 @@ if (\Bitrix\Main\Loader::includeModule('biconnector'))
 			$input['limit'] = $limit;
 		}
 
-		$result = $service->getData($tableName, $input);
+		$licenseLimit = $limitManager->getLimit();
+		$cacheKey = \Bitrix\BIConnector\Internal\Cache\QueryResultCache::isEnabled()
+			? \Bitrix\BIConnector\Internal\Cache\QueryResultCache::buildKey(
+				$accessKey,
+				$manager->getConnectionName(),
+				$manager->getKeyRevision(),
+				$tableName,
+				$input,
+				$limit,
+				$licenseLimit,
+				$consumer,
+				$languageCode,
+				$isV2,
+			)
+			: null;
+		$cached = $cacheKey ? \Bitrix\BIConnector\Internal\Cache\QueryResultCache::get($cacheKey) : null;
 
-		if (isset($result['error']))
+		if ($cached !== null)
 		{
-			echo Bitrix\Main\Web\Json::encode($result);
+			// Cache hit: skip the heavy query path but keep the request analytics honest and replay the
+			// row-limit accounting. Only the query log (b_biconnector_log) stays intentionally skipped.
+			$service->getDataSourceConnector($tableName)?->sendAnalytic();
+			echo $cached['body'];
+			$limitManager->fixLimit($cached['count'] ?? 0);
 		}
 		else
 		{
-			$resultQuery = $service->printQuery(
-				$tableName,
-				$input,
-				$_SERVER['REQUEST_METHOD'],
-				$_SERVER['REQUEST_URI'],
-				$limit,
-				$limitManager,
-			);
+			$result = $service->getData($tableName, $input);
 
-			if (!$resultQuery->isSuccess())
+			if (isset($result['error']))
 			{
-				foreach ($resultQuery->getErrorCollection() as $error)
-				{
-					$outputError = ['error' => $error->getMessage()];
-					if (!empty($error->getCustomData()['description']))
+				echo Bitrix\Main\Web\Json::encode($result);
+			}
+			else
+			{
+				$emitQueryErrors = static function (\Bitrix\Main\Result $resultQuery): void {
+					foreach ($resultQuery->getErrorCollection() as $error)
 					{
-						$outputError['errorMessage'] = $error->getCustomData()['description'];
+						$outputError = ['error' => $error->getMessage()];
+						if (!empty($error->getCustomData()['description']))
+						{
+							$outputError['errorMessage'] = $error->getCustomData()['description'];
+						}
+
+						echo Bitrix\Main\Web\Json::encode($outputError);
+					}
+				};
+
+				if ($cacheKey)
+				{
+					// Stream to the client as in baseline while capturing the body for the cache up to
+					// a size cap; past the cap the capture is dropped so large exports keep bounded memory.
+					$capture = \Bitrix\BIConnector\Internal\Cache\QueryResultCache::createCapture();
+
+					try
+					{
+						ob_start([$capture, 'sink'], 64 * 1024);
+						$resultQuery = $service->printQuery(
+							$tableName,
+							$input,
+							$_SERVER['REQUEST_METHOD'],
+							$_SERVER['REQUEST_URI'],
+							$limit,
+							$limitManager,
+						);
+					}
+					finally
+					{
+						ob_end_flush();
 					}
 
-					echo Bitrix\Main\Web\Json::encode($outputError);
+					if ($resultQuery->isSuccess())
+					{
+						$queryData = $resultQuery->getData();
+						// Cache only when the served row count is explicit: a service that never sets it
+						// must not poison the cache with count = 0 (would break fixLimit on a hit).
+						if ($capture->isComplete() && isset($queryData['count']))
+						{
+							\Bitrix\BIConnector\Internal\Cache\QueryResultCache::set($cacheKey, [
+								'body' => $capture->getBody(),
+								'count' => $queryData['count'],
+							]);
+						}
+					}
+					else
+					{
+						$emitQueryErrors($resultQuery);
+					}
+				}
+				else
+				{
+					// Cache disabled: stream directly like baseline, no buffering.
+					$resultQuery = $service->printQuery(
+						$tableName,
+						$input,
+						$_SERVER['REQUEST_METHOD'],
+						$_SERVER['REQUEST_URI'],
+						$limit,
+						$limitManager,
+					);
+					if (!$resultQuery->isSuccess())
+					{
+						$emitQueryErrors($resultQuery);
+					}
 				}
 			}
 		}

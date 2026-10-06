@@ -4,7 +4,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 use Bitrix\Crm\WebForm\WhatsApp;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Json;
-use \Bitrix\Main\UI\Extension;
+use Bitrix\Main\UI\Extension;
 use Bitrix\UI\Toolbar\Facade\Toolbar;
 
 /** @var CMain $APPLICATION */

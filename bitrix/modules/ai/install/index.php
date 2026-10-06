@@ -11,7 +11,6 @@ use Bitrix\AI\Facade;
 use Bitrix\Main\Application;
 use Bitrix\Main\EventManager;
 use Bitrix\Main\FileTable;
-use Bitrix\Main\IO\File;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Config\Option;
@@ -139,18 +138,12 @@ class AI extends \CModule
 	{
 		global $APPLICATION;
 
-		// db
-		$sqlFile = $this->getDocumentRoot() . "/bitrix/modules/ai/install/db/{$this->getConnectionType()}/install.sql";
-		if (File::isFileExists($sqlFile))
+		$migrationResult = $this->installMigrations();
+		if (!$migrationResult->isSuccess())
 		{
-			$connection = Application::getConnection();
-			$errors = $connection->executeSqlBatch(file_get_contents($sqlFile));
-			if (!empty($errors))
-			{
-				$APPLICATION->throwException(implode('', $errors));
-				$this->errors = $errors;
-				return false;
-			}
+			$this->errors = $migrationResult->getErrorMessages();
+			$APPLICATION->throwException(implode('', $this->errors));
+			return false;
 		}
 
 		// module
@@ -174,31 +167,6 @@ class AI extends \CModule
 		{
 		}
 
-		// install event handlers
-		$eventManager = EventManager::getInstance();
-		/** @see \Bitrix\AI\Handler\Main */
-		$eventManager->registerEventHandler('main', 'onProlog', 'ai', '\\Bitrix\\AI\\Handler\\Main', 'onProlog');
-		/** @see \Bitrix\AI\Handler\Main */
-		$eventManager->registerEventHandler('main', 'onAfterUserDelete', 'ai', '\\Bitrix\\AI\\Handler\\Main', 'onAfterUserDelete');
-		/** @see \Bitrix\AI\Rest */
-		$eventManager->registerEventHandler('rest', 'onRestServiceBuildDescription', 'ai', '\\Bitrix\\AI\\Rest', 'onRestServiceBuildDescription');
-		/** @see \Bitrix\AI\Rest */
-		$eventManager->registerEventHandler('rest', 'onRestAppDelete', 'ai', '\\Bitrix\\AI\\Rest', 'onRestAppDelete');
-		/** @see \Bitrix\AI\Handler\Intranet */
-		$eventManager->registerEventHandler('intranet', 'onSettingsProvidersCollect', 'ai', '\\Bitrix\\AI\\Handler\\Intranet', 'onSettingsProvidersCollect');
-		/** @see \Bitrix\AI\Handler\Baas */
-		$eventManager->registerEventHandler('baas', 'onPackagePurchased', 'ai', '\\Bitrix\\AI\\Handler\\Baas', 'onPackagePurchased');
-		// agents
-		/** @see \Bitrix\AI\QueueJob::clearOldAgent */
-		CAgent::AddAgent('Bitrix\AI\QueueJob::clearOldAgent();', 'ai', 'N', 120);
-		/** @see \Bitrix\AI\Updater::refreshDbAgent */
-		CAgent::AddAgent('Bitrix\AI\Updater::refreshDbAgent();', 'ai', 'N', 3600);
-		/** @see \Bitrix\AI\Cloud\Agent\PropertiesSync::retrieveModelsAgent */
-		CAgent::addAgent(
-			'Bitrix\\AI\\Cloud\\Agent\\PropertiesSync::retrieveModelsAgent();',
-			'ai',
-		);
-
 		if ($moduleLoaded)
 		{
 			if ($this->isCloudInstallation())
@@ -207,13 +175,9 @@ class AI extends \CModule
 			}
 			else
 			{
-				$this->configureBoxBitrixGptFeatures();
 				$this->addDefaultBitrixEngines();
 			}
 		}
-
-		// rights
-		//$this->InstallTasks();
 
 		return true;
 	}
@@ -273,10 +237,9 @@ class AI extends \CModule
 	 */
 	public function installFiles(): bool
 	{
-		$docRoot = $this->getDocumentRoot();
-		CopyDirFiles($docRoot . "/bitrix/modules/ai/install/components", $docRoot . "/bitrix/components", true, true);
-		CopyDirFiles($docRoot . "/bitrix/modules/ai/install/js", $docRoot . "/bitrix/js", true, true);
-		CopyDirFiles($docRoot . "/bitrix/modules/ai/install/activities", $docRoot . "/bitrix/activities", true, true);
+		CopyDirFiles($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/ai/install/components", $_SERVER["DOCUMENT_ROOT"] . "/bitrix/components", true, true);
+		CopyDirFiles($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/ai/install/js", $_SERVER["DOCUMENT_ROOT"] . "/bitrix/js", true, true);
+		CopyDirFiles($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/ai/install/activities", $_SERVER["DOCUMENT_ROOT"] . "/bitrix/activities", true, true);
 
 		return true;
 	}
@@ -290,23 +253,13 @@ class AI extends \CModule
 	{
 		global $APPLICATION;
 
-		$errors = [];
+		$dropTables = isset($arParams['savedata']) && !$arParams['savedata'];
 
-		// delete DB
-		$sqlFile = $this->getDocumentRoot() . "/bitrix/modules/ai/install/db/{$this->getConnectionType()}/uninstall.sql";
-		if (File::isFileExists($sqlFile))
+		$migrationResult = $this->uninstallMigrations($dropTables);
+		if (!$migrationResult->isSuccess())
 		{
-			if (isset($arParams['savedata']) && !$arParams['savedata'])
-			{
-				$connection = Application::getConnection();
-				$errors = $connection->executeSqlBatch(file_get_contents($sqlFile));
-			}
-		}
-
-		if (!empty($errors))
-		{
-			$APPLICATION->throwException(implode('', $errors));
-			$this->errors = $errors;
+			$this->errors = $migrationResult->getErrorMessages();
+			$APPLICATION->throwException(implode('', $this->errors));
 			return false;
 		}
 
@@ -320,32 +273,17 @@ class AI extends \CModule
 			\CAdminNotify::DeleteByTag(Registration::NOTIFICATION_TAG);
 		}
 
-		// agents and rights
-		CAgent::removeModuleAgents('ai');
 		$this->unInstallTasks();
 
-		// uninstall event handlers
-		$eventManager = EventManager::getInstance();
-		/** @see \Bitrix\AI\Handler\Main */
-		$eventManager->unRegisterEventHandler('main', 'onProlog', 'ai', '\\Bitrix\\AI\\Handler\\Main', 'onProlog');
-		/** @see \Bitrix\AI\Handler\Main */
-		$eventManager->unRegisterEventHandler('main', 'onAfterUserDelete', 'ai', '\\Bitrix\\AI\\Handler\\Main', 'onAfterUserDelete');
+		// legacy cleanup: class is no longer present in the module, kept for old portals
 		/** @see \Bitrix\AI\Handler\PublicAgreement */
-		$eventManager->unRegisterEventHandler('main', 'OnPageStart', 'ai', '\\Bitrix\\AI\\Handler\\PublicAgreement', 'onPageStart');
-		/** @see \Bitrix\AI\Rest */
-		$eventManager->unRegisterEventHandler('rest', 'onRestServiceBuildDescription', 'ai', '\\Bitrix\\AI\\Rest', 'onRestServiceBuildDescription');
-		/** @see \Bitrix\AI\Rest */
-		$eventManager->unRegisterEventHandler('rest', 'onRestAppDelete', 'ai', '\\Bitrix\\AI\\Rest', 'onRestAppDelete');
-		/** @see \Bitrix\AI\Handler\Intranet */
-		$eventManager->unRegisterEventHandler('intranet', 'onSettingsProvidersCollect', 'ai', '\\Bitrix\\AI\\Handler\\Intranet', 'onSettingsProvidersCollect');
-		/** @see \Bitrix\AI\Handler\Baas */
-		$eventManager->unRegisterEventHandler('baas', 'onPackagePurchased', 'ai', '\\Bitrix\\AI\\Handler\\Baas', 'onPackagePurchased');
+		EventManager::getInstance()->unRegisterEventHandler('main', 'OnPageStart', 'ai', '\\Bitrix\\AI\\Handler\\PublicAgreement', 'onPageStart');
 
 		// module
 		unregisterModule('ai');
 
 		// delete files finally
-		if (isset($arParams['savedata']) && !$arParams['savedata'])
+		if ($dropTables)
 		{
 			$res = FileTable::getList([
 				'select' => [
@@ -380,28 +318,21 @@ class AI extends \CModule
 
 	private function configureCloudBitrixGptFeatures(): void
 	{
-		$options = [
-			'modules' => ['crm', 'im', 'socialnetwork', 'calendar', 'tasks', 'mail', 'catalog', 'landing', 'call'],
-			'qualities' => ['fields_highlight', 'translate', 'scoring', 'meeting_processing', 'give_advice'],
-			'availableIn' => [
+		\COption::SetOptionString(
+			'ai',
+			'bitrixgpt_portalSettingsItemsToForceReset',
+			json_encode([
 				'crm_copilot_fill_item_from_call_engine_text',
 				'crm_copilot_call_assessment_engine_code',
 				'im_chat_answer_provider',
 				'engine_text',
 				'resume_transcription',
 				'tasks_flows_text_generate_engine',
-			],
-			'portalSettingsItemsToForceReset' => [
-				'crm_copilot_fill_item_from_call_engine_text',
-				'crm_copilot_call_assessment_engine_code',
-				'im_chat_answer_provider',
-				'engine_text',
-				'resume_transcription',
-				'tasks_flows_text_generate_engine',
-			],
-		];
-		\COption::SetOptionString('ai', 'bitrixgpt_options', json_encode($options));
-		\COption::SetOptionString('ai', 'bitrixgpt_enabled', 'Y');
+				'crm_copilot_repeat_sale_engine_code',
+				'landing_text_provider',
+				'landing_site_text_provider',
+			])
+		);
 
 		\COption::SetOptionString(
 			'ai',
@@ -412,53 +343,6 @@ class AI extends \CModule
 				'im_file_transcription_provider'
 			])
 		);
-
-		/** @see \Bitrix\AI\Agents\EngineSettings::resetToBitrixAudioInCloudAgent */
-		\CAgent::AddAgent(
-			'\Bitrix\AI\Agents\EngineSettings::resetToBitrixAudioInCloudAgent();',
-			'ai',
-			interval: 3600,
-			next_exec: ConvertTimeStamp(time() + CTimeZone::GetOffset() + 600, 'FULL'),
-		);
-
-		/** @see \Bitrix\AI\Agents\EngineSettings::resetToBitrixGPTInCloudAgent */
-		\CAgent::AddAgent(
-			'\Bitrix\AI\Agents\EngineSettings::resetToBitrixGPTInCloudAgent();',
-			'ai',
-			interval: 3600,
-			next_exec: ConvertTimeStamp(time() + CTimeZone::GetOffset() + 600, 'FULL'),
-		);
-
-		/** @see \Bitrix\AI\Agents\EngineSettings::enforceEngineBaselineAgent */
-		\CAgent::AddAgent(
-			'\Bitrix\AI\Agents\EngineSettings::enforceEngineBaselineAgent();',
-			'ai',
-			interval: 3600,
-			next_exec: ConvertTimeStamp(time() + CTimeZone::GetOffset() + 3600, 'FULL'),
-		);
-	}
-
-	private function configureBoxBitrixGptFeatures(): void
-	{
-		/** @see \Bitrix\AI\Agents\EngineSettings::resetFollowUpTextStepsToBGPTAgent */
-		\CAgent::AddAgent(
-			'\Bitrix\AI\Agents\EngineSettings::resetFollowUpTextStepsToBGPTAgent();',
-			'ai',
-			interval: 3600,
-			next_exec: ConvertTimeStamp(time() + CTimeZone::GetOffset() + 600, 'FULL'),
-		);
-		/** @see \Bitrix\AI\Agents\EngineSettings::resetFlowsToBGPTAgent */
-		\CAgent::AddAgent(
-			'\Bitrix\AI\Agents\EngineSettings::resetFlowsToBGPTAgent();',
-			'ai',
-			interval: 3600,
-			next_exec: ConvertTimeStamp(time() + CTimeZone::GetOffset() + 600, 'FULL'),
-		);
-	}
-
-	private function getConnectionType(): string
-	{
-		return Application::getConnection()->getType();
 	}
 
 	private function isCloudInstallation(): bool

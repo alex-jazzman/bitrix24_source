@@ -25,7 +25,11 @@ export const ToastCloseButton = {
 		<button class="editor-chart-toast-close-button"
 			 @click="onClick"
 		>
-			<BIcon :name="Outline.CROSS_L" :size="20"></BIcon>
+			<BIcon
+				:name="Outline.CROSS_L"
+				:size="20"
+				color="var(--bizprocdesigner-editor-toast-content-color, var(--ui-color-base-8))"
+			></BIcon>
 		</button>
 	`,
 };

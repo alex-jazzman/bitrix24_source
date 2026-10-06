@@ -1,4 +1,8 @@
 <?php
+
+use Bitrix\Main\Web\HttpClient;
+use Bitrix\Main\Text\Encoding;
+
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
 class gdRssFeeds
@@ -22,9 +26,10 @@ function gdGetRss($rss_url, $cache_time = 0, $isHtml = false)
 
 	$oRssFeeds = new gdRssFeeds();
 
-	$http = new \Bitrix\Main\Web\HttpClient([
+	$http = new HttpClient([
 		"socketTimeout" => 10,
 		"streamTimeout" => 10,
+		"privateIp" => false,
 	]);
 	$res = $http->get($rss_url);
 
@@ -34,10 +39,10 @@ function gdGetRss($rss_url, $cache_time = 0, $isHtml = false)
 		return false;
 	}
 
-	if (preg_match("/<"."\\?XML[^>]{1,}encoding=[\"']([^>\"']{1,})[\"'][^>]{0,}\\?".">/i", $res, $matches))
+	if (preg_match("/<"."\\?XML[^>]+encoding=[\"']([^>\"']+)[\"'][^>]*\\?".">/i", $res, $matches))
 	{
 		$charset = trim($matches[1]);
-		$res = \Bitrix\Main\Text\Encoding::convertEncoding($res, $charset, SITE_CHARSET);
+		$res = Encoding::convertEncoding($res, $charset, SITE_CHARSET);
 	}
 
 	$xml = new CDataXML();

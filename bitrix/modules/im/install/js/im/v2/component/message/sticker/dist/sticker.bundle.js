@@ -337,7 +337,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			ReactionList: im_v2_component_message_elements.ReactionList,
 			MessageHeader: im_v2_component_message_elements.MessageHeader,
 			StickerFallback,
-			PackPopup
+			PackPopup,
+			Reply: im_v2_component_message_elements.Reply
 		},
 		props: {
 			item: {
@@ -357,6 +358,12 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		computed: {
 			message() {
 				return this.item;
+			},
+			hasReply() {
+				return this.message.replyId !== 0;
+			},
+			isForward() {
+				return this.$store.getters['messages/isForward'](this.message.id);
 			},
 			sticker() {
 				const sticker = this.$store.getters['stickers/messages/getStickerByMessageId'](this.message.id);
@@ -404,6 +411,13 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 					<MessageHeader :item="item" :isOverlay="true" />
 				</div>
 			</template>
+			<Reply
+				v-if="hasReply"
+				class="bx-im-message-sticker__reply"
+				:dialogId="dialogId"
+				:replyId="message.replyId"
+				:isForward="isForward"
+			/>
 			<div class="bx-im-message-sticker__container">
 				<div
 					v-if="hasStickerUri"

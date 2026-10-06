@@ -1,6 +1,7 @@
 <?php
 
 use Bitrix\Mail\Helper\MailboxAccess;
+use Bitrix\Mail\Integration\Tasks\TaskMailSourceService;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Mail;
@@ -20,6 +21,15 @@ class CMailMessageActionsComponent extends CBitrixComponent
 		global $USER;
 
 		$message = false;
+		$mailMessageActionsAvailable = false;
+		$sourceType = (string)($this->arParams['MAIL_SOURCE_TYPE'] ?? '');
+		$sourceId = (int)($this->arParams['MAIL_SOURCE_ID'] ?? 0);
+		$userId = (int)$USER->GetID();
+		if (!$this->isCrmActivitySource($sourceType, $sourceId))
+		{
+			$sourceType = '';
+			$sourceId = 0;
+		}
 
 		if (!empty($this->arParams['MESSAGE']))
 		{
@@ -38,26 +48,33 @@ class CMailMessageActionsComponent extends CBitrixComponent
 			}
 		}
 
-		if (empty($message))
+		if (!empty($message))
 		{
-			$this->includeComponentTemplate('disabled');
-			return;
+			$accessModel = Mail\MessageAccess::createByMessageId($message['ID'], $userId);
+			$mailMessageActionsAvailable = $accessModel->canModifyMessage() && Mail\Helper\Message::hasAccess($message);
 		}
 
-		$accessModel = Mail\MessageAccess::createByMessageId($message['ID'], (int)$USER->GetID());
-		if (!$accessModel->canModifyMessage())
+		if (!$mailMessageActionsAvailable && $this->isCrmActivitySource($sourceType, $sourceId))
 		{
-			$this->includeComponentTemplate('disabled');
-			return;
+			$message = $this->getMessageByCrmActivitySource($sourceId, $userId);
 		}
 
-		if (!Mail\Helper\Message::hasAccess($message))
+		if (empty($message) || (!$mailMessageActionsAvailable && !$this->isCrmActivitySource($sourceType, $sourceId)))
 		{
 			$this->includeComponentTemplate('disabled');
 			return;
 		}
 
 		$this->arResult['MESSAGE'] = $message;
+		$this->arResult['MAIL_MESSAGE_ACTIONS_AVAILABLE'] = $mailMessageActionsAvailable;
+		$this->arResult['MAIL_SOURCE'] = [
+			'TYPE' => $sourceType,
+			'ID' => $sourceId,
+		];
+		$this->arResult['CONTROL_ID'] = $mailMessageActionsAvailable
+			? (string)(int)$message['ID']
+			: 'crm-activity-' . $sourceId
+		;
 
 		$userPage = Main\Config\Option::get('socialnetwork', 'user_page', '/company/personal/', SITE_ID);
 
@@ -89,6 +106,34 @@ class CMailMessageActionsComponent extends CBitrixComponent
 		$this->arParams['CRM_AVAILABLE'] = MailboxAccess::hasCurrentUserAccessToEditMailboxIntegrationCrm();
 
 		$this->includeComponentTemplate();
+	}
+
+	private function isCrmActivitySource(string $sourceType, int $sourceId): bool
+	{
+		return $sourceType === TaskMailSourceService::SOURCE_TYPE_CRM_ACTIVITY && $sourceId > 0;
+	}
+
+	private function getMessageByCrmActivitySource(int $activityId, int $userId): ?array
+	{
+		$emailData = TaskMailSourceService::getEmailDataBySource(
+			TaskMailSourceService::SOURCE_TYPE_CRM_ACTIVITY,
+			$activityId,
+			$userId,
+			withBody: false,
+		);
+
+		if (!is_array($emailData))
+		{
+			return null;
+		}
+
+		return [
+			'ID' => 0,
+			'BIND' => [],
+			'SUBJECT' => (string)($emailData['title'] ?? ''),
+			'FIELD_FROM' => (string)($emailData['from'] ?? ''),
+			'MAIL_DATE_TS' => (int)($emailData['dateTs'] ?? 0),
+		];
 	}
 
 }

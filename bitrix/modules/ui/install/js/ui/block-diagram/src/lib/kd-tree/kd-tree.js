@@ -120,13 +120,13 @@ export class KdTree
 		return this.#innerSearch(node.right, node, point);
 	}
 
-	insert(point)
+	insert(point): void
 	{
-		const insertPosition = this.#innerSearch(this.root, null, point);
+		const insertPosition = this.#innerSearch(this.#root, null, point);
 
 		if (insertPosition === null)
 		{
-			this.root = new Node(point, 0, null);
+			this.#root = new Node(point, 0, null);
 
 			return;
 		}

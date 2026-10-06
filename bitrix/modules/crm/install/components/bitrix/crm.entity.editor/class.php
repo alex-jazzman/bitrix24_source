@@ -5,11 +5,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)
 	die();
 }
 
+use Bitrix\Bizproc\Controller\Workflow\Starter;
 use Bitrix\Crm\Activity\LastCommunication\LastCommunicationTimeFormatter;
-use Bitrix\Crm\Agent\Requisite\CompanyAddressConvertAgent;
-use Bitrix\Crm\Agent\Requisite\CompanyUfAddressConvertAgent;
-use Bitrix\Crm\Agent\Requisite\ContactAddressConvertAgent;
-use Bitrix\Crm\Agent\Requisite\ContactUfAddressConvertAgent;
 use Bitrix\Crm\Attribute\FieldAttributeManager;
 use Bitrix\Crm\Entity\EntityEditorConfigScope;
 use Bitrix\Crm\EntityForm\ScopeAccess;
@@ -17,9 +14,9 @@ use Bitrix\Crm\FieldContext\ContextManager;
 use Bitrix\Crm\FieldContext\Repository;
 use Bitrix\Crm\Integration\HumanResources\HumanResources;
 use Bitrix\Crm\Integration\UI\EntityEditor\MartaAIMarksRepository;
+use Bitrix\Crm\Integration\UI\EntityEditor\UnavailableFieldsChecker;
 use Bitrix\Crm\Integration\UI\EntitySelector\CountryProvider;
 use Bitrix\Crm\Restriction\RestrictionManager;
-use Bitrix\Crm\Security\EntityAuthorization;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\EditorAdapter\SchemeDecorator;
 use Bitrix\Main;
@@ -495,9 +492,10 @@ class CCrmEntityEditorComponent extends UIFormComponent
 			$this->arResult['ENTITY_TYPE_ID'] = $this->entityTypeID;
 		}
 
-		$this->categoryId = isset($this->arParams['EXTRAS']['CATEGORY_ID'])
-			? (int)$this->arParams['EXTRAS']['CATEGORY_ID']
-			: 0;
+		$extrasCategoryId = $this->arParams['EXTRAS']['CATEGORY_ID'] ?? null;
+		$contextCategoryId = $this->arParams['CONTEXT']['PARAMS']['CATEGORY_ID'] ?? null;
+
+		$this->categoryId = (int)($extrasCategoryId ?? $contextCategoryId);
 
 		if (empty($this->arResult['ENTITY_TYPE_TITLE']))
 		{
@@ -647,35 +645,33 @@ class CCrmEntityEditorComponent extends UIFormComponent
 		//Bizproc
 		$this->arResult['BIZPROC_MANAGER_CONFIG'] = [];
 		$bizprocEventType = $this->entityID === 0 ? CCrmBizProcEventType::Create : CCrmBizProcEventType::Edit;
-		if (CCrmBizProcHelper::HasParameterizedAutoWorkflows($this->entityTypeID, $bizprocEventType))
+		$documentType = CCrmBizProcHelper::ResolveDocumentType($this->entityTypeID);
+
+		$hasBizprocAutoStartParameters = $documentType && CCrmBizProcHelper::HasParameterizedAutoWorkflows(
+			$this->entityTypeID,
+			$bizprocEventType,
+			$this->categoryId
+		);
+
+		if (
+			$documentType
+			&& (
+				$hasBizprocAutoStartParameters
+				|| method_exists(Starter::class, 'hasAutoStartParametersAction')
+			)
+		)
 		{
 			$bizprocStarterData = [
-				'hasParameters' => true,
-				'moduleId' => 'crm',
-				'entity' => CCrmBizProcHelper::ResolveDocumentName($this->entityTypeID),
-				'documentType' => CCrmOwnerType::ResolveName($this->entityTypeID),
+				'hasParameters' => $hasBizprocAutoStartParameters,
 				'autoExecuteType' => $bizprocEventType,
+				'categoryId' => $this->categoryId,
 				'fieldName' => 'bizproc_parameters',
+				'signedDocumentType' => CBPDocument::signDocumentType($documentType)
 			];
 
-			if (class_exists(\Bitrix\Bizproc\Controller\Workflow\Starter::class))
+			if ($this->entityID > 0)
 			{
-				$bizprocStarterData['signedDocumentType'] = CBPDocument::signDocumentType([
-					$bizprocStarterData['moduleId'], $bizprocStarterData['entity'], $bizprocStarterData['documentType']
-				]);
-
-				if ($this->entityID > 0)
-				{
-					$bizprocStarterData['signedDocumentId'] = CBPDocument::signDocumentType(
-						[
-							$bizprocStarterData['moduleId'],
-							$bizprocStarterData['entity'],
-							CCrmBizProcHelper::ResolveDocumentId($this->entityTypeID, $this->entityID),
-						],
-					);
-				}
-
-				unset($bizprocStarterData['moduleId'], $bizprocStarterData['entity'], $bizprocStarterData['documentType']);
+				$bizprocStarterData['signedDocumentId'] = CBPDocument::signDocumentType(CCrmBizProcHelper::ResolveDocumentId($this->entityTypeID, $this->entityID));
 			}
 
 			$this->arResult['BIZPROC_MANAGER_CONFIG'] = $bizprocStarterData;
@@ -900,6 +896,9 @@ class CCrmEntityEditorComponent extends UIFormComponent
 		$isUfAddPermitted = !$ufAddRestriction->isExceeded($this->entityTypeID);
 		$isResourceBookingPermitted = $ufResourceBookingRestriction->hasPermission();
 
+		$fieldsInfo = $this->getFieldsInfo($this->arResult['ENTITY_FIELDS'], $this->arResult['ENTITY_DATA']);
+		$unavailableRequiredFields = $this->getUnavailableRequiredFields($fieldsInfo['available'], $fieldsInfo['required']);
+
 		$this->arResult['RESTRICTIONS'] = [
 			'userFieldAccessRights' => [
 				'isPermitted' => $isUfAccessRightsPermitted,
@@ -913,6 +912,7 @@ class CCrmEntityEditorComponent extends UIFormComponent
 				'isPermitted' => $isResourceBookingPermitted,
 				'restrictionCallback' => $isResourceBookingPermitted ? '' : $ufResourceBookingRestriction->prepareInfoHelperScript(),
 			],
+			'unavailableRequiredFields' => $unavailableRequiredFields,
 		];
 	}
 
@@ -1063,5 +1063,20 @@ class CCrmEntityEditorComponent extends UIFormComponent
 		}
 
 		return array($config, $configScope);
+	}
+
+	protected function getUnavailableRequiredFields(
+		array $availableFields,
+		array $requiredFields,
+	): array
+	{
+		$unavailableFieldsChecker = new UnavailableFieldsChecker(
+			$availableFields,
+			$requiredFields,
+			$this->entityTypeID,
+			$this->categoryId,
+		);
+
+		return $unavailableFieldsChecker->getUnavailableRequiredFields();
 	}
 }

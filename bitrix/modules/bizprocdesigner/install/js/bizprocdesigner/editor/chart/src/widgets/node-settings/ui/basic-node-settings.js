@@ -1,17 +1,26 @@
+import { useHistory } from 'ui.block-diagram';
 import { mapState, mapWritableState, mapActions } from 'ui.vue3.pinia';
 import { Outline } from 'ui.icon-set.api.vue';
 
+import { FeatureCode } from 'bizprocdesigner.feature';
+
 import { diagramStore as useDiagramStore } from '../../../entities/blocks';
-import { useNodeSettingsStore, NodeSettingsPreview } from '../../../entities/node-settings';
-import { EditNodeSettingsForm, AddSettingsItem } from '../../../features/node-settings';
+import {
+	useNodeSettingsStore,
+	NodeSettingsPreview,
+	getAllAncestorBlocks,
+	getPortsSignature,
+} from '../../../entities/node-settings';
+import { EditNodeSettingsForm, AddSettingsItem, RelationsBlock, DataViewsSection } from '../../../features/node-settings';
 
-import { type Port } from '../../../shared/types';
-import { NODE_SETTINGS_TABS } from '../../../shared/constants';
-
-const ADD_ITEM_ICONS = {
-	rule: Outline.EDIT_M,
-	relation: Outline.PLUS_M,
-};
+import { useFeature } from '../../../shared/composables';
+import { type Block, type Port } from '../../../shared/types';
+import {
+	NODE_SETTINGS_TABS,
+	PORT_TYPES,
+	isDataViewsAllowedBlockType,
+	isPortRulesAllowedBlockType,
+} from '../../../shared/constants';
 
 // @vue/component
 export const BasicNodeSettings = {
@@ -20,15 +29,49 @@ export const BasicNodeSettings = {
 		EditNodeSettingsForm,
 		NodeSettingsPreview,
 		AddSettingsItem,
+		RelationsBlock,
+		DataViewsSection,
+	},
+	setup(): { ruleIcon: string; makeSnapshot: () => void }
+	{
+		const { makeSnapshot } = useHistory();
+
+		return {
+			// '+ Add expert settings' link per mockup 935:82878 (node 935:82383)
+			ruleIcon: Outline.PLUS_M,
+			makeSnapshot,
+		};
 	},
 	computed:
 	{
 		...mapState(useDiagramStore, ['connections']),
-		...mapState(useNodeSettingsStore, ['block', 'nodeSettings']),
+		...mapState(useNodeSettingsStore, ['block', 'nodeSettings', 'ports']),
 		...mapWritableState(useNodeSettingsStore, ['selectedTabId']),
-		addItemIcons(): { [string]: string }
+		isDataViewsSectionShown(): boolean
 		{
-			return ADD_ITEM_ICONS;
+			const { isFeatureAvailable } = useFeature();
+
+			return isDataViewsAllowedBlockType(this.block?.type)
+				&& isFeatureAvailable(FeatureCode.dataTables);
+		},
+		supportsPortRules(): boolean
+		{
+			return isPortRulesAllowedBlockType(this.block?.type);
+		},
+		/**
+		 * A map instead of a call inside the template: the preview watches this prop, and a fresh array
+		 * on every render of this widget would rebuild its captions on every keystroke in a condition.
+		 * Keyed by the input ports alone — the form renders a preview for those (EditNodeSettingsForm
+		 * rulePorts), and the relation ports are served by RelationsBlock with a map of its own, so a walk
+		 * over the ancestors of any other port is spent on nobody.
+		 */
+		ancestorBlocksByPortId(): { [string]: Array<Block> }
+		{
+			return Object.fromEntries(
+				(this.ports ?? [])
+					.filter((port: Port) => port.type === PORT_TYPES.input)
+					.map((port: Port) => [port.id, getAllAncestorBlocks(this.block, port.id)]),
+			);
 		},
 	},
 	methods:
@@ -40,7 +83,6 @@ export const BasicNodeSettings = {
 		]),
 		...mapActions(useDiagramStore, [
 			'publicDraft',
-			'getBlockAncestorsByInputPortId',
 			'deleteConnectionByBlockIdAndPortId',
 		]),
 		onShowConstructions(port: Port): void
@@ -50,7 +92,8 @@ export const BasicNodeSettings = {
 		},
 		async deleteRule(ruleId: string): Promise<void>
 		{
-			const connections = [...this.connections];
+			const prevConnectionsCount = this.connections.length;
+			const prevPortsSignature = getPortsSignature(this.ports);
 			this.deletePort(ruleId);
 			const { outputPortsToDelete } = this.deleteRuleSettings(ruleId);
 			outputPortsToDelete.forEach((portId) => {
@@ -58,14 +101,17 @@ export const BasicNodeSettings = {
 				this.deleteConnectionByBlockIdAndPortId(this.block.id, portId);
 			});
 			this.deleteConnectionByBlockIdAndPortId(this.block.id, ruleId);
-			if (this.connections.length < connections.length)
+			const isConnectionRemoved = this.connections.length < prevConnectionsCount;
+			if (isConnectionRemoved)
 			{
 				await this.publicDraft();
 			}
-		},
-		deleteRelation(relationId: string): void
-		{
-			this.deletePort(relationId);
+			const isCanvasChanged = getPortsSignature(this.ports) !== prevPortsSignature
+				|| isConnectionRemoved;
+			if (isCanvasChanged)
+			{
+				this.makeSnapshot();
+			}
 		},
 	},
 	template: `
@@ -73,8 +119,10 @@ export const BasicNodeSettings = {
 			<template #preview="{ port }">
 				<NodeSettingsPreview
 					:port="port"
+					:block="block"
 					:nodeSettings="nodeSettings"
-					:connectedBlocks="getBlockAncestorsByInputPortId(block, port)"
+					:connectedBlocks="ancestorBlocksByPortId[port.id] ?? []"
+					:fixedPort="!supportsPortRules"
 					@showConstructions="onShowConstructions(port)"
 					@deletePreview="deleteRule(port.id)"
 				>
@@ -82,14 +130,19 @@ export const BasicNodeSettings = {
 				</NodeSettingsPreview>
 			</template>
 
+			<template #storages>
+				<DataViewsSection v-if="isDataViewsSectionShown" :block="block"/>
+			</template>
+
 			<template #addSettingsItem="{ text, itemType }">
 				<AddSettingsItem
 					:itemType="itemType"
-					:iconName="addItemIcons[itemType]"
+					:iconName="ruleIcon"
 				>
 					{{ text }}
 				</AddSettingsItem>
 			</template>
+			<RelationsBlock />
 		</EditNodeSettingsForm>
 	`,
 };

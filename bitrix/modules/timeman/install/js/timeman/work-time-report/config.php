@@ -43,7 +43,6 @@ return [
 		'timeman.provider.service.record-service',
 		'timeman.provider.service.report-service',
 		'ui.bbcode.formatter.html-formatter',
-		'ui.bbcode.parser',
 		'ui.icon-set.api.vue',
 		'ui.icons.b24',
 		'ui.text-editor',

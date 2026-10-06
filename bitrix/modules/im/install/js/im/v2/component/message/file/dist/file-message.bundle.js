@@ -14,7 +14,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			MessageHeader: im_v2_component_message_elements.MessageHeader,
 			MessageFooter: im_v2_component_message_elements.MessageFooter,
 			DefaultMessageContent: im_v2_component_message_elements.DefaultMessageContent,
-			AudioItem: im_v2_component_message_elements.AudioItem
+			AudioItem: im_v2_component_message_elements.AudioItem,
+			Reply: im_v2_component_message_elements.Reply
 		},
 		props: {
 			item: {
@@ -42,6 +43,12 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			},
 			canSetReactions() {
 				return main_core.Type.isNumber(this.message.id);
+			},
+			isReply() {
+				return this.message.replyId !== 0;
+			},
+			isForward() {
+				return this.$store.getters['messages/isForward'](this.message.id);
 			}
 		},
 		methods: {
@@ -53,6 +60,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		<BaseMessage :item="item" :dialogId="dialogId">
 			<div class="bx-im-message-audio__container">
 				<MessageHeader :withTitle="withTitle" :item="item" class="bx-im-message-audio__header"/>
+				<Reply v-if="isReply" :dialogId="dialogId" :replyId="message.replyId" :isForward="isForward" />
 				<AudioItem
 					:key="messageFile.id"
 					:item="messageFile"
@@ -61,7 +69,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				/>
 			</div>
 			<div class="bx-im-message-audio__default-message-container">
-				<DefaultMessageContent :item="item" :dialogId="dialogId" />
+				<DefaultMessageContent :item="item" :dialogId="dialogId" :withReply="false" />
 			</div>
 			<MessageFooter :item="item" :dialogId="dialogId" />
 		</BaseMessage>
@@ -121,7 +129,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			DefaultMessageContent: im_v2_component_message_elements.DefaultMessageContent,
 			BaseFileItem: im_v2_component_message_elements.BaseFileItem,
 			MessageHeader: im_v2_component_message_elements.MessageHeader,
-			MessageFooter: im_v2_component_message_elements.MessageFooter
+			MessageFooter: im_v2_component_message_elements.MessageFooter,
+			Reply: im_v2_component_message_elements.Reply
 		},
 		props: {
 			item: {
@@ -146,6 +155,12 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			messageFile() {
 				const firstFileId = this.message.files[0];
 				return this.$store.getters['files/get'](firstFileId, true);
+			},
+			isReply() {
+				return this.message.replyId !== 0;
+			},
+			isForward() {
+				return this.$store.getters['messages/isForward'](this.message.id);
 			}
 		},
 		created() {
@@ -172,8 +187,12 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		},
 		template: `
 		<BaseMessage :item="item" :dialogId="dialogId">
+			<template v-if="isReply && !isForward" #before-message>
+				<Reply :dialogId="dialogId" :replyId="message.replyId" :isForward="isForward" />
+			</template>
 			<div class="bx-im-message-base-file__container">
 				<MessageHeader :withTitle="withTitle" :item="item" class="bx-im-message-base-file__author-title" />
+				<Reply v-if="isReply && isForward" :dialogId="dialogId" :replyId="message.replyId" :isForward="isForward" />
 				<BaseFileItem
 					:key="messageFile.id"
 					:id="messageFile.id"
@@ -181,7 +200,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 					@openContextMenu="onOpenContextMenu"
 					@cancelClick="onCancel"
 				/>
-				<DefaultMessageContent :item="item" :dialogId="dialogId" />
+				<DefaultMessageContent :item="item" :dialogId="dialogId" :withReply="false" />
 			</div>
 			<MessageFooter :item="item" :dialogId="dialogId" />
 		</BaseMessage>
@@ -198,7 +217,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			DefaultMessageContent: im_v2_component_message_elements.DefaultMessageContent,
 			BaseFileItem: im_v2_component_message_elements.BaseFileItem,
 			MessageHeader: im_v2_component_message_elements.MessageHeader,
-			MessageFooter: im_v2_component_message_elements.MessageFooter
+			MessageFooter: im_v2_component_message_elements.MessageFooter,
+			Reply: im_v2_component_message_elements.Reply
 		},
 		props: {
 			item: {
@@ -225,6 +245,12 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			},
 			fileIds() {
 				return this.message.files.slice(0, FILES_LIMIT);
+			},
+			isReply() {
+				return this.message.replyId !== 0;
+			},
+			isForward() {
+				return this.$store.getters['messages/isForward'](this.message.id);
 			}
 		},
 		created() {
@@ -251,8 +277,12 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		},
 		template: `
 		<BaseMessage :item="item" :dialogId="dialogId">
+			<template v-if="isReply && !isForward" #before-message>
+				<Reply :dialogId="dialogId" :replyId="message.replyId" :isForward="isForward" />
+			</template>
 			<div class="bx-im-message-file-collection__container">
 				<MessageHeader :withTitle="withTitle" :item="item" class="bx-im-message-file-collection__author-title" />
+				<Reply v-if="isReply && isForward" :dialogId="dialogId" :replyId="message.replyId" :isForward="isForward" />
 				<div class="bx-im-message-file-collection__items">
 					<BaseFileItem
 						v-for="fileId in fileIds"
@@ -263,10 +293,11 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 						@cancelClick="onCancel"
 					/>
 				</div>
-				<DefaultMessageContent 
-					:item="item" 
+				<DefaultMessageContent
+					:item="item"
 					:dialogId="dialogId"
-					class="bx-im-message-file-collection__default-content" 
+					:withReply="false"
+					class="bx-im-message-file-collection__default-content"
 				/>
 			</div>
 			<MessageFooter :item="item" :dialogId="dialogId" />
@@ -464,7 +495,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			DefaultMessageContent: im_v2_component_message_elements.DefaultMessageContent,
 			MessageHeader: im_v2_component_message_elements.MessageHeader,
 			MessageFooter: im_v2_component_message_elements.MessageFooter,
-			MediaContent
+			MediaContent,
+			Reply: im_v2_component_message_elements.Reply
 		},
 		props: {
 			item: {
@@ -511,12 +543,15 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				return this.onlyImage;
 			},
 			showBottomContainer() {
-				return this.hasText || this.hasAttach || this.hasReply;
+				return this.hasText || this.hasAttach;
 			},
 			isForward() {
 				return main_core.Type.isStringFilled(this.message.forward.id);
 			},
 			needBackground() {
+				// A reply with media (image/gallery) renders without the common bubble — like a sticker reply:
+				// the quote is a self-contained chip above the media, the media sits below with no background.
+				// The bubble is still needed for a caption/attach (showBottomContainer), a channel post or a forward.
 				return this.showBottomContainer || this.isChannelPost || this.isForward;
 			},
 			isChannelPost() {
@@ -538,12 +573,20 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			}
 		},
 		template: `
-		<BaseMessage 
-			:item="item" 
-			:dialogId="dialogId" 
+		<BaseMessage
+			:item="item"
+			:dialogId="dialogId"
 			:withBackground="needBackground"
 		>
-			<div 
+			<template v-if="hasReply && !isForward" #before-message>
+				<Reply
+					class="bx-im-message-image__quote"
+					:dialogId="dialogId"
+					:replyId="message.replyId"
+					:isForward="isForward"
+				/>
+			</template>
+			<div
 				class="bx-im-message-image__container"
 				:class="{
 					'--has-text': hasText,
@@ -551,7 +594,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				:style="imageContainerStyles"
 			>
 				<MessageHeader :withTitle="false" :item="item" class="bx-im-message-image__header" />
-				<MediaContent 
+				<Reply v-if="hasReply && isForward" :dialogId="dialogId" :replyId="message.replyId" :isForward="isForward" />
+				<MediaContent
 					:item="message"
 					:containerHeight="containerHeight"
 					@cancelClick="onCancel"
@@ -562,6 +606,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 						:dialogId="dialogId"
 						:withText="hasText"
 						:withAttach="hasAttach"
+						:withReply="false"
 					/>
 				</div>
 				<MessageFooter :item="item" :dialogId="dialogId" />

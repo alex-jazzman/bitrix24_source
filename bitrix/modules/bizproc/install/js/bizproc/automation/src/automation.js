@@ -9,9 +9,11 @@ export { Robot } from './robot';
 export { UserOptions } from './user-options';
 export { Document } from './document/document';
 export { ViewMode } from './view-mode';
-export { ConditionGroup } from './condition/condition-group';
-export { ConditionGroupSelector } from './selectors/condition-group-selector';
-export { Condition } from './condition/condition';
+export { Condition, ConditionGroup } from 'bizproc.condition';
+export {
+	AutomationConditionGroupSelector as ConditionGroupSelector,
+	AutomationConditionContext,
+} from './context/automation-condition-context';
 export { Designer } from './designer';
 export * from './tracker/tracker';
 export * from './workflow/types';
@@ -24,7 +26,7 @@ export { MenuSelector } from './selectors/menu-selector';
 export { UserSelector } from './selectors/user-selector';
 export { FileSelector } from './selectors/file-selector';
 export { TimeSelector } from './selectors/time-selector';
-export { DelayInterval } from './delay-interval';
+export { DelayInterval } from 'bizproc.condition';
 export { DelayIntervalSelector } from './delay-interval-selector';
 export { HelpHint } from './help-hint';
 export { SelectorContext } from './context/selector-context';

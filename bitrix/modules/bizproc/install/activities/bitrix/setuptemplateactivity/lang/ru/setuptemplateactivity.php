@@ -1,6 +1,6 @@
 <?php
 $MESS['BIZPROC_SETUP_TEMPLATE_ACTIVITY_PROPERTY_BLOCKS_EMPTY'] = 'Блоки не заполнены';
-$MESS['BIZPROC_SETUP_TEMPLATE_ACTIVITY_PROPERTY_BLOCKS'] = 'Настройка полей';
+$MESS['BIZPROC_SETUP_TEMPLATE_ACTIVITY_PROPERTY_BLOCKS'] = 'Стартовый экран процесса';
 $MESS['BIZPROC_SETUP_TEMPLATE_ACTIVITY_NO_STARTER_USER'] = 'Не найден идентификатор сотрудника, который настроит шаблон';
 $MESS['BIZPROC_SETUP_TEMPLATE_ACTIVITY_PROPERTY_BLOCKS_INVALID_STRUCT'] = 'Ошибка в структуре блоков';
 $MESS['BIZPROC_SETUP_TEMPLATE_ACTIVITY_PROPERTY_BLOCK_ITEMS_EMPTY'] = 'Элементы в блоке #blockPosition# не заполнены';
@@ -32,3 +32,5 @@ $MESS['BIZPROC_SETUP_TEMPLATE_ACTIVITY_LABEL_ICON_ITEM'] = 'Иконка';
 $MESS['BIZPROC_CONSTANT_EMPTY_PROP'] = 'Не заполнено обязательное поле: #PROPERTY#';
 $MESS['BIZPROC_CONSTANT_FIELD_TYPE_UNKNOWN'] = 'В константе указан неизвестный тип поля';
 $MESS['BIZPROC_CONSTANT_UNKNOWN_ID'] = 'Переданы невалидные ID констант: #constantIdList#';
+
+$MESS['BIZPROC_SETUP_TEMPLATE_ACTIVITY_CONTENT_BLOCK_CONSTANTS'] = 'Константы: #count#';

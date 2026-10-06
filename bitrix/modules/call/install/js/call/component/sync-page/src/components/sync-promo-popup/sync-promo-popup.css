@@ -1,0 +1,173 @@
+/* context selector: stretch the same bg over the whole popup window so no white
+   stripe can show around the content; white stays as a fallback while the image loads */
+.call-sync-promo-popup-wrapper.popup-window {
+	--call-sync-promo-popup-bg: url(./images/call-sync-page-promo-bg.webp);
+
+	background: #fff var(--call-sync-promo-popup-bg) center / cover no-repeat;
+}
+
+.call-sync-promo-popup {
+	display: flex;
+	position: relative;
+	width: 905px;
+	height: 525px;
+	border-radius: 32px;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font-size: var(--ui-font-size-lg, 15px);
+	background: var(--call-sync-promo-popup-bg) center / cover no-repeat;
+}
+
+.call-sync-promo-popup__content {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: flex-start;
+	width: 568px;
+	padding-left: var(--ui-space-inline-6xl, 48px);
+	box-sizing: border-box;
+	gap: 28px;
+}
+
+.call-sync-promo-popup__title {
+	max-width: 420px;
+	color: var(--ui-color-base-1, #333);
+	/* 30px has no --ui-font-size-* token (scale tops out at 28px) */
+	font: 600 30px/normal var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	letter-spacing: -0.35px;
+}
+
+.call-sync-promo-popup__features {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-xl, 24px);
+}
+
+.call-sync-promo-popup__feature {
+	display: flex;
+	gap: var(--ui-space-inline-sm, 12px);
+}
+
+.call-sync-promo-popup__feature-icon {
+	flex: 0 0 auto;
+	width: 32px;
+	height: 32px;
+	background-repeat: no-repeat;
+	background-position: center;
+	background-size: contain;
+}
+
+.call-sync-promo-popup__feature-icon.--guest {
+	background-image: url(./images/call-sync-page-promo-guest.svg);
+}
+
+.call-sync-promo-popup__feature-icon.--schedule {
+	background-image: url(./images/call-sync-page-promo-schedule.svg);
+}
+
+.call-sync-promo-popup__feature-icon.--link {
+	background-image: url(./images/call-sync-page-promo-link.svg);
+}
+
+.call-sync-promo-popup__feature-body {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-2xs, 4px);
+}
+
+.call-sync-promo-popup__feature-title {
+	color: var(--ui-color-base-1, #333);
+	font-family: var(--ui-headline-sm-font-family, var(--ui-font-family-primary));
+	font-size: var(--ui-headline-sm-font-size, 17px);
+	/* design weight 600: no --ui-font-weight token between medium(500) and bold(700) */
+	font-weight: 600;
+	line-height: var(--ui-headline-sm-line-height, 23px);
+	letter-spacing: var(--ui-headline-sm-letter-spacing, -0.1px);
+}
+
+.call-sync-promo-popup__feature-desc {
+	max-width: 440px;
+	color: var(--ui-color-base-2, #525c69);
+	font-family: var(--ui-text-md-font-family, var(--ui-font-family-primary));
+	font-size: var(--ui-text-md-font-size, 15px);
+	font-weight: var(--ui-text-md-font-weight, 400);
+	line-height: var(--ui-text-md-line-height, 20px);
+	letter-spacing: var(--ui-text-md-letter-spacing, -0.05px);
+}
+
+.call-sync-promo-popup__footer {
+	margin-top: 4px;
+}
+
+.call-sync-promo-popup__illustration {
+	position: absolute;
+	top: 0;
+	right: 0;
+	width: 460px;
+	height: 100%;
+	pointer-events: none;
+}
+
+.call-sync-promo-popup__illustration-panel {
+	display: flex;
+	position: absolute;
+	top: 130px;
+	right: -86px;
+	align-items: flex-start;
+	width: 400px;
+	height: 264px;
+	border: 2px solid #cc9afd; /* decorative brand color, no DS token */
+	border-radius: 16px;
+	box-sizing: border-box;
+	overflow: hidden;
+	pointer-events: none;
+	/* panel sticks out of the popup edge per design;
+	   --ui-box-shadow-popup-default-blur stores a filter value (blur(17px)), so blur is literal */
+	box-shadow: var(--ui-box-shadow-popup-default-x, 0) var(--ui-box-shadow-popup-default-y, 8px) 17px var(--ui-box-shadow-popup-default-spread, 0) var(--ui-box-shadow-popup-default-color, rgba(0, 0, 0, 0.21));
+}
+
+.call-sync-promo-popup__illustration-video {
+	flex-shrink: 0;
+	width: 420px;
+	height: 286px;
+	/* slight zoom (~5%, aspect preserved) hides the light edges baked into the source video:
+	   the oversized video is centered under the 2px frame and cropped by overflow hidden */
+	margin: -13px -12px;
+	object-fit: cover;
+}
+
+.call-sync-promo-popup__badge {
+	display: inline-flex;
+	position: absolute;
+	align-items: center;
+	min-height: 20px;
+	padding: 1px 10px;
+	border: 3px solid rgba(183, 214, 251, 0.51); /* decorative brand color, no DS token */
+	border-radius: 16px;
+	color: var(--ui-color-bg-content-light, #fff);
+	font: 600 var(--ui-font-size-sm, 13px)/17px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	letter-spacing: -0.045px;
+	white-space: nowrap;
+	background: #87beff; /* decorative brand color, no DS token */
+	opacity: 0.9;
+	box-shadow: 0 1px 2px 0 rgba(205, 228, 255, 0.6); /* decorative brand color, no DS token */
+}
+
+.call-sync-promo-popup__badge.--guest-access {
+	top: 52px;
+	left: 147px;
+}
+
+.call-sync-promo-popup__badge.--no-registration {
+	top: 92px;
+	left: 254px;
+}
+
+.call-sync-promo-popup__badge.--meeting-chat {
+	top: 421px;
+	left: 168px;
+}
+
+.call-sync-promo-popup__badge.--cloud-record {
+	top: 462px;
+	left: 262px;
+}

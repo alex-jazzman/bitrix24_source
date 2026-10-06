@@ -30,7 +30,8 @@ $renderLog = function($log) use ($arResult)
 			) : null;
 		?>
 		<button type="button" class="crm-task-list-mail-item crm-activity-email-logitem-<?=intval($item['ID']) ?>"
-			data-id="<?=intval($item['ID']) ?>" data-log="<?=htmlspecialcharsbx($log) ?>" aria-expanded="false">
+			data-id="<?=intval($item['ID']) ?>" data-log="<?=htmlspecialcharsbx($log) ?>" aria-expanded="false"
+			data-testid="crm-mail-thread-item-<?=intval($item['ID']) ?>">
 			<span class="crm-task-list-mail-item-icon-reply-<?=($item['DIRECTION'] == \CCrmActivityDirection::Incoming ? 'incoming' : 'coming') ?>"></span>
 			<span class="crm-task-list-mail-item-icon <? if ($item['COMPLETED'] != 'Y'): ?>active-mail<? endif ?>"></span>
 			<span class="crm-task-list-mail-item-user"
@@ -59,7 +60,8 @@ $renderLog = function($log) use ($arResult)
 			</span>
 		</button>
 		<div class="crm-task-list-mail-item-inner crm-task-list-mail-item-inner-slider crm-activity-email-details-<?=intval($item['ID']) ?>"
-			style="display: none; text-align: center; " data-id="<?=intval($item['ID']) ?>" data-empty="1">
+			style="display: none; text-align: center; " data-id="<?=intval($item['ID']) ?>" data-empty="1"
+			data-testid="crm-mail-message-<?=intval($item['ID']) ?>">
 			<div class="crm-task-list-mail-item-loading crm-task-list-mail-border-bottom"></div>
 		</div>
 		<?
@@ -99,7 +101,8 @@ BX.ready(function ()
 		<div style="display: none; "></div>
 		<div class="crm-task-list-mail-item-inner crm-task-list-mail-item-inner-slider"
 			id="crm-activity-email-details-<?=intval($activity['ID']) ?>"
-			data-id="<?=intval($activity['ID']) ?>">
+			data-id="<?=intval($activity['ID']) ?>"
+			data-testid="crm-mail-message-<?=intval($activity['ID']) ?>">
 			<? $APPLICATION->includeComponent(
 				'bitrix:crm.activity.email.body', 'slider',
 				array(

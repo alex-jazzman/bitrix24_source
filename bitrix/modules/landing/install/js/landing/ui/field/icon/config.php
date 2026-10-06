@@ -8,10 +8,10 @@ return [
 	'css' => 'dist/icon.bundle.css',
 	'js' => 'dist/icon.bundle.js',
 	'rel' => [
-		'main.core',
-		'landing.ui.panel.iconpanel',
-		'landing.ui.field.image',
 		'landing.ui.card.iconoptionscard',
+		'landing.ui.field.image',
+		'landing.ui.panel.iconpanel',
+		'main.core',
 	],
 	'skip_core' => false,
 ];

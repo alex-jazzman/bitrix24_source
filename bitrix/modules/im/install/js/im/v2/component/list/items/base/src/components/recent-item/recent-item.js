@@ -9,6 +9,7 @@ import { RecentManager } from 'im.v2.lib.recent';
 import { LayoutManager } from 'im.v2.lib.layout';
 import { type ImModelRecentItem, type ImModelChat, type ImModelLayout } from 'im.v2.model';
 
+import { AvatarCounter } from './components/avatar-counter';
 import { ItemCounters } from './components/item-counter';
 import { MessageStatus } from './components/message-status';
 import { MessageText } from './components/message-text/message-text';
@@ -18,7 +19,12 @@ import './css/recent-item.css';
 // @vue/component
 export const BaseRecentItem = {
 	name: 'BaseRecentItem',
-	components: { ChatAvatar, ChatTitle, MessageText, MessageStatus, ItemCounters, InputActionIndicator },
+	components: { ChatAvatar, ChatTitle, MessageText, MessageStatus, AvatarCounter, ItemCounters, InputActionIndicator },
+	inject: {
+		avatarsOnly: {
+			default: false,
+		},
+	},
 	props: {
 		item: {
 			type: Object,
@@ -47,6 +53,10 @@ export const BaseRecentItem = {
 		withDraft: {
 			type: Boolean,
 			default: true,
+		},
+		forceOwnMessage: {
+			type: Boolean,
+			default: false,
 		},
 	},
 	computed: {
@@ -144,15 +154,20 @@ export const BaseRecentItem = {
 				<div class="bx-im-list-recent-item__avatar_container">
 					<div v-if="invitation.isActive" class="bx-im-list-recent-item__avatar_invitation"></div>
 					<div v-else class="bx-im-list-recent-item__avatar_content">
-						<ChatAvatar 
-							:avatarDialogId="recentItem.dialogId" 
-							:contextDialogId="recentItem.dialogId" 
-							:size="AvatarSize.XL" 
+						<ChatAvatar
+							:avatarDialogId="recentItem.dialogId"
+							:contextDialogId="recentItem.dialogId"
+							:size="AvatarSize.XL"
 							:withSpecialTypeIcon="!hasActiveInputAction"
 							:customType="avatarType"
 						/>
 						<InputActionIndicator v-if="showActiveInputAction" />
 					</div>
+					<AvatarCounter
+						v-if="avatarsOnly"
+						:item="recentItem"
+						:isChatMuted="dialog.isMuted"
+					/>
 				</div>
 				<div class="bx-im-list-recent-item__content_container">
 					<div class="bx-im-list-recent-item__content_header">
@@ -171,7 +186,7 @@ export const BaseRecentItem = {
 						</div>
 					</div>
 					<div class="bx-im-list-recent-item__content_bottom">
-						<MessageText :item="recentItem" :withDraft="withDraft" />
+						<MessageText :item="recentItem" :withDraft="withDraft" :forceOwnMessage="forceOwnMessage" />
 						<ItemCounters
 							v-if="withCounter"
 							:withPinStatus="withPinStatus"

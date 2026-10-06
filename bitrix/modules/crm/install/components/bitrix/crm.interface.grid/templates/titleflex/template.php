@@ -24,7 +24,7 @@ $asset = Bitrix\Main\Page\Asset::getInstance();
 $asset->addJs('/bitrix/js/main/utils.js');
 $asset->addJs('/bitrix/js/main/popup_menu.js');
 $asset->addJs('/bitrix/js/crm/common.js');
-$asset->addJs('/bitrix/js/crm/dialog.js');
+\Bitrix\Main\UI\Extension::load('crm.dialog');
 \Bitrix\Main\UI\Extension::load([
 	'crm.grid.field.clickable-user',
 ]);

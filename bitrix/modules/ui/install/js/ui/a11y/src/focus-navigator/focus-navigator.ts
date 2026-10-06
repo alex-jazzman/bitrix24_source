@@ -32,6 +32,17 @@ export class FocusNavigator
 		return FOCUSABLE_SELECTOR;
 	}
 
+	/**
+	 * Whether nothing holds the focus any more: it is either gone or fell back onto
+	 * <body>, which the browser focuses when the focused element goes away.
+	 */
+	static isFocusLost(node?: Node | null): boolean
+	{
+		const activeElement = this.getActiveElement(node);
+
+		return activeElement === null || activeElement.tagName === 'BODY';
+	}
+
 	static getFirst(container: HTMLElement, options?: FocusNavigatorOptions): HTMLElement | null
 	{
 		return this.#traverse(container, 'first', options);

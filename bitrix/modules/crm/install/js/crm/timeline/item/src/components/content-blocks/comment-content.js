@@ -157,7 +157,7 @@ export default BitrixVue.cloneComponent(EditableDescription, {
 			const attachmentAllowEditOptions = this.editor.getAttachmentsAllowEditOptions(attachmentList);
 			this.isSaving = true;
 
-			void this.executeSaveAction(content, attachmentList, attachmentAllowEditOptions).then(() => {
+			void this.executeSaveAction(content, attachmentList, attachmentAllowEditOptions).then((response) => {
 				this.isEdit = false;
 
 				if (!this.isTextChanged)
@@ -168,13 +168,25 @@ export default BitrixVue.cloneComponent(EditableDescription, {
 
 				this.$nextTick((): void => {
 					this.isLongText = this.checkIsLongText();
-					this.executeLoadAction(TYPE_LOAD_FILES_BLOCK, this.$refs.files);
+					if (!this.isCommentRecreated(response))
+					{
+						this.executeLoadAction(TYPE_LOAD_FILES_BLOCK, this.$refs.files);
+					}
 				});
 
 				this.emitEvent('Comment:FinishEdit');
 			}).finally(() => {
 				this.isSaving = false;
 			});
+		},
+
+		// updating a comment bound to several entities recreates it with a new id,
+		// and pull events replace the item, so the stale id must not be loaded again
+		isCommentRecreated(response): boolean
+		{
+			const savedCommentId = Number(response?.data);
+
+			return savedCommentId > 0 && savedCommentId !== this.saveAction?.actionParams?.commentId;
 		},
 
 		executeSaveAction(content: String, attachmentList: Array, attachmentAllowEditOptions: Object): Promise

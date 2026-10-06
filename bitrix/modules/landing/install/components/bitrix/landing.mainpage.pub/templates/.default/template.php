@@ -169,7 +169,7 @@ if (isset($arResult['VIBE_TITLE']))
 		<?php if ($isAnalyticsEnabled): ?>
 			void new BX.Landing.Pub.Analytics({
 				isPublished: <?= $isPublished ? 'true' : 'false' ?>,
-				templateCode: '<?= $landing->getMeta()['TPL_CODE'] ?? '' ?>',
+				templateCode: '<?= CUtil::JSEscape((string)($landing->getMeta()['TPL_CODE'] ?? '')) ?>',
 			});
 		<?php endif; ?>
 

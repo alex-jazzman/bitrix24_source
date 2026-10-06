@@ -7,2382 +7,2082 @@
 	}
 
 this.BX = this.BX || {};
-(function (exports,main_core_events,main_polyfill_intersectionobserver,main_popup,main_core) {
+(function (exports, main_core, main_core_events, main_popup) {
 	'use strict';
 
-	var Default = /*#__PURE__*/function () {
-	  function Default(editor, htmlEditor) {
-	    babelHelpers.classCallCheck(this, Default);
-	    babelHelpers.defineProperty(this, "id", 'SomeParser');
-	    babelHelpers.defineProperty(this, "buttonParams", {
-	      name: 'Some parser name',
-	      iconClassName: 'some-parser-class',
-	      disabledForTextarea: false,
-	      src: '/icon.png',
-	      toolbarSort: 205,
-	      compact: false
-	    });
-	    this.editor = editor;
-	    this.htmlEditor = htmlEditor;
-	    this.handler = this.handler.bind(this);
-	  }
-	  babelHelpers.createClass(Default, [{
-	    key: "handler",
-	    value: function handler() {}
-	  }, {
-	    key: "parse",
-	    value: function parse(text) {
-	      return text;
-	    }
-	  }, {
-	    key: "unparse",
-	    value: function unparse(bxTag, oNode) {
-	      return '';
-	    }
-	  }, {
-	    key: "hasButton",
-	    value: function hasButton() {
-	      return this.buttonParams !== null;
-	    }
-	  }, {
-	    key: "getButton",
-	    value: function getButton() {
-	      if (this.buttonParams === null) {
-	        return null;
-	      }
-	      return {
-	        id: this.id,
-	        name: this.buttonParams.name,
-	        iconClassName: this.buttonParams.iconClassName,
-	        disabledForTextarea: this.buttonParams.disabledForTextarea,
-	        src: this.buttonParams.src,
-	        toolbarSort: this.buttonParams.toolbarSort,
-	        compact: this.buttonParams.compact === true,
-	        handler: this.handler
-	      };
-	    }
-	  }, {
-	    key: "getParser",
-	    value: function getParser() {
-	      var _this = this;
-	      return {
-	        name: this.id,
-	        obj: {
-	          Parse: function Parse(parserId, text) {
-	            return _this.parse(text);
-	          },
-	          UnParse: this.unparse.bind(this)
-	        }
-	      };
-	    }
-	  }]);
-	  return Default;
-	}();
+	class Default {
+		id = 'SomeParser';
+		buttonParams = {
+			name: 'Some parser name',
+			iconClassName: 'some-parser-class',
+			disabledForTextarea: false,
+			src: '/icon.png',
+			toolbarSort: 205,
+			compact: false
+		};
+		constructor(editor, htmlEditor) {
+			this.editor = editor;
+			this.htmlEditor = htmlEditor;
+			this.handler = this.handler.bind(this);
+		}
+		handler() {}
+		parse(text) {
+			return text;
+		}
+		unparse(bxTag, oNode) {
+			return '';
+		}
+		hasButton() {
+			return this.buttonParams !== null;
+		}
+		getButton() {
+			if (this.buttonParams === null) {
+				return null;
+			}
+			return {
+				id: this.id,
+				name: this.buttonParams.name,
+				iconClassName: this.buttonParams.iconClassName,
+				disabledForTextarea: this.buttonParams.disabledForTextarea,
+				src: this.buttonParams.src,
+				toolbarSort: this.buttonParams.toolbarSort,
+				compact: this.buttonParams.compact === true,
+				handler: this.handler
+			};
+		}
+		getParser() {
+			return {
+				name: this.id,
+				obj: {
+					Parse: (parserId, text) => {
+						return this.parse(text);
+					},
+					UnParse: this.unparse.bind(this)
+				}
+			};
+		}
+	}
 
-	var Spoiler = /*#__PURE__*/function (_Default) {
-	  babelHelpers.inherits(Spoiler, _Default);
-	  function Spoiler() {
-	    var _babelHelpers$getProt;
-	    var _this;
-	    babelHelpers.classCallCheck(this, Spoiler);
-	    for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
-	      args[_key] = arguments[_key];
-	    }
-	    _this = babelHelpers.possibleConstructorReturn(this, (_babelHelpers$getProt = babelHelpers.getPrototypeOf(Spoiler)).call.apply(_babelHelpers$getProt, [this].concat(args)));
-	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "id", 'spoiler');
-	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "buttonParams", {
-	      name: main_core.Loc.getMessage('MPF_SPOILER'),
-	      iconClassName: 'spoiler',
-	      disabledForTextarea: false,
-	      src: main_core.Loc.getMessage('MPF_TEMPLATE_FOLDER') + '/images/lhespoiler.svg',
-	      toolbarSort: 205
-	    });
-	    return _this;
-	  }
-	  babelHelpers.createClass(Spoiler, [{
-	    key: "handler",
-	    value: function handler() {
-	      var result;
-	      // Iframe
-	      if (!this.htmlEditor.bbCode || !this.htmlEditor.synchro.IsFocusedOnTextarea()) {
-	        result = this.htmlEditor.action.actions.formatBlock.exec('formatBlock', 'blockquote', 'bx-spoiler', false, {
-	          bxTagParams: {
-	            tag: "spoiler"
-	          }
-	        });
-	      } else
-	        // bbcode + textarea
-	        {
-	          result = this.htmlEditor.action.actions.formatBbCode.exec('quote', {
-	            tag: 'SPOILER'
-	          });
-	        }
-	      return result;
-	    }
-	  }, {
-	    key: "parse",
-	    value: function parse(content, pLEditor) {
-	      if (/\[spoiler(([^\]])*)\]/gi.test(content)) {
-	        content = content.replace(/[\x01-\x02]/gi, '').replace(/\[spoiler([^\]]*)\]/gi, '\x01$1\x01').replace(/\[\/spoiler]/gi, '\x02');
-	        var reg2 = /(?:\x01([^\x01]*)\x01)([^\x01-\x02]+)\x02/gi;
-	        while (content.match(reg2)) {
-	          content = content.replace(reg2, function (str, title, body) {
-	            title = title.replace(/^(="|='|=)/gi, '').replace(/("|')?$/gi, '');
-	            return "<blockquote class=\"bx-spoiler\" id=\"".concat(this.htmlEditor.SetBxTag(false, {
-	              tag: "spoiler"
-	            }), "\" title=\"").concat(title, "\">").concat(body, "</blockquote>");
-	          }.bind(this));
-	        }
-	      }
-	      content = content.replace(/\001([^\001]*)\001/gi, '[spoiler$1]').replace(/\002/gi, '[/spoiler]');
-	      return content;
-	    }
-	  }, {
-	    key: "unparse",
-	    value: function unparse(bxTag, oNode) {
-	      var name = '';
-	      for (var i = 0; i < oNode.node.childNodes.length; i++) {
-	        name += this.htmlEditor.bbParser.GetNodeHtml(oNode.node.childNodes[i]);
-	      }
-	      name = name.trim();
-	      if (name !== '') {
-	        return "[SPOILER" + (oNode.node.hasAttribute("title") ? '=' + oNode.node.getAttribute("title") : '') + "]" + name + "[/SPOILER]";
-	      }
-	      return "";
-	    }
-	  }]);
-	  return Spoiler;
-	}(Default);
+	class Spoiler extends Default {
+		id = 'spoiler';
+		buttonParams = {
+			name: main_core.Loc.getMessage('MPF_SPOILER'),
+			iconClassName: 'spoiler',
+			disabledForTextarea: false,
+			src: main_core.Loc.getMessage('MPF_TEMPLATE_FOLDER') + '/images/lhespoiler.svg',
+			toolbarSort: 205
+		};
+		handler() {
+			let result;
+			// Iframe
+			if (!this.htmlEditor.bbCode || !this.htmlEditor.synchro.IsFocusedOnTextarea()) {
+				result = this.htmlEditor.action.actions.formatBlock.exec('formatBlock', 'blockquote', 'bx-spoiler', false, {
+					bxTagParams: {
+						tag: "spoiler"
+					}
+				});
+			} else
+				// bbcode + textarea
+				{
+					result = this.htmlEditor.action.actions.formatBbCode.exec('quote', {
+						tag: 'SPOILER'
+					});
+				}
+			return result;
+		}
+		parse(content, pLEditor) {
+			if (/\[spoiler(([^\]])*)\]/gi.test(content)) {
+				content = content.replace(/[\x01-\x02]/gi, '').replace(/\[spoiler([^\]]*)\]/gi, '\x01$1\x01').replace(/\[\/spoiler]/gi, '\x02');
+				const reg2 = /(?:\x01([^\x01]*)\x01)([^\x01-\x02]+)\x02/gi;
+				while (content.match(reg2)) {
+					content = content.replace(reg2, function (str, title, body) {
+						title = title.replace(/^(="|='|=)/gi, '').replace(/("|')?$/gi, '');
+						return `<blockquote class="bx-spoiler" id="${this.htmlEditor.SetBxTag(false, {
+						tag: "spoiler"
+					})}" title="${title}">${body}</blockquote>`;
+					}.bind(this));
+				}
+			}
+			content = content.replace(/\001([^\001]*)\001/gi, '[spoiler$1]').replace(/\002/gi, '[/spoiler]');
+			return content;
+		}
+		unparse(bxTag, oNode) {
+			let name = '';
+			for (let i = 0; i < oNode.node.childNodes.length; i++) {
+				name += this.htmlEditor.bbParser.GetNodeHtml(oNode.node.childNodes[i]);
+			}
+			name = name.trim();
+			if (name !== '') {
+				return "[SPOILER" + (oNode.node.hasAttribute("title") ? '=' + oNode.node.getAttribute("title") : '') + "]" + name + "[/SPOILER]";
+			}
+			return "";
+		}
+	}
 
-	var PostUser = /*#__PURE__*/function (_Default) {
-	  babelHelpers.inherits(PostUser, _Default);
-	  function PostUser(editor, htmlEditor) {
-	    var _this;
-	    babelHelpers.classCallCheck(this, PostUser);
-	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(PostUser).call(this, editor, htmlEditor));
-	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "id", 'postuser');
-	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "buttonParams", null);
-	    main_core_events.EventEmitter.subscribe(htmlEditor, 'OnIframeKeydown', function (_ref) {
-	      var _ref$compatData = babelHelpers.slicedToArray(_ref.compatData, 1),
-	        event = _ref$compatData[0];
-	      if (window.onKeyDownHandler) {
-	        window.onKeyDownHandler(event, htmlEditor, htmlEditor.formID);
-	      }
-	    });
-	    main_core_events.EventEmitter.subscribe(htmlEditor, 'OnIframeKeyup', function (_ref2) {
-	      var _ref2$compatData = babelHelpers.slicedToArray(_ref2.compatData, 1),
-	        event = _ref2$compatData[0];
-	      if (window.onKeyUpHandler) {
-	        window.onKeyUpHandler(event, htmlEditor, htmlEditor.formID);
-	      }
-	    });
-	    main_core_events.EventEmitter.subscribe(htmlEditor, 'OnIframeClick', function () {
-	      if (window['BXfpdStopMent' + htmlEditor.formID]) {
-	        window['BXfpdStopMent' + htmlEditor.formID]();
-	      }
-	    });
-	    main_core_events.EventEmitter.subscribe(htmlEditor, 'OnTextareaKeyup', function (_ref3) {
-	      var _ref3$compatData = babelHelpers.slicedToArray(_ref3.compatData, 1),
-	        event = _ref3$compatData[0];
-	      if (htmlEditor.textareaView && htmlEditor.textareaView.GetCursorPosition && window.onTextareaKeyUpHandler) {
-	        window.onTextareaKeyUpHandler(event, htmlEditor, htmlEditor.formID);
-	      }
-	    });
-	    main_core_events.EventEmitter.subscribe(htmlEditor, 'OnTextareaKeydown', function (_ref4) {
-	      var _ref4$compatData = babelHelpers.slicedToArray(_ref4.compatData, 1),
-	        event = _ref4$compatData[0];
-	      if (htmlEditor.textareaView && htmlEditor.textareaView.GetCursorPosition && window.onTextareaKeyDownHandler) {
-	        window.onTextareaKeyDownHandler(event, htmlEditor, htmlEditor.formID);
-	      }
-	    });
-	    return _this;
-	  }
-	  babelHelpers.createClass(PostUser, [{
-	    key: "parse",
-	    value: function parse(content, pLEditor) {
-	      var _this2 = this;
-	      content = content.replace(/\[USER\s*=\s*(\d+)\](.*?)\[\/USER\]/ig, function (str, id, name) {
-	        name = name.trim();
-	        if (name === '') {
-	          return '';
-	        }
-	        var tagId = _this2.htmlEditor.SetBxTag(false, {
-	          tag: _this2.id,
-	          userId: id,
-	          userName: name
-	        });
-	        return "<span id=\"".concat(tagId, "\" class=\"bxhtmled-metion\">").concat(name, "</span>");
-	      }).replace(/\[PROJECT\s*=\s*(\d+)\](.*?)\[\/PROJECT\]/ig, function (str, id, name) {
-	        name = name.trim();
-	        if (name === '') {
-	          return '';
-	        }
-	        var tagId = _this2.htmlEditor.SetBxTag(false, {
-	          tag: _this2.id,
-	          projectId: id,
-	          projectName: name
-	        });
-	        return "<span id=\"".concat(tagId, "\" class=\"bxhtmled-metion\">").concat(name, "</span>");
-	      }).replace(/\[DEPARTMENT\s*=\s*(\d+)\](.*?)\[\/DEPARTMENT\]/ig, function (str, id, name) {
-	        name = name.trim();
-	        if (name === '') {
-	          return '';
-	        }
-	        var tagId = _this2.htmlEditor.SetBxTag(false, {
-	          tag: _this2.id,
-	          departmentId: id,
-	          departmentName: name
-	        });
-	        return "<span id=\"".concat(tagId, "\" class=\"bxhtmled-metion\">").concat(name, "</span>");
-	      });
-	      return content;
-	    }
-	  }, {
-	    key: "unparse",
-	    value: function unparse(bxTag, oNode) {
-	      var _this3 = this;
-	      var text = '';
-	      oNode.node.childNodes.forEach(function (node) {
-	        text += _this3.htmlEditor.bbParser.GetNodeHtml(node);
-	      });
-	      text = String(text).trim();
-	      var result = '';
-	      if (main_core.Type.isStringFilled(text)) {
-	        if (!main_core.Type.isUndefined(bxTag.userId)) {
-	          result = "[USER=".concat(bxTag.userId, "]").concat(text, "[/USER]");
-	        } else if (!main_core.Type.isUndefined(bxTag.projectId)) {
-	          result = "[PROJECT=".concat(bxTag.projectId, "]").concat(text, "[/PROJECT]");
-	        } else if (!main_core.Type.isUndefined(bxTag.departmentId)) {
-	          result = "[DEPARTMENT=".concat(bxTag.departmentId, "]").concat(text, "[/DEPARTMENT]");
-	        }
-	      }
-	      return result;
-	    }
-	  }]);
-	  return PostUser;
-	}(Default);
+	class PostUser extends Default {
+		id = 'postuser';
+		buttonParams = null;
+		constructor(editor, htmlEditor) {
+			super(editor, htmlEditor);
+			main_core_events.EventEmitter.subscribe(htmlEditor, 'OnIframeKeydown', function ({
+				compatData: [event]
+			}) {
+				if (window.onKeyDownHandler) {
+					window.onKeyDownHandler(event, htmlEditor, htmlEditor.formID);
+				}
+			});
+			main_core_events.EventEmitter.subscribe(htmlEditor, 'OnIframeKeyup', function ({
+				compatData: [event]
+			}) {
+				if (window.onKeyUpHandler) {
+					window.onKeyUpHandler(event, htmlEditor, htmlEditor.formID);
+				}
+			});
+			main_core_events.EventEmitter.subscribe(htmlEditor, 'OnIframeClick', function () {
+				if (window['BXfpdStopMent' + htmlEditor.formID]) {
+					window['BXfpdStopMent' + htmlEditor.formID]();
+				}
+			});
+			main_core_events.EventEmitter.subscribe(htmlEditor, 'OnTextareaKeyup', function ({
+				compatData: [event]
+			}) {
+				if (htmlEditor.textareaView && htmlEditor.textareaView.GetCursorPosition && window.onTextareaKeyUpHandler) {
+					window.onTextareaKeyUpHandler(event, htmlEditor, htmlEditor.formID);
+				}
+			});
+			main_core_events.EventEmitter.subscribe(htmlEditor, 'OnTextareaKeydown', function ({
+				compatData: [event]
+			}) {
+				if (htmlEditor.textareaView && htmlEditor.textareaView.GetCursorPosition && window.onTextareaKeyDownHandler) {
+					window.onTextareaKeyDownHandler(event, htmlEditor, htmlEditor.formID);
+				}
+			});
+		}
+		parse(content, pLEditor) {
+			content = content.replace(/\[USER\s*=\s*(\d+)\](.*?)\[\/USER\]/ig, (str, id, name) => {
+				name = name.trim();
+				if (name === '') {
+					return '';
+				}
+				const tagId = this.htmlEditor.SetBxTag(false, {
+					tag: this.id,
+					userId: id,
+					userName: name
+				});
+				return `<span id="${tagId}" class="bxhtmled-metion">${name}</span>`;
+			}).replace(/\[PROJECT\s*=\s*(\d+)\](.*?)\[\/PROJECT\]/ig, (str, id, name) => {
+				name = name.trim();
+				if (name === '') {
+					return '';
+				}
+				const tagId = this.htmlEditor.SetBxTag(false, {
+					tag: this.id,
+					projectId: id,
+					projectName: name
+				});
+				return `<span id="${tagId}" class="bxhtmled-metion">${name}</span>`;
+			}).replace(/\[DEPARTMENT\s*=\s*(\d+)\](.*?)\[\/DEPARTMENT\]/ig, (str, id, name) => {
+				name = name.trim();
+				if (name === '') {
+					return '';
+				}
+				const tagId = this.htmlEditor.SetBxTag(false, {
+					tag: this.id,
+					departmentId: id,
+					departmentName: name
+				});
+				return `<span id="${tagId}" class="bxhtmled-metion">${name}</span>`;
+			});
+			return content;
+		}
+		unparse(bxTag, oNode) {
+			let text = '';
+			oNode.node.childNodes.forEach(node => {
+				text += this.htmlEditor.bbParser.GetNodeHtml(node);
+			});
+			text = String(text).trim();
+			let result = '';
+			if (main_core.Type.isStringFilled(text)) {
+				if (!main_core.Type.isUndefined(bxTag.userId)) {
+					result = `[USER=${bxTag.userId}]${text}[/USER]`;
+				} else if (!main_core.Type.isUndefined(bxTag.projectId)) {
+					result = `[PROJECT=${bxTag.projectId}]${text}[/PROJECT]`;
+				} else if (!main_core.Type.isUndefined(bxTag.departmentId)) {
+					result = `[DEPARTMENT=${bxTag.departmentId}]${text}[/DEPARTMENT]`;
+				}
+			}
+			return result;
+		}
+	}
 
-	var Controller = /*#__PURE__*/function () {
-	  function Controller(cid, container, editor) {
-	    babelHelpers.classCallCheck(this, Controller);
-	    babelHelpers.defineProperty(this, "actionPool", []);
-	    this.cid = cid;
-	    this.container = container;
-	    this.editor = editor;
-	    main_core_events.EventEmitter.subscribe(editor.getEventObject(), 'onShowControllers', function (_ref) {
-	      var data = _ref.data;
-	      main_core_events.EventEmitter.emit(container.parentNode, 'BFileDLoadFormController', new main_core_events.BaseEvent({
-	        compatData: [data]
-	      }));
-	    });
-	    main_core_events.EventEmitter.subscribe(editor.getEventObject(), 'onCollectControllers', function (event) {
-	      event.data[cid] = {
-	        values: []
-	      };
-	    });
-	  }
-	  babelHelpers.createClass(Controller, [{
-	    key: "exec",
-	    value: function exec() {
-	      var callback = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
-	      if (callback) {
-	        this.actionPool.push(callback);
-	      }
-	      if (this.isReady) {
-	        try {
-	          var action;
-	          while ((action = this.actionPool.shift()) && action) {
-	            action.apply(this);
-	          }
-	        } catch (e) {
-	          console.log('error in attachments controllers: ', e);
-	        }
-	      }
-	    }
-	  }, {
-	    key: "getId",
-	    value: function getId() {
-	      return this.cid;
-	    }
-	  }, {
-	    key: "getFieldName",
-	    value: function getFieldName() {
-	      return null;
-	    }
-	  }, {
-	    key: "reinitFrom",
-	    value: function reinitFrom(data) {
-	      var _this = this;
-	      this.exec(function () {
-	        if (!_this.getFieldName()) {
-	          return;
-	        }
-	        _this.container.querySelector("inptut[name=\"".concat(_this.getFieldName(), "\"]")).forEach(function (inputFile) {
-	          inputFile.parentNode.removeChild(inputFile);
-	        });
-	      });
-	    }
-	  }, {
-	    key: "isReady",
-	    get: function get() {
-	      return true;
-	    }
-	  }]);
-	  return Controller;
-	}();
+	class Controller {
+		actionPool = [];
+		constructor(cid, container, editor) {
+			this.cid = cid;
+			this.container = container;
+			this.editor = editor;
+			main_core_events.EventEmitter.subscribe(editor.getEventObject(), 'onShowControllers', ({
+				data
+			}) => {
+				main_core_events.EventEmitter.emit(container.parentNode, 'BFileDLoadFormController', new main_core_events.BaseEvent({
+					compatData: [data]
+				}));
+			});
+			main_core_events.EventEmitter.subscribe(editor.getEventObject(), 'onCollectControllers', event => {
+				event.data[cid] = {
+					values: []
+				};
+			});
+		}
+		get isReady() {
+			return true;
+		}
+		exec(callback = null) {
+			if (callback) {
+				this.actionPool.push(callback);
+			}
+			if (this.isReady) {
+				try {
+					let action;
+					while ((action = this.actionPool.shift()) && action) {
+						action.apply(this);
+					}
+				} catch (e) {
+					console.log('error in attachments controllers: ', e);
+				}
+			}
+		}
+		getId() {
+			return this.cid;
+		}
+		getFieldName() {
+			return null;
+		}
+		reinitFrom(data) {
+			this.exec(() => {
+				if (!this.getFieldName()) {
+					return;
+				}
+				this.container.querySelector(`inptut[name="${this.getFieldName()}"]`).forEach(function (inputFile) {
+					inputFile.parentNode.removeChild(inputFile);
+				});
+			});
+		}
+	}
 
-	var DiskController = /*#__PURE__*/function (_Controller) {
-	  babelHelpers.inherits(DiskController, _Controller);
-	  function DiskController(cid, container, editor) {
-	    var _this;
-	    babelHelpers.classCallCheck(this, DiskController);
-	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(DiskController).call(this, cid, container, editor));
-	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "diskUfUploader", null);
-	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "diskUfHandler", null);
-	    var _catchHandler = function _catchHandler(diskUfUploader) {
-	      _this.diskUfUploader = diskUfUploader;
-	      _this.exec();
-	      var func = function func(BaseEvent) {
-	        main_core_events.EventEmitter.emit(editor.getEventObject(), 'onUploadsHasBeenChanged', BaseEvent);
-	      };
-	      main_core_events.EventEmitter.subscribe(_this.diskUfUploader, 'onFileIsInited', func); // new diskUfUploader
-	      main_core_events.EventEmitter.subscribe(_this.diskUfUploader, 'ChangeFileInput', func); // old diskUfUploader
-	    };
-
-	    if (BX.UploaderManager.getById(cid)) {
-	      _catchHandler(BX.UploaderManager.getById(cid));
-	    }
-	    main_core_events.EventEmitter.subscribeOnce(container.parentNode, 'DiskDLoadFormControllerInit', function (_ref) {
-	      var _ref$compatData = babelHelpers.slicedToArray(_ref.compatData, 1),
-	        diskUfHandler = _ref$compatData[0];
-	      _this.diskUfHandler = diskUfHandler;
-	      if (cid === diskUfHandler.CID && !_this.diskUfUploader) {
-	        _catchHandler(diskUfHandler.agent);
-	      }
-	    });
-	    main_core_events.EventEmitter.subscribe(editor.getEventObject(), 'onShowControllers', function (_ref2) {
-	      var data = _ref2.data;
-	      main_core_events.EventEmitter.emit(container.parentNode, 'DiskLoadFormController', new main_core_events.BaseEvent({
-	        compatData: [data]
-	      }));
-	    });
-	    return _this;
-	  }
-	  babelHelpers.createClass(DiskController, [{
-	    key: "getFieldName",
-	    value: function getFieldName() {
-	      if (this.diskUfHandler) {
-	        return this.diskUfHandler.params.controlName;
-	      }
-	      return null;
-	    }
-	  }, {
-	    key: "reinitFrom",
-	    value: function reinitFrom(data) {
-	      var _this2 = this;
-	      this.exec(function () {
-	        if (!_this2.getFieldName()) {
-	          return;
-	        }
-	        Array.from(_this2.container.querySelectorAll("inptut[name=\"".concat(_this2.getFieldName(), "\"]"))).forEach(function (inputFile) {
-	          inputFile.parentNode.removeChild(inputFile);
-	        });
-	        var values = null;
-	        for (var ii in data) {
-	          if (data.hasOwnProperty(ii) && data[ii] && data[ii]['USER_TYPE_ID'] === 'disk_file' && data[ii]['FIELD_NAME'] === _this2.getFieldName()) {
-	            values = data[ii]['VALUE'];
-	          }
-	        }
-	        if (values) {
-	          var files = {};
-	          values.forEach(function (id) {
-	            var node = document.querySelector('#disk-attach-' + id);
-	            if (node.tagName !== "A") {
-	              node = node.querySelector('img');
-	            }
-	            if (node) {
-	              files['E' + id] = {
-	                type: 'file',
-	                id: id,
-	                name: node.getAttribute("data-bx-title") || node.getAttribute("data-title"),
-	                size: node.getAttribute("data-bx-size") || '',
-	                sizeInt: node.getAttribute("data-bx-size") || '',
-	                width: node.getAttribute("data-bx-width"),
-	                height: node.getAttribute("data-bx-height"),
-	                storage: 'disk',
-	                previewUrl: node.tagName === "A" ? '' : node.getAttribute("data-bx-src") || node.getAttribute("data-src"),
-	                fileId: node.getAttribute("bx-attach-file-id")
-	              };
-	              if (node.hasAttribute("bx-attach-xml-id")) files['E' + id]["xmlId"] = node.getAttribute("bx-attach-xml-id");
-	              if (node.hasAttribute("bx-attach-file-type")) files['E' + id]["fileType"] = node.getAttribute("bx-attach-file-type");
-	            }
-	          });
-	          _this2.diskUfHandler.selectFile({}, {}, files);
-	        }
-	      });
-	    }
-	  }, {
-	    key: "isReady",
-	    get: function get() {
-	      return !!this.diskUfUploader;
-	    }
-	  }]);
-	  return DiskController;
-	}(Controller);
-
-	var _templateObject;
-	/*
-	* @deprecated
-	* */
-	var UploadFile = /*#__PURE__*/function (_Default) {
-	  babelHelpers.inherits(UploadFile, _Default);
-	  function UploadFile(editor, htmlEditor) {
-	    var _this;
-	    babelHelpers.classCallCheck(this, UploadFile);
-	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(UploadFile).call(this, editor, htmlEditor));
-	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "id", 'uploadfile');
-	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "buttonParams", null);
-	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "regexp", /\[FILE ID=((?:\s|\S)*?)?\]/ig);
-	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "values", new Map());
-	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "controllers", new Map());
-	    _this.checkButtonsDebounced = main_core.Runtime.debounce(_this.checkButtons, 500, babelHelpers.assertThisInitialized(_this));
-	    _this.init();
-	    main_core_events.EventEmitter.subscribe(editor.getEditor(), 'OnContentChanged', _this.checkButtons.bind(babelHelpers.assertThisInitialized(_this)));
-	    main_core_events.EventEmitter.subscribe(editor.getEventObject(), 'onReinitializeBefore', function (_ref) {
-	      var _ref$data = babelHelpers.slicedToArray(_ref.data, 2),
-	        text = _ref$data[0],
-	        data = _ref$data[1];
-	      _this.reinit(text, data);
-	    });
-	    return _this;
-	  }
-	  babelHelpers.createClass(UploadFile, [{
-	    key: "init",
-	    value: function init() {
-	      var _this2 = this;
-	      Array.from(this.editor.getContainer().querySelectorAll('.file-selectdialog')).forEach(function (selectorNode, index) {
-	        var cid = selectorNode.id.replace('file-selectdialog-', '');
-	        var controller = _this2.controllers.get(cid);
-	        if (!controller) {
-	          controller = new Controller(cid, selectorNode, _this2.editor);
-	          main_core_events.EventEmitter.subscribe(selectorNode.parentNode, 'OnFileUploadSuccess', function (_ref2) {
-	            var _ref2$data = babelHelpers.slicedToArray(_ref2.data, 2),
-	              element_id = _ref2$data[0].element_id,
-	              _ref2$data$ = _ref2$data[1],
-	              id = _ref2$data$.id,
-	              doc_prefix = _ref2$data$.doc_prefix,
-	              CID = _ref2$data$.CID;
-	            if (cid === id) {
-	              var securityNode = document.querySelector('#' + _this2.editor.getFormId()) ? document.querySelector('#' + _this2.editor.getFormId()).querySelector('#upload-cid') : null;
-	              if (securityNode) {
-	                securityNode.value = CID;
-	              }
-	              var _this2$parseFile = _this2.parseFile(selectorNode.querySelector('#' + doc_prefix + element_id)),
-	                _this2$parseFile2 = babelHelpers.slicedToArray(_this2$parseFile, 2),
-	                _id = _this2$parseFile2[0],
-	                file = _this2$parseFile2[1];
-	              _this2.values.set(_id, file);
-	            }
-	          });
-	          main_core_events.EventEmitter.subscribe(selectorNode.parentNode, 'OnFileUploadRemove', function (_ref3) {
-	            var _ref3$compatData = babelHelpers.slicedToArray(_ref3.compatData, 2),
-	              fileId = _ref3$compatData[0],
-	              id = _ref3$compatData[1].id;
-	            if (cid === id && _this2.values.has(fileId)) {
-	              _this2.values["delete"](fileId);
-	              _this2.deleteFile([fileId]);
-	            }
-	          });
-	          if (index === 0) {
-	            main_core_events.EventEmitter.subscribe(_this2.editor.getEventObject(), 'onFilesHaveCaught', function (event) {
-	              event.stopImmediatePropagation();
-	              if (window['BfileFD' + cid]) {
-	                window['BfileFD' + cid].agent.UploadDroppedFiles(babelHelpers.toConsumableArray(event.getData()));
-	              }
-	            });
-	          }
-	        }
-	        if (selectorNode.querySelector('table.files-list')) {
-	          Array.from(selectorNode.querySelector('table.files-list').querySelectorAll('tr')).forEach(function (tr) {
-	            var _this2$parseFile3 = _this2.parseFile(tr),
-	              _this2$parseFile4 = babelHelpers.slicedToArray(_this2$parseFile3, 2),
-	              id = _this2$parseFile4[0],
-	              file = _this2$parseFile4[1];
-	            _this2.values.set(id, file);
-	          });
-	        }
-	      });
-	    }
-	  }, {
-	    key: "parseFile",
-	    value: function parseFile(tr) {
-	      var _this3 = this;
-	      var id = tr.id.replace('wd-doc', '');
-	      var data = {
-	        id: id,
-	        name: tr.querySelector('[data-role="name"]') ? tr.querySelector('[data-role="name"]').innerHTML : tr.querySelector('span.f-wrap').innerHTML,
-	        node: tr,
-	        buttonNode: tr.querySelector('[data-role="button-insert"]'),
-	        image: {
-	          src: null,
-	          lowsrc: null,
-	          width: null,
-	          height: null
-	        }
-	      };
-	      var insertFile = function insertFile() {
-	        _this3.insertFile(id, tr);
-	      };
-	      var nameNode = tr.querySelector('.f-wrap');
-	      if (nameNode) {
-	        nameNode.addEventListener('click', insertFile);
-	        nameNode.style.cursor = 'pointer';
-	        nameNode.title = main_core.Loc.getMessage('MPF_FILE');
-	      }
-	      var imageNode = tr.querySelector('img');
-	      if (imageNode) {
-	        imageNode.addEventListener('click', insertFile);
-	        imageNode.title = main_core.Loc.getMessage('MPF_FILE');
-	        imageNode.style.cursor = 'pointer';
-	        data.image.lowsrc = imageNode.lowsrc || imageNode.src;
-	        data.image.src = imageNode.rel || imageNode.src;
-	        data.image.width = imageNode.getAttribute('data-bx-full-width');
-	        data.image.height = imageNode.getAttribute('data-bx-full-height');
-	      }
-	      if (tr instanceof HTMLTableRowElement && tr.querySelector('.files-info')) {
-	        if (!data.buttonNode) {
-	          data.buttonNode = main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["\n<span type=\"button\" onclick=\"", "\" data-role=\"button-insert\" class=\"insert-btn\">\n\t<span data-role=\"insert-btn\" class=\"insert-btn-text\">", "</span>\n\t<span data-role=\"in-text-btn\" class=\"insert-btn-text\">", "</span>\n</span>"])), insertFile, main_core.Loc.getMessage('MPF_FILE_INSERT_IN_TEXT'), main_core.Loc.getMessage('MPF_FILE_IN_TEXT'));
-	          tr.querySelector('.files-info').appendChild(data.buttonNode);
-	          this.checkButtonsDebounced();
-	        }
-	      }
-	      return [id, data];
-	    }
-	  }, {
-	    key: "buildHTML",
-	    value: function buildHTML(id, data) {
-	      var htmlData = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
-	      var tagId = this.htmlEditor.SetBxTag(false, {
-	        tag: this.id,
-	        fileId: id
-	      });
-	      var html = "<span data-bx-file-id=\"".concat(id, "\" id=\"").concat(tagId, "\" style=\"color: #2067B0; border-bottom: 1px dashed #2067B0; margin:0 2px;\">").concat(data.name, "</span>");
-	      if (data.image.src) {
-	        var additional = [];
-	        if (htmlData) {
-	          additional.push("style=\"width:".concat(htmlData.width, "px;height:").concat(htmlData.height, "px;\""));
-	        } else if (data.image.width && data.image.height) {
-	          additional.push("style=\"width:".concat(data.image.width, "px;height:").concat(data.image.height, "px;\" "));
-	          additional.push("onload=\"this.style.width='auto';this.style.height='auto';\"");
-	        }
-	        html = "<img style=\"max-width: 90%;\"  data-bx-file-id=\"".concat(id, "\" id=\"").concat(tagId, "\" src=\"").concat(data.image.src, "\" lowsrc=\"").concat(data.image.lowsrc, "\" ").concat(additional.join(' '), "/>");
-	      }
-	      return html;
-	    }
-	  }, {
-	    key: "buildText",
-	    value: function buildText(id, params) {
-	      return "[FILE ID=".concat(id).concat(params || '', "]");
-	    }
-	  }, {
-	    key: "insertFile",
-	    value: function insertFile(id, node) {
-	      var data = this.values.get(String(id));
-	      if (data) {
-	        main_core_events.EventEmitter.emit(this.editor.getEventObject(), 'OnInsertContent', [this.buildText(id), this.buildHTML(id, data)]);
-	      }
-	    }
-	  }, {
-	    key: "deleteFile",
-	    value: function deleteFile(fileIds) {
-	      var content = this.htmlEditor.GetContent();
-	      if (this.htmlEditor.GetViewMode() === 'wysiwyg') {
-	        var doc = this.htmlEditor.GetIframeDoc();
-	        for (var ii in this.htmlEditor.bxTags) {
-	          if (this.htmlEditor.bxTags.hasOwnProperty(ii) && babelHelpers["typeof"](this.htmlEditor.bxTags[ii]) === 'object' && this.htmlEditor.bxTags[ii]['tag'] === this.id && fileIds.indexOf(String(this.htmlEditor.bxTags[ii]['fileId'])) >= 0 && doc.getElementById(ii)) {
-	            var node = doc.getElementById(ii);
-	            node.parentNode.removeChild(node);
-	          }
-	        }
-	        this.htmlEditor.SaveContent();
-	      } else /* if (this.regexp.test(content))*/
-	        {
-	          var content2 = content.replace(this.regexp, function (str, foundId) {
-	            return fileIds.indexOf(foundId) >= 0 ? '' : str;
-	          });
-	          this.htmlEditor.SetContent(content2);
-	          this.htmlEditor.Focus();
-	        }
-	    }
-	  }, {
-	    key: "checkButtons",
-	    value: function checkButtons(event) {
-	      var content = event ? event.compatData[0] : this.htmlEditor.GetContent();
-	      var matches = babelHelpers.toConsumableArray(content.matchAll(this.regexp)).map(function (_ref4) {
-	        var _ref5 = babelHelpers.slicedToArray(_ref4, 2),
-	          match = _ref5[0],
-	          id = _ref5[1];
-	        return id;
-	      });
-	      this.values.forEach(function (data, id) {
-	        if (!data.buttonNode) {
-	          return;
-	        }
-	        var mark = matches.indexOf(id) >= 0;
-	        if (mark === true && data.buttonNode.className !== 'insert-text') {
-	          data.buttonNode.className = 'insert-text';
-	          data.buttonNode.querySelector('[data-role="insert-btn"]').style.display = 'none';
-	          data.buttonNode.querySelector('[data-role="in-text-btn"]').style.display = '';
-	        } else if (mark !== true && data.buttonNode.className !== 'insert-btn') {
-	          data.buttonNode.className = 'insert-btn';
-	          data.buttonNode.querySelector('[data-role="insert-btn"]').style.display = '';
-	          data.buttonNode.querySelector('[data-role="in-text-btn"]').style.display = 'none';
-	        }
-	      });
-	    }
-	  }, {
-	    key: "reinit",
-	    value: function reinit(text, data) {
-	      this.values.forEach(function (file, id) {
-	        if (file.node && file.node.parentNode) {
-	          file.node.parentNode.removeChild(file.node);
-	        }
-	      });
-	      this.values.clear();
-	      this.controllers.forEach(function (controller) {
-	        controller.reinitFrom(data);
-	      });
-	    }
-	  }, {
-	    key: "parse",
-	    value: function parse(content) {
-	      if (!this.regexp.test(content)) {
-	        return content;
-	      }
-	      content = content.replace(this.regexp, function (str, id, width, height) {
-	        if (this.values.has(id)) {
-	          return this.buildHTML(id, this.values.get(id), width > 0 && height > 0 ? {
-	            width: width,
-	            height: height
-	          } : null);
-	        }
-	        return str;
-	      }.bind(this));
-	      return content;
-	    }
-	  }, {
-	    key: "unparse",
-	    value: function unparse(bxTag, _ref6) {
-	      var node = _ref6.node;
-	      var width = parseInt(node.hasAttribute('width') ? node.getAttribute('width') : 0);
-	      var height = parseInt(node.hasAttribute('height') ? node.getAttribute('height') : 0);
-	      var params = '';
-	      if (width > 0 && height > 0) {
-	        params = ' WIDTH=' + width + ' HEIGHT=' + height;
-	      }
-	      var id = node.getAttribute('data-bx-file-id');
-	      return this.buildText(id, params);
-	    }
-	  }]);
-	  return UploadFile;
-	}(Default);
+	class DiskController extends Controller {
+		diskUfUploader = null;
+		diskUfHandler = null;
+		constructor(cid, container, editor) {
+			super(cid, container, editor);
+			const _catchHandler = diskUfUploader => {
+				this.diskUfUploader = diskUfUploader;
+				this.exec();
+				const func = BaseEvent => {
+					main_core_events.EventEmitter.emit(editor.getEventObject(), 'onUploadsHasBeenChanged', BaseEvent);
+				};
+				main_core_events.EventEmitter.subscribe(this.diskUfUploader, 'onFileIsInited', func); // new diskUfUploader
+				main_core_events.EventEmitter.subscribe(this.diskUfUploader, 'ChangeFileInput', func); // old diskUfUploader
+			};
+			if (BX.UploaderManager.getById(cid)) {
+				_catchHandler(BX.UploaderManager.getById(cid));
+			}
+			main_core_events.EventEmitter.subscribeOnce(container.parentNode, 'DiskDLoadFormControllerInit', ({
+				compatData: [diskUfHandler]
+			}) => {
+				this.diskUfHandler = diskUfHandler;
+				if (cid === diskUfHandler.CID && !this.diskUfUploader) {
+					_catchHandler(diskUfHandler.agent);
+				}
+			});
+			main_core_events.EventEmitter.subscribe(editor.getEventObject(), 'onShowControllers', ({
+				data
+			}) => {
+				main_core_events.EventEmitter.emit(container.parentNode, 'DiskLoadFormController', new main_core_events.BaseEvent({
+					compatData: [data]
+				}));
+			});
+		}
+		get isReady() {
+			return !!this.diskUfUploader;
+		}
+		getFieldName() {
+			if (this.diskUfHandler) {
+				return this.diskUfHandler.params.controlName;
+			}
+			return null;
+		}
+		reinitFrom(data) {
+			this.exec(() => {
+				if (!this.getFieldName()) {
+					return;
+				}
+				Array.from(this.container.querySelectorAll(`inptut[name="${this.getFieldName()}"]`)).forEach(function (inputFile) {
+					inputFile.parentNode.removeChild(inputFile);
+				});
+				let values = null;
+				for (let ii in data) {
+					if (data.hasOwnProperty(ii) && data[ii] && data[ii]['USER_TYPE_ID'] === 'disk_file' && data[ii]['FIELD_NAME'] === this.getFieldName()) {
+						values = data[ii]['VALUE'];
+					}
+				}
+				if (values) {
+					const files = {};
+					values.forEach(id => {
+						let node = document.querySelector('#disk-attach-' + id);
+						if (node.tagName !== "A") {
+							node = node.querySelector('img');
+						}
+						if (node) {
+							files['E' + id] = {
+								type: 'file',
+								id: id,
+								name: node.getAttribute("data-bx-title") || node.getAttribute("data-title"),
+								size: node.getAttribute("data-bx-size") || '',
+								sizeInt: node.getAttribute("data-bx-size") || '',
+								width: node.getAttribute("data-bx-width"),
+								height: node.getAttribute("data-bx-height"),
+								storage: 'disk',
+								previewUrl: node.tagName === "A" ? '' : node.getAttribute("data-bx-src") || node.getAttribute("data-src"),
+								fileId: node.getAttribute("bx-attach-file-id")
+							};
+							if (node.hasAttribute("bx-attach-xml-id")) files['E' + id]["xmlId"] = node.getAttribute("bx-attach-xml-id");
+							if (node.hasAttribute("bx-attach-file-type")) files['E' + id]["fileType"] = node.getAttribute("bx-attach-file-type");
+						}
+					});
+					this.diskUfHandler.selectFile({}, {}, files);
+				}
+			});
+		}
+	}
 
 	/*
 	* @deprecated
 	* */
-	var UploadImage = /*#__PURE__*/function (_Default) {
-	  babelHelpers.inherits(UploadImage, _Default);
-	  function UploadImage(editor, htmlEditor) {
-	    var _this;
-	    babelHelpers.classCallCheck(this, UploadImage);
-	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(UploadImage).call(this, editor, htmlEditor));
-	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "id", 'uploadimage');
-	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "buttonParams", null);
-	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "regexp", /\[IMAGE ID=((?:\s|\S)*?)?\]/ig);
-	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "values", new Map());
-	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "controllers", new Map());
-	    _this.init();
-	    console.log('PostImage: ');
-	    main_core_events.EventEmitter.subscribe(editor.getEventObject(), 'onReinitializeBefore', function (_ref) {
-	      var _ref$data = babelHelpers.slicedToArray(_ref.data, 2),
-	        text = _ref$data[0],
-	        data = _ref$data[1];
-	      _this.reinit(text, data);
-	    });
-	    return _this;
-	  }
-	  babelHelpers.createClass(UploadImage, [{
-	    key: "init",
-	    value: function init() {
-	      var _this2 = this;
-	      Array.from(this.editor.getContainer().querySelectorAll('.file-selectdialog')).forEach(function (selectorNode) {
-	        var cid = selectorNode.id.replace('file-selectdialog-', '');
-	        var controller = _this2.controllers.get(cid);
-	        if (!controller) {
-	          controller = new Controller(cid, selectorNode, _this2.editor);
-	          main_core_events.EventEmitter.subscribe(selectorNode.parentNode, 'OnFileUploadSuccess', function (_ref2) {
-	            var _ref2$data = babelHelpers.slicedToArray(_ref2.data, 2),
-	              element_id = _ref2$data[0].element_id,
-	              _ref2$data$ = _ref2$data[1],
-	              id = _ref2$data$.id,
-	              doc_prefix = _ref2$data$.doc_prefix,
-	              CID = _ref2$data$.CID;
-	            if (cid === id) {
-	              var securityNode = document.querySelector('#' + _this2.editor.getFormId()) ? document.querySelector('#' + _this2.editor.getFormId()).querySelector('#upload-cid') : null;
-	              if (securityNode) {
-	                securityNode.value = CID;
-	              }
-	              var _this2$parseFile = _this2.parseFile(selectorNode.querySelector('#' + doc_prefix + element_id)),
-	                _this2$parseFile2 = babelHelpers.slicedToArray(_this2$parseFile, 2),
-	                _id = _this2$parseFile2[0],
-	                file = _this2$parseFile2[1];
-	              _this2.values.set(_id, file);
-	            }
-	          });
-	          main_core_events.EventEmitter.subscribe(selectorNode.parentNode, 'OnFileUploadRemove', function (_ref3) {
-	            var _ref3$compatData = babelHelpers.slicedToArray(_ref3.compatData, 2),
-	              fileId = _ref3$compatData[0],
-	              id = _ref3$compatData[1].id;
-	            if (cid === id && _this2.values.has(fileId)) {
-	              _this2.values["delete"](fileId);
-	            }
-	          });
-	        }
-	        if (selectorNode.querySelector('table.files-list')) {
-	          Array.from(selectorNode.querySelector('table.files-list').querySelectorAll('tr')).forEach(function (tr) {
-	            var _this2$parseFile3 = _this2.parseFile(tr),
-	              _this2$parseFile4 = babelHelpers.slicedToArray(_this2$parseFile3, 2),
-	              id = _this2$parseFile4[0],
-	              file = _this2$parseFile4[1];
-	            _this2.values.set(id, file);
-	          });
-	        }
-	      });
-	    }
-	  }, {
-	    key: "parseFile",
-	    value: function parseFile(tr) {
-	      var id = tr.id.replace('wd-doc', '');
-	      var data = {
-	        id: id,
-	        name: tr.querySelector('[data-role="name"]') ? tr.querySelector('[data-role="name"]').innerHTML : tr.querySelector('span.f-wrap').innerHTML,
-	        node: tr,
-	        image: {
-	          src: null,
-	          lowsrc: null,
-	          width: null,
-	          height: null
-	        }
-	      };
-	      return [id, data];
-	    }
-	  }, {
-	    key: "reinit",
-	    value: function reinit(text, data) {
-	      this.values.forEach(function (file, id) {
-	        if (file.node && file.node.parentNode) {
-	          file.node.parentNode.removeChild(file.node);
-	        }
-	      });
-	      this.values.clear();
-	      this.controllers.forEach(function (controller) {
-	        controller.reinitFrom(data);
-	      });
-	    }
-	  }, {
-	    key: "parse",
-	    value: function parse(content) {
-	      return content;
-	    }
-	  }, {
-	    key: "unparse",
-	    value: function unparse(bxTag, _ref4) {
-	      var node = _ref4.node;
-	      return '';
-	    }
-	  }]);
-	  return UploadImage;
-	}(Default);
+	class UploadFile extends Default {
+		id = 'uploadfile';
+		buttonParams = null;
+		regexp = /\[FILE ID=((?:\s|\S)*?)?\]/ig;
+		values = new Map();
+		controllers = new Map();
+		constructor(editor, htmlEditor) {
+			super(editor, htmlEditor);
+			this.checkButtonsDebounced = main_core.Runtime.debounce(this.checkButtons, 500, this);
+			this.init();
+			main_core_events.EventEmitter.subscribe(editor.getEditor(), 'OnContentChanged', this.checkButtons.bind(this));
+			main_core_events.EventEmitter.subscribe(editor.getEventObject(), 'onReinitializeBefore', ({
+				data: [text, data]
+			}) => {
+				this.reinit(text, data);
+			});
+		}
+		init() {
+			Array.from(this.editor.getContainer().querySelectorAll('.file-selectdialog')).forEach((selectorNode, index) => {
+				const cid = selectorNode.id.replace('file-selectdialog-', '');
+				let controller = this.controllers.get(cid);
+				if (!controller) {
+					controller = new Controller(cid, selectorNode, this.editor);
+					main_core_events.EventEmitter.subscribe(selectorNode.parentNode, 'OnFileUploadSuccess', ({
+						data: [{
+							element_id
+						}, {
+							id,
+							doc_prefix,
+							CID
+						}]
+					}) => {
+						if (cid === id) {
+							const securityNode = document.querySelector('#' + this.editor.getFormId()) ? document.querySelector('#' + this.editor.getFormId()).querySelector('#upload-cid') : null;
+							if (securityNode) {
+								securityNode.value = CID;
+							}
+							const [id, file] = this.parseFile(selectorNode.querySelector('#' + doc_prefix + element_id));
+							this.values.set(id, file);
+						}
+					});
+					main_core_events.EventEmitter.subscribe(selectorNode.parentNode, 'OnFileUploadRemove', ({
+						compatData: [fileId, {
+							id
+						}]
+					}) => {
+						if (cid === id && this.values.has(fileId)) {
+							this.values.delete(fileId);
+							this.deleteFile([fileId]);
+						}
+					});
+					if (index === 0) {
+						main_core_events.EventEmitter.subscribe(this.editor.getEventObject(), 'onFilesHaveCaught', event => {
+							event.stopImmediatePropagation();
+							if (window['BfileFD' + cid]) {
+								window['BfileFD' + cid].agent.UploadDroppedFiles([...event.getData()]);
+							}
+						});
+					}
+				}
+				if (selectorNode.querySelector('table.files-list')) {
+					Array.from(selectorNode.querySelector('table.files-list').querySelectorAll('tr')).forEach(tr => {
+						const [id, file] = this.parseFile(tr);
+						this.values.set(id, file);
+					});
+				}
+			});
+		}
+		parseFile(tr) {
+			const id = tr.id.replace('wd-doc', '');
+			const data = {
+				id: id,
+				name: tr.querySelector('[data-role="name"]') ? tr.querySelector('[data-role="name"]').innerHTML : tr.querySelector('span.f-wrap').innerHTML,
+				node: tr,
+				buttonNode: tr.querySelector('[data-role="button-insert"]'),
+				image: {
+					src: null,
+					lowsrc: null,
+					width: null,
+					height: null
+				}
+			};
+			const insertFile = () => {
+				this.insertFile(id, tr);
+			};
+			const nameNode = tr.querySelector('.f-wrap');
+			if (nameNode) {
+				nameNode.addEventListener('click', insertFile);
+				nameNode.style.cursor = 'pointer';
+				nameNode.title = main_core.Loc.getMessage('MPF_FILE');
+			}
+			const imageNode = tr.querySelector('img');
+			if (imageNode) {
+				imageNode.addEventListener('click', insertFile);
+				imageNode.title = main_core.Loc.getMessage('MPF_FILE');
+				imageNode.style.cursor = 'pointer';
+				data.image.lowsrc = imageNode.lowsrc || imageNode.src;
+				data.image.src = imageNode.rel || imageNode.src;
+				data.image.width = imageNode.getAttribute('data-bx-full-width');
+				data.image.height = imageNode.getAttribute('data-bx-full-height');
+			}
+			if (tr instanceof HTMLTableRowElement && tr.querySelector('.files-info')) {
+				if (!data.buttonNode) {
+					data.buttonNode = main_core.Tag.render`
+<span type="button" onclick="${insertFile}" data-role="button-insert" class="insert-btn">
+	<span data-role="insert-btn" class="insert-btn-text">${main_core.Loc.getMessage('MPF_FILE_INSERT_IN_TEXT')}</span>
+	<span data-role="in-text-btn" class="insert-btn-text">${main_core.Loc.getMessage('MPF_FILE_IN_TEXT')}</span>
+</span>`;
+					tr.querySelector('.files-info').appendChild(data.buttonNode);
+					this.checkButtonsDebounced();
+				}
+			}
+			return [id, data];
+		}
+		buildHTML(id, data, htmlData = null) {
+			const tagId = this.htmlEditor.SetBxTag(false, {
+				tag: this.id,
+				fileId: id
+			});
+			let html = `<span data-bx-file-id="${id}" id="${tagId}" style="color: #2067B0; border-bottom: 1px dashed #2067B0; margin:0 2px;">${data.name}</span>`;
+			if (data.image.src) {
+				let additional = [];
+				if (htmlData) {
+					additional.push(`style="width:${htmlData.width}px;height:${htmlData.height}px;"`);
+				} else if (data.image.width && data.image.height) {
+					additional.push(`style="width:${data.image.width}px;height:${data.image.height}px;" `);
+					additional.push(`onload="this.style.width='auto';this.style.height='auto';"`);
+				}
+				html = `<img style="max-width: 90%;"  data-bx-file-id="${id}" id="${tagId}" src="${data.image.src}" lowsrc="${data.image.lowsrc}" ${additional.join(' ')}/>`;
+			}
+			return html;
+		}
+		buildText(id, params) {
+			return `[FILE ID=${id}${params || ''}]`;
+		}
+		insertFile(id, node) {
+			const data = this.values.get(String(id));
+			if (data) {
+				main_core_events.EventEmitter.emit(this.editor.getEventObject(), 'OnInsertContent', [this.buildText(id), this.buildHTML(id, data)]);
+			}
+		}
+		deleteFile(fileIds) {
+			const content = this.htmlEditor.GetContent();
+			if (this.htmlEditor.GetViewMode() === 'wysiwyg') {
+				const doc = this.htmlEditor.GetIframeDoc();
+				for (let ii in this.htmlEditor.bxTags) {
+					if (this.htmlEditor.bxTags.hasOwnProperty(ii) && typeof this.htmlEditor.bxTags[ii] === 'object' && this.htmlEditor.bxTags[ii]['tag'] === this.id && fileIds.indexOf(String(this.htmlEditor.bxTags[ii]['fileId'])) >= 0 && doc.getElementById(ii)) {
+						const node = doc.getElementById(ii);
+						node.parentNode.removeChild(node);
+					}
+				}
+				this.htmlEditor.SaveContent();
+			} else /* if (this.regexp.test(content))*/
+				{
+					const content2 = content.replace(this.regexp, function (str, foundId) {
+						return fileIds.indexOf(foundId) >= 0 ? '' : str;
+					});
+					this.htmlEditor.SetContent(content2);
+					this.htmlEditor.Focus();
+				}
+		}
+		checkButtons(event) {
+			const content = event ? event.compatData[0] : this.htmlEditor.GetContent();
+			const matches = [...content.matchAll(this.regexp)].map(([match, id]) => {
+				return id;
+			});
+			this.values.forEach((data, id) => {
+				if (!data.buttonNode) {
+					return;
+				}
+				const mark = matches.indexOf(id) >= 0;
+				if (mark === true && data.buttonNode.className !== 'insert-text') {
+					data.buttonNode.className = 'insert-text';
+					data.buttonNode.querySelector('[data-role="insert-btn"]').style.display = 'none';
+					data.buttonNode.querySelector('[data-role="in-text-btn"]').style.display = '';
+				} else if (mark !== true && data.buttonNode.className !== 'insert-btn') {
+					data.buttonNode.className = 'insert-btn';
+					data.buttonNode.querySelector('[data-role="insert-btn"]').style.display = '';
+					data.buttonNode.querySelector('[data-role="in-text-btn"]').style.display = 'none';
+				}
+			});
+		}
+		reinit(text, data) {
+			this.values.forEach((file, id) => {
+				if (file.node && file.node.parentNode) {
+					file.node.parentNode.removeChild(file.node);
+				}
+			});
+			this.values.clear();
+			this.controllers.forEach(controller => {
+				controller.reinitFrom(data);
+			});
+		}
+		parse(content) {
+			if (!this.regexp.test(content)) {
+				return content;
+			}
+			content = content.replace(this.regexp, function (str, id, width, height) {
+				if (this.values.has(id)) {
+					return this.buildHTML(id, this.values.get(id), width > 0 && height > 0 ? {
+						width,
+						height
+					} : null);
+				}
+				return str;
+			}.bind(this));
+			return content;
+		}
+		unparse(bxTag, {
+			node
+		}) {
+			const width = parseInt(node.hasAttribute('width') ? node.getAttribute('width') : 0);
+			const height = parseInt(node.hasAttribute('height') ? node.getAttribute('height') : 0);
+			let params = '';
+			if (width > 0 && height > 0) {
+				params = ' WIDTH=' + width + ' HEIGHT=' + height;
+			}
+			const id = node.getAttribute('data-bx-file-id');
+			return this.buildText(id, params);
+		}
+	}
 
-	var _templateObject$1;
 	/*
 	* @deprecated
 	* */
-	var DiskFile = /*#__PURE__*/function (_UploadFile) {
-	  babelHelpers.inherits(DiskFile, _UploadFile);
-	  function DiskFile() {
-	    var _babelHelpers$getProt;
-	    var _this;
-	    babelHelpers.classCallCheck(this, DiskFile);
-	    for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
-	      args[_key] = arguments[_key];
-	    }
-	    _this = babelHelpers.possibleConstructorReturn(this, (_babelHelpers$getProt = babelHelpers.getPrototypeOf(DiskFile)).call.apply(_babelHelpers$getProt, [this].concat(args)));
-	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "id", 'diskfile');
-	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "regexp", /\[(?:DOCUMENT ID|DISK FILE ID)=([n0-9]+)\]/ig);
-	    return _this;
-	  }
-	  babelHelpers.createClass(DiskFile, [{
-	    key: "init",
-	    value: function init() {
-	      var _this2 = this;
-	      Array.from(this.editor.getContainer().querySelectorAll('.diskuf-selectdialog')).forEach(function (selectorNode, index) {
-	        var cid = selectorNode.id.replace('diskuf-selectdialog-', '');
-	        var controller = _this2.controllers.get(cid);
-	        if (!controller) {
-	          controller = new DiskController(cid, selectorNode, _this2.editor);
-	          _this2.controllers.set(cid, controller);
-	          main_core_events.EventEmitter.subscribe(selectorNode.parentNode, 'OnFileUploadSuccess', function (_ref) {
-	            var _ref$data = babelHelpers.slicedToArray(_ref.data, 3),
-	              element_id = _ref$data[0].element_id,
-	              CID = _ref$data[1].CID,
-	              blob = _ref$data[2];
-	            if (controller.getId() !== CID || _this2.values.has(element_id)) {
-	              return;
-	            }
-	            var _this2$parseFile = _this2.parseFile(selectorNode.querySelector('#disk-edit-attach' + element_id)),
-	              _this2$parseFile2 = babelHelpers.slicedToArray(_this2$parseFile, 3),
-	              id = _this2$parseFile2[0],
-	              fileId = _this2$parseFile2[1],
-	              file = _this2$parseFile2[2];
-	            _this2.values.set(id, file);
-	            if (id !== fileId) {
-	              _this2.values.set(fileId, file);
-	            }
-	            if (blob && blob['insertImageAfterUpload'] && file.image.src) {
-	              _this2.insertFile(id, file.node);
-	            }
-	          });
-	          main_core_events.EventEmitter.subscribe(selectorNode.parentNode, 'OnFileUploadRemove', function (_ref2) {
-	            var _ref2$compatData = babelHelpers.slicedToArray(_ref2.compatData, 2),
-	              fileId = _ref2$compatData[0],
-	              CID = _ref2$compatData[1].CID;
-	            if (controller.getId() === CID && _this2.values.has(fileId)) {
-	              var file = _this2.values.get(fileId);
-	              _this2.values["delete"](file.id);
-	              _this2.values["delete"](file.fileId);
-	              _this2.deleteFile([file.id, file.fileId]);
-	            }
-	          });
-	          main_core_events.EventEmitter.subscribe(selectorNode.parentNode, 'OnFileUploadFailed', function (_ref3) {
-	            var _ref3$compatData = babelHelpers.slicedToArray(_ref3.compatData, 3),
-	              file = _ref3$compatData[0],
-	              CID = _ref3$compatData[1].CID,
-	              blob = _ref3$compatData[2];
-	            if (controller.getId() === CID && blob && blob["referrerToEditor"]) {
-	              BX.onCustomEvent(blob["referrerToEditor"], "OnImageDataUriCaughtFailed", []);
-	              BX.onCustomEvent(_this2.editor, "OnImageDataUriCaughtFailed", [blob["referrerToEditor"]]);
-	            }
-	          });
-	          if (index === 0) {
-	            initVideoReceptionForTheFirstController(_this2, controller, selectorNode, _this2.editor);
-	            initImageReceptionForTheFirstController(_this2, controller, selectorNode, _this2.editor);
-	            main_core_events.EventEmitter.subscribe(_this2.editor.getEventObject(), 'onFilesHaveCaught', function (event) {
-	              event.stopImmediatePropagation();
-	              controller.diskUfUploader.onChange(babelHelpers.toConsumableArray(event.getData()));
-	            });
-	          }
-	        }
-	        if (selectorNode.querySelector('table.files-list')) {
-	          Array.from(selectorNode.querySelector('table.files-list').querySelectorAll('tr')).forEach(function (tr) {
-	            var _this2$parseFile3 = _this2.parseFile(tr),
-	              _this2$parseFile4 = babelHelpers.slicedToArray(_this2$parseFile3, 3),
-	              id = _this2$parseFile4[0],
-	              fileId = _this2$parseFile4[1],
-	              file = _this2$parseFile4[2];
-	            _this2.values.set(id, file);
-	            if (id !== fileId) {
-	              _this2.values.set(fileId, file);
-	            }
-	          });
-	        }
-	      });
-	    }
-	  }, {
-	    key: "parseFile",
-	    value: function parseFile(tr) {
-	      var _this3 = this;
-	      var id = String(tr.id.replace('disk-edit-attach', ''));
-	      var data = {
-	        id: id,
-	        name: tr.querySelector('[data-role="name"]') ? tr.querySelector('[data-role="name"]').innerHTML : tr.querySelector('span.f-wrap').innerHTML,
-	        fileId: tr.getAttribute('bx-attach-file-id'),
-	        node: tr,
-	        buttonNode: tr.querySelector('[data-role="button-insert"]'),
-	        image: {
-	          src: null,
-	          lowsrc: null,
-	          width: null,
-	          height: null
-	        }
-	      };
-	      var nameNode = tr.querySelector('.f-wrap');
-	      var insertFile = function insertFile() {
-	        _this3.insertFile(id, tr);
-	      };
-	      if (nameNode) {
-	        nameNode.addEventListener('click', insertFile);
-	        nameNode.style.cursor = 'pointer';
-	        nameNode.title = main_core.Loc.getMessage('MPF_FILE');
-	      }
-	      var imageNode = tr.querySelector('img.files-preview');
-	      if (imageNode && (imageNode.src.indexOf('bitrix/tools/disk/uf.php') >= 0 || imageNode.src.indexOf('/disk/showFile/') >= 0)) {
-	        imageNode.addEventListener('click', insertFile);
-	        imageNode.title = main_core.Loc.getMessage('MPF_FILE');
-	        imageNode.style.cursor = 'pointer';
-	        data.image.lowsrc = imageNode.lowsrc || imageNode.src;
-	        data.image.src = (imageNode.rel || imageNode.getAttribute('data-bx-src') || imageNode.src).replace(/&(width|height)=\d+/gi, '');
-	        var handler = function handler() {
-	          data.image.width = imageNode.getAttribute('data-bx-full-width');
-	          data.image.height = imageNode.getAttribute('data-bx-full-height');
-	        };
-	        imageNode.addEventListener('load', handler);
-	        if (imageNode.complete) {
-	          handler();
-	        }
-	      }
-	      if (tr instanceof HTMLTableRowElement && !data.buttonNode) {
-	        data.buttonNode = main_core.Tag.render(_templateObject$1 || (_templateObject$1 = babelHelpers.taggedTemplateLiteral(["\n<span class=\"insert-btn\" data-role=\"button-insert\" onclick=\"", "\">\n\t<span data-role=\"insert-btn\" class=\"insert-btn-text\">", "</span>\n\t<span data-role=\"in-text-btn\" class=\"insert-btn-text\" style=\"display: none;\">", "</span>\n</span>"])), insertFile, main_core.Loc.getMessage('MPF_FILE_INSERT_IN_TEXT'), main_core.Loc.getMessage('MPF_FILE_IN_TEXT'));
-	        setTimeout(function () {
-	          if (tr.querySelector('.files-info')) {
-	            tr.querySelector('.files-info').appendChild(data.buttonNode);
-	            _this3.checkButtonsDebounced();
-	          }
-	        });
-	      }
-	      return [id, data.fileId, data];
-	    }
-	  }, {
-	    key: "buildText",
-	    value: function buildText(id, params) {
-	      return "[DISK FILE ID=".concat(id).concat(params || '', "]");
-	    }
-	  }]);
-	  return DiskFile;
-	}(UploadFile);
+	class UploadImage extends Default {
+		id = 'uploadimage';
+		buttonParams = null;
+		regexp = /\[IMAGE ID=((?:\s|\S)*?)?\]/ig;
+		values = new Map();
+		controllers = new Map();
+		constructor(editor, htmlEditor) {
+			super(editor, htmlEditor);
+			this.init();
+			console.log('PostImage: ');
+			main_core_events.EventEmitter.subscribe(editor.getEventObject(), 'onReinitializeBefore', ({
+				data: [text, data]
+			}) => {
+				this.reinit(text, data);
+			});
+		}
+		init() {
+			Array.from(this.editor.getContainer().querySelectorAll('.file-selectdialog')).forEach(selectorNode => {
+				const cid = selectorNode.id.replace('file-selectdialog-', '');
+				let controller = this.controllers.get(cid);
+				if (!controller) {
+					controller = new Controller(cid, selectorNode, this.editor);
+					main_core_events.EventEmitter.subscribe(selectorNode.parentNode, 'OnFileUploadSuccess', ({
+						data: [{
+							element_id
+						}, {
+							id,
+							doc_prefix,
+							CID
+						}]
+					}) => {
+						if (cid === id) {
+							const securityNode = document.querySelector('#' + this.editor.getFormId()) ? document.querySelector('#' + this.editor.getFormId()).querySelector('#upload-cid') : null;
+							if (securityNode) {
+								securityNode.value = CID;
+							}
+							const [id, file] = this.parseFile(selectorNode.querySelector('#' + doc_prefix + element_id));
+							this.values.set(id, file);
+						}
+					});
+					main_core_events.EventEmitter.subscribe(selectorNode.parentNode, 'OnFileUploadRemove', ({
+						compatData: [fileId, {
+							id
+						}]
+					}) => {
+						if (cid === id && this.values.has(fileId)) {
+							this.values.delete(fileId);
+						}
+					});
+				}
+				if (selectorNode.querySelector('table.files-list')) {
+					Array.from(selectorNode.querySelector('table.files-list').querySelectorAll('tr')).forEach(tr => {
+						const [id, file] = this.parseFile(tr);
+						this.values.set(id, file);
+					});
+				}
+			});
+		}
+		parseFile(tr) {
+			const id = tr.id.replace('wd-doc', '');
+			const data = {
+				id: id,
+				name: tr.querySelector('[data-role="name"]') ? tr.querySelector('[data-role="name"]').innerHTML : tr.querySelector('span.f-wrap').innerHTML,
+				node: tr,
+				image: {
+					src: null,
+					lowsrc: null,
+					width: null,
+					height: null
+				}
+			};
+			return [id, data];
+		}
+		reinit(text, data) {
+			this.values.forEach((file, id) => {
+				if (file.node && file.node.parentNode) {
+					file.node.parentNode.removeChild(file.node);
+				}
+			});
+			this.values.clear();
+			this.controllers.forEach(controller => {
+				controller.reinitFrom(data);
+			});
+		}
+		parse(content) {
+			return content;
+		}
+		unparse(bxTag, {
+			node
+		}) {
+			return '';
+		}
+	}
+
+	/*
+	* @deprecated
+	* */
+	class DiskFile extends UploadFile {
+		id = 'diskfile';
+		regexp = /\[(?:DOCUMENT ID|DISK FILE ID)=([n0-9]+)\]/ig;
+		init() {
+			Array.from(this.editor.getContainer().querySelectorAll('.diskuf-selectdialog')).forEach((selectorNode, index) => {
+				const cid = selectorNode.id.replace('diskuf-selectdialog-', '');
+				let controller = this.controllers.get(cid);
+				if (!controller) {
+					controller = new DiskController(cid, selectorNode, this.editor);
+					this.controllers.set(cid, controller);
+					main_core_events.EventEmitter.subscribe(selectorNode.parentNode, 'OnFileUploadSuccess', ({
+						data: [{
+							element_id
+						}, {
+							CID
+						}, blob]
+					}) => {
+						if (controller.getId() !== CID || this.values.has(element_id)) {
+							return;
+						}
+						const [id, fileId, file] = this.parseFile(selectorNode.querySelector('#disk-edit-attach' + element_id));
+						this.values.set(id, file);
+						if (id !== fileId) {
+							this.values.set(fileId, file);
+						}
+						if (blob && blob['insertImageAfterUpload'] && file.image.src) {
+							this.insertFile(id, file.node);
+						}
+					});
+					main_core_events.EventEmitter.subscribe(selectorNode.parentNode, 'OnFileUploadRemove', ({
+						compatData: [fileId, {
+							CID
+						}]
+					}) => {
+						if (controller.getId() === CID && this.values.has(fileId)) {
+							const file = this.values.get(fileId);
+							this.values.delete(file.id);
+							this.values.delete(file.fileId);
+							this.deleteFile([file.id, file.fileId]);
+						}
+					});
+					main_core_events.EventEmitter.subscribe(selectorNode.parentNode, 'OnFileUploadFailed', ({
+						compatData: [file, {
+							CID
+						}, blob]
+					}) => {
+						if (controller.getId() === CID && blob && blob["referrerToEditor"]) {
+							BX.onCustomEvent(blob["referrerToEditor"], "OnImageDataUriCaughtFailed", []);
+							BX.onCustomEvent(this.editor, "OnImageDataUriCaughtFailed", [blob["referrerToEditor"]]);
+						}
+					});
+					if (index === 0) {
+						initVideoReceptionForTheFirstController(this, controller, selectorNode, this.editor);
+						initImageReceptionForTheFirstController(this, controller, selectorNode, this.editor);
+						main_core_events.EventEmitter.subscribe(this.editor.getEventObject(), 'onFilesHaveCaught', event => {
+							event.stopImmediatePropagation();
+							controller.diskUfUploader.onChange([...event.getData()]);
+						});
+					}
+				}
+				if (selectorNode.querySelector('table.files-list')) {
+					Array.from(selectorNode.querySelector('table.files-list').querySelectorAll('tr')).forEach(tr => {
+						const [id, fileId, file] = this.parseFile(tr);
+						this.values.set(id, file);
+						if (id !== fileId) {
+							this.values.set(fileId, file);
+						}
+					});
+				}
+			});
+		}
+		parseFile(tr) {
+			const id = String(tr.id.replace('disk-edit-attach', ''));
+			const data = {
+				id: id,
+				name: tr.querySelector('[data-role="name"]') ? tr.querySelector('[data-role="name"]').innerHTML : tr.querySelector('span.f-wrap').innerHTML,
+				fileId: tr.getAttribute('bx-attach-file-id'),
+				node: tr,
+				buttonNode: tr.querySelector('[data-role="button-insert"]'),
+				image: {
+					src: null,
+					lowsrc: null,
+					width: null,
+					height: null
+				}
+			};
+			const nameNode = tr.querySelector('.f-wrap');
+			const insertFile = () => {
+				this.insertFile(id, tr);
+			};
+			if (nameNode) {
+				nameNode.addEventListener('click', insertFile);
+				nameNode.style.cursor = 'pointer';
+				nameNode.title = main_core.Loc.getMessage('MPF_FILE');
+			}
+			const imageNode = tr.querySelector('img.files-preview');
+			if (imageNode && (imageNode.src.indexOf('bitrix/tools/disk/uf.php') >= 0 || imageNode.src.indexOf('/disk/showFile/') >= 0)) {
+				imageNode.addEventListener('click', insertFile);
+				imageNode.title = main_core.Loc.getMessage('MPF_FILE');
+				imageNode.style.cursor = 'pointer';
+				data.image.lowsrc = imageNode.lowsrc || imageNode.src;
+				data.image.src = (imageNode.rel || imageNode.getAttribute('data-bx-src') || imageNode.src).replace(/&(width|height)=\d+/gi, '');
+				const handler = () => {
+					data.image.width = imageNode.getAttribute('data-bx-full-width');
+					data.image.height = imageNode.getAttribute('data-bx-full-height');
+				};
+				imageNode.addEventListener('load', handler);
+				if (imageNode.complete) {
+					handler();
+				}
+			}
+			if (tr instanceof HTMLTableRowElement && !data.buttonNode) {
+				data.buttonNode = main_core.Tag.render`
+<span class="insert-btn" data-role="button-insert" onclick="${insertFile}">
+	<span data-role="insert-btn" class="insert-btn-text">${main_core.Loc.getMessage('MPF_FILE_INSERT_IN_TEXT')}</span>
+	<span data-role="in-text-btn" class="insert-btn-text" style="display: none;">${main_core.Loc.getMessage('MPF_FILE_IN_TEXT')}</span>
+</span>`;
+				setTimeout(() => {
+					if (tr.querySelector('.files-info')) {
+						tr.querySelector('.files-info').appendChild(data.buttonNode);
+						this.checkButtonsDebounced();
+					}
+				});
+			}
+			return [id, data.fileId, data];
+		}
+		buildText(id, params) {
+			return `[DISK FILE ID=${id}${params || ''}]`;
+		}
+	}
 	function initVideoReceptionForTheFirstController(diskFileParser, controller, selectorNode, editor) {
-	  main_core_events.EventEmitter.subscribe(editor.getEventObject(), 'OnVideoHasCaught', function (event) {
-	    var fileToUpload = event.getData();
-	    var onSuccess = function onSuccess(_ref4) {
-	      var _ref4$data = babelHelpers.slicedToArray(_ref4.data, 3),
-	        element_id = _ref4$data[0].element_id;
-	      babelHelpers.objectDestructuringEmpty(_ref4$data[1]);
-	      var blob = _ref4$data[2];
-	      if (fileToUpload === blob && diskFileParser.values.has(element_id)) {
-	        main_core_events.EventEmitter.unsubscribe(selectorNode.parentNode, 'OnFileUploadSuccess', onSuccess);
-	        diskFileParser.insertFile(element_id, diskFileParser.values.get(element_id).node);
-	      }
-	    };
-	    main_core_events.EventEmitter.subscribe(selectorNode.parentNode, 'OnFileUploadSuccess', onSuccess);
-	    controller.exec(function () {
-	      controller.diskUfUploader.onChange([fileToUpload]);
-	    });
-	    event.stopImmediatePropagation();
-	  });
+		main_core_events.EventEmitter.subscribe(editor.getEventObject(), 'OnVideoHasCaught', event => {
+			const fileToUpload = event.getData();
+			const onSuccess = ({
+				data: [{
+					element_id
+				}, {}, blob]
+			}) => {
+				if (fileToUpload === blob && diskFileParser.values.has(element_id)) {
+					main_core_events.EventEmitter.unsubscribe(selectorNode.parentNode, 'OnFileUploadSuccess', onSuccess);
+					diskFileParser.insertFile(element_id, diskFileParser.values.get(element_id).node);
+				}
+			};
+			main_core_events.EventEmitter.subscribe(selectorNode.parentNode, 'OnFileUploadSuccess', onSuccess);
+			controller.exec(() => {
+				controller.diskUfUploader.onChange([fileToUpload]);
+			});
+			event.stopImmediatePropagation();
+		});
 	}
 	function initImageReceptionForTheFirstController(diskFileParser, controller, selectorNode, editor) {
-	  main_core_events.EventEmitter.subscribe(editor.getEventObject(), 'OnImageHasCaught', function (event) {
-	    event.stopImmediatePropagation();
-	    var fileToUpload = event.getData();
-	    return new Promise(function (resolve, reject) {
-	      var onSuccess = function onSuccess(_ref5) {
-	        var _ref5$data = babelHelpers.slicedToArray(_ref5.data, 3),
-	          element_id = _ref5$data[0].element_id;
-	        babelHelpers.objectDestructuringEmpty(_ref5$data[1]);
-	        var blob = _ref5$data[2];
-	        if (fileToUpload === blob && diskFileParser.values.has(element_id)) {
-	          main_core_events.EventEmitter.unsubscribe(selectorNode.parentNode, 'OnFileUploadSuccess', onSuccess);
-	          main_core_events.EventEmitter.unsubscribe(selectorNode.parentNode, 'OnFileUploadFailed', onFailed);
-	          var file = diskFileParser.values.get(element_id);
-	          var html = diskFileParser.buildHTML(element_id, file);
-	          resolve({
-	            image: file.image,
-	            html: html
-	          });
-	        }
-	      };
-	      var onFailed = function onFailed(_ref6) {
-	        var _ref6$data = babelHelpers.slicedToArray(_ref6.data, 3),
-	          file = _ref6$data[0];
-	        babelHelpers.objectDestructuringEmpty(_ref6$data[1]);
-	        var blob = _ref6$data[2];
-	        if (fileToUpload === blob) {
-	          main_core_events.EventEmitter.unsubscribe(selectorNode.parentNode, 'OnFileUploadSuccess', onSuccess);
-	          main_core_events.EventEmitter.unsubscribe(selectorNode.parentNode, 'OnFileUploadFailed', onFailed);
-	          reject();
-	        }
-	      };
-	      main_core_events.EventEmitter.subscribe(selectorNode.parentNode, 'OnFileUploadSuccess', onSuccess);
-	      main_core_events.EventEmitter.subscribe(selectorNode.parentNode, 'OnFileUploadFailed', onFailed);
-	      controller.exec(function () {
-	        controller.diskUfUploader.onChange([event.getData()]);
-	      });
-	    });
-	  });
+		main_core_events.EventEmitter.subscribe(editor.getEventObject(), 'OnImageHasCaught', event => {
+			event.stopImmediatePropagation();
+			const fileToUpload = event.getData();
+			return new Promise((resolve, reject) => {
+				const onSuccess = ({
+					data: [{
+						element_id
+					}, {}, blob]
+				}) => {
+					if (fileToUpload === blob && diskFileParser.values.has(element_id)) {
+						main_core_events.EventEmitter.unsubscribe(selectorNode.parentNode, 'OnFileUploadSuccess', onSuccess);
+						main_core_events.EventEmitter.unsubscribe(selectorNode.parentNode, 'OnFileUploadFailed', onFailed);
+						const file = diskFileParser.values.get(element_id);
+						const html = diskFileParser.buildHTML(element_id, file);
+						resolve({
+							image: file.image,
+							html: html
+						});
+					}
+				};
+				const onFailed = ({
+					data: [file, {}, blob]
+				}) => {
+					if (fileToUpload === blob) {
+						main_core_events.EventEmitter.unsubscribe(selectorNode.parentNode, 'OnFileUploadSuccess', onSuccess);
+						main_core_events.EventEmitter.unsubscribe(selectorNode.parentNode, 'OnFileUploadFailed', onFailed);
+						reject();
+					}
+				};
+				main_core_events.EventEmitter.subscribe(selectorNode.parentNode, 'OnFileUploadSuccess', onSuccess);
+				main_core_events.EventEmitter.subscribe(selectorNode.parentNode, 'OnFileUploadFailed', onFailed);
+				controller.exec(() => {
+					controller.diskUfUploader.onChange([event.getData()]);
+				});
+			});
+		});
 	}
 
-	var AIImageGenerator = /*#__PURE__*/function (_Default) {
-	  babelHelpers.inherits(AIImageGenerator, _Default);
-	  function AIImageGenerator() {
-	    var _babelHelpers$getProt;
-	    var _this;
-	    babelHelpers.classCallCheck(this, AIImageGenerator);
-	    for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
-	      args[_key] = arguments[_key];
-	    }
-	    _this = babelHelpers.possibleConstructorReturn(this, (_babelHelpers$getProt = babelHelpers.getPrototypeOf(AIImageGenerator)).call.apply(_babelHelpers$getProt, [this].concat(args)));
-	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "id", 'ai-image-generator');
-	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "buttonParams", {
-	      name: 'AI image generator',
-	      iconClassName: 'feed-add-post-editor-btn-ai-image',
-	      disabledForTextarea: false,
-	      toolbarSort: 398,
-	      compact: true
-	    });
-	    return _this;
-	  }
-	  babelHelpers.createClass(AIImageGenerator, [{
-	    key: "handler",
-	    value: function handler() {
-	      var _this2 = this;
-	      if (!this.editor.isImageCopilotEnabledBySettings()) {
-	        top.BX.UI.InfoHelper.show('limit_copilot_off');
-	        return;
-	      }
-	      main_core.Runtime.loadExtension('ai.picker').then(function () {
-	        var aiImagePicker = new BX.AI.Picker({
-	          moduleId: 'main',
-	          contextId: 'image_' + main_core.Loc.getMessage('USER_ID'),
-	          analyticLabel: 'main_post_form_comments_ai_image',
-	          saveImages: false,
-	          history: true,
-	          onSelect: function onSelect(imageURL) {
-	            fetch(imageURL).then(function (response) {
-	              return response.blob();
-	            }).then(function (myBlob) {
-	              BX.onCustomEvent(window, 'onAddVideoMessage', [myBlob, _this2.editor.getFormId()]);
-	            });
-	          }
-	        });
-	        aiImagePicker.setLangSpace(BX.AI.Picker.LangSpace.image);
-	        aiImagePicker.image();
-	      });
-	    }
-	  }, {
-	    key: "parse",
-	    value: function parse(content, pLEditor) {
-	      return content;
-	    }
-	  }, {
-	    key: "unparse",
-	    value: function unparse(bxTag, oNode) {
-	      return '';
-	    }
-	  }]);
-	  return AIImageGenerator;
-	}(Default);
+	class AIImageGenerator extends Default {
+		id = 'ai-image-generator';
+		buttonParams = {
+			name: 'AI image generator',
+			iconClassName: 'feed-add-post-editor-btn-ai-image',
+			disabledForTextarea: false,
+			toolbarSort: 398,
+			compact: true
+		};
+		handler() {
+			if (!this.editor.isImageCopilotEnabledBySettings()) {
+				top.BX.UI.InfoHelper.show('limit_copilot_off');
+				return;
+			}
+			main_core.Runtime.loadExtension('ai.picker').then(() => {
+				const aiImagePicker = new BX.AI.Picker({
+					moduleId: 'main',
+					contextId: 'image_' + main_core.Loc.getMessage('USER_ID'),
+					analyticLabel: 'main_post_form_comments_ai_image',
+					saveImages: false,
+					history: true,
+					onSelect: imageURL => {
+						fetch(imageURL).then(response => response.blob()).then(myBlob => {
+							BX.onCustomEvent(window, 'onAddVideoMessage', [myBlob, this.editor.getFormId()]);
+						});
+					}
+				});
+				aiImagePicker.setLangSpace(BX.AI.Picker.LangSpace.image);
+				aiImagePicker.image();
+			});
+		}
+		parse(content, pLEditor) {
+			return content;
+		}
+		unparse(bxTag, oNode) {
+			return '';
+		}
+	}
 
 	function getKnownParser(parserId, editor, htmlEditor) {
-	  if (parserId === 'Spoiler') {
-	    return new Spoiler(editor, htmlEditor);
-	  }
-	  if (parserId === 'MentionUser') {
-	    return new PostUser(editor, htmlEditor);
-	  }
-	  if (parserId === 'UploadImage') {
-	    return new UploadImage(editor, htmlEditor);
-	  }
-	  if (parserId === 'UploadFile') {
-	    return new UploadFile(editor, htmlEditor);
-	  }
-	  if (parserId === 'AIImage') {
-	    return new AIImageGenerator(editor, htmlEditor);
-	  }
-	  if (babelHelpers["typeof"](parserId) === 'object' && parserId['disk_file']) {
-	    return new DiskFile(editor, htmlEditor);
-	  }
-	  return null;
+		if (parserId === 'Spoiler') {
+			return new Spoiler(editor, htmlEditor);
+		}
+		if (parserId === 'MentionUser') {
+			return new PostUser(editor, htmlEditor);
+		}
+		if (parserId === 'UploadImage') {
+			return new UploadImage(editor, htmlEditor);
+		}
+		if (parserId === 'UploadFile') {
+			return new UploadFile(editor, htmlEditor);
+		}
+		if (parserId === 'AIImage') {
+			return new AIImageGenerator(editor, htmlEditor);
+		}
+		if (typeof parserId === 'object' && parserId['disk_file']) {
+			return new DiskFile(editor, htmlEditor);
+		}
+		return null;
 	}
 
 	function bindAutoSave(htmlEditor, formNode) {
-	  if (!formNode) {
-	    return;
-	  }
-	  BX.addCustomEvent(formNode, 'onAutoSavePrepare', function (ob) {
-	    ob.FORM.setAttribute("bx-lhe-autosave-prepared", "Y");
-	    setTimeout(function () {
-	      BX.addCustomEvent(htmlEditor, 'OnContentChanged', function (text) {
-	        ob["mpfTextContent"] = text;
-	        ob.Init();
-	      });
-	    }, 1500);
-	  });
-	  BX.addCustomEvent(formNode, 'onAutoSave', function (ob, form_data) {
-	    if (BX.type.isNotEmptyString(ob['mpfTextContent'])) form_data['text'] = ob['mpfTextContent'];
-	  });
-	  BX.addCustomEvent(formNode, 'onAutoSaveRestore', function (ob, form_data) {
-	    if (form_data['text'] && /[^\s]+/gi.test(form_data['text'])) {
-	      htmlEditor.CheckAndReInit(form_data['text']);
-	    }
-	  });
-	  if (formNode.hasAttribute("bx-lhe-autosave-prepared") && formNode.BXAUTOSAVE) {
-	    formNode.removeAttribute("bx-lhe-autosave-prepared");
-	    setTimeout(formNode.BXAUTOSAVE.Prepare, 100);
-	  }
+		if (!formNode) {
+			return;
+		}
+		BX.addCustomEvent(formNode, 'onAutoSavePrepare', function (ob) {
+			ob.FORM.setAttribute("bx-lhe-autosave-prepared", "Y");
+			setTimeout(function () {
+				BX.addCustomEvent(htmlEditor, 'OnContentChanged', function (text) {
+					ob["mpfTextContent"] = text;
+					ob.Init();
+				});
+			}, 1500);
+		});
+		BX.addCustomEvent(formNode, 'onAutoSave', function (ob, form_data) {
+			if (BX.type.isNotEmptyString(ob['mpfTextContent'])) form_data['text'] = ob['mpfTextContent'];
+		});
+		BX.addCustomEvent(formNode, 'onAutoSaveRestore', function (ob, form_data) {
+			if (form_data['text'] && /[^\s]+/gi.test(form_data['text'])) {
+				htmlEditor.CheckAndReInit(form_data['text']);
+			}
+		});
+		if (formNode.hasAttribute("bx-lhe-autosave-prepared") && formNode.BXAUTOSAVE) {
+			formNode.removeAttribute("bx-lhe-autosave-prepared");
+			setTimeout(formNode.BXAUTOSAVE.Prepare, 100);
+		}
 	}
 
 	function showPanelEditor(editor, htmlEditor, editorParams) {
-	  var save = false;
-	  if (editorParams.showPanelEditor !== true && editorParams.showPanelEditor !== false) {
-	    editorParams.showPanelEditor = !htmlEditor.toolbar.IsShown();
-	    save = true;
-	  }
-	  editor.exec(function () {
-	    var buttonNode = editor.getContainer().querySelector('[data-bx-role="button-show-panel-editor"]');
-	    buttonNode === null || buttonNode === void 0 ? void 0 : buttonNode.setAttribute('aria-pressed', editorParams.showPanelEditor ? 'true' : 'false');
-	    if (editorParams.showPanelEditor) {
-	      htmlEditor.dom.toolbarCont.style.opacity = 'inherit';
-	      htmlEditor.toolbar.Show();
-	      if (buttonNode) {
-	        buttonNode.classList.add('feed-add-post-form-btn-active');
-	      }
-	    } else {
-	      htmlEditor.toolbar.Hide();
-	      if (buttonNode) {
-	        buttonNode.classList.remove('feed-add-post-form-btn-active');
-	      }
-	    }
-	  });
-	  if (save !== false) {
-	    BX.userOptions.save('main.post.form', 'postEdit', 'showBBCode', editorParams.showPanelEditor ? 'Y' : 'N');
-	  }
+		let save = false;
+		if (editorParams.showPanelEditor !== true && editorParams.showPanelEditor !== false) {
+			editorParams.showPanelEditor = !htmlEditor.toolbar.IsShown();
+			save = true;
+		}
+		editor.exec(() => {
+			const buttonNode = editor.getContainer().querySelector('[data-bx-role="button-show-panel-editor"]');
+			buttonNode?.setAttribute('aria-pressed', editorParams.showPanelEditor ? 'true' : 'false');
+			if (editorParams.showPanelEditor) {
+				htmlEditor.dom.toolbarCont.style.opacity = 'inherit';
+				htmlEditor.toolbar.Show();
+				if (buttonNode) {
+					buttonNode.classList.add('feed-add-post-form-btn-active');
+				}
+			} else {
+				htmlEditor.toolbar.Hide();
+				if (buttonNode) {
+					buttonNode.classList.remove('feed-add-post-form-btn-active');
+				}
+			}
+		});
+		if (save !== false) {
+			BX.userOptions.save('main.post.form', 'postEdit', 'showBBCode', editorParams.showPanelEditor ? 'Y' : 'N');
+		}
 	}
 
 	function showUrlPreview(htmlEditor, editorParams) {
-	  if (!(editorParams.urlPreviewId && window['BXUrlPreview'] && BX(editorParams.urlPreviewId))) {
-	    return;
-	  }
-	  var urlPreview = new BXUrlPreview(BX(editorParams.urlPreviewId));
-	  var OnAfterUrlConvert = function OnAfterUrlConvert(url) {
-	    urlPreview.attachUrlPreview({
-	      url: url
-	    });
-	  };
-	  var OnBeforeCommandExec = function OnBeforeCommandExec(isContentAction, action, oAction, value) {
-	    if (action === 'createLink' && BX.type.isPlainObject(value) && value.hasOwnProperty('href')) {
-	      urlPreview.attachUrlPreview({
-	        url: value.href
-	      });
-	    }
-	  };
-	  BX.addCustomEvent(htmlEditor, 'OnAfterUrlConvert', OnAfterUrlConvert);
-	  BX.addCustomEvent(htmlEditor, 'OnAfterLinkInserted', OnAfterUrlConvert);
-	  BX.addCustomEvent(htmlEditor, 'OnBeforeCommandExec', OnBeforeCommandExec);
-	  BX.addCustomEvent(htmlEditor, 'OnReinitialize', function (text, data) {
-	    urlPreview.detachUrlPreview();
-	    var urlPreviewId;
-	    for (var uf in data) {
-	      if (data.hasOwnProperty(uf) && data[uf].hasOwnProperty('USER_TYPE_ID') && data[uf]['USER_TYPE_ID'] === 'url_preview') {
-	        urlPreviewId = data[uf]['VALUE'];
-	        break;
-	      }
-	    }
-	    if (urlPreviewId) {
-	      urlPreview.attachUrlPreview({
-	        id: urlPreviewId
-	      });
-	    }
-	  });
+		if (!(editorParams.urlPreviewId && window['BXUrlPreview'] && BX(editorParams.urlPreviewId))) {
+			return;
+		}
+		const urlPreview = new BXUrlPreview(BX(editorParams.urlPreviewId));
+		const OnAfterUrlConvert = function (url) {
+			urlPreview.attachUrlPreview({
+				url: url
+			});
+		};
+		const OnBeforeCommandExec = function (isContentAction, action, oAction, value) {
+			if (action === 'createLink' && BX.type.isPlainObject(value) && value.hasOwnProperty('href')) {
+				urlPreview.attachUrlPreview({
+					url: value.href
+				});
+			}
+		};
+		BX.addCustomEvent(htmlEditor, 'OnAfterUrlConvert', OnAfterUrlConvert);
+		BX.addCustomEvent(htmlEditor, 'OnAfterLinkInserted', OnAfterUrlConvert);
+		BX.addCustomEvent(htmlEditor, 'OnBeforeCommandExec', OnBeforeCommandExec);
+		BX.addCustomEvent(htmlEditor, 'OnReinitialize', (text, data) => {
+			urlPreview.detachUrlPreview();
+			let urlPreviewId;
+			for (let uf in data) {
+				if (data.hasOwnProperty(uf) && data[uf].hasOwnProperty('USER_TYPE_ID') && data[uf]['USER_TYPE_ID'] === 'url_preview') {
+					urlPreviewId = data[uf]['VALUE'];
+					break;
+				}
+			}
+			if (urlPreviewId) {
+				urlPreview.attachUrlPreview({
+					id: urlPreviewId
+				});
+			}
+		});
 	}
 
 	function customizeHTMLEditor(editor, htmlEditor) {
-	  editor.exec(function () {
-	    // Contextmenu changing for images/files
-	    htmlEditor.contextMenu.items['postimage'] = htmlEditor.contextMenu.items['postdocument'] = htmlEditor.contextMenu.items['postfile'] = [{
-	      TEXT: main_core.Loc.getMessage('BXEdDelFromText'),
-	      bbMode: true,
-	      ACTION: function ACTION() {
-	        var node = htmlEditor.contextMenu.GetTargetItem('postimage');
-	        if (!node) node = htmlEditor.contextMenu.GetTargetItem('postdocument');
-	        if (!node) node = htmlEditor.contextMenu.GetTargetItem('postfile');
-	        if (node && node.element) {
-	          htmlEditor.selection.RemoveNode(node.element);
-	        }
-	        htmlEditor.contextMenu.Hide();
-	      }
-	    }];
-	    if (htmlEditor.toolbar.controls && htmlEditor.toolbar.controls.FontSelector) {
-	      htmlEditor.toolbar.controls.FontSelector.SetWidth(45);
-	    }
-	  });
+		editor.exec(() => {
+			// Contextmenu changing for images/files
+			htmlEditor.contextMenu.items['postimage'] = htmlEditor.contextMenu.items['postdocument'] = htmlEditor.contextMenu.items['postfile'] = [{
+				TEXT: main_core.Loc.getMessage('BXEdDelFromText'),
+				bbMode: true,
+				ACTION: function () {
+					var node = htmlEditor.contextMenu.GetTargetItem('postimage');
+					if (!node) node = htmlEditor.contextMenu.GetTargetItem('postdocument');
+					if (!node) node = htmlEditor.contextMenu.GetTargetItem('postfile');
+					if (node && node.element) {
+						htmlEditor.selection.RemoveNode(node.element);
+					}
+					htmlEditor.contextMenu.Hide();
+				}
+			}];
+			if (htmlEditor.toolbar.controls && htmlEditor.toolbar.controls.FontSelector) {
+				htmlEditor.toolbar.controls.FontSelector.SetWidth(45);
+			}
+		});
 	}
 
 	function bindHTML(editor) {
-	  var submitButton = document.querySelector('#lhe_button_submit_' + editor.getFormId());
-	  if (submitButton) {
-	    submitButton.addEventListener('click', function (event) {
-	      main_core_events.EventEmitter.emit(editor.getEventObject(), 'OnButtonClick', ['submit']);
-	      event.preventDefault();
-	      event.stopPropagation();
-	    });
-	  }
-	  var cancelButton = document.querySelector('#lhe_button_cancel_' + editor.getFormId());
-	  if (cancelButton) {
-	    cancelButton.addEventListener('click', function (event) {
-	      main_core_events.EventEmitter.emit(editor.getEventObject(), 'OnButtonClick', ['cancel']);
-	      event.preventDefault();
-	      event.stopPropagation();
-	    });
-	  }
+		const submitButton = document.querySelector('#lhe_button_submit_' + editor.getFormId());
+		if (submitButton) {
+			submitButton.addEventListener('click', function (event) {
+				main_core_events.EventEmitter.emit(editor.getEventObject(), 'OnButtonClick', ['submit']);
+				event.preventDefault();
+				event.stopPropagation();
+			});
+		}
+		const cancelButton = document.querySelector('#lhe_button_cancel_' + editor.getFormId());
+		if (cancelButton) {
+			cancelButton.addEventListener('click', function (event) {
+				main_core_events.EventEmitter.emit(editor.getEventObject(), 'OnButtonClick', ['cancel']);
+				event.preventDefault();
+				event.stopPropagation();
+			});
+		}
 	}
 
 	function bindToolbar(editor, htmlEditor) {
-	  var toolbar = editor.getContainer().querySelector('[data-bx-role="toolbar"]');
-	  if (toolbar.querySelector('[data-id="file"]')) {
-	    var fileButton = toolbar.querySelector('[data-id="file"]');
-	    if (fileButton) {
-	      fileButton.addEventListener('click', function () {
-	        main_core_events.EventEmitter.emit(editor.getEventObject(), 'onShowControllers', fileButton.hasAttribute('data-bx-button-status') ? 'hide' : 'show');
-	      });
-	      main_core_events.EventEmitter.subscribe(editor.getEventObject(), 'onShowControllers', function (_ref) {
-	        var data = _ref.data;
-	        if (data.toString() === 'show') {
-	          fileButton.setAttribute('data-bx-button-status', 'active');
-	        } else {
-	          fileButton.removeAttribute('data-bx-button-status');
-	        }
-	      });
-	      fileButton.setAttribute('data-bx-files-count', 0);
-	      main_core_events.EventEmitter.subscribe(editor.getEventObject(), 'onShowControllers:File:Increment', function (_ref2) {
-	        var data = _ref2.data;
-	        var count = data > 0 ? data : 1;
-	        var filesCount = Math.max(parseInt(fileButton.getAttribute('data-bx-files-count') || 0) + count, 0);
-	        if (filesCount > 0) {
-	          if (!fileButton['counterObject']) {
-	            fileButton['counterObject'] = new BX.UI.Counter({
-	              value: filesCount,
-	              color: BX.UI.Counter.Color.GRAY,
-	              animate: true
-	            });
-	            var container = fileButton.querySelector('span');
-	            container.appendChild(fileButton['counterObject'].getContainer());
-	          } else {
-	            fileButton['counterObject'].update(filesCount);
-	          }
-	        }
-	        fileButton.setAttribute('data-bx-files-count', filesCount);
-	      });
-	      main_core_events.EventEmitter.subscribe(editor.getEventObject(), 'onShowControllers:File:Decrement', function (_ref3) {
-	        var data = _ref3.data;
-	        var count = data > 0 ? data : 1;
-	        var filesCount = Math.max(parseInt(fileButton.getAttribute('data-bx-files-count') || 0) - count, 0);
-	        fileButton.setAttribute('data-bx-files-count', filesCount);
-	        if (fileButton['counterObject']) {
-	          fileButton['counterObject'].update(filesCount);
-	        }
-	      });
-	    }
-	  }
-	  if (toolbar.querySelector('[data-id="search-tag"]')) {
-	    window['BXPostFormTags_' + editor.getFormId()] = new BXPostFormTags(editor.getFormId(), toolbar.querySelector('[data-id="search-tag"]'));
-	  }
-	  if (toolbar.querySelector('[data-id="create-link"]')) {
-	    toolbar.querySelector('[data-id="create-link"]').addEventListener('click', function (event) {
-	      htmlEditor.toolbar.controls.InsertLink.OnClick(event);
-	    });
-	  }
-	  if (toolbar.querySelector('[data-id="video"]')) {
-	    toolbar.querySelector('[data-id="video"]').addEventListener('click', function (event) {
-	      htmlEditor.toolbar.controls.InsertVideo.OnClick(event);
-	    });
-	  }
-	  if (toolbar.querySelector('[data-id="quote"]')) {
-	    var quoteNode = toolbar.querySelector('[data-id="quote"]');
-	    quoteNode.setAttribute('data-bx-type', 'action');
-	    quoteNode.setAttribute('data-bx-action', 'quote');
-	    quoteNode.addEventListener('mousedown', function (event) {
-	      htmlEditor.toolbar.controls.Quote.OnMouseDown.apply(htmlEditor.toolbar.controls.Quote, [event]);
-	      htmlEditor.CheckCommand(quoteNode);
-	    });
-	  }
-	  if (editor.getContainer().querySelector('[data-bx-role="button-show-panel-editor"]')) {
-	    editor.getContainer().querySelector('[data-bx-role="button-show-panel-editor"]').addEventListener('click', function () {
-	      editor.showPanelEditor();
-	    });
-	  }
-	  var copilot = toolbar.querySelector('[data-id="copilot"]');
-	  if (copilot) {
-	    var isFocusReturnBound = false;
-	    copilot.addEventListener('click', function () {
-	      var _htmlEditor$iframeVie;
-	      if (!editor.isTextCopilotEnabledBySettings()) {
-	        top.BX.UI.InfoHelper.show('limit_copilot_off');
-	        return;
-	      }
-	      editor.showCopilot();
-	      if (isFocusReturnBound) {
-	        return;
-	      }
-	      var copilotInstance = (_htmlEditor$iframeVie = htmlEditor.iframeView.copilot) === null || _htmlEditor$iframeVie === void 0 ? void 0 : _htmlEditor$iframeVie.copilot;
-	      if (!copilotInstance) {
-	        return;
-	      }
-	      copilotInstance.subscribe('hide', function () {
-	        copilot.focus({
-	          focusVisible: true
-	        });
-	      });
-	      isFocusReturnBound = true;
-	    });
-	  }
+		const toolbar = editor.getContainer().querySelector('[data-bx-role="toolbar"]');
+		if (toolbar.querySelector('[data-id="file"]')) {
+			const fileButton = toolbar.querySelector('[data-id="file"]');
+			if (fileButton) {
+				fileButton.addEventListener('click', () => {
+					main_core_events.EventEmitter.emit(editor.getEventObject(), 'onShowControllers', fileButton.hasAttribute('data-bx-button-status') ? 'hide' : 'show');
+				});
+				main_core_events.EventEmitter.subscribe(editor.getEventObject(), 'onShowControllers', ({
+					data
+				}) => {
+					if (data.toString() === 'show') {
+						fileButton.setAttribute('data-bx-button-status', 'active');
+					} else {
+						fileButton.removeAttribute('data-bx-button-status');
+					}
+				});
+				fileButton.setAttribute('data-bx-files-count', 0);
+				main_core_events.EventEmitter.subscribe(editor.getEventObject(), 'onShowControllers:File:Increment', ({
+					data
+				}) => {
+					const count = data > 0 ? data : 1;
+					const filesCount = Math.max(parseInt(fileButton.getAttribute('data-bx-files-count') || 0) + count, 0);
+					if (filesCount > 0) {
+						if (!fileButton['counterObject']) {
+							fileButton['counterObject'] = new BX.UI.Counter({
+								value: filesCount,
+								color: BX.UI.Counter.Color.GRAY,
+								animate: true
+							});
+							const container = fileButton.querySelector('span');
+							container.appendChild(fileButton['counterObject'].getContainer());
+						} else {
+							fileButton['counterObject'].update(filesCount);
+						}
+					}
+					fileButton.setAttribute('data-bx-files-count', filesCount);
+				});
+				main_core_events.EventEmitter.subscribe(editor.getEventObject(), 'onShowControllers:File:Decrement', ({
+					data
+				}) => {
+					const count = data > 0 ? data : 1;
+					const filesCount = Math.max(parseInt(fileButton.getAttribute('data-bx-files-count') || 0) - count, 0);
+					fileButton.setAttribute('data-bx-files-count', filesCount);
+					if (fileButton['counterObject']) {
+						fileButton['counterObject'].update(filesCount);
+					}
+				});
+			}
+		}
+		if (toolbar.querySelector('[data-id="search-tag"]')) {
+			window['BXPostFormTags_' + editor.getFormId()] = new BXPostFormTags(editor.getFormId(), toolbar.querySelector('[data-id="search-tag"]'));
+		}
+		if (toolbar.querySelector('[data-id="create-link"]')) {
+			toolbar.querySelector('[data-id="create-link"]').addEventListener('click', event => {
+				htmlEditor.toolbar.controls.InsertLink.OnClick(event);
+			});
+		}
+		if (toolbar.querySelector('[data-id="video"]')) {
+			toolbar.querySelector('[data-id="video"]').addEventListener('click', event => {
+				htmlEditor.toolbar.controls.InsertVideo.OnClick(event);
+			});
+		}
+		if (toolbar.querySelector('[data-id="quote"]')) {
+			const quoteNode = toolbar.querySelector('[data-id="quote"]');
+			quoteNode.setAttribute('data-bx-type', 'action');
+			quoteNode.setAttribute('data-bx-action', 'quote');
+			quoteNode.addEventListener('mousedown', event => {
+				htmlEditor.toolbar.controls.Quote.OnMouseDown.apply(htmlEditor.toolbar.controls.Quote, [event]);
+				htmlEditor.CheckCommand(quoteNode);
+			});
+		}
+		if (editor.getContainer().querySelector('[data-bx-role="button-show-panel-editor"]')) {
+			editor.getContainer().querySelector('[data-bx-role="button-show-panel-editor"]').addEventListener('click', () => {
+				editor.showPanelEditor();
+			});
+		}
+		const copilot = toolbar.querySelector('[data-id="copilot"]');
+		if (copilot) {
+			let isFocusReturnBound = false;
+			copilot.addEventListener('click', () => {
+				if (!editor.isTextCopilotEnabledBySettings()) {
+					top.BX.UI.InfoHelper.show('limit_copilot_off');
+					return;
+				}
+				editor.showCopilot(copilot);
+				if (isFocusReturnBound) {
+					return;
+				}
+				const copilotInstance = htmlEditor.iframeView.copilot?.copilot;
+				if (!copilotInstance) {
+					return;
+				}
+				copilotInstance.subscribe('hide', () => {
+					copilot.focus({
+						focusVisible: true
+					});
+				});
+				isFocusReturnBound = true;
+			});
+		}
 	}
 
-	var _templateObject$2;
-	var intersectionObserver;
+	let intersectionObserver;
 	function observeIntersection(entity, callback) {
-	  if (!intersectionObserver) {
-	    intersectionObserver = new IntersectionObserver(function (entries) {
-	      entries.forEach(function (entry) {
-	        if (entry.isIntersecting) {
-	          intersectionObserver.unobserve(entry.target);
-	          var observedCallback = entry.target.observedCallback;
-	          delete entry.target.observedCallback;
-	          setTimeout(observedCallback);
-	        }
-	      });
-	    }, {
-	      threshold: 0
-	    });
-	  }
-	  entity.observedCallback = callback;
-	  intersectionObserver.observe(entity);
+		if (!intersectionObserver) {
+			intersectionObserver = new IntersectionObserver(function (entries) {
+				entries.forEach(entry => {
+					if (entry.isIntersecting) {
+						intersectionObserver.unobserve(entry.target);
+						const observedCallback = entry.target.observedCallback;
+						delete entry.target.observedCallback;
+						setTimeout(observedCallback);
+					}
+				});
+			}, {
+				threshold: 0
+			});
+		}
+		entity.observedCallback = callback;
+		intersectionObserver.observe(entity);
 	}
-	var justCounter = 0;
-	var Toolbar = /*#__PURE__*/function () {
-	  function Toolbar(eventObject, container) {
-	    babelHelpers.classCallCheck(this, Toolbar);
-	    this.container = container.querySelector('[data-bx-role="toolbar"]');
-	    this.container.setAttribute('role', 'toolbar');
-	    this.adjustMorePosition = this.adjustMorePosition.bind(this);
-	    this.moreItem = container.querySelector('[data-bx-role="toolbar-item-more"]');
-	    this.moreItem.addEventListener('click', this.showSubmenu.bind(this));
-	    observeIntersection(this.container, this.adjustMorePosition);
-	    window.addEventListener('resize', this.adjustMorePosition);
-	    this.container.addEventListener('keydown', function (event) {
-	      if (event.key !== 'Enter' && event.key !== ' ') {
-	        return;
-	      }
-	      var button = event.target.closest('[data-bx-role="toolbar-item"], [data-bx-role="toolbar-item-more"]');
-	      if (!button) {
-	        return;
-	      }
-	      event.preventDefault();
-	      var clickTarget = button.firstElementChild || button;
-	      clickTarget.click();
-	    });
-	  }
-	  babelHelpers.createClass(Toolbar, [{
-	    key: "insertAfter",
-	    value: function insertAfter(button, buttonId) {
-	      if (!main_core.Type.isElementNode(button['BODY']) && !main_core.Type.isStringFilled(button['BODY'])) {
-	        return;
-	      }
-	      var item = main_core.Tag.render(_templateObject$2 || (_templateObject$2 = babelHelpers.taggedTemplateLiteral(["<button type=\"button\" class=\"main-post-form-toolbar-button\" data-bx-role=\"toolbar-item\"></button>"])));
-	      if (main_core.Type.isElementNode(button['BODY'])) {
-	        item.appendChild(button['BODY']);
-	      } else {
-	        item.innerHTML = button['BODY'];
-	      }
-	      if (button['ID']) {
-	        item.setAttribute('data-id', button['ID']);
-	      }
-	      if (buttonId !== null) {
-	        var found = false;
-	        var itemBefore = null;
-	        Array.from(this.container.querySelectorAll('[data-bx-role="toolbar-item"]')).forEach(function (toolbarItem) {
-	          if (found === true && itemBefore === null) {
-	            itemBefore = toolbarItem;
-	          } else if (found === false && toolbarItem && toolbarItem.dataset && toolbarItem.dataset.id === buttonId) {
-	            found = true;
-	          }
-	        });
-	        if (itemBefore) {
-	          itemBefore.parentNode.insertBefore(item, itemBefore);
-	        }
-	      }
-	      if (!item.parentNode) {
-	        this.container.appendChild(item);
-	      }
-	      this.adjustMorePosition();
-	    }
-	  }, {
-	    key: "getItems",
-	    value: function getItems() {
-	      return Array.from(this.container.querySelectorAll('[data-bx-role="toolbar-item"]'));
-	    }
-	  }, {
-	    key: "getVisibleItems",
-	    value: function getVisibleItems() {
-	      var _this = this;
-	      var visibleItems = [];
-	      Array.from(this.container.querySelectorAll('[data-bx-role="toolbar-item"]')).forEach(function (item) {
-	        if (item.offsetTop > _this.container.clientHeight / 2) {
-	          visibleItems.push(item);
-	        }
-	      });
-	      return visibleItems;
-	    }
-	  }, {
-	    key: "getHiddenItems",
-	    value: function getHiddenItems() {
-	      var hiddenItems = [];
-	      Array.from(this.container.querySelectorAll('[data-bx-role="toolbar-item"]')).forEach(function (item) {
-	        if (item.offsetTop > 0) {
-	          hiddenItems.push(item);
-	        }
-	      });
-	      return hiddenItems;
-	    }
-	  }, {
-	    key: "adjustMorePosition",
-	    value: function adjustMorePosition() {
-	      var visibleItemsLength = this.getVisibleItems().length;
-	      if (visibleItemsLength <= 0 || visibleItemsLength >= this.getItems().length) {
-	        this.moreItem.style.display = 'none';
-	      } else {
-	        this.moreItem.style.display = '';
-	      }
-	    }
-	  }, {
-	    key: "getPopup",
-	    value: function getPopup() {
-	      var _this2 = this;
-	      if (!this.popup) {
-	        this.popup = main_popup.PopupManager.create({
-	          id: 'main_post_form_toolbar_' + justCounter++,
-	          className: 'main-post-form-toolbar-popup',
-	          cacheable: false,
-	          content: this.getPopupContainer(),
-	          closeByEsc: true,
-	          autoHide: true,
-	          angle: true,
-	          bindElement: this.moreItem,
-	          offsetTop: -5,
-	          offsetLeft: 5,
-	          events: {
-	            onClose: function onClose() {
-	              Array.from(_this2.getPopupContainer().querySelectorAll('[data-bx-role="toolbar-item"]')).forEach(function (item) {
-	                _this2.container.appendChild(item);
-	              });
-	              delete _this2.popup;
-	            }
-	          }
-	        });
-	      }
-	      return this.popup;
-	    }
-	  }, {
-	    key: "getPopupContainer",
-	    value: function getPopupContainer() {
-	      if (!this.popupContainer) {
-	        this.popupContainer = document.createElement('DIV');
-	      }
-	      return this.popupContainer;
-	    }
-	  }, {
-	    key: "showSubmenu",
-	    value: function showSubmenu() {
-	      var _this3 = this;
-	      var hiddenItems = this.getHiddenItems();
-	      if (hiddenItems.length <= 0) {
-	        return;
-	      }
-	      hiddenItems.forEach(function (item) {
-	        _this3.getPopupContainer().appendChild(item);
-	      });
-	      this.getPopup().show();
-	    }
-	  }]);
-	  return Toolbar;
-	}();
+	let justCounter = 0;
+	class Toolbar {
+		constructor(eventObject, container) {
+			this.container = container.querySelector('[data-bx-role="toolbar"]');
+			this.container.setAttribute('role', 'toolbar');
+			this.adjustMorePosition = this.adjustMorePosition.bind(this);
+			this.moreItem = container.querySelector('[data-bx-role="toolbar-item-more"]');
+			this.moreItem.addEventListener('click', this.showSubmenu.bind(this));
+			observeIntersection(this.container, this.adjustMorePosition);
+			window.addEventListener('resize', this.adjustMorePosition);
+			this.container.addEventListener('keydown', event => {
+				if (event.key !== 'Enter' && event.key !== ' ') {
+					return;
+				}
+				const button = event.target.closest('[data-bx-role="toolbar-item"], [data-bx-role="toolbar-item-more"]');
+				if (!button) {
+					return;
+				}
+				event.preventDefault();
+				const clickTarget = button.firstElementChild || button;
+				clickTarget.click();
+			});
+		}
+		insertAfter(button, buttonId) {
+			if (!main_core.Type.isElementNode(button['BODY']) && !main_core.Type.isStringFilled(button['BODY'])) {
+				return;
+			}
+			const item = main_core.Tag.render`<button type="button" class="main-post-form-toolbar-button" data-bx-role="toolbar-item"></button>`;
+			if (main_core.Type.isElementNode(button['BODY'])) {
+				item.appendChild(button['BODY']);
+			} else {
+				item.innerHTML = button['BODY'];
+			}
+			if (button['ID']) {
+				item.setAttribute('data-id', button['ID']);
+			}
+			if (buttonId !== null) {
+				let found = false;
+				let itemBefore = null;
+				Array.from(this.container.querySelectorAll('[data-bx-role="toolbar-item"]')).forEach(toolbarItem => {
+					if (found === true && itemBefore === null) {
+						itemBefore = toolbarItem;
+					} else if (found === false && toolbarItem && toolbarItem.dataset && toolbarItem.dataset.id === buttonId) {
+						found = true;
+					}
+				});
+				if (itemBefore) {
+					itemBefore.parentNode.insertBefore(item, itemBefore);
+				}
+			}
+			if (!item.parentNode) {
+				this.container.appendChild(item);
+			}
+			this.adjustMorePosition();
+		}
+		getItems() {
+			return Array.from(this.container.querySelectorAll('[data-bx-role="toolbar-item"]'));
+		}
+		getVisibleItems() {
+			const visibleItems = [];
+			Array.from(this.container.querySelectorAll('[data-bx-role="toolbar-item"]')).forEach(item => {
+				if (item.offsetTop > this.container.clientHeight / 2) {
+					visibleItems.push(item);
+				}
+			});
+			return visibleItems;
+		}
+		getHiddenItems() {
+			const hiddenItems = [];
+			Array.from(this.container.querySelectorAll('[data-bx-role="toolbar-item"]')).forEach(item => {
+				if (item.offsetTop > 0) {
+					hiddenItems.push(item);
+				}
+			});
+			return hiddenItems;
+		}
+		adjustMorePosition() {
+			const visibleItemsLength = this.getVisibleItems().length;
+			if (visibleItemsLength <= 0 || visibleItemsLength >= this.getItems().length) {
+				this.moreItem.style.display = 'none';
+			} else {
+				this.moreItem.style.display = '';
+			}
+		}
+		getPopup() {
+			if (!this.popup) {
+				this.popup = main_popup.PopupManager.create({
+					id: 'main_post_form_toolbar_' + justCounter++,
+					className: 'main-post-form-toolbar-popup',
+					cacheable: false,
+					content: this.getPopupContainer(),
+					closeByEsc: true,
+					autoHide: true,
+					angle: true,
+					bindElement: this.moreItem,
+					offsetTop: -5,
+					offsetLeft: 5,
+					events: {
+						onClose: () => {
+							Array.from(this.getPopupContainer().querySelectorAll('[data-bx-role="toolbar-item"]')).forEach(item => {
+								this.container.appendChild(item);
+							});
+							delete this.popup;
+						}
+					}
+				});
+			}
+			return this.popup;
+		}
+		getPopupContainer() {
+			if (!this.popupContainer) {
+				this.popupContainer = document.createElement('DIV');
+			}
+			return this.popupContainer;
+		}
+		showSubmenu() {
+			const hiddenItems = this.getHiddenItems();
+			if (hiddenItems.length <= 0) {
+				return;
+			}
+			hiddenItems.forEach(item => {
+				this.getPopupContainer().appendChild(item);
+			});
+			this.getPopup().show();
+		}
+	}
 
-	var TasksLimit = /*#__PURE__*/function () {
-	  function TasksLimit() {
-	    babelHelpers.classCallCheck(this, TasksLimit);
-	  }
-	  babelHelpers.createClass(TasksLimit, null, [{
-	    key: "showPopup",
-	    value: function showPopup(params) {
-	      var tasksLimitPopup = main_popup.PopupManager.getPopupById(this.getPopupId());
-	      if (!tasksLimitPopup) {
-	        tasksLimitPopup = new main_popup.Popup(this.getPopupId(), null, {
-	          content: this.getTasksLimitPopupContent(),
-	          lightShadow: false,
-	          offsetLeft: 20,
-	          autoHide: false,
-	          angle: {
-	            position: 'bottom'
-	          },
-	          closeByEsc: false,
-	          closeIcon: true
-	        });
-	      }
-	      tasksLimitPopup.setBindElement(params.bindPosition);
-	      tasksLimitPopup.show();
-	    }
-	  }, {
-	    key: "getPopupId",
-	    value: function getPopupId() {
-	      return 'bx-post-mention-tasks-limit-popup';
-	    }
-	  }, {
-	    key: "getTasksLimitPopupContent",
-	    value: function getTasksLimitPopupContent() {
-	      return main_core.Dom.create('DIV', {
-	        style: {
-	          width: '400px',
-	          padding: '10px'
-	        },
-	        children: [main_core.Dom.create('SPAN', {
-	          html: main_core.Loc.getMessage('MPF_MENTION_TASKS_LIMIT').replace('#A_BEGIN#', '<a href="javascript:void(0);" onclick="BX.Main.PostFormTasksLimit.onClickTasksLimitPopupSlider(this);">').replace('#A_END#', '</a>')
-	        })]
-	      });
-	    }
-	  }, {
-	    key: "onClickTasksLimitPopupSlider",
-	    value: function onClickTasksLimitPopupSlider(bindElement) {
-	      var _this = this;
-	      BX.Runtime.loadExtension('ui.info-helper').then(function (_ref) {
-	        var FeaturePromotersRegistry = _ref.FeaturePromotersRegistry;
-	        if (FeaturePromotersRegistry) {
-	          FeaturePromotersRegistry.getPromoter({
-	            code: 'limit_tasks_observers_participants',
-	            bindElement: bindElement
-	          }).show();
-	        } else {
-	          _this.hidePopup();
-	          BX.UI.InfoHelper.show('limit_tasks_observers_participants', {
-	            isLimit: true,
-	            limitAnalyticsLabels: {
-	              module: 'tasks',
-	              source: 'postForm',
-	              subject: 'auditor'
-	            }
-	          });
-	        }
-	      });
-	    }
-	  }, {
-	    key: "hidePopup",
-	    value: function hidePopup() {
-	      var tasksLimitPopup = main_popup.PopupManager.getPopupById(this.getPopupId());
-	      if (tasksLimitPopup) {
-	        tasksLimitPopup.close();
-	      }
-	    }
-	  }]);
-	  return TasksLimit;
-	}();
+	class TasksLimit {
+		static showPopup(params) {
+			let tasksLimitPopup = main_popup.PopupManager.getPopupById(this.getPopupId());
+			if (!tasksLimitPopup) {
+				tasksLimitPopup = new main_popup.Popup(this.getPopupId(), null, {
+					content: this.getTasksLimitPopupContent(),
+					lightShadow: false,
+					offsetLeft: 20,
+					autoHide: false,
+					angle: {
+						position: 'bottom'
+					},
+					closeByEsc: false,
+					closeIcon: true
+				});
+			}
+			tasksLimitPopup.setBindElement(params.bindPosition);
+			tasksLimitPopup.show();
+		}
+		static getPopupId() {
+			return 'bx-post-mention-tasks-limit-popup';
+		}
+		static getTasksLimitPopupContent() {
+			return main_core.Dom.create('DIV', {
+				style: {
+					width: '400px',
+					padding: '10px'
+				},
+				children: [main_core.Dom.create('SPAN', {
+					html: main_core.Loc.getMessage('MPF_MENTION_TASKS_LIMIT').replace('#A_BEGIN#', '<a href="javascript:void(0);" onclick="BX.Main.PostFormTasksLimit.onClickTasksLimitPopupSlider(this);">').replace('#A_END#', '</a>')
+				})]
+			});
+		}
+		static onClickTasksLimitPopupSlider(bindElement) {
+			BX.Runtime.loadExtension('ui.info-helper').then(({
+				FeaturePromotersRegistry
+			}) => {
+				if (FeaturePromotersRegistry) {
+					FeaturePromotersRegistry.getPromoter({
+						code: 'limit_tasks_observers_participants',
+						bindElement
+					}).show();
+				} else {
+					this.hidePopup();
+					BX.UI.InfoHelper.show('limit_tasks_observers_participants', {
+						isLimit: true,
+						limitAnalyticsLabels: {
+							module: 'tasks',
+							source: 'postForm',
+							subject: 'auditor'
+						}
+					});
+				}
+			});
+		}
+		static hidePopup() {
+			const tasksLimitPopup = main_popup.PopupManager.getPopupById(this.getPopupId());
+			if (tasksLimitPopup) {
+				tasksLimitPopup.close();
+			}
+		}
+	}
 
-	function _classStaticPrivateFieldSpecGet(receiver, classConstructor, descriptor) { _classCheckPrivateStaticAccess(receiver, classConstructor); _classCheckPrivateStaticFieldDescriptor(descriptor, "get"); return _classApplyDescriptorGet(receiver, descriptor); }
-	function _classCheckPrivateStaticFieldDescriptor(descriptor, action) { if (descriptor === undefined) { throw new TypeError("attempted to " + action + " private static field before its declaration"); } }
-	function _classCheckPrivateStaticAccess(receiver, classConstructor) { if (receiver !== classConstructor) { throw new TypeError("Private static access of wrong provenance"); } }
-	function _classApplyDescriptorGet(receiver, descriptor) { if (descriptor.get) { return descriptor.get.call(receiver); } return descriptor.value; }
-	var Editor = /*#__PURE__*/function () {
-	  function Editor(options, editorParams) {
-	    var _this = this;
-	    babelHelpers.classCallCheck(this, Editor);
-	    babelHelpers.defineProperty(this, "jobs", new Map());
-	    babelHelpers.defineProperty(this, "editorParams", {
-	      height: 100,
-	      ctrlEnterHandler: null,
-	      parsers: null,
-	      showPanelEditor: false,
-	      lazyLoad: true,
-	      urlPreviewId: null,
-	      tasksLimitExceeded: false
-	    });
-	    babelHelpers.defineProperty(this, "actionQueue", []);
-	    this.id = options['id'];
-	    this.name = options['name'];
-	    this.formId = options['formId'];
-	    this.eventNode = options.eventNode || document.querySelector('#div' + (this.name || this.id));
-	    this.eventNode.dataset.bxHtmlEditable = 'Y';
-	    this.formEntityType = null;
-	    Editor.repo.set(this.getId(), this);
-	    if (!main_core.Type.isArray(editorParams.parsers) && main_core.Type.isPlainObject(editorParams.parsers)) {
-	      editorParams.parsers = Object.values(editorParams.parsers);
-	    }
-	    this.setEditorParams(editorParams);
-	    this.bindEvents(window['BXHtmlEditor'] ? window['BXHtmlEditor'].Get(this.getId()) : null);
-	    this.toolbar = new Toolbar(this.getEventObject(), this.getContainer());
-	    this.inited = true;
-	    if (this.name !== null) {
-	      window[this.name] = this;
-	    }
-	    BX.onCustomEvent(this, 'onInitialized', [this, this.getFormId()]);
+	class Editor {
+		static repo = new Map();
+		jobs = new Map();
+		editorParams = {
+			height: 100,
+			ctrlEnterHandler: null,
+			parsers: null,
+			showPanelEditor: false,
+			lazyLoad: true,
+			urlPreviewId: null,
+			tasksLimitExceeded: false
+		};
+		actionQueue = [];
+		constructor(options, editorParams) {
+			this.id = options['id'];
+			this.name = options['name'];
+			this.formId = options['formId'];
+			this.eventNode = options.eventNode || document.querySelector('#div' + (this.name || this.id));
+			this.eventNode.dataset.bxHtmlEditable = 'Y';
+			this.formEntityType = null;
+			Editor.repo.set(this.getId(), this);
+			if (!main_core.Type.isArray(editorParams.parsers) && main_core.Type.isPlainObject(editorParams.parsers)) {
+				editorParams.parsers = Object.values(editorParams.parsers);
+			}
+			this.setEditorParams(editorParams);
+			this.bindEvents(window['BXHtmlEditor'] ? window['BXHtmlEditor'].Get(this.getId()) : null);
+			this.toolbar = new Toolbar(this.getEventObject(), this.getContainer());
+			this.inited = true;
+			if (this.name !== null) {
+				window[this.name] = this;
+			}
+			BX.onCustomEvent(this, 'onInitialized', [this, this.getFormId()]);
 
-	    //region Compatibility for crm.timeline
-	    main_core_events.EventEmitter.subscribe(this.getEventObject(), 'OnFileUploadSuccess', function (_ref) {
-	      var compatData = _ref.compatData;
-	      BX.onCustomEvent(_this.getEventObject(), 'onFileIsAdded', compatData);
-	    });
-	    //endregion
+			//region Compatibility for crm.timeline
+			main_core_events.EventEmitter.subscribe(this.getEventObject(), 'OnFileUploadSuccess', ({
+				compatData
+			}) => {
+				BX.onCustomEvent(this.getEventObject(), 'onFileIsAdded', compatData);
+			});
+			//endregion
 
-	    main_core_events.EventEmitter.subscribe(this.getEventObject(), 'onBusy', function (_ref2) {
-	      var handler = _ref2.data;
-	      if (_this.jobs.size <= 0) {
-	        main_core_events.EventEmitter.emit(_this.getEventObject(), 'onLHEIsBusy');
-	      }
-	      _this.jobs.set(handler, (_this.jobs.get(handler) || 0) + 1);
-	    });
-	    main_core_events.EventEmitter.subscribe(this.getEventObject(), 'onReady', function (_ref3) {
-	      var handler = _ref3.data;
-	      if (_this.jobs.size <= 0 || !_this.jobs.has(handler)) {
-	        return;
-	      }
-	      var counter = _this.jobs.get(handler);
-	      if (counter <= 1) {
-	        _this.jobs["delete"](handler);
-	        if (_this.jobs.size <= 0) {
-	          main_core_events.EventEmitter.emit(_this.getEventObject(), 'onLHEIsReady');
-	        }
-	      } else {
-	        _this.jobs.set(handler, --counter);
-	      }
-	    });
-	  }
-	  babelHelpers.createClass(Editor, [{
-	    key: "setEditorParams",
-	    value: function setEditorParams(editorParams) {
-	      this.editorParams = Object.assign(this.editorParams, editorParams);
-	    }
-	  }, {
-	    key: "bindEvents",
-	    value: function bindEvents() {
-	      var _this2 = this;
-	      var htmlEditor = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
-	      this.events = {};
-	      [['OnEditorInitedBefore', this.OnEditorInitedBefore.bind(this)], ['OnCreateIframeAfter', this.OnCreateIframeAfter.bind(this)], ['OnEditorInitedAfter', this.OnEditorInitedAfter.bind(this)]].forEach(function (_ref4) {
-	        var _ref5 = babelHelpers.slicedToArray(_ref4, 2),
-	          eventName = _ref5[0],
-	          closure = _ref5[1];
-	        if (!htmlEditor) {
-	          _this2.events[eventName] = function (htmlEditor) {
-	            if (htmlEditor.id === _this2.getId()) {
-	              //!it important to use deprecated eventEmitter
-	              BX.removeCustomEvent(eventName, _this2.events[eventName]);
-	              delete _this2.events[eventName];
-	              closure(htmlEditor);
-	            }
-	          };
-	          //!it important to use deprecated eventEmitter
-	          BX.addCustomEvent(eventName, _this2.events[eventName]);
-	        } else {
-	          closure(htmlEditor);
-	        }
-	      });
-	      main_core_events.EventEmitter.subscribe(this.getEventObject(), 'OnShowLHE', this.OnShowLHE.bind(this));
-	      main_core_events.EventEmitter.subscribe(this.getEventObject(), 'OnButtonClick', this.OnButtonClick.bind(this));
-	      main_core_events.EventEmitter.subscribe(this.getEventObject(), 'OnParserRegister', function (_ref6) {
-	        var parser = _ref6.data;
-	        _this2.addParser(parser);
-	      });
-	      main_core_events.EventEmitter.subscribe(this.getEventObject(), 'OnGetHTMLEditor', function (_ref7) {
-	        var someObjectToReceiveHTMLEditor = _ref7.data;
-	        someObjectToReceiveHTMLEditor.htmlEditor = _this2.getEditor();
-	      });
-	      main_core_events.EventEmitter.subscribe(this.getEventObject(), 'OnInsertContent', function (_ref8) {
-	        var _ref8$data = babelHelpers.slicedToArray(_ref8.data, 2),
-	          text = _ref8$data[0],
-	          html = _ref8$data[1];
-	        _this2.insertContent(text, html);
-	      });
-	      main_core_events.EventEmitter.subscribe(this.getEventObject(), 'OnAddButton', function (_ref9) {
-	        var _ref9$data = babelHelpers.slicedToArray(_ref9.data, 2),
-	          button = _ref9$data[0],
-	          beforeButton = _ref9$data[1];
-	        _this2.getToolbar().insertAfter(button, beforeButton);
-	      });
-	      bindHTML(this);
-	    }
-	  }, {
-	    key: "getId",
-	    value: function getId() {
-	      return this.id;
-	    }
-	  }, {
-	    key: "setEditor",
-	    value: function setEditor(htmlEditor) {
-	      var _this3 = this;
-	      if (this.htmlEditor === htmlEditor) {
-	        return;
-	      }
-	      this.htmlEditor = htmlEditor;
-	      htmlEditor.formID = this.getFormId();
-	      main_core_events.EventEmitter.subscribe(htmlEditor, 'OnCtrlEnter', function () {
-	        htmlEditor.SaveContent();
-	        if (main_core.Type.isFunction(_this3.editorParams.ctrlEnterHandler)) {
-	          _this3.editorParams.ctrlEnterHandler();
-	        } else if (main_core.Type.isStringFilled(_this3.editorParams.ctrlEnterHandler) && window[_this3.editorParams.ctrlEnterHandler]) {
-	          window[_this3.editorParams.ctrlEnterHandler]();
-	        } else if (document.forms[_this3.getFormId()]) {
-	          BX.submit(document.forms[_this3.getFormId()]);
-	        }
-	      });
-	      this.editorParams['height'] = htmlEditor.config['height'];
-	      console.groupCollapsed('main.post.form: parsers: ', this.getId());
-	      this.editorParams.parsers.forEach(function (parserId) {
-	        var parser = getKnownParser(parserId, _this3, htmlEditor);
-	        if (parser) {
-	          console.groupCollapsed(parserId);
-	          console.log(parser);
-	          if (parser.hasButton()) {
-	            htmlEditor.AddButton(parser.getButton());
-	          }
-	          htmlEditor.AddParser(parser.getParser());
-	          console.groupEnd(parserId);
-	        }
-	      });
-	      console.groupEnd('main.post.form: parsers: ', this.getId());
+			main_core_events.EventEmitter.subscribe(this.getEventObject(), 'onBusy', ({
+				data: handler
+			}) => {
+				if (this.jobs.size <= 0) {
+					main_core_events.EventEmitter.emit(this.getEventObject(), 'onLHEIsBusy');
+				}
+				this.jobs.set(handler, (this.jobs.get(handler) || 0) + 1);
+			});
+			main_core_events.EventEmitter.subscribe(this.getEventObject(), 'onReady', ({
+				data: handler
+			}) => {
+				if (this.jobs.size <= 0 || !this.jobs.has(handler)) {
+					return;
+				}
+				let counter = this.jobs.get(handler);
+				if (counter <= 1) {
+					this.jobs.delete(handler);
+					if (this.jobs.size <= 0) {
+						main_core_events.EventEmitter.emit(this.getEventObject(), 'onLHEIsReady');
+					}
+				} else {
+					this.jobs.set(handler, --counter);
+				}
+			});
+		}
+		setEditorParams(editorParams) {
+			this.editorParams = Object.assign(this.editorParams, editorParams);
+		}
+		bindEvents(htmlEditor = null) {
+			this.events = {};
+			[['OnEditorInitedBefore', this.OnEditorInitedBefore.bind(this)], ['OnCreateIframeAfter', this.OnCreateIframeAfter.bind(this)], ['OnEditorInitedAfter', this.OnEditorInitedAfter.bind(this)]].forEach(([eventName, closure]) => {
+				if (!htmlEditor) {
+					this.events[eventName] = htmlEditor => {
+						if (htmlEditor.id === this.getId()) {
+							//!it important to use deprecated eventEmitter
+							BX.removeCustomEvent(eventName, this.events[eventName]);
+							delete this.events[eventName];
+							closure(htmlEditor);
+						}
+					};
+					//!it important to use deprecated eventEmitter
+					BX.addCustomEvent(eventName, this.events[eventName]);
+				} else {
+					closure(htmlEditor);
+				}
+			});
+			main_core_events.EventEmitter.subscribe(this.getEventObject(), 'OnShowLHE', this.OnShowLHE.bind(this));
+			main_core_events.EventEmitter.subscribe(this.getEventObject(), 'OnButtonClick', this.OnButtonClick.bind(this));
+			main_core_events.EventEmitter.subscribe(this.getEventObject(), 'OnParserRegister', ({
+				data: parser
+			}) => {
+				this.addParser(parser);
+			});
+			main_core_events.EventEmitter.subscribe(this.getEventObject(), 'OnGetHTMLEditor', ({
+				data: someObjectToReceiveHTMLEditor
+			}) => {
+				someObjectToReceiveHTMLEditor.htmlEditor = this.getEditor();
+			});
+			main_core_events.EventEmitter.subscribe(this.getEventObject(), 'OnInsertContent', ({
+				data: [text, html]
+			}) => {
+				this.insertContent(text, html);
+			});
+			main_core_events.EventEmitter.subscribe(this.getEventObject(), 'OnAddButton', ({
+				data: [button, beforeButton]
+			}) => {
+				this.getToolbar().insertAfter(button, beforeButton);
+			});
+			bindHTML(this);
+		}
+		getId() {
+			return this.id;
+		}
+		setEditor(htmlEditor) {
+			if (this.htmlEditor === htmlEditor) {
+				return;
+			}
+			this.htmlEditor = htmlEditor;
+			htmlEditor.formID = this.getFormId();
+			main_core_events.EventEmitter.subscribe(htmlEditor, 'OnCtrlEnter', () => {
+				htmlEditor.SaveContent();
+				if (main_core.Type.isFunction(this.editorParams.ctrlEnterHandler)) {
+					this.editorParams.ctrlEnterHandler();
+				} else if (main_core.Type.isStringFilled(this.editorParams.ctrlEnterHandler) && window[this.editorParams.ctrlEnterHandler]) {
+					window[this.editorParams.ctrlEnterHandler]();
+				} else if (document.forms[this.getFormId()]) {
+					BX.submit(document.forms[this.getFormId()]);
+				}
+			});
+			this.editorParams['height'] = htmlEditor.config['height'];
+			console.groupCollapsed('main.post.form: parsers: ', this.getId());
+			this.editorParams.parsers.forEach(parserId => {
+				const parser = getKnownParser(parserId, this, htmlEditor);
+				if (parser) {
+					console.groupCollapsed(parserId);
+					console.log(parser);
+					if (parser.hasButton()) {
+						htmlEditor.AddButton(parser.getButton());
+					}
+					htmlEditor.AddParser(parser.getParser());
+					console.groupEnd(parserId);
+				}
+			});
+			console.groupEnd('main.post.form: parsers: ', this.getId());
 
-	      //region Catching external files
-	      // paste an image from IO buffer into editor
-	      main_core_events.EventEmitter.subscribe(htmlEditor, 'OnImageDataUriHandle', function (_ref10) {
-	        var _ref10$compatData = babelHelpers.slicedToArray(_ref10.compatData, 2),
-	          editor = _ref10$compatData[0],
-	          imageBase64 = _ref10$compatData[1];
-	        var blob = BX.UploaderUtils.dataURLToBlob(imageBase64.src);
-	        if (blob && blob.size > 0 && blob.type.indexOf('image/') === 0) {
-	          main_core_events.EventEmitter.emit(_this3.getEventObject(), 'onShowControllers', 'show');
-	          blob.name = blob.name || imageBase64.title || 'image.' + blob.type.substr(6);
-	          blob.referrerToEditor = imageBase64;
-	          main_core_events.EventEmitter.emit(_this3.getEventObject(), 'OnImageHasCaught', new main_core_events.BaseEvent({
-	            data: blob
-	          })).forEach(function (result) {
-	            result.then(function (_ref11) {
-	              var image = _ref11.image,
-	                html = _ref11.html;
-	              main_core_events.EventEmitter.emit(htmlEditor, 'OnImageDataUriCaughtUploaded', new main_core_events.BaseEvent({
-	                compatData: [imageBase64, image, {
-	                  replacement: html
-	                }]
-	              }));
-	            })["catch"](function () {
-	              main_core_events.EventEmitter.emit(htmlEditor, 'OnImageDataUriCaughtFailed', new main_core_events.BaseEvent({
-	                compatData: [imageBase64]
-	              }));
-	            });
-	          });
-	        }
-	      });
+			//region Catching external files
+			// paste an image from IO buffer into editor
+			main_core_events.EventEmitter.subscribe(htmlEditor, 'OnImageDataUriHandle', ({
+				compatData: [editor, imageBase64]
+			}) => {
+				const blob = BX.UploaderUtils.dataURLToBlob(imageBase64.src);
+				if (blob && blob.size > 0 && blob.type.indexOf('image/') === 0) {
+					main_core_events.EventEmitter.emit(this.getEventObject(), 'onShowControllers', 'show');
+					blob.name = blob.name || imageBase64.title || 'image.' + blob.type.substr(6);
+					blob.referrerToEditor = imageBase64;
+					main_core_events.EventEmitter.emit(this.getEventObject(), 'OnImageHasCaught', new main_core_events.BaseEvent({
+						data: blob
+					})).forEach(result => {
+						result.then(({
+							image,
+							html
+						}) => {
+							main_core_events.EventEmitter.emit(htmlEditor, 'OnImageDataUriCaughtUploaded', new main_core_events.BaseEvent({
+								compatData: [imageBase64, image, {
+									replacement: html
+								}]
+							}));
+						}).catch(() => {
+							main_core_events.EventEmitter.emit(htmlEditor, 'OnImageDataUriCaughtFailed', new main_core_events.BaseEvent({
+								compatData: [imageBase64]
+							}));
+						});
+					});
+				}
+			});
 
-	      // paste a video into editor
-	      main_core_events.EventEmitter.subscribe(main_core_events.EventEmitter.GLOBAL_TARGET, 'onAddVideoMessage', function (_ref12) {
-	        var _ref12$compatData = babelHelpers.slicedToArray(_ref12.compatData, 2),
-	          file = _ref12$compatData[0],
-	          formID = _ref12$compatData[1];
-	        if (!formID || _this3.getFormId() !== formID) {
-	          return;
-	        }
-	        main_core_events.EventEmitter.emit(_this3.getEventObject(), 'onShowControllers', 'show');
-	        main_core_events.EventEmitter.emit(_this3.getEventObject(), 'OnVideoHasCaught', new main_core_events.BaseEvent({
-	          data: file
-	        }));
-	      });
-	      // DnD
+			// paste a video into editor
+			main_core_events.EventEmitter.subscribe(main_core_events.EventEmitter.GLOBAL_TARGET, 'onAddVideoMessage', ({
+				compatData: [file, formID]
+			}) => {
+				if (!formID || this.getFormId() !== formID) {
+					return;
+				}
+				main_core_events.EventEmitter.emit(this.getEventObject(), 'onShowControllers', 'show');
+				main_core_events.EventEmitter.emit(this.getEventObject(), 'OnVideoHasCaught', new main_core_events.BaseEvent({
+					data: file
+				}));
+			});
+			// DnD
 
-	      if (this.editorParams.isDnDEnabled) {
-	        (function () {
-	          var placeHolder = BX('micro' + (_this3.name || _this3.id));
-	          var active = false;
-	          var timeoutId = 0;
-	          var activate = function activate(e) {
-	            e.preventDefault();
-	            e.stopPropagation();
-	            if (timeoutId > 0) {
-	              clearTimeout(timeoutId);
-	              timeoutId = 0;
-	            }
-	            if (active === true) {
-	              return;
-	            }
-	            var isFileTransfer = e && e['dataTransfer'] && e['dataTransfer']['types'] && e['dataTransfer']['types'].indexOf('Files') >= 0;
-	            if (isFileTransfer) {
-	              active = true;
-	              _this3.getContainer().classList.add('feed-add-post-dnd-over');
-	              if (placeHolder) {
-	                placeHolder.classList.add('feed-add-post-micro-dnd-ready');
-	              }
-	            }
-	            return true;
-	          };
-	          var disActivate = function disActivate(e) {
-	            e.preventDefault();
-	            e.stopPropagation();
-	            if (timeoutId > 0) {
-	              clearTimeout(timeoutId);
-	            }
-	            timeoutId = setTimeout(function () {
-	              active = false;
-	              _this3.getContainer().classList.remove('feed-add-post-dnd-over');
-	              if (placeHolder) {
-	                placeHolder.classList.remove('feed-add-post-micro-dnd-ready');
-	              }
-	            }, 100);
-	            return false;
-	          };
-	          var catchFiles = function catchFiles(e) {
-	            disActivate(e);
-	            if (e && e['dataTransfer'] && e['dataTransfer']['types'] && e['dataTransfer']['types'].indexOf('Files') >= 0 && e['dataTransfer']['files'] && e['dataTransfer']['files'].length > 0) {
-	              main_core_events.EventEmitter.emit(_this3.getEventObject(), 'OnShowLHE', new main_core_events.BaseEvent({
-	                compatData: ['justShow', {
-	                  onShowControllers: 'show'
-	                }]
-	              }));
-	              main_core_events.EventEmitter.emit(_this3.getEventObject(), 'onFilesHaveCaught', new main_core_events.BaseEvent({
-	                data: e['dataTransfer']['files']
-	              }));
-	              main_core_events.EventEmitter.emit(_this3.getEventObject(), 'onFilesHaveDropped', {
-	                event: e
-	              });
-	            }
-	            return false;
-	          };
-	          _this3.getContainer().addEventListener('dragover', activate);
-	          _this3.getContainer().addEventListener('dragenter', activate);
-	          _this3.getContainer().addEventListener('dragleave', disActivate);
-	          _this3.getContainer().addEventListener('dragexit', disActivate);
-	          _this3.getContainer().addEventListener('drop', catchFiles);
-	          _this3.getContainer().setAttribute('dropzone', 'copy f:*\/*');
-	          if (!document.body.hasAttribute('dropzone')) {
-	            document.body.setAttribute('dropzone', 'copy f:*/*');
-	            document.body.addEventListener('dragover', function (e) {
-	              e.preventDefault();
-	              e.stopPropagation();
-	              return true;
-	            });
-	            document.body.addEventListener('drop', function (e) {
-	              e.preventDefault();
-	              e.stopPropagation();
-	              if (e && e['dataTransfer'] && e['dataTransfer']['types'] && e['dataTransfer']['types'].indexOf('Files') >= 0 && e['dataTransfer']['files'] && e['dataTransfer']['files'].length > 0) {
-	                var lhe;
-	                var iteratorBuffer;
-	                var iterator = _classStaticPrivateFieldSpecGet(this.constructor, Editor, _shownForms).keys();
-	                while ((iteratorBuffer = iterator.next()) && iteratorBuffer.done !== true && iteratorBuffer.value) {
-	                  lhe = iteratorBuffer.value;
-	                }
-	                if (lhe) {
-	                  main_core_events.EventEmitter.emit(lhe.getEventObject(), 'OnShowLHE', new main_core_events.BaseEvent({
-	                    compatData: ['justShow', {
-	                      onShowControllers: 'show'
-	                    }]
-	                  }));
-	                  main_core_events.EventEmitter.emit(lhe.getEventObject(), 'onFilesHaveCaught', new main_core_events.BaseEvent({
-	                    data: e['dataTransfer']['files']
-	                  }));
-	                  main_core_events.EventEmitter.emit(lhe.getEventObject(), 'onFilesHaveDropped', {
-	                    event: e
-	                  });
-	                }
-	              }
-	              return false;
-	            }.bind(_this3));
-	          }
-	          if (placeHolder) {
-	            placeHolder.addEventListener('dragenter', function (e) {
-	              activate(e);
-	              main_core_events.EventEmitter.emit(_this3.getEventObject(), 'OnShowLHE', new main_core_events.BaseEvent({
-	                compatData: ['justShow', {
-	                  onShowControllers: 'show'
-	                }]
-	              }));
-	            });
-	          }
-	          main_core_events.EventEmitter.subscribe(_this3.getEditor(), 'OnIframeDrop', function (_ref13) {
-	            var _ref13$data = babelHelpers.slicedToArray(_ref13.data, 1),
-	              e = _ref13$data[0];
-	            return catchFiles(e);
-	          });
-	          main_core_events.EventEmitter.subscribe(_this3.getEditor(), 'OnIframeDragOver', function (_ref14) {
-	            var _ref14$data = babelHelpers.slicedToArray(_ref14.data, 1),
-	              e = _ref14$data[0];
-	            return activate(e);
-	          });
-	          main_core_events.EventEmitter.subscribe(_this3.getEditor(), 'OnIframeDragLeave', function (_ref15) {
-	            var _ref15$data = babelHelpers.slicedToArray(_ref15.data, 1),
-	              e = _ref15$data[0];
-	            return disActivate(e);
-	          });
-	        })();
-	      }
-	      //endregion
+			if (this.editorParams.isDnDEnabled) {
+				(() => {
+					const placeHolder = BX('micro' + (this.name || this.id));
+					let active = false;
+					let timeoutId = 0;
+					const activate = e => {
+						e.preventDefault();
+						e.stopPropagation();
+						if (timeoutId > 0) {
+							clearTimeout(timeoutId);
+							timeoutId = 0;
+						}
+						if (active === true) {
+							return;
+						}
+						let isFileTransfer = e && e['dataTransfer'] && e['dataTransfer']['types'] && e['dataTransfer']['types'].indexOf('Files') >= 0;
+						if (isFileTransfer) {
+							active = true;
+							this.getContainer().classList.add('feed-add-post-dnd-over');
+							if (placeHolder) {
+								placeHolder.classList.add('feed-add-post-micro-dnd-ready');
+							}
+						}
+						return true;
+					};
+					const disActivate = e => {
+						e.preventDefault();
+						e.stopPropagation();
+						if (timeoutId > 0) {
+							clearTimeout(timeoutId);
+						}
+						timeoutId = setTimeout(() => {
+							active = false;
+							this.getContainer().classList.remove('feed-add-post-dnd-over');
+							if (placeHolder) {
+								placeHolder.classList.remove('feed-add-post-micro-dnd-ready');
+							}
+						}, 100);
+						return false;
+					};
+					const catchFiles = e => {
+						disActivate(e);
+						if (e && e['dataTransfer'] && e['dataTransfer']['types'] && e['dataTransfer']['types'].indexOf('Files') >= 0 && e['dataTransfer']['files'] && e['dataTransfer']['files'].length > 0) {
+							main_core_events.EventEmitter.emit(this.getEventObject(), 'OnShowLHE', new main_core_events.BaseEvent({
+								compatData: ['justShow', {
+									onShowControllers: 'show'
+								}]
+							}));
+							main_core_events.EventEmitter.emit(this.getEventObject(), 'onFilesHaveCaught', new main_core_events.BaseEvent({
+								data: e['dataTransfer']['files']
+							}));
+							main_core_events.EventEmitter.emit(this.getEventObject(), 'onFilesHaveDropped', {
+								event: e
+							});
+						}
+						return false;
+					};
+					this.getContainer().addEventListener('dragover', activate);
+					this.getContainer().addEventListener('dragenter', activate);
+					this.getContainer().addEventListener('dragleave', disActivate);
+					this.getContainer().addEventListener('dragexit', disActivate);
+					this.getContainer().addEventListener('drop', catchFiles);
+					this.getContainer().setAttribute('dropzone', 'copy f:*\/*');
+					if (!document.body.hasAttribute('dropzone')) {
+						document.body.setAttribute('dropzone', 'copy f:*/*');
+						document.body.addEventListener('dragover', function (e) {
+							e.preventDefault();
+							e.stopPropagation();
+							return true;
+						});
+						document.body.addEventListener('drop', function (e) {
+							e.preventDefault();
+							e.stopPropagation();
+							if (e && e['dataTransfer'] && e['dataTransfer']['types'] && e['dataTransfer']['types'].indexOf('Files') >= 0 && e['dataTransfer']['files'] && e['dataTransfer']['files'].length > 0) {
+								let lhe;
+								let iteratorBuffer;
+								const iterator = this.constructor.#shownForms.keys();
+								while ((iteratorBuffer = iterator.next()) && iteratorBuffer.done !== true && iteratorBuffer.value) {
+									lhe = iteratorBuffer.value;
+								}
+								if (lhe) {
+									main_core_events.EventEmitter.emit(lhe.getEventObject(), 'OnShowLHE', new main_core_events.BaseEvent({
+										compatData: ['justShow', {
+											onShowControllers: 'show'
+										}]
+									}));
+									main_core_events.EventEmitter.emit(lhe.getEventObject(), 'onFilesHaveCaught', new main_core_events.BaseEvent({
+										data: e['dataTransfer']['files']
+									}));
+									main_core_events.EventEmitter.emit(lhe.getEventObject(), 'onFilesHaveDropped', {
+										event: e
+									});
+								}
+							}
+							return false;
+						}.bind(this));
+					}
+					if (placeHolder) {
+						placeHolder.addEventListener('dragenter', e => {
+							activate(e);
+							main_core_events.EventEmitter.emit(this.getEventObject(), 'OnShowLHE', new main_core_events.BaseEvent({
+								compatData: ['justShow', {
+									onShowControllers: 'show'
+								}]
+							}));
+						});
+					}
+					main_core_events.EventEmitter.subscribe(this.getEditor(), 'OnIframeDrop', ({
+						data: [e]
+					}) => catchFiles(e));
+					main_core_events.EventEmitter.subscribe(this.getEditor(), 'OnIframeDragOver', ({
+						data: [e]
+					}) => activate(e));
+					main_core_events.EventEmitter.subscribe(this.getEditor(), 'OnIframeDragLeave', ({
+						data: [e]
+					}) => disActivate(e));
+				})();
+			}
+			//endregion
 
-	      main_core_events.EventEmitter.subscribe(htmlEditor, 'OnInsertContent', function (_ref16) {
-	        var _ref16$data = babelHelpers.slicedToArray(_ref16.data, 2),
-	          text = _ref16$data[0],
-	          html = _ref16$data[1];
-	        _this3.insertContent(text, html);
-	      });
+			main_core_events.EventEmitter.subscribe(htmlEditor, 'OnInsertContent', ({
+				data: [text, html]
+			}) => {
+				this.insertContent(text, html);
+			});
 
-	      //region Visible customization
-	      showPanelEditor(this, htmlEditor, this.editorParams);
-	      showUrlPreview(htmlEditor, this.editorParams);
-	      customizeHTMLEditor(this, htmlEditor);
-	      bindAutoSave(htmlEditor, BX(this.getFormId()));
-	      bindToolbar(this, htmlEditor);
-	      //endregion
-	      main_core_events.EventEmitter.subscribe(this.getEventObject(), 'OnAfterShowLHE', function () {
-	        _this3.getEditor().AllowBeforeUnloadHandler();
-	      });
-	      main_core_events.EventEmitter.subscribe(this.getEventObject(), 'OnAfterHideLHE', function () {
-	        TasksLimit.hidePopup();
-	        _this3.getEditor().DenyBeforeUnloadHandler();
-	      });
-	      main_core_events.EventEmitter.subscribe(htmlEditor, 'OnIframeClick', function () {
-	        var event = new MouseEvent('click', {
-	          bubbles: true,
-	          cancelable: true,
-	          view: window
-	        });
-	        htmlEditor.iframeView.container.dispatchEvent(event);
-	      });
-	    }
-	  }, {
-	    key: "getEditor",
-	    value: function getEditor() {
-	      return this.htmlEditor;
-	    }
-	  }, {
-	    key: "getFormId",
-	    value: function getFormId() {
-	      return this.formId;
-	    }
-	  }, {
-	    key: "getEventObject",
-	    value: function getEventObject() {
-	      return this.eventNode;
-	    }
-	  }, {
-	    key: "getContainer",
-	    value: function getContainer() {
-	      return this.eventNode;
-	    }
-	  }, {
-	    key: "getToolbar",
-	    value: function getToolbar() {
-	      return this.toolbar;
-	    }
-	  }, {
-	    key: "OnEditorInitedBefore",
-	    value: function OnEditorInitedBefore(htmlEditor) {
-	      this.setEditor(htmlEditor);
-	    }
-	  }, {
-	    key: "OnCreateIframeAfter",
-	    value: function OnCreateIframeAfter() {
-	      if (this.editorIsLoaded !== true) {
-	        this.editorIsLoaded = true;
-	        this.exec();
-	        main_core_events.EventEmitter.emit(this, 'OnEditorIsLoaded', []);
-	      }
-	    }
-	  }, {
-	    key: "OnEditorInitedAfter",
-	    value: function OnEditorInitedAfter(htmlEditor) {
-	      if (!this.editorParams.lazyLoad) {
-	        main_core_events.EventEmitter.emit(this.getEventObject(), 'OnShowLHE', new main_core_events.BaseEvent({
-	          compatData: ['justShow', htmlEditor, false]
-	        }));
-	      }
-	      if (htmlEditor.sandbox && htmlEditor.sandbox.inited) {
-	        this.OnCreateIframeAfter();
-	      }
-	    }
-	  }, {
-	    key: "addParser",
-	    value: function addParser(parser) {
-	      var _this4 = this;
-	      this.exec(function () {
-	        parser.init(_this4.getEditor());
-	        _this4.getEditor().AddParser({
-	          name: parser.id,
-	          obj: {
-	            Parse: function Parse(parserId, text) {
-	              return parser.parse(text);
-	            },
-	            UnParse: parser.unparse
-	          }
-	        });
-	        if (!_this4['addParserAfterDebounced']) {
-	          _this4.addParserAfterDebounced = main_core.Runtime.debounce(function () {
-	            var content = _this4.getEditor().GetContent();
-	            if (/&#9[13];/gi.test(content)) {
-	              _this4.getEditor().SetContent(content.replace(/&#91;/ig, "[").replace(/&#93;/ig, "]"), true);
-	            }
-	          }, 100);
-	        }
-	        _this4.addParserAfterDebounced();
-	      });
-	    }
-	  }, {
-	    key: "insertContent",
-	    value: function insertContent(text) {
-	      var _this5 = this;
-	      var html = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
-	      this.exec(function () {
-	        var editorMode = _this5.getEditor().GetViewMode();
-	        if (editorMode === 'wysiwyg') {
-	          var range = _this5.getEditor().selection.GetRange();
-	          _this5.getEditor().InsertHtml(html || text, range);
-	          setTimeout(_this5.getEditor().AutoResizeSceleton.bind(_this5.getEditor()), 500);
-	          setTimeout(_this5.getEditor().AutoResizeSceleton.bind(_this5.getEditor()), 1000);
-	        } else {
-	          _this5.getEditor().textareaView.Focus();
-	          if (!_this5.getEditor().bbCode) {
-	            var doc = _this5.getEditor().GetIframeDoc();
-	            var dummy = doc.createElement('DIV');
-	            dummy.style.display = 'none';
-	            dummy.innerHTML = text;
-	            doc.body.appendChild(dummy);
-	            text = _this5.getEditor().Parse(text, true, false);
-	            dummy.parentNode.removeChild(dummy);
-	          }
-	          _this5.getEditor().textareaView.WrapWith('', '', text);
-	        }
-	      });
-	    }
-	  }, {
-	    key: "reinit",
-	    value: function reinit(text, data) {
-	      var _this6 = this;
-	      var showControllers = 'hide';
-	      if (main_core.Type.isPlainObject(data) && Object.values(data).length) {
-	        Object.values(data).forEach(function (property) {
-	          if (property && property['VALUE']) {
-	            showControllers = 'show';
-	          }
-	        });
-	      }
-	      main_core_events.EventEmitter.emitAsync(this.getEventObject(), 'onReinitializeBeforeAsync', [text, data]).then(function () {
-	        main_core_events.EventEmitter.emit(_this6.getEventObject(), 'onShowControllers', showControllers);
-	        main_core_events.EventEmitter.emit(_this6.getEventObject(), 'onReinitializeBefore', [text, data]);
-	        _this6.getEditor().CheckAndReInit(main_core.Type.isString(text) ? text : '');
-	        BX.onCustomEvent(_this6.getEditor(), 'onReinitialize', [_this6, text, data]);
-	        if (_this6.editorParams['height']) {
-	          _this6.oEditor.SetConfigHeight(_this6.editorParams['height']);
-	          _this6.oEditor.ResizeSceleton();
-	        }
-	      });
-	    }
-	  }, {
-	    key: "OnShowLHE",
-	    value: function OnShowLHE(_ref17) {
-	      var _this7 = this;
-	      var data = _ref17.data,
-	        compatData = _ref17.compatData;
-	      var _ref18 = data || compatData,
-	        _ref19 = babelHelpers.slicedToArray(_ref18, 3),
-	        show = _ref19[0],
-	        setFocus = _ref19[1],
-	        FCFormId = _ref19[2];
-	      if (!this.getEditor() && window['BXHtmlEditor']) {
-	        window['BXHtmlEditor'].Get(this.getId()).Init();
-	      }
-	      show = show === false || show === 'hide' || show === 'justShow' ? show : true;
-	      var placeHolder = BX('micro' + (this.name || this.id));
-	      if (placeHolder) {
-	        placeHolder.style.display = show === true || show === 'justShow' ? 'none' : 'block';
-	      }
-	      if (show === 'hide') {
-	        _classStaticPrivateFieldSpecGet(this.constructor, Editor, _shownForms)["delete"](this);
-	        main_core_events.EventEmitter.emit(this.getEventObject(), 'OnBeforeHideLHE');
-	        if (this.getContainer().style.display === 'none') {
-	          main_core_events.EventEmitter.emit(this.getEventObject(), 'OnAfterHideLHE');
-	          main_core_events.EventEmitter.emit(this.getEventObject(), 'onShowControllers', 'hide');
-	        } else {
-	          new BX['easing']({
-	            duration: 200,
-	            start: {
-	              opacity: 100,
-	              height: this.getContainer().scrollHeight
-	            },
-	            finish: {
-	              opacity: 0,
-	              height: 20
-	            },
-	            transition: BX.easing.makeEaseOut(BX.easing.transitions.quad),
-	            step: function step(state) {
-	              _this7.getContainer().style.height = state.height + 'px';
-	              _this7.getContainer().style.opacity = state.opacity / 100;
-	            },
-	            complete: function complete() {
-	              _this7.getContainer().style.cssText = '';
-	              _this7.getContainer().style.display = 'none';
-	              main_core_events.EventEmitter.emit(_this7.getEventObject(), 'OnAfterHideLHE');
-	              main_core_events.EventEmitter.emit(_this7.getEventObject(), 'onShowControllers', 'hide');
-	            }
-	          }).animate();
-	        }
-	      } else if (show) {
-	        _classStaticPrivateFieldSpecGet(this.constructor, Editor, _shownForms).set(this);
-	        this.formEntityType = main_core.Type.isArray(FCFormId) && main_core.Type.isStringFilled(FCFormId[0]) && FCFormId[0].match(/^TASK_(\d+)$/i) ? 'task' : null;
-	        if (setFocus && main_core.Type.isPlainObject(setFocus)) {
-	          if (setFocus['onShowControllers']) {
-	            main_core_events.EventEmitter.emit(this.getEventObject(), 'onShowControllers', setFocus['onShowControllers']);
-	          }
-	        }
-	        main_core_events.EventEmitter.emit(this.getEventObject(), 'OnBeforeShowLHE');
-	        if (show === 'justShow' || this.getContainer().style.display === 'block') {
-	          this.getContainer().style.display = 'block';
-	          main_core_events.EventEmitter.emit(this.getEventObject(), 'OnAfterShowLHE'); //To remember: Here is set a text -> reinitData-> reinit -> editor.CheckAndReInit()
-	          if (setFocus !== false) {
-	            this.getEditor().Focus();
-	          }
-	        } else {
-	          main_core.Dom.adjust(this.getContainer(), {
-	            style: {
-	              display: 'block',
-	              overflow: 'hidden',
-	              height: '20px',
-	              opacity: 0.1
-	            }
-	          });
-	          new BX['easing']({
-	            duration: 200,
-	            start: {
-	              opacity: 10,
-	              height: 20
-	            },
-	            finish: {
-	              opacity: 100,
-	              height: this.getContainer().scrollHeight
-	            },
-	            transition: BX.easing.makeEaseOut(BX.easing.transitions.quad),
-	            step: function step(state) {
-	              _this7.getContainer().style.height = state.height + 'px';
-	              _this7.getContainer().style.opacity = state.opacity / 100;
-	            },
-	            complete: function complete() {
-	              main_core_events.EventEmitter.emit(_this7.getEventObject(), 'OnAfterShowLHE'); //To remember: Here is set a text -> reinitData-> reinit -> editor.CheckAndReInit()
-	              _this7.getEditor().Focus();
-	              _this7.getContainer().style.cssText = "";
-	            }
-	          }).animate();
-	        }
-	      } else {
-	        _classStaticPrivateFieldSpecGet(this.constructor, Editor, _shownForms)["delete"](this);
-	        main_core_events.EventEmitter.emit(this.getEventObject(), 'OnBeforeHideLHE');
-	        main_core_events.EventEmitter.emit(this.getEventObject(), 'onShowControllers', 'hide');
-	        this.getContainer().style.display = 'none';
-	        main_core_events.EventEmitter.emit(this.getEventObject(), 'OnAfterHideLHE');
-	      }
-	    }
-	  }, {
-	    key: "OnButtonClick",
-	    value: function OnButtonClick(_ref20) {
-	      var _ref20$data = babelHelpers.slicedToArray(_ref20.data, 1),
-	        action = _ref20$data[0];
-	      if (action !== 'cancel') {
-	        var res = {
-	          result: true
-	        };
-	        main_core_events.EventEmitter.emit(this.getEventObject(), 'OnClickBeforeSubmit', new main_core_events.BaseEvent({
-	          compatData: [this, res]
-	        }));
-	        if (res['result'] !== false) {
-	          main_core_events.EventEmitter.emit(this.getEventObject(), 'OnClickSubmit', new main_core_events.BaseEvent({
-	            compatData: [this]
-	          }));
-	        }
-	      } else {
-	        main_core_events.EventEmitter.emit(this.getEventObject(), 'OnClickCancel', new main_core_events.BaseEvent({
-	          compatData: [this]
-	        }));
-	        main_core_events.EventEmitter.emit(this.getEventObject(), 'OnShowLHE', new main_core_events.BaseEvent({
-	          compatData: ['hide']
-	        }));
-	      }
-	    } //region compatibility
-	  }, {
-	    key: "exec",
-	    value: function exec(func, args) {
-	      if (typeof func == 'function') {
-	        this.actionQueue.push([func, args]);
-	      }
-	      if (this.editorIsLoaded === true) {
-	        var res;
-	        while ((res = this.actionQueue.shift()) && res) {
-	          res[0].apply(this, res[1]);
-	        }
-	      }
-	    }
-	  }, {
-	    key: "showPanelEditor",
-	    value: function showPanelEditor$$1() {
-	      showPanelEditor(this, this.getEditor(), {});
-	    }
-	  }, {
-	    key: "getContent",
-	    value: function getContent() {
-	      return this.oEditor ? this.oEditor.GetContent() : '';
-	    }
-	  }, {
-	    key: "setContent",
-	    value: function setContent(text) {
-	      if (this.getEditor()) {
-	        this.getEditor().SetContent(text);
-	      }
-	    }
-	  }, {
-	    key: "controllerInit",
-	    value: function controllerInit(status) {
-	      main_core_events.EventEmitter.emit(this.getEventObject(), 'onShowControllers', status === 'hide' ? 'hide' : 'show');
-	    }
-	  }, {
-	    key: "showCopilot",
-	    value: function showCopilot() {
-	      this.getEditor().SetView('wysiwyg');
-	      this.getEditor().ShowCopilotAtTheBottom();
-	    }
-	  }, {
-	    key: "isTextCopilotEnabledBySettings",
-	    value: function isTextCopilotEnabledBySettings() {
-	      var isEnabled = this.getEditor().config.isCopilotTextEnabledBySettings;
-	      return main_core.Type.isNil(isEnabled) || isEnabled;
-	    }
-	  }, {
-	    key: "isImageCopilotEnabledBySettings",
-	    value: function isImageCopilotEnabledBySettings() {
-	      var isEnabled = this.getEditor().config.isCopilotImageEnabledBySettings;
-	      return main_core.Type.isNil(isEnabled) || isEnabled;
-	    }
-	  }, {
-	    key: "isReady",
-	    get: function get() {
-	      return this.editorIsLoaded;
-	    }
-	  }, {
-	    key: "oEditor",
-	    get: function get() {
-	      return this.getEditor();
-	    }
-	  }, {
-	    key: "oEditorId",
-	    get: function get() {
-	      return this.getId();
-	    }
-	  }, {
-	    key: "formID",
-	    get: function get() {
-	      return this.getFormId();
-	    }
-	  }, {
-	    key: "params",
-	    get: function get() {
-	      return {
-	        formID: this.getFormId()
-	      };
-	    }
-	  }, {
-	    key: "controllers",
-	    get: function get() {
-	      var event = new main_core_events.BaseEvent();
-	      var data = {};
-	      event.setData(data);
-	      main_core_events.EventEmitter.emit(this.getEventObject(), 'onCollectControllers', event);
-	      var result = {};
-	      Object.keys(data).forEach(function (fieldName) {
-	        result[fieldName] = Object.assign({}, data[fieldName]);
-	        result[fieldName]['values'] = {};
-	        if (main_core.Type.isArray(data[fieldName]['values'])) {
-	          data[fieldName]['values'].forEach(function (id) {
-	            result[fieldName]['values'][id] = {
-	              id: id
-	            };
-	          });
-	        } else if (main_core.Type.isPlainObject(data[fieldName]['values'])) {
-	          result[fieldName]['values'] = Object.assign({}, data[fieldName]['values']);
-	        }
-	      });
-	      return result;
-	    }
-	  }, {
-	    key: "arFiles",
-	    get: function get() {
-	      var event = new main_core_events.BaseEvent();
-	      var data = {};
-	      event.setData(data);
-	      main_core_events.EventEmitter.emit(this.getEventObject(), 'onCollectControllers', event);
-	      var result = {};
-	      Object.keys(data).forEach(function (fieldName) {
-	        if (data[fieldName]['values']) {
-	          data[fieldName]['values'].forEach(function (id) {
-	            result[id] = [fieldName];
-	          });
-	        }
-	      });
-	      return result;
-	    } //endregion
-	  }]);
-	  return Editor;
-	}();
-	babelHelpers.defineProperty(Editor, "repo", new Map());
-	var _shownForms = {
-	  writable: true,
-	  value: new Map()
-	};
+			//region Visible customization
+			showPanelEditor(this, htmlEditor, this.editorParams);
+			showUrlPreview(htmlEditor, this.editorParams);
+			customizeHTMLEditor(this, htmlEditor);
+			bindAutoSave(htmlEditor, BX(this.getFormId()));
+			bindToolbar(this, htmlEditor);
+			//endregion
+			main_core_events.EventEmitter.subscribe(this.getEventObject(), 'OnAfterShowLHE', () => {
+				this.getEditor().AllowBeforeUnloadHandler();
+			});
+			main_core_events.EventEmitter.subscribe(this.getEventObject(), 'OnAfterHideLHE', () => {
+				TasksLimit.hidePopup();
+				this.getEditor().DenyBeforeUnloadHandler();
+			});
+			main_core_events.EventEmitter.subscribe(htmlEditor, 'OnIframeClick', () => {
+				const event = new MouseEvent('click', {
+					bubbles: true,
+					cancelable: true,
+					view: window
+				});
+				htmlEditor.iframeView.container.dispatchEvent(event);
+			});
+		}
+		getEditor() {
+			return this.htmlEditor;
+		}
+		getFormId() {
+			return this.formId;
+		}
+		getEventObject() {
+			return this.eventNode;
+		}
+		getContainer() {
+			return this.eventNode;
+		}
+		getToolbar() {
+			return this.toolbar;
+		}
+		OnEditorInitedBefore(htmlEditor) {
+			this.setEditor(htmlEditor);
+		}
+		OnCreateIframeAfter() {
+			if (this.editorIsLoaded !== true) {
+				this.editorIsLoaded = true;
+				this.exec();
+				main_core_events.EventEmitter.emit(this, 'OnEditorIsLoaded', []);
+			}
+		}
+		get isReady() {
+			return this.editorIsLoaded;
+		}
+		OnEditorInitedAfter(htmlEditor) {
+			if (!this.editorParams.lazyLoad) {
+				main_core_events.EventEmitter.emit(this.getEventObject(), 'OnShowLHE', new main_core_events.BaseEvent({
+					compatData: ['justShow', htmlEditor, false]
+				}));
+			}
+			if (htmlEditor.sandbox && htmlEditor.sandbox.inited) {
+				this.OnCreateIframeAfter();
+			}
+		}
+		addParser(parser) {
+			this.exec(() => {
+				parser.init(this.getEditor());
+				this.getEditor().AddParser({
+					name: parser.id,
+					obj: {
+						Parse: (parserId, text) => {
+							return parser.parse(text);
+						},
+						UnParse: parser.unparse
+					}
+				});
+				if (!this['addParserAfterDebounced']) {
+					this.addParserAfterDebounced = main_core.Runtime.debounce(() => {
+						const content = this.getEditor().GetContent();
+						if (/&#9[13];/gi.test(content)) {
+							this.getEditor().SetContent(content.replace(/&#91;/ig, "[").replace(/&#93;/ig, "]"), true);
+						}
+					}, 100);
+				}
+				this.addParserAfterDebounced();
+			});
+		}
+		insertContent(text, html = null) {
+			this.exec(() => {
+				const editorMode = this.getEditor().GetViewMode();
+				if (editorMode === 'wysiwyg') {
+					const range = this.getEditor().selection.GetRange();
+					this.getEditor().InsertHtml(html || text, range);
+					setTimeout(this.getEditor().AutoResizeSceleton.bind(this.getEditor()), 500);
+					setTimeout(this.getEditor().AutoResizeSceleton.bind(this.getEditor()), 1000);
+				} else {
+					this.getEditor().textareaView.Focus();
+					if (!this.getEditor().bbCode) {
+						const doc = this.getEditor().GetIframeDoc();
+						const dummy = doc.createElement('DIV');
+						dummy.style.display = 'none';
+						dummy.innerHTML = text;
+						doc.body.appendChild(dummy);
+						text = this.getEditor().Parse(text, true, false);
+						dummy.parentNode.removeChild(dummy);
+					}
+					this.getEditor().textareaView.WrapWith('', '', text);
+				}
+			});
+		}
+		reinit(text, data) {
+			let showControllers = 'hide';
+			if (main_core.Type.isPlainObject(data) && Object.values(data).length) {
+				Object.values(data).forEach(property => {
+					if (property && property['VALUE']) {
+						showControllers = 'show';
+					}
+				});
+			}
+			main_core_events.EventEmitter.emitAsync(this.getEventObject(), 'onReinitializeBeforeAsync', [text, data]).then(() => {
+				main_core_events.EventEmitter.emit(this.getEventObject(), 'onShowControllers', showControllers);
+				main_core_events.EventEmitter.emit(this.getEventObject(), 'onReinitializeBefore', [text, data]);
+				this.getEditor().CheckAndReInit(main_core.Type.isString(text) ? text : '');
+				BX.onCustomEvent(this.getEditor(), 'onReinitialize', [this, text, data]);
+				if (this.editorParams['height']) {
+					this.oEditor.SetConfigHeight(this.editorParams['height']);
+					this.oEditor.ResizeSceleton();
+				}
+			});
+		}
+		OnShowLHE({
+			data,
+			compatData
+		}) {
+			let [show, setFocus, FCFormId] = data || compatData;
+			if (!this.getEditor() && window['BXHtmlEditor']) {
+				window['BXHtmlEditor'].Get(this.getId()).Init();
+			}
+			show = show === false || show === 'hide' || show === 'justShow' ? show : true;
+			const placeHolder = BX('micro' + (this.name || this.id));
+			if (placeHolder) {
+				placeHolder.style.display = show === true || show === 'justShow' ? 'none' : 'block';
+			}
+			if (show === 'hide') {
+				this.constructor.#shownForms.delete(this);
+				main_core_events.EventEmitter.emit(this.getEventObject(), 'OnBeforeHideLHE');
+				if (this.getContainer().style.display === 'none') {
+					main_core_events.EventEmitter.emit(this.getEventObject(), 'OnAfterHideLHE');
+					main_core_events.EventEmitter.emit(this.getEventObject(), 'onShowControllers', 'hide');
+				} else {
+					new BX['easing']({
+						duration: 200,
+						start: {
+							opacity: 100,
+							height: this.getContainer().scrollHeight
+						},
+						finish: {
+							opacity: 0,
+							height: 20
+						},
+						transition: BX.easing.makeEaseOut(BX.easing.transitions.quad),
+						step: state => {
+							this.getContainer().style.height = state.height + 'px';
+							this.getContainer().style.opacity = state.opacity / 100;
+						},
+						complete: () => {
+							this.getContainer().style.cssText = '';
+							this.getContainer().style.display = 'none';
+							main_core_events.EventEmitter.emit(this.getEventObject(), 'OnAfterHideLHE');
+							main_core_events.EventEmitter.emit(this.getEventObject(), 'onShowControllers', 'hide');
+						}
+					}).animate();
+				}
+			} else if (show) {
+				this.constructor.#shownForms.set(this);
+				this.formEntityType = main_core.Type.isArray(FCFormId) && main_core.Type.isStringFilled(FCFormId[0]) && FCFormId[0].match(/^TASK_(\d+)$/i) ? 'task' : null;
+				if (setFocus && main_core.Type.isPlainObject(setFocus)) {
+					if (setFocus['onShowControllers']) {
+						main_core_events.EventEmitter.emit(this.getEventObject(), 'onShowControllers', setFocus['onShowControllers']);
+					}
+				}
+				main_core_events.EventEmitter.emit(this.getEventObject(), 'OnBeforeShowLHE');
+				if (show === 'justShow' || this.getContainer().style.display === 'block') {
+					this.getContainer().style.display = 'block';
+					main_core_events.EventEmitter.emit(this.getEventObject(), 'OnAfterShowLHE'); //To remember: Here is set a text -> reinitData-> reinit -> editor.CheckAndReInit()
+					if (setFocus !== false) {
+						this.getEditor().Focus();
+					}
+				} else {
+					main_core.Dom.adjust(this.getContainer(), {
+						style: {
+							display: 'block',
+							overflow: 'hidden',
+							height: '20px',
+							opacity: 0.1
+						}
+					});
+					new BX['easing']({
+						duration: 200,
+						start: {
+							opacity: 10,
+							height: 20
+						},
+						finish: {
+							opacity: 100,
+							height: this.getContainer().scrollHeight
+						},
+						transition: BX.easing.makeEaseOut(BX.easing.transitions.quad),
+						step: state => {
+							this.getContainer().style.height = state.height + 'px';
+							this.getContainer().style.opacity = state.opacity / 100;
+						},
+						complete: () => {
+							main_core_events.EventEmitter.emit(this.getEventObject(), 'OnAfterShowLHE'); //To remember: Here is set a text -> reinitData-> reinit -> editor.CheckAndReInit()
+							this.getEditor().Focus();
+							this.getContainer().style.cssText = "";
+						}
+					}).animate();
+				}
+			} else {
+				this.constructor.#shownForms.delete(this);
+				main_core_events.EventEmitter.emit(this.getEventObject(), 'OnBeforeHideLHE');
+				main_core_events.EventEmitter.emit(this.getEventObject(), 'onShowControllers', 'hide');
+				this.getContainer().style.display = 'none';
+				main_core_events.EventEmitter.emit(this.getEventObject(), 'OnAfterHideLHE');
+			}
+		}
+		OnButtonClick({
+			data: [action]
+		}) {
+			if (action !== 'cancel') {
+				const res = {
+					result: true
+				};
+				main_core_events.EventEmitter.emit(this.getEventObject(), 'OnClickBeforeSubmit', new main_core_events.BaseEvent({
+					compatData: [this, res]
+				}));
+				if (res['result'] !== false) {
+					main_core_events.EventEmitter.emit(this.getEventObject(), 'OnClickSubmit', new main_core_events.BaseEvent({
+						compatData: [this]
+					}));
+				}
+			} else {
+				main_core_events.EventEmitter.emit(this.getEventObject(), 'OnClickCancel', new main_core_events.BaseEvent({
+					compatData: [this]
+				}));
+				main_core_events.EventEmitter.emit(this.getEventObject(), 'OnShowLHE', new main_core_events.BaseEvent({
+					compatData: ['hide']
+				}));
+			}
+		}
+
+		//region compatibility
+		exec(func, args) {
+			if (typeof func == 'function') {
+				this.actionQueue.push([func, args]);
+			}
+			if (this.editorIsLoaded === true) {
+				let res;
+				while ((res = this.actionQueue.shift()) && res) {
+					res[0].apply(this, res[1]);
+				}
+			}
+		}
+		get oEditor() {
+			return this.getEditor();
+		}
+		get oEditorId() {
+			return this.getId();
+		}
+		get formID() {
+			return this.getFormId();
+		}
+		get params() {
+			return {
+				formID: this.getFormId()
+			};
+		}
+		showPanelEditor() {
+			showPanelEditor(this, this.getEditor(), {});
+		}
+		getContent() {
+			return this.oEditor ? this.oEditor.GetContent() : '';
+		}
+		setContent(text) {
+			if (this.getEditor()) {
+				this.getEditor().SetContent(text);
+			}
+		}
+		controllerInit(status) {
+			main_core_events.EventEmitter.emit(this.getEventObject(), 'onShowControllers', status === 'hide' ? 'hide' : 'show');
+		}
+		showCopilot(copilot) {
+			const editor = this.getEditor();
+			editor.SetView('wysiwyg');
+			if (editor.ShowCopilotAtTheBottom(copilot)) {
+				editor.iframeView.GetSelection().removeAllRanges();
+			}
+		}
+		isTextCopilotEnabledBySettings() {
+			const isEnabled = this.getEditor().config.isCopilotTextEnabledBySettings;
+			return main_core.Type.isNil(isEnabled) || isEnabled;
+		}
+		isImageCopilotEnabledBySettings() {
+			const isEnabled = this.getEditor().config.isCopilotImageEnabledBySettings;
+			return main_core.Type.isNil(isEnabled) || isEnabled;
+		}
+		get controllers() {
+			const event = new main_core_events.BaseEvent();
+			const data = {};
+			event.setData(data);
+			main_core_events.EventEmitter.emit(this.getEventObject(), 'onCollectControllers', event);
+			const result = {};
+			Object.keys(data).forEach(fieldName => {
+				result[fieldName] = Object.assign({}, data[fieldName]);
+				result[fieldName]['values'] = {};
+				if (main_core.Type.isArray(data[fieldName]['values'])) {
+					data[fieldName]['values'].forEach(id => {
+						result[fieldName]['values'][id] = {
+							id: id
+						};
+					});
+				} else if (main_core.Type.isPlainObject(data[fieldName]['values'])) {
+					result[fieldName]['values'] = Object.assign({}, data[fieldName]['values']);
+				}
+			});
+			return result;
+		}
+		get arFiles() {
+			const event = new main_core_events.BaseEvent();
+			const data = {};
+			event.setData(data);
+			main_core_events.EventEmitter.emit(this.getEventObject(), 'onCollectControllers', event);
+			const result = {};
+			Object.keys(data).forEach(fieldName => {
+				if (data[fieldName]['values']) {
+					data[fieldName]['values'].forEach(id => {
+						result[id] = [fieldName];
+					});
+				}
+			});
+			return result;
+		}
+		//endregion
+		static #shownForms = new Map();
+	}
 
 	window['LHEPostForm'] = {
-	  //region compatibility
-	  getEditor: function getEditor(editor) {
-	    return window["BXHtmlEditor"] ? window["BXHtmlEditor"].Get(babelHelpers["typeof"](editor) == "object" ? editor.id : editor) : null;
-	  },
-	  getHandler: function getHandler(editor) {
-	    var id = main_core.Type.isStringFilled(editor) ? editor : editor.id;
-	    return Editor.repo.get(id);
-	  },
-	  getHandlerByFormId: function getHandlerByFormId(formId) {
-	    var result = null;
-	    Editor.repo.forEach(function (editor) {
-	      if (editor.getFormId() === formId) {
-	        result = editor;
-	      }
-	    });
-	    return result;
-	  },
-	  reinitData: function reinitData(editorID, text, data) {
-	    var files = {};
-	    if (!main_core.Type.isPlainObject(data)) {
-	      data = {};
-	    }
-	    Object.entries(data).forEach(function (_ref) {
-	      var _ref2 = babelHelpers.slicedToArray(_ref, 2),
-	        userFieldName = _ref2[0],
-	        userField = _ref2[1];
-	      if (main_core.Type.isPlainObject(userField) && userField['USER_TYPE_ID'] && userField['VALUE'] && Object.values(userField['VALUE']).length > 0) {
-	        files[userFieldName] = userField;
-	      }
-	    });
-	    var handler = this.getHandler(editorID);
-	    if (handler && (handler.isReady || main_core.Type.isStringFilled(text) || Object.values(files).length > 0)) {
-	      handler.exec(handler.reinit, [text, files]);
-	    }
-	    return false;
-	  },
-	  reinitDataBefore: function reinitDataBefore(editorID) {
-	    var handler = Editor.repo.get(editorID);
-	    if (handler && handler.getEventObject()) {
-	      main_core_events.EventEmitter.emit(handler.getEventObject(), 'onReinitializeBefore', [handler]);
-	    }
-	  }
-	  //endregion
+		//region compatibility
+		getEditor: function (editor) {
+			return window["BXHtmlEditor"] ? window["BXHtmlEditor"].Get(typeof editor == "object" ? editor.id : editor) : null;
+		},
+		getHandler: function (editor) {
+			const id = main_core.Type.isStringFilled(editor) ? editor : editor.id;
+			return Editor.repo.get(id);
+		},
+		getHandlerByFormId: function (formId) {
+			let result = null;
+			Editor.repo.forEach(editor => {
+				if (editor.getFormId() === formId) {
+					result = editor;
+				}
+			});
+			return result;
+		},
+		reinitData: function (editorID, text, data) {
+			const files = {};
+			if (!main_core.Type.isPlainObject(data)) {
+				data = {};
+			}
+			Object.entries(data).forEach(([userFieldName, userField]) => {
+				if (main_core.Type.isPlainObject(userField) && userField['USER_TYPE_ID'] && userField['VALUE'] && Object.values(userField['VALUE']).length > 0) {
+					files[userFieldName] = userField;
+				}
+			});
+			const handler = this.getHandler(editorID);
+			if (handler && (handler.isReady || main_core.Type.isStringFilled(text) || Object.values(files).length > 0)) {
+				handler.exec(handler.reinit, [text, files]);
+			}
+			return false;
+		},
+		reinitDataBefore: function (editorID) {
+			const handler = Editor.repo.get(editorID);
+			if (handler && handler.getEventObject()) {
+				main_core_events.EventEmitter.emit(handler.getEventObject(), 'onReinitializeBefore', [handler]);
+			}
+		}
+		//endregion
 	};
 
 	exports.PostForm = Editor;
 	exports.PostFormTasksLimit = TasksLimit;
 
-}((this.BX.Main = this.BX.Main || {}),BX.Event,BX,BX.Main,BX));
+})(this.BX.Main = this.BX.Main || {}, BX, BX.Event, BX.Main);
 
 
 

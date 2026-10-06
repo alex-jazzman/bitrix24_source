@@ -19,6 +19,24 @@
 	min-width: 0;
 }
 
+.sign-document-b2e-company__hcmlink-select.--active {
+	border-radius: var(--ui-border-radius-2xs);
+	cursor: pointer;
+	margin: -5px 0 -5px -6px;
+	padding: 5px 6px;
+	transition: background-color .2s ease;
+}
+
+.sign-document-b2e-company__hcmlink-select.--active:hover {
+	background-color: var(--ui-color-bg-state-hover-default);
+}
+
+.sign-document-b2e-company__hcmlink-select.--active:focus-visible {
+	background-color: var(--ui-color-bg-state-hover-default);
+	box-shadow: 0 0 0 2px var(--ui-color-design-outline-focused-stroke);
+	outline: none;
+}
+
 .sign-document-b2e-company__hcmlink-select-text {
 	font: 16px/20px var(--ui-font-family-primary, var(--ui-font-family-system));
 	flex-grow: 1;

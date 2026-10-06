@@ -318,6 +318,12 @@ class calendar extends CModule
 		$eventManager->registerEventHandler('socialnetwork', 'onSocNetGroupUpdate', 'calendar', '\Bitrix\Calendar\Watcher\Membership\Handler\SocNetGroup', 'onSocNetGroupUpdate');
 		$eventManager->registerEventHandler('socialnetwork', 'onLogIndexGetContent', 'calendar', '\Bitrix\Calendar\Integration\Socialnetwork\Log', 'onIndexGetContent');
 
+		$eventManager->registerEventHandler('humanresources', 'OnMemberAdded', 'calendar', '\Bitrix\Calendar\Watcher\Membership\Handler\Team', 'onMemberAdded');
+		$eventManager->registerEventHandler('humanresources', 'OnMemberUpdated', 'calendar', '\Bitrix\Calendar\Watcher\Membership\Handler\Team', 'onMemberUpdated');
+		$eventManager->registerEventHandler('humanresources', 'OnMemberDeleted', 'calendar', '\Bitrix\Calendar\Watcher\Membership\Handler\Team', 'onMemberDeleted');
+		$eventManager->registerEventHandler('humanresources', 'OnNodeUpdated', 'calendar', '\Bitrix\Calendar\Watcher\Membership\Handler\Team', 'onNodeUpdated');
+		$eventManager->registerEventHandler('humanresources', 'OnNodeDeleted', 'calendar', '\Bitrix\Calendar\Watcher\Membership\Handler\Team', 'onNodeDeleted');
+
 		$eventManager->registerEventHandler('main', 'OnBeforeUserUpdate', 'calendar', '\Bitrix\Calendar\Watcher\Membership\Handler\Department', 'OnBeforeUserUpdate');
 		$eventManager->registerEventHandler('main', 'OnAfterUserUpdate', 'calendar', '\Bitrix\Calendar\Watcher\Membership\Handler\Department', 'OnAfterUserUpdate');
 		$eventManager->registerEventHandler('main', 'OnAfterUserAdd', 'calendar', '\Bitrix\Calendar\Watcher\Membership\Handler\Department', 'OnAfterUserAdd');
@@ -465,6 +471,12 @@ class calendar extends CModule
 		$eventManager->unregisterEventHandler('socialnetwork', 'onSocNetUserToGroupUpdate', 'calendar', '\Bitrix\Calendar\Watcher\Membership\Handler\SocNetGroup', 'onSocNetUserToGroupUpdate');
 		$eventManager->unregisterEventHandler('socialnetwork', 'onSocNetUserToGroupDelete', 'calendar', '\Bitrix\Calendar\Watcher\Membership\Handler\SocNetGroup', 'onSocNetUserToGroupDelete');
 		$eventManager->unregisterEventHandler('socialnetwork', 'onSocNetGroupUpdate', 'calendar', '\Bitrix\Calendar\Watcher\Membership\Handler\SocNetGroup', 'onSocNetGroupUpdate');
+
+		$eventManager->unregisterEventHandler('humanresources', 'OnMemberAdded', 'calendar', '\Bitrix\Calendar\Watcher\Membership\Handler\Team', 'onMemberAdded');
+		$eventManager->unregisterEventHandler('humanresources', 'OnMemberUpdated', 'calendar', '\Bitrix\Calendar\Watcher\Membership\Handler\Team', 'onMemberUpdated');
+		$eventManager->unregisterEventHandler('humanresources', 'OnMemberDeleted', 'calendar', '\Bitrix\Calendar\Watcher\Membership\Handler\Team', 'onMemberDeleted');
+		$eventManager->unregisterEventHandler('humanresources', 'OnNodeUpdated', 'calendar', '\Bitrix\Calendar\Watcher\Membership\Handler\Team', 'onNodeUpdated');
+		$eventManager->unregisterEventHandler('humanresources', 'OnNodeDeleted', 'calendar', '\Bitrix\Calendar\Watcher\Membership\Handler\Team', 'onNodeDeleted');
 
 		$eventManager->unRegisterEventHandler('search', 'BeforeIndex', 'calendar', 'CCalendarLiveFeed', 'FixForumCommentURL');
 

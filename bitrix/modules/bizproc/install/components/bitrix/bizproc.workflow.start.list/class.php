@@ -6,12 +6,13 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\Bizproc\Workflow\Template\Entity\WorkflowTemplateSectionTable;
-use Bitrix\Bizproc\Workflow\Template\Entity\WorkflowTemplateTriggerTable;
 use Bitrix\Bizproc\Workflow\Template\Entity\WorkflowTemplateTable;
 use Bitrix\Bizproc\Workflow\Template\WorkflowTemplateSettingsTable;
 use Bitrix\Bizproc\Api\Request\WorkflowStateService\GetAverageWorkflowDurationRequest;
 use Bitrix\Bizproc\Api\Service\WorkflowStateService;
+use Bitrix\Bizproc\Internal\Container;
 use Bitrix\Bizproc\Internal\Service\Document\DocumentsResolver;
+use Bitrix\Bizproc\Public\Provider\PilotVisibilityProvider;
 use Bitrix\Bizproc\Workflow\Template\WorkflowTemplateUserOptionTable;
 use Bitrix\Main\Engine\Contract\Controllerable;
 use Bitrix\Main\Engine\CurrentUser;
@@ -124,6 +125,7 @@ class BizprocWorkflowStartList extends CBitrixComponent implements Errorable, Co
 	{
 		$arParams['signedDocumentType'] = htmlspecialcharsback($arParams['signedDocumentType'] ?? '');
 		$arParams['signedDocumentId'] = htmlspecialcharsback($arParams['signedDocumentId'] ?? '');
+		$arParams['categoryId'] = is_numeric($arParams['categoryId'] ?? null) ? (int)$arParams['categoryId'] : null;
 
 		if (Loader::includeModule('bizproc'))
 		{
@@ -289,6 +291,7 @@ class BizprocWorkflowStartList extends CBitrixComponent implements Errorable, Co
 			])] = [
 				'documentType' => $complexDocumentType->toArray(),
 				'documentId' => $complexDocumentId->toArray(),
+				'categoryId' => $resolvedDocument->categoryId,
 			];
 		}
 
@@ -389,8 +392,9 @@ class BizprocWorkflowStartList extends CBitrixComponent implements Errorable, Co
 
 		$gridData = [];
 		$templateIds = $resultCollection->getIdList();
-		$templateSectionsMap = $this->getTemplateSectionsMap($templateIds);
-		$templateTriggerSectionsMap = $this->getTemplateTriggerSectionsMap($templateIds);
+		$sectionService = Container::getSectionService();
+		$templateSectionsMap = $sectionService->getTemplateSectionsMap($templateIds);
+		$templateTriggerSectionsMap = $sectionService->getTemplateTriggerSectionsMap($templateIds);
 		$documentsByTypeKey = $this->buildDocumentsByTypeKey($documents);
 		foreach ($resultCollection as $template)
 		{
@@ -483,6 +487,8 @@ class BizprocWorkflowStartList extends CBitrixComponent implements Errorable, Co
 		$order = array_merge(['PIN.ID' => 'DESC'], $this->getGridOrder());
 		$result->setOrder($order);
 
+		$this->applyPilotVisibilityFilter($result);
+
 		$documentsFilter = \Bitrix\Main\ORM\Query\Query::filter()->logic('or');
 		foreach ($documents as $index => $document)
 		{
@@ -490,6 +496,21 @@ class BizprocWorkflowStartList extends CBitrixComponent implements Errorable, Co
 		}
 
 		return $result->where($documentsFilter);
+	}
+
+	/**
+	 * The grid is a manual start point, so the templates a pilot acts on are narrowed to the ones the current
+	 * employee may see. The condition of the pilot has a key of its own and does not meet the ones the query
+	 * already carries, so it is simply added to them.
+	 */
+	private function applyPilotVisibilityFilter(\Bitrix\Main\ORM\Query\Query $query): void
+	{
+		$visibilityFilter = (new PilotVisibilityProvider())->getVisibilityFilter($this->getCurrentUserId());
+
+		foreach ($visibilityFilter as $field => $value)
+		{
+			$query->addFilter($field, $value);
+		}
 	}
 
 	private function getPinAction($template): array
@@ -818,15 +839,24 @@ class BizprocWorkflowStartList extends CBitrixComponent implements Errorable, Co
 			return $signedDocuments;
 		}
 
-		$documentType = CBPHelper::normalizeComplexDocumentId(
-			CBPDocument::unSignDocumentType($this->arParams['~signedDocumentType'] ?? '')
-		);
-		$documentId = CBPHelper::normalizeComplexDocumentId(
-			CBPDocument::unSignDocumentType($this->arParams['~signedDocumentId'] ?? '')
-		);
+		$unsignedDocumentType = CBPDocument::unSignDocumentType($this->arParams['~signedDocumentType'] ?? '');
+		$unsignedDocumentId = CBPDocument::unSignDocumentType($this->arParams['~signedDocumentId'] ?? '');
+
+		$documentType = is_array($unsignedDocumentType)
+			? CBPHelper::normalizeComplexDocumentId($unsignedDocumentType)
+			: null
+		;
+		$documentId = is_array($unsignedDocumentId)
+			? CBPHelper::normalizeComplexDocumentId($unsignedDocumentId)
+			: null
+		;
 
 		return ($documentType !== null && $documentId !== null)
-			? [['documentType' => $documentType, 'documentId' => $documentId]]
+			? [[
+				'documentType' => $documentType,
+				'documentId' => $documentId,
+				'categoryId' => $this->arParams['categoryId'] ?? null,
+			]]
 			: []
 		;
 	}
@@ -850,7 +880,7 @@ class BizprocWorkflowStartList extends CBitrixComponent implements Errorable, Co
 		$result = [];
 		foreach ($documents as $document)
 		{
-			$result[] = $this->makeDocumentContext($document['documentType'], $document['documentId']);
+			$result[] = $this->makeDocumentContext($document);
 		}
 
 		return $result;
@@ -867,14 +897,18 @@ class BizprocWorkflowStartList extends CBitrixComponent implements Errorable, Co
 		return $result;
 	}
 
-	private function makeDocumentContext(array $documentType, array $documentId): array
+	private function makeDocumentContext(array $document): array
 	{
+		$documentType = $document['documentType'];
+		$documentId = $document['documentId'];
+		$categoryId = $document['categoryId'] ?? $this->resolveCategoryId($documentId);
+
 		return [
 			'documentType' => $documentType,
 			'documentId' => $documentId,
 			'documentTypeKey' => $this->buildDocumentTypeKey($documentType),
 			'templateSection' => $this->prepareSection($documentType),
-			'categoryId' => $this->resolveCategoryId($documentId),
+			'categoryId' => $categoryId,
 			'editorUrl' => $this->resolveEditorUrl($documentType),
 			'canEdit' => $this->canCreateWorkflowForDocument($documentId),
 			'signedDocumentType' => CBPDocument::signDocumentType($documentType),
@@ -1215,71 +1249,4 @@ class BizprocWorkflowStartList extends CBitrixComponent implements Errorable, Co
 		return false;
 	}
 
-	private function getTemplateSectionsMap(array $templateIds): array
-	{
-		if (empty($templateIds))
-		{
-			return [];
-		}
-
-		$result = [];
-
-		$sectionsResult = WorkflowTemplateSectionTable::query()
-			->setSelect(['TEMPLATE_ID', 'SECTION_ID'])
-			->whereIn('TEMPLATE_ID', $templateIds)
-			->exec()
-		;
-		while ($section = $sectionsResult->fetch())
-		{
-			$templateId = (int)($section['TEMPLATE_ID'] ?? 0);
-			if ($templateId > 0)
-			{
-				$result[$templateId][] = $section;
-			}
-		}
-
-		return $result;
-	}
-
-	private function getTemplateTriggerSectionsMap(array $templateIds): array
-	{
-		if (empty($templateIds))
-		{
-			return [];
-		}
-
-		$result = [];
-
-		$templateRowsResult = WorkflowTemplateTable::query()
-			->setSelect(['ID', 'TEMPLATE'])
-			->whereIn('ID', $templateIds)
-			->exec()
-		;
-		while ($templateRow = $templateRowsResult->fetch())
-		{
-			$templateId = (int)($templateRow['ID'] ?? 0);
-			if ($templateId > 0)
-			{
-				$template = $templateRow['TEMPLATE'][0] ?? null;
-				$templateChildren = is_array($template) ? ($template['Children'] ?? []) : [];
-				$triggers = WorkflowTemplateTriggerTable::filterTriggersByActivities($templateChildren);
-				foreach ($triggers as $trigger)
-				{
-					$section = ($trigger['CONFIGURATION'] ?? null)?->getSection();
-					if ($section === null)
-					{
-						continue;
-					}
-
-					$result[$templateId][] = [
-						'TRIGGER_TYPE' => $trigger['TRIGGER_TYPE'] ?? null,
-						'SECTION_ID' => $section->id,
-						'SECTION_PATH' => $section->path,
-					];
-				}
-			}
-		}
-
-		return $result;
-	}
 }

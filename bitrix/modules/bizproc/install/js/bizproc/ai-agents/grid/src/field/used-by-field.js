@@ -1,6 +1,6 @@
 import type { BaseEvent } from 'main.core.events';
 import { Popup } from 'main.popup';
-import { Tag, Dom, Text, Event, Type } from 'main.core';
+import { Tag, Dom, Text, Event, Type, Loc } from 'main.core';
 import { SidePanel } from 'main.sidepanel';
 
 import { Text as TypographyText } from 'ui.system.typography';
@@ -134,6 +134,7 @@ export class UsedByField extends BaseField
 				counterWrapperClass,
 			);
 
+			Dom.attr(counter, 'data-test-id', 'bizproc-ai-agents-grid-used-by-avatars-counter');
 			Dom.append(counter, avatarsContainer);
 		}
 
@@ -164,7 +165,7 @@ export class UsedByField extends BaseField
 		}
 
 		const counterClass = 'agent-grid-department-counter agent-grid-department-counter-with-users';
-		const counterWrapperClass = '';
+		const counterWrapperClass = 'agent-grid-department-counter-focus-wrapper';
 		const withPlusPrefix = false;
 		const counterNode = this.#createCounterNode(
 			departmentsCount,
@@ -178,6 +179,7 @@ export class UsedByField extends BaseField
 
 		if (counterNode)
 		{
+			Dom.attr(counterNode, 'data-test-id', 'bizproc-ai-agents-grid-used-by-departments-counter');
 			Dom.append(counterNode, container);
 		}
 	}
@@ -221,7 +223,14 @@ export class UsedByField extends BaseField
 
 			if (counterNode)
 			{
-				Dom.append(counterNode, departmentNode);
+				Dom.attr(counterNode, 'data-test-id', 'bizproc-ai-agents-grid-used-by-departments-counter');
+				// keep node and counter as siblings so the two buttons are not nested
+				const departmentRow = Tag.render`<div class="agent-grid-department-row"></div>`;
+				Dom.append(departmentNode, departmentRow);
+				Dom.append(counterNode, departmentRow);
+				Dom.append(departmentRow, container);
+
+				return;
 			}
 		}
 
@@ -237,6 +246,7 @@ export class UsedByField extends BaseField
 		const departmentWrapper = Tag.render`
 			<div class="${shouldAddHover ? 'agent-grid-department-in-list' : 'agent-grid-department'}"></div>
 		`;
+		Dom.attr(departmentWrapper, 'data-test-id', 'bizproc-ai-agents-grid-used-by-department');
 		const circle = Tag.render`<div class="agent-grid-department-circle">${GridIcons.DEPARTMENT}</div>`;
 		const label = TypographyText.render(
 			department,
@@ -260,6 +270,11 @@ export class UsedByField extends BaseField
 			});
 		});
 
+		this.#makeButtonAccessible(
+			departmentWrapper,
+			Loc.getMessage('BIZPROC_AI_AGENTS_GRID_USED_BY_DEPARTMENT', { '#NAME#': department }),
+		);
+
 		return departmentWrapper;
 	}
 
@@ -269,6 +284,35 @@ export class UsedByField extends BaseField
 			? UsedByField.MAX_COUNTER_VALUE
 			: remainingCount
 		;
+	}
+
+	#makeButtonAccessible(element: HTMLElement, ariaLabel: string): void
+	{
+		Dom.attr(element, 'role', 'button');
+		Dom.attr(element, 'tabindex', '0');
+		if (Type.isStringFilled(ariaLabel))
+		{
+			Dom.attr(element, 'aria-label', ariaLabel);
+		}
+
+		Event.bind(element, 'keydown', (event: KeyboardEvent) => {
+			// ignore bubbling from nested buttons so the action fires exactly once
+			if (event.target !== element)
+			{
+				return;
+			}
+
+			if (event.key === 'Enter' || event.key === ' ' || event.key === 'Spacebar')
+			{
+				if (event.repeat)
+				{
+					return;
+				}
+
+				event.preventDefault();
+				element.click();
+			}
+		});
 	}
 
 	#createCounterNode(
@@ -313,6 +357,11 @@ export class UsedByField extends BaseField
 				event.stopPropagation();
 				this.#openCombinedPopup(departments, users, counterWrapper);
 			});
+
+			this.#makeButtonAccessible(
+				counterWrapper,
+				Loc.getMessage('BIZPROC_AI_AGENTS_GRID_USED_BY_SHOW_MORE'),
+			);
 		}
 		else
 		{
@@ -346,7 +395,13 @@ export class UsedByField extends BaseField
 				chats,
 			);
 
-			Dom.append(counterNode, chatNode);
+			// keep node and counter as siblings so the two buttons are not nested
+			const chatRow = Tag.render`<div class="agent-grid-chat-row"></div>`;
+			Dom.append(chatNode, chatRow);
+			Dom.append(counterNode, chatRow);
+			Dom.append(chatRow, container);
+
+			return;
 		}
 
 		Dom.append(chatNode, container);
@@ -373,16 +428,24 @@ export class UsedByField extends BaseField
 		const chatContainer = Tag.render`
 			<div class="${containerClass}" title="${encodedChatName}">
 				${GridIcons.AGENT_CHAT}
-				<a href="#" class="agent-grid-chat-link">
+				<span class="agent-grid-chat-link">
 					${chatNameNode}
-				</a>
+				</span>
 			</div>
 		`;
 
+		Dom.attr(chatContainer, 'data-test-id', 'bizproc-ai-agents-grid-used-by-chat');
+
 		Event.bind(chatContainer, 'click', (event) => {
 			event.preventDefault();
+			event.stopPropagation();
 			this.openChat(chat.chatId);
 		});
+
+		this.#makeButtonAccessible(
+			chatContainer,
+			Loc.getMessage('BIZPROC_AI_AGENTS_GRID_USED_BY_OPEN_CHAT', { '#NAME#': chatName }),
+		);
 
 		return chatContainer;
 	}
@@ -393,6 +456,7 @@ export class UsedByField extends BaseField
 	): HTMLElement
 	{
 		const counterWrapper = Tag.render`<div class="ai-agents-chats-counter-wrapper"></div>`;
+		Dom.attr(counterWrapper, 'data-test-id', 'bizproc-ai-agents-grid-used-by-chats-counter');
 		const counterClassName = 'ai-agents-chats-counter';
 
 		const displayedNumber = this.#getDisplayedNumber(remainingCount);
@@ -414,6 +478,11 @@ export class UsedByField extends BaseField
 			event.stopPropagation();
 			this.#toggleChatsListPopup(chats, counterWrapper);
 		});
+
+		this.#makeButtonAccessible(
+			counterWrapper,
+			Loc.getMessage('BIZPROC_AI_AGENTS_GRID_USED_BY_SHOW_ALL_CHATS'),
+		);
 
 		return counterWrapper;
 	}
@@ -445,6 +514,7 @@ export class UsedByField extends BaseField
 			maxHeight: 200,
 			padding: 0,
 			autoHide: true,
+			closeByEsc: true,
 			className: 'agents-grid-popup',
 		});
 

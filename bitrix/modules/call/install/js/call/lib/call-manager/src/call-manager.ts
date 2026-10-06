@@ -1,7 +1,7 @@
 // @ts-ignore
 // eslint-disable-next-line @bitrix24/bitrix24-rules/need-alias
 import 'im_call_compatible';
-import { type JsonObject } from 'main.core';
+import { type JsonObject, ajax } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 
 import { Messenger } from 'im.public';
@@ -15,7 +15,8 @@ import { SoundNotificationManager } from 'im.v2.lib.sound-notification';
 import { type Call, type CallAssociatedEntity, type ImModelChat, type ImModelUser } from 'im.v2.model';
 import { ChatService } from 'im.v2.provider.service.chat';
 
-import { Controller, State as CallState, EngineLegacy, Engine as CallEngine, Util } from 'call.core';
+import { EventType as CallEventType } from 'call.const';
+import { Controller, State as CallState, EngineLegacy, Engine as CallEngine, Util, Provider, Type as CallType } from 'call.core';
 import { CallSliderManager } from 'call.lib.call-slider-manager';
 
 import { openCallUserSelector } from './functions/open-call-user-selector';
@@ -83,6 +84,11 @@ export class CallManager
 
 		// @ts-ignore [call-ts] wait call.core to ts
 		return this.#controller.callMultiBroadcastClient.broadcastRequest(callId, { timeout: 100 });
+	}
+
+	setNextCallOptions(options: Object): void
+	{
+		this.#nextCallOptions = options;
 	}
 
 	startCall(dialogId: string, withVideo: boolean = true): void
@@ -245,6 +251,12 @@ export class CallManager
 		return Core.getStore().getters['recent/calls/hasActiveCall']() && !this.hasActiveCurrentCall(dialogId);
 	}
 
+	hasActiveCallInDialog(dialogId: string): boolean
+	{
+		// @ts-ignore [call-ts] wait im to ts.
+		return Boolean(Core.getStore().getters['recent/calls/getCallByDialog'](dialogId));
+	}
+
 	getCallUserLimit()
 	{
 		// @ts-expect-error [call-ts] wait call.core to ts
@@ -353,6 +365,7 @@ export class CallManager
 					SoundNotificationManager.getInstance().stop(soundType);
 				},
 				showUserSelector: openCallUserSelector,
+				getCurrentUser: () => this.getCurrentUser(),
 			},
 			events: {
 				// @ts-expect-error [call-ts] wait call.core to ts
@@ -393,6 +406,104 @@ export class CallManager
 		EventEmitter.subscribe(EventType.call.onJoinFromRecentItem, this.onJoinFromRecentItem.bind(this));
 
 		EventEmitter.subscribe('CallEvents::callCreated', this.#onCallCreated.bind(this));
+
+		const guestIdentifiedEvent = CallEventType?.callEvents?.guestIdentified;
+		if (guestIdentifiedEvent)
+		{
+			EventEmitter.subscribe(guestIdentifiedEvent, this.#onGuestIdentified.bind(this));
+		}
+		else
+		{
+			Logger.warn('CallManager: call.const EventType is unavailable, skipping guestIdentified subscription');
+		}
+
+		const guestInitialChatOpenEvent = CallEventType?.callEvents?.guestInitialChatOpen;
+		if (guestInitialChatOpenEvent)
+		{
+			EventEmitter.subscribe(guestInitialChatOpenEvent, this.#onGuestIdentified.bind(this));
+		}
+		else
+		{
+			Logger.warn('CallManager: call.const EventType is unavailable, skipping guestInitialChatOpen subscription');
+		}
+	}
+
+	// @ts-expect-error [call-ts] wait call.core to ts
+	async #onGuestIdentified(event)
+	{
+		const { dialogId } = event.getData();
+
+		if (!dialogId || (typeof dialogId !== 'string' && typeof dialogId !== 'number'))
+		{
+			Logger.warn('CallManager: guestIdentified: invalid payload', event.getData());
+
+			return;
+		}
+
+		const normalizedDialogId = String(dialogId);
+
+		if (this.hasActiveCurrentCall(normalizedDialogId))
+		{
+			return;
+		}
+
+		// @ts-ignore [call-ts] wait im to ts.
+		const callItem = Core.getStore().getters['recent/calls/getCallByDialog'](normalizedDialogId);
+
+		if (callItem !== null && callItem !== undefined)
+		{
+			this.joinCall(callItem.call.id, callItem.call.uuid, normalizedDialogId, true);
+
+			return;
+		}
+
+		// Store is empty for guests — query the server for an active call in this chat.
+		let response;
+		try
+		{
+			response = await ajax.runAction('call.Call.tryJoinCall', {
+				data: {
+					entityType: 'chat',
+					entityId: normalizedDialogId,
+					provider: Provider.Bitrix,
+					callType: CallType.Instant,
+				},
+			});
+		}
+		catch (error)
+		{
+			Logger.warn('CallManager: guestIdentified: tryJoinCall request failed', error);
+
+			return;
+		}
+
+		const data = response?.data;
+		if (!data?.success)
+		{
+			Logger.warn('CallManager: guestIdentified: no active call for dialog', normalizedDialogId);
+
+			return;
+		}
+
+		const isLegacy = Util.isLegacyCall(data.call?.PROVIDER, data.call?.SCHEME);
+		if (isLegacy)
+		{
+			EngineLegacy.instantiateCall(
+				data.call,
+				data.users,
+				data.logToken,
+				data.connectionData,
+				data.userData,
+			);
+		}
+		else
+		{
+			CallEngine.instantiateCall(data.call, data.callToken, data.logToken, data.userData);
+		}
+
+		// After instantiation, CallEvents::callCreated fires and #onCallCreated
+		// puts the call into recent/calls store. Join explicitly here.
+		this.joinCall(String(data.call?.ID), data.call?.UUID, normalizedDialogId, true);
 	}
 
 	#subscribeToCallEvents(call: Call)
@@ -530,8 +641,19 @@ export class CallManager
 		return dialog.type === ChatType.videoconf;
 	}
 
+	#isCurrentUserGuest(): boolean
+	{
+		// @ts-ignore [call-ts] wait im to ts.
+		return Core.getStore().getters['users/isGuest'](Core.getUserId());
+	}
+
 	#checkCallSupport(dialogId: string): boolean
 	{
+		if (this.#isCurrentUserGuest())
+		{
+			return false;
+		}
+
 		// @ts-expect-error [call-ts] wait call.core to ts
 		if (!this.#pushServerIsActive() || !BX.Call.Util.isWebRTCSupported())
 		{

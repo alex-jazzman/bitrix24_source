@@ -8,8 +8,9 @@ return [
 	'css' => 'dist/cardform.bundle.css',
 	'js' => 'dist/cardform.bundle.js',
 	'rel' => [
-		'main.core',
+		'landing.loc',
 		'landing.ui.form.baseform',
+		'main.core',
 	],
 	'skip_core' => false,
 ];

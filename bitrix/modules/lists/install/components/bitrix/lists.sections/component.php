@@ -1,5 +1,9 @@
-<?
+<?php
+
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
+
+use Bitrix\Main\Web\Uri;
+
 /** @global CMain $APPLICATION */
 /** @global CUser $USER */
 /** @global CDatabase $DB */
@@ -153,7 +157,9 @@ $arResult["~LIST_URL"] = str_replace(
 	$arParams["~LIST_URL"]
 );
 if(intval($arResult["SECTION_ID"]) <= 0)
-	$arResult["~LIST_URL"] = CHTTP::urlAddParams($arResult["~LIST_URL"], array("list_section_id" => ""));
+{
+	$arResult["~LIST_URL"] = (string)(new Uri($arResult["~LIST_URL"]))->addParams(["list_section_id" => ""]);
+}
 $arResult["LIST_URL"] = htmlspecialcharsbx($arResult["~LIST_URL"]);
 
 $arResult["~LIST_SECTION_URL"] = str_replace(
@@ -367,11 +373,13 @@ $this->IncludeComponentTemplate();
 
 $APPLICATION->SetTitle(GetMessage("CC_BLS_PAGE_TITLE", array("#NAME#" => $arResult["IBLOCK"]["NAME"])));
 
-$APPLICATION->AddChainItem($arResult["IBLOCK"]["NAME"], CHTTP::urlAddParams(str_replace(
+$url = (string)(new Uri(str_replace(
 	array("#list_id#", "#section_id#", "#group_id#"),
 	array($arResult["IBLOCK_ID"], 0, $arParams["SOCNET_GROUP_ID"]),
 	$arParams["~LIST_URL"]
-), array("list_section_id" => "")));
+)))->addParams(["list_section_id" => ""]);
+
+$APPLICATION->AddChainItem($arResult["IBLOCK"]["NAME"], $url);
 
 $APPLICATION->AddChainItem(GetMessage("CC_BLS_CHAIN_TITLE", array("#NAME#" => $arResult["IBLOCK"]["NAME"])), str_replace(
 	array("#list_id#", "#section_id#", "#group_id#"),
@@ -385,5 +393,3 @@ if($arResult["SECTION"])
 		$APPLICATION->AddChainItem($arPath["NAME"], $arPath["URL"]);
 	}
 }
-
-?>

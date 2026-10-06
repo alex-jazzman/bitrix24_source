@@ -1,2 +1,63 @@
-this.BX=this.BX||{},function(e,s){"use strict";var a=babelHelpers.classPrivateFieldLooseKey("constructorGuard"),i=babelHelpers.classPrivateFieldLooseKey("instance"),t=babelHelpers.classPrivateFieldLooseKey("availableFeatureCodes"),l=babelHelpers.classPrivateFieldLooseKey("init");class r{constructor(){if(Object.defineProperty(this,l,{value:o}),Object.defineProperty(this,t,{writable:!0,value:new Set}),!0===babelHelpers.classPrivateFieldLooseBase(r,a)[a])throw new Error("Feature class is a singleton and cannot be instantiated multiple times.");babelHelpers.classPrivateFieldLooseBase(this,l)[l]()}static instance(){return babelHelpers.classPrivateFieldLooseBase(this,i)[i]||(babelHelpers.classPrivateFieldLooseBase(this,a)[a]=!1,babelHelpers.classPrivateFieldLooseBase(this,i)[i]=new this,babelHelpers.classPrivateFieldLooseBase(this,a)[a]=!0),babelHelpers.classPrivateFieldLooseBase(this,i)[i]}isAvailable(e){return!!s.Type.isStringFilled(e)&&babelHelpers.classPrivateFieldLooseBase(this,t)[t].has(e)}}function o(){var e,a;const i=null!=(e=s.Extension.getSettings("bizprocdesigner.feature"))?e:null;(null!=(a=null==i?void 0:i.featureCodes)?a:[]).forEach(e=>babelHelpers.classPrivateFieldLooseBase(this,t)[t].add(e))}Object.defineProperty(r,a,{writable:!0,value:!0}),Object.defineProperty(r,i,{writable:!0,value:null});const n=Object.freeze({aiAssistant:"aiAssistant",complexNodeConnections:"complexNodeConnections",debugBar:"debugBar"});e.FeatureCode=n,e.Feature=r}(this.BX.Bizprocdesigner=this.BX.Bizprocdesigner||{},BX);
+/* eslint-disable */
+this.BX = this.BX || {};
+(function (exports, main_core) {
+	'use strict';
+
+	class Feature {
+		static #constructorGuard = true;
+		static #instance = null;
+		#availableFeatureCodes = new Set();
+		#lockedFeatureCodes = new Set();
+		constructor() {
+			if (Feature.#constructorGuard === true) {
+				throw new Error('Feature class is a singleton and cannot be instantiated multiple times.');
+			}
+			this.#init();
+		}
+		static instance() {
+			if (!this.#instance) {
+				this.#constructorGuard = false;
+				this.#instance = new this();
+				this.#constructorGuard = true;
+			}
+			return this.#instance;
+		}
+		isAvailable(featureCode) {
+			if (!main_core.Type.isStringFilled(featureCode)) {
+				return false;
+			}
+			return this.#availableFeatureCodes.has(featureCode);
+		}
+		isLocked(featureCode) {
+			if (!main_core.Type.isStringFilled(featureCode)) {
+				return false;
+			}
+			return this.#lockedFeatureCodes.has(featureCode);
+		}
+		#init() {
+			const settings = main_core.Extension.getSettings('bizprocdesigner.feature') ?? null;
+			const featureCodes = settings?.featureCodes ?? [];
+			const lockedFeatureCodes = settings?.lockedFeatureCodes ?? [];
+			featureCodes.forEach(code => this.#availableFeatureCodes.add(code));
+			lockedFeatureCodes.forEach(code => this.#lockedFeatureCodes.add(code));
+		}
+	}
+
+	const FeatureCode = Object.freeze({
+		aiAssistant: 'aiAssistant',
+		complexNodeConnections: 'complexNodeConnections',
+		debugBar: 'debugBar',
+		dataTables: 'dataTables',
+		externalAiAgent: 'externalAiAgent',
+		expressionBuilder: 'expressionBuilder',
+		readableExpressions: 'readableExpressions',
+		lastRunValues: 'lastRunValues',
+		versionHistory: 'versionHistory',
+		pilotPublication: 'pilotPublication'
+	});
+
+	exports.Feature = Feature;
+	exports.FeatureCode = FeatureCode;
+
+})(this.BX.Bizprocdesigner = this.BX.Bizprocdesigner || {}, BX);
 //# sourceMappingURL=feature.bundle.js.map

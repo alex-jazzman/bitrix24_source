@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports, ui_designTokens, ui_fonts_opensans, im_v2_component_elements_loader, im_v2_component_elements_scrollWithGradient, im_v2_const, im_v2_lib_analytics, im_v2_lib_utils, im_v2_lib_search, im_v2_application_core, main_core, im_v2_lib_menu, im_v2_provider_service_chat, im_v2_component_elements_avatar, im_v2_component_elements_chatTitle, im_v2_lib_dateFormatter, im_v2_lib_textHighlighter, im_v2_lib_collab, im_v2_provider_service_search, im_v2_component_elements_searchInput) {
+(function (exports, ui_designTokens, ui_fonts_opensans, im_v2_component_elements_loader, im_v2_component_elements_scrollWithGradient, im_v2_const, im_v2_lib_analytics, im_v2_lib_utils, im_v2_lib_search, im_v2_application_core, main_core, im_v2_lib_menu, im_v2_provider_service_chat, im_v2_component_elements_avatar, im_v2_component_elements_chatTitle, im_v2_component_elements_searchItemLayout, im_v2_lib_dateFormatter, im_v2_lib_textHighlighter, im_v2_lib_collab, im_v2_provider_service_search, im_v2_component_elements_searchInput) {
 	'use strict';
 
 	const getFirstItemFromSearchResults = ({
@@ -19,14 +19,16 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	};
 
 	// @vue/component
-	const EmptyState = {
-		name: 'EmptyState',
-		computed: {
-			title() {
-				return this.$Bitrix.Loc.getMessage('IM_SEARCH_RESULT_NOT_FOUND');
+	const BaseEmptyState = {
+		name: 'BaseEmptyState',
+		props: {
+			title: {
+				type: String,
+				required: true
 			},
-			subTitle() {
-				return this.$Bitrix.Loc.getMessage('IM_SEARCH_RESULT_NOT_FOUND_DESCRIPTION');
+			subtitle: {
+				type: String,
+				default: ''
 			}
 		},
 		template: `
@@ -35,10 +37,45 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			<div class="bx-im-search-empty-state__title">
 				{{ title }}
 			</div>
-			<div class="bx-im-search-empty-state__subtitle">
-				{{ subTitle }}
+			<div v-if="subtitle" class="bx-im-search-empty-state__subtitle">
+				{{ subtitle }}
 			</div>
 		</div>
+	`
+	};
+
+	// @vue/component
+	const SearchEmptyState = {
+		name: 'SearchEmptyState',
+		components: {
+			BaseEmptyState
+		},
+		methods: {
+			loc(phraseCode) {
+				return this.$Bitrix.Loc.getMessage(phraseCode);
+			}
+		},
+		template: `
+		<BaseEmptyState
+			:title="loc('IM_SEARCH_RESULT_NOT_FOUND')"
+			:subtitle="loc('IM_SEARCH_RESULT_NOT_FOUND_DESCRIPTION')"
+		/>
+	`
+	};
+
+	// @vue/component
+	const RecentEmptyState = {
+		name: 'RecentEmptyState',
+		components: {
+			BaseEmptyState
+		},
+		methods: {
+			loc(phraseCode) {
+				return this.$Bitrix.Loc.getMessage(phraseCode);
+			}
+		},
+		template: `
+		<BaseEmptyState :title="loc('IM_SEARCH_RESULT_NO_RECENT')" />
 	`
 	};
 
@@ -268,7 +305,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		name: 'SearchItem',
 		components: {
 			ChatAvatar: im_v2_component_elements_avatar.ChatAvatar,
-			ChatTitleWithHighlighting: im_v2_component_elements_chatTitle.ChatTitleWithHighlighting
+			ChatTitleWithHighlighting: im_v2_component_elements_chatTitle.ChatTitleWithHighlighting,
+			SearchItemLayout: im_v2_component_elements_searchItemLayout.SearchItemLayout
 		},
 		props: {
 			dialogId: {
@@ -393,37 +431,36 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			}
 		},
 		template: `
-		<div 
-			@click="onClick" 
-			@click.right.prevent="onRightClick" 
-			class="bx-im-search-item__container bx-im-search-item__scope"
-			:class="{'--selected': selected}"
+		<SearchItemLayout
+			:selected="selected"
+			:centered="selfChatReplace"
+			@click="onClick"
+			@contextmenu="onRightClick"
 		>
-			<div class="bx-im-search-item__avatar-container">
+			<template #avatar>
 				<ChatAvatar
-					:avatarDialogId="dialogId" 
-					:contextDialogId="dialogId" 
+					:avatarDialogId="dialogId"
+					:contextDialogId="dialogId"
 					:size="AvatarSize.XL"
 					:customType="avatarType"
 				/>
-			</div>
-			<div class="bx-im-search-item__content-container" :class="{'--centered': selfChatReplace}">
-				<div class="bx-im-search-item__content_header">
-					<ChatTitleWithHighlighting
-						:dialogId="dialogId"
-						:textToHighlight="query"
-						:customType="titleType"
-						:showItsYou="!selfChatReplace"
-						:twoLine="titleTwoLine"
-					/>
-					<div v-if="withDate && formattedDate" class="bx-im-search-item__date">
-						<span>{{ formattedDate }}</span>
-					</div>
+			</template>
+			<template #header>
+				<ChatTitleWithHighlighting
+					:dialogId="dialogId"
+					:textToHighlight="query"
+					:customType="titleType"
+					:showItsYou="!selfChatReplace"
+					:twoLine="titleTwoLine"
+				/>
+				<div v-if="withDate && formattedDate" class="bx-im-search-item__date">
+					<span>{{ formattedDate }}</span>
 				</div>
-				<div v-if="itemText" class="bx-im-search-item__item-text" :title="itemTextForTitle" v-html="itemText"></div>
-			</div>
-			<div v-if="selected" class="bx-im-chat-search-item__selected"></div>
-		</div>
+			</template>
+			<template #subtitle>
+				<span v-if="itemText" :title="itemTextForTitle" v-html="itemText"></span>
+			</template>
+		</SearchItemLayout>
 	`
 	};
 
@@ -433,7 +470,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		components: {
 			ScrollWithGradient: im_v2_component_elements_scrollWithGradient.ScrollWithGradient,
 			SearchItem,
-			EmptyState,
+			SearchEmptyState,
+			RecentEmptyState,
 			RecentUsersCarousel,
 			Loader: im_v2_component_elements_loader.Loader
 		},
@@ -479,6 +517,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			},
 			isEmptyState() {
 				return this.searchResult.length === 0;
+			},
+			isEmptyRecentState() {
+				return this.recentItems.length === 0;
+			},
+			hasRecentSearchSection() {
+				return this.recentItems.length > 0 || this.isRecentLoading;
 			}
 		},
 		created() {
@@ -571,16 +615,19 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 						@clickItem="onClickRecentChatItem"
 						@openContextMenu="onOpenContextMenu"
 					/>
-					<div class="bx-im-chat-search__title">{{ loc('IM_SEARCH_SECTION_RECENT') }}</div>
-					<SearchItem
-						v-for="item in recentItems"
-						:key="item.dialogId"
-						:dialogId="item.dialogId"
-						:titleTwoLine="true"
-						@clickItem="onClickRecentSearchItem"
-						@openContextMenu="onOpenContextMenu"
-					/>
-					<Loader v-if="isRecentLoading" class="bx-im-chat-search__loader" />
+					<template v-if="hasRecentSearchSection">
+						<div class="bx-im-chat-search__title">{{ loc('IM_SEARCH_SECTION_RECENT') }}</div>
+						<SearchItem
+							v-for="item in recentItems"
+							:key="item.dialogId"
+							:dialogId="item.dialogId"
+							:titleTwoLine="true"
+							@clickItem="onClickRecentSearchItem"
+							@openContextMenu="onOpenContextMenu"
+						/>
+						<Loader v-if="isRecentLoading" class="bx-im-chat-search__loader" />
+					</template>
+					<RecentEmptyState v-else-if="isEmptyRecentState" />
 				</template>
 				<template v-else>
 					<SearchItem
@@ -594,7 +641,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 						@clickItem="onClickSearchResultItem($event, index)"
 						@openContextMenu="onOpenContextMenu"
 					/>
-					<EmptyState v-if="isEmptyState" />
+					<SearchEmptyState v-if="isEmptyState" />
 				</template>
 			</div>
 		</ScrollWithGradient>
@@ -629,12 +676,16 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				default: true
 			},
 			recentSectionType: {
-				type: String,
+				type: String || null,
 				default: im_v2_const.RecentType.default
 			},
 			parentChatId: {
 				type: Number || null,
 				default: 0
+			},
+			additionalSearchParams: {
+				type: Object,
+				default: () => ({})
 			}
 		},
 		emits: ['loading', 'openItem', 'closeSearch'],
@@ -677,7 +728,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		created() {
 			const searchParams = {
 				searchRecentSection: this.recentSectionType,
-				parentId: this.parentChatId
+				parentId: this.parentChatId,
+				...this.additionalSearchParams
 			};
 			this.searchService = new im_v2_provider_service_search.SearchService(searchParams);
 			this.runServerSearch = main_core.Runtime.debounce(this.searchOnServer, SEARCH_DEBOUNCE_MS, this);
@@ -863,14 +915,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			exclude: []
 		}
 	};
-	({
-		[im_v2_const.RecentType.taskComments]: {
-			searchRecentSection: im_v2_const.RecentType.taskComments
-		},
-		[im_v2_const.RecentType.default]: {
-			searchRecentSection: im_v2_const.RecentType.default
-		}
-	});
 
 	const mergeSearchItems = (originalItems, newItems) => {
 		const mergedItems = [...originalItems, ...newItems].map(item => {
@@ -886,7 +930,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		components: {
 			ScrollWithGradient: im_v2_component_elements_scrollWithGradient.ScrollWithGradient,
 			SearchItem,
-			EmptyState
+			SearchEmptyState
 		},
 		props: {
 			query: {
@@ -931,7 +975,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			this.searchService = new im_v2_provider_service_search.SearchService(EntitySearchConfig[EntitySearchType.addToChat]);
 			this.searchOnServerDelayed = main_core.Runtime.debounce(this.searchOnServer, 400, this);
 			this.recentSearchItems = im_v2_lib_search.getUsersFromRecentItems({
-				withFakeUsers: true
+				withFakeUsers: true,
+				withGuests: false
 			});
 			this.getEmitter().subscribe(im_v2_const.EventType.search.keyPressed, this.onKeyPressed);
 		},
@@ -1047,7 +1092,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 						:selfChatReplace="false"
 						@clickItem="onClickItem($event, index)"
 					/>
-					<EmptyState v-if="isEmptyState" />
+					<SearchEmptyState v-if="isEmptyState" />
 				</template>
 			</div>
 		</ScrollWithGradient> 
@@ -1060,7 +1105,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		components: {
 			ScrollWithGradient: im_v2_component_elements_scrollWithGradient.ScrollWithGradient,
 			SearchItem,
-			EmptyState
+			SearchEmptyState
 		},
 		props: {
 			query: {
@@ -1224,7 +1269,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 						:query="query"
 						@clickItem="onClickItem($event, index)"
 					/>
-					<EmptyState v-if="isEmptyState" />
+					<SearchEmptyState v-if="isEmptyState" />
 				</template>
 			</div>
 		</ScrollWithGradient> 
@@ -1237,5 +1282,5 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	exports.RecentSearch = RecentSearch;
 	exports.RecentSearchView = RecentSearchView;
 
-})(this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {}, BX, BX, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Application, BX, BX.Messenger.v2.Lib, BX.Messenger.v2.Service, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Service, BX.Messenger.v2.Component.Elements);
+})(this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {}, window, BX, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Application, BX, BX.Messenger.v2.Lib, BX.Messenger.v2.Service, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Service, BX.Messenger.v2.Component.Elements);
 //# sourceMappingURL=registry.bundle.js.map

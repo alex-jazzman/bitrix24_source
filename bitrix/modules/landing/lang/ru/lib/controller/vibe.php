@@ -4,4 +4,7 @@ $MESS['LANDING_WIDGET_APP_NOT_FOUND'] = 'REST-приложение не найд
 $MESS['LANDING_WIDGET_BLOCK_NOT_FOUND'] = 'Блок с виджетом не найден';
 $MESS['LANDING_WIDGET_HANDLER_NOT_FOUND_2'] = 'У виджета отсутствует внешний обработчик';
 $MESS['LANDING_WIDGET_HANDLER_NOT_ALLOW'] = 'Внешний обработчик для виджета недоступен';
+$MESS['LANDING_WIDGET_HANDLER_ADDRESS_NOT_ALLOWED'] = 'Запрос заблокирован: недопустимый адрес внешнего обработчика виджета';
+$MESS['LANDING_WIDGET_HANDLER_ANSWER_STATUS'] = 'Внешний обработчик виджета ответил с кодом #status#';
+$MESS['LANDING_WIDGET_HANDLER_ANSWER_EMPTY'] = 'Внешний обработчик виджета вернул пустой ответ';
 $MESS['LANDING_WIDGET_APP_NO_ACCESS'] = 'Нет доступа к приложению';

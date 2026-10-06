@@ -1,15 +1,21 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
-(function (exports, main_core, main_core_events, main_date, promise, ui_buttons, ui_notification, ui_notificationManager, ui_progressround, ui_viewer, ui_vue, ui_vue_vuex, ui_vue3_pinia, im_application_launch, im_const, im_controller, im_debug, im_lib_clipboard, im_lib_cookie, im_lib_localstorage, im_lib_logger, im_lib_utils, im_provider_pull, im_v2_lib_desktopApi, pull_client, call_application_conferenceChannel, call_component_conference_conferencePublic, call_const, Call, call_mapping, call_lib_accidentLogger, call_lib_analytics, call_lib_callTokenManager, call_lib_settingsManager, call_model, call_store, rest_client) {
+(function (exports, main_core, main_core_events, main_date, promise, ui_buttons, ui_notification, ui_notificationManager, ui_progressround, ui_viewer, ui_vue, ui_vue_vuex, ui_vue3_pinia, im_application_launch, im_const, im_controller, im_debug, im_lib_clipboard, im_lib_cookie, im_lib_localstorage, im_lib_logger, im_lib_utils, im_provider_pull, im_v2_lib_desktopApi, pull_client, call_application_conferenceChannel, call_component_conference_conferencePublic, call_const, Call, call_mapping, call_lib_analytics, call_lib_callTokenManager, call_lib_settingsManager, call_model, call_store, rest_client) {
 	'use strict';
 
 	function _interopNamespaceDefault(e) {
 		var n = Object.create(null);
 		if (e) {
-			for (var k in e) {
-				n[k] = e[k];
-			}
+			Object.keys(e).forEach(function (k) {
+				if (k !== 'default') {
+					var d = Object.getOwnPropertyDescriptor(e, k);
+					Object.defineProperty(n, k, d.get ? d : {
+						enumerable: true,
+						get: function () { return e[k]; }
+					});
+				}
+			});
 		}
 		n.default = e;
 		return Object.freeze(n);
@@ -168,6 +174,8 @@ this.BX.Messenger = this.BX.Messenger || {};
 			this.callStore = null;
 			this.preCall = null;
 			this.currentCall = null;
+			// Calls where the user explicitly picked a microphone - hot-plug auto-switch must not override it.
+			this.callsWithManualMicrophone = new WeakSet();
 			this.callToken = this.params.callToken ?? null;
 			this.videoStrategy = null;
 			this.callDetails = {};
@@ -208,6 +216,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 				console.error('Init error', error);
 			});
 		}
+		#loadAccidentLogger = () => BX.Runtime.loadExtension('call.lib.accident-logger');
 		#initHandlers() {
 			this.#initCallHandlers();
 			this.#initAuxHandlers();
@@ -650,6 +659,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 						this.viewPort.setMicrophoneId(microphoneId);
 					}
 					if (this.currentCall) {
+						this.callsWithManualMicrophone.add(this.currentCall);
 						this.currentCall.setMicrophoneId(microphoneId);
 					} else {
 						this.template.$emit('micSelected', event.data.deviceId);
@@ -1369,13 +1379,17 @@ this.BX.Messenger = this.BX.Messenger || {};
 			for (const deviceInfo of deviceList) {
 				switch (deviceInfo.kind) {
 					case 'audioinput':
-						if (deviceInfo.deviceId === 'default' || isForceUse) {
-							const newDeviceId = Call__namespace.Hardware.getDefaultDeviceIdByGroupId(deviceInfo.groupId, 'audioinput');
-							this.currentCall.setMicrophoneId(newDeviceId);
-							this.viewPort.setMicrophoneId(newDeviceId);
+						{
+							// Pick up any plugged-in microphone, but never override an explicit manual choice.
+							const microphoneManuallySelected = this.callsWithManualMicrophone.has(this.currentCall);
+							if (isForceUse || !microphoneManuallySelected) {
+								const newDeviceId = Call__namespace.Hardware.getDefaultDeviceIdByGroupId(deviceInfo.groupId, 'audioinput');
+								this.currentCall.setMicrophoneId(newDeviceId);
+								this.viewPort.setMicrophoneId(newDeviceId);
+							}
+							this.checkAvailableMicrophone();
+							break;
 						}
-						this.checkAvailableMicrophone();
-						break;
 					case 'videoinput':
 						if (deviceInfo.deviceId === 'default' || isForceUse) {
 							this.currentCall.setCameraId(deviceInfo.deviceId);
@@ -1463,6 +1477,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 				this.stopLocalVideoStream();
 			}
 			this.controller.getStore().commit('conference/startCall');
+			let createdCall = null;
 			let callTokenPromise = Promise.resolve(this.callToken);
 			if (call_lib_settingsManager.CallSettingsManager.jwtCallsEnabled && !this.callToken) {
 				callTokenPromise = call_lib_callTokenManager.CallTokenManager.getToken(this.params.chatId);
@@ -1473,6 +1488,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 				return this.callEngine.createCall(this.getCallConfig(videoEnabled)).then(e => {
 					im_lib_logger.Logger.warn('call created', e);
 					this.currentCall = e.call;
+					createdCall = e.call;
 					if (this.promotedToAdminTimeout) {
 						clearTimeout(this.promotedToAdminTimeout);
 					}
@@ -1552,18 +1568,24 @@ this.BX.Messenger = this.BX.Messenger || {};
 					this.checkVpnStatus();
 					this.onUpdateLastUsedCameraId();
 				});
-			}).catch(async error => {
+			}).catch(error => {
 				im_lib_logger.Logger.error('creating call error', error);
 				let errorCode = Call__namespace.Util.getCallConnectionErrorCode(error);
 				const errorMessage = Call__namespace.Util.getCallConnectionErrorMessage(error);
-				if (errorCode === 'UNKNOWN_ERROR' && error?.message) {
-					errorCode = call_lib_accidentLogger.getUnknownErrorType(error?.message);
+				if (errorCode === 'CLIENT_UNCLASSIFIED' && error?.message) {
+					errorCode = Call__namespace.getUnknownErrorType(error?.message);
 				}
-				await call_lib_accidentLogger.accidentLogger.addLog(error, errorCode);
+				this.#loadAccidentLogger().then(({
+					accidentLogger
+				}) => accidentLogger?.addLog(error, errorCode)).catch(() => {});
 				call_lib_analytics.Analytics.getInstance().onStartCallError({
 					callType: call_lib_analytics.Analytics.AnalyticsType.videoconf,
+					// The room of this attempt, not this.currentCall: a failure before the room
+					// exists sends no identifier rather than the one of a call still running.
+					callId: Call.Util.getCallIdentifier(createdCall),
 					errorCode,
-					errorMessage
+					errorMessage,
+					isVpnActive: this.#isVpnConnected()
 				});
 				this.initCallPromise = null;
 			});
@@ -1668,19 +1690,22 @@ this.BX.Messenger = this.BX.Messenger || {};
 				});
 				this.checkVpnStatus();
 				this.onUpdateLastUsedCameraId();
-			}).catch(async error => {
+			}).catch(error => {
 				let errorCode = Call__namespace.Util.getCallConnectionErrorCode(error);
 				const errorMessage = Call__namespace.Util.getCallConnectionErrorMessage(error);
-				if (errorCode === 'UNKNOWN_ERROR' && error?.message) {
-					errorCode = call_lib_accidentLogger.getUnknownErrorType(error?.message);
+				if (errorCode === 'CLIENT_UNCLASSIFIED' && error?.message) {
+					errorCode = Call__namespace.getUnknownErrorType(error?.message);
 				}
-				await call_lib_accidentLogger.accidentLogger.addLog(error, errorCode);
+				this.#loadAccidentLogger().then(({
+					accidentLogger
+				}) => accidentLogger?.addLog(error, errorCode)).catch(() => {});
 				call_lib_analytics.Analytics.getInstance().onJoinCallError({
 					callType: call_lib_analytics.Analytics.AnalyticsType.videoconf,
 					errorCode,
 					callId: callUuid,
 					errorMessage,
-					isVpnActive: this.#isVpnConnected()
+					isVpnActive: this.#isVpnConnected(),
+					isRoomClosed: error?.isRoomClosed === true
 				});
 				this.initCallPromise = null;
 			});
@@ -2107,7 +2132,8 @@ this.BX.Messenger = this.BX.Messenger || {};
 						cloudRecordEnabled: isPlain && this.currentCall?.isCloudRecordFeaturesEnabled || isBitrix,
 						isCloudRecordFeaturesEnabled: this.currentCall?.isCloudRecordFeaturesEnabled ?? false,
 						callId: this.currentCall?.id,
-						isServiceEnabled: Call__namespace.CallCloudRecord.serviceEnabled
+						isServiceEnabled: Call__namespace.CallCloudRecord.serviceEnabled,
+						canRecord: this.#canCommonRecord()
 					});
 				},
 				toggleVideo: event => {
@@ -3176,18 +3202,11 @@ this.BX.Messenger = this.BX.Messenger || {};
 			call_lib_analytics.Analytics.getInstance().onReconnectError({
 				callId: this.currentCall?.id,
 				callType: call_lib_analytics.Analytics.AnalyticsType.videoconf,
-				errorCode: e?.code,
+				errorCode: e?.error?.code,
 				isVpnActive: this.#isVpnConnected()
 			});
 		}
-		_onParticipantReconnecting(e) {
-			if (e?.participant?.userId && this.viewPort?.wrappedView?.users) {
-				const callUser = this.viewPort.wrappedView.users[e.participant.userId];
-				if (callUser) {
-					callUser.showLastVideoFrame();
-				}
-			}
-		}
+		_onParticipantReconnecting(e) {}
 		_onParticipantReconnected(e) {
 			if (e?.participant?.userId && this.viewPort?.wrappedView?.users) {
 				const callUser = this.viewPort.wrappedView.users[e.participant.userId];
@@ -3504,5 +3523,5 @@ this.BX.Messenger = this.BX.Messenger || {};
 
 	exports.ConferenceApplication = ConferenceApplication;
 
-})(this.BX.Messenger.Application = this.BX.Messenger.Application || {}, BX, BX.Event, BX.Main, BX, BX.UI, BX.UI.Notification, BX.UI.NotificationManager, BX.UI, BX.UI.Viewer, BX, BX, BX.Vue3.Pinia, BX.Messenger.Application, BX.Messenger.Const, BX.Messenger, BX, BX.Messenger.Lib, BX.Messenger.Lib, BX.Messenger.Lib, BX.Messenger.Lib, BX.Messenger.Lib, BX.Messenger.Provider.Pull, BX.Messenger.v2.Lib, BX, BX.Messenger.Application, BX.Messenger, BX.Call.Const, BX.Call, BX.Call.Mapping, BX.Call.Lib, BX.Call.Lib, BX.Call.Lib, BX.Call.Lib, BX.Call.Model, BX.Call.Store, BX);
+})(this.BX.Messenger.Application = this.BX.Messenger.Application || {}, BX, BX.Event, BX.Main, BX, BX.UI, BX.UI.Notification, BX.UI.NotificationManager, BX.UI, BX.UI.Viewer, BX, BX, BX.Vue3.Pinia, BX.Messenger.Application, BX.Messenger.Const, BX.Messenger, BX, BX.Messenger.Lib, BX.Messenger.Lib, BX.Messenger.Lib, BX.Messenger.Lib, BX.Messenger.Lib, BX.Messenger.Provider.Pull, BX.Messenger.v2.Lib, BX, BX.Messenger.Application, BX.Messenger, BX.Call.Const, BX.Call, BX.Call.Mapping, BX.Call.Lib, BX.Call.Lib, BX.Call.Lib, BX.Call.Model, BX.Call.Store, BX);
 //# sourceMappingURL=conference.bundle.js.map

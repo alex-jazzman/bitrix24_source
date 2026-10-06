@@ -12,19 +12,15 @@ jn.define('tasks/layout/checklist/list/src/buttons/button-add-item', (require, e
 	const ICON_SIZE = 24;
 	const IS_IOS = Application.getPlatform() === 'ios';
 
-	/**
-	 * @object buttonAddItem
-	 */
+	/** @type {ButtonAddItemType} */
 	const buttonAddItemType = {
 		key: 'addChecklistItemButton',
 		type: 'checklist-addItem-btn',
 	};
 
 	/**
-	 * @function ButtonAdd
-	 * @param {Object} [props]
-	 * @param {function} [props.onClick]
-	 * @return View
+	 * @param {ButtonAddProps} [props]
+	 * @returns {Object}
 	 */
 	const ButtonAdd = (props = {}) => {
 		const { onClick } = props;

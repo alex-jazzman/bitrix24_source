@@ -15,6 +15,7 @@ use Bitrix\Crm\Format\AddressFormatter;
 use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Settings\CompanySettings;
 use Bitrix\Crm\EntityAddressType;
+use Bitrix\Main\Web\Uri;
 
 /**
  * Bitrix vars
@@ -734,7 +735,7 @@ if (!$isMyCompanyMode && IsModuleInstalled('bizproc') && CModule::IncludeModule(
 		{
 			$bizprocContainerID = $arResult['BIZPROC_CONTAINER_ID'] = $arResult['FORM_ID'].'_bp_wrapper';
 			$arResult['ENABLE_BIZPROC_LAZY_LOADING'] = true;
-			$arResult['POST_FORM_URI'] = CHTTP::urlAddParams(POST_FORM_ACTION_URI, array($formTabKey => 'tab_bizproc'));
+			$arResult['POST_FORM_URI'] = (string)(new Uri(POST_FORM_ACTION_URI))->addParams(array($formTabKey => 'tab_bizproc'));
 
 			$arResult['FIELDS']['tab_bizproc'][] = array(
 				'id' => 'COMPANY_BIZPROC',
@@ -754,31 +755,21 @@ if (!$isMyCompanyMode && IsModuleInstalled('bizproc') && CModule::IncludeModule(
 					'ENTITY' => 'CCrmDocumentCompany',
 					'DOCUMENT_TYPE' => 'COMPANY',
 					'DOCUMENT_ID' => 'COMPANY_'.$arResult['ELEMENT']['ID'],
-					'TASK_EDIT_URL' => CHTTP::urlAddParams(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_COMPANY_SHOW'],
+					'TASK_EDIT_URL' => str_replace('__ID__', '#ID#', (string)(new Uri(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_COMPANY_SHOW'],
 						array(
 							'company_id' => $arResult['ELEMENT']['ID'],
 							$formTabKey => 'tab_bizproc'
-						)),
-						array('bizproc_task' => '#ID#', $formTabKey => 'tab_bizproc')
-					),
-					'WORKFLOW_LOG_URL' => CHTTP::urlAddParams(
-						CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_COMPANY_SHOW'],
+						))))->addParams(array('bizproc_task' => '__ID__', $formTabKey => 'tab_bizproc'))),
+					'WORKFLOW_LOG_URL' => str_replace('__ID__', '#ID#', (string)(new Uri(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_COMPANY_SHOW'],
 							array('company_id' => $arResult['ELEMENT']['ID'])
-						),
-						array('bizproc_log' => '#ID#', $formTabKey => 'tab_bizproc')
-					),
-					'WORKFLOW_START_URL' => CHTTP::urlAddParams(
-						CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_COMPANY_SHOW'],
+						)))->addParams(array('bizproc_log' => '__ID__', $formTabKey => 'tab_bizproc'))),
+					'WORKFLOW_START_URL' => (string)(new Uri(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_COMPANY_SHOW'],
 							array('company_id' => $arResult['ELEMENT']['ID'])
-						),
-						array('bizproc_start' => 1, $formTabKey => 'tab_bizproc')
-					),
-					'back_url' => CHTTP::urlAddParams(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_COMPANY_SHOW'],
+						)))->addParams(array('bizproc_start' => 1, $formTabKey => 'tab_bizproc')),
+					'back_url' => (string)(new Uri(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_COMPANY_SHOW'],
 						array(
 							'company_id' => $arResult['ELEMENT']['ID']
-						)),
-						array($formTabKey => 'tab_bizproc')
-					),
+						))))->addParams(array($formTabKey => 'tab_bizproc')),
 					'SET_TITLE'	=>	'Y'
 				),
 				'',

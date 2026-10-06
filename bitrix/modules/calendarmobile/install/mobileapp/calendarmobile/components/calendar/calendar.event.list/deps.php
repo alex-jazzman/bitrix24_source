@@ -2,13 +2,15 @@
 
 return [
 	'extensions' => [
+		'layout/ui/loading-screen',
 		'loc',
 		'tokens',
-		'layout/ui/loading-screen',
 		'ui-system/typography/heading',
 		'calendar:ajax',
+		'calendar:enums',
 		'calendar:event-list-view',
-		'calendar:layout/ui/loader',
 		'calendar:event-list-view/search',
+		'calendar:layout/ui/loader',
+		'calendar:navigator',
 	],
 ];

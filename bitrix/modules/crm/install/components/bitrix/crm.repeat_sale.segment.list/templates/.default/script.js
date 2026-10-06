@@ -23,10 +23,10 @@
 			this.#isFlowDisabled = isFlowDisabled;
 		}
 		init() {
-			void main_core.Runtime.loadExtension('ui.switcher').then(exports$1 => {
+			void main_core.Runtime.loadExtension('ui.switcher').then(exports => {
 				const {
 					Switcher
-				} = exports$1;
+				} = exports;
 				const switcher = new Switcher({
 					checked: this.#checked,
 					disabled: this.#readOnly,
@@ -34,7 +34,9 @@
 						checked: event => {
 							event.stopPropagation();
 							this.#showMessageBox(() => {
-								this.#changeRepeatSaleSegmentActive(false);
+								this.#changeRepeatSaleSegmentActive(false, () => {
+									switcher.check(true, false);
+								});
 							}, () => {
 								switcher.check(true, false);
 							});
@@ -43,13 +45,17 @@
 							event.stopPropagation();
 							if (this.#isFlowDisabled) {
 								this.#showAllFlowEnableMessageBox(() => {
-									this.#changeRepeatSaleSegmentActive(true);
+									this.#changeRepeatSaleSegmentActive(true, () => {
+										switcher.check(false, false);
+									});
 									this.#isFlowDisabled = false;
 								}, () => {
 									switcher.check(false, false);
 								});
 							} else {
-								this.#changeRepeatSaleSegmentActive(true);
+								this.#changeRepeatSaleSegmentActive(true, () => {
+									switcher.check(false, false);
+								});
 							}
 						}
 					}
@@ -114,7 +120,7 @@
 				}
 			});
 		}
-		#changeRepeatSaleSegmentActive(isEnabled) {
+		#changeRepeatSaleSegmentActive(isEnabled, revert) {
 			main_core.Runtime.throttle(() => {
 				main_core.ajax.runAction('crm.repeatsale.segment.active', {
 					json: {
@@ -128,6 +134,18 @@
 						c_element: `${isEnabled ? 'on' : 'off'}`
 					}
 				}).catch(response => {
+					const sliderCode = response?.errors?.[0]?.customData?.sliderCode;
+					if (sliderCode) {
+						// ui.info-helper is heavy and only needed on this rare subscription error,
+						// so load it lazily here instead of as a static grid dependency.
+						void main_core.Runtime.loadExtension('ui.info-helper').then(({
+							InfoHelper
+						}) => {
+							InfoHelper.show(sliderCode);
+						});
+						revert?.();
+						throw response;
+					}
 					ui_notification.UI.Notification.Center.notify({
 						content: main_core.Text.encode(response.errors[0].message),
 						autoHideDelay: 6000
@@ -212,5 +230,5 @@
 	exports.ActiveField = ActiveField;
 	exports.RoundChartField = RoundChartField;
 
-})(this.window = this.window || {}, BX, BX.UI.Dialogs, BX, BX.UI);
+})(this.window = this.window || {}, BX, BX.UI.Dialogs, BX.UI.Notification, BX.UI);
 //# sourceMappingURL=script.js.map

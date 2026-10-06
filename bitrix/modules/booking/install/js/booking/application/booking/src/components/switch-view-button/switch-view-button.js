@@ -102,7 +102,7 @@ export const SwitchViewButton = {
 		<div class="booking-booking__switch-view-container" ref="dayWeekButton">
 			<UiButton
 				class="booking-booking__switch-view-button"
-				data-id="booking-booking-switch-view-day-button"
+				:dataset="{ id: 'booking-booking-switch-view-day-button' }"
 				:text="loc('BOOKING_BOOKING_SWITZER_DAY_BUTTON')"
 				:size="ButtonSize.SMALL"
 				:style="AirButtonStyle.OUTLINE_NO_ACCENT"

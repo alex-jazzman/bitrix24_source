@@ -14,6 +14,9 @@ Main\Loader::includeModule('mail');
 
 class CMailClientMessageNewComponent extends CBitrixComponent
 {
+	/** Template of the redesigned form: only it gets the initial data of TPL-01. */
+	private const COMPOSE_TEMPLATE_NAME = 'compose';
+
 	/** @var bool */
 	private $isCrmEnable = false;
 
@@ -33,10 +36,10 @@ class CMailClientMessageNewComponent extends CBitrixComponent
 			return;
 		}
 
-		$this->isCrmEnable = MailboxAccess::hasCurrentUserAccessToEditMailboxIntegrationCrm();
-		$this->arResult['CRM_ENABLE'] = ($this->isCrmEnable ? 'Y' : 'N');
-
+		$draftId = max(0, (int)($_REQUEST['draftId'] ?? 0));
+		$isDraftParentMessage = false;
 		$messageId = 0;
+		$isReplyAll = false;
 		if (!empty($_REQUEST['forward']) && $_REQUEST['forward'] > 0)
 		{
 			$messageType = 'forward';
@@ -48,6 +51,24 @@ class CMailClientMessageNewComponent extends CBitrixComponent
 			$messageType = 'reply';
 			$messageId = (int) $_REQUEST['reply'];
 			$subjectPrefix = 'Re';
+			$isReplyAll = isset($_REQUEST['reply_all']) && $_REQUEST['reply_all'] === 'Y';
+		}
+		elseif ($draftId > 0 && Mail\Helper\Config\Feature::isInternalDraftsWebAvailable())
+		{
+			$draft = (new Mail\Internal\Repository\DraftRepository())->findActiveById(
+				(int)$USER->getId(),
+				$draftId,
+				Mail\Internals\DraftTable::CONTEXT_MAIL,
+			);
+			$draftMode = $draft?->snapshot->mode;
+			$draftParentMessageId = (int)($draft?->snapshot->parentMessageId ?? 0);
+			if (in_array($draftMode, ['reply', 'forward'], true) && $draftParentMessageId > 0)
+			{
+				$isDraftParentMessage = true;
+				$messageType = $draftMode;
+				$messageId = $draftParentMessageId;
+				$subjectPrefix = $draftMode === 'reply' ? 'Re' : 'Fwd';
+			}
 		}
 
 		$message = array();
@@ -74,78 +95,67 @@ class CMailClientMessageNewComponent extends CBitrixComponent
 
 		if ($messageId > 0)
 		{
-			$message = Mail\MailMessageTable::getList(array(
-				'runtime' => array(
-					new Main\ORM\Fields\Relations\Reference(
-						'MESSAGE_UID',
-						'Bitrix\Mail\MailMessageUidTable',
-						array(
-							'=this.MAILBOX_ID' => 'ref.MAILBOX_ID',
-							'=this.ID' => 'ref.MESSAGE_ID',
-						),
-						array(
-							'join_type' => 'INNER',
-						)
-					),
-				),
-				'select' => array(
-					'*',
-					'MAILBOX_EMAIL' => 'MAILBOX.EMAIL',
-					'MAILBOX_NAME' => 'MAILBOX.NAME',
-					'MAILBOX_LOGIN' => 'MAILBOX.LOGIN',
-					'DIR_MD5' => 'MESSAGE_UID.DIR_MD5',
-					'MSG_UID' => 'MESSAGE_UID.MSG_UID',
-					'INTERNALDATE' => 'MESSAGE_UID.INTERNALDATE',
-				),
-				'filter' => array(
-					'=ID' => $messageId,
-				),
-			))->fetch();
+			$message = $this->getQuotedMessage($messageId);
 
 			if (empty($message))
 			{
-				showError(Loc::getMessage('MAIL_CLIENT_ELEMENT_NOT_FOUND'));
-				return;
-			}
+				if (!$isDraftParentMessage)
+				{
+					showError(Loc::getMessage('MAIL_CLIENT_ELEMENT_NOT_FOUND'));
 
-			if (!Mail\Helper\Message::hasAccess($message))
+					return;
+				}
+
+				$messageId = 0;
+			}
+			elseif (!Mail\Helper\Message::hasAccess($message))
 			{
-				showError(Loc::getMessage('MAIL_CLIENT_ELEMENT_DENIED'));
-				return;
+				if (!$isDraftParentMessage)
+				{
+					showError(Loc::getMessage('MAIL_CLIENT_ELEMENT_DENIED'));
+
+					return;
+				}
+
+				$message = [];
+				$messageId = 0;
 			}
 
-			$message['ORIGINAL_SUBJECT'] = $message['SUBJECT'];
-			if (!empty($subjectPrefix))
+			if ($messageId > 0)
 			{
-				$message['SUBJECT'] = preg_replace(
-					sprintf('/^(%s:\s*)?/i', preg_quote($subjectPrefix)),
-					sprintf('%s: ', $subjectPrefix),
-					$message['SUBJECT']
-				);
+				$message['ORIGINAL_SUBJECT'] = $message['SUBJECT'];
+				if (!empty($subjectPrefix))
+				{
+					$message['SUBJECT'] = preg_replace(
+						sprintf('/^(%s:\s*)?/i', preg_quote($subjectPrefix)),
+						sprintf('%s: ', $subjectPrefix),
+						$message['SUBJECT'],
+					);
+				}
+
+				if ($level <= 1 && Mail\Helper\Message::ensureAttachments($message) > 0)
+				{
+					return $this->executeComponent($level + 1);
+				}
+
+				$message['__files'] = [];
+				if ($message['ATTACHMENTS'] > 0)
+				{
+					$message['__files'] = Mail\Internals\MailMessageAttachmentTable::getList([
+						'select' => [
+							'ID', 'FILE_ID', 'FILE_NAME', 'FILE_SIZE', 'CONTENT_TYPE',
+						],
+						'filter' => [
+							'=MESSAGE_ID' => $message['ID'],
+						],
+					])->fetchAll();
+				}
+
+				$message['ID'] = 0;
+
+				$message['__type'] = $messageType;
+				$message['__parent'] = $messageId;
 			}
-
-			if ($level <= 1 && Mail\Helper\Message::ensureAttachments($message) > 0)
-			{
-				return $this->executeComponent($level + 1);
-			}
-
-			$message['__files'] = array();
-			if ($message['ATTACHMENTS'] > 0)
-			{
-				$message['__files'] = Mail\Internals\MailMessageAttachmentTable::getList(array(
-					'select' => array(
-						'ID', 'FILE_ID', 'FILE_NAME', 'FILE_SIZE', 'CONTENT_TYPE',
-					),
-					'filter' => array(
-						'=MESSAGE_ID' => $message['ID'],
-					),
-				))->fetchAll();
-			}
-
-			$message['ID'] = 0;
-
-			$message['__type'] = $messageType;
-			$message['__parent'] = $messageId;
 		}
 
 		if (!empty($_REQUEST['email']))
@@ -156,13 +166,118 @@ class CMailClientMessageNewComponent extends CBitrixComponent
 		Mail\Helper\Message::prepare($message);
 
 		$this->arResult['MESSAGE'] = $message;
-		$this->arResult['LAST_RCPT'] = Mail\Helper\Recipient::loadLastRcpt();
-
 		$this->arResult['EMAILS'] = array();//Mail\Helper\Recipient::loadMailContacts();
-		$this->arResult['COPILOT_PARAMS'] = self::prepareCopilotParams();
 		$this->arResult['ANALYTICS'] = $this->arParams['ANALYTICS'];
 
+		if ($this->getTemplateName() === self::COMPOSE_TEMPLATE_NAME)
+		{
+			$draftClientId = Main\UuidGenerator::generateV4();
+			$this->arResult['COMPOSE_FORM_DATA'] = (new Mail\Service\Compose\ComposeFormDataProvider())
+				->getInitialData($message, [
+					'replyAll' => $isReplyAll,
+					'analyticsSource' => $this->arParams['ANALYTICS']['SOURCE'] ?? '',
+					'analyticsElement' => $this->getRequestedAnalyticsElement(),
+					'pathToMessageList' => $this->arParams['~PATH_TO_MAIL_MSG_LIST'] ?? '',
+					'pathToHome' => $this->arParams['~PATH_TO_MAIL_HOME'] ?? '',
+					'draftId' => Mail\Helper\Config\Feature::isInternalDraftsWebAvailable() ? $draftId : 0,
+					'draftClientId' => Mail\Helper\Config\Feature::isInternalDraftsWebAvailable() ? $draftClientId : '',
+				])
+			;
+		}
+		else
+		{
+			$this->fillLegacyFormResult($message, $draftId);
+		}
+
 		$this->includeComponentTemplate();
+	}
+
+	/**
+	 * Keys of the old form only. The redesigned template takes everything from COMPOSE_FORM_DATA, where
+	 * the service builds the very same values, so none of this is computed for it.
+	 */
+	private function fillLegacyFormResult(array $message, int $draftId): void
+	{
+		$this->isCrmEnable = MailboxAccess::hasCurrentUserAccessToEditMailboxIntegrationCrm();
+		$this->arResult['CRM_ENABLE'] = ($this->isCrmEnable ? 'Y' : 'N');
+		$this->arResult['LAST_RCPT'] = Mail\Helper\Recipient::loadLastRcpt();
+		$this->arResult['COPILOT_PARAMS'] = self::prepareCopilotParams();
+		$this->arResult['DRAFT_AVAILABLE'] = Mail\Helper\Config\Feature::isInternalDraftsWebAvailable();
+		$this->arResult['DRAFT_ID'] = $this->arResult['DRAFT_AVAILABLE'] ? $draftId : 0;
+		$this->arResult['DRAFT_CLIENT_ID'] = Main\UuidGenerator::generateV4();
+		$this->arResult['DRAFT_MODE'] = $message['__type'] ?? 'new';
+		$this->arResult['DRAFT_PARENT_MESSAGE_ID'] = (int)($message['__parent'] ?? 0) ?: null;
+		$this->arResult['LARGE_ATTACHMENT_LOCAL_FEATURE_AVAILABLE'] =
+			Mail\Helper\Config\Feature::isLargeAttachmentDiskUploadAvailable()
+		;
+		$this->arResult['LARGE_ATTACHMENT_FEATURE_AVAILABLE'] =
+			Mail\Helper\LicenseManager::isLargeAttachmentAutoUploadEnabled()
+		;
+		$this->arResult['LARGE_ATTACHMENT_SHOW_AHA'] = $this->arResult['LARGE_ATTACHMENT_FEATURE_AVAILABLE']
+			&& !Mail\Helper\Config\Guide::wasLargeAttachmentAhaShown();
+		$this->arResult['LARGE_ATTACHMENT_AHA_OPTION_NAME'] = Mail\Helper\Config\Guide::getLargeAttachmentAhaGuideOptionName();
+		$this->arResult['LARGE_ATTACHMENT_POST_SEND_SUPPRESSED'] = Mail\Helper\Config\Guide::wasLargeAttachmentPostSendPromptSuppressed();
+		$this->arResult['LARGE_ATTACHMENT_POST_SEND_OPTION_NAME'] = Mail\Helper\Config\Guide::getLargeAttachmentPostSendPromptOptionName();
+	}
+
+	/**
+	 * Analytics element the entry point of the form has put into the address. Which values are allowed
+	 * is decided by the service that owns the initial data.
+	 */
+	private function getRequestedAnalyticsElement(): string
+	{
+		$element = $_REQUEST['c_element'] ?? null;
+
+		return is_string($element) ? $element : '';
+	}
+
+	/**
+	 * The message a reply or a forward is built from.
+	 *
+	 * @return array Empty when the message is out of reach.
+	 *
+	 * @throws Main\ArgumentException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
+	private function getQuotedMessage(int $messageId): array
+	{
+		$message = Mail\MailMessageTable::getList([
+			'runtime' => [
+				new Main\ORM\Fields\Relations\Reference(
+					'MESSAGE_UID',
+					'Bitrix\Mail\MailMessageUidTable',
+					[
+						'=this.MAILBOX_ID' => 'ref.MAILBOX_ID',
+						'=this.ID' => 'ref.MESSAGE_ID',
+					],
+					[
+						'join_type' => 'INNER',
+					],
+				),
+			],
+			'select' => [
+				'*',
+				'MAILBOX_EMAIL' => 'MAILBOX.EMAIL',
+				'MAILBOX_NAME' => 'MAILBOX.NAME',
+				'MAILBOX_LOGIN' => 'MAILBOX.LOGIN',
+				'DIR_MD5' => 'MESSAGE_UID.DIR_MD5',
+				'MSG_UID' => 'MESSAGE_UID.MSG_UID',
+				'INTERNALDATE' => 'MESSAGE_UID.INTERNALDATE',
+				// The generation of the placement: what tells a lazy download it is still usable
+				'GENERATION_ID' => 'MESSAGE_UID.GENERATION_ID',
+			],
+			'filter' => array_merge(
+				['=ID' => $messageId],
+				// Of the placements of the message, the download barrier only serves the active one
+				Mail\Helper\Message\Loader\QueryBuilder::generationScopeFilterOfMessages(
+					[$messageId],
+					'MESSAGE_UID.',
+				),
+			),
+		])->fetch();
+
+		return is_array($message) ? $message : [];
 	}
 
 	private static function prepareCopilotParams(): array

@@ -4,13 +4,21 @@
 /** @var array $biconnector_default_option */
 
 use Bitrix\BIConnector\Integration\Superset\SelfHostedConnectionService;
+use Bitrix\BIConnector\Integration\Superset\SupersetInitializer;
 use Bitrix\BIConnector\Superset\Logger\Logger;
+use Bitrix\BIConnector\Superset\Selfhost\License\LicenseLinks;
+use Bitrix\BIConnector\Superset\Selfhost\License\SelfHostedAvailability;
+use Bitrix\BIConnector\Superset\Selfhost\License\SelfHostedAvailabilityState;
+use Bitrix\BIConnector\Superset\Selfhost\License\SelfHostedLicenseState;
+use Bitrix\BIConnector\Superset\Selfhost\License\SelfHostedLicenseView;
 use Bitrix\BIConnector\Superset\Selfhost\SupersetHostMode;
 use Bitrix\Main\Application;
 use Bitrix\Main\Config\Option;
+use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
+use Bitrix\Main\Result;
 
 $module_id = 'biconnector';
 $canRead = $canWrite = $USER->IsAdmin();
@@ -19,11 +27,26 @@ if ($canWrite || $canRead)
 	IncludeModuleLangFile($_SERVER['DOCUMENT_ROOT'] . BX_ROOT . '/modules/main/options.php');
 	IncludeModuleLangFile(__FILE__);
 
+	// The settings page is included without the module, so the module goes first: autoloading of its classes
+	// starts working only after that, and the tab visibility below already asks one of them.
+	CModule::IncludeModule($module_id);
+
 	$allOptions = [
 		['gds_deployment_id', Loc::getMessage('BIC_OPTIONS_GDS_DEPLOYMENT_ID'), ['text', '70']],
 	];
 
 	$isBoxed = !ModuleManager::isModuleInstalled('bitrix24');
+
+	// Offered only where the connection is sold, but kept visible for a portal already switched to the local mode
+	// whatever its area is: otherwise the way back to the cloud mode would disappear with the tab. Hiding is not
+	// the restriction itself - that one lives on the actions, see SupersetHostMode::checkSelfHostedRestrictions().
+	$isSelfHostedTabVisible =
+		$isBoxed
+		&& (
+			SupersetHostMode::checkSelfHostedRegion()->isSuccess()
+			|| SupersetHostMode::isSelfHosted()
+		)
+	;
 
 	$settingsTabs = [
 		[
@@ -33,7 +56,7 @@ if ($canWrite || $canRead)
 		],
 	];
 
-	if ($isBoxed)
+	if ($isSelfHostedTabVisible)
 	{
 		$settingsTabs[] = [
 			'DIV' => 'edit_superset',
@@ -49,8 +72,6 @@ if ($canWrite || $canRead)
 	];
 
 	$tabControl = new CAdminTabControl('tabControl', $settingsTabs);
-
-	CModule::IncludeModule($module_id);
 
 	$selfHostedConnectionService = new SelfHostedConnectionService();
 
@@ -109,7 +130,13 @@ if ($canWrite || $canRead)
 		die();
 	}
 
+	// A refusal is the result and not its message: a phrase missing in the language of the admin panel resolves to
+	// nothing, so a refusal recognised by its text would read as "nothing was refused". The message is used for the
+	// display only.
+	$supersetModeResult = new Result();
 	$supersetModeError = '';
+	$requestedMode = '';
+	$switchRequested = false;
 
 	if (
 		$_SERVER['REQUEST_METHOD'] === 'POST'
@@ -143,44 +170,120 @@ if ($canWrite || $canRead)
 			}
 		}
 
-		// Superset mode switching (boxed installations only)
-		if ($isBoxed && isset($_REQUEST['superset_mode']))
+		// Superset mode switching (boxed installations only): an unconfirmed request changes nothing.
+		$requestedMode = $isBoxed ? (string)($_REQUEST['superset_mode'] ?? '') : '';
+		$switchRequested =
+			$requestedMode !== ''
+			&& $requestedMode !== SupersetHostMode::getMode()
+			&& ($_REQUEST['superset_mode_confirmed'] ?? 'N') === 'Y'
+		;
+
+		if ($switchRequested)
 		{
-			$newMode = (string)$_REQUEST['superset_mode'];
-			if (($_REQUEST['superset_mode_confirmed'] ?? 'N') === 'Y')
+			// Order matters: conditions of the switch, then the answer of the local server, and only then the data
+			// of the mode being left. A server that does not answer leaves the portal in the mode it was in.
+			$switchResult = SupersetHostMode::checkSwitchMode($requestedMode);
+			if (!$switchResult->isSuccess())
 			{
-				$switchResult = SupersetHostMode::handleSwitchMode($newMode);
-				if (!$switchResult->isSuccess())
+				$supersetModeResult->addErrors($switchResult->getErrors());
+			}
+			elseif ($requestedMode === SupersetHostMode::MODE_SELFHOSTED)
+			{
+				$newSupersetAddress = rtrim((string)($_REQUEST['superset_address'] ?? ''), '/');
+				$newAdminPassword = (string)($_REQUEST['superset_admin_password'] ?? '');
+				// Both are required for the first connection: there is no previously saved password to keep.
+				if ($newSupersetAddress === '')
 				{
-					$supersetModeError = $switchResult->getError()->getMessage();
+					$supersetModeResult->addError(new Error(Loc::getMessage('BIC_SUPERSET_ADDRESS_REQUIRED')));
+				}
+				elseif ($newAdminPassword === '')
+				{
+					$supersetModeResult->addError(new Error(Loc::getMessage('BIC_SUPERSET_ADMIN_PASSWORD_REQUIRED')));
+				}
+				elseif (!Loader::includeModule('superset'))
+				{
+					$supersetModeResult->addError(new Error(Loc::getMessage('BIC_SUPERSET_MODULE_NOT_INSTALLED')));
+				}
+				else
+				{
+					$connectionResult = $selfHostedConnectionService->updateConnectionSettings(
+						$newSupersetAddress,
+						$newAdminPassword,
+					);
+					if ($connectionResult->isSuccess())
+					{
+						Application::getInstance()->getKernelSession()->set('BIC_SUPERSET_CONNECTION_SUCCESS', true);
+					}
+					else
+					{
+						Logger::logErrors($connectionResult->getErrors(), [
+							'message' => 'Self-hosted Superset connection check before the mode switch failed',
+							'superset_address' => $newSupersetAddress,
+						]);
+						$supersetModeResult->addError(new Error(Loc::getMessage('BIC_SUPERSET_CONNECTION_ERROR')));
+					}
+				}
+			}
+
+			if ($supersetModeResult->isSuccess())
+			{
+				// The switch refuses itself when the instance being left has not confirmed the reset of its license
+				// state, and refuses before anything is destroyed: the page carries that verdict on as its own.
+				$applyResult = SupersetHostMode::applySwitchMode($requestedMode);
+				if (!$applyResult->isSuccess())
+				{
+					$supersetModeResult->addErrors($applyResult->getErrors());
+				}
+				elseif ($requestedMode === SupersetHostMode::MODE_SELFHOSTED)
+				{
+					// A connected server is already a working instance, so the switch itself makes it ready:
+					// otherwise the portal would keep the "no instance" status the switch has just written.
+					SupersetInitializer::startupSuperset();
 				}
 			}
 		}
 
-		// Save superset connection settings (selfhosted mode)
+		// Address or password of an already connected server. A switch has done this itself, above.
 		if (
 			$isBoxed
+			&& !$switchRequested
 			&& (isset($_REQUEST['superset_address']) || isset($_REQUEST['superset_admin_password']))
-			&& ((string)$_REQUEST['superset_mode'] === SupersetHostMode::MODE_SELFHOSTED)
+			&& SupersetHostMode::getMode() === SupersetHostMode::MODE_SELFHOSTED
 			&& Loader::includeModule('superset')
 		)
 		{
 			$newSupersetAddress = rtrim((string)($_REQUEST['superset_address'] ?? ''), '/');
-			$updateResult = $selfHostedConnectionService->updateConnectionSettings(
-				$newSupersetAddress,
-				(string)($_REQUEST['superset_admin_password'] ?? ''),
-			);
-			if (!$updateResult->isSuccess())
+			// An empty password means "keep the saved one", so only the address is required: an empty one would
+			// wipe the address of a working server.
+			if ($newSupersetAddress === '')
 			{
-				Logger::logErrors($updateResult->getErrors(), [
-					'message' => 'Self-hosted Superset connection settings update failed',
-					'superset_address' => $newSupersetAddress,
-				]);
-				$supersetModeError = Loc::getMessage('BIC_SUPERSET_CONNECTION_ERROR');
+				$supersetModeResult->addError(new Error(Loc::getMessage('BIC_SUPERSET_ADDRESS_REQUIRED')));
 			}
-			elseif (!empty($updateResult->getData()['host_changed']))
+			else
 			{
-				Application::getInstance()->getKernelSession()->set('BIC_SUPERSET_CONNECTION_SUCCESS', true);
+				$updateResult = $selfHostedConnectionService->updateConnectionSettings(
+					$newSupersetAddress,
+					(string)($_REQUEST['superset_admin_password'] ?? ''),
+				);
+				if (!$updateResult->isSuccess())
+				{
+					Logger::logErrors($updateResult->getErrors(), [
+						'message' => 'Self-hosted Superset connection settings update failed',
+						'superset_address' => $newSupersetAddress,
+					]);
+					$supersetModeResult->addError(new Error(Loc::getMessage('BIC_SUPERSET_CONNECTION_ERROR')));
+				}
+				else
+				{
+					if (!empty($updateResult->getData()['host_changed']))
+					{
+						Application::getInstance()->getKernelSession()->set('BIC_SUPERSET_CONNECTION_SUCCESS', true);
+					}
+
+					// The address of a working server has just been confirmed, so saving recovers a portal left
+					// without a ready instance by a switch that stopped halfway.
+					SupersetInitializer::startupSuperset();
+				}
 			}
 		}
 
@@ -191,13 +294,16 @@ if ($canWrite || $canRead)
 			$limitManager->setLimit((int)$_REQUEST['selfhost_row_limit']);
 		}
 
-		ob_start();
-		$Update = ($_REQUEST['Update'] ?? '') . ($_REQUEST['Apply'] ?? '');
-		require_once $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/admin/group_rights2.php';
-		ob_end_clean();
-
-		if ($supersetModeError === '')
+		if ($supersetModeResult->isSuccess())
 		{
+			// The rights of the groups are saved by the file of the admin panel, and its output is of no use on a path
+			// that ends with a redirect. On a refusal the same file is included by the rendering below and saves them
+			// there, so it runs once whatever the path.
+			ob_start();
+			$Update = ($_REQUEST['Update'] ?? '') . ($_REQUEST['Apply'] ?? '');
+			require_once $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/admin/group_rights2.php';
+			ob_end_clean();
+
 			if ($_REQUEST['back_url_settings'] !== '')
 			{
 				if (isset($_REQUEST['Apply']) && $_REQUEST['Apply'] !== '')
@@ -216,7 +322,32 @@ if ($canWrite || $canRead)
 		}
 	}
 
+	if (!$supersetModeResult->isSuccess())
+	{
+		$supersetModeError = (string)$supersetModeResult->getErrors()[0]->getMessage();
+		if ($supersetModeError === '')
+		{
+			// The ru fallback is taken when the language of the admin panel has no phrase: a red box without
+			// a word tells the administrator nothing.
+			$supersetModeError = (string)(
+				Loc::getMessage('BIC_SUPERSET_SAVE_ERROR')
+				?? Loc::getMessage('BIC_SUPERSET_SAVE_ERROR', language: 'ru')
+			);
+		}
+	}
+
 	?>
+	<style>
+		/* A message box of the admin panel is an inline block, so it is centred by the cell, while its own
+		   multiline text stays left aligned. */
+		.bic-settings-message {
+			text-align: center;
+		}
+
+		.bic-settings-message .adm-info-message {
+			text-align: left;
+		}
+	</style>
 	<form method="post" action="<?= $APPLICATION->GetCurPage() ?>?mid=<?= urlencode($module_id) ?>&amp;lang=<?= LANGUAGE_ID ?>">
 	<?php
 	$tabControl->Begin();
@@ -249,19 +380,162 @@ if ($canWrite || $canRead)
 	<?php
 	}
 
-	// Superset mode tab (boxed only)
-	if ($isBoxed)
+	// Rendered only when the tab header is offered: otherwise the tab control would get a body without a tab.
+	if ($isSelfHostedTabVisible)
 	{
 		$tabControl->BeginNextTab();
 
 		$currentMode = SupersetHostMode::getMode();
+		$isSupersetModeRefused = !$supersetModeResult->isSuccess();
 		$isSupersetInstalled = ModuleManager::isModuleInstalled('superset');
 		$canSwitch = $isSupersetInstalled && SupersetHostMode::canSwitchMode();
 		$disabled = $canSwitch ? '' : ' disabled';
-		$articleUrl = \Bitrix\Main\Application::getInstance()->getLicense()->isCis()
-			? 'https://dev.1c-bitrix.ru/learning/course/index.php?COURSE_ID=48&LESSON_ID=33308'
-			: '' // TODO Add en article
+		// The restrictions close the transition only: the mode already in use stays selectable, otherwise a
+		// disabled choice would submit no mode and the connection settings could not be saved.
+		$canSelectSelfHosted = $currentMode === SupersetHostMode::MODE_SELFHOSTED
+			|| SupersetHostMode::checkSelfHostedRestrictions()->isSuccess()
 		;
+		$selfHostedDisabled = ($canSwitch && $canSelectSelfHosted) ? '' : ' disabled';
+		// A refusal keeps the entered choice and address on the form, the confirmation included. A mode the
+		// restrictions forbid is not kept: a choice both checked and disabled submits no mode at all.
+		$isAttemptKept = $isSupersetModeRefused
+			&& $switchRequested
+			&& ($requestedMode !== SupersetHostMode::MODE_SELFHOSTED || $canSelectSelfHosted)
+		;
+		$selectedMode = $isAttemptKept ? $requestedMode : $currentMode;
+		$switchConfirmed = $isAttemptKept ? 'Y' : 'N';
+		$articleUrl = LicenseLinks::getDeployGuideUrl();
+
+		// The state arrives resolved: the page displays it and decides nothing. Read in both modes, because the
+		// expiry term is announced to a cloud portal administrator as well.
+		$licenseViewSource = SelfHostedLicenseView::createForCurrentUser();
+		$licenseView = $licenseViewSource->toArray();
+
+		// Lines of a banner built from an availability state: its texts already exist for the working surfaces, so
+		// the page reuses them. The call to action becomes a link and goes away without an address.
+		$stateLines = static function (SelfHostedAvailabilityState $state, ?string $url): array
+		{
+			$title = $state->getTitle();
+			// A state without a heading says everything in its description; an empty first line would read as a gap.
+			$lines = $title === '' ? [] : [htmlspecialcharsbx($title)];
+			$lines[] = htmlspecialcharsbx($state->getDescription());
+			$actionText = $state->getActionText();
+			if ($url !== null && $actionText !== null)
+			{
+				$actionNote = $state->getActionNote();
+				$lines[] = '<a href="' . htmlspecialcharsbx($url) . '" target="_blank">'
+					. htmlspecialcharsbx($actionText)
+					. '</a>'
+					. ($actionNote === null ? '' : ' ' . htmlspecialcharsbx($actionNote))
+				;
+			}
+
+			return $lines;
+		};
+
+		// One banner at most for the whole chain of conditions, in the order of the gates: an unsuitable edition
+		// first, because buying the extension changes nothing there, then the extension and only then its term.
+		// The gate chain is not asked: outside the local mode it reports an available state whatever the license is.
+		// The renewal phrases carry the link markup, so the address is escaped here, where it is substituted.
+		$renewalUrl = LicenseLinks::getExtensionPurchaseUrl();
+		$expiryBanner = null;
+		if (!SupersetHostMode::checkSelfHostedEdition()->isSuccess())
+		{
+			$expiryBanner = [
+				'testId' => 'biconnector-selfhost-switch-tariff',
+				'isCritical' => false,
+				'lines' => $stateLines(
+					SelfHostedAvailabilityState::TariffUnavailable,
+					LicenseLinks::getEnterprisePurchaseUrl(),
+				),
+			];
+		}
+		elseif (SelfHostedAvailability::getInstance()->isBoxLicenseExpired())
+		{
+			// Second gate, and it announces nothing: the portal itself reports the term of the box license right
+			// above these settings, so a message of ours here would only repeat it. The branch stays to stop the
+			// chain: while the box license is over, the extension is beside the point, so the banner about the
+			// extension does not belong here either.
+			$expiryBanner = null;
+		}
+		elseif ($licenseView['licenseState'] === SelfHostedLicenseState::Grace->value)
+		{
+			// The term is over and the work still runs: what matters here is the day it stops, so the banner names
+			// both dates and stays in the alarming colour.
+			$expiryBanner = [
+				'testId' => 'biconnector-selfhost-license-expiry',
+				'isCritical' => true,
+				'lines' => [
+					Loc::getMessage('BIC_SELFHOST_LICENSE_BANNER_GRACE', [
+						'#DATE#' => htmlspecialcharsbx((string)$licenseView['expiryDate']),
+					]),
+					Loc::getMessage('BIC_SELFHOST_LICENSE_BANNER_GRACE_BLOCK', [
+						'#BLOCK_DATE#' => htmlspecialcharsbx((string)$licenseView['blockDate']),
+					]),
+					$renewalUrl === null
+						? Loc::getMessage('BIC_SELFHOST_LICENSE_BANNER_RENEWAL_NO_URL')
+						: Loc::getMessage('BIC_SELFHOST_LICENSE_BANNER_RENEWAL', [
+							'#PURCHASE_URL#' => htmlspecialcharsbx($renewalUrl),
+						]),
+				],
+			];
+		}
+		elseif ($licenseView['licenseState'] === SelfHostedLicenseState::Expired->value)
+		{
+			$expiryBanner = [
+				'testId' => 'biconnector-selfhost-license-expiry',
+				'isCritical' => true,
+				'lines' => [
+					Loc::getMessage('BIC_SELFHOST_LICENSE_BANNER_EXPIRED', [
+						'#DATE#' => htmlspecialcharsbx((string)$licenseView['expiryDate']),
+					]),
+					$renewalUrl === null
+						? Loc::getMessage('BIC_SELFHOST_LICENSE_BANNER_EXPIRED_RENEWAL_NO_URL')
+						: Loc::getMessage('BIC_SELFHOST_LICENSE_BANNER_EXPIRED_RENEWAL', [
+							'#PURCHASE_URL#' => htmlspecialcharsbx($renewalUrl),
+						]),
+				],
+			];
+		}
+		elseif ($licenseView['licenseState'] === SelfHostedLicenseState::None->value)
+		{
+			$expiryBanner = [
+				'testId' => 'biconnector-selfhost-switch-extension',
+				'isCritical' => false,
+				'lines' => $stateLines(SelfHostedAvailabilityState::ExtensionMissing, $renewalUrl),
+			];
+		}
+		elseif ($licenseView['expiryDate'] !== null)
+		{
+			// A license that still works stays in the calm colour even inside the warning window: the alarming one
+			// is kept for a term that is already over. The window here is the one of an administrator - three
+			// months - and not the one of the reports grid: ordering a renewal takes longer than reading a banner.
+			$warningTexts = $licenseViewSource->getEarlyExpiryWarningTexts();
+			$expiryBanner = $warningTexts === null
+				? [
+					'testId' => 'biconnector-selfhost-license-expiry',
+					'isCritical' => false,
+					'lines' => [
+						Loc::getMessage('BIC_SELFHOST_LICENSE_BANNER_ACTIVE', [
+							'#DATE#' => htmlspecialcharsbx($licenseView['expiryDate']),
+						]),
+					],
+				]
+				: [
+					'testId' => 'biconnector-selfhost-license-expiry',
+					'isCritical' => false,
+					'lines' => [
+						htmlspecialcharsbx($warningTexts['title']),
+						htmlspecialcharsbx($warningTexts['description']),
+						$renewalUrl === null
+							? Loc::getMessage('BIC_SELFHOST_LICENSE_BANNER_RENEWAL_NO_URL')
+							: Loc::getMessage('BIC_SELFHOST_LICENSE_BANNER_RENEWAL', [
+								'#PURCHASE_URL#' => htmlspecialcharsbx($renewalUrl),
+							]),
+					],
+				]
+			;
+		}
 
 		$kernelSession = Application::getInstance()->getKernelSession();
 		$supersetIsConnectSuccess = (bool)$kernelSession->get('BIC_SUPERSET_CONNECTION_SUCCESS');
@@ -270,13 +544,13 @@ if ($canWrite || $canRead)
 			$kernelSession->remove('BIC_SUPERSET_CONNECTION_SUCCESS');
 		}
 
-		if ($supersetModeError !== '')
+		if ($isSupersetModeRefused)
 		{
 			?>
 			<tr>
-				<td colspan="2">
+				<td colspan="2" class="bic-settings-message">
 					<div class="adm-info-message-wrap adm-info-message-red">
-						<div class="adm-info-message">
+						<div class="adm-info-message" role="alert" data-testid="biconnector-selfhost-save-error">
 							<?= htmlspecialcharsbx($supersetModeError) ?>
 							<div class="adm-info-message-icon"></div>
 						</div>
@@ -289,9 +563,9 @@ if ($canWrite || $canRead)
 		{
 			?>
 			<tr>
-				<td colspan="2">
+				<td colspan="2" class="bic-settings-message">
 					<div class="adm-info-message-wrap adm-info-message-green">
-						<div class="adm-info-message">
+						<div class="adm-info-message" role="status" data-testid="biconnector-selfhost-connection-success">
 							<?= Loc::getMessage('BIC_SUPERSET_CONNECTION_SUCCESS') ?>
 							<div class="adm-info-message-icon"></div>
 						</div>
@@ -305,8 +579,8 @@ if ($canWrite || $canRead)
 		{
 			?>
 			<tr>
-				<td colspan="2">
-					<div class="adm-info-message">
+				<td colspan="2" class="bic-settings-message">
+					<div class="adm-info-message" data-testid="biconnector-selfhost-module-missing">
 						<?= Loc::getMessage('BIC_SUPERSET_MODULE_NOT_INSTALLED') ?>
 					</div>
 				</td>
@@ -314,19 +588,40 @@ if ($canWrite || $canRead)
 			<?php
 		}
 			?>
+		<?php if ($expiryBanner !== null): ?>
 		<tr>
-			<td width="40%"><?= Loc::getMessage('BIC_SUPERSET_MODE') ?>:</td>
+			<td colspan="2" class="bic-settings-message">
+				<?php if ($expiryBanner['isCritical']): ?>
+				<div class="adm-info-message-wrap adm-info-message-red">
+					<div class="adm-info-message" data-testid="<?= $expiryBanner['testId'] ?>">
+						<?= implode('<br>', $expiryBanner['lines']) ?>
+						<div class="adm-info-message-icon"></div>
+					</div>
+				</div>
+				<?php else: ?>
+				<div class="adm-info-message" data-testid="<?= $expiryBanner['testId'] ?>">
+					<?= implode('<br>', $expiryBanner['lines']) ?>
+				</div>
+				<?php endif ?>
+			</td>
+		</tr>
+		<?php endif ?>
+		<tr>
+			<td width="40%" id="superset_mode_label"><?= Loc::getMessage('BIC_SUPERSET_MODE') ?>:</td>
 			<td width="60%">
-				<label>
-					<input type="radio" name="superset_mode" value="<?= SupersetHostMode::MODE_CLOUD ?>"<?= ($currentMode === SupersetHostMode::MODE_CLOUD) ? ' checked' : '' ?><?= $disabled ?> onclick="bicOnModeChange(this, false)">
-					<?= Loc::getMessage('BIC_SUPERSET_MODE_CLOUD') ?>
-				</label>
-				<br>
-				<label>
-					<input type="radio" name="superset_mode" value="<?= SupersetHostMode::MODE_SELFHOSTED ?>"<?= ($currentMode === SupersetHostMode::MODE_SELFHOSTED) ? ' checked' : '' ?><?= $disabled ?> onclick="bicOnModeChange(this, true)">
-					<?= Loc::getMessage('BIC_SUPERSET_MODE_SELFHOSTED') ?>
-				</label>
-				<input type="hidden" name="superset_mode_confirmed" id="superset_mode_confirmed" value="N">
+				<?php // The choice is announced as a group: on its own a radio does not say what is being chosen. ?>
+				<div role="radiogroup" aria-labelledby="superset_mode_label" data-testid="biconnector-selfhost-mode">
+					<label>
+						<input type="radio" name="superset_mode" value="<?= SupersetHostMode::MODE_CLOUD ?>"<?= ($selectedMode === SupersetHostMode::MODE_CLOUD) ? ' checked' : '' ?><?= $disabled ?> onclick="bicOnModeChange(this, false)" data-testid="biconnector-selfhost-mode-cloud">
+						<?= Loc::getMessage('BIC_SUPERSET_MODE_CLOUD') ?>
+					</label>
+					<br>
+					<label>
+						<input type="radio" name="superset_mode" value="<?= SupersetHostMode::MODE_SELFHOSTED ?>"<?= ($selectedMode === SupersetHostMode::MODE_SELFHOSTED) ? ' checked' : '' ?><?= $selfHostedDisabled ?> onclick="bicOnModeChange(this, true)" data-testid="biconnector-selfhost-mode-selfhosted">
+						<?= Loc::getMessage('BIC_SUPERSET_MODE_SELFHOSTED') ?>
+					</label>
+				</div>
+				<input type="hidden" name="superset_mode_confirmed" id="superset_mode_confirmed" value="<?= $switchConfirmed ?>" data-testid="biconnector-selfhost-mode-confirmed">
 			</td>
 		</tr>
 		<?php
@@ -337,16 +632,22 @@ if ($canWrite || $canRead)
 			$supersetAddress = $selfHostedConnectionService->getSupersetHost();
 			$jwtPublicKey = $selfHostedConnectionService->readJwtPublicKey();
 		}
-		if ($supersetModeError !== '' && isset($_REQUEST['superset_address']))
+		if ($isSupersetModeRefused && isset($_REQUEST['superset_address']))
 		{
 			$supersetAddress = rtrim((string)($_REQUEST['superset_address']), '/');
 		}
-		$selfhostedDisplay = ($currentMode !== SupersetHostMode::MODE_SELFHOSTED) ? 'display:none' : '';
+		$selfhostedDisplay = ($selectedMode !== SupersetHostMode::MODE_SELFHOSTED) ? 'display:none' : '';
 		?>
 		<tr class="superset-selfhosted-settings" style="<?= $selfhostedDisplay ?>">
-			<td colspan="2">
-				<div class="adm-info-message">
-					<?= Loc::getMessage('BIC_SUPERSET_SELFHOSTED_DEPLOY_HINT', ['#ARTICLE_URL#' => $articleUrl]) ?>
+			<td colspan="2" class="bic-settings-message">
+				<div class="adm-info-message" data-testid="biconnector-selfhost-deploy-hint">
+					<?php // Raw output is left to the phrase below, the one that carries the link. ?>
+					<?= htmlspecialcharsbx((string)Loc::getMessage('BIC_SUPERSET_SELFHOSTED_DEPLOY_INTRO')) ?>
+					<?php if ($articleUrl !== null): ?>
+					<?= Loc::getMessage('BIC_SUPERSET_SELFHOSTED_DEPLOY_HINT_MSGVER_1', [
+						'#ARTICLE_URL#' => htmlspecialcharsbx($articleUrl),
+					]) ?>
+					<?php endif ?>
 				</div>
 			</td>
 		</tr>
@@ -355,7 +656,8 @@ if ($canWrite || $canRead)
 				<label for="superset_address"><?= Loc::getMessage('BIC_SUPERSET_ADDRESS') ?>:</label>
 			</td>
 			<td width="60%">
-				<input type="text" size="70" maxlength="255" value="<?= htmlspecialcharsbx($supersetAddress) ?>" name="superset_address" id="superset_address">
+				<?php // Required while the rows are shown, so the requirement appears and goes away together with them. ?>
+				<input type="text" size="70" maxlength="255" value="<?= htmlspecialcharsbx($supersetAddress) ?>" name="superset_address" id="superset_address"<?= ($selfhostedDisplay === '') ? ' required' : '' ?> data-testid="biconnector-selfhost-address-input">
 			</td>
 		</tr>
 		<tr class="superset-selfhosted-settings" style="<?= $selfhostedDisplay ?>">
@@ -363,28 +665,29 @@ if ($canWrite || $canRead)
 				<label for="superset_admin_password"><?= Loc::getMessage('BIC_SUPERSET_ADMIN_PASSWORD') ?>:</label>
 			</td>
 			<td width="60%">
-				<input type="password" size="40" maxlength="255" value="" name="superset_admin_password" id="superset_admin_password" autocomplete="off">
-				<br><small><?= Loc::getMessage('BIC_SUPERSET_ADMIN_PASSWORD_HINT') ?></small>
+				<input type="password" size="40" maxlength="255" value="" name="superset_admin_password" id="superset_admin_password" autocomplete="off" aria-describedby="superset_admin_password_hint" data-testid="biconnector-selfhost-admin-password-input">
+				<br><small id="superset_admin_password_hint"><?= Loc::getMessage('BIC_SUPERSET_ADMIN_PASSWORD_HINT') ?></small>
 			</td>
 		</tr>
 		<tr class="superset-selfhosted-settings" style="<?= $selfhostedDisplay ?>">
 			<td width="40%" nowrap class="adm-detail-valign-top">
-				<label><?= Loc::getMessage('BIC_SUPERSET_BI_TOKEN') ?>:</label>
+				<label for="superset_regenerate_bi_token_btn"><?= Loc::getMessage('BIC_SUPERSET_BI_TOKEN') ?>:</label>
 			</td>
 			<td width="60%">
-				<input type="button" id="superset_regenerate_bi_token_btn" value="<?= htmlspecialcharsbx(Loc::getMessage('BIC_SUPERSET_BI_TOKEN_REGENERATE')) ?>" onclick="bicRegenerateBiToken()">
-				<span id="superset_bi_token_regenerate_result"></span>
-				<br><small><?= Loc::getMessage('BIC_SUPERSET_BI_TOKEN_HINT') ?></small>
+				<input type="button" id="superset_regenerate_bi_token_btn" value="<?= htmlspecialcharsbx(Loc::getMessage('BIC_SUPERSET_BI_TOKEN_REGENERATE')) ?>" onclick="bicRegenerateBiToken()" aria-describedby="superset_bi_token_hint" data-testid="biconnector-selfhost-bi-token-regenerate-btn">
+				<?php // The answer of the server arrives without a focus change, so the place it appears in is announced. ?>
+				<span id="superset_bi_token_regenerate_result" role="status" data-testid="biconnector-selfhost-bi-token-result"></span>
+				<br><small id="superset_bi_token_hint"><?= Loc::getMessage('BIC_SUPERSET_BI_TOKEN_HINT') ?></small>
 			</td>
 		</tr>
 		<tr class="superset-selfhosted-settings" style="<?= $selfhostedDisplay ?>">
 			<td width="40%" nowrap class="adm-detail-valign-top">
-				<label for="superset_jwt_public_key"><?= Loc::getMessage('BIC_SUPERSET_JWT_PUBLIC_KEY') ?>:</label>
+				<label for="superset_regenerate_jwt_btn"><?= Loc::getMessage('BIC_SUPERSET_JWT_PUBLIC_KEY') ?>:</label>
 			</td>
 			<td width="60%">
-				<input type="button" id="superset_regenerate_jwt_btn" value="<?= htmlspecialcharsbx(Loc::getMessage('BIC_SUPERSET_JWT_REGENERATE')) ?>" onclick="bicRegenerateJwtKeys()">
-				<span id="superset_jwt_regenerate_result"></span>
-				<br><small><?= Loc::getMessage('BIC_SUPERSET_JWT_PUBLIC_KEY_HINT') ?></small>
+				<input type="button" id="superset_regenerate_jwt_btn" value="<?= htmlspecialcharsbx(Loc::getMessage('BIC_SUPERSET_JWT_REGENERATE')) ?>" onclick="bicRegenerateJwtKeys()" aria-describedby="superset_jwt_public_key_hint" data-testid="biconnector-selfhost-jwt-regenerate-btn">
+				<span id="superset_jwt_regenerate_result" role="status" data-testid="biconnector-selfhost-jwt-result"></span>
+				<br><small id="superset_jwt_public_key_hint"><?= Loc::getMessage('BIC_SUPERSET_JWT_PUBLIC_KEY_HINT') ?></small>
 			</td>
 		</tr>
 		<tr class="superset-selfhosted-settings" style="<?= $selfhostedDisplay ?>">
@@ -392,17 +695,17 @@ if ($canWrite || $canRead)
 				<label for="selfhost_row_limit"><?= Loc::getMessage('BIC_OPTIONS_EXPORT_ROW_LIMIT') ?>:</label>
 			</td>
 			<td width="60%">
-				<input type="text" size="20" maxlength="15" value="<?= htmlspecialcharsbx(Option::get($module_id, 'selfhost_row_limit', \Bitrix\BIConnector\LimitManagerBox::DEFAULT_SELFHOST_LIMIT)) ?>" name="selfhost_row_limit" id="selfhost_row_limit">
-				<br><small><?= Loc::getMessage('BIC_OPTIONS_EXPORT_ROW_LIMIT_HINT') ?></small>
+				<input type="text" size="20" maxlength="15" value="<?= htmlspecialcharsbx(Option::get($module_id, 'selfhost_row_limit', \Bitrix\BIConnector\LimitManagerBox::DEFAULT_SELFHOST_LIMIT)) ?>" name="selfhost_row_limit" id="selfhost_row_limit" aria-describedby="selfhost_row_limit_hint" data-testid="biconnector-selfhost-row-limit-input">
+				<br><small id="selfhost_row_limit_hint"><?= Loc::getMessage('BIC_OPTIONS_EXPORT_ROW_LIMIT_HINT') ?></small>
 			</td>
 		</tr>
 		<tr class="superset-selfhosted-settings" style="<?= $selfhostedDisplay ?>">
 			<td width="40%" nowrap>
-				<?= Loc::getMessage('BIC_SUPERSET_VERSION') ?>:
+				<label for="superset_check_version_btn"><?= Loc::getMessage('BIC_SUPERSET_VERSION') ?>:</label>
 			</td>
 			<td width="60%">
-				<input type="button" id="superset_check_version_btn" value="<?= htmlspecialcharsbx(Loc::getMessage('BIC_SUPERSET_CHECK_VERSION')) ?>" onclick="bicSupersetCheckVersion()">
-				<span id="superset_version_result"></span>
+				<input type="button" id="superset_check_version_btn" value="<?= htmlspecialcharsbx(Loc::getMessage('BIC_SUPERSET_CHECK_VERSION')) ?>" onclick="bicSupersetCheckVersion()" data-testid="biconnector-selfhost-version-check-btn">
+				<span id="superset_version_result" role="status" data-testid="biconnector-selfhost-version-result"></span>
 			</td>
 		</tr>
 		<?php
@@ -425,15 +728,19 @@ if ($canWrite || $canRead)
 		<?= bitrix_sessid_post() ?>
 	<?php $tabControl->End();?>
 	</form>
-	<?php if ($isBoxed): ?>
+	<?php if ($isSelfHostedTabVisible): ?>
 	<script>
 	var bicOriginalMode = '<?= CUtil::JSEscape($currentMode) ?>';
+	// Each direction names the data it destroys: only the switch to the local mode loses the cloud BI data.
+	var bicModeSwitchConfirmToSelfhosted = '<?= CUtil::JSEscape(Loc::getMessage('BIC_SUPERSET_MODE_SWITCH_CONFIRM_SELFHOSTED')) ?>';
+	var bicModeSwitchConfirmToCloud = '<?= CUtil::JSEscape(Loc::getMessage('BIC_SUPERSET_MODE_SWITCH_CONFIRM_MSGVER_1')) ?>';
 
 	function bicOnModeChange(radio, showSelfhosted)
 	{
 		if (radio.value !== bicOriginalMode)
 		{
-			if (!confirm('<?= CUtil::JSEscape(Loc::getMessage('BIC_SUPERSET_MODE_SWITCH_CONFIRM')) ?>'))
+			var confirmMessage = showSelfhosted ? bicModeSwitchConfirmToSelfhosted : bicModeSwitchConfirmToCloud;
+			if (!confirm(confirmMessage))
 			{
 				document.querySelector('input[name="superset_mode"][value="' + bicOriginalMode + '"]').checked = true;
 				return;
@@ -450,6 +757,8 @@ if ($canWrite || $canRead)
 		{
 			rows[i].style.display = show ? '' : 'none';
 		}
+		// The requirement follows the visibility: a hidden required field would block saving without a word.
+		document.getElementById('superset_address').required = show;
 	}
 
 	function bicSupersetCheckVersion()

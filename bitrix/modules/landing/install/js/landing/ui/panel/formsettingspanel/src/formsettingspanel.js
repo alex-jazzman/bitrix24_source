@@ -1096,6 +1096,7 @@ export class FormSettingsPanel extends BasePresetPanel
 			const rootWindow = PageObject.getRootWindow();
 			return new rootWindow.BX.UI.Dialogs.MessageBox({
 				buttons: MessageBoxButtons.OK_CANCEL,
+				useAirDesign: true,
 			});
 		});
 	}
@@ -1375,6 +1376,8 @@ export class FormSettingsPanel extends BasePresetPanel
 				onOk,
 				Loc.getMessage('LANDING_SYNCHRONIZATION_POPUP_OK_BUTTON_LABEL'),
 				onCancel,
+				null,
+				true,
 			);
 		});
 	}
@@ -1385,7 +1388,11 @@ export class FormSettingsPanel extends BasePresetPanel
 			return `${acc}\n\n${item}`;
 		}, '');
 
-		window.top.BX.UI.Dialogs.MessageBox.alert(message);
+		window.top.BX.UI.Dialogs.MessageBox.show({
+			message,
+			buttons: MessageBoxButtons.OK,
+			useAirDesign: true,
+		});
 	}
 
 	getErrorAlert(): MessageBox
@@ -1395,6 +1402,7 @@ export class FormSettingsPanel extends BasePresetPanel
 			return new rootWindow.BX.UI.Dialogs.MessageBox({
 				buttons: MessageBoxButtons.OK,
 				okCaption: Loc.getMessage('LANDING_FORM_SAVE_CAPTCHA_ALERT_OK_TEXT'),
+				useAirDesign: true,
 				popupOptions: {
 					maxHeight: 310,
 				},
@@ -1426,7 +1434,11 @@ export class FormSettingsPanel extends BasePresetPanel
 		)
 		{
 			const rootWindow = PageObject.getRootWindow();
-			rootWindow.BX.UI.Dialogs.MessageBox.alert(Loc.getMessage('LANDING_FORM_SAVE_PERMISSION_DENIED'));
+			rootWindow.BX.UI.Dialogs.MessageBox.show({
+				message: Loc.getMessage('LANDING_FORM_SAVE_PERMISSION_DENIED'),
+				buttons: MessageBoxButtons.OK,
+				useAirDesign: true,
+			});
 			return;
 		}
 
@@ -1543,10 +1555,12 @@ export class FormSettingsPanel extends BasePresetPanel
 							else
 							{
 								const rootWindow = PageObject.getRootWindow();
-								rootWindow.BX.UI.Dialogs.MessageBox.alert(
-									Loc.getMessage('LANDING_FORM_SAVE_UNKNOWN_ERROR_ALERT_TEXT'),
-									Loc.getMessage('LANDING_FORM_SAVE_ERROR_ALERT_TITLE'),
-								);
+								rootWindow.BX.UI.Dialogs.MessageBox.show({
+									message: Loc.getMessage('LANDING_FORM_SAVE_UNKNOWN_ERROR_ALERT_TEXT'),
+									title: Loc.getMessage('LANDING_FORM_SAVE_ERROR_ALERT_TITLE'),
+									buttons: MessageBoxButtons.OK,
+									useAirDesign: true,
+								});
 							}
 
 							Dom.removeClass(this.getSaveButton().layout, 'ui-btn-wait');

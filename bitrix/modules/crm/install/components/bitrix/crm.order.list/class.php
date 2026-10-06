@@ -22,6 +22,7 @@ use Bitrix\Iblock\Url\AdminPage\BuilderManager;
 use Bitrix\Main;
 use Bitrix\Main\Grid;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Web\Uri;
 
 Loc::loadMessages(__FILE__);
 
@@ -1483,21 +1484,18 @@ class CCrmOrderListComponent extends \CBitrixComponent
 
 		if ($this->arResult['ENABLE_TASK'])
 		{
-			$this->arResult['TASK_CREATE_URL'] = CHTTP::urlAddParams(
-				CComponentEngine::MakePathFromTemplate(
+			$this->arResult['TASK_CREATE_URL'] = str_replace('__ENTITY_KEYS__', '#ENTITY_KEYS#', (string)(new Uri(CComponentEngine::MakePathFromTemplate(
 					COption::GetOptionString('tasks', 'paths_task_user_edit', ''),
 					array(
 						'task_id' => 0,
 						'user_id' => $this->userId
 					)
-				),
-				array(
-					'UF_CRM_TASK' => '#ENTITY_KEYS#',
-					'ORDER_TOPIC' => urlencode(Loc::getMessage('CRM_TASK_TITLE_PREFIX')),
-					'TAGS' => urlencode(Loc::getMessage('CRM_TASK_TAG')),
-					'back_url' => urlencode($this->arParams['PATH_TO_ORDER_LIST'])
-				)
-			);
+				)))->addParams(array(
+					'UF_CRM_TASK' => '__ENTITY_KEYS__',
+					'ORDER_TOPIC' => Loc::getMessage('CRM_TASK_TITLE_PREFIX'),
+					'TAGS' => Loc::getMessage('CRM_TASK_TAG'),
+					'back_url' => $this->arParams['PATH_TO_ORDER_LIST'],
+				)));
 		}
 
 		if (!in_array('ACCOUNT_NUMBER', $arSelect, true))
@@ -1804,15 +1802,9 @@ class CCrmOrderListComponent extends \CBitrixComponent
 				array('init_mode' => 'edit')
 			);
 
-			$arOrder['PATH_TO_ORDER_COPY'] =  CHTTP::urlAddParams(
-				$arOrder['PATH_TO_ORDER_EDIT'] ?? '',
-				array('copy' => 1)
-			);
+			$arOrder['PATH_TO_ORDER_COPY'] =  (string)(new Uri($arOrder['PATH_TO_ORDER_EDIT'] ?? ''))->addParams(array('copy' => 1));
 
-			$arOrder['PATH_TO_ORDER_DELETE'] =  CHTTP::urlAddParams(
-				$this->isInternal ? $APPLICATION->GetCurPage() : ($this->arParams['PATH_TO_CURRENT_LIST'] ?? ''),
-				array('action_'.$this->arResult['GRID_ID'] => 'delete', 'ID' => $entityID, 'sessid' => $this->arResult['SESSION_ID'])
-			);
+			$arOrder['PATH_TO_ORDER_DELETE'] =  (string)(new Uri($this->isInternal ? $APPLICATION->GetCurPage() : ($this->arParams['PATH_TO_CURRENT_LIST'] ?? '')))->addParams(array('action_'.$this->arResult['GRID_ID'] => 'delete', 'ID' => $entityID, 'sessid' => $this->arResult['SESSION_ID']));
 
 			$contactID = (int)($arOrder['~CONTACT_ID'] ?? 0);
 			$arOrder['PATH_TO_CONTACT_SHOW'] = $contactID <= 0
@@ -2068,35 +2060,26 @@ class CCrmOrderListComponent extends \CBitrixComponent
 
 			if ($this->arResult['ENABLE_TASK'])
 			{
-				$arOrder['PATH_TO_TASK_EDIT'] = CHTTP::urlAddParams(
-					CComponentEngine::MakePathFromTemplate(COption::GetOptionString('tasks', 'paths_task_user_edit', ''),
+				$arOrder['PATH_TO_TASK_EDIT'] = (string)(new Uri(CComponentEngine::MakePathFromTemplate(COption::GetOptionString('tasks', 'paths_task_user_edit', ''),
 						array('task_id' => 0, 'user_id' => $this->userId)
-					),
-					array(
+					)))->addParams(array(
 						'UF_CRM_TASK' => "O_{$entityID}",
-						'ORDER_TOPIC' => urlencode(Loc::getMessage('CRM_TASK_TITLE_PREFIX').' '),
-						'TAGS' => urlencode(Loc::getMessage('CRM_TASK_TAG')),
-						'back_url' => urlencode($this->arParams['PATH_TO_ORDER_LIST'] ?? '')
-					)
-				);
+						'ORDER_TOPIC' => Loc::getMessage('CRM_TASK_TITLE_PREFIX').' ',
+						'TAGS' => Loc::getMessage('CRM_TASK_TAG'),
+						'back_url' => $this->arParams['PATH_TO_ORDER_LIST'] ?? '',
+					));
 			}
 
 			if (IsModuleInstalled('sale'))
 			{
-				$arOrder['PATH_TO_QUOTE_ADD'] = CHTTP::urlAddParams(
-					CComponentEngine::makePathFromTemplate(
+				$arOrder['PATH_TO_QUOTE_ADD'] = (string)(new Uri(CComponentEngine::makePathFromTemplate(
 						$this->arParams['PATH_TO_QUOTE_EDIT'] ?? '',
 						['quote_id' => 0]
-					),
-					['order_id' => $entityID]
-				);
-				$arOrder['PATH_TO_INVOICE_ADD'] = CHTTP::urlAddParams(
-					CComponentEngine::makePathFromTemplate(
+					)))->addParams(['order_id' => $entityID]);
+				$arOrder['PATH_TO_INVOICE_ADD'] = (string)(new Uri(CComponentEngine::makePathFromTemplate(
 						$this->arParams['PATH_TO_INVOICE_EDIT'] ?? '',
 						['invoice_id' => 0]
-					),
-					['order' => $entityID]
-				);
+					)))->addParams(['order' => $entityID]);
 			}
 
 			$arOrder['RESPONSIBLE_BY'] = CUser::FormatName(
@@ -2217,10 +2200,7 @@ class CCrmOrderListComponent extends \CBitrixComponent
 
 			if (!empty($addParams))
 			{
-				$this->arResult['PATH_TO_ORDER_ADD'] = CHTTP::urlAddParams(
-					$this->arResult['PATH_TO_ORDER_ADD'] ?? '',
-					$addParams
-				);
+				$this->arResult['PATH_TO_ORDER_ADD'] = (string)(new Uri($this->arResult['PATH_TO_ORDER_ADD'] ?? ''))->addParams($addParams);
 			}
 		}
 

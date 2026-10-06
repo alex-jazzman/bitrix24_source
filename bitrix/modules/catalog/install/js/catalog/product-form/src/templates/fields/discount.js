@@ -1,8 +1,9 @@
 import {Menu} from 'main.popup';
-import {Loc, Runtime, Text, Type} from 'main.core';
+import {Loc, Text, Type} from 'main.core';
 import {Vue} from "ui.vue";
 import {config} from "../../config";
 import {DiscountType} from "catalog.product-calculator";
+import {MoneyInput} from "./money-input";
 
 Vue.component(config.templateFieldDiscount,
 {
@@ -18,10 +19,23 @@ Vue.component(config.templateFieldDiscount,
 		discountType: Number,
 		discountRate: Number,
 	},
+	data()
+	{
+		return {
+			isFocused: false,
+			isPointerFocus: false,
+			hasInputChanges: false,
+			inputValue: '',
+			publishTimer: null,
+		};
+	},
 	created()
 	{
-		this.onInputDiscount = Runtime.debounce(this.onChangeDiscount, 500, this);
 		this.currencySymbol = this.options.currencySymbol;
+	},
+	beforeDestroy()
+	{
+		this.clearPublishTimer();
 	},
 	mounted()
 	{
@@ -29,6 +43,14 @@ Vue.component(config.templateFieldDiscount,
 	},
 	methods:
 	{
+		clearPublishTimer(): void
+		{
+			if (this.publishTimer)
+			{
+				clearTimeout(this.publishTimer);
+				this.publishTimer = null;
+			}
+		},
 		onChangeType(event, params)
 		{
 			if (!this.editable)
@@ -36,23 +58,122 @@ Vue.component(config.templateFieldDiscount,
 				return;
 			}
 
+			this.flushDiscount(true);
 			const type = (Text.toNumber(params?.options?.type) === DiscountType.MONETARY) ?  DiscountType.MONETARY : DiscountType.PERCENTAGE;
 			this.$emit('changeDiscountType', type);
+			this.inputValue = this.getFocusedDiscountValue(type);
+			this.$nextTick(() => {
+				this.inputValue = this.getFocusedDiscountValue(type);
+			});
 
 			if (this.popupMenu)
 			{
 				this.popupMenu.close();
 			}
 		},
-		onChangeDiscount(event)
+		onInputDiscount(event)
 		{
-			const discountValue = Text.toNumber(event.target.value) || 0;
-			if (discountValue === Text.toNumber(this.discount) || !this.editable)
+			if (!this.editable)
+			{
+				return;
+			}
+
+			this.hasInputChanges = true;
+			this.inputValue = event.target.value;
+			this.clearPublishTimer();
+			if (this.inputValue === '' || MoneyInput.hasTrailingDecimalSeparator(this.inputValue))
+			{
+				return;
+			}
+
+			this.publishTimer = setTimeout(() => {
+				this.flushDiscount();
+			}, MoneyInput.PUBLISH_DELAY);
+		},
+		flushDiscount(forceEmpty: boolean = false): void
+		{
+			this.clearPublishTimer();
+			if (!this.hasInputChanges)
+			{
+				return;
+			}
+
+			if (this.inputValue === '' && !forceEmpty)
+			{
+				return;
+			}
+
+			const discountValue = Text.toNumber(this.inputValue) || 0;
+			this.hasInputChanges = false;
+			if (discountValue === this.getCurrentDiscountValue() || !this.editable)
 			{
 				return;
 			}
 
 			this.$emit('changeDiscount', discountValue);
+		},
+		onFocus(event)
+		{
+			if (!this.editable)
+			{
+				return;
+			}
+
+			const wasFocused = this.isFocused;
+			this.isFocused = true;
+			if (!wasFocused)
+			{
+				this.hasInputChanges = false;
+				this.inputValue = this.isPointerFocus
+					? event.target.value
+					: this.getFocusedDiscountValue()
+				;
+			}
+
+			const shouldMoveCaretToEnd = !this.isPointerFocus && !wasFocused;
+			this.isPointerFocus = false;
+			if (shouldMoveCaretToEnd)
+			{
+				this.$nextTick(() => MoneyInput.moveCaretToEnd(event.target));
+			}
+		},
+		onBlur()
+		{
+			this.flushDiscount(true);
+			this.isFocused = false;
+			this.isPointerFocus = false;
+		},
+		onPointerDown(event): void
+		{
+			if (event.button !== undefined && event.button !== 0)
+			{
+				return;
+			}
+
+			this.isPointerFocus = true;
+		},
+		onPointerCancel(): void
+		{
+			this.isPointerFocus = false;
+		},
+		getFocusedDiscountValue(type = this.discountType)
+		{
+			const isPercent = Text.toNumber(type) === DiscountType.PERCENTAGE;
+			const value = isPercent
+				? Text.toNumber(this.discountRate)
+				: Text.toNumber(this.discount)
+			;
+
+			return value === 0 ? '' : String(value);
+		},
+		getCurrentDiscountValue(type = this.discountType)
+		{
+			const isPercent = Text.toNumber(type) === DiscountType.PERCENTAGE;
+
+			return isPercent
+				? Text.toNumber(this.discountRate)
+				: Text.toNumber(this.discount)
+			;
 		},
 		showPopupMenu(target)
 		{
@@ -94,11 +215,33 @@ Vue.component(config.templateFieldDiscount,
 	computed: {
 		getDiscountInputValue()
 		{
-			if (Text.toNumber(this.discountType) === DiscountType.PERCENTAGE)
+			if (this.isFocused)
 			{
-				return Text.toNumber(this.discountRate);
+				return this.inputValue;
 			}
-			return Text.toNumber(this.discount);
+
+			const isPercent = Text.toNumber(this.discountType) === DiscountType.PERCENTAGE;
+			const value = isPercent
+				? Text.toNumber(this.discountRate)
+				: Text.toNumber(this.discount)
+			;
+
+			// No discount → render an empty field so the "0" placeholder is shown.
+			// Focusing it then starts from scratch: there is no leading 0 to clear
+			// before typing a value.
+			if (value === 0)
+			{
+				return '';
+			}
+
+			if (isPercent)
+			{
+				return value.toFixed(4).replace(/\.?0+$/, '') || '0';
+			}
+
+			const precision = Text.toInteger(this.options?.displayPrecision) || 2;
+
+			return value.toFixed(precision);
 		},
 		getDiscountSymbol()
 		{
@@ -132,8 +275,12 @@ Vue.component(config.templateFieldDiscount,
 				ref="discountInput"
 				v-bind:class="{ 'catalog-pf-product-input--disabled': !editable }"
 				:value="getDiscountInputValue"
-				:v-model="discountRate"
 				@input="onInputDiscount"
+				@pointerdown="onPointerDown"
+				@pointerup="onPointerCancel"
+				@pointercancel="onPointerCancel"
+				@focus="onFocus"
+				@blur="onBlur"
 				placeholder="0"
 				:disabled="!editable"
 				data-name="discount"

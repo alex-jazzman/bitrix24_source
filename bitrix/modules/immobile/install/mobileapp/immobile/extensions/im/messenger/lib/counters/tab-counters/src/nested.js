@@ -21,6 +21,9 @@ jn.define('im/messenger/lib/counters/tab-counters/src/nested', (require, exports
 		NavigationTabId.collabDefault,
 		NavigationTabId.task,
 		NavigationTabId.collabChat,
+		// collabCopilot may be absent from the widget when Feature.isCopilotEnabled is off;
+		// updateItem for a missing tab is a safe no-op, so the id stays unconditional here.
+		NavigationTabId.collabCopilot,
 		NavigationTabId.calendar,
 	];
 
@@ -182,8 +185,13 @@ jn.define('im/messenger/lib/counters/tab-counters/src/nested', (require, exports
 		 * @param {MutationPayload<CounterSetData, CounterSetActions>} mutation
 		 */
 		#counterSetHandler = ({ payload }) => {
-			const { counterList } = payload.data;
-			if (this.#hasRelevantChatIds(counterList?.map((c) => c.chatId)))
+			const { counterList, previousParentChatIdList = [] } = payload.data;
+			// A child detached from this parent no longer appears in its descendants index,
+			// so #hasRelevantChatIds can't see it; previousParentChatIdList catches that case.
+			if (
+				previousParentChatIdList.includes(this.#parentChatId)
+				|| this.#hasRelevantChatIds(counterList?.map((c) => c.chatId))
+			)
 			{
 				this.update();
 			}

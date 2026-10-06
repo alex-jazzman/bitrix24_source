@@ -2,180 +2,169 @@
 this.BX = this.BX || {};
 this.BX.Sign = this.BX.Sign || {};
 this.BX.Sign.V2 = this.BX.Sign.V2 || {};
-(function (exports,main_core,main_core_events,ui_entitySelector) {
+(function (exports, main_core, main_core_events, ui_entitySelector) {
 	'use strict';
 
-	let _ = t => t,
-	  _t,
-	  _t2,
-	  _t3;
-	var _dom = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("dom");
-	var _selector = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("selector");
-	var _selectedItemId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("selectedItemId");
-	var _selectedItemCaption = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("selectedItemCaption");
-	var _isOnSelectEventEnabled = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isOnSelectEventEnabled");
-	var _onSelect = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onSelect");
-	var _setItemSelected = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("setItemSelected");
+	const activationKeys = new Set(['Enter', ' ']);
 	class SignDropdown extends main_core_events.EventEmitter {
-	  constructor(dialogOptions) {
-	    super();
-	    Object.defineProperty(this, _setItemSelected, {
-	      value: _setItemSelected2
-	    });
-	    Object.defineProperty(this, _onSelect, {
-	      value: _onSelect2
-	    });
-	    this.events = {
-	      onSelect: 'onSelect'
-	    };
-	    Object.defineProperty(this, _dom, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _selector, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _selectedItemId, {
-	      writable: true,
-	      value: ''
-	    });
-	    Object.defineProperty(this, _selectedItemCaption, {
-	      writable: true,
-	      value: ''
-	    });
-	    Object.defineProperty(this, _isOnSelectEventEnabled, {
-	      writable: true,
-	      value: true
-	    });
-	    this.setEventNamespace('BX.V2.B2e.SignDropdown');
-	    const {
-	      className,
-	      withCaption,
-	      isEnableSearch,
-	      width,
-	      height
-	    } = dialogOptions;
-	    const _titleNode = withCaption ? main_core.Tag.render(_t || (_t = _`
+		events = {
+			onSelect: 'onSelect'
+		};
+		#dom;
+		#selector;
+		#selectedItemId = '';
+		#selectedItemCaption = '';
+		#isOnSelectEventEnabled = true;
+		constructor(dialogOptions) {
+			super();
+			this.setEventNamespace('BX.V2.B2e.SignDropdown');
+			const {
+				className,
+				withCaption,
+				isEnableSearch,
+				width,
+				height
+			} = dialogOptions;
+			const titleNode = withCaption ? main_core.Tag.render`
 				<div class="sign-b2e-dropdown__text">
 					<span class="sign-b2e-dropdown__text_title"></span>
 					<span class="sign-b2e-dropdown__text_caption"></span>
 				</div>
-			`)) : main_core.Tag.render(_t2 || (_t2 = _`<span class="sign-b2e-dropdown__text"></span>`));
-	    babelHelpers.classPrivateFieldLooseBase(this, _dom)[_dom] = main_core.Tag.render(_t3 || (_t3 = _`
+			` : main_core.Tag.render`<span class="sign-b2e-dropdown__text"></span>`;
+			this.#dom = main_core.Tag.render`
 			<div
 				class="sign-b2e-dropdown"
-				onclick="${0}"
+				role="button"
+				tabindex="0"
+				aria-haspopup="dialog"
+				aria-expanded="false"
+				data-test-id="sign-b2e-dropdown-trigger"
 			>
-				${0}
+				${titleNode}
 				<span class="sign-b2e-dropdown__btn"></span>
 			</div>
-		`), () => {
-	      babelHelpers.classPrivateFieldLooseBase(this, _selector)[_selector].show();
-	    }, _titleNode);
-	    babelHelpers.classPrivateFieldLooseBase(this, _selector)[_selector] = new ui_entitySelector.Dialog({
-	      targetNode: babelHelpers.classPrivateFieldLooseBase(this, _dom)[_dom],
-	      width: width != null ? width : 500,
-	      height: height != null ? height : 350,
-	      showAvatars: false,
-	      dropdownMode: true,
-	      multiple: false,
-	      enableSearch: isEnableSearch != null ? isEnableSearch : true,
-	      hideOnSelect: true,
-	      events: {
-	        'Item:OnSelect': ({
-	          data
-	        }) => babelHelpers.classPrivateFieldLooseBase(this, _onSelect)[_onSelect](data.item)
-	      },
-	      ...dialogOptions
-	    });
-	    if (className) {
-	      const container = babelHelpers.classPrivateFieldLooseBase(this, _selector)[_selector].getContainer();
-	      main_core.Dom.addClass(container, className);
-	    }
-	  }
-	  addItem(item) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _selector)[_selector].addItem(item);
-	  }
-	  addItems(items) {
-	    items.forEach(item => babelHelpers.classPrivateFieldLooseBase(this, _selector)[_selector].addItem(item));
-	  }
-	  removeItems() {
-	    babelHelpers.classPrivateFieldLooseBase(this, _selector)[_selector].removeItems();
-	  }
-	  selectFirstItem() {
-	    const [firstItem] = babelHelpers.classPrivateFieldLooseBase(this, _selector)[_selector].getItems();
-	    if (!main_core.Type.isUndefined(firstItem)) {
-	      firstItem.select();
-	    }
-	  }
-	  selectItem(id) {
-	    const items = babelHelpers.classPrivateFieldLooseBase(this, _selector)[_selector].getItems();
-	    const foundItem = items.find(item => item.id === id);
-	    if (!foundItem) {
-	      return;
-	    }
-	    foundItem.select();
-	  }
+		`;
+			main_core.Event.bind(this.#dom, 'click', () => this.#showSelector());
+			main_core.Event.bind(this.#dom, 'keydown', event => this.#handleKeydown(event));
+			this.#selector = new ui_entitySelector.Dialog({
+				targetNode: this.#dom,
+				width: width ?? 500,
+				height: height ?? 350,
+				showAvatars: false,
+				dropdownMode: true,
+				multiple: false,
+				enableSearch: isEnableSearch ?? true,
+				hideOnSelect: true,
+				events: {
+					onShow: () => this.#setExpanded(true),
+					onHide: () => this.#setExpanded(false),
+					'Item:OnSelect': ({
+						data
+					}) => this.#onSelect(data.item)
+				},
+				...dialogOptions
+			});
+			if (className) {
+				const container = this.#selector.getContainer();
+				main_core.Dom.addClass(container, className);
+			}
+		}
+		addItem(item) {
+			this.#selector.addItem(item);
+		}
+		addItems(items) {
+			items.forEach(item => this.#selector.addItem(item));
+		}
+		removeItems() {
+			this.#selector.removeItems();
+		}
+		selectFirstItem() {
+			const [firstItem] = this.#selector.getItems();
+			if (!main_core.Type.isUndefined(firstItem)) {
+				firstItem.select();
+			}
+		}
+		selectItem(id) {
+			const items = this.#selector.getItems();
+			const foundItem = items.find(item => item.id === id);
+			if (!foundItem) {
+				return;
+			}
+			foundItem.select();
+		}
 
-	  /**
-	   * Without events
-	   */
-	  setItemSelected(id) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _isOnSelectEventEnabled)[_isOnSelectEventEnabled] = false;
-	    this.selectItem(id);
-	    babelHelpers.classPrivateFieldLooseBase(this, _isOnSelectEventEnabled)[_isOnSelectEventEnabled] = true;
-	  }
-	  getLayout() {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _dom)[_dom];
-	  }
-	  getSelectedId() {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _selectedItemId)[_selectedItemId];
-	  }
-	  getSelectedCaption() {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _selectedItemCaption)[_selectedItemCaption];
-	  }
-	  show() {
-	    main_core.Dom.style(babelHelpers.classPrivateFieldLooseBase(this, _dom)[_dom], {
-	      display: 'flex'
-	    });
-	  }
-	  hide() {
-	    main_core.Dom.style(babelHelpers.classPrivateFieldLooseBase(this, _dom)[_dom], {
-	      display: 'none'
-	    });
-	  }
-	}
-	function _onSelect2(item) {
-	  babelHelpers.classPrivateFieldLooseBase(this, _setItemSelected)[_setItemSelected](item);
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _isOnSelectEventEnabled)[_isOnSelectEventEnabled] === false) {
-	    return;
-	  }
-	  this.emit(this.events.onSelect, {
-	    item
-	  });
-	}
-	function _setItemSelected2(item) {
-	  babelHelpers.classPrivateFieldLooseBase(this, _selectedItemId)[_selectedItemId] = item.id;
-	  const {
-	    title,
-	    caption
-	  } = item;
-	  const {
-	    firstElementChild: titleNode
-	  } = babelHelpers.classPrivateFieldLooseBase(this, _dom)[_dom];
-	  if (!caption) {
-	    titleNode.textContent = title;
-	    titleNode.title = title;
-	    return;
-	  }
-	  babelHelpers.classPrivateFieldLooseBase(this, _selectedItemCaption)[_selectedItemCaption] = caption.text;
-	  titleNode.title = `${title} ${caption}`;
-	  titleNode.firstElementChild.textContent = title;
-	  titleNode.lastElementChild.textContent = caption;
+		/**
+		 * Without events
+		 */
+		setItemSelected(id) {
+			this.#isOnSelectEventEnabled = false;
+			this.selectItem(id);
+			this.#isOnSelectEventEnabled = true;
+		}
+		getLayout() {
+			return this.#dom;
+		}
+		getSelectedId() {
+			return this.#selectedItemId;
+		}
+		getSelectedCaption() {
+			return this.#selectedItemCaption;
+		}
+		show() {
+			main_core.Dom.style(this.#dom, {
+				display: 'flex'
+			});
+		}
+		hide() {
+			main_core.Dom.style(this.#dom, {
+				display: 'none'
+			});
+		}
+		#showSelector() {
+			this.#setExpanded(true);
+			this.#selector.show();
+		}
+		#handleKeydown(event) {
+			if (!activationKeys.has(event.key)) {
+				return;
+			}
+			event.preventDefault();
+			this.#showSelector();
+		}
+		#setExpanded(expanded) {
+			main_core.Dom.attr(this.#dom, 'aria-expanded', expanded ? 'true' : 'false');
+		}
+		#onSelect(item) {
+			this.#setItemSelected(item);
+			if (this.#isOnSelectEventEnabled === false) {
+				return;
+			}
+			this.emit(this.events.onSelect, {
+				item
+			});
+		}
+		#setItemSelected(item) {
+			this.#selectedItemId = item.id;
+			const {
+				title,
+				caption
+			} = item;
+			const {
+				firstElementChild: titleNode
+			} = this.#dom;
+			if (!caption) {
+				titleNode.textContent = title;
+				titleNode.title = title;
+				return;
+			}
+			this.#selectedItemCaption = caption.text;
+			titleNode.title = `${title} ${caption}`;
+			titleNode.firstElementChild.textContent = title;
+			titleNode.lastElementChild.textContent = caption;
+		}
 	}
 
 	exports.SignDropdown = SignDropdown;
 
-}((this.BX.Sign.V2.B2e = this.BX.Sign.V2.B2e || {}),BX,BX.Event,BX.UI.EntitySelector));
+})(this.BX.Sign.V2.B2e = this.BX.Sign.V2.B2e || {}, BX, BX.Event, BX.UI.EntitySelector);
 //# sourceMappingURL=sign-dropdown.bundle.js.map

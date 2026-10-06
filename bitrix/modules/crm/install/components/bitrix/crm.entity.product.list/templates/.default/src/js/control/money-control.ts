@@ -28,6 +28,7 @@ export default class MoneyControl
 		{
 			currencyBlock.classList.add('main-dropdown');
 			currencyBlock.dataset.disabled = 'false';
+			currencyBlock.setAttribute('tabindex', '0');
 		}
 
 		this.node.querySelector('.main-grid-editor-money-price')?.removeAttribute('disabled');
@@ -44,6 +45,8 @@ export default class MoneyControl
 		{
 			currencyBlock.classList.remove('main-dropdown');
 			currencyBlock.dataset.disabled = 'true';
+			// disabled currency dropdown must leave the tab order (core keeps tabindex="0")
+			currencyBlock.removeAttribute('tabindex');
 		}
 
 		if (this.hint)

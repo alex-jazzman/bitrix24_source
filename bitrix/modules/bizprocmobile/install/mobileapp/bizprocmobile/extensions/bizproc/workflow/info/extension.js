@@ -8,6 +8,7 @@ jn.define('bizproc/workflow/info', (require, exports, module) => {
 
 	const { PureComponent } = require('layout/pure-component');
 
+	const { handleNetworkError } = require('bizproc/helper/network-error');
 	const { WorkflowDetailsSkeleton } = require('bizproc/skeleton');
 	const { WorkflowDetails } = require('bizproc/workflow/details');
 	const { TaskDetails } = require('bizproc/task/details');
@@ -95,6 +96,13 @@ jn.define('bizproc/workflow/info', (require, exports, module) => {
 					this.setState({ workflowId: response.data.workflowId });
 				})
 				.catch((response) => {
+					if (handleNetworkError(response.errors, this.props.parentLayout))
+					{
+						this.close();
+
+						return;
+					}
+
 					if (Array.isArray(response.errors))
 					{
 						Notify.alert(

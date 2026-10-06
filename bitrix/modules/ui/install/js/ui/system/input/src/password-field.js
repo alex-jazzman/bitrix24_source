@@ -4,6 +4,7 @@ import { InputSize, InputDesign } from './const';
 export type PasswordInputOptions = {
 	value?: string,
 	label?: string,
+	ariaLabel?: string,
 	placeholder?: string,
 	error?: string,
 	size?: InputSize,
@@ -53,6 +54,16 @@ export class PasswordInput
 	getLabel(): string
 	{
 		return this.#input.getLabel();
+	}
+
+	setAriaLabel(value: string): void
+	{
+		this.#input.setAriaLabel(value);
+	}
+
+	getAriaLabel(): string
+	{
+		return this.#input.getAriaLabel();
 	}
 
 	setPlaceholder(value: string): void

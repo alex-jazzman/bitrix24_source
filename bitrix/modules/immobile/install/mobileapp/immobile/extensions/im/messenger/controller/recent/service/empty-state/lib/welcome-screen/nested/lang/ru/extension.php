@@ -2,6 +2,9 @@
 $MESS['IMMOBILE_RECENT_SERVICE_EMPTY_STATE_NESTED_CHAT_TITLE'] = 'В проекте пока нет чатов';
 $MESS['IMMOBILE_RECENT_SERVICE_EMPTY_STATE_NESTED_CHAT_TEXT'] = 'Создайте чат, чтобы начать обсуждение';
 
+$MESS['IMMOBILE_RECENT_SERVICE_EMPTY_STATE_NESTED_COPILOT_TITLE'] = 'Чатов с #COPILOT_NAME# пока нет';
+$MESS['IMMOBILE_RECENT_SERVICE_EMPTY_STATE_NESTED_COPILOT_TEXT'] = 'Они появятся, когда вы их создадите';
+
 $MESS['IMMOBILE_RECENT_SERVICE_EMPTY_STATE_NESTED_TASK_TITLE'] = 'Чатов по задачам пока нет';
 $MESS['IMMOBILE_RECENT_SERVICE_EMPTY_STATE_NESTED_TASK_TEXT'] = 'Как только вы станете участником задачи, здесь появится чат';
 

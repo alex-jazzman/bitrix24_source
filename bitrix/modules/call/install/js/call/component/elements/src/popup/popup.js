@@ -1,5 +1,6 @@
 import { Popup, PopupManager } from 'main.popup';
 import { Type } from 'main.core';
+import { markRaw } from 'ui.vue3';
 
 import type { JsonObject } from 'main.core';
 
@@ -67,7 +68,10 @@ export const CallPopupContainer = {
 			{
 				PopupManager.getPopupById(this.id)?.destroy();
 
-				this.instance = new Popup(this.getPopupConfig());
+				// markRaw prevents Vue from wrapping the Popup instance in a reactive Proxy.
+				// The Popup class relies on private fields (#focusTrap, etc.) that are not
+				// accessible through a Proxy and throw "Private element is not present on this object".
+				this.instance = markRaw(new Popup(this.getPopupConfig()));
 			}
 
 			return this.instance;

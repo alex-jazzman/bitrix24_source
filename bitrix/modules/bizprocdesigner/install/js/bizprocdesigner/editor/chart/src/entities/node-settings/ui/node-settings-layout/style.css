@@ -43,6 +43,9 @@
 	background: 18px 10px url('./images/buttons-skeleton.svg?v=2') no-repeat;
 }
 
+/* The node-settings-transition classes are global and shared with the panel of an ordinary node;
+   they live in entities/common-node-settings/ui/common-settings-form/style.css. */
+
 .editor-chart-node-settings-layout__footer,
 .editor-chart-node-settings-layout.--loading:after {
 	padding: 10px 18px;

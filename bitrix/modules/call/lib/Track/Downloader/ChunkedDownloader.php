@@ -143,7 +143,14 @@ class ChunkedDownloader extends AbstractDownloader
 
 					$errors = $chunkResult->getErrors();
 					$errorCode = !empty($errors) ? $errors[0]->getCode() : 'unknown';
-					$this->sendTelemetry($track, 'error', $errorCode, $this->getEventName($track, 'download_chunk_failed'));
+					$isForced = (bool)($chunkResult->getData()['debug_forced_error'] ?? false);
+					$debugSuffix = $isForced ? '_debug' : '';
+					$this->sendTelemetry(
+						$track,
+						'error',
+						$errorCode . $debugSuffix,
+						$this->getEventName($track, 'download_chunk_failed' . $debugSuffix)
+					);
 
 					$result->addErrors($chunkResult->getErrors());
 					return $this->fail($result);
@@ -210,6 +217,24 @@ class ChunkedDownloader extends AbstractDownloader
 		$logger = Logger::getInstance();
 
 		$log && $logger->info("ChunkedDownloader::downloadChunk: Starting. Bytes: {$startByte}-{$endByte}");
+
+		// [DEBUG] Force NETWORK_ERROR for end-to-end testing of the retryable-recording flow.
+		// Toggle: \Bitrix\Main\Config\Option::set('call', 'debug_force_network_error', true|false).
+		// Returned through the normal chunked path so DownloadAgent retry counter,
+		// telemetry and $this->fail($result) all fire as in production.
+		// The debug_forced_error flag is set on the Result so the caller can mark the
+		// telemetry payload with a distinct event/errorCode and the synthetic event
+		// is not mistaken for a real network failure in analytics.
+		if (filter_var(\Bitrix\Main\Config\Option::get('call', 'debug_force_network_error', ''), FILTER_VALIDATE_BOOLEAN))
+		{
+			$log && $logger->error("ChunkedDownloader::downloadChunk: Forced NETWORK_ERROR (debug_force_network_error). Bytes: {$startByte}-{$endByte}");
+
+			$result->setData(['debug_forced_error' => true]);
+			return $result->addError(new TrackError(
+				TrackError::NETWORK_ERROR,
+				'ChunkedDownloader: forced NETWORK_ERROR for testing'
+			));
+		}
 
 		$httpClient = DownloadHelper::createHttpClient();
 		$httpClient->setHeader('Range', "bytes={$startByte}-{$endByte}");

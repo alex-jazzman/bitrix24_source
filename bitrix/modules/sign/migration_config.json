@@ -1,0 +1,8 @@
+{
+    "defaultTableName": "b_sign_blank",
+    "installDirectoriesMapping": {
+        "install/activities": "activities",
+        "install/components": "components",
+        "install/js": "js"
+    }
+}

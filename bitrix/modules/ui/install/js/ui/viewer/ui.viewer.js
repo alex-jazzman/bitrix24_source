@@ -1291,6 +1291,7 @@
 						class="ui-viewer-download-btn" 
 						target="_blank" 
 						title="${BX.Text.encode(BX.Loc.getMessage('JS_UI_VIEWER_ITEM_ACTION_DOWNLOAD'))}"
+						aria-label="${BX.Text.encode(BX.Loc.getMessage('JS_UI_VIEWER_ITEM_ACTION_DOWNLOAD'))}"
 						href="" 
 						download
 					>
@@ -1511,7 +1512,9 @@
 		{
 			this.getDownloadButton().setAttribute('href', item.getDownloadUrl());
 
-			if (item.getActions().length > 0)
+			const hasMoreMenuItems = item.getActions().length > 0 || item.getMoreMenuItems().length > 0;
+
+			if (hasMoreMenuItems)
 			{
 				BX.Dom.removeClass(this.getMoreButton(), '--hidden');
 			}

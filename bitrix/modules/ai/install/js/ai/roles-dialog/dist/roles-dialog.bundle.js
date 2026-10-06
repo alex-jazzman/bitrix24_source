@@ -669,21 +669,6 @@ this.BX = this.BX || {};
 				return ui_iconSet_api_core.Actions.CHEVRON_RIGHT;
 			}
 		},
-		created() {
-			if (this.groupData.groupData.id === 'recents') {
-				main_core_events.EventEmitter.subscribe('update-complete', this.onUpdate);
-			}
-		},
-		beforeDestroy() {
-			if (this.groupData.groupData.id === 'recents') {
-				main_core_events.EventEmitter.unsubscribe('update-complete', this.onUpdate);
-			}
-		},
-		methods: {
-			onUpdate() {
-				this.groupData.handleClick();
-			}
-		},
 		template: `
 		<div @click="handleClick" class="ai__roles-dialog_group-item-wrapper">
 			<div :class="groupItemClassname">
@@ -740,7 +725,7 @@ this.BX = this.BX || {};
 		'#LINK#': '<a @click.prevent="openRolesLibrary" href="#">',
 		'#/LINK#': '</a>'
 	});
-	const getRolesDialogEmptyGroupStubWithStates = States => {
+	const getRolesDialogEmptyGroupStubWithStates = (States, onOpenRolesLibrary) => {
 		return {
 			computed: {
 				...ui_vue3_pinia.mapWritableState(States.useGlobalState, {
@@ -760,23 +745,6 @@ this.BX = this.BX || {};
 				}
 			},
 			methods: {
-				async sendAnalytics() {
-					try {
-						const {
-							sendData
-						} = await main_core.Runtime.loadExtension('ui.analytics');
-						const sendDataOptions = {
-							event: 'open_list',
-							status: 'success',
-							tool: 'ai',
-							category: 'roles_saving',
-							c_section: 'roles_picker'
-						};
-						sendData(sendDataOptions);
-					} catch (e) {
-						console.error('AI: RolesDialog: Can\'t send analytics', e);
-					}
-				},
 				openRolesLibrary() {
 					if (!main_core.Extension.getSettings('ai.roles-dialog').get('isLibraryVisible')) {
 						ui_notification.UI.Notification.Center.notify({
@@ -784,19 +752,7 @@ this.BX = this.BX || {};
 						});
 						return;
 					}
-					if (BX.SidePanel) {
-						this.sendAnalytics();
-						BX.SidePanel.Instance.open('/bitrix/components/bitrix/ai.role.library.grid/slider.php', {
-							cacheable: false,
-							events: {
-								onCloseStart: () => {
-									main_core.Event.EventEmitter.emit('update');
-								}
-							}
-						});
-					} else {
-						window.location.href = '/bitrix/components/bitrix/ai.prompt.library.grid/slider.php';
-					}
+					onOpenRolesLibrary();
 				}
 			},
 			template: `
@@ -821,7 +777,7 @@ this.BX = this.BX || {};
 		};
 	};
 
-	const RolesDialogRolesLibrary = {
+	const getRolesDialogRolesLibrary = onOpenRolesLibrary => ({
 		components: {
 			BIcon: ui_iconSet_api_vue.BIcon
 		},
@@ -844,37 +800,8 @@ this.BX = this.BX || {};
 			}
 		},
 		methods: {
-			async sendAnalytics() {
-				try {
-					const {
-						sendData
-					} = await main_core.Runtime.loadExtension('ui.analytics');
-					const sendDataOptions = {
-						event: 'open_list',
-						status: 'success',
-						tool: 'ai',
-						category: 'roles_saving',
-						c_section: 'roles_picker'
-					};
-					sendData(sendDataOptions);
-				} catch (e) {
-					console.error('AI: RolesDialog: Can\'t send analytics', e);
-				}
-			},
 			handleClick() {
-				if (BX.SidePanel) {
-					this.sendAnalytics();
-					BX.SidePanel.Instance.open('/bitrix/components/bitrix/ai.role.library.grid/slider.php', {
-						cacheable: false,
-						events: {
-							onCloseStart: () => {
-								main_core.Event.EventEmitter.emit('update');
-							}
-						}
-					});
-				} else {
-					window.location.href = '/bitrix/components/bitrix/ai.prompt.library.grid/slider.php';
-				}
+				onOpenRolesLibrary();
 			}
 		},
 		template: `
@@ -894,7 +821,7 @@ this.BX = this.BX || {};
 			</div>
 		</div>
 	`
-	};
+	});
 
 	const RolesDialogEvents = {
 		HIDE: 'hide',
@@ -915,7 +842,6 @@ this.BX = this.BX || {};
 		#defaultRoleCode;
 		#industries;
 		#selectedDefaultRoleHandler;
-		#reloadDialogHandler;
 		#selectedRoleCode;
 		#universalRole;
 		#title;
@@ -979,6 +905,34 @@ this.BX = this.BX || {};
 		hide() {
 			this.#entityCatalog?.close();
 		}
+		#openRolesLibrary() {
+			this.hide();
+			if (BX.SidePanel) {
+				this.#sendOpenRolesLibraryAnalytics();
+				BX.SidePanel.Instance.open('/bitrix/components/bitrix/ai.role.library.grid/slider.php', {
+					cacheable: false
+				});
+			} else {
+				window.location.href = '/bitrix/components/bitrix/ai.prompt.library.grid/slider.php';
+			}
+		}
+		async #sendOpenRolesLibraryAnalytics() {
+			try {
+				const {
+					sendData
+				} = await main_core.Runtime.loadExtension('ui.analytics');
+				const sendDataOptions = {
+					event: 'open_list',
+					status: 'success',
+					tool: 'ai',
+					category: 'roles_saving',
+					c_section: 'roles_picker'
+				};
+				sendData(sendDataOptions);
+			} catch (e) {
+				console.error('AI: RolesDialog: Can\'t send analytics', e);
+			}
+		}
 		async #showAfterInit() {
 			const loader = new RolesDialogLoaderPopup();
 			let isShowLoader = true;
@@ -1004,36 +958,10 @@ this.BX = this.BX || {};
 			this.#selectedDefaultRoleHandler = this.#selectDefaultRole.bind(this);
 			main_core_events.EventEmitter.subscribe(document, RolesDialogGroupListFooterEvents.CHOOSE_STANDARD_ROLE, this.#selectedDefaultRoleHandler);
 			main_core_events.EventEmitter.subscribe(document, RolesDialogSearchStubEvents.CHOOSE_STANDARD_ROLE, this.#selectedDefaultRoleHandler);
-			this.#reloadDialogHandler = this.#reloadDialog.bind(this);
-			main_core_events.EventEmitter.subscribe('update', this.#reloadDialogHandler);
-		}
-		async #reloadDialog() {
-			const loader = new RolesDialogLoaderPopup();
-			let isShowLoader = true;
-			setTimeout(() => {
-				if (isShowLoader) {
-					loader.show();
-				}
-			}, 300);
-			try {
-				this.#entityCatalog.setItems([]);
-				this.#entityCatalog.setGroups([]);
-				await this.#loadData();
-			} catch (e) {
-				showRolesDialogErrorPopup();
-				console.error(e);
-			} finally {
-				isShowLoader = false;
-				loader.hide();
-				this.#entityCatalog.setItems(this.#getItemsData());
-				this.#entityCatalog.setGroups(this.#getItemGroupsFromIndustries());
-				main_core_events.EventEmitter.emit('update-complete');
-			}
 		}
 		#unsubscribeEvents() {
 			main_core_events.EventEmitter.unsubscribe(document, RolesDialogGroupListFooterEvents.CHOOSE_STANDARD_ROLE, this.#selectedDefaultRoleHandler);
 			main_core_events.EventEmitter.unsubscribe(document, RolesDialogSearchStubEvents.CHOOSE_STANDARD_ROLE, this.#selectedDefaultRoleHandler);
-			main_core_events.EventEmitter.unsubscribe('update', this.#reloadDialogHandler);
 		}
 		#selectRole(role) {
 			const event = new main_core_events.BaseEvent({
@@ -1075,8 +1003,8 @@ this.BX = this.BX || {};
 					RolesDialogGroupItem,
 					RolesDialogGroupListFooter,
 					RolesDialogSearchStub,
-					RolesDialogEmptyGroupStub: getRolesDialogEmptyGroupStubWithStates(States),
-					RolesDialogRolesLibrary
+					RolesDialogEmptyGroupStub: getRolesDialogEmptyGroupStubWithStates(States, () => this.#openRolesLibrary()),
+					RolesDialogRolesLibrary: getRolesDialogRolesLibrary(() => this.#openRolesLibrary())
 				},
 				popupOptions: {
 					className: `ai_roles-dialog_popup ui-entity-catalog__scope${this.#isBitrixGptV2Available ? ' --bitrixgpt-redesign' : ''}`,

@@ -1,8 +1,9 @@
 import { Event, Type } from 'main.core';
 import { Outline } from 'ui.icon-set.api.core';
 import { AirButtonStyle, Button as UiButton, ButtonSize } from 'ui.vue3.components.button';
+import { type MenuOptions, type MenuItemOptions } from 'ui.vue3.components.menu';
+
 import { MenuButton } from '../../../../shared/ui';
-import type { MenuOptions, MenuItemOptions } from 'ui.vue3.components.menu';
 import './template-name-input.css';
 
 type TemplateNameInputData = {
@@ -24,6 +25,11 @@ export const TemplateNameInput = {
 		{
 			type: String,
 			default: '',
+		},
+		readonly:
+		{
+			type: Boolean,
+			default: false,
 		},
 		/** @type MenuOptions */
 		dropdownOptions:
@@ -93,6 +99,11 @@ export const TemplateNameInput = {
 		},
 		onStartEditing(): void
 		{
+			if (this.readonly)
+			{
+				return;
+			}
+
 			this.isEditing = true;
 			this.editedTitle = this.title;
 
@@ -102,6 +113,13 @@ export const TemplateNameInput = {
 		},
 		onSaveTitle(): void
 		{
+			if (this.readonly)
+			{
+				this.onCancelEditing();
+
+				return;
+			}
+
 			this.$emit('update:title', this.editedTitle);
 			this.isEditing = false;
 		},
@@ -140,6 +158,7 @@ export const TemplateNameInput = {
 				<span @click="onStartEditing">{{ title }}</span>
 			</div>
 			<MenuButton
+				v-if="!readonly"
 				:options="preparedOptions"
 				:icon="Outline.CHEVRON_DOWN_M"
 				:buttonStyle="AirButtonStyle.PLAIN_NO_ACCENT"

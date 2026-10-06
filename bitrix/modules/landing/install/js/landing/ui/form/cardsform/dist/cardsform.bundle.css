@@ -5,13 +5,8 @@
 	overflow: hidden;
 	border-radius: 2px;
 	margin-bottom: 6px;
-	-webkit-box-shadow: 0 1px 2px 0 rgba(0,0,0,.2);
 	box-shadow: 0 1px 2px 0 rgba(0,0,0,.2);
-	-webkit-transition: height 200ms ease-out, margin 300ms ease-out, color 200ms ease, translate 200ms ease, -webkit-box-shadow 300ms ease-out;
-	transition: height 200ms ease-out, margin 300ms ease-out, color 200ms ease, translate 200ms ease, -webkit-box-shadow 300ms ease-out;
-	-o-transition: height 200ms ease-out, margin 300ms ease-out, box-shadow 300ms ease-out, color 200ms ease, translate 200ms ease;
 	transition: height 200ms ease-out, margin 300ms ease-out, box-shadow 300ms ease-out, color 200ms ease, translate 200ms ease;
-	transition: height 200ms ease-out, margin 300ms ease-out, box-shadow 300ms ease-out, color 200ms ease, translate 200ms ease, -webkit-box-shadow 300ms ease-out;
 	cursor: pointer;
 }
 
@@ -24,54 +19,34 @@
 	right: 0;
 	bottom: 0;
 	border-radius: 2px;
-	-webkit-transition: opacity 300ms ease;
-	-o-transition: opacity 300ms ease;
 	transition: opacity 300ms ease;
 }
 
 
 .landing-ui-form-card-item-header {
 	position: relative;
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
-	-webkit-box-pack: justify;
-	    -ms-flex-pack: justify;
-	        justify-content: space-between;
+	justify-content: space-between;
 	height: 42px;
 	z-index: 2;
 	border-bottom: 1px transparent solid;
-	-webkit-transition: border 300ms ease, background-color 300ms ease;
-	-o-transition: border 300ms ease, background-color 300ms ease;
 	transition: border 300ms ease, background-color 300ms ease;
 	line-height: 42px;
 	-webkit-user-select: none;
-	-moz-user-select: none;
-	-ms-user-select: none;
 	user-select: none;
 }
 
 .landing-ui-form-card-item-header-left {
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
-	-webkit-box-flex: 1;
-	    -ms-flex-positive: 1;
-	        flex-grow: 1;
-	-webkit-box-pack: justify;
-	    -ms-flex-pack: justify;
-	        justify-content: space-between;
+	flex-grow: 1;
+	justify-content: space-between;
 }
 
 .landing-ui-form-card-item-header-left-inner {
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
 }
 
 .landing-ui-form-card-item-header > div {
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
 }
 
@@ -81,12 +56,8 @@
 }
 
 .landing-ui-form-card-item-header-title {
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
 	height: 42px;
-	-webkit-transition: color 200ms ease;
-	-o-transition: color 200ms ease;
 	transition: color 200ms ease;
 }
 
@@ -94,19 +65,40 @@
 .landing-ui-form-card-item-header-title .landing-card-title-icon span {
 	color: rgba(0,0,0,.3) !important;
 	position: static!important;
-	-webkit-transform: none!important;
-	    -ms-transform: none!important;
-	        transform: none!important;
+	transform: none!important;
 }
 
 .landing-ui-form-card-item-header-edit,
 .landing-ui-form-card-item-header-remove {
 	width: 34px;
-	-webkit-transition: color 200ms ease, background-color 200ms ease;
-	-o-transition: color 200ms ease, background-color 200ms ease;
 	transition: color 200ms ease, background-color 200ms ease;
 	text-align: center;
 	color: rgba(0,0,0,.3);
+}
+
+button.landing-ui-form-card-item-header-remove {
+	appearance: none;
+	-webkit-appearance: none;
+	padding: 0;
+	margin: 0;
+	border: none;
+	background: transparent;
+	font: inherit;
+	line-height: 42px;
+	cursor: pointer;
+}
+
+.landing-ui-form-card-item-header:focus,
+.landing-ui-form-card-item-header-drag:focus,
+.landing-ui-form-card-item-header-remove:focus {
+	outline: none;
+}
+
+.landing-ui-form-card-item-header:focus-visible,
+.landing-ui-form-card-item-header-drag:focus-visible,
+.landing-ui-form-card-item-header-remove:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary, #0075ff);
+	outline-offset: -2px;
 }
 
 .landing-ui-form-card-item-header-remove {
@@ -131,7 +123,6 @@
 
 
 .landing-ui-form-cards-item:hover {
-	-webkit-box-shadow: 0 1px 4px 0 rgba(0,0,0,.4);
 	box-shadow: 0 1px 4px 0 rgba(0,0,0,.4);
 }
 
@@ -140,7 +131,6 @@
 }
 
 .landing-ui-form-cards-item:active {
-	-webkit-box-shadow: 0 1px 2px 0 rgba(0,0,0,.2);
 	box-shadow: 0 1px 2px 0 rgba(0,0,0,.2);
 }
 
@@ -155,7 +145,6 @@
 .landing-ui-form-cards-item.landing-ui-form-cards-item-expand {
 	margin-top: 10px;
 	margin-bottom: 10px;
-	-webkit-box-shadow: 0 1px 4px 0 rgba(0,0,0,0);
 	box-shadow: 0 1px 4px 0 rgba(0,0,0,0);
 	cursor: default;
 }
@@ -172,7 +161,6 @@
 }
 
 .landing-ui-form-cards-item.landing-ui-form-card-item-draggable {
-	-webkit-box-shadow: 0 1px 8px 0 rgba(0,0,0,.4);
 	box-shadow: 0 1px 8px 0 rgba(0,0,0,.4);
 	cursor: grabbing;
 	cursor: -webkit-grabbing;
@@ -185,12 +173,8 @@
 }
 
 .landing-card-title {
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
-	-webkit-box-align: center;
-	    -ms-flex-align: center;
-	        align-items: center;
+	align-items: center;
 	max-width: 300px;
 }
 
@@ -214,21 +198,14 @@
 .landing-card-title-text, .landing-card-title-link {
 	max-width: 210px;
 	overflow: hidden;
-	-o-text-overflow: ellipsis;
-	   text-overflow: ellipsis;
+	text-overflow: ellipsis;
 	white-space: nowrap;
 }
 
 .landing-ui-form-cards .landing-ui-form-footer {
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
-	-webkit-box-pack: center;
-	    -ms-flex-pack: center;
-	        justify-content: center;
-	-webkit-box-align: center;
-	    -ms-flex-align: center;
-	        align-items: center;
+	justify-content: center;
+	align-items: center;
 	min-height: 40px;
 }
 
@@ -236,8 +213,6 @@
 	background: #fafafa;
 	border-radius: 100px;
 	border: none!important;
-	-webkit-transition: background-color 200ms ease;
-	-o-transition: background-color 200ms ease;
 	transition: background-color 200ms ease;
 }
 

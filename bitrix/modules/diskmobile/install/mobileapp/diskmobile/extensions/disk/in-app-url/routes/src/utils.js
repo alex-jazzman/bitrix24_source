@@ -27,6 +27,8 @@ jn.define('disk/in-app-url/routes/src/utils', (require, exports, module) => {
 			showToast({
 				message: Loc.getMessage('M_DISK_IN_APP_URL_FILE_NOT_FOUND'),
 			});
+
+			return;
 		}
 
 		if (diskObject.isFolder)
@@ -54,6 +56,9 @@ jn.define('disk/in-app-url/routes/src/utils', (require, exports, module) => {
 			if (response.errors.length > 0)
 			{
 				console.error(response.errors);
+				showToast({
+					message: Loc.getMessage('M_DISK_IN_APP_URL_FOLDER_NOT_FOUND'),
+				});
 
 				return null;
 			}

@@ -81,6 +81,7 @@ jn.define('call/calls/bitrix-dev', (require, exports, module) => {
 			this.microphoneId = params.microphoneId || '';
 
 			this.muted = params.muted === true;
+			this.invitePeriod = params.invitePeriod;
 
 			this.logToken = params.logToken || '';
 			if (callEngine.getLogService() && this.logToken)
@@ -145,8 +146,6 @@ jn.define('call/calls/bitrix-dev', (require, exports, module) => {
 			this.lastSelfPingReceivedTimeout = null;
 
 			this.created = new Date();
-
-			this.invitePeriod = params.invitePeriod;
 		}
 
 		get provider()

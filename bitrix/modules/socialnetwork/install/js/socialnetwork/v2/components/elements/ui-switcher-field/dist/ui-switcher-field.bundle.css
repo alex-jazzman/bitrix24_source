@@ -43,3 +43,9 @@
 	flex-shrink: 0;
 	min-width: 2em;
 }
+
+.socialnetwork--project-wizard--ui-switcher-field--left-col:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+	border-radius: var(--ui-border-radius-2xs, 4px);
+}

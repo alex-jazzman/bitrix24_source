@@ -28,6 +28,7 @@ use Bitrix\Crm\EntityBankDetail;
 use Bitrix\Crm\Requisite;
 use Bitrix\Crm\RequisiteAddress;
 use Bitrix\Crm\Settings\CompanySettings;
+use Bitrix\Main\Web\Uri;
 
 if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityType()->canImportItems(CCrmOwnerType::Company))
 {
@@ -2288,10 +2289,7 @@ $arResult['FIELDS']['tab_1'][] = array(
 		'onclick="'.htmlspecialcharsbx('BX.Crm.CompanyImportSampleLink.items["'.
 			CUtil::JSEscape($arResult['IMPORT_SAMPLE_LINK_ID']).'"].getSample("'.
 			CUtil::JSEscape(
-				CHTTP::urlAddParams(
-					CComponentEngine::makePathFromTemplate($arParams['PATH_TO_COMPANY_IMPORT']),
-					array('getSample' => 'csv', 'ncc' => 1)
-				)
+				(string)(new Uri(CComponentEngine::makePathFromTemplate($arParams['PATH_TO_COMPANY_IMPORT'])))->addParams(array('getSample' => 'csv', 'ncc' => 1))
 			).'");return false;').'">'.GetMessage('CRM_DOWNLOAD').'</a>'
 );
 $arResult['FIELDS']['tab_1'][] = array(

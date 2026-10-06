@@ -322,7 +322,7 @@ export class Task extends Timeline.Item
 			taskId: this.id,
 		});
 
-		ajax.runAction('rpa.task.do', {
+		ajax.runAction('rpa.Task.do', {
 			analyticsLabel: 'rpaTaskDo',
 			data: ajaxData,
 		}).then((response) =>

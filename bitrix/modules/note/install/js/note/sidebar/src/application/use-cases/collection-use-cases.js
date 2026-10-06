@@ -19,6 +19,7 @@ export class CollectionUseCases
 	#documentRouteName: string;
 	#workspaceRouteName: string;
 	#getRouteDocumentContext: () => Object | null;
+	#saveSidebarState: () => void;
 	#prefetchTimer: ?TimeoutID = null;
 	#handleExternalCollectionRenamed: Function | null = null;
 
@@ -34,6 +35,7 @@ export class CollectionUseCases
 		router = null,
 		routeNames = {},
 		getRouteDocumentContext,
+		saveSidebarState = () => {},
 	}: Object)
 	{
 		this.#api = api;
@@ -49,6 +51,7 @@ export class CollectionUseCases
 		this.#documentRouteName = routeNames.document || 'document';
 		this.#workspaceRouteName = routeNames.workspace || 'workspace';
 		this.#getRouteDocumentContext = getRouteDocumentContext || (() => null);
+		this.#saveSidebarState = saveSidebarState;
 
 		this.#handleExternalCollectionRenamed = (event) => {
 			const { id, name } = event.getData();
@@ -61,6 +64,17 @@ export class CollectionUseCases
 			this.#store.actions.updateCollectionLocal(collectionId, { name: String(name || '') });
 		};
 		EventEmitter.subscribe(NoteEvent.COLLECTION_RENAMED, this.#handleExternalCollectionRenamed);
+	}
+
+	// Undoes what the constructor subscribed. See DocumentUseCases::destroy for why a global subscription
+	// left behind is not merely untidy.
+	destroy(): void
+	{
+		if (this.#handleExternalCollectionRenamed !== null)
+		{
+			EventEmitter.unsubscribe(NoteEvent.COLLECTION_RENAMED, this.#handleExternalCollectionRenamed);
+			this.#handleExternalCollectionRenamed = null;
+		}
 	}
 
 	isCollectionExpanded(collectionId: number): boolean
@@ -179,7 +193,10 @@ export class CollectionUseCases
 			data: { id, name },
 		}));
 
+		// A base created into a closed block opens it, and that is a state to remember like any other:
+		// left unsaved, the block would close itself again on the next load.
 		this.#uiState.collectionsSectionExpanded = true;
+		this.#saveSidebarState();
 		this.#uiState.expandedCollections[id] = true;
 		await this.openCollection({ id, name });
 		if (this.#router && this.#workspaceRouteName)

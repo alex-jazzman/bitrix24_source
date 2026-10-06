@@ -29,6 +29,7 @@ import { UnsupportedBrowserFeatures } from './unsupported_features_in_browsers';
 import { CallCommonRecordState, CallCommonRecordType, CallCloudRecord } from '../call_common_record';
 import { CallStreamManager } from '../media-stream-manager';
 import { SpeakerManager } from './speaker-manager';
+import { ReconnectTarget } from 'call.lib.reconnect-history';
 
 /**
  * Implements Call interface
@@ -78,7 +79,6 @@ const BitrixCallEvent = {
 	onCallConference: 'BitrixCall::onCallConference'
 };
 
-
 const reinvitePeriod = 5500;
 
 // const MAX_USERS_WITHOUT_SIMULCAST = 6;
@@ -105,7 +105,7 @@ export class BitrixCall extends AbstractCall
 
 		this.videoQuality = Quality.VeryHigh; // initial video quality. will drop on new peers connecting
 
-		this.BitrixCall = null;
+		this.CallApi = null;
 
 		this.signaling = new Signaling({
 			call: this
@@ -273,7 +273,7 @@ export class BitrixCall extends AbstractCall
 
 	set reconnectionEventCount(newValue)
 	{
-		if (newValue === 0)
+		if (newValue === 0 && this._reconnectionEventCount > 0)
 		{
 			this.runCallback(CallEvent.onReconnected);
 		}
@@ -373,7 +373,7 @@ export class BitrixCall extends AbstractCall
 
 	canChangeMediaDevices()
 	{
-		return !this.BitrixCall?.isMediaMutedBySystem;
+		return !this.CallApi?.isMediaMutedBySystem;
 	};
 
 	setMuted = (event) =>
@@ -385,7 +385,7 @@ export class BitrixCall extends AbstractCall
 
 		this.muted = event.data.isMicrophoneMuted;
 
-		if (this.BitrixCall)
+		if (this.CallApi)
 		{
 			// Safari: skip audio operations when call is inactive
 			// This prevents permission re-prompt after hangup
@@ -401,15 +401,15 @@ export class BitrixCall extends AbstractCall
 
 			if (this.muted)
 			{
-				this.BitrixCall.disableAudio({ calledFrom: 'setMuted' });
+				this.CallApi.disableAudio({ calledFrom: 'setMuted' });
 			}
 			else
 			{
-				if (!this.BitrixCall.isAudioPublished())
+				if (!this.CallApi.isAudioPublished())
 				{
 					this.#setPublishingState(MediaStreamsKinds.Microphone, true);
 				}
-				this.BitrixCall.enableAudio({ calledFrom: 'setMuted' });
+				this.CallApi.enableAudio({ calledFrom: 'setMuted' });
 			}
 		}
 	};
@@ -423,7 +423,7 @@ export class BitrixCall extends AbstractCall
 
 		this.videoEnabled = event.data.isCameraOn;
 
-		if (this.BitrixCall)
+		if (this.CallApi)
 		{
 			// Safari: skip audio operations when call is inactive
 			// This prevents permission re-prompt after hangup
@@ -439,19 +439,19 @@ export class BitrixCall extends AbstractCall
 
 			if (this.videoEnabled)
 			{
-				if (!this.BitrixCall.isVideoPublished())
+				if (!this.CallApi.isVideoPublished())
 				{
 					this.#setPublishingState(MediaStreamsKinds.Camera, true);
 				}
 				this.localVideoShown = true;
-				this.BitrixCall.enableVideo({calledFrom: 'setVideoEnabled'});
+				this.CallApi.enableVideo({calledFrom: 'setVideoEnabled'});
 			}
 			else
 			{
 				if (this.localVideoShown)
 				{
 					this.localVideoShown = false;
-					this.BitrixCall.disableVideo({calledFrom: 'setVideoEnabled'});
+					this.CallApi.disableVideo({calledFrom: 'setVideoEnabled'});
 				}
 			}
 		}
@@ -467,7 +467,7 @@ export class BitrixCall extends AbstractCall
 		const canSwitchDevice = Boolean(this.cameraId);
 		this.cameraId = cameraId;
 
-		if (this.BitrixCall)
+		if (this.CallApi)
 		{
 			if (!cameraId)
 			{
@@ -481,18 +481,18 @@ export class BitrixCall extends AbstractCall
 				return;
 			}
 
-			if (this.BitrixCall.isVideoPublished())
+			if (this.CallApi.isVideoPublished())
 			{
 				this.#setPublishingState(MediaStreamsKinds.Camera, true);
 			}
 
-			this.BitrixCall.switchActiveVideoDevice(this.cameraId)
+			this.CallApi.switchActiveVideoDevice(this.cameraId)
 				.then(() => {
 					if (Hardware.isCameraOn)
 					{
 						this.runCallback('onUpdateLastUsedCameraId');
 
-						if (this.BitrixCall.isVideoPublished() && this.canChangeMediaDevices())
+						if (this.CallApi.isVideoPublished() && this.canChangeMediaDevices())
 						{
 							const track = CallStreamManager.getLocalStream(MediaStreamsKinds.Camera);
 							const kind = Util.MediaKind[MediaStreamsKinds.Camera];
@@ -504,7 +504,7 @@ export class BitrixCall extends AbstractCall
 								stream: mediaRenderer.stream,
 							});
 
-							if (this.BitrixCall.isVideoPublished())
+							if (this.CallApi.isVideoPublished())
 							{
 								this.#setPublishingState(MediaStreamsKinds.Camera, false);
 							}
@@ -517,7 +517,7 @@ export class BitrixCall extends AbstractCall
 						{
 							this.#setPublishingState(MediaStreamsKinds.Camera, true);
 							this.localVideoShown = true;
-							this.BitrixCall.enableVideo({calledFrom: 'switchActiveVideoDevice', skipUnpause: true});
+							this.CallApi.enableVideo({calledFrom: 'switchActiveVideoDevice', skipUnpause: true});
 						}
 					}
 					else
@@ -541,10 +541,10 @@ export class BitrixCall extends AbstractCall
 			return;
 		}
 
-		const canSwitchDevice = Boolean(this.microphoneId);
+		const hadMicrophoneId = Boolean(this.microphoneId);
 		this.microphoneId = microphoneId;
 
-		if (this.BitrixCall)
+		if (this.CallApi)
 		{
 			if (!microphoneId)
 			{
@@ -553,7 +553,11 @@ export class BitrixCall extends AbstractCall
 				return;
 			}
 
-			if (!canSwitchDevice)
+			// Until the call is connected the initial capture is done by CallApi.connect({ audioDeviceId }),
+			// so switching here would grab the microphone too early. Once the call is connected that capture
+			// has already happened, and every pick - including the very first one, when the call started
+			// without a microphone id - has to be applied to the live audio track.
+			if (!hadMicrophoneId && this.localUserState !== UserState.Connected)
 			{
 				return;
 			}
@@ -561,9 +565,21 @@ export class BitrixCall extends AbstractCall
 			this.#setPublishingState(MediaStreamsKinds.Microphone, true);
 			this.#onEndpointVoiceEnd({ userId: this.userId });
 
-			this.BitrixCall.switchActiveAudioDevice(this.microphoneId)
+			this.CallApi.switchActiveAudioDevice(this.microphoneId)
 				.then(() => {
 					const track = CallStreamManager.getLocalStream(MediaStreamsKinds.Microphone);
+					if (!track)
+					{
+						// The switch only recorded the device and captured nothing (nothing is published yet),
+						// so there is no track to listen to. The microphone stays exactly as it was, and the
+						// first publication applies the device and reports its own track through
+						// onLocalMediaRendererAdded. Building a MediaStream out of null here would throw and
+						// the catch below would show the microphone as turned off.
+						this.log('setMicrophoneId: no local audio track, the device applies on the first publication');
+
+						return;
+					}
+
 					this.#onMicAccessResult({
 						result: true,
 						stream: new MediaStream([track]),
@@ -582,7 +598,7 @@ export class BitrixCall extends AbstractCall
 
 					if (Hardware.isMicrophoneMuted && !this.canChangeMediaDevices())
 					{
-						this.BitrixCall.disableAudio({ calledFrom: 'setMicrophoneId' });
+						this.CallApi.disableAudio({ calledFrom: 'setMicrophoneId' });
 					}
 				});
 		}
@@ -590,12 +606,12 @@ export class BitrixCall extends AbstractCall
 
 	setRecorderState(state)
 	{
-		if (!this.BitrixCall || this.#recorderState === state)
+		if (!this.CallApi || this.#recorderState === state)
 		{
 			return;
 		}
 
-		this.BitrixCall.setRecorderState(state);
+		this.CallApi.setRecorderState(state);
 	}
 
 	/**
@@ -603,12 +619,12 @@ export class BitrixCall extends AbstractCall
 	 */
 	setCloudRecordState(state, kind = null)
 	{
-		if (!this.BitrixCall || this.#cloudRecordState === state)
+		if (!this.CallApi || this.#cloudRecordState === state)
 		{
 			return;
 		}
 
-		this.BitrixCall.setCloudRecordState(state, kind);
+		this.CallApi.setCloudRecordState(state, kind);
 	}
 
 	#setPublishingState(deviceType, publishing)
@@ -629,7 +645,7 @@ export class BitrixCall extends AbstractCall
 
 	setMainStream(users)
 	{
-		if (!this.BitrixCall)
+		if (!this.CallApi)
 		{
 			return;
 		}
@@ -638,22 +654,22 @@ export class BitrixCall extends AbstractCall
 		{
 			const participant = this.peers[users.userId]?.participant;
 			const kind = participant?.screenSharingEnabled ? MediaStreamsKinds.Screen : MediaStreamsKinds.Camera;
-			this.BitrixCall.setMainStream(users, kind);
+			this.CallApi.setMainStream(users, kind);
 		}
 		else
 		{
-			this.BitrixCall.resetMainStream(users);
+			this.CallApi.resetMainStream(users);
 		}
 	}
 
 	setVideoQualityForStreams(params)
 	{
-		if (!this.BitrixCall)
+		if (!this.CallApi)
 		{
 			return;
 		}
 
-		this.BitrixCall.setVideoQualityForStreams(params);
+		this.CallApi.setVideoQualityForStreams(params);
 	}
 
 	requestFloor(requestActive)
@@ -663,32 +679,32 @@ export class BitrixCall extends AbstractCall
 			return;
 		}
 		this.floorRequestActive = requestActive;
-		this.BitrixCall.raiseHand(requestActive);
+		this.CallApi.raiseHand(requestActive);
 	};
 
 	updateUserData(userData: Object): void
 	{
-		this.BitrixCall.updateUserData(userData);
+		this.CallApi.updateUserData(userData);
 	}
 
 	turnOffAllParticipansStream(options)
 	{
-		this.BitrixCall.turnOffAllParticipansStream(options);
+		this.CallApi.turnOffAllParticipansStream(options);
 	};
 
 	turnOffParticipantStream(options)
 	{
-		this.BitrixCall.turnOffParticipantStream(options);
+		this.CallApi.turnOffParticipantStream(options);
 	};
 
 	allowSpeakPermission(options)
 	{
-		this.BitrixCall.allowSpeakPermission(options);
+		this.CallApi.allowSpeakPermission(options);
 	};
 
 	changeSettings(options)
 	{
-		this.BitrixCall.changeSettings(options);
+		this.CallApi.changeSettings(options);
 	};
 
 	/**
@@ -781,7 +797,7 @@ export class BitrixCall extends AbstractCall
 
 	#applyScreenSharing(stream = null)
 	{
-		if (!this.BitrixCall)
+		if (!this.CallApi)
 		{
 			return;
 		}
@@ -794,11 +810,11 @@ export class BitrixCall extends AbstractCall
 
 		if (stream)
 		{
-			this.BitrixCall.startScreenShareWithStream(stream);
+			this.CallApi.startScreenShareWithStream(stream);
 		}
 		else
 		{
-			this.BitrixCall.startScreenShare();
+			this.CallApi.startScreenShare();
 		}
 	}
 
@@ -1016,16 +1032,16 @@ export class BitrixCall extends AbstractCall
 			this.reinitPeers();
 		}
 
-		if (this.BitrixCall)
+		if (this.CallApi)
 		{
-			this.BitrixCall._replaceVideoSharing = false;
-			this.BitrixCall.hangup(!!finishCall);
-			this.BitrixCall = null;
+			this.CallApi._replaceVideoSharing = false;
+			this.CallApi.hangup(!!finishCall);
+			this.CallApi = null;
 		}
 		else
 		{
-			this.log("Tried to hangup, but this.BitrixCall points nowhere");
-			console.error("Tried to hangup, but this.BitrixCall points nowhere");
+			this.log("Tried to hangup, but this.CallApi points nowhere");
+			console.error("Tried to hangup, but this.CallApi points nowhere");
 		}
 
 		// Explicitly finish the call on the backend only when "finish for all"
@@ -1051,7 +1067,7 @@ export class BitrixCall extends AbstractCall
 	attachToConference(options: { joinAsViewer: ?boolean } = {})
 	{
 		const joinAsViewer = options.joinAsViewer === true;
-		if (this.BitrixCall && this.BitrixCall.getState() === CALL_STATE.CONNECTED)
+		if (this.CallApi && this.CallApi.getState() === CALL_STATE.CONNECTED)
 		{
 			if (this.joinedAsViewer === joinAsViewer)
 			{
@@ -1073,11 +1089,11 @@ export class BitrixCall extends AbstractCall
 				this.localUserState = UserState.Connecting;
 				if (Util.canUseNewCallApi(this.connectionData.roomType))
 				{
-					this.BitrixCall = new Call(this.userId);
+					this.CallApi = new Call(this.userId);
 				}
 				else
 				{
-					this.BitrixCall = new CallLegacy(this.userId);
+					this.CallApi = new CallLegacy(this.userId);
 				}
 
 				/*if (Hardware.isCameraOn) // transfered to #onCallConnected
@@ -1087,9 +1103,9 @@ export class BitrixCall extends AbstractCall
 
 				this.joinedAsViewer = joinAsViewer;
 
-				if (!this.BitrixCall)
+				if (!this.CallApi)
 				{
-					this.log("Error: could not create Bitrix call");
+					this.log("Error: could not create Call API instance");
 					return reject({code: "BITRIX_NO_CALL"});
 				}
 
@@ -1100,11 +1116,11 @@ export class BitrixCall extends AbstractCall
 				this.bindCallEvents();
 				this.subscribeHardwareChanges();
 
-				this.BitrixCall.on('Connected', () => {
+				this.CallApi.on('Connected', () => {
 					this.#onCallConnected();
 					resolve();
 				})
-				this.BitrixCall.on('Failed', (e) =>
+				this.CallApi.on('Failed', (e) =>
 				{
 					this.#onCallFailed(e);
 					reject(e);
@@ -1116,7 +1132,7 @@ export class BitrixCall extends AbstractCall
 					return reject({code: "BITRIX_NO_CALL"});
 				}
 
-				this.BitrixCall.connect({
+				this.CallApi.connect({
 					roomId: this.uuid,
 					roomType: this.roomType,
 					userId: this.userId,
@@ -1144,7 +1160,7 @@ export class BitrixCall extends AbstractCall
 
 		const MAX_USERS_WITH_VIDEO = Util.countDisableCameraNewJoinedUsersFeature();
 
-		if (Util.isDisableCameraNewJoinedUsersFeatureEnabled() && this.BitrixCall.remoteParticipantsCount >= MAX_USERS_WITH_VIDEO) // task-596223
+		if (Util.isDisableCameraNewJoinedUsersFeatureEnabled() && this.CallApi.remoteParticipantsCount >= MAX_USERS_WITH_VIDEO) // task-596223
 		{
 			Hardware.isCameraOn = false;
 		}
@@ -1159,25 +1175,25 @@ export class BitrixCall extends AbstractCall
 			Hardware.isMicrophoneMuted = true;
 		}
 
-		this.BitrixCall.on('Failed', this.#onCallDisconnected);
+		this.CallApi.on('Failed', this.#onCallDisconnected);
 
 		//this.signaling.sendCameraState(Hardware.isCameraOn);
 
-		if (!this.BitrixCall.isAudioPublished())
+		if (!this.CallApi.isAudioPublished())
 		{
 			this.#setPublishingState(MediaStreamsKinds.Microphone, true);
 		}
-		this.BitrixCall.enableAudio({ calledFrom: 'onCallConnected', disabled: Hardware.isMicrophoneMuted });
+		this.CallApi.enableAudio({ calledFrom: 'onCallConnected', disabled: Hardware.isMicrophoneMuted });
 
 		if (Hardware.isCameraOn)
 		{
 			this.localVideoShown = true;
 
-			if (!this.BitrixCall.isVideoPublished())
+			if (!this.CallApi.isVideoPublished())
 			{
 				this.#setPublishingState(MediaStreamsKinds.Camera, true);
 			}
-			this.BitrixCall.enableVideo({ calledFrom: 'onCallConnected' });
+			this.CallApi.enableVideo({ calledFrom: 'onCallConnected' });
 		}
 
 		if (this.videoAllowedFrom == UserMnemonic.none)
@@ -1196,100 +1212,100 @@ export class BitrixCall extends AbstractCall
 		this.sendTelemetryEvent("connect_failure");
 		this.localUserState = UserState.Failed;
 
-		this.BitrixCall.enableSilentLogging(false);
-		this.BitrixCall.setLoggerCallback(null);
+		this.CallApi.enableSilentLogging(false);
+		this.CallApi.setLoggerCallback(null);
 	};
 
 	bindCallEvents()
 	{
-		this.BitrixCall.on('PublishSucceed', this.#onLocalMediaRendererAdded);
-		this.BitrixCall.on('PublishPaused', this.#onLocalMediaRendererMuteToggled);
-		this.BitrixCall.on('MediaMutedBySystem', this.#onMediaMutedBySystem);
-		this.BitrixCall.on('PublishFailed', this.#onLocalMediaRendererEnded);
-		this.BitrixCall.on('PublishEnded', this.#onLocalMediaRendererEnded);
-		this.BitrixCall.on('GetUserMediaStarted', this.#onGetUserMediaStarted.bind(this));
-		this.BitrixCall.on('GetUserMediaEnded', this.#onGetUserMediaEnded);
-		this.BitrixCall.on('GetUserMediaFailed', this.#onGetUserMediaFailed);
-		this.BitrixCall.on('GetUserMediaSuccess', this.#onGetUserMediaSuccess.bind(this));
-		this.BitrixCall.on('RemoteMediaAvailable', this.#onRemoteMediaAvailable);
-		this.BitrixCall.on('RemoteMediaUnavailable', this.#onRemoteMediaUnavailable);
-		this.BitrixCall.on('RemoteMediaAdded', this.#onRemoteMediaAdded);
-		this.BitrixCall.on('RemoteMediaRemoved', this.#onRemoteMediaRemoved);
-		this.BitrixCall.on('RemoteMediaMuted', this.#onRemoteMediaMuteToggled);
-		this.BitrixCall.on('RemoteMediaUnmuted', this.#onRemoteMediaMuteToggled);
-		this.BitrixCall.on('AwaitedRemoteMediaMuted', this.#onAwaitedRemoteMediaMuted);
-		this.BitrixCall.on('ParticipantJoined', this.#onParticipantJoined);
-		this.BitrixCall.on('ParticipantReconnecting', this.#onParticipantReconnecting);
-		this.BitrixCall.on('ParticipantReconnected', this.#onParticipantReconnected);
-		this.BitrixCall.on('ParticipantLeaved', this.#onParticipantLeaved);
-		this.BitrixCall.on('MessageReceived', this.#onCallMessageReceived);
-		this.BitrixCall.on('HandRaised', this.#onCallHandRaised);
-		this.BitrixCall.on('VoiceStarted', this.#onEndpointVoiceStart);
-		this.BitrixCall.on('TurnOnCamera', this.#onTurnOnCamera);
-		this.BitrixCall.on('AllParticipantsAudioMuted', this.#onAllParticipantsAudioMuted);
-		this.BitrixCall.on('AllParticipantsVideoMuted', this.#onAllParticipantsVideoMuted);
-		this.BitrixCall.on('AllParticipantsScreenshareMuted', this.#onAllParticipantsScreenshareMuted);
-		this.BitrixCall.on('YouMuteAllParticipants', this.#onYouMuteAllParticipants);
-		this.BitrixCall.on('RoomSettingsChanged', this.#onRoomSettingsChanged);
-		this.BitrixCall.on('UserPermissionsChanged', this.#onUserPermissionsChanged);
-		this.BitrixCall.on('UserRoleChanged', this.#onUserRoleChanged);
-		this.BitrixCall.on('ParticipantMuted', this.#onParticipantMuted);
-		this.BitrixCall.on('VoiceEnded', this.#onEndpointVoiceEnd);
-		this.BitrixCall.on('RecorderStatusChanged', this.#onRecorderStatusChanged);
-		this.BitrixCall.on('CloudRecordStatusChanged', this.#onCloudRecordStatusChanged);
-		this.BitrixCall.on('Reconnecting', this.#onCallReconnecting);
-		this.BitrixCall.on('Reconnected', this.#onCallReconnected);
-		this.BitrixCall.on('ReconnectingFailed', this.#onCallReconnectingFailed);
-		this.BitrixCall.on('Disconnected', this.#onCallDisconnected);
+		this.CallApi.on('PublishSucceed', this.#onLocalMediaRendererAdded);
+		this.CallApi.on('PublishPaused', this.#onLocalMediaRendererMuteToggled);
+		this.CallApi.on('MediaMutedBySystem', this.#onMediaMutedBySystem);
+		this.CallApi.on('PublishFailed', this.#onLocalMediaRendererEnded);
+		this.CallApi.on('PublishEnded', this.#onLocalMediaRendererEnded);
+		this.CallApi.on('GetUserMediaStarted', this.#onGetUserMediaStarted.bind(this));
+		this.CallApi.on('GetUserMediaEnded', this.#onGetUserMediaEnded);
+		this.CallApi.on('GetUserMediaFailed', this.#onGetUserMediaFailed);
+		this.CallApi.on('GetUserMediaSuccess', this.#onGetUserMediaSuccess.bind(this));
+		this.CallApi.on('RemoteMediaAvailable', this.#onRemoteMediaAvailable);
+		this.CallApi.on('RemoteMediaUnavailable', this.#onRemoteMediaUnavailable);
+		this.CallApi.on('RemoteMediaAdded', this.#onRemoteMediaAdded);
+		this.CallApi.on('RemoteMediaRemoved', this.#onRemoteMediaRemoved);
+		this.CallApi.on('RemoteMediaMuted', this.#onRemoteMediaMuteToggled);
+		this.CallApi.on('RemoteMediaUnmuted', this.#onRemoteMediaMuteToggled);
+		this.CallApi.on('AwaitedRemoteMediaMuted', this.#onAwaitedRemoteMediaMuted);
+		this.CallApi.on('ParticipantJoined', this.#onParticipantJoined);
+		this.CallApi.on('ParticipantReconnecting', this.#onParticipantReconnecting);
+		this.CallApi.on('ParticipantReconnected', this.#onParticipantReconnected);
+		this.CallApi.on('ParticipantLeaved', this.#onParticipantLeaved);
+		this.CallApi.on('MessageReceived', this.#onCallMessageReceived);
+		this.CallApi.on('HandRaised', this.#onCallHandRaised);
+		this.CallApi.on('VoiceStarted', this.#onEndpointVoiceStart);
+		this.CallApi.on('TurnOnCamera', this.#onTurnOnCamera);
+		this.CallApi.on('AllParticipantsAudioMuted', this.#onAllParticipantsAudioMuted);
+		this.CallApi.on('AllParticipantsVideoMuted', this.#onAllParticipantsVideoMuted);
+		this.CallApi.on('AllParticipantsScreenshareMuted', this.#onAllParticipantsScreenshareMuted);
+		this.CallApi.on('YouMuteAllParticipants', this.#onYouMuteAllParticipants);
+		this.CallApi.on('RoomSettingsChanged', this.#onRoomSettingsChanged);
+		this.CallApi.on('UserPermissionsChanged', this.#onUserPermissionsChanged);
+		this.CallApi.on('UserRoleChanged', this.#onUserRoleChanged);
+		this.CallApi.on('ParticipantMuted', this.#onParticipantMuted);
+		this.CallApi.on('VoiceEnded', this.#onEndpointVoiceEnd);
+		this.CallApi.on('RecorderStatusChanged', this.#onRecorderStatusChanged);
+		this.CallApi.on('CloudRecordStatusChanged', this.#onCloudRecordStatusChanged);
+		this.CallApi.on('Reconnecting', this.#onCallReconnecting);
+		this.CallApi.on('Reconnected', this.#onCallReconnected);
+		this.CallApi.on('ReconnectingFailed', this.#onCallReconnectingFailed);
+		this.CallApi.on('Disconnected', this.#onCallDisconnected);
 		// if (Util.shouldCollectStats())
 		// {
-		this.BitrixCall.on('CallStatsReceived', this.#onCallStatsReceived);
+		this.CallApi.on('CallStatsReceived', this.#onCallStatsReceived);
 		// }
-		this.BitrixCall.on('UpdatePacketLoss', this.#onUpdatePacketLoss);
-		this.BitrixCall.on('ConnectionQualityChanged', this.#onConnectionQualityChanged);
-		this.BitrixCall.on('ToggleRemoteParticipantVideo', this.#onToggleRemoteParticipantVideo);
-		this.BitrixCall.on('TrackSubscriptionFailed', this.#onTrackSubscriptionFailed);
+		this.CallApi.on('UpdatePacketLoss', this.#onUpdatePacketLoss);
+		this.CallApi.on('ConnectionQualityChanged', this.#onConnectionQualityChanged);
+		this.CallApi.on('ToggleRemoteParticipantVideo', this.#onToggleRemoteParticipantVideo);
+		this.CallApi.on('TrackSubscriptionFailed', this.#onTrackSubscriptionFailed);
 	};
 
 	removeCallEvents()
 	{
-		if (this.BitrixCall)
+		if (this.CallApi)
 		{
-			this.BitrixCall.on('Failed', BX.DoNothing);
-			this.BitrixCall.on('PublishSucceed', BX.DoNothing);
-			this.BitrixCall.on('PublishFailed', BX.DoNothing);
-			this.BitrixCall.on('PublishEnded', BX.DoNothing);
-			this.BitrixCall.on('GetUserMediaEnded', BX.DoNothing);
-			this.BitrixCall.on('RemoteMediaAvailable',  BX.DoNothing);
-			this.BitrixCall.on('RemoteMediaUnavailable',  BX.DoNothing);
-			this.BitrixCall.on('RemoteMediaAdded', BX.DoNothing);
-			this.BitrixCall.on('RemoteMediaRemoved', BX.DoNothing);
-			this.BitrixCall.on('ParticipantJoined', BX.DoNothing);
-			this.BitrixCall.on('ParticipantReconnecting', BX.DoNothing);
-			this.BitrixCall.on('ParticipantReconnected', BX.DoNothing);
-			this.BitrixCall.on('ParticipantLeaved', BX.DoNothing);
-			this.BitrixCall.on('MessageReceived', BX.DoNothing);
-			this.BitrixCall.on('HandRaised', BX.DoNothing);
-			this.BitrixCall.on('AllParticipantsAudioMuted', BX.DoNothing);
-			this.BitrixCall.on('AllParticipantsVideoMuted', BX.DoNothing);
-			this.BitrixCall.on('AllParticipantsScreenshareMuted', BX.DoNothing);
-			this.BitrixCall.on('YouMuteAllParticipants', BX.DoNothing);
-			this.BitrixCall.on('VoiceStarted', BX.DoNothing);
-			this.BitrixCall.on('VoiceEnded', BX.DoNothing);
-			this.BitrixCall.on('RecorderStatusChanged', BX.DoNothing);
-			this.BitrixCall.on('CloudRecordStatusChanged', BX.DoNothing);
-			this.BitrixCall.on('Reconnecting', BX.DoNothing);
-			this.BitrixCall.on('Reconnected', BX.DoNothing);
-			this.BitrixCall.on('ReconnectingFailed', BX.DoNothing);
-			this.BitrixCall.on('Disconnected', BX.DoNothing);
+			this.CallApi.on('Failed', BX.DoNothing);
+			this.CallApi.on('PublishSucceed', BX.DoNothing);
+			this.CallApi.on('PublishFailed', BX.DoNothing);
+			this.CallApi.on('PublishEnded', BX.DoNothing);
+			this.CallApi.on('GetUserMediaEnded', BX.DoNothing);
+			this.CallApi.on('RemoteMediaAvailable',  BX.DoNothing);
+			this.CallApi.on('RemoteMediaUnavailable',  BX.DoNothing);
+			this.CallApi.on('RemoteMediaAdded', BX.DoNothing);
+			this.CallApi.on('RemoteMediaRemoved', BX.DoNothing);
+			this.CallApi.on('ParticipantJoined', BX.DoNothing);
+			this.CallApi.on('ParticipantReconnecting', BX.DoNothing);
+			this.CallApi.on('ParticipantReconnected', BX.DoNothing);
+			this.CallApi.on('ParticipantLeaved', BX.DoNothing);
+			this.CallApi.on('MessageReceived', BX.DoNothing);
+			this.CallApi.on('HandRaised', BX.DoNothing);
+			this.CallApi.on('AllParticipantsAudioMuted', BX.DoNothing);
+			this.CallApi.on('AllParticipantsVideoMuted', BX.DoNothing);
+			this.CallApi.on('AllParticipantsScreenshareMuted', BX.DoNothing);
+			this.CallApi.on('YouMuteAllParticipants', BX.DoNothing);
+			this.CallApi.on('VoiceStarted', BX.DoNothing);
+			this.CallApi.on('VoiceEnded', BX.DoNothing);
+			this.CallApi.on('RecorderStatusChanged', BX.DoNothing);
+			this.CallApi.on('CloudRecordStatusChanged', BX.DoNothing);
+			this.CallApi.on('Reconnecting', BX.DoNothing);
+			this.CallApi.on('Reconnected', BX.DoNothing);
+			this.CallApi.on('ReconnectingFailed', BX.DoNothing);
+			this.CallApi.on('Disconnected', BX.DoNothing);
 			// if (Util.shouldCollectStats())
 			// {
-			this.BitrixCall.on('CallStatsReceived', BX.DoNothing);
+			this.CallApi.on('CallStatsReceived', BX.DoNothing);
 			// }
-			this.BitrixCall.on('UpdatePacketLoss', BX.DoNothing);
-			this.BitrixCall.on('ConnectionQualityChanged', BX.DoNothing);
-			this.BitrixCall.on('ToggleRemoteParticipantVideo', BX.DoNothing);
-			this.BitrixCall.on('TrackSubscriptionFailed', BX.DoNothing);
+			this.CallApi.on('UpdatePacketLoss', BX.DoNothing);
+			this.CallApi.on('ConnectionQualityChanged', BX.DoNothing);
+			this.CallApi.on('ToggleRemoteParticipantVideo', BX.DoNothing);
+			this.CallApi.on('TrackSubscriptionFailed', BX.DoNothing);
 		}
 	};
 
@@ -1341,8 +1357,8 @@ export class BitrixCall extends AbstractCall
 	};
 
 	toggleRemoteParticipantVideo(participants, showVideo, isPaginateToggle = false) {
-		if (this.BitrixCall) {
-			this.BitrixCall.toggleRemoteParticipantVideo(participants, showVideo, isPaginateToggle)
+		if (this.CallApi) {
+			this.CallApi.toggleRemoteParticipantVideo(participants, showVideo, isPaginateToggle)
 		}
 	}
 
@@ -1722,7 +1738,7 @@ export class BitrixCall extends AbstractCall
 
 				if (Hardware.isMicrophoneMuted) // task-597518
 				{
-					this.BitrixCall?.disableAudio({ calledFrom: 'onLocalMediaRendererAdded' });
+					this.CallApi?.disableAudio({ calledFrom: 'onLocalMediaRendererAdded' });
 				}
 				break;
 
@@ -1759,7 +1775,7 @@ export class BitrixCall extends AbstractCall
 			return;
 		}
 
-		if (!this.BitrixCall)
+		if (!this.CallApi)
 		{
 			return;
 		}
@@ -1800,15 +1816,13 @@ export class BitrixCall extends AbstractCall
 			this.signaling.sendCameraState(true);
 		}
 
-		if (options.audio && !Hardware.isMicrophoneMuted)
-		{
-			this.signaling.sendMicrophoneState(true);
-		}
-
 		if (options.audio)
 		{
 			this.getUserMediaFulfilled.audio = false;
-			this.signaling.sendMicrophoneState(true);
+			if (!Hardware.isMicrophoneMuted)
+			{
+				this.signaling.sendMicrophoneState(true);
+			}
 		}
 	};
 
@@ -1847,7 +1861,7 @@ export class BitrixCall extends AbstractCall
 			return;
 		}
 
-		if (!this.BitrixCall)
+		if (!this.CallApi)
 		{
 			return;
 		}
@@ -1873,7 +1887,7 @@ export class BitrixCall extends AbstractCall
 				this.signaling.sendMicrophoneState(false);
 				break;
 			case MediaStreamsKinds.Screen:
-				this.BitrixCall.stopScreenShare();
+				this.CallApi.stopScreenShare();
 				this.log("Screen is no longer shared");
 				this.runCallback(CallEvent.onUserScreenState, {
 					userId: this.userId,
@@ -2184,6 +2198,8 @@ export class BitrixCall extends AbstractCall
 			peer.updateCalculatedState();
 		}
 
+		this.#onEndpointVoiceEnd({ userId: participant.userId });
+
 		this.runCallback(CallEvent.onParticipantReconnected, { participant });
 	};
 
@@ -2253,8 +2269,12 @@ export class BitrixCall extends AbstractCall
 		}
 	};
 
-	#onCallReconnecting = (params) =>
-	{
+	#onCallReconnecting = (params): void => {
+		this.isReconnecting = true;
+
+		const data = Type.isObject(params) ? params : {};
+		this.reconnectHistory.startEntry(data.reconnectionReason ?? null, ReconnectTarget.Sdk);
+
 		if (this._reconnectionEventCount === 0)
 		{
 			params.reconnectionEventCount = this.reconnectionEventCount + 1;
@@ -2262,39 +2282,38 @@ export class BitrixCall extends AbstractCall
 			this.runCallback(CallEvent.onReconnecting, params);
 		}
 
-		if (this.reconnectionEventCount++)
-		{
-
-			return;
-		}
+		// One event per incident, not per attempt: the counter is what closes the condition above and
+		// is reset to zero once the call is connected again.
+		this.reconnectionEventCount++;
 	}
 
-	#onCallReconnected = () =>
-	{
+	#onCallReconnected = (): void => {
+		this.isReconnecting = false;
 		this.reconnectionEventCount = 0;
+		this.reconnectHistory.updateLastEntry(ReconnectTarget.Sdk, true);
 		this.log("Call reconnected");
 		this.sendTelemetryEvent("reconnect");
 		this.localUserState = UserState.Connected;
 
 		if (this.screenShared || this.waitingLocalScreenShare)
 		{
-			this.BitrixCall.startScreenShare();
+			this.CallApi.startScreenShare();
 		}
 
-		if (!this.BitrixCall.isAudioPublished())
+		if (!this.CallApi.isAudioPublished())
 		{
 			this.#setPublishingState(MediaStreamsKinds.Microphone, true);
 		}
-		this.BitrixCall.enableAudio({ calledFrom: 'onCallConnected', disabled: Hardware.isMicrophoneMuted });
+		this.CallApi.enableAudio({ calledFrom: 'onCallConnected', disabled: Hardware.isMicrophoneMuted });
 
 		//this.signaling.sendCameraState(Hardware.isCameraOn);
 		if (Hardware.isCameraOn)
 		{
-			if (!this.BitrixCall.isVideoPublished())
+			if (!this.CallApi.isVideoPublished())
 			{
 				this.#setPublishingState(MediaStreamsKinds.Camera, true);
 			}
-			this.BitrixCall.enableVideo({calledFrom: 'onCallReconnected'});
+			this.CallApi.enableVideo({calledFrom: 'onCallReconnected'});
 		}
 
 		if (this.videoAllowedFrom == UserMnemonic.none)
@@ -2311,7 +2330,7 @@ export class BitrixCall extends AbstractCall
 			this.sendLocalRecordState({ action: this.commonRecordState.state, userId: this.userId }, true);
 		}
 
-		this.BitrixCall.raiseHand(this.floorRequestActive);
+		this.CallApi.raiseHand(this.floorRequestActive);
 	};
 
 	#onCallReconnectingFailed = (e, error) => {
@@ -2392,13 +2411,13 @@ export class BitrixCall extends AbstractCall
 		this.reinitPeers();
 
 		this.localVideoShown = false;
-		if (this.BitrixCall)
+		if (this.CallApi)
 		{
 			this.removeCallEvents();
 			this.unsubscribeHardwareChanges();
 			try
 			{
-				this.BitrixCall.hangup({
+				this.CallApi.hangup({
 					'X-Reason': 'Fatal error',
 					'X-Error': typeof (error) === 'string' ? error : error.code || error.name
 				})
@@ -2407,7 +2426,7 @@ export class BitrixCall extends AbstractCall
 				this.log("Bitrix hangup error: ", e);
 				console.error("Bitrix hangup error: ", e);
 			}
-			this.BitrixCall = null;
+			this.CallApi = null;
 		}
 
 		if (typeof (error) === "string")
@@ -2486,7 +2505,7 @@ export class BitrixCall extends AbstractCall
 		// todo: need to correct stats format
 		// if (this.logger)
 		// {
-		// 	this.logger.sendStat(transformVoxStats(e.stats, this.BitrixCall));
+		// 	this.logger.sendStat(transformVoxStats(e.stats, this.CallApi));
 		// }
 	}
 
@@ -2854,6 +2873,16 @@ export class BitrixCall extends AbstractCall
 		})
 	};
 
+	testReconnect(): void
+	{
+		if (!this.CallApi)
+		{
+			return;
+		}
+
+		this.CallApi.testReconnect();
+	}
+
 	destroy(finishCall = false)
 	{
 		if (this.destroyed)
@@ -2888,12 +2917,12 @@ export class BitrixCall extends AbstractCall
 		}
 
 		clearInterval(this.microphoneLevelInterval);
-		if (this.BitrixCall)
+		if (this.CallApi)
 		{
 			this.removeCallEvents();
 			this.unsubscribeHardwareChanges();
-			this.BitrixCall.hangup(finishCall);
-			this.BitrixCall = null;
+			this.CallApi.hangup(finishCall);
+			this.CallApi = null;
 		}
 
 		for (let userId in this.peers)
@@ -3000,7 +3029,7 @@ class Signaling
 
 	#sendMessage(eventName, data)
 	{
-		if (!this.call.BitrixCall)
+		if (!this.call.CallApi)
 		{
 			return;
 		}
@@ -3013,7 +3042,7 @@ class Signaling
 		data.requestId = Util.getUuidv4();
 		data.senderId = this.call.userId;
 
-		this.call.BitrixCall.sendMessage(JSON.stringify(data));
+		this.call.CallApi.sendMessage(JSON.stringify(data));
 	};
 
 	#runRestAction(signalName, data)
@@ -3294,7 +3323,7 @@ class Peer
 	}
 }
 
-const transformVoxStats = function (s, BitrixCall)
+const transformVoxStats = function (s, CallApi)
 {
 	let result = {
 		connection: s.connection,
@@ -3305,9 +3334,9 @@ const transformVoxStats = function (s, BitrixCall)
 	}
 
 	let endpoints = {};
-	if (BitrixCall.getEndpoints)
+	if (CallApi.getEndpoints)
 	{
-		BitrixCall.getEndpoints().forEach(endpoint => endpoints[endpoint.id] = endpoint)
+		CallApi.getEndpoints().forEach(endpoint => endpoints[endpoint.id] = endpoint)
 	}
 
 	if (!result.connection.timestamp)

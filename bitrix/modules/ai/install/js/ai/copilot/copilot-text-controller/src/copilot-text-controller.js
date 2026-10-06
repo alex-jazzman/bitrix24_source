@@ -1075,7 +1075,24 @@ export class CopilotTextController extends EventEmitter
 			|| firstErrorCode === 'SERVICE_IS_NOT_AVAILABLE_BY_TARIFF'
 		)
 		{
-			this.emit('close');
+			// A technical limit opens no slider, so closing CoPilot would leave the user without any
+			// explanation: keep it open with the message instead.
+			const technicalLimitMessage = AjaxErrorHandler.getVibePlusTechnicalLimitMessage(
+				res?.errors?.[0]?.customData,
+			);
+
+			if (technicalLimitMessage)
+			{
+				this.#inputField.setErrors([{
+					code: firstErrorCode,
+					message: technicalLimitMessage,
+					customData: {},
+				}]);
+			}
+			else
+			{
+				this.emit('close');
+			}
 		}
 		else
 		{
@@ -1095,6 +1112,7 @@ export class CopilotTextController extends EventEmitter
 			errorCode: firstErrorCode,
 			showSliderWithMsg: firstError?.customData?.showSliderWithMsg,
 			sliderCode: firstError?.customData?.sliderCode,
+			vibePlusLimitState: firstError?.customData?.vibePlusLimitState,
 			forceCodeRules: ['sliderCode', 'msgWithHtmlLink'],
 			forceOption: firstError?.customData,
 			bindElement: this.#inputField,

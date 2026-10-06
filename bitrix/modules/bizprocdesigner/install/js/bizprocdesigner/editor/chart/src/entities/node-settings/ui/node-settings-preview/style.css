@@ -1,12 +1,12 @@
+/* Configured-block row per mockup 935:82878 (node 935:82289) */
 .editor-chart-node-settings-preview {
 	display: flex;
-	border: 1px solid rgba(0, 0, 0, 0.05);
+	border: 1px solid var(--ui-color-divider-vibrant-accent-more);
 	border-radius: var(--ui-border-radius-sm);
-	padding: 8px 8px 6px 4px;
+	padding: 8px 8px 8px 4px;
 	font-size: 14px;
-	line-height: 20px;
+	line-height: 19px;
 	cursor: pointer;
-	margin-left: 2px;
 }
 
 .editor-chart-node-settings-preview:hover {
@@ -17,12 +17,43 @@
 	margin-top: 10px;
 }
 
-.editor-chart-node-settings-preview__edit-icon {
-	display: none;
+/* Native-button reset: edit/delete controls are <button> for a11y,
+   the visual stays fully defined by the rules below */
+.editor-chart-node-settings-preview__edit-btn,
+.editor-chart-node-settings-preview__delete-btn {
+	appearance: none;
+	margin: 0;
+	padding: 0;
+	border: none;
+	background: none;
+	font: inherit;
+	color: var(--ui-color-base-5);
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	transition: color 200ms ease;
 }
 
-.editor-chart-node-settings-preview:hover .editor-chart-node-settings-preview__edit-icon {
-	display: block;
+.editor-chart-node-settings-preview__edit-btn:hover,
+.editor-chart-node-settings-preview__delete-btn:hover {
+	color: var(--ui-color-blue-57, #4A9DFF);
+}
+
+.editor-chart-node-settings-preview__edit-btn:focus-visible,
+.editor-chart-node-settings-preview__delete-btn:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: 2px;
+}
+
+/* Edit button hidden until the card is hovered or holds keyboard focus */
+.editor-chart-node-settings-preview__edit-btn {
+	opacity: 0;
+	transition: opacity 0.15s ease, color 200ms ease;
+}
+
+.editor-chart-node-settings-preview:hover .editor-chart-node-settings-preview__edit-btn,
+.editor-chart-node-settings-preview:focus-within .editor-chart-node-settings-preview__edit-btn {
+	opacity: 1;
 }
 
 .editor-chart-node-settings-preview__dnd-icon {
@@ -73,6 +104,11 @@
 
 .editor-chart-node-settings-preview__construction.--output .editor-chart-node-settings-preview__construction_type {
 	color: var(--ui-color-palette-gray-50);
+}
+
+/* Green uppercase label of a configured base-settings block («БАЗОВЫЕ ДЕЙСТВИЯ» on the mockup) */
+.editor-chart-node-settings-preview__construction.--base-settings .editor-chart-node-settings-preview__construction_type {
+	color: var(--ui-color-accent-main-success);
 }
 
 .editor-chart-node-settings-preview__card:not(:last-child) {

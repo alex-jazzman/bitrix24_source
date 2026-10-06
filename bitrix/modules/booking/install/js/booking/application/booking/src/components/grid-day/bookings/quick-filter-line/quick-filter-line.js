@@ -1,6 +1,8 @@
-import { Model } from 'booking.const';
 import { mapGetters } from 'ui.vue3.vuex';
-import { gridFactory } from 'booking.lib.grid';
+
+import { Model } from 'booking.const';
+import { GridFactory, gridTokens, GridTokenKey, type GridBase } from 'booking.lib.grid';
+
 import './quick-filter-line.css';
 
 export const QuickFilterLine = {
@@ -17,7 +19,7 @@ export const QuickFilterLine = {
 		}),
 		grid(): GridBase
 		{
-			return gridFactory.getGrid();
+			return GridFactory.getGrid();
 		},
 		top(): number
 		{
@@ -25,7 +27,7 @@ export const QuickFilterLine = {
 		},
 		width(): number
 		{
-			return this.resourcesIds.length * 280;
+			return this.resourcesIds.length * gridTokens.get(GridTokenKey.DayCellWidth);
 		},
 		fromTs(): number
 		{

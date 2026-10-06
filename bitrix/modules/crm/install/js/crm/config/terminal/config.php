@@ -19,6 +19,8 @@ return [
 		'main.core',
 		'main.popup',
 		'rest.client',
+		'ui.a11y',
+		'ui.design-tokens.air',
 		'ui.dialogs.messagebox',
 		'ui.label',
 		'ui.notification',

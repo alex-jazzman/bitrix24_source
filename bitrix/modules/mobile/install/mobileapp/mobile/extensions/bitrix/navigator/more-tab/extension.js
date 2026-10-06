@@ -6,6 +6,7 @@ jn.define('navigator/more-tab', (require, exports, module) => {
 	const { NOTIFICATION_EVENTS, SUBSCRIPTION_EVENTS } = require('navigator/more-tab/meta');
 	const { EntityReady } = require('entity-ready');
 	const { AnalyticsEvent } = require('analytics');
+	const { requireLazy } = require('require-lazy');
 
 	let TASKS_ROOT_COMPONENT_NAME = null;
 	let TASKS_TABS_NAVIGATOR = null;
@@ -30,6 +31,7 @@ jn.define('navigator/more-tab', (require, exports, module) => {
 			this.subscribeToCrmNotification(MoreTabMenu);
 			this.subscribeToInviteNotification();
 			this.subscribeToOpenTasksTabs(MoreTabMenu);
+			this.subscribeToCalenderNotification(MoreTabMenu);
 		}
 
 		unsubscribeFromEvents()
@@ -37,13 +39,22 @@ jn.define('navigator/more-tab', (require, exports, module) => {
 			BX.removeCustomEvent(NOTIFICATION_EVENTS.TASKS, this.onTaskNotification.bind(this));
 			BX.removeCustomEvent(NOTIFICATION_EVENTS.CRM, this.onCrmNotification.bind(this));
 			BX.removeCustomEvent(NOTIFICATION_EVENTS.INVITE, this.onInviteNotification.bind(this));
-			BX.removeCustomEvent(NOTIFICATION_EVENTS.INVITE, this.onInviteNotification.bind(this));
+			BX.removeCustomEvent(NOTIFICATION_EVENTS.CALENDAR, this.onCalenderNotification.bind(this));
 
 			if (TASKS_TABS_NAVIGATOR)
 			{
 				BX.removeCustomEvent(TASKS_TABS_NAVIGATOR.makeActive, this.openTaskTab.bind(this));
 			}
 		}
+
+		subscribeToCalenderNotification()
+		{
+			BX.addCustomEvent(NOTIFICATION_EVENTS.CALENDAR, this.onCalenderNotification.bind(this));
+			this.onSubscribeToPushNotification(SUBSCRIPTION_EVENTS.CALENDAR);
+		}
+
+		onCalenderNotification(MoreTabMenu)
+		{}
 
 		subscribeToTaskNotification(MoreTabMenu)
 		{
@@ -135,7 +146,7 @@ jn.define('navigator/more-tab', (require, exports, module) => {
 			const { openIntranetInviteWidget } = await requireLazy('intranet:invite-opener-new') || {};
 			if (openIntranetInviteWidget)
 			{
-				this.makeTabActive();
+				void this.makeTabActive();
 
 				openIntranetInviteWidget({
 					analytics: new AnalyticsEvent().setSection('marketing_push'),

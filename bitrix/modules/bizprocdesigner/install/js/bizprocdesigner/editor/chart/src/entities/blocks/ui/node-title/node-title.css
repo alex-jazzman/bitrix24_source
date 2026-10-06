@@ -1,0 +1,42 @@
+.editor-chart-node-title {
+	display: flex;
+	align-items: center;
+	min-width: 0;
+	/* block-layout.css sets the gap while the block top menu buttons are shown */
+	margin-right: var(--editor-chart-top-menu-gap, 0);
+	background: transparent;
+}
+
+/*
+ * The ring is drawn inwards: .editor-chart-block-layout__top-menu-title keeps the ellipsis
+ * with overflow: hidden and its box matches this one, so anything outside is cut off.
+ */
+.editor-chart-node-title:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: -1px;
+	border-radius: var(--ui-border-radius-2xs);
+}
+
+/*
+ * Leaving the edit mode moves the focus from the vanishing input back to the title. The browser
+ * keeps calling that focus keyboard one, so :focus-visible would draw the ring around a title
+ * nobody navigated to. The accent color of the text below still marks the focused title.
+ */
+.editor-chart-node-title.--focus-restored:focus-visible {
+	outline: none;
+}
+
+.editor-chart-node-title__text,
+.editor-chart-node-title__input {
+	flex: 1;
+	min-width: 0;
+}
+
+.editor-chart-node-title__text {
+	transition: color 200ms ease;
+}
+
+.editor-chart-node-title:not(.--editing):hover .editor-chart-node-title__text,
+.editor-chart-node-title:not(.--editing):focus-visible .editor-chart-node-title__text {
+	color: var(--ui-color-accent-main-primary);
+}

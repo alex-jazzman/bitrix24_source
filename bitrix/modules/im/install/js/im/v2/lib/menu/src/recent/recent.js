@@ -1,7 +1,7 @@
 import { Loc, Type } from 'main.core';
 import { type EventEmitter } from 'main.core.events';
 import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
-import { type MenuItemOptions, type MenuSectionOptions, type MenuOptions } from 'ui.system.menu';
+import { MenuItemDesign, type MenuItemOptions, type MenuSectionOptions, type MenuOptions } from 'ui.system.menu';
 
 import { Messenger } from 'im.public';
 import { Core } from 'im.v2.application.core';
@@ -13,17 +13,21 @@ import {
 	UserType,
 	ActionByUserType,
 	UserRole,
+	FolderType,
 	type ApplicationContext,
 } from 'im.v2.const';
 import { Analytics } from 'im.v2.lib.analytics';
 import { CallManager } from 'im.v2.lib.call';
 import { ChannelManager } from 'im.v2.lib.channel';
 import { showLeaveChatConfirm } from 'im.v2.lib.confirm';
+import { Feature, FeatureManager } from 'im.v2.lib.feature';
+import { FolderManager } from 'im.v2.lib.folder';
 import { InviteManager } from 'im.v2.lib.invite';
 import { PermissionManager } from 'im.v2.lib.permission';
 import { Utils } from 'im.v2.lib.utils';
-import { type ImModelRecentItem, type ImModelUser, type ImModelChat } from 'im.v2.model';
+import { type ImModelRecentItem, type ImModelUser, type ImModelChat, type ImModelFolder } from 'im.v2.model';
 import { ChatService } from 'im.v2.provider.service.chat';
+import { FolderService } from 'im.v2.provider.service.folder';
 import { LegacyRecentService } from 'im.v2.provider.service.recent';
 
 import { BaseMenu } from '../base/base';
@@ -39,6 +43,8 @@ const MenuSectionCode = {
 	second: 'second',
 	third: 'third',
 };
+
+const FOLDER_SUBMENU_MAX_HEIGHT = 380;
 
 export class RecentMenu extends BaseMenu
 {
@@ -92,6 +98,7 @@ export class RecentMenu extends BaseMenu
 		return [
 			this.getUnreadMessageItem(),
 			this.getPinMessageItem(),
+			this.getAddToFolderItem(),
 			this.getMuteItem(),
 			this.getOpenProfileItem(),
 			this.getChatsWithUserItem(),
@@ -188,6 +195,32 @@ export class RecentMenu extends BaseMenu
 					Analytics.getInstance().recentContextMenu.onPin(dialogId);
 				}
 			},
+		};
+	}
+
+	getAddToFolderItem(): ?MenuItemOptions
+	{
+		if (!FeatureManager.isFeatureAvailable(Feature.isChatFoldersWebAvailable))
+		{
+			return null;
+		}
+
+		const { chatId }: ImModelChat = this.store.getters['chats/get'](this.context.dialogId, true);
+		if (!chatId)
+		{
+			return null;
+		}
+
+		const personalFolders: ImModelFolder[] = this.store.getters['recent/folders/getList']
+			.filter((folder) => folder.type === FolderType.personal);
+
+		const items = personalFolders.length === 0
+			? [this.#getCreateFolderMenuItem()]
+			: personalFolders.map((folder) => this.#getFolderTargetMenuItem(folder, chatId));
+
+		return {
+			title: Loc.getMessage('IM_LIB_MENU_ADD_TO_FOLDER'),
+			subMenu: { items, maxHeight: FOLDER_SUBMENU_MAX_HEIGHT },
 		};
 	}
 
@@ -534,5 +567,62 @@ export class RecentMenu extends BaseMenu
 		}
 
 		return recentItem.invitation.canResend;
+	}
+
+	#getCreateFolderMenuItem(): MenuItemOptions
+	{
+		return {
+			title: Loc.getMessage('IM_LIB_MENU_CREATE_FOLDER'),
+			onClick: () => {
+				FolderManager.startCreation();
+				this.menuInstance.close();
+			},
+		};
+	}
+
+	#getFolderTargetMenuItem(folder: ImModelFolder, chatId: number): MenuItemOptions
+	{
+		const { definition: { chats } } = folder;
+
+		if (chats.some((chat) => chat.chatId === chatId))
+		{
+			return this.#getSelectedFolderMenuItem(folder);
+		}
+
+		if (chats.length >= FolderManager.getMaxChatsPerFolder())
+		{
+			return this.#getFullFolderMenuItem(folder);
+		}
+
+		return this.#getAvailableFolderMenuItem(folder, chatId);
+	}
+
+	#getSelectedFolderMenuItem(folder: ImModelFolder): MenuItemOptions
+	{
+		return {
+			title: folder.title,
+			isSelected: true,
+			design: MenuItemDesign.Disabled,
+		};
+	}
+
+	#getFullFolderMenuItem(folder: ImModelFolder): MenuItemOptions
+	{
+		return {
+			title: folder.title,
+			design: MenuItemDesign.Disabled,
+			subtitle: Loc.getMessage('IM_LIB_MENU_FOLDER_FULL'),
+		};
+	}
+
+	#getAvailableFolderMenuItem(folder: ImModelFolder, chatId: number): MenuItemOptions
+	{
+		return {
+			title: folder.title,
+			onClick: () => {
+				void (new FolderService()).addChats(folder.id, [{ chatId, dialogId: this.context.dialogId }]);
+				this.menuInstance.close();
+			},
+		};
 	}
 }

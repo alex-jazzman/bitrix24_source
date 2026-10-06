@@ -11,6 +11,11 @@ export function buildRecentItem(params: MessageAddParams): ImModelRecentItem
 		messageId: params.message.id,
 	};
 
+	if (params.message.chatId === params.chatId)
+	{
+		newRecentItem.ownMessageId = params.message.id;
+	}
+
 	const recentItem: ?ImModelRecentItem = Core.getStore().getters['recent/get'](params.dialogId);
 	if (recentItem)
 	{

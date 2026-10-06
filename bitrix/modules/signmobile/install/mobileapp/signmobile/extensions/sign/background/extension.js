@@ -2,7 +2,7 @@
 	const require = (ext) => jn.require(ext);
 	const { Push } = require('native/app');
 	const { SignOpener } = require('sign/opener');
-	const { PushListener } = require('push/listeners');
+	const { pushListener } = require('push/listener');
 
 	const EVENT_NAME_FOUND_DOCUMENT_FOR_SIGNING = 'SIGN_MOBILE_FOUND_DOCUMENT_FOR_SIGNING';
 	const EVENT_NAME_REQUEST_FOR_SIGN_CONFIRMATION = 'SIGN_MOBILE_REQUEST_FOR_SIGN_CONFIRMATION';
@@ -19,12 +19,19 @@
 		{
 			let result = null;
 
-			const jsonParams = JSON.parse(params);
-
-			if (jsonParams.message)
+			try
 			{
-				const message = JSON.parse(jsonParams.message);
-				result = this.unpackEventParams(message);
+				const jsonParams = JSON.parse(params);
+
+				if (jsonParams.message)
+				{
+					const message = JSON.parse(jsonParams.message);
+					result = this.unpackEventParams(message);
+				}
+			}
+			catch (e)
+			{
+				console.error(e);
 			}
 
 			return result;
@@ -75,6 +82,9 @@
 			return result;
 		}
 
+		/**
+		 * @param {Object} data
+		 */
 		processEvent(data)
 		{
 			if (data !== null)
@@ -125,11 +135,11 @@
 				this.processEvent(this.unpackJsonEventParams(params));
 			});
 
-			PushListener.subscribe(EVENT_NAME_FOUND_DOCUMENT_FOR_SIGNING, (message) => {
+			pushListener.subscribe(EVENT_NAME_FOUND_DOCUMENT_FOR_SIGNING, (message) => {
 				this.processEvent(this.unpackEventParams(message));
 			});
 
-			PushListener.subscribe(EVENT_NAME_REQUEST_FOR_SIGN_CONFIRMATION, (message) => {
+			pushListener.subscribe(EVENT_NAME_REQUEST_FOR_SIGN_CONFIRMATION, (message) => {
 				this.processEvent(this.unpackEventParams(message));
 			});
 

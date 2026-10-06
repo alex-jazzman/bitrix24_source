@@ -24,11 +24,15 @@ export const ToastLayout = {
 			<div class="editor-chart-toast-layout__left">
 				<template v-if="icon">
 					<div class="editor-chart-toast-layout__icon">
-						<BIcon :name="icon" :size="28"/>
+						<BIcon
+							:name="icon"
+							:size="28"
+							color="var(--bizprocdesigner-editor-toast-content-color, var(--ui-color-base-8))"
+						/>
 					</div>
 					<div class="editor-chart-toast-layout__divider">
 						<svg xmlns="http://www.w3.org/2000/svg" width="9" height="20" viewBox="0 0 9 20" fill="none">
-							<rect x="4" width="1" height="20" fill="#DFE0E3"/>
+							<rect x="4" width="1" height="20" fill="currentColor"/>
 						</svg>
 					</div>
 				</template>

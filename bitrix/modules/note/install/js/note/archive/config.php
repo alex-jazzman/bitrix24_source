@@ -15,6 +15,7 @@ return [
 		'note.ui.document-list',
 		'note.ui.theme-context',
 		'ui.buttons',
+		'ui.icon-set.api.vue',
 		'ui.notification',
 		'ui.system.dialog',
 		'ui.vue3',

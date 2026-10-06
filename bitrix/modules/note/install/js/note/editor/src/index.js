@@ -1,4 +1,4 @@
 import 'ui.viewer';
 import 'color_picker';
 
-export { NoteEditorApp, DocumentEditorComponent, NoteDocumentPageComponent } from './app';
+export { NoteEditorApp, DocumentEditorComponent, NoteDocumentPageComponent, NoteDocumentEmbedComponent } from './app';

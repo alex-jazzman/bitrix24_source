@@ -111,3 +111,7 @@
 .landing-ui-display-button-group .landing-ui-button.landing-ui-active .landing-ui-button-mobile::before {
     background: url('/bitrix/images/landing/devices/mobile-disabled.svg');
 }
+
+.landing-ui-display-button-group .landing-ui-button:focus-visible {
+    opacity: 1;
+}

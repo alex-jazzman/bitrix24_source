@@ -21,9 +21,6 @@ $return = [
 		],
 		'nodes' => [],
 	],
-	'assets' => [
-		'ext' => ['landing_icon_fonts'],
-	],
 ];
 
 return $return;

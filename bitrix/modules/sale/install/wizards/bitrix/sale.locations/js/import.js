@@ -29,7 +29,7 @@ function Run(STEP)
 		
 	var TID = CPHttpRequest.InitThread();
 	CPHttpRequest.SetAction(TID,__refreshLog);
-	CPHttpRequest.Send(TID, path + '/scripts/loader.php', arData);
+	CPHttpRequest.Post(TID, path + '/scripts/loader.php', arData);
 }
 
 function Import(STEP, arTmpData)
@@ -76,17 +76,17 @@ function Import(STEP, arTmpData)
 	
 	var arData = 
 	{
-		'CSVFILE':filename,
-		'LOADZIP':load_zip,
-		'SYNC':sync,
-		'STEP_LENGTH':step_length,
-		'STEP':STEP,
-		'sessid':sessid
+		CSVFILE:filename,
+		LOADZIP:load_zip,
+		SYNC:sync,
+		STEP_LENGTH:step_length,
+		STEP:STEP,
+		sessid:sessid
 	}
 	
 	var TID = CPHttpRequest.InitThread();
 	CPHttpRequest.SetAction(TID,__refreshLog);
-	CPHttpRequest.Send(TID, path + '/scripts/import.php', arData);
+	CPHttpRequest.Post(TID, path + '/scripts/import.php', arData);
 }
 
 function RunError()

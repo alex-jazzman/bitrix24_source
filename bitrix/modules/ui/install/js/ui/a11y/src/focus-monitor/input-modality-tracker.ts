@@ -6,6 +6,19 @@ export type InputModality = 'keyboard' | 'pointer' | 'unknown';
 
 const NAV_KEYS = new Set(['Tab', 'Escape', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Home', 'End']);
 
+// A modifier alone (e.g. Ctrl held for a shortcut with the mouse in hand) says
+// nothing about how the user navigates.
+const BARE_MODIFIER_KEYS = new Set([
+	'Alt',
+	'AltGraph',
+	'CapsLock',
+	'Control',
+	'Meta',
+	'NumLock',
+	'ScrollLock',
+	'Shift',
+]);
+
 const POINTER_TYPES: Set<PointerType> = new Set(['mouse', 'pen', 'touch']);
 
 /**
@@ -28,12 +41,25 @@ export class InputModalityTracker
 		}
 
 		const onKeyDown = (event: KeyboardEvent) => {
+			if (InputModalityTracker.isBareModifier(event.key))
+			{
+				return;
+			}
+
+			// Any real key press is keyboard input, and the stored navigation always
+			// mirrors the latest one: a non-navigation key clears it.
 			if (NAV_KEYS.has(event.key))
 			{
 				this.#lastNavKey = event.key;
 				this.#lastNavShift = event.shiftKey;
-				this.#setModality('keyboard');
 			}
+			else
+			{
+				this.#lastNavKey = null;
+				this.#lastNavShift = false;
+			}
+
+			this.#setModality('keyboard');
 		};
 
 		const onPointer = (event: PointerEvent) => {
@@ -43,6 +69,8 @@ export class InputModalityTracker
 					: 'mouse'
 			);
 
+			this.#lastNavKey = null;
+			this.#lastNavShift = false;
 			this.#setModality('pointer');
 		};
 
@@ -70,6 +98,15 @@ export class InputModalityTracker
 			this.#detachHandlers.delete(doc);
 			this.#cleanupWeakRefs();
 		}
+	}
+
+	/**
+	 * A key that only changes the meaning of another one: on its own it says nothing
+	 * about how the user interacts.
+	 */
+	static isBareModifier(key: string): boolean
+	{
+		return BARE_MODIFIER_KEYS.has(key);
 	}
 
 	static enableDebug(): void

@@ -1,7 +1,7 @@
 <?php
 
 $MESS['LANDING_WIDGET_CLASS_ABOUT_TITLE'] = 'Компания 24';
-$MESS['LANDING_WIDGET_CLASS_ABOUT_TEXT'] = 'Более 25 лет создаём IT- решения, которые помогают работать бизнесу во всём мире. Дружная команда увлечённых людей. Технологический лидер изменений';
+$MESS['LANDING_WIDGET_CLASS_ABOUT_TEXT'] = 'Более 25 лет создаём IT-решения, которые помогают работать бизнесу во всём мире. Дружная команда увлечённых людей. Технологический лидер изменений';
 $MESS['LANDING_WIDGET_CLASS_ABOUT_BOSS_NAME'] = 'Иван Иванов';
 $MESS['LANDING_WIDGET_CLASS_ABOUT_BOSS_WORK_POSITION'] = 'Генеральный директор';
 $MESS['LANDING_WIDGET_CLASS_ABOUT_TEXT_EMPLOYEES_BASE_PLURAL_0'] = 'сотрудник';

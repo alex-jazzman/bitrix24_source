@@ -8,12 +8,12 @@ return [
 	'css' => 'dist/hcm-link-mapping.bundle.css',
 	'js' => 'dist/hcm-link-mapping.bundle.js',
 	'rel' => [
-		'main.core.events',
 		'humanresources.hcmlink.data-mapper',
 		'main.core',
+		'main.core.events',
 		'main.loader',
-		'ui.entity-selector',
 		'sign.v2.api',
+		'ui.entity-selector',
 	],
 	'skip_core' => false,
 ];

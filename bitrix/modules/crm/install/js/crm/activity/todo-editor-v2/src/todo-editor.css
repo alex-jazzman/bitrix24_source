@@ -367,6 +367,11 @@
 	padding-bottom: var(--ui-space-inset-md);
 }
 
+.crm-activity__todo-editor-v2_calendar-warning {
+	margin-top: var(--ui-space-stack-md);
+	margin-bottom: var(--ui-space-stack-sm);
+}
+
 .crm-activity__settings_popup__calendar-container .crm-activity__settings_popup__calendar__recall-container .ui-btn {
 	border-color: var(--ui-color-palette-gray-03);
 }

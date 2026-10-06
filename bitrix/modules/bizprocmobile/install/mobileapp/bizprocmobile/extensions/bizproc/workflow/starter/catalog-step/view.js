@@ -9,6 +9,8 @@ jn.define('bizproc/workflow/starter/catalog-step/view', (require, exports, modul
 	const { EmptyScreen } = require('layout/ui/empty-screen');
 	const { CatalogStepSkeleton } = require('bizproc/workflow/starter/catalog-step/skeleton');
 	const { Random } = require('utils/random');
+	const { Text2, Text5 } = require('ui-system/typography/text');
+	const { Color } = require('tokens');
 
 	class CatalogStepView extends PureComponent
 	{
@@ -153,17 +155,15 @@ jn.define('bizproc/workflow/starter/catalog-step/view', (require, exports, modul
 						flexDirection: 'row',
 					},
 				},
-				Text({
+				Text2({
 					text: item.name,
+					color: Color.base1,
+					numberOfLines: 2,
+					ellipsize: 'end',
 					style: {
-						fontSize: 18,
-						fontWeight: '400',
-						color: AppTheme.colors.base1,
 						flexGrow: 1,
 						flexShrink: 1,
 					},
-					numberOfLines: 2,
-					ellipsize: 'end',
 				}),
 				item.formattedTime && this.renderTimeBody(item),
 			);
@@ -182,16 +182,15 @@ jn.define('bizproc/workflow/starter/catalog-step/view', (require, exports, modul
 						justifyContent: 'flex-end',
 					},
 				},
-				Text({
+				Text5({
 					text: item.formattedTime,
-					style: {
-						flexShrink: 1,
-						fontWeight: '500',
-						fontSize: 14,
-						color: AppTheme.colors.base4,
-					},
+					accent: true,
+					color: Color.base4,
 					numberOfLines: 1,
 					ellipsize: 'end',
+					style: {
+						flexShrink: 1,
+					},
 				}),
 				Image({
 					style: { height: 24, width: 24, marginLeft: 4 },

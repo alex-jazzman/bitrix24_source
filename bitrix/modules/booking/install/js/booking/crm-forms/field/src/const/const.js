@@ -1,9 +1,7 @@
-import type { Resource } from '../types';
-
-export const ALL_RESOURCES_ID = -1;
+import { type Resource } from '../types';
 
 export const AllResource: Resource = {
-	id: ALL_RESOURCES_ID,
+	id: -1,
 	name: '',
 	typeName: '',
 	slotRanges: [],

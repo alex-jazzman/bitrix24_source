@@ -8,6 +8,8 @@ use Bitrix\Landing\File;
 use Bitrix\Landing\Landing;
 use Bitrix\Landing\Repo;
 use Bitrix\Landing\Node;
+use Bitrix\Landing\Sanitizer;
+use Bitrix\Landing\Security\RepoNormalizer;
 use Bitrix\Landing\Transfer\AppConfiguration;
 use Bitrix\Landing\Transfer\Requisite\Context;
 use Bitrix\Landing\Transfer\Requisite\Dictionary\RatioPart;
@@ -36,10 +38,13 @@ trait BlockTrait
 					$block,
 					$pending
 				);
-				$blocks[$oldBlockId] = $newBlockId;
-				if ($pending)
+				if ($newBlockId !== null)
 				{
-					$blocksPending[] = $newBlockId;
+					$blocks[$oldBlockId] = $newBlockId;
+					if ($pending)
+					{
+						$blocksPending[] = $newBlockId;
+					}
 				}
 			}
 		}
@@ -104,17 +109,22 @@ trait BlockTrait
 
 				if ($appChecked[$appCode])
 				{
-					$repoInfo = $block['repo_info'];
-					$res = Repo::add([
-						'APP_CODE' => $block['repo_block']['app_code'],
-						'XML_ID' => $block['repo_block']['xml_id'],
-						'NAME' => $repoInfo['NAME'] ?? null,
-						'DESCRIPTION' => $repoInfo['DESCRIPTION'] ?? null,
-						'SECTIONS' => $repoInfo['SECTIONS'] ?? null,
-						'PREVIEW' => $repoInfo['PREVIEW'] ?? null,
-						'MANIFEST' => serialize(unserialize($repoInfo['MANIFEST'] ?? '', ['allowed_classes' => false])),
-						'CONTENT' => $repoInfo['CONTENT'] ?? null,
-					]);
+					$repoInfo = is_array($block['repo_info']) ? $block['repo_info'] : [];
+					// only a string is a serialized manifest; anything else in the archive is
+					// no manifest at all, and unserialize() would throw over it
+					$storedManifest = $repoInfo['MANIFEST'] ?? null;
+					$manifest = is_string($storedManifest)
+						? unserialize($storedManifest, ['allowed_classes' => false])
+						: null;
+					// the archive is already accepted for processing, so a rejected content is
+					// stored sanitized instead of losing the whole page to the pending branch
+					$normalized = RepoNormalizer::normalize(
+						$repoInfo,
+						$manifest,
+						$block['repo_block']['xml_id'],
+						$block['repo_block']['app_code']
+					);
+					$res = Repo::add($normalized->fields);
 					if ($res->isSuccess())
 					{
 						$block['code'] = 'repo_' . $res->getId();
@@ -134,6 +144,12 @@ trait BlockTrait
 						'INITIATOR_APP_CODE' => $block['repo_block']['app_code'],
 					]
 				);
+				if ($blockId === false)
+				{
+					$pending = false;
+
+					return null;
+				}
 				if ($blockId)
 				{
 					$sort += 500;
@@ -176,11 +192,7 @@ trait BlockTrait
 		];
 		if ($block['full_content'] ?? null)
 		{
-			$blockFields['CONTENT'] = str_replace(
-				['<?', '?>'],
-				['< ?', '? >'],
-				$block['full_content']
-			);
+			$blockFields['CONTENT'] = (string)(new Sanitizer())->sanitizeText($block['full_content']);
 		}
 		if ($block['designed'] ?? null)
 		{
@@ -190,6 +202,10 @@ trait BlockTrait
 			$block['code'],
 			$blockFields
 		);
+		if ($blockId === false)
+		{
+			return null;
+		}
 		if ($blockId)
 		{
 			$sort += 500;
@@ -260,7 +276,7 @@ trait BlockTrait
 			]);
 			while ($row = $res->fetch())
 			{
-				$items[$row['APP_CODE'] . '@' . $row['XML_ID']] = $row['ID'];
+				$items[$row['APP_CODE'] . '@' . $row['XML_ID']] = (int)$row['ID'];
 			}
 		}
 

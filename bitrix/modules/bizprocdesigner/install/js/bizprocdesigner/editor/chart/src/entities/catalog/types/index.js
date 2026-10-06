@@ -1,9 +1,9 @@
-import type { Ports, BlockType } from '../../../../shared/types';
+import type { Port, BlockType } from '../../../../shared/types';
 
 type DefaultSettings = {
 	width: number,
 	height: number,
-	ports: Ports,
+	ports: Array<Port>,
 };
 
 export type CatalogMenuItemId = string;
@@ -11,6 +11,8 @@ export type CatalogMenuItemId = string;
 export type CatalogMenuItem = {
 	id: CatalogMenuItemId,
 	type: BlockType,
+	// server-owned marker of the settings panel serving the node; an absent value reads as false
+	servedByUnifiedPanel?: boolean,
 	title: string,
 	subtitle: string,
 	icon: string,
@@ -18,6 +20,8 @@ export type CatalogMenuItem = {
 	contentBlockColor?: ?number,
 	defaultSettings: DefaultSettings,
 	properties: {...} | null,
+	contentBlockProducer?: ?{ namespace: string, keyProperty: string, labelProperty: string },
+	contentBlockConsumer?: ?{ namespace: string, keyProperty: string, emptyLabel: string },
 };
 
 export type CatalogMenuGroupId = string;

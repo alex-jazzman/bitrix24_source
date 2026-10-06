@@ -1,5 +1,6 @@
 import { defineStore } from 'ui.vue3.pinia';
 import { useNodeDataInspectorStore } from '../../../shared/stores/node-data-inspector-store';
+import { useDataViewDefinitionStore } from '../../../features/data-view-editor';
 
 type AppState = {
 	isShowRightPanel: boolean;
@@ -27,6 +28,8 @@ export const useAppStore = defineStore('bizprocdesigner-app-store', {
 			this.isShownRightPanel = false;
 			this.isShownPreviewPanel = false;
 			useNodeDataInspectorStore().resetDataInspector();
+
+			useDataViewDefinitionStore().close();
 		},
 		setShowPreviewPanel(isShow: boolean): void
 		{

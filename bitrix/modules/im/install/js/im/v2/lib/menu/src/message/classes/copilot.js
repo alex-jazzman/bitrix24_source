@@ -22,7 +22,6 @@ export class CopilotMessageMenu extends MessageMenu
 		];
 
 		const secondGroupItems = [
-			this.getDeleteItem(),
 			this.getSelectItem(),
 		];
 

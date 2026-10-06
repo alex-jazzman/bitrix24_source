@@ -15,19 +15,26 @@ if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->isCrmAd
 	die();
 }
 
+if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !check_bitrix_sessid())
+{
+	echo GetMessage('CRM_LOC_IMP_ERROR_ACCESS_DENIED');
+	require_once($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/epilog_after.php");
+	die();
+}
+
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/sale/general/location_import.php");
+
+$tmpPath = CTempFile::GetDirectoryName(12, 'crm');
 
 $arImportParams = array(
 	'STEP' => intval($_REQUEST['STEP']),
 	'CSVFILE' => $_REQUEST['CSVFILE'],
+	'TMP_PATH' => $tmpPath,
 	'LOADZIP' => $_REQUEST['LOADZIP'],
 	'SYNC' => $_REQUEST['SYNC'],
 	'STEP_LENGTH' => $_REQUEST['STEP_LENGTH'],
 	'DLZIPFILE' => 'zip_ussr.csv'
 );
-
-if(isset($_REQUEST['TMP_PATH']))
-	$arImportParams['TMP_PATH'] = $_REQUEST['TMP_PATH'];
 
 $arImportResult = saleLocationImport($arImportParams);
 

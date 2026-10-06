@@ -1,4 +1,7 @@
 <?php
+
+use Bitrix\Main\Web\Uri;
+
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 
 function RegisterNewUser($SITE_ID, $arFields)
@@ -73,7 +76,7 @@ function RegisterNewUser($SITE_ID, $arFields)
 		$event->SendImmediate("BITRIX24_USER_INVITATION", $SITE_ID, array(
 			"EMAIL_FROM" => $USER->GetEmail(),
 			"EMAIL_TO" => $userData["EMAIL"],
-			"LINK" => CHTTP::URN2URI("/bitrix/tools/intranet_invite_dialog.php?user_id=".$userData["ID"]."&checkword=".urlencode($userData["CONFIRM_CODE"])),
+			"LINK" => (string)(new Uri("/bitrix/tools/intranet_invite_dialog.php?user_id=".$userData["ID"]."&checkword=".urlencode($userData["CONFIRM_CODE"])))->toAbsolute(),
 			"USER_TEXT" => $messageText,
 		));
 	}
@@ -131,7 +134,7 @@ function RegisterNewUser($SITE_ID, $arFields)
 				$event->SendImmediate("BITRIX24_USER_INVITATION", $SITE_ID, array(
 					"EMAIL_FROM" => $USER->GetEmail(),
 					"EMAIL_TO" => $userData["EMAIL"],
-					"LINK" => CHTTP::URN2URI("/bitrix/tools/intranet_invite_dialog.php?user_id=".$ID."&checkword=".urlencode($arUser["CONFIRM_CODE"])),
+					"LINK" => (string)(new Uri("/bitrix/tools/intranet_invite_dialog.php?user_id=".$ID."&checkword=".urlencode($arUser["CONFIRM_CODE"])))->toAbsolute(),
 					"USER_TEXT" => $messageText,
 				));
 			}
@@ -163,7 +166,7 @@ function ReinviteUser($SITE_ID, $USER_ID)
 		$event->SendImmediate("BITRIX24_USER_INVITATION", $SITE_ID, array(
 			"EMAIL_FROM" => $USER->GetEmail(),
 			"EMAIL_TO" => $arUser["EMAIL"],
-			"LINK" => CHTTP::URN2URI("/bitrix/tools/intranet_invite_dialog.php?user_id=".$USER_ID."&checkword=".urlencode($arUser["CONFIRM_CODE"])),
+			"LINK" => (string)(new Uri("/bitrix/tools/intranet_invite_dialog.php?user_id=".$USER_ID."&checkword=".urlencode($arUser["CONFIRM_CODE"])))->toAbsolute(),
 			"USER_TEXT" => $messageText,
 		));
 		return true;

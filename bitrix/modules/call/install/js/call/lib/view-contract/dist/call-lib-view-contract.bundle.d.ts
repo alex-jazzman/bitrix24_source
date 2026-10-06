@@ -71,6 +71,7 @@ interface CallView {
 	updateButtons(skippedElementsList?: string[]): void;
 	isButtonBlocked(buttonName: string): boolean;
 	getButtonElement(buttonId: string, elementType?: string): HTMLElement | null;
+	setGuestLink(link: string | null): void;
 	setUiState(uiState: string): void;
 	setLayout(newLayout: string): void;
 	setSize(size: string): void;

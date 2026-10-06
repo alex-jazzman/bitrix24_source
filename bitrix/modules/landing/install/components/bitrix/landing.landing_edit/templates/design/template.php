@@ -39,7 +39,7 @@ $isAjax = $component->isAjax();
 		<?php
 		foreach ($arResult['ERRORS'] as $error)
 		{
-			echo $error . '<br/>';
+			echo htmlspecialcharsbx($error) . '<br/>';
 		}
 		?>
 	</div>
@@ -149,9 +149,9 @@ elseif ($isMainpageEditor)
 			top.BX.Landing.UI.Tool.ActionDialog.getInstance().close();
 		}
 		BX.Landing.Env.createInstance({
-			site_id: '<?= $row['SITE_ID']['CURRENT'] ?>',
+			site_id: '<?= CUtil::JSEscape((string)$row['SITE_ID']['CURRENT']) ?>',
 			params: {
-				type: '<?= $arParams['TYPE'] ?>',
+				type: '<?= CUtil::JSEscape((string)$arParams['TYPE']) ?>',
 			},
 		});
 	});
@@ -597,7 +597,7 @@ if ($arParams['SUCCESS_SAVE'])
 							control: BX('<?= $template->getFieldId('ALL_COLORS') ?>'),
 						},
 						corporateColor: {
-							defaultValue: '<?= $themeFields['COLOR']->getValue() ?>',
+							defaultValue: '<?= CUtil::JSEscape((string)$themeFields['COLOR']->getValue()) ?>',
 							control: this.corporateColor,
 						},
 					},
@@ -607,35 +607,35 @@ if ($arParams['SUCCESS_SAVE'])
 						},
 						textColor: {
 							control: this.textColor,
-							defaultValue: '<?= $themeFontsFields['COLOR']->getValue() ?>',
+							defaultValue: '<?= CUtil::JSEscape((string)$themeFontsFields['COLOR']->getValue()) ?>',
 						},
 						textFont: {
 							control: BX('<?= $template->getFieldId('THEMEFONTS_CODE') ?>'),
-							defaultValue: '<?= $themeFontsFields['CODE']->getValue() ?>',
+							defaultValue: '<?= CUtil::JSEscape((string)$themeFontsFields['CODE']->getValue()) ?>',
 						},
 						textSize: {
 							control: BX('<?= $template->getFieldId('THEMEFONTS_SIZE') ?>'),
-							defaultValue: '<?= $themeFontsFields['SIZE']->getValue() ?>',
+							defaultValue: '<?= CUtil::JSEscape((string)$themeFontsFields['SIZE']->getValue()) ?>',
 						},
 						textWeight: {
 							control: BX('<?= $template->getFieldId('THEMEFONTS_FONT_WEIGHT') ?>'),
-							defaultValue: '<?= $themeFontsFields['FONT_WEIGHT']->getValue() ?>',
+							defaultValue: '<?= CUtil::JSEscape((string)$themeFontsFields['FONT_WEIGHT']->getValue()) ?>',
 						},
 						textLineHeight: {
 							control: BX('<?= $template->getFieldId('THEMEFONTS_LINE_HEIGHT') ?>'),
-							defaultValue: '<?= $themeFontsFields['LINE_HEIGHT']->getValue() ?>',
+							defaultValue: '<?= CUtil::JSEscape((string)$themeFontsFields['LINE_HEIGHT']->getValue()) ?>',
 						},
 						hColor: {
 							control: this.hColor,
-							defaultValue: '<?= $themeFontsFields['COLOR_H']->getValue() ?>',
+							defaultValue: '<?= CUtil::JSEscape((string)$themeFontsFields['COLOR_H']->getValue()) ?>',
 						},
 						hFont: {
 							control: BX('<?= $template->getFieldId('THEMEFONTS_CODE_H') ?>'),
-							defaultValue: '<?= $themeFontsFields['CODE_H']->getValue() ?>',
+							defaultValue: '<?= CUtil::JSEscape((string)$themeFontsFields['CODE_H']->getValue()) ?>',
 						},
 						hWeight: {
 							control: BX('<?= $template->getFieldId('THEMEFONTS_FONT_WEIGHT_H') ?>'),
-							defaultValue: '<?= $themeFontsFields['FONT_WEIGHT_H']->getValue() ?>',
+							defaultValue: '<?= CUtil::JSEscape((string)$themeFontsFields['FONT_WEIGHT_H']->getValue()) ?>',
 						},
 					},
 					background: {
@@ -643,22 +643,22 @@ if ($arParams['SUCCESS_SAVE'])
 							control: BX('<?= $template->getFieldId('BACKGROUND_USE') ?>'),
 						},
 						useSite: {
-							defaultValue: '<?= $bgFields['USE']->getValue() ?>',
+							defaultValue: '<?= CUtil::JSEscape((string)$bgFields['USE']->getValue()) ?>',
 						},
 						field: {
 							control: BX('<?= $template->getFieldId('BACKGROUND_PICTURE_FORM') ?>'),
-							defaultValue: '<?= $bgFilePath ?>',
+							defaultValue: '<?= CUtil::JSEscape((string)$bgFilePath) ?>',
 						},
 						image: {
 							control: this.image,
 						},
 						position: {
 							control: BX('<?= $template->getFieldId('BACKGROUND_POSITION') ?>'),
-							defaultValue: '<?= $bgFields['POSITION']->getValue() ?>',
+							defaultValue: '<?= CUtil::JSEscape((string)$bgFields['POSITION']->getValue()) ?>',
 						},
 						color: {
 							control: this.bgColor,
-							defaultValue: '<?= $bgFields['COLOR']->getValue() ?>',
+							defaultValue: '<?= CUtil::JSEscape((string)$bgFields['COLOR']->getValue()) ?>',
 						},
 					},
 				},

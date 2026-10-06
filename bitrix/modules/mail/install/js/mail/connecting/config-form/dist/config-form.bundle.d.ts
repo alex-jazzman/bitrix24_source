@@ -1,16 +1,11 @@
 /* eslint-disable */
-type MailboxConfigFormOptions = {
-	containerId?: string;
-	initialData?: InitialData;
-};
-
 type InitialData = {
 	mode?: Mode;
 	mailboxId?: number | null;
 	connectionRequestId?: number | null;
 	connectionRequest?: ConnectionRequestPayload | null;
 	service?: ServiceState | null;
-	settingsConfig?: RawSettingsConfig | null;
+	settingsConfig?: BX.Mail.Connecting.SettingsConfig.RawSettingsConfig | null;
 	paths?: Partial<InitialDataPaths>;
 	permissions?: Partial<PermissionsInput>;
 };
@@ -37,6 +32,15 @@ type ServiceState = {
 	smtp?: ServiceSmtpSettings;
 };
 
+type ServiceEncryption = 'Y' | 'N' | 'S';
+
+type ServiceSmtpSettings = {
+	server: string;
+	port: string | number;
+	login: boolean;
+	password: boolean;
+};
+
 type InitialDataPaths = {
 	messageList: string;
 	home: string;
@@ -47,6 +51,7 @@ type PermissionsInput = {
 	canEditCrm: boolean;
 	canEditAccess: boolean;
 	canChangeOwner: boolean;
+	canViewMailboxList: boolean;
 	isSmtpAvailable: boolean;
 	isCrmAvailable: boolean;
 	isCalendarAvailable: boolean;
@@ -56,13 +61,9 @@ type PermissionsInput = {
 	sharedMailboxesCount?: number | null;
 };
 
-type ServiceEncryption = 'Y' | 'N' | 'S';
-
-type ServiceSmtpSettings = {
-	server: string;
-	port: string | number;
-	login: boolean;
-	password: boolean;
+type MailboxConfigFormOptions = {
+	containerId?: string;
+	initialData?: InitialData;
 };
 
 declare namespace BX.Mail.Connecting.ConfigForm {

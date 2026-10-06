@@ -11,6 +11,13 @@ import { AccessibilitySettings } from '../accessibility-settings/accessibility-s
 const PRECEDING = Node.DOCUMENT_POSITION_PRECEDING | Node.DOCUMENT_POSITION_CONTAINS;
 const FOLLOWING = Node.DOCUMENT_POSITION_FOLLOWING | Node.DOCUMENT_POSITION_CONTAINED_BY;
 
+type OutsideIsolationOwnership = {
+	ownerCount: number,
+	wasInert: boolean,
+};
+
+const outsideIsolationOwnership = new WeakMap<HTMLElement, OutsideIsolationOwnership>();
+
 /**
  * @memberof BX.UI.Accessibility
  */
@@ -29,7 +36,7 @@ export class FocusTrap
 	#endFocusBoundary: HTMLElement | null = null;
 
 	#lastFocusedElement: HTMLElement | null = null;
-	#alreadyInert: WeakSet<HTMLElement> = new WeakSet();
+	#outsideIsolationElements: Set<HTMLElement> | null = null;
 
 	#startFocusHandler = this.#handleStartBoundaryFocus.bind(this);
 	#endFocusHandler = this.#handleEndBoundaryFocus.bind(this);
@@ -453,6 +460,13 @@ export class FocusTrap
 	{
 		try
 		{
+			if (this.#restoreFocus === null && this.#shouldKeepCurrentFocus())
+			{
+				this.#scheduleLostFocusRestore(this.#lastFocusedElement);
+
+				return;
+			}
+
 			const restoreFocus = this.#restoreFocus ?? true;
 			if (restoreFocus === false)
 			{
@@ -548,13 +562,92 @@ export class FocusTrap
 		}
 	}
 
+	// Focus already moved outside the trap (e.g. to another trap opened on top),
+	// so the default restore must not steal it back.
+	#shouldKeepCurrentFocus(): boolean
+	{
+		if (FocusNavigator.isFocusLost(this.#container))
+		{
+			return false;
+		}
+
+		const activeElement = FocusNavigator.getActiveElement(this.#container);
+
+		return activeElement !== null && !this.#containsElement(activeElement);
+	}
+
+	// The element holding the focus may die together with this container (a menu
+	// opened from a slider closes right after it), and then nobody restores the
+	// focus at all. Whether it survives is only known after the current task.
+	#scheduleLostFocusRestore(lastFocusedElement: HTMLElement | null): void
+	{
+		setTimeout(() => {
+			if (!FocusNavigator.isFocusLost(this.#container))
+			{
+				return;
+			}
+
+			if (lastFocusedElement !== null && InteractivityChecker.isFocusable(lastFocusedElement))
+			{
+				AccessibilityLogger.logNode('focus-trap', 'back to last focus (lost)', lastFocusedElement);
+
+				FocusNavigator.restoreFocus(lastFocusedElement, { preventScroll: true });
+
+				return;
+			}
+
+			FocusMonitor.Instance.restoreFocus();
+		}, 0);
+	}
+
+	#containsElement(element: HTMLElement): boolean
+	{
+		if (this.contains(element))
+		{
+			return true;
+		}
+
+		// element may be inside a nested iframe —
+		// walk up the frameElement chain until we reach the container
+		let doc = element.ownerDocument;
+		while (doc?.defaultView?.frameElement)
+		{
+			const frame = doc.defaultView.frameElement;
+			if (Type.isElementNode(frame) && this.contains(frame as HTMLElement))
+			{
+				return true;
+			}
+
+			doc = frame.ownerDocument;
+		}
+
+		return false;
+	}
+
 	#setOutsideIsolation(enable: boolean): void
 	{
-		if (this.#options.isolateOutside !== true)
+		if (enable && this.#options.isolateOutside !== true)
 		{
 			return;
 		}
 
+		if (enable)
+		{
+			this.#captureOutsideIsolationSnapshot();
+		}
+		else
+		{
+			for (const el of this.#outsideIsolationElements ?? [])
+			{
+				this.#releaseOutsideIsolation(el);
+			}
+
+			this.#outsideIsolationElements = null;
+		}
+	}
+
+	#captureOutsideIsolationSnapshot(): void
+	{
 		const containers = [this.#container, ...this.#getOutsideExceptionElements()];
 		const topLevelContainers = containers.filter(
 			(el) => {
@@ -563,45 +656,62 @@ export class FocusTrap
 		);
 
 		const adjacentElements = this.#getAdjacentElements(topLevelContainers);
-
-		if (enable)
+		this.#outsideIsolationElements = new Set();
+		for (const el of adjacentElements)
 		{
-			this.#alreadyInert = new WeakSet();
-			for (const el of adjacentElements)
+			if (el === this.#container || this.#container.contains(el) || el.getAttribute('data-focus-trap') === this.getId())
 			{
-				if (el === this.#container || this.#container.contains(el) || el.getAttribute('data-focus-trap') === this.getId())
-				{
-					continue;
-				}
-
-				// Old scripts may create hidden containers in the <body> for later display.
-				// In this case, we should not set inert attribute.
-				if (el.parentNode?.nodeName === 'BODY' && el.offsetWidth === 0 && el.offsetHeight === 0)
-				{
-					continue;
-				}
-
-				if (el.inert || el.hasAttribute('inert'))
-				{
-					this.#alreadyInert.add(el);
-				}
-
-				el.setAttribute('inert', 'true');
+				continue;
 			}
+
+			// Old scripts may create hidden containers in the <body> for later display.
+			// In this case, we should not set inert attribute.
+			if (el.parentNode?.nodeName === 'BODY' && el.offsetWidth === 0 && el.offsetHeight === 0)
+			{
+				continue;
+			}
+
+			this.#outsideIsolationElements.add(el);
+			this.#acquireOutsideIsolation(el);
+		}
+	}
+
+	#acquireOutsideIsolation(element: HTMLElement): void
+	{
+		const ownership = outsideIsolationOwnership.get(element);
+		if (ownership)
+		{
+			ownership.ownerCount++;
 		}
 		else
 		{
-			for (const el of adjacentElements)
-			{
-				if (this.#alreadyInert.has(el))
-				{
-					continue;
-				}
+			outsideIsolationOwnership.set(element, {
+				ownerCount: 1,
+				wasInert: element.inert || element.hasAttribute('inert'),
+			});
+		}
 
-				el.removeAttribute('inert');
-			}
+		element.setAttribute('inert', 'true');
+	}
 
-			this.#alreadyInert = new WeakSet();
+	#releaseOutsideIsolation(element: HTMLElement): void
+	{
+		const ownership = outsideIsolationOwnership.get(element);
+		if (!ownership)
+		{
+			return;
+		}
+
+		ownership.ownerCount--;
+		if (ownership.ownerCount > 0)
+		{
+			return;
+		}
+
+		outsideIsolationOwnership.delete(element);
+		if (!ownership.wasInert)
+		{
+			element.removeAttribute('inert');
 		}
 	}
 

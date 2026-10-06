@@ -1,4 +1,8 @@
-<?if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
+<?php
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
+
+use Bitrix\Main\Web\Uri;
 
 if (!CModule::IncludeModule('crm'))
 {
@@ -153,13 +157,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && check_bitrix_sessid() && isset($_PO
 			$_SESSION[$errorID] = implode("\n", $errorMessages);
 
 			LocalRedirect(
-				CHTTP::urlAddParams(
-					CComponentEngine::MakePathFromTemplate(
+				(string)(new Uri(CComponentEngine::MakePathFromTemplate(
 						$arParams['PATH_TO_CURRENCY_LIST'],
 						array()
-					),
-					array('error' => $errorID)
-				)
+					)))->addParams(array('error' => $errorID))
 			);
 		}
 	}
@@ -203,13 +204,10 @@ elseif ($_SERVER['REQUEST_METHOD'] == 'GET' && check_bitrix_sessid() && isset($_
 		else
 		{
 			LocalRedirect(
-				CHTTP::urlAddParams(
-					CComponentEngine::MakePathFromTemplate(
+				(string)(new Uri(CComponentEngine::MakePathFromTemplate(
 						$arParams['PATH_TO_CURRENCY_LIST'],
 						array()
-					),
-					array('error' => $errorID)
-				)
+					)))->addParams(array('error' => $errorID))
 			);
 		}
 	}
@@ -266,22 +264,16 @@ foreach($allCurrencies as $k => $v)
 		);
 
 	$currency['PATH_TO_CURRENCY_DELETE'] =
-		CHTTP::urlAddParams(
-			CComponentEngine::MakePathFromTemplate(
+		(string)(new Uri(CComponentEngine::MakePathFromTemplate(
 				$arParams['PATH_TO_CURRENCY_LIST'],
 				array()
-			),
-			array('action_'.$arResult['GRID_ID'] => 'delete', 'ID' => $k, 'sessid' => bitrix_sessid())
-		);
+			)))->addParams(array('action_'.$arResult['GRID_ID'] => 'delete', 'ID' => $k, 'sessid' => bitrix_sessid()));
 
 	$currency['PATH_TO_CURRENCY_MARK_AS_BASE'] =
-		CHTTP::urlAddParams(
-			CComponentEngine::MakePathFromTemplate(
+		(string)(new Uri(CComponentEngine::MakePathFromTemplate(
 				$arParams['PATH_TO_CURRENCY_LIST'],
 				array()
-			),
-			array('action_'.$arResult['GRID_ID'] => 'mark_as_base', 'ID' => $k, 'sessid' => bitrix_sessid())
-		);
+			)))->addParams(array('action_'.$arResult['GRID_ID'] => 'mark_as_base', 'ID' => $k, 'sessid' => bitrix_sessid()));
 
 	$currency['~ID'] = $k;
 	$currency['~NAME'] = htmlspecialcharsBack($currency['NAME']);

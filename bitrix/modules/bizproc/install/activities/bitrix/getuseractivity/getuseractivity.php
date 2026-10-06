@@ -313,7 +313,7 @@ class CBPGetUserActivity extends CBPActivity
 				{
 					if (
 						($skipAbsent && CIntranetUtils::isUserAbsent($headId))
-						|| ($skipTimeman && !$this->isUserWorking($skipTimeman))
+						|| ($skipTimeman && !$this->isUserWorking($headId))
 					)
 					{
 						continue;
@@ -447,6 +447,7 @@ class CBPGetUserActivity extends CBPActivity
 		{
 			$arCurrentValues = [
 				'user_type' => '',
+				'user_type_text' => '',
 				'user_parameter' => '',
 				'reserve_user_parameter' => '',
 				'max_level' => 1,
@@ -460,9 +461,18 @@ class CBPGetUserActivity extends CBPActivity
 			if (is_array($arCurrentActivity['Properties']))
 			{
 				$userType = $arCurrentActivity['Properties']['UserType'] ?? null;
-				$skipAbsent = ($userType == self::USER_TYPE_BOSS || $userType === self::USER_TYPE_LEAD) ? 'N' : 'Y';
+				$skipAbsent = ($userType === self::USER_TYPE_BOSS || $userType === self::USER_TYPE_LEAD) ? 'N' : 'Y';
 
-				$arCurrentValues['user_type'] = $userType;
+				$arCurrentValues['user_type_text'] = '';
+				if (CBPActivity::isExpression($userType))
+				{
+					$arCurrentValues['user_type_text'] = $userType;
+					$arCurrentValues['user_type'] = '';
+				}
+				else
+				{
+					$arCurrentValues['user_type'] = $userType;
+				}
 				$arCurrentValues['max_level'] = $arCurrentActivity['Properties']['MaxLevel'] ?? null;
 				$arCurrentValues['user_parameter'] = CBPHelper::usersArrayToString(
 					$arCurrentActivity['Properties']['UserParameter'] ?? null,
@@ -521,17 +531,28 @@ class CBPGetUserActivity extends CBPActivity
 		$arErrors = [];
 		$arProperties = [];
 
-		if (
-			!isset($arCurrentValues['user_type'])
-			|| !in_array(
-				$arCurrentValues['user_type'],
-				[self::USER_TYPE_BOSS, self::USER_TYPE_RANDOM, self::USER_TYPE_SEQUENT, self::USER_TYPE_LEAD],
-			)
-		)
+		$userTypeExpression = isset($arCurrentValues['user_type_text'])
+			? trim((string)$arCurrentValues['user_type_text'])
+			: '';
+		if ($userTypeExpression !== '' && CBPActivity::isExpression($userTypeExpression))
 		{
-			$arCurrentValues['user_type'] = self::USER_TYPE_RANDOM;
+			$arProperties['UserType'] = $userTypeExpression;
 		}
-		$arProperties['UserType'] = $arCurrentValues['user_type'];
+		else
+		{
+			if (
+				!isset($arCurrentValues['user_type'])
+				|| !in_array(
+					$arCurrentValues['user_type'],
+					[self::USER_TYPE_BOSS, self::USER_TYPE_RANDOM, self::USER_TYPE_SEQUENT, self::USER_TYPE_LEAD],
+					true
+				)
+			)
+			{
+				$arCurrentValues['user_type'] = self::USER_TYPE_RANDOM;
+			}
+			$arProperties['UserType'] = $arCurrentValues['user_type'];
+		}
 
 		if (
 			!isset($arCurrentValues['max_level'])

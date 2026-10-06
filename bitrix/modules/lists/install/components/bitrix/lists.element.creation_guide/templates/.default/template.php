@@ -27,6 +27,9 @@ $APPLICATION->SetPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "")." 
 	'ui.tooltip',
 	"ui.dialogs.messagebox",
 	'ui.icons.b24',
+	'ui.a11y',
+	// bizproc is optional for this component: Extension::load() skips an extension of a disabled module
+	'bizproc.a11y',
 ]);
 
 $htmlId = 'lists-element-creation-guide';
@@ -130,6 +133,7 @@ if ($canShowFields)
 				'name' => $state['name'],
 				'formId' => 'lists_element_creation_guide_bp_' . $state['templateId'],
 				'fields' => $parameters,
+				'templateId' => $state['templateId'],
 			];
 		}
 	}
@@ -175,6 +179,22 @@ if ($statesToTuning && $canUserTuningStates)
 	}
 }
 
+$processTitle = trim((string)$info['name']);
+
+// a form title equal to the visible title of the process would be voiced twice, so it stays out of the tree
+$renderFormTitle = static function(?string $title) use ($processTitle): string {
+	$title = (string)$title;
+	$a11yAttributes = trim($title) === $processTitle
+		? 'aria-hidden="true"'
+		: 'role="heading" aria-level="3"'
+	;
+
+	return '<div class="list-el-cg__content-form-title" ' . $a11yAttributes . '>'
+		. htmlspecialcharsbx($title)
+		. '</div>'
+	;
+};
+
 $includeFormComponent = static function(array $tab) {
 	global $APPLICATION;
 
@@ -195,37 +215,57 @@ $includeFormComponent = static function(array $tab) {
 };
 ?>
 
-<div class="list-el-cg">
+<div class="list-el-cg" data-testid="<?= htmlspecialcharsbx($htmlId) ?>">
 	<div class="list-el-cg__header">
 		<div class="list-el-cg__header-icon">
 			<div class="ui-icon-set --business-process-1" style="--ui-icon-set__icon-size: 48px; --ui-icon-set__icon-color: #fff;"></div>
 		</div>
 		<div class="list-el-cg__header-content">
-			<div class="list-el-cg__header__title"><?= htmlspecialcharsbx(Loc::getMessage('LISTS_ELEMENT_CREATION_GUIDE_CMP_TITLE')) ?></div>
+			<div class="list-el-cg__header__title" role="heading" aria-level="1"><?= htmlspecialcharsbx(Loc::getMessage('LISTS_ELEMENT_CREATION_GUIDE_CMP_TITLE')) ?></div>
 			<div class="list-el-cg__header__info"><?= htmlspecialcharsbx(Loc::getMessage('LISTS_ELEMENT_CREATION_GUIDE_CMP_DESCRIPTION')) ?></div>
 		</div>
 	</div>
 	<div class="list-el-cg__body">
-		<div class="list-el-cg__breadcrumbs" id="<?= htmlspecialcharsbx($htmlId . '-breadcrumbs') ?>"></div>
+		<div
+			class="list-el-cg__breadcrumbs"
+			id="<?= htmlspecialcharsbx($htmlId . '-breadcrumbs') ?>"
+			data-testid="<?= htmlspecialcharsbx($htmlId . '-steps') ?>"
+		></div>
 		<div class="list-el-cg__container" id="<?= htmlspecialcharsbx($htmlId . '-container') ?>">
 			<div class="list-el-cg__content">
 				<div class="list-el-cg__content-head">
-					<div class="list-el-cg__content-title"><?= htmlspecialcharsbx($info['name']) ?></div>
+					<div class="list-el-cg__content-title" role="heading" aria-level="2"><?= htmlspecialcharsbx($info['name']) ?></div>
 					<div class="list-el-cg__content-config" data-role="list-el-cg__content-config" style="display: none">
 						<div class="ui-icon-set --settings-4"></div>
 					</div>
 				</div>
-				<div id="<?= htmlspecialcharsbx($htmlId . '-errors') ?>"></div>
-				<div class="list-el-cg__content-body --border"></div>
-				<div class="list-el-cg__content-body --border --hidden">
+				<div
+					id="<?= htmlspecialcharsbx($htmlId . '-errors') ?>"
+					data-testid="<?= htmlspecialcharsbx($htmlId . '-errors') ?>"
+				></div>
+				<?php // the bundle picks the step containers by position (src/index.js, #fillSteps): the order is a contract ?>
+				<div
+					class="list-el-cg__content-body --border"
+					data-testid="<?= htmlspecialcharsbx($htmlId . '-step-content-description') ?>"
+				></div>
+				<div
+					class="list-el-cg__content-body --border --hidden"
+					data-testid="<?= htmlspecialcharsbx($htmlId . '-step-content-constants') ?>"
+				>
 					<?php if ($statesToTuning): ?>
 						<?php if ($canUserTuningStates): ?>
 							<?php foreach ($tabStatesToTuning as $tab): ?>
-								<div class="list-el-cg__content-form">
-									<div class="list-el-cg__content-form-title"><?= htmlspecialcharsbx($tab['name']) ?></div>
+								<div
+									class="list-el-cg__content-form"
+									data-testid="<?= htmlspecialcharsbx($htmlId . '-constants-form-' . $tab['templateId']) ?>"
+								>
+									<?= $renderFormTitle($tab['name']) ?>
 									<?php $includeFormComponent($tab) ?>
 									<div>
-										<div id="<?= htmlspecialcharsbx($htmlId . '-constants-' . $tab['templateId'] . '-errors')?>"></div>
+										<div
+											id="<?= htmlspecialcharsbx($htmlId . '-constants-' . $tab['templateId'] . '-errors')?>"
+											data-testid="<?= htmlspecialcharsbx($htmlId . '-constants-errors-' . $tab['templateId']) ?>"
+										></div>
 									</div>
 								</div>
 							<?php endforeach ?>
@@ -236,27 +276,42 @@ $includeFormComponent = static function(array $tab) {
 						<?php endif ?>
 					<?php endif ?>
 				</div>
-				<div class="list-el-cg__content-body --border --hidden">
+				<div
+					class="list-el-cg__content-body --border --hidden"
+					data-testid="<?= htmlspecialcharsbx($htmlId . '-step-content-fields') ?>"
+				>
 					<?php if ($tabElement): ?>
-						<div class="list-el-cg__content-form">
-							<div class="list-el-cg__content-form-title"><?= htmlspecialcharsbx(Loc::getMessage('LISTS_ELEMENT_CREATION_GUIDE_CMP_MAIN_SECTION_TITLE')) ?></div>
+						<div
+							class="list-el-cg__content-form"
+							data-testid="<?= htmlspecialcharsbx($htmlId . '-element-form') ?>"
+						>
+							<?= $renderFormTitle(Loc::getMessage('LISTS_ELEMENT_CREATION_GUIDE_CMP_MAIN_SECTION_TITLE')) ?>
 							<?php $includeFormComponent($tabElement) ?>
 						</div>
 					<?php endif; ?>
 					<?php if ($tabSection): ?>
-						<div class="list-el-cg__content-form">
-							<div class="list-el-cg__content-form-title"><?= htmlspecialcharsbx(Loc::getMessage('LISTS_ELEMENT_CREATION_GUIDE_CMP_SECTION_SECTION_TITLE')) ?></div>
+						<div
+							class="list-el-cg__content-form"
+							data-testid="<?= htmlspecialcharsbx($htmlId . '-section-form') ?>"
+						>
+							<?= $renderFormTitle(Loc::getMessage('LISTS_ELEMENT_CREATION_GUIDE_CMP_SECTION_SECTION_TITLE')) ?>
 							<?php $includeFormComponent($tabSection) ?>
 						</div>
 					<?php endif ?>
 					<?php foreach ($tabStatesOnStartUp as $tab): ?>
-						<div class="list-el-cg__content-form">
-							<div class="list-el-cg__content-form-title"><?= htmlspecialcharsbx($tab['name']) ?></div>
+						<div
+							class="list-el-cg__content-form"
+							data-testid="<?= htmlspecialcharsbx($htmlId . '-parameters-form-' . $tab['templateId']) ?>"
+						>
+							<?= $renderFormTitle($tab['name']) ?>
 							<?php $includeFormComponent($tab); ?>
 						</div>
 					<?php endforeach ?>
 				</div>
-				<div class="list-el-cg__content-body --border --hidden"></div>
+				<div
+					class="list-el-cg__content-body --border --hidden"
+					data-testid="<?= htmlspecialcharsbx($htmlId . '-step-content-status') ?>"
+				></div>
 			</div>
 		</div>
 	</div>

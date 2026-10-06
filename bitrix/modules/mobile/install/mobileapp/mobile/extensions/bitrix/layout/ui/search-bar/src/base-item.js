@@ -16,7 +16,7 @@ jn.define('layout/ui/search-bar/base-item', (require, exports, module) => {
 		 */
 		render()
 		{
-			const { active, last, id, value, name, badgeNew, badgeComingSoon, showCross } = this.props;
+			const { active, last, id, value, name, badgeNew, badgeComingSoon, showCross = true } = this.props;
 
 			let badgeType = null;
 			if (badgeNew)

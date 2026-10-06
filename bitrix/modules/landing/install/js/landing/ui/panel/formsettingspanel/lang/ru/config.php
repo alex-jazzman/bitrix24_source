@@ -169,7 +169,7 @@ $MESS['LANDING_FORM_EMBED_SHOW_POPUP'] = 'Во всплывающем окне';
 $MESS['LANDING_FORM_EMBED_SHOW_SLIDER'] = 'В слайдере';
 
 $MESS['LANDING_IDENTIFY_HEADER'] = 'Узнать клиента';
-$MESS['LANDING_IDENTIFY_MESSAGE_HEADER'] = 'Функция “Узнать клиента” включена!';
+$MESS['LANDING_IDENTIFY_MESSAGE_HEADER'] = 'Функция «Узнать клиента» включена!';
 $MESS['LANDING_IDENTIFY_MESSAGE_DESCRIPTION'] = 'Клиенты заполняют формы быстро, продажи растут!<br>Если клиент заполнял форму на вашем сайте, информация о нём уже есть в вашей CRM. Почему бы её не использовать? Теперь ваши формы будут узнавать клиента и подставлять данные в нужные поля. Клиенту больше не нужно повторно вводить информацию, например, имя, телефон, e-mail. Без сомнений, лёгкость заполнения форм будет увеличивать ваши продажи. ';
 
 $MESS['LANDING_FORM_SETTINGS_CRM_TITLE'] = 'Сущности CRM';
@@ -300,5 +300,5 @@ $MESS['LANDING_FORM_EXPERT_MODE_SWITCHER_LABEL'] = 'Экспертный реж�
 $MESS['LANDING_FORM_HISTORY_DISABLED_HINT'] = 'Кнопки доступны при редактировании дизайна страницы с формой';
 
 $MESS["LANDING_FORM_EDITOR_PHONE_VERIFY_CUSTOM_SLIDER_TITLE"] = "Изменение формы";
-$MESS["LANDING_FORM_EDITOR_PHONE_VERIFY_CUSTOM_TITLE"] = "Получите проверочный код в CMC";
+$MESS["LANDING_FORM_EDITOR_PHONE_VERIFY_CUSTOM_TITLE"] = "Получите проверочный код в СМС";
 $MESS["LANDING_FORM_EDITOR_PHONE_VERIFY_CUSTOM_DESCRIPTION"] = "В целях безопасности для изменения формы вам необходимо указать проверочный код из СМС. Это выполняется однократно для каждой формы.";

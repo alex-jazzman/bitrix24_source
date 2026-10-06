@@ -1,0 +1,28 @@
+<?php
+$MESS["MOBILE_MARKET_INSTALL_ACCESS_ADD_EMPLOYEES"] = "Add users";
+$MESS["MOBILE_MARKET_INSTALL_ACCESS_ALL"] = "Make available to all users";
+$MESS["MOBILE_MARKET_INSTALL_ACCESS_EMPLOYEES_TITLE"] = "Users";
+$MESS["MOBILE_MARKET_INSTALL_ACCESS_HEADER_TITLE"] = "User access and permissions";
+$MESS["MOBILE_MARKET_INSTALL_ACCESS_PROMO_TEXT"] = "You can change permissions on the app page after installation.";
+$MESS["MOBILE_MARKET_INSTALL_ACTION_INSTALL"] = "Install";
+$MESS["MOBILE_MARKET_INSTALL_ACTION_NEXT_ACCESS"] = "Next";
+$MESS["MOBILE_MARKET_INSTALL_ACTION_NEXT_PERMISSIONS"] = "Agree and continue";
+$MESS["MOBILE_MARKET_INSTALL_AGREEMENTS_EMPTY"] = "This app does not require you to agree to additional terms.";
+$MESS["MOBILE_MARKET_INSTALL_AGREEMENTS_HEADER_TITLE"] = "Agreements";
+$MESS["MOBILE_MARKET_INSTALL_AGREEMENTS_PROMO_TEXT"] = "You have to agree to the following terms to proceed.";
+$MESS["MOBILE_MARKET_INSTALL_AGREEMENT_EULA"] = "License Agreement";
+$MESS["MOBILE_MARKET_INSTALL_AGREEMENT_PRIVACY"] = "Privacy Policy";
+$MESS["MOBILE_MARKET_INSTALL_AGREEMENT_TEMPLATE"] = "I have read and agree to the [COLOR=#LINK_COLOR#]#LINK#[/COLOR]";
+$MESS["MOBILE_MARKET_INSTALL_AGREEMENT_TERMS_OF_SERVICE"] = "Market Terms and Conditions";
+$MESS["MOBILE_MARKET_INSTALL_APP_PERMISSIONS_EMPTY"] = "App does not require additional permissions.";
+$MESS["MOBILE_MARKET_INSTALL_EMPLOYEE_SELECTOR_SEND_BUTTON"] = "Select";
+$MESS["MOBILE_MARKET_INSTALL_EMPLOYEE_SELECTOR_TITLE"] = "Select users";
+$MESS["MOBILE_MARKET_INSTALL_ERROR"] = "Cannot install the app";
+$MESS["MOBILE_MARKET_INSTALL_PERMISSIONS_HEADER_TITLE"] = "Required permissions";
+$MESS["MOBILE_MARKET_INSTALL_PERMISSIONS_PROMO_TEXT"] = "You can change permissions on the app page after installation.";
+$MESS["MOBILE_MARKET_INSTALL_PERMISSIONS_SECTION_TITLE"] = "App permissions";
+$MESS["MOBILE_MARKET_INSTALL_RETRY"] = "Retry";
+$MESS["MOBILE_MARKET_INSTALL_RIGHTS_ERROR"] = "The app has been installed, but user access preferences could not be saved";
+$MESS["MOBILE_MARKET_INSTALL_TITLE"] = "Install app";
+$MESS["MOBILE_MARKET_INSTALL_UNAVAILABLE_DESCRIPTION"] = "Could not get app installation data.";
+$MESS["MOBILE_MARKET_INSTALL_UNAVAILABLE_TITLE"] = "App is not available";

@@ -33,7 +33,7 @@ Loc::loadMessages(__FILE__);
 	<?php
 	foreach ($arResult['ERRORS'] as $error)
 	{
-		echo $error . '<br/>';
+		echo htmlspecialcharsbx($error) . '<br/>';
 	}
 	?>
 	</div>
@@ -135,9 +135,9 @@ $uriDomain->addParams(
 			top.window['landingSettingsSaved'] = false;
 		}
 		BX.Landing.Env.createInstance({
-			site_id: '<?= $row['ID']['CURRENT'] ?>',
+			site_id: '<?= CUtil::JSEscape((string)$row['ID']['CURRENT']) ?>',
 			params: {
-				type: '<?= $arParams['TYPE'] ?>',
+				type: '<?= CUtil::JSEscape((string)$arParams['TYPE']) ?>',
 			},
 		});
 	});
@@ -604,30 +604,30 @@ if ($arParams['SUCCESS_SAVE'])
 					},
 					textFont: {
 						control: BX('<?= $template->getFieldId('THEMEFONTS_CODE') ?>'),
-						defaultValue: '<?= $themeFontsFields['CODE']->getValue() ?>',
+						defaultValue: '<?= CUtil::JSEscape((string)$themeFontsFields['CODE']->getValue()) ?>',
 					},
 					textSize: {
 						control: BX('<?= $template->getFieldId('THEMEFONTS_SIZE') ?>'),
-						defaultValue: '<?= $themeFontsFields['SIZE']->getValue() ?>',
+						defaultValue: '<?= CUtil::JSEscape((string)$themeFontsFields['SIZE']->getValue()) ?>',
 					},
 					textWeight: {
 						control: BX('<?= $template->getFieldId('THEMEFONTS_FONT_WEIGHT') ?>'),
-						defaultValue: '<?= $themeFontsFields['FONT_WEIGHT']->getValue() ?>',
+						defaultValue: '<?= CUtil::JSEscape((string)$themeFontsFields['FONT_WEIGHT']->getValue()) ?>',
 					},
 					textLineHeight: {
 						control: BX('<?= $template->getFieldId('THEMEFONTS_LINE_HEIGHT') ?>'),
-						defaultValue: '<?= $themeFontsFields['LINE_HEIGHT']->getValue() ?>',
+						defaultValue: '<?= CUtil::JSEscape((string)$themeFontsFields['LINE_HEIGHT']->getValue()) ?>',
 					},
 					hColor: {
 						control: this.hColor,
 					},
 					hFont: {
 						control: BX('<?= $template->getFieldId('THEMEFONTS_CODE_H') ?>'),
-						defaultValue: '<?= $themeFontsFields['CODE_H']->getValue() ?>',
+						defaultValue: '<?= CUtil::JSEscape((string)$themeFontsFields['CODE_H']->getValue()) ?>',
 					},
 					hWeight: {
 						control: BX('<?= $template->getFieldId('THEMEFONTS_FONT_WEIGHT_H') ?>'),
-						defaultValue: '<?= $themeFontsFields['FONT_WEIGHT_H']->getValue() ?>',
+						defaultValue: '<?= CUtil::JSEscape((string)$themeFontsFields['FONT_WEIGHT_H']->getValue()) ?>',
 					},
 				},
 

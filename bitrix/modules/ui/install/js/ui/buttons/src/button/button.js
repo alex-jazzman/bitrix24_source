@@ -1,11 +1,15 @@
-import { Type, Dom, Text, Event, Tag } from 'main.core';
-import { Menu, type MenuOptions } from 'main.popup';
+import { Type, Dom, Event, Tag } from 'main.core';
+import type { Menu, MenuOptions } from 'main.popup';
 
 import { SplitButton, type ButtonCounterOptions } from 'ui.buttons';
 import { Icon } from 'ui.icon-set.api.core';
 import 'ui.cnt';
 
 import BaseButton from '../base-button';
+import LegacyMenuController from '../menu/legacy-menu-controller';
+import SystemMenuController from '../menu/system-menu-controller';
+import type MenuController from '../menu/menu-controller';
+import { hasMenuItems, type MenuControllerCallbacks } from '../menu/menu-controller';
 import ButtonColor from './button-color';
 import ButtonSize from './button-size';
 import ButtonIcon from './button-icon';
@@ -13,7 +17,7 @@ import ButtonState from './button-state';
 import ButtonStyle from './button-style';
 import ButtonTag from './button-tag';
 import AirButtonStyle from './air-button-style';
-import type { ButtonOptions } from './button-options';
+import type { ButtonOptions, SystemMenuOptions } from './button-options';
 
 /**
  * @namespace {BX.UI}
@@ -24,6 +28,7 @@ export default class Button extends BaseButton
 
 	#style: ?string;
 	#isWide: boolean = false;
+	#menuController: ?MenuController = null;
 	#layout: {
 		icon: HTMLElement,
 	} = {};
@@ -46,7 +51,6 @@ export default class Button extends BaseButton
 
 		this.menuWindow = null;
 		this.handleMenuClick = this.handleMenuClick.bind(this);
-		this.handleMenuClose = this.handleMenuClose.bind(this);
 
 		this.setDependOnTheme(this.options.dependOnTheme ?? false);
 		this.setSize(this.options.size);
@@ -54,7 +58,7 @@ export default class Button extends BaseButton
 		this.setIcon(this.options.icon, this.options.iconPosition || 'left');
 		this.setState(this.options.state);
 		this.setId(this.options.id);
-		this.setMenu(this.options.menu);
+		this.#setInitialMenu();
 		this.setContext(this.options.context);
 		this.setWide(this.options.wide === true);
 		this.setLeftCorners(this.options.removeLeftCorners !== true);
@@ -85,7 +89,7 @@ export default class Button extends BaseButton
 			this.setRound();
 		}
 
-		if (this.options.dropdown || (this.getMenuWindow() && this.options.dropdown !== false))
+		if (this.options.dropdown || (this.#menuController !== null && this.options.dropdown !== false))
 		{
 			this.setDropdown();
 		}
@@ -260,31 +264,135 @@ export default class Button extends BaseButton
 	 */
 	setMenu(options: MenuOptions): this
 	{
-		if (Type.isPlainObject(options) && Type.isArray(options.items) && options.items.length > 0)
+		if (hasMenuItems(options))
 		{
-			this.setMenu(false);
+			this.#removeMenu();
 
-			this.menuWindow = new Menu({
-				id: `ui-btn-menu-${Text.getRandom().toLowerCase()}`,
-				bindElement: this.getMenuBindElement(),
-				...options,
-			});
+			this.#menuController = new LegacyMenuController(options, this.#getMenuCallbacks());
+			this.menuWindow = this.#menuController.getMenu();
 
-			this.menuWindow.getPopupWindow().subscribe('onClose', this.handleMenuClose);
 			Event.bind(this.getMenuClickElement(), 'click', this.handleMenuClick);
 		}
-		else if (options === false && this.menuWindow !== null)
+		else if (options === false)
 		{
-			this.menuWindow.close();
-
-			this.menuWindow.getPopupWindow().unsubscribe('onClose', this.handleMenuClose);
-			Event.unbind(this.getMenuClickElement(), 'click', this.handleMenuClick);
-
-			this.menuWindow.destroy();
-			this.menuWindow = null;
+			this.#removeMenu(LegacyMenuController);
 		}
 
 		return this;
+	}
+
+	/**
+	 * Sets a menu rendered by the ui.system.menu extension instead of the main.popup one.
+	 * Passing false removes it, while the PHP setter takes null for that. The arrow is a caller's
+	 * concern here, unlike the PHP setter, which keeps it in sync itself.
+	 */
+	setSystemMenu(options: SystemMenuOptions | false): this
+	{
+		if (hasMenuItems(options))
+		{
+			this.#removeMenu();
+			this.#warnOnLegacyMenuItems(options.items);
+
+			this.#menuController = new SystemMenuController(options, this.#getMenuCallbacks());
+
+			Event.bind(this.getMenuClickElement(), 'click', this.handleMenuClick);
+		}
+		else if (options === false)
+		{
+			this.#removeMenu(SystemMenuController);
+		}
+
+		return this;
+	}
+
+	/**
+	 * Returns the menu instance, which is created on the first opening: the ui.system.menu class
+	 * is available at runtime only. A menu that has never been opened gives null, unlike
+	 * getMenuWindow(), which has its instance right after setMenu().
+	 */
+	getSystemMenu(): Object | null
+	{
+		return this.#menuController instanceof SystemMenuController ? this.#menuController.getMenu() : null;
+	}
+
+	/**
+	 * Unlike getSystemMenu(), tells a kind of the set menu apart even before its first opening.
+	 */
+	hasSystemMenu(): boolean
+	{
+		return this.#menuController instanceof SystemMenuController;
+	}
+
+	#setInitialMenu(): void
+	{
+		const { menu, systemMenu } = this.options;
+
+		if (hasMenuItems(systemMenu))
+		{
+			if (Type.isPlainObject(menu))
+			{
+				console.warn('BX.UI.Button: the "menu" option is ignored, because "systemMenu" is set.');
+			}
+
+			this.setSystemMenu(systemMenu);
+
+			return;
+		}
+
+		this.setMenu(menu);
+		this.setSystemMenu(systemMenu);
+	}
+
+	/**
+	 * Without a controller class removes a menu of any kind, otherwise only a menu of the given kind.
+	 */
+	#removeMenu(controllerClass: ?Function = null): void
+	{
+		const controller = this.#menuController;
+		if (controller === null)
+		{
+			return;
+		}
+
+		if (controllerClass !== null && !(controller instanceof controllerClass))
+		{
+			return;
+		}
+
+		Event.unbind(this.getMenuClickElement(), 'click', this.handleMenuClick);
+
+		controller.destroy();
+
+		// a consumer handler of the destroyed menu may set a new one, and it must survive
+		if (this.#menuController !== controller)
+		{
+			return;
+		}
+
+		this.#menuController = null;
+		this.menuWindow = null;
+	}
+
+	#warnOnLegacyMenuItems(items: Array<Object>): void
+	{
+		const hasLegacyItems = items.some((item) => Type.isPlainObject(item) && !item.title && item.text);
+		if (!hasLegacyItems)
+		{
+			return;
+		}
+
+		console.warn(
+			'BX.UI.Button: setSystemMenu() expects ui.system.menu options ("title"), got legacy menu format ("text")',
+		);
+	}
+
+	#getMenuCallbacks(): MenuControllerCallbacks
+	{
+		return {
+			getBindElement: () => this.getMenuBindElement(),
+			onShow: () => this.handleMenuShow(),
+			onClose: () => this.handleMenuClose(),
+		};
 	}
 
 	getMenuBindElement(): HTMLElement
@@ -302,8 +410,22 @@ export default class Button extends BaseButton
 	 */
 	handleMenuClick(event: MouseEvent): void
 	{
-		this.getMenuWindow().show();
-		this.setActive(this.getMenuWindow().getPopupWindow().isShown());
+		const opening = this.#menuController?.show();
+		if (opening instanceof Promise)
+		{
+			// the button does not wait for an asynchronous menu, but its failure must not be silent
+			opening.catch((error) => {
+				console.error('BX.UI.Button: cannot show a menu', error);
+			});
+		}
+	}
+
+	/**
+	 * @protected
+	 */
+	handleMenuShow(): void
+	{
+		this.setActive(true);
 	}
 
 	setAirDesign(use: boolean) {
@@ -324,10 +446,14 @@ export default class Button extends BaseButton
 	 */
 	handleMenuClose(): void
 	{
-		this.setActive(false);
+		// a system menu resets only the state it has set itself, a legacy one resets it as it always did
+		if (!this.hasSystemMenu() || this.isActive())
+		{
+			this.setActive(false);
+		}
 	}
 
-	getMenuWindow(): Menu
+	getMenuWindow(): Menu | null
 	{
 		return this.menuWindow;
 	}

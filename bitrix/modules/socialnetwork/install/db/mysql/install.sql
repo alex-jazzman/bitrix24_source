@@ -81,7 +81,8 @@ create table b_sonet_user2group
   unique IX_SONET_USER2GROUP_1(USER_ID, GROUP_ID),
   index IX_SONET_USER2GROUP_2(USER_ID, GROUP_ID, ROLE),
   index IX_SONET_USER2GROUP_3(GROUP_ID, USER_ID, ROLE),
-  index IX_SONET_USER2GROUP_4(USER_ID, ROLE)
+  index IX_SONET_USER2GROUP_4(USER_ID, ROLE),
+  index IX_SONET_USER2GROUP_5(GROUP_ID, ROLE, DATE_CREATE, USER_ID)
 );
 
 create table b_sonet_features
@@ -439,6 +440,20 @@ create table b_sonet_user_content_view
 	index IX_SONET_USER_CONTENT_VIEW_2(RATING_TYPE_ID, RATING_ENTITY_ID)
 );
 
+create table b_sonet_log_im_message
+(
+	LOG_ID int(11) not null,
+	IM_CHAT_ID int(11) not null,
+	IM_MESSAGE_ID int(11) not null,
+	GROUP_ID int(11) not null,
+	DATE_CREATE datetime not null,
+	primary key (LOG_ID, IM_CHAT_ID),
+	unique index UX_SONET_LOG_IM_MSG(IM_MESSAGE_ID),
+	index IX_SONET_LOG_IM_CHAT_LOG(IM_CHAT_ID, LOG_ID),
+	index IX_SONET_LOG_IM_CHAT_MSG(IM_CHAT_ID, IM_MESSAGE_ID),
+	index IX_SONET_LOG_IM_GROUP(GROUP_ID)
+);
+
 create table b_sonet_log_tag (
 	LOG_ID int(11) NOT NULL,
 	ITEM_TYPE varchar(10) not null default 'L',
@@ -606,6 +621,17 @@ create table if not exists b_sonet_collab_log
 	index ix_sonet_collab_log_collab_id_user_id (COLLAB_ID, USER_ID),
 	index ix_sonet_collab_log_collab_id_datetime (COLLAB_ID, DATETIME),
 	index ix_sonet_collab_log_entity (ENTITY_TYPE, ENTITY_ID)
+);
+
+create table if not exists b_sonet_collab_note
+(
+	ID            int unsigned not null auto_increment,
+	COLLAB_ID     int          not null,
+	COLLECTION_ID int          not null,
+	CREATED_BY    int          not null,
+	CREATED_AT    datetime     not null default current_timestamp,
+	primary key (ID),
+	unique index ix_sonet_collab_note_uniq (COLLAB_ID)
 );
 
 create table if not exists b_sonet_onboarding_queue

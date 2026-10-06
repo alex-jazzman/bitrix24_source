@@ -3,8 +3,8 @@ import { Action } from '../../action';
 import { Button } from '../layout/button';
 import { ButtonState } from '../enums/button-state';
 import { ButtonType } from '../enums/button-type';
-import { Browser, Event, Runtime } from 'main.core';
-import { MessageBox, MessageBoxButtons } from "ui.dialogs.messagebox";
+import { Browser, Event, Runtime, Tag, Text } from 'main.core';
+import { confirm } from 'crm.timeline.dialog';
 
 export const Note = {
 	components: {
@@ -187,8 +187,14 @@ export const Note = {
 		},
 
 		adjustHeight(elem) {
-			elem.style.height = 0;
-			elem.style.height = (elem.scrollHeight)+"px";
+			if (!elem)
+			{
+				return;
+			}
+
+			elem.style.overflowY = 'hidden';
+			elem.style.height = 'auto';
+			elem.style.height = `${elem.scrollHeight}px`;
 		},
 
 		setEditMode(editMode: boolean)
@@ -241,16 +247,13 @@ export const Note = {
 
 			if (this.deleteConfirmationText && this.deleteConfirmationText.length)
 			{
-				MessageBox.show({
-					message: this.deleteConfirmationText,
-					modal: true,
-					buttons: MessageBoxButtons.YES_NO,
-					onYes: (messageBox) => {
-						messageBox.close();
+				// eslint-disable-next-line @bitrix24/bitrix24-rules/no-native-dialogs
+				confirm({
+					content: Tag.render`<div>${Text.encode(this.deleteConfirmationText)}</div>`,
+					preset: 'YES_NO',
+					destructive: true,
+					onConfirm: () => {
 						this.executeDeleteAction();
-					},
-					onNo: (messageBox) => {
-						messageBox.close();
 					},
 				});
 			}

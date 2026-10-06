@@ -27,15 +27,17 @@ jn.define('im/messenger/lib/chat-search/src/config', (require, exports, module) 
 		}
 
 		/**
-		 * @param {object} options
-		 * @param {Array<string>} [options.includeOnly] - ['users', 'chats', 'bots'] — find only this entity's
-		 * @param {Array<string>} [options.exclude] - ['users', 'chats', 'bots'] — kick from search this entity's
-		 * @param {Array<string>} [options.recentTab] - items from RecentTab
-		 * @param {number} [options.contextChatId]
+		 * Merges new options into existing ones; `parentId` is always re-applied last.
+		 *
+		 * @param {ChatSearchConfigSetOptionParams} options
 		 */
 		setOption(options = {})
 		{
-			this.entities[0].options = { ...options, parentId: this.parentId };
+			this.entities[0].options = {
+				...(this.entities[0].options ?? {}),
+				...options,
+				parentId: this.parentId,
+			};
 		}
 
 		getConfig()

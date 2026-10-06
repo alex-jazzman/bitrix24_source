@@ -1,5 +1,6 @@
 import { Loc } from 'main.core';
 
+import { ErrorCode } from 'im.v2.const';
 import { type RunActionError } from 'im.v2.lib.rest';
 import { CollabManager } from 'im.v2.lib.collab';
 
@@ -41,14 +42,26 @@ export const CollabNotifier = {
 		showNotification(CollabManager.getDeleteErrorText());
 	},
 
-	onLeaveError(): void
+	onLeaveError(error: RunActionError): void
 	{
-		showNotification(CollabManager.getLeaveErrorText());
+		const NotificationTextByErrorCode = {
+			[ErrorCode.collab.leaveFromStructure]: CollabManager.getLeaveFromStructureErrorText(),
+			default: CollabManager.getLeaveErrorText(),
+		};
+
+		const notificationText = NotificationTextByErrorCode[error?.code] ?? NotificationTextByErrorCode.default;
+		showNotification(notificationText);
 	},
 
-	onKickUserError(): void
+	onKickUserError(error: RunActionError): void
 	{
-		showNotification(CollabManager.getKickErrorText());
+		const NotificationTextByErrorCode = {
+			[ErrorCode.collab.excludeFromStructure]: Loc.getMessage('IM_NOTIFIER_KICK_CHAT_STRUCTURE_ERROR'),
+			default: CollabManager.getKickErrorText(),
+		};
+
+		const notificationText = NotificationTextByErrorCode[error?.code] ?? NotificationTextByErrorCode.default;
+		showNotification(notificationText);
 	},
 
 	onCollaberNotAcceptInvitation(): void

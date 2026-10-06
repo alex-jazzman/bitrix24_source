@@ -20,6 +20,7 @@ jn.define('im/messenger/db/table-schema/src/recent', (require, exports, module) 
 		static id = new StringField('id').configurePrimary();
 		static lastActivityDate = new DateField('lastActivityDate');
 		static message = new ObjectField('message');
+		static ownMessage = new ObjectField('ownMessage');
 		static dateMessage = new DateField('dateMessage');
 		static unread = new BooleanField('unread');
 		static pinned = new BooleanField('pinned');
@@ -39,6 +40,7 @@ jn.define('im/messenger/db/table-schema/src/recent', (require, exports, module) 
 				this.id,
 				this.lastActivityDate,
 				this.message,
+				this.ownMessage,
 				this.dateMessage,
 				this.unread,
 				this.pinned,

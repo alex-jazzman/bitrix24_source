@@ -16,7 +16,7 @@ $errors = $arResult['errors'];
 
 <div class="bizproc__workflow-start_error">
 	<div class="bizproc__workflow-start_error__title">
-		<span class="bizproc__workflow-start_error__title-inner">
+		<span class="bizproc__workflow-start_error__title-inner" role="heading" aria-level="1">
 			<?= htmlspecialcharsbx(\Bitrix\Main\Localization\Loc::getMessage('BIZPROC__CMP_WORKFLOW_START_TMP_ERROR_TITLE')) ?>
 		</span>
 	</div>

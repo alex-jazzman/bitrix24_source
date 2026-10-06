@@ -1,5 +1,5 @@
 <?php
-$MESS['LANDING_BLOCK_0.MENU_1_NAME'] = 'Меню из шаблона «Строительство» с логотипом слева с пунктами меню справа';
+$MESS['LANDING_BLOCK_0.MENU_1_NAME'] = 'Меню из шаблона «Строительство» с логотипом слева и пунктами меню справа';
 $MESS['LANDING_BLOCK_0.MENU_1_NODES_LANDINGBLOCKNODEMENULIST'] = 'Меню';
 $MESS['LANDING_BLOCK_0.MENU_1_NODES_LANDINGBLOCKNODEMENULISTITEMLINK'] = 'Пункт меню';
 $MESS['LANDING_BLOCK_0.MENU_1_NODES_LANDINGBLOCKNODEMENULOGOLINK'] = 'Ссылка на логотипе';

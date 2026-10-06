@@ -11694,6 +11694,19 @@ this.BX.UI = this.BX.UI || {};
 	};
 
 	/**
+	 * @memberof BX.UI.TextEditor
+	 */
+	class RichText extends TextEditor {
+		static getDefaultOptions() {
+			return {
+				plugins: ['RichText', 'Paragraph', 'Clipboard', 'Bold', 'Italic', 'Underline', 'Strikethrough', 'List', 'Link', 'AutoLink', 'Image', 'Video', 'Smiley', 'Copilot', 'ClearFormat', 'History', 'Toolbar', 'Placeholder'],
+				toolbar: ['bold', 'italic', 'underline', 'strikethrough', '|', 'numbered-list', 'bulleted-list', '|', 'link', 'image', 'video', 'smileys', '|', 'clear-format'],
+				newLineMode: NewLineMode.MIXED
+			};
+		}
+	}
+
+	/**
 	 * @namespace BX.UI.TextEditor.Plugins
 	 */
 	const Plugins = {
@@ -11752,6 +11765,7 @@ this.BX.UI = this.BX.UI || {};
 	exports.Constants = Constants;
 	exports.Debug = Debug;
 	exports.Plugins = Plugins;
+	exports.RichText = RichText;
 	exports.TextEditor = TextEditor;
 	exports.TextEditorComponent = TextEditorComponent;
 

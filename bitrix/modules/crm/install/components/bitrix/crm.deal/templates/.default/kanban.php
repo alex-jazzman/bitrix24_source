@@ -298,3 +298,4 @@ else
 
 echo (\Bitrix\Crm\Tour\AiPreset::getInstance()->build());
 echo (\Bitrix\Crm\Tour\MobilePromoter\MobilePromoterDeal::getInstance()->build());
+echo (\Bitrix\Crm\Tour\EInvoicePromo::getInstance()->build($analytics));

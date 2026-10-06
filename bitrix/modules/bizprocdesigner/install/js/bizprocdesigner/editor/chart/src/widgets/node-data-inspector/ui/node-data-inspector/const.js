@@ -28,6 +28,7 @@ export const SchemeItemType = Object.freeze({
 export const SchemeViewGroupKey = Object.freeze({
 	GLOBAL: 'global',
 	INBOUND: 'inbound',
+	FILTER: 'filter',
 	OUTBOUND: 'outbound',
 });
 
@@ -43,6 +44,11 @@ export const SchemeViewGroupConfig = Object.freeze({
 		title: Loc.getMessage('BIZPROCDESIGNER_EDITOR_NODE_DATA_INSPECTOR_SCHEME_SECTION_INBOUND'),
 		color: InspectorViewItemGroupColorDict.GREEN,
 		icon: Outline.LOWER_RIGHT_ARROW,
+	},
+	[ViewGroup.FILTER]: {
+		title: Loc.getMessage('BIZPROCDESIGNER_EDITOR_NODE_DATA_INSPECTOR_SCHEME_SECTION_FILTER'),
+		color: InspectorViewItemGroupColorDict.ORANGE,
+		icon: Outline.FILTER_2_L,
 	},
 	[ViewGroup.OUTBOUND]: {
 		title: Loc.getMessage('BIZPROCDESIGNER_EDITOR_NODE_DATA_INSPECTOR_SCHEME_SECTION_OUTBOUND'),

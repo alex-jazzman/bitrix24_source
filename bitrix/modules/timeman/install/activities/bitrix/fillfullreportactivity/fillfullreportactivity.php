@@ -110,6 +110,18 @@ class CBPFillFullReportActivity extends BaseActivity
 		return static::getPropertiesMap([]);
 	}
 
+	private static function isAiReportAvailable(): bool
+	{
+		$serviceLocator = \Bitrix\Main\DI\ServiceLocator::getInstance();
+		$interface = \Bitrix\Bizproc\Public\Service\AiAgent\NodeAvailabilityServiceInterface::class;
+		if (!$serviceLocator->has($interface))
+		{
+			return true;
+		}
+
+		return $serviceLocator->get($interface)->isAvailable();
+	}
+
 	public static function getPropertiesMap(array $documentType, array $context = []): array
 	{
 		return [
@@ -128,10 +140,15 @@ class CBPFillFullReportActivity extends BaseActivity
 				'Name' => Loc::getMessage('TIMEMAN_FILL_FULL_REPORT_ACTIVITY_TYPE_PROPERTY') ?? '',
 				'FieldName' => 'type',
 				'Type' => FieldType::SELECT,
-				'Options' => [
-					RecordReportType::AI_REPORT => Loc::getMessage('TIMEMAN_FILL_FULL_REPORT_ACTIVITY_TYPE_AI'),
-					RecordReportType::ROBOT_REPORT => Loc::getMessage('TIMEMAN_FILL_FULL_REPORT_ACTIVITY_TYPE_ROBOT'),
-				],
+				'Options' => array_filter(
+					[
+						RecordReportType::AI_REPORT => self::isAiReportAvailable()
+							? Loc::getMessage('TIMEMAN_FILL_FULL_REPORT_ACTIVITY_TYPE_AI')
+							: null,
+						RecordReportType::ROBOT_REPORT => Loc::getMessage('TIMEMAN_FILL_FULL_REPORT_ACTIVITY_TYPE_ROBOT'),
+					],
+					static fn($label) => $label !== null,
+				),
 				'Default' => RecordReportType::ROBOT_REPORT,
 			],
 		];

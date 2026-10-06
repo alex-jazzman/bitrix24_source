@@ -23,6 +23,11 @@ export const SplitButton = {
 			default: null,
 		},
 		loading: Boolean,
+		disabled: Boolean,
+		describedBy: {
+			type: String,
+			default: null,
+		},
 	},
 	emits: ['click', 'mainClick', 'menuClick'],
 	data(): Object
@@ -68,6 +73,33 @@ export const SplitButton = {
 		{
 			this.button.setStyle(style);
 		},
+		disabled(disabled): void
+		{
+			this.button?.setDisabled(disabled);
+		},
+		describedBy(): void
+		{
+			this.applyDescribedBy();
+		},
+	},
+	methods: {
+		applyDescribedBy(): void
+		{
+			const container = this.button?.getMainButton()?.getContainer();
+			if (!container)
+			{
+				return;
+			}
+
+			if (this.describedBy)
+			{
+				container.setAttribute('aria-describedby', this.describedBy);
+			}
+			else
+			{
+				container.removeAttribute('aria-describedby');
+			}
+		},
 	},
 	created(): void
 	{
@@ -80,16 +112,19 @@ export const SplitButton = {
 				this.$emit('click');
 			},
 			mainButton: {
+				dataset: { testid: 'bizprocdesigner-split-button-main' },
 				onclick: () => {
 					this.$emit('mainClick');
 				},
 			},
 			menuButton: {
+				dataset: { testid: 'bizprocdesigner-split-button-menu' },
 				onclick: () => {
 					this.$emit('menuClick');
 				},
 			},
 		});
+		button.setDisabled(this.disabled);
 
 		if (this.icon)
 		{
@@ -103,6 +138,7 @@ export const SplitButton = {
 		const button = this.button?.render();
 
 		this.$refs.button.after(button);
+		this.applyDescribedBy();
 
 		this.isMounted = true;
 	},

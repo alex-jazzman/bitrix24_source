@@ -885,6 +885,7 @@ export class Column extends BX.Kanban.Column
 			});
 
 			BX.addCustomEvent(window, "BX.CRM.Kanban.Item.select", this.closeQuickFormEditor.bind(this));
+			BX.addCustomEvent(window, "BX.CRM.Kanban.Item.select", this.enabledAddButton.bind(this));
 			//BX.addCustomEvent(window, "Kanban.Column:render", this.hideQuickFormEditor.bind(this));
 			BX.addCustomEvent(window, "onCrmEntityCreate", this.hideQuickFormEditor.bind(this));
 			BX.addCustomEvent(window, "Kanban.Column:render", this.enabledAddButton.bind(this));
@@ -1163,8 +1164,11 @@ export class Column extends BX.Kanban.Column
 				useAirDesign: true,
 				style: AirButtonStyle.FILLED,
 				onclick: () => {
-					this.processQuickEditor();
-					this.showQuickEditorLoader();
+					if (!this.editor.hasUnavailableFieldsByStage(this.getId().toString()))
+					{
+						this.processQuickEditor();
+						this.showQuickEditorLoader();
+					}
 				},
 			});
 
@@ -1174,6 +1178,7 @@ export class Column extends BX.Kanban.Column
 				useAirDesign: true,
 				style: AirButtonStyle.OUTLINE,
 				onclick: () => {
+					this.editor?.hideUnavailableFieldsPopup();
 					this.enabledAddButton();
 					this.hideQuickFormEditor();
 					this.cleanEditor();
@@ -1246,6 +1251,7 @@ export class Column extends BX.Kanban.Column
 										{
 											if (columns[i].editor)
 											{
+												columns[i].editor.hideUnavailableFieldsPopup();
 												columns[i].editor.release();
 												columns[i].editor = null;
 												columns[i].editorOpen = false;
@@ -1278,6 +1284,7 @@ export class Column extends BX.Kanban.Column
 
 								releaseAllOtherColumns();
 								this.showQuickEditor();
+
 								return;
 							}
 
@@ -1300,6 +1307,16 @@ export class Column extends BX.Kanban.Column
 									const autoHideEditor = () => {
 										this.editorNode.style.height = null;
 										Event.unbind(this.editorNode, 'transitionend', autoHideEditor);
+
+										if (this.editor.hasUnavailableFieldsByStage(this.getId().toString()))
+										{
+											this.editor.showUnavailableFieldsPopup(
+												this.editorNodeCreate.firstChild,
+												this.getId().toString(),
+											);
+
+											Dom.addClass(this.editorNodeCreate.firstChild, 'ui-btn-disabled');
+										}
 									};
 
 									Event.bind(this.editorNode, 'transitionend', autoHideEditor);
@@ -1669,7 +1686,6 @@ export class Column extends BX.Kanban.Column
 	}
 
 	/**
-	 *
 	 * @param {BX.CRM.Kanban.Item} itemToRemove
 	 */
 	removeItem(itemToRemove)
@@ -1721,7 +1737,6 @@ export class Column extends BX.Kanban.Column
 	}
 
 	/**
-	 *
 	 * @param {BX.CRM.Kanban.Item} item
 	 * @param {string} backgroundColor
 	 */

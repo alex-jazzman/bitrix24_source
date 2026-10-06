@@ -58,13 +58,14 @@ class ProductForm
 			measures: [],
 			iblockId: null,
 			basePriceId: settingsCollection.get('basePriceId'),
-			taxList: [],
+			taxRateList: [],
 			singleProductMode: false,
 			showResults: true,
 			showCompilationModeSwitcher: false,
 			enableEmptyProductError: true,
 			isShortProductViewFormat: false,
 			pricePrecision: 8,
+			displayPrecision: 2,
 			currency: settingsCollection.get('currency'),
 			currencySymbol: settingsCollection.get('currencySymbol'),
 			taxIncluded: settingsCollection.get('taxIncluded'),
@@ -72,6 +73,7 @@ class ProductForm
 			isCatalogHidden: settingsCollection.get('isCatalogHidden'),
 			showDiscountBlock: settingsCollection.get('showDiscountBlock'),
 			showTaxBlock: settingsCollection.get('showTaxBlock'),
+			showTaxSettingsSwitcher: 'N',
 			allowedDiscountTypes: [DiscountType.PERCENTAGE, DiscountType.MONETARY],
 			visibleBlocks: [
 				FormInputCode.PRODUCT_SELECTOR, FormInputCode.IMAGE_EDITOR, FormInputCode.PRICE,
@@ -109,7 +111,14 @@ class ProductForm
 		}
 
 		options = { ...defaultOptions, ...options };
-		options.showTaxBlock = 'N';
+		if (options.showTaxSettingsSwitcher !== 'Y')
+		{
+			options.showTaxBlock = 'N';
+		}
+		else if (Type.isArray(options.visibleBlocks) && !options.visibleBlocks.includes(FormInputCode.TAX))
+		{
+			options.visibleBlocks = [...options.visibleBlocks, FormInputCode.TAX];
+		}
 
 		if (settingsCollection.get('isEnabledLanding'))
 		{
@@ -350,7 +359,10 @@ class ProductForm
 				}
 				else
 				{
-					this.store.dispatch('productList/changeItem', { basketIndex, fields });
+					this.store.dispatch('productList/changeItem', {
+						index: basketIndex,
+						product: fields,
+					});
 				}
 			});
 		}
@@ -402,20 +414,23 @@ class ProductForm
 			if (optionName === 'showDiscountBlock')
 			{
 				item.showDiscountBlock = value;
+				this.store.dispatch('productList/changeItem', {
+					index,
+					product: item,
+				});
 			}
 			else if (optionName === 'showTaxBlock')
 			{
 				item.showTaxBlock = value;
+				this.store.dispatch('productList/changeItem', {
+					index,
+					product: item,
+				});
 			}
 			else if (optionName === 'taxIncluded')
 			{
 				item.fields.taxIncluded = value;
 			}
-
-			this.store.dispatch('productList/changeItem', {
-				index,
-				fields: item,
-			});
 		});
 
 		ajax.runAction(

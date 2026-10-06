@@ -17,4 +17,6 @@ export const GetParameter = {
 
 	backgroundType: 'IM_BACKGROUND',
 	legacyMode: 'IM_LEGACY',
+
+	recentType: 'IM_RECENT_TYPE',
 };

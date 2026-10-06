@@ -3,12 +3,13 @@
  */
 jn.define('disk/dialogs/create-folder', (require, exports, module) => {
 	const { Loc } = require('loc');
-	const { Alert } = require('alert');
+	const { Alert, confirmClosing } = require('alert');
 	const { Indent } = require('tokens');
 
 	const { StringInput, InputDesign, InputMode } = require('ui-system/form/inputs/string');
 
 	const { BaseDialog } = require('disk/dialogs/base');
+	const NON_UNIQUE_NAME_ERROR_CODE = 'DISK_OBJ_22000';
 
 	class CreateFolderDialog extends BaseDialog
 	{
@@ -17,6 +18,7 @@ jn.define('disk/dialogs/create-folder', (require, exports, module) => {
 			super(props);
 
 			this.nameFieldRef = null;
+			this.isConfirmShown = false;
 
 			this.state = {
 				name: '',
@@ -45,6 +47,22 @@ jn.define('disk/dialogs/create-folder', (require, exports, module) => {
 			this.#focusOnNameField();
 		}
 
+		componentWillUnmount()
+		{
+			super.componentWillUnmount();
+
+			this.#disableCloseGuard();
+		}
+
+		setLayoutWidget(layoutWidget)
+		{
+			super.setLayoutWidget(layoutWidget);
+
+			this.layoutWidget?.on('preventDismiss', this.#handleCloseRequest);
+			this.layoutWidget?.on('onViewRemoved', this.#disableCloseGuard);
+			this.#updatePreventDismiss();
+		}
+
 		#focusOnNameField = () => {
 			void this.nameFieldRef?.focus();
 		};
@@ -54,18 +72,72 @@ jn.define('disk/dialogs/create-folder', (require, exports, module) => {
 		};
 
 		#onChangeName = (name) => {
-			this.setState({ name });
+			this.setState({ name }, this.#updatePreventDismiss);
 		};
 
 		#isValidName = () => {
 			return this.state.name.length > 0;
 		};
 
-		save = () => {
-			if (this.state.pending)
+		#hasChanges = () => {
+			return this.state.name.length > 0;
+		};
+
+		#updatePreventDismiss = () => {
+			this.layoutWidget?.preventBottomSheetDismiss(this.#hasChanges());
+		};
+
+		#disableCloseGuard = () => {
+			this.isConfirmShown = false;
+			this.layoutWidget?.preventBottomSheetDismiss(false);
+		};
+
+		#closeWithoutConfirm = () => {
+			this.#disableCloseGuard();
+			this.layoutWidget?.close();
+		};
+
+		#showClosingConfirm = () => {
+			if (this.isConfirmShown)
 			{
 				return;
 			}
+
+			this.isConfirmShown = true;
+
+			confirmClosing({
+				hasSaveAndClose: this.#isValidName(),
+				onSave: this.save,
+				onClose: this.#closeWithoutConfirm,
+				onCancel: () => {
+					this.isConfirmShown = false;
+					this.#updatePreventDismiss();
+				},
+			});
+		};
+
+		#handleCloseRequest = () => {
+			if (!this.#hasChanges())
+			{
+				this.#closeWithoutConfirm();
+
+				return;
+			}
+
+			this.#showClosingConfirm();
+		};
+
+		close = () => {
+			this.#handleCloseRequest();
+		};
+
+		save = () => {
+			if (this.state.pending || !this.#isValidName())
+			{
+				return;
+			}
+
+			this.isConfirmShown = false;
 
 			this.setState({
 				pending: true,
@@ -78,15 +150,22 @@ jn.define('disk/dialogs/create-folder', (require, exports, module) => {
 
 			BX.ajax.runAction('disk.api.folder.addSubFolder', { data })
 				.then((response) => {
-					this.close();
+					this.#closeWithoutConfirm();
 					this.props.onCreate?.(response?.data?.folder);
 				})
 				.catch((err) => {
 					console.error(err);
+					const nonUniqueNameError = err?.errors?.find(
+						(error) => error?.code === NON_UNIQUE_NAME_ERROR_CODE,
+					);
+
 					Alert.alert(
-						Loc.getMessage('M_DISK_CREATE_FOLDER_DIALOG_ERROR_TITLE'),
-						Loc.getMessage('M_DISK_CREATE_FOLDER_DIALOG_ERROR_TEXT'),
-						() => this.setState({ pending: false }),
+						nonUniqueNameError?.message
+							|| Loc.getMessage('M_DISK_CREATE_FOLDER_DIALOG_ERROR_TITLE'),
+						nonUniqueNameError
+							? ''
+							: Loc.getMessage('M_DISK_CREATE_FOLDER_DIALOG_ERROR_TEXT'),
+						() => this.setState({ pending: false }, this.#updatePreventDismiss),
 						Loc.getMessage('M_DISK_CREATE_FOLDER_DIALOG_ERROR_OK'),
 					);
 				});

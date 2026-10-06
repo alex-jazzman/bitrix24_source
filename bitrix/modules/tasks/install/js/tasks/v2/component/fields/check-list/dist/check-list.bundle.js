@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 this.BX.Tasks.V2 = this.BX.Tasks.V2 || {};
 this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
-(function (exports, main_core, main_core_events, ui_vue3_vuex, ui_vue3_components_button, ui_vue3_components_menu, ui_iconSet_api_vue, ui_iconSet_outline, tasks_v2_const, tasks_v2_provider_service_taskService, tasks_v2_provider_service_checkListService, tasks_v2_provider_service_fileService, tasks_v2_lib_highlighter, ui_vue3_components_popup, tasks_v2_component_elements_bottomSheet, ui_vue3_directives_hint, ui_iconSet_animated, tasks_v2_component_elements_hint, ui_draganddrop_draggable, ui_iconSet_actions, tasks_v2_component_elements_growingTextArea, tasks_v2_component_elements_userAvatarList, tasks_v2_component_elements_userCheckbox, tasks_v2_component_elements_progressBar, tasks_v2_core, tasks_v2_lib_userSelectorDialog, ui_system_skeleton_vue, tasks_v2_component_elements_userFieldWidgetComponent, tasks_v2_component_elements_checkbox, ui_notification, ui_system_chip_vue, tasks_v2_lib_fieldHighlighter) {
+(function (exports, main_core, main_core_events, ui_vue3_vuex, ui_vue3_components_button, ui_vue3_components_menu, ui_iconSet_api_vue, ui_iconSet_outline, tasks_v2_const, tasks_v2_provider_service_taskService, tasks_v2_provider_service_checkListService, tasks_v2_provider_service_fileService, tasks_v2_lib_highlighter, ui_vue3_components_popup, tasks_v2_component_elements_bottomSheet, ui_vue3_directives_hint, ui_iconSet_animated, tasks_v2_component_elements_hint, ui_draganddrop_draggable, ui_iconSet_actions, tasks_v2_component_elements_userAvatarList, tasks_v2_component_elements_userCheckbox, tasks_v2_component_elements_progressBar, tasks_v2_component_elements_growingTextArea, ui_bbcode_model, ui_bbcode_parser, tasks_v2_core, tasks_v2_lib_userSelectorDialog, ui_system_skeleton_vue, tasks_v2_component_elements_userFieldWidgetComponent, tasks_v2_component_elements_checkbox, ui_forms, ui_notification, ui_system_chip_vue, tasks_v2_lib_fieldHighlighter) {
 	'use strict';
 
 	const checkListMeta = Object.freeze({
@@ -1305,6 +1305,654 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 		}
 	}
 
+	const ChecklistFormattingAction = Object.freeze({
+		Bold: 'bold',
+		Italic: 'italic',
+		Underline: 'underline',
+		Strikethrough: 'strikethrough',
+		Link: 'link'
+	});
+	const FormattingTags = Object.freeze({
+		[ChecklistFormattingAction.Bold]: {
+			open: '[b]',
+			close: '[/b]',
+			type: 'bold'
+		},
+		[ChecklistFormattingAction.Italic]: {
+			open: '[i]',
+			close: '[/i]',
+			type: 'italic'
+		},
+		[ChecklistFormattingAction.Underline]: {
+			open: '[u]',
+			close: '[/u]',
+			type: 'underline'
+		},
+		[ChecklistFormattingAction.Strikethrough]: {
+			open: '[s]',
+			close: '[/s]',
+			type: 'strikethrough'
+		}
+	});
+	const TagToFormattingAction = Object.freeze({
+		b: ChecklistFormattingAction.Bold,
+		i: ChecklistFormattingAction.Italic,
+		u: ChecklistFormattingAction.Underline,
+		s: ChecklistFormattingAction.Strikethrough,
+		URL: ChecklistFormattingAction.Link
+	});
+	const UrlOpenPrefix = '[URL=';
+	const UrlClose = '[/URL]';
+	const FormattingTagRegExp = /\[(\/?)(b|i|u|s|url)(?:=[^\]]*)?]/gi;
+	const CheckListBbCodeScheme = new ui_bbcode_model.BBCodeScheme({
+		tagSchemes: [new ui_bbcode_model.BBCodeTagScheme({
+			name: ['b', 'u', 'i', 's'],
+			group: ['#inline', '#format'],
+			allowedChildren: ['#text', '#linebreak', '#inline'],
+			canBeEmpty: false
+		}), new ui_bbcode_model.BBCodeTagScheme({
+			name: ['url'],
+			group: ['#inline'],
+			allowedChildren: ['#text', '#linebreak', '#format'],
+			canBeEmpty: false
+		}), new ui_bbcode_model.BBCodeTagScheme({
+			name: ['#root'],
+			allowedChildren: ['#text', '#linebreak', '#inline']
+		}), new ui_bbcode_model.BBCodeTagScheme({
+			name: ['#text']
+		}), new ui_bbcode_model.BBCodeTagScheme({
+			name: ['#linebreak']
+		})],
+		outputTagCase: ui_bbcode_model.BBCodeScheme.Case.LOWER
+	});
+
+	class CheckListFormattingTag {
+		static createRegExp() {
+			return new RegExp(FormattingTagRegExp);
+		}
+	}
+
+	// eslint-disable-next-line no-control-regex
+	const AttributeWhitespaces = /[\u0000-\u0020\u00A0\u1680\u180E\u2000-\u2029\u205F\u3000]/g;
+	const HttpUrl = /^https?:\/\//i;
+	const ProtocolRelativeUrl = /^\/\//;
+	const ExplicitScheme = /^[a-z][\d+.a-z-]*:/i;
+	class CheckListUrl {
+		static sanitize(url) {
+			if (!main_core.Type.isStringFilled(url)) {
+				return '';
+			}
+			const normalizedUrl = url.replaceAll(AttributeWhitespaces, '');
+			return this.sanitizeHttpUrl(normalizedUrl);
+		}
+		static sanitizeHttpUrl(url) {
+			const httpUrl = this.prepareHttpUrl(url);
+			if (!httpUrl) {
+				return '';
+			}
+			try {
+				const parsedUrl = new URL(httpUrl);
+				const hasAllowedProtocol = parsedUrl.protocol === 'http:' || parsedUrl.protocol === 'https:';
+				const hasValidHost = parsedUrl.hostname.includes('.') || parsedUrl.hostname === 'localhost';
+				return hasAllowedProtocol && hasValidHost ? httpUrl : '';
+			} catch {
+				return '';
+			}
+		}
+		static prepareHttpUrl(url) {
+			if (HttpUrl.test(url)) {
+				return url;
+			}
+			if (ProtocolRelativeUrl.test(url)) {
+				return `https:${url}`;
+			}
+			if (ExplicitScheme.test(url)) {
+				return '';
+			}
+			return `https://${url}`;
+		}
+	}
+
+	class CheckListLink {
+		static buildSource(url, text) {
+			const safeUrl = CheckListUrl.sanitize(url);
+			if (!safeUrl) {
+				return '';
+			}
+			const linkText = (main_core.Type.isStringFilled(text) ? text : safeUrl).replace(/\[\/?url(?:=[^\]]*)?]/gi, '');
+			return `${UrlOpenPrefix}${safeUrl}]${linkText}${UrlClose}`;
+		}
+	}
+
+	class CheckListSelection {
+		static normalizeSource(source) {
+			return main_core.Type.isString(source) ? source : '';
+		}
+		static normalizeSelection(source, selection) {
+			const start = Math.max(0, Math.min(selection?.start ?? 0, source.length));
+			const end = Math.max(start, Math.min(selection?.end ?? start, source.length));
+			return {
+				start,
+				end
+			};
+		}
+		static getTextareaSelection(textarea) {
+			const start = textarea?.selectionStart ?? 0;
+			const end = textarea?.selectionEnd ?? start;
+			return {
+				start,
+				end
+			};
+		}
+	}
+
+	class CheckListFormatting {
+		static handleDecorationTag(source, textarea, action) {
+			return this.wrapSelection(source, CheckListSelection.getTextareaSelection(textarea), action);
+		}
+		static addUrlTag(source, textarea, url) {
+			return this.wrapSelection(source, {
+				...CheckListSelection.getTextareaSelection(textarea),
+				url
+			}, ChecklistFormattingAction.Link);
+		}
+		static getActiveFormattingActions(source, selection) {
+			const normalizedSource = CheckListSelection.normalizeSource(source);
+			const {
+				start,
+				end
+			} = CheckListSelection.normalizeSelection(normalizedSource, selection);
+			const activeTags = [];
+			const activeActions = new Set();
+			const formattingTagRegExp = CheckListFormattingTag.createRegExp();
+			let match = formattingTagRegExp.exec(normalizedSource);
+			while (match) {
+				const tagEnd = match.index + match[0].length;
+				if (tagEnd > start) {
+					break;
+				}
+				const tagName = this.normalizeTagName(match[2]);
+				if (match[1] === '/') {
+					const tagIndex = activeTags.lastIndexOf(tagName);
+					if (tagIndex !== -1) {
+						activeTags.splice(tagIndex, 1);
+					}
+				} else {
+					activeTags.push(tagName);
+				}
+				match = formattingTagRegExp.exec(normalizedSource);
+			}
+			activeTags.forEach(tagName => {
+				const action = TagToFormattingAction[tagName];
+				if (action) {
+					activeActions.add(action);
+				}
+			});
+			if (end > start) {
+				Object.keys(TagToFormattingAction).forEach(tagName => {
+					const wrapsSelection = this.getFormattingRanges(normalizedSource, tagName).some(range => {
+						return start <= range.openStart && range.closeEnd <= end;
+					});
+					if (wrapsSelection) {
+						activeActions.add(TagToFormattingAction[tagName]);
+					}
+				});
+			}
+			return [...activeActions];
+		}
+		static wrapSelection(source, selection, action) {
+			const normalizedSource = CheckListSelection.normalizeSource(source);
+			const selectionRange = CheckListSelection.normalizeSelection(normalizedSource, selection);
+			const {
+				start,
+				end
+			} = selectionRange;
+			const selectedText = normalizedSource.slice(start, end);
+			if (action === ChecklistFormattingAction.Link) {
+				const selectedLinkRange = this.findSelectedFormattingRange(normalizedSource, selectionRange, 'URL');
+				if (selectedLinkRange) {
+					return this.unwrapFormattingSelection(normalizedSource, selectedLinkRange.selection, selectedLinkRange.range);
+				}
+				const linkSource = CheckListLink.buildSource(selection?.url ?? '', selectedText);
+				if (!linkSource) {
+					return {
+						source: normalizedSource,
+						selectionStart: start,
+						selectionEnd: end
+					};
+				}
+				return {
+					source: `${normalizedSource.slice(0, start)}${linkSource}${normalizedSource.slice(end)}`,
+					selectionStart: start,
+					selectionEnd: start + linkSource.length
+				};
+			}
+			const tag = FormattingTags[action];
+			if (!tag) {
+				return {
+					source: normalizedSource,
+					selectionStart: start,
+					selectionEnd: end
+				};
+			}
+			const selectedFormattingRange = this.findSelectedFormattingRange(normalizedSource, selectionRange, this.getFormattingTagName(tag));
+			if (selectedFormattingRange && this.canUnwrapCleanly(normalizedSource, selectedFormattingRange.range, selectedFormattingRange.selection)) {
+				return this.unwrapFormattingSelection(normalizedSource, selectedFormattingRange.selection, selectedFormattingRange.range);
+			}
+			const wrappedSource = `${normalizedSource.slice(0, start)}${tag.open}${selectedText}${tag.close}${normalizedSource.slice(end)}`;
+			if (start === end) {
+				const cursor = start + tag.open.length;
+				return {
+					source: wrappedSource,
+					selectionStart: cursor,
+					selectionEnd: cursor
+				};
+			}
+			return {
+				source: wrappedSource,
+				selectionStart: start,
+				selectionEnd: start + tag.open.length + selectedText.length + tag.close.length
+			};
+		}
+		static getFormattingTagName(tag) {
+			return tag.open.slice(1, -1);
+		}
+		static canUnwrapCleanly(source, range, selection) {
+			const beforeSelection = source.slice(range.contentStart, selection.start);
+			const afterSelection = source.slice(selection.end, range.contentEnd);
+			if (CheckListFormattingTag.createRegExp().test(beforeSelection)) {
+				return false;
+			}
+			if (CheckListFormattingTag.createRegExp().test(afterSelection)) {
+				return false;
+			}
+			return true;
+		}
+		static getFormattingRanges(source, tagName) {
+			const openedTags = [];
+			const ranges = [];
+			const normalizedTagName = this.normalizeTagName(tagName);
+			const formattingTagRegExp = CheckListFormattingTag.createRegExp();
+			let match = formattingTagRegExp.exec(source);
+			while (match) {
+				const currentTagName = this.normalizeTagName(match[2]);
+				if (currentTagName === normalizedTagName) {
+					if (match[1] === '/') {
+						const openedTag = openedTags.pop();
+						if (openedTag) {
+							ranges.push({
+								openStart: openedTag.start,
+								openEnd: openedTag.end,
+								openTag: openedTag.tag,
+								contentStart: openedTag.end,
+								contentEnd: match.index,
+								closeStart: match.index,
+								closeEnd: match.index + match[0].length,
+								closeTag: match[0]
+							});
+						}
+					} else {
+						openedTags.push({
+							start: match.index,
+							end: match.index + match[0].length,
+							tag: match[0]
+						});
+					}
+				}
+				match = formattingTagRegExp.exec(source);
+			}
+			return ranges;
+		}
+		static normalizeTagName(tagName) {
+			const normalizedTagName = tagName.toLowerCase();
+			return normalizedTagName === 'url' ? 'URL' : normalizedTagName;
+		}
+		static findSelectedFormattingRange(source, selection, tagName) {
+			const ranges = this.getFormattingRanges(source, tagName);
+			const exactRange = ranges.find(range => {
+				return range.openStart === selection.start && range.closeEnd === selection.end;
+			});
+			if (exactRange) {
+				return {
+					range: exactRange,
+					selection: {
+						start: exactRange.contentStart,
+						end: exactRange.contentEnd
+					}
+				};
+			}
+			const containingRanges = ranges.filter(range => {
+				return range.contentStart <= selection.start && selection.end <= range.contentEnd;
+			}).sort((a, b) => {
+				return a.contentEnd - a.contentStart - (b.contentEnd - b.contentStart);
+			});
+			const range = containingRanges[0];
+			if (!range) {
+				return null;
+			}
+			return {
+				range,
+				selection
+			};
+		}
+		static unwrapFormattingSelection(source, selection, range) {
+			const beforeRange = source.slice(0, range.openStart);
+			const beforeSelection = source.slice(range.contentStart, selection.start);
+			const selectedText = source.slice(selection.start, selection.end);
+			const afterSelection = source.slice(selection.end, range.contentEnd);
+			const afterRange = source.slice(range.closeEnd);
+			const formattedBeforeSelection = beforeSelection ? `${range.openTag}${beforeSelection}${range.closeTag}` : '';
+			const formattedAfterSelection = afterSelection ? `${range.openTag}${afterSelection}${range.closeTag}` : '';
+			const selectionStart = beforeRange.length + formattedBeforeSelection.length;
+			return {
+				source: [beforeRange, formattedBeforeSelection, selectedText, formattedAfterSelection, afterRange].join(''),
+				selectionStart,
+				selectionEnd: selectionStart + selectedText.length
+			};
+		}
+	}
+
+	const HtmlTagByBbCodeTag = Object.freeze({
+		b: 'b',
+		i: 'i',
+		u: 'u',
+		s: 's'
+	});
+	const CheckListBbCodeParser = new ui_bbcode_parser.BBCodeParser({
+		scheme: CheckListBbCodeScheme,
+		linkify: true,
+		normalize: false
+	});
+	class CheckListBbCodeRenderer {
+		static formatHtml(source, linkColor = '') {
+			const normalizedSource = CheckListSelection.normalizeSource(source);
+			if (this.hasMalformedFormattingTags(normalizedSource)) {
+				return this.formatMalformedSource(normalizedSource);
+			}
+			return this.renderNodeToHtml(CheckListBbCodeParser.parse(normalizedSource), linkColor);
+		}
+		static hasMalformedFormattingTags(source) {
+			const openedTags = [];
+			const formattingTagRegExp = CheckListFormattingTag.createRegExp();
+			let match = formattingTagRegExp.exec(source);
+			while (match) {
+				const tagName = match[2].toUpperCase();
+				if (match[1] === '/') {
+					if (openedTags.pop() !== tagName) {
+						return true;
+					}
+				} else {
+					openedTags.push(tagName);
+				}
+				match = formattingTagRegExp.exec(source);
+			}
+			return openedTags.length > 0;
+		}
+		static formatMalformedSource(source) {
+			return main_core.Text.encode(source.replace(CheckListFormattingTag.createRegExp(), (tag, closing, tagName) => {
+				return tag.replace(`${closing}${tagName}`, `${closing}${tagName.toLowerCase()}`);
+			}));
+		}
+		static renderChildrenToHtml(node, linkColor = '') {
+			return node.getChildren().map(child => this.renderNodeToHtml(child, linkColor)).join('');
+		}
+		static renderUrlNodeToHtml(node, linkColor = '') {
+			const sourceUrl = main_core.Type.isStringFilled(node.getValue()) ? node.getValue() : node.toPlainText();
+			const safeUrl = CheckListUrl.sanitize(sourceUrl);
+			if (!safeUrl) {
+				return main_core.Text.encode(node.toString({
+					encode: false
+				}));
+			}
+			const content = this.renderChildrenToHtml(node, linkColor);
+			const href = main_core.Text.encode(safeUrl);
+			const style = main_core.Type.isStringFilled(linkColor) ? ` style="color: ${main_core.Text.encode(linkColor)};"` : '';
+			return [`<a class="tasks-check-list-formatting-layer-link" href="${href}"${style}`, 'target="_blank" rel="noopener noreferrer"', `data-testid="tasks-check-list-formatting-link">${content}</a>`].join(' ');
+		}
+		static renderNodeToHtml(node, linkColor = '') {
+			const name = node.getName();
+			if (name === '#root' || name === '#fragment') {
+				return this.renderChildrenToHtml(node, linkColor);
+			}
+			if (name === '#text' || name === '#linebreak') {
+				return main_core.Text.encode(node.toPlainText());
+			}
+			const htmlTag = HtmlTagByBbCodeTag[name];
+			if (htmlTag) {
+				return `<${htmlTag}>${this.renderChildrenToHtml(node, linkColor)}</${htmlTag}>`;
+			}
+			if (name === 'url') {
+				return this.renderUrlNodeToHtml(node, linkColor);
+			}
+			return main_core.Text.encode(node.toString({
+				encode: false
+			}));
+		}
+	}
+
+	class CheckListBbCode {
+		static handleDecorationTag(source, textarea, action) {
+			return CheckListFormatting.handleDecorationTag(source, textarea, action);
+		}
+		static addUrlTag(source, textarea, url) {
+			return CheckListFormatting.addUrlTag(source, textarea, url);
+		}
+		static getActiveFormattingActions(source, selection) {
+			return CheckListFormatting.getActiveFormattingActions(source, selection);
+		}
+		static buildLinkSource(url, text) {
+			return CheckListLink.buildSource(url, text);
+		}
+		static wrapSelection(source, selection, action) {
+			return CheckListFormatting.wrapSelection(source, selection, action);
+		}
+		static formatHtml(source, linkColor = '') {
+			return CheckListBbCodeRenderer.formatHtml(source, linkColor);
+		}
+	}
+
+	const FORMATTING_SHORTCUT_ACTION_BY_CODE = Object.freeze({
+		KeyB: ChecklistFormattingAction.Bold,
+		KeyI: ChecklistFormattingAction.Italic,
+		KeyU: ChecklistFormattingAction.Underline,
+		KeyS: ChecklistFormattingAction.Strikethrough
+	});
+	function getTextarea(growingTextArea) {
+		return growingTextArea?.$el?.querySelector('textarea') ?? null;
+	}
+
+	// @vue/component
+	const CheckListFormattingLayer = {
+		name: 'CheckListFormattingLayer',
+		components: {
+			GrowingTextArea: tasks_v2_component_elements_growingTextArea.GrowingTextArea
+		},
+		props: {
+			modelValue: {
+				type: String,
+				default: ''
+			},
+			placeholder: {
+				type: String,
+				default: ''
+			},
+			fontColor: {
+				type: String,
+				default: 'var(--ui-color-base-0)'
+			},
+			linkColor: {
+				type: String,
+				default: 'var(--ui-color-accent-main-link)'
+			},
+			fontSize: {
+				type: Number,
+				default: 21
+			},
+			fontWeight: {
+				type: [Number, String],
+				default: 'inherit'
+			},
+			lineHeight: {
+				type: Number,
+				default: 29
+			},
+			readonly: {
+				type: Boolean,
+				default: false
+			}
+		},
+		emits: ['update:modelValue', 'input', 'focus', 'blur', 'emptyFocus', 'emptyBlur', 'enterBlur', 'linkClick', 'click', 'selectionChange'],
+		computed: {
+			hasTitle() {
+				return this.modelValue.trim() !== '';
+			},
+			isReadonlyRender() {
+				return this.readonly && this.hasTitle;
+			},
+			safeDisplayHtml() {
+				return CheckListBbCode.formatHtml(this.modelValue, this.linkColor);
+			},
+			displayStyle() {
+				return {
+					maxHeight: `${this.lineHeight * 3}px`,
+					lineHeight: `${this.lineHeight}px`,
+					color: this.fontColor,
+					fontSize: `${this.fontSize}px`,
+					fontWeight: this.fontWeight
+				};
+			}
+		},
+		methods: {
+			focusTextarea() {
+				this.$refs.growingTextArea?.focusTextarea();
+			},
+			getActiveFormattingActions() {
+				const textarea = getTextarea(this.$refs.growingTextArea);
+				if (!textarea) {
+					return [];
+				}
+				return CheckListBbCode.getActiveFormattingActions(this.modelValue, {
+					start: textarea.selectionStart,
+					end: textarea.selectionEnd
+				});
+			},
+			getSelectedFormattingActions() {
+				return this.getActiveFormattingActions();
+			},
+			applyFormatting(action, url = '') {
+				const textarea = getTextarea(this.$refs.growingTextArea);
+				if (!textarea) {
+					return;
+				}
+				const result = action === ChecklistFormattingAction.Link ? CheckListBbCode.addUrlTag(this.modelValue, textarea, url) : CheckListBbCode.handleDecorationTag(this.modelValue, textarea, action);
+				this.$emit('update:modelValue', result.source);
+				void this.$nextTick(() => {
+					this.restoreTextareaSelection(result.selectionStart, result.selectionEnd);
+				});
+			},
+			restoreTextareaSelection(selectionStart, selectionEnd) {
+				const textarea = getTextarea(this.$refs.growingTextArea);
+				if (!textarea) {
+					return;
+				}
+				const restoreSelection = () => {
+					getTextarea(this.$refs.growingTextArea)?.setSelectionRange(selectionStart, selectionEnd);
+					this.emitSelectionChange();
+				};
+				if (document.activeElement === textarea) {
+					restoreSelection();
+					return;
+				}
+				this.focusTextarea();
+				void this.$nextTick(() => {
+					requestAnimationFrame(restoreSelection);
+				});
+			},
+			handleLayerClick(event) {
+				if (event.target && event.target.closest && event.target.closest('.tasks-check-list-formatting-layer-link')) {
+					this.$emit('linkClick', event);
+					return;
+				}
+				this.$emit('click', event);
+				this.emitSelectionChange();
+			},
+			handleFocus(event) {
+				this.$emit('focus', event);
+				this.emitSelectionChange();
+			},
+			handleInput(value) {
+				this.$emit('input', value);
+				this.emitSelectionChange();
+			},
+			handleUpdateModelValue(value) {
+				this.$emit('update:modelValue', value);
+				this.emitSelectionChange();
+			},
+			handleKeyDown(event) {
+				const action = this.getFormattingShortcutAction(event);
+				if (!action) {
+					return;
+				}
+				event.preventDefault();
+				event.stopPropagation();
+				this.applyFormatting(action);
+			},
+			getFormattingShortcutAction(event) {
+				if (event.target !== getTextarea(this.$refs.growingTextArea)) {
+					return null;
+				}
+				const isModifierPressed = event.ctrlKey || event.metaKey;
+				if (!isModifierPressed || event.altKey || event.shiftKey) {
+					return null;
+				}
+				return FORMATTING_SHORTCUT_ACTION_BY_CODE[event.code] ?? null;
+			},
+			emitSelectionChange() {
+				void this.$nextTick(() => {
+					this.$emit('selectionChange', this.getActiveFormattingActions());
+				});
+			}
+		},
+		template: `
+		<div
+			class="tasks-check-list-formatting-layer"
+			:class="{ '--readonly': isReadonlyRender }"
+			data-testid="tasks-check-list-formatting-layer"
+			@click="handleLayerClick"
+			@keydown="handleKeyDown"
+			@keyup="emitSelectionChange"
+			@mouseup="emitSelectionChange"
+		>
+			<div
+				v-if="isReadonlyRender"
+				class="tasks-check-list-formatting-layer-display print-display-block"
+				:style="displayStyle"
+				v-html="safeDisplayHtml"
+			></div>
+			<GrowingTextArea
+				v-else
+				ref="growingTextArea"
+				:modelValue="modelValue"
+				:placeholder
+				:readonly
+				:fontColor
+				:linkColor
+				:fontSize
+				:fontWeight
+				:lineHeight
+				@update:modelValue="handleUpdateModelValue"
+				@input="handleInput"
+				@focus="handleFocus"
+				@blur="$emit('blur', $event)"
+				@emptyBlur="$emit('emptyBlur')"
+				@emptyFocus="$emit('emptyFocus')"
+				@enterBlur="$emit('enterBlur', $event)"
+				@linkClick="$emit('linkClick', $event)"
+			/>
+		</div>
+	`
+	};
+
 	const MENTION_REGEX = /^([+@])(\p{L}+)?$/u;
 	class MentionMatcher {
 		static match(text, startMatchPosition, currentPosition) {
@@ -1511,7 +2159,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				default: false
 			}
 		},
-		emits: ['update', 'addItem', 'removeItem', 'focus', 'blur', 'emptyBlur', 'show', 'hide'],
+		emits: ['update', 'addItem', 'removeItem', 'focus', 'blur', 'emptyBlur', 'show', 'hide', 'formattingSelectionChange'],
 		setup() {},
 		data() {
 			return {
@@ -1638,6 +2286,9 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			handleLinkClick(event) {
 				event.stopPropagation();
 			},
+			handleFormattingSelectionChange(actions) {
+				this.$emit('formattingSelectionChange', this.id, actions);
+			},
 			updateCheckList(id, fields) {
 				this.$emit('update', this.id);
 				return this.$store.dispatch(`${tasks_v2_const.Model.CheckList}/update`, {
@@ -1657,6 +2308,12 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 					}
 				});
 				this.$emit('update', this.id);
+			},
+			applyFormatting(action, node = null, url = '') {
+				if (this.textReadOnly) {
+					return;
+				}
+				this.$refs.growingTextArea?.applyFormatting(action, url);
 			},
 			addItem(sort) {
 				if (!this.canAdd) {
@@ -1747,7 +2404,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 		components: {
 			BIcon: ui_iconSet_api_vue.BIcon,
 			BMenu: ui_vue3_components_menu.BMenu,
-			GrowingTextArea: tasks_v2_component_elements_growingTextArea.GrowingTextArea,
+			CheckListFormattingLayer,
 			UserAvatarList: tasks_v2_component_elements_userAvatarList.UserAvatarList,
 			UserCheckbox: tasks_v2_component_elements_userCheckbox.UserCheckbox,
 			ProgressBar: tasks_v2_component_elements_progressBar.ProgressBar
@@ -1970,9 +2627,9 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			},
 			handleCompleteState() {
 				if (this.totalCount > 0) {
-					this.complete(this.totalCount === this.completedCount, false);
+					this.complete(this.totalCount === this.completedCount, /* persist */false);
 				} else if (this.completed) {
-					this.complete(false, false);
+					this.complete(false, /* persist */false);
 				}
 			},
 			checkSticky() {
@@ -2053,7 +2710,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				</div>
 			</div>
 			<div class="check-list-widget-parent-item-title-container">
-				<GrowingTextArea
+				<CheckListFormattingLayer
 					ref="growingTextArea"
 					class="check-list-widget-parent-item-title"
 					:data-check-list-id="'check-list-parent-item-title-' + id"
@@ -2073,6 +2730,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 					@emptyFocus="scrollToItem"
 					@blur="handleBlur"
 					@emptyBlur="handleEmptyBlur"
+					@selectionChange="handleFormattingSelectionChange"
 				/>
 				<template v-if="hasAttachments">
 					<div class="check-list-widget-item-attach --parent">
@@ -2181,7 +2839,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 		components: {
 			BIcon: ui_iconSet_api_vue.BIcon,
 			BLine: ui_system_skeleton_vue.BLine,
-			GrowingTextArea: tasks_v2_component_elements_growingTextArea.GrowingTextArea,
+			CheckListFormattingLayer,
 			UserAvatarList: tasks_v2_component_elements_userAvatarList.UserAvatarList,
 			CheckListCheckbox,
 			UserFieldWidgetComponent: tasks_v2_component_elements_userFieldWidgetComponent.DiskUserFieldWidgetComponent
@@ -2375,7 +3033,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				>
 					<BIcon :name="Outline.FIRE_SOLID"/>
 				</div>
-				<GrowingTextArea
+				<CheckListFormattingLayer
 					ref="growingTextArea"
 					class="check-list-widget-child-item-title"
 					:data-check-list-id="'check-list-child-item-title-' + item.id"
@@ -2394,6 +3052,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 					@emptyBlur="handleEmptyBlur"
 					@emptyFocus="scrollToItem"
 					@enterBlur="handleEnter"
+					@selectionChange="handleFormattingSelectionChange"
 				/>
 				<div
 					v-if="hasTrashcanIcon"
@@ -2564,7 +3223,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				default: false
 			}
 		},
-		emits: ['show', 'update', 'addItem', 'addItemFromBtn', 'removeItem', 'focus', 'blur', 'emptyBlur', 'startGroupMode', 'toggleGroupModeSelected', 'openCheckList'],
+		emits: ['show', 'update', 'addItem', 'addItemFromBtn', 'removeItem', 'focus', 'blur', 'emptyBlur', 'formattingSelectionChange', 'startGroupMode', 'toggleGroupModeSelected', 'openCheckList'],
 		setup() {},
 		data() {
 			return {
@@ -2826,6 +3485,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 							@focus="(id) => $emit('focus', id)"
 							@blur="(id) => $emit('blur', id)"
 							@emptyBlur="(id) => $emit('emptyBlur', id)"
+							@formattingSelectionChange="(itemId, actions) => $emit('formattingSelectionChange', itemId, actions)"
 							@startGroupMode="(id) => $emit('startGroupMode', id)"
 							@openCheckList="(id) => $emit('openCheckList', id)"
 						/>
@@ -2862,6 +3522,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 									@focus="(id) => $emit('focus', id)"
 									@blur="(id) => $emit('blur', id)"
 									@emptyBlur="(id) => $emit('emptyBlur', id)"
+									@formattingSelectionChange="(itemId, actions) => $emit('formattingSelectionChange', itemId, actions)"
 									@toggleGroupModeSelected="(id) => $emit('toggleGroupModeSelected', id)"
 									@openCheckList="(id) => $emit('openCheckList', id)"
 								/>
@@ -2897,6 +3558,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	const PanelSection = Object.freeze({
 		Important: 'important',
 		Attachments: 'attachments',
+		Formatting: 'formatting',
 		Movement: 'movement',
 		Accomplice: 'accomplice',
 		Auditor: 'auditor',
@@ -2905,6 +3567,11 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 		Cancel: 'cancel'
 	});
 	const PanelAction = Object.freeze({
+		Bold: 'bold',
+		Italic: 'italic',
+		Underline: 'underline',
+		Strikethrough: 'strikethrough',
+		Link: 'link',
 		SetImportant: 'setImportant',
 		AttachFile: 'attachFile',
 		MoveRight: 'moveRight',
@@ -2934,6 +3601,35 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				hint: 'TASKS_V2_CHECK_LIST_ITEM_ATTACH_HINT'
 			}]
 		}, {
+			name: PanelSection.Formatting,
+			items: [{
+				icon: ui_iconSet_api_vue.Outline.BOLD,
+				iconSize: 20,
+				action: PanelAction.Bold,
+				hint: 'TASKS_V2_CHECK_LIST_ITEM_FORMAT_BOLD_HINT'
+			}, {
+				icon: ui_iconSet_api_vue.Outline.ITALIC,
+				iconSize: 20,
+				action: PanelAction.Italic,
+				hint: 'TASKS_V2_CHECK_LIST_ITEM_FORMAT_ITALIC_HINT'
+			}, {
+				icon: ui_iconSet_api_vue.Outline.UNDERLINE,
+				iconSize: 20,
+				action: PanelAction.Underline,
+				hint: 'TASKS_V2_CHECK_LIST_ITEM_FORMAT_UNDERLINE_HINT'
+			}, {
+				icon: ui_iconSet_api_vue.Outline.STRIKETHROUGH,
+				iconSize: 20,
+				action: PanelAction.Strikethrough,
+				hint: 'TASKS_V2_CHECK_LIST_ITEM_FORMAT_STRIKETHROUGH_HINT'
+			}, {
+				icon: ui_iconSet_api_vue.Outline.LINK,
+				iconSize: 20,
+				action: PanelAction.Link,
+				hint: 'TASKS_V2_CHECK_LIST_ITEM_FORMAT_LINK_HINT',
+				separatorBefore: true
+			}]
+		}, {
 			name: PanelSection.Movement,
 			items: [{
 				icon: ui_iconSet_api_vue.Outline.POINT_RIGHT,
@@ -2948,6 +3644,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			name: PanelSection.Accomplice,
 			items: [{
 				icon: ui_iconSet_api_vue.Outline.PERSON,
+				iconSize: 20,
 				action: PanelAction.AssignAccomplice,
 				hint: 'TASKS_V2_CHECK_LIST_ITEM_ACCOMPLICE_HINT'
 			}]
@@ -2955,6 +3652,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			name: PanelSection.Auditor,
 			items: [{
 				icon: ui_iconSet_api_vue.Outline.OBSERVER,
+				iconSize: 20,
 				action: PanelAction.AssignAuditor,
 				hint: 'TASKS_V2_CHECK_LIST_ITEM_AUDITOR_HINT'
 			}]
@@ -2982,6 +3680,11 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 		}].filter(Boolean)
 	});
 
+	const FormattingActions = Object.freeze([PanelAction.Bold, PanelAction.Italic, PanelAction.Underline, PanelAction.Strikethrough, PanelAction.Link]);
+	const DefaultActions = Object.freeze([PanelAction.SetImportant, PanelAction.MoveRight, PanelAction.MoveLeft, PanelAction.AssignAccomplice, PanelAction.AssignAuditor, PanelAction.Forward, PanelAction.Delete]);
+	const RootItemActions = Object.freeze([PanelAction.AssignAccomplice, PanelAction.AssignAuditor]);
+	const StakeholderActions = Object.freeze([PanelAction.AssignAccomplice, PanelAction.AssignAuditor]);
+
 	// @vue/component
 	const CheckListItemPanel = {
 		name: 'CheckListItemPanel',
@@ -3000,6 +3703,10 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 			currentItem: {
 				type: Object,
 				default: () => null
+			},
+			selectedFormattingActions: {
+				type: Array,
+				default: () => []
 			}
 		},
 		emits: ['action'],
@@ -3054,18 +3761,21 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				if (!this.currentItem) {
 					return [];
 				}
-				let actions = [PanelAction.SetImportant, PanelAction.MoveRight, PanelAction.MoveLeft, PanelAction.AssignAccomplice, PanelAction.AssignAuditor, PanelAction.Forward, PanelAction.Delete];
+				const canFormatCurrentTitle = this.currentItem.actions.modify === true && !this.itemGroupModeSelected;
+				let actions = [...DefaultActions];
 				if (this.itemGroupModeSelected) {
 					actions.push(PanelAction.Cancel);
 				} else {
 					actions.push(PanelAction.AttachFile);
 				}
-				if (this.currentItem.parentId === 0) {
-					actions = [PanelAction.AssignAccomplice, PanelAction.AssignAuditor];
+				if (canFormatCurrentTitle) {
+					actions.push(...FormattingActions);
 				}
-				const stakeholdersActions = new Set([PanelAction.AssignAccomplice, PanelAction.AssignAuditor]);
+				if (this.currentItem.parentId === 0) {
+					actions = [...(canFormatCurrentTitle ? FormattingActions : []), ...RootItemActions];
+				}
 				return actions.filter(action => {
-					const isDisabledStakeholders = stakeholdersActions.has(action) && this.isStakeholdersRestricted;
+					const isDisabledStakeholders = StakeholderActions.includes(action) && this.isStakeholdersRestricted;
 					return !isDisabledStakeholders;
 				});
 			},
@@ -3114,7 +3824,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				if (!this.currentItem) {
 					return [];
 				}
-				const actions = [];
+				const actions = [...this.selectedFormattingActions];
 				if (this.currentItem.isImportant) {
 					actions.push(PanelAction.SetImportant);
 				}
@@ -3174,33 +3884,159 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				this.currentHintElement = event.currentTarget;
 				this.currentHintText = item.hint ? this.loc(item.hint) : null;
 			},
+			getItemTestId(item) {
+				if (!FormattingActions.includes(item.action)) {
+					return null;
+				}
+				return `tasks-check-list-item-panel-${item.action}-btn`;
+			},
 			canShowPanelSection(sectionName) {
 				return !(sectionName === PanelSection.Attachments && !tasks_v2_core.Core.getParams().features.disk);
 			}
 		},
 		template: `
-		<div v-if="sections.length > 0" class="check-list-widget-item-panel" @mousedown.prevent>
+		<div
+			v-if="sections.length > 0"
+			class="check-list-widget-item-panel"
+			data-testid="tasks-check-list-item-panel"
+			@mousedown.prevent
+		>
 			<template v-for="section in sections" :key="section.name">
 				<div class="check-list-widget-item-panel-section" :class="'--' + section.name">
 					<template v-for="item in section.items" :key="item.action" >
-						<div
+						<span
+							v-if="item.separatorBefore"
+							class="check-list-widget-item-panel-section-separator ui-text-editor-toolbar-separator"
+							aria-hidden="true"
+						></span>
+						<button
 							v-hint="tooltip"
+							type="button"
 							class="check-list-widget-item-panel-section-item"
 							:class="{
 								'--disabled': item.disabled,
 								'--active': item.active,
 								[item.className]: Boolean(item.className),
 							}"
+							:disabled="item.disabled"
+							:data-testid="getItemTestId(item)"
 							@click="handleItemClick($event, item)"
 							@mouseenter="handleItemMouseEnter($event, item)"
 						>
-							<BIcon :name="getItemIcon(item)" :hoverable="item.hoverable"/>
+							<BIcon
+								:name="getItemIcon(item)"
+								:hoverable="item.hoverable"
+								:size="item.iconSize"
+								color="var(--ui-color-base-4)"
+								aria-hidden="true"
+							/>
 							<span v-if="item.label">{{ loc(item.label) }}</span>
-						</div>
+						</button>
 					</template>
 				</div>
 			</template>
 		</div>
+	`
+	};
+
+	function isLinkUrlSafe(url) {
+		return CheckListBbCode.buildLinkSource(url.trim(), '') !== '';
+	}
+
+	// @vue/component
+	const CheckListLinkPopup = {
+		name: 'CheckListLinkPopup',
+		components: {
+			Popup: ui_vue3_components_popup.Popup
+		},
+		props: {
+			bindElement: {
+				type: HTMLElement,
+				required: true
+			}
+		},
+		emits: ['apply', 'close'],
+		data() {
+			return {
+				url: ''
+			};
+		},
+		computed: {
+			canApply() {
+				return isLinkUrlSafe(this.url);
+			},
+			popupOptions() {
+				return {
+					bindElement: this.bindElement,
+					autoHide: true,
+					closeByEsc: true,
+					cacheable: false,
+					animation: 'fading',
+					targetContainer: document.body,
+					offsetTop: 6,
+					padding: 0
+				};
+			}
+		},
+		mounted() {
+			void this.$nextTick(() => {
+				this.$refs.input?.focus();
+			});
+		},
+		methods: {
+			handleApply() {
+				const url = this.url.trim();
+				if (!isLinkUrlSafe(url)) {
+					this.$refs?.input?.focus();
+					return;
+				}
+				this.$emit('apply', url);
+			}
+		},
+		template: `
+		<Popup
+			:options="popupOptions"
+			@close="$emit('close')"
+		>
+			<div
+				class="tasks-check-list-link-popup ui-text-editor-link-editor"
+				data-testid="tasks-check-list-link-popup"
+			>
+				<div class="ui-text-editor-link-form">
+					<div class="ui-ctl ui-ctl-textbox ui-ctl-s ui-ctl-inline ui-ctl-w100 ui-text-editor-link-textbox">
+						<div class="ui-ctl-tag">
+							{{ loc('TASKS_V2_CHECK_LIST_ITEM_FORMAT_LINK_URL_LABEL') }}
+						</div>
+						<input
+							ref="input"
+							v-model="url"
+							type="text"
+							class="ui-ctl-element"
+							placeholder="https://"
+							data-testid="link-textbox-input"
+							@keydown.enter.prevent="handleApply"
+						>
+					</div>
+					<button
+						type="button"
+						class="ui-text-editor-link-form-button"
+						data-testid="save-link-btn"
+						:disabled="!canApply"
+						@click="handleApply"
+					>
+						<span class="ui-icon-set --check-l"></span>
+					</button>
+					<button
+						type="button"
+						class="ui-text-editor-link-form-button"
+						data-testid="cancel-link-btn"
+						@click="$emit('close')"
+					>
+						<span class="ui-icon-set --cross-l"></span>
+					</button>
+				</div>
+			</div>
+		</Popup>
 	`
 	};
 
@@ -3399,6 +4235,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 		components: {
 			CheckListWidget,
 			CheckListItemPanel,
+			CheckListLinkPopup,
 			CheckListStub,
 			UiButton: ui_vue3_components_button.Button,
 			BIcon: ui_iconSet_api_vue.BIcon,
@@ -3467,6 +4304,8 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				isForwardMenuShown: false,
 				forwardMenuSectionCode: 'createSection',
 				forwardBindElement: null,
+				linkPopupBindElement: null,
+				selectedFormattingActions: [],
 				isFreeze: false,
 				closing: false
 			};
@@ -3836,6 +4675,12 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 					this.removeItem(itemId);
 				}
 			},
+			handleFormattingSelectionChange(itemId, actions) {
+				if (!this.currentItem || String(this.currentItem.id) !== String(itemId)) {
+					return;
+				}
+				this.selectedFormattingActions = actions;
+			},
 			handleGroupMode(itemId) {
 				this.itemId = itemId;
 				this.cancelGroupMode();
@@ -3858,6 +4703,10 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				action,
 				node
 			}) {
+				if (this.isFormattingAction(action)) {
+					this.handleFormattingAction(action, node);
+					return;
+				}
 				const actionHandlers = {
 					[PanelAction.SetImportant]: n => this.setImportant(n),
 					[PanelAction.AttachFile]: n => this.attachFile(n),
@@ -3878,6 +4727,44 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 					[PanelAction.Cancel]: n => this.cancelGroupMode(n)
 				};
 				actionHandlers[action]?.(node);
+			},
+			isFormattingAction(action) {
+				return [PanelAction.Bold, PanelAction.Italic, PanelAction.Underline, PanelAction.Strikethrough, PanelAction.Link].includes(action);
+			},
+			handleFormattingAction(action, node) {
+				if (action === PanelAction.Link) {
+					this.isItemPanelFreeze = true;
+					this.linkPopupBindElement = node;
+					return;
+				}
+				this.applyFormatting(action, node);
+			},
+			applyFormatting(action, node = null, url = '') {
+				if (!this.currentItem || this.currentItem.actions.modify !== true || this.itemGroupModeSelected) {
+					return;
+				}
+				this.getItemsRef(this.currentItem.id)?.applyFormatting(action, node, url);
+			},
+			handleLinkPopupApply(url) {
+				this.applyFormatting(PanelAction.Link, this.linkPopupBindElement, url);
+				this.closeLinkPopup();
+			},
+			handleLinkPopupClose() {
+				const bindElement = this.closeLinkPopup();
+				this.focusLinkPopupBindElement(bindElement);
+			},
+			closeLinkPopup() {
+				const bindElement = this.linkPopupBindElement;
+				this.linkPopupBindElement = null;
+				this.isItemPanelFreeze = false;
+				return bindElement;
+			},
+			focusLinkPopupBindElement(bindElement) {
+				void this.$nextTick(() => {
+					bindElement?.focus({
+						preventScroll: true
+					});
+				});
 			},
 			handleOpenCheckList(checkListId) {
 				this.cleanNotifiers();
@@ -3910,12 +4797,8 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 					this.removeChecklists();
 				}
 				if (this.checkListChangeTracker.hasChanges() && this.isEdit) {
-					const deletingIds = new Set(Object.values(this.deletingCheckListIds));
-					const fullListDeletingIds = this.checkListManager.expandIdsWithChildren(deletingIds);
-					const checkListsToSave = this.checkLists.filter(checkList => {
-						return !fullListDeletingIds.has(checkList.id);
-					});
-					await tasks_v2_provider_service_checkListService.checkListService.save(this.taskId, checkListsToSave);
+					// Удаляемые пункты и их потомки отсеиваются внутри checkListService.save() (#excludeDeletingItems)
+					await tasks_v2_provider_service_checkListService.checkListService.save(this.taskId, this.checkLists);
 				}
 				this.checkListChangeTracker.reset();
 			},
@@ -4093,13 +4976,17 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				void this.updateCheckList(itemId, {
 					panelIsShown: true
 				});
-				void this.$nextTick(() => this.updatePanelPosition());
+				void this.$nextTick(() => {
+					this.updatePanelPosition();
+					this.updateSelectedFormattingActions();
+				});
 			},
 			hideItemPanel(itemId) {
 				if (this.isPreview) {
 					return;
 				}
 				this.itemPanelIsShown = false;
+				this.selectedFormattingActions = [];
 				if (this.hasActiveGroupMode() && this.checkListManager.getAllSelectedItems().length === 0) {
 					this.deactivateGroupMode();
 				}
@@ -4112,7 +4999,6 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 				this.isItemPanelFreeze = false;
 			},
 			showItemPanelOnNearestSelectedItem(itemId) {
-				// eslint-disable-next-line no-lonely-if
 				const nearestSelectedItem = this.checkListManager.findNearestItem(this.currentItem, true);
 				if (nearestSelectedItem) {
 					this.showItemPanel(nearestSelectedItem.id);
@@ -4174,6 +5060,9 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 						display
 					};
 				}
+			},
+			updateSelectedFormattingActions() {
+				this.selectedFormattingActions = this.getItemsRef(this.currentItem?.id)?.$refs.growingTextArea?.getSelectedFormattingActions?.() ?? [];
 			},
 			setImportant() {
 				if (this.itemGroupModeSelected) {
@@ -4513,6 +5402,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 							@focus="handleFocus"
 							@blur="handleBlur"
 							@emptyBlur="handleEmptyBlur"
+							@formattingSelectionChange="handleFormattingSelectionChange"
 							@startGroupMode="handleGroupMode"
 							@toggleGroupModeSelected="handleGroupModeSelect"
 							@openCheckList="handleOpenCheckList"
@@ -4538,6 +5428,7 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 						v-if="itemPanelIsShown && !isPreview"
 						ref="panel"
 						:currentItem
+						:selectedFormattingActions
 						:style="itemPanelStyles"
 						@action="handlePanelAction"
 					/>
@@ -4545,6 +5436,12 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 						v-if="isForwardMenuShown"
 						:options="forwardMenuOptions"
 						@close="isForwardMenuShown = false"
+					/>
+					<CheckListLinkPopup
+						v-if="linkPopupBindElement"
+						:bindElement="linkPopupBindElement"
+						@apply="handleLinkPopupApply"
+						@close="handleLinkPopupClose"
 					/>
 				</div>
 			</template>
@@ -4754,5 +5651,5 @@ this.BX.Tasks.V2.Component = this.BX.Tasks.V2.Component || {};
 	exports.CheckListList = CheckListList;
 	exports.checkListMeta = checkListMeta;
 
-})(this.BX.Tasks.V2.Component.Fields = this.BX.Tasks.V2.Component.Fields || {}, BX, BX.Event, BX.Vue3.Vuex, BX.Vue3.Components, BX.UI.Vue3.Components, BX.UI.IconSet, window, BX.Tasks.V2.Const, BX.Tasks.V2.Provider.Service, BX.Tasks.V2.Provider.Service, BX.Tasks.V2.Provider.Service, BX.Tasks.V2.Lib, BX.UI.Vue3.Components, BX.Tasks.V2.Component.Elements, BX.Vue3.Directives, window, BX.Tasks.V2.Component.Elements, BX.UI.DragAndDrop, window, BX.Tasks.V2.Component.Elements, BX.Tasks.V2.Component.Elements, BX.Tasks.V2.Component.Elements, BX.Tasks.V2.Component.Elements, BX.Tasks.V2, BX.Tasks.V2.Lib, BX.UI.System.Skeleton.Vue, BX.Tasks.V2.Component.Elements, BX.Tasks.V2.Component.Elements, BX.UI.Notification, BX.UI.System.Chip.Vue, BX.Tasks.V2.Lib);
+})(this.BX.Tasks.V2.Component.Fields = this.BX.Tasks.V2.Component.Fields || {}, BX, BX.Event, BX.Vue3.Vuex, BX.Vue3.Components, BX.UI.Vue3.Components, BX.UI.IconSet, window, BX.Tasks.V2.Const, BX.Tasks.V2.Provider.Service, BX.Tasks.V2.Provider.Service, BX.Tasks.V2.Provider.Service, BX.Tasks.V2.Lib, BX.UI.Vue3.Components, BX.Tasks.V2.Component.Elements, BX.Vue3.Directives, window, BX.Tasks.V2.Component.Elements, BX.UI.DragAndDrop, window, BX.Tasks.V2.Component.Elements, BX.Tasks.V2.Component.Elements, BX.Tasks.V2.Component.Elements, BX.Tasks.V2.Component.Elements, BX.UI.BBCode, BX.UI.BBCode, BX.Tasks.V2, BX.Tasks.V2.Lib, BX.UI.System.Skeleton.Vue, BX.Tasks.V2.Component.Elements, BX.Tasks.V2.Component.Elements, BX, BX.UI.Notification, BX.UI.System.Chip.Vue, BX.Tasks.V2.Lib);
 //# sourceMappingURL=check-list.bundle.js.map

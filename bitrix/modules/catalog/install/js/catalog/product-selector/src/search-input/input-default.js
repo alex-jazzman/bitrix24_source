@@ -98,14 +98,19 @@ export class ProductSearchInputDefault extends ProductSearchInputBase
 		const dialog = this.getDialog();
 		if (event.key === 'Enter' && dialog.getActiveTab() === dialog.getSearchTab())
 		{
-			// prevent a form submit
-			event.stopPropagation();
-			event.preventDefault();
-
 			if ((Browser.isMac() && event.metaKey) || event.ctrlKey)
 			{
+				// create a new product - keep the previous behavior
+				event.preventDefault();
+				event.stopPropagation();
 				dialog.getSearchTab().getFooter().createItem();
+
+				return;
 			}
+
+			// only suppress the form submit; do NOT stopPropagation so the
+			// entity-selector Navigation document listener selects the active item
+			event.preventDefault();
 		}
 	}
 

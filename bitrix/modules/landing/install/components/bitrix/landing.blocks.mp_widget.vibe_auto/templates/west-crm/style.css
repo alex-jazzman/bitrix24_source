@@ -1,0 +1,32 @@
+.landing-block-link-crm {
+	padding: 15px 60px 36px 60px;
+	align-items: center;
+	justify-content: center;
+	gap: 40px;
+}
+
+.landing-block-link-img-crm {
+	width: 216px;
+	height: 216px;
+	align-self: center;
+	background-size: 216px 216px;
+	background-repeat: no-repeat;
+	background-image: url(https://cdn.bitrix24.site/bitrix/images/landing/vibe/ent-west-v2/link/crm/1.png);
+}
+
+.landing-block-link-crm-content {
+	max-width: 700px;
+	align-items: start;
+	justify-content: center;
+}
+
+.landing-block-link-btn-crm {
+	position: relative;
+	max-width: 258px;
+	padding: 8px 18px;
+	color: var(--ui-color-base-white-fixed);
+	background-color: var(--ui-color-stage-bg-1);
+	line-height: 1.4;
+	cursor: pointer;
+	transition: 0.2s ease;
+}

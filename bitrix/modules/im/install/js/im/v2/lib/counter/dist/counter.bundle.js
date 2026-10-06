@@ -22,17 +22,16 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		}
 	};
 
-	const BaseClearHandlers = [type => im_v2_application_core.Core.getStore().dispatch('counters/clearByRecentType', {
-		recentType: type
-	}), type => im_v2_application_core.Core.getStore().dispatch('chats/clearMarkedChatsByType', {
-		type
-	}), type => im_v2_application_core.Core.getStore().dispatch('messages/anchors/removeAllAnchorsByChatType', {
-		type
+	const RecentTypeClearHandlers = [(recentType, parentChatId) => im_v2_application_core.Core.getStore().dispatch('chats/clearMarkedChatsByRecentType', {
+		recentType,
+		parentChatId
+	}), (recentType, parentChatId) => im_v2_application_core.Core.getStore().dispatch('counters/clearByRecentType', {
+		recentType,
+		parentChatId
+	}), (recentType, parentChatId) => im_v2_application_core.Core.getStore().dispatch('messages/anchors/removeAllAnchorsByRecentType', {
+		recentType,
+		parentChatId
 	})];
-	const CounterClearHandlersByChatType = {
-		[im_v2_const.ChatType.taskComments]: BaseClearHandlers,
-		[im_v2_const.ChatType.collab]: BaseClearHandlers
-	};
 	const CounterClearActions = [() => im_v2_application_core.Core.getStore().dispatch('counters/clear'), () => im_v2_application_core.Core.getStore().dispatch('chats/clearMarkedChats'), () => im_v2_application_core.Core.getStore().dispatch('messages/anchors/removeAllAnchors')];
 
 	class CounterManager {
@@ -62,6 +61,16 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				return '99+';
 			}
 			return String(counter);
+		}
+		static clearCountersByRecentType(recentType, parentChatId) {
+			RecentTypeClearHandlers.forEach(handler => {
+				void handler(recentType, parentChatId);
+			});
+		}
+		static clearAllCounters() {
+			CounterClearActions.forEach(actionHandler => {
+				void actionHandler();
+			});
 		}
 		emitCounters() {
 			this.#emitCountersUpdate();
@@ -154,8 +163,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	const taskCounterWatch = (state, getters) => getters['counters/getTotalTaskCounter'];
 
 	exports.CounterClearActions = CounterClearActions;
-	exports.CounterClearHandlersByChatType = CounterClearHandlersByChatType;
 	exports.CounterManager = CounterManager;
+	exports.RecentTypeClearHandlers = RecentTypeClearHandlers;
 
 })(this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}, BX.Event, BX, BX.Messenger.v2.Application, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Const);
 //# sourceMappingURL=counter.bundle.js.map

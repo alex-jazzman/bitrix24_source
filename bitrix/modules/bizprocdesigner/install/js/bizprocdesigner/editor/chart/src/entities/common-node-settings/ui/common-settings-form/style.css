@@ -70,6 +70,9 @@
 	background: var(--ui-color-bg-content-secondary);
 }
 
+/* The only copy of the transition: the class names are global and both settings panels play it —
+   the form of an ordinary node and the layout of a complex one. A second copy elsewhere would put
+   the reduced-motion rule below at the mercy of the order the bundle is concatenated in. */
 .node-settings-transition-enter-active {
 	transition: opacity .7s ease-out;
 }
@@ -80,6 +83,12 @@
 
 .node-settings-transition-enter-to {
 	opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.node-settings-transition-enter-active {
+		transition: none;
+	}
 }
 
 .node-settings-field {
@@ -347,6 +356,12 @@
 	margin-bottom: 5px;
 	color: var(--ui-color-design-outline-content-label);
 	font: var(--ui-font-size-sm)/ var(--ui-font-line-height-2xs) var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+}
+
+.node-settings-edit-caption.--required:after {
+	content: '*';
+	margin-left: 2px;
+	color: var(--ui-color-palette-red-60);
 }
 
 .node-settings-select-dotted {
@@ -1168,6 +1183,8 @@ select[name="delay_type"] {
 }
 
 .node-settings-panel select[multiple] {
+	--bizprocdesigner-multi-select-scrollbar-width: 6px;
+
 	appearance: none !important;
 	-webkit-appearance: none !important;
 	-moz-appearance: none !important;
@@ -1183,7 +1200,7 @@ select[name="delay_type"] {
 	border-radius: 9px !important;
 	background-color: var(--ui-color-palette-white-base) !important;
 	border: 1px solid rgba(0, 0, 0, 0.15) !important;
-	overflow-y: auto;
+	overflow-y: scroll;
 	/* @chef-ignore */
 	scrollbar-width: thin;
 	/* @chef-ignore */
@@ -1256,7 +1273,7 @@ select[name="delay_type"] {
 }
 
 .node-settings-panel select[multiple]::-webkit-scrollbar {
-	width: 6px;
+	width: var(--bizprocdesigner-multi-select-scrollbar-width);
 }
 
 .node-settings-panel select[multiple]::-webkit-scrollbar-track {
@@ -1425,6 +1442,18 @@ img.calendar-icon {
 	height: 13px;
 	margin: 0;
 	border: none;
+}
+
+.popup-window.bizproc-automation-popup-set .bizproc-automation-popup-select > .bizproc-type-control-date + .calendar-icon,
+.popup-window.bizproc-automation-popup-set .bizproc-automation-popup-select > .bizproc-type-control-datetime + .calendar-icon {
+	display: block !important;
+	position: absolute !important;
+	right: 64px;
+	top: 14px;
+	width: 14px;
+	height: 13px;
+	margin: 0;
+	opacity: 0;
 }
 
 #tr_time_type_selector_time img.calendar-icon {

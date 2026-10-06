@@ -146,7 +146,13 @@ export const NoteSharedPageComponent = {
 		{
 			const payload = event?.getData ? event.getData() : null;
 			const command = payload?.command;
-			if (command !== 'collectionListInvalidated' && command !== 'collectionCapabilities')
+			// documentAccessCascade (EVENT-01): a document-level ACL grant/revoke changes what this
+			// flat list contains, so refetch it too — this keeps the flag-off page live under EVENT-01.
+			if (
+				command !== 'collectionListInvalidated'
+				&& command !== 'collectionCapabilities'
+				&& command !== 'documentAccessCascade'
+			)
 			{
 				return;
 			}

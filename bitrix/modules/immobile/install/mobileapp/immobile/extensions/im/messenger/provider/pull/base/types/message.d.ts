@@ -114,6 +114,9 @@ export type ReadMessageParams = {
 	muted: boolean,
 	unread: boolean,
 	viewedMessages: number[],
+	// Exact read (Feed->IM sync): clear indication for EXACTLY viewedMessages, no sweep
+	// up to max(ID) and no cursor rollback by lastId. Old backend omits the flag (field optional).
+	exact?: boolean,
 	type: string,
 	parentChatId: number,
 };

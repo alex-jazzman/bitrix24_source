@@ -5,12 +5,13 @@ jn.define('im/messenger/controller/navigation/folder-tabs-controller', (require,
 	const { Type } = require('type');
 	const { MemoryStorage } = require('native/memorystore');
 	const { Icon } = require('ui-system/blocks/icon');
-	const { NavigationTabId, NonSelectableNavigationTabId, NavigationTabByFolderCode } = require('im/messenger/const');
+	const { NavigationTabId, NonSelectableNavigationTabId, NavigationTabByFolderCode, Analytics } = require('im/messenger/const');
 	const { getLoggerWithContext } = require('im/messenger/lib/logger');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { withTimeout } = require('im/messenger/lib/utils');
 	const { FolderListView } = require('im/messenger/controller/folder/list');
+	const { AnalyticsService } = require('im/messenger/provider/services/analytics');
 
 	const logger = getLoggerWithContext('navigation--folder-tabs-controller', 'FolderTabsController');
 	const FOLDER_TABS_CONTROLLER_STORAGE_NAME = 'immobileFolderTabsController';
@@ -54,9 +55,13 @@ jn.define('im/messenger/controller/navigation/folder-tabs-controller', (require,
 			this.#subscribeFolderModel();
 		}
 
-		handleFolderListTap()
+		async handleFolderListTap()
 		{
-			FolderListView.open();
+			const opened = await FolderListView.open();
+			if (opened)
+			{
+				AnalyticsService.getInstance().sendOpenFolderList(Analytics.SubSection.folderList);
+			}
 		}
 
 		/**

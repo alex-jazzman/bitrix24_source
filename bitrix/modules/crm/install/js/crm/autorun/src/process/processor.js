@@ -31,10 +31,13 @@ export class Processor
 	_totalItemCount = 0;
 	_errors = [];
 
-	static messages = {
-		// default messages, you can override them via settings.messages
-		requestError: Loc.getMessage('CRM_AUTORUN_PROCESS_REQUEST_ERROR'),
-	};
+	static get messages()
+	{
+		return {
+			// default messages, you can override them via settings.messages
+			requestError: Loc.getMessage('CRM_AUTORUN_PROCESS_REQUEST_ERROR'),
+		};
+	}
 
 	static items = {};
 

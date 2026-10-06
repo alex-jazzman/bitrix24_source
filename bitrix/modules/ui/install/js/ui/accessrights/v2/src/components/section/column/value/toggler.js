@@ -15,6 +15,9 @@ export const Toggler = {
 		isChecked(): boolean {
 			return this.value.values.has('1');
 		},
+		isReadOnly(): boolean {
+			return this.userGroup.isReadOnly === true;
+		},
 	},
 	methods: {
 		setValue(value): void {
@@ -30,6 +33,7 @@ export const Toggler = {
 	template: `
 		<Switcher
 			:is-checked="isChecked"
+			:is-disabled="isReadOnly"
 			@check="setValue('1')"
 			@uncheck="setValue('0')"
 			:options="{

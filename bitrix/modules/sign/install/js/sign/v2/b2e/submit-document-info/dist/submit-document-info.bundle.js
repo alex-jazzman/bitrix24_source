@@ -2,491 +2,598 @@
 this.BX = this.BX || {};
 this.BX.Sign = this.BX.Sign || {};
 this.BX.Sign.V2 = this.BX.Sign.V2 || {};
-(function (exports,main_core_cache,main_core_events,sign_v2_api,sign_type,ui_forms,sign_v2_b2e_signLink,main_core,ui_datePicker,ui_formElements_view) {
+(function (exports, main_core, main_date, main_core_cache, main_core_events, sign_v2_api, sign_type, ui_forms, sign_v2_b2e_signLink, ui_formElements_view, ui_datePicker) {
 	'use strict';
 
-	let _ = t => t,
-	  _t,
-	  _t2;
-	var _datepicker = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("datepicker");
-	var _inputNode = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("inputNode");
-	var _renderInputNode = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderInputNode");
 	class DatePickerField extends ui_formElements_view.BaseField {
-	  constructor(params) {
-	    super(params);
-	    Object.defineProperty(this, _renderInputNode, {
-	      value: _renderInputNode2
-	    });
-	    Object.defineProperty(this, _datepicker, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _inputNode, {
-	      writable: true,
-	      value: void 0
-	    });
-	    this.defaultValue = main_core.Type.isStringFilled(params.value) ? params.value : '';
-	    babelHelpers.classPrivateFieldLooseBase(this, _datepicker)[_datepicker] = new ui_datePicker.DatePicker({
-	      type: 'date',
-	      inputField: this.getInputNode(),
-	      targetNode: this.getInputNode()
-	    });
-	  }
-	  getValue() {
-	    return this.getInputNode().value;
-	  }
-	  getInputNode() {
-	    var _babelHelpers$classPr, _babelHelpers$classPr2;
-	    (_babelHelpers$classPr2 = (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _inputNode))[_inputNode]) != null ? _babelHelpers$classPr2 : _babelHelpers$classPr[_inputNode] = babelHelpers.classPrivateFieldLooseBase(this, _renderInputNode)[_renderInputNode]();
-	    return babelHelpers.classPrivateFieldLooseBase(this, _inputNode)[_inputNode];
-	  }
-	  renderContentField() {
-	    const lockElement = !this.isEnable ? this.renderLockElement() : null;
-	    return main_core.Tag.render(_t || (_t = _`
-			<div id="${0}" class="ui-section__field-selector">
-				<div class="ui-section__field-container">
-					<div class="ui-section__field-label_box">
-						<label for="${0}" class="ui-section__field-label">
-							${0}
-						</label> 
-						${0}
-					</div>  
-					<div class="ui-ctl ui-ctl-textbox ui-ctl-block ui-ctl-after-icon ${0}">
-						<div class="ui-ctl-after ui-ctl-icon-calendar"></div>
-						${0}
-					</div>
-					${0}
-				</div>
-				<div class="ui-section__hint">
-					${0}
-				</div>
-			</div>
-		`), this.getId(), this.getName(), this.getLabel(), lockElement, this.inputDefaultWidth ? '' : 'ui-ctl-w100', this.getInputNode(), this.renderErrors(), this.hintTitle);
-	  }
-	}
-	function _renderInputNode2() {
-	  return main_core.Tag.render(_t2 || (_t2 = _`
+		#datepicker;
+		#inputNode;
+		constructor(params) {
+			super(params);
+			this.defaultValue = main_core.Type.isStringFilled(params.value) ? params.value : '';
+			this.#datepicker = new ui_datePicker.DatePicker({
+				type: 'date',
+				inputField: this.getInputNode(),
+				targetNode: this.getInputNode()
+			});
+		}
+		getValue() {
+			return this.getInputNode().value;
+		}
+		getInputNode() {
+			this.#inputNode ??= this.#renderInputNode();
+			return this.#inputNode;
+		}
+		#renderInputNode() {
+			return main_core.Tag.render`
 			<input
-				value="${0}" 
-				name="${0}" 
+				value="${main_core.Text.encode(this.defaultValue)}" 
+				name="${main_core.Text.encode(this.getName())}" 
 				type="text" 
 				class="ui-ctl-element --readonly" 
 				readonly
 			>
-		`), main_core.Text.encode(this.defaultValue), main_core.Text.encode(this.getName()));
-	}
-
-	var readyToSendImage = "/bitrix/js/sign/v2/b2e/submit-document-info/dist/images/ready-to-send-state-image.svg";
-
-	let _$1 = t => t,
-	  _t$1,
-	  _t2$1,
-	  _t3,
-	  _t4,
-	  _t5,
-	  _t6,
-	  _t7,
-	  _t8,
-	  _t9;
-	function sleep(ms) {
-	  return new Promise(resolve => {
-	    setTimeout(resolve, ms);
-	  });
-	}
-	var _cache = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("cache");
-	var _layoutCache = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("layoutCache");
-	var _options = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("options");
-	var _api = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("api");
-	var _fieldFormId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("fieldFormId");
-	var _uiFields = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("uiFields");
-	var _getProgressLayout = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getProgressLayout");
-	var _showProgress = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showProgress");
-	var _hideProgress = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("hideProgress");
-	var _onProgressClosePageBtnClick = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onProgressClosePageBtnClick");
-	var _openSigningSliderAndCloseCurrent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("openSigningSliderAndCloseCurrent");
-	var _getFieldsLayout = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getFieldsLayout");
-	var _getOrCreateFieldLayout = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getOrCreateFieldLayout");
-	var _getFieldLayoutCallback = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getFieldLayoutCallback");
-	var _getFieldValues = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getFieldValues");
-	var _isFieldsValid = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isFieldsValid");
-	var _getFieldByUid = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getFieldByUid");
-	var _findFieldByUidRecursive = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("findFieldByUidRecursive");
-	var _getSelectorItemsWithEmpty = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getSelectorItemsWithEmpty");
-	class SubmitDocumentInfo extends main_core_events.EventEmitter {
-	  constructor(options) {
-	    super();
-	    Object.defineProperty(this, _getSelectorItemsWithEmpty, {
-	      value: _getSelectorItemsWithEmpty2
-	    });
-	    Object.defineProperty(this, _findFieldByUidRecursive, {
-	      value: _findFieldByUidRecursive2
-	    });
-	    Object.defineProperty(this, _getFieldByUid, {
-	      value: _getFieldByUid2
-	    });
-	    Object.defineProperty(this, _isFieldsValid, {
-	      value: _isFieldsValid2
-	    });
-	    Object.defineProperty(this, _getFieldValues, {
-	      value: _getFieldValues2
-	    });
-	    Object.defineProperty(this, _getFieldLayoutCallback, {
-	      value: _getFieldLayoutCallback2
-	    });
-	    Object.defineProperty(this, _getOrCreateFieldLayout, {
-	      value: _getOrCreateFieldLayout2
-	    });
-	    Object.defineProperty(this, _getFieldsLayout, {
-	      value: _getFieldsLayout2
-	    });
-	    Object.defineProperty(this, _openSigningSliderAndCloseCurrent, {
-	      value: _openSigningSliderAndCloseCurrent2
-	    });
-	    Object.defineProperty(this, _onProgressClosePageBtnClick, {
-	      value: _onProgressClosePageBtnClick2
-	    });
-	    Object.defineProperty(this, _hideProgress, {
-	      value: _hideProgress2
-	    });
-	    Object.defineProperty(this, _showProgress, {
-	      value: _showProgress2
-	    });
-	    Object.defineProperty(this, _getProgressLayout, {
-	      value: _getProgressLayout2
-	    });
-	    this.events = Object.freeze({
-	      onProgressClosePageBtnClick: 'onProgressClosePageBtnClick',
-	      documentSendedSuccessFully: 'documentSendedSuccessFully'
-	    });
-	    Object.defineProperty(this, _cache, {
-	      writable: true,
-	      value: new main_core_cache.MemoryCache()
-	    });
-	    Object.defineProperty(this, _layoutCache, {
-	      writable: true,
-	      value: new main_core_cache.MemoryCache()
-	    });
-	    Object.defineProperty(this, _options, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _api, {
-	      writable: true,
-	      value: new sign_v2_api.Api()
-	    });
-	    Object.defineProperty(this, _fieldFormId, {
-	      writable: true,
-	      value: 'sign-b2e-employee-fields-form'
-	    });
-	    Object.defineProperty(this, _uiFields, {
-	      writable: true,
-	      value: []
-	    });
-	    this.setEventNamespace('BX.Sign.V2.B2e.SubmitDocumentInfo');
-	    babelHelpers.classPrivateFieldLooseBase(this, _options)[_options] = options;
-	  }
-	  getLayout() {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _layoutCache)[_layoutCache].remember('layout', () => {
-	      if (babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].fields.length === 0) {
-	        const title = babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].isOnboarding ? main_core.Loc.getMessage('SIGN_SUBMIT_DOCUMENT_INFO_READY_TO_SEND_ONBOARDING_TITLE') : main_core.Loc.getMessage('SIGN_SUBMIT_DOCUMENT_INFO_READY_TO_SEND_TITLE');
-	        const description = babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].isOnboarding ? main_core.Loc.getMessage('SIGN_SUBMIT_DOCUMENT_INFO_READY_TO_SEND_ONBOARDING_DESCRIPTION') : main_core.Loc.getMessage('SIGN_SUBMIT_DOCUMENT_INFO_READY_TO_SEND_DESCRIPTION', {
-	          '#TITLE#': main_core.Text.encode(babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].template.title)
-	        });
-	        return main_core.Tag.render(_t$1 || (_t$1 = _$1`
-						<div class="sign-submit-document-info-center-container">
-							<div class="sign-submit-document-info-center-icon">
-								<img src="${0}" alt="">
-							</div>
-							<p class="sign-submit-document-info-center-title">
-								${0}
-							</p>
-							<p class="sign-submit-document-info-center-description">
-								${0}
-							</p>
-							<form id="${0}"></form>
-						</div>
-					`), readyToSendImage, main_core.Text.encode(title), description, babelHelpers.classPrivateFieldLooseBase(this, _fieldFormId)[_fieldFormId]);
-	      }
-	      return main_core.Tag.render(_t2$1 || (_t2$1 = _$1`
-					<div class="sign-b2e-submit-document-info">
-						<h1 class="sign-b2e-settings__header">${0}</h1>
-						<div class="sign-b2e-settings__item">
-							<p class="sign-b2e-settings__item_title">
-								${0}
-							</p>
-							<form id="${0}">
-								${0}
-							</form>
-						</div>
+		`;
+		}
+		renderContentField() {
+			const lockElement = !this.isEnable ? this.renderLockElement() : null;
+			return main_core.Tag.render`
+			<div id="${this.getId()}" class="ui-section__field-selector">
+				<div class="ui-section__field-container">
+					<div class="ui-section__field-label_box">
+						<label for="${this.getName()}" class="ui-section__field-label">
+							${this.getLabel()}
+						</label> 
+						${lockElement}
+					</div>  
+					<div class="ui-ctl ui-ctl-textbox ui-ctl-block ui-ctl-after-icon ${this.inputDefaultWidth ? '' : 'ui-ctl-w100'}">
+						<div class="ui-ctl-after ui-ctl-icon-calendar"></div>
+						${this.getInputNode()}
 					</div>
-				`), main_core.Loc.getMessage('SIGN_SUBMIT_DOCUMENT_INFO_HEAD'), main_core.Loc.getMessage('SIGN_SUBMIT_DOCUMENT_INFO_DESCRIPTION'), babelHelpers.classPrivateFieldLooseBase(this, _fieldFormId)[_fieldFormId], babelHelpers.classPrivateFieldLooseBase(this, _getFieldsLayout)[_getFieldsLayout]());
-	    });
-	  }
-	  async sendForSign() {
-	    var _BX$PULL;
-	    const currentSidePanel = BX.SidePanel.Instance.getTopSlider();
-	    if (!babelHelpers.classPrivateFieldLooseBase(this, _isFieldsValid)[_isFieldsValid]()) {
-	      return false;
-	    }
-	    let employeeMember = null;
-	    let assigneeMember = null;
-	    let document = null;
-	    main_core_events.EventEmitter.emit('BX.Sign.SignSettingsEmployee:onBeforeTemplateSend');
-	    try {
-	      const sendResult = await babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].template.send(babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].template.uid, babelHelpers.classPrivateFieldLooseBase(this, _getFieldValues)[_getFieldValues](), babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].isOnboarding);
-	      assigneeMember = sendResult.assigneeMember;
-	      employeeMember = sendResult.employeeMember;
-	      document = sendResult.document;
-	    } catch (e) {
-	      console.error(e);
-	      return false;
-	    } finally {
-	      main_core_events.EventEmitter.emit('BX.Sign.SignSettingsEmployee:onAfterTemplateSend');
-	    }
-	    const {
-	      uid: memberUid,
-	      id: memberId
-	    } = babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].isOnboarding ? assigneeMember : employeeMember;
-	    this.emit(this.events.documentSendedSuccessFully, {
-	      document
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _showProgress)[_showProgress]();
-	    let pending = true;
-	    let openSigningSliderAfterPending = true;
-	    const signLink = new sign_v2_b2e_signLink.SignLink({
-	      memberId
-	    });
-	    main_core_events.EventEmitter.subscribeOnce(currentSidePanel, 'SidePanel.Slider:onCloseStart', () => {
-	      pending = false;
-	      openSigningSliderAfterPending = false;
-	    });
-	    (_BX$PULL = BX.PULL) == null ? void 0 : _BX$PULL.subscribe({
-	      moduleId: 'sign',
-	      command: 'memberInvitedToSign',
-	      callback: async params => {
-	        if (params.member.id !== memberId || !pending || !openSigningSliderAfterPending) {
-	          return;
-	        }
-	        pending = false;
-	        await babelHelpers.classPrivateFieldLooseBase(this, _openSigningSliderAndCloseCurrent)[_openSigningSliderAndCloseCurrent](signLink);
-	      }
-	    });
-	    do {
-	      await sleep(5000);
-	      if (!openSigningSliderAfterPending) {
-	        return true;
-	      }
-	      if (!pending) {
-	        break;
-	      }
-	      let status = null;
-	      try {
-	        status = (await babelHelpers.classPrivateFieldLooseBase(this, _api)[_api].getMember(memberUid)).status;
-	      } catch (e) {
-	        console.error(e);
-	        babelHelpers.classPrivateFieldLooseBase(this, _hideProgress)[_hideProgress]();
-	        return false;
-	      }
-	      if (status === sign_type.MemberStatus.ready || status === sign_type.MemberStatus.stoppableReady) {
-	        pending = false;
-	      }
-	    } while (pending);
-	    if (openSigningSliderAfterPending) {
-	      await babelHelpers.classPrivateFieldLooseBase(this, _openSigningSliderAndCloseCurrent)[_openSigningSliderAndCloseCurrent](signLink);
-	    }
-	    return true;
-	  }
+					${this.renderErrors()}
+				</div>
+				<div class="ui-section__hint">
+					${this.hintTitle}
+				</div>
+			</div>
+		`;
+		}
 	}
-	function _getProgressLayout2() {
-	  return babelHelpers.classPrivateFieldLooseBase(this, _layoutCache)[_layoutCache].remember('progressLayout', () => main_core.Tag.render(_t3 || (_t3 = _$1`
+
+	var readyToSendImage = "/bitrix/js/sign/v2/b2e/submit-document-info/dist/assets/ready-to-send-state-image.svg";
+
+	// autotest anchors; regNumber and date are prefixes shared by the field wrapper,
+	// its input and its error container, so the names cannot drift apart
+	const TestId = Object.freeze({
+		regNumber: 'sign-submit-document-info-reg-number',
+		date: 'sign-submit-document-info-date'
+	});
+
+	// Error codes of Operation\Document\Template\Send: the failed field is found by code, because the
+	// message text is translated on each side independently and cannot be compared
+	const ServerErrorCode = Object.freeze({
+		externalIdRequired: 'SIGN_B2E_TEMPLATE_SEND_EXTERNAL_ID_REQUIRED',
+		externalDateRequired: 'SIGN_B2E_TEMPLATE_SEND_EXTERNAL_DATE_REQUIRED',
+		externalDateInvalid: 'SIGN_B2E_TEMPLATE_SEND_EXTERNAL_DATE_INVALID'
+	});
+	function sleep(ms) {
+		return new Promise(resolve => {
+			setTimeout(resolve, ms);
+		});
+	}
+	class SubmitDocumentInfo extends main_core_events.EventEmitter {
+		events = Object.freeze({
+			onProgressClosePageBtnClick: 'onProgressClosePageBtnClick',
+			documentSendedSuccessFully: 'documentSendedSuccessFully'
+		});
+		#cache = new main_core_cache.MemoryCache();
+		#layoutCache = new main_core_cache.MemoryCache();
+		#options;
+		#api = new sign_v2_api.Api();
+		#fieldFormId = 'sign-b2e-employee-fields-form';
+		#uiFields = [];
+		#externalIdField = null;
+		#externalDateField = null;
+		constructor(options) {
+			super();
+			this.setEventNamespace('BX.Sign.V2.B2e.SubmitDocumentInfo');
+			this.#options = options;
+		}
+		#getProgressLayout() {
+			return this.#layoutCache.remember('progressLayout', () => main_core.Tag.render`
 				<div class="sign-b2e-submit-document-info__progress">
 					<div class="sign-b2e-submit-document-info__progress_icon"></div>
 					<h2 class="sign-b2e-submit-document-info__progress_head">
-						${0}
+						${main_core.Loc.getMessage('SIGN_SUBMIT_DOCUMENT_INFO_PROGRESS_HEAD')}
 					</h2>
 					<p class="sign-b2e-submit-document-info__progress_description">
-						${0}
+						${main_core.Loc.getMessage('SIGN_SUBMIT_DOCUMENT_INFO_PROGRESS_DESCRIPTION')}
 					</p>
 					<button
 						class="ui-btn ui-btn-round ui-btn-light-border"
-						onclick="${0}"
+						onclick="${() => this.#onProgressClosePageBtnClick()}"
 					>
-						${0}
+						${main_core.Loc.getMessage('SIGN_SUBMIT_DOCUMENT_INFO_PROGRESS_CLOSE')}
 					</button>
 				</div>
-			`), main_core.Loc.getMessage('SIGN_SUBMIT_DOCUMENT_INFO_PROGRESS_HEAD'), main_core.Loc.getMessage('SIGN_SUBMIT_DOCUMENT_INFO_PROGRESS_DESCRIPTION'), () => babelHelpers.classPrivateFieldLooseBase(this, _onProgressClosePageBtnClick)[_onProgressClosePageBtnClick](), main_core.Loc.getMessage('SIGN_SUBMIT_DOCUMENT_INFO_PROGRESS_CLOSE')));
-	}
-	function _showProgress2() {
-	  main_core.Dom.append(babelHelpers.classPrivateFieldLooseBase(this, _getProgressLayout)[_getProgressLayout](), this.getLayout());
-	}
-	function _hideProgress2() {
-	  main_core.Dom.remove(babelHelpers.classPrivateFieldLooseBase(this, _getProgressLayout)[_getProgressLayout]());
-	}
-	function _onProgressClosePageBtnClick2() {
-	  this.emit(this.events.onProgressClosePageBtnClick);
-	  BX.SidePanel.Instance.close();
-	}
-	async function _openSigningSliderAndCloseCurrent2(signLink) {
-	  return babelHelpers.classPrivateFieldLooseBase(this, _cache)[_cache].remember('openSigningSliderAndCloseCurrent', async () => {
-	    const currentSidePanel = BX.SidePanel.Instance.getTopSlider();
-	    // load signing data before close current slider
-	    await signLink.preloadData();
-	    if (main_core.Type.isNull(currentSidePanel)) {
-	      signLink.openSlider({
-	        events: {}
-	      });
-	    } else {
-	      currentSidePanel.close(false, () => signLink.openSlider({
-	        events: {}
-	      }));
-	    }
-	  });
-	}
-	function _getFieldsLayout2() {
-	  return babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].fields.map(field => babelHelpers.classPrivateFieldLooseBase(this, _getOrCreateFieldLayout)[_getOrCreateFieldLayout](field));
-	}
-	function _getOrCreateFieldLayout2(field) {
-	  return babelHelpers.classPrivateFieldLooseBase(this, _layoutCache)[_layoutCache].remember(`fieldLayout.${field.uid}`, () => {
-	    const fieldsLayoutCallbackByType = babelHelpers.classPrivateFieldLooseBase(this, _getFieldLayoutCallback)[_getFieldLayoutCallback](field);
-	    if (main_core.Type.isNull(fieldsLayoutCallbackByType)) {
-	      throw new TypeError(`Unknown field type: ${field.type}`);
-	    }
-	    return fieldsLayoutCallbackByType(field);
-	  });
-	}
-	function _getFieldLayoutCallback2(field) {
-	  var _fieldsLayoutCallback;
-	  const label = `
+			`);
+		}
+		#showProgress() {
+			main_core.Dom.append(this.#getProgressLayout(), this.getLayout());
+		}
+		#hideProgress() {
+			main_core.Dom.remove(this.#getProgressLayout());
+		}
+		#onProgressClosePageBtnClick() {
+			this.emit(this.events.onProgressClosePageBtnClick);
+			BX.SidePanel.Instance.close();
+		}
+		getLayout() {
+			return this.#layoutCache.remember('layout', () => {
+				const showRegistrationNumberField = this.#options.showRegistrationNumberField === true;
+				const showCreationDateField = this.#options.showCreationDateField === true;
+				const hasRegionalFields = showRegistrationNumberField || showCreationDateField;
+				const hasTemplateFields = this.#options.fields.length > 0;
+				if (!hasTemplateFields && !hasRegionalFields) {
+					const title = this.#options.isOnboarding ? main_core.Loc.getMessage('SIGN_SUBMIT_DOCUMENT_INFO_READY_TO_SEND_ONBOARDING_TITLE') : main_core.Loc.getMessage('SIGN_SUBMIT_DOCUMENT_INFO_READY_TO_SEND_TITLE');
+					const description = this.#options.isOnboarding ? main_core.Loc.getMessage('SIGN_SUBMIT_DOCUMENT_INFO_READY_TO_SEND_ONBOARDING_DESCRIPTION') : main_core.Loc.getMessage('SIGN_SUBMIT_DOCUMENT_INFO_READY_TO_SEND_DESCRIPTION', {
+						'#TITLE#': main_core.Text.encode(this.#options.template.title)
+					});
+					return main_core.Tag.render`
+						<div class="sign-submit-document-info-center-container">
+							<div class="sign-submit-document-info-center-icon">
+								<img src="${readyToSendImage}" alt="">
+							</div>
+							<p class="sign-submit-document-info-center-title">
+								${main_core.Text.encode(title)}
+							</p>
+							<p class="sign-submit-document-info-center-description">
+								${description}
+							</p>
+							<form id="${this.#fieldFormId}"></form>
+						</div>
+					`;
+				}
+				const fieldsSection = hasTemplateFields ? main_core.Tag.render`
+						<div class="sign-b2e-settings__item">
+							<p class="sign-b2e-settings__item_title">
+								${main_core.Loc.getMessage('SIGN_SUBMIT_DOCUMENT_INFO_DESCRIPTION')}
+							</p>
+							<form id="${this.#fieldFormId}">
+								${this.#getFieldsLayout()}
+							</form>
+						</div>
+					` : main_core.Tag.render`<form id="${this.#fieldFormId}"></form>`;
+				return main_core.Tag.render`
+					<div class="sign-b2e-submit-document-info">
+						<h1 class="sign-b2e-settings__header">${main_core.Loc.getMessage('SIGN_SUBMIT_DOCUMENT_INFO_HEAD')}</h1>
+						${hasRegionalFields ? this.#getRegionalFieldsLayout() : ''}
+						${fieldsSection}
+					</div>
+				`;
+			});
+		}
+		#getRegionalFieldsLayout() {
+			return this.#layoutCache.remember('regionalLayout', () => {
+				const fieldLayouts = [];
+				if (this.#options.showRegistrationNumberField === true) {
+					// Pre-fill the registration number with the canonical "no number" default from the company flow
+					// (DocumentRegionalSettings.getExternalIdDefaultValue -> SIGN_V2_B2E_REGIONAL_SETTINGS_DOCUMENT_EXTERNAL_ID_WITHOUT_NUMBER).
+					this.#externalIdField = new ui_formElements_view.TextInput({
+						label: this.#getFieldLabel(main_core.Loc.getMessage('SIGN_SUBMIT_DOCUMENT_INFO_REG_NUMBER_LABEL'), true),
+						inputName: 'sign-b2e-external-id',
+						value: main_core.Loc.getMessage('SIGN_SUBMIT_DOCUMENT_INFO_REG_NUMBER_WITHOUT_NUMBER')
+					});
+					main_core.Dom.attr(this.#externalIdField.getInputNode(), 'data-testid', `${TestId.regNumber}-input`);
+					this.#markFieldRequired(this.#externalIdField);
+					this.#prepareErrorContainer(this.#externalIdField, TestId.regNumber);
+					fieldLayouts.push(main_core.Tag.render`
+					<div class="sign-b2e-submit-document-info__field" data-testid="${TestId.regNumber}-field">
+						${this.#externalIdField.render()}
+					</div>
+				`);
+				}
+				if (this.#options.showCreationDateField === true) {
+					const todayFormatted = main_date.DateTimeFormat.format(main_date.DateTimeFormat.getFormat('SHORT_DATE_FORMAT'), new Date());
+					this.#externalDateField = new DatePickerField({
+						label: this.#getFieldLabel(main_core.Loc.getMessage('SIGN_SUBMIT_DOCUMENT_INFO_DATE_CREATE_LABEL'), true),
+						inputName: 'sign-b2e-external-date',
+						value: todayFormatted
+					});
+					main_core.Dom.attr(this.#externalDateField.getInputNode(), 'data-testid', `${TestId.date}-input`);
+					this.#markFieldRequired(this.#externalDateField);
+					this.#prepareErrorContainer(this.#externalDateField, TestId.date);
+					fieldLayouts.push(main_core.Tag.render`
+					<div class="sign-b2e-submit-document-info__field" data-testid="${TestId.date}-field">
+						${this.#externalDateField.render()}
+					</div>
+				`);
+				}
+				return main_core.Tag.render`
+				<div class="sign-b2e-settings__item">
+					<p class="sign-b2e-settings__item_title">
+						${main_core.Loc.getMessage('SIGN_SUBMIT_DOCUMENT_INFO_REGIONAL_TITLE')}
+					</p>
+					${fieldLayouts}
+				</div>
+			`;
+			});
+		}
+		#getExternalIdValue() {
+			return this.#externalIdField ? this.#externalIdField.getValue() : null;
+		}
+		#getExternalDateValue() {
+			return this.#externalDateField ? this.#externalDateField.getValue() : null;
+		}
+		async sendForSign() {
+			const currentSidePanel = BX.SidePanel.Instance.getTopSlider();
+			if (!this.#isFieldsValid()) {
+				return false;
+			}
+			let employeeMember = null;
+			let assigneeMember = null;
+			let document = null;
+			main_core_events.EventEmitter.emit('BX.Sign.SignSettingsEmployee:onBeforeTemplateSend');
+			try {
+				const sendResult = await this.#api.template.send(this.#options.template.uid, this.#getFieldValues(), this.#options.isOnboarding, this.#getExternalIdValue(), this.#getExternalDateValue());
+				assigneeMember = sendResult.assigneeMember;
+				employeeMember = sendResult.employeeMember;
+				document = sendResult.document;
+			} catch (e) {
+				console.error(e);
+				this.#showServerErrorsOnFields(e);
+				return false;
+			} finally {
+				main_core_events.EventEmitter.emit('BX.Sign.SignSettingsEmployee:onAfterTemplateSend');
+			}
+			const {
+				uid: memberUid,
+				id: memberId
+			} = this.#options.isOnboarding ? assigneeMember : employeeMember;
+			this.emit(this.events.documentSendedSuccessFully, {
+				document
+			});
+			this.#showProgress();
+			let pending = true;
+			let openSigningSliderAfterPending = true;
+			const signLink = new sign_v2_b2e_signLink.SignLink({
+				memberId
+			});
+			main_core_events.EventEmitter.subscribeOnce(currentSidePanel, 'SidePanel.Slider:onCloseStart', () => {
+				pending = false;
+				openSigningSliderAfterPending = false;
+			});
+			BX.PULL?.subscribe({
+				moduleId: 'sign',
+				command: 'memberInvitedToSign',
+				callback: async params => {
+					if (params.member.id !== memberId || !pending || !openSigningSliderAfterPending) {
+						return;
+					}
+					pending = false;
+					await this.#openSigningSliderAndCloseCurrent(signLink);
+				}
+			});
+			do {
+				await sleep(5000);
+				if (!openSigningSliderAfterPending) {
+					return true;
+				}
+				if (!pending) {
+					break;
+				}
+				let status = null;
+				try {
+					status = (await this.#api.getMember(memberUid)).status;
+				} catch (e) {
+					console.error(e);
+					this.#hideProgress();
+					return false;
+				}
+				if (status === sign_type.MemberStatus.ready || status === sign_type.MemberStatus.stoppableReady) {
+					pending = false;
+				}
+			} while (pending);
+			if (openSigningSliderAfterPending) {
+				await this.#openSigningSliderAndCloseCurrent(signLink);
+			}
+			return true;
+		}
+		async #openSigningSliderAndCloseCurrent(signLink) {
+			return this.#cache.remember('openSigningSliderAndCloseCurrent', async () => {
+				const currentSidePanel = BX.SidePanel.Instance.getTopSlider();
+				// load signing data before close current slider
+				await signLink.preloadData();
+				if (main_core.Type.isNull(currentSidePanel)) {
+					signLink.openSlider({
+						events: {}
+					});
+				} else {
+					currentSidePanel.close(false, () => signLink.openSlider({
+						events: {}
+					}));
+				}
+			});
+		}
+		#getFieldsLayout() {
+			return this.#options.fields.map(field => this.#getOrCreateFieldLayout(field));
+		}
+		#getOrCreateFieldLayout(field) {
+			return this.#layoutCache.remember(`fieldLayout.${field.uid}`, () => {
+				const fieldsLayoutCallbackByType = this.#getFieldLayoutCallback(field);
+				if (main_core.Type.isNull(fieldsLayoutCallbackByType)) {
+					throw new TypeError(`Unknown field type: ${field.type}`);
+				}
+				return fieldsLayoutCallbackByType(field);
+			});
+		}
+		#getFieldLabel(name, required) {
+			return `
 			<span>
-				${main_core.Text.encode(field.name)} 
-				${field.required ? '<span class="sign-b2e-submit-document-info__field_required">*</span>' : ''}
+				${main_core.Text.encode(name)}
+				${required ? this.#getRequiredMarker() : ''}
 			</span>
 		`;
-	  const fieldsLayoutCallbackByType = {
-	    date: () => {
-	      const datePickerField = new DatePickerField({
-	        label,
-	        inputName: field.uid,
-	        value: field.value
-	      });
-	      babelHelpers.classPrivateFieldLooseBase(this, _uiFields)[_uiFields].push(datePickerField);
-	      return main_core.Tag.render(_t4 || (_t4 = _$1`
+		}
+
+		// no test anchor here: the marker is decorative (aria-hidden) and repeats on every required field,
+		// so a shared testid would break getByTestId; a test reads aria-required on the input instead
+		#getRequiredMarker() {
+			return `
+			<span class="sign-b2e-submit-document-info__field_required" aria-hidden="true">*</span>
+		`;
+		}
+		#getFieldLayoutCallback(field) {
+			const label = this.#getFieldLabel(field.name, field.required);
+			const fieldsLayoutCallbackByType = {
+				date: () => {
+					const datePickerField = new DatePickerField({
+						label,
+						inputName: field.uid,
+						value: field.value
+					});
+					this.#registerUiField(datePickerField, field.required);
+					return main_core.Tag.render`
 					<div class="sign-b2e-submit-document-info__field">
-						${0}
+						${datePickerField.render()}
 					</div>
-				`), datePickerField.render());
-	    },
-	    string: () => {
-	      const fieldInput = new ui_formElements_view.TextInput({
-	        label,
-	        inputName: field.uid,
-	        value: field.value
-	      });
-	      babelHelpers.classPrivateFieldLooseBase(this, _uiFields)[_uiFields].push(fieldInput);
-	      return main_core.Tag.render(_t5 || (_t5 = _$1`
+				`;
+				},
+				string: () => {
+					const fieldInput = new ui_formElements_view.TextInput({
+						label,
+						inputName: field.uid,
+						value: field.value
+					});
+					this.#registerUiField(fieldInput, field.required);
+					return main_core.Tag.render`
 					<div class="sign-b2e-submit-document-info__field">
-						${0}
+						${fieldInput.render()}
 					</div>
-				`), fieldInput.render());
-	    },
-	    list: () => {
-	      const selector = new ui_formElements_view.Selector({
-	        label,
-	        name: field.uid,
-	        inputName: field.uid,
-	        items: babelHelpers.classPrivateFieldLooseBase(this, _getSelectorItemsWithEmpty)[_getSelectorItemsWithEmpty](field)
-	      });
-	      babelHelpers.classPrivateFieldLooseBase(this, _uiFields)[_uiFields].push(selector);
-	      return main_core.Tag.render(_t6 || (_t6 = _$1`
+				`;
+				},
+				list: () => {
+					const selector = new ui_formElements_view.Selector({
+						label,
+						name: field.uid,
+						inputName: field.uid,
+						items: this.#getSelectorItemsWithEmpty(field)
+					});
+					this.#registerUiField(selector, field.required);
+					return main_core.Tag.render`
 					<div class="sign-b2e-submit-document-info__field">
-						${0}
+						${selector.render()}
 					</div>
-				`), selector.render());
-	    },
-	    // @TODO address picker
-	    address: () => main_core.Tag.render(_t7 || (_t7 = _$1`
+				`;
+				},
+				// @TODO address picker
+				address: () => main_core.Tag.render`
 				<div class="sign-b2e-submit-document-info__field">
 					<span class="sign-b2e-submit-document-info__label">
-						${0}
+						${main_core.Text.encode(field.name)}
 					</span>
 					<div class="sign-b2e-submit-document-info__subfields">
-						${0}
+						${field.subfields.map(subfield => main_core.Tag.render`
+							<div>${this.#getOrCreateFieldLayout(subfield)}</div>
+						`)}
 					</div>
 				</div>
-			`), main_core.Text.encode(field.name), field.subfields.map(subfield => main_core.Tag.render(_t8 || (_t8 = _$1`
-							<div>${0}</div>
-						`), babelHelpers.classPrivateFieldLooseBase(this, _getOrCreateFieldLayout)[_getOrCreateFieldLayout](subfield))))
-	  };
-	  const defaultLayout = () => main_core.Tag.render(_t9 || (_t9 = _$1`<div></div>`));
-	  return (_fieldsLayoutCallback = fieldsLayoutCallbackByType[field.type]) != null ? _fieldsLayoutCallback : defaultLayout;
-	}
-	function _getFieldValues2() {
-	  const form = document.getElementById(babelHelpers.classPrivateFieldLooseBase(this, _fieldFormId)[_fieldFormId]);
-	  const formData = new FormData(form);
-	  const fieldValues = [];
-	  formData.forEach((value, name) => {
-	    fieldValues.push({
-	      name,
-	      value
-	    });
-	  });
-	  return fieldValues;
-	}
-	function _isFieldsValid2() {
-	  let errorCount = 0;
-	  babelHelpers.classPrivateFieldLooseBase(this, _uiFields)[_uiFields].forEach(domField => {
-	    var _domField$getValue;
-	    domField.cleanError();
-	    const templateField = babelHelpers.classPrivateFieldLooseBase(this, _getFieldByUid)[_getFieldByUid](domField.getName());
-	    if (!templateField) {
-	      return;
-	    }
-	    if (templateField.required && ((_domField$getValue = domField.getValue()) == null ? void 0 : _domField$getValue.trim()) === '') {
-	      domField.setErrors([]);
-	      errorCount += 1;
-	    }
-	  });
-	  return errorCount === 0;
-	}
-	function _getFieldByUid2(uid) {
-	  return babelHelpers.classPrivateFieldLooseBase(this, _findFieldByUidRecursive)[_findFieldByUidRecursive](uid, babelHelpers.classPrivateFieldLooseBase(this, _options)[_options].fields);
-	}
-	function _findFieldByUidRecursive2(uid, fields) {
-	  for (const field of fields) {
-	    if (field.uid === uid) {
-	      return field;
-	    }
-	    if (field.subfields) {
-	      const subfield = babelHelpers.classPrivateFieldLooseBase(this, _findFieldByUidRecursive)[_findFieldByUidRecursive](uid, field.subfields);
-	      if (subfield) {
-	        return subfield;
-	      }
-	    }
-	  }
-	  return null;
-	}
-	function _getSelectorItemsWithEmpty2(field) {
-	  const items = [];
-	  if (!field.items.some(item => item.code === field.value)) {
-	    items.push({
-	      value: '',
-	      name: '',
-	      selected: true,
-	      hidden: true,
-	      disabled: true
-	    });
-	  }
-	  field.items.forEach(item => {
-	    items.push({
-	      value: main_core.Text.encode(item.code),
-	      name: main_core.Text.encode(item.label),
-	      selected: item.code === field.value
-	    });
-	  });
-	  return items;
+			`
+			};
+			const defaultLayout = () => main_core.Tag.render`<div></div>`;
+			return fieldsLayoutCallbackByType[field.type] ?? defaultLayout;
+		}
+		#registerUiField(uiField, required) {
+			this.#uiFields.push(uiField);
+			if (required) {
+				this.#markFieldRequired(uiField);
+			}
+		}
+
+		// aria-required instead of the native attribute: the date input is readonly (native required does not work there)
+		// and the form is sent from JS, so native validation must not start on the text inputs either
+		#markFieldRequired(uiField) {
+			main_core.Dom.attr(uiField.getInputNode(), 'aria-required', 'true');
+		}
+		#getFieldValues() {
+			const form = document.getElementById(this.#fieldFormId);
+			const formData = new FormData(form);
+			const fieldValues = [];
+			formData.forEach((value, name) => {
+				fieldValues.push({
+					name,
+					value
+				});
+			});
+			return fieldValues;
+		}
+		#isFieldsValid() {
+			const invalidFields = [];
+
+			// regional fields are rendered above the template ones, so the fields are collected in visual order
+			this.#getRenderedRegionalFields().forEach(({
+				field,
+				errorMessage
+			}) => {
+				this.#cleanFieldError(field);
+				if (field.getValue()?.trim() === '') {
+					this.#setFieldError(field, errorMessage);
+					invalidFields.push(field);
+				}
+			});
+			this.#uiFields.forEach(domField => {
+				this.#cleanFieldError(domField);
+				const templateField = this.#getFieldByUid(domField.getName());
+				if (!templateField) {
+					return;
+				}
+				if (templateField.required && domField.getValue()?.trim() === '') {
+					this.#setFieldError(domField);
+					invalidFields.push(domField);
+				}
+			});
+			invalidFields[0]?.getInputNode().focus();
+			return invalidFields.length === 0;
+		}
+
+		// A regional field is rendered only when the blank really has its placeholder block, so a rendered
+		// field is always required (the same condition is checked by the server in Operation\Document\Template\Send).
+		// errorMessage is shown by the local check before sending; a server refusal is matched by
+		// serverErrorCodes and shows the message the server sent.
+		#getRenderedRegionalFields() {
+			const fields = [];
+			if (this.#externalIdField !== null) {
+				fields.push({
+					field: this.#externalIdField,
+					errorMessage: main_core.Loc.getMessage('SIGN_SUBMIT_DOCUMENT_INFO_REG_NUMBER_REQUIRED_ERROR'),
+					serverErrorCodes: [ServerErrorCode.externalIdRequired]
+				});
+			}
+			if (this.#externalDateField !== null) {
+				fields.push({
+					field: this.#externalDateField,
+					errorMessage: main_core.Loc.getMessage('SIGN_SUBMIT_DOCUMENT_INFO_DATE_CREATE_REQUIRED_ERROR'),
+					serverErrorCodes: [ServerErrorCode.externalDateRequired, ServerErrorCode.externalDateInvalid]
+				});
+			}
+			return fields;
+		}
+
+		// role is set on the empty container upfront: a live region announces only the changes
+		// that happen after it is already in the DOM
+		#prepareErrorContainer(uiField, testId) {
+			main_core.Dom.attr(uiField.renderErrors(), {
+				id: this.#getErrorContainerId(uiField),
+				role: 'alert',
+				'data-testid': `${testId}-error`
+			});
+		}
+		#getErrorContainerId(uiField) {
+			return `${uiField.getId()}-error`;
+		}
+
+		// Template fields are marked invalid without a message, so they are described by nothing:
+		// only regional fields have an error container prepared with the id to point at
+		#setFieldError(uiField, errorMessage = null) {
+			const hasMessage = errorMessage !== null;
+			uiField.setErrors(hasMessage ? [errorMessage] : []);
+			main_core.Dom.addClass(uiField.getErrorBox(), '--error');
+			main_core.Dom.attr(uiField.getInputNode(), {
+				'aria-invalid': 'true',
+				'aria-describedby': hasMessage ? this.#getErrorContainerId(uiField) : null
+			});
+		}
+		#cleanFieldError(uiField) {
+			uiField.cleanError();
+			main_core.Dom.attr(uiField.getInputNode(), {
+				'aria-invalid': null,
+				'aria-describedby': null
+			});
+		}
+
+		// sign.v2.api already notifies with the server message, so here it is only bound to the field it belongs
+		// to. An error with no rendered field behind it (an outdated form, for example) stays in the
+		// notification alone.
+		#showServerErrorsOnFields(error) {
+			const regionalFields = this.#getRenderedRegionalFields();
+			const failedFields = [];
+			this.#getServerErrors(error).forEach(({
+				code,
+				message
+			}) => {
+				const failedField = regionalFields.find(regionalField => this.#matchesServerError(regionalField, code, message));
+				if (failedField && !failedFields.includes(failedField)) {
+					this.#setFieldError(failedField.field, message);
+					failedFields.push(failedField);
+				}
+			});
+			failedFields[0]?.field.getInputNode().focus();
+		}
+
+		// The code is the reliable signal; the message is compared only when the error came without a code,
+		// which happens when sign.v2.api rethrows a plain Error built from the first message
+		#matchesServerError(regionalField, code, message) {
+			if (main_core.Type.isStringFilled(code)) {
+				return regionalField.serverErrorCodes.includes(code);
+			}
+			return message === regionalField.errorMessage;
+		}
+		#getServerErrors(error) {
+			if (main_core.Type.isArrayFilled(error?.errors)) {
+				return error.errors.map(({
+					code,
+					message
+				}) => ({
+					code: code ?? '',
+					message
+				}));
+			}
+			return main_core.Type.isStringFilled(error?.message) ? [{
+				code: '',
+				message: error.message
+			}] : [];
+		}
+		#getFieldByUid(uid) {
+			return this.#findFieldByUidRecursive(uid, this.#options.fields);
+		}
+		#findFieldByUidRecursive(uid, fields) {
+			for (const field of fields) {
+				if (field.uid === uid) {
+					return field;
+				}
+				if (field.subfields) {
+					const subfield = this.#findFieldByUidRecursive(uid, field.subfields);
+					if (subfield) {
+						return subfield;
+					}
+				}
+			}
+			return null;
+		}
+		#getSelectorItemsWithEmpty(field) {
+			const items = [];
+			const fieldItems = main_core.Type.isArray(field.items) ? field.items : [];
+			if (!fieldItems.some(item => item.code === field.value)) {
+				items.push({
+					value: '',
+					name: '',
+					selected: true,
+					hidden: true,
+					disabled: true
+				});
+			}
+			fieldItems.forEach(item => {
+				items.push({
+					value: main_core.Text.encode(item.code),
+					name: main_core.Text.encode(item.label),
+					selected: item.code === field.value
+				});
+			});
+			return items;
+		}
 	}
 
 	exports.SubmitDocumentInfo = SubmitDocumentInfo;
 
-}((this.BX.Sign.V2.B2e = this.BX.Sign.V2.B2e || {}),BX.Cache,BX.Event,BX.Sign.V2,BX.Sign,BX,BX.Sign.V2.B2e,BX,BX.UI.DatePicker,BX.UI.FormElements));
+})(this.BX.Sign.V2.B2e = this.BX.Sign.V2.B2e || {}, BX, BX.Main, BX.Cache, BX.Event, BX.Sign.V2, BX.Sign, BX, BX.Sign.V2.B2e, BX.UI.FormElements, BX.UI.DatePicker);
 //# sourceMappingURL=submit-document-info.bundle.js.map

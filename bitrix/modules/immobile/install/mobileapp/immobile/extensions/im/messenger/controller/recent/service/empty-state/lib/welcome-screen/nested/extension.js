@@ -50,6 +50,13 @@ jn.define('im/messenger/controller/recent/service/empty-state/lib/welcome-screen
 						iconType: IconType.projectEmptyState,
 						showArrow,
 					};
+				case RecentTab.copilot:
+					return {
+						title: Loc.getMessageWithCopilotBotName('IMMOBILE_RECENT_SERVICE_EMPTY_STATE_NESTED_COPILOT_TITLE'),
+						description: Loc.getMessage('IMMOBILE_RECENT_SERVICE_EMPTY_STATE_NESTED_COPILOT_TEXT'),
+						iconType: IconType.copilotEmptyState,
+						showArrow,
+					};
 				case RecentTab.tasksTask:
 					return {
 						title: Loc.getMessage('IMMOBILE_RECENT_SERVICE_EMPTY_STATE_NESTED_TASK_TITLE'),

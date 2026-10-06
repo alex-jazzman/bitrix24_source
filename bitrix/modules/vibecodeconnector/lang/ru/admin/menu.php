@@ -1,0 +1,6 @@
+<?php
+$MESS['VIBECODECONNECTOR_MENU_TITLE'] = 'Интеграция с Битрикс24 Вайбкод';
+$MESS['VIBECODECONNECTOR_MENU_DIAGNOSTIC'] = 'Диагностика';
+$MESS['VIBECODECONNECTOR_MENU_DEVELOPER_KEYS'] = 'Ключи разработчика';
+$MESS['VIBECODECONNECTOR_MENU_IM_BUTTON_TEST'] = 'Тест IM-кнопки каталога';
+$MESS['VIBECODECONNECTOR_MENU_SETTINGS'] = 'Настройки';

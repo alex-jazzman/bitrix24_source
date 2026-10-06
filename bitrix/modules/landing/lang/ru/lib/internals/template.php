@@ -10,6 +10,7 @@ $MESS['LANDING_TABLE_FIELD_MODIFIED_BY_ID'] = 'Идентификатор изм
 $MESS['LANDING_TABLE_FIELD_DATE_CREATE'] = 'Дата создания';
 $MESS['LANDING_TABLE_FIELD_DATE_MODIFY'] = 'Дата изменения';
 $MESS['LANDING_TABLE_TPL_HEADER_FOOTER'] = 'С шапкой и подвалом';
+$MESS['LANDING_TABLE_TPL_HEADER_ONLY'] = 'Только с шапкой';
 $MESS['LANDING_TABLE_TPL_SIDEBAR_RIGHT'] = 'С сайдбаром справа';
 $MESS['LANDING_TABLE_TPL_SIDEBAR_LEFT'] = 'С сайдбаром слева';
 $MESS['LANDING_TABLE_TPL_WITHOUT_LEFT'] = 'Без левого сайдбара';

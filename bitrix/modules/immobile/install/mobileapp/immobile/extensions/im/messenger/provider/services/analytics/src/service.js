@@ -39,6 +39,8 @@ jn.define('im/messenger/provider/services/analytics/service', (require, exports,
 	const { SearchAnalytics } = require('im/messenger/provider/services/analytics/src/search');
 	const { RecentAnalytics } = require('im/messenger/provider/services/analytics/src/recent');
 	const { MessageMenu } = require('im/messenger/provider/services/analytics/src/message-menu');
+	const { FolderAnalytics } = require('im/messenger/provider/services/analytics/src/folder');
+	const { GuestAnalytics } = require('im/messenger/provider/services/analytics/src/guest');
 
 	/** @type {AnalyticsService} */
 	let instance = null;
@@ -110,6 +112,10 @@ jn.define('im/messenger/provider/services/analytics/service', (require, exports,
 		#search;
 		/** @type {MessageMenu} */
 		#messageMenu;
+		/** @type {FolderAnalytics} */
+		#folder;
+		/** @type {GuestAnalytics} */
+		#guest;
 
 		static getInstance()
 		{
@@ -368,6 +374,30 @@ jn.define('im/messenger/provider/services/analytics/service', (require, exports,
 			this.#messageMenu = this.#messageMenu ?? new MessageMenu();
 
 			return this.#messageMenu;
+		}
+
+		/** @protected */
+		get guest()
+		{
+			this.#guest = this.#guest ?? new GuestAnalytics();
+
+			return this.#guest;
+		}
+
+		/**
+		 * @param {DialogId} dialogId
+		 */
+		sendCopyGuestLink(dialogId)
+		{
+			return this.guest.sendCopyGuestLink(dialogId);
+		}
+
+		/**
+		 * @param {DialogId} dialogId
+		 */
+		sendViewJoinPopup(dialogId)
+		{
+			return this.guest.sendViewJoinPopup(dialogId);
 		}
 
 		/**
@@ -942,6 +972,70 @@ jn.define('im/messenger/provider/services/analytics/service', (require, exports,
 		{
 			this.searchAnalytics.sendSelectSearchResult(position);
 		}
+
+		/**
+		 * @return {FolderAnalytics}
+		 */
+		get folderAnalytics()
+		{
+			this.#folder = this.#folder ?? new FolderAnalytics();
+
+			return this.#folder;
+		}
+
+		/**
+		 * @param {string} subSection
+		 */
+		sendClickCreateFolder(subSection)
+		{
+			this.folderAnalytics.sendClickCreateFolder(subSection);
+		}
+
+		/**
+		 * @param {object} params
+		 * @param {number} params.folderId
+		 * @param {string} params.subSection
+		 */
+		sendClickDeleteFolder({ folderId, subSection })
+		{
+			this.folderAnalytics.sendClickDelete({ folderId, subSection });
+		}
+
+		/**
+		 * @param {object} params
+		 * @param {DialogId} params.dialogId
+		 * @param {string} params.subSection
+		 */
+		sendAddToFolder({ dialogId, subSection })
+		{
+			this.folderAnalytics.sendAddToFolder({ dialogId, subSection });
+		}
+
+		/**
+		 * @param {string} subSection
+		 */
+		sendOpenFolderList(subSection)
+		{
+			this.folderAnalytics.sendOpenList(subSection);
+		}
+
+		/**
+		 * @param {string} subSection
+		 */
+		sendClickEditFolder(subSection)
+		{
+			this.folderAnalytics.sendClickEdit(subSection);
+		}
+
+		/**
+		 * @param {object} params
+		 * @param {number} params.folderId
+		 */
+		sendOpenFolder({ folderId })
+		{
+			this.folderAnalytics.sendOpenFolder({ folderId });
+		}
+
 	}
 
 	module.exports = { AnalyticsService };

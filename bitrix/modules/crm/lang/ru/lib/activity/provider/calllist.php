@@ -4,4 +4,5 @@ $MESS["CRM_CALL_LIST_NOT_CREATED_ERROR"] = "Вы не создали списо�
 $MESS["CRM_CALL_LIST_SUBJECT_EMPTY"] = "Название дела для менеджера не указано";
 $MESS["CRM_CALL_LIST_RESPONSIBLE_IM_NOTIFY"] = "Вы назначены ответственным за обзвон \"#title#\"";
 $MESS["CRM_CALL_LIST_USE_WEBFORM"] = "Использовать форму";
+$MESS["CRM_CALL_LIST_RESPONSIBLE_IM_NOTIFY_SUBJECT"] = "#AUTHOR# назначил вас ответственным за обзвон";
 ?>

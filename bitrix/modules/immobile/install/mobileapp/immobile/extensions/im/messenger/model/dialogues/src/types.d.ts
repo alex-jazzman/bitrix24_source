@@ -40,6 +40,7 @@ export type DialoguesModelState = {
 	userCounter: number,
 	participants: Array<any>,
 	lastLoadParticipantId: number,
+	participantsCursor: { role: string, relationId: number } | null,
 	lastReadId: number,
 	markedId: number,
 	lastMessageId: number,
@@ -86,6 +87,7 @@ export type DialoguesModelState = {
 		sections: Array<string>,
 	} | null,
 	containsCollaber: boolean,
+	guestCount: number,
 };
 
 export type LastMessageViews = {
@@ -120,6 +122,8 @@ export type DialogPermissions = {
 	manageUi: PermissionRoles,
 	manageSettings: PermissionRoles,
 	manageMessages: PermissionRoles,
+	manageGuestInvites: PermissionRoles,
+	manageDelete: PermissionRoles,
 }
 
 export type TariffRestrictions = {

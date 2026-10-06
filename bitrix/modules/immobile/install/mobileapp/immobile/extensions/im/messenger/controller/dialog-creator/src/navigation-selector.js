@@ -119,6 +119,7 @@ jn.define('im/messenger/controller/dialog-creator/navigation-selector', (require
 					}
 				},
 				onCreateFolder: () => {
+					AnalyticsService.getInstance().sendClickCreateFolder(Analytics.SubSection.createBox);
 					new FolderCreate().open(this.layout);
 				},
 				onCreateCopilot: debounce(() => {

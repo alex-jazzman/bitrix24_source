@@ -155,3 +155,8 @@ else
 		]
 	);
 }
+
+if ($categoryId === 0 && !$isMyCompanyMode)
+{
+	echo (\Bitrix\Crm\Tour\EInvoicePromo::getInstance()->build($analytics));
+}

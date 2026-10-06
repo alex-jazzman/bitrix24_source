@@ -31,9 +31,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				});
 			});
 		},
-		removeClosedChats(recentType) {
+		removeClosedChats(recentType, parentChatId) {
 			const collection = im_v2_application_core.Core.getStore().getters['recent/getUnreadCollection']({
-				type: recentType
+				type: recentType,
+				parentChatId
 			});
 			const dialogIds = collection.map(({
 				dialogId
@@ -44,7 +45,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			dialogIdsToRemove.forEach(dialogId => {
 				this.removeDialogIdBySections({
 					recentSections: [recentType],
-					dialogId
+					dialogId,
+					parentChatId
 				});
 			});
 		}

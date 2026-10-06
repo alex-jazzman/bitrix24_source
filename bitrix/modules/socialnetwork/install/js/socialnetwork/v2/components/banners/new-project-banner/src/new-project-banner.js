@@ -43,9 +43,9 @@ export const NewProjectBanner = {
 							:placeholder="['[helpdesklink]', '[nbsp]']"
 						>
 							<template #helpdesklink="{ text }">
-								<span class="sonet--new-project-banner--link" @click="showHelpDesk">
+								<button type="button" class="sonet--new-project-banner--link" aria-haspopup="dialog" @click="showHelpDesk">
 									{{ text }}
-								</span>
+								</button>
 							</template>
 							<template #nbsp>
 								{{ '&nbsp;' }}
@@ -55,7 +55,12 @@ export const NewProjectBanner = {
 				</div>
 			</div>
 			<div class="sonet--new-project-banner--close">
-				<button type="button" class="sonet--new-project-banner--close-btn" @click="close">
+				<button
+					type="button"
+					class="sonet--new-project-banner--close-btn"
+					:aria-label="loc('SONET_EXT_NEW_PROJECT_BANNER_CLOSE')"
+					@click="close"
+				>
 					<BIcon :name="Outline.CROSS_L" hoverable/>
 				</button>
 			</div>

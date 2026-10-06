@@ -8,10 +8,10 @@ return [
 	'css' => '/bitrix/js/rpa/timeline/src/timeline.css',
 	'js' => '/bitrix/js/rpa/timeline/dist/timeline.bundle.js',
 	'rel' => [
-		'main.core.events',
-		'rpa.manager',
-		'main.popup',
 		'main.core',
+		'main.core.events',
+		'main.popup',
+		'rpa.manager',
 		'ui.timeline',
 	],
 	'skip_core' => false,

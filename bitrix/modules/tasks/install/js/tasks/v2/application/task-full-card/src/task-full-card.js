@@ -10,11 +10,11 @@ import { TaskCard, type Params } from 'tasks.v2.application.task-card';
 import { Core } from 'tasks.v2.core';
 import { EventName } from 'tasks.v2.const';
 import { idUtils } from 'tasks.v2.lib.id-utils';
-import { TaskMappers } from 'tasks.v2.provider.service.task-service';
 import { type TaskModel } from 'tasks.v2.model.tasks';
 
 import { App } from './component/app';
 import { ClosePopup } from './lib/close-popup';
+import { mapSliderParamsToModel } from './lib/slider-params';
 
 const openedCards = new Set();
 
@@ -52,8 +52,9 @@ export class TaskFullCard
 		}
 
 		const queryParams = new Uri(this.#params.link?.url ?? this.#params.url).getQueryParams();
+		const requestParams = slider.getRequestParams();
 		this.#params = {
-			...TaskMappers.mapSliderDataToModel({ ...queryParams, ...slider.getRequestParams() }),
+			...mapSliderParamsToModel(queryParams, requestParams),
 			...this.#params,
 			...(['tasks_planning', 'tasks_kanban_sprint'].includes(queryParams.SCOPE) ? { deadlineTs: 0 } : {}),
 			embedded: false,

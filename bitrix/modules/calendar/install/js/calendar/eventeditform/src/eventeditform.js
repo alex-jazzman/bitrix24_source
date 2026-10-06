@@ -848,6 +848,7 @@ export class EventEditForm
 						});
 						this.setUserSettings(params.userSettings);
 						Util.setEventWithEmailGuestEnabled(params.eventWithEmailGuestEnabled);
+						Util.setTeamsAsAttendeeEnabled(params.teamsAsAttendeeEnabled);
 						Util.setTimezoneList(params.timezoneList);
 						Util.setAbsenceAvailable(params.absenceAvailable);
 						this.handleSections(params.sections, params.trackingUsersList);
@@ -1835,6 +1836,12 @@ export class EventEditForm
 		this.planner.subscribe('onExpandTimeline', this.handleExpandPlannerTimeline.bind(this));
 		this.planner.subscribe('onDisplayAttendees', this.checkLocationForm.bind(this));
 
+		if (Type.isDate(this.entry.from))
+		{
+			this.planner.currentFromDate = new Date(this.entry.from.getTime());
+			this.planner.currentToDate = new Date(this.entry.from.getTime());
+		}
+
 		this.planner.show();
 		this.planner.showLoader();
 	}
@@ -2683,8 +2690,10 @@ export class EventEditForm
 		// Location
 		if (
 			!excludes.includes('location')
-			&& this.locationSelector.getTextLocation(Location.parseStringValue(this.entry.getLocation()))
-			!== this.locationSelector.getTextLocation(Location.parseStringValue(this.locationSelector.getTextValue()))
+			&& !Location.isSameLocation(
+				this.entry.getLocation(),
+				this.locationSelector.getTextValue(),
+			)
 		)
 		{
 			fields.push('location');
@@ -2957,6 +2966,27 @@ export class EventEditForm
 		{
 			entityList.push({
 				id: 'project',
+			});
+		}
+
+		if (Util.isTeamsAsAttendeeEnabled())
+		{
+			// HR `structure-node` provider; backend maps structure-node <-> SNT<id>.
+			// useMultipleTabs enables the team-fetch branch (flat, no depthLevel), otherwise
+			// teams are queried at depthLevel 1 and the list comes back empty.
+			entityList.push({
+				id: 'structure-node',
+				options: {
+					includedNodeEntityTypes: ['team'],
+					useMultipleTabs: true,
+					// departmentsOnly gives a single selectable "Select team" item with the simple
+					// (flat) access code SNT<id> and a numeric id — matches calendar's backend
+					// mapping (strict ^SNT[0-9]+$). usersAndDepartments would also add the
+					// recursive "team + subteams" option (SNTR<id>, ignored by calendar backend),
+					// and allowFlatDepartments appends a ':F' postfix that the mapping can't parse.
+					selectMode: 'departmentsOnly',
+					visual: { avatarMode: 'node', tagStyle: 'none' },
+				},
 			});
 		}
 

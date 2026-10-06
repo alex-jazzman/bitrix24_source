@@ -358,7 +358,8 @@ jn.define('im/messenger/lib/helper/dialog', (require, exports, module) => {
 
 		get canCopyChatLink()
 		{
-			return !this.isCollab && !this.isCopilot && !this.isDirect;
+			// Group copilot (userCounter > 2) is an exception: copy-link is shown on web for group copilot only, not for 1:1 copilot direct.
+			return !this.isCollab && (!this.isCopilot || this.isCopilotGroupChat) && !this.isDirect;
 		}
 
 		get hasCollaber()
@@ -393,6 +394,7 @@ jn.define('im/messenger/lib/helper/dialog', (require, exports, module) => {
 			const parameters = {
 				[DialogType.copilot]: UrlGetParameter.openCopilotChat,
 				[DialogType.tasksTask]: UrlGetParameter.openTaskChat,
+				[DialogType.collab]: UrlGetParameter.openCollab,
 			};
 
 			const chatGetParameter = parameters[this.dialogModel.type] ?? UrlGetParameter.openChat;

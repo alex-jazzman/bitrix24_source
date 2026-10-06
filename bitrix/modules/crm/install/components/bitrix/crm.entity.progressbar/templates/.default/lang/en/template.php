@@ -1,0 +1,2 @@
+<?php
+$MESS['CRM_ENTITY_PROGRESSBAR_STAGES_ARIA'] = 'Stages';

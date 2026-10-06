@@ -172,7 +172,9 @@ if(CModule::IncludeModule("socialnetwork"))
 
 				if ($bCanAddComments)
 				{
-					// add source object and get source_id, $source_url
+					$source_id = null;
+					$source_url = null;
+
 					$arParams = array(
 						"PATH_TO_SMILE" => $_REQUEST["p_smile"],
 						"PATH_TO_USER_BLOG_POST" => $_REQUEST["p_ubp"],
@@ -198,7 +200,7 @@ if(CModule::IncludeModule("socialnetwork"))
 							"QUOTE" => "N",
 							"CODE" => "N",
 							"FONT" => "N",
-							"UPLOAD" => $arForum["ALLOW_UPLOAD"],
+							"UPLOAD" => "N",
 							"NL2BR" => "N",
 							"SMILES" => "N"
 						);
@@ -395,6 +397,7 @@ if(CModule::IncludeModule("socialnetwork"))
 				$arListParams
 			);
 
+			$arTmpComments = array();
 			while($arComments = $dbComments->GetNext())
 				__SLMGetLogCommentRecord($arComments, $arParams, false, false, $arTmpComments, false);
 
@@ -526,6 +529,7 @@ if(CModule::IncludeModule("socialnetwork"))
 
 		if ($log_id > 0)
 		{
+			$arRights = array();
 			$dbRight = CSocNetLogRights::GetList(array(), array("LOG_ID" => $log_id));
 			while ($arRight = $dbRight->Fetch())
 				$arRights[] = $arRight["GROUP_CODE"];
@@ -539,6 +543,7 @@ if(CModule::IncludeModule("socialnetwork"))
 				"DESTINATION_LIMIT" => 100
 			);
 
+			$iMoreCount = 0;
 			$arDestinations = CSocNetLogTools::FormatDestinationFromRights($arRights, array_merge($arParams, array("CREATED_BY" => $author_id)), $iMoreCount);
 			if (is_array($arDestinations))
 				$arResult["arDestinations"] = array_slice($arDestinations, $iDestinationLimit);

@@ -27,6 +27,7 @@ this.BX = this.BX || {};
 						type="text"
 						class="ui-ctl-element"
 						id="dashboard-title-field"
+						data-testid="biconnector-dashboard-edit-title-field"
 					>
 				</div>
 			</div>
@@ -934,6 +935,7 @@ this.BX = this.BX || {};
 			}
 			this.#render();
 			this.#saveButton = ui_buttons.ButtonManager.createFromNode(document.querySelector('#dashboard-button-save'));
+			this.#saveButton?.getContainer().setAttribute('data-testid', 'biconnector-dashboard-edit-save-button');
 			this.#saveButton?.setDisabled(true);
 			main_core_events.EventEmitter.subscribe('BIConnector.DashboardParamsSelector:initCompleted', this.#onParamSelectorInit.bind(this));
 			main_core_events.EventEmitter.subscribe('BIConnector.DashboardParamsSelector:onChange', this.#onSelectorChange.bind(this));
@@ -995,6 +997,9 @@ this.BX = this.BX || {};
 				bindElement: button,
 				items: [{
 					text: main_core.Loc.getMessage('DASHBOARD_EDIT_ATTACH_MENU_ITEM'),
+					dataset: {
+						testid: 'biconnector-dashboard-edit-attach-menu-item'
+					},
 					onclick: () => {
 						menu.close();
 						this.#openAttachPopup();
@@ -1007,6 +1012,9 @@ this.BX = this.BX || {};
 			let selectedItem = null;
 			const attachButton = new ui_buttons.Button({
 				text: main_core.Loc.getMessage('DASHBOARD_EDIT_ATTACH_CONFIRM'),
+				dataset: {
+					testid: 'biconnector-dashboard-edit-attach-confirm'
+				},
 				useAirDesign: true,
 				style: ui_buttons.AirButtonStyle.FILLED,
 				size: ui_buttons.ButtonSize.LARGE,
@@ -1131,10 +1139,13 @@ this.BX = this.BX || {};
 				onclick: () => this.#detachDashboard()
 			});
 			this.#attachedCardNode = main_core.Tag.render`
-			<div class="dashboard-edit-attached-card">
+			<div class="dashboard-edit-attached-card" data-testid="biconnector-dashboard-edit-attached-card">
 				<div class="dashboard-edit-attached-card-text">
 					<div class="dashboard-edit-attached-card-title">${main_core.Loc.getMessage('DASHBOARD_EDIT_ATTACHED_CARD_TITLE')}</div>
-					<div class="dashboard-edit-attached-card-subtitle">${main_core.Text.encode(title ?? '')}</div>
+					<div
+						class="dashboard-edit-attached-card-subtitle"
+						data-testid="biconnector-dashboard-edit-attached-card-title"
+					>${main_core.Text.encode(title ?? '')}</div>
 				</div>
 			</div>
 		`;
@@ -1283,6 +1294,10 @@ this.BX = this.BX || {};
 				BX.UI.Notification.Center.notify({
 					content: main_core.Text.encode(main_core.Loc.getMessage('DASHBOARD_EDIT_GALLERY_UPLOAD_IN_PROGRESS') ?? '')
 				});
+				setTimeout(() => {
+					const saveButtonContainer = this.#saveButton.getContainer();
+					main_core.Dom.removeClass(saveButtonContainer, ui_buttons.ButtonState.WAITING);
+				}, 0);
 				return;
 			}
 			const currentTitle = this.#titleField.getValue();

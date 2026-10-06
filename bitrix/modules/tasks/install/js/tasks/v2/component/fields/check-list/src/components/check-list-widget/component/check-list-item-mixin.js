@@ -36,6 +36,7 @@ export const CheckListItemMixin = {
 		'emptyBlur',
 		'show',
 		'hide',
+		'formattingSelectionChange',
 	],
 	setup(): { task: TaskModel } {},
 	data(): Object
@@ -216,6 +217,10 @@ export const CheckListItemMixin = {
 		{
 			event.stopPropagation();
 		},
+		handleFormattingSelectionChange(actions: string[]): void
+		{
+			this.$emit('formattingSelectionChange', this.id, actions);
+		},
 		updateCheckList(id: number | string, fields: Partial<CheckListModel>): Promise<void>
 		{
 			this.$emit('update', this.id);
@@ -236,6 +241,15 @@ export const CheckListItemMixin = {
 			});
 
 			this.$emit('update', this.id);
+		},
+		applyFormatting(action: string, node: ?HTMLElement = null, url: string = ''): void
+		{
+			if (this.textReadOnly)
+			{
+				return;
+			}
+
+			this.$refs.growingTextArea?.applyFormatting(action, url);
 		},
 		addItem(sort: ?number): void
 		{

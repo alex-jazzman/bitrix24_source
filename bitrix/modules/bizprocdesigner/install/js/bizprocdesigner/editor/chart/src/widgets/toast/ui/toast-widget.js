@@ -10,7 +10,7 @@ export const ToastWidget = {
 	},
 	template: `
 		<template v-if="current">
-			<slot :name="current.type" :message="current.message">
+			<slot :name="current.type" :message="current.message" :color-scheme="current.colorScheme">
 			</slot>
 		</template>
 	`,

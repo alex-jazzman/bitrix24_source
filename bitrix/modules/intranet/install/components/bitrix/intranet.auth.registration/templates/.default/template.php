@@ -10,8 +10,8 @@ $APPLICATION->IncludeComponent(
 	"bitrix:system.auth.registration",
 	\COption::GetOptionString("main", "auth_components_template", ""),
 	[
-		"AUTH_RESULT" => $arResult['AUTH_RESULT'],
-		'HOST_NAME' => $arResult['HOST_NAME'],
+		"AUTH_RESULT" => $arResult['AUTH_RESULT'] ?? null,
+		'HOST_NAME' => $arResult['HOST_NAME'] ?? null,
 		"NOT_SHOW_LINKS" => 'N',
 	]
 );

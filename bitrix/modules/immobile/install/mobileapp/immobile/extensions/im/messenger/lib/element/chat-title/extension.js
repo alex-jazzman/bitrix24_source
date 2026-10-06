@@ -272,7 +272,11 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 			}
 			else if (user.type === UserType.collaber)
 			{
-				this.description = Loc.getMessage('IMMOBILE_ELEMENT_CHAT_TITLE_USER_COLLABER');
+				this.description = Loc.getMessage('IMMOBILE_ELEMENT_CHAT_TITLE_USER_GUEST');
+			}
+			else if (Feature.isChatWithGuestsAvailable && user.type === UserType.guest)
+			{
+				this.description = Loc.getMessage('IMMOBILE_ELEMENT_CHAT_TITLE_USER_GUEST');
 			}
 			else if (user.extranet)
 			{
@@ -445,6 +449,13 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 				return;
 			}
 
+			if (Feature.isChatWithGuestsAvailable && user.type === UserType.guest)
+			{
+				this.nameColor = Theme.colors.collabAccentPrimaryAlt;
+
+				return;
+			}
+
 			if (user.extranet === true)
 			{
 				this.nameColor = Theme.colors.accentExtraOrange;
@@ -601,18 +612,15 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 					if (this.dialogType === DialogType.collab)
 					{
 						const guestCount = this.store.getters['dialoguesModel/collabModel/getGuestCountByDialogId'](this.dialogId);
-						if (guestCount > 0)
-						{
-							const questText = Loc.getMessagePlural(
-								'IMMOBILE_ELEMENT_CHAT_TITLE_COLLAB_GUEST_COUNT',
-								guestCount,
-								{
-									'#COUNT#': guestCount,
-								},
-							);
-
-							titleParams.detailText += ` [color=${Color.collabAccentPrimaryAlt.toHex()}]${questText}[/color]`;
-						}
+						titleParams.detailText += this.#buildGuestCountText(guestCount);
+					}
+					else if (
+						Feature.isChatWithGuestsAvailable
+						&& [DialogType.chat, DialogType.calendar].includes(this.dialogType)
+					)
+					{
+						const dialog = this.store.getters['dialoguesModel/getById'](this.dialogId);
+						titleParams.detailText += this.#buildGuestCountText(dialog?.guestCount);
 					}
 				}
 			}
@@ -971,6 +979,28 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 				this.name = agentName;
 			}
 			this.description = Loc.getMessage('IMMOBILE_MESSENGER_COPILOT_PERSONAL_ASSISTANT');
+		}
+
+		/**
+		 * @param {number} guestCount
+		 * @return {string}
+		 */
+		#buildGuestCountText(guestCount)
+		{
+			if (!Type.isNumber(guestCount) || guestCount === 0)
+			{
+				return '';
+			}
+
+			const guestText = Loc.getMessagePlural(
+				'IMMOBILE_ELEMENT_CHAT_TITLE_COLLAB_GUEST_COUNT',
+				guestCount,
+				{
+					'#COUNT#': guestCount,
+				},
+			);
+
+			return ` [color=${Color.collabAccentPrimaryAlt.toHex()}]${guestText}[/color]`;
 		}
 	}
 

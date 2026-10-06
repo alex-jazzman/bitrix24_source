@@ -1,15 +1,19 @@
-<?
-$MESS["BPATL_MODIFIED"] = "Modified";
-$MESS["BPATL_NAME"] = "Name";
+<?php
+$MESS["BPATL_A11Y_COMMENTS_LABEL"] = "Comments: #COUNT#";
+$MESS["BPATL_A11Y_DELEGATE_TO_LABEL"] = "Delegate to";
+$MESS["BPATL_A11Y_GRID_UPDATED"] = "List updated";
+$MESS["BPATL_A11Y_PROCESS_FACES_LABEL"] = "Workflow participants";
+$MESS["BPATL_A11Y_ROW_ACTIONS_LABEL"] = "Actions";
+$MESS["BPATL_CURRENT_TASKS"] = "Current Assignments";
 $MESS["BPATL_DESCRIPTION"] = "Description";
-$MESS["BPATL_EMPTY"] = "Assignment List is empty.";
 $MESS["BPATL_DOCUMENT"] = "Element";
 $MESS["BPATL_DOCUMENT_TITLE"] = "View element";
-$MESS["BPATL_CURRENT_TASKS"] = "Current Assignments";
+$MESS["BPATL_EMPTY"] = "Assignment List is empty.";
 $MESS["BPATL_FINISHED_TASKS"] = "Assignment Archive";
-$MESS["BPWC_WLCT_TOTAL"] = "Total";
-$MESS["BPATL_GROUP_ACTION_YES"] = "Approve";
+$MESS["BPATL_GROUP_ACTION_DELEGATE"] = "Delegate";
 $MESS["BPATL_GROUP_ACTION_NO"] = "Decline";
 $MESS["BPATL_GROUP_ACTION_OK"] = "Run";
-$MESS["BPATL_GROUP_ACTION_DELEGATE"] = "Delegate";
-?>
+$MESS["BPATL_GROUP_ACTION_YES"] = "Approve";
+$MESS["BPATL_MODIFIED"] = "Modified";
+$MESS["BPATL_NAME"] = "Name";
+$MESS["BPWC_WLCT_TOTAL"] = "Total";

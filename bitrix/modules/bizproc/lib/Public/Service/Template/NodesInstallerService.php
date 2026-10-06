@@ -6,6 +6,9 @@ namespace Bitrix\Bizproc\Public\Service\Template;
 
 use Bitrix\Bizproc\Public\Entity\Template\NodesInstaller;
 use Bitrix\Main\Application;
+use Bitrix\Main\Event;
+use Bitrix\Main\EventManager;
+use Bitrix\Main\EventResult;
 use Bitrix\Main\InvalidOperationException;
 use Bitrix\Main\Web\Json;
 use Bitrix\Bizproc\Api\Enum\Template\WorkflowTemplateType;
@@ -31,6 +34,12 @@ class NodesInstallerService
 	private const INSTALLER_FILE_NAME = 'installer.php';
 	private const TEMPLATE_FILE_NAME = 'template.json';
 	private const TEMPLATE_LOC_FILE_NAME = 'template.json.php';
+	private const PROMPT_DIR_NAME = 'prompt';
+	private const PROMPT_FILE_NAME_RU = 'ru.json';
+	private const PROMPT_FILE_NAME_EN = 'en.json';
+	private const SYSTEM_PROMPT_PROPERTY = 'systemPrompt';
+	private const PROMPT_PLACEHOLDER_WRAPPER = '@@@';
+	private const RU_PROMPT_LANG_IDS = ['ru', 'kz', 'by'];
 	private const SHOULD_TRY_CACHE_TAG = 'bizproc_nodes_installer';
 	private const SHOULD_TRY_TTL = 86400; // 1 day
 
@@ -86,22 +95,132 @@ class NodesInstallerService
 			throw new ArgumentException('Invalid section name', 'sectionId');
 		}
 
-		$sectionDir = new IO\Directory($this->getNodesDir() . '/' . $sectionId);
+		$sectionDirs = $this->collectSectionDirs($sectionId);
 
-		if (!$sectionDir->isExists())
+		foreach ($sectionDirs as $sectionDir)
 		{
-			return; //no templates to install
+			$this->installFromSectionDir($sectionDir, $langId);
+		}
+	}
+
+	/**
+	 * @return IO\Directory[]
+	 */
+	private function collectSectionDirs(string $sectionId): array
+	{
+		$dirs = [];
+
+		$ownDir = new IO\Directory($this->getNodesDir() . '/' . $sectionId);
+		if ($ownDir->isExists())
+		{
+			$dirs[] = $ownDir;
 		}
 
-		foreach ($sectionDir->getChildren() as $child)
+		$event = new Event('bizproc', 'onGetExternalNodesDirs', ['sectionId' => $sectionId]);
+		EventManager::getInstance()->send($event);
+
+		foreach ($event->getResults() as $eventResult)
 		{
-			if (!$child->isDirectory())
+			if ($eventResult->getType() !== EventResult::SUCCESS)
 			{
 				continue;
 			}
-			/** @var IO\DirectoryEntry $child */
-			$this->installFromDir($child, $langId);
+
+			$externalDirs = $eventResult->getParameters()['dirs'] ?? [];
+			if (!is_array($externalDirs))
+			{
+				continue;
+			}
+
+			foreach ($externalDirs as $dirPath)
+			{
+				$externalDir = new IO\Directory($dirPath);
+				if ($externalDir->isExists())
+				{
+					$dirs[] = $externalDir;
+				}
+			}
 		}
+
+		return $dirs;
+	}
+
+	/**
+	 * Builds the installed template array for a single system node straight from its source files
+	 * (template.json + lang + prompt), exactly as {@see syncSection()} would install it, but WITHOUT
+	 * touching the database. Useful to obtain the "to-be-installed" template before/without a DB sync.
+	 *
+	 * @return array|null null when the node dir is absent, does not support the language, or the
+	 *                    template file is missing/broken
+	 */
+	public function buildTemplateFromSource(string $sectionId, string $systemCode, string $langId = LANGUAGE_ID): ?array
+	{
+		if (preg_match('/[^a-z0-9_\-]/i', $sectionId) || preg_match('/[^a-z0-9_\-]/i', $systemCode))
+		{
+			throw new ArgumentException('Invalid section or system code');
+		}
+
+		$sectionDir = new IO\Directory($this->getNodesDir() . '/' . $sectionId);
+		if (!$sectionDir->isExists())
+		{
+			return null;
+		}
+
+		$dir = null;
+		foreach ($sectionDir->getChildren() as $child)
+		{
+			if ($child->isDirectory() && $child->getName() === $systemCode)
+			{
+				/** @var IO\DirectoryEntry $child */
+				$dir = $child;
+				break;
+			}
+		}
+
+		if ($dir === null)
+		{
+			return null;
+		}
+
+		// Same language-support gate as installFromDir(): a template without the requested lang/prompt
+		// file is not installed for that language.
+		$langDir = new IO\Directory($dir->getPhysicalPath() . '/lang');
+		if ($langDir->isExists())
+		{
+			$langFile = new IO\File($langDir->getPhysicalPath() . "/{$langId}/" . self::TEMPLATE_LOC_FILE_NAME);
+			if (!$langFile->isExists())
+			{
+				return null;
+			}
+		}
+
+		$promptDir = new IO\Directory($dir->getPhysicalPath() . '/' . self::PROMPT_DIR_NAME);
+		if ($promptDir->isExists())
+		{
+			$promptFile = new IO\File($promptDir->getPhysicalPath() . '/' . $this->getPromptFileName($langId));
+			if (!$promptFile->isExists())
+			{
+				return null;
+			}
+		}
+
+		$templateFile = null;
+		foreach ($dir->getChildren() as $child)
+		{
+			if ($child->isFile() && $child->getName() === self::TEMPLATE_FILE_NAME)
+			{
+				/** @var IO\FileEntry $templateFile */
+				$templateFile = $child;
+				break;
+			}
+		}
+
+		if ($templateFile === null)
+		{
+			return null;
+		}
+
+		return $this->buildTemplateFromDir($dir, $templateFile, $langId, new NodesInstaller());
 	}
 
 	private function getTemplateData(int $id): array
@@ -123,13 +242,21 @@ class NodesInstallerService
 	private function makeFilesData(array $template, MakeTemplatePackageDto $request): array
 	{
 		$files = [];
+		$prompts = $request->pullAiPrompts ? $this->pullSystemPrompts($template, $request) : [];
 		$messages = $this->pullMessages($template, $request);
 
-		$files[self::TEMPLATE_FILE_NAME] = $this->makeTemplateFileContents($template);
+		$files[self::TEMPLATE_FILE_NAME] = $this->makeJsonFileContents($template);
 
 		if (!empty($messages))
 		{
 			$files['lang/ru/' . self::TEMPLATE_LOC_FILE_NAME] = $this->makeLangFileContents($messages);
+		}
+
+		if (!empty($prompts))
+		{
+			$files[self::PROMPT_DIR_NAME . '/' . self::PROMPT_FILE_NAME_RU] =
+				$this->makeJsonFileContents($prompts)
+			;
 		}
 
 		$files[self::INSTALLER_FILE_NAME] = $this->makeInstallerFileContents($request);
@@ -149,7 +276,7 @@ class NodesInstallerService
 		return implode(PHP_EOL, $langFileContent);
 	}
 
-	private function makeTemplateFileContents(array $template): string
+	private function makeJsonFileContents(array $template): string
 	{
 		return Json::encode($template, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
 	}
@@ -248,6 +375,63 @@ PHP;
 		return $messages;
 	}
 
+	private function pullSystemPrompts(array &$template, MakeTemplatePackageDto $request): array
+	{
+		$promptPrefix = 'SYSTEMPROMPT_';
+		$prompts = [];
+
+		$getPromptCode = function () use (&$prompts, $promptPrefix): string
+		{
+			$i = 1;
+
+			do
+			{
+				$code = $promptPrefix . $i;
+				++$i;
+			}
+			while (isset($prompts[$code]));
+
+			return $code;
+		};
+
+		$createPrompt = static function (string $text) use (&$prompts, $getPromptCode): string
+		{
+			$code = array_search($text, $prompts, true);
+			if ($code === false)
+			{
+				$code = $getPromptCode();
+			}
+			$prompts[$code] = $text;
+
+			return self::PROMPT_PLACEHOLDER_WRAPPER . $code . self::PROMPT_PLACEHOLDER_WRAPPER;
+		};
+
+		$pull = static function (array &$item) use (&$pull, $createPrompt): void
+		{
+			$properties = $item['Properties'] ?? null;
+			$systemPrompt = is_array($properties) ? ($properties[self::SYSTEM_PROMPT_PROPERTY] ?? null) : null;
+
+			if (is_string($systemPrompt))
+			{
+				$item['Properties'][self::SYSTEM_PROMPT_PROPERTY] = $createPrompt($systemPrompt);
+			}
+
+			foreach ($item as &$child)
+			{
+				if (is_array($child))
+				{
+					$pull($child);
+				}
+			}
+			unset($child);
+		};
+
+		$pull($template);
+		ksort($prompts);
+
+		return $prompts;
+	}
+
 	private function wasTriedRecently(string $sectionId): bool
 	{
 		$cache = Application::getInstance()->getManagedCache();
@@ -273,6 +457,18 @@ PHP;
 		return $connection->lock($name);
 	}
 
+	private function installFromSectionDir(IO\Directory $sectionDir, string $langId): void
+	{
+		foreach ($sectionDir->getChildren() as $child)
+		{
+			if ($child->isDirectory())
+			{
+				/** @var IO\DirectoryEntry $child */
+				$this->installFromDir($child, $langId);
+			}
+		}
+	}
+
 	private function installFromDir(IO\DirectoryEntry $dir, string $langId): void
 	{
 		$templateFile = null;
@@ -283,6 +479,16 @@ PHP;
 		{
 			$langFile = new IO\File($langDir->getPhysicalPath() . "/{$langId}/" . self::TEMPLATE_LOC_FILE_NAME);
 			if (!$langFile->isExists())
+			{
+				return; // template does not support this language
+			}
+		}
+
+		$promptDir = new IO\Directory($dir->getPhysicalPath() . '/' . self::PROMPT_DIR_NAME);
+		if ($promptDir->isExists())
+		{
+			$promptFile = new IO\File($promptDir->getPhysicalPath() . '/' . $this->getPromptFileName($langId));
+			if (!$promptFile->isExists())
 			{
 				return; // template does not support this language
 			}
@@ -341,34 +547,15 @@ PHP;
 			return; // no changes
 		}
 
-		$template = $this->unpackJsonToTemplate($templateFile->getContents());
-		if (empty($template['TEMPLATE']))
+		$template = $this->buildTemplateFromDir($dir, $templateFile, $langId, $installerInstance);
+		if ($template === null)
 		{
-			return; //broken template file
+			return; // broken template file or references unknown activities
 		}
 
-		$template = $this->replaceMessages($dir, $template, $langId);
-
-		if (!$template)
-		{
-			return;
-		}
-
-		if (!\CBPWorkflowTemplateLoader::checkTemplateActivities($template['TEMPLATE']))
-		{
-			return; // template contains unknown activities, probably from newer modules
-		}
-
-		[$module, $entity, $docType] = \Bitrix\Bizproc\Public\Entity\Document\Workflow::getComplexType();
-		$template['MODULE_ID'] = $module;
-		$template['ENTITY'] = $entity;
-		$template['DOCUMENT_TYPE'] = $docType;
-		$template['AUTO_EXECUTE'] = \CBPDocumentEventType::None;
 		$template['MODIFIED'] = DateTime::createFromTimestamp($modifiedTime ?: time());
 		$template['IS_MODIFIED'] = 'N';
-		$template['SYSTEM_CODE'] = $systemCode;
 		$template['ACTIVE'] = 'N';
-		$template['TYPE'] = WorkflowTemplateType::Nodes->value;
 
 		$isNewInstall = $tpl === null;
 		$templateId = $this->upsertTpl($tpl?->getId() ?? 0, $template);
@@ -411,6 +598,46 @@ PHP;
 		return null;
 	}
 
+	/**
+	 * Pure file→template transformation shared by installFromDir() and buildTemplateFromSource():
+	 * unpack the allowed fields from template.json, resolve localized messages and system prompts, and
+	 * attach the workflow document type. Returns null on a broken file or unknown activities. The
+	 * install-specific fields (MODIFIED / IS_MODIFIED / ACTIVE) are added by the caller.
+	 *
+	 * @return array|null
+	 */
+	private function buildTemplateFromDir(IO\DirectoryEntry $dir, IO\FileEntry $templateFile, string $langId, NodesInstaller $installer): ?array
+	{
+		$template = $this->unpackJsonToTemplate($templateFile->getContents());
+		if (empty($template['TEMPLATE']))
+		{
+			return null; // broken template file
+		}
+
+		$template = $this->replaceMessages($dir, $template, $langId, $installer);
+		$template = $this->replaceSystemPrompts($dir, $template, $langId);
+
+		if (!$template)
+		{
+			return null;
+		}
+
+		if (!\CBPWorkflowTemplateLoader::checkTemplateActivities($template['TEMPLATE']))
+		{
+			return null; // template contains unknown activities, probably from newer modules
+		}
+
+		[$module, $entity, $docType] = \Bitrix\Bizproc\Public\Entity\Document\Workflow::getComplexType();
+		$template['MODULE_ID'] = $module;
+		$template['ENTITY'] = $entity;
+		$template['DOCUMENT_TYPE'] = $docType;
+		$template['AUTO_EXECUTE'] = \CBPDocumentEventType::None;
+		$template['SYSTEM_CODE'] = $dir->getName();
+		$template['TYPE'] = WorkflowTemplateType::Nodes->value;
+
+		return $template;
+	}
+
 	private function unpackJsonToTemplate(string $json): ?array
 	{
 		try
@@ -428,13 +655,18 @@ PHP;
 		);
 	}
 
-	private function replaceMessages(IO\DirectoryEntry $dir, array $template, string $langId): array
+	private function replaceMessages(
+		IO\DirectoryEntry $dir,
+		array $template,
+		string $langId,
+		NodesInstaller $installer
+	): array
 	{
 		$messages = \Bitrix\Main\Localization\Loc::loadLanguageFile(
 			$dir->getPath() . '/' . self::TEMPLATE_LOC_FILE_NAME, $langId
 		);
 
-		array_walk_recursive($template, static function (&$item) use ($messages) {
+		array_walk_recursive($template, static function (&$item) use ($messages, $installer) {
 			if (
 				is_string($item)
 				&& str_starts_with($item, '###')
@@ -442,11 +674,87 @@ PHP;
 			)
 			{
 				$code = substr($item, 3, -3);
-				$item = $messages[$code] ?? $code;
+				$item = $installer->prepareMessage($code, $messages[$code] ?? $code);
 			}
 		});
 
 		return $template;
+	}
+
+	private function replaceSystemPrompts(IO\DirectoryEntry $dir, array $template, string $langId): array
+	{
+		$promptFileName = $this->getPromptFileName($langId);
+		$prompts = $this->loadSystemPromptFile(
+			$dir->getPath() . '/' . self::PROMPT_DIR_NAME . '/' . $promptFileName
+		);
+
+		if (empty($prompts))
+		{
+			return $template;
+		}
+
+		$replace = static function (array &$item) use (&$replace, $prompts): void
+		{
+			$properties = $item['Properties'] ?? null;
+			$systemPrompt = is_array($properties) ? ($properties[self::SYSTEM_PROMPT_PROPERTY] ?? null) : null;
+
+			if (
+				is_string($systemPrompt)
+				&& str_starts_with(
+					$systemPrompt,
+					self::PROMPT_PLACEHOLDER_WRAPPER
+				)
+				&& str_ends_with(
+					$systemPrompt,
+					self::PROMPT_PLACEHOLDER_WRAPPER
+				)
+			)
+			{
+				$wrapperLength = strlen(self::PROMPT_PLACEHOLDER_WRAPPER);
+				$code = substr(
+					$systemPrompt,
+					$wrapperLength,
+					-$wrapperLength
+				);
+				if (isset($prompts[$code]))
+				{
+					$item['Properties'][self::SYSTEM_PROMPT_PROPERTY] = $prompts[$code];
+				}
+			}
+
+			foreach ($item as &$child)
+			{
+				if (is_array($child))
+				{
+					$replace($child);
+				}
+			}
+			unset($child);
+		};
+
+		$replace($template);
+
+		return $template;
+	}
+
+	private function loadSystemPromptFile(string $path): array
+	{
+		$file = new File($path);
+		if (!$file->isExists())
+		{
+			return [];
+		}
+
+		try
+		{
+			$prompts = Json::decode($file->getContents());
+		}
+		catch (ArgumentException $e)
+		{
+			return [];
+		}
+
+		return is_array($prompts) ? $prompts : [];
 	}
 
 	private function upsertTpl(int $id, array $data): ?int
@@ -475,5 +783,17 @@ PHP;
 		$nodesDir = $request->outputDir ?? $this->getNodesDir();
 
 		return "{$nodesDir}/{$request->section}/{$request->code}";
+	}
+
+	/**
+	 * @param string $langId
+	 * @return string
+	 */
+	private function getPromptFileName(string $langId): string
+	{
+		return in_array(strtolower($langId), self::RU_PROMPT_LANG_IDS, true)
+			? self::PROMPT_FILE_NAME_RU
+			: self::PROMPT_FILE_NAME_EN
+		;
 	}
 }

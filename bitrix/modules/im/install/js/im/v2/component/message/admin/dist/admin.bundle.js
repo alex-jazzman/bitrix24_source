@@ -29,6 +29,5 @@ this.BX.IM.V2.Component = this.BX.IM.V2.Component || {};
 	};
 
 	exports.AdminMessage = AdminMessage;
-
-})(this.BX.IM.V2.Component.Message = this.BX.IM.V2.Component.Message || {}, BX?.Bitrix24?.Message??{});
+})(this.BX.IM.V2.Component.Message = this.BX.IM.V2.Component.Message || {}, BX?.Bitrix24?.Message??{});;
 //# sourceMappingURL=admin.bundle.js.map

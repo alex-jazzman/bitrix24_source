@@ -108,7 +108,7 @@ class MainMailConfirmAjax
 		$isAdmin = Main\Loader::includeModule('bitrix24') ? \CBitrix24::isPortalAdmin($USER->getId()) : $USER->isAdmin();
 
 		$name   = trim($_REQUEST['name']);
-		$email = mb_strtolower(trim($_REQUEST['email']));
+		$email = Main\Mail\Address::normalizeEmail((string)($_REQUEST['email'] ?? ''));
 		$smtp   = $_REQUEST['smtp'];
 		$code = mb_strtolower(trim($_REQUEST['code']));
 		$public = $isAdmin && $_REQUEST['public'] == 'Y';
@@ -204,10 +204,12 @@ class MainMailConfirmAjax
 			)
 		);
 
-		$senderId = $_REQUEST['id'];
-		if ($senderId && is_numeric($senderId))
+		// the identifier is cast once, before the ownership check: every later use, the limit write
+		// included, has to be the value the check has passed
+		$senderId = (int)($_REQUEST['id'] ?? 0);
+		if ($senderId > 0)
 		{
-			$senderItem = Main\Mail\Internal\SenderTable::getById((int)$senderId)->fetch();
+			$senderItem = Main\Mail\Internal\SenderTable::getById($senderId)->fetch();
 			if (empty($senderItem))
 			{
 				$error = getMessage('MAIN_MAIL_CONFIRM_AJAX_ERROR');
@@ -223,7 +225,7 @@ class MainMailConfirmAjax
 
 			$queryParams = [
 				'filter' => [
-					'=ID' => (int)$senderId,
+					'=ID' => $senderId,
 				]
 			];
 		}
@@ -258,7 +260,7 @@ class MainMailConfirmAjax
 			else
 			{
 				if (
-					($senderId === $item['ID'] && $item['EMAIL'] != $email) ||
+					($senderId === (int)$item['ID'] && $item['EMAIL'] != $email) ||
 					(
 						empty($code)
 						&& $item['EMAIL'] == $email
@@ -266,9 +268,9 @@ class MainMailConfirmAjax
 					)
 				)
 				{
-					if ($senderId === $item['ID'])
+					if ($senderId === (int)$item['ID'])
 					{
-						$senderId = null;
+						$senderId = 0;
 					}
 
 					$toDelete[] = $item['ID'];
@@ -292,13 +294,10 @@ class MainMailConfirmAjax
 
 		Main\Mail\Sender::delete(array_merge($toDelete, $expires));
 
-		if ($smtp && $smtp['limit'] !== null)
+		// the limit belongs to the edited record only; new and pending records get it with their own options
+		if ($senderId > 0 && ($smtp['limit'] ?? null) !== null)
 		{
-			Main\Mail\Sender::setEmailLimit($email, $smtp['limit']);
-		}
-		elseif ($smtp && !isset($smtp['limit']))
-		{
-			Main\Mail\Sender::removeEmailLimit($email);
+			Main\Mail\Sender::setSenderLimit($senderId, (int)$smtp['limit']);
 		}
 
 		$fields = array(

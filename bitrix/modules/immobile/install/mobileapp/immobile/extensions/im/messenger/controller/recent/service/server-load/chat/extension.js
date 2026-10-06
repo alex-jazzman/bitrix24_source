@@ -228,11 +228,22 @@ jn.define('im/messenger/controller/recent/service/server-load/chat', (require, e
 
 			try
 			{
-				await Promise.all([
+				const dispatches = [
 					this.store.dispatch('usersModel/set', modelData.users),
 					this.store.dispatch('dialoguesModel/set', modelData.dialogues),
 					this.store.dispatch('dialoguesModel/copilotModel/setCollection', modelData.copilot),
-				]);
+				];
+
+				// Use set (DB write) so the source chat resolves on cold start; it does not mark
+				// wasCompletelySync, so opening that chat still triggers a full server load.
+				if (modelData.nestedDialogues.length > 0)
+				{
+					dispatches.push(
+						this.store.dispatch('dialoguesModel/set', modelData.nestedDialogues),
+					);
+				}
+
+				await Promise.all(dispatches);
 
 				const recentAction = firstPage ? 'recentModel/setFirstPageByRecentSection' : 'recentModel/setChat';
 				await this.store.dispatch(
@@ -271,6 +282,7 @@ jn.define('im/messenger/controller/recent/service/server-load/chat', (require, e
 
 			let users = [];
 			const dialogues = [];
+			const nestedDialogues = [];
 			const recent = [];
 			const copilotChats = { ...copilotChatsInitial };
 
@@ -287,6 +299,12 @@ jn.define('im/messenger/controller/recent/service/server-load/chat', (require, e
 				}
 
 				dialogues.push(result.dialogue);
+
+				if (result.nestedChatDialogue)
+				{
+					nestedDialogues.push(result.nestedChatDialogue);
+				}
+
 				recent.push(result.recentItem);
 
 				if (result.updateCopilotChat)
@@ -305,6 +323,7 @@ jn.define('im/messenger/controller/recent/service/server-load/chat', (require, e
 			return {
 				users,
 				dialogues,
+				nestedDialogues,
 				recent,
 				copilot,
 			};
@@ -314,7 +333,7 @@ jn.define('im/messenger/controller/recent/service/server-load/chat', (require, e
 		 * @param {RecentItemData} item
 		 * @param {Object} messagesAutoDeleteConfigs
 		 * @param {Record<string,boolean>} copilotChats
-		 * @return {{user,dialogue,recentItem,updateCopilotChat}}
+		 * @return {{user,dialogue,nestedChatDialogue,recentItem,updateCopilotChat}}
 		 */
 		processRecentItem(item, messagesAutoDeleteConfigs, copilotChats)
 		{
@@ -327,6 +346,8 @@ jn.define('im/messenger/controller/recent/service/server-load/chat', (require, e
 			}
 
 			const dialogue = this.buildDialogueItem(item, messagesAutoDeleteConfigs);
+			const nestedChatDialogue = this.buildNestedChatDialogueItem(item);
+
 			const recentItem = ServerLoadUtils.prepareRecentItem(item);
 
 			if (copilotChats[item.id])
@@ -337,9 +358,50 @@ jn.define('im/messenger/controller/recent/service/server-load/chat', (require, e
 			return {
 				user,
 				dialogue,
+				nestedChatDialogue,
 				recentItem,
 				updateCopilotChat,
 			};
+		}
+
+		/**
+		 * Builds a dialogue item for the inline nestedChat source chat; returns null when the row carries none.
+		 *
+		 * @param {RecentItemData} item
+		 * @return {DialoguesModelState|null}
+		 */
+		buildNestedChatDialogueItem(item)
+		{
+			if (!Type.isPlainObject(item.nestedChat) || !(item.nestedChat.id > 0))
+			{
+				return null;
+			}
+
+			const nc = item.nestedChat;
+
+			// Emit extranet and parentChatId only when present: a default fallback would overwrite
+			// an existing dialoguesModel entry's real value via mergeImmutable.
+			const result = {
+				dialogId: nc.dialogId ?? `chat${nc.id}`,
+				chatId: nc.id,
+				name: nc.name,
+				type: nc.type,
+				avatar: nc.avatar,
+				color: nc.color,
+				entityType: nc.entityType ?? '',
+			};
+
+			if (!Type.isUndefined(nc.extranet))
+			{
+				result.extranet = nc.extranet;
+			}
+
+			if (!Type.isUndefined(nc.parentChatId))
+			{
+				result.parentChatId = nc.parentChatId;
+			}
+
+			return result;
 		}
 
 		/**

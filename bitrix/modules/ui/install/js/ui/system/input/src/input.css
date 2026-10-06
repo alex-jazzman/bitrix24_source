@@ -219,6 +219,27 @@
 }
 
 
+/* Multiline */
+.ui-system-input.--multi .ui-system-input-container {
+	overflow: visible;
+}
+
+.ui-system-input-value.--multi {
+	--resize-gap: var(--ui-space-inline-2xs);
+	margin-right: calc(-1 * max(0px, var(--padding-horizontal) - var(--resize-gap)));
+	padding-right: max(0px, var(--padding-horizontal) - var(--resize-gap));
+	margin-bottom: var(--resize-gap);
+	cursor: auto;
+}
+
+
+/* Dropdown cursor */
+.ui-system-input.--dropdown:not(.--clickable) .ui-system-input-container,
+.ui-system-input.--dropdown:not(.--clickable) .ui-system-input-value {
+	cursor: default;
+}
+
+
 /* Icon */
 .ui-system-input-icon {
 	margin-right: var(--ui-space-inline-2xs);

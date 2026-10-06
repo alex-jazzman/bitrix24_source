@@ -37,7 +37,7 @@ const ServicesConfig: ReadonlyMap<string, ChatService> = new Map([
 			connectLabel: Loc.getMessage('CRM_TIMELINE_GOTOCHAT_CONNECT_MAX'),
 			inviteLabel: Loc.getMessage('CRM_TIMELINE_GOTOCHAT_INVITE_MAX'),
 			title: Loc.getMessage('CRM_TIMELINE_GOTOCHAT_SERVICE_MAX'),
-			region: ['ru', 'by', 'az', 'am', 'kz', 'kg', 'md', 'tj', 'uz'],
+			region: ['ru', 'by', 'kz', 'kg', 'tj', 'uz'],
 			iconClass: Outline.MAX,
 		},
 	],

@@ -1,5 +1,5 @@
 <?php
-$MESS["LANDING_BLOCK_WIDGET_71_3_NAME"] = "Text block: a title, a subtitle and 12 text tiles";
+$MESS["LANDING_BLOCK_WIDGET_71_3_NAME"] = "Text block: a title, a subtitle and text tiles";
 $MESS["LANDING_BLOCK_WIDGET_71_3_NODE_BADGE"] = "Tile tab";
 $MESS["LANDING_BLOCK_WIDGET_71_3_NODE_CARD"] = "Tile";
 $MESS["LANDING_BLOCK_WIDGET_71_3_NODE_CARD_BADGE"] = "Tile tab";

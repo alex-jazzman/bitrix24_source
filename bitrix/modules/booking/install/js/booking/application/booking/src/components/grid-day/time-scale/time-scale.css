@@ -1,0 +1,39 @@
+.booking-booking-time-scale {
+	box-sizing: border-box;
+	width: 100%;
+}
+
+.booking-booking-time-scale__row {
+	position: relative;
+	height: calc(var(--booking-day-hour-height) * var(--zoom));
+}
+
+.booking-booking-time-scale__row.--off-hours {
+	height: var(--booking-off-hours-cell-height);
+	transition: var(--booking-animation-duration) opacity var(--booking-animation-function);
+}
+
+.--booking-booking-collapse .booking-booking-time-scale__row.--off-hours {
+	opacity: 0;
+}
+
+.booking-booking-time-scale__label {
+	position: relative;
+	z-index: 1;
+	margin-right: 5px;
+	color: var(--ui-color-base-90);
+	font-size: var(--ui-font-size-xs);
+	line-height: 0;
+	text-align: right;
+	transform: translateY(-50%);
+	white-space: nowrap;
+	pointer-events: none;
+}
+
+.booking-booking-time-scale__row > .booking-booking-time-scale__label {
+	position: absolute;
+	top: 0;
+	right: 5px;
+	margin-right: 0;
+	line-height: var(--ui-font-line-height-3xs);
+}

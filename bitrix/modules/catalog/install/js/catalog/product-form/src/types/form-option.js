@@ -1,19 +1,23 @@
 import { FormElementPosition } from './form-element-position';
 import type { BasketItem } from './basket-item';
 import type { BasketMeasure } from './basket-measure';
-import type { BasketTax } from './basket-tax';
 import type { DiscountTypes } from 'catalog.product-calculator';
 import { FormInputCode } from './form-input-code';
 import type { FormCompilationOption } from './form-compilation-option';
 import { FormCompilationType } from './form-compilation-type';
 import { FormErrorCode } from './form-error-code';
 
+export type TaxRate = {
+	taxId: number,
+	value: number | null,
+};
+
 export type FormOption = {
 	basket: Array<BasketItem>,
 	measures: Array<BasketMeasure>,
 	iblockId?: number,
 	basePriceId?: number,
-	taxList: Array<BasketTax>,
+	taxRateList?: Array<TaxRate>,
 	currencySymbol?: string,
 	singleProductMode: boolean,
 	showResults: boolean,
@@ -23,10 +27,12 @@ export type FormOption = {
 	enableCatalogSaving: boolean,
 	currency?: string,
 	pricePrecision: number,
+	displayPrecision: number,
 	allowedDiscountTypes: Array<DiscountTypes>,
 	taxIncluded: 'Y' | 'N',
 	showDiscountBlock: 'Y' | 'N',
 	showTaxBlock: 'Y' | 'N',
+	showTaxSettingsSwitcher: 'Y' | 'N',
 	newItemPosition: FormElementPosition,
 	buttonsPosition: FormElementPosition,
 	visibleBlocks: Array<FormInputCode>,

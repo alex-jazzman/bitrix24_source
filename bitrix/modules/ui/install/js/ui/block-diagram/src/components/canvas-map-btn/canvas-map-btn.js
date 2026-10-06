@@ -1,8 +1,10 @@
 import './canvas-map-btn.css';
 import { computed } from 'ui.vue3';
+import { useLoc } from '../../composables';
 
 type CanvasMapBtnSetup = {
 	btnStyle: { [string]: string};
+	ariaLabel: string;
 	currentIconColor: string;
 };
 
@@ -36,10 +38,18 @@ export const CanvasMapBtn = {
 	},
 	setup(props): CanvasMapBtnSetup
 	{
+		const loc = useLoc();
 		const btnStyle = computed(() => ({
 			width: `${props.width}px`,
 			height: `${props.height}px`,
 		}));
+		const ariaLabel = computed(() => {
+			const messageId = props.isActive
+				? 'UI_BLOCK_DIAGRAM_CANVAS_MAP_CLOSE'
+				: 'UI_BLOCK_DIAGRAM_CANVAS_MAP_OPEN';
+
+			return loc.getMessage(messageId);
+		});
 
 		const currentIconColor = computed(() => {
 			return props.isActive ? props.clickedIconColor : props.iconColor;
@@ -47,17 +57,22 @@ export const CanvasMapBtn = {
 
 		return {
 			btnStyle,
+			ariaLabel,
 			currentIconColor,
 		};
 	},
 	template: `
 		<button
+			type="button"
 			:style="btnStyle"
+			:aria-label="ariaLabel"
 			class="ui-block-diagram-canvas-map-btn"
 		>
 			<svg
 				width="24"
 				height="24"
+				aria-hidden="true"
+				focusable="false"
 				class="ui-block-diagram-canvas-map-btn__icon"
 				:fill="currentIconColor"
 			>

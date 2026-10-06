@@ -23,7 +23,7 @@ export class CallCardIntegrator
 		return (new Controller())
 			.resolveCallAssessment(callId)
 			.then((response): ?CallCardReplacementApp => {
-				const { callAssessment, hasAvailableSelectorItems } = response?.data ?? {};
+				const { callAssessment, hasAvailableSelectorItems, isCallScoringV2Enabled } = response?.data ?? {};
 				if (!callAssessment)
 				{
 					return null;
@@ -33,6 +33,7 @@ export class CallCardIntegrator
 					hasAvailableSelectorItems,
 					callAssessment,
 					callId,
+					isCallScoringV2Enabled: Boolean(isCallScoringV2Enabled),
 				});
 
 				const tabTitle = Loc.getMessage('CRM_COPILOT_CALL_CARD_REPLACEMENT_TAB_TITLE');

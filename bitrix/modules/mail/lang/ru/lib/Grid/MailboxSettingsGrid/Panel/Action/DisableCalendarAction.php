@@ -1,0 +1,2 @@
+<?php
+$MESS['MAIL_MAILBOX_PANEL_ACTION_CALENDAR_DISABLE_TITLE'] = 'Выключить календарь';

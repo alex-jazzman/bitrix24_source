@@ -38,7 +38,6 @@ export const MembersField = {
 				preselectedItems: this.getPreselectedMembers(),
 				entities: [
 					EntitySelectorEntity.Department,
-					EntitySelectorEntity.Group,
 				],
 				targetContainer: this.getTargetContainer(),
 				onSelect: (userId: number, item: Item) => {

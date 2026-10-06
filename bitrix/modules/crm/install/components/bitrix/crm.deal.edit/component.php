@@ -17,7 +17,7 @@ if (IsModuleInstalled('bizproc') && !CModule::IncludeModule('bizproc'))
 
 global $USER_FIELD_MANAGER, $DB, $USER;
 
-use \Bitrix\Crm\Binding\EntityBinding;
+use Bitrix\Crm\Binding\EntityBinding;
 
 $CCrmDeal = new CCrmDeal();
 $CCrmUserType = new CCrmUserType($USER_FIELD_MANAGER, CCrmDeal::$sUFEntityID);

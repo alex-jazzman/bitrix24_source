@@ -65,14 +65,14 @@ class StartWorkflowActivity
 		const preselectedItems = [];
 		if (this.#templateId)
 		{
-			preselectedItems.push(['bizproc-template', this.#templateId]);
+			preselectedItems.push(['bizproc-start-workflow-template', this.#templateId]);
 		}
 
 		const selector = new TagSelector({
 			dialogOptions: {
 				entities: [
 					{
-						id: 'bizproc-template',
+						id: 'bizproc-start-workflow-template',
 					}
 				],
 				multiple: false,

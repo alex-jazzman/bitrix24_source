@@ -63,7 +63,7 @@ jn.define('calendar/event-list-view/sharing-button', (require, exports, module) 
 				void new BottomSheet({ component })
 					.setBackgroundColor(Color.bgNavigation.toHex())
 					.setMediumPositionPercent(70)
-					.disableContentSwipe()
+					.disableOnlyMediumPosition()
 					.open()
 				;
 			}

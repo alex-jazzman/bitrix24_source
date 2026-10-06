@@ -38,6 +38,10 @@ export const CollabNestedListContainer = {
 			type: Number,
 			required: true,
 		},
+		initialRecentSection: {
+			type: String,
+			required: true,
+		},
 		compactMode: {
 			type: Boolean,
 			default: false,
@@ -50,7 +54,7 @@ export const CollabNestedListContainer = {
 			searchMode: false,
 			searchQuery: '',
 			isSearchLoading: false,
-			currentSection: RecentType.collabDefault,
+			currentSection: null,
 			unreadMode: false,
 		};
 	},
@@ -82,7 +86,8 @@ export const CollabNestedListContainer = {
 		},
 		navigationSections(): CollabSectionItem[]
 		{
-			return Object.values(CollabSectionConfig);
+			return Object.values(CollabSectionConfig)
+				.filter((sectionItem) => sectionItem.isAvailable());
 		},
 		parentChat(): ?ImModelChat
 		{
@@ -112,6 +117,8 @@ export const CollabNestedListContainer = {
 		Logger.warn('List: Collab nested container created');
 
 		Event.bind(document, 'mousedown', this.onDocumentClick);
+
+		this.initCurrentRecentSection();
 	},
 	beforeUnmount()
 	{
@@ -119,6 +126,17 @@ export const CollabNestedListContainer = {
 		Event.unbind(document, 'mousedown', this.onDocumentClick);
 	},
 	methods: {
+		initCurrentRecentSection()
+		{
+			if (!CollabSectionConfig[this.initialRecentSection])
+			{
+				this.currentSection = RecentType.collabDefault;
+
+				return;
+			}
+
+			this.currentSection = this.initialRecentSection;
+		},
 		onDocumentClick(event: MouseEvent)
 		{
 			const sliderContainer = this.$refs.slider.$el;
@@ -160,7 +178,13 @@ export const CollabNestedListContainer = {
 		},
 		onSelectSection(selectedSection: RecentTypeItem)
 		{
+			if (selectedSection === this.currentSection)
+			{
+				return;
+			}
+
 			this.currentSection = selectedSection;
+			this.unreadMode = false;
 		},
 		onToggleUnreadMode()
 		{

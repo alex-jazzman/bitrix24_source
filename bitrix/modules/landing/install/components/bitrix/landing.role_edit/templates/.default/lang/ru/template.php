@@ -31,6 +31,11 @@ $MESS['LANDING_TPL_BUTTON_DEL_RIGHT'] = 'Удалить право';
 $MESS['LANDING_TPL_BUTTON_MODE_TO_ROLE'] = 'Переключить на ролевую модель';
 $MESS['LANDING_TPL_CAPTION'] = 'Название';
 $MESS['LANDING_ALERT_CONTENT_RELOADED'] = 'Вы не сохранили изменения, форма будет перезагружена.';
+$MESS['LANDING_TPL_COL_ACTIONS'] = 'Действия';
+$MESS['LANDING_TPL_ARIA_HINT'] = 'Подсказка к праву #ACTION#';
+$MESS['LANDING_TPL_ARIA_HINT_MORE'] = 'Подсказка со ссылкой на справку к праву #ACTION#';
+$MESS['LANDING_TPL_ARIA_RIGHT_SELECT'] = 'Право #RIGHT# для #SITE#';
+$MESS['LANDING_TPL_ARIA_REMOVE_SITE_RIGHTS'] = 'Удалить право на #SITE#';
 
 //hint in rights
 $MESS['LANDING_TPL_ADDITIONAL_ACTION_HINT_MENU24'] = 'Доступны права только на просмотр контента раздела. Если вы закрываете сотруднику доступ к просмотру, настройка остальных прав нецелесообразна';

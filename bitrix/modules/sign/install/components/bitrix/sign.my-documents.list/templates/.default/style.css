@@ -121,6 +121,18 @@
 	background-color: #F5FCDE !important;
 }
 
+/* Literal like the two state backgrounds above: the cell keeps literal light-theme
+   text colors, so a theme-aware token would invert this cell alone in dark theme. */
+.main-grid-cell:has(.sign-grid-download-background-annulled),
+.main-grid-cell:has(.sign-grid-download-background-annulled):hover
+{
+	background-color: #F0F2F5 !important;
+}
+
+.sign-grid-action-annulled {
+	margin: var(--ui-space-stack-2xs2) 0;
+}
+
 .sign-grid-action-signed-info {
 	display: flex;
 	flex-direction: column;

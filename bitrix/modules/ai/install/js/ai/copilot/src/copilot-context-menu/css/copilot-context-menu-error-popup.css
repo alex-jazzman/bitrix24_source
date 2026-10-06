@@ -24,3 +24,15 @@
 	height: 24px;
 	margin-right: 2px;
 }
+
+/* ======================================================
+ * BitrixGPT Redesign overrides (Phase 2)
+ * All rules MUST stay under .ai__copilot-scope.--bitrixgpt-redesign
+ * ====================================================== */
+
+/* P2.T5 — Error popup: background only (border stays red — --ui-color-palette-red-40, intentional).
+ * NB: scope + --bitrixgpt-redesign + ai__copilot-context-menu_error-popup are on the SAME
+ * popup-window root (see error-popup.js className) → COMPOUND selector. */
+.ai__copilot-context-menu_error-popup.--bitrixgpt-redesign {
+	background-color: var(--ui-color-bg-content-primary, #fff);
+}

@@ -21,6 +21,14 @@
 	padding: 4px 17px 9px;
 }
 
+.bx-im-sidebar-main-detail__error-container {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 16px;
+	padding: 24px 17px;
+}
+
 .bx-im-sidebar-main-detail__user {
 	display: flex;
 	height: 70px;
@@ -99,4 +107,9 @@
 .bx-im-sidebar-main-detail__context-menu-icon {
 	flex-shrink: 0;
 	cursor: pointer;
+}
+
+.bx-im-sidebar-main-detail__user .--highlight {
+	color: var(--im-color-palette-black-solid);
+	background-color: #faf16d;
 }

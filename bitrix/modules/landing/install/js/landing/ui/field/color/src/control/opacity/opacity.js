@@ -1,6 +1,6 @@
 import 'ui.design-tokens';
 
-import {Dom, Event, Tag, Text, Type} from 'main.core';
+import {Dom, Event, Tag, Text, Type, Loc} from 'main.core';
 import {IColorValue} from '../../types/i_color_value';
 import ColorValue from "../../color_value";
 import './css/opacity.css';
@@ -35,6 +35,19 @@ export default class Opacity extends BaseControl
 		Event.bind(this.arrowsUp, 'click', this.onArrowClick.bind(this, 'up'));
 		Event.bind(this.arrowsDown, 'click', this.onArrowClick.bind(this, 'down'));
 		Event.bind(this.pickerControl, 'mousedown', this.onPickerDragStart);
+
+		const defaultPercent = parseInt(this.defaultOpacity * 100);
+		Dom.attr(this.pickerControl, {
+			'role': 'slider',
+			'tabindex': 0,
+			'aria-orientation': 'horizontal',
+			'aria-valuemin': 0,
+			'aria-valuemax': 100,
+			'aria-valuenow': defaultPercent,
+			'aria-valuetext': `${defaultPercent}%`,
+			'aria-label': Loc.getMessage('LANDING_FIELD_COLOR-TAB_OPACITY'),
+		});
+		Event.bind(this.pickerControl, 'keydown', this.onSliderKeydown.bind(this));
 	}
 
 	buildLayout(): HTMLDivElement
@@ -188,6 +201,68 @@ export default class Opacity extends BaseControl
 		const opacity = parseInt((this.getValue().getOpacity()) * 100);
 		this.rangeInput.title = opacity;
 		this.rangeInput.innerHTML = opacity;
+		this.updateSliderAria();
+	}
+
+	updateSliderAria()
+	{
+		if (!this.pickerControl)
+		{
+			return;
+		}
+		const percent = parseInt(this.getValue().getOpacity() * 100);
+		if (Number.isNaN(percent))
+		{
+			// Detached or not yet laid out: keep the last valid aria value.
+			return;
+		}
+		Dom.attr(this.pickerControl, {
+			'aria-valuenow': percent,
+			'aria-valuetext': `${percent}%`,
+		});
+	}
+
+	onSliderKeydown(event: KeyboardEvent)
+	{
+		let handled = true;
+		switch (event.key)
+		{
+			case 'ArrowRight':
+			case 'ArrowUp':
+				this.onArrowClick('up');
+				break;
+			case 'ArrowLeft':
+			case 'ArrowDown':
+				this.onArrowClick('down');
+				break;
+			case 'Home':
+				this.setOpacityByPercent(0);
+				break;
+			case 'End':
+				this.setOpacityByPercent(100);
+				break;
+			default:
+				handled = false;
+				break;
+		}
+
+		if (handled)
+		{
+			event.preventDefault();
+		}
+	}
+
+	setOpacityByPercent(percent: number)
+	{
+		percent = Math.min(100, Math.max(0, parseInt(percent)));
+		this.rangeInput.title = percent;
+		this.rangeInput.innerHTML = percent;
+		const width = this.pickerControl.getBoundingClientRect().width;
+		Dom.style(this.getPicker(), {
+			left: `${width * (percent / 100)}px`,
+		});
+		this.onChange();
+		this.updateSliderAria();
 	}
 
 	onArrowClick(arrowName)
@@ -225,5 +300,6 @@ export default class Opacity extends BaseControl
 			left: `${leftPos}px`,
 		});
 		this.onChange();
+		this.updateSliderAria();
 	}
 }

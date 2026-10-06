@@ -28,6 +28,7 @@
 }
 
 .bx-im-list-container-recent__create-chat_icon {
+	flex-shrink: 0;
 	width: 44px;
 	height: 34px;
 	border-radius: 80px;

@@ -1,4 +1,5 @@
 <?php
+
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_before.php");
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_js.php");
 
@@ -9,6 +10,7 @@ if(!CModule::IncludeModule('fileman'))
  * @global CUser $USER
  * @global CMain $APPLICATION
  */
+
 if(!$USER->CanDoOperation('fileman_edit_menu_elements'))
 	$APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
 
@@ -72,7 +74,7 @@ if(isset($_REQUEST["action"]) && $_REQUEST["action"] == "delete" && check_bitrix
 		}
 		if($success)
 		{
-			$GLOBALS["APPLICATION"]->RemoveFileAccessPermission($arPath_m);
+			$APPLICATION->RemoveFileAccessPermission($arPath_m);
 
 			CUndo::ShowUndoMessage(CUndo::Add($arUndoParams));
 		}
@@ -90,14 +92,10 @@ if(isset($_REQUEST["action"]) && $_REQUEST["action"] == "delete" && check_bitrix
 	die();
 }
 
-if($io->FileExists($abs_path) && empty($new))
-	$bEdit = true;
-else
-	$bEdit = false;
+$bEdit = $io->FileExists($abs_path) && empty($new);
 
 $only_edit = !$USER->CanDoOperation('fileman_add_element_to_menu') || !$USER->CanDoFileOperation('fm_create_new_file', $arPath_m);
 
-/******* POST **********/
 //проверим права на доступ в эту папку
 if(!$USER->CanDoOperation('fileman_edit_existent_files') || !$USER->CanDoFileOperation('fm_edit_existent_file', $arPath_m) || (!$bEdit && $only_edit))
 {
@@ -107,70 +105,66 @@ else
 {
 	if ($_SERVER["REQUEST_METHOD"] == "POST" && $_POST['save'] == 'Y')
 	{
-		$ids = $_POST['ids'] ?? [];
-		if (!is_array($ids))
-		{
-			$ids = array();
-		}
-
-		$res = CFileMan::GetMenuArray($abs_path);
-
-		$aMenuLinksTmp = $res["aMenuLinks"];
-		$aMenuLinksTmp_ = Array();
-
-		//соберем $aMenuLinksTmp из того что пришло с формы
-		$aMenuSort = Array();
-		foreach ($ids as $num)
-		{
-			if (!isset($aMenuLinksTmp[$num-1]) && $only_edit)
-				continue;
-
-			if (isset($_POST["del_".$num]) && $_POST["del_".$num] == "Y" && !$only_edit)
-				continue;
-
-			$aMenuItem = Array($_POST["text_".$num] ?? '', $_POST["link_".$num] ?? '');
-
-			$arAdditionalParams = array(array(), array());
-			if (check_bitrix_sessid() && !empty($_POST['additional_params_'.$num]) && CheckSerializedData($_POST['additional_params_'.$num]))
-			{
-				$arAdditionalParams = @unserialize($_POST['additional_params_'.$num], ['allowed_classes' => false]);
-			}
-
-			$aMenuItem = array_merge($aMenuItem, $arAdditionalParams);
-
-			$aMenuLinksTmp_[] = $aMenuItem;
-			$aMenuSort[] = intval($_POST["sort_".$num] ?? 0);
-		}
-
-		$aMenuLinksTmp = $aMenuLinksTmp_;
-
-		for ($i = 0, $n = count($aMenuSort); $i < $n - 1; $i++)
-		{
-			for ($j = $i + 1; $j < $n; $j++)
-			{
-				if ($aMenuSort[$i] > $aMenuSort[$j])
-				{
-					$tmpSort = $aMenuLinksTmp[$i];
-					$aMenuLinksTmp[$i] = $aMenuLinksTmp[$j];
-					$aMenuLinksTmp[$j] = $tmpSort;
-
-					$tmpSort = $aMenuSort[$i];
-					$aMenuSort[$i] = $aMenuSort[$j];
-					$aMenuSort[$j] = $tmpSort;
-				}
-			}
-		}
-
-		//теперь $aMenuLinksTmp прямо в таком готовом виде, что хоть меню рисуй :-)
 		if (!check_bitrix_sessid())
 		{
 			$strWarning = GetMessage('MENU_EDIT_SESSION_EXPIRED');
 		}
 		else
 		{
+			$ids = $_POST['ids'] ?? [];
+			if (!is_array($ids))
+			{
+				$ids = array();
+			}
+
+			$res = CFileMan::GetMenuArray($abs_path);
+
+			$aMenuLinks = $res["aMenuLinks"];
+			$formMenuLinks = Array();
+
+			//соберем $aMenuLinksTmp из того что пришло с формы
+			$aMenuSort = Array();
+			foreach ($ids as $num)
+			{
+				if (!isset($aMenuLinks[$num-1]) && $only_edit)
+					continue;
+
+				if (isset($_POST["del_".$num]) && $_POST["del_".$num] == "Y" && !$only_edit)
+					continue;
+
+				$aMenuItem = [
+					$_POST["text_".$num] ?? '',
+					$_POST["link_".$num] ?? '',
+					$aMenuLinks[$num-1][2] ?? [],
+					$aMenuLinks[$num-1][3] ?? [],
+					$aMenuLinks[$num-1][4] ?? '',
+				];
+
+				$formMenuLinks[] = $aMenuItem;
+				$aMenuSort[] = intval($_POST["sort_".$num] ?? 0);
+			}
+
+			for ($i = 0, $n = count($aMenuSort); $i < $n - 1; $i++)
+			{
+				for ($j = $i + 1; $j < $n; $j++)
+				{
+					if ($aMenuSort[$i] > $aMenuSort[$j])
+					{
+						$tmpSort = $formMenuLinks[$i];
+						$formMenuLinks[$i] = $formMenuLinks[$j];
+						$formMenuLinks[$j] = $tmpSort;
+
+						$tmpSort = $aMenuSort[$i];
+						$aMenuSort[$i] = $aMenuSort[$j];
+						$aMenuSort[$j] = $tmpSort;
+					}
+				}
+			}
+
 			$f = $io->GetFile($abs_path);
 
 			if ($io->FileExists($abs_path))
+			{
 				$arUndoParams = array(
 					'module' => 'fileman',
 					'undoType' => 'edit_menu',
@@ -180,7 +174,9 @@ else
 						'content' => $f->GetContents()
 					)
 				);
+			}
 			else
+			{
 				$arUndoParams = array(
 					'module' => 'fileman',
 					'undoType' => 'edit_menu',
@@ -191,15 +187,18 @@ else
 						'site' => $site
 					)
 				);
+			}
 
-			CFileMan::SaveMenu(Array($site, $menufilename), $aMenuLinksTmp, $res["sMenuTemplate"]);
+			CFileMan::SaveMenu(Array($site, $menufilename), $formMenuLinks, $res["sMenuTemplate"]);
 
 			if(COption::GetOptionString("fileman", "log_menu", "Y")=="Y")
 			{
 				CEventLog::Log("content", ($bEdit ? "MENU_EDIT" : "MENU_ADD"), "fileman", $path);
 			}
 			if($e = $APPLICATION->GetException())
+			{
 				$strWarning = $e->GetString();
+			}
 
 			if($strWarning == '')
 			{
@@ -217,7 +216,6 @@ top.BX.reload('<?=CUtil::JSEscape($_REQUEST['back_url'] ?? '');?>', true);
 		}
 	}
 }
-/******* /POST **********/
 
 $arMenuTypes = GetMenuTypes($site);
 
@@ -259,15 +257,15 @@ if($strWarning <> "")
 // ======================== Show content ============================= //
 $obJSPopup->StartContent();
 
-$aMenuLinksTmp = [];
+$aMenuLinks = [];
 if($bEdit && $strWarning == '')
 {
 	$res = CFileMan::GetMenuArray($abs_path);
-	$aMenuLinksTmp = $res["aMenuLinks"];
+	$aMenuLinks = $res["aMenuLinks"];
 }
 
-if(!is_array($aMenuLinksTmp))
-	$aMenuLinksTmp = Array();
+if(!is_array($aMenuLinks))
+	$aMenuLinks = Array();
 ?>
 	<input type="hidden" name="save" value="Y" />
 	<table border="0" cellpadding="0" cellspacing="0" class="bx-width100 menu-table">
@@ -286,16 +284,15 @@ if(!is_array($aMenuLinksTmp))
 
 	<div id="bx_menu_layout" class="bx-menu-layout"><?php
 	$itemcnt = 0;
-	for($i = 1, $n = count($aMenuLinksTmp); $i <= $n; $i++):
+	for($i = 1, $n = count($aMenuLinks); $i <= $n; $i++):
 		$itemcnt++;
-		$aMenuLinksItem = $aMenuLinksTmp[$i-1];
+		$aMenuLinksItem = $aMenuLinks[$i-1];
 	?><div class="bx-menu-placement" id="bx_menu_placement_<?=$i?>"><div class="bx-edit-menu-item" id="bx_menu_row_<?=$i?>"><table border="0" cellpadding="0" cellspacing="0" class="bx-width100 internal menu-table"><tbody>
 	<tr>
 
 		<td><input type="hidden" name="sort_<?=$i?>" value="<?= $i*10?>" />
 		<input type="hidden" name="ids[]" value="<?=$i?>" />
 		<input type="hidden" name="del_<?=$i?>" value="N" />
-		<input type="hidden" name="additional_params_<?=$i?>" value="<?=htmlspecialcharsex(serialize(array($aMenuLinksItem[2], $aMenuLinksItem[3], $aMenuLinksItem[4])))?>" />
 		<span class="rowcontrol drag" title="<?=GetMessage('MENU_EDIT_TOOLTIP_DRAG')?>"></span>
 		</td>
 		<td>
@@ -328,7 +325,7 @@ CAdminFileDialog::ShowScript(
 			<span onclick="if (!GLOBAL_bDisableActions) {currentLink = '<?=$i?>'; OpenFileBrowserWindFile_<?=$i?>();}" class="rowcontrol folder" title="<?=GetMessage('MENU_EDIT_TOOLTIP_FD')?>"></span>
 		</td>
 		<td><span onclick="menuMoveUp(<?=$i?>)" class="rowcontrol up" style="visibility: <?=($i == 1 ? 'hidden' : 'visible')?>" title="<?=GetMessage('MENU_EDIT_TOOLTIP_UP')?>"></span></td>
-		<td><span onclick="menuMoveDown(<?=$i?>)" class="rowcontrol down" style="visibility: <?=($i == count($aMenuLinksTmp) ? 'hidden' : 'visible')?>" title="<?=GetMessage('MENU_EDIT_TOOLTIP_DOWN')?>"></span></td>
+		<td><span onclick="menuMoveDown(<?=$i?>)" class="rowcontrol down" style="visibility: <?=($i == count($aMenuLinks) ? 'hidden' : 'visible')?>" title="<?=GetMessage('MENU_EDIT_TOOLTIP_DOWN')?>"></span></td>
 		<td><span onclick="menuDelete(<?=$i?>)" class="rowcontrol delete" title="<?=GetMessage('MENU_EDIT_TOOLTIP_DELETE')?>"></span></td>
 	</tr>
 	</tbody></table></div></div><?php endfor?>
@@ -679,7 +676,7 @@ BX.ready(function ()
 	jsDD.Reset();
 
 <?php
-for ($i = 1, $n = count($aMenuLinksTmp); $i <= $n; $i++):
+for ($i = 1, $n = count($aMenuLinks); $i <= $n; $i++):
 ?>
 	jsDD.registerDest(BX('bx_menu_placement_<?=$i?>'));
 

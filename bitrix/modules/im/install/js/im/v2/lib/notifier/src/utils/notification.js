@@ -8,8 +8,9 @@ export type NotificationAction = {
 type NotificationParams = {
 	autoHideDelay?: number,
 	actions?: NotificationAction[],
+	id?: string,
 };
 
 export const showNotification = (text: string, params: NotificationParams): void => {
-	BX.UI.Notification.Center.notify({ content: text, ...params });
+	BX.UI.Notification.Center.notify({ content: text, blinkOnUpdate: false, ...params });
 };

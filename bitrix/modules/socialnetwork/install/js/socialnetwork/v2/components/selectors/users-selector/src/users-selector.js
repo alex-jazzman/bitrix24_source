@@ -93,20 +93,6 @@ export class UsersSelector
 			});
 		}
 
-		if (optionsEntities.includes(EntitySelectorEntity.Group))
-		{
-			entities.push({
-				id: EntitySelectorEntity.Project,
-				itemOptions: {
-					default: {
-						entityType: EntitySelectorEntity.Group,
-						link: '',
-						linkTitle: '',
-					},
-				},
-			});
-		}
-
 		return entities;
 	}
 

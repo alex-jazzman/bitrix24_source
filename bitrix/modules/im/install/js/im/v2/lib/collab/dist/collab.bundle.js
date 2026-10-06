@@ -63,6 +63,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		getLeaveErrorText() {
 			return getMessage('IM_NOTIFIER_COLLAB_LEAVE_ERROR', 'IM_NOTIFIER_COLLAB_V2_LEAVE_ERROR');
 		},
+		getLeaveFromStructureErrorText() {
+			return getMessage('IM_NOTIFIER_COLLAB_LEAVE_STRUCTURE_ERROR', 'IM_NOTIFIER_COLLAB_V2_LEAVE_STRUCTURE_ERROR');
+		},
 		getKickConfirmTitleText() {
 			return getMessage('IM_LIB_CONFIRM_USER_KICK_FROM_COLLAB_TITLE', 'IM_LIB_CONFIRM_USER_KICK_FROM_COLLAB_V2_TITLE');
 		},

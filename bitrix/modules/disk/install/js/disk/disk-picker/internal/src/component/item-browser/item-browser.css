@@ -1,0 +1,61 @@
+.disk-picker-item-browser {
+	display: flex;
+	flex-direction: column;
+	min-height: 0;
+	height: 100%;
+	padding: var(--ui-space-inset-sm) var(--ui-space-inset-sm) 0;
+	overflow-y: auto;
+}
+
+.disk-picker-item-browser__status {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+	border: 0;
+}
+
+.disk-picker-item-browser__group-title {
+	display: flex;
+	align-items: center;
+	flex: 0 0 28px;
+	height: 28px;
+	padding: var(--ui-space-inset-2xs) var(--ui-space-inset-xs);
+	color: var(--ui-color-base-4);
+}
+
+.disk-picker-item-browser__spacer {
+	flex: 0 0 auto;
+	width: 100%;
+	pointer-events: none;
+}
+
+.disk-picker-item-browser__sentinel {
+	flex: 0 0 1px;
+	width: 100%;
+	height: 1px;
+}
+
+.disk-picker-item-browser__more {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: var(--ui-space-inset-sm);
+}
+
+.disk-picker-item-browser__retry {
+	padding: var(--ui-space-inset-2xs) var(--ui-space-inset-sm);
+	border: none;
+	background: none;
+	cursor: pointer;
+	color: var(--ui-color-accent-main-link);
+	transition: color 200ms ease;
+}
+
+.disk-picker-item-browser__retry:hover {
+	color: var(--ui-color-accent-main-primary);
+}

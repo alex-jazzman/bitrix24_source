@@ -13,9 +13,12 @@ use Bitrix\Mail\Access\Permission\PermissionVariablesDictionary;
 use Bitrix\Mail\Helper\Mailbox\MailboxConnectionRequestService;
 use Bitrix\Mail\Helper\Entity\Department\DepartmentProvider;
 use Bitrix\Mail\Helper\Entity\User\User;
+use Bitrix\Mail\Helper\Mailbox\CrmImapFilter;
 use Bitrix\Mail\Helper\Mailbox\MailboxSyncManager;
 use Bitrix\Mail\Internals\MailEntityOptionsTable;
 use Bitrix\Mail\Internals\Search\MailboxListSearchIndexTable;
+use Bitrix\Mail\Integration\MailService\MigrationStatus;
+use Bitrix\Mail\Integration\MailService\MigrationStatusProvider;
 use Bitrix\Mail\MailServicesTable;
 use Bitrix\Main\Access\AccessCode;
 use Bitrix\Main\Application;
@@ -90,6 +93,7 @@ class MailboxSettingsGridHelper
 	 *     LAST_ACTIVITY: int|null,
 	 *     MAILBOX_NAME: string,
 	 *     CRM_ENABLED: 'Y'|'N',
+	 *     CRM_FILTER_ACTIVE: bool,
 	 *     HAS_ERROR: bool,
 	 *     CRM_LEAD_RESP_DATA: array<array{
 	 *         id: int,
@@ -215,6 +219,7 @@ class MailboxSettingsGridHelper
 	 *     LAST_ACTIVITY: int|null,
 	 *     MAILBOX_NAME: string,
 	 *     CRM_ENABLED: 'Y'|'N',
+	 *     CRM_FILTER_ACTIVE: bool,
 	 *     CRM_LEAD_RESP_DATA: array<array{
 	 *         id: int,
 	 *         name: string,
@@ -242,6 +247,14 @@ class MailboxSettingsGridHelper
 	{
 		$mailboxIds = array_column($mailboxes, 'ID');
 		$emails = array_column($mailboxes, 'EMAIL');
+		try
+		{
+			$migrationStatuses = (new MigrationStatusProvider())->getLatestForMailboxes($mailboxIds);
+		}
+		catch (\Throwable)
+		{
+			$migrationStatuses = [];
+		}
 
 		$emailLimitsAndCounters = $this->getEmailLimitsAndCounters($emails);
 
@@ -270,6 +283,8 @@ class MailboxSettingsGridHelper
 		$errorMailboxIds = MailboxSyncManager::getMailboxesWithConnectionErrorForUsers(array_unique($ownerIds));
 		$errorMailboxIdsMap = array_flip($errorMailboxIds);
 
+		$crmFilterMap = CrmImapFilter::getConnectedMap($mailboxIds);
+
 		$allUserIds = array_unique(array_filter($allUserIds));
 		$users = $this->userProvider->getEntitiesInfo($allUserIds);
 
@@ -277,16 +292,21 @@ class MailboxSettingsGridHelper
 		$departments = $this->departmentProvider->getEntitiesInfo($allDepartmentAccessCodes);
 
 		$allEntitiesInfo = [];
-		foreach ($entityAccessData[self::USER_ENTITY] as $userAccessData)
+		foreach (($entityAccessData[self::USER_ENTITY] ?? []) as $userAccessData)
 		{
 			$keyValue = (string)$userAccessData['ENTITY_ID'];
-			$allEntitiesInfo[$userAccessData['MAILBOX_ID']][] = $users[$keyValue];
+			$user = $users[$keyValue] ?? null;
+
+			if ($user)
+			{
+				$allEntitiesInfo[$userAccessData['MAILBOX_ID']][] = $user;
+			}
 		}
 
-		foreach ($entityAccessData[self::DEPARTMENT_ENTITY] as $departmentAccessData)
+		foreach (($entityAccessData[self::DEPARTMENT_ENTITY] ?? []) as $departmentAccessData)
 		{
 			$keyValue = str_replace('DR', 'D', $departmentAccessData['ACCESS_CODE']);
-			$department = $departments[$keyValue];
+			$department = $departments[$keyValue] ?? null;
 
 			if ($department)
 			{
@@ -316,7 +336,15 @@ class MailboxSettingsGridHelper
 				$ownerData = $users[$mailbox['OWNER_ID']];
 			}
 
-			$rows[] = $this->prepareGridRow($mailbox, $entitiesInfo, $crmLeadRespData, $ownerData, $errorMailboxIdsMap);
+			$rows[] = $this->prepareGridRow(
+				$mailbox,
+				$entitiesInfo,
+				$crmLeadRespData,
+				$ownerData,
+				$errorMailboxIdsMap,
+				$crmFilterMap[(int)$mailbox['ID']] ?? false,
+				$migrationStatuses[(int)$mailbox['ID']] ?? null,
+			);
 		}
 
 		return $rows;
@@ -441,6 +469,7 @@ class MailboxSettingsGridHelper
 	 *     LAST_ACTIVITY: int|null,
 	 *     MAILBOX_NAME: string,
 	 *     CRM_ENABLED: 'Y'|'N',
+	 *     CRM_FILTER_ACTIVE: bool,
 	 *     HAS_ERROR: bool,
 	 *     CRM_LEAD_RESP_DATA: array<array{
 	 *         id: int,
@@ -463,6 +492,8 @@ class MailboxSettingsGridHelper
 		array $crmLeadRespData = [],
 		?User $ownerData = null,
 		array $errorMailboxIdsMap = [],
+		bool $isCrmFilterActive = false,
+		?MigrationStatus $migrationStatus = null,
 	): array
 	{
 		$dataFromOptions = $this->extractDataFromOptions($mailbox);
@@ -514,6 +545,7 @@ class MailboxSettingsGridHelper
 			'LAST_ACTIVITY' => $mailbox['LAST_ACTIVITY'] ? $mailbox['LAST_ACTIVITY']->getTimestamp() : null,
 			'MAILBOX_NAME' => $mailbox['NAME'],
 			'CRM_ENABLED' => $dataFromOptions['crmEnabled'],
+			'CRM_FILTER_ACTIVE' => $isCrmFilterActive,
 			'CRM_LEAD_RESP_DATA' => $crmLeadRespFormattedData,
 			'SENDER_NAME' => $mailbox['USERNAME'],
 			'VOLUME_MB' => Loc::getMessage(
@@ -522,6 +554,8 @@ class MailboxSettingsGridHelper
 			),
 			'HAS_ERROR' => isset($errorMailboxIdsMap[$mailbox['ID']]),
 			'CAN_EDIT' => $mailbox['CAN_EDIT'] ?? false,
+			'MIGRATION_STATUS' => $migrationStatus?->publicStatus,
+			'MIGRATION_ACTIVE' => $migrationStatus?->visibility === 'active',
 		];
 	}
 
@@ -1016,7 +1050,7 @@ class MailboxSettingsGridHelper
 				case 'EMAIL':
 					if (is_string($value))
 					{
-						$query->whereLike('EMAIL', '%' . $value . '%');
+						$this->applyEmailFilterToQuery($query, $value);
 					}
 
 					break;
@@ -1231,6 +1265,31 @@ class MailboxSettingsGridHelper
 					break;
 			}
 		}
+	}
+
+	/**
+	 * The value holds either a single substring typed in the filter or a comma separated list of
+	 * addresses passed from another screen. A typed substring keeps the LIKE search, a machine made
+	 * list of complete addresses is matched exactly and independently of the stored letter case.
+	 */
+	private function applyEmailFilterToQuery(Query $query, string $value): void
+	{
+		$emails = array_filter(
+			array_map('trim', explode(',', $value)),
+			static fn(string $email): bool => $email !== '',
+		);
+
+		if (count($emails) < 2)
+		{
+			$query->whereLike('EMAIL', '%' . $value . '%');
+
+			return;
+		}
+
+		$query
+			->registerRuntimeField(new ExpressionField('EMAIL_LOWER', 'LOWER(%s)', 'EMAIL'))
+			->whereIn('EMAIL_LOWER', array_values(array_unique(array_map('mb_strtolower', $emails))))
+		;
 	}
 
 	private function extractUserIdsFromFilterValue(array $values, ?string $accessCode = ''): array

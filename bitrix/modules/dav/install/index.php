@@ -51,6 +51,9 @@ Class dav extends CModule
 		RegisterModuleDependences("main", "OnBeforeUserTypeDelete", "dav", "CDavExchangeMail", "handleUserTypeDelete");
 		RegisterModuleDependences("main", "OnApplicationsBuildList", "main", '\Bitrix\Dav\Application', "onApplicationsBuildList", 100, "modules/dav/lib/application.php"); // main here is not a mistake
 
+		// GC agent: sweep expired WebDAV locks (safety net for the lazy per-request purge).
+		CAgent::AddAgent('CDavVirtualFileSystem::collectExpiredLocks();', 'dav', 'N', 900);
+
 		return true;
 	}
 
@@ -75,6 +78,8 @@ Class dav extends CModule
 		UnRegisterModuleDependences("main", "OnAfterUserUpdate", "dav", "CDavExchangeMail", "handleUserChange");
 		UnRegisterModuleDependences("main", "OnBeforeUserTypeDelete", "dav", "CDavExchangeMail", "handleUserTypeDelete");
 		UnRegisterModuleDependences("main", "OnApplicationsBuildList", "main", '\Bitrix\Dav\Application', "onApplicationsBuildList", "modules/dav/lib/application.php"); // main here is not a mistake
+
+		CAgent::RemoveAgent('CDavVirtualFileSystem::collectExpiredLocks();', 'dav');
 
 		UnRegisterModule("dav");
 

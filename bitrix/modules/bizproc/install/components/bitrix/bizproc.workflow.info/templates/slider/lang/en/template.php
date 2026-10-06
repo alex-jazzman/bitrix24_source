@@ -19,6 +19,7 @@ $MESS["BPWFI_SLIDER_NOT_MY_PROCESS"] = "You are viewing #USER#'s workflow.";
 $MESS["BPWFI_SLIDER_NOT_MY_TASK"] = "You are viewing #USER#'s assignment";
 $MESS["BPWFI_SLIDER_PROCESS"] = "Workflow";
 $MESS["BPWFI_SLIDER_STATUS"] = "Status";
+$MESS["BPWFI_SLIDER_TABS_NAV_LABEL"] = "Form sections";
 $MESS["BPWFI_SLIDER_TASK"] = "Assignment";
 $MESS["BPWFI_SLIDER_TIMELINE_MSGVER_1"] = "Journal";
 $MESS["BPWFI_SLIDER_TYPE"] = "Workflow type";

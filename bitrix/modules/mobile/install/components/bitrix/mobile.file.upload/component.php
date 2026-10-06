@@ -1,4 +1,7 @@
-<?
+<?php
+
+use Bitrix\Main\Web\Uri;
+
 if(!defined("B_PROLOG_INCLUDED")||B_PROLOG_INCLUDED!==true)die();
 
 $arParams['MAX_FILE_SIZE'] = intval($arParams['MAX_FILE_SIZE']);
@@ -245,7 +248,11 @@ if (
 		$dbRes = CFile::GetList(array(), array("@ID" => implode(",", $arParams["INPUT_VALUE"])));
 		while ($arFile = $dbRes->GetNext())
 		{
-			$arFile['URL'] = CHTTP::URN2URI($APPLICATION->GetCurPageParam("mfi_mode=down&fileID=".$arFile['ID']."&cid=".$arResult['CONTROL_UID']."&".bitrix_sessid_get(), array("mfi_mode", "fileID", "cid")));
+			$url = $APPLICATION->GetCurPageParam(
+				"mfi_mode=down&fileID=".$arFile['ID']."&cid=".$arResult['CONTROL_UID']."&".bitrix_sessid_get(),
+				array("mfi_mode", "fileID", "cid")
+			);
+			$arFile['URL'] = (string)(new Uri($url))->toAbsolute();
 			$arFile['FILE_SIZE_FORMATTED'] = CFile::FormatSize($arFile['FILE_SIZE']);
 			$arResult['FILES'][$arFile['ID']] = $arFile;
 			$_SESSION["MFU_UPLOADED_FILES_".$GLOBALS["USER"]->GetId()."_".$arResult['CONTROL_UID']][] = $arFile['ID'];

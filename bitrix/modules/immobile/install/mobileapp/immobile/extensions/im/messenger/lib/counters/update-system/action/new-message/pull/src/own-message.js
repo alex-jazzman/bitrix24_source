@@ -12,19 +12,32 @@ jn.define('im/messenger/lib/counters/update-system/action/new-message/pull/src/o
 		/**
 		 * @param {number} chatId
 		 * @param {CounterModelState} counterState
+		 * @param {?number} messageId
 		 */
 		constructor({
 			chatId,
 			counterState,
+			messageId = null,
 		})
 		{
 			super();
 			this.chatId = chatId;
 			this.counterState = counterState;
+			this.messageId = messageId;
 		}
 
 		async execute(repository)
 		{
+			if (await this.isOutdatedByLastMessageId(this.chatId, this.messageId))
+			{
+				this.logger.warn('NewOwnPullMessageAction: skip outdated message event', {
+					chatId: this.chatId,
+					messageId: this.messageId,
+				});
+
+				return;
+			}
+
 			await repository.deleteOperationsByChatId(this.chatId);
 			await repository.saveCounterStateList([{
 				...this.counterState,

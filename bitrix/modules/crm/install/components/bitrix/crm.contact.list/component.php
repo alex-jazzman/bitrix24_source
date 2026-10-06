@@ -12,6 +12,7 @@ use Bitrix\Crm\Component\EntityList\UserField\GridHeaders;
 use Bitrix\Crm\ContactAddress;
 use Bitrix\Crm\EntityAddress;
 use Bitrix\Crm\EntityAddressType;
+use Bitrix\Crm\Filter\RelatedEntity;
 use Bitrix\Crm\Format\AddressFormatter;
 use Bitrix\Crm\Integrity\Volatile;
 use Bitrix\Crm\Service\Container;
@@ -21,6 +22,7 @@ use Bitrix\Crm\Tracking;
 use Bitrix\Crm\WebForm\Manager as WebFormManager;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Web\Uri;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)
 {
@@ -817,6 +819,10 @@ if(!$arResult['IS_EXTERNAL_FILTER'])
 	$arFilter += $filterOptions->getFilter($arResult['FILTER']);
 }
 
+$relatedEntitiesParameters = ['filter' => $arFilter];
+RelatedEntity\GridFilterApplier::getDefault()->apply($relatedEntitiesParameters, CCrmOwnerType::Contact);
+$arFilter = $relatedEntitiesParameters['filter'];
+
 $CCrmUserType->PrepareListFilterValues($arResult['FILTER'], $arFilter, $arResult['GRID_ID']);
 
 $USER_FIELD_MANAGER->AdminListAddFilter(CCrmContact::$sUFEntityID, $arFilter);
@@ -1068,21 +1074,18 @@ $arResult['ENABLE_TASK'] = IsModuleInstalled('tasks');
 
 if($arResult['ENABLE_TASK'])
 {
-	$arResult['TASK_CREATE_URL'] = CHTTP::urlAddParams(
-		CComponentEngine::MakePathFromTemplate(
+	$arResult['TASK_CREATE_URL'] = str_replace('__ENTITY_KEYS__', '#ENTITY_KEYS#', (string)(new Uri(CComponentEngine::MakePathFromTemplate(
 			COption::GetOptionString('tasks', 'paths_task_user_edit', ''),
 			array(
 				'task_id' => 0,
 				'user_id' => $userID
 			)
-		),
-		array(
-			'UF_CRM_TASK' => '#ENTITY_KEYS#',
-			'TITLE' => urlencode(GetMessage('CRM_TASK_TITLE_PREFIX')),
-			'TAGS' => urlencode(GetMessage('CRM_TASK_TAG')),
-			'back_url' => urlencode($arParams['PATH_TO_CONTACT_LIST'])
-		)
-	);
+		)))->addParams(array(
+			'UF_CRM_TASK' => '__ENTITY_KEYS__',
+			'TITLE' => GetMessage('CRM_TASK_TITLE_PREFIX'),
+			'TAGS' => GetMessage('CRM_TASK_TAG'),
+			'back_url' => $arParams['PATH_TO_CONTACT_LIST'],
+		)));
 }
 
 // Export all fields
@@ -1724,7 +1727,7 @@ foreach($arResult['CONTACT'] as &$arContact)
 		if ($isInExportMode)
 		{
 			if ($arFile = CFile::GetFileArray($arContact['PHOTO']))
-				$arContact['PHOTO'] = CHTTP::URN2URI($arFile["SRC"]);
+				$arContact['PHOTO'] = (string)(new Uri($arFile["SRC"]))->toAbsolute();
 		}
 		else
 		{
@@ -1797,13 +1800,10 @@ foreach($arResult['CONTACT'] as &$arContact)
 
 	if ($arResult['PERM_DEAL'])
 	{
-		$arContact['PATH_TO_DEAL_EDIT'] = CHTTP::urlAddParams(
-			CComponentEngine::MakePathFromTemplate(
+		$arContact['PATH_TO_DEAL_EDIT'] = (string)(new Uri(CComponentEngine::MakePathFromTemplate(
 				$arResult['ENABLE_SLIDER'] ? $arParams['PATH_TO_DEAL_DETAILS'] : $arParams['PATH_TO_DEAL_EDIT'],
 				array('deal_id' => 0)
-			),
-			array('contact_id' => $entityID, 'company_id' => $arContact['COMPANY_ID'])
-		);
+			)))->addParams(array('contact_id' => $entityID, 'company_id' => $arContact['COMPANY_ID']));
 	}
 
 	$analyticsEventBuilder = \Bitrix\Crm\Integration\Analytics\Builder\Entity\CopyOpenEvent::createDefault(\CCrmOwnerType::Contact)
@@ -1848,14 +1848,11 @@ foreach($arResult['CONTACT'] as &$arContact)
 			->getUri()
 		;
 	}
-	$arContact['PATH_TO_CONTACT_DELETE'] =  CHTTP::urlAddParams(
-		$bInternal ? $APPLICATION->GetCurPage() : $arParams['PATH_TO_CONTACT_LIST'],
-		array(
+	$arContact['PATH_TO_CONTACT_DELETE'] =  (string)(new Uri($bInternal ? $APPLICATION->GetCurPage() : $arParams['PATH_TO_CONTACT_LIST']))->addParams(array(
 			'action_'.$arResult['GRID_ID'] => 'delete',
 			'ID' => $entityID,
 			'sessid' => $arResult['SESSION_ID']
-		)
-	);
+		));
 	$arContact['PATH_TO_USER_PROFILE'] = CComponentEngine::MakePathFromTemplate(
 		$arParams['PATH_TO_USER_PROFILE'],
 		array('user_id' => $arContact['ASSIGNED_BY'] ?? 0)
@@ -1921,41 +1918,32 @@ foreach($arResult['CONTACT'] as &$arContact)
 
 	if ($arResult['ENABLE_TASK'])
 	{
-		$arContact['PATH_TO_TASK_EDIT'] = CHTTP::urlAddParams(
-			CComponentEngine::MakePathFromTemplate(
+		$arContact['PATH_TO_TASK_EDIT'] = (string)(new Uri(CComponentEngine::MakePathFromTemplate(
 				COption::GetOptionString('tasks', 'paths_task_user_edit', ''),
 				array(
 					'task_id' => 0,
 					'user_id' => $userID
 				)
-			),
-			array(
+			)))->addParams(array(
 				'UF_CRM_TASK' => "C_{$entityID}",
 				'TITLE' => urlencode(GetMessage('CRM_TASK_TITLE_PREFIX').' '),
 				'TAGS' => urlencode(GetMessage('CRM_TASK_TAG')),
 				'back_url' => urlencode($arParams['PATH_TO_CONTACT_LIST'])
-			)
-		);
+			));
 	}
 
 	if (IsModuleInstalled('sale'))
 	{
 		$arContact['PATH_TO_QUOTE_ADD'] =
-			CHTTP::urlAddParams(
-				CComponentEngine::makePathFromTemplate(
+			(string)(new Uri(CComponentEngine::makePathFromTemplate(
 					$arParams['PATH_TO_QUOTE_EDIT'],
 					array('quote_id' => 0)
-				),
-				array('contact_id' => $entityID)
-			);
+				)))->addParams(array('contact_id' => $entityID));
 		$arContact['PATH_TO_INVOICE_ADD'] =
-			CHTTP::urlAddParams(
-				CComponentEngine::makePathFromTemplate(
+			(string)(new Uri(CComponentEngine::makePathFromTemplate(
 					$arParams['PATH_TO_INVOICE_EDIT'],
 					array('invoice_id' => 0)
-				),
-				array('contact' => $entityID)
-			);
+				)))->addParams(array('contact' => $entityID));
 	}
 
 	if ($arResult['ENABLE_BIZPROC'])
@@ -1966,13 +1954,10 @@ foreach($arResult['CONTACT'] as &$arContact)
 		$arDocumentStates = is_array($allDocumentStates["CONTACT_{$entityID}"] ?? null) ?
 			$allDocumentStates["CONTACT_{$entityID}"] : [];
 
-		$arContact['PATH_TO_BIZPROC_LIST'] =  CHTTP::urlAddParams(
-			CComponentEngine::MakePathFromTemplate(
+		$arContact['PATH_TO_BIZPROC_LIST'] =  (string)(new Uri(CComponentEngine::MakePathFromTemplate(
 				$arParams['PATH_TO_CONTACT_SHOW'],
 				array('contact_id' => $entityID)
-			),
-			array('CRM_CONTACT_SHOW_V12_active_tab' => 'tab_bizproc')
-		);
+			)))->addParams(array('CRM_CONTACT_SHOW_V12_active_tab' => 'tab_bizproc'));
 
 		$totalTaskQty = 0;
 		$docStatesQty = count($arDocumentStates);
@@ -2155,10 +2140,7 @@ if($arResult['ENABLE_TOOLBAR'])
 
 	if(!empty($addParams))
 	{
-		$arResult['PATH_TO_CONTACT_ADD'] = CHTTP::urlAddParams(
-			$arResult['PATH_TO_CONTACT_ADD'],
-			$addParams
-		);
+		$arResult['PATH_TO_CONTACT_ADD'] = (string)(new Uri($arResult['PATH_TO_CONTACT_ADD']))->addParams($addParams);
 	}
 }
 

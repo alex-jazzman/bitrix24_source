@@ -4,6 +4,9 @@ module.exports = {
 		css: 'dist/whatsApp-popup-changes-sending-messages.bundle.css',
 		js: 'dist/whatsApp-popup-changes-sending-messages.bundle.js',
 	},
+	cssImages: {
+		type: 'copy',
+	},
 	namespace: 'BX.Booking.Component',
 	browserslist: true,
 };

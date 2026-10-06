@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports, im_v2_lib_feature, main_core, im_v2_component_message_base, im_v2_component_message_elements, im_v2_lib_copilot, im_v2_lib_helpdesk, im_v2_lib_notifier, im_v2_lib_parser, im_v2_lib_utils, ui_iconSet_api_vue, im_v2_const, im_v2_application_core, im_v2_lib_feedback, im_v2_lib_logger, im_v2_lib_rest) {
+(function (exports, im_v2_lib_feature, main_core, im_v2_component_message_base, im_v2_component_message_elements, im_v2_lib_copilot, im_v2_lib_helpdesk, im_v2_lib_notifier, im_v2_lib_parser, im_v2_lib_utils, im_v2_const, im_v2_lib_analytics, ui_iconSet_api_vue, im_v2_application_core, im_v2_lib_feedback, im_v2_lib_logger, im_v2_lib_rest) {
 	'use strict';
 
 	// @vue/component
@@ -388,9 +388,39 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			},
 			hasKeyboard() {
 				return this.message.keyboard.length > 0;
+			},
+			suggestsCount() {
+				return this.message.keyboard.filter(button => button.type === im_v2_const.KeyboardButtonType.button).length;
 			}
 		},
+		mounted() {
+			if (this.hasKeyboard) {
+				this.subscribeToVisibility();
+			}
+		},
+		beforeUnmount() {
+			this.unsubscribeFromVisibility();
+		},
 		methods: {
+			subscribeToVisibility() {
+				this.$Bitrix.eventEmitter.subscribe(im_v2_const.EventType.dialog.onMessageIsVisible, this.onMessageIsVisible);
+			},
+			unsubscribeFromVisibility() {
+				this.$Bitrix.eventEmitter.unsubscribe(im_v2_const.EventType.dialog.onMessageIsVisible, this.onMessageIsVisible);
+			},
+			onMessageIsVisible(event) {
+				const {
+					messageId,
+					dialogId
+				} = event.getData();
+				if (dialogId !== this.dialogId || messageId !== this.message.id) {
+					return;
+				}
+				im_v2_lib_analytics.Analytics.getInstance().copilot.onShowSuggestedPrompts(this.dialogId, this.message.id, this.suggestsCount);
+			},
+			onSuggestedPromptClick() {
+				im_v2_lib_analytics.Analytics.getInstance().copilot.onClickSuggestedPrompt(this.dialogId, this.suggestsCount);
+			},
 			loc(phraseCode, replacements = {}) {
 				return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
 			}
@@ -416,7 +446,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			</div>
 			<BottomPanel v-if="!isError" :message="message" :dialogId="dialogId" />
 			<template #after-message v-if="hasKeyboard">
-				<MessageKeyboard :item="message" :dialogId="dialogId" />
+				<MessageKeyboard :item="message" :dialogId="dialogId" @click="onSuggestedPromptClick" />
 			</template>
 		</BaseMessage>
 	`
@@ -466,5 +496,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	exports.CopilotMessage = CopilotMessage;
 
-})(this.BX.Messenger.v2.Component.Message = this.BX.Messenger.v2.Component.Message || {}, BX.Messenger.v2.Lib, BX, BX.Messenger.v2.Component.Message, BX.Messenger.v2.Component.Message, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.UI.IconSet, BX.Messenger.v2.Const, BX.Messenger.v2.Application, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib);
+})(this.BX.Messenger.v2.Component.Message = this.BX.Messenger.v2.Component.Message || {}, BX.Messenger.v2.Lib, BX, BX.Messenger.v2.Component.Message, BX.Messenger.v2.Component.Message, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.UI.IconSet, BX.Messenger.v2.Application, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib);
 //# sourceMappingURL=copilot-answer.bundle.js.map

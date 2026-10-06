@@ -75,6 +75,7 @@ jn.define('layout/ui/whats-new', (require, exports, module) => {
 			this.listReadNewsIds = [];
 			this.listMarkReadNewsIds = [];
 			this.pendingReadNewsIds = [];
+			this.analyticsReadNewsIds = new Set();
 			this.onItemsViewable = this.onItemsViewable.bind(this);
 			this.sendReadNewsDebounced = debounce(this.sendReadNews, 500, this);
 
@@ -427,12 +428,28 @@ jn.define('layout/ui/whats-new', (require, exports, module) => {
 		 */
 		onItemsViewable(items)
 		{
+			this.sendReadAnalytics(items);
+
 			const newsIds = items
 				.filter((item) => Type.isNumber(item?.id) && item?.isNew)
 				.map((item) => item.id);
 
 			this.listReadNewsIds.push(...newsIds);
 			this.markNewsAsRead();
+		}
+
+		sendReadAnalytics(items)
+		{
+			items
+				.filter((item) => Type.isNumber(item?.id) && !this.analyticsReadNewsIds.has(item.id))
+				.forEach((item) => {
+					this.analyticsReadNewsIds.add(item.id);
+
+					new WhatsNewAnalytics()
+						.setEvent(WhatsNewAnalytics.Event.read)
+						.setP4(WhatsNewAnalytics.getWhatsNewItemId(item.id))
+						.send();
+				});
 		}
 
 		markNewsAsRead()

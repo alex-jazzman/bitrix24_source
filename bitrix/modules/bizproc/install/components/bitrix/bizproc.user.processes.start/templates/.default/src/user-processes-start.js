@@ -1,6 +1,7 @@
-import { Type, Dom, Text, Loc, ajax, Runtime, Tag, Event } from 'main.core';
+import { Type, Dom, Text, Loc, ajax, Runtime, Tag } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import { Alert, AlertColor } from 'ui.alerts';
+import { announce, enhanceGrid, subscribeGridUpdated } from 'bizproc.a11y';
 import { Router } from 'bizproc.router';
 
 import './style.css';
@@ -12,6 +13,10 @@ export class UserProcessesStart
 	gridId: string;
 	#counters: Map = new Map();
 	onElementCreatedHandler: any = null;
+
+	// The template calls init() on every Grid::updated, so the previous subscription
+	// is dropped before a new one is created.
+	#gridSubscription = null;
 
 	constructor(options: {
 		gridId: string,
@@ -39,9 +44,45 @@ export class UserProcessesStart
 		{
 			BX.Bizproc.Component.UserProcessesStart.colorPinnedRows(this.getGrid());
 		}
+		this.#applyGridA11y();
 
-		EventEmitter.subscribe('Grid::updated', this.#onAfterGridUpdated.bind(this));
+		this.subscribeGridEvents();
 		this.subscribeCustomEvents();
+	}
+
+	subscribeGridEvents()
+	{
+		this.unsubscribeGridEvents();
+		this.#gridSubscription = subscribeGridUpdated(this.gridId, () => this.#onAfterGridUpdated());
+	}
+
+	unsubscribeGridEvents()
+	{
+		this.#gridSubscription?.destroy();
+		this.#gridSubscription = null;
+	}
+
+	#applyGridA11y(): void
+	{
+		const container = this.getGrid()?.getContainer();
+		if (!Type.isDomNode(container))
+		{
+			return;
+		}
+
+		enhanceGrid(container, {
+			gridId: this.gridId,
+			rowActionsLabel: Loc.getMessage('BIZPROC_USER_PROCESSES_START_ROW_ACTIONS_LABEL'),
+			columnLabels: {
+				PIN: Loc.getMessage('BIZPROC_USER_PROCESSES_START_PIN_COLUMN_LABEL'),
+			},
+			toggles: [{
+				selector: '.main-grid-cell-content-action-pin',
+				label: Loc.getMessage('BIZPROC_USER_PROCESSES_START_PIN_LABEL'),
+				// the helper falls back to the same class value when the grid is not loaded yet
+				activeClass: BX.Grid?.CellActionState?.ACTIVE,
+			}],
+		});
 	}
 
 	subscribeCustomEvents()
@@ -64,6 +105,7 @@ export class UserProcessesStart
 
 	destroy()
 	{
+		this.unsubscribeGridEvents();
 		this.unsubscribeCustomEvents();
 	}
 
@@ -76,11 +118,15 @@ export class UserProcessesStart
 		{
 			BX.Bizproc.Component.UserProcessesStart.#action('unpin', iblockId, gridId);
 			Dom.removeClass(button, BX.Grid.CellActionState.ACTIVE);
+			Dom.attr(button, 'aria-pressed', 'false');
+			announce(Loc.getMessage('BIZPROC_USER_PROCESSES_START_UNPINNED'));
 		}
 		else
 		{
 			BX.Bizproc.Component.UserProcessesStart.#action('pin', iblockId, gridId);
 			Dom.addClass(button, BX.Grid.CellActionState.ACTIVE);
+			Dom.attr(button, 'aria-pressed', 'true');
+			announce(Loc.getMessage('BIZPROC_USER_PROCESSES_START_PINNED'));
 		}
 
 		const grid = BX.Main.gridManager.getInstanceById(gridId);
@@ -131,6 +177,8 @@ export class UserProcessesStart
 			BX.UI.Hint.init(this.getGrid().getContainer());
 			BX.Bizproc.Component.UserProcessesStart.colorPinnedRows(this.getGrid());
 		}
+		this.#applyGridA11y();
+		announce(Loc.getMessage('BIZPROC_USER_PROCESSES_START_GRID_UPDATED'));
 
 		this.#counters.forEach((value, key) => {
 			const counter = document.querySelector(`[data-role="iblock-${key}-counter"]`);

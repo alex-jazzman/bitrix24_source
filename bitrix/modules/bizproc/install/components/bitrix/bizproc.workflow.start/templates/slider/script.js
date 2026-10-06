@@ -1,1021 +1,901 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Bizproc = this.BX.Bizproc || {};
-(function (exports,ui_iconSet_api_core,ui_alerts,bp_field_type,ui_forms,main_date,sidepanel,main_core_events,ui_buttons,main_core,ui_dialogs_messagebox) {
+(function (exports, main_core, main_core_events, ui_buttons, ui_a11y, sidepanel, bizproc_a11y, ui_iconSet_api_core, ui_alerts, ui_dialogs_messagebox, bp_field_type, ui_forms, main_date) {
 	'use strict';
 
-	let _ = t => t,
-	  _t,
-	  _t2,
-	  _t3,
-	  _t4,
-	  _t5;
-	var _title = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("title");
-	var _description = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("description");
-	var _renderIcon = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderIcon");
-	var _renderContent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderContent");
-	var _renderTitle = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderTitle");
-	var _renderInfo = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderInfo");
 	class Header {
-	  constructor(config) {
-	    Object.defineProperty(this, _renderInfo, {
-	      value: _renderInfo2
-	    });
-	    Object.defineProperty(this, _renderTitle, {
-	      value: _renderTitle2
-	    });
-	    Object.defineProperty(this, _renderContent, {
-	      value: _renderContent2
-	    });
-	    Object.defineProperty(this, _renderIcon, {
-	      value: _renderIcon2
-	    });
-	    Object.defineProperty(this, _title, {
-	      writable: true,
-	      value: ''
-	    });
-	    Object.defineProperty(this, _description, {
-	      writable: true,
-	      value: ''
-	    });
-	    if (main_core.Type.isStringFilled(config.title)) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _title)[_title] = config.title;
-	    }
-	    if (main_core.Type.isStringFilled(config.description)) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _description)[_description] = config.description;
-	    }
-	  }
-	  render() {
-	    return main_core.Tag.render(_t || (_t = _`
+		#title = '';
+		#description = '';
+		constructor(config) {
+			if (main_core.Type.isStringFilled(config.title)) {
+				this.#title = config.title;
+			}
+			if (main_core.Type.isStringFilled(config.description)) {
+				this.#description = config.description;
+			}
+		}
+		render() {
+			return main_core.Tag.render`
 			<div class="bizproc__ws_start__header">
-				${0}
-				${0}
+				${this.#renderIcon()}
+				${this.#renderContent()}
 			</div>
-		`), babelHelpers.classPrivateFieldLooseBase(this, _renderIcon)[_renderIcon](), babelHelpers.classPrivateFieldLooseBase(this, _renderContent)[_renderContent]());
-	  }
-	}
-	function _renderIcon2() {
-	  const icon = new ui_iconSet_api_core.Icon({
-	    icon: ui_iconSet_api_core.Main.BUSINESS_PROCESS_1,
-	    size: 48,
-	    color: 'var(--ui-color-palette-white-base)'
-	  });
-	  return main_core.Tag.render(_t2 || (_t2 = _`
+		`;
+		}
+		#renderIcon() {
+			const icon = new ui_iconSet_api_core.Icon({
+				icon: ui_iconSet_api_core.Main.BUSINESS_PROCESS_1,
+				size: 48,
+				color: 'var(--ui-color-palette-white-base)'
+			});
+			return main_core.Tag.render`
 			<div class="bizproc__ws_start__header-icon">
-				${0}
+				${icon.render()}
 			</div>
-		`), icon.render());
-	}
-	function _renderContent2() {
-	  return main_core.Tag.render(_t3 || (_t3 = _`
+		`;
+		}
+		#renderContent() {
+			return main_core.Tag.render`
 			<div class="bizproc__ws_start__header-content">
-				${0}
-				${0}
+				${this.#renderTitle()}
+				${this.#renderInfo()}
 			</div>
-		`), babelHelpers.classPrivateFieldLooseBase(this, _renderTitle)[_renderTitle](), babelHelpers.classPrivateFieldLooseBase(this, _renderInfo)[_renderInfo]());
-	}
-	function _renderTitle2() {
-	  return main_core.Tag.render(_t4 || (_t4 = _`
-			<div class="bizproc__ws_start__header__title">
-				${0}
+		`;
+		}
+		#renderTitle() {
+			return main_core.Tag.render`
+			<div class="bizproc__ws_start__header__title" role="heading" aria-level="1">
+				${main_core.Text.encode(this.#title)}
 			</div>
-		`), main_core.Text.encode(babelHelpers.classPrivateFieldLooseBase(this, _title)[_title]));
-	}
-	function _renderInfo2() {
-	  return main_core.Tag.render(_t5 || (_t5 = _`
+		`;
+		}
+		#renderInfo() {
+			return main_core.Tag.render`
 			<div class="bizproc__ws_start__header__info">
-				${0}
+				${main_core.Text.encode(this.#description)}
 			</div>
-		`), main_core.Text.encode(babelHelpers.classPrivateFieldLooseBase(this, _description)[_description]));
+		`;
+		}
 	}
 
-	let _$1 = t => t,
-	  _t$1,
-	  _t2$1;
-	var _items = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("items");
-	var _itemsNode = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("itemsNode");
-	var _sequenceSteps = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sequenceSteps");
-	var _currentStepId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("currentStepId");
-	var _renderItem = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderItem");
-	var _markNotActive = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("markNotActive");
-	var _markActive = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("markActive");
-	var _markComplete = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("markComplete");
-	var _markNotComplete = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("markNotComplete");
 	class Breadcrumbs {
-	  constructor(config = {}) {
-	    Object.defineProperty(this, _markNotComplete, {
-	      value: _markNotComplete2
-	    });
-	    Object.defineProperty(this, _markComplete, {
-	      value: _markComplete2
-	    });
-	    Object.defineProperty(this, _markActive, {
-	      value: _markActive2
-	    });
-	    Object.defineProperty(this, _markNotActive, {
-	      value: _markNotActive2
-	    });
-	    Object.defineProperty(this, _renderItem, {
-	      value: _renderItem2
-	    });
-	    Object.defineProperty(this, _items, {
-	      writable: true,
-	      value: new Map()
-	    });
-	    Object.defineProperty(this, _itemsNode, {
-	      writable: true,
-	      value: new Map()
-	    });
-	    Object.defineProperty(this, _sequenceSteps, {
-	      writable: true,
-	      value: []
-	    });
-	    Object.defineProperty(this, _currentStepId, {
-	      writable: true,
-	      value: null
-	    });
-	    if (!main_core.Type.isArrayFilled(config.items)) {
-	      throw new TypeError('BX.Bizproc.Workflow.SingleStart.Breadcrumbs: items must be filled array');
-	    }
-	    config.items.forEach(item => {
-	      babelHelpers.classPrivateFieldLooseBase(this, _items)[_items].set(item.id, item);
-	      babelHelpers.classPrivateFieldLooseBase(this, _sequenceSteps)[_sequenceSteps].push(item.id);
-	      if (item.active) {
-	        babelHelpers.classPrivateFieldLooseBase(this, _currentStepId)[_currentStepId] = item.id;
-	      }
-	    });
-	    if (!main_core.Type.isStringFilled(babelHelpers.classPrivateFieldLooseBase(this, _currentStepId)[_currentStepId]) && main_core.Type.isStringFilled(babelHelpers.classPrivateFieldLooseBase(this, _sequenceSteps)[_sequenceSteps].at(0))) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _currentStepId)[_currentStepId] = babelHelpers.classPrivateFieldLooseBase(this, _sequenceSteps)[_sequenceSteps].at(0);
-	    }
-	  }
-	  render() {
-	    return main_core.Tag.render(_t$1 || (_t$1 = _$1`
-			<div class="bizproc__ws_start__breadcrumbs">
-				${0}
+		#items = new Map();
+		#itemsNode = new Map();
+		#sequenceSteps = [];
+		#currentStepId = null;
+		constructor(config = {}) {
+			if (!main_core.Type.isArrayFilled(config.items)) {
+				throw new TypeError('BX.Bizproc.Workflow.SingleStart.Breadcrumbs: items must be filled array');
+			}
+			config.items.forEach(item => {
+				this.#items.set(item.id, item);
+				this.#sequenceSteps.push(item.id);
+				if (item.active) {
+					this.#currentStepId = item.id;
+				}
+			});
+			if (!main_core.Type.isStringFilled(this.#currentStepId) && main_core.Type.isStringFilled(this.#sequenceSteps.at(0))) {
+				this.#currentStepId = this.#sequenceSteps.at(0);
+			}
+		}
+		render() {
+			const label = main_core.Text.encode(main_core.Loc.getMessage('BIZPROC_CMP_WORKFLOW_START_TMP_SINGLE_START_STEPS_LABEL'));
+			return main_core.Tag.render`
+			<div
+				class="bizproc__ws_start__breadcrumbs"
+				role="group"
+				aria-label="${label}"
+				data-testid="bizproc-ws-start-steps"
+			>
+				${[...this.#items.entries()].map(([key, item]) => this.#renderItem(item, key))}
 			</div>
-		`), [...babelHelpers.classPrivateFieldLooseBase(this, _items)[_items].entries()].map(([key, item]) => babelHelpers.classPrivateFieldLooseBase(this, _renderItem)[_renderItem](item, key)));
-	  }
-	  next() {
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _currentStepId)[_currentStepId]) {
-	      const index = babelHelpers.classPrivateFieldLooseBase(this, _sequenceSteps)[_sequenceSteps].indexOf(babelHelpers.classPrivateFieldLooseBase(this, _currentStepId)[_currentStepId]);
-	      if (index !== -1 && main_core.Type.isStringFilled(babelHelpers.classPrivateFieldLooseBase(this, _sequenceSteps)[_sequenceSteps].at(index + 1))) {
-	        babelHelpers.classPrivateFieldLooseBase(this, _markNotActive)[_markNotActive](babelHelpers.classPrivateFieldLooseBase(this, _currentStepId)[_currentStepId]);
-	        babelHelpers.classPrivateFieldLooseBase(this, _markComplete)[_markComplete](babelHelpers.classPrivateFieldLooseBase(this, _currentStepId)[_currentStepId]);
-	        babelHelpers.classPrivateFieldLooseBase(this, _currentStepId)[_currentStepId] = babelHelpers.classPrivateFieldLooseBase(this, _sequenceSteps)[_sequenceSteps].at(index + 1);
-	        babelHelpers.classPrivateFieldLooseBase(this, _markActive)[_markActive](babelHelpers.classPrivateFieldLooseBase(this, _currentStepId)[_currentStepId]);
-	      }
-	    }
-	  }
-	  back() {
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _currentStepId)[_currentStepId]) {
-	      const index = babelHelpers.classPrivateFieldLooseBase(this, _sequenceSteps)[_sequenceSteps].indexOf(babelHelpers.classPrivateFieldLooseBase(this, _currentStepId)[_currentStepId]);
-	      if (index !== -1 && index - 1 >= 0 && main_core.Type.isStringFilled(babelHelpers.classPrivateFieldLooseBase(this, _sequenceSteps)[_sequenceSteps].at(index - 1))) {
-	        babelHelpers.classPrivateFieldLooseBase(this, _markNotActive)[_markNotActive](babelHelpers.classPrivateFieldLooseBase(this, _currentStepId)[_currentStepId]);
-	        babelHelpers.classPrivateFieldLooseBase(this, _currentStepId)[_currentStepId] = babelHelpers.classPrivateFieldLooseBase(this, _sequenceSteps)[_sequenceSteps].at(index - 1);
-	        babelHelpers.classPrivateFieldLooseBase(this, _markNotComplete)[_markNotComplete](babelHelpers.classPrivateFieldLooseBase(this, _currentStepId)[_currentStepId]);
-	        babelHelpers.classPrivateFieldLooseBase(this, _markActive)[_markActive](babelHelpers.classPrivateFieldLooseBase(this, _currentStepId)[_currentStepId]);
-	      }
-	    }
-	  }
-	}
-	function _renderItem2(item, stepId) {
-	  if (!babelHelpers.classPrivateFieldLooseBase(this, _itemsNode)[_itemsNode].has(stepId)) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _itemsNode)[_itemsNode].set(stepId, main_core.Tag.render(_t2$1 || (_t2$1 = _$1`
-					<div class="bizproc__ws_start__breadcrumbs-item${0}">
-						<span>${0}</span>
-						<span class="ui-icon-set --chevron-right"></span>
-					</div>
-				`), item.active ? ' --active' : '', main_core.Text.encode(item.text)));
-	  }
-	  return babelHelpers.classPrivateFieldLooseBase(this, _itemsNode)[_itemsNode].get(stepId);
-	}
-	function _markNotActive2(stepId) {
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _items)[_items].has(stepId)) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _items)[_items].get(stepId).active = false;
-	    main_core.Dom.removeClass(babelHelpers.classPrivateFieldLooseBase(this, _itemsNode)[_itemsNode].get(stepId), '--active');
-	  }
-	}
-	function _markActive2(stepId) {
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _items)[_items].has(stepId)) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _items)[_items].get(stepId).active = true;
-	    main_core.Dom.addClass(babelHelpers.classPrivateFieldLooseBase(this, _itemsNode)[_itemsNode].get(stepId), '--active');
-	  }
-	}
-	function _markComplete2(stepId) {
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _items)[_items].has(stepId)) {
-	    main_core.Dom.addClass(babelHelpers.classPrivateFieldLooseBase(this, _itemsNode)[_itemsNode].get(stepId), '--complete');
-	  }
-	}
-	function _markNotComplete2(stepId) {
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _items)[_items].has(stepId)) {
-	    main_core.Dom.removeClass(babelHelpers.classPrivateFieldLooseBase(this, _itemsNode)[_itemsNode].get(stepId), '--complete');
-	  }
+		`;
+		}
+		getCurrentStepTitle() {
+			return this.#items.has(this.#currentStepId) ? this.#items.get(this.#currentStepId).text : '';
+		}
+		#renderItem(item, stepId) {
+			if (!this.#itemsNode.has(stepId)) {
+				const node = main_core.Tag.render`
+				<div
+					class="bizproc__ws_start__breadcrumbs-item${item.active ? ' --active' : ''}"
+					data-testid="bizproc-ws-start-step-${stepId}"
+				>
+					<span>${main_core.Text.encode(item.text)}</span>
+					<span class="ui-icon-set --chevron-right" aria-hidden="true"></span>
+				</div>
+			`;
+				this.#markCurrent(node, item.active);
+				this.#itemsNode.set(stepId, node);
+			}
+			return this.#itemsNode.get(stepId);
+		}
+		#markCurrent(node, isCurrent) {
+			main_core.Dom.attr(node, 'aria-current', isCurrent ? 'step' : null);
+		}
+		next() {
+			if (this.#currentStepId) {
+				const index = this.#sequenceSteps.indexOf(this.#currentStepId);
+				if (index !== -1 && main_core.Type.isStringFilled(this.#sequenceSteps.at(index + 1))) {
+					this.#markNotActive(this.#currentStepId);
+					this.#markComplete(this.#currentStepId);
+					this.#currentStepId = this.#sequenceSteps.at(index + 1);
+					this.#markActive(this.#currentStepId);
+				}
+			}
+		}
+		back() {
+			if (this.#currentStepId) {
+				const index = this.#sequenceSteps.indexOf(this.#currentStepId);
+				if (index !== -1 && index - 1 >= 0 && main_core.Type.isStringFilled(this.#sequenceSteps.at(index - 1))) {
+					this.#markNotActive(this.#currentStepId);
+					this.#currentStepId = this.#sequenceSteps.at(index - 1);
+					this.#markNotComplete(this.#currentStepId);
+					this.#markActive(this.#currentStepId);
+				}
+			}
+		}
+		#markNotActive(stepId) {
+			if (this.#items.has(stepId)) {
+				this.#items.get(stepId).active = false;
+				main_core.Dom.removeClass(this.#itemsNode.get(stepId), '--active');
+				this.#markCurrent(this.#itemsNode.get(stepId), false);
+			}
+		}
+		#markActive(stepId) {
+			if (this.#items.has(stepId)) {
+				this.#items.get(stepId).active = true;
+				main_core.Dom.addClass(this.#itemsNode.get(stepId), '--active');
+				this.#markCurrent(this.#itemsNode.get(stepId), true);
+			}
+		}
+		#markComplete(stepId) {
+			if (this.#items.has(stepId)) {
+				main_core.Dom.addClass(this.#itemsNode.get(stepId), '--complete');
+			}
+		}
+		#markNotComplete(stepId) {
+			if (this.#items.has(stepId)) {
+				main_core.Dom.removeClass(this.#itemsNode.get(stepId), '--complete');
+			}
+		}
 	}
 
-	var _buttons = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("buttons");
-	var _sequenceSteps$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sequenceSteps");
-	var _currentStepId$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("currentStepId");
-	var _wrapper = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("wrapper");
-	var _currentStepButtons = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("currentStepButtons");
 	class Buttons {
-	  static createNextButton(action) {
-	    return new ui_buttons.Button({
-	      id: 'next',
-	      text: main_core.Text.encode(main_core.Loc.getMessage('BIZPROC_CMP_WORKFLOW_START_TMP_SINGLE_START_NEXT_BUTTON')),
-	      onclick: action,
-	      color: ui_buttons.ButtonColor.PRIMARY
-	    });
-	  }
-	  static createBackButton(action) {
-	    return new ui_buttons.Button({
-	      id: 'back',
-	      text: main_core.Text.encode(main_core.Loc.getMessage('BIZPROC_CMP_WORKFLOW_START_TMP_SINGLE_START_BACK_BUTTON')),
-	      onclick: action,
-	      color: ui_buttons.ButtonColor.LIGHT_BORDER
-	    });
-	  }
-	  static createStartButton(action) {
-	    return new ui_buttons.Button({
-	      id: 'start',
-	      text: main_core.Text.encode(main_core.Loc.getMessage('BIZPROC_CMP_WORKFLOW_START_TMP_SINGLE_START_START_BUTTON')),
-	      onclick: action,
-	      color: ui_buttons.ButtonColor.PRIMARY
-	    });
-	  }
-	  constructor(config) {
-	    Object.defineProperty(this, _currentStepButtons, {
-	      get: _get_currentStepButtons,
-	      set: void 0
-	    });
-	    Object.defineProperty(this, _buttons, {
-	      writable: true,
-	      value: new Map()
-	    });
-	    Object.defineProperty(this, _sequenceSteps$1, {
-	      writable: true,
-	      value: []
-	    });
-	    Object.defineProperty(this, _currentStepId$1, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _wrapper, {
-	      writable: true,
-	      value: void 0
-	    });
-	    if (main_core.Type.isPlainObject(config.buttons)) {
-	      Object.entries(config.buttons).forEach(([stepId, buttons]) => {
-	        babelHelpers.classPrivateFieldLooseBase(this, _buttons)[_buttons].set(stepId, buttons);
-	        babelHelpers.classPrivateFieldLooseBase(this, _sequenceSteps$1)[_sequenceSteps$1].push(stepId);
-	      });
-	      if (main_core.Type.isArrayFilled(babelHelpers.classPrivateFieldLooseBase(this, _sequenceSteps$1)[_sequenceSteps$1])) {
-	        var _config$currentStepId;
-	        babelHelpers.classPrivateFieldLooseBase(this, _currentStepId$1)[_currentStepId$1] = (_config$currentStepId = config.currentStepId) != null ? _config$currentStepId : babelHelpers.classPrivateFieldLooseBase(this, _sequenceSteps$1)[_sequenceSteps$1].at(0);
-	      }
-	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _wrapper)[_wrapper] = config.wrapper;
-	  }
-	  next() {
-	    const index = babelHelpers.classPrivateFieldLooseBase(this, _sequenceSteps$1)[_sequenceSteps$1].indexOf(babelHelpers.classPrivateFieldLooseBase(this, _currentStepId$1)[_currentStepId$1]);
-	    if (index !== -1 && main_core.Type.isStringFilled(babelHelpers.classPrivateFieldLooseBase(this, _sequenceSteps$1)[_sequenceSteps$1].at(index + 1))) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _currentStepId$1)[_currentStepId$1] = babelHelpers.classPrivateFieldLooseBase(this, _sequenceSteps$1)[_sequenceSteps$1].at(index + 1);
-	      this.show();
-	    }
-	  }
-	  back() {
-	    const index = babelHelpers.classPrivateFieldLooseBase(this, _sequenceSteps$1)[_sequenceSteps$1].indexOf(babelHelpers.classPrivateFieldLooseBase(this, _currentStepId$1)[_currentStepId$1]);
-	    if (index !== -1 && index - 1 >= 0 && main_core.Type.isStringFilled(babelHelpers.classPrivateFieldLooseBase(this, _sequenceSteps$1)[_sequenceSteps$1].at(index - 1))) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _currentStepId$1)[_currentStepId$1] = babelHelpers.classPrivateFieldLooseBase(this, _sequenceSteps$1)[_sequenceSteps$1].at(index - 1);
-	      this.show();
-	    }
-	  }
-	  show() {
-	    main_core.Dom.clean(babelHelpers.classPrivateFieldLooseBase(this, _wrapper)[_wrapper]);
-	    const buttons = babelHelpers.classPrivateFieldLooseBase(this, _currentStepButtons)[_currentStepButtons];
-	    if (main_core.Type.isArrayFilled(babelHelpers.classPrivateFieldLooseBase(this, _currentStepButtons)[_currentStepButtons])) {
-	      main_core.Dom.show(babelHelpers.classPrivateFieldLooseBase(this, _wrapper)[_wrapper]);
-	      buttons.forEach(button => {
-	        button.renderTo(babelHelpers.classPrivateFieldLooseBase(this, _wrapper)[_wrapper]);
-	      });
-	    } else {
-	      main_core.Dom.hide(babelHelpers.classPrivateFieldLooseBase(this, _wrapper)[_wrapper]);
-	    }
-	  }
-	  resolveEnableState(enable) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _currentStepButtons)[_currentStepButtons].forEach(button => {
-	      if (main_core.Type.isBoolean(enable[button.getId()])) {
-	        button.setDisabled(!enable[button.getId()]);
-	      }
-	    });
-	  }
-	  resolveWaitingState(waiting) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _currentStepButtons)[_currentStepButtons].forEach(button => {
-	      if (main_core.Type.isBoolean(waiting[button.getId()])) {
-	        button.setWaiting(waiting[button.getId()]);
-	      }
-	    });
-	  }
-	}
-	function _get_currentStepButtons() {
-	  return babelHelpers.classPrivateFieldLooseBase(this, _buttons)[_buttons].has(babelHelpers.classPrivateFieldLooseBase(this, _currentStepId$1)[_currentStepId$1]) ? babelHelpers.classPrivateFieldLooseBase(this, _buttons)[_buttons].get(babelHelpers.classPrivateFieldLooseBase(this, _currentStepId$1)[_currentStepId$1]) : [];
+		#buttons = new Map();
+		#sequenceSteps = [];
+		#currentStepId = null;
+		#wrapper;
+		static createNextButton(action) {
+			return new ui_buttons.Button({
+				id: 'next',
+				text: main_core.Text.encode(main_core.Loc.getMessage('BIZPROC_CMP_WORKFLOW_START_TMP_SINGLE_START_NEXT_BUTTON')),
+				onclick: action,
+				color: ui_buttons.ButtonColor.PRIMARY,
+				dataset: {
+					testid: 'bizproc-ws-start-next-btn'
+				}
+			});
+		}
+		static createBackButton(action) {
+			return new ui_buttons.Button({
+				id: 'back',
+				text: main_core.Text.encode(main_core.Loc.getMessage('BIZPROC_CMP_WORKFLOW_START_TMP_SINGLE_START_BACK_BUTTON')),
+				onclick: action,
+				color: ui_buttons.ButtonColor.LIGHT_BORDER,
+				dataset: {
+					testid: 'bizproc-ws-start-back-btn'
+				}
+			});
+		}
+		static createStartButton(action) {
+			return new ui_buttons.Button({
+				id: 'start',
+				text: main_core.Text.encode(main_core.Loc.getMessage('BIZPROC_CMP_WORKFLOW_START_TMP_SINGLE_START_START_BUTTON')),
+				onclick: action,
+				color: ui_buttons.ButtonColor.PRIMARY,
+				dataset: {
+					testid: 'bizproc-ws-start-start-btn'
+				}
+			});
+		}
+		constructor(config) {
+			if (main_core.Type.isPlainObject(config.buttons)) {
+				Object.entries(config.buttons).forEach(([stepId, buttons]) => {
+					this.#buttons.set(stepId, buttons);
+					this.#sequenceSteps.push(stepId);
+				});
+				if (main_core.Type.isArrayFilled(this.#sequenceSteps)) {
+					this.#currentStepId = config.currentStepId ?? this.#sequenceSteps.at(0);
+				}
+			}
+			this.#wrapper = config.wrapper;
+		}
+		next() {
+			const index = this.#sequenceSteps.indexOf(this.#currentStepId);
+			if (index !== -1 && main_core.Type.isStringFilled(this.#sequenceSteps.at(index + 1))) {
+				this.#currentStepId = this.#sequenceSteps.at(index + 1);
+				this.show();
+			}
+		}
+		back() {
+			const index = this.#sequenceSteps.indexOf(this.#currentStepId);
+			if (index !== -1 && index - 1 >= 0 && main_core.Type.isStringFilled(this.#sequenceSteps.at(index - 1))) {
+				this.#currentStepId = this.#sequenceSteps.at(index - 1);
+				this.show();
+			}
+		}
+		show() {
+			main_core.Dom.clean(this.#wrapper);
+			const buttons = this.#currentStepButtons;
+			if (main_core.Type.isArrayFilled(this.#currentStepButtons)) {
+				main_core.Dom.show(this.#wrapper);
+				buttons.forEach(button => {
+					button.renderTo(this.#wrapper);
+				});
+			} else {
+				main_core.Dom.hide(this.#wrapper);
+			}
+		}
+		get #currentStepButtons() {
+			return this.#buttons.has(this.#currentStepId) ? this.#buttons.get(this.#currentStepId) : [];
+		}
+		resolveEnableState(enable) {
+			this.#currentStepButtons.forEach(button => {
+				if (main_core.Type.isBoolean(enable[button.getId()])) {
+					button.setDisabled(!enable[button.getId()]);
+				}
+			});
+		}
+		resolveWaitingState(waiting) {
+			this.#currentStepButtons.forEach(button => {
+				if (main_core.Type.isBoolean(waiting[button.getId()])) {
+					button.setWaiting(waiting[button.getId()]);
+				}
+			});
+		}
 	}
 
-	let _$2 = t => t,
-	  _t$2;
-	var _errors = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("errors");
-	var _element = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("element");
-	var _renderErrors = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderErrors");
 	class ErrorNotifier {
-	  constructor(props) {
-	    Object.defineProperty(this, _renderErrors, {
-	      value: _renderErrors2
-	    });
-	    Object.defineProperty(this, _errors, {
-	      writable: true,
-	      value: []
-	    });
-	    Object.defineProperty(this, _element, {
-	      writable: true,
-	      value: void 0
-	    });
-	    this.errors = props.errors;
-	  }
-	  set errors(errors) {
-	    if (main_core.Type.isArray(errors)) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _errors)[_errors] = errors;
-	    }
-	  }
-	  render() {
-	    babelHelpers.classPrivateFieldLooseBase(this, _element)[_element] = main_core.Tag.render(_t$2 || (_t$2 = _$2`<div>${0}</div>`), babelHelpers.classPrivateFieldLooseBase(this, _renderErrors)[_renderErrors]());
-	    return babelHelpers.classPrivateFieldLooseBase(this, _element)[_element];
-	  }
-	  show(scrollToElement = true) {
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _element)[_element]) {
-	      this.clean();
-	      main_core.Dom.append(babelHelpers.classPrivateFieldLooseBase(this, _renderErrors)[_renderErrors](), babelHelpers.classPrivateFieldLooseBase(this, _element)[_element]);
-	      if (scrollToElement) {
-	        // eslint-disable-next-line @bitrix24/bitrix24-rules/no-bx
-	        BX.scrollToNode(babelHelpers.classPrivateFieldLooseBase(this, _element)[_element]);
-	      }
-	    }
-	  }
-	  clean() {
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _element)[_element]) {
-	      main_core.Dom.clean(babelHelpers.classPrivateFieldLooseBase(this, _element)[_element]);
-	    }
-	  }
-	}
-	function _renderErrors2() {
-	  if (main_core.Type.isArrayFilled(babelHelpers.classPrivateFieldLooseBase(this, _errors)[_errors])) {
-	    const message = babelHelpers.classPrivateFieldLooseBase(this, _errors)[_errors].map(error => main_core.Text.encode(error.message || '')).join('<br/>');
-	    return new ui_alerts.Alert({
-	      text: message,
-	      color: ui_alerts.AlertColor.DANGER
-	    }).render();
-	  }
-	  return null;
+		#errors = [];
+		#element;
+		#idPrefix = `bizproc-ws-start-error-${main_core.Text.getRandom(8).toLowerCase()}`;
+		#messageIdByField = new Map();
+		constructor(props) {
+			this.errors = props.errors;
+		}
+		set errors(errors) {
+			if (main_core.Type.isArray(errors)) {
+				this.#errors = errors;
+			}
+		}
+
+		// field key -> id of the node holding its message, so a control can be bound to its own error
+		get messageIdByField() {
+			return this.#messageIdByField;
+		}
+		render() {
+			this.#element = main_core.Tag.render`<div>${this.#renderErrors()}</div>`;
+			return this.#element;
+		}
+		show(scrollToElement = true) {
+			if (this.#element) {
+				this.clean();
+				main_core.Dom.append(this.#renderErrors(), this.#element);
+				if (scrollToElement) {
+					// eslint-disable-next-line @bitrix24/bitrix24-rules/no-bx
+					BX.scrollToNode(this.#element);
+				}
+			}
+		}
+		clean() {
+			this.#messageIdByField = new Map();
+			if (this.#element) {
+				main_core.Dom.clean(this.#element);
+			}
+		}
+		#renderErrors() {
+			if (main_core.Type.isArrayFilled(this.#errors)) {
+				this.#messageIdByField = new Map();
+				const message = this.#errors.map((error, index) => {
+					const messageId = `${this.#idPrefix}-${index}`;
+					const field = error.customData?.parameter;
+					if (main_core.Type.isStringFilled(field)) {
+						this.#messageIdByField.set(field, messageId);
+					}
+					return `<span id="${messageId}">${main_core.Text.encode(error.message || '')}</span>`;
+				}).join('<br/>');
+
+				// the role lives on the node carrying the text: an always present alert region
+				// would announce its own name every time the step is redrawn. The name is a hidden
+				// text inside the region, not aria-label: a name on a live region replaces its
+				// content in part of the screen readers, and the error text would be lost
+				return main_core.Tag.render`
+				<div role="alert">
+					${bizproc_a11y.visuallyHidden(main_core.Loc.getMessage('BIZPROC_CMP_WORKFLOW_START_TMP_SINGLE_START_ERRORS_LABEL'))}
+					${new ui_alerts.Alert({
+				text: message,
+				color: ui_alerts.AlertColor.DANGER
+			}).render()}
+				</div>
+			`;
+			}
+			return null;
+		}
 	}
 
-	function showExitDialog(onConfirm, onCancel) {
-	  const messageBox = ui_dialogs_messagebox.MessageBox.confirm(main_core.Loc.getMessage('BIZPROC_CMP_WORKFLOW_START_TMP_SINGLE_START_EXIT_DIALOG_DESCRIPTION'), main_core.Loc.getMessage('BIZPROC_CMP_WORKFLOW_START_TMP_SINGLE_START_EXIT_DIALOG_TITLE'), onConfirm, main_core.Loc.getMessage('BIZPROC_CMP_WORKFLOW_START_TMP_SINGLE_START_EXIT_DIALOG_CONFIRM'), main_core.Type.isFunction(onCancel) ? onCancel : () => true, main_core.Loc.getMessage('BIZPROC_CMP_WORKFLOW_START_TMP_SINGLE_START_EXIT_DIALOG_CANCEL'));
-	  if (main_core.Type.isFunction(onCancel)) {
-	    const popup = messageBox.getPopupWindow();
-	    popup.subscribe('onClose', onCancel);
-	  }
+	// onClose runs on any way out of the dialog — cancel button, Esc, click outside and the confirmed
+	// exit as well, so it fits resetting a flag rather than an undo of the confirmed action
+	function showConfirmDialog(texts, onConfirm, onClose) {
+		const initiator = document.activeElement;
+		const messageBox = ui_dialogs_messagebox.MessageBox.create({
+			message: texts.description,
+			title: texts.title,
+			okCaption: texts.confirmCaption,
+			cancelCaption: texts.cancelCaption,
+			onOk: onConfirm,
+			// no onCancel here on purpose: the cancel button without a callback just closes the
+			// popup, and the caller gets its single call from the onClose subscription below,
+			// which also covers Esc and a click outside
+			buttons: ui_dialogs_messagebox.MessageBoxButtons.OK_CANCEL,
+			popupOptions: {
+				// the portal accessibility settings can be off, so the option is passed explicitly
+				focusTrap: {
+					restoreFocus: () => resolveFocusTarget(initiator, messageBox.getPopupWindow().getPopupContainer())
+				}
+			}
+		});
+		messageBox.show();
+		const popup = messageBox.getPopupWindow();
+
+		// the slider closes on keydown while a popup closes on keyup: with Esc enabled right away the
+		// keypress that opened this dialog would also close it. A listener bound during that keydown
+		// is not called for it, so closing by Esc starts working from the next keypress.
+		const enableClosingByEsc = () => {
+			main_core.Event.unbind(document, 'keydown', enableClosingByEsc);
+			if (!popup.isDestroyed()) {
+				popup.setClosingByEsc(true);
+			}
+		};
+		main_core.Event.bind(document, 'keydown', enableClosingByEsc);
+		popup.subscribe('onClose', () => {
+			main_core.Event.unbind(document, 'keydown', enableClosingByEsc);
+		});
+		if (main_core.Type.isFunction(onClose)) {
+			popup.subscribe('onClose', onClose);
+		}
+	}
+	function resolveFocusTarget(initiator, dialogContainer) {
+		if (initiator && initiator !== document.body && document.contains(initiator)) {
+			return initiator;
+		}
+
+		// the dialog can be opened by the slider close button, then the initiator lives in the top document
+		const slider = BX.SidePanel.Instance.getSliderByWindow(window);
+		if (slider) {
+			return slider.getLabel().getContainer();
+		}
+
+		// the dialog can also be shown outside a slider: without a fallback the keyboard user would be
+		// left with no focus at all. Nodes of the closing dialog itself are not an option
+		const fallback = ui_a11y.FocusNavigator.getFirst(document.body);
+		return fallback && dialogContainer?.contains(fallback) !== true ? fallback : null;
+	}
+
+	function showExitDialog(onConfirm, onClose) {
+		showConfirmDialog({
+			title: main_core.Loc.getMessage('BIZPROC_CMP_WORKFLOW_START_TMP_SINGLE_START_EXIT_DIALOG_TITLE'),
+			description: main_core.Loc.getMessage('BIZPROC_CMP_WORKFLOW_START_TMP_SINGLE_START_EXIT_DIALOG_DESCRIPTION'),
+			confirmCaption: main_core.Loc.getMessage('BIZPROC_CMP_WORKFLOW_START_TMP_SINGLE_START_EXIT_DIALOG_CONFIRM'),
+			cancelCaption: main_core.Loc.getMessage('BIZPROC_CMP_WORKFLOW_START_TMP_SINGLE_START_EXIT_DIALOG_CANCEL')
+		}, onConfirm, onClose);
 	}
 
 	function addMissingFormDataValues(target, source) {
-	  const addedKeys = new Set();
-	  for (const [key, value] of source.entries()) {
-	    if (!target.has(key) || addedKeys.has(key)) {
-	      addedKeys.add(key);
-	      target.append(key, value);
-	    }
-	  }
+		const addedKeys = new Set();
+		for (const [key, value] of source.entries()) {
+			if (!target.has(key) || addedKeys.has(key)) {
+				addedKeys.add(key);
+				target.append(key, value);
+			}
+		}
 	}
 
 	function isEqualsFormData(form1, form2) {
-	  for (const key of form1.keys()) {
-	    if (!form2.has(key)) {
-	      return false;
-	    }
-	    const values1 = form1.getAll(key);
-	    const values2 = form2.getAll(key);
-	    if (values1.length !== values2.length) {
-	      return false;
-	    }
-	    for (const singleKey of values1.keys()) {
-	      let value1 = values1.at(singleKey);
-	      let value2 = values2.at(singleKey);
-	      if (main_core.Type.isFile(value1)) {
-	        value1 = value1.name;
-	        value2 = value2.name;
-	      }
-	      if (value1 !== value2) {
-	        return false;
-	      }
-	    }
-	  }
-	  return true;
+		for (const key of form1.keys()) {
+			if (!form2.has(key)) {
+				return false;
+			}
+			const values1 = form1.getAll(key);
+			const values2 = form2.getAll(key);
+			if (values1.length !== values2.length) {
+				return false;
+			}
+			for (const singleKey of values1.keys()) {
+				let value1 = values1.at(singleKey);
+				let value2 = values2.at(singleKey);
+				if (main_core.Type.isFile(value1)) {
+					value1 = value1.name;
+					value2 = value2.name;
+				}
+				if (value1 !== value2) {
+					return false;
+				}
+			}
+		}
+		return true;
 	}
 
-	let _$3 = t => t,
-	  _t$3,
-	  _t2$2;
-	function renderBpForm(formName, title, fields, documentType, description, signedDocumentId) {
-	  let context = {};
-	  if (main_core.Type.isStringFilled(signedDocumentId)) {
-	    context = {
-	      isStartWorkflow: true,
-	      signedDocumentId
-	    };
-	  }
-	  const controls = BX.Bizproc.FieldType.renderControlCollection(documentType, fields.map(field => ({
-	    property: field,
-	    fieldName: field.Id,
-	    value: field.Default,
-	    controlId: field.Id
-	  })), 'public', context);
-	  return main_core.Tag.render(_t$3 || (_t$3 = _$3`
-		<form name="${0}">
+	const FIELD_BLOCK_SELECTOR = '.bizproc__ws_start__content-form-block';
+	const FIELD_LABEL_SELECTOR = '.ui-ctl-title';
+	const FIELD_CONTROL_SELECTOR = 'input:not([type="hidden"]), select, textarea';
+	const CONTROL_RENDER_EVENTS = ['BX.Bizproc.FieldType.onCustomRenderControlFinished', 'BX.Bizproc.FieldType.onCollectionRenderControlFinished'];
+	const DEFAULT_TITLE_LEVEL = 2;
+	function renderBpForm(formName, title, fields, documentType, options = {}) {
+		const {
+			description = null,
+			signedDocumentId = null,
+			onSubmit = null,
+			titleLevel = DEFAULT_TITLE_LEVEL
+		} = options;
+		let context = {};
+		if (main_core.Type.isStringFilled(signedDocumentId)) {
+			context = {
+				isStartWorkflow: true,
+				signedDocumentId
+			};
+		}
+		const controls = BX.Bizproc.FieldType.renderControlCollection(documentType, fields.map(field => ({
+			property: field,
+			fieldName: field.Id,
+			value: field.Default,
+			controlId: field.Id
+		})), 'public', context);
+		const form = main_core.Tag.render`
+		<form name="${formName}" data-testid="${formName}">
 			<div class="bizproc__ws_start__content-form-title-block">
-				<div class="bizproc__ws_start__content-form-title">${0}</div>
-				<div class="bizproc__ws_start__content-form-description">${0}</div>
+				${renderFormTitle(title, titleLevel)}
+				<div class="bizproc__ws_start__content-form-description">${main_core.Text.encode(description)}</div>
 			</div>
-				${0}
+				${fields.map(property => {
+		const control = main_core.Type.isElementNode(controls[property.Id]) ? controls[property.Id] : BX.Bizproc.FieldType.renderControlPublic(documentType, property, property.Id, property.Default, false);
+		return renderBpFieldForForm(property, control);
+	})}
 		</form>
-	`), formName, main_core.Text.encode(title), main_core.Text.encode(description), fields.map(property => {
-	    const control = main_core.Type.isElementNode(controls[property.Id]) ? controls[property.Id] : BX.Bizproc.FieldType.renderControlPublic(documentType, property, property.Id, property.Default, false);
-	    return renderBpFieldForForm(property, control);
-	  }));
+	`;
+		main_core.Event.bind(form, 'submit', event => {
+			event.preventDefault();
+			if (main_core.Type.isFunction(onSubmit)) {
+				onSubmit(event);
+			}
+		});
+		const requiredFieldNames = fields.filter(field => main_core.Text.toBoolean(field.Required)).map(field => field.Id);
+		const describeControls = () => {
+			labelControls(form);
+			markRequiredControls(form, requiredFieldNames);
+		};
+		describeControls();
+		CONTROL_RENDER_EVENTS.forEach(eventName => {
+			// multiple fields and entity selectors draw their controls after the form is built
+			main_core_events.EventEmitter.subscribe(eventName, describeControls);
+		});
+		return form;
 	}
 	function renderBpFieldForForm(property, control) {
-	  return main_core.Tag.render(_t2$2 || (_t2$2 = _$3`
-		<div class="bizproc__ws_start__content-form-block">
-			<div class="ui-ctl-title${0}">
-				${0}
+		const isRequired = main_core.Text.toBoolean(property.Required);
+		return main_core.Tag.render`
+		<div class="bizproc__ws_start__content-form-block" data-testid="bizproc-ws-start-field-${main_core.Text.encode(property.Id)}">
+			<div class="ui-ctl-title${isRequired ? ' --required' : ''}">
+				${main_core.Text.encode(property.Name)}
 			</div>
-			${0}
+			${control}
 		</div>
-	`), main_core.Text.toBoolean(property.Required) ? ' --required' : '', main_core.Text.encode(property.Name), control);
+	`;
+	}
+	function renderFormTitle(title, level) {
+		const node = main_core.Tag.render`
+		<div class="bizproc__ws_start__content-form-title">${main_core.Text.encode(title)}</div>
+	`;
+		if (main_core.Type.isNumber(level)) {
+			main_core.Dom.attr(node, {
+				role: 'heading',
+				'aria-level': String(level)
+			});
+		} else {
+			// the surrounding step already renders a heading with the same text
+			main_core.Dom.attr(node, 'aria-hidden', 'true');
+		}
+		return node;
+	}
+	function labelControls(form) {
+		bizproc_a11y.labelFormControls(form, {
+			blockSelector: FIELD_BLOCK_SELECTOR,
+			labelSelector: FIELD_LABEL_SELECTOR
+		});
+	}
+	function markRequiredControls(form, fieldNames) {
+		if (fieldNames.length === 0) {
+			return;
+		}
+		[...form.querySelectorAll(FIELD_CONTROL_SELECTOR)]
+		// a date field also renders a timezone select, it carries another name
+		.filter(node => fieldNames.some(name => node.name === name || node.name === `${name}[]`)).forEach(node => main_core.Dom.attr(node, 'aria-required', 'true'));
 	}
 
-	let _$4 = t => t,
-	  _t$4,
-	  _t2$3;
 	class Step extends main_core_events.EventEmitter {
-	  constructor(config) {
-	    super();
-	    this.setEventNamespace('BX.Bizproc.Component.WorkflowSingleStart.Step');
-	    if (this.constructor === Step) {
-	      throw new Error('Object of Abstract Class cannot be created');
-	    }
-	    this.name = config.name;
-	  }
-	  render() {
-	    return main_core.Tag.render(_t$4 || (_t$4 = _$4`
+		constructor(config) {
+			super();
+			this.setEventNamespace('BX.Bizproc.Component.WorkflowSingleStart.Step');
+			if (this.constructor === Step) {
+				throw new Error('Object of Abstract Class cannot be created');
+			}
+			this.name = config.name;
+		}
+		render() {
+			return main_core.Tag.render`
 			<div class="bizproc__ws_start__content">
-				${0}
-				${0}
-				${0}
+				${this.renderHead()}
+				${this.renderBody()}
+				${this.renderFooter()}
 			</div>
-		`), this.renderHead(), this.renderBody(), this.renderFooter());
-	  }
-	  renderHead() {
-	    return main_core.Tag.render(_t2$3 || (_t2$3 = _$4`
+		`;
+		}
+		renderHead() {
+			return main_core.Tag.render`
 			<div class="bizproc__ws_start__content-head">
-				<div class="bizproc__ws_start__content-title">
-					${0}
+				<div class="bizproc__ws_start__content-title" role="heading" aria-level="2">
+					${main_core.Text.encode(this.name)}
 				</div>
 			</div>
-		`), main_core.Text.encode(this.name));
-	  }
-	  renderBody() {
-	    throw new Error('Abstract Method has no implementation');
-	  }
-	  renderFooter() {
-	    return null;
-	  }
-	  isNextEnabled() {
-	    return true;
-	  }
-	  onBeforeNextStep() {
-	    return Promise.resolve();
-	  }
-	  isBackEnabled() {
-	    return true;
-	  }
-	  onChangeStepAvailability() {
-	    this.emit('onChangeStepAvailability');
-	  }
-	  onAfterRender() {}
-	  canExit() {
-	    return true;
-	  }
+		`;
+		}
+		renderBody() {
+			throw new Error('Abstract Method has no implementation');
+		}
+		renderFooter() {
+			return null;
+		}
+		isNextEnabled() {
+			return true;
+		}
+		onBeforeNextStep() {
+			return Promise.resolve();
+		}
+		isBackEnabled() {
+			return true;
+		}
+		onChangeStepAvailability() {
+			this.emit('onChangeStepAvailability');
+		}
+		onAfterRender() {}
+		announcesOwnState() {
+			return false;
+		}
+		canExit() {
+			return true;
+		}
 	}
 
 	class StepWithErrors extends Step {
-	  constructor(config) {
-	    super(config);
-	    this.errorNotifier = new ErrorNotifier({});
-	  }
-	  renderErrors() {
-	    return this.errorNotifier.render();
-	  }
-	  showErrors(errors) {
-	    if (main_core.Type.isArrayFilled(errors)) {
-	      this.errorNotifier.errors = errors;
-	      this.errorNotifier.show();
-	    }
-	  }
-	  cleanErrors() {
-	    this.errorNotifier.errors = [];
-	    this.errorNotifier.clean();
-	  }
+		constructor(config) {
+			super(config);
+			this.errorNotifier = new ErrorNotifier({});
+		}
+		renderErrors() {
+			return this.errorNotifier.render();
+		}
+		showErrors(errors, form = null) {
+			if (main_core.Type.isArrayFilled(errors)) {
+				this.errorNotifier.errors = errors;
+				this.errorNotifier.show();
+				this.#focusInvalidControl(form);
+			}
+		}
+		cleanErrors(form = null) {
+			this.errorNotifier.errors = [];
+			this.errorNotifier.clean();
+			if (main_core.Type.isDomNode(form)) {
+				bizproc_a11y.clearInvalidControls(form);
+			}
+		}
+
+		// the announcement alone leaves a keyboard user with no idea where the error is, so the focus
+		// goes to the field itself; the message is bound to the control and read together with its name
+		#focusInvalidControl(form) {
+			if (!main_core.Type.isDomNode(form)) {
+				return;
+			}
+			bizproc_a11y.clearInvalidControls(form);
+			const fields = [...this.errorNotifier.messageIdByField].map(([name, messageId]) => ({
+				name,
+				messageId
+			}));
+
+			// errors without a field key still point at a required field left empty
+			const control = bizproc_a11y.markInvalidControls(form, fields) ?? bizproc_a11y.findUnfilledRequiredControl(form);
+			control?.focus();
+		}
 	}
 
-	let _$5 = t => t,
-	  _t$5,
-	  _t2$4;
-	const FORM_NAME = 'bizproc-ws-single-start-constants';
-	var _constants = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("constants");
-	var _documentType = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("documentType");
-	var _signedDocumentType = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("signedDocumentType");
-	var _signedDocumentId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("signedDocumentId");
-	var _templateId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("templateId");
-	var _body = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("body");
-	var _form = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("form");
-	var _isConstantsTuned = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isConstantsTuned");
-	var _originalFormData = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("originalFormData");
-	var _hasConstants = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("hasConstants");
-	var _renderStub = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderStub");
-	var _renderConstants = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderConstants");
-	var _subscribeOnRenderEvents = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("subscribeOnRenderEvents");
-	var _onAfterFieldCollectionRenderer = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onAfterFieldCollectionRenderer");
-	var _renderSaveButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderSaveButton");
-	var _handleSaveClick = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleSaveClick");
+	const FORM_NAME$3 = 'bizproc-ws-single-start-constants';
 	class ConstantsStep extends StepWithErrors {
-	  constructor(config) {
-	    super(config);
-	    Object.defineProperty(this, _handleSaveClick, {
-	      value: _handleSaveClick2
-	    });
-	    Object.defineProperty(this, _renderSaveButton, {
-	      value: _renderSaveButton2
-	    });
-	    Object.defineProperty(this, _onAfterFieldCollectionRenderer, {
-	      value: _onAfterFieldCollectionRenderer2
-	    });
-	    Object.defineProperty(this, _subscribeOnRenderEvents, {
-	      value: _subscribeOnRenderEvents2
-	    });
-	    Object.defineProperty(this, _renderConstants, {
-	      value: _renderConstants2
-	    });
-	    Object.defineProperty(this, _renderStub, {
-	      value: _renderStub2
-	    });
-	    Object.defineProperty(this, _hasConstants, {
-	      get: _get_hasConstants,
-	      set: void 0
-	    });
-	    Object.defineProperty(this, _constants, {
-	      writable: true,
-	      value: []
-	    });
-	    Object.defineProperty(this, _documentType, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _signedDocumentType, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _signedDocumentId, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _templateId, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _body, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _form, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _isConstantsTuned, {
-	      writable: true,
-	      value: false
-	    });
-	    Object.defineProperty(this, _originalFormData, {
-	      writable: true,
-	      value: null
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _documentType)[_documentType] = config.documentType;
-	    babelHelpers.classPrivateFieldLooseBase(this, _signedDocumentType)[_signedDocumentType] = config.signedDocumentType;
-	    babelHelpers.classPrivateFieldLooseBase(this, _signedDocumentId)[_signedDocumentId] = config.signedDocumentId;
-	    babelHelpers.classPrivateFieldLooseBase(this, _templateId)[_templateId] = main_core.Text.toInteger(config.templateId);
-	    if (main_core.Type.isArrayFilled(config.constants)) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _constants)[_constants] = config.constants;
-	    }
-	  }
-	  renderBody() {
-	    if (!babelHelpers.classPrivateFieldLooseBase(this, _body)[_body]) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _body)[_body] = main_core.Tag.render(_t$5 || (_t$5 = _$5`
+		#constants = [];
+		#documentType = null;
+		#signedDocumentType;
+		#signedDocumentId;
+		#templateId;
+		#body;
+		#form;
+		#saveButton;
+		#isConstantsTuned = false;
+		#originalFormData = null;
+		constructor(config) {
+			super(config);
+			this.#documentType = config.documentType;
+			this.#signedDocumentType = config.signedDocumentType;
+			this.#signedDocumentId = config.signedDocumentId;
+			this.#templateId = main_core.Text.toInteger(config.templateId);
+			if (main_core.Type.isArrayFilled(config.constants)) {
+				this.#constants = config.constants;
+			}
+		}
+		get #hasConstants() {
+			return main_core.Type.isArrayFilled(this.#constants);
+		}
+		renderBody() {
+			if (!this.#body) {
+				this.#body = main_core.Tag.render`
 				<div class="bizproc__ws_start__content-body">
-					${0}
+					${this.#hasConstants ? this.#renderConstants() : this.#renderStub()}
 				</div>
-			`), babelHelpers.classPrivateFieldLooseBase(this, _hasConstants)[_hasConstants] ? babelHelpers.classPrivateFieldLooseBase(this, _renderConstants)[_renderConstants]() : babelHelpers.classPrivateFieldLooseBase(this, _renderStub)[_renderStub]());
-	    }
-	    return babelHelpers.classPrivateFieldLooseBase(this, _body)[_body];
-	  }
-	  isNextEnabled() {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _isConstantsTuned)[_isConstantsTuned];
-	  }
-	  canExit() {
-	    if (!babelHelpers.classPrivateFieldLooseBase(this, _hasConstants)[_hasConstants] || !babelHelpers.classPrivateFieldLooseBase(this, _originalFormData)[_originalFormData] || babelHelpers.classPrivateFieldLooseBase(this, _isConstantsTuned)[_isConstantsTuned]) {
-	      return true;
-	    }
-	    return isEqualsFormData(new FormData(babelHelpers.classPrivateFieldLooseBase(this, _form)[_form]), babelHelpers.classPrivateFieldLooseBase(this, _originalFormData)[_originalFormData]);
-	  }
-	}
-	function _get_hasConstants() {
-	  return main_core.Type.isArrayFilled(babelHelpers.classPrivateFieldLooseBase(this, _constants)[_constants]);
-	}
-	function _renderStub2() {
-	  return new ui_alerts.Alert({
-	    text: main_core.Text.encode(main_core.Loc.getMessage('BIZPROC_CMP_WORKFLOW_START_TMP_SINGLE_START_NOT_TUNING_CONSTANTS')),
-	    color: ui_alerts.AlertColor.WARNING,
-	    icon: ui_alerts.AlertIcon.INFO
-	  }).render();
-	}
-	function _renderConstants2() {
-	  babelHelpers.classPrivateFieldLooseBase(this, _form)[_form] = renderBpForm(FORM_NAME, this.name, babelHelpers.classPrivateFieldLooseBase(this, _constants)[_constants], babelHelpers.classPrivateFieldLooseBase(this, _documentType)[_documentType], null, babelHelpers.classPrivateFieldLooseBase(this, _signedDocumentId)[_signedDocumentId]);
-	  main_core.Dom.append(this.renderErrors(), babelHelpers.classPrivateFieldLooseBase(this, _form)[_form]);
-	  main_core.Dom.append(babelHelpers.classPrivateFieldLooseBase(this, _renderSaveButton)[_renderSaveButton](), babelHelpers.classPrivateFieldLooseBase(this, _form)[_form]);
-	  babelHelpers.classPrivateFieldLooseBase(this, _originalFormData)[_originalFormData] = new FormData(babelHelpers.classPrivateFieldLooseBase(this, _form)[_form]);
-	  babelHelpers.classPrivateFieldLooseBase(this, _subscribeOnRenderEvents)[_subscribeOnRenderEvents]();
-	  return main_core.Tag.render(_t2$4 || (_t2$4 = _$5`<div class="bizproc__ws_start__content-form">${0}</div>`), babelHelpers.classPrivateFieldLooseBase(this, _form)[_form]);
-	}
-	function _subscribeOnRenderEvents2() {
-	  main_core_events.EventEmitter.subscribe('BX.Bizproc.FieldType.onCustomRenderControlFinished', babelHelpers.classPrivateFieldLooseBase(this, _onAfterFieldCollectionRenderer)[_onAfterFieldCollectionRenderer].bind(this));
-	  main_core_events.EventEmitter.subscribe('BX.Bizproc.FieldType.onCollectionRenderControlFinished', babelHelpers.classPrivateFieldLooseBase(this, _onAfterFieldCollectionRenderer)[_onAfterFieldCollectionRenderer].bind(this));
-	}
-	function _onAfterFieldCollectionRenderer2() {
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _originalFormData)[_originalFormData] && document.forms.namedItem(FORM_NAME)) {
-	    addMissingFormDataValues(babelHelpers.classPrivateFieldLooseBase(this, _originalFormData)[_originalFormData], new FormData(document.forms.namedItem(FORM_NAME)));
-	  }
-	}
-	function _renderSaveButton2() {
-	  return new ui_buttons.Button({
-	    text: main_core.Text.encode(main_core.Loc.getMessage('BIZPROC_CMP_WORKFLOW_START_TMP_SINGLE_START_BUTTON_SAVE')),
-	    size: ui_buttons.ButtonSize.EXTRA_SMALL,
-	    color: ui_buttons.ButtonColor.SECONDARY,
-	    onclick: babelHelpers.classPrivateFieldLooseBase(this, _handleSaveClick)[_handleSaveClick].bind(this)
-	  }).render();
-	}
-	function _handleSaveClick2(button) {
-	  button.setWaiting(true);
-	  this.cleanErrors();
-	  const data = new FormData(babelHelpers.classPrivateFieldLooseBase(this, _form)[_form]);
-	  data.set('templateId', babelHelpers.classPrivateFieldLooseBase(this, _templateId)[_templateId]);
-	  data.set('signedDocumentType', babelHelpers.classPrivateFieldLooseBase(this, _signedDocumentType)[_signedDocumentType]);
-	  main_core.ajax.runAction('bizproc.workflow.starter.setConstants', {
-	    data
-	  }).then(() => {
-	    babelHelpers.classPrivateFieldLooseBase(this, _isConstantsTuned)[_isConstantsTuned] = true;
-	    this.onChangeStepAvailability();
-	    button.setWaiting(false);
-	  }).catch(response => {
-	    this.showErrors(response.errors);
-	    button.setWaiting(false);
-	  });
+			`;
+			}
+			return this.#body;
+		}
+		isNextEnabled() {
+			return this.#isConstantsTuned;
+		}
+		#renderStub() {
+			return new ui_alerts.Alert({
+				text: main_core.Text.encode(main_core.Loc.getMessage('BIZPROC_CMP_WORKFLOW_START_TMP_SINGLE_START_NOT_TUNING_CONSTANTS')),
+				color: ui_alerts.AlertColor.WARNING,
+				icon: ui_alerts.AlertIcon.INFO
+			}).render();
+		}
+		#renderConstants() {
+			this.#form = renderBpForm(FORM_NAME$3, this.name, this.#constants, this.#documentType, {
+				signedDocumentId: this.#signedDocumentId,
+				onSubmit: () => this.#handleSaveClick(this.#saveButton),
+				// the step head already renders this.name as a heading
+				titleLevel: null
+			});
+			main_core.Dom.append(this.renderErrors(), this.#form);
+			main_core.Dom.append(this.#renderSaveButton(), this.#form);
+			this.#originalFormData = new FormData(this.#form);
+			this.#subscribeOnRenderEvents();
+			return main_core.Tag.render`<div class="bizproc__ws_start__content-form">${this.#form}</div>`;
+		}
+		#subscribeOnRenderEvents() {
+			main_core_events.EventEmitter.subscribe('BX.Bizproc.FieldType.onCustomRenderControlFinished', this.#onAfterFieldCollectionRenderer.bind(this));
+			main_core_events.EventEmitter.subscribe('BX.Bizproc.FieldType.onCollectionRenderControlFinished', this.#onAfterFieldCollectionRenderer.bind(this));
+		}
+		#onAfterFieldCollectionRenderer() {
+			if (this.#originalFormData && document.forms.namedItem(FORM_NAME$3)) {
+				addMissingFormDataValues(this.#originalFormData, new FormData(document.forms.namedItem(FORM_NAME$3)));
+			}
+		}
+		#renderSaveButton() {
+			this.#saveButton = new ui_buttons.Button({
+				text: main_core.Text.encode(main_core.Loc.getMessage('BIZPROC_CMP_WORKFLOW_START_TMP_SINGLE_START_BUTTON_SAVE')),
+				size: ui_buttons.ButtonSize.EXTRA_SMALL,
+				color: ui_buttons.ButtonColor.SECONDARY,
+				props: {
+					type: 'button'
+				},
+				dataset: {
+					testid: 'bizproc-ws-start-save-constants-btn'
+				},
+				onclick: this.#handleSaveClick.bind(this)
+			});
+			return this.#saveButton.render();
+		}
+		#handleSaveClick(button) {
+			if (button.isWaiting()) {
+				return;
+			}
+			button.setWaiting(true);
+			this.cleanErrors(this.#form);
+			const data = new FormData(this.#form);
+			data.set('templateId', this.#templateId);
+			data.set('signedDocumentType', this.#signedDocumentType);
+			main_core.ajax.runAction('bizproc.workflow.starter.setConstants', {
+				data
+			}).then(() => {
+				this.#isConstantsTuned = true;
+				this.onChangeStepAvailability();
+				button.setWaiting(false);
+			}).catch(response => {
+				this.showErrors(response.errors, this.#form);
+				button.setWaiting(false);
+			});
+		}
+		canExit() {
+			if (!this.#hasConstants || !this.#originalFormData || this.#isConstantsTuned) {
+				return true;
+			}
+			return isEqualsFormData(new FormData(this.#form), this.#originalFormData);
+		}
 	}
 
 	function startWorkflowAction(data) {
-	  return new Promise((resolve, reject) => {
-	    main_core.ajax.runAction('bizproc.workflow.starter.startWorkflow', {
-	      data
-	    }).then(response => {
-	      const slider = BX.SidePanel.Instance.getSliderByWindow(window);
-	      if (slider) {
-	        const dictionary = slider.getData();
-	        dictionary.set('data', {
-	          workflowId: response.data.workflowId
-	        });
-	      }
-	      resolve(response);
-	    }).catch(reject);
-	  });
+		return new Promise((resolve, reject) => {
+			main_core.ajax.runAction('bizproc.workflow.starter.startWorkflow', {
+				data
+			}).then(response => {
+				const slider = BX.SidePanel.Instance.getSliderByWindow(window);
+				if (slider) {
+					const dictionary = slider.getData();
+					dictionary.set('data', {
+						workflowId: response.data.workflowId
+					});
+				}
+				resolve(response);
+			}).catch(reject);
+		});
 	}
 
-	let _$6 = t => t,
-	  _t$6;
-	const FORM_NAME$1 = 'bizproc-ws-single-start-parameters';
-	var _parameters = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("parameters");
-	var _documentType$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("documentType");
-	var _signedDocumentId$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("signedDocumentId");
-	var _signedDocumentType$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("signedDocumentType");
-	var _templateId$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("templateId");
-	var _triggerType = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("triggerType");
-	var _body$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("body");
-	var _form$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("form");
-	var _originalFormData$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("originalFormData");
-	var _isSent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isSent");
-	var _startTime = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("startTime");
-	var _renderParametersForm = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderParametersForm");
-	var _subscribeOnRenderEvents$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("subscribeOnRenderEvents");
-	var _onAfterFieldCollectionRenderer$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onAfterFieldCollectionRenderer");
+	const FORM_NAME$2 = 'bizproc-ws-single-start-parameters';
 	class ParametersStep extends StepWithErrors {
-	  constructor(config) {
-	    super(config);
-	    Object.defineProperty(this, _onAfterFieldCollectionRenderer$1, {
-	      value: _onAfterFieldCollectionRenderer2$1
-	    });
-	    Object.defineProperty(this, _subscribeOnRenderEvents$1, {
-	      value: _subscribeOnRenderEvents2$1
-	    });
-	    Object.defineProperty(this, _renderParametersForm, {
-	      value: _renderParametersForm2
-	    });
-	    Object.defineProperty(this, _parameters, {
-	      writable: true,
-	      value: []
-	    });
-	    Object.defineProperty(this, _documentType$1, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _signedDocumentId$1, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _signedDocumentType$1, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _templateId$1, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _triggerType, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _body$1, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _form$1, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _originalFormData$1, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _isSent, {
-	      writable: true,
-	      value: false
-	    });
-	    Object.defineProperty(this, _startTime, {
-	      writable: true,
-	      value: void 0
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _documentType$1)[_documentType$1] = config.documentType;
-	    if (main_core.Type.isArrayFilled(config.parameters)) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _parameters)[_parameters] = config.parameters;
-	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _templateId$1)[_templateId$1] = main_core.Text.toInteger(config.templateId);
-	    babelHelpers.classPrivateFieldLooseBase(this, _signedDocumentType$1)[_signedDocumentType$1] = config.signedDocumentType;
-	    babelHelpers.classPrivateFieldLooseBase(this, _signedDocumentId$1)[_signedDocumentId$1] = config.signedDocumentId;
-	    babelHelpers.classPrivateFieldLooseBase(this, _triggerType)[_triggerType] = config.triggerType;
-	    babelHelpers.classPrivateFieldLooseBase(this, _startTime)[_startTime] = Math.round(Date.now() / 1000);
-	  }
-	  renderBody() {
-	    if (!babelHelpers.classPrivateFieldLooseBase(this, _body$1)[_body$1]) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _body$1)[_body$1] = main_core.Tag.render(_t$6 || (_t$6 = _$6`
+		#parameters = [];
+		#documentType = null;
+		#signedDocumentId;
+		#signedDocumentType;
+		#templateId;
+		#triggerType;
+		#body;
+		#form;
+		#originalFormData = null;
+		#isSent = false;
+		#startTime;
+		constructor(config) {
+			super(config);
+			this.#documentType = config.documentType;
+			if (main_core.Type.isArrayFilled(config.parameters)) {
+				this.#parameters = config.parameters;
+			}
+			this.#templateId = main_core.Text.toInteger(config.templateId);
+			this.#signedDocumentType = config.signedDocumentType;
+			this.#signedDocumentId = config.signedDocumentId;
+			this.#triggerType = config.triggerType;
+			this.#startTime = Math.round(Date.now() / 1000);
+		}
+		renderBody() {
+			if (!this.#body) {
+				this.#body = main_core.Tag.render`
 				<div class="bizproc__ws_start__content-body">
-					${0}
+					${this.renderErrors()}
 					<div class="bizproc__ws_start__content-form">
-						${0}
+						${this.#renderParametersForm()}
 					</div>
 				</div>
-			`), this.renderErrors(), babelHelpers.classPrivateFieldLooseBase(this, _renderParametersForm)[_renderParametersForm]());
-	    }
-	    return babelHelpers.classPrivateFieldLooseBase(this, _body$1)[_body$1];
-	  }
-	  canExit() {
-	    if (!babelHelpers.classPrivateFieldLooseBase(this, _originalFormData$1)[_originalFormData$1] || babelHelpers.classPrivateFieldLooseBase(this, _isSent)[_isSent]) {
-	      return true;
-	    }
-	    return isEqualsFormData(new FormData(babelHelpers.classPrivateFieldLooseBase(this, _form$1)[_form$1]), babelHelpers.classPrivateFieldLooseBase(this, _originalFormData$1)[_originalFormData$1]);
-	  }
-	  onBeforeNextStep() {
-	    var _babelHelpers$classPr;
-	    this.cleanErrors();
-	    const data = new FormData(babelHelpers.classPrivateFieldLooseBase(this, _form$1)[_form$1]);
-	    data.set('templateId', babelHelpers.classPrivateFieldLooseBase(this, _templateId$1)[_templateId$1]);
-	    data.set('signedDocumentType', babelHelpers.classPrivateFieldLooseBase(this, _signedDocumentType$1)[_signedDocumentType$1]);
-	    data.set('signedDocumentId', babelHelpers.classPrivateFieldLooseBase(this, _signedDocumentId$1)[_signedDocumentId$1]);
-	    data.set('startDuration', Math.round(Date.now() / 1000) - babelHelpers.classPrivateFieldLooseBase(this, _startTime)[_startTime]);
-	    data.set('triggerType', (_babelHelpers$classPr = babelHelpers.classPrivateFieldLooseBase(this, _triggerType)[_triggerType]) != null ? _babelHelpers$classPr : '');
-	    return new Promise((resolve, reject) => {
-	      startWorkflowAction(data).then(() => {
-	        babelHelpers.classPrivateFieldLooseBase(this, _isSent)[_isSent] = true;
-	        resolve();
-	      }).catch(response => {
-	        this.showErrors(response.errors);
-	        reject();
-	      });
-	    });
-	  }
-	}
-	function _renderParametersForm2() {
-	  babelHelpers.classPrivateFieldLooseBase(this, _form$1)[_form$1] = renderBpForm(FORM_NAME$1, main_core.Loc.getMessage('BIZPROC_CMP_WORKFLOW_START_TMP_SINGLE_START_PARAMETERS_TITLE'), babelHelpers.classPrivateFieldLooseBase(this, _parameters)[_parameters], babelHelpers.classPrivateFieldLooseBase(this, _documentType$1)[_documentType$1], null, babelHelpers.classPrivateFieldLooseBase(this, _signedDocumentId$1)[_signedDocumentId$1]);
-	  babelHelpers.classPrivateFieldLooseBase(this, _originalFormData$1)[_originalFormData$1] = new FormData(babelHelpers.classPrivateFieldLooseBase(this, _form$1)[_form$1]);
-	  babelHelpers.classPrivateFieldLooseBase(this, _subscribeOnRenderEvents$1)[_subscribeOnRenderEvents$1]();
-	  return babelHelpers.classPrivateFieldLooseBase(this, _form$1)[_form$1];
-	}
-	function _subscribeOnRenderEvents2$1() {
-	  main_core_events.EventEmitter.subscribe('BX.Bizproc.FieldType.onCustomRenderControlFinished', babelHelpers.classPrivateFieldLooseBase(this, _onAfterFieldCollectionRenderer$1)[_onAfterFieldCollectionRenderer$1].bind(this));
-	  main_core_events.EventEmitter.subscribe('BX.Bizproc.FieldType.onCollectionRenderControlFinished', babelHelpers.classPrivateFieldLooseBase(this, _onAfterFieldCollectionRenderer$1)[_onAfterFieldCollectionRenderer$1].bind(this));
-	}
-	function _onAfterFieldCollectionRenderer2$1() {
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _originalFormData$1)[_originalFormData$1] && document.forms.namedItem(FORM_NAME$1)) {
-	    addMissingFormDataValues(babelHelpers.classPrivateFieldLooseBase(this, _originalFormData$1)[_originalFormData$1], new FormData(document.forms.namedItem(FORM_NAME$1)));
-	  }
+			`;
+			}
+			return this.#body;
+		}
+		#renderParametersForm() {
+			this.#form = renderBpForm(FORM_NAME$2, main_core.Loc.getMessage('BIZPROC_CMP_WORKFLOW_START_TMP_SINGLE_START_PARAMETERS_TITLE'), this.#parameters, this.#documentType, {
+				signedDocumentId: this.#signedDocumentId,
+				onSubmit: () => this.emit('onEnterSubmit'),
+				// the form title is nested under the step heading
+				titleLevel: 3
+			});
+			this.#originalFormData = new FormData(this.#form);
+			this.#subscribeOnRenderEvents();
+			return this.#form;
+		}
+		#subscribeOnRenderEvents() {
+			main_core_events.EventEmitter.subscribe('BX.Bizproc.FieldType.onCustomRenderControlFinished', this.#onAfterFieldCollectionRenderer.bind(this));
+			main_core_events.EventEmitter.subscribe('BX.Bizproc.FieldType.onCollectionRenderControlFinished', this.#onAfterFieldCollectionRenderer.bind(this));
+		}
+		#onAfterFieldCollectionRenderer() {
+			if (this.#originalFormData && document.forms.namedItem(FORM_NAME$2)) {
+				addMissingFormDataValues(this.#originalFormData, new FormData(document.forms.namedItem(FORM_NAME$2)));
+			}
+		}
+		canExit() {
+			if (!this.#originalFormData || this.#isSent) {
+				return true;
+			}
+			return isEqualsFormData(new FormData(this.#form), this.#originalFormData);
+		}
+		onBeforeNextStep() {
+			this.cleanErrors(this.#form);
+			const data = new FormData(this.#form);
+			data.set('templateId', this.#templateId);
+			data.set('signedDocumentType', this.#signedDocumentType);
+			data.set('signedDocumentId', this.#signedDocumentId);
+			data.set('startDuration', Math.round(Date.now() / 1000) - this.#startTime);
+			data.set('triggerType', this.#triggerType ?? '');
+			return new Promise((resolve, reject) => {
+				startWorkflowAction(data).then(() => {
+					this.#isSent = true;
+					resolve();
+				}).catch(response => {
+					this.showErrors(response.errors, this.#form);
+					reject();
+				});
+			});
+		}
 	}
 
-	let _$7 = t => t,
-	  _t$7,
-	  _t2$5,
-	  _t3$1,
-	  _t4$1,
-	  _t5$1,
-	  _t6,
-	  _t7,
-	  _t8;
-	var _body$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("body");
-	var _recommendation = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("recommendation");
-	var _recommendationElement = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("recommendationElement");
-	var _expandElement = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("expandElement");
-	var _freeHeight = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("freeHeight");
-	var _duration = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("duration");
-	var _isHeightFixed = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isHeightFixed");
-	var _hasRecommendation = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("hasRecommendation");
-	var _hasDuration = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("hasDuration");
-	var _getFreeHeight = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getFreeHeight");
-	var _fixRecommendationHeight = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("fixRecommendationHeight");
-	var _renderRecommendation = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderRecommendation");
-	var _renderEmptyRecommendation = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderEmptyRecommendation");
-	var _renderExpandElement = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderExpandElement");
-	var _toggleRecommendation = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("toggleRecommendation");
-	var _renderDuration = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderDuration");
-	var _renderLinkToArticle = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderLinkToArticle");
 	class RecommendationStep extends Step {
-	  constructor(config) {
-	    super(config);
-	    Object.defineProperty(this, _renderLinkToArticle, {
-	      value: _renderLinkToArticle2
-	    });
-	    Object.defineProperty(this, _renderDuration, {
-	      value: _renderDuration2
-	    });
-	    Object.defineProperty(this, _toggleRecommendation, {
-	      value: _toggleRecommendation2
-	    });
-	    Object.defineProperty(this, _renderExpandElement, {
-	      value: _renderExpandElement2
-	    });
-	    Object.defineProperty(this, _renderEmptyRecommendation, {
-	      value: _renderEmptyRecommendation2
-	    });
-	    Object.defineProperty(this, _renderRecommendation, {
-	      value: _renderRecommendation2
-	    });
-	    Object.defineProperty(this, _fixRecommendationHeight, {
-	      value: _fixRecommendationHeight2
-	    });
-	    Object.defineProperty(this, _getFreeHeight, {
-	      value: _getFreeHeight2
-	    });
-	    Object.defineProperty(this, _hasDuration, {
-	      get: _get_hasDuration,
-	      set: void 0
-	    });
-	    Object.defineProperty(this, _hasRecommendation, {
-	      get: _get_hasRecommendation,
-	      set: void 0
-	    });
-	    Object.defineProperty(this, _body$2, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _recommendation, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _recommendationElement, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _expandElement, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _freeHeight, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _duration, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _isHeightFixed, {
-	      writable: true,
-	      value: false
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _recommendation)[_recommendation] = String(config.recommendation).trim();
-	    if (!main_core.Type.isNil(config.duration)) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _duration)[_duration] = main_core.Text.toInteger(config.duration);
-	    }
-	  }
-	  onAfterRender() {
-	    if (!babelHelpers.classPrivateFieldLooseBase(this, _isHeightFixed)[_isHeightFixed]) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _fixRecommendationHeight)[_fixRecommendationHeight]();
-	      babelHelpers.classPrivateFieldLooseBase(this, _isHeightFixed)[_isHeightFixed] = true;
-	    }
-	  }
-	  renderBody() {
-	    if (!babelHelpers.classPrivateFieldLooseBase(this, _body$2)[_body$2]) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _body$2)[_body$2] = main_core.Tag.render(_t$7 || (_t$7 = _$7`
+		#body;
+		#recommendation = null;
+		#recommendationElement = null;
+		#expandElement = null;
+		#freeHeight = null;
+		#duration = null;
+		#isHeightFixed = false;
+		constructor(config) {
+			super(config);
+			this.#recommendation = String(config.recommendation).trim();
+			if (!main_core.Type.isNil(config.duration)) {
+				this.#duration = main_core.Text.toInteger(config.duration);
+			}
+		}
+		get #hasRecommendation() {
+			return main_core.Type.isStringFilled(this.#recommendation);
+		}
+		get #hasDuration() {
+			return !main_core.Type.isNil(this.#duration);
+		}
+		#getFreeHeight() {
+			if (main_core.Type.isNil(this.#freeHeight)) {
+				const slider = document.querySelector('.ui-page-slider-workarea-content-padding');
+				this.#freeHeight = slider ? slider.offsetHeight - window.innerHeight : 0;
+			}
+			return this.#freeHeight;
+		}
+		onAfterRender() {
+			if (!this.#isHeightFixed) {
+				this.#fixRecommendationHeight();
+				this.#isHeightFixed = true;
+			}
+		}
+		#fixRecommendationHeight() {
+			if (this.#recommendationElement && this.#expandElement) {
+				if (this.#getFreeHeight() <= 0) {
+					main_core.Event.unbindAll(this.#expandElement, 'click');
+					main_core.Dom.remove(this.#expandElement);
+					this.#expandElement = null;
+				} else {
+					this.#toggleRecommendation();
+				}
+			}
+		}
+		renderBody() {
+			if (!this.#body) {
+				this.#body = main_core.Tag.render`
 				<div class="bizproc__ws_start__content-body">
-					${0}
-					${0}
+					${this.#renderRecommendation()}
+					${this.#renderExpandElement()}
 				</div>
-			`), babelHelpers.classPrivateFieldLooseBase(this, _renderRecommendation)[_renderRecommendation](), babelHelpers.classPrivateFieldLooseBase(this, _renderExpandElement)[_renderExpandElement]());
-	    }
-	    return babelHelpers.classPrivateFieldLooseBase(this, _body$2)[_body$2];
-	  }
-	  renderFooter() {
-	    return main_core.Tag.render(_t2$5 || (_t2$5 = _$7`
-			<div class="bizproc__ws_single-start__informer">
-				<div class="bizproc__ws_single-start__informer-header">
-					<div class="bizproc__ws_single-start__informer-title">
-						${0}
-					</div>
-					${0}
-				</div>
-				<div class="bizproc__ws_single-start__informer-message">
-					${0}
-				</div>
-				<div class="bizproc__ws_single-start__informer-bottom">
-					${0}
-				</div>
-			</div>
-		`), main_core.Text.encode(main_core.Loc.getMessage('BIZPROC_CMP_WORKFLOW_START_TMP_SINGLE_START_AVERAGE_DURATION_TITLE')), babelHelpers.classPrivateFieldLooseBase(this, _renderDuration)[_renderDuration](), main_core.Text.encode(main_core.Loc.getMessage(babelHelpers.classPrivateFieldLooseBase(this, _hasDuration)[_hasDuration] ? 'BIZPROC_CMP_WORKFLOW_START_TMP_SINGLE_START_DURATION_DESCRIPTION' : 'BIZPROC_CMP_WORKFLOW_START_TMP_SINGLE_START_DURATION_UNDEFINED_DESCRIPTION')), babelHelpers.classPrivateFieldLooseBase(this, _hasDuration)[_hasDuration] ? babelHelpers.classPrivateFieldLooseBase(this, _renderLinkToArticle)[_renderLinkToArticle]() : null);
-	  }
-	}
-	function _get_hasRecommendation() {
-	  return main_core.Type.isStringFilled(babelHelpers.classPrivateFieldLooseBase(this, _recommendation)[_recommendation]);
-	}
-	function _get_hasDuration() {
-	  return !main_core.Type.isNil(babelHelpers.classPrivateFieldLooseBase(this, _duration)[_duration]);
-	}
-	function _getFreeHeight2() {
-	  if (main_core.Type.isNil(babelHelpers.classPrivateFieldLooseBase(this, _freeHeight)[_freeHeight])) {
-	    const slider = document.querySelector('.ui-page-slider-workarea-content-padding');
-	    babelHelpers.classPrivateFieldLooseBase(this, _freeHeight)[_freeHeight] = slider ? slider.offsetHeight - window.innerHeight : 0;
-	  }
-	  return babelHelpers.classPrivateFieldLooseBase(this, _freeHeight)[_freeHeight];
-	}
-	function _fixRecommendationHeight2() {
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _recommendationElement)[_recommendationElement] && babelHelpers.classPrivateFieldLooseBase(this, _expandElement)[_expandElement]) {
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _getFreeHeight)[_getFreeHeight]() <= 0) {
-	      main_core.Event.unbindAll(babelHelpers.classPrivateFieldLooseBase(this, _expandElement)[_expandElement], 'click');
-	      main_core.Dom.remove(babelHelpers.classPrivateFieldLooseBase(this, _expandElement)[_expandElement]);
-	      babelHelpers.classPrivateFieldLooseBase(this, _expandElement)[_expandElement] = null;
-	    } else {
-	      babelHelpers.classPrivateFieldLooseBase(this, _toggleRecommendation)[_toggleRecommendation]();
-	    }
-	  }
-	}
-	function _renderRecommendation2() {
-	  const recommendation = babelHelpers.classPrivateFieldLooseBase(this, _hasRecommendation)[_hasRecommendation] ? BX.util.nl2br(main_core.Text.encode(babelHelpers.classPrivateFieldLooseBase(this, _recommendation)[_recommendation])) : babelHelpers.classPrivateFieldLooseBase(this, _renderEmptyRecommendation)[_renderEmptyRecommendation]();
-	  babelHelpers.classPrivateFieldLooseBase(this, _recommendationElement)[_recommendationElement] = main_core.Tag.render(_t3$1 || (_t3$1 = _$7`
+			`;
+			}
+			return this.#body;
+		}
+		#renderRecommendation() {
+			const recommendation = this.#hasRecommendation ? BX.util.nl2br(main_core.Text.encode(this.#recommendation)) : this.#renderEmptyRecommendation();
+			this.#recommendationElement = main_core.Tag.render`
 			<div class="bizproc__ws_single-start__content-wrapper">
-				${0}
+				${recommendation}
 			</div>
-		`), recommendation);
-	  return babelHelpers.classPrivateFieldLooseBase(this, _recommendationElement)[_recommendationElement];
-	}
-	function _renderEmptyRecommendation2() {
-	  return main_core.Tag.render(_t4$1 || (_t4$1 = _$7`
+		`;
+			return this.#recommendationElement;
+		}
+		#renderEmptyRecommendation() {
+			return main_core.Tag.render`
 			<div class="bizproc__ws_single-start__empty-recommendation">
 				<svg width="172" height="172" viewBox="0 0 172 172" fill="none" xmlns="http://www.w3.org/2000/svg">
 					<path opacity="0.5" d="M137.617 121.056C137.617 123.661 135.505 125.773 132.899 125.773C130.294 125.773 128.182 123.661 128.182 121.056C128.182 118.45 130.294 116.338 132.899 116.338C135.505 116.338 137.617 118.45 137.617 121.056Z" fill="#2FC6F6"/>
@@ -1087,72 +967,89 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 					</defs>
 				</svg>
 				<span class="bizproc__ws_single-start__text-empty">
-					${0}
+					${main_core.Text.encode(main_core.Loc.getMessage('BIZPROC_CMP_WORKFLOW_START_TMP_SINGLE_START_EMPTY_RECOMMENDATION_1'))}
 				</span>
 			</div>
-		`), main_core.Text.encode(main_core.Loc.getMessage('BIZPROC_CMP_WORKFLOW_START_TMP_SINGLE_START_EMPTY_RECOMMENDATION_1')));
-	}
-	function _renderExpandElement2() {
-	  if (!babelHelpers.classPrivateFieldLooseBase(this, _hasRecommendation)[_hasRecommendation]) {
-	    return null;
-	  }
-	  babelHelpers.classPrivateFieldLooseBase(this, _expandElement)[_expandElement] = main_core.Tag.render(_t5$1 || (_t5$1 = _$7`
+		`;
+		}
+		#renderExpandElement() {
+			if (!this.#hasRecommendation) {
+				return null;
+			}
+			this.#expandElement = main_core.Tag.render`
 			<div class="bizproc__ws_single-start__content-open --expanded">
-				${0}
+				${main_core.Text.encode(main_core.Loc.getMessage('BIZPROC_CMP_WORKFLOW_START_TMP_SINGLE_START_COLLAPSE_RECOMMENDATION'))}
 			</div>
-		`), main_core.Text.encode(main_core.Loc.getMessage('BIZPROC_CMP_WORKFLOW_START_TMP_SINGLE_START_COLLAPSE_RECOMMENDATION')));
-	  main_core.Event.bind(babelHelpers.classPrivateFieldLooseBase(this, _expandElement)[_expandElement], 'click', babelHelpers.classPrivateFieldLooseBase(this, _toggleRecommendation)[_toggleRecommendation].bind(this));
-	  return babelHelpers.classPrivateFieldLooseBase(this, _expandElement)[_expandElement];
-	}
-	function _toggleRecommendation2() {
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _recommendationElement)[_recommendationElement] && babelHelpers.classPrivateFieldLooseBase(this, _expandElement)[_expandElement]) {
-	    main_core.Dom.toggleClass(babelHelpers.classPrivateFieldLooseBase(this, _expandElement)[_expandElement], ['--expanded', '--collapsed']);
-	    babelHelpers.classPrivateFieldLooseBase(this, _expandElement)[_expandElement].innerText = main_core.Loc.getMessage(main_core.Dom.hasClass(babelHelpers.classPrivateFieldLooseBase(this, _expandElement)[_expandElement], '--expanded') ? 'BIZPROC_CMP_WORKFLOW_START_TMP_SINGLE_START_COLLAPSE_RECOMMENDATION' : 'BIZPROC_CMP_WORKFLOW_START_TMP_SINGLE_START_EXPAND_RECOMMENDATION');
-	    main_core.Dom.toggleClass(babelHelpers.classPrivateFieldLooseBase(this, _recommendationElement)[_recommendationElement], ['--hide']);
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _getFreeHeight)[_getFreeHeight]() > 0) {
-	      const height = main_core.Dom.hasClass(babelHelpers.classPrivateFieldLooseBase(this, _expandElement)[_expandElement], '--expanded') ? `${babelHelpers.classPrivateFieldLooseBase(this, _recommendationElement)[_recommendationElement].scrollHeight}px` : `${babelHelpers.classPrivateFieldLooseBase(this, _recommendationElement)[_recommendationElement].offsetHeight - babelHelpers.classPrivateFieldLooseBase(this, _getFreeHeight)[_getFreeHeight]()}px`;
-	      main_core.Dom.style(babelHelpers.classPrivateFieldLooseBase(this, _recommendationElement)[_recommendationElement], 'height', height);
-	    }
-	  }
-	}
-	function _renderDuration2() {
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _hasDuration)[_hasDuration]) {
-	    let formattedDuration = main_core.Loc.getMessage('BIZPROC_CMP_WORKFLOW_START_TMP_SINGLE_START_ZERO_DURATION');
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _duration)[_duration] > 0) {
-	      formattedDuration = main_date.DateTimeFormat.format([['s', 'sdiff'], ['i', 'idiff'], ['H', 'Hdiff'], ['d', 'ddiff'], ['m', 'mdiff'], ['Y', 'Ydiff']], 0, babelHelpers.classPrivateFieldLooseBase(this, _duration)[_duration]);
-	    }
-	    return main_core.Tag.render(_t6 || (_t6 = _$7`
+		`;
+			main_core.Event.bind(this.#expandElement, 'click', this.#toggleRecommendation.bind(this));
+			return this.#expandElement;
+		}
+		#toggleRecommendation() {
+			if (this.#recommendationElement && this.#expandElement) {
+				main_core.Dom.toggleClass(this.#expandElement, ['--expanded', '--collapsed']);
+				this.#expandElement.innerText = main_core.Loc.getMessage(main_core.Dom.hasClass(this.#expandElement, '--expanded') ? 'BIZPROC_CMP_WORKFLOW_START_TMP_SINGLE_START_COLLAPSE_RECOMMENDATION' : 'BIZPROC_CMP_WORKFLOW_START_TMP_SINGLE_START_EXPAND_RECOMMENDATION');
+				main_core.Dom.toggleClass(this.#recommendationElement, ['--hide']);
+				if (this.#getFreeHeight() > 0) {
+					const height = main_core.Dom.hasClass(this.#expandElement, '--expanded') ? `${this.#recommendationElement.scrollHeight}px` : `${this.#recommendationElement.offsetHeight - this.#getFreeHeight()}px`;
+					main_core.Dom.style(this.#recommendationElement, 'height', height);
+				}
+			}
+		}
+		renderFooter() {
+			return main_core.Tag.render`
+			<div class="bizproc__ws_single-start__informer">
+				<div class="bizproc__ws_single-start__informer-header">
+					<div class="bizproc__ws_single-start__informer-title">
+						${main_core.Text.encode(main_core.Loc.getMessage('BIZPROC_CMP_WORKFLOW_START_TMP_SINGLE_START_AVERAGE_DURATION_TITLE'))}
+					</div>
+					${this.#renderDuration()}
+				</div>
+				<div class="bizproc__ws_single-start__informer-message">
+					${main_core.Text.encode(main_core.Loc.getMessage(this.#hasDuration ? 'BIZPROC_CMP_WORKFLOW_START_TMP_SINGLE_START_DURATION_DESCRIPTION' : 'BIZPROC_CMP_WORKFLOW_START_TMP_SINGLE_START_DURATION_UNDEFINED_DESCRIPTION'))}
+				</div>
+				<div class="bizproc__ws_single-start__informer-bottom">
+					${this.#hasDuration ? this.#renderLinkToArticle() : null}
+				</div>
+			</div>
+		`;
+		}
+		#renderDuration() {
+			if (this.#hasDuration) {
+				let formattedDuration = main_core.Loc.getMessage('BIZPROC_CMP_WORKFLOW_START_TMP_SINGLE_START_ZERO_DURATION');
+				if (this.#duration > 0) {
+					formattedDuration = main_date.DateTimeFormat.format([['s', 'sdiff'], ['i', 'idiff'], ['H', 'Hdiff'], ['d', 'ddiff'], ['m', 'mdiff'], ['Y', 'Ydiff']], 0, this.#duration);
+				}
+				return main_core.Tag.render`
 				<div class="bizproc__ws_single-start__informer-time">
-					<span>${0}</span>
+					<span>${main_core.Text.encode(formattedDuration)}</span>
 					<div class="ui-icon-set --time-picker"></div>
 				</div>
-			`), main_core.Text.encode(formattedDuration));
-	  }
-	  return main_core.Tag.render(_t7 || (_t7 = _$7`
+			`;
+			}
+			return main_core.Tag.render`
 			<div class="bizproc__ws_single-start__informer-time">
 				<span class="bizproc__ws_single-start__text-empty">
-					${0}
+					${main_core.Text.encode(main_core.Loc.getMessage('BIZPROC_CMP_WORKFLOW_START_TMP_SINGLE_START_EMPTY_DURATION'))}
 				</span>
 			</div>
-		`), main_core.Text.encode(main_core.Loc.getMessage('BIZPROC_CMP_WORKFLOW_START_TMP_SINGLE_START_EMPTY_DURATION')));
-	}
-	function _renderLinkToArticle2() {
-	  return main_core.Tag.render(_t8 || (_t8 = _$7`
+		`;
+		}
+		#renderLinkToArticle() {
+			return main_core.Tag.render`
 			<a class="bizproc__ws_single-start__link" href="#" onclick="top.BX.Helper.show('redirect=detail&code=18783714')">
-				${0}
+				${main_core.Text.encode(main_core.Loc.getMessage('BIZPROC_CMP_WORKFLOW_START_TMP_SINGLE_START_AVERAGE_DURATION_HINT'))}
 			</a>
-		`), main_core.Text.encode(main_core.Loc.getMessage('BIZPROC_CMP_WORKFLOW_START_TMP_SINGLE_START_AVERAGE_DURATION_HINT')));
+		`;
+		}
 	}
 
-	let _$8 = t => t,
-	  _t$8;
 	const CLOSE_SLIDER_AFTER_SECONDS = 1;
 	class SuccessStartStep extends Step {
-	  renderHead() {
-	    return null;
-	  }
-	  renderBody() {
-	    return main_core.Tag.render(_t$8 || (_t$8 = _$8`
+		renderHead() {
+			return null;
+		}
+		renderBody() {
+			return main_core.Tag.render`
 			<div>
 				<div class="bizproc-workflow-start__slider">
 					<div class="bizproc-workflow-start__slider-logo">
@@ -1160,914 +1057,690 @@ this.BX.Bizproc = this.BX.Bizproc || {};
 					</div>
 					<div class="bizproc-workflow-start__slider-content">
 						<div class="bizproc-workflow-start__slider-text">
-							${0}
+							${main_core.Loc.getMessage('BIZPROC_CMP_WORKFLOW_START_TMP_SINGLE_START_FINAL_TEXT_STARTED')}
 						</div>
 					</div>
 				</div>
 			</div>
-		`), main_core.Loc.getMessage('BIZPROC_CMP_WORKFLOW_START_TMP_SINGLE_START_FINAL_TEXT_STARTED'));
-	  }
-	  onAfterRender() {
-	    setTimeout(() => {
-	      if (BX.SidePanel.Instance.getSliderByWindow(window)) {
-	        BX.SidePanel.Instance.getSliderByWindow(window).close();
-	      }
-	    }, CLOSE_SLIDER_AFTER_SECONDS * 1000);
-	  }
+		`;
+		}
+		announcesOwnState() {
+			return true;
+		}
+		onAfterRender() {
+			// the slider closes a second later, so the result is announced from the top window:
+			// its live region outlives this document
+			bizproc_a11y.announce(main_core.Loc.getMessage('BIZPROC_CMP_WORKFLOW_START_TMP_SINGLE_START_FINAL_TEXT_STARTED'), {
+				assertive: true,
+				inTopWindow: true
+			});
+			setTimeout(() => {
+				if (BX.SidePanel.Instance.getSliderByWindow(window)) {
+					BX.SidePanel.Instance.getSliderByWindow(window).close();
+				}
+			}, CLOSE_SLIDER_AFTER_SECONDS * 1000);
+		}
 	}
 
-	let _$9 = t => t,
-	  _t$9,
-	  _t2$6;
-	const HTML_ELEMENT_ID = 'bizproc-workflow-start-single-start';
-	var _header = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("header");
-	var _breadcrumbs = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("breadcrumbs");
-	var _errorNotifier = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("errorNotifier");
-	var _steps = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("steps");
-	var _buttons$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("buttons");
-	var _sequenceSteps$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("sequenceSteps");
-	var _currentStepId$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("currentStepId");
-	var _content = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("content");
-	var _canExit = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("canExit");
-	var _isExitInProcess = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isExitInProcess");
-	var _templateId$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("templateId");
-	var _signedDocumentType$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("signedDocumentType");
-	var _signedDocumentId$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("signedDocumentId");
-	var _triggerType$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("triggerType");
-	var _startTime$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("startTime");
-	var _resolveButtonsEnableState = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("resolveButtonsEnableState");
-	var _renderContent$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderContent");
-	var _updateContent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("updateContent");
-	var _next = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("next");
-	var _back = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("back");
-	var _fastStart = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("fastStart");
-	var _markButtonsOnBeforeNextStep = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("markButtonsOnBeforeNextStep");
-	var _cleanErrors = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("cleanErrors");
-	var _isNextStepEnable = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isNextStepEnable");
-	var _isPreviousStepEnable = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isPreviousStepEnable");
-	var _exit = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("exit");
-	var _composeData = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("composeData");
-	var _getRecommendationData = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getRecommendationData");
-	var _getConstantsData = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getConstantsData");
-	var _getParametersData = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getParametersData");
-	var _getStartData = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getStartData");
-	var _subscribeOnSliderClose = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("subscribeOnSliderClose");
+	const HTML_ELEMENT_ID$2 = 'bizproc-workflow-start-single-start';
 	class SingleStart {
-	  constructor(_config) {
-	    Object.defineProperty(this, _subscribeOnSliderClose, {
-	      value: _subscribeOnSliderClose2
-	    });
-	    Object.defineProperty(this, _getStartData, {
-	      value: _getStartData2
-	    });
-	    Object.defineProperty(this, _getParametersData, {
-	      value: _getParametersData2
-	    });
-	    Object.defineProperty(this, _getConstantsData, {
-	      value: _getConstantsData2
-	    });
-	    Object.defineProperty(this, _getRecommendationData, {
-	      value: _getRecommendationData2
-	    });
-	    Object.defineProperty(this, _composeData, {
-	      value: _composeData2
-	    });
-	    Object.defineProperty(this, _exit, {
-	      value: _exit2
-	    });
-	    Object.defineProperty(this, _isPreviousStepEnable, {
-	      value: _isPreviousStepEnable2
-	    });
-	    Object.defineProperty(this, _isNextStepEnable, {
-	      value: _isNextStepEnable2
-	    });
-	    Object.defineProperty(this, _cleanErrors, {
-	      value: _cleanErrors2
-	    });
-	    Object.defineProperty(this, _markButtonsOnBeforeNextStep, {
-	      value: _markButtonsOnBeforeNextStep2
-	    });
-	    Object.defineProperty(this, _fastStart, {
-	      value: _fastStart2
-	    });
-	    Object.defineProperty(this, _back, {
-	      value: _back2
-	    });
-	    Object.defineProperty(this, _next, {
-	      value: _next2
-	    });
-	    Object.defineProperty(this, _updateContent, {
-	      value: _updateContent2
-	    });
-	    Object.defineProperty(this, _renderContent$1, {
-	      value: _renderContent2$1
-	    });
-	    Object.defineProperty(this, _resolveButtonsEnableState, {
-	      value: _resolveButtonsEnableState2
-	    });
-	    Object.defineProperty(this, _header, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _breadcrumbs, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _errorNotifier, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _steps, {
-	      writable: true,
-	      value: new Map()
-	    });
-	    Object.defineProperty(this, _buttons$1, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _sequenceSteps$2, {
-	      writable: true,
-	      value: []
-	    });
-	    Object.defineProperty(this, _currentStepId$2, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _content, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _canExit, {
-	      writable: true,
-	      value: false
-	    });
-	    Object.defineProperty(this, _isExitInProcess, {
-	      writable: true,
-	      value: false
-	    });
-	    Object.defineProperty(this, _templateId$2, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _signedDocumentType$2, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _signedDocumentId$2, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _triggerType$1, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _startTime$1, {
-	      writable: true,
-	      value: void 0
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _startTime$1)[_startTime$1] = Math.round(Date.now() / 1000);
-	    const composedData = babelHelpers.classPrivateFieldLooseBase(this, _composeData)[_composeData](_config);
-	    babelHelpers.classPrivateFieldLooseBase(this, _header)[_header] = new Header({
-	      title: main_core.Loc.getMessage('BIZPROC_CMP_WORKFLOW_START_TMP_SINGLE_START_TITLE'),
-	      description: main_core.Loc.getMessage('BIZPROC_CMP_WORKFLOW_START_TMP_SINGLE_START_DESCRIPTION')
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _breadcrumbs)[_breadcrumbs] = new Breadcrumbs({
-	      items: Object.values(composedData).map(data => data.breadcrumbs)
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _errorNotifier)[_errorNotifier] = new ErrorNotifier({});
-	    if (_config.errors) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _errorNotifier)[_errorNotifier].errors = _config.errors;
-	      babelHelpers.classPrivateFieldLooseBase(this, _errorNotifier)[_errorNotifier].show();
-	    }
-	    Object.entries(composedData).forEach(([key, data]) => {
-	      babelHelpers.classPrivateFieldLooseBase(this, _steps)[_steps].set(key, data.step);
-	      data.step.subscribe('onChangeStepAvailability', babelHelpers.classPrivateFieldLooseBase(this, _resolveButtonsEnableState)[_resolveButtonsEnableState].bind(this));
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _sequenceSteps$2)[_sequenceSteps$2] = Object.keys(composedData);
-	    babelHelpers.classPrivateFieldLooseBase(this, _currentStepId$2)[_currentStepId$2] = _config.workflowId ? babelHelpers.classPrivateFieldLooseBase(this, _sequenceSteps$2)[_sequenceSteps$2].at(-1) : babelHelpers.classPrivateFieldLooseBase(this, _sequenceSteps$2)[_sequenceSteps$2].at(0);
-	    if (_config.workflowId) {
-	      const slider = BX.SidePanel.Instance.getSliderByWindow(window);
-	      if (slider) {
-	        const dictionary = slider.getData();
-	        dictionary.set('data', {
-	          workflowId: _config.workflowId
-	        });
-	      }
-	      babelHelpers.classPrivateFieldLooseBase(this, _canExit)[_canExit] = true;
-	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _buttons$1)[_buttons$1] = new Buttons({
-	      buttons: Object.fromEntries(Object.entries(composedData).map(([key, data]) => [key, data.buttons])),
-	      wrapper: document.getElementById(`${HTML_ELEMENT_ID}-buttons`).querySelector('.ui-button-panel'),
-	      currentStepId: babelHelpers.classPrivateFieldLooseBase(this, _currentStepId$2)[_currentStepId$2]
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _signedDocumentType$2)[_signedDocumentType$2] = _config.signedDocumentType;
-	    babelHelpers.classPrivateFieldLooseBase(this, _signedDocumentId$2)[_signedDocumentId$2] = _config.signedDocumentId;
-	    babelHelpers.classPrivateFieldLooseBase(this, _templateId$2)[_templateId$2] = main_core.Text.toInteger(_config.id);
-	    babelHelpers.classPrivateFieldLooseBase(this, _triggerType$1)[_triggerType$1] = _config.triggerType;
-	    babelHelpers.classPrivateFieldLooseBase(this, _subscribeOnSliderClose)[_subscribeOnSliderClose]();
-	  }
-	  render() {
-	    babelHelpers.classPrivateFieldLooseBase(this, _content)[_content] = babelHelpers.classPrivateFieldLooseBase(this, _renderContent$1)[_renderContent$1]();
-	    return main_core.Tag.render(_t$9 || (_t$9 = _$9`
+		#header;
+		#breadcrumbs;
+		#errorNotifier;
+		#steps = new Map();
+		#buttons;
+		#sequenceSteps = [];
+		#currentStepId;
+		#content;
+		#canExit = false;
+		#isExitInProcess = false;
+		#isNextStepInProcess = false;
+		#templateId;
+		#signedDocumentType;
+		#signedDocumentId;
+		#triggerType;
+		#startTime;
+		constructor(config) {
+			this.#startTime = Math.round(Date.now() / 1000);
+			const composedData = this.#composeData(config);
+			this.#header = new Header({
+				title: main_core.Loc.getMessage('BIZPROC_CMP_WORKFLOW_START_TMP_SINGLE_START_TITLE'),
+				description: main_core.Loc.getMessage('BIZPROC_CMP_WORKFLOW_START_TMP_SINGLE_START_DESCRIPTION')
+			});
+			this.#breadcrumbs = new Breadcrumbs({
+				items: Object.values(composedData).map(data => data.breadcrumbs)
+			});
+			this.#errorNotifier = new ErrorNotifier({});
+			if (config.errors) {
+				this.#errorNotifier.errors = config.errors;
+				this.#errorNotifier.show();
+			}
+			Object.entries(composedData).forEach(([key, data]) => {
+				this.#steps.set(key, data.step);
+				data.step.subscribe('onChangeStepAvailability', this.#resolveButtonsEnableState.bind(this));
+				data.step.subscribe('onEnterSubmit', () => this.#next());
+			});
+			this.#sequenceSteps = Object.keys(composedData);
+			this.#currentStepId = config.workflowId ? this.#sequenceSteps.at(-1) : this.#sequenceSteps.at(0);
+			if (config.workflowId) {
+				const slider = BX.SidePanel.Instance.getSliderByWindow(window);
+				if (slider) {
+					const dictionary = slider.getData();
+					dictionary.set('data', {
+						workflowId: config.workflowId
+					});
+				}
+				this.#canExit = true;
+			}
+			this.#buttons = new Buttons({
+				buttons: Object.fromEntries(Object.entries(composedData).map(([key, data]) => [key, data.buttons])),
+				wrapper: document.getElementById(`${HTML_ELEMENT_ID$2}-buttons`).querySelector('.ui-button-panel'),
+				currentStepId: this.#currentStepId
+			});
+			this.#signedDocumentType = config.signedDocumentType;
+			this.#signedDocumentId = config.signedDocumentId;
+			this.#templateId = main_core.Text.toInteger(config.id);
+			this.#triggerType = config.triggerType;
+			this.#subscribeOnSliderClose();
+		}
+		#resolveButtonsEnableState() {
+			this.#buttons.resolveEnableState({
+				next: this.#steps.get(this.#currentStepId).isNextEnabled(),
+				back: this.#steps.get(this.#currentStepId).isBackEnabled(),
+				start: this.#steps.get(this.#currentStepId).isNextEnabled()
+			});
+		}
+		render() {
+			this.#content = this.#renderContent();
+			return main_core.Tag.render`
 			<div class="bizproc__ws_start">
-				${0}
+				${this.#header.render()}
 				<div class="bizproc__ws_start__body">
-					${0}
-					${0}
+					${this.#breadcrumbs.render()}
+					${this.#content}
 				</div>
 			</div>
-		`), babelHelpers.classPrivateFieldLooseBase(this, _header)[_header].render(), babelHelpers.classPrivateFieldLooseBase(this, _breadcrumbs)[_breadcrumbs].render(), babelHelpers.classPrivateFieldLooseBase(this, _content)[_content]);
-	  }
-	  onAfterRender() {
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _steps)[_steps].has('recommendation')) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _steps)[_steps].get('recommendation').onAfterRender();
-	    }
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _currentStepId$2)[_currentStepId$2] === 'start') {
-	      babelHelpers.classPrivateFieldLooseBase(this, _steps)[_steps].get('start').onAfterRender();
-	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _buttons$1)[_buttons$1].show();
-	  }
-	}
-	function _resolveButtonsEnableState2() {
-	  babelHelpers.classPrivateFieldLooseBase(this, _buttons$1)[_buttons$1].resolveEnableState({
-	    next: babelHelpers.classPrivateFieldLooseBase(this, _steps)[_steps].get(babelHelpers.classPrivateFieldLooseBase(this, _currentStepId$2)[_currentStepId$2]).isNextEnabled(),
-	    back: babelHelpers.classPrivateFieldLooseBase(this, _steps)[_steps].get(babelHelpers.classPrivateFieldLooseBase(this, _currentStepId$2)[_currentStepId$2]).isBackEnabled(),
-	    start: babelHelpers.classPrivateFieldLooseBase(this, _steps)[_steps].get(babelHelpers.classPrivateFieldLooseBase(this, _currentStepId$2)[_currentStepId$2]).isNextEnabled()
-	  });
-	}
-	function _renderContent2$1() {
-	  return main_core.Tag.render(_t2$6 || (_t2$6 = _$9`
+		`;
+		}
+		#renderContent() {
+			return main_core.Tag.render`
 			<div class="bizproc__ws_start__container">
-				${0}
-				${0}
+				${this.#errorNotifier.render()}
+				${this.#steps.has(this.#currentStepId) ? this.#steps.get(this.#currentStepId).render() : null}
 			</div>
-		`), babelHelpers.classPrivateFieldLooseBase(this, _errorNotifier)[_errorNotifier].render(), babelHelpers.classPrivateFieldLooseBase(this, _steps)[_steps].has(babelHelpers.classPrivateFieldLooseBase(this, _currentStepId$2)[_currentStepId$2]) ? babelHelpers.classPrivateFieldLooseBase(this, _steps)[_steps].get(babelHelpers.classPrivateFieldLooseBase(this, _currentStepId$2)[_currentStepId$2]).render() : null);
-	}
-	function _updateContent2() {
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _content)[_content]) {
-	    const content = babelHelpers.classPrivateFieldLooseBase(this, _renderContent$1)[_renderContent$1]();
-	    main_core.Dom.replace(babelHelpers.classPrivateFieldLooseBase(this, _content)[_content], content);
-	    babelHelpers.classPrivateFieldLooseBase(this, _content)[_content] = content;
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _steps)[_steps].has(babelHelpers.classPrivateFieldLooseBase(this, _currentStepId$2)[_currentStepId$2])) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _steps)[_steps].get(babelHelpers.classPrivateFieldLooseBase(this, _currentStepId$2)[_currentStepId$2]).onAfterRender();
-	    }
-	  }
-	}
-	function _next2() {
-	  babelHelpers.classPrivateFieldLooseBase(this, _cleanErrors)[_cleanErrors]();
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _isNextStepEnable)[_isNextStepEnable]()) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _markButtonsOnBeforeNextStep)[_markButtonsOnBeforeNextStep]();
-	    babelHelpers.classPrivateFieldLooseBase(this, _steps)[_steps].get(babelHelpers.classPrivateFieldLooseBase(this, _currentStepId$2)[_currentStepId$2]).onBeforeNextStep().then(() => {
-	      babelHelpers.classPrivateFieldLooseBase(this, _breadcrumbs)[_breadcrumbs].next();
-	      babelHelpers.classPrivateFieldLooseBase(this, _currentStepId$2)[_currentStepId$2] = babelHelpers.classPrivateFieldLooseBase(this, _sequenceSteps$2)[_sequenceSteps$2].at(babelHelpers.classPrivateFieldLooseBase(this, _sequenceSteps$2)[_sequenceSteps$2].indexOf(babelHelpers.classPrivateFieldLooseBase(this, _currentStepId$2)[_currentStepId$2]) + 1);
-	      babelHelpers.classPrivateFieldLooseBase(this, _updateContent)[_updateContent]();
-	      babelHelpers.classPrivateFieldLooseBase(this, _buttons$1)[_buttons$1].next();
-	      babelHelpers.classPrivateFieldLooseBase(this, _resolveButtonsEnableState)[_resolveButtonsEnableState]();
-	    }).catch(error => {
-	      babelHelpers.classPrivateFieldLooseBase(this, _resolveButtonsEnableState)[_resolveButtonsEnableState]();
-	      if (error) {
-	        console.error(error);
-	      }
-	    });
-	  }
-	}
-	function _back2() {
-	  babelHelpers.classPrivateFieldLooseBase(this, _cleanErrors)[_cleanErrors]();
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _isPreviousStepEnable)[_isPreviousStepEnable]()) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _breadcrumbs)[_breadcrumbs].back();
-	    babelHelpers.classPrivateFieldLooseBase(this, _currentStepId$2)[_currentStepId$2] = babelHelpers.classPrivateFieldLooseBase(this, _sequenceSteps$2)[_sequenceSteps$2].at(babelHelpers.classPrivateFieldLooseBase(this, _sequenceSteps$2)[_sequenceSteps$2].indexOf(babelHelpers.classPrivateFieldLooseBase(this, _currentStepId$2)[_currentStepId$2]) - 1);
-	    babelHelpers.classPrivateFieldLooseBase(this, _updateContent)[_updateContent]();
-	    babelHelpers.classPrivateFieldLooseBase(this, _buttons$1)[_buttons$1].back();
-	    babelHelpers.classPrivateFieldLooseBase(this, _resolveButtonsEnableState)[_resolveButtonsEnableState]();
-	  }
-	}
-	function _fastStart2() {
-	  babelHelpers.classPrivateFieldLooseBase(this, _cleanErrors)[_cleanErrors]();
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _isNextStepEnable)[_isNextStepEnable]()) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _markButtonsOnBeforeNextStep)[_markButtonsOnBeforeNextStep]();
-	    const data = {
-	      templateId: babelHelpers.classPrivateFieldLooseBase(this, _templateId$2)[_templateId$2],
-	      signedDocumentType: babelHelpers.classPrivateFieldLooseBase(this, _signedDocumentType$2)[_signedDocumentType$2],
-	      signedDocumentId: babelHelpers.classPrivateFieldLooseBase(this, _signedDocumentId$2)[_signedDocumentId$2],
-	      startDuration: Math.round(Date.now() / 1000) - babelHelpers.classPrivateFieldLooseBase(this, _startTime$1)[_startTime$1],
-	      triggerType: babelHelpers.classPrivateFieldLooseBase(this, _triggerType$1)[_triggerType$1]
-	    };
-	    startWorkflowAction(data).then(() => {
-	      babelHelpers.classPrivateFieldLooseBase(this, _canExit)[_canExit] = true;
-	      babelHelpers.classPrivateFieldLooseBase(this, _next)[_next]();
-	    }).catch(response => {
-	      babelHelpers.classPrivateFieldLooseBase(this, _errorNotifier)[_errorNotifier].errors = response.errors;
-	      babelHelpers.classPrivateFieldLooseBase(this, _errorNotifier)[_errorNotifier].show();
-	      babelHelpers.classPrivateFieldLooseBase(this, _resolveButtonsEnableState)[_resolveButtonsEnableState]();
-	    });
-	  }
-	}
-	function _markButtonsOnBeforeNextStep2() {
-	  babelHelpers.classPrivateFieldLooseBase(this, _buttons$1)[_buttons$1].resolveWaitingState({
-	    start: true,
-	    next: true
-	  });
-	  babelHelpers.classPrivateFieldLooseBase(this, _buttons$1)[_buttons$1].resolveEnableState({
-	    back: false
-	  });
-	}
-	function _cleanErrors2() {
-	  babelHelpers.classPrivateFieldLooseBase(this, _errorNotifier)[_errorNotifier].errors = [];
-	  babelHelpers.classPrivateFieldLooseBase(this, _errorNotifier)[_errorNotifier].clean();
-	}
-	function _isNextStepEnable2() {
-	  const index = babelHelpers.classPrivateFieldLooseBase(this, _sequenceSteps$2)[_sequenceSteps$2].indexOf(babelHelpers.classPrivateFieldLooseBase(this, _currentStepId$2)[_currentStepId$2]);
-	  return index !== -1 && main_core.Type.isStringFilled(babelHelpers.classPrivateFieldLooseBase(this, _sequenceSteps$2)[_sequenceSteps$2].at(index + 1)) && babelHelpers.classPrivateFieldLooseBase(this, _steps)[_steps].get(babelHelpers.classPrivateFieldLooseBase(this, _currentStepId$2)[_currentStepId$2]).isNextEnabled();
-	}
-	function _isPreviousStepEnable2() {
-	  const index = babelHelpers.classPrivateFieldLooseBase(this, _sequenceSteps$2)[_sequenceSteps$2].indexOf(babelHelpers.classPrivateFieldLooseBase(this, _currentStepId$2)[_currentStepId$2]);
-	  return index !== -1 && index - 1 >= 0 && main_core.Type.isStringFilled(babelHelpers.classPrivateFieldLooseBase(this, _sequenceSteps$2)[_sequenceSteps$2].at(index - 1)) && babelHelpers.classPrivateFieldLooseBase(this, _steps)[_steps].get(babelHelpers.classPrivateFieldLooseBase(this, _currentStepId$2)[_currentStepId$2]).isBackEnabled();
-	}
-	function _exit2() {
-	  if (BX.SidePanel.Instance.getSliderByWindow(window)) {
-	    BX.SidePanel.Instance.getSliderByWindow(window).close();
-	  }
-	}
-	function _composeData2(config) {
-	  const data = {
-	    recommendation: babelHelpers.classPrivateFieldLooseBase(this, _getRecommendationData)[_getRecommendationData](config)
-	  };
-	  if (!config.isConstantsTuned) {
-	    data.constants = babelHelpers.classPrivateFieldLooseBase(this, _getConstantsData)[_getConstantsData](config);
-	  }
-	  if (config.hasParameters) {
-	    data.parameters = babelHelpers.classPrivateFieldLooseBase(this, _getParametersData)[_getParametersData](config);
-	  }
-	  data.start = babelHelpers.classPrivateFieldLooseBase(this, _getStartData)[_getStartData](config);
-	  return data;
-	}
-	function _getRecommendationData2(config) {
-	  const isFastStart = config.isConstantsTuned && !config.hasParameters;
-	  return {
-	    breadcrumbs: {
-	      id: 'recommendation',
-	      text: main_core.Loc.getMessage('BIZPROC_CMP_WORKFLOW_START_TMP_SINGLE_START_STEP_RECOMMENDATION'),
-	      active: true
-	    },
-	    step: new RecommendationStep({
-	      name: config.name,
-	      recommendation: config.description,
-	      duration: config.duration
-	    }),
-	    buttons: [Buttons.createBackButton(babelHelpers.classPrivateFieldLooseBase(this, _exit)[_exit].bind(this)), isFastStart ? Buttons.createStartButton(babelHelpers.classPrivateFieldLooseBase(this, _fastStart)[_fastStart].bind(this)) : Buttons.createNextButton(babelHelpers.classPrivateFieldLooseBase(this, _next)[_next].bind(this))]
-	  };
-	}
-	function _getConstantsData2(config) {
-	  return {
-	    breadcrumbs: {
-	      id: 'constants',
-	      text: main_core.Loc.getMessage('BIZPROC_CMP_WORKFLOW_START_TMP_SINGLE_START_STEP_CONSTANTS'),
-	      active: false
-	    },
-	    step: new ConstantsStep({
-	      name: config.name,
-	      templateId: config.id,
-	      constants: config.constants,
-	      documentType: config.documentType,
-	      signedDocumentType: config.signedDocumentType,
-	      signedDocumentId: config.signedDocumentId,
-	      triggerType: config.triggerType
-	    }),
-	    buttons: [Buttons.createBackButton(babelHelpers.classPrivateFieldLooseBase(this, _back)[_back].bind(this)), config.hasParameters ? Buttons.createNextButton(babelHelpers.classPrivateFieldLooseBase(this, _next)[_next].bind(this)) : Buttons.createStartButton(babelHelpers.classPrivateFieldLooseBase(this, _fastStart)[_fastStart].bind(this))]
-	  };
-	}
-	function _getParametersData2(config) {
-	  return {
-	    breadcrumbs: {
-	      id: 'parameters',
-	      text: main_core.Loc.getMessage('BIZPROC_CMP_WORKFLOW_START_TMP_SINGLE_START_STEP_PARAMETERS'),
-	      active: false
-	    },
-	    step: new ParametersStep({
-	      name: config.name,
-	      templateId: config.id,
-	      parameters: config.parameters,
-	      documentType: config.documentType,
-	      signedDocumentId: config.signedDocumentId,
-	      signedDocumentType: config.signedDocumentType,
-	      triggerType: config.triggerType
-	    }),
-	    buttons: [Buttons.createBackButton(babelHelpers.classPrivateFieldLooseBase(this, _back)[_back].bind(this)), Buttons.createStartButton(babelHelpers.classPrivateFieldLooseBase(this, _next)[_next].bind(this)) // slow start
-	    ]
-	  };
-	}
-	function _getStartData2(config) {
-	  return {
-	    breadcrumbs: {
-	      id: 'start',
-	      text: main_core.Loc.getMessage('BIZPROC_CMP_WORKFLOW_START_TMP_SINGLE_START_STEP_START'),
-	      active: false
-	    },
-	    step: new SuccessStartStep({
-	      name: config.name
-	    }),
-	    buttons: []
-	  };
-	}
-	function _subscribeOnSliderClose2() {
-	  const slider = BX.SidePanel.Instance.getSliderByWindow(window);
-	  if (slider) {
-	    main_core_events.EventEmitter.subscribe(slider, 'SidePanel.Slider:onClose', event => {
-	      if (!babelHelpers.classPrivateFieldLooseBase(this, _canExit)[_canExit]) {
-	        const canExit = [...babelHelpers.classPrivateFieldLooseBase(this, _steps)[_steps].values()].every(step => step ? step.canExit() : true);
-	        if (!canExit) {
-	          event.getCompatData()[0].denyAction();
-	          if (!babelHelpers.classPrivateFieldLooseBase(this, _isExitInProcess)[_isExitInProcess]) {
-	            babelHelpers.classPrivateFieldLooseBase(this, _isExitInProcess)[_isExitInProcess] = true;
-	            showExitDialog(() => {
-	              babelHelpers.classPrivateFieldLooseBase(this, _canExit)[_canExit] = true;
-	              slider.close();
-	              return true;
-	            }, () => {
-	              babelHelpers.classPrivateFieldLooseBase(this, _isExitInProcess)[_isExitInProcess] = false;
-	              return true;
-	            });
-	          }
-	        }
-	      }
-	    });
-	  }
+		`;
+		}
+		#updateContent() {
+			if (this.#content) {
+				const content = this.#renderContent();
+				main_core.Dom.replace(this.#content, content);
+				this.#content = content;
+				if (this.#steps.has(this.#currentStepId)) {
+					this.#steps.get(this.#currentStepId).onAfterRender();
+				}
+			}
+		}
+		onAfterRender() {
+			if (this.#steps.has('recommendation')) {
+				this.#steps.get('recommendation').onAfterRender();
+			}
+			if (this.#currentStepId === 'start') {
+				this.#steps.get('start').onAfterRender();
+			}
+			this.#buttons.show();
+		}
+		#next() {
+			if (this.#isNextStepInProcess) {
+				return;
+			}
+			this.#cleanErrors();
+			if (this.#isNextStepEnable()) {
+				this.#isNextStepInProcess = true;
+				this.#markButtonsOnBeforeNextStep();
+				this.#steps.get(this.#currentStepId).onBeforeNextStep().then(() => {
+					this.#isNextStepInProcess = false;
+					this.#breadcrumbs.next();
+					this.#currentStepId = this.#sequenceSteps.at(this.#sequenceSteps.indexOf(this.#currentStepId) + 1);
+					this.#updateContent();
+					this.#buttons.next();
+					this.#resolveButtonsEnableState();
+					this.#focusCurrentStep();
+					this.#announceCurrentStep();
+				}).catch(error => {
+					this.#isNextStepInProcess = false;
+					this.#resolveButtonsEnableState();
+					if (error) {
+						console.error(error);
+					}
+				});
+			}
+		}
+		#back() {
+			this.#cleanErrors();
+			if (this.#isPreviousStepEnable()) {
+				this.#breadcrumbs.back();
+				this.#currentStepId = this.#sequenceSteps.at(this.#sequenceSteps.indexOf(this.#currentStepId) - 1);
+				this.#updateContent();
+				this.#buttons.back();
+				this.#resolveButtonsEnableState();
+				this.#focusCurrentStep();
+				this.#announceCurrentStep();
+			}
+		}
+
+		// announced after the focus move on purpose: moving the focus makes the screen reader speak
+		// the newly focused element, and that speech drops a polite message queued right before it
+		#announceCurrentStep() {
+			// the final step announces the start result itself, a step title would talk over it
+			if (this.#steps.get(this.#currentStepId)?.announcesOwnState()) {
+				return;
+			}
+			bizproc_a11y.announce(this.#breadcrumbs.getCurrentStepTitle());
+		}
+		#focusCurrentStep() {
+			if (this.#content) {
+				// the action buttons live outside the content, so without this the focus would
+				// stay on them while the step behind has already changed
+				ui_a11y.FocusNavigator.focusFirst(this.#content, {
+					preventScroll: true
+				});
+			}
+		}
+		#fastStart() {
+			this.#cleanErrors();
+			if (this.#isNextStepEnable()) {
+				this.#markButtonsOnBeforeNextStep();
+				const data = {
+					templateId: this.#templateId,
+					signedDocumentType: this.#signedDocumentType,
+					signedDocumentId: this.#signedDocumentId,
+					startDuration: Math.round(Date.now() / 1000) - this.#startTime,
+					triggerType: this.#triggerType
+				};
+				startWorkflowAction(data).then(() => {
+					this.#canExit = true;
+					this.#next();
+				}).catch(response => {
+					this.#errorNotifier.errors = response.errors;
+					this.#errorNotifier.show();
+					this.#resolveButtonsEnableState();
+				});
+			}
+		}
+		#markButtonsOnBeforeNextStep() {
+			this.#buttons.resolveWaitingState({
+				start: true,
+				next: true
+			});
+			this.#buttons.resolveEnableState({
+				back: false
+			});
+		}
+		#cleanErrors() {
+			this.#errorNotifier.errors = [];
+			this.#errorNotifier.clean();
+		}
+		#isNextStepEnable() {
+			const index = this.#sequenceSteps.indexOf(this.#currentStepId);
+			return index !== -1 && main_core.Type.isStringFilled(this.#sequenceSteps.at(index + 1)) && this.#steps.get(this.#currentStepId).isNextEnabled();
+		}
+		#isPreviousStepEnable() {
+			const index = this.#sequenceSteps.indexOf(this.#currentStepId);
+			return index !== -1 && index - 1 >= 0 && main_core.Type.isStringFilled(this.#sequenceSteps.at(index - 1)) && this.#steps.get(this.#currentStepId).isBackEnabled();
+		}
+		#exit() {
+			if (BX.SidePanel.Instance.getSliderByWindow(window)) {
+				BX.SidePanel.Instance.getSliderByWindow(window).close();
+			}
+		}
+		#composeData(config) {
+			const data = {
+				recommendation: this.#getRecommendationData(config)
+			};
+			if (!config.isConstantsTuned) {
+				data.constants = this.#getConstantsData(config);
+			}
+			if (config.hasParameters) {
+				data.parameters = this.#getParametersData(config);
+			}
+			data.start = this.#getStartData(config);
+			return data;
+		}
+		#getRecommendationData(config) {
+			const isFastStart = config.isConstantsTuned && !config.hasParameters;
+			return {
+				breadcrumbs: {
+					id: 'recommendation',
+					text: main_core.Loc.getMessage('BIZPROC_CMP_WORKFLOW_START_TMP_SINGLE_START_STEP_RECOMMENDATION'),
+					active: true
+				},
+				step: new RecommendationStep({
+					name: config.name,
+					recommendation: config.description,
+					duration: config.duration
+				}),
+				buttons: [Buttons.createBackButton(this.#exit.bind(this)), isFastStart ? Buttons.createStartButton(this.#fastStart.bind(this)) : Buttons.createNextButton(this.#next.bind(this))]
+			};
+		}
+		#getConstantsData(config) {
+			return {
+				breadcrumbs: {
+					id: 'constants',
+					text: main_core.Loc.getMessage('BIZPROC_CMP_WORKFLOW_START_TMP_SINGLE_START_STEP_CONSTANTS'),
+					active: false
+				},
+				step: new ConstantsStep({
+					name: config.name,
+					templateId: config.id,
+					constants: config.constants,
+					documentType: config.documentType,
+					signedDocumentType: config.signedDocumentType,
+					signedDocumentId: config.signedDocumentId,
+					triggerType: config.triggerType
+				}),
+				buttons: [Buttons.createBackButton(this.#back.bind(this)), config.hasParameters ? Buttons.createNextButton(this.#next.bind(this)) : Buttons.createStartButton(this.#fastStart.bind(this))]
+			};
+		}
+		#getParametersData(config) {
+			return {
+				breadcrumbs: {
+					id: 'parameters',
+					text: main_core.Loc.getMessage('BIZPROC_CMP_WORKFLOW_START_TMP_SINGLE_START_STEP_PARAMETERS'),
+					active: false
+				},
+				step: new ParametersStep({
+					name: config.name,
+					templateId: config.id,
+					parameters: config.parameters,
+					documentType: config.documentType,
+					signedDocumentId: config.signedDocumentId,
+					signedDocumentType: config.signedDocumentType,
+					triggerType: config.triggerType
+				}),
+				buttons: [Buttons.createBackButton(this.#back.bind(this)), Buttons.createStartButton(this.#next.bind(this)) // slow start
+				]
+			};
+		}
+		#getStartData(config) {
+			return {
+				breadcrumbs: {
+					id: 'start',
+					text: main_core.Loc.getMessage('BIZPROC_CMP_WORKFLOW_START_TMP_SINGLE_START_STEP_START'),
+					active: false
+				},
+				step: new SuccessStartStep({
+					name: config.name
+				}),
+				buttons: []
+			};
+		}
+		#subscribeOnSliderClose() {
+			const slider = BX.SidePanel.Instance.getSliderByWindow(window);
+			if (slider) {
+				main_core_events.EventEmitter.subscribe(slider, 'SidePanel.Slider:onClose', event => {
+					if (!this.#canExit) {
+						const canExit = [...this.#steps.values()].every(step => step ? step.canExit() : true);
+						if (!canExit) {
+							event.getCompatData()[0].denyAction();
+							if (!this.#isExitInProcess) {
+								this.#isExitInProcess = true;
+								showExitDialog(() => {
+									this.#canExit = true;
+									slider.close();
+									return true;
+								}, () => {
+									this.#isExitInProcess = false;
+									return true;
+								});
+							}
+						}
+					}
+				});
+			}
+		}
 	}
 
-	function showCancelDialog(onConfirm, onCancel) {
-	  const messageBox = ui_dialogs_messagebox.MessageBox.confirm(main_core.Loc.getMessage('BIZPROC_CMP_WORKFLOW_START_TMP_AUTOSTART_EXIT_DIALOG_DESCRIPTION'), main_core.Loc.getMessage('BIZPROC_CMP_WORKFLOW_START_TMP_AUTOSTART_EXIT_DIALOG_TITLE'), onConfirm, main_core.Loc.getMessage('BIZPROC_CMP_WORKFLOW_START_TMP_AUTOSTART_EXIT_DIALOG_CONFIRM'), main_core.Type.isFunction(onCancel) ? onCancel : () => true, main_core.Loc.getMessage('BIZPROC_CMP_WORKFLOW_START_TMP_AUTOSTART_EXIT_DIALOG_CANCEL'));
-	  if (main_core.Type.isFunction(onCancel)) {
-	    const popup = messageBox.getPopupWindow();
-	    popup.subscribe('onClose', onCancel);
-	  }
+	function showCancelDialog$1(onConfirm, onClose) {
+		showConfirmDialog({
+			title: main_core.Loc.getMessage('BIZPROC_CMP_WORKFLOW_START_TMP_AUTOSTART_EXIT_DIALOG_TITLE'),
+			description: main_core.Loc.getMessage('BIZPROC_CMP_WORKFLOW_START_TMP_AUTOSTART_EXIT_DIALOG_DESCRIPTION'),
+			confirmCaption: main_core.Loc.getMessage('BIZPROC_CMP_WORKFLOW_START_TMP_AUTOSTART_EXIT_DIALOG_CONFIRM'),
+			cancelCaption: main_core.Loc.getMessage('BIZPROC_CMP_WORKFLOW_START_TMP_AUTOSTART_EXIT_DIALOG_CANCEL')
+		}, onConfirm, onClose);
 	}
 
-	let _$a = t => t,
-	  _t$a,
-	  _t2$7;
-	const FORM_NAME$2 = 'bizproc-ws-autostart';
+	const FORM_NAME$1 = 'bizproc-ws-autostart';
 	const HTML_ELEMENT_ID$1 = 'bizproc-workflow-start-autostart';
-	var _header$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("header");
-	var _breadcrumbs$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("breadcrumbs");
-	var _buttons$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("buttons");
-	var _errorNotifier$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("errorNotifier");
-	var _templates = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("templates");
-	var _documents = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("documents");
-	var _signedDocumentType$3 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("signedDocumentType");
-	var _signedDocumentId$3 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("signedDocumentId");
-	var _autoExecute = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("autoExecute");
-	var _forms = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("forms");
-	var _canExit$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("canExit");
-	var _isExitInProcess$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isExitInProcess");
-	var _renderForm = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderForm");
-	var _exit$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("exit");
-	var _save = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("save");
-	var _appendDocumentsToFormData = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("appendDocumentsToFormData");
-	var _subscribeOnSliderClose$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("subscribeOnSliderClose");
 	class Autostart {
-	  constructor(config) {
-	    Object.defineProperty(this, _subscribeOnSliderClose$1, {
-	      value: _subscribeOnSliderClose2$1
-	    });
-	    Object.defineProperty(this, _appendDocumentsToFormData, {
-	      value: _appendDocumentsToFormData2
-	    });
-	    Object.defineProperty(this, _save, {
-	      value: _save2
-	    });
-	    Object.defineProperty(this, _exit$1, {
-	      value: _exit2$1
-	    });
-	    Object.defineProperty(this, _renderForm, {
-	      value: _renderForm2
-	    });
-	    Object.defineProperty(this, _header$1, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _breadcrumbs$1, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _buttons$2, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _errorNotifier$1, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _templates, {
-	      writable: true,
-	      value: []
-	    });
-	    Object.defineProperty(this, _documents, {
-	      writable: true,
-	      value: []
-	    });
-	    Object.defineProperty(this, _signedDocumentType$3, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _signedDocumentId$3, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _autoExecute, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _forms, {
-	      writable: true,
-	      value: []
-	    });
-	    Object.defineProperty(this, _canExit$1, {
-	      writable: true,
-	      value: false
-	    });
-	    Object.defineProperty(this, _isExitInProcess$1, {
-	      writable: true,
-	      value: false
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _header$1)[_header$1] = new Header({
-	      title: main_core.Loc.getMessage('BIZPROC_CMP_WORKFLOW_START_TMP_AUTOSTART_TITLE'),
-	      description: main_core.Loc.getMessage('BIZPROC_CMP_WORKFLOW_START_TMP_AUTOSTART_DESCRIPTION')
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _breadcrumbs$1)[_breadcrumbs$1] = new Breadcrumbs({
-	      items: [{
-	        id: 'autostart',
-	        text: main_core.Loc.getMessage('BIZPROC_CMP_WORKFLOW_START_TMP_AUTOSTART_STEP_AUTOSTART_TITLE'),
-	        active: true
-	      }]
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _buttons$2)[_buttons$2] = new Buttons({
-	      buttons: {
-	        autostart: [Buttons.createBackButton(babelHelpers.classPrivateFieldLooseBase(this, _exit$1)[_exit$1].bind(this)), new ui_buttons.Button({
-	          id: 'save',
-	          text: main_core.Text.encode(main_core.Loc.getMessage('BIZPROC_CMP_WORKFLOW_START_TMP_SINGLE_START_BUTTON_SAVE')),
-	          onclick: babelHelpers.classPrivateFieldLooseBase(this, _save)[_save].bind(this),
-	          color: ui_buttons.ButtonColor.PRIMARY
-	        })]
-	      },
-	      wrapper: document.getElementById(`${HTML_ELEMENT_ID$1}-buttons`).querySelector('.ui-button-panel')
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _errorNotifier$1)[_errorNotifier$1] = new ErrorNotifier({});
-	    if (main_core.Type.isArrayFilled(config.templates)) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _templates)[_templates] = config.templates;
-	    }
-	    if (main_core.Type.isArrayFilled(config.documents)) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _documents)[_documents] = config.documents;
-	    }
-	    if (main_core.Type.isStringFilled(config.signedDocumentType)) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _signedDocumentType$3)[_signedDocumentType$3] = config.signedDocumentType;
-	    }
-	    if (main_core.Type.isStringFilled(config.signedDocumentId)) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _signedDocumentId$3)[_signedDocumentId$3] = config.signedDocumentId;
-	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _autoExecute)[_autoExecute] = main_core.Text.toInteger(config.autoExecuteType);
-	    babelHelpers.classPrivateFieldLooseBase(this, _subscribeOnSliderClose$1)[_subscribeOnSliderClose$1]();
-	  }
-	  render() {
-	    return main_core.Tag.render(_t$a || (_t$a = _$a`
+		#header;
+		#breadcrumbs;
+		#buttons;
+		#errorNotifier;
+		#templates = [];
+		#documents = [];
+		#signedDocumentType = null;
+		#signedDocumentId = null;
+		#autoExecute;
+		#forms = [];
+		#canExit = false;
+		#isExitInProcess = false;
+		#isSaving = false;
+		constructor(config) {
+			this.#header = new Header({
+				title: main_core.Loc.getMessage('BIZPROC_CMP_WORKFLOW_START_TMP_AUTOSTART_TITLE'),
+				description: main_core.Loc.getMessage('BIZPROC_CMP_WORKFLOW_START_TMP_AUTOSTART_DESCRIPTION')
+			});
+			this.#breadcrumbs = new Breadcrumbs({
+				items: [{
+					id: 'autostart',
+					text: main_core.Loc.getMessage('BIZPROC_CMP_WORKFLOW_START_TMP_AUTOSTART_STEP_AUTOSTART_TITLE'),
+					active: true
+				}]
+			});
+			this.#buttons = new Buttons({
+				buttons: {
+					autostart: [Buttons.createBackButton(this.#exit.bind(this)), new ui_buttons.Button({
+						id: 'save',
+						text: main_core.Text.encode(main_core.Loc.getMessage('BIZPROC_CMP_WORKFLOW_START_TMP_SINGLE_START_BUTTON_SAVE')),
+						onclick: this.#save.bind(this),
+						color: ui_buttons.ButtonColor.PRIMARY
+					})]
+				},
+				wrapper: document.getElementById(`${HTML_ELEMENT_ID$1}-buttons`).querySelector('.ui-button-panel')
+			});
+			this.#errorNotifier = new ErrorNotifier({});
+			if (main_core.Type.isArrayFilled(config.templates)) {
+				this.#templates = config.templates;
+			}
+			if (main_core.Type.isArrayFilled(config.documents)) {
+				this.#documents = config.documents;
+			}
+			if (main_core.Type.isStringFilled(config.signedDocumentType)) {
+				this.#signedDocumentType = config.signedDocumentType;
+			}
+			if (main_core.Type.isStringFilled(config.signedDocumentId)) {
+				this.#signedDocumentId = config.signedDocumentId;
+			}
+			this.#autoExecute = main_core.Text.toInteger(config.autoExecuteType);
+			this.#subscribeOnSliderClose();
+		}
+		render() {
+			return main_core.Tag.render`
 			<div class="bizproc__ws_start">
-				${0}
+				${this.#header.render()}
 				<div class="bizproc__ws_start__body">
-					${0}
+					${this.#breadcrumbs.render()}
 					<div class="bizproc__ws_start__container">
-						${0}
+						${this.#errorNotifier.render()}
 						<div class="bizproc__ws_start__content">
 							<div class="bizproc__ws_start__content-body">
-								${0}
+								${this.#templates.map(template => this.#renderForm(template))}
 							</div>
 						</div>
 					</div>
 				<div>
 			</div>
-		`), babelHelpers.classPrivateFieldLooseBase(this, _header$1)[_header$1].render(), babelHelpers.classPrivateFieldLooseBase(this, _breadcrumbs$1)[_breadcrumbs$1].render(), babelHelpers.classPrivateFieldLooseBase(this, _errorNotifier$1)[_errorNotifier$1].render(), babelHelpers.classPrivateFieldLooseBase(this, _templates)[_templates].map(template => babelHelpers.classPrivateFieldLooseBase(this, _renderForm)[_renderForm](template)));
-	  }
-	  onAfterRender() {
-	    babelHelpers.classPrivateFieldLooseBase(this, _buttons$2)[_buttons$2].show();
-	  }
-	}
-	function _renderForm2(template) {
-	  const form = renderBpForm(`${FORM_NAME$2}_${template.id}`, template.name, template.parameters, template.documentType, template.description);
-	  babelHelpers.classPrivateFieldLooseBase(this, _forms)[_forms].push(form);
-	  return main_core.Tag.render(_t2$7 || (_t2$7 = _$a`<div class="bizproc__ws_start__content-form">${0}</div>`), form);
-	}
-	function _exit2$1() {
-	  if (BX.SidePanel.Instance.getSliderByWindow(window)) {
-	    BX.SidePanel.Instance.getSliderByWindow(window).close();
-	  }
-	}
-	function _save2() {
-	  babelHelpers.classPrivateFieldLooseBase(this, _buttons$2)[_buttons$2].resolveWaitingState({
-	    save: true
-	  });
-	  const data = new FormData();
-	  babelHelpers.classPrivateFieldLooseBase(this, _forms)[_forms].forEach(form => {
-	    addMissingFormDataValues(data, new FormData(form));
-	  });
-	  babelHelpers.classPrivateFieldLooseBase(this, _appendDocumentsToFormData)[_appendDocumentsToFormData](data);
-	  data.set('autoExecuteType', babelHelpers.classPrivateFieldLooseBase(this, _autoExecute)[_autoExecute]);
-	  main_core.ajax.runAction('bizproc.workflow.starter.checkParameters', {
-	    data
-	  }).then(response => {
-	    const slider = BX.SidePanel.Instance.getSliderByWindow(window);
-	    if (slider) {
-	      const dictionary = slider.getData();
-	      dictionary.set('data', {
-	        signedParameters: response.data.parameters
-	      });
-	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _errorNotifier$1)[_errorNotifier$1].clean();
-	    babelHelpers.classPrivateFieldLooseBase(this, _buttons$2)[_buttons$2].resolveWaitingState({
-	      save: false
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _canExit$1)[_canExit$1] = true;
-	    babelHelpers.classPrivateFieldLooseBase(this, _exit$1)[_exit$1]();
-	  }).catch(response => {
-	    babelHelpers.classPrivateFieldLooseBase(this, _errorNotifier$1)[_errorNotifier$1].errors = response.errors;
-	    babelHelpers.classPrivateFieldLooseBase(this, _errorNotifier$1)[_errorNotifier$1].show();
-	    babelHelpers.classPrivateFieldLooseBase(this, _buttons$2)[_buttons$2].resolveWaitingState({
-	      save: false
-	    });
-	  });
-	}
-	function _appendDocumentsToFormData2(data) {
-	  babelHelpers.classPrivateFieldLooseBase(this, _documents)[_documents].forEach((document, index) => {
-	    document.documentType.forEach((value, documentTypeIndex) => {
-	      data.append(`documents[${index}][documentType][${documentTypeIndex}]`, value);
-	    });
-	    if (main_core.Type.isArray(document.documentId)) {
-	      document.documentId.forEach((value, documentIdIndex) => {
-	        data.append(`documents[${index}][documentId][${documentIdIndex}]`, value);
-	      });
-	    }
-	  });
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _documents)[_documents].length === 1 && main_core.Type.isStringFilled(babelHelpers.classPrivateFieldLooseBase(this, _signedDocumentType$3)[_signedDocumentType$3])) {
-	    data.set('signedDocumentType', babelHelpers.classPrivateFieldLooseBase(this, _signedDocumentType$3)[_signedDocumentType$3]);
-	  }
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _documents)[_documents].length === 1 && main_core.Type.isStringFilled(babelHelpers.classPrivateFieldLooseBase(this, _signedDocumentId$3)[_signedDocumentId$3])) {
-	    data.set('signedDocumentId', babelHelpers.classPrivateFieldLooseBase(this, _signedDocumentId$3)[_signedDocumentId$3]);
-	  }
-	}
-	function _subscribeOnSliderClose2$1() {
-	  const slider = BX.SidePanel.Instance.getSliderByWindow(window);
-	  if (slider) {
-	    main_core_events.EventEmitter.subscribe(slider, 'SidePanel.Slider:onClose', event => {
-	      if (!babelHelpers.classPrivateFieldLooseBase(this, _canExit$1)[_canExit$1]) {
-	        event.getCompatData()[0].denyAction();
-	        if (!babelHelpers.classPrivateFieldLooseBase(this, _isExitInProcess$1)[_isExitInProcess$1]) {
-	          babelHelpers.classPrivateFieldLooseBase(this, _isExitInProcess$1)[_isExitInProcess$1] = true;
-	          showCancelDialog(() => {
-	            babelHelpers.classPrivateFieldLooseBase(this, _canExit$1)[_canExit$1] = true;
-	            slider.close();
-	            return true;
-	          }, () => {
-	            babelHelpers.classPrivateFieldLooseBase(this, _isExitInProcess$1)[_isExitInProcess$1] = false;
-	            return true;
-	          });
-	        }
-	      }
-	    });
-	  }
+		`;
+		}
+		onAfterRender() {
+			this.#buttons.show();
+		}
+		#renderForm(template) {
+			const form = renderBpForm(`${FORM_NAME$1}_${template.id}`, template.name, template.parameters, template.documentType, {
+				description: template.description,
+				onSubmit: () => this.#save()
+			});
+			this.#forms.push(form);
+			return main_core.Tag.render`<div class="bizproc__ws_start__content-form">${form}</div>`;
+		}
+		#exit() {
+			if (BX.SidePanel.Instance.getSliderByWindow(window)) {
+				BX.SidePanel.Instance.getSliderByWindow(window).close();
+			}
+		}
+		#save() {
+			if (this.#isSaving) {
+				return;
+			}
+			this.#isSaving = true;
+			this.#buttons.resolveWaitingState({
+				save: true
+			});
+			const data = new FormData();
+			this.#forms.forEach(form => {
+				addMissingFormDataValues(data, new FormData(form));
+			});
+			this.#appendDocumentsToFormData(data);
+			data.set('autoExecuteType', this.#autoExecute);
+			main_core.ajax.runAction('bizproc.workflow.starter.checkParameters', {
+				data
+			}).then(response => {
+				const slider = BX.SidePanel.Instance.getSliderByWindow(window);
+				if (slider) {
+					const dictionary = slider.getData();
+					dictionary.set('data', {
+						signedParameters: response.data.parameters
+					});
+				}
+				this.#errorNotifier.clean();
+				this.#buttons.resolveWaitingState({
+					save: false
+				});
+				this.#isSaving = false;
+				this.#canExit = true;
+				this.#exit();
+			}).catch(response => {
+				this.#errorNotifier.errors = response.errors;
+				this.#errorNotifier.show();
+				this.#buttons.resolveWaitingState({
+					save: false
+				});
+				this.#isSaving = false;
+			});
+		}
+		#appendDocumentsToFormData(data) {
+			this.#documents.forEach((document, index) => {
+				document.documentType.forEach((value, documentTypeIndex) => {
+					data.append(`documents[${index}][documentType][${documentTypeIndex}]`, value);
+				});
+				if (main_core.Type.isArray(document.documentId)) {
+					document.documentId.forEach((value, documentIdIndex) => {
+						data.append(`documents[${index}][documentId][${documentIdIndex}]`, value);
+					});
+				}
+				if (!main_core.Type.isNil(document.categoryId)) {
+					data.append(`documents[${index}][categoryId]`, document.categoryId);
+				}
+			});
+			if (this.#documents.length === 1 && main_core.Type.isStringFilled(this.#signedDocumentType)) {
+				data.set('signedDocumentType', this.#signedDocumentType);
+			}
+			if (this.#documents.length === 1 && main_core.Type.isStringFilled(this.#signedDocumentId)) {
+				data.set('signedDocumentId', this.#signedDocumentId);
+			}
+		}
+		#subscribeOnSliderClose() {
+			const slider = BX.SidePanel.Instance.getSliderByWindow(window);
+			if (slider) {
+				main_core_events.EventEmitter.subscribe(slider, 'SidePanel.Slider:onClose', event => {
+					if (!this.#canExit) {
+						event.getCompatData()[0].denyAction();
+						if (!this.#isExitInProcess) {
+							this.#isExitInProcess = true;
+							showCancelDialog$1(() => {
+								this.#canExit = true;
+								slider.close();
+								return true;
+							}, () => {
+								this.#isExitInProcess = false;
+								return true;
+							});
+						}
+					}
+				});
+			}
+		}
 	}
 
-	function showCancelDialog$1(onConfirm, onCancel) {
-	  const messageBox = ui_dialogs_messagebox.MessageBox.confirm(main_core.Loc.getMessage('BIZPROC_CMP_WORKFLOW_START_TMP_EDIT_CONSTANTS_EXIT_DIALOG_DESCRIPTION'), main_core.Loc.getMessage('BIZPROC_CMP_WORKFLOW_START_TMP_EDIT_CONSTANTS_EXIT_DIALOG_TITLE'), onConfirm, main_core.Loc.getMessage('BIZPROC_CMP_WORKFLOW_START_TMP_EDIT_CONSTANTS_EXIT_DIALOG_CONFIRM'), main_core.Type.isFunction(onCancel) ? onCancel : () => true, main_core.Loc.getMessage('BIZPROC_CMP_WORKFLOW_START_TMP_EDIT_CONSTANTS_EXIT_DIALOG_CANCEL'));
-	  if (main_core.Type.isFunction(onCancel)) {
-	    const popup = messageBox.getPopupWindow();
-	    popup.subscribe('onClose', onCancel);
-	  }
+	function showCancelDialog(onConfirm, onClose) {
+		showConfirmDialog({
+			title: main_core.Loc.getMessage('BIZPROC_CMP_WORKFLOW_START_TMP_EDIT_CONSTANTS_EXIT_DIALOG_TITLE'),
+			description: main_core.Loc.getMessage('BIZPROC_CMP_WORKFLOW_START_TMP_EDIT_CONSTANTS_EXIT_DIALOG_DESCRIPTION'),
+			confirmCaption: main_core.Loc.getMessage('BIZPROC_CMP_WORKFLOW_START_TMP_EDIT_CONSTANTS_EXIT_DIALOG_CONFIRM'),
+			cancelCaption: main_core.Loc.getMessage('BIZPROC_CMP_WORKFLOW_START_TMP_EDIT_CONSTANTS_EXIT_DIALOG_CANCEL')
+		}, onConfirm, onClose);
 	}
 
-	let _$b = t => t,
-	  _t$b,
-	  _t2$8;
-	const FORM_NAME$3 = 'bizproc-ws-edit-constants';
-	const HTML_ELEMENT_ID$2 = 'bizproc-workflow-start-edit-constants';
-	var _header$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("header");
-	var _breadcrumbs$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("breadcrumbs");
-	var _buttons$3 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("buttons");
-	var _errorNotifier$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("errorNotifier");
-	var _constants$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("constants");
-	var _documentType$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("documentType");
-	var _signedDocumentType$4 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("signedDocumentType");
-	var _templateId$3 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("templateId");
-	var _templateName = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("templateName");
-	var _form$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("form");
-	var _canExit$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("canExit");
-	var _isExitInProcess$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isExitInProcess");
-	var _originalFormData$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("originalFormData");
-	var _renderConstants$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderConstants");
-	var _renderErrors$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("renderErrors");
-	var _subscribeOnRenderEvents$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("subscribeOnRenderEvents");
-	var _onAfterFieldCollectionRenderer$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onAfterFieldCollectionRenderer");
-	var _handleSaveClick$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleSaveClick");
-	var _exit$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("exit");
-	var _subscribeOnSliderClose$2 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("subscribeOnSliderClose");
-	var _isChangedConstants = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isChangedConstants");
+	const FORM_NAME = 'bizproc-ws-edit-constants';
+	const HTML_ELEMENT_ID = 'bizproc-workflow-start-edit-constants';
 	class EditConstants {
-	  constructor(config) {
-	    Object.defineProperty(this, _isChangedConstants, {
-	      value: _isChangedConstants2
-	    });
-	    Object.defineProperty(this, _subscribeOnSliderClose$2, {
-	      value: _subscribeOnSliderClose2$2
-	    });
-	    Object.defineProperty(this, _exit$2, {
-	      value: _exit2$2
-	    });
-	    Object.defineProperty(this, _handleSaveClick$1, {
-	      value: _handleSaveClick2$1
-	    });
-	    Object.defineProperty(this, _onAfterFieldCollectionRenderer$2, {
-	      value: _onAfterFieldCollectionRenderer2$2
-	    });
-	    Object.defineProperty(this, _subscribeOnRenderEvents$2, {
-	      value: _subscribeOnRenderEvents2$2
-	    });
-	    Object.defineProperty(this, _renderErrors$1, {
-	      value: _renderErrors2$1
-	    });
-	    Object.defineProperty(this, _renderConstants$1, {
-	      value: _renderConstants2$1
-	    });
-	    Object.defineProperty(this, _header$2, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _breadcrumbs$2, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _buttons$3, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _errorNotifier$2, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _constants$1, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _documentType$2, {
-	      writable: true,
-	      value: null
-	    });
-	    Object.defineProperty(this, _signedDocumentType$4, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _templateId$3, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _templateName, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _form$2, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _canExit$2, {
-	      writable: true,
-	      value: false
-	    });
-	    Object.defineProperty(this, _isExitInProcess$2, {
-	      writable: true,
-	      value: false
-	    });
-	    Object.defineProperty(this, _originalFormData$2, {
-	      writable: true,
-	      value: null
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _header$2)[_header$2] = new Header({
-	      title: main_core.Loc.getMessage('BIZPROC_CMP_WORKFLOW_START_TMP_EDIT_CONSTANTS_TITLE'),
-	      description: main_core.Loc.getMessage('BIZPROC_CMP_WORKFLOW_START_TMP_EDIT_CONSTANTS_DESCRIPTION')
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _breadcrumbs$2)[_breadcrumbs$2] = new Breadcrumbs({
-	      items: [{
-	        id: 'edit-constants',
-	        text: main_core.Loc.getMessage('BIZPROC_CMP_WORKFLOW_START_TMP_EDIT_CONSTANTS_STEP_AUTOSTART_TITLE'),
-	        active: true
-	      }]
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _buttons$3)[_buttons$3] = new Buttons({
-	      buttons: {
-	        edit: [Buttons.createBackButton(babelHelpers.classPrivateFieldLooseBase(this, _exit$2)[_exit$2].bind(this)), new ui_buttons.Button({
-	          id: 'save',
-	          text: main_core.Text.encode(main_core.Loc.getMessage('BIZPROC_CMP_WORKFLOW_START_TMP_SINGLE_START_BUTTON_SAVE')),
-	          onclick: babelHelpers.classPrivateFieldLooseBase(this, _handleSaveClick$1)[_handleSaveClick$1].bind(this),
-	          color: ui_buttons.ButtonColor.PRIMARY
-	        })]
-	      },
-	      wrapper: document.getElementById(`${HTML_ELEMENT_ID$2}-buttons`).querySelector('.ui-button-panel')
-	    });
-	    babelHelpers.classPrivateFieldLooseBase(this, _buttons$3)[_buttons$3].show();
-	    babelHelpers.classPrivateFieldLooseBase(this, _errorNotifier$2)[_errorNotifier$2] = new ErrorNotifier({});
-	    babelHelpers.classPrivateFieldLooseBase(this, _documentType$2)[_documentType$2] = config.documentType;
-	    babelHelpers.classPrivateFieldLooseBase(this, _signedDocumentType$4)[_signedDocumentType$4] = config.signedDocumentType;
-	    babelHelpers.classPrivateFieldLooseBase(this, _templateId$3)[_templateId$3] = main_core.Text.toInteger(config.templateId);
-	    babelHelpers.classPrivateFieldLooseBase(this, _templateName)[_templateName] = config.templateName;
-	    babelHelpers.classPrivateFieldLooseBase(this, _constants$1)[_constants$1] = config.constants;
-	    babelHelpers.classPrivateFieldLooseBase(this, _subscribeOnSliderClose$2)[_subscribeOnSliderClose$2]();
-	  }
-	  render() {
-	    return main_core.Tag.render(_t$b || (_t$b = _$b`
+		#header;
+		#breadcrumbs;
+		#buttons;
+		#errorNotifier;
+		#constants;
+		#documentType = null;
+		#signedDocumentType;
+		#templateId;
+		#templateName;
+		#form;
+		#saveButton;
+		#canExit = false;
+		#isExitInProcess = false;
+		#originalFormData = null;
+		constructor(config) {
+			this.#header = new Header({
+				title: main_core.Loc.getMessage('BIZPROC_CMP_WORKFLOW_START_TMP_EDIT_CONSTANTS_TITLE'),
+				description: main_core.Loc.getMessage('BIZPROC_CMP_WORKFLOW_START_TMP_EDIT_CONSTANTS_DESCRIPTION')
+			});
+			this.#breadcrumbs = new Breadcrumbs({
+				items: [{
+					id: 'edit-constants',
+					text: main_core.Loc.getMessage('BIZPROC_CMP_WORKFLOW_START_TMP_EDIT_CONSTANTS_STEP_AUTOSTART_TITLE'),
+					active: true
+				}]
+			});
+			this.#saveButton = new ui_buttons.Button({
+				id: 'save',
+				text: main_core.Text.encode(main_core.Loc.getMessage('BIZPROC_CMP_WORKFLOW_START_TMP_SINGLE_START_BUTTON_SAVE')),
+				onclick: this.#handleSaveClick.bind(this),
+				color: ui_buttons.ButtonColor.PRIMARY,
+				dataset: {
+					testid: 'bizproc-ws-edit-constants-save-btn'
+				}
+			});
+			this.#buttons = new Buttons({
+				buttons: {
+					edit: [Buttons.createBackButton(this.#exit.bind(this)), this.#saveButton]
+				},
+				wrapper: document.getElementById(`${HTML_ELEMENT_ID}-buttons`).querySelector('.ui-button-panel')
+			});
+			this.#buttons.show();
+			this.#errorNotifier = new ErrorNotifier({});
+			this.#documentType = config.documentType;
+			this.#signedDocumentType = config.signedDocumentType;
+			this.#templateId = main_core.Text.toInteger(config.templateId);
+			this.#templateName = config.templateName;
+			this.#constants = config.constants;
+			this.#subscribeOnSliderClose();
+		}
+		render() {
+			return main_core.Tag.render`
 			<div class="bizproc__ws_start">
-				${0}
+				${this.#header.render()}
 				<div class="bizproc__ws_start__body">
-					${0}
+					${this.#breadcrumbs.render()}
 					<div class="bizproc__ws_start__container">
-						${0}
+						${this.#errorNotifier.render()}
 						<div class="bizproc__ws_start__content">
 							<div class="bizproc__ws_start__content-body">
-								${0}
+								${this.#renderConstants()}
 							</div>
 						</div>
 					</div>
 				<div>
 			</div>
-		`), babelHelpers.classPrivateFieldLooseBase(this, _header$2)[_header$2].render(), babelHelpers.classPrivateFieldLooseBase(this, _breadcrumbs$2)[_breadcrumbs$2].render(), babelHelpers.classPrivateFieldLooseBase(this, _errorNotifier$2)[_errorNotifier$2].render(), babelHelpers.classPrivateFieldLooseBase(this, _renderConstants$1)[_renderConstants$1]());
-	  }
-	}
-	function _renderConstants2$1() {
-	  babelHelpers.classPrivateFieldLooseBase(this, _form$2)[_form$2] = renderBpForm(FORM_NAME$3, babelHelpers.classPrivateFieldLooseBase(this, _templateName)[_templateName], babelHelpers.classPrivateFieldLooseBase(this, _constants$1)[_constants$1], babelHelpers.classPrivateFieldLooseBase(this, _documentType$2)[_documentType$2], null, null);
-	  main_core.Dom.append(babelHelpers.classPrivateFieldLooseBase(this, _renderErrors$1)[_renderErrors$1](), babelHelpers.classPrivateFieldLooseBase(this, _form$2)[_form$2]);
-	  babelHelpers.classPrivateFieldLooseBase(this, _originalFormData$2)[_originalFormData$2] = new FormData(babelHelpers.classPrivateFieldLooseBase(this, _form$2)[_form$2]);
-	  babelHelpers.classPrivateFieldLooseBase(this, _subscribeOnRenderEvents$2)[_subscribeOnRenderEvents$2]();
-	  return main_core.Tag.render(_t2$8 || (_t2$8 = _$b`<div class="bizproc__ws_start__content-form">${0}</div>`), babelHelpers.classPrivateFieldLooseBase(this, _form$2)[_form$2]);
-	}
-	function _renderErrors2$1() {
-	  return babelHelpers.classPrivateFieldLooseBase(this, _errorNotifier$2)[_errorNotifier$2].render();
-	}
-	function _subscribeOnRenderEvents2$2() {
-	  main_core_events.EventEmitter.subscribe('BX.Bizproc.FieldType.onCustomRenderControlFinished', babelHelpers.classPrivateFieldLooseBase(this, _onAfterFieldCollectionRenderer$2)[_onAfterFieldCollectionRenderer$2].bind(this));
-	  main_core_events.EventEmitter.subscribe('BX.Bizproc.FieldType.onCollectionRenderControlFinished', babelHelpers.classPrivateFieldLooseBase(this, _onAfterFieldCollectionRenderer$2)[_onAfterFieldCollectionRenderer$2].bind(this));
-	}
-	function _onAfterFieldCollectionRenderer2$2() {
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _originalFormData$2)[_originalFormData$2] && document.forms.namedItem(FORM_NAME$3)) {
-	    addMissingFormDataValues(babelHelpers.classPrivateFieldLooseBase(this, _originalFormData$2)[_originalFormData$2], new FormData(document.forms.namedItem(FORM_NAME$3)));
-	  }
-	}
-	function _handleSaveClick2$1(button) {
-	  button.setWaiting(true);
-	  babelHelpers.classPrivateFieldLooseBase(this, _errorNotifier$2)[_errorNotifier$2].clean();
-	  const data = new FormData(babelHelpers.classPrivateFieldLooseBase(this, _form$2)[_form$2]);
-	  data.set('templateId', babelHelpers.classPrivateFieldLooseBase(this, _templateId$3)[_templateId$3]);
-	  data.set('signedDocumentType', babelHelpers.classPrivateFieldLooseBase(this, _signedDocumentType$4)[_signedDocumentType$4]);
-	  main_core.ajax.runAction('bizproc.workflow.starter.setConstants', {
-	    data
-	  }).then(() => {
-	    button.setWaiting(false);
-	    babelHelpers.classPrivateFieldLooseBase(this, _canExit$2)[_canExit$2] = true;
-	    babelHelpers.classPrivateFieldLooseBase(this, _exit$2)[_exit$2]();
-	  }).catch(response => {
-	    babelHelpers.classPrivateFieldLooseBase(this, _errorNotifier$2)[_errorNotifier$2].errors = response.errors;
-	    babelHelpers.classPrivateFieldLooseBase(this, _errorNotifier$2)[_errorNotifier$2].show();
-	    button.setWaiting(false);
-	  });
-	}
-	function _exit2$2() {
-	  if (BX.SidePanel.Instance.getSliderByWindow(window)) {
-	    BX.SidePanel.Instance.getSliderByWindow(window).close();
-	  }
-	}
-	function _subscribeOnSliderClose2$2() {
-	  const slider = BX.SidePanel.Instance.getSliderByWindow(window);
-	  if (slider) {
-	    main_core_events.EventEmitter.subscribe(slider, 'SidePanel.Slider:onClose', event => {
-	      if (!babelHelpers.classPrivateFieldLooseBase(this, _canExit$2)[_canExit$2] && babelHelpers.classPrivateFieldLooseBase(this, _isChangedConstants)[_isChangedConstants]()) {
-	        event.getCompatData()[0].denyAction();
-	        if (!babelHelpers.classPrivateFieldLooseBase(this, _isExitInProcess$2)[_isExitInProcess$2]) {
-	          babelHelpers.classPrivateFieldLooseBase(this, _isExitInProcess$2)[_isExitInProcess$2] = true;
-	          showCancelDialog$1(() => {
-	            babelHelpers.classPrivateFieldLooseBase(this, _canExit$2)[_canExit$2] = true;
-	            slider.close();
-	            return true;
-	          }, () => {
-	            babelHelpers.classPrivateFieldLooseBase(this, _isExitInProcess$2)[_isExitInProcess$2] = false;
-	            return true;
-	          });
-	        }
-	      }
-	    });
-	  }
-	}
-	function _isChangedConstants2() {
-	  if (!babelHelpers.classPrivateFieldLooseBase(this, _originalFormData$2)[_originalFormData$2]) {
-	    return false;
-	  }
-	  return !isEqualsFormData(new FormData(babelHelpers.classPrivateFieldLooseBase(this, _form$2)[_form$2]), babelHelpers.classPrivateFieldLooseBase(this, _originalFormData$2)[_originalFormData$2]);
+		`;
+		}
+		#renderConstants() {
+			this.#form = renderBpForm(FORM_NAME, this.#templateName, this.#constants, this.#documentType, {
+				onSubmit: () => this.#handleSaveClick(this.#saveButton)
+			});
+			main_core.Dom.append(this.#renderErrors(), this.#form);
+			this.#originalFormData = new FormData(this.#form);
+			this.#subscribeOnRenderEvents();
+			return main_core.Tag.render`<div class="bizproc__ws_start__content-form">${this.#form}</div>`;
+		}
+		#renderErrors() {
+			return this.#errorNotifier.render();
+		}
+		#subscribeOnRenderEvents() {
+			main_core_events.EventEmitter.subscribe('BX.Bizproc.FieldType.onCustomRenderControlFinished', this.#onAfterFieldCollectionRenderer.bind(this));
+			main_core_events.EventEmitter.subscribe('BX.Bizproc.FieldType.onCollectionRenderControlFinished', this.#onAfterFieldCollectionRenderer.bind(this));
+		}
+		#onAfterFieldCollectionRenderer() {
+			if (this.#originalFormData && document.forms.namedItem(FORM_NAME)) {
+				addMissingFormDataValues(this.#originalFormData, new FormData(document.forms.namedItem(FORM_NAME)));
+			}
+		}
+		#handleSaveClick(button) {
+			if (button.isWaiting()) {
+				return;
+			}
+			button.setWaiting(true);
+			this.#errorNotifier.clean();
+			const data = new FormData(this.#form);
+			data.set('templateId', this.#templateId);
+			data.set('signedDocumentType', this.#signedDocumentType);
+			main_core.ajax.runAction('bizproc.workflow.starter.setConstants', {
+				data
+			}).then(() => {
+				button.setWaiting(false);
+				this.#canExit = true;
+				this.#exit();
+			}).catch(response => {
+				this.#errorNotifier.errors = response.errors;
+				this.#errorNotifier.show();
+				button.setWaiting(false);
+			});
+		}
+		#exit() {
+			if (BX.SidePanel.Instance.getSliderByWindow(window)) {
+				BX.SidePanel.Instance.getSliderByWindow(window).close();
+			}
+		}
+		#subscribeOnSliderClose() {
+			const slider = BX.SidePanel.Instance.getSliderByWindow(window);
+			if (slider) {
+				main_core_events.EventEmitter.subscribe(slider, 'SidePanel.Slider:onClose', event => {
+					if (!this.#canExit && this.#isChangedConstants()) {
+						event.getCompatData()[0].denyAction();
+						if (!this.#isExitInProcess) {
+							this.#isExitInProcess = true;
+							showCancelDialog(() => {
+								this.#canExit = true;
+								slider.close();
+								return true;
+							}, () => {
+								this.#isExitInProcess = false;
+								return true;
+							});
+						}
+					}
+				});
+			}
+		}
+		#isChangedConstants() {
+			if (!this.#originalFormData) {
+				return false;
+			}
+			return !isEqualsFormData(new FormData(this.#form), this.#originalFormData);
+		}
 	}
 
-	exports.WorkflowSingleStart = SingleStart;
 	exports.WorkflowAutoStart = Autostart;
 	exports.WorkflowEditConstants = EditConstants;
+	exports.WorkflowSingleStart = SingleStart;
 
-}((this.BX.Bizproc.Component = this.BX.Bizproc.Component || {}),BX.UI.IconSet,BX.UI,BX,BX,BX.Main,BX,BX.Event,BX.UI,BX,BX.UI.Dialogs));
+})(this.BX.Bizproc.Component = this.BX.Bizproc.Component || {}, BX, BX.Event, BX.UI, BX.UI.Accessibility, BX, BX.Bizproc.A11y, BX.UI.IconSet, BX.UI, BX.UI.Dialogs, BX, BX, BX.Main);
 //# sourceMappingURL=script.js.map

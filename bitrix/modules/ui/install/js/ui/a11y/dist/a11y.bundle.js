@@ -8,9 +8,29 @@ this.BX.UI = this.BX.UI || {};
 	const FOCUSABLE_SELECTOR = focusableElements.join(',');
 
 	const supportsCheckVisibility = !main_core.Type.isUndefined(window.Element) && 'checkVisibility' in window.Element.prototype;
+	const NON_TEXT_INPUT_TYPES = new Set(['button', 'checkbox', 'color', 'file', 'hidden', 'image', 'radio', 'range', 'reset', 'submit']);
+	const NON_EDITABLE_INPUT_TYPES = new Set(['button', 'checkbox', 'file', 'hidden', 'image', 'radio', 'range', 'reset', 'submit']);
 	class InteractivityChecker {
 		static isDisabled(element) {
 			return main_core.Type.isElementNode(element) && (element.hasAttribute('disabled') || element.getAttribute('aria-disabled') === 'true');
+		}
+		static isTextInput(element) {
+			if (!main_core.Type.isElementNode(element)) {
+				return false;
+			}
+			if (element.tagName === 'INPUT') {
+				return !NON_TEXT_INPUT_TYPES.has(element.type);
+			}
+			return element.tagName === 'TEXTAREA' || element.isContentEditable;
+		}
+		static isEditable(element) {
+			if (!main_core.Type.isElementNode(element)) {
+				return false;
+			}
+			if (element.tagName === 'INPUT') {
+				return !NON_EDITABLE_INPUT_TYPES.has(element.type);
+			}
+			return element.tagName === 'TEXTAREA' || element.tagName === 'SELECT' || element.isContentEditable;
 		}
 		static isVisible(element) {
 			if (!main_core.Type.isElementNode(element) || !element.isConnected) {
@@ -159,6 +179,10 @@ this.BX.UI = this.BX.UI || {};
 	class FocusNavigator {
 		static get FOCUSABLE_SELECTOR() {
 			return FOCUSABLE_SELECTOR;
+		}
+		static isFocusLost(node) {
+			const activeElement = this.getActiveElement(node);
+			return activeElement === null || activeElement.tagName === 'BODY';
 		}
 		static getFirst(container, options) {
 			return this.#traverse(container, 'first', options);
@@ -464,6 +488,7 @@ this.BX.UI = this.BX.UI || {};
 	}
 
 	const NAV_KEYS = new Set(['Tab', 'Escape', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Home', 'End']);
+	const BARE_MODIFIER_KEYS = new Set(['Alt', 'AltGraph', 'CapsLock', 'Control', 'Meta', 'NumLock', 'ScrollLock', 'Shift']);
 	const POINTER_TYPES = new Set(['mouse', 'pen', 'touch']);
 	class InputModalityTracker {
 		#modality = 'unknown';
@@ -477,14 +502,22 @@ this.BX.UI = this.BX.UI || {};
 				return;
 			}
 			const onKeyDown = event => {
+				if (InputModalityTracker.isBareModifier(event.key)) {
+					return;
+				}
 				if (NAV_KEYS.has(event.key)) {
 					this.#lastNavKey = event.key;
 					this.#lastNavShift = event.shiftKey;
-					this.#setModality('keyboard');
+				} else {
+					this.#lastNavKey = null;
+					this.#lastNavShift = false;
 				}
+				this.#setModality('keyboard');
 			};
 			const onPointer = event => {
 				this.#pointerType = POINTER_TYPES.has(event.pointerType) ? event.pointerType : 'mouse';
+				this.#lastNavKey = null;
+				this.#lastNavShift = false;
 				this.#setModality('pointer');
 			};
 			main_core.Event.bind(doc, 'keydown', onKeyDown, true);
@@ -504,6 +537,9 @@ this.BX.UI = this.BX.UI || {};
 				this.#detachHandlers.delete(doc);
 				this.#cleanupWeakRefs();
 			}
+		}
+		static isBareModifier(key) {
+			return BARE_MODIFIER_KEYS.has(key);
 		}
 		static enableDebug() {
 			AccessibilityLogger.enable('input-modality');
@@ -764,6 +800,7 @@ this.BX.UI = this.BX.UI || {};
 
 	const PRECEDING = Node.DOCUMENT_POSITION_PRECEDING | Node.DOCUMENT_POSITION_CONTAINS;
 	const FOLLOWING = Node.DOCUMENT_POSITION_FOLLOWING | Node.DOCUMENT_POSITION_CONTAINED_BY;
+	const outsideIsolationOwnership = new WeakMap();
 	class FocusTrap {
 		#id = `focus-trap-${main_core.Text.getRandom()}`;
 		#container;
@@ -776,7 +813,7 @@ this.BX.UI = this.BX.UI || {};
 		#startFocusBoundary = null;
 		#endFocusBoundary = null;
 		#lastFocusedElement = null;
-		#alreadyInert = new WeakSet();
+		#outsideIsolationElements = null;
 		#startFocusHandler = this.#handleStartBoundaryFocus.bind(this);
 		#endFocusHandler = this.#handleEndBoundaryFocus.bind(this);
 		constructor(container, options = {}) {
@@ -1045,6 +1082,10 @@ this.BX.UI = this.BX.UI || {};
 		}
 		restoreFocus() {
 			try {
+				if (this.#restoreFocus === null && this.#shouldKeepCurrentFocus()) {
+					this.#scheduleLostFocusRestore(this.#lastFocusedElement);
+					return;
+				}
 				const restoreFocus = this.#restoreFocus ?? true;
 				if (restoreFocus === false) {
 					return;
@@ -1107,37 +1148,97 @@ this.BX.UI = this.BX.UI || {};
 				this.#lastFocusedElement = null;
 			}
 		}
+		#shouldKeepCurrentFocus() {
+			if (FocusNavigator.isFocusLost(this.#container)) {
+				return false;
+			}
+			const activeElement = FocusNavigator.getActiveElement(this.#container);
+			return activeElement !== null && !this.#containsElement(activeElement);
+		}
+		#scheduleLostFocusRestore(lastFocusedElement) {
+			setTimeout(() => {
+				if (!FocusNavigator.isFocusLost(this.#container)) {
+					return;
+				}
+				if (lastFocusedElement !== null && InteractivityChecker.isFocusable(lastFocusedElement)) {
+					AccessibilityLogger.logNode('focus-trap', 'back to last focus (lost)', lastFocusedElement);
+					FocusNavigator.restoreFocus(lastFocusedElement, {
+						preventScroll: true
+					});
+					return;
+				}
+				FocusMonitor.Instance.restoreFocus();
+			}, 0);
+		}
+		#containsElement(element) {
+			if (this.contains(element)) {
+				return true;
+			}
+			let doc = element.ownerDocument;
+			while (doc?.defaultView?.frameElement) {
+				const frame = doc.defaultView.frameElement;
+				if (main_core.Type.isElementNode(frame) && this.contains(frame)) {
+					return true;
+				}
+				doc = frame.ownerDocument;
+			}
+			return false;
+		}
 		#setOutsideIsolation(enable) {
-			if (this.#options.isolateOutside !== true) {
+			if (enable && this.#options.isolateOutside !== true) {
 				return;
 			}
+			if (enable) {
+				this.#captureOutsideIsolationSnapshot();
+			} else {
+				for (const el of this.#outsideIsolationElements ?? []) {
+					this.#releaseOutsideIsolation(el);
+				}
+				this.#outsideIsolationElements = null;
+			}
+		}
+		#captureOutsideIsolationSnapshot() {
 			const containers = [this.#container, ...this.#getOutsideExceptionElements()];
 			const topLevelContainers = containers.filter(el => {
 				return !containers.some(other => other !== el && other.contains(el));
 			});
 			const adjacentElements = this.#getAdjacentElements(topLevelContainers);
-			if (enable) {
-				this.#alreadyInert = new WeakSet();
-				for (const el of adjacentElements) {
-					if (el === this.#container || this.#container.contains(el) || el.getAttribute('data-focus-trap') === this.getId()) {
-						continue;
-					}
-					if (el.parentNode?.nodeName === 'BODY' && el.offsetWidth === 0 && el.offsetHeight === 0) {
-						continue;
-					}
-					if (el.inert || el.hasAttribute('inert')) {
-						this.#alreadyInert.add(el);
-					}
-					el.setAttribute('inert', 'true');
+			this.#outsideIsolationElements = new Set();
+			for (const el of adjacentElements) {
+				if (el === this.#container || this.#container.contains(el) || el.getAttribute('data-focus-trap') === this.getId()) {
+					continue;
 				}
+				if (el.parentNode?.nodeName === 'BODY' && el.offsetWidth === 0 && el.offsetHeight === 0) {
+					continue;
+				}
+				this.#outsideIsolationElements.add(el);
+				this.#acquireOutsideIsolation(el);
+			}
+		}
+		#acquireOutsideIsolation(element) {
+			const ownership = outsideIsolationOwnership.get(element);
+			if (ownership) {
+				ownership.ownerCount++;
 			} else {
-				for (const el of adjacentElements) {
-					if (this.#alreadyInert.has(el)) {
-						continue;
-					}
-					el.removeAttribute('inert');
-				}
-				this.#alreadyInert = new WeakSet();
+				outsideIsolationOwnership.set(element, {
+					ownerCount: 1,
+					wasInert: element.inert || element.hasAttribute('inert')
+				});
+			}
+			element.setAttribute('inert', 'true');
+		}
+		#releaseOutsideIsolation(element) {
+			const ownership = outsideIsolationOwnership.get(element);
+			if (!ownership) {
+				return;
+			}
+			ownership.ownerCount--;
+			if (ownership.ownerCount > 0) {
+				return;
+			}
+			outsideIsolationOwnership.delete(element);
+			if (!ownership.wasInert) {
+				element.removeAttribute('inert');
 			}
 		}
 		#getAdjacentElements(containers) {
@@ -1476,7 +1577,6 @@ this.BX.UI = this.BX.UI || {};
 		PageDown: 'end',
 		Backspace: 'previous'
 	};
-	const NON_EDITABLE_INPUT_TYPES = new Set(['button', 'checkbox', 'file', 'hidden', 'image', 'radio', 'range', 'reset', 'submit']);
 	class FocusZone {
 		#container;
 		#options;
@@ -1856,7 +1956,10 @@ this.BX.UI = this.BX.UI || {};
 			this.#bindings = [];
 		}
 		#attachObserver() {
-			this.#observer = new MutationObserver(() => {
+			this.#observer = new MutationObserver(mutations => {
+				if (this.#isOwnTabIndexWrite(mutations)) {
+					return;
+				}
 				this.#scheduleSyncFocusableElements();
 			});
 			this.#observer.observe(this.#container, {
@@ -1864,6 +1967,14 @@ this.BX.UI = this.BX.UI || {};
 				subtree: true,
 				childList: true,
 				attributeFilter: ['hidden', 'disabled', 'tabindex', 'inert', 'contenteditable', 'aria-disabled']
+			});
+		}
+		#isOwnTabIndexWrite(mutations) {
+			if (this.#tabbableOnly) {
+				return false;
+			}
+			return mutations.every(record => {
+				return record.type === 'attributes' && record.attributeName === 'tabindex' && this.#elementSet.has(record.target);
 			});
 		}
 		#scheduleSyncFocusableElements() {
@@ -1917,19 +2028,6 @@ this.BX.UI = this.BX.UI || {};
 			}
 			return direction;
 		}
-		static #isEditableElement(element) {
-			if (!main_core.Type.isElementNode(element)) {
-				return false;
-			}
-			const el = element;
-			if (el.tagName === 'INPUT') {
-				return !NON_EDITABLE_INPUT_TYPES.has(element.type);
-			}
-			if (el.tagName === 'TEXTAREA' || el.tagName === 'SELECT') {
-				return true;
-			}
-			return el.isContentEditable;
-		}
 		static #isNativeInputKey(event, activeElement) {
 			const {
 				key,
@@ -1938,7 +2036,7 @@ this.BX.UI = this.BX.UI || {};
 			} = event;
 			const codePoint = key.codePointAt(0) ?? 0;
 			const isSingleChar = key.length === 1 || key.length === 2 && codePoint >= 0xD800 && codePoint <= 0xDBFF;
-			const isEditable = FocusZone.#isEditableElement(activeElement);
+			const isEditable = InteractivityChecker.isEditable(activeElement);
 			const isSelect = activeElement?.tagName === 'SELECT';
 			if (isEditable && (isSingleChar || key === 'Home' || key === 'End')) {
 				return true;
@@ -1993,8 +2091,7 @@ this.BX.UI = this.BX.UI || {};
 			});
 		}
 	}
-	if (!customElements.get('visually-hidden'))
-	{
+	if (!customElements.get('visually-hidden')) {
 		customElements.define('visually-hidden', VisuallyHidden);
 	}
 

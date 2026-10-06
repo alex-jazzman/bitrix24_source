@@ -1,0 +1,119 @@
+/**
+ * Public CSS surface: the root class together with the consumer classes of the className option,
+ * the element name .ui-system-popover__pointer, the --ui-context-* class and the data-position /
+ * data-alignment / data-flipped / data-anchor-hidden attributes, which appear only once a position has been
+ * applied. The bubble is on none of those lists and needs no name of its own: it is the very node the
+ * consumer passed as content, so the background, the radius, the padding and the shadow are written straight
+ * onto it, and a shadow that falls away from the anchor is four rules of theirs on the applied side
+ * ([data-position="top"] .my-tip { ... }) - no class of the extension takes part. The service attribute
+ * data-ui-system-popover-bubble on that node is not a styling surface either: it carries the layout defaults
+ * below, and it carries them at zero specificity so that the CSS of the consumer always outweighs them.
+ * What is left here is what positioning, the stacking order and the geometry of the arrow need: the look
+ * belongs to the place of use.
+ */
+
+.ui-system-popover {
+	/* Size of the arrow figure: 36px along the popover side, 12px across it. Mirrors POINTER_WIDTH and
+	   POINTER_DEPTH from const.ts. Of that depth the computation leaves POINTER_OVERLAP inside the bubble,
+	   so the figure protrudes by one pixel less. */
+	--ui-popover-pointer-width: 36px;
+	--ui-popover-pointer-depth: 12px;
+
+	/* Positioned root: the computation writes left/top/right/bottom/transform inline. A flex column with a
+	   single item, the bubble: the size limits of stretch/constrainSize are written here, and the bubble
+	   follows them by the flex layout (the arrow is an absolute sibling, which flex leaves alone). */
+	position: absolute;
+	top: 0;
+	left: 0;
+	display: flex;
+	flex-direction: column;
+}
+
+.ui-system-popover.--hidden {
+	display: none;
+}
+
+/* Hidden but still laid out: the computation needs the size in both states. */
+.ui-system-popover.--measuring,
+.ui-system-popover.--anchor-hidden {
+	visibility: hidden;
+}
+
+/* Layout defaults of the bubble - the node of the consumer, marked by the controller with the service
+   attribute. They make it follow the size plan the root carries: min-height lets the flex item shrink under a
+   max-height of the root, max-width holds a bubble of its own width inside a capped root, border-box keeps
+   the padding of the consumer inside that width. No min-width: the automatic minimum size works on the main
+   axis, and in a column that is the block one. :where() zeroes the specificity on purpose - these are
+   defaults, so a rule of the consumer outweighs them whatever order the stylesheets loaded in; a bare
+   attribute weighs as much as a class, and a consumer max-width would then win or lose by that order. */
+:where([data-ui-system-popover-bubble]) {
+	min-height: 0;
+	max-width: 100%;
+	box-sizing: border-box;
+}
+
+/* Layout box of the arrow: a positioned box with a z-index sits above the bubble, which is a plain in-flow
+   node of the consumer, so the opaque fill covers a shadow the bubble may cast on it - underneath, the arrow
+   would read a shade darker than the bubble itself. The computation writes the side it hangs on and the
+   coordinate along that side inline. The box follows the orientation of the applied side, so on the vertical
+   sides the two sizes swap. */
+.ui-system-popover__pointer {
+	position: absolute;
+	z-index: 2;
+	display: none;
+	width: var(--ui-popover-pointer-width);
+	height: var(--ui-popover-pointer-depth);
+}
+
+.ui-system-popover[data-position="left"] .ui-system-popover__pointer,
+.ui-system-popover[data-position="right"] .ui-system-popover__pointer {
+	width: var(--ui-popover-pointer-depth);
+	height: var(--ui-popover-pointer-width);
+}
+
+/* The figure itself turns inside that box: a rotated element keeps its own layout box, so turning the box
+   would leave the size swap and the rotation out of sync. Centred, it lands the same way on all four sides. */
+.ui-system-popover__pointer::before {
+	content: "";
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	width: var(--ui-popover-pointer-width);
+	height: var(--ui-popover-pointer-depth);
+	/* Fill of the figure: an implementation variable and not a public one - the controller writes it on the
+	   node out of the computed background of the bubble, so the arrow follows the consumer CSS by itself. */
+	background-color: var(--ui-popover-pointer-color, transparent);
+	-webkit-mask-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='13' fill='none' viewBox='0 0 36 13'%3E%3Cpath fill='%23fff' d='M1.571 12C7.687 12 13.393 0 17.994 0s10.239 12 16.423 12z'/%3E%3C/svg%3E");
+	        mask-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='13' fill='none' viewBox='0 0 36 13'%3E%3Cpath fill='%23fff' d='M1.571 12C7.687 12 13.393 0 17.994 0s10.239 12 16.423 12z'/%3E%3C/svg%3E");
+	/* The last row of the 36 x 13 source viewBox is empty: the mask keeps its natural proportions and the
+	   top alignment cuts that row off. */
+	-webkit-mask-size: var(--ui-popover-pointer-width) auto;
+	        mask-size: var(--ui-popover-pointer-width) auto;
+	-webkit-mask-position: top;
+	        mask-position: top;
+	-webkit-mask-repeat: no-repeat;
+	        mask-repeat: no-repeat;
+	transform: translate(-50%, -50%) rotate(var(--ui-popover-pointer-rotation, 0deg));
+}
+
+/* The applied side turns the figure: the tip looks into the anchor, and the natural orientation of the
+   figure is the one of the bottom side - that side needs no block, it is the base value. */
+.ui-system-popover[data-position="top"] {
+	--ui-popover-pointer-rotation: 180deg;
+}
+
+.ui-system-popover[data-position="left"] {
+	--ui-popover-pointer-rotation: 90deg;
+}
+
+.ui-system-popover[data-position="right"] {
+	--ui-popover-pointer-rotation: -90deg;
+}
+
+.ui-system-popover.--with-pointer .ui-system-popover__pointer {
+	display: block;
+}
+
+.ui-system-popover.--with-pointer.--pointer-hidden .ui-system-popover__pointer {
+	display: none;
+}

@@ -7,3 +7,4 @@ $MESS['CRM_AUTOMATION_TRIGGER_SHIPMENT_CHANGED_CONDITION'] = 'Поля отгр�
 
 $MESS['CRM_AUTOMATION_TRIGGER_SHIPMENT_CHANGED_NODE_DESCRIPTION'] = 'Запускает процесс после любых изменений в процессе отгрузки';
 
+$MESS['CRM_AUTOMATION_TRIGGER_SHIPMENT_CHANGED_EVENT_DATE_TIME'] = 'Дата и время изменения отгрузки';

@@ -13,6 +13,15 @@ export class Factory
 		});
 	}
 
+	static getToolbarSessionBoostButton(selector: string): Button
+	{
+		return new Button({
+			selector,
+			service: Settings.getSessionBoostServiceCode(),
+			widget: this.getSessionBoostWidget(),
+		});
+	}
+
 	static getSessionBoostWidget(): Widget
 	{
 		return Widget.getInstance(Settings.getSessionBoostServiceCode());

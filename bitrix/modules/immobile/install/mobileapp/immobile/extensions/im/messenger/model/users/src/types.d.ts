@@ -48,6 +48,7 @@ export type UsersModelActions =
 	| 'usersModel/setFromPush'
 	| 'usersModel/update'
 	| 'usersModel/delete'
+	| 'usersModel/deleteByIdList'
 	| 'usersModel/merge'
 	| 'usersModel/addShort'
 	| 'usersModel/setFromLocalDatabase'
@@ -78,12 +79,13 @@ export interface UsersSetData extends PayloadData {
 	userList: Array<UsersModelState>;
 }
 
-export type UsersDeleteActions = 'delete';
+export type UsersDeleteActions = 'delete' | 'deleteByIdList';
 
 export type UserRole = 'guest' | 'member' | 'manager' | 'owner' | 'none';
 
 export interface UsersDeleteData extends PayloadData {
-	id: number;
+	id?: number;
+	idList?: Array<number>;
 }
 
 export type UsersSetFromPushActions = 'setFromPush';

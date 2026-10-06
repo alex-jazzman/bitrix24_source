@@ -11,6 +11,7 @@ jn.define('im/messenger/const/navigation-tab', (require, exports, module) => {
 		task: 'task',
 		collabDefault: 'collabDefault',
 		collabChat: 'collabChat',
+		collabCopilot: 'collabCopilot',
 		calendar: 'calendar',
 	};
 

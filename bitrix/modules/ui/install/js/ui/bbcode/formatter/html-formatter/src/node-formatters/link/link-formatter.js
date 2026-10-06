@@ -89,13 +89,11 @@ export class LinkNodeFormatter extends NodeFormatter
 
 				if (validateUrl(sourceHref))
 				{
-					const nodeAttributes: {[key: string]: string} = node.getAttributes();
 					const { defaultTarget = '_blank', attributes } = formatter.getLinkSettings();
 
 					return Dom.create({
 						tag: 'a',
 						attrs: {
-							...nodeAttributes,
 							...attributes,
 							href: sourceHref,
 							target: defaultTarget,

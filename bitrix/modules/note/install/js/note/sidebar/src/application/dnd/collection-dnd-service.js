@@ -76,7 +76,9 @@ export class CollectionDndService
 			this.#cacheListRects(listNode);
 		}
 
-		const scrollParent = listNode.closest('.sidebar-content');
+		// The list scrolls inside itself, not with the panel, so the cached rects go stale with the
+		// tree area's own scroll position.
+		const scrollParent = listNode.querySelector('.tree-scroll') ?? listNode.closest('.sidebar-content');
 		if (scrollParent && scrollParent.scrollTop !== this.#lastScrollTop)
 		{
 			this.#lastScrollTop = scrollParent.scrollTop;

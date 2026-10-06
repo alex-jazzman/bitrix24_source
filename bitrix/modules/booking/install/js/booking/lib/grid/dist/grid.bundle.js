@@ -5,6 +5,10 @@ this.BX.Booking = this.BX.Booking || {};
 	'use strict';
 
 	class GridBase {
+		#paramsProvider;
+		constructor(paramsProvider) {
+			this.#paramsProvider = paramsProvider;
+		}
 		calculateLeft(...args) {
 			throw new Error('Method calculateLeft must be implemented');
 		}
@@ -22,6 +26,9 @@ this.BX.Booking = this.BX.Booking || {};
 		}
 		getUnitDurations() {
 			return booking_lib_duration.Duration.getUnitDurations();
+		}
+		getParamValue(key) {
+			return this.#paramsProvider.get(key);
 		}
 	}
 
@@ -106,7 +113,7 @@ this.BX.Booking = this.BX.Booking || {};
 		calculateHeight(fromTs, toTs) {
 			const minHeight = this.#hourHeight / 4;
 			const from = Math.max(this.#selectedDateTs, fromTs + this.#offset);
-			const to = Math.min(new Date(this.#selectedDateTs).setHours(24), toTs + this.#offset);
+			const to = Math.min(new Date(this.#selectedDateTs).setHours(HoursInDay), toTs + this.#offset);
 			return Math.max((to - from) / booking_lib_duration.Duration.getUnitDurations().H * this.#hourHeight, minHeight);
 		}
 		calculateWidth(width) {
@@ -115,7 +122,7 @@ this.BX.Booking = this.BX.Booking || {};
 		calculateRealHeight(fromTs, toTs) {
 			const minHeight = this.#hourHeight / 4;
 			const minTs = new Date(this.#selectedDateTs).setHours(this.#offHoursExpanded ? 0 : this.#fromHour);
-			const maxTs = new Date(this.#selectedDateTs).setHours(this.#offHoursExpanded ? 24 : this.#toHour);
+			const maxTs = new Date(this.#selectedDateTs).setHours(this.#offHoursExpanded ? HoursInDay : this.#toHour);
 			const from = Math.max(minTs, fromTs + this.#offset);
 			const to = Math.min(maxTs, toTs + this.#offset);
 			return Math.max((to - from) / booking_lib_duration.Duration.getUnitDurations().H * this.#hourHeight, minHeight);
@@ -124,28 +131,27 @@ this.BX.Booking = this.BX.Booking || {};
 			return gridTokens.get(GridTokenKey.DayHourHeight) * this.#zoom;
 		}
 		get #selectedDateTs() {
-			return booking_core.Core.getStore().getters[`${booking_const.Model.Interface}/selectedDateTs`] + this.#offset;
+			return this.getParamValue('selectedDateTs') + this.#offset;
 		}
 		get #offset() {
-			return booking_core.Core.getStore().getters[`${booking_const.Model.Interface}/offset`];
+			return this.getParamValue('offset');
 		}
 		get #zoom() {
-			return booking_core.Core.getStore().getters[`${booking_const.Model.Interface}/zoom`];
+			return this.getParamValue('zoom');
 		}
 		get #resourcesIds() {
-			return booking_core.Core.getStore().getters[`${booking_const.Model.Interface}/resourcesIds`];
+			return this.getParamValue('resourcesIds');
 		}
 		get #fromHour() {
-			return booking_core.Core.getStore().getters[`${booking_const.Model.Interface}/fromHour`];
+			return this.getParamValue('fromHour');
 		}
 		get #toHour() {
-			return booking_core.Core.getStore().getters[`${booking_const.Model.Interface}/toHour`];
+			return this.getParamValue('toHour');
 		}
 		get #offHoursExpanded() {
-			return booking_core.Core.getStore().getters[`${booking_const.Model.Interface}/offHoursExpanded`];
+			return this.getParamValue('offHoursExpanded');
 		}
 	}
-	const gridDay = new GridDay();
 
 	class GridWeek extends GridBase {
 		calculateLeft(dayIndex, fromTs) {
@@ -188,32 +194,48 @@ this.BX.Booking = this.BX.Booking || {};
 			return new Date(weekStartDate.getFullYear(), weekStartDate.getMonth(), weekStartDate.getDate()).getTime() - this.#offset;
 		}
 		get #weekStartTs() {
-			return booking_core.Core.getStore().getters[`${booking_const.Model.Interface}/selectedFirstDayPeriodTs`] + this.#offset;
+			return this.getParamValue('selectedFirstDayPeriodTs') + this.#offset;
 		}
 		get #offset() {
-			return booking_core.Core.getStore().getters[`${booking_const.Model.Interface}/offset`];
+			return this.getParamValue('offset');
 		}
 		get #zoom() {
-			return booking_core.Core.getStore().getters[`${booking_const.Model.Interface}/zoom`];
+			return this.getParamValue('zoom');
 		}
 		get #resourcesIds() {
-			return booking_core.Core.getStore().getters[`${booking_const.Model.Interface}/resourcesIds`];
+			return this.getParamValue('resourcesIds');
 		}
 	}
-	const gridWeek = new GridWeek();
 
-	class GridFactory {
-		getGrid() {
-			const isWeekMode = booking_core.Core.getStore().getters[`${booking_const.Model.Interface}/isWeekMode`];
-			return isWeekMode ? gridWeek : gridDay;
+	class GridParamsProvider {
+		#params;
+		constructor(params = null) {
+			this.#params = params;
+		}
+		get(key) {
+			return this.#params?.[key] ?? booking_core.Core.getStore().getters[`${booking_const.Model.Interface}/${key}`];
 		}
 	}
-	const gridFactory = new GridFactory();
+
+	const stateParamsProvider = new GridParamsProvider();
+	const gridDay = new GridDay(stateParamsProvider);
+	const gridWeek = new GridWeek(stateParamsProvider);
+	class GridFactory {
+		static getGrid(params = null) {
+			if (!params) {
+				const isWeekMode = booking_core.Core.getStore().getters[`${booking_const.Model.Interface}/isWeekMode`];
+				return isWeekMode ? gridWeek : gridDay;
+			}
+			const paramsProvider = new GridParamsProvider(params);
+			return params.gridMode === booking_const.Grid.Mode.Week ? new GridWeek(paramsProvider) : new GridDay(paramsProvider);
+		}
+	}
 
 	exports.GridBase = GridBase;
+	exports.GridFactory = GridFactory;
 	exports.GridTokenCssVar = GridTokenCssVar;
 	exports.GridTokenKey = GridTokenKey;
-	exports.gridFactory = gridFactory;
+	exports.HoursInDay = HoursInDay;
 	exports.gridTokens = gridTokens;
 
 })(this.BX.Booking.Lib = this.BX.Booking.Lib || {}, BX.Booking, BX.Booking.Const, BX.Booking.Lib, BX);

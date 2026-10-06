@@ -6,3 +6,6 @@ $MESS['NOTE_DOCUMENT_TRASH_HARD_DELETE_ERROR'] = 'Не удалось удали
 $MESS['NOTE_DOCUMENT_TRASH_ORPHAN_TARGET_REQUIRED'] = 'Исходная база знаний была удалена. Выберите другую базу знаний, в которую нужно восстановить документ';
 $MESS['NOTE_TRASH_RESTORE_ALL_ERROR'] = 'Не удалось восстановить документы из корзины, попробуйте ещё раз немного позже';
 $MESS['NOTE_TRASH_EMPTY_ERROR'] = 'Не удалось очистить корзину, попробуйте ещё раз немного позже';
+$MESS['NOTE_BULK_EMPTY_SELECTION'] = 'Документы не выбраны';
+$MESS['NOTE_BULK_LIMIT_EXCEEDED'] = 'Выберите меньше документов и попробуйте ещё раз';
+$MESS['NOTE_BULK_ERROR'] = 'Не удалось выполнить групповое действие, попробуйте ещё раз немного позже';

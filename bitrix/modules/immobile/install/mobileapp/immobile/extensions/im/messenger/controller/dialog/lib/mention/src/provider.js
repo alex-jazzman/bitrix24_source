@@ -145,7 +145,9 @@ jn.define('im/messenger/controller/dialog/lib/mention/provider', (require, expor
 				return false;
 			}
 
-			return userItem.type === UserType.user && Number(item.id) !== MessengerParams.getUserId();
+			return userItem.type === UserType.user
+			&& Number(item.id) !== MessengerParams.getUserId()
+			&& userItem.active !== false;
 		}
 
 		/**

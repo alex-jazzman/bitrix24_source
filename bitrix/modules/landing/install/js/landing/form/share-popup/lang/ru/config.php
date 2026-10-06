@@ -12,5 +12,5 @@ $MESS['LANDING_FORM_SHARE__HELP_LINK_LABEL_MSGVER_1'] = 'Закажите вне
 $MESS['LANDING_FORM_SHARE__HELP_ACTION_LABEL'] = 'Заказать';
 
 $MESS["LANDING_FORM_PHONE_VERIFY_CUSTOM_SLIDER_TITLE"] = "Публикация формы";
-$MESS["LANDING_FORM_PHONE_VERIFY_CUSTOM_TITLE"] = "Получите проверочный код в CMC";
+$MESS["LANDING_FORM_PHONE_VERIFY_CUSTOM_TITLE"] = "Получите проверочный код в СМС";
 $MESS["LANDING_FORM_PHONE_VERIFY_CUSTOM_DESCRIPTION"] = "В целях безопасности для публикации формы вам необходимо указать проверочный код из СМС. Это выполняется однократно для каждой формы.";

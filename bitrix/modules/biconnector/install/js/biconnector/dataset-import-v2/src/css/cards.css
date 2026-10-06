@@ -1,0 +1,307 @@
+.biconnector-dataset-import-v2-card {
+	flex: 0 0 auto;
+	background: var(--ui-color-bg-content-primary, #fff);
+	border-radius: 16px;
+	box-shadow: var(--ui-box-shadow-card-default, 0 1px 0 rgba(0, 0, 0, 0.04));
+}
+
+.biconnector-dataset-import-v2-card__header {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	width: 100%;
+	padding: 22px 24px;
+	box-sizing: border-box;
+	color: var(--ui-color-base-1, #333);
+}
+
+.biconnector-dataset-import-v2-card__icon {
+	flex: 0 0 auto;
+	width: 24px;
+	height: 24px;
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary, #0075ff);
+}
+
+.biconnector-dataset-import-v2-card__title {
+	flex: 1;
+	font-weight: 500;
+	color: #000;
+	letter-spacing: -0.1px;
+}
+
+.biconnector-dataset-import-v2-card__title-hint.ui-hint .ui-hint-icon,
+.biconnector-dataset-import-v2-card__title-hint.ui-hint .ui-hint-icon.ui-icon-set.--o-question,
+.biconnector-dataset-import-v2-card__title-hint.ui-hint .ui-hint-icon .ui-icon-set.--o-question {
+	--ui-icon-set__icon-size: 18px;
+}
+
+.biconnector-dataset-import-v2-card__title-hint {
+	display: inline-flex;
+	align-items: center;
+	line-height: 1;
+}
+
+.biconnector-dataset-import-v2-card__header-extra {
+	flex: 0 0 auto;
+	display: inline-flex;
+	align-items: center;
+}
+
+.biconnector-dataset-import-v2-card__header-link {
+	display: inline-flex;
+	align-items: center;
+	gap: 2px;
+	height: 24px;
+	padding: 0 4px;
+	border: 0;
+	background: transparent;
+	color: var(--ui-color-accent-main-primary, #0075ff);
+	cursor: pointer;
+	font-family: inherit;
+	font-weight: 500;
+	letter-spacing: -0.05px;
+}
+
+.biconnector-dataset-import-v2-card__header-link:hover {
+	color: var(--ui-color-accent-main-primary-hover, #0066df);
+}
+
+.biconnector-dataset-import-v2-card__header-link-icon {
+	--ui-icon-set__icon-size: 16px;
+	--ui-icon-set__icon-color: currentColor;
+}
+
+.biconnector-dataset-import-v2-card--disabled .biconnector-dataset-import-v2-card__icon {
+	--ui-icon-set__icon-color: var(--ui-color-base-3, #828b95);
+}
+
+.biconnector-dataset-import-v2-card--disabled .biconnector-dataset-import-v2-card__title {
+	color: var(--ui-color-base-3, #828b95);
+}
+
+.biconnector-dataset-import-v2-card__body {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	padding: 0 24px 24px;
+}
+
+.biconnector-dataset-import-v2-connection__selector {
+	min-height: 42px;
+}
+
+.biconnector-dataset-import-v2-connection__preview {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	padding: 9px 12px;
+	border: 1px solid var(--ui-color-design-outline-stroke-alt1, #dfe0e3);
+	border-radius: 8px;
+	background: var(--ui-color-base-white-fixed, #fff);
+	cursor: pointer;
+	font-family: inherit;
+	font-size: 14px;
+	line-height: 20px;
+	color: var(--ui-color-accent-main-primary, #0075ff);
+}
+
+.biconnector-dataset-import-v2-connection__avatar {
+	width: 24px;
+	height: 24px;
+	flex-shrink: 0;
+	background-size: contain;
+	background-repeat: no-repeat;
+	background-position: center;
+}
+
+.biconnector-dataset-import-v2-connection__name {
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.biconnector-dataset-import-v2-related__list {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+}
+
+.biconnector-dataset-import-v2-related__chip {
+	display: inline-flex;
+	align-items: center;
+	height: 34px;
+	padding: 0 8px 0 12px;
+	box-sizing: border-box;
+	border: 1px solid var(--ui-color-accent-soft-blue-1, #c4e6ff);
+	border-radius: 8px;
+	background: var(--ui-color-base-white-fixed, #fff);
+	color: var(--ui-color-accent-main-primary, #0075ff);
+	font-size: 15px;
+	line-height: 20px;
+	letter-spacing: -0.05px;
+	text-decoration: none;
+	white-space: nowrap;
+	transition: background-color 0.15s ease-in-out;
+}
+
+.biconnector-dataset-import-v2-related__chip:hover {
+	background: var(--ui-color-bg-content-secondary, #f6fafb);
+}
+
+.biconnector-dataset-import-v2-related__empty {
+	font-size: 14px;
+	line-height: 20px;
+	color: var(--ui-color-base-3, #828b95);
+}
+
+.biconnector-dataset-import-v2-card__row {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 12px;
+}
+
+.biconnector-dataset-import-v2-card__field {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.biconnector-dataset-import-v2-card__field-label {
+	font-size: 13px;
+	line-height: 18px;
+	color: var(--ui-color-base-2, #525c69);
+}
+
+.biconnector-dataset-import-v2-card__field-error {
+	font-size: 12px;
+	line-height: 16px;
+	color: var(--ui-color-accent-main-alert, #ff5752);
+}
+
+.biconnector-dataset-import-v2-card__input,
+.biconnector-dataset-import-v2-card__select,
+.biconnector-dataset-import-v2-card__textarea {
+	width: 100%;
+	padding: 9px 12px;
+	box-sizing: border-box;
+	border: 1px solid var(--ui-color-design-outline-stroke-alt1, #dfe0e3);
+	border-radius: 8px;
+	background: var(--ui-color-design-outline-bg-alt, #fff);
+	color: var(--ui-color-base-1, #333);
+	font-family: inherit;
+	font-size: 15px;
+	line-height: 20px;
+	outline: 0;
+	transition: border-color 0.15s ease-in-out;
+}
+
+.biconnector-dataset-import-v2-card__select {
+	appearance: none;
+	padding-right: 36px;
+	background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none'><path d='M1 1L6 6L11 1' stroke='%23828b95' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+	background-repeat: no-repeat;
+	background-position: right 12px center;
+}
+
+.biconnector-dataset-import-v2-card__input:focus,
+.biconnector-dataset-import-v2-card__select:focus,
+.biconnector-dataset-import-v2-card__textarea:focus {
+	border-color: var(--ui-color-accent-main-primary, #0075ff);
+}
+
+.biconnector-dataset-import-v2-card__input--error,
+.biconnector-dataset-import-v2-card__input--error:focus {
+	border-color: var(--ui-color-accent-main-alert, #ff5752);
+}
+
+.biconnector-dataset-import-v2-card__input:disabled,
+.biconnector-dataset-import-v2-card__select:disabled,
+.biconnector-dataset-import-v2-card__textarea:disabled {
+	border-color: transparent;
+	background: #f7f7f7;
+	color: #525c69;
+	opacity: 1;
+	-webkit-text-fill-color: #525c69;
+	cursor: not-allowed;
+}
+
+.biconnector-dataset-import-v2-card__textarea {
+	resize: vertical;
+	min-height: 80px;
+}
+
+.biconnector-dataset-import-v2-card__toggle {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	cursor: pointer;
+	user-select: none;
+}
+
+.biconnector-dataset-import-v2-card__toggle-input {
+	position: absolute;
+	opacity: 0;
+	pointer-events: none;
+}
+
+.biconnector-dataset-import-v2-card__toggle-track {
+	flex: 0 0 auto;
+	width: 40px;
+	height: 22px;
+	background: var(--ui-color-base-6, #c6cdd3);
+	border-radius: 11px;
+	transition: background-color 0.15s ease-in-out;
+	position: relative;
+}
+
+.biconnector-dataset-import-v2-card__toggle-knob {
+	position: absolute;
+	top: 2px;
+	left: 2px;
+	width: 18px;
+	height: 18px;
+	background: #fff;
+	border-radius: 50%;
+	transition: transform 0.15s ease-in-out;
+}
+
+.biconnector-dataset-import-v2-card__toggle-input:checked + .biconnector-dataset-import-v2-card__toggle-track {
+	background: var(--ui-color-accent-main-primary, #0075ff);
+}
+
+.biconnector-dataset-import-v2-card__toggle-input:checked + .biconnector-dataset-import-v2-card__toggle-track .biconnector-dataset-import-v2-card__toggle-knob {
+	transform: translateX(18px);
+}
+
+.biconnector-dataset-import-v2-card__toggle-label {
+	font-size: 14px;
+	line-height: 20px;
+	color: var(--ui-color-base-1, #333);
+}
+
+.biconnector-dataset-import-v2-card__columns-empty {
+	padding: 24px;
+	text-align: center;
+	font-size: 14px;
+	line-height: 19px;
+	color: var(--ui-color-base-3, #828b95);
+	background: var(--ui-color-bg-content-secondary, #f7f9fb);
+	border-radius: 12px;
+}
+
+.biconnector-dataset-import-v2-card__columns-list {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.biconnector-dataset-import-v2-card__column-row {
+	padding: 12px 14px;
+	border: 1px dashed var(--ui-color-design-outline-stroke-alt1, #dfe0e3);
+	border-radius: 10px;
+	color: var(--ui-color-base-2, #525c69);
+}
+
+.biconnector-dataset-import-v2-card__column-row-stub {
+	font-size: 13px;
+}

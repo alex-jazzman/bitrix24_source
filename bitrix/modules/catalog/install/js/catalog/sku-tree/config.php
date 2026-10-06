@@ -8,12 +8,13 @@ return [
 	'css' => 'dist/sku-tree.bundle.css',
 	'js' => 'dist/sku-tree.bundle.js',
 	'rel' => [
-		'ui.design-tokens',
-		'main.core',
 		'catalog.sku-tree',
+		'main.core',
 		'main.core.events',
-		'ui.forms',
+		'ui.a11y',
 		'ui.buttons',
+		'ui.design-tokens',
+		'ui.forms',
 	],
 	'skip_core' => false,
 ];

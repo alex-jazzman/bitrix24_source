@@ -87,3 +87,8 @@
 .landing-ui-field-color-hex.--base .main-ui-loader {
 	margin-right: 6px;
 }
+
+.landing-ui-field-color-hex-input:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary, #0075ff);
+	outline-offset: -2px;
+}

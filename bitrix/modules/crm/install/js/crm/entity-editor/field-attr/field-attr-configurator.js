@@ -398,6 +398,11 @@ if(typeof BX.Crm.EntityFieldAttributeConfigurator === "undefined")
 						this._groups.pipeline?.setSelected(true);
 						this._groups.junk?.setSelected(true);
 					}
+					else
+					{
+						this._groups.pipeline?.setSelected(false);
+						this._groups.junk?.setSelected(false);
+					}
 				}
 				else if (!this.isChildrenGroupsFullySelected() && (groupId === 'pipeline' || groupId === 'junk'))
 				{

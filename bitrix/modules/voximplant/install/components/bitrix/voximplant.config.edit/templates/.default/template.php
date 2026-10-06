@@ -147,21 +147,21 @@ $arResult["ERROR"] ??= '';
 						<div id="voximplant-hint" class="voximplant-number-settings-row">
 							<div class="voximplant-number-settings-choice voximplant-number-settings-bold-text">
 								<input id="play-welcome-melody" name="MELODY_WELCOME_ENABLE" type="checkbox"
-									   class="voximplant-number-settings-checkbox" data-role="welcome-melody"
-									   <? if ($arResult["ITEM"]["MELODY_WELCOME_ENABLE"] == "Y") { ?>checked<? } ?> value="Y"
+										class="voximplant-number-settings-checkbox" data-role="welcome-melody"
+										<? if ($arResult["ITEM"]["MELODY_WELCOME_ENABLE"] == "Y") { ?>checked<? } ?> value="Y"
 								>
 								<label for="play-welcome-melody" class="voximplant-number-settings-label">
 									<?= Loc::getMessage("VI_CONFIG_EDIT_PLAY_WELCOME_MELODY") ?>
 								</label>
 							</div>
 							<div class="voximplant-number-settings-inner tel-set-height-animated"
-								 data-role="welcome-melody-settings" data-height="160px" style="max-height: <?=$arResult["ITEM"]["MELODY_WELCOME_ENABLE"] == "Y" ? "160px" : "0"?>">
+								data-role="welcome-melody-settings" data-height="160px" style="max-height: <?=$arResult["ITEM"]["MELODY_WELCOME_ENABLE"] == "Y" ? "160px" : "0"?>">
 								<div class="voximplant-number-settings-choice">
 									<input id="direct-code" name="DIRECT_CODE" type="checkbox"
-										   class="voximplant-number-settings-checkbox"
-										   <? if ($arResult["ITEM"]["DIRECT_CODE"] == "Y") { ?>checked<? } ?> value="Y">
+											class="voximplant-number-settings-checkbox"
+											<? if ($arResult["ITEM"]["DIRECT_CODE"] == "Y") { ?>checked<? } ?> value="Y">
 									<label for="direct-code"
-										   class="voximplant-number-settings-label"><?= Loc::getMessage("VI_CONFIG_EDIT_EXT_NUM_PROCESSING") ?></label>
+											class="voximplant-number-settings-label"><?= Loc::getMessage("VI_CONFIG_EDIT_EXT_NUM_PROCESSING") ?></label>
 								</div>
 								<div class="voximplant-number-settings-inner">
 									<p class="voximplant-number-settings-text"><?= Loc::getMessage("VI_CONFIG_EDIT_EXT_NUM_PROCESSING_TIP") ?></p>
@@ -177,25 +177,44 @@ $arResult["ERROR"] ??= '';
 							</div>
 						</div>
 					<? endif ?>
+					<? if($arResult["ITEM"]["PORTAL_MODE"] !== CVoxImplantConfig::MODE_LINK && CVoxImplantConfig::isDtmfTypeEnabled()): ?>
+						<div class="voximplant-number-settings-row">
+							<div class="voximplant-number-settings-choice voximplant-number-settings-bold-text">
+								<input id="vi-change-dtmf" name="CHANGE_DTMF_TYPE" type="checkbox" data-role="change-dtmf-type" class="voximplant-number-settings-checkbox" <? if ((($arResult["ITEM"]["DTMF_TYPE"] ?? '') !== '' && ($arResult["ITEM"]["DTMF_TYPE"] ?? '') !== CVoxImplantConfig::DTMF_TYPE_ALL)) { ?>checked<? } ?> value="Y">
+								<label for="vi-change-dtmf" class="voximplant-number-settings-label"><?= Loc::getMessage("VI_CONFIG_EDIT_DTMF_TYPE_CHANGE") ?></label>
+							</div>
+							<div class="voximplant-number-settings-inner tel-set-height-animated" data-role="change-dtmf-type-settings" data-height="140px" style="max-height: <?= (($arResult["ITEM"]["DTMF_TYPE"] ?? '') !== '' && ($arResult["ITEM"]["DTMF_TYPE"] ?? '') !== CVoxImplantConfig::DTMF_TYPE_ALL) ? "140px" : "0" ?>">
+								<p class="voximplant-number-settings-text"><?= Loc::getMessage("VI_CONFIG_EDIT_DTMF_TYPE_TIP") ?></p>
+								<div class="voximplant-control-row">
+									<div class="voximplant-control-subtitle"><?= Loc::getMessage("VI_CONFIG_EDIT_DTMF_TYPE") ?></div>
+									<select name="DTMF_TYPE" class="voximplant-control-select">
+										<option value="<?= CVoxImplantConfig::DTMF_TYPE_INBAND ?>" <?= (($arResult["ITEM"]["DTMF_TYPE"] ?? '') === CVoxImplantConfig::DTMF_TYPE_INBAND ? " selected" : "") ?>><?= Loc::getMessage("VI_CONFIG_EDIT_DTMF_TYPE_INBAND") ?></option>
+										<option value="<?= CVoxImplantConfig::DTMF_TYPE_RFC2833 ?>" <?= (($arResult["ITEM"]["DTMF_TYPE"] ?? '') === CVoxImplantConfig::DTMF_TYPE_RFC2833 ? " selected" : "") ?>><?= Loc::getMessage("VI_CONFIG_EDIT_DTMF_TYPE_RFC2833") ?></option>
+										<option value="<?= CVoxImplantConfig::DTMF_TYPE_SIP_INFO ?>" <?= (($arResult["ITEM"]["DTMF_TYPE"] ?? '') === CVoxImplantConfig::DTMF_TYPE_SIP_INFO ? " selected" : "") ?>><?= Loc::getMessage("VI_CONFIG_EDIT_DTMF_TYPE_SIPINFO") ?></option>
+									</select>
+								</div>
+							</div>
+						</div>
+					<? endif ?>
 					<? if($arResult["ITEM"]["PORTAL_MODE"] !== CVoxImplantConfig::MODE_LINK): ?>
 						<div class="voximplant-number-settings-row">
 							<div class="voximplant-number-settings-choice voximplant-number-settings-bold-text">
 								<input id="vi-set-ivr" name="IVR" type="checkbox" data-role="enable-ivr"
-									   data-locked="<?= (\Bitrix\Voximplant\Ivr\Ivr::isEnabled() ? "N" : "Y") ?>"
-									   data-license-popup="limit_contact_center_telephony_ivr"
-									   class="voximplant-number-settings-checkbox"
-									   <? if ($arResult["ITEM"]["IVR"] == "Y") { ?>checked<? } ?> value="Y">
+										data-locked="<?= (\Bitrix\Voximplant\Ivr\Ivr::isEnabled() ? "N" : "Y") ?>"
+										data-license-popup="limit_contact_center_telephony_ivr"
+										class="voximplant-number-settings-checkbox"
+										<? if ($arResult["ITEM"]["IVR"] == "Y") { ?>checked<? } ?> value="Y">
 								<label for="vi-set-ivr" class="voximplant-number-settings-label"><?= Loc::getMessage("TELEPHONY_USE_IVR_2") ?></label>
 								<? if (!\Bitrix\Voximplant\Ivr\Ivr::isEnabled()): ?>
 									<div class="tel-lock-holder-select"
-										 title="<?= GetMessage("VI_CONFIG_LOCK_ALT") ?>">
+										title="<?= GetMessage("VI_CONFIG_LOCK_ALT") ?>">
 										<div onclick="BX.UI.InfoHelper.show('limit_contact_center_telephony_ivr')"
-											 class="tel-lock <?= (CVoxImplantAccount::IsDemo() ? 'tel-lock-demo' : '') ?>"></div>
+											class="tel-lock <?= (CVoxImplantAccount::IsDemo() ? 'tel-lock-demo' : '') ?>"></div>
 									</div>
 								<? endif ?>
 							</div>
 							<div class="voximplant-number-settings-inner tel-set-height-animated" data-role="ivr-settings"
-								 data-height="80px" style="max-height: <?= $arResult["ITEM"]["IVR"] == "Y" ? "80px" : "0" ?>">
+								data-height="80px" style="max-height: <?= $arResult["ITEM"]["IVR"] == "Y" ? "80px" : "0" ?>">
 								<div class="voximplant-control-row">
 									<div class="voximplant-control-subtitle"><?= Loc::getMessage("VI_CONFIG_EDIT_IVR_SELECTION") ?></div>
 									<div class="voximplant-control-select-flexible">
@@ -217,13 +236,13 @@ $arResult["ERROR"] ??= '';
 						<div class="voximplant-number-settings-row">
 							<div class="voximplant-number-settings-choice voximplant-number-settings-bold-text">
 								<input id="vi_crm_forward" type="checkbox" data-role="enable-crm-forward"
-									   class="voximplant-number-settings-checkbox" name="CRM_FORWARD"
-									   <? if ($arResult["ITEM"]["CRM_FORWARD"] == "Y") { ?>checked<? } ?> value="Y">
+										class="voximplant-number-settings-checkbox" name="CRM_FORWARD"
+										<? if ($arResult["ITEM"]["CRM_FORWARD"] == "Y") { ?>checked<? } ?> value="Y">
 								<label for="vi_crm_forward"
-									   class="voximplant-number-settings-label"><?= Loc::getMessage("VI_CONFIG_EDIT_CRM_FORWARD_2") ?></label>
+										class="voximplant-number-settings-label"><?= Loc::getMessage("VI_CONFIG_EDIT_CRM_FORWARD_2") ?></label>
 							</div>
 							<div class="voximplant-number-settings-inner tel-set-height-animated"
-								 data-role="crm-forward-settings" data-height="80px" style="max-height: <?= $arResult["ITEM"]["CRM_FORWARD"] == "Y" ? "80px" : "0" ?>">
+								data-role="crm-forward-settings" data-height="80px" style="max-height: <?= $arResult["ITEM"]["CRM_FORWARD"] == "Y" ? "80px" : "0" ?>">
 								<div class="voximplant-control-row">
 									<div class="voximplant-control-subtitle"><?= Loc::getMessage("VI_CONFIG_EDIT_CRM_CHECKING_OMITTED_CALL_NEW") ?></div>
 									<select class="voximplant-control-select" name="CRM_RULE">
@@ -255,17 +274,17 @@ $arResult["ERROR"] ??= '';
 										<? endforeach; ?>
 									</select>
 									<span id="vi-group-show-config" class="voximplant-link"
-										  data-role="show-group-config">
+											data-role="show-group-config">
 								<?= Loc::getMessage("VI_CONFIG_GROUP_SETTINGS") ?>
 							</span>
 								</div>
 							</div>
 							<div class="voximplant-number-settings-choice">
 								<input id="vi_timeman" type="checkbox" class="voximplant-number-settings-checkbox"
-									   name="TIMEMAN" <? if ($arResult["ITEM"]["TIMEMAN"] == "Y") { ?>checked<? } ?>
-									   value="Y">
+										name="TIMEMAN" <? if ($arResult["ITEM"]["TIMEMAN"] == "Y") { ?>checked<? } ?>
+										value="Y">
 								<label for="vi_timeman"
-									   class="voximplant-number-settings-label"><?= Loc::getMessage("VI_CONFIG_EDIT_TIMEMAN_SUPPORT") ?></label>
+										class="voximplant-number-settings-label"><?= Loc::getMessage("VI_CONFIG_EDIT_TIMEMAN_SUPPORT") ?></label>
 							</div>
 						</div>
 					</div>
@@ -279,9 +298,9 @@ $arResult["ERROR"] ??= '';
 				<div class="voximplant-number-settings-row">
 					<div class="voximplant-number-settings-choice voximplant-number-settings-bold-text">
 						<input id="DETECT_LINE_NUMBER" name="SIP[DETECT_LINE_NUMBER]" type="checkbox" data-role="enable-sip-detect-line-number"
-							   value="Y"
-							   <? if ($arResult["SIP_CONFIG"]["DETECT_LINE_NUMBER"] === "Y"): ?>checked="checked"<? endif ?>
-							   class="voximplant-number-settings-checkbox">
+								value="Y"
+								<? if ($arResult["SIP_CONFIG"]["DETECT_LINE_NUMBER"] === "Y"): ?>checked="checked"<? endif ?>
+								class="voximplant-number-settings-checkbox">
 						<label for="DETECT_LINE_NUMBER" class="voximplant-number-settings-label"><?= Loc::getMessage("VI_CONFIG_SIP_DETECT_INCOMING_NUMBER") ?></label>
 					</div>
 
@@ -335,7 +354,7 @@ $arResult["ERROR"] ??= '';
 											<? endforeach; ?>
 										</select>
 										<span class="voximplant-link"
-											  data-role="show-crm-exception-list"><?= Loc::getMessage("VI_CONFIG_CONFIGURE_CRM_EXCEPTIONS_LIST") ?></span>
+												data-role="show-crm-exception-list"><?= Loc::getMessage("VI_CONFIG_CONFIGURE_CRM_EXCEPTIONS_LIST") ?></span>
 									</div>
 								</div>
 								<div class="voximplant-control-row">
@@ -357,9 +376,9 @@ $arResult["ERROR"] ??= '';
 									</select>
 									<? if (!\Bitrix\Voximplant\Limits::canSelectCallSource() || CVoxImplantAccount::IsDemo()): ?>
 										<div class="tel-lock-holder-select"
-											 title="<?= GetMessage("VI_CONFIG_LOCK_ALT") ?>">
+											title="<?= GetMessage("VI_CONFIG_LOCK_ALT") ?>">
 											<div onclick="BX.UI.InfoHelper.show('limit_contact_center_telephony_source')"
-												 class="tel-lock <?= (CVoxImplantAccount::IsDemo() ? 'tel-lock-demo' : '') ?>"></div>
+												class="tel-lock <?= (CVoxImplantAccount::IsDemo() ? 'tel-lock-demo' : '') ?>"></div>
 										</div>
 									<? endif; ?>
 									<? if (!\Bitrix\Voximplant\Limits::canSelectCallSource()): ?>
@@ -375,9 +394,9 @@ $arResult["ERROR"] ??= '';
 								</div>
 								<div class="voximplant-number-settings-choice">
 									<input id="crm-transfer-change" name="CRM_TRANSFER_CHANGE" type="checkbox"
-										   class="voximplant-number-settings-checkbox"
-										   <? if ($arResult["ITEM"]["CRM_TRANSFER_CHANGE"] == "Y") { ?>checked<? } ?>
-										   value="Y" data-role="crm-transfer-change">
+											class="voximplant-number-settings-checkbox"
+											<? if ($arResult["ITEM"]["CRM_TRANSFER_CHANGE"] == "Y") { ?>checked<? } ?>
+											value="Y" data-role="crm-transfer-change">
 									<label for="crm-transfer-change" class="voximplant-number-settings-label">
 										<?= Loc::getMessage("VI_CONFIG_EDIT_CRM_TRANSFER_CHANGE") ?>
 									</label>
@@ -395,10 +414,10 @@ $arResult["ERROR"] ??= '';
 				<div id="voximplant-hint2" class="voximplant-number-settings-row">
 					<div class="voximplant-number-settings-choice voximplant-number-settings-bold-text">
 						<input id="vi-recording" type="checkbox" name="RECORDING"
-							   data-role="enable-recording" <?= ($arResult["ITEM"]["RECORDING"] == "Y" ? 'checked' : '') ?>
-							   value="Y" class="voximplant-number-settings-checkbox">
+								data-role="enable-recording" <?= ($arResult["ITEM"]["RECORDING"] == "Y" ? 'checked' : '') ?>
+								value="Y" class="voximplant-number-settings-checkbox">
 						<label for="vi-recording"
-							   class="voximplant-number-settings-label"><?= Loc::getMessage("VI_CONFIG_EDIT_RECORD") ?></label>
+								class="voximplant-number-settings-label"><?= Loc::getMessage("VI_CONFIG_EDIT_RECORD") ?></label>
 
 						<?if ($arResult['RECORD_LIMIT']['ENABLE']):?>
 							<div class="tel-lock-holder-title" title="<?=GetMessage("VI_CONFIG_LOCK_RECORD_ALT", Array("#LIMIT#" => $arResult['RECORD_LIMIT']['LIMIT'], '#REMAINING#' => $arResult['RECORD_LIMIT']['REMAINING']))?>"><div onclick="BX.UI.InfoHelper.show('limit_record_100_call_month')"  class="tel-lock tel-lock-half <?=(CVoxImplantAccount::IsDemo()? 'tel-lock-demo': '')?>"></div></div>
@@ -407,24 +426,24 @@ $arResult["ERROR"] ??= '';
 						<?endif;?>
 					</div>
 					<div class="voximplant-number-settings-inner tel-set-height-animated" data-role="recording-settings"
-						 data-height="470px" style="max-height: <?= $arResult["ITEM"]["RECORDING"] == "Y" ? "470px" : "0"?>">
+						data-height="470px" style="max-height: <?= $arResult["ITEM"]["RECORDING"] == "Y" ? "470px" : "0"?>">
 						<div class="voximplant-number-settings-text"><?= Loc::getMessage("VI_CONFIG_EDIT_RECORD_TIP_3") ?></div>
 						<div class="ui-alert ui-alert-warning">
 							<span class="ui-alert-message"><?= Loc::getMessage("VI_CONFIG_EDIT_RECORD_TIP2") ?></span>
 						</div>
 						<div class="voximplant-number-settings-choice">
 							<input id="vi_recording_notice" type="checkbox" name="RECORDING_NOTICE"
-								   <? if ($arResult["ITEM"]["RECORDING_NOTICE"] == "Y") { ?>checked<? } ?> value="Y"
-								   class="voximplant-number-settings-checkbox">
+									<? if ($arResult["ITEM"]["RECORDING_NOTICE"] == "Y") { ?>checked<? } ?> value="Y"
+									class="voximplant-number-settings-checkbox">
 							<label for="vi_recording_notice"
-								   class="voximplant-number-settings-label"><?= Loc::getMessage("VI_CONFIG_EDIT_RECORD_NOTICE") ?></label>
+									class="voximplant-number-settings-label"><?= Loc::getMessage("VI_CONFIG_EDIT_RECORD_NOTICE") ?></label>
 						</div>
 						<div class="voximplant-number-settings-choice" id="vi-recording-stereo-container">
 							<input id="vi_recording_stereo" type="checkbox" name="RECORDING_STEREO"
-								   <? if ($arResult["ITEM"]["RECORDING_STEREO"] == "Y") { ?>checked<? } ?> value="Y"
-								   class="voximplant-number-settings-checkbox">
+									<? if ($arResult["ITEM"]["RECORDING_STEREO"] == "Y") { ?>checked<? } ?> value="Y"
+									class="voximplant-number-settings-checkbox">
 							<label for="vi_recording_stereo"
-								   class="voximplant-number-settings-label"><?= Loc::getMessage("VI_CONFIG_EDIT_RECORD_STEREO") ?>
+									class="voximplant-number-settings-label"><?= Loc::getMessage("VI_CONFIG_EDIT_RECORD_STEREO") ?>
 								<span data-hint="<?= Loc::getMessage("VI_CONFIG_EDIT_RECORD_STEREO_HINT") ?>"></span>
 							</label>
 						</div>
@@ -432,16 +451,16 @@ $arResult["ERROR"] ??= '';
 						<? if ($arResult["SHOW_TRANSCRIPTION"]): ?>
 							<div class="voximplant-number-settings-choice">
 								<input id="vi_transcribe" type="checkbox" name="TRANSCRIBE" value="Y"
-									   class="voximplant-number-settings-checkbox"
-									   <? if ($arResult["ITEM"]["TRANSCRIBE"] == "Y") { ?>checked<? } ?>
-									   <? if (!\Bitrix\Voximplant\Transcript::isEnabled()) { ?>disabled<? } ?>>
+										class="voximplant-number-settings-checkbox"
+										<? if ($arResult["ITEM"]["TRANSCRIBE"] == "Y") { ?>checked<? } ?>
+										<? if (!\Bitrix\Voximplant\Transcript::isEnabled()) { ?>disabled<? } ?>>
 								<label for="vi_transcribe"
-									   class="voximplant-number-settings-label"><?= Loc::getMessage("VI_CONFIG_EDIT_TRANSCRIBE") ?></label>
+										class="voximplant-number-settings-label"><?= Loc::getMessage("VI_CONFIG_EDIT_TRANSCRIBE") ?></label>
 								<? if (!\Bitrix\Voximplant\Transcript::isEnabled() || \Bitrix\Voximplant\Transcript::isDemo()): ?>
 									<div class="tel-lock-holder-select"
-										 title="<?= Loc::getMessage("VI_CONFIG_LOCK_ALT") ?>">
+										title="<?= Loc::getMessage("VI_CONFIG_LOCK_ALT") ?>">
 										<div onclick="BX.UI.InfoHelper.show('limit_contact_center_telephony_call_transcription')"
-											 class="tel-lock <?= (\Bitrix\Voximplant\Transcript::isDemo() ? 'tel-lock-demo' : '') ?>"></div>
+											class="tel-lock <?= (\Bitrix\Voximplant\Transcript::isDemo() ? 'tel-lock-demo' : '') ?>"></div>
 									</div>
 								<? endif; ?>
 							</div>
@@ -472,15 +491,15 @@ $arResult["ERROR"] ??= '';
 				<div id="voximplant-hint2" class="voximplant-number-settings-row">
 					<div class="voximplant-number-settings-choice voximplant-number-settings-bold-text">
 						<input id="vi_vote" name="VOTE" type="checkbox"
-							   <? if ($arResult["ITEM"]["VOTE"] == "Y") { ?>checked<? } ?> value="Y"
-							   class="voximplant-number-settings-checkbox">
+								<? if ($arResult["ITEM"]["VOTE"] == "Y") { ?>checked<? } ?> value="Y"
+								class="voximplant-number-settings-checkbox">
 						<label for="vi_vote" class="voximplant-number-settings-label">
 							<?= Loc::getMessage("VI_CONFIG_VOTE") ?>
 						</label>
 						<? if (!\Bitrix\Voximplant\Limits::canVote() || CVoxImplantAccount::IsDemo()): ?>
 							<div class="tel-lock-holder-title" title="<?= GetMessage("VI_CONFIG_LOCK_ALT") ?>">
 								<div onclick="BX.UI.InfoHelper.show('limit_contact_center_telephony_customer_rate')"
-									 class="tel-lock <?= (CVoxImplantAccount::IsDemo() ? 'tel-lock-demo' : '') ?>"></div>
+									class="tel-lock <?= (CVoxImplantAccount::IsDemo() ? 'tel-lock-demo' : '') ?>"></div>
 							</div>
 						<? endif; ?>
 					</div>
@@ -506,14 +525,14 @@ $arResult["ERROR"] ??= '';
 				<div class="voximplant-number-settings-row">
 					<div class="voximplant-number-settings-choice voximplant-number-settings-bold-text">
 						<input id="WORKTIME_ENABLE" name="WORKTIME_ENABLE" type="checkbox" data-role="enable-worktime"
-							   value="Y"
-							   <? if ($arResult["ITEM"]["WORKTIME_ENABLE"] === "Y"): ?>checked="checked"<? endif ?>
-							   class="voximplant-number-settings-checkbox">
+								value="Y"
+								<? if ($arResult["ITEM"]["WORKTIME_ENABLE"] === "Y"): ?>checked="checked"<? endif ?>
+								class="voximplant-number-settings-checkbox">
 						<label for="WORKTIME_ENABLE"
-							   class="voximplant-number-settings-label"><?= Loc::getMessage("VI_CONFIG_EDIT_WORKTIME_ENABLE") ?></label>
+								class="voximplant-number-settings-label"><?= Loc::getMessage("VI_CONFIG_EDIT_WORKTIME_ENABLE") ?></label>
 					</div>
 					<div class="voximplant-number-settings-inner tel-set-height-animated" data-role="worktime-settings"
-						 data-height="800px" style="max-height: <?= $arResult["ITEM"]["WORKTIME_ENABLE"] === "Y" ? "800px" : "0" ?>">
+						data-height="800px" style="max-height: <?= $arResult["ITEM"]["WORKTIME_ENABLE"] === "Y" ? "800px" : "0" ?>">
 						<div class="voximplant-control-row">
 							<div class="voximplant-control-subtitle"><?= Loc::getMessage("VI_CONFIG_EDIT_WORKTIME_TIMEZONE") ?></div>
 							<select name="WORKTIME_TIMEZONE" class="voximplant-control-select">
@@ -555,8 +574,8 @@ $arResult["ERROR"] ??= '';
 						<div class="voximplant-control-row">
 							<div class="voximplant-control-subtitle"><?= Loc::getMessage("VI_CONFIG_EDIT_WORKTIME_HOLIDAYS") ?></div>
 							<input name="WORKTIME_HOLIDAYS" type="text"
-								   value="<?= htmlspecialcharsbx($arResult["ITEM"]["WORKTIME_HOLIDAYS"]) ?>"
-								   class="voximplant-control-input">
+									value="<?= htmlspecialcharsbx($arResult["ITEM"]["WORKTIME_HOLIDAYS"]) ?>"
+									class="voximplant-control-input">
 							<div class="voximplant-control-description">
 								<div class="voximplant-control-subtitle"><?= Loc::getMessage("VI_CONFIG_EDIT_WORKTIME_HOLIDAYS_EXAMPLE_EXAMPLE") ?></div>
 								<?= Loc::getMessage("VI_CONFIG_EDIT_WORKTIME_HOLIDAYS_EXAMPLE_DAYS") ?>
@@ -575,11 +594,11 @@ $arResult["ERROR"] ??= '';
 						</div>
 
 						<div id="vi_dayoff_number" class="voximplant-control-row"
-							 <? if (CVoxImplantIncoming::RULE_PSTN_SPECIFIC != $arResult["ITEM"]["WORKTIME_DAYOFF_RULE"]): ?>style="display: none"<? endif ?>>
+							<? if (CVoxImplantIncoming::RULE_PSTN_SPECIFIC != $arResult["ITEM"]["WORKTIME_DAYOFF_RULE"]): ?>style="display: none"<? endif ?>>
 							<div class="voximplant-control-subtitle"><?= Loc::getMessage("VI_CONFIG_EDIT_WORKTIME_DAYOFF_NUMBER") ?></div>
 							<input name="WORKTIME_DAYOFF_NUMBER" type="text"
-								   value="<?= htmlspecialcharsbx($arResult["ITEM"]["WORKTIME_DAYOFF_NUMBER"]) ?>"
-								   class="voximplant-control-input">
+									value="<?= htmlspecialcharsbx($arResult["ITEM"]["WORKTIME_DAYOFF_NUMBER"]) ?>"
+									class="voximplant-control-input">
 						</div>
 
 						<? if ($arResult['SHOW_MELODIES']): ?>
@@ -694,33 +713,33 @@ $arResult["ERROR"] ??= '';
 				<div class="voximplant-number-settings-row">
 					<div class="voximplant-number-settings-choice voximplant-number-settings-bold-text">
 						<input id="vi_can_be_selected"
-							   class="voximplant-number-settings-checkbox" value="Y"
-							   type="checkbox"
-							   name="CAN_BE_SELECTED"
-							   <? if ($arResult["ITEM"]["CAN_BE_SELECTED"] === "Y"): ?>checked="checked"<? endif ?>
+								class="voximplant-number-settings-checkbox" value="Y"
+								type="checkbox"
+								name="CAN_BE_SELECTED"
+								<? if ($arResult["ITEM"]["CAN_BE_SELECTED"] === "Y"): ?>checked="checked"<? endif ?>
 								data-role="number-selection"
-							   data-locked="<?= (\Bitrix\Voximplant\Limits::canSelectLine() ? "N" : "Y") ?>"
-							   data-license-popup="limit_contact_center_telephony_line_selection"
+								data-locked="<?= (\Bitrix\Voximplant\Limits::canSelectLine() ? "N" : "Y") ?>"
+								data-license-popup="limit_contact_center_telephony_line_selection"
 						/>
 						<label for="vi_can_be_selected"
-							   class="voximplant-number-settings-label"><?= Loc::getMessage("VI_CONFIG_ALLOW_TO_SELECT_NUMBER_FOR_OUTGOING_CALL") ?></label>
+								class="voximplant-number-settings-label"><?= Loc::getMessage("VI_CONFIG_ALLOW_TO_SELECT_NUMBER_FOR_OUTGOING_CALL") ?></label>
 						<? if (!\Bitrix\Voximplant\Limits::canSelectLine() || CVoxImplantAccount::IsDemo()): ?>
 							<div class="tel-lock-holder-select" title="<?= GetMessage("VI_CONFIG_LOCK_ALT") ?>">
 								<div onclick="BX.UI.InfoHelper.show('limit_contact_center_telephony_line_selection')"
-									 class="tel-lock <?= (CVoxImplantAccount::IsDemo() ? 'tel-lock-demo' : '') ?>"></div>
+									class="tel-lock <?= (CVoxImplantAccount::IsDemo() ? 'tel-lock-demo' : '') ?>"></div>
 							</div>
 						<? endif; ?>
 					</div>
 					<div class="voximplant-number-settings-inner tel-set-height-animated"
-						 data-role="number-selection-settings" data-height="250px" style="max-height: <?=$arResult["ITEM"]["CAN_BE_SELECTED"] == "Y" ? "250px" : "0"?>">
+						data-role="number-selection-settings" data-height="250px" style="max-height: <?=$arResult["ITEM"]["CAN_BE_SELECTED"] == "Y" ? "250px" : "0"?>">
 						<? if ($arResult["ITEM"]["PORTAL_MODE"] != CVoxImplantConfig::MODE_GROUP): ?>
 							<div id="voximplant-hint3" class="voximplant-control-row">
 								<div class="voximplant-control-subtitle"><?= Loc::getMessage("VI_CONFIG_LINE_PREFIX") ?></div>
 								<div class="voximplant-control-select-flexible">
 									<input id="vi-line-prefix" name="LINE_PREFIX" type="text"
-										   value="<?= htmlspecialcharsbx($arResult["ITEM"]["LINE_PREFIX"]) ?>"
-										   class="voximplant-control-input" size="10" maxlength="10"
-										   data-role="input-line-prefix">
+											value="<?= htmlspecialcharsbx($arResult["ITEM"]["LINE_PREFIX"]) ?>"
+											class="voximplant-control-input" size="10" maxlength="10"
+											data-role="input-line-prefix">
 									<span data-hint="<?= Loc::getMessage("VI_CONFIG_LINE_PREFIX_HINT") ?>"></span>
 								</div>
 							</div>
@@ -746,13 +765,13 @@ $arResult["ERROR"] ??= '';
 				<div class="voximplant-number-settings-row">
 					<div class="voximplant-number-settings-choice voximplant-number-settings-bold-text">
 						<input id="vi_callback_redial" name="CALLBACK_REDIAL" type="checkbox" value="Y"
-							   <? if ($arResult["ITEM"]["CALLBACK_REDIAL"] === "Y"): ?>checked="checked"<? endif ?>
-							   class="voximplant-number-settings-checkbox" data-role="callback-redial">
+								<? if ($arResult["ITEM"]["CALLBACK_REDIAL"] === "Y"): ?>checked="checked"<? endif ?>
+								class="voximplant-number-settings-checkbox" data-role="callback-redial">
 						<label for="vi_callback_redial"
-							   class="voximplant-number-settings-label"><?= Loc::getMessage("VI_CONFIG_CALLBACK_REDIAL") ?></label>
+								class="voximplant-number-settings-label"><?= Loc::getMessage("VI_CONFIG_CALLBACK_REDIAL") ?></label>
 					</div>
 					<div class="voximplant-number-settings-inner tel-set-height-animated" data-role="callback-redial-settings"
-						 data-height="100px" style="max-height: <?= $arResult["ITEM"]["CALLBACK_REDIAL"] === "Y" ? "100px" : "0"?>">
+						data-height="100px" style="max-height: <?= $arResult["ITEM"]["CALLBACK_REDIAL"] === "Y" ? "100px" : "0"?>">
 						<div class="voximplant-control-multiple-inline voximplant-control-missed-call">
 							<div class="voximplant-control-row">
 								<div class="voximplant-control-subtitle"><?= Loc::getMessage("VI_CONFIG_CALLBACK_REDIAL_ATTEMPTS") ?></div>
@@ -776,20 +795,20 @@ $arResult["ERROR"] ??= '';
 				<div class="voximplant-number-settings-row">
 					<div class="voximplant-number-settings-choice voximplant-number-settings-bold-text">
 						<input id="vi_use_specific_backup_number" name="USE_SPECIFIC_BACKUP_NUMBER" type="checkbox"
-							   class="voximplant-number-settings-checkbox"
-							   value="Y" <?= ($arResult["ITEM"]["BACKUP_NUMBER"] == "" ? "" : "checked") ?>
+								class="voximplant-number-settings-checkbox"
+								value="Y" <?= ($arResult["ITEM"]["BACKUP_NUMBER"] == "" ? "" : "checked") ?>
 								data-role="backup-number">
 						<label for="vi_use_specific_backup_number"
-							   class="voximplant-number-settings-label"><?= Loc::getMessage("VI_CONFIG_SET_USE_SPECIFIC_BACKUP_NUMBER_USE") ?></label>
+								class="voximplant-number-settings-label"><?= Loc::getMessage("VI_CONFIG_SET_USE_SPECIFIC_BACKUP_NUMBER_USE") ?></label>
 					</div>
 					<div class="voximplant-number-settings-inner tel-set-height-animated" data-role="backup-number-settings" data-height="230px"
-						 style="max-height: <?=$arResult["ITEM"]["BACKUP_NUMBER"] == "" ? "0" : "230px"?>">
+						style="max-height: <?=$arResult["ITEM"]["BACKUP_NUMBER"] == "" ? "0" : "230px"?>">
 						<div class="voximplant-number-settings-text"><?= Loc::getMessage("VI_CONFIG_SET_BACKUP_NUMBER") ?></div>
 						<div class="voximplant-control-row">
 							<div class="voximplant-control-subtitle"><?= Loc::getMessage("VI_CONFIG_BACKUP_NUMBER") ?></div>
 							<input name="BACKUP_NUMBER" type="text"
-								   value="<?= htmlspecialcharsbx($arResult["ITEM"]["BACKUP_NUMBER"]) ?>" size="15"
-								   maxlength="20" class="voximplant-control-input">
+									value="<?= htmlspecialcharsbx($arResult["ITEM"]["BACKUP_NUMBER"]) ?>" size="15"
+									maxlength="20" class="voximplant-control-input">
 						</div>
 						<div class="voximplant-control-row">
 							<div class="voximplant-control-subtitle"><?= Loc::getMessage("VI_CONFIG_BACKUP_LINE") ?></div>
@@ -805,10 +824,10 @@ $arResult["ERROR"] ??= '';
 					<div class="voximplant-number-settings-row">
 						<div class="voximplant-number-settings-choice voximplant-number-settings-bold-text">
 							<input id="FORWARD_LINE_ENABLED" name="FORWARD_LINE_ENABLED" type="checkbox" value="Y"
-								   <? if ($arResult["ITEM"]["FORWARD_LINE"] !== CVoxImplantConfig::FORWARD_LINE_DEFAULT): ?>checked="checked"<? endif ?>
-								   class="voximplant-number-settings-checkbox">
+									<? if ($arResult["ITEM"]["FORWARD_LINE"] !== CVoxImplantConfig::FORWARD_LINE_DEFAULT): ?>checked="checked"<? endif ?>
+									class="voximplant-number-settings-checkbox">
 							<label for="FORWARD_LINE_ENABLED"
-								   class="voximplant-number-settings-label"><?= Loc::getMessage("VI_CONFIG_EDIT_FORWARD_NUMBER") ?></label>
+									class="voximplant-number-settings-label"><?= Loc::getMessage("VI_CONFIG_EDIT_FORWARD_NUMBER") ?></label>
 						</div>
 						<div class="voximplant-number-settings-inner">
 							<div class="voximplant-number-settings-text"><?= Loc::getMessage("VI_CONFIG_EDIT_FORWARD_NUMBER_TIP") ?></div>
@@ -827,10 +846,10 @@ $arResult["ERROR"] ??= '';
 					<div class="voximplant-number-settings-row">
 						<div class="voximplant-number-settings-choice voximplant-number-settings-bold-text">
 							<input id="redirect-with-client-number" name="REDIRECT_WITH_CLIENT_NUMBER" type="checkbox"
-								   <? if ($arResult["ITEM"]["REDIRECT_WITH_CLIENT_NUMBER"] == "Y") { ?>checked<? } ?>
-								   value="Y" class="voximplant-number-settings-checkbox">
+									<? if ($arResult["ITEM"]["REDIRECT_WITH_CLIENT_NUMBER"] == "Y") { ?>checked<? } ?>
+									value="Y" class="voximplant-number-settings-checkbox">
 							<label for="redirect-with-client-number"
-								   class="voximplant-number-settings-label"><?= Loc::getMessage("VI_CONFIG_REDIRECT_WITH_CLIENT_NUMBER") ?></label>
+									class="voximplant-number-settings-label"><?= Loc::getMessage("VI_CONFIG_REDIRECT_WITH_CLIENT_NUMBER") ?></label>
 						</div>
 						<div class="voximplant-number-settings-inner">
 							<div class="voximplant-number-settings-text"><?= Loc::getMessage("VI_CONFIG_REDIRECT_WITH_CLIENT_NUMBER_TIP") ?></div>

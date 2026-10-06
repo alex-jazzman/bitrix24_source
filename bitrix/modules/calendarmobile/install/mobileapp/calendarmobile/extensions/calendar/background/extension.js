@@ -1,7 +1,7 @@
 (() => {
 	const require = (ext) => jn.require(ext);
-	const { requireLazy } = require('require-lazy');
 	const { EventAjax } = require('calendar/ajax/event');
+	const { requireLazy } = require('require-lazy');
 
 	class CalendarBackgroundAction
 	{

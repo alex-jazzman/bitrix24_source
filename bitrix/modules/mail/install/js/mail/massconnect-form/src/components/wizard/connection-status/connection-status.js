@@ -16,12 +16,28 @@ import {
 	ERROR_TYPE_AUTH,
 	ERROR_TYPE_SMTP_CONNECTION,
 	ALLOWED_CONNECTION_ERROR_TYPES,
+	PORTAL_EMAIL_CONFLICT_ERROR_CODE,
 } from '../../../utils/const/connection-error';
 import './connection-status.css';
+
+const MAILBOX_LIST_PATH = '/mail/mailbox-list';
+
+// Matches the default page size of the mailbox grid, so every found mailbox fits the first page
+const OCCUPIED_EMAILS_FILTER_LIMIT = 20;
 
 function getNotificationCenter()
 {
 	return globalThis.BX?.UI?.Notification?.Center ?? null;
+}
+
+function extractOccupiedEmails(errorDetails: ErrorDetail[]): string[]
+{
+	const emails = errorDetails
+		.filter((item) => item.code === PORTAL_EMAIL_CONFLICT_ERROR_CODE)
+		.map((item) => item.customData?.email)
+		.filter((email) => Type.isStringFilled(email));
+
+	return [...new Set(emails)];
 }
 
 // @vue/component
@@ -83,6 +99,7 @@ export const ConnectionStatus = {
 			'crmSettings',
 			'passwordlessMode',
 			'connectionSettings',
+			'permissions',
 		]),
 		outline(): Outline
 		{
@@ -222,6 +239,25 @@ export const ConnectionStatus = {
 		{
 			return this.errorDetails.some((item) => {
 				return Type.isStringFilled(item.message) || Type.isPlainObject(item.customData);
+			});
+		},
+		occupiedEmails(): string[]
+		{
+			return extractOccupiedEmails(this.errorDetails);
+		},
+		hasOccupiedMailboxesLink(): boolean
+		{
+			return this.occupiedEmails.length > 0 && this.permissions.canViewMailboxList;
+		},
+		hasOccupiedEmailsBeyondLimit(): boolean
+		{
+			return this.occupiedEmails.length > OCCUPIED_EMAILS_FILTER_LIMIT;
+		},
+		occupiedEmailsLimitNotice(): string
+		{
+			return this.loc('MAIL_MASSCONNECT_FORM_CONNECTION_FIND_MAILBOXES_LIMIT', {
+				'#LIMIT#': String(OCCUPIED_EMAILS_FILTER_LIMIT),
+				'#TOTAL#': String(this.occupiedEmails.length),
 			});
 		},
 	},
@@ -560,6 +596,20 @@ export const ConnectionStatus = {
 			return '';
 		},
 
+		openOccupiedMailboxList(): void
+		{
+			const params = new URLSearchParams({
+				EMAIL: this.occupiedEmails.slice(0, OCCUPIED_EMAILS_FILTER_LIMIT).join(', '),
+				apply_filter: 'Y',
+			});
+
+			BX.SidePanel.Instance.open(`${MAILBOX_LIST_PATH}?${params.toString()}`, {
+				data: {
+					resetFilterOnClose: true,
+				},
+			});
+		},
+
 		handleCancel(): void
 		{
 			this.isCancelled = true;
@@ -697,6 +747,22 @@ export const ConnectionStatus = {
 							class="mail_massconnect__connection-status_details-link"
 							v-hint="getErrorDetailsHintParams"
 						>{{ loc('MAIL_MASSCONNECT_FORM_CONNECTION_DETAILS_LINK') }}</span>
+						<UiButton
+							v-if="hasOccupiedMailboxesLink"
+							class="mail_massconnect__connection-status_find-mailboxes-button"
+							:text="loc('MAIL_MASSCONNECT_FORM_CONNECTION_FIND_MAILBOXES')"
+							:style="AirButtonStyle.PLAIN_ACCENT"
+							:size="ButtonSize.EXTRA_SMALL"
+							:dataset="{ testId: 'mail_massconnect__connection-status_find-mailboxes' }"
+							@click="openOccupiedMailboxList"
+						/>
+					</div>
+					<div
+						v-if="hasOccupiedMailboxesLink && hasOccupiedEmailsBeyondLimit"
+						class="mail_massconnect__connection-status_find-mailboxes-limit"
+						data-test-id="mail_massconnect__connection-status_find-mailboxes-limit"
+					>
+						{{ occupiedEmailsLimitNotice }}
 					</div>
 				</div>
 				<div

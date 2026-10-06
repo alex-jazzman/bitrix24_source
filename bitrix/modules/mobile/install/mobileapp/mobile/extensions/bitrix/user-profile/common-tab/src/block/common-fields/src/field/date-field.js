@@ -66,6 +66,7 @@ jn.define('user-profile/common-tab/src/block/common-fields/src/field/date-field'
 				dateFormat: 'd MMMM y',
 				rightContent: Icon.CALENDAR,
 				onChange: (newValue) => this.onChange(newValue, idx),
+				backgroundColor: Color.bgContentSecondaryInvert,
 				style: {
 					width: '100%',
 				},

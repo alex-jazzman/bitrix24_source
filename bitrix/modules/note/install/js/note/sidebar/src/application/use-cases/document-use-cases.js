@@ -3,6 +3,7 @@ import { EventEmitter, BaseEvent } from 'main.core.events';
 import { NoteAnalytics } from 'note.analytics';
 import { NoteEvent } from '../../services/note-events';
 import { openPickCollectionPopup } from '../../components/pick-collection-popup';
+import { captureRowArrival, markSectionMotion } from '../../utils/drop-motion';
 import type { SidebarDocument } from '../../type';
 import type { SidebarApi } from '../../services/sidebar-api';
 
@@ -23,7 +24,11 @@ export class DocumentUseCases
 	#reloadRouteDocumentContext: (() => Promise<void>) | null;
 	#openingDocumentId: number = 0;
 	#handleExternalDocRenamed: Function;
+	#handleExternalDocExcerptChanged: Function;
+	#handleExternalFavoriteChanged: Function;
+	#handleExternalNotifyChanged: Function;
 	#handleBulkDocumentsRestored: Function;
+	#handleBulkDocumentsChanged: Function;
 	#prefetchTimer: ?TimeoutID = null;
 
 	constructor({
@@ -64,28 +69,86 @@ export class DocumentUseCases
 		};
 		EventEmitter.subscribe(NoteEvent.DOCUMENT_RENAMED, this.#handleExternalDocRenamed);
 
+		// The editor has just materialized the text and brought back its card preview: adopt it in the
+		// loaded branches instead of asking for the list again. An empty string is the preview of a document
+		// whose text was deleted, so the type decides whether to patch, not the truthiness.
+		this.#handleExternalDocExcerptChanged = (event) => {
+			const { documentId, collectionId, excerpt } = event?.getData?.() ?? {};
+			if (typeof excerpt !== 'string')
+			{
+				return;
+			}
+
+			this.#store.actions.updateDocumentLocal(
+				Number(documentId),
+				{ excerpt },
+				{ collectionId: Number(collectionId) },
+			);
+		};
+		EventEmitter.subscribe(NoteEvent.DOCUMENT_EXCERPT_CHANGED, this.#handleExternalDocExcerptChanged);
+
+		// A star pressed outside the sidebar (activity line of the editor, knowledge base page): adopt the
+		// flag now instead of waiting for the pull round-trip, the same way a rename is adopted.
+		this.#handleExternalFavoriteChanged = (event) => {
+			this.#store.actions.applyExternalFavorite(event.getData() || {});
+		};
+		EventEmitter.subscribe(NoteEvent.FAVORITE_CHANGED, this.#handleExternalFavoriteChanged);
+
+		// Same for the bell: pressed in the editor or on the knowledge base page, it has to reach the row
+		// of the block now rather than on the pull round-trip.
+		this.#handleExternalNotifyChanged = (event) => {
+			this.#store.actions.applyExternalNotify(event?.getData?.() ?? {});
+		};
+		EventEmitter.subscribe(NoteEvent.SUBSCRIPTION_CHANGED, this.#handleExternalNotifyChanged);
+
 		this.#handleBulkDocumentsRestored = async (event) => {
 			const data = event.getData() || {};
 			const restoredCollections = Array.isArray(data.restoredCollections) ? data.restoredCollections : [];
 			restoredCollections.forEach((collection) => this.#ensureCollectionInStore(collection));
 
-			// Restored docs may belong to collections whose branches are still hydrated locally
-			// (e.g. user archived documents one by one — collection was kept in store with empty branch).
-			// Invalidate every loaded branch so the next access refetches fresh data.
-			this.#store.actions.invalidateAllChildren();
-
-			// Currently-expanded collections won't trigger hover/click; reload them eagerly so the
-			// user sees restored documents without having to interact.
-			const expandedCollectionIds = Object.keys(this.#uiState.expandedCollections)
-				.filter((id) => this.#uiState.expandedCollections[id])
-				.map((id) => Number(id))
-				.filter((id) => Number.isInteger(id) && id > 0)
-			;
-			await Promise.all(
-				expandedCollectionIds.map((id) => this.#store.actions.ensureChildrenLoaded(id, null)),
-			);
+			await this.#refreshLoadedBranches();
 		};
 		EventEmitter.subscribe(NoteEvent.DOCUMENTS_BULK_RESTORED, this.#handleBulkDocumentsRestored);
+
+		this.#handleBulkDocumentsChanged = async () => {
+			// Bulk archive/delete/move on the workspace page: same broad refresh as a
+			// restore — the initiator never receives the corresponding pull payload.
+			await this.#refreshLoadedBranches();
+		};
+		EventEmitter.subscribe(NoteEvent.DOCUMENTS_BULK_CHANGED, this.#handleBulkDocumentsChanged);
+	}
+
+	// Every subscription of the constructor, undone. The sidebar is mounted more than once in a session,
+	// and these listeners are global: one left behind keeps the store of the dead mount alive and goes on
+	// answering into it, so a single star pressed elsewhere costs a reactive update - and, for the bulk
+	// events, a full re-read of every loaded branch - once per mount there has ever been.
+	destroy(): void
+	{
+		clearTimeout(this.#prefetchTimer);
+		this.#prefetchTimer = null;
+
+		EventEmitter.unsubscribe(NoteEvent.DOCUMENT_RENAMED, this.#handleExternalDocRenamed);
+		EventEmitter.unsubscribe(NoteEvent.DOCUMENT_EXCERPT_CHANGED, this.#handleExternalDocExcerptChanged);
+		EventEmitter.unsubscribe(NoteEvent.FAVORITE_CHANGED, this.#handleExternalFavoriteChanged);
+		EventEmitter.unsubscribe(NoteEvent.SUBSCRIPTION_CHANGED, this.#handleExternalNotifyChanged);
+		EventEmitter.unsubscribe(NoteEvent.DOCUMENTS_BULK_RESTORED, this.#handleBulkDocumentsRestored);
+		EventEmitter.unsubscribe(NoteEvent.DOCUMENTS_BULK_CHANGED, this.#handleBulkDocumentsChanged);
+	}
+
+	// Invalidate every hydrated branch and eagerly reload the expanded collections so the
+	// user sees the new tree state without having to re-interact.
+	async #refreshLoadedBranches(): Promise<void>
+	{
+		this.#store.actions.invalidateAllChildren();
+
+		const expandedCollectionIds = Object.keys(this.#uiState.expandedCollections)
+			.filter((id) => this.#uiState.expandedCollections[id])
+			.map((id) => Number(id))
+			.filter((id) => Number.isInteger(id) && id > 0)
+		;
+		await Promise.all(
+			expandedCollectionIds.map((id) => this.#store.actions.ensureChildrenLoaded(id, null)),
+		);
 	}
 
 	canEditDocument(doc: SidebarDocument): boolean
@@ -112,6 +175,63 @@ export class DocumentUseCases
 		const collectionId = Number(doc?.collectionId);
 
 		return this.#canManagePermissionsInCollection(collectionId);
+	}
+
+	// [P2] Accessible-tree ("Shared with me") section. DnD is forced off here; TreeNode couples the
+	// create-child affordance to the same canManage gate, so with DnD off create-child is off in this
+	// section too — a deliberate trade-off since TreeNode must stay untouched (only props change).
+	async toggleSharedSection(): Promise<void>
+	{
+		await this.#store.actions.toggleSharedSection();
+	}
+
+	async ensureSharedLoaded(): Promise<void>
+	{
+		await this.#store.actions.ensureSharedLoaded();
+	}
+
+	async loadMoreSharedTree(): Promise<void>
+	{
+		await this.#store.actions.loadMoreSharedTree();
+	}
+
+	toggleSharedDoc(doc: SidebarDocument): void
+	{
+		this.#store.actions.toggleSharedDocExpanded(doc);
+	}
+
+	toggleSharedContainer(collectionId: number): void
+	{
+		this.#store.actions.toggleSharedContainer(collectionId);
+	}
+
+	// Same debounce as prefetchDocumentChildren: a hover across the tree must not fire a request
+	// per row, and an already-loaded branch is served from the namespace.
+	prefetchSharedDocumentChildren(doc: SidebarDocument | null): void
+	{
+		clearTimeout(this.#prefetchTimer);
+
+		if (!doc)
+		{
+			return;
+		}
+
+		const collectionId = Number(doc.collectionId);
+		const parentId = Number(doc.id);
+		const hasLoadedChildren = this.#store.queries.getSharedChildren(collectionId, parentId).length > 0;
+		if (!doc.hasChildren && !hasLoadedChildren)
+		{
+			return;
+		}
+
+		this.#prefetchTimer = setTimeout(() => {
+			void this.#store.actions.prefetchSharedChildren(doc);
+		}, 300);
+	}
+
+	async loadMoreSharedChildren(doc: SidebarDocument): Promise<void>
+	{
+		await this.#store.actions.loadMoreSharedChildren(doc);
 	}
 
 	async openDocument(doc: SidebarDocument): Promise<void>
@@ -294,6 +414,10 @@ export class DocumentUseCases
 		{
 			const doc = await this.#api.createDocument(collectionId, title, parentId);
 			const nextPosition = this.#store.queries.getChildren(collectionId, parentId).length + 1;
+			// The list as it stands before the row joins it: the rows under the place it takes have a row of
+			// height to give up, and the section a row of height to grow by. Left to the render alone, both
+			// happened in a single frame.
+			const arrival = captureRowArrival(parentId);
 			const insertedDoc = this.#store.actions.insertDocumentLocal(
 				{
 					...doc,
@@ -305,6 +429,8 @@ export class DocumentUseCases
 				},
 				{ forceCreateBranch: true },
 			);
+			arrival?.play();
+			markSectionMotion(document.querySelector('.sidebar'));
 			EventEmitter.emit(NoteEvent.DOCUMENT_RENAMED, new BaseEvent({
 				data: { id: Number(insertedDoc?.id || doc?.id), title, collectionId },
 			}));
@@ -330,6 +456,62 @@ export class DocumentUseCases
 		{
 			this.#onFail(error);
 		}
+	}
+
+	// Standalone from confirmCreateDocument: throws on failure so the caller (file drop
+	// service) can keep processing the rest of a multi-file set without a shared onFail.
+	async createDocumentFromMarkdownFile(
+		collectionId: number,
+		parentId: number | null,
+		title: string,
+		markdown: string,
+		{ open = false }: { open?: boolean } = {},
+	): Promise<SidebarDocument>
+	{
+		if (parentId !== null)
+		{
+			this.#store.state.expandedDocs[parentId] = true;
+		}
+		else
+		{
+			this.#uiState.expandedCollections[collectionId] = true;
+		}
+
+		const doc = await this.#api.createDocument(collectionId, title, parentId, markdown);
+		const nextPosition = this.#store.queries.getChildren(collectionId, parentId).length + 1;
+		const insertedDoc = this.#store.actions.insertDocumentLocal(
+			{
+				...doc,
+				collectionId,
+				parentId,
+				title,
+				position: Number(doc?.position || nextPosition),
+				hasChildren: Boolean(doc?.hasChildren ?? false),
+			},
+			{ forceCreateBranch: true },
+		);
+		EventEmitter.emit(NoteEvent.DOCUMENT_RENAMED, new BaseEvent({
+			data: { id: Number(insertedDoc?.id || doc?.id), title, collectionId },
+		}));
+
+		if (parentId !== null)
+		{
+			EventEmitter.emit(NoteEvent.DOCUMENT_CHILDREN_CHANGED, new BaseEvent({
+				data: { parentId, collectionId },
+			}));
+		}
+
+		if (open && Number(insertedDoc?.id) > 0)
+		{
+			await this.openDocument(insertedDoc);
+			const routeContext = this.#getRouteDocumentContext();
+			if (routeContext)
+			{
+				routeContext.autoEdit = true;
+			}
+		}
+
+		return insertedDoc;
 	}
 
 	renameDocument(doc: SidebarDocument): void
@@ -461,13 +643,37 @@ export class DocumentUseCases
 			return;
 		}
 
+		// Offer the "with nested" choice only when the node actually has children; the
+		// checkbox defaults to ON (cascade), unchecking it lifts the children one level up.
+		const hasChildren = this.#resolveHasChildren(doc);
+		const { confirmed, withNested } = await this.#dialog.confirmArchive({
+			message: this.#messages.confirmArchiveDocument,
+			title: this.#messages.confirmArchiveDocumentTitle,
+			confirmText: this.#messages.archiveConfirm,
+			offerNested: hasChildren,
+			nestedLabel: this.#messages.archiveWithNested,
+			nestedDefault: true,
+		});
+		if (!confirmed)
+		{
+			return;
+		}
+
 		try
 		{
-			await this.#api.archiveDocument(Number(doc.id));
+			await this.#api.archiveDocument(Number(doc.id), withNested);
 			const collectionId = Number(doc.collectionId);
 			const parentId = this.#toNullableInt(doc.parentId);
 			const shouldLeaveDocumentPage = this.#isRouteDocumentInSubtree(Number(doc.id), collectionId);
 			this.#store.actions.removeDocumentLocal(collectionId, parentId, Number(doc.id));
+
+			// Without cascade the direct children were re-hung onto this node's parent
+			// (grandparent, or root when parentId is null) — refetch that branch so they resurface.
+			if (!withNested && hasChildren)
+			{
+				this.#store.actions.invalidateBranch(collectionId, parentId);
+				await this.#store.actions.loadDocuments(collectionId, parentId, false);
+			}
 
 			if (parentId !== null)
 			{
@@ -494,11 +700,17 @@ export class DocumentUseCases
 			return;
 		}
 
-		const confirmed = await this.#dialog.confirm(
-			this.#messages.confirmDeleteDocument,
-			this.#messages.confirmDeleteDocumentTitle,
-			this.#messages.delete,
-		);
+		// Offer the "with nested" choice only when the node actually has children; the
+		// checkbox defaults to ON (cascade), unchecking it lifts the children one level up.
+		const hasChildren = this.#resolveHasChildren(doc);
+		const { confirmed, withNested } = await this.#dialog.confirmDelete({
+			message: this.#messages.confirmDeleteDocument,
+			title: this.#messages.confirmDeleteDocumentTitle,
+			confirmText: this.#messages.delete,
+			offerNested: hasChildren,
+			nestedLabel: this.#messages.deleteWithNested,
+			nestedDefault: true,
+		});
 		if (!confirmed)
 		{
 			return;
@@ -506,11 +718,19 @@ export class DocumentUseCases
 
 		try
 		{
-			await this.#api.deleteDocument(Number(doc.id));
+			await this.#api.deleteDocument(Number(doc.id), withNested);
 			const collectionId = Number(doc.collectionId);
 			const parentId = this.#toNullableInt(doc.parentId);
 			const shouldLeaveDocumentPage = this.#isRouteDocumentInSubtree(Number(doc.id), collectionId);
 			this.#store.actions.removeDocumentLocal(collectionId, parentId, Number(doc.id));
+
+			// Without cascade the direct children were re-hung onto this node's parent
+			// (grandparent, or root when parentId is null) — refetch that branch so they resurface.
+			if (!withNested && hasChildren)
+			{
+				this.#store.actions.invalidateBranch(collectionId, parentId);
+				await this.#store.actions.loadDocuments(collectionId, parentId, false);
+			}
 
 			if (parentId !== null)
 			{
@@ -547,6 +767,21 @@ export class DocumentUseCases
 		}
 
 		return Number(value);
+	}
+
+	// The `get` bootstrap payload (a document already loaded in the sidebar tree) omits
+	// hasChildren, while getOpenContext includes it. Trust an explicit boolean on the doc,
+	// otherwise fall back to the sidebar store, which carries the flag from list/tree responses.
+	#resolveHasChildren(doc: SidebarDocument): boolean
+	{
+		if (typeof doc?.hasChildren === 'boolean')
+		{
+			return doc.hasChildren;
+		}
+
+		const stored = this.#store.queries.findLoadedDocumentAnywhere(Number(doc?.id));
+
+		return Boolean(stored?.hasChildren);
 	}
 
 	#getRouteDocumentId(): number

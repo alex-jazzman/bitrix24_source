@@ -1,37 +1,15 @@
-/**
- * @module tasks/checklist/controller
- */
+/** @module tasks/checklist/controller */
 jn.define('tasks/checklist/controller', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { clone } = require('utils/object');
-	const { debounce } = require('utils/function');
 	const { ChecklistWidget } = require('tasks/checklist/widget');
 	const { CheckListFlatTree } = require('tasks/checklist/flat-tree');
 	const { PropTypes } = require('utils/validation');
 	const { showErrorToast, Position } = require('toast');
 
-	/**
-	 * @typedef {Object} ChecklistControllerProps
-	 * @property {number} [taskId]
-	 * @property {number} [groupId]
-	 * @property {number} [userId]
-	 * @property {Array} [checklistTree]
-	 * @property {Object} [diskConfig]
-	 * @property {boolean} [hideCompleted]
-	 * @property {boolean} [hideMoreMenu=false]
-	 * @property {boolean} [autoCompleteItem=true]
-	 * @property {boolean} [inLayout]
-	 * @property {Function} [onChange]
-	 * @property {Function} [onClose]
-	 * @property {Object} [parentWidget]
-	 *
-	 * @class ChecklistController
-	 */
 	class ChecklistController
 	{
-		/**
-		 * @param {ChecklistControllerProps} props
-		 */
+		/** @param {ChecklistControllerProps} props */
 		constructor(props)
 		{
 			PropTypes.validate(ChecklistController.propTypes, props, 'ChecklistController');
@@ -44,46 +22,30 @@ jn.define('tasks/checklist/controller', (require, exports, module) => {
 			this.widgetMap = new Map();
 			this.checklistsMap = new Map();
 			this.currentOpenChecklistId = null;
-			this.handleOnSave = debounce(this.handleOnSave, 1000, this);
+			this.handleOnSave = this.save.bind(this);
 
 			this.setChecklistTree(props.checklistTree);
 		}
 
-		/**
-		 * @public
-		 * @param {string|number} taskId
-		 */
+		/** @param {string|number} taskId */
 		setTaskId(taskId)
 		{
 			this.props.taskId = taskId;
 		}
 
-		/**
-		 * @public
-		 * @param {number} groupId
-		 */
+		/** @param {number} groupId */
 		setGroupId(groupId)
 		{
 			this.props.groupId = groupId;
 		}
 
-		/**
-		 * @public
-		 * @param {{folderId: number}} value
-		 */
+		/** @param {ChecklistDiskConfig} value */
 		setDiskConfig(value)
 		{
 			this.props.diskConfig = value;
 		}
 
-		/**
-		 * @public
-		 * @return {{
-		 * 	completed: number,
-		 * 	uncompleted: number,
-		 * 	checklistDetails: { title: string, completed: number, uncompleted: number }[],
-		 * }}
-		 */
+		/** @return {ChecklistReduxData} */
 		getReduxData()
 		{
 			const checklists = [...this.getChecklists().values()];
@@ -113,9 +75,8 @@ jn.define('tasks/checklist/controller', (require, exports, module) => {
 		}
 
 		/**
-		 * @public
-		 * @param {number} taskId
-		 * @param {FlatArray<object>} items
+		 * @param {ChecklistSaveParams} params
+		 * @return {Promise}
 		 */
 		static save({ taskId, items })
 		{
@@ -147,9 +108,7 @@ jn.define('tasks/checklist/controller', (require, exports, module) => {
 		}
 
 		/**
-		 *
-		 * @param {boolean} value
-		 * @param {number} userId
+		 * @param {ChecklistToggleCompletedParams} params
 		 * @return {Promise}
 		 */
 		static toggleCompletedItems = ({ value, userId }) => {
@@ -173,9 +132,8 @@ jn.define('tasks/checklist/controller', (require, exports, module) => {
 		};
 
 		/**
-		 * @public
-		 * @param params
-		 * @return {CheckListFlatTree[]|*[]}
+		 * @param {MakeChecklistFlatTreesParams} params
+		 * @return {CheckListFlatTree[]}
 		 */
 		static makeChecklistFlatTrees(params)
 		{
@@ -194,19 +152,21 @@ jn.define('tasks/checklist/controller', (require, exports, module) => {
 			}));
 		}
 
+		/** @return {Map<ChecklistItemId, CheckListFlatTree>} */
 		getChecklists()
 		{
 			return this.checklistsMap;
 		}
 
+		/** @return {ChecklistItemId[]} */
 		getChecklistsIds()
 		{
 			return [...this.checklistsMap.keys()];
 		}
 
 		/**
-		 * @param {string | number} checklistId
-		 * @return {Checklist}
+		 * @param {ChecklistItemId} checklistId
+		 * @return {Checklist|null}
 		 */
 		getViewChecklistComponent(checklistId)
 		{
@@ -220,6 +180,7 @@ jn.define('tasks/checklist/controller', (require, exports, module) => {
 			return checklistWidget.getComponent();
 		}
 
+		/** @param {ChecklistItemId} checklistId */
 		closeChecklistWidget(checklistId)
 		{
 			const checklistWidget = this.widgetMap.get(checklistId);
@@ -231,6 +192,7 @@ jn.define('tasks/checklist/controller', (require, exports, module) => {
 			checklistWidget.close();
 		}
 
+		/** @return {ChecklistItemData[][]} */
 		getChecklistFlatTree()
 		{
 			const checklistsFlatTree = [];
@@ -242,11 +204,7 @@ jn.define('tasks/checklist/controller', (require, exports, module) => {
 			return checklistsFlatTree;
 		}
 
-		/**
-		 * @param {Array} checklistsFlatTree
-		 * @param {Object} checklistsTree
-		 * @param {boolean} clear
-		 */
+		/** @param {SetChecklistsParams} params */
 		setChecklists({ checklistsFlatTree, checklistsTree, clear = false })
 		{
 			if (clear)
@@ -264,6 +222,7 @@ jn.define('tasks/checklist/controller', (require, exports, module) => {
 			}
 		}
 
+		/** @param {ChecklistItemData[][]} checklistsFlatTree */
 		setChecklistFlatTree(checklistsFlatTree)
 		{
 			clone(checklistsFlatTree).forEach((checklistFlatTree) => {
@@ -271,10 +230,7 @@ jn.define('tasks/checklist/controller', (require, exports, module) => {
 			});
 		}
 
-		/**
-		 * @public
-		 * @param {object} tree
-		 */
+		/** @param {ChecklistItemData} tree */
 		setChecklistTree(tree)
 		{
 			const checklists = tree?.descendants || [];
@@ -294,24 +250,21 @@ jn.define('tasks/checklist/controller', (require, exports, module) => {
 			this.checklistsMap.clear();
 		}
 
+		/** @param {CheckListFlatTree} checklist */
 		addChecklist(checklist)
 		{
 			const checklistId = checklist.getId();
 			this.checklistsMap.set(checklistId, checklist);
 		}
 
-		/**
-		 * @param {string | number} checklistId
-		 */
+		/** @param {string | number} checklistId */
 		#deleteChecklist(checklistId)
 		{
 			this.#removeChecklistById(checklistId);
 			this.#removeFromWidgetMap(checklistId);
 		}
 
-		/**
-		 * @param checklistId
-		 */
+		/** @param {ChecklistItemId} checklistId */
 		#removeChecklistById(checklistId)
 		{
 			this.checklistsMap.delete(checklistId);
@@ -329,8 +282,7 @@ jn.define('tasks/checklist/controller', (require, exports, module) => {
 
 		/**
 		 * @private
-		 * @param {string | number} checklistId
-		 * @param {LayoutWidget} checklistWidget
+		 * @param {AddToWidgetMapParams} params
 		 */
 		addToWidgetMap({ checklistId, checklistWidget })
 		{
@@ -338,9 +290,7 @@ jn.define('tasks/checklist/controller', (require, exports, module) => {
 		}
 
 		/**
-		 * @param {object} params
-		 * @param {CheckListFlatTree} [params.checklist]
-		 * @param {string | number} [params.focusedItemId]
+		 * @param {OpenChecklistParams} params
 		 * @return {Promise}
 		 */
 		openChecklist(params)
@@ -383,7 +333,7 @@ jn.define('tasks/checklist/controller', (require, exports, module) => {
 		}
 
 		/**
-		 * @param {object} params
+		 * @param {BuildDefaultListParams} params
 		 * @return {CheckListFlatTree}
 		 */
 		createNewChecklist(params)
@@ -395,12 +345,8 @@ jn.define('tasks/checklist/controller', (require, exports, module) => {
 		}
 
 		/**
-		 * @param {object} moveParams
-		 * @param {number[]} [moveParams.moveIds]
-		 * @param {number} [moveParams.toCheckListId]
-		 * @param {number} [moveParams.sourceChecklistId]
-		 * @param {boolean} [moveParams.open]
-		 * @return {void}
+		 * @param {MoveToChecklistParams} moveParams
+		 * @return {Promise<(function(): Promise<void>)|null>}
 		 */
 		handleOnMoveToChecklist = async (moveParams) => {
 			const { moveIds, sourceChecklistId } = moveParams;
@@ -434,11 +380,7 @@ jn.define('tasks/checklist/controller', (require, exports, module) => {
 			};
 		};
 
-		/**
-		 * @param {number[]} moveIds
-		 * @param {number} toCheckListId
-		 * @param {number} sourceChecklistId
-		 */
+		/** @param {MoveToChecklistParams} params */
 		async moveToChecklist({ moveIds, toCheckListId, sourceChecklistId })
 		{
 			const sourceChecklist = this.checklistsMap.get(sourceChecklistId);
@@ -459,6 +401,10 @@ jn.define('tasks/checklist/controller', (require, exports, module) => {
 			viewReceivingChecklist?.reload({});
 		}
 
+		/**
+		 * @param {ChecklistItemId} checklistId
+		 * @return {LayoutWidget}
+		 */
 		getParentWidgetByChecklistId(checklistId)
 		{
 			const { parentWidget } = this.props;
@@ -474,7 +420,8 @@ jn.define('tasks/checklist/controller', (require, exports, module) => {
 
 		/**
 		 * @private
-		 * @return {Promise}
+		 * @param {ChecklistItemId} checklistId
+		 * @return {function(): Promise}
 		 */
 		handleOnCreateChecklist = (checklistId) => () => {
 			return this.openChecklist({
@@ -485,7 +432,7 @@ jn.define('tasks/checklist/controller', (require, exports, module) => {
 
 		/**
 		 * @private
-		 * @param params
+		 * @param {BuildDefaultListParams} [params]
 		 * @return {CheckListFlatTree}
 		 */
 		createChecklist(params = {})
@@ -497,10 +444,7 @@ jn.define('tasks/checklist/controller', (require, exports, module) => {
 			});
 		}
 
-		/**
-		 * @public
-		 * @return {{}[]}
-		 */
+		/** @return {ChecklistItemRequestData[]|null} */
 		getChecklistRequestData()
 		{
 			let shouldAbort = false;
@@ -549,19 +493,24 @@ jn.define('tasks/checklist/controller', (require, exports, module) => {
 		#handleOnChange = () => {
 			const { onChange } = this.props;
 
-			onChange(this);
+			onChange?.(this);
 		};
 
-		async handleOnSave()
+		async save(checklistId = this.currentOpenChecklistId)
 		{
 			const { taskId } = this.getTaskParams();
-			if (!taskId)
-			{
-				return false;
-			}
 
+			this.getViewChecklistComponent(checklistId)?.syncFocusedItemText?.(false, true);
 			this.#filterEmptyChecklists();
 			this.#handleOnChange();
+
+			// an entity that is not on the server yet (task being created, template) has nowhere to save:
+			// such a checklist is sent within the entity itself, so closing must not be blocked
+			if (!taskId)
+			{
+				return true;
+			}
+
 			const items = this.getChecklistRequestData();
 
 			if (!Array.isArray(items))
@@ -572,7 +521,7 @@ jn.define('tasks/checklist/controller', (require, exports, module) => {
 			try
 			{
 				const response = await ChecklistController.save({ taskId, items });
-				this.#updateAfterSave(response);
+				this.#updateAfterSave(response, checklistId);
 			}
 			catch (error)
 			{
@@ -589,16 +538,29 @@ jn.define('tasks/checklist/controller', (require, exports, module) => {
 			return true;
 		}
 
-		#handleOnClose = (checklistId) => {
+		#handleOnClose = async (checklistId) => {
 			const checklist = this.checklistsMap.get(checklistId);
 
 			if (!checklist || !this.widgetMap.has(checklistId))
 			{
-				return;
+				return true;
+			}
+
+			this.getViewChecklistComponent(checklistId)?.syncFocusedItemText?.(false, true);
+
+			if (checklist.canUpdate() || checklist.canAdd())
+			{
+				const isSaved = await this.save(checklistId);
+				if (!isSaved)
+				{
+					return false;
+				}
 			}
 
 			this.#removeFromWidgetMap(checklistId);
 			this.props.onClose?.();
+
+			return true;
 		};
 
 		handleOnRemove = (checklistId) => () => {
@@ -607,6 +569,7 @@ jn.define('tasks/checklist/controller', (require, exports, module) => {
 			void this.handleOnSave();
 		};
 
+		/** @return {ChecklistTaskParams} */
 		getTaskParams()
 		{
 			const { userId, taskId, groupId, diskConfig, hideCompleted, autoCompleteItem } = this.props;
@@ -614,16 +577,18 @@ jn.define('tasks/checklist/controller', (require, exports, module) => {
 			return { userId, taskId, groupId, diskConfig, hideCompleted, autoCompleteItem };
 		}
 
-		#updateAfterSave(items)
+		/**
+		 * @param {Record<string, { id: ChecklistItemId }>} items
+		 * @param {ChecklistItemId} checklistId
+		 */
+		#updateAfterSave(items, checklistId)
 		{
 			if (!items)
 			{
-				console.warn('Items not found after saving the checklist');
-
 				return;
 			}
 
-			const checklist = this.checklistsMap.get(this.currentOpenChecklistId);
+			const checklist = this.checklistsMap.get(checklistId);
 			if (!checklist)
 			{
 				return;
@@ -639,10 +604,7 @@ jn.define('tasks/checklist/controller', (require, exports, module) => {
 			});
 		}
 
-		/**
-		 * @public
-		 * @return {boolean}
-		 */
+		/** @return {boolean} */
 		hasUploadingFiles()
 		{
 			for (const checklist of this.checklistsMap.values())
@@ -660,8 +622,7 @@ jn.define('tasks/checklist/controller', (require, exports, module) => {
 		}
 
 		/**
-		 * @public
-		 * @param {number} checklistId
+		 * @param {ChecklistItemId} checklistId
 		 * @return {CheckListFlatTree|null}
 		 */
 		getChecklistById(checklistId)

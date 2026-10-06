@@ -1,0 +1,8 @@
+{
+	"defaultTableName": "b_ai_queue",
+	"installDirectoriesMapping": {
+		"install/components": "components",
+		"install/js": "js",
+		"install/activities": "activities"
+	}
+}

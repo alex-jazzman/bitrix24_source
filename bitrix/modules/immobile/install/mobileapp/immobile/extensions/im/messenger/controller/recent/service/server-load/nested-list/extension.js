@@ -146,6 +146,7 @@ jn.define('im/messenger/controller/recent/service/server-load/nested-list', (req
 							recentSection: this.recentLocator.get('recentSection'),
 							itemList: regularRecentItems,
 							parentChatId: this.recentLocator.get('parentChatId'),
+							tabId: this.recentLocator.get('id'),
 						},
 					),
 				];
@@ -229,6 +230,7 @@ jn.define('im/messenger/controller/recent/service/server-load/nested-list', (req
 						...recentItem,
 						liked: false,
 						message: itemMessage,
+						ownMessage: ServerLoadUtils.resolveOwnMessage(recentItem, allMessages),
 					});
 
 					result.recent.push(item);

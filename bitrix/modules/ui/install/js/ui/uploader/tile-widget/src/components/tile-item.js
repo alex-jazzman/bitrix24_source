@@ -1,6 +1,7 @@
 import { Dom, Loc, Text, Type } from 'main.core';
 import { MenuManager, type PopupOptions } from 'main.popup';
 
+import { FocusNavigator, InteractivityChecker } from 'ui.a11y';
 import { FileOrigin, FileStatus } from 'ui.uploader.core';
 import { TileWidgetSlot } from 'ui.uploader.tile-widget';
 import { BIcon } from 'ui.icon-set.api.vue';
@@ -22,7 +23,32 @@ export const TileItem: BitrixVueComponentProps = {
 		ErrorPopup,
 		FileIconComponent,
 	},
-	inject: ['uploader', 'adapter', 'widgetOptions', 'emitter'],
+	inject: {
+		uploader: {},
+		adapter: {},
+		widgetOptions: {},
+		emitter: {},
+		insideTileList: {
+			default: false,
+		},
+		tileZone: {
+			default: null,
+		},
+	},
+	/**
+	 * The hidden status "file is in the text" is rendered here, and the extra action of the tile
+	 * refers to it through `aria-describedby`. Only the tile knows both the flag and whether the
+	 * highlight is allowed at all, so the id is resolved in one place: a second computation of the
+	 * same condition once left the reference pointing at an element that was not rendered.
+	 */
+	provide(): Object
+	{
+		return {
+			tileInsertedStatus: {
+				getId: (): ?string => (this.isSelected ? this.insertedStatusId : null),
+			},
+		};
+	},
 	props: {
 		item: {
 			type: Object,
@@ -52,6 +78,7 @@ export const TileItem: BitrixVueComponentProps = {
 			Outline,
 			FileStatus,
 			menuId: `ui-tile-uploader-item-menu-${Text.getRandom().toLowerCase()}`,
+			errorTextId: `ui-tile-uploader-item-error-${Text.getRandom().toLowerCase()}`,
 		};
 	},
 	data(): Object
@@ -99,6 +126,7 @@ export const TileItem: BitrixVueComponentProps = {
 				offsetTop: 6,
 				minWidth: targetNodeWidth,
 				maxWidth: 500,
+				closeByEsc: true,
 			};
 		},
 		clampedFileName(): string
@@ -172,7 +200,7 @@ export const TileItem: BitrixVueComponentProps = {
 				const removeItem = {
 					id: 'remove',
 					text: Loc.getMessage('TILE_UPLOADER_MENU_REMOVE'),
-					onclick: this.remove,
+					onclick: this.removeFromMenu,
 				};
 
 				items.push(removeItem);
@@ -231,6 +259,56 @@ export const TileItem: BitrixVueComponentProps = {
 
 			return params;
 		},
+		isUploading(): boolean
+		{
+			return this.item.status === FileStatus.UPLOADING;
+		},
+		isViewerAvailable(): boolean
+		{
+			return Object.keys(this.viewerAttrs).length > 0;
+		},
+		errorText(): string
+		{
+			const { error } = this.item;
+			if (!error)
+			{
+				return '';
+			}
+
+			return [error.message, error.description].filter(Boolean).join('. ');
+		},
+		errorDescribedBy(): ?string
+		{
+			return this.item.error ? this.errorTextId : null;
+		},
+		insertedStatusId(): string
+		{
+			return `ui-tile-uploader-item-inserted-status-${this.item.id}`;
+		},
+		insertedStatusText(): string
+		{
+			return Loc.getMessage('TILE_UPLOADER_FILE_INSERTED_STATUS');
+		},
+		removeFileLabel(): string
+		{
+			return Loc.getMessage('TILE_UPLOADER_REMOVE_FILE_LABEL');
+		},
+		cancelUploadLabel(): string
+		{
+			return Loc.getMessage('TILE_UPLOADER_CANCEL_UPLOAD_LABEL');
+		},
+		itemMenuLabel(): string
+		{
+			return Loc.getMessage('TILE_UPLOADER_ITEM_MENU_LABEL');
+		},
+		openFileLabel(): string
+		{
+			return Loc.getMessage('TILE_UPLOADER_OPEN_FILE_LABEL', { '#FILENAME#': this.item.name });
+		},
+		uploadProgressLabel(): string
+		{
+			return Loc.getMessage('TILE_UPLOADER_UPLOAD_PROGRESS_LABEL');
+		},
 	},
 	created(): void
 	{
@@ -245,6 +323,28 @@ export const TileItem: BitrixVueComponentProps = {
 		}
 	},
 	methods: {
+		/**
+		 * Removal from the menu waits for the menu to close first. The menu keeps a focus trap, and
+		 * on close the trap returns the focus to the element it was opened from - the menu button of
+		 * this very tile. Removing the file before that put our focus target in place only for the
+		 * trap to override it, and the tile then took the focus with it to the body.
+		 */
+		removeFromMenu(): void
+		{
+			if (!this.menu)
+			{
+				this.remove();
+
+				return;
+			}
+
+			this.menu.getPopupWindow().subscribeOnce('onAfterClose', () => {
+				this.remove();
+			});
+
+			this.menu.close();
+		},
+
 		remove(): void
 		{
 			if (this.readonly)
@@ -252,7 +352,82 @@ export const TileItem: BitrixVueComponentProps = {
 				return;
 			}
 
+			const focusTarget: ?HTMLElement = this.getFocusTargetAfterRemove();
+
 			this.uploader.removeFile(this.item.id, { removeFromServer: this.removeFromServer });
+
+			if (!focusTarget)
+			{
+				return;
+			}
+
+			// an action of a neighbouring tile belongs to the zone, so it has to learn about the move
+			if (this.tileZone && focusTarget.closest('.ui-tile-uploader-items') !== null)
+			{
+				this.tileZone.focusAction(focusTarget);
+
+				return;
+			}
+
+			if (InteractivityChecker.isFocusable(focusTarget))
+			{
+				FocusNavigator.focusTarget(focusTarget, { preventScroll: true });
+			}
+			else
+			{
+				// the widget root is the last resort: it gets tabindex="-1" to accept the focus
+				FocusNavigator.focusContainer(focusTarget, { preventScroll: true });
+			}
+		},
+
+		/**
+		 * The focus is moved while the tile is still in the DOM: the leave animation of
+		 * transition-group keeps the node alive, and waiting for it would drop focus to the body.
+		 * Order of targets: next tile, previous tile, file input of the drop area.
+		 */
+		getFocusTargetAfterRemove(): ?HTMLElement
+		{
+			const tile: HTMLElement = this.$refs.container;
+			const activeElement: ?HTMLElement = FocusNavigator.getActiveElement();
+			const focusIsInside = (activeElement !== null && tile.contains(activeElement)) || this.isMenuShown;
+			if (!focusIsInside)
+			{
+				return null;
+			}
+
+			const target: ?HTMLElement = (
+				this.findTargetInNeighbours(tile, 'nextElementSibling')
+				?? this.findTargetInNeighbours(tile, 'previousElementSibling')
+			);
+			if (target)
+			{
+				return target;
+			}
+
+			const widget: ?HTMLElement = tile.closest('.ui-tile-uploader');
+
+			return widget?.querySelector('.ui-tile-uploader-drop-input') ?? widget;
+		},
+
+		findTargetInNeighbours(tile: HTMLElement, direction: string): ?HTMLElement
+		{
+			for (let node = tile[direction]; node; node = node[direction])
+			{
+				// tiles being removed stay in the DOM until the leave animation ends,
+				// and focusing one of them would drop the focus to the body a moment later
+				if (node.className.includes('ui-tile-uploader-item-leave'))
+				{
+					continue;
+				}
+
+				const target: ?HTMLElement = FocusNavigator.getFirst(node, { tabbableOnly: false });
+				if (target)
+				{
+					return target;
+				}
+			}
+
+			return null;
 		},
 
 		handleMouseEnter(item): void
@@ -263,6 +438,10 @@ export const TileItem: BitrixVueComponentProps = {
 			}
 		},
 		handleMouseLeave(): void
+		{
+			this.showError = false;
+		},
+		hideError(): void
 		{
 			this.showError = false;
 		},
@@ -283,7 +462,8 @@ export const TileItem: BitrixVueComponentProps = {
 
 				this.menu = MenuManager.create({
 					id: this.menuId,
-					bindElement: this.$refs.menu.$el,
+					bindElement: this.$refs.menu,
+					ariaLabel: this.itemMenuLabel,
 					targetContainer: document.body,
 					angle: true,
 					offsetLeft: 13,
@@ -319,13 +499,30 @@ export const TileItem: BitrixVueComponentProps = {
 					item: this.item,
 				});
 
+				// closing the menu returns the focus to this button, and it arrives from the popup, that
+				// is from outside the focus zone - the zone has to be told where to land, or it resolves
+				// the entry point itself and throws the focus to the first action of the first file
+				this.tileZone?.holdEntry(this.$refs.menu);
+
+				// main.popup fires onShow before it positions the popup (popup.js:1708 then :1715), and
+				// the menu focuses its first item on onShow with scrolling allowed - the browser then
+				// scrolls the page to a popup that still sits at the top of the document. Placing it at
+				// the button beforehand keeps the page still; show() positions it precisely afterwards.
+				this.menu.getPopupWindow().adjustPosition();
 				this.menu.show();
 			});
 		},
 	},
+	/**
+	 * DOM order inside the tile is the keyboard order: the file itself, then the actions on it in
+	 * their visual order - removal on the left, then the extra action, then the menu on the right.
+	 * The overlays are positioned absolutely, so the order does not affect the layout: entering the
+	 * list does not start on an irreversible action, and the actions are still walked left to right.
+	 */
 	template: `
 		<div
 			class="ui-tile-uploader-item"
+			data-testid="ui-tile-uploader-item"
 			:class="[
 				'ui-tile-uploader-item--' + item.status,
 				{
@@ -333,65 +530,129 @@ export const TileItem: BitrixVueComponentProps = {
 					'--selected': (isMenuShown && widgetOptions.compact) || isSelected,
 				},
 			]"
+			:role="insideTileList ? 'group' : null"
+			:aria-label="insideTileList ? item.name : null"
 			ref="container"
 		>
-			<ErrorPopup v-if="item.error && showError" :error="item.error" :popup-options="errorPopupOptions"/>
+			<ErrorPopup
+				v-if="item.error && showError"
+				:error="item.error"
+				:popup-options="errorPopupOptions"
+				@onDestroy="hideError"
+			/>
+			<span v-if="item.error" class="ui-tile-uploader-visually-hidden" :id="errorTextId">{{errorText}}</span>
 			<div
 				class="ui-tile-uploader-item-content"
 				@mouseenter="handleMouseEnter(item)"
 				@mouseleave="handleMouseLeave"
 			>
+				<component
+					:is="isViewerAvailable ? 'button' : 'div'"
+					:type="isViewerAvailable ? 'button' : null"
+					class="ui-tile-uploader-item-preview-content"
+					data-testid="ui-tile-uploader-item-preview"
+					:aria-label="isViewerAvailable ? openFileLabel : null"
+					:aria-describedby="isViewerAvailable ? errorDescribedBy : null"
+					v-bind="viewerAttrs"
+				>
+					<span class="ui-tile-uploader-item-preview">
+						<span
+							v-if="item.previewUrl"
+							class="ui-tile-uploader-item-image"
+							:class="{ 'ui-tile-uploader-item-image-default': item.previewUrl === null }"
+							:style="{ backgroundImage: item.previewUrl !== null ? 'url(' + item.previewUrl + ')' : '' }">
+						</span>
+						<FileIconComponent
+							v-else
+							:name="item.extension || '...'"
+							:size="fileIconSize"
+							aria-hidden="true"
+						/>
+					</span>
+					<span
+						v-if="item.name"
+						class="ui-tile-uploader-item-name-box"
+						:title="item.name"
+					>
+						<span class="ui-tile-uploader-item-name">
+							<span class="ui-tile-uploader-item-name-title">{{clampedFileName}}</span>
+							<span v-if="item.extension" class="ui-tile-uploader-item-name-extension">.{{item.extension}}</span>
+						</span>
+					</span>
+					<span
+						v-if="isSelected"
+						class="ui-tile-uploader-visually-hidden"
+						:id="insertedStatusId"
+					>{{insertedStatusText}}</span>
+				</component>
 				<div v-if="item.status !== FileStatus.COMPLETE" class="ui-tile-uploader-item-state">
 					<div class="ui-tile-uploader-item-loader" v-if="item.status === FileStatus.UPLOADING">
-						<UploadLoader :progress="item.progress" :width="20" colorTrack="#73d8f8" colorBar="#fff"/>
+						<UploadLoader
+							:progress="item.progress"
+							:width="20"
+							colorTrack="#73d8f8"
+							colorBar="#fff"
+							aria-hidden="true"
+						/>
 					</div>
 					<div v-else class="ui-tile-uploader-item-state-icon"></div>
-					<div class="ui-tile-uploader-item-status">
+					<div
+						class="ui-tile-uploader-item-status"
+						:role="isUploading ? 'progressbar' : null"
+						:aria-label="isUploading ? uploadProgressLabel : null"
+						:aria-valuemin="isUploading ? 0 : null"
+						:aria-valuemax="isUploading ? 100 : null"
+						:aria-valuenow="isUploading ? item.progress : null"
+					>
 						<div class="ui-tile-uploader-item-status-name">{{status}}</div>
 						<div v-if="fileSize" class="ui-tile-uploader-item-state-desc">{{fileSize}}</div>
 					</div>
-					<div v-if="!readonly" class="ui-tile-uploader-item-state-remove" @click="remove" key="aaa"></div>
+					<button
+						v-if="!readonly"
+						type="button"
+						class="ui-tile-uploader-item-state-remove"
+						data-testid="ui-tile-uploader-item-cancel-btn"
+						:aria-label="cancelUploadLabel"
+						:aria-describedby="errorDescribedBy"
+						@click="remove"
+						key="aaa"
+					></button>
 				</div>
 				<template v-else>
-					<div v-if="!readonly" class="ui-tile-uploader-item-remove" key="remove" @click="remove">
-						<BIcon :name="Outline.CROSS_L"/>
-					</div>
+					<button
+						v-if="!readonly"
+						type="button"
+						class="ui-tile-uploader-item-remove"
+						data-testid="ui-tile-uploader-item-remove-btn"
+						:aria-label="removeFileLabel"
+						:aria-describedby="errorDescribedBy"
+						key="remove"
+						@click="remove"
+					>
+						<BIcon :name="Outline.CROSS_L" aria-hidden="true"/>
+					</button>
 					<div class="ui-tile-uploader-item-actions" key="actions">
 						<div class="ui-tile-uploader-item-actions-pad">
 							<div v-if="extraAction" class="ui-tile-uploader-item-extra-actions">
 								<component :is="extraAction" :item="item"></component>
 							</div>
-							<BIcon
+							<button
 								v-if="showItemMenuButton"
+								type="button"
 								class="ui-tile-uploader-item-menu"
-								:name="Actions.MORE"
+								data-testid="ui-tile-uploader-item-menu-btn"
+								:aria-label="itemMenuLabel"
+								:aria-describedby="errorDescribedBy"
+								aria-haspopup="menu"
+								:aria-expanded="isMenuShown ? 'true' : 'false'"
 								ref="menu"
 								@click="toggleMenu"
-							/>
+							>
+								<BIcon :name="Actions.MORE" aria-hidden="true"/>
+							</button>
 						</div>
 					</div>
 				</template>
-				<div class="ui-tile-uploader-item-preview-content" v-bind="viewerAttrs">
-					<div class="ui-tile-uploader-item-preview">
-						<div
-							v-if="item.previewUrl"
-							class="ui-tile-uploader-item-image"
-							:class="{ 'ui-tile-uploader-item-image-default': item.previewUrl === null }"
-							:style="{ backgroundImage: item.previewUrl !== null ? 'url(' + item.previewUrl + ')' : '' }">
-						</div>
-						<FileIconComponent v-else :name="item.extension || '...'" :size="fileIconSize"/>
-					</div>
-					<div
-						v-if="item.name"
-						class="ui-tile-uploader-item-name-box"
-						:title="item.name"
-					>
-						<div class="ui-tile-uploader-item-name">
-							<span class="ui-tile-uploader-item-name-title">{{clampedFileName}}</span>
-							<span v-if="item.extension" class="ui-tile-uploader-item-name-extension">.{{item.extension}}</span>
-						</div>
-					</div>
-				</div>
 			</div>
 		</div>
 	`,

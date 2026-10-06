@@ -1,11 +1,19 @@
 <?php
 $MESS["CRM_SECURITY_ROLE_PERMS_TYPE_MULTI_"] = "Deny access";
 $MESS["CRM_SECURITY_ROLE_PERMS_TYPE_MULTI_A"] = "User's items";
+$MESS["CRM_SECURITY_ROLE_PERMS_TYPE_MULTI_A_MSGVER_1"] = "Only their own items";
 $MESS["CRM_SECURITY_ROLE_PERMS_TYPE_MULTI_D"] = "User department's items";
-$MESS["CRM_SECURITY_ROLE_PERMS_TYPE_MULTI_F"] = "User dept. subdepartment's items";
+$MESS["CRM_SECURITY_ROLE_PERMS_TYPE_MULTI_D_MSGVER_1"] = "Items of their department";
+$MESS["CRM_SECURITY_ROLE_PERMS_TYPE_MULTI_F"] = "Also subdepartment's items";
+$MESS["CRM_SECURITY_ROLE_PERMS_TYPE_MULTI_F_MSGVER_1"] = "Items of their subdepartments";
 $MESS["CRM_SECURITY_ROLE_PERMS_TYPE_MULTI_INHERIT"] = "Inherit";
 $MESS["CRM_SECURITY_ROLE_PERMS_TYPE_MULTI_INHERIT_MSGVER_1"] = "Inherit";
+$MESS["CRM_SECURITY_ROLE_PERMS_TYPE_MULTI_INHERIT_TAB_DESCRIPTION"] = "The stage inherits access permissions from the section and pipeline settings:";
 $MESS["CRM_SECURITY_ROLE_PERMS_TYPE_MULTI_O"] = "All items marked as \"Available to everyone\"";
-$MESS["CRM_SECURITY_ROLE_PERMS_TYPE_MULTI_ST"] = "User team and subteam's items";
+$MESS["CRM_SECURITY_ROLE_PERMS_TYPE_MULTI_O_MSGVER_1"] = "Items available to everyone";
+$MESS["CRM_SECURITY_ROLE_PERMS_TYPE_MULTI_ST"] = "Also subteam's items";
+$MESS["CRM_SECURITY_ROLE_PERMS_TYPE_MULTI_ST_MSGVER_1"] = "Items of their teams and subteams";
 $MESS["CRM_SECURITY_ROLE_PERMS_TYPE_MULTI_T"] = "User team's items";
+$MESS["CRM_SECURITY_ROLE_PERMS_TYPE_MULTI_T_MSGVER_1"] = "Items of their teams";
 $MESS["CRM_SECURITY_ROLE_PERMS_TYPE_MULTI_X_MSGVER_1"] = "All items";
+$MESS["CRM_SECURITY_ROLE_PERMS_TYPE_MULTI_X_MSGVER_2"] = "All items of all employees";

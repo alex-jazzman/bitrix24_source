@@ -3,7 +3,7 @@ import { Api } from 'sign.v2.api';
 import type { LoadedDocumentData, TemplateCreatedDocument } from 'sign.v2.api';
 import { BitrixVue, VueCreateAppResult } from 'ui.vue3';
 import { UserPartyApp } from './app';
-import { UserParty } from 'sign.v2.b2e.user-party';
+import { UserParty, type PreselectedSignerEntity } from 'sign.v2.b2e.user-party';
 import { useDocumentTemplateFillingStore } from 'sign.v2.b2e.sign-settings-templates';
 
 import './style.css';
@@ -17,13 +17,13 @@ export class DocumentTemplateUserParty
 	#store: Object;
 	#api: Api;
 
-	constructor(store: Object)
+	constructor(store: ?Object = null, preselectedSigners: ?Array<PreselectedSignerEntity> = null)
 	{
 		const b2eSignersLimitCount = this.#getB2eSignersCountLimit();
 		const region = this.#getRegion();
 
 		this.#store = store;
-		this.#userParty = new UserParty({ mode: 'edit', b2eSignersLimitCount, region });
+		this.#userParty = new UserParty({ mode: 'edit', b2eSignersLimitCount, region, preselectedSigners });
 		this.#api = new Api();
 	}
 

@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports, ui_iconSet_api_vue, im_v2_lib_menu, im_v2_const, im_v2_lib_unreadMode, im_v2_provider_service_chat, im_v2_application_core, im_v2_lib_analytics, main_core, ui_iconSet_api_core, im_v2_lib_feature) {
+(function (exports, ui_iconSet_api_vue, im_v2_lib_menu, im_v2_const, im_v2_lib_unreadMode, im_v2_provider_service_chat, im_v2_application_core, im_v2_lib_analytics, main_core, ui_iconSet_api_core) {
 	'use strict';
 
 	const MenuSectionCode = {
@@ -25,15 +25,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			};
 		}
 		getMenuItems() {
-			const isUnreadRecentModeAvailable = im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.unreadRecentModeAvailable);
-			if (!isUnreadRecentModeAvailable) {
-				return [this.getReadAllItem()];
-			}
 			const firstGroupItems = [this.getDefaultModeItem(), this.getUnreadModeItem()];
 			const secondGroupItems = [this.getReadAllItem()];
-			if (this.context.parentChatId > 0) {
-				return this.groupItems(firstGroupItems, MenuSectionCode.first);
-			}
 			return [...this.groupItems(firstGroupItems, MenuSectionCode.first), ...this.groupItems(secondGroupItems, MenuSectionCode.second)];
 		}
 		getMenuGroups() {
@@ -108,8 +101,11 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		}
 		onReadAllClick() {
 			im_v2_lib_analytics.Analytics.getInstance().recentHeaderMenu.onReadAllTaskChats();
-			im_v2_lib_unreadMode.UnreadModeManager.removeClosedChats(im_v2_const.RecentType.taskComments);
-			new im_v2_provider_service_chat.ChatService().readAllByType(im_v2_const.ChatType.taskComments);
+			if (this.context.parentChatId > 0) {
+				new im_v2_provider_service_chat.ChatService().readAllByRecentType(im_v2_const.RecentType.taskComments, this.context.parentChatId);
+				return;
+			}
+			new im_v2_provider_service_chat.ChatService().readAllByRecentType(im_v2_const.RecentType.taskComments, im_v2_const.ParentChatScope.all);
 		}
 		getUnreadCounter() {
 			const parentChatId = this.context.parentChatId;
@@ -121,11 +117,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	}
 
 	class CollabHeaderMenu extends BaseRecentHeaderMenu {
-		getMenuItems() {
-			return [this.getDefaultModeItem(), this.getUnreadModeItem()];
-		}
 		onReadAllClick() {
-			new im_v2_provider_service_chat.ChatService().readAllByType(im_v2_const.ChatType.collab);
+			new im_v2_provider_service_chat.ChatService().readAllByRecentType(im_v2_const.RecentType.collab, im_v2_const.ParentChatScope.topLevel);
 		}
 		getUnreadCounter() {
 			return im_v2_application_core.Core.getStore().getters['counters/getTotalCollabCounter'];
@@ -133,22 +126,44 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	}
 
 	class CollabDefaultHeaderMenu extends BaseRecentHeaderMenu {
+		onReadAllClick() {
+			new im_v2_provider_service_chat.ChatService().readAllByRecentType(im_v2_const.RecentType.collabDefault, this.context.parentChatId);
+			this.#readParentChat();
+		}
 		getUnreadCounter() {
 			const childrenCounter = im_v2_application_core.Core.getStore().getters['counters/getChildrenTotalCounter'](this.context.parentChatId, im_v2_const.RecentType.collabDefault);
 			const parentCounter = im_v2_application_core.Core.getStore().getters['counters/getTotalCounterByIds']([this.context.parentChatId]);
 			return parentCounter + childrenCounter;
 		}
+		#readParentChat() {
+			const {
+				dialogId
+			} = im_v2_application_core.Core.getStore().getters['chats/getByChatId'](this.context.parentChatId);
+			new im_v2_provider_service_chat.ChatService().readDialog(dialogId);
+		}
 	}
 
 	class CollabChatHeaderMenu extends BaseRecentHeaderMenu {
+		onReadAllClick() {
+			new im_v2_provider_service_chat.ChatService().readAllByRecentType(im_v2_const.RecentType.collabChat, this.context.parentChatId);
+		}
 		getUnreadCounter() {
 			return im_v2_application_core.Core.getStore().getters['counters/getChildrenTotalCounter'](this.context.parentChatId, im_v2_const.RecentType.collabChat);
 		}
 	}
 
 	class CollabCalendarHeaderMenu extends BaseRecentHeaderMenu {
+		onReadAllClick() {
+			new im_v2_provider_service_chat.ChatService().readAllByRecentType(im_v2_const.RecentType.calendar, this.context.parentChatId);
+		}
 		getUnreadCounter() {
 			return im_v2_application_core.Core.getStore().getters['counters/getChildrenTotalCounter'](this.context.parentChatId, im_v2_const.RecentType.calendar);
+		}
+	}
+
+	class CollabCopilotHeaderMenu extends BaseRecentHeaderMenu {
+		getUnreadCounter() {
+			return im_v2_application_core.Core.getStore().getters['counters/getChildrenTotalCounter'](this.context.parentChatId, im_v2_const.RecentType.copilot);
 		}
 	}
 
@@ -158,7 +173,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		[im_v2_const.RecentType.default]: RecentHeaderMenu,
 		[im_v2_const.RecentType.collabDefault]: CollabDefaultHeaderMenu,
 		[im_v2_const.RecentType.collabChat]: CollabChatHeaderMenu,
-		[im_v2_const.RecentType.calendar]: CollabCalendarHeaderMenu
+		[im_v2_const.RecentType.calendar]: CollabCalendarHeaderMenu,
+		[im_v2_const.RecentType.copilot]: CollabCopilotHeaderMenu
 	};
 
 	// @vue/component
@@ -243,5 +259,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	exports.HeaderMenu = HeaderMenu;
 
-})(this.BX.Messenger.v2.Component.List = this.BX.Messenger.v2.Component.List || {}, BX.UI.IconSet, BX.Messenger.v2.Lib, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Service, BX.Messenger.v2.Application, BX.Messenger.v2.Lib, BX, BX.UI.IconSet, BX.Messenger.v2.Lib);
+})(this.BX.Messenger.v2.Component.List = this.BX.Messenger.v2.Component.List || {}, BX.UI.IconSet, BX.Messenger.v2.Lib, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Service, BX.Messenger.v2.Application, BX.Messenger.v2.Lib, BX, BX.UI.IconSet);
 //# sourceMappingURL=header-menu.bundle.js.map

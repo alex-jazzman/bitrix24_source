@@ -136,6 +136,14 @@ jn.define('im/messenger/lib/parser/functions/url', (require, exports, module) =>
 					return `${TAG_PLACEHOLDER}${id}`;
 				});
 
+				// Unpaired tags like [name=value] (e.g. [icon=URL]) — protect URL inside from being wrapped in [IMG]
+				text = text.replace(/\[\w+=[^\]]*\]/g, (tag) => {
+					const id = replacedTags.length;
+					replacedTags.push(tag);
+
+					return `${TAG_PLACEHOLDER}${id}`;
+				});
+
 				text = text.replace(imageUrlPattern, (url) => `[IMG]${url}[/IMG]`);
 
 				replacedTags.forEach((originalTag, index) => {

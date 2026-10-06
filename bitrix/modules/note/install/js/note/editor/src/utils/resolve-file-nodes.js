@@ -29,8 +29,13 @@ function collectUnresolvedFileIds(doc: Object, skip: Set<number>): number[]
  * Resolve missing file URLs by fileId for attachment nodes in the document.
  *
  * Sets showUrl/downloadUrl/name/viewerAttrs (and clears `unavailable`) for every node whose
- * fileId the backend resolved. Nodes the backend reports as failed are NOT mutated here — the
- * caller decides how to surface them (placeholder vs removal), since that depends on origin.
+ * fileId the backend resolved. Nodes the backend reports as failed (e.g. a file the [P4.T3]
+ * reachability sweep already physically removed) are flagged `unavailable = true` here, which is
+ * enough on its own to surface the existing placeholder (AC-024/ERR-004) — this is the fallback
+ * for read-only consumers like the version preview, which have no extra caller-side handling.
+ * A caller with origin-specific needs (e.g. the live editor's paste-delete flow) may still act on
+ * `failedIds`/`failedById` afterwards — marking unavailable first does not preclude removing the
+ * node right after.
  *
  * @param {Object} editor — Tiptap editor instance.
  * @param {number} documentId — owning document id (URLs are document-scoped).
@@ -101,7 +106,7 @@ export async function resolveFileNodes(
 		}
 	}
 
-	if (urlMap.size > 0)
+	if (urlMap.size > 0 || failedById.size > 0)
 	{
 		const { tr, doc, schema } = editor.state;
 		let changed = false;
@@ -115,6 +120,14 @@ export async function resolveFileNodes(
 			const payload = urlMap.get(node.attrs.fileId);
 			if (!payload)
 			{
+				// Backend-confirmed failure (e.g. reachability-swept file): flag the placeholder
+				// fallback. The caller may still delete the node afterwards (see doc comment above).
+				if (failedById.has(node.attrs.fileId) && !node.attrs.unavailable)
+				{
+					tr.setNodeMarkup(pos, undefined, { ...node.attrs, unavailable: true });
+					changed = true;
+				}
+
 				return;
 			}
 
@@ -133,6 +146,9 @@ export async function resolveFileNodes(
 			// (full attr replace) wipes the width/align from a pasted [[image ... width=N align=X]].
 			attrs.width = node.attrs.width ?? null;
 			attrs.align = node.attrs.align ?? null;
+			// [version-diff] Same reason: keep the diff tag so a removed/added image stays painted
+			// after it resolves (the resolve is exactly what used to drop the old decoration).
+			attrs.diffState = node.attrs.diffState ?? null;
 
 			if (targetType === node.type.name)
 			{

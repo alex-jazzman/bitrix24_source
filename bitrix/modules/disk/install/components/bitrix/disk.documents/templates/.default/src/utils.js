@@ -24,7 +24,23 @@ function observeIntersection(entity, callback)
 	intersectionObserver.observe(entity);
 }
 
+function keepFocusThroughMenuClose(focusFn)
+{
+	const onRestore = (event) => {
+		event.preventDefault();
+		document.removeEventListener('a11y:restore-focus', onRestore, true);
+	};
+
+	document.addEventListener('a11y:restore-focus', onRestore, true);
+
+	setTimeout(() => {
+		document.removeEventListener('a11y:restore-focus', onRestore, true);
+	}, 2000);
+
+	setTimeout(focusFn, 0);
+}
 
 export {
-	observeIntersection
+	observeIntersection,
+	keepFocusThroughMenuClose,
 }

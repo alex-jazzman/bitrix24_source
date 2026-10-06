@@ -1,7 +1,7 @@
 import { Builder, Dictionary } from 'crm.integration.analytics';
 import type { WhatsAppDeleteEvent as WhatsAppDeleteEventStructure } from 'crm.integration.types';
-import { Loc, Type } from 'main.core';
-import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
+import { confirm } from 'crm.timeline.dialog';
+import { Loc, Tag, Text, Type } from 'main.core';
 
 import ConfigurableItem from '../configurable-item';
 import { type ActionParams, Base } from './base';
@@ -99,17 +99,13 @@ export class WhatsApp extends Base
 			)
 		)
 		{
-			MessageBox.show({
-				modal: true,
+			// eslint-disable-next-line @bitrix24/bitrix24-rules/no-native-dialogs
+			confirm({
 				title: Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_WHATSAPP_RESEND_CONFIRM_DIALOG_TITLE'),
-				message: Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_WHATSAPP_RESEND_CONFIRM_DIALOG_MESSAGE'),
-				buttons: MessageBoxButtons.OK_CANCEL,
-				okCaption: Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_SMS_RESEND_CONFIRM_DIALOG_OK_BTN'),
-				onOk: (messageBox) => {
-					messageBox.close();
-					goToEditor();
-				},
-				onCancel: (messageBox) => messageBox.close(),
+				content: Tag.render`<div>${Text.encode(Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_WHATSAPP_RESEND_CONFIRM_DIALOG_MESSAGE'))}</div>`,
+				preset: 'OK_CANCEL',
+				confirmText: Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_SMS_RESEND_CONFIRM_DIALOG_OK_BTN'),
+				onConfirm: () => goToEditor(),
 			});
 		}
 		else

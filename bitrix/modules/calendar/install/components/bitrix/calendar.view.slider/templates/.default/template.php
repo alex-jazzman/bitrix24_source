@@ -5,6 +5,13 @@ use Bitrix\Calendar\Access\ActionDictionary;
 use Bitrix\Calendar\Access\EventAccessController;
 use \Bitrix\Main\Localization\Loc;
 
+if (($arParams['isRestrictedEventView'] ?? false) === true)
+{
+	$arParams['UF'] = [];
+
+	return;
+}
+
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/tools/clock.php");
 global $APPLICATION, $USER_FIELD_MANAGER;
 
@@ -97,7 +104,7 @@ $codes = [];
 $meetingHost = false;
 if ($event['IS_MEETING'])
 {
-	$userIndex = CCalendarEvent::getUserIndex();
+	$userIndex = $arParams['userIndex'] ?? CCalendarEvent::getUserIndex();
 	$attendees = ['y' => [], 'n' => [], 'q' => [], 'i' => []];
 
 	if (!empty($event['ATTENDEE_LIST']) && is_array($event['ATTENDEE_LIST']))
@@ -141,14 +148,14 @@ if (!isset($meetingHost) || !$meetingHost)
 	$meetingHost = CCalendar::GetUser($event['CREATED_BY'], true);
 	$meetingHost['DISPLAY_NAME'] = CCalendar::GetUserName($meetingHost);
 	$meetingHost['AVATAR'] = CCalendar::GetUserAvatarSrc($meetingHost);
-	$meetingHost['URL'] = CCalendar::GetUserUrl($meetingHost["ID"], $arParams["PATH_TO_USER"]);
+	$meetingHost['URL'] = CCalendar::GetUserUrl($meetingHost["ID"], $arParams["PATH_TO_USER"] ?? '');
 }
 
 if ($event['IS_MEETING'] && $event['MEETING']['MEETING_CREATOR'] && $event['MEETING']['MEETING_CREATOR'] !== $event['MEETING_HOST'])
 {
 	$meetingCreator = CCalendar::GetUser($event['MEETING']['MEETING_CREATOR'], true);
 	$meetingCreator['DISPLAY_NAME'] = CCalendar::GetUserName($meetingCreator);
-	$meetingCreator['URL'] = CCalendar::GetUserUrl($meetingCreator["ID"], $meetingCreator["PATH_TO_USER"]);
+	$meetingCreator['URL'] = CCalendar::GetUserUrl($meetingCreator["ID"], $meetingCreator["PATH_TO_USER"] ?? '');
 }
 
 $arParams['event'] = $event;

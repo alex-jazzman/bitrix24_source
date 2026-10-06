@@ -1,8 +1,17 @@
 import {Uri, Cache, Loc, Reflection, Type, Http, ajax, Text} from 'main.core';
 import {Env} from 'landing.env';
+import {resolveUploadErrorAction} from './upload_error';
 import type {Block, Landing, Site, Template, CreatePageOptions, SourceResponse, PreparedResponse} from './types';
 
 let additionalRequestCompleted = true;
+
+/**
+ * Upper bound for a single batch request built from portal data (sites, pages, etc).
+ * The server drops a batch longer than Bitrix\Landing\PublicAction::MAX_BATCH_ITEMS (500),
+ * and one item costs about 8 POST variables, so 500 items would also overflow
+ * the usual max_input_vars = 1000 long before the module limit is reached.
+ */
+export const BATCH_ITEMS_PER_REQUEST = 100;
 
 /**
  * @memberOf BX.Landing
@@ -353,6 +362,33 @@ export class Backend
 			});
 	}
 
+	/**
+	 * Runs a list of batch items as several sequential requests, none of them longer
+	 * than BATCH_ITEMS_PER_REQUEST, and concatenates the responses keeping the source order.
+	 * A failed part rejects the whole call, so the caller never gets a silently shortened list.
+	 */
+	batchList(action: string, items: Array<{[key: string]: any}>): Promise<Array<{[key: string]: any}>>
+	{
+		if (items.length <= BATCH_ITEMS_PER_REQUEST)
+		{
+			return this.batch(action, items);
+		}
+
+		const chunks = [];
+		for (let index = 0; index < items.length; index += BATCH_ITEMS_PER_REQUEST)
+		{
+			chunks.push(items.slice(index, index + BATCH_ITEMS_PER_REQUEST));
+		}
+
+		return chunks.reduce((queue, chunk) => {
+			return queue.then((processed) => {
+				return this
+					.batch(action, chunk)
+					.then((response) => [...processed, ...response]);
+			});
+		}, Promise.resolve([]));
+	}
+
 	upload(file: File | Blob, uploadParams = {}): Promise<{[key: string]: any}, any>
 	{
 		const formData = new FormData();
@@ -402,7 +438,12 @@ export class Backend
 			.then((response) => response.result)
 			.catch((err) => {
 				const error = Type.isString(err) ? {type: 'error'} : err;
-				error.action = 'Block::uploadFile';
+				const res = resolveUploadErrorAction(error);
+				error.action = res.action;
+				if (res.hideSupportLink)
+				{
+					error.hideSupportLink = true;
+				}
 				// eslint-disable-next-line
 				BX.Landing.ErrorManager.getInstance().add(error);
 				return Promise.reject(err);
@@ -465,28 +506,18 @@ export class Backend
 		};
 
 		return this.cache.remember(`landings+${JSON.stringify(ids)}`, () => {
-			if (ids.filter((id) => !Type.isNil(id)).length === 0)
-			{
-				return this.getSites()
-					.then((sites) => {
-						const data = sites.map((site) => getBathItem(site.ID));
-						return this.batch('Landing::getList', data);
-					})
-					.then((response) => prepareResponse(response))
-					.then((response) => {
-						response.forEach((landing) => {
-							this.cache.set(`landing+${landing.ID}`, Promise.resolve(landing));
-						});
-					});
-			}
+			const requestedIds = ids.some((id) => !Type.isNil(id))
+				? Promise.resolve(ids)
+				: this.getSites().then((sites) => sites.map((site) => site.ID));
 
-			const data = ids.map((id) => getBathItem(id));
-			return this.batch('Landing::getList', data)
+			return requestedIds
+				.then((siteIds) => this.batchList('Landing::getList', siteIds.map((id) => getBathItem(id))))
 				.then((response) => prepareResponse(response))
 				.then((response) => {
 					response.forEach((landing) => {
 						this.cache.set(`landing+${landing.ID}`, Promise.resolve(landing));
 					});
+
 					return response;
 				});
 		});

@@ -33,7 +33,7 @@ export class BaseField extends EventEmitter
 	static createError(text: string): HTMLDivElement
 	{
 		return Tag.render`
-			<div class="landing-ui-field-description landing-ui-error">
+			<div class="landing-ui-field-description landing-ui-error" role="alert">
 				<span class="fa fa-info-circle"> </span> ${text}
 			</div>
 		`;
@@ -72,6 +72,19 @@ export class BaseField extends EventEmitter
 		this.layout = BaseField.createLayout();
 		this.header = BaseField.createHeader();
 		this.input = this.createInput();
+
+		// Stable DOM ids, computed once before subclasses mutate this.id/this.selector.
+		this.headerId = `landing-ui-field-label-${Text.getRandom()}`;
+		this.descriptionId = `landing-ui-field-description-${Text.getRandom()}`;
+		this.errorId = `landing-ui-field-error-${Text.getRandom()}`;
+		this.errorNode = null;
+
+		Dom.attr(this.header, 'id', this.headerId);
+		if (!this.input.id)
+		{
+			Dom.attr(this.input, 'id', this.id);
+		}
+
 		this.setTitle(this.title);
 
 		Dom.append(this.header, this.layout);
@@ -114,12 +127,26 @@ export class BaseField extends EventEmitter
 
 	setTitle(title: string)
 	{
+		this.title = title;
 		this.header.innerHTML = Text.encode(title);
+		this.applyLabelledBy(title);
+	}
+
+	applyLabelledBy(title: string)
+	{
+		if (Type.isString(title) && title !== '')
+		{
+			Dom.attr(this.input, 'aria-labelledby', this.headerId);
+		}
+		else
+		{
+			Dom.attr(this.input, 'aria-labelledby', null);
+		}
 	}
 
 	getDescription(): ?HTMLDivElement
 	{
-		return this.layout.querySelector('.landing-ui-field-description');
+		return this.layout.querySelector('.landing-ui-field-description:not(.landing-ui-error)');
 	}
 
 	setDescription(description: string)
@@ -134,6 +161,13 @@ export class BaseField extends EventEmitter
 			Dom.remove(this.getDescription());
 			Dom.append(this.description, this.layout);
 		}
+
+		if (this.description)
+		{
+			Dom.attr(this.description, 'id', this.descriptionId);
+		}
+
+		this.syncDescribedBy();
 	}
 
 	removeDescription()
@@ -141,6 +175,39 @@ export class BaseField extends EventEmitter
 		Dom.remove(this.getDescription());
 		this.description = null;
 		this.descriptionText = '';
+		this.syncDescribedBy();
+	}
+
+	setError(text: string)
+	{
+		this.clearError();
+		this.errorNode = BaseField.createError(text);
+		Dom.attr(this.errorNode, 'id', this.errorId);
+		Dom.append(this.errorNode, this.layout);
+		Dom.attr(this.input, 'aria-invalid', 'true');
+		this.syncDescribedBy();
+	}
+
+	clearError()
+	{
+		if (this.errorNode)
+		{
+			Dom.remove(this.errorNode);
+			this.errorNode = null;
+		}
+
+		Dom.attr(this.input, 'aria-invalid', null);
+		this.syncDescribedBy();
+	}
+
+	syncDescribedBy()
+	{
+		const ids = [
+			this.description ? this.descriptionId : null,
+			this.errorNode ? this.errorId : null,
+		].filter(Boolean);
+
+		Dom.attr(this.input, 'aria-describedby', ids.length > 0 ? ids.join(' ') : null);
 	}
 
 	createInput(): HTMLDivElement
@@ -148,6 +215,18 @@ export class BaseField extends EventEmitter
 		return Tag.render`
 			<div class="landing-ui-field-input">${this.content}</div>
 		`;
+	}
+
+	/**
+	 * Makes a non-native contentEditable input reachable and announced as a textbox.
+	 * Opt-in: only editable-div fields (TextField and descendants) call it, so native
+	 * inputs and non-text widgets that extend BaseField keep their own semantics.
+	 */
+	enableTextboxAccessibility(options: {multiline?: boolean} = {})
+	{
+		Dom.attr(this.input, 'tabindex', '0');
+		Dom.attr(this.input, 'role', 'textbox');
+		Dom.attr(this.input, 'aria-multiline', options.multiline === true ? 'true' : null);
 	}
 
 	// eslint-disable-next-line class-methods-use-this

@@ -105,6 +105,8 @@ class Cloud extends BaseReceiver implements IdempotentReplayable
 			return null;
 		}
 
+		CloudRecordExpectationAgent::scheduleAgent($call->getId());
+
 		$chat = Chat::getInstance($call->getChatId());
 		if (!$chat || $chat instanceof \Bitrix\Im\V2\Chat\NullChat)
 		{
@@ -412,8 +414,21 @@ class Cloud extends BaseReceiver implements IdempotentReplayable
 		$chat = Chat::getInstance($call->getChatId());
 		if ($chat && !($chat instanceof \Bitrix\Im\V2\Chat\NullChat))
 		{
-			$errorText = $recordingError->errorMessage ?: $recordingError->errorCode;
-			$message = CallChatMessage::makeCloudRecordErrorMessage($call, $chat, $errorText);
+			$callId = $call->getId();
+			$showRetryButton =
+				CloudRecordExpectationAgent::hasRetryableTracks($callId)
+				&& !CloudRecordExpectationAgent::hasActiveDownloadAgentsForCall($callId)
+			;
+
+			if ($showRetryButton)
+			{
+				$message = CallChatMessage::makeCloudRecordRetryableErrorMessage($call, $chat);
+			}
+			else
+			{
+				$errorText = $recordingError->errorMessage ?: $recordingError->errorCode;
+				$message = CallChatMessage::makeCloudRecordErrorMessage($call, $chat, $errorText);
+			}
 
 			$sendingConfig = (new SendingConfig())
 				->enableSkipCounterIncrements()

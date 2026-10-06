@@ -8,7 +8,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	const SUPPORTED_CHAT_TYPES = new Set([im_v2_const.ChatType.collab]);
 	const EXCLUDED_LAYOUTS = new Set([im_v2_const.Layout.taskComments]);
-	const COMPACT_MODE_LAYOUTS = new Set([im_v2_const.Layout.chat]);
 	class NestedListManager {
 		#initedChat;
 		constructor(payload) {
@@ -22,9 +21,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		}
 		static isSupportedChatType(chatType) {
 			return SUPPORTED_CHAT_TYPES.has(chatType);
-		}
-		static isCompactModeLayout() {
-			return COMPACT_MODE_LAYOUTS.has(NestedListManager.#getCurrentLayoutName());
 		}
 		static async prepareParentChatId(parentDialogId) {
 			let realDialogId = parentDialogId;
@@ -93,7 +89,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		data() {
 			return {
 				isLoading: false,
-				nestedListParentChatId: 0
+				nestedListParentChatId: 0,
+				nestedListCompactMode: true,
+				initialRecentSection: null
 			};
 		},
 		computed: {
@@ -104,8 +102,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			isNestedListActive() {
 				return this.nestedListParentChatId > 0;
 			},
-			nestedListCompactMode() {
-				return NestedListManager.isCompactModeLayout();
+			isRootListAvatarsOnly() {
+				return this.isNestedListActive && this.nestedListCompactMode;
 			},
 			nestedListClasses() {
 				return {
@@ -131,7 +129,12 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			this.getEmitter().unsubscribe(im_v2_const.EventType.dialog.onDialogInited, this.onDialogInited);
 		},
 		methods: {
-			async openNestedList(parentDialogId) {
+			async openNestedList(parentDialogId, options = {}) {
+				const {
+					compactMode = true,
+					recentType = im_v2_const.RecentType.collabDefault
+				} = options;
+				this.nestedListCompactMode = compactMode;
 				this.isLoading = true;
 				const parentChatId = await NestedListManager.prepareParentChatId(parentDialogId);
 				const listWasClosed = !this.isLoading;
@@ -139,6 +142,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 					return;
 				}
 				this.nestedListParentChatId = parentChatId;
+				this.initialRecentSection = recentType;
 				this.isLoading = false;
 			},
 			closeNestedList() {
@@ -226,9 +230,10 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			},
 			onOpenNestedListEvent(event) {
 				const {
-					parentDialogId
+					parentDialogId,
+					options
 				} = event.getData();
-				void this.openNestedList(parentDialogId);
+				void this.openNestedList(parentDialogId, options);
 			},
 			onCloseNestedListEvent(event) {
 				if (!this.closeEventMatchesActiveList(event)) {
@@ -269,7 +274,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		},
 		template: `
 		<KeepAlive>
-			<component :is="listComponent" @selectChat="onSelectChat" />
+			<component :is="listComponent" :avatarsOnly="isRootListAvatarsOnly" @selectChat="onSelectChat" />
 		</KeepAlive>
 		<SlideAnimation :entrySide="SlideEntrySide.right">
 			<div v-if="isLoading || isNestedListActive" :class="nestedListClasses" class="bx-im-list-navigator-nested-list__container">
@@ -278,6 +283,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 					v-else-if="isNestedListActive"
 					:parentChatId="nestedListParentChatId"
 					:compactMode="nestedListCompactMode"
+					:initialRecentSection="initialRecentSection"
 					@close="onCloseNestedListClick"
 					@selectChat="onNestedListSelectChat"
 				/>

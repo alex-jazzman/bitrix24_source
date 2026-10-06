@@ -281,7 +281,15 @@ if(typeof(BX.Crm.DedupeWizard) === "undefined")
 		},
 		reloadEntityList: function()
 		{
-			if (top.BX.CRM && top.BX.CRM.Kanban)
+			if (!top.BX)
+			{
+				return;
+			}
+
+			// BX.CRM.Kanban namespace is shared by several extensions, Grid is not always among them
+			if (top.BX.CRM && top.BX.CRM.Kanban && top.BX.CRM.Kanban.Grid
+				&& BX.type.isFunction(top.BX.CRM.Kanban.Grid.getInstance)
+			)
 			{
 				var kanban = top.BX.CRM.Kanban.Grid.getInstance();
 				if (kanban)
@@ -289,7 +297,7 @@ if(typeof(BX.Crm.DedupeWizard) === "undefined")
 					kanban.reload();
 				}
 			}
-			if (top.BX.Main.gridManager)
+			if (top.BX.Main && top.BX.Main.gridManager)
 			{
 				var gridId = 'CRM_' + this.getEntityTypeName() + '_LIST_V12'; // does not support deal categories
 				var grid = top.BX.Main.gridManager.getInstanceById(gridId);
@@ -316,7 +324,15 @@ if(typeof(BX.Crm.DedupeWizard) === "undefined")
 			{
 				if (this._enableEntityListReload)
 				{
-					this.reloadEntityList();
+					// reload is a side effect of closing, its failure must not block the slider
+					try
+					{
+						this.reloadEntityList();
+					}
+					catch(e)
+					{
+						console.error('Crm.DedupeWizard: entity list reload on slider close failed', e);
+					}
 				}
 				return;
 			}

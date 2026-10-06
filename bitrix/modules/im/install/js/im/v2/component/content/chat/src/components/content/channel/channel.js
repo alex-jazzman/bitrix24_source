@@ -15,7 +15,7 @@ export const ChannelContent = {
 		},
 	},
 	template: `
-		<BaseChatContent :dialogId="dialogId" :withChatContentDisclaimer="false">
+		<BaseChatContent :dialogId="dialogId">
 			<template #dialog>
 				<ChannelDialog :dialogId="dialogId" :key="dialogId" />
 			</template>

@@ -6,16 +6,13 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Mobile\Context;
 use Bitrix\Mobile\Tab\Tabable;
+use Bitrix\Mobile\Tab\Tasks\ProjectsComponent;
 use Bitrix\Mobile\Tab\Utils;
-use Bitrix\MobileApp\Janative\Manager;
 use Bitrix\Main\ORM\Query\Filter;
 use Bitrix\Intranet\Settings\Tools\ToolsManager;
-use Bitrix\MobileApp\Mobile;
 
 class Projects implements Tabable
 {
-	private const INITIAL_COMPONENT = 'tasks:tasks.project.list';
-
 	/** @var Context $context */
 	private $context;
 
@@ -122,22 +119,16 @@ class Projects implements Tabable
 
 	private function getComponentParams(): array
 	{
+		$projectsListComponent = ProjectsComponent::getListComponent();
+
 		return [
 			'name' => 'JSStackComponent',
 			'title' => $this->getTitle(),
-			'componentCode' => 'tasks.project.list',
-			'scriptPath' => Manager::getComponentPath(self::INITIAL_COMPONENT),
-			'rootWidget' => [
-				'name' => 'tasks.list',
-				'settings' => [
-					'objectName' => 'list',
-					'useSearch' => true,
-					'useLargeTitleMode' => true,
-					'emptyListMode' => true,
-				],
-			],
+			'componentCode' => $projectsListComponent['code'],
+			'scriptPath' => $projectsListComponent['scriptPath'],
+			'rootWidget' => ProjectsComponent::getRootWidget($projectsListComponent['code']),
 			'params' => [
-				'COMPONENT_CODE' => 'tasks.project.list',
+				'COMPONENT_CODE' => $projectsListComponent['code'],
 				'SITE_ID' => $this->context->siteId,
 				'SITE_DIR' => $this->context->siteDir,
 				'USER_ID' => $this->context->userId,

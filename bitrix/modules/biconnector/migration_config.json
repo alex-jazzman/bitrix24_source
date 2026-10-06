@@ -1,0 +1,14 @@
+{
+	"defaultTableName": "b_biconnector_key",
+	"installDirectoriesMapping": {
+		"install/activities": "activities",
+		"install/components": "components",
+		"install/images": "images",
+		"install/js": "js",
+		"install/public/bitrix/tools": "tools",
+		"install/templates": "templates"
+	},
+	"publicDirectoriesMapping": {
+		"install/public": ""
+	}
+}

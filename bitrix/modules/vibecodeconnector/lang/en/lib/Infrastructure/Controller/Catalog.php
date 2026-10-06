@@ -1,0 +1,24 @@
+<?php
+$MESS["VIBECODECONNECTOR_CATALOG_UPDATE_ERROR_COMMON"] = "Could not save the changes. Try again later.";
+$MESS["VIBECODECONNECTOR_CATALOG_UPDATE_ERROR_DESCRIPTION_CONTROL"] = "App description contains invalid characters.";
+$MESS["VIBECODECONNECTOR_CATALOG_UPDATE_ERROR_DESCRIPTION_ENCODING"] = "App description contains invalid characters.";
+$MESS["VIBECODECONNECTOR_CATALOG_UPDATE_ERROR_DESCRIPTION_LENGTH_PLURAL_0"] = "App description must not be longer than #MIN# character.";
+$MESS["VIBECODECONNECTOR_CATALOG_UPDATE_ERROR_DESCRIPTION_LENGTH_PLURAL_1"] = "App description must not be longer than #MIN# characters.";
+$MESS["VIBECODECONNECTOR_CATALOG_UPDATE_ERROR_DESCRIPTION_LENGTH_PLURAL_2"] = "App description must not be longer than #MIN# characters.";
+$MESS["VIBECODECONNECTOR_CATALOG_UPDATE_ERROR_ICON_FORMAT"] = "PNG, JPEG, GIF, WEBP and BMP files are supported.";
+$MESS["VIBECODECONNECTOR_CATALOG_UPDATE_ERROR_ICON_PIXELS"] = "Image size must not exceed 4 megapixels.";
+$MESS["VIBECODECONNECTOR_CATALOG_UPDATE_ERROR_ICON_REQUIRED"] = "Select icon file";
+$MESS["VIBECODECONNECTOR_CATALOG_UPDATE_ERROR_ICON_SAVE"] = "Could not save the icon. Try again later.";
+$MESS["VIBECODECONNECTOR_CATALOG_UPDATE_ERROR_ICON_SIZE"] = "Icon file must not exceed 5 MB.";
+$MESS["VIBECODECONNECTOR_CATALOG_UPDATE_ERROR_ICON_UPLOAD"] = "File has failed to upload. Please try again.";
+$MESS["VIBECODECONNECTOR_CATALOG_UPDATE_ERROR_SYNC"] = "Could not save the changes. Try again later.";
+$MESS["VIBECODECONNECTOR_CATALOG_UPDATE_ERROR_TITLE_CONTROL"] = "App name contains invalid characters.";
+$MESS["VIBECODECONNECTOR_CATALOG_UPDATE_ERROR_TITLE_ENCODING"] = "App name contains invalid characters.";
+$MESS["VIBECODECONNECTOR_CATALOG_UPDATE_ERROR_TITLE_MAX_PLURAL_0"] = "App name must not be longer than #MIN# character.";
+$MESS["VIBECODECONNECTOR_CATALOG_UPDATE_ERROR_TITLE_MAX_PLURAL_1"] = "App name must not be longer than #MIN# characters.";
+$MESS["VIBECODECONNECTOR_CATALOG_UPDATE_ERROR_TITLE_MAX_PLURAL_2"] = "App name must not be longer than #MIN# characters.";
+$MESS["VIBECODECONNECTOR_CATALOG_UPDATE_ERROR_TITLE_MIN_PLURAL_0"] = "App name has to include at least #MIN# character.";
+$MESS["VIBECODECONNECTOR_CATALOG_UPDATE_ERROR_TITLE_MIN_PLURAL_1"] = "App name has to include at least #MIN# characters.";
+$MESS["VIBECODECONNECTOR_CATALOG_UPDATE_ERROR_TITLE_MIN_PLURAL_2"] = "App name has to include at least #MIN# characters.";
+$MESS["VIBECODECONNECTOR_CATALOG_UPDATE_ERROR_TOO_LARGE"] = "Icon file must not exceed 5 MB.";
+$MESS["VIBECODECONNECTOR_CATALOG_UPDATE_ERROR_TYPE"] = "Only apps can be renamed.";

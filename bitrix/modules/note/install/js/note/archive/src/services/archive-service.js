@@ -4,6 +4,11 @@ const ACTION_LIST = 'note.infrastructure.DocumentController.listArchived';
 const ACTION_RESTORE = 'note.infrastructure.DocumentController.restore';
 const ACTION_RESTORE_ALL = 'note.infrastructure.DocumentController.restoreAll';
 const ACTION_DELETE_ALL = 'note.infrastructure.DocumentController.deleteAllArchived';
+const ACTION_RESOLVE_BULK = 'note.infrastructure.DocumentController.resolveBulkSelection';
+const ACTION_RESTORE_MANY = 'note.infrastructure.DocumentController.restoreMany';
+const ACTION_DELETE_MANY = 'note.infrastructure.DocumentController.deleteMany';
+
+const SECTION_ARCHIVE = 'archive';
 
 export type ArchivedDocument = {
 	id: number,
@@ -21,6 +26,20 @@ export type ArchivedDocument = {
 export type ArchivedListResult = {
 	items: ArchivedDocument[],
 	nextCursor: ?Object,
+};
+
+// DTO-01: outcome of a bulk operation. On limitExceeded the counters are all zero and nothing was applied.
+export type BulkOutcome = {
+	processedCount: number,
+	skippedCount: number,
+	skippedByAccessCount: number,
+	skippedOrphanCount: number,
+	limitExceeded: boolean,
+};
+
+export type BulkResolution = {
+	affectedCount: number,
+	limitExceeded: boolean,
 };
 
 export class ArchiveService
@@ -120,6 +139,92 @@ export class ArchiveService
 		{
 			throw new Error(this.#extractErrorMessage(error));
 		}
+	}
+
+	// API-08 dry-run: true affected volume (roots + descendants) for an explicit archive selection.
+	async resolveBulkSelection(ids: number[], withNested: boolean): Promise<BulkResolution>
+	{
+		try
+		{
+			const response = await ajax.runAction(ACTION_RESOLVE_BULK, {
+				data: {
+					documentIds: this.#normalizeIds(ids),
+					section: SECTION_ARCHIVE,
+					withNested: withNested ? 1 : 0,
+				},
+			});
+			const data = response?.data ?? {};
+
+			return {
+				affectedCount: Number(data.affectedCount) || 0,
+				limitExceeded: data.limitExceeded === true,
+			};
+		}
+		catch (error)
+		{
+			throw this.#wrapError(error);
+		}
+	}
+
+	// API-03
+	async restoreMany(ids: number[]): Promise<BulkOutcome>
+	{
+		return this.#runBulk(ACTION_RESTORE_MANY, {
+			documentIds: this.#normalizeIds(ids),
+		});
+	}
+
+	// API-02
+	async deleteMany(ids: number[], withNested: boolean): Promise<BulkOutcome>
+	{
+		return this.#runBulk(ACTION_DELETE_MANY, {
+			documentIds: this.#normalizeIds(ids),
+			section: SECTION_ARCHIVE,
+			withNested: withNested ? 1 : 0,
+		});
+	}
+
+	async #runBulk(action: string, data: Object): Promise<BulkOutcome>
+	{
+		try
+		{
+			const response = await ajax.runAction(action, { data });
+
+			return this.#parseOutcome(response?.data?.outcome);
+		}
+		catch (error)
+		{
+			throw this.#wrapError(error);
+		}
+	}
+
+	#parseOutcome(raw: mixed): BulkOutcome
+	{
+		const outcome = Type.isPlainObject(raw) ? raw : {};
+
+		return {
+			processedCount: Number(outcome.processedCount) || 0,
+			skippedCount: Number(outcome.skippedCount) || 0,
+			skippedByAccessCount: Number(outcome.skippedByAccessCount) || 0,
+			skippedOrphanCount: Number(outcome.skippedOrphanCount) || 0,
+			limitExceeded: outcome.limitExceeded === true,
+		};
+	}
+
+	#normalizeIds(ids: mixed): number[]
+	{
+		const source = ids instanceof Set ? [...ids] : (Array.isArray(ids) ? ids : []);
+
+		return source.map((id) => Number(id)).filter((id) => Number.isInteger(id) && id > 0);
+	}
+
+	#wrapError(error: mixed): Error
+	{
+		const code = String(error?.errors?.[0]?.code || error?.code || '');
+		const wrapped = new Error(this.#extractErrorMessage(error));
+		wrapped.code = code;
+
+		return wrapped;
 	}
 
 	#extractErrorMessage(error: mixed): string

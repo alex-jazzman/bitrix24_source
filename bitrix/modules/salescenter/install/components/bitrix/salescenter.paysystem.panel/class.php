@@ -954,7 +954,7 @@ class SalesCenterPaySystemPanel extends CBitrixComponent implements Controllerab
 		return [
 			'id' => 'sbp_recommend',
 			'title' => Loc::getMessage('SPP_PAYSYSTEM_SBP_RECOMMEND'),
-			'image' => $this->getImagePath().'sbp_recommend.svg',
+			'image' => $this->getImagePath().'sbp_recommend.webp',
 			'data' => [
 				'type' => 'recommend',
 				'feedbackConfig' => [

@@ -24,6 +24,11 @@ use Bitrix\Main\DB\SqlQueryException;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Uri;
+use Bitrix\Main\UI\PageNavigation;
+use Bitrix\Main\Engine\CurrentUser;
+use Bitrix\Lists\Field;
+use Bitrix\Main\Web\Json;
+use Bitrix\Main\Grid\Panel\Snippet;
 
 $this->setFrameMode(false);
 
@@ -185,9 +190,12 @@ $arResult["ANY_SECTION"] = (isset($_REQUEST["list_section_id"]) && $_REQUEST["li
 $arResult["SECTION"] = false;
 $arResult["SECTION_ID"] = false;
 $arResult["PARENT_SECTION_ID"] = false;
-$sectionUpperUrl = CHTTP::urlAddParams(str_replace(array("#list_id#", "#section_id#", "#group_id#"),
+$listUrl = str_replace(
+	array("#list_id#", "#section_id#", "#group_id#"),
 	array($arResult["IBLOCK_ID"], 0, $arParams["SOCNET_GROUP_ID"]),
-	$arParams['LIST_URL']), array('list_section_id' => ""));
+	$arParams['LIST_URL']
+);
+$sectionUpperUrl = (string)(new Uri($listUrl))->addParams(['list_section_id' => '']);
 $arResult["SECTIONS"] = array(
 	array(
 		"NAME" => GetMessage("CC_BLL_UPPER_LEVEL"),
@@ -233,9 +241,15 @@ while($arSection = $rsSections->GetNext())
 	$arResult["LIST_SECTIONS"][$arSection["ID"]] = str_repeat(" . ", $arSection["DEPTH_LEVEL"]).$arSection["NAME"];
 	$arResult["~LIST_SECTIONS"][$arSection["ID"]] = str_repeat(" . ", $arSection["DEPTH_LEVEL"]).$arSection["~NAME"];
 
-	$sectionUrl = CHTTP::URN2URI(CHTTP::urlAddParams(str_replace(array("#list_id#", "#section_id#", "#group_id#"),
+	$url = str_replace(
+		array("#list_id#", "#section_id#", "#group_id#"),
 		array($arResult["IBLOCK_ID"], 0, $arParams["SOCNET_GROUP_ID"]),
-		$arParams['LIST_URL']), array('list_section_id' => $arSection["ID"])));
+		$arParams['LIST_URL']
+	);
+	$sectionUrl = (string)(new Uri($url))
+		->addParams(['list_section_id' => $arSection["ID"]])
+		->toAbsolute()
+	;
 
 	$arResult["SECTIONS"][$arSection["ID"]] = array(
 		"ID" => $arSection["ID"],
@@ -301,10 +315,13 @@ $arResult["~LIST_SECTION_URL"] = str_replace(
 );
 $arResult["LIST_SECTION_URL"] = htmlspecialcharsbx($arResult["~LIST_SECTION_URL"]);
 
-$parentSectionUrl = $arResult["PARENT_SECTION_ID"] ? $arResult["PARENT_SECTION_ID"] : "";
-$arResult["~LIST_PARENT_URL"] = CHTTP::urlAddParams(str_replace(array("#list_id#", "#section_id#", "#group_id#"),
+$parentSectionUrl = $arResult["PARENT_SECTION_ID"] ?: "";
+$parentUrl = str_replace(
+	array("#list_id#", "#section_id#", "#group_id#"),
 	array($arResult["IBLOCK_ID"], 0, $arParams["SOCNET_GROUP_ID"]),
-	$arParams['LIST_URL']), array('list_section_id' => $parentSectionUrl));
+	$arParams['LIST_URL']
+);
+$arResult["~LIST_PARENT_URL"] = (string)(new Uri($parentUrl))->addParams(['list_section_id' => $parentSectionUrl]);
 $arResult["LIST_PARENT_URL"] = htmlspecialcharsbx($arResult["~LIST_PARENT_URL"]);
 
 $arResult["~BIZPROC_WORKFLOW_ADMIN_URL"] = str_replace(
@@ -375,7 +392,7 @@ if(
 				$conn->startTransaction();
 				try
 				{
-					$success = \CIBlockElement::Delete($arElement['ID']);
+					$success = CIBlockElement::Delete($arElement['ID']);
 					if (!$success)
 					{
 						$ex = $APPLICATION->GetException();
@@ -416,7 +433,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['error']))
 	{
 		if (!isset($_SESSION[$errorID]))
 		{
-			LocalRedirect(CHTTP::urlDeleteParams($APPLICATION->GetCurPage(), array('error')));
+			LocalRedirect((string)(new Uri($APPLICATION->GetCurPage()))->deleteParams(['error']));
 		}
 
 		$strError = strval($_SESSION[$errorID]);
@@ -797,7 +814,7 @@ $session = Bitrix\Main\Application::getInstance()->getSession();
 
 if ($request->isAjaxRequest() && $request->get('action') == 'getTotalCount')
 {
-	$totalCount = \CIBlockElement::getList(
+	$totalCount = CIBlockElement::getList(
 		$grid_sort['sort'],
 		$arFilter,
 		[],
@@ -826,7 +843,7 @@ if (
 	}
 }
 
-$nav = new \Bitrix\Main\UI\PageNavigation($arResult['GRID_ID']);
+$nav = new PageNavigation($arResult['GRID_ID']);
 $nav->setPageSize($grid_options->getNavParams()['nPageSize']);
 $nav->setCurrentPage($pageNum);
 $nav->initFromUri();
@@ -855,7 +872,7 @@ $rsElements = CIBlockElement::getList(
 $isBizprocActive = $arResult['BIZPROC'] === 'Y';
 if ($isBizprocActive)
 {
-	$arUserGroupsForBP = \Bitrix\Main\Engine\CurrentUser::get()->getUserGroups();
+	$arUserGroupsForBP = CurrentUser::get()->getUserGroups();
 	$arDocumentStatesForBP = CBPWorkflowTemplateLoader::getDocumentTypeStates(
 		BizprocDocument::generateDocumentComplexType($arParams['IBLOCK_TYPE_ID'], $arIBlock['ID'])
 	);
@@ -934,7 +951,7 @@ while ($obElement = $rsElements->GetNextElement())
 
 	if (!empty($arProperties))
 	{
-		$propertyValuesObject = \CIblockElement::getPropertyValues(
+		$propertyValuesObject = CIblockElement::getPropertyValues(
 			$arIBlock['ID'],
 			['ID' => $data['ID'], 'SHOW_NEW' => ($arParams['CAN_EDIT'] ? 'Y' : 'N')]
 		);
@@ -970,7 +987,7 @@ while ($obElement = $rsElements->GetNextElement())
 		$field["FIELD_ID"] = $fieldId;
 		$valueKey = (mb_substr($fieldId, 0, 9) == "PROPERTY_") ? $fieldId : "~".$fieldId;
 		$field["VALUE"] = $listValues[$data["ID"]][$valueKey] ?? null;
-		$columns[$fieldId] = \Bitrix\Lists\Field::renderField($field);
+		$columns[$fieldId] = Field::renderField($field);
 	}
 
 	if($iblockSectionId)
@@ -1052,14 +1069,11 @@ while ($obElement = $rsElements->GetNextElement())
 			else
 				$html .= "<b>".(++$ii)."</b>:<br />";
 
-			$url = CHTTP::urlAddParams(str_replace(
+			$url = (string)(new Uri(str_replace(
 				array("#list_id#", "#document_state_id#", "#group_id#"),
 				array($arResult["IBLOCK_ID"], $vv["ID"], $arParams["SOCNET_GROUP_ID"]),
 				$arParams["~BIZPROC_LOG_URL"]
-			),
-				array("back_url" => $backUrl),
-				array("skip_empty" => true, "encode" => true)
-			);
+			)))->addParams(["back_url" => $backUrl]);
 
 			$html .= "<a href=\"".htmlspecialcharsbx($url)."\">".($vv["STATE_TITLE"] <> '' ?
 				htmlspecialcharsbx($vv["STATE_TITLE"]) : htmlspecialcharsbx($vv["STATE_NAME"]))."</a><br />";
@@ -1114,7 +1128,7 @@ while ($obElement = $rsElements->GetNextElement())
 		array($arIBlock["ID"], intval($arResult["SECTION_ID"]), intval($data["~ID"]), $arParams["SOCNET_GROUP_ID"]),
 		$arParams["LIST_ELEMENT_URL"]
 	);
-	$url = CHTTP::urlAddParams($url, ["list_section_id" => ($arResult["ANY_SECTION"] ? "" : $section_id)]);
+	$url = (string)(new Uri($url))->addParams(["list_section_id" => ($arResult["ANY_SECTION"] ? "" : $section_id)]);
 
 	$aActions = [];
 	if(
@@ -1148,15 +1162,15 @@ while ($obElement = $rsElements->GetNextElement())
 		)
 	)
 	{
-		$urlCopy = CHTTP::urlAddParams(str_replace(
-				['#list_id#', '#section_id#', '#element_id#', '#group_id#'],
-				[$arIBlock['ID'], (int)($arResult['SECTION_ID']), 0, $arParams['SOCNET_GROUP_ID']],
-				$arParams['LIST_ELEMENT_URL']
-			),
-			['copy_id' => $data['~ID']],
-			['skip_empty' => true, 'encode' => true]
+		$urlCopy = str_replace(
+			['#list_id#', '#section_id#', '#element_id#', '#group_id#'],
+			[$arIBlock['ID'], (int)($arResult['SECTION_ID']), 0, $arParams['SOCNET_GROUP_ID']],
+			$arParams['LIST_ELEMENT_URL']
 		);
-		$urlCopy = CHTTP::urlAddParams($urlCopy, ['list_section_id' => ($arResult['ANY_SECTION'] ? '' : $section_id)]);
+		$urlCopy = (string)(new Uri($urlCopy))->addParams([
+			'copy_id' => $data['~ID'],
+			'list_section_id' => ($arResult['ANY_SECTION'] ? '' : $section_id),
+		]);
 		$aActions[] = [
 			'TEXT' => Loc::getMessage('CC_BLL_ELEMENT_ACTION_MENU_COPY'),
 			'HREF' => $urlCopy,
@@ -1174,7 +1188,7 @@ while ($obElement = $rsElements->GetNextElement())
 			)
 		)
 		{
-			$startParams = \Bitrix\Main\Web\Json::encode([
+			$startParams = Json::encode([
 				'signedDocumentType' => CBPDocument::signDocumentType($documentComplexType),
 				'signedDocumentId' => CBPDocument::signDocumentType($documentComplexId),
 			]);
@@ -1281,15 +1295,13 @@ while ($obElement = $rsElements->GetNextElement())
 					{
 						foreach($tasks as $task)
 						{
-							$url = CHTTP::urlAddParams(str_replace(
+							$url = str_replace(
 								array("#list_id#", "#section_id#", "#element_id#", "#task_id#", "#group_id#"),
 								array($arIBlock["ID"], intval($arResult["SECTION_ID"]), $data["ID"],
 									$task["ID"], $arParams["SOCNET_GROUP_ID"]),
 								$arParams["~BIZPROC_TASK_URL"]
-							),
-								array("back_url" => $backUrl),
-								array("skip_empty" => true, "encode" => true)
 							);
+							$url = (string)(new Uri($url))->addParams(["back_url" => $backUrl]);
 							$actionsProcess[] = array(
 								"TEXT" => $task["NAME"],
 								"ONCLICK" => "jsUtils.Redirect(arguments, '".CUtil::JSEscape($url)."')",
@@ -1353,7 +1365,7 @@ if (!$arResult["IS_SOCNET_GROUP_CLOSED"] && ($lists_perm >= CListPermissions::CA
 	|| CIBlockRights::UserHasRightTo($IBLOCK_ID, $IBLOCK_ID, "element_delete")))
 {
 	/* Create sctructure group actions for grid  */
-	$snippet = new \Bitrix\Main\Grid\Panel\Snippet();
+	$snippet = new Snippet();
 	$actionsPanel = array(
 		"GROUPS" => array(
 			array(
@@ -1388,14 +1400,14 @@ $arResult["LIST_NEW_ELEMENT_URL"] = str_replace(
 	array($arIBlock["ID"], intval($arResult["SECTION_ID"]), 0, $arParams["SOCNET_GROUP_ID"]),
 	$arParams["LIST_ELEMENT_URL"]
 );
-$arResult["LIST_NEW_ELEMENT_URL"] = CHTTP::urlAddParams(
-	$arResult["LIST_NEW_ELEMENT_URL"], ["list_section_id" => ($arResult["ANY_SECTION"] ? "" : $section_id)]);
+$arResult["LIST_NEW_ELEMENT_URL"] = (string)(new Uri($arResult["LIST_NEW_ELEMENT_URL"]))->addParams(["list_section_id" => ($arResult["ANY_SECTION"] ? "" : $section_id)]);
 
-$APPLICATION->AddChainItem($arResult["IBLOCK"]["NAME"], CHTTP::urlAddParams(str_replace(
+$url = str_replace(
 	array("#list_id#", "#section_id#", "#group_id#"),
 	array($arResult["IBLOCK_ID"], 0, $arParams["SOCNET_GROUP_ID"]),
 	$arParams["~LIST_URL"]
-), array("list_section_id" => "")));
+);
+$APPLICATION->AddChainItem($arResult["IBLOCK"]["NAME"], (string)(new Uri($url))->addParams(["list_section_id" => ""]));
 
 foreach($arResult["SECTION_PATH"] as $arPath)
 {
@@ -1403,4 +1415,3 @@ foreach($arResult["SECTION_PATH"] as $arPath)
 }
 
 $this->IncludeComponentTemplate();
-?>

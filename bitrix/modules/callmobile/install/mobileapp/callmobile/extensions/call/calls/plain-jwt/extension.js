@@ -100,6 +100,7 @@ jn.define('call/calls/plain-jwt', (require, exports, module) => {
 
 			this.lastPingReceivedTimeout = null;
 			this.waitForAnswerTimeout = null;
+			this.invitePeriod = params.invitePeriod;
 			this.iceConnectionStateTimer = null;
 			this.isSwitchingConnectionType = false;
 
@@ -127,8 +128,6 @@ jn.define('call/calls/plain-jwt', (require, exports, module) => {
 			});
 
 			this._videoEnablePending = false;
-
-			this.invitePeriod = params.invitePeriod;
 		}
 
 		get provider()
@@ -213,12 +212,6 @@ jn.define('call/calls/plain-jwt', (require, exports, module) => {
 		 **/
 		inviteUsers(config = {})
 		{
-			// const users = config.users || this.peers.map(peer => peer.userId);
-			const users = config.users || [];
-			if (users.length === 0)
-			{
-				//throw new Error("No users to invite");
-			}
 			this.ready = true;
 
 			this.getLocalMedia().then(() =>
@@ -231,6 +224,8 @@ jn.define('call/calls/plain-jwt', (require, exports, module) => {
 					return;
 				}
 
+				this.joinStatus = BX.Call.JoinStatus.Local;
+
 				clearTimeout(this.waitForAnswerTimeout);
 				this.waitForAnswerTimeout = setTimeout(() =>
 				{
@@ -242,32 +237,6 @@ jn.define('call/calls/plain-jwt', (require, exports, module) => {
 					this.getSignaling().sendUsersInvited({
 						users: config.userData,
 					});
-				}
-
-				if (users.length)
-				{
-					return this.getSignaling().inviteUsers({
-						userIds: users,
-						video: this.videoEnabled ? "Y" : "N",
-					});
-				}
-			}).then((response) =>
-			{
-				for (let i = 0; i < users.length; i++)
-				{
-					let userId = users[i];
-					let peer = this.getPeer(userId);
-					if (!peer)
-					{
-						peer = this.createPeer(userId);
-						this.peers[userId] = peer;
-					}
-					peer.onInvited();
-					this.joinStatus = BX.Call.JoinStatus.Local;
-					/*this.runCallback(BX.Call.Event.onUserInvited, {
-							userId: userId
-						});*/
-					//this.scheduleRepeatInvite();
 				}
 			});
 		}

@@ -1,7 +1,7 @@
 import { Dom, Event, Loc, Tag, Text, Type } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import { Mapper } from 'humanresources.hcmlink.data-mapper';
-import type { Api } from 'signproxy.signing.api';
+import type { Api } from 'sign.v2.api';
 import type { HrmLinkOptions } from './type';
 
 import './style.css';

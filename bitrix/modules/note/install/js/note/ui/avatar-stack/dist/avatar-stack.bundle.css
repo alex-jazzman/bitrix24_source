@@ -1,0 +1,298 @@
+.note-avatar-stack {
+	/* Avatar diameter — overridable by hosts that render the stack inline in tight rows
+	   (e.g. the activity chip / history tiles use a smaller size). */
+	--note-avatar-stack-size: 28px;
+	position: relative;
+	display: flex;
+	align-items: center;
+}
+
+.note-avatar-stack__row {
+	display: flex;
+	align-items: center;
+}
+
+.note-avatar-stack__avatar {
+	/* Clickable avatars render as a native <button> (keyboard + a11y for free); reset the UA chrome
+	   so button and non-clickable <span> look identical. */
+	appearance: none;
+	padding: 0;
+	border: none;
+	background: none;
+	font: inherit;
+	color: inherit;
+	position: relative;
+	width: var(--note-avatar-stack-size);
+	height: var(--note-avatar-stack-size);
+	margin-right: -5px;
+	border-radius: var(--ui-border-radius-circle, 50%);
+	box-shadow: 0 0 0 2px var(--ui-color-bg-content-primary);
+}
+
+/* Raise z-index so the ring isn't clipped by the next avatar overlapping it (margin-right: -5px). */
+.note-avatar-stack__avatar:focus-visible {
+	z-index: 20;
+	outline: 2px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+}
+
+/* Entrance animation runs only for genuinely new participants (--appearing), not on every
+   node re-creation (mode toggle recreates the node for the tooltip) or when the dropdown opens. */
+.note-avatar-stack__avatar.--appearing {
+	animation: note-participant-in 160ms ease-out;
+}
+
+@keyframes note-participant-in {
+	from { opacity: 0; transform: scale(0.6); }
+	to { opacity: 1; transform: scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.note-avatar-stack__avatar.--appearing { animation: none; }
+}
+
+.note-avatar-stack__avatar.--editing {
+	box-shadow: 0 0 0 2px var(--ui-color-bg-content-primary), 0 0 0 3px var(--ui-color-accent-main-success, #9DCF00);
+}
+
+.note-avatar-stack__avatar-image {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+	height: 100%;
+	border-radius: var(--ui-border-radius-circle, 50%);
+	/* Identity color of this participant (set inline by participantAvatarStyle). It is the wrapper
+	   that carries the color, not ui.avatar's own circle — see the --ui-avatar rules below. */
+	background-color: var(--note-avatar-stack-color, var(--ui-color-base-7));
+	overflow: hidden;
+}
+
+/* ui.avatar derives its circle, initials and userpic entirely from --ui-avatar-size; the JS omits
+   the `size` option so hosts keep resizing the whole stack through one variable.
+   display: block is load-bearing — upstream makes it inline-flex, so it sits on the text baseline
+   and its (block) parent grows by the descender gap, pushing the avatar a couple of pixels above
+   the centre of the circle. */
+.note-avatar-stack__avatar-image .ui-avatar {
+	--ui-avatar-size: var(--note-avatar-stack-size);
+	display: block;
+}
+
+/* ui.avatar paints its own base circle under the userpic. We already paint the identity color on
+   the wrapper, and at the mask's anti-aliased edge that second circle bleeds through as a rim
+   (same artefact note.ui.mention-chip hides), so drop it. */
+.note-avatar-stack__avatar-image .ui-avatar-base {
+	display: none;
+}
+
+/* Contrast-aware initial: ui.avatar hardcodes white, which is unreadable on the lighter half of
+   the identity palette. The font-size needs !important — upstream writes it inline on the node. */
+.note-avatar-stack__avatar-image .ui-avatar__text {
+	color: var(--note-avatar-stack-initial-color, #fff);
+	font-family: 'Inter', sans-serif;
+	font-size: calc(var(--note-avatar-stack-size) * 0.43) !important;
+	font-weight: 600;
+	text-transform: uppercase;
+}
+
+.note-avatar-stack__avatar:hover {
+	z-index: 20;
+}
+
+.note-avatar-stack__avatar.--clickable {
+	cursor: pointer;
+}
+
+.note-avatar-stack__hint-name {
+	display: block;
+	font-weight: 600;
+}
+
+.note-avatar-stack__hint-action {
+	display: block;
+	opacity: 0.75;
+}
+
+/* State: single participant + visible name (showSingleName). */
+.note-avatar-stack__single-name {
+	margin-left: 8px;
+	color: var(--ui-color-base-1);
+	font-size: 14px;
+	font-weight: 500;
+	white-space: nowrap;
+}
+
+/* Stacked overflow puck: a plain circle sized like an avatar so it blends into the stack. */
+.note-avatar-stack__counter {
+	position: relative;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: var(--note-avatar-stack-size);
+	height: var(--note-avatar-stack-size);
+	padding: 0;
+	border: none;
+	border-radius: var(--ui-border-radius-circle, 50%);
+	background: var(--ui-color-base-6, #DFE0E3);
+	color: var(--ui-color-base-1, #333333);
+	font-family: 'Inter', sans-serif;
+	font-size: 11px;
+	font-weight: 600;
+	line-height: 1;
+	cursor: pointer;
+	box-shadow: 0 0 0 2px var(--ui-color-bg-content-primary);
+	animation: note-participant-in 160ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce)
+{
+	.note-avatar-stack__counter
+	{
+		animation: none;
+	}
+}
+
+.note-avatar-stack__counter:hover,
+.note-avatar-stack__counter.--active {
+	background: var(--ui-color-base-5, #C9CCD0);
+}
+
+/* Compact puck (mobile / no stack): a ghost icon+count that matches the borderless header action
+ * icons — no fill (a filled pill clashes with the transparent neighbours, especially in dark theme),
+ * theme-aware colour via base tokens, and a person icon so a lone number reads as "participants". */
+.note-avatar-stack__counter.--compact {
+	gap: 4px;
+	width: auto;
+	height: 40px;
+	padding: 0 8px;
+	border-radius: 999px;
+	background: transparent;
+	box-shadow: none;
+	color: var(--ui-color-base-3);
+	font-size: 14px;
+	font-weight: 600;
+	font-variant-numeric: tabular-nums;
+}
+
+.note-avatar-stack__counter.--compact:hover,
+.note-avatar-stack__counter.--compact.--active {
+	background: transparent;
+	color: var(--ui-color-base-1);
+}
+
+.note-avatar-stack__counter-icon {
+	--ui-icon-set__icon-size: 24px;
+	--ui-icon-set__icon-color: var(--ui-color-base-3);
+	flex: 0 0 24px;
+	width: 24px;
+	height: 24px;
+}
+
+.note-avatar-stack__counter-text {
+	line-height: 1;
+	/* Same token as the icon; lighter weight so the solid glyph doesn't read heavier than the
+	 * thin outline icon next to it (their colours are identical, only the ink coverage differs). */
+	color: var(--ui-color-base-3);
+	font-weight: 500;
+}
+
+/* Overlap the overflow puck onto the preceding avatars (stacked mode only; the compact puck
+ * is the first child and keeps its natural position). */
+.note-avatar-stack__avatar + .note-avatar-stack__counter {
+	margin-left: -3px;
+}
+
+.note-avatar-stack__counter:hover,
+.note-avatar-stack__counter.--active {
+	background: var(--ui-color-base-5, #D5D9DC);
+}
+
+/* Visually 1:1 with note-action-menu (three-dots / breadcrumb overflow): same popup chrome, item
+ * metrics, hover and typography — only the row content stays richer (name + action + avatar). */
+.note-avatar-stack__menu {
+	position: absolute;
+	top: calc(100% + 9px);
+	right: 0;
+	min-width: 216px;
+	max-width: 320px;
+	max-height: 340px;
+	overflow-y: auto;
+	padding: 10px 0;
+	border: 1px solid var(--ui-color-divider-default, #f0f0f0);
+	border-radius: var(--note-popup-radius, 18px);
+	background: var(--ui-color-bg-content-primary, #FFFFFF);
+	box-shadow: 0 8px 17px rgba(0, 0, 0, 0.105);
+	z-index: 40;
+}
+
+.note-avatar-stack__menu-list {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.note-avatar-stack__menu-item {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+	margin: 0 10px;
+	padding: 8px 18px;
+	border-radius: var(--ui-border-radius-md, 12px);
+	background: transparent;
+	color: var(--ui-color-base-1);
+	cursor: pointer;
+	transition: background 0.12s ease;
+}
+
+.note-avatar-stack__menu-item:hover,
+.note-avatar-stack__menu-item:focus-visible {
+	background: var(--ui-color-bg-content-secondary, rgba(0, 0, 0, 0.03));
+}
+
+.note-avatar-stack__menu-item:focus-visible {
+	outline: none;
+}
+
+.note-avatar-stack__menu-item-text {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	min-width: 0;
+}
+
+.note-avatar-stack__menu-item-name {
+	font-family: var(--ui-font-family-primary), 'Inter', sans-serif;
+	font-size: 14px;
+	font-weight: 400;
+	line-height: 19px;
+	letter-spacing: -0.05px;
+	color: inherit;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.note-avatar-stack__menu-item-action {
+	font-family: var(--ui-font-family-primary), 'Inter', sans-serif;
+	font-size: 12px;
+	line-height: 15px;
+	color: var(--ui-color-base-3, #828B95);
+}
+
+.note-avatar-stack__menu-item-action.--editing {
+	color: var(--ui-color-accent-main-success);
+}
+
+.note-avatar-stack__avatar.--menu {
+	flex: 0 0 auto;
+	margin-right: 0;
+	box-shadow: none;
+}
+
+/* Row mode (`inline`): one avatar inside a list row, so neither the overlap margin nor the
+   separator ring that only make sense between stacked avatars. */
+.note-avatar-stack.--inline .note-avatar-stack__avatar {
+	margin-right: 0;
+	box-shadow: none;
+}

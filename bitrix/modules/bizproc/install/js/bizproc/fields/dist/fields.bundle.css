@@ -1,0 +1,197 @@
+/*
+ * Reset the native <fieldset> chrome. A multiple field renders with the SAME
+ * visual treatment as a single field (no frame) - the frame/background belongs
+ * to a containing "block" component, not to the field's own rendering.
+ * The fieldset also carries .bizproc-fields-row (column stack rhythm on DS space tokens).
+ */
+.bizproc-fields-row--multiple {
+	border: 0;
+	margin: 0;
+	padding: 0;
+	min-width: 0;
+}
+
+/* Vertical rhythm of a field row: name block, control (and caption) stack with a small gap. */
+.bizproc-fields-row {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-2xs);
+}
+
+/*
+ * The name block: the name and the description hint icon sit on one line, vertically
+ * centered, with the hint right after the name. The single field wears it on its
+ * <label>, the group on its <legend> - one block, one gap.
+ */
+.bizproc-fields-header {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-2xs);
+	/* 17px: holds one line of the name even when the name is empty; DS has no line-box size token. */
+	min-height: 17px;
+	padding: 0 var(--ui-space-inset-3xs);
+}
+
+/*
+ * A <legend> that is the first child of a <fieldset> carries native chrome and is
+ * rendered specially: it does NOT participate in the parent flex `gap`. Reset the
+ * chrome and supply the row gap as margin-bottom so a group's name->first-control
+ * spacing matches a single field (whose name block IS a normal flex item).
+ */
+legend.bizproc-fields-header {
+	width: auto;
+	margin: 0 0 var(--ui-space-stack-2xs);
+}
+
+.bizproc-fields-label {
+	font-size: var(--ui-font-size-sm);
+	font-weight: var(--ui-font-weight-normal);
+	/* 17px: --ui-font-line-height-* are unitless ratios, none of which yields 17px on a 13px font. */
+	line-height: 17px;
+	color: var(--ui-color-design-outline-content-label);
+}
+
+/* Keep the ui.hint "?" icon from shrinking; the gap to the name comes from the block. */
+.bizproc-fields-header .ui-hint {
+	flex-shrink: 0;
+}
+
+.bizproc-fields-label__required {
+	color: var(--ui-color-accent-main-alert);
+}
+
+.bizproc-fields-caption {
+	font-size: var(--ui-font-size-xs);
+	/* 16px: --ui-font-line-height-* are unitless ratios, none of which yields 16px on a 12px font. */
+	line-height: 16px;
+	color: var(--ui-color-base-4);
+	padding-left: var(--ui-space-inset-3xs);
+}
+
+/* Value rows stack vertically; the Add button sits below them with the same gap. */
+.bizproc-fields-multiple {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-xs);
+}
+
+.bizproc-fields-multiple__row {
+	display: flex;
+	align-items: flex-start;
+	gap: var(--ui-space-inline-xs2);
+}
+
+/* The control column stretches; the trailing remove button keeps its intrinsic size. */
+.bizproc-fields-multiple__row > *:first-child {
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+.bizproc-fields-multiple__remove {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	box-sizing: border-box;
+	flex-shrink: 0;
+	/* 20px glyph on the 32px control height of the neighbouring input; DS has no size token for either. */
+	width: 20px;
+	height: 32px;
+	padding: 0;
+	border: 0;
+	background: none;
+	color: var(--ui-color-base-4);
+	cursor: pointer;
+	transition: color .15s ease;
+}
+
+.bizproc-fields-multiple__remove:hover {
+	color: var(--ui-color-base-2);
+}
+
+.bizproc-fields-multiple__remove .ui-icon-set {
+	--ui-icon-set__icon-size: 20px;
+}
+
+/* Stretched outline "add row" button built on DS tokens. */
+.bizproc-fields-multiple__add {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	box-sizing: border-box;
+	gap: var(--ui-space-inline-xs);
+	width: 100%;
+	/* 38px: mockup height of the add-row button; DS has no button-height size token. */
+	height: 38px;
+	padding: 0;
+	border: 1px solid var(--ui-color-divider-default);
+	border-radius: var(--ui-border-radius-md);
+	background: transparent;
+	font-size: var(--ui-font-size-md);
+	font-weight: var(--ui-font-weight-medium);
+	/* 18px: --ui-font-line-height-* are unitless ratios, none of which yields 18px on a 14px font. */
+	line-height: 18px;
+	color: var(--ui-color-base-1);
+	cursor: pointer;
+	transition: background-color .15s ease;
+}
+
+.bizproc-fields-multiple__add:hover {
+	background: var(--ui-color-bg-state-hover-default);
+}
+
+.bizproc-fields-multiple__add .ui-icon-set {
+	--ui-icon-set__icon-size: 20px;
+}
+
+/* The "insert value" affordance, one block for every field type. */
+.bizproc-fields-insert {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	box-sizing: border-box;
+	flex-shrink: 0;
+	/* 32px: fixed hit-target square matching the DS icon-button footprint. */
+	width: 32px;
+	height: 32px;
+	padding: 0;
+	border: none;
+	border-radius: var(--ui-border-radius-sm);
+	background: none;
+	--ui-icon-set__icon-color: var(--ui-color-base-4);
+	color: var(--ui-color-base-4);
+	cursor: pointer;
+	/* .15s is the transition duration shared by every field type here; DS has no duration token. */
+	transition: color .15s ease;
+}
+
+.bizproc-fields-insert:hover {
+	--ui-icon-set__icon-color: var(--ui-color-base-2);
+	color: var(--ui-color-base-2);
+}
+
+/* Keyboard focus ring: the icon button needs a visible indicator beyond the UA default
+   (WCAG 2.4.7). 1px width / 2px offset are conventional sizes; DS has no outline token. */
+.bizproc-fields-insert:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+}
+
+.bizproc-fields-insert .ui-icon-set {
+	/* 20px: DS icon glyph size inside the 32px button. */
+	--ui-icon-set__icon-size: 20px;
+}
+
+/*
+ * .bizproc-fields-box is the bordered box of every text-shaped control (see buildTextControl).
+ *
+ * Insertion by the bizproc.automation provider wraps the value node in
+ * .bizproc-automation-popup-select and splices that wrapper in its place, so the wrapper
+ * becomes the direct child of the box. The class belongs to the provider's module
+ * and carries no width of its own, so the wrapper collapses to the intrinsic size of the
+ * control plus the "..." handle: the handle drifts to the middle of the box, and a decorated
+ * <textarea> stops filling the row. Growing it here is the consumer-side compensation.
+ */
+.bizproc-fields-box > .bizproc-automation-popup-select {
+	flex: 1 1 auto;
+	min-width: 0;
+}

@@ -5,13 +5,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 (function (exports, main_core, im_v2_const, ui_notification, im_public, im_v2_lib_collab) {
 	'use strict';
 
-	const showNotification = (text, params) => {
-		BX.UI.Notification.Center.notify({
-			content: text,
-			...params
-		});
-	};
-
 	const extractRestErrorCode = error => {
 		const {
 			ex: {
@@ -21,6 +14,15 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		return errorCode;
 	};
 
+	const showNotification = (text, params) => {
+		BX.UI.Notification.Center.notify({
+			content: text,
+			blinkOnUpdate: false,
+			...params
+		});
+	};
+
+	const CHAT_ACCESS_ERROR_NOTIFICATION_ID = 'im-chat-access-error';
 	const ChatNotifier = {
 		handleLoadError(error) {
 			// eslint-disable-next-line unicorn/prefer-switch
@@ -54,7 +56,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			showNotification(main_core.Loc.getMessage('IM_NOTIFIER_CHAT_ACCESS_ERROR'));
 		},
 		onAccessDeniedError() {
-			showNotification(main_core.Loc.getMessage('IM_NOTIFIER_CHAT_ACCESS_ERROR'));
+			showNotification(main_core.Loc.getMessage('IM_NOTIFIER_CHAT_ACCESS_ERROR'), {
+				id: CHAT_ACCESS_ERROR_NOTIFICATION_ID
+			});
 		},
 		onContextMessageNotFoundError() {
 			showNotification(main_core.Loc.getMessage('IM_NOTIFIER_CONTEXT_MESSAGE_NOT_FOUND_ERROR'));
@@ -161,11 +165,21 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			}
 			showNotification(im_v2_lib_collab.CollabManager.getDeleteErrorText());
 		},
-		onLeaveError() {
-			showNotification(im_v2_lib_collab.CollabManager.getLeaveErrorText());
+		onLeaveError(error) {
+			const NotificationTextByErrorCode = {
+				[im_v2_const.ErrorCode.collab.leaveFromStructure]: im_v2_lib_collab.CollabManager.getLeaveFromStructureErrorText(),
+				default: im_v2_lib_collab.CollabManager.getLeaveErrorText()
+			};
+			const notificationText = NotificationTextByErrorCode[error?.code] ?? NotificationTextByErrorCode.default;
+			showNotification(notificationText);
 		},
-		onKickUserError() {
-			showNotification(im_v2_lib_collab.CollabManager.getKickErrorText());
+		onKickUserError(error) {
+			const NotificationTextByErrorCode = {
+				[im_v2_const.ErrorCode.collab.excludeFromStructure]: main_core.Loc.getMessage('IM_NOTIFIER_KICK_CHAT_STRUCTURE_ERROR'),
+				default: im_v2_lib_collab.CollabManager.getKickErrorText()
+			};
+			const notificationText = NotificationTextByErrorCode[error?.code] ?? NotificationTextByErrorCode.default;
+			showNotification(notificationText);
 		},
 		onCollaberNotAcceptInvitation() {
 			showNotification(main_core.Loc.getMessage('IM_NOTIFIER_COLLAB_COLLABER_NOT_ACCEPT_INVITATION'));
@@ -347,17 +361,43 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	};
 
 	const SharedLinkNotifier = {
-		onCopyIndividualLinkComplete() {
-			showNotification(main_core.Loc.getMessage('IM_NOTIFIER_SHARED_LINK_COPY_INDIVIDUAL_COMPLETE'));
+		onCopyIndividualLinkComplete(chatType) {
+			const NotificationTextByChatType = {
+				[im_v2_const.ChatType.collab]: main_core.Loc.getMessage('IM_NOTIFIER_SHARED_LINK_COPY_INDIVIDUAL_COMPLETE_COLLAB'),
+				default: main_core.Loc.getMessage('IM_NOTIFIER_SHARED_LINK_COPY_INDIVIDUAL_COMPLETE')
+			};
+			const notificationText = NotificationTextByChatType[chatType] ?? NotificationTextByChatType.default;
+			showNotification(notificationText);
 		},
 		onClickInvalidLinkError() {
 			showNotification(main_core.Loc.getMessage('IM_NOTIFIER_SHARED_LINK_CLICK_INVALID_ERROR'));
 		},
-		onChangeLinkComplete() {
-			showNotification(main_core.Loc.getMessage('IM_NOTIFIER_SHARED_LINK_CHANGE_COMPLETE'));
+		onChangeLinkComplete(chatType) {
+			const NotificationTextByChatType = {
+				[im_v2_const.ChatType.collab]: main_core.Loc.getMessage('IM_NOTIFIER_SHARED_LINK_CHANGE_COMPLETE_COLLAB'),
+				default: main_core.Loc.getMessage('IM_NOTIFIER_SHARED_LINK_CHANGE_COMPLETE')
+			};
+			const notificationText = NotificationTextByChatType[chatType] ?? NotificationTextByChatType.default;
+			showNotification(notificationText);
 		},
 		onChangeLinkError() {
 			showNotification(main_core.Loc.getMessage('IM_NOTIFIER_SHARED_LINK_CHANGE_ERROR'));
+		}
+	};
+
+	const FolderNotifier = {
+		onFolderLimitError(maxFolders) {
+			showNotification(main_core.Loc.getMessage('IM_NOTIFIER_FOLDER_LIMIT_ERROR', {
+				'#LIMIT#': maxFolders
+			}));
+		},
+		onChatLimitError(maxChats) {
+			showNotification(main_core.Loc.getMessage('IM_NOTIFIER_FOLDER_CHAT_LIMIT_ERROR', {
+				'#LIMIT#': maxChats
+			}));
+		},
+		onAddChatComplete() {
+			showNotification(main_core.Loc.getMessage('IM_NOTIFIER_FOLDER_CHAT_ADD_COMPLETE'));
 		}
 	};
 
@@ -375,6 +415,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		sharedLink: SharedLinkNotifier,
 		notification: NotificationNotifier,
 		sticker: StickerNotifier,
+		folder: FolderNotifier,
 		onCopyTextComplete() {
 			showNotification(main_core.Loc.getMessage('IM_NOTIFIER_TEXT_COPY_COMPLETE'));
 		},

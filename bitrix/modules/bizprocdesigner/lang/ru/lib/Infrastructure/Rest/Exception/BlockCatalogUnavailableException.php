@@ -1,0 +1,3 @@
+<?php
+
+$MESS['BIZPROCDESIGNER_REST_EXCEPTION_BLOCK_CATALOG_UNAVAILABLE'] = 'Каталог блоков недоступен';

@@ -838,6 +838,7 @@ export class ImportDialog
 				text: this.#isWikiSource()
 					? Loc.getMessage('NOTE_IMPORT_SELECT')
 					: Loc.getMessage('NOTE_IMPORT_CONNECT'),
+				dataset: { testid: 'note-import-connect' },
 				onclick: () => {
 					this.#onConnect();
 				},
@@ -855,6 +856,7 @@ export class ImportDialog
 					style: AirButtonStyle.PLAIN,
 					useAirDesign: true,
 					text: Loc.getMessage('NOTE_IMPORT_DIALOG_CANCEL_BUTTON'),
+					dataset: { testid: 'note-import-close' },
 					onclick: () => {
 						this.#dialog?.hide();
 					},
@@ -869,6 +871,7 @@ export class ImportDialog
 				style: AirButtonStyle.FILLED,
 				useAirDesign: true,
 				text: Loc.getMessage('NOTE_IMPORT_START'),
+				dataset: { testid: 'note-import-start' },
 				onclick: () => {
 					this.#onStartImport();
 				},
@@ -885,6 +888,7 @@ export class ImportDialog
 					style: AirButtonStyle.PLAIN,
 					useAirDesign: true,
 					text: Loc.getMessage('NOTE_IMPORT_BACK'),
+					dataset: { testid: 'note-import-back' },
 					onclick: () => {
 						this.#screen = IMPORT_SCREEN.CONNECTION;
 						this.#render();
@@ -903,6 +907,7 @@ export class ImportDialog
 					style: AirButtonStyle.FILLED,
 					useAirDesign: true,
 					text: Loc.getMessage('NOTE_IMPORT_OVERWRITE_CONFIRM'),
+					dataset: { testid: 'note-import-overwrite-confirm' },
 					onclick: () => {
 						this.#onConfirmOverwrite();
 					},
@@ -912,6 +917,7 @@ export class ImportDialog
 					style: AirButtonStyle.PLAIN,
 					useAirDesign: true,
 					text: Loc.getMessage('NOTE_IMPORT_BACK'),
+					dataset: { testid: 'note-import-back' },
 					onclick: () => {
 						this.#screen = IMPORT_SCREEN.COLLECTIONS;
 						this.#render();
@@ -927,6 +933,7 @@ export class ImportDialog
 				style: AirButtonStyle.PLAIN,
 				useAirDesign: true,
 				text: Loc.getMessage('NOTE_IMPORT_CANCEL'),
+				dataset: { testid: 'note-import-cancel' },
 				onclick: () => {
 					this.#onCancel();
 				},
@@ -942,6 +949,7 @@ export class ImportDialog
 				style: AirButtonStyle.FILLED,
 				useAirDesign: true,
 				text: Loc.getMessage('NOTE_IMPORT_DONE'),
+				dataset: { testid: 'note-import-done' },
 				onclick: () => {
 					this.#onDone();
 				},

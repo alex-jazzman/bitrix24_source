@@ -1,0 +1,62 @@
+.crm-ai-report-drawer .crm-ai-report-drawer__header {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: space-between;
+	margin-bottom: var(--ui-space-stack-md, 16px);
+}
+
+.crm-ai-report-drawer .crm-ai-report-drawer__header .crm-ai-report-drawer__title {
+	color: var(--ui-color-base-1, #FFFFFF);
+	font-weight: var(--ui-font-weight-medium, 500);
+	margin: 0 0 var(--ui-space-stack-xs2, 10px) 0;
+}
+
+.crm-ai-report-drawer .crm-ai-report-drawer__header .crm-ai-report-drawer__subtitle {
+	color: var(--ui-color-base-2, #525C69);
+	font-weight: var(--ui-font-weight-medium);
+}
+
+.crm-ai-report-drawer__subtitle .crm-ai-report-drawer__subtitle-highlight {
+	color: var(--ui-color-blue-40, #7FDEFC);
+	display: inline-flex;
+	align-items: center;
+	cursor: pointer;
+}
+
+.crm-ai-report-drawer__subtitle .crm-ai-report-drawer__subtitle-more-managers {
+	color: var(--ui-color-blue-40, #7FDEFC);
+	display: inline-flex;
+	align-items: center;
+	gap: var(--ui-space-inline-3xs, 2px);
+	padding: 0;
+	border: none;
+	background: transparent;
+	font: inherit;
+	line-height: inherit;
+	cursor: pointer;
+}
+
+.crm-ai-report-drawer__subtitle .crm-ai-report-drawer__subtitle-more-managers::after {
+	content: '';
+	display: inline-block;
+	width: 14px;
+	height: 14px;
+	flex-shrink: 0;
+	background-color: currentColor;
+	-webkit-mask-image: var(--o-ui-icon-set__path_chevron-down-m);
+	mask-image: var(--o-ui-icon-set__path_chevron-down-m);
+	-webkit-mask-size: 100% 100%;
+	mask-size: 100% 100%;
+}
+
+.crm-ai-report-drawer__subtitle .crm-ai-report-drawer__subtitle-info-icon {
+	background-color: var(--ui-color-design-filled-content-icon-secondary, #B4DFFF);
+	-webkit-mask-image: var(--o-ui-icon-set__path_info-circle);
+	mask-image: var(--o-ui-icon-set__path_info-circle);
+	mask-size: 100% 100%;
+	width: 20px;
+	height: 20px;
+	display: inline-block;
+	margin-left: var(--ui-space-inline-3xs, 2px);
+}

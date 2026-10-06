@@ -101,6 +101,10 @@ export const BInput = {
 			type: String,
 			default: 'text',
 		},
+		ariaLabel: {
+			type: String,
+			default: '',
+		},
 		required: {
 			type: Boolean,
 			default: false,
@@ -255,7 +259,9 @@ export const BInput = {
 				{
 					'--center': center,
 					'--with-chips': chips?.length > 0,
+					'--multi': rowsQuantity > 1,
 					'--clickable': clickable,
+					'--dropdown': dropdown,
 					'--stretched': stretched,
 					'--active': active || focused,
 					'--error': error && !disabled,
@@ -282,6 +288,7 @@ export const BInput = {
 					class="ui-system-input-value --multi"
 					:style="{ resize }"
 					:placeholder
+					:aria-label="ariaLabel || null"
 					:disabled
 					:rows="rowsQuantity"
 					:readonly
@@ -296,6 +303,7 @@ export const BInput = {
 					class="ui-system-input-value"
 					:style="{ '--placeholder-length': placeholder.length + 'ch' }"
 					:placeholder
+					:aria-label="ariaLabel || null"
 					:disabled
 					:type="currentInputType"
 					:readonly
@@ -352,6 +360,10 @@ export const PasswordField = {
 			type: String,
 			default: '',
 		},
+		ariaLabel: {
+			type: String,
+			default: '',
+		},
 		placeholder: {
 			type: String,
 			default: '',
@@ -404,6 +416,7 @@ export const PasswordField = {
 			@update:modelValue="$emit('update:modelValue', $event)"
 			type="password"
 			:label="label"
+			:ariaLabel="ariaLabel"
 			:placeholder="placeholder"
 			:error="error"
 			:size="size"

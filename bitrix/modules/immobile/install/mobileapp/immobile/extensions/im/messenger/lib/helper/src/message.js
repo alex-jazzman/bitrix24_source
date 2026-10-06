@@ -291,7 +291,18 @@ jn.define('im/messenger/lib/helper/message', (require, exports, module) => {
 		 */
 		get isImageWithoutPreview()
 		{
-			return this.isImage && !Type.isStringFilled(this.#firstFile?.urlPreview);
+			if (!this.isWithFile)
+			{
+				return false;
+			}
+
+			if (this.#files.length !== 1)
+			{
+				return false;
+			}
+
+			return this.#firstFile?.type === FileType.image
+				&& !Type.isStringFilled(this.#firstFile?.urlPreview);
 		}
 
 		get isAudio()

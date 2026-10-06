@@ -227,7 +227,7 @@
 			void new BottomSheet({ component })
 				.setBackgroundColor(AppTheme.colors.bgNavigation)
 				.setMediumPositionPercent(80)
-				.disableContentSwipe()
+				.disableOnlyMediumPosition()
 				.open()
 			;
 		}

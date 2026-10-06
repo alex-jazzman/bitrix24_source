@@ -33,19 +33,11 @@ export const ResourcePanel = {
 	watch: {
 		scroll(value): void
 		{
-			this.applyScroll(value);
-		},
-	},
-	mounted(): void
-	{
-		this.applyScroll(this.scroll);
-	},
-	methods: {
-		applyScroll(value: number): void
-		{
 			this.$refs.container[this.inactiveScrollProperty] = 0;
 			this.$refs.container[this.scrollProperty] = value;
 		},
+	},
+	methods: {
 		handleScroll(): void
 		{
 			const scrollValue = this.$refs.container[this.scrollProperty];

@@ -1,9 +1,10 @@
 <?php
 
-use Bitrix\Main,
-	Bitrix\Iblock,
-	Bitrix\Catalog,
-	Bitrix\Main\Localization\Loc;
+use Bitrix\Main;
+use Bitrix\Iblock;
+use Bitrix\Catalog;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Web\Uri;
 
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 
@@ -13,7 +14,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
  * No longer used by internal code and not recommended. Use "catalog.products.viewed" instead.
  *
  * @deprecated deprecated since catalog 17.0.5
- * @use \CatalogProductsViewedComponent
+ * @use CatalogProductsViewedComponent
  */
 class CCatalogViewedProductsComponent extends CBitrixComponent
 {
@@ -155,7 +156,7 @@ class CCatalogViewedProductsComponent extends CBitrixComponent
 	}
 
 	/**
-	 * Return product product properties to add in basket
+	 * Return product properties to add in basket
 	 * @return array
 	 */
 	protected function getProductPropertiesFromRequest()
@@ -968,11 +969,11 @@ class CCatalogViewedProductsComponent extends CBitrixComponent
 	{
 		global $APPLICATION;
 
-		$currentPath = CHTTP::urlDeleteParams(
-			$APPLICATION->GetCurPageParam(),
-			array($this->arParams['PRODUCT_ID_VARIABLE'], $this->arParams['ACTION_VARIABLE'], ''),
-			array('delete_system_params' => true)
+		$deleteParams = array_merge(
+			[$this->arParams['PRODUCT_ID_VARIABLE'], $this->arParams['ACTION_VARIABLE']],
+ 			Main\HttpRequest::getSystemParameters()
 		);
+		$currentPath = (string)(new Uri($APPLICATION->GetCurPageParam()))->deleteParams($deleteParams);
 		$currentPath .= (mb_stripos($currentPath, '?') === false ? '?' : '&');
 		if ($this->arParams['COMPARE_PATH'] == '')
 		{
@@ -980,11 +981,7 @@ class CCatalogViewedProductsComponent extends CBitrixComponent
 		}
 		else
 		{
-			$comparePath = CHTTP::urlDeleteParams(
-				$this->arParams['COMPARE_PATH'],
-				array($this->arParams['PRODUCT_ID_VARIABLE'], $this->arParams['ACTION_VARIABLE'], ''),
-				array('delete_system_params' => true)
-			);
+			$comparePath = (string)(new Uri($this->arParams['COMPARE_PATH']))->deleteParams($deleteParams);
 			$comparePath .= (mb_stripos($comparePath, '?') === false ? '?' : '&');
 		}
 		$this->arParams['COMPARE_PATH'] = $comparePath.$this->arParams['ACTION_VARIABLE'].'=COMPARE';

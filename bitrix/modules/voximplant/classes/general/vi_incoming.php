@@ -91,6 +91,20 @@ class CVoxImplantIncoming
 			$result["NO_ANSWER_RULE"] = self::RULE_VOICEMAIL;
 		}
 
+		$allowedDtmfTypes = [
+			CVoxImplantConfig::DTMF_TYPE_ALL,
+			CVoxImplantConfig::DTMF_TYPE_INBAND,
+			CVoxImplantConfig::DTMF_TYPE_RFC2833,
+			CVoxImplantConfig::DTMF_TYPE_SIP_INFO,
+		];
+		if (
+			!CVoxImplantConfig::isDtmfTypeEnabled()
+			|| !in_array($result["DTMF_TYPE"] ?? '', $allowedDtmfTypes, true)
+		)
+		{
+			$result["DTMF_TYPE"] = CVoxImplantConfig::DTMF_TYPE_ALL;
+		}
+
 		foreach(GetModuleEvents("voximplant", "onCallInit", true) as $arEvent)
 		{
 			ExecuteModuleEventEx($arEvent, Array(Array(
@@ -187,8 +201,10 @@ class CVoxImplantIncoming
 			$config = Array(
 				"callId" => $params['CALL_ID'],
 			);
+			$idSuffix = $params['COMMAND'] == 'answer_self' ? '_ANSWER' : '_FINISH';
 			$push['send_immediately'] = 'Y';
 			$push['advanced_params'] = Array(
+				"id" => 'VI_CALL_'.$params['CALL_ID'].$idSuffix,
 				"notificationsToCancel" => array('VI_CALL_'.$params['CALL_ID']),
 			);
 		}
@@ -459,12 +475,7 @@ class CVoxImplantIncoming
 			if($config['WORKTIME_USER_ID'] > 0)
 			{
 				$call->updateUserId($config['WORKTIME_USER_ID']);
-				CVoxImplantCrmHelper::registerCallInCrm($call);
-
-				if(\CVoxImplantConfig::GetLeadWorkflowExecution() == \CVoxImplantConfig::WORKFLOW_START_IMMEDIATE)
-				{
-					CVoxImplantCrmHelper::StartCallTrigger($call, true);
-				}
+				CVoxImplantCrmHelper::registerCallInCrmWithLeadLock($call, true);
 			}
 			else
 			{

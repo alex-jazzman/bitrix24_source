@@ -309,6 +309,18 @@ html:not(.bx-firefox) .agent-grid-chat-link {
 	cursor: pointer;
 }
 
+.agent-grid-department-row {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+}
+
+.agent-grid-chat-row {
+	display: flex;
+	align-items: center;
+	gap: 2px;
+}
+
 .agent-grid-department-in-list,
 .agent-grid-user-in-list,
 .agent-grid-chats-in-list {
@@ -390,6 +402,18 @@ html:not(.bx-firefox) .agent-grid-chat-link {
 }
 .ai-agents-chats-counter {
 	color: var(--ui-color-base-3);
+}
+
+.agent-grid-department:focus-visible,
+.agent-grid-department-in-list:focus-visible,
+.agent-grid-chat-container:focus-visible,
+.agent-grid-chats-in-list:focus-visible,
+.agent-grid-avatar-counter:focus-visible,
+.agent-grid-department-counter:focus-visible,
+.agent-grid-department-counter-focus-wrapper:focus-visible,
+.ai-agents-chats-counter-wrapper:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
 }
 
 /* endregion */
@@ -502,6 +526,26 @@ html:not(.bx-firefox) .agent-grid-chat-link {
 }
 .launch-control-field-rag-files-hint > span {
 	margin: 0;
+}
+
+/* endregion */
+
+/* region Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+	.agent-grid-load-bar {
+		animation: none;
+		transform: scaleY(1);
+		opacity: 1;
+	}
+
+	.ai-agents-grid-row-highlighted,
+	.ai-agents-grid-row-highlighted td:not([style*="background-color"]) {
+		animation: none;
+	}
+
+	.agent-grid-chat-link {
+		transition: none;
+	}
 }
 
 /* endregion */

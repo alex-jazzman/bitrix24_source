@@ -47,12 +47,19 @@
 		return event.button === undefined || event.button === 0;
 	}
 
+	// A plain click on the handle must not freeze the panel, only a real move does
+	const DRAG_THRESHOLD = 4;
+
 	function createDragState()
 	{
 		return {
 			dragging: false,
+			moved: false,
+			lastLeft: null,
 			offsetX: 0,
 			offsetY: 0,
+			startX: 0,
+			startY: 0,
 			ownerWindow: null,
 			isFixedPosition: false,
 		};
@@ -130,7 +137,15 @@
 			isFixedPosition,
 			offsetX: pointerPosition.x - baseLeft,
 			offsetY: pointerPosition.y - baseTop,
+			startX: pointerPosition.x,
+			startY: pointerPosition.y,
 		};
+	}
+
+	function isBelowDragThreshold(dragState, pointerPosition)
+	{
+		return Math.abs(pointerPosition.x - dragState.startX) < DRAG_THRESHOLD
+			&& Math.abs(pointerPosition.y - dragState.startY) < DRAG_THRESHOLD;
 	}
 
 	function handlePointerMove(event, editor, dragState)
@@ -141,7 +156,28 @@
 		}
 
 		const pointerPosition = getPointerPosition(event, dragState.ownerWindow, dragState.isFixedPosition);
-		applyPanelPosition(editor, pointerPosition.y - dragState.offsetY, pointerPosition.x - dragState.offsetX);
+		if (!dragState.moved)
+		{
+			if (isBelowDragThreshold(dragState, pointerPosition))
+			{
+				return;
+			}
+
+			dragState.moved = true;
+		}
+
+		const top = pointerPosition.y - dragState.offsetY;
+		const left = pointerPosition.x - dragState.offsetX;
+
+		dragState.lastLeft = left;
+		applyPanelPosition(editor, top, left);
+		// Keep the user-chosen position until the panel is hidden or moves to another element
+		editor.hasManualPosition = true;
+		if (Type.isFunction(editor.rememberPosition))
+		{
+			// The drag writes the styles bypassing adjustPosition(), keep the remembered position in sync
+			editor.rememberPosition(top, left);
+		}
 	}
 
 	function endPointerDrag(dragState, event, editor, dragButton, pointerHandlers)
@@ -154,6 +190,14 @@
 		unbindWindowPointerEvents(dragState.ownerWindow, pointerHandlers);
 		tryReleasePointerCapture(dragButton.layout, event);
 		Dom.addClass(editor.layout, 'landing-ui-transition');
+
+		if (dragState.moved && Type.isFunction(editor.clampManualPosition))
+		{
+			// The panel must not be dropped out of the window. The final position is passed explicitly:
+			// the styles go through the deferred BX.DOM queue, so the layout may still hold the position
+			// of the previous frame at pointerup.
+			editor.clampManualPosition(dragState.lastLeft);
+		}
 
 		return { ...dragState, dragging: false };
 	}
@@ -173,7 +217,11 @@
 			isFixedPosition: pointerOffsets.isFixedPosition,
 			offsetX: pointerOffsets.offsetX,
 			offsetY: pointerOffsets.offsetY,
+			startX: pointerOffsets.startX,
+			startY: pointerOffsets.startY,
 			dragging: true,
+			moved: false,
+			lastLeft: null,
 		};
 
 		trySetPointerCapture(dragButton.layout, event);

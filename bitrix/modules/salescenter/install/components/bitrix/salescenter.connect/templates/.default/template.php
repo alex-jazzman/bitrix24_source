@@ -93,16 +93,16 @@ function salescenterConnectTemplateRenderBlock(array $data, \CBitrixComponentTem
 		if($data['image'] === 'preview')
 		{
 			$language = mb_strtolower(Loc::getCurrentLang());
-			$image = Path::combine($imagePath, 'preview_' . $language . '.png');
+			$image = Path::combine($imagePath, 'preview_' . $language . '.webp');
 			if(!File::isFileExists(Path::combine($_SERVER['DOCUMENT_ROOT'], $image)))
 			{
 				if(in_array($language, ['ru', 'by', 'kz', 'ua'], true))
 				{
-					$image = Path::combine($imagePath, 'preview_ru.png');
+					$image = Path::combine($imagePath, 'preview_ru.webp');
 				}
 				else
 				{
-					$image = Path::combine($imagePath, 'preview_en.png');
+					$image = Path::combine($imagePath, 'preview_en.webp');
 				}
 			}
 		}

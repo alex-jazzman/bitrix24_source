@@ -63,18 +63,6 @@ this.BX.Socialnetwork.V2.Components = this.BX.Socialnetwork.V2.Components || {};
 					}
 				});
 			}
-			if (optionsEntities.includes(socialnetwork_v2_const.EntitySelectorEntity.Group)) {
-				entities.push({
-					id: socialnetwork_v2_const.EntitySelectorEntity.Project,
-					itemOptions: {
-						default: {
-							entityType: socialnetwork_v2_const.EntitySelectorEntity.Group,
-							link: '',
-							linkTitle: ''
-						}
-					}
-				});
-			}
 			return entities;
 		}
 		getPreselectedItems() {

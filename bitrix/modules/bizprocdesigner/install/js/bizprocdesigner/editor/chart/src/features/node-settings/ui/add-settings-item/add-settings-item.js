@@ -52,7 +52,8 @@ export const AddSettingsItem = {
 		};
 	},
 	template: `
-		<div
+		<button
+			type="button"
 			class="editor-chart-node-settings-add-item-button"
 			:data-test-id="$testId('complexNodeSettingsAdd', itemType)"
 			@click="actions[this.itemType]()"
@@ -60,12 +61,13 @@ export const AddSettingsItem = {
 			<BIcon
 				class="editor-chart-node-settings-add-item-button__plus"
 				:name="iconName"
-				:size="22"
-				color="#828b95"
+				:size="18"
+				color="currentColor"
+				aria-hidden="true"
 			/>
 			<span>
 				<slot />
 			</span>
-		</div>
+		</button>
 	`,
 };

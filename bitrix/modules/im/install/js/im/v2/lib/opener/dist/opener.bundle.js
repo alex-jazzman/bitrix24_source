@@ -140,7 +140,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				contextId
 			});
 		},
-		async openCollab(dialogId = '') {
+		async openCollab(dialogId = '', options = {}) {
 			const preparedDialogId = dialogId.toString();
 			if (!im_v2_lib_feature.TariffManager.collab.isAvailable()) {
 				im_v2_lib_feature.TariffManager.collab.openFeatureSlider();
@@ -160,7 +160,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			}
 			await this.openCollab();
 			main_core_events.EventEmitter.emit(im_v2_const.EventType.recent.openNestedList, {
-				parentDialogId: dialogId
+				parentDialogId: dialogId,
+				options
 			});
 			return Promise.resolve();
 		},

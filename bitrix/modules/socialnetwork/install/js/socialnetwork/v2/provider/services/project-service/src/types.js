@@ -1,3 +1,22 @@
+export type ProjectNotificationTypeDto = {
+	id: string,
+	counterEnabled: boolean,
+}
+
+export type ProjectNotificationGroupDto = {
+	id: string,
+	label: string,
+	types: ProjectNotificationTypeDto[],
+}
+
+export type ProjectNotificationCatalogDto = {
+	groups: ProjectNotificationGroupDto[],
+}
+
+export type ProjectNotificationPayloadDto = {
+	types: ProjectNotificationTypeDto[],
+}
+
 export type ProjectDto = {
 	id: number,
 	avatar?: {
@@ -22,6 +41,8 @@ export type ProjectDto = {
 	numberOfMembers?: number | null,
 	members: UserEntityType[],
 	moderatorMembers: UserEntityType[],
+	notificationCatalog?: ProjectNotificationCatalogDto | null,   // вход: каталог из чтения проекта (DTO-01)
+	notifications?: ProjectNotificationPayloadDto | null,          // выход: payload настройки в create/update (DTO-02)
 	options?: {
 		whoCanInvite: string,
 		manageMessages: string,

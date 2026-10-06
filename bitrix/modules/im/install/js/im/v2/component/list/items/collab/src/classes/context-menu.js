@@ -9,6 +9,7 @@ export class CollabRecentMenu extends RecentMenu
 		return [
 			this.getUnreadMessageItem(),
 			this.getPinMessageItem(),
+			this.getAddToFolderItem(),
 			this.getMuteItem(),
 		];
 	}

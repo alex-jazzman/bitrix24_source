@@ -1,0 +1,12 @@
+export class WestAutoHeaderBanner extends BX.Landing.Widget.Base
+{
+	constructor(element)
+	{
+		super(element);
+		this.initialize(element);
+	}
+
+	initialize(element)
+	{
+	}
+}

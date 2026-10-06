@@ -65,6 +65,7 @@ export class EntityCatalog extends EventEmitter
 	#items: Array<Item> = [];
 	#showEmptyGroups: boolean = false;
 	#showSearch: boolean = false;
+	#canDeselectGroups: ?boolean = null;
 	#filterOptions: {
 		filterItems: Array<FilterData>,
 		multiple: boolean,
@@ -106,21 +107,13 @@ export class EntityCatalog extends EventEmitter
 		super();
 		this.setEventNamespace('BX.UI.EntityCatalog');
 
+		this.#canDeselectGroups = Type.isBoolean(props.canDeselectGroups) ? props.canDeselectGroups : null;
 		this.setGroups(Type.isArray(props.groups) ? props.groups : []);
 		this.setItems(Type.isArray(props.items) ? props.items : []);
 
 		// backward compatibility
 		this.#recentGroupData = props.recentGroupData ?? null;
 		this.#showRecentGroup = Type.isBoolean(props.showRecentGroup) ? props.showRecentGroup : false;
-
-		if (Type.isBoolean(props.canDeselectGroups))
-		{
-			this.#groups.forEach((groupList) => {
-				groupList.forEach((group) => {
-					group.deselectable = props.canDeselectGroups;
-				});
-			});
-		}
 
 		this.#showEmptyGroups = Type.isBoolean(props.showEmptyGroups) ? props.showEmptyGroups : false;
 		this.#showSearch = Type.isBoolean(props.showSearch) ? props.showSearch : false;
@@ -144,29 +137,40 @@ export class EntityCatalog extends EventEmitter
 
 	setGroups(groups: Array<Array<GroupData> | GroupData>): this
 	{
-		this.#groups = groups.map((groupList) => {
+		const normalizedGroups = groups.map((groupList) => {
 			if (!Type.isArray(groupList))
 			{
 				groupList = [groupList];
 			}
-			return groupList.map(group => ({ selected: false, deselectable: true, ...group }));
+			return groupList.map((group) => {
+				const normalizedGroup = { selected: false, deselectable: true, ...group };
+				if (Type.isBoolean(this.#canDeselectGroups))
+				{
+					normalizedGroup.deselectable = this.#canDeselectGroups;
+				}
+
+				return normalizedGroup;
+			});
 		});
+		const isStructureChanged = this.isGroupsStructureChanged(normalizedGroups);
+		this.#groups = normalizedGroups;
 
 		if (!this.#vueInstance || !this.#vueInstance.localGroups)
 		{
 			return this;
 		}
 
-		if (this.isGroupsStructureChanged(this.#groups))
+		if (isStructureChanged)
 		{
+			const groupsForRefresh = this.#resolveGroupsForTemplate();
 			try
 			{
-				this.#vueInstance.refreshGroups(this.#groups);
+				this.#vueInstance.refreshGroups(groupsForRefresh);
 			}
 			catch (e)
 			{
 				console.error(e);
-				this.#vueInstance.localGroups = this.#groups;
+				this.#vueInstance.localGroups = groupsForRefresh;
 			}
 		}
 		else
@@ -637,16 +641,14 @@ export class EntityCatalog extends EventEmitter
 
 	close()
 	{
+		const application = this.#application;
+		const popup = this.#popup;
+
 		try
 		{
-			if (this.#application && typeof this.#application.unmount === 'function')
+			if (application && typeof application.unmount === 'function')
 			{
-				this.#application.unmount();
-			}
-
-			if (this.#popup)
-			{
-				this.#popup.close();
+				application.unmount();
 			}
 		}
 		catch (e)
@@ -654,8 +656,22 @@ export class EntityCatalog extends EventEmitter
 			console.error(e);
 		}
 
-		this.#application = null;
-		this.#vueInstance = null;
-		this.#popup = null;
+		try
+		{
+			if (popup)
+			{
+				popup.close();
+			}
+		}
+		catch (e)
+		{
+			console.error(e);
+		}
+		finally
+		{
+			this.#application = null;
+			this.#vueInstance = null;
+			this.#popup = null;
+		}
 	}
 }

@@ -32,3 +32,11 @@
 	height: 20px;
 	margin-right: 4px;
 }
+
+.ui-btn.ui-btn-icon-ai::before,
+.ui-btn.ui-btn-icon-ai .ui-btn-main::before,
+.ui-btn.ui-btn-icon-ai::after,
+.ui-btn.ui-btn-icon-ai .ui-btn-main::after {
+	animation-duration: 0s !important;
+	animation-delay: 0s !important;
+}

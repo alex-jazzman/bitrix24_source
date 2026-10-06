@@ -1,5 +1,5 @@
 <?php
-$MESS["LANDING_BLOCK_2_THREE_COLS_2_CARDS_LANDINGBLOCKCARD_LEFT"] = "Center column: page";
+$MESS["LANDING_BLOCK_2_THREE_COLS_2_CARDS_LANDINGBLOCKCARD_LEFT"] = "Left column: page";
 $MESS["LANDING_BLOCK_2_THREE_COLS_2_CARDS_LANDINGBLOCKCARD_RIGHT"] = "Right column: page";
 $MESS["LANDING_BLOCK_2_THREE_COLS_2_DESCRIPTION"] = "Three columns; carousels on the left and on the right; text with a title in the center.";
 $MESS["LANDING_BLOCK_2_THREE_COLS_2_NAME"] = "Three columns: flipping images with text on both sides; text on a color background in the center";

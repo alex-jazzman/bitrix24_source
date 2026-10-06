@@ -12,6 +12,7 @@ use Bitrix\Main\Web\Json;
 		'crm.field.color-selector',
 		'crm_common',
 		'bizproc.automation',
+		'disk.disk-picker',
 		'ui.design-tokens',
 		'ui.icon-set.api.core',
 		'ui.icon-set.main',

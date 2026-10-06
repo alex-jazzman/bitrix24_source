@@ -8,6 +8,7 @@ import { MessageBox } from 'ui.dialogs.messagebox';
 import { Label, LabelColor } from 'ui.label';
 import DocumentManager from './document-manager';
 import { OneCPlanRestrictionSlider } from 'catalog.tool-availability-manager';
+import { FocusNavigator } from 'ui.a11y';
 import 'ui.hint';
 
 declare var BX: {[key: string]: any};
@@ -126,6 +127,7 @@ export class EntityEditorPaymentDocuments
 		this._callContext = options.CONTEXT;
 		this._rootNode = Tag.render`<div class="${this.constructor._rootNodeClass}"></div>`;
 		this._menus = [];
+		this._pendingFocus = null;
 		this._isUsedInventoryManagement = this._options.IS_USED_INVENTORY_MANAGEMENT;
 		this._salesOrderRights = this._options.SALES_ORDERS_RIGHTS;
 		this._isInventoryManagementRestricted = this._options.IS_INVENTORY_MANAGEMENT_RESTRICTED;
@@ -168,6 +170,8 @@ export class EntityEditorPaymentDocuments
 
 	render(): HTMLElement
 	{
+		const focusTarget = this._resolveFocusTargetBeforeRender();
+
 		this._menus.forEach((menu) => menu.destroy());
 		this._rootNode.innerHTML = '';
 		this._setupCurrencyFormat();
@@ -185,7 +189,84 @@ export class EntityEditorPaymentDocuments
 			</div>
 		`);
 
+		if (focusTarget !== null)
+		{
+			this._applyFocusAfterRender(focusTarget);
+		}
+
 		return this._rootNode;
+	}
+
+	_focusableControls(): Array<HTMLElement>
+	{
+		return [...this._rootNode.querySelectorAll(FocusNavigator.FOCUSABLE_SELECTOR)];
+	}
+
+	/**
+	 * Works out which control should keep focus once the block is rebuilt. Called before the DOM is
+	 * wiped: an explicit `_pendingFocus` (set when a menu action triggers a rerender) wins; otherwise
+	 * focus is preserved only when it currently sits inside the block (a live rerender, not the first
+	 * render). Returns a descriptor consumed by `_applyFocusAfterRender`, or null to leave focus alone.
+	 */
+	_resolveFocusTargetBeforeRender(): { selector: string } | { index: number } | null
+	{
+		const pending = this._pendingFocus;
+		this._pendingFocus = null;
+
+		if (pending && pending.selector)
+		{
+			return { selector: pending.selector };
+		}
+
+		let reference = null;
+		if (pending && pending.element)
+		{
+			reference = pending.element;
+		}
+		else
+		{
+			const active = FocusNavigator.getActiveElement();
+			if (active && this._rootNode.contains(active))
+			{
+				reference = active;
+			}
+		}
+
+		if (!reference || !this._rootNode.contains(reference))
+		{
+			return null;
+		}
+
+		const index = this._focusableControls().indexOf(reference);
+
+		return index >= 0 ? { index } : null;
+	}
+
+	_applyFocusAfterRender(target: { selector: string } | { index: number }): void
+	{
+		let element = null;
+
+		if (target.selector)
+		{
+			element = this._rootNode.querySelector(target.selector);
+		}
+		else if (Type.isNumber(target.index))
+		{
+			const controls = this._focusableControls();
+			if (controls.length > 0)
+			{
+				element = controls[Math.min(target.index, controls.length - 1)];
+			}
+		}
+
+		if (element)
+		{
+			FocusNavigator.focusTarget(element, { preventScroll: true });
+		}
+		else
+		{
+			FocusNavigator.focusContainer(this._rootNode, { preventScroll: true });
+		}
 	}
 
 	setOptions(options)
@@ -427,12 +508,20 @@ export class EntityEditorPaymentDocuments
 
 		const openMenu = (event) => {
 			event.preventDefault();
+			const trigger = event.currentTarget;
 			popupMenu = MenuManager.create({
 				id: `payment-documents-payment-action-${doc.ID}`,
-				bindElement: event.target,
+				bindElement: trigger,
 				items: menuItems,
+				focusTrap: { initialFocus: 'container' },
+			});
+			popupMenu.subscribeOnce('onClose', () => {
+				trigger.setAttribute('aria-expanded', 'false');
+				this._pendingFocus = null;
 			});
 			popupMenu.show();
+			trigger.setAttribute('aria-expanded', 'true');
+			this._pendingFocus = { element: trigger };
 
 			const removeDocumentMenuItem = popupMenu.itemsContainer.querySelector('.crm-entity-widget-payment-menu-item-remove');
 			if (removeDocumentMenuItem)
@@ -447,11 +536,18 @@ export class EntityEditorPaymentDocuments
 
 		return Tag.render`
 			<div class="crm-entity-widget-payment-detail">
-				<a class="ui-link" onclick="${openSlider}">${title}</a>
+				<button type="button" class="ui-link" data-testid="payment-documents-payment-title-${doc.ID}" onclick="${openSlider}">${title}</button>
 				<div class="crm-entity-widget-payment-detail-inner">
-					<div class="ui-label ui-label-md ui-label-light crm-entity-widget-payment-action" onclick="${openMenu}">
+					<button
+						type="button"
+						class="ui-label ui-label-md ui-label-light crm-entity-widget-payment-action"
+						data-testid="payment-documents-payment-action-${doc.ID}"
+						aria-haspopup="true"
+						aria-expanded="false"
+						onclick="${openMenu}"
+					>
 						<span class="ui-label-inner">${Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_ACTIONS_MENU')}</span>
-					</div>
+					</button>
 					${(new Label(labelOptions)).render()}
 				</div>
 			</div>
@@ -528,12 +624,20 @@ export class EntityEditorPaymentDocuments
 
 		const openMenu = (event) => {
 			event.preventDefault();
+			const trigger = event.currentTarget;
 			popupMenu = MenuManager.create({
 				id: `payment-documents-delivery-action-${doc.ID}`,
-				bindElement: event.target,
+				bindElement: trigger,
 				items: menuItems,
+				focusTrap: { initialFocus: 'container' },
+			});
+			popupMenu.subscribeOnce('onClose', () => {
+				trigger.setAttribute('aria-expanded', 'false');
+				this._pendingFocus = null;
 			});
 			popupMenu.show();
+			trigger.setAttribute('aria-expanded', 'true');
+			this._pendingFocus = { element: trigger };
 
 			const removeDocumentMenuItem = popupMenu.itemsContainer.querySelector('.crm-entity-widget-shipment-menu-item-remove');
 			if (removeDocumentMenuItem)
@@ -548,13 +652,20 @@ export class EntityEditorPaymentDocuments
 
 		return Tag.render`
 			<div class="crm-entity-widget-payment-detail">
-				<a class="ui-link" onclick="${openSlider}">
+				<button type="button" class="ui-link" data-testid="payment-documents-delivery-title-${doc.ID}" onclick="${openSlider}">
 					${title}
-				</a>
+				</button>
 				<div class="crm-entity-widget-payment-detail-inner">
-					<div class="ui-label ui-label-md ui-label-light crm-entity-widget-payment-action" onclick="${openMenu}">
+					<button
+						type="button"
+						class="ui-label ui-label-md ui-label-light crm-entity-widget-payment-action"
+						data-testid="payment-documents-delivery-action-${doc.ID}"
+						aria-haspopup="true"
+						aria-expanded="false"
+						onclick="${openMenu}"
+					>
 						<span class="ui-label-inner">${Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_ACTIONS_MENU')}</span>
-					</div>
+					</button>
 					${(new Label(labelOptions)).render()}
 				</div>
 			</div>
@@ -663,12 +774,20 @@ export class EntityEditorPaymentDocuments
 
 		const openMenu = (event) => {
 			event.preventDefault();
+			const trigger = event.currentTarget;
 			popupMenu = MenuManager.create({
 				id: `payment-documents-realization-action-${doc.ID}`,
-				bindElement: event.target,
+				bindElement: trigger,
 				items: menuItems,
+				focusTrap: { initialFocus: 'container' },
+			});
+			popupMenu.subscribeOnce('onClose', () => {
+				trigger.setAttribute('aria-expanded', 'false');
+				this._pendingFocus = null;
 			});
 			popupMenu.show();
+			trigger.setAttribute('aria-expanded', 'true');
+			this._pendingFocus = { element: trigger };
 
 			const removeDocumentMenuItem = popupMenu.itemsContainer.querySelector('.crm-entity-widget-realization-menu-item-remove');
 			if (removeDocumentMenuItem)
@@ -683,18 +802,25 @@ export class EntityEditorPaymentDocuments
 
 		const actionMenu =			menuItems.length > 0
 			? Tag.render`
-				<div class="ui-label ui-label-md ui-label-light crm-entity-widget-payment-action" onclick="${openMenu}">
+				<button
+					type="button"
+					class="ui-label ui-label-md ui-label-light crm-entity-widget-payment-action"
+					data-testid="payment-documents-realization-action-${doc.ID}"
+					aria-haspopup="true"
+					aria-expanded="false"
+					onclick="${openMenu}"
+				>
 					<span class="ui-label-inner">${Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_ACTIONS_MENU')}</span>
-				</div>
+				</button>
 			`
 			: ''
 		;
 
 		return Tag.render`
 			<div class="crm-entity-widget-payment-detail">
-				<a class="ui-link" onclick="${openSlider}">
+				<button type="button" class="ui-link" data-testid="payment-documents-realization-title-${doc.ID}" onclick="${openSlider}">
 					${title}
-				</a>
+				</button>
 				<div class="crm-entity-widget-payment-detail-inner">
 					${actionMenu}
 					${(new Label(labelOptions)).render()}
@@ -706,6 +832,7 @@ export class EntityEditorPaymentDocuments
 	_renderAddDocument(): HTMLElement
 	{
 		const latestOrderId = this._latestOrderId();
+		let popupMenu;
 
 		const menuItems = [
 			{
@@ -747,22 +874,51 @@ export class EntityEditorPaymentDocuments
 			menuItems.push(realizationMenuItem);
 		}
 
+		// a11y (I1.B5): the add-menu items open a slider - unlike the action menu they never closed
+		// the popup, so it stayed open behind the slider and arrow keys scrolled it. Close the popup
+		// first and, since the rerender happens later (after the slider creates a document and fires
+		// reloadModel), remember the add control so focus lands back on it instead of the pay button.
+		const addControlSelector = '.crm-entity-widget-payment-add-box > .ui-entity-editor-content-add-lnk';
+		menuItems.forEach((menuItem) => {
+			const runAction = menuItem.onclick;
+			menuItem.onclick = () => {
+				popupMenu.close();
+				this._pendingFocus = { selector: addControlSelector };
+				runAction();
+			};
+		});
+
 		const openMenu = (event) => {
 			event.preventDefault();
-			const popupMenu = MenuManager.create({
+			const trigger = event.currentTarget;
+			popupMenu = MenuManager.create({
 				id: 'payment-documents-create-document-action',
-				bindElement: event.target,
+				bindElement: trigger,
 				items: menuItems,
+				focusTrap: { initialFocus: 'container' },
+			});
+			popupMenu.subscribeOnce('onClose', () => {
+				trigger.setAttribute('aria-expanded', 'false');
+				this._pendingFocus = null;
 			});
 			popupMenu.show();
+			trigger.setAttribute('aria-expanded', 'true');
+			this._pendingFocus = { element: trigger };
 			this._menus.push(popupMenu);
 		};
 
 		return Tag.render`
 			<div class="crm-entity-widget-payment-add-box">
-				<a href="#" class="ui-entity-editor-content-add-lnk" onclick="${openMenu}">
+				<button
+					type="button"
+					class="ui-entity-editor-content-add-lnk"
+					data-testid="payment-documents-create-btn"
+					aria-haspopup="true"
+					aria-expanded="false"
+					onclick="${openMenu}"
+				>
 					${Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_CREATE_DOCUMENT_MSGVER_2')}
-				</a>
+				</button>
 			</div>
 		`;
 	}

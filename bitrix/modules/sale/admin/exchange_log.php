@@ -107,18 +107,40 @@ if ($filter_xml_id <> '') $filter["=XML_ID"] = trim($filter_xml_id);
 if ($filter_direction_id <> '')
     $filter["=DIRECTION"] = trim($filter_direction_id);
 
+$headers = array(
+	array("id"=>"ID", "content"=>Loc::getMessage("LOG_ID"), "sort"=>"ID", "default"=>true),
+	array("id"=>"ENTITY_ID", "content"=>Loc::getMessage("LOG_ENTITY_ID"), "sort"=>"ENTITY_ID", "default"=>true),
+	array("id"=>"ENTITY_TYPE_ID", "content"=>Loc::getMessage("LOG_ENTITY_TYPE_ID"), "sort"=>"ENTITY_TYPE_ID", "default"=>true),
+	array("id"=>"PARENT_ID", "content"=>Loc::getMessage("LOG_PARENT_ID"), "sort"=>"PARENT_ID", "default"=>true),
+	array("id"=>"OWNER_ENTITY_ID", "content"=>Loc::getMessage("LOG_OWNER_ENTITY_ID"), "sort"=>"OWNER_ENTITY_ID", "default"=>true),
+	array("id"=>"ENTITY_DATE_UPDATE", "content"=>Loc::getMessage("LOG_ENTITY_DATE_UPDATE"), "sort"=>"ENTITY_DATE_UPDATE", "default"=>true),
+	array("id"=>"XML_ID", "content"=>Loc::getMessage("LOG_XML_ID"), "sort"=>"XML_ID", "default"=>true),
+	array("id"=>"MARKED", "content"=>Loc::getMessage("LOG_MARKED"), "sort"=>"MARKED", "default"=>true),
+	array("id"=>"MESSAGE", "content"=>Loc::getMessage("LOG_MESSAGE"), "sort"=>"MESSAGE", "default"=>true),
+	array("id"=>"DATE_INSERT", "content"=>Loc::getMessage("LOG_DATE_INSERT"), "sort"=>"DATE_INSERT", "default"=>true),
+);
+
+$params = array();
+
 if ($del_filter !== 'Y')
 {
-	$params = array(
-		'filter' => $filter
-	);
+	$params['filter'] = $filter;
 }
 
-if (isset($by))
+$allowedSortFields = array_values(array_filter(array_column($headers, 'sort')));
+$sortField = isset($by) ? (string)$by : 'ID';
+$sortDirection = isset($order) ? mb_strtoupper((string)$order) : 'ASC';
+
+if (
+	!in_array($sortField, $allowedSortFields, true)
+	|| !in_array($sortDirection, array('ASC', 'DESC'), true)
+)
 {
-	$order = isset($order) ? $order : "ASC";
-	$params['order'] = array($by => $order);
+	$sortField = 'ID';
+	$sortDirection = 'ASC';
 }
+
+$params['order'] = array($sortField => $sortDirection);
 
 $navyParams = CDBResult::GetNavParams(CAdminResult::GetNavSize($tableId));
 
@@ -135,19 +157,6 @@ else
 $totalPages = 0;
 
 $params['select']=array('*');
-
-$headers = array(
-	array("id"=>"ID", "content"=>Loc::getMessage("LOG_ID"), "sort"=>"ID", "default"=>true),
-	array("id"=>"ENTITY_ID", "content"=>Loc::getMessage("LOG_ENTITY_ID"), "sort"=>"ENTITY_ID", "default"=>true),
-	array("id"=>"ENTITY_TYPE_ID", "content"=>Loc::getMessage("LOG_ENTITY_TYPE_ID"), "sort"=>"ENTITY_TYPE_ID", "default"=>true),
-	array("id"=>"PARENT_ID", "content"=>Loc::getMessage("LOG_PARENT_ID"), "sort"=>"PARENT_ID", "default"=>true),
-	array("id"=>"OWNER_ENTITY_ID", "content"=>Loc::getMessage("LOG_OWNER_ENTITY_ID"), "sort"=>"OWNER_ENTITY_ID", "default"=>true),
-	array("id"=>"ENTITY_DATE_UPDATE", "content"=>Loc::getMessage("LOG_ENTITY_DATE_UPDATE"), "sort"=>"ENTITY_DATE_UPDATE", "default"=>true),
-	array("id"=>"XML_ID", "content"=>Loc::getMessage("LOG_XML_ID"), "sort"=>"XML_ID", "default"=>true),
-	array("id"=>"MARKED", "content"=>Loc::getMessage("LOG_MARKED"), "sort"=>"MARKED", "default"=>true),
-	array("id"=>"MESSAGE", "content"=>Loc::getMessage("LOG_MESSAGE"), "sort"=>"MESSAGE", "default"=>true),
-	array("id"=>"DATE_INSERT", "content"=>Loc::getMessage("LOG_DATE_INSERT"), "sort"=>"DATE_INSERT", "default"=>true),
-);
 
 $dbResultList = new CAdminResult((new Logger\Exchange(Logger\ProviderType::ONEC_NAME))->getList($params), $tableId);
 $dbResultList->NavStart();

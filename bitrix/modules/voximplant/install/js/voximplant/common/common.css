@@ -670,7 +670,10 @@
 	overflow: hidden;
 	margin: 20px 0 75px;
 	height: 97px;
-	background: #2fc6f6 url(images/voximplant-license-banner-bg.png) right center no-repeat;
+	background-color: #2fc6f6;
+	background-repeat: no-repeat;
+	background-position: right center;
+	background-image: url(images/voximplant-license-banner-bg.webp);
 	text-decoration: none;
 	cursor: pointer;
 }

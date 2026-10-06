@@ -164,7 +164,7 @@ export const DayGridCell = {
 			}
 
 			this.halfOffset = 0;
-			const clientY = event.clientY - window.scrollY;
+			const clientY = event.clientY;
 			const rect = this.$el.getBoundingClientRect();
 			const bottomHalf = clientY > (rect.top + rect.top + rect.height) / 2;
 			const canSubtractHalfHour = this.fromTs >= this.freeSpace.fromTs;

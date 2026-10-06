@@ -2,6 +2,7 @@
 $MESS["SIGN_ONBOARDING_B2B_BTN_TEXT"] = "Create or upload a document and send it for signing. You can send it to yourself to see how the whole thing works.";
 $MESS["SIGN_ONBOARDING_B2B_BTN_TITLE"] = "Add document for signing";
 $MESS["SIGN_ONBOARDING_B2E_BANNER_BTN_SIGN_TEST_TEXT"] = "Sign test document";
+$MESS["SIGN_ONBOARDING_B2E_BANNER_CLOSE_BTN_ARIA_LABEL"] = "Close banner";
 $MESS["SIGN_ONBOARDING_B2E_BANNER_DESCRIPTION_SIGN_TEST_TEXT"] = "This will give you a full understanding of the whole signing process. The signed test document will have no legal force or effect.";
 $MESS["SIGN_ONBOARDING_B2E_BANNER_TITLE_SIGN_TEST_TEXT"] = "Try out e-signing now";
 $MESS["SIGN_ONBOARDING_B2E_BY_EMPLOYEE_POPUP_BTN_TEXT"] = "Learn more";
@@ -20,6 +21,8 @@ $MESS["SIGN_ONBOARDING_B2E_STEP_ROUTE_TEXT"] = "Manage HR documents by switching
 $MESS["SIGN_ONBOARDING_B2E_STEP_ROUTE_TITLE"] = "Keep track of your documents";
 $MESS["SIGN_ONBOARDING_B2E_STEP_TEMPLATES_TEXT_V1"] = "Create templates for frequently signed documents. Group templates in bundles to make signing even faster.";
 $MESS["SIGN_ONBOARDING_B2E_STEP_TEMPLATES_TITLE_V1"] = "Templates and bundles";
+$MESS["SIGN_ONBOARDING_B2E_TEST_SIGNING_SETTINGS_AHA_TEXT"] = "Open the kanban settings to sign a test document.";
+$MESS["SIGN_ONBOARDING_B2E_TEST_SIGNING_SETTINGS_AHA_TITLE"] = "Sign test document";
 $MESS["SIGN_ONBOARDING_B2E_WELCOME_POPUP_BTN_SIGN_TEST_TEXT"] = "Sign test document";
 $MESS["SIGN_ONBOARDING_B2E_WELCOME_POPUP_BTN_TEXT"] = "Start";
 $MESS["SIGN_ONBOARDING_B2E_WELCOME_POPUP_BTN_TEXT_RU"] = "Continue e-Signature for HR tour";

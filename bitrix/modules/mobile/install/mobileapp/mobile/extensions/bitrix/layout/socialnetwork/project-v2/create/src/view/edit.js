@@ -20,6 +20,7 @@ jn.define('layout/socialnetwork/project-v2/create/src/view/edit', (require, expo
 	const { ProjectCreateParticipantsBlock } = require('layout/socialnetwork/project-v2/create/src/view/components/participants-block');
 	const { ProjectCreateSettingsBlock } = require('layout/socialnetwork/project-v2/create/src/view/components/settings-block');
 	const { ProjectCreateAdditionalSettings } = require('layout/socialnetwork/project-v2/create/src/view/additional-settings');
+	const { ProjectNotificationsSettings } = require('layout/socialnetwork/project-v2/create/src/view/project-notifications-settings');
 	const { ProjectType } = require('layout/socialnetwork/project-v2/create/src/enum/project-type');
 	const {
 		normalizeAvatar,
@@ -31,6 +32,7 @@ jn.define('layout/socialnetwork/project-v2/create/src/view/edit', (require, expo
 	const {
 		extractSettings,
 		getNormalizedSettings,
+		isValidNotificationCatalog,
 	} = require('layout/socialnetwork/project-v2/create/src/helpers/project-create-settings');
 	const { normalizeProjectSettings } = require('layout/socialnetwork/project-v2/create/src/helpers/settings-normalizer');
 	const { ProjectCreateTypeSettings } = require('layout/socialnetwork/project-v2/create/src/view/type-settings');
@@ -83,6 +85,7 @@ jn.define('layout/socialnetwork/project-v2/create/src/view/edit', (require, expo
 						testId: this.getTestId('area-list'),
 						resizableByKeyboard: true,
 						showsVerticalScrollIndicator: true,
+						onScrollBeginDrag: this.#hideKeyboard,
 						viewProps: {
 							style: {
 								paddingBottom: FOOTER_CONTENT_OFFSET,
@@ -131,6 +134,8 @@ jn.define('layout/socialnetwork/project-v2/create/src/view/edit', (require, expo
 			testId: this.getTestId('settings-block'),
 			typeSubtitle: this.#getProjectTypeSubtitle(),
 			showPermissions: true,
+			showProjectNotifications: !this.isLegacyProject
+				&& isValidNotificationCatalog(this.state.notifications),
 			onItemClick: this.#onSettingsItemClick,
 		});
 
@@ -156,6 +161,13 @@ jn.define('layout/socialnetwork/project-v2/create/src/view/edit', (require, expo
 			if (item.id === 'additional-settings')
 			{
 				await this.#openAdditionalSettings();
+
+				return;
+			}
+
+			if (item.id === 'project-notifications')
+			{
+				await this.#openProjectNotificationsSettings();
 			}
 		};
 
@@ -384,6 +396,7 @@ jn.define('layout/socialnetwork/project-v2/create/src/view/edit', (require, expo
 
 			layoutWidget?.showComponent(ProjectCreateAdditionalSettings({
 				layoutWidget,
+				rootLayoutWidget: this.props.rootLayoutWidget,
 				projectId: this.props.projectId,
 				dateStart: this.state.dateStart,
 				dateFinish: this.state.dateFinish,
@@ -391,6 +404,24 @@ jn.define('layout/socialnetwork/project-v2/create/src/view/edit', (require, expo
 				messagesAutoDeleteDelay: this.state.messagesAutoDeleteDelay,
 				autoDeleteEnabledInPortalSettings: this.props.autoDeleteEnabledInPortalSettings,
 				showMessagesAutoDelete: !this.isLegacyProject,
+				onChange: this.#onFieldsChange,
+			}));
+		};
+
+		#openProjectNotificationsSettings = async () => {
+			const layoutWidget = await this.props.layoutWidget?.openWidget('layout', {
+				backgroundColor: Color.bgPrimary.toHex(),
+				titleParams: {
+					text: Loc.getMessage('MOBILE_LAYOUT_PROJECT_V2_CREATE_NOTIFICATIONS_TITLE'),
+					type: 'entity',
+				},
+			});
+
+			layoutWidget?.showComponent(ProjectNotificationsSettings({
+				layoutWidget,
+				rootLayoutWidget: this.props.rootLayoutWidget,
+				projectId: this.props.projectId,
+				notifications: this.state.notifications,
 				onChange: this.#onFieldsChange,
 			}));
 		};
@@ -427,6 +458,8 @@ jn.define('layout/socialnetwork/project-v2/create/src/view/edit', (require, expo
 				knowledgeEditPerms: this.state.knowledgeEditPerms,
 				knowledgeSettingsPerms: this.state.knowledgeSettingsPerms,
 				knowledgeDeletePerms: this.state.knowledgeDeletePerms,
+				layoutWidget,
+				rootLayoutWidget: this.props.rootLayoutWidget,
 				onChange: this.#onFieldsChange,
 			}));
 		};
@@ -442,6 +475,7 @@ jn.define('layout/socialnetwork/project-v2/create/src/view/edit', (require, expo
 
 			layoutWidget?.showComponent(ProjectCreateTypeSettings({
 				layoutWidget,
+				rootLayoutWidget: this.props.rootLayoutWidget,
 				type: this.state.type,
 				onChange: this.#onFieldsChange,
 			}));
@@ -490,6 +524,7 @@ jn.define('layout/socialnetwork/project-v2/create/src/view/edit', (require, expo
 				dateFinish: this.state.dateFinish,
 				tags: this.state.tags,
 				messagesAutoDeleteDelay: this.state.messagesAutoDeleteDelay,
+				notifications: this.state.notifications,
 			});
 		};
 
@@ -571,18 +606,37 @@ jn.define('layout/socialnetwork/project-v2/create/src/view/edit', (require, expo
 					testId: this.getTestId('footer'),
 					safeArea: true,
 					backgroundColor: Color.bgContentPrimary,
+					keyboardButton: this.#getKeyboardButtonProps(),
 				},
 				Button({
 					testId: this.getTestId('create-btn'),
 					size: ButtonSize.L,
 					loading: this.state.pending,
-					disabled: this.state.name.trim().length === 0,
+					disabled: this.#isSubmitButtonDisabled(),
 					stretched: true,
 					backgroundColor: Color.accentMainPrimary,
-					text: this.props.submitButtonText ?? Loc.getMessage('MOBILE_LAYOUT_PROJECT_V2_CREATE_CREATE_BUTTON'),
+					text: this.#getSubmitButtonText(),
 					onClick: this.#onSubmitButtonClick,
 				}),
 			);
+		}
+
+		#getKeyboardButtonProps = () => ({
+			testId: this.getTestId('create-btn-keyboard'),
+			loading: this.state.pending,
+			disabled: this.#isSubmitButtonDisabled(),
+			backgroundColor: Color.accentMainPrimary,
+			text: this.#getSubmitButtonText(),
+			onClick: this.#onSubmitButtonClick,
+		});
+
+		#getSubmitButtonText = () => {
+			return this.props.submitButtonText ?? Loc.getMessage('MOBILE_LAYOUT_PROJECT_V2_CREATE_CREATE_BUTTON');
+		};
+
+		#isSubmitButtonDisabled()
+		{
+			return this.state.name.trim().length === 0;
 		}
 
 		#onSubmitButtonClick = () => {

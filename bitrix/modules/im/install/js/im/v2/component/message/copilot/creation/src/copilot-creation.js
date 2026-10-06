@@ -1,10 +1,14 @@
-import { SendingService } from 'im.v2.provider.service.sending';
-import { BaseMessage } from 'im.v2.component.message.base';
+import { Type } from 'main.core';
+import { type BaseEvent } from 'main.core.events';
+
 import { AvatarSize, MessageAvatar } from 'im.v2.component.elements.avatar';
+import { BaseMessage } from 'im.v2.component.message.base';
+import { EventType } from 'im.v2.const';
+import { Analytics } from 'im.v2.lib.analytics';
+import { SendingService } from 'im.v2.provider.service.sending';
+import { type ImModelMessage, type ImModelCopilotPrompt, type ImModelCopilotRole } from 'im.v2.model';
 
 import './css/copilot-creation-message.css';
-
-import type { ImModelMessage, ImModelCopilotPrompt, ImModelCopilotRole } from 'im.v2.model';
 
 // @vue/component
 export const ChatCopilotCreationMessage = {
@@ -20,8 +24,7 @@ export const ChatCopilotCreationMessage = {
 			required: true,
 		},
 	},
-	computed:
-	{
+	computed: {
 		AvatarSize: () => AvatarSize,
 		message(): ImModelMessage
 		{
@@ -42,6 +45,14 @@ export const ChatCopilotCreationMessage = {
 		{
 			return this.$store.getters['copilot/messages/getPrompts'](this.message.id);
 		},
+		hasSuggestedPrompts(): boolean
+		{
+			return Type.isArrayFilled(this.promptList);
+		},
+		suggestsCount(): number
+		{
+			return this.promptList.length;
+		},
 		role(): ImModelCopilotRole
 		{
 			return this.$store.getters['copilot/messages/getRole'](this.message.id);
@@ -51,10 +62,40 @@ export const ChatCopilotCreationMessage = {
 			return this.role.name;
 		},
 	},
-	methods:
+	mounted()
 	{
+		if (this.hasSuggestedPrompts)
+		{
+			this.subscribeToVisibility();
+		}
+	},
+	beforeUnmount()
+	{
+		this.unsubscribeFromVisibility();
+	},
+	methods: {
+		subscribeToVisibility(): void
+		{
+			this.$Bitrix.eventEmitter.subscribe(EventType.dialog.onMessageIsVisible, this.onMessageIsVisible);
+		},
+		unsubscribeFromVisibility(): void
+		{
+			this.$Bitrix.eventEmitter.unsubscribe(EventType.dialog.onMessageIsVisible, this.onMessageIsVisible);
+		},
+		onMessageIsVisible(event: BaseEvent<{ messageId: number, dialogId: string }>): void
+		{
+			const { messageId, dialogId } = event.getData();
+			if (dialogId !== this.dialogId || messageId !== this.message.id)
+			{
+				return;
+			}
+
+			Analytics.getInstance().copilot.onShowSuggestedPrompts(this.dialogId, this.message.id, this.suggestsCount);
+		},
 		onMessageClick(prompt: ImModelCopilotPrompt)
 		{
+			Analytics.getInstance().copilot.onClickSuggestedPrompt(this.dialogId, this.suggestsCount);
+
 			void this.getSendingService().sendCopilotPrompt({
 				text: prompt.text,
 				copilot: {

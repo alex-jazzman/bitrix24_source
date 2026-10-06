@@ -1,7 +1,11 @@
 import { Event } from 'main.core';
 import { toValue, ref, computed } from 'ui.vue3';
 import { useBlockDiagram } from './block-diagram';
+import { useSnapModifier } from './snap-modifier';
+import { getBoundsByStartEdge, getSizeByEndEdge } from '../utils';
 import { CURSOR_TYPES } from '../constants';
+
+type ResizeHandler = (event: MouseEvent) => void;
 
 // eslint-disable-next-line max-lines-per-function
 export function useResizableBlock(options): {...}
@@ -9,13 +13,14 @@ export function useResizableBlock(options): {...}
 	const {
 		cursorType,
 		resizingBlock,
-		blockDiagramTop,
-		blockDiagramLeft,
-		transformX,
-		transformY,
-		zoom,
+		transformMouseEventToPoint,
+		snapValue,
 		updateBlock,
+		startAutoScroll,
+		stopAutoScroll,
+		updateMousePosition,
 	} = useBlockDiagram();
+	const snapModifier = useSnapModifier();
 	const {
 		block,
 		minWidth,
@@ -35,13 +40,21 @@ export function useResizableBlock(options): {...}
 	let prevBlockY = 0;
 	let prevBlockWidth = 0;
 	let prevBlockHeight = 0;
+	let activeResizeHandlers: ResizeHandler[] = [];
+	let lastResizeEvent: MouseEvent | null = null;
 
 	const sizeBlockStyle = computed(() => {
 		if (toValue(isResize))
 		{
+			const { position, dimensions } = toValue(resizingBlock);
+
+			// Staged position has to win over blockPositionStyle: the model block keeps its
+			// own position until mouseup, so left/top resize would not move the block.
 			return {
-				width: `${toValue(resizingBlock).dimensions.width}px`,
-				height: `${toValue(resizingBlock).dimensions.height}px`,
+				top: `${position.y}px`,
+				left: `${position.x}px`,
+				width: `${dimensions.width}px`,
+				height: `${dimensions.height}px`,
 				cursor: toValue(cursorType),
 			};
 		}
@@ -52,6 +65,33 @@ export function useResizableBlock(options): {...}
 			cursor: toValue(cursorType),
 		};
 	});
+
+	// While resizing the model block keeps its old size, so slot content has to read the
+	// staged geometry to stay in step with the frame it lives in.
+	const blockDimensions = computed(() => {
+		const staged = toValue(resizingBlock);
+
+		return toValue(isResize) && staged !== null
+			? staged.dimensions
+			: toValue(block).dimensions;
+	});
+
+	function isGeometryStaged(): boolean
+	{
+		const staged = toValue(resizingBlock);
+
+		if (staged === null)
+		{
+			return false;
+		}
+
+		const { position, dimensions } = toValue(block);
+
+		return staged.position.x !== position.x
+			|| staged.position.y !== position.y
+			|| staged.dimensions.width !== dimensions.width
+			|| staged.dimensions.height !== dimensions.height;
+	}
 
 	function updateResizableBlock(): void
 	{
@@ -92,324 +132,206 @@ export function useResizableBlock(options): {...}
 		Event.unbind(toValue(rightBottomCornerRef), 'mousedown', onMouseDownRightBottomCorner);
 		Event.unbind(toValue(leftTopCornerRef), 'mousedown', onMouseDownLeftTopCorner);
 		Event.unbind(toValue(leftBottomCornerRef), 'mousedown', onMouseDownLeftBottomCorner);
+
+		// Autoscroll and the staged geometry belong to the whole diagram, so only the instance
+		// that owns the gesture may wind it down: under render optimization neighbour blocks
+		// are culled and unmounted exactly while the camera pans for this gesture.
+		if (!toValue(isResize))
+		{
+			return;
+		}
+
+		// The block is gone, so the staged geometry is dropped without reaching the model.
+		teardownGesture();
 	}
 
-	function startResize(event: MouseEvent, curType: string): void
+	function teardownGesture(): void
+	{
+		stopAutoScroll();
+		snapModifier.stopTracking();
+		Event.unbind(document, 'mousemove', onMouseMove);
+		Event.unbind(document, 'mouseup', endResize);
+		cursorType.value = 'default';
+		isResize.value = false;
+		resizingBlock.value = null;
+		activeResizeHandlers = [];
+		lastResizeEvent = null;
+	}
+
+	function startResize(event: MouseEvent, curType: string, resizeHandlers: ResizeHandler[]): void
 	{
 		event.stopPropagation();
 		cursorType.value = curType;
-		resizingBlock.value = { ...toValue(block) };
+		// Geometry is staged in its own objects. Sharing position/dimensions with the model
+		// block turns every resize step into a deep mutation of props.blocks, which makes
+		// useWatchProps rebuild the intersections index; under render optimization that
+		// unmounts the block mid-gesture and onUnmounted then tears the gesture down.
+		resizingBlock.value = {
+			...toValue(block),
+			position: { ...toValue(block).position },
+			dimensions: { ...toValue(block).dimensions },
+		};
 		prevBlockX = toValue(block).position.x;
 		prevBlockY = toValue(block).position.y;
 		prevBlockWidth = toValue(block).dimensions.width;
 		prevBlockHeight = toValue(block).dimensions.height;
 		isResize.value = true;
+		activeResizeHandlers = resizeHandlers;
+
+		snapModifier.sync(event);
+		snapModifier.startTracking();
+		startAutoScroll(event, applyResize);
+
+		Event.bind(document, 'mousemove', onMouseMove);
+		Event.bind(document, 'mouseup', endResize);
 	}
 
 	function endResize(event: MouseEvent): void
 	{
 		event.stopPropagation();
-		cursorType.value = 'default';
-		updateResizableBlock();
-		isResize.value = false;
-		resizingBlock.value = null;
+
+		// A click on a handle without a move stages nothing: emitting the command anyway would
+		// mark the document dirty and wake autosave for an unchanged block.
+		if (isGeometryStaged())
+		{
+			// The staged geometry is dropped as soon as the command is out, so the consumer has
+			// to apply update:blocks synchronously: until the model catches up the block is drawn
+			// with its pre-gesture position and size.
+			updateResizableBlock();
+		}
+
+		teardownGesture();
+	}
+
+	function applyResize(): void
+	{
+		if (!toValue(isResize) || !lastResizeEvent)
+		{
+			return;
+		}
+
+		for (const resize of activeResizeHandlers)
+		{
+			resize(lastResizeEvent);
+		}
+	}
+
+	function onMouseMove(event: MouseEvent): void
+	{
+		event.stopPropagation();
+
+		if (!toValue(isResize))
+		{
+			return;
+		}
+
+		lastResizeEvent = event;
+		snapModifier.sync(event);
+
+		// Autoscroll moves the camera, so the same cursor point maps to a new world point. The
+		// gesture reports the pointer on every move and the autoscroll itself holds the loop back
+		// until this first report - the wait no longer belongs here.
+		updateMousePosition(event);
+
+		applyResize();
+	}
+
+	// Edge under the cursor in canvas coordinates. It is rounded before snapping, so an
+	// unsnapped edge still leaves the model with whole-pixel geometry at any zoom.
+	function getEdgeX(event: MouseEvent): number
+	{
+		return snapValue(Math.round(transformMouseEventToPoint(event).x), snapModifier.isPressed());
+	}
+
+	function getEdgeY(event: MouseEvent): number
+	{
+		return snapValue(Math.round(transformMouseEventToPoint(event).y), snapModifier.isPressed());
 	}
 
 	function resizeTopSide(event: MouseEvent): void
 	{
-		let newY = event.clientY / toValue(zoom);
-		newY += toValue(transformY);
-		newY -= toValue(blockDiagramTop) / toValue(zoom);
+		const edgeY = getEdgeY(event);
+		const { position, size } = getBoundsByStartEdge(
+			edgeY,
+			prevBlockY + prevBlockHeight,
+			toValue(minHeight),
+		);
 
-		let newHeight = event.clientY / toValue(zoom);
-		newHeight += toValue(transformY);
-		newHeight -= toValue(blockDiagramTop) / toValue(zoom);
-		newHeight -= prevBlockY + prevBlockHeight;
-		newHeight = Math.abs(newHeight);
-
-		const fixedPositionY = prevBlockY + prevBlockHeight - toValue(minHeight);
-
-		resizingBlock.value.position.y = newHeight < toValue(minHeight) || newY >= fixedPositionY
-			? fixedPositionY
-			: newY;
-
-		resizingBlock.value.dimensions.height = newHeight < toValue(minHeight) || newY >= fixedPositionY
-			? toValue(minHeight)
-			: newHeight;
+		resizingBlock.value.position.y = position;
+		resizingBlock.value.dimensions.height = size;
 	}
 
 	function resizeRightSide(event: MouseEvent): void
 	{
-		let cursorX = event.clientX / toValue(zoom);
-		cursorX += toValue(transformX);
-		cursorX -= toValue(blockDiagramLeft) / toValue(zoom);
+		const edgeX = getEdgeX(event);
 
-		let newWidth = prevBlockX;
-		newWidth -= event.clientX / toValue(zoom);
-		newWidth -= toValue(transformX);
-		newWidth -= toValue(blockDiagramLeft) / toValue(zoom);
-		newWidth = Math.abs(newWidth);
-
-		resizingBlock.value.dimensions.width = newWidth < toValue(minWidth) || cursorX <= prevBlockX
-			? toValue(minWidth)
-			: newWidth;
+		resizingBlock.value.dimensions.width = getSizeByEndEdge(edgeX, prevBlockX, toValue(minWidth));
 	}
 
 	function resizeBottomSide(event: MouseEvent): void
 	{
-		let cursorX = event.clientY / toValue(zoom);
-		cursorX += toValue(transformY);
-		cursorX -= toValue(blockDiagramTop) / toValue(zoom);
+		const edgeY = getEdgeY(event);
 
-		let newHeight = event.clientY / toValue(zoom);
-		newHeight -= prevBlockY;
-		newHeight += toValue(transformY);
-		newHeight -= toValue(blockDiagramTop) / toValue(zoom);
-		newHeight = Math.abs(newHeight);
-
-		resizingBlock.value.dimensions.height = newHeight < toValue(minHeight) || cursorX <= prevBlockY
-			? toValue(minHeight)
-			: newHeight;
+		resizingBlock.value.dimensions.height = getSizeByEndEdge(edgeY, prevBlockY, toValue(minHeight));
 	}
 
 	function resizeLeftSide(event: MouseEvent): void
 	{
-		let newX = event.clientX / toValue(zoom);
-		newX += toValue(transformX);
-		newX -= toValue(blockDiagramLeft) / toValue(zoom);
+		const edgeX = getEdgeX(event);
+		const { position, size } = getBoundsByStartEdge(
+			edgeX,
+			prevBlockX + prevBlockWidth,
+			toValue(minWidth),
+		);
 
-		let newWidth = event.clientX / toValue(zoom);
-		newWidth += toValue(transformX);
-		newWidth -= toValue(blockDiagramLeft) / toValue(zoom);
-		newWidth -= (prevBlockX + prevBlockWidth);
-		newWidth = Math.abs(newWidth);
-
-		const fixedPositionX = prevBlockX + prevBlockWidth - toValue(minWidth);
-
-		resizingBlock.value.position.x = newWidth < toValue(minWidth) || newX >= fixedPositionX
-			? fixedPositionX
-			: newX;
-
-		resizingBlock.value.dimensions.width = newWidth < toValue(minWidth) || newX >= fixedPositionX
-			? toValue(minWidth)
-			: newWidth;
+		resizingBlock.value.position.x = position;
+		resizingBlock.value.dimensions.width = size;
 	}
 
 	function onMouseDownRightSide(event: MouseEvent): void
 	{
-		startResize(event, CURSOR_TYPES.EW_RESIZE);
-		Event.bind(document, 'mousemove', onMouseMoveRightSide);
-		Event.bind(document, 'mouseup', onMouseUpRightSide);
-	}
-
-	function onMouseMoveRightSide(event: MouseEvent): void
-	{
-		event.stopPropagation();
-
-		if (!toValue(isResize))
-		{
-			return;
-		}
-
-		resizeRightSide(event);
-	}
-
-	function onMouseUpRightSide(event: MouseEvent): void
-	{
-		endResize(event);
-		Event.unbind(document, 'mousemove', onMouseMoveRightSide);
-		Event.unbind(document, 'mouseup', onMouseUpRightSide);
+		startResize(event, CURSOR_TYPES.EW_RESIZE, [resizeRightSide]);
 	}
 
 	function onMouseDownBottomSide(event: MouseEvent): void
 	{
-		startResize(event, CURSOR_TYPES.NS_RESIZE);
-		Event.bind(document, 'mousemove', onMouseMoveBottomSide);
-		Event.bind(document, 'mouseup', onMouseUpBottomSide);
-	}
-
-	function onMouseMoveBottomSide(event: MouseEvent): void
-	{
-		event.stopPropagation();
-
-		if (!toValue(isResize))
-		{
-			return;
-		}
-
-		resizeBottomSide(event);
-	}
-
-	function onMouseUpBottomSide(event: MouseEvent): void
-	{
-		endResize(event);
-		Event.unbind(document, 'mousemove', onMouseMoveBottomSide);
-		Event.unbind(document, 'mouseup', onMouseUpBottomSide);
+		startResize(event, CURSOR_TYPES.NS_RESIZE, [resizeBottomSide]);
 	}
 
 	function onMouseDownLeftSide(event: MouseEvent): void
 	{
-		startResize(event, CURSOR_TYPES.EW_RESIZE);
-		Event.bind(document, 'mousemove', onMouseMoveLeftSide);
-		Event.bind(document, 'mouseup', onMouseUpLeftSide);
-	}
-
-	function onMouseMoveLeftSide(event: MouseEvent): void
-	{
-		event.stopPropagation();
-
-		if (!toValue(isResize))
-		{
-			return;
-		}
-
-		resizeLeftSide(event);
-	}
-
-	function onMouseUpLeftSide(event: MouseEvent): void
-	{
-		endResize(event);
-		Event.unbind(document, 'mousemove', onMouseMoveLeftSide);
-		Event.unbind(document, 'mouseup', onMouseUpLeftSide);
+		startResize(event, CURSOR_TYPES.EW_RESIZE, [resizeLeftSide]);
 	}
 
 	function onMouseDownTopSide(event: MouseEvent): void
 	{
-		startResize(event, CURSOR_TYPES.NS_RESIZE);
-		Event.bind(document, 'mousemove', onMouseMoveTopSide);
-		Event.bind(document, 'mouseup', onMouseUpTopSide);
-	}
-
-	function onMouseMoveTopSide(event: MouseEvent): void
-	{
-		event.stopPropagation();
-
-		if (!toValue(isResize))
-		{
-			return;
-		}
-
-		resizeTopSide(event);
-	}
-
-	function onMouseUpTopSide(event: MouseEvent)
-	{
-		endResize(event);
-		Event.unbind(document, 'mousemove', onMouseMoveTopSide);
-		Event.unbind(document, 'mouseup', onMouseUpTopSide);
+		startResize(event, CURSOR_TYPES.NS_RESIZE, [resizeTopSide]);
 	}
 
 	function onMouseDownRightBottomCorner(event: MouseEvent): void
 	{
-		startResize(event, CURSOR_TYPES.NWSE_RESIZE);
-		Event.bind(document, 'mousemove', onMouseMoveRightBottomCorner);
-		Event.bind(document, 'mouseup', onMouseUpRightBottomCorner);
-	}
-
-	function onMouseMoveRightBottomCorner(event: MouseEvent): void
-	{
-		event.stopPropagation();
-
-		if (!toValue(isResize))
-		{
-			return;
-		}
-
-		resizeRightSide(event);
-		resizeBottomSide(event);
-	}
-
-	function onMouseUpRightBottomCorner(event: MouseEvent): void
-	{
-		endResize(event);
-		Event.unbind(document, 'mousemove', onMouseMoveRightBottomCorner);
-		Event.unbind(document, 'mouseup', onMouseUpRightBottomCorner);
+		startResize(event, CURSOR_TYPES.NWSE_RESIZE, [resizeRightSide, resizeBottomSide]);
 	}
 
 	function onMouseDownRightTopCorner(event: MouseEvent): void
 	{
-		startResize(event, CURSOR_TYPES.NESW_RESIZE);
-		Event.bind(document, 'mousemove', onMouseMoveRightTopCorner);
-		Event.bind(document, 'mouseup', onMouseUpRightTopCorner);
-	}
-
-	function onMouseMoveRightTopCorner(event: MouseEvent): void
-	{
-		event.stopPropagation();
-
-		if (!toValue(isResize))
-		{
-			return;
-		}
-
-		resizeTopSide(event);
-		resizeRightSide(event);
-	}
-
-	function onMouseUpRightTopCorner(event: MouseEvent): void
-	{
-		endResize(event);
-		Event.unbind(document, 'mousemove', onMouseMoveRightTopCorner);
-		Event.unbind(document, 'mouseup', onMouseUpRightTopCorner);
+		startResize(event, CURSOR_TYPES.NESW_RESIZE, [resizeTopSide, resizeRightSide]);
 	}
 
 	function onMouseDownLeftBottomCorner(event: MouseEvent): void
 	{
-		startResize(event, CURSOR_TYPES.NESW_RESIZE);
-		Event.bind(document, 'mousemove', onMouseMoveLeftBottomCorner);
-		Event.bind(document, 'mouseup', onMouseUpLeftBottomCorner);
-	}
-
-	function onMouseMoveLeftBottomCorner(event: MouseEvent): void
-	{
-		event.stopPropagation();
-
-		if (!toValue(isResize))
-		{
-			return;
-		}
-
-		resizeLeftSide(event);
-		resizeBottomSide(event);
-	}
-
-	function onMouseUpLeftBottomCorner(event: MouseEvent): void
-	{
-		endResize(event);
-		Event.unbind(document, 'mousemove', onMouseMoveLeftBottomCorner);
-		Event.unbind(document, 'mouseup', onMouseUpLeftBottomCorner);
+		startResize(event, CURSOR_TYPES.NESW_RESIZE, [resizeLeftSide, resizeBottomSide]);
 	}
 
 	function onMouseDownLeftTopCorner(event: MouseEvent): void
 	{
-		startResize(event, CURSOR_TYPES.NWSE_RESIZE);
-		Event.bind(document, 'mousemove', onMouseMoveLeftTopCorner);
-		Event.bind(document, 'mouseup', onMouseUpLeftTopCorner);
-	}
-
-	function onMouseMoveLeftTopCorner(event: MouseEvent): void
-	{
-		event.stopPropagation();
-
-		if (!toValue(isResize))
-		{
-			return;
-		}
-
-		resizeLeftSide(event);
-		resizeTopSide(event);
-	}
-
-	function onMouseUpLeftTopCorner(event: MouseEvent): void
-	{
-		endResize(event);
-		Event.unbind(document, 'mousemove', onMouseMoveLeftTopCorner);
-		Event.unbind(document, 'mouseup', onMouseUpLeftTopCorner);
+		startResize(event, CURSOR_TYPES.NWSE_RESIZE, [resizeLeftSide, resizeTopSide]);
 	}
 
 	return {
 		isResize,
 		sizeBlockStyle,
+		blockDimensions,
 		onMounted,
 		onUnmounted,
 	};

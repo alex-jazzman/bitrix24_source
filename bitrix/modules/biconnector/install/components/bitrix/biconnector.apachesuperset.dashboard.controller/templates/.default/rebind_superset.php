@@ -33,7 +33,7 @@ if ($isAdmin)
 \Bitrix\Main\UI\Extension::load($extensions);
 ?>
 
-<div class="biconnector-link-superset-wrapper">
+<div class="biconnector-link-superset-wrapper" data-testid="biconnector-dashboard-rebind-required">
 	<div class="biconnector-link-superset-content">
 		<div class="biconnector-link-superset-icon"></div>
 		<div class="biconnector-link-superset-title">

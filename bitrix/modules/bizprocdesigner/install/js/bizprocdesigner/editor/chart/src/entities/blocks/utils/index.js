@@ -4,3 +4,6 @@ export * from './validate-connection-rules';
 export * from './normalyze-connection';
 export * from './exchange-buffer';
 export * from './should-animate-block';
+export * from './content-block-scope';
+export * from './timestamps';
+export * from './insert-node-connection-policy.ts';

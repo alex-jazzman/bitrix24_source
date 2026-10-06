@@ -1,0 +1,19 @@
+<?php
+
+$MESS['BIZPROC_ACTION_AREA_CRM'] = 'CRM';
+$MESS['BIZPROC_ACTION_AREA_SMART_PROCESS'] = 'Смарт-процессы';
+$MESS['BIZPROC_ACTION_AREA_TASKS'] = 'Задачи';
+$MESS['BIZPROC_ACTION_AREA_BIZPROC'] = 'Бизнес-процессы';
+$MESS['BIZPROC_ACTION_AREA_DISK'] = 'Диск';
+$MESS['BIZPROC_ACTION_AREA_CALENDAR'] = 'Календарь';
+$MESS['BIZPROC_ACTION_AREA_MAIL'] = 'Почта';
+$MESS['BIZPROC_ACTION_AREA_MESSENGER'] = 'Мессенджер и чаты';
+$MESS['BIZPROC_ACTION_AREA_OPEN_LINES'] = 'Открытые линии';
+$MESS['BIZPROC_ACTION_AREA_ECOMMERCE'] = 'Интернет-магазин и заказы';
+$MESS['BIZPROC_ACTION_AREA_CATALOG'] = 'Каталог';
+$MESS['BIZPROC_ACTION_AREA_LISTS'] = 'Списки';
+$MESS['BIZPROC_ACTION_AREA_HR'] = 'HR и оргструктура';
+$MESS['BIZPROC_ACTION_AREA_SIGN'] = 'КЭДО';
+$MESS['BIZPROC_ACTION_AREA_TIMEMAN'] = 'Рабочее время';
+$MESS['BIZPROC_ACTION_AREA_VIDEOCALLS'] = 'Видеозвонки и конференции';
+$MESS['BIZPROC_ACTION_AREA_EXTERNAL'] = 'Внешние интеграции';

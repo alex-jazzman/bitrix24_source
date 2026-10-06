@@ -66,24 +66,6 @@
 		}
 	});
 
-	// todo: fix subscribing
-	onCustomEvent('BX.Landing.Animation.Copilot:init', (event, sec) => {
-		event.data.blocksData.forEach((blockData) => {
-			if (blockData.element === undefined)
-			{
-				return;
-			}
-
-			const allObservableElements = BX.Landing.OnscrollAnimationHelper.getBlockAnimatedElements(blockData.element);
-			allObservableElements.forEach((element) => {
-				void style(element, {
-					'animation-name': 'none',
-				});
-				BX.Landing.OnscrollAnimationHelper.observer.unobserve(element);
-			});
-		});
-	});
-
 	BX.Landing.OnscrollAnimationHelper.SELECTOR = '.js-animation:not(.animation-none)';
 	BX.Landing.OnscrollAnimationHelper.PROP = 'animation-name';
 	BX.Landing.OnscrollAnimationHelper.ANIMATIONS = [

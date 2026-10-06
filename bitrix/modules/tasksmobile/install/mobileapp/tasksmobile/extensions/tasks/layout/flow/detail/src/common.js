@@ -77,7 +77,7 @@ jn.define('tasks/layout/flow/detail/src/common', (require, exports, module) => {
 						width: 216,
 						height: 216,
 					},
-					uri: makeLibraryImagePath('zefir-flow-not-found.png', 'empty-states', 'tasks'),
+					uri: makeLibraryImagePath('zefir-not-found.png', 'empty-states', 'tasks'),
 				}),
 				title: Loc.getMessage('TASKSMOBILE_FLOW_DETAIL_FLOW_NOT_FOUND_TITLE'),
 				description: Loc.getMessage('TASKSMOBILE_FLOW_DETAIL_FLOW_NOT_FOUND_DESCRIPTION'),

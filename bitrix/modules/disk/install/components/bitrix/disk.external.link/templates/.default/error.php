@@ -12,74 +12,50 @@ if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
 /** @var string $componentPath */
 /** @var CDiskExternalLinkComponent $component */
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\UI\Extension;
+
+Loc::loadMessages(__DIR__ . '/template.php');
+
+include $_SERVER['DOCUMENT_ROOT'] . '/bitrix/components/bitrix/disk.external.link/templates/.default/access-page.php';
+
+Extension::load([
+	'ui.design-tokens',
+	'ui.fonts.opensans',
+	'ui.buttons',
+]);
+
+$APPLICATION->SetAdditionalCSS($templateFolder . '/access-card.css');
 
 $langId = $component->getLangId();
-switch(mb_strtolower($langId))
-{
-	case 'en':
-	case 'de':
-	case 'ru':
-	case 'ua':
-	$langForBanner = mb_strtolower($langId);
-		break;
-	default:
-		$langForBanner = Loc::getDefaultLang($langId);
-}
+
+$illustration = $templateFolder . '/images/access-lock.png';
+$title = $component->getMessage('DISK_EXT_LINK_DENIED_TITLE');
+$description = ($arResult['ERROR_MESSAGE'] ?? '') ?: $component->getMessage('DISK_EXT_LINK_DENIED_DESCRIPTION');
+$mode = 'denied';
+$slotHtml = '';
+$cardTestId = 'disk-ext-denied-card';
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="<?= mb_strtolower($langId) ?>">
 <head>
-	<meta charset="windows-1251">
+	<meta charset="<?= LANG_CHARSET ?>">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta http-equiv="Content-Type" content="text/html; charset=<?= SITE_CHARSET ?>" />
 	<title><?= $component->getMessage('DISK_EXT_LINK_TITLE') ?></title>
-	<link rel="stylesheet" href="<?= $this->getFolder() ?>/style.css">
+	<?php
+	$APPLICATION->ShowCSS();
+	$APPLICATION->ShowHeadStrings();
+	$APPLICATION->ShowHeadScripts();
+	?>
 </head>
-<body>
-
+<body class="<?= $pageBodyClass ?>">
 	<div class="bx-shared-wrap">
-
-		<div class="bx-shared-header">
-			<div class="bx-shared-logo">
-				<?= $component->getMessage('DISK_EXT_LINK_B24') ?>
-			</div>
+		<?php if ($showExternalHeader): ?>
+			<?php include $_SERVER['DOCUMENT_ROOT'] . '/bitrix/components/bitrix/disk.external.link/templates/.default/access-header.php'; ?>
+		<?php endif; ?>
+		<div class="<?= $cardLayoutClass ?>">
+			<?php include $_SERVER['DOCUMENT_ROOT'] . '/bitrix/components/bitrix/disk.external.link/templates/.default/access-card.php'; ?>
 		</div>
-		<div class="bx-shared-body">
-			<table class="bx-shared-body-container">
-				<tr>
-					<td class="bx-shared-body-previewblock tac">
-
-						<div class="bx-file-icon-container-big m0a icon-non">
-							<div class="bx-file-icon-cover">
-								<div class="bx-file-icon-corner"></div>
-								<div class="bx-file-icon-corner-fix"></div>
-								<div class="bx-file-icon-images"></div>
-							</div>
-							<div class="bx-file-icon-label"></div>
-						</div>
-
-						<br>
-						<br>
-
-						<h1 class="bx-shared-body-filename" style="color: #535c69;"><?= $component->getMessage('DISK_EXT_LINK_TEXT') ?></h1>
-						<div style="font-size: 14px;color: #535c69;"><?= $arResult['ERROR_MESSAGE']?: $component->getMessage('DISK_EXT_LINK_DESCRIPTION') ?></div>
-					</td>
-				</tr>
-			</table>
-		</div>
-		<?php if(isModuleInstalled('bitrix24') && \Bitrix\Main\Loader::includeModule('intranet')) { ?>
-			<div class="banner_b24" style="">
-				<a target="_blank" href="<?= CIntranetUtils::getB24Link('file') . '&utm_source=fileshare_button&utm_medium=referral&utm_campaign=fileshare_button'; ?>" class="banner-b24-link-container">
-					<span class="banner-b24-link-container-cyrcle-logo <?= $langForBanner ?>"></span>
-					<span class="banner-b24-link-container-cyrcle-desc"><?= $component->getMessage('DISK_EXT_LINK_B24_ADV_TEXT') ?></span>
-					<span class="banner-b24-link-container-cyrcle-title l1"><span><?= $component->getMessage('DISK_EXT_LINK_B24_ADV_1') ?></span></span>
-					<span class="banner-b24-link-container-cyrcle-title l2"><span><?= $component->getMessage('DISK_EXT_LINK_B24_ADV_2') ?></span></span>
-					<span class="banner-b24-link-container-cyrcle-title l3"><span><?= $component->getMessage('DISK_EXT_LINK_B24_ADV_3') ?></span></span>
-					<span class="banner-b24-link-container-cyrcle-title l4"><span><?= $component->getMessage('DISK_EXT_LINK_B24_ADV_4') ?></span></span>
-					<span class="banner-b24-link-container-cyrcle-title l5"><span><?= $component->getMessage('DISK_EXT_LINK_B24_ADV_5') ?></span></span>
-					<span class="banner-b24-link-container-cyrcle-title l6"><span><?= $component->getMessage('DISK_EXT_LINK_B24_ADV_6') ?></span></span>
-					<span class="banner-b24-link-container-cyrcle-button"><span><?= $component->getMessage('DISK_EXT_LINK_B24_ADV_CREATE_LINK_TEXT') ?></span></span>
-				</a>
-			</div>
-		<?php } ?>
 	</div>
 </body>
 </html>

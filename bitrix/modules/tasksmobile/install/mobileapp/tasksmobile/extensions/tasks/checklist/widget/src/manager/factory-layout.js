@@ -1,6 +1,4 @@
-/**
- * @module tasks/checklist/widget/src/manager/factory-layout
- */
+/** @module tasks/checklist/widget/src/manager/factory-layout */
 jn.define('tasks/checklist/widget/src/manager/factory-layout', (require, exports, module) => {
 	const { PropTypes } = require('utils/validation');
 	const { ChecklistBottomSheet } = require('tasks/checklist/widget/src/manager/bottom-sheet');
@@ -15,12 +13,8 @@ jn.define('tasks/checklist/widget/src/manager/factory-layout', (require, exports
 	};
 
 	/**
-	 * @typedef {Object} ChecklistBottomSheetProps
-	 *
-	 * @param layoutType
-	 * @param {ChecklistBottomSheetProps} restProps
-	 *
-	 * @function ChecklistBottomSheet
+	 * @param {ChecklistBottomSheetProps & { layoutType?: string }} params
+	 * @return {ChecklistBaseLayout}
 	 */
 	function checklistWidgetFactoryLayout({ layoutType, ...restProps })
 	{

@@ -25,6 +25,22 @@ export const ConstantTime = {
 			type: Boolean,
 			default: false,
 		},
+		labelledbyId: {
+			type: String,
+			default: '',
+		},
+		describedbyId: {
+			type: String,
+			default: '',
+		},
+		invalid: {
+			type: Boolean,
+			default: false,
+		},
+		required: {
+			type: Boolean,
+			default: false,
+		},
 	},
 	emits: ['update:modelValue'],
 	data(): Object
@@ -140,6 +156,14 @@ export const ConstantTime = {
 			this.emitUpdate(this.prepareEventData(normalizedValue, this.timezone));
 			input.value = timeString;
 		},
+		onTimeInputKeydown(event: KeyboardEvent): void
+		{
+			if (event.key === 'Enter' || event.key === ' ' || event.key === 'Spacebar')
+			{
+				event.preventDefault();
+				this.openTimePicker();
+			}
+		},
 		openTimePicker(): void
 		{
 			if (this.disabled)
@@ -200,10 +224,15 @@ export const ConstantTime = {
 		        type="text"
 		        class="ui-ctl-element"
 		        :disabled="disabled"
+		        :aria-labelledby="labelledbyId || null"
+		        :aria-describedby="describedbyId || null"
+		        :aria-invalid="invalid ? 'true' : null"
+		        :aria-required="required ? 'true' : null"
 		        placeholder="HH:MM"
 		        readonly
 		        @change="onTimeChange"
 		        @click="openTimePicker"
+		        @keydown="onTimeInputKeydown"
 		        style="cursor: pointer;"
 		        data-test-id="bizproc-setup-template__form-time-value"
 		    >
@@ -214,6 +243,7 @@ export const ConstantTime = {
 		        class="ui-ctl-element"
 		        :value="timezone"
 		        :disabled="disabled"
+		        :aria-label="$Bitrix.Loc.getMessage('BIZPROC_JS_AI_AGENTS_ACTIVATOR_FORM_TIMEZONE')"
 		        @change="onTimezoneChange"
 		        data-test-id="bizproc-setup-template__form-time-timezone"
 		    >

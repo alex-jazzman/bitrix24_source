@@ -51,6 +51,7 @@
 		BX.Calendar.Util.setAccessNames(config.accessNames);
 		BX.Calendar.Util.setEventWithEmailGuestEnabled(config.eventWithEmailGuestEnabled);
 		BX.Calendar.Util.setProjectFeatureEnabled(config.projectFeatureEnabled);
+		BX.Calendar.Util.setTeamsAsAttendeeEnabled(config.teamsAsAttendeeEnabled);
 		BX.Calendar.Util.setIsBitrix24Template(config.isBitrix24Template);
 
 		BX.Calendar.Util.setDayMonthFormat(config.dayMonthFormat);

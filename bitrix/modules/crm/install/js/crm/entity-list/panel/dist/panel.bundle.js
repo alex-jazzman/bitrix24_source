@@ -910,10 +910,10 @@ this.BX.Crm.EntityList = this.BX.Crm.EntityList || {};
 				return;
 			}
 			try {
-				const exports$1 = await main_core.Runtime.loadExtension('crm.group-actions.messages');
+				const exports = await main_core.Runtime.loadExtension('crm.group-actions.messages');
 				const {
 					Messages
-				} = exports$1;
+				} = exports;
 				const options = {
 					gridId: grid.getId(),
 					entityTypeId: this.#entityTypeId,
@@ -1285,6 +1285,8 @@ this.BX.Crm.EntityList = this.BX.Crm.EntityList || {};
 	Router.registerHandler(OpenTaskCreationForm);
 	Router.registerHandler(LoadEnumsAndEditSelected);
 
+	const routers = new Map();
+
 	/**
 	 * @memberOf BX.Crm.EntityList.Panel
 	 */
@@ -1306,10 +1308,16 @@ this.BX.Crm.EntityList = this.BX.Crm.EntityList || {};
 			console.error('progressBarContainer not found', progressBarContainerId);
 			return;
 		}
+		const existingRouter = routers.get(gridId);
+		if (existingRouter) {
+			existingRouter.stopListening();
+			routers.delete(gridId);
+		}
 		const progressBarRepo = new crm_autorun.ProgressBarRepository(progressBarContainer);
 		const settings = main_core.Extension.getSettings('crm.entity-list.panel');
 		const eventRouter = new Router(grid, progressBarRepo, settings);
 		eventRouter.startListening();
+		routers.set(gridId, eventRouter);
 	}
 
 	/**
@@ -1325,5 +1333,5 @@ this.BX.Crm.EntityList = this.BX.Crm.EntityList || {};
 	exports.init = init;
 	exports.loadEnumsGridEditData = loadEnumsGridEditData;
 
-})(this.BX.Crm.EntityList.Panel = this.BX.Crm.EntityList.Panel || {}, BX.Crm.Autorun, BX, BX, BX.UI.Dialogs, BX, BX.Event, BX.Collections, BX.Crm, BX.UI.EntitySelector);
+})(this.BX.Crm.EntityList.Panel = this.BX.Crm.EntityList.Panel || {}, BX.Crm.Autorun, BX, BX.UI.Notification, BX.UI.Dialogs, BX, BX.Event, BX.Collections, BX.Crm, BX.UI.EntitySelector);
 //# sourceMappingURL=panel.bundle.js.map

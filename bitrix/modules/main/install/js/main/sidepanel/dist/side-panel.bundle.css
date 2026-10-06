@@ -97,6 +97,7 @@
 	transition-property: opacity, display, transform;
 	transition-duration: 150ms;
 	transition-timing-function: ease-in-out;
+	/* @chef-ignore */
 	transition-behavior: allow-discrete;
 }
 
@@ -128,6 +129,7 @@
 	transition-property: opacity, display, transform;
 	transition-duration: 150ms;
 	transition-timing-function: ease-in-out;
+	/* @chef-ignore */
 	transition-behavior: allow-discrete;
 
 	box-sizing: border-box;

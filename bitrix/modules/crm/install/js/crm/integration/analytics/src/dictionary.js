@@ -73,6 +73,10 @@ export const Dictionary = Object.freeze({
 	EVENT_OLD_INVOICE_READONLY_ALERT_CLICK: 'banner_click',
 	EVENT_OLD_INVOICE_READONLY_ALERT_CLOSE: 'banner_close',
 
+	EVENT_EINVOICE_PROMO_VIEW: 'banner_view',
+	EVENT_EINVOICE_PROMO_CLICK: 'banner_click',
+	EVENT_EINVOICE_PROMO_CLOSE: 'banner_close',
+
 	EVENT_IMPORT_VIEW: 'view',
 	EVENT_IMPORT_EDIT: 'edit',
 	EVENT_IMPORT_CREATE: 'create',
@@ -100,6 +104,7 @@ export const Dictionary = Object.freeze({
 	TYPE_REPEAT_SALE_BANNER_START_FORCE: 'repeat_sale_force_start',
 	TYPE_REPEAT_SALE_BANNER_STATISTICS: 'repeat_sale_statistics',
 	TYPE_OLD_INVOICE_READONLY_ALERT: 'old_invoice',
+	TYPE_EINVOICE_PROMO: 'einvoice_promo',
 	// endregion
 
 	// region Section const

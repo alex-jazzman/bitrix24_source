@@ -46,3 +46,8 @@
 	content: '*';
 	color: var(--ui-color-background-on-alert);
 }
+
+.bizproc__ws_start__content-form :is(input, select, textarea, button, a[href], [tabindex]):focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+}

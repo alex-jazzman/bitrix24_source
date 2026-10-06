@@ -1,3 +1,32 @@
+.bx-im-search-item-layout__scope {
+	--im-search-item__color_item-date: var(--im-color-palette-gray-40);
+	--im-search-item__color_highlight: var(--im-color-palette-black-solid);
+	--im-search-item__color_highlight-description: var(--im-color-palette-gray-80);
+	--im-search-item__background-color_highlight: #faf16d;
+}
+
+.bx-im-search-item__date {
+	display: flex;
+	flex-shrink: 0;
+	align-items: center;
+	justify-content: right;
+	height: 18px;
+	margin-left: 3px;
+	font: var(--im-font-size-xs)/var(--im-font-line-height-3xs) var(--im-font-family-system);
+	color: var(--im-search-item__color_item-date);
+	text-transform: lowercase;
+}
+
+.bx-im-search-item-layout__content-container .--highlight {
+	color: var(--im-search-item__color_highlight);
+	background-color: var(--im-search-item__background-color_highlight);
+}
+
+.bx-im-search-item-layout__item-text .--highlight {
+	color: var(--im-search-item__color_highlight-description);
+}
+
+/* compatibility layer for imopenlines 26.600.0, drop it once 26.700.0 is rolled out */
 .bx-im-search-item__scope {
 	--im-search-item__background-color_container: var(--im-color-palette-white-base);
 	--im-search-item__background-color_hover-container: #f1f4f6;
@@ -51,18 +80,6 @@
 	text-overflow: ellipsis;
 	overflow: hidden;
 	white-space: nowrap;
-}
-
-.bx-im-search-item__date {
-	display: flex;
-	flex-shrink: 0;
-	align-items: center;
-	justify-content: right;
-	height: 18px;
-	margin-left: 3px;
-	font: var(--im-font-size-xs)/var(--im-font-line-height-3xs) var(--im-font-family-system);
-	color: var(--im-search-item__color_item-date);
-	text-transform: lowercase;
 }
 
 .bx-im-search-item__content_header {

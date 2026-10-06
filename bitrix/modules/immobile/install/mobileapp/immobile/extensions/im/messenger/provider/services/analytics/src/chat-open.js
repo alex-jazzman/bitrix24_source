@@ -70,12 +70,15 @@ jn.define('im/messenger/provider/services/analytics/chat-open', (require, export
 
 				const element = context === OpenDialogContextType.push ? Analytics.Element.push : null;
 
+				const folderSubSection = AnalyticsHelper.getFolderSubSection();
+
 				const analytics = new AnalyticsEvent()
 					.setTool(Analytics.Tool.im)
 					.setCategory(category)
 					.setEvent(Analytics.Event.openExisting)
 					.setType(type)
 					.setSection(AnalyticsHelper.getSectionCode())
+					.setSubSection(folderSubSection)
 					.setElement(element)
 					.setP2(AnalyticsHelper.getP2ByUserType())
 				;

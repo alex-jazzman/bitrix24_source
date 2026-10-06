@@ -14,6 +14,9 @@ jn.define('layout/socialnetwork/project-v2/create/src/view/additional-settings',
 	const { Loc } = require('loc');
 	const { Text2, Text5, Text4 } = require('ui-system/typography/text');
 	const { createTestIdGenerator } = require('utils/test');
+	const {
+		createProjectSettingsCloseGuard,
+	} = require('layout/socialnetwork/project-v2/create/src/helpers/project-settings-close-guard');
 
 	const BORDER_WIDTH = 1;
 	const BLOCK_BORDER_RADIUS = 12;
@@ -36,6 +39,21 @@ jn.define('layout/socialnetwork/project-v2/create/src/view/additional-settings',
 				tags: props.tags ?? [],
 				messagesAutoDeleteDelay: props.messagesAutoDeleteDelay ?? 0,
 			};
+			this.initialFields = this.#getFields();
+			this.closeGuard = null;
+		}
+
+		componentDidMount()
+		{
+			this.closeGuard = createProjectSettingsCloseGuard({
+				layoutWidget: this.props.layoutWidget,
+				preventLayoutWidget: this.props.rootLayoutWidget ?? this.props.layoutWidget,
+				releasePreventDismiss: false,
+				initialFields: this.initialFields,
+				getCurrentFields: this.#getFields,
+				onSaveAndClose: this.#close,
+				onDiscardAndClose: this.#rollbackAndClose,
+			});
 		}
 
 		render()
@@ -413,19 +431,33 @@ jn.define('layout/socialnetwork/project-v2/create/src/view/additional-settings',
 
 		#updateFields = (fields) => {
 			this.setState(fields, () => {
-				const changedFields = {
-					dateStart: this.state.dateStart,
-					dateFinish: this.state.dateFinish,
-					tags: this.state.tags,
-				};
-
-				if (this.props.showMessagesAutoDelete !== false)
-				{
-					changedFields.messagesAutoDeleteDelay = this.state.messagesAutoDeleteDelay;
-				}
-
-				this.props.onChange?.(changedFields);
+				this.props.onChange?.(this.#getFields());
+				this.closeGuard?.update();
 			});
+		};
+
+		#getFields = () => {
+			const fields = {
+				dateStart: this.state.dateStart,
+				dateFinish: this.state.dateFinish,
+				tags: this.state.tags,
+			};
+
+			if (this.props.showMessagesAutoDelete !== false)
+			{
+				fields.messagesAutoDeleteDelay = this.state.messagesAutoDeleteDelay;
+			}
+
+			return fields;
+		};
+
+		#close = () => {
+			this.props.layoutWidget?.close();
+		};
+
+		#rollbackAndClose = () => {
+			this.props.onChange?.(this.initialFields);
+			this.props.layoutWidget?.close();
 		};
 
 		#hideKeyboard = () => {

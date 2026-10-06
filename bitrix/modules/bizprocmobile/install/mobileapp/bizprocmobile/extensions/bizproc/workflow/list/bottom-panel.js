@@ -7,6 +7,8 @@ jn.define('bizproc/workflow/list/bottom-panel', (require, exports, module) => {
 	const { Type } = require('type');
 	const { PureComponent } = require('layout/pure-component');
 	const { BottomToolbar } = require('layout/ui/bottom-toolbar');
+	const { Text4 } = require('ui-system/typography/text');
+	const { Color } = require('tokens');
 
 	const { TasksPerformer } = require('bizproc/task/tasks-performer');
 
@@ -60,16 +62,14 @@ jn.define('bizproc/workflow/list/bottom-panel', (require, exports, module) => {
 		{
 			return View(
 				{ style: { flex: 1, flexDirection: 'column' } },
-				Text({
+				Text4({
 					style: {
 						marginLeft: 19,
 						marginRight: 18,
 						marginTop: 10,
 						marginBottom: 13,
-						color: AppTheme.colors.base1,
-						fontWeight: '400',
-						fontSize: 14,
 					},
+					color: Color.base1,
 					text: Loc.getMessage(
 						'BPMOBILE_WORKFLOW_LIST_SELECTED_TASKS',
 						{ '#TASKS_AMOUNT#': this.state.tasks.length },

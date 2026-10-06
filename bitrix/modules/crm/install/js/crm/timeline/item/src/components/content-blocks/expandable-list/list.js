@@ -1,3 +1,4 @@
+import { FocusNavigator } from 'ui.a11y';
 import ListItem from './list-item';
 
 export default {
@@ -37,9 +38,23 @@ export default {
 		ListItem,
 	},
 	methods: {
-		showMore()
+		handleShowMore()
 		{
 			this.isShortList = false;
+
+			this.$nextTick(() => {
+				const listContainer = this.$el.querySelector('.crm-entity-stream-advice-list');
+				const items = listContainer
+					? listContainer.querySelectorAll('.crm-entity-stream-advice-list-item')
+					: [];
+				const firstRevealed = items[this.showMoreCnt] ?? null;
+
+				const moved = firstRevealed ? FocusNavigator.focusFirst(firstRevealed) : null;
+				if (moved === null && listContainer)
+				{
+					FocusNavigator.focusContainer(listContainer);
+				}
+			});
 		},
 		isItemVisible(index)
 		{
@@ -50,6 +65,10 @@ export default {
 		isShowMoreVisible()
 		{
 			return this.isShortList && this.listItems.length > this.shortListItemsCnt;
+		},
+		ariaExpanded()
+		{
+			return String(!this.isShortList);
 		},
 	},
 	// language=Vue
@@ -66,14 +85,16 @@ export default {
 					v-bind="item.properties"
 				></ListItem>
 			</transition-group>
-			<a
+			<button
 				v-if="isShowMoreVisible"
-				@click.prevent="showMore"
+				type="button"
+				data-testid="timeline-expandable-list-show-more"
+				:aria-expanded="ariaExpanded"
+				@click="handleShowMore"
 				class="crm-entity-stream-advice-link"
-				href="#"
 			>
 				{{showMoreText}}
-			</a>
+			</button>
 		</div>
 	`
 }

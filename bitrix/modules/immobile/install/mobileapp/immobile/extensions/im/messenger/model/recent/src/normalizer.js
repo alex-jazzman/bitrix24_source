@@ -78,6 +78,15 @@ jn.define('im/messenger/model/recent/normalizer', (require, exports, module) => 
 			result.message = prepareMessage(fields);
 		}
 
+		// Only act when the key is present: when absent it stays out of the normalized fields, so the
+		// `update` mutation's spread merge preserves the existing stored value instead of overwriting it.
+		if ('ownMessage' in fields)
+		{
+			result.ownMessage = Type.isPlainObject(fields.ownMessage)
+				? prepareMessage({ message: fields.ownMessage })
+				: null;
+		}
+
 		if (Type.isPlainObject(fields.invited))
 		{
 			result.invitation = {
@@ -211,6 +220,15 @@ jn.define('im/messenger/model/recent/normalizer', (require, exports, module) => 
 		if (Type.isDate(fields.message.date) || Type.isString(fields.message.date))
 		{
 			message.date = DateHelper.cast(fields.message.date);
+		}
+
+		if (Type.isNumber(fields.message.chatId))
+		{
+			message.chatId = fields.message.chatId;
+		}
+		else if (Type.isNumber(fields.message.chat_id))
+		{
+			message.chatId = fields.message.chat_id;
 		}
 
 		if (Type.isNumber(fields.message.author_id))

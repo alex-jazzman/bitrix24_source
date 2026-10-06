@@ -24,7 +24,7 @@
 .product-item-detail-info-container-title {
 	margin-bottom: 3px;
 	font: 13px/18px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
-	color: #a3a9b1;
+	color: var(--ui-color-base-2, #525c69);
 }
 
 .product-item-scu-container { margin-bottom: 5px; }
@@ -247,7 +247,7 @@
 }
 
 .product-item-scu-wrapper.--short-format .ui-ctl-radio-selector .ui-ctl-label-text {
-	color: #959CA4;
+	color: #525c69;
 }
 
 .product-item-scu-wrapper.--short-format .ui-ctl-radio-selector .ui-ctl-label-img {
@@ -256,6 +256,32 @@
 	min-width: 18px;
 	min-height: 18px;
 	border-radius: var(--ui-border-radius-3xs);
+}
+
+/* endregion */
+
+/* region a11y focus (I6.B4) - inset focus ring on variation pills via ::before.
+   Pills sit flush against the left edge of overflow:hidden clippers
+   (.product-item-scu-wrapper, .product-item-detail-info-container), so the default
+   outer UA outline is cut off on the edge pills. Draw the ring inside the pill's
+   border-box instead; the pill does not move. Covers picture and text variants and
+   the --short-format layout. Keyboard focus only. */
+.product-item-scu-list .ui-ctl-radio-selector {
+	position: relative;
+}
+
+.product-item-scu-list .ui-ctl-radio-selector:focus-visible {
+	outline: none;
+}
+
+.product-item-scu-list .ui-ctl-radio-selector:focus-visible::before {
+	content: '';
+	position: absolute;
+	inset: 2px;
+	border: 3px solid var(--ui-color-focus-outline, #4A9DFF);
+	border-radius: var(--ui-border-radius-3xs, 2px);
+	pointer-events: none;
+	z-index: 1;
 }
 
 /* endregion */

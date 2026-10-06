@@ -293,6 +293,7 @@ jn.define('im/messenger/controller/recent/service/server-load/collab', (require,
 							...recentItem,
 							liked: false,
 							message: itemMessage,
+							ownMessage: ServerLoadUtils.resolveOwnMessage(recentItem, allMessages),
 						},
 					);
 

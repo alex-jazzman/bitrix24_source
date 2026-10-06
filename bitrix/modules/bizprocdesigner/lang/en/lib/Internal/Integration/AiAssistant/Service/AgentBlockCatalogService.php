@@ -1,0 +1,4 @@
+<?php
+$MESS["BIZPROCDESIGNER_BLOCK_CATALOG_ERR_BLOCK_NOT_FOUND"] = "Block was not found.";
+$MESS["BIZPROCDESIGNER_BLOCK_CATALOG_ERR_MODULE_NOT_INSTALLED"] = "The Business Processes module is not installed.";
+$MESS["BIZPROCDESIGNER_BLOCK_CATALOG_ERR_SETTINGS_NOT_DESCRIBED"] = "Block settings have no description.";

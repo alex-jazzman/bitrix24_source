@@ -132,7 +132,7 @@ $sendHtmlResponse = function($html)
 
 CBitrixComponent::includeComponentClass('bitrix:bizproc.automation');
 
-$documentInformation = \BizprocAutomationComponent::unSignDocument($_REQUEST['document_signed']);
+$documentInformation = \BizprocAutomationComponent::unSignDocument($_REQUEST['document_signed'] ?? '');
 
 if (!$documentInformation)
 {
@@ -309,8 +309,13 @@ switch ($action)
 		$updatedTemplates = array();
 		foreach ($templates as $templateData)
 		{
+			if (!is_array($templateData))
+			{
+				continue;
+			}
+
 			$template = null;
-			if ($templateData['ID'])
+			if (!empty($templateData['ID']))
 			{
 				$tpl = Bitrix\Bizproc\Workflow\Template\Entity\WorkflowTemplateTable::getById($templateData['ID'])->fetchObject();
 				if ($tpl)
@@ -497,6 +502,11 @@ switch ($action)
 			$templates = [];
 			foreach ($statuses as $status)
 			{
+				if (!is_string($status) || $status === '')
+				{
+					continue;
+				}
+
 				$template = new \Bitrix\Bizproc\Automation\Engine\Template($documentType, $status);
 				if ($template->getId() > 0)
 				{

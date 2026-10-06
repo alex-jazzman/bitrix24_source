@@ -5,6 +5,8 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Main\Web\Uri;
+
 /** @var array $arParams */
 /** @var array $arResult */
 /** @global CMain $APPLICATION */
@@ -23,10 +25,9 @@ CJSCore::Init(array('window', 'lists'));
 Bitrix\Main\UI\Extension::load(["ui.buttons", "ui.dialogs.messagebox"]);
 
 $jsClass = 'ListsElementEditClass_'.$arResult['RAND_STRING'];
-$urlTabBp = CHTTP::urlAddParams(
-	$APPLICATION->GetCurPageParam("", array($arResult["FORM_ID"]."_active_tab")),
-	array($arResult["FORM_ID"]."_active_tab" => "tab_bp")
-);
+$urlTabBp = (string)(new Uri($APPLICATION->GetCurPageParam("", array($arResult["FORM_ID"]."_active_tab"))))
+	->addParams([$arResult["FORM_ID"]."_active_tab" => "tab_bp"])
+;
 $socnetGroupId = $arParams["SOCNET_GROUP_ID"] ?: 0;
 $sectionId = $arResult["SECTION_ID"] ?: 0;
 

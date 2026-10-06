@@ -1,0 +1,105 @@
+body.biconnector-dataset-import-v2-formats-page .ui-button-panel {
+	justify-content: flex-start;
+}
+
+.biconnector-dataset-import-v2-formats {
+	display: flex;
+	flex-direction: column;
+}
+
+.biconnector-dataset-import-v2-formats__body {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	padding: 20px 24px;
+}
+
+.biconnector-dataset-import-v2-formats__hint {
+	background: var(--ui-color-accent-soft-primary-1, #e8f4ff);
+	border-radius: 12px;
+	padding: 14px 16px;
+	font-size: 14px;
+	line-height: 19px;
+	color: var(--ui-color-base-1, #333);
+}
+
+.biconnector-dataset-import-v2-formats__hint-link {
+	color: var(--ui-color-accent-main-primary, #0075ff);
+	text-decoration: none;
+}
+
+.biconnector-dataset-import-v2-formats__hint-link:hover {
+	text-decoration: underline;
+}
+
+.biconnector-dataset-import-v2-formats__field {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.biconnector-dataset-import-v2-formats__field-label {
+	font-size: 14px;
+	line-height: 20px;
+	color: var(--ui-color-base-0, #000);
+	font-weight: 500;
+}
+
+.biconnector-dataset-import-v2-formats__field-sublabel {
+	font-size: 12px;
+	line-height: 16px;
+	color: var(--ui-color-base-3, #828b95);
+	margin-bottom: 4px;
+}
+
+.biconnector-dataset-import-v2-formats__select {
+	width: 100%;
+	padding: 9px 36px 9px 12px;
+	box-sizing: border-box;
+	border: 1px solid var(--ui-color-design-outline-stroke-alt1, #dfe0e3);
+	border-radius: 8px;
+	background: var(--ui-color-bg-content-primary, #fff);
+	color: var(--ui-color-base-1, #333);
+	font-family: inherit;
+	font-size: 14px;
+	line-height: 20px;
+	appearance: none;
+	background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none'><path d='M1 1L6 6L11 1' stroke='%23828b95' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+	background-repeat: no-repeat;
+	background-position: right 12px center;
+	outline: 0;
+	transition: border-color 0.15s ease-in-out;
+}
+
+.biconnector-dataset-import-v2-formats__select:focus {
+	border-color: var(--ui-color-accent-main-primary, #0075ff);
+}
+
+.biconnector-dataset-import-v2-formats__custom-input {
+	width: 100%;
+	padding: 9px 12px;
+	box-sizing: border-box;
+	border: 1px solid var(--ui-color-design-outline-stroke-alt1, #dfe0e3);
+	border-radius: 8px;
+	background: var(--ui-color-bg-content-primary, #fff);
+	color: var(--ui-color-base-1, #333);
+	font-family: inherit;
+	font-size: 14px;
+	line-height: 20px;
+	outline: 0;
+	transition: border-color 0.15s ease-in-out;
+}
+
+.biconnector-dataset-import-v2-formats__custom-input:focus {
+	border-color: var(--ui-color-accent-main-primary, #0075ff);
+}
+
+.biconnector-dataset-import-v2-formats__custom-input.--error {
+	border-color: var(--ui-color-accent-main-alert, #ff5752);
+}
+
+.biconnector-dataset-import-v2-formats__error {
+	font-size: 12px;
+	line-height: 16px;
+	color: var(--ui-color-accent-main-alert, #ff5752);
+}

@@ -10,8 +10,15 @@ jn.define('im/messenger/controller/collab-entity-creation-selector/src/controlle
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { getLoggerWithContext } = require('im/messenger/lib/logger');
 	const { Notification } = require('im/messenger/lib/ui/notification');
+	const { ChatPermission } = require('im/messenger/lib/permission-manager');
+	const { Feature } = require('im/messenger/lib/feature');
+	const { runAttachFromProject } = require('im/messenger/controller/attach-chat/flow');
+	const { ChatService } = require('im/messenger/provider/services/chat');
+	const { DialogType, CopilotRoleType, OpenDialogContextType } = require('im/messenger/const');
+	const { MenuVisibility } = require('im/messenger/controller/dialog-creator/menu-visibility');
 
 	const { CollabEntityCreationSelector } = require('im/messenger/controller/collab-entity-creation-selector/src/selector');
+	const { calculateBackdropHeight } = require('im/messenger/controller/collab-entity-creation-selector/src/backdrop-height');
 
 	const logger = getLoggerWithContext('collab-entity-creation-selector', 'CollabEntityCreationController');
 
@@ -27,11 +34,13 @@ jn.define('im/messenger/controller/collab-entity-creation-selector/src/controlle
 
 		async open()
 		{
+			const items = this.#getItems();
+
 			const widget = await PageManager.openWidget('layout', {
 				titleParams: this.#getTitleParams(),
 				backgroundColor: Color.bgSecondary.toHex(),
 				backdrop: {
-					mediumPositionHeight: 330,
+					mediumPositionHeight: calculateBackdropHeight(items.length),
 					horizontalSwipeAllowed: false,
 					onlyMediumPosition: true,
 				},
@@ -39,7 +48,7 @@ jn.define('im/messenger/controller/collab-entity-creation-selector/src/controlle
 
 			widget.showComponent(new CollabEntityCreationSelector({
 				widget,
-				items: this.#getItems(),
+				items,
 			}));
 		}
 
@@ -120,15 +129,84 @@ jn.define('im/messenger/controller/collab-entity-creation-selector/src/controlle
 		}
 
 		/**
+		 * @return {?CollabEntityCreationSelectorItem}
+		 */
+		get #attachChatItem()
+		{
+			if (!Feature.isAttachChatToProjectAvailable)
+			{
+				return null;
+			}
+
+			const parentDialog = serviceLocator.get('core').getStore()
+				.getters['dialoguesModel/getByChatId'](this.parentChatId);
+
+			if (!parentDialog || !ChatPermission.canAddParticipants(parentDialog))
+			{
+				return null;
+			}
+
+			return {
+				iconType: IconType.chatAttach,
+				text: Loc.getMessage('IMMOBILE_COLLAB_ENTITY_CREATION_WIDGET_ATTACH_CHAT_ITEM_TITLE'),
+				onClick: () => {
+					runAttachFromProject({ parentDialog, parentWidget: PageManager })
+						.catch((error) => {
+							Notification.showErrorToast();
+							logger.error('runAttachFromProject error', error);
+						});
+				},
+			};
+		}
+
+		/**
+		 * @return {CollabEntityCreationSelectorItem}
+		 */
+		get #copilotCreationItem()
+		{
+			return {
+				iconType: IconType.copilot,
+				text: Loc.getMessageWithCopilotBotName('IMMOBILE_COLLAB_ENTITY_CREATION_WIDGET_COPILOT_ITEM_TITLE'),
+				onClick: () => {
+					const chatService = new ChatService();
+					chatService.createCopilot({
+						type: DialogType.copilot.toUpperCase(),
+						copilotMainRole: CopilotRoleType.copilotUniversalRole,
+						parentChatId: this.parentChatId,
+					})
+						.then(({ chatId }) => {
+							return serviceLocator.get('dialog-manager').openDialog({
+								dialogId: `chat${chatId}`,
+								context: OpenDialogContextType.chatCreation,
+							});
+						})
+						.catch((error) => {
+							Notification.showErrorToast();
+							logger.error('copilotCreationItem.onClick error', error);
+						});
+				},
+			};
+		}
+
+		/**
 		 * @return {Array<CollabEntityCreationSelectorItem>}
 		 */
 		#getItems()
 		{
-			return [
+			const items = [
 				this.#taskCreationItem,
-				this.#calendarCreationItem,
 				this.#groupChatCreationItem,
-			];
+				this.#attachChatItem,
+			].filter(Boolean);
+
+			if (MenuVisibility.canCreateCopilot())
+			{
+				items.push(this.#copilotCreationItem);
+			}
+
+			items.push(this.#calendarCreationItem);
+
+			return items;
 		}
 
 		#getTitleParams()
@@ -191,6 +269,15 @@ jn.define('im/messenger/controller/collab-entity-creation-selector/src/controlle
 				calType: 'group',
 				ownerId: Number(projectData.id),
 			});
+		}
+
+		/**
+		 * @desc Test-only helper. Exposes #getItems for unit tests.
+		 * @return {Array<CollabEntityCreationSelectorItem>}
+		 */
+		getItemsForTest()
+		{
+			return this.#getItems();
 		}
 	}
 

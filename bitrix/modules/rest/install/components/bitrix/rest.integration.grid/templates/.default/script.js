@@ -31,48 +31,75 @@ BX.ready(
 				}
 			},
 			delete: function (id, code) {
-				BX.ajax.runComponentAction(
-					'bitrix:rest.integration.grid',
-					'delete',
-					{
-						mode: 'class',
-						signedParameters: restIntegrationGridComponent.signetParameters,
-						data:
+				var messageBox = BX.UI.Dialogs.MessageBox.create({
+					message: BX.message('REST_INTEGRATION_GRID_CONFIRM_DELETE_POPUP_TEXT'),
+					title: BX.message('REST_INTEGRATION_GRID_CONFIRM_DELETE_POPUP_TITLE'),
+					okCaption: BX.message('REST_INTEGRATION_GRID_CONFIRM_DELETE_POPUP_OK_BUTTON_TEXT'),
+					buttons: BX.UI.Dialogs.MessageBoxButtons.OK_CANCEL,
+					onOk: function(messageBox) {
+						return BX.ajax.runComponentAction(
+							'bitrix:rest.integration.grid',
+							'delete',
 							{
-								id: id
-							},
-						analyticsLabel:
-							{
-								type: 'integrationDelete',
-								integrationCode: code
+								mode: 'class',
+								signedParameters: restIntegrationGridComponent.signetParameters,
+								data:
+									{
+										id: id
+									},
+								analyticsLabel:
+									{
+										type: 'integrationDelete',
+										integrationCode: code
+									}
 							}
-					}
-				).then(
-					function (response)
-					{
-						if (!!response.data && !!response.data.result)
-						{
-							if (response.data.result === 'success')
+						).then(
+							function (response)
 							{
-								BX.rest.integration.grid.reloadData();
-							}
-							else if (!!response.data.errors)
-							{
-								var key;
-								for(key in response.data.errors)
+								messageBox.close();
+								if (!!response.data && !!response.data.result)
 								{
-									BX.UI.Notification.Center.notify(
+									if (response.data.result === 'success')
+									{
+										BX.rest.integration.grid.reloadData();
+									}
+									else if (!!response.data.errors)
+									{
+										var key;
+										for(key in response.data.errors)
 										{
-											content: response.data.errors[key]
+											BX.UI.Notification.Center.notify(
+												{
+													content: response.data.errors[key]
+												}
+											);
 										}
-									);
+									}
 								}
 							}
-						}
-					}
-				);
+						);
+					},
+				});
+				messageBox.getOkButton().setColor(BX.UI.Button.Color.DANGER);
+				messageBox.getOkButton().getContainer().setAttribute('data-test-id', 'rest-integration-grid-confirm-delete-ok');
+				messageBox.getCancelButton().getContainer().setAttribute('data-test-id', 'rest-integration-grid-confirm-delete-cancel');
+				messageBox.getPopupWindow().getPopupContainer().setAttribute('data-test-id', 'rest-integration-grid-confirm-delete-popup');
+				messageBox.show();
 			}
 		};
 		BX.rest.integration.grid = new Grid();
+
+		try {
+			const url = new URL(window.location.href);
+			if (url.searchParams.has('by') || url.searchParams.has('order'))
+			{
+				url.searchParams.delete('by');
+				url.searchParams.delete('order');
+				window.history.replaceState({}, '', url.toString());
+			}
+		}
+		catch (error)
+		{
+		}
 	}
 );

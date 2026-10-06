@@ -191,6 +191,7 @@ jn.define('call/calls/engine', (require, exports, module) => {
 			this.jwtCalls = {};
 			this.unknownCalls = {};
 			this.callsInitializedFromPush = new Set();
+			this.finishedCalls = new Set();
 			this.callsToProcessAfterMessengerReady = {
 				legacy: new Map(),
 				jwt: new Map(),
@@ -944,10 +945,23 @@ jn.define('call/calls/engine', (require, exports, module) => {
 			return findCall(jwtCalls) || findCall(legacyCalls);
 		}
 
+		instantiateCall(callFields, connectionData, users, logToken, userData)
+		{
+			return this._instantiateCall(callFields, connectionData, users, logToken, userData);
+		}
+
 		updateConnectionData(call)
 		{
 			return new Promise((resolve, reject) =>
 			{
+				// Repeat join from recents reaches getCallConnectionData directly,
+				// bypassing getCallConnectionDataById — guard the closed-room cache
+				// here too so a re-entry does not hit /v2/join again.
+				if (call?.uuid && stuckCallFinishTracker.isRecentlyClosed(call.uuid))
+				{
+					return reject({ code: BX.Call.CallError.AlreadyFinished });
+				}
+
 				const chatId = call.associatedEntity?.chatId;
 
 				if (!chatId)
@@ -1140,6 +1154,10 @@ jn.define('call/calls/engine', (require, exports, module) => {
 				{
 					call._onPullEvent(command, params, extra);
 				}
+				else if (command === 'Call::finish' && !isLegacyCall && callUuid)
+				{
+					this.finishedCalls.add(callUuid);
+				}
 				else if (command === 'Call::ping')
 				{
 					this._onUnknownCallPing(params.callId, extra.server_time_ago, pingTTLWebsocket).then((result) => {
@@ -1288,6 +1306,14 @@ jn.define('call/calls/engine', (require, exports, module) => {
 			const callFields = params.call;
 			const callId = parseInt(callFields.ID, 10);
 			const callUuid = callFields.UUID || callFields.uuid;
+
+			// JWT race: `Call::finish` arrived before `Call::incoming` reached us — do not
+			// open the popup for a call that the initiator has already cancelled.
+			if (callUuid && this.finishedCalls.has(callUuid))
+			{
+				return;
+			}
+
 			let call = this.legacyCalls[callId] || this.jwtCalls[callUuid];
 
 			if (params.userData)
@@ -2746,9 +2772,11 @@ jn.define('call/calls/engine', (require, exports, module) => {
 					{
 						resolve(response);
 					}
-
-					const error = { code: BX.Call.CallError.MediaServerMissingParams };
-					reject(error);
+					else
+					{
+						const error = { code: BX.Call.CallError.MediaServerMissingParams };
+						reject(error);
+					}
 				}).catch((e) => {
 					let error = e;
 
@@ -2775,6 +2803,16 @@ jn.define('call/calls/engine', (require, exports, module) => {
 
 		async getCallConnectionDataById(callUuid)
 		{
+			// Repeat join to a room the server already confirmed gone: skip the
+			// network round-trip. Controller catch treats alreadyFinished as
+			// room-closed (deduped toast + card dismissal). Only uuids marked
+			// closed after a proven mustCreate=false failure short-circuit, so
+			// an active call's reconnect (never markClosed) is not affected.
+			if (callUuid && stuckCallFinishTracker.isRecentlyClosed(callUuid))
+			{
+				return Promise.reject({ code: BX.Call.CallError.AlreadyFinished });
+			}
+
 			const call = callEngine.jwtCalls[callUuid];
 
 			if (!call)

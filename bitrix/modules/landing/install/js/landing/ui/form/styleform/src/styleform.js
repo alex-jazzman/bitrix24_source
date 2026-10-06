@@ -33,10 +33,12 @@ export class StyleForm extends BaseForm
 		this.onHeaderEnter = this.onHeaderEnter.bind(this);
 		this.onHeaderLeave = this.onHeaderLeave.bind(this);
 		this.onHeaderClick = this.onHeaderClick.bind(this);
+		this.onHeaderKeyDown = this.onHeaderKeyDown.bind(this);
 
 		this.prepareHeader();
 
 		Event.bind(this.header, 'click', this.onHeaderClick);
+		Event.bind(this.header, 'keydown', this.onHeaderKeyDown);
 		Event.bind(this.header, 'mouseenter', this.onHeaderEnter);
 		Event.bind(this.header, 'mouseleave', this.onHeaderLeave);
 
@@ -49,6 +51,8 @@ export class StyleForm extends BaseForm
 		{
 			Dom.addClass(this.layout, 'landing-ui-form-style--collapsed');
 		}
+
+		this.prepareHeaderA11y();
 
 		if (
 			this.specialType && this.specialType === 'crm_forms'
@@ -78,11 +82,45 @@ export class StyleForm extends BaseForm
 		Highlight.getInstance().hide();
 	}
 
-	// eslint-disable-next-line class-methods-use-this
 	onHeaderClick(event: MouseEvent)
 	{
 		event.preventDefault();
 		Dom.toggleClass(this.layout, 'landing-ui-form-style--collapsed');
+		this.syncHeaderExpanded();
+	}
+
+	onHeaderKeyDown(event: KeyboardEvent)
+	{
+		if (event.target !== event.currentTarget)
+		{
+			return;
+		}
+
+		if (event.key === 'Enter' || event.key === ' ' || event.key === 'Spacebar')
+		{
+			event.preventDefault();
+			this.onHeaderClick(event);
+		}
+	}
+
+	prepareHeaderA11y()
+	{
+		const bodyId = `landing-styleform-body-${this.id}`;
+
+		Dom.attr(this.body, 'id', bodyId);
+		Dom.attr(this.header, {
+			'role': 'button',
+			'tabindex': '0',
+			'aria-controls': bodyId,
+		});
+
+		this.syncHeaderExpanded();
+	}
+
+	syncHeaderExpanded()
+	{
+		const collapsed = Dom.hasClass(this.layout, 'landing-ui-form-style--collapsed');
+		Dom.attr(this.header, 'aria-expanded', collapsed ? 'false' : 'true');
 	}
 
 	addField(field: BaseField)

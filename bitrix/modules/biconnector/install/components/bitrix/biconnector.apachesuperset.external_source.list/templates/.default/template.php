@@ -16,7 +16,6 @@ use Bitrix\Main\Web\Json;
 
 Extension::load([
 	'biconnector.grid.editable-columns',
-	'biconnector.dataset-import',
 	'biconnector.apache-superset-analytics',
 	'ui.dialogs.messagebox',
 	'ui.hint',

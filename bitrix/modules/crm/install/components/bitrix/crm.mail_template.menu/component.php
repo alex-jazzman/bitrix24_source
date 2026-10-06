@@ -1,5 +1,8 @@
 <?php
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
+
+use Bitrix\Main\Web\Uri;
 
 if (!CModule::IncludeModule('crm'))
 {
@@ -61,13 +64,10 @@ if ($elementDelete && $arParams['TYPE'] == 'edit' && $exists)
 			.GetMessageJS('CRM_MAIL_TEMPLATE_DELETE_DLG_TITLE')."', '"
 			.GetMessageJS('CRM_MAIL_TEMPLATE_DELETE_DLG_MESSAGE')."', '"
 			.GetMessageJS('CRM_MAIL_TEMPLATE_DELETE_DLG_BTNTITLE')."', '"
-			.CHTTP::urlAddParams(
-				CComponentEngine::MakePathFromTemplate(
+			.(new Uri(CComponentEngine::MakePathFromTemplate(
 					$arParams['PATH_TO_MAIL_TEMPLATE_EDIT'],
 					array('element_id' => $elementID)
-				),
-				array('delete' => '', 'sessid' => bitrix_sessid())
-			)."')",
+				)))->addParams(array('delete' => '', 'sessid' => bitrix_sessid()))."')",
 		'ICON' => 'btn-delete'
 	);
 }

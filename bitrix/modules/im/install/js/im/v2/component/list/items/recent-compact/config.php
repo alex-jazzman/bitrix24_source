@@ -1,10 +1,24 @@
 <?php
 
-use Bitrix\Im\V2\Application\Navigation\Menu;
+use Bitrix\Im\V2\Permission;
+use Bitrix\Im\V2\Permission\GlobalAction;
+use Bitrix\Main\Engine\CurrentUser;
+use Bitrix\Main\Loader;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
+}
+
+$openLinesAvailable = false;
+
+if (Loader::includeModule('im'))
+{
+	$openLinesAvailable = (bool)Permission::canDoGlobalAction(
+		(int)CurrentUser::get()->getId(),
+		GlobalAction::GetOpenlines,
+		null,
+	);
 }
 
 return [
@@ -31,6 +45,6 @@ return [
 	],
 	'skip_core' => false,
 	'settings' => [
-		'navigationItems' => Menu::getInstance()->getMenuItems(),
+		'openLinesAvailable' => $openLinesAvailable,
 	],
 ];

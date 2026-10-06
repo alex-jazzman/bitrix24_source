@@ -8,10 +8,10 @@ return [
 	'css' => 'dist/engine.bundle.css',
 	'js' => 'dist/engine.bundle.js',
 	'rel' => [
+		'main.core',
+		'main.core.events',
 		'main.loader',
 		'ui.vue3',
-		'main.core.events',
-		'main.core',
 	],
 	'skip_core' => false,
 ];

@@ -9,6 +9,7 @@ jn.define('im/messenger/provider/services/sending/files', (require, exports, mod
 	const { getExtension } = require('utils/file');
 	const { Filesystem, Reader } = require('native/filesystem');
 
+	const { PerfPoint } = require('debug/prism');
 	const {
 		FileStatus,
 		FileType,
@@ -507,6 +508,14 @@ jn.define('im/messenger/provider/services/sending/files', (require, exports, mod
 				message: messageModel?.text ?? '',
 			};
 
+			// Include reply_id if the local message model carries a replyId (set by #prepareMessage).
+			// Only sent when the value is a valid positive integer (DTO-LOCAL-01 / API-01).
+			const replyId = messageModel?.params?.replyId;
+			if (Number.isFinite(replyId) && replyId > 0)
+			{
+				params.reply_id = replyId;
+			}
+
 			const realFileIdsInt = filesIdsCollection.map((fileId) => {
 				const fileParams = this.#prepareFileParams(fileId.temporaryFileId);
 
@@ -528,12 +537,14 @@ jn.define('im/messenger/provider/services/sending/files', (require, exports, mod
 				fileIdParams.upload_id = realFileIdsInt;
 			}
 
+			const point = new PerfPoint('IM Reply With Media', 'commitFiles').start();
 			BX.rest.callMethod(RestMethod.imDiskFileCommit, {
 				...params,
 				...fileIdParams,
 			})
 				.then(async (res) => {
 					logger.log(`${this.constructor.name}.commitFile is done`, res);
+					point.end();
 
 					filesIdsCollection.forEach((fileIds) => {
 						this.#updateUploadRegistryData(fileIds.realFileIdInt, { status: FileStatus.done });
@@ -548,6 +559,7 @@ jn.define('im/messenger/provider/services/sending/files', (require, exports, mod
 				})
 				.catch(async (error) => {
 					logger.error(`${this.constructor.name}.commitFiles: error`, error);
+					point.end();
 
 					await this.#updateMessageModel(temporaryMessageId, {
 						error: true,

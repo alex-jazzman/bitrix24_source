@@ -13,43 +13,35 @@
 }
 
 .editor-chart-block-content.--background-color-1 {
-	background-color: var(--designer-bp-ai-bg);
-    opacity: 0.4;
+	background-color: color-mix(in srgb, var(--designer-bp-ai-bg) 40%, transparent);
 }
 
 .editor-chart-block-content.--background-color-2 {
-	background-color: var(--designer-bp-entities-bg);
-    opacity: 0.4;
+	background-color: color-mix(in srgb, var(--designer-bp-entities-bg) 40%, transparent);
 }
 
 .editor-chart-block-content.--background-color-3 {
-	background-color: var(--designer-bp-employe-bg);
-    opacity: 0.4;
+	background-color: color-mix(in srgb, var(--designer-bp-employe-bg) 40%, transparent);
 }
 
 .editor-chart-block-content.--background-color-4 {
-	background-color: var(--designer-bp-technical-bg);
-    opacity: 0.4;
+	background-color: color-mix(in srgb, var(--designer-bp-technical-bg) 40%, transparent);
 }
 
 .editor-chart-block-content.--background-color-5 {
-	background-color: var(--designer-bp-communication-bg);
-    opacity: 0.4;
+	background-color: color-mix(in srgb, var(--designer-bp-communication-bg) 40%, transparent);
 }
 
 .editor-chart-block-content.--background-color-6 {
-	background-color: var(--designer-bp-storage-bg);
-    opacity: 0.4;
+	background-color: color-mix(in srgb, var(--designer-bp-storage-bg) 40%, transparent);
 }
 
 .editor-chart-block-content.--background-color-7 {
-	background-color: var(--designer-bp-afiliate-bg);
-    opacity: 0.4;
+	background-color: color-mix(in srgb, var(--designer-bp-afiliate-bg) 40%, transparent);
 }
 
 .editor-chart-block-content.--background-color-8 {
-	background-color: rgba(31, 134, 255, 1); /* token will be provided later */
-    opacity: 0.4;
+	background-color: color-mix(in srgb, rgba(31, 134, 255, 1) 40%, transparent); /* token will be provided later */
 }
 
 .editor-chart-block-content.--default {

@@ -1,11 +1,10 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Call = this.BX.Call || {};
-(function (exports, ui_vue3) {
+(function (exports, ui_vue3, main_core) {
 	'use strict';
 
-	// @vue/component
-	const VideoQualitySlider = {
+	const VideoQualitySlider = ui_vue3.defineComponent({
 		name: 'VideoQualitySlider',
 		props: {
 			title: {
@@ -26,7 +25,6 @@ this.BX.Call = this.BX.Call || {};
 			}
 		},
 		emits: ['change'],
-		// eslint-disable-next-line flowtype/require-return-type
 		data() {
 			return {
 				currentIndex: 0,
@@ -35,19 +33,20 @@ this.BX.Call = this.BX.Call || {};
 			};
 		},
 		computed: {
-			// eslint-disable-next-line flowtype/require-return-type
 			thumbStyle() {
 				const position = this.getThumbPosition();
 				return {
 					left: `${position}%`
 				};
 			},
-			// eslint-disable-next-line flowtype/require-return-type
+			currentLabel() {
+				return this.videoQualityList[this.currentIndex]?.label ?? '';
+			},
 			marks() {
 				if (this.videoQualityList.length < 2) {
 					return [];
 				}
-				return this.videoQualityList.map((item, index) => ({
+				return this.videoQualityList.map((_item, index) => ({
 					index,
 					position: index / (this.videoQualityList.length - 1) * 100
 				}));
@@ -65,15 +64,11 @@ this.BX.Call = this.BX.Call || {};
 			}
 		},
 		beforeUnmount() {
-			// eslint-disable-next-line @bitrix24/bitrix24-rules/no-native-events-binding
-			document.removeEventListener('mousemove', this.handleMouseMove);
-			// eslint-disable-next-line @bitrix24/bitrix24-rules/no-native-events-binding
-			document.removeEventListener('mouseup', this.handleMouseUp);
-			// eslint-disable-next-line @bitrix24/bitrix24-rules/no-style
-			document.body.style.userSelect = '';
+			main_core.Event.unbind(document, 'mousemove', this.handleMouseMove);
+			main_core.Event.unbind(document, 'mouseup', this.handleMouseUp);
+			main_core.Dom.style(document.body, 'user-select', '');
 		},
 		methods: {
-			// eslint-disable-next-line flowtype/require-return-type
 			getThumbPosition() {
 				if (this.videoQualityList.length < 2) {
 					return 0;
@@ -86,7 +81,6 @@ this.BX.Call = this.BX.Call || {};
 				}
 				return `${index / (this.videoQualityList.length - 1) * 100}%`;
 			},
-			// eslint-disable-next-line flowtype/require-return-type
 			getLabelStyle(index) {
 				const position = this.getLabelPosition(index);
 				return {
@@ -98,12 +92,13 @@ this.BX.Call = this.BX.Call || {};
 				const index = Math.round(percentage / 100 * (this.videoQualityList.length - 1));
 				return Math.max(0, Math.min(this.videoQualityList.length - 1, index));
 			},
-			handleTrackClick(e) {
+			handleTrackClick(event) {
 				if (this.disabled) {
 					return;
 				}
-				const rect = this.$refs.track.getBoundingClientRect();
-				const x = e.clientX - rect.left;
+				const track = this.$refs.track;
+				const rect = track.getBoundingClientRect();
+				const x = event.clientX - rect.left;
 				const percentage = x / rect.width * 100;
 				const index = this.getClosestIndex(percentage);
 				if (index !== this.currentIndex) {
@@ -120,33 +115,68 @@ this.BX.Call = this.BX.Call || {};
 					this.$emit('change', this.videoQualityList[index].value);
 				}
 			},
-			handleThumbMouseDown(e) {
-				if (e.button !== 0) {
+			handleThumbMouseDown(event) {
+				if (event.button !== 0) {
 					return;
 				}
 				if (this.disabled) {
 					return;
 				}
 				this.isDragging = true;
-				this.dragRect = this.$refs.track.getBoundingClientRect();
-
-				// eslint-disable-next-line @bitrix24/bitrix24-rules/no-native-events-binding
-				document.addEventListener('mousemove', this.handleMouseMove);
-				// eslint-disable-next-line @bitrix24/bitrix24-rules/no-native-events-binding
-				document.addEventListener('mouseup', this.handleMouseUp);
-				// eslint-disable-next-line @bitrix24/bitrix24-rules/no-style
-				document.body.style.userSelect = 'none';
-				e.preventDefault();
+				const track = this.$refs.track;
+				this.dragRect = track.getBoundingClientRect();
+				main_core.Event.bind(document, 'mousemove', this.handleMouseMove);
+				main_core.Event.bind(document, 'mouseup', this.handleMouseUp);
+				main_core.Dom.style(document.body, 'user-select', 'none');
+				event.preventDefault();
 			},
-			handleMouseMove(e) {
-				if (!this.isDragging) {
+			handleMouseMove(event) {
+				if (!this.isDragging || !this.dragRect) {
 					return;
 				}
-				const x = e.clientX - this.dragRect.left;
+				const x = event.clientX - this.dragRect.left;
 				const percentage = Math.max(0, Math.min(100, x / this.dragRect.width * 100));
 				const index = this.getClosestIndex(percentage);
 				if (index !== this.currentIndex) {
 					this.currentIndex = index;
+				}
+			},
+			handleThumbKeydown(event) {
+				if (this.disabled) {
+					return;
+				}
+				let newIndex = this.currentIndex;
+				switch (event.key) {
+					case 'ArrowRight':
+					case 'ArrowUp':
+						newIndex = Math.min(this.videoQualityList.length - 1, this.currentIndex + 1);
+						event.preventDefault();
+						break;
+					case 'ArrowLeft':
+					case 'ArrowDown':
+						newIndex = Math.max(0, this.currentIndex - 1);
+						event.preventDefault();
+						break;
+					case 'Home':
+						newIndex = 0;
+						event.preventDefault();
+						break;
+					case 'End':
+						newIndex = this.videoQualityList.length - 1;
+						event.preventDefault();
+						break;
+					default:
+						return;
+				}
+				if (newIndex !== this.currentIndex) {
+					this.currentIndex = newIndex;
+					this.$emit('change', this.videoQualityList[newIndex].value);
+				}
+			},
+			handleLabelKeydown(index, event) {
+				if (event.key === 'Enter' || event.key === ' ') {
+					event.preventDefault();
+					this.handleLabelClick(index);
 				}
 			},
 			handleMouseUp() {
@@ -155,18 +185,15 @@ this.BX.Call = this.BX.Call || {};
 				}
 				this.isDragging = false;
 				this.dragRect = null;
-				// eslint-disable-next-line @bitrix24/bitrix24-rules/no-native-events-binding
-				document.removeEventListener('mousemove', this.handleMouseMove);
-				// eslint-disable-next-line @bitrix24/bitrix24-rules/no-native-events-binding
-				document.removeEventListener('mouseup', this.handleMouseUp);
-				// eslint-disable-next-line @bitrix24/bitrix24-rules/no-style
-				document.body.style.userSelect = '';
+				main_core.Event.unbind(document, 'mousemove', this.handleMouseMove);
+				main_core.Event.unbind(document, 'mouseup', this.handleMouseUp);
+				main_core.Dom.style(document.body, 'user-select', '');
 			}
 		},
 		template: `
-		<div class="bx-2-call-view-video-quality-container" :class="{ 'is-disabled': disabled }">
+		<div class="bx-2-call-view-video-quality-container" :class="{ 'is-disabled': disabled }" data-testid="video-quality-slider">
 			<div class="bx-2-call-view-video-quality-title">
-				<div class="bx-2-call-view-video-quality-title-icon"></div>
+				<div class="bx-2-call-view-video-quality-title-icon" aria-hidden="true"></div>
 				<span class="bx-2-call-view-video-quality-title-text">{{ title }}</span>
 			</div>
 
@@ -174,6 +201,7 @@ this.BX.Call = this.BX.Call || {};
 				<div
 					ref="track"
 					class="bx-2-call-view-video-quality-track"
+					data-testid="video-quality-slider-track"
 					@click="handleTrackClick"
 				>
 					<div
@@ -182,11 +210,22 @@ this.BX.Call = this.BX.Call || {};
 						class="bx-2-call-view-video-quality-mark"
 						:style="{ left: mark.position + '%' }"
 					></div>
-	
+
 					<div
 						class="bx-2-call-view-video-quality-thumb"
 						:style="thumbStyle"
+						role="slider"
+						:tabindex="disabled ? -1 : 0"
+						:aria-label="title"
+						aria-orientation="horizontal"
+						:aria-valuemin="0"
+						:aria-valuemax="videoQualityList.length - 1"
+						:aria-valuenow="currentIndex"
+						:aria-valuetext="currentLabel"
+						:aria-disabled="disabled ? 'true' : undefined"
+						data-testid="video-quality-slider-thumb"
 						@mousedown="handleThumbMouseDown"
+						@keydown="handleThumbKeydown"
 					></div>
 				</div>
 
@@ -197,7 +236,12 @@ this.BX.Call = this.BX.Call || {};
 						class="bx-2-call-view-video-quality-label"
 						:class="{ active: currentIndex === index }"
 						:style="getLabelStyle(index)"
+						role="button"
+						:tabindex="disabled ? -1 : 0"
+						:aria-disabled="disabled ? 'true' : undefined"
+						data-testid="video-quality-slider-label"
 						@click="handleLabelClick(index)"
+						@keydown="handleLabelKeydown(index, $event)"
 					>
 						{{ item.label }}
 					</div>
@@ -205,7 +249,7 @@ this.BX.Call = this.BX.Call || {};
 			</div>
 		</div>
 	`
-	};
+	});
 
 	class VideoQualityRange {
 		#application = null;
@@ -263,5 +307,5 @@ this.BX.Call = this.BX.Call || {};
 
 	exports.VideoQualityRange = VideoQualityRange;
 
-})(this.BX.Call.Component = this.BX.Call.Component || {}, BX.Vue3);
+})(this.BX.Call.Component = this.BX.Call.Component || {}, BX.Vue3, BX);
 //# sourceMappingURL=video-quality-range.bundle.js.map

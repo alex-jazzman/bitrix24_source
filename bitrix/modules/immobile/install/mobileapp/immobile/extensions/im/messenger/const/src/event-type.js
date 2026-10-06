@@ -69,6 +69,7 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 		recent: {
 			itemSelected: 'onItemSelected',
 			itemAction: 'onItemAction',
+			popupMenuItemTap: 'onPopupMenuItemTap',
 			searchShow: 'onSearchShow',
 			searchHide: 'onSearchHide',
 			userTypeText: 'onUserTypeText',
@@ -242,6 +243,7 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 			updateCallToken: 'ImMobile.CallManager:updateCallToken',
 			createCall: 'onCallInvite',
 			setCurrentUser: 'ImMobile.CallManager:setCurrentUser',
+			guestIdentified: 'ImMobile.CallManager:guestIdentified',
 		},
 		/** Integration (other components events) */
 		chatDialog: {

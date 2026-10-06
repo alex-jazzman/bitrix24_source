@@ -7,8 +7,14 @@ jn.define('tasks/layout/checklist/list/src/toasts', (require, exports, module) =
 	const { Haptics } = require('haptics');
 	const { showToast } = require('toast');
 
+	/** @type {Object|null} */
 	let shownToast = null;
 
+	/**
+	 * @param {ChecklistToastParams} params
+	 * @param {Object} layoutWidget
+	 * @returns {Object}
+	 */
 	const showChecklistToastMap = (params, layoutWidget) => {
 		shownToast?.close();
 		shownToast = showToast(params, layoutWidget);
@@ -16,6 +22,10 @@ jn.define('tasks/layout/checklist/list/src/toasts', (require, exports, module) =
 		return shownToast;
 	};
 
+	/**
+	 * @param {ChecklistEmptyToastParams} params
+	 * @returns {Object}
+	 */
 	const toastEmptyPersonalList = ({ layoutWidget, hideCompleted, lastActive }) => {
 		Haptics.impactLight();
 
@@ -27,12 +37,20 @@ jn.define('tasks/layout/checklist/list/src/toasts', (require, exports, module) =
 		}, layoutWidget);
 	};
 
+	/**
+	 * @param {ChecklistMovedToastParams} params
+	 * @returns {Object}
+	 */
 	const toastMovedItem = ({ layoutWidget, onButtonTap }) => showChecklistToastMap({
 		onButtonTap,
 		message: Loc.getMessage('TASKSMOBILE_LAYOUT_CHECKLIST_ITEM_MOVED'),
 		buttonText: Loc.getMessage('TASKSMOBILE_LAYOUT_CHECKLIST_REDIRECT'),
 	}, layoutWidget);
 
+	/**
+	 * @param {ChecklistNoRightsToastParams} options
+	 * @returns {void}
+	 */
 	const toastNoRights = ({ layoutWidget, params }) => {
 		Haptics.notifyWarning();
 		showChecklistToastMap({

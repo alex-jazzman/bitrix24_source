@@ -16,5 +16,7 @@ return [
 		'layout/pure-component',
 		'layout/ui/widget-header-button',
 		'layout/ui/entity-editor/manager',
+
+		'bizproc:helper/network-error',
 	],
 ];

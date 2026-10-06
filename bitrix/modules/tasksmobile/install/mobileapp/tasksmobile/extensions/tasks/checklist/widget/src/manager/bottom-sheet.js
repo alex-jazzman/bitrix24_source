@@ -1,6 +1,4 @@
-/**
- * @module tasks/checklist/widget/src/manager/bottom-sheet
- */
+/** @module tasks/checklist/widget/src/manager/bottom-sheet */
 jn.define('tasks/checklist/widget/src/manager/bottom-sheet', (require, exports, module) => {
 	const { Color } = require('tokens');
 	const { Haptics } = require('haptics');
@@ -9,11 +7,9 @@ jn.define('tasks/checklist/widget/src/manager/bottom-sheet', (require, exports, 
 	const { PropTypes } = require('utils/validation');
 	const { ChecklistBaseLayout } = require('tasks/checklist/widget/src/manager/base-layout');
 
-	/**
-	 * @class ChecklistBottomSheet
-	 */
 	class ChecklistBottomSheet extends ChecklistBaseLayout
 	{
+		/** @param {ChecklistBottomSheetProps} props */
 		constructor(props)
 		{
 			super(props);
@@ -21,13 +17,7 @@ jn.define('tasks/checklist/widget/src/manager/bottom-sheet', (require, exports, 
 			this.handleOnPreventDismiss = this.handleOnPreventDismiss.bind(this);
 		}
 
-		/**
-		 * @public
-		 * @param {object} props
-		 * @param {LayoutComponent} [props.component]
-		 * @param {LayoutWidget} [props.parentWidget]
-		 * @return {Promise<LayoutWidget>}
-		 */
+		/** @return {Promise<Object>} */
 		async open(props)
 		{
 			const checklistBottomSheet = new BottomSheet({
@@ -55,6 +45,7 @@ jn.define('tasks/checklist/widget/src/manager/bottom-sheet', (require, exports, 
 
 		/**
 		 * @private
+		 * @return {void}
 		 */
 		initialPreventDismiss()
 		{
@@ -64,6 +55,7 @@ jn.define('tasks/checklist/widget/src/manager/bottom-sheet', (require, exports, 
 
 		/**
 		 * @private
+		 * @return {void}
 		 */
 		handleOnPreventDismiss()
 		{
@@ -75,10 +67,14 @@ jn.define('tasks/checklist/widget/src/manager/bottom-sheet', (require, exports, 
 			}
 			else
 			{
-				this.handleOnClose();
+				void this.handleOnClose();
 			}
 		}
 
+		/**
+		 * @private
+		 * @return {void}
+		 */
 		openAlert()
 		{
 			const { params } = this.alert;
@@ -86,6 +82,7 @@ jn.define('tasks/checklist/widget/src/manager/bottom-sheet', (require, exports, 
 			Alert.alert('', params?.title);
 		}
 
+		/** @return {void} */
 		close()
 		{
 			this.layoutWidget.close();

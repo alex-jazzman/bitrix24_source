@@ -7,7 +7,10 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Bizproc\Activity\Dto\ContentBlock;
 use Bitrix\Bizproc\Internal\Entity\StorageItem\StorageItem;
+use Bitrix\Bizproc\Public\Activity\Interface\ActivityContentBlockProviderInterface;
+use Bitrix\Bizproc\Public\Activity\Interface\ContentBlockScopeConsumerInterface;
 use Bitrix\Bizproc\Public\Command\StorageItem\AddStorageItemCommand;
 use Bitrix\Bizproc\Public\Command\StorageItem\UpdateStorageItemCommand;
 use Bitrix\Bizproc\Public\Provider\StorageFieldProvider;
@@ -31,7 +34,7 @@ use Bitrix\Bizproc\Internal\Service\StorageActivity\StorageActivityService;
  * @property-write ?string RewriteMode
  * @property-write string IsExpanded
  */
-class CBPWriteDataStorageActivity extends BaseActivity implements IBPConfigurableActivity
+class CBPWriteDataStorageActivity extends BaseActivity implements IBPConfigurableActivity, ActivityContentBlockProviderInterface, ContentBlockScopeConsumerInterface
 {
 	use \Bitrix\Bizproc\Activity\Mixins\EntityFilter;
 
@@ -436,6 +439,7 @@ class CBPWriteDataStorageActivity extends BaseActivity implements IBPConfigurabl
 					],
 				],
 				'Required' => false,
+				'RequiredMark' => true,
 				'AllowSelection' => false,
 			],
 			'StorageCode' => [
@@ -476,10 +480,11 @@ class CBPWriteDataStorageActivity extends BaseActivity implements IBPConfigurabl
 				],
 			],
 			'WriteFields' => [
-				'Name' => '',
+				'Name' => Loc::getMessage('BIZPROC_WRITE_DATA_ACTIVITY_WRITE_FIELDS_PROPERTY'),
 				'FieldName' => 'write_fields',
 				'Type' => FieldType::CUSTOM,
 				'Required' => false,
+				'RequiredMark' => true,
 				'AllowSelection' => true,
 				'CustomType' => 'writeFields',
 				'Options' => [
@@ -554,6 +559,16 @@ class CBPWriteDataStorageActivity extends BaseActivity implements IBPConfigurabl
 		$result->setData($currentValues);
 
 		return $result;
+	}
+
+	public static function getContentBlock(array $properties, ?\Bitrix\Bizproc\Activity\Dto\ContentBlockContext $context = null): ?ContentBlock
+	{
+		return StorageActivityService::getContentBlock($properties, $context);
+	}
+
+	public static function getScopeConsumption(): array
+	{
+		return StorageActivityService::getScopeConsumption();
 	}
 
 	private static function normalizeFieldKeys(mixed $fieldKeys): array
@@ -671,6 +686,21 @@ class CBPWriteDataStorageActivity extends BaseActivity implements IBPConfigurabl
 					),
 				];
 			}
+		}
+
+		$hasStorage =
+			!CBPHelper::isEmptyValue($arTestProperties['StorageId'] ?? null)
+			|| !CBPHelper::isEmptyValue($arTestProperties['StorageCode'] ?? null)
+		;
+		if (!$hasStorage)
+		{
+			$errors[] = [
+				'code' => 'NotExist',
+				'parameter' => 'StorageId',
+				'message' => Loc::getMessage('BIZPROC_WRITE_DATA_ACTIVITY_EMPTY_STORAGE_ID_OR_CODE'),
+			];
+
+			return $errors;
 		}
 
 		$fields = $arTestProperties['Fields'] ?? [];

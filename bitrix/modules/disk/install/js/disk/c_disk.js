@@ -40,7 +40,7 @@ if (!BX.Disk.pathToUser)
 		{
 			params = params || {};
 
-			if (command === 'onlyoffice' && params.documentSession)
+			if ((command === 'onlyoffice' || command === 'vibeoffice') && params.documentSession)
 			{
 				if (params.event === 'saved')
 				{

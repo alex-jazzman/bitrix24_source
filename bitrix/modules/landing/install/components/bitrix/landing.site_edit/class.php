@@ -5,6 +5,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\Landing\Binding\Group;
+use Bitrix\Landing\Copilot\Services\CreateAiSiteChecker;
 use \Bitrix\Landing\Hook;
 use Bitrix\Landing\Hook\Page\Theme;
 use Bitrix\Landing\Node\Component;
@@ -158,6 +159,20 @@ class LandingSiteEditComponent extends LandingBaseFormComponent
 	}
 
 	/**
+	 * Returns true, if this site was created by the AI scenario.
+	 * @return bool
+	 */
+	protected function isAiSiteCreated(): bool
+	{
+		return (new CreateAiSiteChecker())->isSiteCreated((int)$this->arParams['SITE_ID']);
+	}
+
+	protected function isAiSitesEnabled(): bool
+	{
+		return \Bitrix\Landing\Copilot\Manager::isAiSitesEnabled();
+	}
+
+	/**
 	 * Base executable method.
 	 * @return void
 	 */
@@ -186,10 +201,13 @@ class LandingSiteEditComponent extends LandingBaseFormComponent
 
 			$this->arResult['SITE'] = $site = $this->getRow();
 			$this->arResult['LANG_CODES'] = $this->getLangCodes();
-			$this->arResult['TEMPLATES'] = $this->getTemplates();
+			$isAiSiteCreated = $this->isAiSitesEnabled() && $this->isAiSiteCreated();
+			$this->arResult['TEMPLATES'] = $isAiSiteCreated ? [] : $this->getTemplates();
 			$this->arResult['IS_INTRANET'] = $this->isIntranet();
 			$this->arResult['SHOW_RIGHTS'] = Rights::isAdmin() && Rights::isExtendedMode();
 			$this->arResult['SETTINGS'] = [];
+			$this->arResult['HOOKS'] = [];
+			$this->arResult['TEMPLATES_REF'] = [];
 			$this->arResult['REGISTER'] = Register::getInstance();
 			$this->arResult['SITE_INCLUDES_SCRIPT'] = Cookies::isSiteIncludesScript($this->id);
 			$this->arResult['COOKIES_AGREEMENT'] = Cookies::getMainAgreement();
@@ -295,12 +313,13 @@ class LandingSiteEditComponent extends LandingBaseFormComponent
 
 			$this->arResult['COLORS'] = Theme::getColorCodes();
 			$this->arResult['PREPARE_COLORS'] = self::prepareColors($this->arResult['COLORS']);
-			$themeHookFields = $this->arResult['HOOKS']['THEME']->getPageFields();
-			if ($themeHookFields['THEME_CODE'])
+			$themeHook = $this->arResult['HOOKS']['THEME'] ?? null;
+			$themeHookFields = $themeHook ? $themeHook->getPageFields() : [];
+			if (isset($themeHookFields['THEME_CODE']))
 			{
 				$this->arResult['LANDING_VALUE_CODE'] = $themeHookFields['THEME_CODE']->getValue();
 			}
-			if ($themeHookFields['THEME_COLOR'])
+			if (isset($themeHookFields['THEME_COLOR']))
 			{
 				$this->arResult['LANDING_VALUE_COLOR'] = $themeHookFields['THEME_COLOR']->getValue();
 			}
@@ -308,8 +327,10 @@ class LandingSiteEditComponent extends LandingBaseFormComponent
 			{
 				$themeHookFields['THEME_USE']->setValue('Y');
 			}
-			$this->arResult['CURRENT_COLORS']['value'] = htmlspecialcharsbx(trim($themeHookFields['THEME_COLOR']->getValue()));
-			if (!$this->arResult['CURRENT_COLORS']['value'])
+			$this->arResult['CURRENT_COLORS']['value'] = isset($themeHookFields['THEME_COLOR'])
+				? htmlspecialcharsbx(trim($themeHookFields['THEME_COLOR']->getValue()))
+				: '';
+			if (!$this->arResult['CURRENT_COLORS']['value'] && isset($themeHookFields['THEME_CODE']))
 			{
 				$this->arResult['CURRENT_COLORS']['theme'] = htmlspecialcharsbx(trim($themeHookFields['THEME_CODE']->getValue()));
 			}
@@ -517,6 +538,11 @@ class LandingSiteEditComponent extends LandingBaseFormComponent
 	 */
 	public static function getCurrentTheme(array $hooks, array $colors): string
 	{
+		if (!isset($hooks['THEME']))
+		{
+			return self::DEFAULT_SITE_COLOR;
+		}
+
 		$themeHookFields = $hooks['THEME']->getPageFields();
 		$themeCurr = htmlspecialcharsbx(trim($themeHookFields['THEME_COLOR']->getValue()));
 		if (!$themeCurr)

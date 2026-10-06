@@ -106,8 +106,16 @@ if ($arResult["FatalErrorMessage"] == '')
 			}
 		}
 
+		$freezeRefusal = (new \Bitrix\Bizproc\Internal\Service\Pilot\SettingsFreezeGate())
+			->findRefusal((int)$arResult['ID'])
+		;
+		if ($freezeRefusal !== null)
+		{
+			$errorMessageTmp = $freezeRefusal->getMessage();
+		}
+
 		$arKeys = array_keys($arResult["CONSTANTS"]);
-		foreach ($arKeys as $variableKey)
+		foreach ($errorMessageTmp === '' ? $arKeys : [] as $variableKey)
 		{
 			$arErrorsTmp = array();
 
@@ -148,8 +156,18 @@ if ($arResult["FatalErrorMessage"] == '')
 
 		if ($errorMessageTmp == '')
 		{
-			CBPWorkflowTemplateLoader::Update($arResult["ID"], array("CONSTANTS" => $arResult["CONSTANTS"]));
+			try
+			{
+				CBPWorkflowTemplateLoader::Update($arResult["ID"], array("CONSTANTS" => $arResult["CONSTANTS"]));
+			}
+			catch (CBPWorkflowTemplateValidationException $exception)
+			{
+				$errorMessageTmp = implode(' ', array_column($exception->getErrors(), 'message'));
+			}
+		}
 
+		if ($errorMessageTmp == '')
+		{
 			if ($arParams['AJAX_RESPONSE'])
 			{
 				$APPLICATION->RestartBuffer();

@@ -149,7 +149,11 @@ if ($component->isDefaultMode())
 	$types = $typesMap->getTypes();
 	foreach($types as $type)
 	{
-		$code = $arResult['SELECTOR_ENTITY_TYPES'][\CCrmOwnerType::CommonDynamicName] . '_' . $type->getEntityTypeId();
+		$entityTypeId = $type->getEntityTypeId();
+		$entityTypeName = \CCrmOwnerType::ResolveName($entityTypeId);
+		$code = $arResult['SELECTOR_ENTITY_TYPES'][\CCrmOwnerType::CommonDynamicName] . '_' . $entityTypeId;
+		$arResult['LIST_PREFIXES'][$entityTypeName] = \CCrmOwnerTypeAbbr::ResolveByTypeID($entityTypeId);
+		$arResult['SELECTOR_ENTITY_TYPES'][$entityTypeName] = $code;
 		$arResult['DYNAMIC_TYPE_TITLES'][mb_strtoupper($code)] = \Bitrix\Main\Text\HtmlFilter::encode($type->getTitle());
 	}
 

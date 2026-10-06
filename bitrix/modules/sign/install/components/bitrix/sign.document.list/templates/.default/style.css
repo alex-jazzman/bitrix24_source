@@ -1,48 +1,6 @@
-.sign-personal-download-result-file-wrapper {
-	display: flex;
-	flex-direction: row;
-	width: max-content;
-	height: max-content;
-	padding-top: 5px;
-	padding-bottom: 5px;
-	text-decoration: none !important;
-	border: var(--ui-border-width-thin, 1px) solid #A8C6E6;
-	border-radius: var(--ui-border-radius-xl, 14px);
-	padding: 5px 15px;
-}
-
-.sign-personal-download-result-file-wrapper:hover {
-	background-color: rgb(205, 205, 205) !important;
-}
-
-.sign-personal-download-result-file-wrapper:active {
-	background-color: rgb(175, 175, 175) !important;
-}
-
-.sign-personal-download-result-file-inner {
-	display: flex;
-	border-bottom: none !important;
-}
-
-.sign-personal-download-result-file-text {
-	align-self: center;
-	margin-left: 5px;
-	text-transform: uppercase;
-	font-size: var(--ui-font-size-3xs, 11px);
-	color: var(--ui-color-palette-gray-90);
-	padding-left: 5px;
-}
-
-.sign-personal-download-btn,
-.sign-personal-download-btn:hover {
-	width: 160px;
-	color: var(--ui-color-palette-gray-90);
-	text-decoration: none !important;
-}
-
 .sign-personal-download-dropdown-menu-btn {
 	width: auto;
-	min-width: 200px;
+	min-width: 170px;
 }
 
 .sign-personal-download-dropdown-menu-btn a,
@@ -50,8 +8,122 @@
 	color: var(--ui-color-palette-gray-90);
 }
 
-.sign-personal-download-result-icon {
-	width: 18px;
+.sign-personal-action {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--ui-size-xs);
+}
+
+.sign-personal-download-btn {
+	display: inline-flex;
+	align-items: stretch;
+	width: auto;
+	height: var(--ui-size-2xl);
+	border: var(--ui-design-outline-stroke-weight) solid var(--ui-color-design-outline-stroke);
+	border-radius: var(--ui-border-radius-sm);
+	background: transparent;
+	overflow: hidden;
+	box-sizing: border-box;
+}
+
+.sign-personal-download-btn__main,
+.sign-personal-download-btn__toggle {
+	border: 0;
+	background: transparent;
+	padding: 0;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+	user-select: none;
+	-webkit-tap-highlight-color: transparent;
+	font: inherit;
+	color: inherit;
+}
+
+.sign-personal-download-btn__main {
+	padding: 0 24px;
+	font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+	font-weight: var(--ui-font-weight-normal);
+	font-size: var(--ui-font-size-sm);
+	line-height: 1;
+	letter-spacing: -0.02em;
+	color: var(--ui-color-design-outline-content);
+	white-space: nowrap;
+	text-decoration: none !important;
+}
+
+.sign-personal-download-btn__toggle {
+	position: relative;
+	width: var(--ui-size-2xl);
+	padding: 0;
+	color: var(--ui-color-design-outline-content);
+}
+
+.sign-personal-download-btn__toggle::before {
+	content: "";
+	position: absolute;
+	left: 0;
+	top: 7px;
+	bottom: 7px;
+	width: 1px;
+	background: var(--ui-color-design-outline-stroke);
+	border-radius: 999px;
+	opacity: 1;
+}
+
+.sign-personal-download-btn__icon {
+	width: 9px;
+	height: 5px;
+	display: block;
+	background-image: url("images/dropdown-toggle-icon.svg");
+	background-repeat: no-repeat;
+	background-position: center;
+	background-size: contain;
+}
+
+.sign-personal-download-btn__main:hover,
+.sign-personal-download-btn__toggle:hover {
+	background: rgb(205, 205, 205);
+}
+
+.sign-personal-download-btn--no-toggle .sign-personal-download-btn__main{
+	padding-right: calc(24px + 28px / 2);
+	padding-left: calc(24px + 28px / 2);
+}
+
+.sign-personal-view-btn {
+	height: var(--ui-size-2xl);
+	width: var(--ui-size-2xl);
+
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+
+	border: var(--ui-design-outline-stroke-weight) solid var(--ui-color-design-outline-stroke);
+	border-radius: 8px;
+	background: transparent;
+	color: var(--ui-color-design-outline-content);
+
+	box-sizing: border-box;
+	cursor: pointer;
+	user-select: none;
+	-webkit-tap-highlight-color: transparent;
+	padding: 0;
+}
+
+.sign-personal-view-btn:hover {
+	background: rgb(205, 205, 205);
+}
+
+.sign-personal-view-btn__icon {
+	width: 14px;
+	height: 14px;
+	display: block;
+	background-image: url("images/view-icon.svg");
+	background-repeat: no-repeat;
+	background-position: center;
+	background-size: contain;
 }
 
 .sign-personal-grid-company {
@@ -212,11 +284,35 @@
 	justify-content: center;
 	align-items: center;
 	background-color: var(--ui-color-palette-gray-05);
+	cursor: pointer;
+}
+
+.sign-grid-document-title__icon_wrapper:hover {
+	background-color: rgb(215, 215, 215);
+}
+
+.sign-grid-document-title__icon_wrapper__no-hover {
+	display: flex;
+	border-radius: 50%;
+	width: 40px;
+	height: 40px;
+	justify-content: center;
+	align-items: center;
+	background-color: var(--ui-color-palette-gray-05);
 }
 
 .sign-document-list-wrapper .main-grid-cell-content {
 	display: flex;
 	align-items: center;
+}
+
+/* The grid core sets `.main-grid-cell { vertical-align: top }`, so every column
+   starts at the top of the row and each one ends up centered around a different
+   axis depending on how tall its own content is. Centering all row cells puts the
+   service cells (checkbox, row actions) and the content columns on one axis.
+   Scoped to this grid; the header uses `.main-grid-cell-head` and is untouched. */
+.sign-document-list-wrapper .main-grid-cell {
+	vertical-align: middle;
 }
 
 .sign-grid-document-title_link {
@@ -240,4 +336,74 @@
 	margin-top: 3%;
 	color: var(--ui-color-palette-gray-90);
 	font-size: 12px;
+}
+
+/* Slim down the mass-action panel so it matches the templates grid height. */
+.ui-action-panel.ui-action-panel-show {
+	height: 5% !important;
+	min-height: 60px;
+	margin: 10px 0 10px 0;
+}
+
+/* Folder-row icon for the Safe grid. The ui-icon-set --folder glyph does not
+   render on the Safe page, so use a self-contained background-image svg shipped
+   with this template (no external extension needed), like the templates grid. */
+.sign-grid-safe-folder__icon {
+	width: 24px;
+	height: 24px;
+	background-image: url('images/folder.svg');
+	background-size: cover;
+	display: inline-block;
+	margin-right: 13px;
+	vertical-align: middle;
+	flex-shrink: 0;
+}
+
+/* Document-row icon for the Safe grid, matching the templates grid record style
+   (self-contained background-image svg shipped with this template). */
+.sign-grid-safe-document__icon {
+	width: 24px;
+	height: 24px;
+	background-image: url('images/document-template.svg');
+	background-size: cover;
+	display: inline-block;
+	margin-right: 13px;
+	vertical-align: middle;
+	flex-shrink: 0;
+}
+
+/* Safe grid: the document icon is a standalone svg (like the templates grid), so
+   drop the grey round wrapper used for the default file glyph in other modes. */
+.sign-grid-document-title__icon_wrapper--plain {
+	width: auto;
+	height: auto;
+	background: none;
+	border-radius: 0;
+}
+
+.sign-grid-document-title__icon_wrapper.sign-grid-document-title__icon_wrapper--plain:hover {
+	background: none;
+}
+
+.sign-grid-document-title__icon_wrapper.sign-grid-document-title__icon_wrapper--plain:hover
+.sign-grid-safe-document__icon {
+	background-image: url('images/document-template-hover.svg');
+}
+
+/* Safe grid: separate the row action ("burger") menu from the row checkbox, to
+   match the templates grid spacing. */
+.sign-document-list-wrapper .main-grid-row-action-button {
+	margin-left: 8px;
+	/* The core's `top: 2px` compensates for top-aligned cells; rows are centered. */
+	top: 0;
+}
+
+/* Clicking a row selects it for bulk actions, and the core grid skips that only
+   when the click target is the link itself (main.ui.grid, `_onClickOnRow`). A link
+   made of nested spans - the user cell, the row action button - handed the core a
+   span instead, so opening a document also ticked its row. Making link content
+   transparent to pointer events keeps the target on the link: the link still works,
+   the row is not selected, and clicking anywhere else in the row still selects it. */
+.sign-document-list-wrapper .main-grid-cell a * {
+	pointer-events: none;
 }

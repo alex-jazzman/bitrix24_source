@@ -8,7 +8,7 @@ return [
 	'css' => 'dist/connector.disk.bundle.css',
 	'js' => 'dist/connector.disk.bundle.js',
 	'rel' => [
-		'main.polyfill.core',
+		'main.core',
 	],
-	'skip_core' => true,
+	'skip_core' => false,
 ];

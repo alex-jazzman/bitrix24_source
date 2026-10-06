@@ -126,6 +126,8 @@ export class Analytics
 				return 'integration_bitrix24KEDO';
 			case ProviderCode.goskey:
 				return 'integration_Goskluch';
+			case ProviderCode.goskeyLite:
+				return 'integration_Goskluch_Light';
 			case ProviderCode.external:
 				return 'integration_external';
 			default:

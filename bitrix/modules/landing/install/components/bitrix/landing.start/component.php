@@ -11,6 +11,7 @@ use \Bitrix\Landing\Manager;
 use Bitrix\Landing\Site\Type;
 use \Bitrix\Main\Localization\Loc;
 use \Bitrix\Main\Application;
+use Bitrix\Main\Security\Random;
 use \Bitrix\Main\Web\Uri;
 use \Bitrix\Main\Loader;
 use \Bitrix\Main\SiteTemplateTable;
@@ -74,7 +75,11 @@ if (Loader::includeModule('bitrix24'))
 		return;
 	}
 }
-if (!Rights::hasAdditionalRight(Rights::ADDITIONAL_RIGHTS['menu24'], null, true))
+// menu24 of VIBE only controls the navigation, the vibe pages keep their own checks
+if (
+	Type::getCurrentScopeId() !== Type::SCOPE_CODE_VIBE
+	&& !Rights::hasAdditionalRight(Rights::ADDITIONAL_RIGHTS['menu24'], null, true)
+)
 {
 	Manager::getApplication()->showAuthForm(
 		Loc::getMessage('LANDING_CMP_ACCESS_DENIED2')
@@ -146,10 +151,37 @@ $request = Application::getInstance()->getContext()->getRequest();
 $uriString = $request->getRequestUri();
 $uriPage = $request->getRequestedPage();
 $landingTypes = \Bitrix\Landing\Site::getTypes();
+$initialPromptField = 'initial_prompt';
+$initialPromptTokenField = 'initial_prompt_token';
+$initialPromptSessionKey = 'landing_ai_site_initial_prompt';
+$initialPromptMaxLength = 4000;
+$normalizeInitialPrompt = static function ($prompt) use ($initialPromptMaxLength): string
+{
+	if (!is_scalar($prompt))
+	{
+		return '';
+	}
+
+	$prompt = str_replace(["\r\n", "\r"], "\n", (string)$prompt);
+	$prompt = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', '', $prompt);
+	if (!is_string($prompt))
+	{
+		return '';
+	}
+
+	$prompt = trim($prompt);
+	if (mb_strlen($prompt) > $initialPromptMaxLength)
+	{
+		$prompt = mb_substr($prompt, 0, $initialPromptMaxLength);
+	}
+
+	return $prompt;
+};
 
 // template vars
 $arResult['AGREEMENT'] = array();
 $arResult['AGREEMENT_ACCEPTED'] = false;
+$arResult['AGREEMENT_INITIAL_PROMPT'] = '';
 $arResult['CHECK_FEATURE_PERM'] = \Bitrix\Landing\Restriction\Manager::isAllowed('limit_sites_access_permissions');
 $arParams['ACTION_FOLDER'] = isset($arParams['ACTION_FOLDER']) ? $arParams['ACTION_FOLDER'] : 'folderId';
 $arParams['SEF_MODE'] = isset($arParams['SEF_MODE']) ? $arParams['SEF_MODE'] : 'Y';
@@ -365,6 +397,10 @@ if ($componentPage == 'domains' || $componentPage == 'domain_edit')
 }
 
 // only AGREEMENTS below
+if ($componentPage === 'ai' && $request->isPost() && check_bitrix_sessid())
+{
+	$arResult['AGREEMENT_INITIAL_PROMPT'] = $normalizeInitialPrompt($request->getPost($initialPromptField));
+}
 
 $currentLang = LANGUAGE_ID;
 $currentZone = Manager::getZone();
@@ -558,10 +594,34 @@ if (
 	check_bitrix_sessid()
 )
 {
+	$redirectUriString = $uriString;
 	Consent::addByContext(
 		$arResult['AGREEMENT']['ID']
 	);
-	LocalRedirect($uriString);
+	if ($componentPage === 'ai')
+	{
+		$session = Application::getInstance()->getSession();
+		$initialPrompt = $normalizeInitialPrompt($request->getPost($initialPromptField));
+		if ($initialPrompt !== '')
+		{
+			$initialPromptToken = Random::getString(32, true);
+			$session->set($initialPromptSessionKey, [
+				'prompt' => $initialPrompt,
+				'token' => $initialPromptToken,
+				'createdAt' => time(),
+			]);
+
+			$redirectUri = new Uri($uriString);
+			$redirectUri->deleteParams([$initialPromptTokenField]);
+			$redirectUri->addParams([$initialPromptTokenField => $initialPromptToken]);
+			$redirectUriString = $redirectUri->getUri();
+		}
+		elseif ($session->has($initialPromptSessionKey))
+		{
+			$session->remove($initialPromptSessionKey);
+		}
+	}
+	LocalRedirect($redirectUriString);
 }
 
 // if not accept and don't exist agreement

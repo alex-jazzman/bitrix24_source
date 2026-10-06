@@ -82,4 +82,5 @@ class Controller extends ContainerController
 	}
 }
 
-export {Controller, Options}
+export {Controller}
+export type {Options}

@@ -1,6 +1,4 @@
-/**
- * @module tasks/layout/checklist/list
- */
+/** @module tasks/layout/checklist/list */
 jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 	const { Color } = require('tokens');
 	const { unique } = require('utils/array');
@@ -25,17 +23,10 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 		type: 'stubMenu',
 	};
 
-	/**
-	 * @class Checklist
-	 */
+	/** @class Checklist */
 	class Checklist extends LayoutComponent
 	{
-		/**
-		 * @param {object} props
-		 * @param {string | number} [props.focusedItemId]
-		 * @param {CheckListFlatTree} [props.checklist]
-		 * @param {object} [props.parentWidget]
-		 */
+		/** @param {ChecklistProps} props */
 		constructor(props)
 		{
 			super(props);
@@ -51,7 +42,7 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 
 			/** @type {ListViewQueueWorker} */
 			this.checklistQueue = new ListViewQueueWorker();
-			/** @type {ChecklistActionsMenu} */
+			/** @type {ChecklistActionsMenu | null} */
 			this.menuRef = null;
 
 			this.#initState(props);
@@ -64,11 +55,16 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 			this.initialKeyboardHandlers();
 		}
 
+		/** @param {ChecklistProps} props */
 		componentWillReceiveProps(props)
 		{
 			this.#initState(props);
 		}
 
+		/**
+		 * @private
+		 * @param {ChecklistProps} props
+		 */
 		#initState(props)
 		{
 			this.state = {
@@ -105,7 +101,7 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 			});
 		}
 
-		/** @type {CheckListFlatTree} */
+		/** @return {CheckListFlatTree} */
 		get checklist()
 		{
 			const { checklist } = this.props;
@@ -113,12 +109,7 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 			return checklist;
 		}
 
-		/**
-		 * @public
-		 * @param {object} params
-		 * @param {boolean} [params.onlyMine]
-		 * @param {boolean} [params.hideCompleted]
-		 */
+		/** @param {ChecklistReloadParams} [params] */
 		reload(params = {})
 		{
 			this.checklist.setConditions(params, true);
@@ -146,11 +137,13 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 			checklistItem.reload();
 		}
 
+		/** @param {Object} parentWidget */
 		setParentWidget(parentWidget)
 		{
 			this.parentWidget = parentWidget;
 		}
 
+		/** @return {Object | null} */
 		getParentWidget()
 		{
 			return this.parentWidget;
@@ -162,9 +155,9 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 		}
 
 		/**
-		 * @public
 		 * @param {CheckListFlatTreeItem} item
-		 * @param {Boolean} shouldRender
+		 * @param {boolean} [shouldRender]
+		 * @return {Promise<void>}
 		 */
 		updateRowByKey = (item, shouldRender = true) => {
 			const key = item.getKey();
@@ -174,12 +167,7 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 			return this.checklistQueue.updateRowByKey(key, updateItem, false, shouldRender);
 		};
 
-		/**
-		 * @param {Array<string | number>} itemIds
-		 * @param {ListViewAnimate} [animation]
-		 * @param {boolean} [saveFocus]
-		 * @param {boolean} [shouldRender]
-		 */
+		/** @param {ChecklistUpdateRowsParams} params */
 		updateRows = ({ itemIds, animation, saveFocus, shouldRender }) => {
 			if (typeof saveFocus === 'boolean')
 			{
@@ -220,8 +208,8 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 		/**
 		 * @private
 		 * @param {string[]} keys
-		 * @param {string} animation
-		 * @return {Promise<ListViewQueueWorker>}
+		 * @param {string} [animation]
+		 * @return {Promise<void>}
 		 */
 		deleteRows(keys, animation = 'fade')
 		{
@@ -229,9 +217,9 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 		}
 
 		/**
-		 * @param {object} item
+		 * @param {Object} item
 		 * @param {number} position
-		 * @return Promise<void>
+		 * @return {Promise<void>}
 		 */
 		insertRows(item, position)
 		{
@@ -265,7 +253,8 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 		}
 
 		/**
-		 * @param {number} index
+		 * @private
+		 * @param {number | undefined} index
 		 * @param {string} itemKey
 		 * @return {Promise<boolean>}
 		 */
@@ -291,6 +280,7 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 			return lastIndex !== position && lastIndex - 1 !== position;
 		}
 
+		/** @return {boolean} */
 		isFilterEnabled()
 		{
 			const { onlyMine, hideCompleted } = this.state;
@@ -310,6 +300,10 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 			this.toastEmptyPersonalList = toastEmptyPersonalList({ layoutWidget: this.getParentWidget(), ...this.state });
 		}
 
+		/**
+		 * @param {CheckListFlatTreeItem[]} [checklistItems]
+		 * @return {boolean}
+		 */
 		shouldEmptyToast(checklistItems)
 		{
 			const isEmptyList = (items) => items.filter((item) => !item.isRoot()).length === 0;
@@ -322,6 +316,7 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 			return isEmptyList(this.checklist.getFilteredItems(this.state));
 		}
 
+		/** @return {Object[]} */
 		getItems()
 		{
 			const checklistItems = this.isFilterEnabled()
@@ -334,9 +329,7 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 			return primitiveItems;
 		}
 
-		/**
-		 * @return {View}
-		 */
+		/** @return {Object} */
 		render()
 		{
 			const NativeListView = this.#nativeListView();
@@ -374,7 +367,8 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 
 		/**
 		 * @private
-		 * @param {object} item
+		 * @param {Object} item
+		 * @return {Object | null}
 		 */
 		renderChecklistItem(item)
 		{
@@ -396,8 +390,6 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 			const checklistItem = this.checklist.getItemById(item.id);
 			if (!checklistItem)
 			{
-				console.log(`no item ${item.id}`);
-
 				return null;
 			}
 
@@ -408,6 +400,10 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 				: new MainChecklistItem(itemProps);
 		}
 
+		/**
+		 * @param {CheckListFlatTreeItem} checklistItem
+		 * @return {Object}
+		 */
 		getItemProps(checklistItem)
 		{
 			const { diskConfig } = this.props;
@@ -431,6 +427,7 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 				updateRowByKey: this.updateRowByKey,
 				updateMenu: this.updateActionMenu,
 				onChangeAttachments: this.#handleOnChangeAttachments,
+				onSelectionStylesChange: this.handleOnSelectionStylesChange,
 				onToggleComplete: this.handleOnToggleComplete,
 				openUserSelectionManager: this.openUserSelectionManager,
 				openTariffRestrictionWidget: this.openTariffRestrictionWidget,
@@ -439,7 +436,7 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 
 		/**
 		 * @private
-		 * @returns {ChecklistActionsMenu}
+		 * @return {ChecklistActionsMenu}
 		 */
 		renderMenu()
 		{
@@ -452,6 +449,7 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 				item,
 				parentWidget: this.getParentWidget(),
 				onTabMove: this.#handleOnTabMove,
+				onTextFormat: this.handleOnTextFormat,
 				onToggleImportant: this.handleOnToggleImportant,
 				onMoveToCheckList: this.handleOnShowChecklistsMenu,
 				openUserSelectionManager: this.openUserSelectionManager,
@@ -483,14 +481,17 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 		}
 
 		/**
-		 * @param {Boolean} forceDelete
-		 * @param {CheckListFlatTreeItem} item
+		 * @private
+		 * @param {ChecklistOnBlurParams} params
+		 * @return {Promise<void>}
 		 */
 		#handleOnBlur = ({ item, forceDelete = false }) => {
 			if (!item)
 			{
 				return Promise.resolve();
 			}
+
+			this.syncItemText(item.getId());
 
 			if (forceDelete)
 			{
@@ -511,13 +512,11 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 			}
 
 			this.setSaveFocus(false);
+			this.handleOnSelectionStylesChange([]);
 
 			return Promise.resolve();
 		};
 
-		/**
-		 * @public
-		 */
 		handleOnToggleImportant = () => {
 			const focusedItem = this.getFocusedItem();
 			this.getFocusedItemRef()?.toggleImportant();
@@ -533,6 +532,25 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 			this.getFocusedItemRef()?.addFile();
 		};
 
+		/**
+		 * @param {'bold' | 'italic' | 'underline' | 'strikethrough'} type
+		 * @param {CheckListFlatTreeItem | null} [item]
+		 */
+		handleOnTextFormat = (type, item = this.getFocusedItem()) => {
+			this.setSaveFocus(true);
+
+			const itemId = item?.getId?.() ?? this.focusedItemId;
+			const itemRef = this.getItemRef(itemId);
+
+			itemRef?.applyTextFormat(type);
+		};
+
+		/** @param {string[]} styles */
+		handleOnSelectionStylesChange = (styles) => {
+			this.menuRef?.highlightTextStyles(styles);
+		};
+
+		/** @param {boolean} [shouldSave] */
 		handleOnChange = (shouldSave = true) => {
 			const { onChange } = this.props;
 
@@ -544,6 +562,7 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 			}
 		};
 
+		/** @param {boolean} shouldSave */
 		handleOnSave(shouldSave)
 		{
 			const { onSave } = this.props;
@@ -577,6 +596,10 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 			return this.insertNewItem(rootItem);
 		};
 
+		/**
+		 * @param {CheckListFlatTreeItem} [submitItem]
+		 * @return {Promise<void>}
+		 */
 		handleOnSubmit = async (submitItem) => {
 			const focusedItem = this.getFocusedItem();
 			const item = submitItem || focusedItem;
@@ -594,6 +617,11 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 			return this.insertNewItem(item);
 		};
 
+		/**
+		 * @private
+		 * @param {CheckListFlatTreeItem} item
+		 * @return {number}
+		 */
 		#getInsertPosition(item)
 		{
 			this.checklist.setConditions(this.state);
@@ -603,6 +631,10 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 			return position;
 		}
 
+		/**
+		 * @param {CheckListFlatTreeItem} item
+		 * @return {Promise<void>}
+		 */
 		async insertNewItem(item)
 		{
 			if (!this.checklist.canAdd())
@@ -640,6 +672,7 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 
 		/**
 		 * @param {number} insertPosition
+		 * @return {boolean}
 		 */
 		preInsertValidationFocus(insertPosition)
 		{
@@ -656,6 +689,10 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 			return false;
 		}
 
+		/**
+		 * @param {CheckListFlatTreeItem} item
+		 * @return {Promise<void>}
+		 */
 		async afterInsert(item)
 		{
 			this.updateChecklistCounter();
@@ -663,7 +700,8 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 		}
 
 		/**
-		 * @param {CheckListFlatTreeItem} item
+		 * @param {ChecklistRemoveItemParams} params
+		 * @return {Promise<void>}
 		 */
 		handleOnRemoveItem = async ({ item }) => {
 			const removeKeys = this.checklist.removeItem(item);
@@ -697,6 +735,7 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 		};
 
 		/**
+		 * @private
 		 * @param {CheckListFlatTreeItem} item
 		 * @param {'left' | 'right'} direction
 		 */
@@ -715,6 +754,10 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 			this.updateRows({ itemIds: moveIds });
 		};
 
+		/**
+		 * @param {Array<number | string>} moveIds
+		 * @param {Object} targetRef
+		 */
 		handleOnShowChecklistsMenu = (moveIds, targetRef) => {
 			const { checklists } = this.props;
 
@@ -729,6 +772,10 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 			});
 		};
 
+		/**
+		 * @private
+		 * @param {ChecklistChangeMembersParams} params
+		 */
 		#handleOnChangeMembers = ({ members, item, memberType }) => {
 			if (members.length > 0)
 			{
@@ -757,6 +804,11 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 			}
 		};
 
+		/**
+		 * @private
+		 * @param {ChecklistChangeAttachmentsParams} params
+		 * @return {Promise<void>}
+		 */
 		#handleOnChangeAttachments = ({ item, shouldRender }) => {
 			this.updateActionMenu(item);
 			this.handleOnChange();
@@ -764,9 +816,7 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 			return this.updateRows({ itemIds: [item.getId()], animation: 'automatic', shouldRender });
 		};
 
-		/**
-		 * @param {CheckListFlatTreeItem} item
-		 */
+		/** @param {CheckListFlatTreeItem} item */
 		removeElementFilterIsEnabled(item)
 		{
 			if (this.timerId)
@@ -797,6 +847,10 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 			});
 		}
 
+		/**
+		 * @param {ChecklistMoveItemParams} params
+		 * @return {Promise<void>}
+		 */
 		async moveItemToChecklist({ checklistId, moveIds })
 		{
 			const { onMoveToCheckList } = this.props;
@@ -813,8 +867,8 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 		}
 
 		/**
-		 * @param {number|string} itemId
-		 * @param {string} memberType
+		 * @param {number | string} itemId
+		 * @param {ChecklistMemberType} memberType
 		 */
 		openUserSelectionManager = (itemId, memberType) => {
 			const item = this.checklist.getItemById(itemId);
@@ -855,6 +909,7 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 			userFieldInstance.openSelector();
 		};
 
+		/** @param {ChecklistMemberType} memberType */
 		openTariffRestrictionWidget = (memberType) => {
 			this.setSaveFocus(true);
 
@@ -864,6 +919,11 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 			});
 		};
 
+		/**
+		 * @private
+		 * @param {ChecklistChangeUsersParams} params
+		 * @return {(event: Object, members?: Object[]) => void}
+		 */
 		#handleOnChangeUsers = ({ item, memberType }) => (_, members = []) => {
 			this.#handleOnChangeMembers({ item, members, memberType });
 			this.updateActionMenu(item);
@@ -875,6 +935,10 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 			this.handleOnChange();
 		};
 
+		/**
+		 * @param {ChecklistMemberType} entityMemberType
+		 * @return {(config?: Object) => Object}
+		 */
 		getUserFieldConfig(entityMemberType)
 		{
 			const fieldConfigMap = {
@@ -885,9 +949,7 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 			return fieldConfigMap[entityMemberType];
 		}
 
-		/**
-		 * @returns {MainChecklistItem}
-		 */
+		/** @return {MainChecklistItem | undefined} */
 		getFocusedItemRef()
 		{
 			if (this.focusedItemId)
@@ -899,7 +961,8 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 		}
 
 		/**
-		 * @returns {MainChecklistItem}
+		 * @param {number | string} id
+		 * @return {MainChecklistItem | undefined}
 		 */
 		getItemRef(id)
 		{
@@ -907,7 +970,8 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 		}
 
 		/**
-		 * @param {CheckListFlatTreeItem} focusedItem
+		 * @param {CheckListFlatTreeItem | null} focusedItem
+		 * @return {Promise<void>}
 		 */
 		handleShowMenu = async (focusedItem) => {
 			if (!this.menuRef || !focusedItem)
@@ -928,6 +992,7 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 			}
 		};
 
+		/** @return {void} */
 		handleHideMenu = () => {
 			if (!this.menuRef)
 			{
@@ -938,18 +1003,23 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 			this.menuRef.hide();
 		};
 
+		/** @param {CheckListFlatTreeItem} item */
 		updateActionMenu = (item) => {
 			this.menuRef?.setItem(item);
 		};
 
 		/**
-		 * @private
-		 * @param {number | null} focusedItemId
-		 * @return {string[]}
+		 * @param {number | string | null} focusedItemId
+		 * @return {Array<number | string | null>}
 		 */
 		setFocused(focusedItemId)
 		{
 			const blurItemId = this.focusedItemId;
+			if (blurItemId && blurItemId !== focusedItemId)
+			{
+				this.syncItemText(blurItemId);
+			}
+
 			this.focusedItemId = focusedItemId;
 			this.checklist.getItemById(focusedItemId)?.focus();
 			this.checklist.getItemById(blurItemId)?.blur();
@@ -957,6 +1027,23 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 			return [blurItemId, focusedItemId];
 		}
 
+		/**
+		 * @param {number | string | null} itemId
+		 * @param {boolean} [shouldSave]
+		 * @param {boolean} [force]
+		 * @return {boolean}
+		 */
+		syncItemText(itemId, shouldSave = true, force = false)
+		{
+			if (!itemId)
+			{
+				return false;
+			}
+
+			return Boolean(this.getItemRef(itemId)?.syncTitleText?.(shouldSave, force));
+		}
+
+		/** @return {void} */
 		handleOnFocusItem = () => {
 			const focusedItem = this.getFocusedItemRef();
 			if (focusedItem)
@@ -965,15 +1052,28 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 			}
 		};
 
+		/** @return {void} */
 		handleOnBlurFocusedItem = () => {
 			const focusedItem = this.getFocusedItemRef();
 
 			if (focusedItem)
 			{
+				this.syncFocusedItemText();
 				focusedItem.textInputBlur();
 			}
 		};
 
+		/**
+		 * @param {boolean} [shouldSave]
+		 * @param {boolean} [force]
+		 * @return {boolean}
+		 */
+		syncFocusedItemText(shouldSave = true, force = false)
+		{
+			return this.syncItemText(this.focusedItemId, shouldSave, force);
+		}
+
+		/** @return {void} */
 		showToastNoRights = () => {
 			toastNoRights({
 				layoutWidget: this.getParentWidget(),
@@ -982,33 +1082,39 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 
 		/**
 		 * @private
-		 * @param values
-		 * @return {*|*[]}
+		 * @param {Array<number | string> | number | string} values
+		 * @return {Array<number | string>}
 		 */
 		prepareArray(values)
 		{
 			return unique(Array.isArray(values) ? values : [values]).filter(Boolean);
 		}
 
+		/** @return {CheckListFlatTreeItem | null} */
 		getFocusedItem()
 		{
 			return this.checklist.getItemById(this.focusedItemId);
 		}
 
-		/**
-		 * @public
-		 * @param {Boolean} save
-		 */
+		/** @param {Boolean} save */
 		setSaveFocus(save)
 		{
 			this.saveFocus = save;
 		}
 
+		/**
+		 * @param {string} itemKey
+		 * @return {boolean}
+		 */
 		shouldButtonAdd(itemKey)
 		{
 			return itemKey === buttonAddItemType.key && this.checklist.canAdd();
 		}
 
+		/**
+		 * @private
+		 * @return {Object}
+		 */
 		#nativeListView()
 		{
 			return IS_IOS ? ListView : OptimizedListView;

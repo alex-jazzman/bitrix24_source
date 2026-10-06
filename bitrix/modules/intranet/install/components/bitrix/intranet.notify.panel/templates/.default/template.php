@@ -5,6 +5,10 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+/**
+ * @var array $arResult
+ */
+
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
 use Bitrix\Main\Web;
@@ -35,6 +39,39 @@ if (isset($arResult['annualSummary'])):
 			annualSummary.subscribe('onClose', onDone);
 			annualSummary.subscribe('onShow', () => BX.userOptions.save('intranet', 'annual_summary_25_last_show', null, Math.floor(Date.now() / 1000)));
 			annualSummary.show();
+		});
+	</script>
+<?php endif; ?>
+<?php if ($arResult['FEATURE']['PROMOTER'] !== '' || $arResult['FEATURE']['ID'] !== ''): ?>
+	<script>
+		BX.ready(() => {
+			const paramsToRemove = [
+				'feature_promoter',
+				'feature_promoter_by_id',
+			];
+			if (window.history && window.history.replaceState)
+			{
+				const url = new URL(window.location.href);
+				paramsToRemove.forEach(param => url.searchParams.delete(param));
+				window.history.replaceState(null, '', url.toString());
+			}
+
+			let promoter;
+
+			BX.loadExt(['ui.info-helper', 'ui.banner-dispatcher']).then(function() {
+				<?php if ($arResult['FEATURE']['ID'] !== ''): ?>
+					promoter = BX.UI.FeaturePromotersRegistry.getPromoter({featureId: '<?= \CUtil::JSEscape($arResult['FEATURE']['ID']) ?>'});
+				<?php else: ?>
+					promoter = BX.UI.FeaturePromotersRegistry.getPromoter({code: '<?= \CUtil::JSEscape($arResult['FEATURE']['PROMOTER']) ?>'});
+				<?php endif; ?>
+				BX.UI.BannerDispatcher.normal.toQueue((onDone) => {
+					BX.Event.EventEmitter.subscribe('SidePanel.Slider:onCloseComplete', () => {
+						onDone();
+					});
+
+					promoter.show();
+				});
+			});
 		});
 	</script>
 <?php endif; ?>

@@ -16,9 +16,10 @@ import {
 	ConnectionType,
 } from '../call_api.js';
 import { CallLegacy } from '../call-api-legacy.js';
-import { CallStreamManager } from '../media-stream-manager';
+import { CallStreamManager, STREAM_MANAGER_SUPERSEDED } from '../media-stream-manager';
 import { CallCommonRecordState, CallCommonRecordType } from '../call_common_record';
 import { CallSettingsManager } from 'call.lib.settings-manager';
+import { ReconnectTarget } from 'call.lib.reconnect-history';
 
 const ajaxActions = {
 	decline: 'call.Call.decline',
@@ -93,6 +94,22 @@ export class ServerPlainCall extends AbstractCall
 
 	#screenShared: boolean;
 
+	// Set while this engine keeps the camera button held for its own publishing. The button block is a
+	// plain flag without a hold counter, so a release must be addressed: an unconditional one would also
+	// clear blocks set for other reasons (legacy mobile peer, no access to the camera).
+	#cameraPublishingHold: boolean;
+
+	// Number of camera captures started by replaceLocalMediaStream() that have not settled yet. The captures
+	// own the hold and give it up only when the last of them is over. They are not serialized - setCameraId()
+	// on a device list change and onLocalVideoTrackUnmute() start their own - so counting them keeps the one
+	// that finishes first from unblocking the button while another capture is still running.
+	#cameraCaptureCount: number;
+
+	// Per tag: the shared capture the published audio track was cloned from. A capture handing the same
+	// source back leaves the publication alone, so a request that changed nothing about audio costs neither
+	// a new track nor a swap in the sender.
+	#publishedAudioSource: { [tag: string]: MediaStreamTrack };
+
 	#onUnloadHandler: Function;
 	#onOnlineHandler: Function;
 
@@ -140,6 +157,7 @@ export class ServerPlainCall extends AbstractCall
 		this.CallApi = null;
 		this.#connectionType = ConnectionType.PeerToPeer;
 		this.#keepStreams = false;
+		this.#publishedAudioSource = {};
 
 		this._reconnectionEventCount = 0;
 		this.waitForAnswerTimeout = null;
@@ -156,6 +174,8 @@ export class ServerPlainCall extends AbstractCall
 		this._isCopilotFeaturesEnabled = CallSettingsManager.plainCallFollowUpEnabled;
 
 		this.#screenShared = false;
+		this.#cameraPublishingHold = false;
+		this.#cameraCaptureCount = 0;
 
 		Event.bind(window, 'unload', this.#onUnloadHandler);
 		Event.bind(window, 'online', this.#onOnlineHandler);
@@ -480,6 +500,10 @@ export class ServerPlainCall extends AbstractCall
 			{
 				peer._destroyPeerConnection();
 			}
+
+			// The negotiation that would have released a pending camera hold dies with these connections:
+			// an answer to an already sent offer is dropped by the connection id guard.
+			this.#releaseCameraPublishingHold();
 		}
 
 		if (this.CallApi)
@@ -487,6 +511,16 @@ export class ServerPlainCall extends AbstractCall
 			this.CallApi.switchConnectionType(this.#connectionType);
 		}
 		this.#updateOutgoingTracks();
+
+		if (useMediaServer && this.CallApi && !Hardware.isMicrophoneMuted && this.CallApi.isAudioPublished())
+		{
+			// On P2P->MediaServer switch the microphone was already published to CallApi during the P2P phase,
+			// so isAudioPublished() stays true and #updateMediaServerTracks skips it. Republish it proactively;
+			// otherwise it recovers only reactively after the peer's ~7.5s subscription timeout, delaying audio.
+			// Gate on isAudioPublished(): if audio is not yet published, #updateMediaServerTracks->enableAudio()
+			// establishes it, and a parallel republish would race that publication over the same source/cid.
+			this.CallApi.republishTrack(MediaStreamsKinds.Microphone);
+		}
 
 		if (!useMediaServer)
 		{
@@ -629,8 +663,11 @@ export class ServerPlainCall extends AbstractCall
 
 				this.bindCallEvents();
 
-				this.CallApi.on('Connected', () =>
-				{
+				this.CallApi.on('Connected', () => {
+					if (this.isReconnecting && !this.#isAnyOneReconnecting())
+					{
+						this.isReconnecting = false;
+					}
 					this.CallApi.on('Failed', this.#onCallDisconnected);
 
 					this.state = CallState.Connected;
@@ -811,6 +848,14 @@ export class ServerPlainCall extends AbstractCall
 		}
 		catch (error)
 		{
+			if (error?.name === STREAM_MANAGER_SUPERSEDED)
+			{
+				// Superseded by a newer device selection - not a media failure. Don't fall back through the
+				// remaining constraints; a fallback capture would register after the newest request and
+				// unseat the selected device. Rethrow: callers already handle a getUserMedia rejection.
+				throw error;
+			}
+
 			this.log('getUserMedia error: ', error);
 			this.log('Current constraints', currentConstraints);
 
@@ -855,12 +900,12 @@ export class ServerPlainCall extends AbstractCall
 
 				this.getUserMedia(constraintsArray).then((result) => {
 					this.log('Local media stream received');
-					const stream = result.stream.clone();
+					const stream = new MediaStream(result.stream.getVideoTracks().map((track) => track.clone()));
 					this.localStreams[tag] = stream;
 
-					stream.getAudioTracks().forEach((track) => {
-						track.addEventListener('ended', () => this.onLocalAudioTrackEnded(), { once: true });
-					});
+					// Audio goes through the single publication path: the call publishes a clone of its own, so a
+					// local teardown never reaches the shared capture.
+					result.stream.getAudioTracks().forEach((track) => this.#publishAudioTrack(tag, track));
 
 					const track = CallStreamManager.getLocalStream(MediaStreamsKinds.Camera);
 					const kind = Util.MediaKind[MediaStreamsKinds.Camera];
@@ -927,6 +972,11 @@ export class ServerPlainCall extends AbstractCall
 					});
 
 					resolve(mediaRenderer.stream);
+				}).finally(() => {
+					if (!this.isAnyoneParticipating())
+					{
+						this.setPublishingState(MediaStreamsKinds.Camera, false);
+					}
 				});
 
 				return;
@@ -965,21 +1015,20 @@ export class ServerPlainCall extends AbstractCall
 				{
 					videoResult.stream.getVideoTracks().forEach((track) => stream.addTrack(track.clone()));
 				}
-				if (audioResult.stream)
-				{
-					audioResult.stream.getAudioTracks().forEach((track) => stream.addTrack(track.clone()));
-				}
 
 				this.localStreams[tag] = stream;
+
+				// Audio goes through the single publication path: the call publishes a clone of its own, so a
+				// local teardown never reaches the shared capture.
+				if (audioResult.stream)
+				{
+					audioResult.stream.getAudioTracks().forEach((track) => this.#publishAudioTrack(tag, track));
+				}
 
 				stream.getVideoTracks().forEach((track) => {
 					track.addEventListener('ended', () => this.onLocalVideoTrackEnded(), { once: true });
 					track.addEventListener('mute', () => this.onLocalVideoTrackMute());
 					track.addEventListener('unmute', () => this.onLocalVideoTrackUnmute());
-				});
-
-				stream.getAudioTracks().forEach((track) => {
-					track.addEventListener('ended', () => this.onLocalAudioTrackEnded(), { once: true });
 				});
 
 				const track = CallStreamManager.getLocalStream(MediaStreamsKinds.Camera);
@@ -1044,26 +1093,34 @@ export class ServerPlainCall extends AbstractCall
 				}
 
 				reject(error);
+			}).finally(() => {
+				if (!this.isAnyoneParticipating())
+				{
+					this.setPublishingState(MediaStreamsKinds.Camera, false);
+				}
 			});
 		});
 	}
 
-	getLocalAudioStream(tag, fallbackToAudio)
+	getLocalAudioStream(tag, forceCapture = false)
 	{
 		if (!Type.isStringFilled(tag))
 		{
 			tag = 'main';
 		}
 
-		const currentAudioTrack = this.localStreams[tag]?.getAudioTracks()?.[0];
-		if (currentAudioTrack?.readyState === 'live')
+		if (!forceCapture)
 		{
-			return Promise.resolve(this.localStreams[tag]);
-		}
+			const currentAudioTrack = this.localStreams[tag]?.getAudioTracks()?.[0];
+			if (currentAudioTrack?.readyState === 'live')
+			{
+				return Promise.resolve(this.localStreams[tag]);
+			}
 
-		if (this.localStreams[tag] && this.localStreams[tag].getAudioTracks().length > 0)
-		{
-			Util.stopMediaStreamAudioTracks(this.localStreams[tag]);
+			if (this.localStreams[tag] && this.localStreams[tag].getAudioTracks().length > 0)
+			{
+				Util.stopMediaStreamAudioTracks(this.localStreams[tag]);
+			}
 		}
 
 		this.log("Requesting access to audio devices");
@@ -1080,22 +1137,14 @@ export class ServerPlainCall extends AbstractCall
 					this.localStreams[tag] = new MediaStream();
 				}
 
-				this.localStreams[tag].addTrack(stream.getAudioTracks()[0]);
-				stream.getAudioTracks().forEach((track) =>
-				{
-					track.addEventListener("ended", () => this.onLocalAudioTrackEnded())
-				});
+				const publishedTrack = this.#publishAudioTrack(tag, stream.getAudioTracks()[0]);
 
 				if (tag === 'main')
 				{
 					this.attachVoiceDetection();
 					if (this.muted)
 					{
-						const audioTracks = stream.getAudioTracks();
-						if (audioTracks[0])
-						{
-							audioTracks[0].enabled = false;
-						}
+						publishedTrack.enabled = false;
 					}
 				}
 
@@ -1122,6 +1171,45 @@ export class ServerPlainCall extends AbstractCall
 				reject(error);
 			});
 		});
+	}
+
+	/**
+	 * Puts the capture into localStreams and returns the track the call publishes from it. The published
+	 * track belongs to the call, not to the capture: it is a clone, so tearing a local stream down never
+	 * reaches the shared track StreamManager and the noise suppression graph hand out.
+	 *
+	 * A capture that brings the same shared source back changes nothing - the clone already published stays.
+	 * A device change does rebuild the audio pipeline, so its capture is a different source: a new track is
+	 * published and the peer hands it to the sender it already has.
+	 */
+	#publishAudioTrack(tag: string, capturedTrack: MediaStreamTrack): MediaStreamTrack
+	{
+		const stream = this.localStreams[tag];
+		const publishedTrack = stream.getAudioTracks()[0];
+
+		if (publishedTrack?.readyState === 'live' && this.#publishesCapture(tag, publishedTrack, capturedTrack))
+		{
+			return publishedTrack;
+		}
+
+		// Only now, with the new capture in hand, is the previous track released: a stopped track cannot be
+		// revived, so tearing it down before the capture would leave the call mute on any failure.
+		stream.getAudioTracks().forEach((track) => {
+			track.stop();
+			stream.removeTrack(track);
+		});
+
+		const trackToPublish = capturedTrack.clone();
+		stream.addTrack(trackToPublish);
+		this.#publishedAudioSource[tag] = capturedTrack;
+		trackToPublish.addEventListener('ended', () => this.onLocalAudioTrackEnded(), { once: true });
+
+		return trackToPublish;
+	}
+
+	#publishesCapture(tag: string, publishedTrack: MediaStreamTrack, capturedTrack: MediaStreamTrack): boolean
+	{
+		return publishedTrack === capturedTrack || this.#publishedAudioSource[tag] === capturedTrack;
 	}
 
 	setRecorderState(state)
@@ -1170,6 +1258,7 @@ export class ServerPlainCall extends AbstractCall
 	{
 		if (deviceType === MediaStreamsKinds.Camera)
 		{
+			this.#cameraPublishingHold = publishing;
 			this.runCallback(CallEvent.onCameraPublishing, {
 				publishing
 			});
@@ -1179,6 +1268,14 @@ export class ServerPlainCall extends AbstractCall
 			this.runCallback(CallEvent.onMicrophonePublishing, {
 				publishing
 			});
+		}
+	}
+
+	#releaseCameraPublishingHold(): void
+	{
+		if (this.#cameraPublishingHold && this.#cameraCaptureCount === 0)
+		{
+			this.setPublishingState(MediaStreamsKinds.Camera, false);
 		}
 	}
 
@@ -1684,6 +1781,7 @@ export class ServerPlainCall extends AbstractCall
 	replaceLocalMediaStream(tag: string = "main")
 	{
 		this.setPublishingState(MediaStreamsKinds.Camera, true);
+		this.#cameraCaptureCount++;
 		if (this.localStreams[tag])
 		{
 			Util.stopMediaStream(this.localStreams[tag]);
@@ -1713,20 +1811,27 @@ export class ServerPlainCall extends AbstractCall
 			}).catch((error) => {
 				console.error('Could not get access to hardware; don\'t really know what to do. error:', error);
 				reject(error);
+			}).finally(() => {
+				this.#cameraCaptureCount--;
+
+				// Publishing through the media server sends no offer, so no answer ever arrives to release
+				// the hold taken for this replacement - it would stay on the camera button until the call ends.
+				if (this.useMediaServer)
+				{
+					this.#releaseCameraPublishingHold();
+				}
 			});
 		});
 	}
 
 	replaceLocalAudioStream(tag: string = "main")
 	{
-		if (this.localStreams[tag])
-		{
-			Util.stopMediaStreamAudioTracks(this.localStreams[tag]);
-		}
-
 		return new Promise((resolve, reject) =>
 		{
-			this.getLocalAudioStream(tag).then(() =>
+			// Nothing is torn down up front: a stopped track cannot be revived, so a failed capture would
+			// leave the call without audio for good. getLocalAudioStream drops the previous track once the
+			// new one is in hand - and only when it is a different one.
+			this.getLocalAudioStream(tag, true).then(() =>
 			{
 				if (this.ready)
 				{
@@ -1800,6 +1905,11 @@ export class ServerPlainCall extends AbstractCall
 
 		return false;
 	};
+
+	#isAnyOneReconnecting()
+	{
+		return Object.values(this.peers).some((peer) => peer.isReconnecting);
+	}
 
 	getParticipatingUsers()
 	{
@@ -2226,6 +2336,12 @@ export class ServerPlainCall extends AbstractCall
 			this.signaling.sendMicrophoneState([e.userId], !Hardware.isMicrophoneMuted);
 			this.signaling.sendCameraState(e.userId, Hardware.isCameraOn);
 			this.wasConnected = true;
+
+			// media server publication is not a part of the P2P handshake, so it must not depend on isInitiator()
+			if (this.useMediaServer)
+			{
+				this.peers[e.userId]?.sendMedia();
+			}
 		}
 	};
 
@@ -2335,6 +2451,13 @@ export class ServerPlainCall extends AbstractCall
 		peer.setSignalingConnected(true);
 		peer.setReady(true);
 
+		// A peer of an incoming call is born ready, so in media server mode it is already Connected
+		// and setReady() produces no state transition - #onPeerStateChanged never fires for it.
+		if (this.useMediaServer && peer.calculatedState === UserState.Connected)
+		{
+			peer.sendMedia();
+		}
+
 		if (this.ready && !peer.isInitiator())
 		{
 			this.log('waiting for the other side to send connection offer');
@@ -2385,6 +2508,8 @@ export class ServerPlainCall extends AbstractCall
 			peer.participant = participant;
 			peer.updateCalculatedState();
 		}
+
+		this.#onEndpointVoiceEnd({ userId: participant.userId });
 
 		this.runCallback(CallEvent.onParticipantReconnected, { participant });
 	};
@@ -2708,9 +2833,25 @@ export class ServerPlainCall extends AbstractCall
 		}
 	};
 
-	#onCallReconnecting = (event) => {
+	#onCallReconnecting = (event): void => {
+		this.isReconnecting = true;
 		this._reconnectionEventCount++;
 		const data = Type.isObject(event) ? event : {};
+
+		if (data.userId !== undefined)
+		{
+			// Reconnecting from Provider (Peer)
+			this.reconnectHistory.startEntry(
+				data.reconnectionReason ?? null,
+				ReconnectTarget.Provider,
+				data.userId,
+			);
+		}
+		else
+		{
+			// Reconnecting from SDK
+			this.reconnectHistory.startEntry(data.reconnectionReason ?? null, ReconnectTarget.Sdk);
+		}
 
 		this.runCallback(CallEvent.onReconnecting, {
 			reconnectionEventCount: this._reconnectionEventCount,
@@ -2719,8 +2860,14 @@ export class ServerPlainCall extends AbstractCall
 		});
 	};
 
-	#onCallReconnected = () => {
+	#onCallReconnected = (): void => {
+		if (this.CallApi.isConnected() || !this.#isAnyOneReconnecting())
+		{
+			this.isReconnecting = false;
+		}
 		this._reconnectionEventCount = 0;
+		this.reconnectHistory.updateLastEntry(ReconnectTarget.Sdk, !this.isReconnecting);
+		this.reconnectHistory.updateLastEntry(ReconnectTarget.Provider, !this.isReconnecting);
 		this.runCallback(CallEvent.onReconnected);
 
 		if (this.useMediaServer)
@@ -2824,7 +2971,25 @@ export class ServerPlainCall extends AbstractCall
 
 		this.#connectionType = connectionType;
 
+		// A camera hold taken before the switch can no longer be released by the P2P negotiation it was
+		// waiting for, so drop it here as well.
+		this.#releaseCameraPublishingHold();
+
 		this.#updateOutgoingTracks();
+
+		if (
+			connectionType === ConnectionType.MediaServer
+			&& this.CallApi
+			&& !Hardware.isMicrophoneMuted
+			&& this.CallApi.isAudioPublished()
+		)
+		{
+			// The receiving side transitions to MediaServer here (not via setUseMediaServer), so its microphone
+			// is not proactively republished either; do it so the peer hears it without the ~7.5s reactive delay.
+			// Gate on isAudioPublished(): #updateOutgoingTracks() above runs enableAudio() when audio is not yet
+			// published, so republishing here too would race that fresh publication over the same source/cid.
+			this.CallApi.republishTrack(MediaStreamsKinds.Microphone);
+		}
 
 		if (this.#recorderState === RecorderStatus.ENABLED && !this.useMediaServer)
 		{
@@ -2901,6 +3066,12 @@ export class ServerPlainCall extends AbstractCall
 		clearTimeout(this.iceConnectionStateTimer);
 		clearInterval(this.statsInterval);
 		clearInterval(this.microphoneLevelInterval);
+	}
+
+	testReconnect(): void
+	{
+		const peer: Peer = Object.values(this.peers)[0];
+		peer?.reconnect({ reconnectionReason: 'TEST_RECONNECTION' });
 	}
 
 	destroy(finishCall)
@@ -3085,6 +3256,7 @@ class Peer
 		this.pendingLocalOfferConfig = null;
 		this.signalingConnected = params.signalingConnected === true;
 		this.failureReason = '';
+		this.isReconnecting = false;
 
 		this.userAgent = '';
 		this.isFirefox = false;
@@ -3401,7 +3573,11 @@ class Peer
 
 	#updateMediaServerTracks(): void
 	{
-		if (Hardware.isCameraOn && !this.call.CallApi.isVideoPublished())
+		// Without a media server the room publication is idle: the peer connection carries the media, while
+		// publishing here starts a second capture of the same devices and a publish/unpublish loop on every
+		// update. Only the disable branches stay unconditional - they take the publication down when the call
+		// falls back from the media server to a direct connection.
+		if (Hardware.isCameraOn && this.call.useMediaServer && !this.call.CallApi.isVideoPublished())
 		{
 			void this.call.CallApi.enableVideo({ calledFrom: 'updateOutgoingTracks' });
 		}
@@ -3410,7 +3586,7 @@ class Peer
 			void this.call.CallApi.disableVideo({ calledFrom: 'updateOutgoingTracks' });
 		}
 
-		if (!Hardware.isMicrophoneMuted && !this.call.CallApi.isAudioPublished())
+		if (!Hardware.isMicrophoneMuted && this.call.useMediaServer && !this.call.CallApi.isAudioPublished())
 		{
 			void this.call.CallApi.enableAudio({ calledFrom: 'updateOutgoingTracks' });
 		}
@@ -4045,6 +4221,7 @@ class Peer
 
 		if (this.peerConnection.connectionState === "connected" || this.peerConnection.connectionState === "completed")
 		{
+			this.isReconnecting = false;
 			this.connectionAttempt = 0;
 			this.callbacks.onReconnected();
 			clearTimeout(this.reconnectAfterDisconnectTimeout);
@@ -4701,6 +4878,7 @@ class Peer
 		}
 		clearTimeout(this.reconnectAfterDisconnectTimeout);
 
+		this.isReconnecting = true;
 		this.connectionAttempt++;
 		const maxConnectionAttempt = 3;
 		const connectionAttempt = this.call.CallApi?.isConnected() ? 0 : this.connectionAttempt;
@@ -4716,7 +4894,10 @@ class Peer
 			return;
 		}
 
-		this.callbacks.onReconnecting(event);
+		this.callbacks.onReconnecting({
+			...event,
+			userId: this.userId,
+		});
 
 		this.log(`Trying to restore ICE connection. Attempt ${this.connectionAttempt}`);
 		if (this.isInitiator())

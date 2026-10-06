@@ -33,7 +33,7 @@ import SaveSplitButton from './split-button/presets/save-split-button';
 import SendSplitButton from './split-button/presets/send-split-button';
 
 import type { BaseButtonOptions } from './base-button-options';
-import type { ButtonOptions } from './button/button-options';
+import type { ButtonOptions, SystemMenuOptions } from './button/button-options';
 import type { SplitButtonOptions } from './split-button/split-button-options';
 import type { SplitSubButtonOptions } from './split-button/split-sub-button-options';
 
@@ -49,6 +49,7 @@ import 'ui.icon-set.main';
 export type {
 	BaseButtonOptions,
 	ButtonOptions,
+	SystemMenuOptions,
 	SplitButtonOptions,
 	SplitSubButtonOptions,
 	ButtonCounterOptions,

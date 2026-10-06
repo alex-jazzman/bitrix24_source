@@ -9,7 +9,7 @@ $MESS["MAIL_CLIENT_ELEMENT_DENIED"] = "Access denied";
 $MESS["MAIL_CLIENT_ELEMENT_NOT_FOUND"] = "Item was not found.";
 $MESS["MAIL_CLIENT_FORM_ERROR"] = "Error processing form";
 $MESS["MAIL_CLIENT_HOME_TITLE"] = "Mail";
-$MESS["MAIL_CLIENT_MAILBOX_INDEX_BAR"] = "Indexing";
+$MESS["MAIL_CLIENT_HOME_TITLE_MSGVER_1"] = "Webmail";
 $MESS["MAIL_CLIENT_MAILBOX_SYNC_BAR"] = "Synchronization";
 $MESS["MAIL_CLIENT_MAILBOX_SYNC_BAR_INTERRUPTED"] = "Cannot perform synchronization.";
 $MESS["MAIL_CLIENT_SAVE_ERROR"] = "Error saving data";
@@ -21,6 +21,8 @@ $MESS["MAIL_FOLDER_SORT_BTN_HINT"] = "Folder sort order";
 $MESS["MAIL_FOLDER_SORT_DEFAULT"] = "Default";
 $MESS["MAIL_FOLDER_SORT_GUIDE_DESCRIPTION"] = "You can sort the folders alphabetically, or use the mail service sorting.";
 $MESS["MAIL_FOLDER_SORT_GUIDE_TITLE"] = "Select folder sort order";
+$MESS["MAIL_FOLDER_SORT_MANUAL"] = "Custom";
+$MESS["MAIL_FOLDER_SORT_MODE_SAVE_ERROR"] = "Could not save folder sorting mode. Try again.";
 $MESS["MAIL_MAILBOX_LICENSE_CONNECTED_MAILBOXES_LIMIT_BODY"] = "The number of mailboxes per employee depends on the active Bitrix24 plan.
 <br><br>
 Your current plan allows #LIMIT# mailboxes per employee.";
@@ -69,6 +71,7 @@ $MESS["MAIL_MESSAGE_ICAL_NOTIFY_ERROR"] = "Error processing the request.";
 $MESS["MAIL_MESSAGE_ICAL_NOTIFY_REJECT"] = "Invitation declined";
 $MESS["MAIL_MESSAGE_ICAL_REJECT"] = "Decline";
 $MESS["MAIL_MESSAGE_LIST_ADDRESSBOOK_LINK"] = "Contacts";
+$MESS["MAIL_MESSAGE_LIST_ADDRESSBOOK_LINK_MSGVER_1"] = "My email contacts";
 $MESS["MAIL_MESSAGE_LIST_ATTACH_ICON_HINT"] = "Contains attachments";
 $MESS["MAIL_MESSAGE_LIST_BLACKLIST_LINK"] = "Blacklist";
 $MESS["MAIL_MESSAGE_LIST_BTN_DELETE"] = "Delete";

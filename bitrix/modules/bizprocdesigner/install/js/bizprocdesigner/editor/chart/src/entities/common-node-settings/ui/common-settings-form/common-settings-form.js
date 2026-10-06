@@ -6,18 +6,35 @@ import { EventEmitter, type BaseEvent } from 'main.core.events';
 import { MessageBox } from 'ui.dialogs.messagebox';
 import { BIcon, Outline } from 'ui.icon-set.api.vue';
 
+import { FeatureCode } from 'bizprocdesigner.feature';
+
 import { editorAPI } from '../../../../shared/api';
-import { handleResponseError } from '../../../../shared/utils';
-import { usePropertyDialog } from '../../../../shared/composables';
+import {
+	documentFieldsCache,
+	handleResponseError,
+	hasVisibleFieldLabel,
+	isRequiredField,
+} from '../../../../shared/utils';
+import { usePropertyDialog, useFeature } from '../../../../shared/composables';
 import { diagramStore } from '../../../../entities/blocks';
+import { isReadableExpressionsAvailable } from '../../../../entities/node-settings/utils/readable-expressions';
+import { DataViewsSection } from '../../../../features/node-settings/ui/data-views-section/data-views-section';
+import {
+	closeExpressionBuilder,
+	mountExpressionBuilders,
+} from '../../../../features/node-settings/utils/expression-builder-mount';
+import { unmountFormVeneers } from '../../../../features/node-settings/utils/readable-expressions-veneer';
+import { useCommonNodeSettingsStore } from '../../stores/common-node-settings';
 import { ValueSelector } from './value-selector';
 
 import { type Block, type SettingsControls } from '../../../../shared/types';
+import { TITLE_FIELD_NAME, isDataViewsAllowedBlockType } from '../../../../shared/constants';
 
 import './style.css';
 
 const SCROLL_ZONE = 50;
 const SCROLL_SPEED = 10;
+const MULTI_SELECT_SCROLLBAR_WIDTH_PROPERTY = '--bizprocdesigner-multi-select-scrollbar-width';
 const RULE_FORM_ID = 'form-settings-rule';
 const SETTINGS_FIELDS_IDS = new Set([
 	'row_title',
@@ -29,6 +46,7 @@ export const CommonNodeSettingsForm = {
 	name: 'CommonNodeSettingsForm',
 	components: {
 		BIcon,
+		DataViewsSection,
 	},
 	props:
 	{
@@ -64,13 +82,21 @@ export const CommonNodeSettingsForm = {
 		},
 	},
 	emits: ['showPreview', 'close'],
-	setup(): { iconSet: typeof Outline, store: diagramStore }
+	setup(): {
+		iconSet: typeof Outline,
+		store: diagramStore,
+		settingsStore: useCommonNodeSettingsStore,
+		isFeatureAvailable: (code: string) => boolean,
+		}
 	{
 		const store: diagramStore = diagramStore();
+		const { isFeatureAvailable } = useFeature();
 
 		return {
 			iconSet: Outline,
 			store,
+			settingsStore: useCommonNodeSettingsStore(),
+			isFeatureAvailable,
 		};
 	},
 	data(): {
@@ -84,18 +110,19 @@ export const CommonNodeSettingsForm = {
 		settingsFormTitle: string,
 		nodeControls: Array<any> | null,
 		inputListeners: [],
-		shouldShowWithTransition: boolean,
 		isDragging: boolean,
 		dragMouseY: number,
 		autoScrollFrameId: number,
 		scrollBoundaries: { top: number, bottom: number } | null,
 		rendererInstance: ?Object,
 		lastRenderRequestId: number,
+		settingsControlsRequest: ?XMLHttpRequest,
 		dynamicComponents: Object,
 		customFieldsData: Object,
 		childVueApps: Array<any>,
 		collectionRenderFinishedHandler: ?Function,
 		pendingCollectionRenderResolve: ?Function,
+		activeMultiSelectScrollbarSelectionCleanup: ?Function,
 		}
 	{
 		return {
@@ -104,30 +131,44 @@ export const CommonNodeSettingsForm = {
 			hasErrors: false,
 			isSubmitting: false,
 			hasSettings: false,
+			currentBlock: this.block,
 			useDocumentContext: false,
 			settingsForm: null,
 			settingsFormTitle: '',
 			nodeControls: null,
 			inputListeners: [],
-			shouldShowWithTransition: false,
 			isDragging: false,
 			dragMouseY: 0,
 			autoScrollFrameId: null,
 			scrollBoundaries: null,
 			rendererInstance: null,
 			lastRenderRequestId: 0,
+			settingsControlsRequest: null,
 			dynamicComponents: {},
 			customFieldsData: {},
 			childVueApps: [],
 			collectionRenderFinishedHandler: null,
 			pendingCollectionRenderResolve: null,
+			activeMultiSelectScrollbarSelectionCleanup: null,
 		};
 	},
 	computed:
 	{
+		// Only an agent-driven show asks for the fade; a user click must stay instant. The flag has
+		// to reach Transition as a strict boolean: `css` defaults to true, so an absent one would
+		// animate what nobody asked to animate.
+		shouldShowWithTransition(): boolean
+		{
+			return this.settingsStore.shouldShowWithTransition === true;
+		},
 		isRuleHidden(): boolean
 		{
 			return this.selectedTabId === 'basic';
+		},
+		isDataViewsSectionShown(): boolean
+		{
+			return isDataViewsAllowedBlockType(this.block?.type)
+				&& this.isFeatureAvailable(FeatureCode.dataTables);
 		},
 	},
 	watch: {
@@ -177,7 +218,7 @@ export const CommonNodeSettingsForm = {
 		this.currentBlock = this.block;
 		await this.$nextTick();
 		await this.renderControls();
-		Event.bind(document, 'mousedown', this.multiSelectMouseHandler);
+		Event.bind(document, 'mousedown', this.handleMultiSelectScrollbarMouseDown, true);
 		Event.bind(this.$refs.scrollContainer, 'scroll', this.handleScroll);
 		EventEmitter.subscribe('BX.Bizproc:setuptemplateactivity:preview', this.showPreview);
 		EventEmitter.subscribe('Bizproc.SetupTemplate:Draggable:start', this.onDragStart);
@@ -192,10 +233,11 @@ export const CommonNodeSettingsForm = {
 	unmounted(): void
 	{
 		this.stopAutoScroll();
+		this.cleanupMultiSelectScrollbarSelectionGuard();
 
 		this.cleanupFormResources();
 
-		Event.unbind(document, 'mousedown', this.multiSelectMouseHandler);
+		Event.unbind(document, 'mousedown', this.handleMultiSelectScrollbarMouseDown, true);
 		Event.unbind(this.$refs.scrollContainer, 'scroll', this.handleScroll);
 
 		EventEmitter.unsubscribe('BX.Bizproc:setuptemplateactivity:preview', this.showPreview);
@@ -208,44 +250,145 @@ export const CommonNodeSettingsForm = {
 		this.destroyRendererInstance();
 	},
 	methods: {
+		// The fade belongs to the show that asked for it, so the flag goes down as soon as it has
+		// played: a repeated render of the same node raises and drops isLoading again, and that is
+		// not a show anybody asked to animate.
+		onContentShown(): void
+		{
+			this.settingsStore.finishShowTransition();
+		},
+		cleanupMultiSelectScrollbarSelectionGuard(): void
+		{
+			this.activeMultiSelectScrollbarSelectionCleanup?.();
+		},
 		isRenderCancelled(requestId: number): boolean
 		{
 			return this.lastRenderRequestId !== requestId || !this.$refs.contentContainer;
+		},
+		cancelSettingsControlsRequest(): void
+		{
+			// The id is bumped before the abort, so the rejection that follows is
+			// dropped by isRenderCancelled instead of being reported as a failure.
+			this.lastRenderRequestId += 1;
+
+			if (this.settingsControlsRequest)
+			{
+				this.settingsControlsRequest.abort();
+				this.settingsControlsRequest = null;
+			}
 		},
 		loc(phraseCode: string, replacements: { [p: string]: string } = {}): string
 		{
 			return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
 		},
-		multiSelectMouseHandler(event: MouseEvent): void
+		handleMultiSelectScrollbarMouseDown(event: MouseEvent): void
 		{
-			if (!event.isTrusted || event.button !== 0)
+			if (!event.isTrusted || event.button !== 0 || !(event.target instanceof HTMLElement))
 			{
 				return;
 			}
 
-			const opt = event.target;
-			const select = opt.parentElement;
-			if (opt.tagName === 'OPTION' && select?.multiple)
+			const select = event.target instanceof HTMLSelectElement
+				? event.target
+				: event.target.closest('select[multiple]')
+			;
+			if (!(select instanceof HTMLSelectElement) || !this.$el.contains(select))
 			{
-				event.preventDefault();
-				const scroll = select.scrollTop;
-				opt.selected = !opt.selected;
-				setTimeout(() => {
-					select.scrollTop = scroll;
-				}, 0);
+				return;
 			}
+			this.cleanupMultiSelectScrollbarSelectionGuard();
+
+			const toggleOption = () => {
+				const option = event.target instanceof HTMLOptionElement ? event.target : null;
+				if (!option || !select.contains(option))
+				{
+					return;
+				}
+
+				event.preventDefault();
+				const scrollTop = select.scrollTop;
+				option.selected = !option.selected;
+				setTimeout(() => {
+					select.scrollTop = scrollTop;
+				}, 0);
+			};
+
+			const rect = select.getBoundingClientRect();
+			const computedStyle = window.getComputedStyle(select);
+			const borderLeftWidth = parseFloat(computedStyle.borderLeftWidth) || 0;
+			const borderRightWidth = parseFloat(computedStyle.borderRightWidth) || 0;
+			const borderWidth = borderLeftWidth + borderRightWidth;
+			const layoutScrollbarWidth = Math.max(select.offsetWidth - select.clientWidth - borderWidth, 0);
+			const styledScrollbarWidth = Math.max(
+				parseFloat(computedStyle.getPropertyValue(MULTI_SELECT_SCROLLBAR_WIDTH_PROPERTY)) || 0,
+				0,
+			);
+			const scrollbarWidth = Math.max(layoutScrollbarWidth, styledScrollbarWidth);
+			if (scrollbarWidth <= 0 || select.scrollHeight <= select.clientHeight)
+			{
+				toggleOption();
+				return;
+			}
+
+			const isRtl = computedStyle.direction === 'rtl';
+			const isScrollbarHit = isRtl
+				? event.clientX <= rect.left + borderLeftWidth + scrollbarWidth
+				: event.clientX >= rect.right - borderRightWidth - scrollbarWidth
+			;
+			if (!isScrollbarHit)
+			{
+				toggleOption();
+				return;
+			}
+
+			const selectedState = Array.from(select.options, (option) => option.selected);
+			const restoreSelection = () => {
+				Array.from(select.options).forEach((option, index) => {
+					option.selected = selectedState[index] ?? false;
+				});
+			};
+			const handleSelectionChange = (selectionEvent: Event) => {
+				selectionEvent.stopImmediatePropagation();
+				restoreSelection();
+			};
+			let cleanupTimeoutId = null;
+			const restoreTimeoutId = setTimeout(restoreSelection, 0);
+			let isCleanedUp = false;
+			const cleanup = () => {
+				if (isCleanedUp)
+				{
+					return;
+				}
+
+				isCleanedUp = true;
+				clearTimeout(restoreTimeoutId);
+				if (cleanupTimeoutId !== null)
+				{
+					clearTimeout(cleanupTimeoutId);
+				}
+				restoreSelection();
+				Event.unbind(select, 'input', handleSelectionChange, true);
+				Event.unbind(select, 'change', handleSelectionChange, true);
+				Event.unbind(document, 'mouseup', scheduleCleanup, true);
+				Event.unbind(window, 'blur', cleanup);
+				if (this.activeMultiSelectScrollbarSelectionCleanup === cleanup)
+				{
+					this.activeMultiSelectScrollbarSelectionCleanup = null;
+				}
+			};
+			const scheduleCleanup = () => {
+				cleanupTimeoutId = setTimeout(cleanup, 0);
+			};
+
+			this.activeMultiSelectScrollbarSelectionCleanup = cleanup;
+			Event.bind(select, 'input', handleSelectionChange, true);
+			Event.bind(select, 'change', handleSelectionChange, true);
+			Event.bind(document, 'mouseup', scheduleCleanup, true);
+			Event.bind(window, 'blur', cleanup);
 		},
 		showPreview(event: boolean): void
 		{
 			this.$emit('showPreview', event.data);
-		},
-		async showSettings(node: Block, shouldShowWithTransition: boolean): Promise<void>
-		{
-			this.isVisible = true;
-			this.currentBlock = node;
-			this.shouldShowWithTransition = shouldShowWithTransition;
-			await this.$nextTick();
-			await this.renderControls();
 		},
 		extractFormData(): { [key: string]: any }
 		{
@@ -331,7 +474,7 @@ export const CommonNodeSettingsForm = {
 		},
 		handleFormSave(): void
 		{
-			if (this.isSubmitting || !this.settingsForm)
+			if (this.isSubmitting || !this.settingsForm || this.store.isWriteLocked)
 			{
 				return;
 			}
@@ -341,6 +484,9 @@ export const CommonNodeSettingsForm = {
 		},
 		handleFormCancel(): void
 		{
+			closeExpressionBuilder();
+			unmountFormVeneers(this.$refs.contentContainer);
+			unmountFormVeneers(this.$refs.ruleContainer);
 			this.$emit('close');
 			this.isVisible = false;
 			this.$refs.contentContainer.innerHTML = '';
@@ -427,6 +573,18 @@ export const CommonNodeSettingsForm = {
 				})
 				.catch((error) => console.error(error));
 		},
+		shouldShowRequiredMark(field: Object): boolean
+		{
+			return (
+				isRequiredField(field)
+				&& field.fieldName !== TITLE_FIELD_NAME
+				&& this.shouldShowFieldCaption(field)
+			);
+		},
+		shouldShowFieldCaption(field: Object): boolean
+		{
+			return hasVisibleFieldLabel(field);
+		},
 		renderField(fieldProps: ?HTMLElement, field: Object): HTMLElement | null
 		{
 			const control = Type.isDomNode(fieldProps) ? fieldProps : null;
@@ -453,10 +611,14 @@ export const CommonNodeSettingsForm = {
 
 			return Tag.render`
 				<div class="${className}" id="row_${field.fieldName}">
-				    <div class="node-settings-edit-caption">${field.property.Name}</div>
+					${this.shouldShowFieldCaption(field) ? `
+						<div class="node-settings-edit-caption${this.shouldShowRequiredMark(field) ? ' --required' : ''}">
+							${field.property.Name}
+						</div>
+					` : ''}
 				    <div class="field-row">
 				        ${control}
-				        ${field.fieldName === 'title' ? `
+				        ${field.fieldName === TITLE_FIELD_NAME ? `
 				        	<a href="#" onclick="HideShow('row_activity_id'); return false;">
 				        		${this.loc('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_ID')}
 				        	</a>
@@ -492,18 +654,28 @@ export const CommonNodeSettingsForm = {
 				window.arWorkflowConstants = workflowConstants;
 			}
 
+			let request = null;
+
 			try
 			{
-				const settingsControls = await editorAPI.getNodeSettingsControls({
-					documentType: this.documentType,
-					activity: this.currentBlock?.activity,
-					workflow: {
-						workflowParameters: JSON.stringify(workflowParameters),
-						workflowVariables: JSON.stringify(workflowVariables),
-						workflowTemplate: JSON.stringify(compatibleTemplate),
-						workflowConstants: JSON.stringify(workflowConstants),
+				const settingsControls = await editorAPI.getNodeSettingsControls(
+					{
+						documentType: this.documentType,
+						activity: this.currentBlock?.activity,
+						workflow: {
+							workflowParameters: JSON.stringify(workflowParameters),
+							workflowVariables: JSON.stringify(workflowVariables),
+							workflowTemplate: JSON.stringify(compatibleTemplate),
+							workflowConstants: JSON.stringify(workflowConstants),
+						},
 					},
-				});
+					{
+						onRequestStart: (xhr) => {
+							request = markRaw(xhr);
+							this.settingsControlsRequest = request;
+						},
+					},
+				);
 				if (this.isRenderCancelled(requestId))
 				{
 					return null;
@@ -521,6 +693,13 @@ export const CommonNodeSettingsForm = {
 				handleResponseError(error);
 
 				return null;
+			}
+			finally
+			{
+				if (this.settingsControlsRequest === request)
+				{
+					this.settingsControlsRequest = null;
+				}
 			}
 		},
 		createFormData(): FormData
@@ -579,7 +758,20 @@ export const CommonNodeSettingsForm = {
 		},
 		async renderControls(): Promise<void>
 		{
-			const requestId = ++this.lastRenderRequestId;
+			// Warms the cache the readable layer resolves document fields from: the request is
+			// memoized, so it costs nothing on repeated renders and nothing when the flag is off.
+			if (isReadableExpressionsAvailable() && Type.isArrayFilled(this.documentType))
+			{
+				documentFieldsCache.fetchFields(this.documentType);
+			}
+
+			// The markup the open builder is bound to goes away right below.
+			closeExpressionBuilder();
+			unmountFormVeneers(this.$refs.contentContainer);
+			unmountFormVeneers(this.$refs.ruleContainer);
+
+			this.cancelSettingsControlsRequest();
+			const requestId = this.lastRenderRequestId;
 			this.isLoading = true;
 			if (this.$refs.contentContainer)
 			{
@@ -595,6 +787,19 @@ export const CommonNodeSettingsForm = {
 			this.nodeControls = [];
 
 			const settingControls = await this.getNodeSettingsControls(requestId);
+			if (this.isRenderCancelled(requestId))
+			{
+				// A render superseded by a newer one leaves the loading state to it. A render
+				// cancelled by the container going away has nobody to hand it over to, so the
+				// skeleton has to come down here instead of standing forever.
+				if (this.lastRenderRequestId === requestId)
+				{
+					this.isLoading = false;
+				}
+
+				return;
+			}
+
 			this.useDocumentContext = Boolean(settingControls?.useDocumentContext);
 			if (settingControls && Type.isArray(settingControls.controls))
 			{
@@ -610,6 +815,8 @@ export const CommonNodeSettingsForm = {
 				if (this.settingsForm)
 				{
 					Dom.append(this.settingsForm, this.$refs.contentContainer);
+					mountExpressionBuilders(this.settingsForm, { block: this.currentBlock });
+					mountExpressionBuilders(this.ruleSettingsForm, { block: this.currentBlock });
 				}
 
 				this.isLoading = false;
@@ -791,6 +998,9 @@ export const CommonNodeSettingsForm = {
 						this.applyFieldPlaceholders(this.settingsForm);
 						this.clearDefaultTitleInput(this.settingsForm);
 						this.hasSettings = true;
+
+						mountExpressionBuilders(this.settingsForm, { block: this.currentBlock });
+						mountExpressionBuilders(this.ruleSettingsForm, { block: this.currentBlock });
 					}
 					catch (error)
 					{
@@ -879,6 +1089,9 @@ export const CommonNodeSettingsForm = {
 			if (this.isSetupTemplateActivity)
 			{
 				this.clearDefaultTitleInput(form);
+				// Whole dialog stays in one form here, so there is no separate rule form
+				// to keep from a previously opened block.
+				this.ruleSettingsForm = null;
 
 				return form;
 			}
@@ -968,10 +1181,12 @@ export const CommonNodeSettingsForm = {
 		},
 		handleFieldInput(event: InputEvent): void
 		{
-			if (this.hasErrors)
+			if (!this.hasErrors)
 			{
-				Dom.removeClass(event.target, 'has-error');
+				return;
 			}
+
+			Dom.removeClass(event.target, 'has-error');
 		},
 		handleScroll(): void
 		{
@@ -1103,6 +1318,10 @@ export const CommonNodeSettingsForm = {
 		},
 		cleanupFormResources(): void
 		{
+			this.cancelSettingsControlsRequest();
+			closeExpressionBuilder();
+			unmountFormVeneers(this.$refs.contentContainer);
+			unmountFormVeneers(this.$refs.ruleContainer);
 			this.cancelPendingCollectionRender();
 
 			if (this.inputListeners && this.handleFieldInput)
@@ -1157,13 +1376,18 @@ export const CommonNodeSettingsForm = {
 				v-if="isVisible"
 				class="node-settings-panel --common"
 				:class="{ '--loading': isLoading, '--setup-template-activity': isSetupTemplateActivity }"
+				:data-testid="$testId('bizprocdesigner-common-node-settings')"
 				ref="settingsPanel"
 			>
 				<div class="node-settings-header">
 					<h3 class="node-settings-title">
 						{{loc('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_TITLE')}}
 					</h3>
-					<span class="node-settings-title-close-icon" @click="handleFormCancel"></span>
+					<span
+						class="node-settings-title-close-icon"
+						:data-testid="$testId('bizprocdesigner-common-node-settings-close')"
+						@click="handleFormCancel"
+					></span>
 				</div>
 				<slot name="header"/>
 				<div class="node-settings-form__controls">
@@ -1173,6 +1397,7 @@ export const CommonNodeSettingsForm = {
 				<Transition
 					:css="shouldShowWithTransition"
 					name="node-settings-transition"
+					@after-enter="onContentShown"
 				>
 					<div v-show="!isLoading" class="node-settings-content" ref="scrollContainer">
 						<div class="temp-block" v-show="!hasSettings">
@@ -1196,6 +1421,7 @@ export const CommonNodeSettingsForm = {
 							</div>
 							<div ref="contentContainer"></div>
 						</div>
+						<DataViewsSection v-if="isRuleHidden && isDataViewsSectionShown" :block="block"/>
 						<div
 							v-if="isRuleHidden"
 							class="node-settings-form__section --rules"
@@ -1238,14 +1464,17 @@ export const CommonNodeSettingsForm = {
 				>
 					<template v-if="hasSettings">
 						<button
+							v-if="!store.isWriteLocked"
 							class="ui-btn --air ui-btn-lg --style-outline-fill-accent ui-btn-no-caps"
 							:class="{ 'ui-btn-wait': isSubmitting }"
+							:data-test-id="$testId('commonNodeSettingsSaveButton')"
 							@click="handleFormSave"
 						>
 							{{loc('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_SAVE')}}
 						</button>
 						<button
 							class="ui-btn ui-btn-lg ui-btn-link ui-btn-no-caps"
+							:data-testid="$testId('bizprocdesigner-common-node-settings-cancel')"
 							@click="handleFormCancel"
 						>
 							{{loc('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_CANCEL')}}

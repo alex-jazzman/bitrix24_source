@@ -1,0 +1,22 @@
+<?php
+$MESS["IMMOBILE_ATTACH_CHAT_CONFIRM_ATTACH_BUTTON_CONFIRM"] = "Yes";
+$MESS["IMMOBILE_ATTACH_CHAT_CONFIRM_ATTACH_DESCRIPTION"] = "All chat members will be granted access to the project. The chat will be available only from within the project only. Do you want to move the chat to the project?";
+$MESS["IMMOBILE_ATTACH_CHAT_CONFIRM_ATTACH_TITLE"] = "Move chat to project";
+$MESS["IMMOBILE_ATTACH_CHAT_CONFIRM_BUTTON_CANCEL"] = "Cancel";
+$MESS["IMMOBILE_ATTACH_CHAT_CONFIRM_DETACH_BUTTON_CONFIRM"] = "Yes";
+$MESS["IMMOBILE_ATTACH_CHAT_CONFIRM_DETACH_DESCRIPTION"] = "The chat will not be part of the project anymore. It will be visible in the chat list. Do you want to remove the chat from the project?";
+$MESS["IMMOBILE_ATTACH_CHAT_CONFIRM_DETACH_TITLE"] = "Remove chat from project";
+$MESS["IMMOBILE_ATTACH_CHAT_SELECTOR_CHATS_SEARCH_EMPTY_DESCRIPTION"] = "Try a different search.";
+$MESS["IMMOBILE_ATTACH_CHAT_SELECTOR_CHATS_SEARCH_EMPTY_TITLE"] = "No results";
+$MESS["IMMOBILE_ATTACH_CHAT_SELECTOR_CHATS_TITLE"] = "Select a chat";
+$MESS["IMMOBILE_ATTACH_CHAT_SELECTOR_LOADING"] = "Loading...";
+$MESS["IMMOBILE_ATTACH_CHAT_SELECTOR_PROJECTS_SEARCH_EMPTY_DESCRIPTION"] = "Try a different search.";
+$MESS["IMMOBILE_ATTACH_CHAT_SELECTOR_PROJECTS_SEARCH_EMPTY_TITLE"] = "No results";
+$MESS["IMMOBILE_ATTACH_CHAT_SELECTOR_PROJECTS_TITLE"] = "Select a project";
+$MESS["IMMOBILE_ATTACH_CHAT_TOAST_ATTACH_SUCCESS"] = "Chat \"#CHAT#\" has been moved to project \"#PROJECT#\"";
+$MESS["IMMOBILE_ATTACH_CHAT_TOAST_DETACH_SUCCESS"] = "Chat \"#CHAT#\" has been removed from project \"#PROJECT#\"";
+$MESS["IMMOBILE_ATTACH_CHAT_TOAST_ERROR_ACCESS_DENIED"] = "Insufficient permission to move this chat to project";
+$MESS["IMMOBILE_ATTACH_CHAT_TOAST_ERROR_ALREADY_HAS_PARENT"] = "This chat is already part of a project";
+$MESS["IMMOBILE_ATTACH_CHAT_TOAST_ERROR_GENERIC"] = "Cannot complete action. Please try again.";
+$MESS["IMMOBILE_ATTACH_CHAT_TOAST_ERROR_NO_PARENT"] = "This chat is not part of the project";
+$MESS["IMMOBILE_ATTACH_CHAT_TOAST_ERROR_WRONG_PARENT"] = "This project is no longer available";

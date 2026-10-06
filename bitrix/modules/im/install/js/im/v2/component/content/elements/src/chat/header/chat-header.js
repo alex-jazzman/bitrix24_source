@@ -1,9 +1,10 @@
 import { type JsonObject } from 'main.core';
 
+import { Core } from 'im.v2.application.core';
 import { FadeAnimation } from 'im.v2.component.animation';
 import { ChatAvatar } from 'im.v2.component.elements.avatar';
 import { LineLoader } from 'im.v2.component.elements.loader';
-import { ChatType, ActionByRole, UserType, ActionByUserType } from 'im.v2.const';
+import { ChatType, ActionByRole, UserType, ActionByUserType, UserRole } from 'im.v2.const';
 import { PermissionManager } from 'im.v2.lib.permission';
 import { type ImModelUser, type ImModelChat } from 'im.v2.model';
 import { ChatService } from 'im.v2.provider.service.chat';
@@ -93,9 +94,18 @@ export const ChatHeader = {
 
 			return this.user.type === UserType.bot;
 		},
+		isCurrentUserGuest(): boolean
+		{
+			return this.$store.getters['users/isGuest'](Core.getUserId());
+		},
 		showCallButton(): boolean
 		{
 			if (this.isBot || !this.withCallButton)
+			{
+				return false;
+			}
+
+			if (this.isCurrentUserGuest || this.dialog.role === UserRole.guest)
 			{
 				return false;
 			}
@@ -119,10 +129,7 @@ export const ChatHeader = {
 				return false;
 			}
 
-			const canPerformActionByRole = permissionManager.canPerformActionByRole(ActionByRole.extend, this.dialogId);
-			const canPerformActionByUserType = permissionManager.canPerformActionByUserType(ActionByUserType.extend);
-
-			return canPerformActionByRole && canPerformActionByUserType;
+			return permissionManager.canManageUsersAdd(this.dialogId);
 		},
 		showSearchButton(): boolean
 		{

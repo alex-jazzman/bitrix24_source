@@ -1,5 +1,7 @@
 <?php
 $MESS["LANDING_TPL_ACTIONS"] = "actions";
+$MESS["LANDING_TPL_ACTIONS_ARIA_FOLDER"] = "Actions for folder \"#TITLE#\"";
+$MESS["LANDING_TPL_ACTIONS_ARIA_PAGE"] = "Actions for page \"#TITLE#\"";
 $MESS["LANDING_TPL_ACTION_ADD"] = "New page";
 $MESS["LANDING_TPL_ACTION_ADD_PAGE"] = "Create page";
 $MESS["LANDING_TPL_ACTION_COPY"] = "Copy page";
@@ -36,7 +38,19 @@ $MESS["LANDING_TPL_AREA_WITHOUT_RIGHT_1"] = "Header";
 $MESS["LANDING_TPL_AREA_WITHOUT_RIGHT_2"] = "Left sidebar";
 $MESS["LANDING_TPL_AREA_WITHOUT_RIGHT_3"] = "Footer";
 $MESS["LANDING_TPL_DELETED"] = "Deleted";
+$MESS["LANDING_TPL_FOLDER_NAME_INPUT_LABEL"] = "Folder name";
 $MESS["LANDING_TPL_MODIF"] = "Modified";
+$MESS["LANDING_TPL_ONBOARDING_AI_BUTTON"] = "Create a site";
+$MESS["LANDING_TPL_ONBOARDING_AI_ITEM_1_DESC_MSGVER_1"] = "AI will create the site structure, add content and publish the new landing site.";
+$MESS["LANDING_TPL_ONBOARDING_AI_ITEM_1_TITLE_MSGVER_1"] = "Just ask #COPILOT_NAME#";
+$MESS["LANDING_TPL_ONBOARDING_AI_ITEM_2_DESC_MSGVER_1"] = "Ask AI to add a new block, change text, update contacts or polish the design.";
+$MESS["LANDING_TPL_ONBOARDING_AI_ITEM_2_TITLE_MSGVER_1"] = "Edit your site by conversing with AI in the chat";
+$MESS["LANDING_TPL_ONBOARDING_AI_ITEM_3_DESC_MSGVER_1"] = "The sites you created before will remain up and running. You can edit these sites in the good old Site Builder.";
+$MESS["LANDING_TPL_ONBOARDING_AI_ITEM_3_TITLE_MSGVER_1"] = "Your old sites remain in place";
+$MESS["LANDING_TPL_ONBOARDING_AI_SUBTITLE_MSGVER_1"] = "Create a new site in only a few minutes.";
+$MESS["LANDING_TPL_ONBOARDING_AI_TITLE_MSGVER_1"] = "AI-assisted sites";
+$MESS["LANDING_TPL_ONBOARDING_VIDEO_PAUSE"] = "Pause video";
+$MESS["LANDING_TPL_ONBOARDING_VIDEO_PLAY"] = "Play video";
 $MESS["LANDING_TPL_PUBLIC"] = "Published";
 $MESS["LANDING_TPL_TITLE"] = "Website";
 $MESS["LANDING_TPL_TITLE_PAGE"] = "Website";

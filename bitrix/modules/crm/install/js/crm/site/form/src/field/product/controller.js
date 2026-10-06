@@ -97,4 +97,5 @@ class Controller extends ListField.Controller
 	}
 }
 
-export {Controller, Options, DefaultOptions}
+export {Controller, DefaultOptions}
+export type {Options}

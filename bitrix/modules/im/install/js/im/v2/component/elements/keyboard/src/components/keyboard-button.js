@@ -1,7 +1,7 @@
-import { Text, type JsonObject } from 'main.core';
+import { type JsonObject, Text } from 'main.core';
 
+import { ColorToken, type KeyboardButtonConfig, KeyboardButtonDisplay } from 'im.v2.const';
 import { Logger } from 'im.v2.lib.logger';
-import { KeyboardButtonDisplay, ColorToken, type KeyboardButtonConfig } from 'im.v2.const';
 
 type ButtonStyle = {
 	width?: string,
@@ -33,24 +33,13 @@ export const KeyboardButton = {
 		{
 			return this.config;
 		},
-		isAiAssistant(): boolean
-		{
-			return this.button.bgColorToken === ColorToken.aiAssistant;
-		},
 		commonAttributes(): { class: string[], style: ButtonStyle }
 		{
-			const attrs = {
+			return {
 				class: ['bx-im-keyboard-button__container', this.buttonClasses],
 				style: this.buttonStyles,
+				title: this.button.text,
 			};
-
-			if (this.isAiAssistant)
-			{
-				attrs['data-text'] = this.button.text;
-				attrs.title = this.button.text;
-			}
-
-			return attrs;
 		},
 		buttonClasses(): string[]
 		{
@@ -151,14 +140,14 @@ export const KeyboardButton = {
 			v-bind="commonAttributes"
 			@click="onClick"
 		>
-			{{ button.text }}
+			<span class="bx-im-keyboard-button__text --ellipsis">{{ button.text }}</span>
 		</a>
 		<div
 			v-else
 			v-bind="commonAttributes"
 			@click="onClick"
 		>
-			{{ button.text }}
+			<span class="bx-im-keyboard-button__text --ellipsis">{{ button.text }}</span>
 		</div>
 	`,
 };

@@ -63,6 +63,12 @@ class CrmActivityEmailAjax
 	private static function executeLog(&$error)
 	{
 		$error = false;
+		if (($_REQUEST['template'] ?? '') !== 'slider')
+		{
+			$error = getMessage('CRM_ACT_EMAIL_AJAX_ERROR');
+
+			return array();
+		}
 
 		$itemId = !empty($_REQUEST['id']) ? (int) $_REQUEST['id'] : false;
 		if (!$itemId)
@@ -260,7 +266,8 @@ class CrmActivityEmailAjax
 					) : null;
 				?>
 				<div class="crm-task-list-mail-item crm-activity-email-logitem-<?=intval($item['ID']) ?>"
-					data-id="<?=intval($item['ID']) ?>" data-log="<?=htmlspecialcharsbx($type) ?>">
+					data-id="<?=intval($item['ID']) ?>" data-log="<?=htmlspecialcharsbx($type) ?>"
+					data-testid="crm-mail-thread-item-<?=intval($item['ID']) ?>">
 					<span class="crm-task-list-mail-item-icon-reply-<?=($item['DIRECTION'] == \CCrmActivityDirection::Incoming ? 'incoming' : 'coming') ?>"></span>
 					<span class="crm-task-list-mail-item-icon <? if ($item['COMPLETED'] != 'Y'): ?>active-mail<? endif ?>"></span>
 					<span class="crm-task-list-mail-item-user"
@@ -289,7 +296,8 @@ class CrmActivityEmailAjax
 					</span>
 				</div>
 				<div class="crm-task-list-mail-item-inner <? if (!$isSlider): ?>crm-task-list-mail-border-bottom<? endif ?> crm-activity-email-details-<?=intval($item['ID']) ?> <? if ($isSlider): ?> crm-task-list-mail-item-inner-slider<? endif ?>"
-					style="display: none; text-align: center; " data-id="<?=intval($item['ID']) ?>" data-empty="1">
+					style="display: none; text-align: center; " data-id="<?=intval($item['ID']) ?>" data-empty="1"
+					data-testid="crm-mail-message-<?=intval($item['ID']) ?>">
 					<div class="crm-task-list-mail-item-loading <? if ($isSlider): ?>crm-task-list-mail-border-bottom<? endif ?>"></div>
 				</div>
 				<?
@@ -308,6 +316,12 @@ class CrmActivityEmailAjax
 		global $APPLICATION, $USER;
 
 		$error = false;
+		if (($_REQUEST['template'] ?? '') !== 'slider')
+		{
+			$error = getMessage('CRM_ACT_EMAIL_AJAX_ERROR');
+
+			return array();
+		}
 
 		$itemId = !empty($_REQUEST['id']) ? (int) $_REQUEST['id'] : false;
 		if (!$itemId)
@@ -459,7 +473,7 @@ class CrmActivityEmailAjax
 
 			$APPLICATION->includeComponent(
 				'bitrix:crm.activity.email.body',
-				$_REQUEST['template'] == 'slider' ? 'slider' : '',
+				'slider',
 				array(
 					'ACTIVITY'        => $activity,
 					'TEMPLATES'       => $templates,

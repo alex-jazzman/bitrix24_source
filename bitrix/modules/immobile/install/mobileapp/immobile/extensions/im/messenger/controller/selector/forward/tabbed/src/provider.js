@@ -349,6 +349,7 @@ jn.define('im/messenger/controller/selector/forward/tabbed/src/provider', (requi
 				serverStrategy: new DefaultServerSearchStrategy({
 					config: new ChatSearchConfig(null),
 					recentTab,
+					dynamicOptions: () => ({ excludeGuests: true }),
 				}),
 				loadSearchProcessed: (itemIdList, needSearchOnServer) => {
 					if (this.activeTab !== tabId)
@@ -397,7 +398,7 @@ jn.define('im/messenger/controller/selector/forward/tabbed/src/provider', (requi
 
 				if (dialog.type === DialogType.user || dialog.type === DialogType.private)
 				{
-					return true;
+					return !UserHelper.createByUserId(Number(dialog.dialogId))?.isGuest;
 				}
 
 				return ChatPermission.canPost(dialog);

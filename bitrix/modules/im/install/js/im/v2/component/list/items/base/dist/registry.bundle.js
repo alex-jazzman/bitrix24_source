@@ -3,8 +3,71 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports, main_date, im_v2_component_elements_avatar, im_v2_component_elements_chatTitle, im_v2_component_list_items_elements_inputActionIndicator, im_v2_const, im_v2_lib_dateFormatter, im_v2_lib_recent, im_v2_lib_layout, im_v2_application_core, im_v2_lib_counter, main_core, im_v2_lib_utils, im_v2_lib_parser, ui_vue3_components_richLoc, im_v2_component_elements_listLoadingState, im_v2_component_animation) {
+(function (exports, main_date, im_v2_component_elements_avatar, im_v2_component_elements_chatTitle, im_v2_component_list_items_elements_inputActionIndicator, im_v2_const, im_v2_lib_dateFormatter, im_v2_lib_recent, im_v2_lib_layout, im_v2_lib_counter, im_v2_application_core, main_core, im_v2_lib_utils, im_v2_lib_parser, im_v2_lib_feature, ui_vue3_components_richLoc, im_v2_component_elements_listLoadingState, im_v2_component_animation) {
 	'use strict';
+
+	// @vue/component
+	const AvatarCounter = {
+		name: 'AvatarCounter',
+		props: {
+			item: {
+				type: Object,
+				required: true
+			},
+			isChatMuted: {
+				type: Boolean,
+				default: false
+			}
+		},
+		computed: {
+			recentItem() {
+				return this.item;
+			},
+			dialog() {
+				return this.$store.getters['chats/get'](this.recentItem.dialogId, true);
+			},
+			chatCounter() {
+				return this.$store.getters['counters/getCounterByChatId'](this.dialog.chatId);
+			},
+			childrenCounter() {
+				return this.$store.getters['counters/getChildrenTotalCounter'](this.dialog.chatId);
+			},
+			totalCounter() {
+				return this.chatCounter + this.childrenCounter;
+			},
+			formattedCounter() {
+				return im_v2_lib_counter.CounterManager.formatCounter(this.totalCounter);
+			},
+			isChatMarkedUnread() {
+				return this.$store.getters['counters/getUnreadStatus'](this.dialog.chatId);
+			},
+			showBadge() {
+				return this.totalCounter > 0 || this.isChatMarkedUnread;
+			},
+			showUnreadWithoutCounter() {
+				return this.isChatMarkedUnread && this.totalCounter === 0;
+			},
+			showUnreadWithCounter() {
+				return this.isChatMarkedUnread && this.totalCounter > 0;
+			},
+			counterClasses() {
+				return {
+					'--muted': this.isChatMuted,
+					'--no-counter': this.showUnreadWithoutCounter,
+					'--with-unread': this.showUnreadWithCounter
+				};
+			}
+		},
+		template: `
+		<div
+			v-if="showBadge"
+			:class="counterClasses"
+			class="bx-im-list-recent-item__avatar_counter"
+		>
+			<span v-if="totalCounter > 0">{{ formattedCounter }}</span>
+		</div>
+	`
+	};
 
 	// @vue/component
 	const ItemCounters = {
@@ -337,6 +400,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		name: 'MessageText',
 		components: {
 			MessageAvatar: im_v2_component_elements_avatar.MessageAvatar,
+			ChatAvatar: im_v2_component_elements_avatar.ChatAvatar,
 			MessageDraft,
 			InvitationPlaceholder,
 			BirthdayPlaceholder,
@@ -350,12 +414,25 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			withDraft: {
 				type: Boolean,
 				default: true
+			},
+			forceOwnMessage: {
+				type: Boolean,
+				default: false
 			}
 		},
 		computed: {
 			AvatarSize: () => im_v2_component_elements_avatar.AvatarSize,
 			recentItem() {
 				return this.item;
+			},
+			recentItemForPreview() {
+				if (this.message?.id && this.message.id !== this.recentItem.messageId) {
+					return {
+						...this.recentItem,
+						messageId: this.message.id
+					};
+				}
+				return this.recentItem;
 			},
 			dialog() {
 				return this.$store.getters['chats/get'](this.recentItem.dialogId, true);
@@ -364,7 +441,29 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				return this.$store.getters['users/get'](this.recentItem.dialogId, true);
 			},
 			message() {
+				if (this.forceOwnMessage && this.recentItem.ownMessageId > 0) {
+					const ownMessage = this.$store.getters['recent/getOwnMessage'](this.recentItem.dialogId);
+					if (ownMessage) {
+						return ownMessage;
+					}
+				}
 				return this.$store.getters['recent/getMessage'](this.recentItem.dialogId);
+			},
+			isNestedPreviewSource() {
+				if (this.forceOwnMessage || !this.isNestedPreviewAvailable) {
+					return false;
+				}
+				const messageChatId = this.message?.chatId;
+				if (!messageChatId || !this.dialog.chatId) {
+					return false;
+				}
+				return messageChatId !== this.dialog.chatId;
+			},
+			previewSourceChat() {
+				if (!this.isNestedPreviewSource) {
+					return null;
+				}
+				return this.$store.getters['chats/getByChatId'](this.message?.chatId) ?? null;
 			},
 			needsInvitationPlaceholder() {
 				return this.recentItem.invitation.isActive;
@@ -387,14 +486,23 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				}
 				return HiddenTitleByChatType[this.dialog.type] ?? HiddenTitleByChatType.default;
 			},
+			isNestedPreviewAvailable() {
+				return im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.isCollabPreviewSourceEnabled);
+			},
 			isLastMessageAuthor() {
 				return this.showLastMessage && this.message.authorId === im_v2_application_core.Core.getUserId();
 			},
+			canShowAuthorAvatar() {
+				return Boolean(this.message);
+			},
 			messageText() {
-				if (this.message.isDeleted) {
+				if (!this.message) {
+					return this.hiddenMessageText;
+				}
+				if (this.message?.isDeleted) {
 					return this.loc('IM_LIST_RECENT_DELETED_MESSAGE');
 				}
-				const formattedText = im_v2_lib_parser.Parser.purifyRecent(this.recentItem);
+				const formattedText = im_v2_lib_parser.Parser.purifyRecent(this.recentItemForPreview);
 				if (!this.showLastMessage || !formattedText) {
 					return this.hiddenMessageText;
 				}
@@ -430,14 +538,32 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				<BirthdayPlaceholder v-else-if="needsBirthdayPlaceholder" />
 				<VacationPlaceholder v-else-if="needsVacationPlaceholder" :vacationDate="user.absent" />
 				<template v-else>
-					<span v-if="isLastMessageAuthor" class="bx-im-list-recent-item__self_author-icon"></span>
-					<MessageAvatar
-						v-else-if="isChat && message.authorId"
-						:messageId="message.id"
-						:authorId="message.authorId"
-						:size="AvatarSize.XXS"
-						class="bx-im-list-recent-item__author-avatar"
-					/>
+					<template v-if="isNestedPreviewSource && previewSourceChat">
+						<ChatAvatar
+							:avatarDialogId="previewSourceChat.dialogId"
+							:contextDialogId="previewSourceChat.dialogId"
+							:size="AvatarSize.XXS"
+							:withTooltip="false"
+							class="bx-im-list-recent-item__author-avatar"
+							data-testid="recent-item-preview-source-avatar"
+						/>
+						<span
+							class="bx-im-list-recent-item__preview-source-name"
+							data-testid="recent-item-preview-source-name"
+						>
+							{{ previewSourceChat.name }}:
+						</span>
+					</template>
+					<template v-else-if="canShowAuthorAvatar">
+						<span v-if="isLastMessageAuthor" class="bx-im-list-recent-item__self_author-icon"></span>
+						<MessageAvatar
+							v-else-if="isChat && message.authorId"
+							:messageId="message.id"
+							:authorId="message.authorId"
+							:size="AvatarSize.XXS"
+							class="bx-im-list-recent-item__author-avatar"
+						/>
+					</template>
 					<span>{{ formattedMessageText }}</span>
 				</template>
 			</span>
@@ -453,8 +579,14 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			ChatTitle: im_v2_component_elements_chatTitle.ChatTitle,
 			MessageText,
 			MessageStatus,
+			AvatarCounter,
 			ItemCounters,
 			InputActionIndicator: im_v2_component_list_items_elements_inputActionIndicator.InputActionIndicator
+		},
+		inject: {
+			avatarsOnly: {
+				default: false
+			}
 		},
 		props: {
 			item: {
@@ -484,6 +616,10 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			withDraft: {
 				type: Boolean,
 				default: true
+			},
+			forceOwnMessage: {
+				type: Boolean,
+				default: false
 			}
 		},
 		computed: {
@@ -560,15 +696,20 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				<div class="bx-im-list-recent-item__avatar_container">
 					<div v-if="invitation.isActive" class="bx-im-list-recent-item__avatar_invitation"></div>
 					<div v-else class="bx-im-list-recent-item__avatar_content">
-						<ChatAvatar 
-							:avatarDialogId="recentItem.dialogId" 
-							:contextDialogId="recentItem.dialogId" 
-							:size="AvatarSize.XL" 
+						<ChatAvatar
+							:avatarDialogId="recentItem.dialogId"
+							:contextDialogId="recentItem.dialogId"
+							:size="AvatarSize.XL"
 							:withSpecialTypeIcon="!hasActiveInputAction"
 							:customType="avatarType"
 						/>
 						<InputActionIndicator v-if="showActiveInputAction" />
 					</div>
+					<AvatarCounter
+						v-if="avatarsOnly"
+						:item="recentItem"
+						:isChatMuted="dialog.isMuted"
+					/>
 				</div>
 				<div class="bx-im-list-recent-item__content_container">
 					<div class="bx-im-list-recent-item__content_header">
@@ -587,7 +728,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 						</div>
 					</div>
 					<div class="bx-im-list-recent-item__content_bottom">
-						<MessageText :item="recentItem" :withDraft="withDraft" />
+						<MessageText :item="recentItem" :withDraft="withDraft" :forceOwnMessage="forceOwnMessage" />
 						<ItemCounters
 							v-if="withCounter"
 							:withPinStatus="withPinStatus"
@@ -724,5 +865,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	exports.BaseRecentList = BaseRecentList;
 	exports.FixedItemContainer = FixedItemContainer;
 
-})(this.BX.Messenger.v2.Component.List = this.BX.Messenger.v2.Component.List || {}, BX.Main, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Component.List, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Application, BX.Messenger.v2.Lib, BX, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.UI.Vue3.Components, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Component.Animation);
+})(this.BX.Messenger.v2.Component.List = this.BX.Messenger.v2.Component.List || {}, BX.Main, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Component.List, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Application, BX, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.UI.Vue3.Components, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Component.Animation);
 //# sourceMappingURL=registry.bundle.js.map

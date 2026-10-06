@@ -99,6 +99,13 @@
 	flex-shrink: 0;
 	width: var(--im-message-base__offset_context-menu);
 }
+
+.bx-im-message-base__content-main {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+	max-width: 100%;
+}
 /* end content container */
 
 /* body */
@@ -272,6 +279,7 @@
 	flex-grow: 1;
 	flex-direction: column;
 	display: flex;
+	min-width: 0;
 }
 
 .bx-im-message-base__bottom.--width-limit {

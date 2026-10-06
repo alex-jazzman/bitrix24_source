@@ -1,6 +1,0 @@
-<?php
-$MESS["DATASET_IMPORT_CHECK_FILE"] = "Check file for errors";
-$MESS["DATASET_IMPORT_EDIT_TITLE_MSGVER_1"] = "Edit table";
-$MESS["DATASET_IMPORT_REEXPORT"] = "Export to CSV";
-$MESS["DATASET_IMPORT_SYSTEM_TITLE"] = "Table \"#TABLE_NAME#\"";
-$MESS["DATASET_IMPORT_TITLE_MSGVER_1"] = "Create table";

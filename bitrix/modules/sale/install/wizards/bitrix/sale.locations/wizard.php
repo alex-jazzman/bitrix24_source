@@ -243,7 +243,7 @@ class Step3 extends CWizardStep
 		$this->content .= '<div id="error_message" style="display: none;"><br /><button onclick="RunAgain(); return false">'.GetMessage('WSL_STEP3_ERROR_TRY').'</button></div>';
 		$this->content .= '</div>';
 		$this->content .= '<script src="/bitrix/js/main/cphttprequest.js"></script>';
-		$this->content .= '<script src="'.$path.'/js/import.js"></script>';
+		$this->content .= '<script src="' . CUtil::GetAdditionalFileURL($path . '/js/import.js') . '"></script>';
 		$this->content .= '<script>
 
 var nextButtonID = "'.$wizard->GetNextButtonID().'";
@@ -299,7 +299,7 @@ class Step4 extends CWizardStep
 		$this->content .= '<div id="output"><br /></div>';
 		$this->content .= '</div>';
 		$this->content .= '<script src="/bitrix/js/main/cphttprequest.js"></script>';
-		$this->content .= '<script src="'.$path.'/js/import.js"></script>';
+		$this->content .= '<script src="' . CUtil::GetAdditionalFileURL($path . '/js/import.js') . '"></script>';
 		$this->content .= '<script>
 
 var nextButtonID = "'.$wizard->GetNextButtonID().'";

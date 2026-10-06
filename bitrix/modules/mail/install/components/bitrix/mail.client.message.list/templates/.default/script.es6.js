@@ -61,9 +61,24 @@ Event.ready(() => {
 		},
 	});
 
-	syncButtonWrapper.replaceChildren(syncButton.getContainer());
+	syncButtonWrapper?.replaceChildren(syncButton.getContainer());
 
 	sortButtonWrapper = document.querySelector('[data-role="mail-folder-sort-button-wrapper"]');
+
+	// Reflect the active sort mode on the button (a drag switches it to 'manual').
+	EventEmitter.subscribe('BX.Mail.FolderSort:onChange', (event) => {
+		const mode = event.data?.mode;
+		if (!mode)
+		{
+			return;
+		}
+
+		currentFolderSortMode = mode;
+		if (sortButtonWrapper)
+		{
+			sortButtonWrapper.dataset.sortMode = mode;
+		}
+	});
 
 	const sortButton = new Button({
 		className: 'mail-folder-sort-button',
@@ -82,6 +97,11 @@ Event.ready(() => {
 				{ id: 'alpha_desc', text: Loc.getMessage('MAIL_FOLDER_SORT_ALPHA_DESC') },
 			];
 
+			if (Loc.getMessage('MAIL_FOLDER_MANUAL_SORTING_AVAILABLE') === 'Y')
+			{
+				sortModes.push({ id: 'manual', text: Loc.getMessage('MAIL_FOLDER_SORT_MANUAL') });
+			}
+
 			const menuItems = [
 				{
 					delimiter: true,
@@ -92,6 +112,7 @@ Event.ready(() => {
 					dataset: { testId: `mail_sort-menu__item_${mode.id}` },
 					className: currentFolderSortMode === mode.id ? 'menu-popup-item-accept' : '',
 					onclick() {
+						const previousMode = currentFolderSortMode;
 						currentFolderSortMode = mode.id;
 						sortButtonWrapper.dataset.sortMode = mode.id;
 						BX.Main.MenuManager.destroy(sortMenuId);
@@ -101,8 +122,24 @@ Event.ready(() => {
 								mailboxId: parseInt(Loc.getMessage('MAIL_MAILBOX_ID'), 10),
 								mode: mode.id,
 							},
-						}).catch((response) => {
-							console.error('Failed to save folder sort mode', response);
+						}).catch(() => {
+							BX.UI?.Notification?.Center?.notify({
+								content: Loc.getMessage('MAIL_FOLDER_SORT_MODE_SAVE_ERROR'),
+							});
+
+							// A later switch to another mode superseded this request: keep the
+							// newer choice instead of rolling back to the stale mode.
+							if (currentFolderSortMode !== mode.id)
+							{
+								return;
+							}
+
+							currentFolderSortMode = previousMode;
+							if (sortButtonWrapper)
+							{
+								sortButtonWrapper.dataset.sortMode = previousMode;
+							}
+							EventEmitter.emit('BX.Mail.FolderSort:onChange', { mode: previousMode });
 						});
 					},
 				})),
@@ -134,25 +171,28 @@ Event.ready(() => {
 		},
 	});
 
-	sortButtonWrapper.replaceChildren(sortButton.getContainer());
-
-	if (currentFolderSortMode !== 'default')
+	if (sortButtonWrapper)
 	{
-		sortButtonWrapper.dataset.sortMode = currentFolderSortMode;
-		EventEmitter.emit('BX.Mail.FolderSort:onChange', { mode: currentFolderSortMode });
-	}
+		sortButtonWrapper.replaceChildren(sortButton.getContainer());
 
-	if (Loc.getMessage('MAIL_NEED_SHOW_FOLDER_SORT_GUIDE') === 'Y')
-	{
-		(new BX.Mail.MailGuide({
-			id: 'mail-folder-sort-guide',
-			title: Loc.getMessage('MAIL_FOLDER_SORT_GUIDE_TITLE'),
-			description: Loc.getMessage('MAIL_FOLDER_SORT_GUIDE_DESCRIPTION'),
-			bindElement: sortButton.getContainer(),
-			addHighlighter: true,
-			showImage: false,
-			userOptionName: 'folder_sort_guide_shown',
-		})).show();
+		if (currentFolderSortMode !== 'default')
+		{
+			sortButtonWrapper.dataset.sortMode = currentFolderSortMode;
+			EventEmitter.emit('BX.Mail.FolderSort:onChange', { mode: currentFolderSortMode });
+		}
+
+		if (Loc.getMessage('MAIL_NEED_SHOW_FOLDER_SORT_GUIDE') === 'Y')
+		{
+			(new BX.Mail.MailGuide({
+				id: 'mail-folder-sort-guide',
+				title: Loc.getMessage('MAIL_FOLDER_SORT_GUIDE_TITLE'),
+				description: Loc.getMessage('MAIL_FOLDER_SORT_GUIDE_DESCRIPTION'),
+				bindElement: sortButton.getContainer(),
+				addHighlighter: true,
+				showImage: false,
+				userOptionName: 'folder_sort_guide_shown',
+			})).show();
+		}
 	}
 
 	EventEmitter.subscribe('BX.Main.Grid:onBeforeReload', (event) => {
@@ -182,7 +222,10 @@ Event.ready(() => {
 			{
 				setTimeout(
 					() => {
-						EventEmitter.emit(window, 'Grid::thereSelectedRows');
+						if (grid.getRows().getSelected().length > 0)
+						{
+							EventEmitter.emit(window, 'Grid::thereSelectedRows');
+						}
 					},
 					0,
 				);
@@ -196,16 +239,19 @@ Event.ready(() => {
 
 	sliderPage = document.getElementsByClassName('ui-slider-page')[0];
 	progressBar = document.querySelector('[data-role="mail-progress-bar"]');
-	sliderPage.insertBefore(progressBar, sliderPage.firstChild);
-	errorBox = document.querySelector('[data-role="error-box"]');
+	if (sliderPage && progressBar)
+	{
+		sliderPage.insertBefore(progressBar, sliderPage.firstChild);
+		errorBox = document.querySelector('[data-role="error-box"]');
 
-	namespaceMailHome.ProgressBar = new ProgressBar(progressBar);
+		namespaceMailHome.ProgressBar = new ProgressBar(progressBar);
 
-	namespaceMailHome.ProgressBar.setSyncButton(syncButton);
-	namespaceMailHome.ProgressBar.setErrorBoxNode(document.querySelector('[data-role="error-box"]'));
-	namespaceMailHome.ProgressBar.setErrorTextNode(document.querySelector('[data-role="error-box-text"]'));
-	namespaceMailHome.ProgressBar.setErrorHintNode(document.querySelector('[data-role="error-box-hint"]'));
-	namespaceMailHome.ProgressBar.setErrorTitleNode(document.querySelector('[data-role="error-box-title"]'));
+		namespaceMailHome.ProgressBar.setSyncButton(syncButton);
+		namespaceMailHome.ProgressBar.setErrorBoxNode(document.querySelector('[data-role="error-box"]'));
+		namespaceMailHome.ProgressBar.setErrorTextNode(document.querySelector('[data-role="error-box-text"]'));
+		namespaceMailHome.ProgressBar.setErrorHintNode(document.querySelector('[data-role="error-box-hint"]'));
+		namespaceMailHome.ProgressBar.setErrorTitleNode(document.querySelector('[data-role="error-box-title"]'));
+	}
 });
 
 BX.ready(() => {

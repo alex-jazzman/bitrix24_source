@@ -929,6 +929,25 @@ class Call
 			|| (($states[CallUser::STATE_READY] ?? 0) >= 1 && ($states[CallUser::STATE_CALLING] ?? 0) >= 1);
 	}
 
+	/**
+	 * Returns true when at least one participant is in STATE_READY (i.e. the host
+	 * has already connected). Used by the guest join flow to decide whether a call
+	 * is worth joining without requiring the >=2 participants rule of hasActiveUsers.
+	 */
+	public function hasReadyUsers(): bool
+	{
+		$this->loadUsers();
+		foreach ($this->users as $user)
+		{
+			if ($user->getState() === CallUser::STATE_READY)
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
 	//endregion
 
 	public function getSignaling(): Signaling

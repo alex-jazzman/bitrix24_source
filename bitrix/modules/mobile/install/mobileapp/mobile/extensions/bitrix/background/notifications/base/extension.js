@@ -2,7 +2,8 @@
  * @module background/notifications/base
  */
 jn.define('background/notifications/base', (require, exports, module) => {
-	const { PushListener } = require('push/listeners');
+	const { pushListener } = require('push/listener');
+	const { EntityReady } = require('entity-ready');
 
 	/**
 	 * @abstract
@@ -12,7 +13,7 @@ jn.define('background/notifications/base', (require, exports, module) => {
 	{
 		constructor()
 		{
-			PushListener.subscribe(this.getNotificationType(), this.handleNotificationClick.bind(this));
+			pushListener.subscribe(this.getNotificationType(), this.handleNotificationClick.bind(this));
 
 			this.isSubscribed = false;
 			this.emitNotificationOnSubscribe = false;
@@ -21,6 +22,10 @@ jn.define('background/notifications/base', (require, exports, module) => {
 			if (this.getSubscriptionEventName())
 			{
 				BX.addCustomEvent(this.getSubscriptionEventName(), this.onSubscribeToPushNotification.bind(this));
+
+				EntityReady.wait(this.getSubscriptionEventName())
+					.then(() => this.onSubscribeToPushNotification())
+					.catch(console.error);
 			}
 		}
 
@@ -38,9 +43,10 @@ jn.define('background/notifications/base', (require, exports, module) => {
 		 */
 		handleNotificationClick(message)
 		{
+			this.sendAnalytics(message);
+
 			if (this.isSubscribed)
 			{
-				this.sendAnalytics(message);
 				BX.postComponentEvent(this.getNotificationEventName(), [message]);
 			}
 			else
@@ -90,7 +96,6 @@ jn.define('background/notifications/base', (require, exports, module) => {
 
 				if (this.emitNotificationOnSubscribe)
 				{
-					this.sendAnalytics(this.emitNotificationMessage);
 					BX.postComponentEvent(this.getNotificationEventName(), [this.emitNotificationMessage]);
 
 					this.emitNotificationOnSubscribe = false;

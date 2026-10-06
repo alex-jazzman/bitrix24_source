@@ -1691,11 +1691,7 @@ class CatalogProductGridComponent extends \CBitrixComponent
 		$navComponentParameters = [];
 		if ($this->arParams['BASE_LINK'] !== '')
 		{
-			$navComponentParameters["BASE_LINK"] = \CHTTP::urlAddParams(
-				$this->arParams['BASE_LINK'],
-				[],
-				['encode' => true]
-			);
+			$navComponentParameters["BASE_LINK"] = (string)(new Uri($this->arParams['BASE_LINK']))->addParams([]);
 		}
 		return (string)$iterator->GetPageNavStringEx(
 			$navComponentObject,

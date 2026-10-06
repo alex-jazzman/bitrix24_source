@@ -38,5 +38,6 @@ return [
 		'./src/update',
 		'./src/user',
 		'./src/member',
+		'./src/attach',
 	],
 ];

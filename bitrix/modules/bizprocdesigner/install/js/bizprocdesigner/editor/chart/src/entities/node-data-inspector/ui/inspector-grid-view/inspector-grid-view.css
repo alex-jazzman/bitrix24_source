@@ -30,7 +30,8 @@
 
 .editor-chart-inspector-grid-view__cell {
 	padding: 14px 0 14px 18px;
-	flex: 1 0;
+	flex: 1 1 0;
+	min-width: 0;
 }
 
 .editor-chart-inspector-grid-view__heads .editor-chart-inspector-grid-view__cell {
@@ -42,7 +43,6 @@
 }
 
 .editor-chart-inspector-grid-view__cell:last-child {
-	flex: 1 0;
 	border-right: none;
 }
 
@@ -59,10 +59,30 @@
 }
 
 .editor-chart-inspector-grid-view__cell.--name {
+	flex: 1 1 0;
+}
+
+/* Only the value is kept on a single line: the name and the type wrap and stay readable in full. */
+.editor-chart-inspector-grid-view__cell.--value {
+	flex: 1 1 0;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.editor-chart-inspector-grid-view__cell.--type {
+	flex: 0 0 116px;
+}
+
+.editor-chart-inspector-grid-view__row .editor-chart-inspector-grid-view__cell.--name {
 	font-weight: 500;
 	line-height: 17px;
 }
 
-.editor-chart-inspector-grid-view__cell.--type {
+.editor-chart-inspector-grid-view__row .editor-chart-inspector-grid-view__cell.--value {
+	color: var(--ui-color-base-2);
+}
+
+.editor-chart-inspector-grid-view__row .editor-chart-inspector-grid-view__cell.--type {
 	color: var(--ui-color-base-4);
 }

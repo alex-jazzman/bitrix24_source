@@ -4,7 +4,9 @@ import { BuilderModel } from 'ui.vue3.vuex';
 import { type Channel, type ChannelLastUsedFrom, type ChannelPosition, type Preferences } from '../editor';
 import { type Logger } from '../service/logger';
 
-type PreferencesState = Preferences;
+type PreferencesState = Preferences & {
+	saveFlowOptOut: boolean,
+};
 
 export class PreferencesModel extends BuilderModel
 {
@@ -27,6 +29,7 @@ export class PreferencesModel extends BuilderModel
 		return {
 			channelsSort: Runtime.clone(this.getVariable('channelsSort', [])),
 			channelsLastUsedFrom: Runtime.clone(this.getVariable('channelsLastUsedFrom', [])),
+			saveFlowOptOut: Boolean(this.getVariable('saveFlowOptOut', false)),
 		};
 	}
 
@@ -99,6 +102,12 @@ export class PreferencesModel extends BuilderModel
 					channelsSort: normalized,
 				});
 			},
+			/** @function preferences/setSaveFlowOptOut */
+			setSaveFlowOptOut: (store, payload: { saveFlowOptOut: boolean }) => {
+				store.commit('setSaveFlowOptOut', {
+					saveFlowOptOut: Boolean(payload?.saveFlowOptOut),
+				});
+			},
 			/** @function preferences/setChannelsLastUsedFrom */
 			setChannelsLastUsedFrom: (store, payload: { channelsLastUsedFrom: ChannelLastUsedFrom[] }) => {
 				const { channelsLastUsedFrom } = payload;
@@ -151,6 +160,9 @@ export class PreferencesModel extends BuilderModel
 			},
 			setChannelsLastUsedFrom: (state, { channelsLastUsedFrom }) => {
 				state.channelsLastUsedFrom = channelsLastUsedFrom;
+			},
+			setSaveFlowOptOut: (state, { saveFlowOptOut }) => {
+				state.saveFlowOptOut = saveFlowOptOut;
 			},
 		};
 	}

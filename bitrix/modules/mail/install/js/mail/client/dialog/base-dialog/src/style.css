@@ -53,6 +53,10 @@
 	justify-content: center;
 }
 
+.mail__client_dialog_base-dialog--hide-close-icon .popup-window-close-icon {
+	display: none;
+}
+
 .mail__client_dialog_base-dialog_loader {
 	display: flex;
 	align-items: center;

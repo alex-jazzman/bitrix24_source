@@ -1,7 +1,8 @@
-import {Loc, Runtime, Text} from 'main.core';
+import {Loc, Text} from 'main.core';
 import {Vue} from "ui.vue";
 import {config} from "../../config";
 import type {BaseEvent} from "main.core.events";
+import {MoneyInput} from "./money-input";
 
 Vue.component(config.templateFieldPrice,
 {
@@ -17,9 +18,20 @@ Vue.component(config.templateFieldPrice,
 		hasError: Boolean,
 		options: Object,
 	},
-	created()
+	data()
 	{
-		this.onInputPriceHandler = Runtime.debounce(this.onInputPrice, 500, this);
+		return {
+			isFocused: false,
+			isPointerFocus: false,
+			hasInputChanges: false,
+			inputValue: '',
+			publishTimer: null,
+			lastValidValue: Text.toNumber(this.price),
+		};
+	},
+	beforeDestroy()
+	{
+		this.clearPublishTimer();
 	},
 	mounted()
 	{
@@ -27,6 +39,14 @@ Vue.component(config.templateFieldPrice,
 	},
 	methods:
 	{
+		clearPublishTimer(): void
+		{
+			if (this.publishTimer)
+			{
+				clearTimeout(this.publishTimer);
+				this.publishTimer = null;
+			}
+		},
 		onInputPrice(event: BaseEvent): void
 		{
 			if (!this.editable)
@@ -34,29 +54,97 @@ Vue.component(config.templateFieldPrice,
 				return;
 			}
 
-			event.target.value = event.target.value.replace(/[^.,\d]/g,'');
-			if (event.target.value === '')
+			const input = event.target;
+			this.hasInputChanges = true;
+			const sanitized = MoneyInput.sanitizeDecimalInput(
+				input.value,
+				input.selectionStart,
+				input.selectionEnd,
+			);
+			this.inputValue = sanitized.value;
+			if (input.value !== sanitized.value)
 			{
-				event.target.value = 0;
-			}
-			const lastSymbol = event.target.value.substr(-1);
-			if (lastSymbol === ',')
-			{
-				event.target.value = event.target.value.replace(',', ".");
+				input.value = sanitized.value;
+				MoneyInput.applySelection(input, sanitized.selectionStart, sanitized.selectionEnd);
 			}
 
-			let newPrice = Text.toNumber(event.target.value);
-			if (lastSymbol === '.' || lastSymbol === ',')
+			const newPrice = MoneyInput.getDecimalPublishValue(this.inputValue);
+			if (newPrice === null)
+			{
+				this.clearPublishTimer();
+
+				return;
+			}
+
+			this.lastValidValue = newPrice;
+			this.clearPublishTimer();
+			this.publishTimer = setTimeout(() => {
+				this.publishPrice(this.lastValidValue);
+			}, MoneyInput.PUBLISH_DELAY);
+		},
+		publishPrice(newPrice: number): void
+		{
+			this.clearPublishTimer();
+			this.hasInputChanges = false;
+			this.$emit('onChangePrice', newPrice);
+		},
+		onFocus(event: BaseEvent): void
+		{
+			if (!this.editable)
 			{
 				return;
 			}
 
-			if (newPrice < 0)
+			const wasFocused = this.isFocused;
+			this.isFocused = true;
+			if (!wasFocused)
 			{
-				newPrice *= -1;
+				this.hasInputChanges = false;
+				this.lastValidValue = Text.toNumber(this.price);
+				this.inputValue = this.isPointerFocus
+					? event.target.value
+					: MoneyInput.formatFocusedDecimal(this.price)
+				;
 			}
 
-			this.$emit('onChangePrice', newPrice);
+			const shouldSelectAll = !this.isPointerFocus && !wasFocused;
+			this.isPointerFocus = false;
+			if (shouldSelectAll)
+			{
+				this.$nextTick(() => MoneyInput.selectAll(event.target));
+			}
+		},
+		onBlur(): void
+		{
+			if (this.hasInputChanges)
+			{
+				const newPrice = this.inputValue === ''
+					? 0
+					: MoneyInput.getDecimalPublishValue(this.inputValue, true)
+				;
+
+				this.publishPrice(newPrice ?? this.lastValidValue);
+			}
+			else
+			{
+				this.clearPublishTimer();
+			}
+
+			this.isFocused = false;
+			this.isPointerFocus = false;
+		},
+		onPointerDown(event): void
+		{
+			if (event.button !== undefined && event.button !== 0)
+			{
+				return;
+			}
+
+			this.isPointerFocus = true;
+		},
+		onPointerCancel(): void
+		{
+			this.isPointerFocus = false;
 		},
 	},
 	computed:
@@ -78,19 +166,33 @@ Vue.component(config.templateFieldPrice,
 
 			return null;
 		},
+		displayPrice(): string
+		{
+			if (this.isFocused)
+			{
+				return this.inputValue;
+			}
+
+			return MoneyInput.formatDecimal(this.price, this.options?.displayPrecision);
+		},
 	},
 	// language=Vue
 	template: `
-		<div 
-			class="catalog-pf-product-input-wrapper" 
+		<div
+			class="catalog-pf-product-input-wrapper"
 			:class="{ 'ui-ctl-danger': hasError, '.catalog-pf-product-input-wrapper--disabled': !editable }"
 			:data-hint="hintText"
 			data-hint-no-icon
 		>
 			<input 	type="text" class="catalog-pf-product-input catalog-pf-product-input--align-right"
 					v-bind:class="{ 'catalog-pf-product-input--disabled': !editable }"
-					v-model.lazy="price"
-					@input="onInputPriceHandler"
+					:value="displayPrice"
+					@input="onInputPrice"
+					@pointerdown="onPointerDown"
+					@pointerup="onPointerCancel"
+					@pointercancel="onPointerCancel"
+					@focus="onFocus"
+					@blur="onBlur"
 					:disabled="!editable"
 					data-name="price"
 					:data-value="price"

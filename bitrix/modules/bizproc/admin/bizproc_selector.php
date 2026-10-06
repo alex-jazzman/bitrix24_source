@@ -689,3 +689,7 @@ $popupWindow->ShowStandardButtons(array('cancel'));
 ?>
 <?$popupWindow->EndButtons();?>
 </body>
+<?php
+// Task 722886: the admin ajax epilog flushes deferred head blocks into the popup response.
+require $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/epilog_admin_js.php";
+?>

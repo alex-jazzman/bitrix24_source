@@ -276,6 +276,7 @@ $MESS["CRM_TYPE_TYPE_IS_BIZ_PROC_ENABLED_TITLE"] = "Use workflow designer in SPA
 $MESS["CRM_TYPE_TYPE_IS_CATEGORIES_ENABLED_TITLE"] = "Use custom sales pipelines and tunnels in SPA";
 $MESS["CRM_TYPE_TYPE_IS_CLIENT_ENABLED_TITLE"] = "\"Customer\" field";
 $MESS["CRM_TYPE_TYPE_IS_COUNTERS_ENABLED_TITLE"] = "Use counters";
+$MESS["CRM_TYPE_TYPE_IS_COUNTERS_ENABLED_TITLE_MSGVER_1"] = "Enable Activities view mode";
 $MESS["CRM_TYPE_TYPE_IS_CRM_TRACKING_ENABLED_TITLE"] = "Use Sales Intelligence";
 $MESS["CRM_TYPE_TYPE_IS_DOCUMENTS_ENABLED_TITLE"] = "Print documents";
 $MESS["CRM_TYPE_TYPE_IS_LINK_WITH_PRODUCTS_ENABLED_TITLE"] = "Bind to catalog products";

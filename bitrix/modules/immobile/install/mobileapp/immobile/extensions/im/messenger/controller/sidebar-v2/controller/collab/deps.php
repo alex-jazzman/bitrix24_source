@@ -4,10 +4,13 @@ return [
 	'extensions' => [
 		'assets/icons',
 		'haptics',
+		'type',
 		'im:messenger/const',
 		'im:messenger/controller/sidebar-v2/const',
+		'im:messenger/controller/dialog/lib/helper/text',
 		'im:messenger/controller/sidebar-v2/controller/base',
 		'im:messenger/controller/sidebar-v2/loc',
+		'im:messenger/lib/di/service-locator',
 		'im:messenger/controller/sidebar-v2/tabs/audio',
 		'im:messenger/controller/sidebar-v2/tabs/links',
 		'im:messenger/controller/sidebar-v2/tabs/media',
@@ -18,6 +21,7 @@ return [
 		'im:messenger/controller/sidebar-v2/user-actions/user',
 		'im:messenger/lib/feature',
 		'im:messenger/lib/ui/notification',
+		'tokens',
 	],
 	'bundle' => [
 		'./src/view',

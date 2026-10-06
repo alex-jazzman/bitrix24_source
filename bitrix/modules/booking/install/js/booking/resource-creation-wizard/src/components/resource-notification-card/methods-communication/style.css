@@ -22,13 +22,13 @@
 }
 
 .resource-notification-card-communication-item:hover {
-	background: url('../images/glow-ia.png') no-repeat center;
+	background: url('../images/glow-ia.webp') no-repeat center;
 	background-size: cover;
 	border-color: transparent;
 }
 
 .resource-notification-card-communication-item.--active {
-	background: url('../images/glow-ia.png') no-repeat center;
+	background: url('../images/glow-ia.webp') no-repeat center;
 	background-size: cover;
 	border-color: var(--ui-color-accent-main-primary);
 }
@@ -47,7 +47,7 @@
 }
 
 .resource-notification-card-communication-item-icon.--ai_call {
-	background: url("../../../../images/bitrixgpt.png") no-repeat center;
+	background: url("../../../../images/bitrixgpt.webp") no-repeat center;
 	background-size: contain;
 }
 

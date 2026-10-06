@@ -566,12 +566,23 @@ jn.define('im/messenger/provider/services/sending/file', (require, exports, modu
 				fileIdParams.upload_id = realFileId;
 			}
 
+			// @deprecated — FileUploadService is superseded by FilesUploadService.
+			// Carry reply_id for parity with #commitFiles in files.js (API-01 / DTO-LOCAL-01).
+			const replyIdParams = {};
+			const messageModel = this.store.getters['messagesModel/getByTemplateId'](temporaryMessageId);
+			const replyId = messageModel?.params?.replyId;
+			if (Number.isFinite(replyId) && replyId > 0)
+			{
+				replyIdParams.reply_id = replyId;
+			}
+
 			BX.rest.callMethod(RestMethod.imDiskFileCommit, {
 				chat_id: chatId,
 				message: '', // we don't have feature to send files with text right now
 				template_id: temporaryMessageId,
 				file_template_id: temporaryFileId,
 				...fileIdParams,
+				...replyIdParams,
 			})
 				.then(() => {
 					logger.log('FileUploadService.commitFile is done', params);

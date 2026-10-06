@@ -110,6 +110,22 @@ return [
 		],
 		'readonly' => true,
 	],
+	'messenger' => [
+		'value' => [
+			'queues' => [
+				/** @see \Bitrix\Im\V2\Async\QueueId */
+				'im_department_tree_sync' => [
+					'handler' => \Bitrix\Im\V2\Chat\Tree\Async\DepartmentTreeSyncReceiver::class,
+					'retry_strategy' => [
+						'max_retries' => 5,
+						'delay' => 5,
+						'multiplier' => 3,
+					],
+				],
+			],
+		],
+		'readonly' => true,
+	],
 	'aiassistant.marta' => [
 		'value' => [
 			'agents' => [

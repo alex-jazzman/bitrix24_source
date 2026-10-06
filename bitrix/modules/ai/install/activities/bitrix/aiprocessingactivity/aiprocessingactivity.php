@@ -1,9 +1,11 @@
 <?php
 
+use Bitrix\Bizproc\Public\Activity\Interface\ActivityContentBlockProviderInterface;
 use Bitrix\Bizproc\Activity\PropertiesDialog;
 use Bitrix\Bizproc\FieldType;
 use Bitrix\Bizproc\Public\Event\ParameterBuilder\AI\Context\ChatHistoryEventParametersBuilder;
 use Bitrix\Bizproc\Public\Integration\AI\Service\ObfuscationService;
+use Bitrix\Bizproc\Public\Service\AiAgent\NodeAvailabilityServiceInterface;
 use Bitrix\Main\Loader;
 use Bitrix\AI\Payload;
 use Bitrix\Main\Error;
@@ -16,7 +18,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
-class CBPAiProcessingActivity extends CBPActivity implements IBPEventActivity, IBPActivityExternalEventListener
+class CBPAiProcessingActivity extends CBPActivity implements IBPEventActivity, IBPActivityExternalEventListener, ActivityContentBlockProviderInterface
 {
 	private const MODULE_ID = 'ai';
 	private const PARAM_PROMPT = 'prompt';
@@ -94,6 +96,20 @@ class CBPAiProcessingActivity extends CBPActivity implements IBPEventActivity, I
 
 	public function execute(): int
 	{
+		$nodeAvailabilityLocator = ServiceLocator::getInstance();
+		if ($nodeAvailabilityLocator->has(NodeAvailabilityServiceInterface::class))
+		{
+			$nodeAvailabilityService = $nodeAvailabilityLocator->get(
+				NodeAvailabilityServiceInterface::class
+			);
+			if (!$nodeAvailabilityService->isAvailable())
+			{
+				$this->logError($nodeAvailabilityService->getUnavailableError()->getMessage());
+
+				return CBPActivityExecutionStatus::Closed;
+			}
+		}
+
 		if (Config\Option::get('ai', 'bp_ai_processing_activity_disabled', 'N') === 'Y')
 		{
 			$this->logError(Loc::getMessage('AI_PROCESSING_ACTIVITY_DISABLED'));
@@ -395,6 +411,54 @@ class CBPAiProcessingActivity extends CBPActivity implements IBPEventActivity, I
 		$currentActivity['Properties'] = $properties;
 
 		return true;
+	}
+
+	public static function getContentBlock(array $properties, ?\Bitrix\Bizproc\Activity\Dto\ContentBlockContext $context = null): ?\Bitrix\Bizproc\Activity\Dto\ContentBlock
+	{
+		$title = self::resolveEngineTitle($properties[self::PARAM_ENGINE] ?? null);
+
+		return new \Bitrix\Bizproc\Activity\Dto\ContentBlock(
+			(is_string($title) && $title)
+				? $title
+				: (string)Loc::getMessage('AI_PROCESSING_ACTIVITY_CONTENT_BLOCK_EMPTY'),
+		);
+	}
+
+	private static function resolveEngineTitle(mixed $engineCode): ?string
+	{
+		if (!$engineCode || !is_string($engineCode))
+		{
+			return null;
+		}
+
+		// Request-local cache: getContentBlock() runs per AI node on diagram open/save/catalog build,
+		// so resolving the same engine through AI\Engine repeatedly would re-init the engine registry.
+		static $titleCache = [];
+		if (array_key_exists($engineCode, $titleCache))
+		{
+			return $titleCache[$engineCode];
+		}
+
+		if (!Loader::includeModule('ai'))
+		{
+			return null;
+		}
+
+		try
+		{
+			$engine = \Bitrix\AI\Engine::getByCode(
+				$engineCode,
+				new \Bitrix\AI\Context('bizproc', 'chatHistory'),
+			);
+
+			$name = $engine?->getIEngine()->getName();
+
+			return $titleCache[$engineCode] = (is_string($name) && $name !== '' ? $name : null);
+		}
+		catch (\Throwable)
+		{
+			return null;
+		}
 	}
 
 	protected static function getPropertiesMap(array $documentType, array $context = []): array

@@ -1,6 +1,7 @@
 import { Loc, Tag, Type, Text } from 'main.core';
 import { DateTimeFormat } from 'main.date';
 import { Timeline } from 'bizproc.workflow.timeline';
+import { makeActivatable } from 'bizproc.a11y';
 
 import 'ui.design-tokens';
 import 'ui.icons';
@@ -86,17 +87,25 @@ export class Summary
 		const title = Text.encode(this.#name);
 		const footerTitle = Text.encode(Loc.getMessage('BIZPROC_JS_WORKFLOW_FACES_SUMMARY_TIMELINE_MSGVER_1'));
 
-		return Tag.render`
+		const root = Tag.render`
 			<div class="bp-workflow-faces-summary-item">
 				<div class="bp-workflow-faces-summary-name">
 					<div class="bp-workflow-faces-summary__text-area" title="${title}">${title}</div>
 				</div>
 				${this.#renderContent()}
-				<div class="bp-workflow-faces-summary__duration" onclick="${this.#openTimeline.bind(this)}">
+				<div class="bp-workflow-faces-summary__duration">
 					<div class="bp-workflow-faces-summary__text-area" title="${footerTitle}">${footerTitle}</div>
 				</div>
 			</div>
 		`;
+
+		const durationNode = root.querySelector('.bp-workflow-faces-summary__duration');
+		if (durationNode)
+		{
+			makeActivatable(durationNode, this.#openTimeline.bind(this));
+		}
+
+		return root;
 	}
 
 	#renderContent(): HTMLElement

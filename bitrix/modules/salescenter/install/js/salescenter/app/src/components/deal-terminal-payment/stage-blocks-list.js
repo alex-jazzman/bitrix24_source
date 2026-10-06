@@ -1,4 +1,4 @@
-import { ajax as Ajax, Loc, Runtime, userOptions as UserOptions } from 'main.core';
+import { ajax as Ajax, Loc, Runtime } from 'main.core';
 import { StatusTypes as Status } from 'salescenter.component.stage-block';
 import * as TimeLineItem from 'salescenter.timeline';
 import { UI } from 'ui.notification';

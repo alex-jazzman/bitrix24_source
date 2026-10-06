@@ -1,11 +1,12 @@
 import { toValue } from 'ui.vue3';
 import { useBlockDiagram } from './block-diagram';
-import type { DiagramBlockId } from '../types';
+import type { DiagramBlock, DiagramBlockId } from '../types';
 
 export type UseCanvas = {
 	zoomIn: (zoomStep: number) => void,
 	zoomOut: (zoomStep: number) => void,
 	setCamera: (params: { x: number, y: number, zoom: number}) => void,
+	goToBlock: (block: DiagramBlock) => void,
 	goToBlockById: (id: DiagramBlockId) => void,
 };
 
@@ -41,11 +42,9 @@ export function useCanvas(): UseCanvas
 		toValue(canvasInstance)?.setCamera(params);
 	}
 
-	function goToBlockById(id: DiagramBlockId): void
+	function goToBlock(block: DiagramBlock): void
 	{
-		const block = toValue(blocks).find((block) => block.id === id);
-
-		if (!block)
+		if (!block?.position || !block?.dimensions)
 		{
 			return;
 		}
@@ -61,11 +60,17 @@ export function useCanvas(): UseCanvas
 		});
 	}
 
+	function goToBlockById(id: DiagramBlockId): void
+	{
+		goToBlock(toValue(blocks).find((block) => block.id === id));
+	}
+
 	return {
 		zoomIn,
 		zoomOut,
 		setZoom,
 		setCamera,
+		goToBlock,
 		goToBlockById,
 	};
 }

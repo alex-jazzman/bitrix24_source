@@ -28,6 +28,8 @@ export class RequestQueue
 					this.nextRequest = null;
 					this.add(next);
 				}
-			});
+			})
+			// Non-critical selected-block telemetry: swallow transport failure to avoid unhandled rejection.
+			.catch(() => {});
 	}
 }

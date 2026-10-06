@@ -1,7 +1,8 @@
 import { BIcon, Outline } from 'ui.icon-set.api.vue';
 import { Loc } from 'main.core';
 import { UI } from 'ui.notification';
-import { dragInspectorSchemeDataItem } from '../../../../directives/drag-inspector-scheme-data-item';
+
+import { InspectorValueCell } from '../../../inspector-value-cell/inspector-value-cell';
 
 import './style.css';
 
@@ -10,9 +11,7 @@ export const InspectorSchemeDataItemView = {
 	name: 'InspectorSchemeDataItemView',
 	components: {
 		BIcon,
-	},
-	directives: {
-		dragInspectorSchemeDataItem,
+		InspectorValueCell,
 	},
 	props: {
 		item: {
@@ -25,14 +24,6 @@ export const InspectorSchemeDataItemView = {
 		itemTitle(): string
 		{
 			return this.item.text;
-		},
-		exampleValue(): string
-		{
-			return this.item.exampleValue ?? '';
-		},
-		hasExampleValue(): boolean
-		{
-			return this.exampleValue !== undefined && this.exampleValue !== null && this.exampleValue !== '';
 		},
 		dataType(): string
 		{
@@ -58,8 +49,9 @@ export const InspectorSchemeDataItemView = {
 		<div class="inspector-scheme-view__data-item-row">
 			<div class="inspector-scheme-view__data-item-title-container">
 				<div
-					class="inspector-scheme-view__data-item-hoverable"
-					v-drag-inspector-scheme-data-item="item.value"
+					class="inspector-scheme-view__data-item-hoverable inspector-scheme-view__data-item-drag-source"
+					:data-test-id="$testId('nodeDataInspectorSchemeDragSource')"
+					:data-drag-value="item.value"
 				>
 					<div class="inspector-scheme-view__data-item-title"
 						 :title="itemTitle"
@@ -78,10 +70,14 @@ export const InspectorSchemeDataItemView = {
 					<BIcon :name="Outline.COPY" :size="16"/>
 				</div>
 			</div>
-			<span class="inspector-scheme-view__data-item-example-value"
-				  :title="exampleValue"
+			<span
+				class="inspector-scheme-view__data-item-example-value"
+				:data-test-id="$testId('nodeDataInspectorSchemeValueCell')"
 			>
-				{{ exampleValue }}
+				<InspectorValueCell
+					:data-test-id="$testId('nodeDataInspectorSchemeValueText')"
+					:item="item"
+				/>
 			</span>
 			<span 
 				class="inspector-scheme-view__data-item-type"

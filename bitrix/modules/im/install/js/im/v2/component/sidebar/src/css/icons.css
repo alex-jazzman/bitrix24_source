@@ -1,15 +1,3 @@
-.bx-im-sidebar__back-icon {
-	cursor: pointer;
-	border: none;
-	width: 24px;
-	height: 24px;
-	background: url('./images/arrow-back.svg') no-repeat center;
-}
-
-.bx-im-sidebar__back-icon:hover {
-	background: url('./images/arrow-back-hover.svg') no-repeat center;
-}
-
 .bx-im-sidebar__forward-icon {
 	cursor: pointer;
 	border: none;

@@ -139,7 +139,7 @@ export class MenuBar
 
 	getFirstItemIdWithLayout(): ?Item
 	{
-		if (this.#isReadonly)
+		if (this.#isReadonly || !this.#menu)
 		{
 			return null;
 		}
@@ -187,6 +187,11 @@ export class MenuBar
 
 	#selectMenuItem(id: String): void
 	{
+		if (!this.#menu)
+		{
+			return;
+		}
+
 		const activeItem = this.#menu.getItemById(this.#selectedItemId);
 		const currentDiv = this.#menu.getItemById(id);
 		let wasActiveInMoreMenu = false;

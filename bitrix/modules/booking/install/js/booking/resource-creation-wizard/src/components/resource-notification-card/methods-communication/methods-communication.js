@@ -65,6 +65,7 @@ export const MethodsCommunication = {
 					:key="sender.code"
 					class="resource-notification-card-communication-item"
 					:class="{ '--active': sender.code === resource.senderCode, '--ai-call': sender.code === Communication.AiCall }"
+					:data-testid="'booking-resource-wizard-communication-item-' + sender.code"
 					@click="selectSender(sender.code)"
 				>
 					<IconBlock

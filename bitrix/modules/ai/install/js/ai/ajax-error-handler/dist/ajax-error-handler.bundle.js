@@ -18,6 +18,9 @@ this.BX = this.BX || {};
 		}).filter(strPart => strPart).join('_');
 	}
 
+	// An active Vibe+ portal is already on the top tariff: the server answers such a limit with the
+	// technical text and a support button, and deliberately sends no slider code.
+	const VIBE_PLUS_TECHNICAL_LIMIT_STATE = 'TechnicalLimit';
 	const ErrorCode = {
 		ERROR_CODE_FORCE: 'ERROR_CODE_FORCE',
 		MONTHLY_LIMIT: 'LIMIT_IS_EXCEEDED_MONTHLY',
@@ -48,11 +51,11 @@ this.BX = this.BX || {};
 					}
 				case ErrorCode.MONTHLY_LIMIT:
 					{
-						return this.#handleMonthlyLimitError(handleGenerateErrorParams?.sliderCode);
+						return this.#handleMonthlyLimitError(handleGenerateErrorParams?.sliderCode, handleGenerateErrorParams?.vibePlusLimitState);
 					}
 				case ErrorCode.DAILY_LIMIT:
 					{
-						return this.#handleDailyLimitError();
+						return this.#handleDailyLimitError(handleGenerateErrorParams?.sliderCode, handleGenerateErrorParams?.vibePlusLimitState);
 					}
 				case ErrorCode.TARIFF_LIMIT:
 					{
@@ -97,11 +100,33 @@ this.BX = this.BX || {};
 				throw new Error('AI.AjaxErrorHandler: baasOptions.context option is required and must be a string');
 			}
 		}
-		static #handleDailyLimitError() {
-			AjaxErrorHandler.#showInfoHelper(AjaxErrorHandler.#replaceSliderCodeWithBoxLimitCodeIfBox('limit_copilot_max_number_daily_requests'));
+		static #handleDailyLimitError(sliderCode, vibePlusLimitState) {
+			if (AjaxErrorHandler.#isVibePlusTechnicalLimit(vibePlusLimitState)) {
+				return;
+			}
+			AjaxErrorHandler.#showInfoHelper(AjaxErrorHandler.#replaceSliderCodeWithBoxLimitCodeIfBox(sliderCode === 'limit_why_pay_tariff_vibe' ? sliderCode : 'limit_copilot_max_number_daily_requests'));
 		}
-		static #handleMonthlyLimitError(sliderCode) {
+		static #handleMonthlyLimitError(sliderCode, vibePlusLimitState) {
+			if (AjaxErrorHandler.#isVibePlusTechnicalLimit(vibePlusLimitState)) {
+				return;
+			}
 			AjaxErrorHandler.#showInfoHelper(sliderCode ?? 'limit_copilot_requests');
+		}
+		static #isVibePlusTechnicalLimit(vibePlusLimitState) {
+			return vibePlusLimitState === VIBE_PLUS_TECHNICAL_LIMIT_STATE;
+		}
+		static isVibePlusTechnicalLimit(customData) {
+			return AjaxErrorHandler.#isVibePlusTechnicalLimit(customData?.vibePlusLimitState);
+		}
+
+		// The technical limit text is written for the messenger, where BBCode is rendered. CoPilot shows
+		// the error as plain text, so the promoter link is cut off and the ask to contact support stays.
+		static getVibePlusTechnicalLimitMessage(customData) {
+			if (!AjaxErrorHandler.isVibePlusTechnicalLimit(customData)) {
+				return null;
+			}
+			const message = customData?.msgForIm;
+			return main_core.Type.isStringFilled(message) ? message.replaceAll(/\s*\[url=[^\]]*].*?\[\/url]/gi, '').trim() : null;
 		}
 		static #handleForceError(forceCodeRules, forceOption, bindElement) {
 			if (!forceCodeRules?.length) {
@@ -217,11 +242,11 @@ this.BX = this.BX || {};
 					}
 				case ErrorCode.MONTHLY_LIMIT:
 					{
-						return this.#handleMonthlyLimitError(handleGenerateErrorParams?.sliderCode);
+						return this.#handleMonthlyLimitError(handleGenerateErrorParams?.sliderCode, handleGenerateErrorParams?.vibePlusLimitState);
 					}
 				case ErrorCode.DAILY_LIMIT:
 					{
-						return this.#handleDailyLimitError();
+						return this.#handleDailyLimitError(handleGenerateErrorParams?.sliderCode, handleGenerateErrorParams?.vibePlusLimitState);
 					}
 				case ErrorCode.TARIFF_LIMIT:
 					{

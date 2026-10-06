@@ -4,6 +4,14 @@ this.BX.Sign = this.BX.Sign || {};
 (function (exports, sign_type, main_core, ui_notification, ui_sidepanelContent) {
 	'use strict';
 
+	function isFilledMessage(message) {
+		return main_core.Type.isString(message) && message.trim() !== '';
+	}
+	function getErrorMessage(sortedErrors, ...fallbacks) {
+		const messages = [...sortedErrors.map(error => error.message), ...fallbacks];
+		return messages.find(message => isFilledMessage(message)) ?? '';
+	}
+
 	function getErrorSortCode(error, connectionErrorCode) {
 		const {
 			code
@@ -100,7 +108,7 @@ this.BX.Sign = this.BX.Sign || {};
 				top.BX.UI.InfoHelper.show('limit_office_e_signature');
 				throw ex;
 			}
-			const content = sortedErrors[0]?.message ?? message;
+			const content = getErrorMessage(sortedErrors, main_core.Loc.getMessage('SIGN_JS_V2_API_ERROR_COMMON'), message);
 			ui_notification.UI.Notification.Center.notify({
 				content: main_core.Text.encode(content),
 				autoHideDelay: 4000
@@ -122,11 +130,13 @@ this.BX.Sign = this.BX.Sign || {};
 				folderId
 			});
 		}
-		send(templateUid, fields, isOnboarding = false) {
+		send(templateUid, fields, isOnboarding = false, externalId = null, externalDate = null) {
 			return post('sign.api_v1.b2e.document.template.send', {
 				uid: templateUid,
 				fields,
-				isOnboarding
+				isOnboarding,
+				externalId,
+				externalDate
 			});
 		}
 		getFields(templateUid) {
@@ -255,6 +265,26 @@ this.BX.Sign = this.BX.Sign || {};
 				excludeRejected
 			}, notifyError);
 		}
+		pinList(listId, notifyError = true) {
+			return post('sign.api_v1.b2e.signers.pinList', {
+				listId
+			}, notifyError);
+		}
+		unpinList(listId, notifyError = true) {
+			return post('sign.api_v1.b2e.signers.unpinList', {
+				listId
+			}, notifyError);
+		}
+		getFeedRecipients(listId, notifyError = true) {
+			return post('sign.api_v1.b2e.signers.getFeedRecipients', {
+				listId
+			}, notifyError);
+		}
+		createChat(listId, notifyError = true) {
+			return post('sign.api_v1.integration.im.groupChat.createSignersListChat', {
+				listId
+			}, notifyError);
+		}
 	}
 
 	class PlaceholderApi {
@@ -281,11 +311,81 @@ this.BX.Sign = this.BX.Sign || {};
 		}
 	}
 
+	const BulkActionType = Object.freeze({
+		approve: 'approve',
+		reject: 'reject'
+	});
+	class MyDocumentsApi {
+		getBulkActionProcessOptions({
+			actionType,
+			memberIds
+		}) {
+			return {
+				controller: 'sign.api_v1.b2e.document.member',
+				action: 'processBulk',
+				params: {
+					data: {
+						actionType,
+						memberIds: [...memberIds]
+					}
+				}
+			};
+		}
+	}
+
+	class SafeFolderApi {
+		create(title) {
+			return post('sign.api_v1.b2e.document.safeFolder.create', {
+				title
+			});
+		}
+		rename(folderId, newTitle) {
+			return post('sign.api_v1.b2e.document.safeFolder.rename', {
+				folderId,
+				newTitle
+			});
+		}
+
+		// `targetFolderId` is `null` to move the folder content to the root ("no folder");
+		// the backend requires it when the folder is not empty.
+		delete(folderId, targetFolderId = null) {
+			return post('sign.api_v1.b2e.document.safeFolder.delete', {
+				folderId,
+				targetFolderId
+			});
+		}
+		getListByDepthLevel(depthLevel, limit = 50, offset = 0) {
+			return post('sign.api_v1.b2e.document.safeFolder.listByDepthLevel', {
+				depthLevel,
+				limit,
+				offset
+			});
+		}
+
+		// `targetFolderId` is `null` for the root ("no folder").
+		moveDocuments(documentIds, targetFolderId) {
+			return post('sign.api_v1.b2e.document.safeFolder.moveDocuments', {
+				documentIds,
+				targetFolderId
+			});
+		}
+		listPeople(folderId, category, limit, afterUserId) {
+			return post('sign.api_v1.b2e.document.safeFolder.listPeople', {
+				folderId,
+				category,
+				limit,
+				afterUserId
+			});
+		}
+	}
+
 	class Api {
 		template = new TemplateApi();
 		templateFolder = new TemplateFolderApi();
 		signersList = new SignersListApi();
 		placeholder = new PlaceholderApi();
+		myDocuments = new MyDocumentsApi();
+		safeFolder = new SafeFolderApi();
 		#post(endpoint, data = null, notifyError = true) {
 			return post(endpoint, data, notifyError);
 		}
@@ -632,11 +732,16 @@ this.BX.Sign = this.BX.Sign || {};
 		setDecisionToSesB2eAgreement() {
 			return this.#post('sign.api_v1.b2e.member.communication.setAgreementDecision', {});
 		}
-		createDocumentChat(chatType, documentId, isEntityId) {
+		createDocumentChat(chatType, documentId) {
 			return this.#post('sign.api_v1.integration.im.groupChat.createDocumentChat', {
 				chatType,
-				documentId,
-				isEntityId
+				documentId
+			});
+		}
+		createDocumentChatByEntity(chatType, entityId) {
+			return this.#post('sign.api_v1.integration.im.groupChat.createDocumentChatByEntity', {
+				chatType,
+				entityId
 			});
 		}
 		getDocumentFillAndStartProgress(uid) {
@@ -660,6 +765,18 @@ this.BX.Sign = this.BX.Sign || {};
 		removeDocument(uid) {
 			return this.#post('sign.api_v1.document.remove', {
 				uid
+			});
+		}
+		annulMember(uid, annul) {
+			return this.#post('sign.api_v1.document.member.annul', {
+				uid,
+				annul
+			});
+		}
+		annulMembersBatch(uids, annul) {
+			return this.#post('sign.api_v1.document.member.annulBatch', {
+				uids,
+				annul
 			});
 		}
 		attachGroupToDocument(documentUid, groupId) {
@@ -742,6 +859,7 @@ this.BX.Sign = this.BX.Sign || {};
 	}
 
 	exports.Api = Api;
+	exports.BulkActionType = BulkActionType;
 
 })(this.BX.Sign.V2 = this.BX.Sign.V2 || {}, BX.Sign, BX, BX.UI.Notification, BX.UI.Sidepanel.Content);
 //# sourceMappingURL=api.bundle.js.map

@@ -98,7 +98,11 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		}
 		#openCollab(params) {
 			const dialogId = params.get(im_v2_const.GetParameter.openCollab);
-			void im_public.Messenger.openCollab(dialogId);
+			const recentType = params.get(im_v2_const.GetParameter.recentType) ?? im_v2_const.RecentType.collabDefault;
+			void im_public.Messenger.openCollab(dialogId, {
+				compactMode: false,
+				recentType
+			});
 		}
 		#openTaskComments(params) {
 			const dialogId = params.get(im_v2_const.GetParameter.openTaskComments);
@@ -156,6 +160,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			this.#initCurrentUserAdminStatus();
 			this.#initGuestState();
 			this.#initBindings();
+			this.#initFolders();
 			im_v2_lib_counter.CounterManager.init();
 			im_v2_lib_permission.PermissionManager.init();
 			im_v2_lib_promo.PromoManager.init();
@@ -257,15 +262,22 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			im_v2_lib_guest.GuestManager.getInstance().setTermsOfServiceUrl(videoCallsTermsUrl);
 		}
 		#initBindings() {
+			const rule = {
+				condition: Object.values(BindingsCondition),
+				handler(event, link) {
+					new BindingsManager().routeLink(link.url);
+					event.preventDefault();
+				}
+			};
 			main_sidepanel.SidePanel.Instance.bindAnchors({
-				rules: [{
-					condition: Object.values(BindingsCondition),
-					handler(event, link) {
-						new BindingsManager().routeLink(link.url);
-						event.preventDefault();
-					}
-				}]
+				rules: [rule]
 			});
+		}
+		#initFolders() {
+			const {
+				folders
+			} = im_v2_application_core.Core.getApplicationData();
+			void im_v2_application_core.Core.getStore().dispatch('recent/folders/set', folders);
 		}
 	}
 

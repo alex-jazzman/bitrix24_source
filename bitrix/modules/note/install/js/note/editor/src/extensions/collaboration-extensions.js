@@ -22,6 +22,13 @@ export function createCollaborationExtensions({ provider, user }: { provider: Ob
 					</span>
 				`;
 
+				// Tag the caret so the header participant list can scroll a peer's cursor into view.
+				const caretUserId = Number(caretUser.id);
+				if (Number.isFinite(caretUserId) && caretUserId > 0)
+				{
+					el.dataset.userId = String(caretUserId);
+				}
+
 				requestAnimationFrame(() => {
 					if (!el.isConnected)
 					{
@@ -103,12 +110,6 @@ export function createCollaborationExtensions({ provider, user }: { provider: Ob
 						Dom.style(el, 'height', `${caretHeight}px`);
 					}
 
-					const shell = el.closest('.note-editor-document-shell');
-					if (!shell)
-					{
-						return;
-					}
-
 					const label = Tag.render`
 						<div class="collaboration-cursor__label">
 							<span class="collaboration-cursor__label-dot" style="background-color: ${caretColor}"></span>
@@ -118,15 +119,24 @@ export function createCollaborationExtensions({ provider, user }: { provider: Ob
 
 					Dom.append(label, el);
 
-					const labelRect = label.getBoundingClientRect();
-					const shellRect = shell.getBoundingClientRect();
+					// Keep the label inside the nearest surface that bounds the editor. The document
+					// page wraps it in a shell; embedded surfaces (the collection description) have
+					// none, so fall back to the prose area — the label still renders either way.
+					const bounds = el.closest('.note-editor-document-shell') ?? prose;
+					if (!(bounds instanceof HTMLElement))
+					{
+						return;
+					}
 
-					if (labelRect.right > shellRect.right)
+					const labelRect = label.getBoundingClientRect();
+					const boundsRect = bounds.getBoundingClientRect();
+
+					if (labelRect.right > boundsRect.right)
 					{
 						Dom.style(label, 'left', 'auto');
 						Dom.style(label, 'right', '0');
 					}
-					else if (labelRect.left < shellRect.left)
+					else if (labelRect.left < boundsRect.left)
 					{
 						Dom.style(label, 'left', '0');
 						Dom.style(label, 'right', 'auto');

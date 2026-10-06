@@ -3,6 +3,7 @@
  */
 jn.define('im/messenger/controller/sidebar-v2/controller/base/src/permission-manager', (require, exports, module) => {
 	const { Type } = require('type');
+	const { ActionByUserType } = require('im/messenger/const');
 	const { ChatPermission, UserPermission } = require('im/messenger/lib/permission-manager');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { Loc } = require('im/messenger/controller/sidebar-v2/loc');
@@ -33,6 +34,11 @@ jn.define('im/messenger/controller/sidebar-v2/controller/base/src/permission-man
 
 		canEdit()
 		{
+			if (!this.userPermission.canPerformActionByUserType(ActionByUserType.editChat))
+			{
+				return false;
+			}
+
 			return this.chatPermission.canEditDialog(this.dialogId);
 		}
 
@@ -73,6 +79,17 @@ jn.define('im/messenger/controller/sidebar-v2/controller/base/src/permission-man
 
 		canAddParticipants()
 		{
+			if (!this.userPermission.canPerformActionByUserType(ActionByUserType.joinChat))
+			{
+				return false;
+			}
+
+			if (this.dialogHelper.isDirect
+				&& !this.userPermission.canPerformActionByUserType(ActionByUserType.joinChat, Number(this.dialogId)))
+			{
+				return false;
+			}
+
 			return this.chatPermission.canAddParticipants(this.dialogId);
 		}
 
@@ -81,8 +98,13 @@ jn.define('im/messenger/controller/sidebar-v2/controller/base/src/permission-man
 			return this.chatPermission.canChangeOwner();
 		}
 
-		canChangeManagers()
+		canChangeManagers(userId)
 		{
+			if (!this.userPermission.canPerformActionByUserType(ActionByUserType.beChatManager, userId))
+			{
+				return false;
+			}
+
 			return this.chatPermission.canChangeManagers(this.dialogId);
 		}
 
@@ -93,7 +115,7 @@ jn.define('im/messenger/controller/sidebar-v2/controller/base/src/permission-man
 
 		canMute()
 		{
-			return this.chatPermission.сanMute(this.dialogId);
+			return this.chatPermission.canMute(this.dialogId);
 		}
 
 		/**

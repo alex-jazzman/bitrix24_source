@@ -1,6 +1,7 @@
 import {Tag, Event, Dom, Loc} from 'main.core';
-import {EventEmitter} from "main.core.events";
+import {EventEmitter} from 'main.core.events';
 import 'ui.notification';
+import { A11y } from './a11y';
 
 export default class PopupHelper
 {
@@ -24,6 +25,9 @@ export default class PopupHelper
 		this.$containerInputUrl = null;
 		this.$containerCopyLink = null;
 		this.$containerTestOrder = null;
+		this.focusTrap = null;
+		this.focusTrapPromise = null;
+		this.isShown = false;
 
 		this.adjustCloseEditByClick = this.adjustCloseEditByClick.bind(this);
 		this.adjustCloseEditByKeyDown = this.adjustCloseEditByKeyDown.bind(this);
@@ -31,6 +35,9 @@ export default class PopupHelper
 
 	hide()
 	{
+		this.isShown = false;
+		this.deactivateFocusTrap();
+		A11y.setHidden(this.getContainer(), true);
 		this.getContainer().classList.remove('--show');
 		Event.unbind(document.body, 'click', this.adjustCloseEditByClick);
 		Event.unbind(document.body, 'keydown', this.adjustCloseEditByKeyDown);
@@ -39,6 +46,8 @@ export default class PopupHelper
 
 	show(param: string)
 	{
+		this.isShown = true;
+		A11y.setHidden(this.getContainer(), false);
 		this.getContainer().classList.add('--show');
 		if (param === 'link')
 		{
@@ -65,9 +74,88 @@ export default class PopupHelper
 			this.getContainerSecondStep().style.display = null;
 		}
 
+		this.syncContainersVisibility(param);
+		this.activateFocusTrap();
 		Event.bind(document.body, 'click', this.adjustCloseEditByClick);
 		Event.bind(document.body, 'keydown', this.adjustCloseEditByKeyDown);
 		EventEmitter.emit(this, 'BX.Landing.SiteTile.Popup:onShow', this);
+	}
+
+	syncContainersVisibility(param: string)
+	{
+		const isQr = param === 'link';
+		const isNotPublished = param === 'notPublished';
+		const isFirstStep = !isQr && !isNotPublished && !this.getContainerFirstStep().classList.contains('--hide-right');
+		const isSecondStep = !isQr && !isNotPublished && !this.getContainerSecondStep().classList.contains('--hide-left');
+
+		A11y.setHidden(this.getContainerQr(), !isQr);
+		A11y.setHidden(this.getContainerNotPublished(), !isNotPublished);
+		A11y.setHidden(this.getContainerFirstStep(), !isFirstStep);
+		A11y.setHidden(this.getContainerSecondStep(), !isSecondStep);
+		this.syncDialogLabel(param);
+	}
+
+	syncDialogLabel(param: string)
+	{
+		if (param === 'link')
+		{
+			const label = this.indexEditUrl.startsWith('/shop/')
+				? Loc.getMessage('LANDING_SITE_TILE_POPUP_OPEN_SHOP')
+				: Loc.getMessage('LANDING_SITE_TILE_POPUP_OPEN_SITE')
+			;
+
+			this.getContainer().setAttribute('aria-label', label);
+			return;
+		}
+
+		if (param === 'notPublished')
+		{
+			this.getContainer().setAttribute(
+				'aria-label',
+				this.notPublishedText ? this.notPublishedText.title : Loc.getMessage('LANDING_SITE_TILE_NOT_PUBLISHED_TITLE'),
+			);
+			return;
+		}
+
+		const label = this.getContainerFirstStep().classList.contains('--hide-right')
+			? Loc.getMessage('LANDING_SITE_TILE_POPUP_TEST_ORDER')
+			: Loc.getMessage('LANDING_SITE_TILE_POPUP_CREATE_TEST_ORDER')
+		;
+
+		this.getContainer().setAttribute('aria-label', label);
+	}
+
+	activateFocusTrap()
+	{
+		if (this.focusTrap)
+		{
+			this.focusTrap.activate({ initialFocus: true });
+			return;
+		}
+
+		if (!this.focusTrapPromise)
+		{
+			this.focusTrapPromise = A11y.createFocusTrap(this.getContainer(), {
+				initialFocus: 'first-tabbable',
+				restoreFocus: true,
+				isolateOutside: true,
+			});
+		}
+
+		this.focusTrapPromise
+			.then((focusTrap) => {
+				this.focusTrap = focusTrap;
+				if (this.isShown && this.focusTrap)
+				{
+					this.focusTrap.activate({ initialFocus: true });
+				}
+			})
+			.catch(() => {});
+	}
+
+	deactivateFocusTrap()
+	{
+		this.focusTrap?.deactivate();
 	}
 
 	adjustCloseEditByClick(ev)
@@ -106,12 +194,18 @@ export default class PopupHelper
 	{
 		this.getContainerFirstStep().classList.add('--hide-right');
 		this.getContainerSecondStep().classList.remove('--hide-left');
+		this.syncContainersVisibility();
+		this.getContainerSecondStep()
+			.querySelector('.landing-sites__popup-prev')
+			?.focus({ preventScroll: true });
 	}
 
 	showFirstStep()
 	{
 		this.getContainerFirstStep().classList.remove('--hide-right');
 		this.getContainerSecondStep().classList.add('--hide-left');
+		this.syncContainersVisibility();
+		this.getContainerTestOrder().focus({ preventScroll: true });
 	}
 
 	getContainerInputUrl()
@@ -119,9 +213,9 @@ export default class PopupHelper
 		if (!this.$containerInputUrl)
 		{
 			this.$containerInputUrl = Tag.render`
-				<input 
-					type="text" 
-					style="position: absolute; opacity: 0; pointer-events: none"
+				<input
+					type="text"
+					style="position: absolute; left: 0; top: 0; width: 1px; height: 1px; padding: 0; border: 0; opacity: 0; pointer-events: none"
 					value="${this.fullUrl}">
 			`;
 		}
@@ -134,18 +228,34 @@ export default class PopupHelper
 		if (!this.$containerCopyLink)
 		{
 			this.$containerCopyLink = Tag.render`
-				<div class="landing-sites__popup-copy">
+				<button type="button" class="landing-sites__popup-copy">
 					${Loc.getMessage('LANDING_SITE_TILE_POPUP_COPY_LINK')}
-				</div>
+				</button>
 			`;
 
 			Event.bind(this.$containerCopyLink, 'click', () => {
 				this.getContainerInputUrl().select();
-				document.execCommand('copy');
-				BX.UI.Notification.Center.notify({
-					content: Loc.getMessage('LANDING_SITE_TILE_POPUP_COPY_LINK_COMPLETE'),
-					autoHideDelay: 2000,
-				});
+				let isCopied = false;
+				try
+				{
+					isCopied = document.execCommand('copy');
+				}
+				catch (error)
+				{
+					isCopied = false;
+				}
+
+				if (isCopied)
+				{
+					BX.UI.Notification.Center.notify({
+						content: Loc.getMessage('LANDING_SITE_TILE_POPUP_COPY_LINK_COMPLETE'),
+						autoHideDelay: 2000,
+					});
+					A11y.announce(Loc.getMessage('LANDING_SITE_TILE_POPUP_COPY_LINK_COMPLETE'));
+					return;
+				}
+
+				A11y.announce(Loc.getMessage('LANDING_SITE_TILE_POPUP_COPY_LINK_ERROR'), 'assertive');
 			});
 		}
 
@@ -171,7 +281,13 @@ export default class PopupHelper
 	{
 		if (!this.$containerQr)
 		{
-			let closeIcon = Tag.render`<div class="landing-sites__popup-close"></div>`;
+			let closeIcon = Tag.render`
+				<button
+					type="button"
+					class="landing-sites__popup-close"
+					aria-label="${Loc.getMessage('LANDING_SITE_TILE_POPUP_CLOSE')}"
+				></button>
+			`;
 			Event.bind(closeIcon, 'click', this.hide.bind(this));
 			const isShop = this.indexEditUrl.startsWith('/shop/');
 			const popupText = isShop ? Loc.getMessage('LANDING_SITE_TILE_POPUP_TEST_ORDER_ACTION_3') : Loc.getMessage('LANDING_SITE_TILE_POPUP_SITE_TEXT');
@@ -212,9 +328,9 @@ export default class PopupHelper
 		if (!this.$containerTestOrder)
 		{
 			this.$containerTestOrder = Tag.render`
-				<span class="ui-btn ui-btn-success ui-btn-round">
+				<button type="button" class="ui-btn ui-btn-success ui-btn-round">
 					${Loc.getMessage('LANDING_SITE_TILE_POPUP_CREATE_TEST_ORDER')}
-				</span>	
+				</button>
 			`;
 
 			Event.bind(this.$containerTestOrder, 'click', this.showSecondStep.bind(this));
@@ -227,7 +343,13 @@ export default class PopupHelper
 	{
 		if (!this.$containerFirstStep)
 		{
-			let closeIcon = Tag.render`<div class="landing-sites__popup-close"></div>`;
+			let closeIcon = Tag.render`
+				<button
+					type="button"
+					class="landing-sites__popup-close"
+					aria-label="${Loc.getMessage('LANDING_SITE_TILE_POPUP_CLOSE')}"
+				></button>
+			`;
 			Event.bind(closeIcon, 'click', this.hide.bind(this));
 
 			this.$containerFirstStep = Tag.render`
@@ -263,8 +385,20 @@ export default class PopupHelper
 	{
 		if (!this.$containerSecondStep)
 		{
-			let closeIcon = Tag.render`<div class="landing-sites__popup-close"></div>`;
-			let prevIcon = Tag.render`<div class="landing-sites__popup-prev"></div>`;
+			let closeIcon = Tag.render`
+				<button
+					type="button"
+					class="landing-sites__popup-close"
+					aria-label="${Loc.getMessage('LANDING_SITE_TILE_POPUP_CLOSE')}"
+				></button>
+			`;
+			let prevIcon = Tag.render`
+				<button
+					type="button"
+					class="landing-sites__popup-prev"
+					aria-label="${Loc.getMessage('LANDING_SITE_TILE_POPUP_BACK')}"
+				></button>
+			`;
 
 			Event.bind(closeIcon, 'click', this.hide.bind(this));
 			Event.bind(prevIcon, 'click', this.showFirstStep.bind(this));
@@ -301,13 +435,19 @@ export default class PopupHelper
 	{
 		if (!this.$containerNotPublished)
 		{
-			const closeIcon = Tag.render`<div class="landing-sites__popup-close"></div>`;
+			const closeIcon = Tag.render`
+				<button
+					type="button"
+					class="landing-sites__popup-close"
+					aria-label="${Loc.getMessage('LANDING_SITE_TILE_POPUP_CLOSE')}"
+				></button>
+			`;
 			Event.bind(closeIcon, 'click', this.hide.bind(this));
 
 			let buttPublish = Tag.render`
-				<span href="${this.ordersUrl}" class="ui-btn ui-btn-success ui-btn-round">
+				<button type="button" class="ui-btn ui-btn-success ui-btn-round">
 					${Loc.getMessage('LANDING_SITE_TILE_NOT_PUBLISHED_BUTTON_PUBLISH')}
-				</span>
+				</button>
 			`;
 			if (
 				this.itemObj.access.publication === false
@@ -321,28 +461,34 @@ export default class PopupHelper
 				if (code === 'shop1c')
 				{
 					buttPublish = Tag.render`
-					<span 
+					<button 
+						type="button"
 						class="ui-btn ui-btn-success ui-btn-round ui-btn-disabled ui-btn-icon-lock"
+						aria-disabled="true"
 						data-hint="${hint}<br><a href='${url}'>${link}</a>"
 						data-hint-no-icon
 						data-hint-html
 						data-hint-interactivity
 					>
 						${Loc.getMessage('LANDING_SITE_TILE_NOT_PUBLISHED_BUTTON_PUBLISH')}
-					</span>
+					</button>
 				`;
 				}
 			}
-			Event.bind(buttPublish, 'click', () =>
+			if (buttPublish.getAttribute('aria-disabled') !== 'true')
 			{
-				EventEmitter.emit('BX.Landing.SiteTile:publish', this.itemObj);
-				this.hide();
-			});
+				Event.bind(buttPublish, 'click', () =>
+				{
+					this.itemObj.markUserPublicationAction();
+					EventEmitter.emit('BX.Landing.SiteTile:publish', this.itemObj);
+					this.hide();
+				});
+			}
 
 			const buttOpen = Tag.render`
-				<span href="${this.ordersUrl}" class="ui-btn ui-btn-light-border ui-btn-round">
+				<button type="button" class="ui-btn ui-btn-light-border ui-btn-round">
 					${Loc.getMessage('LANDING_SITE_TILE_NOT_PUBLISHED_BUTTON_OPEN')}
-				</span>
+				</button>
 			`;
 			Event.bind(buttOpen, 'click', () =>
 			{
@@ -354,7 +500,7 @@ export default class PopupHelper
 			});
 
 			this.$containerNotPublished = Tag.render`
-				<div class="landing-sites__popup-container --not-published">
+				<div class="landing-sites__popup-container --not-published" aria-hidden="true" inert>
 					${closeIcon}
 					<div class="landing-sites__popup-wrapper">
 						<div class="landing-sites__popup-title">
@@ -384,7 +530,14 @@ export default class PopupHelper
 		if (!this.$container)
 		{
 			this.$container = Tag.render`
-				<div class="landing-sites__popup">
+				<div
+					class="landing-sites__popup"
+					role="dialog"
+					aria-modal="true"
+					aria-label="${Loc.getMessage('LANDING_SITE_TILE_POPUP_CREATE_TEST_ORDER')}"
+					aria-hidden="true"
+					inert
+				>
 					${this.getContainerFirstStep()}
 					${this.getContainerSecondStep()}
 					${this.getContainerQr()}

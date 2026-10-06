@@ -49,7 +49,8 @@ jn.define('entity-ready', (require, exports, module) => {
 					{
 						resolve();
 
-						BX.removeCustomEvent('EntityReady::ready', this.eventHandlers.get(entityId));
+						// remove itself: a Map lookup breaks concurrent waits for the same id
+						BX.removeCustomEvent('EntityReady::ready', readyHandler);
 						this.eventHandlers.delete(entityId);
 
 						const checkReadyHandler = this.checkReadyHandlers.get(entityId);

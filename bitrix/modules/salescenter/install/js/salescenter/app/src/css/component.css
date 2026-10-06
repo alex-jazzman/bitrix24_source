@@ -1509,7 +1509,7 @@
 }
 
 .salescenter-app-payment-by-sms-item-counter-icon-check {
-	background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAQCAYAAAAmlE46AAAANElEQVQokWNgoAT8////wn/SwAKYRpIBikYiXUcDjTidRoTGBnQ86tSho5EUANNIau7YAACRzsg+rE9//wAAAABJRU5ErkJggg==);
+	background-image: url(data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2214%22%20height%3D%2216%22%20viewBox%3D%220%200%2014%2016%22%3E%3Cpath%20fill%3D%22%23FFF%22%20fill-rule%3D%22evenodd%22%20d%3D%22M2%201h11a1%201%200%20011%201v13a1%201%200%2001-1%201H2a1%201%200%2001-1-1V2a1%201%200%20011-1zm1%202v11h9V3H3z%22/%3E%3Cpath%20fill%3D%22%23FFF%22%20d%3D%22M4%205h7v2H4zM4%208h7v2H4z%22/%3E%3Cpath%20fill%3D%22%23FFF%22%20fill-opacity%3D%22.5%22%20d%3D%22M4%206h5v1H4zM4%209h5v1H4z%22/%3E%3C/svg%3E);
 }
 
 .salescenter-app-payment-by-sms-item-counter-icon-check-sent {
@@ -2586,11 +2586,28 @@
 .salescenter-popup-qr__icon {
 	width: var(--icon-phone-width);
 	height: 478px;
-	background: url(../image/salescenter-qr-popup-phone.svg) no-repeat;
+	background-image: url(../image/salescenter-qr-popup-phone.webp);
+	background-image: -webkit-image-set(
+		url(../image/salescenter-qr-popup-phone.webp) 1x,
+		url(../image/salescenter-qr-popup-phone-2x.webp) 2x
+	);
+	background-image: image-set(
+		url(../image/salescenter-qr-popup-phone.webp) 1x,
+		url(../image/salescenter-qr-popup-phone-2x.webp) 2x
+	);
+	background-repeat: no-repeat;
 }
 
 .salescenter-popup-qr__icon.--ru {
-	background: url(../image/salescenter-qr-popup-phone-ru.svg) no-repeat;
+	background-image: url(../image/salescenter-qr-popup-phone-ru.webp);
+	background-image: -webkit-image-set(
+		url(../image/salescenter-qr-popup-phone-ru.webp) 1x,
+		url(../image/salescenter-qr-popup-phone-ru-2x.webp) 2x
+	);
+	background-image: image-set(
+		url(../image/salescenter-qr-popup-phone-ru.webp) 1x,
+		url(../image/salescenter-qr-popup-phone-ru-2x.webp) 2x
+	);
 }
 
 .salescenter-popup-qr__wrap .popup-window-buttons {
@@ -2679,7 +2696,7 @@
 }
 
 .salescenter-app-payment-by-sms-message-sender-empty-state-image {
-	background: url(./../image/empty-state.png) no-repeat;
+	background: url(./../image/empty-state.webp) no-repeat;
 	background-size: cover;
 	width: 250px;
 	height: 234px;

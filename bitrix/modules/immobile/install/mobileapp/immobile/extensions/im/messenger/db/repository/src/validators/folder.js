@@ -42,29 +42,18 @@ jn.define('im/messenger/db/repository/validators/folder', (require, exports, mod
 			result.sort = folder.sort;
 		}
 
-		if (Type.isPlainObject(folder.definition))
+		// Invariant: validateFolder only ever receives already-normalized flat folders.
+		// FolderDataProvider.setList runs normalize() before repository.replaceAll, and
+		// FolderRepository.getAll rebuilds chatIds from the membership table — the REST
+		// `definition` shape never reaches this validator, so it is not read here.
+		if (Type.isArray(folder.chatIds))
 		{
-			if (Type.isArray(folder.definition.chatIds))
-			{
-				result.chatIds = folder.definition.chatIds;
-			}
-
-			if (Type.isStringFilled(folder.definition.recentSection) || Type.isNull(folder.definition.recentSection))
-			{
-				result.recentSection = folder.definition.recentSection;
-			}
+			result.chatIds = folder.chatIds;
 		}
-		else
-		{
-			if (Type.isArray(folder.chatIds))
-			{
-				result.chatIds = folder.chatIds;
-			}
 
-			if (Type.isStringFilled(folder.recentSection) || Type.isNull(folder.recentSection))
-			{
-				result.recentSection = folder.recentSection;
-			}
+		if (Type.isStringFilled(folder.recentSection) || Type.isNull(folder.recentSection))
+		{
+			result.recentSection = folder.recentSection;
 		}
 
 		return result;

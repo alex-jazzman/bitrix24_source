@@ -9,9 +9,15 @@
 	line-height: normal;
 	text-decoration: none;
 	cursor: pointer;
-	-webkit-transition: .1s;
-	-moz-transition: .1s;
-	transition: .1s;
+	/* only the hover colors animate: `transition: .1s` also animated the focus ring */
+	transition: color .1s, border-color .1s;
+}
+
+/* The form row clips overflow, so the ring is drawn inside the button box. */
+.bizproc-type-control-clone-btn:focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link, #0b66c3);
+	outline-offset: -1px;
+	border-radius: 2px;
 }
 
 .bizproc-type-control-text {

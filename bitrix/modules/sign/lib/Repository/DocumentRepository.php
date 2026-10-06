@@ -10,6 +10,7 @@ use Bitrix\Main\ORM\Data\AddResult;
 use Bitrix\Main\ORM\Data\DeleteResult;
 use Bitrix\Main\ORM\Data\UpdateResult;
 use Bitrix\Main\ORM\Data\Result;
+use Bitrix\Main\DB\SqlExpression;
 use Bitrix\Main\ORM\Query\Query;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\Type\DateTime;
@@ -30,6 +31,8 @@ class DocumentRepository
 {
 	private const INITIATOR_NAME_META_KEY = Document::META_KEYS['initiatorName'];
 	private const DOCUMENT_DEFAULT_PARTIES_COUNT = 2;
+	private const TEMPLATE_REPRESENTATIVE_BATCH_SIZE = 300;
+	private const SAFE_EXPORT_BATCH_SIZE = 300;
 
 	/** @var array<DocumentScenario::*, int> */
 	private const SCENARIO_NAME_TO_ID_MAP = [
@@ -152,6 +155,65 @@ class DocumentRepository
 		}
 		
 		return $result;
+	}
+
+	/**
+	 * @param list<int> $documentIds
+	 */
+	public function resetRepresentativeByIds(array $documentIds, int $expectedRepresentativeId): Main\Result
+	{
+		$result = new Main\Result();
+		if (empty($documentIds))
+		{
+			return $result;
+		}
+
+		$connection = Main\Application::getConnection();
+		$helper = $connection->getSqlHelper();
+		$tableName = Internal\DocumentTable::getTableName();
+		[$update] = $helper->prepareUpdate($tableName, ['REPRESENTATIVE_ID' => null]);
+		$sql = (new SqlExpression(
+			'UPDATE ?# SET ' . $update . ' WHERE ?# IN (?@) AND ?# = ?i',
+			$tableName,
+			'ID',
+			array_values(array_unique($documentIds)),
+			'REPRESENTATIVE_ID',
+			$expectedRepresentativeId,
+		))->compile();
+		$connection->queryExecute($sql);
+
+		return $result;
+	}
+
+	/**
+	 * @return \Generator<array{documentId: int, templateId: int}>
+	 */
+	public function iterateB2eTemplateDocumentIdsByRepresentative(int $userId): \Generator
+	{
+		$lastDocumentId = 0;
+		do
+		{
+			$rows = Internal\DocumentTable::query()
+				->setSelect(['ID', 'TEMPLATE_ID'])
+				->where('REPRESENTATIVE_ID', $userId)
+				->where('TEMPLATE_ID', '>', 0)
+				->where('ENTITY_TYPE', EntityType::SMART_B2E)
+				->where('ID', '>', $lastDocumentId)
+				->setOrder(['ID' => 'ASC'])
+				->setLimit(self::TEMPLATE_REPRESENTATIVE_BATCH_SIZE)
+				->fetchAll()
+			;
+			foreach ($rows as $row)
+			{
+				$lastDocumentId = (int)$row['ID'];
+
+				yield [
+					'documentId' => $lastDocumentId,
+					'templateId' => (int)$row['TEMPLATE_ID'],
+				];
+			}
+		}
+		while (count($rows) === self::TEMPLATE_REPRESENTATIVE_BATCH_SIZE);
 	}
 
 	public function unsetEntityId(Item\Document $item): Result
@@ -537,6 +599,62 @@ class DocumentRepository
 		;
 	}
 
+	public function listForSafeExportByIds(array $ids): Item\DocumentCollection
+	{
+		$ids = array_values(array_unique(array_filter(
+			array_map('intval', $ids),
+			static fn(int $id): bool => $id > 0,
+		)));
+		if ($ids === [])
+		{
+			return new Item\DocumentCollection();
+		}
+
+		$documents = [];
+		foreach (array_chunk($ids, self::SAFE_EXPORT_BATCH_SIZE) as $batchIds)
+		{
+			$rows = Internal\DocumentTable::query()
+				->setSelect([
+					'ID',
+					'TITLE',
+					'SCENARIO',
+					'EXTERNAL_ID',
+					'ENTITY_TYPE',
+					'ENTITY_ID',
+					'CREATED_BY_ID',
+					'REPRESENTATIVE_ID',
+					// Without it in the selection the type silently reads as COMPANY, and the
+					// export never recognises an employee-initiated document the way the screen
+					// does - see Service\B2e\AnnulmentTargetService.
+					'INITIATED_BY_TYPE',
+				])
+				->whereIn('ID', $batchIds)
+				->fetchAll()
+			;
+
+			foreach ($rows as $row)
+			{
+				$scenarioId = $row['SCENARIO'] === null ? null : (int)$row['SCENARIO'];
+				$entityType = $row['ENTITY_TYPE'];
+				$documents[] = new Item\Document(
+					scenario: $scenarioId === null ? null : $this->getScenarioNameById($scenarioId),
+					id: (int)$row['ID'],
+					title: $row['TITLE'],
+					entityType: $entityType,
+					entityTypeId: $entityType === null ? null : EntityType::getEntityTypeIdByType($entityType),
+					entityId: $row['ENTITY_ID'] === null ? null : (int)$row['ENTITY_ID'],
+					createdById: $row['CREATED_BY_ID'] === null ? null : (int)$row['CREATED_BY_ID'],
+					representativeId: $row['REPRESENTATIVE_ID'] === null ? null : (int)$row['REPRESENTATIVE_ID'],
+					externalId: $row['EXTERNAL_ID'],
+					initiatedByType: InitiatedByType::tryFromInt((int)$row['INITIATED_BY_TYPE'])
+						?? InitiatedByType::COMPANY,
+				);
+			}
+		}
+
+		return new Item\DocumentCollection(...$documents);
+	}
+
 	public function listByEntityIdsAndType(array $entityIds, string $entityType): Item\DocumentCollection
 	{
 		$models = Internal\DocumentTable::query()
@@ -588,6 +706,59 @@ class DocumentRepository
 		}
 
 		return Internal\DocumentTable::updateMulti($documentIds, ['PROVIDER_CODE' => $providerCode]);
+	}
+
+	/**
+	 * Writes the stop initiator only while the document has none. Two stops of the same document
+	 * race before the service call, and the trace decides who the callback names in the legal log,
+	 * so the trace of the first initiator must survive the second attempt.
+	 *
+	 * @return bool true only when this very call wrote the trace
+	 */
+	public function setStoppedByIdIfEmpty(int $documentId, int $userId): bool
+	{
+		if ($documentId <= 0 || $userId <= 0)
+		{
+			return false;
+		}
+
+		$connection = Main\Application::getConnection();
+		$sqlHelper = $connection->getSqlHelper();
+		$table = $sqlHelper->quote(Internal\DocumentTable::getTableName());
+		$column = $sqlHelper->quote('STOPPED_BY_ID');
+
+		$connection->queryExecute(
+			"UPDATE {$table} SET {$column} = {$userId}"
+			. " WHERE " . $sqlHelper->quote('ID') . " = {$documentId} AND {$column} IS NULL"
+		);
+
+		return $connection->getAffectedRowsCount() > 0;
+	}
+
+	/**
+	 * Takes the stop initiator back only while the trace is still the expected one. The rollback is
+	 * as conditional as the write: an initiator that belongs to someone else is never cleared.
+	 *
+	 * @return bool true only when this very call cleared the trace
+	 */
+	public function resetStoppedById(int $documentId, int $expectedUserId): bool
+	{
+		if ($documentId <= 0 || $expectedUserId <= 0)
+		{
+			return false;
+		}
+
+		$connection = Main\Application::getConnection();
+		$sqlHelper = $connection->getSqlHelper();
+		$table = $sqlHelper->quote(Internal\DocumentTable::getTableName());
+		$column = $sqlHelper->quote('STOPPED_BY_ID');
+
+		$connection->queryExecute(
+			"UPDATE {$table} SET {$column} = NULL"
+			. " WHERE " . $sqlHelper->quote('ID') . " = {$documentId} AND {$column} = {$expectedUserId}"
+		);
+
+		return $connection->getAffectedRowsCount() > 0;
 	}
 
 	/**

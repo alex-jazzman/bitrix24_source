@@ -40,9 +40,23 @@ jn.define('disk/file-grid/recent-files', (require, exports, module) => {
 			return false;
 		}
 
+		/**
+		 * @protected
+		 * @return {boolean} recent list shows files from arbitrary folders, getFolderId() is always null
+		 */
+		shouldReconcileByParentId()
+		{
+			return false;
+		}
+
 		showStorageName()
 		{
 			return true;
+		}
+
+		shouldUseStoredSorting()
+		{
+			return false;
 		}
 
 		fetchStorage()

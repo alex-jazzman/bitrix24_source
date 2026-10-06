@@ -1,5 +1,11 @@
 <?php
 
+$MESS["BITRIX_AI_RAG_BOT_AIASSISTANTAGENTCOMPLEXACTIVITY_TITLE"] = "AI-агент";
+$MESS["BITRIX_AI_RAG_BOT_AIASSISTANTAGENTCOMPLEXACTIVITY_RETURN_AI_RESULT"] = "Результат AI-обработки";
+$MESS["BITRIX_AI_RAG_BOT_AIASSISTANTAGENTCOMPLEXACTIVITY_RETURN_ERROR_MESSAGE"] = "Ошибка AI-обработки";
+$MESS["BITRIX_AI_RAG_BOT_AIASSISTANTAGENTCOMPLEXACTIVITY_RETURN_TOOLS_USED"] = "MCP использован без ошибок";
+$MESS["BITRIX_AI_RAG_BOT_AIASSISTANTAGENTCOMPLEXACTIVITY_RETURN_SOURCES"] = "Источники (веб-поиск)";
+$MESS["BITRIX_AI_RAG_BOT_AIAGENTRESTARTTRIGGER_TITLE"] = "Перезапуск агента";
 $MESS["BIZPROC_AI_AGENT_RAGCHATBOT_DEFAULT_1"] = "При ответе избегайте обсуждения политики, религии, личных конфликтов и негативных комментариев о коллегах. Отвечайте вежливо, профессионально и нейтрально. Если тема затрагивает запрещённые направления, вежливо откажитесь и предложите помощь в другом вопросе";
 $MESS["BIZPROC_AI_AGENT_RAGCHATBOT_DEFAULT_2"] = "Общайтесь вежливо, уважительно и корректно. Избегайте оскорблений, грубых выражений и агрессивного тона. Соблюдайте правила делового этикета, слушайте собеседника и реагируйте спокойно. Если ситуация требует критики, выражайте её конструктивно и без перехода на личности";
 $MESS["BIZPROC_AI_AGENT_RAGCHATBOT_DESCRIPTION_1"] = "Этот агент мгновенно найдёт информацию в ваших базах знаний и ответит на вопросы сотрудников прямо в чате.  Например, станет консультантом по юридическим вопросам или проводником для новичков в компании.
@@ -61,8 +67,6 @@ $MESS["BIZPROC_AI_AGENT_RAGCHATBOT_SYSTEMPROMPT_1"] = "## Роль и Главн
 $MESS["BIZPROC_AI_AGENT_RAGCHATBOT_TEXT_1"] = "Сотрудники будут общаться с агентом в чате. Придумайте понятное название для этого чата, например, «Консультант по вопросам бухгалтерии»";
 $MESS["BIZPROC_AI_AGENT_RAGCHATBOT_TEXT_2"] = "Профессиональные настройки";
 $MESS["BIZPROC_AI_AGENT_RAGCHATBOT_TEXT_3"] = "Расширенные параметры для тонкой настройки логики и поведения агента. Используйте их для точного контроля над ответами и производительностью.";
-$MESS["BIZPROC_AI_AGENT_RAGCHATBOT_TEXT_4"] = "Промпты";
-$MESS["BIZPROC_AI_AGENT_RAGCHATBOT_TEXT_5"] = "Напишите, как агент должен себя вести, в каком стиле общаться, что он должен знать и как отвечать на вопросы";
 $MESS["BIZPROC_AI_AGENT_RAGCHATBOT_TITLE_1"] = "Нодовый бизнес-процесс";
 $MESS["BIZPROC_AI_AGENT_RAGCHATBOT_TITLE_2"] = "AI-агент";
 $MESS["BIZPROC_AI_AGENT_RAGCHATBOT_TITLE_3"] = "Мастер настройки данных";
@@ -78,7 +82,6 @@ $MESS["BIZPROC_NODES_BITRIX_AI_RAG_BOT_MESSAGE_1"] = "Привет! Мне пр�
 {=A9700_4393_6634_9720:Message}
 ------------------------------------------------------
 У меня нет такой информации. Предлагаю добавить это в базу знаний.";
-$MESS["BIZPROC_NODES_BITRIX_AI_RAG_BOT_NAME_1"] = "Результат AI-обработки";
 $MESS["BIZPROC_NODES_BITRIX_AI_RAG_BOT_NAME_10"] = "Чат-бот";
 $MESS["BIZPROC_NODES_BITRIX_AI_RAG_BOT_NAME_11"] = "Сотрудник, запустивший агента";
 $MESS["BIZPROC_NODES_BITRIX_AI_RAG_BOT_NAME_12"] = "Групповой чат";
@@ -88,8 +91,6 @@ $MESS["BIZPROC_NODES_BITRIX_AI_RAG_BOT_NAME_4"] = "Процесс";
 $MESS["BIZPROC_NODES_BITRIX_AI_RAG_BOT_NAME_5"] = "Шаблон";
 $MESS["BIZPROC_NODES_BITRIX_AI_RAG_BOT_NAME_6"] = "Кем создано";
 $MESS["BIZPROC_NODES_BITRIX_AI_RAG_BOT_NAME_7"] = "Когда создано";
-$MESS["BIZPROC_NODES_BITRIX_AI_RAG_BOT_NAME_8"] = "Ошибка AI-обработки";
-$MESS["BIZPROC_NODES_BITRIX_AI_RAG_BOT_NAME_9"] = "MCP использован без ошибок";
 $MESS["BIZPROC_NODES_BITRIX_AI_RAG_BOT_STORAGETITLE_1"] = "Системная информация для агента поиска по базе знаний [{=Workflow:TemplateId}]";
 $MESS["BIZPROC_NODES_BITRIX_AI_RAG_BOT_TITLE_1"] = "Создание хранилища";
 $MESS["BIZPROC_NODES_BITRIX_AI_RAG_BOT_TITLE_2"] = "Запись данных";

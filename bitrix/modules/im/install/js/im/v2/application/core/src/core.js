@@ -26,6 +26,7 @@ import {
 	BasePullHandler,
 	RecentPullHandler,
 	RecentUnreadPullHandler,
+	FolderPullHandler,
 	NotificationPullHandler,
 	NotifierPullHandler,
 	OnlinePullHandler,
@@ -263,6 +264,7 @@ class CoreApplication
 		this.#pullClient.subscribe(new OnlinePullHandler());
 		this.#pullClient.subscribe(new CounterPullHandler());
 		this.#pullClient.subscribe(new RecentUnreadPullHandler());
+		this.#pullClient.subscribe(new FolderPullHandler());
 		this.#pullClient.subscribe(new AnchorPullHandler());
 		this.#pullClient.subscribe(new SidebarPullHandler());
 		this.#pullClient.subscribe(new StickersPullHandler());
@@ -298,3 +300,4 @@ class CoreApplication
 const Core = new CoreApplication();
 
 export { Core, CoreApplication };
+export type { FolderLimits } from './types/types';

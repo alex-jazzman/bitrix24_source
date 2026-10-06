@@ -40,7 +40,7 @@ this.BX.Mail = this.BX.Mail || {};
 			}
 			const messageBox = new ui_dialogs_messagebox.MessageBox({
 				title: main_core.Loc.getMessage("MAIL_DIALOG_EDIT_CONTACT_REMOVE_DIALOG_TITLE"),
-				message: main_core.Loc.getMessage("MAIL_DIALOG_EDIT_CONTACT_REMOVE_DIALOG_MESSAGE"),
+				message: main_core.Loc.getMessage("MAIL_DIALOG_EDIT_CONTACT_REMOVE_DIALOG_MESSAGE_MSGVER_1"),
 				buttons: BX.UI.Dialogs.MessageBoxButtons.OK_CANCEL,
 				popupOptions: {
 					zIndex: messageBoxZIndex

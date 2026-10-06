@@ -76,6 +76,7 @@ jn.define('call/calls/plain', (require, exports, module) => {
 			this.localStream = null;
 			this.videoEnabled = Boolean(params.videoEnabled);
 			this.muted = Boolean(params.muted);
+			this.invitePeriod = params.invitePeriod;
 			this.isCopilotActive = Boolean(params.isCopilotActive);
 
 			/** @var {Peer[]} */
@@ -117,8 +118,6 @@ jn.define('call/calls/plain', (require, exports, module) => {
 				onSwitchMicrophonesStatus: () => this.eventEmitter.emit(BX.Call.Event.onActiveCallNotificationSwitchMicrophoneStatusPress),
 				onHangup: () => this.eventEmitter.emit(BX.Call.Event.onActiveCallNotificationHangupButtonPress)
 			});
-
-			this.invitePeriod = params.invitePeriod;
 		}
 
 		get provider()

@@ -18,6 +18,7 @@ return [
 		'im:messenger/controller/folder/update',
 		'im:messenger/controller/folder/lib/ui/loadable-button',
 		'im:messenger/controller/folder/lib/actions',
+		'im:messenger/provider/services/analytics',
 	],
 	'bundle' => [
 		'./src/card',

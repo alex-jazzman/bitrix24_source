@@ -1,4 +1,5 @@
-import {Menu, MenuItem} from 'main.popup';
+import {Menu} from 'main.popup';
+import type {MenuItem} from 'main.popup';
 import {Runtime, Type, Text} from 'main.core';
 import {Vue} from "ui.vue";
 import {config} from "../../config";

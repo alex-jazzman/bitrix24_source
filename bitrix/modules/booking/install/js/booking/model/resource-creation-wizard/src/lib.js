@@ -1,6 +1,6 @@
 import { toRaw } from 'ui.vue3';
 import { Core } from 'booking.core';
-import { Communication } from 'booking.const';
+import { Communication, NotificationTemplateType } from 'booking.const';
 import type { NotificationsSenderModel } from 'booking.model.notifications';
 import type { ResourceModel } from './types';
 
@@ -39,11 +39,11 @@ export function getEmptyResource(): ResourceModel
 		isInfoNotificationOn: false,
 		isDelayedNotificationOn: false,
 		isReminderNotificationOn: false,
-		templateTypeConfirmation: 'animate',
-		templateTypeFeedback: 'animate',
-		templateTypeInfo: 'animate',
-		templateTypeDelayed: 'animate',
-		templateTypeReminder: 'base',
+		templateTypeConfirmation: NotificationTemplateType.Animate,
+		templateTypeFeedback: NotificationTemplateType.Animate,
+		templateTypeInfo: NotificationTemplateType.Animate,
+		templateTypeDelayed: NotificationTemplateType.Animate,
+		templateTypeReminder: NotificationTemplateType.Base,
 		createdBy: 0,
 		createdAt: 0,
 		updatedAt: null,

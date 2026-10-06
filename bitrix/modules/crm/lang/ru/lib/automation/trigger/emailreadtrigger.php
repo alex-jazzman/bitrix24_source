@@ -5,3 +5,4 @@ $MESS['CRM_AUTOMATION_TRIGGER_EMAIL_READ_NAME_1'] = 'Отследить прос
 $MESS['CRM_AUTOMATION_TRIGGER_EMAIL_READ_DESCRIPTION'] = 'Меняет стадию после того, как клиент прочитал письмо';
 
 $MESS['CRM_AUTOMATION_TRIGGER_EMAIL_READ_NODE_DESCRIPTION'] = 'Запускает процесс после того, как клиент прочитал письмо';
+$MESS['CRM_AUTOMATION_TRIGGER_EMAIL_READ_EVENT_DATE_TIME'] = 'Дата и время просмотра письма';

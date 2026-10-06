@@ -10,7 +10,8 @@ import { Helpdesk, Link } from 'sign.v2.helper';
 import { Alert } from 'ui.alerts';
 import { Dialog } from 'ui.entity-selector';
 import { Label, LabelColor } from 'ui.label';
-import { hide, show } from './functions';
+import { setupAccessibleTrigger } from './accessibility';
+import { hide, isGoskeyLitePromoAllowed, show } from './functions';
 import type { CompanyData } from './index';
 import { HelpdeskCodes, ProviderCode } from './index';
 import { Api } from 'sign.v2.api';
@@ -24,6 +25,7 @@ export type Options = {
 
 export const allowedSignatureProviders: Array<ProviderCodeType> = [
 	'goskey',
+	'goskey-lite',
 	'external',
 	'ses-ru',
 	'ses-com',
@@ -45,10 +47,14 @@ export class ProviderSelector extends EventEmitter
 
 	#layoutCache: MemoryCache<HTMLElement> = new MemoryCache();
 	#providerMenu: Dialog | null = null;
+	#providerDialogTrigger: { setExpanded: (expanded: boolean) => void } | null = null;
+	#connectMenuTrigger: { setExpanded: (expanded: boolean) => void } | null = null;
+	#connectMenu: Menu | null = null;
 	#options: Options;
 	#showTaxId: boolean = true;
 	#providerExpiresDaysToShowInfo: Number = 45;
 	#company: CompanyData | null = null;
+	#nothingToSelect: boolean = true;
 	#companyList: Array<Company> = [];
 	#registerIframe: HTMLIFrameElement | null;
 	#iframeConnectInterval: number | null = null;
@@ -89,12 +95,22 @@ export class ProviderSelector extends EventEmitter
 	get #providerConnectedSelectDropdownBtnLayout(): HTMLElement
 	{
 		return this.#layoutCache.remember('providerConnectedSelectDropdownBtnLayout', () => {
-			return Tag.render`
+			const button = Tag.render`
 				<span
 					class="sign-document-b2e-company-info-dropdown-btn sign-document-b2e-company__provider_dropdown-btn"
-					onclick="${() => this.#providerMenu.show()}"
 				></span>
 			`;
+			// The dropdown button, not the row, is the accessible trigger: the row also holds the
+			// disconnect menu button, and nesting one ARIA button inside another breaks the tree.
+			this.#providerDialogTrigger = setupAccessibleTrigger(button, {
+				hasPopup: 'dialog',
+				label: Loc.getMessage('SIGN_B2E_COMPANIES_SELECT_BUTTON'),
+				testId: 'sign-b2e-provider-selector-trigger',
+				stopPropagation: true,
+				onActivate: () => this.#showProviderMenu(),
+			});
+
+			return button;
 		});
 	}
 
@@ -158,7 +174,7 @@ export class ProviderSelector extends EventEmitter
 					</span>
 					<button
 						class="ui-btn ui-btn-success ui-btn-xs ui-btn-round"
-						onclick="${() => this.#getProviderMenu().show()}"
+						onclick="${() => this.#showProviderMenu()}"
 					>
 						${Loc.getMessage('SIGN_B2E_COMPANIES_SELECT_BUTTON')}
 					</button>
@@ -184,7 +200,7 @@ export class ProviderSelector extends EventEmitter
 	get #connectedProviderLayout(): HTMLElement
 	{
 		return this.#layoutCache.remember('connectedProvider', () => {
-			return Tag.render`
+			const layout = Tag.render`
 				<div class="sign-document-b2e-company__provider_selected">
 					<div class="sign-document-b2e-company__provider_selected__external-image-container">
 						<img class="sign-document-b2e-company__provider_selected__external-img"
@@ -202,18 +218,31 @@ export class ProviderSelector extends EventEmitter
 					${this.#providerConnectDropdownBtnLayout}
 				</div>
 			`;
+			// Mouse convenience only: the whole row opens the provider dialog, while keyboard and
+			// screen readers use the dropdown button inside it.
+			Event.bind(layout, 'click', () => this.#showProviderMenu());
+
+			return layout;
 		});
 	}
 
 	get #providerConnectDropdownBtnLayout(): HTMLElement
 	{
 		return this.#layoutCache.remember('providerConnectDropdownBtnLayout', () => {
-			return Tag.render`
+			const button = Tag.render`
 				<span
 					class="sign-document-b2e-company-info-edit"
-					onclick="${() => this.#showConnectMenu()}"
 				></span>
 			`;
+			this.#connectMenuTrigger = setupAccessibleTrigger(button, {
+				hasPopup: 'menu',
+				label: Loc.getMessage('SIGN_B2E_PROVIDER_DISCONNECT'),
+				testId: 'sign-b2e-provider-selector-menu',
+				stopPropagation: true,
+				onActivate: () => this.#showConnectMenu(),
+			});
+
+			return button;
 		});
 	}
 
@@ -227,7 +256,7 @@ export class ProviderSelector extends EventEmitter
 		this.#providerMenu = new Dialog({
 			width: 425,
 			height: 363,
-			targetNode: this.getLayout(),
+			targetNode: this.#connectedProviderLayout,
 			items: [],
 			showAvatars: true,
 			dropdownMode: true,
@@ -237,6 +266,8 @@ export class ProviderSelector extends EventEmitter
 				{ id: 'b2e-providers', title: Loc.getMessage('SIGN_B2E_PROVIDERS_TAB') },
 			],
 			events: {
+				onShow: () => this.#providerDialogTrigger?.setExpanded(true),
+				onHide: () => this.#providerDialogTrigger?.setExpanded(false),
 				'Item:OnSelect': ({ data }) => {
 					this.#onProviderSelect(data.item.id);
 				},
@@ -246,6 +277,27 @@ export class ProviderSelector extends EventEmitter
 		});
 
 		return this.#providerMenu;
+	}
+
+	#showProviderMenu(): void
+	{
+		if (this.#nothingToSelect)
+		{
+			return;
+		}
+
+		const menu = this.#getProviderMenu();
+		menu.setTargetNode(this.#getProviderMenuTargetNode());
+		this.#providerDialogTrigger?.setExpanded(true);
+		menu.show();
+	}
+
+	#getProviderMenuTargetNode(): HTMLElement
+	{
+		// The connected row is hidden after deselect, so the popup binds to the visible select button.
+		return Dom.style(this.#connectedProviderLayout, 'display') === 'none'
+			? this.#providerUnsetLayout
+			: this.#connectedProviderLayout;
 	}
 
 	#getProviderAddButton(): ?HTMLElement
@@ -345,10 +397,26 @@ export class ProviderSelector extends EventEmitter
 
 	#showConnectMenu(): void
 	{
+		// Repeated activation closes the open menu instead of building a second one: the old popup
+		// hides with a zero timeout, and its onPopupClose would reset ARIA of the already shown menu.
+		if (this.#connectMenu)
+		{
+			this.#connectMenu.close();
+
+			return;
+		}
+
 		const menu = new Menu({
 			bindElement: this.#providerConnectDropdownBtnLayout,
 			cacheable: false,
+			events: {
+				onPopupClose: () => {
+					this.#connectMenu = null;
+					this.#connectMenuTrigger?.setExpanded(false);
+				},
+			},
 		});
+		this.#connectMenu = menu;
 		menu.addMenuItem({
 			text: Loc.getMessage('SIGN_B2E_PROVIDER_DISCONNECT'),
 			onclick: () => {
@@ -356,6 +424,7 @@ export class ProviderSelector extends EventEmitter
 				menu.close();
 			},
 		});
+		this.#connectMenuTrigger?.setExpanded(true);
 		menu.show();
 	}
 
@@ -396,9 +465,76 @@ export class ProviderSelector extends EventEmitter
 		void guide.startOnce();
 	}
 
+	#shouldShowGoskeyLitePromo(company: Company): boolean
+	{
+		return isGoskeyLitePromoAllowed({
+			providers: company?.providers,
+			goskeyLiteAvailable: company?.goskeyLiteAvailable,
+			region: this.#options.region,
+			documentInitiatedType: this.#options.documentInitiatedType,
+			goskeyCode: ProviderCode.goskey,
+			goskeyLiteCode: ProviderCode.goskeyLite,
+			employeeInitiatedType: DocumentInitiated.employee,
+		});
+	}
+
+	// Reuses the base provider tour mechanics and shows once per user via startOnce() + autoSave:
+	// ui.tour persists the visit (in CUserOptions through sign.tour) the moment the promo is shown,
+	// so it never appears again once seen. The CTA opens the same connection slider as the regular
+	// "add provider" flow.
+	#startGoskeyLitePromo(): void
+	{
+		const guide = new Guide({
+			id: 'sign-b2e-goskey-lite-promo',
+			onEvents: true,
+			autoSave: true,
+			steps: [
+				{
+					target: this.#providerConnectedSelectDropdownBtnLayout,
+					title: `
+						<p class="sign-document-b2e-company__provider_tour-step-head">
+							${Loc.getMessage('SIGN_B2E_GOSKEY_LITE_PROMO_HEAD')}
+						</p>
+					`,
+					// ui.tour renders step buttons as PopupWindowButton and does not forward custom
+					// attributes, so the CTA button cannot carry a data-testid directly. The promo
+					// content wrapper carries it instead: e2e locates the promo and clicks its primary
+					// button.
+					text: `
+						<div data-testid="sign-b2e-goskey-lite-promo">
+							<p class="sign-document-b2e-company__provider_tour-step-text">
+								${Loc.getMessage('SIGN_B2E_GOSKEY_LITE_PROMO_TEXT')}
+							</p>
+							<p class="sign-document-b2e-company__provider_tour-step-text">
+								${Loc.getMessage('SIGN_B2E_GOSKEY_LITE_PROMO_NOTE')}
+							</p>
+						</div>
+					`,
+					buttons: [
+						{
+							text: Loc.getMessage('SIGN_B2E_GOSKEY_LITE_PROMO_CONNECT'),
+							event: () => {
+								guide.close();
+								this.#openProvidersConnectionSlider();
+							},
+						},
+					],
+				},
+			],
+			popupOptions: {
+				width: 380,
+				autoHide: true,
+				className: 'sign-document-b2e-company__provider_popup-tour',
+				centerAngle: true,
+			},
+		});
+		void guide.startOnce();
+	}
+
 	setProvider(rqInn: ?string, company: Company): void
 	{
 		this.#resetProviderState();
+		this.#nothingToSelect = true;
 		if (company?.providers?.length > 0)
 		{
 			hide(this.#providerDisconnectedLayout);
@@ -437,14 +573,27 @@ export class ProviderSelector extends EventEmitter
 		const [firstItem] = menu.getItems();
 		firstItem.select();
 
-		const nothingToSelect = !company?.registerUrl && company?.providers?.length < 2;
+		this.#nothingToSelect = !company?.registerUrl && company?.providers?.length < 2;
 		Dom.style(
 			this.#providerConnectedSelectDropdownBtnLayout,
 			'display',
-			nothingToSelect ? 'none' : 'block',
+			this.#nothingToSelect ? 'none' : 'block',
 		);
+		// Cursor and hover must not promise an action the row cannot perform.
+		if (this.#nothingToSelect)
+		{
+			Dom.removeClass(this.#connectedProviderLayout, '--clickable');
+		}
+		else
+		{
+			Dom.addClass(this.#connectedProviderLayout, '--clickable');
+		}
 
-		if (this.#options.region === 'ru' && this.#options.documentInitiatedType !== DocumentInitiated.employee)
+		if (this.#shouldShowGoskeyLitePromo(company))
+		{
+			this.#startGoskeyLitePromo();
+		}
+		else if (this.#options.region === 'ru' && this.#options.documentInitiatedType !== DocumentInitiated.employee)
 		{
 			this.#tryStartProviderTour();
 		}
@@ -491,6 +640,8 @@ export class ProviderSelector extends EventEmitter
 		{
 			case 'goskey':
 				return Loc.getMessage('SIGN_B2E_PROVIDER_GOSKEY_NAME');
+			case 'goskey-lite':
+				return Loc.getMessage('SIGN_B2E_PROVIDER_GOSKEY_LITE_NAME');
 			case 'ses-ru':
 				return Loc.getMessage('SIGN_B2E_PROVIDER_SES_NAME');
 			case 'ses-com':
@@ -596,11 +747,13 @@ export class ProviderSelector extends EventEmitter
 
 		const providerCodeToProviderInfoTextMap: { [key: ProviderCodeType]: ?string } = {
 			goskey: Loc.getMessage('SIGN_B2E_COMPANY_GOSKEY_INFO'),
+			'goskey-lite': Loc.getMessage('SIGN_B2E_COMPANY_GOSKEY_LITE_INFO'),
 			'ses-ru': Loc.getMessage('SIGN_B2E_COMPANY_SES_RU_INFO'),
 			'ses-ru-express': Loc.getMessage('SIGN_B2E_COMPANY_SES_RU_EXPRESS_INFO'),
 		};
 		const providerCodeToHelpdeskCodeMap: { [key: ProviderCodeType]: string } = {
 			goskey: HelpdeskCodes.GoskeyDetails,
+			'goskey-lite': HelpdeskCodes.GoskeyDetails,
 			'ses-ru': HelpdeskCodes.SesRuDetails,
 			'ses-ru-express': HelpdeskCodes.SesRuExpressDetails,
 		};
@@ -665,6 +818,11 @@ export class ProviderSelector extends EventEmitter
 
 	#isProviderExpired(provider: Provider): boolean
 	{
+		if (provider.code === ProviderCode.goskeyLite)
+		{
+			return false;
+		}
+
 		return provider.expires && this.#getProviderDaysLeft(provider.expires) < 1;
 	}
 
@@ -795,6 +953,11 @@ export class ProviderSelector extends EventEmitter
 			return this.#isProviderExpired(provider)
 				? 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzYiIGhlaWdodD0iMzYiIHZpZXdCb3g9IjAgMCAzNiAzNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjM2IiBoZWlnaHQ9IjM2IiByeD0iMTgiIGZpbGw9IiNCREMxQzYiLz4KPHBhdGggZmlsbC1ydWxlPSJldmVub2RkIiBjbGlwLXJ1bGU9ImV2ZW5vZGQiIGQ9Ik0xNi4zMzA1IDE0Ljg5OTlMMTkuNzU3MiAxMS40NzMxQzIwLjM4ODEgMTAuODQyMyAyMS40MTA5IDEwLjg0MjMgMjIuMDQxNyAxMS40NzMxTDI0LjcwNyAxNC4xMzg0QzI1LjMzNzggMTQuNzY5MiAyNS4zMzc4IDE1Ljc5MiAyNC43MDcgMTYuNDIyOUwyMS4yODAyIDE5Ljg0OTZDMjAuODU5NyAyMC4yNzAyIDIwLjE3OTEgMjAuMjcxNSAxOS43NTg1IDE5Ljg1MDlMMTYuMzI5OCAxNi40MjIyQzE1LjkwOTMgMTYuMDAxNiAxNS45MDk5IDE1LjMyMDQgMTYuMzMwNSAxNC44OTk5Wk0yMS42NjEgMTUuNjYxNEMyMS4zNDU2IDE1Ljk3NjggMjAuODM0MiAxNS45NzY4IDIwLjUxODcgMTUuNjYxNEMyMC4yMDMzIDE1LjM0NiAyMC4yMDMzIDE0LjgzNDYgMjAuNTE4NyAxNC41MTkxQzIwLjgzNDIgMTQuMjAzNyAyMS4zNDU2IDE0LjIwMzcgMjEuNjYxIDE0LjUxOTFDMjEuOTc2NCAxNC44MzQ2IDIxLjk3NjQgMTUuMzQ2IDIxLjY2MSAxNS42NjE0WiIgZmlsbD0id2hpdGUiLz4KPHBhdGggZD0iTTE3LjA5MiAxNy45NDU5TDE4LjQyNDYgMTkuMjc4NUMxOC42MzQ5IDE5LjQ4ODggMTguNjM0OSAxOS44Mjk3IDE4LjQyNDYgMjAuMDRMMTcuMDU5MyAyMS40MDUzQzE2Ljk1ODQgMjEuNTA2MyAxNi44MjE0IDIxLjU2MyAxNi42Nzg2IDIxLjU2M0gxNS4zNzg2VjIyLjg2M0MxNS4zNzg2IDIzLjAwNTggMTUuMzIxOSAyMy4xNDI3IDE1LjIyMDkgMjMuMjQzN0wxNS4xNTU2IDIzLjMwOUMxNS4wNTQ2IDIzLjQxIDE0LjkxNzYgMjMuNDY2OCAxNC43NzQ4IDIzLjQ2NjhIMTMuNDc0OVYyNC43NjY3QzEzLjQ3NDkgMjQuOTA5NSAxMy40MTgxIDI1LjA0NjUgMTMuMzE3MiAyNS4xNDc1TDEyLjg3MTEgMjUuNTkzNUMxMi43NzAxIDI1LjY5NDUgMTIuNjMzMSAyNS43NTEzIDEyLjQ5MDMgMjUuNzUxM0gxMS4zMjVDMTEuMjM4OCAyNS43NTEzIDExLjE1NjEgMjUuNzE3IDExLjA5NTIgMjUuNjU2MUMxMS4wMzQyIDI1LjU5NTEgMTEgMjUuNTEyNSAxMSAyNS40MjYzVjIzLjY1NzFMMTUuMTg4MiAxOS40Njg5QzE0Ljk3OCAxOS4yNTg2IDE0Ljk3OCAxOC45MTc3IDE1LjE4ODIgMTguNzA3NEwxNS45NDk3IDE3Ljk0NTlDMTYuMjY1MiAxNy42MzA1IDE2Ljc3NjYgMTcuNjMwNSAxNy4wOTIgMTcuOTQ1OVoiIGZpbGw9IndoaXRlIi8+CjxwYXRoIGZpbGwtcnVsZT0iZXZlbm9kZCIgY2xpcC1ydWxlPSJldmVub2RkIiBkPSJNNS42MTUyNiAxNy4wNTY0VjE5LjMwMDJDNS42MTUyNiAyMC43MzA5IDUuNjE2ODIgMjEuNjk0NiA1LjY4NTA2IDIyLjQ1MjJDNS43NTAzMSAyMy4xNzY1IDUuODY4ODYgMjMuNTk0MiA2LjA0MzgxIDIzLjkzNDVDNi4yMTg3NyAyNC4yNzQ5IDYuNDg4MzggMjQuNjEyMyA3LjAzNjA3IDI1LjA4MDRDNy42MDg4NiAyNS41NyA4LjM4NjI5IDI2LjEyMTcgOS41NDE2OCAyNi45Mzg3TDExLjA0NTkgMjguMDAyNEwxMy41Nzc5IDI5LjQyMjRDMTQuODc2MiAzMC4xNTA1IDE1Ljc1MjYgMzAuNjQwMSAxNi40NzUgMzAuOTU4NUMxNy4xNjYgMzEuMjYzIDE3LjYwNCAzMS4zNTc5IDE3Ljk5OTkgMzEuMzU3OUMxOC4zOTU3IDMxLjM1NzkgMTguODMzNyAzMS4yNjMgMTkuNTI0NyAzMC45NTg1QzIwLjI0NzIgMzAuNjQwMSAyMS4xMjM1IDMwLjE1MDUgMjIuNDIxOSAyOS40MjI0TDI0Ljk1MzkgMjguMDAyNEwyNi40NTgxIDI2LjkzODdDMjcuNjEzNSAyNi4xMjE3IDI4LjM5MDkgMjUuNTcgMjguOTYzNyAyNS4wODA0QzI5LjUxMTQgMjQuNjEyMyAyOS43ODEgMjQuMjc0OSAyOS45NTU5IDIzLjkzNDVDMzAuMTMwOSAyMy41OTQyIDMwLjI0OTQgMjMuMTc2NSAzMC4zMTQ3IDIyLjQ1MjJDMzAuMzgyOSAyMS42OTQ2IDMwLjM4NDUgMjAuNzMwOSAzMC4zODQ1IDE5LjMwMDJWMTcuMDU2NEMzMC4zODQ1IDE1LjYyNTcgMzAuMzgyOSAxNC42NjE5IDMwLjMxNDcgMTMuOTA0NEMzMC4yNDk0IDEzLjE4IDMwLjEzMDkgMTIuNzYyMyAyOS45NTU5IDEyLjQyMkMyOS43ODEgMTIuMDgxNiAyOS41MTE0IDExLjc0NDIgMjguOTYzNyAxMS4yNzYxQzI4LjM5MDkgMTAuNzg2NSAyNy42MTM1IDEwLjIzNDkgMjYuNDU4MSA5LjQxNzgzTDI0LjkxOTggOC4zMzAwNEwyMi44MjczIDcuMDA5OEMyMS40MTc3IDYuMTIwNDIgMjAuNDYzNCA1LjUyMDc0IDE5LjY3MzQgNS4xMzA3QzE4LjkxNzMgNC43NTczMyAxOC40MzY4IDQuNjQyMDYgMTcuOTk5OSA0LjY0MjA2QzE3LjU2MyA0LjY0MjA2IDE3LjA4MjUgNC43NTczMyAxNi4zMjYzIDUuMTMwN0MxNS41MzYzIDUuNTIwNzQgMTQuNTgyMSA2LjEyMDQyIDEzLjE3MjUgNy4wMDk4TDExLjA4IDguMzMwMDNMOS41NDE2NyA5LjQxNzgzQzguMzg2MjkgMTAuMjM0OSA3LjYwODg2IDEwLjc4NjUgNy4wMzYwNyAxMS4yNzYxQzYuNDg4MzggMTEuNzQ0MiA2LjIxODc3IDEyLjA4MTYgNi4wNDM4MSAxMi40MjJDNS44Njg4NiAxMi43NjIzIDUuNzUwMzEgMTMuMTggNS42ODUwNiAxMy45MDQ0QzUuNjE2ODIgMTQuNjYxOSA1LjYxNTI2IDE1LjYyNTcgNS42MTUyNiAxNy4wNTY0Wk0xMC4xOTIyIDYuOTU3NTNMMTIuMzIwNiA1LjYxNDY0QzE1LjA4MzMgMy44NzE1NSAxNi40NjQ2IDMgMTcuOTk5OSAzQzE5LjUzNTEgMyAyMC45MTY1IDMuODcxNTUgMjMuNjc5MiA1LjYxNDY0TDI1LjgwNzYgNi45NTc1M0wyNy4zODA2IDguMDY5ODZDMjkuNjQzOCA5LjY3MDI5IDMwLjc3NTQgMTAuNDcwNSAzMS4zODc3IDExLjY2MTVDMzEuOTk5OSAxMi44NTI1IDMxLjk5OTkgMTQuMjUzOCAzMS45OTk5IDE3LjA1NjRWMTkuMzAwMkMzMS45OTk5IDIyLjEwMjcgMzEuOTk5OSAyMy41MDQgMzEuMzg3NyAyNC42OTVDMzAuNzc1NCAyNS44ODYgMjkuNjQzOCAyNi42ODYyIDI3LjM4MDYgMjguMjg2N0wyNS44MDc2IDI5LjM5OUwyMy4yMDIzIDMwLjg2MDFDMjAuNjU4NiAzMi4yODY3IDE5LjM4NjggMzMgMTcuOTk5OSAzM0MxNi42MTMgMzMgMTUuMzQxMiAzMi4yODY3IDEyLjc5NzUgMzAuODYwMUwxMC4xOTIyIDI5LjM5OUw4LjYxOTE3IDI4LjI4NjZDNi4zNTU5MyAyNi42ODYyIDUuMjI0MzEgMjUuODg2IDQuNjEyMDkgMjQuNjk1QzMuOTk5ODggMjMuNTA0IDMuOTk5ODggMjIuMTAyNyAzLjk5OTg4IDE5LjMwMDJWMTcuMDU2NEMzLjk5OTg4IDE0LjI1MzggMy45OTk4OCAxMi44NTI1IDQuNjEyMDkgMTEuNjYxNUM1LjIyNDMxIDEwLjQ3MDUgNi4zNTU5NCA5LjY3MDI5IDguNjE5MTggOC4wNjk4NkwxMC4xOTIyIDYuOTU3NTNaIiBmaWxsPSJ3aGl0ZSIvPgo8L3N2Zz4K'
 				: 'data:image/png;base64,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';
+		}
+
+		if (provider.code === ProviderCode.goskeyLite)
+		{
+			return 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDQiIGhlaWdodD0iNDQiIHZpZXdCb3g9IjAgMCA0NCA0NCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiByb2xlPSJpbWciIGFyaWEtbGFiZWw9ItCj0L/RgNC+0YnRkdC90L3Ri9C5INCT0L7RgdC60LvRjtGHIj4KPHBhdGggZD0iTTAgMjEuNUMwIDkuNjI1ODggOS42MjU4OCAwIDIxLjUgMFYwQzMzLjM3NDEgMCA0MyA5LjYyNTg4IDQzIDIxLjVWMjEuNUM0MyAzMy4zNzQxIDMzLjM3NDEgNDMgMjEuNSA0M1Y0M0M5LjYyNTg4IDQzIDAgMzMuMzc0MSAwIDIxLjVWMjEuNVoiIGZpbGw9IiMwQTI4OTYiLz4KPHBhdGggZD0iTTI5LjQ3NDEgMTUuOTkzMkwyNi41MTEgMTMuMDIyOEMyNS44MjQzIDEyLjIxMzkgMjQuNjE0MyAxMi4xMTczIDIzLjgwOSAxMi44MDdDMjMuNzMxOSAxMi44NzMyIDIzLjY1OTcgMTIuOTQ1NiAyMy41OTQxIDEzLjAyMjhMMTkuMTU4OSAxNy40NzQ4QzE4Ljg0NzIgMTcuNzk2MiAxOC44NDcyIDE4LjMwOCAxOS4xNTg5IDE4LjYyOTRMMjMuODczNiAyMy4zNjIyQzI0LjE5MzkgMjMuNjc1MiAyNC43MDM3IDIzLjY3NTIgMjUuMDIzMyAyMy4zNjIyTDI5LjQ3MzQgMTguOTIxN0MzMC4zODU3IDE4LjAwNTkgMzAuMzg1NyAxNi45MTMzIDI5LjQ3MzQgMTUuOTkzMkgyOS40NzQxWk0yNi40NzMzIDE3LjQ0NjhDMjYuNDczMyAxOC4xMzc4IDI1LjkxNTMgMTguNjk3NSAyNS4yMjc1IDE4LjY5NzVDMjQuNTM5NSAxOC42OTc1IDIzLjk4MTggMTguMTM3MiAyMy45ODE4IDE3LjQ0NjhDMjMuOTgxOCAxNi43NTY1IDI0LjUzOTUgMTYuMTk2MiAyNS4yMjc1IDE2LjE5NjJDMjUuOTE1MyAxNi4xOTYyIDI2LjQ3MzMgMTYuNzU1OSAyNi40NzMzIDE3LjQ0NjhaTTIyLjI0NTQgMjIuNjAzM0wxOS45MzQ0IDIwLjI3NTJDMTkuNzg0OCAyMC4xMjU3IDE5LjU0MzYgMjAuMTI1NyAxOS4zOTQxIDIwLjI3NTJMMTguMDE4MyAyMS42NTYzQzE3Ljg2OTMgMjEuODA2NiAxNy44NjkzIDIyLjA0OTEgMTguMDE4MyAyMi4xOTkxTDE4LjI1MjIgMjIuNDMzN0wxMy4zNTM2IDI3LjM1NDlDMTMuMjgzNyAyNy40MjU0IDEzLjI0MzYgMjcuNTIwNiAxMy4yNDI0IDI3LjYyMDVMMTMuMjA0MSAyOS42NjM1QzEzLjIwNDEgMjkuODc2MyAxMy4zNzU0IDMwLjA0ODEgMTMuNTg3NSAzMC4wNDgxSDE1LjE5NzRDMTUuMjk5NSAzMC4wNDgxIDE1LjM5NzMgMzAuMDA4NiAxNS40Njk2IDI5LjkzNjlMMTUuODM2IDI5LjU2NzRMMTUuODM3OCAyOS41NjU3QzE1LjkwNzIgMjkuNDk1NyAxNi4wMjUgMjkuMzc2NiAxNi4wMjczIDI5LjI3ODhMMTYuMjE4OSAyNy41NDdMMTcuMzE4MiAyNy40Mzg4QzE3LjcyNTkgMjcuMzk4NSAxOC4xMTEzIDI3LjIzNTEgMTguNDIzNSAyNi45Njk1VjI1LjE0MTdMMTkuMTM4OSAyNS4xMTNDMTkuODUxIDI1LjA4NDQgMjAuNTI4NiAyNC43OTU4IDIxLjA0MjggMjQuMzAxNkwyMi4yNDY3IDIzLjE0NTNDMjIuMzk1NSAyMi45OTUzIDIyLjM5NTUgMjIuNzUyOCAyMi4yNDY3IDIyLjYwMjVMMjIuMjQ1NCAyMi42MDMzWiIgZmlsbD0id2hpdGUiLz4KPHBhdGggZD0iTTIxLjY3NDIgMzkuMjM0MUMyMC4zNjY5IDM5LjIzNDEgMTkuMDU5OCAzOC45MDY3IDE3LjczMzcgMzguMjUyMkMxNC42MTUxIDM2LjcxMDQgMTIuMjcyMyAzNS4zNTg3IDkuMzc3ODggMzMuNDMxOEM2LjkxNDI1IDMxLjc5MSA1LjYyNTQyIDI5LjU1OSA1LjQzNjM3IDI2LjYwNzNDNS4yMTI2MiAyMy4xMjQ1IDUuMjEyNjIgMjAuMDE4NCA1LjQzNjM3IDE2LjUzNzZDNS42MjU0MiAxMy41ODY2IDYuOTE0MjUgMTEuMzU0NSA5LjM3NjYxIDkuNzE0M0MxMi4yNzc0IDcuNzgxODEgMTQuNjIwNiA2LjQyOTY1IDE3LjczNDUgNC44OTAzNUMyMC4zODU5IDMuNTgxOTYgMjIuOTYzMSAzLjU4MTM1IDI1LjYxMzUgNC44OTIxOEMyOC43MjkxIDYuNDMyMDkgMzEuMDcxNiA3Ljc4NDg1IDMzLjk2OTggOS43MTYxM0MzNi40Mjk5IDExLjM1NTEgMzcuNzE4OCAxMy41ODYgMzcuOTA5NiAxNi41MzUyQzM4LjEzNTEgMjAuMDE0OSAzOC4xMzUxIDIzLjEyMTQgMzcuOTA5NiAyNi42MTAzQzM3LjcxODggMjkuNTYgMzYuNDI5MiAzMS43OTEgMzMuOTY4NiAzMy40MzA2QzMxLjA3NDcgMzUuMzU3NyAyOC43MzI3IDM2LjcwOTIgMjUuNjE1MiAzOC4yNTA5QzI0LjI4OTIgMzguOTA3MiAyMi45ODEzIDM5LjIzNDkgMjEuNjczIDM5LjIzNDlMMjEuNjc0MiAzOS4yMzQxWk0yMS42NzQyIDUuOTgxNzhDMjAuNjg3MiA1Ljk4MTc4IDE5LjcwMDQgNi4yMzk0NSAxOC42NTY0IDYuNzU0NzhDMTUuNjI5NSA4LjI1MDM0IDEzLjM1MDYgOS41NjU0MiAxMC41MzAxIDExLjQ0NDRDOC41OTE1NiAxMi43MzUyIDcuNjYwNTMgMTQuMzQ2OCA3LjUxMTUzIDE2LjY3MDFDNy4yOTQxMSAyMC4wNTkyIDcuMjk0MTEgMjMuMDgzMiA3LjUxMTUzIDI2LjQ3NDNDNy42NjA1MyAyOC43OTc1IDguNTkxNTYgMzAuNDEwMiAxMC41MzA2IDMxLjcwMTZDMTMuMzQ0NSAzMy41NzUzIDE1LjYyMjYgMzQuODg5MiAxOC42NTUxIDM2LjM4ODNDMjAuNzQzNyAzNy40MTk1IDIyLjYwNTggMzcuNDE4NCAyNC42OTQ2IDM2LjM4NzFDMjcuNzI2NCAzNC44ODcyIDMwLjAwMzUgMzMuNTczNSAzMi44MTcxIDMxLjY5OThDMzQuNzU0NCAzMC40MDk3IDM1LjY4NTQgMjguNzk4OCAzNS44MzYyIDI2LjQ3NkMzNi4wNTU2IDIzLjA4MDEgMzYuMDU1NiAyMC4wNTYyIDM1LjgzNjIgMTYuNjY4OUMzNS42ODU0IDE0LjM0NzQgMzQuNzU1MSAxMi43MzY0IDMyLjgxODQgMTEuNDQ2M0MzMC4wMDA1IDkuNTY4NDYgMjcuNzIyMSA4LjI1MzM4IDI0LjY5MjYgNi43NTUzOUMyMy42NDkzIDYuMjM5NDUgMjIuNjYxOCA1Ljk4MTc4IDIxLjY3NDIgNS45ODE3OFoiIGZpbGw9IndoaXRlIi8+CjxnIHRyYW5zZm9ybT0idHJhbnNsYXRlKC0xLjEsIDIuMSkgc2NhbGUoMC45KSI+CjxwYXRoIGQ9Ik00MS4zMDU3IDI2LjEyQzQyLjcwNTggMjQuNTEyIDQ1LjMxIDI1Ljk1NzQgNDQuNjgzNiAyNy45OTY5TDQzLjQ3NTYgMzEuOTI5Nkg0Ny41MTc2TDQ3LjY0NTUgMzEuOTM0NEM0OC4yMzY0IDMxLjk3NzUgNDguNzY3IDMyLjMxNTkgNDkuMDU0NyAzMi44MzM5TDQ5LjExMjMgMzIuOTQ4MUM0OS40MDAyIDMzLjU2OTIgNDkuMzAxMSAzNC4zMDAyIDQ4Ljg2MDQgMzQuODIyMUwzOS43MDYxIDQ1LjY2QzM4LjMxNjQgNDcuMzA1MiAzNS42NzAxIDQ1Ljg1NDUgMzYuMzExNSA0My43OTc3VjQzLjc5NjhMMzcuNTI4MyAzOS45MDEySDMzLjE3MjlDMzIuNDg0MyAzOS45MDEyIDMxLjg1ODEgMzkuNDk4NCAzMS41NzIzIDM4Ljg3MUwzMS41NzEzIDM4Ljg3QzMxLjI4NjEgMzguMjQyNCAzMS4zOTQ5IDM3LjUwNzcgMzEuODQ1NyAzNi45ODkxVjM2Ljk4ODJMNDEuMzA1NyAyNi4xMloiIGZpbGw9IiMwMDc1RkYiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+CjwvZz4KPC9zdmc+Cg==';
 		}
 
 		if (

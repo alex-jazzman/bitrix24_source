@@ -10,9 +10,9 @@ return [
 	'rel' => [
 		'landing.backend',
 		'landing.loc',
+		'main.core',
 		'main.popup',
 		'ui.dialogs.messagebox',
-		'main.core',
 		'ui.icons.disk',
 	],
 	'skip_core' => false,

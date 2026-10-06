@@ -1,12 +1,6 @@
-import { PAGE_SIZE } from '../shared/constants';
+import { PAGE_SIZE, REFRESH_DEBOUNCE_JITTER_MS, REFRESH_DEBOUNCE_MIN_MS } from '../shared/constants';
 import type { Collection, GlobalPermissions } from '../../../type';
 import type { SidebarApi } from '../../../services/sidebar-api';
-
-// Debounce window for capability and list refresh — collapses bursts of ACL
-// updates on the same collection (or list-invalidations during a multi-step
-// admin operation) and adds random jitter to desynchronise reconnecting clients.
-const REFRESH_DEBOUNCE_MIN_MS = 80;
-const REFRESH_DEBOUNCE_JITTER_MS = 220;
 
 export class SidebarCollectionActions
 {
@@ -16,16 +10,26 @@ export class SidebarCollectionActions
 	#setGlobalPermissions: (permissions: GlobalPermissions) => void;
 	#removeBranch: (collectionId: number, parentId: number | null) => void;
 	#refreshCollectionWatches: () => void;
+	#patchFavoriteTitle: (entityType: string, entityId: number, title: mixed) => boolean;
 	#capabilityRefreshTimers: Map<number, TimeoutID>;
 	#listRefetchTimer: TimeoutID | null;
 
-	constructor({ api, state, setError, setGlobalPermissions, removeBranch, refreshCollectionWatches }: {
+	constructor({
+		api,
+		state,
+		setError,
+		setGlobalPermissions,
+		removeBranch,
+		refreshCollectionWatches,
+		patchFavoriteTitle = () => false,
+	}: {
 		api: SidebarApi,
 		state: Object,
 		setError: (message: string) => void,
 		setGlobalPermissions: (permissions: GlobalPermissions) => void,
 		removeBranch: (collectionId: number, parentId: number | null) => void,
 		refreshCollectionWatches?: () => void,
+		patchFavoriteTitle?: (entityType: string, entityId: number, title: mixed) => boolean,
 	})
 	{
 		this.#api = api;
@@ -33,6 +37,7 @@ export class SidebarCollectionActions
 		this.#setError = setError;
 		this.#setGlobalPermissions = setGlobalPermissions;
 		this.#removeBranch = removeBranch;
+		this.#patchFavoriteTitle = patchFavoriteTitle;
 		this.#refreshCollectionWatches = typeof refreshCollectionWatches === 'function' ? refreshCollectionWatches : () => {};
 		this.#capabilityRefreshTimers = new Map();
 		this.#listRefetchTimer = null;
@@ -121,6 +126,8 @@ export class SidebarCollectionActions
 		const next = [...this.#state.collections.value];
 		next[index] = { ...next[index], ...patch };
 		this.#state.collections.value = next;
+		// The row of the favorites block keeps its own copy of the name (see patchFavoriteTitle).
+		this.#patchFavoriteTitle('collection', normalizedId, patch.name);
 
 		return true;
 	}

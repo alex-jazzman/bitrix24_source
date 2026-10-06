@@ -342,7 +342,9 @@ jn.define('im/messenger/provider/services/chat/load', (require, exports, module)
 			const dialogData = { ...extractor.getMainChat(), tariffRestrictions: extractor.getTariffRestrictions() };
 			this.setRecent(extractor).catch((err) => logger.log('LoadService.updateModels.setRecent error', err));
 			const copilotData = { dialogId: extractor.getDialogId(), ...extractor.getCopilot() };
-			const copilotPromise = this.store.dispatch('dialoguesModel/copilotModel/setCollection', copilotData);
+			// copilot data must be committed before dialoguesModel/set:
+			// its update mutation redraws the dialog header, which reads copilotModel
+			await this.store.dispatch('dialoguesModel/copilotModel/setCollection', copilotData);
 
 			void await this.store.dispatch('dialoguesModel/set', dialogData);
 
@@ -373,7 +375,6 @@ jn.define('im/messenger/provider/services/chat/load', (require, exports, module)
 				usersPromise,
 				filesPromise,
 				reactionPromise,
-				copilotPromise,
 			]);
 
 			await Promise.all(messagesPromise);

@@ -10,6 +10,7 @@ return [
 	'js' => 'dist/timeline.bundle.js',
 	'rel' => [
 		'crm.field.color-selector',
+		'crm.timeline.dialog',
 		'crm.timeline.item',
 		'crm.timeline.tools',
 		'main.core',
@@ -29,6 +30,7 @@ return [
 		'ui.system.label',
 		'ui.system.menu',
 		'ui.vue3',
+		'ui.vue3.components.button',
 		'ui.vue3.directives.hint',
 	],
 	'skip_core' => false,

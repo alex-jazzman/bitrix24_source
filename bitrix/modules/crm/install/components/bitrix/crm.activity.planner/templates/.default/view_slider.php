@@ -55,6 +55,8 @@ $APPLICATION->restartBuffer();
 							'',
 							array(
 								'MESSAGE_ID' => $activity['UF_MAIL_MESSAGE'],
+								'MAIL_SOURCE_TYPE' => 'crm_activity',
+								'MAIL_SOURCE_ID' => (int)$activity['ID'],
 							)
 						); ?>
 						<?=\Bitrix\UI\Toolbar\Facade\Toolbar::renderRightButtons()?>

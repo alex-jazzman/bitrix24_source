@@ -74,9 +74,25 @@ jn.define('im/messenger/controller/recent/service/action/common', (require, expo
 			return serviceLocator.get('core').getStore();
 		}
 
+		/**
+		 * @param {string} itemId
+		 * @param {string} popupMenuItemId
+		 */
+		onPopupMenuItemTap = async (itemId, popupMenuItemId) => {
+			this.logger.log('onPopupMenuItemTap', itemId, popupMenuItemId);
+
+			const itemActionData = {
+				action: { identifier: popupMenuItemId },
+				item: { params: { id: itemId } },
+			};
+
+			await this.onItemAction(itemActionData);
+		};
+
 		subscribeEvents(ui)
 		{
 			ui?.on(EventType.recent.itemAction, this.onItemAction);
+			ui?.on(EventType.recent.popupMenuItemTap, this.onPopupMenuItemTap);
 		}
 
 		unsubscribeEvents()
@@ -84,6 +100,7 @@ jn.define('im/messenger/controller/recent/service/action/common', (require, expo
 			this.recentLocator.get('ui')
 				.then((ui) => {
 					ui?.off(EventType.recent.itemAction, this.onItemAction);
+					ui?.off(EventType.recent.popupMenuItemTap, this.onPopupMenuItemTap);
 				})
 				.catch((error) => {
 					this.logger.error('unsubscribeEvents error', error);

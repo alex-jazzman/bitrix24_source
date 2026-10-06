@@ -1,9 +1,0 @@
-.switcher-field {
-	display: flex;
-	flex-direction: row;
-	gap: 8px;
-}
-
-.switcher-field__label {
-	line-height: var(--ui-font-line-height-3xs);
-}

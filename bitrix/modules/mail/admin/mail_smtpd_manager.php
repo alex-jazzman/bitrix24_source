@@ -57,13 +57,17 @@ switch($_REQUEST['action'])
 */
 		if ($startErrorMessage == '')
 		{
+			$command = CSMTPServer::SetCommand("start");
+
 			if ($bWindowsHosting)
 			{
-				pclose(popen("start ".$phpPath." \"".$serverPath."\"", "r"));
+				$commandPrefix = 'set "'.CSMTPServer::COMMAND_TOKEN_ENVIRONMENT_VARIABLE.'='.$command["token"].'" && ';
+				pclose(popen($commandPrefix."start ".$phpPath." \"".$serverPath."\"", "r"));
 			}
 			else
 			{
-				$cmd = 'nohup '.$phpPath.' '.ltrim($serverPath, '.').' > /dev/null &';
+				$commandPrefix = CSMTPServer::COMMAND_TOKEN_ENVIRONMENT_VARIABLE.'='.escapeshellarg($command["token"]).' ';
+				$cmd = $commandPrefix.'nohup '.$phpPath.' '.ltrim($serverPath, '.').' > /dev/null &';
 				exec($cmd, $op);
 			}
 		}
@@ -74,6 +78,7 @@ switch($_REQUEST['action'])
 			$res = $startErrorMessage;
 		break;
 	case 'stop':
+		CSMTPServer::SetCommand("stop");
 		$CACHE_MANAGER->Read(3600000, $cache_id = "smtpd_stop");
 		$CACHE_MANAGER->Set($cache_id, true);
 		break;

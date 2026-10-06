@@ -60,9 +60,15 @@
 		 */
 		getRelevantClass: function(url)
 		{
+			const vkVideoAvailable = BX.Landing.Env.getInstance().isVkVideoAvailable();
 			let result = null;
 			for (let provider in this.services)
 			{
+				if (provider === 'vk' && vkVideoAvailable !== true)
+				{
+					continue;
+				}
+
 				if (this.services.hasOwnProperty(provider) &&
 					BX.getClass(this.services[provider])["validate"](url))
 				{

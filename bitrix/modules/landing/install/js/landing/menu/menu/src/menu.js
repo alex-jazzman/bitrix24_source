@@ -6,9 +6,12 @@ import {Backend} from 'landing.backend';
 import {MenuItem} from 'landing.menu.menuitem';
 import {MenuForm} from 'landing.ui.form.menuform';
 import {StylePanel} from 'landing.ui.panel.stylepanel';
+import {A11y} from 'landing.ui.a11y';
 import buildTree from './build-tree';
 import makeFlatTree from './make-flat-tree';
 import getNodeClass from './get-node-class';
+import decorateTreeSemantics from './decorate-tree';
+import createTreeFocusNavigator from './get-tree-focusable';
 
 import './css/style.css';
 
@@ -22,6 +25,8 @@ export class Menu extends Event.EventEmitter
 	/**
 	 * Prefetches all site landings into Backend cache before menu forms are built.
 	 * Deduplicates concurrent calls within the same editor session.
+	 * block.js calls this statically before getEditForms() for blocks with menu nodes,
+	 * so this method must ship together with block.js (see ticket 247221/250505).
 	 */
 	static prefetchLandings(): Promise<void>
 	{
@@ -67,6 +72,11 @@ export class Menu extends Event.EventEmitter
 			Dom.insertAfter(this.getAddPageLayout(), this.root);
 		}
 
+		decorateTreeSemantics(this.root);
+
+		this.focusZone = null;
+		this.setupTreeFocusZone();
+
 		Event.bind(this.root, 'click', (event: MouseEvent) => {
 			if (
 				!StylePanel.getInstance().isShown()
@@ -87,6 +97,28 @@ export class Menu extends Event.EventEmitter
 				}
 			}
 		});
+	}
+
+	setupTreeFocusZone(): void
+	{
+		const root = this.root;
+		A11y.load()
+			.then(({FocusZone}) => {
+				if (root !== this.root)
+				{
+					return;
+				}
+				if (this.focusZone)
+				{
+					this.focusZone.deactivate();
+				}
+				this.focusZone = new FocusZone(root, {
+					getNextFocusable: createTreeFocusNavigator(),
+					focusInStrategy: 'first',
+				});
+				this.focusZone.activate();
+			})
+			.catch(() => {});
 	}
 
 	createMenuItem(options): MenuItem
@@ -210,6 +242,7 @@ export class Menu extends Event.EventEmitter
 					});
 
 					Dom.append(li, this.root);
+					decorateTreeSemantics(this.root);
 					Dom.remove(this.getAddPageField());
 					Dom.removeClass(this.root, 'landing-menu-root-list-with-field');
 					Dom.removeClass(this.getAddPageLayout(), 'landing-menu-add-with-background');
@@ -356,7 +389,11 @@ export class Menu extends Event.EventEmitter
 	{
 		const newList = this.createList(items);
 
+		decorateTreeSemantics(newList);
+
 		Dom.replace(this.root, newList);
 		this.root = newList;
+
+		this.setupTreeFocusZone();
 	}
 }

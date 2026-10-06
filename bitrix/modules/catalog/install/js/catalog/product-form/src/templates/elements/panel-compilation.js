@@ -1,7 +1,8 @@
 import {Vuex} from 'ui.vue.vuex';
 import {Vue} from 'ui.vue';
 import {config} from '../../config';
-import {BaseEvent, EventEmitter} from 'main.core.events';
+import {EventEmitter} from 'main.core.events';
+import type {BaseEvent} from 'main.core.events';
 import {Popup} from 'main.popup';
 import {FormMode} from '../../types/form-mode';
 import {FormCompilationType} from '../../types/form-compilation-type';

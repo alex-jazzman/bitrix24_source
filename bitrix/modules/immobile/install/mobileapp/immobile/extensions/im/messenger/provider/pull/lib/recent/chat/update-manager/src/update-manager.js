@@ -27,6 +27,7 @@ jn.define('im/messenger/provider/pull/lib/recent/chat/update-manager/update-mana
 		setLastMessageInfo()
 		{
 			this.#setMessageChat();
+			this.#setSourceChats();
 			this.#setUsers();
 			this.#setFiles();
 			this.#setMessage();
@@ -81,6 +82,7 @@ jn.define('im/messenger/provider/pull/lib/recent/chat/update-manager/update-mana
 				? this.#params.users.find((user) => Number(user.id) === message.author_id)
 				: null) ?? { id: 0 };
 
+			// own is not emitted in the realtime RecentUpdate; the client holds it itself, so we leave the key off.
 			return RecentDataConverter.fromPullToModel({
 				id: this.getDialogId(),
 				chat: this.#params.chat,
@@ -113,7 +115,55 @@ jn.define('im/messenger/provider/pull/lib/recent/chat/update-manager/update-mana
 		#setMessage()
 		{
 			const lastChannelPost = this.getLastMessage();
+
+			// The recentUpdate preview payload carries no read fields (unread/viewed), and
+			// messagesModel/store replaces the element with defaults. A message already living in
+			// the model keeps its actual read state authoritative: re-storing the bare payload would
+			// mark a still-unread message of an open dialog as viewed and hide it from the read gate.
+			const existingMessage = this.#store.getters['messagesModel/getById'](lastChannelPost.id);
+			if ('id' in existingMessage)
+			{
+				return;
+			}
+
 			this.#store.dispatch('messagesModel/store', lastChannelPost);
+		}
+
+		/**
+		 * Persists child source chats (set, with DB persist) so getByChatId(message.chatId)
+		 * resolves on cold start. set keeps wasCompletelySync false, so opening the source
+		 * chat still triggers a full server load.
+		 */
+		#setSourceChats()
+		{
+			const chats = this.#params.chats;
+			if (!chats || typeof chats !== 'object')
+			{
+				return;
+			}
+
+			const mainChatId = this.#params.chat?.id;
+			const sourceChats = [];
+
+			Object.entries(chats).forEach(([chatIdStr, chatData]) => {
+				const chatId = Number(chatIdStr);
+
+				// Main chat is already handled by #setMessageChat().
+				if (chatId > 0 && chatId !== mainChatId && chatData && typeof chatData === 'object')
+				{
+					const dialogId = chatData.dialogId ?? `chat${chatId}`;
+					sourceChats.push({
+						...chatData,
+						chatId,
+						dialogId,
+					});
+				}
+			});
+
+			if (sourceChats.length > 0)
+			{
+				this.#store.dispatch('dialoguesModel/set', sourceChats);
+			}
 		}
 	}
 

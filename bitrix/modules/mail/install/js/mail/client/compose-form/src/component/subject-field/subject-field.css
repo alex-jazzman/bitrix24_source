@@ -1,0 +1,13 @@
+.mail-compose-subject-field__label
+{
+	flex: 0 0 76px;
+	color: var(--ui-color-base-4);
+}
+
+/* the naked design of the input draws no ring at all, so the row shows the focus of the field itself */
+.mail-compose-subject-field:focus-within
+{
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: 2px;
+	border-radius: var(--ui-border-radius-sm);
+}

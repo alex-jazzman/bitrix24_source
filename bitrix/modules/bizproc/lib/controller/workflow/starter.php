@@ -12,6 +12,9 @@ use Bitrix\Bizproc\Controller\Base;
 use Bitrix\Bizproc\Error;
 use Bitrix\Bizproc\Internal\Service\Document\DocumentsResolver;
 use Bitrix\Bizproc\Internal\Service\Document\Dto\ResolvedDocumentDto;
+use Bitrix\Bizproc\Starter\Template\Start\CollectRequest;
+use Bitrix\Bizproc\Starter\Template\Start\CollectorService;
+use Bitrix\Bizproc\Starter\Template\Start\StartableTemplate;
 use Bitrix\Bizproc\Public\Entity\Document\Workflow;
 use Bitrix\Bizproc\Public\Service\Workflow\StarterService;
 use Bitrix\Bizproc\Starter\Dto\ContextDto;
@@ -19,6 +22,7 @@ use Bitrix\Bizproc\Starter\Dto\DocumentDto;
 use Bitrix\Bizproc\Starter\Dto\EventDto;
 use Bitrix\Bizproc\Starter\Dto\MetaDataDto;
 use Bitrix\Bizproc\Starter\Enum\Face;
+use Bitrix\Bizproc\Starter\Enum\ManualStartSurface;
 use Bitrix\Main\Localization\Loc;
 use CBPDocumentEventType;
 
@@ -112,6 +116,10 @@ class Starter extends Base
 		}
 
 		$templateService = new WorkflowTemplateService();
+
+		// the version is chosen anew here, at the confirmation of the start: the one the form was built
+		// from could have been replaced or stopped meanwhile, and a set of fields that no longer matches
+		// comes back as an ordinary "fill in the field" error bound to the field
 		$workflowParameters = $templateService->prepareStartParameters(
 			new PrepareStartParametersRequest(
 				templateId: $templateId,
@@ -121,6 +129,7 @@ class Starter extends Base
 					$this->getRequest()->getFileList()->toArray()
 				),
 				targetUserId: $userId,
+				manualStartSurface: $this->manualStartSurfaceOf($triggerType),
 			)
 		);
 
@@ -156,10 +165,19 @@ class Starter extends Base
 	{
 		$currentUserId = $this->getCurrentUserId();
 
-		$context = new ContextDto('bizproc', Face::WEB);
+		$context = new ContextDto(
+			'bizproc',
+			Face::WEB,
+			manualStartSurface: $this->manualStartSurfaceOf($triggerType),
+		);
 		$metaData = new MetaDataDto($startDuration >= 0 ? $startDuration : null);
 		$documentId = $this->getComplexDocumentId();
 		$documentType = $this->getComplexDocumentType();
+
+		// the values are already prepared against the parameters of the version that acts for this
+		// employee, so they are handed over keyed by the template: a flat set would be matched against the
+		// live row once more and would lose the fields the pilot version of the template has of its own
+		$workflowParameters = [$templateId => $workflowParameters];
 
 		if ($triggerType)
 		{
@@ -191,6 +209,17 @@ class Starter extends Base
 			parameters: $workflowParameters,
 			metaData: $metaData,
 		);
+	}
+
+	/**
+	 * Every start of this action is a start an employee performs by hand, and the two branches of the
+	 * action are two different surfaces of the product: the start form and the trigger button of the
+	 * scheme. The form and the start it confirms must name the same one, otherwise the set of the fields
+	 * would be built for one surface and the start performed on another.
+	 */
+	private function manualStartSurfaceOf(?string $triggerType): ManualStartSurface
+	{
+		return $triggerType ? ManualStartSurface::TriggerButton : ManualStartSurface::StartForm;
 	}
 
 	public function checkParametersAction(int $autoExecuteType): ?array
@@ -241,14 +270,20 @@ class Starter extends Base
 		foreach ($accessibleDocuments as $document)
 		{
 			$parametersDocumentType = $document->complexDocumentType->toArray();
-			foreach (\CBPWorkflowTemplateLoader::getDocumentTypeStates($parametersDocumentType, $autoExecuteType) as $template)
+			foreach (
+				$this->collectStartTemplates(
+					$parametersDocumentType,
+					$autoExecuteType,
+					$document->categoryId,
+					onlyParameterized: true,
+				) as $template
+			)
 			{
-				$templateId = (int)($template['TEMPLATE_ID'] ?? 0);
+				$templateId = $template->id;
 				if (
 					$templateId <= 0
 					|| isset($processedTemplateIds[$templateId])
-					|| !is_array($template['TEMPLATE_PARAMETERS'])
-					|| !$template['TEMPLATE_PARAMETERS']
+					|| !$template->hasParameters()
 				)
 				{
 					continue;
@@ -257,7 +292,7 @@ class Starter extends Base
 				$processedTemplateIds[$templateId] = true;
 				$parameters[$templateId] =
 					$this->prepareWorkflowParameters(
-						$template['TEMPLATE_PARAMETERS'],
+						$template->parameters,
 						$parametersDocumentType,
 						"bizproc{$templateId}_",
 					)
@@ -276,6 +311,90 @@ class Starter extends Base
 		}
 
 		return ['parameters' => \CBPDocument::signParameters($parameters)];
+	}
+
+	public function hasAutoStartParametersAction(int $autoExecuteType): ?array
+	{
+		if (!$this->checkBizprocFeature())
+		{
+			return null;
+		}
+
+		if ($autoExecuteType < 0)
+		{
+			$this->addError(new Error(
+				Loc::getMessage('BIZPROC_LIB_API_CONTROLLER_WORKFLOW_STARTER_ERROR_INCORRECT_AUTO_EXECUTE_TYPE') ?? ''
+			));
+
+			return null;
+		}
+
+		$documents = $this->getDocumentsForCheckParameters();
+		if (empty($documents))
+		{
+			return null;
+		}
+
+		$hasAccessibleDocuments = false;
+		foreach ($documents as $document)
+		{
+			if (!$this->canUserStartWorkflowForResolvedDocument($document))
+			{
+				continue;
+			}
+
+			$hasAccessibleDocuments = true;
+			if ((new CollectorService())->hasTemplates(
+				new CollectRequest(
+					complexDocumentType: $document->complexDocumentType->toArray(),
+					eventType: $autoExecuteType,
+					categoryId: $document->categoryId,
+					onlyParameterized: true,
+					useAutoExecuteBitmask: true,
+					requireActive: true,
+					excludeSystem: false,
+				),
+			))
+			{
+				return ['hasParameters' => true];
+			}
+		}
+
+		if (!$hasAccessibleDocuments)
+		{
+			$this->addError(new Error(
+				Loc::getMessage('BIZPROC_LIB_API_CONTROLLER_WORKFLOW_STARTER_ERROR_ACCESS_DENIED') ?? ''
+			));
+
+			return null;
+		}
+
+		return ['hasParameters' => false];
+	}
+
+	/**
+	 * @return list<StartableTemplate>
+	 */
+	private function collectStartTemplates(
+		array $complexDocumentType,
+		int $eventType,
+		?int $categoryId = null,
+		bool $onlyParameterized = false,
+	): array
+	{
+		$collection = (new CollectorService())->collect(
+			new CollectRequest(
+				complexDocumentType: $complexDocumentType,
+				eventType: $eventType,
+				categoryId: $categoryId,
+				onlyParameterized: $onlyParameterized,
+				useAutoExecuteBitmask: true,
+				requireActive: true,
+				excludeSystem: false,
+			),
+		);
+
+		return $collection->getAll();
 	}
 
 	private function getDocumentsForCheckParameters(): array
@@ -321,10 +440,17 @@ class Starter extends Base
 			return true;
 		}
 
+		$parameters = [];
+		if ($document->categoryId !== null)
+		{
+			$parameters['DocumentCategoryId'] = $document->categoryId;
+		}
+
 		return \CBPDocument::canUserOperateDocumentType(
 			\CBPCanUserOperateOperation::StartWorkflow,
 			$currentUserId,
 			$parametersDocumentType,
+			$parameters,
 		);
 	}
 
@@ -396,6 +522,7 @@ class Starter extends Base
 	private function buildRequestDocumentPayload(bool $withDocumentId = false): array
 	{
 		$request = $this->getRequest();
+		$categoryId = $request->get('categoryId') ?? $request->get('category_id');
 		$documentType = $request->get('documentType');
 		$documentId = $request->get('documentId');
 
@@ -406,6 +533,10 @@ class Starter extends Base
 			{
 				$payload['documentId'] = $documentId;
 			}
+			if ($categoryId !== null)
+			{
+				$payload['categoryId'] = $categoryId;
+			}
 
 			return $payload;
 		}
@@ -414,6 +545,10 @@ class Starter extends Base
 		if ($withDocumentId || $request->get('signedDocumentId') !== null)
 		{
 			$payload['signedDocumentId'] = $request->get('signedDocumentId');
+		}
+		if ($categoryId !== null)
+		{
+			$payload['categoryId'] = $categoryId;
 		}
 
 		return $payload;

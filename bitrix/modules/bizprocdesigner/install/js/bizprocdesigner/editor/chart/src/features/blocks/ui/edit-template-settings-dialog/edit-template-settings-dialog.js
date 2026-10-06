@@ -1,7 +1,7 @@
 import { Type } from 'main.core';
 import { AirButtonStyle, Button } from 'ui.buttons';
 import { Dialog } from 'ui.system.dialog';
-import { mapActions, mapWritableState } from 'ui.vue3.pinia';
+import { mapActions, mapState } from 'ui.vue3.pinia';
 import { diagramStore as useDiagramStore } from '../../../../entities/blocks';
 import './style.css';
 
@@ -10,8 +10,9 @@ export const EditTemplateSettingsDialog = {
 	name: 'EditTemplateSettingsDialog',
 	emits: ['close'],
 	computed: {
-		...mapWritableState(useDiagramStore, [
+		...mapState(useDiagramStore, [
 			'template',
+			'isWriteLocked',
 		]),
 	},
 	beforeMount(): void
@@ -30,7 +31,7 @@ export const EditTemplateSettingsDialog = {
 	},
 	methods: {
 		...mapActions(useDiagramStore, [
-			'updateTemplateData',
+			'applyTemplateMetadata',
 		]),
 		loc(locString: string): string
 		{
@@ -76,15 +77,20 @@ export const EditTemplateSettingsDialog = {
 				dialog.hide();
 			});
 			confirm.bindEvent('click', () => {
-				this.template.NAME =
-					Type.isStringFilled(this.localName)
-						? this.localName
-						: this.loc('BIZPROCDESIGNER_EDITOR_DEFAULT_TITLE')
+				if (this.isWriteLocked)
+				{
+					dialog.hide();
+
+					return;
+				}
+
+				const templateName = Type.isStringFilled(this.localName)
+					? this.localName
+					: this.loc('BIZPROCDESIGNER_EDITOR_DEFAULT_TITLE')
 				;
-				this.template.DESCRIPTION = this.localDescription;
-				this.updateTemplateData({
-					NAME: this.template.NAME,
-					DESCRIPTION: this.template.DESCRIPTION,
+				this.applyTemplateMetadata({
+					NAME: templateName,
+					DESCRIPTION: this.localDescription,
 				});
 
 				dialog.hide();
@@ -106,6 +112,7 @@ export const EditTemplateSettingsDialog = {
 				<div class="ui-ctl ui-ctl-textbox">
 					<input
 						v-model="localName"
+						:disabled="isWriteLocked"
 						:placeholder="$Bitrix.Loc.getMessage('BIZPROCDESIGNER_EDITOR_DEFAULT_TITLE')"
 						class="ui-ctl-element"
 					>
@@ -115,6 +122,7 @@ export const EditTemplateSettingsDialog = {
 				<div class="ui-ctl ui-ctl-textarea">
 					<textarea
 						v-model="localDescription"
+						:disabled="isWriteLocked"
 						:placeholder="$Bitrix.Loc.getMessage('BIZPROCDESIGNER_EDITOR_DESCRIPTION_PLACEHOLDER')"
 						class="ui-ctl-element"
 					/>

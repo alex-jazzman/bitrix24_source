@@ -1,6 +1,7 @@
 <?php
 
 $MESS['BIZPROC_WRITE_DATA_ACTIVITY_SELECT_STORAGE'] = 'Выберите хранилище';
+$MESS['BIZPROC_WRITE_DATA_ACTIVITY_EMPTY_STORAGE_ID_OR_CODE'] = 'Заполните обязательное поле «Хранилище» — без него сохранить не получится';
 $MESS['BIZPROC_WRITE_DATA_ACTIVITY_RECORD_NAME'] = 'Название';
 $MESS['BIZPROC_WRITE_DATA_ACTIVITY_RECORD_AUTHOR'] = 'Записать от лица';
 $MESS['BIZPROC_WRITE_DATA_ACTIVITY_CREATE_NEW_STORAGE'] = 'Создать новое';
@@ -23,5 +24,6 @@ $MESS['BIZPROC_WRITE_DATA_ACTIVITY_STORAGE_NOT_FOUND'] = 'Не удалось н
 $MESS['BIZPROC_WRITE_DATA_ACTIVITY_AUTHOR_NOT_FOUND'] = 'Не найден пользователь указанный в поле "Записать от лица"';
 $MESS['BIZPROC_WRITE_DATA_ACTIVITY_FILTER_FIELDS_PROPERTY'] = 'Фильтр по полям';
 $MESS['BIZPROC_WRITE_DATA_ACTIVITY_FILTER_FIELDS_COLLAPSED_TEXT'] = 'Фильтр выбран, для просмотра нажмите Развернуть';
+$MESS['BIZPROC_WRITE_DATA_ACTIVITY_WRITE_FIELDS_PROPERTY'] = 'Поля хранилища';
 $MESS['BIZPROC_WRITE_DATA_ACTIVITY_FIELDS_ADD_FIELD'] = 'Добавить поле';
 $MESS['BIZPROC_WRITE_DATA_ACTIVITY_CREATE_NEW_FIELD'] = 'Создать новое поле';

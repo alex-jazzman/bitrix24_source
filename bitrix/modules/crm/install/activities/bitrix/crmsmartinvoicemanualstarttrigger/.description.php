@@ -41,6 +41,16 @@ $arActivityDescription =
 				'Type' => FieldType::DOCUMENT,
 				'Default' => $documentType,
 			],
+			'Initiator' => [
+				'Name' => Loc::getMessage('CRM_SMART_INVOICE_MANUAL_START_TRIGGER_RETURN_INITIATOR') ?? '',
+				'Type' => FieldType::USER,
+				'Default' => null,
+			],
+			'EventDateTime' => [
+				'Name' => Loc::getMessage('CRM_SMART_INVOICE_MANUAL_START_TRIGGER_RETURN_EVENT_DATE_TIME') ?? '',
+				'Type' => FieldType::DATETIME,
+				'Default' => null,
+			],
 		])
 		->setAdditionalResult(['Return'])
 		->toArray()

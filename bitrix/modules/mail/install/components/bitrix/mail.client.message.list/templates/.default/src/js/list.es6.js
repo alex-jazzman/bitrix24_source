@@ -1,11 +1,39 @@
 import { EventEmitter } from "main.core.events";
-import { Loc } from 'main.core';
+import { Dom, Event, Loc, Reflection, Runtime, Type } from 'main.core';
+import { AirButtonStyle, Button, ButtonSize } from 'ui.buttons';
+import { withFavoritesSection, withoutFavoritesSection, isFavoritesSectionUrl } from 'mail.favorites-filter-state';
+import { getMigrationState } from 'mail.migration-state';
+
+const DRAFTS_SECTION = 'drafts';
+const LABEL_SCOPE_ALL_MAILBOXES = 0;
+const LABELS_SLIDER_URL = '/mail/labels';
+const LABEL_ITEM_ID_PREFIX = 'mail-label-';
+const ACTION_PANEL_MENU_ID = 'ui-action-panel-item-popup-menu';
+const ACTION_PANEL_POPUP_ID = `menu-popup-${ACTION_PANEL_MENU_ID}`;
 
 export class List
 {
 	constructor(options)
 	{
 		this.gridId = options.gridId;
+		this.filterId = options.filterId;
+		this.isDraftMode = options.isDraftMode === true;
+		this.composePath = options.composePath || '';
+		this.composeSliderOptions = options.composeSliderOptions || { cacheable: false };
+		this.draftsPath = options.draftsPath || '';
+		this.messageListPath = options.messageListPath || '';
+		this.favoritesSectionActive = options.favoritesSectionActive === true;
+		// the section is a part of the list improvements, and the server applies its marker only
+		// under them: with the improvements off the same marker in the address means nothing here
+		this.listImprovementsEnabled = Loc.getMessage('MAIL_LIST_IMPROVEMENTS_ENABLED') === 'Y';
+		this.folderBehindFavoritesSection = '';
+		this.draftDeleteConfirm = options.draftDeleteConfirm || '';
+		this.draftDeleteDescription = options.draftDeleteDescription || '';
+		this.draftDeleteManyConfirm = options.draftDeleteManyConfirm || '';
+		this.draftDeleteManyDescription = options.draftDeleteManyDescription || '';
+		this.draftDeleteButton = options.draftDeleteButton || '';
+		this.draftCancelButton = options.draftCancelButton || '';
+		this.draftDeletePartialError = options.draftDeletePartialError || '';
 		this.mailboxId = options.mailboxId;
 		this.canMarkSpam = options.canMarkSpam;
 		this.canDelete = options.canDelete;
@@ -14,23 +42,714 @@ export class List
 		this.ERROR_CODE_CAN_NOT_DELETE = options.ERROR_CODE_CAN_NOT_DELETE;
 		this.ERROR_CODE_CAN_NOT_MARK_SPAM = options.ERROR_CODE_CAN_NOT_MARK_SPAM;
 		this.disabledClassName = 'js-disabled';
+		this.migrationActiveMailboxIds = new Set();
+		this.migrationActionIds = options.migrationActionIds ?? [];
+		this.migrationMailboxIds = options.migrationMailboxIds ?? [Number(this.mailboxId)];
+		this.migrationStates = new Map();
+		this.migrationStateUnsubscribes = [];
+		this.migrationStatesInitialized = false;
+		this.migrationStatesDestroyed = false;
+		this.migrationPageLeaveHandler = null;
+		this.migrationActionPreviousState = new Map();
+		this.modifiedDraftSliders = new Set();
+		this.closedDraftSliders = new Map();
 		this.userInterfaceManager = new BX.Mail.Client.Message.List.UserInterfaceManager(options);
 		this.userInterfaceManager.resetGridSelection = this.resetGridSelection.bind(this);
 		this.userInterfaceManager.isSelectedRowsHaveClass = this.isSelectedRowsHaveClass.bind(this);
 		this.userInterfaceManager.getGridInstance = this.getGridInstance.bind(this);
 		this.userInterfaceManager.updateCountersFromBackend = this.updateCountersFromBackend.bind(this);
 		this.cache = {};
+		this.isAssignMenuOpening = false;
+
+		const labelCore = (BX.Mail && BX.Mail.Label && BX.Mail.Label.Core) ? BX.Mail.Label.Core : null;
+		this.labelCollection = labelCore ? new labelCore.LabelCollection(options.labels || []) : null;
+		this.labelsVersion = 0;
+
 		this.addEventHandlers();
+		this.initDraftsSection();
+		if (!this.isDraftMode)
+		{
+			setTimeout(() => this.initClientDraftList());
+			// the sections live in the address, so history navigation drives them even
+			// on portals where the embedded draft list is off
+			Event.bind(window, 'popstate', () => this.handleHistoryChange());
+		}
+
+		if (this.labelCollection)
+		{
+			this.subscribeLabelsSliderClose();
+		}
 
 		BX.Mail.Client.Message.List[options.id] = this;
+		BX.Mail.Client.Message.List.confirmDeleteSelectedDrafts = this.confirmDeleteSelectedDrafts.bind(this);
+		Reflection.namespace('BX.Mail.Home').MessageList = this;
+
+		if (!this.isDraftMode)
+		{
+			this.migrationPageLeaveHandler = () => this.destroyMigrationStates();
+			Event.bind(window, 'pagehide', this.migrationPageLeaveHandler);
+			const initializations = [];
+			this.migrationMailboxIds.forEach((mailboxId) => {
+				const normalizedMailboxId = Number(mailboxId);
+				if (!Number.isInteger(normalizedMailboxId) || normalizedMailboxId <= 0)
+				{
+					return;
+				}
+
+				const migrationState = getMigrationState(normalizedMailboxId);
+				this.migrationStates.set(normalizedMailboxId, migrationState);
+				this.migrationStateUnsubscribes.push(migrationState.subscribe((change) => {
+					this.setMailboxMigrationActive(
+						normalizedMailboxId,
+						change.active,
+						this.migrationStatesInitialized,
+					);
+				}));
+				this.setMailboxMigrationActive(normalizedMailboxId, migrationState.isActive(), false);
+				initializations.push(migrationState.initialize());
+			});
+			void Promise.all(initializations).then(() => {
+				if (this.migrationStatesDestroyed)
+				{
+					return;
+				}
+
+				this.migrationActiveMailboxIds.clear();
+				this.migrationStates.forEach((migrationState, mailboxId) => {
+					if (migrationState.isActive())
+					{
+						this.migrationActiveMailboxIds.add(mailboxId);
+					}
+				});
+				this.migrationStatesInitialized = true;
+				this.applyMigrationStateToGrid();
+			});
+		}
 	};
+
+	setMailboxMigrationActive(mailboxId, active, applyToGrid = true)
+	{
+		const wasActive = this.migrationActiveMailboxIds.has(mailboxId);
+		if (active === true)
+		{
+			this.migrationActiveMailboxIds.add(mailboxId);
+		}
+		else
+		{
+			this.migrationActiveMailboxIds.delete(mailboxId);
+		}
+		if (applyToGrid)
+		{
+			this.applyMigrationStateToGrid(wasActive && !active);
+		}
+	}
+
+	applyMigrationStateToGrid(resetSelection = false)
+	{
+		BX.Mail.Home.Grid?.setMigrationLocked(this.migrationActiveMailboxIds);
+		if (resetSelection)
+		{
+			BX.Mail.Home.Grid?.resetGridSelection();
+		}
+		this.syncMigrationActionPanel();
+	}
+
+	destroyMigrationStates()
+	{
+		if (this.migrationStatesDestroyed)
+		{
+			return;
+		}
+
+		this.migrationStatesDestroyed = true;
+		this.migrationStateUnsubscribes.forEach((unsubscribe) => unsubscribe());
+		this.migrationStateUnsubscribes = [];
+		this.migrationStates.clear();
+		if (this.migrationPageLeaveHandler)
+		{
+			Event.unbind(window, 'pagehide', this.migrationPageLeaveHandler);
+			this.migrationPageLeaveHandler = null;
+		}
+	}
+
+	syncMigrationActionPanel()
+	{
+		const panel = BX.Mail.Home.Grid?.getPanel();
+		if (!panel)
+		{
+			return;
+		}
+
+		const selectedIds = this.getGridInstance()?.getRows().getSelectedIds() ?? [];
+		const hasSelection = selectedIds.length > 0;
+		const migrationSelected = BX.Mail.Home.Grid?.areAllRowsSelected?.() === true
+			? this.shouldRefuseMigrationActionForMessageIds(['all'])
+			: this.shouldRefuseMigrationActionForMessageIds(selectedIds)
+		;
+		this.migrationActionIds.forEach((actionId) => {
+			const item = panel.getItemById?.(actionId);
+			if (!item)
+			{
+				return;
+			}
+
+			if (migrationSelected)
+			{
+				if (!this.migrationActionPreviousState.has(actionId))
+				{
+					this.migrationActionPreviousState.set(actionId, item.isDisabled());
+				}
+				item.disable();
+				item.layout?.container?.setAttribute(
+					'title',
+					Loc.getMessage('MAIL_MESSAGE_LIST_MIGRATION_ACTION_UNAVAILABLE'),
+				);
+
+				return;
+			}
+
+			if (this.migrationActionPreviousState.has(actionId))
+			{
+				if (this.migrationActionPreviousState.get(actionId) === false && hasSelection)
+				{
+					item.enable();
+				}
+				else
+				{
+					item.disable();
+				}
+				this.migrationActionPreviousState.delete(actionId);
+			}
+			if (item.layout?.container)
+			{
+				item.layout.container.setAttribute('title', item.title || item.text || '');
+			}
+		});
+	}
+
+	hasActiveMigrationForMessageIds(messageIds)
+	{
+		if (this.migrationActiveMailboxIds.size === 0)
+		{
+			return false;
+		}
+		if (messageIds.includes('all'))
+		{
+			return true;
+		}
+
+		return messageIds.some((messageId) => (
+			this.migrationActiveMailboxIds.has(this.getRowMailboxId(messageId))
+		));
+	}
+
+	shouldRefuseMigrationActionForMessageIds(messageIds)
+	{
+		const mailboxIds = messageIds.includes('all')
+			? [...this.migrationStates.keys()]
+			: messageIds.map((messageId) => this.getRowMailboxId(messageId))
+		;
+
+		return mailboxIds.some((mailboxId) => {
+			const migrationState = this.migrationStates.get(mailboxId);
+
+			return migrationState !== undefined
+				&& (!migrationState.isInitialized() || migrationState.isActive())
+			;
+		});
+	}
+
+	refuseMigrationAction(id)
+	{
+		const messageIds = id === undefined
+			? (BX.Mail.Home.Grid?.areAllRowsSelected?.() === true
+				? ['all']
+				: this.getGridInstance().getRows().getSelectedIds())
+			: [id]
+		;
+		if (!this.shouldRefuseMigrationActionForMessageIds(messageIds))
+		{
+			return false;
+		}
+
+		this.notify(Loc.getMessage('MAIL_MESSAGE_LIST_MIGRATION_ACTION_UNAVAILABLE'));
+
+		return true;
+	}
+
+	// The left menu decides which section is lit, and the drafts item is rendered by
+	// the template: the screen hands the menu the pair of handlers for that item.
+	initDraftsSection()
+	{
+		const directoryMenu = BX.Mail.Home.LeftMenuNode?.directoryMenu;
+		if (!directoryMenu)
+		{
+			return;
+		}
+
+		directoryMenu.registerSection(DRAFTS_SECTION, {
+			activate: () => this.applyDraftsHighlight(true),
+			deactivate: () => this.applyDraftsHighlight(false),
+		});
+
+		if (this.isDraftMode)
+		{
+			directoryMenu.activateSection(DRAFTS_SECTION);
+		}
+	}
+
+	setDraftsSectionActive(active)
+	{
+		const directoryMenu = BX.Mail.Home.LeftMenuNode?.directoryMenu;
+		if (!directoryMenu)
+		{
+			this.applyDraftsHighlight(active);
+
+			return;
+		}
+
+		if (active)
+		{
+			directoryMenu.activateSection(DRAFTS_SECTION);
+		}
+		else
+		{
+			directoryMenu.releaseSection(DRAFTS_SECTION);
+		}
+	}
+
+	applyDraftsHighlight(active)
+	{
+		const draftsButton = document.querySelector('[data-testid="mail-drafts-button"]');
+		if (!draftsButton)
+		{
+			return;
+		}
+
+		if (active)
+		{
+			Dom.addClass(draftsButton, 'mail-menu-directory-item--active');
+			Dom.attr(draftsButton, 'aria-current', 'page');
+		}
+		else
+		{
+			Dom.removeClass(draftsButton, 'mail-menu-directory-item--active');
+			Dom.attr(draftsButton, 'aria-current', null);
+		}
+	}
+
+	initClientDraftList(attempt = 0)
+	{
+		this.draftNavigationButton = document.querySelector('[data-testid="mail-drafts-button"]');
+		this.messageListContainer = document.querySelector('[data-role="mail-message-list-view"]');
+		this.draftListContainer = document.querySelector('[data-testid="mail-client-draft-list"]');
+		this.messageFilterContainer = document.querySelector('[data-role="mail-message-list-filter"]');
+		this.draftFilterContainer = document.querySelector('[data-testid="mail-draft-list-filter"]');
+		if (
+			!this.draftNavigationButton
+			|| !this.messageListContainer
+			|| !this.draftListContainer
+			|| !this.messageFilterContainer
+			|| !this.draftFilterContainer
+		)
+		{
+			if (attempt < 100)
+			{
+				setTimeout(() => this.initClientDraftList(attempt + 1), 50);
+			}
+
+			return;
+		}
+
+		this.draftNavigationButton.addEventListener('click', (event) => {
+			event.preventDefault();
+			event.stopImmediatePropagation();
+			this.showDrafts();
+		});
+
+		if (this.isDraftUrl(window.location.href))
+		{
+			this.showDrafts(false);
+		}
+	}
+
+	handleHistoryChange()
+	{
+		if (this.isDraftUrl(window.location.href))
+		{
+			this.showDrafts(false);
+
+			return;
+		}
+
+		this.hideDrafts(false);
+		this.syncFavoritesSectionFromHistory();
+	}
+
+	isDraftUrl(url)
+	{
+		const currentUrl = new URL(url, window.location.origin);
+		const draftUrl = new URL(this.draftsPath, window.location.origin);
+		if (currentUrl.pathname.replace(/\/+$/, '') !== draftUrl.pathname.replace(/\/+$/, ''))
+		{
+			return false;
+		}
+
+		return !draftUrl.searchParams.has('list_mode')
+			|| currentUrl.searchParams.get('list_mode') === draftUrl.searchParams.get('list_mode')
+		;
+	}
+
+	showDrafts(updateHistory = true)
+	{
+		if (!this.draftListContainer || this.draftListContainer.hidden === false)
+		{
+			return;
+		}
+
+		if (this.favoritesSectionActive)
+		{
+			// the drafts address carries no section marker, so the section is left behind
+			this.switchFavoritesSection(false, { updateHistory: false, reload: false });
+		}
+
+		this.resetGridViewSelection(this.gridId);
+		this.resetGridViewSelection('mail-internal-draft-list');
+		this.messageListContainer.hidden = true;
+		this.draftListContainer.hidden = false;
+		this.messageFilterContainer.hidden = true;
+		this.draftFilterContainer.hidden = false;
+		this.unfixActionPanel(this.gridId);
+		this.refreshActionPanelPosition('mail-internal-draft-list');
+		Dom.addClass(document.body, 'mail-client-draft-list-view');
+		this.setDraftsSectionActive(true);
+		const draftGrid = this.getDraftGridInstance();
+		if (draftGrid)
+		{
+			draftGrid.baseUrl = this.draftsPath;
+			this.syncDraftActionPanel(draftGrid);
+			const moreButton = this.draftListContainer.querySelector(`#${draftGrid.getId()}_nav_more`);
+			if (moreButton)
+			{
+				const page = new URL(moreButton.href, window.location.origin).searchParams.get('mail-internal-draft-list');
+				moreButton.href = BX.util.add_url_param(this.draftsPath, {
+					'mail-internal-draft-list': page,
+				});
+			}
+
+			draftGrid.reloadTable('POST', {}, null, this.draftsPath);
+			setTimeout(() => this.syncDraftActionPanel(this.getDraftGridInstance()));
+		}
+
+		if (updateHistory)
+		{
+			window.history.pushState({ mailDraftList: true }, '', this.draftsPath);
+		}
+	}
+
+	unfixActionPanel(gridId)
+	{
+		const actionPanel = BX.Mail.Home.GridActionPanels?.[gridId];
+		actionPanel?.getPositionTracker?.().stop();
+		actionPanel?.unfixPanel();
+		if (actionPanel?.renderTo)
+		{
+			actionPanel.renderTo.appendChild(actionPanel.getPanelContainer());
+			Dom.removeClass(actionPanel.getPanelContainer(), 'ui-action-panel-fixed');
+			actionPanel.panelIsFixed = null;
+		}
+	}
+
+	refreshActionPanelPosition(gridId)
+	{
+		const actionPanel = BX.Mail.Home.GridActionPanels?.[gridId];
+		if (!actionPanel)
+		{
+			return;
+		}
+
+		actionPanel.getPositionTracker?.().start();
+		actionPanel.unfixPanel();
+		requestAnimationFrame(() => {
+			actionPanel.adjustPanelStyle();
+			actionPanel.handleScroll();
+		});
+	}
+
+	resetGridViewSelection(gridId)
+	{
+		if (gridId === this.gridId)
+		{
+			BX.onCustomEvent('Mail::resetGridSelection');
+		}
+
+		const grid = BX.Main.gridManager.getInstanceById(gridId);
+		grid?.getRows().unselectAll();
+		grid?.adjustCheckAllCheckboxes();
+
+		const actionPanel = BX.Mail.Home.GridActionPanels?.[gridId];
+		const checkAllCheckbox = actionPanel?.getPanelContainer().querySelector(
+			`input[data-mail-grid-check-all="${gridId}"]`,
+		);
+		if (checkAllCheckbox)
+		{
+			checkAllCheckbox.checked = false;
+			checkAllCheckbox.indeterminate = false;
+		}
+		actionPanel?.setTotalSelectedItems(0);
+		actionPanel?.hidePanel(grid);
+	}
+
+	syncDraftActionPanel(draftGrid)
+	{
+		const actionPanel = BX.Mail.Home.GridActionPanels?.['mail-internal-draft-list'];
+		if (actionPanel && draftGrid)
+		{
+			actionPanel.grid = draftGrid;
+			this.userInterfaceManager.addCheckAllCheckbox(actionPanel, draftGrid);
+		}
+	}
+
+	hideDrafts(updateHistory = true)
+	{
+		if (!this.draftListContainer || this.draftListContainer.hidden)
+		{
+			return;
+		}
+
+		this.resetGridViewSelection('mail-internal-draft-list');
+		this.resetGridViewSelection(this.gridId);
+		this.draftListContainer.hidden = true;
+		this.messageListContainer.hidden = false;
+		this.draftFilterContainer.hidden = true;
+		this.messageFilterContainer.hidden = false;
+		this.unfixActionPanel('mail-internal-draft-list');
+		this.refreshActionPanelPosition(this.gridId);
+		Dom.removeClass(document.body, 'mail-client-draft-list-view');
+		this.setDraftsSectionActive(false);
+
+		if (updateHistory)
+		{
+			window.history.pushState({ mailDraftList: false }, '', this.messageListPath);
+		}
+
+		this.selectedDraftIds = [];
+	}
+
+	showFavoritesSection()
+	{
+		this.hideDrafts(false);
+		this.switchFavoritesSection(true, {
+			// a repeated pick of the same section refreshes it instead of stacking history
+			updateHistory: !this.favoritesSectionActive,
+			reload: true,
+		});
+	}
+
+	leaveFavoritesSection()
+	{
+		if (!this.favoritesSectionActive)
+		{
+			return;
+		}
+
+		// the caller reloads the list itself by applying the filter
+		this.switchFavoritesSection(false, { updateHistory: true, reload: false });
+	}
+
+	navigateToMessageList(params)
+	{
+		const url = BX.util.add_url_param(this.messageListPath, params);
+		const slider = top.BX.SidePanel.Instance.getTopSlider();
+		if (slider)
+		{
+			slider.setUrl(url);
+			slider.getFrameWindow().location.href = url;
+
+			return;
+		}
+
+		window.location.href = url;
+	}
+
+	syncFavoritesSectionFromHistory()
+	{
+		if (!this.listImprovementsEnabled)
+		{
+			return;
+		}
+
+		const active = isFavoritesSectionUrl(window.location.href);
+		if (active === this.favoritesSectionActive)
+		{
+			return;
+		}
+
+		this.switchFavoritesSection(active, { updateHistory: false, reload: true });
+	}
+
+	switchFavoritesSection(active, { updateHistory, reload })
+	{
+		const base = this.isDraftUrl(window.location.href) ? this.messageListPath : window.location.href;
+		const url = active ? withFavoritesSection(base) : withoutFavoritesSection(base);
+		const grid = BX.Main.gridManager.getById(this.gridId)?.instance ?? null;
+
+		if (active && !this.favoritesSectionActive)
+		{
+			// the way back: the section is left for the folder it was entered from
+			this.folderBehindFavoritesSection = this.getFilterFolder();
+		}
+
+		// the folder is kept for one way back only, so leaving the section spends it
+		const folderBehindSection = this.folderBehindFavoritesSection;
+		if (!active)
+		{
+			this.folderBehindFavoritesSection = '';
+		}
+
+		this.favoritesSectionActive = active;
+		if (grid)
+		{
+			// the grid keeps its own copy of the address it reloads from
+			grid.baseUrl = url;
+		}
+
+		if (updateHistory)
+		{
+			window.history.pushState({ mailFavoritesSection: active }, '', url);
+		}
+
+		BX.Mail.Home.LeftMenuNode?.directoryMenu?.setFavoritesActive(active);
+
+		if (!reload)
+		{
+			return;
+		}
+
+		// the all mail view keeps no folder field, so there is nothing to hand over to the filter
+		if (this.hasFilterFolderField())
+		{
+			this.applyFolderToFilter(active ? '' : folderBehindSection);
+
+			return;
+		}
+
+		grid?.reloadTable('POST', {}, null, url);
+	}
+
+	getFilterInstance()
+	{
+		const filter = BX.Main?.filterManager?.getById?.(this.filterId);
+
+		return (BX.Main?.Filter && filter instanceof BX.Main.Filter) ? filter : null;
+	}
+
+	hasFilterFolderField()
+	{
+		return this.getFilterInstance()?.getFilterFieldsValues()?.DIR !== undefined;
+	}
+
+	getFilterFolder()
+	{
+		return this.getFilterInstance()?.getFilterFieldsValues()?.DIR ?? '';
+	}
+
+	// The section spans the whole mailbox, so it holds the filter at "any folder": the very field the
+	// left menu writes when a folder is picked. Applying it reloads the list from the address the
+	// section owns, so the filter and the selection tell the same story.
+	applyFolderToFilter(folder)
+	{
+		// forced, so that the extension lays the fields over the applied ones and leaves the rest of
+		// the filter as the user set it; without the flag a named preset takes the folder into the
+		// additional values it saves for the user
+		this.getFilterInstance().getApi().extendFilter({ DIR: folder, LABEL_ID: '' }, true);
+	}
 
 	addEventHandlers()
 	{
+		BX.addCustomEvent('Grid::updated', () => {
+			this.syncDraftActionPanel(this.getDraftGridInstance());
+			this.syncMigrationActionPanel();
+		});
+		BX.addCustomEvent('Grid::thereSelectedRows', () => this.syncMigrationActionPanel());
+		BX.addCustomEvent('Grid::allRowsSelected', () => this.syncMigrationActionPanel());
+		BX.addCustomEvent('BX.UI.ActionPanel:created', () => this.syncMigrationActionPanel());
+
 		// todo delete this hack
 		// it is here to prevent grid's title changing after filter apply
 		BX.ajax.UpdatePageData = (function() {
 		});
+
+		BX.addCustomEvent('SidePanel.Slider:onMessage', (event) => {
+			if (event.getEventId() === 'Mail.Client.DraftClosed')
+			{
+				const slider = event.getSender?.();
+				if (slider)
+				{
+					this.closedDraftSliders.set(slider, event.getData()?.content ?? '');
+				}
+
+				return;
+			}
+
+			if (event.getEventId() === 'Mail.Client.DraftSaved')
+			{
+				const slider = event.getSender?.();
+				if (slider)
+				{
+					this.modifiedDraftSliders.add(slider);
+				}
+
+				return;
+			}
+
+			if (event.getEventId() !== 'Mail.Client.MessageCreatedSuccess')
+			{
+				return;
+			}
+
+			this.reloadDraftGrid();
+		});
+
+		(window.top?.BX ?? BX).addCustomEvent('SidePanel.Slider:onCloseComplete', (event) => {
+			const slider = event.getSlider?.();
+			if (this.modifiedDraftSliders.delete(slider))
+			{
+				this.reloadDraftGrid();
+			}
+
+			if (this.closedDraftSliders.has(slider))
+			{
+				const content = this.closedDraftSliders.get(slider);
+				this.closedDraftSliders.delete(slider);
+				void this.showDraftSavedNotification(content);
+			}
+		});
+
+		document.addEventListener('click', (event) => {
+			const draftListContainer = document.querySelector('[data-testid="mail-client-draft-list"]');
+			if (draftListContainer && !draftListContainer.hidden)
+			{
+				setTimeout(() => {
+					if (!draftListContainer.hidden)
+					{
+						this.updateDraftActionPanel();
+					}
+				}, 50);
+				setTimeout(() => {
+					if (!draftListContainer.hidden)
+					{
+						this.updateDraftActionPanel();
+					}
+				}, 250);
+			}
+
+		}, true);
+
+		if (this.isDraftMode)
+		{
+			return;
+		}
 
 		EventEmitter.subscribe(
 			'onSubMenuShow',
@@ -134,6 +853,18 @@ export class List
 			}
 		}.bind(this));
 
+		EventEmitter.subscribe('BX.Main.Menu.Item:onmouseenter', (event) => {
+			const menuItem = event.target;
+
+			if (menuItem && menuItem.dataset && menuItem.dataset.labelMenu)
+			{
+				this.prepareLabelsSubMenu(menuItem);
+			}
+		});
+
+		this.panelPopupShowHandler = (popupWindow) => this.handleActionPanelPopupShow(popupWindow);
+		BX.addCustomEvent(window, 'onPopupShow', this.panelPopupShowHandler);
+
 		const itemsMenu = document.querySelectorAll('.ical-event-control-menu');
 
 		for (let i = 0; i < itemsMenu.length; i++)
@@ -142,6 +873,176 @@ export class List
 		}
 
 		BX.bindDelegate(document.body, 'click', { className: 'ical-event-control-button' }, this.onClickICalButton.bind(this));
+	}
+
+	async showDraftSavedNotification(content)
+	{
+		const rootWindow = window.top ?? window;
+		let notificationCenter = rootWindow.BX?.UI?.Notification?.Center;
+		if (!notificationCenter)
+		{
+			const notificationExtension = await rootWindow.BX.Runtime.loadExtension('ui.notification');
+			notificationCenter = rootWindow.BX?.UI?.Notification?.Center ?? notificationExtension.Center;
+		}
+		notificationCenter.notify({ content });
+	}
+
+	reloadDraftGrid()
+	{
+		this.getDraftGridInstance()?.reloadTable('POST');
+	}
+
+	openDraft(draftId)
+	{
+		BX.SidePanel.Instance.open(
+			BX.util.add_url_param(this.composePath, { draftId }),
+			this.composeSliderOptions,
+		);
+	}
+
+	deleteDraft(draftId)
+	{
+		return new Promise((resolve, reject) => {
+			BX.ajax.runAction('mail.api.draft.delete', { data: { draftId } }).then((response) => {
+				if (response.data.deleted === true)
+				{
+					BX.Mail.Home.FilterToolbar?.decreaseStaticCount(1);
+				}
+
+				this.getDraftGridInstance()?.reloadTable('POST', {}, null, this.draftsPath);
+				resolve(response);
+			}, reject);
+		});
+	}
+
+	deleteSelectedDrafts()
+	{
+		const draftIds = this.getSelectedDraftIds();
+		if (draftIds.length === 0)
+		{
+			return Promise.resolve();
+		}
+
+		return new Promise((resolve, reject) => {
+			BX.ajax.runAction('mail.api.draft.deleteMany', { data: { draftIds } }).then((response) => {
+				const deletedIds = Array.isArray(response.data.deletedIds) ? response.data.deletedIds : [];
+				const failedIds = Array.isArray(response.data.failedIds) ? response.data.failedIds : [];
+				BX.Mail.Home.FilterToolbar?.decreaseStaticCount(deletedIds.length);
+				const draftGrid = this.getDraftGridInstance();
+				draftGrid?.getRows().unselectAll();
+				draftGrid?.adjustCheckAllCheckboxes();
+				this.selectedDraftIds = [];
+				draftGrid?.reloadTable('POST', {}, null, this.draftsPath);
+				if (failedIds.length > 0)
+				{
+					this.notify(
+						this.draftDeletePartialError.replace('#COUNT#', String(failedIds.length)),
+						5000,
+					);
+				}
+				resolve(response);
+			}, reject);
+		});
+	}
+
+	getSelectedDraftIds()
+	{
+		const draftListContainer = document.querySelector('[data-testid="mail-client-draft-list"]');
+		const draftIds = Array.from(
+			draftListContainer?.querySelectorAll(
+				'.main-grid-row[data-draft-id] input[type="checkbox"]:checked',
+			) || [],
+		).map((checkbox) => Number(checkbox.closest('[data-draft-id]').dataset.draftId));
+
+		return draftIds.length > 0 ? draftIds : (this.selectedDraftIds || []);
+	}
+
+	confirmDeleteSelectedDrafts()
+	{
+		const draftIds = this.getSelectedDraftIds();
+		if (draftIds.length === 0)
+		{
+			return;
+		}
+
+		this.showDraftDeleteConfirmation(
+			this.draftDeleteManyConfirm,
+			this.draftDeleteManyDescription.replace('#COUNT#', String(draftIds.length)),
+			() => this.deleteSelectedDrafts(),
+		);
+	}
+
+	confirmDeleteDraft(draftId)
+	{
+		this.showDraftDeleteConfirmation(
+			this.draftDeleteConfirm,
+			this.draftDeleteDescription,
+			() => this.deleteDraft(draftId),
+		);
+	}
+
+	async showDraftDeleteConfirmation(title, description, onConfirm)
+	{
+		const {
+			Dialog,
+			Text,
+		} = await Runtime.loadExtension([
+			'ui.system.dialog',
+			'ui.system.typography',
+		]);
+		let dialog;
+		const confirmButton = new Button({
+			text: this.draftDeleteButton,
+			size: ButtonSize.LARGE,
+			style: AirButtonStyle.FILLED_ALERT,
+			useAirDesign: true,
+			onclick: () => {
+				confirmButton.setWaiting();
+				cancelButton.setDisabled();
+				const handleError = () => {
+					confirmButton.setWaiting(false);
+					cancelButton.setDisabled(false);
+				};
+				try
+				{
+					const result = onConfirm();
+					if (result && typeof result.then === 'function')
+					{
+						result.then(
+							() => dialog.hide(),
+							handleError,
+						);
+					}
+					else
+					{
+						dialog.hide();
+					}
+				}
+				catch
+				{
+					handleError();
+				}
+			},
+		});
+		const cancelButton = new Button({
+			text: this.draftCancelButton,
+			size: ButtonSize.LARGE,
+			style: AirButtonStyle.OUTLINE,
+			useAirDesign: true,
+			onclick: () => dialog.hide(),
+		});
+
+		dialog = new Dialog({
+			title,
+			content: Text.render(description, { size: 'sm' }),
+			centerButtons: [confirmButton, cancelButton],
+			hasCloseButton: true,
+			hasOverlay: true,
+			closeByEsc: true,
+			closeByClickOutside: true,
+			width: 480,
+		});
+		dialog.show();
 	}
 
 	loadLevelMenu(menuItem, hash)
@@ -330,6 +1231,40 @@ export class List
 		}
 	}
 
+	updateDraftActionPanel()
+	{
+		const draftGrid = this.getDraftGridInstance();
+		const actionPanel = BX.Mail.Home.GridActionPanels?.['mail-internal-draft-list'];
+		if (!draftGrid || !actionPanel)
+		{
+			return;
+		}
+
+		actionPanel.grid = draftGrid;
+		this.selectedDraftIds = this.getSelectedDraftIds();
+		const selectedCount = this.selectedDraftIds.length;
+		actionPanel.setTotalSelectedItems(selectedCount);
+		const deleteItem = actionPanel.getItemById('draft-delete');
+		const deleteButton = document.querySelector(
+			'[data-testid="mail-client-draft-list"] #draft-delete',
+		);
+		if (selectedCount === 0)
+		{
+			deleteItem?.disable();
+		}
+		else
+		{
+			deleteItem?.enable();
+			if (deleteButton)
+			{
+				BX.data(deleteButton, 'slider-ignore-autobinding', true);
+				deleteButton.querySelectorAll('*').forEach((element) => {
+					BX.data(element, 'slider-ignore-autobinding', true);
+				});
+			}
+		}
+	}
+
 	onViewClick(id)
 	{
 		if (id === undefined && this.getGridInstance().getRows().getSelectedIds().length === 0)
@@ -343,6 +1278,443 @@ export class List
 		});
 	}
 
+	onAssignLabelClick()
+	{
+		if (this.isAssignMenuOpening)
+		{
+			return;
+		}
+
+		const messageIds = this.getGridInstance().getRows().getSelectedIds();
+		if (!messageIds.length)
+		{
+			return;
+		}
+
+		const bindElement = (window.event && window.event.target) ? window.event.target : document.body;
+		this.showAssignMenu(bindElement, messageIds, this.resolveCommonMessageLabelIds(messageIds));
+	}
+
+	resolveMessageLabelIds(id)
+	{
+		const apiClient = this.getLabelApiClient();
+		if (!apiClient)
+		{
+			return Promise.resolve([]);
+		}
+
+		return apiClient.messageLabels(id).catch(() => []);
+	}
+
+	// Labels of the whole selection: the group selector shows them as assigned, so a click removes
+	// them everywhere. A failure is passed on instead of opening an empty "nothing assigned" state.
+	resolveCommonMessageLabelIds(messageIds)
+	{
+		const apiClient = this.getLabelApiClient();
+		if (!apiClient)
+		{
+			return Promise.resolve([]);
+		}
+
+		return apiClient.commonMessageLabels(messageIds);
+	}
+
+	resolveLabelScopeMailboxId(messageIds)
+	{
+		if (!this.isAllMailMode())
+		{
+			return this.mailboxId;
+		}
+
+		const mailboxIds = new Set(messageIds.map((messageId) => this.parseMailboxId(messageId)));
+
+		return mailboxIds.size === 1 ? [...mailboxIds][0] : LABEL_SCOPE_ALL_MAILBOXES;
+	}
+
+	parseMailboxId(messageId)
+	{
+		const mailboxId = Number(String(messageId).split('-').pop());
+
+		return Number.isInteger(mailboxId) && mailboxId > 0 ? mailboxId : LABEL_SCOPE_ALL_MAILBOXES;
+	}
+
+	showAssignMenu(bindElement, messageIds, currentLabelIds)
+	{
+		this.isAssignMenuOpening = true;
+
+		return Runtime.loadExtension('mail.label.assign-menu')
+			.then(({ AssignMenu }) => AssignMenu.show({
+				bindElement,
+				messageIds,
+				currentLabelIds,
+				mailboxId: this.resolveLabelScopeMailboxId(messageIds),
+				onChange: (change) => this.onLabelAssignmentChanged(change),
+			}))
+			.catch(() => this.notify(Loc.getMessage('MAIL_MESSAGE_LIST_LABELS_LOAD_ERROR')))
+			.finally(() => {
+				this.isAssignMenuOpening = false;
+			});
+	}
+
+	onLabelAssignmentChanged(change)
+	{
+		if (!change || change.assigned)
+		{
+			return;
+		}
+
+		const filter = BX.Main.filterManager.getById(this.filterId);
+		if (!filter)
+		{
+			return;
+		}
+
+		const activeLabelId = parseInt(filter.getFilterFieldsValues()['LABEL_ID'], 10);
+		if (activeLabelId > 0 && activeLabelId === change.labelId)
+		{
+			this.resetGridSelection();
+			BX.Mail.Home.Grid.reloadTable();
+		}
+	}
+
+	getLabelApiClient()
+	{
+		return (BX.Mail.Label && BX.Mail.Label.Core) ? BX.Mail.Label.Core.apiClient : null;
+	}
+
+	subscribeLabelsSliderClose()
+	{
+		this.labelsSliderCloseHandler = (sliderEvent) => this.handleLabelsSliderClose(sliderEvent);
+
+		this.labelsEventTargets = new Set([this.getSidePanelEventTarget()]);
+		if (BX.addCustomEvent)
+		{
+			this.labelsEventTargets.add(BX);
+		}
+
+		this.labelsEventTargets.forEach((target) => target.addCustomEvent(
+			'SidePanel.Slider:onCloseComplete',
+			this.labelsSliderCloseHandler,
+		));
+
+		// window.top.BX outlives this document, so its handler has to go away with the document.
+		this.pageLeaveHandler = () => this.destroy();
+		Event.bind(window, 'pagehide', this.pageLeaveHandler);
+	}
+
+	destroy()
+	{
+		this.destroyMigrationStates();
+
+		if (!this.labelsSliderCloseHandler)
+		{
+			return;
+		}
+
+		this.labelsEventTargets.forEach((target) => target.removeCustomEvent(
+			'SidePanel.Slider:onCloseComplete',
+			this.labelsSliderCloseHandler,
+		));
+		this.labelsSliderCloseHandler = null;
+
+		BX.removeCustomEvent(window, 'onPopupShow', this.panelPopupShowHandler);
+		this.panelPopupShowHandler = null;
+
+		Event.unbind(window, 'pagehide', this.pageLeaveHandler);
+		this.pageLeaveHandler = null;
+	}
+
+	getSidePanelEventTarget()
+	{
+		if (window.top && window.top.BX && window.top.BX.addCustomEvent)
+		{
+			return window.top.BX;
+		}
+
+		return BX;
+	}
+
+	handleLabelsSliderClose(sliderEvent)
+	{
+		const url = sliderEvent?.getSlider?.()?.getUrl?.() ?? '';
+		if (!url.includes(LABELS_SLIDER_URL))
+		{
+			return;
+		}
+
+		const apiClient = this.getLabelApiClient();
+		if (!apiClient || !this.labelCollection)
+		{
+			return;
+		}
+
+		apiClient.list()
+			.then((labels) => {
+				this.labelCollection.setAll(labels);
+				this.labelsVersion++;
+			})
+			.catch(() => {});
+	}
+
+	prepareLabelsSubMenu(menuItem)
+	{
+		const subMenu = menuItem.getSubMenu();
+		if (
+			subMenu
+			&& !this.subMenuHasLoadingItem(subMenu)
+			&& menuItem.labelsSubMenuVersion === this.labelsVersion
+		)
+		{
+			return;
+		}
+
+		const rowId = String(menuItem.gridRowId ?? '');
+		if (!this.labelCollection || rowId === '')
+		{
+			return;
+		}
+
+		const scopeMailboxId = this.resolveLabelScopeMailboxId([rowId]);
+		const labels = this.getLabelsForScope(scopeMailboxId);
+		const items = labels.length > 0
+			? this.buildLabelsSubMenuItems(rowId, labels, [])
+			: [this.buildEmptyLabelsItem()];
+
+		const popup = BX.Main.PopupManager.getPopupById('menu-popup-popup-submenu-' + menuItem.getId());
+		if (popup)
+		{
+			popup.destroy();
+		}
+
+		menuItem.destroySubMenu();
+		menuItem.addSubMenu(items);
+		menuItem.showSubMenu();
+		menuItem.labelsSubMenuVersion = this.labelsVersion;
+
+		if (labels.length > 0)
+		{
+			this.applyAssignedLabelMarks(menuItem, rowId);
+		}
+	}
+
+	handleActionPanelPopupShow(popupWindow)
+	{
+		if (popupWindow?.uniquePopupId !== ACTION_PANEL_POPUP_ID)
+		{
+			return;
+		}
+
+		if (!popupWindow.bindElement?.dataset?.labelMenu)
+		{
+			return;
+		}
+
+		const menu = BX.Main.MenuManager.getMenuById(ACTION_PANEL_MENU_ID);
+		if (!menu)
+		{
+			return;
+		}
+
+		const rowId = String(this.getGridInstance().getRows().getSelectedIds()[0] ?? '');
+		if (!this.labelCollection || rowId === '')
+		{
+			return;
+		}
+
+		const scopeMailboxId = this.resolveLabelScopeMailboxId([rowId]);
+		const labels = this.getLabelsForScope(scopeMailboxId);
+		const items = labels.length > 0
+			? this.buildLabelsSubMenuItems(rowId, labels, [])
+			: [this.buildEmptyLabelsItem()];
+
+		this.replaceMenuItems(menu, items);
+
+		if (labels.length > 0)
+		{
+			this.applyAssignedLabelMarksToMenu(
+				menu,
+				rowId,
+				() => BX.Main.MenuManager.getMenuById(ACTION_PANEL_MENU_ID) !== menu || !menu.isShown(),
+			);
+		}
+	}
+
+	replaceMenuItems(menu, items)
+	{
+		const staleItemIds = menu.getMenuItems().map((item) => item.getId());
+		const addedItems = items.filter((item) => menu.addMenuItem(item, null) !== null);
+
+		// The placeholder goes away last: removing the last item of a menu destroys its popup.
+		if (addedItems.length > 0)
+		{
+			staleItemIds.forEach((itemId) => menu.removeMenuItem(itemId));
+		}
+	}
+
+	getLabelsForScope(scopeMailboxId)
+	{
+		return this.labelCollection.getAll().filter(
+			(label) => label.mailboxId === LABEL_SCOPE_ALL_MAILBOXES || label.mailboxId === scopeMailboxId,
+		);
+	}
+
+	applyAssignedLabelMarks(menuItem, rowId)
+	{
+		const targetSubMenu = menuItem.getSubMenu();
+		if (!targetSubMenu)
+		{
+			return;
+		}
+
+		this.applyAssignedLabelMarksToMenu(
+			targetSubMenu,
+			rowId,
+			() => menuItem.getSubMenu() !== targetSubMenu,
+		);
+	}
+
+	applyAssignedLabelMarksToMenu(menu, rowId, isStale)
+	{
+		this.resolveMessageLabelIds(rowId)
+			.then((currentLabelIds) => {
+				if (isStale())
+				{
+					return;
+				}
+
+				const assignedLabelIds = new Set((currentLabelIds || []).map((labelId) => Number(labelId)));
+				menu.getMenuItems().forEach((item) => {
+					const labelId = this.parseLabelItemId(item.getId());
+					if (labelId !== null && !this.toggledLabelIds?.has(labelId))
+					{
+						this.setLabelItemChecked(item, assignedLabelIds.has(labelId));
+					}
+				});
+			})
+			.catch(() => {});
+	}
+
+	parseLabelItemId(itemId)
+	{
+		if (!Type.isString(itemId) || !itemId.startsWith(LABEL_ITEM_ID_PREFIX))
+		{
+			return null;
+		}
+
+		const labelId = Number(itemId.slice(LABEL_ITEM_ID_PREFIX.length));
+
+		return Number.isInteger(labelId) ? labelId : null;
+	}
+
+	buildEmptyLabelsItem()
+	{
+		return {
+			id: 'mail-label-empty',
+			text: Loc.getMessage('MAIL_MESSAGE_LIST_LABELS_EMPTY'),
+			disabled: true,
+		};
+	}
+
+	subMenuHasLoadingItem(subMenu)
+	{
+		const items = subMenu.getMenuItems();
+		for (let i = 0; i < items.length; i++)
+		{
+			if (items[i].getId() === 'loading')
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	buildLabelsSubMenuItems(rowId, labels, currentLabelIds)
+	{
+		const assignedLabelIds = new Set((currentLabelIds || []).map((labelId) => Number(labelId)));
+		// The marks arrive asynchronously, so a label the user has already toggled must keep his state.
+		this.toggledLabelIds = new Set();
+		const items = [];
+
+		for (let i = 0; i < labels.length; i++)
+		{
+			const label = labels[i];
+			const labelId = Number(label.id);
+			const isAssigned = assignedLabelIds.has(labelId);
+
+			items.push({
+				id: LABEL_ITEM_ID_PREFIX + labelId,
+				text: label.name,
+				className: this.getLabelItemClassName(isAssigned),
+				dataset: {
+					testid: 'mail-message-list-label-item-' + labelId,
+					preventCloseContextMenu: true,
+				},
+				onclick: (event, item) => this.onLabelToggleClick(event, item, labelId, rowId),
+			});
+		}
+
+		return items;
+	}
+
+	getLabelItemClassName(isAssigned)
+	{
+		return isAssigned
+			? 'mail-msg-list-label-item menu-popup-item-accept'
+			: 'mail-msg-list-label-item';
+	}
+
+	onLabelToggleClick(event, item, labelId, rowId)
+	{
+		if (event)
+		{
+			event.stopPropagation();
+		}
+
+		const apiClient = this.getLabelApiClient();
+		if (!apiClient)
+		{
+			return;
+		}
+
+		const wasAssigned = Dom.hasClass(item.getContainer(), 'menu-popup-item-accept');
+		const willAssign = !wasAssigned;
+
+		this.toggledLabelIds?.add(labelId);
+		this.setLabelItemChecked(item, willAssign);
+
+		const request = willAssign
+			? apiClient.assign([labelId], [rowId])
+			: apiClient.unassign([labelId], [rowId]);
+
+		request
+			.then(() => {
+				this.onLabelAssignmentChanged({ labelId, assigned: willAssign });
+			})
+			.catch(() => {
+				this.setLabelItemChecked(item, wasAssigned);
+				this.notify(Loc.getMessage('MAIL_MESSAGE_LIST_LABEL_TOGGLE_ERROR'));
+			});
+	}
+
+	setLabelItemChecked(item, checked)
+	{
+		const container = item.getContainer();
+		if (!container)
+		{
+			return;
+		}
+
+		if (checked)
+		{
+			Dom.addClass(container, 'menu-popup-item-accept');
+		}
+		else
+		{
+			Dom.removeClass(container, 'menu-popup-item-accept');
+		}
+	}
+
 	onDeleteImmediately(id)
 	{
 		let additionalOptions =
@@ -354,6 +1726,11 @@ export class List
 
 	onDeleteClick(id,additionalOptions)
 	{
+		if (this.refuseMigrationAction(id))
+		{
+			return;
+		}
+
 		const selected = this.getGridInstance().getRows().getSelected();
 		if (id === undefined && selected.length === 0)
 		{
@@ -455,6 +1832,10 @@ export class List
 		{
 			id = BX.data(popupSubmenu, 'grid-row-id');
 		}
+		if (this.refuseMigrationAction(id))
+		{
+			return;
+		}
 		const isDisabled = JSON.parse(folderOptions.isDisabled);
 
 		if ((id === undefined && this.getGridInstance().getRows().getSelectedIds().length === 0) || isDisabled)
@@ -529,6 +1910,11 @@ export class List
 
 	onReadClick(id)
 	{
+		if (this.refuseMigrationAction(id))
+		{
+			return;
+		}
+
 		let selected = [];
 		let resultIds = [];
 
@@ -654,6 +2040,11 @@ export class List
 
 	onSpamClick(id)
 	{
+		if (this.refuseMigrationAction(id))
+		{
+			return;
+		}
+
 		const selected = this.getGridInstance().getRows().getSelected();
 		if (id === undefined && selected.length === 0)
 		{
@@ -1018,11 +2409,13 @@ export class List
 		return !!(BX.Mail.Home.MailboxSelector && BX.Mail.Home.MailboxSelector.isAllMailMode);
 	}
 
+	/** The mailbox of a row comes from its `data-mailbox-id` attribute: the grid keeps its row data server-side. */
 	getRowMailboxId(rowId)
 	{
 		const row = this.getGridInstance().getRows().getById(rowId);
+		const mailboxId = Number(row?.getDataset?.()?.mailboxId ?? 0);
 
-		return parseInt(row?.getData()?.MAILBOX_ID, 10);
+		return Number.isInteger(mailboxId) && mailboxId > 0 ? mailboxId : 0;
 	}
 
 	canRowDelete(rowId)
@@ -1062,6 +2455,11 @@ export class List
 	getGridInstance()
 	{
 		return BX.Main.gridManager.getById(this.gridId).instance;
+	}
+
+	getDraftGridInstance()
+	{
+		return BX.Main.gridManager.getById('mail-internal-draft-list')?.instance || null;
 	}
 
 	getRowsBindings(rows)

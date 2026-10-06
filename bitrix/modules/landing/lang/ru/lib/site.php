@@ -9,5 +9,6 @@ $MESS['LANDING_EXPORT_ERROR'] = 'Параметр code может состоят
 $MESS['LANDING_COPY_ERROR_SITE_NOT_FOUND'] = 'Сайт не найден или доступ к нему запрещен.';
 $MESS['LANDING_COPY_ERROR_FOLDER_NOT_FOUND'] = 'Папка не найдена или доступ к ней запрещен.';
 $MESS['LANDING_COPY_ERROR_MOVE_RESTRICTION'] = 'Невозможно переместить папку.';
+$MESS['LANDING_UPDATE_FOLDER_ERROR_INDEX_OUT_OF_SITE'] = 'Главная страница папки должна быть страницей этого же сайта.';
 $MESS['LANDING_DELETE_FOLDER_ERROR_CONTAINS_AREAS'] = 'Папка содержит включаемые области и не может быть удалена.';
 $MESS['LANDING_CLB_ERROR_DELETE_SMN'] = 'Вам нужно сначала удалить страницы соответствующего сайта в разделе Сайты24.';

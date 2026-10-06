@@ -4,6 +4,7 @@
 jn.define('im/messenger/controller/navigation/src/nested/tabs-config', (require, exports, module) => {
 	const { NavigationTabId } = require('im/messenger/const');
 	const { Loc } = require('im/messenger/loc');
+	const { Feature } = require('im/messenger/lib/feature');
 
 	const NestedTabsConfig = [
 		{
@@ -38,6 +39,18 @@ jn.define('im/messenger/controller/navigation/src/nested/tabs-config', (require,
 				useSearch: true,
 			},
 		},
+		...(Feature.isCopilotEnabled ? [
+			{
+				id: NavigationTabId.collabCopilot,
+				title: Loc.getMessageWithCopilotBotName('IMMOBILE_NAVIGATION_NESTED_TAB_COPILOT'),
+				widget: {
+					name: 'chat.recent',
+					id: NavigationTabId.collabCopilot,
+					code: NavigationTabId.collabCopilot,
+					useSearch: true,
+				},
+			},
+		] : []),
 		{
 			id: NavigationTabId.calendar,
 			title: Loc.getMessage('IMMOBILE_NAVIGATION_NESTED_TAB_CALENDAR'),

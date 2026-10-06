@@ -9,6 +9,9 @@ jn.define('bizproc/workflow/details/content', (require, exports, module) => {
 	const { EntityManager } = require('layout/ui/entity-editor/manager');
 	const { CollapsibleText } = require('layout/ui/collapsible-text');
 	const { Random } = require('utils/random');
+	const { H4 } = require('ui-system/typography/heading');
+	const { Text5 } = require('ui-system/typography/text');
+	const { Color, Typography } = require('tokens');
 
 	class WorkflowDetailsContent extends PureComponent
 	{
@@ -61,14 +64,13 @@ jn.define('bizproc/workflow/details/content', (require, exports, module) => {
 
 		renderDocumentName()
 		{
-			return this.workflow.documentTitle && Text(
+			return this.workflow.documentTitle && H4(
 				{
 					testId: 'WORKFLOW_DETAILS_DOCUMENT_NAME',
+					accent: true,
+					color: Color.base1,
 					style: {
-						fontWeight: '600',
-						fontSize: 18,
 						lineHeightMultiple: 1.22,
-						color: AppTheme.colors.base1,
 						marginBottom: 12,
 					},
 					text: this.workflow.documentTitle,
@@ -87,7 +89,7 @@ jn.define('bizproc/workflow/details/content', (require, exports, module) => {
 				},
 				style: {
 					fontWeight: '400',
-					fontSize: 14,
+					fontSize: Typography.text4.getValue().fontSize,
 					lineHeightMultiple: 1.28,
 					color: AppTheme.colors.base2,
 					marginBottom: 12,
@@ -150,13 +152,11 @@ jn.define('bizproc/workflow/details/content', (require, exports, module) => {
 						marginTop: 12,
 					},
 				},
-				Text({
+				Text5({
+					color: Color.base5,
 					style: {
 						marginHorizontal: 24,
 						marginVertical: 16,
-						color: AppTheme.colors.base5,
-						fontSize: 14,
-						fontWeight: '400',
 						textAlign: 'center',
 					},
 					text: message,

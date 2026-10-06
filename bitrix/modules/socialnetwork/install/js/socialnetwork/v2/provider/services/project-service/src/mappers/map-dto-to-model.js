@@ -38,6 +38,7 @@ export function mapDtoToModel(projectDto: ProjectDto): ProjectModel
 		dates: mapDates(projectDto.dates),
 		tags: mapValue(projectDto.tags, [...projectDto.tags]),
 		publication: mapValue(projectDto.publication, projectDto.publication || false),
+		notifications: projectDto.notificationCatalog ?? null,
 	};
 }
 

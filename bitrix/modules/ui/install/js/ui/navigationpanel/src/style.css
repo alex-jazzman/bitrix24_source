@@ -63,7 +63,6 @@
 
 .ui-nav-panel {
 	display: inline-flex;
-	overflow: hidden;
 	margin-right: 10px;
 	border-radius: 16px;
 	background-color: var(--color_background);
@@ -87,8 +86,26 @@
 	min-height: 33px;
 	color: var(--color_text);
 	white-space: nowrap;
-	transition: .3s;
+	transition: color .3s, background-color .3s, opacity .3s;
 	cursor: pointer;
+	/* reset for native button; no-op for the anchor variant of the item */
+	-webkit-appearance: none;
+	appearance: none;
+	background: none;
+	border: none;
+	padding: 0;
+	font: inherit;
+	text-align: inherit;
+}
+
+/* outward focus ring, mirrors ui.buttons air styles; the panel no longer clips (overflow removed) */
+.ui-nav-panel__item:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+}
+
+html[data-input-modality="pointer"] .ui-nav-panel__item:focus-visible {
+	outline: none;
 }
 
 .ui-nav-panel.--air .ui-nav-panel__item {
@@ -98,15 +115,26 @@
 	background-color: var(--color_background);
 }
 
+/* keep the pill ends rounded now that the panel no longer clips its children; logical corners follow RTL */
+.ui-nav-panel.--air .ui-nav-panel__item:first-child {
+	border-start-start-radius: var(--ui-border-radius-sm);
+	border-end-start-radius: var(--ui-border-radius-sm);
+}
+
+.ui-nav-panel.--air .ui-nav-panel__item:last-child {
+	border-start-end-radius: var(--ui-border-radius-sm);
+	border-end-end-radius: var(--ui-border-radius-sm);
+}
+
 .ui-nav-panel__item:hover {
 	color: var(--color_text-hover);
-	transition: .1s;
+	transition: color .1s, background-color .1s;
 }
 
 .ui-nav-panel.--air .ui-nav-panel__item:hover {
 	color: var(--color_text-hover);
 	background-color: var(--color_background-hover);
-	transition: .1s;
+	transition: color .1s, background-color .1s;
 }
 
 .ui-nav-panel__item.--active {

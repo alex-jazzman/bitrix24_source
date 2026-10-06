@@ -5,9 +5,11 @@ import { Lottie } from 'ui.lottie';
 
 import './css/copilot-context-menu-loader.css';
 import copilotLottieIcon from '../copilot-input-field/lottie/copilot-icon-1.json';
+import bitrixGptLottieIcon from '../copilot-input-field/lottie/bitrixgpt-animation.json';
 
 type CopilotReadonlyLoaderOptions = {
 	bindElement: HTMLElement;
+	isBitrixGptV2Available?: boolean;
 }
 
 export const CopilotContextMenuLoaderEvents = {
@@ -19,6 +21,7 @@ export class CopilotContextMenuLoader extends EventEmitter
 	#popup: Popup | null = null;
 	#bindElement: HTMLElement;
 	#lottieLoaderIcon;
+	#isBitrixGptV2Available: boolean;
 
 	constructor(options: CopilotReadonlyLoaderOptions)
 	{
@@ -26,6 +29,7 @@ export class CopilotContextMenuLoader extends EventEmitter
 
 		this.setEventNamespace('AI.CopilotContextMenu:Loader');
 		this.#bindElement = options.bindElement;
+		this.#isBitrixGptV2Available = options.isBitrixGptV2Available === true;
 	}
 
 	show(): void
@@ -43,7 +47,8 @@ export class CopilotContextMenuLoader extends EventEmitter
 
 	destroy(): void
 	{
-		this.#popup.destroy();
+		this.#cleanupLottieLoaderIcon(true);
+		this.#popup?.destroy();
 		this.#popup = null;
 	}
 
@@ -72,14 +77,17 @@ export class CopilotContextMenuLoader extends EventEmitter
 			minWidth: 282,
 			minHeight: 42,
 			padding: 6,
-			className: 'ai__copilot-scope ai__copilot-context-menu_loader-popup',
+			className: `ai__copilot-scope${this.#isBitrixGptV2Available ? ' --bitrixgpt-redesign' : ''} ai__copilot-context-menu_loader-popup`,
 			events: {
 				onPopupShow: () => {
-					this.#lottieLoaderIcon.play();
+					if (this.#shouldPlayLoadingAnimation())
+					{
+						this.#lottieLoaderIcon.play();
+					}
 				},
 
 				onPopupClose: () => {
-					this.#lottieLoaderIcon.stop();
+					this.#cleanupLottieLoaderIcon();
 				},
 			},
 		});
@@ -96,8 +104,9 @@ export class CopilotContextMenuLoader extends EventEmitter
 		this.#lottieLoaderIcon = Lottie.loadAnimation({
 			container: loaderIcon,
 			renderer: 'svg',
-			animationData: copilotLottieIcon,
+			animationData: this.#isBitrixGptV2Available ? bitrixGptLottieIcon : copilotLottieIcon,
 			autoplay: false,
+			...(this.#isBitrixGptV2Available ? { loop: true } : {}),
 		});
 
 		const cancelBtn = Tag.render`
@@ -128,5 +137,23 @@ export class CopilotContextMenuLoader extends EventEmitter
 				${cancelBtn}
 			</div>
 		`;
+	}
+
+	#shouldPlayLoadingAnimation(): boolean
+	{
+		return this.#isBitrixGptV2Available === false
+			|| window.matchMedia?.('(prefers-reduced-motion: reduce)').matches !== true
+		;
+	}
+
+	#cleanupLottieLoaderIcon(destroy: boolean = false): void
+	{
+		this.#lottieLoaderIcon?.stop();
+
+		if (destroy)
+		{
+			this.#lottieLoaderIcon?.destroy();
+			this.#lottieLoaderIcon = null;
+		}
 	}
 }

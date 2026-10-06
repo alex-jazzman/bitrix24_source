@@ -62,7 +62,20 @@ class Evaluation extends AISenseContent
 			{
 				$this->efficiencyValue = ceil(100 / $totalCriteria * $positiveCriteria);
 			}
+
+			$this->isEmpty = ($this->efficiencyValue < 0);
 		}
+	}
+
+	public function hasContent(bool $ignoreComputedCriteria = false): bool
+	{
+		if ($ignoreComputedCriteria)
+		{
+			// Restart decision: the auto-seeded calendar criterion must not count as content.
+			return !empty($this->meetingEvaluation);
+		}
+
+		return parent::hasContent();
 	}
 
 	/**

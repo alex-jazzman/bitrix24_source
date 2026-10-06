@@ -1,5 +1,5 @@
-import type { ClientDto } from 'booking.provider.service.client-service';
-import type { ResourceDto } from 'booking.provider.service.resources-service';
+import { type ClientDto } from 'booking.provider.service.client-service';
+import { type ResourceDto } from 'booking.provider.service.resources-service';
 import { BookingSource } from 'booking.const';
 
 export type BookingDto = {
@@ -18,7 +18,7 @@ export type BookingDto = {
 	rrule: string | null,
 	note: string | null,
 	externalData: DealDataDto,
-	messages: MessageDto[],
+	isConfirmationSent: boolean | null,
 	skus: SkuDto[],
 	payment: PaymentDto,
 	source: $Values<typeof BookingSource>,
@@ -62,10 +62,4 @@ type DatePeriodDto = {
 type DatePeriodItem = {
 	timestamp: number,
 	timezone: string,
-};
-
-type MessageDto = {
-	id: number,
-	bookingId: number,
-	notificationType: string,
 };

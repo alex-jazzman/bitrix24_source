@@ -1,0 +1,67 @@
+/*
+ * BitrixGPT avatar, ported from aiassistant/install/js/aiassistant/marta/src/css/avatar.css
+ * (the `--bitrixgpt` block and @keyframes bitrixgpt-glow). Only what draws the avatar is here:
+ * wrapper size, the icon circle, the glow layer and its animation.
+ *
+ * Class names are kept identical to aiassistant on purpose — the markup is a copy of the BI
+ * launcher's, so a future change there stays easy to diff against. The `border`/`border-radius`
+ * resets and the `content: none` rules are defensive: they only matter if aiassistant.marta's own
+ * stylesheet ever lands on the page (it must not — see config.php).
+ *
+ * The icon is addressed by its published path as a literal because it belongs to another module
+ * and cannot live in note's own asset registry. The glow file is set from JS via AssetUrl.
+ */
+
+.aiassistant-marta__avatar-wrapper {
+	--aiassistant-marta__avatar-size: 40px;
+
+	position: relative;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: var(--aiassistant-marta__avatar-size);
+	height: var(--aiassistant-marta__avatar-size);
+}
+
+/* Icon 36px centered in the 40px wrapper (Figma: image layout 36×36 inside 40×40 avatar). */
+.aiassistant-marta__avatar-wrapper .aiassistant-marta__avatar {
+	box-sizing: border-box;
+	width: 36px;
+	height: 36px;
+	background: url(/bitrix/js/aiassistant/marta/image/bitrixgpt-icon.webp) center no-repeat;
+	background-size: contain;
+	border: none;
+	border-radius: 0;
+}
+
+/* No gradient ring behind the icon in the base state. */
+.aiassistant-marta__avatar-wrapper .aiassistant-marta__avatar::before {
+	content: none;
+}
+
+/*
+ * Glow — a static same-origin WebP rotated by CSS. Injected as an <img> by the button and removed
+ * on animationend, so it exists only while it plays.
+ */
+.aiassistant-marta__glow-svg {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	display: block;
+	width: var(--aiassistant-marta__avatar-size);
+	height: var(--aiassistant-marta__avatar-size);
+	border: 0;
+	pointer-events: none;
+	z-index: 0;
+	animation: bitrixgpt-glow 9s linear forwards;
+}
+
+.aiassistant-marta__avatar-wrapper.--highlighting::before {
+	content: none;
+}
+
+@keyframes bitrixgpt-glow {
+	0% { transform: translate(-50%, -50%) rotate(0deg); opacity: 1; }
+	88.89% { transform: translate(-50%, -50%) rotate(720deg); opacity: 1; }
+	100% { transform: translate(-50%, -50%) rotate(720deg); opacity: 0; }
+}

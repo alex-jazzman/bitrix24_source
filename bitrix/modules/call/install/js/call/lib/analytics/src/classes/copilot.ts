@@ -8,6 +8,7 @@ import {
 	AnalyticsTool,
 	AnalyticsType,
 } from '../const';
+import { getCallTool } from '../utils';
 
 type BaseCallParams = {
 	callId: string;
@@ -89,7 +90,7 @@ export class Copilot
 	onAIRecordStatusChanged(params: AIRecordStatusChangedParams)
 	{
 		sendData({
-			tool: AnalyticsTool.im,
+			tool: getCallTool(),
 			category: AnalyticsCategory.call,
 			event: params.isAIOn ? AnalyticsEvent.aiOn : AnalyticsEvent.aiOff,
 			type: params.callType,
@@ -102,7 +103,7 @@ export class Copilot
 	onOpenFollowUpTab(params: OpenFollowUpTabParams)
 	{
 		sendData({
-			tool: AnalyticsTool.im,
+			tool: getCallTool(),
 			category: AnalyticsCategory.callFollowup,
 			event: AnalyticsEvent.openTab,
 			type: params.tabName,
@@ -113,7 +114,7 @@ export class Copilot
 	onOpenFollowUpSlider(params: BaseCallParams)
 	{
 		sendData({
-			tool: AnalyticsTool.im,
+			tool: getCallTool(),
 			category: AnalyticsCategory.callFollowup,
 			event: AnalyticsEvent.openSlider,
 			p5: `callId_${params.callId}`,
@@ -123,7 +124,7 @@ export class Copilot
 	onFollowUpCreateEventClick(params: BaseCallParams)
 	{
 		sendData({
-			tool: AnalyticsTool.im,
+			tool: getCallTool(),
 			category: AnalyticsCategory.callFollowup,
 			event: AnalyticsEvent.clickCreateEvent,
 			p5: `callId_${params.callId}`,
@@ -133,7 +134,7 @@ export class Copilot
 	onFollowUpCreateTaskClick(params: BaseCallParams)
 	{
 		sendData({
-			tool: AnalyticsTool.im,
+			tool: getCallTool(),
 			category: AnalyticsCategory.callFollowup,
 			event: AnalyticsEvent.clickCreateTask,
 			p5: `callId_${params.callId}`,
@@ -143,7 +144,7 @@ export class Copilot
 	onAIRestrictionsPopupShow(params: AIRestrictionsPopupShowParams)
 	{
 		sendData({
-			tool: AnalyticsTool.im,
+			tool: getCallTool(),
 			category: AnalyticsCategory.call,
 			event: AnalyticsEvent.viewPopup,
 			type: params.popupType,
@@ -154,7 +155,7 @@ export class Copilot
 	onCopilotNotifyShow(params: CopilotNotifyShowParams)
 	{
 		sendData({
-			tool: AnalyticsTool.im,
+			tool: getCallTool(),
 			category: AnalyticsCategory.call,
 			event: AnalyticsEvent.viewNotification,
 			type: params.isCopilotActive ? AnalyticsType.aiOn : AnalyticsType.turnOnAi,
@@ -165,7 +166,7 @@ export class Copilot
 	onAIRecordTimeCodeClick(params: BaseCallParams)
 	{
 		sendData({
-			tool: AnalyticsTool.im,
+			tool: getCallTool(),
 			category: AnalyticsCategory.callFollowup,
 			event: AnalyticsEvent.clickTimeCode,
 			p5: `callId_${params.callId}`,
@@ -175,7 +176,7 @@ export class Copilot
 	onAIPlayRecord(params: BaseCallParams)
 	{
 		sendData({
-			tool: AnalyticsTool.im,
+			tool: getCallTool(),
 			category: AnalyticsCategory.callFollowup,
 			event: AnalyticsEvent.playRecord,
 			p5: `callId_${params.callId}`,
@@ -185,7 +186,7 @@ export class Copilot
 	onClickAIOff(params: BaseCallTypeParams)
 	{
 		sendData({
-			tool: AnalyticsTool.im,
+			tool: getCallTool(),
 			category: AnalyticsCategory.call,
 			event: AnalyticsEvent.clickAiOff,
 			type: params.callType,
@@ -196,7 +197,7 @@ export class Copilot
 	onSelectAIOff(params: BaseCallTypeParams)
 	{
 		sendData({
-			tool: AnalyticsTool.im,
+			tool: getCallTool(),
 			category: AnalyticsCategory.call,
 			event: AnalyticsEvent.aiOff,
 			type: params.callType,
@@ -207,7 +208,7 @@ export class Copilot
 	onSelectAIDelete(params: BaseCallTypeParams)
 	{
 		sendData({
-			tool: AnalyticsTool.im,
+			tool: getCallTool(),
 			category: AnalyticsCategory.callFollowup,
 			event: AnalyticsEvent.delete,
 			type: params.callType,

@@ -1,6 +1,37 @@
 import {createPinia} from 'ui.vue3.pinia';
 import {BitrixVue} from "ui.vue3";
 import {DetailComponent} from "market.detail-component";
+import { Runtime } from 'main.core';
+
+let vibePlusApplicationLimitPopupPromise = null;
+
+async function scheduleVibePlusApplicationLimitPopup(projection)
+{
+	if (!projection)
+	{
+		return;
+	}
+
+	try
+	{
+		vibePlusApplicationLimitPopupPromise ??= Runtime.loadExtension(
+			'market.vibe-plus-application-limit-popup',
+		).catch((error) => {
+			vibePlusApplicationLimitPopupPromise = null;
+			throw error;
+		});
+		const loadedExtension = await vibePlusApplicationLimitPopupPromise;
+		const extension = Array.isArray(loadedExtension)
+			? loadedExtension[0]
+			: loadedExtension;
+
+		extension.scheduleVibePlusApplicationLimitPopup(projection);
+	}
+	catch
+	{
+		return;
+	}
+}
 
 export class Detail
 {
@@ -24,7 +55,7 @@ export class Detail
 
 			},
 			mounted() {
-
+				void scheduleVibePlusApplicationLimitPopup(this.result.VIBE_PLUS_APPLICATION_LIMIT);
 			},
 			methods: {
 

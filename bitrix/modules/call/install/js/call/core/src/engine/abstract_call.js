@@ -6,6 +6,7 @@ import { getPrimary } from './engine-registry';
 import {Hardware} from '../call_hardware';
 import { getLogMessage, getTimeForLog, isConsoleLogsEnabled } from '../log-helpers';
 import { CallCommonRecordState, CallCommonRecordType } from '../call_common_record';
+import { ReconnectHistory as ReconnectHistoryClass } from 'call.lib.reconnect-history';
 
 /**
  * Abstract call class
@@ -42,6 +43,8 @@ export class AbstractCall
 		this.type = BX.prop.getInteger(params, "type", CallType.Instant); // @see {BX.Call.Type}
 		this.roomType = BX.prop.getInteger(params, 'roomType', RoomType.Small);
 		this.state = BX.prop.getString(params, "state", CallState.Idle);
+		this.isReconnecting = false;
+		this.reconnectHistory = new ReconnectHistoryClass();
 
 		this.ready = false;
 		this.userId = getPrimary().getCurrentUserId();
@@ -205,6 +208,11 @@ export class AbstractCall
 
 		this.localStreams[tag] = mediaStream;
 	};
+
+	get reconnectionInfo()
+	{
+		return this.reconnectHistory.getHistory();
+	}
 
 	isAnyoneParticipating()
 	{

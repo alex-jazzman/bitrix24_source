@@ -185,5 +185,5 @@
 	`
 	});
 
-})(BX, BX, BX, BX, BX.Main, BX.Messenger.Lib);
+})(window, BX, BX, BX, BX.Main, BX.Messenger.Lib);
 //# sourceMappingURL=call-feedback.bundle.js.map

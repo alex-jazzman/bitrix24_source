@@ -15,8 +15,8 @@
 }
 
 .bx-im-list-recent-empty-state__subtitle {
-	margin-bottom: 34px;
 	width: 291px;
+	margin-bottom: 20px;
 	text-align: center;
 	font-size: var(--im-font-size-xl);
 	line-height: 21px;
@@ -65,4 +65,9 @@
 
 .bx-im-list-recent-empty-state__image.--default {
 	background-image: url("./images/default.png");
+}
+
+/* Custom variants */
+.bx-im-list-recent-empty-state__image.--folder {
+	background-image: url("./images/folder.png");
 }

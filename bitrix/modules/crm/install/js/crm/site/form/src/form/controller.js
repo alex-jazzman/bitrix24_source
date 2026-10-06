@@ -752,4 +752,5 @@ class Controller extends Event
 }
 
 type Options = Type.Options;
-export {Controller, Options}
+export {Controller}
+export type {Options}

@@ -7,7 +7,7 @@ import {
 	WizardApiEntityChangedDict,
 } from 'humanresources.company-structure.utils';
 import { ChangeSaveModeControl } from '../change-save-mode-control/change-save-mode-control';
-import { TagSelector, type ItemOptions } from 'ui.entity-selector';
+import { TagSelector, type Dialog, type ItemOptions } from 'ui.entity-selector';
 
 export const Employees = {
 	name: 'employees',
@@ -52,6 +52,7 @@ export const Employees = {
 	{
 		this.memberRoles = getMemberRoles(this.entityType);
 		this.selectedUsers = new Set();
+		this.isTransferringRole = false;
 		this.departmentHeads = [];
 		this.departmentEmployees = [];
 		this.removedUsers = [];
@@ -64,6 +65,11 @@ export const Employees = {
 		// store initial users to control applyData method in tagSelector
 		this.initialUsers = this.heads.reduce((set, item) => set.add(item.id), new Set());
 		this.employeesIds.forEach((item) => this.initialUsers.add(item));
+
+		// non-depleting twin of initialUsers: membership persisted in the node at wizard open,
+		// used to recognize a member even after their role was transferred within this node
+		this.persistedMemberIds = this.heads.reduce((set, item) => set.add(item.id), new Set());
+		this.employeesIds.forEach((item) => this.persistedMemberIds.add(item));
 	},
 
 	mounted(): void
@@ -104,6 +110,7 @@ export const Employees = {
 			handler(payload: number[]): void
 			{
 				this.employeesIds.forEach((item) => this.initialUsers.add(item));
+				this.employeesIds.forEach((item) => this.persistedMemberIds.add(item));
 				const preselectedEmployees = payload.map((employeeId) => ['user', employeeId]);
 				const { dialog } = this.employeesSelector;
 				dialog.setPreselectedItems(preselectedEmployees);
@@ -145,6 +152,12 @@ export const Employees = {
 					},
 					onTagRemove: (event: BaseEvent) => {
 						const { tag } = event.getData();
+						if (this.isTransferringRole)
+						{
+							// role transfer within the node removes the previous tag itself
+							return;
+						}
+
 						this.selectedUsers.delete(tag.id);
 						this.onSelectorToggle(tag, this.memberRoles[roleKey]);
 						this.applyData();
@@ -159,7 +172,7 @@ export const Employees = {
 								dialog.setHeight(250);
 								if (dialog.isLoaded())
 								{
-									this.toggleUsers(dialog);
+									this.toggleUsers(dialog, roleKey);
 								}
 							},
 						},
@@ -177,7 +190,7 @@ export const Employees = {
 							}
 						},
 						onLoad: (event) => {
-							this.toggleUsers(dialog);
+							this.toggleUsers(dialog, roleKey);
 							const users = event.target.items.get('user');
 
 							users.forEach((user) => {
@@ -185,7 +198,7 @@ export const Employees = {
 							});
 						},
 						'SearchTab:onLoad': () => {
-							this.toggleUsers(dialog);
+							this.toggleUsers(dialog, roleKey);
 						},
 					},
 					height: 250,
@@ -211,12 +224,20 @@ export const Employees = {
 		{
 			return this.$Bitrix.Loc.getMessage(phraseCode, replacements);
 		},
-		toggleUsers(dialog): void
+		toggleUsers(dialog: Dialog, roleKey: string): void
 		{
+			// Head and deputy selectors keep members occupied in other roles of this node findable,
+			// so they can be promoted directly; only the subordinates selector hides them. Leaving
+			// non-subordinate dialogs untouched preserves entity-selector's own hidden placeholders.
+			const hideOccupied = roleKey === memberRolesKeys.employee;
+			if (!hideOccupied)
+			{
+				return;
+			}
+
 			const items = dialog.getItems();
 			items.forEach((item) => {
-				const hidden = this.selectedUsers.has(item.id)
-					&& !dialog.selectedItems.has(item);
+				const hidden = this.selectedUsers.has(item.id) && !dialog.selectedItems.has(item);
 				item.setHidden(hidden);
 			});
 		},
@@ -232,6 +253,10 @@ export const Employees = {
 				{
 					return;
 				}
+
+				// adding a member already occupied in another role of this node - drop the
+				// previous role so the member ends up in exactly one role (no duplicate)
+				this.releaseMemberRole(userData);
 
 				this.removedUsers = this.removedUsers.filter((user) => user.id !== userData.id);
 				Object.keys(this.moveUsersMap).forEach((nodeId) => {
@@ -255,7 +280,7 @@ export const Employees = {
 			this.movedUserData = userData;
 			this.movedUserRole = role;
 
-			if (!this.isTeamEntity && this.isUserPreselected(tag.selector, userData.id))
+			if (!this.isTeamEntity && this.isUserPreselected(userData.id))
 			{
 				this.showMoveUserPopup = true;
 			}
@@ -274,9 +299,7 @@ export const Employees = {
 				return;
 			}
 
-			const selector = this.getSelectorByRole(this.movedUserRole);
-
-			if (this.isUserPreselected(selector, this.movedUserData.id))
+			if (this.isUserPreselected(this.movedUserData.id))
 			{
 				this.removedUsers = [...this.removedUsers, { ...this.movedUserData, role: this.movedUserRole }];
 				if (newNodeId)
@@ -327,6 +350,39 @@ export const Employees = {
 					return this.employeesSelector;
 			}
 		},
+		releaseMemberRole(userData: UserData): void
+		{
+			const headEntry = this.departmentHeads.find((head) => head.id === userData.id);
+			const employeeEntry = this.departmentEmployees.find((employee) => employee.id === userData.id);
+			if (!headEntry && !employeeEntry)
+			{
+				return;
+			}
+
+			const previousRole = headEntry ? headEntry.role : employeeEntry.role;
+			const previousSelector = this.getSelectorByRole(previousRole);
+
+			this.isTransferringRole = true;
+			try
+			{
+				previousSelector.removeTag({ id: userData.id, entityId: 'user' });
+			}
+			finally
+			{
+				this.isTransferringRole = false;
+			}
+
+			if (headEntry)
+			{
+				this.departmentHeads = this.departmentHeads.filter((head) => head.id !== userData.id);
+			}
+			else
+			{
+				this.departmentEmployees = this.departmentEmployees.filter((employee) => employee.id !== userData.id);
+			}
+
+			this.userCount -= 1;
+		},
 		applyData(): void
 		{
 			this.$emit('applyData', {
@@ -343,15 +399,11 @@ export const Employees = {
 		{
 			this.$emit('saveModeChanged', actionId);
 		},
-		isUserPreselected(selector: TagSelector, userId: number): boolean
+		isUserPreselected(userId: number): boolean
 		{
-			const { preselectedItems = [] } = selector.dialog;
-			const parsedPreselected = preselectedItems
-				.flat()
-				.filter((preselectedItem) => preselectedItem !== 'user')
-			;
-
-			return parsedPreselected.includes(userId);
+			// persistence is a property of node membership at wizard open, not of a specific
+			// selector dialog: a member transferred to another role stays recognized as persisted
+			return this.persistedMemberIds.has(userId);
 		},
 	},
 

@@ -106,6 +106,7 @@ jn.define('disk/enum', (require, exports, module) => {
 			case 'mp3':
 			case 'ogg':
 			case 'wav':
+			case 'm4a':
 				return FileType.AUDIO;
 
 			case 'vsd':

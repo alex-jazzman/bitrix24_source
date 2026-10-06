@@ -10,3 +10,4 @@ $MESS['SIGN_V2_B2E_SIGN_SETTINGS_INVALID_FILE_TYPE'] = 'Неверный тип 
 $MESS['SIGN_V2_B2E_SIGN_SETTINGS_LOADED_FILE_NAME'] = 'Загружен файл под названием: #FILENAME#';
 $MESS['SIGN_V2_B2E_SIGN_SETTINGS_INVALID_FILE_SIZE'] = 'Превышен максимальный размер файла';
 $MESS['SIGN_V2_B2E_SIGN_SETTINGS_INVALID_IMAGE_FILE_SIZE'] = 'Превышен максимальный размер изображения';
+$MESS['SIGN_V2_B2E_SIGN_SETTINGS_ADD_FILES_FOLDER_TITLE'] = 'Добавить папку с файлами';

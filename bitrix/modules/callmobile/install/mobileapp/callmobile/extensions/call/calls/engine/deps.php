@@ -17,5 +17,8 @@ return [
 		'call:calls/settings-manager',
 		'call:calls/stuck-call-finish-tracker',
 	],
+	'bundle' => [
+		'./src/is-room-closed-error',
+	],
 	'components' => []
 ];

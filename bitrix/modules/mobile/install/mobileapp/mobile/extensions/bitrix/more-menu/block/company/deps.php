@@ -4,6 +4,7 @@ return [
 	'extensions' => [
 		'layout/pure-component',
 		'module',
+		'more-menu/block/company/personal-account',
 		'more-menu/block/company/support',
 		'more-menu/block/company/support-banners',
 		'more-menu/block/company/users',

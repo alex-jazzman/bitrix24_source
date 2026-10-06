@@ -133,14 +133,34 @@ class ChatMessage extends CallChatMessage
 
 	public static function generateOverviewMessage(int $callId, OutcomeCollection $outcomeCollection, Chat $chat): ?Message
 	{
-		/** @var Overview $overview */
-		$overview = $outcomeCollection->getOutcomeByType(SenseType::OVERVIEW->value)?->getSenseContent();
+		// Pick the latest outcome with content per type
+		$overview = null;
+		$evaluation = null;
+		$insights = null;
+		foreach ($outcomeCollection as $outcome)
+		{
+			$content = $outcome->getSenseContent();
+			if ($overview === null && $content instanceof Overview && $content->hasContent())
+			{
+				$overview = $content;
+			}
+			elseif ($evaluation === null && $content instanceof Evaluation && $content->hasContent())
+			{
+				$evaluation = $content;
+			}
+			elseif ($insights === null && $content instanceof Insights && $content->hasContent())
+			{
+				$insights = $content;
+			}
+			if ($overview && $evaluation && $insights)
+			{
+				break;
+			}
+		}
 		if (!$overview)
 		{
 			return null;
 		}
-		/** @var Evaluation $evaluation */
-		$evaluation = $outcomeCollection->getOutcomeByType(SenseType::EVALUATION->value)?->getSenseContent();
 
 		$hostUrl = UrlManager::getInstance()->getHostUrl();
 
@@ -188,7 +208,7 @@ class ChatMessage extends CallChatMessage
 		}
 
 		$efficiencyValue = -1;
-		if ($evaluation && $evaluation->efficiencyValue >= 0)
+		if ($evaluation instanceof Evaluation && $evaluation->hasContent() && $evaluation->efficiencyValue >= 0)
 		{
 			$efficiencyValue = $evaluation->efficiencyValue;
 		}
@@ -291,16 +311,14 @@ class ChatMessage extends CallChatMessage
 			}
 		}
 
-		/** @var Insights $insights */
-		$insights = $outcomeCollection->getOutcomeByType(SenseType::INSIGHTS->value)?->getSenseContent();
-		if ($insights)
+		if ($insights instanceof Insights && $insights->hasContent())
 		{
 			$insightTexts = [];
 			if ($insights->getVersion() > 1)
 			{
 				$transcription = $outcomeCollection->getOutcomeByType(SenseType::TRANSCRIBE->value)?->getSenseContent();
 				$speakerList = $transcription instanceof Transcription
-					? $transcription->prepareSpeakersList()
+					? $transcription->prepareSpeakersList(0)
 					: [];
 
 				$joinedUserIds = [];

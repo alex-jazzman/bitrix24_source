@@ -50,6 +50,10 @@
 	gap: 4px;
 }
 
+.node-data-inspector-layout__content-controls-view-mode .ui-chip {
+	--background-hover: var(--ui-color-bg-state-hover-default);
+}
+
 .node-data-inspector-layout__divider {
 	border-bottom: 1px solid var(--ui-color-palette-gray-15);
 }

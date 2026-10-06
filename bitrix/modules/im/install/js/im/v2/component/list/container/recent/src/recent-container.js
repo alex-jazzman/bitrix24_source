@@ -1,12 +1,12 @@
 import { Event, type JsonObject } from 'main.core';
 import { EventEmitter } from 'main.core.events';
+import { computed } from 'ui.vue3';
 
 import { RecentList, RecentUnreadList } from 'im.v2.component.list.items.recent';
 import { ChatSearchInput, RecentSearch } from 'im.v2.component.search';
-import { Layout, EventType, ActionByUserType, RecentType, type LayoutType } from 'im.v2.const';
+import { Layout, EventType, RecentType, type LayoutType } from 'im.v2.const';
 import { Analytics } from 'im.v2.lib.analytics';
 import { Logger } from 'im.v2.lib.logger';
-import { PermissionManager } from 'im.v2.lib.permission';
 import { type ImModelLayout } from 'im.v2.model';
 import { HeaderMenu } from 'im.v2.component.list.container.elements.header-menu';
 import { VibeCodeCatalogButton } from 'im.v2.component.list.container.elements.vibe-code-catalog-button';
@@ -14,6 +14,8 @@ import { VibeCodeCatalogButton } from 'im.v2.component.list.container.elements.v
 import { CreateChatMenu } from './components/create-chat-menu/create-chat-menu';
 
 import './css/recent-container.css';
+
+export { CreateChatMenu } from './components/create-chat-menu/create-chat-menu';
 
 // @vue/component
 export const RecentListContainer = {
@@ -26,6 +28,18 @@ export const RecentListContainer = {
 		RecentSearch,
 		RecentUnreadList,
 		VibeCodeCatalogButton,
+	},
+	provide(): { avatarsOnly: boolean }
+	{
+		return {
+			avatarsOnly: computed(() => this.avatarsOnly),
+		};
+	},
+	props: {
+		avatarsOnly: {
+			type: Boolean,
+			default: false,
+		},
 	},
 	emits: ['selectChat'],
 	data(): JsonObject
@@ -46,17 +60,6 @@ export const RecentListContainer = {
 		layoutName(): LayoutType
 		{
 			return this.layout.name;
-		},
-		canCreateChat(): boolean
-		{
-			const actions = [
-				ActionByUserType.createChat,
-				ActionByUserType.createCollab,
-				ActionByUserType.createChannel,
-				ActionByUserType.createConference,
-			];
-
-			return actions.some((action) => PermissionManager.getInstance().canPerformActionByUserType(action));
 		},
 	},
 	created()
@@ -143,7 +146,7 @@ export const RecentListContainer = {
 						@updateSearch="onUpdateSearch"
 					/>
 				</div>
-				<CreateChatMenu v-if="canCreateChat" />
+				<CreateChatMenu />
 			</div>
 			<div class="bx-im-list-container-recent__elements_container">
 				<div class="bx-im-list-container-recent__elements">

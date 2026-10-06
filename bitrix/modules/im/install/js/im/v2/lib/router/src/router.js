@@ -1,5 +1,5 @@
 import { Messenger } from 'im.public';
-import { GetParameter } from 'im.v2.const';
+import { GetParameter, RecentType } from 'im.v2.const';
 
 export const Router = {
 	handleGetParams(): void
@@ -62,8 +62,9 @@ export const Router = {
 		}
 		else if (urlParams.has(GetParameter.openCollab))
 		{
-			const dialogId = urlParams.get(GetParameter.openCollab);
-			void Messenger.openCollab(dialogId ?? '');
+			const dialogId = urlParams.get(GetParameter.openCollab) ?? '';
+			const recentType = urlParams.get(GetParameter.recentType) ?? RecentType.collabDefault;
+			void Messenger.openCollab(dialogId, { compactMode: false, recentType });
 		}
 		else if (urlParams.has(GetParameter.openSharedLink))
 		{

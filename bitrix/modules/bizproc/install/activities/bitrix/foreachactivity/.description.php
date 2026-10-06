@@ -51,5 +51,6 @@ $arActivityDescription = (new ActivityDescription(
 	->setColorIndex(ActivityColorIndex::GREY->value)
 	->setGroups([ActivityGroup::WORKFLOW->value])
 	->setIcon(Outline::REPEAT->name)
+	->setAdditionalResult(['ValueReturnProperties'])
 	->toArray()
 ;

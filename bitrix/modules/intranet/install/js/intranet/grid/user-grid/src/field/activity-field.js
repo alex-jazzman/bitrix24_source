@@ -72,6 +72,8 @@ export class ActivityField extends BaseField
 		GridManager.reinviteCloudAction(data).then((response) => {
 			row?.update();
 			row?.stateUnload();
+		}).catch(() => {
+			row?.stateUnload();
 		});
 	}
 
@@ -136,6 +138,8 @@ export class ActivityField extends BaseField
 		{
 			button.setWaiting(true);
 			GridManager.reinviteAction(params.userId, params.isExtranet).then(() => {
+				button.setWaiting(false);
+			}).catch(() => {
 				button.setWaiting(false);
 			});
 		}

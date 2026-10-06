@@ -9,6 +9,7 @@ return [
 		'layout/socialnetwork/project/view',
 		'layout/socialnetwork/project-v2/create',
 		'loc',
+		'new-projects-promo/trigger',
 		'notify',
 		'project/member-list',
 		'project/member.list',

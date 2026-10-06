@@ -31,6 +31,7 @@ export const PublishFullDropdownOption = {
 	},
 	template: `
 		<DropdownMenuOption
+			data-testid="bizprocdesigner-editor-publish-full-option"
 			:title="$Bitrix.Loc.getMessage('BIZPROCDESIGNER_EDITOR_MENU_FULL_TITLE')"
 			:description="$Bitrix.Loc.getMessage('BIZPROCDESIGNER_EDITOR_MENU_FULL_DESCR')"
 			:isActive="false"

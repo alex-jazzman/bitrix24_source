@@ -20,6 +20,7 @@ type ImageConfiguratorPopupOptions = {
 	popupOffset?: ImageConfiguratorPopupOffset;
 	withoutBackBtn: boolean;
 	imageConfiguratorOptions: ImageConfiguratorOptions;
+	isBitrixGptV2Available?: boolean;
 }
 
 type ImageConfiguration = {
@@ -45,6 +46,7 @@ export class ImageConfiguratorPopup extends EventEmitter
 	#submitButton: Button;
 	#loader: Loader;
 	#loaderOverlay: HTMLElement;
+	#isBitrixGptV2Available: boolean;
 
 	constructor(options: ImageConfiguratorPopupOptions)
 	{
@@ -54,10 +56,12 @@ export class ImageConfiguratorPopup extends EventEmitter
 		this.#bindElement = options.bindElement;
 		this.#popupOffset = options.popupOffset;
 		this.#withoutBackBtn = options.withoutBackBtn === true;
+		this.#isBitrixGptV2Available = options.isBitrixGptV2Available === true;
 		this.#imageConfigurator = new ImageConfigurator({
 			formats: options.imageConfiguratorOptions.formats,
 			styles: options.imageConfiguratorOptions.styles,
 			engines: options.imageConfiguratorOptions.engines,
+			isBitrixGptV2Available: this.#isBitrixGptV2Available,
 		});
 
 		this.#imageConfigurator.subscribe('change-parameter', (event) => {
@@ -158,7 +162,9 @@ export class ImageConfiguratorPopup extends EventEmitter
 
 		this.#loader = new Loader({
 			size: 110,
-			color: getComputedStyle(document.body).getPropertyValue('--ui-color-copilot-primary'),
+			color: this.#isBitrixGptV2Available
+				? getComputedStyle(document.body).getPropertyValue('--ui-color-accent-main-primary')
+				: getComputedStyle(document.body).getPropertyValue('--ui-color-copilot-primary'),
 			target: this.#loaderOverlay,
 		});
 
@@ -182,6 +188,7 @@ export class ImageConfiguratorPopup extends EventEmitter
 			cacheable: true,
 			width: 278,
 			padding: 0,
+			className: this.#isBitrixGptV2Available ? 'ai__copilot-scope --bitrixgpt-redesign' : undefined,
 			content: this.#renderPopupContent(),
 		});
 

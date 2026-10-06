@@ -7,6 +7,7 @@ export class Feature
 	static #instance: this | null = null;
 
 	#availableFeatureCodes: Set<FeatureCodeType> = new Set();
+	#lockedFeatureCodes: Set<FeatureCodeType> = new Set();
 
 	constructor()
 	{
@@ -41,11 +42,23 @@ export class Feature
 		return this.#availableFeatureCodes.has(featureCode);
 	}
 
+	isLocked(featureCode: FeatureCodeType): boolean
+	{
+		if (!Type.isStringFilled(featureCode))
+		{
+			return false;
+		}
+
+		return this.#lockedFeatureCodes.has(featureCode);
+	}
+
 	#init(): void
 	{
 		const settings = Extension.getSettings('bizprocdesigner.feature') ?? null;
 		const featureCodes = settings?.featureCodes ?? [];
+		const lockedFeatureCodes = settings?.lockedFeatureCodes ?? [];
 
 		featureCodes.forEach((code: string) => this.#availableFeatureCodes.add(code));
+		lockedFeatureCodes.forEach((code: string) => this.#lockedFeatureCodes.add(code));
 	}
 }

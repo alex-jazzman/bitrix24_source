@@ -8,6 +8,7 @@ import { Popup } from 'main.popup';
 export class ConfirmStatusDialog extends EventEmitter
 {
 	DOM = {};
+	declined = false;
 	constructor()
 	{
 		super();
@@ -18,6 +19,7 @@ export class ConfirmStatusDialog extends EventEmitter
 
 	show()
 	{
+		this.declined = false;
 		this.dialog = new Popup({
 			id: this.id,
 			titleBar: Loc.getMessage('EC_DECLINE_REC_EVENT'),
@@ -36,6 +38,14 @@ export class ConfirmStatusDialog extends EventEmitter
 			contentBackground: "#fff",
 			overlay: { opacity: 15 },
 			cacheable: false,
+			events: {
+				onPopupClose: () => {
+					if (!this.declined)
+					{
+						this.emit('onCancel', new BaseEvent());
+					}
+				},
+			},
 		});
 
 		this.dialog.show();
@@ -98,6 +108,7 @@ export class ConfirmStatusDialog extends EventEmitter
 
 	onDeclineHandler()
 	{
+		this.declined = true;
 		this.close();
 		const compactForm = EntryManager.getCompactViewForm();
 		if (

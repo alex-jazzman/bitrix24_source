@@ -1,10 +1,5 @@
 <?php
 
-use Bitrix\Crm\Integration\AI\AIManager;
-use Bitrix\Crm\Integration\AI\BaasManager;
-use Bitrix\Crm\Integration\AI\Enum\GlobalSetting;
-use Bitrix\Crm\Integration\AI\Operation\Scenario;
-use Bitrix\Crm\Integration\AI\Operation\TranscribeCallRecording;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Loader;
 
@@ -14,32 +9,16 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 $createTimeAliases = [];
-$isAIEnabledInGlobalSettings = false;
-$isAIHasPackages = false;
-$allAIOperationTypes = [];
-$transcribeAIOperationType = 0;
 
 if (Loader::includeModule('crm'))
 {
 	$container = Container::getInstance();
-
 	$map = $container->getTypesMap();
 	foreach ($map->getFactories() as $factory)
 	{
 		$createTimeAliases[$factory->getEntityTypeId()] =
 			$factory->getEntityFieldNameByMap(\Bitrix\Crm\Item::FIELD_NAME_CREATED_TIME)
 		;
-	}
-
-	$isAIEnabledInGlobalSettings = AIManager::isEnabledInGlobalSettings(GlobalSetting::FillItemFromCall)
-		|| AIManager::isEnabledInGlobalSettings(GlobalSetting::Summarize)
-		|| AIManager::isEnabledInGlobalSettings(GlobalSetting::AnalyzeCommunication)
-	;
-	$isAIHasPackages = BaasManager::hasPackage();
-	if ($isAIHasPackages && AIManager::isAiCallAutomaticProcessingAllowed())
-	{
-		$allAIOperationTypes = AIManager::getAllOperationTypes();
-		$transcribeAIOperationType = TranscribeCallRecording::TYPE_ID;
 	}
 }
 
@@ -55,16 +34,9 @@ return [
 		'main.core',
 		'main.core.events',
 		'main.popup',
-		'ui.entity-selector',
 	],
 	'skip_core' => false,
 	'settings' => [
 		'createTimeAliases' => $createTimeAliases,
-		'isAIEnabledInGlobalSettings' => $isAIEnabledInGlobalSettings,
-		'isAIHasPackages' => $isAIHasPackages,
-		'allAIOperationTypes' => $allAIOperationTypes,
-		'transcribeAIOperationType' => $transcribeAIOperationType,
-		'aiDisabledSliderCode' => Scenario::FILL_FIELDS_SCENARIO_OFF_SLIDER_CODE,
-		'aiPackagesEmptySliderCode' => BaasManager::getEmptyPackagesSliderCode(),
 	],
 ];

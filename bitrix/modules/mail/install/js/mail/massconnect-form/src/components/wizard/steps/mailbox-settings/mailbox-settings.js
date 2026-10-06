@@ -32,6 +32,7 @@ export const MailboxSettings = {
 				'crmSyncOptions',
 				'crmEntityOptions',
 				'crmSourceOptions',
+				'isCrmAvailable',
 			],
 		),
 		switcherOptions(): Object
@@ -81,11 +82,13 @@ export const MailboxSettings = {
 			/>
 
 			<CrmIntegration
+				v-if="isCrmAvailable"
 				:model-value="crmSettings"
 				:can-edit-crm-integration="permissions.canEditCrmIntegration"
 				:sync-period-options="crmSyncOptions"
 				:entity-options="crmEntityOptions"
 				:source-options="crmSourceOptions"
+				:show-vcf-option="true"
 				@update:model-value="setCrmSettings($event)"
 			/>
 

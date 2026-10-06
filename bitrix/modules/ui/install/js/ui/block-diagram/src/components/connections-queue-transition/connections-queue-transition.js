@@ -1,12 +1,14 @@
 import './connections-queue-transition.css';
 import { toValue } from 'ui.vue3';
-import { useBlockDiagram, useHistory } from '../../composables';
+import { useBlockDiagram } from '../../composables';
+import { matchesTransitionEl } from '../../utils';
+import { ANIMATED_TYPES } from '../../constants';
 
 type ConnectionsQueueTransitionSetup = {
 	isAnimate: boolean;
 	onBeforeEnter: () => void;
-	onAfterEnter: () => void;
-	onAfterLeave: () => void;
+	onAfterEnter: (el: HTMLElement) => void;
+	onAfterLeave: (el: HTMLElement) => void;
 };
 
 // @vue/component
@@ -17,16 +19,40 @@ export const ConnectionsQueueTransition = {
 		const {
 			isAnimate,
 			currentAnimationItem,
-			animationQueue,
-			updatePortPosition,
+			animationStep,
+			updatePort,
 			hooks,
 		} = useBlockDiagram();
-		const history = useHistory();
+
+		// Совпадает ли завершившийся переход с текущим элементом-связью. Логика
+		// сопоставления по data-id корня связи (Connection кладёт его на <svg>)
+		// вынесена в чистую matchesTransitionEl. Если data-id недоступен — грубый
+		// тип-фильтр + резервный таймер контроллера.
+		function isCurrentTransitionEl(el: HTMLElement): boolean
+		{
+			return matchesTransitionEl(el, toValue(currentAnimationItem)?.item);
+		}
+
+		function advanceForCurrent(): void
+		{
+			// Контроллер гарантирует ровно одно продвижение на шаг (переход vs
+			// резервный таймер) по токену шага.
+			animationStep.settle(animationStep.currentToken);
+		}
 
 		function onBeforeEnter(): void
 		{
 			const { item: connection } = toValue(currentAnimationItem) ?? {};
+			// Сторонний enter-переход может сработать после завершения очереди, когда
+			// stop() обнулил currentAnimationItem — тогда connection отсутствует и
+			// деструктуризация/updatePort ниже упали бы. Просто выходим.
+			if (!connection)
+			{
+				return;
+			}
+
 			hooks.connectionTransitionStart.trigger(connection);
+
 			const {
 				sourceBlockId,
 				sourcePortId,
@@ -34,33 +60,33 @@ export const ConnectionsQueueTransition = {
 				targetPortId,
 			} = connection;
 
-			updatePortPosition(sourceBlockId, sourcePortId);
-			updatePortPosition(targetBlockId, targetPortId);
+			// Полный рефреш геометрии обоих портов перед входом связи: rect + segment
+			// sizes. Во время поблочной анимации updatePortSegmentSizes ещё не отработал
+			// (он ждёт waitAllBlocksMounted), поэтому одного updatePortRect мало —
+			// связь отрисуется без сегментов. updatePort покрывает block rect + port
+			// rect + segment sizes самодостаточно.
+			updatePort(sourceBlockId, sourcePortId);
+			updatePort(targetBlockId, targetPortId);
 		}
 
-		function nextAnimatedItem(): void
-		{
-			const { done = false } = toValue(animationQueue)?.next() ?? {};
-
-			if (done)
-			{
-				animationQueue.value = null;
-			}
-			else
-			{
-				history.makeSnapshot();
-			}
-		}
-
-		function onAfterEnter(): void
+		function onAfterEnter(el: HTMLElement): void
 		{
 			hooks.connectionTransitionEnd.trigger(toValue(currentAnimationItem)?.item);
-			nextAnimatedItem();
+			// Как и в blocks-queue-transition: продвигаем очередь только для перехода
+			// текущего элемента-связи, чтобы сторонний переход (в т.ч. вызванный
+			// отсечением при движении камеры) не дал лишнее продвижение.
+			if (toValue(currentAnimationItem)?.type === ANIMATED_TYPES.CONNECTION && isCurrentTransitionEl(el))
+			{
+				advanceForCurrent();
+			}
 		}
 
-		function onAfterLeave(): void
+		function onAfterLeave(el: HTMLElement): void
 		{
-			nextAnimatedItem();
+			if (toValue(currentAnimationItem)?.type === ANIMATED_TYPES.REMOVE_CONNECTION && isCurrentTransitionEl(el))
+			{
+				advanceForCurrent();
+			}
 		}
 
 		return {

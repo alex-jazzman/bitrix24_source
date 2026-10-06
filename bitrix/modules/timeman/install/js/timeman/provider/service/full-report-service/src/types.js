@@ -26,3 +26,8 @@ export type FullReportCreate = {
 	userId: number,
 	reportText: string,
 };
+
+export type DiscussResult = {
+	dialogId: string,
+	created: boolean,
+};

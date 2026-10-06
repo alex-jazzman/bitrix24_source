@@ -136,9 +136,13 @@ jn.define('im/messenger/lib/element/recent/item/user', (require, exports, module
 
 			if (hasInputAction && !UserHelper.isCurrentUser(this.id))
 			{
+				const typingAnimationColor = Feature.isChatRecentSubtitleAvatarSupported
+					? Color.accentMainPrimaryalt.toHex()
+					: '#777777';
+
 				subtitleStyle = {
 					animation: {
-						color: '#777777',
+						color: typingAnimationColor,
 						type: 'bubbles',
 					},
 				};
@@ -218,7 +222,7 @@ jn.define('im/messenger/lib/element/recent/item/user', (require, exports, module
 		createActions()
 		{
 			const dialogId = this.getModelItem().id;
-			const canMuted = ChatPermission.сanMute(dialogId);
+			const canMuted = ChatPermission.canMute(dialogId);
 
 			this.actions = [
 				this.getAddToFolderAction(),

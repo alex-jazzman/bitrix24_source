@@ -1,4 +1,4 @@
-import { RestMethod } from 'im.v2.const';
+import { ChatType, RestMethod } from 'im.v2.const';
 import { UserManager } from 'im.v2.lib.user';
 import { Core } from 'im.v2.application.core';
 
@@ -8,12 +8,14 @@ import type { Store } from 'ui.vue3.vuex';
 import type { JsonObject } from 'main.core';
 import type { RestClient } from 'rest.client';
 import type { RawUser } from 'im.v2.provider.service';
+import type { ImModelChat } from 'im.v2.model';
 
 const REQUEST_ITEMS_LIMIT = 50;
 
 type QueryParams = {
 	dialogId: string,
 	limit: number,
+	withGroupSort?: boolean,
 	cursor?: MembersPaginationCursor,
 };
 
@@ -43,11 +45,24 @@ export class MembersService
 	getInitialQuery(): {[$Values<typeof RestMethod>]: JsonObject}
 	{
 		return {
-			[RestMethod.imV2ChatMemberTail]: {
-				dialogId: this.dialogId,
-				limit: REQUEST_ITEMS_LIMIT,
-			},
+			[RestMethod.imV2ChatMemberTail]: this.getBaseQueryParams(),
 		};
+	}
+
+	getBaseQueryParams(): QueryParams
+	{
+		const queryParams: QueryParams = {
+			dialogId: this.dialogId,
+			limit: REQUEST_ITEMS_LIMIT,
+		};
+
+		// Collab members are grouped by role on the server; other chat types keep the flat list.
+		if (this.needGroupSort())
+		{
+			queryParams.withGroupSort = true;
+		}
+
+		return queryParams;
 	}
 
 	loadFirstPage(): Promise
@@ -72,10 +87,7 @@ export class MembersService
 
 	getQueryParams(): QueryParams
 	{
-		const queryParams = {
-			dialogId: this.dialogId,
-			limit: REQUEST_ITEMS_LIMIT,
-		};
+		const queryParams = this.getBaseQueryParams();
 
 		const nextCursor = this.store.getters['sidebar/members/getNextCursor'](this.chatId);
 		if (nextCursor)
@@ -84,6 +96,13 @@ export class MembersService
 		}
 
 		return queryParams;
+	}
+
+	needGroupSort(): boolean
+	{
+		const chat: ImModelChat = this.store.getters['chats/get'](this.dialogId, true);
+
+		return chat.type === ChatType.collab;
 	}
 
 	async requestPage(queryParams: QueryParams): Promise
@@ -98,6 +117,10 @@ export class MembersService
 		catch (error)
 		{
 			console.error('SidebarMain: Im.DialogUsersList: page request error', error);
+
+			// Surface the failure to the panel so it can show an error state with a retry button.
+			// Already loaded members stay in the model, so retry re-requests only the failed page.
+			throw error;
 		}
 
 		return this.updateModels(restResult);

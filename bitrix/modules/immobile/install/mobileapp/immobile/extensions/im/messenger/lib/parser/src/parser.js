@@ -85,7 +85,7 @@ jn.define('im/messenger/lib/parser/parser', (require, exports, module) => {
 
 			if (Feature.isMarkdownParserEnabled)
 			{
-				text = markdownConverter.decode(text, options.messageId, options.dialogCode);
+				text = markdownConverter.decode(text);
 			}
 			text = parserDate.decode(text);
 

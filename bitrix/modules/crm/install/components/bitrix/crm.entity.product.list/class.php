@@ -673,6 +673,7 @@ final class CCrmEntityProductListComponent
 		$this->defaultSettings['PAGE_SIZES'] = [5, 10, 20, 50, 100];
 		$this->defaultSettings['NEW_ROW_POSITION'] = CUserOptions::GetOption('crm.entity.product.list', 'new.row.position', 'top');
 		$this->defaultSettings['SHOW_PRODUCT_IMAGES'] = CUserOptions::GetOption('crm.entity.product.list', 'show.product.images', 'Y');
+		$this->defaultSettings['SHOW_TAX_NAME'] = CUserOptions::GetOption('crm.entity.product.list', 'show.tax.name', 'N');
 		$this->defaultSettings['ALLOW_CATALOG_PRICE_EDIT'] = true;
 		$this->defaultSettings['ALLOW_DISCOUNT_CHANGE'] = true;
 		$this->defaultSettings['ALLOW_RESERVATION'] = false;
@@ -729,6 +730,7 @@ final class CCrmEntityProductListComponent
 				'AJAX_ID',
 				'NEW_ROW_POSITION',
 				'SHOW_PRODUCT_IMAGES',
+				'SHOW_TAX_NAME',
 			],
 		];
 		foreach ($paramsList as $entity => $list)
@@ -939,10 +941,43 @@ final class CCrmEntityProductListComponent
 	{
 		foreach (CCrmTax::GetVatRateInfos() as $vatRow)
 		{
-			$this->productVatList[$vatRow['ID']] = $vatRow['VALUE'];
+			$this->productVatList[$vatRow['ID']] = [
+				'ID' => $vatRow['ID'],
+				'NAME' => $vatRow['NAME'],
+				'VALUE' => $vatRow['VALUE'],
+			];
 		}
 
-		asort($this->productVatList, SORT_NUMERIC);
+		$this->productVatList = $this->sortProductVatList($this->productVatList);
+	}
+
+	/**
+	 * @param array $productVatList
+	 * @return array
+	 */
+	public function sortProductVatList(array $productVatList): array
+	{
+		uasort($productVatList, static function (array $a, array $b): int
+		{
+			if ($a['VALUE'] === $b['VALUE'])
+			{
+				return 0;
+			}
+
+			if ($a['VALUE'] === null)
+			{
+				return -1;
+			}
+
+			if ($b['VALUE'] === null)
+			{
+				return 1;
+			}
+
+			return $a['VALUE'] <=> $b['VALUE'];
+		});
+
+		return $productVatList;
 	}
 
 	/**
@@ -1109,7 +1144,10 @@ final class CCrmEntityProductListComponent
 				{
 					$row['TAX_RATE'] = ($row['TAX_RATE'] === '') ? null : (float)$row['TAX_RATE'];
 				}
+
+				$row = $this->setTaxIdTaxNameByRate($row);
 			}
+
 			unset($row);
 		}
 		elseif ($this->entity['ID'] > 0)
@@ -1120,32 +1158,31 @@ final class CCrmEntityProductListComponent
 				$this->arParams['IS_COPY_MODE'] && !$this->crmSettings['ALLOW_CATALOG_PRICE_EDIT']
 			;
 			$shouldResetReservationData = $this->arParams['IS_COPY_MODE'] && !$isReservationAllowed;
-			if ($isReservationAllowed || $shouldUpdateCatalogPrices || $shouldResetReservationData)
+			foreach ($this->rows as $rowIndex => $row)
 			{
-				foreach ($this->rows as $rowIndex => $row)
+				if ($isReservationAllowed)
 				{
-					if ($isReservationAllowed)
-					{
-						$this->rows[$rowIndex]['INPUT_RESERVE_QUANTITY'] = $row['RESERVE_QUANTITY'];
-					}
-
-					if ($shouldUpdateCatalogPrices)
-					{
-						$this->rows[$rowIndex] =
-							Container::getInstance()->getProductRowChecker()->updateCatalogPrice(
-								$this->rows[$rowIndex],
-								$this->currency['ID'],
-							);
-					}
-
-					if ($shouldResetReservationData)
-					{
-						$this->rows[$rowIndex]['RESERVE_QUANTITY'] = null;
-						$this->rows[$rowIndex]['RESERVE_ID'] = null;
-						$this->rows[$rowIndex]['STORE_ID'] = null;
-						$this->rows[$rowIndex]['DATE_RESERVE_END'] = null;
-					}
+					$this->rows[$rowIndex]['INPUT_RESERVE_QUANTITY'] = $row['RESERVE_QUANTITY'];
 				}
+
+				if ($shouldUpdateCatalogPrices)
+				{
+					$this->rows[$rowIndex] =
+						Container::getInstance()->getProductRowChecker()->updateCatalogPrice(
+							$this->rows[$rowIndex],
+							$this->currency['ID'],
+						);
+				}
+
+				if ($shouldResetReservationData)
+				{
+					$this->rows[$rowIndex]['RESERVE_QUANTITY'] = null;
+					$this->rows[$rowIndex]['RESERVE_ID'] = null;
+					$this->rows[$rowIndex]['STORE_ID'] = null;
+					$this->rows[$rowIndex]['DATE_RESERVE_END'] = null;
+				}
+
+				$this->rows[$rowIndex] = $this->setTaxIdTaxNameByRate($this->rows[$rowIndex]);
 			}
 		}
 
@@ -1172,6 +1209,35 @@ final class CCrmEntityProductListComponent
 
 			$this->rows = \Bitrix\Crm\Service\Sale\Reservation\ReservationService::getInstance()->fillBasketReserves($this->rows);
 		}
+	}
+
+	private function setTaxIdTaxNameByRate(array $row): array
+	{
+		foreach ($this->productVatList as $vat)
+		{
+			if ($vat['VALUE'] === $row['TAX_RATE'])
+			{
+				if (!$row['TAX_NAME'])
+				{
+					$row['TAX_NAME'] = $vat['NAME'];
+					$row['TAX_ID'] = $vat['ID'];
+
+					break;
+				}
+				elseif ($row['TAX_NAME'] === $vat['NAME'])
+				{
+					$row['TAX_ID'] = $vat['ID'];
+
+					break;
+				}
+			}
+		}
+		if (!isset($row['TAX_ID']))
+		{
+			$row['TAX_ID'] = 0;
+		}
+
+		return $row;
 	}
 
 	/**
@@ -1272,6 +1338,7 @@ final class CCrmEntityProductListComponent
 
 		$this->arResult['RESTRICTED_PRODUCT_TYPES'] = $this->getRestrictedProductTypes();
 		$this->arResult['IS_SHOW_PRODUCT_IMAGES'] = $this->isShowProductImages();
+		$this->arResult['SHOW_TAX_NAME'] = $this->isShowTaxName();
 	}
 
 	protected function getGridActionPanel(): array
@@ -3143,6 +3210,14 @@ final class CCrmEntityProductListComponent
 		}
 
 		$items[] = [
+			'id' => 'SHOW_TAX_NAME',
+			'checked' => $this->defaultSettings['SHOW_TAX_NAME'] === 'Y',
+			'title' => Loc::getMessage('CRM_ENTITY_PRODUCT_LIST_SETTING_SHOW_TAX_NAME_TITLE'),
+			'desc' => '',
+			'action' => 'grid',
+		];
+
+		$items[] = [
 			'id' => 'SHOW_PRODUCT_IMAGES',
 			'checked' =>
 				$this->defaultSettings['SHOW_PRODUCT_IMAGES'] === 'Y'
@@ -3198,6 +3273,10 @@ final class CCrmEntityProductListComponent
 			{
 				$headers = ['MAIN_INFO'];
 			}
+		}
+		elseif ($settingId === 'SHOW_TAX_NAME')
+		{
+			\CUserOptions::SetOption('crm.entity.product.list', 'show.tax.name', $isTrue ? 'Y' : 'N');
 		}
 		elseif ($settingId === 'WAREHOUSE')
 		{
@@ -3493,5 +3572,10 @@ final class CCrmEntityProductListComponent
 	protected function isShowProductImages(): bool
 	{
 		return $this->getStorageItem(self::STORAGE_GRID, 'SHOW_PRODUCT_IMAGES') === 'Y';
+	}
+
+	protected function isShowTaxName(): bool
+	{
+		return $this->getStorageItem(self::STORAGE_GRID, 'SHOW_TAX_NAME') === 'Y';
 	}
 }

@@ -1,0 +1,16 @@
+.msgsvc-ct-list-title-cell {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-3xs);
+}
+
+.msgsvc-ct-list-title-cell__preview {
+	color: var(--ui-color-text-subtle, #828b95);
+	font-size: var(--ui-font-size-xs);
+	white-space: normal;
+	display: -webkit-box;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 2;
+	overflow: hidden;
+	word-break: break-word;
+}

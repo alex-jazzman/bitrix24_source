@@ -45,8 +45,7 @@ jn.define('im/messenger/controller/folder/update', (require, exports, module) =>
 			const preloaded = await preloadFolderChats(this.id);
 			if (preloaded)
 			{
-				const serverChatIds = preloaded.folder?.definition?.chatIds ?? preloaded.chatIds;
-				this.chatIds = this.#resolveDialogIds(serverChatIds);
+				this.chatIds = this.#extractDialogIds(preloaded);
 			}
 			parentWidget.openWidget('layout', {
 				titleParams: this.getTitleParams(),
@@ -142,6 +141,35 @@ jn.define('im/messenger/controller/folder/update', (require, exports, module) =>
 		#getFolder()
 		{
 			return serviceLocator.get('core').getStore().getters['folderModel/getById'](this.id);
+		}
+
+		/**
+		 * Resolves the preloaded folder members to dialogIds for the form.
+		 *
+		 * Prefers the server-authoritative dialogId carried in `definition.chats`
+		 * (group → "chat" + chatId, private → companion userId). This is the exact
+		 * value the form needs and avoids the client-side chatId → dialogId lookup,
+		 * which mis-resolved private chats whose companion was not yet in
+		 * dialoguesModel to a wrong `chat${chatId}` id.
+		 *
+		 * Falls back to the local store lookup only on the cache-hit path, where
+		 * `preloaded.folder` is the flat local model (no `definition`) and every
+		 * member is guaranteed to already live in dialoguesModel.
+		 *
+		 * @param {{ folder: object, chatIds: Array<number> }} preloaded
+		 * @return {Array<string>}
+		 */
+		#extractDialogIds(preloaded)
+		{
+			const chats = preloaded.folder?.definition?.chats;
+			if (Type.isArray(chats))
+			{
+				return chats
+					.map((chat) => chat.dialogId)
+					.filter((dialogId) => Type.isStringFilled(dialogId));
+			}
+
+			return this.#resolveDialogIds(preloaded.chatIds ?? []);
 		}
 
 		#resolveDialogIds(chatIds)

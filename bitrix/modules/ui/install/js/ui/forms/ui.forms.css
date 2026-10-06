@@ -1140,6 +1140,7 @@ button.ui-ctl-after:active {
 	height: auto;
 	appearance: checkbox;
 	flex: none;
+	transition: none;
 }
 
 .ui-ctl-checkbox .ui-ctl-label-text {
@@ -1272,6 +1273,7 @@ button.ui-ctl-after:active {
 	height: auto;
 	appearance: radio;
 	flex: none;
+	transition: none;
 }
 
 .ui-ctl-radio .ui-ctl-label-text {

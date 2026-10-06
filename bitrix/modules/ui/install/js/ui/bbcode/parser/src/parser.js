@@ -26,6 +26,7 @@ type BBCodeParserOptions = {
 	onUnknown?: (node: BBCodeContentNode, scheme: BBCodeScheme) => void,
 	encoder?: BBCodeEncoder,
 	linkify?: boolean,
+	normalize?: boolean,
 };
 
 class BBCodeParser
@@ -34,6 +35,7 @@ class BBCodeParser
 	encoder: BBCodeEncoder;
 	onUnknownHandler: () => any;
 	allowedLinkify: boolean = true;
+	allowedNormalize: boolean = true;
 
 	constructor(options: BBCodeParserOptions = {})
 	{
@@ -67,6 +69,11 @@ class BBCodeParser
 		if (Type.isBoolean(options.linkify))
 		{
 			this.setIsAllowedLinkify(options.linkify);
+		}
+
+		if (Type.isBoolean(options.normalize))
+		{
+			this.setIsAllowedNormalize(options.normalize);
 		}
 	}
 
@@ -120,6 +127,16 @@ class BBCodeParser
 	isAllowedLinkify(): boolean
 	{
 		return this.allowedLinkify;
+	}
+
+	setIsAllowedNormalize(value: boolean)
+	{
+		this.allowedNormalize = Boolean(value);
+	}
+
+	isAllowedNormalize(): boolean
+	{
+		return this.allowedNormalize;
 	}
 
 	canBeLinkified(node: BBCodeTextNode | BBCodeElementNode): boolean
@@ -359,9 +376,11 @@ class BBCodeParser
 		let level = 0;
 
 		const tokenizer = new BBCodeTokenizer();
-		const tokens = this.normalizeTokens(
-			tokenizer.tokenize(bbcode),
-		);
+		let tokens = tokenizer.tokenize(bbcode);
+		if (this.isAllowedNormalize())
+		{
+			tokens = this.normalizeTokens(tokens);
+		}
 
 		tokens.forEach((token: BBCodeToken) => {
 			const parent = stack[level];

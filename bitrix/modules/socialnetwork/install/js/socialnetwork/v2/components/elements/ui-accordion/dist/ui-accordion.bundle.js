@@ -135,6 +135,7 @@ this.BX.Socialnetwork.V2.Components = this.BX.Socialnetwork.V2.Components || {};
 				type="button"
 				:disabled="isDisabled"
 				:aria-expanded="isOpen ? 'true' : 'false'"
+				:tabindex="isDisabled ? -1 : 0"
 				@click="onToggle"
 			>
 				<span class="sonet--ui-accordion-item-head-content">

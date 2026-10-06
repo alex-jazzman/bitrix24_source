@@ -1,15 +1,13 @@
 import { Type } from 'main.core';
 import { EventEmitter } from 'main.core.events';
-import { BuilderModel } from 'ui.vue3.vuex';
+import { BuilderModel, type ActionTree, type GetterTree, type MutationTree } from 'ui.vue3.vuex';
 
 import { Layout, EventType } from 'im.v2.const';
 import { LayoutManager } from 'im.v2.lib.layout';
 
 import { SettingsModel } from './nested-modules/settings/settings';
 import { TariffRestrictionsModel } from './nested-modules/tariff-restrictions/tariff-restrictions';
-
-import type { ActionTree, GetterTree, MutationTree } from 'ui.vue3.vuex';
-import type { Layout as ImModelLayout } from '../type/layout';
+import { type Layout as ImModelLayout } from '../type/layout';
 
 type ApplicationState = { layout: ImModelLayout };
 
@@ -31,11 +29,11 @@ export class ApplicationModel extends BuilderModel
 	getState(): ApplicationState
 	{
 		return {
-			layout:
-			{
+			layout: {
 				name: Layout.chat,
 				entityId: '',
 				contextId: 0,
+				params: {},
 			},
 		};
 	}
@@ -75,26 +73,33 @@ export class ApplicationModel extends BuilderModel
 	{
 		return {
 			/** @function application/setLayout */
-			setLayout: (store, payload: {name: string, entityId?: string, contextId?: number}) => {
-				const { name, entityId = '', contextId = 0 } = payload;
+			setLayout: (store, payload: Partial<ImModelLayout>) => {
+				const { name, entityId = '', contextId = 0, params = {} } = payload;
 				if (!Type.isStringFilled(name))
 				{
 					return;
 				}
 
 				const previousLayout = { ...store.state.layout };
+
 				const newLayout = {
 					name: this.validateLayout(name),
-					entityId: this.validateLayoutEntityId(name, entityId),
+					entityId,
 					contextId,
+					params,
 				};
+
+				if (this.#isSameLayout(previousLayout, newLayout))
+				{
+					newLayout.params = { ...previousLayout.params, ...newLayout.params };
+				}
 
 				EventEmitter.emit(EventType.layout.onLayoutChange, {
 					from: previousLayout,
 					to: newLayout,
 				});
 
-				if (previousLayout.name === newLayout.name && previousLayout.entityId === newLayout.entityId)
+				if (this.#isSameLayoutPayload(previousLayout, newLayout))
 				{
 					return;
 				}
@@ -126,15 +131,15 @@ export class ApplicationModel extends BuilderModel
 		return name;
 	}
 
-	validateLayoutEntityId(name: string, entityId: string): string
+	#isSameLayoutPayload(previousLayout: ImModelLayout, newLayout: ImModelLayout): boolean
 	{
-		if (!LayoutManager.getInstance().isValidLayout(name))
-		{
-			return '';
-		}
+		return this.#isSameLayout(previousLayout, newLayout)
+			&& previousLayout.entityId === newLayout.entityId
+			&& JSON.stringify(previousLayout.params) === JSON.stringify(newLayout.params);
+	}
 
-		// TODO check `entityId` by layout name
-
-		return entityId;
+	#isSameLayout(previousLayout: ImModelLayout, newLayout: ImModelLayout): boolean
+	{
+		return previousLayout.name === newLayout.name;
 	}
 }

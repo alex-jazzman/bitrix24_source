@@ -79,8 +79,41 @@ jn.define('im/messenger/db/model-writer/vuex/user', (require, exports, module) =
 			this.repository.user.saveFromModel(uniqueUserList);
 		}
 
+		/**
+		 * @param {MutationPayload} mutation.payload
+		 */
 		deleteRouter(mutation)
-		{}
+		{
+			if (this.checkIsValidMutation(mutation) === false)
+			{
+				return;
+			}
+
+			const actionName = mutation?.payload?.actionName;
+			const data = mutation?.payload?.data || {};
+			const deleteActions = [
+				'delete',
+				'deleteByIdList',
+			];
+			if (!deleteActions.includes(actionName))
+			{
+				return;
+			}
+
+			// Single 'delete' is dispatched from dialog close (not a profile removal).
+			// DB deletion must only happen via sync-lifecycle ('deleteByIdList').
+			if (actionName === 'delete')
+			{
+				return;
+			}
+
+			if (!Type.isArrayFilled(data.idList))
+			{
+				return;
+			}
+
+			this.repository.user.deleteByIdList(data.idList);
+		}
 
 		/**
 		 * @param {Array<UsersModelState>} users

@@ -26,11 +26,12 @@ $MESS["CRM_COMPANY_UPDATE_PERMISSION_DENIED"] = "Отсутствует разр
 $MESS["CRM_LEAD_UPDATE_PERMISSION_DENIED"] = "Отсутствует разрешение на редактирование дел лида \"#TITLE#\". Пожалуйста, обратитесь к администратору портала.";
 $MESS["CRM_DEAL_UPDATE_PERMISSION_DENIED"] = "Отсутствует разрешение на редактирование дел сделки \"#TITLE#\". Пожалуйста, обратитесь к администратору портала.";
 $MESS["CRM_ACTIVITY_COULD_NOT_CREATE_POSTING"] = "Не удалось зарегистрировать письмо для отправки.";
+$MESS["CRM_ACTIVITY_EMAIL_LARGE_ATTACHMENT_SEND_ERROR"] = "Не удалось проверить ссылку на файлы. Попробуйте отправить письмо ещё раз";
 $MESS["CRM_ACTIVITY_COULD_NOT_SAVE_POSTING_FILE"] = "Не удалось присоединить файл \"#FILE_NAME#\" к письму.";
 $MESS["CRM_ACTIVITY_EMAIL_CREATION_CANCELED"] = "Операция создания письма отменена.";
 $MESS["CRM_ACTIVITY_EMAIL_CREATION_LIMITED"] = "Вы достигли лимита на отправку писем в этом месяце. %link_start%Подробнее%link_end%.";
 $MESS["CRM_ACTIVITY_EMAIL_CUSTOM_LIMITED"] = "Вы достигли лимита на отправку писем в сутки. Измените лимит в настройках отправителя. %link_start%Подробне%link_end%.";
-$MESS["CRM_ACTIVITY_EMAIL_MESSAGE_TO_MANY_RECIPIENTS"] = "Получателей не может быть больше 10";
+$MESS["CRM_ACTIVITY_EMAIL_MESSAGE_TO_MANY_RECIPIENTS"] = "Получателей не может быть больше #COUNT#";
 $MESS["CRM_ACTIVITY_EMAIL_BLACKLISTED"] = "Мы не отправили ваше письмо, так как эти адреса находятся в %link_start% черном списке %link_end%: %emails%";
 $MESS["CRM_MESSAGE_NEW_TARIFF_RESTRICTION"] = "На вашем тарифном плане действуют ограничения:<br/>\"Кому\", \"Копия\", \"Скрытая копия\" - #COUNT# Email (получатель)";
 ?>

@@ -1,0 +1,137 @@
+.disk-picker-preview-panel {
+	box-sizing: border-box;
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-md);
+	width: 100%;
+	height: 100%;
+	padding: var(--ui-space-inset-lg) var(--ui-space-inset-md);
+	overflow-y: auto;
+}
+
+.disk-picker-preview-panel__empty {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: var(--ui-space-stack-md);
+	height: 100%;
+}
+
+.disk-picker-preview-panel__empty-graphic {
+	flex: none;
+	width: 120px;
+	height: 120px;
+	background: url('../../image/no-file.png') center / 120px 120px no-repeat;
+}
+
+.disk-picker-preview-panel__empty-hint {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--ui-space-stack-2xs);
+	max-width: 360px;
+	text-align: center;
+	color: var(--ui-color-base-3);
+}
+
+.disk-picker-preview-panel__multi-hint {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: var(--ui-space-stack-2xs);
+}
+
+.disk-picker-preview-panel__multi-hint-action {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: var(--ui-space-inline-2xs);
+}
+
+.disk-picker-preview-panel__multi-hint-action kbd {
+	box-sizing: border-box;
+	padding: var(--ui-space-inset-2xs) var(--ui-space-inset-xs);
+	border: 0;
+	border-radius: var(--ui-border-radius-xs);
+	background: var(--ui-color-base-7);
+	color: inherit;
+	font: inherit;
+	text-align: center;
+}
+
+.disk-picker-preview-panel__click {
+	flex: none;
+	width: 17px;
+	height: 24px;
+	background: url('../../image/mouse.png') center / contain no-repeat;
+}
+
+.disk-picker-preview-panel__single,
+.disk-picker-preview-panel__multi {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-md);
+}
+
+.disk-picker-preview-panel__thumb {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: 154px;
+	border-radius: var(--ui-border-radius-lg);
+	background: var(--ui-color-bg-content-primary);
+	overflow: hidden;
+}
+
+.disk-picker-preview-panel__image {
+	max-width: 100%;
+	max-height: 100%;
+	object-fit: contain;
+}
+
+.disk-picker-preview-panel__fan {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: center;
+	gap: var(--ui-space-inline-2xs);
+	height: 154px;
+}
+
+.disk-picker-preview-panel__name,
+.disk-picker-preview-panel__multi-title {
+	min-width: 0;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	color: var(--ui-color-base-1);
+}
+
+.disk-picker-preview-panel__props {
+	display: flex;
+	flex-direction: column;
+}
+
+.disk-picker-preview-panel__prop {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--ui-space-inline-sm);
+	min-height: 26px;
+	border-bottom: 1px solid var(--ui-color-divider-default);
+}
+
+.disk-picker-preview-panel__prop-label {
+	color: var(--ui-color-base-2);
+}
+
+.disk-picker-preview-panel__prop-value {
+	min-width: 0;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	color: var(--ui-color-base-2);
+}

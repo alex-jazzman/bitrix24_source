@@ -2,6 +2,7 @@
 
 use Bitrix\Catalog\Access\AccessController;
 use Bitrix\Catalog\Access\ActionDictionary;
+use Bitrix\Main\Web\Uri;
 
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/catalog/prolog.php");
@@ -1411,42 +1412,42 @@ function checkParameters(f)
 * @return mixed
 */
 function fReplaceUrl($arCatalog, $urlCurrent)
+{
+	$urlCurrentDefault = $urlCurrent;
+
+	foreach($arCatalog as $key => $submenu)
+	{
+		$arUrlAdd = array("set_filter" => "Y");
+
+		$url = $submenu["url"];
+		$urlParse = parse_url($url);
+		$arUrlTag = explode("&", $urlParse["query"]);
+
+		foreach($arUrlTag as $tag)
+		{
+			$tmp = explode("=", $tag);
+			if($tmp[0] == "IBLOCK_ID" || $tmp[0] == "find_section_section")
 			{
-				$urlCurrentDefault = $urlCurrent;
+				if($tmp[0] == "find_section_section")
+					$tmp[0] = "filter_section";
 
-				foreach($arCatalog as $key => $submenu)
-				{
-					$arUrlAdd = array("set_filter" => "Y");
-
-					$url = $submenu["url"];
-					$urlParse = parse_url($url);
-					$arUrlTag = explode("&", $urlParse["query"]);
-
-					foreach($arUrlTag as $tag)
-					{
-						$tmp = explode("=", $tag);
-						if($tmp[0] == "IBLOCK_ID" || $tmp[0] == "find_section_section")
-						{
-							if($tmp[0] == "find_section_section")
-								$tmp[0] = "filter_section";
-
-							$urlCurrent = CHTTP::urlDeleteParams($urlCurrent, array($tmp[0]));
-							$arUrlAdd[$tmp[0]] = $tmp[1];
-						}
-					}
-
-					$url = CHTTP::urlAddParams($urlCurrent, $arUrlAdd, array("encode","skip_empty"));
-					$arCatalog[$key]["url"] = $url;
-
-					if(isset($submenu["items"]) && count($submenu["items"]) > 0)
-					{
-						$subCatal = fReplaceUrl($submenu["items"], $urlCurrentDefault);
-						$arCatalog[$key]["items"] = $subCatal;
-					}
-				}
-
-				return $arCatalog;
+				$urlCurrent = (string)(new Uri($urlCurrent))->deleteParams([$tmp[0]]);
+				$arUrlAdd[$tmp[0]] = $tmp[1];
 			}
+		}
+
+		$url = (string)(new Uri($urlCurrent))->addParams($arUrlAdd);
+		$arCatalog[$key]["url"] = $url;
+
+		if(isset($submenu["items"]) && count($submenu["items"]) > 0)
+		{
+			$subCatal = fReplaceUrl($submenu["items"], $urlCurrentDefault);
+			$arCatalog[$key]["items"] = $subCatal;
+		}
+	}
+
+	return $arCatalog;
+}
 
 $urlCurrent = $APPLICATION->GetCurPageParam();
 $arCatalog = CCatalogAdmin::get_sections_menu('', $iblockId, 2, 0);

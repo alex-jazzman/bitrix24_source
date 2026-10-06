@@ -38,7 +38,7 @@ export class InvitationNotification
 			className: 'popup-window-dark',
 			background: 'rgb(8, 93, 193)',
 			closeIcon: true,
-			autoHide: false,
+			autoHide: true,
 			closeByEsc: true,
 			padding: 12,
 			borderRadius: 20,
@@ -59,7 +59,6 @@ export class InvitationNotification
 			events: {
 				onClose: () => {
 					onDone();
-					BX.userOptions.save('intranet.invitation', 'invitationNotificationTransitionBalloonTs', null, Math.floor(Date.now() / 1000));
 				},
 			},
 		});
@@ -168,6 +167,7 @@ export class InvitationNotification
 			this.#popup = this.createNotificationBalloon(onDone);
 			this.#popup.show();
 			this.#popup.zIndexComponent.setZIndex(400);
+			this.#saveUserOption();
 			this.#sendAnalytics('push_show');
 
 			this.invitationButton.addEventListener('click', () => {
@@ -176,23 +176,28 @@ export class InvitationNotification
 		});
 	}
 
+	#saveUserOption(): void
+	{
+		BX.userOptions.save('intranet.invitation', 'invitationNotificationTransitionBalloonTs', null, Math.floor(Date.now() / 1000));
+	}
+
 	#sendAnalytics(event: string): void
 	{
 		const typeMap = {
-			1: "common",
-			3: "tasks",
-			4: "crm",
-			5: "automatization",
-			6: "common",
-			7: "repeat_invite"
+			1: 'common',
+			3: 'tasks',
+			4: 'crm',
+			5: 'automatization',
+			6: 'common',
+			7: 'repeat_invite',
 		};
-		const type = typeMap[this.#options.type] || "unknown";
+		const type = typeMap[this.#options.type] || 'unknown';
 
 		const params = {
+			event,
+			type,
 			tool: 'invitation',
 			category: 'onboarding',
-			event,
-			type: type,
 		};
 
 		sendData(params);

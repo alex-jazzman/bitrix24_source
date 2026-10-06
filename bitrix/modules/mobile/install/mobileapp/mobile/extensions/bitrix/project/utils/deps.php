@@ -14,7 +14,10 @@ return [
 		'qrauth/utils',
 		'rest',
 		'tariff-plan-restriction',
+		'tokens',
 		'toast',
+		'ui-system/blocks/avatar',
 		'utils/guid',
+		'utils/url',
 	],
 ];

@@ -11,127 +11,14 @@ use Bitrix\Bizproc\Activity\ActivityDescription;
 use Bitrix\Bizproc\Activity\Enum\ActivityColorIndex;
 use Bitrix\Bizproc\Activity\Enum\ActivityGroup;
 use Bitrix\Bizproc\Activity\Enum\ActivityType;
-use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Ui\Public\Enum\IconSet\Outline;
 
-$isEntitySelectorAvailable = defined(\Bitrix\Bizproc\Integration\UI\EntitySelector\DocumentTypeProvider::class . '::PRESELECTED_ITEMS_SUPPORTED');
-
-$map = [
-	'LEAD' => 'LEAD',
-	'DEAL' => 'DEAL',
-	'CONTACT' => 'CONTACT',
-	'COMPANY' => 'COMPANY',
-	'ORDER' => 'ORDER',
-];
-
-if ($isEntitySelectorAvailable)
+if (!class_exists('CBPCrmEntityFieldChangedTrigger'))
 {
-	$map['DEAL'] = 'crm@CCrmDocumentDeal@DEAL';
-	$map['COMPANY'] = 'crm@CCrmDocumentCompany@COMPANY';
-	$map['LEAD'] = 'crm@CCrmDocumentLead@LEAD';
-	$map['ORDER'] = 'crm@Bitrix\Crm\Integration\BizProc\Document\Order@ORDER';
-	$map['CONTACT'] = 'crm@CCrmDocumentContact@CONTACT';
+	\CBPRuntime::getRuntime()->includeActivityFile('crmentityfieldchangedtrigger');
 }
 
-$presets = [
-	[
-		'ID' => 'DEAL',
-		'NAME' => Loc::getMessage('BP_CRM_DEAL_FCT_DESCR_NAME'),
-		'DESCRIPTION' => Loc::getMessage('BP_CRM_DEAL_FCT_DESCR_DESCR'),
-		'PROPERTIES' => [ 'Document' => $map['DEAL'] ],
-		'NODE_ICON' => Outline::HANDSHAKE->name,
-		'GROUPS' => [
-			ActivityGroup::STARTER->value,
-			ActivityGroup::SALES_CRM->value,
-		],
-	],
-	[
-		'ID' => 'CONTACT',
-		'NAME' => Loc::getMessage('BP_CRM_CONTACT_FCT_DESCR_NAME'),
-		'DESCRIPTION' => Loc::getMessage('BP_CRM_CONTACT_FCT_DESCR_DESCR'),
-		'PROPERTIES' => [ 'Document' => $map['CONTACT'] ],
-		'NODE_ICON' => Outline::CONTACT->name,
-		'GROUPS' => [
-			ActivityGroup::STARTER->value,
-			ActivityGroup::SALES_CRM->value,
-		],
-	],
-	[
-		'ID' => 'COMPANY',
-		'NAME' => Loc::getMessage('BP_CRM_COMPANY_FCT_DESCR_NAME'),
-		'DESCRIPTION' => Loc::getMessage('BP_CRM_COMPANY_FCT_DESCR_DESCR'),
-		'PROPERTIES' => [ 'Document' => $map['COMPANY'] ],
-		'NODE_ICON' => Outline::COMPANY->name,
-		'GROUPS' => [
-			ActivityGroup::STARTER->value,
-			ActivityGroup::SALES_CRM->value,
-		],
-	],
-	[
-		'ID' => 'LEAD',
-		'NAME' => Loc::getMessage('BP_CRM_LEAD_FCT_DESCR_NAME'),
-		'DESCRIPTION' => Loc::getMessage('BP_CRM_LEAD_FCT_DESCR_DESCR'),
-		'PROPERTIES' => [ 'Document' => $map['LEAD'] ],
-		'NODE_ICON' => Outline::LEAD->name,
-		'GROUPS' => [
-			ActivityGroup::STARTER->value,
-			ActivityGroup::SALES_CRM->value,
-		],
-	],
-];
-
-if ($isEntitySelectorAvailable)
-{
-	$presets[] = [
-		'ID' => 'QUOTE',
-		'NAME' => Loc::getMessage('BP_CRM_QUOTE_FCT_DESCR_NAME'),
-		'DESCRIPTION' => Loc::getMessage('BP_CRM_QUOTE_FCT_DESCR_DESCR'),
-		'PROPERTIES' => [ 'Document' => 'crm@\Bitrix\Crm\Integration\BizProc\Document\Quote@QUOTE' ],
-		'NODE_ICON' => Outline::SUITCASE->name,
-		'GROUPS' => [
-			ActivityGroup::STARTER->value,
-			ActivityGroup::SALES_CRM->value,
-		],
-	];
-	$presets[] = [
-		'ID' => 'AUTOMATED_SOLUTION',
-		'NAME' => Loc::getMessage('BP_CRM_AUTOMATED_SOLUTION_FCT_DESCR_NAME'),
-		'DESCRIPTION' => Loc::getMessage('BP_CRM_AUTOMATED_SOLUTION_FCT_DESCR_DESCR'),
-		'PROPERTIES' => [ 'IsAutomatedSolution' => 'Y' ],
-		'NODE_ICON' => Outline::SMART_PROCESS->name,
-		'GROUPS' => [
-			ActivityGroup::STARTER->value,
-			ActivityGroup::DIGITAL_WORKPLACE->value,
-		],
-	];
-	$presets[] = [
-		'ID' => 'DYNAMIC',
-		'NAME' => Loc::getMessage('BP_CRM_DYNAMIC_FCT_DESCR_NAME'),
-		'DESCRIPTION' => Loc::getMessage('BP_CRM_DYNAMIC_FCT_DESCR_DESCR'),
-		'NODE_ICON' => Outline::SMART_PROCESS->name,
-		'GROUPS' => [
-			ActivityGroup::STARTER->value,
-			ActivityGroup::SALES_CRM->value,
-		],
-	];
-}
-
-if (Loader::includeModule('crm') && \CCrmSaleHelper::isWithOrdersMode())
-{
-	$presets[] = [
-		'ID' => 'ORDER',
-		'NAME' => Loc::getMessage('BP_CRM_ORDER_FCT_DESCR_NAME'),
-		'DESCRIPTION' => Loc::getMessage('BP_CRM_ORDER_FCT_DESCR_DESCR'),
-		'PROPERTIES' => [ 'Document' => $map['ORDER'] ],
-		'NODE_ICON' => Outline::CHANGE_ORDER->name,
-		'GROUPS' => [
-			ActivityGroup::STARTER->value,
-			ActivityGroup::SALES_CRM->value,
-			ActivityGroup::PAYMENT->value,
-		],
-	];
-}
+$presets = class_exists('CBPCrmEntityFieldChangedTrigger') ? CBPCrmEntityFieldChangedTrigger::getPresets() : [];
 
 $arActivityDescription = (new ActivityDescription(
 	name: '',
@@ -141,6 +28,18 @@ $arActivityDescription = (new ActivityDescription(
 	->setClass('CrmEntityFieldChangedTrigger')
 	->setCategory(['ID' => 'document'])
 	->setPresets($presets)
+	->setReturn([
+		'Initiator' => [
+			'Name' => Loc::getMessage('BP_CRM_ENTITY_FIELD_CHANGED_TRIGGER_RETURN_INITIATOR') ?? '',
+			'Type' => \Bitrix\Bizproc\FieldType::USER,
+			'Default' => null,
+		],
+		'EventDateTime' => [
+			'Name' => Loc::getMessage('BP_CRM_ENTITY_FIELD_CHANGED_TRIGGER_RETURN_EVENT_DATE_TIME') ?? '',
+			'Type' => \Bitrix\Bizproc\FieldType::DATETIME,
+			'Default' => null,
+		],
+	])
 	->set('ADDITIONAL_RESULT', ['Return'])
 	->setGroups([ActivityGroup::STARTER->value])
 	->setColorIndex(ActivityColorIndex::BLUE->value)

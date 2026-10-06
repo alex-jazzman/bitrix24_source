@@ -33,3 +33,19 @@ $arActivityDescription = [
 		],
 	],
 ];
+
+if (
+	enum_exists('\Bitrix\Bizproc\Activity\Enum\ActionGroup')
+	&& enum_exists('\Bitrix\Bizproc\Activity\Enum\ActionArea')
+)
+{
+	$arActivityDescription['NODE_ACTION_SETTINGS'] = [
+		'HANDLES_DOCUMENT' => false,
+		'ACTION_GROUP' => \Bitrix\Bizproc\Activity\Enum\ActionGroup::CREATE->value,
+		'ACTION_AREA' => \Bitrix\Bizproc\Activity\Enum\ActionArea::CRM->value,
+		'ACTION_OBJECTS' => [
+			['id' => 'crm_deal', 'title' => GetMessage('CRM_ACTIVITY_OBJECT_DEAL')],
+		],
+		'CREATES_DOCUMENT' => true,
+	];
+}

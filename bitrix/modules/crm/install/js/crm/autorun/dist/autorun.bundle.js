@@ -255,10 +255,12 @@ this.BX.Crm = this.BX.Crm || {};
 		_processedItemCount = 0;
 		_totalItemCount = 0;
 		_errors = [];
-		static messages = {
-			// default messages, you can override them via settings.messages
-			requestError: main_core.Loc.getMessage('CRM_AUTORUN_PROCESS_REQUEST_ERROR')
-		};
+		static get messages() {
+			return {
+				// default messages, you can override them via settings.messages
+				requestError: main_core.Loc.getMessage('CRM_AUTORUN_PROCESS_REQUEST_ERROR')
+			};
+		}
 		static items = {};
 		static create(id, settings) {
 			const self = new Processor(id, settings);
@@ -1036,13 +1038,15 @@ this.BX.Crm = this.BX.Crm || {};
 	 * @memberOf BX.Crm.Autorun
 	 */
 	class BatchAssignmentManager extends BatchManager {
-		static messages = {
-			// default messages, you can override them via settings.messages
-			title: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_ASSIGN_TITLE'),
-			summaryCaption: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_ASSIGN_SUMMARY_CAPTION'),
-			summarySucceeded: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_ASSIGN_SUMMARY_SUCCEEDED'),
-			summaryFailed: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_ASSIGN_SUMMARY_FAILED')
-		};
+		static get messages() {
+			return {
+				// default messages, you can override them via settings.messages
+				title: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_ASSIGN_TITLE'),
+				summaryCaption: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_ASSIGN_SUMMARY_CAPTION'),
+				summarySucceeded: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_ASSIGN_SUMMARY_SUCCEEDED'),
+				summaryFailed: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_ASSIGN_SUMMARY_FAILED')
+			};
+		}
 		static items = {};
 		#assignedById;
 		static getItem(id) {
@@ -1418,18 +1422,20 @@ this.BX.Crm = this.BX.Crm || {};
 	 * @alias BX.Crm.BatchDeletionManager
 	 */
 	class BatchDeletionManager extends BatchManager {
-		static messages = {
-			// default messages, you can override them via settings.messages
-			title: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_DELETE_TITLE'),
-			// default message for all entity types
-			confirmation: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_DELETE_CONFIRMATION'),
-			confirmationTitle: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_DELETE_CONFIRMATION_TITLE'),
-			// default message for all entity types
-			confirmationYesCaption: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_DELETE_CONFIRMATION_YES_CAPTION'),
-			summaryCaption: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_DELETE_SUMMARY_CAPTION'),
-			summarySucceeded: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_DELETE_SUMMARY_SUCCEEDED'),
-			summaryFailed: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_DELETE_SUMMARY_FAILED')
-		};
+		static get messages() {
+			return {
+				// default messages, you can override them via settings.messages
+				title: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_DELETE_TITLE'),
+				// default message for all entity types
+				confirmation: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_DELETE_CONFIRMATION'),
+				confirmationTitle: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_DELETE_CONFIRMATION_TITLE'),
+				// default message for all entity types
+				confirmationYesCaption: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_DELETE_CONFIRMATION_YES_CAPTION'),
+				summaryCaption: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_DELETE_SUMMARY_CAPTION'),
+				summarySucceeded: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_DELETE_SUMMARY_SUCCEEDED'),
+				summaryFailed: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_DELETE_SUMMARY_FAILED')
+			};
+		}
 		static items = {};
 		static getItem(id) {
 			return BX.prop.get(BatchDeletionManager.items, id, null);
@@ -1496,13 +1502,15 @@ this.BX.Crm = this.BX.Crm || {};
 	 * @memberOf BX.Crm.Autorun
 	 */
 	class BatchExclusionManager extends BatchManager {
-		static messages = {
-			// default messages, you can override them via settings.messages
-			title: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_EXCLUSION_TITLE'),
-			summaryCaption: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_EXCLUSION_SUMMARY_CAPTION'),
-			summarySucceeded: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_EXCLUSION_SUMMARY_SUCCEEDED'),
-			summaryFailed: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_EXCLUSION_SUMMARY_FAILED')
-		};
+		static get messages() {
+			return {
+				// default messages, you can override them via settings.messages
+				title: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_EXCLUSION_TITLE'),
+				summaryCaption: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_EXCLUSION_SUMMARY_CAPTION'),
+				summarySucceeded: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_EXCLUSION_SUMMARY_SUCCEEDED'),
+				summaryFailed: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_EXCLUSION_SUMMARY_FAILED')
+			};
+		}
 		static items = {};
 		static getItem(id) {
 			return BX.prop.get(BatchExclusionManager.items, id, null);
@@ -1530,12 +1538,14 @@ this.BX.Crm = this.BX.Crm || {};
 	}
 
 	class BatchObserversManager extends BatchManager {
-		static messages = {
-			title: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_OBSERVERS_TITLE'),
-			summaryCaption: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_OBSERVERS_SUMMARY_CAPTION'),
-			summarySucceeded: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_OBSERVERS_SUMMARY_SUCCEEDED'),
-			summaryFailed: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_OBSERVERS_SUMMARY_FAILED')
-		};
+		static get messages() {
+			return {
+				title: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_OBSERVERS_TITLE'),
+				summaryCaption: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_OBSERVERS_SUMMARY_CAPTION'),
+				summarySucceeded: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_OBSERVERS_SUMMARY_SUCCEEDED'),
+				summaryFailed: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_OBSERVERS_SUMMARY_FAILED')
+			};
+		}
 		static items = {};
 		#observerIdList = [];
 		static getItem(id) {
@@ -1575,13 +1585,15 @@ this.BX.Crm = this.BX.Crm || {};
 	 * @memberOf BX.Crm.Autorun
 	 */
 	class BatchRefreshAccountingDataManager extends BatchManager {
-		static messages = {
-			// default messages, you can override them via settings.messages
-			title: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_REFRESH_ACCOUNTING_DATA_TITLE'),
-			summaryCaption: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_REFRESH_ACCOUNTING_DATA_SUMMARY_CAPTION'),
-			summarySucceeded: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_REFRESH_ACCOUNTING_DATA_SUMMARY_SUCCEEDED'),
-			summaryFailed: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_REFRESH_ACCOUNTING_DATA_SUMMARY_FAILED')
-		};
+		static get messages() {
+			return {
+				// default messages, you can override them via settings.messages
+				title: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_REFRESH_ACCOUNTING_DATA_TITLE'),
+				summaryCaption: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_REFRESH_ACCOUNTING_DATA_SUMMARY_CAPTION'),
+				summarySucceeded: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_REFRESH_ACCOUNTING_DATA_SUMMARY_SUCCEEDED'),
+				summaryFailed: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_REFRESH_ACCOUNTING_DATA_SUMMARY_FAILED')
+			};
+		}
 		static items = {};
 		static getItem(id) {
 			return BX.prop.get(BatchRefreshAccountingDataManager.items, id, null);
@@ -1614,13 +1626,15 @@ this.BX.Crm = this.BX.Crm || {};
 	 * @memberOf BX.Crm.Autorun
 	 */
 	class BatchRestartAutomationManager extends BatchManager {
-		static messages = {
-			// default messages, you can override them via settings.messages
-			title: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_RESTART_AUTOMATION_TITLE'),
-			summaryCaption: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_RESTART_AUTOMATION_SUMMARY_CAPTION'),
-			summarySucceeded: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_RESTART_AUTOMATION_SUMMARY_SUCCEEDED'),
-			summaryFailed: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_RESTART_AUTOMATION_SUMMARY_FAILED')
-		};
+		static get messages() {
+			return {
+				// default messages, you can override them via settings.messages
+				title: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_RESTART_AUTOMATION_TITLE'),
+				summaryCaption: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_RESTART_AUTOMATION_SUMMARY_CAPTION'),
+				summarySucceeded: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_RESTART_AUTOMATION_SUMMARY_SUCCEEDED'),
+				summaryFailed: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_RESTART_AUTOMATION_SUMMARY_FAILED')
+			};
+		}
 		static items = {};
 		static getItem(id) {
 			return BX.prop.get(BatchRestartAutomationManager.items, id, null);
@@ -1653,13 +1667,15 @@ this.BX.Crm = this.BX.Crm || {};
 	 * @memberOf BX.Crm.Autorun
 	 */
 	class BatchSetCategoryManager extends BatchManager {
-		static messages = {
-			// default messages, you can override them via settings.messages
-			title: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_SET_CATEGORY_TITLE'),
-			summaryCaption: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_SET_CATEGORY_SUMMARY_CAPTION'),
-			summarySucceeded: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_SET_CATEGORY_SUMMARY_SUCCEEDED'),
-			summaryFailed: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_SET_CATEGORY_SUMMARY_FAILED')
-		};
+		static get messages() {
+			return {
+				// default messages, you can override them via settings.messages
+				title: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_SET_CATEGORY_TITLE'),
+				summaryCaption: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_SET_CATEGORY_SUMMARY_CAPTION'),
+				summarySucceeded: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_SET_CATEGORY_SUMMARY_SUCCEEDED'),
+				summaryFailed: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_SET_CATEGORY_SUMMARY_FAILED')
+			};
+		}
 		static items = {};
 		#categoryId;
 		static getItem(id) {
@@ -1701,14 +1717,16 @@ this.BX.Crm = this.BX.Crm || {};
 	 * @memberOf BX.Crm.Autorun
 	 */
 	class BatchSetExportManager extends BatchManager {
-		static messages = {
-			// default messages, you can override them via settings.messages
-			title: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_SET_EXPORT_TITLE'),
-			// default message for all entity types
-			summaryCaption: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_SET_EXPORT_SUMMARY_CAPTION'),
-			summarySucceeded: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_SET_EXPORT_SUMMARY_SUCCEEDED'),
-			summaryFailed: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_SET_EXPORT_SUMMARY_FAILED')
-		};
+		static get messages() {
+			return {
+				// default messages, you can override them via settings.messages
+				title: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_SET_EXPORT_TITLE'),
+				// default message for all entity types
+				summaryCaption: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_SET_EXPORT_SUMMARY_CAPTION'),
+				summarySucceeded: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_SET_EXPORT_SUMMARY_SUCCEEDED'),
+				summaryFailed: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_SET_EXPORT_SUMMARY_FAILED')
+			};
+		}
 		static items = {};
 		#export;
 		static getItem(id) {
@@ -1767,13 +1785,15 @@ this.BX.Crm = this.BX.Crm || {};
 	 * @memberOf BX.Crm.Autorun
 	 */
 	class BatchSetOpenedManager extends BatchManager {
-		static messages = {
-			// default messages, you can override them via settings.messages
-			title: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_SET_OPENED_TITLE'),
-			summaryCaption: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_SET_OPENED_SUMMARY_CAPTION'),
-			summarySucceeded: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_SET_OPENED_SUMMARY_SUCCEEDED'),
-			summaryFailed: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_SET_OPENED_SUMMARY_FAILED')
-		};
+		static get messages() {
+			return {
+				// default messages, you can override them via settings.messages
+				title: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_SET_OPENED_TITLE'),
+				summaryCaption: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_SET_OPENED_SUMMARY_CAPTION'),
+				summarySucceeded: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_SET_OPENED_SUMMARY_SUCCEEDED'),
+				summaryFailed: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_SET_OPENED_SUMMARY_FAILED')
+			};
+		}
 		static items = {};
 		#isOpened;
 		static getItem(id) {
@@ -1819,13 +1839,15 @@ this.BX.Crm = this.BX.Crm || {};
 	 * @memberOf BX.Crm.Autorun
 	 */
 	class BatchSetStageManager extends BatchManager {
-		static messages = {
-			// default messages, you can override them via settings.messages
-			title: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_SET_STAGE_TITLE'),
-			summaryCaption: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_SET_STAGE_SUMMARY_CAPTION'),
-			summarySucceeded: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_SET_STAGE_SUMMARY_SUCCEEDED'),
-			summaryFailed: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_SET_STAGE_SUMMARY_FAILED')
-		};
+		static get messages() {
+			return {
+				// default messages, you can override them via settings.messages
+				title: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_SET_STAGE_TITLE'),
+				summaryCaption: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_SET_STAGE_SUMMARY_CAPTION'),
+				summarySucceeded: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_SET_STAGE_SUMMARY_SUCCEEDED'),
+				summaryFailed: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_SET_STAGE_SUMMARY_FAILED')
+			};
+		}
 		static items = {};
 		#stageId;
 		static getItem(id) {
@@ -1866,13 +1888,15 @@ this.BX.Crm = this.BX.Crm || {};
 	 * @memberOf BX.Crm.Autorun
 	 */
 	class BatchWhatsappMessageManager extends BatchManager {
-		static messages = {
-			// default messages, you can override them via settings.messages
-			title: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_WHATSAPP_MESSAGE_TITLE'),
-			summaryCaption: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_WHATSAPP_MESSAGE_SUMMARY_CAPTION'),
-			summarySucceeded: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_WHATSAPP_MESSAGE_SUMMARY_SUCCEEDED'),
-			summaryFailed: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_WHATSAPP_MESSAGE_SUMMARY_FAILED')
-		};
+		static get messages() {
+			return {
+				// default messages, you can override them via settings.messages
+				title: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_WHATSAPP_MESSAGE_TITLE'),
+				summaryCaption: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_WHATSAPP_MESSAGE_SUMMARY_CAPTION'),
+				summarySucceeded: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_WHATSAPP_MESSAGE_SUMMARY_SUCCEEDED'),
+				summaryFailed: main_core.Loc.getMessage('CRM_AUTORUN_BATCH_WHATSAPP_MESSAGE_SUMMARY_FAILED')
+			};
+		}
 		#templateParams = null;
 		setTemplateParams(templateParams) {
 			this.#templateParams = templateParams;
@@ -1976,5 +2000,5 @@ this.BX.Crm = this.BX.Crm || {};
 	exports.ProgressBarRepository = ProgressBarRepository;
 	exports.SummaryPanel = SummaryPanel;
 
-})(this.BX.Crm.Autorun = this.BX.Crm.Autorun || {}, BX, BX, BX.Crm.Integration.Analytics, BX.UI.Analytics, BX.UI.Dialogs);
+})(this.BX.Crm.Autorun = this.BX.Crm.Autorun || {}, BX, window, BX.Crm.Integration.Analytics, BX.UI.Analytics, BX.UI.Dialogs);
 //# sourceMappingURL=autorun.bundle.js.map

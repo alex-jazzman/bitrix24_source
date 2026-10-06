@@ -8,16 +8,9 @@ jn.define('tasks/layout/checklist/list/src/checkbox/important', (require, export
 	const { IconView, Icon } = require('ui-system/blocks/icon');
 	const IMPORTANT_SIZE = 16;
 
-	/**
-	 * @class ChecklistImportant
-	 */
 	class ChecklistImportant extends PureComponent
 	{
-		/**
-		 * @param {object} props
-		 * @param {function} [props.onClick]
-		 * @param {boolean} [props.important]
-		 */
+		/** @param {ChecklistImportantProps} props */
 		constructor(props)
 		{
 			super(props);

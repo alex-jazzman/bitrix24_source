@@ -11,7 +11,6 @@ export class UnderlineNodeFormatter extends NodeFormatter
 				return Dom.create({
 					tag: 'u',
 					attrs: {
-						...node.getAttributes(),
 						className: 'ui-typography-text-underline',
 					},
 				});

@@ -99,6 +99,13 @@
 	display: flex;
 	pointer-events: none;
 }
+
+.landing-pub-top-panel-unique-view,
+.landing-pub-top-panel-total-view {
+	display: flex;
+	align-items: center;
+}
+
 .landing-pub-top-panel-actions {
 	margin-left: 25px;
 }

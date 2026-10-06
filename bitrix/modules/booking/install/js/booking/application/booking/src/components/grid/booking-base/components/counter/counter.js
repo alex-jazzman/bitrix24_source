@@ -1,8 +1,6 @@
+import { Grid, Model, VisitStatus } from 'booking.const';
 import { Duration } from 'booking.lib.duration';
-import { mapGetters } from 'ui.vue3.vuex';
-
-import { Model, VisitStatus } from 'booking.const';
-import type { BookingModel } from 'booking.model.bookings';
+import { type BookingModel } from 'booking.model.bookings';
 
 import { DotCounter } from './components/dot-counter/dot-counter';
 import { FullCounter } from './components/full-counter/full-counter';
@@ -15,6 +13,11 @@ export const Counter = {
 		DotCounter,
 		FullCounter,
 	},
+	inject: {
+		gridContext: {
+			default: null,
+		},
+	},
 	props: {
 		bookingId: {
 			type: [Number, String],
@@ -26,10 +29,15 @@ export const Counter = {
 		},
 	},
 	computed: {
-		...mapGetters({
-			isWeekMode: `${Model.Interface}/isWeekMode`,
-			notificationTypes: `${Model.Dictionary}/getNotifications`,
-		}),
+		isWeekMode(): boolean
+		{
+			if (this.gridContext)
+			{
+				return this.gridContext.gridMode === Grid.Mode.Week;
+			}
+
+			return this.$store.getters[`${Model.Interface}/isWeekMode`];
+		},
 		booking(): BookingModel
 		{
 			return this.$store.getters[`${Model.Bookings}/getById`](this.bookingId);
@@ -41,15 +49,7 @@ export const Counter = {
 				return false;
 			}
 
-			const notificationTypes = Object.fromEntries(
-				Object.entries(this.notificationTypes).map(([type, { value }]) => [type, value]),
-			);
-
-			const confirmationSent = this.booking.messages?.some(
-				({ notificationType }) => notificationType === notificationTypes.Confirmation,
-			);
-
-			return !this.booking.isConfirmed && confirmationSent;
+			return !this.booking.isConfirmed && this.booking.isConfirmationSent;
 		},
 		showConfirmed(): boolean
 		{

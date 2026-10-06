@@ -1,8 +1,21 @@
 
+.mail-left-directory-menu-wrapper {
+	margin: 14px 0;
+}
+
+/* A label block follows the folders: the gap down to its leading separator gets tighter. */
+.mail-left-directory-menu-wrapper--labels-below {
+	margin-bottom: 12px;
+}
+
 .ui-mail-left-directory-menu{
 	padding: 0;
 	width: calc(100% + 20px);
-	margin: 14px 0 23px -20px;
+	margin: 0 0 0 -20px;
+}
+
+.ui-mail-left-directory-menu:empty {
+	display: none;
 }
 
 .ui-mail-left-directory-menu.mail-left-directory-menu--no-nesting {
@@ -461,6 +474,33 @@
 	position: relative;
 }
 
+.mail-left-directory-menu--sortable .mail-menu-directory-item-container {
+	-webkit-user-select: none;
+	        user-select: none;
+}
+
+/* Grab-hand affordance for reorderable folders.
+   Covers top-level items and nested rows; the expand toggle keeps its own cursor. */
+.mail-left-directory-menu--sortable > .mail-menu-directory-item-container > .ui-sidepanel-menu-item,
+.mail-left-directory-menu--sortable > .mail-menu-directory-item-container > .ui-sidepanel-menu-item .ui-sidepanel-menu-link,
+.mail-left-directory-menu--sortable .mail-menu-directory-children > .mail-menu-directory-item-container > .ui-sidepanel-menu-item,
+.mail-left-directory-menu--sortable .mail-menu-directory-children > .mail-menu-directory-item-container > .ui-sidepanel-menu-item .ui-sidepanel-menu-link {
+	cursor: grab;
+}
+
+.mail-left-directory-menu--sortable > .mail-menu-directory-item-container > .ui-sidepanel-menu-item:active,
+.mail-left-directory-menu--sortable > .mail-menu-directory-item-container > .ui-sidepanel-menu-item:active .ui-sidepanel-menu-link,
+.mail-left-directory-menu--sortable .mail-menu-directory-children > .mail-menu-directory-item-container > .ui-sidepanel-menu-item:active,
+.mail-left-directory-menu--sortable .mail-menu-directory-children > .mail-menu-directory-item-container > .ui-sidepanel-menu-item:active .ui-sidepanel-menu-link {
+	cursor: grabbing;
+}
+
+.mail-left-directory-menu-wrapper .ui-draggable--drop-preview {
+	border: none;
+	border-radius: var(--ui-border-radius-sm);
+	background: rgba(255, 255, 255, 0.46);
+}
+
 /*.mail-menu-directory-item-container .ui-sidepanel-menu-item .ui-sidepanel-menu-link-text-item*/
 
 .mail-menu-directory-item-container .ui-sidepanel-menu-link,
@@ -574,6 +614,51 @@
 	background: var(--ui-color-base-8, rgba(255, 255, 255, 0.20));
 }
 
+.mail-favorites-menu {
+	margin: 12px 0 0 0;
+}
+
+/* The leading separator brings its own vertical spacing. */
+.mail-favorites-menu--leading-separator {
+	margin: 0;
+}
+
+.mail-favorites-menu-item {
+	width: 100%;
+	margin: 0;
+	padding: 0;
+	border: none;
+	background: transparent;
+	font: inherit;
+	color: inherit;
+	text-align: left;
+	cursor: pointer;
+	outline: none;
+}
+
+.mail-favorites-menu-link {
+	margin-left: 34px;
+	cursor: pointer;
+}
+
+.mail-favorites-menu-item:focus-visible .ui-sidepanel-menu-link {
+	border-radius: 8px;
+	outline: 2px solid var(--ui-color-base-white-fixed);
+	outline-offset: -2px;
+}
+
+/* Separator of a left menu block. Shared with the label block, which renders it through
+   mail.label.menu (mail.directorymenu CSS is always co-loaded there). */
+.mail-favorites-menu-separator {
+	height: 1px;
+	margin: 10px 25px 0 34px;
+	background: var(--ui-color-base-8, rgba(255, 255, 255, 0.20));
+}
+
+/* The separator leads its block instead of closing it: it is the block's top border. */
+.mail-favorites-menu-separator--leading {
+	margin: 10px 15px 10px 0;
+}
 
 .ui-sidepanel-sidebar {
     margin: 21px 0 0 -21px;

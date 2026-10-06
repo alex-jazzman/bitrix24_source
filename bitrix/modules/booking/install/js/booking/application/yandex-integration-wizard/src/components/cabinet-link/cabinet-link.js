@@ -46,7 +46,13 @@ export const YandexIntegrationWizardCabinetLink = {
 			const languageId = this.loc('LANGUAGE_ID') ?? 'en';
 			const imageLanguageId = languageId === 'ru' ? 'ru' : 'en';
 
-			return `/bitrix/js/booking/application/yandex-integration-wizard/images/yandex-cabinet-link-guide-${imageLanguageId}.png`;
+			return `/bitrix/js/booking/application/yandex-integration-wizard/images/yandex-cabinet-link-guide-${imageLanguageId}.webp`;
+		},
+		cabinetLinkImageSrcSet(): string
+		{
+			const imageUrl = this.cabinetLinkImageUrl;
+
+			return `${imageUrl} 1x, ${imageUrl.replace('.webp', '-2x.webp')} 2x`;
 		},
 		yandexBusinessLink(): string
 		{
@@ -143,6 +149,7 @@ export const YandexIntegrationWizardCabinetLink = {
 					<img 
 						class="booking-yiw-cabinet-link__guide-image"
 						:src="cabinetLinkImageUrl"
+						:srcset="cabinetLinkImageSrcSet"
 						:alt="loc('YANDEX_WIZARD_CABINET_LINK_GUIDE_TITLE')"
 						draggable="false"
 					/>

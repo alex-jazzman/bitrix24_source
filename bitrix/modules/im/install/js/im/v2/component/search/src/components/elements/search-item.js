@@ -2,6 +2,7 @@ import { Text, Loc } from 'main.core';
 
 import { ChatAvatar, AvatarSize, ChatAvatarType } from 'im.v2.component.elements.avatar';
 import { ChatTitleWithHighlighting, ChatTitleType } from 'im.v2.component.elements.chat-title';
+import { SearchItemLayout } from 'im.v2.component.elements.search-item-layout';
 import { ChatType } from 'im.v2.const';
 import { DateFormatter, DateTemplate } from 'im.v2.lib.date-formatter';
 import { highlightText } from 'im.v2.lib.text-highlighter';
@@ -23,7 +24,7 @@ const ItemTextByChatType: Record<string, () => string> = {
 // @vue/component
 export const SearchItem = {
 	name: 'SearchItem',
-	components: { ChatAvatar, ChatTitleWithHighlighting },
+	components: { ChatAvatar, ChatTitleWithHighlighting, SearchItemLayout },
 	props: {
 		dialogId: {
 			type: String,
@@ -182,36 +183,35 @@ export const SearchItem = {
 		},
 	},
 	template: `
-		<div 
-			@click="onClick" 
-			@click.right.prevent="onRightClick" 
-			class="bx-im-search-item__container bx-im-search-item__scope"
-			:class="{'--selected': selected}"
+		<SearchItemLayout
+			:selected="selected"
+			:centered="selfChatReplace"
+			@click="onClick"
+			@contextmenu="onRightClick"
 		>
-			<div class="bx-im-search-item__avatar-container">
+			<template #avatar>
 				<ChatAvatar
-					:avatarDialogId="dialogId" 
-					:contextDialogId="dialogId" 
+					:avatarDialogId="dialogId"
+					:contextDialogId="dialogId"
 					:size="AvatarSize.XL"
 					:customType="avatarType"
 				/>
-			</div>
-			<div class="bx-im-search-item__content-container" :class="{'--centered': selfChatReplace}">
-				<div class="bx-im-search-item__content_header">
-					<ChatTitleWithHighlighting
-						:dialogId="dialogId"
-						:textToHighlight="query"
-						:customType="titleType"
-						:showItsYou="!selfChatReplace"
-						:twoLine="titleTwoLine"
-					/>
-					<div v-if="withDate && formattedDate" class="bx-im-search-item__date">
-						<span>{{ formattedDate }}</span>
-					</div>
+			</template>
+			<template #header>
+				<ChatTitleWithHighlighting
+					:dialogId="dialogId"
+					:textToHighlight="query"
+					:customType="titleType"
+					:showItsYou="!selfChatReplace"
+					:twoLine="titleTwoLine"
+				/>
+				<div v-if="withDate && formattedDate" class="bx-im-search-item__date">
+					<span>{{ formattedDate }}</span>
 				</div>
-				<div v-if="itemText" class="bx-im-search-item__item-text" :title="itemTextForTitle" v-html="itemText"></div>
-			</div>
-			<div v-if="selected" class="bx-im-chat-search-item__selected"></div>
-		</div>
+			</template>
+			<template #subtitle>
+				<span v-if="itemText" :title="itemTextForTitle" v-html="itemText"></span>
+			</template>
+		</SearchItemLayout>
 	`,
 };

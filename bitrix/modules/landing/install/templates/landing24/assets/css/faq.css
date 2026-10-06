@@ -206,3 +206,33 @@ block faq6
 	right: 0;
 	top: calc(50% - 31px);
 }
+
+/*
+block faq7
+ */
+.landing-block-faq-7 .landing-block-faq-icons .fa-minus {
+	display: none;
+}
+.landing-block-faq-7 .landing-block-card.active .landing-block-faq-icons .fa-minus,
+.landing-edit-mode .landing-block-faq-7 .landing-block-faq-icons .fa-minus {
+	display: inline-block;
+}
+.landing-block-faq-7 .landing-block-card.active .landing-block-faq-icons .fa-plus,
+.landing-edit-mode .landing-block-faq-7 .landing-block-faq-icons .fa-plus {
+	display: none;
+}
+
+/*
+block faq8
+ */
+.landing-block-faq-8 .landing-block-faq-icons .fa-minus {
+	display: none;
+}
+.landing-block-faq-8 .landing-block-card.active .landing-block-faq-icons .fa-minus,
+.landing-edit-mode .landing-block-faq-8 .landing-block-faq-icons .fa-minus {
+	display: inline-block;
+}
+.landing-block-faq-8 .landing-block-card.active .landing-block-faq-icons .fa-plus,
+.landing-edit-mode .landing-block-faq-8 .landing-block-faq-icons .fa-plus {
+	display: none;
+}

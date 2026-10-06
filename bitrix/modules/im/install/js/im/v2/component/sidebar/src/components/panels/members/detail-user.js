@@ -1,14 +1,17 @@
-import { ChatTitle } from 'im.v2.component.elements.chat-title';
+import { Text } from 'main.core';
+
+import { ChatTitle, ChatTitleWithHighlighting } from 'im.v2.component.elements.chat-title';
 import { ChatAvatar, AvatarSize } from 'im.v2.component.elements.avatar';
 import { Utils } from 'im.v2.lib.utils';
 import { CopilotManager } from 'im.v2.lib.copilot';
+import { highlightText } from 'im.v2.lib.text-highlighter';
 
 import type { ImModelUser } from 'im.v2.model';
 
 // @vue/component
 export const DetailUser = {
 	name: 'DetailUser',
-	components: { ChatAvatar, ChatTitle },
+	components: { ChatAvatar, ChatTitle, ChatTitleWithHighlighting },
 	props: {
 		dialogId: {
 			type: String,
@@ -25,6 +28,10 @@ export const DetailUser = {
 		isManager: {
 			type: Boolean,
 			default: false,
+		},
+		highlightQuery: {
+			type: String,
+			default: '',
 		},
 	},
 	data(): {showContextButton: boolean}
@@ -71,6 +78,37 @@ export const DetailUser = {
 		{
 			return this.$store.getters['users/bots/isAiAssistant'](this.dialogId);
 		},
+		isHighlighting(): boolean
+		{
+			return this.highlightQuery.length > 0;
+		},
+		titleComponent(): Object
+		{
+			return this.isHighlighting ? ChatTitleWithHighlighting : ChatTitle;
+		},
+		titleProps(): Object
+		{
+			const props = {
+				dialogId: this.dialogId,
+				withLeftIcon: !this.isCopilot,
+			};
+
+			if (this.isHighlighting)
+			{
+				props.textToHighlight = this.highlightQuery;
+			}
+
+			return props;
+		},
+		highlightedPosition(): ?string
+		{
+			if (!this.isHighlighting)
+			{
+				return null;
+			}
+
+			return highlightText(Text.encode(this.position), this.highlightQuery);
+		},
 	},
 	methods:
 	{
@@ -100,10 +138,10 @@ export const DetailUser = {
 			<div class="bx-im-sidebar-main-detail__user-info-container">
 				<div class="bx-im-sidebar-main-detail__user-title-container">
 					<a v-if="hasLink" :href="userLink" target="_blank" class="bx-im-sidebar-main-detail__user-title-link">
-						<ChatTitle :dialogId="dialogId" :withLeftIcon="!isCopilot" />
+						<component :is="titleComponent" v-bind="titleProps" />
 					</a>
 					<div v-else class="bx-im-sidebar-main-detail__user-title-link">
-						<ChatTitle :dialogId="dialogId" :withLeftIcon="!isCopilot" />
+						<component :is="titleComponent" v-bind="titleProps" />
 					</div>
 					<div
 						v-if="needContextMenu && showContextButton"
@@ -111,7 +149,8 @@ export const DetailUser = {
 						@click="onClickContextMenu"
 					></div>
 				</div>
-				<div class="bx-im-sidebar-main-detail__position-text" :title="position">
+				<div v-if="isHighlighting" class="bx-im-sidebar-main-detail__position-text" :title="position" v-html="highlightedPosition"></div>
+				<div v-else class="bx-im-sidebar-main-detail__position-text" :title="position">
 					{{ position }}
 				</div>
 			</div>

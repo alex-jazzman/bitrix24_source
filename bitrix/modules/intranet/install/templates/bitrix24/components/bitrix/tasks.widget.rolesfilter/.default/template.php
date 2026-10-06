@@ -30,7 +30,7 @@ $this->SetViewTarget("sidebar", 200);
 		?>
 		<a class="plus-icon" href="<?= $url->getUri() ?>"></a>
 	</div>
-	<?php if (is_array($arResult['ROLES'])): ?>
+	<?php if (!empty($arResult['ROLES']) && is_array($arResult['ROLES'])): ?>
 		<div class="sidebar-widget-content">
 			<?php foreach ($arResult['ROLES'] as $role): ?>
 				<a class="sidebar-widget-item task-item <?= $role['COUNTER'] == 0 ? '--zero' : '' ?>" href="<?= $role['HREF'] ?>">

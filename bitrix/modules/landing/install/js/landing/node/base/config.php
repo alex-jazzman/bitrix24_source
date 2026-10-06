@@ -9,6 +9,7 @@ return [
 	'js' => 'dist/base.bundle.js',
 	'rel' => [
 		'main.polyfill.core',
+		'landing.utils',
 	],
 	'skip_core' => true,
 ];

@@ -1,10 +1,8 @@
 import { BIcon } from 'ui.icon-set.api.vue';
 import { Actions, Main, Outline } from 'ui.icon-set.api.core';
-import { Runtime, Event } from 'main.core';
-import type { AnalyticsOptions } from 'ui.analytics';
 import '../css/roles-dialog-roles-library.css';
 
-export const RolesDialogRolesLibrary = {
+export const getRolesDialogRolesLibrary = (onOpenRolesLibrary: () => void) => ({
 	components: {
 		BIcon,
 	},
@@ -30,49 +28,9 @@ export const RolesDialogRolesLibrary = {
 		},
 	},
 	methods: {
-		async sendAnalytics(): void
+		handleClick(): void
 		{
-			try
-			{
-				const { sendData } = await Runtime.loadExtension('ui.analytics');
-
-				const sendDataOptions: AnalyticsOptions = {
-					event: 'open_list',
-					status: 'success',
-					tool: 'ai',
-					category: 'roles_saving',
-					c_section: 'roles_picker',
-				};
-
-				sendData(sendDataOptions);
-			}
-			catch (e)
-			{
-				console.error('AI: RolesDialog: Can\'t send analytics', e);
-			}
-		},
-
-		handleClick(): ?Function
-		{
-			if (BX.SidePanel)
-			{
-				this.sendAnalytics();
-				BX.SidePanel.Instance.open(
-					'/bitrix/components/bitrix/ai.role.library.grid/slider.php',
-					{
-						cacheable: false,
-						events: {
-							onCloseStart: () => {
-								Event.EventEmitter.emit('update');
-							},
-						},
-					},
-				);
-			}
-			else
-			{
-				window.location.href = '/bitrix/components/bitrix/ai.prompt.library.grid/slider.php';
-			}
+			onOpenRolesLibrary();
 		},
 	},
 	template: `
@@ -92,4 +50,4 @@ export const RolesDialogRolesLibrary = {
 			</div>
 		</div>
 	`,
-};
+});

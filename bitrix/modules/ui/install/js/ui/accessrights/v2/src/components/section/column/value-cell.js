@@ -33,15 +33,20 @@ export const ValueCell = {
 		{
 			return getValueComponent(this.right);
 		},
+		isReadOnly(): boolean
+		{
+			return this.userGroup.isReadOnly === true;
+		},
 	},
 	// data attributes are needed for e2e automated tests
 	template: `
 		<CellLayout
 			:class="{
 				'ui-access-rights-v2-group-children': right.group,
-				'--modified': value.isModified
+				'--modified': value.isModified,
+				'--read-only': isReadOnly
 			}"
-			v-memo="[userGroup.id, value.values, value.isModified]"
+			v-memo="[userGroup.id, value.values, value.isModified, isReadOnly]"
 		>
 			<Component
 				:is="cellComponent"

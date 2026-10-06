@@ -76,6 +76,13 @@ function buildBaseAttributes(config: NodeConfig): Object
 		align: {
 			default: null,
 		},
+		// [version-diff] 'added' | 'removed' | null. Set only inside the read-only version preview to
+		// tag the node in the diff; the NodeView turns it into a CSS class. Not serialized to markdown
+		// (renderMarkdown emits only fileId/width/align) and preserved across resolve (see
+		// resolve-file-nodes.js), so it rides along like width/align.
+		diffState: {
+			default: null,
+		},
 	};
 }
 

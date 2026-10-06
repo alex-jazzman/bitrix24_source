@@ -12,6 +12,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	'ui.buttons',
 	'ui.icons',
 	'ui.alerts',
+	'bizproc.a11y',
 	'bizproc.workflow.starter',
 	'bizproc.workflow.instances.widget',
 	'ui.feedback.form',
@@ -20,7 +21,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 /** @var array $arResult */
 global $APPLICATION;
-
+?>
+<section aria-label="<?= htmlspecialcharsbx(\Bitrix\Main\Localization\Loc::getMessage('BIZPROC_CMP_TMP_WORKKFLOW_START_LIST_GRID_ARIA_LABEL')) ?>">
+<?php
 $APPLICATION->IncludeComponent(
 	'bitrix:main.ui.grid',
 	'',
@@ -53,6 +56,7 @@ $APPLICATION->IncludeComponent(
 	]
 );
 ?>
+</section>
 
 <script>
 	BX.ready(() => {

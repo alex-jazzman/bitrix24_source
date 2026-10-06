@@ -3,17 +3,10 @@
 	position: relative;
 	width: 100% !important;
 	min-width: 770px;
-	-webkit-transition: .1s;
-	-o-transition: .1s;
 	transition: .1s;
 	min-height: calc(100vh - 68px - 79px);
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
-	-webkit-box-orient: vertical;
-	-webkit-box-direction: normal;
-	    -ms-flex-direction: column;
-	        flex-direction: column;
+	flex-direction: column;
 	margin-bottom: 0 !important;
 }
 
@@ -52,9 +45,7 @@
 	overflow: hidden;
 	overflow-x: auto;
 	position: relative;
-	-webkit-box-flex: 1;
-	    -ms-flex: 1;
-	        flex: 1;
+	flex: 1;
 }
 
 .automation-base-scroll {
@@ -74,8 +65,6 @@
 }
 
 .bizproc-automation-status-list {
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
 	list-style-type: none;
 	padding: 0;
@@ -84,14 +73,11 @@
 }
 
 .bizproc-automation-status-list-item {
-	-webkit-box-flex: 1;
-	-ms-flex: 1;
 	flex: 1;
 	min-width: 190px;
 	max-width: 400px;
 	position: relative;
 	padding: 0 0 23px 0;
-	-webkit-box-sizing: border-box;
 	box-sizing: border-box;
 }
 
@@ -114,9 +100,7 @@
 	white-space: nowrap;
 	z-index: 99;
 	-ms-text-overflow: ellipsis;
-	-o-text-overflow: ellipsis;
-	   text-overflow: ellipsis;
-	-webkit-box-sizing: border-box;
+	text-overflow: ellipsis;
 	box-sizing: border-box;
 	-wenkit-border-radius: 3px;
 	border-radius: 3px;
@@ -135,12 +119,8 @@
 }
 
 .bizproc-automation-status-name {
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
-	-webkit-box-align: center;
-	    -ms-flex-align: center;
-	        align-items: center;
+	align-items: center;
 	overflow: hidden;
 	position: relative;
 	margin: 0 0 7px 0;
@@ -148,9 +128,7 @@
 
 .bizproc-automation-status-line {
 	height: 1px;
-	-webkit-box-flex: 1;
-	    -ms-flex: 1;
-	        flex: 1;
+	flex: 1;
 	background: #d8d8d8;
 }
 
@@ -187,15 +165,15 @@
 }
 
 .bitrix24-light-theme .bizproc-automation-status-help .ui-hint-icon {
-	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='13' height='13' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M12.978 6.49A6.489 6.489 0 100 6.488a6.489 6.489 0 0012.978 0zm-8.996-1.7c0-.318.102-.64.306-.965.204-.326.502-.596.893-.81.39-.214.847-.32 1.368-.32.485 0 .912.089 1.283.267.371.18.658.422.86.73.202.307.303.641.303 1.002 0 .284-.057.533-.172.747a2.286 2.286 0 01-.412.554 30 30 0 01-.854.785 3.473 3.473 0 00-.273.273 1 1 0 00-.231.411c-.019.065-.046.18-.083.343-.063.348-.262.522-.596.522a.61.61 0 01-.439-.17c-.119-.114-.178-.283-.178-.507 0-.28.043-.524.13-.73a1.85 1.85 0 01.346-.54 7.92 7.92 0 01.582-.555c.214-.187.368-.328.464-.423.095-.096.175-.202.24-.319a.77.77 0 00.098-.38c0-.268-.1-.494-.298-.677-.2-.184-.456-.276-.77-.276-.368 0-.638.093-.812.278-.174.186-.32.459-.441.82-.114.377-.33.566-.647.566a.635.635 0 01-.474-.198.606.606 0 01-.193-.428zm1.913 5.296c.152.132.33.198.534.198.197 0 .37-.067.521-.2.15-.134.226-.318.226-.552A.722.722 0 006.96 9a.722.722 0 00-.531-.216.745.745 0 00-.542.216.714.714 0 00-.22.53c0 .238.076.423.228.555z' fill='%23BDC1C6'/%3E%3C/svg%3E");
+	background-image: url("data:image/svg+xml,%3Csvg width='13' height='13' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M12.978 6.49A6.489 6.489 0 1 0 0 6.488a6.489 6.489 0 0 0 12.978 0Zm-8.996-1.7c0-.318.102-.64.306-.965.204-.326.502-.596.893-.81.39-.214.847-.32 1.368-.32.485 0 .912.089 1.283.267.371.18.658.422.86.73.202.307.303.641.303 1.002 0 .284-.057.533-.172.747a2.286 2.286 0 0 1-.412.554 30 30 0 0 1-.854.785 3.473 3.473 0 0 0-.273.273c-.069.079-.12.15-.153.215-.034.066-.06.13-.078.196-.019.065-.046.18-.083.343-.063.348-.262.522-.596.522a.61.61 0 0 1-.439-.17c-.119-.114-.178-.283-.178-.507 0-.28.043-.524.13-.73a1.85 1.85 0 0 1 .346-.54 7.92 7.92 0 0 1 .582-.555c.214-.187.368-.328.464-.423.095-.096.175-.202.24-.319a.77.77 0 0 0 .098-.38c0-.268-.1-.494-.298-.677-.2-.184-.456-.276-.77-.276-.368 0-.638.093-.812.278-.174.186-.32.459-.441.82-.114.377-.33.566-.647.566a.635.635 0 0 1-.474-.198.606.606 0 0 1-.193-.428Zm1.913 5.296c.152.132.33.198.534.198.197 0 .37-.067.521-.2.15-.134.226-.318.226-.552A.722.722 0 0 0 6.96 9a.722.722 0 0 0-.531-.216.745.745 0 0 0-.542.216.714.714 0 0 0-.22.53c0 .238.076.423.228.555Z' fill='%23BDC1C6'/%3E%3C/svg%3E");
 }
 
 .bitrix24-light-theme .automation-toolbar-search .ui-ctl-icon-clear {
-	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='12' height='12' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11.279 1.78L7.343 5.716l3.936 3.936L9.65 11.28 5.716 7.342 1.781 11.28.153 9.65 4.09 5.715.153 1.781 1.781.153l3.935 3.935L9.651.153l1.628 1.628z' fill='%23fff' fill-rule='evenodd'/%3E%3C/svg%3E");
+	background-image: url("data:image/svg+xml,%3Csvg width='12' height='12' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11.279 1.78L7.343 5.716l3.936 3.936L9.65 11.28 5.716 7.342 1.781 11.28.153 9.65 4.09 5.715.153 1.781 1.781.153l3.935 3.935L9.651.153l1.628 1.628z' fill='%23fff' fill-rule='evenodd'/%3E%3C/svg%3E");
 }
 
 .bitrix24-light-theme .automation-toolbar-search .ui-ctl-icon-search {
-	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='15' height='15'%3E%3Cpath fill='%23fff' fill-rule='evenodd' d='M1.33 5.5c0-2.304 1.866-4.17 4.17-4.17S9.67 3.195 9.67 5.5A4.167 4.167 0 015.5 9.67 4.167 4.167 0 011.33 5.5m12.528 6.944l-3.816-3.817-.014-.008a5.5 5.5 0 10-1.41 1.409c.004.004.005.01.01.014l3.816 3.817c.372.37.982.37 1.354 0l.06-.063a.96.96 0 000-1.354'/%3E%3C/svg%3E");
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='15' height='15' viewBox='0 0 15 15'%3E%3Cpath fill='%23fff' fill-rule='evenodd' d='M1.33 5.5c0-2.304 1.866-4.17 4.17-4.17S9.67 3.195 9.67 5.5c0 2.305-1.865 4.17-4.17 4.17-2.305 0-4.17-1.865-4.17-4.17m12.528 6.944l-3.816-3.817-.014-.008C10.64 7.73 11 6.66 11 5.5 11 2.462 8.537 0 5.5 0S0 2.462 0 5.5 2.463 11 5.5 11c1.158 0 2.232-.36 3.118-.972.004.004.005.01.01.014l3.816 3.817c.372.37.982.37 1.354 0l.06-.063c.372-.372.372-.982 0-1.354'/%3E%3C/svg%3E");
 }
 
 .bitrix24-dark-theme .automation-toolbar-search .ui-ctl-icon-clear {
@@ -236,8 +214,6 @@
 .bizproc-automation-status-list-config {
 	float: right;
 	position: relative;
-	-webkit-box-flex: 0;
-	-ms-flex: none;
 	flex: none;
 	right: 0;
 	margin: 0 0 0 -27px;
@@ -263,15 +239,9 @@
 .bizproc-automation-btn-add,
 .bizproc-automation-robot-btn-add,
 .bizproc-automation-robot-btn-prohibit {
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
-	-webkit-box-align: center;
-	    -ms-flex-align: center;
-	        align-items: center;
-	-webkit-box-pack: center;
-	    -ms-flex-pack: center;
-	        justify-content: center;
+	align-items: center;
+	justify-content: center;
 	height: 31px;
 	line-height: 31px;
 	background-color: rgba(255,255,255,.8);
@@ -282,8 +252,6 @@
 	text-decoration: none !important;
 	color: #80868e !important;
 	text-align: center;
-	-webkit-transition: .1s;
-	-o-transition: .1s;
 	transition: .1s;
 	cursor: pointer;
 }
@@ -296,8 +264,7 @@
 .bitrix24-light-theme .bizproc-automation-robot-btn-add,
 .bitrix24-light-theme .bizproc-automation-robot-btn-prohibit {
 	background-color: rgba(255,255,255,.11);
-	-webkit-box-shadow: none;
-	        box-shadow: none;
+	box-shadow: none;
 	color: #fff!important;
 }
 
@@ -312,8 +279,7 @@
 .bizproc-automation-btn-add:hover,
 .bizproc-automation-robot-btn-add:hover {
 	background-color: #fff;
-	-webkit-box-shadow: 0 1px 1px rgba(0, 0, 0, .06);
-	        box-shadow: 0 1px 1px rgba(0, 0, 0, .06);
+	box-shadow: 0 1px 1px rgba(0, 0, 0, .06);
 }
 
 .bitrix24-light-theme .bizproc-automation-btn-add:hover,
@@ -335,7 +301,7 @@
 .bizproc-automation-robot-btn-prohibit:before {
 	background-size: 18px 18px;
 	background-position: center;
-	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='18' height='18' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M6.751 12.712a4.316 4.316 0 005.934-5.934l-5.934 5.934zm-1.43-1.43l5.935-5.934a4.316 4.316 0 00-5.934 5.934zm3.683 3.76a6.012 6.012 0 110-12.024 6.012 6.012 0 010 12.023z' fill='%23888D94'/%3E%3C/svg%3E");
+	background-image: url("data:image/svg+xml,%3Csvg width='18' height='18' viewBox='0 0 18 18' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M6.75136 12.7119C7.40699 13.1138 8.17823 13.3455 9.00358 13.3455C11.387 13.3455 13.3192 11.4133 13.3192 9.02989C13.3192 8.20453 13.0875 7.43329 12.6856 6.77766L6.75136 12.7119H6.75136ZM5.32153 11.2821L11.2558 5.34784C10.6002 4.94595 9.82894 4.71425 9.00358 4.71425C6.62012 4.71425 4.68795 6.64643 4.68795 9.02989C4.68795 9.85524 4.91964 10.6265 5.32153 11.2821ZM9.00358 15.0415C5.68348 15.0415 2.992 12.35 2.992 9.02989C2.992 5.70979 5.68348 3.01831 9.00358 3.01831C12.3237 3.01831 15.0152 5.70979 15.0152 9.02989C15.0152 12.35 12.3237 15.0415 9.00358 15.0415Z' fill='%23888D94'/%3E%3C/svg%3E%0A");
 }
 
 .bitrix24-light-theme .bizproc-automation-btn-add:before,
@@ -345,14 +311,12 @@
 }
 
 .bitrix24-light-theme .bizproc-automation-robot-btn-prohibit:before {
-	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='18' height='18' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M6.751 12.712a4.316 4.316 0 005.934-5.934l-5.934 5.934zm-1.43-1.43l5.935-5.934a4.316 4.316 0 00-5.934 5.934zm3.683 3.76a6.012 6.012 0 110-12.024 6.012 6.012 0 010 12.023z' fill='%23fff' opacity='.7'/%3E%3C/svg%3E");
+	background-image: url("data:image/svg+xml,%3Csvg width='18' height='18' viewBox='0 0 18 18' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cg opacity='0.7'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M6.75136 12.7119C7.40699 13.1138 8.17823 13.3455 9.00358 13.3455C11.387 13.3455 13.3192 11.4133 13.3192 9.02989C13.3192 8.20453 13.0875 7.43329 12.6856 6.77766L6.75136 12.7119ZM5.32153 11.2821L11.2558 5.34784C10.6002 4.94595 9.82894 4.71425 9.00358 4.71425C6.62012 4.71425 4.68795 6.64643 4.68795 9.02989C4.68795 9.85524 4.91964 10.6265 5.32153 11.2821ZM9.00358 15.0415C5.68348 15.0415 2.992 12.35 2.992 9.02989C2.992 5.70979 5.68348 3.01831 9.00358 3.01831C12.3237 3.01831 15.0152 5.70979 15.0152 9.02989C15.0152 12.35 12.3237 15.0415 9.00358 15.0415Z' fill='white'/%3E%3C/g%3E%3C/svg%3E%0A");
 }
 
 .bizproc-automation-btn-add-text {
 	max-width: 0;
 	font-size: 13px;
-	-webkit-transition: max-width .4s;
-	-o-transition: max-width .4s;
 	transition: max-width .4s;
 	overflow: hidden;
 }
@@ -377,7 +341,7 @@
 	height: 34px;
 	border-radius: 50%;
 	background-color: rgba(82, 92, 105, .1);
-	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='19' height='17' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M15.375 4.763l1.007-3.382a.867.867 0 00-.194-.836.844.844 0 00-1.433.34l-.862 2.902a9.134 9.134 0 00-8.556.01L4.471.884A.848.848 0 003.41.31a.861.861 0 00-.567 1.071l1.01 3.395a9.686 9.686 0 00-3.58 7.559c0 5.306 4.184 4.004 9.35 4.004 5.165 0 9.35 1.302 9.35-4.004a9.676 9.676 0 00-3.599-7.572zm-5.76 6.85c-3.687 0-6.678.388-6.678-1.193s2.99-2.865 6.678-2.865c3.687 0 6.682 1.283 6.682 2.865 0 1.582-2.99 1.194-6.682 1.194zM6.56 8.74a1.022 1.022 0 00-.823 1.13c.064.537.53.93 1.065.898.534-.032.951-.48.951-1.021A1.112 1.112 0 006.561 8.74zm5.284 1.132c.066.537.533.93 1.067.897a1.02 1.02 0 00.951-1.022 1.112 1.112 0 00-1.198-1.007 1.023 1.023 0 00-.82 1.132z' fill='%236A737F'/%3E%3C/svg%3E");
+	background-image: url("data:image/svg+xml,%3Csvg width='19' height='17' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='m15.375 4.763 1.007-3.382a.867.867 0 0 0-.194-.836.844.844 0 0 0-1.433.34l-.862 2.902a9.134 9.134 0 0 0-8.556.01L4.471.884A.848.848 0 0 0 3.41.31a.861.861 0 0 0-.567 1.071l1.01 3.395a9.686 9.686 0 0 0-3.58 7.559c0 5.306 4.184 4.004 9.35 4.004 5.165 0 9.35 1.302 9.35-4.004a9.676 9.676 0 0 0-3.599-7.572Zm-5.76 6.85c-3.687 0-6.678.388-6.678-1.193s2.99-2.865 6.678-2.865c3.687 0 6.682 1.283 6.682 2.865 0 1.582-2.99 1.194-6.682 1.194ZM6.56 8.74a1.022 1.022 0 0 0-.823 1.13c.064.537.53.93 1.065.898.534-.032.951-.48.951-1.021A1.112 1.112 0 0 0 6.561 8.74Zm5.284 1.132c.066.537.533.93 1.067.897a1.02 1.02 0 0 0 .951-1.022 1.112 1.112 0 0 0-1.198-1.007 1.023 1.023 0 0 0-.82 1.132Z' fill='%236A737F'/%3E%3C/svg%3E");
 	background-position: center 8px;
 	background-repeat: no-repeat;
 	background-size: 19px 17px;
@@ -385,7 +349,7 @@
 
 .bitrix24-light-theme.bizpoc-automation-body .ui-side-panel-wrap-title-item:before {
 	background-color: rgba(255, 255, 255, 0.2);
-	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='19' height='17' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M15.375 4.763l1.007-3.382a.867.867 0 00-.194-.836.844.844 0 00-1.433.34l-.862 2.902a9.134 9.134 0 00-8.556.01L4.471.884A.848.848 0 003.41.31a.861.861 0 00-.567 1.071l1.01 3.395a9.686 9.686 0 00-3.58 7.559c0 5.306 4.184 4.004 9.35 4.004 5.165 0 9.35 1.302 9.35-4.004a9.676 9.676 0 00-3.599-7.572zm-5.76 6.85c-3.687 0-6.678.388-6.678-1.193s2.99-2.865 6.678-2.865c3.687 0 6.682 1.283 6.682 2.865 0 1.582-2.99 1.194-6.682 1.194zM6.56 8.74a1.022 1.022 0 00-.823 1.13c.064.537.53.93 1.065.898.534-.032.951-.48.951-1.021A1.112 1.112 0 006.561 8.74zm5.284 1.132c.066.537.533.93 1.067.897a1.02 1.02 0 00.951-1.022 1.112 1.112 0 00-1.198-1.007 1.023 1.023 0 00-.82 1.132z' fill='%23fff'/%3E%3C/svg%3E");
+	background-image: url("data:image/svg+xml,%3Csvg width='19' height='17' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='m15.375 4.763 1.007-3.382a.867.867 0 0 0-.194-.836.844.844 0 0 0-1.433.34l-.862 2.902a9.134 9.134 0 0 0-8.556.01L4.471.884A.848.848 0 0 0 3.41.31a.861.861 0 0 0-.567 1.071l1.01 3.395a9.686 9.686 0 0 0-3.58 7.559c0 5.306 4.184 4.004 9.35 4.004 5.165 0 9.35 1.302 9.35-4.004a9.676 9.676 0 0 0-3.599-7.572Zm-5.76 6.85c-3.687 0-6.678.388-6.678-1.193s2.99-2.865 6.678-2.865c3.687 0 6.682 1.283 6.682 2.865 0 1.582-2.99 1.194-6.682 1.194ZM6.56 8.74a1.022 1.022 0 0 0-.823 1.13c.064.537.53.93 1.065.898.534-.032.951-.48.951-1.021A1.112 1.112 0 0 0 6.561 8.74Zm5.284 1.132c.066.537.533.93 1.067.897a1.02 1.02 0 0 0 .951-1.022 1.112 1.112 0 0 0-1.198-1.007 1.023 1.023 0 0 0-.82 1.132Z' fill='%23fff'/%3E%3C/svg%3E");
 	background-size: 19px 17px;
 }
 
@@ -408,18 +372,12 @@
 }
 
 .bizproc-automation-trigger-item {
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
-	-ms-flex-wrap: wrap;
-	    flex-wrap: wrap;
-	-webkit-box-pack: justify;
-	    -ms-flex-pack: justify;
-	        justify-content: space-between;
+	flex-wrap: wrap;
+	justify-content: space-between;
 	margin: 0 0 5px 0;
 	position: relative;
-	-webkit-box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
-	        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
 	border-radius: var(--ui-border-radius-md, 0);
 }
 
@@ -460,17 +418,12 @@
 }
 
 .bizproc-automation-trigger-item-wrapper {
-	-webkit-box-sizing: border-box;
-	        box-sizing: border-box;
+	box-sizing: border-box;
 	max-width: calc(100% - 3px);
 	width: calc(100% - 3px);
 	margin-left: 3px;
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
-	-webkit-box-align: center;
-	    -ms-flex-align: center;
-	        align-items: center;
+	align-items: center;
 	height: 36px;
 	background: #fff;
 	font-size: 14px;
@@ -478,8 +431,6 @@
 	color: #333333;
 	padding: 0 20px 0 3px;
 	position: relative;
-	-webkit-transition: .1s;
-	-o-transition: .1s;
 	transition: .1s;
 }
 
@@ -488,16 +439,13 @@
 	white-space: nowrap;
 	overflow: hidden;
 	-ms-text-overflow: ellipsis;
-	-o-text-overflow: ellipsis;
-	   text-overflow: ellipsis;
+	text-overflow: ellipsis;
 }
 
 .bizproc-automation-trigger-item-wrapper-complete {
 	background: #f5fcde;
 	-webkit-user-select: none;
-	-moz-user-select: none;
-	 -ms-user-select: none;
-	     user-select: none;
+	user-select: none;
 }
 
 .bizproc-automation-trigger-item-wrapper-complete-light::after,
@@ -523,18 +471,17 @@
 	display: block;
 	width: 24px;
 	height: 24px;
-	-ms-flex-negative: 0;
-	    flex-shrink: 0;
+	flex-shrink: 0;
 	margin-right: 5px;
 	background-repeat: no-repeat;
 	background-position: center;
-	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='24' height='24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M12 4.22a7.78 7.78 0 100 15.56 7.78 7.78 0 000-15.56zM12 7a3 3 0 00-3 3v4a3 3 0 006 0v-4a3 3 0 00-3-3z' fill='%23BDC1C6'/%3E%3Crect x='10' y='12' width='4' height='3' rx='1' fill='%23BDC1C6'/%3E%3C/svg%3E");
+	background-image: url("data:image/svg+xml,%3Csvg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M11.9999 4.22058C7.70346 4.22058 4.22047 7.70357 4.22047 12C4.22047 16.2965 7.70346 19.7795 11.9999 19.7795C16.2964 19.7795 19.7794 16.2965 19.7794 12C19.7794 7.70357 16.2964 4.22058 11.9999 4.22058ZM12 6.99998C10.3431 6.99998 9 8.34313 9 9.99998V14C9 15.6568 10.3431 17 12 17C13.6568 17 15 15.6568 15 14V9.99998C15 8.34313 13.6568 6.99998 12 6.99998Z' fill='%23BDC1C6'/%3E%3Crect x='10' y='12' width='4' height='3' rx='1' fill='%23BDC1C6'/%3E%3C/svg%3E%0A");
 }
 
 .bizproc-automation-trigger-item-wrapper-complete-double::before,
 .bizproc-automation-trigger-item-wrapper-complete::before {
 	margin: 0 5px;
-	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='24' height='24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M9.602 19.018a.3.3 0 01-.419 0l-5.851-5.703a.4.4 0 010-.573l1.65-1.609a.4.4 0 01.56 0l3.85 3.754L18.46 6.05a.4.4 0 01.558 0l1.651 1.609a.4.4 0 010 .572L9.602 19.018z' fill='%2394C400'/%3E%3C/svg%3E");
+	background-image: url("data:image/svg+xml,%3Csvg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M9.60186 19.0176C9.48536 19.1312 9.2996 19.1312 9.1831 19.0176L3.33187 13.3151C3.17077 13.1581 3.17077 12.8992 3.33186 12.7422L4.98285 11.1332C5.13818 10.9818 5.38587 10.9818 5.5412 11.1332L9.39248 14.8866L18.459 6.05052C18.6143 5.89914 18.862 5.89914 19.0174 6.05052L20.6683 7.65954C20.8294 7.81654 20.8294 8.07546 20.6683 8.23246L9.60186 19.0176Z' fill='%2394C400'/%3E%3C/svg%3E%0A");
 }
 
 /*.bizproc-automation-trigger-item-wrapper-complete-double::before {*/
@@ -557,8 +504,6 @@
 	color: #6a737f;
 	cursor: pointer;
 	-webkit--transition: .2s;
-	-webkit-transition: .2s;
-	-o-transition: .2s;
 	transition: .2s;
 }
 
@@ -580,12 +525,8 @@
 }
 
 .automation-base-node-top {
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
-	-webkit-box-align: center;
-	    -ms-flex-align: center;
-	        align-items: center;
+	align-items: center;
 	width: 100%;
 	overflow: hidden;
 	min-height: 70px;
@@ -594,8 +535,6 @@
 }
 
 .automation-base-button {
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
 	margin-left: 30px;
 }
@@ -617,22 +556,6 @@
 
 .bitrix24-light-theme .automation-toolbar-search .automation-toolbar-search-input:hover {
 	border-color: var(--ui-field-color-primary);
-}
-
-.bitrix24-light-theme .automation-toolbar-search .automation-toolbar-search-input::-webkit-input-placeholder {
-	color:#bdc0c4
-}
-
-.bitrix24-light-theme .automation-toolbar-search .automation-toolbar-search-input::-moz-placeholder {
-	color:#bdc0c4
-}
-
-.bitrix24-light-theme .automation-toolbar-search .automation-toolbar-search-input:-ms-input-placeholder {
-	color:#bdc0c4
-}
-
-.bitrix24-light-theme .automation-toolbar-search .automation-toolbar-search-input::-ms-input-placeholder {
-	color:#bdc0c4
 }
 
 .bitrix24-light-theme .automation-toolbar-search .automation-toolbar-search-input::placeholder {
@@ -674,56 +597,31 @@
 }
 
 .bizproc-automation-trigger-item-drag .bizproc-automation-trigger-item-wrapper {
-	-webkit-box-shadow: 0 0 10px rgba(0,0,0,.1);
 	box-shadow: 0 0 10px rgba(0,0,0,.1);
 	z-index: 999;
 }
 
 .bizproc-automation-trigger-item-drag {
-	-webkit-transform: rotate(4deg) translate(-30px, -20px);
-	-ms-transform: rotate(4deg) translate(-30px, -20px);
-	    transform: rotate(4deg) translate(-30px, -20px);
+	transform: rotate(4deg) translate(-30px, -20px);
 	z-index: 999;
 }
 
 .bizproc-automation-trigger-item-off {
-	-webkit-animation: pulse 1s infinite;
 	animation: pulse 1s infinite;
-}
-
-@-webkit-keyframes pulse {
-	from {
-		opacity: .3;
-		-webkit-transform: scale3d(.95,.95,.95);
-		        transform: scale3d(.95,.95,.95);
-	}
-	50% {
-		opacity: .7;
-		-webkit-transform: scale3d(1,1,1);
-		        transform: scale3d(1,1,1);
-	}
-	to {
-		opacity: .3;
-		-webkit-transform: scale3d(.95,.95,.95);
-		        transform: scale3d(.95,.95,.95);
-	}
 }
 
 @keyframes pulse {
 	from {
 		opacity: .3;
-		-webkit-transform: scale3d(.95,.95,.95);
-		        transform: scale3d(.95,.95,.95);
+		transform: scale3d(.95,.95,.95);
 	}
 	50% {
 		opacity: .7;
-		-webkit-transform: scale3d(1,1,1);
-		        transform: scale3d(1,1,1);
+		transform: scale3d(1,1,1);
 	}
 	to {
 		opacity: .3;
-		-webkit-transform: scale3d(.95,.95,.95);
-		        transform: scale3d(.95,.95,.95);
+		transform: scale3d(.95,.95,.95);
 	}
 }
 
@@ -738,11 +636,7 @@
 	opacity: .4;
 	cursor: pointer;
 	z-index: 999;
-	-webkit-transform: rotate(45deg);
-	-ms-transform: rotate(45deg);
-	    transform: rotate(45deg);
-	-webkit-transition: .1s;
-	-o-transition: .1s;
+	transform: rotate(45deg);
 	transition: .1s;
 }
 
@@ -812,11 +706,8 @@
 	background: #eff4f6 !important;
 	border: 0 dashed transparent;
 	border-radius: 6px;
-	-webkit-box-sizing: border-box;
-	        box-sizing: border-box;
+	box-sizing: border-box;
 	opacity: 0;
-	-webkit-transition: .1s;
-	-o-transition: .1s;
 	transition: .1s;
 }
 
@@ -831,17 +722,10 @@
 
 .bizproc-automation-robot-container {
 	position: relative;
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
-	-ms-flex-wrap: wrap;
-	    flex-wrap: wrap;
-	-webkit-box-align: center;
-	    -ms-flex-align: center;
-	        align-items: center;
-	-webkit-box-pack: justify;
-	    -ms-flex-pack: justify;
-	        justify-content: space-between;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
 	margin: 0 0 6px 0;
 	border-radius: 3px;
 }
@@ -856,8 +740,7 @@
 	right: 0;
 	background: #e8f9fd;
 	border-left: 3px solid transparent;
-	-webkit-box-shadow: 0 1px 3px rgba(0, 0, 0, .15);
-	        box-shadow: 0 1px 3px rgba(0, 0, 0, .15);
+	box-shadow: 0 1px 3px rgba(0, 0, 0, .15);
 	border-radius: 	var(--ui-border-radius-md, 3px);
 	z-index: -1;
 }
@@ -919,8 +802,6 @@
 	right: 7px;
 	pointer-events: none;
 	opacity: 0;
-	-webkit-transition: .15s;
-	-o-transition: .15s;
 	transition: .15s;
 	z-index: 99;
 }
@@ -948,8 +829,6 @@
 
 .bizproc-automation-trigger-item.--selected .bizproc-automation-trigger-checkbox,
 .bizproc-automation-robot-container.--selected .bizproc-automation-robot-container-checkbox {
-	-webkit-transition: .1s;
-	-o-transition: .1s;
 	transition: .1s;
 	opacity: 1;
 }
@@ -961,28 +840,20 @@
 .bizproc-automation-robot-container-drag {
 	z-index: 999;
 	padding: 0;
-	-webkit-transform: rotate(4deg) translate(-30px, -20px);
-	    -ms-transform: rotate(4deg) translate(-30px, -20px);
-	        transform: rotate(4deg) translate(-30px, -20px);
-	-webkit-box-shadow: 0 0 10px rgba(0,0,0,.1);
-	        box-shadow: 0 0 10px rgba(0,0,0,.1);
-	-webkit-transition: 0s;
-	-o-transition: 0s;
+	transform: rotate(4deg) translate(-30px, -20px);
+	box-shadow: 0 0 10px rgba(0,0,0,.1);
 	transition: 0s;
 }
 
 .bizproc-automation-robot-container-wrapper {
 	width: calc(100% - 3px);
 	margin-left: 3px;
-	-webkit-box-sizing: border-box;
-	        box-sizing: border-box;
+	box-sizing: border-box;
 	display: block;
 	padding: 9px 9px 8px;
 	position: relative;
 	background: #fff;
 	border-radius: var(--ui-border-radius-md, 3px);
-	-webkit-transition: .1s;
-	-o-transition: .1s;
 	transition: .1s;
 }
 
@@ -1001,12 +872,9 @@
 .bizproc-automation-robot-deactivated, .bizproc-automation-robot-invalid {
 	position: absolute;
 	top: 45%;
-	-webkit-transform: translate(0, -50%);
-	    -ms-transform: translate(0, -50%);
-	        transform: translate(0, -50%);
+	transform: translate(0, -50%);
 	width: 100%;
-	-webkit-box-sizing: border-box;
-	        box-sizing: border-box;
+	box-sizing: border-box;
 	padding: 0 5px;
 	text-align: center;
 	font-size: 14px;
@@ -1127,9 +995,7 @@
 	margin: 0 !important;
 	/*border: 1px solid #d4eac9 !important;*/
 	-webkit-user-select: none;
-	-moz-user-select: none;
-	 -ms-user-select: none;
-	     user-select: none;
+	user-select: none;
 }
 
 .bizproc-automation-robot-container-wrapper-complete .bizproc-automation-robot-btn-delete {
@@ -1158,8 +1024,7 @@
 	overflow: hidden;
 	white-space: nowrap;
 	-ms-text-overflow: ellipsis;
-	-o-text-overflow: ellipsis;
-	   text-overflow: ellipsis;
+	text-overflow: ellipsis;
 }
 
 .bizproc-automation-robot-link {
@@ -1167,8 +1032,6 @@
 	vertical-align: middle;
 	border-bottom: 1px dashed rgba(32,102,176,.4);
 	cursor: pointer;
-	-webkit-transition: .2s;
-	-o-transition: .2s;
 	transition: .2s;
 }
 
@@ -1208,8 +1071,6 @@
 	opacity: .5;
 	background: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2211px%22%20height%3D%2212px%22%20viewBox%3D%220%200%2011%2012%22%20version%3D%221.1%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cg%20transform%3D%22translate%28-974.000000%2C%20-350.000000%29%22%3E%3Cg%20transform%3D%22translate%28951.000000%2C%20139.000000%29%22%20fill%3D%22%23ccc%22%3E%3Cpath%20d%3D%22M31.5512911%2C211.101355%20L34%2C213.572184%20L26.9013699%2C220.634571%20L24.4526609%2C218.163742%20L31.5512911%2C211.101355%20Z%20M23.0090453%2C221.760249%20C22.984488%2C221.854056%2023.0107994%2C221.953172%2023.0774548%2C222.022199%20C23.1458643%2C222.091227%2023.2440933%2C222.117776%2023.33706%2C222.091227%20L26.2400781%2C221.301836%20L23.7913692%2C218.831008%20L23.0090453%2C221.760249%20Z%22%3E%3C/path%3E%3C/g%3E%3C/g%3E%3C/svg%3E') center center no-repeat;
 	cursor: pointer;
-	-webkit-transition: .1s;
-	-o-transition: .1s;
 	transition: .1s;
 }
 
@@ -1227,8 +1088,7 @@
 .bizproc-automation-robot-settings-title {
 	display: block;
 	overflow: hidden;
-	-o-text-overflow: ellipsis;
-	   text-overflow: ellipsis;
+	text-overflow: ellipsis;
 	font-size: 12px;
 	color: #b1b7c5;
 	margin: 0 0 1px 0;
@@ -1238,15 +1098,12 @@
 	display: inline-block;
 	vertical-align: middle;
 	cursor: pointer;
-	-webkit-transition: 0s;
-	-o-transition: 0s;
 	transition: 0s;
 	/*height: 30px;*/
 	max-width: 100%;
 	overflow: hidden;
 	white-space: nowrap;
-	-o-text-overflow: ellipsis;
-	   text-overflow: ellipsis;
+	text-overflow: ellipsis;
 }
 
 .bizproc-automation-robot-settings-name:hover {
@@ -1272,11 +1129,7 @@
 	background-size: 9px 9px;
 	opacity: .4;
 	cursor: pointer;
-	-webkit-transform: rotate(45deg);
-	-ms-transform: rotate(45deg);
-	    transform: rotate(45deg);
-	-webkit-transition: .1s;
-	-o-transition: .1s;
+	transform: rotate(45deg);
 	transition: .1s;
 }
 
@@ -1290,8 +1143,6 @@
 	opacity: .4;
 	white-space: nowrap;
 	cursor: pointer;
-	-webkit-transition: .1s;
-	-o-transition: .1s;
 	transition: .1s;
 	color: #b1b7c5;
 	font-size: 13px;
@@ -1309,8 +1160,6 @@
 	color: #6a737f;
 	text-align: right;
 	cursor: pointer;
-	-webkit-transition: .1s;
-	-o-transition: .1s;
 	transition: .1s;
 	opacity: 0.8;
 	margin-left: auto;
@@ -1332,8 +1181,7 @@
 	background: #eff4f6 !important;
 	border: 0 dashed transparent;
 	border-radius: 6px;
-	-webkit-box-sizing: border-box;
-	        box-sizing: border-box;
+	box-sizing: border-box;
 	opacity: 0;
 
 
@@ -1358,8 +1206,6 @@
 	border: 2px dashed #c1c5c7;
 	margin-bottom: 10px;
 	opacity: 1;
-	-webkit-transition: .1s;
-	-o-transition: .1s;
 	transition: .1s;
 }
 
@@ -1408,7 +1254,7 @@
 	width: 9px;
 	height: 12px;
 	content: '';
-	background-image: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI5IiBoZWlnaHQ9IjEyIj48cGF0aCBmaWxsPSIjMjhCQUU5IiBmaWxsLXJ1bGU9ImV2ZW5vZGQiIGQ9Ik03Ljk1MiA1SDl2N0gwVjVoMS4wNTJWMy40MTJhMy40NTIgMy40NTIgMCAwMTYuOSAwVjV6bS0uOTU2IDBsLjAxMi0xLjU4OEEyLjcgMi43IDAgMDA0LjUuOTNhMi43IDIuNyAwIDAwLTIuNTA4IDIuNDgyTDIuMDA1IDVoNC45OTF6TTUuMDIgOC44Nzl2MS4yODdIMy45ODFWOC44NzlhLjgxLjgxIDAgMDEtLjMwNi0uNjM0LjgyNS44MjUgMCAxMTEuNjUgMCAuODEuODEgMCAwMS0uMzA2LjYzNHoiLz48L3N2Zz4=);
+	background-image: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI5IiBoZWlnaHQ9IjEyIiB2aWV3Qm94PSIwIDAgOSAxMiI+ICA8cGF0aCBmaWxsPSIjMjhCQUU5IiBmaWxsLXJ1bGU9ImV2ZW5vZGQiIGQ9Ik03Ljk1Miw1IEw5LDUgTDksMTIgTDAsMTIgTDAsNSBMMS4wNTIsNSBMMS4wNTIsMy40MTIgQzEuMTE1MzMxNjcsMS41NTIzMjI3NCAyLjY0MTI0NDY2LDAuMDc3NDkwNDI1MSA0LjUwMiwwLjA3NzQ5MDQyNTEgQzYuMzYyNzU1MzQsMC4wNzc0OTA0MjUxIDcuODg4NjY4MzMsMS41NTIzMjI3NCA3Ljk1MiwzLjQxMiBMNy45NTIsNSBaIE02Ljk5NjQyNzgzLDUgTDcuMDA4LDMuNDEyIEM2LjkwMzAwMjI5LDIuMDc3Mjc1NzMgNS44MzU3NDU5MywxLjAyMTA4MzQ0IDQuNSwwLjkzIEMzLjE2NDI1NDA3LDEuMDIxMDgzNDQgMi4wOTY5OTc3MSwyLjA3NzI3NTczIDEuOTkyLDMuNDEyIEwyLjAwNTA0MDUzLDUgTDYuOTk2NDI3ODMsNSBaIE01LjAxOSw4Ljg3OSBMNS4wMTksMTAuMTY2IEwzLjk4MSwxMC4xNjYgTDMuOTgxLDguODc5IEMzLjc4NzY5NDg0LDguNzI1MzU2MDEgMy42NzUwMzA3Nyw4LjQ5MTkyNzg1IDMuNjc1LDguMjQ1IEMzLjY3NSw3Ljc4OTM2NTA4IDQuMDQ0MzY1MDgsNy40MiA0LjUsNy40MiBDNC45NTU2MzQ5Miw3LjQyIDUuMzI1LDcuNzg5MzY1MDggNS4zMjUsOC4yNDUgQzUuMzI0OTY5MjMsOC40OTE5Mjc4NSA1LjIxMjMwNTE2LDguNzI1MzU2MDEgNS4wMTksOC44NzkgTDUuMDE5LDguODc5IFoiLz48L3N2Zz4=);
 	background-position: center center;
 	margin-right: 3px;
 }
@@ -1427,7 +1273,6 @@
 	padding: 0 !important;
 	text-align: left !important;
 	z-index: 999 !important;
-	-webkit-box-shadow: none !important;
 	box-shadow: none !important;
 }
 
@@ -1440,38 +1285,28 @@
 }
 
 .bizproc-automation-robot-information.--complete {
-	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='24' height='24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M9.602 19.018a.3.3 0 01-.419 0l-5.851-5.703a.4.4 0 010-.573l1.65-1.609a.4.4 0 01.56 0l3.85 3.754L18.46 6.05a.4.4 0 01.558 0l1.651 1.609a.4.4 0 010 .572L9.602 19.018z' fill='%2394C400'/%3E%3C/svg%3E");
+	background-image: url("data:image/svg+xml,%3Csvg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M9.60186 19.0176C9.48536 19.1312 9.2996 19.1312 9.1831 19.0176L3.33187 13.3151C3.17077 13.1581 3.17077 12.8992 3.33186 12.7422L4.98285 11.1332C5.13818 10.9818 5.38587 10.9818 5.5412 11.1332L9.39248 14.8866L18.459 6.05052C18.6143 5.89914 18.862 5.89914 19.0174 6.05052L20.6683 7.65954C20.8294 7.81654 20.8294 8.07546 20.6683 8.23246L9.60186 19.0176Z' fill='%2394C400'/%3E%3C/svg%3E%0A");
+}
+
+.bizproc-automation-robot-information.--skipped {
+	background-image: url("data:image/svg+xml,%3Csvg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M5 6.5L11.5 12L5 17.5V6.5ZM12.5 6.5L19 12L12.5 17.5V6.5Z' fill='%23A8ADB4'/%3E%3C/svg%3E%0A");
 }
 
 .bizproc-automation-robot-information.--errors {
 	width: 30px;
-	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='30' height='27' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M16.943 10.835l.865-2.906a.745.745 0 00-.166-.72.725.725 0 00-1.232.293l-.741 2.495a7.85 7.85 0 00-7.353.007l-.744-2.502a.729.729 0 00-.91-.494.74.74 0 00-.489.921l.87 2.917a8.324 8.324 0 00-3.078 6.497c0 4.56 3.596 3.44 8.035 3.44 4.44 0 8.035 1.12 8.035-3.44a8.316 8.316 0 00-3.092-6.508zm-4.95 5.888c-3.17 0-5.74.332-5.74-1.026 0-1.359 2.57-2.462 5.74-2.462 3.169 0 5.742 1.102 5.742 2.462s-2.57 1.026-5.742 1.026zm-2.625-2.47a.878.878 0 00-.707.97c.055.462.456.801.915.773a.875.875 0 00.818-.878.956.956 0 00-1.026-.865zm4.541.973c.056.462.458.8.917.771a.876.876 0 00.817-.879.956.956 0 00-1.03-.865.879.879 0 00-.704.973z' fill='%23525C69' opacity='.6'/%3E%3Ccircle cx='21' cy='9' r='6' fill='%23fff'/%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M21 15a6 6 0 100-12 6 6 0 000 12zm.508-9.437l3.08 5.13a.603.603 0 01-.515.913h-6.16a.604.604 0 01-.52-.913l3.08-5.13a.601.601 0 011.035 0zm-.55 1.378a.407.407 0 00-.41.41V8.88c0 .227.182.409.41.409h.055a.407.407 0 00.409-.41V7.35a.407.407 0 00-.409-.409h-.056zm.03 3.893a.517.517 0 00.515-.515.517.517 0 00-.515-.515.517.517 0 00-.515.515c0 .283.232.515.515.515z' fill='%23FF5752'/%3E%3C/svg%3E");
+	background-image: url("data:image/svg+xml,%3Csvg width='30' height='27' viewBox='0 0 30 27' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cg opacity='0.6'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M16.9432 10.835L17.8084 7.92903C17.8838 7.67637 17.8202 7.40223 17.6416 7.20986C17.463 7.01749 17.1965 6.93613 16.9425 6.99641C16.6885 7.0567 16.4855 7.24948 16.4101 7.50213L15.669 9.99667C13.365 8.78024 10.6178 8.78314 8.31628 10.0044L7.57152 7.50213C7.45498 7.11156 7.04749 6.89051 6.66137 7.00839C6.27525 7.12627 6.05671 7.53846 6.17325 7.92903L7.04215 10.8464C5.0909 12.424 3.95775 14.8158 3.96451 17.3426C3.96451 21.9025 7.56056 20.7836 12 20.7836C16.4394 20.7836 20.0354 21.9025 20.0354 17.3426C20.0432 14.8091 18.9039 12.4114 16.9432 10.835ZM11.9927 16.7229C8.82383 16.7229 6.25366 17.0552 6.25366 15.6966C6.25366 14.338 8.82383 13.2349 11.9927 13.2349C15.1617 13.2349 17.7355 14.3369 17.7355 15.6966C17.7355 17.0563 15.1653 16.7229 11.9927 16.7229ZM9.36781 14.2527C8.91538 14.3363 8.60552 14.7618 8.66073 15.2236C8.71594 15.6855 9.11712 16.024 9.57621 15.9961C10.0353 15.9682 10.3935 15.5835 10.3937 15.1183C10.3424 14.595 9.88596 14.2098 9.36781 14.2527ZM13.9093 15.2259C13.9655 15.6877 14.3673 16.0255 14.8264 15.997C15.2855 15.9685 15.6434 15.5836 15.6435 15.1184C15.5922 14.5935 15.1334 14.2078 14.6139 14.2528C14.1617 14.3378 13.853 14.7642 13.9093 15.2259Z' fill='%23525C69'/%3E%3C/g%3E%3Ccircle cx='21' cy='9' r='6' fill='white'/%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M21 15C24.3137 15 27 12.3137 27 8.99998C27 5.68628 24.3137 3 21 3C17.6863 3 15 5.68628 15 8.99998C15 12.3137 17.6863 15 21 15ZM21.5077 5.56277L24.5876 10.6925C24.8299 11.0964 24.5371 11.6063 24.0726 11.6063H17.9129C17.4434 11.6063 17.1505 11.0964 17.3929 10.6925L20.4727 5.56277C20.705 5.16895 21.2704 5.16895 21.5077 5.56277ZM20.9575 6.94112C20.7303 6.94112 20.5485 7.12288 20.5485 7.35008V8.8799C20.5485 9.1071 20.7303 9.28886 20.9575 9.28886H21.013C21.2402 9.28886 21.422 9.1071 21.422 8.8799V7.35008C21.422 7.12288 21.2402 6.94112 21.013 6.94112H20.9575ZM20.9878 10.8338C21.2705 10.8338 21.5028 10.6016 21.5028 10.3188C21.5028 10.0361 21.2705 9.80385 20.9878 9.80385C20.705 9.80385 20.4728 10.0361 20.4728 10.3188C20.4728 10.6016 20.705 10.8338 20.9878 10.8338Z' fill='%23FF5752'/%3E%3C/svg%3E%0A");
 }
 
 .bizproc-automation-robot-information.--loader {
-	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='24' height='24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M13.062 4l1.889 1.896-1.56 1.568a4.712 4.712 0 013.261 5.112l.607 1.813 2.59-.877c.099-.5.151-1.018.151-1.548C20 7.888 16.979 4.522 13.062 4zm2.392 11.155a4.674 4.674 0 01-6.217.619l-1.973.008.012 2.666A7.93 7.93 0 0011.999 20a7.995 7.995 0 006.992-4.125l-2.961 1-.576-1.72zm-7.77-1.337a4.71 4.71 0 01-.379-1.854 4.712 4.712 0 013.333-4.51l1.55-1.558-1.798-1.803C6.743 4.84 4 8.081 4 11.964c0 1.63.483 3.145 1.313 4.41l-.012-2.546 2.383-.01z' fill='%232066B0'/%3E%3C/svg%3E");
-	-webkit-animation: round 1s infinite linear;
+	background-image: url("data:image/svg+xml,%3Csvg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M13.0617 4L14.951 5.8962L13.3918 7.46355C15.3047 8.05974 16.6923 9.84948 16.6923 11.9657C16.6923 12.1727 16.6782 12.3762 16.6521 12.5761L17.259 14.3895L19.8498 13.5118C19.9479 13.0114 20 12.4945 20 11.9645C20 7.88822 16.9786 4.52166 13.0617 4ZM15.4538 15.1548C14.5973 16.0893 13.367 16.6772 11.9994 16.6772C10.9667 16.6772 10.012 16.3413 9.23712 15.7735L7.26388 15.7818L7.27571 18.448C8.5983 19.4239 10.2332 20 11.9994 20C15.0042 20 17.6234 18.3357 18.9909 15.8752L16.0299 16.8748L15.4538 15.1548ZM7.68384 13.8181C7.44133 13.2503 7.30529 12.6234 7.30529 11.9645C7.30529 9.83765 8.7095 8.03963 10.6378 7.45409L12.1887 5.8962L10.3905 4.09345C6.74336 4.83986 4 8.08103 4 11.9645C4 13.5934 4.48266 15.1087 5.31312 16.3744L5.30129 13.8276L7.68384 13.8181Z' fill='%232066B0'/%3E%3C/svg%3E%0A");
 	animation: round 1s infinite linear;
-}
-
-@-webkit-keyframes round {
-	from {
-		-webkit-transform: rotate(0deg);
-		transform: rotate(0deg);
-	}
-	to {
-		-webkit-transform: rotate(360deg);
-		transform: rotate(360deg);
-	}
 }
 
 @keyframes round {
 	from {
-		-webkit-transform: rotate(0deg);
 		transform: rotate(0deg);
 	}
 	to {
-		-webkit-transform: rotate(360deg);
 		transform: rotate(360deg);
 	}
 }
@@ -1500,14 +1335,6 @@
 	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
-.bizproc-automation-popup-settings {
-	clear: both;
-	display: block;
-	overflow: hidden;
-	margin: 0 0 11px 0;
-	position: relative;
-}
-
 .bizproc-automation-popup-settings-block {
 	display: inline-block;
 	max-width: 100%;
@@ -1520,13 +1347,6 @@
 	margin-right: 7px;
 }
 
-.bizproc-automation-popup-settings-title {
-	display: inline-block;
-	font-size: 14px;
-	color: var(--ui-color-text-subtle);
-	line-height: var(--ui-font-line-height-lg);
-}
-
 .bizproc-automation-popup-settings-title-top {
 	display: block;
 	margin: 0 0 5px 0;
@@ -1537,8 +1357,7 @@
 	vertical-align: middle;
 	overflow: hidden;
 	white-space: nowrap;
-	-o-text-overflow: ellipsis;
-	   text-overflow: ellipsis;
+	text-overflow: ellipsis;
 	margin: 0 13px 0 0;
 }
 
@@ -1550,31 +1369,7 @@
 .bizproc-automation-popup-select-item .bizproc-automation-popup-settings-title-auto-width {
 	min-width: auto;
 	margin: 0 9px;
-	-ms-flex-negative: 0;
-	    flex-shrink: 0;
-}
-
-.bizproc-automation-popup-settings-link-wrapper {
-	display: inline-block;
-	line-height: 26px;
-	margin: 0 10px 0 0;
-}
-
-.bizproc-automation-popup-settings-link,
-.bizproc-automation-popup-settings-button {
-	display: inline-block;
-	margin: 0 6px;
-	padding: 0 0 2px 0;
-	font-size: var(--ui-font-size-md);
-	font-weight: var(--ui-font-weight-normal);
-	color: var(--ui-color-link-primary-base);
-	border-bottom: var(--ui-border-width-thin) var(--ui-text-decoration-style-dashed) rgba(var(--ui-color-link-primary-base-rgb), .4);
-	line-height: normal;
-	text-decoration: none;
-	cursor: pointer;
-	-webkit-transition: .1s;
-	-o-transition: .1s;
-	transition: .1s;
+	flex-shrink: 0;
 }
 
 .bizproc-automation-popup-settings-tab-head .bizproc-automation-popup-settings-link {
@@ -1589,8 +1384,7 @@
 	color: var(--ui-color-link-primary-base);
 	background: var(--ui-color-base-05);
 	height: 28px;
-	-webkit-box-sizing: border-box;
-	        box-sizing: border-box;
+	box-sizing: border-box;
 }
 
 .bizproc-automation-popup-settings-tab-head .bizproc-automation-popup-settings-link:last-child {
@@ -1599,11 +1393,6 @@
 
 .bizproc-automation-popup-settings-tab-head .bizproc-automation-popup-settings-link:only-of-type {
 	margin-left: 0;
-}
-
-.bizproc-automation-popup-settings-link:hover,
-.bizproc-automation-popup-settings-button:hover {
-	border-bottom-color: rgba(var(--ui-color-link-primary-base-rgb), 1);
 }
 
 .bizproc-automation-popup-settings-tab-head .bizproc-automation-popup-settings-link:hover {
@@ -1623,8 +1412,6 @@
 	font-weight: normal;
 	color: #0063C6;
 	border-bottom: 1px solid transparent;
-	-webkit-transition: border-bottom .3s;
-	-o-transition: border-bottom .3s;
 	transition: border-bottom .3s;
 }
 
@@ -1646,8 +1433,7 @@
 	color: var(--ui-color-base-90);
 	background: var(--ui-color-background-primary);
 	height: 29px;
-	-webkit-box-sizing: border-box;
-	        box-sizing: border-box;
+	box-sizing: border-box;
 	pointer-events: none;
 }
 
@@ -1701,7 +1487,6 @@
 	border-radius: 2px;
 	min-height: 86px;
 	padding: 12px 17px;
-	-webkit-box-sizing: border-box;
 	box-sizing: border-box;
 }
 
@@ -1716,7 +1501,6 @@
 	border-radius: 2px;
 	height: 36px;
 	padding: 0 17px;
-	-webkit-box-sizing: border-box;
 	box-sizing: border-box;
 }
 .bizproc-automation-popup-input::-webkit-input-placeholder {color:#bdc0c4;}
@@ -1740,11 +1524,6 @@
 .bizproc-automation-popup-input-numeric {
 	max-width: 155px;
 }
-.bizproc-automation-popup-select-block {
-	display: block;
-	overflow: hidden;
-}
-
 .bizproc-automation-popup-select-item {
 	display: block;
 	overflow: hidden;
@@ -1772,8 +1551,7 @@
 	width: 30px;
 	padding: 0 5px;
 	overflow: hidden;
-	-o-text-overflow: ellipsis;
-	   text-overflow: ellipsis;
+	text-overflow: ellipsis;
 	margin: 0 10px 0 0;
 	line-height: 36px;
 	text-align: center;
@@ -1798,7 +1576,6 @@
 	cursor: pointer;
 	margin: 0 10px 0 0;
 	padding: 0 35px 0 10px;
-	-webkit-box-sizing: border-box;
 	box-sizing: border-box;
 }
 
@@ -1806,9 +1583,7 @@
 	content: '';
 	width: 11px;
 	height: 11px;
-	-webkit-transform: rotate(45deg);
-	-ms-transform: rotate(45deg);
-	    transform: rotate(45deg);
+	transform: rotate(45deg);
 	border-right: 2px solid #535c69;
 	border-bottom: 2px solid #535c69;
 	width: 6px;
@@ -1825,7 +1600,6 @@
 	border-radius: 2px;
 	min-height: 36px;
 	padding: 1px;
-	-webkit-box-sizing: border-box;
 	box-sizing: border-box;
 }
 
@@ -1867,18 +1641,12 @@
 	height: 2px;
 	background: #96d5e8;
 	position: absolute;
-	-webkit-transition: .1s;
-	-o-transition: .1s;
 	transition: .1s;
-	-webkit-transform: translate(-50%,-50%) rotate(45deg);
-	-ms-transform: translate(-50%,-50%) rotate(45deg);
-	    transform: translate(-50%,-50%) rotate(45deg);
+	transform: translate(-50%,-50%) rotate(45deg);
 }
 
 .bizproc-automation-popup-autocomplete-delete:before {
-	-webkit-transform: translate(-50%,-50%) rotate(-45deg);
-	-ms-transform: translate(-50%,-50%) rotate(-45deg);
-	    transform: translate(-50%,-50%) rotate(-45deg);
+	transform: translate(-50%,-50%) rotate(-45deg);
 }
 
 .bizproc-automation-popup-autocomplete-delete:hover::after,
@@ -1968,7 +1736,6 @@
 	float: right;
 	height: 39px;
 	line-height: 39px;
-	-webkit-box-shadow: inset 0 0 0 1px #a1a6ac;
 	box-shadow: inset 0 0 0 1px #a1a6ac;
 	background: none;
 	color: #535c69;
@@ -1985,8 +1752,6 @@
 	white-space: nowrap;
 	text-decoration: none !important;
 	-webkit-font-smoothing: antialiased;
-	-webkit-transition: background-color 0.2s linear, color 0.2s linear;
-	-o-transition: background-color 0.2s linear, color 0.2s linear;
 	transition: background-color 0.2s linear, color 0.2s linear;
 }
 
@@ -1997,19 +1762,9 @@
 
 .bizproc-automation-edit-robots:active {
 	background: #868d95;
-	-webkit-box-shadow: none;
 	box-shadow: none;
 	color: #fff;
 
-}
-
-.bizproc-automation-popup-select {
-	display: -webkit-box;
-	display: -ms-flexbox;
-	display: flex;
-	-webkit-box-align: center;
-	-ms-flex-align: center;
-	align-items: center;
 }
 
 .bizproc-automation-popup-select .bxhtmled-area-cnt {
@@ -2020,46 +1775,8 @@
 	margin: 0 0 8px 0;
 }
 
-.bizproc-automation-popup-select-dotted {
-	-webkit-box-flex: 1;
-	-ms-flex: 1;
-	flex: 1;
-	padding: 5px 0;
-	display: -webkit-box;
-	display: -ms-flexbox;
-	display: flex;
-	-webkit-box-align: center;
-	-ms-flex-align: center;
-	align-items: center;
-	min-width: 30px;
-	max-width: 30px;
-	cursor: pointer;
-}
-
-.bizproc-automation-popup-select-dotted:before {
-	content: ' ';
-	display: inline-block;
-	margin: 0 0 0 8px;
-	width: 4px;
-	height: 4px;
-	background: #82868c;
-	opacity: .6;
-	-webkit-box-shadow: 6px 0 0 #82868c, 12px 0 0 #82868c;
-	        box-shadow: 6px 0 0 #82868c, 12px 0 0 #82868c;
-	border-radius:50%;
-	-webkit-transition: .1s;
-	-o-transition: .1s;
-	transition: .1s;
-}
-
-.bizproc-automation-popup-select-dotted:hover:before {
-	opacity: 1;
-}
-
 .bizproc-automation-popup-select .bizproc-automation-popup-textarea,
 .bizproc-automation-popup-select .bizproc-automation-popup-input {
-	-webkit-box-flex: 1;
-	-ms-flex: 1;
 	flex: 1;
 	width: auto;
 }
@@ -2069,41 +1786,7 @@
 	overflow-y: scroll;
 }
 
-.bizproc-automation-popup-settings-dropdown {
-	display: inline-block;
-	min-width: 155px;
-	padding: 10px 30px 10px 10px;
-	height: 38px;
-	outline: none;
-	margin: 0 10px 0 0;
-	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
-	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2010.97%206.86%22%3E%3Cpolygon%20points%3D%225.49%204.11%201.37%200%200%201.37%204.8%206.17%205.49%206.86%2010.97%201.37%209.6%200%205.49%204.11%22%20fill%3D%22%23535c69%22/%3E%3C/svg%3E');
-	background-position: right 10px center;
-	background-repeat: no-repeat;
-	background-size: 11px 22px;
-	background-color: #fff;
-	line-height: 14px;
-	color: #000000;
-	border: 1px solid #c6cdd3;
-	cursor: pointer;
-	border-radius: 2px;
-	-webkit-box-sizing: border-box;
-	box-sizing: border-box;
-	-webkit-appearance: none;
-	-moz-appearance: none;
-	-ms-appearance: none;
-	appearance: none !important;
-	vertical-align: middle;
-	text-align: left;
-	white-space: nowrap;
-	overflow: hidden;
-	-o-text-overflow: ellipsis;
-	   text-overflow: ellipsis;
-}
-
 .bizproc-automation-popup-settings-dropdown-flexible {
-	-webkit-box-flex: 1;
-	-ms-flex: 1;
 	flex: 1;
 }
 
@@ -2119,11 +1802,7 @@
 	border: 1px solid #c6cdd3;
 	cursor: pointer;
 	border-radius: 2px;
-	-webkit-box-sizing: border-box;
 	box-sizing: border-box;
-	-webkit-appearance: none;
-	-moz-appearance: none;
-	-ms-appearance: none;
 	appearance: none !important;
 	vertical-align: middle;
 }
@@ -2133,8 +1812,7 @@
 .bizproc-automation-delay-interval-basis {
 	white-space: nowrap;
 	overflow: hidden;
-	-o-text-overflow: ellipsis;
-	   text-overflow: ellipsis;
+	text-overflow: ellipsis;
 	vertical-align: middle;
 	position: relative;
 }
@@ -2152,8 +1830,6 @@
 	cursor: help;
 	font-size: 10px;
 	line-height: 15px;
-	-webkit-transition: .1s;
-	-o-transition: .1s;
 	transition: .1s;
 }
 
@@ -2175,15 +1851,26 @@
 	margin: 0;
 }
 
+/*
+	Фикс: длинные опции <select> контрола значения (в т.ч. мультиселект
+	bizproc-type-control-multiple) растягивали попап. Пиним ширину формы по
+	дропдаунам поля/оператора (280px). Скоуп заякорен на .bizproc-automation-popup-set,
+	чтобы не задеть соседние попапы (delay-interval, execution-queue, настройки роботов).
+*/
+.bizproc-automation-popup-set .bizproc-automation-popup-select-block {
+	width: 280px;
+	box-sizing: border-box;
+}
+
+.bizproc-automation-popup-set .bizproc-automation-popup-select-block select.bizproc-type-control {
+	max-width: 100%;
+}
+
 .bizproc-automation-popup-settings-link-flex {
-	-webkit-box-flex: 1;
-	-ms-flex: 1;
 	flex: 1;
 }
 
 .bizproc-automation-popup-settings-title-wrapper {
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
 	max-width: 100%;
 	float: left;
@@ -2199,7 +1886,7 @@
 .bizproc-automation-popup-settings-link-remove {
 	display: inline-block;
 	vertical-align: middle;
-	background: url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAiIGhlaWdodD0iMTAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTcuNzg3IDFMNSAzLjc4NyAyLjIxMyAxIDEgMi4yMTMgMy43ODcgNSAxIDcuNzg3IDIuMjEzIDkgNSA2LjIxMyA3Ljc4NyA5IDkgNy43ODcgNi4yMTMgNSA5IDIuMjEzIiBmaWxsPSIjOTk5IiBmaWxsLXJ1bGU9ImV2ZW5vZGQiLz48L3N2Zz4=)  center center no-repeat;
+	background: url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAiIGhlaWdodD0iMTAiIHZpZXdCb3g9IjAgMCAxMCAxMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNNy43ODcgMUw1IDMuNzg3IDIuMjEzIDEgMSAyLjIxMyAzLjc4NyA1IDEgNy43ODcgMi4yMTMgOSA1IDYuMjEzIDcuNzg3IDkgOSA3Ljc4NyA2LjIxMyA1IDkgMi4yMTMiIGZpbGw9IiM5OTkiIGZpbGwtcnVsZT0iZXZlbm9kZCIvPjwvc3ZnPg==)  center center no-repeat;
 	background-size: 8px;
 	width: 20px;
 	height: 25px;
@@ -2213,11 +1900,7 @@
 }
 
 .bizproc-automation-popup-settings-alert {
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
-	-webkit-box-align: center;
-	-ms-flex-align: center;
 	align-items: center;
 	position: relative;
 	padding: 13px 13px 13px 36px;
@@ -2225,8 +1908,7 @@
 	min-height: 42px;
 	border-radius: 2px;
 	background: rgba(255,255,255,.5);
-	-webkit-box-sizing: border-box;
-	        box-sizing: border-box;
+	box-sizing: border-box;
 }
 
 .bizproc-automation-popup-settings-alert:before {
@@ -2238,9 +1920,7 @@
 	height: 14px;
 	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2018%2014%22%3E%3Cpath%20fill%3D%22%23FF5752%22%20fill-rule%3D%22evenodd%22%20d%3D%22M9%200L0%2014h18L9%200zm-.83%204.645h1.743v4.613H8.17V4.645zm0%207.733l.008-1.78h1.744l-.01%201.78H8.17z%22/%3E%3C/svg%3E');
 	background-repeat: no-repeat;
-	-webkit-transform: translate(0,-50%);
-	-ms-transform: translate(0,-50%);
-	    transform: translate(0,-50%);
+	transform: translate(0,-50%);
 }
 
 /* Wait robot */
@@ -2268,8 +1948,7 @@
 	color: #555c6d;
 	vertical-align: middle;
 	text-align: center;
-	-o-text-overflow: ellipsis;
-	   text-overflow: ellipsis;
+	text-overflow: ellipsis;
 	font: 400 16px/36px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
@@ -2306,8 +1985,6 @@
 }
 
 .crm-entity-section .automation-base-button {
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
 }
 
@@ -2332,11 +2009,9 @@
 .bizproc-automation-robot-container.--denied .bizproc-automation-robot-btn-delete {
 	width: 18px;
 	height: 15px;
-	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='18' height='15' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M17.015 12.775L10.136 1.317c-.53-.88-1.793-.88-2.312 0L.945 12.775c-.54.902.113 2.041 1.162 2.041h13.758a1.347 1.347 0 001.15-2.041zM7.994 5.309a.91.91 0 01.913-.913h.124a.91.91 0 01.914.913v3.417a.91.91 0 01-.914.914h-.124a.91.91 0 01-.913-.914V5.31zm2.131 6.631c0 .632-.519 1.15-1.15 1.15-.632 0-1.15-.518-1.15-1.15 0-.631.518-1.15 1.15-1.15.631 0 1.15.519 1.15 1.15z' fill='%23525C69' fill-opacity='.4'/%3E%3C/svg%3E");
+	background-image: url("data:image/svg+xml,%3Csvg width='18' height='15' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M17.015 12.775 10.136 1.317c-.53-.88-1.793-.88-2.312 0L.945 12.775c-.54.902.113 2.041 1.162 2.041h13.758a1.347 1.347 0 0 0 1.15-2.041ZM7.994 5.309a.91.91 0 0 1 .913-.913h.124a.91.91 0 0 1 .914.913v3.417a.91.91 0 0 1-.914.914h-.124a.91.91 0 0 1-.913-.914V5.31Zm2.131 6.631c0 .632-.519 1.15-1.15 1.15-.632 0-1.15-.518-1.15-1.15 0-.631.518-1.15 1.15-1.15.631 0 1.15.519 1.15 1.15Z' fill='%23525C69' fill-opacity='.4'/%3E%3C/svg%3E");
 	background-size: contain;
-	-webkit-transform: none;
-	    -ms-transform: none;
-	        transform: none;
+	transform: none;
 	opacity: 1;
 	pointer-events: none;
 }
@@ -2345,8 +2020,6 @@
 	height: 0;
 	margin-top: 10px;
 	overflow: hidden;
-	-webkit-transition: height 0.3s linear;
-	-o-transition: height 0.3s linear;
 	transition: height 0.3s linear;
 }
 
@@ -2354,8 +2027,6 @@
 	margin: 0 2px;
 	border-bottom: 1px dashed rgba(145,113,30,.4);
 	cursor: pointer;
-	-webkit-transition: .2s;
-	-o-transition: .2s;
 	transition: .2s;
 }
 
@@ -2364,34 +2035,24 @@
 }
 
 .bizproc-automation-robot-settings-popup-titlebar {
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
-	-webkit-box-align: center;
-	    -ms-flex-align: center;
-	        align-items: center;
+	align-items: center;
 }
 
 .bizproc-automation-robot-settings-popup-titlebar-text {
-	-o-text-overflow: ellipsis;
-	   text-overflow: ellipsis;
+	text-overflow: ellipsis;
 	overflow: hidden;
 }
 
 .bizproc-automation-popup-select__wrapper {
 	position: relative;
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
-	-ms-flex-wrap: wrap;
-	    flex-wrap: wrap;
+	flex-wrap: wrap;
 	min-height: 56px;
 	line-height: 56px;
 	margin-bottom: 0;
 	padding: 0 10px 0 17px;
 	background: var(--ui-color-base-02);
-	-webkit-transition: .2s;
-	-o-transition: .2s;
 	transition: .2s;
 }
 
@@ -2410,26 +2071,18 @@
 }
 
 .bizproc-automation-popup-select__visible-row {
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
-	-webkit-box-align: center;
-	    -ms-flex-align: center;
-	        align-items: center;
+	align-items: center;
 	max-width: 100%;
 	width: 100%;
 	min-height: 56px;
 }
 
 .bizproc-automation-popup-select__chevron {
-	-webkit-box-ordinal-group: 10;
-	    -ms-flex-order: 9;
-	        order: 9;
+	order: 9;
 	margin-left: auto;
 	opacity: 0.6;
 	cursor: pointer;
-	-webkit-transition: .2s;
-	-o-transition: .2s;
 	transition: .2s;
 }
 
@@ -2438,9 +2091,7 @@
 }
 
 .bizproc-automation-popup-select__chevron.--active {
-	-webkit-transform: rotate(180deg);
-	    -ms-transform: rotate(180deg);
-	        transform: rotate(180deg);
+	transform: rotate(180deg);
 }
 
 .bizproc-automation-popup-select__chevron.--disabled {
@@ -2454,8 +2105,6 @@
 	margin-right: -10px;
 	margin-left: auto;
 	overflow: hidden;
-	-webkit-transition: .2s;
-	-o-transition: .2s;
 	transition: .2s;
 }
 
@@ -2481,10 +2130,8 @@
 
 
 .bizproc-automation-popup-settings__input {
-	-ms-flex-negative: 0;
-	    flex-shrink: 0;
-	-webkit-box-sizing: border-box;
-	        box-sizing: border-box;
+	flex-shrink: 0;
+	box-sizing: border-box;
 	display: inline-block;
 	width: 43px;
 	height: 31px;
@@ -2493,8 +2140,7 @@
 	border: 1px solid #C9CCD0;
 	border-radius: 4px;
 	overflow: hidden;
-	-o-text-overflow: ellipsis;
-	   text-overflow: ellipsis;
+	text-overflow: ellipsis;
 	text-align: center;
 	font-family: var(--ui-font-family-primary);
 	font-size: var(--ui-font-size-md);
@@ -2514,16 +2160,14 @@
 	margin-right: 13px;
 	overflow: hidden;
 	white-space: nowrap;
-	-o-text-overflow: ellipsis;
-	   text-overflow: ellipsis;
+	text-overflow: ellipsis;
 	font-size: var(--ui-font-size-md);
 	color: var(--ui-color-palette-gray-80);
 }
 
 .bizproc-automation-popup-settings__text.--first {
 	min-width: 48px;
-	-ms-flex-negative: 0;
-	    flex-shrink: 0;
+	flex-shrink: 0;
 }
 
 .bizproc-automation-popup-settings__subtitle {
@@ -2532,12 +2176,8 @@
 }
 
 .bizproc-automation-popup-settings__checkbox-label {
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
-	-webkit-box-align: center;
-	    -ms-flex-align: center;
-	        align-items: center;
+	align-items: center;
 	font-size: var(--ui-font-size-md);
 	color: var(--ui-color-base-80);
 	cursor: pointer;
@@ -2548,22 +2188,15 @@
 }
 
 .bizproc-automation-popup-select__wrapper-flex {
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
-	-webkit-box-align: stretch;
-	    -ms-flex-align: stretch;
-	        align-items: stretch;
-	-webkit-box-sizing: border-box;
-	        box-sizing: border-box;
+	align-items: stretch;
+	box-sizing: border-box;
 	padding-left: 9px;
 	border-radius: 6px;
 	overflow: hidden;
 	background: var(--ui-color-base-04);
 	cursor: pointer;
-	-webkit-box-pack: justify;
-	    -ms-flex-pack: justify;
-	        justify-content: space-between;
+	justify-content: space-between;
 }
 
 .bizproc-automation-popup-select__wrapper-flex.--active {
@@ -2572,9 +2205,16 @@
 
 .bizproc-automation-popup-settings__image-block {
 	width: 97px;
-	-ms-flex-negative: 0;
-	    flex-shrink: 0;
-	background: url("images/bizproc_execution-queue.svg") center no-repeat;
+	flex-shrink: 0;
+	background: url("images/bizproc_execution-queue.webp") center no-repeat;
+	background-image: -webkit-image-set(
+		url("images/bizproc_execution-queue.webp") 1x,
+		url("images/bizproc_execution-queue@2x.webp") 2x
+	);
+	background-image: image-set(
+		url("images/bizproc_execution-queue.webp") 1x,
+		url("images/bizproc_execution-queue@2x.webp") 2x
+	);
 	background-size: cover;
 	margin-left: 10px;
 }
@@ -2610,98 +2250,53 @@
 }
 
 .bizproc-automation_execution-queue_transform-element {
-	-webkit-transform-origin: center center;
-	    -ms-transform-origin: center center;
-	        transform-origin: center center;
+	transform-origin: center center;
 }
 
 .bizproc-automation-popup-select__wrapper-flex.--active .bizproc-automation_execution-queue_simultaneously .bizproc-automation_execution-queue_transform-element {
-	-webkit-animation: scale-element .5s linear 1;
-	        animation: scale-element .5s linear 1;
+	animation: scale-element .5s linear 1;
 }
 
 .bizproc-automation-popup-select__wrapper-flex.--active .bizproc-automation_execution-queue_in-turn .bizproc-automation_execution-queue_transform-element.--one {
-	-webkit-animation: scale-element .5s linear 1;
-	        animation: scale-element .5s linear 1;
+	animation: scale-element .5s linear 1;
 }
 
 .bizproc-automation-popup-select__wrapper-flex.--active .bizproc-automation_execution-queue_in-turn .bizproc-automation_execution-queue_transform-element.--two {
-	-webkit-animation: scale-element .5s linear 1;
-	        animation: scale-element .5s linear 1;
-	-webkit-animation-delay: .5s;
-	        animation-delay: .5s;
-}
-
-@-webkit-keyframes scale-element {
-	0% {
-		-webkit-transform: scale(1);
-		        transform: scale(1);
-	}
-	50% {
-		-webkit-transform: scale(1.05);
-		        transform: scale(1.05);
-	}
-	100% {
-		-webkit-transform: scale(1);
-		        transform: scale(1);
-	}
+	animation: scale-element .5s linear 1;
+	animation-delay: .5s;
 }
 
 @keyframes scale-element {
 	0% {
-		-webkit-transform: scale(1);
-		        transform: scale(1);
+		transform: scale(1);
 	}
 	50% {
-		-webkit-transform: scale(1.05);
-		        transform: scale(1.05);
+		transform: scale(1.05);
 	}
 	100% {
-		-webkit-transform: scale(1);
-		        transform: scale(1);
+		transform: scale(1);
 	}
 }
 
 .bizproc-automation-popup-select__wrapper-flex.--active .bizproc-automation_execution-queue_simultaneously .bizproc-automation_execution-queue_checked {
-	-webkit-animation-delay: .3s;
-	        animation-delay: .3s;
-	-webkit-animation-fill-mode: forwards;
-	        animation-fill-mode: forwards;
-	-webkit-animation-name: visible;
-	        animation-name: visible;
-	-webkit-animation-duration: .3s;
-	        animation-duration: .3s;
+	animation-delay: .3s;
+	animation-fill-mode: forwards;
+	animation-name: visible;
+	animation-duration: .3s;
 }
 
 .bizproc-automation-popup-select__wrapper-flex.--active .bizproc-automation_execution-queue_in-turn .bizproc-automation_execution-queue_checked.--one {
-	-webkit-animation-delay: .5s;
-	        animation-delay: .5s;
-	-webkit-animation-fill-mode: forwards;
-	        animation-fill-mode: forwards;
-	-webkit-animation-name: visible;
-	        animation-name: visible;
-	-webkit-animation-duration: .3s;
-	        animation-duration: .3s;
+	animation-delay: .5s;
+	animation-fill-mode: forwards;
+	animation-name: visible;
+	animation-duration: .3s;
 }
 
 .bizproc-automation-popup-select__wrapper-flex.--active .bizproc-automation_execution-queue_in-turn .bizproc-automation_execution-queue_checked.--two {
-	-webkit-animation-delay: 1s;
-	        animation-delay: 1s;
-	-webkit-animation-fill-mode: forwards;
-	        animation-fill-mode: forwards;
-	-webkit-animation-name: visible;
-	        animation-name: visible;
-	-webkit-animation-duration: .3s;
-	        animation-duration: .3s;
-}
-
-@-webkit-keyframes visible {
-	0% {
-		opacity: 0;
-	}
-	100% {
-		opacity: 1;
-	}
+	animation-delay: 1s;
+	animation-fill-mode: forwards;
+	animation-name: visible;
+	animation-duration: .3s;
 }
 
 @keyframes visible {
@@ -2711,216 +2306,6 @@
 	100% {
 		opacity: 1;
 	}
-}
-
-.bizproc-automation-popup-settings__condition-content {
-	min-height: 54px;
-	margin-bottom: 12px;
-}
-
-.bizproc-automation-popup-settings__condition-header {
-	display: -webkit-box;
-	display: -ms-flexbox;
-	display: flex;
-	-webkit-box-pack: justify;
-	    -ms-flex-pack: justify;
-	        justify-content: space-between;
-	margin-bottom: 5px;
-	border-bottom: var(--ui-border-width-thin) solid var(--ui-color-base-20);
-}
-
-.bizproc-automation-popup-settings__btn-toggle {
-	display: -webkit-inline-box;
-	display: -ms-inline-flexbox;
-	display: inline-flex;
-	gap: 5px;
-	-webkit-box-align: center;
-	    -ms-flex-align: center;
-	        align-items: center;
-	padding-bottom: 5px;
-	--ui-icon-set__icon-color: var(--ui-color-text-subtle);
-	cursor: pointer;
-	-webkit-transition: .2s;
-	-o-transition: .2s;
-	transition: .2s;
-}
-
-.bizproc-automation-popup-settings__btn-toggle.--disabled {
-	opacity: .4;
-	pointer-events: none;
-}
-
-.bizproc-automation-popup-settings__btn-toggle:hover .bizproc-automation-popup-settings-title {
-	color: var(--ui-color-palette-gray-90);
-}
-
-.bizproc-automation-popup-settings__btn-toggle:hover {
-	--ui-icon-set__icon-color: var(--ui-color-palette-gray-90);
-}
-
-.bizproc-automation-popup-settings__condition {
-	display: -webkit-box;
-	display: -ms-flexbox;
-	display: flex;
-	-ms-flex-wrap: wrap;
-	    flex-wrap: wrap;
-	gap: 5px;
-	padding: 3px 0;
-}
-
-.bizproc-automation-popup-settings__condition-content.--active .bizproc-automation-popup-settings__btn-toggle .ui-icon-set {
-	-webkit-transform: rotate(180deg);
-	    -ms-transform: rotate(180deg);
-	        transform: rotate(180deg);
-}
-
-.bizproc-automation-popup-settings__condition-help {
-	color: var(--ui-color-base-40);
-	line-height: var(--ui-font-line-height-3xl);
-}
-
-.bizproc-automation-popup-settings__transition-height-wrapper {
-	display: grid;
-	grid-template-rows: 0fr;
-	-webkit-transition: grid-template-rows .2s;
-	-o-transition: grid-template-rows .2s;
-	transition: grid-template-rows .2s;
-	transition: grid-template-rows .2s, -ms-grid-rows .2s;
-}
-
-.bizproc-automation-popup-settings__transition-height-content {
-	overflow: hidden;
-}
-
-.bizproc-automation-popup-settings__transition-height-wrapper.--revert,
-.bizproc-automation-popup-settings__condition-content.--active .bizproc-automation-popup-settings__transition-height-wrapper {
-	grid-template-rows: 1fr;
-}
-
-.bizproc-automation-popup-settings__condition-content.--active .bizproc-automation-popup-settings__transition-height-wrapper.--revert {
-	grid-template-rows: 0fr;
-}
-
-.bizproc-automation-popup-settings__condition-selector {
-	display: -webkit-box;
-	display: -ms-flexbox;
-	display: flex;
-	-webkit-box-align: baseline;
-	    -ms-flex-align: baseline;
-	        align-items: baseline;
-	-webkit-box-orient: vertical;
-	-webkit-box-direction: normal;
-	    -ms-flex-direction: column;
-	        flex-direction: column;
-	width: 100%;
-	gap: 5px;
-}
-
-.bizproc-automation-popup-settings__condition-item {
-	display: -webkit-box;
-	display: -ms-flexbox;
-	display: flex;
-	-webkit-box-align: center;
-	    -ms-flex-align: center;
-	        align-items: center;
-	/*max-width: 100%;*/
-	width: 100%;
-	padding: 8px 0;
-	-webkit-box-sizing: border-box;
-	        box-sizing: border-box;
-	border: var(--ui-border-width-thin) solid var(--ui-color-base-20);
-	border-radius: var(--ui-border-radius-2xs);
-	background: var(--ui-color-background-primary);
-	cursor: pointer;
-}
-
-.bizproc-automation-popup-settings__condition-item_draggable,
-.bizproc-automation-popup-settings__condition-item_close {
-	-ms-flex-negative: 0;
-	    flex-shrink: 0;
-	--ui-icon-set__icon-color: var(--ui-color-base-80);
-}
-
-.bizproc-automation-popup-settings__condition-item_draggable:hover {
-	--ui-icon-set__icon-color: var(--ui-color-base-90);
-}
-
-.bizproc-automation-popup-settings__condition-item_close {
-	--ui-icon-set__icon-color: var(--ui-color-base-35);
-}
-
-.bizproc-automation-popup-settings__condition-text {
-	overflow: hidden;
-	padding: 0 3px;
-	border-radius: var(--ui-border-radius-2xs);
-	white-space: nowrap;
-	-o-text-overflow: ellipsis;
-	   text-overflow: ellipsis;
-	font-size: var(--ui-font-size-md);
-	line-height: var(--ui-font-line-height-md);
-	color: var(--ui-color-link-primary-base);
-	background: var(--ui-color-background-info);
-}
-
-.bizproc-automation-popup-settings__condition-item_close:hover {
-	--ui-icon-set__icon-color: var(--ui-color-base-80);
-}
-
-.bizproc-automation-popup-settings__condition-item_content {
-	display: -webkit-box;
-	display: -ms-flexbox;
-	display: flex;
-	-ms-flex-wrap: wrap;
-	    flex-wrap: wrap;
-	gap: 4px;
-	-webkit-box-flex: 1;
-	    -ms-flex: 1;
-	        flex: 1;
-	margin: 0 3px;
-	overflow: hidden;
-}
-
-.bizproc-automation-popup-settings__condition-switcher {
-	position: relative;
-	padding: 2px;
-	border: var(--ui-border-width-thin) solid var(--ui-color-base-20);
-	border-radius: var(--ui-border-radius-xs);
-	background: var(--ui-color-background-primary);
-	cursor: pointer;
-}
-
-.bizproc-automation-popup-settings__condition-switcher_wrapper {
-	position: relative;
-	display: -webkit-box;
-	display: -ms-flexbox;
-	display: flex;
-	gap: 0 2px;
-}
-
-.bizproc-automation-popup-settings__condition-switcher_btn {
-	font-size: var(--ui-font-size-xs);
-	line-height: var(--ui-font-line-height-lg);
-	padding: 0 6px;
-	text-transform: uppercase;
-	color: var(--ui-color-base-30);
-	background: transparent;
-	border-radius: var(--ui-border-radius-2xs);
-	-webkit-user-select: none;
-	   -moz-user-select: none;
-	    -ms-user-select: none;
-	        user-select: none;
-	-webkit-transition: .2s;
-	-o-transition: .2s;
-	transition: .2s;
-}
-
-.bizproc-automation-popup-settings__condition-switcher_btn.--active {
-	color: var(--ui-color-on-primary);
-	background: var(--ui-color-primary);
-}
-
-.bizproc-automation-popup-settings__condition-selector:last-of-type .bizproc-automation-popup-settings__condition-switcher {
-	display: none;
 }
 
 .bizproc-automation-inline-time-selector-chevron {
@@ -2941,19 +2326,10 @@
 }
 
 .bizproc-automation-popup-settings-tab-inner .bizproc-automation-popup-settings-link {
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
-	-webkit-box-orient: vertical;
-	-webkit-box-direction: normal;
-	    -ms-flex-direction: column;
-	        flex-direction: column;
-	-webkit-box-pack: center;
-	    -ms-flex-pack: center;
-	        justify-content: center;
-	-webkit-box-align: center;
-	    -ms-flex-align: center;
-	        align-items: center;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
 	margin: 0;
 	padding: 10px 0;
 	height: 76px;
@@ -2962,16 +2338,12 @@
 	background: #f8fafa;
 	border-radius: var(--ui-border-radius-md);
 	font-weight: var(--ui-font-weight-bold);
-	-webkit-box-sizing: border-box;
-	        box-sizing: border-box;
+	box-sizing: border-box;
 }
 
 .bizproc-automation-popup-settings-tab-item-box {
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
-	-ms-flex-wrap: wrap;
-	    flex-wrap: wrap;
+	flex-wrap: wrap;
 	gap: 8px;
 	margin-bottom: 8px;
 }
@@ -2989,8 +2361,7 @@
 }
 
 .bizproc-automation-popup-settings .files-text {
-	-o-text-overflow: ellipsis;
-	   text-overflow: ellipsis;
+	text-overflow: ellipsis;
 	overflow: hidden;
 }
 

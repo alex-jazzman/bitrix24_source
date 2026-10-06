@@ -192,14 +192,21 @@
 
 .tm-control-panel.--closed::before,
 .tm-control-panel.--start::before {
-	background: url("../../image/light-2.png") no-repeat center;
+	background: no-repeat center;
+	background-image: image-set(
+		url("../../image/light-2.webp") 1x,
+		url("../../image/light-2@2x.webp") 2x
+	);
 	opacity: 1;
 	background-size: cover;
 }
 
 .tm-control-panel.--closed.--auto::before,
 .tm-control-panel.--start.--auto::before {
-	background-image: url("../../image/auto.png");
+	background-image: image-set(
+		url("../../image/auto.webp") 1x,
+		url("../../image/auto@2x.webp") 2x
+	);
 }
 
 .tm-control-panel__info.--gpt-info,

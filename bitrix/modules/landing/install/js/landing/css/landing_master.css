@@ -250,6 +250,29 @@ body:not(.landing-copilot-generation) .block-wrapper.landing-ui-hover .landing-u
 	opacity: 1;
 }
 
+body:not(.landing-copilot-generation) .block-wrapper:focus-within .landing-ui-panel-content-action,
+body:not(.landing-copilot-generation) .block-wrapper:focus-within .landing-ui-panel-block-action {
+	opacity: 1;
+}
+
+body:not(.landing-copilot-generation) .block-wrapper:focus-within .landing-ui-panel-create-action,
+body:not(.landing-copilot-generation) .block-wrapper:focus-within .landing-ui-panel-sidebar-actions {
+	opacity: 1;
+}
+
+body:not(.landing-copilot-generation) .landing-card:focus-within > .landing-ui-panel-block-card-action {
+	opacity: 1;
+}
+
+.landing-ui-panel-block-action .landing-ui-button:focus-visible,
+.landing-ui-panel-content-action .landing-ui-button:focus-visible,
+.landing-ui-panel-create-action .landing-ui-button:focus-visible,
+.landing-ui-panel-sidebar-actions .landing-ui-button:focus-visible,
+.landing-ui-panel-block-card-action .landing-ui-button:focus-visible,
+.landing-ui-panel-create-before-action .landing-ui-button:focus-visible {
+	outline-offset: -2px;
+}
+
 body:not(.landing-copilot-generation) .landing-sidebar .block-wrapper:hover .landing-ui-panel-content-action,
 body:not(.landing-copilot-generation) .landing-sidebar .block-wrapper.landing-ui-hover .landing-ui-panel-content-action,
 body:not(.landing-copilot-generation) .landing-sidebar .block-wrapper:hover .landing-ui-panel-block-action,
@@ -1071,6 +1094,11 @@ div[id^="popup-window-content-calendar-resourcebooking-settings-popup"] {
 	opacity: 1;
 }
 
+body:not(.landing-ui-hide-action-panels) .landing-main > [class~='block-wrapper']:first-of-type:focus-within .landing-ui-panel-create-before-action {
+	display: block;
+	opacity: 1;
+}
+
 body:not(.landing-ui-hide-action-panels) .landing-main > [class~='block-wrapper']:first-of-type:hover .landing-ui-panel-create-before-action {
 	display: block;
 	opacity: 1;
@@ -1100,6 +1128,11 @@ body:not(.landing-ui-hide-action-panels) .landing-main > [class~='block-wrapper'
 
 .ui-btn:focus {
 	outline: none!important;
+}
+
+.ui-btn:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary, #0075ff)!important;
+	outline-offset: 2px;
 }
 
 .landing-ui-hide-action-panels .landing-ui-panel-create-before-action {

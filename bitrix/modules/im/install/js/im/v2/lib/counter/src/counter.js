@@ -1,17 +1,17 @@
 import { EventEmitter, BaseEvent } from 'main.core.events';
 import { Extension, Runtime } from 'main.core';
+import { type SettingsCollection } from 'main.core.collections';
+import { type Store } from 'ui.vue3.vuex';
 
 import { Core } from 'im.v2.application.core';
 import { DesktopManager } from 'im.v2.lib.desktop';
 import { Logger } from 'im.v2.lib.logger';
-import { EventType, NavigationMenuItem } from 'im.v2.const';
+import { EventType, NavigationMenuItem, type RecentTypeItem, type ParentChatIdType } from 'im.v2.const';
 
 import { updateBrowserTitleCounter } from './helpers/update-browser-title-counter';
+import { RecentTypeClearHandlers, CounterClearActions } from './const/const';
 
-import type { SettingsCollection } from 'main.core.collections';
-import type { Store } from 'ui.vue3.vuex';
-
-export { CounterClearHandlersByChatType, CounterClearActions } from './const/const';
+export { CounterClearActions, RecentTypeClearHandlers } from './const/const';
 
 type NavigationCountersPayload = {
 	chat: number;
@@ -68,6 +68,20 @@ export class CounterManager
 		}
 
 		return String(counter);
+	}
+
+	static clearCountersByRecentType(recentType: RecentTypeItem, parentChatId: ParentChatIdType)
+	{
+		RecentTypeClearHandlers.forEach((handler) => {
+			void handler(recentType, parentChatId);
+		});
+	}
+
+	static clearAllCounters()
+	{
+		CounterClearActions.forEach((actionHandler) => {
+			void actionHandler();
+		});
 	}
 
 	emitCounters()

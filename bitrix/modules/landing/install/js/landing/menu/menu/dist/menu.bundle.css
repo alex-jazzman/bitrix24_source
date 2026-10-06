@@ -82,6 +82,11 @@
 	outline: none;
 }
 
+.landing-ui-menu-add-button:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary, #0075ff);
+	outline-offset: 2px;
+}
+
 @media all {
 	body .landing-menu-root-list {
 		margin-bottom: 69px!important;

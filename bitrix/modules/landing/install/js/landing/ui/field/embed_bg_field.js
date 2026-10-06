@@ -19,7 +19,10 @@
 	 */
 	BX.Landing.UI.Field.EmbedBg = function(data)
 	{
-		data.description = "<span class='landing-ui-anchor-preview'>"+BX.Landing.Loc.getMessage('LANDING_EMBED_BG_FIELD_DESCRIPTION_MSGVER_1')+"</span>";
+		const descriptionMessageId = BX.Landing.Env.getInstance().isVkVideoAvailable()
+			? 'LANDING_EMBED_BG_FIELD_DESCRIPTION_MSGVER_1'
+			: 'LANDING_EMBED_BG_FIELD_DESCRIPTION_NO_VK_MSGVER_1';
+		data.description = "<span class='landing-ui-anchor-preview'>"+BX.Landing.Loc.getMessage(descriptionMessageId)+"</span>";
 		BX.Landing.UI.Field.Embed.apply(this, arguments);
 
 		BX.Dom.addClass(this.error, 'landing-ui-error');
@@ -33,9 +36,11 @@
 
 		isEmbedUrl: function(value)
 		{
-			return BX.Landing.Utils.Matchers.youtube.test(value)
-				|| BX.Landing.Utils.Matchers.vk.test(value)
-			;
+			return BX.Landing.isSupportedVideoUrl(
+				value,
+				['youtube', 'vk'],
+				BX.Landing.Env.getInstance().isVkVideoAvailable()
+			);
 		},
 
 		getValue: function()

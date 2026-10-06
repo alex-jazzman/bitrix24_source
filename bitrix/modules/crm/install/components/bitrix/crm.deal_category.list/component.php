@@ -16,6 +16,7 @@ if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->isAdmin
 use Bitrix\Crm\Category\DealCategory;
 use Bitrix\Crm\Entry\UpdateException;
 use Bitrix\Crm\Service\Container;
+use Bitrix\Main\Web\Uri;
 
 $arResult['CAN_EDIT'] = $arResult['CAN_DELETE'] = true;
 
@@ -243,13 +244,10 @@ for($i = 0; $i < $arResult['ROWS_COUNT']; $i++)
 	}
 
 	$items[$i]['PATH_TO_DELETE'] =
-		CHTTP::urlAddParams(
-			CComponentEngine::MakePathFromTemplate(
+		(string)(new Uri(CComponentEngine::MakePathFromTemplate(
 				$arParams['PATH_TO_DEAL_CATEGORY_LIST'],
 				array('category_id' => $ID)
-			),
-			array('action_'.$arResult['GRID_ID'] => 'delete', 'ID' => $ID, 'sessid' => bitrix_sessid())
-		);
+			)))->addParams(array('action_'.$arResult['GRID_ID'] => 'delete', 'ID' => $ID, 'sessid' => bitrix_sessid()));
 
 	$items[$i]['PATH_TO_STATUS_EDIT'] = CComponentEngine::MakePathFromTemplate(
 		$arParams['PATH_TO_STATUS_EDIT'],

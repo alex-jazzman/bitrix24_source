@@ -48,6 +48,13 @@ class LandingPubComponent extends LandingBaseComponent
 	protected $isPreviewMode = false;
 
 	/**
+	 * Preview opened by a valid signed link (Site::isPublicHashValid), as opposed to the
+	 * DRAFT_MODE preview of knowledge bases and groups.
+	 * @var boolean
+	 */
+	protected $isSignedPreview = false;
+
+	/**
 	 * SEF variables.
 	 * @var array
 	 */
@@ -105,6 +112,277 @@ class LandingPubComponent extends LandingBaseComponent
 	public function isPreviewMode(): bool
 	{
 		return $this->isPreviewMode;
+	}
+
+	/**
+	 * Reads the editor-context marker (MARKER-01) from the request and returns the
+	 * validated parent portal origin for the device-preview postMessage responder,
+	 * or an empty string when the marker is absent or malformed. The value is echoed
+	 * into an inline script by the template, so only a strict scheme://host[:port]
+	 * origin is allowed here — a raw request string is never trusted.
+	 * @return string
+	 */
+	private function getDevicePreviewParentOrigin(): string
+	{
+		// is_string(): the request value is an array for ?landing_device_preview[]=...
+		$raw = $this->request('landing_device_preview');
+		if (!is_string($raw) || $raw === '')
+		{
+			return '';
+		}
+
+		return $this->sanitizeOrigin($raw);
+	}
+
+	/**
+	 * Returns true when the editor will really sandbox the preview frame.
+	 *
+	 * The editor sandboxes it only for a preview sharing the portal origin (DeviceUI
+	 * .isSameOriginPreview): a cross-origin preview is isolated by the browser anyway. The marker
+	 * travels with every device preview though, so the same predicate has to be re-evaluated here
+	 * — otherwise the sandbox workarounds (storage shim, inlined fonts, suppressed cookie banner)
+	 * would be paid for by a preview opened on the site's own domain, where no sandbox is ever set.
+	 * A cloud preview is no longer such a case: its link is built on the portal host by
+	 * Site\PreviewUrl, so there the same-origin branch really runs.
+	 * @param string $parentOrigin Validated portal origin from MARKER-01.
+	 * @return bool
+	 */
+	private function isSandboxedDevicePreview(string $parentOrigin): bool
+	{
+		$ownOrigin = (Manager::isHttps() ? 'https://' : 'http://')
+			. mb_strtolower(Application::getInstance()->getContext()->getServer()->getHttpHost());
+
+		return $parentOrigin === $ownOrigin;
+	}
+
+	/**
+	 * Returns true when the signed preview is served on the portal origin and has to be
+	 * sandboxed by the page itself, not only by the editor frame around it.
+	 *
+	 * In Bitrix24 (cloud and box alike) that is every valid signed preview: Site::getPublicHash()
+	 * binds the signature to the host of the request and the link is built on that same host, so
+	 * a signature that checks out was issued for this very origin. The site manager is left as
+	 * is — there the signature is bound to the site domain, and a preview on a domain of its own
+	 * shares nothing with the portal.
+	 * @return bool
+	 */
+	private function isSandboxedSignedPreview(): bool
+	{
+		return $this->isSignedPreview && Manager::isB24();
+	}
+
+	/**
+	 * Gives the signed preview document an opaque origin via the CSP sandbox directive.
+	 *
+	 * In preview the hooks read their draft values (Hook::setEditMode()). Under the portal origin
+	 * a script of the page would run with the portal session of whoever opens the link: the
+	 * editor sandboxes its device frame for exactly this reason (DeviceUI), but the same page
+	 * opened by the direct link had no sandbox at all. Without allow-same-origin the page cannot
+	 * reach the portal cookies, storage or same-origin API; scripts, forms, popups and dialogs
+	 * stay allowed, so the page renders and behaves like the published one. The opaque origin
+	 * does not make the trusted portal address safe for arbitrary code of the author though —
+	 * a login form drawn by it would still be believed — so the arbitrary html and code of the
+	 * author are off in the sandboxed preview: the head-block hook (Hook\Page\HeadBlock::enabled()),
+	 * the Google Tag Manager container, which runs any script of the author as well
+	 * (Hook\Page\GTM::enabled()), the Bitrix24 widget, whose script url is stored as sent
+	 * (Hook\Page\B24button::enabled()), and the raw html of the html block
+	 * (LandingBlocksHtmlComponent::mustSanitize()); the block content itself is sanitized on save.
+	 * Downloads stay allowed: a download in the sandbox is
+	 * started by a click on a link of the page (the file links of the blocks point to
+	 * landing.api.diskFile.download and are left to the browser by public.js), and with the
+	 * author's code off there is nothing to start one by itself. The workarounds the sandbox
+	 * needs (storage shim, inlined fonts) are the same as for the device frame — see the caller.
+	 * @return void
+	 */
+	private function sandboxSignedPreview(): void
+	{
+		Application::getInstance()->getContext()->getResponse()->addHeader(
+			'Content-Security-Policy',
+			'sandbox allow-scripts allow-forms allow-popups allow-modals allow-popups-to-escape-sandbox allow-downloads'
+		);
+	}
+
+	/**
+	 * Puts the storage shim at the very top of <head> for the sandboxed device preview.
+	 *
+	 * The shim has to run before ANY page script reaches for cookie or storage: inside the
+	 * sandbox both throw, and an uncaught DOMException aborts the whole surrounding script
+	 * block. Injected from the component rather than from its template because the template
+	 * runs after <head> is already built — a string added there ends up at the bottom of
+	 * <body>, behind the user head-block code and the page hooks it was meant to protect.
+	 * Inlined rather than linked to spare the preview a blocking request for 3 KB.
+	 * @return void
+	 */
+	private function injectDevicePreviewShim(): void
+	{
+		$shimFile = Manager::getDocRoot() . '/bitrix/js/landing/device_preview/sandbox_shim.js';
+		if (!\Bitrix\Main\IO\File::isFileExists($shimFile))
+		{
+			return;
+		}
+
+		$asset = \Bitrix\Main\Page\Asset::getInstance();
+		// data-skip-moving: the kernel relocates scripts to the bottom of the page, which for
+		// this one would defeat the whole point of injecting it first.
+		$asset->addString(
+			'<script data-skip-moving="true">'
+			. \Bitrix\Main\IO\File::getFileContents($shimFile)
+			. '</script>',
+			false,
+			\Bitrix\Main\Page\AssetLocation::BEFORE_CSS
+		);
+
+		// The conversion hit collector POSTs to the portal host unless its context cookie says
+		// the visit is already counted. From the opaque origin that request is cross-origin
+		// without CORS headers: the browser logs an error, and the hit is dropped anyway since
+		// session cookies are not sent. A preview must not count as a visit, so seed the
+		// in-memory jar and let the collector skip the request. Guarded by the shim flag: a real
+		// cookie store must never receive this cookie.
+		if (\Bitrix\Main\Loader::includeModule('conversion'))
+		{
+			$seed = json_encode(
+				\Bitrix\Conversion\DayContext::getVarName()
+					. '=' . rawurlencode(json_encode(['EXPIRE' => time() + 86400])),
+				JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP
+			);
+			$asset->addString(
+				'<script data-skip-moving="true">'
+				. 'if (window.landingDevicePreviewSandboxed) { document.cookie = ' . $seed . '; }'
+				. '</script>',
+				false,
+				\Bitrix\Main\Page\AssetLocation::BEFORE_CSS
+			);
+		}
+	}
+
+	/**
+	 * Overrides the Open Sans @font-face rules with data-URI ones for the sandboxed device preview.
+	 *
+	 * The opaque origin turns a same-host font request into a cross-origin one, and the portal
+	 * serves fonts without Access-Control-Allow-Origin: the browser blocks the fetch and logs an
+	 * error on every preview reload. Text still renders, but with fallback metrics — which is
+	 * exactly what a device preview is looked at for. The rules are appended after the stylesheet
+	 * of the ui extension, so with identical descriptors they win and the networked src is never
+	 * fetched. Only the 'Open Sans' family is overridden: the legacy 'OpenSans*' aliases from the
+	 * same stylesheet are not used by public pages, and a family nothing matches is never fetched.
+	 * @return void
+	 */
+	private function injectDevicePreviewFontFaces(): void
+	{
+		$cssFile = Manager::getDocRoot() . '/bitrix/js/ui/fonts/opensans/ui.font.opensans.css';
+		$cssContent = \Bitrix\Main\IO\File::isFileExists($cssFile)
+			? \Bitrix\Main\IO\File::getFileContents($cssFile)
+			: '';
+		if (!$cssContent || !preg_match_all('/@font-face\s*{(.+?)}/is', $cssContent, $faces))
+		{
+			return;
+		}
+
+		$styles = '';
+		foreach ($faces[1] as $face)
+		{
+			if (!preg_match('/font-family\s*:\s*([\'"])Open Sans\1/i', $face))
+			{
+				continue;
+			}
+			$inlined = $this->inlineFontFaceSrc($face);
+			if ($inlined !== null)
+			{
+				$styles .= '@font-face{' . $inlined . '}';
+			}
+		}
+
+		if ($styles !== '')
+		{
+			\Bitrix\Main\Page\Asset::getInstance()->addString(
+				'<style data-role="landing-device-preview-fonts">' . $styles . '</style>',
+				false,
+				\Bitrix\Main\Page\AssetLocation::AFTER_CSS
+			);
+		}
+	}
+
+	/**
+	 * Replaces the woff url() of a single @font-face body with a data URI and drops the ttf
+	 * fallback declared next to it. Returns null when there is no local woff to inline.
+	 * @param string $face Body of the @font-face rule.
+	 * @return string|null
+	 */
+	private function inlineFontFaceSrc(string $face): ?string
+	{
+		if (!preg_match('/url\(([\'"])([^\'"]+\.woff)\1\)/i', $face, $url))
+		{
+			return null;
+		}
+
+		$fontFile = Manager::getDocRoot() . $url[2];
+		$fontData = \Bitrix\Main\IO\File::isFileExists($fontFile)
+			? \Bitrix\Main\IO\File::getFileContents($fontFile)
+			: '';
+		if (!$fontData)
+		{
+			return null;
+		}
+
+		$face = preg_replace(
+			'/,?\s*url\([\'"][^\'"]+\.ttf[\'"]\)\s*format\([\'"]truetype[\'"]\)/i',
+			'',
+			$face
+		);
+
+		return str_replace(
+			$url[0],
+			'url(\'data:font/woff;base64,' . base64_encode($fontData) . '\')',
+			$face
+		);
+	}
+
+	/**
+	 * Validates a string as a bare web origin (scheme://host[:port]) and returns it
+	 * normalized, or an empty string when it is not a well-formed origin.
+	 * @param string $value Raw candidate.
+	 * @return string
+	 */
+	private function sanitizeOrigin(string $value): string
+	{
+		$parts = parse_url($value);
+		if (
+			!is_array($parts)
+			|| !isset($parts['scheme'], $parts['host'])
+			|| isset($parts['user'])
+			|| isset($parts['pass'])
+			|| isset($parts['query'])
+			|| isset($parts['fragment'])
+			|| (isset($parts['path']) && $parts['path'] !== '')
+		)
+		{
+			return '';
+		}
+
+		$scheme = mb_strtolower($parts['scheme']);
+		if ($scheme !== 'http' && $scheme !== 'https')
+		{
+			return '';
+		}
+
+		$host = mb_strtolower($parts['host']);
+		if (!preg_match('/^[a-z0-9.\-\[\]:]+$/', $host))
+		{
+			return '';
+		}
+
+		$origin = $scheme . '://' . $host;
+		if (isset($parts['port']))
+		{
+			$port = (int)$parts['port'];
+			if ($port < 1 || $port > 65535)
+			{
+				return '';
+			}
+			$origin .= ':' . $port;
+		}
+
+		return $origin;
 	}
 
 	/**
@@ -449,17 +727,18 @@ class LandingPubComponent extends LandingBaseComponent
 			// for base work
 			(
 				($requestedPageParts[0] ?? null) == 'preview' &&
-				($requestedPageParts[1] ?? null) == Site::getPublicHash($siteId)
+				Site::isPublicHashValid($siteId ?? 0, $requestedPageParts[1] ?? null)
 			)
 			||
 			// for cloud version
 			(
 				$this->request('landing_mode') == 'preview' &&
-				$this->request('hash') == Site::getPublicHash($siteId)
+				Site::isPublicHashValid($siteId ?? 0, $this->request('hash'))
 			)
 		)
 		{
 			$this->isPreviewMode = true;
+			$this->isSignedPreview = true;
 			if (($requestedPageParts[0] ?? null) == 'preview')
 			{
 				array_shift($requestedPageParts);
@@ -1394,7 +1673,7 @@ class LandingPubComponent extends LandingBaseComponent
 				$domainName .= $landingUrlParts['host'];
 			}
 		}
-		$canonical = $domainName . Manager::getApplication()->getCurDir();
+		$canonical = htmlspecialcharsbx($domainName . Manager::getApplication()->getCurDir());
 		Manager::setPageView(
 			'MetaOG',
 			'<meta property="og:url" content="' . $canonical . '" />' . "\n" .
@@ -1486,6 +1765,43 @@ class LandingPubComponent extends LandingBaseComponent
 				]
 			);
 		}
+	}
+
+	/**
+	 * Target of the force reload of the editor (?forceLandingId=<id>) on the "page not found"
+	 * branch, or null when there is nothing to redirect to.
+	 *
+	 * The page has to exist and to belong to the resolved site: under the preview mode the url of
+	 * a page is signed, so a page of any other site would turn the signed preview of this one into
+	 * a signed link into a draft of that other site.
+	 * @return string|null
+	 */
+	protected function getForceReloadUrl(): ?string
+	{
+		$forceLandingId = (int)$this->request('forceLandingId');
+		if ($forceLandingId <= 0)
+		{
+			return null;
+		}
+
+		// the same rights gate the resolved page goes through (CHECK_PERMISSIONS of the component):
+		// the visitor of a signed preview needs no session of the portal, and the target is a page
+		// of the very site the signature opens
+		// the same flags as for the resolved page: under DRAFT_MODE (knowledge bases, groups) the
+		// preview mode is on as well, but the urls there must not carry the signed preview tail
+		$landingForce = Landing::createInstance($forceLandingId, [
+			'check_permissions' => $this->arParams['CHECK_PERMISSIONS'] == 'Y',
+			'disable_link_preview' => $this->arParams['DRAFT_MODE'] == 'Y',
+		]);
+		if (
+			!$landingForce->exist()
+			|| $landingForce->getSiteId() !== (int)($this->arParams['LOCAL_SITE_ID'] ?? 0)
+		)
+		{
+			return null;
+		}
+
+		return $landingForce->getPublicUrl(false, false) . '?IFRAME=Y';
 	}
 
 	/**
@@ -1587,6 +1903,29 @@ class LandingPubComponent extends LandingBaseComponent
 				$this->arResult['ADV_CODE'] = $this->getAdvCode();
 				$this->arResult['SEARCH_RESULT_QUERY'] = $this->request('q');
 				$this->arResult['CAN_EDIT'] = 'N';
+				// MARKER-01: expose the validated parent portal origin so the template can inject
+				// the device-preview postMessage responder only for the editor device preview.
+				// The responder is needed by every device preview, sandboxed or not; the workarounds
+				// behind the device-preview mode are needed only by a sandboxed one — the editor
+				// frame under a sandbox attribute, or the signed preview under the CSP sandbox.
+				$this->arResult['DEVICE_PREVIEW_PARENT_ORIGIN'] = $this->getDevicePreviewParentOrigin();
+				$sandboxedSignedPreview = $this->isSandboxedSignedPreview();
+				if ($sandboxedSignedPreview)
+				{
+					$this->sandboxSignedPreview();
+				}
+				if (
+					$sandboxedSignedPreview
+					|| (
+						$this->arResult['DEVICE_PREVIEW_PARENT_ORIGIN'] !== ''
+						&& $this->isSandboxedDevicePreview($this->arResult['DEVICE_PREVIEW_PARENT_ORIGIN'])
+					)
+				)
+				{
+					Landing::setDevicePreviewMode(true);
+					$this->injectDevicePreviewShim();
+					$this->injectDevicePreviewFontFaces();
+				}
 				// if landing found
 				if ($landing->exist())
 				{
@@ -1783,16 +2122,28 @@ class LandingPubComponent extends LandingBaseComponent
 
 					$this->arParams['CHECK_PERMISSIONS'] = 'Y';
 				}
-				// for 404 we need site url
+				// the page is not found, but the request itself is still inside the preview:
+				// the url builders below must keep the portal host and the preview hash
+				if ($this->isPreviewMode)
+				{
+					Landing::setPreviewMode(true);
+				}
+				// for 404 we need site url; inside the signed preview of a non published site the
+				// bare publication root is not found either, so the url keeps the signed preview form
 				if ($this->arParams['LOCAL_SITE_ID'] ?? null)
 				{
-					$this->arResult['SITE_URL'] = Site::getPublicUrl($this->arParams['LOCAL_SITE_ID']);
+					$this->arResult['SITE_URL'] = Site::getPublicUrl(
+						$this->arParams['LOCAL_SITE_ID'],
+						true,
+						true,
+						$this->isSignedPreview
+					);
 				}
 				// try force reload
-				if ($this->request('forceLandingId'))
+				$forceReloadUrl = $this->getForceReloadUrl();
+				if ($forceReloadUrl !== null)
 				{
-					$landingForce = Landing::createInstance($this->request('forceLandingId'));
-					\localRedirect($landingForce->getPublicUrl(false, false) . '?IFRAME=Y');
+					\localRedirect($forceReloadUrl);
 				}
 				// site is actual not exists
 				$this->setHttpStatusOnce($this::ERROR_STATUS_NOT_FOUND);

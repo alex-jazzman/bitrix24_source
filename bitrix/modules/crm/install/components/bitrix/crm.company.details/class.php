@@ -332,6 +332,7 @@ class CCrmCompanyDetailsComponent
 									'PRESERVE_HISTORY' => true,
 									'ADD_EVENT_NAME' => 'CrmCreateDealFromCompany',
 									'EXTENDED_INTERNAL_MODE' => true,
+									'ENABLE_GROUP_ACTIONS' => 'Y',
 									'ANALYTICS' => [
 										// we dont know where from this component was opened from - it could be anywhere on portal
 										'c_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SECTION_COMPANY,
@@ -799,6 +800,20 @@ class CCrmCompanyDetailsComponent
 				'name' => 'ID',
 				'title' => Loc::getMessage('CRM_COMPANY_FIELD_ID'),
 				'type' => 'text',
+				'editable' => false,
+				'enableAttributes' => false
+			),
+			array(
+				'name' => 'DATE_CREATE',
+				'title' => Loc::getMessage('CRM_COMPANY_FIELD_DATE_CREATE'),
+				'type' => 'datetime',
+				'editable' => false,
+				'enableAttributes' => false
+			),
+			array(
+				'name' => 'DATE_MODIFY',
+				'title' => Loc::getMessage('CRM_COMPANY_FIELD_DATE_MODIFY'),
+				'type' => 'datetime',
 				'editable' => false,
 				'enableAttributes' => false
 			),

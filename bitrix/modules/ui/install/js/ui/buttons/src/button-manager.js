@@ -6,6 +6,7 @@ import { Counter, CounterStyle } from 'ui.cnt';
 
 import BaseButton from './base-button';
 import Button from './button/button';
+import { hasMenuItems } from './menu/menu-controller';
 import SplitButton from './split-button/split-button';
 import ButtonTag from './button/button-tag';
 import ButtonColor from './button/button-color';
@@ -196,7 +197,19 @@ export default class ButtonManager
 			this.#convertEvents(options.events);
 		}
 
-		if (Type.isPlainObject(nodeOptions.menu))
+		if (hasMenuItems(nodeOptions.systemMenu))
+		{
+			if (Type.isPlainObject(nodeOptions.menu))
+			{
+				console.warn(
+					'BX.UI.ButtonManager.createFromNode: the "menu" option is ignored, because "systemMenu" is set.',
+				);
+			}
+
+			options.systemMenu = nodeOptions.systemMenu;
+			this.#convertSystemMenuEvents(options.systemMenu);
+		}
+		else if (Type.isPlainObject(nodeOptions.menu))
 		{
 			options.menu = nodeOptions.menu;
 			this.#convertMenuEvents(options.menu.items);
@@ -490,6 +503,76 @@ export default class ButtonManager
 			if (Type.isArray(item.items))
 			{
 				this.#convertMenuEvents(item.items);
+			}
+		});
+	}
+
+	/**
+	 * @private
+	 * @param options ui.buttons options of a button rendered inside a menu
+	 */
+	static #convertButtonOptions(options)
+	{
+		if (options.onclick)
+		{
+			options.onclick = this.#convertEventHandler(options.onclick);
+		}
+
+		this.#convertEvents(options.events);
+
+		if (hasMenuItems(options.systemMenu))
+		{
+			this.#convertSystemMenuEvents(options.systemMenu);
+		}
+		else if (Type.isPlainObject(options.menu))
+		{
+			this.#convertMenuEvents(options.menu.items);
+		}
+	}
+
+	/**
+	 * @private
+	 * @param menu ui.system.menu options
+	 */
+	static #convertSystemMenuEvents(menu)
+	{
+		this.#convertEvents(menu.events);
+
+		if (menu.richHeader?.onClick)
+		{
+			menu.richHeader.onClick = this.#convertEventHandler(menu.richHeader.onClick);
+		}
+
+		if (!Type.isArray(menu.items))
+		{
+			return;
+		}
+
+		menu.items.forEach((item) => {
+			if (!Type.isPlainObject(item))
+			{
+				return;
+			}
+
+			if (item.onClick)
+			{
+				item.onClick = this.#convertEventHandler(item.onClick);
+			}
+
+			if (item.extraIcon?.onClick)
+			{
+				item.extraIcon.onClick = this.#convertEventHandler(item.extraIcon.onClick);
+			}
+
+			// a menu item may render a ui.buttons button, and its options keep the old handler format
+			if (Type.isPlainObject(item.uiButtonOptions))
+			{
+				this.#convertButtonOptions(item.uiButtonOptions);
+			}
+
+			if (Type.isPlainObject(item.subMenu))
+			{
+				this.#convertSystemMenuEvents(item.subMenu);
 			}
 		});
 	}

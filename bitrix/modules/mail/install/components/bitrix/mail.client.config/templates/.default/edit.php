@@ -1,5 +1,11 @@
 <?php
 
+/**
+ * @global CMain $APPLICATION
+ * @var array $arParams
+ * @var array $arResult
+ */
+
 use Bitrix\Mail\Helper\LicenseManager;
 use Bitrix\Mail\Helper\Enum\MailboxStatus;
 use Bitrix\Mail\Helper\Mailbox\MailboxSettingsConfig;
@@ -7,8 +13,12 @@ use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Json;
 use Bitrix\Main\Web\Uri;
+use Bitrix\Main\UI\Extension;
+use Bitrix\Main\Loader;
+use Bitrix\Mail\Helper\MailAccess;
+use Bitrix\Mail\Helper\OrphanedMailboxLifecycle;
 
-\Bitrix\Main\UI\Extension::load([
+Extension::load([
 	'mail.setting-selector',
 	'ui.info-helper',
 	'ui.alerts',
@@ -21,14 +31,14 @@ use Bitrix\Main\Web\Uri;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
-if (\CModule::includeModule('bitrix24'))
+if (CModule::includeModule('bitrix24'))
 {
-	\CBitrix24::initLicenseInfoPopupJS();
+	CBitrix24::initLicenseInfoPopupJS();
 }
 
-\Bitrix\Main\UI\Extension::load(['ui.buttons', 'ui.hint']);
-\Bitrix\Main\Loader::includeModule('socialnetwork');
-\CJsCore::init(array('socnetlogdest', 'popup', 'fx'));
+Extension::load(['ui.buttons', 'ui.hint']);
+Loader::includeModule('socialnetwork');
+CJsCore::init(array('socnetlogdest', 'popup', 'fx'));
 $APPLICATION->setAdditionalCSS('/bitrix/components/bitrix/main.post.form/templates/.default/style.css');
 
 $bodyClass = $APPLICATION->GetPageProperty("BodyClass");
@@ -50,7 +60,7 @@ if ('N' == $_REQUEST['oauth'])
 	unset($settings['oauth']);
 }
 
-$baseUri = \CHTTP::urlDeleteParams(Main\Context::getCurrent()->getRequest()->getRequestUri(), array('oauth'));
+$baseUri = (new Uri(Main\Context::getCurrent()->getRequest()->getRequestUri()))->deleteParams(['oauth']);
 
 if (!empty($mailbox))
 {
@@ -201,7 +211,7 @@ $senderNameBlockHtml = '
 					<div class="mail-connect-email-block" id="mail_connect_mb_oauth_status">
 						<div id="mail-connect-email-inner" class="mail-connect-email-inner">
 							<span class="mail-connect-email-img" id="mail_connect_mb_oauth_status_image"></span>
-							<a class="mail-connect-email-text" title="<?= htmlspecialcharsbx($settings['oauth_user']['email']); ?>" id="mail_connect_mb_oauth_status_email">
+							<a class="mail-connect-email-text" title="<?= htmlspecialcharsbx($settings['oauth_user']['email'] ?? ''); ?>" id="mail_connect_mb_oauth_status_email">
 								<? if (!empty($settings['oauth_user'])) echo htmlspecialcharsbx($settings['oauth_user']['email']); ?>
 							</a>
 						</div>
@@ -209,7 +219,7 @@ $senderNameBlockHtml = '
 							type="button" id="mail_connect_mb_oauth_cancel_btn"><?=Loc::getMessage('MAIL_CLIENT_CONFIG_OAUTH_DISCONNECT') ?></button>
 					</div>
 				</div>
-				<a href="<?= htmlspecialcharsbx(\CHTTP::urlAddParams($baseUri, array('oauth' => 'N'))) ?>"
+				<a href="<?= htmlspecialcharsbx((clone $baseUri)->addParams(['oauth' => 'N'])) ?>"
 					data-slider-ignore-autobinding="true" style="display: none; ">password mode</a>
 
 						<div id="mail-email-oauth" class="ui-alert ui-alert-warning mail-connect-form-item">
@@ -286,7 +296,7 @@ $senderNameBlockHtml = '
 							</div>
 						</div>
 						<? if (!empty($hiddenOAuth)): ?>
-							<a href="<?=htmlspecialcharsbx(\CHTTP::urlAddParams($baseUri, array('oauth' => 'Y'))) ?>"
+							<a href="<?=htmlspecialcharsbx((clone $baseUri)->addParams(['oauth' => 'Y'])) ?>"
 							   data-slider-ignore-autobinding="true" style="display: none; ">oauth mode</a>
 						<? endif ?>
 					<? endif ?>
@@ -362,8 +372,8 @@ $senderNameBlockHtml = '
 		</div>
 		<?php if (
 			!empty($mailbox)
-			&& \Bitrix\Mail\Helper\MailAccess::hasCurrentUserAdminAccess()
-			&& \Bitrix\Mail\Helper\OrphanedMailboxLifecycle::isOrphan($mailbox)
+			&& MailAccess::hasCurrentUserAdminAccess()
+			&& OrphanedMailboxLifecycle::isOrphan($mailbox)
 		): ?>
 		<div class="ui-slider-section">
 			<div class="mail-connect-section-block">
@@ -806,7 +816,7 @@ if (empty($mailbox))
 $ownerData = null;
 if (!empty($mailbox['USER_ID']))
 {
-	$user = \CUser::GetByID($mailbox['USER_ID'])->Fetch();
+	$user = CUser::GetByID($mailbox['USER_ID'])->Fetch();
 	if ($user)
 	{
 		$avatarUrl = null;
@@ -822,7 +832,7 @@ if (!empty($mailbox['USER_ID']))
 		$ownerData = [
 			'id' => $user['ID'],
 			'entityId' => 'user',
-			'title' => \CUser::FormatName(\CSite::getNameFormat(false), $user, true, false),
+			'title' => CUser::FormatName(CSite::getNameFormat(false), $user, true, false),
 			'avatar' => $avatarUrl,
 		];
 	}
@@ -943,21 +953,21 @@ $arJsParams = [
 
 
 	BX.message({
-		'MAIL_CLIENT_CONFIG_IMAP_DIRS_TITLE': '<?=\CUtil::jsEscape(Loc::getMessage('MAIL_CLIENT_CONFIG_IMAP_DIRS_TITLE')) ?>',
-		'MAIL_CLIENT_CONFIG_IMAP_DIRS_SYNC': '<?=\CUtil::jsEscape(Loc::getMessage('MAIL_CLIENT_CONFIG_IMAP_DIRS_SYNC')) ?>',
-		'MAIL_CLIENT_CONFIG_IMAP_DIRS_FOR': '<?=\CUtil::jsEscape(Loc::getMessage('MAIL_CLIENT_CONFIG_IMAP_DIRS_FOR')) ?>',
-		'MAIL_CLIENT_CONFIG_IMAP_DIRS_OUTCOME': '<?=\CUtil::jsEscape(Loc::getMessage('MAIL_CLIENT_CONFIG_IMAP_DIRS_OUTCOME')) ?>',
-		'MAIL_CLIENT_CONFIG_IMAP_DIRS_TRASH': '<?=\CUtil::jsEscape(Loc::getMessage('MAIL_CLIENT_CONFIG_IMAP_DIRS_TRASH')) ?>',
-		'MAIL_CLIENT_CONFIG_IMAP_DIRS_SPAM': '<?=\CUtil::jsEscape(Loc::getMessage('MAIL_CLIENT_CONFIG_IMAP_DIRS_SPAM')) ?>',
-		'MAIL_CLIENT_CONFIG_IMAP_DIRS_EMPTY_DEFAULT': '<?=\CUtil::jsEscape(Loc::getMessage('MAIL_CLIENT_CONFIG_IMAP_DIRS_EMPTY_DEFAULT')) ?>',
-		'MAIL_CLIENT_CONFIG_IMAP_DIRS_BTN_SAVE': '<?=\CUtil::jsEscape(Loc::getMessage('MAIL_CLIENT_CONFIG_IMAP_DIRS_BTN_SAVE')) ?>',
-		'MAIL_CLIENT_CONFIG_IMAP_DIRS_BTN_CANCEL': '<?=\CUtil::jsEscape(Loc::getMessage('MAIL_CLIENT_CONFIG_IMAP_DIRS_BTN_CANCEL')) ?>',
-		'MAIL_MAILBOX_LICENSE_SHARED_LIMIT_BODY': '<?=\CUtil::jsEscape(Loc::getMessage('MAIL_MAILBOX_LICENSE_SHARED_LIMIT_BODY', array('#LIMIT#' => LicenseManager::getSharedMailboxesLimit()))) ?>',
-		'MAIL_MAILBOX_LICENSE_SHARED_LIMIT_TITLE': '<?=\CUtil::jsEscape(Loc::getMessage('MAIL_MAILBOX_LICENSE_SHARED_LIMIT_TITLE')) ?>',
-		'MAIL_CONFIG_OAUTH_ERROR_TOUR_TITLE': '<?=\CUtil::jsEscape(Loc::getMessage('MAIL_CONFIG_OAUTH_ERROR_TOUR_TITLE')) ?>',
-		'MAIL_CONFIG_OAUTH_ERROR_TOUR_TEXT': '<?=\CUtil::jsEscape(Loc::getMessage('MAIL_CONFIG_OAUTH_ERROR_TOUR_TEXT')) ?>',
-		'MAIL_CONFIG_PASSWORD_ERROR_TOUR_TITLE': '<?=\CUtil::jsEscape(Loc::getMessage('MAIL_CONFIG_PASSWORD_ERROR_TOUR_TITLE')) ?>',
-		'MAIL_CONFIG_PASSWORD_ERROR_TOUR_TEXT': '<?=\CUtil::jsEscape(Loc::getMessage('MAIL_CONFIG_PASSWORD_ERROR_TOUR_TEXT')) ?>',
+		'MAIL_CLIENT_CONFIG_IMAP_DIRS_TITLE': '<?=CUtil::jsEscape(Loc::getMessage('MAIL_CLIENT_CONFIG_IMAP_DIRS_TITLE')) ?>',
+		'MAIL_CLIENT_CONFIG_IMAP_DIRS_SYNC': '<?=CUtil::jsEscape(Loc::getMessage('MAIL_CLIENT_CONFIG_IMAP_DIRS_SYNC')) ?>',
+		'MAIL_CLIENT_CONFIG_IMAP_DIRS_FOR': '<?=CUtil::jsEscape(Loc::getMessage('MAIL_CLIENT_CONFIG_IMAP_DIRS_FOR')) ?>',
+		'MAIL_CLIENT_CONFIG_IMAP_DIRS_OUTCOME': '<?=CUtil::jsEscape(Loc::getMessage('MAIL_CLIENT_CONFIG_IMAP_DIRS_OUTCOME')) ?>',
+		'MAIL_CLIENT_CONFIG_IMAP_DIRS_TRASH': '<?=CUtil::jsEscape(Loc::getMessage('MAIL_CLIENT_CONFIG_IMAP_DIRS_TRASH')) ?>',
+		'MAIL_CLIENT_CONFIG_IMAP_DIRS_SPAM': '<?=CUtil::jsEscape(Loc::getMessage('MAIL_CLIENT_CONFIG_IMAP_DIRS_SPAM')) ?>',
+		'MAIL_CLIENT_CONFIG_IMAP_DIRS_EMPTY_DEFAULT': '<?=CUtil::jsEscape(Loc::getMessage('MAIL_CLIENT_CONFIG_IMAP_DIRS_EMPTY_DEFAULT')) ?>',
+		'MAIL_CLIENT_CONFIG_IMAP_DIRS_BTN_SAVE': '<?=CUtil::jsEscape(Loc::getMessage('MAIL_CLIENT_CONFIG_IMAP_DIRS_BTN_SAVE')) ?>',
+		'MAIL_CLIENT_CONFIG_IMAP_DIRS_BTN_CANCEL': '<?=CUtil::jsEscape(Loc::getMessage('MAIL_CLIENT_CONFIG_IMAP_DIRS_BTN_CANCEL')) ?>',
+		'MAIL_MAILBOX_LICENSE_SHARED_LIMIT_BODY': '<?=CUtil::jsEscape(Loc::getMessage('MAIL_MAILBOX_LICENSE_SHARED_LIMIT_BODY', array('#LIMIT#' => LicenseManager::getSharedMailboxesLimit()))) ?>',
+		'MAIL_MAILBOX_LICENSE_SHARED_LIMIT_TITLE': '<?=CUtil::jsEscape(Loc::getMessage('MAIL_MAILBOX_LICENSE_SHARED_LIMIT_TITLE')) ?>',
+		'MAIL_CONFIG_OAUTH_ERROR_TOUR_TITLE': '<?=CUtil::jsEscape(Loc::getMessage('MAIL_CONFIG_OAUTH_ERROR_TOUR_TITLE')) ?>',
+		'MAIL_CONFIG_OAUTH_ERROR_TOUR_TEXT': '<?=CUtil::jsEscape(Loc::getMessage('MAIL_CONFIG_OAUTH_ERROR_TOUR_TEXT')) ?>',
+		'MAIL_CONFIG_PASSWORD_ERROR_TOUR_TITLE': '<?=CUtil::jsEscape(Loc::getMessage('MAIL_CONFIG_PASSWORD_ERROR_TOUR_TITLE')) ?>',
+		'MAIL_CONFIG_PASSWORD_ERROR_TOUR_TEXT': '<?=CUtil::jsEscape(Loc::getMessage('MAIL_CONFIG_PASSWORD_ERROR_TOUR_TEXT')) ?>',
 	});
 
 

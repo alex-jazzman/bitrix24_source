@@ -9,7 +9,7 @@ export const TileMoreItem: BitrixVueComponentProps = {
 	components: {
 		BIcon,
 	},
-	emit: ['onClick'],
+	emits: ['onClick'],
 	props: {
 		hiddenFilesCount: {
 			type: Number,
@@ -31,11 +31,17 @@ export const TileMoreItem: BitrixVueComponentProps = {
 		},
 	},
 	template: `
-		<div class="ui-tile-uploader-item" @click="$emit('onClick')">
-			<div class="ui-tile-uploader-item-more">
-				<BIcon class="ui-tile-uploader-item-more-icon" :name="Actions.MORE"/>
-				<div class="ui-tile-uploader-item-more-label" v-html="moreButtonCaption"></div>
-			</div>
+		<div class="ui-tile-uploader-item">
+			<button
+				type="button"
+				class="ui-tile-uploader-item-more"
+				data-testid="ui-tile-uploader-more-btn"
+				aria-expanded="false"
+				@click="$emit('onClick')"
+			>
+				<BIcon class="ui-tile-uploader-item-more-icon" :name="Actions.MORE" aria-hidden="true"/>
+				<span class="ui-tile-uploader-item-more-label" v-html="moreButtonCaption"></span>
+			</button>
 		</div>
 	`,
 };

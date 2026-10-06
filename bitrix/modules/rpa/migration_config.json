@@ -1,0 +1,8 @@
+{
+    "defaultTableName": "b_rpa_type",
+    "installDirectoriesMapping": {
+        "install/activities": "activities",
+        "install/components": "components",
+        "install/js": "js"
+    }
+}

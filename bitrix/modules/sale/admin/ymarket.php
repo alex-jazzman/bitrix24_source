@@ -4,6 +4,7 @@
 use Bitrix\Main\Context;
 use Bitrix\Main\Loader;
 use \Bitrix\Sale\Services\PaySystem\Restrictions;
+use Bitrix\Main\Web\HttpClient;
 
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_before.php");
 IncludeModuleLangFile(__FILE__);
@@ -42,11 +43,10 @@ else
 
 if (isset($_REQUEST["https_check"]) && $_REQUEST["https_check"] == "Y" && check_bitrix_sessid())
 {
-	$ob = new CHTTP();
-	$ob->http_timeout = 10;
+	$ob = new HttpClient();
+	$ob->setTimeout(10);
 
-
-	if (!@$ob->Get("https://".$_SERVER["SERVER_NAME"].$APPLICATION->GetCurPage()))
+	if (!$ob->get("https://".$_SERVER["SERVER_NAME"].$APPLICATION->GetCurPage()))
 	{
 		$res = "error";
 		$text = GetMessage("SALE_YM_CHECK_HTTPS_ERROR");

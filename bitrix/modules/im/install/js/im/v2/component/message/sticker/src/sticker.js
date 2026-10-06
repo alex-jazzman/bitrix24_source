@@ -1,7 +1,7 @@
 import { Type } from 'main.core';
 
 import { BaseMessage } from 'im.v2.component.message.base';
-import { MessageHeader, MessageStatus, ReactionList } from 'im.v2.component.message.elements';
+import { MessageHeader, MessageStatus, ReactionList, Reply } from 'im.v2.component.message.elements';
 
 import { PackPopup } from './components/pack-popup/pack-popup';
 import { StickerFallback } from './components/sticker-fallback';
@@ -14,7 +14,7 @@ import type { JsonObject } from 'main.core';
 // @vue/component
 export const StickerMessage = {
 	name: 'StickerMessage',
-	components: { BaseMessage, MessageStatus, ReactionList, MessageHeader, StickerFallback, PackPopup },
+	components: { BaseMessage, MessageStatus, ReactionList, MessageHeader, StickerFallback, PackPopup, Reply },
 	props: {
 		item: {
 			type: Object,
@@ -35,6 +35,14 @@ export const StickerMessage = {
 		message(): ImModelMessage
 		{
 			return this.item;
+		},
+		hasReply(): boolean
+		{
+			return this.message.replyId !== 0;
+		},
+		isForward(): boolean
+		{
+			return this.$store.getters['messages/isForward'](this.message.id);
 		},
 		sticker(): ?ImModelSticker
 		{
@@ -94,6 +102,13 @@ export const StickerMessage = {
 					<MessageHeader :item="item" :isOverlay="true" />
 				</div>
 			</template>
+			<Reply
+				v-if="hasReply"
+				class="bx-im-message-sticker__reply"
+				:dialogId="dialogId"
+				:replyId="message.replyId"
+				:isForward="isForward"
+			/>
 			<div class="bx-im-message-sticker__container">
 				<div
 					v-if="hasStickerUri"

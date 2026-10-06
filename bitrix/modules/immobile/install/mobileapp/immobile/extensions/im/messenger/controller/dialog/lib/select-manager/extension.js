@@ -343,14 +343,19 @@ jn.define('im/messenger/controller/dialog/lib/select-manager', (require, exports
 			}
 
 			const dialogModel = dialogHelper.dialogModel;
-			const hasPrivilegedRole = dialogHelper.isCurrentUserOwner || dialogHelper.isCurrentUserManager;
 			const canDeleteOtherMessage = ChatPermission.canDeleteOtherMessage(dialogModel);
+			const canDeleteOwnMessage = ChatPermission.canDeleteOwnMessage(dialogModel);
 			const selectedMessageIdsAllowedDelete = this.#selectedMessageIdList.filter((id) => {
 				const messageHelper = MessageHelper.createById(id);
 
 				if (messageHelper.isYour)
 				{
-					return (hasPrivilegedRole && canDeleteOtherMessage) || !messageHelper.isDeleted;
+					if (messageHelper.isDeleted)
+					{
+						return false;
+					}
+
+					return canDeleteOwnMessage;
 				}
 
 				return canDeleteOtherMessage;

@@ -9,6 +9,7 @@ import { Analytics } from 'im.v2.lib.analytics';
 import { BulkActionsManager } from 'im.v2.lib.bulk-actions';
 import { ChannelManager } from 'im.v2.lib.channel';
 import { FeatureManager, Feature, TariffManager } from 'im.v2.lib.feature';
+import { FolderManager } from 'im.v2.lib.folder';
 import { LocalStorageManager } from 'im.v2.lib.local-storage';
 import { Logger } from 'im.v2.lib.logger';
 import { type ImModelLayout, type ImModelChat } from 'im.v2.model';
@@ -23,6 +24,7 @@ export class LayoutManager
 	static #instance: LayoutManager;
 	#emitter: EventEmitter;
 	#lastOpenedElement: { [layoutName: LayoutType]: EntityId } = {};
+	#originLayout: ?ImModelLayout = null;
 
 	static getInstance(): LayoutManager
 	{
@@ -54,6 +56,8 @@ export class LayoutManager
 			}
 		}
 
+		this.#saveOriginLayout();
+
 		if (config.entityId)
 		{
 			this.setLastOpenedElement(config.name, config.entityId);
@@ -73,6 +77,18 @@ export class LayoutManager
 		return Core.getStore().dispatch('application/setLayout', config);
 	}
 
+	restoreOriginLayout(newEntityId?: string): Promise
+	{
+		let originLayout = this.#originLayout ?? { name: Layout.chat };
+		if (newEntityId)
+		{
+			originLayout = { ...originLayout, entityId: newEntityId, contextId: 0 };
+		}
+		this.#originLayout = null;
+
+		return this.setLayout(originLayout);
+	}
+
 	getLayout(): ImModelLayout
 	{
 		return Core.getStore().getters['application/getLayout'];
@@ -85,6 +101,7 @@ export class LayoutManager
 		LocalStorageManager.getInstance().set(LocalStorageKey.layoutConfig, {
 			name: currentLayout.name,
 			entityId: currentLayout.entityId,
+			params: currentLayout.params,
 		});
 	}
 
@@ -93,7 +110,7 @@ export class LayoutManager
 		const layoutConfig = LocalStorageManager.getInstance().get(LocalStorageKey.layoutConfig);
 		if (!layoutConfig)
 		{
-			return this.setLayout({ name: Layout.chat });
+			return this.setLayout(FolderManager.getInitialLayout() ?? { name: Layout.chat });
 		}
 
 		Logger.warn('LayoutManager: last layout was restored', layoutConfig);
@@ -190,6 +207,7 @@ export class LayoutManager
 			Layout.openlinesV2,
 			Layout.collab,
 			Layout.taskComments,
+			Layout.folder,
 		]);
 
 		return chatLayouts.has(layoutName);
@@ -197,9 +215,27 @@ export class LayoutManager
 
 	isChatFormLayout(layoutName: LayoutType): boolean
 	{
-		const formLayouts = new Set([Layout.createChat, Layout.updateChat]);
+		const formLayouts = new Set([
+			Layout.createChat,
+			Layout.updateChat,
+		]);
 
 		return formLayouts.has(layoutName);
+	}
+
+	isFolderFormLayout(layoutName: LayoutType): boolean
+	{
+		const formLayouts = new Set([
+			Layout.createFolder,
+			Layout.updateFolder,
+		]);
+
+		return formLayouts.has(layoutName);
+	}
+
+	isFormLayout(layoutName: LayoutType): boolean
+	{
+		return this.isChatFormLayout(layoutName) || this.isFolderFormLayout(layoutName);
 	}
 
 	async #onGoToMessageContext(event: BaseEvent<{dialogId: string, messageId: number}>): void
@@ -242,6 +278,17 @@ export class LayoutManager
 		}
 
 		Analytics.getInstance().onOpenTab(config.name);
+	}
+
+	#saveOriginLayout()
+	{
+		const currentLayout = this.getLayout();
+		if (this.isFormLayout(currentLayout.name))
+		{
+			return;
+		}
+
+		this.#originLayout = { ...currentLayout };
 	}
 
 	#isSameChat(config: ImModelLayout): boolean

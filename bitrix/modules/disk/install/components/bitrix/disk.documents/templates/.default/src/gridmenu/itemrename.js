@@ -2,6 +2,7 @@ import {Text} from 'main.core';
 import {Options as GridOptions} from '../options';
 import Item from './item';
 import Backend from "../backend";
+import {keepFocusThroughMenuClose} from "../utils";
 
 export default class ItemRename extends Item
 {
@@ -89,7 +90,7 @@ export default class ItemRename extends Item
 				}
 			}.bind(this));
 			input.addEventListener('blur', onBlur);
-			BX.focus(input);
+			keepFocusThroughMenuClose(() => BX.focus(input));
 		}
 	}
 
@@ -98,4 +99,3 @@ export default class ItemRename extends Item
 		return itemData['id'] === 'rename';
 	}
 }
-

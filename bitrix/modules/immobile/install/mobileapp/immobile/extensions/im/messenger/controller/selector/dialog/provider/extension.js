@@ -30,16 +30,7 @@ jn.define('im/messenger/controller/selector/dialog/provider', (require, exports,
 	{
 		/**
 		 * @param {String} context
-		 * @param {Object} options
-		 * @param {Boolean} options.allowMultipleSelection=false
-		 * @param {Boolean} options.withFavorite=false
-		 * @param {Boolean} options.withCurrentUser=true
-		 * @param {Boolean} options.onlyUsers=false
-		 * @param {Boolean} options.useNotes=false
-		 * @param {Array<string|number>} [options.initialDialogIds] - dialogIds that must appear in
-		 *     the recent list even if they are not in recentModel (e.g. chats hidden from recent
-		 *     but already present in the folder being edited). Without this, the native widget
-		 *     drops them from the final selection on close.
+		 * @param {DialogSelectorProviderOptions} options
 		 */
 		constructor(context, options = {})
 		{
@@ -53,6 +44,7 @@ jn.define('im/messenger/controller/selector/dialog/provider', (require, exports,
 			this.withCurrentUser = options?.withCurrentUser ?? true;
 			this.onlyUsers = options?.onlyUsers ?? false;
 			this.useNotes = options?.useNotes ?? false;
+			this.excludeGuests = options?.excludeGuests ?? false;
 			this.initialDialogIds = Type.isArray(options?.initialDialogIds)
 				? options.initialDialogIds.map((id) => String(id))
 				: [];
@@ -78,9 +70,13 @@ jn.define('im/messenger/controller/selector/dialog/provider', (require, exports,
 						DialogType.comment,
 						DialogType.tasksTask,
 					],
+					excludeGuests: this.excludeGuests,
 				}),
 				serverStrategy: new DefaultServerSearchStrategy({
 					config: new ChatSearchConfig(),
+					dynamicOptions: this.excludeGuests
+						? () => ({ excludeGuests: true })
+						: undefined,
 				}),
 				loadSearchProcessed: this.#onLocalSearchComplete,
 				loadSearchComplete: this.#onServerSearchComplete,
@@ -187,6 +183,15 @@ jn.define('im/messenger/controller/selector/dialog/provider', (require, exports,
 			{
 				dialogs = dialogs.filter((dialog) => {
 					return Number(dialog.dialogId) !== serviceLocator.get('core').getUserId();
+				});
+			}
+
+			if (this.excludeGuests)
+			{
+				dialogs = dialogs.filter((dialog) => {
+					const userHelper = UserHelper.createByUserId(Number(dialog.dialogId));
+
+					return !userHelper?.isGuest;
 				});
 			}
 

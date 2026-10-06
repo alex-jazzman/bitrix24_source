@@ -2,6 +2,7 @@
 
 use Bitrix\Crm\Integration\AI\AIManager;
 use Bitrix\Crm\Integration\AI\Operation\Scenario;
+use Bitrix\Main\Loader;
 use Bitrix\Main\ModuleManager;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
@@ -9,22 +10,30 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
-$settings = [
-	'hasLocationModule' => ModuleManager::isModuleInstalled('location'),
-	'aiScenarioList' => [
+$aiScenarioList = [];
+if (Loader::includeModule('crm'))
+{
+	$aiScenarioList = [
 		Scenario::TRANSCRIBE_RECORD_SCENARIO,
 		Scenario::SUMMARIZE_SCENARIO,
 		Scenario::FILL_FIELDS_SCENARIO,
 		Scenario::CALL_SCORING_SCENARIO,
+		Scenario::CALL_SCORING_V2_SCENARIO,
 		Scenario::ANALYZE_COMMUNICATION_SCENARIO,
 		Scenario::FULL_SCENARIO,
-	],
+	];
+}
+
+$settings = [
+	'hasLocationModule' => ModuleManager::isModuleInstalled('location'),
+	'aiScenarioList' => $aiScenarioList,
 ];
 
 return [
 	'css' => 'dist/index.bundle.css',
 	'js' => 'dist/index.bundle.js',
 	'rel' => [
+		'ai.ajax-error-handler',
 		'bizproc.types',
 		'calendar.sharing.interface',
 		'calendar.util',
@@ -39,6 +48,7 @@ return [
 		'crm.field.ping-selector',
 		'crm.integration.analytics',
 		'crm.router',
+		'crm.timeline.dialog',
 		'crm.timeline.editors.comment-editor',
 		'crm.timeline.tools',
 		'crm_common',
@@ -54,6 +64,7 @@ return [
 		'main.sidepanel',
 		'pull.client',
 		'rest.client',
+		'ui.a11y',
 		'ui.alerts',
 		'ui.analytics',
 		'ui.avatar',
@@ -62,7 +73,6 @@ return [
 		'ui.cnt',
 		'ui.design-tokens',
 		'ui.design-tokens.air',
-		'ui.dialogs.messagebox',
 		'ui.entity-selector',
 		'ui.feedback.form',
 		'ui.hint',
@@ -78,6 +88,7 @@ return [
 		'ui.progressround',
 		'ui.sidepanel',
 		'ui.system.chip.vue',
+		'ui.system.dialog',
 		'ui.system.label',
 		'ui.system.menu',
 		'ui.system.typography.vue',
@@ -89,6 +100,11 @@ return [
 	'settings' => $settings,
 	'skip_core' => false,
 	'oninit' => static function() {
+		if (!Loader::includeModule('crm'))
+		{
+			return [];
+		}
+
 		return [
 			'lang_additional' => [
 				'AI_APP_COLLECTION_MARKET_LINK' => AIManager::getAiAppCollectionMarketLink(),

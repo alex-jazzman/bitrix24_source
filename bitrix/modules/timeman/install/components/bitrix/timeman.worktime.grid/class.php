@@ -1101,58 +1101,6 @@ class TimemanWorktimeGridComponent extends Timeman\Component\BaseComponent
 		return $sortedTemplateParamsList;
 	}
 
-	public static function getUserOffset($userData)
-	{
-		// this is copy of \CTimeZone::GetOffset
-		// but without select on every call
-		// delete this method when \CTimeZone::GetOffset will be able to work with userIds list
-
-		if (!\CTimeZone::optionEnabled())
-		{
-			return 0;
-		}
-
-		try
-		{
-			$localTime = new \DateTime();
-			$localOffset = $localTime->getOffset();
-			$userOffset = $localOffset;
-
-			$autoTimeZone = $userZone = '';
-			$factOffset = 0;
-			if (!empty($userData))
-			{
-				$autoTimeZone = trim($userData["AUTO_TIME_ZONE"]);
-				$userZone = $userData["TIME_ZONE"];
-				$factOffset = intval($userData["TIME_ZONE_OFFSET"]);
-			}
-
-			if ($autoTimeZone == "N")
-			{
-				$userTime = ($userZone <> "" ? new \DateTime(null, new \DateTimeZone($userZone)) : $localTime);
-				$userOffset = $userTime->getOffset();
-			}
-			else
-			{
-				if (\CTimeZone::isAutoTimeZone($autoTimeZone))
-				{
-					return $factOffset;
-				}
-				else
-				{
-					$serverZone = \COption::GetOptionString("main", "default_time_zone", "");
-					$serverTime = ($serverZone <> "" ? new \DateTime(null, new \DateTimeZone($serverZone)) : $localTime);
-					$userOffset = $serverTime->getOffset();
-				}
-			}
-		}
-		catch (\Exception $e)
-		{
-			return 0;
-		}
-		return $userOffset - $localOffset;
-	}
-
 	private function setTimezoneToggleAvailable(&$departmentsToUsersMap)
 	{
 		$this->arResult['showTimezoneToggle'] = false;
@@ -1162,19 +1110,27 @@ class TimemanWorktimeGridComponent extends Timeman\Component\BaseComponent
 			return;
 		}
 
-		$offsets = [];
-		$userOffsets = [];
+		// The toggle is offered only when grid users live in more than one effective IANA zone. Zones are
+		// resolved date-aware (ALG-01) from the persisted TIME_ZONE (grid users are "other" users), never
+		// from the deprecated TIME_ZONE_OFFSET. The TIME_ZONE is already loaded on usersCollection, so we
+		// resolve from it via resolveEffectiveTimeZoneIdFromPersisted() — this seeds the request-scoped
+		// IANA cache WITHOUT a per-user CUser::GetList() read (Q-1: no N+1). Subsequent
+		// resolveEffectiveTimeZoneId() calls for these users (per-row in templateparams) then hit the cache.
+		$timeHelper = TimeHelper::getInstance();
+		$zones = [];
 		foreach ($userIds as $userId)
 		{
-			if (!$this->usersCollection->getByPrimary($userId))
+			$user = $this->usersCollection->getByPrimary($userId);
+			if (!$user)
 			{
 				continue;
 			}
-			$userOffsets[$userId] = $this->getUserOffset($this->usersCollection->getByPrimary($userId));
-			$offsets[(string)$userOffsets[$userId]] = true;
+			$zones[$timeHelper->resolveEffectiveTimeZoneIdFromPersisted(
+				(int)$userId,
+				(string)$user->getTimeZone()
+			)] = true;
 		}
-		TimeHelper::getInstance()->setTimezoneOffsets($userOffsets);
-		if (count($offsets) > 1)
+		if (count($zones) > 1)
 		{
 			$this->arResult['showTimezoneToggle'] = true;
 		}
@@ -1333,13 +1289,15 @@ class TimemanWorktimeGridComponent extends Timeman\Component\BaseComponent
 	 */
 	private function buildUsersQuery()
 	{
+		// TIME_ZONE (IANA, source of truth) and AUTO_TIME_ZONE (mode flag, NOT an IANA id) are selected;
+		// TIME_ZONE_OFFSET is intentionally NOT selected — the deprecated offset is never read by the new
+		// date-aware model (ADR invariant). Per-user zones are resolved via TimeHelper::resolveEffectiveTimeZoneId.
 		return $this->dependencyManager
 			->getScheduleRepository()
 			->getUsersBaseQuery()
 			->addSelect('PERSONAL_GENDER')
 			->addSelect('AUTO_TIME_ZONE')
-			->addSelect('TIME_ZONE')
-			->addSelect('TIME_ZONE_OFFSET');
+			->addSelect('TIME_ZONE');
 	}
 
 	private function excludeNotEmployees(&$departmentsToUsersMap)

@@ -24,3 +24,15 @@ $MESS['NOTE_RECYCLEBIN_PAGE_ERROR_GENERIC'] = 'Не удалось выполн�
 $MESS['NOTE_RECYCLEBIN_PAGE_CONFIRM_RESTORE_ALL'] = 'Восстановить все документы из корзины?';
 $MESS['NOTE_RECYCLEBIN_PAGE_CONFIRM_EMPTY'] = 'Все документы из корзины будут удалены навсегда';
 $MESS['NOTE_RECYCLEBIN_PAGE_CONFIRM_CANCEL'] = 'Отмена';
+
+$MESS['NOTE_RECYCLEBIN_BULK_HARD_DELETE_TITLE'] = 'Удалить навсегда?';
+$MESS['NOTE_RECYCLEBIN_BULK_HARD_DELETE_MESSAGE'] = 'Выбранные документы будут удалены навсегда. Это действие нельзя отменить';
+$MESS['NOTE_RECYCLEBIN_BULK_HARD_DELETE_ACTION'] = 'Удалить навсегда';
+$MESS['NOTE_RECYCLEBIN_BULK_ORPHAN_TARGET_TEXT'] = 'Исходная база знаний для части документов удалена. Выберите, в какую базу знаний их восстановить';
+$MESS['NOTE_RECYCLEBIN_BULK_ORPHAN_PENDING'] = 'Часть документов не восстановлена. Выберите базу знаний для них';
+$MESS['NOTE_RECYCLEBIN_BULK_DONE_DELETE_PLURAL_0'] = 'Удалён навсегда #COUNT# документ';
+$MESS['NOTE_RECYCLEBIN_BULK_DONE_DELETE_PLURAL_1'] = 'Удалено навсегда #COUNT# документа';
+$MESS['NOTE_RECYCLEBIN_BULK_DONE_DELETE_PLURAL_2'] = 'Удалено навсегда #COUNT# документов';
+$MESS['NOTE_RECYCLEBIN_BULK_PARTIAL_DELETE_PLURAL_0'] = 'Удалён навсегда #DONE# документ, пропущено #SKIPPED#';
+$MESS['NOTE_RECYCLEBIN_BULK_PARTIAL_DELETE_PLURAL_1'] = 'Удалено навсегда #DONE# документа, пропущено #SKIPPED#';
+$MESS['NOTE_RECYCLEBIN_BULK_PARTIAL_DELETE_PLURAL_2'] = 'Удалено навсегда #DONE# документов, пропущено #SKIPPED#';

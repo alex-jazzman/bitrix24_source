@@ -1,0 +1,15 @@
+.bizproc-setuptemplateactivity-constant-value-datetime {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-xs);
+}
+
+.bizproc-setuptemplateactivity-constant-value-datetime__pickers {
+	display: flex;
+	gap: var(--ui-space-inline-xs);
+}
+
+.bizproc-setuptemplateactivity-constant-value-datetime__pickers > .ui-ctl {
+	flex: 1 1 0;
+	min-width: 0;
+}

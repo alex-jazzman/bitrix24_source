@@ -73,16 +73,6 @@ $sendError = function($error) use ($sendResponse)
 
 switch ($action)
 {
-	case 'ACTIVITY_VIEW':
-		$APPLICATION->IncludeComponent('bitrix:crm.activity.planner',
-			'.default',
-			array(
-				'ACTION' => 'VIEW',
-				'ELEMENT_ID' => isset($_REQUEST['activity_id'])? (int) $_REQUEST['activity_id'] : 0,
-				'CALENDAR_EVENT_ID' => isset($_REQUEST['calendar_event_id'])? (int) $_REQUEST['calendar_event_id'] : 0
-			)
-		);
-		break;
 	case 'ACTIVITY_EDIT':
 		$APPLICATION->IncludeComponent('bitrix:crm.activity.planner',
 			'.default',

@@ -14,6 +14,7 @@ $call_default_option = [
 	'call_log_secret' => '',
 	'call_ai_enabled' => true,
 	'call_invite_period' => 30000,
+	'call_sync_invite_period' => 300000,
 ];
 
 if (file_exists($_SERVER["DOCUMENT_ROOT"]."/bitrix/php_interface/call_options.php"))

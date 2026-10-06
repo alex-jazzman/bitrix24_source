@@ -6,7 +6,11 @@ use Bitrix\Disk;
 use Bitrix\Disk\Configuration;
 use Bitrix\Disk\Controller\Response\PreviewResponseBuilder;
 use Bitrix\Disk\Driver;
+use Bitrix\Disk\Infrastructure\Controller\HtmlViewerRefusalResponse;
 use Bitrix\Disk\Integration\Bitrix24Manager;
+use Bitrix\Disk\Internal\Service\HtmlViewerService;
+use Bitrix\Disk\Internal\Service\MarkdownRenderService;
+use Bitrix\Disk\Internal\Service\TiffPreviewService;
 use Bitrix\Disk\Internals\Engine;
 use Bitrix\Disk\Internals\Error\Error;
 use Bitrix\Disk\Security\ParameterSigner;
@@ -14,6 +18,7 @@ use Bitrix\Disk\TypeFile;
 use Bitrix\Main;
 use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentTypeException;
+use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Engine\ActionFilter\Authentication;
 use Bitrix\Main\Engine\AutoWire\ExactParameter;
 use Bitrix\Main\Engine\Response;
@@ -21,6 +26,8 @@ use Bitrix\Main\Localization\Loc;
 
 class File extends BaseObject
 {
+	use HtmlViewerRefusalResponse;
+
 	public function configureActions()
 	{
 		$configureActions = parent::configureActions();
@@ -38,7 +45,9 @@ class File extends BaseObject
 			]
 		];
 
-		$configureActions['download'] = [
+		$configureActions['download'] =
+		$configureActions['showMarkdown'] =
+		$configureActions['showHtml'] = [
 			'-prefilters' => [
 				Main\Engine\ActionFilter\Csrf::class,
 				Authentication::class,
@@ -48,6 +57,10 @@ class File extends BaseObject
 				new Main\Engine\ActionFilter\CloseSession(),
 			]
 		];
+		$configureActions['showTiffPreview'] = $configureActions['showMarkdown'];
+		$configureActions['showTiffPreview']['+prefilters'][] = new Main\Engine\ActionFilter\HttpMethod([
+			Main\Engine\ActionFilter\HttpMethod::METHOD_GET,
+		]);
 
 		return $configureActions;
 	}
@@ -303,6 +316,54 @@ class File extends BaseObject
 		return $response;
 	}
 
+	public function showMarkdownAction(Disk\File $file): ?array
+	{
+		if (!Configuration::isEnabledMarkdownViewer())
+		{
+			$this->addError(new Error('Markdown viewer is disabled by configuration.', MarkdownRenderService::ERROR_VIEWER_DISABLED));
+
+			return null;
+		}
+
+		$result = (new MarkdownRenderService())->renderByFile($file);
+		if (!$result->isSuccess())
+		{
+			$this->addErrors($result->getErrors());
+
+			return null;
+		}
+
+		return $result->getData();
+	}
+
+	public function showHtmlAction(Disk\File $file): Main\HttpResponse
+	{
+		return ServiceLocator::getInstance()->get(HtmlViewerService::class)->showByFile($file);
+	}
+
+	public function showTiffPreviewAction(
+		Disk\File $file,
+		?string $previewToken = null,
+	): array|Response\BFile|null
+	{
+		$unifiedLinkSignature = $this->getRequest()->getQuery('_uls');
+		$result = (new TiffPreviewService())->getByFile(
+			$file,
+			$previewToken,
+			is_string($unifiedLinkSignature) ? $unifiedLinkSignature : null,
+		);
+		if (!$result->isSuccess())
+		{
+			$this->addErrors($result->getErrors());
+
+			return null;
+		}
+
+		$data = $result->getData();
+
+		return $data['response'] ?? $data;
+	}
+
 	public function copyToAction(Disk\File $file, Disk\Folder $toFolder)
 	{
 		return $this->copyTo($file, $toFolder);
@@ -543,8 +604,25 @@ class File extends BaseObject
 
 	public function runPreviewGenerationAction(Disk\File $file)
 	{
+		if (Disk\Integration\TransformerManager::transformToView($file))
+		{
+			return [
+				'previewGeneration' => [
+					'status' => Disk\View\Base::TRANSFORM_STATUS_SUCCESS,
+					'data' => [
+						'pullTag' => Disk\Integration\TransformerManager::subscribe(
+							$file->getId(),
+							$this->getCurrentUser()->getId(),
+						),
+					],
+				],
+			];
+		}
+
 		return [
-			'previewGeneration' => $file->getView()->transformOnOpen($file),
+			'previewGeneration' => [
+				'status' => Disk\View\Base::TRANSFORM_STATUS_NOT_ALLOWED,
+			],
 		];
 	}
 

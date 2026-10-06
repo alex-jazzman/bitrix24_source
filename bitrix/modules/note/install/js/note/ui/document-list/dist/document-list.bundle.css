@@ -2,6 +2,13 @@
 	width: 100%;
 	display: flex;
 	flex-direction: column;
+	transition: padding-bottom 0.2s ease;
+}
+
+/* Clearance for the fixed bulk-actions pill (bottom: 26px + pill height) so the last card is
+   scrollable above it instead of being partially covered. */
+.note-document-cards--bulk-active {
+	padding-bottom: 96px;
 }
 
 .note-document-cards__grid {
@@ -56,10 +63,55 @@
 
 /* Lift interactive children above the stretched overlay so they remain clickable */
 .note-document-card__header-action,
+.note-document-card__select,
 a.note-document-card__collection-link,
 .note-document-card__attribution {
 	position: relative;
 	z-index: 2;
+}
+
+.note-document-card__select {
+	flex: 0 0 auto;
+	transition: opacity 0.12s ease, width 0.12s ease, margin-right 0.12s ease;
+}
+
+/* Mobile: the always-visible checkbox is the sole entry into selection mode, so grow its
+   tap target to ~44px. Negative margins absorb the padding to keep the row layout unchanged
+   (top/bottom fully, left fully; a small right gap to the title remains). width/margin are
+   pinned here so the desktop slide-in (--selecting/hover, below) never resizes the permanent
+   mobile checkbox — otherwise entering selection mode would shift every title sideways. */
+html.note-mobile .note-document-card__select {
+	width: auto;
+	padding: 13px;
+	margin: -13px -5px -13px -13px;
+}
+
+/* Hover-select gutter: idle cards keep full width (checkbox collapsed); the checkbox slides
+   in on card hover or keyboard focus. Its click enters selection mode (see page onSelect).
+   Suppressed on mobile — showHoverSelect is false there, so this class is never applied. */
+.note-document-card--hover-select .note-document-card__select {
+	width: 0;
+	margin-right: -12px;
+	opacity: 0;
+	overflow: hidden;
+	pointer-events: none;
+}
+
+.note-document-card--hover-select:hover .note-document-card__select,
+.note-document-card--hover-select:focus-within .note-document-card__select {
+	width: 20px;
+	margin-right: 0;
+	opacity: 1;
+	overflow: visible;
+	pointer-events: auto;
+}
+
+/* Entering selection mode expands the checkbox with the same slide-in as hover,
+   so checkboxes on non-hovered cards animate in instead of popping in. */
+.note-document-card--selecting .note-document-card__select {
+	width: 20px;
+	margin-right: 0;
+	opacity: 1;
 }
 
 .note-document-card:hover {
@@ -69,7 +121,7 @@ a.note-document-card__collection-link,
 .note-document-card__header {
 	display: flex;
 	flex-direction: row;
-	gap: 24px;
+	gap: 12px;
 	justify-content: space-between;
 	align-items: center;
 }
@@ -80,6 +132,9 @@ a.note-document-card__collection-link,
 	gap: 6px;
 	align-items: center;
 	min-width: 0;
+	/* Grow to fill the row so the title stays left-aligned right after the checkbox
+	   instead of being pushed toward the centre by the header's space-between. */
+	flex: 1 1 auto;
 }
 
 .note-document-card__title {
@@ -139,31 +194,11 @@ a.note-document-card__collection-link,
 	min-width: 0;
 }
 
+/* The avatar itself is note.ui.avatar-stack in row mode (one participant): the circle, the
+   identity color and the initial come from there, only the card metrics stay here. */
 .note-document-card__avatar {
-	width: 20px;
-	height: 20px;
-	border-radius: 9999px;
-	overflow: hidden;
-	background: var(--ui-color-base-7, #EEF2F4);
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
+	--note-avatar-stack-size: 20px;
 	flex: 0 0 auto;
-}
-
-.note-document-card__avatar-img {
-	width: 100%;
-	height: 100%;
-	object-fit: cover;
-	display: block;
-}
-
-.note-document-card__avatar-initials {
-	font-size: 9px;
-	line-height: 1;
-	font-weight: 600;
-	color: var(--ui-color-base-3, #828B95);
-	text-transform: uppercase;
 }
 
 .note-document-card__author-name {
@@ -267,4 +302,178 @@ a.note-document-card__collection-link .note-document-card__collection-name {
 	align-items: center;
 	justify-content: center;
 	padding: 0.5rem;
+}
+
+.note-bulk-actions-bar {
+	position: fixed;
+	/* Desktop centers over the content area, compensating for the sidebar */
+	left: calc(50% + 132px);
+	bottom: 26px;
+	z-index: 40;
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	padding: 7px 8px 7px 16px;
+	border: 2px solid var(--ui-color-divider-default, #f0f0f0);
+	border-radius: 999px;
+	background: var(--ui-color-bg-content-primary, #fff);
+	opacity: 0;
+	pointer-events: none;
+	transform: translateX(-50%) translateY(120%);
+	transition: transform 0.28s cubic-bezier(0.2, 0.9, 0.3, 1.2), opacity 0.2s;
+}
+
+.note-bulk-actions-bar--visible {
+	opacity: 1;
+	pointer-events: auto;
+	transform: translateX(-50%) translateY(0);
+}
+
+.note-bulk-actions-bar__counter {
+	padding: 0 4px;
+	color: var(--ui-color-base-1);
+	font-size: 14px;
+	font-weight: 600;
+	white-space: nowrap;
+	font-variant-numeric: tabular-nums;
+}
+
+.note-bulk-actions-bar__divider {
+	width: 1px;
+	height: 24px;
+	margin: 0 4px;
+	background: var(--ui-color-divider-default, #f0f0f0);
+}
+
+.note-bulk-actions-bar__btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 7px 12px;
+	border: none;
+	background: none;
+	border-radius: 999px;
+	color: var(--ui-color-base-1);
+	font-size: 14px;
+	font-weight: 500;
+	line-height: 1;
+	white-space: nowrap;
+	cursor: pointer;
+	transition: background 0.12s ease, color 0.12s ease;
+	--ui-icon-set__icon-size: 18px;
+	--ui-icon-set__icon-color: var(--ui-color-base-3);
+}
+
+.note-bulk-actions-bar__btn:hover {
+	background: var(--ui-color-bg-state-hover-default);
+}
+
+.note-bulk-actions-bar__btn:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary, #2fc6f6);
+	outline-offset: 1px;
+}
+
+.note-bulk-actions-bar__btn--icon {
+	padding: 7px;
+}
+
+/* "Select all" latch engaged: highlight the button so the active all-selected state reads.
+   Matches the sidebar's active row (color-mix over the themed accent token) so both surfaces
+   render identically in light and dark. */
+.note-bulk-actions-bar__btn--active {
+	background: color-mix(in srgb, var(--ui-color-accent-main-primary) 12%, transparent);
+	color: var(--ui-color-accent-main-primary);
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary);
+}
+
+.note-bulk-actions-bar__btn--active:hover {
+	background: color-mix(in srgb, var(--ui-color-accent-main-primary) 12%, transparent);
+}
+
+.note-bulk-actions-bar__btn--danger {
+	color: var(--ui-color-accent-main-alert, #ff5752);
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-alert, #ff5752);
+}
+
+.note-bulk-actions-bar__btn--danger:hover {
+	background: color-mix(in srgb, var(--ui-color-accent-main-alert, #ff5752) 10%, transparent);
+	color: var(--ui-color-accent-main-alert, #ff5752);
+}
+
+.note-bulk-actions-bar__btn-text {
+	pointer-events: none;
+}
+
+/* Mobile: recenter the pill and drop button labels down to icon-only so the four actions
+   plus the counter fit a narrow screen without overflowing (labels live in title/aria-label). */
+.note-bulk-actions-bar--mobile {
+	left: 50%;
+	max-width: calc(100vw - 24px);
+	gap: 2px;
+	padding: 6px 8px;
+}
+
+.note-bulk-actions-bar--mobile .note-bulk-actions-bar__btn-text {
+	display: none;
+}
+
+/* Icon-only buttons become 40px squares so the tap target is large and the round hover/active
+   highlight is a true circle (a non-square button turns the 999px radius into an ellipse). */
+.note-bulk-actions-bar--mobile .note-bulk-actions-bar__btn {
+	width: 40px;
+	height: 40px;
+	padding: 0;
+	justify-content: center;
+}
+
+.note-bulk-actions-bar--mobile .note-bulk-actions-bar__btn--danger {
+	margin-left: 4px;
+}
+
+.note-bulk-actions-bar--mobile .note-bulk-actions-bar__counter {
+	padding: 0 2px 0 4px;
+	font-size: 13px;
+}
+
+.note-bulk-actions-bar--mobile .note-bulk-actions-bar__divider {
+	margin: 0 2px;
+}
+
+@media (max-width: 820px) {
+	.note-bulk-actions-bar {
+		left: 50%;
+		max-width: calc(100vw - 24px);
+		gap: 2px;
+		padding: 6px 8px;
+	}
+
+	.note-bulk-actions-bar__btn-text {
+		display: none;
+	}
+
+	.note-bulk-actions-bar__btn {
+		width: 40px;
+		height: 40px;
+		padding: 0;
+		justify-content: center;
+	}
+
+	.note-bulk-actions-bar__btn--danger {
+		margin-left: 4px;
+	}
+
+	.note-bulk-actions-bar__counter {
+		padding: 0 2px 0 4px;
+		font-size: 13px;
+	}
+
+	.note-bulk-actions-bar__divider {
+		margin: 0 2px;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.note-bulk-actions-bar {
+		transition: none;
+	}
 }

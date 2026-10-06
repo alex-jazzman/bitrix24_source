@@ -1,4 +1,4 @@
-import { Dom, Event, Runtime, Tag } from 'main.core';
+import { Dom, Event, Runtime, Tag, Loc } from 'main.core';
 import isHex from '../../internal/is-hex';
 import ColorValue from '../../color_value';
 
@@ -50,7 +50,10 @@ export default class Hex extends BaseControl
 	getInput(): HTMLInputElement
 	{
 		return this.cache.remember('input', () => {
-			return Tag.render`<input type="text" name="hexInput" value="${Hex.DEFAULT_TEXT}" class="landing-ui-field-color-hex-input">`;
+			const input = Tag.render`<input type="text" name="hexInput" value="${Hex.DEFAULT_TEXT}" class="landing-ui-field-color-hex-input">`;
+			Dom.attr(input, 'aria-label', Loc.getMessage('LANDING_FIELD_COLOR_HEX_INPUT_LABEL'));
+
+			return input;
 		});
 	}
 

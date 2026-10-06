@@ -1,0 +1,7 @@
+{
+    "defaultTableName": "b_documentgenerator_template",
+    "installDirectoriesMapping": {
+        "install/components": "components",
+        "install/js": "js"
+    }
+}

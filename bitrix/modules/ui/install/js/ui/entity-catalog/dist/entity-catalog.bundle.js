@@ -761,6 +761,7 @@ this.BX = this.BX || {};
 			return {
 				selectedGroup,
 				selectedGroupId: selectedGroup?.id ?? null,
+				selectedGroupIdBeforeSearch: null,
 				shownItems: [],
 				shownGroups: [],
 				lastSearchString: '',
@@ -769,7 +770,10 @@ this.BX = this.BX || {};
 		},
 		computed: {
 			itemsBySelectedGroupId() {
-				const items = this.items.filter(item => item.groupIds.some(id => id === this.selectedGroupId));
+				if (main_core.Type.isNil(this.selectedGroupId)) {
+					return [];
+				}
+				const items = this.items.filter(item => item.groupIds.some(id => String(id) === String(this.selectedGroupId)));
 				return this.selectedGroup?.compare ? items.sort(this.selectedGroup.compare) : items;
 			},
 			computedShownGroups() {
@@ -778,9 +782,9 @@ this.BX = this.BX || {};
 				}
 				const groupIdsWithItems = new Set();
 				this.items.forEach(item => {
-					item.groupIds.forEach(groupId => groupIdsWithItems.add(groupId));
+					item.groupIds.forEach(groupId => groupIdsWithItems.add(String(groupId)));
 				});
-				return this.groups.map(groupList => groupList.filter(group => group.isHeaderGroup === true || groupIdsWithItems.has(group.id))).filter(list => list.length > 0);
+				return this.groups.map(groupList => groupList.filter(group => group.isHeaderGroup === true || groupIdsWithItems.has(String(group.id)))).filter(list => list.length > 0);
 			},
 			computedShownItems() {
 				if (this.searching && main_core.Type.isStringFilled(this.lastSearchString)) {
@@ -819,13 +823,14 @@ this.BX = this.BX || {};
 				handler(newVal) {
 					// quick replace in-place to keep same array object reference
 					this.shownGroups.splice(0, this.shownGroups.length, ...newVal);
-					if (!this.selectedGroupId) {
-						const selected = this.shownGroups.flat().find(g => g.selected);
-						if (selected) {
-							this.selectedGroup = selected;
-							this.selectedGroupId = selected.id;
-						}
+					const groups = newVal.flat();
+					let selectedGroup = null;
+					if (!main_core.Type.isNil(this.selectedGroupId)) {
+						selectedGroup = groups.find(group => String(group.id) === String(this.selectedGroupId));
 					}
+					selectedGroup ??= groups.find(group => group.selected) ?? null;
+					this.selectedGroup = selectedGroup;
+					this.selectedGroupId = selectedGroup?.id ?? null;
 				}
 			},
 			selectedGroup() {
@@ -841,10 +846,10 @@ this.BX = this.BX || {};
 				const groupIdsWithItems = new Set();
 				this.items.forEach(item => {
 					item.groupIds.forEach(groupId => {
-						groupIdsWithItems.add(groupId);
+						groupIdsWithItems.add(String(groupId));
 					});
 				});
-				return this.groups.map(groupList => groupList.filter(group => group.isHeaderGroup === true || groupIdsWithItems.has(group.id))).filter(groupList => groupList.length > 0);
+				return this.groups.map(groupList => groupList.filter(group => group.isHeaderGroup === true || groupIdsWithItems.has(String(group.id)))).filter(groupList => groupList.length > 0);
 			},
 			handleGroupSelected(group) {
 				this.searching = false;
@@ -859,7 +864,18 @@ this.BX = this.BX || {};
 				if (!main_core.Type.isStringFilled(queryString)) {
 					this.searching = false;
 					this.shownItems = [];
+					if (!main_core.Type.isNil(this.selectedGroupIdBeforeSearch)) {
+						const selectedGroup = this.getDisplayedGroup().flat().find(group => String(group.id) === String(this.selectedGroupIdBeforeSearch));
+						if (selectedGroup) {
+							this.selectedGroup = selectedGroup;
+							this.selectedGroupId = selectedGroup.id;
+						}
+					}
+					this.selectedGroupIdBeforeSearch = null;
 					return;
+				}
+				if (this.searching === false) {
+					this.selectedGroupIdBeforeSearch = this.selectedGroupId;
 				}
 				this.searching = true;
 				this.selectedGroup = null;
@@ -1005,6 +1021,7 @@ this.BX = this.BX || {};
 		#items = [];
 		#showEmptyGroups = false;
 		#showSearch = false;
+		#canDeselectGroups = null;
 		#filterOptions = {
 			filterItems: [],
 			multiple: false
@@ -1020,19 +1037,13 @@ this.BX = this.BX || {};
 		constructor(props) {
 			super();
 			this.setEventNamespace('BX.UI.EntityCatalog');
+			this.#canDeselectGroups = main_core.Type.isBoolean(props.canDeselectGroups) ? props.canDeselectGroups : null;
 			this.setGroups(main_core.Type.isArray(props.groups) ? props.groups : []);
 			this.setItems(main_core.Type.isArray(props.items) ? props.items : []);
 
 			// backward compatibility
 			this.#recentGroupData = props.recentGroupData ?? null;
 			this.#showRecentGroup = main_core.Type.isBoolean(props.showRecentGroup) ? props.showRecentGroup : false;
-			if (main_core.Type.isBoolean(props.canDeselectGroups)) {
-				this.#groups.forEach(groupList => {
-					groupList.forEach(group => {
-						group.deselectable = props.canDeselectGroups;
-					});
-				});
-			}
 			this.#showEmptyGroups = main_core.Type.isBoolean(props.showEmptyGroups) ? props.showEmptyGroups : false;
 			this.#showSearch = main_core.Type.isBoolean(props.showSearch) ? props.showSearch : false;
 			if (main_core.Type.isPlainObject(props.filterOptions)) {
@@ -1046,25 +1057,34 @@ this.BX = this.BX || {};
 			this.subscribeFromOptions(props.events);
 		}
 		setGroups(groups) {
-			this.#groups = groups.map(groupList => {
+			const normalizedGroups = groups.map(groupList => {
 				if (!main_core.Type.isArray(groupList)) {
 					groupList = [groupList];
 				}
-				return groupList.map(group => ({
-					selected: false,
-					deselectable: true,
-					...group
-				}));
+				return groupList.map(group => {
+					const normalizedGroup = {
+						selected: false,
+						deselectable: true,
+						...group
+					};
+					if (main_core.Type.isBoolean(this.#canDeselectGroups)) {
+						normalizedGroup.deselectable = this.#canDeselectGroups;
+					}
+					return normalizedGroup;
+				});
 			});
+			const isStructureChanged = this.isGroupsStructureChanged(normalizedGroups);
+			this.#groups = normalizedGroups;
 			if (!this.#vueInstance || !this.#vueInstance.localGroups) {
 				return this;
 			}
-			if (this.isGroupsStructureChanged(this.#groups)) {
+			if (isStructureChanged) {
+				const groupsForRefresh = this.#resolveGroupsForTemplate();
 				try {
-					this.#vueInstance.refreshGroups(this.#groups);
+					this.#vueInstance.refreshGroups(groupsForRefresh);
 				} catch (e) {
 					console.error(e);
-					this.#vueInstance.localGroups = this.#groups;
+					this.#vueInstance.localGroups = groupsForRefresh;
 				}
 			} else {
 				const countersMap = {};
@@ -1407,19 +1427,26 @@ this.BX = this.BX || {};
 			event.stopPropagation();
 		}
 		close() {
+			const application = this.#application;
+			const popup = this.#popup;
 			try {
-				if (this.#application && typeof this.#application.unmount === 'function') {
-					this.#application.unmount();
-				}
-				if (this.#popup) {
-					this.#popup.close();
+				if (application && typeof application.unmount === 'function') {
+					application.unmount();
 				}
 			} catch (e) {
 				console.error(e);
 			}
-			this.#application = null;
-			this.#vueInstance = null;
-			this.#popup = null;
+			try {
+				if (popup) {
+					popup.close();
+				}
+			} catch (e) {
+				console.error(e);
+			} finally {
+				this.#application = null;
+				this.#vueInstance = null;
+				this.#popup = null;
+			}
 		}
 	}
 

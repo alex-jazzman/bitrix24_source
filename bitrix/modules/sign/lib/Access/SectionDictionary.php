@@ -46,12 +46,17 @@ class SectionDictionary
 				SignPermissionDictionary::SIGN_B2E_MEMBER_DYNAMIC_FIELDS_DELETE,
 				SignPermissionDictionary::SIGN_B2E_MY_SAFE,
 				SignPermissionDictionary::SIGN_B2E_MY_SAFE_DOCUMENTS,
+				SignPermissionDictionary::SIGN_B2E_MY_SAFE_FOLDER_READ,
+				SignPermissionDictionary::SIGN_B2E_MY_SAFE_FOLDER_CREATE,
+				SignPermissionDictionary::SIGN_B2E_MY_SAFE_FOLDER_WRITE,
+				SignPermissionDictionary::SIGN_B2E_MY_SAFE_FOLDER_DELETE,
 				SignPermissionDictionary::SIGN_B2E_MY_SAFE_FIRED,
 				SignPermissionDictionary::SIGN_B2E_SIGNERS_LIST_READ,
 				SignPermissionDictionary::SIGN_B2E_SIGNERS_LIST_ADD,
 				SignPermissionDictionary::SIGN_B2E_SIGNERS_LIST_EDIT,
 				SignPermissionDictionary::SIGN_B2E_SIGNERS_LIST_DELETE,
 				SignPermissionDictionary::SIGN_B2E_SIGNERS_LIST_REFUSED,
+				SignPermissionDictionary::SIGN_DOCUMENT_ANNUL,
 			],
 			self::ACCESS => [
 				SignPermissionDictionary::SIGN_ACCESS_RIGHTS,
@@ -69,6 +74,10 @@ class SectionDictionary
 		if (!Feature::instance()->isDocumentTemplatesAvailable())
 		{
 			$map = self::removeTemplatePermissions($map);
+		}
+		if (!Feature::instance()->isSafeFolderGroupingAllowed())
+		{
+			$map = self::removeSafeFolderPermissions($map);
 		}
 
 		return $map;
@@ -123,6 +132,11 @@ class SectionDictionary
 			SignPermissionDictionary::SIGN_B2E_TEMPLATE_CREATE,
 			SignPermissionDictionary::SIGN_B2E_TEMPLATE_DELETE,
 		]);
+	}
+
+	private static function removeSafeFolderPermissions(array $map): array
+	{
+		return self::removeB2ePermissions($map, SignPermissionDictionary::getSafeFolderPermissionIds());
 	}
 
 	private static function removeB2ePermissions(array $map, array $permissionsToDelete): array

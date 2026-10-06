@@ -8,9 +8,8 @@ jn.define('tasks/layout/checklist/preview/src/title', (require, exports, module)
 	const text = Loc.getMessage('TASKS_FIELDS_CHECKLIST_AIR_TITLE');
 
 	/**
-	 * @param {boolean} loading
-	 * @param {number} count
-	 * @param {string} testId
+	 * @param {TitleParams} params
+	 * @return {Object}
 	 */
 	const Title = ({ count = 0, testId, loading = false }) => {
 		const shouldShowCounter = count > 0 && !loading;

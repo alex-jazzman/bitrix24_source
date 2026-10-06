@@ -37,10 +37,10 @@ class CrmFormService
 
 	#fetchGetResources(ids: number[]): Promise<ResourceDto[]>
 	{
-		const action: string = new ApiClient().buildUrl('CrmForm.PublicForm.getResources');
+		const action: string = new ApiClient().buildUrl('CrmForm.SettingsForm.getResources');
 
 		return ajax.runAction(action, {
-			data: {
+			json: {
 				ids,
 			},
 		});
@@ -153,7 +153,7 @@ class CrmFormService
 		}
 		catch (error)
 		{
-			console.log('CrmFormService: get default resource skus relations error', error);
+			console.error('CrmFormService: get default resource skus relations error', error);
 
 			return [];
 		}

@@ -1,6 +1,6 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports, main_core, crm_messagesender_editor, main_core_events, main_loader, main_popup, rest_client, salescenter_manager, ui_buttons, bitrix24_phoneverify, ui_designTokens, ui_fonts_opensans, ui_notification, ui_dialogs_messagebox, ui_vue, ui_vue_vuex, salescenter_component_stageBlock, Tile, TimeLineItem, salescenter_marketplace, salescenter_component_stageBlock_tile, Hint, catalog_productForm, currency, DeliverySelector$1, ui_fonts_ruble, salescenter_component_stageBlock_smsMessage, salescenter_component_stageBlock_automation, AutomationStage, salescenter_component_stageBlock_timeline, ui_icons_disk, popup, ui_buttons_icons, ui_forms, ui_pinner, crm_integration_analytics, crm_router, salescenter_lib, ui_entitySelector, currency_currencyCore, landing_backend, landing_pageobject, ui_iconSet_actions, ui_analytics) {
+(function (exports, main_core, crm_messagesender_editor, main_core_events, main_loader, main_popup, rest_client, salescenter_manager, ui_buttons, bitrix24_phoneverify, ui_designTokens, ui_fonts_opensans, ui_notification, ui_dialogs_messagebox, ui_vue, ui_vue_vuex, salescenter_component_stageBlock, Tile, TimeLineItem, salescenter_marketplace, salescenter_component_stageBlock_tile, Hint, catalog_productForm, currency_currencyCore, DeliverySelector$1, ui_fonts_ruble, salescenter_component_stageBlock_smsMessage, salescenter_component_stageBlock_automation, AutomationStage, salescenter_component_stageBlock_timeline, ui_icons_disk, popup, ui_buttons_icons, ui_forms, ui_pinner, crm_integration_analytics, crm_router, salescenter_lib, ui_entitySelector, landing_backend, ui_iconSet_actions, ui_analytics) {
 	'use strict';
 
 	function _interopNamespaceDefault(e) {
@@ -353,6 +353,9 @@ this.BX = this.BX || {};
 		created() {
 			this.refreshId = null;
 			const defaultCurrency = this.$root.$app.options.currencyCode || '';
+			if (defaultCurrency) {
+				currency_currencyCore.CurrencyCore.loadCurrencyFormat(defaultCurrency);
+			}
 			this.$store.dispatch('orderCreation/setCurrency', defaultCurrency);
 			if (main_core.Type.isArray(this.$root.$app.options.basket)) {
 				const fields = [];
@@ -364,17 +367,21 @@ this.BX = this.BX || {};
 			if (main_core.Type.isObject(this.$root.$app.options.totals)) {
 				this.$store.commit('orderCreation/setTotal', this.$root.$app.options.totals);
 			}
-			this.productForm = new catalog_productForm.ProductForm({
+			const basketItems = main_core.Type.isArray(this.$root.$app.options.basket) ? this.$root.$app.options.basket : [];
+			const initialTaxIncluded = basketItems.map(item => item?.fields?.taxIncluded).find(value => value === 'Y' || value === 'N') || 'Y';
+			const productFormOptions = {
 				currencySymbol: this.$root.$app.options.currencySymbol,
 				currency: defaultCurrency,
 				iblockId: this.$root.$app.options.catalogIblockId,
 				basePriceId: this.$root.$app.options.basePriceId,
-				basket: main_core.Type.isArray(this.$root.$app.options.basket) ? this.$root.$app.options.basket : [],
+				basket: basketItems,
 				totals: this.$root.$app.options.totals,
-				taxList: this.$root.$app.options.vatList,
+				taxRateList: this.$root.$app.options.vatRateList,
 				measures: this.$root.$app.options.measures,
 				showDiscountBlock: this.$root.$app.options.showProductDiscounts,
 				showTaxBlock: this.$root.$app.options.showProductTaxes,
+				showTaxSettingsSwitcher: 'Y',
+				taxIncluded: initialTaxIncluded,
 				totalResultLabel: this.$root.$app.options.mode === 'delivery' ? main_core.Loc.getMessage('SALESCENTER_SHIPMENT_PRODUCT_BLOCK_TOTAL') : null,
 				urlBuilderContext: this.$root.$app.options.urlProductBuilderContext,
 				isCatalogPriceEditEnabled: this.$root.$app.options.isCatalogPriceEditEnabled,
@@ -388,7 +395,16 @@ this.BX = this.BX || {};
 				sessionId: this.$root.$app.options.sessionId,
 				isShortProductViewFormat: true,
 				enableEmptyProductError: false
-			});
+			};
+			const pricePrecision = main_core.Text.toInteger(this.$root.$app.options.pricePrecision);
+			if (pricePrecision > 0) {
+				productFormOptions.pricePrecision = pricePrecision;
+			}
+			const displayPrecision = main_core.Text.toInteger(this.$root.$app.options.displayPrecision);
+			if (displayPrecision >= 0) {
+				productFormOptions.displayPrecision = displayPrecision;
+			}
+			this.productForm = new catalog_productForm.ProductForm(productFormOptions);
 			this.checkProductErrors();
 			main_core_events.EventEmitter.subscribe(this.productForm, 'ProductForm:onBasketChange', main_core.Runtime.debounce(this.onBasketChange, 500, this));
 			main_core_events.EventEmitter.subscribe(this.productForm, 'ProductForm:onErrorsChange', main_core.Runtime.debounce(this.checkProductErrors, 500, this));
@@ -674,6 +690,9 @@ this.BX = this.BX || {};
 		},
 		created() {
 			this.$store.dispatch('orderCreation/setPersonTypeId', this.config.personTypeId);
+			if (this.config.currency) {
+				currency_currencyCore.CurrencyCore.loadCurrencyFormat(this.config.currency);
+			}
 			this.refreshAvailableServices();
 		},
 		computed: {
@@ -691,7 +710,7 @@ this.BX = this.BX || {};
 			},
 			deliveryFormatted() {
 				if (this.isDeliveryCalculated) {
-					return BX.Currency.currencyFormat(this.delivery, this.config.currency, false);
+					return currency_currencyCore.CurrencyCore.currencyFormat(this.delivery, this.config.currency, false);
 				}
 			},
 			total() {
@@ -701,7 +720,7 @@ this.BX = this.BX || {};
 				return this.productsPrice + this.delivery;
 			},
 			totalFormatted() {
-				return BX.Currency.currencyFormat(this.total, this.config.currency, false);
+				return currency_currencyCore.CurrencyCore.currencyFormat(this.total, this.config.currency, false);
 			},
 			isDeliveryCalculated() {
 				return this.order.delivery !== null;
@@ -788,11 +807,14 @@ this.BX = this.BX || {};
 			}).then(result => {
 				this.shipment = result.data.shipment;
 				this.canUserPerformCalls = result.data.canUserPerformCalls;
+				if (this.shipment && this.shipment.currency) {
+					currency_currencyCore.CurrencyCore.loadCurrencyFormat(this.shipment.currency);
+				}
 			});
 		},
 		methods: {
 			getFormattedPrice(price) {
-				return BX.Currency.currencyFormat(price, this.currency, true);
+				return currency_currencyCore.CurrencyCore.currencyFormat(price, this.currency, true);
 			},
 			isPhoneRequestProperty(property) {
 				if (!main_core.Type.isArray(property.tags)) {
@@ -1205,6 +1227,7 @@ this.BX = this.BX || {};
 		terminalList: 'terminal_list'
 	});
 
+	const PAYMENT_SEND_EVENT = 'salescenter.app:onbeforepaymentsend';
 	const MessageMixin = {
 		watch: {
 			isCompilationMode(compilationMode) {
@@ -1233,6 +1256,26 @@ this.BX = this.BX || {};
 				return this.$store.getters['orderCreation/getMessageData'];
 			}
 		},
+		mounted() {
+			if (this.messageSenderAvailable) {
+				// Payment send is host-driven and never emits the editor's `onSend`,
+				// so bridge it to handleSendAttempt() across all editor-owning variants
+				// (deal-receiving-payment, crm-entity-create-payment, chat-receiving-payment).
+				// handleSendAttempt() comes from a newer crm bundle.
+				this.onBeforePaymentSendHandler = () => {
+					if (main_core.Type.isFunction(this.messageSenderEditor?.handleSendAttempt)) {
+						this.messageSenderEditor.handleSendAttempt();
+					}
+				};
+				main_core_events.EventEmitter.subscribe(PAYMENT_SEND_EVENT, this.onBeforePaymentSendHandler);
+			}
+		},
+		beforeDestroy() {
+			if (this.onBeforePaymentSendHandler) {
+				main_core_events.EventEmitter.unsubscribe(PAYMENT_SEND_EVENT, this.onBeforePaymentSendHandler);
+				this.onBeforePaymentSendHandler = null;
+			}
+		},
 		methods: {
 			convertLegacyTemplateToBBCode(template) {
 				const caption = main_core.Loc.getMessage('SALESCENTER_TEMPLATE_PLACEHOLDER_LINK');
@@ -1240,7 +1283,7 @@ this.BX = this.BX || {};
 				return template.replaceAll('#LINK#', () => {
 					if (isFirstOccurrence) {
 						isFirstOccurrence = false;
-						return `[placeholder code=LINK removable=false copyable=false]${caption}[/placeholder]`;
+						return `[placeholder code=LINK removable=false copyable=false salescenterPaymentLink=true]${caption}[/placeholder]`;
 					}
 					return caption;
 				});
@@ -6543,6 +6586,7 @@ this.BX = this.BX || {};
 			if (!this.store.getters['orderCreation/isAllowedSubmit'] || this.isProgress) {
 				return;
 			}
+			this.emitGlobalEvent('salescenter.app:onbeforepaymentsend');
 			this.startProgress(buttonEvent);
 			let options = {
 				dialogId: this.dialogId,
@@ -6725,6 +6769,11 @@ this.BX = this.BX || {};
 			if (!this.store.getters['orderCreation/isAllowedSubmit'] || this.isProgress) {
 				return null;
 			}
+
+			// Trigger the message-editor save-flow while the editor is still alive:
+			// payment send closes the slider (and destroys the editor) before the
+			// `onpaymentcreated` event, so the snapshot must be captured up front.
+			this.emitGlobalEvent('salescenter.app:onbeforepaymentsend');
 			this.startProgress(buttonEvent);
 			const data = {
 				dialogId: this.dialogId,
@@ -7003,6 +7052,7 @@ this.BX = this.BX || {};
 			if (!this.store.getters['orderCreation/isAllowedSubmit'] || this.isProgress) {
 				return null;
 			}
+			this.emitGlobalEvent('salescenter.app:onbeforepaymentsend');
 			this.startProgress(buttonEvent);
 			const options = {
 				sendingMethod: this.sendingMethod,
@@ -7101,5 +7151,5 @@ this.BX = this.BX || {};
 
 	exports.App = App;
 
-})(this.BX.Salescenter = this.BX.Salescenter || {}, BX, BX.Crm.MessageSender.Editor, BX.Event, BX, BX.Main, BX, BX.Salescenter, BX.UI, BX.Bitrix24, BX, BX, BX.UI.Notification, BX.UI.Dialogs, BX, BX, BX.Salescenter.Component, BX.Salescenter.Tile, BX.Salescenter, BX.Salescenter, BX.Salescenter.Component.StageBlock, BX.Salescenter.Component.StageBlock, BX.Catalog, BX, BX.Salescenter, BX, BX.Salescenter.Component.StageBlock, BX.Salescenter.Component.StageBlock, BX.Salescenter.AutomationStage, BX.Salescenter.Component.StageBlock.TimeLine, BX, BX, BX, BX, BX, BX.Crm.Integration.Analytics, BX.Crm, BX.Salescenter, BX.UI.EntitySelector, BX.Currency, BX.Landing, BX.Landing, window, BX.UI.Analytics);
+})(this.BX.Salescenter = this.BX.Salescenter || {}, BX, BX.Crm.MessageSender.Editor, BX.Event, BX, BX.Main, BX, BX.Salescenter, BX.UI, BX.Bitrix24, window, BX, BX.UI.Notification, BX.UI.Dialogs, BX, BX, BX.Salescenter.Component, BX.Salescenter.Tile, BX.Salescenter, BX.Salescenter, BX.Salescenter.Component.StageBlock, BX.Salescenter.Component.StageBlock, BX.Catalog, BX.Currency, BX.Salescenter, BX, BX.Salescenter.Component.StageBlock, BX.Salescenter.Component.StageBlock, BX.Salescenter.AutomationStage, BX.Salescenter.Component.StageBlock.TimeLine, BX, BX, BX, BX, BX, BX.Crm.Integration.Analytics, BX.Crm, BX.Salescenter, BX.UI.EntitySelector, BX.Landing, window, BX.UI.Analytics);
 //# sourceMappingURL=app.bundle.js.map

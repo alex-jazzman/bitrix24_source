@@ -57,6 +57,7 @@ jn.define('user-profile/common-tab/src/block/common-fields/src/field/email-field
 				size: InputSize.M,
 				design: InputDesign.GREY,
 				mode: InputMode.NAKED,
+				backgroundColor: Color.bgContentSecondaryInvert,
 				validation: true,
 				onChange: this.#onEmailChange,
 				onFocus: () => this.onFocus(idx),

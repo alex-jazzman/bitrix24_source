@@ -99,24 +99,31 @@ if (!$errorMessage)
 	// create default reports by user request
 	if (!empty($_POST['CREATE_DEFAULT']))
 	{
-		$dReports = CBaseSaleReportHelper::getDefaultReports();
-
-		foreach ($dReports as $moduleVer => $vReports)
+		if (!check_bitrix_sessid())
 		{
-			//CReport::addFreshDefaultReports($vReports, $ownerId);
-			foreach ($vReports as &$dReport)
-			{
-				$dReport['settings']['mark_default'] = $dReport['mark_default'];
-				$dReport['settings']['title'] = $dReport['title'];
-				$dReport['settings']['description'] = $dReport['description'];
-				$dReport['settings']['owner'] = $dReport['owner'];
-
-				CReport::Add($dReport['settings']);
-			}
-			unset($dReport);
+			$errorMessage .= GetMessage('MAIN_SESSION_EXPIRED') . '<br>';
 		}
+		else
+		{
+			$dReports = CBaseSaleReportHelper::getDefaultReports();
 
-		LocalRedirect($arParams['PATH_TO_REPORT_LIST']);
+			foreach ($dReports as $moduleVer => $vReports)
+			{
+				//CReport::addFreshDefaultReports($vReports, $ownerId);
+				foreach ($vReports as &$dReport)
+				{
+					$dReport['settings']['mark_default'] = $dReport['mark_default'];
+					$dReport['settings']['title'] = $dReport['title'];
+					$dReport['settings']['description'] = $dReport['description'];
+					$dReport['settings']['owner'] = $dReport['owner'];
+
+					CReport::Add($dReport['settings']);
+				}
+				unset($dReport);
+			}
+
+			LocalRedirect($arParams['PATH_TO_REPORT_LIST']);
+		}
 	}
 	// </editor-fold>
 
@@ -325,6 +332,7 @@ else
 		?>
 
 		<form action="" method="POST">
+			<?=bitrix_sessid_post()?>
 			<input type="hidden" name="CREATE_DEFAULT" value="1" />
 			<input class="adm-btn-save" type="submit" value="<?=GetMessage('SALE_REPORT_CREATE_DEFAULT')?>" />
 		</form>

@@ -1,0 +1,28 @@
+<?php
+$MESS["MOBILE_MARKET_INSTALL_TITLE"] = 'Установка приложения';
+$MESS["MOBILE_MARKET_INSTALL_UNAVAILABLE_TITLE"] = 'Установка недоступна';
+$MESS["MOBILE_MARKET_INSTALL_UNAVAILABLE_DESCRIPTION"] = 'Не удалось получить данные приложения для установки.';
+$MESS["MOBILE_MARKET_INSTALL_PERMISSIONS_HEADER_TITLE"] = 'Доступ приложения';
+$MESS["MOBILE_MARKET_INSTALL_ACCESS_HEADER_TITLE"] = 'Доступ сотрудникам';
+$MESS["MOBILE_MARKET_INSTALL_AGREEMENTS_HEADER_TITLE"] = 'Соглашения';
+$MESS["MOBILE_MARKET_INSTALL_APP_PERMISSIONS_EMPTY"] = 'Дополнительные доступы не требуются.';
+$MESS["MOBILE_MARKET_INSTALL_PERMISSIONS_PROMO_TEXT"] = 'Настройки доступа можно изменить на странице приложения после установки.';
+$MESS["MOBILE_MARKET_INSTALL_PERMISSIONS_SECTION_TITLE"] = 'Доступы для приложения';
+$MESS["MOBILE_MARKET_INSTALL_ACCESS_PROMO_TEXT"] = 'Настройки доступа можно изменить на странице приложения после установки.';
+$MESS["MOBILE_MARKET_INSTALL_ACCESS_ALL"] = 'Доступно всем сотрудникам';
+$MESS["MOBILE_MARKET_INSTALL_ACCESS_EMPLOYEES_TITLE"] = 'Сотрудники';
+$MESS["MOBILE_MARKET_INSTALL_ACCESS_ADD_EMPLOYEES"] = 'Добавить сотрудников';
+$MESS["MOBILE_MARKET_INSTALL_AGREEMENTS_PROMO_TEXT"] = 'Ознакомьтесь и согласитесь с правилами использования приложения';
+$MESS["MOBILE_MARKET_INSTALL_AGREEMENTS_EMPTY"] = 'Дополнительных соглашений для подтверждения нет.';
+$MESS["MOBILE_MARKET_INSTALL_AGREEMENT_TEMPLATE"] = 'Я ознакомлен и согласен с [COLOR=#LINK_COLOR#]#LINK#[/COLOR]';
+$MESS["MOBILE_MARKET_INSTALL_AGREEMENT_TERMS_OF_SERVICE"] = 'Правилами использования каталога решений';
+$MESS["MOBILE_MARKET_INSTALL_AGREEMENT_EULA"] = 'Лицензионным Соглашением';
+$MESS["MOBILE_MARKET_INSTALL_AGREEMENT_PRIVACY"] = 'Политикой Конфиденциальности';
+$MESS["MOBILE_MARKET_INSTALL_EMPLOYEE_SELECTOR_TITLE"] = 'Выбор сотрудников';
+$MESS["MOBILE_MARKET_INSTALL_EMPLOYEE_SELECTOR_SEND_BUTTON"] = 'Выбрать';
+$MESS["MOBILE_MARKET_INSTALL_ACTION_NEXT_PERMISSIONS"] = 'Разрешить и продолжить';
+$MESS["MOBILE_MARKET_INSTALL_ACTION_NEXT_ACCESS"] = 'Продолжить';
+$MESS["MOBILE_MARKET_INSTALL_ACTION_INSTALL"] = 'Установить';
+$MESS["MOBILE_MARKET_INSTALL_RETRY"] = 'Повторить';
+$MESS["MOBILE_MARKET_INSTALL_ERROR"] = 'Не удалось установить приложение.';
+$MESS["MOBILE_MARKET_INSTALL_RIGHTS_ERROR"] = 'Приложение установлено, но не удалось сохранить доступ для сотрудников.';

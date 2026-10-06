@@ -56,11 +56,19 @@ jn.define('im/messenger/lib/element/recent/item/copilot', (require, exports, mod
 
 				return this;
 			}
+			const messageText = this.getMessageText(item);
 
 			const hasAuthor = message.senderId;
 			if (!hasAuthor)
 			{
-				this.subtitle = this.getMessageText(item);
+				this.subtitle = messageText;
+
+				return this;
+			}
+
+			if (this.shouldShowSubtitleAvatar())
+			{
+				this.subtitle = messageText;
 
 				return this;
 			}
@@ -76,7 +84,7 @@ jn.define('im/messenger/lib/element/recent/item/copilot', (require, exports, mod
 				authorInfo = `${user.name}: `;
 			}
 
-			this.subtitle = authorInfo + this.getMessageText(item);
+			this.subtitle = authorInfo + messageText;
 
 			return this;
 		}

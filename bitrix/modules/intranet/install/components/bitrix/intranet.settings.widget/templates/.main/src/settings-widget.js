@@ -1,15 +1,14 @@
-import {ajax, Dom, Event, Loc, Tag, Text, Type} from 'main.core';
-import {PopupComponentsMaker, PopupComponentsMakerItem} from 'ui.popupcomponentsmaker';
-import type {SettingsWidgetOptions, SettingsWidgetHoldingOptions, MainPageConfiguration} from './types/options';
-import {Label, LabelSize} from 'ui.label';
-import {EventEmitter} from 'main.core.events';
-import { RequisiteSection } from './requisite-section';
-import { WidgetLoader } from 'intranet.widget-loader';
+import { ajax, Dom, Event, Loc, Tag, Text, Type } from 'main.core';
+import { EventEmitter } from 'main.core.events';
+import 'ui.buttons';
 import 'ui.icon-set.actions';
 import 'ui.icon-set.main';
 import 'ui.icons.b24';
 import 'ui.icons.crm';
-import 'ui.buttons';
+import { PopupComponentsMaker, PopupComponentsMakerItem } from 'ui.popupcomponentsmaker';
+import { WidgetLoader } from 'intranet.widget-loader';
+import { RequisiteSection } from './requisite-section';
+import { type SettingsWidgetOptions, type SettingsWidgetHoldingOptions, type MainPageConfiguration } from './types/options';
 
 export class SettingsWidget extends EventEmitter
 {
@@ -217,14 +216,17 @@ export class SettingsWidget extends EventEmitter
 			this.#mainPage.isAvailable ? this.#getMainPageElement() : null,
 			this.#isAdmin ? this.#getSecurityAndSettingsElement() : null,
 			this.#isBitrix24 ? this.#getHoldingsElement() : null,
-			this.#getMigrateElement(),
+			this.#isAdmin ? this.#getMigrateElement() : null,
 		];
 
 		content.forEach((element) => {
 			Dom.append(element, container);
 		});
 
-		Dom.append(this.#getFooter(), container);
+		if (this.#isAdmin)
+		{
+			Dom.append(this.#getFooter(), container);
+		}
 	}
 
 	#getLinkHeaderIcon(): HTMLElement
@@ -399,28 +401,28 @@ export class SettingsWidget extends EventEmitter
 		};
 
 		const element = Tag.render`
-		<div class="intranet-settings-widget__branch" onclick="${onclickOpen}">
-			<div class="intranet-settings-widget__branch-icon_box">
-				<div class="ui-icon-set intranet-settings-widget__branch-icon --filial-network"></div>
-			</div>
-			<div class="intranet-settings-widget__branch_content">
-				<div class="intranet-settings-widget__branch-title">
+			<button type="button" class="intranet-settings-widget__branch" onclick="${onclickOpen}" data-testid="settings-widget-block-filial-network">
+			<span class="intranet-settings-widget__branch-icon_box">
+				<span class="ui-icon-set intranet-settings-widget__branch-icon --filial-network"></span>
+			</span>
+			<span class="intranet-settings-widget__branch_content">
+				<span class="intranet-settings-widget__branch-title">
 					${
 						affiliate.isHolding
 							? Loc.getMessage('INTRANET_SETTINGS_WIDGET_MAIN_BRANCH')
 							: Loc.getMessage('INTRANET_SETTINGS_WIDGET_SECONDARY_BRANCH')
 					}
-				</div>
-				<div class="intranet-settings-widget__title">
+				</span>
+				<span class="intranet-settings-widget__title">
 					${affiliate.name}
-				</div>
-			</div>
-			<div class="intranet-settings-widget__branch-btn_box">
-				<button class="ui-btn ui-btn-light-border ui-btn-round ui-btn-xs ui-btn-no-caps intranet-setting__btn-light">
+				</span>
+			</span>
+			<span class="intranet-settings-widget__branch-btn_box">
+				<span class="ui-btn ui-btn-light-border ui-btn-round ui-btn-xs ui-btn-no-caps intranet-setting__btn-light">
 					${Loc.getMessage('INTRANET_SETTINGS_WIDGET_BRANCHES')}
-				</button>
-			</div>
-		</div>
+				</span>
+			</span>
+		</button>
 		`;
 
 		return this.#prepareElement(element);
@@ -434,14 +436,14 @@ export class SettingsWidget extends EventEmitter
 
 			const onclickClose = () => {
 				this.#holdingWidget.getWidget().close();
-				this.show();
+				this.show(this.#target);
 			};
 
 			const holdingWidgetCloseBtn = Tag.render`
-				<div class="intranet-settings-widget__close-btn">
-					<div onclick="${onclickClose}" class="ui-icon-set --arrow-left intranet-settings-widget__close-btn_icon"></div>
-					<div class="intranet-settings-widget__close-btn_name">${Loc.getMessage('INTRANET_SETTINGS_WIDGET_BRANCH_LIST')}</div>
-				</div>
+				<button type="button" onclick="${onclickClose}" class="intranet-settings-widget__close-btn">
+					<span aria-hidden="true" class="ui-icon-set --arrow-left intranet-settings-widget__close-btn_icon"></span>
+					<span class="intranet-settings-widget__close-btn_name">${Loc.getMessage('INTRANET_SETTINGS_WIDGET_BRANCH_LIST')}</span>
+				</button>
 			`;
 
 			this.#holdingWidget.getWidget().getPopup().getContentContainer().prepend(holdingWidgetCloseBtn);
@@ -480,24 +482,24 @@ export class SettingsWidget extends EventEmitter
 		};
 
 		const lockIcon = Tag.render`
-			<div class="intranet-settings-widget__branch-lock-icon_box">
-				<div class="ui-icon-set intranet-settings-widget__branch-lock-icon --lock"></div>
-			</div>
+			<span class="intranet-settings-widget__branch-lock-icon_box">
+				<span class="ui-icon-set intranet-settings-widget__branch-lock-icon --lock"></span>
+			</span>
 		`;
 
 		const element = Tag.render`
-			<div class="intranet-settings-widget__branch" onclick="${onclickOpen}" data-testid="settings-widget-block-filial-network">
-				<div class="intranet-settings-widget__branch-icon_box">
-					<div class="ui-icon-set intranet-settings-widget__branch-icon --filial-network"></div>
+			<button type="button" class="intranet-settings-widget__branch" onclick="${onclickOpen}" data-testid="settings-widget-block-filial-network">
+				<span class="intranet-settings-widget__branch-icon_box">
+					<span class="ui-icon-set intranet-settings-widget__branch-icon --filial-network"></span>
 					${!this.#holding.canBeHolding ? lockIcon : ''}
-				</div>
-				<div class="intranet-settings-widget__branch_content">
-					<div class="intranet-settings-widget__title">${title}</div>
-				</div>
-				<div class="intranet-settings-widget__branch-btn_box">
-					<button class="ui-btn ui-btn-light-border ui-btn-round ui-btn-xs ui-btn-no-caps intranet-setting__btn-light">${buttonText}</button>
-				</div>
-			</div>
+				</span>
+				<span class="intranet-settings-widget__branch_content">
+					<span class="intranet-settings-widget__title">${title}</span>
+				</span>
+				<span class="intranet-settings-widget__branch-btn_box">
+					<span class="ui-btn ui-btn-light-border ui-btn-round ui-btn-xs ui-btn-no-caps intranet-setting__btn-light">${buttonText}</span>
+				</span>
+			</button>
 		`;
 
 		return this.#prepareElement(element);

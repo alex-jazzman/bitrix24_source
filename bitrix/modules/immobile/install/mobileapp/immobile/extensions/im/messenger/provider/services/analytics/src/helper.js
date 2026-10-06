@@ -3,7 +3,7 @@
  */
 jn.define('im/messenger/provider/services/analytics/helper', (require, exports, module) => {
 	const { Type } = require('type');
-	const { Analytics, DialogType, NavigationTabId } = require('im/messenger/const');
+	const { Analytics, DialogType, NavigationTabId, NavigationTabByFolderCode } = require('im/messenger/const');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { ObjectUtils } = require('im/messenger/lib/utils');
@@ -111,7 +111,8 @@ jn.define('im/messenger/provider/services/analytics/helper', (require, exports, 
 
 		getSectionCode()
 		{
-			switch (this.#recentManager?.getActiveRecentId())
+			const activeId = this.#recentManager?.getActiveRecentId();
+			switch (activeId)
 			{
 				case NavigationTabId.channel:
 					return Analytics.Section.channelTab;
@@ -121,9 +122,58 @@ jn.define('im/messenger/provider/services/analytics/helper', (require, exports, 
 					return Analytics.Section.collabTab;
 				case NavigationTabId.task:
 					return Analytics.Section.taskTab;
-				default:
+				case NavigationTabId.chats:
 					return Analytics.Section.chatTab;
+				default:
+				{
+					const folderId = Number(activeId);
+					if (Number.isInteger(folderId) && folderId > 0)
+					{
+						const folder = serviceLocator.get('core').getStore()
+							.getters['folderModel/getById'](folderId)
+						;
+						if (folder)
+						{
+							return Analytics.Section.userFolder;
+						}
+					}
+
+					return Analytics.Section.chatTab;
+				}
 			}
+		}
+
+		/**
+		 * @returns {string|null}
+		 */
+		getFolderSubSection()
+		{
+			const activeId = this.#recentManager?.getActiveRecentId();
+			if (!activeId)
+			{
+				return null;
+			}
+
+			const store = serviceLocator.get('core').getStore();
+			const standardTabIds = Object.values(NavigationTabId);
+			if (standardTabIds.includes(activeId))
+			{
+				const folder = store.getters['folderModel/getList']()
+					.find((f) => f.type === 'system' && NavigationTabByFolderCode[f.code] === activeId)
+				;
+
+				return folder?.code ?? null;
+			}
+
+			const folderId = Number(activeId);
+			if (!Number.isInteger(folderId) || folderId <= 0)
+			{
+				return null;
+			}
+
+			const folder = store.getters['folderModel/getById'](folderId);
+
+			return folder ? Analytics.Type.userFolder : null;
 		}
 
 		/**

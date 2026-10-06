@@ -2,14 +2,8 @@
 global $MESS;
 
 use Bitrix\Disk\Configuration;
-use Bitrix\Disk\Document\BitrixHandler;
 use Bitrix\Disk\Document\DocumentHandlersManager;
-use Bitrix\Disk\Document\Models\DocumentSessionTable;
-use Bitrix\Disk\Document\OnlyOffice\OnlyOfficeHandler;
-use Bitrix\Disk\Internal\EventHandlers\RestrictDeleteCustomServerHandler;
 use Bitrix\Disk\Public\Event\DeletingCustomServerEvent;
-use Bitrix\Disk\UserConfiguration;
-use Bitrix\Main\Application;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Localization\Loc;
 
@@ -86,50 +80,22 @@ Class disk extends CModule
 
 	function InstallDB($install_wizard = true)
 	{
-		global $DB, $APPLICATION;
-		$connection = \Bitrix\Main\Application::getConnection();
-		$errors = null;
+		global $APPLICATION;
 
-		if (!$DB->TableExists('b_disk_storage'))
+		$migrationResult = $this->installMigrations();
+		if (!$migrationResult->isSuccess())
 		{
-			$errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/disk/install/db/' . $connection->getType() . '/install.sql');
+			$APPLICATION->ThrowException(implode('', $migrationResult->getErrorMessages()));
+			return false;
 		}
 
 		$this->InstallTasks();
 
-		if (!empty($errors))
-		{
-			$APPLICATION->ThrowException(implode("", $errors));
-			return false;
-		}
-
 		$isWebdavInstalled = isModuleInstalled('webdav');
-		$this->RegisterModuleDependencies(!$isWebdavInstalled);
 
 		RegisterModule("disk");
 
 		static::InstallUserFields();
-
-		CAgent::addAgent('Bitrix\\Disk\\ExternalLink::removeExpiredWithTypeAuto();', 'disk', 'N');
-
-		CAgent::addAgent('Bitrix\\Disk\\Bitrix24Disk\\UploadFileManager::removeIrrelevant();', 'disk', 'N', 1800);
-
-		CAgent::addAgent('Bitrix\\Disk\\Internals\\Cleaner::deleteShowSession(3, 2);', 'disk', 'N', 3600);
-		CAgent::addAgent('Bitrix\\Disk\\Internals\\Cleaner::deleteRightSetupSession();', 'disk', 'N');
-		CAgent::addAgent('Bitrix\\Disk\\Internals\\Cleaner::emptyOldDeletedLogEntries();', 'disk', 'N', 2592000);
-		CAgent::addAgent('Bitrix\\Disk\\Internals\\Rights\\Healer::restartSetupSession();', 'disk', 'N', 3600);
-		CAgent::addAgent('Bitrix\\Disk\\Internals\\Rights\\Healer::markBadSetupSession();', 'disk', 'N');
-		CAgent::addAgent('Bitrix\\Disk\\Search\\Reindex\\ExtendedIndex::processWithStatusExtended();', 'disk', 'N', 1800);
-		/** @see \Bitrix\Disk\Internals\Cleaner::deleteVersionsByTtlAgent */
-		CAgent::addAgent('Bitrix\\Disk\\Internals\\Cleaner::deleteVersionsByTtlAgent(3);', 'disk', 'N', 7200);
-		/** @see \Bitrix\Disk\Internals\Cleaner::deleteTrashCanFilesByTtlAgent */
-		CAgent::addAgent('Bitrix\\Disk\\Internals\\Cleaner::deleteTrashCanFilesByTtlAgent(3);', 'disk', 'N', 8000);
-		/** @see \Bitrix\Disk\Internals\Cleaner::deleteTrashCanEmptyFolderByTtlAgent */
-		CAgent::addAgent('Bitrix\\Disk\\Internals\\Cleaner::deleteTrashCanEmptyFolderByTtlAgent(3);', 'disk', 'N', 8000);
-		/** @see \Bitrix\Disk\Internals\Cleaner::releaseObjectLocksAgent() */
-		CAgent::addAgent('Bitrix\\Disk\\Internals\\Cleaner::releaseObjectLocksAgent();', 'disk', 'N', 7200);
-		/** @see \Bitrix\Disk\Document\OnlyOffice\RestrictionManager::deleteOldOrPendingAgent() */
-		CAgent::addAgent('Bitrix\\Disk\\Document\\OnlyOffice\\RestrictionManager::deleteOldOrPendingAgent();', 'disk', 'N', 3600);
 
 		if(!$isWebdavInstalled)
 		{
@@ -175,31 +141,7 @@ Class disk extends CModule
 
 		self::tryToEnableZipNginx();
 
-		if (IsModuleInstalled('bitrix24'))
-		{
-			CAgent::AddAgent(
-				name: 'Bitrix\Disk\Infrastructure\Agent\SwitchOnlyOfficeServersTypeAgent::run();',
-				module: 'disk',
-				interval: 300,
-				next_exec: ConvertTimeStamp(time() + CTimeZone::GetOffset() + 600, 'FULL'),
-				existError: false,
-			);
-		}
-
-		\Bitrix\Main\Config\Option::set('disk', 'unified_link.enabled', 'Y');
 		\Bitrix\Main\Config\Option::set('disk', 'unified_link.allow_document_handler_onlyoffice', 'Y');
-		\Bitrix\Main\Config\Option::set('disk', 'unified_link.allow_type_2', 'Y');
-		\Bitrix\Main\Config\Option::set('disk', 'unified_link.allow_type_3', 'Y');
-		\Bitrix\Main\Config\Option::set('disk', 'unified_link.allow_type_4', 'Y');
-		\Bitrix\Main\Config\Option::set('disk', 'unified_link.allow_type_5', 'Y');
-		\Bitrix\Main\Config\Option::set('disk', 'unified_link.allow_type_6', 'Y');
-		\Bitrix\Main\Config\Option::set('disk', 'unified_link.allow_type_7', 'Y');
-		\Bitrix\Main\Config\Option::set('disk', 'unified_link.allow_type_8', 'Y');
-		\Bitrix\Main\Config\Option::set('disk', 'unified_link.allow_type_9', 'Y');
-		\Bitrix\Main\Config\Option::set('disk', 'unified_link.allow_type_10', 'Y');
-		\Bitrix\Main\Config\Option::set('disk', 'unified_link.allow_type_11', 'Y');
-		\Bitrix\Main\Config\Option::set("disk", 'unified_link.allow_type_12', 'Y');
-		\Bitrix\Main\Config\Option::set('disk', 'custom_servers_enabled', 'Y');
 
 		return true;
 	}
@@ -299,8 +241,7 @@ Class disk extends CModule
 
 	function UnInstallDB($arParams = Array())
 	{
-		global $DB, $APPLICATION;
-		$connection = \Bitrix\Main\Application::getConnection();
+		global $APPLICATION;
 		if(CModule::IncludeModule("search"))
 		{
 
@@ -308,95 +249,20 @@ Class disk extends CModule
 		}
 
 
-		$errors = null;
-		if(array_key_exists("savedata", $arParams) && $arParams["savedata"] != "Y")
+		$dropTables = array_key_exists("savedata", $arParams) && $arParams["savedata"] != "Y";
+		if ($dropTables)
 		{
 			static::UnInstallUserFields();
-			$errors = $DB->RunSQLBatch($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/disk/install/db/".$connection->getType()."/uninstall.sql");
-
-			if (!empty($errors))
-			{
-				$APPLICATION->ThrowException(implode("", $errors));
-				return false;
-			}
 		}
 
-		CAgent::removeModuleAgents("disk");
+		$migrationResult = $this->uninstallMigrations($dropTables);
+		if (!$migrationResult->isSuccess())
+		{
+			$APPLICATION->ThrowException(implode('', $migrationResult->getErrorMessages()));
+			return false;
+		}
+
 		COption::removeOption('disk');
-
-
-		//UnRegisterModuleDependences
-		UnRegisterModuleDependences("main", "OnAfterRegisterModule", "main", "disk", "installUserFields", "/modules/disk/install/index.php"); // check UF
-
-		UnRegisterModuleDependences("main", "OnAfterUserAdd", "disk", "\\Bitrix\\Disk\\SocialnetworkHandlers", "onAfterUserAdd");
-		UnRegisterModuleDependences("main", "OnAfterUserAdd", "disk", "\\Bitrix\\Disk\\SocialnetworkHandlers", "onUserDelete");
-		UnRegisterModuleDependences("main", "OnAfterUserUpdate", "disk", "\\Bitrix\\Disk\\SocialnetworkHandlers", "onAfterUserUpdate");
-
-		UnRegisterModuleDependences('main', 'OnUserTypeBuildList', 'disk', 'Bitrix\\Disk\\Uf\\FileUserType', 'GetUserTypeDescription');
-		UnRegisterModuleDependences('main', 'OnUserTypeBuildList', 'disk', 'Bitrix\\Disk\\Uf\\VersionUserType', 'GetUserTypeDescription');
-
-		UnRegisterModuleDependences("search", "OnReindex", "disk", "\\Bitrix\\Disk\\Search\\IndexManager", "onSearchReindex");
-		UnRegisterModuleDependences("search", "OnSearchGetURL", "disk", "\\Bitrix\\Disk\\Search\\IndexManager", "onSearchGetUrl");
-
-		UnRegisterModuleDependences('socialnetwork', 'OnSocNetFeaturesAdd', 'disk', "\\Bitrix\\Disk\\SocialnetworkHandlers", 'onSocNetFeaturesAdd');
-		UnRegisterModuleDependences('socialnetwork', 'OnSocNetFeaturesUpdate', 'disk', "\\Bitrix\\Disk\\SocialnetworkHandlers", 'onSocNetFeaturesUpdate');
-		UnRegisterModuleDependences('socialnetwork', 'OnSocNetUserToGroupAdd', 'disk', "\\Bitrix\\Disk\\SocialnetworkHandlers", 'onSocNetUserToGroupAdd');
-		UnRegisterModuleDependences('socialnetwork', 'OnSocNetUserToGroupUpdate', 'disk', "\\Bitrix\\Disk\\SocialnetworkHandlers", 'onSocNetUserToGroupUpdate');
-		UnRegisterModuleDependences('socialnetwork', 'OnSocNetUserToGroupDelete', 'disk', "\\Bitrix\\Disk\\SocialnetworkHandlers", 'onSocNetUserToGroupDelete');
-		UnRegisterModuleDependences('socialnetwork', 'OnSocNetGroupDelete', 'disk', "\\Bitrix\\Disk\\SocialnetworkHandlers", 'onSocNetGroupDelete');
-		UnRegisterModuleDependences("socialnetwork", "OnBeforeSocNetGroupDelete", "disk", "\\Bitrix\\Disk\\SocialnetworkHandlers", "onBeforeSocNetGroupDelete");
-		UnRegisterModuleDependences('socialnetwork', 'OnSocNetGroupAdd', 'disk', "\\Bitrix\\Disk\\SocialnetworkHandlers", 'onSocNetGroupAdd');
-		UnRegisterModuleDependences("socialnetwork", "OnSocNetGroupUpdate", "disk", "\\Bitrix\\Disk\\SocialnetworkHandlers", "onSocNetGroupUpdate");
-		UnRegisterModuleDependences('socialnetwork', 'OnAfterFetchDiskUfEntity', 'disk', "\\Bitrix\\Disk\\SocialnetworkHandlers", 'onAfterFetchDiskUfEntity');
-
-		UnRegisterModuleDependences("iblock", "OnBeforeIBlockDelete", "disk", "disk", "OnBeforeIBlockDelete");
-		UnRegisterModuleDependences("perfmon", "OnGetTableSchema", "disk", "disk", "OnGetTableSchema");
-
-		UnRegisterModuleDependences("im", "OnBeforeConfirmNotify", "disk", "\\Bitrix\\Disk\\Sharing", "OnBeforeConfirmNotify");
-		UnRegisterModuleDependences("im", "OnGetNotifySchema", "disk", "\\Bitrix\\Disk\\Integration\\NotifySchema", "onGetNotifySchema");
-
-		UnRegisterModuleDependences("rest", "OnRestServiceBuildDescription", "disk", "\\Bitrix\\Disk\\Rest\\RestManager", "onRestServiceBuildDescription");
-		UnRegisterModuleDependences("rest", "onRestGetModule", "disk", "\\Bitrix\\Disk\\Rest\\RestManager", "onRestGetModule");
-		UnRegisterModuleDependences("rest", "OnRestAppDelete", "disk", "\\Bitrix\\Disk\\Rest\\RestManager", "onRestAppDelete");
-
-		UnRegisterModuleDependences("iblock", "OnIBlockPropertyBuildList", "disk", "\\Bitrix\\Disk\\Integration\\FileDiskProperty", "GetUserTypeDescription");
-
-		UnRegisterModuleDependences('disk', 'onAfterDeleteStorage', 'disk', "\\Bitrix\\Disk\\Integration\\Volume", 'onStorageDelete');
-		UnRegisterModuleDependences('main', 'onUserDelete', 'disk', "\\Bitrix\\Disk\\Integration\\Volume", 'onUserDelete');
-
-		$eventManager = \Bitrix\Main\EventManager::getInstance();
-		$eventManager->unRegisterEventHandler("main", "onFileTransformationComplete", "disk", "\\Bitrix\\Disk\\Integration\\TransformerManager", "resetCacheInUfAfterTransformation");
-		$eventManager->unRegisterEventHandler('disk', 'OnRetrievingUserRights', 'disk', "\\Bitrix\\Disk\\Integration\\Collab\\CollabHandlers", 'onRetrievingUserRights');
-		$eventManager->unRegisterEventHandler('disk', 'OnPreloadUserRights', 'disk', "\\Bitrix\\Disk\\Integration\\Collab\\CollabHandlers", 'onPreloadUserRights');
-		$eventManager->unRegisterEventHandler('main', 'onPreviewRendererBuildList', 'disk', DocumentHandlersManager::class, 'additionalPreviewManagersList');
-		$eventManager->unRegisterEventHandler('disk', 'OnSaveSessionInRestrictionLog', 'disk', '\\Bitrix\\Disk\\Document\\OnlyOffice\\Handlers\\AvailableDocumentSessionCountNotifier', 'handleSessionCountChanges');
-		$eventManager->unRegisterEventHandler('disk', 'OnDeleteSessionsFromRestrictionLog', 'disk', '\\Bitrix\\Disk\\Document\\OnlyOffice\\Handlers\\AvailableDocumentSessionCountNotifier', 'handleSessionCountChanges');
-		$eventManager->unRegisterEventHandler('baas', 'onServiceBalanceChanged', 'disk', '\\Bitrix\\Disk\\Document\\OnlyOffice\\Handlers\\AvailableDocumentSessionCountNotifier', 'handleBalanceChanges');
-
-		$eventManager->unRegisterEventHandler(
-			fromModuleId: 'bizproc',
-			eventType: 'onGetDocumentType',
-			toModuleId: 'disk',
-			toClass: \Bitrix\Disk\Internal\Integration\Bizproc\EventHandlers\OnGetDocumentType\GetDocumentTypes::class,
-			toMethod: 'onGetDocumentType',
-		);
-
-		$eventManager->unRegisterEventHandler(
-			fromModuleId: 'main',
-			eventType: 'OnAfterUserLogout',
-			toModuleId: 'disk',
-			toClass: \Bitrix\Disk\Internal\Integration\Main\EventHandlers\OnAfterUserLogoutEventHandler::class,
-			toMethod: 'handle',
-		);
-
-		$eventManager->unRegisterEventHandler(
-			fromModuleId: 'disk',
-			/** @see DeletingCustomServerEvent::EVENT_NAME */
-			eventType: 'deletingCustomServer',
-			toModuleId: 'disk',
-			toClass: '\\Bitrix\\Disk\\Internal\\EventHandlers\\RestrictDeleteCustomServerHandler',
-			toMethod: 'handle',
-		);
 
 		UnRegisterModule("disk");
 

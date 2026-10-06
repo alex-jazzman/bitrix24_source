@@ -32,6 +32,24 @@ export class RecentUpdateManager
 		this.addItemToCollection(sections, newRecentItem, this.#getParentChatId());
 	}
 
+	// Metadata-only variant for RecentUpdateMeta (lastActivityDate=null): hydrates the payload and
+	// re-targets the preview messageId of an already existing recent item. Never adds the item to
+	// sections or touches its lastActivityDate, so a hidden row is not surfaced and sort order keeps.
+	updateExistingItem(): void
+	{
+		if (!this.#params.message?.id)
+		{
+			return;
+		}
+
+		this.#setLastMessageInfo();
+
+		void Core.getStore().dispatch('recent/update', {
+			dialogId: this.#getDialogId(),
+			fields: { messageId: this.#params.message.id },
+		});
+	}
+
 	addItemToCollection(sections: RecentTypeItem[], recentItem: ImModelRecentItem, parentChatId: number): void
 	{
 		sections.forEach((recentSection) => {
@@ -51,6 +69,7 @@ export class RecentUpdateManager
 	#setLastMessageInfo(): void
 	{
 		this.#setMessageChat();
+		this.#setSourceChats();
 		this.#setUsers();
 		this.#setFiles();
 		this.#setMessage();
@@ -68,6 +87,11 @@ export class RecentUpdateManager
 
 	#getLastMessageId(): number | string
 	{
+		if (this.#params.message?.id)
+		{
+			return this.#params.message.id;
+		}
+
 		const chat = Core.getStore().getters['chats/get'](this.#getDialogId());
 		const lastMessageId = Core.getStore().getters['messages/getLastId'](chat.chatId);
 
@@ -91,10 +115,32 @@ export class RecentUpdateManager
 		void Core.getStore().dispatch('chats/set', chat);
 	}
 
+	#setSourceChats(): void
+	{
+		if (!this.#params.chats)
+		{
+			return;
+		}
+
+		// Source chats already carry their own dialogId, so no normalization is needed (unlike #setMessageChat).
+		Object.values(this.#params.chats).forEach((sourceChat) => {
+			void Core.getStore().dispatch('chats/set', sourceChat);
+		});
+	}
+
 	#setMessage(): void
 	{
 		if (this.#params.message)
 		{
+			if (this.#isNestedPreview())
+			{
+				// Nested collab preview is a message of a child chat: keep it in the collection only,
+				// without chatCollection membership, so the following messageAdd sets its read state.
+				void Core.getStore().dispatch('messages/store', this.#params.message);
+
+				return;
+			}
+
 			void Core.getStore().dispatch('messages/setChatCollection', {
 				messages: this.#params.message,
 			});
@@ -110,5 +156,10 @@ export class RecentUpdateManager
 				chatId: this.#getChatId(),
 			},
 		});
+	}
+
+	#isNestedPreview(): boolean
+	{
+		return Number(this.#params.message.chatId) !== Number(this.#getChatId());
 	}
 }

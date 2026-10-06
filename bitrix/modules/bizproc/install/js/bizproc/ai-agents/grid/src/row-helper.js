@@ -1,4 +1,4 @@
-import { Dom } from 'main.core';
+import { Dom, Type } from 'main.core';
 import type { GridColumns, GridRowAction, AddRowOptions } from './types';
 
 export class RowHelper
@@ -74,6 +74,19 @@ export class RowHelper
 		row.setCellsContent(updateColumns);
 	}
 
+	updateActions(
+		row: BX.Grid.Row,
+		actions: ?GridRowAction[],
+	): void
+	{
+		if (!row || !Type.isArrayFilled(actions))
+		{
+			return;
+		}
+
+		row.setActions(actions);
+	}
+
 	highlight(row: BX.Grid.Row): void
 	{
 		if (!row)
@@ -83,7 +96,7 @@ export class RowHelper
 
 		Dom.addClass(row.getNode(), 'ai-agents-grid-row-highlighted');
 		setTimeout(() => {
-			Dom.removeClass(row, 'ai-agents-grid-row-highlighted');
+			Dom.removeClass(row.getNode(), 'ai-agents-grid-row-highlighted');
 		}, 2500);
 	}
 }

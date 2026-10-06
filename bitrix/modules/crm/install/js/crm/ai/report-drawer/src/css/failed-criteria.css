@@ -1,0 +1,46 @@
+.crm-ai-report-drawer__content-block.crm-ai-report-drawer__failed-criteria-block {
+	--crm-ai-report-drawer__failed-criteria-header-offset:
+		calc(24px + var(--ui-space-inset-2xs2, 6px));
+	display: flex;
+	flex-direction: column;
+	padding: var(--ui-space-inset-lg2, 22px) var(--ui-space-inset-lg, 20px) var(--ui-space-inset-xl, 24px);
+}
+
+.crm-ai-report-drawer__failed-criteria-block-header {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	gap: var(--ui-space-inset-2xs2, 6px);
+	width: 100%;
+}
+
+.crm-ai-report-drawer__failed-criteria-block-cross {
+	-webkit-mask-image: var(--o-ui-icon-set__path_cross-m);
+	mask-image: var(--o-ui-icon-set__path_cross-m);
+	-webkit-mask-size: 100% 100%;
+	mask-size: 100% 100%;
+	background-color: var(--ui-color-accent-main-alert);
+	height: 24px;
+	width: 24px;
+	padding: 0;
+}
+
+.crm-ai-report-drawer__failed-criteria-block-title {
+	flex: 1;
+}
+
+.crm-ai-report-drawer__failed-criteria-block-ai-analysis {
+	margin-top: var(--ui-space-stack-xs, 8px);
+	padding-left: var(--crm-ai-report-drawer__failed-criteria-header-offset);
+	box-sizing: border-box;
+}
+
+.crm-ai-report-drawer__failed-criteria-block-description {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	margin-top: var(--ui-space-stack-sm, 12px);
+	color: var(--ui-color-base-3);
+	cursor: pointer;
+	width: fit-content;
+}

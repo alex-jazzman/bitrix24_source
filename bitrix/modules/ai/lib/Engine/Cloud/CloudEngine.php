@@ -52,6 +52,7 @@ abstract class CloudEngine extends Engine\Engine implements IEngine
 			'contextId' => $this->getContext()->getContextId(),
 			'userId' => $this->getContext()->getUserId(),
 		];
+
 		try
 		{
 			$payload = $this->getPayload();
@@ -283,6 +284,7 @@ abstract class CloudEngine extends Engine\Engine implements IEngine
 		Analytics::sendAiQueryLimitEvent(
 			$errorLimit->getCustomData()['errorLimitType'] ?? $errorLimit->getCode(),
 			$this->getContext()->getModuleId(),
+			$this->getContext()->getUserId(),
 		);
 
 		$this->queueJob->cancel();

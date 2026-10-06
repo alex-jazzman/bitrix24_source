@@ -3,6 +3,11 @@
 */
 jn.define('im/messenger/lib/rest', (require, exports, module) => {
 	const { getLogger } = require('im/messenger/lib/logger');
+	const {
+		isGuestUnauthorized,
+		handleGuestSessionTerminated,
+	} = require('im/messenger/lib/guest-session');
+
 	const logger = getLogger('network');
 	const ABORT_ERROR = 'AbortError';
 
@@ -24,6 +29,12 @@ jn.define('im/messenger/lib/rest', (require, exports, module) => {
 				})
 				.catch((response) => {
 					logger.error('ajax.runAction.catch:', response, action, config);
+
+					const httpStatus = response?.data?.ajaxRejectData?.xhr?.status;
+					if (isGuestUnauthorized(httpStatus))
+					{
+						handleGuestSessionTerminated();
+					}
 
 					return reject(response.errors);
 				})
@@ -48,6 +59,11 @@ jn.define('im/messenger/lib/rest', (require, exports, module) => {
 				})
 				.catch((response) => {
 					logger.log('BX.rest.callMethod catch:', response, method, params);
+
+					if (isGuestUnauthorized(response?.status))
+					{
+						handleGuestSessionTerminated();
+					}
 
 					return reject(response);
 				})

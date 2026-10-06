@@ -1,7 +1,0 @@
-DROP TABLE b_messageservice_message;
-DROP TABLE b_messageservice_rest_app;
-DROP TABLE b_messageservice_rest_app_lang;
-DROP TABLE b_messageservice_incoming_message;
-DROP TABLE b_messageservice_restriction;
-DROP TABLE b_messageservice_channel;
-DROP TABLE b_messageservice_template;

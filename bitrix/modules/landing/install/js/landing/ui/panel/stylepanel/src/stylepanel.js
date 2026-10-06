@@ -19,6 +19,10 @@ export class StylePanel extends Content
 {
 	shouldAdjustTopPanelControls = false;
 
+	// Not a modal: the panel drops its own overlay, shrinks the page beside itself
+	// and expects clicks on the preview nodes while it is open.
+	isDialog: boolean = false;
+
 	constructor(options = {})
 	{
 		super(options);
@@ -120,6 +124,8 @@ export class StylePanel extends Content
 
 	show(formMode): Promise<StylePanel>
 	{
+		const isOpening = !this.isShown();
+
 		this[showPseudoContent]();
 		StylePanel[disableEditorPointerEvents]();
 
@@ -148,6 +154,13 @@ export class StylePanel extends Content
 
 		return super.show()
 			.then(() => {
+				// The panel has no focus trap to bring the focus in, so it does it on its own, once the
+				// panel is really on screen: a layout still carrying `hidden` takes no focus.
+				if (isOpening)
+				{
+					this.moveFocusInside();
+				}
+
 				this.loader.show();
 
 				setTimeout(() => {

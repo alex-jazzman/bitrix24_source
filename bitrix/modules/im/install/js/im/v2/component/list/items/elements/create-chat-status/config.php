@@ -8,7 +8,6 @@ return [
 	'css' => 'dist/create-chat-status.bundle.css',
 	'js' => 'dist/create-chat-status.bundle.js',
 	'rel' => [
-		'im.public',
 		'im.v2.component.elements.avatar',
 		'im.v2.const',
 		'im.v2.lib.create-chat',

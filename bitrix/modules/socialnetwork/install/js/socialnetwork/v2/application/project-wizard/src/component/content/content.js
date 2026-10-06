@@ -14,6 +14,7 @@ import { PrivacyTypeField } from './fields/privacy-type/privacy-type';
 import { BaseFeatureField } from './fields/base-feature/base-feature';
 import { LegacyToolsBlock } from './fields/legacy-tools/legacy-tools-block';
 import { AccessRightsBlock } from './fields/access-rights/access-rights-block';
+import { NotificationsBlock } from './fields/notifications/notifications-block';
 import { AdditionalSettingsBlock } from './fields/additional-settings/additional-settings-block';
 
 import './content.css';
@@ -23,6 +24,7 @@ export const ProjectWizardContent = {
 	name: 'ProjectWizardContent',
 	components: {
 		AccessRightsBlock,
+		NotificationsBlock,
 		AdditionalSettingsBlock,
 		CopySettingsField,
 		GoalField,
@@ -69,6 +71,7 @@ export const ProjectWizardContent = {
 			<PrivacyTypeField />
 			<BaseFeatureField v-if="isOldPortal" />
 			<AccessRightsBlock />
+			<NotificationsBlock />
 			<LegacyToolsBlock
 				v-if="(toggleableFeatures.length > 0 && !isActionCopy)"
 			/>

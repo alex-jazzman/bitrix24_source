@@ -257,13 +257,6 @@ elseif ($action === 'SAVE_PROGRESS' && check_bitrix_sessid())
 
 	$arFields = array('STAGE_ID' => $stageID);
 
-	$dealUpdateAction = new \Bitrix\Crm\Reservation\Component\DealUpdateAction($ID);
-	$dealUpdateAction->before($arFields, static function ($inventoryManagementCheckResult) {
-		__CrmDealListEndResponse([
-			'ERROR' => current($inventoryManagementCheckResult->getErrorMessages()),
-		]);
-	});
-
 	$CCrmDeal = new CCrmDeal();
 	if ($CCrmDeal->Update(
 		$ID,
@@ -277,12 +270,6 @@ elseif ($action === 'SAVE_PROGRESS' && check_bitrix_sessid())
 		])
 	)
 	{
-		$dealUpdateAction->after(static function ($processInventoryManagementResult) {
-			__CrmDealListEndResponse([
-				'ERROR' => current($processInventoryManagementResult->getErrorMessages()),
-			]);
-		});
-
 		if (($arPreviousFields['IS_RECURRING'] ?? 'N') !== 'Y')
 		{
 			$starter = new \Bitrix\Crm\Integration\BizProc\Starter\CrmStarter(

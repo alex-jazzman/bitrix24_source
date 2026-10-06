@@ -13,9 +13,17 @@ use Bitrix\Bizproc\Activity\Enum\ActivityContentBlockColor;
 use Bitrix\Bizproc\Activity\Enum\ActivityGroup;
 use Bitrix\Bizproc\Activity\Enum\ActivityNodeType;
 use Bitrix\Bizproc\Activity\Enum\ActivityType;
+use Bitrix\Bizproc\Public\Service\AiAgent\NodeAvailabilityServiceInterface;
+use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Ui\Public\Enum\IconSet\Outline;
+
+$serviceLocator = ServiceLocator::getInstance();
+$isAiNodeAvailable =
+	$serviceLocator->has(NodeAvailabilityServiceInterface::class)
+	&& $serviceLocator->get(NodeAvailabilityServiceInterface::class)->isAvailable()
+;
 
 $activityDescription =
 	(new ActivityDescription(
@@ -25,7 +33,7 @@ $activityDescription =
 	))
 	->setClass('AiProcessingActivity')
 	->setJsClass('BizProcActivity')
-	->setExcluded(!Loader::includeModule('ai'))
+	->setExcluded(!Loader::includeModule('ai') || !$isAiNodeAvailable)
 	->setReturn([
 		'aiResult' => [
 			'NAME' => Loc::getMessage('AI_ACTIVITY_PROCESSING_AI_RESULT'),
@@ -42,7 +50,7 @@ $activityDescription =
 	->setIcon(Outline::AI_ROBOT->name)
 ;
 
-if (class_exists(ActivityNodeType::class) && ActivityNodeType::tryFrom('service') !== null)
+if (class_exists(ActivityNodeType::class) && defined(ActivityNodeType::class . '::SERVICE'))
 {
 	$activityDescription->setNodeType(ActivityNodeType::SERVICE->value);
 }

@@ -1,6 +1,7 @@
 import { UpdateScript as UpdateScriptButton } from './button/update-script';
 import { AllScripts as AllScriptsButton, ALL_SCRIPTS_URL } from './button/all-scripts';
 import { Prompt } from './prompt';
+import { CriteriaList } from './criteria-list';
 import { ScriptSelector } from './script-selector';
 import { mapGetters } from 'ui.vue3.vuex';
 import { EmptyState } from './empty-state';
@@ -13,10 +14,13 @@ export const Main = {
 	components: {
 		ScriptSelector,
 		Prompt,
+		CriteriaList,
 		UpdateScriptButton,
 		AllScriptsButton,
 		EmptyState,
 	},
+
+	computed: mapGetters(['hasAvailableSelectorItems', 'isCallScoringV2Enabled']),
 
 	methods: {
 		emptyStateTitle(): string
@@ -34,13 +38,12 @@ export const Main = {
 		},
 	},
 
-	computed: mapGetters(['hasAvailableSelectorItems']),
-
 	template: `
 		<div class="crm-copilot__call-card-replacement">
 			<div v-if="hasAvailableSelectorItems" class="crm-copilot__call-card-replacement-content">
 				<ScriptSelector />
-				<Prompt />
+				<CriteriaList v-if="isCallScoringV2Enabled" />
+				<Prompt v-else />
 			</div>
 			<EmptyState
 				v-else

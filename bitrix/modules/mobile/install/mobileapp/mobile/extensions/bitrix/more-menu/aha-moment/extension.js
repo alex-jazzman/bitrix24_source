@@ -281,36 +281,88 @@ jn.define('more-menu/aha-moment', (require, exports, module) => {
 	/**
 	 * @param {AhaMomentDto} dto
 	 * @param {MenuNavigator} menuNavigator
-	 * @return {boolean} wasShown
+	 * @param {function} [onComplete]
+	 * @param {function} [canShow]
+	 * @return {boolean} wasScheduled
 	 */
-	const showAhaMoment = (dto, menuNavigator) => {
+	const showAhaMoment = (dto, menuNavigator, onComplete = null, canShow = null) => {
+		let isCompleted = false;
+		const complete = () => {
+			if (isCompleted)
+			{
+				return;
+			}
+
+			isCompleted = true;
+			onComplete?.();
+		};
+
 		const config = AhaMomentFactory.createConfig(dto, menuNavigator);
 		if (!config)
 		{
+			complete();
+
 			return false;
 		}
+
+		const { onHide } = config;
+		const show = (targetRef) => {
+			if (canShow && !canShow())
+			{
+				complete();
+
+				return;
+			}
+
+			try
+			{
+				AhaMoment.show({
+					...config,
+					canShow,
+					targetRef,
+					onShowSkipped: complete,
+					onHide: () => {
+						try
+						{
+							onHide?.();
+						}
+						finally
+						{
+							complete();
+						}
+					},
+				});
+			}
+			catch (error)
+			{
+				console.error('AhaMoment show error', error);
+				complete();
+			}
+		};
 
 		const refKey = config?.refKey;
 		if (Type.isStringFilled(refKey))
 		{
 			RefRegistry.waitFor(refKey, 4000)
 				.then((ref) => {
-					if (ref)
+					if (!ref)
 					{
-						AhaMoment.show({
-							...config,
-							targetRef: ref,
-						});
+						complete();
+
+						return;
 					}
+
+					show(ref);
 				})
 				.catch((error) => {
 					console.error('RefRegistry error', error);
+					complete();
 				});
 
 			return true;
 		}
 
-		AhaMoment.show(config);
+		show(config.targetRef);
 
 		return true;
 	};

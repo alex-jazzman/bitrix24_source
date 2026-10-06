@@ -11551,13 +11551,17 @@ if(typeof BX.UI.EntityEditorProductRowSummary === "undefined")
 			if (!isReadOnly)
 			{
 				const addProductLinkBlock = BX.create(
-					'span',
+					'button',
 					{
 						props: {
+							type: 'button',
 							className: 'ui-enitity-editor-product-summary-tab-link',
 							onclick: () => {
 								this.openDetailProductList();
 							}
+						},
+						attrs: {
+							'data-testid': 'product-summary-edit-btn',
 						},
 						text: BX.message("UI_ENTITY_EDITOR_PRODUCT_SUMMARY_TAB_LINK_EDIT"),
 					}
@@ -11612,13 +11616,17 @@ if(typeof BX.UI.EntityEditorProductRowSummary === "undefined")
 		}
 
 		return BX.create(
-			'div',
+			'button',
 			{
 				props: {
+					type: 'button',
 					className: 'ui-entity-editor-product-summary-empty-list-container',
 					onclick: () => {
 						this.addNewPositionInDetailProductList();
 					}
+				},
+				attrs: {
+					'data-testid': 'product-summary-empty-add-btn',
 				},
 				children:
 					[
@@ -11812,13 +11820,17 @@ if(typeof BX.UI.EntityEditorProductRowSummary === "undefined")
 		{
 			const listLength = Math.min(this.totalCount, this.productListLimit * 2);
 			this._moreButton = BX.create(
-				'span',
+				'button',
 				{
 					props: {
+						type: 'button',
 						className: 'ui-entity-editor-product-list-more-button',
 						onclick: () => {
 							this._onMoreButtonClick();
 						}
+					},
+					attrs: {
+						'data-testid': 'product-summary-more-btn',
 					},
 					text: BX.message('UI_ENTITY_EDITOR_PRODUCT_SUMMARY_MORE_BUTTON')
 						.replace('#COUNT#', listLength - this._productListOffset),
@@ -11830,9 +11842,11 @@ if(typeof BX.UI.EntityEditorProductRowSummary === "undefined")
 	};
 
 	BX.UI.EntityEditorProductRowSummary.prototype._onMoreButtonClick = function() {
+		const moreButtonHadFocus = document.activeElement === this._moreButton;
 		this._productListContainer.style.maxHeight = `${this._productListContainer.clientHeight}px`;
 		const products = this.getAvailableProductsToDisplay();
 
+		const firstNewRowIndex = this._productListOffset;
 		for (let i = this._productListOffset; i < products.length; i++)
 		{
 			this.addProductRow(products[i]);
@@ -11842,21 +11856,47 @@ if(typeof BX.UI.EntityEditorProductRowSummary === "undefined")
 			this._productListContainer.style.maxHeight = `${2 * height}px`;
 		}, 0);
 		BX.remove(this._moreButton);
+
+		let showAllButton = null;
 		if (products.length < this.getProductListLength())
 		{
-			this._wrapper.appendChild(BX.create(
-				'span',
+			showAllButton = BX.create(
+				'button',
 				{
 					props: {
+						type: 'button',
 						className: 'ui-entity-editor-product-list-more-button',
 						onclick: () => {
 							this.openDetailProductList();
 						}
 					},
+					attrs: {
+						'data-testid': 'product-summary-show-all-btn',
+					},
 					text: BX.message('UI_ENTITY_EDITOR_PRODUCT_SUMMARY_FULL_BUTTON')
 						.replace(/#COUNT#/gi, this.totalCount),
 				}
-			))
+			);
+			this._wrapper.appendChild(showAllButton);
+		}
+
+		if (moreButtonHadFocus)
+		{
+			// keyboard-activated "More": move focus off the removed button
+			const firstNewRow = this._productListContainer.children[firstNewRowIndex] || null;
+			let focusTarget = showAllButton
+				|| (firstNewRow ? firstNewRow.querySelector('.ui-entity-editor-product-title-link') : null);
+			if (!focusTarget && firstNewRow)
+			{
+				// A product without a link renders a plain span title (not focusable),
+				// so fall back to the row itself with a temporary programmatic tab stop.
+				firstNewRow.setAttribute('tabindex', '-1');
+				focusTarget = firstNewRow;
+			}
+			if (focusTarget)
+			{
+				focusTarget.focus();
+			}
 		}
 	};
 

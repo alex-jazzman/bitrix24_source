@@ -14,21 +14,20 @@ jn.define('tasks/layout/checklist/list/src/item/main-item', (require, exports, m
 
 	const LAYOUT_CHECKBOX_WIDTH = 34;
 
-	/**
-	 * @class MainChecklistItem
-	 */
 	class MainChecklistItem extends BaseChecklistItem
 	{
+		/** @param {MainChecklistItemProps} props */
 		constructor(props)
 		{
 			super(props);
 
-			/** @type {CheckBoxCounter} */
+			/** @type {CheckBoxCounter | null} */
 			this.counterRef = null;
-			/** @type {ButtonRemove} */
+			/** @type {ButtonRemove | null} */
 			this.buttonRemoveRef = null;
 		}
 
+		/** @return {Object} */
 		render()
 		{
 			return this.renderContent({
@@ -61,6 +60,7 @@ jn.define('tasks/layout/checklist/list/src/item/main-item', (require, exports, m
 			});
 		}
 
+		/** @return {Object | null} */
 		renderRemoveButton()
 		{
 			if (!this.canRemoveItem())
@@ -78,6 +78,7 @@ jn.define('tasks/layout/checklist/list/src/item/main-item', (require, exports, m
 
 		/**
 		 * @private
+		 * @return {boolean}
 		 */
 		isShowActionRow()
 		{
@@ -88,7 +89,7 @@ jn.define('tasks/layout/checklist/list/src/item/main-item', (require, exports, m
 
 		/**
 		 * @private
-		 * @return {[ItemAttachments]}
+		 * @return {Object}
 		 */
 		renderActions()
 		{
@@ -107,7 +108,8 @@ jn.define('tasks/layout/checklist/list/src/item/main-item', (require, exports, m
 		}
 
 		/**
-		 * @return View
+		 * @private
+		 * @return {Object}
 		 */
 		#renderMembers()
 		{
@@ -130,7 +132,8 @@ jn.define('tasks/layout/checklist/list/src/item/main-item', (require, exports, m
 		}
 
 		/**
-		 * @returns {ItemAttachments}
+		 * @private
+		 * @return {Object}
 		 */
 		#renderAttachments()
 		{
@@ -160,7 +163,7 @@ jn.define('tasks/layout/checklist/list/src/item/main-item', (require, exports, m
 
 		/**
 		 * @private
-		 * @returns {CheckBoxCounter|null}
+		 * @return {Object}
 		 */
 		renderCheckbox()
 		{
@@ -188,6 +191,7 @@ jn.define('tasks/layout/checklist/list/src/item/main-item', (require, exports, m
 			);
 		}
 
+		/** @return {ChecklistTextFieldStyle} */
 		getTextFieldStyle()
 		{
 			return {
@@ -196,6 +200,7 @@ jn.define('tasks/layout/checklist/list/src/item/main-item', (require, exports, m
 			};
 		}
 
+		/** @return {void} */
 		handleOnToggleComplete = () => {
 			const { item, onToggleComplete } = this.props;
 
@@ -205,6 +210,7 @@ jn.define('tasks/layout/checklist/list/src/item/main-item', (require, exports, m
 			onToggleComplete(item);
 		};
 
+		/** @return {void} */
 		handleOnBlur()
 		{
 			if (this.buttonRemoveRef)
@@ -215,6 +221,7 @@ jn.define('tasks/layout/checklist/list/src/item/main-item', (require, exports, m
 			super.handleOnBlur();
 		}
 
+		/** @return {void} */
 		handleOnFocus()
 		{
 			const { item, updateMenu } = this.props;
@@ -232,6 +239,7 @@ jn.define('tasks/layout/checklist/list/src/item/main-item', (require, exports, m
 			super.handleOnFocus(item);
 		}
 
+		/** @return {void} */
 		handleOnSubmit()
 		{
 			if (this.getTextValue())
@@ -244,6 +252,7 @@ jn.define('tasks/layout/checklist/list/src/item/main-item', (require, exports, m
 			}
 		}
 
+		/** @return {Promise<void>} */
 		toggleImportant()
 		{
 			const { item } = this.props;
@@ -252,6 +261,7 @@ jn.define('tasks/layout/checklist/list/src/item/main-item', (require, exports, m
 			return this.counterRef.toggleAnimateImportant(item.getIsImportant());
 		}
 
+		/** @param {string[]} members */
 		setMembersToText(members)
 		{
 			const { item } = this.props;
@@ -265,6 +275,10 @@ jn.define('tasks/layout/checklist/list/src/item/main-item', (require, exports, m
 			this.toggleCompleteText();
 		}
 
+		/**
+		 * @param {Object} progressParams
+		 * @return {Promise<void>}
+		 */
 		updateProgress(progressParams)
 		{
 			if (!this.counterRef)

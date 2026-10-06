@@ -1,14 +1,15 @@
 import { mapState } from 'ui.vue3.pinia';
 import { BIcon, Outline } from 'ui.icon-set.api.vue';
 
-import { FeatureCode } from 'bizprocdesigner.feature';
-
 import { useNodeSettingsStore } from '../../../../entities/node-settings';
-import { useLoc, useFeature } from '../../../../shared/composables';
-import { PORT_TYPES } from '../../../../shared/constants';
+import { useLoc } from '../../../../shared/composables';
+import { PORT_TYPES, isPortRulesAllowedBlockType } from '../../../../shared/constants';
 import { type Port as TPort } from '../../../../shared/types';
+import { ReadableExpressions } from '../../directives/readable-expressions';
 
 import './style.css';
+
+let formIdCounter = 0;
 
 // @vue/component
 export const EditNodeSettingsForm = {
@@ -16,19 +17,22 @@ export const EditNodeSettingsForm = {
 	components: {
 		BIcon,
 	},
+	directives: { ReadableExpressions },
 	setup(): {
 		getMessage: () => string;
-		isFeatureAvailable: (code: string) => boolean;
 		iconSet: typeof Outline;
+		titleFieldId: string;
+		descriptionFieldId: string;
 		}
 	{
 		const { getMessage } = useLoc();
-		const { isFeatureAvailable } = useFeature();
+		formIdCounter++;
 
 		return {
 			getMessage,
-			isFeatureAvailable,
 			iconSet: Outline,
+			titleFieldId: `editor-chart-node-settings-form-title-${formIdCounter}`,
+			descriptionFieldId: `editor-chart-node-settings-form-description-${formIdCounter}`,
 		};
 	},
 	computed:
@@ -40,18 +44,17 @@ export const EditNodeSettingsForm = {
 				.filter((port) => port.type === PORT_TYPES.input)
 			;
 		},
-		relationPorts(): Array<TPort>
-		{
-			return this.ports.filter((port) => port.type === PORT_TYPES.inputRelation);
-		},
 		rulePortsLength(): number
 		{
 			return this.rulePorts.length;
 		},
-		isRelationFeatureAvailable(): boolean
+		supportsPortRules(): boolean
 		{
-			return this.block.node?.shouldShowAuxPorts !== true
-				&& this.isFeatureAvailable(FeatureCode.complexNodeConnections);
+			return isPortRulesAllowedBlockType(this.block?.type);
+		},
+		showRulesSection(): boolean
+		{
+			return this.supportsPortRules || this.rulePortsLength > 0;
 		},
 	},
 	watch:
@@ -83,7 +86,7 @@ export const EditNodeSettingsForm = {
 			<div class="editor-chart-node-settings-form__section">
 				<div class="editor-chart-node-settings-form__section-header">
 					<div class="editor-chart-node-settings-form__section-header-main">
-						<BIcon :name="iconSet.EDIT_M" :size="30"/>
+						<BIcon :name="iconSet.EDIT_M" :size="24"/>
 						<span class="editor-chart-node-settings-form__section-title">
 							{{ getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_GENERAL_SECTION_TITLE') }}
 						</span>
@@ -94,12 +97,14 @@ export const EditNodeSettingsForm = {
 				</div>
 				<div class="editor-chart-node-settings-form__fields">
 					<div>
-						<span class="editor-chart-node-settings-form__label">
+						<label class="editor-chart-node-settings-form__label" :for="titleFieldId">
 							{{ getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_NODE_NAME_LABEL_MSGVER_1') }}
-						</span>
+						</label>
 						<div class="ui-ctl ui-ctl-textbox editor-chart-node-settings-form__node-name-input">
 							<input type="text"
+								v-readable-expressions
 								class="ui-ctl-element"
+								:id="titleFieldId"
 								:placeholder="getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_NODE_NAME_PLACEHOLDER_MSGVER_1')"
 								:value="nodeSettings.title"
 								:data-test-id="$testId('complexNodeName')"
@@ -108,13 +113,15 @@ export const EditNodeSettingsForm = {
 						</div>
 					</div>
 					<div class="editor-chart-node-settings-form__node-description">
-						<span class="editor-chart-node-settings-form__label">
+						<label class="editor-chart-node-settings-form__label" :for="descriptionFieldId">
 							{{ getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_NODE_DESCRIPTION_LABEL') }}
-						</span>
+						</label>
 						<div class="ui-ctl ui-ctl-textarea editor-chart-node-settings-form__node-description_textarea">
 							<textarea
+								v-readable-expressions
 								rows="1"
 								class="ui-ctl-element"
+								:id="descriptionFieldId"
 								:placeholder="getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_NODE_DESCRIPTION_PLACEHOLDER_MSGVER_1')"
 								:value="nodeSettings.description"
 								:data-test-id="$testId('complexNodeDescription')"
@@ -124,10 +131,15 @@ export const EditNodeSettingsForm = {
 					</div>
 				</div>
 			</div>
-			<div class="editor-chart-node-settings-form__section --rules">
+			<slot name="storages" />
+			<div
+				v-if="showRulesSection"
+				class="editor-chart-node-settings-form__section --rules"
+				:data-test-id="$testId('complexNodeRulesSection')"
+			>
 				<div class="editor-chart-node-settings-form__section-header">
 					<div class="editor-chart-node-settings-form__section-header-main">
-						<BIcon :name="iconSet.DATA_READING" :size="26"/>
+						<BIcon :name="iconSet.DATA_READING" :size="24"/>
 						<span class="editor-chart-node-settings-form__section-title">
 							{{ getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_RULE_SECTION_TITLE') }}
 						</span>
@@ -142,26 +154,19 @@ export const EditNodeSettingsForm = {
 					:port="port"
 					name="preview"
 				/>
-				<slot
-					v-for="port in relationPorts"
-					:key="port.id"
-					:port="port"
-					name="preview"
-				/>
-				<div class="editor-chart-node-settings-form__add-buttons">
+				<div
+					v-if="supportsPortRules"
+					class="editor-chart-node-settings-form__add-buttons"
+					:data-test-id="$testId('complexNodeRulesAddButtons')"
+				>
 					<slot
 						:itemType="'rule'"
-						:text="getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_EDIT_RULES_BUTTON')"
-						name="addSettingsItem"
-					/>
-					<slot
-						v-if="isRelationFeatureAvailable"
-						:itemType="'relation'"
-						:text="getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_ADD_ENTRY_POINT_BUTTON')"
+						:text="getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_ADD_EXPERT_SETTINGS_BUTTON')"
 						name="addSettingsItem"
 					/>
 				</div>
 			</div>
+			<slot />
 		</div>
 	`,
 };

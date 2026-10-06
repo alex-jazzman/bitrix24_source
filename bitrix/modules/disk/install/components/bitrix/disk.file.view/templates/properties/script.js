@@ -357,10 +357,20 @@ BX.Disk.FileViewClass = (function ()
 	FileViewClass.prototype.formatAirMessageBoxFileName = function(message, name)
 	{
 		var safeName = BX.util.htmlspecialchars(name);
-		var fileName = '<span class="disk-air-message-box-file-name">' + safeName + '</span>';
-		var fileNameWithTitle = '<span class="disk-air-message-box-file-name" title="' + safeName + '">' + safeName + '</span>';
+		var chars = Array.from(name);
+		var dotIndex = chars.lastIndexOf('.');
+		var extLength = dotIndex > 0 ? chars.length - dotIndex : 0;
+		var tailLength = Math.min(chars.length, Math.max(12, Math.min(extLength + 2, 20)));
+		var head = BX.util.htmlspecialchars(chars.slice(0, chars.length - tailLength).join(''));
+		var tail = BX.util.htmlspecialchars(chars.slice(chars.length - tailLength).join(''));
+		var fileName = '<span class="disk-air-message-box-file-name-sr-only">' + safeName + '</span>'
+			+ '<span class="disk-air-message-box-file-name" aria-hidden="true">' + head + '</span>'
+			+ '<span class="disk-air-message-box-file-name-tail" aria-hidden="true">' + tail + '</span>';
 		var wrapFileName = function(leftPart, rightPart) {
-			return '<span class="disk-air-message-box-file-name-wrapper" title="' + safeName + '">'
+			return '<span'
+				+ ' class="disk-air-message-box-file-name-wrapper"'
+				+ ' data-testid="disk-air-message-box-file-name"'
+				+ ' title="' + safeName + '">'
 				+ leftPart
 				+ fileName
 				+ rightPart
@@ -378,7 +388,9 @@ BX.Disk.FileViewClass = (function ()
 			.replace(/#NAME#(\?)/g, function(match, questionMark) {
 				return wrapFileName('', questionMark);
 			})
-			.replace(/#NAME#/g, fileNameWithTitle)
+			.replace(/#NAME#/g, function() {
+				return wrapFileName('', '');
+			})
 		;
 	};
 

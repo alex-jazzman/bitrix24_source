@@ -1,0 +1,102 @@
+.disk-picker-toolbar {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	gap: var(--ui-space-inline-sm);
+	width: 100%;
+}
+
+.disk-picker-toolbar__title {
+	display: flex;
+	align-items: center;
+	flex-grow: 1;
+	min-width: 0;
+}
+
+/*
+ * When the search is open the title keeps only its natural width so the search slot
+ * (right of the breadcrumbs) can take the remaining space; the breadcrumbs stay
+ * visible and clickable and shrink through their own ellipsis if the path is wide.
+ */
+.disk-picker-toolbar__title.--search-open {
+	flex-grow: 0;
+}
+
+.disk-picker-toolbar__title-text {
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	color: var(--ui-color-base-1);
+}
+
+/*
+ * Empty placeholder that reserves the search area between the breadcrumbs and the
+ * view toggle. The relocated standard filter lives in the App-root filter-host,
+ * which is positioned to mirror this slot (App.syncFilterHost).
+ */
+.disk-picker-toolbar__search-slot {
+	flex-grow: 1;
+	min-width: 0;
+	align-self: stretch;
+}
+
+.disk-picker-toolbar__search-button {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+	width: 34px;
+	height: 34px;
+	border: 1px solid var(--ui-color-divider-default);
+	border-radius: var(--ui-border-radius-sm);
+	background: var(--ui-color-bg-content-primary);
+	color: var(--ui-color-base-70);
+	cursor: pointer;
+	transition: background-color 200ms ease;
+}
+
+.disk-picker-toolbar__search-button:hover {
+	background: var(--ui-color-bg-state-hover-default);
+}
+
+.disk-picker-toolbar__search-button:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: -2px;
+}
+
+.disk-picker-toolbar__view-toggle {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	flex-shrink: 0;
+}
+
+.disk-picker-toolbar__view-button {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 34px;
+	height: 34px;
+	border: 1px solid var(--ui-color-divider-default);
+	background: var(--ui-color-bg-content-primary);
+	color: var(--ui-color-base-70);
+	cursor: pointer;
+	transition: background-color 200ms ease;
+}
+
+.disk-picker-toolbar__view-button.--active {
+	color: var(--ui-color-accent-main-primary);
+}
+
+.disk-picker-toolbar__view-button:first-child {
+	border-radius: var(--ui-border-radius-sm) 0 0 var(--ui-border-radius-sm);
+}
+
+.disk-picker-toolbar__view-button:last-child {
+	border-radius: 0 var(--ui-border-radius-sm) var(--ui-border-radius-sm) 0;
+	border-left: none;
+}
+
+.disk-picker-toolbar__view-button.--active {
+	background: var(--ui-color-bg-state-hover-default);
+}

@@ -11,6 +11,7 @@ import { RequiredPaysystemCodes } from './const/required-paysystem-codes';
 import { createStore, mapGetters, mapMutations, Store } from 'ui.vue3.vuex';
 import '../css/app.css';
 import 'ui.notification';
+import 'ui.design-tokens.air';
 
 type AppProps = {
 	rootNodeId: string,

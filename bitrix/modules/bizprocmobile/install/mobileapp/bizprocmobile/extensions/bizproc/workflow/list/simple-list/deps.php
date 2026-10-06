@@ -11,7 +11,6 @@ return [
 		'event-emitter',
 		'loc',
 		'type',
-		'toast',
 		'require-lazy',
 
 		'utils/object',
@@ -27,6 +26,7 @@ return [
 		'ui-system/form/checkbox',
 
 		'layout/ui/counter-view',
+		'bizproc:helper/network-error',
 		'bizproc:workflow/faces',
 		'bizproc:task/buttons',
 		'bizproc:task/task-constants',

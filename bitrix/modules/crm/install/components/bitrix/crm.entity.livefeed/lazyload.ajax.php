@@ -1,4 +1,7 @@
 <?php
+
+use Bitrix\Main\Web\Uri;
+
 define('NO_KEEP_STATISTIC', 'Y');
 define('NO_AGENT_STATISTIC','Y');
 define('NO_AGENT_CHECK', true);
@@ -60,7 +63,7 @@ if($postFormUri !== '')
 {
 	$tabKey = $formID !== '' ? "{$formID}_active_tab" : 'active_tab';
 	$tabID = isset($params['TAB_ID']) ? $params['TAB_ID'] : '';
-	$postFormUri = CHTTP::urlAddParams($postFormUri, array($tabKey => $tabID));
+	$postFormUri = (string)(new Uri($postFormUri))->addParams(array($tabKey => $tabID));
 }
 $actionUri = isset($params['ACTION_URI']) ? $params['ACTION_URI'] : '';
 

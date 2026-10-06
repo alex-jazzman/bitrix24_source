@@ -7,6 +7,7 @@ export type CallActionHelperData = {
 	signedDocumentType?: SignedDocumentType,
 	complexDocumentId?: ComplexDocumentId,
 	signedDocumentId?: SignedDocumentId,
+	categoryId?: ?number,
 	triggerType?: ?string,
 	customAjaxUrl: ?string,
 };

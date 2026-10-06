@@ -1,4 +1,4 @@
-import { FileExport } from 'biconnector.dataset-import.file-export';
+import { FileExport } from 'biconnector.file-export';
 import { LoadingPopup } from 'biconnector.loading-popup';
 import { Popup as MainPopup } from 'main.popup';
 import { Reflection, Loc, Text, ajax as Ajax, Tag } from 'main.core';
@@ -301,7 +301,7 @@ class ExternalDatasetManager
 					style: AirButtonStyle.PLAIN,
 					useAirDesign: true,
 					onclick: () => {
-						BX.BIConnector.DatasetImport.Slider.open(datasetType, datasetId, {}, {
+						BX.BIConnector.DatasetImportV2.Slider.open(datasetType, datasetId, {}, {
 							properties: {
 								isOpenInitially: false,
 								isOpenOnLoadData: false,

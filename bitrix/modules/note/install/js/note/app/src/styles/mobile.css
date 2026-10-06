@@ -59,6 +59,22 @@ html.note-mobile:has(> body .popup-window-overlay) body {
 	height: 100dvh !important;
 }
 
+/* The page under the open drawer stands still - see applyScrollLock in note-layout, which is what puts
+   this class on and reads the offset the body is pinned at. Fixed rather than merely unscrollable: a
+   document scroller told to stop scrolling loses the offset it stood at, and the reader came back to the
+   top of the article on closing the panel. */
+html.note-mobile.note-mobile-scroll-locked,
+html.note-mobile.note-mobile-scroll-locked body {
+	overflow: hidden;
+}
+
+html.note-mobile.note-mobile-scroll-locked body {
+	position: fixed;
+	left: 0;
+	right: 0;
+	width: 100%;
+}
+
 html.note-mobile .note-page {
 	height: auto;
 	min-height: 100dvh;
@@ -88,12 +104,16 @@ html.note-mobile .sidebar-resizer {
 	display: none;
 }
 
+/* z-index sits above the sticky editor toolbar (also 100): the header is a fixed stacking
+ * context, so its teleported participants popup is trapped inside it — with an equal z-index the
+ * toolbar (later in DOM) would paint over the dropped-down popup. Stays well below main.popup's
+ * 1000 baseline so sliders/viewer still cover the header. */
 html.note-mobile .note-page-header {
 	position: fixed;
 	top: 0;
 	left: 0;
 	right: 0;
-	z-index: 100;
+	z-index: 110;
 	height: var(--note-mobile-header-h);
 	padding: 0;
 	gap: 0;
@@ -114,10 +134,28 @@ html.note-mobile .note-page-header.is-compact {
 	overflow: hidden;
 }
 
-html.note-mobile .note-page-brand,
-html.note-mobile .note-page-header-divider,
+/* The header carries no left block on mobile: the burger stands where the brand does on a desktop, and
+   the app names the knowledge base in its own bar above the page. Left in place the block held the width
+   of the panel - a width nothing shrinks - and the action icons of the document, pinned to the right,
+   were laid over its subtitle. It also has no boundary to draw here: the panel is an overlay, so there
+   is no edge for the header to continue. */
+html.note-mobile .note-page-brand {
+	display: none;
+}
+
+/* Mobile header is empty by default: the archive / recyclebin / shared /
+ * workspace pages only teleport a breadcrumb into the slot, which we don't want
+ * on mobile. The slot is revealed only on the document page, where it carries
+ * the action icons (edit / more) next to the burger, pinned to the right. */
 html.note-mobile .note-page-header-slot {
 	display: none;
+}
+
+/* @chef-ignore */
+html.note-mobile .note-page-header-slot:has(.note-page-document-header) {
+	display: flex;
+	padding: 0 8px 0 0;
+	justify-content: flex-end;
 }
 
 html.note-mobile .note-page-mobile-burger {
@@ -200,6 +238,17 @@ html.note-mobile .ui-selector-dialog {
 	box-sizing: border-box;
 }
 
+/* Collection picker keeps the tab rail (search + collections ushki), so it needs the rail gutter
+   (left: rail-gutter from the blanket rule — do not override left). Only trim the width so the
+   dropdown's right edge lines up with the input instead of overhanging toward the screen edge:
+   input right edge sits at dialog-gutter/2 (3px) + ui-system-dialog content padding (24px) from
+   the viewport's right; dropdown left is rail-gutter. */
+/* @chef-ignore */
+html.note-mobile .popup-window.note-collection-picker-dropdown:has(.ui-selector-dialog) {
+	width: calc(100vw - var(--note-popup-rail-gutter) - var(--note-popup-dialog-gutter) / 2 - 24px) !important;
+	max-width: calc(100vw - var(--note-popup-rail-gutter) - var(--note-popup-dialog-gutter) / 2 - 24px) !important;
+}
+
 /* @chef-ignore */
 html.note-mobile .popup-window:has(.ui-selector-dialog) {
 	max-height: calc(100dvh - var(--note-popup-vh-gutter)) !important;
@@ -276,9 +325,14 @@ html.note-mobile .note-sidebar-search-input {
 	line-height: 20px;
 }
 
+/* Toasts are top-right anchored. Forcing full width stretched them across the
+ * screen and killed the right gutter. Let them hug their content (capped to the
+ * viewport) so they sit compactly in the top-right corner with breathing room. */
+/* ui.notification positions balloons via inline (important) left/top, so only
+ * max-width is ours to control. Cap it well below the viewport so the toast
+ * reads as a compact chip with a clear gutter instead of a full-width bar. */
 html.note-mobile .ui-notification-balloon {
-	max-width: calc(100vw - 32px) !important;
-	width: calc(100vw - 32px) !important;
+	max-width: min(320px, calc(100vw - 48px)) !important;
 }
 
 /* ===== ui.viewer header on mobile =====

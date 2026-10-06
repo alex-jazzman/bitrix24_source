@@ -9,6 +9,7 @@ export type ResourceCreationWizardState = {
 	resourceName: string;
 	resourceAvatarFile: File | null;
 	resource: ResourceModel;
+	templateTypePreselectionContext: TemplateTypePreselectionContext | null;
 	advertisingResourceTypes: AdvertisingResourceType[],
 	favorite: boolean;
 	fetching: boolean,
@@ -28,6 +29,11 @@ export type ResourceCreationWizardState = {
 	showLicenseWarning: boolean;
 	senderCode: $Values<typeof Communication>;
 }
+
+export type TemplateTypePreselectionContext = {
+	resourceTypeId: number | null,
+	slotLength: number,
+};
 
 export type InitPayload = {
 	resourceId: ResourceId,

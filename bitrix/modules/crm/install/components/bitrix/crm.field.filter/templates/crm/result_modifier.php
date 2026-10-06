@@ -1,4 +1,8 @@
-<?if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
+<?php
+
+use Bitrix\Main\Web\Uri;
+
+if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
 
 if(!CModule::IncludeModule('crm'))
@@ -128,7 +132,7 @@ if (isset($arSettings['CONTACT']) && $arSettings['CONTACT'] == 'Y')
 				$arImg =  CFile::ResizeImageGet($arRes['PHOTO'], array('width' => 25, 'height' => 25), BX_RESIZE_IMAGE_EXACT);
 				if(is_array($arImg) && isset($arImg['src']))
 				{
-					$imageUrl = CHTTP::URN2URI($arImg['src']);
+					$imageUrl = (string)(new Uri($arImg['src']))->toAbsolute();
 				}
 			}
 
@@ -181,7 +185,7 @@ if (isset($arSettings['COMPANY']) && $arSettings['COMPANY'] == 'Y')
 				$arImg =  CFile::ResizeImageGet($arRes['LOGO'], array('width' => 25, 'height' => 25), BX_RESIZE_IMAGE_EXACT);
 				if(is_array($arImg) && isset($arImg['src']))
 				{
-					$imageUrl = CHTTP::URN2URI($arImg['src']);
+					$imageUrl = (string)(new Uri($arImg['src']))->toAbsolute();
 				}
 			}
 
@@ -420,7 +424,7 @@ if (!empty($arResult['SELECTED']))
 				$arImg =  CFile::ResizeImageGet($arRes['PHOTO'], array('width' => 25, 'height' => 25), BX_RESIZE_IMAGE_EXACT);
 				if(is_array($arImg) && isset($arImg['src']))
 				{
-					$imageUrl = CHTTP::URN2URI($arImg['src']);
+					$imageUrl = (string)(new Uri($arImg['src']))->toAbsolute();
 				}
 			}
 
@@ -465,7 +469,7 @@ if (!empty($arResult['SELECTED']))
 				$arImg =  CFile::ResizeImageGet($arRes['LOGO'], array('width' => 25, 'height' => 25), BX_RESIZE_IMAGE_EXACT);
 				if(is_array($arImg) && isset($arImg['src']))
 				{
-					$imageUrl = CHTTP::URN2URI($arImg['src']);
+					$imageUrl = (string)(new Uri($arImg['src']))->toAbsolute();
 				}
 			}
 

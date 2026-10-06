@@ -1,4 +1,7 @@
-<?
+<?php
+
+use Bitrix\Main\Web\Uri;
+
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/mail/prolog.php");
 
@@ -12,7 +15,7 @@ require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/mail/include.php");
 $dbr = $DB->Query("SELECT * FROM b_mail_msg_attachment WHERE ID=".intval($ID));
 if($dbr_arr = $dbr->Fetch())
 {
-	$utfName      = CHTTP::urnEncode($dbr_arr['FILE_NAME'], 'UTF-8');
+	$utfName = Uri::urnEncode($dbr_arr['FILE_NAME']);
 	$translitName = CUtil::translit($dbr_arr['FILE_NAME'], LANGUAGE_ID, array('max_len' => 1024, 'safe_chars' => '.', 'replace_space' => '-'));
 
 	header("Content-Type: application/force-download; name=\"".$translitName."\"");

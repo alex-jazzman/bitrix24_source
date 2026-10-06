@@ -19,3 +19,15 @@ export interface BaseSearchEntity
 	dynamicSearch: boolean;
 	sort?: number;
 }
+
+export type ChatSearchConfigSetOptionParams = {
+	/** ['users', 'chats', 'bots'] — restrict search to these entities only. */
+	includeOnly?: Array<string>;
+	/** ['users', 'chats', 'bots'] — drop these entities from the search. */
+	exclude?: Array<string>;
+	/** Items from RecentTab. */
+	recentTab?: Array<string>;
+	contextChatId?: number;
+	/** Drop im-guest users from server search results. */
+	excludeGuests?: boolean;
+};

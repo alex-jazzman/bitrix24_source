@@ -41,6 +41,7 @@ export function normalizeCurrentUser(value: mixed): CurrentUser
 		id: normalizeStringValue(user.id ?? user.userId, '0'),
 		name: normalizeStringValue(user.name, 'User') || 'User',
 		color: normalizeUserColor(user.color),
+		avatar: Type.isStringFilled(user.avatar) ? user.avatar : null,
 	};
 }
 

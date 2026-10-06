@@ -1,4 +1,4 @@
-import { defineComponent } from 'vue';
+import { defineComponent } from 'ui.vue3';
 import { Dom } from 'main.core';
 import './ui-textarea.css';
 

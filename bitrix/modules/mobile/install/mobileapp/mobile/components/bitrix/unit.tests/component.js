@@ -1,149 +1,286 @@
 (() => {
 	const require = (ext) => jn.require(ext);
-	const { Color } = require('tokens');
-	const { testSuites, report, ConsolePrinter, JnLayoutPrinter } = require('testing');
+	const { ComponentHelper } = require('helpers/component');
+	const { Loc } = require('loc');
+	const { isModuleInstalled } = require('module');
+	const { createTestingGroupTestId, testingCatalog } = require('testing/catalog');
+	require('testing/catalog/mobile');
+	const { Indent } = require('tokens');
+	const { EntityCell } = require('ui-system/blocks/entity-cell');
+	const { StatusBlock } = require('ui-system/blocks/status-block');
+	const { Button, ButtonDesign, ButtonSize } = require('ui-system/form/buttons/button');
+	const { StringInput, InputDesign, InputMode, InputSize, Icon } = require('ui-system/form/inputs/string');
+	const { Box } = require('ui-system/layout/box');
 
-	class UnitTestDashboard extends LayoutComponent
+	const Section = {
+		ROOT: 'root',
+		MODULES: 'modules',
+		FEATURES: 'features',
+	};
+
+	/**
+	 * @extends {LayoutComponent<UnitTestsCatalogProps, UnitTestsCatalogState>}
+	 */
+	class UnitTestsCatalog extends LayoutComponent
 	{
+		/**
+		 * @param {UnitTestsCatalogProps} props
+		 */
 		constructor(props)
 		{
 			super(props);
 
-			this.jnLayoutPrinter = new JnLayoutPrinter();
-			this.consolePrinter = new ConsolePrinter();
-			this.consolePrinter.print(report);
+			this.state = {
+				section: Section.ROOT,
+				catalogReady: false,
+				searchQuery: '',
+			};
+		}
+
+		componentDidMount()
+		{
+			this.#updateTitle(Section.ROOT);
+			layout.setLeftButtons([
+				{
+					type: 'back',
+					callback: () => this.#handleBack(),
+				},
+			]);
+
+			void this.#loadExternalCatalogs();
 		}
 
 		render()
 		{
-			return ScrollView(
+			return Box(
 				{
-					style: {
-						flexDirection: 'column',
-					},
+					testId: 'unit-tests-catalog',
+					safeArea: { bottom: true },
+					withScroll: this.state.section !== Section.ROOT,
 				},
-				View(
-					{
-						style: {
-							paddingTop: 16,
-							flexDirection: 'column',
-							flexGrow: 1,
-						},
-					},
-					Button({
-						text: 'Run tests',
-						style: {
-							marginHorizontal: 80,
-							marginVertical: 16,
-							paddingHorizontal: 20,
-							paddingVertical: 10,
-							borderWidth: 1,
-							borderColor: Color.bgSeparatorPrimary.toHex(),
-							borderRadius: 5,
-						},
-						onClick()
-						{
-							console.clear && console.clear();
-							this.reload();
-						},
-					}),
-					View(
-						{
-							style: {
-								flexDirection: 'row',
-								justifyContent: 'center',
-								marginBottom: 16,
-							},
-						},
-						Text({
-							text: 'Results duplicates in console',
-							style: {
-								fontSize: 16,
-							},
-						}),
-					),
-					View(
-						{},
-						this.renderTotals(),
-						this.jnLayoutPrinter.print(report),
-					),
-				),
+				this.state.section === Section.ROOT ? this.#renderRoot() : this.#renderGroups(),
 			);
 		}
 
-		renderTotals()
+		#renderRoot()
 		{
-			const assertions = report.totalAssertions;
-			const failures = report.totalFailures;
-			const isSuccess = failures === 0;
-
-			const stats = isSuccess
-				? `Assertions: ${assertions}`
-				: `Assertions: ${assertions}, failures: ${failures}`;
+			const basicGroup = testingCatalog.getGroup('basic');
 
 			return View(
-				{
-					style: {
-						flexDirection: 'column',
-						flexGrow: 1,
-					},
-				},
-				View(
-					{
-						style: {
-							backgroundColor: isSuccess
-								? Color.accentSoftElementGreen1.toHex()
-								: Color.accentMainAlert.toHex(),
-							padding: 12,
-							flexDirection: 'row',
-							justifyContent: 'space-between',
-						},
-					},
-					View(
-						{
-							testId: 'UnitTestDashboard_status',
-						},
-						Text({
-							testId: 'UnitTestDashboard_status_text',
-							text: isSuccess ? 'SUCCESS' : 'FAILURES',
-							style: {
-								fontWeight: 'bold',
-								fontSize: 18,
-							},
-						}),
-					),
-					View(
-						{
-							testId: 'UnitTestDashboard_statistics',
-						},
-						Text({
-							testId: 'UnitTestDashboard_statistics_text',
-							text: stats,
-							style: {
-								fontSize: 16,
-							},
-						}),
-					),
-				),
+				{ testId: 'unit-tests-catalog-root' },
+				EntityCell({
+					testId: 'unit-tests-catalog-modules',
+					title: Loc.getMessage('MOBILE_UNIT_TESTS_MODULES'),
+					nextLevel: true,
+					onClick: () => this.#setSection(Section.MODULES),
+				}),
+				EntityCell({
+					testId: 'unit-tests-catalog-features',
+					title: Loc.getMessage('MOBILE_UNIT_TESTS_FEATURES'),
+					nextLevel: true,
+					onClick: () => this.#setSection(Section.FEATURES),
+				}),
+				EntityCell({
+					testId: 'unit-tests-catalog-basic',
+					title: Loc.getMessage('MOBILE_UNIT_TESTS_BASIC'),
+					nextLevel: true,
+					disabled: !basicGroup,
+					onClick: () => basicGroup && this.#openRunner(basicGroup),
+				}),
 			);
 		}
-	}
 
-	async function executeTests()
-	{
-		const only = testSuites.filter((suite) => suite.$only);
-		const executables = (only.length > 0 ? only : testSuites).filter((suite) => !suite.$skip);
-
-		for (const suite of executables)
+		#renderGroups()
 		{
-			// eslint-disable-next-line no-await-in-loop
-			void await suite.execute();
+			const groupType = this.state.section === Section.MODULES ? 'module' : 'feature';
+			const groups = testingCatalog.getGroupsByType(groupType);
+			const extensionNames = this.#getExtensionNames(groups);
+			const filteredGroups = this.#filterGroups(groups);
+
+			return View(
+				{ testId: `unit-tests-${groupType}-list` },
+				this.#renderGroupControls(groupType, extensionNames),
+				this.#renderGroupItems(groupType, groups, filteredGroups),
+			);
+		}
+
+		#renderGroupControls(groupType, extensionNames)
+		{
+			return View(
+				{
+					testId: `unit-tests-${groupType}-controls`,
+					style: {
+						paddingHorizontal: Indent.XL.toNumber(),
+						paddingTop: Indent.XL.toNumber(),
+						paddingBottom: Indent.M.toNumber(),
+					},
+				},
+				StringInput({
+					testId: `unit-tests-${groupType}-search`,
+					value: this.state.searchQuery,
+					placeholder: Loc.getMessage('MOBILE_UNIT_TESTS_SEARCH_PLACEHOLDER'),
+					size: InputSize.M,
+					design: InputDesign.GREY,
+					mode: InputMode.STROKE,
+					leftContent: Icon.SEARCH,
+					erase: true,
+					onChange: (searchQuery) => this.setState({ searchQuery }),
+					onErase: () => this.setState({ searchQuery: '' }),
+				}),
+				Button({
+					testId: `unit-tests-${groupType}-run-all`,
+					text: Loc.getMessage('MOBILE_UNIT_TESTS_RUN_ALL', {
+						'#COUNT#': extensionNames.length,
+					}),
+					design: ButtonDesign.OUTLINE,
+					size: ButtonSize.M,
+					stretched: true,
+					disabled: !this.state.catalogReady || extensionNames.length === 0,
+					style: { marginTop: Indent.M.toNumber() },
+					onClick: () => this.#openAllGroups(groupType, extensionNames),
+				}),
+			);
+		}
+
+		#renderGroupItems(groupType, groups, filteredGroups)
+		{
+			if (filteredGroups.length === 0)
+			{
+				return StatusBlock({
+					testId: `unit-tests-${groupType}-empty`,
+					title: Loc.getMessage(
+						groups.length === 0
+							? 'MOBILE_UNIT_TESTS_EMPTY'
+							: 'MOBILE_UNIT_TESTS_SEARCH_EMPTY',
+					),
+				});
+			}
+
+			return View(
+				{ testId: `unit-tests-${groupType}-groups` },
+				...filteredGroups.map((group) => EntityCell({
+					testId: createTestingGroupTestId(group.id),
+					title: group.title,
+					nextLevel: true,
+					entityData: group,
+					onClick: (selectedGroup) => this.#openRunner(selectedGroup),
+				})),
+			);
+		}
+
+		#filterGroups(groups)
+		{
+			const searchQuery = this.state.searchQuery.trim().toLocaleLowerCase();
+
+			return groups.filter((group) => (
+				`${group.title} ${group.id}`.toLocaleLowerCase().includes(searchQuery)
+			));
+		}
+
+		#getExtensionNames(groups)
+		{
+			return [...new Set(groups.flatMap((group) => group.extensionNames))];
+		}
+
+		#openAllGroups(groupType, extensionNames)
+		{
+			const title = groupType === 'module'
+				? Loc.getMessage('MOBILE_UNIT_TESTS_MODULES')
+				: Loc.getMessage('MOBILE_UNIT_TESTS_FEATURES')
+			;
+
+			this.#openRunner({
+				id: `all:${groupType}`,
+				type: groupType,
+				title,
+				extensionNames,
+			});
+		}
+
+		#setSection(section)
+		{
+			this.#updateTitle(section);
+			this.setState({ section, searchQuery: '' });
+		}
+
+		#updateTitle(section)
+		{
+			const titles = {
+				[Section.ROOT]: Loc.getMessage('MOBILE_UNIT_TESTS_TITLE'),
+				[Section.MODULES]: Loc.getMessage('MOBILE_UNIT_TESTS_MODULES'),
+				[Section.FEATURES]: Loc.getMessage('MOBILE_UNIT_TESTS_FEATURES'),
+			};
+
+			layout.setTitle({
+				text: titles[section],
+				type: 'common',
+			}, true);
+		}
+
+		#handleBack()
+		{
+			if (this.state.section !== Section.ROOT)
+			{
+				this.#setSection(Section.ROOT);
+
+				return;
+			}
+
+			layout.back();
+		}
+
+		#openRunner(group)
+		{
+			ComponentHelper.openLayout(
+				{
+					name: 'unit.tests.runner',
+					canOpenInDefault: true,
+					widgetParams: { title: group.title },
+					componentParams: {
+						groupId: group.id,
+						groupType: group.type,
+						title: group.title,
+						extensionNames: group.extensionNames,
+					},
+				},
+				layout,
+			);
+		}
+
+		async #loadExternalCatalogs()
+		{
+			const externalCatalogs = [
+				{
+					moduleId: 'crmmobile',
+					importName: 'crm:testing/catalog',
+					requireName: 'crm/testing/catalog',
+				},
+				{
+					moduleId: 'tasksmobile',
+					importName: 'tasks:testing/catalog',
+					requireName: 'tasks/testing/catalog',
+				},
+			].filter(({ moduleId }) => isModuleInstalled(moduleId));
+			const catalogResults = await Promise.allSettled(
+				externalCatalogs.map(({ importName, requireName }) => (
+					jn.import(importName).then(() => require(requireName))
+				)),
+			);
+
+			catalogResults.forEach((result, index) => {
+				if (result.status === 'rejected')
+				{
+					console.error(`Failed to load ${externalCatalogs[index].importName}`, result.reason);
+				}
+			});
+
+			this.setState({
+				catalogReady: catalogResults.every(({ status }) => status === 'fulfilled'),
+			});
 		}
 	}
 
-	BX.onViewLoaded(async () => {
-		await executeTests().catch(console.error);
-
-		layout.showComponent(new UnitTestDashboard({}));
+	BX.onViewLoaded(() => {
+		layout.showComponent(new UnitTestsCatalog({}));
 	});
 })();

@@ -44,6 +44,10 @@ export const DefaultMessageContent = {
 			type: Boolean,
 			default: true,
 		},
+		withReply: {
+			type: Boolean,
+			default: true,
+		},
 		withBuilder: {
 			type: Boolean,
 			default: false,
@@ -82,7 +86,7 @@ export const DefaultMessageContent = {
 	},
 	template: `
 		<div class="bx-im-message-default-content__container" :class="{'--no-text': !withText || hasBuilderBlocks}">
-			<Reply v-if="isReply" :dialogId="dialogId" :replyId="message.replyId" :isForward="isForward" />
+			<Reply v-if="isReply && withReply" :dialogId="dialogId" :replyId="message.replyId" :isForward="isForward" />
 			<TextContent v-if="withText && !hasBuilderBlocks" :text="formattedText" />
 			<BuilderContent v-else :item="item" :dialogId="dialogId"/>
 			<div v-if="withAttach && message.attach.length > 0" class="bx-im-message-default-content__attach">

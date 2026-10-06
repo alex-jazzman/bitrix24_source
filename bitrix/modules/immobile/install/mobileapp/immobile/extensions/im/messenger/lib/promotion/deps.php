@@ -14,7 +14,6 @@ return [
 	'bundle' => [
 		'./src/promotion',
 		'./src/trigger-manager',
-		'./src/entities/video-note',
 		'./src/entities/copilot',
 		'./src/entities/tasks',
 	],

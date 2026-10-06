@@ -37,7 +37,56 @@ jn.define('layout/socialnetwork/project-v2/create/src/helpers/project-create-set
 		'tags',
 		'messagesAutoDeleteDelay',
 		'isLegacyProject',
+		'notifications',
 	];
+
+	const isValidNotificationCatalog = (catalog) => {
+		return catalog !== null
+			&& typeof catalog === 'object'
+			&& !Array.isArray(catalog)
+			&& Array.isArray(catalog.groups)
+			&& catalog.groups.length > 0
+			&& catalog.groups.every((group) => group && Array.isArray(group.types));
+	};
+
+	const normalizeNotificationCatalog = (catalog) => {
+		if (!isValidNotificationCatalog(catalog))
+		{
+			return null;
+		}
+
+		const groups = catalog.groups
+			.map((group) => ({
+				id: String(group.id ?? ''),
+				label: String(group.label ?? ''),
+				types: group.types
+					.filter((type) => type && type.id)
+					.map((type) => ({
+						id: String(type.id),
+						label: String(type.label ?? ''),
+						counterEnabled: type.counterEnabled === true,
+					})),
+			}))
+			.filter((group) => group.id && group.types.length > 0);
+
+		return groups.length > 0 ? { groups } : null;
+	};
+
+	const buildNotificationsPayload = (catalog) => {
+		const normalizedCatalog = normalizeNotificationCatalog(catalog);
+		if (!normalizedCatalog)
+		{
+			return null;
+		}
+
+		const types = normalizedCatalog.groups.flatMap((group) => group.types)
+			.map((type) => ({
+				id: type.id,
+				counterEnabled: type.counterEnabled,
+			}));
+
+		return types.length > 0 ? { types } : null;
+	};
 
 	const normalizeSettings = (settings = {}) => {
 		const normalizedSettings = normalizeProjectSettings(settings);
@@ -45,6 +94,7 @@ jn.define('layout/socialnetwork/project-v2/create/src/helpers/project-create-set
 		return {
 			...normalizedSettings,
 			avatar: normalizeAvatar(normalizedSettings.avatar, normalizedSettings.image),
+			notifications: normalizeNotificationCatalog(normalizedSettings.notifications),
 		};
 	};
 
@@ -81,6 +131,7 @@ jn.define('layout/socialnetwork/project-v2/create/src/helpers/project-create-set
 		messagesAutoDeleteDelay: 0,
 		autoDeleteEnabledInPortalSettings: false,
 		isLegacyProject: false,
+		notifications: null,
 	});
 
 	const getNormalizedSettings = (settings = {}, userId = 0) => normalizeSettings({
@@ -102,8 +153,8 @@ jn.define('layout/socialnetwork/project-v2/create/src/helpers/project-create-set
 
 	const buildProjectPayload = (fields, isEditMode = false) => {
 		const tags = Array.isArray(fields.tags) ? fields.tags : [];
-
-		return {
+		const notifications = buildNotificationsPayload(fields.notifications);
+		const payload = {
 			name: fields.name,
 			description: fields.description,
 			avatar: buildAvatarPayload(fields.avatar, fields.image, isEditMode),
@@ -133,6 +184,13 @@ jn.define('layout/socialnetwork/project-v2/create/src/helpers/project-create-set
 				delete: fields.knowledgeDeletePerms ?? PermissionValueType.ALL,
 			},
 		};
+
+		if (notifications)
+		{
+			payload.notifications = notifications;
+		}
+
+		return payload;
 	};
 
 	const getSubmitErrorMessage = (response, mode = ProjectCreateMode.CREATE) => {
@@ -163,6 +221,9 @@ jn.define('layout/socialnetwork/project-v2/create/src/helpers/project-create-set
 		getDefaultSettings,
 		getNormalizedSettings,
 		buildProjectPayload,
+		buildNotificationsPayload,
+		isValidNotificationCatalog,
+		normalizeNotificationCatalog,
 		getSubmitErrorMessage,
 		getCreatedProjectId,
 		getCreatedProjectChatId,

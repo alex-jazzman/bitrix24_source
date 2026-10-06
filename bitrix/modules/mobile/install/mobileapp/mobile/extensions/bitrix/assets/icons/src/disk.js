@@ -188,6 +188,10 @@ jn.define('assets/icons/src/disk', (require, exports, module) => {
 		psd: DiskIcon.PSD,
 		rar: DiskIcon.RAR,
 		zip: DiskIcon.ZIP,
+		mp3: DiskIcon.AUDIO,
+		ogg: DiskIcon.AUDIO,
+		wav: DiskIcon.AUDIO,
+		m4a: DiskIcon.AUDIO,
 		board: DiskIcon.FLIPCHART,
 	};
 

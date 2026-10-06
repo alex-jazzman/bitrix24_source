@@ -51,7 +51,6 @@
 
 		this.initAnalytics();
 		this.bindActions();
-		this.overridePrint();
 	};
 
 	BXMailView.prototype.initIframe = function()
@@ -88,6 +87,12 @@
 		}
 
 		this.messageBody.renderTo(html);
+		this.slider = BX.SidePanel.Instance.getTopSlider();
+		this.messageBody.bindPrintControl({
+			slider: this.slider,
+			getHeaderHtml: () => this.collectPrintHeaderHtml(),
+			getHeaderStyles: () => this.getPrintHeaderStyles(),
+		});
 	};
 
 	BXMailView.prototype.ajaxLoadMessageBody = function ()
@@ -296,39 +301,6 @@
 	{
 		this.bindDiscussInChat();
 	}
-
-	BXMailView.prototype.overridePrint = function ()
-	{
-		const slider = BX.SidePanel.Instance.getTopSlider();
-		if (!slider)
-		{
-			return;
-		}
-
-		const printLabel = slider.getPrintLabel();
-		if (!printLabel)
-		{
-			return;
-		}
-
-		this.slider = slider;
-		const defaultOnclick = printLabel.getOnclick();
-		printLabel.setOnclick((label, currentSlider) => {
-			if (!this.messageBody)
-			{
-				if (defaultOnclick)
-				{
-					defaultOnclick(label, currentSlider);
-				}
-
-				return;
-			}
-
-			const headerHtml = this.collectPrintHeaderHtml();
-			const headerStyles = this.getPrintHeaderStyles();
-			this.messageBody.print(headerHtml, headerStyles);
-		});
-	};
 
 	BXMailView.prototype.collectPrintHeaderHtml = function ()
 	{

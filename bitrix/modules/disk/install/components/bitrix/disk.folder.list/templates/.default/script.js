@@ -10,8 +10,12 @@ BX.Disk.FolderListClass = (function() {
 		this.currentFolder = parameters.currentFolder || {};
 		this.gridId = parameters.gridId;
 		this.isTrashMode = parameters.isTrashMode;
+		this.actionPanel = parameters.actionPanel || {};
+		this.actionPanel.key = String(this.actionPanel.key || '');
 		this.filterValueToSkipSearchUnderLinks = parameters.filterValueToSkipSearchUnderLinks || {};
 		this.filterId = parameters.filterId;
+		this.searchSessionId = 0;
+		this.activeSearchSession = null;
 
 		if (BX.Main.gridManager)
 		{
@@ -67,6 +71,7 @@ BX.Disk.FolderListClass = (function() {
 		BX.Disk.Page.changeStorage(this.storage);
 
 		this.setEvents();
+		this.subscribeToActionPanel();
 
 		if (this.shouldUseHistory())
 		{
@@ -278,12 +283,45 @@ BX.Disk.FolderListClass = (function() {
 		BX.addCustomEvent('Disk:onChangeDocumentService', this.onChangeDocumentService.bind(this));
 	};
 
+	FolderListClass.prototype.getCurrentActionPanel = function()
+	{
+		const registry = BX.Disk.folderListActionPanels || {};
+		const panel = registry[this.actionPanel.key];
+
+		if (!panel || panel.renderTo !== this.actionPanel.renderTo)
+		{
+			return null;
+		}
+
+		return panel;
+	};
+
+	FolderListClass.prototype.subscribeToActionPanel = function()
+	{
+		if (this.isActionPanelSubscribed)
+		{
+			return;
+		}
+
+		const panel = this.getCurrentActionPanel();
+		if (!panel)
+		{
+			return;
+		}
+
+		this.isActionPanelSubscribed = true;
+		BX.addCustomEvent(panel, 'BX.UI.ActionPanel:showPanel', () => {
+			this.refreshDestroyGroupAction();
+		});
+	};
+
 	FolderListClass.prototype.onBeforeFilterApply = function(filterId, data, filter, promise) {
 		if (filterId !== this.filterId)
 		{
 			return;
 		}
 
+		this.cancelSearchSession();
 		this.isFiltetedFolderList = true;
 		promise.then(() => {
 			if (filter.getSearch().getSearchString() || filter.getSearch().getSquares().length > 0)
@@ -316,13 +354,15 @@ BX.Disk.FolderListClass = (function() {
 	};
 
 	const _getSymlinksUnderObjectId = [];
-	FolderListClass.prototype.getSymlinksUnderObjectId = function(object)
+	FolderListClass.prototype.getSymlinksUnderObjectId = function(object, session)
 	{
 		const objectId = object.id;
 		if (_getSymlinksUnderObjectId[objectId] !== undefined)
 		{
 			const result = new BX.Promise();
-			result.fulfill(_getSymlinksUnderObjectId[objectId]);
+			result.fulfill(
+				!session || this.isCurrentSearchSession(session) ? _getSymlinksUnderObjectId[objectId] : [],
+			);
 
 			return result;
 		}
@@ -333,14 +373,21 @@ BX.Disk.FolderListClass = (function() {
 			dataType: 'json',
 			url: BX.Disk.addToLinkParam(this.ajaxUrl, 'action', 'showSymlinks'),
 			data: object,
-			onsuccess(data) {
-				if (!data || !data.status || data.status !== 'success')
+			onsuccess: (data) => {
+				if (!data || data.status !== 'success' || !BX.type.isArray(data.items))
 				{
+					promise.reject(data);
+
 					return;
 				}
 
 				_getSymlinksUnderObjectId[objectId] = data.items;
-				promise.fulfill(_getSymlinksUnderObjectId[objectId]);
+				promise.fulfill(
+					!session || this.isCurrentSearchSession(session) ? _getSymlinksUnderObjectId[objectId] : [],
+				);
+			},
+			onfailure: (error) => {
+				promise.reject(error);
 			},
 		});
 
@@ -400,6 +447,8 @@ BX.Disk.FolderListClass = (function() {
 			return;
 		}
 
+		this.cancelSearchSession();
+
 		if (this.commonGrid.isTile())
 		{
 			promise = promise.then(() => {
@@ -412,20 +461,18 @@ BX.Disk.FolderListClass = (function() {
 			return;
 		}
 
-		this.layout.fileListContainer.classList.add('disk-running-filter');
-
 		this.runAfterFilterOpenFolder = this.resetFilter.bind(this);
 
 		const folder = BX.Disk.Page.getFolder();
 		folder.link = window.location.pathname.toString();
-
-		const isTimeToStopSearch = function() {
-			const currentFolderInGrid = BX.Disk.Page.getFolder();
-
-			return currentFolderInGrid && currentFolderInGrid.id != folder.id;
-		};
+		const session = this.beginSearchSession(folder);
 
 		promise.then(() => {
+			if (!this.isCurrentSearchSession(session))
+			{
+				return;
+			}
+
 			if (!this.commonGrid.countItems())
 			{
 				if (this.commonGrid.isTile())
@@ -433,119 +480,182 @@ BX.Disk.FolderListClass = (function() {
 					this.commonGrid.instance.removeEmptyBlock();
 					this.commonGrid.instance.setMinHeightContainer();
 				}
+
+				session.faded = true;
 				this.commonGrid.fade();
 			}
 
-			this.getSymlinksUnderObjectId(folder).then((items) => {
-				let promise = new BX.Promise();
-				const firstPromise = promise;
+			this.getSymlinksUnderObjectId(folder, session).then(
+				(items) => {
+					this.searchConnectedFolders(session, items);
+				},
+				() => {
+					this.finishSearchSession(session);
+				},
+			);
+		}, () => {
+			this.finishSearchSession(session);
+		});
+	};
 
-				items.forEach(function(symlink, index) {
-					promise = promise.then(() => {
-						if (isTimeToStopSearch())
-						{
-							return;
-						}
+	FolderListClass.prototype.searchConnectedFolders = function(session, items)
+	{
+		let queue = new BX.Promise();
+		const startPromise = queue;
 
-						const promise = new BX.Promise();
-
-						const grid = this.commonGrid.instance;
-						const data = {
-							viewGridStorageId: BX.Disk.Page.getStorage().id,
-						};
-
-						if (items.length === index + 1)
-						{
-							this.removeSearchProcessInConnectedFolders();
-						}
-						else if (this.commonGrid.countItems() > 0)
-						{
-							this.showSearchProcessInConnectedFolders();
-						}
-
-						if (this.commonGrid.isGrid())
-						{
-							grid.getData().request(symlink.link, 'POST', data, null, function() {
-								if (isTimeToStopSearch())
-								{
-									return;
-								}
-
-								const bodyRows = BX.Grid.Utils.getByClass(this.getResponse(), grid.settings.get('classBodyRow'));
-
-								if (
-									BX.type.isArray(bodyRows) && bodyRows.length === 1
-										&& BX.hasClass(bodyRows[0], grid.settings.get('classEmptyRows'))
-								)
-								{}
-								else if (BX.type.isArray(bodyRows) && bodyRows.length === 0 || !BX.type.isArray(bodyRows))
-								{}
-								else
-								{
-									BX.remove(BX.Grid.Utils.getByClass(grid.getContainer(), grid.settings.get('classEmptyRows'), true));
-									grid.adjustEmptyTable(bodyRows);
-									grid.getUpdater().appendBodyRows(bodyRows);
-									grid.getRows().reset();
-									grid.bindOnRowEvents();
-
-									grid.updateCounterDisplayed();
-									grid.updateCounterSelected();
-
-									grid.tableUnfade();
-								}
-
-								promise.fulfill();
-							});
-						}
-						else
-						{
-							const ajaxPromise = BX.ajax.promise({
-								url: BX.util.add_url_param(symlink.link, {
-									grid_id: this.commonGrid.getId(),
-									internal: true,
-								}),
-								method: 'POST',
-								dataType: 'json',
-								data,
-							});
-
-							ajaxPromise.then((response) => {
-								if (this.commonGrid.countItems())
-								{
-									this.commonGrid.unFade();
-								}
-
-								if (isTimeToStopSearch())
-								{
-									return;
-								}
-
-								response.data.tileGrid.items.forEach(function(item) {
-									this.commonGrid.instance.appendItem(item);
-								}, this);
-
-								promise.fulfill();
-							});
-						}
-
-						return promise;
-					});
-				}, this);
-
-				promise.then(() => {
-					this.layout.fileListContainer.classList.remove('disk-running-filter');
-					this.commonGrid.unFade();
-
-					if (!this.commonGrid.countItems() && this.commonGrid.isTile())
-					{
-						this.commonGrid.instance.setMinHeightContainer();
-						this.commonGrid.instance.appendEmptyBlock();
-					}
-				});
-
-				firstPromise.fulfill();
+		items.forEach((symlink, index) => {
+			queue = queue.then(() => {
+				return this.requestConnectedFolder(session, symlink, items.length === index + 1);
 			});
 		});
+
+		const finishSearch = () => {
+			this.finishSearchSession(session);
+		};
+		queue.then(
+			finishSearch,
+			finishSearch,
+		);
+
+		startPromise.fulfill();
+	};
+
+	FolderListClass.prototype.requestConnectedFolder = function(session, symlink, isLast)
+	{
+		const requestPromise = new BX.Promise();
+		if (!this.isCurrentSearchSession(session))
+		{
+			requestPromise.fulfill();
+
+			return requestPromise;
+		}
+
+		const grid = this.commonGrid.instance;
+		const data = {
+			viewGridStorageId: BX.Disk.Page.getStorage().id,
+		};
+
+		if (!isLast && this.commonGrid.countItems() > 0)
+		{
+			this.showSearchProcessInConnectedFolders(session);
+		}
+
+		if (this.commonGrid.isGrid())
+		{
+			const gridData = grid.getData();
+			gridData.request(
+				symlink.link,
+				'POST',
+				data,
+				null,
+				() => {
+					try
+					{
+						if (this.isCurrentSearchSession(session))
+						{
+							this.applySearchResponse(session, gridData.getResponse());
+						}
+
+						requestPromise.fulfill();
+					}
+					catch (error)
+					{
+						requestPromise.reject(error);
+					}
+				},
+				(xhr, error) => {
+					requestPromise.reject(error || xhr);
+				},
+			);
+		}
+		else
+		{
+			BX.ajax.promise({
+				url: BX.util.add_url_param(symlink.link, {
+					grid_id: this.commonGrid.getId(),
+					internal: true,
+				}),
+				method: 'POST',
+				dataType: 'json',
+				data,
+			}).then(
+				(response) => {
+					try
+					{
+						if (this.isCurrentSearchSession(session))
+						{
+							this.applySearchResponse(session, response);
+						}
+
+						requestPromise.fulfill();
+					}
+					catch (error)
+					{
+						requestPromise.reject(error);
+					}
+				},
+				(error) => {
+					requestPromise.reject(error);
+				},
+			);
+		}
+
+		return requestPromise;
+	};
+
+	FolderListClass.prototype.applySearchResponse = function(session, response)
+	{
+		if (!this.isCurrentSearchSession(session))
+		{
+			return false;
+		}
+
+		if (this.commonGrid.isGrid())
+		{
+			const grid = this.commonGrid.instance;
+			const bodyRows = BX.Grid.Utils.getByClass(response, grid.settings.get('classBodyRow'));
+			if (!BX.type.isArray(bodyRows))
+			{
+				throw new TypeError('Invalid connected folder search response');
+			}
+
+			if (
+				bodyRows.length === 0
+				|| (
+					bodyRows.length === 1
+					&& BX.hasClass(bodyRows[0], grid.settings.get('classEmptyRows'))
+				)
+			)
+			{
+				return true;
+			}
+
+			BX.remove(BX.Grid.Utils.getByClass(grid.getContainer(), grid.settings.get('classEmptyRows'), true));
+			grid.adjustEmptyTable(bodyRows);
+			grid.getUpdater().appendBodyRows(bodyRows);
+			grid.getRows().reset();
+			grid.bindOnRowEvents();
+			grid.updateCounterDisplayed();
+			grid.updateCounterSelected();
+
+			return true;
+		}
+
+		if (
+			!response
+			|| !response.data
+			|| !response.data.tileGrid
+			|| !BX.type.isArray(response.data.tileGrid.items)
+		)
+		{
+			throw new TypeError('Invalid connected folder search response');
+		}
+
+		response.data.tileGrid.items.forEach((item) => {
+			this.commonGrid.instance.appendItem(item);
+		});
+
+		return true;
 	};
 
 	FolderListClass.prototype.resetFilter = function()
@@ -998,127 +1108,202 @@ BX.Disk.FolderListClass = (function() {
 
 	FolderListClass.prototype.createFolder = function() {
 		const self = this;
+		const idSuffix = BX.util.getRandomString(6);
+		const inputId = `disk-new-create-filename-${idSuffix}`;
+		const errorId = `disk-new-create-folder-error-${idSuffix}`;
 
-		var modal = BX.Disk.modalWindow({
-			modalId: 'bx-disk-create-folder',
-			title: BX.message('DISK_FOLDER_TITLE_CREATE_FOLDER'),
-			contentClassName: '',
-			contentStyle: {
-				paddingTop: '30px',
-				paddingBottom: '70px',
+		const errorNode = BX.create('div', {
+			props: {
+				id: errorId,
+				className: 'bx-disk-popup-error',
 			},
-			events: {
-				onAfterPopupShow() {
-					BX.focus(BX('disk-new-create-filename'));
-				},
-				onPopupClose() {
-					this.destroy();
-				},
+			attrs: {
+				role: 'alert',
+				'data-testid': 'disk-folder-create-error',
 			},
-			content: [
+			style: {
+				marginTop: '8px',
+				color: 'var(--ui-color-accent-main-alert, #f76d63)',
+				fontSize: '13px',
+			},
+		});
+
+		const input = BX.create('input', {
+			props: {
+				id: inputId,
+				className: 'bx-disk-popup-input',
+				type: 'text',
+				value: '',
+			},
+			attrs: {
+				required: 'required',
+				'aria-required': 'true',
+				'aria-invalid': 'false',
+				'aria-describedby': errorId,
+				'data-testid': 'disk-folder-create-name-input',
+			},
+			style: {
+				fontSize: '16px',
+				marginTop: '10px',
+			},
+		});
+
+		const clearError = () => {
+			if (errorNode.textContent === '')
+			{
+				return;
+			}
+			errorNode.textContent = '';
+			input.setAttribute('aria-invalid', 'false');
+		};
+
+		const showError = () => {
+			BX.addClass(input, 'disk-animated disk-animate-shake');
+			input.addEventListener('animationend', () => {
+				BX.removeClass(input, 'disk-animated disk-animate-shake');
+			}, { once: true });
+
+			errorNode.textContent = BX.message('DISK_FOLDER_ERROR_EMPTY_NAME_CREATE_FOLDER');
+			input.setAttribute('aria-invalid', 'true');
+			BX.focus(input);
+		};
+
+		BX.bind(input, 'input', clearError);
+
+		const content = BX.create('div', {
+			children: [
 				BX.create('label', {
 					props: {
 						className: 'bx-disk-popup-label',
-						for: 'disk-new-create-filename',
+					},
+					attrs: {
+						for: inputId,
 					},
 					children: [
 						BX.create('span', {
 							props: {
 								className: 'req',
 							},
+							attrs: {
+								'aria-hidden': 'true',
+							},
 							text: '*',
 						}),
-						BX.message('DISK_FOLDER_LABEL_NAME_CREATE_FOLDER'),
+						BX.create('span', {
+							text: BX.message('DISK_FOLDER_LABEL_NAME_CREATE_FOLDER'),
+						}),
 					],
 				}),
-				BX.create('input', {
-					props: {
-						id: 'disk-new-create-filename',
-						className: 'bx-disk-popup-input',
-						type: 'text',
-						value: '',
-					},
-					style: {
-						fontSize: '16px',
-						marginTop: '10px',
-					},
-				}),
+				input,
+				errorNode,
 			],
-			buttons: [
-				new BX.PopupWindowCustomButton({
-					text: BX.message('DISK_FOLDER_BTN_CREATE_FOLDER'),
-					className: 'ui-btn ui-btn-success',
-					events: {
-						click() {
-							const input = BX('disk-new-create-filename');
-							const newName = input.value;
-							if (!newName || !newName.replaceAll(/\s+/g, ''))
-							{
-								BX.addClass(input, 'disk-animated disk-animate-shake');
-								input.addEventListener('animationend', () => {
-									BX.removeClass(input, 'disk-animated disk-animate-shake');
-								});
+		});
 
-								BX.focus(input);
+		this.showAirMessageBox({
+			title: BX.message('DISK_FOLDER_TITLE_CREATE_FOLDER'),
+			message: content,
+			popupOptions: {
+				closeByEsc: true,
+				focusTrap: true,
+				events: {
+					onAfterPopupShow() {
+						BX.focus(input);
+					},
+				},
+			},
+			buttonsFactory(messageBox) {
+				let submitting = false;
+
+				const submit = (button) => {
+					if (submitting)
+					{
+						return;
+					}
+
+					const newName = input.value;
+					if (!newName || !newName.replaceAll(/\s+/g, ''))
+					{
+						showError();
+
+						return;
+					}
+
+					submitting = true;
+					button.setWaiting(true);
+
+					BX.Disk.ajax({
+						method: 'POST',
+						dataType: 'json',
+						url: BX.Disk.addToLinkParam(self.ajaxUrl, 'action', 'addFolder'),
+						data: {
+							targetFolderId: BX.Disk.Page.getFolder().id,
+							name: newName,
+						},
+						onsuccess(data) {
+							if (!data)
+							{
+								submitting = false;
+								button.setWaiting(false);
 
 								return;
 							}
 
-							this.addClassName('ui-btn-clock');
-							const button = this;
+							if (data.status && data.status === 'success')
+							{
+								messageBox.close();
 
-							BX.Disk.ajax({
-								method: 'POST',
-								dataType: 'json',
-								url: BX.Disk.addToLinkParam(self.ajaxUrl, 'action', 'addFolder'),
-								data: {
-									targetFolderId: BX.Disk.Page.getFolder().id,
-									name: newName,
-								},
-								onsuccess: function(data) {
-									if (!data)
+								self.commonGrid.reload(
+									BX.Disk.getUrlToShowObjectInGrid(data.folder.id, { resetFilter: 1 }),
+									{},
+								).then(() => {
+									self.resetFilter();
+									self.commonGrid.selectItemById(data.folder.id);
+
+									if (self.commonGrid.isGrid())
 									{
-										return;
+										const row = self.getRow(data.folder.id);
+										self.scrollToRow(row);
 									}
-
-									if (data.status && data.status == 'success')
-									{
-										modal.close();
-
-										this.commonGrid.reload(
-											BX.Disk.getUrlToShowObjectInGrid(data.folder.id, { resetFilter: 1 }),
-											{},
-										).then(() => {
-											this.resetFilter();
-											this.commonGrid.selectItemById(data.folder.id);
-
-											if (this.commonGrid.isGrid())
-											{
-												const row = this.getRow(data.folder.id);
-												this.scrollToRow(row);
-											}
-										});
-									}
-									else
-									{
-										BX.Disk.showModalWithStatusAction(data);
-										button.removeClassName('ui-btn-clock');
-									}
-								}.bind(self),
-							});
+								});
+							}
+							else
+							{
+								submitting = false;
+								button.setWaiting(false);
+								BX.Disk.showModalWithStatusAction(data);
+							}
 						},
+					});
+				};
+
+				const createButton = new BX.UI.Button({
+					text: BX.message('DISK_FOLDER_BTN_CREATE_FOLDER'),
+					useAirDesign: true,
+					style: BX.UI.AirButtonStyle.FILLED,
+					wide: true,
+					onclick(button) {
+						submit(button);
 					},
-				}),
-				new BX.PopupWindowCustomButton({
-					text: BX.message('DISK_JS_BTN_CLOSE'),
-					className: 'ui-btn ui-btn-link',
-					events: {
-						click() {
-							BX.PopupWindowManager.getCurrentPopup().close();
-						},
-					},
-				}),
-			],
+				});
+				createButton.getContainer().setAttribute('data-testid', 'disk-folder-create-submit-btn');
+
+				BX.bind(input, 'keydown', (event) => {
+					if (event.key === 'Enter')
+					{
+						event.preventDefault();
+						submit(createButton);
+					}
+				});
+
+				const cancelButton = messageBox.getCancelButton({
+					style: BX.UI.AirButtonStyle.PLAIN_NO_ACCENT,
+				});
+				cancelButton.setText(BX.message('DISK_JS_BTN_CLOSE'));
+				cancelButton.setWide(true);
+				cancelButton.getContainer().setAttribute('data-testid', 'disk-folder-create-cancel-btn');
+
+				return [createButton, cancelButton];
+			},
 		});
 	};
 
@@ -1452,12 +1637,11 @@ BX.Disk.FolderListClass = (function() {
 	 */
 	FolderListClass.prototype.openFolder = function(folderId, folder)
 	{
+		this.cancelSearchSession();
 		this.commonGrid.reload(folder.link, {
 			resetFilter: 1,
 		}).then(() => {
 			BX.onCustomEvent('Disk.FolderListClass:onFolderOpen', [folder, this.isFiltetedFolderList]);
-
-			this.removeSearchProcessInConnectedFolders();
 
 			BX.Disk.Page.changeFolder({
 				id: folder.id,
@@ -1640,7 +1824,7 @@ BX.Disk.FolderListClass = (function() {
 			const item = this.commonGrid.instance.getItem(objectId);
 			if (item)
 			{
-				item.onRename();
+				this.keepFocusThroughMenuClose(() => item.onRename());
 			}
 
 			return;
@@ -1658,6 +1842,11 @@ BX.Disk.FolderListClass = (function() {
 
 		if (input)
 		{
+			// editSelectedCancel() may blur the input (e.g. in Chrome), which triggers the
+			// 'blur' handler below and would call editSelectedSave() with the new value,
+			// overriding the cancel. This flag tells 'blur' that a cancel is in progress.
+			let cancelling = false;
+
 			BX.bind(input, 'keydown', (event) => {
 				if (event.key === 'Enter')
 				{
@@ -1669,17 +1858,60 @@ BX.Disk.FolderListClass = (function() {
 
 				if (event.key === 'Escape')
 				{
+					event.stopPropagation();
+					event.preventDefault();
+
+					cancelling = true;
 					this.commonGrid.instance.editSelectedCancel();
 				}
 			});
 			BX.bind(input, 'blur', (event) => {
 				event.stopPropagation();
 				event.preventDefault();
+
+				if (cancelling)
+				{
+					return;
+				}
+
 				this.commonGrid.instance.editSelectedSave();
 			});
 
-			BX.focus(input);
+			this.keepFocusThroughMenuClose(() => BX.focus(input));
 		}
+	};
+
+	// Activates the inline-rename field and keeps its focus when the actions menu closes.
+	//
+	// The row/tile actions menu is a popup that may own an a11y focus-trap (ui.a11y). On
+	// close the trap restores focus to the element that was focused before the menu opened
+	// by dispatching a cancelable 'a11y:restore-focus' event (FocusNavigator.restoreFocus).
+	// That blurs the rename field → editSelectedSave/runRename → the rename collapses.
+	//
+	// Two independent problems, two parts of the fix:
+	//   1) The restore may run synchronously, via requestAnimationFrame, or on the close
+	//      animation, so a timer can't reliably win the race. We cancel the restore instead:
+	//      intercept the first 'a11y:restore-focus' and preventDefault it.
+	//   2) The activation itself must run after the menu's click/close cycle — in tile mode
+	//      running it synchronously inside the menu-item click is undone by the close. So we
+	//      defer focusFn to the next tick.
+	// Together: the activation runs once the menu is gone and the restore can't steal focus,
+	// regardless of its timing. If a11y/focus-trap is off, no event fires and focus just stays.
+	FolderListClass.prototype.keepFocusThroughMenuClose = function(focusFn)
+	{
+		const onRestore = (event) => {
+			event.preventDefault();
+			document.removeEventListener('a11y:restore-focus', onRestore, true);
+		};
+
+		document.addEventListener('a11y:restore-focus', onRestore, true);
+
+		// Safety: drop the listener if no restore happens (a11y/focus-trap is off).
+		setTimeout(() => {
+			document.removeEventListener('a11y:restore-focus', onRestore, true);
+		}, 2000);
+
+		setTimeout(focusFn, 0);
 	};
 
 	FolderListClass.prototype.processGridGroupActionRestore = function()
@@ -1803,10 +2035,20 @@ BX.Disk.FolderListClass = (function() {
 	FolderListClass.prototype.formatAirMessageBoxFileName = function(message, name)
 	{
 		const safeName = BX.util.htmlspecialchars(name);
-		const fileName = '<span class="disk-air-message-box-file-name">' + safeName + '</span>';
-		const fileNameWithTitle = '<span class="disk-air-message-box-file-name" title="' + safeName + '">' + safeName + '</span>';
+		const chars = Array.from(name);
+		const dotIndex = chars.lastIndexOf('.');
+		const extLength = dotIndex > 0 ? chars.length - dotIndex : 0;
+		const tailLength = Math.min(chars.length, Math.max(12, Math.min(extLength + 2, 20)));
+		const head = BX.util.htmlspecialchars(chars.slice(0, chars.length - tailLength).join(''));
+		const tail = BX.util.htmlspecialchars(chars.slice(chars.length - tailLength).join(''));
+		const fileName = '<span class="disk-air-message-box-file-name-sr-only">' + safeName + '</span>'
+			+ '<span class="disk-air-message-box-file-name" aria-hidden="true">' + head + '</span>'
+			+ '<span class="disk-air-message-box-file-name-tail" aria-hidden="true">' + tail + '</span>';
 		const wrapFileName = (leftPart, rightPart) => {
-			return '<span class="disk-air-message-box-file-name-wrapper" title="' + safeName + '">'
+			return '<span'
+				+ ' class="disk-air-message-box-file-name-wrapper"'
+				+ ' data-testid="disk-air-message-box-file-name"'
+				+ ' title="' + safeName + '">'
 				+ leftPart
 				+ fileName
 				+ rightPart
@@ -1824,7 +2066,9 @@ BX.Disk.FolderListClass = (function() {
 			.replace(/#NAME#(\?)/g, (match, questionMark) => {
 				return wrapFileName('', questionMark);
 			})
-			.replace(/#NAME#/g, fileNameWithTitle)
+			.replace(/#NAME#/g, () => {
+				return wrapFileName('', '');
+			})
 		;
 	};
 
@@ -1843,11 +2087,17 @@ BX.Disk.FolderListClass = (function() {
 
 			if (BX.type.isFunction(options.buttonsFactory))
 			{
-				messageBox.setButtons(options.buttonsFactory(messageBox));
+				const buttons = options.buttonsFactory(messageBox);
+				if (buttons === null)
+				{
+					return;
+				}
+
+				messageBox.setButtons(buttons);
 			}
 
 			const popupContainer = messageBox.getPopupWindow().getPopupContainer();
-			popupContainer.classList.add('disk-air-message-box-fit-content');
+			popupContainer.classList.add('disk-air-message-box-fit-content', '--content-text');
 
 			messageBox.show();
 		});
@@ -1873,28 +2123,44 @@ BX.Disk.FolderListClass = (function() {
 		const isFolder = parameters.object.isFolder;
 		const isDeleted = parameters.object.isDeleted;
 
-		const canDelete = parameters.canDelete;
-		let messageDescription = '';
+		const canMarkDeleted = parameters.canMarkDeleted === true;
+		const canDelete = parameters.canDelete === true;
+		const canMarkDeletedObject = !isDeleted && canMarkDeleted;
+		if (!canMarkDeletedObject && !canDelete)
+		{
+			return;
+		}
 
-		if (isFolder)
-		{
-			messageDescription = BX.message(canDelete ? 'DISK_FOLDER_LIST_TRASH_DELETE_DESTROY_FOLDER_CONFIRM' : 'DISK_FOLDER_LIST_TRASH_DELETE_FOLDER_CONFIRM');
-		}
-		else
-		{
-			messageDescription = BX.message(canDelete ? 'DISK_FOLDER_LIST_TRASH_DELETE_DESTROY_FILE_CONFIRM' : 'DISK_FOLDER_LIST_TRASH_DELETE_FILE_CONFIRM');
-		}
+		let messageCode = '';
 
 		if (isDeleted)
 		{
-			messageDescription = isFolder
-				? BX.message('DISK_FOLDER_LIST_TRASH_DELETE_DESTROY_DELETED_FOLDER_CONFIRM')
-				: BX.message('DISK_FOLDER_LIST_TRASH_DELETE_DESTROY_DELETED_FILE_CONFIRM');
+			messageCode = isFolder
+				? 'DISK_FOLDER_LIST_TRASH_DELETE_DESTROY_DELETED_FOLDER_CONFIRM'
+				: 'DISK_FOLDER_LIST_TRASH_DELETE_DESTROY_DELETED_FILE_CONFIRM';
+		}
+		else if (canMarkDeletedObject && canDelete)
+		{
+			messageCode = isFolder
+				? 'DISK_FOLDER_LIST_TRASH_DELETE_DESTROY_FOLDER_CONFIRM'
+				: 'DISK_FOLDER_LIST_TRASH_DELETE_DESTROY_FILE_CONFIRM';
+		}
+		else if (canMarkDeletedObject)
+		{
+			messageCode = isFolder
+				? 'DISK_FOLDER_LIST_TRASH_DELETE_FOLDER_CONFIRM'
+				: 'DISK_FOLDER_LIST_TRASH_DELETE_FILE_CONFIRM';
+		}
+		else
+		{
+			messageCode = isFolder
+				? 'DISK_FOLDER_LIST_TRASH_DELETE_DESTROY_DELETED_FOLDER_CONFIRM'
+				: 'DISK_FOLDER_LIST_TRASH_DELETE_DESTROY_DELETED_FILE_CONFIRM';
 		}
 
 		this.showAirMessageBox({
 			title: BX.message('DISK_FOLDER_LIST_TRASH_DELETE_TITLE'),
-			message: this.formatAirMessageBoxFileName(messageDescription, name),
+			message: this.formatAirMessageBoxFileName(BX.message(messageCode), name),
 			buttonsFactory: (messageBox) => {
 				const buttons = [];
 				const cancelButton = messageBox.getCancelButton({
@@ -1902,7 +2168,7 @@ BX.Disk.FolderListClass = (function() {
 				});
 				cancelButton.setText(BX.message('DISK_FOLDER_LIST_TRASH_CANCEL_DELETE_BUTTON'));
 
-				if (!isDeleted)
+				if (canMarkDeletedObject)
 				{
 					buttons.push(new BX.UI.Button({
 						text: BX.message('DISK_FOLDER_LIST_TRASH_DELETE_BUTTON'),
@@ -2197,13 +2463,73 @@ BX.Disk.FolderListClass = (function() {
 		});
 	};
 
+	FolderListClass.prototype.canDestroySelected = function()
+	{
+		const ids = this.commonGrid.getSelectedIds();
+		if (ids.length === 0)
+		{
+			return false;
+		}
+
+		if (this.commonGrid.isGrid())
+		{
+			const selectedRows = this.commonGrid.instance.getRows().getSelected();
+
+			return selectedRows.length === ids.length && selectedRows.every((row) => {
+				return row.getNode().dataset.canDestroy === '1';
+			});
+		}
+
+		const items = this.commonGrid.instance.getSelectedItems();
+
+		return items.length === ids.length && items.every((item) => {
+			return item.canDelete === true;
+		});
+	};
+
+	FolderListClass.prototype.refreshDestroyGroupAction = function()
+	{
+		const panel = this.getCurrentActionPanel();
+		if (!panel)
+		{
+			return;
+		}
+
+		const item = panel.getItemById('destroy');
+		if (!item)
+		{
+			return;
+		}
+
+		if (this.canDestroySelected())
+		{
+			item.show();
+		}
+		else
+		{
+			item.hide();
+		}
+	};
+
 	FolderListClass.prototype.openConfirmDestroyGroup = function()
 	{
+		if (!this.canDestroySelected())
+		{
+			return;
+		}
+
 		const messageDescription = BX.message('DISK_FOLDER_LIST_TRASH_DESTROY_GROUP_CONFIRM');
 		this.showAirMessageBox({
 			title: BX.message('DISK_FOLDER_LIST_TRASH_DELETE_TITLE'),
 			message: messageDescription,
 			buttonsFactory: (messageBox) => {
+				if (!this.canDestroySelected())
+				{
+					this.refreshDestroyGroupAction();
+
+					return null;
+				}
+
 				const cancelButton = messageBox.getCancelButton({
 					style: BX.UI.AirButtonStyle.PLAIN_NO_ACCENT,
 				});
@@ -2217,13 +2543,22 @@ BX.Disk.FolderListClass = (function() {
 						style: BX.UI.AirButtonStyle.FILLED,
 						wide: true,
 						onclick: (button) => {
+							if (!this.canDestroySelected())
+							{
+								messageBox.close();
+								this.refreshDestroyGroupAction();
+
+								return;
+							}
+
+							const selectedIds = this.commonGrid.getSelectedIds();
 							button.setWaiting(true);
 
 							const values = {};
 							values[this.commonGrid.getActionKey()] = 'destroy';
 
 							const data = {
-								rows: this.commonGrid.getSelectedIds(),
+								rows: selectedIds,
 								controls: values,
 							};
 
@@ -3959,6 +4294,7 @@ BX.Disk.FolderListClass = (function() {
 											data: {
 												isChangedRights: isChangedRights ? 1 : 0,
 												showExtendedRights: BX('showExtendedRights').checked ? 1 : 0,
+												setRightsOnPseudoSystemFolders: BX('setRightsOnPseudoSystemFolders')?.checked ? 1 : 0,
 												storageId,
 												storageNewRights,
 											},
@@ -5208,14 +5544,102 @@ BX.Disk.FolderListClass = (function() {
 		return BX.PreventDefault(event);
 	};
 
-	FolderListClass.prototype.showSearchProcessInConnectedFolders = function()
+	FolderListClass.prototype.resolveSearchHost = function()
 	{
-		if (this.layout.loader)
+		const gridContainer = this.commonGrid.getContainer();
+		const host = gridContainer.closest('.bx-disk-interface-filelist') || gridContainer;
+		BX.addClass(host, 'bx-disk-interface-filelist-search-host');
+
+		return host;
+	};
+
+	FolderListClass.prototype.beginSearchSession = function(folder)
+	{
+		this.cancelSearchSession();
+
+		const session = {
+			id: ++this.searchSessionId,
+			folderId: folder.id,
+			host: this.resolveSearchHost(),
+			faded: false,
+			loader: null,
+			loaderWrapper: null,
+		};
+
+		this.activeSearchSession = session;
+		BX.addClass(session.host, 'disk-running-filter');
+
+		return session;
+	};
+
+	FolderListClass.prototype.cancelSearchSession = function()
+	{
+		const session = this.activeSearchSession;
+		this.activeSearchSession = null;
+		this.tearDownSearchSession(session);
+	};
+
+	FolderListClass.prototype.finishSearchSession = function(session)
+	{
+		if (!this.isCurrentSearchSession(session))
 		{
 			return;
 		}
 
-		this.layout.loader = BX.create('div', {
+		this.activeSearchSession = null;
+		this.tearDownSearchSession(session);
+	};
+
+	FolderListClass.prototype.isCurrentSearchSession = function(session)
+	{
+		return Boolean(
+			session
+			&& this.activeSearchSession
+			&& this.activeSearchSession.id === session.id,
+		);
+	};
+
+	FolderListClass.prototype.tearDownSearchSession = function(session)
+	{
+		if (!session)
+		{
+			return;
+		}
+
+		const searchSession = session;
+		this.removeSearchProcessInConnectedFolders(searchSession);
+		BX.removeClass(searchSession.host, 'disk-running-filter');
+
+		if (searchSession.faded)
+		{
+			searchSession.faded = false;
+			this.commonGrid.unFade();
+		}
+
+		this.restoreTileEmptyState();
+	};
+
+	FolderListClass.prototype.restoreTileEmptyState = function()
+	{
+		if (!this.commonGrid.countItems() && this.commonGrid.isTile())
+		{
+			this.commonGrid.instance.removeEmptyBlock();
+			this.commonGrid.instance.setMinHeightContainer();
+			this.commonGrid.instance.appendEmptyBlock();
+		}
+	};
+
+	FolderListClass.prototype.showSearchProcessInConnectedFolders = function(session)
+	{
+		const resolvedHost = this.resolveSearchHost();
+		const searchSession = session || this.activeSearchSession;
+		if (!this.isCurrentSearchSession(searchSession) || searchSession.loader)
+		{
+			return;
+		}
+
+		const host = searchSession.host || resolvedHost;
+		searchSession.loader = BX.create('div', {
 			props: {
 				className: 'bx-disk-interface-filelist-loader',
 			},
@@ -5225,7 +5649,7 @@ BX.Disk.FolderListClass = (function() {
 						className: 'bx-disk-interface-filelist-loader-wrapper',
 					},
 					children: [
-						this.layout.loaderWrapper = BX.create('div', {
+						searchSession.loaderWrapper = BX.create('div', {
 							props: {
 								className: 'bx-disk-interface-filelist-loader-container',
 							},
@@ -5243,26 +5667,25 @@ BX.Disk.FolderListClass = (function() {
 
 		const loader = new BX.Loader({ size: 170 });
 
-		loader.show(this.layout.loaderWrapper);
-		if (this.commonGrid.isGrid())
-		{
-			document.querySelector('.main-grid-wrapper').appendChild(this.layout.loader);
-		}
-		else if (this.commonGrid.isTile())
-		{
-			this.commonGrid.getContainer().parentNode.appendChild(this.layout.loader);
-		}
+		loader.show(searchSession.loaderWrapper);
+		BX.append(searchSession.loader, host);
 	};
 
-	FolderListClass.prototype.removeSearchProcessInConnectedFolders = function()
+	FolderListClass.prototype.removeSearchProcessInConnectedFolders = function(session)
 	{
-		if (!this.layout.loader)
-		
-		{ return;
+		const searchSession = session;
+		if (!searchSession || !searchSession.loader)
+		{
+			return;
 		}
 
-		this.layout.loader.parentNode.removeChild(this.layout.loader);
-		this.layout.loader = null;
+		if (searchSession.loader.parentNode)
+		{
+			BX.remove(searchSession.loader);
+		}
+
+		searchSession.loader = null;
+		searchSession.loaderWrapper = null;
 	};
 
 	return FolderListClass;
@@ -5577,7 +6000,9 @@ BX.Disk.FolderListClass = (function() {
 		this.title = options.name;
 		this.isFolder = options.isFolder;
 		this.isFile = options.isFile;
+		this.isMailAttachments = options.isMailAttachments;
 		this.canAdd = options.canAdd;
+		this.canDelete = options.canDelete === true;
 		this.isLocked = options.isLocked;
 		this.isSymlink = options.isSymlink;
 		this.image = options.image;
@@ -5801,6 +6226,10 @@ BX.Disk.FolderListClass = (function() {
 			BX.bind(this.item.titleInput, 'keydown', (event) => {
 				if (event.key === 'Escape')
 				{
+					// cancelRenaming() blurs the input, which triggers the 'blur' handler below
+					// and would call runRename() with the new value. Restore the original title
+					// first, so runRename()'s early-return (value === this.title) makes it a no-op.
+					this.item.titleInput.value = this.title;
 					this.cancelRenaming();
 
 					event.preventDefault();
@@ -5996,7 +6425,9 @@ BX.Disk.FolderListClass = (function() {
 
 			if (this.isFolder)
 			{
-				this.item.fileType.classList.add('ui-icon-file-folder-shared');
+				this.item.fileType.classList.add(
+					this.isMailAttachments ? 'ui-icon-file-folder-mail-shared' : 'ui-icon-file-folder-shared'
+				);
 			}
 			else if (this.item.symlink)
 			{
@@ -6010,7 +6441,9 @@ BX.Disk.FolderListClass = (function() {
 
 			if (this.isFolder)
 			{
-				this.item.fileType.classList.remove('ui-icon-file-folder-shared');
+				this.item.fileType.classList.remove(
+					this.isMailAttachments ? 'ui-icon-file-folder-mail-shared' : 'ui-icon-file-folder-shared'
+				);
 			}
 			else if (this.item.symlink)
 			{
@@ -6118,6 +6551,8 @@ BX.Disk.FolderListClass = (function() {
 
 			this.isFolder ? fileExtension = 'folder' : null;
 			this.isSymlink && this.isFolder ? fileExtension = 'folder-shared' : null;
+			this.isFolder && this.isMailAttachments ? fileExtension = 'folder-mail' : null;
+			this.isSymlink && this.isFolder && this.isMailAttachments ? fileExtension = 'folder-mail-shared' : null;
 
 			return fileExtension;
 		},

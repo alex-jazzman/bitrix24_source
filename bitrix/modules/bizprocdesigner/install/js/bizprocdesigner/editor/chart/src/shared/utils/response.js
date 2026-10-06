@@ -17,3 +17,8 @@ export function handleResponseError(response: Response): void
 		console.error(response);
 	}
 }
+
+export function getErrorCode(responseOrError: Object): ?string
+{
+	return responseOrError?.errors?.[0]?.code ?? null;
+}

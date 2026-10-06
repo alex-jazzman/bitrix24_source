@@ -227,6 +227,14 @@ if (CModule::IncludeModule("sale"))
 			}
 		}
 
+		foreach ($arOrderProps as $key => $value)
+		{
+			if (is_string($value))
+			{
+				$arOrderProps[$key] = htmlspecialcharsbx($value);
+			}
+		}
+
 		CCurrencyLang::disableUseHideZero();
 		include($rep_file_name);
 		CCurrencyLang::enableUseHideZero();

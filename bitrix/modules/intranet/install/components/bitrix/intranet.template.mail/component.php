@@ -98,6 +98,18 @@ if (!function_exists('getSiteHostName'))
 	}
 }
 
+if (!function_exists('imMailSanitizeMessageHtml'))
+{
+	function imMailSanitizeMessageHtml(string $html): string
+	{
+		$sanitizer = new CBXSanitizer();
+		$sanitizer->SetLevel(CBXSanitizer::SECURE_LEVEL_HIGH);
+		$sanitizer->ApplyDoubleEncode(false);
+
+		return $sanitizer->SanitizeHtml($html);
+	}
+}
+
 $arResult['USER_LANG'] = LANGUAGE_ID;
 $arResult['PERSONAL_DATA_POLICY_URL'] = $urlProvider->getPrivacyPolicyUrl();
 
@@ -222,7 +234,11 @@ if ($arParams["TEMPLATE_TYPE"] == "IM_NEW_NOTIFY" || $arParams["TEMPLATE_TYPE"] 
 
 	$parser = new CTextParser();
 	$parser->allow = array('ANCHOR' => 'N');
-	$arParams["MESSAGE"] = $parser->convertText($arParams["MESSAGE"]);
+	// The mail event compiler runs nl2br() over the field, so the body arrives with <br> tags;
+	// convertText() re-adds its own from the newlines. Normalize back to newlines first so line
+	// breaks render instead of leaking as literal "<br />" text once htmlspecialcharsback is gone.
+	$messageText = preg_replace('#<br\s*/?>#i', "\n", (string)($arParams["~MESSAGE"] ?? $arParams["MESSAGE"]));
+	$arParams["MESSAGE"] = imMailSanitizeMessageHtml($parser->convertText($messageText));
 }
 
 if ($arParams["TEMPLATE_TYPE"] == "IM_NEW_MESSAGE_GROUP")
@@ -256,10 +272,13 @@ if ($arParams["TEMPLATE_TYPE"] == "IM_NEW_MESSAGE_GROUP")
 
 	$messagesFromUser = unserialize($arParams["~MESSAGES_FROM_USERS"], ["allowed_classes" => false]);
 
+	$parser = new CTextParser();
+	$parser->allow = array('ANCHOR' => 'N');
+
 	foreach ($messagesFromUser as $userId => $message)
 	{
 		$arResult["MESSAGES_FROM_USERS"][$userId] = [
-			"MESSAGE" => $message,
+			"MESSAGE" => imMailSanitizeMessageHtml($parser->convertText($message)),
 			"USER_PHOTO" => $arResult["FROM_USERS"][$userId]
 		];
 	}

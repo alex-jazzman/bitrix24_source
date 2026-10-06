@@ -767,6 +767,7 @@ class CIMEvent
 		IM\V2\Chat\User\OwnerService::onAfterUserUpdate($arParams);
 		IM\V2\Message\Sticker\CustomPacks\PackDeleteAgent::onAfterUserUpdate($arParams);
 		IM\V2\Guest\GuestCounter::onAfterUserUpdate($arParams);
+		IM\V2\Sync\UserLifecycleService::onAfterUserUpdate($arParams);
 
 		if ((isset($arParams['ACTIVE']) || isset($arParams['UF_DEPARTMENT'])) && CIMChat::GetGeneralChatId())
 		{
@@ -902,6 +903,8 @@ class CIMEvent
 
 		\Bitrix\Im\Bot::unRegister(['BOT_ID' => $ID]);
 
+		IM\V2\SharingLink\SharingLinkMemberService::getInstance()->deleteByUser($ID);
+
 		$strSQL = "DELETE FROM b_im_recent WHERE USER_ID = ".$ID;
 		$DB->Query($strSQL, true);
 
@@ -918,6 +921,8 @@ class CIMEvent
 		{
 			(new IM\V2\Pull\Event\ChatHideOnUserDelete($ID))->send();
 		}
+
+		IM\V2\Sync\UserLifecycleService::onUserDelete($ID);
 
 		return true;
 	}

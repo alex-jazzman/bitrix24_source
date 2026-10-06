@@ -13,6 +13,15 @@ export class NoiseSuppressionService
 			this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 			this.destination = this.audioCtx.createMediaStreamDestination();
 		}
+		else if (!this.#isDestinationLive())
+		{
+			// The output track was stopped from the outside (a legacy engine tears its local stream down
+			// before recapturing). Rebuild the destination only - keeping the context keeps the sample rate
+			// the processed stream is clocked by.
+			this.inputSource?.disconnect();
+			this.noiseSuppressionNode?.disconnect();
+			this.destination = this.audioCtx.createMediaStreamDestination();
+		}
 
 		if (this.audioCtx.state === 'suspended')
 		{
@@ -28,6 +37,8 @@ export class NoiseSuppressionService
 					track.stop();
 				}
 			});
+			// The replaced source node stays wired into the graph until it is unplugged explicitly.
+			this.inputSource?.disconnect();
 			this.inputSource = this.audioCtx.createMediaStreamSource(stream);
 			this.inputStream = stream;
 		}
@@ -59,6 +70,11 @@ export class NoiseSuppressionService
 		}
 
 		this.previousEnable = this.enable;
+	}
+
+	#isDestinationLive(): boolean
+	{
+		return Boolean(this.destination?.stream?.getAudioTracks()?.some((track) => track.readyState === 'live'));
 	}
 
 	stop()

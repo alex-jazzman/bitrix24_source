@@ -26,6 +26,8 @@ Extension::load([
 
 $this->addExternalCss('/bitrix/components/bitrix/intranet.user.profile.section.security/templates/.default/style.css');
 
+$isOwnProfile = (int)$USER->GetID() === (int)$arParams["USER_ID"];
+
 $arJSParams = [
 	"signedParameters" => $this->getComponent()->getSignedParameters(),
 	"componentName" => $this->getComponent()->getName(),
@@ -35,7 +37,7 @@ $arJSParams = [
 
 	...$arResult["OTP"]["PUSH_OTP_CONFIG"],
 	'provideSmsOtp' => $arResult['PROVIDE_SMS_OTP'] === true,
-	'canShowBannerPushOtp' => (int)$USER->GetID() === (int)$arParams["USER_ID"],
+	'canShowBannerPushOtp' => $isOwnProfile,
 	'isOtpActive' => $arResult["OTP"]["IS_ACTIVE"] === true,
 	'isNotPushOtp' => $arResult['OTP']['TYPE'] !== \Bitrix\Security\Mfa\OtpType::Push,
 	"tooltipTitle" => Loc::getMessage("INTRANET_USER_OTP_RECOVERY_TOOLTIP_TITLE"),
@@ -96,7 +98,7 @@ $arJSParams = [
 						<div class="intranet-user-otp-list__row-value ui-text --md">
 							<?php if (!$arResult['OTP']['PHONE_NUMBER_CONFIRMED'] && $arResult['OTP']['PHONE_NUMBER']): ?>
 							<div
-								data-hint="<?= Loc::getMessage('INTRANET_USER_OTP_LIST_SMS_HINT') ?>"
+								data-hint="<?= Loc::getMessage($isOwnProfile ? 'INTRANET_USER_OTP_LIST_SMS_HINT' : 'INTRANET_USER_OTP_LIST_SMS_HINT_FOREIGN') ?>"
 								data-hint-no-icon="true"
 								class="ui-hint ui-icon-set --o-alert-accent"
 								<?php if ($arResult["OTP"]["CAN_EDIT_OTP"] === 'Y'): ?>
@@ -105,7 +107,7 @@ $arJSParams = [
 							></div>
 							<?php elseif (empty($arResult['OTP']['PHONE_NUMBER'])): ?>
 								<div
-									data-hint="<?= Loc::getMessage('INTRANET_USER_OTP_LIST_SMS_HINT_WITHOUT_CONNECT') ?>"
+									data-hint="<?= Loc::getMessage($isOwnProfile ? 'INTRANET_USER_OTP_LIST_SMS_HINT_WITHOUT_CONNECT' : 'INTRANET_USER_OTP_LIST_SMS_HINT_WITHOUT_CONNECT_FOREIGN') ?>"
 									data-hint-no-icon="true"
 									class="ui-hint ui-icon-set --o-alert-accent"
 									<?php if ($arResult["OTP"]["CAN_EDIT_OTP"] === 'Y'): ?>

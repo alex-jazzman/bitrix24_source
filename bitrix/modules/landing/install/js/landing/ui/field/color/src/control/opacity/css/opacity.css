@@ -176,3 +176,8 @@
 .landing-ui-field-color-opacity-range-output-arrows-down:hover::before {
 	opacity: 1;
 }
+
+.landing-ui-field-color-opacity:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary, #0075ff);
+	outline-offset: 2px;
+}

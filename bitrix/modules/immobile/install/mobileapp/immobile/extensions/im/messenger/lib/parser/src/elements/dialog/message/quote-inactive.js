@@ -12,7 +12,13 @@ jn.define('im/messenger/lib/parser/elements/dialog/message/quote-inactive', (req
 	 */
 	class QuoteInactive
 	{
-		constructor(title = '', text = '')
+		/**
+		 * @param {string} title
+		 * @param {string} text
+		 * @param {QuotePreview|null} [preview] — structured media preview; native renders this if supported,
+		 *   falls back to text if not. Never null-assigned — omit if no preview.
+		 */
+		constructor(title = '', text = '', preview = null)
 		{
 			this.type = QuoteInactive.getType();
 
@@ -29,6 +35,11 @@ jn.define('im/messenger/lib/parser/elements/dialog/message/quote-inactive', (req
 			if (Feature.isChatDialogExpandingQuoteSupported)
 			{
 				this.displayLinesNumber = 4;
+			}
+
+			if (preview !== null && Type.isPlainObject(preview))
+			{
+				this.preview = preview;
 			}
 		}
 

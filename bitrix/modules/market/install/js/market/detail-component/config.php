@@ -8,7 +8,7 @@ return [
 	'css' => 'dist/detail-component.bundle.css',
 	'js' => 'dist/detail-component.bundle.js',
 	'rel' => [
-		'main.polyfill.core',
+		'main.core',
 		'main.core.events',
 		'main.popup',
 		'market.install-store',
@@ -23,5 +23,5 @@ return [
 		'ui.ears',
 		'ui.vue3.pinia',
 	],
-	'skip_core' => true,
+	'skip_core' => false,
 ];

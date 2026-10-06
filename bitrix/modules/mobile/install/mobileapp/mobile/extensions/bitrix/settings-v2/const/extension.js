@@ -36,6 +36,7 @@ jn.define('settings-v2/const', (require, exports, module) => {
 		CACHE_INFO: 'info',
 		TOGGLE: 'toggle',
 		BUTTON: 'button',
+		TEXT_BUTTON: 'text-button',
 		LINK_BUTTON: 'link-button',
 		THEME: 'theme',
 		DESCRIPTION: 'description',

@@ -13,6 +13,7 @@ return [
 		'main.core',
 		'main.core.events',
 		'main.popup',
+		'ui.a11y',
 		'ui.dialogs.messagebox',
 		'ui.hint',
 		'ui.label',

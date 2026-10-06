@@ -68,12 +68,20 @@ this.BX.Call = this.BX.Call || {};
 		Failed: 'Failed'
 	});
 
+	const EventType = {
+		callEvents: {
+			guestIdentified: 'IM:Guest:onAfterGuestNamePopupClose',
+			guestInitialChatOpen: 'IM:Guest:onInitialChatOpen'
+		}
+	};
+
 	exports.CallTypes = CallTypes;
 	exports.ConferenceErrorCode = ConferenceErrorCode;
 	exports.ConferenceFieldState = ConferenceFieldState;
 	exports.ConferenceRightPanelMode = ConferenceRightPanelMode;
 	exports.ConferenceStateType = ConferenceStateType;
 	exports.ConferenceUserState = ConferenceUserState;
+	exports.EventType = EventType;
 	exports.ParticipantTrackType = ParticipantTrackType;
 
 })(this.BX.Call.Const = this.BX.Call.Const || {}, BX.Messenger.v2.Lib);

@@ -51,7 +51,8 @@ $isSlider = isset($_REQUEST['IFRAME']) && $_REQUEST['IFRAME'] === 'Y';
 			items: <?= \CUtil::PhpToJSObject($arResult['ITEMS']) ?>,
 			filterId: "<?= \CUtil::JSEscape($arResult['FILTER_ID']) ?>",
 			title: '<?= \CUtil::JSEscape($arResult['TITLE']) ?>',
-			resetAllFields: <?= Json::encode((bool)($arParams['RESET_ALL_FIELDS'] ?? false)) ?>
+			resetAllFields: <?= Json::encode((bool)($arParams['RESET_ALL_FIELDS'] ?? false)) ?>,
+			thousandsSeparator: <?= Json::encode((string)($arResult['NUMBER_THOUSANDS_SEPARATOR'] ?? '')) ?>
 		});
 
 		counter.init();

@@ -7,16 +7,16 @@ jn.define('tasks/layout/checklist/list/src/buttons/button-remove', (require, exp
 	const { Color } = require('tokens');
 	const { IconView, Icon } = require('ui-system/blocks/icon');
 
-	/**
-	 * @class ButtonRemove
-	 */
 	class ButtonRemove extends LayoutComponent
 	{
+		/** @param {ButtonRemoveProps} props */
 		constructor(props)
 		{
 			super(props);
 
+			/** @type {boolean} */
 			this.isShow = false;
+			/** @type {Object|null} */
 			this.buttonRef = null;
 		}
 
@@ -32,7 +32,7 @@ jn.define('tasks/layout/checklist/list/src/buttons/button-remove', (require, exp
 
 		/**
 		 * @private
-		 * @param {boolean} show
+		 * @param {ButtonRemoveToggleParams} options
 		 */
 		animateToggleButton({ show })
 		{

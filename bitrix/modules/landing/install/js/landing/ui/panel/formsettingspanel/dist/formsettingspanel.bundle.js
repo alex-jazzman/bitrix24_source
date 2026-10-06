@@ -2,1227 +2,1119 @@
 this.BX = this.BX || {};
 this.BX.Landing = this.BX.Landing || {};
 this.BX.Landing.UI = this.BX.Landing.UI || {};
-(function (exports,landing_ui_panel_basepresetpanel,landing_pageobject,landing_loc,main_core,landing_backend,main_loader,crm_form_client,ui_buttons,landing_env,landing_ui_panel_stylepanel,ui_dialogs_messagebox,ui_alerts,landing_ui_button_sidebarbutton,ui_tour,landing_ui_panel_fieldspanel,bitrix24_phoneverify,ui_switcher,ui_hint,ui_fonts_opensans,landing_history) {
+(function (exports, landing_ui_panel_basepresetpanel, landing_pageobject, landing_loc, main_core, landing_backend, main_loader, crm_form_client, ui_buttons, landing_env, landing_ui_panel_stylepanel, ui_dialogs_messagebox, ui_alerts, landing_ui_button_sidebarbutton, ui_tour, landing_ui_panel_fieldspanel, bitrix24_phoneverify, ui_switcher, ui_hint, ui_fonts_opensans, landing_history) {
 	'use strict';
 
-	var _templateObject, _templateObject2, _templateObject3;
-	function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
-	function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
-	function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration(obj, privateSet); privateSet.add(obj); }
-	function _classPrivateFieldInitSpec(obj, privateMap, value) { _checkPrivateRedeclaration(obj, privateMap); privateMap.set(obj, value); }
-	function _checkPrivateRedeclaration(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
-	function _classPrivateMethodGet(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
-	var PHONE_VERIFY_FORM_ENTITY = 'crm_webform';
+	const PHONE_VERIFY_FORM_ENTITY = 'crm_webform';
 
 	/**
 	 * @memberOf BX.Landing.UI.Panel
 	 */
-	var _phoneDoesntVerifiedResponseCode = /*#__PURE__*/new WeakMap();
-	var _isPhoneValidationError = /*#__PURE__*/new WeakSet();
-	var _showPhoneVerifySlider = /*#__PURE__*/new WeakSet();
-	var FormSettingsPanel = /*#__PURE__*/function (_BasePresetPanel) {
-	  babelHelpers.inherits(FormSettingsPanel, _BasePresetPanel);
-	  babelHelpers.createClass(FormSettingsPanel, null, [{
-	    key: "getInstance",
-	    value: function getInstance() {
-	      var rootWindow = landing_pageobject.PageObject.getRootWindow();
-	      var rootWindowPanel = rootWindow.BX.Landing.UI.Panel.FormSettingsPanel;
-	      if (!rootWindowPanel.instance && !FormSettingsPanel.instance) {
-	        rootWindowPanel.instance = new FormSettingsPanel();
-	      }
-	      return rootWindowPanel.instance || FormSettingsPanel.instance;
-	    }
-	  }]);
-	  function FormSettingsPanel() {
-	    var _this;
-	    babelHelpers.classCallCheck(this, FormSettingsPanel);
-	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(FormSettingsPanel).call(this));
-	    _classPrivateMethodInitSpec(babelHelpers.assertThisInitialized(_this), _showPhoneVerifySlider);
-	    _classPrivateMethodInitSpec(babelHelpers.assertThisInitialized(_this), _isPhoneValidationError);
-	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "adjustActionsPanels", false);
-	    _classPrivateFieldInitSpec(babelHelpers.assertThisInitialized(_this), _phoneDoesntVerifiedResponseCode, {
-	      writable: true,
-	      value: 'PHONE_NOT_VERIFIED'
-	    });
-	    _this.setEventNamespace('BX.Landing.UI.Panel.FormSettingsPanel');
-	    _this.setTitle(landing_loc.Loc.getMessage('LANDING_FORM_SETTINGS_PANEL_TITLE'));
-	    _this.lsCache = new main_core.Cache.LocalStorageCache();
-	    main_core.Dom.addClass(_this.layout, 'landing-ui-panel-form-settings');
-	    _this.subscribe('onCancel', function () {
-	      BX.onCustomEvent(babelHelpers.assertThisInitialized(_this), 'BX.Landing.Block:onFormSettingsClose', [_this.getCurrentBlock().id]);
-	    });
-	    _this.disableOverlay();
-	    if (_this.isCrmFormPage()) {
-	      var dictionary = landing_env.Env.getInstance().getOptions().formEditorData.dictionary;
-	      var preparedSidebarButtons = dictionary.sidebarButtons.map(function (buttonOptions) {
-	        return new landing_ui_button_sidebarbutton.SidebarButton(_objectSpread(_objectSpread({}, buttonOptions), {}, {
-	          child: true
-	        }));
-	      });
-	      _this.setSidebarButtons(preparedSidebarButtons);
-	      var preparedPresets = dictionary.scenarios.map(function (presetOptions) {
-	        return new landing_ui_panel_basepresetpanel.Preset(presetOptions);
-	      });
-	      _this.setPresets(preparedPresets);
-	      var preparedPresetCategories = dictionary.scenarioCategories.map(function (categoryOptions) {
-	        return new landing_ui_panel_basepresetpanel.PresetCategory(categoryOptions);
-	      });
-	      _this.setCategories(preparedPresetCategories);
-	    } else {
-	      main_core.Dom.append(_this.getBlockSettingsButton().render(), _this.getRightHeaderControls());
-	    }
-	    _this.subscribe('onCancel', _this.onCancelClick.bind(babelHelpers.assertThisInitialized(_this)));
-	    main_core.Dom.append(_this.getExpertSwitcherLayout(), _this.layout);
-	    return _this;
-	  }
-	  babelHelpers.createClass(FormSettingsPanel, [{
-	    key: "getExpertSwitcherLayout",
-	    value: function getExpertSwitcherLayout() {
-	      var _this2 = this;
-	      return this.cache.remember('switcherLayout', function () {
-	        var onClick = function onClick() {
-	          _this2.getExpertModeSwitcher().node.click();
-	        };
-	        return main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"landing-ui-expert-switcher\">\n\t\t\t\t\t", "\n\t\t\t\t\t<span onclick=\"", "\" class=\"landing-ui-expert-switcher-label\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</span>\n\t\t\t\t</div>\n\t\t\t"])), _this2.getExpertModeSwitcher().node, onClick, landing_loc.Loc.getMessage('LANDING_FORM_EXPERT_MODE_SWITCHER_LABEL'));
-	      });
-	    }
-	  }, {
-	    key: "getExpertModeSwitcher",
-	    value: function getExpertModeSwitcher() {
-	      var _this3 = this;
-	      return this.cache.remember('expertModeSwitcher', function () {
-	        var rootWindow = landing_pageobject.PageObject.getRootWindow();
-	        var switcher = new rootWindow.BX.UI.Switcher({
-	          checked: _this3.isExpertModeEnabled()
-	        });
-	        main_core.Dom.addClass(switcher.node, 'ui-switcher-size-sm ui-switcher-color-green');
-	        main_core.Event.bind(switcher.node, 'click', _this3.onExpertSwitcherClick.bind(_this3));
-	        return switcher;
-	      });
-	    }
-	  }, {
-	    key: "onExpertSwitcherClick",
-	    value: function onExpertSwitcherClick() {
-	      this.lsCache.set('formEditorExpertMode', this.getExpertModeSwitcher().isChecked());
-	      this.onExpertModeChange();
-	    }
-	  }, {
-	    key: "getCurrentPreset",
-	    value: function getCurrentPreset() {
-	      var _this$getFormOptions = this.getFormOptions(),
-	        templateId = _this$getFormOptions.templateId;
-	      var preset = this.getPresets().find(function (currentPreset) {
-	        return currentPreset.options.id === templateId;
-	      });
-	      if (preset) {
-	        return preset;
-	      }
-	      return this.getPresets().find(function (currentPreset) {
-	        return currentPreset.options.id === 'expert';
-	      });
-	    }
-	  }, {
-	    key: "onExpertModeChange",
-	    value: function onExpertModeChange() {
-	      var _this4 = this;
-	      var currentPreset = this.getCurrentPreset();
-	      if (this.getExpertModeSwitcher().isChecked() && main_core.Type.isArrayFilled(currentPreset.options.expertModeItems)) {
-	        this.clearSidebar();
-	        this.getSidebarButtons().filter(function (button) {
-	          return currentPreset.options.expertModeItems.includes(button.id);
-	        }).forEach(function (button) {
-	          if (!currentPreset.options.items.includes(button.id)) {
-	            button.deactivate();
-	          }
-	          _this4.appendSidebarButton(button);
-	        });
-	      } else {
-	        var currentSidebarButton = this.getSidebarButtons().find(function (button) {
-	          return button.isActive();
-	        });
-	        var buttons = this.getSidebarButtons().filter(function (button) {
-	          return currentPreset.options.items.includes(button.id);
-	        });
-	        this.clearSidebar();
-	        buttons.forEach(function (button) {
-	          _this4.appendSidebarButton(button);
-	        });
-	        if (currentSidebarButton && !currentPreset.options.items.includes(currentSidebarButton.id)) {
-	          var defaultSection = function () {
-	            if (main_core.Type.isStringFilled(currentPreset.options.defaultSection)) {
-	              return currentPreset.options.defaultSection;
-	            }
-	            return 'fields';
-	          }();
-	          var defaultSectionButton = this.getSidebarButtons().find(function (button) {
-	            return button.id === defaultSection;
-	          });
-	          if (defaultSectionButton) {
-	            defaultSectionButton.getLayout().click();
-	          }
-	        }
-	      }
-	    }
-	  }, {
-	    key: "isExpertModeEnabled",
-	    value: function isExpertModeEnabled() {
-	      return this.lsCache.get('formEditorExpertMode', false);
-	    } // eslint-disable-next-line class-methods-use-this
-	  }, {
-	    key: "isCrmFormPage",
-	    value: function isCrmFormPage() {
-	      return landing_env.Env.getInstance().getSpecialType() === 'crm_forms';
-	    }
-	  }, {
-	    key: "getFormDesignButton",
-	    value: function getFormDesignButton() {
-	      var _this5 = this;
-	      return this.cache.remember('formDesignButton', function () {
-	        return new ui_buttons.Button({
-	          text: landing_loc.Loc.getMessage('LANDING_FORM_DESIGN_BUTTON'),
-	          color: ui_buttons.Button.Color.LIGHT_BORDER,
-	          round: true,
-	          className: 'landing-ui-panel-top-button',
-	          onclick: _this5.onFormDesignButtonClick.bind(_this5)
-	        });
-	      });
-	    }
-	  }, {
-	    key: "getBlockSettingsButton",
-	    value: function getBlockSettingsButton() {
-	      var _this6 = this;
-	      return this.cache.remember('blockSettingsButton', function () {
-	        return new ui_buttons.Button({
-	          text: landing_loc.Loc.getMessage('LANDING_FORM_SETTINGS_BLOCK_SETTINGS_BUTTON_TEXT'),
-	          color: ui_buttons.Button.Color.LIGHT_BORDER,
-	          round: true,
-	          className: 'landing-ui-panel-top-button',
-	          onclick: _this6.onBlockSettingsButtonClick.bind(_this6)
-	        });
-	      });
-	    }
-	  }, {
-	    key: "onBlockSettingsButtonClick",
-	    value: function onBlockSettingsButtonClick() {
-	      var _this7 = this;
-	      if (this.getCurrentBlock()) {
-	        this.hide().then(function () {
-	          _this7.getCurrentBlock().showContentPanel();
-	        });
-	      }
-	    }
-	  }, {
-	    key: "onFormDesignButtonClick",
-	    value: function onFormDesignButtonClick() {
-	      if (this.getCurrentBlock()) {
-	        this.getCurrentBlock().onFormDesignClick();
-	      }
-	    }
-	  }, {
-	    key: "getLoader",
-	    value: function getLoader() {
-	      var _this8 = this;
-	      return this.cache.remember('loader', function () {
-	        return new main_loader.Loader({
-	          target: _this8.body
-	        });
-	      });
-	    }
-	  }, {
-	    key: "showLoader",
-	    value: function showLoader() {
-	      main_core.Dom.addClass(this.layout, 'landing-ui-panel-state-content-load');
-	      void this.getLoader().show();
-	      main_core.Dom.hide(this.sidebar);
-	      main_core.Dom.hide(this.content);
-	      main_core.Dom.hide(this.getExpertSwitcherLayout());
-	    }
-	  }, {
-	    key: "hideLoader",
-	    value: function hideLoader() {
-	      main_core.Dom.removeClass(this.layout, 'landing-ui-panel-state-content-load');
-	      this.getLoader().hide();
-	      main_core.Dom.show(this.sidebar);
-	      main_core.Dom.show(this.content);
-	      if (main_core.Type.isArrayFilled(this.getCurrentPreset().options.expertModeItems)) {
-	        main_core.Dom.show(this.getExpertSwitcherLayout());
-	      }
-	    }
-	  }, {
-	    key: "showContentLoader",
-	    value: function showContentLoader() {
-	      main_core.Dom.addClass(this.layout, 'landing-ui-panel-state-body-load');
-	      babelHelpers.get(babelHelpers.getPrototypeOf(FormSettingsPanel.prototype), "showContentLoader", this).call(this);
-	    }
-	  }, {
-	    key: "hideContentLoader",
-	    value: function hideContentLoader() {
-	      main_core.Dom.removeClass(this.layout, 'landing-ui-panel-state-body-load');
-	      babelHelpers.get(babelHelpers.getPrototypeOf(FormSettingsPanel.prototype), "hideContentLoader", this).call(this);
-	    }
-	  }, {
-	    key: "load",
-	    value: function load() {
-	      var _this9 = this;
-	      var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-	      if (options.showWithOptions) {
-	        var editorData = landing_env.Env.getInstance().getOptions().formEditorData;
-	        var dictionary = editorData.dictionary;
-	        var preparedSidebarButtons = dictionary.sidebarButtons.map(function (buttonOptions) {
-	          return new landing_ui_button_sidebarbutton.SidebarButton(_objectSpread(_objectSpread({}, buttonOptions), {}, {
-	            child: true
-	          }));
-	        });
-	        this.setSidebarButtons(preparedSidebarButtons);
-	        var preparedPresets = dictionary.scenarios.map(function (presetOptions) {
-	          return new landing_ui_panel_basepresetpanel.Preset(presetOptions);
-	        });
-	        this.setPresets(preparedPresets);
-	        var preparedPresetCategories = dictionary.scenarioCategories.map(function (categoryOptions) {
-	          return new landing_ui_panel_basepresetpanel.PresetCategory(categoryOptions);
-	        });
-	        this.setCategories(preparedPresetCategories);
-	        this.setCrmFields(editorData.crmFields);
-	        this.setCrmCompanies(editorData.crmCompanies);
-	        this.setCrmCategories(editorData.crmCategories);
-	        this.setAgreements(editorData.agreements);
-	        var currentOptions = main_core.Runtime.clone(editorData.formOptions);
-	        if (currentOptions.agreements.use !== true) {
-	          currentOptions.agreements.use = true;
-	          currentOptions.data.agreements = [];
-	        }
-	        this.setFormOptions(currentOptions);
-	        this.setFormDictionary(editorData.dictionary);
-	        return Promise.resolve();
-	      }
-	      var crmData = landing_backend.Backend.getInstance().batch('Form::getCrmFields', {
-	        crmFields: {
-	          action: 'Form::getCrmFields',
-	          data: null
-	        },
-	        crmCompanies: {
-	          action: 'Form::getCrmCompanies',
-	          data: null
-	        },
-	        crmCategories: {
-	          action: 'Form::getCrmCategories',
-	          data: null
-	        },
-	        agreements: {
-	          action: 'Form::getAgreements',
-	          data: null
-	        }
-	      }).then(function (result) {
-	        _this9.setCrmFields(result.crmFields.result);
-	        _this9.setCrmCompanies(result.crmCompanies.result);
-	        _this9.setCrmCategories(result.crmCategories.result);
-	        _this9.setAgreements(result.agreements.result);
-	      });
-	      var formOptions = crm_form_client.FormClient.getInstance().getOptions(this.getCurrentFormId()).then(function (options) {
-	        var currentOptions = main_core.Runtime.clone(options);
-	        if (currentOptions.agreements.use !== true) {
-	          currentOptions.agreements.use = true;
-	          currentOptions.data.agreements = [];
-	        }
-	        _this9.setFormOptions(currentOptions);
-	      });
-	      var formDictionary = crm_form_client.FormClient.getInstance().getDictionary().then(function (dictionary) {
-	        _this9.setFormDictionary(dictionary);
-	        var preparedSidebarButtons = dictionary.sidebarButtons.map(function (buttonOptions) {
-	          return new landing_ui_button_sidebarbutton.SidebarButton(_objectSpread(_objectSpread({}, buttonOptions), {}, {
-	            child: true
-	          }));
-	        });
-	        _this9.setSidebarButtons(preparedSidebarButtons);
-	        var preparedPresets = dictionary.scenarios.map(function (presetOptions) {
-	          return new landing_ui_panel_basepresetpanel.Preset(presetOptions);
-	        });
-	        _this9.setPresets(preparedPresets);
-	        var preparedPresetCategories = dictionary.scenarioCategories.map(function (categoryOptions) {
-	          return new landing_ui_panel_basepresetpanel.PresetCategory(categoryOptions);
-	        });
-	        _this9.setCategories(preparedPresetCategories);
-	      });
-	      return Promise.all([crmData, formOptions, formDictionary]);
-	    }
-	  }, {
-	    key: "setAgreements",
-	    value: function setAgreements(agreements) {
-	      this.cache.set('agreements', main_core.Runtime.orderBy(agreements, ['id'], ['asc']));
-	    }
-	  }, {
-	    key: "getAgreements",
-	    value: function getAgreements() {
-	      return this.cache.get('agreements');
-	    }
-	  }, {
-	    key: "isLeadEnabled",
-	    value: function isLeadEnabled() {
-	      return this.getFormDictionary().document.lead.enabled;
-	    }
-	  }, {
-	    key: "setCurrentBlock",
-	    value: function setCurrentBlock(block) {
-	      this.cache.set('currentBlock', block);
-	    }
-	  }, {
-	    key: "getCurrentBlock",
-	    value: function getCurrentBlock() {
-	      return this.cache.get('currentBlock');
-	    }
-	  }, {
-	    key: "getSaveOriginalFileNameAlert",
-	    value: function getSaveOriginalFileNameAlert() {
-	      return this.cache.remember('saveOriginalFileNameAlert', function () {
-	        var alert = new ui_alerts.Alert({
-	          text: landing_loc.Loc.getMessage('LANDING_CRM_FORM_MAIN_OPTION_WARNING'),
-	          color: ui_alerts.AlertColor.WARNING
-	        });
-	        return alert.render();
-	      });
-	    }
-	  }, {
-	    key: "show",
-	    value: function show() {
-	      var _this10 = this;
-	      var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {
-	        formOptions: {}
-	      };
-	      if (!this.layout.parentNode) {
-	        this.enableToggleMode();
-	      }
-	      if (!this.isFormCreated()) {
-	        this.disableTransparentMode();
-	      }
-	      var _Env$getInstance$getO = landing_env.Env.getInstance().getOptions(),
-	        mainOptions = _Env$getInstance$getO.mainOptions;
-	      if (mainOptions.saveOriginalFileName === false) {
-	        this.prependContent(this.getSaveOriginalFileNameAlert());
-	        var closeButtonTop = main_core.Text.toNumber(main_core.Dom.style(this.closeButton.getLayout(), 'top'));
-	        var alertHeight = this.getSaveOriginalFileNameAlert().getBoundingClientRect().height;
-	        main_core.Dom.style(this.closeButton.getLayout(), 'top', "".concat(closeButtonTop + alertHeight, "px"));
-	      }
-	      this.setCurrentBlock(options.block);
-	      this.setCurrentFormId(options.formId);
-	      this.setCurrentFormInstanceId(options.instanceId);
-	      this.showLoader();
-	      this.load(options).then(function () {
-	        _this10.hideLoader();
-	        var formOptions = _this10.getFormOptions();
-	        if (main_core.Type.isPlainObject(options.formOptions)) {
-	          var _formOptions = main_core.Runtime.merge(_this10.getFormOptions(), options.formOptions);
-	          _this10.setFormOptions(_formOptions);
-	        }
-	        if (options.state === 'presets') {
-	          var presetFromRequest = _this10.getPresetIdFromRequest();
-	          var preset = false;
-	          if (presetFromRequest) {
-	            preset = _this10.getPresets().find(function (item) {
-	              return item.options.id === presetFromRequest;
-	            });
-	          }
-	          if (preset) {
-	            _this10.applyPreset(preset);
-	          } else {
-	            _this10.onPresetFieldClick();
-	            _this10.activatePreset(formOptions.templateId);
-	          }
-	        } else {
-	          var _preset = _this10.getPresets().find(function (item) {
-	            return item.options.id === formOptions.templateId;
-	          });
-	          if (!_preset) {
-	            _preset = _this10.getPresets().find(function (item) {
-	              return item.options.id === 'expert';
-	            });
-	          }
-	          if (_this10.isFormCreated()) {
-	            _this10.applyPreset(_preset);
-	            _this10.onPresetFieldClick();
-	          } else {
-	            _this10.applyPreset(_preset, true);
-	          }
-	        }
-	        _this10.setInitialFormOptions(main_core.Runtime.clone(_this10.getFormOptions()));
-	        if (!_this10.isFormCreated()) {
-	          _this10.onExpertModeChange();
-	        }
-	      })["catch"](function (error) {
-	        if (main_core.Type.isArrayFilled(error)) {
-	          var accessDeniedCode = 510;
-	          var isAccessDenied = error.some(function (errorItem) {
-	            return String(errorItem.code) === String(accessDeniedCode);
-	          });
-	          if (isAccessDenied) {
-	            _this10.getLoader().hide();
-	            main_core.Dom.show(_this10.sidebar);
-	            main_core.Dom.show(_this10.content);
-	            main_core.Dom.hide(_this10.footer);
-	            main_core.Dom.append(_this10.getAccessError(), _this10.content);
-	          }
-	        }
-	        console.error(error);
-	      });
-	      var editorWindow = landing_pageobject.PageObject.getEditorWindow();
-	      main_core.Dom.addClass(editorWindow.document.body, 'landing-ui-hide-action-panels-form');
-	      var rootWindow = landing_pageobject.PageObject.getRootWindow();
-	      main_core.Dom.addClass(rootWindow.document.body, 'landing-ui-hide-action-panels-form');
-	      void landing_ui_panel_stylepanel.StylePanel.getInstance().hide();
-	      this.disableHistory();
-	      return babelHelpers.get(babelHelpers.getPrototypeOf(FormSettingsPanel.prototype), "show", this).call(this, options).then(function () {
-	        setTimeout(function () {
-	          var y = _this10.getCurrentBlock().node.offsetTop;
-	          landing_pageobject.PageObject.getEditorWindow().scrollTo(0, y);
-	        }, 300);
-	        BX.onCustomEvent(_this10, 'BX.Landing.Block:onFormSettingsOpen', [_this10.getCurrentBlock().id]);
-	        return Promise.resolve(true);
-	      });
-	    }
-	  }, {
-	    key: "getHistoryHint",
-	    value: function getHistoryHint() {
-	      return this.cache.remember('historyHint', function () {
-	        var layout = main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<span \n\t\t\t\t\tclass=\"landing-ui-history-hint\"\n\t\t\t\t\tdata-hint=\"", "\"\n\t\t\t\t\tdata-hint-no-icon\n\t\t\t\t></span>\n\t\t\t"])), main_core.Text.encode(landing_loc.Loc.getMessage('LANDING_FORM_HISTORY_DISABLED_HINT')));
-	        var rootWindow = landing_pageobject.PageObject.getRootWindow();
-	        rootWindow.BX.UI.Hint.initNode(layout);
-	        return layout;
-	      });
-	    }
-	  }, {
-	    key: "disableHistory",
-	    value: function disableHistory() {
-	      var rootWindow = landing_pageobject.PageObject.getRootWindow();
-	      var TopPanel = rootWindow.BX.Landing.UI.Panel.Top;
-	      if (TopPanel) {
-	        var _TopPanel$getInstance = TopPanel.getInstance(),
-	          undoButton = _TopPanel$getInstance.undoButton,
-	          redoButton = _TopPanel$getInstance.redoButton;
-	        main_core.Dom.addClass(undoButton, 'landing-ui-disabled-from-form');
-	        main_core.Dom.addClass(redoButton, 'landing-ui-disabled-from-form');
-	        main_core.Dom.append(this.getHistoryHint(), undoButton.parentElement);
-	      }
-	    }
-	  }, {
-	    key: "enableHistory",
-	    value: function enableHistory() {
-	      var rootWindow = landing_pageobject.PageObject.getRootWindow();
-	      var TopPanel = rootWindow.BX.Landing.UI.Panel.Top;
-	      if (TopPanel) {
-	        var _TopPanel$getInstance2 = TopPanel.getInstance(),
-	          undoButton = _TopPanel$getInstance2.undoButton,
-	          redoButton = _TopPanel$getInstance2.redoButton;
-	        main_core.Dom.removeClass(undoButton, 'landing-ui-disabled-from-form');
-	        main_core.Dom.removeClass(redoButton, 'landing-ui-disabled-from-form');
-	        main_core.Dom.remove(this.getHistoryHint());
-	      }
-	    }
-	  }, {
-	    key: "getAccessError",
-	    value: function getAccessError() {
-	      return this.cache.remember('accessErrorMessage', function () {
-	        return main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"landing-ui-access-error-message\">\n\t\t\t\t\t<div class=\"landing-ui-access-error-message-text\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t"])), landing_loc.Loc.getMessage('LANDING_CRM_ACCESS_ERROR_MESSAGE'));
-	      });
-	    } // eslint-disable-next-line class-methods-use-this
-	  }, {
-	    key: "getPresetIdFromRequest",
-	    value: function getPresetIdFromRequest() {
-	      var uri = new main_core.Uri(window.top.location.href);
-	      return uri.getQueryParam('preset');
-	    } // eslint-disable-next-line class-methods-use-this
-	  }, {
-	    key: "isFormCreated",
-	    value: function isFormCreated() {
-	      var rootWindow = landing_pageobject.PageObject.getRootWindow();
-	      var uri = new main_core.Uri(rootWindow.location.href);
-	      return main_core.Text.toBoolean(uri.getQueryParam('formCreated'));
-	    }
-	  }, {
-	    key: "setCurrentFormId",
-	    value: function setCurrentFormId(formId) {
-	      this.cache.set('currentFormId', main_core.Text.toNumber(formId));
-	    }
-	  }, {
-	    key: "getCurrentFormId",
-	    value: function getCurrentFormId() {
-	      return this.cache.get('currentFormId');
-	    }
-	  }, {
-	    key: "setCurrentFormInstanceId",
-	    value: function setCurrentFormInstanceId(formId) {
-	      this.cache.set('currentFormInstanceId', formId);
-	    }
-	  }, {
-	    key: "getCurrentFormInstanceId",
-	    value: function getCurrentFormInstanceId() {
-	      return this.cache.get('currentFormInstanceId');
-	    }
-	  }, {
-	    key: "setCrmFields",
-	    value: function setCrmFields(fields) {
-	      this.cache.set('fields', fields);
-	    }
-	  }, {
-	    key: "getCrmFields",
-	    value: function getCrmFields() {
-	      return this.cache.get('fields') || {};
-	    }
-	  }, {
-	    key: "setCrmCompanies",
-	    value: function setCrmCompanies(companies) {
-	      this.cache.set('companies', companies);
-	    }
-	  }, {
-	    key: "getCrmCompanies",
-	    value: function getCrmCompanies() {
-	      return this.cache.get('companies') || [];
-	    }
-	  }, {
-	    key: "setCrmCategories",
-	    value: function setCrmCategories(categories) {
-	      this.cache.set('crmCategories', categories);
-	    }
-	  }, {
-	    key: "getCrmCategories",
-	    value: function getCrmCategories() {
-	      return this.cache.get('crmCategories') || [];
-	    }
-	  }, {
-	    key: "setFormOptions",
-	    value: function setFormOptions(options) {
-	      this.cache.set('formOptions', options);
-	    }
-	  }, {
-	    key: "getFormOptions",
-	    value: function getFormOptions() {
-	      return main_core.Runtime.clone(this.cache.get('formOptions') || {});
-	    }
-	  }, {
-	    key: "setFormDictionary",
-	    value: function setFormDictionary(dictionary) {
-	      this.cache.set('formDictionary', dictionary);
-	    }
-	  }, {
-	    key: "getFormDictionary",
-	    value: function getFormDictionary() {
-	      return this.cache.get('formDictionary') || {};
-	    }
-	  }, {
-	    key: "setInitialFormOptions",
-	    value: function setInitialFormOptions(options) {
-	      this.cache.set('initialFormOptions', main_core.Runtime.clone(options));
-	    }
-	  }, {
-	    key: "getInitialFormOptions",
-	    value: function getInitialFormOptions() {
-	      return this.cache.get('initialFormOptions');
-	    } // eslint-disable-next-line
-	  }, {
-	    key: "getCrmForm",
-	    value: function getCrmForm() {
-	      var _this11 = this;
-	      var formApp = main_core.Reflection.getClass('b24form.App');
-	      if (formApp) {
-	        if (this.getCurrentFormInstanceId()) {
-	          return formApp.get(this.getCurrentFormInstanceId());
-	        }
-	        var tmpIndex = -1;
-	        var currentFormIndex = babelHelpers.toConsumableArray(this.getCurrentBlock().node.parentElement.childNodes).reduce(function (acc, item) {
-	          if (main_core.Dom.attr(item, 'data-subtype') === 'form') {
-	            tmpIndex += 1;
-	            if (item === _this11.getCurrentBlock().node) {
-	              return tmpIndex;
-	            }
-	          }
-	          return acc;
-	        }, 0);
-	        return formApp.list()[currentFormIndex];
-	      }
-	      return null;
-	    }
-	  }, {
-	    key: "onChange",
-	    value: function onChange(event) {
-	      var _this12 = this;
-	      var eventData = event.getData();
-	      var eventTargetValue = event.getTarget().getValue();
-	      Promise.resolve(eventTargetValue).then(function (value) {
-	        if (eventData.skipPrepare) {
-	          var formOptions = _this12.getFormOptions();
-	          if (Reflect.has(value, 'presetFields') || Reflect.has(value, 'document') || Reflect.has(value, 'result')) {
-	            var additionalValue = {};
-	            if (Reflect.has(value, 'document')) {
-	              additionalValue.payment = value.document.payment;
-	              delete value.document.payment;
-	            }
-	            return _objectSpread(_objectSpread(_objectSpread({}, formOptions), value), additionalValue);
-	          }
-	          if (Reflect.has(value, 'embedding') || Reflect.has(value, 'callback') || Reflect.has(value, 'whatsapp') || Reflect.has(value, 'bookingResourceAutoSelection') || Reflect.has(value, 'name') && Reflect.has(value, 'data') && Reflect.has(value.data, 'useSign')) {
-	            var mergedOptions = main_core.Runtime.merge(formOptions, value);
-	            if (Reflect.has(value, 'responsible')) {
-	              mergedOptions.responsible.users = value.responsible.users;
-	            }
-	            return mergedOptions;
-	          }
-	          if (Reflect.has(value, 'captcha')) {
-	            var _value$captcha, _value$captcha2;
-	            var recaptcha = {};
-	            var captcha = {};
-	            var yandexCaptcha = {};
-	            if ((_value$captcha = value.captcha) !== null && _value$captcha !== void 0 && _value$captcha.recaptcha) {
-	              var _value$captcha$recapt = value.captcha.recaptcha,
-	                _key = _value$captcha$recapt.key,
-	                secret = _value$captcha$recapt.secret,
-	                use = _value$captcha$recapt.use;
-	              // eslint-disable-next-line no-param-reassign
-	              delete value.captcha.recaptcha.key;
-	              // eslint-disable-next-line no-param-reassign
-	              delete value.captcha.recaptcha.secret;
-	              if (!main_core.Type.isNil(_key)) {
-	                recaptcha.key = _key;
-	              }
-	              if (!main_core.Type.isNil(secret)) {
-	                recaptcha.secret = secret;
-	              }
-	              if (!main_core.Type.isNil(use)) {
-	                recaptcha.use = use;
-	              }
-	            }
-	            if ((_value$captcha2 = value.captcha) !== null && _value$captcha2 !== void 0 && _value$captcha2.yandexCaptcha) {
-	              var _value$captcha$yandex = value.captcha.yandexCaptcha,
-	                _key2 = _value$captcha$yandex.key,
-	                _secret = _value$captcha$yandex.secret,
-	                _use = _value$captcha$yandex.use;
-	              // eslint-disable-next-line no-param-reassign
-	              delete value.captcha.yandexCaptcha.key;
-	              // eslint-disable-next-line no-param-reassign
-	              delete value.captcha.yandexCaptcha.secret;
-	              if (!main_core.Type.isNil(_key2)) {
-	                yandexCaptcha.key = _key2;
-	              }
-	              if (!main_core.Type.isNil(_secret)) {
-	                yandexCaptcha.secret = _secret;
-	              }
-	              if (!main_core.Type.isNil(_use)) {
-	                yandexCaptcha.use = _use;
-	              }
-	            }
-	            if (value.captcha) {
-	              var service = value.captcha.service;
-	              if (!main_core.Type.isNil(service)) {
-	                captcha.service = service;
-	              }
-	            }
-	            captcha.recaptcha = _objectSpread(_objectSpread({}, formOptions.captcha.recaptcha), recaptcha);
-	            captcha.yandexCaptcha = _objectSpread(_objectSpread({}, formOptions.captcha.yandexCaptcha), yandexCaptcha);
-	            return _objectSpread(_objectSpread({}, formOptions), {}, {
-	              captcha: _objectSpread(_objectSpread({}, formOptions.captcha), captcha),
-	              data: _objectSpread(_objectSpread({}, formOptions.data), value)
-	            });
-	          }
-	          return _objectSpread(_objectSpread({}, formOptions), {}, {
-	            data: _objectSpread(_objectSpread({}, formOptions.data), value)
-	          });
-	        }
-	        return crm_form_client.FormClient.getInstance().prepareOptions(_this12.getFormOptions(), value).then(function (result) {
-	          if (value.agreements) {
-	            result.data = main_core.Runtime.merge(result.data, value);
-	          }
-	          if (value.integration) {
-	            result.integration = value.integration;
-	          }
-	          if (value.fields) {
-	            result.data.fields = result.data.fields.map(function (field, index) {
-	              return main_core.Runtime.merge(field, value.fields[index]);
-	            });
-	          }
-	          return result;
-	        });
-	      }).then(function (result) {
-	        BX.Landing.UI.Panel.Top.getInstance().setFormName(result.name);
-	        _this12.setFormOptions(result);
-	        _this12.getCrmForm().adjust(main_core.Runtime.clone(result.data));
-	      });
-	    }
-	  }, {
-	    key: "getPersonalizationVariables",
-	    value: function getPersonalizationVariables() {
-	      var _this13 = this;
-	      return this.cache.remember('personalizationVariables', function () {
-	        return _this13.getFormDictionary().personalization.list.map(function (item) {
-	          return {
-	            name: item.name,
-	            value: item.id
-	          };
-	        });
-	      });
-	    }
-	  }, {
-	    key: "getDefaultValuesVariables",
-	    value: function getDefaultValuesVariables() {
-	      var _this14 = this;
-	      return this.cache.remember('personalizationVariables', function () {
-	        var _this14$getFormDictio = _this14.getFormDictionary(),
-	          properties = _this14$getFormDictio.properties;
-	        if (main_core.Type.isPlainObject(properties) && main_core.Type.isArrayFilled(properties.list)) {
-	          return properties.list.map(function (item) {
-	            return {
-	              name: item.name,
-	              value: item.id
-	            };
-	          });
-	        }
-	        return [];
-	      });
-	    }
-	  }, {
-	    key: "getContent",
-	    value: function getContent(id) {
-	      var _this15 = this;
-	      var currentButton = this.getSidebarButtons().find(function (button) {
-	        return id === button.options.id;
-	      });
-	      var extension = currentButton.options.data.extension;
-	      var contentExtension = this.cache.remember(extension, function () {
-	        var rootWindow = landing_pageobject.PageObject.getRootWindow();
-	        return rootWindow.BX.Runtime.loadExtension(extension).then(function (exports) {
-	          return exports["default"];
-	        });
-	      });
-	      return contentExtension.then(function (ContentWrapperClass) {
-	        if (main_core.Type.isFunction(ContentWrapperClass)) {
-	          return new ContentWrapperClass({
-	            formOptions: _this15.getFormOptions(),
-	            dictionary: _this15.getFormDictionary(),
-	            crmFields: _this15.getCrmFields(),
-	            companies: _this15.getCrmCompanies(),
-	            categories: _this15.getCrmCategories(),
-	            agreements: _this15.getAgreements(),
-	            isLeadEnabled: _this15.isLeadEnabled(),
-	            form: _this15.getCrmForm()
-	          });
-	        }
-	        return null;
-	      });
-	    }
-	  }, {
-	    key: "onPresetClick",
-	    value: function onPresetClick(event) {
-	      if (event.getTarget().options.openable) {
-	        this.disableTransparentMode();
-	      }
-	      var uri = new main_core.Uri(window.top.location.toString());
-	      uri.removeQueryParam('formCreated');
-	      uri.removeQueryParam('preset');
-	      window.top.history.replaceState(null, document.title, uri.toString());
-	      this.applyPreset(event.getTarget());
-	    }
-	  }, {
-	    key: "getCheckActionConfirm",
-	    value: function getCheckActionConfirm() {
-	      return this.cache.remember('checkActionConfirm', function () {
-	        var rootWindow = landing_pageobject.PageObject.getRootWindow();
-	        return new rootWindow.BX.UI.Dialogs.MessageBox({
-	          buttons: ui_dialogs_messagebox.MessageBoxButtons.OK_CANCEL
-	        });
-	      });
-	    }
-	  }, {
-	    key: "applyPreset",
-	    value: function applyPreset(preset) {
-	      var _this16 = this;
-	      var skipOptions = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
-	      var lastPreset = this.getPresets().find(function (currentPreset) {
-	        return main_core.Dom.hasClass(currentPreset.getLayout(), 'landing-ui-panel-preset-active');
-	      });
-	      this.getPresets().forEach(function (currentPreset) {
-	        currentPreset.deactivate();
-	      });
-	      if (!skipOptions) {
-	        var runAction = function () {
-	          if (main_core.Type.isArrayFilled(preset.options.actions)) {
-	            return Promise.all(preset.options.actions.map(function (action) {
-	              if (action.id === 'showTour') {
-	                var rootWindow = landing_pageobject.PageObject.getRootWindow();
-	                var guide = new rootWindow.BX.UI.Tour.Guide({
-	                  onEvents: false,
-	                  steps: action.data.steps
-	                });
-	                guide.start();
-	              }
-	              if (action.id === 'showHelp') {
-	                if (window.top.BX.Helper) {
-	                  window.top.BX.Helper.show(action.data.href);
-	                }
-	              }
-	              if (action.id === 'check') {
-	                return crm_form_client.FormClient.getInstance().check({
-	                  templateId: preset.options.id
-	                }).then(function (result) {
-	                  if (result.success === false) {
-	                    var checkActionConfirm = _this16.getCheckActionConfirm();
-	                    checkActionConfirm.setTitle(result.message.title);
-	                    checkActionConfirm.setMessage(result.message.description);
-	                    checkActionConfirm.setOkCaption(result.message.confirmButton);
-	                    checkActionConfirm.setCancelCaption(result.message.cancelButton);
-	                    return new Promise(function (resolve) {
-	                      checkActionConfirm.setOkCallback(function () {
-	                        checkActionConfirm.getOkButton().setDisabled(false);
-	                        checkActionConfirm.getCancelButton().setDisabled(false);
-	                        checkActionConfirm.close();
-	                        resolve(true);
-	                      });
-	                      checkActionConfirm.setCancelCallback(function () {
-	                        checkActionConfirm.getOkButton().setDisabled(false);
-	                        checkActionConfirm.getCancelButton().setDisabled(false);
-	                        checkActionConfirm.close();
-	                        resolve(false);
-	                      });
-	                      checkActionConfirm.show();
-	                    });
-	                  }
-	                  return Promise.resolve(true);
-	                });
-	              }
-	              return Promise.resolve();
-	            }));
-	          }
-	          return Promise.resolve();
-	        }();
-	        if (preset.options.openable) {
-	          this.showLoader();
-	          void runAction.then(function (actions) {
-	            var actionsResult = function () {
-	              if (main_core.Type.isArrayFilled(preset.options.actions)) {
-	                return preset.options.actions.reduce(function (acc, item, index) {
-	                  return _objectSpread(_objectSpread({}, acc), {}, babelHelpers.defineProperty({}, item.id, actions[index]));
-	                }, {});
-	              }
-	              return {};
-	            }();
-	            if (Reflect.has(actionsResult, 'check') && actionsResult.check === true || !Reflect.has(actionsResult, 'check')) {
-	              _this16.getPresets().forEach(function (currentPreset) {
-	                currentPreset.deactivate();
-	              });
-	              preset.activate();
-	              crm_form_client.FormClient.getInstance().prepareOptions(_this16.getFormOptions(), {
-	                templateId: preset.options.id
-	              }).then(function (result) {
-	                return landing_backend.Backend.getInstance().action('Form::getCrmFields').then(function (crmFields) {
-	                  _this16.setCrmFields(crmFields);
-	                  landing_ui_panel_fieldspanel.FieldsPanel.getInstance().setCrmFields(crmFields);
-	                  return result;
-	                });
-	              }).then(function (result) {
-	                BX.Landing.UI.Panel.Top.getInstance().setFormName(result.name);
-	                _this16.setFormOptions(_objectSpread(_objectSpread({}, result), {}, {
-	                  templateId: preset.options.id
-	                }));
-	                _this16.getCrmForm().adjust(main_core.Runtime.clone(result.data));
-	                if (_this16.isFormCreated()) {
-	                  _this16.onPresetFieldClick();
-	                  _this16.activatePreset(preset.options.id);
-	                } else {
-	                  babelHelpers.get(babelHelpers.getPrototypeOf(FormSettingsPanel.prototype), "applyPreset", _this16).call(_this16, preset);
-	                  if (main_core.Type.isArrayFilled(preset.options.expertModeItems)) {
-	                    main_core.Dom.show(_this16.getExpertSwitcherLayout());
-	                    _this16.onExpertModeChange();
-	                  } else {
-	                    main_core.Dom.hide(_this16.getExpertSwitcherLayout());
-	                  }
-	                }
-	                _this16.hideLoader();
-	              });
-	            } else {
-	              _this16.hideLoader();
-	              _this16.enableTransparentMode();
-	              if (lastPreset) {
-	                lastPreset.activate();
-	                preset.deactivate();
-	              }
-	            }
-	          });
-	        }
-	      } else {
-	        if (preset.options.openable) {
-	          babelHelpers.get(babelHelpers.getPrototypeOf(FormSettingsPanel.prototype), "applyPreset", this).call(this, preset);
-	          if (main_core.Type.isArrayFilled(preset.options.expertModeItems)) {
-	            main_core.Dom.show(this.getExpertSwitcherLayout());
-	            this.onExpertModeChange();
-	          } else {
-	            main_core.Dom.hide(this.getExpertSwitcherLayout());
-	          }
-	          this.hideLoader();
-	        }
-	        preset.activate();
-	      }
-	    }
-	  }, {
-	    key: "getFormNode",
-	    value: function getFormNode() {
-	      var _this17 = this;
-	      return this.cache.remember('formNode', function () {
-	        return _this17.getCurrentBlock().node.querySelector('[data-b24form-use-style]');
-	      });
-	    }
-	  }, {
-	    key: "useBlockDesign",
-	    value: function useBlockDesign() {
-	      var _this18 = this;
-	      return this.cache.remember('useBlockDesign', function () {
-	        return main_core.Text.toBoolean(main_core.Dom.attr(_this18.getFormNode(), 'data-b24form-use-style'));
-	      });
-	    }
-	  }, {
-	    key: "getCurrentCrmEntityName",
-	    value: function getCurrentCrmEntityName() {
-	      var scheme = this.getFormOptions().document.scheme;
-	      var schemeItem = this.getFormDictionary().document.schemes.find(function (item) {
-	        return String(scheme) === String(item.id);
-	      });
-	      return schemeItem.name;
-	    }
-	  }, {
-	    key: "getNotSynchronizedFields",
-	    value: function getNotSynchronizedFields() {
-	      return crm_form_client.FormClient.getInstance().checkFields(this.getFormOptions()).then(function (result) {
-	        return result;
-	      });
-	    }
-	  }, {
-	    key: "showSynchronizationPopup",
-	    value: function showSynchronizationPopup(notSynchronizedFields) {
-	      var _this19 = this;
-	      return new Promise(function (resolve) {
-	        var onOk = function onOk(messageBox) {
-	          messageBox.close();
-	          resolve(true);
-	        };
-	        var onCancel = function onCancel(messageBox) {
-	          messageBox.close();
-	          resolve(false);
-	        };
-	        var messageDescription = function () {
-	          var entityName = landing_loc.Loc.getMessage('LANDING_SYNCHRONIZATION_POPUP_ENTITY_TEMPLATE').replace('{entityName}', main_core.Text.encode(_this19.getCurrentCrmEntityName()));
-	          return landing_loc.Loc.getMessage('LANDING_SYNCHRONIZATION_POPUP_DESCRIPTION').replace('{entityName}', main_core.Text.encode(entityName));
-	        }();
-	        var messageText = function () {
-	          var fields = babelHelpers.toConsumableArray(notSynchronizedFields).map(function (field) {
-	            return landing_loc.Loc.getMessage('LANDING_SYNCHRONIZATION_POPUP_FIELD_TEMPLATE').replace('{fieldName}', main_core.Text.encode(field));
-	          });
-	          if (notSynchronizedFields.length > 1) {
-	            var lastField = fields.pop();
-	            return landing_loc.Loc.getMessage('LANDING_SYNCHRONIZATION_POPUP_TEXT').replace('{fieldsList}', fields.join(', ')).replace('{lastField}', lastField);
-	          }
-	          return landing_loc.Loc.getMessage('LANDING_SYNCHRONIZATION_POPUP_TEXT_1').replace('{field}', fields.join(', '));
-	        }();
-	        window.top.BX.UI.Dialogs.MessageBox.confirm("".concat(messageDescription, "<br><br>").concat(messageText), landing_loc.Loc.getMessage('LANDING_SYNCHRONIZATION_POPUP_TITLE'), onOk, landing_loc.Loc.getMessage('LANDING_SYNCHRONIZATION_POPUP_OK_BUTTON_LABEL'), onCancel);
-	      });
-	    }
-	  }, {
-	    key: "showSynchronizationErrorPopup",
-	    value: function showSynchronizationErrorPopup(errors) {
-	      var message = errors.reduce(function (acc, item) {
-	        return "".concat(acc, "\n\n").concat(item);
-	      }, '');
-	      window.top.BX.UI.Dialogs.MessageBox.alert(message);
-	    }
-	  }, {
-	    key: "getErrorAlert",
-	    value: function getErrorAlert() {
-	      return this.cache.remember('errorAlert', function () {
-	        var rootWindow = landing_pageobject.PageObject.getRootWindow();
-	        return new rootWindow.BX.UI.Dialogs.MessageBox({
-	          buttons: ui_dialogs_messagebox.MessageBoxButtons.OK,
-	          okCaption: landing_loc.Loc.getMessage('LANDING_FORM_SAVE_CAPTCHA_ALERT_OK_TEXT'),
-	          popupOptions: {
-	            maxHeight: 310
-	          }
-	        });
-	      });
-	    }
-	  }, {
-	    key: "onSaveClick",
-	    value: function onSaveClick() {
-	      var _this20 = this;
-	      var dictionary = this.getFormDictionary();
-	      BX.onCustomEvent(this, 'BX.Landing.Block:onFormSave', [this.getCurrentBlock().id]);
-	      if (main_core.Type.isPlainObject(dictionary.permissions) && main_core.Type.isPlainObject(dictionary.permissions.tariff) && dictionary.permissions.tariff.restricted === true) {
-	        var rootWindow = landing_pageobject.PageObject.getRootWindow();
-	        rootWindow.BX.UI.InfoHelper.show('limit_crm_webform_edit');
-	        return;
-	      }
-	      if (main_core.Type.isPlainObject(dictionary.permissions) && main_core.Type.isPlainObject(dictionary.permissions.form) && dictionary.permissions.form.edit === false) {
-	        var _rootWindow = landing_pageobject.PageObject.getRootWindow();
-	        _rootWindow.BX.UI.Dialogs.MessageBox.alert(landing_loc.Loc.getMessage('LANDING_FORM_SAVE_PERMISSION_DENIED'));
-	        return;
-	      }
-	      main_core.Dom.addClass(this.getSaveButton().layout, 'ui-btn-wait');
-	      this.getNotSynchronizedFields().then(function (result) {
-	        if (main_core.Type.isPlainObject(result.sync)) {
-	          if (main_core.Type.isArrayFilled(result.sync.errors)) {
-	            _this20.showSynchronizationErrorPopup(result.sync.errors);
-	            return false;
-	          }
-	          if (main_core.Type.isArrayFilled(result.sync.fields)) {
-	            var fieldLabels = result.sync.fields.map(function (field) {
-	              return field.label;
-	            });
-	            return _this20.showSynchronizationPopup(fieldLabels);
-	          }
-	        }
-	        return true;
-	      }).then(function (isConfirmed) {
-	        if (isConfirmed) {
-	          var uri = new main_core.Uri(window.top.location.toString());
-	          uri.removeQueryParam('formCreated');
-	          window.top.history.replaceState(null, document.title, uri.toString());
-	          var initialOptions = _this20.getInitialFormOptions();
-	          var currentOptions = _this20.getFormOptions();
-	          var options = function () {
-	            if (!_this20.isCrmFormPage()) {
-	              var clonedOptions = main_core.Runtime.clone(currentOptions);
-	              clonedOptions.data.design = main_core.Runtime.clone(initialOptions.data.design);
-	              return clonedOptions;
-	            }
-	            return currentOptions;
-	          }();
-	          void crm_form_client.FormClient.getInstance().saveOptions(options).then(function (result) {
-	            BX.onCustomEvent(_this20, 'BX.Landing.Block:onAfterFormSave', [_this20.getCurrentBlock().id]);
-	            _this20.setFormOptions(result);
-	            _this20.setInitialFormOptions(result);
-	            crm_form_client.FormClient.getInstance().resetCache(result.id);
-	            main_core.Dom.removeClass(_this20.getSaveButton().layout, 'ui-btn-wait');
-	            var activeButton = _this20.getSidebarButtons().find(function (button) {
-	              return button.isActive();
-	            });
-	            return landing_backend.Backend.getInstance().action('Form::getCrmFields').then(function (crmFields) {
-	              _this20.setCrmFields(crmFields);
-	              landing_ui_panel_fieldspanel.FieldsPanel.getInstance().setCrmFields(crmFields);
-	              if (activeButton && !main_core.Dom.hasClass(_this20.layout, 'landing-ui-panel-mode-transparent')) {
-	                activeButton.getLayout().click();
-	              }
-	              return result;
-	            });
-	            if (_this20.isCrmFormPage()) {
-	              main_core.Dom.addClass(_this20.getSaveButton().layout, 'ui-btn-icon-done');
-	              var currentButtonText = _this20.getSaveButton().layout.innerText;
-	              _this20.getSaveButton().setText(landing_loc.Loc.getMessage('LANDING_FORM_EDITOR_SAVE_BUTTON_STATE_SAVED'));
-	              setTimeout(function () {
-	                main_core.Dom.removeClass(_this20.getSaveButton().layout, 'ui-btn-icon-done');
-	                _this20.getSaveButton().setText(currentButtonText);
-	              }, 1500);
-	            } else {
-	              void _this20.hide();
-	            }
-	          })["catch"](function (errors) {
-	            if (main_core.Type.isArrayFilled(errors)) {
-	              if (_classPrivateMethodGet(_this20, _isPhoneValidationError, _isPhoneValidationError2).call(_this20, errors)) {
-	                _classPrivateMethodGet(_this20, _showPhoneVerifySlider, _showPhoneVerifySlider2).call(_this20);
-	              } else {
-	                var errorMessage = errors.map(function (item) {
-	                  return main_core.Text.encode(item.message);
-	                }).join('<br><br>');
-	                var errorAlert = _this20.getErrorAlert();
-	                errorAlert.setMessage(errorMessage);
-	                errorAlert.show();
-	              }
-	            } else {
-	              var _rootWindow2 = landing_pageobject.PageObject.getRootWindow();
-	              _rootWindow2.BX.UI.Dialogs.MessageBox.alert(landing_loc.Loc.getMessage('LANDING_FORM_SAVE_UNKNOWN_ERROR_ALERT_TEXT'), landing_loc.Loc.getMessage('LANDING_FORM_SAVE_ERROR_ALERT_TITLE'));
-	            }
-	            main_core.Dom.removeClass(_this20.getSaveButton().layout, 'ui-btn-wait');
-	          });
-	          if (_this20.useBlockDesign() && _this20.isCrmFormPage()) {
-	            _this20.disableUseBlockDesign();
-	          }
-	        } else {
-	          main_core.Dom.removeClass(_this20.getSaveButton().layout, 'ui-btn-wait');
-	        }
-	      });
-	    }
-	  }, {
-	    key: "isChanged",
-	    value: function isChanged() {
-	      return JSON.stringify(this.getFormOptions()) !== JSON.stringify(this.getInitialFormOptions());
-	    }
-	  }, {
-	    key: "disableUseBlockDesign",
-	    value: function disableUseBlockDesign() {
-	      main_core.Dom.attr(this.getFormNode(), 'data-b24form-use-style', 'N');
-	      this.cache.set('useBlockDesign', false);
-	      landing_backend.Backend.getInstance().action('Landing\\Block::updateNodes', {
-	        block: this.getCurrentBlock().id,
-	        data: {
-	          '.bitrix24forms': {
-	            attrs: {
-	              'data-b24form-use-style': 'N'
-	            }
-	          }
-	        },
-	        lid: this.getCurrentBlock().lid,
-	        siteId: this.getCurrentBlock().siteId
-	      }, {
-	        code: this.getCurrentBlock().manifest.code
-	      }).then(function (result) {
-	        return landing_history.History.getInstance().push();
-	      });
-	    }
-	  }, {
-	    key: "onCancelClick",
-	    value: function onCancelClick() {
-	      var initialFormOptions = this.getInitialFormOptions();
-	      this.getCrmForm().adjust(initialFormOptions.data);
-	      BX.Landing.UI.Panel.Top.getInstance().setFormName(initialFormOptions.name);
-	      void this.hide();
-	    }
-	  }, {
-	    key: "hide",
-	    value: function hide() {
-	      var editorWindow = landing_pageobject.PageObject.getEditorWindow();
-	      main_core.Dom.removeClass(editorWindow.document.body, 'landing-ui-hide-action-panels-form');
-	      var rootWindow = landing_pageobject.PageObject.getRootWindow();
-	      main_core.Dom.removeClass(rootWindow.document.body, 'landing-ui-hide-action-panels-form');
-	      this.enableHistory();
-	      return babelHelpers.get(babelHelpers.getPrototypeOf(FormSettingsPanel.prototype), "hide", this).call(this);
-	    }
-	  }, {
-	    key: "onSidebarButtonClick",
-	    value: function onSidebarButtonClick(event) {
-	      var target = event.getTarget();
-	      if (target.options.id === 'design') {
-	        this.onFormDesignButtonClick();
-	      } else {
-	        babelHelpers.get(babelHelpers.getPrototypeOf(FormSettingsPanel.prototype), "onSidebarButtonClick", this).call(this, event);
-	      }
-	    }
-	  }], [{
-	    key: "sanitize",
-	    value: function sanitize(value) {
-	      if (main_core.Type.isStringFilled(value)) {
-	        return main_core.Text.decode(value).replace(/<style[^>]*>.*<\/style>/gm, '').replace(/<script[^>]*>.*<\/script>/gm, '').replace(/<[^>]+>/gm, '');
-	      }
-	      return value;
-	    }
-	  }]);
-	  return FormSettingsPanel;
-	}(landing_ui_panel_basepresetpanel.BasePresetPanel);
-	function _isPhoneValidationError2(errors) {
-	  var _this21 = this;
-	  return errors.some(function (error) {
-	    return error.code === babelHelpers.classPrivateFieldGet(_this21, _phoneDoesntVerifiedResponseCode);
-	  });
-	}
-	function _showPhoneVerifySlider2() {
-	  if (typeof bitrix24_phoneverify.PhoneVerify !== 'undefined') {
-	    bitrix24_phoneverify.PhoneVerify.getInstance().setEntityType(PHONE_VERIFY_FORM_ENTITY).setEntityId(this.getCurrentFormId()).startVerify({
-	      sliderTitle: landing_loc.Loc.getMessage('LANDING_FORM_EDITOR_PHONE_VERIFY_CUSTOM_SLIDER_TITLE'),
-	      title: landing_loc.Loc.getMessage('LANDING_FORM_EDITOR_PHONE_VERIFY_CUSTOM_TITLE'),
-	      description: landing_loc.Loc.getMessage('LANDING_FORM_EDITOR_PHONE_VERIFY_CUSTOM_DESCRIPTION')
-	    });
-	  }
+	class FormSettingsPanel extends landing_ui_panel_basepresetpanel.BasePresetPanel {
+		static getInstance() {
+			const rootWindow = landing_pageobject.PageObject.getRootWindow();
+			const rootWindowPanel = rootWindow.BX.Landing.UI.Panel.FormSettingsPanel;
+			if (!rootWindowPanel.instance && !FormSettingsPanel.instance) {
+				rootWindowPanel.instance = new FormSettingsPanel();
+			}
+			return rootWindowPanel.instance || FormSettingsPanel.instance;
+		}
+		adjustActionsPanels = false;
+		#phoneDoesntVerifiedResponseCode = 'PHONE_NOT_VERIFIED';
+		constructor() {
+			super();
+			this.setEventNamespace('BX.Landing.UI.Panel.FormSettingsPanel');
+			this.setTitle(landing_loc.Loc.getMessage('LANDING_FORM_SETTINGS_PANEL_TITLE'));
+			this.lsCache = new main_core.Cache.LocalStorageCache();
+			main_core.Dom.addClass(this.layout, 'landing-ui-panel-form-settings');
+			this.subscribe('onCancel', () => {
+				BX.onCustomEvent(this, 'BX.Landing.Block:onFormSettingsClose', [this.getCurrentBlock().id]);
+			});
+			this.disableOverlay();
+			if (this.isCrmFormPage()) {
+				const {
+					dictionary
+				} = landing_env.Env.getInstance().getOptions().formEditorData;
+				const preparedSidebarButtons = dictionary.sidebarButtons.map(buttonOptions => {
+					return new landing_ui_button_sidebarbutton.SidebarButton({
+						...buttonOptions,
+						child: true
+					});
+				});
+				this.setSidebarButtons(preparedSidebarButtons);
+				const preparedPresets = dictionary.scenarios.map(presetOptions => {
+					return new landing_ui_panel_basepresetpanel.Preset(presetOptions);
+				});
+				this.setPresets(preparedPresets);
+				const preparedPresetCategories = dictionary.scenarioCategories.map(categoryOptions => {
+					return new landing_ui_panel_basepresetpanel.PresetCategory(categoryOptions);
+				});
+				this.setCategories(preparedPresetCategories);
+			} else {
+				main_core.Dom.append(this.getBlockSettingsButton().render(), this.getRightHeaderControls());
+			}
+			this.subscribe('onCancel', this.onCancelClick.bind(this));
+			main_core.Dom.append(this.getExpertSwitcherLayout(), this.layout);
+		}
+		getExpertSwitcherLayout() {
+			return this.cache.remember('switcherLayout', () => {
+				const onClick = () => {
+					this.getExpertModeSwitcher().node.click();
+				};
+				return main_core.Tag.render`
+				<div class="landing-ui-expert-switcher">
+					${this.getExpertModeSwitcher().node}
+					<span onclick="${onClick}" class="landing-ui-expert-switcher-label">
+						${landing_loc.Loc.getMessage('LANDING_FORM_EXPERT_MODE_SWITCHER_LABEL')}
+					</span>
+				</div>
+			`;
+			});
+		}
+		getExpertModeSwitcher() {
+			return this.cache.remember('expertModeSwitcher', () => {
+				const rootWindow = landing_pageobject.PageObject.getRootWindow();
+				const switcher = new rootWindow.BX.UI.Switcher({
+					checked: this.isExpertModeEnabled()
+				});
+				main_core.Dom.addClass(switcher.node, 'ui-switcher-size-sm ui-switcher-color-green');
+				main_core.Event.bind(switcher.node, 'click', this.onExpertSwitcherClick.bind(this));
+				return switcher;
+			});
+		}
+		onExpertSwitcherClick() {
+			this.lsCache.set('formEditorExpertMode', this.getExpertModeSwitcher().isChecked());
+			this.onExpertModeChange();
+		}
+		getCurrentPreset() {
+			const {
+				templateId
+			} = this.getFormOptions();
+			const preset = this.getPresets().find(currentPreset => {
+				return currentPreset.options.id === templateId;
+			});
+			if (preset) {
+				return preset;
+			}
+			return this.getPresets().find(currentPreset => {
+				return currentPreset.options.id === 'expert';
+			});
+		}
+		onExpertModeChange() {
+			const currentPreset = this.getCurrentPreset();
+			if (this.getExpertModeSwitcher().isChecked() && main_core.Type.isArrayFilled(currentPreset.options.expertModeItems)) {
+				this.clearSidebar();
+				this.getSidebarButtons().filter(button => {
+					return currentPreset.options.expertModeItems.includes(button.id);
+				}).forEach(button => {
+					if (!currentPreset.options.items.includes(button.id)) {
+						button.deactivate();
+					}
+					this.appendSidebarButton(button);
+				});
+			} else {
+				const currentSidebarButton = this.getSidebarButtons().find(button => {
+					return button.isActive();
+				});
+				const buttons = this.getSidebarButtons().filter(button => {
+					return currentPreset.options.items.includes(button.id);
+				});
+				this.clearSidebar();
+				buttons.forEach(button => {
+					this.appendSidebarButton(button);
+				});
+				if (currentSidebarButton && !currentPreset.options.items.includes(currentSidebarButton.id)) {
+					const defaultSection = (() => {
+						if (main_core.Type.isStringFilled(currentPreset.options.defaultSection)) {
+							return currentPreset.options.defaultSection;
+						}
+						return 'fields';
+					})();
+					const defaultSectionButton = this.getSidebarButtons().find(button => {
+						return button.id === defaultSection;
+					});
+					if (defaultSectionButton) {
+						defaultSectionButton.getLayout().click();
+					}
+				}
+			}
+		}
+		isExpertModeEnabled() {
+			return this.lsCache.get('formEditorExpertMode', false);
+		}
+
+		// eslint-disable-next-line class-methods-use-this
+		isCrmFormPage() {
+			return landing_env.Env.getInstance().getSpecialType() === 'crm_forms';
+		}
+		getFormDesignButton() {
+			return this.cache.remember('formDesignButton', () => {
+				return new ui_buttons.Button({
+					text: landing_loc.Loc.getMessage('LANDING_FORM_DESIGN_BUTTON'),
+					color: ui_buttons.Button.Color.LIGHT_BORDER,
+					round: true,
+					className: 'landing-ui-panel-top-button',
+					onclick: this.onFormDesignButtonClick.bind(this)
+				});
+			});
+		}
+		getBlockSettingsButton() {
+			return this.cache.remember('blockSettingsButton', () => {
+				return new ui_buttons.Button({
+					text: landing_loc.Loc.getMessage('LANDING_FORM_SETTINGS_BLOCK_SETTINGS_BUTTON_TEXT'),
+					color: ui_buttons.Button.Color.LIGHT_BORDER,
+					round: true,
+					className: 'landing-ui-panel-top-button',
+					onclick: this.onBlockSettingsButtonClick.bind(this)
+				});
+			});
+		}
+		onBlockSettingsButtonClick() {
+			if (this.getCurrentBlock()) {
+				this.hide().then(() => {
+					this.getCurrentBlock().showContentPanel();
+				});
+			}
+		}
+		onFormDesignButtonClick() {
+			if (this.getCurrentBlock()) {
+				this.getCurrentBlock().onFormDesignClick();
+			}
+		}
+		getLoader() {
+			return this.cache.remember('loader', () => {
+				return new main_loader.Loader({
+					target: this.body
+				});
+			});
+		}
+		showLoader() {
+			main_core.Dom.addClass(this.layout, 'landing-ui-panel-state-content-load');
+			void this.getLoader().show();
+			main_core.Dom.hide(this.sidebar);
+			main_core.Dom.hide(this.content);
+			main_core.Dom.hide(this.getExpertSwitcherLayout());
+		}
+		hideLoader() {
+			main_core.Dom.removeClass(this.layout, 'landing-ui-panel-state-content-load');
+			this.getLoader().hide();
+			main_core.Dom.show(this.sidebar);
+			main_core.Dom.show(this.content);
+			if (main_core.Type.isArrayFilled(this.getCurrentPreset().options.expertModeItems)) {
+				main_core.Dom.show(this.getExpertSwitcherLayout());
+			}
+		}
+		showContentLoader() {
+			main_core.Dom.addClass(this.layout, 'landing-ui-panel-state-body-load');
+			super.showContentLoader();
+		}
+		hideContentLoader() {
+			main_core.Dom.removeClass(this.layout, 'landing-ui-panel-state-body-load');
+			super.hideContentLoader();
+		}
+		load(options = {}) {
+			if (options.showWithOptions) {
+				const editorData = landing_env.Env.getInstance().getOptions().formEditorData;
+				const {
+					dictionary
+				} = editorData;
+				const preparedSidebarButtons = dictionary.sidebarButtons.map(buttonOptions => {
+					return new landing_ui_button_sidebarbutton.SidebarButton({
+						...buttonOptions,
+						child: true
+					});
+				});
+				this.setSidebarButtons(preparedSidebarButtons);
+				const preparedPresets = dictionary.scenarios.map(presetOptions => {
+					return new landing_ui_panel_basepresetpanel.Preset(presetOptions);
+				});
+				this.setPresets(preparedPresets);
+				const preparedPresetCategories = dictionary.scenarioCategories.map(categoryOptions => {
+					return new landing_ui_panel_basepresetpanel.PresetCategory(categoryOptions);
+				});
+				this.setCategories(preparedPresetCategories);
+				this.setCrmFields(editorData.crmFields);
+				this.setCrmCompanies(editorData.crmCompanies);
+				this.setCrmCategories(editorData.crmCategories);
+				this.setAgreements(editorData.agreements);
+				const currentOptions = main_core.Runtime.clone(editorData.formOptions);
+				if (currentOptions.agreements.use !== true) {
+					currentOptions.agreements.use = true;
+					currentOptions.data.agreements = [];
+				}
+				this.setFormOptions(currentOptions);
+				this.setFormDictionary(editorData.dictionary);
+				return Promise.resolve();
+			}
+			const crmData = landing_backend.Backend.getInstance().batch('Form::getCrmFields', {
+				crmFields: {
+					action: 'Form::getCrmFields',
+					data: null
+				},
+				crmCompanies: {
+					action: 'Form::getCrmCompanies',
+					data: null
+				},
+				crmCategories: {
+					action: 'Form::getCrmCategories',
+					data: null
+				},
+				agreements: {
+					action: 'Form::getAgreements',
+					data: null
+				}
+			}).then(result => {
+				this.setCrmFields(result.crmFields.result);
+				this.setCrmCompanies(result.crmCompanies.result);
+				this.setCrmCategories(result.crmCategories.result);
+				this.setAgreements(result.agreements.result);
+			});
+			const formOptions = crm_form_client.FormClient.getInstance().getOptions(this.getCurrentFormId()).then(options => {
+				const currentOptions = main_core.Runtime.clone(options);
+				if (currentOptions.agreements.use !== true) {
+					currentOptions.agreements.use = true;
+					currentOptions.data.agreements = [];
+				}
+				this.setFormOptions(currentOptions);
+			});
+			const formDictionary = crm_form_client.FormClient.getInstance().getDictionary().then(dictionary => {
+				this.setFormDictionary(dictionary);
+				const preparedSidebarButtons = dictionary.sidebarButtons.map(buttonOptions => {
+					return new landing_ui_button_sidebarbutton.SidebarButton({
+						...buttonOptions,
+						child: true
+					});
+				});
+				this.setSidebarButtons(preparedSidebarButtons);
+				const preparedPresets = dictionary.scenarios.map(presetOptions => {
+					return new landing_ui_panel_basepresetpanel.Preset(presetOptions);
+				});
+				this.setPresets(preparedPresets);
+				const preparedPresetCategories = dictionary.scenarioCategories.map(categoryOptions => {
+					return new landing_ui_panel_basepresetpanel.PresetCategory(categoryOptions);
+				});
+				this.setCategories(preparedPresetCategories);
+			});
+			return Promise.all([crmData, formOptions, formDictionary]);
+		}
+		setAgreements(agreements) {
+			this.cache.set('agreements', main_core.Runtime.orderBy(agreements, ['id'], ['asc']));
+		}
+		getAgreements() {
+			return this.cache.get('agreements');
+		}
+		isLeadEnabled() {
+			return this.getFormDictionary().document.lead.enabled;
+		}
+		setCurrentBlock(block) {
+			this.cache.set('currentBlock', block);
+		}
+		getCurrentBlock() {
+			return this.cache.get('currentBlock');
+		}
+		getSaveOriginalFileNameAlert() {
+			return this.cache.remember('saveOriginalFileNameAlert', () => {
+				const alert = new ui_alerts.Alert({
+					text: landing_loc.Loc.getMessage('LANDING_CRM_FORM_MAIN_OPTION_WARNING'),
+					color: ui_alerts.AlertColor.WARNING
+				});
+				return alert.render();
+			});
+		}
+		show(options = {
+			formOptions: {}
+		}) {
+			if (!this.layout.parentNode) {
+				this.enableToggleMode();
+			}
+			if (!this.isFormCreated()) {
+				this.disableTransparentMode();
+			}
+			const {
+				mainOptions
+			} = landing_env.Env.getInstance().getOptions();
+			if (mainOptions.saveOriginalFileName === false) {
+				this.prependContent(this.getSaveOriginalFileNameAlert());
+				const closeButtonTop = main_core.Text.toNumber(main_core.Dom.style(this.closeButton.getLayout(), 'top'));
+				const alertHeight = this.getSaveOriginalFileNameAlert().getBoundingClientRect().height;
+				main_core.Dom.style(this.closeButton.getLayout(), 'top', `${closeButtonTop + alertHeight}px`);
+			}
+			this.setCurrentBlock(options.block);
+			this.setCurrentFormId(options.formId);
+			this.setCurrentFormInstanceId(options.instanceId);
+			this.showLoader();
+			this.load(options).then(() => {
+				this.hideLoader();
+				const formOptions = this.getFormOptions();
+				if (main_core.Type.isPlainObject(options.formOptions)) {
+					const formOptions = main_core.Runtime.merge(this.getFormOptions(), options.formOptions);
+					this.setFormOptions(formOptions);
+				}
+				if (options.state === 'presets') {
+					const presetFromRequest = this.getPresetIdFromRequest();
+					let preset = false;
+					if (presetFromRequest) {
+						preset = this.getPresets().find(item => {
+							return item.options.id === presetFromRequest;
+						});
+					}
+					if (preset) {
+						this.applyPreset(preset);
+					} else {
+						this.onPresetFieldClick();
+						this.activatePreset(formOptions.templateId);
+					}
+				} else {
+					let preset = this.getPresets().find(item => {
+						return item.options.id === formOptions.templateId;
+					});
+					if (!preset) {
+						preset = this.getPresets().find(item => {
+							return item.options.id === 'expert';
+						});
+					}
+					if (this.isFormCreated()) {
+						this.applyPreset(preset);
+						this.onPresetFieldClick();
+					} else {
+						this.applyPreset(preset, true);
+					}
+				}
+				this.setInitialFormOptions(main_core.Runtime.clone(this.getFormOptions()));
+				if (!this.isFormCreated()) {
+					this.onExpertModeChange();
+				}
+			}).catch(error => {
+				if (main_core.Type.isArrayFilled(error)) {
+					const accessDeniedCode = 510;
+					const isAccessDenied = error.some(errorItem => {
+						return String(errorItem.code) === String(accessDeniedCode);
+					});
+					if (isAccessDenied) {
+						this.getLoader().hide();
+						main_core.Dom.show(this.sidebar);
+						main_core.Dom.show(this.content);
+						main_core.Dom.hide(this.footer);
+						main_core.Dom.append(this.getAccessError(), this.content);
+					}
+				}
+				console.error(error);
+			});
+			const editorWindow = landing_pageobject.PageObject.getEditorWindow();
+			main_core.Dom.addClass(editorWindow.document.body, 'landing-ui-hide-action-panels-form');
+			const rootWindow = landing_pageobject.PageObject.getRootWindow();
+			main_core.Dom.addClass(rootWindow.document.body, 'landing-ui-hide-action-panels-form');
+			void landing_ui_panel_stylepanel.StylePanel.getInstance().hide();
+			this.disableHistory();
+			return super.show(options).then(() => {
+				setTimeout(() => {
+					const y = this.getCurrentBlock().node.offsetTop;
+					landing_pageobject.PageObject.getEditorWindow().scrollTo(0, y);
+				}, 300);
+				BX.onCustomEvent(this, 'BX.Landing.Block:onFormSettingsOpen', [this.getCurrentBlock().id]);
+				return Promise.resolve(true);
+			});
+		}
+		getHistoryHint() {
+			return this.cache.remember('historyHint', () => {
+				const layout = main_core.Tag.render`
+				<span 
+					class="landing-ui-history-hint"
+					data-hint="${main_core.Text.encode(landing_loc.Loc.getMessage('LANDING_FORM_HISTORY_DISABLED_HINT'))}"
+					data-hint-no-icon
+				></span>
+			`;
+				const rootWindow = landing_pageobject.PageObject.getRootWindow();
+				rootWindow.BX.UI.Hint.initNode(layout);
+				return layout;
+			});
+		}
+		disableHistory() {
+			const rootWindow = landing_pageobject.PageObject.getRootWindow();
+			const TopPanel = rootWindow.BX.Landing.UI.Panel.Top;
+			if (TopPanel) {
+				const {
+					undoButton,
+					redoButton
+				} = TopPanel.getInstance();
+				main_core.Dom.addClass(undoButton, 'landing-ui-disabled-from-form');
+				main_core.Dom.addClass(redoButton, 'landing-ui-disabled-from-form');
+				main_core.Dom.append(this.getHistoryHint(), undoButton.parentElement);
+			}
+		}
+		enableHistory() {
+			const rootWindow = landing_pageobject.PageObject.getRootWindow();
+			const TopPanel = rootWindow.BX.Landing.UI.Panel.Top;
+			if (TopPanel) {
+				const {
+					undoButton,
+					redoButton
+				} = TopPanel.getInstance();
+				main_core.Dom.removeClass(undoButton, 'landing-ui-disabled-from-form');
+				main_core.Dom.removeClass(redoButton, 'landing-ui-disabled-from-form');
+				main_core.Dom.remove(this.getHistoryHint());
+			}
+		}
+		getAccessError() {
+			return this.cache.remember('accessErrorMessage', () => {
+				return main_core.Tag.render`
+				<div class="landing-ui-access-error-message">
+					<div class="landing-ui-access-error-message-text">
+						${landing_loc.Loc.getMessage('LANDING_CRM_ACCESS_ERROR_MESSAGE')}
+					</div>
+				</div>
+			`;
+			});
+		}
+
+		// eslint-disable-next-line class-methods-use-this
+		getPresetIdFromRequest() {
+			const uri = new main_core.Uri(window.top.location.href);
+			return uri.getQueryParam('preset');
+		}
+
+		// eslint-disable-next-line class-methods-use-this
+		isFormCreated() {
+			const rootWindow = landing_pageobject.PageObject.getRootWindow();
+			const uri = new main_core.Uri(rootWindow.location.href);
+			return main_core.Text.toBoolean(uri.getQueryParam('formCreated'));
+		}
+		setCurrentFormId(formId) {
+			this.cache.set('currentFormId', main_core.Text.toNumber(formId));
+		}
+		getCurrentFormId() {
+			return this.cache.get('currentFormId');
+		}
+		setCurrentFormInstanceId(formId) {
+			this.cache.set('currentFormInstanceId', formId);
+		}
+		getCurrentFormInstanceId() {
+			return this.cache.get('currentFormInstanceId');
+		}
+		setCrmFields(fields) {
+			this.cache.set('fields', fields);
+		}
+		getCrmFields() {
+			return this.cache.get('fields') || {};
+		}
+		setCrmCompanies(companies) {
+			this.cache.set('companies', companies);
+		}
+		getCrmCompanies() {
+			return this.cache.get('companies') || [];
+		}
+		setCrmCategories(categories) {
+			this.cache.set('crmCategories', categories);
+		}
+		getCrmCategories() {
+			return this.cache.get('crmCategories') || [];
+		}
+		setFormOptions(options) {
+			this.cache.set('formOptions', options);
+		}
+		getFormOptions() {
+			return main_core.Runtime.clone(this.cache.get('formOptions') || {});
+		}
+		setFormDictionary(dictionary) {
+			this.cache.set('formDictionary', dictionary);
+		}
+		getFormDictionary() {
+			return this.cache.get('formDictionary') || {};
+		}
+		setInitialFormOptions(options) {
+			this.cache.set('initialFormOptions', main_core.Runtime.clone(options));
+		}
+		getInitialFormOptions() {
+			return this.cache.get('initialFormOptions');
+		}
+
+		// eslint-disable-next-line
+		getCrmForm() {
+			const formApp = main_core.Reflection.getClass('b24form.App');
+			if (formApp) {
+				if (this.getCurrentFormInstanceId()) {
+					return formApp.get(this.getCurrentFormInstanceId());
+				}
+				let tmpIndex = -1;
+				const currentFormIndex = [...this.getCurrentBlock().node.parentElement.childNodes].reduce((acc, item) => {
+					if (main_core.Dom.attr(item, 'data-subtype') === 'form') {
+						tmpIndex += 1;
+						if (item === this.getCurrentBlock().node) {
+							return tmpIndex;
+						}
+					}
+					return acc;
+				}, 0);
+				return formApp.list()[currentFormIndex];
+			}
+			return null;
+		}
+		onChange(event) {
+			const eventData = event.getData();
+			const eventTargetValue = event.getTarget().getValue();
+			Promise.resolve(eventTargetValue).then(value => {
+				if (eventData.skipPrepare) {
+					const formOptions = this.getFormOptions();
+					if (Reflect.has(value, 'presetFields') || Reflect.has(value, 'document') || Reflect.has(value, 'result')) {
+						const additionalValue = {};
+						if (Reflect.has(value, 'document')) {
+							additionalValue.payment = value.document.payment;
+							delete value.document.payment;
+						}
+						return {
+							...formOptions,
+							...value,
+							...additionalValue
+						};
+					}
+					if (Reflect.has(value, 'embedding') || Reflect.has(value, 'callback') || Reflect.has(value, 'whatsapp') || Reflect.has(value, 'bookingResourceAutoSelection') || Reflect.has(value, 'name') && Reflect.has(value, 'data') && Reflect.has(value.data, 'useSign')) {
+						const mergedOptions = main_core.Runtime.merge(formOptions, value);
+						if (Reflect.has(value, 'responsible')) {
+							mergedOptions.responsible.users = value.responsible.users;
+						}
+						return mergedOptions;
+					}
+					if (Reflect.has(value, 'captcha')) {
+						const recaptcha = {};
+						const captcha = {};
+						const yandexCaptcha = {};
+						if (value.captcha?.recaptcha) {
+							const {
+								key,
+								secret,
+								use
+							} = value.captcha.recaptcha;
+							// eslint-disable-next-line no-param-reassign
+							delete value.captcha.recaptcha.key;
+							// eslint-disable-next-line no-param-reassign
+							delete value.captcha.recaptcha.secret;
+							if (!main_core.Type.isNil(key)) {
+								recaptcha.key = key;
+							}
+							if (!main_core.Type.isNil(secret)) {
+								recaptcha.secret = secret;
+							}
+							if (!main_core.Type.isNil(use)) {
+								recaptcha.use = use;
+							}
+						}
+						if (value.captcha?.yandexCaptcha) {
+							const {
+								key,
+								secret,
+								use
+							} = value.captcha.yandexCaptcha;
+							// eslint-disable-next-line no-param-reassign
+							delete value.captcha.yandexCaptcha.key;
+							// eslint-disable-next-line no-param-reassign
+							delete value.captcha.yandexCaptcha.secret;
+							if (!main_core.Type.isNil(key)) {
+								yandexCaptcha.key = key;
+							}
+							if (!main_core.Type.isNil(secret)) {
+								yandexCaptcha.secret = secret;
+							}
+							if (!main_core.Type.isNil(use)) {
+								yandexCaptcha.use = use;
+							}
+						}
+						if (value.captcha) {
+							const {
+								service
+							} = value.captcha;
+							if (!main_core.Type.isNil(service)) {
+								captcha.service = service;
+							}
+						}
+						captcha.recaptcha = {
+							...formOptions.captcha.recaptcha,
+							...recaptcha
+						};
+						captcha.yandexCaptcha = {
+							...formOptions.captcha.yandexCaptcha,
+							...yandexCaptcha
+						};
+						return {
+							...formOptions,
+							captcha: {
+								...formOptions.captcha,
+								...captcha
+							},
+							data: {
+								...formOptions.data,
+								...value
+							}
+						};
+					}
+					return {
+						...formOptions,
+						data: {
+							...formOptions.data,
+							...value
+						}
+					};
+				}
+				return crm_form_client.FormClient.getInstance().prepareOptions(this.getFormOptions(), value).then(result => {
+					if (value.agreements) {
+						result.data = main_core.Runtime.merge(result.data, value);
+					}
+					if (value.integration) {
+						result.integration = value.integration;
+					}
+					if (value.fields) {
+						result.data.fields = result.data.fields.map((field, index) => {
+							return main_core.Runtime.merge(field, value.fields[index]);
+						});
+					}
+					return result;
+				});
+			}).then(result => {
+				BX.Landing.UI.Panel.Top.getInstance().setFormName(result.name);
+				this.setFormOptions(result);
+				this.getCrmForm().adjust(main_core.Runtime.clone(result.data));
+			});
+		}
+		static sanitize(value) {
+			if (main_core.Type.isStringFilled(value)) {
+				return main_core.Text.decode(value).replace(/<style[^>]*>.*<\/style>/gm, '').replace(/<script[^>]*>.*<\/script>/gm, '').replace(/<[^>]+>/gm, '');
+			}
+			return value;
+		}
+		getPersonalizationVariables() {
+			return this.cache.remember('personalizationVariables', () => {
+				return this.getFormDictionary().personalization.list.map(item => {
+					return {
+						name: item.name,
+						value: item.id
+					};
+				});
+			});
+		}
+		getDefaultValuesVariables() {
+			return this.cache.remember('personalizationVariables', () => {
+				const {
+					properties
+				} = this.getFormDictionary();
+				if (main_core.Type.isPlainObject(properties) && main_core.Type.isArrayFilled(properties.list)) {
+					return properties.list.map(item => {
+						return {
+							name: item.name,
+							value: item.id
+						};
+					});
+				}
+				return [];
+			});
+		}
+		getContent(id) {
+			const currentButton = this.getSidebarButtons().find(button => {
+				return id === button.options.id;
+			});
+			const {
+				extension
+			} = currentButton.options.data;
+			const contentExtension = this.cache.remember(extension, () => {
+				const rootWindow = landing_pageobject.PageObject.getRootWindow();
+				return rootWindow.BX.Runtime.loadExtension(extension).then(exports => {
+					return exports.default;
+				});
+			});
+			return contentExtension.then(ContentWrapperClass => {
+				if (main_core.Type.isFunction(ContentWrapperClass)) {
+					return new ContentWrapperClass({
+						formOptions: this.getFormOptions(),
+						dictionary: this.getFormDictionary(),
+						crmFields: this.getCrmFields(),
+						companies: this.getCrmCompanies(),
+						categories: this.getCrmCategories(),
+						agreements: this.getAgreements(),
+						isLeadEnabled: this.isLeadEnabled(),
+						form: this.getCrmForm()
+					});
+				}
+				return null;
+			});
+		}
+		onPresetClick(event) {
+			if (event.getTarget().options.openable) {
+				this.disableTransparentMode();
+			}
+			const uri = new main_core.Uri(window.top.location.toString());
+			uri.removeQueryParam('formCreated');
+			uri.removeQueryParam('preset');
+			window.top.history.replaceState(null, document.title, uri.toString());
+			this.applyPreset(event.getTarget());
+		}
+		getCheckActionConfirm() {
+			return this.cache.remember('checkActionConfirm', () => {
+				const rootWindow = landing_pageobject.PageObject.getRootWindow();
+				return new rootWindow.BX.UI.Dialogs.MessageBox({
+					buttons: ui_dialogs_messagebox.MessageBoxButtons.OK_CANCEL,
+					useAirDesign: true
+				});
+			});
+		}
+		applyPreset(preset, skipOptions = false) {
+			const lastPreset = this.getPresets().find(currentPreset => {
+				return main_core.Dom.hasClass(currentPreset.getLayout(), 'landing-ui-panel-preset-active');
+			});
+			this.getPresets().forEach(currentPreset => {
+				currentPreset.deactivate();
+			});
+			if (!skipOptions) {
+				const runAction = (() => {
+					if (main_core.Type.isArrayFilled(preset.options.actions)) {
+						return Promise.all(preset.options.actions.map(action => {
+							if (action.id === 'showTour') {
+								const rootWindow = landing_pageobject.PageObject.getRootWindow();
+								const guide = new rootWindow.BX.UI.Tour.Guide({
+									onEvents: false,
+									steps: action.data.steps
+								});
+								guide.start();
+							}
+							if (action.id === 'showHelp') {
+								if (window.top.BX.Helper) {
+									window.top.BX.Helper.show(action.data.href);
+								}
+							}
+							if (action.id === 'check') {
+								return crm_form_client.FormClient.getInstance().check({
+									templateId: preset.options.id
+								}).then(result => {
+									if (result.success === false) {
+										const checkActionConfirm = this.getCheckActionConfirm();
+										checkActionConfirm.setTitle(result.message.title);
+										checkActionConfirm.setMessage(result.message.description);
+										checkActionConfirm.setOkCaption(result.message.confirmButton);
+										checkActionConfirm.setCancelCaption(result.message.cancelButton);
+										return new Promise(resolve => {
+											checkActionConfirm.setOkCallback(() => {
+												checkActionConfirm.getOkButton().setDisabled(false);
+												checkActionConfirm.getCancelButton().setDisabled(false);
+												checkActionConfirm.close();
+												resolve(true);
+											});
+											checkActionConfirm.setCancelCallback(() => {
+												checkActionConfirm.getOkButton().setDisabled(false);
+												checkActionConfirm.getCancelButton().setDisabled(false);
+												checkActionConfirm.close();
+												resolve(false);
+											});
+											checkActionConfirm.show();
+										});
+									}
+									return Promise.resolve(true);
+								});
+							}
+							return Promise.resolve();
+						}));
+					}
+					return Promise.resolve();
+				})();
+				if (preset.options.openable) {
+					this.showLoader();
+					void runAction.then(actions => {
+						const actionsResult = (() => {
+							if (main_core.Type.isArrayFilled(preset.options.actions)) {
+								return preset.options.actions.reduce((acc, item, index) => {
+									return {
+										...acc,
+										[item.id]: actions[index]
+									};
+								}, {});
+							}
+							return {};
+						})();
+						if (Reflect.has(actionsResult, 'check') && actionsResult.check === true || !Reflect.has(actionsResult, 'check')) {
+							this.getPresets().forEach(currentPreset => {
+								currentPreset.deactivate();
+							});
+							preset.activate();
+							crm_form_client.FormClient.getInstance().prepareOptions(this.getFormOptions(), {
+								templateId: preset.options.id
+							}).then(result => {
+								return landing_backend.Backend.getInstance().action('Form::getCrmFields').then(crmFields => {
+									this.setCrmFields(crmFields);
+									landing_ui_panel_fieldspanel.FieldsPanel.getInstance().setCrmFields(crmFields);
+									return result;
+								});
+							}).then(result => {
+								BX.Landing.UI.Panel.Top.getInstance().setFormName(result.name);
+								this.setFormOptions({
+									...result,
+									templateId: preset.options.id
+								});
+								this.getCrmForm().adjust(main_core.Runtime.clone(result.data));
+								if (this.isFormCreated()) {
+									this.onPresetFieldClick();
+									this.activatePreset(preset.options.id);
+								} else {
+									super.applyPreset(preset);
+									if (main_core.Type.isArrayFilled(preset.options.expertModeItems)) {
+										main_core.Dom.show(this.getExpertSwitcherLayout());
+										this.onExpertModeChange();
+									} else {
+										main_core.Dom.hide(this.getExpertSwitcherLayout());
+									}
+								}
+								this.hideLoader();
+							});
+						} else {
+							this.hideLoader();
+							this.enableTransparentMode();
+							if (lastPreset) {
+								lastPreset.activate();
+								preset.deactivate();
+							}
+						}
+					});
+				}
+			} else {
+				if (preset.options.openable) {
+					super.applyPreset(preset);
+					if (main_core.Type.isArrayFilled(preset.options.expertModeItems)) {
+						main_core.Dom.show(this.getExpertSwitcherLayout());
+						this.onExpertModeChange();
+					} else {
+						main_core.Dom.hide(this.getExpertSwitcherLayout());
+					}
+					this.hideLoader();
+				}
+				preset.activate();
+			}
+		}
+		getFormNode() {
+			return this.cache.remember('formNode', () => {
+				return this.getCurrentBlock().node.querySelector('[data-b24form-use-style]');
+			});
+		}
+		useBlockDesign() {
+			return this.cache.remember('useBlockDesign', () => {
+				return main_core.Text.toBoolean(main_core.Dom.attr(this.getFormNode(), 'data-b24form-use-style'));
+			});
+		}
+		getCurrentCrmEntityName() {
+			const {
+				scheme
+			} = this.getFormOptions().document;
+			const schemeItem = this.getFormDictionary().document.schemes.find(item => {
+				return String(scheme) === String(item.id);
+			});
+			return schemeItem.name;
+		}
+		getNotSynchronizedFields() {
+			return crm_form_client.FormClient.getInstance().checkFields(this.getFormOptions()).then(result => {
+				return result;
+			});
+		}
+		showSynchronizationPopup(notSynchronizedFields) {
+			return new Promise(resolve => {
+				const onOk = messageBox => {
+					messageBox.close();
+					resolve(true);
+				};
+				const onCancel = messageBox => {
+					messageBox.close();
+					resolve(false);
+				};
+				const messageDescription = (() => {
+					const entityName = landing_loc.Loc.getMessage('LANDING_SYNCHRONIZATION_POPUP_ENTITY_TEMPLATE').replace('{entityName}', main_core.Text.encode(this.getCurrentCrmEntityName()));
+					return landing_loc.Loc.getMessage('LANDING_SYNCHRONIZATION_POPUP_DESCRIPTION').replace('{entityName}', main_core.Text.encode(entityName));
+				})();
+				const messageText = (() => {
+					const fields = [...notSynchronizedFields].map(field => {
+						return landing_loc.Loc.getMessage('LANDING_SYNCHRONIZATION_POPUP_FIELD_TEMPLATE').replace('{fieldName}', main_core.Text.encode(field));
+					});
+					if (notSynchronizedFields.length > 1) {
+						const lastField = fields.pop();
+						return landing_loc.Loc.getMessage('LANDING_SYNCHRONIZATION_POPUP_TEXT').replace('{fieldsList}', fields.join(', ')).replace('{lastField}', lastField);
+					}
+					return landing_loc.Loc.getMessage('LANDING_SYNCHRONIZATION_POPUP_TEXT_1').replace('{field}', fields.join(', '));
+				})();
+				window.top.BX.UI.Dialogs.MessageBox.confirm(`${messageDescription}<br><br>${messageText}`, landing_loc.Loc.getMessage('LANDING_SYNCHRONIZATION_POPUP_TITLE'), onOk, landing_loc.Loc.getMessage('LANDING_SYNCHRONIZATION_POPUP_OK_BUTTON_LABEL'), onCancel, null, true);
+			});
+		}
+		showSynchronizationErrorPopup(errors) {
+			const message = errors.reduce((acc, item) => {
+				return `${acc}\n\n${item}`;
+			}, '');
+			window.top.BX.UI.Dialogs.MessageBox.show({
+				message,
+				buttons: ui_dialogs_messagebox.MessageBoxButtons.OK,
+				useAirDesign: true
+			});
+		}
+		getErrorAlert() {
+			return this.cache.remember('errorAlert', () => {
+				const rootWindow = landing_pageobject.PageObject.getRootWindow();
+				return new rootWindow.BX.UI.Dialogs.MessageBox({
+					buttons: ui_dialogs_messagebox.MessageBoxButtons.OK,
+					okCaption: landing_loc.Loc.getMessage('LANDING_FORM_SAVE_CAPTCHA_ALERT_OK_TEXT'),
+					useAirDesign: true,
+					popupOptions: {
+						maxHeight: 310
+					}
+				});
+			});
+		}
+		onSaveClick() {
+			const dictionary = this.getFormDictionary();
+			BX.onCustomEvent(this, 'BX.Landing.Block:onFormSave', [this.getCurrentBlock().id]);
+			if (main_core.Type.isPlainObject(dictionary.permissions) && main_core.Type.isPlainObject(dictionary.permissions.tariff) && dictionary.permissions.tariff.restricted === true) {
+				const rootWindow = landing_pageobject.PageObject.getRootWindow();
+				rootWindow.BX.UI.InfoHelper.show('limit_crm_webform_edit');
+				return;
+			}
+			if (main_core.Type.isPlainObject(dictionary.permissions) && main_core.Type.isPlainObject(dictionary.permissions.form) && dictionary.permissions.form.edit === false) {
+				const rootWindow = landing_pageobject.PageObject.getRootWindow();
+				rootWindow.BX.UI.Dialogs.MessageBox.show({
+					message: landing_loc.Loc.getMessage('LANDING_FORM_SAVE_PERMISSION_DENIED'),
+					buttons: ui_dialogs_messagebox.MessageBoxButtons.OK,
+					useAirDesign: true
+				});
+				return;
+			}
+			main_core.Dom.addClass(this.getSaveButton().layout, 'ui-btn-wait');
+			this.getNotSynchronizedFields().then(result => {
+				if (main_core.Type.isPlainObject(result.sync)) {
+					if (main_core.Type.isArrayFilled(result.sync.errors)) {
+						this.showSynchronizationErrorPopup(result.sync.errors);
+						return false;
+					}
+					if (main_core.Type.isArrayFilled(result.sync.fields)) {
+						const fieldLabels = result.sync.fields.map(field => {
+							return field.label;
+						});
+						return this.showSynchronizationPopup(fieldLabels);
+					}
+				}
+				return true;
+			}).then(isConfirmed => {
+				if (isConfirmed) {
+					const uri = new main_core.Uri(window.top.location.toString());
+					uri.removeQueryParam('formCreated');
+					window.top.history.replaceState(null, document.title, uri.toString());
+					const initialOptions = this.getInitialFormOptions();
+					const currentOptions = this.getFormOptions();
+					const options = (() => {
+						if (!this.isCrmFormPage()) {
+							const clonedOptions = main_core.Runtime.clone(currentOptions);
+							clonedOptions.data.design = main_core.Runtime.clone(initialOptions.data.design);
+							return clonedOptions;
+						}
+						return currentOptions;
+					})();
+					void crm_form_client.FormClient.getInstance().saveOptions(options).then(result => {
+						BX.onCustomEvent(this, 'BX.Landing.Block:onAfterFormSave', [this.getCurrentBlock().id]);
+						this.setFormOptions(result);
+						this.setInitialFormOptions(result);
+						crm_form_client.FormClient.getInstance().resetCache(result.id);
+						main_core.Dom.removeClass(this.getSaveButton().layout, 'ui-btn-wait');
+						const activeButton = this.getSidebarButtons().find(button => {
+							return button.isActive();
+						});
+						return landing_backend.Backend.getInstance().action('Form::getCrmFields').then(crmFields => {
+							this.setCrmFields(crmFields);
+							landing_ui_panel_fieldspanel.FieldsPanel.getInstance().setCrmFields(crmFields);
+							if (activeButton && !main_core.Dom.hasClass(this.layout, 'landing-ui-panel-mode-transparent')) {
+								activeButton.getLayout().click();
+							}
+							return result;
+						});
+					}).catch(errors => {
+						if (main_core.Type.isArrayFilled(errors)) {
+							if (this.#isPhoneValidationError(errors)) {
+								this.#showPhoneVerifySlider();
+							} else {
+								const errorMessage = errors.map(item => {
+									return main_core.Text.encode(item.message);
+								}).join('<br><br>');
+								const errorAlert = this.getErrorAlert();
+								errorAlert.setMessage(errorMessage);
+								errorAlert.show();
+							}
+						} else {
+							const rootWindow = landing_pageobject.PageObject.getRootWindow();
+							rootWindow.BX.UI.Dialogs.MessageBox.show({
+								message: landing_loc.Loc.getMessage('LANDING_FORM_SAVE_UNKNOWN_ERROR_ALERT_TEXT'),
+								title: landing_loc.Loc.getMessage('LANDING_FORM_SAVE_ERROR_ALERT_TITLE'),
+								buttons: ui_dialogs_messagebox.MessageBoxButtons.OK,
+								useAirDesign: true
+							});
+						}
+						main_core.Dom.removeClass(this.getSaveButton().layout, 'ui-btn-wait');
+					});
+					if (this.useBlockDesign() && this.isCrmFormPage()) {
+						this.disableUseBlockDesign();
+					}
+				} else {
+					main_core.Dom.removeClass(this.getSaveButton().layout, 'ui-btn-wait');
+				}
+			});
+		}
+		#isPhoneValidationError(errors) {
+			return errors.some(error => {
+				return error.code === this.#phoneDoesntVerifiedResponseCode;
+			});
+		}
+		#showPhoneVerifySlider() {
+			if (typeof bitrix24_phoneverify.PhoneVerify !== 'undefined') {
+				bitrix24_phoneverify.PhoneVerify.getInstance().setEntityType(PHONE_VERIFY_FORM_ENTITY).setEntityId(this.getCurrentFormId()).startVerify({
+					sliderTitle: landing_loc.Loc.getMessage('LANDING_FORM_EDITOR_PHONE_VERIFY_CUSTOM_SLIDER_TITLE'),
+					title: landing_loc.Loc.getMessage('LANDING_FORM_EDITOR_PHONE_VERIFY_CUSTOM_TITLE'),
+					description: landing_loc.Loc.getMessage('LANDING_FORM_EDITOR_PHONE_VERIFY_CUSTOM_DESCRIPTION')
+				});
+			}
+		}
+		isChanged() {
+			return JSON.stringify(this.getFormOptions()) !== JSON.stringify(this.getInitialFormOptions());
+		}
+		disableUseBlockDesign() {
+			main_core.Dom.attr(this.getFormNode(), 'data-b24form-use-style', 'N');
+			this.cache.set('useBlockDesign', false);
+			landing_backend.Backend.getInstance().action('Landing\\Block::updateNodes', {
+				block: this.getCurrentBlock().id,
+				data: {
+					'.bitrix24forms': {
+						attrs: {
+							'data-b24form-use-style': 'N'
+						}
+					}
+				},
+				lid: this.getCurrentBlock().lid,
+				siteId: this.getCurrentBlock().siteId
+			}, {
+				code: this.getCurrentBlock().manifest.code
+			}).then(result => {
+				return landing_history.History.getInstance().push();
+			});
+		}
+		onCancelClick() {
+			const initialFormOptions = this.getInitialFormOptions();
+			this.getCrmForm().adjust(initialFormOptions.data);
+			BX.Landing.UI.Panel.Top.getInstance().setFormName(initialFormOptions.name);
+			void this.hide();
+		}
+		hide() {
+			const editorWindow = landing_pageobject.PageObject.getEditorWindow();
+			main_core.Dom.removeClass(editorWindow.document.body, 'landing-ui-hide-action-panels-form');
+			const rootWindow = landing_pageobject.PageObject.getRootWindow();
+			main_core.Dom.removeClass(rootWindow.document.body, 'landing-ui-hide-action-panels-form');
+			this.enableHistory();
+			return super.hide();
+		}
+		onSidebarButtonClick(event) {
+			const target = event.getTarget();
+			if (target.options.id === 'design') {
+				this.onFormDesignButtonClick();
+			} else {
+				super.onSidebarButtonClick(event);
+			}
+		}
 	}
 
 	exports.FormSettingsPanel = FormSettingsPanel;
 
-}((this.BX.Landing.UI.Panel = this.BX.Landing.UI.Panel || {}),BX.Landing.UI.Panel,BX.Landing,BX.Landing,BX,BX.Landing,BX,BX.Crm.Form,BX.UI,BX.Landing,BX.Landing.UI.Panel,BX.UI.Dialogs,BX.UI,BX.Landing.UI.Button,BX.UI.Tour,BX.Landing.UI.Panel,BX.Bitrix24,BX.UI,BX,BX,BX.Landing));
+})(this.BX.Landing.UI.Panel = this.BX.Landing.UI.Panel || {}, BX.Landing.UI.Panel, BX.Landing, BX.Landing, BX, BX.Landing, BX, BX.Crm.Form, BX.UI, BX.Landing, BX.Landing.UI.Panel, BX.UI.Dialogs, BX.UI, BX.Landing.UI.Button, BX.UI.Tour, BX.Landing.UI.Panel, BX.Bitrix24, BX.UI, BX.UI, BX, BX.Landing);
 //# sourceMappingURL=formsettingspanel.bundle.js.map

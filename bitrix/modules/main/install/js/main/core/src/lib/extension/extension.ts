@@ -6,7 +6,7 @@ const settingsStorage = new Map();
 
 export default class Extension
 {
-	static getSettings(extensionName: string)
+	static getSettings(extensionName: string): SettingsCollection
 	{
 		if (Type.isStringFilled(extensionName))
 		{

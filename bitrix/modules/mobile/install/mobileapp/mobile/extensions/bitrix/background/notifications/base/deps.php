@@ -2,6 +2,7 @@
 
 return [
 	'extensions' => [
-		'push/listeners',
+		'push/listener',
+		'entity-ready',
 	],
 ];

@@ -2,9 +2,12 @@
 $MESS["INTRANET_CONTROLLER_INVITE_DELETE_FAILED"] = "Error deleting invitation.";
 $MESS["INTRANET_CONTROLLER_INVITE_ERROR_INVALID_RESPONSE"] = "Could not send invitation. Please try again.";
 $MESS["INTRANET_CONTROLLER_INVITE_ERROR_INVITE_LIMIT"] = "Reached daily invitation limit.";
+$MESS["INTRANET_CONTROLLER_INVITE_ERROR_INVITE_LIMIT_EMAIL"] = "You have reached your daily email invite quota. Please use a different way to invite users.";
+$MESS["INTRANET_CONTROLLER_INVITE_ERROR_INVITE_LIMIT_SMS"] = "You have reached your daily SMS invite quota. Please use a different way to invite users.";
 $MESS["INTRANET_CONTROLLER_INVITE_ERROR_UNKNOWN"] = "Unknown error.";
 $MESS["INTRANET_CONTROLLER_INVITE_ERROR_USER_ALREADY_CONFIRMED"] = "This user has already joined your Bitrix24.";
 $MESS["INTRANET_CONTROLLER_INVITE_ERROR_USER_IS_NOT_EMPLOYEE"] = "Cannot send invitation to this user.";
+$MESS["INTRANET_CONTROLLER_INVITE_ERROR_USER_LOGIN_ALREADY_EXISTS"] = "A user with this login already exists.";
 $MESS["INTRANET_CONTROLLER_INVITE_ERROR_USER_NOT_FOUND"] = "Cannot find this user.";
 $MESS["INTRANET_CONTROLLER_INVITE_FAILED"] = "Error creating invitation.";
 $MESS["INTRANET_CONTROLLER_INVITE_NO_PERMISSIONS"] = "You don't have permission to invite users.";

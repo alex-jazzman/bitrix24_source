@@ -1,8 +1,8 @@
+import { confirm } from 'crm.timeline.dialog';
 import { Router } from 'crm.router';
-import { ajax, Dom, Loc, Runtime, Text } from 'main.core';
+import { ajax, Dom, Loc, Runtime, Tag, Text } from 'main.core';
 import type { FeatureResolver } from 'sign.feature-resolver';
 import type { Api } from 'sign.v2.api';
-import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
 import { UI } from 'ui.notification';
 import ConfigurableItem from '../configurable-item';
 import { Base } from './base';
@@ -26,6 +26,7 @@ Runtime.loadExtension(['sign.v2.api', 'sign.feature-resolver']).then(async (expo
 export class SignB2eDocument extends Base
 {
 	#isCancellationInProgress: boolean = false;
+	#isAnnulmentInProgress: boolean = false;
 	static isItemSupported(item: ConfigurableItem): boolean
 	{
 		return (
@@ -48,6 +49,11 @@ export class SignB2eDocument extends Base
 		if (action === 'Activity:SignB2eDocument:ShowSigningCancel')
 		{
 			this.#cancelWithConfirm(actionData?.documentUid);
+		}
+		else if (action === 'SignB2eDocument:ShowAnnulConfirm'
+			|| action === 'Activity:SignB2eDocument:ShowAnnulConfirm')
+		{
+			this.#annulWithConfirm(actionData?.documentUid, actionData?.annul === 'Y');
 		}
 		else if ((action === 'SignB2eDocument:ShowSigningProcess'
 			|| action === 'Activity:SignB2eDocument:ShowSigningProcess') && processUri.length > 0)
@@ -90,15 +96,13 @@ export class SignB2eDocument extends Base
 		}
 		else if (action === 'SignB2eDocumentEntry:Delete' && actionData?.entryId)
 		{
-			MessageBox.show({
-				message: actionData?.confirmationText || '',
-				modal: true,
-				buttons: MessageBoxButtons.YES_NO,
-				onYes: () => {
+			// eslint-disable-next-line @bitrix24/bitrix24-rules/no-native-dialogs
+			confirm({
+				content: Tag.render`<div>${Text.encode(actionData?.confirmationText || '')}</div>`,
+				preset: 'YES_NO',
+				destructive: true,
+				onConfirm: () => {
 					return this.#deleteEntry(actionData.entryId);
-				},
-				onNo: (messageBox) => {
-					messageBox.close();
 				},
 			});
 		}
@@ -115,31 +119,21 @@ export class SignB2eDocument extends Base
 			return;
 		}
 
-		const signingCancelationDialog = new MessageBox({
+		// eslint-disable-next-line @bitrix24/bitrix24-rules/no-native-dialogs
+		confirm({
 			title: Loc.getMessage('CRM_TIMELINE_ITEM_SIGNING_CANCEL_DIALOG_TITLE'),
-			message: Loc.getMessage('CRM_TIMELINE_ITEM_SIGNING_CANCEL_DIALOG_TEXT'),
-			modal: true,
-		});
-
-		signingCancelationDialog.setButtons([new BX.UI.Button({
-			text: Loc.getMessage('CRM_TIMELINE_ITEM_SIGNING_CANCEL_DIALOG_YES_BUTTON_TEXT'),
-			color: BX.UI.Button.Color.DANGER,
-			onclick: () => {
+			content: Tag.render`<div>${Text.encode(Loc.getMessage('CRM_TIMELINE_ITEM_SIGNING_CANCEL_DIALOG_TEXT'))}</div>`,
+			preset: 'OK_CANCEL',
+			destructive: true,
+			confirmText: Loc.getMessage('CRM_TIMELINE_ITEM_SIGNING_CANCEL_DIALOG_YES_BUTTON_TEXT'),
+			cancelText: Loc.getMessage('CRM_TIMELINE_ITEM_SIGNING_CANCEL_DIALOG_NO_BUTTON_TEXT'),
+			onConfirm: () => {
 				this.#isCancellationInProgress = true;
-				signingCancelationDialog.close();
 				this.#cancelSigningProcess(documentUid).finally(() => {
 					this.#isCancellationInProgress = false;
 				});
 			},
-		}), new BX.UI.Button({
-			text: Loc.getMessage('CRM_TIMELINE_ITEM_SIGNING_CANCEL_DIALOG_NO_BUTTON_TEXT'),
-			color: BX.UI.Button.Color.LIGHT_BORDER,
-			onclick: () => {
-				signingCancelationDialog.close();
-			},
-		})]);
-
-		signingCancelationDialog.show();
+		});
 	}
 
 	#cancelSigningProcess(documentUid): Promise
@@ -177,6 +171,91 @@ export class SignB2eDocument extends Base
 		});
 	}
 
+	#annulWithConfirm(documentUid: string, annul: boolean): void
+	{
+		if (this.#isAnnulmentInProgress)
+		{
+			return;
+		}
+
+		// eslint-disable-next-line @bitrix24/bitrix24-rules/no-native-dialogs
+		confirm({
+			title: Loc.getMessage(annul
+				? 'CRM_TIMELINE_ITEM_SIGN_ANNUL_DIALOG_TITLE'
+				: 'CRM_TIMELINE_ITEM_SIGN_UNANNUL_DIALOG_TITLE'),
+			content: Tag.render`<div>${Text.encode(Loc.getMessage(annul
+				? 'CRM_TIMELINE_ITEM_SIGN_ANNUL_DIALOG_TEXT'
+				: 'CRM_TIMELINE_ITEM_SIGN_UNANNUL_DIALOG_TEXT'))}</div>`,
+			preset: 'OK_CANCEL',
+			confirmText: Loc.getMessage(annul
+				? 'CRM_TIMELINE_ITEM_SIGN_ANNUL_DIALOG_YES_BUTTON_TEXT'
+				: 'CRM_TIMELINE_ITEM_SIGN_UNANNUL_DIALOG_YES_BUTTON_TEXT'),
+			cancelText: Loc.getMessage('CRM_TIMELINE_ITEM_SIGN_ANNUL_DIALOG_NO_BUTTON_TEXT'),
+			onConfirm: () => {
+				this.#isAnnulmentInProgress = true;
+				this.#annulDocument(documentUid, annul).finally(() => {
+					this.#isAnnulmentInProgress = false;
+				});
+			},
+		});
+	}
+
+	#annulDocument(documentUid, annul: boolean): Promise
+	{
+		return new Promise((resolve, reject) => {
+			ajax.runAction(
+				'sign.api_v1.document.annulByDocument',
+				{
+					data: {
+						uid: documentUid,
+						annul,
+					},
+					preparePost: false,
+					headers: [{
+						name: 'Content-Type',
+						value: 'application/json',
+					}],
+				},
+			).then((response) => {
+				UI.Notification.Center.notify({
+					content: this.#getAnnulResultMessage(response?.data, annul),
+					autoHideDelay: 5000,
+				});
+				resolve(response);
+			}, (response) => {
+				response.errors.forEach((error) => {
+					UI.Notification.Center.notify({
+						content: error.message,
+						autoHideDelay: 5000,
+					});
+				});
+				reject(response.errors);
+			}).catch(() => {
+				reject();
+			});
+		});
+	}
+
+	#getAnnulResultMessage(data, annul: boolean): string
+	{
+		const changed = Text.toInteger(data?.changed);
+		const forbidden = Text.toInteger(data?.forbidden);
+
+		if (changed > 0)
+		{
+			return Loc.getMessage(annul
+				? 'CRM_TIMELINE_ITEM_SIGN_ANNUL_SUCCESS'
+				: 'CRM_TIMELINE_ITEM_SIGN_UNANNUL_SUCCESS');
+		}
+
+		if (forbidden > 0)
+		{
+			return Loc.getMessage('CRM_TIMELINE_ITEM_SIGN_ANNUL_FORBIDDEN');
+		}
+
+		return Loc.getMessage('CRM_TIMELINE_ITEM_SIGN_ANNUL_UNCHANGED');
+	}
+
 	#deleteEntry(entryId): Promise
 	{
 		console.log(`delete entry${entryId}`);
@@ -206,7 +285,7 @@ export class SignB2eDocument extends Base
 	{
 		if (api && featureResolver && featureResolver.released('createDocumentChat'))
 		{
-			const chatId = (await api.createDocumentChat(chatType, documentId, false)).chatId;
+			const chatId = (await api.createDocumentChat(chatType, documentId)).chatId;
 
 			Runtime.loadExtension('im.public.iframe').then((exports: Object) => {
 				exports.Messenger.openChat(`chat${chatId}`);

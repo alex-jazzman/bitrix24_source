@@ -93,11 +93,16 @@ class Insights extends AISenseContent
 							if (!empty($obj))
 							{
 								$this->{$field}[] = $obj;
+								$this->isEmpty = false;
 							}
 						}
 						else
 						{
 							$this->{$field}[] = $row;
+							if ($this->isEmpty && !empty($row))
+							{
+								$this->isEmpty = false;
+							}
 						}
 					}
 				}
@@ -115,6 +120,10 @@ class Insights extends AISenseContent
 				if ($value)
 				{
 					$this->{$field} = $value->getContent();
+					if ($this->isEmpty && !empty($this->{$field}))
+					{
+						$this->isEmpty = false;
+					}
 				}
 			}
 
@@ -162,6 +171,7 @@ class Insights extends AISenseContent
 								$totalCriteria++;
 							}
 						}
+						$this->isEmpty = $this->isEmpty && ($totalCriteria == 0);
 						if ($totalCriteria > 0)
 						{
 							$analysis->efficiencyValue = ceil(100 / $totalCriteria * $positiveCriteria);

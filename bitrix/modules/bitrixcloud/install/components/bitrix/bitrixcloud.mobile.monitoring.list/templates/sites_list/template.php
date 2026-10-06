@@ -33,7 +33,7 @@ if (isset($arResult['ITEMS']))
 		$arData['TITLE'] = $domain;
 		$arData['ID'] = md5($domain);
 
-		if (isset($info['PROBLEM']) && $info['PROBLEM'] = true)
+		if (isset($info['PROBLEM']) && $info['PROBLEM'] == true)
 		{
 			$arData['TITLE_COLOR'] = 'RED';
 		}

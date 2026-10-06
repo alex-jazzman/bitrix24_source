@@ -1,4 +1,5 @@
 <?php
+$MESS["UPLOADER_CLOUD_ERROR"] = "Error uploading file to the cloud (#CODE#).";
 $MESS["UPLOADER_FILE_LOAD_ABORTED"] = "Error retrieving remote file data.";
 $MESS["UPLOADER_FILE_SIZE_POSTFIXES"] = " bytes| kB| MB| GB| TB";
 $MESS["UPLOADER_FILE_UPLOAD_ABORTED"] = "File upload has been aborted.";

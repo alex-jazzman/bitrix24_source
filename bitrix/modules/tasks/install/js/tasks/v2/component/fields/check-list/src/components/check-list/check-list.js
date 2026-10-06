@@ -12,7 +12,7 @@ import 'ui.icon-set.outline';
 import { Model } from 'tasks.v2.const';
 import { taskService } from 'tasks.v2.provider.service.task-service';
 import { checkListService } from 'tasks.v2.provider.service.check-list-service';
-import { EntityTypes, FileService, fileService } from 'tasks.v2.provider.service.file-service';
+import { EntityTypes, fileService, type FileService } from 'tasks.v2.provider.service.file-service';
 import { highlighter } from 'tasks.v2.lib.highlighter';
 import { type CheckListModel } from 'tasks.v2.model.check-list';
 import { type TaskModel } from 'tasks.v2.model.tasks';
@@ -24,6 +24,7 @@ import { CheckListSheet } from '../check-list-sheet/check-list-sheet';
 import { CheckListList } from '../check-list-list/check-list-list';
 import { CheckListWidget } from '../check-list-widget/check-list-widget';
 import { CheckListItemPanel } from '../check-list-item-panel/check-list-item-panel';
+import { CheckListLinkPopup } from '../check-list-formatting/check-list-link-popup';
 
 import { Context } from '../../lib/check-list-const';
 import { CheckListManager } from '../../lib/check-list-manager';
@@ -40,6 +41,7 @@ export const CheckList = {
 	components: {
 		CheckListWidget,
 		CheckListItemPanel,
+		CheckListLinkPopup,
 		CheckListStub,
 		UiButton,
 		BIcon,
@@ -111,6 +113,8 @@ export const CheckList = {
 			isForwardMenuShown: false,
 			forwardMenuSectionCode: 'createSection',
 			forwardBindElement: null,
+			linkPopupBindElement: null,
+			selectedFormattingActions: [],
 			isFreeze: false,
 			closing: false,
 		};
@@ -681,6 +685,15 @@ export const CheckList = {
 				this.removeItem(itemId);
 			}
 		},
+		handleFormattingSelectionChange(itemId: number | string, actions: string[]): void
+		{
+			if (!this.currentItem || String(this.currentItem.id) !== String(itemId))
+			{
+				return;
+			}
+
+			this.selectedFormattingActions = actions;
+		},
 		handleGroupMode(itemId: number | string): void
 		{
 			this.itemId = itemId;
@@ -711,6 +724,13 @@ export const CheckList = {
 		},
 		handlePanelAction({ action, node }: {action: string, node: HTMLElement}): void
 		{
+			if (this.isFormattingAction(action))
+			{
+				this.handleFormattingAction(action, node);
+
+				return;
+			}
+
 			const actionHandlers = {
 				[PanelAction.SetImportant]: (n) => this.setImportant(n),
 				[PanelAction.AttachFile]: (n) => this.attachFile(n),
@@ -734,6 +754,64 @@ export const CheckList = {
 			};
 
 			actionHandlers[action]?.(node);
+		},
+		isFormattingAction(action: string): boolean
+		{
+			return [
+				PanelAction.Bold,
+				PanelAction.Italic,
+				PanelAction.Underline,
+				PanelAction.Strikethrough,
+				PanelAction.Link,
+			].includes(action);
+		},
+		handleFormattingAction(action: string, node: HTMLElement): void
+		{
+			if (action === PanelAction.Link)
+			{
+				this.isItemPanelFreeze = true;
+				this.linkPopupBindElement = node;
+
+				return;
+			}
+
+			this.applyFormatting(action, node);
+		},
+		applyFormatting(action: string, node: ?HTMLElement = null, url: string = ''): void
+		{
+			if (!this.currentItem || this.currentItem.actions.modify !== true || this.itemGroupModeSelected)
+			{
+				return;
+			}
+
+			this.getItemsRef(this.currentItem.id)?.applyFormatting(action, node, url);
+		},
+		handleLinkPopupApply(url: string): void
+		{
+			this.applyFormatting(PanelAction.Link, this.linkPopupBindElement, url);
+
+			this.closeLinkPopup();
+		},
+		handleLinkPopupClose(): void
+		{
+			const bindElement = this.closeLinkPopup();
+
+			this.focusLinkPopupBindElement(bindElement);
+		},
+		closeLinkPopup(): ?HTMLElement
+		{
+			const bindElement = this.linkPopupBindElement;
+
+			this.linkPopupBindElement = null;
+			this.isItemPanelFreeze = false;
+
+			return bindElement;
+		},
+		focusLinkPopupBindElement(bindElement: ?HTMLElement): void
+		{
+			void this.$nextTick(() => {
+				bindElement?.focus({ preventScroll: true });
+			});
 		},
 		handleOpenCheckList(checkListId: number | string): void
 		{
@@ -1019,7 +1097,10 @@ export const CheckList = {
 
 			void this.updateCheckList(itemId, { panelIsShown: true });
 
-			void this.$nextTick(() => this.updatePanelPosition());
+			void this.$nextTick(() => {
+				this.updatePanelPosition();
+				this.updateSelectedFormattingActions();
+			});
 		},
 		hideItemPanel(itemId: number | string): void
 		{
@@ -1029,6 +1110,7 @@ export const CheckList = {
 			}
 
 			this.itemPanelIsShown = false;
+			this.selectedFormattingActions = [];
 
 			if (this.hasActiveGroupMode() && this.checkListManager.getAllSelectedItems().length === 0)
 			{
@@ -1045,7 +1127,6 @@ export const CheckList = {
 		},
 		showItemPanelOnNearestSelectedItem(itemId: number | string): void
 		{
-			// eslint-disable-next-line no-lonely-if
 			const nearestSelectedItem = this.checkListManager.findNearestItem(this.currentItem, true);
 			if (nearestSelectedItem)
 			{
@@ -1127,6 +1208,13 @@ export const CheckList = {
 					display,
 				};
 			}
+		},
+		updateSelectedFormattingActions(): void
+		{
+			this.selectedFormattingActions = (
+				this.getItemsRef(this.currentItem?.id)?.$refs.growingTextArea?.getSelectedFormattingActions?.()
+				?? []
+			);
 		},
 		setImportant(): void
 		{
@@ -1603,6 +1691,7 @@ export const CheckList = {
 							@focus="handleFocus"
 							@blur="handleBlur"
 							@emptyBlur="handleEmptyBlur"
+							@formattingSelectionChange="handleFormattingSelectionChange"
 							@startGroupMode="handleGroupMode"
 							@toggleGroupModeSelected="handleGroupModeSelect"
 							@openCheckList="handleOpenCheckList"
@@ -1628,6 +1717,7 @@ export const CheckList = {
 						v-if="itemPanelIsShown && !isPreview"
 						ref="panel"
 						:currentItem
+						:selectedFormattingActions
 						:style="itemPanelStyles"
 						@action="handlePanelAction"
 					/>
@@ -1635,6 +1725,12 @@ export const CheckList = {
 						v-if="isForwardMenuShown"
 						:options="forwardMenuOptions"
 						@close="isForwardMenuShown = false"
+					/>
+					<CheckListLinkPopup
+						v-if="linkPopupBindElement"
+						:bindElement="linkPopupBindElement"
+						@apply="handleLinkPopupApply"
+						@close="handleLinkPopupClose"
 					/>
 				</div>
 			</template>

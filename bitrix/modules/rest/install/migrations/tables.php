@@ -84,6 +84,7 @@ $migration->table('b_rest_ap')->create(function (\Bitrix\Main\UpdateSystem\Migra
 	$columns->datetime('DATE_CREATE')->defaultCurrentTimestamp();
 	$columns->datetime('DATE_LOGIN');
 	$columns->varchar('LAST_IP', 255);
+	$columns->date('DATE_EXPIRE');
 	$table->addPrimaryKey('ID');
 	$table->addIndex('ix_b_rest_ap', ['USER_ID', 'PASSWORD', 'ACTIVE']);
 });
@@ -377,4 +378,35 @@ $migration->table('b_rest_app_scope_request_state')->create(function (\Bitrix\Ma
 	$table->addPrimaryKey('ID');
 	$table->addIndex('ix_b_rest_app_scope_request_state_request', ['REQUEST_ID']);
 });
-
+$migration->table('b_rest_deferred_batch')->create(function (\Bitrix\Main\UpdateSystem\Migration\CreateTableBuilder $table) {
+	$table->addId();
+	$addColumn = $table->addColumn();
+	$addColumn->int('USER_ID')->unsigned()->notNull();
+	$addColumn->varchar('STATUS', 20)->notNull()->default('pending');
+	$addColumn->mediumText('REQUEST_PARAMS');
+	$addColumn->mediumText('COMMANDS')->notNull();
+	$addColumn->text('SCOPES')->notNull();
+	$addColumn->int('RESULT_FILE_ID')->unsigned();
+	$addColumn->text('ERROR_MESSAGE');
+	$addColumn->datetime('CREATED_AT')->notNull();
+	$addColumn->datetime('UPDATED_AT')->notNull();
+	$table->addIndex('IX_REST_DEFERRED_BATCH_USER_ID_ID', ['USER_ID', 'ID']);
+	$table->addIndex('IX_REST_DEFERRED_BATCH_STATUS_CREATED_AT', ['STATUS', 'CREATED_AT', 'ID']);
+});
+$migration->table('b_rest_app_install_request')->create(function (\Bitrix\Main\UpdateSystem\Migration\CreateTableBuilder $table) {
+	$columns = $table->addColumn();
+	$columns->int('ID')->notNull()->autoincrement();
+	$columns->varchar('APP_CODE', 128)->notNull();
+	$columns->varchar('APP_VERSION', 4)->notNull()->default('1');
+	$columns->int('USER_ID')->notNull();
+	$columns->varchar('CHECK_HASH', 255);
+	$columns->varchar('INSTALL_HASH', 255);
+	$columns->varchar('APP_NAME', 255);
+	$columns->varchar('APP_ICON_URL', 1000);
+	$columns->varchar('STATUS', 16)->notNull()->default('pending');
+	$columns->int('RESOLVED_BY_ID');
+	$columns->datetime('DATE_CREATE')->defaultCurrentTimestamp();
+	$columns->datetime('DATE_RESOLVE');
+	$table->addPrimaryKey('ID');
+	$table->addIndex('ix_b_rest_app_install_request_lookup', ['APP_CODE', 'APP_VERSION']);
+});

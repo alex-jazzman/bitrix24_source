@@ -1,2 +1,3 @@
 export { useProjectStore, defaultProjectFeatures } from './project';
-export type { ProjectModel, ProjectFeatures, ProjectFeature, ProjectDates, ProjectPermissions } from './types';
+export { isValidNotificationCatalog } from './notification-catalog';
+export type { ProjectModel, ProjectFeatures, ProjectFeature, ProjectDates, ProjectPermissions, NotificationCatalog, NotificationGroup, NotificationType } from './types';

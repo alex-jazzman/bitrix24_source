@@ -9,8 +9,8 @@ return [
 	'js' => 'dist/document-validation.bundle.js',
 	'rel' => [
 		'main.core',
-		'sign.v2.b2e.representative-selector',
 		'sign.type',
+		'sign.v2.b2e.representative-selector',
 		'sign.v2.helper',
 	],
 	'skip_core' => false,

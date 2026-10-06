@@ -348,8 +348,8 @@ jn.define('im/messenger/controller/recent/service/render/common', (require, expo
 			this.#resetCollection();
 
 			const preparedItems = this.#convertToRecentItems(items);
-			await this.#setItems(preparedItems);
 			this.#setItemsInCollection(preparedItems);
+			await this.#setItems(preparedItems);
 		};
 
 		/**
@@ -364,8 +364,8 @@ jn.define('im/messenger/controller/recent/service/render/common', (require, expo
 
 			this.#resetCollection();
 
-			await this.#setItems(preparedItems);
 			this.#setItemsInCollection(preparedItems);
+			await this.#setItems(preparedItems);
 		};
 
 		/**

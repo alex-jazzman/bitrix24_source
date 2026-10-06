@@ -30,5 +30,5 @@ export {
 	useAutoScroll,
 } from './composables';
 export { DragBlock } from './directives';
-export type { Point } from './types';
-export { PORT_POSITION } from './constants';
+export type { DiagramConnectionPreview, Point } from './types';
+export { PORT_POSITION, ANIMATED_TYPES } from './constants';

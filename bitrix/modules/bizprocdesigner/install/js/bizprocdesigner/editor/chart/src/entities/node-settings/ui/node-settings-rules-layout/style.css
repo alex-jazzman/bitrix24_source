@@ -1,6 +1,13 @@
 .editor-chart-node-settings-rules-layout {
 	flex: 1;
+	display: flex;
+	flex-direction: column;
 	overflow-y: auto;
+	/* height of the pinned bottom part of the rules card, measured by the component;
+	   offsets keyboard focus so controls aren't hidden under it */
+	scroll-padding-top: var(--editor-chart-rules-card-pinned-height, 60px);
+	/* @chef-ignore */
+	scrollbar-gutter: stable;
 	background: var(--ui-color-bg-content-secondary);
 }
 
@@ -8,10 +15,106 @@
 	pointer-events: none;
 }
 
+/* "Rules" card per mockup page-node-settings: white card 16/18/20, radius 12, secondary shadow,
+   18px stack between header, divider and chips toolbar */
+.editor-chart-node-settings-rules-layout__rules-card {
+	/* negative top pins only the bottom part of the card (divider + chips toolbar);
+	   the offset to the divider is measured by the component via ResizeObserver */
+	position: sticky;
+	top: calc(-1 * var(--editor-chart-rules-card-sticky-offset, 120px));
+	z-index: 20;
+	flex: none;
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-md2);
+	margin: 18px 18px 0;
+	padding: var(--ui-space-inset-md) var(--ui-space-inset-md2) var(--ui-space-inset-lg);
+	background: var(--ui-color-bg-content-primary);
+	border-radius: var(--ui-border-radius-lg);
+	box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.13); /* box-shadow-area-secondary (Figma); no ready-made --ui-shadow variable */
+}
+
+/* pinned per mockup 1383:21594: flush edge-to-edge strip under the tabs header —
+   drop side margins and radius, swap the soft card shadow for a 1px bottom hairline;
+   18px side padding is inherited from the base card */
+.editor-chart-node-settings-rules-layout__rules-card.--pinned {
+	margin-right: 0;
+	margin-left: 0;
+	border-radius: 0;
+	/* symmetric 19px bottom inset below the chips per mockup — off the token scale (16/18/20/22) */
+	padding-bottom: 19px;
+	box-shadow: 0 1px 0 var(--ui-color-base-6);
+}
+
+/* Keep the measured head at the same width when the pinned card expands over its side margins. */
+.editor-chart-node-settings-rules-layout__rules-card-metrics {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-md2);
+}
+
+.editor-chart-node-settings-rules-layout__rules-card.--pinned .editor-chart-node-settings-rules-layout__rules-card-metrics {
+	margin-right: 18px;
+	margin-left: 18px;
+}
+
+/* divider stays in the DOM for sticky-offset measurement (its .top is what we measure),
+   but when pinned it is both hidden and collapsed to zero height so it adds no top space */
+.editor-chart-node-settings-rules-layout__rules-card.--pinned .editor-chart-node-settings-rules-layout__rules-card-divider {
+	height: 0;
+	visibility: hidden;
+}
+
+/* pinned toolbar per mockup 1383:21594: symmetric 19px above the pills; the gap between the
+   chips is the toolbar's own 6px in both states, so it is not overridden here.
+   The sticky strip's visible top sits at the (collapsed) divider, so the top inset is
+   defined solely here: cancel the card's inter-item gap, then set an explicit inset —
+   independent of the shared gap and below the divider, so the sticky offset is unaffected */
+.editor-chart-node-settings-rules-layout__rules-card.--pinned .editor-chart-node-settings-add-construction-toolbar {
+	margin-top: calc(-1 * var(--ui-space-stack-md2));
+	/* symmetric 19px top inset above the chips per mockup — off the token scale (16/18/20/22) */
+	padding-top: 19px;
+}
+
+/* header per node 935:29579: title row, 14px to description */
+.editor-chart-node-settings-rules-layout__rules-card-header {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-inline-sm2);
+}
+
+.editor-chart-node-settings-rules-layout__rules-card-title {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-sm);
+	font-size: 16px;
+	line-height: 21px;
+	font-weight: var(--ui-font-weight-medium);
+	color: var(--ui-color-base-1);
+}
+
+.editor-chart-node-settings-rules-layout__rules-card-description {
+	font-size: 12px;
+	line-height: 15px;
+	color: var(--ui-color-base-3);
+}
+
+/* full-width divider per node 935:29610 */
+.editor-chart-node-settings-rules-layout__rules-card-divider {
+	height: 1px;
+	background: var(--ui-color-divider-vibrant-accent-more);
+}
+
+/* Flow of the rules surface: head blocks (base-settings, filters) and group cards are
+   different block types, so the 18px rhythm per mockup page-node-settings lives on the
+   container gap - a per-block margin model breaks down as soon as the types mix */
 .editor-chart-node-settings-rules-layout__content {
-	flex: 1;
+	flex: none;
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-md2);
 	overflow-y: auto;
-	padding: 0 18px;
+	padding: var(--ui-space-inset-md2);
 }
 
 .editor-chart-node-settings-rules-layout__content::-webkit-scrollbar,
@@ -32,32 +135,35 @@
 	margin-bottom: 18px;
 }
 
+/* Empty state per mockup 935:83190: centered text over the shared CircuitBackdrop */
 .editor-chart-node-settings-rules-layout__empty {
-	text-align: center;
+	position: relative;
+	flex: 1;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+	overflow: hidden;
+}
+
+/* text block per node 935:83196: 339px column, 10px gap, 24px side insets */
+.editor-chart-node-settings-rules-layout__empty-content {
+	position: relative;
 	display: flex;
 	flex-direction: column;
 	align-items: center;
-}
-
-.editor-chart-node-settings-rules-layout__empty:before {
-	display: block;
-	content: '';
-	background-image: url('./images/empty.svg');
+	gap: 10px;
 	width: 339px;
-	height: 211px;
+	max-width: 100%;
+	padding: 0 24px;
+	box-sizing: border-box;
+	text-align: center;
 }
 
-.editor-chart-node-settings-rules-layout__empty_head {
-	font-size: 19px;
-	line-height: 26px;
-	font-weight: var(--ui-font-weight-medium);
-	color: var(--ui-color-black-base);
-	margin: 0;
+.editor-chart-node-settings-rules-layout__empty-head {
+	color: var(--ui-color-base-1);
 }
 
-.editor-chart-node-settings-rules-layout__empty_text {
-	font-size: 16px;
-	line-height: 21px;
-	color: var(--ui-color-gray-90);
-	margin: 0;
+.editor-chart-node-settings-rules-layout__empty-text {
+	color: var(--ui-color-base-2);
 }

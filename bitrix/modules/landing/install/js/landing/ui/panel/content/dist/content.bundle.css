@@ -11,15 +11,13 @@
 }
 
 .landing-ui-panel-content-overlay.landing-ui-show {
-	-webkit-animation: showOverlay 300ms both;
-	        animation: showOverlay 300ms both;
+	animation: showOverlay 300ms both;
 	/*animation-delay: 100ms;*/
 }
 
 .landing-ui-panel-content-overlay.landing-ui-hide {
 	visibility: visible;
-	-webkit-animation: hideOverlay 300ms both;
-	        animation: hideOverlay 300ms both;
+	animation: hideOverlay 300ms both;
 }
 
 .landing-ui-hide-controls .landing-ui-panel-content-overlay {
@@ -27,13 +25,8 @@
 }
 
 .landing-ui-panel-content {
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
-	-webkit-box-orient: vertical;
-	-webkit-box-direction: normal;
-	    -ms-flex-direction: column;
-	        flex-direction: column;
+	flex-direction: column;
 	background: #EEF2F4;
 	position: fixed;
 	width: 880px;
@@ -43,9 +36,7 @@
 	right: auto;
 	z-index: 322;
 	/*box-shadow: 0 0 16px 0 rgba(0,0,0,.1);*/  /* chrome have bug with box shadow, see 0145815 */
-	-webkit-transform: translateX(-100%);
-	    -ms-transform: translateX(-100%);
-	        transform: translateX(-100%);
+	transform: translateX(-100%);
 	opacity: 0;
 	margin-top: 65px;
 }
@@ -65,9 +56,7 @@ main.landing-edit-mode .landing-ui-panel-content
 .landing-ui-panel-show-from-right.landing-ui-panel-content {
 	left: auto;
 	right: 0;
-	-webkit-transform: translateX(100%);
-	    -ms-transform: translateX(100%);
-	        transform: translateX(100%);
+	transform: translateX(100%);
 }
 
 .landing-ui-panel.landing-ui-panel-link {
@@ -84,69 +73,33 @@ main.landing-edit-mode .landing-ui-panel-content
 }
 
 .landing-ui-panel-content.landing-ui-show {
-	-webkit-animation: showContentPanel 400ms ease both;
-	        animation: showContentPanel 400ms ease both;
+	animation: showContentPanel 400ms ease both;
 }
 
 .landing-ui-panel-content.landing-ui-hide {
-	-webkit-animation: hideContentPanel 400ms ease both;
-	        animation: hideContentPanel 400ms ease both;
+	animation: hideContentPanel 400ms ease both;
 	visibility: visible;
 }
 
 .landing-ui-panel-show-from-right.landing-ui-panel-content.landing-ui-show {
-	-webkit-animation: showContentPanelFromRight 400ms ease both;
-	        animation: showContentPanelFromRight 400ms ease both;
+	animation: showContentPanelFromRight 400ms ease both;
 }
 
 .landing-ui-panel-show-from-right.landing-ui-panel-content.landing-ui-hide {
-	-webkit-animation: hideContentPanelToRight 400ms ease both;
-	        animation: hideContentPanelToRight 400ms ease both;
+	animation: hideContentPanelToRight 400ms ease both;
 	visibility: visible;
-}
-
-
-@-webkit-keyframes showContentPanel {
-	0% {
-		opacity: 0;
-		-webkit-transform: translateX(-100%);
-		        transform: translateX(-100%);
-	}
-	100% {
-		visibility: visible;
-		opacity: 1;
-		-webkit-transform: translateX(0);
-		        transform: translateX(0);
-	}
 }
 
 
 @keyframes showContentPanel {
 	0% {
 		opacity: 0;
-		-webkit-transform: translateX(-100%);
-		        transform: translateX(-100%);
+		transform: translateX(-100%);
 	}
 	100% {
 		visibility: visible;
 		opacity: 1;
-		-webkit-transform: translateX(0);
-		        transform: translateX(0);
-	}
-}
-
-@-webkit-keyframes hideContentPanel {
-	0% {
-		visibility: visible;
-		opacity: 1;
-		-webkit-transform: translateX(0);
-		        transform: translateX(0);
-	}
-	100% {
-		visibility: hidden;
-		opacity: 0;
-		-webkit-transform: translateX(-100%);
-		        transform: translateX(-100%);
+		transform: translateX(0);
 	}
 }
 
@@ -154,57 +107,24 @@ main.landing-edit-mode .landing-ui-panel-content
 	0% {
 		visibility: visible;
 		opacity: 1;
-		-webkit-transform: translateX(0);
-		        transform: translateX(0);
+		transform: translateX(0);
 	}
 	100% {
 		visibility: hidden;
 		opacity: 0;
-		-webkit-transform: translateX(-100%);
-		        transform: translateX(-100%);
-	}
-}
-
-@-webkit-keyframes showContentPanelFromRight {
-	0% {
-		opacity: 0;
-		-webkit-transform: translateX(100%);
-		        transform: translateX(100%);
-	}
-	100% {
-		visibility: visible;
-		opacity: 1;
-		-webkit-transform: translateX(0);
-		        transform: translateX(0);
+		transform: translateX(-100%);
 	}
 }
 
 @keyframes showContentPanelFromRight {
 	0% {
 		opacity: 0;
-		-webkit-transform: translateX(100%);
-		        transform: translateX(100%);
+		transform: translateX(100%);
 	}
 	100% {
 		visibility: visible;
 		opacity: 1;
-		-webkit-transform: translateX(0);
-		        transform: translateX(0);
-	}
-}
-
-@-webkit-keyframes hideContentPanelToRight {
-	0% {
-		visibility: visible;
-		opacity: 1;
-		-webkit-transform: translateX(0);
-		        transform: translateX(0);
-	}
-	100% {
-		visibility: hidden;
-		opacity: 0;
-		-webkit-transform: translateX(100%);
-		        transform: translateX(100%);
+		transform: translateX(0);
 	}
 }
 
@@ -212,24 +132,12 @@ main.landing-edit-mode .landing-ui-panel-content
 	0% {
 		visibility: visible;
 		opacity: 1;
-		-webkit-transform: translateX(0);
-		        transform: translateX(0);
+		transform: translateX(0);
 	}
 	100% {
 		visibility: hidden;
 		opacity: 0;
-		-webkit-transform: translateX(100%);
-		        transform: translateX(100%);
-	}
-}
-
-
-@-webkit-keyframes showOverlay {
-	0% {
-		opacity: 0;
-	}
-	100% {
-		opacity: .5;
+		transform: translateX(100%);
 	}
 }
 
@@ -240,15 +148,6 @@ main.landing-edit-mode .landing-ui-panel-content
 	}
 	100% {
 		opacity: .5;
-	}
-}
-
-@-webkit-keyframes hideOverlay {
-	0% {
-		opacity: .5;
-	}
-	100% {
-		opacity: 0;
 	}
 }
 
@@ -268,19 +167,11 @@ main.landing-edit-mode .landing-ui-panel-content
 	width: 100%;
 	height: 63px;
 	min-height: 63px;
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
-	-webkit-box-pack: center;
-	    -ms-flex-pack: center;
-	        justify-content: center;
-	-webkit-box-orient: vertical;
-	-webkit-box-direction: normal;
-	    -ms-flex-direction: column;
-	        flex-direction: column;
+	justify-content: center;
+	flex-direction: column;
 	padding-bottom: 10px;
-	-webkit-box-sizing: content-box;
-	        box-sizing: content-box;
+	box-sizing: content-box;
 }
 
 .landing-ui-panel-content-with-subtitle .landing-ui-panel-content-header {
@@ -300,8 +191,7 @@ main.landing-edit-mode .landing-ui-panel-content
 	margin: 10px 33px 0 30px;
 	white-space: nowrap;
 	overflow: hidden;
-	-o-text-overflow: ellipsis;
-	   text-overflow: ellipsis;
+	text-overflow: ellipsis;
 }
 
 
@@ -314,14 +204,11 @@ main.landing-edit-mode .landing-ui-panel-content
 	margin-right: 80px;
 	white-space: nowrap;
 	overflow: hidden;
-	-o-text-overflow: ellipsis;
-	   text-overflow: ellipsis;
+	text-overflow: ellipsis;
 }
 
 
 .landing-ui-panel-content-body {
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
 	height: calc(100% - 73px);
 	overflow: auto;
@@ -329,8 +216,6 @@ main.landing-edit-mode .landing-ui-panel-content
 
 .landing-ui-panel-content-footer {
 	background: #ffffff;
-	display: -webkit-box;
-	display: -ms-flexbox;
 	display: flex;
 	width: 100%;
 	height: 63px;
@@ -340,16 +225,10 @@ main.landing-edit-mode .landing-ui-panel-content
 	line-height: 90px;
 	/*box-shadow: 0 -1px 2px 0 rgba(0,0,0,.1);*/
 	z-index: 399;
-	-webkit-box-align: center;
-	    -ms-flex-align: center;
-	        align-items: center;
-	-webkit-box-pack: center;
-	    -ms-flex-pack: center;
-	        justify-content: center;
-	-webkit-box-shadow: 0 -2px 4px 0 #c6c9cb;
-	        box-shadow: 0 -2px 4px 0 #c6c9cb;
-	-webkit-transform: translateZ(0);
-	        transform: translateZ(0);
+	align-items: center;
+	justify-content: center;
+	box-shadow: 0 -2px 4px 0 #c6c9cb;
+	transform: translateZ(0);
 }
 
 .landing-ui-panel-content-footer:empty {
@@ -367,8 +246,7 @@ main.landing-edit-mode .landing-ui-panel-content
 	overflow-y: auto;
 	margin-left: 14px;
 	margin-right: 5px;
-	-webkit-transform: translateZ(0);
-	        transform: translateZ(0);
+	transform: translateZ(0);
 	border-top: 20px transparent solid;
 	border-bottom: 20px transparent solid;
 	border-radius: var(--ui-border-radius-md);
@@ -405,8 +283,6 @@ main.landing-edit-mode .landing-ui-panel-content
 	position: absolute;
 	top: 23px;
 	right: 15px;
-	-webkit-transition: opacity 200ms ease!important;
-	-o-transition: opacity 200ms ease!important;
 	transition: opacity 200ms ease!important;
 	border-right: none!important;
 	border-radius: 32px!important;

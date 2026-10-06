@@ -58,3 +58,49 @@
 .ai__copilot_input-submit-btn:hover {
 	cursor: pointer;
 }
+
+/* ======================================================
+ * BitrixGPT Redesign overrides (Phase 2)
+ * All rules MUST stay under .ai__copilot-scope.--bitrixgpt-redesign
+ * ====================================================== */
+
+/* P2.T3 — Submit button: brand gradient fill + rounded-square shape (Figma «Button filled bitrix gpt»)
+ * Figma: 28x28, radius 8px (button-S-radius), filled-bitrix-gpt gradient 263.02deg.
+ * Gradient extracted into a local custom property to avoid literal duplication across states. */
+.ai__copilot-scope.--bitrixgpt-redesign {
+	--ai-copilot-submit-gradient: linear-gradient(
+		263.02deg,
+		var(--ui-color-design-filled-bitrix-gpt-bg-gradient-5, #f96269) 2.92%,
+		var(--ui-color-design-filled-bitrix-gpt-bg-gradient-4, #f046b7) 25.99%,
+		var(--ui-color-design-filled-bitrix-gpt-bg-gradient-3, #9d48ff) 49.07%,
+		var(--ui-color-design-filled-bitrix-gpt-bg-gradient-2, #3f68ff) 76.77%,
+		var(--ui-color-design-filled-bitrix-gpt-bg-gradient-1, #0098ea) 86%
+	);
+}
+
+.ai__copilot-scope.--bitrixgpt-redesign .ai__copilot_input-submit-btn {
+	width: 28px;
+	height: 28px;
+	border-radius: var(--ui-border-radius-sm, 8px);
+	background: var(--ai-copilot-submit-gradient);
+	transition: 0.2s ease-out opacity;
+}
+
+.ai__copilot-scope.--bitrixgpt-redesign .ai__copilot_input-submit-btn:hover {
+	background: var(--ai-copilot-submit-gradient);
+	opacity: 0.85;
+}
+
+.ai__copilot-scope.--bitrixgpt-redesign .ai__copilot_input-submit-btn:active {
+	background: var(--ai-copilot-submit-gradient);
+	opacity: 0.7;
+}
+
+/* P5.5c — Enter hint: grey text, hide the arrow glyph next to it (Figma shows only "Enter") */
+.ai__copilot-scope.--bitrixgpt-redesign .ai__copilot_input-submit-hotkey-text {
+	color: var(--ui-color-base-4, #a8adb4);
+}
+
+.ai__copilot-scope.--bitrixgpt-redesign .ai__copilot_input-submit-hotkey-icon {
+	display: none;
+}

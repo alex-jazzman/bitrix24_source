@@ -453,7 +453,7 @@ export default class Dom
 	 * @param context
 	 * @return {HTMLElement|HTMLBodyElement}
 	 */
-	static create(tag: string | CreateOptions, data: AdjustData = {}, context: Document = document): HTMLElement | null
+	static create(tag: string | CreateOptions, data: AdjustData = {}, context: Document = document): HTMLElement
 	{
 		let tagName = tag as string;
 		let options = data;
@@ -465,7 +465,7 @@ export default class Dom
 			tagName = tagOptions.tag as string;
 		}
 
-		return Dom.adjust(context.createElement(tagName), options);
+		return Dom.adjust(context.createElement(tagName), options)!;
 	}
 
 	/**

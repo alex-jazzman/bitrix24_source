@@ -333,6 +333,22 @@
 	background-image: url(/bitrix/images/landing/editor/link-active.svg);
 }
 
+.landing-ui-panel-compact-editor .landing-ui-button-compact-editor-action.--link {
+	position: relative;
+}
+
+.landing-ui-panel-compact-editor .landing-ui-button-compact-editor-action.--link::after {
+	content: '';
+	width: 1px;
+	height: 22px;
+	background: #A8ADB4;
+	opacity: .32;
+	left: 0;
+	top: 50%;
+	transform: translateY(-50%);
+	position: absolute;
+}
+
 .landing-ui-icon-editor-unlink {
 	background-image: url(/bitrix/images/landing/editor/unlink.svg);
 	width: 20px!important;

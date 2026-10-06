@@ -128,6 +128,7 @@ class UserRepository
 			lastActivityDate: $lastActivityDate ?? null,
 			timezone: $timezone ?? null,
 			personalGender: $user['PERSONAL_GENDER'] ?? null,
+			dateRegister: ($user['DATE_REGISTER'] ?? null)?->getTimestamp(),
 		);
 	}
 

@@ -93,13 +93,7 @@ export const ScriptSelector = {
 				return;
 			}
 
-			Router.openSlider(
-				`/crm/copilot-call-assessment/details/${this.assessmentSettingsId}/`,
-				{
-					width: 700,
-					cacheable: false,
-				},
-			);
+			Router.Instance.openCallAssessmentSlider(this.assessmentSettingsId, { legacyWidth: 700 });
 		},
 		onShowActualPrompt(): void
 		{

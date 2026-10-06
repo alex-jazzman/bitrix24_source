@@ -5,8 +5,26 @@
 	max-height: 58px;
 	padding: var(--ui-space-inline-sm) var(--ui-space-inset-md);
 	border-radius: 0 0 var(--ui-border-radius-2xl) var(--ui-border-radius-2xl);
+	box-shadow: var(--ui-shadow-bottom-m);
 }
 
 .bizprocdesigner-editor-toast.--warning {
-	background-color: #FAAA08;
+	background-color: var(--ui-color-accent-main-warning);
+	/* White content on saturated orange. */
+	--bizprocdesigner-editor-toast-content-color: var(--ui-color-base-8);
+	--bizprocdesigner-editor-toast-divider-color: rgba(255, 255, 255, 0.5);
+}
+
+.bizprocdesigner-editor-toast.--processing {
+	/* Processing: solid blue, white content. */
+	background-color: var(--ui-color-accent-main-primary-alt);
+	--bizprocdesigner-editor-toast-content-color: var(--ui-color-base-8);
+	--bizprocdesigner-editor-toast-divider-color: rgba(255, 255, 255, 0.5);
+}
+
+.bizprocdesigner-editor-toast.--completed {
+	/* Completed: solid green, white content. */
+	background-color: var(--ui-color-accent-main-success-alt);
+	--bizprocdesigner-editor-toast-content-color: var(--ui-color-base-8);
+	--bizprocdesigner-editor-toast-divider-color: rgba(255, 255, 255, 0.5);
 }

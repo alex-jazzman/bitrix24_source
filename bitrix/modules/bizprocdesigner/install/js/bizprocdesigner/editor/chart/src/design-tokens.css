@@ -41,4 +41,28 @@
 
 	--designer-bp-frame-pink-bg: rgba(255, 232, 232, 1);
 	--designer-bp-frame-pink-br: rgba(250, 174, 174, 1);
+
+	/* Action = purple: no ui-color-designer-bp-rules-* DS token for "action";
+	   hex from Figma 8XCy8X0vuiOkAPneMEOLJV, node 935:29616 (+ ACTION chip palette) */
+	--designer-bp-rules-action-stroke: #decaff;
+	--designer-bp-rules-action-bg: #f8f4ff;
+	--designer-bp-rules-action-text: #aa74ff;
+
+	/* BitrixGPT "ai glow" arc: curated palette, a documented exception to the
+	   no-hardcode-hex rule (DesignOps 2026-07-29, "curated palettes outside tokens").
+	   Only the 18% stop has a DS token (#3F68FF); #00A5FF, #9D47FF, #FC83D3 and
+	   #00CCCC have none, and the nearest token would distort the brand gradient.
+	   Figma "ai glow" COMPONENT_SET node-id=4950:19400, file HZJYbinbBA1DxpX99ZjJup.
+
+	   Color stops only: the conic-gradient itself is assembled on the spinning ring.
+	   A var() inside a custom property is substituted where that property is declared,
+	   so wrapping the stops into a ready-made gradient here would freeze the rotation
+	   angle at its :root value and the ring would never spin. */
+	--designer-bp-ai-glow-stops:
+		rgba(0, 204, 204, 0) 2%,
+		#00A5FF 9%,
+		var(--ui-color-design-filled-bitrix-gpt-bg-gradient-2) 18%,
+		#9D47FF 32%,
+		#FC83D3 43%,
+		rgba(0, 204, 204, 0) 83%;
 }

@@ -75,3 +75,9 @@ input[type="text"][data-role="inline-selector-target"] {
 	max-width: 85% !important;
 	background-position: 202px -152px;
 }
+
+.bizproc-automation-popup-settings__condition-header > .bizproc-automation-popup-settings-title.--required:after {
+	content: '*';
+	margin-left: 2px;
+	color: var(--ui-color-palette-red-60);
+}

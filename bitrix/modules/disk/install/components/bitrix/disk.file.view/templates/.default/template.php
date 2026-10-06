@@ -21,6 +21,7 @@ $messages = Loc::loadLanguageFile(__FILE__);
 
 CJSCore::Init([
 	'ui.design-tokens',
+	'ui.icon-set.outline',
 	'ui.fonts.opensans',
 	'ui.viewer',
 	'ui.avatar',
@@ -201,24 +202,26 @@ foreach ($jsTemplates->getChildren() as $jsTemplate)
 				<? if ($arResult['FILE']['IS_DELETED'] && $arResult['CAN_RESTORE'])
 				{
 					?>
-					<span class="disk-detail-sidebar-editor-item disk-detail-sidebar-editor-item-restore">
+					<span class="disk-detail-sidebar-editor-item disk-detail-sidebar-editor-item-restore" data-testid="disk-detail-editor-restore">
+						<span class="ui-icon-set --o-undo" aria-hidden="true"></span>
 						<?= Loc::getMessage('DISK_FILE_VIEW_FILE_RESTORE') ?>
 					</span>
 					<?
 				}
 				?>
-				<span class="disk-detail-sidebar-editor-item disk-detail-sidebar-editor-item-show" id="bx-disk-filepage-filename" <?= $arResult['FILE']['VIEWER_ATTRIBUTES'] ?>><?= Loc::getMessage("DISK_FILE_VIEW_FILE_RUN_VIEWER") ?></span>
+				<span class="disk-detail-sidebar-editor-item disk-detail-sidebar-editor-item-show" id="bx-disk-filepage-filename" data-testid="disk-detail-editor-show" <?= $arResult['FILE']['VIEWER_ATTRIBUTES'] ?>><span class="ui-icon-set --o-observer" aria-hidden="true"></span><?= Loc::getMessage("DISK_FILE_VIEW_FILE_RUN_VIEWER") ?></span>
 				<? if (!$arResult['FILE']['IS_DELETED'] && !empty($arResult['CAN_UPDATE']) && (!$arResult['FILE']['LOCK']['IS_LOCKED'] || $arResult['FILE']['LOCK']['IS_LOCKED_BY_SELF']) && $arResult['FILE']['IS_EDITABLE'])
 				{
-					?><a class="disk-detail-sidebar-editor-item disk-detail-sidebar-editor-item-edit" href="#edit" onclick="top.BX.UI.Viewer.Instance.runActionByNode(BX('bx-disk-filepage-filename'), 'edit', {
+					?><a class="disk-detail-sidebar-editor-item disk-detail-sidebar-editor-item-edit" data-testid="disk-detail-editor-edit" href="#edit" onclick="top.BX.UI.Viewer.Instance.runActionByNode(BX('bx-disk-filepage-filename'), 'edit', {
 							modalWindow: BX.Disk.openBlankDocumentPopup()
-						}); event.preventDefault(); return false;"><?= Loc::getMessage('DISK_FILE_VIEW_FILE_EDIT') ?></a><?
+						}); event.preventDefault(); return false;"><span class="ui-icon-set --edit-m" aria-hidden="true"></span><?= Loc::getMessage('DISK_FILE_VIEW_FILE_EDIT') ?></a><?
 				}?>
-				<a class="disk-detail-sidebar-editor-item disk-detail-sidebar-editor-item-download" href="<?= $arResult['FILE']['DOWNLOAD_URL'] ?>"><?= Loc::getMessage('DISK_FILE_VIEW_FILE_DOWNLOAD') ?></a>
+				<a class="disk-detail-sidebar-editor-item disk-detail-sidebar-editor-item-download" data-testid="disk-detail-editor-download" href="<?= $arResult['FILE']['DOWNLOAD_URL'] ?>"><span class="ui-icon-set --o-download" aria-hidden="true"></span><?= Loc::getMessage('DISK_FILE_VIEW_FILE_DOWNLOAD') ?></a>
 				<? if (!$arResult['FILE']['IS_DELETED'] && !empty($arResult['CAN_UPDATE']) && (!$arResult['FILE']['LOCK']['IS_LOCKED'] || $arResult['FILE']['LOCK']['IS_LOCKED_BY_SELF']))
 				{
 					?>
-					<a id="bx-disk-file-upload-btn" class="disk-detail-sidebar-editor-item disk-detail-sidebar-editor-item-update" href="javascript:void(0);">
+					<a id="bx-disk-file-upload-btn" class="disk-detail-sidebar-editor-item disk-detail-sidebar-editor-item-update" data-testid="disk-detail-editor-update" href="javascript:void(0);">
+						<span class="ui-icon-set --o-upload" aria-hidden="true"></span>
 						<?= Loc::getMessage('DISK_FILE_VIEW_FILE_UPLOAD_VERSION') ?>
 					</a>
 					<?
@@ -227,21 +230,22 @@ foreach ($jsTemplates->getChildren() as $jsTemplate)
 				<? if(!empty($arResult['CAN_DELETE']))
 				{
 					?>
-					<div class="disk-detail-sidebar-editor-item disk-detail-sidebar-editor-item-remove">
+					<div class="disk-detail-sidebar-editor-item disk-detail-sidebar-editor-item-remove" data-testid="disk-detail-editor-remove">
+						<span class="ui-icon-set --o-trashcan" aria-hidden="true"></span>
 						<?= Loc::getMessage('DISK_FILE_VIEW_DELETE') ?>
 					</div>
 					<?
 				}
 				?>
-				<div class="disk-detail-sidebar-link-more js-disk-file-more-actions"><?= Loc::getMessage('DISK_FILE_VIEW_FILE_MORE_ACTIONS') ?></div>
+				<div class="disk-detail-sidebar-link-more js-disk-file-more-actions" data-testid="disk-detail-more-actions"><?= Loc::getMessage('DISK_FILE_VIEW_FILE_MORE_ACTIONS') ?></div>
 			</div>
 		</div>
 
 		<?php if(!$arResult['FILE']['IS_DELETED'] && $arResult['EXTERNAL_LINK']['ENABLED']){ ?>
 		<div class="disk-detail-sidebar-section">
 			<div class="disk-detail-sidebar-public-link">
-				<div class="disk-detail-sidebar-public-link-copy-link" id="disk-detail-sidebar-public-link-copy-link" for="bx-disk-sidebar-shared-inner-link-input" title="<?= Loc::getMessage('DISK_FILE_VIEW_INTERNAL_LINK_COPY_HINT') ?>"><?= Loc::getMessage('DISK_FILE_VIEW_INTERNAL_LINK') ?></div>
-				<input class="bx-disk-sidebar-shared-inner-link-input" type="text" value="<?= $arResult['FILE']['SHOW_FILE_ABSOLUTE_URL'] ?>" id="bx-disk-sidebar-shared-inner-link-input">
+				<div class="disk-detail-sidebar-public-link-copy-link" id="disk-detail-sidebar-public-link-copy-link" data-testid="disk-detail-copy-internal-link" for="bx-disk-sidebar-shared-inner-link-input" title="<?= Loc::getMessage('DISK_FILE_VIEW_INTERNAL_LINK_COPY_HINT') ?>"><span class="ui-icon-set --o-copy" aria-hidden="true"></span><?= Loc::getMessage('DISK_FILE_VIEW_INTERNAL_LINK') ?></div>
+				<input class="bx-disk-sidebar-shared-inner-link-input" type="text" value="<?= $arResult['FILE']['SHOW_FILE_ABSOLUTE_URL'] ?>" id="bx-disk-sidebar-shared-inner-link-input" data-testid="disk-detail-internal-link-input">
 			</div>
 			<div data-entity="external-link-place"></div>
 		</div>
@@ -378,6 +382,7 @@ BX(function () {
 				objectId: <?= $arResult['EXTERNAL_LINK']['OBJECT_ID']?>,
 				link: '<?= $arResult['EXTERNAL_LINK']['LINK']?>',
 				hasPassword: <?= $arResult['EXTERNAL_LINK']['HAS_PASSWORD']? 'true' : 'false'?>,
+				canEditSettings: <?= $arResult['EXTERNAL_LINK']['CAN_EDIT_SETTINGS'] ? 'true' : 'false' ?>,
 				hasDeathTime: <?= $arResult['EXTERNAL_LINK']['HAS_DEATH_TIME']? 'true' : 'false'?>,
 				deathTimeTimestamp: <?= $arResult['EXTERNAL_LINK']['DEATH_TIME_TIMESTAMP']?: 'null'?>,
 				<? if ($arResult['EXTERNAL_LINK']['DEATH_TIME']) { ?>

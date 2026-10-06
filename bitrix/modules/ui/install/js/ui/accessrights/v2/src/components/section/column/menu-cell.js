@@ -39,16 +39,25 @@ export const MenuCell = {
 				offsetLeft: -Math.floor(width / 2) + 9,
 			};
 		},
-		shownUserGroupsWithoutCurrent(): UserGroupsCollection {
+		applyTargetUserGroups(): UserGroupsCollection {
 			const shown: UserGroupsCollection = this.$store.getters['userGroups/shown'];
 
-			const shownWithoutCurrent: UserGroupsCollection = Runtime.clone(shown);
-			shownWithoutCurrent.delete(this.userGroup.id);
+			const targets: UserGroupsCollection = new Map();
+			for (const [userGroupId, userGroup] of shown)
+			{
+				if (userGroupId !== this.userGroup.id && !userGroup.isReadOnly)
+				{
+					targets.set(userGroupId, userGroup);
+				}
+			}
 
-			return shownWithoutCurrent;
+			return Runtime.clone(targets);
 		},
 		applyDialogItems(): ItemOptions[] {
-			return ItemsMapper.mapUserGroups(this.shownUserGroupsWithoutCurrent);
+			return ItemsMapper.mapUserGroups(this.applyTargetUserGroups);
+		},
+		isReadOnly(): boolean {
+			return this.userGroup.isReadOnly === true;
 		},
 	},
 	methods: {
@@ -114,7 +123,7 @@ export const MenuCell = {
 					:popup-options="menuPopupOptions"
 				>
 					<RichMenuItem
-						v-if="isMaxValueSetForAny"
+						v-if="isMaxValueSetForAny && !isReadOnly"
 						:icon="RichMenuItemIcon.check"
 						:title="$Bitrix.Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_SET_MAX_ACCESS_RIGHTS')"
 						:subtitle="$Bitrix.Loc.getMessage(
@@ -126,7 +135,7 @@ export const MenuCell = {
 						@click="setMaxValuesInSection"
 					/>
 					<RichMenuItem
-						v-if="isMinValueSetForAny"
+						v-if="isMinValueSetForAny && !isReadOnly"
 						:icon="RichMenuItemIcon['red-lock']"
 						:title="$Bitrix.Loc.getMessage('JS_UI_ACCESSRIGHTS_V2_SET_MIN_ACCESS_RIGHTS')"
 						:subtitle="$Bitrix.Loc.getMessage(

@@ -1,7 +1,5 @@
 import { Chip, ChipDesign, ChipSize } from 'ui.system.chip.vue';
 
-import './style.css';
-
 // @vue/component
 export const InspectorViewModeButton = {
 	name: 'InspectorViewModeButton',
@@ -26,7 +24,7 @@ export const InspectorViewModeButton = {
 		ChipSize: (): typeof ChipSize => ChipSize,
 	},
 	template: `
-		<Chip 
+		<Chip
 			:text="title"
 			:size="ChipSize.Md"
 			:design="design"

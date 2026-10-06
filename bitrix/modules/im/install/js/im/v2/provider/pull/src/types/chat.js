@@ -1,9 +1,9 @@
-import type { JsonObject } from 'main.core';
+import { type JsonObject } from 'main.core';
 
-import type { InputActionType } from 'im.v2.lib.input-action';
-import type { RecentTypeItem } from 'im.v2.const';
+import { type InputActionType } from 'im.v2.lib.input-action';
+import { type RecentTypeItem, type ParentChatIdType } from 'im.v2.const';
 
-import type { RawChat, RawFile, RawMessage, RawUser } from './common';
+import { type RawChat, type RawFile, type RawMessage, type RawUser } from './common';
 
 export type ChatOwnerParams = {
 	chatId: number,
@@ -133,4 +133,9 @@ export type MessagesAutoDeleteDelayParams = {
 	chatId: number,
 	dialogId: string,
 	delay: number,
+};
+
+export type ChatReadAllParams = {
+	recentSection: RecentTypeItem,
+	parentChatId: ParentChatIdType,
 };

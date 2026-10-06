@@ -6,7 +6,8 @@ import {
 import { PreviewLayout } from '../preview-layout/preview-layout';
 import { PreviewHeader } from '../preview-header/preview-header';
 import { PreviewBlock } from '../preview-block/preview-block';
-import { FormElement } from 'bizproc.setup-template';
+import { Type } from 'main.core';
+import { FormElement, isPickerOpenKey, PICKER_ROW_SELECTOR } from 'bizproc.setup-template';
 import { ITEM_TYPES } from '../../constants';
 // eslint-disable-next-line no-unused-vars
 import type { Block } from '../../types';
@@ -56,6 +57,37 @@ export const PreviewApp = {
 				}, {});
 		},
 	},
+	methods: {
+		/**
+		 * The preview is a picture of the form, not the form itself, but the `disabled` prop below is
+		 * not declared by the field chain and only lands on the row element. A date or time field
+		 * carries a real picker, so activating its row would open the picker and change the shown
+		 * value. Only such a row is caught: everything the other fields do stays in the preview
+		 * anyway (`formData` is a computed without a setter), and swallowing their events would take
+		 * the space bar out of a text field and the toggling out of a radio.
+		 */
+		isPickerRow(event: Event): boolean
+		{
+			return Type.isElementNode(event.target) && Type.isDomNode(event.target.closest(PICKER_ROW_SELECTOR));
+		},
+		suppressActivation(event: Event): void
+		{
+			if (!this.isPickerRow(event))
+			{
+				return;
+			}
+
+			event.preventDefault();
+			event.stopPropagation();
+		},
+		suppressKeyActivation(event: KeyboardEvent): void
+		{
+			if (isPickerOpenKey(event))
+			{
+				this.suppressActivation(event);
+			}
+		},
+	},
 	template: `
 		<PreviewLayout>
 			<template #header>
@@ -76,6 +108,8 @@ export const PreviewApp = {
 							:formData="formData"
 							:disabled="true"
 							:errors="{}"
+							@click.capture="suppressActivation"
+							@keydown.capture="suppressKeyActivation"
 						/>
 					</template>
 				</PreviewBlock>

@@ -23,6 +23,7 @@ use Bitrix\Main\DB\SqlQueryException;
 use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Lists\Internal\Integration\Crm\Validator\CrmPropertyValidator;
+use Bitrix\Main\Web\Uri;
 
 $this->setFrameMode(false);
 
@@ -139,11 +140,11 @@ $arResult["~LISTS_URL"] = str_replace(
 );
 $arResult["LISTS_URL"] = htmlspecialcharsbx($arResult["~LISTS_URL"]);
 
-$arResult["~LIST_URL"] = CHTTP::urlAddParams(str_replace(
+$arResult["~LIST_URL"] = (string)(new Uri(str_replace(
 	array("#list_id#", "#section_id#", "#group_id#"),
 	array($arResult["IBLOCK_ID"], 0, $arParams["SOCNET_GROUP_ID"]),
 	$arParams["~LIST_URL"]
-), array("list_section_id" => ""));
+)))->addParams(["list_section_id" => ""]);
 $arResult["LIST_URL"] = htmlspecialcharsbx($arResult["~LIST_URL"]);
 
 $arResult["~LIST_SECTION_URL"] = str_replace(
@@ -153,24 +154,23 @@ $arResult["~LIST_SECTION_URL"] = str_replace(
 );
 if ($SECTION_ID)
 {
-	$arResult["~LIST_SECTION_URL"] = CHTTP::urlAddParams(
-		$arResult["~LIST_SECTION_URL"], ["list_section_id" => $SECTION_ID]);
+	$arResult["~LIST_SECTION_URL"] = (string)(new Uri($arResult["~LIST_SECTION_URL"]))->addParams(["list_section_id" => $SECTION_ID]);
 }
 $arResult["LIST_SECTION_URL"] = htmlspecialcharsbx($arResult["~LIST_SECTION_URL"]);
 
 if ($ELEMENT_ID > 0)
 {
 	$copy_id = 0;
-	$arResult["LIST_COPY_ELEMENT_URL"] = CHTTP::urlAddParams(str_replace(
-			array("#list_id#", "#section_id#", "#element_id#", "#group_id#"),
-			array($arResult["IBLOCK_ID"], intval($arResult["SECTION_ID"] ?? 0), 0, $arParams["SOCNET_GROUP_ID"]),
-			$arParams["~LIST_ELEMENT_URL"]
-		),
-		array("copy_id" => $ELEMENT_ID),
-		array("skip_empty" => true, "encode" => true)
-	);
+	$arResult["LIST_COPY_ELEMENT_URL"] = (string)(new Uri(str_replace(
+		array("#list_id#", "#section_id#", "#element_id#", "#group_id#"),
+		array($arResult["IBLOCK_ID"], intval($arResult["SECTION_ID"] ?? 0), 0, $arParams["SOCNET_GROUP_ID"]),
+		$arParams["~LIST_ELEMENT_URL"]
+	)))->addParams(["copy_id" => $ELEMENT_ID]);
+
 	if(isset($_GET["list_section_id"]) && $_GET["list_section_id"] == '')
-		$arResult["LIST_COPY_ELEMENT_URL"] = CHTTP::urlAddParams($arResult["LIST_COPY_ELEMENT_URL"], array("list_section_id" => ""));
+	{
+		$arResult["LIST_COPY_ELEMENT_URL"] = (string)(new Uri($arResult["LIST_COPY_ELEMENT_URL"]))->addParams(["list_section_id" => ""]);
+	}
 }
 else
 {
@@ -307,7 +307,7 @@ $tab_name = $arResult["FORM_ID"]."_active_tab";
 $bVarsFromForm = false;
 
 $request = \Bitrix\Main\Application::getInstance()->getContext()->getRequest();
-$backUrl = (new \Bitrix\Main\Web\Uri($request->getQuery('back_url')))->getPath() ?: null;
+$backUrl = (new Uri($request->getQuery('back_url')))->getPath() ?: null;
 
 $arResult["BACK_URL"] = is_string($backUrl) && $backUrl ? $backUrl : $arResult["~LIST_SECTION_URL"];
 
@@ -337,8 +337,7 @@ if (!function_exists("isUsePrefix"))
 $arResult["EXTERNAL_CONTEXT"] = isset($_REQUEST["external_context"]) ? $_REQUEST["external_context"] : "";
 if(!empty($arResult["EXTERNAL_CONTEXT"]))
 {
-	$arResult["BACK_URL"] = CHTTP::urlAddParams($APPLICATION->getCurPageParam(),
-		array("external_context_canceled" => "y"));
+	$arResult["BACK_URL"] = (string)(new Uri($APPLICATION->getCurPageParam()))->addParams(["external_context_canceled" => "y"]);
 	if(!empty($_REQUEST['external_context_canceled']))
 	{
 		$arResult['EXTERNAL_EVENT'] = array(
@@ -966,16 +965,16 @@ if(
 		{
 			//Successfull update
 
-			$url = CHTTP::urlAddParams(str_replace(
+			$url = (string)(new Uri(str_replace(
 				array("#list_id#", "#section_id#", "#element_id#", "#group_id#"),
 				array($arResult["IBLOCK_ID"], intval($_POST["IBLOCK_SECTION_ID"]), $arResult["ELEMENT_ID"], $arParams["SOCNET_GROUP_ID"]),
 				$arParams["~LIST_ELEMENT_URL"]
-			),
-				array($tab_name => $_POST[$tab_name]),
-				array("skip_empty" => true, "encode" => true)
-			);
+			)))->addParams([$tab_name => $_POST[$tab_name]]);
+
 			if(isset($_GET["list_section_id"]) && $_GET["list_section_id"] == '')
-				$url = CHTTP::urlAddParams($url, array("list_section_id" => ""));
+			{
+				$url = (string)(new Uri($url))->addParams(["list_section_id" => ""]);
+			}
 
 			if(isset($arResult['EXTERNAL_CONTEXT']) && $arResult['EXTERNAL_CONTEXT'] !== '')
 			{

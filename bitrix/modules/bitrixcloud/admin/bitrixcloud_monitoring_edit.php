@@ -2,8 +2,8 @@
 define('ADMIN_MODULE_NAME', 'bitrixcloud');
 require_once $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_before.php';
 IncludeModuleLangFile(__FILE__);
-/* @var CMain $APPLICATION */
-/* @var CUser $USER */
+/** @var CMain $APPLICATION */
+/** @var CUser $USER */
 if (!$USER->CanDoOperation('bitrixcloud_monitoring') || !CModule::IncludeModule('bitrixcloud'))
 {
 	$APPLICATION->AuthForm(GetMessage('ACCESS_DENIED'));
@@ -34,7 +34,7 @@ try
 		$result = $monitoring->startMonitoring(
 			$_REQUEST['domain'],
 			$_REQUEST['IS_HTTPS'] === 'Y',
-			LANGUAGE_ID,//$_REQUEST["LANG"],
+			LANGUAGE_ID,
 			$_REQUEST['EMAILS'],
 			$_REQUEST['TESTS']
 		);

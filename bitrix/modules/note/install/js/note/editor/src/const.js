@@ -15,7 +15,24 @@ export const FLUSH_MAX_INTERVAL_MS = 2000; // 2 s
  * Reduces the number of rows in b_note_document_updates and keeps yjsState fresh.
  * Also updates the markdown (ProseMirror JSON) in b_note_document for search/preview.
  */
-export const COMPACT_INTERVAL_MS = 5 * 60 * 1000; // 5 min
+export const COMPACT_INTERVAL_MS = 3 * 60 * 1000; // 3 min
+
+/**
+ * Materialization: pushing the current markdown to the server on work boundaries.
+ *
+ * Cheap and non-destructive (no journal rewrite, no yjsState) — it only keeps CONTENT_UPDATED_AT
+ * fresh so REST/search see the latest text soon after editing stops, without waiting for compaction.
+ * MATERIALIZE_DEBOUNCE_MS — pause after the last keystroke before materializing.
+ * MATERIALIZE_MAX_INTERVAL_MS — ceiling during continuous typing; forces a materialize anyway.
+ */
+export const MATERIALIZE_DEBOUNCE_MS = 30 * 1000; // 30 s
+export const MATERIALIZE_MAX_INTERVAL_MS = 2 * 60 * 1000; // 2 min
+
+/**
+ * Journal backstop: debounce for the server-driven compaction hint (savePatch → compactSuggested).
+ * A burst of flushes with the flag raised collapses into a single compaction run.
+ */
+export const COMPACT_SUGGEST_DEBOUNCE_MS = 5 * 1000; // 5 s
 
 /**
  * Awareness: presence and cursor sharing between users.

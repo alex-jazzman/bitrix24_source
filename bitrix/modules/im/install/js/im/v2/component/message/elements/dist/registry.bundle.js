@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports, im_v2_application_core, im_v2_const, im_v2_lib_dateFormatter, ui_vue3, im_v2_component_elements_attach, im_v2_component_elements_keyboard, main_core_events, ui_reaction_item, im_v2_lib_permission, im_v2_lib_channel, ui_reaction_item_vue, im_v2_component_elements_avatar, im_v2_component_elements_userListPopup, im_v2_lib_utils, im_v2_provider_service_user, im_v2_lib_logger, im_v2_lib_rest, ui_reaction_picker, main_core, im_v2_lib_parser, im_v2_component_elements_chatTitle, im_v2_lib_menu, im_v2_provider_service_sending, im_v2_provider_service_message, im_v2_provider_service_uploading, ui_system_menu, ui_iconSet_api_vue, im_v2_lib_copilot, im_v2_component_animation, im_v2_provider_service_comments, im_v2_lib_feature, ui_system_chip_vue, main_sidepanel, ui_sidepanel_layout, ui_lottie, ui_vue3_components_button, im_v2_component_elements_mediaGallery, im_v2_component_elements_popup, im_v2_component_elements_player, im_v2_component_elements_progressbar) {
+(function (exports, im_v2_application_core, im_v2_const, im_v2_lib_dateFormatter, ui_vue3, im_v2_component_elements_attach, im_v2_component_elements_keyboard, main_core_events, ui_reaction_item, im_v2_lib_permission, im_v2_lib_channel, ui_reaction_item_vue, im_v2_component_elements_avatar, im_v2_component_elements_userListPopup, im_v2_lib_utils, im_v2_provider_service_user, im_v2_lib_logger, im_v2_lib_rest, ui_reaction_picker, main_core, im_v2_lib_parser, im_v2_component_elements_chatTitle, im_v2_lib_menu, im_v2_provider_service_sending, im_v2_provider_service_message, im_v2_provider_service_uploading, ui_system_menu, ui_iconSet_api_vue, im_v2_lib_copilot, im_v2_component_animation, im_v2_provider_service_comments, main_sidepanel, ui_system_chip_vue, ui_sidepanel_layout, ui_lottie, ui_vue3_components_button, im_v2_component_elements_mediaGallery, im_v2_component_elements_popup, im_v2_component_elements_player, im_v2_component_elements_progressbar) {
 	'use strict';
 
 	// @vue/component
@@ -134,6 +134,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				required: true
 			}
 		},
+		emits: ['click'],
 		computed: {
 			message() {
 				return this.item;
@@ -147,7 +148,12 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		},
 		template: `
 		<div class="bx-im-message-keyboard__container">
-			<Keyboard :buttons="message.keyboard" :dialogId="dialogId" :messageId="message.id" />
+			<Keyboard
+				:buttons="message.keyboard"
+				:dialogId="dialogId"
+				:messageId="message.id"
+				@click="$emit('click', $event)"
+			/>
 		</div>
 	`
 	};
@@ -730,6 +736,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	};
 
 	const NO_CONTEXT_TAG = 'none';
+	const NAME_MAX_LENGTH = 40;
+	const GALLERY_STACK_MAX = 3;
 
 	// @vue/component
 	const Reply = {
@@ -765,12 +773,134 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				return this.$store.getters['chats/getByChatId'](this.replyMessage?.chatId);
 			},
 			replyAuthor() {
-				return this.$store.getters['users/get'](this.replyMessage.authorId);
+				return this.$store.getters['users/get'](this.replyMessage?.authorId);
 			},
 			replyTitle() {
 				return this.replyAuthor ? this.replyAuthor.name : this.loc('IM_DIALOG_CHAT_QUOTE_DEFAULT_TITLE');
 			},
+			// --- Media / file computed for the original-message preview ---
+			/** Files attached to the original message — read once, reused by the file/gallery computed below */
+			messageFiles() {
+				if (!this.replyMessage) {
+					return [];
+				}
+				return this.$store.getters['messages/getMessageFiles'](this.replyMessage.id);
+			},
+			messageFile() {
+				return this.messageFiles[0] ?? null;
+			},
+			isImage() {
+				return Boolean(this.messageFile && this.messageFile.type === im_v2_const.FileType.image);
+			},
+			isVideo() {
+				return Boolean(this.messageFile && this.messageFile.type === im_v2_const.FileType.video);
+			},
+			/**
+			 * Video note (round video message). Keeps FileType.video — there is no separate file type;
+			 * the round-message flag lives on the file. Rendered as a compact round thumbnail (its
+			 * urlPreview poster) instead of the rectangular video thumbnail — like a single media
+			 * thumbnail, with no textual type caption (the round shape conveys the type). The
+			 * IM_PARSER_ICON_TYPE_VIDEO_NOTE phrase is still used as the image alt (a11y).
+			 */
+			isVideoNote() {
+				return Boolean(this.messageFile && this.messageFile.isVideoNote);
+			},
+			isFile() {
+				return Boolean(this.messageFile && this.messageFile.type === im_v2_const.FileType.file);
+			},
+			isAudio() {
+				return Boolean(this.messageFile && this.messageFile.type === im_v2_const.FileType.audio);
+			},
+			isSticker() {
+				if (!this.replyMessage) {
+					return false;
+				}
+				return this.$store.getters['stickers/messages/isSticker'](this.replyMessage.id);
+			},
+			/** Sticker image URI of the original message (null if not a sticker or sticker data is not in store) */
+			stickerImageUri() {
+				if (!this.replyMessage || !this.isSticker) {
+					return null;
+				}
+				const stickerId = this.$store.getters['stickers/messages/getStickerByMessageId'](this.replyMessage.id);
+				const sticker = this.$store.getters['stickers/get'](stickerId);
+				return sticker?.uri ?? null;
+			},
+			/** Number of files attached to the original message */
+			galleryCount() {
+				return this.messageFiles.length;
+			},
+			/** First files of the original message shown as an overlapped stack (max GALLERY_STACK_MAX) */
+			galleryThumbnails() {
+				return this.messageFiles.slice(0, GALLERY_STACK_MAX);
+			},
+			/** Files beyond the ones shown in the stack — rendered as a "+N" badge */
+			galleryRemainingCount() {
+				return Math.max(this.galleryCount - this.galleryThumbnails.length, 0);
+			},
+			/**
+			 * Count modifier for the gallery stack. The stack items are absolutely positioned, so the
+			 * container cannot size itself to its content (fit-content would collapse it). The fixed base
+			 * width fits the 3-thumbnail layout; for 1/2 shown thumbnails the container must shrink to the
+			 * actual right edge of the last (rotated) thumbnail — otherwise the flex gap to the caption
+			 * grows and the stack↔text spacing looks inconsistent between 2- and 3-media quotes.
+			 */
+			galleryStackModifier() {
+				return `--count-${this.galleryThumbnails.length}`;
+			},
+			/** True when the original bundles several media (image/video) — show the stack instead of a single thumbnail */
+			isGallery() {
+				return (this.isImage || this.isVideo) && this.galleryCount > 1 && !this.isDeleted;
+			},
+			/**
+			 * The gallery stack is rendered only when there are several media AND the first file has a
+			 * preview (otherwise the type icon is shown instead). Used both to gate the stack template
+			 * and the preview media-offset so the extra top margin is not added when the icon is shown.
+			 */
+			showGalleryStack() {
+				return this.isGallery && !this.showIcon;
+			},
+			/** Pluralized "N media" caption for the gallery preview */
+			mediaCountText() {
+				return main_core.Loc.getMessagePlural('IM_MESSAGE_REPLY_MEDIA_COUNT', this.galleryCount, {
+					'#COUNT#': this.galleryCount
+				});
+			},
+			showIcon() {
+				if (!this.messageFile) {
+					return false;
+				}
+				return !this.messageFile.urlPreview;
+			},
+			truncatedFileName() {
+				if (!this.messageFile?.name) {
+					return '';
+				}
+				return im_v2_lib_utils.Utils.file.getShortFileName(this.messageFile.name, NAME_MAX_LENGTH);
+			},
+			iconClass() {
+				if (!this.messageFile?.name) {
+					return 'ui-icon-file-file';
+				}
+				const iconType = im_v2_lib_utils.Utils.file.getIconTypeByFilename(this.messageFile.name);
+				return `ui-icon-file-${iconType}`;
+			},
+			/** Human-readable size of the file reply (empty when the file has no known size) */
+			fileSize() {
+				if (!this.messageFile?.size) {
+					return '';
+				}
+				return im_v2_lib_utils.Utils.file.formatFileSize(this.messageFile.size);
+			},
+			// --- End media computed ---
+
+			isMessageDeleted() {
+				return Boolean(this.replyMessage?.isDeleted);
+			},
 			replyText() {
+				if (!this.replyMessage) {
+					return '';
+				}
 				let text = im_v2_lib_parser.Parser.prepareQuote(this.replyMessage);
 				text = im_v2_lib_parser.Parser.decodeText(text);
 				return text;
@@ -785,10 +915,10 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				if (!this.isForward) {
 					return `${this.dialogId}/${this.replyId}`;
 				}
-				return `${this.replyMessageChat.dialogId}/${this.replyId}`;
+				return `${this.replyMessageChat?.dialogId}/${this.replyId}`;
 			},
 			canShowReply() {
-				return !main_core.Type.isNil(this.replyMessage);
+				return this.replyId !== 0;
 			},
 			isActiveQuote() {
 				return this.replyContext !== NO_CONTEXT_TAG;
@@ -802,6 +932,50 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			},
 			toggleLabel() {
 				return this.isExpanded ? this.loc('IM_PARSER_QUOTE_COLLAPSE') : this.loc('IM_PARSER_QUOTE_EXPAND');
+			},
+			/**
+			 * The original always travels with the reply (server bundles it as additionalMessages/additionalEntities).
+			 * So an absent original means it is inaccessible to the current user — show the "unavailable" fallback.
+			 */
+			isUnavailable() {
+				return main_core.Type.isNil(this.replyMessage);
+			},
+			/** True when the original is present and not deleted */
+			hasOriginal() {
+				return !main_core.Type.isNil(this.replyMessage) && !this.isMessageDeleted;
+			},
+			/** True when the original is present but deleted */
+			isDeleted() {
+				return !main_core.Type.isNil(this.replyMessage) && this.isMessageDeleted;
+			},
+			/** Show media preview only when the original is present and not deleted */
+			showMediaPreview() {
+				return this.hasOriginal && Boolean(this.messageFile || this.isSticker);
+			},
+			/**
+			 * Caption shown next to the media preview. For image/video and stickers with a thumbnail the type
+			 * is already conveyed by the thumbnail, so the textual type prefix (image/video/sticker) would
+			 * duplicate it — suppress it. Other types keep the full quote text.
+			 */
+			previewText() {
+				if ((this.isImage || this.isVideo) && !this.showIcon) {
+					const caption = im_v2_lib_parser.Parser.purify({
+						text: this.replyMessage?.text ?? ''
+					});
+					return im_v2_lib_parser.Parser.decodeText(caption);
+				}
+				if (this.isSticker && this.stickerImageUri) {
+					return '';
+				}
+
+				// For a file reply the file chip (icon + name + size) conveys the file; below it show only the caption text.
+				if (this.isFile) {
+					const caption = im_v2_lib_parser.Parser.purify({
+						text: this.replyMessage?.text ?? ''
+					});
+					return im_v2_lib_parser.Parser.decodeText(caption);
+				}
+				return this.replyText;
 			}
 		},
 		watch: {
@@ -835,6 +1009,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				const selection = window.getSelection().toString().trim();
 				return main_core.Type.isStringFilled(selection);
 			},
+			hasPreview(file) {
+				return main_core.Type.isStringFilled(file.urlPreview);
+			},
 			onQuoteClick(event) {
 				const isInteractiveClick = event.target instanceof HTMLElement && event.target.closest('a');
 				if (isInteractiveClick) {
@@ -850,6 +1027,22 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				}
 				this.toggleExpanded();
 			},
+			onNavigateToOriginal() {
+				if (!this.isActiveQuote) {
+					return;
+				}
+				const [dialogId, messageId] = this.replyContext.split('/');
+				this.$Bitrix.eventEmitter.emit(im_v2_const.EventType.dialog.goToMessageContext, {
+					messageId: Number.parseInt(messageId, 10),
+					dialogId: dialogId.toString()
+				});
+			},
+			onQuoteKeydown(event) {
+				if (event.key === 'Enter' || event.key === ' ') {
+					event.preventDefault();
+					this.onNavigateToOriginal();
+				}
+			},
 			loc(phraseCode) {
 				return this.$Bitrix.Loc.getMessage(phraseCode);
 			}
@@ -860,21 +1053,149 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			class="bx-im-message-quote --reply"
 			:class="quoteClasses"
 			:data-context="replyContext"
+			data-testid="im-message-reply-root"
 			@click="onQuoteClick"
 		>
 			<div class="bx-im-message-quote__wrap">
-				<div class="bx-im-message-quote__name">
+				<div
+					class="bx-im-message-quote__name"
+					:tabindex="isActiveQuote ? 0 : -1"
+					:role="isActiveQuote ? 'button' : undefined"
+					:aria-label="isActiveQuote ? loc('IM_MESSAGE_REPLY_GO_TO_ORIGINAL') : undefined"
+					data-testid="im-message-reply-navigate-btn"
+					@keydown="isActiveQuote ? onQuoteKeydown($event) : undefined"
+				>
 					<div class="bx-im-message-quote__name-text">{{ replyTitle }}</div>
 				</div>
-				<div ref="text" class="bx-im-message-quote__text" v-html="replyText"></div>
-				<button
-					v-if="isExpandable"
-					type="button"
-					class="bx-im-message-quote__toggle"
-					@click.stop="toggleExpanded"
-				>
-					{{ toggleLabel }}
-				</button>
+
+				<!-- Original is inaccessible to the current user (server did not bundle it) -->
+				<div v-if="isUnavailable" class="bx-im-message-quote__text" data-testid="im-message-reply-state-unavailable">{{ loc('IM_MESSAGE_REPLY_UNAVAILABLE') }}</div>
+
+				<!-- Original is deleted -->
+				<div v-else-if="isDeleted" ref="text" class="bx-im-message-quote__text" data-testid="im-message-reply-state-deleted" v-html="replyText"></div>
+
+				<!-- Original with media preview -->
+				<template v-else-if="showMediaPreview">
+					<!-- Visual preview (file chip / thumbnail / icon / sticker) -->
+					<div
+							class="bx-im-message-quote__preview"
+							:class="{ 'bx-im-message-quote__preview--media-offset': isFile || showGalleryStack }"
+							data-testid="im-message-reply-preview"
+						>
+						<!-- File: file-type icon + name + size chip -->
+						<template v-if="isFile">
+							<div class="bx-im-message-quote__file-icon" data-testid="im-message-reply-file-icon">
+								<div :class="iconClass" class="ui-icon" aria-hidden="true"><i></i></div>
+							</div>
+							<div class="bx-im-message-quote__file-caption">
+								<span class="bx-im-message-quote__file-name" data-testid="im-message-reply-file-name">{{ truncatedFileName }}</span>
+								<span
+									v-if="fileSize"
+									class="bx-im-message-quote__file-size"
+									data-testid="im-message-reply-file-size"
+								>{{ fileSize }}</span>
+							</div>
+						</template>
+
+						<!-- Gallery: overlapped stack of first thumbnails + "+N" badge + "Gallery / N media" caption -->
+						<template v-else-if="showGalleryStack">
+							<div class="bx-im-message-quote__gallery-stack" :class="galleryStackModifier" data-testid="im-message-reply-gallery-stack">
+								<div
+									v-for="file in galleryThumbnails"
+									:key="file.id"
+									class="bx-im-message-quote__gallery-stack-item"
+								>
+									<img
+										v-if="hasPreview(file)"
+										class="bx-im-message-quote__gallery-stack-img"
+										:src="file.urlPreview"
+										:alt="file.name"
+										loading="lazy"
+									>
+								</div>
+								<span
+									v-if="galleryRemainingCount > 0"
+									class="bx-im-message-quote__gallery-badge"
+									data-testid="im-message-reply-gallery-badge"
+								>+{{ galleryRemainingCount }}</span>
+							</div>
+							<div class="bx-im-message-quote__gallery-caption" data-testid="im-message-reply-gallery-caption">
+								<span class="bx-im-message-quote__gallery-caption-title">{{ loc('IM_PARSER_ICON_TYPE_GALLERY') }}</span>
+								<span class="bx-im-message-quote__gallery-caption-count">{{ mediaCountText }}</span>
+							</div>
+						</template>
+
+						<!-- Video note (round video message): round thumbnail (poster) only, no type caption (round shape conveys the type; alt keeps the IM_PARSER_ICON_TYPE_VIDEO_NOTE a11y label) -->
+						<template v-else-if="isVideoNote && !showIcon">
+							<div class="bx-im-message-quote__preview-video-note" data-testid="im-message-reply-preview-video-note">
+								<img
+									class="bx-im-message-quote__preview-video-note_img"
+									:src="messageFile.urlPreview"
+									:alt="loc('IM_PARSER_ICON_TYPE_VIDEO_NOTE')"
+									loading="lazy"
+								>
+							</div>
+						</template>
+
+						<!-- Image / Video: single thumbnail (urlPreview only) -->
+						<template v-else-if="(isImage || isVideo) && !showIcon">
+							<div class="bx-im-message-quote__preview-image" data-testid="im-message-reply-preview-image">
+								<img
+									class="bx-im-message-quote__preview-image_img"
+									:src="messageFile.urlPreview"
+									:alt="messageFile.name"
+									loading="lazy"
+								>
+							</div>
+						</template>
+
+						<!-- Image / Video without preview: type icon -->
+						<template v-else-if="isImage || isVideo">
+							<div class="bx-im-message-quote__preview-file-icon" data-testid="im-message-reply-preview-icon">
+								<div :class="iconClass" class="ui-icon" aria-hidden="true"><i></i></div>
+							</div>
+						</template>
+
+						<!-- Audio: no icon; text label shown below -->
+						<template v-else-if="isAudio"></template>
+
+						<!-- Sticker: mini-thumbnail (falls back to text label when uri is absent) -->
+						<template v-else-if="isSticker && stickerImageUri">
+							<div class="bx-im-message-quote__preview-sticker" data-testid="im-message-reply-preview-sticker">
+								<img
+									class="bx-im-message-quote__preview-sticker_img"
+									:src="stickerImageUri"
+									:alt="replyText"
+									loading="lazy"
+								>
+							</div>
+						</template>
+					</div>
+					<div v-if="previewText" ref="text" class="bx-im-message-quote__text" v-html="previewText"></div>
+					<button
+						v-if="isExpandable"
+						type="button"
+						class="bx-im-message-quote__toggle"
+						data-testid="im-message-reply-toggle-btn"
+						@click.stop="toggleExpanded"
+					>
+						{{ toggleLabel }}
+					</button>
+				</template>
+
+				<!-- Original, text only -->
+				<template v-else>
+					<div ref="text" class="bx-im-message-quote__text" v-html="replyText"></div>
+					<button
+						v-if="isExpandable"
+						type="button"
+						class="bx-im-message-quote__toggle"
+						data-testid="im-message-reply-toggle-btn"
+						@click.stop="toggleExpanded"
+					>
+						{{ toggleLabel }}
+					</button>
+				</template>
 			</div>
 		</div>
 	`
@@ -1444,8 +1765,13 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	`
 	};
 
-	const SLIDER_ID = 'im:source-list-slider';
+	const SLIDER_ID_PREFIX = 'im:source-list-slider';
 	const SLIDER_WIDTH = 546;
+
+	// Slider id is derived from the message id. The sources button is rendered only for fully
+	// received messages, so `messageId` is stable for the component lifetime (not a temporary
+	// sending id) and yields a stable, per-message unique slider id.
+	const buildSliderId = messageId => `${SLIDER_ID_PREFIX}:${messageId}`;
 
 	// @vue/component
 	const SourceListSlider = {
@@ -1453,6 +1779,10 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		props: {
 			messageBlocks: {
 				type: Array,
+				required: true
+			},
+			messageId: {
+				type: [Number, String],
 				required: true
 			}
 		},
@@ -1473,6 +1803,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			}
 		},
 		created() {
+			this.sliderId = buildSliderId(this.messageId);
 			this.contentContainer = main_core.Tag.render`<div></div>`;
 			this.openSlider();
 		},
@@ -1481,7 +1812,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		},
 		methods: {
 			openSlider() {
-				main_sidepanel.SidePanel.Instance.open(SLIDER_ID, {
+				main_sidepanel.SidePanel.Instance.open(this.sliderId, {
 					cacheable: false,
 					width: SLIDER_WIDTH,
 					contentCallback: () => {
@@ -1495,7 +1826,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				});
 			},
 			closeSlider() {
-				const slider = main_sidepanel.SidePanel.Instance.getSlider(SLIDER_ID);
+				const slider = main_sidepanel.SidePanel.Instance.getSlider(this.sliderId);
 				if (!slider) {
 					return;
 				}
@@ -1539,7 +1870,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 					>
 						{{ source.description }}
 					</div>
-					<a :href="source.url" target="_blank" class="bx-im-message-source-list-slider__item-link">
+					<a :href="source.url" target="_blank" class="bx-im-message-source-list-slider__item-link --ellipsis">
 						{{ source.url }}
 					</a>
 				</div>
@@ -1547,6 +1878,10 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		</Teleport>
 	`
 	};
+
+	// Module-level coordinator: id of the message whose source slider is currently open.
+	// When a new button is clicked, the slider of the previously opened message is closed first.
+	let openMessageId = null;
 
 	// @vue/component
 	const SourceListButton = {
@@ -1559,6 +1894,10 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		props: {
 			messageBlocks: {
 				type: Array,
+				required: true
+			},
+			messageId: {
+				type: [Number, String],
 				required: true
 			}
 		},
@@ -1577,7 +1916,35 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				});
 			}
 		},
+		beforeUnmount() {
+			// Only clear the coordinator if this message owns the open slider. Its own
+			// SourceListSlider.beforeUnmount → closeSlider() handles the actual close idempotently.
+			if (openMessageId === this.messageId) {
+				openMessageId = null;
+			}
+		},
 		methods: {
+			handleButtonClick() {
+				if (this.showSlider) {
+					main_sidepanel.SidePanel.Instance.getSlider(buildSliderId(this.messageId))?.close();
+					return;
+				}
+
+				// Close the previously opened message's slider by its message-derived id.
+				// This is intentionally idempotent: that slider's own beforeUnmount → closeSlider()
+				// is a safe no-op afterwards (getSlider() returns null once it is already closed).
+				if (openMessageId !== null && openMessageId !== this.messageId) {
+					main_sidepanel.SidePanel.Instance.getSlider(buildSliderId(openMessageId))?.close();
+				}
+				openMessageId = this.messageId;
+				this.showSlider = true;
+			},
+			handleSliderClose() {
+				this.showSlider = false;
+				if (openMessageId === this.messageId) {
+					openMessageId = null;
+				}
+			},
 			loc(phraseCode) {
 				return this.$Bitrix.Loc.getMessage(phraseCode);
 			}
@@ -1586,13 +1953,13 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		<span
 			v-if="hasSources"
 			:title="loc('IM_MESSAGE_BUILDER_SOURCES_BUTTON')"
-			class="bx-im-message-source-list-button__container --ui-hoverable" 
-			@click="showSlider = true"
+			class="bx-im-message-source-list-button__container --ui-hoverable"
+			@click="handleButtonClick"
 		>
 			<BIcon :name="OutlineIcons.EARTH" />
 			<span class="--ellipsis">{{ loc('IM_MESSAGE_BUILDER_SOURCES_BUTTON') }}</span>
 		</span>
-		<SourceListSlider v-if="showSlider" :messageBlocks="messageBlocks" @close="showSlider = false"/>
+		<SourceListSlider v-if="showSlider" :messageBlocks="messageBlocks" :messageId="messageId" @close="handleSliderClose"/>
 	`
 	};
 
@@ -4268,7 +4635,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	const AiAssistantSearch = {
 		name: 'AiAssistantSearch',
 		components: {
-			BaseBlock
+			BaseBlock,
+			BIcon: ui_iconSet_api_vue.BIcon
 		},
 		props: {
 			message: {
@@ -4284,9 +4652,35 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				required: true
 			}
 		},
+		data() {
+			return {
+				isExpanded: false,
+				isExpandable: false
+			};
+		},
 		computed: {
+			OutlineIcons: () => ui_iconSet_api_vue.Outline,
 			aiAssistantSearchBlock() {
 				return this.block;
+			},
+			chevronIcon() {
+				return this.isExpanded ? ui_iconSet_api_vue.Outline.CHEVRON_TOP_L : ui_iconSet_api_vue.Outline.CHEVRON_DOWN_L;
+			},
+			chevronLabel() {
+				return this.isExpanded ? this.loc('IM_MESSAGE_BUILDER_AI_ASSISTANT_SEARCH_COLLAPSE') : this.loc('IM_MESSAGE_BUILDER_AI_ASSISTANT_SEARCH_EXPAND');
+			},
+			textClasses() {
+				return {
+					'bx-im-message-block-ai-assistant-search__text': true,
+					'--ellipsis': !this.isExpanded,
+					'--expanded': this.isExpanded,
+					'--has-chevron': this.isExpandable && !this.isExpanded
+				};
+			}
+		},
+		watch: {
+			'aiAssistantSearchBlock.text': function () {
+				void this.updateToggleAvailability();
 			}
 		},
 		mounted() {
@@ -4297,12 +4691,39 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				loop: true,
 				autoplay: true
 			});
+			void this.updateToggleAvailability();
 		},
 		beforeUnmount() {
 			if (!this.currentAnimation) {
 				return;
 			}
 			this.currentAnimation.destroy();
+		},
+		methods: {
+			toggleExpanded() {
+				if (!this.isExpandable) {
+					return;
+				}
+				this.isExpanded = !this.isExpanded;
+			},
+			loc(phraseCode) {
+				return this.$Bitrix.Loc.getMessage(phraseCode);
+			},
+			async updateToggleAvailability() {
+				await this.$nextTick();
+				const textNode = this.$refs.text;
+				if (!textNode) {
+					return;
+				}
+				main_core.Dom.style(textNode, 'white-space', 'nowrap');
+				const containerWidth = textNode.parentElement?.clientWidth ?? textNode.clientWidth;
+				const isOverflowing = textNode.scrollWidth > containerWidth;
+				main_core.Dom.style(textNode, 'white-space', '');
+				this.isExpandable = isOverflowing;
+				if (!isOverflowing) {
+					this.isExpanded = false;
+				}
+			}
 		},
 		template: `
 		<BaseBlock
@@ -4311,20 +4732,38 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			:dialogId="dialogId"
 		>
 			<div class="bx-im-message-block-ai-assistant-search__container">
+				<div class="bx-im-message-block-ai-assistant-search__width-anchor" aria-hidden="true"></div>
 				<div class="bx-im-message-block-ai-assistant-search__title-container">
 					<div class="bx-im-message-block-ai-assistant-search__icon" ref="animationContainer"></div>
-					<div 
-						:title="aiAssistantSearchBlock.title" 
+					<div
+						:title="aiAssistantSearchBlock.title"
 						class="bx-im-message-block-ai-assistant-search__title --ellipsis"
 					>
 						{{ aiAssistantSearchBlock.title }}
 					</div>
 				</div>
-				<div 
-					:title="aiAssistantSearchBlock.text" 
-					class="bx-im-message-block-ai-assistant-search__text --ellipsis"
-				>
-					{{ aiAssistantSearchBlock.text }}
+				<div class="bx-im-message-block-ai-assistant-search__text-container">
+					<div
+						ref="text"
+						:title="aiAssistantSearchBlock.text"
+						:class="textClasses"
+					>
+						{{ aiAssistantSearchBlock.text }}
+					</div>
+					<button
+						v-if="isExpandable"
+						type="button"
+						class="bx-im-message-block-ai-assistant-search__chevron"
+						:aria-label="chevronLabel"
+						:aria-expanded="isExpanded"
+						data-testid="ai-assistant-search-expand-btn"
+						@click.stop="toggleExpanded"
+					>
+						<BIcon
+							:name="chevronIcon"
+							aria-hidden="true"
+						/>
+					</button>
 				</div>
 			</div>
 		</BaseBlock>
@@ -4722,7 +5161,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 					>
 						{{ description }}
 					</div>
-					<div class="bx-im-source-popup__url">{{ sourceItem.url }}</div>
+					<div class="bx-im-source-popup__url --ellipsis">{{ sourceItem.url }}</div>
 				</a>
 			</div>
 		</MessengerPopup>
@@ -4977,7 +5416,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				return getTextColorClass(this.listItem, this.listBlock);
 			},
 			formattedText() {
-				return im_v2_lib_parser.Parser.decodeText(this.listItem.text);
+				return im_v2_lib_parser.Parser.decodeInlineText(this.listItem.text);
 			},
 			itemIconType() {
 				const iconType = this.listItem.icon?.type || this.listBlock.icon?.type;
@@ -4991,7 +5430,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			}
 		},
 		template: `
-		<li class="bx-im-message-block-unordered-list-item__container">
+		<li class="bx-im-message-block-unordered-list-item__container" data-testid="message-builder-unordered-list-item">
 			<span
 				class="bx-im-message-block-unordered-list-item__marker"
 				:class="iconColorClass"
@@ -5063,7 +5502,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		},
 		methods: {
 			getFormattedText(text) {
-				return im_v2_lib_parser.Parser.decodeText(text);
+				return im_v2_lib_parser.Parser.decodeInlineText(text);
 			},
 			getTextColorClass(item) {
 				return getTextColorClass(item, this.listBlock);
@@ -5073,11 +5512,12 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			}
 		},
 		template: `
-		<ol class="bx-im-message-block-ordered-list__container">
+		<ol class="bx-im-message-block-ordered-list__container" data-testid="message-builder-ordered-list">
 			<li
 				v-for="(item, index) in listBlock.elements"
 				:key="index"
 				class="bx-im-message-block-ordered-list__item"
+				data-testid="message-builder-ordered-list-item"
 			>
 				<span
 					class="bx-im-message-block-ordered-list__marker"
@@ -5351,7 +5791,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				return firstColumn;
 			},
 			getFormattedText(text) {
-				return im_v2_lib_parser.Parser.decodeText(text);
+				return im_v2_lib_parser.Parser.decodeInlineText(text);
 			}
 		},
 		template: `
@@ -5365,7 +5805,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 					:class="{ '--narrow': isNarrow }"
 					:style="{ '--im-message-builder-table-cols': columnCount }"
 					ref="container"
-					class="bx-im-message-block-table__container" 
+					class="bx-im-message-block-table__container"
+					data-testid="message-builder-table"
 				>
 					<table class="bx-im-message-block-table__table">
 						<tbody>
@@ -5376,6 +5817,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 								<td
 									v-for="(cell, cellIndex) in row"
 									:key="cellIndex"
+									data-testid="message-builder-table-cell"
 								>
 									<BuilderTextContent
 										:text="getFormattedText(cell.text)"
@@ -5515,9 +5957,6 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			messageBlocks() {
 				return this.$store.getters['messages/builder/getBlocks'](this.message.id);
 			},
-			isAvailable() {
-				return im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.isMessageBuilderAvailable);
-			},
 			hasBlocks() {
 				return this.messageBlocks.length > 0;
 			},
@@ -5549,7 +5988,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			}
 		},
 		template: `
-		<div v-if="isAvailable && hasBlocks" :style="maxWidthStyles">
+		<div v-if="hasBlocks" :style="maxWidthStyles">
 			<component
 				v-for="(block, index) in messageBlocks"
 				:is="getComponentNameByType(block.type)"
@@ -5558,7 +5997,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				:block="block"
 				:dialogId="dialogId"
 			/>
-			<SourceListButton :messageBlocks="messageBlocks" />
+			<SourceListButton :messageBlocks="messageBlocks" :messageId="message.id" />
 		</div>
 	`
 	};
@@ -5595,6 +6034,10 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				type: Boolean,
 				default: true
 			},
+			withReply: {
+				type: Boolean,
+				default: true
+			},
 			withBuilder: {
 				type: Boolean,
 				default: false
@@ -5625,7 +6068,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		},
 		template: `
 		<div class="bx-im-message-default-content__container" :class="{'--no-text': !withText || hasBuilderBlocks}">
-			<Reply v-if="isReply" :dialogId="dialogId" :replyId="message.replyId" :isForward="isForward" />
+			<Reply v-if="isReply && withReply" :dialogId="dialogId" :replyId="message.replyId" :isForward="isForward" />
 			<TextContent v-if="withText && !hasBuilderBlocks" :text="formattedText" />
 			<BuilderContent v-else :item="item" :dialogId="dialogId"/>
 			<div v-if="withAttach && message.attach.length > 0" class="bx-im-message-default-content__attach">
@@ -6020,5 +6463,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	exports.TextContent = TextContent;
 	exports.VideoItem = VideoItem;
 
-})(this.BX.Messenger.v2.Component.Message = this.BX.Messenger.v2.Component.Message || {}, BX.Messenger.v2.Application, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Vue3, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Component.Elements, BX.Event, BX.UI.Reaction.Item, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.UI.Reaction.Item.Vue, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Lib, BX.Messenger.v2.Service, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.UI.Reaction.Picker, BX, BX.Messenger.v2.Lib, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Lib, BX.Messenger.v2.Service, BX.Messenger.v2.Service, BX.Messenger.v2.Service, BX.UI.System, BX.UI.IconSet, BX.Messenger.v2.Lib, BX.Messenger.v2.Component.Animation, BX.Messenger.v2.Service, BX.Messenger.v2.Lib, BX.UI.System.Chip.Vue, BX.SidePanel, BX.UI.SidePanel, BX.UI, BX.Vue3.Components, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Component.Elements);
+})(this.BX.Messenger.v2.Component.Message = this.BX.Messenger.v2.Component.Message || {}, BX.Messenger.v2.Application, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Vue3, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Component.Elements, BX.Event, BX.UI.Reaction.Item, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.UI.Reaction.Item.Vue, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Lib, BX.Messenger.v2.Service, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.UI.Reaction.Picker, BX, BX.Messenger.v2.Lib, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Lib, BX.Messenger.v2.Service, BX.Messenger.v2.Service, BX.Messenger.v2.Service, BX.UI.System, BX.UI.IconSet, BX.Messenger.v2.Lib, BX.Messenger.v2.Component.Animation, BX.Messenger.v2.Service, BX.SidePanel, BX.UI.System.Chip.Vue, BX.UI.SidePanel, BX.UI, BX.Vue3.Components, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Component.Elements);
 //# sourceMappingURL=registry.bundle.js.map

@@ -19,6 +19,7 @@ class CBPFullReportReadyTrigger extends BaseTrigger
 {
 	private const PARAM_USER_IDS = 'USER_IDS';
 	private const RETURN_PARAM_USER = 'USER';
+	private const RETURN_PARAM_MANAGER = 'MANAGER';
 
 	public function execute(): int
 	{
@@ -30,6 +31,12 @@ class CBPFullReportReadyTrigger extends BaseTrigger
 			$this->{self::RETURN_PARAM_USER} = 'user_' . $userId;
 		}
 
+		$managerId = (int)($context[FullReportReadyTrigger::FIELD_MANAGER_ID] ?? 0);
+		if (!empty($managerId))
+		{
+			$this->{self::RETURN_PARAM_MANAGER} = 'user_' . $managerId;
+		}
+
 		return CBPActivityExecutionStatus::Closed;
 	}
 
@@ -39,10 +46,14 @@ class CBPFullReportReadyTrigger extends BaseTrigger
 		$this->arProperties = [
 			self::PARAM_USER_IDS => null,
 			self::RETURN_PARAM_USER => null,
+			self::RETURN_PARAM_MANAGER => null,
 		];
 
 		$this->SetPropertiesTypes([
 			self::RETURN_PARAM_USER => [
+				'Type' => FieldType::USER,
+			],
+			self::RETURN_PARAM_MANAGER => [
 				'Type' => FieldType::USER,
 			],
 		]);

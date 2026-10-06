@@ -550,7 +550,8 @@ export default class Comment extends History
 				this._detetionConfirmDlgId,
 				{
 					title: this.getMessage("removeConfirmTitle"),
-					content: this.getMessage('commentRemove')
+					content: this.getMessage('commentRemove'),
+					background: 'vibrant',
 				}
 			);
 		}

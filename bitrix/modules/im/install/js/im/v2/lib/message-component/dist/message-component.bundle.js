@@ -70,9 +70,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			return this.#message.isDeleted || this.#isEmptyMessage();
 		}
 		#isEmojiOnly() {
-			if (this.#message.replyId > 0) {
-				return false;
-			}
 			if (this.#isForward()) {
 				return false;
 			}
@@ -82,9 +79,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			return im_v2_lib_utils.Utils.text.isEmojiOnly(this.#message.text);
 		}
 		#hasSmilesOnly() {
-			if (this.#message.replyId > 0) {
-				return false;
-			}
 			if (this.#isForward()) {
 				return false;
 			}
@@ -118,6 +112,5 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	}
 
 	exports.MessageComponentManager = MessageComponentManager;
-
-})(this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}, BX?.OpenLines?.v2?.Lib??{}, BX?.Messenger?.v2?.Application??{}, BX?.Messenger?.v2?.Const??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{});
+})(this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}, BX?.OpenLines?.v2?.Lib??{}, BX?.Messenger?.v2?.Application??{}, BX?.Messenger?.v2?.Const??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{});;
 //# sourceMappingURL=message-component.bundle.js.map

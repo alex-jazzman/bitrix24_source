@@ -12,8 +12,9 @@ export type RecentUpdateParams = {
 	parentChatId: number,
 	additionalMessages: RawMessage[],
 	chat: RecentChat,
+	chats?: {[chatId: string]: RecentChat},
 	counter: number,
-	lastActivityDate: string,
+	lastActivityDate: ?string,
 	message: RawMessage,
 	files: RawFile[],
 	users: RawUser[],
@@ -54,10 +55,6 @@ export type RecentHideParams = {
 		sections: RecentTypeItem[],
 	}
 };
-
-export type UserLogoutParams = {
-	deactivatedCodes: string[],
-}
 
 type UserShowInRecentItem = {
 	user: RawUser,

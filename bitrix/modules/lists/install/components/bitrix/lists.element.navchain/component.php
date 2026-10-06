@@ -1,5 +1,9 @@
-<?
+<?php
+
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
+
+use Bitrix\Main\Web\Uri;
+
 /** @global CMain $APPLICATION */
 /** @global CUser $USER */
 /** @global CDatabase $DB */
@@ -64,11 +68,11 @@ if (isset($arParams['ADD_NAVCHAIN_GROUP']) && $arParams["ADD_NAVCHAIN_GROUP"] ==
 
 if (!isset($arParams['ADD_NAVCHAIN_LIST']) || $arParams["ADD_NAVCHAIN_LIST"] !== "N")
 {
-	$arResult["~LIST_URL"] = CHTTP::urlAddParams(str_replace(
+	$arResult["~LIST_URL"] = (string)(new Uri(str_replace(
 		array("#list_id#", "#section_id#", "#group_id#"),
 		array($arResult["IBLOCK_ID"], 0, $arParams["SOCNET_GROUP_ID"]),
 		$arParams["~LIST_URL"]
-	), array("list_section_id" => ""));
+	)))->addParams(["list_section_id" => ""]);
 	$arResult["LIST_URL"] = htmlspecialcharsbx($arResult["~LIST_URL"]);
 
 	$APPLICATION->AddChainItem($arResult["IBLOCK"]["NAME"], $arResult["~LIST_URL"]);

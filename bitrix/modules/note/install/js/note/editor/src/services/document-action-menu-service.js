@@ -42,6 +42,7 @@ export class DocumentActionMenuService
 
 	#buildMenuItems(docId: number, context: Object): Array<Object>
 	{
+		const isMain = Boolean(context?.isMain);
 		const isTrashed = Boolean(context?.isTrashed);
 		const isArchived = Boolean(context?.isArchived);
 		const canEditCollection = Boolean(context?.canEditCollection);
@@ -49,7 +50,11 @@ export class DocumentActionMenuService
 		const canRestore = Boolean(context?.canRestore);
 		const canHardDelete = Boolean(context?.canHardDelete);
 		const documentTitle = Type.isString(context?.documentTitle) ? context.documentTitle : '';
+		const onCopyLink = typeof context?.onCopyLink === 'function' ? context.onCopyLink : null;
+		const canEdit = Boolean(context?.canEdit);
 		const onCopyMarkdown = typeof context?.onCopyMarkdown === 'function' ? context.onCopyMarkdown : null;
+		const onDownload = typeof context?.onDownload === 'function' ? context.onDownload : null;
+		const onImportMarkdown = typeof context?.onImportMarkdown === 'function' ? context.onImportMarkdown : null;
 		const onArchive = typeof context?.onArchive === 'function' ? context.onArchive : null;
 		const onRestore = typeof context?.onRestore === 'function' ? context.onRestore : null;
 		const onDelete = typeof context?.onDelete === 'function' ? context.onDelete : null;
@@ -57,13 +62,44 @@ export class DocumentActionMenuService
 		const onHardDelete = typeof context?.onHardDelete === 'function' ? context.onHardDelete : null;
 		const items = [];
 
+		if (onCopyLink)
+		{
+			items.push({
+				text: this.#messages.copyLink ?? '',
+				iconModifier: 'o-link',
+				testId: 'note-doc-menu-copy-link',
+				onClick: onCopyLink,
+			});
+		}
+
 		if (onCopyMarkdown)
 		{
 			items.push({
 				text: this.#messages.copyMarkdown ?? '',
 				iconModifier: 'o-copy',
+				testId: 'note-doc-menu-copy-markdown',
 				onClick: onCopyMarkdown,
 			});
+		}
+
+		// Not gated by isTrashed/isArchived/canEditCollection: viewing the document page
+		// already implies view access, and downloading is allowed for trashed/archived docs too.
+		if (onDownload)
+		{
+			items.push({
+				text: this.#messages.download ?? '',
+				iconModifier: 'o-download',
+				testId: 'note-doc-menu-download',
+				onClick: onDownload,
+			});
+		}
+
+		// The collection's main document (the "About" description) cannot be archived,
+		// deleted, moved, or have its permissions managed - it lives and dies with the
+		// collection. Expose only the safe, non-destructive actions (e.g. copy markdown).
+		if (isMain)
+		{
+			return items;
 		}
 
 		if (isTrashed)
@@ -73,6 +109,7 @@ export class DocumentActionMenuService
 				items.push({
 					text: this.#messages.restoreFromTrash ?? '',
 					iconModifier: 'o-undo',
+					testId: 'note-doc-menu-restore',
 					onClick: onRestoreFromTrash,
 				});
 			}
@@ -83,6 +120,7 @@ export class DocumentActionMenuService
 					text: this.#messages.hardDelete ?? '',
 					iconModifier: 'o-trashcan',
 					danger: true,
+					testId: 'note-doc-menu-hard-delete',
 					onClick: onHardDelete,
 				});
 			}
@@ -97,6 +135,7 @@ export class DocumentActionMenuService
 				items.push({
 					text: this.#messages.restore ?? '',
 					iconModifier: 'o-undo',
+					testId: 'note-doc-menu-restore',
 					onClick: onRestore,
 				});
 			}
@@ -107,6 +146,7 @@ export class DocumentActionMenuService
 					text: this.#messages.delete ?? '',
 					iconModifier: 'o-trashcan',
 					danger: true,
+					testId: 'note-doc-menu-delete',
 					onClick: onDelete,
 				});
 			}
@@ -114,11 +154,22 @@ export class DocumentActionMenuService
 			return items;
 		}
 
+		if (!isArchived && canEdit && onImportMarkdown)
+		{
+			items.push({
+				text: this.#messages.importMarkdown ?? '',
+				iconModifier: 'o-share',
+				testId: 'note-doc-menu-import-markdown',
+				onClick: onImportMarkdown,
+			});
+		}
+
 		if (!isArchived && canEditCollection && onArchive)
 		{
 			items.push({
 				text: this.#messages.archive ?? '',
 				iconModifier: 'o-box-with-lid',
+				testId: 'note-doc-menu-archive',
 				onClick: onArchive,
 			});
 		}
@@ -128,6 +179,7 @@ export class DocumentActionMenuService
 			items.push({
 				text: this.#messages.permissions ?? '',
 				iconModifier: 'o-settings',
+				testId: 'note-doc-menu-permissions',
 				onClick: () => {
 					void PermissionsApp.openDocumentPopup(docId, { documentTitle });
 				},
@@ -140,6 +192,7 @@ export class DocumentActionMenuService
 				text: this.#messages.delete ?? '',
 				iconModifier: 'o-trashcan',
 				danger: true,
+				testId: 'note-doc-menu-delete',
 				onClick: onDelete,
 			});
 		}

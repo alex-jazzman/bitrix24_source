@@ -77,6 +77,7 @@ export class VueAttachmentNodeView
 		this._observedParent = null;
 		this._handleImgLoad = () => this.scheduleStackUpdate();
 		this.syncLayout();
+		this.syncDiffState();
 
 		this.mountVue();
 
@@ -166,6 +167,7 @@ export class VueAttachmentNodeView
 
 		this.node = node;
 		this.syncLayout();
+		this.syncDiffState();
 		this.scheduleStackUpdate();
 		if (this.vm)
 		{
@@ -174,6 +176,16 @@ export class VueAttachmentNodeView
 		}
 
 		return true;
+	}
+
+	// [version-diff] Reflect the diffState attr as a class on the block DOM (the element in block flow,
+	// same place align/stacking classes live). The attr is part of the model and survives resolve, so
+	// the paint never drops after an image loads — unlike a positional node decoration.
+	syncDiffState(): void
+	{
+		const state = this.node.attrs.diffState;
+		this.dom.classList.toggle('note-version-diff-node--added', state === 'added');
+		this.dom.classList.toggle('note-version-diff-node--removed', state === 'removed');
 	}
 
 	// Effective rendered width of this node's block in px. offsetWidth reflects the live drag px, the

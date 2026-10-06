@@ -14,6 +14,7 @@ jn.define('bizproc/workflow/list/simple-list/item', (require, exports, module) =
 	const { Base } = require('layout/ui/simple-list/items/base');
 	const { Checkbox } = require('ui-system/form/checkbox');
 
+	const { handleNetworkError } = require('bizproc/helper/network-error');
 	const { WorkflowFaces } = require('bizproc/workflow/faces');
 	const { TaskErrorCode, TaskUserStatus } = require('bizproc/task/task-constants');
 	const { TaskButtons } = require('bizproc/task/buttons');
@@ -351,13 +352,15 @@ jn.define('bizproc/workflow/list/simple-list/item', (require, exports, module) =
 		{
 			if (Array.isArray(errors) && errors.length > 0 && !this.isLayoutHidden)
 			{
+				if (handleNetworkError(errors, this.layout))
+				{
+					return;
+				}
+
 				const error = errors.pop();
 				if (!TaskErrorCode.isTaskNotFoundErrorCode(error.code))
 				{
-					const message = error?.code === 'NETWORK_ERROR'
-						? Loc.getMessage('BPMOBILE_WORKFLOW_SIMPLE_LIST_NETWORK_ERROR')
-						: error.message;
-					Alert.alert(message);
+					Alert.alert(error.message);
 				}
 			}
 		}

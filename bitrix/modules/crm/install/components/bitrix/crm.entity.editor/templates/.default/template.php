@@ -301,6 +301,13 @@ if (!empty($htmlEditorConfigs))
 	}
 	?></div>
 <?php endif ?>
+<?php
+$isRichTextUserFieldAvailable =
+	class_exists(\Bitrix\Main\Config\Feature::class)
+	&& class_exists(\Bitrix\UI\Config\Feature\RichTextUserFieldFlag::class)
+	&& \Bitrix\Main\Config\Feature::isEnabled(\Bitrix\UI\Config\Feature\RichTextUserFieldFlag::class)
+;
+?>
 <script>
 	BX.ready(
 		function()
@@ -312,6 +319,7 @@ if (!empty($htmlEditorConfigs))
 			<?php if (
 				!empty($arResult['USERFIELD_TYPE_REST_CREATE_URL'])
 				|| \Bitrix\Crm\Integration\Calendar::isResourceBookingAvailableForEntity($arResult['USER_FIELD_ENTITY_ID'])
+				|| $isRichTextUserFieldAvailable
 			):?>
 			BX.Event.EventEmitter.subscribe(
 				'BX.UI.EntityUserFieldManager:getTypes',
@@ -322,7 +330,8 @@ if (!empty($htmlEditorConfigs))
 					{
 						return;
 					}
-					<?php if (\Bitrix\Crm\Integration\Calendar::isResourceBookingAvailableForEntity($arResult['USER_FIELD_ENTITY_ID'])):?>
+					var insertTypeBeforeAddress = function(types, item)
+					{
 						var index = 0;
 						var length = types.length;
 						for (; index < length; index++)
@@ -332,10 +341,21 @@ if (!empty($htmlEditorConfigs))
 								break;
 							}
 						}
-						types.splice(index, 0, {
+
+						types.splice(index, 0, item);
+					};
+					<?php if (\Bitrix\Crm\Integration\Calendar::isResourceBookingAvailableForEntity($arResult['USER_FIELD_ENTITY_ID'])):?>
+						insertTypeBeforeAddress(types, {
 							name: "resourcebooking",
 							title: "<?=GetMessageJS('CRM_ENTITY_ED_UF_RESOURCEBOOKING_TITLE')?>",
 							legend: "<?=GetMessageJS('CRM_ENTITY_ED_UF_RESOURCEBOOKING_LEGEND')?>"
+						});
+					<?php endif;?>
+					<?php if ($isRichTextUserFieldAvailable):?>
+						insertTypeBeforeAddress(types, {
+							name: "rich_text",
+							title: "<?=GetMessageJS('CRM_ENTITY_ED_UF_RICH_TEXT_TITLE')?>",
+							legend: "<?=GetMessageJS('CRM_ENTITY_ED_UF_RICH_TEXT_LEGEND')?>"
 						});
 					<?php endif;?>
 					<?php if (!empty($arResult['USERFIELD_TYPE_REST_CREATE_URL'])):?>

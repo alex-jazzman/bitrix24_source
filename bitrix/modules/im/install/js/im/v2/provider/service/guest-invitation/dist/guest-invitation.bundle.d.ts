@@ -25,7 +25,7 @@ declare namespace BX.Messenger.v2.Service {
 
 	class GuestInvitationService {
 		generateInviteLink(chatId: number): Promise<SharingLink>;
-		updateLink(chatId: number): Promise<void>;
+		updateLink(chatId: number): Promise<SharingLink>;
 		inviteByEmail(chatId: number, invitations: Array<{
 			email: string;
 		}>): Promise<void>;

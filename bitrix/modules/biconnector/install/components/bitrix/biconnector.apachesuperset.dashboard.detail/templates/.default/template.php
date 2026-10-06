@@ -11,9 +11,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
  * @var string $templateFolder
  */
 
+use Bitrix\BIConnector\Internal\Integration\AiAssistant\BitrixGptChat;
 use Bitrix\BIConnector\Manager;
 use Bitrix\BIConnector\Services\ApacheSuperset;
-use Bitrix\BIConnector\Internal\Integration\AiAssistant\BitrixGptChat;
 use Bitrix\Main\Context;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
@@ -143,21 +143,13 @@ $bitrixGptName = $isBitrixGptChatAvailable ? BitrixGptChat::getName() : '';
 			</div>
 		</div>
 		<div class="dashboard-header-buttons">
-			<button id="edit-btn" class="ui-btn --air ui-btn-md --style-tinted ui-btn-no-caps --with-left-icon dashboard-header-buttons-edit" data-compact-hint="<?= htmlspecialcharsbx(Loc::getMessage('SUPERSET_DASHBOARD_DETAIL_HEADER_EDIT')) ?>">
-				<div class="ui-icon-set --edit-l"></div>
-				<span class="dashboard-header-button-label"><?= Loc::getMessage('SUPERSET_DASHBOARD_DETAIL_HEADER_EDIT') ?></span>
-			</button>
-			<button id="info-btn" class="ui-btn --air ui-btn-md --style-outline ui-btn-no-caps dashboard-header-buttons-info" data-compact-hint="<?= htmlspecialcharsbx(Loc::getMessage('SUPERSET_DASHBOARD_DETAIL_HEADER_INFO')) ?>">
+			<button id="info-btn" class="ui-btn --air ui-btn-md --style-outline ui-btn-no-caps dashboard-header-buttons-info">
 				<div class="ui-icon-set --o-info-circle"></div>
-				<span class="dashboard-header-button-label"><?= Loc::getMessage('SUPERSET_DASHBOARD_DETAIL_HEADER_INFO') ?></span>
-			</button>
-			<button id="download-btn" class="ui-btn --air ui-btn-md --style-outline ui-btn-no-caps ui-btn-dropdown dashboard-header-buttons-download" data-compact-hint="<?= htmlspecialcharsbx(Loc::getMessage('SUPERSET_DASHBOARD_DETAIL_HEADER_DOWNLOAD')) ?>">
-				<div class="ui-icon-set --o-download"></div>
-				<span class="dashboard-header-button-label"><?= Loc::getMessage('SUPERSET_DASHBOARD_DETAIL_HEADER_DOWNLOAD') ?></span>
+				<?= Loc::getMessage('SUPERSET_DASHBOARD_DETAIL_HEADER_INFO') ?>
 			</button>
 			<button id="share-btn" class="ui-btn --air ui-btn-md --style-outline ui-btn-no-caps ui-btn-dropdown dashboard-header-buttons-share" data-compact-hint="<?= htmlspecialcharsbx(Loc::getMessage('SUPERSET_DASHBOARD_DETAIL_HEADER_SHARE_LINK')) ?>">
 				<div class="ui-icon-set --o-share"></div>
-				<span class="dashboard-header-button-label"><?= Loc::getMessage('SUPERSET_DASHBOARD_DETAIL_HEADER_SHARE_LINK') ?></span>
+				<?= Loc::getMessage('SUPERSET_DASHBOARD_DETAIL_HEADER_SHARE_LINK_MSGVER_1') ?>
 			</button>
 			<?php if ($isBitrixGptChatAvailable): ?>
 				<button

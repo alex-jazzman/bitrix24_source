@@ -47,6 +47,7 @@ export type RawChat = {
 	type: string,
 	backgroundId: string | null,
 	textFieldEnabled: boolean
+	dialogId?: string
 };
 
 

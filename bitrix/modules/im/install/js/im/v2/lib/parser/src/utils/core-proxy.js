@@ -3,26 +3,34 @@ import { Extension } from 'main.core';
 const settings = Extension.getSettings('im.v2.lib.parser');
 const v2 = settings.get('v2');
 
+// Prefer the namespace the v2 flag selects, but fall back to whichever is actually present, so
+// the extension does not throw if it is evaluated before the selected namespace is set up.
+const resolveNamespace = () => {
+	const messenger = BX.Messenger ?? {};
+
+	return (v2 ? messenger.v2 : messenger.Embedding) ?? messenger.v2 ?? messenger.Embedding ?? {};
+};
+
 const CoreProxy = {
 	getCore()
 	{
-		return v2 ? BX.Messenger.v2.Application.Core : BX.Messenger.Embedding.Application.Core;
+		return resolveNamespace().Application?.Core;
 	},
 	getUtils()
 	{
-		return v2 ? BX.Messenger.v2.Lib.Utils : BX.Messenger.Embedding.Lib.Utils;
+		return resolveNamespace().Lib?.Utils;
 	},
 	getLogger()
 	{
-		return v2 ? BX.Messenger.v2.Lib.Logger : BX.Messenger.Embedding.Lib.Logger;
+		return resolveNamespace().Lib?.Logger;
 	},
 	getConst()
 	{
-		return v2 ? BX.Messenger.v2.Const : BX.Messenger.Embedding.Const;
+		return resolveNamespace().Const ?? {};
 	},
 	getSmileManager()
 	{
-		return v2 ? BX.Messenger.v2.Lib.SmileManager : BX.Messenger.Embedding.Lib.SmileManager;
+		return resolveNamespace().Lib?.SmileManager;
 	},
 	getBigSmileOption()
 	{
@@ -35,6 +43,18 @@ const CoreProxy = {
 
 		return CoreProxy.getCore().getStore().getters['application/getOption']('bigSmileEnable');
 	},
+
+	// Read the Markdown feature flag straight from the Core application data the
+	// parser already reaches for everything else, instead of pulling the heavier
+	// im.v2.lib.feature extension into every parser consumer just for this boolean
+	// (FeatureManager.isFeatureAvailable resolves the same featureOptions value).
+	isMarkdownFeatureEnabled()
+	{
+		const applicationData = CoreProxy.getCore().getApplicationData?.() ?? {};
+		const { featureOptions = {} } = applicationData;
+
+		return featureOptions.isMarkdownAvailable ?? false;
+	},
 };
 
 const getCore = () => CoreProxy.getCore();
@@ -43,8 +63,18 @@ const getLogger = () => CoreProxy.getLogger();
 const getConst = () => CoreProxy.getConst();
 const getSmileManager = () => CoreProxy.getSmileManager();
 const getBigSmileOption = () => CoreProxy.getBigSmileOption();
+const isMarkdownFeatureEnabled = () => CoreProxy.isMarkdownFeatureEnabled();
 
-export { CoreProxy, getCore, getUtils, getLogger, getConst, getSmileManager, getBigSmileOption };
+export {
+	CoreProxy,
+	getCore,
+	getUtils,
+	getLogger,
+	getConst,
+	getSmileManager,
+	getBigSmileOption,
+	isMarkdownFeatureEnabled,
+};
 
 export type Smile = {
 	id: string;

@@ -1,0 +1,4 @@
+<?php
+
+$MESS['BIZPROCDESIGNER_REST_EXCEPTION_BLOCK_TYPE_NOT_FOUND'] = 'Тип блока `#TYPE#` не найден';
+$MESS['BIZPROCDESIGNER_REST_EXCEPTION_BLOCK_PRESET_NOT_FOUND'] = 'Вариант `#PRESET_ID#` не найден у типа блока `#TYPE#`';

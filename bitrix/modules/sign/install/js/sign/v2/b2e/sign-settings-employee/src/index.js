@@ -18,6 +18,8 @@ type StepsContext = {
 	selectedTemplateUid?: string;
 	templatesList?: Template[];
 	fields?: TemplateField[];
+	showRegistrationNumberField?: boolean;
+	showCreationDateField?: boolean;
 }
 
 const emptyStateHelpdeskCode = '23174934';
@@ -107,9 +109,10 @@ export class B2EEmployeeSignSettings
 			beforeCompletion: async () => {
 				this.#stepsContext.selectedTemplateUid = startProcess.getSelectedTemplateUid();
 				this.#stepsContext.templatesList = await startProcess.getTemplates();
-				this.#stepsContext.fields = (await startProcess.getFields(this.#stepsContext.selectedTemplateUid))
-					.fields
-				;
+				const fieldsResponse = await startProcess.getFields(this.#stepsContext.selectedTemplateUid);
+				this.#stepsContext.fields = fieldsResponse.fields;
+				this.#stepsContext.showRegistrationNumberField = fieldsResponse.hasRegistrationNumberPlaceholder;
+				this.#stepsContext.showCreationDateField = fieldsResponse.hasCreationDatePlaceholder;
 			},
 		};
 	}
@@ -125,6 +128,8 @@ export class B2EEmployeeSignSettings
 					.find((template) => template.uid === signSettings.#stepsContext.selectedTemplateUid)
 				;
 
+				const showRegistrationNumberField = signSettings.#stepsContext.showRegistrationNumberField === true;
+				const showCreationDateField = signSettings.#stepsContext.showCreationDateField === true;
 				submitDocumentInfo = new SubmitDocumentInfo({
 					template: {
 						uid: currentTemplateSelected.uid,
@@ -133,10 +138,12 @@ export class B2EEmployeeSignSettings
 					company: currentTemplateSelected.company,
 					fields: signSettings.#stepsContext.fields,
 					isOnboarding: false,
+					showRegistrationNumberField,
+					showCreationDateField,
 				});
 
 				const layout = submitDocumentInfo.getLayout();
-				if (signSettings.#stepsContext.fields.length > 0)
+				if (signSettings.#stepsContext.fields.length > 0 || showRegistrationNumberField || showCreationDateField)
 				{
 					SignSettingsItemCounter.numerate(layout);
 				}

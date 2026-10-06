@@ -231,13 +231,21 @@ export class ChatPullHandler
 
 	handleChatUpdate(params: {chat: RawChat})
 	{
+		const { dialogId, parent_chat_id: newParentChatId } = params.chat;
+		const { parentChatId: lastParentChatId }: ImModelChat = this.#store.getters['chats/get'](dialogId);
+
 		void this.#store.dispatch('chats/update', {
-			dialogId: params.chat.dialogId,
+			dialogId,
 			fields: {
 				role: getChatRoleForUser(params.chat),
 				...params.chat,
 			},
 		});
+
+		if (lastParentChatId !== newParentChatId)
+		{
+			void this.#store.dispatch('recent/hide', { dialogId });
+		}
 	}
 
 	handleChatFieldsUpdate(params: Partial<RawChat> & {dialogId: string, chatId: number})

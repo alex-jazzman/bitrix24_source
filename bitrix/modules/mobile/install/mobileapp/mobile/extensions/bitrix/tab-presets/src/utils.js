@@ -13,6 +13,8 @@ jn.define('tab-presets/src/utils', (require, exports, module) => {
 		crm: Icon.CRM,
 		menu: Icon.APPS,
 		terminal: Icon.PAYMENT_TERMINAL,
+		market: Icon.MARKET,
+		marketplace: Icon.MARKET,
 		catalog_store: Icon.INVENTORY_MANAGEMENT,
 		projects: Icon.FOLDER,
 		calendar: Icon.CALENDAR,
@@ -24,6 +26,7 @@ jn.define('tab-presets/src/utils', (require, exports, module) => {
 		sign: Icon.SIGN,
 		file: Icon.FILE,
 		call_list: Icon.PHONE_UP,
+		sync: Icon.RECORD_VIDEO,
 		mail: Icon.MAIL,
 		check_in: Icon.LOCATION,
 	};

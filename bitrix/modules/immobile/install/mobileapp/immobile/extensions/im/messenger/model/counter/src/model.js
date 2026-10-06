@@ -136,6 +136,26 @@ jn.define('im/messenger/model/counter/src/model', (require, exports, module) => 
 			},
 
 			/**
+			 * @function counterModel/hasMutedAncestor
+			 * Walks up the parentChatId chain and checks whether any ancestor
+			 * counter is muted. An ancestor without a counter record is treated
+			 * as not muted.
+			 * @return {boolean}
+			 */
+			hasMutedAncestor: (state) => (chatId) => {
+				const ancestorIds = getAncestorChatIds(state.collection, chatId);
+				for (const ancestorId of ancestorIds)
+				{
+					if (state.collection[ancestorId]?.isMuted)
+					{
+						return true;
+					}
+				}
+
+				return false;
+			},
+
+			/**
 			 * @function counterModel/getCounterMarkedAsUnread
 			 * @return {Array<CounterModelState>}
 			 */
@@ -168,6 +188,7 @@ jn.define('im/messenger/model/counter/src/model', (require, exports, module) => 
 				} = payload;
 
 				const preparedCounterStateList = [];
+				const previousParentChatIdList = [];
 				for (const counterState of counterList)
 				{
 					const chatId = counterState.chatId;
@@ -181,11 +202,27 @@ jn.define('im/messenger/model/counter/src/model', (require, exports, module) => 
 						...counterState,
 					};
 
-					preparedCounterStateList.push({
+					const existing = store.state.collection[chatId];
+					const preparedCounterState = {
 						...counterDefaultElement,
-						...store.state.collection[chatId],
+						...existing,
 						...normalize(modelCounter),
-					});
+					};
+
+					// The counter is leaving a parent (e.g. a chat detached from a project): the
+					// previous parent's aggregated badge must be recomputed, but after the mutation
+					// it is no longer reachable through childrenIndex. Surface it to subscribers,
+					// mirroring the parentChatIdList contract of the delete payload.
+					if (
+						existing
+						&& existing.parentChatId > 0
+						&& existing.parentChatId !== preparedCounterState.parentChatId
+					)
+					{
+						previousParentChatIdList.push(existing.parentChatId);
+					}
+
+					preparedCounterStateList.push(preparedCounterState);
 				}
 
 				if (!Type.isArrayFilled(preparedCounterStateList))
@@ -197,6 +234,7 @@ jn.define('im/messenger/model/counter/src/model', (require, exports, module) => 
 					actionName: 'set',
 					data: {
 						counterList: preparedCounterStateList,
+						previousParentChatIdList: [...new Set(previousParentChatIdList)],
 					},
 				});
 			},

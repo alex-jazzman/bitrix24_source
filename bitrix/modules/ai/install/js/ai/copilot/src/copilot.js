@@ -130,6 +130,7 @@ export class Copilot extends EventEmitter
 	#menuForceTop: boolean = true;
 	#responseFormat: string;
 	#windowResizeHandler: Function;
+	#isBitrixGptV2Available: boolean;
 
 	static #staticEulaRestrictCallback: Function | false = null;
 
@@ -216,12 +217,13 @@ export class Copilot extends EventEmitter
 		this.#autoHide = options.autoHide ?? false;
 		this.#preventAutoHide = Type.isFunction(options.preventAutoHide) ? options.preventAutoHide : () => false;
 		this.#menuForceTop = options.menuForceTop ?? true;
+		this.#isBitrixGptV2Available = Extension.getSettings('ai.copilot').get('isBitrixGptV2Available') === true;
 	}
 
 	render(): HTMLElement
 	{
 		this.#container = Tag.render`
-			<div class="ai__copilot ai__copilot-scope">
+			<div class="ai__copilot ai__copilot-scope${this.#isBitrixGptV2Available ? ' --bitrixgpt-redesign' : ''}">
 				${this.#resultField.render()}
 				${this.#inputField.render()}
 				${this.#warningField.render()}
@@ -515,6 +517,7 @@ export class Copilot extends EventEmitter
 			popupWithoutBackBtn: this.#useImage && this.#useText === false,
 			useInsertAboveAndUnderMenuItems: this.#useText,
 			analytics: this.#getAnalytics(true),
+			isBitrixGptV2Available: this.#isBitrixGptV2Available,
 		});
 
 		await this.#copilotImageController.init();

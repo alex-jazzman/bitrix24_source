@@ -10,4 +10,6 @@ $disk_default_option = array(
 	"disk_allow_use_external_link" => "Y",
 	"disk_object_lock_enabled" => "N",
 	"disk_version_limit_per_file" => 0,
+	"disk_enable_markdown_viewer" => "N",
+	"disk_enable_universal_file_picker" => "N",
 );

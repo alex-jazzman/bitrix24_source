@@ -14,6 +14,7 @@ use Bitrix\Crm\ContactAddress;
 use Bitrix\Crm\Format\AddressFormatter;
 use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Settings\ContactSettings;
+use Bitrix\Main\Web\Uri;
 
 /**
  * Bitrix vars
@@ -756,7 +757,7 @@ if (IsModuleInstalled('bizproc') && CModule::IncludeModule('bizproc') && CBPRunt
 		{
 			$bizprocContainerID = $arResult['BIZPROC_CONTAINER_ID'] = $arResult['FORM_ID'].'_bp_wrapper';
 			$arResult['ENABLE_BIZPROC_LAZY_LOADING'] = true;
-			$arResult['POST_FORM_URI'] = CHTTP::urlAddParams(POST_FORM_ACTION_URI, array($formTabKey => 'tab_bizproc'));
+			$arResult['POST_FORM_URI'] = (string)(new Uri(POST_FORM_ACTION_URI))->addParams(array($formTabKey => 'tab_bizproc'));
 
 			$arResult['FIELDS']['tab_bizproc'][] = array(
 				'id' => 'CONTACT_BIZPROC',
@@ -776,30 +777,22 @@ if (IsModuleInstalled('bizproc') && CModule::IncludeModule('bizproc') && CBPRunt
 					'ENTITY' => 'CCrmDocumentContact',
 					'DOCUMENT_TYPE' => 'CONTACT',
 					'DOCUMENT_ID' => 'CONTACT_'.$arResult['ELEMENT']['ID'],
-					'TASK_EDIT_URL' => CHTTP::urlAddParams(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_CONTACT_SHOW'],
+					'TASK_EDIT_URL' => str_replace('__ID__', '#ID#', (string)(new Uri(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_CONTACT_SHOW'],
 						array(
 							'contact_id' => $arResult['ELEMENT']['ID']
-						)),
-						array('bizproc_task' => '#ID#', $formTabKey => 'tab_bizproc')
-					),
-					'WORKFLOW_LOG_URL' => CHTTP::urlAddParams(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_CONTACT_SHOW'],
+						))))->addParams(array('bizproc_task' => '__ID__', $formTabKey => 'tab_bizproc'))),
+					'WORKFLOW_LOG_URL' => str_replace('__ID__', '#ID#', (string)(new Uri(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_CONTACT_SHOW'],
 						array(
 							'contact_id' => $arResult['ELEMENT']['ID']
-						)),
-						array('bizproc_log' => '#ID#', $formTabKey => 'tab_bizproc')
-					),
-					'WORKFLOW_START_URL' => CHTTP::urlAddParams(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_CONTACT_SHOW'],
+						))))->addParams(array('bizproc_log' => '__ID__', $formTabKey => 'tab_bizproc'))),
+					'WORKFLOW_START_URL' => (string)(new Uri(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_CONTACT_SHOW'],
 						array(
 							'contact_id' => $arResult['ELEMENT']['ID']
-						)),
-						array('bizproc_start' => 1, $formTabKey => 'tab_bizproc')
-					),
-					'back_url' => CHTTP::urlAddParams(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_CONTACT_SHOW'],
+						))))->addParams(array('bizproc_start' => 1, $formTabKey => 'tab_bizproc')),
+					'back_url' => (string)(new Uri(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_CONTACT_SHOW'],
 						array(
 							'contact_id' => $arResult['ELEMENT']['ID']
-						)),
-						array($formTabKey => 'tab_bizproc')
-					),
+						))))->addParams(array($formTabKey => 'tab_bizproc')),
 					'SET_TITLE'	=>	'Y'
 				),
 				'',

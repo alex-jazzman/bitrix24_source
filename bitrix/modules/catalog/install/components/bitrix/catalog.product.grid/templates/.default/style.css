@@ -1,6 +1,5 @@
 .element-field-grid-section-cell
 {
-	white-space: nowrap;
 }
 .element-field-grid-section-cell .ui-icon
 {
@@ -10,5 +9,4 @@
 .element-field-grid-section-cell-name
 {
 	padding-left: 10px;
-	white-space: nowrap;
 }

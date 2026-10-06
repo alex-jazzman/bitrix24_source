@@ -1,0 +1,35 @@
+<?php
+
+return [
+	'extensions' => [
+		'assets/icons',
+		'asset-manager',
+		'layout/ui/stateful-list',
+		'layout/ui/list/base-more-menu',
+		'layout/ui/search-bar',
+		'layout/ui/stateful-list/type-generator',
+		'layout/ui/stateful-list/pull',
+		'ui-system/blocks/status-block',
+		'loc',
+		'project/opener',
+		'toast',
+		'layout/socialnetwork/project-v2/create',
+		'rest',
+		'rest/run-action-executor',
+		'statemanager/redux/batched-actions',
+		'statemanager/redux/slices/users',
+		'statemanager/redux/store',
+		'tokens',
+		'tasks:project-list/simple-list/items',
+		'tasks:statemanager/redux/slices/groups',
+		'tasks:statemanager/redux/slices/project-list',
+	],
+	'bundle' => [
+		'./src/constants',
+		'./src/more-menu',
+		'./src/search',
+		'./src/empty-state',
+		'./src/project-opener',
+		'./src/pull',
+	],
+];

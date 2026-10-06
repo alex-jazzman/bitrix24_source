@@ -17,6 +17,7 @@ use Bitrix\Main\Loader;
 
 \Bitrix\Main\UI\Extension::load([
 	'main.polyfill.intersectionobserver',
+	'bizproc.a11y',
 	'bizproc.router',
 	'bizproc.task',
 	'bizproc.workflow.timeline',
@@ -199,12 +200,17 @@ $gridParams['ROWS'] = $gridRows;
 
 /** @var array $arResult */
 global $APPLICATION;
+?>
+<section aria-label="<?= htmlspecialcharsbx(\Bitrix\Main\Localization\Loc::getMessage('BIZPROC_USER_PROCESSES_TEMPLATE_GRID_ARIA_LABEL')) ?>">
+<?php
 $APPLICATION->IncludeComponent(
 	'bitrix:main.ui.grid',
 	'',
 	$gridParams,
 );
-
+?>
+</section>
+<?php
 $messages = \Bitrix\Main\Localization\Loc::loadLanguageFile(__FILE__);
 ?>
 <script>

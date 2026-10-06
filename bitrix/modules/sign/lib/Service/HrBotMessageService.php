@@ -2,6 +2,7 @@
 
 namespace Bitrix\Sign\Service;
 
+use Bitrix\Main\Application;
 use Bitrix\Main\Error;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\Result;
@@ -16,6 +17,7 @@ use Bitrix\Sign\Service\Sign\UrlGeneratorService;
 use Bitrix\Sign\Type;
 use Bitrix\Sign\Service\Integration\Im\ImService;
 use Bitrix\Sign\Item\Integration\Im;
+use Bitrix\Sign\Service\B2e\ReceiptRecipientResolver;
 use Bitrix\Sign\Service\Sign\MemberService;
 use Bitrix\Sign\Type\Member\Role;
 use Bitrix\Sign\Type\ProviderCode;
@@ -65,6 +67,33 @@ class HrBotMessageService
 		return new Result();
 	}
 
+	/**
+	 * SC-002: sends the company-side invitation of an employee-initiated document when the caller registers
+	 * the receipt mark right after it. The mark states that the company received the document, so it follows
+	 * a really sent invitation and replaces the "signed by employee" message suppressed on the
+	 * SIGNER -> DONE transition. When the invitation cannot be built, no mark follows it, so that suppressed
+	 * message is delivered here and the failure is rethrown to be handled as any invitation failure.
+	 *
+	 * @throws ObjectNotFoundException
+	 */
+	public function sendInviteMessageExpectingCompanyReceipt(
+		Document $document,
+		Member $assignee,
+		string $providerCode,
+	): Result
+	{
+		try
+		{
+			return $this->sendInviteMessage($document, $assignee, $providerCode);
+		}
+		catch (ObjectNotFoundException $exception)
+		{
+			$this->sendByEmployeeSignedFallbackMessage($document);
+
+			throw $exception;
+		}
+	}
+
 	public function handleDocumentStatusChangedMessage(Document $document, string $newStatus, ?int $initiatorUserId = null): Result
 	{
 		if ($this->isByEmployee($document))
@@ -110,6 +139,13 @@ class HrBotMessageService
 			switch (true)
 			{
 				case $member->role === Role::SIGNER && $member->status === Type\MemberStatus::DONE:
+					// SC-002: employee is notified when the company receives the document
+					// (on the assignee invitation), not on the "sent" event.
+					if ($this->isReceiptMarkExpectedForCompanySide($document))
+					{
+						return new Result();
+					}
+
 					$userIdFrom = $this->getBotUserId() ?? $document->representativeId;
 					$userIdTo = $this->memberService->getUserIdForMember($member);
 					return $this->byEmployeeSendEmployeeSignedMessageToEmployee($userIdFrom, $userIdTo, $document, $member);
@@ -129,12 +165,44 @@ class HrBotMessageService
 						? $this->sendRefusedMessage($memberUserId, $document->createdById, $document)
 						: new Result()
 					,
-					Type\MemberStatus::DONE => $this->sendDoneMessageToEmployee($this->getBotUserId() ?? $document->createdById, $member, $document),
+					// SC-001: the "document signed" message is sent on the result-file save (receipt) event
+					// instead of on this status change.
+					Type\MemberStatus::DONE => new Result(),
 					default => new Result(),
 				};
 		}
 
 		return new Result();
+	}
+
+	/**
+	 * Impersonal notice about a document that can no longer be prepared for signing.
+	 * Recipients do not depend on the failed member role: preparation fails for the whole document.
+	 */
+	public function notifyDocumentPreparationFailed(Document $document): Result
+	{
+		if (!HrBot::isAvailable())
+		{
+			return (new Result())->addError(new Error('Chat is not available'));
+		}
+
+		$userIdFrom = $this->getBotUserId() ?? $document->createdById;
+		if (!$userIdFrom)
+		{
+			return (new Result())->addError(new Error('Sender of the document preparation failed message not found'));
+		}
+
+		$result = new Result();
+		$link = $this->urlGenerator->getSigningProcessLink($document);
+
+		foreach ($this->getDocumentPreparationFailedRecipients($document) as $userIdTo)
+		{
+			$result->addErrors(
+				$this->sendDocumentPreparationFailedMessage($userIdFrom, $userIdTo, $document, $link)->getErrors()
+			);
+		}
+
+		return $result;
 	}
 
 	public function repeatSigningOnErrors(Document $document, Member $assignee): Result
@@ -160,6 +228,395 @@ class HrBotMessageService
 		}
 
 		return $result;
+	}
+
+	/**
+	 * Resolves the recipients of the annulment/un-annulment HR-bot card for one
+	 * signer member and sends the card to each of them (ALG-02).
+	 *
+	 * Two independent recipients, each actor-gated: the signing employee and the
+	 * document initiator (createdById - always a live person: the manual initiator
+	 * or the Responsible of a robot/activity/1C launch). The actor is always
+	 * excluded. When the employee equals the initiator, only the employee card is
+	 * sent: the initiator card would be its full duplicate - same recipient, same
+	 * single signing. All arguments are passed explicitly; the method never reads
+	 * "who is in the request".
+	 */
+	public function handleMemberAnnulled(Document $document, Member $signer, bool $annul, int $actorUserId): Result
+	{
+		$result = new Result();
+
+		$employeeUserId = $this->memberService->getUserIdForMember($signer, $document);
+
+		$result->addErrors(
+			$this->sendMemberAnnulledToEmployee($document, $signer, $annul, $actorUserId)->getErrors()
+		);
+
+		if ($employeeUserId !== null && $employeeUserId === $document->createdById)
+		{
+			return $result;
+		}
+
+		$result->addErrors(
+			$this->sendMemberAnnulledToInitiator($document, $annul, $actorUserId)->getErrors()
+		);
+
+		return $result;
+	}
+
+	/**
+	 * Same as handleMemberAnnulled() for a set of signer records of one document,
+	 * changed by one action: a card per employee plus a single aggregated card to
+	 * the initiator, never one per record. The initiator card reports how many
+	 * signings the action changed. It is dropped when it would duplicate the only
+	 * employee card: one changed signing whose single recipient is the initiator.
+	 *
+	 * The employee fan-out is inherent - every employee has their own chat with the
+	 * bot, so N changed records mean N cards - and it is what makes this delivery
+	 * worth deferring (see scheduleMembersAnnulled()). Delivery is best-effort per
+	 * recipient: a failing or throwing send is collected into the result and never
+	 * stops the remaining cards.
+	 *
+	 * @param iterable<Member> $signers Records actually changed by the action.
+	 * @param int|null $annulledCount Signings the action changed, for the initiator
+	 *        card. Pass it when the exact number is known from the write itself (a
+	 *        conditional UPDATE reports it); otherwise the size of the set is used.
+	 */
+	public function handleMembersAnnulled(
+		Document $document,
+		iterable $signers,
+		bool $annul,
+		int $actorUserId,
+		?int $annulledCount = null,
+	): Result
+	{
+		$result = new Result();
+
+		// Invariants of the whole action: the same actor and the same document for
+		// every card. Resolved on the first recipient and reused, so the cost does
+		// not grow with the fan-out and an empty set resolves nothing; kept inside
+		// the per-recipient try, so a failing resolve is collected like a failing
+		// send instead of escaping the deferred job.
+		$actorName = null;
+		$link = null;
+		$signerCount = 0;
+		$recipients = [];
+
+		foreach ($signers as $signer)
+		{
+			// Counts the changed records, not the delivered cards: the actor's own
+			// signing is annulled just like the rest, it only gets no card.
+			$signerCount++;
+
+			try
+			{
+				$actorName ??= $this->memberService->getUserRepresentedName($actorUserId);
+				$link ??= $this->urlGenerator->getSigningProcessLink($document);
+
+				// Collected before the delivery attempt: a failing send must not
+				// shrink the set and switch the deduplication below on.
+				$recipientId = $this->memberService->getUserIdForMember($signer, $document);
+				if ($recipientId !== null)
+				{
+					$recipients[$recipientId] = true;
+				}
+
+				$result->addErrors(
+					$this
+						->sendMemberAnnulledToEmployee($document, $signer, $annul, $actorUserId, $actorName, $link)
+						->getErrors()
+				);
+			}
+			catch (\Throwable $e)
+			{
+				$result->addError(new Error($e->getMessage()));
+			}
+		}
+
+		$annulledCount ??= $signerCount;
+		if ($annulledCount <= 0)
+		{
+			// Nothing changed, so there is nothing to report to the initiator.
+			return $result;
+		}
+
+		$soleRecipientId = count($recipients) === 1 ? array_key_first($recipients) : null;
+		if (
+			$annulledCount === 1
+			&& $soleRecipientId !== null
+			&& $document->createdById !== null
+			&& $soleRecipientId === $document->createdById
+		)
+		{
+			// The aggregated card would duplicate the only employee card, so the
+			// initiator keeps just that one. A recipient that did not resolve is
+			// not in the set, so the aggregated card still goes out.
+			return $result;
+		}
+
+		try
+		{
+			$result->addErrors(
+				$this
+					->sendMemberAnnulledToInitiator($document, $annul, $actorUserId, $annulledCount, $actorName, $link)
+					->getErrors()
+			);
+		}
+		catch (\Throwable $e)
+		{
+			$result->addError(new Error($e->getMessage()));
+		}
+
+		return $result;
+	}
+
+	/**
+	 * Defers handleMembersAnnulled() to a background job of the current request, so
+	 * a mass action returns without waiting for its chat fan-out.
+	 *
+	 * The job runs after the response is flushed, in the same process, on the record
+	 * set the action itself resolved - nothing is persisted in between, so delivery
+	 * stays at-most-once: a process that dies before the job drops the cards instead
+	 * of duplicating them. Consistent with the rest of the annulment side effects, a
+	 * failed delivery never rolls back the persisted mark; it is only logged.
+	 *
+	 * @param iterable<Member> $signers Records actually changed by the action.
+	 * @param int|null $annulledCount Signings the action changed, see
+	 *        handleMembersAnnulled().
+	 */
+	public function scheduleMembersAnnulled(
+		Document $document,
+		iterable $signers,
+		bool $annul,
+		int $actorUserId,
+		?int $annulledCount = null,
+	): void
+	{
+		Application::getInstance()->addBackgroundJob(
+			function () use ($document, $signers, $annul, $actorUserId, $annulledCount): void
+			{
+				$result = $this->handleMembersAnnulled($document, $signers, $annul, $actorUserId, $annulledCount);
+				if (!$result->isSuccess())
+				{
+					Container::instance()->getLogger('Service')->error(
+						'Annulment cards for document {documentId} partially failed: {errorsText}',
+						[
+							'documentId' => $document->id,
+							'errorsText' => implode('|| ', $result->getErrorMessages()),
+						],
+					);
+				}
+			},
+		);
+	}
+
+	/**
+	 * Sends the annulment/un-annulment card to the signing employee, unless the
+	 * employee is the actor. Building block of ALG-02, reused by the inline single
+	 * path and by the deferred batch fan-out (per-member delivery).
+	 *
+	 * $actorName and $link are the same for every card of one action, so a fan-out
+	 * resolves them once and passes them in; a single-card caller may omit them.
+	 */
+	public function sendMemberAnnulledToEmployee(
+		Document $document,
+		Member $signer,
+		bool $annul,
+		int $actorUserId,
+		?string $actorName = null,
+		?string $link = null,
+	): Result
+	{
+		$signerUserId = $this->memberService->getUserIdForMember($signer, $document);
+		if ($signerUserId === null || $signerUserId === $actorUserId)
+		{
+			return new Result();
+		}
+
+		return $this->sendMemberAnnulledMessage(
+			$document,
+			$signerUserId,
+			$annul,
+			$actorUserId,
+			toInitiator: false,
+			actorName: $actorName,
+			link: $link,
+		);
+	}
+
+	/**
+	 * Sends the annulment/un-annulment card to the document initiator
+	 * (createdById), unless the initiator is the actor. Building block of ALG-02;
+	 * a batch calls it once per document (one aggregated card).
+	 *
+	 * @param int|null $annulledCount Signings changed by the action. Above one the
+	 *        card reports the number, so an aggregated card is not read as a single
+	 *        annulment; null or one keeps the single-signing wording.
+	 */
+	public function sendMemberAnnulledToInitiator(
+		Document $document,
+		bool $annul,
+		int $actorUserId,
+		?int $annulledCount = null,
+		?string $actorName = null,
+		?string $link = null,
+	): Result
+	{
+		$initiatorUserId = $document->createdById;
+		if ($initiatorUserId === null || $initiatorUserId === $actorUserId)
+		{
+			return new Result();
+		}
+
+		return $this->sendMemberAnnulledMessage(
+			$document,
+			$initiatorUserId,
+			$annul,
+			$actorUserId,
+			toInitiator: true,
+			actorName: $actorName,
+			link: $link,
+			annulledCount: $annulledCount,
+		);
+	}
+
+	private function sendMemberAnnulledMessage(
+		Document $document,
+		int $userIdTo,
+		bool $annul,
+		int $actorUserId,
+		bool $toInitiator,
+		?string $actorName = null,
+		?string $link = null,
+		?int $annulledCount = null,
+	): Result
+	{
+		$userIdFrom = $this->getBotUserId() ?? $actorUserId;
+		$actorName ??= $this->memberService->getUserRepresentedName($actorUserId);
+		$link ??= $this->urlGenerator->getSigningProcessLink($document);
+
+		$message = $annul
+			? new Im\Messages\Failure\DocumentAnnulled(
+				fromUser: $userIdFrom,
+				toUser: $userIdTo,
+				initiatorUserId: $actorUserId,
+				initiatorName: $actorName,
+				document: $document,
+				link: $link,
+				toInitiator: $toInitiator,
+				annulledCount: $annulledCount,
+			)
+			: new Im\Messages\Failure\AnnulmentCanceled(
+				fromUser: $userIdFrom,
+				toUser: $userIdTo,
+				initiatorUserId: $actorUserId,
+				initiatorName: $actorName,
+				document: $document,
+				link: $link,
+				toInitiator: $toInitiator,
+				annulledCount: $annulledCount,
+			)
+		;
+
+		return $this->imService->sendMessage(
+			$message->setLang($this->userService->getUserLanguage($userIdTo))
+		);
+	}
+
+	/**
+	 * SC-002: notifies the employee that the company received the document initiated by the employee.
+	 * The message is addressed to the employee ($document->createdById); the name shown in the card
+	 * is the company side that received the document, resolved from the invited assignee.
+	 */
+	public function handleCompanyReceivedByEmployeeDocument(Document $document, Member $assignee): Result
+	{
+		$recipient = (new ReceiptRecipientResolver($this->memberService))->resolveRecipient(
+			$document,
+			$assignee,
+			Type\B2e\ReceiptScenario::EmployeeInitiated,
+		);
+
+		if ($recipient === null)
+		{
+			// N7 fallback: the company-side recipient could not be resolved (e.g. empty display name), but
+			// the old "signed by employee" message was already suppressed on the SIGNER -> DONE transition.
+			// Deliver that previous message (without a receipt line) so the employee is never left silent.
+			return $this->sendByEmployeeSignedFallbackMessage($document);
+		}
+
+		$userFrom = $this->getBotUserId() ?? $document->representativeId;
+		$userTo = $document->createdById;
+
+		if (!$userFrom || !$userTo)
+		{
+			return new Result();
+		}
+
+		// The employee opens the document by their own signing link, as in the replaced "signed by employee"
+		// message, which is not sent either when the signer does not resolve.
+		$signer = $this->memberService->getSigner($document);
+		if ($signer === null)
+		{
+			return (new Result())->addError(new Error('Signer not found'));
+		}
+
+		return $this->imService->sendMessage(
+			(new Im\Messages\ByEmployee\ReceivedByCompany(
+				fromUser: $userFrom,
+				toUser: $userTo,
+				recipientUserId: $recipient->id,
+				recipientName: $recipient->name,
+				document: $document,
+				link: $this->urlGenerator->makeSigningUrl($signer),
+			))->setLang($this->userService->getUserLanguage($userTo))
+		);
+	}
+
+	/**
+	 * SC-001: notifies the employee signer that the company-initiated document is signed and that the
+	 * company side received the signed result file. The message is addressed to the employee signer;
+	 * the name shown in the card is the company side ($document->createdById) that received the document.
+	 */
+	public function handleCompanyReceivedSignedByCompanyDocument(Document $document, Member $signerMember): Result
+	{
+		$recipient = (new ReceiptRecipientResolver($this->memberService))->resolveRecipient(
+			$document,
+			$signerMember,
+			Type\B2e\ReceiptScenario::CompanyInitiated,
+		);
+
+		if ($recipient === null)
+		{
+			// N7 fallback: the receiver could not be resolved (e.g. empty display name), but the old
+			// "document signed" message was already suppressed on the SIGNER -> DONE transition. Deliver
+			// that previous message (without a receipt line) so the employee signer is never left silent.
+			$userFrom = $this->getBotUserId() ?? $document->createdById;
+			if (!$userFrom)
+			{
+				return new Result();
+			}
+
+			return $this->sendDoneMessageToEmployee($userFrom, $signerMember, $document);
+		}
+
+		$userFrom = $this->getBotUserId() ?? $document->createdById;
+		$userTo = $this->memberService->getUserIdForMember($signerMember);
+
+		if (!$userFrom || !$userTo)
+		{
+			return new Result();
+		}
+
+		return $this->imService->sendMessage(
+			(new Im\Messages\ByCompany\ReceivedSignedByCompany(
+				fromUser: $userFrom,
+				toUser: $userTo,
+				recipientUserId: $recipient->id,
+				recipientName: $recipient->name,
+				document: $document,
+				link: $this->urlGenerator->makeSigningUrl($signerMember),
+			))->setLang($this->userService->getUserLanguage($userTo))
+		);
 	}
 
 	/**
@@ -267,11 +724,13 @@ class HrBotMessageService
 		}
 		elseif ($stopInitiatorUserId !== $document->createdById)
 		{
+			// the initiator is passed as is: the card names whoever stopped the document, and substituting
+			// the assignee here told the employee that their own document was refused by a colleague
 			$result->addErrors($this->sendByEmployeeStoppedToEmployeeMessage(
 				$userFrom,
 				$employeeUser,
 				$document,
-				$stopInitiatorUserId ?? $assigneeUserId ?? $userFrom,
+				$stopInitiatorUserId,
 			)->getErrors());
 		}
 
@@ -415,6 +874,47 @@ class HrBotMessageService
 		);
 	}
 
+	/**
+	 * Company side only: the notice tells about a document that needs nothing from the employee
+	 * and links to a company page. For a by-employee document the creator is the employee himself.
+	 *
+	 * @return list<int>
+	 */
+	private function getDocumentPreparationFailedRecipients(Document $document): array
+	{
+		$recipients = [];
+
+		if (!$this->isByEmployee($document) && $document->createdById)
+		{
+			$recipients[] = $document->createdById;
+		}
+
+		$companySideUserId = $this->getActiveReviewerOrAssigneeUserId($document);
+		if ($companySideUserId && !in_array($companySideUserId, $recipients, true))
+		{
+			$recipients[] = $companySideUserId;
+		}
+
+		return $recipients;
+	}
+
+	private function sendDocumentPreparationFailedMessage(
+		int $userIdFrom,
+		int $userIdTo,
+		Document $document,
+		string $link,
+	): Result
+	{
+		return $this->imService->sendMessage(
+			(new Im\Messages\Failure\DocumentPreparationFailed(
+				fromUser: $userIdFrom,
+				toUser: $userIdTo,
+				document: $document,
+				link: $link,
+			))->setLang($this->userService->getUserLanguage($userIdTo))
+		);
+	}
+
 	private function sendExpiredMessageToCompany(int $userIdFrom, int $userIdTo, Document $document): Result
 	{
 		$message = new Im\Messages\Failure\DocumentExpiredToCompany(
@@ -459,6 +959,12 @@ class HrBotMessageService
 	{
 		// TODO Im\Messages\Done\ToEmployeeGoskey for goskey
 		$userIdTo = $this->memberService->getUserIdForMember($memberTo);
+
+		if (!$userIdTo)
+		{
+			return new Result();
+		}
+
 		return $this->imService->sendMessage(
 			(new Im\Messages\Done\ToEmployee(
 				fromUser: $userIdFrom,
@@ -484,6 +990,30 @@ class HrBotMessageService
 				link: $this->urlGenerator->makeSigningUrl($employee),
 			))->setLang($this->userService->getUserLanguage($userIdTo))
 		);
+	}
+
+	/**
+	 * SC-002 N7 fallback: sends the previous "signed by employee" message to the employee signer when the
+	 * receipt mark cannot be delivered -- its recipient did not resolve, or the invitation it follows could
+	 * not be built. Mirrors the send path that runs on the SIGNER -> DONE transition when no mark is expected.
+	 */
+	private function sendByEmployeeSignedFallbackMessage(Document $document): Result
+	{
+		$signer = $this->memberService->getSigner($document);
+		if ($signer === null)
+		{
+			return (new Result())->addError(new Error('Signer not found'));
+		}
+
+		$userIdFrom = $this->getBotUserId() ?? $document->representativeId;
+		$userIdTo = $this->memberService->getUserIdForMember($signer);
+
+		if (!$userIdFrom || !$userIdTo)
+		{
+			return new Result();
+		}
+
+		return $this->byEmployeeSendEmployeeSignedMessageToEmployee($userIdFrom, $userIdTo, $document, $signer);
 	}
 
 	private function byEmployeeSendDoneMessageToEmployee(Document $document): Result
@@ -569,8 +1099,24 @@ class HrBotMessageService
 		);
 	}
 
-	private function sendByEmployeeStoppedToEmployeeMessage(int $userIdFrom, int $userIdTo, Document $document, int $whoStoppedUserId): Result
+	/**
+	 * @param int|null $whoStoppedUserId the message names the one who stopped the document, so an unknown
+	 *   initiator leaves nothing to say: the stop came from the signing service or from the employee
+	 *   themselves, and naming a bystander would assert a refusal they never made. Same rule as in
+	 *   sendStoppedToEmployeeMessage().
+	 */
+	private function sendByEmployeeStoppedToEmployeeMessage(
+		int $userIdFrom,
+		int $userIdTo,
+		Document $document,
+		?int $whoStoppedUserId,
+	): Result
 	{
+		if ($whoStoppedUserId === null)
+		{
+			return new Result();
+		}
+
 		$signer = $this->memberService->getSigner($document);
 
 		if (!$signer)
@@ -687,6 +1233,23 @@ class HrBotMessageService
 	private function isByEmployee(Document $document): bool
 	{
 		return $document->initiatedByType === Type\Document\InitiatedByType::EMPLOYEE;
+	}
+
+	/**
+	 * Whether the employee will receive an SC-002 receipt mark instead of the "document sent" message.
+	 * True only when a company assignee will actually be invited to sign (assignee exists and the chat
+	 * invitation is not skipped, e.g. not a self-send). Otherwise the employee keeps the previous
+	 * "document sent" message and is never left without a notification.
+	 */
+	private function isReceiptMarkExpectedForCompanySide(Document $document): bool
+	{
+		$assignee = $this->memberService->getAssignee($document);
+		if ($assignee === null)
+		{
+			return false;
+		}
+
+		return !$this->memberService->skipChatInvitationForMember($assignee, $document);
 	}
 
 	/**

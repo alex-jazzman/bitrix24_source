@@ -19,7 +19,6 @@ import './css/component.css';
 import Deal from './deal';
 import { ApplicationModel } from './models/application';
 import { Backend } from 'landing.backend';
-import { PageObject } from 'landing.pageobject';
 import { DocumentSelectorModel } from './models/document-selector';
 import { OrderCreationModel } from './models/ordercreation';
 import 'ui.icon-set.actions';
@@ -650,6 +649,8 @@ export class App
 			return;
 		}
 
+		this.emitGlobalEvent('salescenter.app:onbeforepaymentsend');
+
 		this.startProgress(buttonEvent);
 
 		let options = {
@@ -909,6 +910,11 @@ export class App
 		{
 			return null;
 		}
+
+		// Trigger the message-editor save-flow while the editor is still alive:
+		// payment send closes the slider (and destroys the editor) before the
+		// `onpaymentcreated` event, so the snapshot must be captured up front.
+		this.emitGlobalEvent('salescenter.app:onbeforepaymentsend');
 
 		this.startProgress(buttonEvent);
 
@@ -1265,6 +1271,8 @@ export class App
 		{
 			return null;
 		}
+
+		this.emitGlobalEvent('salescenter.app:onbeforepaymentsend');
 
 		this.startProgress(buttonEvent);
 

@@ -3,6 +3,7 @@ import { Runtime, Type } from 'main.core';
 import type { BaseEvent } from 'main.core.events';
 import { EventEmitter } from 'main.core.events';
 import { DateTimeFormat } from 'main.date';
+import { UI } from 'ui.notification';
 import { TextEditor, TextEditorComponent } from 'ui.text-editor';
 import { ElementIds, EventIds } from '../analytics';
 import type { BlockSettings } from '../todo-editor';
@@ -73,6 +74,7 @@ export const TodoEditor = {
 			required: false,
 		},
 		textEditor: TextEditor,
+		onEditStart: Function,
 	},
 
 	data(): Object
@@ -99,10 +101,16 @@ export const TodoEditor = {
 			blocksData,
 			modeData: this.mode,
 			currentUserData: this.currentUser,
+			canChangeDeadline: true,
+			isEdit: this.mode !== ADD_MODE,
 		};
 	},
 
 	computed: {
+		deadlineTabIndex(): number
+		{
+			return this.isEdit ? 0 : -1;
+		},
 		deadlineFormatted(): string
 		{
 			let converter = new DatetimeConverter(this.currentDeadline);
@@ -174,12 +182,13 @@ export const TodoEditor = {
 			}
 		},
 
-		setData({ title, description, deadline, id, colorId, currentUser, pingOffsets }): void
+		setData({ title, description, deadline, id, colorId, currentUser, pingOffsets, canChangeDeadline }): void
 		{
 			this.title = title;
 			this.textEditor.setText(description);
 			this.currentDeadline = new Date(deadline);
 			this.currentActivityId = id;
+			this.canChangeDeadline = canChangeDeadline ?? true;
 
 			this.currentUserData = currentUser;
 			this.responsibleUserId = currentUser.userId;
@@ -197,6 +206,7 @@ export const TodoEditor = {
 		setMode(mode: string): void
 		{
 			this.modeData = mode;
+			this.isEdit = mode !== ADD_MODE;
 		},
 
 		resetCurrentActivityId(): void
@@ -237,6 +247,16 @@ export const TodoEditor = {
 
 		onDeadlineClick(): void
 		{
+			if (!this.canChangeDeadline)
+			{
+				UI.Notification.Center.notify({
+					content: this.$Bitrix.Loc.getMessage('CRM_ACTIVITY_TODO_EDITOR_V2_CALENDAR_EVENT_ACCESS_DENIED'),
+					autoHideDelay: 5000,
+				});
+
+				return;
+			}
+
 			// eslint-disable-next-line @bitrix24/bitrix24-rules/no-bx
 			BX.calendar({
 				node: this.$refs.deadline,
@@ -246,6 +266,15 @@ export const TodoEditor = {
 				value: DateTimeFormat.format(DatetimeConverter.getSiteDateTimeFormat(), this.currentDeadline),
 				callback: this.onSetDeadlineByCalendar.bind(this),
 			});
+		},
+
+		onDeadlineKeydown(event: KeyboardEvent): void
+		{
+			if (event.key === 'Enter' || event.key === ' ')
+			{
+				event.preventDefault();
+				this.onDeadlineClick();
+			}
 		},
 
 		onSetDeadlineByCalendar(deadline: Date): void
@@ -435,6 +464,7 @@ export const TodoEditor = {
 
 		handleTextEditorFocus(event): void
 		{
+			this.isEdit = true;
 			this.descriptionBeforeFocus = this.textEditor.getText();
 		},
 
@@ -462,6 +492,10 @@ export const TodoEditor = {
 			});
 
 			const block = this.getBlockDataById(actionId);
+			if (!Type.isObject(block))
+			{
+				return;
+			}
 
 			if (Type.isPlainObject(componentParams))
 			{
@@ -486,6 +520,12 @@ export const TodoEditor = {
 			block.focused = true;
 			block.sort = this.getNextBlockSortValue();
 
+			if (Type.isFunction(this.onEditStart))
+			{
+				this.onEditStart();
+			}
+
+			this.isEdit = true;
 			this.textEditor.focus();
 
 			if (!this.addBlockSended)
@@ -523,6 +563,7 @@ export const TodoEditor = {
 
 		closeBlocks(): void
 		{
+			this.isEdit = false;
 			this.blocksData.forEach((block: BlockSettings) => {
 				this.resetBlock(block);
 			});
@@ -648,7 +689,10 @@ export const TodoEditor = {
 							<div class="crm-activity__todo-editor-v2_left_tools">
 								<div
 									ref="deadline"
+									role="button"
+									:tabindex="deadlineTabIndex"
 									@click="onDeadlineClick"
+									@keydown="onDeadlineKeydown"
 									class="crm-activity__todo-editor-v2_deadline"
 								>
 								<span class="crm-activity__todo-editor-v2_deadline-pill">

@@ -1,6 +1,7 @@
 <?php
 namespace Bitrix\Crm\Service;
 
+use Bitrix\Crm\Activity\Provider\Email;
 use Bitrix\Crm\Decorator\JsonSerializable\ClearNullValues;
 use Bitrix\Crm\Integration\Im\Chat;
 use Bitrix\Crm\Integration\Intranet\SystemPageProvider\ActivityPage;
@@ -797,6 +798,11 @@ class Router
 	{
 		if ($this->isNewRoutingForListEnabled($entityTypeId))
 		{
+			if (\CCrmOwnerType::isPossibleDynamicTypeId($entityTypeId))
+			{
+				return $this->getActivityUrlViaActivitiesPageWithNewRouting($entityTypeId, $categoryId);
+			}
+
 			return $this->getKanbanActivityUrlWithNewRouting($entityTypeId, $categoryId);
 		}
 
@@ -806,6 +812,59 @@ class Router
 	public function getActivityDetailsShareableUrl(int $activityId, int $chatId): ?Uri
 	{
 		$userId = (int)CurrentUser::get()->getId();
+
+		// Shares the read-permission check and base URL resolution with getActivityDetailsUrl().
+		if ($this->getActivityDetailsUrl($activityId, $userId) === null)
+		{
+			return null;
+		}
+
+		if (!Loader::includeModule('im') || Chat::getUserRelationToChat($chatId, $userId) === null)
+		{
+			return null;
+		}
+
+		$token = PermissionToken::createViewActivityToken($activityId, $chatId);
+
+		return new Uri('/crm/activity/details/' . $activityId . '/?act=' . urlencode($token));
+	}
+
+	/**
+	 * Returns the details Uri of an email activity signed with a task-scoped read token.
+	 *
+	 * Intentionally does not check CRM permissions of the current user: the token grants read access
+	 * by task access instead. Only the email provider is accepted, so no other activity kind can be
+	 * opened this way. The binding between the activity and the task must be proven by the caller:
+	 * the source table belongs to the mail module and must not be read from crm.
+	 *
+	 * @internal Written for the CRM email source of a task; the only caller is
+	 *   {@see \Bitrix\Mail\Integration\Crm\Activity::getTaskScopedDetailsUrl()}.
+	 */
+	public function getActivityDetailsUrlWithTaskAccess(int $activityId, int $taskId): ?Uri
+	{
+		if ($activityId <= 0 || $taskId <= 0)
+		{
+			return null;
+		}
+
+		$activity = Container::getInstance()->getActivityBroker()->getById($activityId);
+		if (!$activity)
+		{
+			return null;
+		}
+
+		if (($activity['PROVIDER_ID'] ?? null) !== Email::getId())
+		{
+			return null;
+		}
+
+		$token = PermissionToken::createViewActivityTokenForTask($activityId, $taskId);
+
+		return new Uri('/crm/activity/details/' . $activityId . '/?act=' . urlencode($token));
+	}
+
+	public function getActivityDetailsUrl(int $activityId, int $userId): ?Uri
+	{
 		if ($userId <= 0)
 		{
 			return null;
@@ -823,14 +882,7 @@ class Router
 			return null;
 		}
 
-		if (!Loader::includeModule('im') || Chat::getUserRelationToChat($chatId, $userId) === null)
-		{
-			return null;
-		}
-
-		$token = PermissionToken::createViewActivityToken($activityId, $chatId);
-
-		return new Uri('/crm/activity/details/' . $activityId . '/?act=' . urlencode($token));
+		return new Uri('/crm/activity/details/' . $activityId . '/');
 	}
 
 	public function getDeadlinesUrl(int $entityTypeId, int $categoryId = null): ?Uri
@@ -919,6 +971,20 @@ class Router
 				'entityTypeId' => $entityTypeId,
 				'categoryId' => $categoryId ?? 0,
 				'viewMode' => $viewMode,
+			]
+		);
+	}
+
+	protected function getActivityUrlViaActivitiesPageWithNewRouting(
+		int $entityTypeId,
+		int $categoryId = null
+	): ?Uri
+	{
+		return $this->getUrlForTemplate(
+			'bitrix:crm.item.activities',
+			[
+				'entityTypeId' => $entityTypeId,
+				'categoryId' => $categoryId ?? 0,
 			]
 		);
 	}
@@ -1617,7 +1683,7 @@ class Router
 
 		$url = new Uri($currentUrl);
 		$path = $url->getPath();
-		if (preg_match('#type/(\d+)/(list|kanban)?#', $path, $matches))
+		if (preg_match('#type/(\d+)/(list|kanban|activities|deadlines)?(?:/category/(\d+))?#', $path, $matches))
 		{
 			$entityTypeId = (int)$matches[1];
 			if (!\CCrmOwnerType::isCorrectEntityTypeId($entityTypeId))
@@ -1625,9 +1691,16 @@ class Router
 				return null;
 			}
 
-			if (isset($matches[2]))
+			$categoryId = !empty($matches[3]) ? (int)$matches[3] : null;
+			$viewSlug = $matches[2] ?? '';
+
+			if ($viewSlug !== '')
 			{
-				$viewType = mb_strtoupper($matches[2]);
+				$viewType = mb_strtoupper($viewSlug);
+				if ($viewType === 'ACTIVITIES')
+				{
+					$viewType = static::LIST_VIEW_ACTIVITY;
+				}
 			}
 			else
 			{
@@ -1636,10 +1709,20 @@ class Router
 
 			if ($viewType === static::LIST_VIEW_LIST)
 			{
-				return $this->getItemListUrl($entityTypeId);
+				return $this->getItemListUrl($entityTypeId, $categoryId);
 			}
 
-			return $this->getKanbanUrl($entityTypeId);
+			if ($viewType === static::LIST_VIEW_ACTIVITY)
+			{
+				return $this->getActivityUrl($entityTypeId, $categoryId);
+			}
+
+			if ($viewType === static::LIST_VIEW_DEADLINES)
+			{
+				return $this->getDeadlinesUrl($entityTypeId, $categoryId);
+			}
+
+			return $this->getKanbanUrl($entityTypeId, $categoryId);
 		}
 
 		return null;

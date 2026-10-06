@@ -44,8 +44,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				const dialogId = urlParams.get(im_v2_const.GetParameter.openChannel);
 				void im_public.Messenger.openChannel(dialogId);
 			} else if (urlParams.has(im_v2_const.GetParameter.openCollab)) {
-				const dialogId = urlParams.get(im_v2_const.GetParameter.openCollab);
-				void im_public.Messenger.openCollab(dialogId ?? '');
+				const dialogId = urlParams.get(im_v2_const.GetParameter.openCollab) ?? '';
+				const recentType = urlParams.get(im_v2_const.GetParameter.recentType) ?? im_v2_const.RecentType.collabDefault;
+				void im_public.Messenger.openCollab(dialogId, {
+					compactMode: false,
+					recentType
+				});
 			} else if (urlParams.has(im_v2_const.GetParameter.openSharedLink)) {
 				const code = urlParams.get(im_v2_const.GetParameter.openSharedLink);
 				void im_public.Messenger.joinChatByCode(code);

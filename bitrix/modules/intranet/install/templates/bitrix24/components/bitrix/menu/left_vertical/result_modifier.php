@@ -57,7 +57,8 @@ $arResult = [
 		'crm' => ToolsManager::getInstance()->checkAvailabilityByToolId('crm'),
 		'tasks' => ToolsManager::getInstance()->checkAvailabilityByToolId('tasks'),
 		'sites' => ToolsManager::getInstance()->checkAvailabilityByToolId('sites'),
-		'social' => ToolsManager::getInstance()->checkAvailabilityByToolId('team_work')
+		'social' => ToolsManager::getInstance()->checkAvailabilityByToolId('team_work'),
+		'sync' => Loader::includeModule('call') && \Bitrix\Call\Settings::isSyncPresetEnabled(),
 	],
 	'SETTINGS_PATH' => \Bitrix\Intranet\Portal::getInstance()->getSettings()->getSettingsUrl(),
 	'SHOW_SETTINGS_BUTTON' => ($arParams['SHOW_SETTINGS_BUTTON'] ?? 'Y') === 'Y'

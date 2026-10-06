@@ -1,0 +1,24 @@
+<?php
+$MESS["BPFCT_DOCUMENT_EMPTY"] = "This \"Workflow element\" field is required.";
+$MESS["BP_CRM_AUTOMATED_SOLUTION_CREATE_FCT_DESCR_DESCR"] = "Triggered after a new Automated Solution is created.";
+$MESS["BP_CRM_AUTOMATED_SOLUTION_CREATE_FCT_DESCR_NAME"] = "Automated solution created";
+$MESS["BP_CRM_COMPANY_CREATE_FCT_DESCR_DESCR"] = "Triggered after a new Company is created.";
+$MESS["BP_CRM_COMPANY_CREATE_FCT_DESCR_NAME"] = "Company added";
+$MESS["BP_CRM_CONTACT_CREATE_FCT_DESCR_DESCR"] = "Triggered after a new Contact is created.";
+$MESS["BP_CRM_CONTACT_CREATE_FCT_DESCR_NAME"] = "Contact created";
+$MESS["BP_CRM_DEAL_CREATE_FCT_DESCR_DESCR"] = "Triggered after a new Deal is created.";
+$MESS["BP_CRM_DEAL_CREATE_FCT_DESCR_NAME"] = "Deal added";
+$MESS["BP_CRM_DYNAMIC_CREATE_FCT_DESCR_DESCR"] = "Triggered after a new SPA is created.";
+$MESS["BP_CRM_DYNAMIC_CREATE_FCT_DESCR_NAME"] = "SPA created";
+$MESS["BP_CRM_ENTITY_CREATE_TRIGGER_CATEGORY_ID"] = "Sales pipeline";
+$MESS["BP_CRM_ENTITY_CREATE_TRIGGER_ENTITY_ID"] = "Created CRM entity ID";
+$MESS["BP_CRM_ENTITY_CREATE_TRIGGER_ENTITY_TYPE_ID"] = "Created CRM entity type";
+$MESS["BP_CRM_FCT_DOCUMENT"] = "Workflow element";
+$MESS["BP_CRM_LEAD_CREATE_FCT_DESCR_DESCR"] = "Triggered after a new Lead is created.";
+$MESS["BP_CRM_LEAD_CREATE_FCT_DESCR_NAME"] = "Lead created";
+$MESS["BP_CRM_ORDER_CREATE_FCT_DESCR_DESCR"] = "Triggered after a new Order is created.";
+$MESS["BP_CRM_ORDER_CREATE_FCT_DESCR_NAME"] = "Order created";
+$MESS["BP_CRM_QUOTE_CREATE_FCT_DESCR_DESCR"] = "Triggered after a new Estimate is created.";
+$MESS["BP_CRM_QUOTE_CREATE_FCT_DESCR_NAME"] = "Estimate created";
+$MESS["BP_CRM_SMART_INVOICE_CREATE_FCT_DESCR_DESCR"] = "Triggered after a new Invoice is created.";
+$MESS["BP_CRM_SMART_INVOICE_CREATE_FCT_DESCR_NAME"] = "Invoice created";

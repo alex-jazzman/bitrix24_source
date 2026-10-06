@@ -92,7 +92,7 @@ BX.CrmElementEntitySelector = (function ()
 	{
 		var key = BX.type.isNotEmptyString(params['key']) ? params['key'] : '';
 		var value = BX.type.isPlainObject(params['value']) ? params['value'] : {};
-		var typeName = BX.type.isNotEmptyString(value['entityTypeName']) ? value['entityTypeName'] : '';
+		var typeName = BX.type.isNotEmptyString(value['entityTypeName']) ? value['entityTypeName'].toUpperCase() : '';
 		var context = BX.type.isNotEmptyString(value['context']) ? value['context'] : '';
 
 		if(
@@ -102,11 +102,15 @@ BX.CrmElementEntitySelector = (function ()
 			BX.type.isPlainObject(this.externalRequestData[context])
 		)
 		{
-			var isCanceled = BX.type.isBoolean(value['isCanceled']) ? value['isCanceled'] : false;
-			if(!isCanceled && BX.type.isPlainObject(value['entityInfo']))
+			var isCanceled =
+				(BX.type.isBoolean(value['isCanceled']) && value['isCanceled'])
+				|| (BX.type.isBoolean(value['isCancelled']) && value['isCancelled'])
+			;
+			var entityInfo = BX.type.isPlainObject(value['entityInfo']) ? value['entityInfo'] : {};
+			var valueEntityId = value.entityId || entityInfo.id || entityInfo.ENTITY_ID;
+			if(!isCanceled && valueEntityId)
 			{
 				var selector = BX.UI.SelectorManager.instances[this.fieldUid];
-				var valueEntityType = value.entityInfo.type.toUpperCase();
 
 				if (BX.type.isNotEmptyObject(selector))
 				{
@@ -122,7 +126,7 @@ BX.CrmElementEntitySelector = (function ()
 							selectedItems[code] = selector.itemsSelected[code];
 						}
 					}
-					selectedItems[this.listPrefix[valueEntityType] + '_' + value.entityInfo.id] = this.selectorEntityTypes[valueEntityType];
+					selectedItems[this.listPrefix[typeName] + '_' + valueEntityId] = this.selectorEntityTypes[typeName];
 
 					BX.onCustomEvent("BX.Main.SelectorV2:reInitDialog", [ {
 						selectorId: this.fieldUid,
@@ -136,7 +140,8 @@ BX.CrmElementEntitySelector = (function ()
 				var slider = BX.SidePanel.Instance.getSlider(this.externalRequestData[context]['url']);
 				if (slider)
 				{
-					slider.destroy();
+					slider.setCacheable(false);
+					slider.close();
 				}
 			}
 

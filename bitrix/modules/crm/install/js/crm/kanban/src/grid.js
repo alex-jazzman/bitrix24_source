@@ -2018,6 +2018,12 @@ export class Grid extends BX.Kanban.Grid
 
 	showResponseError(response)
 	{
+		if (response.errorCode === 'MODE_NOT_AVAILABLE')
+		{
+			this.handleModeNotAvailable();
+			return;
+		}
+
 		const errorText = response.error;
 
 		if (response.fatal)
@@ -2030,6 +2036,38 @@ export class Grid extends BX.Kanban.Grid
 				content: errorText,
 				autoHideDelay: 5000,
 			});
+		}
+	}
+
+	handleModeNotAvailable()
+	{
+		if (this._modeNotAvailableHandled)
+		{
+			return;
+		}
+
+		this._modeNotAvailableHandled = true;
+
+		BX.UI.Notification.Center.notify({
+			content: Loc.getMessage('CRM_KANBAN_MODE_ACTIVITIES_DISABLED'),
+			autoHideDelay: 5000,
+		});
+
+		const gridData = this.getData();
+		const entityTypeId = gridData.hasOwnProperty('entityTypeInt')
+			? Text.toInteger(gridData.entityTypeInt)
+			: 0;
+		const categoryId = gridData.params && gridData.params.hasOwnProperty('CATEGORY_ID')
+			? Text.toInteger(gridData.params.CATEGORY_ID)
+			: 0;
+
+		if (entityTypeId > 0 && BX.Crm.Router && BX.Crm.Router.Instance)
+		{
+			const listUri = BX.Crm.Router.Instance.getItemListUrl(entityTypeId, categoryId);
+			if (listUri)
+			{
+				window.location = listUri.toString();
+			}
 		}
 	}
 
@@ -2188,6 +2226,7 @@ export class Grid extends BX.Kanban.Grid
 				this.setData(gridData);
 				this.destroyFieldsSelectPopup();
 				this.destroyHideColumnSumPopups();
+				this.destroyUnavailableFieldsPopup();
 
 				const exist = [];
 				let id = null;
@@ -2944,6 +2983,11 @@ export class Grid extends BX.Kanban.Grid
 		});
 	}
 
+	destroyUnavailableFieldsPopup()
+	{
+		PopupManager.getPopupById('crm-unavailable-fields-checker-popup')?.destroy();
+	}
+
 	/**
 	 * Handler partial editor close.
 	 * @param {BX.Crm.PartialEditorDialog} sender
@@ -3254,6 +3298,14 @@ export class Grid extends BX.Kanban.Grid
 			}
 
 			this.handleScrollWithOpenPopupInKanbanColumn = (e) => {
+				// Sticky popups (e.g. the "not enough rights" popup) must follow the
+				// bound button on scroll instead of being closed.
+				if (this.isStickyKanbanColumnPopup(popupWindow)) {
+					this.updateStickyPopupPosition(popupWindow);
+
+					return;
+				}
+
 				popupWindow.close();
 			}
 
@@ -3343,6 +3395,75 @@ export class Grid extends BX.Kanban.Grid
 		}
 
 		return !!kanbanColumnElem;
+	}
+
+	/**
+	 * Sticky popups must follow their bound element while the column is scrolled
+	 * instead of being closed on scroll (e.g. the "not enough rights" popup
+	 * anchored to the quick create save button).
+	 * @param {BX.PopupWindow} popupWindow
+	 * @returns {boolean}
+	 */
+	isStickyKanbanColumnPopup(popupWindow)
+	{
+		return popupWindow.uniquePopupId === 'crm-unavailable-fields-checker-popup';
+	}
+
+	/**
+	 * Keeps a sticky popup glued to its bound element while the column scrolls,
+	 * but hides it once the bound element is scrolled out of the visible area of
+	 * its scroll container (so a fixed popup does not float over the top menu).
+	 * @param {BX.PopupWindow} popupWindow
+	 * @returns {void}
+	 */
+	updateStickyPopupPosition(popupWindow)
+	{
+		const bindElement = popupWindow.bindElement;
+		const container = popupWindow.popupContainer;
+		if (!bindElement || !container)
+		{
+			return;
+		}
+
+		const scrollContainer = this.getScrollableParent(bindElement);
+		let isBindElementVisible = true;
+		if (scrollContainer)
+		{
+			const bindRect = bindElement.getBoundingClientRect();
+			const scrollRect = scrollContainer.getBoundingClientRect();
+			isBindElementVisible = bindRect.bottom > scrollRect.top && bindRect.top < scrollRect.bottom;
+		}
+
+		if (isBindElementVisible)
+		{
+			container.style.visibility = '';
+			popupWindow.adjustPosition();
+		}
+		else
+		{
+			container.style.visibility = 'hidden';
+		}
+	}
+
+	/**
+	 * Nearest vertically scrollable ancestor of the node (or null).
+	 * @param {HTMLElement} node
+	 * @returns {?HTMLElement}
+	 */
+	getScrollableParent(node)
+	{
+		let current = node.parentElement;
+		while (current)
+		{
+			const overflowY = getComputedStyle(current).overflowY;
+			if ((overflowY === 'auto' || overflowY === 'scroll') && current.scrollHeight > current.clientHeight)
+			{
+				return current;
+			}
+			current = current.parentElement;
+		}
+
+		return null;
 	}
 
 	/**

@@ -77,41 +77,30 @@ class mobile extends CModule
 
 	function InstallDB()
 	{
-		RegisterModule("mobile");
-		$eventManager = \Bitrix\Main\EventManager::getInstance();
-		$eventManager->registerEventHandler('pull', 'ShouldMessageBeSent', 'mobile', 'CMobileEvent', 'shouldSendNotification');
-		$eventManager->registerEventHandler('rest', 'OnRestServiceBuildDescription', 'mobile', '\Bitrix\Mobile\Rest', 'onRestServiceBuildDescription');
-		$eventManager->registerEventHandler('mobile', 'onOneTimeHashRemoved', 'mobile', '\Bitrix\Mobile\Deeplink', 'onOneTimeHashRemoved');
-		$eventManager->registerEventHandler('pull', 'OnGetDependentModule', 'mobile', 'CMobileEvent', 'PullOnGetDependentModule');
-		$eventManager->registerEventHandler('pull', 'onPushTokenUniqueHashGet', 'mobile', '\Bitrix\Mobile\Push\EventHandler', 'onPushTokenUniqueHashGet');
-		$eventManager->registerEventHandler('main', 'OnApplicationsBuildList', 'mobile', 'MobileApplication', 'OnApplicationsBuildList', 100, "modules/mobile/classes/general/mobile_event.php");
-		$eventManager->registerEventHandler('main', 'OnApplicationsBuildList', 'mobile', '\Bitrix\Mobile\Auth\MobileGuestApplication', 'onApplicationsBuildList', 100, 'modules/mobile/lib/Auth/MobileGuestApplication.php');
-		$eventManager->registerEventHandler('main', 'onApplicationScopeError', 'mobile', '\Bitrix\Mobile\Auth\MobileGuestApplication', 'onApplicationScopeError');
-		$eventManager->registerEventHandler('mobileapp', 'onJNComponentWorkspaceGet', 'mobile', 'CMobileEvent', 'getJNWorkspace');
-		$eventManager->registerEventHandler('mobile', 'onMobileMenuStructureBuilt', 'mobile', 'CMobileEvent', 'onMobileMenuBuilt');
-		$eventManager->registerEventHandler('main', 'onKernelCheckInstallFilesMappingGet', 'mobile', 'CMobileEvent', 'getKernelCheckPath');
-		$eventManager->registerEventHandler('mobileapp', 'onBeforeComponentContentGet', 'mobile', 'CMobileEvent', 'onBeforeComponentContentGet');
-		$eventManager->registerEventHandler('mobileapp', 'onBuildEnvVariable', 'mobile', \Bitrix\Mobile\Internal\Integration\Mobileapp\EventHandler\OnBuildEnvVariable::class, 'handle');
+		$migrationResult = $this->installMigrations();
+		if (!$migrationResult->isSuccess())
+		{
+			$this->errors = $migrationResult->getErrorMessages();
+
+			return false;
+		}
+
+		RegisterModule('mobile');
 
 		return true;
 	}
 
 	function UnInstallDB($arParams = [])
 	{
-		UnRegisterModuleDependences("pull", "OnGetDependentModule", "mobile", "CMobileEvent", "PullOnGetDependentModule");
-		UnRegisterModuleDependences("main", "OnApplicationsBuildList", "main", 'MobileApplication', "OnApplicationsBuildList", 100, "modules/mobile/classes/general/mobile_event.php");
+		$migrationResult = $this->uninstallMigrations(false);
+		if (!$migrationResult->isSuccess())
+		{
+			$this->errors = $migrationResult->getErrorMessages();
 
-		$eventManager = \Bitrix\Main\EventManager::getInstance();
-		$eventManager->unRegisterEventHandler('main', 'OnApplicationsBuildList', 'mobile', '\Bitrix\Mobile\Auth\MobileGuestApplication', 'onApplicationsBuildList', 'modules/mobile/lib/Auth/MobileGuestApplication.php');
-		$eventManager->unRegisterEventHandler('main', 'onApplicationScopeError', 'mobile', '\Bitrix\Mobile\Auth\MobileGuestApplication', 'onApplicationScopeError');
-		$eventManager->unRegisterEventHandler('rest', 'OnRestServiceBuildDescription', 'mobile', '\Bitrix\Mobile\Rest', 'onRestServiceBuildDescription');
-		$eventManager->unRegisterEventHandler('mobileapp', 'onJNComponentWorkspaceGet', 'mobile', 'CMobileEvent', 'getJNWorkspace');
-		$eventManager->unRegisterEventHandler('main', 'onKernelCheckInstallFilesMappingGet', 'mobile', 'CMobileEvent', 'getKernelCheckPath');
-		$eventManager->unRegisterEventHandler('mobileapp', 'onBeforeComponentContentGet', 'mobile', 'CMobileEvent', 'onBeforeComponentContentGet');
-		$eventManager->unRegisterEventHandler('mobileapp', 'onBuildEnvVariable', 'mobile', \Bitrix\Mobile\Internal\Integration\Mobileapp\EventHandler\OnBuildEnvVariable::class, 'handle');
-		$eventManager->unRegisterEventHandler('pull', 'onPushTokenUniqueHashGet', 'mobile', '\Bitrix\Mobile\Push\EventHandler', 'onPushTokenUniqueHashGet');
+			return false;
+		}
 
-		UnRegisterModule("mobile");
+		UnRegisterModule('mobile');
 
 		return true;
 	}

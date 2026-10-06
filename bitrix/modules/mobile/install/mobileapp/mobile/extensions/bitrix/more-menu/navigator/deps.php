@@ -2,11 +2,12 @@
 
 return [
 	'extensions' => [
+		'in-app-url',
+		'more-menu/list/utils',
+		'more-menu/utils',
 		'navigator/base',
 		'navigator/more-tab/meta',
-		'more-menu/list/utils',
 		'require-lazy',
-		'in-app-url',
 		'type',
 		'more-menu/ref-registry',
 	],

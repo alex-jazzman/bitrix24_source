@@ -1,18 +1,19 @@
 import { type JsonObject, Event, Runtime } from 'main.core';
+import { computed } from 'ui.vue3';
 
-import { CreateChatPromo } from 'im.v2.component.list.container.elements.create-chat-promo';
 import { CreateChatButton } from 'im.v2.component.list.container.elements.create-chat-button';
+import { CreateChatPromo } from 'im.v2.component.list.container.elements.create-chat-promo';
+import { HeaderMenu } from 'im.v2.component.list.container.elements.header-menu';
 import { CollabList, CollabUnreadList } from 'im.v2.component.list.items.collab';
+import { ChatSearchInput, RecentSearch } from 'im.v2.component.search';
 import { Layout, ChatType, ActionByUserType, RecentType, PromoId } from 'im.v2.const';
-import { PromoManager } from 'im.v2.lib.promo';
 import { Analytics } from 'im.v2.lib.analytics';
+import { CollabManager } from 'im.v2.lib.collab';
 import { CreateChatManager } from 'im.v2.lib.create-chat';
 import { Feature, FeatureManager, TariffManager } from 'im.v2.lib.feature';
 import { Logger } from 'im.v2.lib.logger';
 import { PermissionManager } from 'im.v2.lib.permission';
-import { HeaderMenu } from 'im.v2.component.list.container.elements.header-menu';
-import { ChatSearchInput, RecentSearch } from 'im.v2.component.search';
-import { CollabManager } from 'im.v2.lib.collab';
+import { PromoManager } from 'im.v2.lib.promo';
 
 import '../css/container.css';
 
@@ -27,6 +28,18 @@ export const CollabListContainer = {
 		CollabUnreadList,
 		ChatSearchInput,
 		RecentSearch,
+	},
+	provide(): { avatarsOnly: boolean }
+	{
+		return {
+			avatarsOnly: computed(() => this.avatarsOnly),
+		};
+	},
+	props: {
+		avatarsOnly: {
+			type: Boolean,
+			default: false,
+		},
 	},
 	emits: ['selectChat'],
 	data(): JsonObject
@@ -60,10 +73,6 @@ export const CollabListContainer = {
 		searchInputText(): string
 		{
 			return CollabManager.getSearchInputText();
-		},
-		isUnreadRecentModeAvailable(): boolean
-		{
-			return FeatureManager.isFeatureAvailable(Feature.unreadRecentModeAvailable);
 		},
 	},
 	created()
@@ -154,7 +163,6 @@ export const CollabListContainer = {
 		<div class="bx-im-list-container-collab__container" ref="collab-container">
 			<div class="bx-im-list-container-collab__header_container">
 				<HeaderMenu
-					v-if="isUnreadRecentModeAvailable"
 					:unreadMode="unreadMode"
 					:recentSection="RecentType.collab"
 					@toggleUnreadMode="onToggleUnreadMode"

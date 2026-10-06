@@ -13,6 +13,7 @@ use Bitrix\BIConnector\Integration\Superset\SupersetController;
 use Bitrix\BIConnector\Integration\Superset\SupersetInitializer;
 use Bitrix\BIConnector\Superset\Grid\Row\Assembler\Field\Base\DetailLinkFieldAssembler;
 use Bitrix\BIConnector\Superset\MarketAccessManager;
+use Bitrix\BIConnector\Superset\Selfhost\License\SelfHostedLicenseLock;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
 use Bitrix\Main\Web\Json;
@@ -112,6 +113,24 @@ class NameFieldAssembler extends DetailLinkFieldAssembler
 				</a>
 				HTML;
 		}
+		elseif (SelfHostedLicenseLock::isDashboardLocked())
+		{
+			$openSlider = SelfHostedLicenseLock::getOpenSliderScript();
+			// A button and not a link: the padlock opens the restriction and navigates nowhere. The padlock itself
+			// carries the reason as text, otherwise the report would read as an ordinary one to a screen reader.
+			$lockLabel = htmlspecialcharsbx((string)Loc::getMessage('BI_DASHBOARD_NAME_LOCKED'));
+			$link = <<<HTML
+				<button
+					type="button"
+					class="biconnector-grid-name-link biconnector-grid-name-link-button"
+					data-testid="biconnector-selfhost-license-locked-dashboard"
+					onclick="{$openSlider}"
+				>
+					<span class="ui-icon-set --lock-m" role="img" aria-label="{$lockLabel}"></span>
+					{$title}
+				</button>
+				HTML;
+		}
 		else
 		{
 			$value['DETAIL_URL'] .=
@@ -169,7 +188,7 @@ class NameFieldAssembler extends DetailLinkFieldAssembler
 				onclick="event.stopPropagation(); BX.BIConnector.SupersetDashboardGridManager.Instance.renameDashboard({$dashboardId})"
 			>
 				<i
-					class="ui-icon-set --pencil-60 dashboard-edit-icon"
+					class="ui-icon-set --edit-l dashboard-edit-icon"
 				></i>
 			</a>
 		HTML;
@@ -177,12 +196,12 @@ class NameFieldAssembler extends DetailLinkFieldAssembler
 
 	protected function getPinButton(int $dashboardId, bool $isPinned): string
 	{
-		if (!Feature::isBuilderEnabled())
+		if (!Feature::isBuilderEnabled() || SelfHostedLicenseLock::isDashboardLocked())
 		{
 			return '';
 		}
 
-		$iconClass = $isPinned ? '--pin-2 dashboard-unpin-icon' : '--pin-1 dashboard-pin-icon';
+		$iconClass = $isPinned ? '--pin-2 dashboard-unpin-icon' : '--o-pin-list dashboard-pin-icon';
 		$method =
 			$isPinned
 				? 'BX.BIConnector.SupersetDashboardGridManager.Instance.unpin'
@@ -207,7 +226,7 @@ class NameFieldAssembler extends DetailLinkFieldAssembler
 	 */
 	protected function canEditTitle(array $dashboardData): bool
 	{
-		if (!Feature::isBuilderEnabled())
+		if (!Feature::isBuilderEnabled() || SelfHostedLicenseLock::isDashboardLocked())
 		{
 			return false;
 		}

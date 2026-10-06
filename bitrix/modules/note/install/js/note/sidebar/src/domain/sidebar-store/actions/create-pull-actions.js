@@ -19,6 +19,14 @@ const PullCommand = Object.freeze({
 	COLLECTION_DELETE: 'collectionDelete',
 	COLLECTION_CAPABILITIES: 'collectionCapabilities',
 	COLLECTION_LIST_INVALIDATED: 'collectionListInvalidated',
+	DOCUMENT_ACCESS_CASCADE: 'documentAccessCascade',
+	// [EVENT-01] Personal channel: the composition of the favorites block.
+	FAVORITE_ADD: 'favoriteAdd',
+	FAVORITE_REMOVE: 'favoriteRemove',
+	FAVORITE_MOVE: 'favoriteMove',
+	// [EVENT-02] Personal channel: the notification state of an object of the block.
+	SUBSCRIPTION_SET: 'subscriptionSet',
+	SUBSCRIPTION_REMOVE: 'subscriptionRemove',
 });
 
 export { PullCommand };

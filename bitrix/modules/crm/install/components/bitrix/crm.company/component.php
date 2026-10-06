@@ -8,6 +8,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 use Bitrix\Crm;
 use Bitrix\Crm\Integration\Report\DisablingHelper;
 use Bitrix\Crm\Restriction\AvailabilityManager;
+use Bitrix\Main\Web\Uri;
 
 if (!CModule::IncludeModule('crm'))
 {
@@ -241,11 +242,7 @@ if (isset($_GET['redirect_to']))
 
 	if (isset($arResult[$pathKey]))
 	{
-		$redirectUrl = CHTTP::urlAddParams(
-			$arResult[$pathKey],
-			array_diff_key($_GET, array_flip(['redirect_to'])),
-			['encode' => true]
-		);
+		$redirectUrl = (string)(new Uri($arResult[$pathKey]))->addParams(array_diff_key($_GET, array_flip(['redirect_to'])));
 		LocalRedirect($redirectUrl);
 	}
 }
@@ -272,11 +269,6 @@ if (isset($_GET['id']))
 	$arResult['VARIABLES']['company_ids'] = array_map('intval', $entityIDs);
 }
 
-\CCrmEntityHelper::setEnabledFactoryFlagByRequest(
-	Crm\Settings\CompanySettings::getCurrent(),
-	\Bitrix\Main\Application::getInstance()->getContext()->getRequest(),
-);
-
 if (
 	\Bitrix\Crm\Settings\LayoutSettings::getCurrent()->isSliderEnabled()
 	&& ($componentPage === 'edit' || $componentPage === 'show')
@@ -292,7 +284,7 @@ if (
 		parse_str($_SERVER['QUERY_STRING'], $queryParams);
 		if (!empty($queryParams))
 		{
-			$redirectUrl = CHTTP::urlAddParams($redirectUrl, $queryParams, ['encode' => true]);
+			$redirectUrl = (string)(new Uri($redirectUrl))->addParams($queryParams);
 		}
 	}
 

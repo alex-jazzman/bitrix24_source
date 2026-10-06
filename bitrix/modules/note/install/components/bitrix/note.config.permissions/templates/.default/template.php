@@ -15,28 +15,6 @@ use Bitrix\UI\Buttons;
  * @var CMain $APPLICATION
  */
 
-$error = (array)($arResult['ERROR'] ?? []);
-if (($error['REASON'] ?? null) === 'tariff')
-{
-	\Bitrix\Main\UI\Extension::load(['main.sidepanel', 'ui.info-helper']);
-	$sliderCode = (string)($error['SLIDER_CODE'] ?? '');
-	?>
-	<script>
-		BX.ready(() => {
-			BX.addCustomEvent('SidePanel.Slider:onCloseComplete', () => {
-				window.location.replace('/');
-			});
-			BX.UI.InfoHelper.show('<?= CUtil::JSEscape($sliderCode) ?>', {
-				isLimit: true,
-				limitAnalyticsLabels: { module: 'note' },
-			});
-		});
-	</script>
-	<?php
-
-	return;
-}
-
 \Bitrix\Main\UI\Extension::load([
 	'ui.accessrights.v2',
 	'ui.buttons',
@@ -91,3 +69,27 @@ $APPLICATION->IncludeComponent('bitrix:ui.button.panel', '', [
 
 	noteAccessRightsApp.draw();
 </script>
+<?php
+$tariffSliderCode = (string)($arResult['TARIFF_SLIDER_CODE'] ?? '');
+if ($tariffSliderCode !== '')
+{
+	// Tariff/tool blocks access: the permissions interface stays mounted underneath
+	// while the tariff slider opens on top; closing the slider redirects the user away.
+	// Unlike note.editor, no mobile guard on the redirect is needed here: the permissions
+	// config is a desktop-only admin surface and is never opened in the mobile webview.
+	\Bitrix\Main\UI\Extension::load(['main.sidepanel', 'ui.info-helper']);
+	?>
+	<script>
+		BX.ready(() => {
+			BX.addCustomEvent('SidePanel.Slider:onCloseComplete', () => {
+				window.location.replace('/');
+			});
+			BX.UI.InfoHelper.show('<?= CUtil::JSEscape($tariffSliderCode) ?>', {
+				isLimit: true,
+				limitAnalyticsLabels: { module: 'note' },
+			});
+		});
+	</script>
+	<?php
+}
+?>

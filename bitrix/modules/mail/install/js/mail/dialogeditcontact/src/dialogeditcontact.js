@@ -62,7 +62,7 @@ export class DialogEditContact
 
 		const messageBox = new MessageBox({
 			title: Loc.getMessage("MAIL_DIALOG_EDIT_CONTACT_REMOVE_DIALOG_TITLE"),
-			message: Loc.getMessage("MAIL_DIALOG_EDIT_CONTACT_REMOVE_DIALOG_MESSAGE"),
+			message: Loc.getMessage("MAIL_DIALOG_EDIT_CONTACT_REMOVE_DIALOG_MESSAGE_MSGVER_1"),
 			buttons: BX.UI.Dialogs.MessageBoxButtons.OK_CANCEL,
 			popupOptions: {
 				zIndex: messageBoxZIndex,

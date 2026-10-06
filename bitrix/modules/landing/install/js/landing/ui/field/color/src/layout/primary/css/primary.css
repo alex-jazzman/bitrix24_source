@@ -39,3 +39,9 @@
 .landing-ui-field-color-primary-text:hover {
 	opacity: 1;
 }
+
+.landing-ui-field-color-primary:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary, #0075ff);
+	outline-offset: 2px;
+	border-radius: 2px;
+}

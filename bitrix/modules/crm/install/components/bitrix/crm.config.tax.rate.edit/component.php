@@ -1,4 +1,8 @@
-<?if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
+<?php
+
+if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
+
+use Bitrix\Main\Web\Uri;
 
 if (!CModule::IncludeModule('crm'))
 	return;
@@ -25,10 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') // process data from popup dialog
 
 		if(isset($_REQUEST['RATE_PAGE']))
 		{
-			$arResult['RATE_PAGE'] = CHTTP::urlAddParams(
-				$_REQUEST['RATE_PAGE'],
-				[$_REQUEST['FORM_ID'].'_active_tab' => 'tab_rateslist']
-			);
+			$arResult['RATE_PAGE'] = (string)(new Uri($_REQUEST['RATE_PAGE']))->addParams([$_REQUEST['FORM_ID'].'_active_tab' => 'tab_rateslist']);
 		}
 		else
 		{

@@ -615,7 +615,6 @@ if ($arParams['BACK_URL'])
 	<?php if (
 		$ID > 0
 		&& defined('Bitrix\Bizproc\Dev\ENV')
-		&& $arResult['TEMPLATE'][0]['Type'] === 'StateMachineWorkflowActivity'
 	): ?>
 		<div class="ui-alert ui-alert-primary ui-alert-icon-info">
 			<div class="ui-alert-message">

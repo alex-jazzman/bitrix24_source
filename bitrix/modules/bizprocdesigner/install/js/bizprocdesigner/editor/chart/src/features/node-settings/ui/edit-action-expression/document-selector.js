@@ -112,6 +112,11 @@ export class DocumentSelector
 					return false;
 				}
 
+				if (property.Multiple === true)
+				{
+					return false;
+				}
+
 				if (!Type.isArrayFilled(property.Default))
 				{
 					return true;
@@ -122,15 +127,7 @@ export class DocumentSelector
 					return true;
 				}
 
-				for (const key: number of this.#fixedDocumentType.keys())
-				{
-					if (property.Default?.[key] !== this.#fixedDocumentType[key])
-					{
-						return false;
-					}
-				}
-
-				return true;
+				return property.Default?.[0] === this.#fixedDocumentType[0];
 			})
 			.forEach((property: ActivityProperty): void => {
 				const item: ItemOptions = {

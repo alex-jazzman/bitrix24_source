@@ -48,7 +48,7 @@ jn.define('im/messenger/lib/converter/ui/recent-search', (require, exports, modu
 			item.styles = {
 				title: {
 					font: {
-						color: ChatTitle.createFromDialogId(preparedUser.id).getTitleColor(),
+						color: ChatTitle.createFromDialogId(preparedUser.id).getTitleColor({ useNotes: true }),
 						useColor: true,
 					},
 				},

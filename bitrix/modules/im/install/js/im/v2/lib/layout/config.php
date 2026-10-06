@@ -25,6 +25,7 @@ return [
 		'im.v2.lib.bulk-actions',
 		'im.v2.lib.channel',
 		'im.v2.lib.feature',
+		'im.v2.lib.folder',
 		'im.v2.lib.local-storage',
 		'im.v2.lib.logger',
 		'main.core',

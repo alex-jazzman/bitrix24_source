@@ -9,6 +9,7 @@ jn.define('im/messenger/assets/icon/src/messenger-icon', (require, exports, modu
 	const IconType = Object.freeze({
 		calendar: 'calendar',
 		groupChat: 'groupChat',
+		chatAttach: 'chatAttach',
 		channel: 'channel',
 		task: 'task',
 		copilot: 'copilot',
@@ -22,11 +23,13 @@ jn.define('im/messenger/assets/icon/src/messenger-icon', (require, exports, modu
 		copilotEmptyState: 'copilotEmptyState',
 		projectEmptyState: 'projectEmptyState',
 		taskEmptyState: 'taskEmptyState',
+		chatAttachEmptyState: 'chatAttachEmptyState',
 	});
 
 	const IconRegistry = Object.freeze({
 		[IconType.calendar]: 'calendar',
 		[IconType.groupChat]: 'group-chat',
+		[IconType.chatAttach]: 'chat-attach',
 		[IconType.channel]: 'channel',
 		[IconType.task]: 'task',
 		[IconType.copilot]: 'copilot',
@@ -40,6 +43,7 @@ jn.define('im/messenger/assets/icon/src/messenger-icon', (require, exports, modu
 		[IconType.copilotEmptyState]: 'copilot-empty-state',
 		[IconType.projectEmptyState]: 'project-empty-state',
 		[IconType.taskEmptyState]: 'task-empty-state',
+		[IconType.chatAttachEmptyState]: 'chat-attach-empty-state',
 	});
 
 	class MessengerIcon

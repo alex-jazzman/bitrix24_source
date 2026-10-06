@@ -1,7 +1,9 @@
 <?php
 $MESS["MAIN_MAIL_CONFIRM_MESSAGE_SUBJECT"] = "Confirm email address";
+$MESS['MAIN_MAIL_SENDER_ADDRESS_MISMATCH_ERROR'] = 'The sender is unavailable. Select an up-to-date sender and try sending the email again.';
 $MESS["MAIN_MAIL_SENDER_EDIT_ERROR"] = "Insufficient permission to edit sender.";
 $MESS["MAIN_MAIL_SENDER_INVALID_NAME"] = "The sender name may include alphanumeric characters, spaces and these characters: , ' . - ( )";
+$MESS['MAIN_MAIL_SENDER_UNAVAILABLE_ERROR'] = 'The sender is unavailable. Select another sender and try sending the email again.';
 $MESS["MAIN_MAIL_SENDER_UNKNOWN_SENDER_ERROR"] = "Sender was not found.";
 $MESS["MAIN_SENDER_EMPTY_SMTP_LOGIN"] = "Enter SMTP server login.";
 $MESS["MAIN_SENDER_EMPTY_SMTP_PASSWORD"] = "Enter SMTP server password.";

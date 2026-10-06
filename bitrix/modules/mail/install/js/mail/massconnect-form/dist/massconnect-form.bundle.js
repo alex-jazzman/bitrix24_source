@@ -42,6 +42,7 @@ this.BX.Mail = this.BX.Mail || {};
 					periodValue: ''
 				},
 				assignKnownClientEmails: true,
+				vcf: true,
 				incoming: {
 					enabled: true,
 					createAction: ''
@@ -55,6 +56,7 @@ this.BX.Mail = this.BX.Mail || {};
 				responsibleQueue: []
 			},
 			crmSourceOptions: [],
+			isCrmAvailable: false,
 			calendarSettings: {
 				enabled: true,
 				autoAddEvents: true
@@ -69,7 +71,8 @@ this.BX.Mail = this.BX.Mail || {};
 			analyticsSource: '',
 			permissions: {
 				allowedLevels: null,
-				canEditCrmIntegration: false
+				canEditCrmIntegration: false,
+				canViewMailboxList: false
 			}
 		}),
 		actions: {
@@ -103,12 +106,15 @@ this.BX.Mail = this.BX.Mail || {};
 				this.crmSyncOptions = mapped.crmSyncOptions;
 				this.crmEntityOptions = mapped.crmEntityOptions;
 				this.crmSourceOptions = mapped.crmSourceOptions;
+				this.isCrmAvailable = mapped.crmAvailable;
+				this.permissions.canEditCrmIntegration = mapped.canEditCrmIntegration;
 				this.mailSettings.sync.enabled = mapped.mailSyncEnabled;
 				this.mailSettings.sync.periodValue = mail_connecting_settingsConfig.resolveSettingValue(mapped.mailSyncOptions, this.mailSettings.sync.periodValue, mapped.messageMaxAge);
 				this.crmSettings.enabled = mapped.crmEnabled;
 				this.crmSettings.sync.enabled = mapped.crmSyncEnabled;
 				this.crmSettings.sync.periodValue = mail_connecting_settingsConfig.resolveSettingValue(mapped.crmSyncOptions, this.crmSettings.sync.periodValue, mapped.crmSyncPeriod);
 				this.crmSettings.assignKnownClientEmails = mapped.crmAssignKnownClientEmails;
+				this.crmSettings.vcf = mapped.crmVcf;
 				this.crmSettings.incoming.enabled = mapped.crmIncomingCreate;
 				this.crmSettings.incoming.createAction = mail_connecting_settingsConfig.resolveSettingValue(mapped.crmEntityOptions, this.crmSettings.incoming.createAction, mapped.crmIncomingEntity);
 				this.crmSettings.outgoing.enabled = mapped.crmOutgoingCreate;
@@ -121,7 +127,7 @@ this.BX.Mail = this.BX.Mail || {};
 				this.calendarSettings = newSettings;
 			},
 			prepareCrmOptions() {
-				if (!this.crmSettings.enabled) {
+				if (!this.isCrmAvailable || !this.crmSettings.enabled) {
 					return {
 						enabled: NO_VALUE
 					};
@@ -136,6 +142,7 @@ this.BX.Mail = this.BX.Mail || {};
 				if (this.crmSettings.assignKnownClientEmails) {
 					crmOptions.config.crm_public = this.crmSettings.assignKnownClientEmails ? YES_VALUE : NO_VALUE;
 				}
+				crmOptions.config.crm_vcf = this.crmSettings.vcf ? YES_VALUE : NO_VALUE;
 				if (this.crmSettings.incoming.enabled) {
 					crmOptions.config.crm_new_entity_in = this.crmSettings.incoming.createAction;
 				}
@@ -254,7 +261,7 @@ this.BX.Mail = this.BX.Mail || {};
 			},
 			setPermissions(permissions) {
 				this.permissions.allowedLevels = [permissions?.allowedLevels];
-				this.permissions.canEditCrmIntegration = permissions?.canEditCrmIntegration;
+				this.permissions.canViewMailboxList = permissions?.canViewMailboxList ?? false;
 			}
 		}
 	});
@@ -350,6 +357,10 @@ this.BX.Mail = this.BX.Mail || {};
 	const ERROR_TYPE_AUTH = 'auth';
 	const ERROR_TYPE_SMTP_CONNECTION = 'smtp_connection';
 	const ALLOWED_CONNECTION_ERROR_TYPES = [ERROR_TYPE_IMAP_CONNECTION, ERROR_TYPE_AUTH, ERROR_TYPE_SMTP_CONNECTION];
+
+	// Server error code for an address already connected on the portal by someone else:
+	// see MailboxConnector::EXISTS_ON_PORTAL_ERROR_KEY.
+	const PORTAL_EMAIL_CONFLICT_ERROR_CODE = 'EXISTS_ON_PORTAL_ERROR';
 
 	// @vue/component
 	const ConnectionData = {
@@ -972,7 +983,28 @@ this.BX.Mail = this.BX.Mail || {};
 					enableSearch: true,
 					context: 'MAIL_MASSCONNECT_EMPLOYEES',
 					entities: [{
+						id: 'user',
+						dynamicLoad: true,
+						dynamicSearch: true,
+						substituteEntityId: 'mail-massconnect-user',
+						options: {
+							activeUsers: true,
+							intranetUsersOnly: true,
+							extranetUsersOnly: false,
+							emailUsers: false,
+							emailUsersOnly: false,
+							myEmailUsers: false,
+							networkUsers: false,
+							networkUsersOnly: false,
+							collabers: false,
+							showInvitationFooter: false,
+							inviteEmployeeLink: false,
+							inviteExtranetLink: false,
+							inviteGuestLink: false
+						}
+					}, {
 						id: 'structure-node',
+						dynamicSearch: true,
 						options: {
 							selectMode: 'usersAndDepartments',
 							forSearch: true,
@@ -1288,7 +1320,7 @@ this.BX.Mail = this.BX.Mail || {};
 		},
 		mixins: [LocalizationMixin],
 		computed: {
-			...ui_vue3_pinia.mapState(useWizardStore, ['mailSettings', 'crmSettings', 'calendarSettings', 'analyticsSource', 'permissions', 'mailSyncOptions', 'crmSyncOptions', 'crmEntityOptions', 'crmSourceOptions']),
+			...ui_vue3_pinia.mapState(useWizardStore, ['mailSettings', 'crmSettings', 'calendarSettings', 'analyticsSource', 'permissions', 'mailSyncOptions', 'crmSyncOptions', 'crmEntityOptions', 'crmSourceOptions', 'isCrmAvailable']),
 			switcherOptions() {
 				return {
 					size: ui_switcher.SwitcherSize.large,
@@ -1331,11 +1363,13 @@ this.BX.Mail = this.BX.Mail || {};
 			/>
 
 			<CrmIntegration
+				v-if="isCrmAvailable"
 				:model-value="crmSettings"
 				:can-edit-crm-integration="permissions.canEditCrmIntegration"
 				:sync-period-options="crmSyncOptions"
 				:entity-options="crmEntityOptions"
 				:source-options="crmSourceOptions"
+				:show-vcf-option="true"
 				@update:model-value="setCrmSettings($event)"
 			/>
 
@@ -1352,8 +1386,16 @@ this.BX.Mail = this.BX.Mail || {};
 		PASSWORDLESS_REQUESTS_SENT: 'mail-massconnect-passwordless-requests-sent'
 	};
 
+	const MAILBOX_LIST_PATH = '/mail/mailbox-list';
+
+	// Matches the default page size of the mailbox grid, so every found mailbox fits the first page
+	const OCCUPIED_EMAILS_FILTER_LIMIT = 20;
 	function getNotificationCenter() {
 		return globalThis.BX?.UI?.Notification?.Center ?? null;
+	}
+	function extractOccupiedEmails(errorDetails) {
+		const emails = errorDetails.filter(item => item.code === PORTAL_EMAIL_CONFLICT_ERROR_CODE).map(item => item.customData?.email).filter(email => main_core.Type.isStringFilled(email));
+		return [...new Set(emails)];
 	}
 
 	// @vue/component
@@ -1399,7 +1441,7 @@ this.BX.Mail = this.BX.Mail || {};
 			};
 		},
 		computed: {
-			...ui_vue3_pinia.mapState(useWizardStore, ['analyticsSource', 'calendarSettings', 'crmSettings', 'passwordlessMode', 'connectionSettings']),
+			...ui_vue3_pinia.mapState(useWizardStore, ['analyticsSource', 'calendarSettings', 'crmSettings', 'passwordlessMode', 'connectionSettings', 'permissions']),
 			outline() {
 				return ui_iconSet_api_vue.Outline;
 			},
@@ -1496,6 +1538,21 @@ this.BX.Mail = this.BX.Mail || {};
 			hasErrorDetails() {
 				return this.errorDetails.some(item => {
 					return main_core.Type.isStringFilled(item.message) || main_core.Type.isPlainObject(item.customData);
+				});
+			},
+			occupiedEmails() {
+				return extractOccupiedEmails(this.errorDetails);
+			},
+			hasOccupiedMailboxesLink() {
+				return this.occupiedEmails.length > 0 && this.permissions.canViewMailboxList;
+			},
+			hasOccupiedEmailsBeyondLimit() {
+				return this.occupiedEmails.length > OCCUPIED_EMAILS_FILTER_LIMIT;
+			},
+			occupiedEmailsLimitNotice() {
+				return this.loc('MAIL_MASSCONNECT_FORM_CONNECTION_FIND_MAILBOXES_LIMIT', {
+					'#LIMIT#': String(OCCUPIED_EMAILS_FILTER_LIMIT),
+					'#TOTAL#': String(this.occupiedEmails.length)
 				});
 			}
 		},
@@ -1723,6 +1780,17 @@ this.BX.Mail = this.BX.Mail || {};
 				}
 				return '';
 			},
+			openOccupiedMailboxList() {
+				const params = new URLSearchParams({
+					EMAIL: this.occupiedEmails.slice(0, OCCUPIED_EMAILS_FILTER_LIMIT).join(', '),
+					apply_filter: 'Y'
+				});
+				BX.SidePanel.Instance.open(`${MAILBOX_LIST_PATH}?${params.toString()}`, {
+					data: {
+						resetFilterOnClose: true
+					}
+				});
+			},
 			handleCancel() {
 				this.isCancelled = true;
 				this.isFinished = true;
@@ -1852,6 +1920,22 @@ this.BX.Mail = this.BX.Mail || {};
 							class="mail_massconnect__connection-status_details-link"
 							v-hint="getErrorDetailsHintParams"
 						>{{ loc('MAIL_MASSCONNECT_FORM_CONNECTION_DETAILS_LINK') }}</span>
+						<UiButton
+							v-if="hasOccupiedMailboxesLink"
+							class="mail_massconnect__connection-status_find-mailboxes-button"
+							:text="loc('MAIL_MASSCONNECT_FORM_CONNECTION_FIND_MAILBOXES')"
+							:style="AirButtonStyle.PLAIN_ACCENT"
+							:size="ButtonSize.EXTRA_SMALL"
+							:dataset="{ testId: 'mail_massconnect__connection-status_find-mailboxes' }"
+							@click="openOccupiedMailboxList"
+						/>
+					</div>
+					<div
+						v-if="hasOccupiedMailboxesLink && hasOccupiedEmailsBeyondLimit"
+						class="mail_massconnect__connection-status_find-mailboxes-limit"
+						data-test-id="mail_massconnect__connection-status_find-mailboxes-limit"
+					>
+						{{ occupiedEmailsLimitNotice }}
 					</div>
 				</div>
 				<div
@@ -2130,7 +2214,7 @@ this.BX.Mail = this.BX.Mail || {};
 		};
 		permissions = {
 			allowedLevels: null,
-			canEditCrmIntegration: null
+			canViewMailboxList: false
 		};
 		constructor(options = {}) {
 			this.rootNode = document.querySelector(`#${options.appContainerId}`);

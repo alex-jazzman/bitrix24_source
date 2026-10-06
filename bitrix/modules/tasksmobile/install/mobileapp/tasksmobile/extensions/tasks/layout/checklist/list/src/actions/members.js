@@ -16,9 +16,12 @@ jn.define('tasks/layout/checklist/list/src/actions/members', (require, exports, 
 
 	/**
 	 * @class ItemMembers
+	 * @extends LayoutComponent
+	 * @param {ItemMembersProps} props
 	 */
 	class ItemMembers extends LayoutComponent
 	{
+		/** @return {boolean} */
 		isShow()
 		{
 			const { item } = this.props;
@@ -26,6 +29,7 @@ jn.define('tasks/layout/checklist/list/src/actions/members', (require, exports, 
 			return item.getMembersCount() > 0;
 		}
 
+		/** @return {Object | null} */
 		render()
 		{
 			if (!this.isShow())
@@ -43,6 +47,10 @@ jn.define('tasks/layout/checklist/list/src/actions/members', (require, exports, 
 			);
 		}
 
+		/**
+		 * @private
+		 * @return {Object[]}
+		 */
 		renderMemberTypes()
 		{
 			const { item, testId } = this.props;
@@ -92,6 +100,11 @@ jn.define('tasks/layout/checklist/list/src/actions/members', (require, exports, 
 			));
 		}
 
+		/**
+		 * @private
+		 * @param {number} count
+		 * @return {Object | null}
+		 */
 		renderRestView = (count) => {
 			if (!count)
 			{
@@ -107,6 +120,11 @@ jn.define('tasks/layout/checklist/list/src/actions/members', (require, exports, 
 			});
 		};
 
+		/**
+		 * @private
+		 * @param {string} memberType
+		 * @return {() => void}
+		 */
 		handleOnClick = (memberType) => () => {
 			const { onClick, item } = this.props;
 

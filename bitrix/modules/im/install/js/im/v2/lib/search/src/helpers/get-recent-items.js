@@ -1,38 +1,59 @@
 import { Core } from 'im.v2.application.core';
-import { RecentType, type RecentTypeItem, ParentChatScope } from 'im.v2.const';
+import { ActionByRole } from 'im.v2.const';
+import { PermissionManager } from 'im.v2.lib.permission';
+import { RecentType, type RecentTypeItem, type ParentChatIdType } from 'im.v2.const';
+import { ChatManager } from 'im.v2.lib.chat';
 import { type ImModelRecentItem } from 'im.v2.model';
 
 import { getRecentItemDate } from './get-recent-item-date';
 import { type SearchResultItem } from '../types/types';
 
-type GetRecentListParams = { withFakeUsers: boolean, searchRecentSection?: RecentTypeItem, parentChatId: ?number };
+type GetRecentListParams = {
+	withFakeUsers: boolean,
+	searchRecentSection?: RecentTypeItem,
+	parentChatId: ParentChatIdType,
+	onlyAttachableToCollab?: boolean,
+};
 
 export function getRecentListItems(params: GetRecentListParams): SearchResultItem[]
 {
-	const { withFakeUsers, searchRecentSection, parentChatId } = params;
+	const { searchRecentSection, parentChatId, onlyAttachableToCollab, withFakeUsers } = params;
 
-	const recentSection = searchRecentSection ?? RecentType.default;
-	const preparedParentChatId = prepareParentChatId(parentChatId);
+	const recentType = searchRecentSection ?? RecentType.default;
+	const preparedParentChatId = ChatManager.prepareParentChatId(parentChatId);
 
 	const payload = {
-		type: recentSection,
+		type: recentType,
 		parentChatId: preparedParentChatId,
 	};
 
 	const recentItems: ImModelRecentItem[] = Core.getStore().getters['recent/getSortedCollection'](payload);
 
+	const filterRecentItem = onlyAttachableToCollab
+		? (item: ImModelRecentItem) => isAttachableToCollab(item.dialogId, recentType)
+		: (item: ImModelRecentItem) => isSearchableRecentItem(item, withFakeUsers);
+
 	return recentItems
-		.filter((item) => filterRecentItem(item, withFakeUsers))
+		.filter((item) => filterRecentItem(item))
 		.map(({ dialogId }) => buildSearchResultItem(dialogId));
 }
 
-const filterRecentItem = (recentItem: ImModelRecentItem, withFakeUsers: boolean): boolean => {
-	if (withFakeUsers && recentItem.isFakeElement)
+const isAttachableToCollab = (dialogId: string, recentType: RecentTypeItem): boolean => {
+	const handleByRecentType = {
+		[RecentType.collab]: () => PermissionManager.getInstance().canManageUsersAdd(dialogId),
+		[RecentType.default]: () => canAttach(dialogId),
+	};
+
+	return handleByRecentType[recentType]();
+};
+
+const isSearchableRecentItem = (item: ImModelRecentItem, withFakeUsers: boolean): boolean => {
+	if (withFakeUsers && item.isFakeElement)
 	{
 		return true;
 	}
 
-	return !recentItem.isBirthdayPlaceholder && !recentItem.isFakeElement;
+	return !item.isBirthdayPlaceholder && !item.isFakeElement;
 };
 
 const buildSearchResultItem = (dialogId: string): SearchResultItem => {
@@ -42,12 +63,8 @@ const buildSearchResultItem = (dialogId: string): SearchResultItem => {
 	};
 };
 
-const prepareParentChatId = (parentChatId: ?number): number => {
-	const isAllScope = parentChatId === ParentChatScope.all;
-	if (!parentChatId || isAllScope)
-	{
-		return ParentChatScope.topLevel;
-	}
+const canAttach = (dialogId: string): boolean => {
+	const permissionManager = PermissionManager.getInstance();
 
-	return parentChatId;
+	return permissionManager.canPerformActionByRole(ActionByRole.attachToParent, dialogId);
 };

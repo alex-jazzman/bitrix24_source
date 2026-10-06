@@ -4,6 +4,7 @@
 jn.define('im/messenger/controller/dialog/lib/message-sender', (require, exports, module) => {
 	const { Type } = require('type');
 	const { Uuid } = require('utils/uuid');
+	const { PerfPoint } = require('debug/prism');
 
 	const {
 		ErrorCode,
@@ -284,12 +285,40 @@ jn.define('im/messenger/controller/dialog/lib/message-sender', (require, exports
 				return;
 			}
 
-			await this.sendingService.sendFiles(this.dialogId, files, text)
-				.catch((error) => logger.error(`${this.constructor.name}.sendFilesWithText`, error))
-			;
+			// Capture replyId synchronously BEFORE any async reset (P1 moves quote to background,
+			// but getQuoteMessage() still returns the quoteMessage at this point).
+			// CAP-01: Only attach replyId on the file path when both native build and server
+			// support reply-with-media (Feature.isReplyWithMediaAvailable).
+			// When false, files are sent without reply link (graceful degradation).
+			// Regular text reply is NOT affected by this gate.
+			const sendParams = {};
+			if (
+				Feature.isReplyWithMediaAvailable
+				&& (this.replyManager.isQuoteInProcess || this.replyManager.isQuoteInBackground)
+			)
+			{
+				const quoteMessage = this.replyManager.getQuoteMessage();
+				const quoteMessageId = Number(quoteMessage?.id);
+				if (Number.isFinite(quoteMessageId) && quoteMessageId > 0)
+				{
+					sendParams.replyId = quoteMessageId;
+				}
+			}
+
+			const point = new PerfPoint('IM Reply With Media', 'sendFilesWithText').start();
+			try
+			{
+				await this.sendingService.sendFiles(this.dialogId, files, text, sendParams)
+					.catch((error) => logger.error(`${this.constructor.name}.sendFilesWithText`, error))
+				;
+			}
+			finally
+			{
+				point.end();
+			}
 
 			this.inputActionManager.startSendingFile();
-			this.replyManager.finishAttachingFiles();
+			this.replyManager.finishAttachingFiles(false);
 			this.view.clearInput();
 			this.draftManager.clearDraft(this.dialogId);
 		}
@@ -854,6 +883,12 @@ jn.define('im/messenger/controller/dialog/lib/message-sender', (require, exports
 				templateId: message.id,
 			};
 
+			const replyId = modelMessage.params?.replyId;
+			if (Number.isInteger(replyId) && replyId > 0)
+			{
+				messageToSend.replyId = replyId;
+			}
+
 			const copilotParams = this.#buildCopilotParams();
 			if (copilotParams)
 			{
@@ -889,6 +924,12 @@ jn.define('im/messenger/controller/dialog/lib/message-sender', (require, exports
 				templateId: message.id,
 				stickerParams: modelMessage.stickerParams,
 			};
+
+			const replyId = modelMessage.params?.replyId;
+			if (Number.isInteger(replyId) && replyId > 0)
+			{
+				messageToSend.replyId = replyId;
+			}
 
 			if (messageIndex > 0)
 			{

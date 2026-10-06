@@ -303,8 +303,10 @@ this.BX = this.BX || {};
 		#currentValues;
 		#openOptionsMenu;
 		#params = {};
+		#isBitrixGptV2Available;
 		constructor(options) {
 			super(options);
+			this.#isBitrixGptV2Available = options.isBitrixGptV2Available === true;
 			this.#params = this.#initParams(options);
 			const data = {
 				format: this.#params.format.options[0].value,
@@ -363,10 +365,11 @@ this.BX = this.BX || {};
 		}
 		#renderParam(options, parameterName) {
 			const selectedOption = options.options.find(option => option.value === this.#currentValues[parameterName]);
+			const iconColor = this.#isBitrixGptV2Available ? getComputedStyle(document.body).getPropertyValue('--ui-color-accent-main-primary') : getComputedStyle(document.body).getPropertyValue('--ui-color-copilot-primary');
 			const icon = new ui_iconSet_api_core.Icon({
 				size: 24,
 				icon: options.icon,
-				color: '#8E52EC'
+				color: iconColor
 			});
 			const rightChevronIcon = new ui_iconSet_api_core.Icon({
 				size: 16,
@@ -499,7 +502,8 @@ this.BX = this.BX || {};
 			});
 			this.#imageConfiguratorParams = new ImageConfiguratorParams({
 				formats: options?.formats ?? [],
-				engines: options?.engines ?? []
+				engines: options?.engines ?? [],
+				isBitrixGptV2Available: options?.isBitrixGptV2Available === true
 			});
 			this.#imageConfiguratorParams.subscribe('change-parameter', event => {
 				const data = event.getData();
@@ -557,16 +561,19 @@ this.BX = this.BX || {};
 		#submitButton;
 		#loader;
 		#loaderOverlay;
+		#isBitrixGptV2Available;
 		constructor(options) {
 			super(options);
 			this.#popupId = options.popupId || String(Math.random());
 			this.#bindElement = options.bindElement;
 			this.#popupOffset = options.popupOffset;
 			this.#withoutBackBtn = options.withoutBackBtn === true;
+			this.#isBitrixGptV2Available = options.isBitrixGptV2Available === true;
 			this.#imageConfigurator = new ImageConfigurator({
 				formats: options.imageConfiguratorOptions.formats,
 				styles: options.imageConfiguratorOptions.styles,
-				engines: options.imageConfiguratorOptions.engines
+				engines: options.imageConfiguratorOptions.engines,
+				isBitrixGptV2Available: this.#isBitrixGptV2Available
 			});
 			this.#imageConfigurator.subscribe('change-parameter', event => {
 				const data = event.getData();
@@ -629,7 +636,7 @@ this.BX = this.BX || {};
 			main_core.Dom.append(this.#loaderOverlay, this.#popup?.getPopupContainer());
 			this.#loader = new main_loader.Loader({
 				size: 110,
-				color: getComputedStyle(document.body).getPropertyValue('--ui-color-copilot-primary'),
+				color: this.#isBitrixGptV2Available ? getComputedStyle(document.body).getPropertyValue('--ui-color-accent-main-primary') : getComputedStyle(document.body).getPropertyValue('--ui-color-copilot-primary'),
 				target: this.#loaderOverlay
 			});
 			this.#loader.show(this.#loaderOverlay);
@@ -647,6 +654,7 @@ this.BX = this.BX || {};
 				cacheable: true,
 				width: 278,
 				padding: 0,
+				className: this.#isBitrixGptV2Available ? 'ai__copilot-scope --bitrixgpt-redesign' : undefined,
 				content: this.#renderPopupContent()
 			});
 			this.#popup.setOffset({
@@ -726,6 +734,7 @@ this.BX = this.BX || {};
 		#inputFieldCancelLoadingEventHandler;
 		#inputFieldSubmitEventHandler;
 		#inputFieldAdjustHeightEventHandler;
+		#isBitrixGptV2Available;
 		constructor(options) {
 			super(options);
 			this.setEventNamespace('AI.CopilotImage');
@@ -738,6 +747,7 @@ this.BX = this.BX || {};
 			this.#popupWithoutBackBtn = options.popupWithoutBackBtn === true;
 			this.#useInsertAboveAndUnderTextMenuItems = options.useInsertAboveAndUnderMenuItems;
 			this.#analytics = options.analytics;
+			this.#isBitrixGptV2Available = options.isBitrixGptV2Available === true;
 			this.#inputFieldSubmitEventHandler = this.#handleInputFieldSubmitEvent.bind(this);
 			this.#inputFieldCancelLoadingEventHandler = this.#handleInputFieldCancelLoadingEvent.bind(this);
 			this.#inputFieldAdjustHeightEventHandler = this.#handleInputFieldAdjustHeightEvent.bind(this);
@@ -783,7 +793,8 @@ this.BX = this.BX || {};
 					styles: this.#styles,
 					formats: this.#formats,
 					engines: this.#engines
-				}
+				},
+				isBitrixGptV2Available: this.#isBitrixGptV2Available
 			});
 			if (!this.#inputField.getValue()) {
 				this.#imageConfiguratorPopup.disableSubmitButton();
@@ -923,7 +934,17 @@ this.BX = this.BX || {};
 			if (firstError && firstError?.code === 'LIMIT_IS_EXCEEDED_BAAS') {
 				this.#inputField.disable();
 			} else if (firstError && (firstError.code === 'LIMIT_IS_EXCEEDED_MONTHLY' || firstError.code === 'LIMIT_IS_EXCEEDED_DAILY' || firstError.code === 'SERVICE_IS_NOT_AVAILABLE_BY_TARIFF')) {
-				this.emit('close');
+				// A technical limit opens no slider, so closing CoPilot would leave the user without any
+				// explanation: keep it open with the message instead.
+				const technicalLimitMessage = ai_ajaxErrorHandler.AjaxErrorHandler.getVibePlusTechnicalLimitMessage(firstError?.customData);
+				if (technicalLimitMessage) {
+					this.#inputField.setErrors([{
+						code: firstError.code,
+						message: technicalLimitMessage
+					}]);
+				} else {
+					this.emit('close');
+				}
 			} else if (firstError) {
 				main_core.Dom.addClass(this.#copilotContainer, '--error');
 				this.#showErrorMenu();
@@ -946,6 +967,7 @@ this.BX = this.BX || {};
 				errorCode: firstError?.code,
 				showSliderWithMsg: firstError?.customData?.showSliderWithMsg,
 				sliderCode: firstError?.customData?.sliderCode,
+				vibePlusLimitState: firstError?.customData?.vibePlusLimitState,
 				forceCodeRules: ['sliderCode', 'msgWithHtmlLink'],
 				forceOption: firstError?.customData,
 				bindElement: this.#inputField

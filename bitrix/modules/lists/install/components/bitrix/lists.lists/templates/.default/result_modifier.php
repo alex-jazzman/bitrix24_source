@@ -5,10 +5,10 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
-$defaultImg = "<img src=\"/bitrix/images/lists/nopic_list_150.png\" width=\"36\" height=\"30\" border=\"0\" alt=\"\" />";
+$defaultImg = "<img src=\"/bitrix/images/lists/nopic_list_150.webp\" width=\"36\" height=\"30\" border=\"0\" alt=\"\" />";
 if($arParams["IBLOCK_TYPE_ID"] == COption::GetOptionString("lists", "livefeed_iblock_type_id"))
 {
-	$defaultImg = "<img src=\"/bitrix/images/lists/default.png\" width=\"36\" height=\"30\" border=\"0\" alt=\"\" />";
+	$defaultImg = "<img src=\"/bitrix/images/lists/default.webp\" width=\"36\" height=\"30\" border=\"0\" alt=\"\" />";
 }
 foreach($arResult["ITEMS"] as $key => $item)
 {

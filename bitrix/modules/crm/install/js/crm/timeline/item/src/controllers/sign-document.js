@@ -1,10 +1,10 @@
-import { ajax as Ajax, Text, Loc } from 'main.core';
+import { confirm } from 'crm.timeline.dialog';
+import { ajax as Ajax, Tag, Text, Loc } from 'main.core';
 import { Router } from 'crm.router';
 import { Base } from './base';
 import { ajax } from 'main.core';
 import { DateTimeFormat } from "main.date";
 import { DatetimeConverter } from "crm.timeline.tools";
-import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
 
 import ConfigurableItem from '../configurable-item';
 import {UI} from "ui.notification";
@@ -58,17 +58,14 @@ export class SignDocument extends Base
 		}
 		else if (action === 'SignDocumentEntry:Delete' && actionData?.entryId)
 		{
-			MessageBox.show({
-				message: actionData?.confirmationText || '',
-				modal: true,
-				buttons: MessageBoxButtons.YES_NO,
-				onYes: () =>
+			// eslint-disable-next-line @bitrix24/bitrix24-rules/no-native-dialogs
+			confirm({
+				content: Tag.render`<div>${Text.encode(actionData?.confirmationText || '')}</div>`,
+				preset: 'YES_NO',
+				destructive: true,
+				onConfirm: () =>
 				{
 					return this.#deleteEntry(actionData.entryId);
-				},
-				onNo: (messageBox) =>
-				{
-					messageBox.close();
 				},
 			});
 		}

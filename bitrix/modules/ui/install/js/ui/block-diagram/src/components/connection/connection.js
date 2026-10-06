@@ -127,7 +127,7 @@ export const Connection = {
 		};
 	},
 	template: `
-		<svg :class="connectionClassNames">
+		<svg :class="connectionClassNames" :data-id="connection.id">
 			<g class="ui-block-diagram-connection__group">
 				<path
 					:d="connectionPathInfo.path"

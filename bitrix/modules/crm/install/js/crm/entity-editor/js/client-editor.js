@@ -205,6 +205,24 @@ if(typeof BX.Crm.EntityEditorClientSearchBox === "undefined")
 				this.setEntityTypeName(entityTypeName);
 				this.loadEntityInfo(entityId);
 			},
+			switchToCreatedEntity: function(entityTypeName, entityId)
+			{
+				if(entityId <= 0 || !this._entityInfo)
+				{
+					return;
+				}
+
+				var settings = BX.clone(this._entityInfo.getSettings());
+				settings["id"] = entityId;
+				if(BX.type.isNotEmptyString(entityTypeName))
+				{
+					settings["typeName"] = entityTypeName;
+				}
+
+				// A positive id moves the box from "create" to "select" mode, so a repeated submit
+				// reuses the already created client instead of creating a duplicate.
+				this.setEntity(BX.CrmEntityInfo.create(settings), false);
+			},
 			hasEntity: function()
 			{
 				return !!this._entityInfo;

@@ -1,5 +1,7 @@
 import { Dom, Type, Event, Tag } from 'main.core';
 import { toValue } from 'ui.vue3';
+
+import { resolveDragImageScale } from '../utils';
 import type { DragData } from '../types';
 
 let copiedDragItem = null;
@@ -23,11 +25,21 @@ function onDragStart(event: MouseEvent, value: DragData | () => DragData): void
 	});
 
 	const { width, height } = copiedDragItem.getBoundingClientRect();
+	const dragImageScale = resolveDragImageScale(width, height);
+
+	if (dragImageScale < 1)
+	{
+		Dom.style(copiedDragItem, { zoom: dragImageScale });
+	}
+
+	// anchor on the size the bitmap is actually rendered at, which also keeps the anchor correct
+	// in browsers that ignore zoom (Firefox below 126)
+	const rendered = copiedDragItem.getBoundingClientRect();
 
 	event.dataTransfer.setDragImage(
 		copiedDragItem,
-		width / 2,
-		height / 2,
+		rendered.width / 2,
+		rendered.height / 2,
 	);
 
 	event.dataTransfer.setData('text/plain', JSON.stringify({

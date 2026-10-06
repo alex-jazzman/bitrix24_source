@@ -8,3 +8,6 @@ $MESS['BPATL_TASK_TITLE_1'] = "Задание";
 $MESS["BPATL_USER_STATUS_YES"] = "Вы утвердили документ";
 $MESS["BPATL_USER_STATUS_NO"] = "Вы отклонили документ";
 $MESS["BPATL_USER_STATUS_OK"] = "Вы ознакомились с документом";
+$MESS["BPATL_A11Y_STARTER_AVATAR"] = "Инициатор процесса";
+$MESS["BPATL_A11Y_TASK_ACTIONS"] = "Действия по заданию";
+$MESS["BPATL_A11Y_PROCESS_FACES_LABEL"] = "Участники процесса";

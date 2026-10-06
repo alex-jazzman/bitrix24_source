@@ -6,6 +6,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 use Bitrix\Main\Loader;
 use Bitrix\Catalog;
 use Bitrix\Crm;
+use Bitrix\Main\Web\Uri;
+use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Measure;
 
 /** @global CMain $APPLICATION */
 global $USER, $DB, $APPLICATION;
@@ -58,7 +61,7 @@ if (!$isErrorOccured && !CCrmSecurityHelper::IsAuthorized())
 }
 
 if (!$isErrorOccured
-	&& !\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->product()->canRead()
+	&& !Container::getInstance()->getUserPermissions()->product()->canRead()
 )
 {
 	$errorMessage = GetMessage('CRM_PERMISSION_DENIED');
@@ -79,7 +82,7 @@ if ($isErrorOccured)
 }
 
 $arResult['CAN_DELETE'] = $arResult['CAN_EDIT'] = $arResult['CAN_ADD_SECTION'] = $arResult['CAN_EDIT_SECTION'] =
-	\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->isCrmAdmin();
+	Container::getInstance()->getUserPermissions()->isCrmAdmin();
 
 $arParams['PATH_TO_PRODUCT_LIST'] = CrmCheckPath('PATH_TO_PRODUCT_LIST', $arParams['PATH_TO_PRODUCT_LIST'], $APPLICATION->GetCurPage().'?section_id=#section_id#');
 $arParams['PATH_TO_PRODUCT_SHOW'] = CrmCheckPath('PATH_TO_PRODUCT_SHOW', $arParams['PATH_TO_PRODUCT_SHOW'], $APPLICATION->GetCurPage().'?product_id=#product_id#&show');
@@ -112,7 +115,7 @@ if ($bVatMode)
 
 // measure list items
 $arResult['MEASURE_LIST_ITEMS'] = array('' => GetMessage('CRM_MEASURE_NOT_SELECTED'));
-$measures = \Bitrix\Crm\Measure::getMeasures(0);
+$measures = Measure::getMeasures(0);
 if (is_array($measures))
 {
 	foreach ($measures as $measure)
@@ -619,7 +622,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['error']))
 	{
 		if (!isset($_SESSION[$errorID]))
 		{
-			LocalRedirect(CHTTP::urlDeleteParams($APPLICATION->GetCurPage(), array('error')));
+			LocalRedirect((string)(new Uri($APPLICATION->GetCurPage()))->deleteParams(['error']));
 		}
 
 		$errorMessage = strval($_SESSION[$errorID]);
@@ -842,7 +845,7 @@ if ($actionData['ACTIVE'])
 			{
 				$errorID = uniqid('crm_err_');
 				$_SESSION[$errorID] = $errorMessage;
-				LocalRedirect(CHTTP::urlAddParams($APPLICATION->GetCurPage(), array('error' => $errorID)));
+				LocalRedirect((string)(new Uri($APPLICATION->GetCurPage()))->addParams(['error' => $errorID]));
 			}
 			else
 			{
@@ -941,7 +944,7 @@ if ($actionData['ACTIVE'])
 		{
 			$errorID = uniqid('crm_err_');
 			$_SESSION[$errorID] = $errorMessage;
-			LocalRedirect(CHTTP::urlAddParams($APPLICATION->GetCurPage(), array('error' => $errorID)));
+			LocalRedirect((string)(new Uri($APPLICATION->GetCurPage()))->addParams(['error' => $errorID]));
 		}
 
 		if (!$actionData['AJAX_CALL'])
@@ -1330,15 +1333,14 @@ while($arElement = $obRes->GetNext())
 				array('product_id' => $arElement['ID'])
 			);
 
-		$arElement['PATH_TO_PRODUCT_DELETE'] =
-			CHTTP::urlAddParams(
-				CComponentEngine::MakePathFromTemplate(
-					$arParams['PATH_TO_PRODUCT_LIST'],
-					//array('section_id' => isset($arElement['SECTION_ID']) ? $arElement['SECTION_ID'] : '0')
-					array('section_id' => $sectionID)
-				),
-				array('action_'.$arResult['GRID_ID'] => 'delete', 'ID' => $arElement['TYPE'].$arElement['ID'], 'sessid' => bitrix_sessid())
-			);
+		$path = CComponentEngine::MakePathFromTemplate(
+			$arParams['PATH_TO_PRODUCT_LIST'],
+			//array('section_id' => isset($arElement['SECTION_ID']) ? $arElement['SECTION_ID'] : '0')
+			array('section_id' => $sectionID)
+		);
+		$arElement['PATH_TO_PRODUCT_DELETE'] = (string)(new Uri($path))
+			->addParams(['action_'.$arResult['GRID_ID'] => 'delete', 'ID' => $arElement['TYPE'].$arElement['ID'], 'sessid' => bitrix_sessid()])
+		;
 
 		foreach ($arPricesSelect as $fieldName)
 			$arElement['~'.$fieldName] = $arElement[$fieldName] = null;
@@ -1385,7 +1387,7 @@ while($arElement = $obRes->GetNext())
 					$controlSettings = [];
 					while ($arProperty = $rsProperties->Fetch())
 					{
-						if (isset($arProperty['USER_TYPE']) && !empty($arProperty['USER_TYPE'])
+						if (!empty($arProperty['USER_TYPE'])
 							&& !array_key_exists($arProperty['USER_TYPE'], $arPropUserTypeList))
 							continue;
 
@@ -1424,7 +1426,7 @@ while($arElement = $obRes->GetNext())
 
 						$userTypeMultipleWithMultipleMethod = $userTypeMultipleWithSingleMethod =
 						$userTypeSingleWithSingleMethod = false;
-						if (isset($arProperty['USER_TYPE']) && !empty($arProperty['USER_TYPE'])
+						if (!empty($arProperty['USER_TYPE'])
 							&& is_array($arPropUserTypeList[$arProperty['USER_TYPE']]))
 						{
 							$userTypeMultipleWithMultipleMethod = (
@@ -1486,7 +1488,7 @@ while($arElement = $obRes->GetNext())
 									$controlSettings
 								];
 								$value = call_user_func_array($method, $params);
-								if ($arProperty['USER_TYPE'] === \CIBlockPropertyHTML::USER_TYPE)
+								if ($arProperty['USER_TYPE'] === CIBlockPropertyHTML::USER_TYPE)
 								{
 									$value = HTMLToTxt($value);
 								}
@@ -1536,7 +1538,7 @@ $arResult['PROPERTY_VALUES'] = $arPropertyValues;
 unset($arPropertyValues);
 CCrmProduct::ObtainPricesVats($arResult['PRODUCTS'], $arProductId, $arPricesSelect, $arVatsSelect,
 	(isset($arFilter['~REAL_PRICE']) && $arFilter['~REAL_PRICE'] === true));
-$productMeasureInfos = \Bitrix\Crm\Measure::getProductMeasures($arProductId);
+$productMeasureInfos = Measure::getProductMeasures($arProductId);
 if (!is_array($productMeasureInfos))
 	$productMeasureInfos = array();
 $arResult['PRODUCT_MEASURE_INFOS'] = $productMeasureInfos;

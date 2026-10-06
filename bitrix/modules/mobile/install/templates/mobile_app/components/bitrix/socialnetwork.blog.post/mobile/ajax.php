@@ -566,7 +566,7 @@ if(!$strError)
 					htmlspecialcharsBack($arParams["PATH_TO_POST"]),
 					array(
 						"post_id" => "#source_post_id#",
-						"user_id" => $arPost["AUTHOR_ID"]
+						"user_id" => $arBlogPost["AUTHOR_ID"]
 					)
 				);
 

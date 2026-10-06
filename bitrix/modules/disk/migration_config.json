@@ -1,0 +1,8 @@
+{
+    "defaultTableName": "b_disk_storage",
+    "installDirectoriesMapping": {
+        "install/activities": "activities",
+        "install/components": "components",
+        "install/js": "js"
+    }
+}

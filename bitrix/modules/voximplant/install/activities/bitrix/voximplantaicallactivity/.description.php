@@ -16,7 +16,7 @@ $arActivityDescription =
 	(new ActivityDescription(
 		Loc::getMessage('BPVAICA_DESCR_NAME') ?? '',
 		Loc::getMessage('BPVAICA_DESCR_DESCR') ?? '',
-		[ActivityType::ACTIVITY->value, ActivityType::ROBOT->value, ActivityType::NODE->value],
+		[ActivityType::NODE->value],
 	))
 		->setClass('VoximplantAiCallActivity')
 		->setJsClass('BizProcActivity')

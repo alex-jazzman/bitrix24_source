@@ -11,6 +11,7 @@ $presetData = [
 	'CRM_PRESET_AVAILABLE' => Loader::includeModule('crm') && CCrmPerms::IsAccessEnabled(),
 	'TASKS_PRESET_AVAILABLE' => false,
 	'SITES_PRESET_AVAILABLE' => false,
+	'SYNC_PRESET_AVAILABLE' => Loader::includeModule('call') && \Bitrix\Call\Settings::isSyncPresetEnabled(),
 ];
 
 if (Loader::includeModule('socialnetwork'))

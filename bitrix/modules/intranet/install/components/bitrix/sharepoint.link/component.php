@@ -1,4 +1,8 @@
-<?
+<?php
+
+use Bitrix\Main\Web\HttpClient;
+use Bitrix\Main\Web\Uri;
+
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 
 if (!CBXFeatures::IsFeatureEnabled('intranet_sharepoint') && IsModuleInstalled("bitrix24"))
@@ -346,25 +350,28 @@ else
 			$sp_pass = $_REQUEST['sp_pass'];
 
 			$arResult['SERVER'] = 0; $arResult['AUTH'] = 0;
-			if ($sp_server && $sp_server != 'http://' && ($URL = CHTTP::ParseURL($sp_server)))
+			if ($sp_server && $sp_server != 'http://')
 			{
-				if ($URL['host'] && $URL['scheme'] == 'http')
+				$URL = new Uri($sp_server);
+				if ($URL->getHost() && ($URL->getScheme() == 'http' || $URL->getScheme() == 'https'))
 				{
-					$ob = new CHTTP();
-					$ob->setFollowRedirect(false);
+					$ob = (new HttpClient())
+						->setRedirect(false)
+					;
 
 					if ($sp_user)
 					{
-						$ob->SetAuthBasic($sp_user, $sp_pass);
+						$ob->setAuthorization($sp_user, $sp_pass);
 					}
 
-					if ($ob->Get($sp_server) !== false)
+					if ($ob->get($sp_server) !== false)
 					{
-						if ($ob->status == 200 || $ob->status == 302 || $ob->status == 401)
+						$status = $ob->getStatus();
+						if ($status == 200 || $status == 302 || $status == 401)
 						{
 							$arResult['SERVER'] = 1;
 
-							if ($ob->status != 401)
+							if ($status != 401)
 								$arResult['AUTH'] = 1;
 						}
 					}

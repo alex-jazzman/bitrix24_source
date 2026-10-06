@@ -1,6 +1,6 @@
 import { Loc } from 'main.core';
 import { markRaw } from 'ui.vue3';
-import { DatePicker } from 'ui.date-picker';
+import { DatePicker, addDate } from 'ui.date-picker';
 import { BInput, InputSize, InputDesign } from 'ui.system.input.vue';
 import { BMenu } from 'ui.system.menu.vue';
 import { TextSm } from 'ui.system.typography.vue';
@@ -96,10 +96,6 @@ export const PublicAccessDateRange = {
 			return label || '';
 		},
 	},
-	mounted()
-	{
-		this.initDatePicker();
-	},
 	beforeUnmount()
 	{
 		this.destroyDatePicker();
@@ -118,6 +114,34 @@ export const PublicAccessDateRange = {
 
 			return createPickerDateFromTimestamp(this.modelValue * 1000);
 		},
+		getDateForPickerOpen()
+		{
+			const selectedDate = this.getDateFromModelValue();
+			if (!(selectedDate instanceof Date))
+			{
+				return null;
+			}
+
+			if (this.isTodayPickerDate(selectedDate))
+			{
+				const selectedTimestamp = this.getTimestampFromSelectedDate(selectedDate);
+				const nowTimestamp = Math.floor(Date.now() / 1000);
+
+				if (selectedTimestamp !== false && selectedTimestamp > nowTimestamp)
+				{
+					return selectedDate;
+				}
+
+				const nextAvailableTodayTimestamp = this.getNextAvailableTodayTimestamp();
+
+				return nextAvailableTodayTimestamp === false
+					? null
+					: createPickerDateFromTimestamp(nextAvailableTodayTimestamp * 1000)
+				;
+			}
+
+			return this.getDateWithTime(selectedDate, this.getCurrentPickerDate());
+		},
 		getInputElement()
 		{
 			return this.$refs.dateInputWrap?.querySelector('input');
@@ -131,6 +155,43 @@ export const PublicAccessDateRange = {
 				today.getMonth(),
 				today.getDate(),
 			);
+		},
+		getCurrentPickerDate()
+		{
+			const now = new Date();
+
+			return createPickerDate(
+				now.getFullYear(),
+				now.getMonth(),
+				now.getDate(),
+				now.getHours(),
+				now.getMinutes(),
+			);
+		},
+		getDatePickerPresets()
+		{
+			return [
+				{
+					label: Loc.getMessage('DISK_SHARING_ACCESS_POPUP_PUBLIC_DATE_PICKER_PRESET_1_HOUR'),
+					value: () => addDate(this.getCurrentPickerDate(), 'hour', 1),
+				},
+				{
+					label: Loc.getMessage('DISK_SHARING_ACCESS_POPUP_PUBLIC_DATE_PICKER_PRESET_24_HOURS'),
+					value: () => addDate(this.getCurrentPickerDate(), 'hour', 24),
+				},
+				{
+					label: Loc.getMessage('DISK_SHARING_ACCESS_POPUP_PUBLIC_DATE_PICKER_PRESET_3_DAYS'),
+					value: () => addDate(this.getCurrentPickerDate(), 'day', 3),
+				},
+				{
+					label: Loc.getMessage('DISK_SHARING_ACCESS_POPUP_PUBLIC_DATE_PICKER_PRESET_WEEK'),
+					value: () => addDate(this.getCurrentPickerDate(), 'week', 1),
+				},
+				{
+					label: Loc.getMessage('DISK_SHARING_ACCESS_POPUP_PUBLIC_DATE_PICKER_PRESET_MONTH'),
+					value: () => addDate(this.getCurrentPickerDate(), 'month', 1),
+				},
+			];
 		},
 		formatTime(hours, minutes = 0)
 		{
@@ -213,7 +274,7 @@ export const PublicAccessDateRange = {
 				&& date.getUTCDate() === today.getDate()
 			);
 		},
-		initDatePicker()
+		initDatePicker(selectedDate = null)
 		{
 			const input = this.getInputElement();
 			if (this.datePicker || !input)
@@ -230,6 +291,7 @@ export const PublicAccessDateRange = {
 				enableTime: true,
 				autoHide: true,
 				minDate: todayStart,
+				presets: this.getDatePickerPresets(),
 				dayColors: [
 					{
 						matcher: (date) => {
@@ -260,7 +322,10 @@ export const PublicAccessDateRange = {
 				},
 			}));
 
-			this.syncDatePickerValue();
+			if (selectedDate instanceof Date)
+			{
+				this.datePicker.selectDate(selectedDate, { updateInputs: false, emitEvents: false, render: true });
+			}
 		},
 		destroyDatePicker()
 		{
@@ -356,23 +421,22 @@ export const PublicAccessDateRange = {
 		},
 		openDatePicker()
 		{
-			if (!this.datePicker)
-			{
-				this.initDatePicker();
-			}
+			const selectedDate = this.getDateForPickerOpen();
+
+			this.destroyDatePicker();
+			this.initDatePicker(selectedDate);
 
 			if (!this.datePicker)
 			{
 				return;
 			}
 
-			this.syncDatePickerValue();
 			this.datePicker.setDefaultTime(this.getRoundedDefaultTime());
 
 			this.$nextTick(() => {
 				if (this.datePicker)
 				{
-					this.datePicker.show();
+					this.datePicker.getPopup().show();
 				}
 			});
 		},

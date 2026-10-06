@@ -13,6 +13,7 @@ import { WorkTimeReport, ReportMode } from 'timeman.work-time-report';
 import { ButtonTextDropdown as UIButtonTextDropdown } from './button-split/button-split';
 import { Clock } from './clock/clock';
 import { isStartState, START_STATE_DURATION_MS } from '../lib/start-state';
+import { computeWorkdayTimers } from '../lib/workday-timers';
 import './app.css';
 
 const settings = Extension.getSettings('timeman.work-status-control-panel');
@@ -566,7 +567,9 @@ export const App = {
 
 		getDateStart(): number
 		{
-			return parseInt(window.BXTIMEMAN?.DATA?.INFO?.DATE_START, 10) * 1000 || 0;
+			// Absolute start anchor (not wall-coordinate DATE_START): used both as the
+			// timer origin and by isStartState's "< 1h after start" window.
+			return parseInt(window.BXTIMEMAN?.DATA?.INFO?.DISPLAY_START_TIMESTAMP, 10) * 1000 || 0;
 		},
 
 		setBindOptions(): any
@@ -635,43 +638,22 @@ export const App = {
 			const dateNow = Date.now();
 			this.currentTimestamp = dateNow;
 			const timerInfo = { ...window.BXTIMEMAN.DATA.INFO };
-			const dateStart = this.getDateStart();
-			const dateWorkingDayStopped = parseInt(timerInfo.DATE_FINISH) * 1000;
-			const timeTimeLeaks = parseInt(timerInfo.TIME_LEAKS) * 1000;
-			const delta = dateNow - dateStart;
-			const deltaPast = dateWorkingDayStopped - dateStart;
-			const deltaPause = dateNow - dateWorkingDayStopped;
 
 			this.updateDayStateIfNewHour();
 
-			if (this.isClosed)
-			{
-				if (this.isCanOpen)
-				{
-					this.timerWorkingDayValue = 0;
-					this.timerPauseValue = 0;
-				}
-				else if (this.canOpen === 'REOPEN')
-				{
-					this.timerWorkingDayValue = deltaPast - timeTimeLeaks;
-					this.timerPauseValue = timeTimeLeaks;
-				}
-			}
-			else if (this.workStatus === 'OPENED')
-			{
-				this.timerWorkingDayValue = delta - timeTimeLeaks;
-				this.timerPauseValue = timeTimeLeaks;
-			}
-			else if (this.workStatus === 'PAUSED')
-			{
-				this.timerWorkingDayValue = deltaPast - timeTimeLeaks;
-				this.timerPauseValue = deltaPause + timeTimeLeaks;
-			}
-			else if (this.workStatus === 'EXPIRED')
-			{
-				this.timerWorkingDayValue = delta - timeTimeLeaks;
-				this.timerPauseValue = timeTimeLeaks;
-			}
+			const { workingDayMs, pauseMs } = computeWorkdayTimers({
+				workStatus: this.workStatus,
+				canOpen: this.canOpen,
+				isCanOpen: this.isCanOpen,
+				dateStartMs: this.getDateStart(),
+				dateStopMs: parseInt(timerInfo.DISPLAY_STOP_TIMESTAMP, 10) * 1000 || 0,
+				durationMs: parseInt(timerInfo.DURATION, 10) * 1000 || 0,
+				timeLeaksMs: parseInt(timerInfo.TIME_LEAKS, 10) * 1000 || 0,
+				nowMs: dateNow,
+			});
+
+			this.timerWorkingDayValue = workingDayMs;
+			this.timerPauseValue = pauseMs;
 		},
 
 		openDay(event): any

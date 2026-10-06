@@ -21,6 +21,7 @@ $MESS["CRM_COMPANY_EVENT_ADD"] = "Создана компания";
 $MESS["CRM_COMPANY_EVENT_UPDATE_ASSIGNED_BY"] = "Изменён ответственный";
 $MESS["CRM_COMPANY_EVENT_UPDATE_TITLE"] = "Изменёно название";
 $MESS["CRM_COMPANY_RESPONSIBLE_IM_NOTIFY"] = "Вы назначены ответственным за компанию \"#title#\"";
+
 $MESS["CRM_COMPANY_NOT_RESPONSIBLE_IM_NOTIFY"] = "Вы перестали быть ответственным за компанию \"#title#\"";
 $MESS["CRM_COMPANY_CREATION_CANCELED"] = "Создание компании отменено обработчиком события: \"#NAME#\"";
 $MESS["CRM_COMPANY_UPDATE_CANCELED"] = "Обновление компании отменено обработчиком события: \"#NAME#\"";

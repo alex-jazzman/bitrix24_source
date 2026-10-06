@@ -3,65 +3,66 @@ this.BX = this.BX || {};
 (function (exports) {
 	'use strict';
 
-	var DocumentInitiated = Object.freeze({
-	  employee: 'employee',
-	  company: 'company'
+	const DocumentInitiated = Object.freeze({
+		employee: 'employee',
+		company: 'company'
 	});
-	var DocumentMode = Object.freeze({
-	  document: 'document',
-	  template: 'template'
+	const DocumentMode = Object.freeze({
+		document: 'document',
+		template: 'template'
 	});
-	var MemberRole = Object.freeze({
-	  assignee: 'assignee',
-	  signer: 'signer',
-	  editor: 'editor',
-	  reviewer: 'reviewer'
+	const MemberRole = Object.freeze({
+		assignee: 'assignee',
+		signer: 'signer',
+		editor: 'editor',
+		reviewer: 'reviewer'
 	});
-	var MemberStatus = Object.freeze({
-	  done: 'done',
-	  wait: 'wait',
-	  ready: 'ready',
-	  refused: 'refused',
-	  stopped: 'stopped',
-	  stoppableReady: 'stoppable_ready',
-	  processing: 'processing'
+	const MemberStatus = Object.freeze({
+		done: 'done',
+		wait: 'wait',
+		ready: 'ready',
+		refused: 'refused',
+		stopped: 'stopped',
+		stoppableReady: 'stoppable_ready',
+		processing: 'processing'
 	});
-	var ProviderCode = Object.freeze({
-	  goskey: 'goskey',
-	  sesCom: 'ses-com',
-	  sesRu: 'ses-ru',
-	  external: 'external'
+	const ProviderCode = Object.freeze({
+		goskey: 'goskey',
+		goskeyLite: 'goskey-lite',
+		sesCom: 'ses-com',
+		sesRu: 'ses-ru',
+		external: 'external'
 	});
-	var Reminder = Object.freeze({
-	  none: 'none',
-	  oncePerDay: 'oncePerDay',
-	  twicePerDay: 'twicePerDay',
-	  threeTimesPerDay: 'threeTimesPerDay'
+	const Reminder = Object.freeze({
+		none: 'none',
+		oncePerDay: 'oncePerDay',
+		twicePerDay: 'twicePerDay',
+		threeTimesPerDay: 'threeTimesPerDay'
 	});
-	var TemplateEntity = Object.freeze({
-	  template: 'template',
-	  folder: 'folder',
-	  multiple: 'multiple'
+	const TemplateEntity = Object.freeze({
+		template: 'template',
+		folder: 'folder',
+		multiple: 'multiple'
 	});
-	var EntityType = Object.freeze({
-	  USER: 'user',
-	  STRUCTURE_NODE_ROLE: 'structure-node-role',
-	  COMPANY: 'company'
+	const EntityType = Object.freeze({
+		USER: 'user',
+		STRUCTURE_NODE_ROLE: 'structure-node-role',
+		COMPANY: 'company'
 	});
-	var BlankScenario = Object.freeze({
-	  b2b: 'b2b',
-	  b2e: 'b2e'
+	const BlankScenario = Object.freeze({
+		b2b: 'b2b',
+		b2e: 'b2e'
 	});
 
+	exports.BlankScenario = BlankScenario;
 	exports.DocumentInitiated = DocumentInitiated;
 	exports.DocumentMode = DocumentMode;
+	exports.EntityType = EntityType;
 	exports.MemberRole = MemberRole;
 	exports.MemberStatus = MemberStatus;
 	exports.ProviderCode = ProviderCode;
 	exports.Reminder = Reminder;
 	exports.TemplateEntity = TemplateEntity;
-	exports.EntityType = EntityType;
-	exports.BlankScenario = BlankScenario;
 
-}((this.BX.Sign = this.BX.Sign || {})));
+})(this.BX.Sign = this.BX.Sign || {});
 //# sourceMappingURL=type.bundle.js.map

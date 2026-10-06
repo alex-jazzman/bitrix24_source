@@ -43,6 +43,11 @@ this.BX.MessageService.Message = this.BX.MessageService.Message || {};
 		}
 	}
 
+	// Editor event names. Cross-region DOM intents use the per-app `$Bitrix.eventEmitter`;
+	// host-visible lifecycle/cache events use the locator EventEmitter.
+	const INSERT_PLACEHOLDER_TEXT_EVENT = 'messageservice:message-editor:insertPlaceholderText';
+	const CUSTOM_TEMPLATE_CACHE_INVALIDATE_EVENT = 'messageservice:message-editor:customTemplateCacheInvalidate';
+
 	class ContentProviderFactory {
 		#resolvers = new Map();
 		#instances = new Map();
@@ -164,6 +169,18 @@ this.BX.MessageService.Message = this.BX.MessageService.Message || {};
 					} = token.attrs;
 					const result = replacer(code, customData);
 					return result === null ? this.serializePlaceholder(code, token.caption, customData) : result;
+				}
+				return token.type === 'linebreak' ? '\n' : token.content;
+			}).join('');
+		}
+		serialize(tokens) {
+			return tokens.map(token => {
+				if (token.type === 'placeholder') {
+					const {
+						code = '',
+						...attrs
+					} = token.attrs;
+					return this.serializePlaceholder(code, token.caption, attrs);
 				}
 				return token.type === 'linebreak' ? '\n' : token.content;
 			}).join('');
@@ -1130,13 +1147,22 @@ this.BX.MessageService.Message = this.BX.MessageService.Message || {};
 					});
 				}
 			});
+
+			// The header (CustomTemplateSelector) lives outside this content subtree
+			// and cannot reach the editor directly. It emits a domain intent on the
+			// per-app bus; the active content owner (this component) executes it.
+			this.$Bitrix.eventEmitter.subscribe(INSERT_PLACEHOLDER_TEXT_EVENT, this.handleInsertPlaceholderText);
 		},
 		unmounted() {
+			this.$Bitrix.eventEmitter.unsubscribe(INSERT_PLACEHOLDER_TEXT_EVENT, this.handleInsertPlaceholderText);
 			this.textEditor.destroy();
 			this.textEditor = null;
 			this.insertContext = null;
 		},
 		methods: {
+			handleInsertPlaceholderText(event) {
+				this.insertContext.insertPlaceholderText(event.getData().text);
+			},
 			showCopilot() {
 				this.textEditor.focus();
 				this.textEditor.dispatchCommand(INSERT_COPILOT_DIALOG_COMMAND, {});
@@ -1182,8 +1208,15 @@ this.BX.MessageService.Message = this.BX.MessageService.Message || {};
 	// @vue/component
 	const ContentContainer = {
 		name: 'ContentContainer',
+		props: {
+			contentStyle: {
+				/** @type {{ [key: string]: string | null }} */
+				type: Object,
+				default: () => ({})
+			}
+		},
 		template: `
-		<div class="messageservice-message-editor__content" data-role="content-container">
+		<div class="messageservice-message-editor__content" data-role="content-container" :style="contentStyle">
 			<slot/>
 		</div>
 	`
@@ -1485,7 +1518,7 @@ this.BX.MessageService.Message = this.BX.MessageService.Message || {};
 
 	// eslint-disable-next-line no-unused-vars
 
-	const ENTITY_ID$3 = 'messageservice-from';
+	const ENTITY_ID$4 = 'messageservice-from';
 
 	// @vue/component
 	const EditorFooter = {
@@ -1533,7 +1566,7 @@ this.BX.MessageService.Message = this.BX.MessageService.Message || {};
 				return this.fromList.map(from => {
 					return {
 						id: from.id,
-						entityId: ENTITY_ID$3,
+						entityId: ENTITY_ID$4,
 						title: from.name,
 						subtitle: from.description,
 						selected: from.id === this.from.id,
@@ -1555,7 +1588,7 @@ this.BX.MessageService.Message = this.BX.MessageService.Message || {};
 				this.dialog = new ui_entitySelector.Dialog({
 					targetNode: this.$refs.from,
 					entities: [{
-						id: ENTITY_ID$3,
+						id: ENTITY_ID$4,
 						searchable: true
 					}],
 					items: this.dialogItems,
@@ -1808,6 +1841,357 @@ this.BX.MessageService.Message = this.BX.MessageService.Message || {};
 			:trimmable="true"
 			data-test-role="channel-selector"
 			@click="toggleSelector"
+		/>
+	`
+	};
+
+	const ENTITY_ID$3 = 'messageservice-custom-template';
+	// Per-placeholder hook fired while inserting a template body. A zone
+	// subscriber calls `event.preventDefault()` to cut the placeholder out for the
+	// current recipient; the platform never interprets placeholder origin itself.
+	const TEMPLATE_PLACEHOLDER_INSERT_EVENT = 'onTemplatePlaceholderInsert';
+	const TEMPLATE_AVATAR = '/bitrix/js/messageservice/message/editor/images/template.svg';
+	const TEMPLATE_AVATAR_BG_COLOR = 'var(--ui-color-accent-soft-blue-3)';
+	const toTemplatePlaceholder = token => Object.freeze({
+		code: token.attrs.code,
+		caption: token.caption,
+		attrs: Object.freeze({
+			...token.attrs
+		})
+	});
+
+	/**
+	 * Selector of user-managed (custom) message templates.
+	 *
+	 * Inserts the selected template body into the editor by emitting a domain
+	 * intent on the per-app bus; the active content owner inserts the text at the
+	 * caret. The create/edit form is still externally rendered: we emit
+	 * `CustomTemplate:onFormRequested` / `CustomTemplate:onListRequested`
+	 * for embedders to handle.
+	 *
+	 * @emits BX.MessageService.Message.Editor:CustomTemplate:onFormRequested
+	 * @emits BX.MessageService.Message.Editor:CustomTemplate:onListRequested
+	 *
+	 * @vue/component
+	 */
+	const CustomTemplateSelector = {
+		name: 'CustomTemplateSelector',
+		components: {
+			Chip: ui_system_chip_vue.Chip
+		},
+		props: {
+			binding: {
+				/** @type {import('../../editor').TemplateBinding} */
+				type: Object,
+				required: true
+			}
+		},
+		setup() {
+			return {
+				Outline: ui_iconSet_api_vue.Outline
+			};
+		},
+		data() {
+			return {
+				isDialogOpen: false
+			};
+		},
+		dialog: null,
+		computed: {
+			...ui_vue3_vuex.mapState({
+				/** @type {import('../../editor').Layout} */
+				layout: state => state.application.layout
+			}),
+			canCreateInSelector() {
+				return Boolean(this.layout?.isCustomTemplateCreateInSelectorShown);
+			}
+		},
+		mounted() {
+			const emitter = this.$Bitrix.Data.get('locator').getEventEmitter();
+			emitter.subscribe('onSendSuccess', this.handleTemplateCacheInvalidate);
+			emitter.subscribe(CUSTOM_TEMPLATE_CACHE_INVALIDATE_EVENT, this.handleTemplateCacheInvalidate);
+		},
+		beforeUnmount() {
+			const emitter = this.$Bitrix.Data.get('locator').getEventEmitter();
+			emitter.unsubscribe('onSendSuccess', this.handleTemplateCacheInvalidate);
+			emitter.unsubscribe(CUSTOM_TEMPLATE_CACHE_INVALIDATE_EVENT, this.handleTemplateCacheInvalidate);
+			this.dialog?.destroy();
+			this.dialog = null;
+		},
+		methods: {
+			handleTemplateCacheInvalidate() {
+				this.invalidateCache();
+			},
+			toggleDialog() {
+				if (this.dialog) {
+					if (this.dialog.isOpen()) {
+						this.dialog.hide();
+					} else {
+						this.dialog.show();
+					}
+					return;
+				}
+				const dialogConfig = {
+					targetNode: this.$el,
+					context: `messageservice.custom-template:${this.binding.zoneId}`,
+					entities: [{
+						id: ENTITY_ID$3,
+						dynamicLoad: true,
+						dynamicSearch: true,
+						itemOptions: {
+							default: {
+								avatar: TEMPLATE_AVATAR,
+								avatarOptions: {
+									bgColor: TEMPLATE_AVATAR_BG_COLOR
+								}
+							}
+						},
+						options: {
+							zoneId: this.binding.zoneId,
+							sceneId: this.binding.sceneId,
+							targetId: this.binding.targetId
+						}
+					}],
+					width: 400,
+					height: 350,
+					enableSearch: true,
+					hideOnSelect: true,
+					autoHide: true,
+					dropdownMode: false,
+					multiple: false,
+					recentItemsLimit: 10,
+					recentTabOptions: {
+						stubOptions: {
+							title: this.$Bitrix.Loc.getMessage('MSGSVC_CT_SELECTOR_EMPTY_TITLE'),
+							// Arrow points at the footer "+ New template" action, so the
+							// empty state still leads the user to template creation.
+							arrow: this.canCreateInSelector
+						}
+					},
+					events: {
+						'Item:onSelect': event => {
+							const item = event.getData().item;
+							const body = item.getCustomData().get('body') || '';
+							if (!main_core.Type.isStringFilled(body)) {
+								return;
+							}
+							this.insertTemplate(body, {
+								id: Number(item.getId()),
+								title: item.getTitle(),
+								isForeign: Boolean(item.getCustomData().get('isForeign'))
+							});
+						},
+						onShow: () => {
+							this.isDialogOpen = true;
+						},
+						onHide: () => {
+							this.isDialogOpen = false;
+						},
+						onDestroy: () => {
+							this.isDialogOpen = false;
+							this.dialog = null;
+						}
+					}
+				};
+				dialogConfig.footer = this.buildDialogFooter();
+				this.dialog = new ui_entitySelector.Dialog(dialogConfig);
+				this.dialog.show();
+			},
+			/**
+			 * Build a footer for the entity-selector Dialog containing template
+			 * management actions. Returns an array of HTMLElements consumable
+			 * by `Dialog`'s `footer` option (mirrors `template-selector.js`).
+			 *
+			 * The "Open templates" link is always present so it stays reachable in
+			 * the empty state and in scenes that hide creation. The
+			 * "+ New template" link is added only when creation is allowed.
+			 */
+			buildDialogFooter() {
+				const onSettingsClick = () => {
+					this.openList();
+				};
+				const footer = [];
+				if (this.canCreateInSelector) {
+					const onCreateClick = () => {
+						this.openCreateForm();
+					};
+					const createBtn = main_core.Tag.render`
+					<span
+						class="ui-selector-footer-link ui-selector-footer-link-add"
+						data-testid="custom-template-selector-create-btn"
+						tabindex="0"
+						role="button"
+						onclick="${onCreateClick}"
+					>${this.$Bitrix.Loc.getMessage('MSGSVC_CT_SELECTOR_CREATE_BUTTON')}</span>
+				`;
+					createBtn.addEventListener('keydown', event => {
+						if (event.key === 'Enter' || event.key === ' ') {
+							event.preventDefault();
+							onCreateClick();
+						}
+					});
+					footer.push(createBtn);
+				}
+				const settingsBtn = main_core.Tag.render`
+				<span
+					class="ui-selector-footer-link"
+					data-testid="custom-template-selector-open-list-btn"
+					tabindex="0"
+					role="button"
+					onclick="${onSettingsClick}"
+				>${this.$Bitrix.Loc.getMessage('MSGSVC_CT_SELECTOR_SETTINGS_BUTTON')}</span>
+			`;
+				settingsBtn.addEventListener('keydown', event => {
+					if (event.key === 'Enter' || event.key === ' ') {
+						event.preventDefault();
+						onSettingsClick();
+					}
+				});
+				footer.push(main_core.Tag.render`<span style="width: 100%;"></span>`, settingsBtn);
+				return footer;
+			},
+			/**
+			 * Insert a template body at the caret. Every placeholder of the body is
+			 * offered to the zone via the per-placeholder hook before the
+			 * text is inserted: a subscriber that calls `preventDefault()` cuts the
+			 * placeholder out together with its caption; without a subscriber the
+			 * body is inserted as is. The platform never interprets placeholder
+			 * origin — the zone decides keep/remove for its own zone.
+			 *
+			 * The hook data carries `existingPlaceholders` — the placeholders the
+			 * editor body already holds, followed by the ones kept earlier in this
+			 * very insert. It is context for the zone's own rules (deduplication,
+			 * mutual exclusion), not a platform-level decision.
+			 */
+			insertTemplate(body, template) {
+				// $Bitrix.Data is the idiomatic per-app DI store for Vue-Bitrix:
+				// the Editor seeds it with the ServiceLocator in beforeCreate(),
+				// and components reach it without prop drilling.
+				const locator = this.$Bitrix.Data.get('locator');
+
+				// Host bus (the embedder subscribes here) — used only for the
+				// per-placeholder keep/remove hook below, not for the actual insert.
+				const emitter = locator.getEventEmitter();
+				const bodyBeforeInsert = this.$store.getters['message/body'] ?? '';
+				const wasEmptyBeforeInsert = !main_core.Type.isStringFilled(bodyBeforeInsert);
+
+				// Scanned once: the body is only written after this loop, so it cannot
+				// change while placeholders are offered to the zone.
+				const existingPlaceholders = placeholderService.scan(bodyBeforeInsert).filter(token => token.type === 'placeholder').map(token => toTemplatePlaceholder(token));
+				let removedCount = 0;
+				const kept = placeholderService.scan(body).filter(token => {
+					if (token.type !== 'placeholder') {
+						return true;
+					}
+					const event = new main_core_events.BaseEvent({
+						data: {
+							placeholder: {
+								code: token.attrs.code,
+								caption: token.caption,
+								attrs: token.attrs
+							},
+							// Per-call copy of frozen entries: a subscriber must not be able
+							// to skew the context of the placeholders still to be offered.
+							existingPlaceholders: [...existingPlaceholders],
+							binding: {
+								...this.binding
+							}
+						}
+					});
+					emitter.emit(TEMPLATE_PLACEHOLDER_INSERT_EVENT, event);
+					if (event.isDefaultPrevented()) {
+						removedCount++;
+						return false;
+					}
+					existingPlaceholders.push(toTemplatePlaceholder(token));
+					return true;
+				});
+				this.$Bitrix.eventEmitter.emit(INSERT_PLACEHOLDER_TEXT_EVENT, {
+					text: placeholderService.serialize(kept)
+				});
+
+				// The editor body is updated by the lexical onChange listener, which
+				// may settle after this synchronous frame — read it on the next tick
+				// so `bodyAtInsert` matches what `message/body` reports at send time.
+				void this.$nextTick(() => {
+					void this.$store.dispatch('message/onTemplateInsert', {
+						id: template.id,
+						title: template.title,
+						isForeign: template.isForeign,
+						bodyAtInsert: this.$store.getters['message/body'],
+						wasEmptyBeforeInsert
+					});
+				});
+				if (removedCount > 0) {
+					const removedMessage = this.$Bitrix.Loc.getMessage('MSGSVC_CT_SELECTOR_PLACEHOLDERS_REMOVED');
+					// Lazy-load so the base editor bundle does not eagerly pull a11y/notification.
+					main_core.Runtime.loadExtension('ui.notification').then(({
+						Center
+					}) => {
+						Center.notify({
+							content: removedMessage,
+							useAirDesign: true
+						});
+					}).catch(() => {});
+					main_core.Runtime.loadExtension('ui.a11y').then(({
+						LiveAnnouncer
+					}) => {
+						LiveAnnouncer.announce(removedMessage, 'assertive');
+					}).catch(() => {});
+				}
+			},
+			invalidateCache() {
+				this.dialog?.destroy();
+				this.dialog = null;
+			},
+			/**
+			 * Request the embedder to open the "create custom template" form.
+			 * Intended to be wired to a footer action button or external trigger.
+			 */
+			openCreateForm() {
+				this.invalidateCache();
+
+				// Raw editor text, not the `message/body` getter: the footer button
+				// only appears on non-template-based channels, so the user-typed
+				// text in `state.message.text` is exactly what should pre-fill the
+				// new template.
+				const bodyInitial = this.$store.state.message.text ?? '';
+				const emitter = this.$Bitrix.Data.get('locator').getEventEmitter();
+				emitter.emit('CustomTemplate:onFormRequested', new main_core_events.BaseEvent({
+					data: {
+						mode: 'create',
+						templateId: null,
+						titleInitial: '',
+						bodyInitial,
+						bindElement: this.$el,
+						binding: {
+							...this.binding
+						}
+					}
+				}));
+			},
+			openList() {
+				this.invalidateCache();
+				const emitter = this.$Bitrix.Data.get('locator').getEventEmitter();
+				emitter.emit('CustomTemplate:onListRequested', new main_core_events.BaseEvent({
+					data: {
+						bindElement: this.$el,
+						binding: {
+							...this.binding
+						}
+					}
+				}));
+			}
+		},
+		template: `
+		<Chip
+			:icon="Outline.TEXT_FORMAT_BOTTOM"
+			:dropdown="true"
+			:text="$Bitrix.Loc.getMessage('MSGSVC_CT_SELECTOR_BUTTON')"
+			data-testid="custom-template-selector-trigger"
+			aria-haspopup="listbox"
+			:aria-expanded="isDialogOpen ? 'true' : 'false'"
+			@click="toggleDialog"
 		/>
 	`
 	};
@@ -2139,6 +2523,7 @@ this.BX.MessageService.Message = this.BX.MessageService.Message || {};
 		components: {
 			BButton: ui_vue3_components_button.Button,
 			ChannelSelector,
+			CustomTemplateSelector,
 			NotificationTemplateSelector,
 			ToSelector,
 			TemplateSelector
@@ -2157,17 +2542,21 @@ this.BX.MessageService.Message = this.BX.MessageService.Message || {};
 			}),
 			...ui_vue3_vuex.mapState({
 				/** @type {Layout} */
-				layout: state => state.application.layout
+				layout: state => state.application.layout,
+				/** @type {?TemplateBinding} */
+				templateBinding: state => state.application.scene.templateBinding
 			}),
 			hasChannels() {
 				return !main_core.Type.isNil(this.currentChannel);
 			},
 			isTemplatesSelectorShown() {
-				// todo templates for custom text
 				return Boolean(this.currentChannel?.isTemplatesBased);
 			},
 			isNotificationTemplateSelectorShown() {
 				return this.currentChannel?.backend.senderCode === 'bitrix24' && this.hasMultipleNotificationTemplates;
+			},
+			isCustomTemplateSelectorShown() {
+				return Boolean(this.layout?.isCustomTemplateSelectorShown) && !main_core.Type.isNil(this.templateBinding) && !main_core.Type.isNil(this.currentChannel) && this.currentChannel.backend.senderCode !== 'bitrix24' && !this.currentChannel.isTemplatesBased;
 			}
 		},
 		methods: {
@@ -2202,6 +2591,10 @@ this.BX.MessageService.Message = this.BX.MessageService.Message || {};
 			<div class="messageservice-message-editor__header-right">
 				<TemplateSelector v-if="isTemplatesSelectorShown"/>
 				<NotificationTemplateSelector v-if="isNotificationTemplateSelectorShown"/>
+				<CustomTemplateSelector
+					v-if="isCustomTemplateSelectorShown"
+					:binding="templateBinding"
+				/>
 			</div>
 		</div>
 	`
@@ -2244,12 +2637,17 @@ this.BX.MessageService.Message = this.BX.MessageService.Message || {};
 					paddingLeft: this.layout.paddingLeft ?? this.layout.padding,
 					paddingRight: this.layout.paddingRight ?? this.layout.padding
 				};
+			},
+			contentStyle() {
+				return {
+					marginBottom: this.layout.contentMarginBottom
+				};
 			}
 		},
 		template: `
 		<div class="messageservice-message-editor" data-test-role="messageservice-message-editor" :style="paddingStyle">
 			<EditorHeader v-if="layout.isHeaderShown"/>
-			<ContentContainer>
+			<ContentContainer :content-style="contentStyle">
 				<component :is="contentComponent"/>
 			</ContentContainer>
 			<EditorFooter v-if="layout.isFooterShown"/>
@@ -2376,10 +2774,12 @@ this.BX.MessageService.Message = this.BX.MessageService.Message || {};
 					isToSelectorShown: true,
 					isChannelSelectorShown: true,
 					isMessageTextReadOnly: false,
-					padding: 'var(--ui-space-inset-lg)'
+					padding: 'var(--ui-space-inset-lg)',
+					contentMarginBottom: null
 				})),
 				scene: makeFrozenClone(this.getVariable('scene', {
-					id: ''
+					id: '',
+					templateBinding: null
 				})),
 				progress: {
 					isSending: false,
@@ -2602,6 +3002,16 @@ this.BX.MessageService.Message = this.BX.MessageService.Message || {};
 		}
 	}
 
+	// Sentinel for the "used template" slot when the clean-scenario invariant is
+	// broken (editor was not empty before insert, or a second template was
+	// inserted). It is intentionally a plain string so it survives store cloning
+	// and never collides with a real template object (which is always an object).
+	const AMBIGUOUS_USED_TEMPLATE = 'ambiguous';
+	const SaveFlowDecision = Object.freeze({
+		None: 'none',
+		UpdateToast: 'updateToast',
+		SaveToast: 'saveToast'
+	});
 	class MessageModel extends ui_vue3_vuex.BuilderModel {
 		#logger;
 		getName() {
@@ -2613,7 +3023,8 @@ this.BX.MessageService.Message = this.BX.MessageService.Message || {};
 		}
 		getState() {
 			return {
-				text: String(this.getVariable('text', '') ?? '')
+				text: String(this.getVariable('text', '') ?? ''),
+				usedTemplate: null
 			};
 		}
 		getGetters() {
@@ -2639,6 +3050,20 @@ this.BX.MessageService.Message = this.BX.MessageService.Message || {};
 						return main_core.Type.isStringFilled(rootGetters['notificationTemplates/current']?.code);
 					}
 					return main_core.Type.isStringFilled(getters.body);
+				},
+				/** @function message/saveFlowDecision */
+				saveFlowDecision: (state, getters) => {
+					const used = state.usedTemplate;
+					if (main_core.Type.isNil(used) || used === AMBIGUOUS_USED_TEMPLATE) {
+						return SaveFlowDecision.None;
+					}
+					if (used.isForeign) {
+						return SaveFlowDecision.SaveToast;
+					}
+					if (getters.body === used.bodyAtInsert) {
+						return SaveFlowDecision.None;
+					}
+					return SaveFlowDecision.UpdateToast;
 				}
 			};
 		}
@@ -2658,6 +3083,36 @@ this.BX.MessageService.Message = this.BX.MessageService.Message || {};
 					store.commit('setText', {
 						text
 					});
+				},
+				/**
+				 * Record a template insertion for the save-flow. The clean
+				 * scenario (empty editor + first template) keeps a snapshot; any other
+				 * insert marks the state AMBIGUOUS so no toast is shown later.
+				 *
+				 * @function message/onTemplateInsert
+				 */
+				onTemplateInsert: (store, payload) => {
+					const {
+						id,
+						title,
+						isForeign,
+						bodyAtInsert,
+						wasEmptyBeforeInsert
+					} = payload;
+					if (wasEmptyBeforeInsert && main_core.Type.isNil(store.state.usedTemplate)) {
+						store.commit('setUsedTemplate', {
+							usedTemplate: {
+								id,
+								title,
+								isForeign: Boolean(isForeign),
+								bodyAtInsert: String(bodyAtInsert ?? '')
+							}
+						});
+						return;
+					}
+					store.commit('setUsedTemplate', {
+						usedTemplate: AMBIGUOUS_USED_TEMPLATE
+					});
 				}
 			};
 		}
@@ -2667,6 +3122,9 @@ this.BX.MessageService.Message = this.BX.MessageService.Message || {};
 			return {
 				setText: (state, payload) => {
 					state.text = payload.text;
+				},
+				setUsedTemplate: (state, payload) => {
+					state.usedTemplate = payload.usedTemplate;
 				}
 			};
 		}
@@ -2769,7 +3227,8 @@ this.BX.MessageService.Message = this.BX.MessageService.Message || {};
 		getState() {
 			return {
 				channelsSort: main_core.Runtime.clone(this.getVariable('channelsSort', [])),
-				channelsLastUsedFrom: main_core.Runtime.clone(this.getVariable('channelsLastUsedFrom', []))
+				channelsLastUsedFrom: main_core.Runtime.clone(this.getVariable('channelsLastUsedFrom', [])),
+				saveFlowOptOut: Boolean(this.getVariable('saveFlowOptOut', false))
 			};
 		}
 		getGetters() {
@@ -2825,6 +3284,12 @@ this.BX.MessageService.Message = this.BX.MessageService.Message || {};
 						channelsSort: normalized
 					});
 				},
+				/** @function preferences/setSaveFlowOptOut */
+				setSaveFlowOptOut: (store, payload) => {
+					store.commit('setSaveFlowOptOut', {
+						saveFlowOptOut: Boolean(payload?.saveFlowOptOut)
+					});
+				},
 				/** @function preferences/setChannelsLastUsedFrom */
 				setChannelsLastUsedFrom: (store, payload) => {
 					const {
@@ -2869,6 +3334,11 @@ this.BX.MessageService.Message = this.BX.MessageService.Message || {};
 					channelsLastUsedFrom
 				}) => {
 					state.channelsLastUsedFrom = channelsLastUsedFrom;
+				},
+				setSaveFlowOptOut: (state, {
+					saveFlowOptOut
+				}) => {
+					state.saveFlowOptOut = saveFlowOptOut;
 				}
 			};
 		}
@@ -3401,6 +3871,15 @@ this.BX.MessageService.Message = this.BX.MessageService.Message || {};
 		constructor(params) {
 			this.#store = params.store;
 		}
+		isSaveFlowDisabled() {
+			return Boolean(this.#store.state.preferences.saveFlowOptOut);
+		}
+		disableSaveFlow() {
+			void this.#store.dispatch('preferences/setSaveFlowOptOut', {
+				saveFlowOptOut: true
+			});
+			this.#savePreferences();
+		}
 		saveChannelLastUsedFrom(channel, fromId) {
 			const channelsLastUsedFrom = main_core.Runtime.clone(this.#store.state.preferences.channelsLastUsedFrom);
 			const index = channelsLastUsedFrom.findIndex(item => item.channelId === channel.id);
@@ -3440,6 +3919,208 @@ this.BX.MessageService.Message = this.BX.MessageService.Message || {};
 		}
 	}
 
+	const TOAST_CATEGORY = 'messageservice-message-editor-save-flow';
+	const AUTO_SUFFIX_STRATEGY = 'autoSuffix';
+	const SAVE_FLOW_TOAST_WIDTH = 520;
+
+	/**
+	 * Offers to update or save the custom template used in a clean compose
+	 * scenario right after the user starts sending. The toast is fired in
+	 * parallel with the send and never blocks it: the send-attempt handler captures
+	 * the decision synchronously and returns immediately, while the template CUD
+	 * calls happen later, only if the user reacts to the toast.
+	 */
+	class SaveFlowService {
+		#logger;
+		#store;
+		#eventEmitter;
+		#preferencesService;
+		#customTemplateServiceFactory;
+		constructor(params) {
+			this.#logger = params.logger;
+			this.#store = params.store;
+			this.#eventEmitter = params.eventEmitter;
+			this.#preferencesService = params.preferencesService;
+			this.#customTemplateServiceFactory = params.customTemplateServiceFactory;
+		}
+
+		/**
+		 * Synchronous, non-blocking entry point invoked on a confirmed send attempt,
+		 * both from the native send path (SendService) and from host-driven scenes.
+		 * Errors are isolated here: a throw must never break sending.
+		 * Returns immediately; the toast and any CUD calls happen out of band.
+		 */
+		handleSendAttempt() {
+			try {
+				this.#run();
+			} catch (error) {
+				this.#logger.error('saveFlow: send attempt handler failed', {
+					error
+				});
+			}
+		}
+		#run() {
+			if (this.#preferencesService.isSaveFlowDisabled()) {
+				return;
+			}
+			const snapshot = this.#captureSnapshot();
+			if (snapshot === null) {
+				return;
+			}
+			if (snapshot.decision === SaveFlowDecision.UpdateToast) {
+				this.#showUpdateToast(snapshot);
+				return;
+			}
+			if (snapshot.decision === SaveFlowDecision.SaveToast) {
+				this.#showSaveToast(snapshot);
+			}
+		}
+		#captureSnapshot() {
+			const decision = this.#store.getters['message/saveFlowDecision'];
+			if (decision === SaveFlowDecision.None) {
+				return null;
+			}
+			const used = this.#store.state.message.usedTemplate;
+			const binding = this.#store.state.application.scene?.templateBinding;
+			if (!main_core.Type.isPlainObject(used) || !main_core.Type.isPlainObject(binding)) {
+				return null;
+			}
+			return {
+				decision,
+				templateId: used.id,
+				title: used.title,
+				body: this.#store.getters['message/body'],
+				isForeign: used.isForeign,
+				binding: {
+					zoneId: binding.zoneId,
+					sceneId: binding.sceneId,
+					targetId: binding.targetId
+				}
+			};
+		}
+		#showUpdateToast(snapshot) {
+			this.#notify({
+				category: TOAST_CATEGORY,
+				useAirDesign: true,
+				width: SAVE_FLOW_TOAST_WIDTH,
+				content: main_core.Loc.getMessage('MSGSVC_SAVE_FLOW_UPDATE_TITLE', {
+					'#TITLE#': main_core.Text.encode(snapshot.title)
+				}),
+				actions: [{
+					title: main_core.Loc.getMessage('MSGSVC_SAVE_FLOW_UPDATE_ACTION'),
+					events: {
+						click: (event, balloon) => {
+							balloon.close();
+							void this.#update(snapshot);
+						}
+					}
+				}, this.#buildOptOutAction()]
+			});
+		}
+		#showSaveToast(snapshot) {
+			this.#notify({
+				category: TOAST_CATEGORY,
+				useAirDesign: true,
+				width: SAVE_FLOW_TOAST_WIDTH,
+				content: main_core.Loc.getMessage('MSGSVC_SAVE_FLOW_SAVE_TITLE', {
+					'#TITLE#': main_core.Text.encode(snapshot.title)
+				}),
+				actions: [{
+					title: main_core.Loc.getMessage('MSGSVC_SAVE_FLOW_SAVE_ACTION'),
+					events: {
+						click: (event, balloon) => {
+							balloon.close();
+							void this.#create(snapshot);
+						}
+					}
+				}, this.#buildOptOutAction()]
+			});
+		}
+		#buildOptOutAction() {
+			return {
+				title: main_core.Loc.getMessage('MSGSVC_SAVE_FLOW_OPT_OUT_ACTION'),
+				events: {
+					click: (event, balloon) => {
+						balloon.close();
+						this.#preferencesService.disableSaveFlow();
+					}
+				}
+			};
+		}
+		async #update(snapshot) {
+			const service = await this.#customTemplateServiceFactory();
+			service.update(snapshot.templateId, {
+				title: snapshot.title,
+				body: snapshot.body
+			}).then(() => {
+				this.#invalidateTemplateCache();
+			}).catch(response => {
+				this.#handleCudError(response);
+			});
+		}
+		async #create(snapshot) {
+			const service = await this.#customTemplateServiceFactory();
+			service.create({
+				zone: snapshot.binding.zoneId,
+				scene: snapshot.binding.sceneId,
+				targetId: snapshot.binding.targetId,
+				title: snapshot.title,
+				body: snapshot.body,
+				strategy: AUTO_SUFFIX_STRATEGY
+			}).then(data => {
+				this.#invalidateTemplateCache();
+				const finalTitle = data?.title;
+				if (main_core.Type.isStringFilled(finalTitle) && finalTitle !== snapshot.title) {
+					this.#notify({
+						category: TOAST_CATEGORY,
+						useAirDesign: true,
+						content: main_core.Loc.getMessage('MSGSVC_SAVE_FLOW_SAVED_SUFFIX', {
+							'#TITLE#': main_core.Text.encode(finalTitle)
+						})
+					});
+				}
+			}).catch(response => {
+				this.#handleCudError(response);
+			});
+		}
+		#handleCudError(response) {
+			this.#logger.error('saveFlow: template CUD failed', {
+				response
+			});
+			const message = response?.errors?.[0]?.message;
+			this.#notify({
+				category: TOAST_CATEGORY,
+				useAirDesign: true,
+				content: main_core.Type.isStringFilled(message) ? main_core.Text.encode(message) : main_core.Loc.getMessage('MSGSVC_SAVE_FLOW_ERROR')
+			});
+		}
+
+		// Lazy-load so the base editor bundle does not eagerly pull notification.
+		// A toast failure must never break sending, so the chain swallows errors.
+		// Toasts share one category, so a reused balloon keeps its previous buttons:
+		// only an explicit null clears them, undefined is a no-op for setActions().
+		#notify(options) {
+			main_core.Runtime.loadExtension('ui.notification').then(({
+				Center
+			}) => {
+				Center.notify({
+					actions: null,
+					...options
+				});
+			}).catch(error => {
+				this.#logger.error('saveFlow: toast failed', {
+					error
+				});
+			});
+		}
+		#invalidateTemplateCache() {
+			this.#eventEmitter.emit(CUSTOM_TEMPLATE_CACHE_INVALIDATE_EVENT);
+		}
+
+		// No-op kept for a uniform service lifecycle in ServiceLocator.destroy().
+		destroy() {}
+	}
+
 	class SendService {
 		#logger;
 		#store;
@@ -3447,6 +4128,7 @@ this.BX.MessageService.Message = this.BX.MessageService.Message || {};
 		#emitter;
 		#analyticsService;
 		#preferencesService;
+		#saveFlowService;
 		constructor(params) {
 			this.#logger = params.logger;
 			this.#store = params.store;
@@ -3454,6 +4136,7 @@ this.BX.MessageService.Message = this.BX.MessageService.Message || {};
 			this.#emitter = params.eventEmitter;
 			this.#analyticsService = params.analyticsService;
 			this.#preferencesService = params.preferencesService;
+			this.#saveFlowService = params.saveFlowService;
 		}
 		sendMessage() {
 			if (this.#store.getters['application/isProgress']) {
@@ -3463,6 +4146,11 @@ this.BX.MessageService.Message = this.BX.MessageService.Message || {};
 			void this.#store.dispatch('application/setProgress', {
 				isSending: true
 			});
+
+			// Snapshot the save-flow state before transport handlers run, so an
+			// onSend handler can't mutate the editor before it is captured. It is
+			// synchronous, isolates its own errors, and never blocks the async send.
+			this.#saveFlowService.handleSendAttempt();
 			return this.#emitter.emitAsync('onSend').then(eventResults => {
 				const successResult = eventResults.find(x => main_core.Type.isPlainObject(x) && x.status === 'success');
 				if (successResult) {
@@ -3592,7 +4280,8 @@ this.BX.MessageService.Message = this.BX.MessageService.Message || {};
 					messageModel: this.getMessageModel(),
 					eventEmitter: this.#emitter,
 					analyticsService: this.getAnalyticsService(),
-					preferencesService: this.getPreferencesService()
+					preferencesService: this.getPreferencesService(),
+					saveFlowService: this.getSaveFlowService()
 				});
 			});
 		}
@@ -3627,6 +4316,19 @@ this.BX.MessageService.Message = this.BX.MessageService.Message || {};
 				});
 			});
 		}
+		getSaveFlowService() {
+			return this.#services.remember('saveFlowService', () => {
+				return new SaveFlowService({
+					logger: this.getLogger(),
+					store: this.#store,
+					eventEmitter: this.#emitter,
+					preferencesService: this.getPreferencesService(),
+					customTemplateServiceFactory: () => main_core.Runtime.loadExtension('messageservice.custom-template.editor').then(({
+						CustomTemplateService
+					}) => new CustomTemplateService())
+				});
+			});
+		}
 		getAnalyticsService() {
 			return this.#services.remember('analyticsService', () => {
 				return new AnalyticsService({
@@ -3648,6 +4350,9 @@ this.BX.MessageService.Message = this.BX.MessageService.Message || {};
 		destroy() {
 			if (this.#services.has('providerFactory')) {
 				this.#services.get('providerFactory').destroy();
+			}
+			if (this.#services.has('saveFlowService')) {
+				this.#services.get('saveFlowService').destroy();
 			}
 			this.#services = null;
 		}
@@ -3822,6 +4527,13 @@ this.BX.MessageService.Message = this.BX.MessageService.Message || {};
 	 * @emits BX.MessageService.Message.Editor:onTemplateChange
 	 * @emits BX.MessageService.Message.Editor:onNotificationTemplateChange
 	 * @emits BX.MessageService.Message.Editor:onStateChange
+	 * @emits BX.MessageService.Message.Editor:CustomTemplate:onFormRequested
+	 * @emits BX.MessageService.Message.Editor:onTemplatePlaceholderInsert
+	 *        Cancellable, once per placeholder of an inserted custom template. Data:
+	 *        `{ placeholder, existingPlaceholders, binding }`, where `existingPlaceholders`
+	 *        lists the placeholders already in the body plus the ones kept earlier in
+	 *        the same insert. The editor supplies context only — it never interprets
+	 *        placeholder origin; the zone decides keep/remove via `preventDefault()`.
 	 */
 	class Editor extends main_core_events.EventEmitter {
 		#options;
@@ -3844,6 +4556,21 @@ this.BX.MessageService.Message = this.BX.MessageService.Message || {};
 		 */
 		getState() {
 			return this.#stateExporter?.getState() ?? null;
+		}
+
+		/**
+		 * Notify the editor that a real send attempt has started. Host scenes that
+		 * drive sending themselves (e.g. payment) call this in their send-attempt
+		 * point instead of using the editor footer. It does not emit `onSend`, so
+		 * host send-handlers are not triggered. Currently its only side effect is
+		 * the save-flow decision, but callers must not rely on that.
+		 * No-op until the editor is rendered.
+		 */
+		handleSendAttempt() {
+			if (main_core.Type.isNil(this.#store)) {
+				return;
+			}
+			this.#locator?.getSaveFlowService().handleSendAttempt();
 		}
 
 		/**
@@ -4025,7 +4752,8 @@ this.BX.MessageService.Message = this.BX.MessageService.Message || {};
 			})).addModel(messageModel).addModel(TemplatesModel.create().useDatabase(false).setLogger(this.#locator.getLogger())).addModel(NotificationTemplatesModel.create().useDatabase(false).setLogger(this.#locator.getLogger()).setVariables({
 				collection: this.#options.notificationTemplates
 			})).addModel(PreferencesModel.create().useDatabase(false).setLogger(this.#locator.getLogger()).setVariables({
-				channelsSort: this.#options.preferences?.channelsSort
+				channelsSort: this.#options.preferences?.channelsSort,
+				saveFlowOptOut: this.#options.preferences?.saveFlowOptOut ?? false
 			})).addModel(AnalyticsModel.create().useDatabase(false).setLogger(this.#locator.getLogger()).setVariables({
 				analytics: this.#options.analytics
 			})).build();

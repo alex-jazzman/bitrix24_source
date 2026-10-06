@@ -1,7 +1,11 @@
-<?if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
-use Bitrix\Main,
-	Bitrix\Main\Loader,
-	Bitrix\Catalog;
+<?php
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
+
+use Bitrix\Main;
+use Bitrix\Main\Loader;
+use Bitrix\Catalog;
+use Bitrix\Main\Web\Uri;
 
 if (!Loader::includeModule('crm'))
 {
@@ -228,13 +232,10 @@ foreach($allVats as $k => $v)
 		);
 
 	$arVat['PATH_TO_VAT_DELETE'] =
-		CHTTP::urlAddParams(
-			CComponentEngine::MakePathFromTemplate(
+		(string)(new Uri(CComponentEngine::MakePathFromTemplate(
 				$arParams['PATH_TO_VAT_LIST'],
 				array('vat_id' => $k)
-			),
-			array('action_'.$arResult['GRID_ID'] => 'delete', 'ID' => $k, 'sessid' => bitrix_sessid())
-		);
+			)))->addParams(array('action_'.$arResult['GRID_ID'] => 'delete', 'ID' => $k, 'sessid' => bitrix_sessid()));
 
 	$arVat['~NAME'] = $arVat['NAME'];
 	$vats[] = $arVat;

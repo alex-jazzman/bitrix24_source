@@ -5,7 +5,6 @@ jn.define('bizproc/workflow/list/simple-list', (require, exports, module) => {
 	const AppTheme = require('apptheme');
 	const { EventEmitter } = require('event-emitter');
 	const { Loc } = require('loc');
-	const { showToast, Position } = require('toast');
 	const { Type } = require('type');
 	const { clone, isEmpty } = require('utils/object');
 
@@ -136,7 +135,7 @@ jn.define('bizproc/workflow/list/simple-list', (require, exports, module) => {
 			this.listRef = ref;
 		}
 
-		onTaskTouch({ task, isInline })
+		onTaskTouch({ task })
 		{
 			const item = this.listRef.getItem(task.workflowId);
 			if (item)
@@ -147,11 +146,6 @@ jn.define('bizproc/workflow/list/simple-list', (require, exports, module) => {
 			if (this.state.selectedTasks)
 			{
 				this.onTaskDeselected({ task });
-			}
-
-			if (isInline)
-			{
-				this.notifyAboutCompletedTask(task);
 			}
 		}
 
@@ -227,24 +221,6 @@ jn.define('bizproc/workflow/list/simple-list', (require, exports, module) => {
 			if (this.isWorkflowFirstTask(task.workflowId, task.id))
 			{
 				this.hideItem(task.workflowId);
-			}
-		}
-
-		notifyAboutCompletedTask(task)
-		{
-			if (task && task.name && BX.prop.getBoolean(this.props, 'showNotifications', true) === true)
-			{
-				showToast(
-					{
-						message: Loc.getMessage(
-							'BPMOBILE_WORKFLOW_SIMPLE_LIST_TASK_TOUCHED',
-							{ '#TASK_NAME#': task.name },
-						),
-						time: 2,
-						position: Position.TOP,
-					},
-					this.layout,
-				);
 			}
 		}
 

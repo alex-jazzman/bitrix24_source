@@ -6,6 +6,7 @@ define('DisableEventsCheck', true);
 
 use Bitrix\Crm\Integration\BizProc\Starter\CrmStarter;
 use Bitrix\Crm\Integration\BizProc\Starter\Dto\DocumentDto;
+use Bitrix\Crm\Integration\Mail\LargeAttachment\SendPreparation;
 use Bitrix\Crm\Integration\StorageManager;
 use Bitrix\Crm\Integration\StorageType;
 use Bitrix\Crm\Service\Container;
@@ -101,13 +102,32 @@ if($action == '')
 
 function GetCrmActivityCommunications($ID)
 {
+	$ID = (int)$ID;
+	if($ID <= 0)
+	{
+		return array('ERROR' => 'Invalid data');
+	}
+
+	$activity = CCrmActivity::GetByID($ID, false);
+	if(!$activity)
+	{
+		return array('ERROR' => 'Activity not found!');
+	}
+
+	if(!CheckCrmActivityItemReadPermission($activity))
+	{
+		return array('ERROR' => GetMessage('CRM_PERMISSION_DENIED'));
+	}
+
 	$communications = CCrmActivity::GetCommunications($ID);
 	$communicationData = array();
 	if(is_array($communications))
 	{
+		$userPermissions = CCrmPerms::GetCurrentUserPermissions();
 		foreach($communications as &$comm)
 		{
 			CCrmActivity::PrepareCommunicationInfo($comm);
+			CCrmActivity::MaskCommunicationForUser($comm, $userPermissions);
 			$datum = array(
 				'id' => $comm['ID'],
 				'type' => $comm['TYPE'],
@@ -135,8 +155,55 @@ function GetCrmActivityCommunications($ID)
 		)
 	);
 }
+function CheckCrmActivityItemReadPermission($activity, $userPermissions = null)
+{
+	$ID = isset($activity['ID']) ? (int)$activity['ID'] : 0;
+	if($ID <= 0)
+	{
+		return false;
+	}
+
+	$bindings = CCrmActivity::GetBindings($ID);
+	if(is_array($bindings) && !empty($bindings))
+	{
+		foreach($bindings as $binding)
+		{
+			if(CCrmActivity::CheckReadPermission($binding['OWNER_TYPE_ID'], $binding['OWNER_ID'], $userPermissions))
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	$ownerTypeID = isset($activity['OWNER_TYPE_ID']) ? (int)$activity['OWNER_TYPE_ID'] : CCrmOwnerType::Undefined;
+	$ownerID = isset($activity['OWNER_ID']) ? (int)$activity['OWNER_ID'] : 0;
+
+	return $ownerID > 0
+		&& CCrmOwnerType::IsDefined($ownerTypeID)
+		&& CCrmActivity::CheckReadPermission($ownerTypeID, $ownerID, $userPermissions)
+	;
+}
 function GetCrmActivityCommunicationsPage($ID, $pageSize, $pageNumber)
 {
+	$ID = (int)$ID;
+	if($ID <= 0)
+	{
+		return array('ERROR' => 'Invalid data');
+	}
+
+	$activity = CCrmActivity::GetByID($ID, false);
+	if(!$activity)
+	{
+		return array('ERROR' => 'Activity not found!');
+	}
+
+	if(!CheckCrmActivityItemReadPermission($activity))
+	{
+		return array('ERROR' => GetMessage('CRM_PERMISSION_DENIED'));
+	}
+
 	$dbRes = CCrmActivity::GetCommunicationList(
 		array('ID' => 'ASC'),
 		array('ACTIVITY_ID' => $ID),
@@ -145,10 +212,12 @@ function GetCrmActivityCommunicationsPage($ID, $pageSize, $pageNumber)
 	);
 
 	$communicationData = array();
+	$userPermissions = CCrmPerms::GetCurrentUserPermissions();
 	while($result = $dbRes->Fetch())
 	{
 		$result['ENTITY_SETTINGS'] = isset($result['ENTITY_SETTINGS']) && $result['ENTITY_SETTINGS'] !== '' ? unserialize($result['ENTITY_SETTINGS'], ['allowed_classes' => false]) : array();
 		CCrmActivity::PrepareCommunicationInfo($result);
+		CCrmActivity::MaskCommunicationForUser($result, $userPermissions);
 		$communicationData[] = array(
 			'id' => $result['ID'],
 			'type' => $result['TYPE'],
@@ -866,6 +935,12 @@ if($action == 'DELETE')
 		__CrmActivityEditorEndResponse(array('ERROR' => 'Provider not found!'));
 	}
 
+	$userPermissions = CCrmPerms::GetCurrentUserPermissions();
+	if(!CCrmActivity::CheckItemDeletePermission($arActivity, $userPermissions))
+	{
+		__CrmActivityEditorEndResponse(array('ERROR' => GetMessage('CRM_PERMISSION_DENIED')));
+	}
+
 	$ownerTypeName = isset($_POST['OWNER_TYPE'])? mb_strtoupper(strval($_POST['OWNER_TYPE'])) : '';
 	if($provider::checkOwner() && !isset($ownerTypeName[0]))
 	{
@@ -1037,6 +1112,25 @@ elseif($action == 'COMPLETE')
 		__CrmActivityEditorEndResponse(array('ERROR' => GetMessage('CRM_PERMISSION_DENIED')));
 	}
 
+	// Ownerless providers are not covered by the owner gated check above, so the provider's own rule decides.
+	// The responsible and the administrator are let through before it: CallList::checkUpdatePermission()
+	// drops the RESPONSIBLE_ID clause of its parent and denies a list whose entities are already deleted.
+	if(
+		!$provider::checkOwner()
+		&& (int)($arActivity['RESPONSIBLE_ID'] ?? 0) !== CCrmSecurityHelper::GetCurrentUserID()
+		&& !Container::getInstance()->getUserPermissions()->isAdmin()
+	)
+	{
+		// The rule takes a typed identifier, while the stored value is a nullable raw string.
+		$arActivityToCheck = $arActivity;
+		$arActivityToCheck['ASSOCIATED_ENTITY_ID'] = isset($arActivity['ASSOCIATED_ENTITY_ID']) ? intval($arActivity['ASSOCIATED_ENTITY_ID']) : 0;
+
+		if(!$provider::checkUpdatePermission($arActivityToCheck))
+		{
+			__CrmActivityEditorEndResponse(array('ERROR' => GetMessage('CRM_PERMISSION_DENIED')));
+		}
+	}
+
 	$completed = (isset($_POST['COMPLETED']) ? intval($_POST['COMPLETED']) : 0) > 0;
 
 	if(CCrmActivity::Complete($ID, $completed, array('REGISTER_SONET_EVENT' => true)))
@@ -1107,6 +1201,12 @@ elseif($action == 'SET_PRIORITY')
 		__CrmActivityEditorEndResponse(array('ERROR' => 'Activity not found!'));
 	}
 
+	$userPermissions = CCrmPerms::GetCurrentUserPermissions();
+	if(!CCrmActivity::CheckItemUpdatePermission($arActivity, $userPermissions))
+	{
+		__CrmActivityEditorEndResponse(array('ERROR' => GetMessage('CRM_PERMISSION_DENIED')));
+	}
+
 	$ownerTypeName = isset($_POST['OWNER_TYPE'])? mb_strtoupper(strval($_POST['OWNER_TYPE'])) : '';
 	if(!isset($ownerTypeName[0]))
 	{
@@ -1166,6 +1266,12 @@ elseif($action == 'SAVE_ACTIVITY')
 		if(!$arActivity)
 		{
 			__CrmActivityEditorEndResponse(array('ERROR'=>'IS NOT EXISTS!'));
+		}
+
+		$userPermissions = CCrmPerms::GetCurrentUserPermissions();
+		if(!CCrmActivity::CheckItemUpdatePermission($arActivity, $userPermissions))
+		{
+			__CrmActivityEditorEndResponse(array('ERROR' => GetMessage('CRM_PERMISSION_DENIED')));
 		}
 	}
 
@@ -1617,6 +1723,21 @@ elseif($action == 'SAVE_EMAIL')
 
 	$ID = isset($data['ID']) ? (int)$data['ID'] : 0;
 	$isNew = $ID <= 0;
+	$arActivity = null;
+	if(!$isNew)
+	{
+		$arActivity = CCrmActivity::GetByID($ID, false);
+		if(!$arActivity)
+		{
+			__CrmActivityEditorEndResponse(['ERROR' => 'Activity not found!']);
+		}
+
+		$userPermissions = CCrmPerms::GetCurrentUserPermissions();
+		if(!CCrmActivity::CheckItemUpdatePermission($arActivity, $userPermissions))
+		{
+			__CrmActivityEditorEndResponse(['ERROR' => GetMessage('CRM_PERMISSION_DENIED')]);
+		}
+	}
 
 	$userID = $curUser->GetID();
 	$responsibleId = (int) $userID;
@@ -1706,10 +1827,18 @@ elseif($action == 'SAVE_EMAIL')
 		]);
 	}
 
-	if (count($commData) > 10)
+	$totalRecipientsLimit = \Bitrix\Crm\Integration\Mail\RecipientLimitProvider::getTotal();
+
+	if (count($commData) > $totalRecipientsLimit)
 	{
 		__CrmActivityEditorEndResponse([
-			'ERROR' => \Bitrix\Main\Localization\Loc::getMessage('CRM_ACTIVITY_EMAIL_MESSAGE_TO_MANY_RECIPIENTS')
+			'ERROR' => \Bitrix\Main\Localization\Loc::getMessage(
+				'CRM_ACTIVITY_EMAIL_MESSAGE_TO_MANY_RECIPIENTS',
+				[
+					'#COUNT#' => $totalRecipientsLimit,
+					'10' => $totalRecipientsLimit,
+				],
+			),
 		]);
 	}
 
@@ -1958,6 +2087,12 @@ elseif($action == 'SAVE_EMAIL')
 	$ownerTypeID = !empty($ownerTypeName) ? CCrmOwnerType::resolveId($ownerTypeName) : 0;
 	$ownerID = isset($data['ownerID']) ? intval($data['ownerID']) : 0;
 
+	// The draft is stored on the entity the form posted, so the pair is snapshotted before the owner
+	// below is recalculated from the bindings and possibly moved to another entity. Completing by the
+	// draft id alone would close a draft of another CRM entity, or a mail one, of the same user.
+	$draftEntityTypeID = $ownerTypeID;
+	$draftEntityID = $ownerID;
+
 	$bindData = isset($data['bindings']) ? $data['bindings'] : [];
 	if (!empty($rawData['docs']) && is_array($rawData['docs']))
 	{
@@ -2130,6 +2265,8 @@ elseif($action == 'SAVE_EMAIL')
 	$from  = '';
 	$reply = '';
 	$rawCc = $cc;
+	$senderId = array_key_exists('senderId', $decodedData) ? (int)$decodedData['senderId'] : null;
+	$mailboxId = array_key_exists('mailboxId', $decodedData) ? (int)$decodedData['mailboxId'] : null;
 
 	if (isset($decodedData['from']))
 	{
@@ -2169,10 +2306,42 @@ elseif($action == 'SAVE_EMAIL')
 			__CrmActivityEditorEndResponse(array('ERROR' => getMessage('CRM_ACTIVITY_INVALID_EMAIL', array('#VALUE#' => $from))));
 		}
 
-		/**
-		 * @todo Explicitly enter the ID. This will increase the productivity of selection.
-		 */
-		$mailboxHelper = \Bitrix\Mail\Helper\Mailbox::findBy(null, $fromEmail);
+		$mailboxHelper = null;
+		if ($mailboxId !== null)
+		{
+			$selectedSender = \Bitrix\Crm\Integration\Mail\MessageSender::findAvailableMailbox(
+				$mailboxId,
+				$fromEmail,
+				(int)$userID,
+			);
+			if ($selectedSender !== null)
+			{
+				$mailboxHelper = \Bitrix\Mail\Helper\Mailbox::createInstance($mailboxId, false);
+			}
+			else
+			{
+				__CrmActivityEditorEndResponse(array('ERROR' => getMessage('CRM_ACTIVITY_EMAIL_EMPTY_FROM_FIELD')));
+			}
+		}
+		elseif ($senderId !== null)
+		{
+			$selectedSender = \Bitrix\Crm\Integration\Mail\MessageSender::findAvailableSender(
+				$senderId,
+				$fromEmail,
+				(int)$userID,
+			);
+			if (!empty($selectedSender['mailboxId']))
+			{
+				$mailboxHelper = \Bitrix\Mail\Helper\Mailbox::createInstance(
+					(int)$selectedSender['mailboxId'],
+					false,
+				);
+			}
+		}
+		else
+		{
+			$mailboxHelper = \Bitrix\Mail\Helper\Mailbox::findBy(null, $fromEmail);
+		}
 
 		if ($mailboxHelper !== null)
 		{
@@ -2244,6 +2413,16 @@ elseif($action == 'SAVE_EMAIL')
 	}
 
 	$parentId = isset($data['REPLIED_ID']) ? (int) $data['REPLIED_ID'] : 0;
+	$parentActivity = null;
+	if ($parentId > 0)
+	{
+		$parentActivity = CCrmActivity::GetByID($parentId, false);
+		if (!$parentActivity || !CheckCrmActivityItemReadPermission($parentActivity))
+		{
+			__CrmActivityEditorEndResponse(array('ERROR' => GetMessage('CRM_PERMISSION_DENIED')));
+		}
+	}
+
 	if ($parentId > 0 && !$dealBinded)
 	{
 		$parentBindings = CCrmActivity::getBindings($parentId);
@@ -2341,7 +2520,12 @@ elseif($action == 'SAVE_EMAIL')
 			$forwardedID = isset($data['FORWARDED_ID']) ? intval($data['FORWARDED_ID']) : 0;
 			if($forwardedID > 0)
 			{
-				$arForwardedFields = CCrmActivity::GetByID($forwardedID);
+				$arForwardedFields = CCrmActivity::GetByID($forwardedID, false);
+				if(!$arForwardedFields || !CheckCrmActivityItemReadPermission($arForwardedFields))
+				{
+					__CrmActivityEditorEndResponse(array('ERROR' => GetMessage('CRM_PERMISSION_DENIED')));
+				}
+
 				if($arForwardedFields)
 				{
 					CCrmActivity::PrepareStorageElementIDs($arForwardedFields);
@@ -2415,6 +2599,15 @@ elseif($action == 'SAVE_EMAIL')
 
 				if ($storageElementsActivityId > 0)
 				{
+					$storageElementsActivity = $storageElementsActivityId === $parentId
+						? $parentActivity
+						: CCrmActivity::GetByID($storageElementsActivityId, false)
+					;
+					if(!$storageElementsActivity || !CheckCrmActivityItemReadPermission($storageElementsActivity))
+					{
+						__CrmActivityEditorEndResponse(array('ERROR' => GetMessage('CRM_PERMISSION_DENIED')));
+					}
+
 					$filesToCheck = FileUserType::getItemsInfo($data['__diskfiles']);
 					foreach ($filesToCheck as $file)
 					{
@@ -2470,8 +2663,6 @@ elseif($action == 'SAVE_EMAIL')
 		}
 	}
 
-	$totalSize = 0;
-
 	$arRawFiles = [];
 	if (
 		isset($arFields['STORAGE_ELEMENT_IDS'])
@@ -2482,7 +2673,57 @@ elseif($action == 'SAVE_EMAIL')
 		foreach ($arFields['STORAGE_ELEMENT_IDS'] as $item)
 		{
 			$arRawFiles[$item] = StorageManager::makeFileArray($item, $storageTypeID);
-			$totalSize += $arRawFiles[$item]['size'];
+		}
+	}
+
+	$largeAttachmentContracts = isset($data['__largeAttachments']) && is_array($data['__largeAttachments'])
+		? $data['__largeAttachments']
+		: []
+	;
+	$allowedLargeAttachmentFileIds = $storageTypeID === StorageType::Disk
+		? (array)($arFields['STORAGE_ELEMENT_IDS'] ?? [])
+		: []
+	;
+	$largeAttachmentResult = (new SendPreparation())->prepare(
+		$userID,
+		$largeAttachmentContracts,
+		$allowedLargeAttachmentFileIds,
+		$messageHtml,
+		[
+			SendPreparation::STORAGE_ELEMENT_IDS => (array)($arFields['STORAGE_ELEMENT_IDS'] ?? []),
+			SendPreparation::RAW_FILES => $arRawFiles,
+			SendPreparation::ATTACH_TO_FILE_IDS => $attachToFileIds,
+			SendPreparation::TEMPLATE_STORAGE_ELEMENT_IDS => $templateArFileIDs,
+			SendPreparation::TEMPLATE_ATTACH_TO_FILE_IDS => $templateAttachToFileIds,
+		],
+	);
+	if (!$largeAttachmentResult->isSuccess())
+	{
+		$error = $largeAttachmentResult->getErrors()[0];
+		__CrmActivityEditorEndResponse([
+			'ERROR' => getMessage('CRM_ACTIVITY_EMAIL_LARGE_ATTACHMENT_SEND_ERROR'),
+			'ERROR_CODE' => $error->getCode(),
+		]);
+	}
+
+	$arFields['STORAGE_ELEMENT_IDS'] =
+		$largeAttachmentResult->getData()[SendPreparation::STORAGE_ELEMENT_IDS]
+	;
+	$arRawFiles = $largeAttachmentResult->getData()[SendPreparation::RAW_FILES];
+	$attachToFileIds = $largeAttachmentResult->getData()[SendPreparation::ATTACH_TO_FILE_IDS];
+	$templateArFileIDs =
+		$largeAttachmentResult->getData()[SendPreparation::TEMPLATE_STORAGE_ELEMENT_IDS]
+	;
+	$templateAttachToFileIds =
+		$largeAttachmentResult->getData()[SendPreparation::TEMPLATE_ATTACH_TO_FILE_IDS]
+	;
+
+	$totalSize = 0;
+	if ($arRawFiles)
+	{
+		foreach ($arRawFiles as $arRawFile)
+		{
+			$totalSize += $arRawFile['size'];
 		}
 
 		$maxSize = Helper\Message::getMaxAttachedFilesSize();
@@ -2495,8 +2736,20 @@ elseif($action == 'SAVE_EMAIL')
 		}
 	}
 
+	$emailMeta = [
+		'__email' => $fromEmail,
+		'from'    => $from,
+		'replyTo' => $reply,
+		'to'      => join(', ', $to),
+		'cc'      => join(', ', $rawCc),
+		'bcc'     => join(', ', $bcc),
+	];
+
 	if ($isNew)
 	{
+		// the EmailSent trigger fires inside the add, so the addresses must already be in these fields
+		$arFields['SETTINGS'] = ['EMAIL_META' => $emailMeta];
+
 		if(!($ID = CCrmActivity::Add($arFields, false, false, ['REGISTER_SONET_EVENT' => true])))
 		{
 			__CrmActivityEditorEndResponse(['ERROR' => CCrmActivity::GetLastErrorMessage()]);
@@ -2567,14 +2820,7 @@ elseif($action == 'SAVE_EMAIL')
 				'Message-Id' => $messageId,
 				'Reply-To'   => $reply ?: $fromEmail,
 			],
-			'EMAIL_META' => [
-				'__email' => $fromEmail,
-				'from'    => $from,
-				'replyTo' => $reply,
-				'to'      => join(', ', $to),
-				'cc'      => join(', ', $rawCc),
-				'bcc'     => join(', ', $bcc),
-			],
+			'EMAIL_META' => $emailMeta,
 			'SANITIZE_ON_VIEW' => 1,
 		],
 	], false, false, array('REGISTER_SONET_EVENT' => true));
@@ -2641,6 +2887,7 @@ elseif($action == 'SAVE_EMAIL')
 		__CrmActivityEditorEndResponse(['ERROR' => $arErrors]);
 	}
 
+	$transportResult = null;
 	$sendResult = \Bitrix\Crm\Integration\Mail\MessageSender::send(
 		[
 			'subject'         => $subject,
@@ -2661,10 +2908,28 @@ elseif($action == 'SAVE_EMAIL')
 		],
 		(string)GetMessage('CRM_EMAIL_ACTION_DEFAULT_SUBJECT', ['#DATE#'=> $now]),
 		$mailboxHelper,
+		$transportResult,
+		$senderId,
+		(int)$userID,
 	);
 
 	if (!$sendResult)
 	{
+		$controlledTransportError = \Bitrix\Crm\Integration\Mail\MessageSender::getControlledTransportError(
+			$transportResult,
+		);
+		if ($controlledTransportError !== null)
+		{
+			if ($isNew)
+			{
+				CCrmActivity::delete($ID);
+			}
+
+			__CrmActivityEditorEndResponse([
+				'ERROR' => [$controlledTransportError->getMessage()],
+			]);
+		}
+
 		if ($isNew)
 		{
 			if (Loader::includeModule('bitrix24'))
@@ -2701,6 +2966,14 @@ elseif($action == 'SAVE_EMAIL')
 		CCrmActivity::delete($ID);
 		__CrmActivityEditorEndResponse(['ERROR' => $arErrors]);
 	}
+
+	\Bitrix\Crm\Integration\Mail\Draft::completeAfterSuccessfulSend(
+		userId: (int)$userID,
+		draftId: $data['draftId'] ?? null,
+		crmEntityTypeId: $draftEntityTypeID,
+		crmEntityId: $draftEntityID,
+		expectedRevision: $data['draftRevision'] ?? null,
+	);
 
 	addEventToStatFile('crm', 'send_email_message', $_REQUEST['context'], trim(trim($messageId), '<>'));
 
@@ -2820,9 +3093,11 @@ elseif($action == 'GET_ACTIVITY')
 
 	$commData = array();
 	$communications = CCrmActivity::GetCommunications($ID);
+	$userPermissions = CCrmPerms::GetCurrentUserPermissions();
 	foreach($communications as &$arComm)
 	{
 		CCrmActivity::PrepareCommunicationInfo($arComm);
+		CCrmActivity::MaskCommunicationForUser($arComm, $userPermissions);
 		$commData[] = array(
 			'type' => $arComm['TYPE'],
 			'value' => $arComm['VALUE'],

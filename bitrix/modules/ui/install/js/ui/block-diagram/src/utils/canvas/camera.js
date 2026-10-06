@@ -162,6 +162,11 @@ export class Camera
 		camera.#zoom = this.#zoom;
 		camera.#rotation = this.#rotation;
 		camera.updateMatrix();
+		camera.#onChangedTransformParams({
+			x: camera.#x,
+			y: camera.#y,
+			zoom: camera.#zoom,
+		});
 
 		return camera;
 	}

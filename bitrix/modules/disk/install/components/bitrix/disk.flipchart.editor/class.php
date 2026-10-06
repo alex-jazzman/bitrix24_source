@@ -2,6 +2,11 @@
 
 use Bitrix\Disk\Document\Flipchart\BoardService;
 use Bitrix\Disk\Document\Flipchart\Configuration;
+use Bitrix\Disk\Document\Flipchart\DualMode\ConfigurationException;
+use Bitrix\Disk\Document\Flipchart\DualMode\PilotLog;
+use Bitrix\Disk\Document\Flipchart\DualMode\ServiceProfile;
+use Bitrix\Disk\Document\Flipchart\DualMode\ServiceProfileResolver;
+use Bitrix\Disk\Document\Flipchart\FramePolicy;
 use Bitrix\Disk\Document\Flipchart\JwtService;
 use Bitrix\Disk\Document\Models\DocumentSession;
 use Bitrix\Disk\Document\Models\GuestUser;
@@ -16,6 +21,7 @@ use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Engine\UrlManager;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\SystemException;
 use Bitrix\Disk\Internals\DiskComponent;
 use Bitrix\Main\ModuleManager;
 use Bitrix\Main\Context;
@@ -94,15 +100,61 @@ class CDiskFlipchartViewerComponent extends DiskComponent
 	{
 		$session = $this->session;
 		$jwt = new JwtService($session->getUser());
+
+		$profile = ServiceProfileResolver::createFromOptions()->resolveForEditor($session->getObject());
+		if ($profile === null)
+		{
+			// null is a full outcome of the resolver, not an error: no instance may be contacted with this
+			// object's id. Checking before the token is minted avoids a proxy round trip
+			// (JwtService::generateToken() signs data on the proxy) for an object no instance may serve.
+			PilotLog::error(
+				'Board service profile is not resolved: {entryPoint}, object {objectId}',
+				[
+					'entryPoint' => 'prepareSdkParams',
+					'objectId' => (int)$session->getObjectId(),
+				],
+			);
+
+			throw new SystemException('Board service profile is not resolved.');
+		}
+
 		$token = $this->generateToken($jwt);
 
-		if (Configuration::isUsingDocumentProxy())
+		if ($profile === ServiceProfile::New)
+		{
+			// The new instance is unknown to the cloud proxy, so this profile never goes through it.
+			try
+			{
+				$appUrl = Configuration::getAppUrl(ServiceProfile::New);
+			}
+			catch (ConfigurationException $exception)
+			{
+				// executeComponent() swallows this on an ordinary request with debug off, so without an
+				// unconditional record the user gets an empty slider and the portal logs hold nothing.
+				PilotLog::error(
+					'Board service app url is not configured: {entryPoint}, object {objectId}, {reason}',
+					[
+						'entryPoint' => 'prepareSdkParams',
+						'objectId' => (int)$session->getObjectId(),
+						'reason' => $exception->getMessage(),
+					],
+				);
+
+				throw $exception;
+			}
+		}
+		elseif (Configuration::isUsingDocumentProxy())
 		{
 			$appUrl = $jwt->getAppUrlFromProxy();
 		}
 		else
 		{
 			$appUrl = Configuration::getAppUrl();
+		}
+
+		if (!Configuration::isValidAppUrl($appUrl))
+		{
+			throw new SystemException('Flipchart app url is not a valid absolute url');
 		}
 
 		$this->arResult['DOCUMENT_SESSION'] = $session;
@@ -119,6 +171,10 @@ class CDiskFlipchartViewerComponent extends DiskComponent
 		$this->arResult['SHOW_TEMPLATES_MODAL'] = (bool)($this->arParams['SHOW_TEMPLATES_MODAL'] ?? false);
 		$this->arResult['LANGUAGE'] = $this->getLanguage();
 		$this->arResult['HEADER_LOGO_URL'] = $this->getHeaderLogoUrl();
+
+		// Task wiring is only for boards served by the new service - the vendor app has no task
+		// protocol, and emptying shareElementInBitrix there would strip its own create-task item.
+		$this->arResult['TASKS_ENABLED'] = Configuration::isTasksEnabled() && $profile === ServiceProfile::New;
 	}
 
 	private function prepareOtherParams(User $user): void
@@ -154,6 +210,11 @@ class CDiskFlipchartViewerComponent extends DiskComponent
 
 	protected function processActionDefault(): void
 	{
+		if (!FramePolicy::emit())
+		{
+			throw new SystemException('Frame policy cannot be applied: headers are already sent');
+		}
+
 		$user = $this->getCurrentUser();
 
 		$this->prepareSdkParams();

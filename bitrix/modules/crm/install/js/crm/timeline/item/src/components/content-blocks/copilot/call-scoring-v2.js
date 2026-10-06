@@ -115,13 +115,7 @@ export const CallScoringV2 = {
 				return;
 			}
 
-			Router.openSlider(
-				`/crm/copilot-call-assessment/details/${assessmentSettingsId}/`,
-				{
-					width: 700,
-					cacheable: false,
-				},
-			);
+			Router.Instance.openCallAssessmentSlider(assessmentSettingsId);
 		},
 
 		showDetails(): void
@@ -136,9 +130,10 @@ export const CallScoringV2 = {
 	// language=Vue
 	template: `
 		<div class="crm-timeline__call-scoring-v2">
-			<div 
+			<div
 				class="crm-timeline__call-scoring-v2-chart"
 				ref="chartContainer"
+				@click.prevent="showDetails"
 			></div>
 			<div class="crm-timeline__call-scoring-v2-content">
 				<div class="body">
@@ -152,7 +147,10 @@ export const CallScoringV2 = {
 						>{{ scriptTitle }}</div>
 					</div>
 					<div>
-						<span class="summary-text">{{ scoreDescription }}</span>
+						<span
+							class="summary-text"
+							@click.prevent="showDetails"
+						>{{ scoreDescription }}</span>
 						<span
 							class="details-link"
 							@click.prevent="showDetails"

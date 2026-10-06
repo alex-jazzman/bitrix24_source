@@ -1,6 +1,10 @@
-<?if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+<?php
+if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+
+use Bitrix\Main\Web\Uri;
+
 \Bitrix\Main\Localization\Loc::loadMessages(__FILE__);
-?><?
+
 $pageId = "group_group_lists";
 include($_SERVER["DOCUMENT_ROOT"]."/bitrix/components/bitrix/socialnetwork_group/templates/.default/util_group_menu.php");
 include($_SERVER["DOCUMENT_ROOT"]."/bitrix/components/bitrix/socialnetwork_group/templates/.default/util_group_profile.php");
@@ -29,11 +33,11 @@ include($_SERVER["DOCUMENT_ROOT"]."/bitrix/components/bitrix/socialnetwork_group
 				array(
 					"TEXT" => GetMessage("CT_BL_STATE_BIZPROC"),
 					"TITLE" => GetMessage("CT_BL_STATE_BIZPROC_TITLE"),
-					"LINK" => CHTTP::urlAddParams(str_replace(
+					"LINK" => (string)(new Uri(str_replace(
 							array("#list_id#", "#group_id#", "#ID#", "#id#"),
 							array($arResult["VARIABLES"]["list_id"], $arResult["VARIABLES"]["group_id"], 0, 0),
 							$arResult["PATH_TO_GROUP_BIZPROC_WORKFLOW_EDIT"]
-					), array("init" => "statemachine")),
+						)))->addParams(["init" => "statemachine"]),
 					"ICON" => "btn-new",
 				),
 				array(

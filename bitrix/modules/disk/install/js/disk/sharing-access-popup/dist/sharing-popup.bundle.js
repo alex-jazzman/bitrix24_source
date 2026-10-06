@@ -406,9 +406,6 @@ this.BX = this.BX || {};
 				return label || '';
 			}
 		},
-		mounted() {
-			this.initDatePicker();
-		},
 		beforeUnmount() {
 			this.destroyDatePicker();
 		},
@@ -422,12 +419,50 @@ this.BX = this.BX || {};
 				}
 				return createPickerDateFromTimestamp(this.modelValue * 1000);
 			},
+			getDateForPickerOpen() {
+				const selectedDate = this.getDateFromModelValue();
+				if (!(selectedDate instanceof Date)) {
+					return null;
+				}
+				if (this.isTodayPickerDate(selectedDate)) {
+					const selectedTimestamp = this.getTimestampFromSelectedDate(selectedDate);
+					const nowTimestamp = Math.floor(Date.now() / 1000);
+					if (selectedTimestamp !== false && selectedTimestamp > nowTimestamp) {
+						return selectedDate;
+					}
+					const nextAvailableTodayTimestamp = this.getNextAvailableTodayTimestamp();
+					return nextAvailableTodayTimestamp === false ? null : createPickerDateFromTimestamp(nextAvailableTodayTimestamp * 1000);
+				}
+				return this.getDateWithTime(selectedDate, this.getCurrentPickerDate());
+			},
 			getInputElement() {
 				return this.$refs.dateInputWrap?.querySelector('input');
 			},
 			getTodayStart() {
 				const today = new Date();
 				return createPickerDate(today.getFullYear(), today.getMonth(), today.getDate());
+			},
+			getCurrentPickerDate() {
+				const now = new Date();
+				return createPickerDate(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours(), now.getMinutes());
+			},
+			getDatePickerPresets() {
+				return [{
+					label: main_core.Loc.getMessage('DISK_SHARING_ACCESS_POPUP_PUBLIC_DATE_PICKER_PRESET_1_HOUR'),
+					value: () => ui_datePicker.addDate(this.getCurrentPickerDate(), 'hour', 1)
+				}, {
+					label: main_core.Loc.getMessage('DISK_SHARING_ACCESS_POPUP_PUBLIC_DATE_PICKER_PRESET_24_HOURS'),
+					value: () => ui_datePicker.addDate(this.getCurrentPickerDate(), 'hour', 24)
+				}, {
+					label: main_core.Loc.getMessage('DISK_SHARING_ACCESS_POPUP_PUBLIC_DATE_PICKER_PRESET_3_DAYS'),
+					value: () => ui_datePicker.addDate(this.getCurrentPickerDate(), 'day', 3)
+				}, {
+					label: main_core.Loc.getMessage('DISK_SHARING_ACCESS_POPUP_PUBLIC_DATE_PICKER_PRESET_WEEK'),
+					value: () => ui_datePicker.addDate(this.getCurrentPickerDate(), 'week', 1)
+				}, {
+					label: main_core.Loc.getMessage('DISK_SHARING_ACCESS_POPUP_PUBLIC_DATE_PICKER_PRESET_MONTH'),
+					value: () => ui_datePicker.addDate(this.getCurrentPickerDate(), 'month', 1)
+				}];
 			},
 			formatTime(hours, minutes = 0) {
 				return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
@@ -465,7 +500,7 @@ this.BX = this.BX || {};
 				const today = new Date();
 				return date.getUTCFullYear() === today.getFullYear() && date.getUTCMonth() === today.getMonth() && date.getUTCDate() === today.getDate();
 			},
-			initDatePicker() {
+			initDatePicker(selectedDate = null) {
 				const input = this.getInputElement();
 				if (this.datePicker || !input) {
 					return;
@@ -478,6 +513,7 @@ this.BX = this.BX || {};
 					enableTime: true,
 					autoHide: true,
 					minDate: todayStart,
+					presets: this.getDatePickerPresets(),
 					dayColors: [{
 						matcher: date => {
 							const compareDate = createPickerDate(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
@@ -500,7 +536,13 @@ this.BX = this.BX || {};
 						[DATE_PICKER_EVENT_BEFORE_SELECT]: event => this.handleBeforeSelect(event)
 					}
 				}));
-				this.syncDatePickerValue();
+				if (selectedDate instanceof Date) {
+					this.datePicker.selectDate(selectedDate, {
+						updateInputs: false,
+						emitEvents: false,
+						render: true
+					});
+				}
 			},
 			destroyDatePicker() {
 				if (!this.datePicker) {
@@ -581,17 +623,16 @@ this.BX = this.BX || {};
 				});
 			},
 			openDatePicker() {
-				if (!this.datePicker) {
-					this.initDatePicker();
-				}
+				const selectedDate = this.getDateForPickerOpen();
+				this.destroyDatePicker();
+				this.initDatePicker(selectedDate);
 				if (!this.datePicker) {
 					return;
 				}
-				this.syncDatePickerValue();
 				this.datePicker.setDefaultTime(this.getRoundedDefaultTime());
 				this.$nextTick(() => {
 					if (this.datePicker) {
-						this.datePicker.show();
+						this.datePicker.getPopup().show();
 					}
 				});
 			},
@@ -1303,6 +1344,12 @@ this.BX = this.BX || {};
 			isPublicLinkBlockedByPolicy() {
 				return Boolean(this.publicLinkDisabledReason);
 			},
+			canEditPublicLinkSettings() {
+				return this.publicLink?.canEditSettings !== false;
+			},
+			isPublicLinkSettingsBlocked() {
+				return this.isPublicLinkBlockedByPolicy || !this.canEditPublicLinkSettings;
+			},
 			accessItems() {
 				const publicLink = this.publicLink;
 				if (!publicLink?.enabled) {
@@ -1343,8 +1390,8 @@ this.BX = this.BX || {};
 				};
 			},
 			showSettings() {
-				if (!this.isFullSettings && this.isPublicLinkBlockedByPolicy) {
-					this.handleBlockedPublicLink();
+				if (!this.isFullSettings && this.isPublicLinkSettingsBlocked) {
+					this.handleBlockedPublicLinkSettings();
 					return;
 				}
 				this.isFullSettings = !this.isFullSettings;
@@ -1370,6 +1417,17 @@ this.BX = this.BX || {};
 					return;
 				}
 				notify('DISK_SHARING_ACCESS_POPUP_NOTIFY_ERROR_MESSAGE');
+			},
+			handleBlockedPublicLinkSettings() {
+				if (!this.canEditPublicLinkSettings) {
+					notify('DISK_SHARING_ACCESS_POPUP_NOTIFY_PUBLIC_LINK_EDIT_SETTINGS_DENIED');
+					return;
+				}
+				if (this.isPublicLinkBlockedByPolicy) {
+					this.handleBlockedPublicLink();
+					return;
+				}
+				notify('DISK_SHARING_ACCESS_POPUP_NOTIFY_PUBLIC_LINK_EDIT_DENIED');
 			},
 			onBlockedToggleAttempt() {
 				this.handleBlockedPublicLink();
@@ -1437,8 +1495,8 @@ this.BX = this.BX || {};
 				if (!this.isActivePublicLink) {
 					return;
 				}
-				if (this.isPublicLinkBlockedByPolicy) {
-					this.handleBlockedPublicLink();
+				if (this.isPublicLinkSettingsBlocked) {
+					this.handleBlockedPublicLinkSettings();
 					return;
 				}
 				const prev = this.selectedAccessId;
@@ -1473,8 +1531,8 @@ this.BX = this.BX || {};
 				if (this.isPasswordSaving || this.isActivePublicLinkSaving || !this.isActivePublicLink) {
 					return;
 				}
-				if (this.isPublicLinkBlockedByPolicy) {
-					this.handleBlockedPublicLink();
+				if (this.isPublicLinkSettingsBlocked) {
+					this.handleBlockedPublicLinkSettings();
 					return;
 				}
 				const hadSavedPassword = this.hasSavedPassword;
@@ -1507,8 +1565,8 @@ this.BX = this.BX || {};
 				if (password.length < 8 || this.isPasswordSaving || !this.isActivePublicLink) {
 					return;
 				}
-				if (this.isPublicLinkBlockedByPolicy) {
-					this.handleBlockedPublicLink();
+				if (this.isPublicLinkSettingsBlocked) {
+					this.handleBlockedPublicLinkSettings();
 					return;
 				}
 				this.isPasswordSaving = true;
@@ -1533,8 +1591,8 @@ this.BX = this.BX || {};
 				if (!this.isActivePublicLink || this.isActivePublicLinkSaving) {
 					return;
 				}
-				if (this.isPublicLinkBlockedByPolicy) {
-					this.handleBlockedPublicLink();
+				if (this.isPublicLinkSettingsBlocked) {
+					this.handleBlockedPublicLinkSettings();
 					return;
 				}
 				const nextValue = this.normalizeAccessEndDate(value);
@@ -1562,8 +1620,8 @@ this.BX = this.BX || {};
 				this.isDownload = next?.publicLink?.canDownloadWithReadAccess ?? true;
 			},
 			async onToggleDownload(value) {
-				if (this.isPublicLinkBlockedByPolicy) {
-					this.handleBlockedPublicLink();
+				if (this.isPublicLinkSettingsBlocked) {
+					this.handleBlockedPublicLinkSettings();
 					return;
 				}
 				const prev = this.isDownload;
@@ -1599,9 +1657,9 @@ this.BX = this.BX || {};
 				:isFullSettings="isFullSettings"
 				:accessEndDate="accessEndDate"
 				:isPassword="hasSavedPassword"
-				:isSettingsBlocked="isPublicLinkBlockedByPolicy"
+				:isSettingsBlocked="isPublicLinkSettingsBlocked"
 				@toggleSettings="showSettings"
-				@blockedSettings="handleBlockedPublicLink"
+				@blockedSettings="handleBlockedPublicLinkSettings"
 			/>
 				<div v-if="isActivePublicLink && isFullSettings" class="access-public-block__inputs">
 					<PublicAccessSelect
@@ -2822,24 +2880,38 @@ this.BX = this.BX || {};
 		#mode = 'default';
 		#onAfterHide = null;
 		#initialAccessRights = null;
+		#openGeneration = 0;
 		async open(params = {}) {
-			this.#objectId = params.objectId;
-			this.#uniqueCode = params.uniqueCode ?? null;
-			this.#initialTab = params.initialTab ?? null;
-			this.#mode = params.mode ?? 'default';
-			this.#onAfterHide = params.onAfterHide ?? null;
-			if (!this.#objectId) {
+			const openGeneration = ++this.#openGeneration;
+			const objectId = params.objectId;
+			const uniqueCode = params.uniqueCode ?? null;
+			const initialTab = params.initialTab ?? null;
+			const mode = params.mode ?? 'default';
+			const onAfterHide = params.onAfterHide ?? null;
+			if (!objectId) {
 				throw new Error('SharingPopupDialog.open: objectId is required');
 			}
+			let initialAccessRights;
 			try {
-				this.#initialAccessRights = await getAccessRights({
-					objectId: this.#objectId,
-					uniqueCode: this.#uniqueCode
+				initialAccessRights = await getAccessRights({
+					objectId,
+					uniqueCode
 				});
 			} catch {
-				notify('DISK_SHARING_ACCESS_POPUP_NOTIFY_ERROR_MESSAGE');
+				if (this.#isCurrentOpen(openGeneration)) {
+					notify('DISK_SHARING_ACCESS_POPUP_NOTIFY_ERROR_MESSAGE');
+				}
 				return;
 			}
+			if (!this.#isCurrentOpen(openGeneration)) {
+				return;
+			}
+			this.#objectId = objectId;
+			this.#uniqueCode = uniqueCode;
+			this.#initialTab = initialTab;
+			this.#mode = mode;
+			this.#onAfterHide = onAfterHide;
+			this.#initialAccessRights = initialAccessRights;
 			if (!this.#dialog) {
 				this.#container = main_core.Tag.render`<div class="disk-sharing-access-popup__content"></div>`;
 				this.#dialog = new ui_system_dialog.Dialog({
@@ -2851,8 +2923,9 @@ this.BX = this.BX || {};
 					events: {
 						onAfterShow: () => this.#markPopup(),
 						onAfterHide: () => {
-							this.#runAfterHide();
+							const onAfterHide = this.#onAfterHide;
 							this.#reset();
+							this.#runAfterHide(onAfterHide);
 						}
 					}
 				});
@@ -2869,7 +2942,12 @@ this.BX = this.BX || {};
 			}
 		}
 		close() {
-			this.#dialog?.hide();
+			this.#openGeneration += 1;
+			if (this.#dialog) {
+				this.#dialog.hide();
+				return;
+			}
+			this.#reset();
 		}
 		#mount() {
 			this.#app = ui_vue3.BitrixVue.createApp(RootApp, {
@@ -2882,9 +2960,9 @@ this.BX = this.BX || {};
 			});
 			this.#app.mount(this.#container);
 		}
-		#runAfterHide() {
-			if (typeof this.#onAfterHide === 'function') {
-				this.#onAfterHide();
+		#runAfterHide(onAfterHide) {
+			if (typeof onAfterHide === 'function') {
+				onAfterHide();
 			}
 		}
 		#unmount() {
@@ -2898,6 +2976,7 @@ this.BX = this.BX || {};
 			}
 		}
 		#reset() {
+			this.#openGeneration += 1;
 			this.#unmount();
 			this.#dialog = null;
 			this.#container = null;
@@ -2906,6 +2985,9 @@ this.BX = this.BX || {};
 			this.#initialAccessRights = null;
 			this.#mode = 'default';
 			this.#onAfterHide = null;
+		}
+		#isCurrentOpen(openGeneration) {
+			return this.#openGeneration === openGeneration;
 		}
 	}
 

@@ -1,0 +1,98 @@
+.crm-tour-csv2-timeline-popup .popup-window {
+	background: transparent !important;
+	box-shadow: 0 8px 17px rgba(0, 0, 0, 0.21);
+	overflow: visible !important;
+}
+
+.crm-tour-csv2-timeline-popup .popup-window-content {
+	padding: 0 !important;
+	overflow: visible !important;
+}
+
+.crm-tour-csv2-timeline {
+	position: relative;
+	width: 480px;
+}
+
+.crm-tour-csv2-timeline__clip {
+	position: relative;
+	display: flex;
+	box-sizing: border-box;
+	gap: var(--ui-space-inset-sm2);
+	align-items: stretch;
+	width: 100%;
+	min-height: 196px;
+	padding-right: var(--ui-space-inset-lg);
+	overflow: hidden;
+	border-radius: var(--ui-border-radius-3xl);
+	background-image: linear-gradient(135deg, #7b37e6 0%, #e134a7 100%);
+	background-repeat: no-repeat;
+	background-size: 480px 212px;
+}
+
+.crm-tour-csv2-timeline::after {
+	content: '';
+	position: absolute;
+	bottom: -11px;
+	left: 50%;
+	width: 36px;
+	height: 13px;
+	transform: translateX(-50%);
+	background-image: linear-gradient(135deg, #7b37e6 0%, #e134a7 100%);
+	background-size: 480px 212px;
+	background-position: -222px -199px;
+	background-repeat: no-repeat;
+	clip-path: polygon(0 0, 100% 0, 50% 100%);
+	z-index: 2;
+}
+
+.crm-tour-csv2-timeline__media {
+	position: relative;
+	z-index: 1;
+	flex: 0 0 140px;
+	align-self: flex-start;
+	width: 140px;
+	height: 196px;
+}
+
+.crm-tour-csv2-timeline__video {
+	position: absolute;
+	top: 33px;
+	left: -38px;
+	width: 198px;
+	height: 198px;
+	object-fit: contain;
+	pointer-events: none;
+}
+
+.crm-tour-csv2-timeline__body {
+	position: relative;
+	z-index: 1;
+	display: flex;
+	flex: 1 1 auto;
+	flex-direction: column;
+	gap: var(--ui-space-inset-xs2);
+	padding: var(--ui-space-inset-lg) 0;
+	min-width: 0;
+}
+
+.crm-tour-csv2-timeline__title {
+	color: #fff;
+	font-size: var(--ui-font-size-2xl, 17px);
+	font-weight: var(--ui-font-weight-semi-bold);
+	line-height: 23px;
+	letter-spacing: -0.1px;
+}
+
+.crm-tour-csv2-timeline__text {
+	color: rgba(255, 255, 255, 0.8);
+	font-size: var(--ui-font-size-md, 14px);
+	font-weight: var(--ui-font-weight-normal);
+	line-height: 19px;
+	letter-spacing: -0.05px;
+}
+
+.crm-tour-csv2-timeline__actions {
+	display: flex;
+	margin-top: var(--ui-space-inset-2xs2);
+}

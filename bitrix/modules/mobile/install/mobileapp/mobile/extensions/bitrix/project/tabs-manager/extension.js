@@ -35,12 +35,18 @@ jn.define('project/tabs-manager', (require, exports, module) => {
 			{
 				WorkgroupUtil.getGroupData(this.groupId).then(
 					(data) => {
-						this.tabs.setTitle({
-							text: data.NAME,
-							detailText: WorkgroupUtil.getSubtitle(data.NUMBER_OF_MEMBERS),
-							imageUrl: WorkgroupUtil.getAvatarUrl(data),
-							userLargeTitleMode: true,
-						});
+						this.tabs.setTitle(
+							WorkgroupUtil.getProjectTitleParams(
+								{
+									title: data.NAME,
+									params: {
+										...this.item.params,
+										avatar: WorkgroupUtil.getTitleAvatarUrl(data),
+									},
+								},
+								WorkgroupUtil.getSubtitle(data.NUMBER_OF_MEMBERS),
+							),
+						);
 					},
 					console.error,
 				);

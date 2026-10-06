@@ -2,7 +2,9 @@ import { ajax as Ajax, Dom, Event, Loc, Runtime, Tag, Type } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 import { Menu, Popup } from 'main.popup';
 import { Button } from 'ui.buttons';
+import { MessageBox } from 'ui.dialogs.messagebox';
 import 'ui.icon.set';
+import 'ui.hint';
 import { Section, Row } from 'ui.section';
 import { SettingsSection } from 'ui.form-elements.field';
 import 'sidepanel';
@@ -75,8 +77,8 @@ export class VibeSection extends EventEmitter
 
 	#importPopup: ?Menu = null;
 	#exportPopup: ?Menu = null;
-	#popupShare: ?Popup = null;
-	#popupWithdraw: ?Popup = null;
+	#popupShare: ?MessageBox = null;
+	#popupWithdraw: ?MessageBox = null;
 
 	constructor(options: VibeOptions)
 	{
@@ -261,7 +263,12 @@ export class VibeSection extends EventEmitter
 			this.warningHintPopup = new Popup({
 				angle: true,
 				autoHide: true,
-				content: Loc.getMessage('INTRANET_SETTINGS_VIBE_HINT_WARNING'),
+				className: 'ui-hint-popup',
+				content: Tag.render`
+					<div class="ui-hint-content">
+						${Loc.getMessage('INTRANET_SETTINGS_VIBE_HINT_WARNING')}
+					</div>
+				`,
 				cacheable: false,
 				animation: 'fading-slide',
 				bindElement: event.target,
@@ -310,7 +317,12 @@ export class VibeSection extends EventEmitter
 				this.successHintPopup = new Popup({
 					angle: true,
 					autoHide: true,
-					content: Loc.getMessage('INTRANET_SETTINGS_VIBE_HINT_SUCCESS'),
+					className: 'ui-hint-popup',
+					content: Tag.render`
+						<div class="ui-hint-content">
+							${Loc.getMessage('INTRANET_SETTINGS_VIBE_HINT_SUCCESS')}
+						</div>
+					`,
 					cacheable: false,
 					animation: 'fading-slide',
 					bindElement: event.target,
@@ -343,7 +355,7 @@ export class VibeSection extends EventEmitter
 		if (!this.#buttonMainSettings)
 		{
 			this.#buttonMainSettings = Tag.render`
-				<button class="intranet-settings-btn-settings">
+				<button type="button" class="intranet-settings-btn-settings">
 					<div class="ui-icon-set --more"></div>
 				</button>
 			`;
@@ -357,7 +369,7 @@ export class VibeSection extends EventEmitter
 		if (!this.#buttonSecondarySettings)
 		{
 			this.#buttonSecondarySettings = Tag.render`
-				<button class="intranet-settings-btn-settings">
+				<button type="button" class="intranet-settings-btn-settings">
 					<div class="ui-icon-set --more"></div>
 				</button>
 			`;
@@ -481,6 +493,7 @@ export class VibeSection extends EventEmitter
 				buttons: BX.UI.Dialogs.MessageBoxButtons.OK_CANCEL,
 				okCaption: Loc.getMessage('INTRANET_SETTINGS_VIBE_IMPORT_POPUP_MESSAGEBOX_OK_BUTTON'),
 				cancelCaption: Loc.getMessage('INTRANET_SETTINGS_VIBE_IMPORT_POPUP_MESSAGEBOX_CANCEL_BUTTON'),
+				useAirDesign: true,
 				onOk: () => {
 					onOK();
 
@@ -536,17 +549,22 @@ export class VibeSection extends EventEmitter
 		}
 		else
 		{
-			this.#popupShare = new Popup({
-				titleBar: Loc.getMessage('INTRANET_SETTINGS_VIBE_SHARE_POPUP_TITLE_MSGVER_1'),
-				content: Loc.getMessage('INTRANET_SETTINGS_VIBE_SHARE_POPUP_CONTENT'),
-				width: 350,
-				closeIcon: true,
-				closeByEsc: true,
-				animation: 'fading-slide',
+			this.#popupShare = new MessageBox({
+				title: Loc.getMessage('INTRANET_SETTINGS_VIBE_SHARE_POPUP_TITLE_MSGVER_1'),
+				message: Loc.getMessage('INTRANET_SETTINGS_VIBE_SHARE_POPUP_CONTENT'),
+				minWidth: 350,
+				maxWidth: 420,
+				useAirDesign: true,
+				popupOptions: {
+					closeIcon: true,
+					closeByEsc: true,
+					animation: 'fading-slide',
+				},
 				buttons: [
 					new Button({
 						text: Loc.getMessage('INTRANET_SETTINGS_VIBE_SHARE_POPUP_BTN_CONFIRM'),
 						color: Button.Color.PRIMARY,
+						useAirDesign: true,
 						onclick: () => {
 							const newTemplate = this.getInfoSuccessTemplate();
 							const wrapper = this.#secondaryTemplate.querySelector(
@@ -578,14 +596,13 @@ export class VibeSection extends EventEmitter
 					new Button({
 						text: Loc.getMessage('INTRANET_SETTINGS_VIBE_POPUP_BTN_CANCEL'),
 						color: Button.Color.LIGHT_BORDER,
+						useAirDesign: true,
+						style: Button.AirStyle.OUTLINE,
 						onclick: () => {
 							this.#popupShare.close();
 						},
 					}),
 				],
-				events: {
-					onClose: () => {},
-				},
 			});
 
 			this.#popupShare?.show();
@@ -613,17 +630,22 @@ export class VibeSection extends EventEmitter
 				: Loc.getMessage('INTRANET_SETTINGS_VIBE_WITHDRAW_POPUP_BTN_CONFIRM_FREE')
 			;
 
-			this.#popupWithdraw = new Popup({
-				titleBar: title,
-				content,
-				width: 350,
-				closeIcon: true,
-				closeByEsc: true,
-				animation: 'fading-slide',
+			this.#popupWithdraw = new MessageBox({
+				title,
+				message: content,
+				minWidth: 350,
+				maxWidth: 420,
+				useAirDesign: true,
+				popupOptions: {
+					closeIcon: true,
+					closeByEsc: true,
+					animation: 'fading-slide',
+				},
 				buttons: [
 					new Button({
 						text: okText,
-						color: Button.Color.DANGER_DARK,
+						useAirDesign: true,
+						style: Button.AirStyle.FILLED_ALERT,
 						onclick: () => {
 							const newTemplate = this.getInfoTemplate();
 							const wrapper = this.#secondaryTemplate.querySelector(
@@ -650,14 +672,13 @@ export class VibeSection extends EventEmitter
 					new Button({
 						text: Loc.getMessage('INTRANET_SETTINGS_VIBE_POPUP_BTN_CANCEL'),
 						color: Button.Color.LIGHT_BORDER,
+						useAirDesign: true,
+						style: Button.AirStyle.OUTLINE,
 						onclick: () => {
 							this.#popupWithdraw.close();
 						},
 					}),
 				],
-				events: {
-					onClose: () => {},
-				},
 			});
 
 			this.#popupWithdraw?.show();
@@ -675,12 +696,12 @@ export class VibeSection extends EventEmitter
 		{
 			const buttonEdit = Tag.render`
 			
-				<button class="ui-btn ui-btn-md ui-btn-round ui-btn-no-caps --light-blue">
+				<button type="button" class="ui-btn ui-btn-md ui-btn-round ui-btn-no-caps --light-blue">
 					${Loc.getMessage('INTRANET_SETTINGS_VIBE_BUTTON_EDIT')}
 				</button>
 			`;
 			const buttonEditLock = Tag.render`
-				<button class="ui-btn ui-btn-md ui-btn-round ui-btn-no-caps --light-blue --disabled">
+				<button type="button" class="ui-btn ui-btn-md ui-btn-round ui-btn-no-caps --light-blue --disabled">
 					${Loc.getMessage('INTRANET_SETTINGS_VIBE_BUTTON_EDIT')}
 					${this.renderLockElement()}
 				</button>
@@ -696,13 +717,13 @@ export class VibeSection extends EventEmitter
 		if (!this.#buttonPublish)
 		{
 			const renderNode = Tag.render`
-				<button class="ui-btn ui-btn-md ui-btn-round ui-btn-no-caps
+				<button type="button" class="ui-btn ui-btn-md ui-btn-round ui-btn-no-caps
 						${this.#isPageExists ? 'ui-btn-primary' : '--light-blue'}">
 					${Loc.getMessage('INTRANET_SETTINGS_VIBE_BUTTON_PUBLIC')}
 				</button>
 			`;
 			const renderNodeLock = Tag.render`
-				<button class="ui-btn ui-btn-md ui-btn-round ui-btn-no-caps --disabled
+				<button type="button" class="ui-btn ui-btn-md ui-btn-round ui-btn-no-caps --disabled
 						${this.#isPageExists ? 'ui-btn-primary' : '--light-blue'}">
 					${Loc.getMessage('INTRANET_SETTINGS_VIBE_BUTTON_PUBLIC')}
 					${this.renderLockElement()}
@@ -719,7 +740,7 @@ export class VibeSection extends EventEmitter
 		if (!this.#buttonWithdraw)
 		{
 			this.#buttonWithdraw = Tag.render`
-				<button class="ui-btn ui-btn-md ui-btn-round ui-btn-no-caps
+				<button type="button" class="ui-btn ui-btn-md ui-btn-round ui-btn-no-caps
 						${this.#isPageExists ? 'ui-btn-primary' : '--light-blue'}">
 					${Loc.getMessage('INTRANET_SETTINGS_VIBE_BUTTON_UNPUBLIC')}
 				</button>
@@ -739,7 +760,7 @@ export class VibeSection extends EventEmitter
 		if (!this.#buttonPartners)
 		{
 			this.#buttonPartners = Tag.render`
-				<button class="ui-btn ui-btn-md ui-btn-round ui-btn-no-caps --light-gray">
+				<button type="button" class="ui-btn ui-btn-md ui-btn-round ui-btn-no-caps --light-gray">
 					${Loc.getMessage('INTRANET_SETTINGS_VIBE_BUTTON_PARTNERS')}
 				</button>
 			`;
@@ -759,12 +780,12 @@ export class VibeSection extends EventEmitter
 		{
 			const buttonColor = this.#isPageExists ? '--light-blue' : 'ui-btn-primary';
 			const renderNode = Tag.render`
-				<button class="ui-btn ui-btn-md ui-btn-round ui-btn-no-caps ${buttonColor}">
+				<button type="button" class="ui-btn ui-btn-md ui-btn-round ui-btn-no-caps ${buttonColor}">
 					${Loc.getMessage('INTRANET_SETTINGS_VIBE_BUTTON_MARKET')}
 				</button>
 			`;
 			const renderNodeLock = Tag.render`
-				<button class="ui-btn ui-btn-md ui-btn-round ui-btn-no-caps ${buttonColor} --disabled">
+				<button type="button" class="ui-btn ui-btn-md ui-btn-round ui-btn-no-caps ${buttonColor} --disabled">
 					${Loc.getMessage('INTRANET_SETTINGS_VIBE_BUTTON_MARKET')}
 					${this.renderLockElement()}
 				</button>

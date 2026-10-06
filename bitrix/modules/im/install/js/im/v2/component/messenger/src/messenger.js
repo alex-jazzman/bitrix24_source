@@ -17,6 +17,7 @@ import { BulkActionsManager } from 'im.v2.lib.bulk-actions';
 import { CounterManager } from 'im.v2.lib.counter';
 import { DesktopManager } from 'im.v2.lib.desktop';
 import { EscManager } from 'im.v2.lib.esc-manager';
+import { Feature, FeatureManager } from 'im.v2.lib.feature';
 import { InitManager } from 'im.v2.lib.init';
 import { LayoutManager } from 'im.v2.lib.layout';
 import { Logger } from 'im.v2.lib.logger';
@@ -25,6 +26,7 @@ import { ThemeManager } from 'im.v2.lib.theme';
 import { type ImModelLayout } from 'im.v2.model';
 
 import { DesktopOverlay } from './components/desktop-overlay';
+import { FolderPanel } from './components/folder-panel/folder-panel';
 import { LayoutComponentMap } from './config/component-map';
 
 import './css/messenger.css';
@@ -32,7 +34,7 @@ import './css/messenger.css';
 // @vue/component
 export const Messenger = {
 	name: 'MessengerRoot',
-	components: { ListNavigator, OpenlinesContent, DesktopOverlay },
+	components: { ListNavigator, OpenlinesContent, DesktopOverlay, FolderPanel },
 	data(): JsonObject
 	{
 		return {
@@ -68,6 +70,10 @@ export const Messenger = {
 		isOpenline(): boolean
 		{
 			return this.layout.name === Layout.openlines;
+		},
+		isFolderAvailable(): boolean
+		{
+			return FeatureManager.isFeatureAvailable(Feature.isChatFoldersWebAvailable);
 		},
 		containerClasses(): string[]
 		{
@@ -139,6 +145,7 @@ export const Messenger = {
 		<div class="bx-im-messenger__scope bx-im-messenger__container --ui-context-content-light" :class="containerClasses" ref="container">
 			<div class="bx-im-messenger__layout_container">
 				<div class="bx-im-messenger__layout_content">
+					<FolderPanel v-if="isFolderAvailable" />
 					<div v-if="hasListComponent" class="bx-im-messenger__list_container">
 						<ListNavigator :listComponent="listComponent" @selectChat="onSelectChat" />
 					</div>

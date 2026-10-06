@@ -4,6 +4,11 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+if (!class_exists(\Bitrix\Bizproc\Activity\Dto\Complex\Settings::class))
+{
+	return;
+}
+
 use Bitrix\Bizproc\Activity\ActivityDescription;
 use Bitrix\Bizproc\Activity\Enum\ActivityColorIndex;
 use Bitrix\Bizproc\Activity\Enum\ActivityGroup;
@@ -14,6 +19,15 @@ use Bitrix\Ui\Public\Enum\IconSet\Outline;
 use Bitrix\Bizproc\Activity\Dto\Complex;
 use Bitrix\Bizproc\Activity\Dto\Complex\NodeActionDictionary;
 use Bitrix\Bizproc\Activity\Dto\Complex\NodeAction;
+
+// Filter is offered because the node publishes FilterReturnPropertiesMap; relations needs a
+// declared relationAction, which this node has none of. Everything else stays on the default.
+// Older bizproc versions have no BlockAvailability::legacyDefault().
+$availableBlocksArgs = [];
+if (method_exists(Complex\BlockAvailability::class, 'legacyDefault'))
+{
+	$availableBlocksArgs['availableBlocks'] = Complex\BlockAvailability::legacyDefault(filter: true, relations: false);
+}
 
 $arActivityDescription = (new ActivityDescription(
 	name: Loc::GetMessage('CRM_COMPLEX_ACTIVITY_DYNAMIC_NAME') ?? '',
@@ -32,6 +46,7 @@ $arActivityDescription = (new ActivityDescription(
 	])
 	->setComplexActivitySettings(
 		new Complex\Settings(
+			...$availableBlocksArgs,
 			actionDictionary: new NodeActionDictionary(
 				new NodeAction(
 					activityCode: 'crmcreatedynamicactivity',
@@ -106,5 +121,6 @@ $arActivityDescription = (new ActivityDescription(
 			),
 		),
 	)
+	->setAdditionalResult(['FilterReturnPropertiesMap'])
 	->toArray()
 ;

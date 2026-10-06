@@ -1,4 +1,5 @@
 import { InspectorSchemeItemView } from './components/inspector-scheme-item-view/inspector-scheme-item-view';
+import { dragInspectorSchemeDataItem } from '../../directives/drag-inspector-scheme-data-item';
 
 // eslint-disable-next-line no-unused-vars
 import { type InspectorViewItemBase } from '../../types';
@@ -10,6 +11,9 @@ export const InspectorSchemeView = {
 	name: 'InspectorSchemeView',
 	components: {
 		InspectorSchemeItemView,
+	},
+	directives: {
+		dragInspectorSchemeDataItem,
 	},
 	props: {
 		data: {
@@ -36,15 +40,13 @@ export const InspectorSchemeView = {
 		},
 	},
 	template: `
-		<div class="inspector-scheme-view">
+		<div class="inspector-scheme-view" v-drag-inspector-scheme-data-item>
 			<template v-for="(group, groupIndex) in groupList">
 				<ul class="inspector-scheme-view__item-list" :class="makeGroupColorName(group.color)">
 					<InspectorSchemeItemView
 						:key="group.text || groupIndex"
 						:item="group"
-					>
-						<template #loading><slot name="loading"/></template>
-					</InspectorSchemeItemView>
+					/>
 				</ul>
 				<div v-if="groupIndex + 1 < groupList.length"
 					 class="inspector-scheme-view__item-list-group-divider"

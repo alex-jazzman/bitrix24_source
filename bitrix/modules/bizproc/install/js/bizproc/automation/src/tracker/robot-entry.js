@@ -11,6 +11,7 @@ export class RobotEntry
 	modified: ?string = undefined;
 	notes: Array<string> = [];
 	errors: Array<string> = [];
+	skipReasons: Array<string> = [];
 	#entryId: number = -1;
 	workflowStatus: number = WorkflowStatus.CREATED;
 
@@ -39,6 +40,11 @@ export class RobotEntry
 			{
 				this.status = TrackingStatus.COMPLETED;
 			}
+			else if (entry.isSkipEntry())
+			{
+				// The node was not run at all, so it is neither running nor completed.
+				this.status = TrackingStatus.SKIPPED;
+			}
 			else
 			{
 				this.status = TrackingStatus.RUNNING;
@@ -52,6 +58,10 @@ export class RobotEntry
 		else if (entry.type === TrackingEntry.CUSTOM_ACTIVITY_TYPE)
 		{
 			this.notes.push(entry.note);
+		}
+		else if (entry.isSkipEntry() && Type.isStringFilled(entry.note))
+		{
+			this.skipReasons.push(entry.note);
 		}
 	}
 }

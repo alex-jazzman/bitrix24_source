@@ -4,17 +4,17 @@ import { EventEmitter } from 'main.core.events';
 import { BLine } from 'ui.system.skeleton.vue';
 import { BIcon, Outline } from 'ui.icon-set.api.vue';
 import 'ui.icon-set.outline';
-import type { VueUploaderAdapter } from 'ui.uploader.vue';
+import { type VueUploaderAdapter } from 'ui.uploader.vue';
 
-import type { UserFieldWidgetOptions } from 'disk.uploader.user-field-widget';
+import { type UserFieldWidgetOptions } from 'disk.uploader.user-field-widget';
 
 import { EventName, Model } from 'tasks.v2.const';
-import { GrowingTextArea } from 'tasks.v2.component.elements.growing-text-area';
 import { UserAvatarList } from 'tasks.v2.component.elements.user-avatar-list';
-import { fileService, EntityTypes } from 'tasks.v2.provider.service.file-service';
+import { EntityTypes, fileService } from 'tasks.v2.provider.service.file-service';
 import { highlighter } from 'tasks.v2.lib.highlighter';
 import { DiskUserFieldWidgetComponent } from 'tasks.v2.component.elements.user-field-widget-component';
 
+import { CheckListFormattingLayer } from '../../check-list-formatting/check-list-formatting-layer';
 import { CheckListItemMixin } from './check-list-item-mixin';
 import { CheckListCheckbox } from './check-list-checkbox';
 
@@ -24,7 +24,7 @@ export const CheckListChildItem = {
 	components: {
 		BIcon,
 		BLine,
-		GrowingTextArea,
+		CheckListFormattingLayer,
 		UserAvatarList,
 		CheckListCheckbox,
 		UserFieldWidgetComponent: DiskUserFieldWidgetComponent,
@@ -285,7 +285,7 @@ export const CheckListChildItem = {
 				>
 					<BIcon :name="Outline.FIRE_SOLID"/>
 				</div>
-				<GrowingTextArea
+				<CheckListFormattingLayer
 					ref="growingTextArea"
 					class="check-list-widget-child-item-title"
 					:data-check-list-id="'check-list-child-item-title-' + item.id"
@@ -304,6 +304,7 @@ export const CheckListChildItem = {
 					@emptyBlur="handleEmptyBlur"
 					@emptyFocus="scrollToItem"
 					@enterBlur="handleEnter"
+					@selectionChange="handleFormattingSelectionChange"
 				/>
 				<div
 					v-if="hasTrashcanIcon"

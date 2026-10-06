@@ -71,8 +71,6 @@ Header('Content-Type: application/x-javascript; charset='.LANG_CHARSET);
 $currentUserID = CCrmSecurityHelper::GetCurrentUserID();
 $currentUserPermissions = CCrmPerms::GetCurrentUserPermissions();
 
-$isFactoryEnabled = Crm\Settings\DealSettings::getCurrent()->isFactoryEnabled();
-
 $context = Application::getInstance()->getContext();
 $request = $context->getRequest();
 $action = $request->getPost('ACTION') ?? '';
@@ -211,6 +209,14 @@ elseif($action === 'SAVE')
 
 	$isNew = $ID === 0;
 	$isCopyMode = $isNew && $sourceEntityID > 0;
+
+	if (
+		$sourceEntityID > 0
+		&& !Container::getInstance()->getUserPermissions()->item()->canRead(\CCrmOwnerType::Deal, $sourceEntityID)
+	)
+	{
+		__CrmDealDetailsEndJsonResonse(['ERROR' => \Bitrix\Main\Localization\Loc::getMessage('CRM_COMMON_ERROR_ACCESS_DENIED')]);
+	}
 
 	//TODO: Implement external mode
 	$isExternal = false;
@@ -860,7 +866,6 @@ elseif($action === 'SAVE')
 		$conversionWizard->prepareDataForSave(CCrmOwnerType::Deal, $fields);
 	}
 
-	$itemBeforeSave = null;
 	$checkExceptions = null;
 	$errorMessage = '';
 
@@ -956,33 +961,6 @@ elseif($action === 'SAVE')
 					$mcBankDetailId > 0 ? $mcBankDetailId : null
 				);
 
-				// region InventoryManagement
-				if (!$isFactoryEnabled)
-				{
-					$factory = Crm\Service\Container::getInstance()->getFactory(\CCrmOwnerType::Deal);
-					if ($factory)
-					{
-						$itemBeforeSave = $factory->createItem();
-						$itemBeforeSave->setFromCompatibleData($fields);
-
-						$inventoryManagementChecker = new Crm\Reservation\Component\InventoryManagementChecker($itemBeforeSave);
-						if ($enableProductRows)
-						{
-							$productRowsCheckResult = $inventoryManagementChecker->checkProductRows($productRows, []);
-							if (!$productRowsCheckResult->isSuccess())
-							{
-								__CrmDealDetailsEndJsonResonse([
-									'ERROR' => current($productRowsCheckResult->getErrorMessages()),
-								]);
-							}
-						}
-
-						$inventoryManagementCheckResult = $inventoryManagementChecker->checkBeforeAdd($fields);
-						$fields = $inventoryManagementCheckResult->getData();
-					}
-				}
-				// endregion
-
 				$saveOptions['ITEM_OPTIONS'] = [
 					'VIEW_MODE' => $viewMode,
 					'STAGE_ID' => $fields['STAGE_ID'],
@@ -993,19 +971,6 @@ elseif($action === 'SAVE')
 				{
 					$checkExceptions = $entity->GetCheckExceptions();
 					$errorMessage = $entity->LAST_ERROR;
-				}
-
-				if ($ID > 0 && isset($inventoryManagementCheckResult))
-				{
-					if ($inventoryManagementCheckResult->getErrorCollection()->getErrorByCode(Crm\Reservation\Error\InventoryManagementError::INVENTORY_MANAGEMENT_ERROR_CODE))
-					{
-						Crm\Activity\Provider\StoreDocument::addProductActivity($ID);
-					}
-
-					if ($inventoryManagementCheckResult->getErrorCollection()->getErrorByCode(Crm\Reservation\Error\AvailabilityServices::AVAILABILITY_SERVICES_ERROR_CODE))
-					{
-						Crm\Activity\Provider\StoreDocument::addServiceActivity($ID);
-					}
 				}
 			}
 			else
@@ -1063,59 +1028,6 @@ elseif($action === 'SAVE')
 					$saveOptions['REGISTER_STATISTICS'] = false;
 				}
 
-				// region Contractor
-				if (!$isFactoryEnabled)
-				{
-					$factory = Crm\Service\Container::getInstance()->getFactory(\CCrmOwnerType::Deal);
-					if ($factory)
-					{
-						$itemBeforeSave = $factory->createItem();
-						$itemBeforeSave->set('ID', $previousFields['ID']);
-						$itemBeforeSave->setFromCompatibleData($previousFields);
-
-						if (!empty($originalProductRows))
-						{
-							$itemBeforeSave->setFromCompatibleData([Crm\Item::FIELD_NAME_PRODUCTS => $originalProductRows]);
-						}
-
-						$inventoryManagementChecker = new Crm\Reservation\Component\InventoryManagementChecker($itemBeforeSave);
-						if ($enableProductRows)
-						{
-							$productRowsCheckResult = $inventoryManagementChecker->checkProductRows(
-								$productRows,
-								$originalProductRows
-							);
-							if (!$productRowsCheckResult->isSuccess())
-							{
-								__CrmDealDetailsEndJsonResonse([
-									'ERROR' => current($productRowsCheckResult->getErrorMessages()),
-								]);
-							}
-						}
-
-						$inventoryManagementCheckResult = $inventoryManagementChecker->checkBeforeUpdate($fields);
-						if (!$inventoryManagementCheckResult->isSuccess())
-						{
-							if ($inventoryManagementCheckResult->getErrorCollection()->getErrorByCode(Crm\Reservation\Error\InventoryManagementError::INVENTORY_MANAGEMENT_ERROR_CODE))
-							{
-								Crm\Activity\Provider\StoreDocument::addProductActivity($ID);
-							}
-
-							if ($inventoryManagementCheckResult->getErrorCollection()->getErrorByCode(Crm\Reservation\Error\AvailabilityServices::AVAILABILITY_SERVICES_ERROR_CODE))
-							{
-								Crm\Activity\Provider\StoreDocument::addServiceActivity($ID);
-							}
-
-							__CrmDealDetailsEndJsonResonse([
-								'ERROR' => current($inventoryManagementCheckResult->getErrorMessages()),
-							]);
-						}
-
-						$fields = $inventoryManagementCheckResult->getData();
-					}
-				}
-				// endregion
-
 				// verification products before update deal (need for correct updating OPPORTUNITY)
 				if (!empty($productRows))
 				{
@@ -1168,70 +1080,6 @@ elseif($action === 'SAVE')
 			}
 			__CrmDealDetailsEndJsonResonse($responseData);
 		}
-
-		// save and synchronize products has already been done in \Bitrix\Crm\Entity\Compatibility\Adapter::performUpdate
-		if (!$isFactoryEnabled)
-		{
-			$factory = Crm\Service\Container::getInstance()->getFactory(\CCrmOwnerType::Deal);
-			if (!$isExternal && $enableProductRows && (!$isNew || !empty($productRows)))
-			{
-				$saveProductRowsResult = \CCrmDeal::SaveProductRows($ID, $productRows, true, true, false);
-				if(!$saveProductRowsResult)
-				{
-					/** @var CApplicationException $ex */
-					$ex = $APPLICATION->GetException();
-					__CrmDealDetailsEndJsonResonse(array(
-						'ERROR' => $ex ? $ex->GetString() : GetMessage('CRM_DEAL_PRODUCT_ROWS_SAVING_ERROR')
-					));
-				}
-			}
-
-			if (
-				$ID > 0
-				&& isset($itemBeforeSave)
-				&& $factory
-			)
-			{
-				$itemAfterSave = $factory->getItem(
-					$ID,
-					[
-						Crm\Item::FIELD_NAME_ID,
-						Crm\Item::FIELD_NAME_CATEGORY_ID,
-						Crm\Item::FIELD_NAME_STAGE_ID,
-						Crm\Item::FIELD_NAME_STAGE_SEMANTIC_ID,
-						Crm\Item::FIELD_NAME_PRODUCTS . '.ID',
-						Crm\Item::FIELD_NAME_PRODUCTS . '.QUANTITY',
-						Crm\Item::FIELD_NAME_PRODUCTS . '.' . Crm\Item::FIELD_NAME_PRODUCT_RESERVATION . '.STORE_ID',
-					],
-				);
-				if ($itemAfterSave)
-				{
-					if (
-						isset($inventoryManagementCheckResult)
-						&& \CCrmSaleHelper::isProcessInventoryManagement()
-						&& $inventoryManagementCheckResult->isSuccess()
-					)
-					{
-						$processInventoryManagementResult =
-							(new Crm\Reservation\Component\InventoryManagement($itemBeforeSave, $itemAfterSave))
-								->process()
-						;
-						if (!$processInventoryManagementResult->isSuccess())
-						{
-							__CrmDealDetailsEndJsonResonse([
-								'ERROR' => current($processInventoryManagementResult->getErrorMessages()),
-							]);
-						}
-					}
-
-					(new Crm\Service\Operation\Action\CreateFinalSummaryTimelineHistoryItem())
-						->setItemBeforeSave($itemBeforeSave)
-						->process($itemAfterSave)
-					;
-				}
-			}
-		}
-		//endregion
 
 		if(!empty($productRowSettings))
 		{

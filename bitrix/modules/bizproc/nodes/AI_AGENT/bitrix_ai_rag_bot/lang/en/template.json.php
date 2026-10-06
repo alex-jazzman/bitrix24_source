@@ -1,4 +1,10 @@
 <?php
+$MESS["BITRIX_AI_RAG_BOT_AIAGENTRESTARTTRIGGER_TITLE"] = "Restart AI agent";
+$MESS["BITRIX_AI_RAG_BOT_AIASSISTANTAGENTCOMPLEXACTIVITY_RETURN_AI_RESULT"] = "AI processing result";
+$MESS["BITRIX_AI_RAG_BOT_AIASSISTANTAGENTCOMPLEXACTIVITY_RETURN_ERROR_MESSAGE"] = "AI processing error";
+$MESS["BITRIX_AI_RAG_BOT_AIASSISTANTAGENTCOMPLEXACTIVITY_RETURN_SOURCES"] = "Sources (web search)";
+$MESS["BITRIX_AI_RAG_BOT_AIASSISTANTAGENTCOMPLEXACTIVITY_RETURN_TOOLS_USED"] = "No MCP errors detected.";
+$MESS["BITRIX_AI_RAG_BOT_AIASSISTANTAGENTCOMPLEXACTIVITY_TITLE"] = "AI agent";
 $MESS["BIZPROC_AI_AGENT_RAGCHATBOT_DEFAULT_1"] = "Refrain from controversial topics like politic and religion; avoid unfair criticism. Remain polite and professional. If the discussion diverts to a prohibited topic, politely decline to proceed and suggest your assistance on a different matter.";
 $MESS["BIZPROC_AI_AGENT_RAGCHATBOT_DEFAULT_2"] = "Be polite and respectful. Avoid insults, explicit language and aggressive attitude. Observe business etiquette, listen to your counterpart and stay calm. If the situation calls for criticism, keep it constructive. Don't resort to personal attacks.";
 $MESS["BIZPROC_AI_AGENT_RAGCHATBOT_DESCRIPTION_1"] = "This agent is good at finding information in your knowledge bases. Use the chat to answer questions and get answers from it. Example: it can act as a legal consultant, or a guide for new employees.
@@ -12,7 +18,7 @@ $MESS["BIZPROC_AI_AGENT_RAGCHATBOT_NAME_3"] = "Show this agent to users";
 $MESS["BIZPROC_AI_AGENT_RAGCHATBOT_NAME_4"] = "Agent knowledge base";
 $MESS["BIZPROC_AI_AGENT_RAGCHATBOT_NAME_5"] = "Context and restrictions";
 $MESS["BIZPROC_AI_AGENT_RAGCHATBOT_NAME_6"] = "Communication style";
-$MESS["BIZPROC_AI_AGENT_RAGCHATBOT_NAME_7"] = "Chat bot avatar";
+$MESS["BIZPROC_AI_AGENT_RAGCHATBOT_NAME_7"] = "Chat bot image";
 $MESS["BIZPROC_AI_AGENT_RAGCHATBOT_SYSTEMPROMPT_1"] = "## Role and Main Objective
 
 You are a **friendly and efficient knowledge base assistant**.

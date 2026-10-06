@@ -108,6 +108,11 @@
 	pointer-events: all;
 }
 
+.landing-ui-field-image-action-button-clear:focus-visible {
+	opacity: 1;
+	pointer-events: all;
+}
+
 .landing-ui-field-image-action-button {
 	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
 	font-weight: var(--ui-font-weight-bold, 700);

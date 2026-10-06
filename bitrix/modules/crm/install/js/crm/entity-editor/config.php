@@ -9,7 +9,6 @@ CJSCore::RegisterExt('crm_entity_editor_rel', [
 	'js' => [
 		'/bitrix/js/main/dd.js',
 		'/bitrix/js/crm/interface_form.js',
-		'/bitrix/js/crm/dialog.js',
 	],
 ]);
 
@@ -67,6 +66,7 @@ return [
 		'crm.client-selector',
 		'crm_common',
 		'crm_entity_editor_rel',
+		'crm.dialog',
 		'crm.router',
 		'ui.forms',
 		'ui.entity-editor',
@@ -83,5 +83,6 @@ return [
 		'crm.entity-editor.analytics-controller',
 		'main.popup',
 		'intranet.old-interface.intranet-common',
+		'crm.entity-editor.unavailable-fields-checker',
 	],
 ];

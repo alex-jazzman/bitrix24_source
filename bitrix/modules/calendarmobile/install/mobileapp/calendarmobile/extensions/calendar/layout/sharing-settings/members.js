@@ -5,6 +5,8 @@ jn.define('calendar/layout/sharing-settings/members', (require, exports, module)
 	const AppTheme = require('apptheme');
 	const { Loc } = require('loc');
 	const { EntitySelectorFactory } = require('selector/widget/factory');
+	const { Text4 } = require('ui-system/typography/text');
+	const { Color } = require('tokens');
 
 	const { SharingContext } = require('calendar/model/sharing');
 	const { SharingSettingsCard } = require('calendar/layout/sharing-settings/card');
@@ -178,9 +180,11 @@ jn.define('calendar/layout/sharing-settings/members', (require, exports, module)
 
 		renderHeaderTitle()
 		{
-			return Text({
-				style: styles.headerTitle,
+			return Text4({
+				testId: 'calendar-sharing-settings-members-title',
+				style: { flex: 1 },
 				text: Loc.getMessage('M_CALENDAR_SETTINGS_CREATE_JOINT_SLOTS'),
+				color: Color.base1,
 			});
 		}
 
@@ -232,11 +236,6 @@ jn.define('calendar/layout/sharing-settings/members', (require, exports, module)
 		peopleIcon: {
 			width: 24,
 			height: 24,
-		},
-		headerTitle: {
-			fontSize: 15,
-			color: AppTheme.colors.base1,
-			flex: 1,
 		},
 		members: {
 			paddingHorizontal: 40,

@@ -2,7 +2,7 @@ import { Type } from 'main.core';
 import { BuilderModel, type GetterTree, type ActionTree, type MutationTree } from 'ui.vue3.vuex';
 
 import { Core } from 'im.v2.application.core';
-import { type AnchorType, type ChatTypeItem } from 'im.v2.const';
+import { type AnchorType, type ChatTypeItem, ParentChatScope, type RecentTypeItem } from 'im.v2.const';
 
 import { isAnchorsEqual, isAnchorWithTypeFromCurrentChat } from './helpers';
 
@@ -11,6 +11,11 @@ import { type Anchor } from '../../../type/anchor';
 type AnchorsState = {
 	anchors: Anchor[];
 };
+
+type RemoveAnchorsPayload = {
+	recentType: RecentTypeItem,
+	parentChatId: number,
+}
 
 export class AnchorsModel extends BuilderModel
 {
@@ -149,9 +154,9 @@ export class AnchorsModel extends BuilderModel
 			removeChatAnchors: (store, chatId: number) => {
 				store.commit('removeChatAnchors', chatId);
 			},
-			/** @function messages/anchors/removeAllAnchorsByChatType */
-			removeAllAnchorsByChatType: (store, payload: { type: ChatTypeItem }) => {
-				store.commit('removeAllAnchorsByChatType', payload);
+			/** @function messages/anchors/removeAllAnchorsByRecentType */
+			removeAllAnchorsByRecentType: (store, payload: RemoveAnchorsPayload) => {
+				store.commit('removeAllAnchorsByRecentType', payload);
 			},
 			/** @function messages/anchors/removeAllAnchors */
 			removeAllAnchors: (store) => {
@@ -186,14 +191,22 @@ export class AnchorsModel extends BuilderModel
 					return anchor.chatId !== chatId;
 				});
 			},
-			removeAllAnchorsByChatType: (state: AnchorsState, payload: { type: ChatTypeItem }) => {
-				const { type } = payload;
-				const anchors = Core.getStore().getters['messages/anchors/getAnchorsByChatType'](type);
-				const chatIds = new Set(anchors.map((anchor: Anchor) => anchor.chatId));
+			removeAllAnchorsByRecentType: (state: AnchorsState, payload: RemoveAnchorsPayload) => {
+				const { recentType, parentChatId } = payload;
+
+				if (parentChatId === ParentChatScope.all)
+				{
+					// eslint-disable-next-line no-param-reassign
+					state.anchors = state.anchors.filter((anchor: Anchor) => {
+						return !anchor.recentSections.includes(recentType);
+					});
+
+					return;
+				}
 
 				// eslint-disable-next-line no-param-reassign
 				state.anchors = state.anchors.filter((anchor: Anchor) => {
-					return !chatIds.has(anchor.chatId);
+					return anchor.parentChatId !== parentChatId || !anchor.recentSections.includes(recentType);
 				});
 			},
 			removeAllAnchors: (state: AnchorsState) => {

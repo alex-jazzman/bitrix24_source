@@ -20,12 +20,12 @@ export const TitleIconComponent = {
 		},
 	},
 	template: `
-		<div class="bizproc-setup-template__heading --icon">
+		<h2 class="bizproc-setup-template__heading --icon">
 			<i class="ui-icon-set" :class="'--' + currentIconCssClass"></i>
 			<div class="bizproc-setup-template__heading-text">
 				{{ item.text }}
 			</div>
-		</div>
+		</h2>
 
 	`,
 };

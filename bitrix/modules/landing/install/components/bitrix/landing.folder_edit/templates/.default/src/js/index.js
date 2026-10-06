@@ -1,4 +1,7 @@
 import { Event, Dom } from 'main.core';
+import { EditableField } from './editable-field';
+
+export { EditableField };
 
 type FolderEditOptions = {
 	siteId: number,
@@ -151,9 +154,19 @@ export class FolderEdit
 		}
 		const path = this.#pathToLandingEdit.replace('#landing_edit#', id);
 
-		this.#selectorPageLink.innerHTML =
-			`<span id="landing-folder-index-link-text" class="landing-folder-index-link-text">${title}</span>`;
+		Dom.clean(this.#selectorPageLink);
+		Dom.append(
+			Dom.create('span', {
+				attrs: {
+					id: 'landing-folder-index-link-text',
+					class: 'landing-folder-index-link-text',
+				},
+				text: title,
+			}),
+			this.#selectorPageLink,
+		);
 		this.#selectorPageLink.setAttribute('href', path);
+		this.#selectorPageLink.removeAttribute('hidden');
 		this.#selectorFieldId.setAttribute('value', id);
 
 		this.#loadPreview(id);

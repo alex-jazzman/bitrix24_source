@@ -186,7 +186,7 @@ export function createErrorBlock(message: string, onRetry: Function): HTMLElemen
 {
 	const container = Tag.render`<div class="note-import-error-block"></div>`;
 	const retryButton = Tag.render`
-		<button type="button" class="note-import-link-button">${Loc.getMessage('NOTE_IMPORT_RETRY')}</button>
+		<button type="button" class="note-import-link-button" data-testid="note-import-retry">${Loc.getMessage('NOTE_IMPORT_RETRY')}</button>
 	`;
 
 	Event.bind(retryButton, 'click', () => onRetry());

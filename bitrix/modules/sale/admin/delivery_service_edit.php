@@ -10,8 +10,8 @@ use Bitrix\Catalog\VatTable;
 use Bitrix\Currency;
 use Bitrix\Sale\Delivery\Services;
 use Bitrix\Sale\Delivery\ExtraServices;
-
 use Bitrix\Sale\Helpers\Admin\BusinessValueControl;
+use Bitrix\Main\Web\Uri;
 
 Loc::loadMessages(__FILE__);
 Loader::includeModule('sale');
@@ -54,8 +54,7 @@ $classNamesList = Services\Manager::getHandlersList();
 $disableButtonsFlag = false;
 $backUrlReq = !empty($_REQUEST["back_url"]) ? str_replace("mode=list", "", $_REQUEST["back_url"]) : '';
 $backUrlReq = $adminSidePanelHelper->editUrlToPublicPage($backUrlReq);
-$backUrl = $APPLICATION->GetCurPageParam("", array("mode", "back_url"));
-$backUrl = urlencode(CHTTP::urlDeleteParams($backUrl, array("IFRAME", "IFRAME_TYPE")));
+$backUrl = urlencode((string)(new Uri($APPLICATION->GetCurPageParam()))->deleteParams(["mode", "back_url", "IFRAME", "IFRAME_TYPE"]));
 
 /*
  * Process form fields received via POST

@@ -8,6 +8,15 @@
 	display: none;
 }
 
+/* The menu draws no ring for the item that takes the keyboard focus. The colour is the one the rest of
+   the module draws its rings with, the fields of the section next to the menu among them: two colours
+   on one screen read as two kinds of focus. The ring goes inside the box: the menu is shifted past the
+   left edge of the sidebar, where an outer outline would be cut off. */
+#landing-settings-sidemenu .ui-sidepanel-menu-link:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary, #0075ff);
+	outline-offset: -2px;
+}
+
 .landing-error-page {
 	background: #fff;
 	color: #525c69;
@@ -72,6 +81,19 @@
 #landing-settings-content {
 	position: relative;
 	padding-left: 10px;
+}
+/* The live region is printed with the document and stays in the accessibility tree the whole time,
+   so nothing is drawn for it until it holds a message. The colour is not what carries the meaning:
+   the message says in words what did not happen. */
+.landing-settings-message:not(:empty) {
+	margin: var(--ui-space-stack-sm, 12px) 10px 0;
+	padding: var(--ui-space-inset-sm, 12px) var(--ui-space-inset-md, 16px);
+	border-left: 3px solid var(--ui-color-accent-main-alert, #f2543d);
+	border-radius: var(--ui-border-radius-2xs, 4px);
+	background: var(--ui-color-bg-content-secondary, #f5f7f8);
+	color: var(--ui-color-base-1, #333);
+	font-size: var(--ui-font-size-md, 14px);
+	line-height: var(--ui-font-line-height-md, 1.4);
 }
 .landing-settings-loader-container {
 	position: absolute;

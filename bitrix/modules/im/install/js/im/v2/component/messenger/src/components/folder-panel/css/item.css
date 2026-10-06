@@ -1,0 +1,119 @@
+.bx-im-messenger-folder-panel__item {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	width: 100%;
+	padding: 14px 6px;
+	cursor: pointer;
+	transition: background-color 100ms;
+}
+
+.bx-im-messenger-folder-panel-item__counter {
+	position: absolute;
+	top: -6px;
+	right: -12px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 14px;
+	height: 14px;
+	padding: 0 4px;
+	border-radius: var(--ui-border-radius-xl);
+	background-color: var(--ui-color-design-tinted-na-bg);
+	font: var(--im-font-size-4xs) var(--im-font-family-system);
+	font-weight: var(--im-font-weight-medium);
+	color: var(--ui-color-design-tinted-na-content);
+	transition: background-color 100ms, color 100ms;
+}
+
+.bx-im-messenger-folder-panel-item__title {
+	font: var(--im-font-size-4xs)/12px var(--im-font-family-system);
+	color: var(--ui-color-base-3);
+	text-align: center;
+	transition: color 100ms;
+	user-select: none;
+}
+
+/* hover/active */
+.bx-im-messenger-folder-panel__item:hover .bx-im-messenger-folder-panel-item__title {
+	color: var(--ui-color-base-1);
+}
+
+.bx-im-messenger-folder-panel__item.--selected {
+	background-color: var(--ui-color-accent-soft-blue-2);
+}
+
+.bx-im-messenger-folder-panel__item.--selected .bx-im-messenger-folder-panel-item__counter {
+	background-color: var(--ui-color-design-filled-bg);
+	color: var(--ui-color-design-filled-content);
+}
+
+.bx-im-messenger-folder-panel__item.--selected .bx-im-messenger-folder-panel-item__title {
+	color: var(--ui-color-base-0);
+}
+
+/* icons */
+.bx-im-messenger-folder-panel-item__icon {
+	position: relative;
+	width: 24px;
+	height: 24px;
+	margin-bottom: 4px;
+
+	background-image: url('./images/folder.webp');
+	background-position: center;
+	background-size: contain;
+	background-repeat: no-repeat;
+}
+
+.bx-im-messenger-folder-panel-item__icon.--default {
+	background-image: url('./images/default.webp');
+}
+
+.bx-im-messenger-folder-panel-item__icon.--tasksTask {
+	background-image: url('./images/task-comments.webp');
+}
+
+.bx-im-messenger-folder-panel-item__icon.--copilot {
+	background-image: url('./images/copilot.webp');
+}
+
+.bx-im-messenger-folder-panel-item__icon.--openChannel {
+	background-image: url('./images/channel.webp');
+}
+
+.bx-im-messenger-folder-panel-item__icon.--collab {
+	background-image: url('./images/collab.webp');
+}
+
+.bx-im-messenger-folder-panel-item__icon.--lines {
+	background-image: url('./images/lines.webp');
+}
+
+/* active (selected) icons */
+.bx-im-messenger-folder-panel__item.--selected .bx-im-messenger-folder-panel-item__icon {
+	background-image: url('./images/folder-active.webp');
+}
+
+.bx-im-messenger-folder-panel__item.--selected .bx-im-messenger-folder-panel-item__icon.--default {
+	background-image: url('./images/default-active.webp');
+}
+
+.bx-im-messenger-folder-panel__item.--selected .bx-im-messenger-folder-panel-item__icon.--tasksTask {
+	background-image: url('./images/task-comments-active.webp');
+}
+
+.bx-im-messenger-folder-panel__item.--selected .bx-im-messenger-folder-panel-item__icon.--copilot {
+	background-image: url('./images/copilot-active.webp');
+}
+
+.bx-im-messenger-folder-panel__item.--selected .bx-im-messenger-folder-panel-item__icon.--openChannel {
+	background-image: url('./images/channel-active.webp');
+}
+
+.bx-im-messenger-folder-panel__item.--selected .bx-im-messenger-folder-panel-item__icon.--collab {
+	background-image: url('./images/collab-active.webp');
+}
+
+.bx-im-messenger-folder-panel__item.--selected .bx-im-messenger-folder-panel-item__icon.--lines {
+	background-image: url('./images/lines-active.webp');
+}

@@ -35,7 +35,9 @@ export class ActiveField
 
 						this.#showMessageBox(
 							() => {
-								this.#changeRepeatSaleSegmentActive(false);
+								this.#changeRepeatSaleSegmentActive(false, () => {
+									switcher.check(true, false);
+								});
 							},
 							() => {
 								switcher.check(true, false);
@@ -49,7 +51,9 @@ export class ActiveField
 						{
 							this.#showAllFlowEnableMessageBox(
 								() => {
-									this.#changeRepeatSaleSegmentActive(true);
+									this.#changeRepeatSaleSegmentActive(true, () => {
+										switcher.check(false, false);
+									});
 									this.#isFlowDisabled = false;
 								},
 								() => {
@@ -59,7 +63,9 @@ export class ActiveField
 						}
 						else
 						{
-							this.#changeRepeatSaleSegmentActive(true);
+							this.#changeRepeatSaleSegmentActive(true, () => {
+								switcher.check(false, false);
+							});
 						}
 					},
 				},
@@ -132,7 +138,7 @@ export class ActiveField
 		});
 	}
 
-	#changeRepeatSaleSegmentActive(isEnabled: boolean): void
+	#changeRepeatSaleSegmentActive(isEnabled: boolean, revert: () => void): void
 	{
 		Runtime.throttle(() => {
 			Ajax
@@ -149,6 +155,19 @@ export class ActiveField
 					},
 				})
 				.catch((response) => {
+					const sliderCode = response?.errors?.[0]?.customData?.sliderCode;
+					if (sliderCode)
+					{
+						// ui.info-helper is heavy and only needed on this rare subscription error,
+						// so load it lazily here instead of as a static grid dependency.
+						void Runtime.loadExtension('ui.info-helper').then(({ InfoHelper }) => {
+							InfoHelper.show(sliderCode);
+						});
+						revert?.();
+
+						throw response;
+					}
+
 					UI.Notification.Center.notify({
 						content: Text.encode(response.errors[0].message),
 						autoHideDelay: 6000,

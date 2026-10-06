@@ -1,9 +1,9 @@
-import { ajax, Dom, Tag, Text, Type, Loc, Event, Runtime } from 'main.core';
-import { BaseEvent } from 'main.core.events';
+import { ajax, Dom, Tag, Text, Type, Loc, Runtime } from 'main.core';
 import { Popup } from 'main.popup';
 import { footerTypeEnum, ImageStackSteps, imageTypeEnum } from 'ui.image-stack-steps';
 import { Label, LabelColor, LabelSize } from 'ui.label';
 import { DateTimeFormat } from 'main.date';
+import { makeActivatable } from 'bizproc.a11y';
 
 import 'main.polyfill.intersectionobserver';
 
@@ -136,18 +136,27 @@ export class Widget
 	render(): HTMLElement
 	{
 		const isEmpty = this.#params.allCount < 1;
-		const node = Tag.render`<div class="bp-workflow-instances-widget ${isEmpty ? '--empty' : ''}"></div>`;
+		const node = Tag.render`
+			<div
+				class="bp-workflow-instances-widget ${isEmpty ? '--empty' : ''}"
+				data-testid="bizproc-instances-widget"
+			></div>
+		`;
 		this.#stack.renderTo(node);
 
 		if (!isEmpty)
 		{
-			Event.bind(node, 'click', this.#handleClick.bind(this));
+			Dom.attr(node, {
+				'aria-label': this.#getStackText(this.#params.allCount),
+				'aria-haspopup': 'dialog',
+			});
+			makeActivatable(node, this.#handleClick.bind(this));
 		}
 
 		return node;
 	}
 
-	#handleClick(event: BaseEvent)
+	#handleClick(event: MouseEvent)
 	{
 		if (!this.#popupInstance)
 		{
@@ -160,6 +169,11 @@ export class Widget
 				bindElement: event.target,
 				padding: 0,
 				borderRadius: '12px',
+				role: 'dialog',
+				ariaLabel: Loc.getMessage('BIZPROC_JS_WORKFLOW_INST_WIDGET_POPUP_TITLE'),
+				// the portal accessibility settings can be off, so both options are passed explicitly
+				closeByEsc: true,
+				focusTrap: true,
 			});
 		}
 

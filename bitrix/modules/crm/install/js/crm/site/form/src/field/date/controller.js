@@ -15,4 +15,5 @@ class Controller extends DateTimeField.Controller
 	}
 }
 
-export {Controller, Options}
+export {Controller}
+export type {Options}

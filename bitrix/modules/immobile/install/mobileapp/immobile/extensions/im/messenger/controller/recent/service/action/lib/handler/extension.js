@@ -5,7 +5,7 @@ jn.define('im/messenger/controller/recent/service/action/lib/handler', (require,
 	const { Type } = require('type');
 	const { UserProfile } = require('user-profile');
 	const { Loc } = require('im/messenger/loc');
-	const { ErrorType, OpenlineStatus } = require('im/messenger/const');
+	const { ErrorType, OpenlineStatus, Analytics } = require('im/messenger/const');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { MessengerNotifier } = require('im/messenger/lib/ui/notification/messenger-notifier');
 	const { openDialog } = require('im/messenger/controller/recent/service/select/lib/opener');
@@ -13,6 +13,7 @@ jn.define('im/messenger/controller/recent/service/action/lib/handler', (require,
 	const { ChatDeletionOrigin, ChatDeletionReason } = require('im/messenger/application/lib/chat-deletion-manager');
 	const { FolderCreate } = require('im/messenger/controller/folder/create');
 	const { FolderSelector } = require('im/messenger/controller/folder/selector');
+	const { AnalyticsService } = require('im/messenger/provider/services/analytics');
 
 	const {
 		RecentRest,
@@ -679,6 +680,11 @@ jn.define('im/messenger/controller/recent/service/action/lib/handler', (require,
 
 				return;
 			}
+
+			AnalyticsService.getInstance().sendAddToFolder({
+				dialogId: itemId,
+				subSection: Analytics.SubSection.recentSwipeMenu,
+			});
 
 			if (!hasPersonalFolders(store))
 			{

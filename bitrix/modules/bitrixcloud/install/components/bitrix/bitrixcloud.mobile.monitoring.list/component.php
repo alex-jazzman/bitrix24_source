@@ -76,7 +76,7 @@ if ($monitoringResults->getStatus() === CBitrixCloudMonitoringResult::RED_LAMP)
 		$uptime = explode('/', $uptime);
 		if ($uptime[0] > 0 && $uptime[1] > 0)
 		{
-			$uptimeRate = $uptime[0] / $uptime[1];
+			$uptimeRate = intval($uptime[0]) / intval($uptime[1]);
 		}
 	}
 
@@ -134,7 +134,7 @@ foreach ($monitoringResults as $domainName => $tmp)
 
 		if ($result[0] > 0 && $result[1] > 0)
 		{
-			$resultText = round($result[0] / $result[1] * 100, 2) . '%';
+			$resultText = round(intval($result[0]) / intval($result[1]) * 100, 2) . '%';
 		}
 		else
 		{
@@ -145,7 +145,7 @@ foreach ($monitoringResults as $domainName => $tmp)
 
 		if ($result[1] > 0)
 		{
-			$failTime = ($result[1] - $result[0]);
+			$failTime = intval($result[1]) - intval($result[0]);
 
 			if ($failTime > 0)
 			{
@@ -170,7 +170,7 @@ foreach ($monitoringResults as $domainName => $tmp)
 				'i' => 'idiff',
 				'H' => 'Hdiff',
 				'-' => 'ddiff',
-			], time() - $result[1]);
+			], time() - intval($result[1]));
 
 			$arData['MONITORING_PERIOD']['DATA'] = $resultText;
 		}
@@ -264,7 +264,7 @@ foreach ($monitoringResults as $domainName => $tmp)
 	unset($localDomains[$domainName]);
 }
 
-if ($arResult['ITEMS'] && isset($arParams['LIST_URL']))
+if (isset($arResult['ITEMS']) && isset($arParams['LIST_URL']))
 {
 	LocalRedirect($arParams['LIST_URL']);
 }

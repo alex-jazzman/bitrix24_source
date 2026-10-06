@@ -7,6 +7,11 @@
 	--list-el-cg-border-radius: 22px;
 }
 
+.list-el-cg :is(a[href], button, input, select, textarea, [tabindex]):focus-visible {
+	outline: 1px solid var(--ui-color-accent-main-link);
+	outline-offset: 2px;
+}
+
 .list-el-cg__header {
 	display: flex;
 	align-items: center;
@@ -324,7 +329,15 @@
 	bottom: 0;
 	width: 889px;
 	height: calc(100vh - 370px);
-	background: url(image/lists-el-cg-slider-bg.png) left top no-repeat;
+	background: url(image/lists-el-cg-slider-bg.webp) left top no-repeat;
+	background-image: -webkit-image-set(
+		url(image/lists-el-cg-slider-bg.webp) 1x,
+		url(image/lists-el-cg-slider-bg-2x.webp) 2x
+	);
+	background-image: image-set(
+		url(image/lists-el-cg-slider-bg.webp) 1x,
+		url(image/lists-el-cg-slider-bg-2x.webp) 2x
+	);
 	background-size: 100%;
 	z-index: -9;
 }

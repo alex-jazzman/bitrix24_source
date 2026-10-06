@@ -111,6 +111,19 @@
 	pointer-events: none;
 }
 
+.landing-editable-field-button {
+	appearance: none;
+	-webkit-appearance: none;
+	display: flex;
+	align-items: center;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	background: transparent;
+	font: inherit;
+	color: inherit;
+}
+
 @keyframes uiShowTitleInput {
 	0% { box-shadow: 0 0 0 1px rgba(198,205,211,.0);}
 	100% { box-shadow: 0 0 0 1px rgba(198,205,211, 0.7);}
@@ -140,14 +153,20 @@
 }
 
 .ui-title-input-btn {
+	appearance: none;
+	-webkit-appearance: none;
+	padding: 0;
+	border: 0;
+	font: inherit;
+	color: inherit;
 	margin-right: 6px;
 	display: flex;
 	flex-direction: row;
 	align-items: center;
 	justify-content:  center;
 	cursor: pointer;
-	height: 20px;
-	width: 20px;
+	height: 25px;
+	width: 25px;
 	min-width: 20px;
 	background-color: var(--ui-color-base-05);
 	border-radius: var(--ui-border-radius-circle);
@@ -212,6 +231,14 @@
 }
 
 .landing-form-collapse-label {
+	appearance: none;
+	-webkit-appearance: none;
+	padding: 0;
+	border: 0;
+	background: transparent;
+	font: inherit;
+	text-align: inherit;
+	cursor: pointer;
 	color: #535c69;
 	font-weight: var(--ui-font-weight-bold);
 	margin-right: 3px;
@@ -295,6 +322,14 @@
 	margin: 0 0 15px;
 }
 
+/* A link inside a paragraph has to differ from the text by more than its colour. The second
+   selector outweighs `.landing-form-site-name-block a` of style.css, which drops the underline
+   for the whole block; the block is shared with the domain form, so the rule there stays. */
+.landing-form-field-description a,
+.landing-form-site-name-block .landing-form-field-description a {
+	text-decoration: underline;
+}
+
 .landing-form-list {
 	display: flex;
 	padding: 0 24px 22px;
@@ -376,8 +411,20 @@
 	background-image: url(/bitrix/images/landing/templates/layout-6.svg);
 }
 
+/* hidden from the eye, not from the keyboard: display none would leave the gallery unreachable */
 .layout-switcher {
-	display: none;
+	position: absolute;
+	margin: -1px;
+	padding: 0;
+	width: 1px;
+	height: 1px;
+	border: 0;
+	overflow: hidden;
+	/* clip is deprecated and clip-path is what replaces it; both are kept, the older engines the
+	   portal is opened in know only the first one */
+	clip: rect(0, 0, 0, 0);
+	clip-path: inset(50%);
+	white-space: nowrap;
 }
 
 .field-layout-radio_1:checked ~ .landing-form-list label[for*="field-layout-radio_1"],
@@ -427,6 +474,14 @@
 }
 
 .landing-form-select-prev, .landing-form-select-next {
+	appearance: none;
+	-webkit-appearance: none;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	background: transparent;
+	font: inherit;
+	color: inherit;
 	width: 12px;
 	height: 19px;
 	cursor: pointer;
@@ -626,16 +681,153 @@ div[data-form-row-hidden] + .ui-form-row-hidden,
 	display: none;
 }
 
-.ui-title-input-btn .ui-icon-set.--copilot-ai {
-	--ui-icon-set__icon-color: white;
-}
-.--copilot .ui-title-input-btn {
-	background-color: #8d52ec;
-}
 .--copilot .ui-title-input-btn:hover {
 	opacity: .8;
 }
 
 .landing-form-page-layout.--main-page .landing-form-layout-detail {
 	display: none;
+}
+
+.ui-title-input-btn.--icon-gradient {
+	background-color: transparent;
+}
+
+.--icon-gradient .ui-icon-set.--bitrix-gpt {
+	--ui-icon-set__icon-color: linear-gradient(
+		264deg,
+		var(--ui-color-design-outline-bitrix-gpt-content-gradient-5) 1.67%,
+		var(--ui-color-design-outline-bitrix-gpt-content-gradient-4) 21.82%,
+		var(--ui-color-design-outline-bitrix-gpt-content-gradient-3) 52.44%,
+		var(--ui-color-design-outline-bitrix-gpt-content-gradient-2) 76.41%,
+		var(--ui-color-design-outline-bitrix-gpt-content-gradient-1) 97.21%
+	);
+	--ui-icon-set__icon-size: 25px;
+}
+
+[data-landing-additional-detail="meta"] .ui-ctl {
+	margin-left: 0;
+}
+
+/* ===================== a11y: semantic retrofit (WCAG 2.1 AA) ===================== */
+
+/* a stretched flex item, the button centers its text and drops below the quick links next to it */
+.landing-page-set-form .landing-form-collapse-label,
+.landing-site-set-form .landing-form-collapse-label {
+	align-self: flex-start;
+	line-height: 18px; /* line-height of .landing-additional-alt-promo-text */
+}
+
+/* base styles of these two live in style.css, only the browser button defaults are reset here */
+.landing-additional-alt-promo-text {
+	appearance: none;
+	-webkit-appearance: none;
+	padding: 0;
+	border-top: 0;
+	border-right: 0;
+	border-left: 0;
+	background: transparent;
+	font-family: inherit;
+	font-size: inherit;
+	font-weight: inherit;
+	text-align: inherit;
+	color: inherit;
+}
+
+.landing-form-social-img-edit {
+	appearance: none;
+	-webkit-appearance: none;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	background: transparent;
+	font: inherit;
+	color: inherit;
+}
+
+/* the button chrome is reset, the plain link look stays: the color repeats the one the links of
+   the form take from `a` of style.css, the control used to be a link itself */
+.landing-form-link-btn {
+	appearance: none;
+	-webkit-appearance: none;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	background: transparent;
+	font: inherit;
+	text-align: inherit;
+	cursor: pointer;
+	color: #2067b0;
+}
+
+/* the icon of the delete action comes from the background of style.css, only the chrome is reset */
+.landing-form-rights-delete {
+	appearance: none;
+	-webkit-appearance: none;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	font: inherit;
+}
+
+/* visible keyboard focus */
+.ui-title-input-btn:focus-visible,
+.landing-form-collapse-label:focus-visible,
+.landing-additional-alt-promo-text:focus-visible,
+.landing-editable-field-button:focus-visible,
+.landing-form-social-img-edit:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: 2px;
+}
+
+/* ui.layout-form collapses a checkbox block with height and opacity only, so the keyboard keeps
+   walking into it; both settings forms open their blocks from the keyboard. The design and the
+   catalog forms are left out, their blocks sit behind an accordion no keyboard opens and hiding
+   them would lock the content away. The delay keeps the closing animation. */
+.landing-page-set-form .ui-form-row-hidden:not(.ui-form-row-hidden-show),
+.landing-site-set-form .ui-form-row-hidden:not(.ui-form-row-hidden-show) {
+	visibility: hidden;
+	transition: .15s linear, visibility 0s linear .15s;
+}
+
+/* The switcher itself is out of sight, so the keyboard focus is shown on the item it is bound to.
+   The pair is resolved by the script and marked with a class: paired in CSS it takes a list of every
+   index by hand, and such a list both ends at the last template someone remembered and matches by
+   substring, where `radio_1` also catches `radio_10`. */
+.landing-form-layout-item.--focus {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: -2px;
+}
+
+/* ui.forms drops the browser ring on every control and compensates with a border colour; a checkbox
+   has no border of its own, so its keyboard focus becomes invisible. The ring goes on the wrapper so
+   that it holds the text as well, and inwards because the form rows clip their content. */
+.ui-ctl-checkbox:has(.ui-ctl-element:focus-visible) {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: -2px;
+}
+
+/* inset offset: the gallery and the form rows clip their content, an outward ring gets cut off */
+.landing-form-select-prev:focus-visible,
+.landing-form-select-next:focus-visible,
+.landing-form-link-btn:focus-visible,
+.landing-form-rights-delete:focus-visible,
+.landing-form-input-right:focus-visible,
+.ui-checkbox-hidden-input-hook-help a:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: -2px;
+}
+
+/* The control of a page type is a 13px circle in the corner of its tile, the one of a layout is
+   hidden altogether: the tile is what the eye looks at, so the tile carries the ring. */
+.landing-form-type-page:has(.ui-radio:focus-visible),
+.field-layout-radio_1:focus-visible ~ .landing-form-list label[for*="field-layout-radio_1"],
+.field-layout-radio_2:focus-visible ~ .landing-form-list label[for*="field-layout-radio_2"],
+.field-layout-radio_3:focus-visible ~ .landing-form-list label[for*="field-layout-radio_3"],
+.field-layout-radio_4:focus-visible ~ .landing-form-list label[for*="field-layout-radio_4"],
+.field-layout-radio_5:focus-visible ~ .landing-form-list label[for*="field-layout-radio_5"],
+.field-layout-radio_6:focus-visible ~ .landing-form-list label[for*="field-layout-radio_6"],
+.field-layout-radio_7:focus-visible ~ .landing-form-list label[for*="field-layout-radio_7"] {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: -2px;
 }

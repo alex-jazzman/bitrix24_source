@@ -1,6 +1,6 @@
 import Type from '../../type';
 
-export default function deepFreeze(target: { [key: string]: any })
+export default function deepFreeze<T>(target: T): Readonly<T>
 {
 	if (Type.isObject(target))
 	{

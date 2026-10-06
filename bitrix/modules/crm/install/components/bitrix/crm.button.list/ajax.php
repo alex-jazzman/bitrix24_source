@@ -14,7 +14,7 @@ if (!Loader::includeModule('crm'))
 	return;
 }
 
-use \Bitrix\Crm\SiteButton\Script;
+use Bitrix\Crm\SiteButton\Script;
 
 Loc::loadMessages(__FILE__);
 

@@ -1,9 +1,10 @@
 <?php
+
 define("STOP_STATISTICS", true);
 define('NO_AGENT_CHECK', true);
 define('NOT_CHECK_PERMISSIONS', true);
 define("DisableEventsCheck", true);
-require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_before.php");
+require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_before.php");
 
 use Bitrix\Main,
 	Bitrix\Sale;
@@ -20,7 +21,7 @@ if (Main\Loader::includeModule("sale"))
 		$content = Main\Web\Json::decode($content);
 		$paymentData = $content['payment']['paymentToken']['paymentData'] ?? '';
 		$request->set(array_merge($request->toArray(), [
-			'paymentData' => $paymentData
+			'paymentData' => $paymentData,
 		]));
 	}
 
@@ -33,7 +34,13 @@ if (Main\Loader::includeModule("sale"))
 	else
 	{
 		$service = Sale\PaySystem\Manager::getObjectById($paySystemId);
-		if ($service)
+		if (!$service)
+		{
+			$result = [
+				'status' => 'STATUS_FAIL',
+			];
+		}
+		else
 		{
 			[$orderId, $paymentId] = Sale\PaySystem\Manager::getIdsByPayment($paymentId, $service->getField('ENTITY_REGISTRY_TYPE'));
 
@@ -41,23 +48,41 @@ if (Main\Loader::includeModule("sale"))
 			/** @var Sale\Order $orderClassName */
 			$orderClassName = $registry->getOrderClassName();
 
-			$order = $orderClassName::load($orderId);
-			$paymentCollection = $order->getPaymentCollection();
-			/** @var Sale\Payment $payment */
-			$payment = $paymentCollection->getItemById($paymentId);
-
-			$initResult = $service->initiatePay($payment, $request, Sale\PaySystem\BaseServiceHandler::STRING);
-			if ($initResult->isSuccess())
-			{
-				$result = [
-					'status' => 'STATUS_SUCCESS',
-				];
-			}
-			else
+			$order = $orderId > 0 ? $orderClassName::load($orderId) : null;
+			if (!$order)
 			{
 				$result = [
 					'status' => 'STATUS_FAIL',
 				];
+			}
+			else
+			{
+				$paymentCollection = $order->getPaymentCollection();
+				/** @var Sale\Payment $payment */
+				$payment = $paymentCollection->getItemById($paymentId);
+
+				if (!$payment || $payment->getPaymentSystemId() !== $paySystemId)
+				{
+					$result = [
+						'status' => 'STATUS_FAIL',
+					];
+				}
+				else
+				{
+					$initResult = $service->initiatePay($payment, $request, Sale\PaySystem\BaseServiceHandler::STRING);
+					if ($initResult->isSuccess())
+					{
+						$result = [
+							'status' => 'STATUS_SUCCESS',
+						];
+					}
+					else
+					{
+						$result = [
+							'status' => 'STATUS_FAIL',
+						];
+					}
+				}
 			}
 		}
 	}
@@ -72,10 +97,10 @@ if (empty($result)
 	$content = file_get_contents('php://input');
 	if ($content)
 	{
-		$debugInfo .= "\ncontent=".$content;
+		$debugInfo .= "\ncontent=" . $content;
 	}
 
-	Sale\PaySystem\Logger::addDebugInfo('Apple Pay Gateway. Request: '.($debugInfo ? $debugInfo : "empty"));
+	Sale\PaySystem\Logger::addDebugInfo('Apple Pay Gateway. Request: ' . ($debugInfo ? $debugInfo : "empty"));
 }
 
 /** @noinspection PhpVariableNamingConventionInspection */

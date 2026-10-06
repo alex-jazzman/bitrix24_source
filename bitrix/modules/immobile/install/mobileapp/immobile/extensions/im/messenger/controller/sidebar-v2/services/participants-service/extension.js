@@ -3,7 +3,8 @@
  */
 jn.define('im/messenger/controller/sidebar-v2/services/participants-service', (require, exports, module) => {
 	const { getLogger } = require('im/messenger/lib/logger');
-	const { RestMethod, UserRole } = require('im/messenger/const');
+	const { RestMethod } = require('im/messenger/const');
+	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { SidebarDataProvider } = require('im/messenger/controller/sidebar-v2/services/data-provider');
 
 	const logger = getLogger('sidebar--participants-service');
@@ -15,9 +16,55 @@ jn.define('im/messenger/controller/sidebar-v2/services/participants-service', (r
 	 */
 	class ParticipantsService extends SidebarDataProvider
 	{
+		/**
+		 * @type {?function(): void}
+		 * Notifies the tab that the initial participants load has failed.
+		 * The initial load is started by the controller as a batch (RestManager.callBatch),
+		 * not by the tab, so the tab cannot wrap it in its own try/catch and
+		 * subscribes to the error through this callback.
+		 */
+		#onLoadError = null;
+
+		/**
+		 * @public
+		 * @param {?function(): void} handler
+		 */
+		setOnLoadError(handler)
+		{
+			this.#onLoadError = typeof handler === 'function' ? handler : null;
+		}
+
 		getInitialQueryHandler()
 		{
-			return (response) => this.#handlePage(response.data());
+			// RestManager calls the handler even for a failed batch method
+			// (emit happens before the error check), so we handle the error here,
+			// not only in .catch(callBatch). Without this, on a Member.tail failure
+			// the tab would commit an empty page and hang in the loading state.
+			// We check only .error(): in a batch the method result carries no .status
+			// (unlike callMethod in loadPage), and RestManager detects a method error
+			// exactly by .error() - otherwise a successful response would be falsely treated as a failure.
+			return (response) => {
+				if (response.error())
+				{
+					logger.error('getInitialQueryHandler.error', response.error(), response.ex);
+					this.#notifyLoadError();
+
+					return;
+				}
+
+				this.#handlePage(response.data());
+			};
+		}
+
+		/**
+		 * @private
+		 */
+		#notifyLoadError()
+		{
+			if (typeof this.#onLoadError === 'function')
+			{
+				this.#onLoadError();
+			}
 		}
 
 		getInitialQueryMethod()
@@ -33,21 +80,38 @@ jn.define('im/messenger/controller/sidebar-v2/services/participants-service', (r
 				dialogId: dialogModel.dialogId,
 			};
 
-			if (dialogModel.lastLoadParticipantId)
+			if (this.#shouldUseGroupSort(dialogModel))
 			{
-				const relationId = dialogModel.lastLoadParticipantId;
-				const role = this.#getRelationUserRole(relationId);
+				queryParams.withGroupSort = true;
+			}
 
+			if (dialogModel.participantsCursor)
+			{
 				return {
 					...queryParams,
-					cursor: {
-						relationId,
-						role,
-					},
+					cursor: dialogModel.participantsCursor,
 				};
 			}
 
 			return queryParams;
+		}
+
+		/**
+		 * Grouped sorting of participants (owner -> managers -> guests -> others,
+		 * newest on top) is enabled opt-in by the withGroupSort flag only for project
+		 * collab chats. The backend applies the grouped mode unconditionally by the flag, so we
+		 * keep the chat-type gate on the client: without it regular chats would get a different
+		 * ordering (a regression). Symmetric to the web participants panel - the same order
+		 * is required on both platforms. The flag is set in the single request
+		 * builder, so it goes out both with the initial load and with pagination -
+		 * pages do not drift apart from the grouped cursor.
+		 *
+		 * @param {DialoguesModelState} dialogModel
+		 * @return {boolean}
+		 */
+		#shouldUseGroupSort(dialogModel)
+		{
+			return DialogHelper.createByModel(dialogModel)?.isCollab === true;
 		}
 
 		loadPage(offset = 0)
@@ -56,7 +120,7 @@ jn.define('im/messenger/controller/sidebar-v2/services/participants-service', (r
 
 			if (!dialogModel)
 			{
-				return new Promise().resolve(false);
+				return Promise.resolve(false);
 			}
 
 			return new Promise((resolve, reject) => {
@@ -88,24 +152,28 @@ jn.define('im/messenger/controller/sidebar-v2/services/participants-service', (r
 			logger.info('SidebarServices.getParticipantList:', data);
 			const { users, nextCursor } = data;
 
+			const hasUsers = Array.isArray(users) && users.length > 0;
+			const participants = hasUsers
+				? users.map(({ id }) => id).filter((id) => id > 0)
+				: [];
+
 			const mutations = [];
 
-			if (Array.isArray(users) && users.length > 0)
+			if (hasUsers)
 			{
-				const participants = users
-					.map(({ id }) => id)
-					.filter((id) => id > 0);
-
-				mutations.push(
-					this.store.dispatch('usersModel/merge', users),
-					this.store.dispatch('dialoguesModel/addParticipants', {
-						participants,
-						dialogId: this.getDialogId(),
-						lastLoadParticipantId: nextCursor && users[users.length - 1].id,
-						hasNextPage: participants?.length === LIMIT,
-					}),
-				);
+				mutations.push(this.store.dispatch('usersModel/merge', users));
 			}
+
+			// Always update the cursor and hasNextPage, even on an empty response -
+			// otherwise hasNextPage stays true and onLoadMore loops on empty requests.
+			mutations.push(
+				this.store.dispatch('dialoguesModel/addParticipants', {
+					participants,
+					dialogId: this.getDialogId(),
+					participantsCursor: nextCursor || null,
+					hasNextPage: Boolean(nextCursor),
+				}),
+			);
 
 			return Promise.all(mutations);
 		}
@@ -122,25 +190,6 @@ jn.define('im/messenger/controller/sidebar-v2/services/participants-service', (r
 			return this.store.getters['dialoguesModel/getById'](this.getDialogId());
 		}
 
-		/**
-		 * @return {UserRole}
-		 */
-		#getRelationUserRole(relationId)
-		{
-			const dialogModel = this.getDialogModel();
-
-			if (Number(dialogModel.owner) === Number(relationId))
-			{
-				return UserRole.owner;
-			}
-
-			if (dialogModel.managerList.includes(relationId))
-			{
-				return UserRole.manager;
-			}
-
-			return UserRole.member;
-		}
 	}
 
 	module.exports = {

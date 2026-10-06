@@ -1,5 +1,5 @@
 import { Markdown } from '@tiptap/markdown';
-import { sharedMarked } from './shared-marked';
+import { MarkdownEscapeParser, sharedMarked } from './shared-marked';
 import { FileUploadService } from '../services/file-upload-service';
 import { MAX_IMAGE_SIZE, MAX_FILE_SIZE } from '../const';
 import { createCoreExtensions } from './core-extensions';
@@ -13,7 +13,9 @@ import { MarkdownPasteExtension } from './markdown-paste-extension';
 import { FileNodeResolverExtension } from './file-node-resolver-extension';
 import { NoteMentionNode } from './mention/note-mention-node';
 import { NoteMentionResolverExtension } from './mention/note-mention-resolver-extension';
+import { DiffChangeMark } from './diff-change-mark';
 import { TabIndent } from './tab-indent-extension';
+import { NoteHotkeys } from './hotkeys-extension';
 
 import type { CurrentUser } from '../type';
 
@@ -31,7 +33,9 @@ export function createEditorExtensions({
 	onMentionClick?: Function | null,
 } = {}): Object[]
 {
-	const hasCollaborationProvider = Boolean(provider?.document);
+	// Awareness counts as much as the document: the caret extension binds straight to it, so a provider
+	// that stopped halfway through its connect is not one the collaborative extensions can run on.
+	const hasCollaborationProvider = Boolean(provider?.document && provider?.awareness);
 
 	const extensions = [
 		...createCoreExtensions({ hasCollaborationProvider, documentId }),
@@ -40,10 +44,12 @@ export function createEditorExtensions({
 		...createTableExtensions(),
 		createFileHandlerExtension(uploadService),
 		TabIndent,
+		NoteHotkeys,
 		Markdown.configure({
 			marked: sharedMarked,
 			markedOptions: { gfm: true },
 		}),
+		MarkdownEscapeParser,
 		MarkdownPasteExtension,
 		NoteAssetTokenizer,
 		EnrichedAssetTokenizer,
@@ -54,6 +60,8 @@ export function createEditorExtensions({
 			onMentionClick: typeof onMentionClick === 'function' ? onMentionClick : null,
 		}),
 		NoteMentionResolverExtension,
+		// Read-only version-preview diff mark; inert everywhere else (never applied on the live editor).
+		DiffChangeMark,
 	];
 
 	if (hasCollaborationProvider)

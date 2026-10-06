@@ -16,13 +16,31 @@ export class ProviderLifecycle
 	#onCapabilities: ((params: Object) => void) | null;
 	#onLifecycleChange: ((reason: string) => void) | null;
 	#onRemoteContentOverwritten: ((params: Object) => void) | null;
+	#onGenesisRefused: ((params: Object) => void) | null;
+	#onSaveRefused: ((params: Object) => void) | null;
+	#onConnectionSettled: ((params: Object) => void) | null;
 	#provider: Object | null;
 	#isReconnecting: boolean;
-	#isHandlingAuthFailure: boolean;
+	#isEndingConnectionAttempt: boolean;
+	#isGoingIdle: boolean;
 	#idleTracker: IdleTracker;
 	#compactTimerId: number | null;
+	#participantsTimer: number | null;
 
-	constructor({ state, schema, getEditorMarkdown, messages, onHardDelete = null, onRemoteRename = null, onCapabilities = null, onLifecycleChange = null, onRemoteContentOverwritten = null }: {
+	constructor({
+		state,
+		schema,
+		getEditorMarkdown,
+		messages,
+		onHardDelete = null,
+		onRemoteRename = null,
+		onCapabilities = null,
+		onLifecycleChange = null,
+		onRemoteContentOverwritten = null,
+		onGenesisRefused = null,
+		onSaveRefused = null,
+		onConnectionSettled = null,
+	}: {
 		state: Object,
 		schema: Object,
 		getEditorMarkdown: () => string | null,
@@ -32,6 +50,9 @@ export class ProviderLifecycle
 		onCapabilities?: ((params: Object) => void) | null,
 		onLifecycleChange?: ((reason: string) => void) | null,
 		onRemoteContentOverwritten?: ((params: Object) => void) | null,
+		onGenesisRefused?: ((params: Object) => void) | null,
+		onSaveRefused?: ((params: Object) => void) | null,
+		onConnectionSettled?: ((params: Object) => void) | null,
 	})
 	{
 		this.#state = state;
@@ -43,16 +64,31 @@ export class ProviderLifecycle
 		this.#onCapabilities = typeof onCapabilities === 'function' ? onCapabilities : null;
 		this.#onLifecycleChange = typeof onLifecycleChange === 'function' ? onLifecycleChange : null;
 		this.#onRemoteContentOverwritten = typeof onRemoteContentOverwritten === 'function' ? onRemoteContentOverwritten : null;
+		this.#onGenesisRefused = typeof onGenesisRefused === 'function' ? onGenesisRefused : null;
+		this.#onSaveRefused = typeof onSaveRefused === 'function' ? onSaveRefused : null;
+		this.#onConnectionSettled = typeof onConnectionSettled === 'function' ? onConnectionSettled : null;
 		this.#provider = null;
 		this.#isReconnecting = false;
-		this.#isHandlingAuthFailure = false;
+		this.#isEndingConnectionAttempt = false;
+		this.#isGoingIdle = false;
 		this.#idleTracker = new IdleTracker();
 		this.#compactTimerId = null;
+		this.#participantsTimer = null;
 	}
 
 	get provider(): Object | null
 	{
 		return this.#provider;
+	}
+
+	setMode(mode: string): void
+	{
+		this.#provider?.setMode?.(mode);
+	}
+
+	materialize(): void
+	{
+		void this.#provider?.materialize?.();
 	}
 
 	async initialize(documentId: number, user: Object, collaborationData: Object | null = null): Promise<void>
@@ -62,75 +98,161 @@ export class ProviderLifecycle
 			return;
 		}
 
-		this.#state.collaborationStatus = CollaborationStatus.CONNECTING;
+		// One lifecycle never runs two providers. Callers tear the previous one down themselves, but they
+		// do it before awaits of their own, and a path that gets in between would leave the predecessor
+		// alive: undestroyed, still subscribed to pull and still flushing patches from a Y.Doc that has
+		// been replaced.
+		if (this.#provider)
+		{
+			await this.destroy();
+		}
 
-		this.#provider = markRaw(new PushPullYjsProvider({
+		this.#setStatus(CollaborationStatus.CONNECTING, null);
+
+		// Held in a local for the callbacks below to close over: `this.#provider` is whoever is current
+		// when a signal arrives, and that is exactly what a signal has to be checked against.
+		const provider = markRaw(new PushPullYjsProvider({
 			documentId,
 			userId: Number(user.id),
 			userName: String(user.name || ''),
 			userColor: String(user.color || '#999999'),
+			userAvatar: (typeof user.avatar === 'string' && user.avatar !== '') ? user.avatar : null,
+			mode: this.#state.mode === 'edit' ? 'edit' : 'view',
 			schema: this.#schema,
+			// Persisted on the provider so timer/idle/teardown triggers can materialize without an
+			// argument, unlike compact() which still receives it per call.
+			getEditorMarkdown: () => this.#getEditorMarkdown(),
 		}));
-		this.#provider.collectionId = Number(this.#state.collectionId) || 0;
+		this.#provider = provider;
+		provider.collectionId = Number(this.#state.collectionId) || 0;
 
-		this.#provider.onStatus = ({ status }) => {
-			this.#state.collaborationStatus = Type.isStringFilled(status)
-				? status
-				: CollaborationStatus.UNKNOWN;
+		provider.onParticipants = (participants) => {
+			// Presence arrives as one pull message per peer (each answers our `join` independently),
+			// so the initial fill trickles in over a window wider than a normal update.
+			// Use a longer settle window while the list is still empty to gather everyone into one
+			// batch, then a short debounce afterwards so mode/join changes stay responsive.
+			const next = Array.isArray(participants) ? participants : [];
+			const isInitialFill = this.#state.participants.length === 0 && next.length > 0;
+			const settleMs = isInitialFill ? 500 : 180;
+			if (this.#participantsTimer !== null)
+			{
+				clearTimeout(this.#participantsTimer);
+			}
+			this.#participantsTimer = setTimeout(() => {
+				this.#participantsTimer = null;
+				this.#state.participants = next;
+			}, settleMs);
 		};
 
-		this.#provider.onSynced = () => {
-			this.#state.collaborationStatus = CollaborationStatus.SYNCED;
+		provider.onStatus = ({ status }) => {
+			this.#setStatus(Type.isStringFilled(status) ? status : CollaborationStatus.UNKNOWN, provider);
 		};
 
-		this.#provider.onDisconnect = () => {
-			this.#state.collaborationStatus = CollaborationStatus.DISCONNECTED;
+		provider.onSynced = () => {
+			this.#setStatus(CollaborationStatus.SYNCED, provider);
 		};
 
-		this.#provider.onConnectError = () => {
-			this.handleConnectError();
+		provider.onDisconnect = () => {
+			this.#setStatus(CollaborationStatus.DISCONNECTED, provider);
 		};
 
-		this.#provider.onNeedReconnect = () => {
+		provider.onConnectError = () => {
+			this.handleConnectError(provider);
+		};
+
+		provider.onNeedReconnect = () => {
 			void this.softReconnect();
 		};
 
-		this.#provider.onRemoteDocumentUpdate = (params) => {
+		provider.onRemoteDocumentUpdate = (params) => {
 			this.handleRemoteDocumentUpdate(params);
 		};
 
-		this.#provider.onRemoteArchive = (params) => {
+		provider.onRemoteArchive = (params) => {
 			this.handleRemoteArchive(params);
 		};
 
-		this.#provider.onRemoteRestore = (params) => {
+		provider.onRemoteRestore = (params) => {
 			this.handleRemoteRestore(params);
 		};
 
-		this.#provider.onRemoteDelete = (params) => {
+		provider.onRemoteDelete = (params) => {
 			this.handleRemoteDelete(params);
 		};
 
-		this.#provider.onRemoteHardDelete = (params) => {
+		provider.onRemoteHardDelete = (params) => {
 			this.handleRemoteHardDelete(params);
 		};
 
-		this.#provider.onRemoteCapabilities = (params) => {
+		provider.onRemoteCapabilities = (params) => {
 			this.handleRemoteCapabilities(params);
 		};
 
-		this.#provider.onRemoteContentOverwritten = (params) => {
-			this.handleRemoteContentOverwritten(params);
+		provider.onRemoteContentOverwritten = (params) => {
+			this.handleRemoteContentOverwritten(params, provider);
 		};
 
-		await this.#provider.connect(collaborationData);
+		provider.onGenesisRefused = (params) => {
+			this.handleGenesisRefused(params, provider);
+		};
+
+		provider.onGenesisFailed = () => {
+			this.handleGenesisFailed(provider);
+		};
+
+		provider.onSaveRefused = (params) => {
+			this.handleSaveRefused(params, provider);
+		};
+
+		await provider.connect(collaborationData);
 	}
 
-	handleRemoteContentOverwritten(params: Object): void
+	// `source` is the provider the signal came from, on the same terms as the status writes: a rebuild
+	// belongs to whoever is running now, and a predecessor asking for one would throw away the state of
+	// its successor. Every signal has a provider behind it, so the argument is not optional: a call
+	// without one would pass the check it exists for.
+	handleRemoteContentOverwritten(params: Object, source: Object): void
 	{
+		if (source !== this.#provider)
+		{
+			return;
+		}
+
 		if (this.#onRemoteContentOverwritten)
 		{
 			this.#onRemoteContentOverwritten(params || {});
+		}
+	}
+
+	// Reported once per provider, from inside its own connect(): the server refused to write a
+	// collaborative baseline for this document. Nothing is decided here - what to do with a document
+	// that cannot be collaborative is the feature layer's call.
+	handleGenesisRefused(params: Object, source: Object): void
+	{
+		if (source !== this.#provider)
+		{
+			return;
+		}
+
+		if (this.#onGenesisRefused)
+		{
+			this.#onGenesisRefused(params || {});
+		}
+	}
+
+	// The server refused a patch this provider sent. Told apart from a refused genesis by when it happens:
+	// the connection was up and working, and the document was taken out of the collaborative format under
+	// it. The provider is left standing - it holds the text - and the feature layer decides.
+	handleSaveRefused(params: Object, source: Object): void
+	{
+		if (source !== this.#provider)
+		{
+			return;
+		}
+
+		if (this.#onSaveRefused)
+		{
+			this.#onSaveRefused(params || {});
 		}
 	}
 
@@ -161,39 +283,78 @@ export class ProviderLifecycle
 		this.#provider?.stopCompactInterval();
 	}
 
-	destroy(): void
+	async destroy(options: Object = {}): Promise<void>
 	{
 		this.stopCompaction();
 		this.#idleTracker.stop();
 
-		if (this.#provider)
+		if (this.#participantsTimer !== null)
 		{
-			this.#provider.destroy();
-			this.#provider = null;
+			clearTimeout(this.#participantsTimer);
+			this.#participantsTimer = null;
 		}
 
-		this.#state.collaborationStatus = CollaborationStatus.IDLE;
+		// Detach the provider and reset reactive state synchronously so double-fire teardowns and the
+		// status indicator behave exactly as before; only the provider's own async teardown materialize
+		// is awaited, and only callers on the SPA-navigation path actually await this method.
+		const provider = this.#provider;
+		this.#provider = null;
+		this.#state.participants = [];
+		this.#setStatus(CollaborationStatus.IDLE, null);
+
+		if (provider)
+		{
+			await provider.destroy(options);
+		}
 	}
 
 	startIdleTracking(): void
 	{
-		if (!this.#provider)
+		const provider = this.#provider;
+		if (!provider)
 		{
 			return;
 		}
 
 		this.#idleTracker.start(
-			() => {
-				if (this.#provider?.isConnected)
+			async () => {
+				if (!provider.isConnected)
 				{
-					this.#state.collaborationStatus = CollaborationStatus.DISCONNECTED;
-					this.#provider.disconnect();
+					return;
 				}
+
+				// The intent to go idle is recorded BEFORE the await. The provider is still connected
+				// while the request is in the air, so a user coming back right then would see a live
+				// provider, skip the reconnect — and then get disconnected by this very handler once it
+				// resumed. The resume callback clears the flag, and the disconnect below stands down.
+				this.#isGoingIdle = true;
+				this.#setStatus(CollaborationStatus.DISCONNECTED, provider);
+				// Materialize before going silent for ~10 minutes so the last state still lands.
+				await provider.materialize();
+
+				if (!this.#isGoingIdle)
+				{
+					return; // activity resumed mid-flight — stay connected
+				}
+
+				this.#isGoingIdle = false;
+				provider.disconnect();
 			},
 			() => {
-				if (this.#provider && !this.#provider.isConnected)
+				const wasGoingIdle = this.#isGoingIdle;
+				this.#isGoingIdle = false;
+
+				if (!provider.isConnected)
 				{
 					void this.softReconnect();
+
+					return;
+				}
+
+				if (wasGoingIdle)
+				{
+					// Never actually disconnected — undo the status the idle handler set ahead of time.
+					this.#setStatus(CollaborationStatus.SYNCED, provider);
 				}
 			},
 		);
@@ -201,7 +362,8 @@ export class ProviderLifecycle
 
 	async softReconnect(): Promise<void>
 	{
-		if (this.#isReconnecting || !this.#provider)
+		const provider = this.#provider;
+		if (this.#isReconnecting || !provider)
 		{
 			return;
 		}
@@ -210,15 +372,17 @@ export class ProviderLifecycle
 		try
 		{
 			this.stopCompaction();
-			this.#state.collaborationStatus = CollaborationStatus.CONNECTING;
-			await this.#provider.sync();
-			this.#state.collaborationStatus = CollaborationStatus.SYNCED;
+			this.#setStatus(CollaborationStatus.CONNECTING, provider);
+			await provider.sync();
+			this.#setStatus(CollaborationStatus.SYNCED, provider);
 			this.startIdleTracking();
 			this.startCompaction();
+			// State accumulated during the disconnect window materializes right after resync.
+			void this.#provider?.materialize();
 		}
 		catch
 		{
-			this.#state.collaborationStatus = CollaborationStatus.DISCONNECTED;
+			this.#setStatus(CollaborationStatus.DISCONNECTED, provider);
 		}
 		finally
 		{
@@ -287,7 +451,8 @@ export class ProviderLifecycle
 
 		const mode = this.#state.recycleBinId ? 'recyclebin' : (this.#state.isArchived ? 'archive' : 'home');
 
-		this.destroy();
+		// Push teardown: the document is already gone remotely — nothing to materialize, and no await.
+		void this.destroy({ materialize: false });
 		this.#notifyLifecycle(this.#messages.hardDeletedRemote);
 
 		if (this.#onHardDelete)
@@ -372,6 +537,22 @@ export class ProviderLifecycle
 		this.#emitLifecycleChange('restored');
 	}
 
+	// The one place the lifecycle writes the indicator; terminal states after a server refusal are set by
+	// the feature layer. `source` is the provider a status belongs to: a provider that has already been torn
+	// down still has continuations in flight and callbacks the transport holds, and none of them may
+	// overwrite the status of the provider that replaced it. Writes the lifecycle makes on its own behalf —
+	// the pre-connect status and the teardown reset — pass `null`: at that moment there is no provider whose
+	// word it would be. Guarding here rather than in each callback is deliberate.
+	#setStatus(status: string, source: Object | null): void
+	{
+		if (source !== null && source !== this.#provider)
+		{
+			return;
+		}
+
+		this.#state.collaborationStatus = status;
+	}
+
 	#emitLifecycleChange(reason: string): void
 	{
 		if (this.#onLifecycleChange)
@@ -398,17 +579,53 @@ export class ProviderLifecycle
 		}
 	}
 
-	handleConnectError(): void
+	// `source` names the provider that lost its connection. The check stands before the teardown rather
+	// than at the status write: a broken connection reported by a provider that has already been replaced
+	// would dismantle its successor and complain about a connection nobody is using, and by the time the
+	// status is written the field is null anyway.
+	handleConnectError(source: Object): void
 	{
-		if (this.#isHandlingAuthFailure)
+		if (this.#endConnectionAttempt(source))
 		{
-			return;
+			showErrorToast(this.#messages.loadError);
+		}
+	}
+
+	// Writing the collaborative baseline failed for a reason the server never named: the text on screen
+	// is the server's own and did not change, so the attempt ends on the indicator alone. The load error
+	// of handleConnectError() would announce a failure to load the document the user is reading.
+	handleGenesisFailed(source: Object): void
+	{
+		this.#endConnectionAttempt(source);
+	}
+
+	// Ends the connection attempt of `source` and answers whether this call is the one that ended it, so
+	// that a caller which also speaks to the user does so once, and only for the provider it runs.
+	#endConnectionAttempt(source: Object): boolean
+	{
+		if (source !== this.#provider)
+		{
+			return false;
 		}
 
-		this.#isHandlingAuthFailure = true;
-		this.destroy();
-		this.#state.collaborationStatus = CollaborationStatus.DISCONNECTED;
-		showErrorToast(this.#messages.loadError);
-		this.#isHandlingAuthFailure = false;
+		if (this.#isEndingConnectionAttempt)
+		{
+			return false;
+		}
+
+		this.#isEndingConnectionAttempt = true;
+		// Push teardown: the connection is broken, materialize has nowhere to go — fire and forget.
+		// State reset runs synchronously inside destroy(), so the DISCONNECTED set below still wins.
+		void this.destroy({ materialize: false });
+		this.#setStatus(CollaborationStatus.DISCONNECTED, null);
+		this.#isEndingConnectionAttempt = false;
+		// The attempt is over and no provider is left: the caller decides what that means for editing.
+		// Reported after the teardown so the caller sees the outcome, not the provider on its way out.
+		if (this.#onConnectionSettled)
+		{
+			this.#onConnectionSettled({ documentId: Number(source?.documentId) || 0 });
+		}
+
+		return true;
 	}
 }

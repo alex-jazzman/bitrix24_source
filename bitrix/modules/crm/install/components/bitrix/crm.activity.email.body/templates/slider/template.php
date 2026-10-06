@@ -10,23 +10,56 @@ use Bitrix\Crm\Activity\Provider\Email;
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 global $APPLICATION;
 
-\Bitrix\Main\UI\Extension::load([
-	'ui.viewer',
-	'ui.progressbar',
-]);
-
-if (IsModuleInstalled('disk'))
-{
-	\Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/js/disk/css/legacy_uf_common.css');
-}
-
 if(!Loader::includeModule("mail"))
 {
 	echo getMessage('CRM_ACT_EMAIL_NO_MAIL');
 	die();
 }
 
+$largeAttachmentEnabled = \Bitrix\Crm\Integration\Mail\LargeAttachment\SendPreparation::isAvailable();
+$largeAttachmentFeatureAvailable = $largeAttachmentEnabled
+	&& \Bitrix\Mail\Helper\LicenseManager::isLargeAttachmentAutoUploadEnabled()
+;
+$largeAttachmentMaxSize = $largeAttachmentEnabled
+	? \Bitrix\Mail\Helper\Message::getMaxAttachedFilesSize()
+	: 0
+;
+$extensions = [
+	'ui.viewer',
+	'ui.progressbar',
+];
+if ($largeAttachmentEnabled)
+{
+	$extensions[] = 'crm.mail.large-attachment';
+}
+\Bitrix\Main\UI\Extension::load($extensions);
+
+if (IsModuleInstalled('disk'))
+{
+	\Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/js/disk/css/legacy_uf_common.css');
+}
+
 $activity = $arParams['ACTIVITY'];
+// The draft belongs to the owner of the letter being answered, the same entity the reply opened from
+// the timeline resolves (crm.activity.email/templates/.default/edit.php).
+$draftEntityTypeId = (int)$activity['OWNER_TYPE_ID'];
+$draftEntityId = (int)$activity['OWNER_ID'];
+// Repeats as much of the draft boundary of the controller as a render can afford: an entity type
+// that has an item factory (old invoices and recurring deals have none) plus the update permission
+// on it. Existence of the entity is left to the controller, to keep a select off every render. The
+// reply form itself is offered on read access alone, so without the permission check every autosave
+// would be refused, leaving the user with a blocking dialog on every close.
+$draftAvailable =
+	$draftEntityId > 0
+	&& \Bitrix\Crm\Integration\Mail\Draft::isAvailable()
+	&& \Bitrix\Crm\Service\Container::getInstance()->getFactory($draftEntityTypeId) !== null
+	&& \CCrmActivity::CheckUpdatePermission($draftEntityTypeId, $draftEntityId)
+;
+$draftClientId = \Bitrix\Main\UuidGenerator::generateV4();
+if ($draftAvailable)
+{
+	\Bitrix\Main\UI\Extension::load('mail.draft');
+}
 
 $ownerUid = sprintf('CRM%s%u', \CCrmOwnerType::resolveName($activity['OWNER_TYPE_ID']), $activity['OWNER_ID']);
 
@@ -261,8 +294,8 @@ $bodyLoaderMaxTime = ini_get('max_execution_time') ?: 60;
 			<div class="crm-task-list-mail-item-control-inner">
 				<input type="hidden" name="OWNER_TYPE" value="<?=\CCrmOwnerType::resolveName($activity['OWNER_TYPE_ID']) ?>">
 				<input type="hidden" name="OWNER_ID" value="<?=$activity['OWNER_ID'] ?>">
-				<button type="button" class="crm-task-list-mail-item-control crm-task-list-mail-item-control-reply"><?=getMessage('CRM_ACT_EMAIL_BTN_REPLY') ?></button>
-				<button type="button" class="crm-task-list-mail-item-control crm-task-list-mail-item-control-icon-answertoall"><?=getMessage('CRM_ACT_EMAIL_BTN_REPLY_All') ?></button>
+				<button type="button" class="crm-task-list-mail-item-control crm-task-list-mail-item-control-reply" data-testid="crm-mail-reply-btn-<?=$activityId ?>"><?=getMessage('CRM_ACT_EMAIL_BTN_REPLY') ?></button>
+				<button type="button" class="crm-task-list-mail-item-control crm-task-list-mail-item-control-icon-answertoall" data-testid="crm-mail-reply-all-btn-<?=$activityId ?>"><?=getMessage('CRM_ACT_EMAIL_BTN_REPLY_All') ?></button>
 				<button type="button" class="crm-task-list-mail-item-control crm-task-list-mail-item-control-icon-resend"><?=getMessage('CRM_ACT_EMAIL_BTN_FWD') ?></button>
 				<button class="crm-task-list-mail-item-control crm-task-list-mail-item-control-icon-discuss js-crm-discuss-in-chat"
 					 data-activity-id="<?= (int)$activity['ID'] ?>"><?=getMessage('CRM_ACT_EMAIL_BTN_DISCUSS_IN_CHAT') ?></button>
@@ -389,6 +422,7 @@ $bodyLoaderMaxTime = ini_get('max_execution_time') ?: 60;
 <? endif ?>
 <button type="button" class="crm-task-list-mail-message-panel crm-task-list-mail-border-bottom"
 	id="<?= htmlspecialcharsbx($replyElementId) ?>"
+	data-testid="crm-mail-reply-panel-btn-<?=$activityId ?>"
 	<?php if($isAjaxBody || !empty($activity['IS_READ_ONLY'])): ?> style="display:none" <?php endif; ?>>
 	<span class="crm-task-list-mail-item-user" aria-hidden="true" <? if (!empty($arParams['USER_IMAGE'])): ?> style="background: url('<?=htmlspecialcharsbx($arParams['USER_IMAGE']) ?>'); background-size: 23px 23px; "<? endif ?>></span>
 	<span class="crm-task-list-mail-message-panel-text"><?=getMessage('CRM_ACT_EMAIL_REPLY') ?></span>
@@ -396,12 +430,15 @@ $bodyLoaderMaxTime = ini_get('max_execution_time') ?: 60;
 
 <? $formId = sprintf('crm_act_email_reply_%u_form', $activity['ID']); ?>
 <form id="<?=htmlspecialcharsbx($formId) ?>" method="POST"
+	data-testid="crm-mail-reply-form-<?=$activityId ?>"
 	action="/bitrix/components/bitrix/crm.activity.editor/ajax.php?action=save_email&context=activity-<?=$activity['ID'] ?>"
 	class="crm-task-list-mail-border-bottom" style="display: none; margin-top: 10px; ">
 	<?=bitrix_sessid_post() ?>
 	<input type="hidden" name="ACTION" value="SAVE_EMAIL">
 	<input type="hidden" name="DATA[ownerType]" value="<?=\CCrmOwnerType::resolveName($activity['OWNER_TYPE_ID']) ?>">
 	<input type="hidden" name="DATA[ownerID]" value="<?=$activity['OWNER_ID'] ?>">
+	<input type="hidden" name="DATA[draftId]" value="" data-role="mail-draft-id" data-testid="crm-mail-reply-draft-id-field-<?=$activityId ?>">
+	<input type="hidden" name="DATA[draftRevision]" value="" data-role="mail-draft-revision">
 	<?
 	/**
 	 * @todo Remove it when switching to a new controller.
@@ -490,12 +527,17 @@ $bodyLoaderMaxTime = ini_get('max_execution_time') ?: 60;
 			'COPILOT_PARAMS' => $arParams['COPILOT_PARAMS'],
 			'OWNER_TYPE_ID' => $ownerTypeId,
 			'OWNER_ID' => $ownerId,
+			'DRAFT_CLIENT_ID' => $draftClientId,
+			'DRAFT_MODE' => 'reply',
+			'DRAFT_PARENT_MESSAGE_ID' => (int)$activity['ID'],
 			'REPLY_FIELD_TO_JSON' => Message::getSelectedRecipientsForDialog($replyTo, $ownerType, $ownerId)->toJsObject(),
 			'REPLY_FIELD_CC_JSON' => Message::getSelectedRecipientsForDialog($replyCC, $ownerType, $ownerId)->toJsObject(),
 			'SELECTED_RECIPIENTS_JSON' => Message::getSelectedRecipientsForDialog($selectedRecipients, $ownerType, $ownerId, true)->toJsObject(),
 			'FIELDS' => array(
 				array(
 					'name'     => 'DATA[from]',
+					'senderIdName' => 'DATA[senderId]',
+					'mailboxIdName' => 'DATA[mailboxId]',
 					'title'    => getMessage('CRM_ACT_EMAIL_CREATE_FROM'),
 					'type'     => 'from',
 					'value'    => $fromValue,
@@ -580,8 +622,16 @@ try
 }
 catch (err) {}
 
+BX.message({
+	CRM_ACT_EMAIL_DRAFT_LOAD_ERROR: '<?=\CUtil::jsEscape(getMessage('CRM_ACT_EMAIL_DRAFT_LOAD_ERROR')) ?>'
+});
+
 BX.ready(function()
 {
+	BX.message({
+		CRM_LARGE_ATTACHMENT_LOCAL_FEATURE_AVAILABLE: <?= $largeAttachmentEnabled ? 'true' : 'false' ?>,
+	});
+
 	var instance = new BXCrmActivityEmail({
 		activityId: <?=intval($activity['ID']) ?>,
 		formId: '<?=\CUtil::jsEscape($formId) ?>',
@@ -595,7 +645,24 @@ BX.ready(function()
 		bodyLoaderElementId: '<?= CUtil::JSescape($bodyLoaderElementId) ?>',
 		bodyLoaderMaxTime: <?= (int)$bodyLoaderMaxTime ?>,
 		isAjaxBody: <?= (int)$isAjaxBody ?>,
+		draft: <?= \Bitrix\Main\Web\Json::encode([
+			'available' => $draftAvailable,
+			'clientId' => $draftClientId,
+			'entityTypeId' => $draftEntityTypeId,
+			'entityId' => $draftEntityId,
+		]) ?>,
 	});
+
+	<?php if ($largeAttachmentEnabled): ?>
+	BX.Crm.Mail.LargeAttachment.init({
+		formId: '<?=\CUtil::jsEscape($formId) ?>',
+		uploaderControlId: 'main_mail_form_<?=\CUtil::jsEscape($formId) ?>',
+		messageId: <?=intval($activity['ID']) ?>,
+		featureAvailable: <?=$largeAttachmentFeatureAvailable ? 'true' : 'false' ?>,
+		folderName: BX.Loc.getMessage('CRM_LARGE_ATTACHMENT_FOLDER_NAME') || '',
+		maxSize: <?=intval($largeAttachmentMaxSize) ?>
+	});
+	<?php endif ?>
 
 	setTimeout(function ()
 	{

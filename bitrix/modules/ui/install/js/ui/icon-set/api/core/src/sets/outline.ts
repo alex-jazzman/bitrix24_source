@@ -158,6 +158,7 @@ export const Outline = Object.freeze({
 	HOURGLASS: 'o-hourglass',
 	IDEA_LAMP: 'o-idea-lamp',
 	IMAGE: 'o-image',
+	IMAGE_PLUS: 'o-image-plus',
 	INFO_CIRCLE: 'o-info-circle',
 	INTERVAL: 'o-interval',
 	INTRANET: 'o-intranet',
@@ -648,4 +649,5 @@ export const Outline = Object.freeze({
 	FILE_WITH_CALENDAR: 'o-file-with-calendar',
 	FILE_WITH_CROWN: 'o-file-with-crown',
 	FILE_WITH_PERSON: 'o-file-with-person',
+	NO_CLOUD_SYNC: 'o-no-cloud-sync',
 } as const);

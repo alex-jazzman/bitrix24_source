@@ -22,10 +22,35 @@
 	cursor: grab;
 }
 
-.inspector-scheme-view__data-item-title.--ghost {
+.inspector-scheme-view__data-item-title:hover {
+	background: var(--ui-color-bg-state-hover-default);
+}
+
+.inspector-scheme-view__data-item-drag-ghost {
+	position: fixed;
+	z-index: 9999;
+	opacity: 0.85;
+	pointer-events: none;
+}
+
+/* The ghost is re-parented to body, so it cannot inherit the panel-scoped border colour. */
+.inspector-scheme-view__data-item-drag-ghost .inspector-scheme-view__data-item-title {
 	border: 1px solid var(--ui-color-palette-gray-30);
 	border-radius: 6px;
 	background: var(--ui-color-palette-white-base);
+}
+
+/*
+ * Owns the cursor for the whole drag. The settings panel controls declare cursor with
+ * !important, including on pseudo-elements, so the overlay covers them instead of competing
+ * with their cascade. Pointer events stay on: without them the cursor comes from the element
+ * underneath and the overlay is pointless.
+ */
+.inspector-scheme-view__data-item-drag-cursor-overlay {
+	position: fixed;
+	inset: 0;
+	z-index: 2147483647;
+	background: transparent;
 	cursor: grabbing;
 }
 
@@ -81,10 +106,9 @@
 	min-width: 160px;
 	max-width: 160px;
 	font-weight: var(--ui-font-weight-normal);
+	line-height: 19px;
 	color: var(--ui-color-base-2);
 	overflow: hidden;
-	white-space: nowrap;
-	text-overflow: ellipsis;
 }
 
 .inspector-scheme-view__data-item-type {

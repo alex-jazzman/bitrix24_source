@@ -1,4 +1,4 @@
-import { UserRole, ChatActionGroup, type ChatTypeItem } from 'im.v2.const';
+import { UserRole, ChatActionGroup, type FolderTypeItem, type ChatTypeItem, type RecentTypeItem } from 'im.v2.const';
 
 type ActionGroupItem = $Keys<typeof ChatActionGroup>;
 type RoleItem = $Keys<typeof UserRole>;
@@ -50,6 +50,8 @@ export type Chat = {
 	diskFolderId: number,
 	role: RoleItem,
 	permissions: Object<ActionGroupItem, RoleItem>,
+	// Phase 0 (task 718250): superadmin project chat access
+	hasManageCapability: boolean,
 	tariffRestrictions: {
 		isHistoryLimitExceeded: boolean,
 	},
@@ -71,4 +73,22 @@ export type CollabInfo = {
 export type CollabEntityInfo = {
 	counter: number,
 	url: string,
+};
+
+export type FolderChat = {
+	chatId: number,
+	dialogId: string,
+};
+
+export type Folder = {
+	id: number,
+	sort: number,
+	type: FolderTypeItem,
+	title: string,
+	displaysNestedInRoot: boolean,
+	definition: {
+		recentSection?: RecentTypeItem,
+		chats?: FolderChat[],
+	},
+	code?: RecentTypeItem,
 };

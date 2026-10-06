@@ -1,5 +1,5 @@
 <?
-use \Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Sale\PaySystem;
 
 define("STOP_STATISTICS", true);

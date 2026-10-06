@@ -1057,6 +1057,12 @@
 	text-align: right;
 	font-size: 21px;
 	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	table-layout: fixed;
+	font-variant-numeric: tabular-nums;
+}
+
+.catalog-pf-result td:last-child {
+	width: 40%;
 }
 
 .catalog-pf-result-wrapper {
@@ -1158,7 +1164,6 @@ label.ui-ctl-radio-selector {
 }
 
 .catalog-pf-product-panel-compilation-wrapper .ui-ctl-checkbox {
-	width: -webkit-fit-content;
 	width: fit-content;
 }
 
@@ -1241,7 +1246,7 @@ label.ui-ctl-radio-selector {
 }
 
 .catalog-product-form-popup--creating-shop .catalog-product-form-popup--loader-block.catalog-product-form-popup--done::before {
-	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='23' height='18'%3E%3Cpath fill='%239DCF00' fill-rule='evenodd' d='M2.82 6.862l5.13 5.13L19.74.202l2.583 2.582L7.95 17.155.24 9.443l2.582-2.581z'/%3E%3C/svg%3E");
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='23' height='18' viewBox='0 0 23 18'%3E%3Cpath fill='%239DCF00' fill-rule='evenodd' d='M2.58190097,6.65951572 L7.71162054,11.7898728 L19.5017408,0 L22.0836418,2.58190097 L7.71206302,16.9534797 L0,9.2414167 L2.58190097,6.65951572 Z' transform='translate(.239 .202)'/%3E%3C/svg%3E");
 }
 
 .catalog-product-form-popup--creating-shop .catalog-product-form-popup--loader-block.catalog-product-form-popup--done::after {
@@ -1301,11 +1306,28 @@ label.ui-ctl-radio-selector {
 	display: block;
 	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size: 12px;
-	color: rgba(128, 134, 142, .7);
+	color: #525c69;
 	line-height: 16px;
 }
 
 .catalog-pf-product-panel-compilation-message .ui-card-message-without-angle {
 	margin-top: 14px;
 	margin-bottom: 5px;
+}
+
+.catalog-pf-product-tax-wrapper {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.catalog-pf-product-tax-sum {
+	font-family: var(--ui-font-family-primary);
+	font-size: 13px;
+	color: #525c69;
+	white-space: nowrap;
+}
+
+.catalog-pf-product-tax-sum__currency {
+	margin-left: 3px;
 }

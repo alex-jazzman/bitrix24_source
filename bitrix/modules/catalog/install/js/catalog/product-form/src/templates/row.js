@@ -7,7 +7,8 @@ import "catalog.product-selector";
 import "ui.common";
 import "ui.alerts";
 import "ui.notification";
-import {ProductCalculator, DiscountType, FieldScheme} from "catalog.product-calculator";
+import {DiscountType} from "catalog.product-calculator";
+import type {FieldScheme} from "catalog.product-calculator";
 import {FormInputCode} from "../types/form-input-code";
 import {FormErrorCode} from "../types/form-error-code";
 import {FormMode} from "../types/form-mode";
@@ -73,6 +74,8 @@ Vue.component(config.templateRowName,
 			this.currencySymbol = this.options.currencySymbol;
 
 			this.model = this.initModel();
+			this.syncDefaultTaxFields();
+			this.primeCalculator();
 			if (Type.isArray(this.options.measures))
 			{
 				this.options.measures.map((measure) => {
@@ -103,6 +106,25 @@ Vue.component(config.templateRowName,
 					{
 						basePrice = Text.toNumber(basePrice);
 					}
+
+					const explicitTaxRate = Text.toNumber(
+						defaultFields.taxRate
+						?? defaultFields.vatRate
+						?? defaultFields.tax,
+					);
+					const taxId = this.resolveTaxIdFromList(defaultFields.taxId, explicitTaxRate);
+					const isDefaultNoVat = (
+						explicitTaxRate <= 0
+						&&
+						Text.toInteger(defaultFields.taxId) === 0
+						&& taxId !== null
+						&& taxId !== 0
+					);
+					const taxRate = isDefaultNoVat
+						? 0
+						: explicitTaxRate || this.resolveTaxRateFromList(taxId) || 0
+					;
+
 					return {
 						NAME: this.basketItem.fields?.name || '',
 						MODULE: this.basketItem.fields?.module || '',
@@ -119,11 +141,95 @@ Vue.component(config.templateRowName,
 						DISCOUNT_TYPE_ID: Text.toNumber(defaultFields.discountType) || DiscountType.PERCENTAGE,
 						DISCOUNT_RATE: Text.toNumber(defaultFields.discountRate),
 						DISCOUNT_SUM: Text.toNumber(defaultFields.discount),
-						TAX_INCLUDED: defaultFields.taxIncluded || this.options.taxIncluded,
-						TAX_RATE: defaultFields.tax || 0,
+						TAX_INCLUDED: this.resolveTaxIncluded(defaultFields) || this.options.taxIncluded,
+						TAX_RATE: taxRate,
+						TAX_ID: taxId,
 						CUSTOMIZED: defaultFields.isCustomPrice || 'N',
 						MEASURE_CODE: defaultFields.measureCode || this.defaultMeasure.code,
 						MEASURE_NAME: defaultFields.measureName || this.defaultMeasure.name,
+					}
+				},
+				resolveTaxIdFromList(taxId, taxRate = 0): ?number
+				{
+					const normalizedTaxId = Text.toInteger(taxId);
+					const taxRateList = this.options.taxRateList;
+					if (!Type.isArray(taxRateList))
+					{
+						return normalizedTaxId || null;
+					}
+
+					if (normalizedTaxId > 0)
+					{
+						return normalizedTaxId;
+					}
+
+					if (normalizedTaxId === 0 && Text.toNumber(taxRate) <= 0)
+					{
+						return taxRateList.find((item) => item.value === null)?.taxId
+							?? null
+						;
+					}
+
+					return normalizedTaxId;
+				},
+				resolveTaxRateFromList(taxId): number
+				{
+					if (!Type.isArray(this.options.taxRateList) || Type.isNil(taxId))
+					{
+						return 0;
+					}
+
+					const tax = this.options.taxRateList.find((item) => item.taxId === Text.toInteger(taxId));
+
+					return Text.toNumber(tax?.value) || 0;
+				},
+				resolveTaxIncluded(fields: {}): ?string
+				{
+					const candidates = [fields.taxIncluded, fields.vatIncluded];
+					for (const raw of candidates)
+					{
+						if (raw === true || raw === 'Y' || raw === 'y')
+						{
+							return 'Y';
+						}
+						if (raw === false || raw === 'N' || raw === 'n')
+						{
+							return 'N';
+						}
+					}
+
+					return null;
+				},
+				syncDefaultTaxFields(): void
+				{
+					const modelFields = this.getProductFieldsFromModel();
+					const currentTaxIncluded = this.resolveTaxIncluded(this.basketItem.fields ?? {});
+					if (
+						Type.isNil(modelFields.taxId)
+						|| (
+							Text.toInteger(this.basketItem.fields?.taxId) === Text.toInteger(modelFields.taxId)
+							&& currentTaxIncluded === modelFields.taxIncluded
+						)
+					)
+					{
+						return;
+					}
+
+					this.changeProductFields({
+						taxId: modelFields.taxId,
+						taxRate: modelFields.taxRate,
+						taxIncluded: modelFields.taxIncluded,
+						taxSum: modelFields.taxSum,
+					});
+				},
+				primeCalculator(): void
+				{
+					const calculator = this.model.getCalculator();
+					const fields = calculator.getFields();
+					const basePrice = Text.toNumber(fields.BASE_PRICE);
+					if (basePrice > 0)
+					{
+						calculator.setFields(calculator.calculateBasePrice(basePrice));
 					}
 				},
 				initModel(): ProductModel
@@ -177,6 +283,7 @@ Vue.component(config.templateRowName,
 				getProductFieldsFromModel()
 				{
 					const modelFields = this.model.getFields();
+					const calculatorFields = this.model.getCalculator().getFields();
 					return {
 						productId: modelFields.PRODUCT_ID,
 						skuId: modelFields.SKU_ID,
@@ -193,7 +300,10 @@ Vue.component(config.templateRowName,
 						measureCode: modelFields.MEASURE_CODE || '',
 						measureName: modelFields.MEASURE_NAME || '',
 						properties: modelFields.PROPERTIES || {},
-						taxId: modelFields.TAX_ID,
+						taxId: modelFields.TAX_ID ?? modelFields.VAT_ID,
+						taxRate: Text.toNumber(modelFields.TAX_RATE) || 0,
+						taxIncluded: modelFields.TAX_INCLUDED ?? modelFields.VAT_INCLUDED,
+						taxSum: Text.toNumber(calculatorFields.TAX_SUM) || 0,
 						type: modelFields.TYPE,
 						morePhoto: modelFields.MORE_PHOTO,
 					};
@@ -220,10 +330,87 @@ Vue.component(config.templateRowName,
 				},
 				onProductChange(fields: {})
 				{
+					const calculator = this.model.getCalculator();
+					const incomingTaxIncluded = (fields.TAX_INCLUDED === 'Y' || fields.TAX_INCLUDED === 'N')
+						? fields.TAX_INCLUDED
+						: null;
+					let incomingTaxRate = Type.isNil(fields.TAX_RATE)
+						? null
+						: Text.toNumber(fields.TAX_RATE);
+
+					const taxAware = this.options.showTaxSettingsSwitcher === 'Y';
+					const hasIncomingTaxFields = (
+						!Type.isUndefined(fields.TAX_RATE)
+						|| !Type.isUndefined(fields.TAX_ID)
+						|| !Type.isUndefined(fields.VAT_ID)
+					);
+					if (taxAware && hasIncomingTaxFields)
+					{
+						const incomingTaxId = fields.TAX_ID ?? fields.VAT_ID;
+						const resolvedTaxId = this.resolveTaxIdFromList(incomingTaxId, incomingTaxRate);
+						if (!Type.isNil(resolvedTaxId) && resolvedTaxId !== Text.toInteger(incomingTaxId))
+						{
+							incomingTaxRate = this.resolveTaxRateFromList(resolvedTaxId);
+							fields.TAX_ID = resolvedTaxId;
+							fields.TAX_RATE = incomingTaxRate;
+						}
+					}
+
+					const isFirstRealProduct = (
+						this.basketLength === 1
+						&& !(Text.toNumber(this.basketItem.fields.productId) > 0)
+						&& !(Text.toNumber(this.basketItem.fields.skuId) > 0)
+					);
+					if (taxAware && incomingTaxIncluded && isFirstRealProduct)
+					{
+						this.$root.$app.options.taxIncluded = incomingTaxIncluded;
+					}
+
+					const formTaxIncluded = this.$root.$app.options.taxIncluded;
+					const canConvert = (
+						taxAware
+						&& !isFirstRealProduct
+						&& incomingTaxRate !== null
+						&& !Type.isUndefined(fields.BASE_PRICE)
+					);
+					const conversion = canConvert
+						? calculator.convertBasePriceForTaxIncluded(
+							Text.toNumber(fields.BASE_PRICE),
+							incomingTaxRate,
+							incomingTaxIncluded,
+							formTaxIncluded,
+						)
+						: {converted: false};
+					const needsConversion = conversion.converted;
+					if (needsConversion)
+					{
+						fields.BASE_PRICE = conversion.price;
+						fields.TAX_INCLUDED = formTaxIncluded;
+						fields.CUSTOMIZED = 'Y';
+					}
+
+					const preTaxFields = {};
+					const effectiveTaxIncluded = needsConversion ? formTaxIncluded : incomingTaxIncluded;
+					if (effectiveTaxIncluded && calculator.getFields().TAX_INCLUDED !== effectiveTaxIncluded)
+					{
+						preTaxFields.TAX_INCLUDED = effectiveTaxIncluded;
+					}
+					if (
+						incomingTaxRate !== null
+						&& incomingTaxRate !== Text.toNumber(calculator.getFields().TAX_RATE)
+					)
+					{
+						preTaxFields.TAX_RATE = incomingTaxRate;
+					}
+					if (Object.keys(preTaxFields).length > 0)
+					{
+						calculator.setFields(preTaxFields);
+					}
+
 					fields = Object.assign(
 						Type.isUndefined(fields.BASE_PRICE)
-							? this.model.getCalculator().getFields()
-							: this.model.getCalculator().calculateBasePrice(fields.BASE_PRICE),
+							? calculator.getFields()
+							: calculator.calculateBasePrice(fields.BASE_PRICE),
 						fields,
 					);
 
@@ -327,12 +514,13 @@ Vue.component(config.templateRowName,
 				{
 					this.model.getCalculator().setFields(fields);
 					this.model.setFields(fields);
-					this.changeProductFields({...this.basketItem.fields, ...this.getProductFieldsFromModel()});
 
 					if (!Type.isNil(fields.SUM))
 					{
 						this.changeRowData({sum: fields.SUM});
 					}
+
+					this.changeProductFields({...this.basketItem.fields, ...this.getProductFieldsFromModel()});
 				},
 				onChangeQuantity(quantity: number): void
 				{
@@ -382,21 +570,22 @@ Vue.component(config.templateRowName,
 				},
 				changeTax(fields)
 				{
-					const calculatedFields = this.model.getCalculator().calculateTax(fields.taxValue);
+					const calculatedFields = this.model.getCalculator().calculateTax(Text.toNumber(fields.taxValue));
 					calculatedFields.TAX_ID = fields.taxId;
 					this.processFields(calculatedFields)
 					return  calculatedFields;
 				},
 				changeTaxIncluded(taxIncluded)
 				{
-					if (taxIncluded === this.basketItem.taxIncluded || !this.isEditableField(this.blocks.tax))
+					const calculator = this.model.getCalculator();
+					if (taxIncluded === calculator.getFields().TAX_INCLUDED)
 					{
 						return;
 					}
 
-					const calculatedFields = this.model.getCalculator().calculateTaxIncluded(taxIncluded);
-					this.processFields(calculatedFields)
-					return  calculatedFields;
+					const calculatedFields = calculator.calculateTaxIncluded(taxIncluded);
+					this.processFields(calculatedFields);
+					return calculatedFields;
 				},
 				removeItem()
 				{
@@ -578,7 +767,7 @@ Vue.component(config.templateRowName,
 				showTaxBlock(): boolean
 				{
 					return this.options.showTaxBlock === 'Y'
-						&& this.getTaxList.length > 0
+						&& this.options.taxRateList.length > 0
 						&& this.isVisibleBlock(this.blocks.tax)
 						&& !this.isReadOnly
 					;
@@ -615,9 +804,29 @@ Vue.component(config.templateRowName,
 				{
 					return this.basketItem.fields.measureCode || this.defaultMeasure.code;
 				},
-				getTaxList(): []
+				taxSum(): number
 				{
-					return Type.isArray(this.options.taxList) ? this.options.taxList : [];
+					if (this.taxRate <= 0)
+					{
+						return 0;
+					}
+
+					if (!Type.isNil(this.basketItem.fields?.taxSum))
+					{
+						return Text.toNumber(this.basketItem.fields.taxSum);
+					}
+
+					return Text.toNumber(this.basketItem.fields?.vatAmount) || 0;
+				},
+				taxRate(): number
+				{
+					const fromFields = Text.toNumber(this.basketItem.fields?.taxRate);
+					if (fromFields > 0)
+					{
+						return fromFields;
+					}
+
+					return this.resolveTaxRateFromList(this.basketItem.fields?.taxId);
 				},
 				taxIncluded(): string
 				{
@@ -714,6 +923,7 @@ Vue.component(config.templateRowName,
 	
 						<div v-if="isVisibleBlock(blocks.result)" class="catalog-pf-product-control" style="width: 94px">
 							<${config.templateFieldResultSum}
+									data-testid="catalog-product-form-row-result"
 									:sum="getSumValue()"
 									:options="options"
 									:editable="isEditableField(blocks.result)"
@@ -747,15 +957,18 @@ Vue.component(config.templateRowName,
 					</div>
 	
 					<div v-if="showTaxBlock" class="catalog-pf-product-item-section catalog-pf-product-item-section--dashed">
-						<div v-if="showTaxSelector" class="catalog-pf-product-link-toggler catalog-pf-product-link-toggler--hide" @click="toggleTax('N')">{{localize.CATALOG_FORM_TAX_TITLE}}</div>
-						<div v-else class="catalog-pf-product-link-toggler catalog-pf-product-link-toggler--show" @click="toggleTax('Y')">{{localize.CATALOG_FORM_TAX_TITLE}}</div>
+						<div v-if="showTaxSelector" data-testid="catalog-product-form-tax-toggle" class="catalog-pf-product-link-toggler catalog-pf-product-link-toggler--hide" @click="toggleTax('N')">{{localize.CATALOG_FORM_TAX_TITLE}}</div>
+						<div v-else data-testid="catalog-product-form-tax-toggle" class="catalog-pf-product-link-toggler catalog-pf-product-link-toggler--show" @click="toggleTax('Y')">{{localize.CATALOG_FORM_TAX_TITLE}}</div>
 					</div>
 					<div v-if="showTaxSelector && showTaxBlock" class="catalog-pf-product-item-section">
 						<${config.templateFieldTax}
 							:taxId="basketItem.fields.taxId"
 							:options="options"
 							:editable="isEditableField(blocks.tax)"
-							@changeProduct="changeProduct"
+							:taxRate="taxRate"
+							:taxSum="taxSum"
+							:currencySymbol="currencySymbol"
+							@changeTax="changeTax"
 						/>
 					</div>
 					<div class="catalog-pf-product-item-section catalog-pf-product-item-section--dashed"></div>

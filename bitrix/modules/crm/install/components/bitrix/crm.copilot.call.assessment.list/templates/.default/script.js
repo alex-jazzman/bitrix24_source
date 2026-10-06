@@ -5,8 +5,10 @@
 	const namespace$3 = main_core.Reflection.namespace('BX.Crm.Copilot.CallAssessmentList');
 	class ActionButton {
 		#isActive;
-		constructor(isActiveCopilot = true) {
+		#sliderWidth;
+		constructor(isActiveCopilot = true, sliderWidth = 700) {
 			this.#isActive = isActiveCopilot;
+			this.#sliderWidth = sliderWidth;
 		}
 		execute() {
 			if (this.#isActive) {
@@ -16,7 +18,7 @@
 				}
 				ui_sidepanel.SidePanel.Instance.open(`/crm/copilot-call-assessment/details/0/`, {
 					cacheable: false,
-					width: 700,
+					//width: this.#sliderWidth,
 					allowChangeHistory: false
 				});
 				return;
@@ -44,13 +46,17 @@
 			this.#readOnly = readOnly;
 		}
 		init() {
-			void main_core.Runtime.loadExtension('ui.switcher').then(exports$1 => {
+			void main_core.Runtime.loadExtension('ui.switcher').then(exports => {
 				const {
-					Switcher
-				} = exports$1;
+					Switcher,
+					AirSwitcherStyle
+				} = exports;
 				this.switcher = new Switcher({
 					checked: this.#checked,
 					disabled: this.#readOnly,
+					size: 'large',
+					useAirDesign: true,
+					style: AirSwitcherStyle.SOLID,
 					handlers: {
 						checked: event => {
 							event.stopPropagation();
@@ -115,6 +121,7 @@
 	class Grid {
 		#grid = null;
 		#reloadGridTimeoutId = null;
+		static #SETTINGS_MENU_ID = 'crm-copilot-call-assessment-list-settings-menu';
 		constructor(gridId) {
 			this.#grid = BX.Main.gridManager.getInstanceById(gridId);
 		}
@@ -123,6 +130,35 @@
 		}
 		#bindEvents() {
 			main_core_events.EventEmitter.subscribe('BX.Crm.Copilot.CallAssessment:onClickDelete', this.#handleItemDelete.bind(this));
+			main_core_events.EventEmitter.subscribe('BX.Main.Popup:onShow', this.#handleSettingsMenuShow.bind(this));
+			BX.addCustomEvent('SidePanel.Slider:onCloseComplete', this.#handleSliderClose.bind(this));
+		}
+		#handleSettingsMenuShow(event) {
+			const popup = event.getTarget();
+			if (popup?.getId?.() !== Grid.#SETTINGS_MENU_ID) {
+				return;
+			}
+			Promise.resolve().then(() => {
+				const popupContainer = popup.popupContainer;
+				const button = popup.bindElement;
+				const angle = popupContainer?.querySelector?.('.popup-window-angly');
+				if (!popupContainer || !button || !angle) {
+					return;
+				}
+				const btnRect = button.getBoundingClientRect();
+				const popupRect = popupContainer.getBoundingClientRect();
+				const angleWidth = angle.getBoundingClientRect().width || 16;
+				const btnCenterX = btnRect.left + btnRect.width / 2;
+				const desiredLeft = Math.max(8, btnCenterX - popupRect.left - angleWidth / 2);
+				angle.style.left = `${desiredLeft}px`;
+			});
+		}
+		#handleSliderClose(sliderEvent) {
+			const url = sliderEvent?.slider?.getUrl?.();
+			if (typeof url !== 'string' || !url.includes('/crm/copilot-call-assessment/details/')) {
+				return;
+			}
+			this.#reloadGridAfterTimeout();
 		}
 		#handleItemDelete(event) {
 			const id = main_core.Text.toInteger(event.data.id);
@@ -266,5 +302,5 @@
 	exports.Grid = Grid;
 	exports.RoundChartField = RoundChartField;
 
-})(this.window = this.window || {}, BX, BX, BX.UI.Dialogs, BX, BX.Event, BX.UI);
+})(this.window = this.window || {}, BX, BX, BX.UI.Dialogs, BX.UI.Notification, BX.Event, BX.UI);
 //# sourceMappingURL=script.js.map

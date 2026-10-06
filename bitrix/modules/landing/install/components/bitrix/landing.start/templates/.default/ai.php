@@ -15,10 +15,11 @@ Loc::loadMessages(__FILE__);
 
 $APPLICATION->IncludeComponent(
 	'bitrix:landing.site_copilot',
-	'.default',
+	'ai',
 	[
 		'TYPE' => $arParams['TYPE'],
 		'PAGE_URL_SITES' => $arParams['PAGE_URL_SITES'],
+		'AGREEMENT_ACCEPTED' => empty($arResult['AGREEMENT']) || $arResult['AGREEMENT_ACCEPTED'],
 	],
 	$component
 );

@@ -236,6 +236,11 @@
 								postFields.BACKGROUND_CODE = postData.BACKGROUND_CODE;
 							}
 
+							if (typeof postData.MAIL_MESSAGE_ID !== 'undefined')
+							{
+								postFields.MAIL_MESSAGE_ID = postData.MAIL_MESSAGE_ID;
+							}
+
 							if (
 								BX.type.isNotEmptyString(ufCode)
 								&& BX.type.isArray(postData[ufCode])

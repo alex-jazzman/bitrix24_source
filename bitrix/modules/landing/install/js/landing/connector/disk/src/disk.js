@@ -1,11 +1,42 @@
 
+import { Runtime } from 'main.core';
+
 type OpenDialogOptions = {
 	onSelect: () => {},
 };
 
 export class Disk
 {
-	static openDialog({onSelect}: OpenDialogOptions)
+	static openDialog({onSelect}: OpenDialogOptions): Promise<void>
+	{
+		return Runtime.loadExtension('disk.disk-picker')
+			.then((pickerExports) => {
+				const DiskPicker = pickerExports ? pickerExports.DiskPicker : null;
+				if (DiskPicker && DiskPicker.isEnabled())
+				{
+					const picker = new DiskPicker();
+					picker.open({
+						selectionMode: 'single',
+						onSelect: ({ items }) => {
+							const selectedItem = items[0];
+							if (selectedItem && onSelect)
+							{
+								onSelect(String(selectedItem.objectId));
+							}
+						},
+					});
+
+					return;
+				}
+
+				Disk.#openLegacyDialog(onSelect);
+			})
+			.catch(() => {
+				Disk.#openLegacyDialog(onSelect);
+			});
+	}
+
+	static #openLegacyDialog(onSelect: () => {})
 	{
 		const urlSelect = '/bitrix/tools/disk/uf.php?action=selectFile&dialog2=Y&SITE_ID=' + BX.message('SITE_ID');
 		const dialogName = 'LandingDiskFile';

@@ -1,4 +1,5 @@
-<?
+<?php
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
@@ -6,6 +7,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Loader;
+use Bitrix\Main\Web\Uri;
 
 Loc::loadMessages(__FILE__);
 
@@ -232,14 +234,11 @@ class CrmBuyerGroupsList extends \CBitrixComponent
 
 			if ($this->canRemoveGroup($group))
 			{
-				$pathToRemove = CHTTP::urlAddParams(
-					$this->arParams['PATH_TO_BUYER_GROUP_LIST'],
-					[
+				$pathToRemove = (string)(new Uri($this->arParams['PATH_TO_BUYER_GROUP_LIST']))->addParams([
 						'action' => 'deleteGroupAjax',
 						'ID' => $group['ID'],
 						'sessid' => bitrix_sessid(),
-					]
-				);
+					]);
 				$pathToRemove = CUtil::JSEscape($pathToRemove);
 
 				$actions[] = [

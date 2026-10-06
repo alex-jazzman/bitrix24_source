@@ -362,7 +362,7 @@
 }
 
 .bx-viewer-too-big-title {
-	background: url("../images/bx-viewer-icons.png?2323") no-repeat -58px -1524px;
+	background: url("../images/bx-viewer-icons.webp?2323") no-repeat -58px -1524px;
 	color: #999;
 	font-size: 12px;
 	margin-top: -3px;
@@ -425,7 +425,7 @@
 }
 
 .bx-viewer-btn-save:before {
-	background: url(../images/bx-viewer-icons.png?2323) no-repeat -59px -1563px;
+	background: url(../images/bx-viewer-icons.webp?2323) no-repeat -59px -1563px;
 	content: "";
 	height: 7px;
 	top: 10px;
@@ -605,7 +605,7 @@
 }
 
 .bx-viewer-btn-split-r .bx-viewer-btn-split-bg:before {
-	background: url(../images/bx-viewer-icons.png?2323) no-repeat -59px -1563px;
+	background: url(../images/bx-viewer-icons.webp?2323) no-repeat -59px -1563px;
 	content: "";
 	height: 7px;
 	top: 10px;
@@ -645,7 +645,7 @@
 }
 
 .bx-viewer-popup-item .menu-popup-item-icon{
-	background: url(../images/bx-viewer-icons.png?2323) no-repeat 100px;
+	background: url(../images/bx-viewer-icons.webp?2323) no-repeat 100px;
 	display: inline-block;
 	height: 29px;
 	vertical-align: top;
@@ -691,7 +691,7 @@
 }
 .status-sky-drive:before,
 .status-google:before {
-	background: url(../images/bx-viewer-icons.png?2323) no-repeat 100px 100px;
+	background: url(../images/bx-viewer-icons.webp?2323) no-repeat 100px 100px;
 	content: "";
 	height: 13px;
 	left: 0;
@@ -793,7 +793,7 @@
 }
 
 .bx-viewer-alert-close-icon {
-	background: url(../images/bx-viewer-icons.png?23232) no-repeat center -1742px;
+	background: url(../images/bx-viewer-icons.webp?23232) no-repeat center -1742px;
 	height: 23px;
 	opacity: 0.5;
 	right: 5px;

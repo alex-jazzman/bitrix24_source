@@ -1,8 +1,11 @@
-<?if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
+<?php
 
-use \Bitrix\Sale\PaySystem;
-use \Bitrix\Main\IO;
-use \Bitrix\Main\Application;
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
+
+use Bitrix\Sale\PaySystem;
+use Bitrix\Main\IO;
+use Bitrix\Main\Application;
+use Bitrix\Main\Web\Uri;
 
 if (!CModule::IncludeModule('crm'))
 {
@@ -204,13 +207,10 @@ while ($paySystem = $dbPaySystems->fetch())
 		);
 
 	$tmpPS['PATH_TO_PS_DELETE'] =
-		CHTTP::urlAddParams(
-			CComponentEngine::MakePathFromTemplate(
+		(string)(new Uri(CComponentEngine::MakePathFromTemplate(
 				$arParams['PATH_TO_PS_LIST'],
 				array('ps_id' => $paySystem['ID'])
-			),
-			array('action_'.$arResult['GRID_ID'] => 'delete', 'ID' => $paySystem['ID'], 'sessid' => bitrix_sessid())
-		);
+			)))->addParams(array('action_'.$arResult['GRID_ID'] => 'delete', 'ID' => $paySystem['ID'], 'sessid' => bitrix_sessid()));
 
 	$arResult['PAY_SYSTEMS'][$tmpPS['ID']] = $tmpPS;
 }
@@ -219,4 +219,3 @@ $arResult['ROWS_COUNT'] = count($arResult['PAY_SYSTEMS']);
 $arResult['PERSON_TYPE_LIST'] = CCrmPaySystem::getPersonTypesList();
 
 $this->IncludeComponentTemplate();
-?>

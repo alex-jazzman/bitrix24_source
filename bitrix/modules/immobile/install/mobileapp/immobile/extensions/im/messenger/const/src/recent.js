@@ -33,6 +33,9 @@ jn.define('im/messenger/const/recent', (require, exports, module) => {
 		[NavigationTabId.openlines]: RecentTab.openlines,
 		[NavigationTabId.collabDefault]: RecentTab.collabDefault,
 		[NavigationTabId.collabChat]: RecentTab.collabChat,
+		// collabCopilot sends recentSection='copilot' to the server (same as root copilot);
+		// distinction between global and project scope is done by parentId on the server side.
+		[NavigationTabId.collabCopilot]: RecentTab.copilot,
 		[NavigationTabId.calendar]: RecentTab.calendar,
 	});
 
@@ -48,16 +51,16 @@ jn.define('im/messenger/const/recent', (require, exports, module) => {
 		[RecentTab.calendar]: NavigationTabId.calendar,
 	});
 
-	// System folder.code → NavigationTabId. Differs from NavigationTabByRecentTab
-	// only for openlines: backend FolderTable.code is 'openlines', while
-	// RecentTab.openlines is 'lines' (recent-section legacy alias).
+	// System folder.code → NavigationTabId. The Open Lines folder rest-code is
+	// 'lines' (backend FolderTable rest-code; domain code is unchanged), which
+	// matches RecentTab.openlines ('lines').
 	const NavigationTabByFolderCode = Object.freeze({
 		default: NavigationTabId.chats,
 		copilot: NavigationTabId.copilot,
 		collab: NavigationTabId.collab,
 		openChannel: NavigationTabId.channel,
 		tasksTask: NavigationTabId.task,
-		openlines: NavigationTabId.openlines,
+		lines: NavigationTabId.openlines,
 	});
 
 	const MessageStatus = Object.freeze({

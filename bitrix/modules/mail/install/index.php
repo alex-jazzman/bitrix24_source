@@ -1,6 +1,5 @@
 <?php
 
-use Bitrix\Mail\Access\Install\AccessInstaller;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Localization\Loc;
 Loc::loadMessages(__FILE__);
@@ -33,18 +32,14 @@ Class mail extends CModule
 	function InstallDB($arParams = array())
 	{
 		global $DB, $APPLICATION;
-		$connection = \Bitrix\Main\Application::getConnection();
 		$this->errors = false;
 
-		// Database tables creation
-		if (!$DB->TableExists('b_mail_mailbox'))
-		{
-			$this->errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/mail/install/db/' . $connection->getType() . '/install.sql');
+		$isFreshInstall = !$DB->TableExists('b_mail_mailbox');
 
-			if (\Bitrix\Main\Entity\CryptoField::cryptoAvailable())
-			{
-				\Bitrix\Main\ORM\Data\DataManager::enableCrypto('TOKENS', 'b_mail_oauth', true);
-			}
+		$migrationResult = $this->installMigrations();
+		if (!$migrationResult->isSuccess())
+		{
+			$this->errors = $migrationResult->getErrorMessages();
 		}
 
 		if($this->errors !== false)
@@ -54,47 +49,16 @@ Class mail extends CModule
 		}
 		else
 		{
-			$eventManager = \Bitrix\Main\EventManager::getInstance();
-
-			$eventManager->registerEventHandlerCompatible('rest', 'OnRestServiceBuildDescription', 'mail', 'CMailRestService', 'OnRestServiceBuildDescription');
-
-			$eventManager->registerEventHandlerCompatible('main', 'OnAfterUserUpdate', 'mail', 'CMail', 'onUserUpdate');
-			$eventManager->registerEventHandlerCompatible('main', 'OnAfterUserDelete', 'mail', 'CMail', 'onUserDelete');
-
-			$eventManager->registerEventHandlerCompatible('main', 'OnBeforeSiteUpdate', 'mail', 'Bitrix\Mail\User', 'handleSiteUpdate');
-			$eventManager->registerEventHandler('main', 'OnAfterSetOption_server_name', 'mail', 'Bitrix\Mail\User', 'handleServerNameUpdate');
-
-			$eventManager->registerEventHandlerCompatible('main', 'OnUserTypeBuildList', 'mail', 'Bitrix\Mail\MessageUserType', 'getUserTypeDescription');
-			$eventManager->registerEventHandlerCompatible('main', 'OnMailEventMailRead', 'mail', 'Bitrix\Mail\Helper\MessageEventManager', 'onMailEventMailRead');
-
-			$eventManager->registerEventHandler('main', 'OnUISelectorGetProviderByEntityType', 'mail', '\Bitrix\Mail\Integration\Main\UISelector\Handler', 'OnUISelectorGetProviderByEntityType');
-			$eventManager->registerEventHandler('main', 'OnUISelectorFillLastDestination', 'mail', '\Bitrix\Mail\Integration\Main\UISelector\Handler', 'OnUISelectorFillLastDestination');
-
-			$eventManager->registerEventHandler('mail', 'onMailMessageNew', 'mail', '\Bitrix\Mail\Integration\Calendar\ICal\ICalMailEventManager', 'onMailMessageNew');
-			$eventManager->registerEventHandlerCompatible('im', 'OnGetNotifySchema', 'mail', '\Bitrix\Mail\Integration\Im\Notification', 'getSchema');
-
-			$eventManager->registerEventHandler('mail', 'onMailMessageNew', 'mail', '\Bitrix\Mail\Integration\Calendar\ICal\ICalMailEventManager', 'onMailMessageNew');
-
-			$eventManager->registerEventHandler('mobile', 'onRequestSyncMail', 'mail', '\Bitrix\Mail\Integration\SyncRequest', 'onRequestSyncMail');
-
-			$eventManager->registerEventHandler('calendar', 'OnAfterCalendarEventDelete', 'mail', '\Bitrix\Mail\Integration\Calendar\ICal\ICalMailEventManager', 'onUnbindEvent');
-
-			$eventManager->registerEventHandler('ai', 'onTuningLoad', 'mail', '\Bitrix\Mail\Integration\AI\EventHandler', 'onTuningLoad');
-			$eventManager->registerEventHandler('ai', 'onContextGetMessages', 'mail', '\Bitrix\Mail\Integration\AI\Controller', 'onContextGetMessages');
-
-			$eventManager->registerEventHandler('humanresources', 'OnMemberUpdated', 'mail', '\Bitrix\Mail\Integration\HumanResources\StructureEventHandler', 'onMemberUpdated');
-			$eventManager->registerEventHandler('humanresources', 'OnMemberAdded', 'mail', '\Bitrix\Mail\Integration\HumanResources\StructureEventHandler', 'onMemberAdded');
-			$eventManager->registerEventHandler('humanresources', 'OnMemberDeleted', 'mail', '\Bitrix\Mail\Integration\HumanResources\StructureEventHandler', 'onMemberDeleted');
+			if ($isFreshInstall && \Bitrix\Main\Entity\CryptoField::cryptoAvailable())
+			{
+				\Bitrix\Main\ORM\Data\DataManager::enableCrypto('TOKENS', 'b_mail_oauth', true);
+			}
 
 			RegisterModule("mail");
 
 			if (CModule::IncludeModule("mail"))
 			{
-				$errors = $DB->runSqlBatch($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/mail/install/db/' . $connection->getType() . '/install_ft.sql');
-				if ($errors === false)
-				{
-					\Bitrix\Mail\MailMessageTable::getEntity()->enableFullTextIndex('SEARCH_CONTENT');
-				}
+				\Bitrix\Mail\Internal\Service\SourceGeneration\MigrationOperationSchema::clearCache();
 
 				$result = \Bitrix\Main\SiteTable::getList();
 				while (($site = $result->fetch()) !== false)
@@ -189,20 +153,6 @@ Class mail extends CModule
 				}
 			}
 
-			RegisterModuleDependences("pull", "OnGetDependentModule", "mail", "\\Bitrix\\Mail\\MailPullSchema", "OnGetDependentModule" );
-			RegisterModuleDependences('tasks', 'OnTaskDelete', 'mail', '\\Bitrix\\Mail\\Integration\\Intranet\\Secretary', 'onTaskDelete');
-
-			CAgent::AddAgent("CMailbox::CleanUp();", "mail", "N", 60*60*24);
-
-			$startTime = \ConvertTimeStamp(time() + \CTimeZone::GetOffset() + 600, 'FULL');
-			CAgent::AddAgent(
-				name: "\Bitrix\Mail\Access\Install\AccessInstaller::install();",
-				module: $this->MODULE_ID,
-				interval: 60,
-				next_exec: $startTime,
-				existError: false,
-			);
-
 			return true;
 		}
 	}
@@ -249,19 +199,13 @@ Class mail extends CModule
 	function UnInstallDB($arParams = array())
 	{
 		global $DB, $APPLICATION;
-		$connection = \Bitrix\Main\Application::getConnection();
 		$this->errors = false;
 
-		if(!array_key_exists("savedata", $arParams) || $arParams["savedata"] != "Y")
+		$dropTables = !array_key_exists("savedata", $arParams) || $arParams["savedata"] != "Y";
+
+		if($dropTables)
 		{
-			$this->errors = $DB->RunSQLBatch($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/mail/install/db/".$connection->getType()."/uninstall.sql");
-
 			$this->deleteOptions();
-
-			if (\Bitrix\Main\Loader::includeModule('mail'))
-			{
-				\Bitrix\Mail\MailMessageTable::getEntity()->enableFullTextIndex('SEARCH_CONTENT', false);
-			}
 
 			if ($DB->TableExists('b_main_mail_sender') && $DB->Query("SELECT PARENT_MODULE_ID FROM b_main_mail_sender WHERE 1=0", true))
 			{
@@ -277,40 +221,11 @@ Class mail extends CModule
 			}
 		}
 
-		$eventManager = \Bitrix\Main\EventManager::getInstance();
-
-		$eventManager->unRegisterEventHandler('rest', 'OnRestServiceBuildDescription', 'mail', 'CMailRestService', 'OnRestServiceBuildDescription');
-
-		$eventManager->unRegisterEventHandler('main', 'OnAfterUserUpdate', 'mail', 'CMail', 'onUserUpdate');
-		$eventManager->unRegisterEventHandler('main', 'OnAfterUserDelete', 'mail', 'CMail', 'onUserDelete');
-
-		$eventManager->unRegisterEventHandler('main', 'OnBeforeSiteUpdate', 'mail', 'Bitrix\\Mail\\User', 'handleSiteUpdate');
-		$eventManager->unRegisterEventHandler('main', 'OnAfterSetOption_server_name', 'mail', 'Bitrix\\Mail\\User', 'handleServerNameUpdate');
-
-		$eventManager->unRegisterEventHandler('main', 'OnUserTypeBuildList', 'mail', 'Bitrix\\Mail\\MessageUserType', 'getUserTypeDescription');
-		$eventManager->unRegisterEventHandler('main', 'OnMailEventMailRead', 'mail', 'Bitrix\\Mail\\Helper\\MessageEventManager', 'onMailEventMailRead');
-
-		$eventManager->unRegisterEventHandler('main', 'OnUISelectorGetProviderByEntityType', 'mail', '\Bitrix\Mail\Integration\Main\UISelector\Handler', 'OnUISelectorGetProviderByEntityType');
-		$eventManager->unRegisterEventHandler('main', 'OnUISelectorFillLastDestination', 'mail', '\Bitrix\Mail\Integration\Main\UISelector\Handler', 'OnUISelectorFillLastDestination');
-
-		$eventManager->unRegisterEventHandler('mail', 'onMailMessageNew', 'mail', '\Bitrix\Mail\Integration\Calendar\ICal\ICalMailEventManager', 'onMailMessageNew');
-
-		$eventManager->unRegisterEventHandler('im', 'OnGetNotifySchema', 'mail', '\Bitrix\Mail\Integration\Im\Notification', 'getSchema');
-
-		$eventManager->unRegisterEventHandler('mail', 'onMailMessageNew', 'mail', '\Bitrix\Mail\Integration\Calendar\ICal\ICalMailEventManager', 'onMailMessageNew');
-		$eventManager->unRegisterEventHandler('calendar', 'OnAfterCalendarEventDelete', 'mail', '\Bitrix\Mail\Integration\Calendar\ICal\ICalMailEventManager', 'onUnbindEvent');
-
-		$eventManager->unRegisterEventHandler('mobile', 'onRequestSyncMail', 'mail', '\Bitrix\Mail\Integration\SyncRequest', 'onRequestSyncMail');
-
-		$eventManager->unRegisterEventHandler('ai', 'onTuningLoad', 'mail', '\Bitrix\Mail\Integration\AI\EventHandler', 'onTuningLoad');
-		$eventManager->unRegisterEventHandler('ai', 'onContextGetMessages', 'mail', '\Bitrix\Mail\Integration\AI\Controller', 'onContextGetMessages');
-
-		$eventManager->unRegisterEventHandler('humanresources', 'OnMemberUpdated', 'mail', '\Bitrix\Mail\Integration\HumanResources\StructureEventHandler', 'onMemberUpdated');
-		$eventManager->unRegisterEventHandler('humanresources', 'OnMemberAdded', 'mail', '\Bitrix\Mail\Integration\HumanResources\StructureEventHandler', 'onMemberAdded');
-		$eventManager->unRegisterEventHandler('humanresources', 'OnMemberDeleted', 'mail', '\Bitrix\Mail\Integration\HumanResources\StructureEventHandler', 'onMemberDeleted');
-
-		//delete agents
-		CAgent::RemoveModuleAgents("mail");
+		$migrationResult = $this->uninstallMigrations($dropTables);
+		if (!$migrationResult->isSuccess())
+		{
+			$this->errors = $migrationResult->getErrorMessages();
+		}
 
 		UnRegisterModule("mail");
 
@@ -389,9 +304,6 @@ Class mail extends CModule
 			$GLOBALS["errors"] = $this->errors;
 			$APPLICATION->IncludeAdminFile(Loc::getMessage("MAIL_INSTALL_TITLE"), $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/mail/install/unstep2.php");
 		}
-
-		UnRegisterModuleDependences("pull", "OnGetDependentModule", "mail", "\\Bitrix\\Mail\\MailPullSchema", "OnGetDependentModule" );
-		UnRegisterModuleDependences('tasks', 'OnTaskDelete', 'mail', '\\Bitrix\\Mail\\Integration\\Intranet\\Secretary', 'onTaskDelete');
 	}
 
 	function deleteOptions(): void

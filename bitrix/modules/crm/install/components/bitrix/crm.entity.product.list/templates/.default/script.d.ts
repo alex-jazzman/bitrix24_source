@@ -55,6 +55,12 @@ type CrmEntityProductListSettings = Record<string, any>;
 
 type CrmEntityProductListYesNo = 'Y' | 'N';
 
+type CrmEntityProductListTaxRate = {
+	ID: number | string;
+	NAME: string;
+	VALUE: number | string | null;
+};
+
 type CrmEntityProductListSettingItem = {
 	id: string;
 	title: string;
@@ -93,6 +99,7 @@ declare namespace BX.Crm.Entity.ProductList {
 		};
 		private readonly stateChange;
 		private updateFieldForList;
+		private readonly pendingFocusAfterProductSelect;
 		readonly productSelectionPopupHandler: (event: Event) => void;
 		readonly productRowAddHandler: () => void;
 		readonly showSettingsPopupHandler: () => void;
@@ -367,6 +374,7 @@ declare namespace BX.Crm.Entity.ProductList {
 		getEditorContainer(): HTMLElement | null;
 		getHintPopup(): HintPopup;
 		initHandlers(): void;
+		applyDropdownAccessibility(): void;
 		initHandlersForSelectors(): void;
 		unsubscribeCustomEvents(): void;
 		private initActions;
@@ -410,7 +418,9 @@ declare namespace BX.Crm.Entity.ProductList {
 		getTaxRate(): number;
 		getTaxSum(): number;
 		getTaxNode(): HTMLSelectElement | null;
-		getTaxId(): number;
+		getTaxName(): string;
+		getTaxId(): number | string;
+		getTaxIdFromNode(): number;
 		updateFieldByEvent(fieldCode: string, event: UIEvent): void;
 		updateField(fieldCode: string, value: any, mode?: string): void;
 		updateFieldValue(code: string, value: any, mode?: string): void;
@@ -424,13 +434,13 @@ declare namespace BX.Crm.Entity.ProductList {
 		changeDiscountType(value: any): void;
 		changeRowDiscount(value: any, mode?: string): void;
 		changeTaxId(value: number): void;
-		changeTaxRate(value: number | null | string): void;
 		changeTaxIncluded(value: any): void;
 		changeRowSum(value: any, mode?: string): void;
 		changeProductName(value: any): void;
 		changeSort(value: any, mode?: string): void;
 		changeStore(value: number): void;
 		updateUiStoreAmountData(): void;
+		private setStoreAvailableInteractive;
 		updatePropertyFields(): void;
 		clearPropertyFields(): void;
 		setRowReserved(value: any): void;
@@ -453,7 +463,7 @@ declare namespace BX.Crm.Entity.ProductList {
 		setDiscount(value: any, mode?: string): void;
 		setDiscountType(value: any): void;
 		setRowDiscount(value: any, mode?: string): void;
-		setTaxRate(value: any): void;
+		setTaxRate(taxRate: CrmEntityProductListTaxRate): void;
 		setTaxIncluded(value: CrmEntityProductListYesNo, mode?: string): void;
 		setRowSum(value: any, mode?: string): void;
 		getInputByFieldName(fieldName: string): HTMLElement | null;
@@ -523,6 +533,7 @@ declare namespace BX.Crm.Entity.ProductList {
 		clearCache(): void;
 		isInputDisabled(): boolean;
 		private static onDateInputClick;
+		private static onDateInputKeyDown;
 		onDateChange(event: Event): void;
 		private getDateNode;
 		private getReserveInputNode;
@@ -539,6 +550,7 @@ declare namespace BX.Crm.Entity.ProductList {
 		private readonly inventoryManagementMode;
 		private node;
 		private popup;
+		private readonly clickHandler;
 		constructor(options: CrmEntityProductListStoreAvailablePopupOptions);
 		setNode(node: HTMLElement): void;
 		private createPopup;
@@ -557,13 +569,26 @@ declare namespace BX.Crm.Entity.ProductList {
 	}
 
 	class SettingsPopup {
+		private static lastActiveSelector;
 		private readonly target;
 		private readonly settings;
 		private readonly editor;
 		private readonly cache;
+		private keydownHandler;
+		private keydownBound;
 		constructor(target: HTMLElement, settings: CrmEntityProductListSettingItem[] | undefined, editor: Editor);
 		show(): void;
 		getPopup(): BX.Main.Popup;
+		private setTriggerExpanded;
+		private bindKeyboardNavigation;
+		private unbindKeyboardNavigation;
+		private handleKeyboardNavigation;
+		private getFocusableSettingInputs;
+		private focusRelativeSetting;
+		private focusEdgeSetting;
+		onSettingsGridReloaded(popupContainer: HTMLElement): void;
+		private buildSelectorForActiveControl;
+		private scheduleFocusRestoreOnReload;
 		getSetting(id: string): CrmEntityProductListSettingItem | undefined;
 		private prepareSettingsContent;
 		private getCrmEntityProductListSettingItem;

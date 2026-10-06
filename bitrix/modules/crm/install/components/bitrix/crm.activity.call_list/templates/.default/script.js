@@ -150,16 +150,6 @@
 				{
 					top.BX.Bitrix24.Slider.closeAll();
 				}
-				else
-				{
-					for(dialogId in top.BX.CrmActivityProvider.dialogs)
-					{
-						if(top.BX.CrmActivityProvider.dialogs.hasOwnProperty(dialogId) && top.BX.CrmActivityProvider.dialogs[dialogId])
-						{
-							top.BX.CrmActivityProvider.dialogs[dialogId].close();
-						}
-					}
-				}
 
 				top.BXIM.startCallList(self.callListId, {
 					webformId: self.webformId,

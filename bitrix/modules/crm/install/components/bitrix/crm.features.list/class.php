@@ -243,9 +243,17 @@ class CrmFeaturesList extends CBitrixComponent implements \Bitrix\Main\Engine\Co
 	private function resetTour(string $tourId): void
 	{
 		$tour = $this->tourRepository->getById($tourId);
-		if ($tour)
+		if (!$tour)
 		{
-			CUserOptions::DeleteOptionsByName($tour['optionCategory'], $tour['optionName']);
+			return;
+		}
+
+		CUserOptions::DeleteOptionsByName($tour['optionCategory'], $tour['optionName']);
+
+		$className = '\\Bitrix\\Crm\\Tour\\' . str_replace('/', '\\', $tour['id']);
+		if (method_exists($className, 'getInstance'))
+		{
+			$className::getInstance()->onReset();
 		}
 	}
 

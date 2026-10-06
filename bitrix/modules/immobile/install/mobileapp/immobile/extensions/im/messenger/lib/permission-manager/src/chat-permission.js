@@ -9,6 +9,7 @@ jn.define('im/messenger/lib/permission-manager/chat-permission', (require, expor
 		UserRole,
 		DialogActionType,
 		DialogType,
+		UserType,
 	} = require('im/messenger/const');
 
 	const MinimalRoleForAction = {
@@ -39,12 +40,19 @@ jn.define('im/messenger/lib/permission-manager/chat-permission', (require, expor
 
 		/**
 		 * @desc check is can call by dialog data (use id dialog "chat#" or dialog state object)
+		 * @desc a guest can never initiate a call, regardless of dialog data (verbose mode also returns a flat false)
 		 * @param {DialoguesModelState|string} dialogData
 		 * @param {boolean} [verbose=false] - prop for verbose response, returns an object with a key
 		 * @return {boolean|object}
 		 */
 		canCall(dialogData, verbose = false)
 		{
+			// guest never initiates a call: client-side counterpart of the REST start-call whitelist gate
+			if (this.isCurrentUserGuest())
+			{
+				return false;
+			}
+
 			if (!this.setDialogData(dialogData))
 			{
 				return false;
@@ -69,6 +77,15 @@ jn.define('im/messenger/lib/permission-manager/chat-permission', (require, expor
 			}
 
 			return canCall;
+		}
+
+		/**
+		 * @desc Check the current user (not the interlocutor) is a guest
+		 * @return {boolean}
+		 */
+		isCurrentUserGuest()
+		{
+			return MessengerParams.getUserInfo()?.type === UserType.guest;
 		}
 
 		/**
@@ -146,6 +163,19 @@ jn.define('im/messenger/lib/permission-manager/chat-permission', (require, expor
 			}
 
 			return chatPermissions.actionGroupsDefaults[chatType] ?? chatPermissions.actionGroupsDefaults[DialogType.default];
+		}
+
+		/**
+		 * @desc Check is can manage the chat guest link. Mirrors web `manageGuestLink` gate:
+		 * the three-layer role check honors the per-chat-type table, so chat types that keep the
+		 * guest link at its ROLE_NONE default (e.g. collab) hide the option, consistent with the
+		 * backend `Chat::canDo(ManageGuestLink)`. Regular chats override it to member and stay open.
+		 * @param {DialoguesModelState|string} dialogData
+		 * @return {boolean}
+		 */
+		canInviteGuests(dialogData)
+		{
+			return this.canPerformActionByRole(DialogActionType.manageGuestLink, dialogData);
 		}
 
 		/**
@@ -709,7 +739,12 @@ jn.define('im/messenger/lib/permission-manager/chat-permission', (require, expor
 			return this.getRightByLowRole(installedMinimalRole);
 		}
 
-		canDeleteChat(dialogData)
+		/**
+		 * @desc Check is can delete own messages (including unread ones)
+		 * @param {DialoguesModelState|string} dialogData
+		 * @return {boolean}
+		 */
+		canDeleteOwnMessage(dialogData)
 		{
 			if (!this.setDialogData(dialogData))
 			{
@@ -717,9 +752,19 @@ jn.define('im/messenger/lib/permission-manager/chat-permission', (require, expor
 			}
 
 			const rolesByChatType = this.getDefaultRolesByChatType();
-			const installedMinimalRole = rolesByChatType[DialogActionType.delete];
+			const installedMinimalRole = rolesByChatType[DialogActionType.deleteOwnMessage];
+
+			if (Type.isUndefined(installedMinimalRole))
+			{
+				return true;
+			}
 
 			return this.getRightByLowRole(installedMinimalRole);
+		}
+
+		canDeleteChat(dialogData)
+		{
+			return this.canPerformActionByRole(DialogActionType.delete, dialogData);
 		}
 
 		/**
@@ -741,7 +786,7 @@ jn.define('im/messenger/lib/permission-manager/chat-permission', (require, expor
 		 * @param {DialoguesModelState|string} dialogData
 		 * @return {boolean}
 		 */
-		сanMute(dialogData)
+		canMute(dialogData)
 		{
 			if (!this.setDialogData(dialogData))
 			{

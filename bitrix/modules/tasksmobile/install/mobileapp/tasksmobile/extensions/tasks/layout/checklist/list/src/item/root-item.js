@@ -10,20 +10,20 @@ jn.define('tasks/layout/checklist/list/src/item/root-item', (require, exports, m
 	const FOCUS = 'focus';
 	const BLUR = 'blur';
 
-	/**
-	 * @class RootChecklistItem
-	 */
 	class RootChecklistItem extends BaseChecklistItem
 	{
+		/** @param {RootChecklistItemProps} props */
 		constructor(props)
 		{
 			super(props);
 
 			const { item } = props;
 
+			/** @type {string} */
 			this.prevTitle = item.getTitle();
 		}
 
+		/** @return {Object} */
 		render()
 		{
 			return this.renderContent({
@@ -53,6 +53,7 @@ jn.define('tasks/layout/checklist/list/src/item/root-item', (require, exports, m
 			});
 		}
 
+		/** @return {Object} */
 		renderDescription()
 		{
 			const { item } = this.props;
@@ -78,6 +79,7 @@ jn.define('tasks/layout/checklist/list/src/item/root-item', (require, exports, m
 			);
 		}
 
+		/** @return {ChecklistTextFieldStyle} */
 		getTextFieldStyle()
 		{
 			return {
@@ -95,6 +97,7 @@ jn.define('tasks/layout/checklist/list/src/item/root-item', (require, exports, m
 			return Loc.getMessage('TASKSMOBILE_LAYOUT_LIST_INPUT_PLACEHOLDER');
 		}
 
+		/** @return {void} */
 		handleOnBlur()
 		{
 			const { item } = this.props;
@@ -104,15 +107,24 @@ jn.define('tasks/layout/checklist/list/src/item/root-item', (require, exports, m
 			super.handleOnBlur();
 		}
 
+		/** @return {void} */
 		handleOnFocus()
 		{
-			const { item } = this.props;
+			const { item, updateMenu } = this.props;
 
 			this.toggleChecklistRootTitle(item, FOCUS);
+
+			// Keep the bottom panel targeting the focused root title, same as MainChecklistItem.
+			// Without this, BIUS actions are applied to a stale menu item instead of the root title.
+			if (updateMenu)
+			{
+				updateMenu(item);
+			}
 
 			super.handleOnFocus(item);
 		}
 
+		/** @return {void} */
 		handleOnSubmit()
 		{
 			const { item } = this.props;
@@ -126,16 +138,25 @@ jn.define('tasks/layout/checklist/list/src/item/root-item', (require, exports, m
 			super.handleOnSubmit();
 		}
 
-		handleOnChangeTitle(title)
+		/**
+		 * @param {string} title
+		 * @param {boolean} [isFocused]
+		 * @param {boolean} [shouldSave]
+		 */
+		handleOnChangeTitle(title, isFocused, shouldSave = true)
 		{
 			if (this.isDefaultChecklistTitle(this.#getPrevTitle()) && !title)
 			{
 				return;
 			}
 
-			super.handleOnChangeTitle(title);
+			super.handleOnChangeTitle(title, isFocused, shouldSave);
 		}
 
+		/**
+		 * @param {CheckListFlatTreeItem} item
+		 * @param {'focus' | 'blur'} action
+		 */
 		toggleChecklistRootTitle(item, action)
 		{
 			const title = item.getTitle();
@@ -151,6 +172,10 @@ jn.define('tasks/layout/checklist/list/src/item/root-item', (require, exports, m
 			}
 		}
 
+		/**
+		 * @param {string} value
+		 * @return {boolean}
+		 */
 		isDefaultChecklistTitle(value)
 		{
 			const regex = new RegExp(`^${Loc.getMessage('TASKSMOBILE_LAYOUT_CHECKLIST_STUB_TEXT').toLowerCase()}(\\s\\d+)?$`);
@@ -158,6 +183,10 @@ jn.define('tasks/layout/checklist/list/src/item/root-item', (require, exports, m
 			return regex.test(value.trim().toLowerCase());
 		}
 
+		/**
+		 * @private
+		 * @param {CheckListFlatTreeItem} item
+		 */
 		#clearText(item)
 		{
 			if (item.getTitle())
@@ -167,11 +196,19 @@ jn.define('tasks/layout/checklist/list/src/item/root-item', (require, exports, m
 			}
 		}
 
+		/**
+		 * @private
+		 * @return {string}
+		 */
 		#getPrevTitle()
 		{
 			return this.prevTitle;
 		}
 
+		/**
+		 * @private
+		 * @param {string} title
+		 */
 		#setPrevTitle(title)
 		{
 			this.prevTitle = title;

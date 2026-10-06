@@ -1,0 +1,3 @@
+<?php
+$MESS["UI_COUNTER_PANEL_ITEM_RESTRICTED"] = "Unavailable";
+$MESS["UI_COUNTER_PANEL_MORE_BUTTON"] = "More...";

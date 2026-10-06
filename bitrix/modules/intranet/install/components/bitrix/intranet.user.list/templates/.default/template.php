@@ -25,6 +25,7 @@ CUtil::InitJSCore(['popup']);
 	'intranet.invitation-counter',
 	'pull.client',
 	'main.pagination.lazyloadtotalcount',
+	'ui.tooltip',
 ]);
 
 

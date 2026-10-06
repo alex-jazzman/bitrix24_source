@@ -8,9 +8,9 @@ return [
 	'css' => 'dist/text.bundle.css',
 	'js' => 'dist/text.bundle.js',
 	'rel' => [
-		'main.core',
 		'landing.node.base',
 		'landing.node.tableeditor',
+		'main.core',
 	],
 	'skip_core' => false,
 ];

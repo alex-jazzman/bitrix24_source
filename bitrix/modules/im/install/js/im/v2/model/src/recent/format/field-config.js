@@ -19,6 +19,11 @@ export const recentFieldsConfig: FieldsConfig = [
 		checkFunction: isNumberOrString,
 	},
 	{
+		fieldName: 'ownMessageId',
+		targetFieldName: 'ownMessageId',
+		checkFunction: isNumberOrString,
+	},
+	{
 		fieldName: 'draft',
 		targetFieldName: 'draft',
 		checkFunction: Type.isPlainObject,

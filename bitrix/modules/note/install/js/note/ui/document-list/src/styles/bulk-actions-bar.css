@@ -1,0 +1,173 @@
+.note-bulk-actions-bar {
+	position: fixed;
+	/* Desktop centers over the content area, compensating for the sidebar */
+	left: calc(50% + 132px);
+	bottom: 26px;
+	z-index: 40;
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	padding: 7px 8px 7px 16px;
+	border: 2px solid var(--ui-color-divider-default, #f0f0f0);
+	border-radius: 999px;
+	background: var(--ui-color-bg-content-primary, #fff);
+	opacity: 0;
+	pointer-events: none;
+	transform: translateX(-50%) translateY(120%);
+	transition: transform 0.28s cubic-bezier(0.2, 0.9, 0.3, 1.2), opacity 0.2s;
+}
+
+.note-bulk-actions-bar--visible {
+	opacity: 1;
+	pointer-events: auto;
+	transform: translateX(-50%) translateY(0);
+}
+
+.note-bulk-actions-bar__counter {
+	padding: 0 4px;
+	color: var(--ui-color-base-1);
+	font-size: 14px;
+	font-weight: 600;
+	white-space: nowrap;
+	font-variant-numeric: tabular-nums;
+}
+
+.note-bulk-actions-bar__divider {
+	width: 1px;
+	height: 24px;
+	margin: 0 4px;
+	background: var(--ui-color-divider-default, #f0f0f0);
+}
+
+.note-bulk-actions-bar__btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 7px 12px;
+	border: none;
+	background: none;
+	border-radius: 999px;
+	color: var(--ui-color-base-1);
+	font-size: 14px;
+	font-weight: 500;
+	line-height: 1;
+	white-space: nowrap;
+	cursor: pointer;
+	transition: background 0.12s ease, color 0.12s ease;
+	--ui-icon-set__icon-size: 18px;
+	--ui-icon-set__icon-color: var(--ui-color-base-3);
+}
+
+.note-bulk-actions-bar__btn:hover {
+	background: var(--ui-color-bg-state-hover-default);
+}
+
+.note-bulk-actions-bar__btn:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary, #2fc6f6);
+	outline-offset: 1px;
+}
+
+.note-bulk-actions-bar__btn--icon {
+	padding: 7px;
+}
+
+/* "Select all" latch engaged: highlight the button so the active all-selected state reads.
+   Matches the sidebar's active row (color-mix over the themed accent token) so both surfaces
+   render identically in light and dark. */
+.note-bulk-actions-bar__btn--active {
+	background: color-mix(in srgb, var(--ui-color-accent-main-primary) 12%, transparent);
+	color: var(--ui-color-accent-main-primary);
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary);
+}
+
+.note-bulk-actions-bar__btn--active:hover {
+	background: color-mix(in srgb, var(--ui-color-accent-main-primary) 12%, transparent);
+}
+
+.note-bulk-actions-bar__btn--danger {
+	color: var(--ui-color-accent-main-alert, #ff5752);
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-alert, #ff5752);
+}
+
+.note-bulk-actions-bar__btn--danger:hover {
+	background: color-mix(in srgb, var(--ui-color-accent-main-alert, #ff5752) 10%, transparent);
+	color: var(--ui-color-accent-main-alert, #ff5752);
+}
+
+.note-bulk-actions-bar__btn-text {
+	pointer-events: none;
+}
+
+/* Mobile: recenter the pill and drop button labels down to icon-only so the four actions
+   plus the counter fit a narrow screen without overflowing (labels live in title/aria-label). */
+.note-bulk-actions-bar--mobile {
+	left: 50%;
+	max-width: calc(100vw - 24px);
+	gap: 2px;
+	padding: 6px 8px;
+}
+
+.note-bulk-actions-bar--mobile .note-bulk-actions-bar__btn-text {
+	display: none;
+}
+
+/* Icon-only buttons become 40px squares so the tap target is large and the round hover/active
+   highlight is a true circle (a non-square button turns the 999px radius into an ellipse). */
+.note-bulk-actions-bar--mobile .note-bulk-actions-bar__btn {
+	width: 40px;
+	height: 40px;
+	padding: 0;
+	justify-content: center;
+}
+
+.note-bulk-actions-bar--mobile .note-bulk-actions-bar__btn--danger {
+	margin-left: 4px;
+}
+
+.note-bulk-actions-bar--mobile .note-bulk-actions-bar__counter {
+	padding: 0 2px 0 4px;
+	font-size: 13px;
+}
+
+.note-bulk-actions-bar--mobile .note-bulk-actions-bar__divider {
+	margin: 0 2px;
+}
+
+@media (max-width: 820px) {
+	.note-bulk-actions-bar {
+		left: 50%;
+		max-width: calc(100vw - 24px);
+		gap: 2px;
+		padding: 6px 8px;
+	}
+
+	.note-bulk-actions-bar__btn-text {
+		display: none;
+	}
+
+	.note-bulk-actions-bar__btn {
+		width: 40px;
+		height: 40px;
+		padding: 0;
+		justify-content: center;
+	}
+
+	.note-bulk-actions-bar__btn--danger {
+		margin-left: 4px;
+	}
+
+	.note-bulk-actions-bar__counter {
+		padding: 0 2px 0 4px;
+		font-size: 13px;
+	}
+
+	.note-bulk-actions-bar__divider {
+		margin: 0 2px;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.note-bulk-actions-bar {
+		transition: none;
+	}
+}

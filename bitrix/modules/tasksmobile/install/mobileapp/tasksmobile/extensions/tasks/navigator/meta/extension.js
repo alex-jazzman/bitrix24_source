@@ -13,6 +13,7 @@ jn.define('tasks/navigator/meta', (require, exports, module) => {
 	const TASKS_TABS = {
 		TASKS: 'tasks.dashboard',
 		PROJECT: 'tasks.project.list',
+		PROJECT_V2: 'tasks.project.list.v2',
 		FLOW: 'tasks.flow.list',
 		SCRUM: 'tasks.scrum.list',
 		EFFICIENCY: 'tasks.efficiency',

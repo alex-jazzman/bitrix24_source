@@ -6,7 +6,7 @@ jn.define('vibecode/catalog/src/header-controller', (require, exports, module) =
 	const { Loc } = require('loc');
 	const { Color } = require('tokens');
 	const { Icon } = require('assets/icons');
-	const { PopupMenu, PopupMenuPosition } = require('ui-system/popups/popup-menu');
+	const { PopupMenu } = require('ui-system/popups/popup-menu');
 	const {
 		CATALOG_STATE,
 		VIBECODE_CREATE_URL,
@@ -16,6 +16,7 @@ jn.define('vibecode/catalog/src/header-controller', (require, exports, module) =
 	const CATALOG_STATE_ORDER = [
 		CATALOG_STATE.ACTIVE,
 		CATALOG_STATE.HIDDEN,
+		CATALOG_STATE.NEW,
 		CATALOG_STATE.ALL,
 	];
 
@@ -196,16 +197,26 @@ jn.define('vibecode/catalog/src/header-controller', (require, exports, module) =
 			const messageId = {
 				[CATALOG_STATE.ACTIVE]: 'MOBILE_VIBECODE_CATALOG_STATE_ACTIVE',
 				[CATALOG_STATE.HIDDEN]: 'MOBILE_VIBECODE_CATALOG_STATE_HIDDEN',
+				[CATALOG_STATE.NEW]: 'MOBILE_VIBECODE_CATALOG_STATE_NEW',
 				[CATALOG_STATE.ALL]: 'MOBILE_VIBECODE_CATALOG_STATE_ALL',
 			}[state];
 
 			return Loc.getMessage(messageId);
 		}
 
+		getVisibleCatalogStates()
+		{
+			return CATALOG_STATE_ORDER.filter(
+				(state) => state !== CATALOG_STATE.NEW
+					|| this.renderer.getNewAppsCount() > 0
+					|| state === this.renderer.getCatalogState(),
+			);
+		}
+
 		handleStateFilterClick = () => {
 			this.hideStatePopupMenu();
 			this.statePopupMenu = new PopupMenu({
-				items: CATALOG_STATE_ORDER.map((state) => ({
+				items: this.getVisibleCatalogStates().map((state) => ({
 					id: `vibecode-catalog-state-${state}`,
 					testId: this.renderer.getTestId(`state-menu-${state}`),
 					title: this.getCatalogStateTitle(state),
@@ -220,9 +231,7 @@ jn.define('vibecode/catalog/src/header-controller', (require, exports, module) =
 				],
 			});
 
-			this.statePopupMenu.show({
-				position: PopupMenuPosition.TOP_RIGHT,
-			});
+			this.statePopupMenu.show();
 		};
 
 		handleCatalogStateSelected(state)

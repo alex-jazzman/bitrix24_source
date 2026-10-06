@@ -51,7 +51,23 @@
 				});
 			});
 			localRule.condition = modifiedConditions;
+			localRule.options = this.wrapRuleOptions(localRule.options);
 			return localRule;
+		}
+		static wrapRuleOptions(ruleOptions) {
+			return link => {
+				const preparedOptions = main_core.Type.isFunction(ruleOptions) ? ruleOptions(link) : ruleOptions;
+				if (!main_core.Type.isPlainObject(preparedOptions)) {
+					return preparedOptions;
+				}
+				if (preparedOptions.copyLinkLabel === true && !main_core.Type.isStringFilled(preparedOptions.newWindowUrl) && main_core.Type.isStringFilled(link == null ? void 0 : link.url)) {
+					return {
+						...preparedOptions,
+						newWindowUrl: link.url
+					};
+				}
+				return preparedOptions;
+			};
 		}
 	}
 	namespace.Router = Router;

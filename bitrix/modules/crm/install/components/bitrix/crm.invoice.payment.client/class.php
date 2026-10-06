@@ -8,6 +8,7 @@ use Bitrix\Main,
 	Bitrix\Crm\Integration,
 	Bitrix\Crm\Invoice\Invoice,
 	Bitrix\Main\Application;
+use Bitrix\Main\Web\Uri;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
@@ -144,18 +145,14 @@ class CrmInvoicePaymentClientComponent extends CBitrixComponent
 			$pathToInvoicePayment = "/pub/payment.php?invoice_id=#invoice_id#&hash=".$this->arParams['HASH'];
 
 			$this->arResult['BUTTONS'] = array(
-				'SAVE' => CHTTP::urlAddParams(
-						CComponentEngine::makePathFromTemplate(
+				'SAVE' => (string)(new Uri(CComponentEngine::makePathFromTemplate(
 							$pathToInvoicePayment,
 							array('invoice_id' => $this->arParams['ACCOUNT_NUMBER'])
-						),
-						array('pdf' => 1, 'DOWNLOAD' => 'Y', 'ncc' => '1')),
-				'PRINT' => "BX.util.popup('".CHTTP::urlAddParams(
-						CComponentEngine::makePathFromTemplate(
+						)))->addParams(array('pdf' => 1, 'DOWNLOAD' => 'Y', 'ncc' => '1')),
+				'PRINT' => "BX.util.popup('".(string)(new Uri(CComponentEngine::makePathFromTemplate(
 							$pathToInvoicePayment,
 							array('invoice_id' => $this->arParams['ACCOUNT_NUMBER'])
-						),
-						array('PRINT' => 'Y', 'ncc' => '1'))."', 960, 600)",
+						)))->addParams(array('PRINT' => 'Y', 'ncc' => '1'))."', 960, 600)",
 				"B24" => CIntranetUtils::getB24Link()
 			);
 		}

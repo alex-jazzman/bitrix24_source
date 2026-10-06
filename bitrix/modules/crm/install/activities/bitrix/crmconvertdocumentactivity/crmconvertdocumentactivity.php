@@ -6,10 +6,15 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\Crm;
+use Bitrix\Bizproc\Activity\Mixins\TargetDocumentResolverTrait;
 use Bitrix\Crm\Integration\Analytics\Dictionary;
+use Bitrix\Bizproc\Activity\Mixins\ChecksResolvedTargetAccessTrait;
 
 class CBPCrmConvertDocumentActivity extends CBPActivity
 {
+	use TargetDocumentResolverTrait;
+	use ChecksResolvedTargetAccessTrait;
+
 	public function __construct($name)
 	{
 		parent::__construct($name);
@@ -66,7 +71,7 @@ class CBPCrmConvertDocumentActivity extends CBPActivity
 
 		$this->logDebug();
 
-		$documentId = $this->GetDocumentId();
+		$documentId = $this->resolveTargetDocumentId();
 		if ($documentId[0] !== 'crm')
 		{
 			$this->WriteToTrackingService(GetMessage("CRM_CVTDA_INCORRECT_DOCUMENT"), 0, CBPTrackingType::Error);
@@ -76,6 +81,18 @@ class CBPCrmConvertDocumentActivity extends CBPActivity
 
 		[$entityTypeName, $entityId] = explode('_', $documentId[2]);
 		$entityTypeId = \CCrmOwnerType::ResolveID($entityTypeName);
+
+		$hasRequiredAccess = $entityTypeId === \CCrmOwnerType::Lead
+			? $this->canUpdateResolvedTarget($documentId)
+			: $this->canReadResolvedTarget($documentId)
+		;
+
+		if (!$hasRequiredAccess)
+		{
+			$this->logResolvedTargetAccessDenied();
+
+			return CBPActivityExecutionStatus::Closed;
+		}
 
 		if ($this->isAlreadyConverted($entityTypeId, $entityId))
 		{
@@ -181,7 +198,7 @@ class CBPCrmConvertDocumentActivity extends CBPActivity
 	{
 		$start = ConvertTimeStamp(time() + CTimeZone::GetOffset(), 'FULL');
 
-		$documentId = $this->GetDocumentId();
+		$documentId = $this->resolveTargetDocumentId();
 		[$typeName, $id] = explode('_', $documentId[2]);
 		$typeId = \CCrmOwnerType::ResolveID($typeName);
 

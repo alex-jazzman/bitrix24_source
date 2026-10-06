@@ -308,7 +308,7 @@ if($arParams['TYPE'] === 'list')
 
 	if($isMyCompanyMode)
 	{
-		$createUrl = CHTTP::urlAddParams($createUrl, ['mycompany' => 'y']);
+		$createUrl = (string)(new Uri($createUrl))->addParams(['mycompany' => 'y']);
 	}
 
 	if($arResult['CATEGORY_ID'] > 0)
@@ -504,7 +504,7 @@ if($arParams['TYPE'] === 'list')
 
 			if ($arResult['CATEGORY_ID'] > 0)
 			{
-				$dedupePath = CHTTP::urlAddParams($dedupePath, ['category_id' => $arResult['CATEGORY_ID']]);
+				$dedupePath = (string)(new Uri($dedupePath))->addParams(['category_id' => $arResult['CATEGORY_ID']]);
 			}
 
 			$arResult['BUTTONS'][] = array(
@@ -685,12 +685,10 @@ if (($arParams['TYPE'] == 'edit' || $arParams['TYPE'] == 'show') && $bAdd
 	$arResult['BUTTONS'][] = array(
 		'TEXT' => GetMessage('COMPANY_COPY'),
 		'TITLE' => GetMessage('COMPANY_COPY_TITLE'),
-		'LINK' => CHTTP::urlAddParams(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_COMPANY_EDIT'],
+		'LINK' => (string)(new Uri(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_COMPANY_EDIT'],
 			array(
 				'company_id' => $arParams['ELEMENT_ID']
-			)),
-			array('copy' => 1)
-		),
+			))))->addParams(array('copy' => 1)),
 		'ICON' => 'btn-copy'
 	);
 }
@@ -741,10 +739,7 @@ if ($arParams['TYPE'] == 'show')
 		$arResult['BUTTONS'][] = array(
 			'TEXT' => GetMessage('COMPANY_ADD_DEAL'),
 			'TITLE' => GetMessage('COMPANY_ADD_DEAL_TITLE'),
-			'LINK' => CHTTP::urlAddParams(
-				CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_DEAL_EDIT'], array('deal_id' => 0)),
-				array('company_id' => $arParams['ELEMENT_ID'])
-			),
+			'LINK' => (string)(new Uri(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_DEAL_EDIT'], array('deal_id' => 0))))->addParams(array('company_id' => $arParams['ELEMENT_ID'])),
 			'ICONCLASS' => 'btn-add-deal'
 		);
 	}
@@ -754,11 +749,9 @@ if ($arParams['TYPE'] == 'show')
 		$arResult['BUTTONS'][] = array(
 			'TEXT' => GetMessage('COMPANY_ADD_CONTACT'),
 			'TITLE' => GetMessage('COMPANY_ADD_CONTACT_TITLE'),
-			'LINK' => CHTTP::urlAddParams(
-				CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_CONTACT_EDIT'], array('contact_id' => 0)),
-				array(
+			'LINK' => (string)(new Uri(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_CONTACT_EDIT'], array('contact_id' => 0))))->addParams(array(
 					'company_id' => $arParams['ELEMENT_ID'],
-					'backurl' => urlencode($APPLICATION->GetCurPage())
+					'backurl' => $APPLICATION->GetCurPage(),
 				)
 			),
 			'ICONCLASS' => 'btn-add-contact'
@@ -771,12 +764,10 @@ if (($arParams['TYPE'] == 'edit' || $arParams['TYPE'] == 'show') && $bDelete && 
 	$arResult['BUTTONS'][] = array(
 		'TEXT' => Loc::getMessage('COMPANY_DELETE'),
 		'TITLE' => Loc::getMessage('COMPANY_DELETE_TITLE'),
-		'LINK' => "javascript:company_delete('".GetMessage('COMPANY_DELETE_DLG_TITLE')."', '".GetMessage('COMPANY_DELETE_DLG_MESSAGE')."', '".GetMessage('COMPANY_DELETE_DLG_BTNTITLE')."', '".CHTTP::urlAddParams(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_COMPANY_EDIT'],
+		'LINK' => "javascript:company_delete('".GetMessage('COMPANY_DELETE_DLG_TITLE')."', '".GetMessage('COMPANY_DELETE_DLG_MESSAGE')."', '".GetMessage('COMPANY_DELETE_DLG_BTNTITLE')."', '".(string)(new Uri(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_COMPANY_EDIT'],
 			array(
 				'company_id' => $arParams['ELEMENT_ID']
-			)),
-			array('delete' => '', 'sessid' => bitrix_sessid())
-		)."')",
+			))))->addParams(array('delete' => '', 'sessid' => bitrix_sessid()))."')",
 		'ICON' => 'btn-delete'
 	);
 }

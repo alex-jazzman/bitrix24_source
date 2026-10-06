@@ -1,5 +1,5 @@
 <?php
-$MESS["NOTTRANSLATE__LANDING_DEMO_STORE_MINI_ONE_ELEMENT_HANDMADE__TEXT1"] = "<p>Мы изготавливаем различные украшения: кольца, серьги, кулоны, браслеты. <br /><span style=\"font-size: 1.14286rem;\">У нас есть как готовые украшение, так и под заказ!</span></p>";
+$MESS["NOTTRANSLATE__LANDING_DEMO_STORE_MINI_ONE_ELEMENT_HANDMADE__TEXT1"] = "<p>Мы изготавливаем различные украшения: кольца, серьги, кулоны, браслеты. <br /><span style=\"font-size: 1.14286rem;\">У нас есть как готовые украшения, так и под заказ!</span></p>";
 $MESS["NOTTRANSLATE__LANDING_DEMO_STORE_MINI_ONE_ELEMENT_HANDMADE__TEXT2"] = "<p>Мы изготавливаем украшения на любой вкус, которые моментально разбирают. И каждую модель можно повторить!</p>";
 $MESS["NOTTRANSLATE__LANDING_DEMO_STORE_MINI_ONE_ELEMENT_HANDMADE__TEXT3"] = "<p>За время работы нашего магазинчика, мы осчастливили огромное количество людей!</p>";
 $MESS["NOTTRANSLATE__LANDING_DEMO_STORE_MINI_ONE_ELEMENT_HANDMADE__TEXT4"] = "<p>Наши возможности не ограничиваются готовыми украшениями, мы всегда готовы сделать что-либо на заказ!</p>";

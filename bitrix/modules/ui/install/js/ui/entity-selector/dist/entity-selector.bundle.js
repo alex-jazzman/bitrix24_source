@@ -1,106 +1,88 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.UI = this.BX.UI || {};
-(function (exports, main_core, main_core_events, main_popup, main_loader, main_core_collections, ui_iconSet_api_core) {
+(function (exports, ui_designTokens, ui_iconSet_solid, main_core, main_core_cache, main_core_events, main_popup, main_loader, ui_a11y, main_core_collections, ui_iconSet_api_core) {
 	'use strict';
 
-	let ItemNodeComparator = /*#__PURE__*/function () {
-		function ItemNodeComparator() {
-			babelHelpers.classCallCheck(this, ItemNodeComparator);
-		}
-		return babelHelpers.createClass(ItemNodeComparator, null, [{
-			key: "makeMultipleComparator",
-			value: function makeMultipleComparator(order) {
-				const props = Object.keys(order).map(property => `get${main_core.Text.capitalize(property)}`);
-
-				/*
-				asc *
-				asc nulls last *
-				asc nulls first
-					desc *
-				desc nulls first *
-				desc nulls last
-				*/
-				const directions = [];
-				Object.values(order).forEach(element => {
-					const direction = element.toLowerCase().trim();
-
-					// Default sorting: 'asc' || 'asc nulls last'
-					let ascOrdering = true;
-					let nullsOrdering = true;
-					if (direction === 'desc' || direction === 'desc nulls first') {
-						ascOrdering = false;
-					} else if (direction === 'asc nulls first') {
-						nullsOrdering = false;
-					} else if (direction === 'desc nulls last') {
-						ascOrdering = false;
-						nullsOrdering = false;
-					}
-					directions.push({
-						ascOrdering,
-						nullsOrdering
-					});
-				});
-				const numberOfProperties = props.length;
-				return (nodeA, nodeB) => {
-					let i = 0;
-					let result = 0;
-					while (result === 0 && i < numberOfProperties) {
-						const propertyGetter = props[i];
-						const direction = directions[i];
-						result = this.compareItemNodes(nodeA, nodeB, propertyGetter, direction.ascOrdering, direction.nullsOrdering);
-						i += 1;
-					}
-					return result;
-				};
-			}
-		}, {
-			key: "compareItemNodes",
-			value: function compareItemNodes(nodeA, nodeB, propertyGetter, ascOrdering, nullsOrdering) {
-				const itemA = nodeA.getItem();
-				const itemB = nodeB.getItem();
-				itemA.getCustomData().get();
-				const valueA = itemA[propertyGetter]();
-				const valueB = itemB[propertyGetter]();
-				let result = 0;
-				if (valueA !== null && valueB === null) {
-					result = nullsOrdering ? -1 : 1;
-				} else if (valueA === null && valueB !== null) {
-					result = nullsOrdering ? 1 : -1;
-				} else if (valueA === null && valueB === null) {
-					result = ascOrdering ? -1 : 1;
-				} else {
-					if (main_core.Type.isString(valueA)) {
-						result = valueA.localeCompare(valueB);
-					} else {
-						result = valueA - valueB;
-					}
+	class ItemNodeComparator {
+		static makeMultipleComparator(order) {
+			const props = Object.keys(order).map(property => `get${main_core.Text.capitalize(property)}`);
+			const directions = [];
+			Object.values(order).forEach(element => {
+				const direction = element.toLowerCase().trim();
+				let ascOrdering = true;
+				let nullsOrdering = true;
+				switch (direction) {
+					case 'desc':
+					case 'desc nulls first':
+						{
+							ascOrdering = false;
+							break;
+						}
+					case 'asc nulls first':
+						{
+							nullsOrdering = false;
+							break;
+						}
+					case 'desc nulls last':
+						{
+							ascOrdering = false;
+							nullsOrdering = false;
+							break;
+						}
 				}
-				const sortOrder = ascOrdering ? 1 : -1;
-				return result * sortOrder;
-			}
-		}]);
-	}();
-
-	let TextNodeType = /*#__PURE__*/function () {
-		function TextNodeType() {
-			babelHelpers.classCallCheck(this, TextNodeType);
+				directions.push({
+					ascOrdering,
+					nullsOrdering
+				});
+			});
+			const numberOfProperties = props.length;
+			return (nodeA, nodeB) => {
+				let i = 0;
+				let result = 0;
+				while (result === 0 && i < numberOfProperties) {
+					const propertyGetter = props[i];
+					const direction = directions[i];
+					result = this.compareItemNodes(nodeA, nodeB, propertyGetter, direction.ascOrdering, direction.nullsOrdering);
+					i += 1;
+				}
+				return result;
+			};
 		}
-		return babelHelpers.createClass(TextNodeType, null, [{
-			key: "isValid",
-			value: function isValid(type) {
-				return main_core.Type.isString(type) && (type === this.HTML || type === this.TEXT);
+		static compareItemNodes(nodeA, nodeB, propertyGetter, ascOrdering, nullsOrdering) {
+			const itemA = nodeA.getItem();
+			const itemB = nodeB.getItem();
+			const valueA = itemA[propertyGetter]();
+			const valueB = itemB[propertyGetter]();
+			let result = 0;
+			if (valueA !== null && valueB === null) {
+				result = nullsOrdering ? -1 : 1;
+			} else if (valueA === null && valueB !== null) {
+				result = nullsOrdering ? 1 : -1;
+			} else if (valueA === null && valueB === null) {
+				result = ascOrdering ? -1 : 1;
+			} else if (main_core.Type.isString(valueA)) {
+				result = valueA.localeCompare(valueB);
+			} else {
+				result = valueA - valueB;
 			}
-		}]);
-	}();
-	babelHelpers.defineProperty(TextNodeType, "TEXT", 'text');
-	babelHelpers.defineProperty(TextNodeType, "HTML", 'html');
+			const sortOrder = ascOrdering ? 1 : -1;
+			return result * sortOrder;
+		}
+	}
 
-	let TextNode = /*#__PURE__*/function () {
-		function TextNode(options) {
-			babelHelpers.classCallCheck(this, TextNode);
-			babelHelpers.defineProperty(this, "text", null);
-			babelHelpers.defineProperty(this, "type", null);
+	class TextNodeType {
+		static TEXT = 'text';
+		static HTML = 'html';
+		static isValid(type) {
+			return main_core.Type.isString(type) && (type === this.HTML || type === this.TEXT);
+		}
+	}
+
+	class TextNode {
+		text = null;
+		type = null;
+		constructor(options) {
 			if (main_core.Type.isPlainObject(options)) {
 				if (main_core.Type.isString(options.text)) {
 					this.text = options.text;
@@ -112,420 +94,215 @@ this.BX.UI = this.BX.UI || {};
 				this.text = options;
 			}
 		}
-		return babelHelpers.createClass(TextNode, [{
-			key: "getText",
-			value: function getText() {
-				return this.text;
+		getText() {
+			return this.text;
+		}
+		getType() {
+			return this.type;
+		}
+		isNullable() {
+			return this.getText() === null;
+		}
+		renderTo(element) {
+			const text = this.getText();
+			if (text === null) {
+				return;
 			}
-		}, {
-			key: "getType",
-			value: function getType() {
-				return this.type;
+			if (this.getType() === null || this.getType() === TextNodeType.TEXT) {
+				element.textContent = text;
+			} else if (this.getType() === TextNodeType.HTML) {
+				element.innerHTML = text;
 			}
-		}, {
-			key: "isNullable",
-			value: function isNullable() {
-				return this.getText() === null;
+		}
+		toString() {
+			return this.getText() ?? '';
+		}
+		toJSON() {
+			if (this.getType() === null) {
+				return this.getText();
 			}
-		}, {
-			key: "renderTo",
-			value: function renderTo(element) {
-				const text = this.getText();
-				if (text === null) {
+			return {
+				text: this.getText(),
+				type: this.getType()
+			};
+		}
+	}
+
+	class Highlighter {
+		static mark(text, matches) {
+			let encode = true;
+			if (text instanceof TextNode) {
+				if (text.getType() === 'html') {
+					encode = false;
+				}
+				text = text.getText();
+			}
+			if (!main_core.Type.isStringFilled(text) || !matches || matches.count() === 0) {
+				return text;
+			}
+			const str = text;
+			let result = '';
+			let offset = 0;
+			let chunk = '';
+			matches.forEach(match => {
+				if (offset > match.getStartIndex()) {
 					return;
 				}
-				if (this.getType() === null || this.getType() === TextNodeType.TEXT) {
-					element.textContent = text;
-				} else if (this.getType() === TextNodeType.HTML) {
-					element.innerHTML = text;
-				}
-			}
-		}, {
-			key: "toString",
-			value: function toString() {
-				return this.getText() ?? '';
-			}
-		}, {
-			key: "toJSON",
-			value: function toJSON() {
-				if (this.getType() === null) {
-					return this.getText();
-				} else {
-					return {
-						text: this.getText(),
-						type: this.getType()
-					};
-				}
-			}
-		}]);
-	}();
-
-	let Highlighter = /*#__PURE__*/function () {
-		function Highlighter() {
-			babelHelpers.classCallCheck(this, Highlighter);
-		}
-		return babelHelpers.createClass(Highlighter, null, [{
-			key: "mark",
-			value: function mark(text, matches) {
-				let encode = true;
-				if (text instanceof TextNode) {
-					if (text.getType() === 'html') {
-						encode = false;
-					}
-					text = text.getText();
-				}
-				if (!main_core.Type.isStringFilled(text) || !matches || matches.count() === 0) {
-					return text;
-				}
-				let result = '';
-				let offset = 0;
-				let chunk = '';
-				matches.forEach(match => {
-					if (offset > match.getStartIndex()) {
-						return;
-					}
-					chunk = text.substring(offset, match.getStartIndex());
-					result += encode ? main_core.Text.encode(chunk) : chunk;
-					result += '<span class="ui-selector-highlight-mark">';
-					chunk = text.substring(match.getStartIndex(), match.getEndIndex());
-					result += encode ? main_core.Text.encode(chunk) : chunk;
-					result += '</span>';
-					offset = match.getEndIndex();
-				});
-				chunk = text.substring(offset);
+				chunk = str.substring(offset, match.getStartIndex());
 				result += encode ? main_core.Text.encode(chunk) : chunk;
-				return result;
-			}
-		}]);
-	}();
+				result += '<span class="ui-selector-highlight-mark">';
+				chunk = str.substring(match.getStartIndex(), match.getEndIndex());
+				result += encode ? main_core.Text.encode(chunk) : chunk;
+				result += '</span>';
+				offset = match.getEndIndex();
+			});
+			chunk = str.substring(offset);
+			result += encode ? main_core.Text.encode(chunk) : chunk;
+			return result;
+		}
+	}
 
-	let ItemBadge = /*#__PURE__*/function () {
-		function ItemBadge(badgeOptions) {
-			babelHelpers.classCallCheck(this, ItemBadge);
-			babelHelpers.defineProperty(this, "title", null);
-			babelHelpers.defineProperty(this, "textColor", null);
-			babelHelpers.defineProperty(this, "bgColor", null);
-			babelHelpers.defineProperty(this, "border", null);
-			babelHelpers.defineProperty(this, "containers", new WeakMap());
+	class ItemBadge {
+		title = null;
+		textColor = null;
+		bgColor = null;
+		border = null;
+		containers = new WeakMap();
+		constructor(badgeOptions) {
 			const options = main_core.Type.isPlainObject(badgeOptions) ? badgeOptions : {};
 			this.setTitle(options.title);
 			this.setTextColor(options.textColor);
 			this.setBgColor(options.bgColor);
-			this.setBorder(options.border);
+			this.setBorder(options.border ?? null);
 		}
-		return babelHelpers.createClass(ItemBadge, [{
-			key: "getTitle",
-			value: function getTitle() {
-				const titleNode = this.getTitleNode();
-				return titleNode !== null && !titleNode.isNullable() ? titleNode.getText() : '';
+		getTitle() {
+			const titleNode = this.getTitleNode();
+			return titleNode !== null && !titleNode.isNullable() ? titleNode.getText() : '';
+		}
+		getTitleNode() {
+			return this.title;
+		}
+		setTitle(title) {
+			if (main_core.Type.isStringFilled(title) || main_core.Type.isPlainObject(title) || title === null) {
+				this.title = title === null ? null : new TextNode(title);
 			}
-		}, {
-			key: "getTitleNode",
-			value: function getTitleNode() {
-				return this.title;
+		}
+		getTextColor() {
+			return this.textColor;
+		}
+		setTextColor(textColor) {
+			if (main_core.Type.isString(textColor) || textColor === null) {
+				this.textColor = textColor;
 			}
-		}, {
-			key: "setTitle",
-			value: function setTitle(title) {
-				if (main_core.Type.isStringFilled(title) || main_core.Type.isPlainObject(title) || title === null) {
-					this.title = title === null ? null : new TextNode(title);
-				}
+		}
+		getBgColor() {
+			return this.bgColor;
+		}
+		setBgColor(bgColor) {
+			if (main_core.Type.isString(bgColor) || bgColor === null) {
+				this.bgColor = bgColor;
 			}
-		}, {
-			key: "getTextColor",
-			value: function getTextColor() {
-				return this.textColor;
+		}
+		getBorder() {
+			return this.border;
+		}
+		setBorder(border) {
+			if (main_core.Type.isString(border) || border === null) {
+				this.border = border;
 			}
-		}, {
-			key: "setTextColor",
-			value: function setTextColor(textColor) {
-				if (main_core.Type.isString(textColor) || textColor === null) {
-					this.textColor = textColor;
-				}
+		}
+		getContainer(target) {
+			let container = this.containers.get(target);
+			if (!container) {
+				container = document.createElement('span');
+				container.className = 'ui-selector-item-badge';
+				this.containers.set(target, container);
 			}
-		}, {
-			key: "getBgColor",
-			value: function getBgColor() {
-				return this.bgColor;
+			return container;
+		}
+		renderTo(target) {
+			const container = this.getContainer(target);
+			const titleNode = this.getTitleNode();
+			if (titleNode) {
+				titleNode.renderTo(container);
+			} else {
+				container.textContent = '';
 			}
-		}, {
-			key: "setBgColor",
-			value: function setBgColor(bgColor) {
-				if (main_core.Type.isString(bgColor) || bgColor === null) {
-					this.bgColor = bgColor;
-				}
-			}
-		}, {
-			key: "getBorder",
-			value: function getBorder() {
-				return this.border;
-			}
-		}, {
-			key: "setBorder",
-			value: function setBorder(border) {
-				if (main_core.Type.isString(border) || border === null) {
-					this.border = border;
-				}
-			}
-		}, {
-			key: "getContainer",
-			value: function getContainer(target) {
-				let container = this.containers.get(target);
-				if (!container) {
-					container = document.createElement('span');
-					container.className = 'ui-selector-item-badge';
-					this.containers.set(target, container);
-				}
-				return container;
-			}
-		}, {
-			key: "renderTo",
-			value: function renderTo(target) {
-				const container = this.getContainer(target);
-				const titleNode = this.getTitleNode();
-				if (titleNode) {
-					this.getTitleNode().renderTo(container);
-				} else {
-					container.textContent = '';
-				}
-				main_core.Dom.style(container, 'color', this.getTextColor());
-				main_core.Dom.style(container, 'background-color', this.getBgColor());
-				main_core.Dom.style(container, 'border', this.getBorder());
-				main_core.Dom.append(container, target);
-			}
-		}, {
-			key: "toJSON",
-			value: function toJSON() {
-				return {
-					title: this.getTitleNode(),
-					textColor: this.getTextColor(),
-					bgColor: this.getBgColor(),
-					border: this.getBorder()
-				};
-			}
-		}]);
-	}();
+			main_core.Dom.style(container, 'color', this.getTextColor());
+			main_core.Dom.style(container, 'background-color', this.getBgColor());
+			main_core.Dom.style(container, 'border', this.getBorder());
+			main_core.Dom.append(container, target);
+		}
+		toJSON() {
+			return {
+				title: this.getTitleNode(),
+				textColor: this.getTextColor(),
+				bgColor: this.getBgColor(),
+				border: this.getBorder()
+			};
+		}
+	}
 
-	let SearchField = /*#__PURE__*/function () {
-		function SearchField(fieldOptions) {
-			babelHelpers.classCallCheck(this, SearchField);
-			babelHelpers.defineProperty(this, "name", null);
-			babelHelpers.defineProperty(this, "type", 'string');
-			babelHelpers.defineProperty(this, "searchable", true);
-			babelHelpers.defineProperty(this, "system", false);
-			babelHelpers.defineProperty(this, "sort", null);
-			const options = main_core.Type.isPlainObject(fieldOptions) ? fieldOptions : {};
-			if (!main_core.Type.isStringFilled(options.name)) {
-				throw new Error('EntitySelector.SearchField: "name" parameter is required.');
-			}
-			this.name = options.name;
-			this.setType(options.type);
-			this.setSystem(options.system);
-			this.setSort(options.sort);
-			this.setSearchable(options.searchable);
-		}
-		return babelHelpers.createClass(SearchField, [{
-			key: "getName",
-			value: function getName() {
-				return this.name;
-			}
-		}, {
-			key: "getType",
-			value: function getType() {
-				return this.type;
-			}
-		}, {
-			key: "setType",
-			value: function setType(type) {
-				if (main_core.Type.isStringFilled(type)) {
-					this.type = type;
-				}
-			}
-		}, {
-			key: "getSort",
-			value: function getSort() {
-				return this.sort;
-			}
-		}, {
-			key: "setSort",
-			value: function setSort(sort) {
-				if (main_core.Type.isNumber(sort) || sort === null) {
-					this.sort = sort;
-				}
-			}
-		}, {
-			key: "setSearchable",
-			value: function setSearchable(flag) {
-				if (main_core.Type.isBoolean(flag)) {
-					this.searchable = flag;
-				}
-			}
-		}, {
-			key: "isSearchable",
-			value: function isSearchable() {
-				return this.searchable;
-			}
-		}, {
-			key: "setSystem",
-			value: function setSystem(flag) {
-				if (main_core.Type.isBoolean(flag)) {
-					this.system = flag;
-				}
-			}
-		}, {
-			key: "isCustom",
-			value: function isCustom() {
-				return !this.isSystem();
-			}
-		}, {
-			key: "isSystem",
-			value: function isSystem() {
-				return this.system;
-			}
-		}]);
-	}();
-
-	let MatchIndex = /*#__PURE__*/function () {
-		function MatchIndex(field, queryWord, startIndex) {
-			babelHelpers.classCallCheck(this, MatchIndex);
-			babelHelpers.defineProperty(this, "field", null);
-			babelHelpers.defineProperty(this, "queryWord", null);
-			babelHelpers.defineProperty(this, "startIndex", null);
-			babelHelpers.defineProperty(this, "endIndex", null);
-			this.field = field;
-			this.queryWord = queryWord;
-			this.startIndex = startIndex;
-			this.endIndex = startIndex + queryWord.length;
-		}
-		return babelHelpers.createClass(MatchIndex, [{
-			key: "getField",
-			value: function getField() {
-				return this.field;
-			}
-		}, {
-			key: "getQueryWord",
-			value: function getQueryWord() {
-				return this.queryWord;
-			}
-		}, {
-			key: "getStartIndex",
-			value: function getStartIndex() {
-				return this.startIndex;
-			}
-		}, {
-			key: "getEndIndex",
-			value: function getEndIndex() {
-				return this.endIndex;
-			}
-		}]);
-	}();
-
-	const comparator = (a, b) => {
-		if (a.getStartIndex() === b.getStartIndex()) {
-			return a.getEndIndex() > b.getEndIndex() ? -1 : 1;
-		} else {
-			return a.getStartIndex() > b.getStartIndex() ? 1 : -1;
-		}
-	};
-	let MatchField = /*#__PURE__*/function () {
-		function MatchField(field, indexes = []) {
-			babelHelpers.classCallCheck(this, MatchField);
-			babelHelpers.defineProperty(this, "field", null);
-			babelHelpers.defineProperty(this, "matchIndexes", new main_core_collections.OrderedArray(comparator));
-			this.field = field;
-			this.addIndexes(indexes);
-		}
-		return babelHelpers.createClass(MatchField, [{
-			key: "getField",
-			value: function getField() {
-				return this.field;
-			}
-		}, {
-			key: "getMatches",
-			value: function getMatches() {
-				return this.matchIndexes;
-			}
-		}, {
-			key: "addIndex",
-			value: function addIndex(matchIndex) {
-				this.matchIndexes.add(matchIndex);
-			}
-		}, {
-			key: "addIndexes",
-			value: function addIndexes(matchIndexes) {
-				if (main_core.Type.isArray(matchIndexes)) {
-					matchIndexes.forEach(matchIndex => {
-						this.addIndex(matchIndex);
-					});
-				}
-			}
-		}]);
-	}();
-
-	let Animation = /*#__PURE__*/function () {
-		function Animation() {
-			babelHelpers.classCallCheck(this, Animation);
-		}
-		return babelHelpers.createClass(Animation, null, [{
-			key: "handleTransitionEnd",
-			value: function handleTransitionEnd(element, propertyName) {
-				const properties = main_core.Type.isArray(propertyName) ? new Set(propertyName) : new Set([propertyName]);
-				const computed = getComputedStyle(element);
-				const durations = computed.transitionDuration.split(',').map(v => parseFloat(v) * 1000);
-				const delays = computed.transitionDelay.split(',').map(v => parseFloat(v) * 1000);
-				const timeout = Math.max(...durations.map((d, i) => d + (delays[i] ?? delays[0] ?? 0)), 0) + 50;
-				return new Promise(resolve => {
-					let finished = false;
-					let timer = null;
-					const finish = event => {
-						if (finished) {
-							return;
-						}
-						finished = true;
-						if (timer !== null) {
-							clearTimeout(timer);
-						}
-						main_core.Event.unbind(element, 'transitionend', handler);
-						resolve(event);
-					};
-					const handler = event => {
-						if (event.target !== element || !properties.has(event.propertyName)) {
-							return;
-						}
-						properties.delete(event.propertyName);
-						if (properties.size === 0) {
-							finish(event);
-						}
-					};
-					if (timeout <= 50) {
-						queueMicrotask(() => finish(null));
+	class Animation {
+		static handleTransitionEnd(element, propertyName) {
+			const properties = main_core.Type.isArray(propertyName) ? new Set(propertyName) : new Set([propertyName]);
+			const computed = getComputedStyle(element);
+			const durations = computed.transitionDuration.split(',').map(v => parseFloat(v) * 1000);
+			const delays = computed.transitionDelay.split(',').map(v => parseFloat(v) * 1000);
+			const timeout = Math.max(...durations.map((d, i) => d + (delays[i] ?? delays[0] ?? 0)), 0) + 50;
+			return new Promise(resolve => {
+				let finished = false;
+				let timer = null;
+				const finish = event => {
+					if (finished) {
 						return;
 					}
-					main_core.Event.bind(element, 'transitionend', handler);
-					timer = setTimeout(() => {
-						finish(null);
-					}, timeout);
-				});
-			}
-		}, {
-			key: "handleAnimationEnd",
-			value: function handleAnimationEnd(element, animationName) {
-				return new Promise(resolve => {
-					const handler = event => {
-						if (!animationName || event.animationName === animationName) {
-							resolve(event);
-							main_core.Event.unbind(element, 'animationend', handler);
-						}
-					};
-					main_core.Event.bind(element, 'animationend', handler);
-				});
-			}
-		}]);
-	}();
+					finished = true;
+					if (timer !== null) {
+						clearTimeout(timer);
+					}
+					main_core.Event.unbind(element, 'transitionend', handler);
+					resolve(event);
+				};
+				const handler = event => {
+					if (event.target !== element || !properties.has(event.propertyName)) {
+						return;
+					}
+					properties.delete(event.propertyName);
+					if (properties.size === 0) {
+						finish(event);
+					}
+				};
+				if (timeout <= 50) {
+					queueMicrotask(() => finish(null));
+					return;
+				}
+				main_core.Event.bind(element, 'transitionend', handler);
+				timer = setTimeout(() => {
+					finish(null);
+				}, timeout);
+			});
+		}
+		static handleAnimationEnd(element, animationName) {
+			return new Promise(resolve => {
+				const handler = event => {
+					if (!animationName || event.animationName === animationName) {
+						resolve(event);
+						main_core.Event.unbind(element, 'animationend', handler);
+					}
+				};
+				main_core.Event.bind(element, 'animationend', handler);
+			});
+		}
+	}
 
-	const regexp = /^data:((?:\w+\/(?:(?!;).)+)?)((?:;[\w\W]*?[^;])*),(.+)$/;
+	function isItem(item) {
+		return item instanceof Item;
+	}
+
+	const regexp = /^data:((?:\w+\/(?:(?!;).)+)?)((?:;[\W\w]*?[^;])*),(.+)$/;
 	const isDataUri = str => {
-		return typeof str === 'string' ? str.match(regexp) : false;
+		return main_core.Type.isString(str) ? str.match(regexp) !== null : false;
 	};
 	function encodeUrl(url) {
 		if (isDataUri(url)) {
@@ -534,50 +311,43 @@ this.BX.UI = this.BX.UI || {};
 		return encodeURI(url);
 	}
 
-	var _ItemNode;
-	function _classPrivateMethodInitSpec$1(e, a) { _checkPrivateRedeclaration$3(e, a), a.add(e); }
-	function _checkPrivateRedeclaration$3(e, t) { if (t.has(e)) throw new TypeError("Cannot initialize the same private elements twice on an object"); }
-	function _assertClassBrand$4(e, t, n) { if ("function" == typeof e ? e === t : e.has(t)) return arguments.length < 3 ? t : n; throw new TypeError("Private element is not present on this object"); }
-	let RenderMode = /*#__PURE__*/babelHelpers.createClass(function RenderMode() {
-		babelHelpers.classCallCheck(this, RenderMode);
-	});
-	babelHelpers.defineProperty(RenderMode, "PARTIAL", 'partial');
-	babelHelpers.defineProperty(RenderMode, "OVERRIDE", 'override');
-	var _ItemNode_brand = /*#__PURE__*/new WeakSet();
-	let ItemNode = /*#__PURE__*/function () {
-		function ItemNode(item, nodeOptions) {
-			babelHelpers.classCallCheck(this, ItemNode);
-			_classPrivateMethodInitSpec$1(this, _ItemNode_brand);
-			babelHelpers.defineProperty(this, "item", null);
-			babelHelpers.defineProperty(this, "tab", null);
-			babelHelpers.defineProperty(this, "cache", new main_core.Cache.MemoryCache());
-			babelHelpers.defineProperty(this, "parentNode", null);
-			babelHelpers.defineProperty(this, "children", null);
-			babelHelpers.defineProperty(this, "childItems", new WeakMap());
-			// for the fast access
-			babelHelpers.defineProperty(this, "loaded", false);
-			babelHelpers.defineProperty(this, "dynamic", false);
-			babelHelpers.defineProperty(this, "dynamicPromise", null);
-			babelHelpers.defineProperty(this, "loader", null);
-			babelHelpers.defineProperty(this, "open", false);
-			babelHelpers.defineProperty(this, "autoOpen", false);
-			babelHelpers.defineProperty(this, "focused", false);
-			babelHelpers.defineProperty(this, "renderMode", RenderMode.PARTIAL);
-			babelHelpers.defineProperty(this, "title", null);
-			babelHelpers.defineProperty(this, "subtitle", null);
-			babelHelpers.defineProperty(this, "supertitle", null);
-			babelHelpers.defineProperty(this, "caption", null);
-			babelHelpers.defineProperty(this, "captionOptions", {});
-			babelHelpers.defineProperty(this, "avatar", null);
-			babelHelpers.defineProperty(this, "avatarOptions", null);
-			babelHelpers.defineProperty(this, "link", null);
-			babelHelpers.defineProperty(this, "linkTitle", null);
-			babelHelpers.defineProperty(this, "textColor", null);
-			babelHelpers.defineProperty(this, "badges", null);
-			babelHelpers.defineProperty(this, "badgesOptions", {});
-			babelHelpers.defineProperty(this, "hidden", false);
-			babelHelpers.defineProperty(this, "highlights", []);
-			babelHelpers.defineProperty(this, "renderWithDebounce", main_core.Runtime.debounce(this.render, 50, this));
+	class RenderMode {
+		static PARTIAL = 'partial';
+		static OVERRIDE = 'override';
+	}
+	class ItemNode {
+		item = null;
+		tab = null;
+		id;
+		cache = new main_core_cache.MemoryCache();
+		parentNode = null;
+		children;
+		childItems = new WeakMap();
+		loaded = false;
+		dynamic = false;
+		dynamicPromise = null;
+		loader = null;
+		open = false;
+		autoOpen = false;
+		focused = false;
+		renderMode = RenderMode.PARTIAL;
+		title = null;
+		subtitle = null;
+		supertitle = null;
+		caption = null;
+		captionOptions = {};
+		avatar = null;
+		avatarOptions = null;
+		link = null;
+		linkTitle = null;
+		textColor = null;
+		badges = null;
+		badgesOptions = {};
+		hidden = false;
+		highlights = [];
+		rendered = false;
+		renderWithDebounce = main_core.Runtime.debounce(this.render, 50, this);
+		constructor(item, nodeOptions) {
 			const options = main_core.Type.isPlainObject(nodeOptions) ? nodeOptions : {};
 			if (main_core.Type.isObject(item)) {
 				this.item = item;
@@ -588,6 +358,7 @@ this.BX.UI = this.BX.UI || {};
 			} else if (main_core.Type.isPlainObject(options.itemOrder)) {
 				comparator = ItemNodeComparator.makeMultipleComparator(options.itemOrder);
 			}
+			this.id = main_core.Text.getRandom();
 			this.children = new main_core_collections.OrderedArray(comparator);
 			this.renderMode = options.renderMode === RenderMode.OVERRIDE ? RenderMode.OVERRIDE : RenderMode.PARTIAL;
 			if (this.renderMode === RenderMode.OVERRIDE) {
@@ -637,1333 +408,1110 @@ this.BX.UI = this.BX.UI || {};
 			this.setDynamic(options.dynamic);
 			this.setOpen(options.open);
 		}
-		return babelHelpers.createClass(ItemNode, [{
-			key: "getItem",
-			value: function getItem() {
-				return this.item;
+		getItem() {
+			return this.item;
+		}
+		isRoot() {
+			return this.getParentNode() === null;
+		}
+		getId() {
+			return this.id;
+		}
+		getDialog() {
+			return this.getTab().getDialog();
+		}
+		setTab(tab) {
+			this.tab = tab;
+		}
+		getTab() {
+			return this.tab;
+		}
+		getParentNode() {
+			return this.parentNode;
+		}
+		setParentNode(parentNode) {
+			this.parentNode = parentNode;
+		}
+		getNextSibling() {
+			if (!this.getParentNode()) {
+				return null;
 			}
-		}, {
-			key: "isRoot",
-			value: function isRoot() {
-				return this.getParentNode() === null;
+			const siblings = this.getParentNode().getChildren();
+			const index = siblings.getIndex(this);
+			return siblings.getByIndex(index + 1);
+		}
+		getPreviousSibling() {
+			if (!this.getParentNode()) {
+				return null;
 			}
-		}, {
-			key: "getDialog",
-			value: function getDialog() {
-				return this.getTab().getDialog();
+			const siblings = this.getParentNode().getChildren();
+			const index = siblings.getIndex(this);
+			return siblings.getByIndex(index - 1);
+		}
+		addChildren(children) {
+			if (!main_core.Type.isArray(children)) {
+				return;
 			}
-		}, {
-			key: "setTab",
-			value: function setTab(tab) {
-				this.tab = tab;
+			children.forEach(childOptions => {
+				delete childOptions.tabs;
+				const childItem = this.getDialog().addItem(childOptions);
+				const childNode = this.addItem(childItem, childOptions.nodeOptions);
+				childNode.addChildren(childOptions.children);
+			});
+		}
+		addChild(child) {
+			if (!(child instanceof ItemNode)) {
+				throw new TypeError('EntitySelector.ItemNode: an item must be an instance of EntitySelector.ItemNode.');
 			}
-		}, {
-			key: "getTab",
-			value: function getTab() {
-				return this.tab;
+			if (this.isChildOf(child) || child === this) {
+				throw new Error('EntitySelector.ItemNode: a child item cannot be a parent of current item.');
 			}
-		}, {
-			key: "getParentNode",
-			value: function getParentNode() {
-				return this.parentNode;
+			if (this.getChildren().has(child) || this.childItems.has(child.getItem())) {
+				return null;
 			}
-		}, {
-			key: "setParentNode",
-			value: function setParentNode(parentNode) {
-				this.parentNode = parentNode;
+			this.getChildren().add(child);
+			this.childItems.set(child.getItem(), child);
+			child.setTab(this.getTab());
+			child.setParentNode(this);
+			if (this.isRendered()) {
+				this.renderWithDebounce();
 			}
-		}, {
-			key: "getNextSibling",
-			value: function getNextSibling() {
-				if (!this.getParentNode()) {
-					return null;
-				}
-				const siblings = this.getParentNode().getChildren();
-				const index = siblings.getIndex(this);
-				return siblings.getByIndex(index + 1);
+			return child;
+		}
+		getDepthLevel() {
+			return this.isRoot() ? 0 : this.getParentNode().getDepthLevel() + 1;
+		}
+		addItem(item, nodeOptions) {
+			let itemNode = this.childItems.get(item);
+			if (!itemNode) {
+				itemNode = item.createNode(nodeOptions);
+				this.addChild(itemNode);
 			}
-		}, {
-			key: "getPreviousSibling",
-			value: function getPreviousSibling() {
-				if (!this.getParentNode()) {
-					return null;
-				}
-				const siblings = this.getParentNode().getChildren();
-				const index = siblings.getIndex(this);
-				return siblings.getByIndex(index - 1);
-			}
-		}, {
-			key: "addChildren",
-			value: function addChildren(children) {
-				if (!main_core.Type.isArray(children)) {
-					return;
-				}
-				children.forEach(childOptions => {
-					delete childOptions.tabs;
-					const childItem = this.getDialog().addItem(childOptions);
-					const childNode = this.addItem(childItem, childOptions.nodeOptions);
-					childNode.addChildren(childOptions.children);
+			return itemNode;
+		}
+		addItems(items) {
+			if (main_core.Type.isArray(items)) {
+				this.disableRender();
+				items.forEach(item => {
+					if (main_core.Type.isArray(item) && item.length === 2) {
+						this.addItem(item[0], item[1]);
+					} else if (isItem(item)) {
+						this.addItem(item);
+					}
 				});
-			}
-		}, {
-			key: "addChild",
-			value: function addChild(child) {
-				if (!(child instanceof ItemNode)) {
-					throw new Error('EntitySelector.ItemNode: an item must be an instance of EntitySelector.ItemNode.');
-				}
-				if (this.isChildOf(child) || child === this) {
-					throw new Error('EntitySelector.ItemNode: a child item cannot be a parent of current item.');
-				}
-				if (this.getChildren().has(child) || this.childItems.has(child.getItem())) {
-					return null;
-				}
-				this.getChildren().add(child);
-				this.childItems.set(child.getItem(), child);
-				child.setTab(this.getTab());
-				child.setParentNode(this);
+				this.enableRender();
 				if (this.isRendered()) {
 					this.renderWithDebounce();
 				}
-				return child;
 			}
-		}, {
-			key: "getDepthLevel",
-			value: function getDepthLevel() {
-				return this.isRoot() ? 0 : this.getParentNode().getDepthLevel() + 1;
+		}
+		hasItem(item) {
+			return this.childItems.has(item);
+		}
+		removeChild(child) {
+			if (!this.getChildren().has(child)) {
+				return false;
 			}
-		}, {
-			key: "addItem",
-			value: function addItem(item, nodeOptions) {
-				let itemNode = this.childItems.get(item);
-				if (!itemNode) {
-					itemNode = item.createNode(nodeOptions);
-					this.addChild(itemNode);
-				}
-				return itemNode;
+			child.removeChildren();
+			if (child.isFocused()) {
+				child.unfocus();
 			}
-		}, {
-			key: "addItems",
-			value: function addItems(items) {
-				if (main_core.Type.isArray(items)) {
-					this.disableRender();
-					items.forEach(item => {
-						if (main_core.Type.isArray(item) && item.length === 2) {
-							this.addItem(item[0], item[1]);
-						} else if (item instanceof Item) {
-							this.addItem(item);
-						}
-					});
-					this.enableRender();
-					if (this.isRendered()) {
-						this.renderWithDebounce();
-					}
+			child.setParentNode(null);
+			child.getItem().removeNode(child);
+			this.getChildren().delete(child);
+			this.childItems.delete(child.getItem());
+			if (this.isRendered()) {
+				main_core.Dom.remove(child.getOuterContainer());
+			}
+			return true;
+		}
+		removeChildren() {
+			if (!this.hasChildren()) {
+				return;
+			}
+			this.getChildren().forEach(node => {
+				node.removeChildren();
+				if (node.isFocused()) {
+					node.unfocus();
+				}
+				node.setParentNode(null);
+				node.getItem().removeNode(node);
+			});
+			this.getChildren().clear();
+			this.childItems = new WeakMap();
+			if (this.isRendered()) {
+				this.getChildrenContainer().textContent = '';
+			}
+		}
+		hasChild(child) {
+			return this.getChildren().has(child);
+		}
+		isChildOf(parent) {
+			let parentNode = this.getParentNode();
+			while (parentNode !== null) {
+				if (parentNode === parent) {
+					return true;
+				}
+				parentNode = parentNode.getParentNode();
+			}
+			return false;
+		}
+		getFirstChild() {
+			return this.children.getFirst();
+		}
+		getLastChild() {
+			return this.children.getLast();
+		}
+		getChildren() {
+			return this.children;
+		}
+		hasChildren() {
+			return this.children.count() > 0;
+		}
+		loadChildren() {
+			if (!this.isDynamic()) {
+				throw new Error('EntitySelector.ItemNode.loadChildren: an item node is not dynamic.');
+			}
+			if (this.dynamicPromise) {
+				return this.dynamicPromise;
+			}
+			this.dynamicPromise = main_core.ajax.runAction('ui.entityselector.getChildren', {
+				json: {
+					parentItem: this.getItem().getAjaxJson(),
+					dialog: this.getDialog().getAjaxJson()
+				},
+				getParameters: {
+					context: this.getDialog().getContext()
+				}
+			});
+			this.dynamicPromise.then(response => {
+				if (response && response.data && main_core.Type.isPlainObject(response.data.dialog)) {
+					this.addChildren(response.data.dialog.items);
+					this.render();
+				}
+				this.loaded = true;
+			});
+			this.dynamicPromise.catch(error => {
+				this.loaded = false;
+				this.dynamicPromise = null;
+				console.error(error);
+			});
+			return this.dynamicPromise;
+		}
+		setOpen(open) {
+			if (main_core.Type.isBoolean(open)) {
+				if (open && this.isDynamic() && !this.isLoaded()) {
+					this.setAutoOpen(true);
+				} else {
+					this.open = open;
 				}
 			}
-		}, {
-			key: "hasItem",
-			value: function hasItem(item) {
-				return this.childItems.has(item);
+		}
+		isOpen() {
+			return this.open;
+		}
+		isAutoOpen() {
+			return this.autoOpen && this.isDynamic() && !this.isLoaded();
+		}
+		setAutoOpen(autoOpen) {
+			if (main_core.Type.isBoolean(autoOpen)) {
+				this.autoOpen = autoOpen;
 			}
-		}, {
-			key: "removeChild",
-			value: function removeChild(child) {
-				if (!this.getChildren().has(child)) {
-					return false;
-				}
-				child.removeChildren();
-				if (child.isFocused()) {
-					child.unfocus();
-				}
-				child.setParentNode(null);
-				child.getItem().removeNode(child);
-				this.getChildren().delete(child);
-				this.childItems.delete(child.getItem());
-				if (this.isRendered()) {
-					main_core.Dom.remove(child.getOuterContainer());
-				}
-				return true;
+		}
+		setDynamic(dynamic) {
+			if (main_core.Type.isBoolean(dynamic)) {
+				this.dynamic = dynamic;
 			}
-		}, {
-			key: "removeChildren",
-			value: function removeChildren() {
-				if (!this.hasChildren()) {
-					return;
-				}
-				this.getChildren().forEach(node => {
-					node.removeChildren();
-					if (node.isFocused()) {
-						node.unfocus();
-					}
-					node.setParentNode(null);
-					node.getItem().removeNode(node);
+		}
+		isDynamic() {
+			return this.dynamic;
+		}
+		isLoaded() {
+			return this.loaded;
+		}
+		getLoader() {
+			if (this.loader === null) {
+				this.loader = new main_loader.Loader({
+					target: this.getIndicatorContainer(),
+					size: 30
 				});
-				this.getChildren().clear();
-				this.childItems = new WeakMap();
-				if (this.isRendered()) {
-					if (main_core.Browser.isIE()) {
-						main_core.Dom.clean(this.getChildrenContainer());
-					} else {
-						this.getChildrenContainer().textContent = '';
-					}
+			}
+			return this.loader;
+		}
+		showLoader() {
+			void this.getLoader().show();
+			main_core.Dom.addClass(this.getIndicatorContainer(), 'ui-selector-item-indicator-hidden');
+		}
+		hideLoader() {
+			void this.getLoader().hide();
+			main_core.Dom.removeClass(this.getIndicatorContainer(), 'ui-selector-item-indicator-hidden');
+		}
+		destroyLoader() {
+			this.getLoader().destroy();
+			this.loader = null;
+			main_core.Dom.removeClass(this.getIndicatorContainer(), 'ui-selector-item-indicator-hidden');
+		}
+		expand() {
+			if (this.isOpen() || !this.hasChildren() && !this.isDynamic()) {
+				return;
+			}
+			if (this.isDynamic() && !this.isLoaded()) {
+				this.loadChildren().then(() => {
+					this.destroyLoader();
+					this.expand();
+				});
+				this.showLoader();
+				return;
+			}
+			main_core.Dom.addClass(this.getOuterContainer(), 'ui-selector-item-box-open');
+			main_core.Dom.attr(this.getOuterContainer(), 'aria-expanded', 'true');
+			main_core.Dom.style(this.getChildrenContainer(), 'height', '0px');
+			main_core.Dom.style(this.getChildrenContainer(), 'opacity', 0);
+			requestAnimationFrame(() => {
+				requestAnimationFrame(() => {
+					main_core.Dom.style(this.getChildrenContainer(), 'height', `${this.getChildrenContainer().scrollHeight}px`);
+					main_core.Dom.style(this.getChildrenContainer(), 'opacity', 1);
+					Animation.handleTransitionEnd(this.getChildrenContainer(), 'height').then(() => {
+						main_core.Dom.style(this.getChildrenContainer(), 'height', null);
+						main_core.Dom.style(this.getChildrenContainer(), 'opacity', null);
+						main_core.Dom.addClass(this.getOuterContainer(), 'ui-selector-item-box-open');
+						main_core.Dom.attr(this.getOuterContainer(), 'aria-expanded', 'true');
+						this.setOpen(true);
+					}).catch(() => {
+					});
+				});
+			});
+		}
+		collapse() {
+			if (!this.isOpen()) {
+				return;
+			}
+			main_core.Dom.style(this.getChildrenContainer(), 'height', `${this.getChildrenContainer().offsetHeight}px`);
+			requestAnimationFrame(() => {
+				requestAnimationFrame(() => {
+					main_core.Dom.style(this.getChildrenContainer(), 'height', '0px');
+					main_core.Dom.style(this.getChildrenContainer(), 'opacity', 0);
+					Animation.handleTransitionEnd(this.getChildrenContainer(), 'height').then(() => {
+						main_core.Dom.style(this.getChildrenContainer(), 'height', null);
+						main_core.Dom.style(this.getChildrenContainer(), 'opacity', null);
+						main_core.Dom.removeClass(this.getOuterContainer(), 'ui-selector-item-box-open');
+						main_core.Dom.attr(this.getOuterContainer(), 'aria-expanded', 'false');
+						this.setOpen(false);
+					}).catch(() => {
+					});
+				});
+			});
+		}
+		render(appendChildren = false) {
+			if (this.isRoot()) {
+				this.renderRoot(appendChildren);
+				return;
+			}
+			const titleNode = this.getTitleNode();
+			if (titleNode) {
+				titleNode.renderTo(this.getTitleContainer());
+			} else {
+				this.getTitleContainer().textContent = '';
+			}
+			const supertitleNode = this.getSupertitleNode();
+			if (supertitleNode) {
+				supertitleNode.renderTo(this.getSupertitleContainer());
+			} else {
+				this.getSupertitleContainer().textContent = '';
+			}
+			const subtitleNode = this.getSubtitleNode();
+			if (subtitleNode) {
+				subtitleNode.renderTo(this.getSubtitleContainer());
+			} else {
+				this.getSubtitleContainer().textContent = '';
+			}
+			const captionNode = this.getCaptionNode();
+			if (captionNode) {
+				captionNode.renderTo(this.getCaptionContainer());
+			} else {
+				this.getCaptionContainer().textContent = '';
+			}
+			const captionFitContent = this.getCaptionOption('fitContent');
+			if (main_core.Type.isBoolean(captionFitContent)) {
+				main_core.Dom.style(this.getCaptionContainer(), 'flex-shrink', captionFitContent ? 0 : null);
+			}
+			const captionJustifyContent = this.getCaptionOption('justifyContent');
+			if (main_core.Type.isStringFilled(captionJustifyContent) || captionJustifyContent === null) {
+				main_core.Dom.style(this.getCaptionContainer(), {
+					flexGrow: captionJustifyContent ? '1' : null,
+					textAlign: captionJustifyContent || null
+				});
+			}
+			const captionMaxWidth = this.getCaptionOption('maxWidth');
+			if (main_core.Type.isString(captionMaxWidth) || main_core.Type.isNumber(captionMaxWidth)) {
+				main_core.Dom.style(this.getCaptionContainer(), 'max-width', main_core.Type.isNumber(captionMaxWidth) ? `${captionMaxWidth}px` : captionMaxWidth);
+			}
+			if (main_core.Type.isStringFilled(this.getTextColor())) {
+				this.getTitleContainer().style.color = this.getTextColor();
+			} else {
+				this.getTitleContainer().style.removeProperty('color');
+			}
+			main_core.Dom.clean(this.getAvatarContainer());
+			const avatar = this.getAvatar();
+			if (main_core.Type.isStringFilled(avatar)) {
+				this.getAvatarContainer().style.backgroundImage = `url('${encodeUrl(avatar)}')`;
+			} else {
+				const bgImage = this.getAvatarOption('bgImage');
+				if (main_core.Type.isStringFilled(bgImage)) {
+					this.getAvatarContainer().style.backgroundImage = bgImage;
+				} else {
+					this.getAvatarContainer().style.removeProperty('background-image');
 				}
 			}
-		}, {
-			key: "hasChild",
-			value: function hasChild(child) {
-				return this.getChildren().has(child);
+			const bgColor = this.getAvatarOption('bgColor');
+			if (main_core.Type.isStringFilled(bgColor)) {
+				this.getAvatarContainer().style.backgroundColor = bgColor;
+			} else {
+				this.getAvatarContainer().style.removeProperty('background-color');
 			}
-		}, {
-			key: "isChildOf",
-			value: function isChildOf(parent) {
+			const bgSize = this.getAvatarOption('bgSize');
+			if (main_core.Type.isStringFilled(bgSize)) {
+				this.getAvatarContainer().style.backgroundSize = bgSize;
+			} else {
+				this.getAvatarContainer().style.removeProperty('background-size');
+			}
+			const border = this.getAvatarOption('border');
+			if (main_core.Type.isStringFilled(border)) {
+				this.getAvatarContainer().style.border = border;
+			} else {
+				this.getAvatarContainer().style.removeProperty('border');
+			}
+			const borderRadius = this.getAvatarOption('borderRadius');
+			if (main_core.Type.isStringFilled(borderRadius)) {
+				this.getAvatarContainer().style.borderRadius = borderRadius;
+			} else {
+				this.getAvatarContainer().style.removeProperty('border-radius');
+			}
+			const outline = this.getAvatarOption('outline');
+			main_core.Dom.style(this.getAvatarContainer(), 'outline', outline);
+			const outlineOffset = this.getAvatarOption('outlineOffset');
+			main_core.Dom.style(this.getAvatarContainer(), 'outline-offset', outlineOffset);
+			const icon = {
+				icon: this.getAvatarOption('icon'),
+				size: bgSize ?? undefined,
+				color: this.getAvatarOption('iconColor') ?? undefined
+			};
+			if (ui_iconSet_api_core.Icon.isValid(icon)) {
+				main_core.Dom.style(this.getAvatarContainer(), 'background-image', 'none');
+				main_core.Dom.append(new ui_iconSet_api_core.Icon(icon).render(), this.getAvatarContainer());
+			}
+			main_core.Dom.clean(this.getBadgeContainer());
+			this.getBadges().forEach(badge => {
+				badge.renderTo(this.getBadgeContainer());
+			});
+			const badgesFitContent = this.getBadgesOption('fitContent');
+			if (main_core.Type.isBoolean(badgesFitContent)) {
+				main_core.Dom.style(this.getBadgeContainer(), 'flex-shrink', badgesFitContent ? 0 : null);
+			}
+			const badgesJustifyContent = this.getBadgesOption('justifyContent');
+			if (main_core.Type.isStringFilled(badgesJustifyContent) || badgesJustifyContent === null) {
+				main_core.Dom.style(this.getBadgeContainer(), {
+					flexGrow: badgesJustifyContent ? '1' : null,
+					justifyContent: badgesJustifyContent || null
+				});
+			}
+			const badgesMaxWidth = this.getBadgesOption('maxWidth');
+			if (main_core.Type.isString(badgesMaxWidth) || main_core.Type.isNumber(badgesMaxWidth)) {
+				main_core.Dom.style(this.getBadgeContainer(), 'max-width', main_core.Type.isNumber(badgesMaxWidth) ? `${badgesMaxWidth}px` : badgesMaxWidth);
+			}
+			const linkTitleNode = this.getLinkTitleNode();
+			if (linkTitleNode) {
+				linkTitleNode.renderTo(this.getLinkTextContainer());
+			} else {
+				this.getLinkTextContainer().textContent = '';
+			}
+			main_core.Dom.attr(this.getOuterContainer(), 'role', this.getTab().getItemsContainer().role === 'tree' ? 'treeitem' : 'option');
+			if (this.hasChildren() || this.isDynamic()) {
+				main_core.Dom.addClass(this.getOuterContainer(), 'ui-selector-item-box-has-children');
+				if (this.getDepthLevel() >= this.getTab().getItemMaxDepth()) {
+					main_core.Dom.addClass(this.getOuterContainer(), 'ui-selector-item-box-max-depth');
+				}
+			} else if (this.getOuterContainer().classList.contains('ui-selector-item-box-has-children')) {
+				main_core.Dom.removeClass(this.getOuterContainer(), ['ui-selector-item-box-has-children', 'ui-selector-item-box-max-depth']);
+			}
+			if (this.hasChildren()) {
+				const hasVisibleChild = this.getChildren().getAll().some(child => {
+					return child.isHidden() !== true;
+				});
+				if (!hasVisibleChild) {
+					this.#setHidden(true);
+				}
+			}
+			this.toggleVisibility();
+			this.highlight();
+			this.renderChildren(appendChildren);
+			if (this.isAutoOpen()) {
+				this.setAutoOpen(false);
+				requestAnimationFrame(() => {
+					requestAnimationFrame(() => {
+						this.expand();
+					});
+				});
+			}
+			this.rendered = true;
+		}
+		renderRoot(appendChildren = false) {
+			const isTree = this.getChildren().getAll().some(child => {
+				return child.hasChildren() || child.isDynamic();
+			});
+			main_core.Dom.attr(this.getTab().getItemsContainer(), 'role', isTree ? 'tree' : 'listbox');
+			this.renderChildren(appendChildren);
+			this.rendered = true;
+			const stub = this.getTab().getStub();
+			if (stub && stub.isAutoShow() && (this.getDialog().isLoaded() || !this.getDialog().hasDynamicLoad())) {
+				if (this.hasChildren()) {
+					stub.hide();
+				} else {
+					stub.show();
+				}
+			}
+		}
+		renderChildren(appendChildren = false) {
+			if (!appendChildren) {
+				this.getChildrenContainer().textContent = '';
+			}
+			if (this.hasChildren()) {
+				let previousSibling = null;
+				this.getChildren().forEach(child => {
+					child.render(appendChildren);
+					const container = child.getOuterContainer();
+					if (!appendChildren) {
+						main_core.Dom.append(container, this.getChildrenContainer());
+					}
+					if (!container.parentNode) {
+						if (previousSibling === null) {
+							main_core.Dom.append(container, this.getChildrenContainer());
+						} else {
+							main_core.Dom.insertAfter(container, previousSibling.getOuterContainer());
+						}
+					}
+					previousSibling = child;
+				});
+			}
+		}
+		isRendered() {
+			return this.rendered && this.getDialog() && this.getDialog().isRendered();
+		}
+		enableRender() {
+			this.rendered = true;
+		}
+		disableRender() {
+			this.rendered = false;
+		}
+		getRenderMode() {
+			return this.renderMode;
+		}
+		isHidden() {
+			return this.hidden || this.getItem().isHidden();
+		}
+		setHidden(flag) {
+			if (!main_core.Type.isBoolean(flag) || this.isRoot()) {
+				return;
+			}
+			this.#setHidden(flag);
+			if (this.isRendered()) {
+				this.toggleVisibility();
 				let parentNode = this.getParentNode();
-				while (parentNode !== null) {
-					if (parentNode === parent) {
-						return true;
+				const isHidden = this.isHidden();
+				while (parentNode.isRoot() === false) {
+					if (isHidden) {
+						const hasVisibleChild = parentNode.getChildren().getAll().some(child => {
+							return child.isHidden() !== true;
+						});
+						if (!hasVisibleChild) {
+							parentNode.#setHidden(true);
+						}
+						parentNode.toggleVisibility();
+					} else {
+						parentNode.#setHidden(false);
+						parentNode.toggleVisibility();
+						if (parentNode.isHidden()) {
+							break;
+						}
 					}
 					parentNode = parentNode.getParentNode();
 				}
-				return false;
 			}
-		}, {
-			key: "getFirstChild",
-			value: function getFirstChild() {
-				return this.children.getFirst();
+		}
+		#setHidden(flag) {
+			if (main_core.Type.isBoolean(flag) && !this.isRoot()) {
+				this.hidden = flag;
 			}
-		}, {
-			key: "getLastChild",
-			value: function getLastChild() {
-				return this.children.getLast();
+		}
+		toggleVisibility() {
+			if (this.isHidden()) {
+				main_core.Dom.addClass(this.getOuterContainer(), '--hidden');
+			} else if (this.getOuterContainer().classList.contains('--hidden')) {
+				main_core.Dom.removeClass(this.getOuterContainer(), '--hidden');
 			}
-		}, {
-			key: "getChildren",
-			value: function getChildren() {
-				return this.children;
+		}
+		lock() {
+			if (this.hasChildren() || this.isDynamic()) {
+				return;
 			}
-		}, {
-			key: "hasChildren",
-			value: function hasChildren() {
-				return this.children.count() > 0;
+			main_core.Dom.addClass(this.getOuterContainer(), 'ui-selector-item-box-locked');
+		}
+		unlock() {
+			if (this.hasChildren() || this.isDynamic()) {
+				return;
 			}
-		}, {
-			key: "loadChildren",
-			value: function loadChildren() {
-				if (!this.isDynamic()) {
-					throw new Error('EntitySelector.ItemNode.loadChildren: an item node is not dynamic.');
-				}
-				if (this.dynamicPromise) {
-					return this.dynamicPromise;
-				}
-				this.dynamicPromise = main_core.ajax.runAction('ui.entityselector.getChildren', {
-					json: {
-						parentItem: this.getItem().getAjaxJson(),
-						dialog: this.getDialog().getAjaxJson()
-					},
-					getParameters: {
-						context: this.getDialog().getContext()
-					}
-				});
-				this.dynamicPromise.then(response => {
-					if (response && response.data && main_core.Type.isPlainObject(response.data.dialog)) {
-						this.addChildren(response.data.dialog.items);
-						this.render();
-					}
-					this.loaded = true;
-				});
-				this.dynamicPromise.catch(error => {
-					this.loaded = false;
-					this.dynamicPromise = null;
-					console.error(error);
-				});
-				return this.dynamicPromise;
+			main_core.Dom.removeClass(this.getOuterContainer(), 'ui-selector-item-box-locked');
+		}
+		getTitle() {
+			const titleNode = this.getTitleNode();
+			return titleNode === null ? null : titleNode.getText();
+		}
+		getTitleNode() {
+			return this.title === null ? this.getItem().getTitleNode() : this.title;
+		}
+		setTitle(title) {
+			if (main_core.Type.isString(title) || main_core.Type.isPlainObject(title)) {
+				this.title = new TextNode(title);
+			} else if (title === null) {
+				this.title = null;
 			}
-		}, {
-			key: "setOpen",
-			value: function setOpen(open) {
-				if (main_core.Type.isBoolean(open)) {
-					if (open && this.isDynamic() && !this.isLoaded()) {
-						this.setAutoOpen(true);
-					} else {
-						this.open = open;
-					}
-				}
+		}
+		getSubtitle() {
+			const subtitleNode = this.getSubtitleNode();
+			return subtitleNode === null ? null : subtitleNode.getText();
+		}
+		getSubtitleNode() {
+			return this.subtitle === null ? this.getItem().getSubtitleNode() : this.subtitle;
+		}
+		setSubtitle(subtitle) {
+			if (main_core.Type.isString(subtitle) || main_core.Type.isPlainObject(subtitle)) {
+				this.subtitle = new TextNode(subtitle);
+			} else if (subtitle === null) {
+				this.subtitle = null;
 			}
-		}, {
-			key: "isOpen",
-			value: function isOpen() {
-				return this.open;
+		}
+		getSupertitle() {
+			const supertitleNode = this.getSupertitleNode();
+			return supertitleNode === null ? null : supertitleNode.getText();
+		}
+		getSupertitleNode() {
+			return this.supertitle === null ? this.getItem().getSupertitleNode() : this.supertitle;
+		}
+		setSupertitle(supertitle) {
+			if (main_core.Type.isString(supertitle) || main_core.Type.isPlainObject(supertitle)) {
+				this.supertitle = new TextNode(supertitle);
+			} else if (supertitle === null) {
+				this.supertitle = null;
 			}
-		}, {
-			key: "isAutoOpen",
-			value: function isAutoOpen() {
-				return this.autoOpen && this.isDynamic() && !this.isLoaded();
+		}
+		getCaption() {
+			const caption = this.getCaptionNode();
+			return caption === null ? null : caption.getText();
+		}
+		getCaptionNode() {
+			return this.caption === null ? this.getItem().getCaptionNode() : this.caption;
+		}
+		setCaption(caption) {
+			if (main_core.Type.isString(caption) || main_core.Type.isPlainObject(caption)) {
+				this.caption = new TextNode(caption);
+			} else if (caption === null) {
+				this.caption = null;
 			}
-		}, {
-			key: "setAutoOpen",
-			value: function setAutoOpen(autoOpen) {
-				if (main_core.Type.isBoolean(autoOpen)) {
-					this.autoOpen = autoOpen;
-				}
+		}
+		getCaptionOption(option) {
+			if (!main_core.Type.isUndefined(this.captionOptions[option])) {
+				return this.captionOptions[option];
 			}
-		}, {
-			key: "setDynamic",
-			value: function setDynamic(dynamic) {
-				if (main_core.Type.isBoolean(dynamic)) {
-					this.dynamic = dynamic;
-				}
+			return this.getItem().getCaptionOption(option);
+		}
+		setCaptionOption(option, value) {
+			if (main_core.Type.isStringFilled(option) && !main_core.Type.isUndefined(value)) {
+				this.captionOptions[option] = value;
 			}
-		}, {
-			key: "isDynamic",
-			value: function isDynamic() {
-				return this.dynamic;
-			}
-		}, {
-			key: "isLoaded",
-			value: function isLoaded() {
-				return this.loaded;
-			}
-		}, {
-			key: "getLoader",
-			value: function getLoader() {
-				if (this.loader === null) {
-					this.loader = new main_loader.Loader({
-						target: this.getIndicatorContainer(),
-						size: 30
-					});
-				}
-				return this.loader;
-			}
-		}, {
-			key: "showLoader",
-			value: function showLoader() {
-				void this.getLoader().show();
-				main_core.Dom.addClass(this.getIndicatorContainer(), 'ui-selector-item-indicator-hidden');
-			}
-		}, {
-			key: "hideLoader",
-			value: function hideLoader() {
-				void this.getLoader().hide();
-				main_core.Dom.removeClass(this.getIndicatorContainer(), 'ui-selector-item-indicator-hidden');
-			}
-		}, {
-			key: "destroyLoader",
-			value: function destroyLoader() {
-				this.getLoader().destroy();
-				this.loader = null;
-				main_core.Dom.removeClass(this.getIndicatorContainer(), 'ui-selector-item-indicator-hidden');
-			}
-		}, {
-			key: "expand",
-			value: function expand() {
-				if (this.isOpen() || !this.hasChildren() && !this.isDynamic()) {
-					return;
-				}
-				if (this.isDynamic() && !this.isLoaded()) {
-					this.loadChildren().then(() => {
-						this.destroyLoader();
-						this.expand();
-					});
-					this.showLoader();
-					return;
-				}
-				main_core.Dom.addClass(this.getOuterContainer(), 'ui-selector-item-box-open');
-				main_core.Dom.style(this.getChildrenContainer(), 'height', '0px');
-				main_core.Dom.style(this.getChildrenContainer(), 'opacity', 0);
-				requestAnimationFrame(() => {
-					requestAnimationFrame(() => {
-						main_core.Dom.style(this.getChildrenContainer(), 'height', `${this.getChildrenContainer().scrollHeight}px`);
-						main_core.Dom.style(this.getChildrenContainer(), 'opacity', 1);
-						Animation.handleTransitionEnd(this.getChildrenContainer(), 'height').then(() => {
-							main_core.Dom.style(this.getChildrenContainer(), 'height', null);
-							main_core.Dom.style(this.getChildrenContainer(), 'opacity', null);
-							main_core.Dom.addClass(this.getOuterContainer(), 'ui-selector-item-box-open');
-							this.setOpen(true);
-						});
-					});
+		}
+		setCaptionOptions(options) {
+			if (main_core.Type.isPlainObject(options)) {
+				Object.keys(options).forEach(option => {
+					this.setCaptionOption(option, options[option]);
 				});
 			}
-		}, {
-			key: "collapse",
-			value: function collapse() {
-				if (!this.isOpen()) {
-					return;
+		}
+		getAvatar() {
+			return this.avatar === null ? this.getItem().getAvatar() : this.avatar;
+		}
+		setAvatar(avatar) {
+			if (main_core.Type.isString(avatar) || avatar === null) {
+				this.avatar = avatar;
+			}
+		}
+		getAvatarOption(option) {
+			return this.avatarOptions === null || main_core.Type.isUndefined(this.avatarOptions[option]) ? this.getItem().getAvatarOption(option) : this.avatarOptions[option];
+		}
+		setAvatarOption(option, value) {
+			if (main_core.Type.isStringFilled(option) && !main_core.Type.isUndefined(value)) {
+				if (this.avatarOptions === null) {
+					this.avatarOptions = {};
 				}
-				main_core.Dom.style(this.getChildrenContainer(), 'height', `${this.getChildrenContainer().offsetHeight}px`);
-				requestAnimationFrame(() => {
-					requestAnimationFrame(() => {
-						main_core.Dom.style(this.getChildrenContainer(), 'height', '0px');
-						main_core.Dom.style(this.getChildrenContainer(), 'opacity', 0);
-						Animation.handleTransitionEnd(this.getChildrenContainer(), 'height').then(() => {
-							main_core.Dom.style(this.getChildrenContainer(), 'height', null);
-							main_core.Dom.style(this.getChildrenContainer(), 'opacity', null);
-							main_core.Dom.removeClass(this.getOuterContainer(), 'ui-selector-item-box-open');
-							this.setOpen(false);
-						});
-					});
+				this.avatarOptions[option] = value;
+			}
+		}
+		setAvatarOptions(avatarOptions) {
+			if (main_core.Type.isPlainObject(avatarOptions)) {
+				Object.keys(avatarOptions).forEach(option => {
+					this.setAvatarOption(option, avatarOptions[option]);
 				});
 			}
-		}, {
-			key: "render",
-			value: function render(appendChildren = false) {
-				if (this.isRoot()) {
-					this.renderRoot(appendChildren);
-					return;
-				}
-				const titleNode = this.getTitleNode();
-				if (titleNode) {
-					titleNode.renderTo(this.getTitleContainer());
-				} else {
-					this.getTitleContainer().textContent = '';
-				}
-				const supertitleNode = this.getSupertitleNode();
-				if (supertitleNode) {
-					supertitleNode.renderTo(this.getSupertitleContainer());
-				} else {
-					this.getSupertitleContainer().textContent = '';
-				}
-				const subtitleNode = this.getSubtitleNode();
-				if (subtitleNode) {
-					subtitleNode.renderTo(this.getSubtitleContainer());
-				} else {
-					this.getSubtitleContainer().textContent = '';
-				}
-				const captionNode = this.getCaptionNode();
-				if (captionNode) {
-					captionNode.renderTo(this.getCaptionContainer());
-				} else {
-					this.getCaptionContainer().textContent = '';
-				}
-				const captionFitContent = this.getCaptionOption('fitContent');
-				if (main_core.Type.isBoolean(captionFitContent)) {
-					main_core.Dom.style(this.getCaptionContainer(), 'flex-shrink', captionFitContent ? 0 : null);
-				}
-				const captionJustifyContent = this.getCaptionOption('justifyContent');
-				if (main_core.Type.isStringFilled(captionJustifyContent) || captionJustifyContent === null) {
-					main_core.Dom.style(this.getCaptionContainer(), {
-						flexGrow: captionJustifyContent ? '1' : null,
-						textAlign: captionJustifyContent || null
-					});
-				}
-				const captionMaxWidth = this.getCaptionOption('maxWidth');
-				if (main_core.Type.isString(captionMaxWidth) || main_core.Type.isNumber(captionMaxWidth)) {
-					main_core.Dom.style(this.getCaptionContainer(), 'max-width', main_core.Type.isNumber(captionMaxWidth) ? `${captionMaxWidth}px` : captionMaxWidth);
-				}
-				if (main_core.Type.isStringFilled(this.getTextColor())) {
-					this.getTitleContainer().style.color = this.getTextColor();
-				} else {
-					this.getTitleContainer().style.removeProperty('color');
-				}
-				main_core.Dom.clean(this.getAvatarContainer());
-				const avatar = this.getAvatar();
-				if (main_core.Type.isStringFilled(avatar)) {
-					this.getAvatarContainer().style.backgroundImage = `url('${encodeUrl(avatar)}')`;
-				} else {
-					const bgImage = this.getAvatarOption('bgImage');
-					if (main_core.Type.isStringFilled(bgImage)) {
-						this.getAvatarContainer().style.backgroundImage = bgImage;
-					} else {
-						this.getAvatarContainer().style.removeProperty('background-image');
-					}
-				}
-				const bgColor = this.getAvatarOption('bgColor');
-				if (main_core.Type.isStringFilled(bgColor)) {
-					this.getAvatarContainer().style.backgroundColor = bgColor;
-				} else {
-					this.getAvatarContainer().style.removeProperty('background-color');
-				}
-				const bgSize = this.getAvatarOption('bgSize');
-				if (main_core.Type.isStringFilled(bgSize)) {
-					this.getAvatarContainer().style.backgroundSize = bgSize;
-				} else {
-					this.getAvatarContainer().style.removeProperty('background-size');
-				}
-				const border = this.getAvatarOption('border');
-				if (main_core.Type.isStringFilled(border)) {
-					this.getAvatarContainer().style.border = border;
-				} else {
-					this.getAvatarContainer().style.removeProperty('border');
-				}
-				const borderRadius = this.getAvatarOption('borderRadius');
-				if (main_core.Type.isStringFilled(borderRadius)) {
-					this.getAvatarContainer().style.borderRadius = borderRadius;
-				} else {
-					this.getAvatarContainer().style.removeProperty('border-radius');
-				}
-				const outline = this.getAvatarOption('outline');
-				main_core.Dom.style(this.getAvatarContainer(), 'outline', outline);
-				const outlineOffset = this.getAvatarOption('outlineOffset');
-				main_core.Dom.style(this.getAvatarContainer(), 'outline-offset', outlineOffset);
-				const icon = {
-					icon: this.getAvatarOption('icon'),
-					size: bgSize ?? undefined,
-					color: this.getAvatarOption('iconColor') ?? undefined
-				};
-				if (ui_iconSet_api_core.Icon.isValid(icon)) {
-					main_core.Dom.style(this.getAvatarContainer(), 'background-image', 'none');
-					main_core.Dom.append(new ui_iconSet_api_core.Icon(icon).render(), this.getAvatarContainer());
-				}
-				main_core.Dom.clean(this.getBadgeContainer());
-				this.getBadges().forEach(badge => {
-					badge.renderTo(this.getBadgeContainer());
+		}
+		getTextColor() {
+			return this.textColor === null ? this.getItem().getTextColor() : this.textColor;
+		}
+		setTextColor(textColor) {
+			if (main_core.Type.isString(textColor) || textColor === null) {
+				this.textColor = textColor;
+			}
+		}
+		getLink() {
+			return this.link === null ? this.getItem().getLink() : this.getItem().replaceMacros(this.link);
+		}
+		setLink(link) {
+			if (main_core.Type.isString(link) || link === null) {
+				this.link = link;
+			}
+		}
+		getLinkTitle() {
+			const linkTitle = this.getLinkTitleNode();
+			return linkTitle === null ? null : linkTitle.getText();
+		}
+		getLinkTitleNode() {
+			return this.linkTitle === null ? this.getItem().getLinkTitleNode() : this.linkTitle;
+		}
+		setLinkTitle(title) {
+			if (main_core.Type.isString(title) || main_core.Type.isPlainObject(title)) {
+				this.linkTitle = new TextNode(title);
+			} else if (title === null) {
+				this.linkTitle = null;
+			}
+		}
+		getBadges() {
+			return this.badges === null ? this.getItem().getBadges() : this.badges;
+		}
+		setBadges(badges) {
+			if (main_core.Type.isArray(badges)) {
+				this.badges = [];
+				badges.forEach(badge => {
+					this.badges.push(new ItemBadge(badge));
 				});
-				const badgesFitContent = this.getBadgesOption('fitContent');
-				if (main_core.Type.isBoolean(badgesFitContent)) {
-					main_core.Dom.style(this.getBadgeContainer(), 'flex-shrink', badgesFitContent ? 0 : null);
-				}
-				const badgesJustifyContent = this.getBadgesOption('justifyContent');
-				if (main_core.Type.isStringFilled(badgesJustifyContent) || badgesJustifyContent === null) {
-					main_core.Dom.style(this.getBadgeContainer(), {
-						flexGrow: badgesJustifyContent ? '1' : null,
-						justifyContent: badgesJustifyContent || null
-					});
-				}
-				const badgesMaxWidth = this.getBadgesOption('maxWidth');
-				if (main_core.Type.isString(badgesMaxWidth) || main_core.Type.isNumber(badgesMaxWidth)) {
-					main_core.Dom.style(this.getBadgeContainer(), 'max-width', main_core.Type.isNumber(badgesMaxWidth) ? `${badgesMaxWidth}px` : badgesMaxWidth);
-				}
-				const linkTitleNode = this.getLinkTitleNode();
-				if (linkTitleNode) {
-					linkTitleNode.renderTo(this.getLinkTextContainer());
-				} else {
-					this.getLinkTextContainer().textContent = '';
-				}
+			} else if (badges === null) {
+				this.badges = null;
+			}
+		}
+		getBadgesOption(option) {
+			if (!main_core.Type.isUndefined(this.badgesOptions[option])) {
+				return this.badgesOptions[option];
+			}
+			return this.getItem().getBadgesOption(option);
+		}
+		setBadgesOption(option, value) {
+			if (main_core.Type.isStringFilled(option) && !main_core.Type.isUndefined(value)) {
+				this.badgesOptions[option] = value;
+			}
+		}
+		setBadgesOptions(options) {
+			if (main_core.Type.isPlainObject(options)) {
+				Object.keys(options).forEach(option => {
+					this.setBadgesOption(option, options[option]);
+				});
+			}
+		}
+		getOuterContainer() {
+			return this.cache.remember('outer-container', () => {
+				let className = '';
+				const div = document.createElement('div');
 				if (this.hasChildren() || this.isDynamic()) {
-					main_core.Dom.addClass(this.getOuterContainer(), 'ui-selector-item-box-has-children');
+					className += ' ui-selector-item-box-has-children';
 					if (this.getDepthLevel() >= this.getTab().getItemMaxDepth()) {
-						main_core.Dom.addClass(this.getOuterContainer(), 'ui-selector-item-box-max-depth');
+						className += ' ui-selector-item-box-max-depth';
 					}
-				} else if (this.getOuterContainer().classList.contains('ui-selector-item-box-has-children')) {
-					main_core.Dom.removeClass(this.getOuterContainer(), ['ui-selector-item-box-has-children', 'ui-selector-item-box-max-depth']);
-				}
-				if (this.hasChildren()) {
-					const hasVisibleChild = this.getChildren().getAll().some(child => {
-						return child.isHidden() !== true;
-					});
-					if (!hasVisibleChild) {
-						_assertClassBrand$4(_ItemNode_brand, this, _setHidden).call(this, true);
-					}
-				}
-				this.toggleVisibility();
-				this.highlight();
-				this.renderChildren(appendChildren);
-				if (this.isAutoOpen()) {
-					this.setAutoOpen(false);
-					requestAnimationFrame(() => {
-						requestAnimationFrame(() => {
-							this.expand();
-						});
-					});
-				}
-				this.rendered = true;
-			}
-
-			/**
-			 * @private
-			 */
-		}, {
-			key: "renderRoot",
-			value: function renderRoot(appendChildren = false) {
-				this.renderChildren(appendChildren);
-				this.rendered = true;
-				const stub = this.getTab().getStub();
-				if (stub && stub.isAutoShow() && (this.getDialog().isLoaded() || !this.getDialog().hasDynamicLoad())) {
-					if (this.hasChildren()) {
-						stub.hide();
-					} else {
-						stub.show();
-					}
-				}
-			}
-
-			/**
-			 * @private
-			 */
-		}, {
-			key: "renderChildren",
-			value: function renderChildren(appendChildren = false) {
-				if (!appendChildren) {
-					if (main_core.Browser.isIE()) {
-						main_core.Dom.clean(this.getChildrenContainer());
-					} else {
-						this.getChildrenContainer().textContent = '';
-					}
-				}
-				if (this.hasChildren()) {
-					let previousSibling = null;
-					this.getChildren().forEach(child => {
-						child.render(appendChildren);
-						const container = child.getOuterContainer();
-						if (!appendChildren) {
-							main_core.Dom.append(container, this.getChildrenContainer());
-						}
-						if (!container.parentNode) {
-							if (previousSibling !== null) {
-								main_core.Dom.insertAfter(container, previousSibling.getOuterContainer());
-							} else {
-								main_core.Dom.append(container, this.getChildrenContainer());
-							}
-						}
-						previousSibling = child;
-					});
-				}
-			}
-		}, {
-			key: "isRendered",
-			value: function isRendered() {
-				return this.rendered && this.getDialog() && this.getDialog().isRendered();
-			}
-		}, {
-			key: "enableRender",
-			value: function enableRender() {
-				this.rendered = true;
-			}
-		}, {
-			key: "disableRender",
-			value: function disableRender() {
-				this.rendered = false;
-			}
-		}, {
-			key: "getRenderMode",
-			value: function getRenderMode() {
-				return this.renderMode;
-			}
-		}, {
-			key: "isHidden",
-			value: function isHidden() {
-				return this.hidden === true || this.getItem().isHidden() === true;
-			}
-		}, {
-			key: "setHidden",
-			value: function setHidden(flag) {
-				if (!main_core.Type.isBoolean(flag) || this.isRoot()) {
-					return;
-				}
-				_assertClassBrand$4(_ItemNode_brand, this, _setHidden).call(this, flag);
-				if (this.isRendered()) {
-					this.toggleVisibility();
-					let parentNode = this.getParentNode();
-					const isHidden = this.isHidden();
-					while (parentNode.isRoot() === false) {
-						if (isHidden) {
-							const hasVisibleChild = parentNode.getChildren().getAll().some(child => {
-								return child.isHidden() !== true;
-							});
-							if (!hasVisibleChild) {
-								var _parentNode;
-								_assertClassBrand$4(_ItemNode_brand, _parentNode = parentNode, _setHidden).call(_parentNode, true);
-							}
-							parentNode.toggleVisibility();
-						} else {
-							var _parentNode2;
-							_assertClassBrand$4(_ItemNode_brand, _parentNode2 = parentNode, _setHidden).call(_parentNode2, false);
-							parentNode.toggleVisibility();
-							if (parentNode.isHidden()) {
-								break;
-							}
-						}
-						parentNode = parentNode.getParentNode();
-					}
-				}
-			}
-		}, {
-			key: "toggleVisibility",
-			value: function toggleVisibility() {
-				if (this.isHidden()) {
-					main_core.Dom.addClass(this.getOuterContainer(), '--hidden');
-				} else if (this.getOuterContainer().classList.contains('--hidden')) {
-					main_core.Dom.removeClass(this.getOuterContainer(), '--hidden');
-				}
-			}
-		}, {
-			key: "lock",
-			value: function lock() {
-				if (this.hasChildren() || this.isDynamic()) {
-					return;
-				}
-				main_core.Dom.addClass(this.getOuterContainer(), 'ui-selector-item-box-locked');
-			}
-		}, {
-			key: "unlock",
-			value: function unlock() {
-				if (this.hasChildren() || this.isDynamic()) {
-					return;
-				}
-				main_core.Dom.removeClass(this.getOuterContainer(), 'ui-selector-item-box-locked');
-			}
-		}, {
-			key: "getTitle",
-			value: function getTitle() {
-				const titleNode = this.getTitleNode();
-				return titleNode !== null ? titleNode.getText() : null;
-			}
-		}, {
-			key: "getTitleNode",
-			value: function getTitleNode() {
-				return this.title !== null ? this.title : this.getItem().getTitleNode();
-			}
-		}, {
-			key: "setTitle",
-			value: function setTitle(title) {
-				if (main_core.Type.isString(title) || main_core.Type.isPlainObject(title)) {
-					this.title = new TextNode(title);
-				} else if (title === null) {
-					this.title = null;
-				}
-			}
-		}, {
-			key: "getSubtitle",
-			value: function getSubtitle() {
-				const subtitleNode = this.getSubtitleNode();
-				return subtitleNode !== null ? subtitleNode.getText() : null;
-			}
-		}, {
-			key: "getSubtitleNode",
-			value: function getSubtitleNode() {
-				return this.subtitle !== null ? this.subtitle : this.getItem().getSubtitleNode();
-			}
-		}, {
-			key: "setSubtitle",
-			value: function setSubtitle(subtitle) {
-				if (main_core.Type.isString(subtitle) || main_core.Type.isPlainObject(subtitle)) {
-					this.subtitle = new TextNode(subtitle);
-				} else if (subtitle === null) {
-					this.subtitle = null;
-				}
-			}
-		}, {
-			key: "getSupertitle",
-			value: function getSupertitle() {
-				const supertitleNode = this.getSupertitleNode();
-				return supertitleNode !== null ? supertitleNode.getText() : null;
-			}
-		}, {
-			key: "getSupertitleNode",
-			value: function getSupertitleNode() {
-				return this.supertitle !== null ? this.supertitle : this.getItem().getSupertitleNode();
-			}
-		}, {
-			key: "setSupertitle",
-			value: function setSupertitle(supertitle) {
-				if (main_core.Type.isString(supertitle) || main_core.Type.isPlainObject(supertitle)) {
-					this.supertitle = new TextNode(supertitle);
-				} else if (supertitle === null) {
-					this.supertitle = null;
-				}
-			}
-		}, {
-			key: "getCaption",
-			value: function getCaption() {
-				const caption = this.getCaptionNode();
-				return caption !== null ? caption.getText() : null;
-			}
-		}, {
-			key: "getCaptionNode",
-			value: function getCaptionNode() {
-				return this.caption !== null ? this.caption : this.getItem().getCaptionNode();
-			}
-		}, {
-			key: "setCaption",
-			value: function setCaption(caption) {
-				if (main_core.Type.isString(caption) || main_core.Type.isPlainObject(caption)) {
-					this.caption = new TextNode(caption);
-				} else if (caption === null) {
-					this.caption = null;
-				}
-			}
-		}, {
-			key: "getCaptionOption",
-			value: function getCaptionOption(option) {
-				if (!main_core.Type.isUndefined(this.captionOptions[option])) {
-					return this.captionOptions[option];
-				}
-				return this.getItem().getCaptionOption(option);
-			}
-		}, {
-			key: "setCaptionOption",
-			value: function setCaptionOption(option, value) {
-				if (main_core.Type.isStringFilled(option) && !main_core.Type.isUndefined(value)) {
-					this.captionOptions[option] = value;
-				}
-			}
-		}, {
-			key: "setCaptionOptions",
-			value: function setCaptionOptions(options) {
-				if (main_core.Type.isPlainObject(options)) {
-					Object.keys(options).forEach(option => {
-						this.setCaptionOption(option, options[option]);
-					});
-				}
-			}
-		}, {
-			key: "getAvatar",
-			value: function getAvatar() {
-				return this.avatar !== null ? this.avatar : this.getItem().getAvatar();
-			}
-		}, {
-			key: "setAvatar",
-			value: function setAvatar(avatar) {
-				if (main_core.Type.isString(avatar) || avatar === null) {
-					this.avatar = avatar;
-				}
-			}
-		}, {
-			key: "getAvatarOption",
-			value: function getAvatarOption(option) {
-				return this.avatarOptions === null || main_core.Type.isUndefined(this.avatarOptions[option]) ? this.getItem().getAvatarOption(option) : this.avatarOptions[option];
-			}
-		}, {
-			key: "setAvatarOption",
-			value: function setAvatarOption(option, value) {
-				if (main_core.Type.isStringFilled(option) && !main_core.Type.isUndefined(value)) {
-					if (this.avatarOptions === null) {
-						this.avatarOptions = {};
-					}
-					this.avatarOptions[option] = value;
-				}
-			}
-		}, {
-			key: "setAvatarOptions",
-			value: function setAvatarOptions(avatarOptions) {
-				if (main_core.Type.isPlainObject(avatarOptions)) {
-					Object.keys(avatarOptions).forEach(option => {
-						this.setAvatarOption(option, avatarOptions[option]);
-					});
-				}
-			}
-		}, {
-			key: "getTextColor",
-			value: function getTextColor() {
-				return this.textColor !== null ? this.textColor : this.getItem().getTextColor();
-			}
-		}, {
-			key: "setTextColor",
-			value: function setTextColor(textColor) {
-				if (main_core.Type.isString(textColor) || textColor === null) {
-					this.textColor = textColor;
-				}
-			}
-		}, {
-			key: "getLink",
-			value: function getLink() {
-				return this.link !== null ? this.getItem().replaceMacros(this.link) : this.getItem().getLink();
-			}
-		}, {
-			key: "setLink",
-			value: function setLink(link) {
-				if (main_core.Type.isString(link) || link === null) {
-					this.link = link;
-				}
-			}
-		}, {
-			key: "getLinkTitle",
-			value: function getLinkTitle() {
-				const linkTitle = this.getLinkTitleNode();
-				return linkTitle !== null ? linkTitle.getText() : null;
-			}
-		}, {
-			key: "getLinkTitleNode",
-			value: function getLinkTitleNode() {
-				return this.linkTitle !== null ? this.linkTitle : this.getItem().getLinkTitleNode();
-			}
-		}, {
-			key: "setLinkTitle",
-			value: function setLinkTitle(title) {
-				if (main_core.Type.isString(title) || main_core.Type.isPlainObject(title)) {
-					this.linkTitle = new TextNode(title);
-				} else if (title === null) {
-					this.linkTitle = null;
-				}
-			}
-		}, {
-			key: "getBadges",
-			value: function getBadges() {
-				return this.badges !== null ? this.badges : this.getItem().getBadges();
-			}
-		}, {
-			key: "setBadges",
-			value: function setBadges(badges) {
-				if (main_core.Type.isArray(badges)) {
-					this.badges = [];
-					badges.forEach(badge => {
-						this.badges.push(new ItemBadge(badge));
-					});
-				} else if (badges === null) {
-					this.badges = null;
-				}
-			}
-		}, {
-			key: "getBadgesOption",
-			value: function getBadgesOption(option) {
-				if (!main_core.Type.isUndefined(this.badgesOptions[option])) {
-					return this.badgesOptions[option];
-				}
-				return this.getItem().getBadgesOption(option);
-			}
-		}, {
-			key: "setBadgesOption",
-			value: function setBadgesOption(option, value) {
-				if (main_core.Type.isStringFilled(option) && !main_core.Type.isUndefined(value)) {
-					this.badgesOptions[option] = value;
-				}
-			}
-		}, {
-			key: "setBadgesOptions",
-			value: function setBadgesOptions(options) {
-				if (main_core.Type.isPlainObject(options)) {
-					Object.keys(options).forEach(option => {
-						this.setBadgesOption(option, options[option]);
-					});
-				}
-			}
-		}, {
-			key: "getOuterContainer",
-			value: function getOuterContainer() {
-				return this.cache.remember('outer-container', () => {
-					let className = '';
-					if (this.hasChildren() || this.isDynamic()) {
-						className += ' ui-selector-item-box-has-children';
-						if (this.getDepthLevel() >= this.getTab().getItemMaxDepth()) {
-							className += ' ui-selector-item-box-max-depth';
-						}
-					} else if (this.getItem().isLocked()) {
-						className += ' ui-selector-item-box-locked';
-					} else if (this.getItem().isSelected()) {
-						className += ' ui-selector-item-box-selected';
-					}
-					if (this.isOpen()) {
-						className += ' ui-selector-item-box-open';
-					}
-					const div = document.createElement('div');
-					div.className = `ui-selector-item-box${className}`;
-					div.appendChild(this.getContainer());
-					div.appendChild(this.getChildrenContainer());
-					return div;
-				});
-			}
-		}, {
-			key: "getChildrenContainer",
-			value: function getChildrenContainer() {
-				if (this.isRoot() && this.getTab()) {
-					return this.getTab().getItemsContainer();
-				}
-				return this.cache.remember('children-container', () => {
-					const div = document.createElement('div');
-					div.className = 'ui-selector-item-children';
-					return div;
-				});
-			}
-		}, {
-			key: "getContainer",
-			value: function getContainer() {
-				return this.cache.remember('container', () => {
-					const div = document.createElement('div');
-					div.className = 'ui-selector-item --ui-hoverable';
-					main_core.Event.bind(div, 'click', this.handleClick.bind(this));
-					main_core.Event.bind(div, 'mouseenter', this.handleMouseEnter.bind(this));
-					main_core.Event.bind(div, 'mouseleave', this.handleMouseLeave.bind(this));
-					div.appendChild(this.getAvatarContainer());
-					div.appendChild(this.getTitlesContainer());
-					div.appendChild(this.getIndicatorContainer());
-					if (main_core.Type.isStringFilled(this.getLink())) {
-						div.appendChild(this.getLinkContainer());
-					}
-					return div;
-				});
-			}
-		}, {
-			key: "getAvatarContainer",
-			value: function getAvatarContainer() {
-				return this.cache.remember('avatar', () => {
-					const div = document.createElement('div');
-					div.className = 'ui-selector-item-avatar';
-					return div;
-				});
-			}
-		}, {
-			key: "getTitlesContainer",
-			value: function getTitlesContainer() {
-				return this.cache.remember('titles', () => {
-					const div = document.createElement('div');
-					div.className = 'ui-selector-item-titles';
-					div.appendChild(this.getSupertitleContainer());
-					div.appendChild(this.getTitleBoxContainer());
-					div.appendChild(this.getSubtitleContainer());
-					return div;
-				});
-			}
-		}, {
-			key: "getTitleBoxContainer",
-			value: function getTitleBoxContainer() {
-				return this.cache.remember('title-box', () => {
-					const div = document.createElement('div');
-					div.className = 'ui-selector-item-title-box';
-					div.appendChild(this.getTitleContainer());
-					div.appendChild(this.getBadgeContainer());
-					div.appendChild(this.getCaptionContainer());
-					return div;
-				});
-			}
-		}, {
-			key: "getTitleContainer",
-			value: function getTitleContainer() {
-				return this.cache.remember('title', () => {
-					const div = document.createElement('div');
-					div.className = 'ui-selector-item-title';
-					return div;
-				});
-			}
-		}, {
-			key: "getSubtitleContainer",
-			value: function getSubtitleContainer() {
-				return this.cache.remember('subtitle', () => {
-					const div = document.createElement('div');
-					div.className = 'ui-selector-item-subtitle';
-					return div;
-				});
-			}
-		}, {
-			key: "getSupertitleContainer",
-			value: function getSupertitleContainer() {
-				return this.cache.remember('supertitle', () => {
-					const div = document.createElement('div');
-					div.className = 'ui-selector-item-supertitle';
-					return div;
-				});
-			}
-		}, {
-			key: "getCaptionContainer",
-			value: function getCaptionContainer() {
-				return this.cache.remember('caption', () => {
-					const div = document.createElement('div');
-					div.className = 'ui-selector-item-caption';
-					return div;
-				});
-			}
-		}, {
-			key: "getIndicatorContainer",
-			value: function getIndicatorContainer() {
-				return this.cache.remember('indicator', () => {
-					const div = document.createElement('div');
-					div.className = 'ui-selector-item-indicator ui-icon-set__scope';
-					return div;
-				});
-			}
-		}, {
-			key: "getBadgeContainer",
-			value: function getBadgeContainer() {
-				return this.cache.remember('badge', () => {
-					const div = document.createElement('div');
-					div.className = 'ui-selector-item-badges';
-					return div;
-				});
-			}
-		}, {
-			key: "getLinkContainer",
-			value: function getLinkContainer() {
-				return this.cache.remember('link', () => {
-					const anchor = document.createElement('a');
-					anchor.className = 'ui-selector-item-link';
-					anchor.href = this.getLink();
-					anchor.target = '_blank';
-					anchor.title = '';
-					main_core.Event.bind(anchor, 'click', this.handleLinkClick.bind(this));
-					anchor.appendChild(this.getLinkTextContainer());
-					return anchor;
-				});
-			}
-		}, {
-			key: "getLinkTextContainer",
-			value: function getLinkTextContainer() {
-				return this.cache.remember('link-text', () => {
-					const span = document.createElement('span');
-					span.className = 'ui-selector-item-link-text';
-					return span;
-				});
-			}
-		}, {
-			key: "showLink",
-			value: function showLink() {
-				if (main_core.Type.isStringFilled(this.getLink())) {
-					main_core.Dom.addClass(this.getLinkContainer(), 'ui-selector-item-link--show');
-					requestAnimationFrame(() => {
-						requestAnimationFrame(() => {
-							main_core.Dom.addClass(this.getLinkContainer(), 'ui-selector-item-link--animate');
-						});
-					});
-				}
-			}
-		}, {
-			key: "hideLink",
-			value: function hideLink() {
-				if (main_core.Type.isStringFilled(this.getLink())) {
-					main_core.Dom.removeClass(this.getLinkContainer(), ['ui-selector-item-link--show', 'ui-selector-item-link--animate']);
-				}
-			}
-		}, {
-			key: "setHighlights",
-			value: function setHighlights(highlights) {
-				this.highlights = highlights;
-			}
-		}, {
-			key: "getHighlights",
-			value: function getHighlights() {
-				return this.highlights;
-			}
-		}, {
-			key: "highlight",
-			value: function highlight() {
-				this.getHighlights().forEach(matchField => {
-					const field = matchField.getField();
-					const fieldName = field.getName();
-					if (field.isCustom()) {
-						const text = this.getItem().getCustomData().get(fieldName);
-						this.getSubtitleContainer().innerHTML = Highlighter.mark(text, matchField.getMatches());
-					} else if (field.getName() === 'title') {
-						this.getTitleContainer().innerHTML = Highlighter.mark(this.getItem().getTitleNode(), matchField.getMatches());
-					} else if (field.getName() === 'subtitle') {
-						this.getSubtitleContainer().innerHTML = Highlighter.mark(this.getItem().getSubtitleNode(), matchField.getMatches());
-					} else if (field.getName() === 'supertitle') {
-						this.getSupertitleContainer().innerHTML = Highlighter.mark(this.getItem().getSupertitleNode(), matchField.getMatches());
-					} else if (field.getName() === 'caption') {
-						this.getCaptionContainer().innerHTML = Highlighter.mark(this.getItem().getCaptionNode(), matchField.getMatches());
-					}
-				});
-			}
-		}, {
-			key: "select",
-			value: function select() {
-				if (this.hasChildren() || this.isDynamic()) {
-					return;
-				}
-				main_core.Dom.addClass(this.getOuterContainer(), 'ui-selector-item-box-selected');
-			}
-		}, {
-			key: "deselect",
-			value: function deselect() {
-				if (this.hasChildren() || this.isDynamic()) {
-					return;
-				}
-				main_core.Dom.removeClass(this.getOuterContainer(), 'ui-selector-item-box-selected');
-			}
-		}, {
-			key: "focus",
-			value: function focus() {
-				if (this.isFocused()) {
-					return;
-				}
-				this.focused = true;
-				main_core.Dom.addClass(this.getOuterContainer(), 'ui-selector-item-box-focused');
-				this.getDialog().emit('ItemNode:onFocus', {
-					node: this
-				});
-			}
-		}, {
-			key: "unfocus",
-			value: function unfocus() {
-				if (!this.isFocused()) {
-					return;
-				}
-				this.focused = false;
-				main_core.Dom.removeClass(this.getOuterContainer(), 'ui-selector-item-box-focused');
-				this.getDialog().emit('ItemNode:onUnfocus', {
-					node: this
-				});
-			}
-		}, {
-			key: "isFocused",
-			value: function isFocused() {
-				return this.focused;
-			}
-		}, {
-			key: "click",
-			value: function click() {
-				if (this.hasChildren() || this.isDynamic()) {
-					if (this.isOpen()) {
-						this.collapse();
-					} else {
-						this.expand();
-					}
+					div.ariaExpanded = this.isOpen().toString();
+				} else if (this.getItem().isLocked()) {
+					className += ' ui-selector-item-box-locked';
 				} else if (this.getItem().isSelected()) {
-					if (this.getItem().isDeselectable()) {
-						this.getItem().deselect({
-							node: this
-						});
-					}
-					if (!this.getItem().isSelected() && this.getDialog().shouldHideOnDeselect()) {
-						this.getDialog().hide();
-					}
+					className += ' ui-selector-item-box-selected';
+					div.ariaSelected = 'true';
 				} else {
-					this.getItem().select({
-						node: this
+					div.ariaSelected = 'false';
+				}
+				if (this.isOpen()) {
+					className += ' ui-selector-item-box-open';
+				}
+				div.className = `ui-selector-item-box${className}`;
+				div.id = this.getId();
+				div.tabIndex = -1;
+				if (!this.isRoot()) {
+					div.dataset.testid = `ui-selector-item-${this.getItem().getEntityId()}-${this.getItem().getId()}`;
+				}
+				if (!this.getDialog().hasTagSelector()) {
+					main_core.Event.bind(div, 'focusout', this.handleFocusOut.bind(this));
+					main_core.Event.bind(div, 'focus', this.handleFocus.bind(this));
+				}
+				div.appendChild(this.getContainer());
+				div.appendChild(this.getChildrenContainer());
+				return div;
+			});
+		}
+		getChildrenContainer() {
+			if (this.isRoot() && this.getTab()) {
+				return this.getTab().getItemsContainer();
+			}
+			return this.cache.remember('children-container', () => {
+				const div = document.createElement('div');
+				div.className = 'ui-selector-item-children';
+				div.role = 'group';
+				return div;
+			});
+		}
+		getContainer() {
+			return this.cache.remember('container', () => {
+				const div = document.createElement('div');
+				div.className = 'ui-selector-item --ui-hoverable';
+				div.dataset.testid = 'ui-selector-item-content';
+				main_core.Event.bind(div, 'click', this.handleClick.bind(this));
+				main_core.Event.bind(div, 'mouseenter', this.handleMouseEnter.bind(this));
+				main_core.Event.bind(div, 'mouseleave', this.handleMouseLeave.bind(this));
+				div.appendChild(this.getAvatarContainer());
+				div.appendChild(this.getTitlesContainer());
+				div.appendChild(this.getIndicatorContainer());
+				if (main_core.Type.isStringFilled(this.getLink())) {
+					div.appendChild(this.getLinkContainer());
+				}
+				return div;
+			});
+		}
+		getAvatarContainer() {
+			return this.cache.remember('avatar', () => {
+				const div = document.createElement('div');
+				div.className = 'ui-selector-item-avatar';
+				div.ariaHidden = 'true';
+				return div;
+			});
+		}
+		getTitlesContainer() {
+			return this.cache.remember('titles', () => {
+				const div = document.createElement('div');
+				div.className = 'ui-selector-item-titles';
+				div.appendChild(this.getSupertitleContainer());
+				div.appendChild(this.getTitleBoxContainer());
+				div.appendChild(this.getSubtitleContainer());
+				return div;
+			});
+		}
+		getTitleBoxContainer() {
+			return this.cache.remember('title-box', () => {
+				const div = document.createElement('div');
+				div.className = 'ui-selector-item-title-box';
+				div.appendChild(this.getTitleContainer());
+				div.appendChild(this.getBadgeContainer());
+				div.appendChild(this.getCaptionContainer());
+				return div;
+			});
+		}
+		getTitleContainer() {
+			return this.cache.remember('title', () => {
+				const div = document.createElement('div');
+				div.className = 'ui-selector-item-title';
+				return div;
+			});
+		}
+		getSubtitleContainer() {
+			return this.cache.remember('subtitle', () => {
+				const div = document.createElement('div');
+				div.className = 'ui-selector-item-subtitle';
+				return div;
+			});
+		}
+		getSupertitleContainer() {
+			return this.cache.remember('supertitle', () => {
+				const div = document.createElement('div');
+				div.className = 'ui-selector-item-supertitle';
+				return div;
+			});
+		}
+		getCaptionContainer() {
+			return this.cache.remember('caption', () => {
+				const div = document.createElement('div');
+				div.className = 'ui-selector-item-caption';
+				return div;
+			});
+		}
+		getIndicatorContainer() {
+			return this.cache.remember('indicator', () => {
+				const div = document.createElement('div');
+				div.className = 'ui-selector-item-indicator ui-icon-set__scope';
+				div.ariaHidden = 'true';
+				return div;
+			});
+		}
+		getBadgeContainer() {
+			return this.cache.remember('badge', () => {
+				const div = document.createElement('div');
+				div.className = 'ui-selector-item-badges';
+				return div;
+			});
+		}
+		getLinkContainer() {
+			return this.cache.remember('link', () => {
+				const anchor = document.createElement('a');
+				anchor.className = 'ui-selector-item-link';
+				anchor.href = this.getLink();
+				anchor.target = '_blank';
+				anchor.title = '';
+				anchor.ariaHidden = 'true';
+				anchor.tabIndex = -1;
+				main_core.Event.bind(anchor, 'click', this.handleLinkClick.bind(this));
+				anchor.appendChild(this.getLinkTextContainer());
+				return anchor;
+			});
+		}
+		getLinkTextContainer() {
+			return this.cache.remember('link-text', () => {
+				const span = document.createElement('span');
+				span.className = 'ui-selector-item-link-text';
+				return span;
+			});
+		}
+		showLink() {
+			if (main_core.Type.isStringFilled(this.getLink())) {
+				main_core.Dom.addClass(this.getLinkContainer(), 'ui-selector-item-link--show');
+				requestAnimationFrame(() => {
+					requestAnimationFrame(() => {
+						main_core.Dom.addClass(this.getLinkContainer(), 'ui-selector-item-link--animate');
 					});
-					if (this.getDialog().shouldClearSearchOnSelect()) {
-						this.getDialog().clearSearch();
-					}
-					if (this.getItem().isSelected() && this.getDialog().shouldHideOnSelect()) {
-						this.getDialog().hide();
-					}
+				});
+			}
+		}
+		hideLink() {
+			if (main_core.Type.isStringFilled(this.getLink())) {
+				main_core.Dom.removeClass(this.getLinkContainer(), ['ui-selector-item-link--show', 'ui-selector-item-link--animate']);
+			}
+		}
+		setHighlights(highlights) {
+			this.highlights = highlights;
+		}
+		getHighlights() {
+			return this.highlights;
+		}
+		highlight() {
+			this.getHighlights().forEach(matchField => {
+				const field = matchField.getField();
+				const fieldName = field.getName();
+				if (field.isCustom()) {
+					const text = this.getItem().getCustomData().get(fieldName);
+					this.getSubtitleContainer().innerHTML = Highlighter.mark(text, matchField.getMatches());
+				} else if (field.getName() === 'title') {
+					this.getTitleContainer().innerHTML = Highlighter.mark(this.getItem().getTitleNode(), matchField.getMatches());
+				} else if (field.getName() === 'subtitle') {
+					this.getSubtitleContainer().innerHTML = Highlighter.mark(this.getItem().getSubtitleNode(), matchField.getMatches());
+				} else if (field.getName() === 'supertitle') {
+					this.getSupertitleContainer().innerHTML = Highlighter.mark(this.getItem().getSupertitleNode(), matchField.getMatches());
+				} else if (field.getName() === 'caption') {
+					this.getCaptionContainer().innerHTML = Highlighter.mark(this.getItem().getCaptionNode(), matchField.getMatches());
+				}
+			});
+		}
+		select() {
+			if (this.hasChildren() || this.isDynamic()) {
+				return;
+			}
+			main_core.Dom.addClass(this.getOuterContainer(), 'ui-selector-item-box-selected');
+			main_core.Dom.attr(this.getOuterContainer(), 'aria-selected', 'true');
+		}
+		deselect() {
+			if (this.hasChildren() || this.isDynamic()) {
+				return;
+			}
+			main_core.Dom.removeClass(this.getOuterContainer(), 'ui-selector-item-box-selected');
+			main_core.Dom.attr(this.getOuterContainer(), 'aria-selected', 'false');
+		}
+		focus(focusVisible = false) {
+			if (this.isFocused()) {
+				return;
+			}
+			this.focused = true;
+			main_core.Dom.addClass(this.getOuterContainer(), 'ui-selector-item-box-focused');
+			if (!this.getDialog().hasTagSelector() && this.getDialog().getFocusTrap() !== null) {
+				main_core.Dom.attr(this.getOuterContainer(), 'tabindex', 0);
+				this.getOuterContainer().focus();
+				if (focusVisible) {
+					main_core.Dom.addClass(this.getOuterContainer(), '--focus-visible');
+				} else {
+					main_core.Dom.removeClass(this.getOuterContainer(), '--focus-visible');
+				}
+			}
+			this.getDialog().emit('ItemNode:onFocus', {
+				node: this
+			});
+		}
+		unfocus() {
+			if (!this.isFocused()) {
+				return;
+			}
+			this.focused = false;
+			main_core.Dom.removeClass(this.getOuterContainer(), 'ui-selector-item-box-focused --focus-visible');
+			main_core.Dom.attr(this.getOuterContainer(), 'tabindex', -1);
+			this.getDialog().emit('ItemNode:onUnfocus', {
+				node: this
+			});
+		}
+		isFocused() {
+			return this.focused;
+		}
+		click() {
+			if (this.hasChildren() || this.isDynamic()) {
+				if (this.isOpen()) {
+					this.collapse();
+				} else {
+					this.expand();
 				}
 				this.getDialog().focusSearch();
-			}
-		}, {
-			key: "scrollIntoView",
-			value: function scrollIntoView() {
-				const tabContainer = this.getTab().getContainer();
-				const nodeContainer = this.getContainer();
-				const tabRect = main_core.Dom.getPosition(tabContainer);
-				const nodeRect = main_core.Dom.getPosition(nodeContainer);
-				const margin = 9; // 'ui-selector-items' padding - 'ui-selector-item' margin = 10 - 1
-
-				if (nodeRect.top < tabRect.top)
-					// scroll up
-					{
-						tabContainer.scrollTop -= tabRect.top - nodeRect.top + margin;
-					} else if (nodeRect.bottom > tabRect.bottom)
-					// scroll down
-					{
-						tabContainer.scrollTop += nodeRect.bottom - tabRect.bottom + margin;
-					}
-			}
-		}, {
-			key: "handleClick",
-			value: function handleClick() {
-				this.click();
-			}
-		}, {
-			key: "handleLinkClick",
-			value: function handleLinkClick(event) {
-				this.getDialog().emit('ItemNode:onLinkClick', {
-					node: this,
-					event
-				});
-				event.stopPropagation();
-			}
-		}, {
-			key: "handleMouseEnter",
-			value: function handleMouseEnter() {
-				this.focus();
-				this.showLink();
-				_assertClassBrand$4(_ItemNode_brand, this, _makeEllipsisTitle).call(this);
-			}
-		}, {
-			key: "handleMouseLeave",
-			value: function handleMouseLeave() {
-				this.unfocus();
-				this.hideLink();
-			}
-		}]);
-	}();
-	_ItemNode = ItemNode;
-	function _setHidden(flag) {
-		if (main_core.Type.isBoolean(flag) && !this.isRoot()) {
-			this.hidden = flag;
-		}
-	}
-	function _makeEllipsisTitle() {
-		var _this$constructor;
-		if (_assertClassBrand$4(_ItemNode, _this$constructor = this.constructor, _isEllipsisActive).call(_this$constructor, this.getTitleContainer())) {
-			var _this$constructor2;
-			this.getContainer().setAttribute('title', _assertClassBrand$4(_ItemNode, _this$constructor2 = this.constructor, _sanitizeTitle$1).call(_this$constructor2, this.getTitleContainer().textContent));
-		} else {
-			main_core.Dom.attr(this.getContainer(), 'title', null);
-		}
-		const containers = [this.getSupertitleContainer(), this.getSubtitleContainer(), this.getCaptionContainer(), ...this.getBadges().map(badge => badge.getContainer(this.getBadgeContainer()))];
-		containers.forEach(container => {
-			var _this$constructor3;
-			if (_assertClassBrand$4(_ItemNode, _this$constructor3 = this.constructor, _isEllipsisActive).call(_this$constructor3, container)) {
-				var _this$constructor4;
-				container.setAttribute('title', _assertClassBrand$4(_ItemNode, _this$constructor4 = this.constructor, _sanitizeTitle$1).call(_this$constructor4, container.textContent));
+			} else if (this.getItem().isSelected()) {
+				if (this.getItem().isDeselectable()) {
+					this.getItem().deselect({
+						node: this
+					});
+					this.getDialog().focusSearch();
+				}
+				if (!this.getItem().isSelected() && this.getDialog().shouldHideOnDeselect()) {
+					this.getDialog().hide();
+				}
 			} else {
-				main_core.Dom.attr(container, 'title', null);
+				this.getItem().select({
+					node: this
+				});
+				if (this.getDialog().shouldClearSearchOnSelect()) {
+					this.getDialog().clearSearch();
+					this.getDialog().focusSearch();
+				}
+				if (this.getItem().isSelected() && this.getDialog().shouldHideOnSelect()) {
+					this.getDialog().hide();
+				}
 			}
-		});
-	}
-	function _isEllipsisActive(element) {
-		return element.offsetWidth < element.scrollWidth;
-	}
-	function _sanitizeTitle$1(text) {
-		return text.replace(/[\t ]+/gm, ' ').replace(/\n+/gm, '\n').trim();
+		}
+		scrollIntoView() {
+			const tabContainer = this.getTab().getContainer();
+			const nodeContainer = this.getContainer();
+			const tabRect = main_core.Dom.getPosition(tabContainer);
+			const nodeRect = main_core.Dom.getPosition(nodeContainer);
+			const margin = 9;
+			if (nodeRect.top < tabRect.top)
+				{
+					tabContainer.scrollTop -= tabRect.top - nodeRect.top + margin;
+				} else if (nodeRect.bottom > tabRect.bottom)
+				{
+					tabContainer.scrollTop += nodeRect.bottom - tabRect.bottom + margin;
+				}
+		}
+		#makeEllipsisTitle() {
+			if (ItemNode.#isEllipsisActive(this.getTitleContainer())) {
+				this.getContainer().setAttribute('title', ItemNode.#sanitizeTitle(this.getTitleContainer().textContent));
+			} else {
+				main_core.Dom.attr(this.getContainer(), 'title', null);
+			}
+			const containers = [this.getSupertitleContainer(), this.getSubtitleContainer(), this.getCaptionContainer(), ...this.getBadges().map(badge => badge.getContainer(this.getBadgeContainer()))];
+			containers.forEach(container => {
+				if (ItemNode.#isEllipsisActive(container)) {
+					container.setAttribute('title', ItemNode.#sanitizeTitle(container.textContent));
+				} else {
+					main_core.Dom.attr(container, 'title', null);
+				}
+			});
+		}
+		static #isEllipsisActive(element) {
+			return element.offsetWidth < element.scrollWidth;
+		}
+		static #sanitizeTitle(text) {
+			return text.replace(/[\t ]+/gm, ' ').replace(/\n+/gm, '\n').trim();
+		}
+		handleClick() {
+			this.click();
+		}
+		handleLinkClick(event) {
+			this.getDialog().emit('ItemNode:onLinkClick', {
+				node: this,
+				event
+			});
+			event.stopPropagation();
+		}
+		handleMouseEnter() {
+			this.focus();
+			this.showLink();
+			this.#makeEllipsisTitle();
+		}
+		handleMouseLeave() {
+			this.unfocus();
+			this.hideLink();
+		}
+		handleFocusOut() {
+			if (this.isFocused()) {
+				main_core.Dom.removeClass(this.getOuterContainer(), '--focus-visible');
+			}
+		}
+		handleFocus() {
+			if (this.isFocused() && this.getDialog().getFocusTrap() !== null) {
+				main_core.Dom.addClass(this.getOuterContainer(), '--focus-visible');
+			}
+		}
 	}
 
-	let SearchFieldIndex = /*#__PURE__*/function () {
-		function SearchFieldIndex(field, indexes = []) {
-			babelHelpers.classCallCheck(this, SearchFieldIndex);
-			babelHelpers.defineProperty(this, "field", null);
-			babelHelpers.defineProperty(this, "indexes", []);
+	class SearchFieldIndex {
+		field = null;
+		indexes = [];
+		constructor(field, indexes = []) {
 			this.field = field;
 			this.addIndexes(indexes);
 		}
-		return babelHelpers.createClass(SearchFieldIndex, [{
-			key: "getField",
-			value: function getField() {
-				return this.field;
+		getField() {
+			return this.field;
+		}
+		getIndexes() {
+			return this.indexes;
+		}
+		addIndex(index) {
+			this.getIndexes().push(index);
+		}
+		addIndexes(indexes) {
+			for (const index of indexes) {
+				this.addIndex(index);
 			}
-		}, {
-			key: "getIndexes",
-			value: function getIndexes() {
-				return this.indexes;
-			}
-		}, {
-			key: "addIndex",
-			value: function addIndex(index) {
-				this.getIndexes().push(index);
-			}
-		}, {
-			key: "addIndexes",
-			value: function addIndexes(indexes) {
-				indexes.forEach(index => {
-					this.addIndex(index);
-				});
-			}
-		}]);
-	}();
+		}
+	}
 
-	let WordIndex = /*#__PURE__*/function () {
-		function WordIndex(word, startIndex) {
-			babelHelpers.classCallCheck(this, WordIndex);
-			babelHelpers.defineProperty(this, "word", '');
-			babelHelpers.defineProperty(this, "startIndex", 0);
+	class WordIndex {
+		word = '';
+		startIndex = 0;
+		constructor(word, startIndex) {
 			this.setWord(word);
 			this.setStartIndex(startIndex);
 		}
-		return babelHelpers.createClass(WordIndex, [{
-			key: "getWord",
-			value: function getWord() {
-				return this.word;
+		getWord() {
+			return this.word;
+		}
+		setWord(word) {
+			if (main_core.Type.isStringFilled(word)) {
+				this.word = word;
 			}
-		}, {
-			key: "setWord",
-			value: function setWord(word) {
-				if (main_core.Type.isStringFilled(word)) {
-					this.word = word;
-				}
-				return this;
+			return this;
+		}
+		getStartIndex() {
+			return this.startIndex;
+		}
+		setStartIndex(index) {
+			if (main_core.Type.isNumber(index) && index >= 0) {
+				this.startIndex = index;
 			}
-		}, {
-			key: "getStartIndex",
-			value: function getStartIndex() {
-				return this.startIndex;
-			}
-		}, {
-			key: "setStartIndex",
-			value: function setStartIndex(index) {
-				if (main_core.Type.isNumber(index) && index >= 0) {
-					this.startIndex = index;
-				}
-				return this;
-			}
-		}]);
-	}();
+			return this;
+		}
+	}
 
-	/**
-	 * @license
-	 * Lodash <https://lodash.com/>
-	 * Copyright OpenJS Foundation and other contributors <https://openjsf.org/>
-	 * Released under MIT license <https://lodash.com/license>
-	 * Based on Underscore.js 1.8.3 <http://underscorejs.org/LICENSE>
-	 * Copyright Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
-	 */
-
-	/** Used to compose unicode character classes. */
 	const rsAstralRange = '\\ud800-\\udfff';
 	const rsComboMarksRange = '\\u0300-\\u036f';
 	const reComboHalfMarksRange = '\\ufe20-\\ufe2f';
@@ -1980,8 +1528,6 @@ this.BX.UI = this.BX.UI || {};
 	const rsUpperRange = 'A-Z\\xc0-\\xd6\\xd8-\\xde';
 	const rsVarRange = '\\ufe0e\\ufe0f';
 	const rsBreakRange = rsMathOpRange + rsNonCharRange + rsPunctuationRange + rsSpaceRange;
-
-	/** Used to compose unicode capture groups. */
 	const rsApos = '[\'\u2019]';
 	const rsBreak = `[${rsBreakRange}]`;
 	const rsCombo = `[${rsComboRange}]`;
@@ -1996,8 +1542,6 @@ this.BX.UI = this.BX.UI || {};
 	const rsSurrPair = '[\\ud800-\\udbff][\\udc00-\\udfff]';
 	const rsUpper = `[${rsUpperRange}]`;
 	const rsZWJ = '\\u200d';
-
-	/** Used to compose unicode regexes. */
 	const rsMiscLower = `(?:${rsLower}|${rsMisc})`;
 	const rsMiscUpper = `(?:${rsUpper}|${rsMisc})`;
 	const rsOptContrLower = `(?:${rsApos}(?:d|ll|m|re|s|t|ve))?`;
@@ -2011,258 +1555,269 @@ this.BX.UI = this.BX.UI || {};
 	const rsEmoji = `(?:${[rsDingbat, rsRegional, rsSurrPair].join('|')})${rsSeq}`;
 	const unicodeWordsRegExp = new RegExp([`${rsUpper}?${rsLower}+${rsOptContrLower}(?=${[rsBreak, rsUpper, '$'].join('|')})`, `${rsMiscUpper}+${rsOptContrUpper}(?=${[rsBreak, rsUpper + rsMiscLower, '$'].join('|')})`, `${rsUpper}?${rsMiscLower}+${rsOptContrLower}`, `${rsUpper}+${rsOptContrUpper}`, rsOrdUpper, rsOrdLower, `${rsDigit}+`, rsEmoji].join('|'), 'g');
 
-	const asciiWordRegExp = /[^\x00-\x2f\x3a-\x40\x5b-\x60\x7b-\x7f]+/g;
-	const hasUnicodeWordRegExp = /[a-z][A-Z]|[A-Z]{2}[a-z]|[0-9][a-zA-Z]|[a-zA-Z][0-9]|[^a-zA-Z0-9 ]/;
-	const nonWhitespaceRegExp = /[^\s]+/g;
-	const specialChars = `!"#$%&'()*+,-.\/:;<=>?@[\\]^_\`{|}`;
+	const asciiWordRegExp = /[^\x00-\x2F\x3A-\x40\x5B-\x60\x7B-\x7F]+/g;
+	const hasUnicodeWordRegExp = /[a-z][A-Z]|[A-Z]{2}[a-z]|\d[A-Za-z]|[A-Za-z]\d|[^\d A-Za-z]/;
+	const nonWhitespaceRegExp = /\S+/g;
+	const specialChars = '!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}';
 	const specialCharsRegExp = new RegExp(`[${specialChars}]`);
-	let SearchIndex = /*#__PURE__*/function () {
-		function SearchIndex() {
-			babelHelpers.classCallCheck(this, SearchIndex);
-			babelHelpers.defineProperty(this, "indexes", []);
+	class SearchIndex {
+		indexes = [];
+		addIndex(fieldIndex) {
+			if (fieldIndex instanceof SearchFieldIndex) {
+				this.getIndexes().push(fieldIndex);
+			}
 		}
-		return babelHelpers.createClass(SearchIndex, [{
-			key: "addIndex",
-			value: function addIndex(fieldIndex) {
-				if (main_core.Type.isObject(fieldIndex)) {
-					this.getIndexes().push(fieldIndex);
-				}
-			}
-		}, {
-			key: "getIndexes",
-			value: function getIndexes() {
-				return this.indexes;
-			}
-		}], [{
-			key: "create",
-			value: function create(item) {
-				const index = new SearchIndex();
-				const entity = item.getEntity();
-				if (!item.isSearchable() || !entity.isSearchable() || item.isHidden()) {
-					return index;
-				}
-				const searchFields = entity.getSearchFields();
-				searchFields.forEach(field => {
-					if (!field.isSearchable()) {
-						return;
-					}
-					if (field.isSystem()) {
-						if (field.getName() === 'title') {
-							const textNode = item.getTitleNode();
-							const stripTags = textNode !== null && textNode.getType() === 'html';
-							index.addIndex(this.createIndex(field, item.getTitle(), stripTags));
-						} else if (field.getName() === 'subtitle') {
-							const textNode = item.getSubtitleNode();
-							const stripTags = textNode !== null && textNode.getType() === 'html';
-							index.addIndex(this.createIndex(field, item.getSubtitle(), stripTags));
-						} else if (field.getName() === 'supertitle') {
-							const textNode = item.getSupertitleNode();
-							const stripTags = textNode !== null && textNode.getType() === 'html';
-							index.addIndex(this.createIndex(field, item.getSupertitle(), stripTags));
-						} else if (field.getName() === 'caption') {
-							const textNode = item.getCaptionNode();
-							const stripTags = textNode !== null && textNode.getType() === 'html';
-							index.addIndex(this.createIndex(field, item.getCaption(), stripTags));
-						}
-					} else {
-						const customData = item.getCustomData().get(field.getName());
-						if (!main_core.Type.isUndefined(customData)) {
-							index.addIndex(this.createIndex(field, customData));
-						}
-					}
-				});
+		getIndexes() {
+			return this.indexes;
+		}
+		static create(item) {
+			const index = new SearchIndex();
+			const entity = item.getEntity();
+			if (!item.isSearchable() || !entity.isSearchable() || item.isHidden()) {
 				return index;
 			}
-		}, {
-			key: "createIndex",
-			value: function createIndex(field, text, stripTags = false) {
-				if (!main_core.Type.isStringFilled(text)) {
-					return null;
-				}
-				if (stripTags) {
-					text = text.replace(/<\/?[^>]+>/g, match => ' '.repeat(match.length));
-					text = text.replace(/&(?:#\d+|#x[\da-fA-F]+|[0-9a-zA-Z]+);/g, match => ' '.repeat(match.length));
-				}
-				let index = null;
-				if (field.getType() === 'string') {
-					const wordIndexes = this.splitText(text);
-					if (main_core.Type.isArrayFilled(wordIndexes)) {
-						// "GoPro111 Leto15"
-						// [go, pro, 111, leto, 15] + [gopro111, leto15]
-						this.fillComplexWords(wordIndexes);
-						this.fillNonCharWords(wordIndexes, text);
-						index = new SearchFieldIndex(field, wordIndexes);
-					}
-				} else if (field.getType() === 'email') {
-					const position = text.indexOf('@');
-					if (position !== -1) {
-						index = new SearchFieldIndex(field, [new WordIndex(text.toLowerCase(), 0), new WordIndex(text.substr(position + 1).toLowerCase(), position + 1)]);
-					}
-				}
-				return index;
-			}
-		}, {
-			key: "splitText",
-			value: function splitText(text) {
-				if (!main_core.Type.isStringFilled(text)) {
-					return [];
-				}
-				return this.hasUnicodeWord(text) ? this.splitUnicodeText(text) : this.splitAsciiText(text);
-			}
-		}, {
-			key: "splitUnicodeText",
-			value: function splitUnicodeText(text) {
-				return this.splitTextInternal(text, unicodeWordsRegExp);
-			}
-		}, {
-			key: "splitAsciiText",
-			value: function splitAsciiText(text) {
-				return this.splitTextInternal(text, asciiWordRegExp);
-			}
-		}, {
-			key: "hasUnicodeWord",
-			value: function hasUnicodeWord(text) {
-				return hasUnicodeWordRegExp.test(text);
-			}
-		}, {
-			key: "splitTextInternal",
-			value: function splitTextInternal(text, regExp) {
-				let match;
-				const result = [];
-				regExp.lastIndex = 0;
-				while ((match = regExp.exec(text)) !== null) {
-					if (match.index === regExp.lastIndex) {
-						regExp.lastIndex++;
-					}
-					result.push(new WordIndex(match[0].toLowerCase(), match.index));
-				}
-				return result;
-			}
-
-			/**
-			 *  @private
-			 */
-		}, {
-			key: "fillComplexWords",
-			value: function fillComplexWords(indexes) {
-				if (indexes.length < 2) {
+			const searchFields = entity.getSearchFields();
+			searchFields.forEach(field => {
+				if (!field.isSearchable()) {
 					return;
 				}
-				let complexWord = null;
-				let startIndex = null;
-				indexes.forEach((currentIndex, currentArrayIndex) => {
-					const nextIndex = indexes[currentArrayIndex + 1];
-					if (nextIndex) {
-						const sameWord = currentIndex.getStartIndex() + currentIndex.getWord().length === nextIndex.getStartIndex();
-						if (sameWord) {
-							if (complexWord === null) {
-								complexWord = currentIndex.getWord();
-								startIndex = currentIndex.getStartIndex();
-							}
-							complexWord += nextIndex.getWord();
-						} else if (complexWord !== null) {
-							indexes.push(new WordIndex(complexWord, startIndex));
-							complexWord = null;
-							startIndex = null;
+				if (field.isSystem()) {
+					if (field.getName() === 'title') {
+						const textNode = item.getTitleNode();
+						const stripTags = textNode !== null && textNode.getType() === 'html';
+						index.addIndex(this.createIndex(field, item.getTitle(), stripTags));
+					} else if (field.getName() === 'subtitle') {
+						const textNode = item.getSubtitleNode();
+						const stripTags = textNode !== null && textNode.getType() === 'html';
+						index.addIndex(this.createIndex(field, item.getSubtitle(), stripTags));
+					} else if (field.getName() === 'supertitle') {
+						const textNode = item.getSupertitleNode();
+						const stripTags = textNode !== null && textNode.getType() === 'html';
+						index.addIndex(this.createIndex(field, item.getSupertitle(), stripTags));
+					} else if (field.getName() === 'caption') {
+						const textNode = item.getCaptionNode();
+						const stripTags = textNode !== null && textNode.getType() === 'html';
+						index.addIndex(this.createIndex(field, item.getCaption(), stripTags));
+					}
+				} else {
+					const customData = item.getCustomData().get(field.getName());
+					if (!main_core.Type.isUndefined(customData)) {
+						index.addIndex(this.createIndex(field, customData));
+					}
+				}
+			});
+			return index;
+		}
+		static createIndex(field, text, stripTags = false) {
+			if (!main_core.Type.isStringFilled(text)) {
+				return null;
+			}
+			if (stripTags) {
+				text = text.replace(/<\/?[^>]+>/g, match => ' '.repeat(match.length));
+				text = text.replace(/&(?:#\d+|#x[\dA-Fa-f]+|[\dA-Za-z]+);/g, match => ' '.repeat(match.length));
+			}
+			let index = null;
+			if (field.getType() === 'string') {
+				const wordIndexes = this.splitText(text);
+				if (main_core.Type.isArrayFilled(wordIndexes)) {
+					this.fillComplexWords(wordIndexes);
+					this.fillNonCharWords(wordIndexes, text);
+					index = new SearchFieldIndex(field, wordIndexes);
+				}
+			} else if (field.getType() === 'email') {
+				const position = text.indexOf('@');
+				if (position !== -1) {
+					index = new SearchFieldIndex(field, [new WordIndex(text.toLowerCase(), 0), new WordIndex(text.substr(position + 1).toLowerCase(), position + 1)]);
+				}
+			}
+			return index;
+		}
+		static splitText(text) {
+			if (!main_core.Type.isStringFilled(text)) {
+				return [];
+			}
+			return this.hasUnicodeWord(text) ? this.splitUnicodeText(text) : this.splitAsciiText(text);
+		}
+		static splitUnicodeText(text) {
+			return this.splitTextInternal(text, unicodeWordsRegExp);
+		}
+		static splitAsciiText(text) {
+			return this.splitTextInternal(text, asciiWordRegExp);
+		}
+		static hasUnicodeWord(text) {
+			return hasUnicodeWordRegExp.test(text);
+		}
+		static splitTextInternal(text, regExp) {
+			let match;
+			const result = [];
+			regExp.lastIndex = 0;
+			while ((match = regExp.exec(text)) !== null) {
+				if (match.index === regExp.lastIndex) {
+					regExp.lastIndex++;
+				}
+				result.push(new WordIndex(match[0].toLowerCase(), match.index));
+			}
+			return result;
+		}
+		static fillComplexWords(indexes) {
+			if (indexes.length < 2) {
+				return;
+			}
+			let complexWord = null;
+			let startIndex = null;
+			indexes.forEach((currentIndex, currentArrayIndex) => {
+				const nextIndex = indexes[currentArrayIndex + 1];
+				if (nextIndex) {
+					const sameWord = currentIndex.getStartIndex() + currentIndex.getWord().length === nextIndex.getStartIndex();
+					if (sameWord) {
+						if (complexWord === null) {
+							complexWord = currentIndex.getWord();
+							startIndex = currentIndex.getStartIndex();
 						}
+						complexWord += nextIndex.getWord();
 					} else if (complexWord !== null) {
 						indexes.push(new WordIndex(complexWord, startIndex));
 						complexWord = null;
 						startIndex = null;
 					}
-				});
-			}
-
-			/**
-			 *  @private
-			 */
-		}, {
-			key: "fillNonCharWords",
-			value: function fillNonCharWords(indexes, text) {
-				if (!specialCharsRegExp.test(text)) {
-					return;
+				} else if (complexWord !== null) {
+					indexes.push(new WordIndex(complexWord, startIndex));
+					complexWord = null;
+					startIndex = null;
 				}
-				let match;
-				while ((match = nonWhitespaceRegExp.exec(text)) !== null) {
-					if (match.index === nonWhitespaceRegExp.lastIndex) {
-						nonWhitespaceRegExp.lastIndex++;
-					}
-					const word = match[0];
-					if (specialCharsRegExp.test(word)) {
-						indexes.push(new WordIndex(word.toLowerCase(), match.index));
-						for (let i = 0; i < word.length; i++) {
-							const char = word[i];
-							if (!specialChars.includes(char)) {
-								break;
-							}
-							const wordToIndex = word.substr(i + 1);
-							if (wordToIndex.length) {
-								indexes.push(new WordIndex(wordToIndex.toLowerCase(), match.index + i + 1));
-							}
+			});
+		}
+		static fillNonCharWords(indexes, text) {
+			if (!specialCharsRegExp.test(text)) {
+				return;
+			}
+			let match;
+			while ((match = nonWhitespaceRegExp.exec(text)) !== null) {
+				if (match.index === nonWhitespaceRegExp.lastIndex) {
+					nonWhitespaceRegExp.lastIndex++;
+				}
+				const word = match[0];
+				if (specialCharsRegExp.test(word)) {
+					indexes.push(new WordIndex(word.toLowerCase(), match.index));
+					for (let i = 0; i < word.length; i++) {
+						const char = word[i];
+						if (!specialChars.includes(char)) {
+							break;
+						}
+						const wordToIndex = word.substr(i + 1);
+						if (wordToIndex.length) {
+							indexes.push(new WordIndex(wordToIndex.toLowerCase(), match.index + i + 1));
 						}
 					}
 				}
-				nonWhitespaceRegExp.lastIndex = 0;
 			}
-		}]);
-	}();
+			nonWhitespaceRegExp.lastIndex = 0;
+		}
+	}
 
-	let EntityFilter = /*#__PURE__*/function () {
-		function EntityFilter(filterOptions) {
-			babelHelpers.classCallCheck(this, EntityFilter);
-			babelHelpers.defineProperty(this, "id", null);
-			babelHelpers.defineProperty(this, "options", {});
+	class SearchField {
+		name = null;
+		type = 'string';
+		searchable = true;
+		system = false;
+		sort = null;
+		constructor(fieldOptions) {
+			const options = main_core.Type.isPlainObject(fieldOptions) ? fieldOptions : {};
+			if (!main_core.Type.isStringFilled(options.name)) {
+				throw new Error('EntitySelector.SearchField: "name" parameter is required.');
+			}
+			this.name = options.name;
+			this.setType(options.type);
+			this.setSystem(options.system);
+			this.setSort(options.sort);
+			this.setSearchable(options.searchable);
+		}
+		getName() {
+			return this.name;
+		}
+		getType() {
+			return this.type;
+		}
+		setType(type) {
+			if (main_core.Type.isStringFilled(type)) {
+				this.type = type;
+			}
+		}
+		getSort() {
+			return this.sort;
+		}
+		setSort(sort) {
+			if (main_core.Type.isNumber(sort) || sort === null) {
+				this.sort = sort;
+			}
+		}
+		setSearchable(flag) {
+			if (main_core.Type.isBoolean(flag)) {
+				this.searchable = flag;
+			}
+		}
+		isSearchable() {
+			return this.searchable;
+		}
+		setSystem(flag) {
+			if (main_core.Type.isBoolean(flag)) {
+				this.system = flag;
+			}
+		}
+		isCustom() {
+			return !this.isSystem();
+		}
+		isSystem() {
+			return this.system;
+		}
+	}
+
+	class EntityFilter {
+		id = null;
+		options = {};
+		constructor(filterOptions) {
 			const options = main_core.Type.isPlainObject(filterOptions) ? filterOptions : {};
 			this.id = options.id;
-			this.options = options.options;
+			this.options = main_core.Type.isPlainObject(options.options) ? options.options : this.options;
 		}
-		return babelHelpers.createClass(EntityFilter, [{
-			key: "getId",
-			value: function getId() {
-				return this.id;
-			}
-		}, {
-			key: "getOptions",
-			value: function getOptions() {
-				return this.options;
-			}
-		}, {
-			key: "toJSON",
-			value: function toJSON() {
-				return {
-					id: this.getId(),
-					options: this.getOptions()
-				};
-			}
-		}]);
-	}();
+		getId() {
+			return this.id;
+		}
+		getOptions() {
+			return this.options;
+		}
+		toJSON() {
+			return {
+				id: this.getId(),
+				options: this.getOptions()
+			};
+		}
+	}
 
-	/**
-	 * @memberof BX.UI.EntitySelector
-	 */
-	let Entity = /*#__PURE__*/function () {
-		function Entity(entityOptions) {
-			babelHelpers.classCallCheck(this, Entity);
-			babelHelpers.defineProperty(this, "id", null);
-			babelHelpers.defineProperty(this, "options", {});
-			babelHelpers.defineProperty(this, "searchable", true);
-			babelHelpers.defineProperty(this, "searchFields", null);
-			babelHelpers.defineProperty(this, "dynamicLoad", false);
-			babelHelpers.defineProperty(this, "dynamicSearch", false);
-			babelHelpers.defineProperty(this, "dynamicSearchMatchMode", 'exact');
-			babelHelpers.defineProperty(this, "substituteEntityId", null);
-			babelHelpers.defineProperty(this, "fillRecentItems", true);
-			babelHelpers.defineProperty(this, "searchCacheLimits", []);
-			babelHelpers.defineProperty(this, "filters", new Map());
-			babelHelpers.defineProperty(this, "itemOptions", {});
-			babelHelpers.defineProperty(this, "tagOptions", {});
-			babelHelpers.defineProperty(this, "badgeOptions", []);
-			babelHelpers.defineProperty(this, "textNodes", new Map());
+	class Entity {
+		static extensions = null;
+		static defaultOptions = null;
+		id;
+		options = {};
+		searchable = true;
+		searchFields;
+		dynamicLoad = false;
+		dynamicSearch = false;
+		dynamicSearchMatchMode = 'exact';
+		substituteEntityId = null;
+		fillRecentItems = true;
+		searchCacheLimits = [];
+		filters = new Map();
+		itemOptions = {};
+		tagOptions = {};
+		badgeOptions = [];
+		textNodes = new Map();
+		constructor(entityOptions) {
 			let options = main_core.Type.isPlainObject(entityOptions) ? entityOptions : {};
 			if (!main_core.Type.isStringFilled(options.id)) {
 				throw new Error('EntitySelector.Entity: "id" parameter is required.');
 			}
-			const defaultOptions = this.constructor.getEntityDefaultOptions(options.id) || {};
+			const defaultOptions = Entity.getEntityDefaultOptions(options.id) || {};
 			options = main_core.Runtime.merge(JSON.parse(JSON.stringify(defaultOptions)), options);
 			this.id = options.id.toLowerCase();
 			this.options = main_core.Type.isPlainObject(options.options) ? options.options : {};
@@ -2279,13 +1834,14 @@ this.BX.UI = this.BX.UI || {};
 			this.searchFields = new main_core_collections.OrderedArray((fieldA, fieldB) => {
 				if (fieldA.getSort() !== null && fieldB.getSort() === null) {
 					return -1;
-				} else if (fieldA.getSort() === null && fieldB.getSort() !== null) {
-					return 1;
-				} else if (fieldA.getSort() === null && fieldB.getSort() === null) {
-					return -1;
-				} else {
-					return fieldA.getSort() - fieldB.getSort();
 				}
+				if (fieldA.getSort() === null && fieldB.getSort() !== null) {
+					return 1;
+				}
+				if (fieldA.getSort() === null && fieldB.getSort() === null) {
+					return -1;
+				}
+				return fieldA.getSort() - fieldB.getSort();
 			});
 			this.setSearchable(options.searchable);
 			this.setDynamicLoad(options.dynamicLoad);
@@ -2294,400 +1850,303 @@ this.BX.UI = this.BX.UI || {};
 			this.setSearchFields(options.searchFields);
 			this.setSearchCacheLimits(options.searchCacheLimits);
 		}
-		return babelHelpers.createClass(Entity, [{
-			key: "getId",
-			value: function getId() {
-				return this.id;
-			}
-		}, {
-			key: "getOptions",
-			value: function getOptions() {
-				return this.options;
-			}
-		}, {
-			key: "getItemOptions",
-			value: function getItemOptions() {
-				return this.itemOptions;
-			}
-		}, {
-			key: "getItemOption",
-			value: function getItemOption(option, entityType) {
-				return this.constructor.getOptionInternal(this.itemOptions, option, entityType);
-			}
-		}, {
-			key: "getTagOptions",
-			value: function getTagOptions() {
-				return this.tagOptions;
-			}
-		}, {
-			key: "getTagOption",
-			value: function getTagOption(option, entityType) {
-				return this.constructor.getOptionInternal(this.tagOptions, option, entityType);
-			}
-		}, {
-			key: "getBadges",
-			value: function getBadges(item) {
-				const entityTypeBadges = this.getItemOption('badges', item.getEntityType()) || [];
-				const badges = [...entityTypeBadges];
-				this.badgeOptions.forEach(badge => {
-					if (main_core.Type.isPlainObject(badge.conditions)) {
-						for (const condition in badge.conditions) {
-							if (item.getCustomData().get(condition) !== badge.conditions[condition]) {
-								return;
-							}
+		static getDefaultOptions() {
+			if (this.defaultOptions === null) {
+				this.defaultOptions = {};
+				for (const extension of this.getExtensions()) {
+					const settings = main_core.Extension.getSettings(extension);
+					const entities = settings.get('entities', []);
+					for (const entity of entities) {
+						if (main_core.Type.isStringFilled(entity.id) && main_core.Type.isPlainObject(entity.options)) {
+							this.defaultOptions[entity.id] = JSON.parse(JSON.stringify(entity.options));
 						}
-						badges.push(badge);
 					}
-				});
-				return badges;
-			}
-		}, {
-			key: "getOptionTextNode",
-			value: function getOptionTextNode(option, entityType) {
-				if (!main_core.Type.isString(option)) {
-					return null;
-				}
-				if (!main_core.Type.isString(entityType)) {
-					entityType = 'default';
-				}
-				let optionNodes = this.textNodes.get(option);
-				let node = optionNodes ? optionNodes.get(entityType) : undefined;
-				if (main_core.Type.isUndefined(node)) {
-					if (!optionNodes) {
-						optionNodes = new Map();
-						this.textNodes.set(option, optionNodes);
-					}
-					const itemOption = this.getItemOption(option, entityType);
-					node = main_core.Type.isString(itemOption) || main_core.Type.isPlainObject(itemOption) ? new TextNode(itemOption) : null;
-					optionNodes.set(entityType, node);
-				}
-				return node;
-			}
-		}, {
-			key: "isSearchable",
-			value: function isSearchable() {
-				return this.searchable;
-			}
-		}, {
-			key: "setSearchable",
-			value: function setSearchable(flag) {
-				if (main_core.Type.isBoolean(flag)) {
-					this.searchable = flag;
 				}
 			}
-		}, {
-			key: "getSearchFields",
-			value: function getSearchFields() {
-				return this.searchFields;
+			return this.defaultOptions;
+		}
+		static getExtensions() {
+			if (this.extensions === null) {
+				const settings = main_core.Extension.getSettings('ui.entity-selector');
+				this.extensions = settings.get('extensions', []);
 			}
-		}, {
-			key: "setSearchFields",
-			value: function setSearchFields(searchFields) {
-				this.searchFields.clear();
-
-				// Default Search Fields
-				const titleField = new SearchField({
-					name: 'title',
-					searchable: true,
-					system: true,
-					type: 'string'
-				});
-				const subtitleField = new SearchField({
-					name: 'subtitle',
-					searchable: true,
-					system: true,
-					type: 'string'
-				});
-				this.searchFields.add(titleField);
-				this.searchFields.add(subtitleField);
-
-				// Custom Search Fields
-				const customFields = main_core.Type.isArray(searchFields) ? searchFields : [];
-				customFields.forEach(fieldOptions => {
-					const field = new SearchField(fieldOptions);
-					if (field.isSystem())
-						// Entity can override default fields.
-						{
-							// delete a default title field
-							if (field.getName() === 'title') {
-								this.searchFields.delete(titleField);
-							} else if (field.getName() === 'subtitle') {
-								this.searchFields.delete(subtitleField);
-							}
-						}
-					this.searchFields.add(field);
-				});
-				this.searchFields.forEach((field, index) => {
-					field.setSort(index);
-				});
-			}
-		}, {
-			key: "setSearchCacheLimits",
-			value: function setSearchCacheLimits(limits) {
-				if (main_core.Type.isArrayFilled(limits)) {
-					limits.forEach(limit => {
-						if (main_core.Type.isStringFilled(limit)) {
-							this.searchCacheLimits.push(new RegExp(limit, 'i'));
-						}
-					});
-				}
-			}
-		}, {
-			key: "getSearchCacheLimits",
-			value: function getSearchCacheLimits() {
-				return this.searchCacheLimits;
-			}
-		}, {
-			key: "hasDynamicLoad",
-			value: function hasDynamicLoad() {
-				return this.dynamicLoad;
-			}
-		}, {
-			key: "setDynamicLoad",
-			value: function setDynamicLoad(flag) {
-				if (main_core.Type.isBoolean(flag)) {
-					this.dynamicLoad = flag;
-				}
-			}
-		}, {
-			key: "hasDynamicSearch",
-			value: function hasDynamicSearch() {
-				return this.dynamicSearch;
-			}
-		}, {
-			key: "setDynamicSearch",
-			value: function setDynamicSearch(flag) {
-				if (main_core.Type.isBoolean(flag)) {
-					this.dynamicSearch = flag;
-				}
-			}
-		}, {
-			key: "setDynamicSearchMatchMode",
-			value: function setDynamicSearchMatchMode(mode) {
-				if (mode === 'all' || mode === 'exact') {
-					this.dynamicSearchMatchMode = mode;
-				}
-			}
-		}, {
-			key: "getDynamicSearchMatchMode",
-			value: function getDynamicSearchMatchMode() {
-				return this.dynamicSearchMatchMode;
-			}
-		}, {
-			key: "getFilters",
-			value: function getFilters() {
-				return Array.from(this.filters.values());
-			}
-		}, {
-			key: "addFilters",
-			value: function addFilters(filters) {
-				if (main_core.Type.isArray(filters)) {
-					filters.forEach(filterOptions => {
-						this.addFilter(filterOptions);
-					});
-				}
-			}
-		}, {
-			key: "addFilter",
-			value: function addFilter(filterOptions) {
-				if (main_core.Type.isPlainObject(filterOptions)) {
-					const filter = new EntityFilter(filterOptions);
-					this.filters.set(filter.getId(), filter);
-				}
-			}
-		}, {
-			key: "getFilter",
-			value: function getFilter(id) {
-				return this.filters.get(id) || null;
-			}
-		}, {
-			key: "getSubstituteEntityId",
-			value: function getSubstituteEntityId() {
-				return this.substituteEntityId;
-			}
-		}, {
-			key: "shouldFillRecentItems",
-			value: function shouldFillRecentItems() {
-				return this.fillRecentItems;
-			}
-		}, {
-			key: "toJSON",
-			value: function toJSON() {
-				return {
-					id: this.getId(),
-					options: this.getOptions(),
-					searchable: this.isSearchable(),
-					dynamicLoad: this.hasDynamicLoad(),
-					dynamicSearch: this.hasDynamicSearch(),
-					filters: this.getFilters(),
-					substituteEntityId: this.getSubstituteEntityId(),
-					fillRecentItems: this.shouldFillRecentItems()
-				};
-			}
-		}], [{
-			key: "getDefaultOptions",
-			value: function getDefaultOptions() {
-				if (this.defaultOptions === null) {
-					this.defaultOptions = {};
-					this.getExtensions().forEach(extension => {
-						const settings = main_core.Extension.getSettings(extension);
-						const entities = settings.get('entities', []);
-						entities.forEach(entity => {
-							if (main_core.Type.isStringFilled(entity.id) && main_core.Type.isPlainObject(entity.options)) {
-								this.defaultOptions[entity.id] = JSON.parse(JSON.stringify(entity.options)); // clone
-							}
-						});
-					});
-				}
-				return this.defaultOptions;
-			}
-		}, {
-			key: "getExtensions",
-			value: function getExtensions() {
-				if (this.extensions === null) {
-					const settings = main_core.Extension.getSettings('ui.entity-selector');
-					this.extensions = settings.get('extensions', []);
-				}
-				return this.extensions;
-			}
-		}, {
-			key: "getEntityDefaultOptions",
-			value: function getEntityDefaultOptions(entityId) {
-				return this.getDefaultOptions()[entityId] || null;
-			}
-		}, {
-			key: "getItemOptions",
-			value: function getItemOptions(entityId, entityType) {
-				if (!main_core.Type.isStringFilled(entityId)) {
-					return null;
-				}
-				const options = this.getEntityDefaultOptions(entityId);
-				const itemOptions = options && options['itemOptions'] ? options['itemOptions'] : null;
-				if (main_core.Type.isUndefined(entityType)) {
-					return itemOptions;
-				} else {
-					return itemOptions && !main_core.Type.isUndefined(itemOptions[entityType]) ? itemOptions[entityType] : null;
-				}
-			}
-		}, {
-			key: "getTagOptions",
-			value: function getTagOptions(entityId, entityType) {
-				if (!main_core.Type.isStringFilled(entityId)) {
-					return null;
-				}
-				const options = this.getEntityDefaultOptions(entityId);
-				const tagOptions = options && options['tagOptions'] ? options['tagOptions'] : null;
-				if (main_core.Type.isUndefined(entityType)) {
-					return tagOptions;
-				} else {
-					return tagOptions && !main_core.Type.isUndefined(tagOptions[entityType]) ? tagOptions[entityType] : null;
-				}
-			}
-		}, {
-			key: "getItemOption",
-			value: function getItemOption(entityId, option, entityType) {
-				return this.getOptionInternal(this.getItemOptions(entityId), option, entityType);
-			}
-		}, {
-			key: "getTagOption",
-			value: function getTagOption(entityId, option, entityType) {
-				return this.getOptionInternal(this.getTagOptions(entityId), option, entityType);
-			}
-		}, {
-			key: "getOptionInternal",
-			value: function getOptionInternal(options, option, type) {
-				if (!main_core.Type.isPlainObject(options)) {
-					return null;
-				}
-				if (options[type] && !main_core.Type.isUndefined(options[type][option])) {
-					return options[type][option];
-				} else if (options['default'] && !main_core.Type.isUndefined(options['default'][option])) {
-					return options['default'][option];
-				}
+			return this.extensions;
+		}
+		static getEntityDefaultOptions(entityId) {
+			return this.getDefaultOptions()[entityId] || null;
+		}
+		static getItemOptions(entityId, entityType) {
+			if (!main_core.Type.isStringFilled(entityId)) {
 				return null;
 			}
-		}]);
-	}();
-	babelHelpers.defineProperty(Entity, "extensions", null);
-	babelHelpers.defineProperty(Entity, "defaultOptions", null);
-
-	let TypeUtils = /*#__PURE__*/function () {
-		function TypeUtils() {
-			babelHelpers.classCallCheck(this, TypeUtils);
+			const options = this.getEntityDefaultOptions(entityId);
+			const itemOptions = options && options.itemOptions ? options.itemOptions : null;
+			if (main_core.Type.isUndefined(entityType)) {
+				return itemOptions;
+			}
+			return itemOptions && !main_core.Type.isUndefined(itemOptions[entityType]) ? itemOptions[entityType] : null;
 		}
-		return babelHelpers.createClass(TypeUtils, null, [{
-			key: "createMapFromOptions",
-			value: function createMapFromOptions(options) {
-				if (main_core.Type.isPlainObject(options)) {
-					return new Map(Object.entries(options));
-				}
-				const map = new Map();
-				if (main_core.Type.isArrayFilled(options)) {
-					options.forEach(element => {
-						if (main_core.Type.isArray(element) && element.length === 2 && main_core.Type.isString(element[0])) {
-							map.set(element[0], element[1]);
-						}
-					});
-				}
-				return map;
+		static getTagOptions(entityId, entityType) {
+			if (!main_core.Type.isStringFilled(entityId)) {
+				return null;
 			}
-		}, {
-			key: "convertMapToObject",
-			value: function convertMapToObject(map) {
-				const obj = {};
-				if (main_core.Type.isMap(map)) {
-					map.forEach((value, key) => {
-						if (main_core.Type.isString(key)) {
-							obj[key] = value;
-						}
-					});
-				}
-				return obj;
+			const options = this.getEntityDefaultOptions(entityId);
+			const tagOptions = options && options.tagOptions ? options.tagOptions : null;
+			if (main_core.Type.isUndefined(entityType)) {
+				return tagOptions;
 			}
-		}]);
-	}();
+			return tagOptions && !main_core.Type.isUndefined(tagOptions[entityType]) ? tagOptions[entityType] : null;
+		}
+		getId() {
+			return this.id;
+		}
+		getOptions() {
+			return this.options;
+		}
+		getItemOptions() {
+			return this.itemOptions;
+		}
+		static getItemOption(entityId, option, entityType) {
+			return this.getOptionInternal(this.getItemOptions(entityId), option, entityType);
+		}
+		getItemOption(option, entityType) {
+			return Entity.getOptionInternal(this.itemOptions, option, entityType);
+		}
+		getTagOptions() {
+			return this.tagOptions;
+		}
+		static getTagOption(entityId, option, entityType) {
+			return this.getOptionInternal(this.getTagOptions(entityId), option, entityType);
+		}
+		getTagOption(option, entityType) {
+			return Entity.getOptionInternal(this.tagOptions, option, entityType);
+		}
+		static getOptionInternal(options, option, type) {
+			if (!main_core.Type.isPlainObject(options)) {
+				return null;
+			}
+			const map = options;
+			if (map[type] && !main_core.Type.isUndefined(map[type][option])) {
+				return map[type][option];
+			}
+			if (map['default'] && !main_core.Type.isUndefined(map['default'][option])) {
+				return map['default'][option];
+			}
+			return null;
+		}
+		getBadges(item) {
+			const entityTypeBadges = this.getItemOption('badges', item.getEntityType()) || [];
+			const badges = [...entityTypeBadges];
+			this.badgeOptions.forEach(badge => {
+				if (main_core.Type.isPlainObject(badge.conditions)) {
+					for (const condition in badge.conditions) {
+						if (item.getCustomData().get(condition) !== badge.conditions[condition]) {
+							return;
+						}
+					}
+					badges.push(badge);
+				}
+			});
+			return badges;
+		}
+		getOptionTextNode(option, entityType) {
+			if (!main_core.Type.isString(option)) {
+				return null;
+			}
+			if (!main_core.Type.isString(entityType)) {
+				entityType = 'default';
+			}
+			let optionNodes = this.textNodes.get(option);
+			let node = optionNodes ? optionNodes.get(entityType) : undefined;
+			if (main_core.Type.isUndefined(node)) {
+				if (!optionNodes) {
+					optionNodes = new Map();
+					this.textNodes.set(option, optionNodes);
+				}
+				const itemOption = this.getItemOption(option, entityType);
+				node = main_core.Type.isString(itemOption) || main_core.Type.isPlainObject(itemOption) ? new TextNode(itemOption) : null;
+				optionNodes.set(entityType, node);
+			}
+			return node;
+		}
+		isSearchable() {
+			return this.searchable;
+		}
+		setSearchable(flag) {
+			if (main_core.Type.isBoolean(flag)) {
+				this.searchable = flag;
+			}
+		}
+		getSearchFields() {
+			return this.searchFields;
+		}
+		setSearchFields(searchFields) {
+			this.searchFields.clear();
+			const titleField = new SearchField({
+				name: 'title',
+				searchable: true,
+				system: true,
+				type: 'string'
+			});
+			const subtitleField = new SearchField({
+				name: 'subtitle',
+				searchable: true,
+				system: true,
+				type: 'string'
+			});
+			this.searchFields.add(titleField);
+			this.searchFields.add(subtitleField);
+			const customFields = main_core.Type.isArray(searchFields) ? searchFields : [];
+			for (const fieldOptions of customFields) {
+				const field = new SearchField(fieldOptions);
+				if (field.isSystem())
+					{
+						if (field.getName() === 'title') {
+							this.searchFields.delete(titleField);
+						} else if (field.getName() === 'subtitle') {
+							this.searchFields.delete(subtitleField);
+						}
+					}
+				this.searchFields.add(field);
+			}
+			this.searchFields.forEach((field, index) => {
+				field.setSort(index);
+			});
+		}
+		setSearchCacheLimits(limits) {
+			if (main_core.Type.isArrayFilled(limits)) {
+				for (const limit of limits) {
+					if (main_core.Type.isStringFilled(limit)) {
+						this.searchCacheLimits.push(new RegExp(limit, 'i'));
+					}
+				}
+			}
+		}
+		getSearchCacheLimits() {
+			return this.searchCacheLimits;
+		}
+		hasDynamicLoad() {
+			return this.dynamicLoad;
+		}
+		setDynamicLoad(flag) {
+			if (main_core.Type.isBoolean(flag)) {
+				this.dynamicLoad = flag;
+			}
+		}
+		hasDynamicSearch() {
+			return this.dynamicSearch;
+		}
+		setDynamicSearch(flag) {
+			if (main_core.Type.isBoolean(flag)) {
+				this.dynamicSearch = flag;
+			}
+		}
+		setDynamicSearchMatchMode(mode) {
+			if (mode === 'all' || mode === 'exact') {
+				this.dynamicSearchMatchMode = mode;
+			}
+		}
+		getDynamicSearchMatchMode() {
+			return this.dynamicSearchMatchMode;
+		}
+		getFilters() {
+			return [...this.filters.values()];
+		}
+		addFilters(filters) {
+			if (main_core.Type.isArray(filters)) {
+				filters.forEach(filterOptions => {
+					this.addFilter(filterOptions);
+				});
+			}
+		}
+		addFilter(filterOptions) {
+			if (main_core.Type.isPlainObject(filterOptions)) {
+				const filter = new EntityFilter(filterOptions);
+				this.filters.set(filter.getId(), filter);
+			}
+		}
+		getFilter(id) {
+			return this.filters.get(id) || null;
+		}
+		getSubstituteEntityId() {
+			return this.substituteEntityId;
+		}
+		shouldFillRecentItems() {
+			return this.fillRecentItems;
+		}
+		toJSON() {
+			return {
+				id: this.getId(),
+				options: this.getOptions(),
+				searchable: this.isSearchable(),
+				dynamicLoad: this.hasDynamicLoad(),
+				dynamicSearch: this.hasDynamicSearch(),
+				filters: this.getFilters(),
+				substituteEntityId: this.getSubstituteEntityId(),
+				fillRecentItems: this.shouldFillRecentItems()
+			};
+		}
+	}
 
-	function _classPrivateMethodInitSpec(e, a) { _checkPrivateRedeclaration$2(e, a), a.add(e); }
-	function _checkPrivateRedeclaration$2(e, t) { if (t.has(e)) throw new TypeError("Cannot initialize the same private elements twice on an object"); }
-	function _assertClassBrand$3(e, t, n) { if ("function" == typeof e ? e === t : e.has(t)) return arguments.length < 3 ? t : n; throw new TypeError("Private element is not present on this object"); }
-	var _Item_brand = /*#__PURE__*/new WeakSet();
-	/**
-	 * @memberof BX.UI.EntitySelector
-	 * @package ui.entity-selector
-	 */
-	let Item = /*#__PURE__*/function () {
-		function Item(itemOptions) {
-			babelHelpers.classCallCheck(this, Item);
-			_classPrivateMethodInitSpec(this, _Item_brand);
-			babelHelpers.defineProperty(this, "id", null);
-			babelHelpers.defineProperty(this, "entityId", null);
-			babelHelpers.defineProperty(this, "entityType", null);
-			babelHelpers.defineProperty(this, "title", null);
-			babelHelpers.defineProperty(this, "subtitle", null);
-			babelHelpers.defineProperty(this, "supertitle", null);
-			babelHelpers.defineProperty(this, "caption", null);
-			babelHelpers.defineProperty(this, "captionOptions", {});
-			babelHelpers.defineProperty(this, "avatar", null);
-			babelHelpers.defineProperty(this, "avatarOptions", null);
-			babelHelpers.defineProperty(this, "textColor", null);
-			babelHelpers.defineProperty(this, "link", null);
-			babelHelpers.defineProperty(this, "linkTitle", null);
-			babelHelpers.defineProperty(this, "tagOptions", null);
-			babelHelpers.defineProperty(this, "badges", null);
-			babelHelpers.defineProperty(this, "badgesOptions", {});
-			babelHelpers.defineProperty(this, "dialog", null);
-			babelHelpers.defineProperty(this, "nodes", new Set());
-			babelHelpers.defineProperty(this, "selected", false);
-			babelHelpers.defineProperty(this, "searchable", true);
-			babelHelpers.defineProperty(this, "saveable", true);
-			babelHelpers.defineProperty(this, "deselectable", true);
-			babelHelpers.defineProperty(this, "hidden", false);
-			babelHelpers.defineProperty(this, "locked", false);
-			babelHelpers.defineProperty(this, "searchIndex", null);
-			babelHelpers.defineProperty(this, "customData", null);
-			babelHelpers.defineProperty(this, "sort", null);
-			babelHelpers.defineProperty(this, "contextSort", null);
-			babelHelpers.defineProperty(this, "globalSort", null);
+	class TypeUtils {
+		static createMapFromOptions(options) {
+			if (main_core.Type.isPlainObject(options)) {
+				return new Map(Object.entries(options));
+			}
+			const map = new Map();
+			if (main_core.Type.isArrayFilled(options)) {
+				options.forEach(element => {
+					if (main_core.Type.isArray(element) && element.length === 2 && main_core.Type.isString(element[0])) {
+						map.set(element[0], element[1]);
+					}
+				});
+			}
+			return map;
+		}
+		static convertMapToObject(map) {
+			const obj = {};
+			if (main_core.Type.isMap(map)) {
+				map.forEach((value, key) => {
+					if (main_core.Type.isString(key)) {
+						obj[key] = value;
+					}
+				});
+			}
+			return obj;
+		}
+	}
+
+	class Item {
+		id;
+		entityId;
+		entityType;
+		title = null;
+		subtitle = null;
+		supertitle = null;
+		caption = null;
+		captionOptions = {};
+		avatar = null;
+		avatarOptions = null;
+		textColor = null;
+		link = null;
+		linkTitle = null;
+		tagOptions;
+		badges = null;
+		badgesOptions = {};
+		dialog;
+		nodes = new Set();
+		selected = false;
+		searchable = true;
+		saveable = true;
+		deselectable = true;
+		hidden = false;
+		locked = false;
+		searchIndex = null;
+		customData;
+		sort = null;
+		contextSort = null;
+		globalSort = null;
+		constructor(itemOptions) {
 			const options = main_core.Type.isPlainObject(itemOptions) ? itemOptions : {};
 			if (!main_core.Type.isStringFilled(options.id) && !main_core.Type.isNumber(options.id)) {
 				throw new Error('EntitySelector.Item: "id" parameter is required.');
@@ -2722,826 +2181,647 @@ this.BX.UI = this.BX.UI || {};
 			this.setGlobalSort(options.globalSort);
 			this.setSort(options.sort);
 		}
-		return babelHelpers.createClass(Item, [{
-			key: "getId",
-			value: function getId() {
-				return this.id;
+		getId() {
+			return this.id;
+		}
+		getEntityId() {
+			return this.entityId;
+		}
+		getEntity() {
+			let entity = this.getDialog().getEntity(this.getEntityId());
+			if (entity === null) {
+				entity = new Entity({
+					id: this.getEntityId()
+				});
+				this.getDialog().addEntity(entity);
 			}
-		}, {
-			key: "getEntityId",
-			value: function getEntityId() {
-				return this.entityId;
+			return entity;
+		}
+		getEntityType() {
+			return this.entityType;
+		}
+		getTitle() {
+			const titleNode = this.getTitleNode();
+			return titleNode !== null && !titleNode.isNullable() ? titleNode.getText() : '';
+		}
+		getTitleNode() {
+			return this.title;
+		}
+		setTitle(title) {
+			if (main_core.Type.isStringFilled(title) || main_core.Type.isPlainObject(title) || title === null) {
+				this.title = title === null ? null : new TextNode(title);
+				this.resetSearchIndex();
+				this.#renderNodes();
 			}
-		}, {
-			key: "getEntity",
-			value: function getEntity() {
-				let entity = this.getDialog().getEntity(this.getEntityId());
-				if (entity === null) {
-					entity = new Entity({
-						id: this.getEntityId()
-					});
-					this.getDialog().addEntity(entity);
+		}
+		getSubtitle() {
+			const subtitleNode = this.getSubtitleNode();
+			return subtitleNode === null ? null : subtitleNode.getText();
+		}
+		getSubtitleNode() {
+			return this.subtitle === null ? this.getEntityTextNode('subtitle') : this.subtitle;
+		}
+		setSubtitle(subtitle) {
+			if (main_core.Type.isString(subtitle) || main_core.Type.isPlainObject(subtitle) || subtitle === null) {
+				this.subtitle = subtitle === null ? null : new TextNode(subtitle);
+				this.resetSearchIndex();
+				this.#renderNodes();
+			}
+		}
+		getSupertitle() {
+			const supertitleNode = this.getSupertitleNode();
+			return supertitleNode === null ? null : supertitleNode.getText();
+		}
+		getSupertitleNode() {
+			return this.supertitle === null ? this.getEntityTextNode('supertitle') : this.supertitle;
+		}
+		setSupertitle(supertitle) {
+			if (main_core.Type.isString(supertitle) || main_core.Type.isPlainObject(supertitle) || supertitle === null) {
+				this.supertitle = supertitle === null ? null : new TextNode(supertitle);
+				this.resetSearchIndex();
+				this.#renderNodes();
+			}
+		}
+		getCaption() {
+			const captionNode = this.getCaptionNode();
+			return captionNode === null ? null : captionNode.getText();
+		}
+		getCaptionNode() {
+			return this.caption === null ? this.getEntityTextNode('caption') : this.caption;
+		}
+		setCaption(caption) {
+			if (main_core.Type.isString(caption) || main_core.Type.isPlainObject(caption) || caption === null) {
+				this.caption = caption === null ? null : new TextNode(caption);
+				this.resetSearchIndex();
+				this.#renderNodes();
+			}
+		}
+		getCaptionOption(option) {
+			if (!main_core.Type.isUndefined(this.captionOptions[option])) {
+				return this.captionOptions[option];
+			}
+			const captionOptions = this.getEntityItemOption('captionOptions');
+			if (main_core.Type.isPlainObject(captionOptions) && !main_core.Type.isUndefined(captionOptions[option])) {
+				return captionOptions[option];
+			}
+			return null;
+		}
+		setCaptionOption(option, value) {
+			if (main_core.Type.isStringFilled(option) && !main_core.Type.isUndefined(value)) {
+				this.captionOptions[option] = value;
+				this.#renderNodes();
+			}
+		}
+		setCaptionOptions(options) {
+			if (main_core.Type.isPlainObject(options)) {
+				Object.keys(options).forEach(option => {
+					this.setCaptionOption(option, options[option]);
+				});
+			}
+		}
+		getAvatar() {
+			return this.avatar === null ? this.getEntityItemOption('avatar') : this.avatar;
+		}
+		setAvatar(avatar) {
+			if (main_core.Type.isString(avatar) || avatar === null) {
+				this.avatar = avatar;
+				this.#renderNodes();
+			}
+		}
+		getAvatarOption(option) {
+			if (this.avatarOptions !== null && !main_core.Type.isUndefined(this.avatarOptions[option])) {
+				return this.avatarOptions[option];
+			}
+			const avatarOptions = this.getEntityItemOption('avatarOptions');
+			if (main_core.Type.isPlainObject(avatarOptions) && !main_core.Type.isUndefined(avatarOptions[option])) {
+				return avatarOptions[option];
+			}
+			return null;
+		}
+		setAvatarOption(option, value) {
+			if (main_core.Type.isStringFilled(option) && !main_core.Type.isUndefined(value)) {
+				if (this.avatarOptions === null) {
+					this.avatarOptions = {};
 				}
-				return entity;
+				this.avatarOptions[option] = value;
+				this.#renderNodes();
 			}
-		}, {
-			key: "getEntityType",
-			value: function getEntityType() {
-				return this.entityType;
+		}
+		setAvatarOptions(options) {
+			if (main_core.Type.isPlainObject(options)) {
+				Object.keys(options).forEach(option => {
+					this.setAvatarOption(option, options[option]);
+				});
 			}
-		}, {
-			key: "getTitle",
-			value: function getTitle() {
-				const titleNode = this.getTitleNode();
-				return titleNode !== null && !titleNode.isNullable() ? titleNode.getText() : '';
+		}
+		getTextColor() {
+			return this.textColor === null ? this.getEntityItemOption('textColor') : this.textColor;
+		}
+		setTextColor(textColor) {
+			if (main_core.Type.isString(textColor) || textColor === null) {
+				this.textColor = textColor;
+				this.#renderNodes();
 			}
-		}, {
-			key: "getTitleNode",
-			value: function getTitleNode() {
-				return this.title;
+		}
+		getLink() {
+			const link = this.link === null ? this.getEntityItemOption('link') : this.link;
+			return this.replaceMacros(link);
+		}
+		setLink(link) {
+			if (main_core.Type.isString(link) || link === null) {
+				this.link = link;
+				this.#renderNodes();
 			}
-		}, {
-			key: "setTitle",
-			value: function setTitle(title) {
-				if (main_core.Type.isStringFilled(title) || main_core.Type.isPlainObject(title) || title === null) {
-					this.title = title === null ? null : new TextNode(title);
-					this.resetSearchIndex();
-					_assertClassBrand$3(_Item_brand, this, _renderNodes).call(this);
-				}
+		}
+		getLinkTitle() {
+			const linkTitleNode = this.getLinkTitleNode();
+			return linkTitleNode === null ? main_core.Loc.getMessage('UI_SELECTOR_ITEM_LINK_TITLE') || '' : linkTitleNode.getText();
+		}
+		getLinkTitleNode() {
+			return this.linkTitle === null ? this.getEntityTextNode('linkTitle') : this.linkTitle;
+		}
+		setLinkTitle(linkTitle) {
+			if (main_core.Type.isString(linkTitle) || main_core.Type.isPlainObject(linkTitle) || linkTitle === null) {
+				this.linkTitle = linkTitle === null ? null : new TextNode(linkTitle);
+				this.#renderNodes();
 			}
-		}, {
-			key: "getSubtitle",
-			value: function getSubtitle() {
-				const subtitleNode = this.getSubtitleNode();
-				return subtitleNode !== null ? subtitleNode.getText() : null;
-			}
-		}, {
-			key: "getSubtitleNode",
-			value: function getSubtitleNode() {
-				return this.subtitle !== null ? this.subtitle : this.getEntityTextNode('subtitle');
-			}
-		}, {
-			key: "setSubtitle",
-			value: function setSubtitle(subtitle) {
-				if (main_core.Type.isString(subtitle) || main_core.Type.isPlainObject(subtitle) || subtitle === null) {
-					this.subtitle = subtitle === null ? null : new TextNode(subtitle);
-					this.resetSearchIndex();
-					_assertClassBrand$3(_Item_brand, this, _renderNodes).call(this);
-				}
-			}
-		}, {
-			key: "getSupertitle",
-			value: function getSupertitle() {
-				const supertitleNode = this.getSupertitleNode();
-				return supertitleNode !== null ? supertitleNode.getText() : null;
-			}
-		}, {
-			key: "getSupertitleNode",
-			value: function getSupertitleNode() {
-				return this.supertitle !== null ? this.supertitle : this.getEntityTextNode('supertitle');
-			}
-		}, {
-			key: "setSupertitle",
-			value: function setSupertitle(supertitle) {
-				if (main_core.Type.isString(supertitle) || main_core.Type.isPlainObject(supertitle) || supertitle === null) {
-					this.supertitle = supertitle === null ? null : new TextNode(supertitle);
-					this.resetSearchIndex();
-					_assertClassBrand$3(_Item_brand, this, _renderNodes).call(this);
-				}
-			}
-		}, {
-			key: "getCaption",
-			value: function getCaption() {
-				const captionNode = this.getCaptionNode();
-				return captionNode !== null ? captionNode.getText() : null;
-			}
-		}, {
-			key: "getCaptionNode",
-			value: function getCaptionNode() {
-				return this.caption !== null ? this.caption : this.getEntityTextNode('caption');
-			}
-		}, {
-			key: "setCaption",
-			value: function setCaption(caption) {
-				if (main_core.Type.isString(caption) || main_core.Type.isPlainObject(caption) || caption === null) {
-					this.caption = caption === null ? null : new TextNode(caption);
-					this.resetSearchIndex();
-					_assertClassBrand$3(_Item_brand, this, _renderNodes).call(this);
-				}
-			}
-		}, {
-			key: "getCaptionOption",
-			value: function getCaptionOption(option) {
-				if (!main_core.Type.isUndefined(this.captionOptions[option])) {
-					return this.captionOptions[option];
-				}
-				const captionOptions = this.getEntityItemOption('captionOptions');
-				if (main_core.Type.isPlainObject(captionOptions) && !main_core.Type.isUndefined(captionOptions[option])) {
-					return captionOptions[option];
-				}
-				return null;
-			}
-		}, {
-			key: "setCaptionOption",
-			value: function setCaptionOption(option, value) {
-				if (main_core.Type.isStringFilled(option) && !main_core.Type.isUndefined(value)) {
-					this.captionOptions[option] = value;
-					_assertClassBrand$3(_Item_brand, this, _renderNodes).call(this);
-				}
-			}
-		}, {
-			key: "setCaptionOptions",
-			value: function setCaptionOptions(options) {
-				if (main_core.Type.isPlainObject(options)) {
-					Object.keys(options).forEach(option => {
-						this.setCaptionOption(option, options[option]);
-					});
-				}
-			}
-		}, {
-			key: "getAvatar",
-			value: function getAvatar() {
-				return this.avatar !== null ? this.avatar : this.getEntityItemOption('avatar');
-			}
-		}, {
-			key: "setAvatar",
-			value: function setAvatar(avatar) {
-				if (main_core.Type.isString(avatar) || avatar === null) {
-					this.avatar = avatar;
-					_assertClassBrand$3(_Item_brand, this, _renderNodes).call(this);
-				}
-			}
-		}, {
-			key: "getAvatarOption",
-			value: function getAvatarOption(option) {
-				if (this.avatarOptions !== null && !main_core.Type.isUndefined(this.avatarOptions[option])) {
-					return this.avatarOptions[option];
-				}
-				const avatarOptions = this.getEntityItemOption('avatarOptions');
-				if (main_core.Type.isPlainObject(avatarOptions) && !main_core.Type.isUndefined(avatarOptions[option])) {
-					return avatarOptions[option];
-				}
-				return null;
-			}
-		}, {
-			key: "setAvatarOption",
-			value: function setAvatarOption(option, value) {
-				if (main_core.Type.isStringFilled(option) && !main_core.Type.isUndefined(value)) {
-					if (this.avatarOptions === null) {
-						this.avatarOptions = {};
-					}
-					this.avatarOptions[option] = value;
-					_assertClassBrand$3(_Item_brand, this, _renderNodes).call(this);
-				}
-			}
-		}, {
-			key: "setAvatarOptions",
-			value: function setAvatarOptions(options) {
-				if (main_core.Type.isPlainObject(options)) {
-					Object.keys(options).forEach(option => {
-						this.setAvatarOption(option, options[option]);
-					});
-				}
-			}
-		}, {
-			key: "getTextColor",
-			value: function getTextColor() {
-				return this.textColor !== null ? this.textColor : this.getEntityItemOption('textColor');
-			}
-		}, {
-			key: "setTextColor",
-			value: function setTextColor(textColor) {
-				if (main_core.Type.isString(textColor) || textColor === null) {
-					this.textColor = textColor;
-					_assertClassBrand$3(_Item_brand, this, _renderNodes).call(this);
-				}
-			}
-		}, {
-			key: "getLink",
-			value: function getLink() {
-				const link = this.link !== null ? this.link : this.getEntityItemOption('link');
-				return this.replaceMacros(link);
-			}
-		}, {
-			key: "setLink",
-			value: function setLink(link) {
-				if (main_core.Type.isString(link) || link === null) {
-					this.link = link;
-					_assertClassBrand$3(_Item_brand, this, _renderNodes).call(this);
-				}
-			}
-		}, {
-			key: "getLinkTitle",
-			value: function getLinkTitle() {
-				const linkTitleNode = this.getLinkTitleNode();
-				return linkTitleNode !== null ? linkTitleNode.getText() : main_core.Loc.getMessage('UI_SELECTOR_ITEM_LINK_TITLE');
-			}
-		}, {
-			key: "getLinkTitleNode",
-			value: function getLinkTitleNode() {
-				return this.linkTitle !== null ? this.linkTitle : this.getEntityTextNode('linkTitle');
-			}
-		}, {
-			key: "setLinkTitle",
-			value: function setLinkTitle(linkTitle) {
-				if (main_core.Type.isString(linkTitle) || main_core.Type.isPlainObject(linkTitle) || linkTitle === null) {
-					this.linkTitle = linkTitle === null ? null : new TextNode(linkTitle);
-					_assertClassBrand$3(_Item_brand, this, _renderNodes).call(this);
-				}
-			}
-		}, {
-			key: "getBadges",
-			value: function getBadges() {
-				if (this.badges !== null) {
-					return this.badges;
-				}
-				const badges = this.getEntity().getBadges(this);
-				if (main_core.Type.isArray(badges)) {
-					this.badges = [];
-					badges.forEach(badge => {
-						this.badges.push(new ItemBadge(badge));
-					});
-				} else {
-					this.badges = [];
-				}
+		}
+		getBadges() {
+			if (this.badges !== null) {
 				return this.badges;
 			}
-		}, {
-			key: "setBadges",
-			value: function setBadges(badges) {
-				if (main_core.Type.isArray(badges)) {
-					this.badges = [];
-					badges.forEach(badge => {
-						this.badges.push(new ItemBadge(badge));
-					});
-					_assertClassBrand$3(_Item_brand, this, _renderNodes).call(this);
-				} else if (badges === null) {
-					this.badges = null;
-					_assertClassBrand$3(_Item_brand, this, _renderNodes).call(this);
+			const badges = this.getEntity().getBadges(this);
+			if (main_core.Type.isArray(badges)) {
+				this.badges = [];
+				for (const badge of badges) {
+					this.badges.push(new ItemBadge(badge));
 				}
+			} else {
+				this.badges = [];
 			}
-		}, {
-			key: "getBadgesOption",
-			value: function getBadgesOption(option) {
-				if (!main_core.Type.isUndefined(this.badgesOptions[option])) {
-					return this.badgesOptions[option];
+			return this.badges;
+		}
+		setBadges(badges) {
+			if (main_core.Type.isArray(badges)) {
+				this.badges = [];
+				for (const badge of badges) {
+					this.badges.push(new ItemBadge(badge));
 				}
-				const badgesOptions = this.getEntityItemOption('badgesOptions');
-				if (main_core.Type.isPlainObject(badgesOptions) && !main_core.Type.isUndefined(badgesOptions[option])) {
-					return badgesOptions[option];
-				}
-				return null;
+				this.#renderNodes();
+			} else if (badges === null) {
+				this.badges = null;
+				this.#renderNodes();
 			}
-		}, {
-			key: "setBadgesOption",
-			value: function setBadgesOption(option, value) {
-				if (main_core.Type.isStringFilled(option) && !main_core.Type.isUndefined(value)) {
-					this.badgesOptions[option] = value;
-					_assertClassBrand$3(_Item_brand, this, _renderNodes).call(this);
-				}
+		}
+		getBadgesOption(option) {
+			if (!main_core.Type.isUndefined(this.badgesOptions[option])) {
+				return this.badgesOptions[option];
 			}
-		}, {
-			key: "setBadgesOptions",
-			value: function setBadgesOptions(options) {
-				if (main_core.Type.isPlainObject(options)) {
-					Object.keys(options).forEach(option => {
-						this.setBadgesOption(option, options[option]);
-					});
-				}
+			const badgesOptions = this.getEntityItemOption('badgesOptions');
+			if (main_core.Type.isPlainObject(badgesOptions) && !main_core.Type.isUndefined(badgesOptions[option])) {
+				return badgesOptions[option];
 			}
-
-			/**
-			 * @internal
-			 */
-		}, {
-			key: "setDialog",
-			value: function setDialog(dialog) {
-				this.dialog = dialog;
+			return null;
+		}
+		setBadgesOption(option, value) {
+			if (main_core.Type.isStringFilled(option) && !main_core.Type.isUndefined(value)) {
+				this.badgesOptions[option] = value;
+				this.#renderNodes();
 			}
-		}, {
-			key: "getDialog",
-			value: function getDialog() {
-				return this.dialog;
+		}
+		setBadgesOptions(options) {
+			if (main_core.Type.isPlainObject(options)) {
+				Object.keys(options).forEach(option => {
+					this.setBadgesOption(option, options[option]);
+				});
 			}
-		}, {
-			key: "createNode",
-			value: function createNode(nodeOptions) {
-				const itemNode = new ItemNode(this, nodeOptions);
-				this.nodes.add(itemNode);
-				return itemNode;
+		}
+		setDialog(dialog) {
+			this.dialog = dialog;
+		}
+		getDialog() {
+			return this.dialog;
+		}
+		createNode(nodeOptions) {
+			const itemNode = new ItemNode(this, nodeOptions);
+			this.nodes.add(itemNode);
+			return itemNode;
+		}
+		removeNode(node) {
+			this.nodes.delete(node);
+		}
+		getNodes() {
+			return this.nodes;
+		}
+		select(selectOptions = {}) {
+			if (this.selected) {
+				return;
 			}
-		}, {
-			key: "removeNode",
-			value: function removeNode(node) {
-				this.nodes.delete(node);
-			}
-		}, {
-			key: "getNodes",
-			value: function getNodes() {
-				return this.nodes;
-			}
-		}, {
-			key: "select",
-			value: function select(selectOptions = {}) {
-				if (this.selected) {
-					return;
-				}
-				const options = main_core.Type.isBoolean(selectOptions) // Compatibility signature select(preselectedMode: boolean = false)
-				? {
-					emitEvents: !selectOptions,
-					animate: !selectOptions
-				} : selectOptions;
-				const {
-					emitEvents,
-					animate,
-					node
-				} = {
-					emitEvents: true,
-					animate: true,
-					node: null,
-					...options
-				};
-				const dialog = this.getDialog();
-				if (dialog && emitEvents) {
-					const event = new main_core_events.BaseEvent({
-						data: {
-							item: this,
-							node
-						}
-					});
-					dialog.emit('Item:onBeforeSelect', event);
-					if (event.isDefaultPrevented()) {
-						return;
-					}
-				}
-				if (this.isLocked()) {
-					return;
-				}
-				this.selected = true;
-				if (dialog) {
-					dialog.handleItemSelect(this, animate);
-				}
-				if (this.isRendered()) {
-					this.getNodes().forEach(itemNode => {
-						itemNode.select();
-					});
-				}
-				if (dialog && emitEvents) {
-					dialog.emit('Item:onSelect', {
+			const options = main_core.Type.isBoolean(selectOptions)
+			? {
+				emitEvents: !selectOptions,
+				animate: !selectOptions
+			} : selectOptions;
+			const {
+				emitEvents,
+				animate,
+				node
+			} = {
+				emitEvents: true,
+				animate: true,
+				node: null,
+				...options
+			};
+			const dialog = this.getDialog();
+			if (dialog && emitEvents) {
+				const event = new main_core_events.BaseEvent({
+					data: {
 						item: this,
 						node
-					});
-					dialog.saveRecentItem(this);
-				}
-			}
-		}, {
-			key: "deselect",
-			value: function deselect(deselectOptions = {}) {
-				if (!this.selected) {
+					}
+				});
+				dialog.emit('Item:onBeforeSelect', event);
+				if (event.isDefaultPrevented()) {
 					return;
 				}
-				const options = main_core.Type.isBoolean(deselectOptions) // Compatibility signature select(preselectedMode: boolean = false)
-				? {
-					emitEvents: !deselectOptions,
-					animate: !deselectOptions
-				} : deselectOptions;
-				const {
-					emitEvents,
-					animate,
+			}
+			if (this.isLocked()) {
+				return;
+			}
+			this.selected = true;
+			if (dialog) {
+				dialog.handleItemSelect(this, animate);
+			}
+			if (this.isRendered()) {
+				for (const itemNode of this.getNodes()) {
+					itemNode.select();
+				}
+			}
+			if (dialog && emitEvents) {
+				dialog.emit('Item:onSelect', {
+					item: this,
 					node
-				} = {
-					emitEvents: true,
-					animate: true,
-					node: null,
-					...options
-				};
-				const dialog = this.getDialog();
-				if (dialog && emitEvents) {
-					const event = new main_core_events.BaseEvent({
-						data: {
-							item: this,
-							node
-						}
-					});
-					dialog.emit('Item:onBeforeDeselect', event);
-					if (event.isDefaultPrevented()) {
-						return;
-					}
-				}
-				this.selected = false;
-				if (this.isRendered()) {
-					this.getNodes().forEach(itemNode => {
-						itemNode.deselect();
-					});
-				}
-				if (dialog) {
-					dialog.handleItemDeselect(this, animate);
-				}
-				if (dialog && emitEvents) {
-					dialog.emit('Item:onDeselect', {
+				});
+				dialog.saveRecentItem(this);
+			}
+		}
+		deselect(deselectOptions = {}) {
+			if (!this.selected) {
+				return;
+			}
+			const options = main_core.Type.isBoolean(deselectOptions)
+			? {
+				emitEvents: !deselectOptions,
+				animate: !deselectOptions
+			} : deselectOptions;
+			const {
+				emitEvents,
+				animate,
+				node
+			} = {
+				emitEvents: true,
+				animate: true,
+				node: null,
+				...options
+			};
+			const dialog = this.getDialog();
+			if (dialog && emitEvents) {
+				const event = new main_core_events.BaseEvent({
+					data: {
 						item: this,
 						node
-					});
-				}
-			}
-		}, {
-			key: "isSelected",
-			value: function isSelected() {
-				return this.selected;
-			}
-		}, {
-			key: "setSearchable",
-			value: function setSearchable(flag) {
-				if (main_core.Type.isBoolean(flag)) {
-					this.searchable = flag;
-				}
-			}
-		}, {
-			key: "isSearchable",
-			value: function isSearchable() {
-				return this.searchable;
-			}
-		}, {
-			key: "setSaveable",
-			value: function setSaveable(flag) {
-				if (main_core.Type.isBoolean(flag)) {
-					this.saveable = flag;
-				}
-			}
-		}, {
-			key: "isSaveable",
-			value: function isSaveable() {
-				return this.saveable;
-			}
-		}, {
-			key: "setDeselectable",
-			value: function setDeselectable(flag) {
-				if (main_core.Type.isBoolean(flag)) {
-					this.deselectable = flag;
-					if (this.getDialog() && this.getDialog().getTagSelector()) {
-						const tag = this.getDialog().getTagSelector().getTag({
-							id: this.getId(),
-							entityId: this.getEntityId()
-						});
-						if (tag) {
-							tag.setDeselectable(flag);
-						}
 					}
-				}
-			}
-		}, {
-			key: "isDeselectable",
-			value: function isDeselectable() {
-				return this.deselectable;
-			}
-		}, {
-			key: "setHidden",
-			value: function setHidden(flag) {
-				if (main_core.Type.isBoolean(flag)) {
-					this.hidden = flag;
-					if (this.isRendered()) {
-						this.getNodes().forEach(node => {
-							node.setHidden(flag);
-						});
-					}
-				}
-			}
-		}, {
-			key: "isHidden",
-			value: function isHidden() {
-				return this.hidden;
-			}
-		}, {
-			key: "lock",
-			value: function lock() {
-				if (this.locked) {
+				});
+				dialog.emit('Item:onBeforeDeselect', event);
+				if (event.isDefaultPrevented()) {
 					return;
 				}
-				const dialog = this.getDialog();
-				if (dialog) {
-					const event = new main_core_events.BaseEvent({
-						data: {
-							item: this
-						}
+			}
+			this.selected = false;
+			if (this.isRendered()) {
+				this.getNodes().forEach(itemNode => {
+					itemNode.deselect();
+				});
+			}
+			if (dialog) {
+				dialog.handleItemDeselect(this, animate);
+			}
+			if (dialog && emitEvents) {
+				dialog.emit('Item:onDeselect', {
+					item: this,
+					node
+				});
+			}
+		}
+		isSelected() {
+			return this.selected;
+		}
+		setSearchable(flag) {
+			if (main_core.Type.isBoolean(flag)) {
+				this.searchable = flag;
+			}
+		}
+		isSearchable() {
+			return this.searchable;
+		}
+		setSaveable(flag) {
+			if (main_core.Type.isBoolean(flag)) {
+				this.saveable = flag;
+			}
+		}
+		isSaveable() {
+			return this.saveable;
+		}
+		setDeselectable(flag) {
+			if (main_core.Type.isBoolean(flag)) {
+				this.deselectable = flag;
+				const tagSelector = this.getDialog()?.getTagSelector() || null;
+				if (tagSelector !== null) {
+					const tag = tagSelector.getTag({
+						id: this.getId(),
+						entityId: this.getEntityId()
 					});
-					dialog.emit('Item:onBeforeLock', event);
-					if (event.isDefaultPrevented()) {
-						return;
+					if (tag) {
+						tag.setDeselectable(flag);
 					}
 				}
-				if (this.isSelected()) {
-					return;
-				}
-				this.locked = true;
+			}
+		}
+		isDeselectable() {
+			return this.deselectable;
+		}
+		setHidden(flag) {
+			if (main_core.Type.isBoolean(flag)) {
+				this.hidden = flag;
 				if (this.isRendered()) {
 					this.getNodes().forEach(node => {
-						node.lock();
-					});
-				}
-				if (dialog) {
-					dialog.emit('Item:onLock', {
-						item: this
+						node.setHidden(flag);
 					});
 				}
 			}
-		}, {
-			key: "unlock",
-			value: function unlock() {
-				if (!this.locked) {
+		}
+		isHidden() {
+			return this.hidden;
+		}
+		lock() {
+			if (this.locked) {
+				return;
+			}
+			const dialog = this.getDialog();
+			if (dialog) {
+				const event = new main_core_events.BaseEvent({
+					data: {
+						item: this
+					}
+				});
+				dialog.emit('Item:onBeforeLock', event);
+				if (event.isDefaultPrevented()) {
 					return;
 				}
-				const dialog = this.getDialog();
-				if (dialog) {
-					const event = new main_core_events.BaseEvent({
-						data: {
-							item: this
-						}
-					});
-					dialog.emit('Item:onBeforeUnlock', event);
-					if (event.isDefaultPrevented()) {
-						return;
-					}
+			}
+			if (this.isSelected()) {
+				return;
+			}
+			this.locked = true;
+			if (this.isRendered()) {
+				for (const node of this.getNodes()) {
+					node.lock();
 				}
-				this.locked = false;
-				if (this.isRendered()) {
-					this.getNodes().forEach(node => {
-						node.unlock();
-					});
-				}
-				if (dialog) {
-					dialog.emit('Item:onUnlock', {
+			}
+			if (dialog) {
+				dialog.emit('Item:onLock', {
+					item: this
+				});
+			}
+		}
+		unlock() {
+			if (!this.locked) {
+				return;
+			}
+			const dialog = this.getDialog();
+			if (dialog) {
+				const event = new main_core_events.BaseEvent({
+					data: {
 						item: this
-					});
-				}
-			}
-		}, {
-			key: "isLocked",
-			value: function isLocked() {
-				return this.locked;
-			}
-		}, {
-			key: "setContextSort",
-			value: function setContextSort(sort) {
-				if (main_core.Type.isNumber(sort) || sort === null) {
-					this.contextSort = sort;
-				}
-			}
-		}, {
-			key: "getContextSort",
-			value: function getContextSort() {
-				return this.contextSort;
-			}
-		}, {
-			key: "setGlobalSort",
-			value: function setGlobalSort(sort) {
-				if (main_core.Type.isNumber(sort) || sort === null) {
-					this.globalSort = sort;
-				}
-			}
-		}, {
-			key: "getGlobalSort",
-			value: function getGlobalSort() {
-				return this.globalSort;
-			}
-		}, {
-			key: "setSort",
-			value: function setSort(sort) {
-				if (main_core.Type.isNumber(sort) || sort === null) {
-					this.sort = sort;
-				}
-			}
-		}, {
-			key: "getSort",
-			value: function getSort() {
-				return this.sort;
-			}
-		}, {
-			key: "getSearchIndex",
-			value: function getSearchIndex() {
-				if (this.searchIndex === null) {
-					this.searchIndex = SearchIndex.create(this);
-				}
-				return this.searchIndex;
-			}
-		}, {
-			key: "resetSearchIndex",
-			value: function resetSearchIndex() {
-				this.searchIndex = null;
-			}
-		}, {
-			key: "getCustomData",
-			value: function getCustomData() {
-				return this.customData;
-			}
-		}, {
-			key: "setCustomData",
-			value: function setCustomData(property, value) {
-				if (main_core.Type.isNull(property)) {
-					this.customData = new Map();
-					_assertClassBrand$3(_Item_brand, this, _renderNodes).call(this);
-				} else if (main_core.Type.isPlainObject(property)) {
-					Object.entries(property).forEach(item => {
-						const [currentKey, currentValue] = item;
-						this.customData.set(currentKey, currentValue);
-					});
-					_assertClassBrand$3(_Item_brand, this, _renderNodes).call(this);
-				} else if (main_core.Type.isString(property)) {
-					if (main_core.Type.isNull(value)) {
-						this.customData.delete(property);
-						_assertClassBrand$3(_Item_brand, this, _renderNodes).call(this);
-					} else if (!main_core.Type.isUndefined(value)) {
-						this.customData.set(property, value);
-						_assertClassBrand$3(_Item_brand, this, _renderNodes).call(this);
 					}
+				});
+				dialog.emit('Item:onBeforeUnlock', event);
+				if (event.isDefaultPrevented()) {
+					return;
 				}
 			}
-		}, {
-			key: "isRendered",
-			value: function isRendered() {
-				return this.getDialog() && this.getDialog().isRendered();
-			}
-		}, {
-			key: "getEntityItemOption",
-			value: function getEntityItemOption(option) {
-				return this.getEntity().getItemOption(option, this.getEntityType());
-			}
-		}, {
-			key: "getEntityTagOption",
-			value: function getEntityTagOption(option) {
-				return this.getEntity().getTagOption(option, this.getEntityType());
-			}
-		}, {
-			key: "getEntityTextNode",
-			value: function getEntityTextNode(option) {
-				return this.getEntity().getOptionTextNode(option, this.getEntityType());
-			}
-		}, {
-			key: "getTagOptions",
-			value: function getTagOptions() {
-				return this.tagOptions;
-			}
-		}, {
-			key: "getTagOption",
-			value: function getTagOption(option) {
-				const value = this.getTagOptions().get(option);
-				if (!main_core.Type.isUndefined(value)) {
-					return value;
+			this.locked = false;
+			if (this.isRendered()) {
+				for (const node of this.getNodes()) {
+					node.unlock();
 				}
-				return null;
 			}
-		}, {
-			key: "getTagGlobalOption",
-			value: function getTagGlobalOption(option, useItemOptions = false) {
-				if (!main_core.Type.isStringFilled(option)) {
-					return null;
+			if (dialog) {
+				dialog.emit('Item:onUnlock', {
+					item: this
+				});
+			}
+		}
+		isLocked() {
+			return this.locked;
+		}
+		setContextSort(sort) {
+			if (main_core.Type.isNumber(sort) || sort === null) {
+				this.contextSort = sort;
+			}
+		}
+		getContextSort() {
+			return this.contextSort;
+		}
+		setGlobalSort(sort) {
+			if (main_core.Type.isNumber(sort) || sort === null) {
+				this.globalSort = sort;
+			}
+		}
+		getGlobalSort() {
+			return this.globalSort;
+		}
+		setSort(sort) {
+			if (main_core.Type.isNumber(sort) || sort === null) {
+				this.sort = sort;
+			}
+		}
+		getSort() {
+			return this.sort;
+		}
+		getSearchIndex() {
+			if (this.searchIndex === null) {
+				this.searchIndex = SearchIndex.create(this);
+			}
+			return this.searchIndex;
+		}
+		resetSearchIndex() {
+			this.searchIndex = null;
+		}
+		getCustomData() {
+			return this.customData;
+		}
+		setCustomData(property, value) {
+			if (main_core.Type.isNull(property)) {
+				this.customData = new Map();
+				this.#renderNodes();
+			} else if (main_core.Type.isPlainObject(property)) {
+				Object.entries(property).forEach(item => {
+					const [currentKey, currentValue] = item;
+					this.customData.set(currentKey, currentValue);
+				});
+				this.#renderNodes();
+			} else if (main_core.Type.isString(property)) {
+				if (main_core.Type.isNull(value)) {
+					this.customData.delete(property);
+					this.#renderNodes();
+				} else if (!main_core.Type.isUndefined(value)) {
+					this.customData.set(property, value);
+					this.#renderNodes();
 				}
-				let value = this.getTagOption(option);
-				if (value === null && useItemOptions === true && this[option] !== null) {
-					value = this[option];
+			}
+		}
+		isRendered() {
+			return this.getDialog() && this.getDialog().isRendered();
+		}
+		#renderNodes() {
+			if (this.isRendered()) {
+				for (const node of this.getNodes()) {
+					node.render();
 				}
-				if (value === null && this.getDialog().getTagSelector()) {
-					const fn = `getTag${main_core.Text.toPascalCase(option)}`;
-					if (main_core.Type.isFunction(this.getDialog().getTagSelector()[fn])) {
-						value = this.getDialog().getTagSelector()[fn]();
-					}
-				}
-				if (value === null) {
-					value = this.getEntityTagOption(option);
-				}
-				if (value === null && useItemOptions === true) {
-					value = this.getEntityItemOption(option);
-				}
+			}
+		}
+		getEntityItemOption(option) {
+			return this.getEntity().getItemOption(option, this.getEntityType());
+		}
+		getEntityTagOption(option) {
+			return this.getEntity().getTagOption(option, this.getEntityType());
+		}
+		getEntityTextNode(option) {
+			return this.getEntity().getOptionTextNode(option, this.getEntityType());
+		}
+		getTagOptions() {
+			return this.tagOptions;
+		}
+		getTagOption(option) {
+			const value = this.getTagOptions().get(option);
+			if (!main_core.Type.isUndefined(value)) {
 				return value;
 			}
-		}, {
-			key: "getTagBgColor",
-			value: function getTagBgColor() {
-				return this.getTagGlobalOption('bgColor');
+			return null;
+		}
+		getTagGlobalOption(option, useItemOptions = false) {
+			if (!main_core.Type.isStringFilled(option)) {
+				return null;
 			}
-		}, {
-			key: "getTagTextColor",
-			value: function getTagTextColor() {
-				return this.getTagGlobalOption('textColor');
+			let value = this.getTagOption(option);
+			if (value === null && useItemOptions === true && this[option] !== null) {
+				value = this[option];
 			}
-		}, {
-			key: "getTagMaxWidth",
-			value: function getTagMaxWidth() {
-				return this.getTagGlobalOption('maxWidth');
-			}
-		}, {
-			key: "getTagFontWeight",
-			value: function getTagFontWeight() {
-				return this.getTagGlobalOption('fontWeight');
-			}
-		}, {
-			key: "getTagAvatar",
-			value: function getTagAvatar() {
-				return this.getTagGlobalOption('avatar', true);
-			}
-		}, {
-			key: "getTagAvatarOptions",
-			value: function getTagAvatarOptions() {
-				return this.getTagGlobalOption('avatarOptions', true);
-			}
-		}, {
-			key: "getTagLink",
-			value: function getTagLink() {
-				return this.replaceMacros(this.getTagGlobalOption('link', true));
-			}
-
-			/**
-			 * @internal
-			 */
-		}, {
-			key: "replaceMacros",
-			value: function replaceMacros(str) {
-				if (!main_core.Type.isStringFilled(str)) {
-					return str;
+			if (value === null && this.getDialog().getTagSelector()) {
+				const fn = `getTag${main_core.Text.toPascalCase(option)}`;
+				if (main_core.Type.isFunction(this.getDialog().getTagSelector()[fn])) {
+					value = this.getDialog().getTagSelector()[fn]();
 				}
-				return str.replace(/#id#/i, this.getId()).replace(/#element_id#/i, this.getId());
 			}
-
-			/**
-			 * @internal
-			 */
-		}, {
-			key: "createTag",
-			value: function createTag() {
-				return {
-					id: this.getId(),
-					entityId: this.getEntityId(),
-					entityType: this.getEntityType(),
-					title: this.getTagOption('title') || this.getTitleNode() && this.getTitleNode().toJSON() || '',
-					deselectable: this.isDeselectable(),
-					avatar: this.getTagAvatar(),
-					avatarOptions: this.getTagAvatarOptions(),
-					link: this.getTagLink(),
-					maxWidth: this.getTagMaxWidth(),
-					textColor: this.getTagTextColor(),
-					bgColor: this.getTagBgColor(),
-					fontWeight: this.getTagFontWeight(),
-					onclick: this.getTagOption('onclick')
-				};
+			if (value === null) {
+				value = this.getEntityTagOption(option);
 			}
-		}, {
-			key: "getAjaxJson",
-			value: function getAjaxJson() {
-				return this.toJSON();
+			if (value === null && useItemOptions === true) {
+				value = this.getEntityItemOption(option);
 			}
-		}, {
-			key: "toJSON",
-			value: function toJSON() {
-				return {
-					id: this.getId(),
-					entityId: this.getEntityId(),
-					entityType: this.getEntityType(),
-					selected: this.isSelected(),
-					deselectable: this.isDeselectable(),
-					searchable: this.isSearchable(),
-					saveable: this.isSaveable(),
-					hidden: this.isHidden(),
-					locked: this.isLocked(),
-					title: this.getTitleNode(),
-					link: this.getLink(),
-					linkTitle: this.getLinkTitleNode(),
-					subtitle: this.getSubtitleNode(),
-					supertitle: this.getSupertitleNode(),
-					caption: this.getCaptionNode(),
-					avatar: this.getAvatar(),
-					textColor: this.getTextColor(),
-					sort: this.getSort(),
-					contextSort: this.getContextSort(),
-					globalSort: this.getGlobalSort(),
-					customData: TypeUtils.convertMapToObject(this.getCustomData()),
-					tagOptions: TypeUtils.convertMapToObject(this.getTagOptions()),
-					badges: this.getBadges()
-				};
+			return value;
+		}
+		getTagBgColor() {
+			return this.getTagGlobalOption('bgColor');
+		}
+		getTagTextColor() {
+			return this.getTagGlobalOption('textColor');
+		}
+		getTagMaxWidth() {
+			return this.getTagGlobalOption('maxWidth');
+		}
+		getTagFontWeight() {
+			return this.getTagGlobalOption('fontWeight');
+		}
+		getTagAvatar() {
+			return this.getTagGlobalOption('avatar', true);
+		}
+		getTagAvatarOptions() {
+			return this.getTagGlobalOption('avatarOptions', true);
+		}
+		getTagLink() {
+			return this.replaceMacros(this.getTagGlobalOption('link', true));
+		}
+		replaceMacros(str) {
+			if (!main_core.Type.isStringFilled(str)) {
+				return str;
 			}
-		}]);
-	}();
-	function _renderNodes() {
-		if (this.isRendered()) {
-			this.getNodes().forEach(node => {
-				node.render();
-			});
+			const id = String(this.getId());
+			return str.replace(/#id#/i, id).replace(/#element_id#/i, id);
+		}
+		createTag() {
+			const titleNode = this.getTitleNode();
+			return {
+				id: this.getId(),
+				entityId: this.getEntityId(),
+				entityType: this.getEntityType(),
+				title: this.getTagOption('title') || titleNode && titleNode.toJSON() || '',
+				deselectable: this.isDeselectable(),
+				avatar: this.getTagAvatar(),
+				avatarOptions: this.getTagAvatarOptions(),
+				link: this.getTagLink(),
+				maxWidth: this.getTagMaxWidth(),
+				textColor: this.getTagTextColor(),
+				bgColor: this.getTagBgColor(),
+				fontWeight: this.getTagFontWeight(),
+				onclick: this.getTagOption('onclick')
+			};
+		}
+		getAjaxJson() {
+			return this.toJSON();
+		}
+		toJSON() {
+			return {
+				id: this.getId(),
+				entityId: this.getEntityId(),
+				entityType: this.getEntityType(),
+				selected: this.isSelected(),
+				deselectable: this.isDeselectable(),
+				searchable: this.isSearchable(),
+				saveable: this.isSaveable(),
+				hidden: this.isHidden(),
+				locked: this.isLocked(),
+				title: this.getTitleNode(),
+				link: this.getLink(),
+				linkTitle: this.getLinkTitleNode(),
+				subtitle: this.getSubtitleNode(),
+				supertitle: this.getSupertitleNode(),
+				caption: this.getCaptionNode(),
+				avatar: this.getAvatar(),
+				textColor: this.getTextColor(),
+				sort: this.getSort(),
+				contextSort: this.getContextSort(),
+				globalSort: this.getGlobalSort(),
+				customData: TypeUtils.convertMapToObject(this.getCustomData()),
+				tagOptions: TypeUtils.convertMapToObject(this.getTagOptions()),
+				badges: this.getBadges()
+			};
 		}
 	}
 
-	let BaseStub = /*#__PURE__*/function () {
+	let BaseStub = function () {
 		function BaseStub(tab, options) {
 			babelHelpers.classCallCheck(this, BaseStub);
-			babelHelpers.defineProperty(this, "tab", null);
+			babelHelpers.defineProperty(this, "tab", void 0);
 			babelHelpers.defineProperty(this, "autoShow", true);
-			babelHelpers.defineProperty(this, "cache", new main_core.Cache.MemoryCache());
+			babelHelpers.defineProperty(this, "cache", new main_core_cache.MemoryCache());
 			babelHelpers.defineProperty(this, "content", null);
+			babelHelpers.defineProperty(this, "options", {});
 			this.options = main_core.Type.isPlainObject(options) ? options : {};
 			this.tab = tab;
 			this.autoShow = this.getOption('autoShow', true);
 		}
-
-		/**
-		 * @abstract
-		 */
 		return babelHelpers.createClass(BaseStub, [{
 			key: "render",
 			value: function render() {
@@ -3570,14 +2850,10 @@ this.BX.UI = this.BX.UI || {};
 			key: "show",
 			value: function show() {
 				main_core.Dom.append(this.getOuterContainer(), this.getTab().getContainer());
-				/*requestAnimationFrame(() => {
-					Dom.addClass(this.getOuterContainer(), 'ui-selector-tab-stub--show');
-				});*/
 			}
 		}, {
 			key: "hide",
 			value: function hide() {
-				// Dom.removeClass(this.getOuterContainer(), 'ui-selector-tab-stub--show');
 				main_core.Dom.remove(this.getOuterContainer());
 			}
 		}, {
@@ -3590,7 +2866,8 @@ this.BX.UI = this.BX.UI || {};
 			value: function getOption(option, defaultValue) {
 				if (!main_core.Type.isUndefined(this.options[option])) {
 					return this.options[option];
-				} else if (!main_core.Type.isUndefined(defaultValue)) {
+				}
+				if (!main_core.Type.isUndefined(defaultValue)) {
 					return defaultValue;
 				}
 				return null;
@@ -3598,13 +2875,13 @@ this.BX.UI = this.BX.UI || {};
 		}]);
 	}();
 
-	function _callSuper$8(t, o, e) { return o = babelHelpers.getPrototypeOf(o), babelHelpers.possibleConstructorReturn(t, _isNativeReflectConstruct$8() ? Reflect.construct(o, e || [], babelHelpers.getPrototypeOf(t).constructor) : o.apply(t, e)); }
-	function _isNativeReflectConstruct$8() { try { var t = !Boolean.prototype.valueOf.call(Reflect.construct(Boolean, [], function () {})); } catch (t) {} return (_isNativeReflectConstruct$8 = function () { return !!t; })(); }
-	let DefaultStub = /*#__PURE__*/function (_BaseStub) {
-		function DefaultStub(tab, options) {
+	function _callSuper$4(t, o, e) { return o = babelHelpers.getPrototypeOf(o), babelHelpers.possibleConstructorReturn(t, _isNativeReflectConstruct$4() ? Reflect.construct(o, e || [], babelHelpers.getPrototypeOf(t).constructor) : o.apply(t, e)); }
+	function _isNativeReflectConstruct$4() { try { var t = !Boolean.prototype.valueOf.call(Reflect.construct(Boolean, [], function () {})); } catch (t) {} return (_isNativeReflectConstruct$4 = function () { return !!t; })(); }
+	let DefaultStub = function (_BaseStub) {
+		function DefaultStub(...args) {
 			var _this;
 			babelHelpers.classCallCheck(this, DefaultStub);
-			_this = _callSuper$8(this, DefaultStub, [tab, options]);
+			_this = _callSuper$4(this, DefaultStub, [...args]);
 			babelHelpers.defineProperty(_this, "content", null);
 			return _this;
 		}
@@ -3655,176 +2932,28 @@ this.BX.UI = this.BX.UI || {};
 		}]);
 	}(BaseStub);
 
-	let BaseHeader = /*#__PURE__*/function () {
-		function BaseHeader(context, options) {
-			babelHelpers.classCallCheck(this, BaseHeader);
-			babelHelpers.defineProperty(this, "dialog", null);
-			babelHelpers.defineProperty(this, "tab", null);
-			babelHelpers.defineProperty(this, "container", null);
-			babelHelpers.defineProperty(this, "cache", new main_core.Cache.MemoryCache());
-			this.options = main_core.Type.isPlainObject(options) ? options : {};
-			if (context instanceof Dialog) {
-				this.dialog = context;
-			} else {
-				this.tab = context;
-				this.dialog = this.tab.getDialog();
-			}
-		}
-		return babelHelpers.createClass(BaseHeader, [{
-			key: "getDialog",
-			value: function getDialog() {
-				return this.dialog;
-			}
-		}, {
-			key: "getTab",
-			value: function getTab() {
-				return this.tab;
-			}
-		}, {
-			key: "show",
-			value: function show() {
-				main_core.Dom.addClass(this.getContainer(), 'ui-selector-header--show');
-			}
-		}, {
-			key: "hide",
-			value: function hide() {
-				main_core.Dom.removeClass(this.getContainer(), 'ui-selector-header--show');
-			}
-		}, {
-			key: "getOptions",
-			value: function getOptions() {
-				return this.options;
-			}
-		}, {
-			key: "getOption",
-			value: function getOption(option, defaultValue) {
-				if (!main_core.Type.isUndefined(this.options[option])) {
-					return this.options[option];
-				} else if (!main_core.Type.isUndefined(defaultValue)) {
-					return defaultValue;
-				}
-				return null;
-			}
-		}, {
-			key: "getContainer",
-			value: function getContainer() {
-				if (this.container === null) {
-					this.container = main_core.Tag.render`
-				<div class="ui-selector-header">${this.render()}</div>
-			`;
-				}
-				return this.container;
-			}
-
-			/**
-			 * @abstract
-			 */
-		}, {
-			key: "render",
-			value: function render() {
-				throw new Error('You must implement render() method.');
-			}
-		}]);
-	}();
-
-	let BaseFooter = /*#__PURE__*/function () {
-		function BaseFooter(context, options) {
-			babelHelpers.classCallCheck(this, BaseFooter);
-			babelHelpers.defineProperty(this, "dialog", null);
-			babelHelpers.defineProperty(this, "tab", null);
-			babelHelpers.defineProperty(this, "container", null);
-			babelHelpers.defineProperty(this, "cache", new main_core.Cache.MemoryCache());
-			this.options = main_core.Type.isPlainObject(options) ? options : {};
-			if (context instanceof Dialog) {
-				this.dialog = context;
-			} else {
-				this.tab = context;
-				this.dialog = this.tab.getDialog();
-			}
-		}
-		return babelHelpers.createClass(BaseFooter, [{
-			key: "getDialog",
-			value: function getDialog() {
-				return this.dialog;
-			}
-		}, {
-			key: "getTab",
-			value: function getTab() {
-				return this.tab;
-			}
-		}, {
-			key: "show",
-			value: function show() {
-				main_core.Dom.addClass(this.getContainer(), 'ui-selector-footer--show');
-			}
-		}, {
-			key: "hide",
-			value: function hide() {
-				main_core.Dom.removeClass(this.getContainer(), 'ui-selector-footer--show');
-			}
-		}, {
-			key: "getOptions",
-			value: function getOptions() {
-				return this.options;
-			}
-		}, {
-			key: "getOption",
-			value: function getOption(option, defaultValue) {
-				if (!main_core.Type.isUndefined(this.options[option])) {
-					return this.options[option];
-				} else if (!main_core.Type.isUndefined(defaultValue)) {
-					return defaultValue;
-				}
-				return null;
-			}
-		}, {
-			key: "getContainer",
-			value: function getContainer() {
-				if (this.container === null) {
-					this.container = main_core.Tag.render`
-				<div class="ui-selector-footer">${this.render()}</div>
-			`;
-				}
-				return this.container;
-			}
-
-			/**
-			 * @abstract
-			 */
-		}, {
-			key: "render",
-			value: function render() {
-				throw new Error('You must implement render() method.');
-			}
-		}]);
-	}();
-
-	/**
-	 * @memberof BX.UI.EntitySelector
-	 */
-	let Tab = /*#__PURE__*/function () {
-		function Tab(dialog, tabOptions) {
-			babelHelpers.classCallCheck(this, Tab);
-			babelHelpers.defineProperty(this, "id", null);
-			babelHelpers.defineProperty(this, "title", null);
-			babelHelpers.defineProperty(this, "rootNode", null);
-			babelHelpers.defineProperty(this, "dialog", null);
-			babelHelpers.defineProperty(this, "stub", null);
-			babelHelpers.defineProperty(this, "visible", true);
-			babelHelpers.defineProperty(this, "rendered", false);
-			babelHelpers.defineProperty(this, "locked", false);
-			babelHelpers.defineProperty(this, "selected", false);
-			babelHelpers.defineProperty(this, "hovered", false);
-			babelHelpers.defineProperty(this, "icon", {});
-			babelHelpers.defineProperty(this, "textColor", {});
-			babelHelpers.defineProperty(this, "bgColor", {});
-			babelHelpers.defineProperty(this, "itemMaxDepth", 5);
-			babelHelpers.defineProperty(this, "header", null);
-			babelHelpers.defineProperty(this, "showDefaultHeader", true);
-			babelHelpers.defineProperty(this, "footer", null);
-			babelHelpers.defineProperty(this, "showDefaultFooter", true);
-			babelHelpers.defineProperty(this, "showAvatars", null);
-			babelHelpers.defineProperty(this, "cache", new main_core.Cache.MemoryCache());
+	class Tab {
+		id;
+		title = null;
+		rootNode = null;
+		dialog = null;
+		stub = null;
+		visible = true;
+		rendered = false;
+		locked = false;
+		selected = false;
+		hovered = false;
+		icon = {};
+		textColor = {};
+		bgColor = {};
+		itemMaxDepth = 5;
+		header = null;
+		showDefaultHeader = true;
+		footer = null;
+		showDefaultFooter = true;
+		showAvatars = null;
+		cache = new main_core_cache.MemoryCache();
+		constructor(dialog, tabOptions) {
 			const options = main_core.Type.isPlainObject(tabOptions) ? tabOptions : {};
 			if (!main_core.Type.isStringFilled(options.id)) {
 				throw new Error('EntitySelector.Tab: "id" parameter is required.');
@@ -3848,289 +2977,229 @@ this.BX.UI = this.BX.UI || {};
 			this.setFooter(options.footer, options.footerOptions);
 			this.setShowAvatars(options.showAvatars);
 		}
-		return babelHelpers.createClass(Tab, [{
-			key: "getId",
-			value: function getId() {
-				return this.id;
-			}
-
-			/**
-			 * @internal
-			 */
-		}, {
-			key: "setDialog",
-			value: function setDialog(dialog) {
-				this.dialog = dialog;
-			}
-		}, {
-			key: "getDialog",
-			value: function getDialog() {
-				return this.dialog;
-			}
-		}, {
-			key: "getStub",
-			value: function getStub() {
-				return this.stub;
-			}
-		}, {
-			key: "setStub",
-			value: function setStub(stub, stubOptions) {
-				let instance = null;
-				const options = main_core.Type.isPlainObject(stubOptions) ? stubOptions : {};
-				if (main_core.Type.isString(stub) || main_core.Type.isFunction(stub)) {
-					const className = main_core.Type.isString(stub) ? main_core.Reflection.getClass(stub) : stub;
-					if (main_core.Type.isFunction(className)) {
-						instance = new className(this, options);
-						if (!(instance instanceof BaseStub)) {
-							console.error('EntitySelector: stub is not an instance of BaseStub.');
-							instance = null;
-						}
-					}
-				}
-				if (!instance && stub !== false) {
-					instance = new DefaultStub(this, options);
-				}
-				this.stub = instance;
-			}
-		}, {
-			key: "getHeader",
-			value: function getHeader() {
-				return this.header;
-			}
-		}, {
-			key: "setHeader",
-			value: function setHeader(headerContent, headerOptions) {
-				/** @var {BaseHeader} */
-				let header = null;
-				if (headerContent !== null) {
-					header = Dialog.createHeader(this, headerContent, headerOptions);
-					if (header === null) {
-						return;
-					}
-				}
-				if (this.isRendered() && this.getHeader() !== null) {
-					main_core.Dom.remove(this.getHeader().getContainer());
-					this.getDialog().adjustHeader();
-				}
-				this.header = header;
-				if (this.isRendered()) {
-					this.getDialog().appendHeader(header);
-					this.getDialog().adjustHeader();
-				}
-			}
-		}, {
-			key: "canShowDefaultHeader",
-			value: function canShowDefaultHeader() {
-				return this.showDefaultHeader;
-			}
-		}, {
-			key: "enableDefaultHeader",
-			value: function enableDefaultHeader() {
-				this.showDefaultHeader = true;
-				this.getDialog().adjustHeader();
-			}
-		}, {
-			key: "disableDefaultHeader",
-			value: function disableDefaultHeader() {
-				this.showDefaultHeader = false;
-				this.getDialog().adjustHeader();
-			}
-		}, {
-			key: "getFooter",
-			value: function getFooter() {
-				return this.footer;
-			}
-		}, {
-			key: "setFooter",
-			value: function setFooter(footerContent, footerOptions) {
-				/** @var {BaseFooter} */
-				let footer = null;
-				if (footerContent !== null) {
-					footer = Dialog.createFooter(this, footerContent, footerOptions);
-					if (footer === null) {
-						return;
-					}
-				}
-				if (this.isRendered() && this.getFooter() !== null) {
-					main_core.Dom.remove(this.getFooter().getContainer());
-					this.getDialog().adjustFooter();
-				}
-				this.footer = footer;
-				if (this.isRendered()) {
-					this.getDialog().appendFooter(footer);
-					this.getDialog().adjustFooter();
-				}
-			}
-		}, {
-			key: "canShowDefaultFooter",
-			value: function canShowDefaultFooter() {
-				return this.showDefaultFooter;
-			}
-		}, {
-			key: "enableDefaultFooter",
-			value: function enableDefaultFooter() {
-				this.showDefaultFooter = true;
-				this.getDialog().adjustFooter();
-			}
-		}, {
-			key: "disableDefaultFooter",
-			value: function disableDefaultFooter() {
-				this.showDefaultFooter = false;
-				this.getDialog().adjustFooter();
-			}
-		}, {
-			key: "setShowAvatars",
-			value: function setShowAvatars(flag) {
-				if (main_core.Type.isBoolean(flag) || flag === null) {
-					this.showAvatars = flag;
-					if (this.isRendered()) {
-						this.renderContainer();
+		getId() {
+			return this.id;
+		}
+		getTabPanelId() {
+			return `${this.getDialog().getId()}-tabpanel-${this.getId()}`;
+		}
+		getListBoxId() {
+			return `${this.getDialog().getId()}-listbox-${this.getId()}`;
+		}
+		getLabelId() {
+			return `${this.getDialog().getId()}-tab-${this.getId()}`;
+		}
+		setDialog(dialog) {
+			this.dialog = dialog;
+		}
+		getDialog() {
+			return this.dialog;
+		}
+		getStub() {
+			return this.stub;
+		}
+		setStub(stub, stubOptions) {
+			let instance = null;
+			const options = main_core.Type.isPlainObject(stubOptions) ? stubOptions : {};
+			if (main_core.Type.isString(stub) || main_core.Type.isFunction(stub)) {
+				const className = main_core.Type.isString(stub) ? main_core.Reflection.getClass(stub) : stub;
+				if (main_core.Type.isFunction(className)) {
+					const StubClass = className;
+					instance = new StubClass(this, options);
+					if (!(instance instanceof BaseStub)) {
+						console.error('EntitySelector: stub is not an instance of BaseStub.');
+						instance = null;
 					}
 				}
 			}
-		}, {
-			key: "shouldShowAvatars",
-			value: function shouldShowAvatars() {
-				return this.showAvatars ?? this.getDialog().shouldShowAvatars();
+			if (!instance && stub !== false) {
+				instance = new DefaultStub(this, options);
 			}
-		}, {
-			key: "getRootNode",
-			value: function getRootNode() {
-				return this.rootNode;
-			}
-		}, {
-			key: "setTitle",
-			value: function setTitle(title) {
-				if (main_core.Type.isStringFilled(title) || main_core.Type.isPlainObject(title) || title === null) {
-					this.title = title === null ? null : new TextNode(title);
-					if (this.isRendered()) {
-						this.renderLabel();
-					}
-				}
-			}
-		}, {
-			key: "getTitle",
-			value: function getTitle() {
-				const titleNode = this.getTitleNode();
-				return titleNode !== null && !titleNode.isNullable() ? titleNode.getText() : '';
-			}
-		}, {
-			key: "getTitleNode",
-			value: function getTitleNode() {
-				return this.title;
-			}
-		}, {
-			key: "setIcon",
-			value: function setIcon(icon) {
-				return this.setProperty('icon', icon);
-			}
-		}, {
-			key: "getIcon",
-			value: function getIcon(state) {
-				return this.getPropertyByState('icon', state);
-			}
-		}, {
-			key: "setBgColor",
-			value: function setBgColor(bgColor) {
-				return this.setProperty('bgColor', bgColor);
-			}
-		}, {
-			key: "getBgColor",
-			value: function getBgColor(state) {
-				return this.getPropertyByState('bgColor', state);
-			}
-		}, {
-			key: "setTextColor",
-			value: function setTextColor(textColor) {
-				return this.setProperty('textColor', textColor);
-			}
-		}, {
-			key: "getTextColor",
-			value: function getTextColor(state) {
-				return this.getPropertyByState('textColor', state);
-			}
-
-			/**
-			 * @private
-			 */
-		}, {
-			key: "setProperty",
-			value: function setProperty(name, states) {
-				const property = this[name];
-				if (!property) {
+			this.stub = instance;
+		}
+		getHeader() {
+			return this.header;
+		}
+		setHeader(headerContent, headerOptions) {
+			let header = null;
+			if (headerContent !== null) {
+				header = this.getDialog().createHeader(this, headerContent, headerOptions);
+				if (header === null) {
 					return;
 				}
-				if (main_core.Type.isPlainObject(states)) {
-					Object.keys(states).forEach(state => {
-						if (main_core.Type.isStringFilled(states[state])) {
-							property[state] = states[state];
-						}
-					});
-				} else if (main_core.Type.isStringFilled(states)) {
-					property['default'] = states;
+			}
+			if (this.isRendered() && this.getHeader() !== null) {
+				main_core.Dom.remove(this.getHeader().getContainer());
+				this.getDialog().adjustHeader();
+			}
+			this.header = header;
+			if (this.isRendered()) {
+				this.getDialog().appendHeader(header);
+				this.getDialog().adjustHeader();
+			}
+		}
+		canShowDefaultHeader() {
+			return this.showDefaultHeader;
+		}
+		enableDefaultHeader() {
+			this.showDefaultHeader = true;
+			this.getDialog().adjustHeader();
+		}
+		disableDefaultHeader() {
+			this.showDefaultHeader = false;
+			this.getDialog().adjustHeader();
+		}
+		getFooter() {
+			return this.footer;
+		}
+		setFooter(footerContent, footerOptions) {
+			let footer = null;
+			if (footerContent !== null) {
+				footer = this.getDialog().createFooter(this, footerContent, footerOptions);
+				if (footer === null) {
+					return;
 				}
 			}
-
-			/**
-			 * @private
-			 */
-		}, {
-			key: "getPropertyByState",
-			value: function getPropertyByState(name, state) {
-				const property = this[name];
-				const labelState = main_core.Type.isStringFilled(state) ? state : 'default';
-				if (!main_core.Type.isUndefined(property) && !main_core.Type.isUndefined(property[labelState])) {
-					return property[labelState];
-				}
-				return null;
+			if (this.isRendered() && this.getFooter() !== null) {
+				main_core.Dom.remove(this.getFooter().getContainer());
+				this.getDialog().adjustFooter();
 			}
-
-			/**
-			 * @private
-			 */
-		}, {
-			key: "getPropertyByCurrentState",
-			value: function getPropertyByCurrentState(name) {
-				const property = this[name];
-				if (this.isSelected() && this.isHovered() && property.selectedHovered) {
-					return property.selectedHovered;
-				} else if (this.isSelected() && property.selected) {
-					return property.selected;
-				} else if (this.isHovered() && property.hovered) {
-					return property.hovered;
-				} else if (property.default) {
-					return property.default;
-				}
-				return null;
+			this.footer = footer;
+			if (this.isRendered()) {
+				this.getDialog().appendFooter(footer);
+				this.getDialog().adjustFooter();
 			}
-		}, {
-			key: "setItemMaxDepth",
-			value: function setItemMaxDepth(depth) {
-				if (main_core.Type.isNumber(depth) && depth > 0) {
-					this.itemMaxDepth = depth;
+		}
+		canShowDefaultFooter() {
+			return this.showDefaultFooter;
+		}
+		enableDefaultFooter() {
+			this.showDefaultFooter = true;
+			this.getDialog().adjustFooter();
+		}
+		disableDefaultFooter() {
+			this.showDefaultFooter = false;
+			this.getDialog().adjustFooter();
+		}
+		setShowAvatars(flag) {
+			if (main_core.Type.isBoolean(flag) || flag === null) {
+				this.showAvatars = flag;
+				if (this.isRendered()) {
+					this.renderContainer();
 				}
 			}
-		}, {
-			key: "getItemMaxDepth",
-			value: function getItemMaxDepth() {
-				return this.itemMaxDepth;
+		}
+		shouldShowAvatars() {
+			return this.showAvatars ?? this.getDialog().shouldShowAvatars();
+		}
+		getRootNode() {
+			return this.rootNode;
+		}
+		setTitle(title) {
+			if (main_core.Type.isStringFilled(title) || main_core.Type.isPlainObject(title) || title === null) {
+				this.title = title === null ? null : new TextNode(title);
+				if (this.isRendered()) {
+					this.renderLabel();
+				}
 			}
-		}, {
-			key: "getContainer",
-			value: function getContainer() {
-				return this.cache.remember('container', () => {
-					return main_core.Tag.render`
-				<div class="ui-selector-tab-content">${this.getItemsContainer()}</div>
-			`;
+		}
+		getTitle() {
+			const titleNode = this.getTitleNode();
+			return titleNode !== null && !titleNode.isNullable() ? titleNode.getText() : '';
+		}
+		getTitleNode() {
+			return this.title;
+		}
+		setIcon(icon) {
+			return this.setProperty('icon', icon);
+		}
+		getIcon(state) {
+			return this.getPropertyByState('icon', state);
+		}
+		setBgColor(bgColor) {
+			return this.setProperty('bgColor', bgColor);
+		}
+		getBgColor(state) {
+			return this.getPropertyByState('bgColor', state);
+		}
+		setTextColor(textColor) {
+			return this.setProperty('textColor', textColor);
+		}
+		getTextColor(state) {
+			return this.getPropertyByState('textColor', state);
+		}
+		setProperty(name, states) {
+			const property = this[name];
+			if (!property) {
+				return;
+			}
+			if (main_core.Type.isPlainObject(states)) {
+				Object.keys(states).forEach(state => {
+					if (main_core.Type.isStringFilled(states[state])) {
+						property[state] = states[state];
+					}
 				});
+			} else if (main_core.Type.isStringFilled(states)) {
+				property['default'] = states;
 			}
-		}, {
-			key: "getLabelContainer",
-			value: function getLabelContainer() {
-				return this.cache.remember('label', () => {
-					const className = this.isVisible() ? '' : ' ui-selector-tab-label-hidden';
-					return main_core.Tag.render`
+		}
+		getPropertyByState(name, state) {
+			const property = this[name];
+			const labelState = main_core.Type.isStringFilled(state) ? state : 'default';
+			if (!main_core.Type.isUndefined(property) && !main_core.Type.isUndefined(property[labelState])) {
+				return property[labelState];
+			}
+			return null;
+		}
+		getPropertyByCurrentState(name) {
+			const property = this[name];
+			if (this.isSelected() && this.isHovered() && property.selectedHovered) {
+				return property.selectedHovered;
+			}
+			if (this.isSelected() && property.selected) {
+				return property.selected;
+			}
+			if (this.isHovered() && property.hovered) {
+				return property.hovered;
+			}
+			if (property.default) {
+				return property.default;
+			}
+			return null;
+		}
+		setItemMaxDepth(depth) {
+			if (main_core.Type.isNumber(depth) && depth > 0) {
+				this.itemMaxDepth = depth;
+			}
+		}
+		getItemMaxDepth() {
+			return this.itemMaxDepth;
+		}
+		getContainer() {
+			return this.cache.remember('container', () => {
+				return main_core.Tag.render`
 				<div
+					class="ui-selector-tab-content"
+					role="tabpanel"
+					tabindex="-1"
+					id="${this.getTabPanelId()}"
+					aria-labelledby="${this.getLabelId()}"
+				>${this.getItemsContainer()}</div>
+			`;
+			});
+		}
+		getLabelContainer() {
+			return this.cache.remember('label', () => {
+				const className = this.isVisible() ? '' : ' ui-selector-tab-label-hidden';
+				return main_core.Tag.render`
+				<button
+					type="button"
+					role="tab"
+					id="${this.getLabelId()}"
+					aria-controls="${this.getTabPanelId()}"
+					aria-selected="false"
+					tabindex="-1"
+					data-testid="ui-selector-tab-${this.getId()}"
 					class="ui-selector-tab-label${className} --ui-hoverable"
 					onclick="${this.handleLabelClick.bind(this)}"
 					onmouseenter="${this.handleLabelMouseEnter.bind(this)}"
@@ -4138,363 +3207,265 @@ this.BX.UI = this.BX.UI || {};
 				>
 					${this.getIconContainer()}
 					${this.getTitleContainer()}
-				</div>
+				</button>
 			`;
-				});
-			}
-		}, {
-			key: "getIconContainer",
-			value: function getIconContainer() {
-				return this.cache.remember('icon', () => {
-					return main_core.Tag.render`
-				<div class="ui-selector-tab-icon"></div>
+			});
+		}
+		getIconContainer() {
+			return this.cache.remember('icon', () => {
+				return main_core.Tag.render`
+				<span class="ui-selector-tab-icon" role="none"></span>
 			`;
-				});
-			}
-		}, {
-			key: "getTitleContainer",
-			value: function getTitleContainer() {
-				return this.cache.remember('title', () => {
-					return main_core.Tag.render`
-				<div class="ui-selector-tab-title"></div>
+			});
+		}
+		getTitleContainer() {
+			return this.cache.remember('title', () => {
+				return main_core.Tag.render`
+				<span class="ui-selector-tab-title"></span>
 			`;
-				});
-			}
-		}, {
-			key: "getItemsContainer",
-			value: function getItemsContainer() {
-				return this.cache.remember('items', () => {
-					return main_core.Tag.render`
-				<div class="ui-selector-items"></div>
+			});
+		}
+		getItemsContainer() {
+			return this.cache.remember('items', () => {
+				return main_core.Tag.render`
+				<div
+					class="ui-selector-items"
+					aria-multiselectable="${this.getDialog().isMultiple() ? 'true' : 'false'}"
+					id="${this.getListBoxId()}"
+					aria-labelledby="${this.getLabelId()}"
+				></div>
 			`;
-				});
+			});
+		}
+		getListBoxContainer() {
+			return this.getItemsContainer();
+		}
+		render() {
+			this.getRootNode().render();
+			this.rendered = true;
+		}
+		renderLabel() {
+			main_core.Dom.style(this.getTitleContainer(), 'color', this.getPropertyByCurrentState('textColor'));
+			main_core.Dom.style(this.getLabelContainer(), 'background-color', this.getPropertyByCurrentState('bgColor'));
+			const icon = this.getPropertyByCurrentState('icon');
+			main_core.Dom.clean(this.getIconContainer());
+			try {
+				main_core.Dom.append(new ui_iconSet_api_core.Icon({
+					icon: icon
+				}).render(), this.getIconContainer());
+				main_core.Dom.style(this.getIconContainer(), 'mask-image', 'none');
+				main_core.Dom.style(this.getIconContainer(), 'background-color', 'transparent');
+			} catch {
+				main_core.Dom.style(this.getIconContainer(), 'mask-image', icon ? `url('${encodeUrl(icon)}')` : null);
 			}
-		}, {
-			key: "render",
-			value: function render() {
-				this.getRootNode().render();
-				this.rendered = true;
+			const titleNode = this.getTitleNode();
+			if (titleNode) {
+				this.getTitleNode().renderTo(this.getTitleContainer());
+			} else {
+				this.getTitleContainer().textContent = '';
 			}
-
-			/** @internal **/
-		}, {
-			key: "renderLabel",
-			value: function renderLabel() {
-				main_core.Dom.style(this.getTitleContainer(), 'color', this.getPropertyByCurrentState('textColor'));
-				main_core.Dom.style(this.getLabelContainer(), 'background-color', this.getPropertyByCurrentState('bgColor'));
-				const icon = this.getPropertyByCurrentState('icon');
-				main_core.Dom.clean(this.getIconContainer());
-				try {
-					main_core.Dom.append(new ui_iconSet_api_core.Icon({
-						icon
-					}).render(), this.getIconContainer());
-					main_core.Dom.style(this.getIconContainer(), 'mask-image', 'none');
-					main_core.Dom.style(this.getIconContainer(), 'background-color', 'transparent');
-				} catch {
-					main_core.Dom.style(this.getIconContainer(), 'mask-image', icon ? `url('${encodeUrl(icon)}')` : null);
-				}
-				const titleNode = this.getTitleNode();
-				if (titleNode) {
-					this.getTitleNode().renderTo(this.getTitleContainer());
-				} else {
-					this.getTitleContainer().textContent = '';
-				}
+		}
+		renderContainer() {
+			const className = 'ui-selector-tab-content--hide-avatars';
+			if (this.shouldShowAvatars()) {
+				main_core.Dom.removeClass(this.getContainer(), className);
+			} else {
+				main_core.Dom.addClass(this.getContainer(), className);
 			}
-
-			/** @internal **/
-		}, {
-			key: "renderContainer",
-			value: function renderContainer() {
-				const className = 'ui-selector-tab-content--hide-avatars';
-				if (this.shouldShowAvatars()) {
-					main_core.Dom.removeClass(this.getContainer(), className);
-				} else {
-					main_core.Dom.addClass(this.getContainer(), className);
-				}
-			}
-		}, {
-			key: "isVisible",
-			value: function isVisible() {
-				return this.visible;
-			}
-		}, {
-			key: "setVisible",
-			value: function setVisible(flag) {
-				if (main_core.Type.isBoolean(flag)) {
-					this.visible = flag;
-					if (this.isRendered()) {
-						if (this.visible) {
-							main_core.Dom.remove(this.getLabelContainer(), 'ui-selector-tab-label-hidden');
-						} else {
-							main_core.Dom.addClass(this.getLabelContainer(), 'ui-selector-tab-label-hidden');
-						}
+		}
+		isVisible() {
+			return this.visible;
+		}
+		setVisible(flag) {
+			if (main_core.Type.isBoolean(flag)) {
+				this.visible = flag;
+				if (this.isRendered()) {
+					if (this.visible) {
+						main_core.Dom.removeClass(this.getLabelContainer(), 'ui-selector-tab-label-hidden');
+					} else {
+						main_core.Dom.addClass(this.getLabelContainer(), 'ui-selector-tab-label-hidden');
 					}
 				}
 			}
-		}, {
-			key: "isRendered",
-			value: function isRendered() {
-				return this.rendered && this.getDialog() && this.getDialog().isRendered();
+		}
+		isRendered() {
+			return this.rendered && this.getDialog() && this.getDialog().isRendered();
+		}
+		select() {
+			if (this.isSelected()) {
+				return;
 			}
-
-			/**
-			 * @internal
-			 */
-		}, {
-			key: "select",
-			value: function select() {
-				if (this.isSelected()) {
-					return;
-				}
-				main_core.Dom.addClass(this.getContainer(), 'ui-selector-tab-content-active');
-				if (this.isVisible()) {
-					main_core.Dom.addClass(this.getLabelContainer(), 'ui-selector-tab-label-active');
-					this.renderLabel();
-				}
-				this.selected = true;
-				if (this.isVisible()) {
-					this.renderLabel();
-				}
-				if (this.getHeader()) {
-					this.getHeader().show();
-				}
-				if (this.getFooter()) {
-					this.getFooter().show();
-				}
-				this.getDialog().emit('Tab:onSelect', {
-					tab: this
-				});
-			}
-
-			/**
-			 * @internal
-			 */
-		}, {
-			key: "deselect",
-			value: function deselect() {
-				if (!this.isSelected()) {
-					return;
-				}
-				main_core.Dom.removeClass(this.getContainer(), 'ui-selector-tab-content-active');
-				if (this.isVisible()) {
-					main_core.Dom.removeClass(this.getLabelContainer(), 'ui-selector-tab-label-active');
-				}
-				this.selected = false;
-				if (this.isVisible()) {
-					this.renderLabel();
-				}
-				if (this.getHeader()) {
-					this.getHeader().hide();
-				}
-				if (this.getFooter()) {
-					this.getFooter().hide();
-				}
-				this.getDialog().emit('Tab:onDeselect', {
-					tab: this
-				});
-			}
-		}, {
-			key: "hover",
-			value: function hover() {
-				if (this.isHovered()) {
-					return;
-				}
-				main_core.Dom.addClass(this.getLabelContainer(), 'ui-selector-tab-label-hover');
-				this.hovered = true;
+			main_core.Dom.addClass(this.getContainer(), 'ui-selector-tab-content-active');
+			main_core.Dom.attr(this.getLabelContainer(), 'aria-selected', 'true');
+			main_core.Dom.attr(this.getDialog().getTagSelector()?.getTextBox(), 'aria-controls', this.getListBoxId());
+			if (this.isVisible()) {
+				main_core.Dom.addClass(this.getLabelContainer(), 'ui-selector-tab-label-active');
 				this.renderLabel();
 			}
-		}, {
-			key: "unhover",
-			value: function unhover() {
-				if (!this.isHovered()) {
-					return;
-				}
-				main_core.Dom.removeClass(this.getLabelContainer(), 'ui-selector-tab-label-hover');
-				this.hovered = false;
+			this.selected = true;
+			this.getHeader()?.show();
+			this.getFooter()?.show();
+			this.getDialog().emit('Tab:onSelect', {
+				tab: this
+			});
+		}
+		deselect() {
+			if (!this.isSelected()) {
+				return;
+			}
+			main_core.Dom.removeClass(this.getContainer(), 'ui-selector-tab-content-active');
+			if (this.isVisible()) {
+				main_core.Dom.removeClass(this.getLabelContainer(), 'ui-selector-tab-label-active');
+			}
+			main_core.Dom.attr(this.getLabelContainer(), 'aria-selected', 'false');
+			main_core.Dom.attr(this.getDialog().getTagSelector()?.getTextBox(), 'aria-controls', null);
+			this.selected = false;
+			if (this.isVisible()) {
 				this.renderLabel();
 			}
-		}, {
-			key: "isSelected",
-			value: function isSelected() {
-				return this.selected;
-			}
-		}, {
-			key: "isHovered",
-			value: function isHovered() {
-				return this.hovered;
-			}
-		}, {
-			key: "lock",
-			value: function lock() {
-				this.locked = true;
-				main_core.Dom.addClass(this.getContainer(), 'ui-selector-tab-content-locked');
-			}
-		}, {
-			key: "unlock",
-			value: function unlock() {
-				this.locked = false;
-				main_core.Dom.removeClass(this.getContainer(), 'ui-selector-tab-content-locked');
-			}
-		}, {
-			key: "isLocked",
-			value: function isLocked() {
-				return this.locked;
-			}
-		}, {
-			key: "handleLabelClick",
-			value: function handleLabelClick() {
-				this.getDialog().selectTab(this.getId());
-			}
-		}, {
-			key: "handleLabelMouseEnter",
-			value: function handleLabelMouseEnter() {
-				this.hover();
-			}
-		}, {
-			key: "handleLabelMouseLeave",
-			value: function handleLabelMouseLeave() {
-				this.unhover();
-			}
-		}]);
-	}();
-
-	function _callSuper$7(t, o, e) { return o = babelHelpers.getPrototypeOf(o), babelHelpers.possibleConstructorReturn(t, _isNativeReflectConstruct$7() ? Reflect.construct(o, e || [], babelHelpers.getPrototypeOf(t).constructor) : o.apply(t, e)); }
-	function _isNativeReflectConstruct$7() { try { var t = !Boolean.prototype.valueOf.call(Reflect.construct(Boolean, [], function () {})); } catch (t) {} return (_isNativeReflectConstruct$7 = function () { return !!t; })(); }
-	function _classPrivateFieldInitSpec$1(e, t, a) { _checkPrivateRedeclaration$1(e, t), t.set(e, a); }
-	function _checkPrivateRedeclaration$1(e, t) { if (t.has(e)) throw new TypeError("Cannot initialize the same private elements twice on an object"); }
-	function _classPrivateFieldGet$1(s, a) { return s.get(_assertClassBrand$2(s, a)); }
-	function _classPrivateFieldSet$1(s, a, r) { return s.set(_assertClassBrand$2(s, a), r), r; }
-	function _assertClassBrand$2(e, t, n) { if ("function" == typeof e ? e === t : e.has(t)) return arguments.length < 3 ? t : n; throw new TypeError("Private element is not present on this object"); }
-
-	/**
-	 * @namespace BX.UI.Uploader
-	 */
-	var _entityId = /*#__PURE__*/new WeakMap();
-	let EntityError = /*#__PURE__*/function (_BaseError) {
-		function EntityError(...args) {
-			var _this;
-			babelHelpers.classCallCheck(this, EntityError);
-			_this = _callSuper$7(this, EntityError, [...args]);
-			_classPrivateFieldInitSpec$1(_this, _entityId, void 0);
-			return _this;
+			this.getHeader()?.hide();
+			this.getFooter()?.hide();
+			this.getDialog().emit('Tab:onDeselect', {
+				tab: this
+			});
 		}
-		babelHelpers.inherits(EntityError, _BaseError);
-		return babelHelpers.createClass(EntityError, [{
-			key: "setEntityId",
-			value: function setEntityId(entityId) {
-				if (main_core.Type.isStringFilled(entityId)) {
-					_classPrivateFieldSet$1(_entityId, this, entityId);
-				}
+		hover() {
+			if (this.isHovered()) {
+				return;
 			}
-		}, {
-			key: "getEntityId",
-			value: function getEntityId() {
-				return _classPrivateFieldGet$1(_entityId, this);
-			}
-		}]);
-	}(main_core.BaseError);
-
-	function _classPrivateFieldInitSpec(e, t, a) { _checkPrivateRedeclaration(e, t), t.set(e, a); }
-	function _checkPrivateRedeclaration(e, t) { if (t.has(e)) throw new TypeError("Cannot initialize the same private elements twice on an object"); }
-	function _classPrivateFieldSet(s, a, r) { return s.set(_assertClassBrand$1(s, a), r), r; }
-	function _classPrivateFieldGet(s, a) { return s.get(_assertClassBrand$1(s, a)); }
-	function _assertClassBrand$1(e, t, n) { if ("function" == typeof e ? e === t : e.has(t)) return arguments.length < 3 ? t : n; throw new TypeError("Private element is not present on this object"); }
-	var _errors = /*#__PURE__*/new WeakMap();
-	/**
-	 * @namespace BX.UI.Uploader
-	 */
-	let EntityErrorCollection = /*#__PURE__*/function () {
-		function EntityErrorCollection() {
-			babelHelpers.classCallCheck(this, EntityErrorCollection);
-			_classPrivateFieldInitSpec(this, _errors, []);
+			main_core.Dom.addClass(this.getLabelContainer(), 'ui-selector-tab-label-hover');
+			this.hovered = true;
+			this.renderLabel();
 		}
-		return babelHelpers.createClass(EntityErrorCollection, [{
-			key: "getByEntityId",
-			value: function getByEntityId(entityId) {
-				return _classPrivateFieldGet(_errors, this).filter(error => error.getEntityId() === entityId);
+		unhover() {
+			if (!this.isHovered()) {
+				return;
 			}
-		}, {
-			key: "add",
-			value: function add(item) {
-				_classPrivateFieldGet(_errors, this).push(item);
-			}
-		}, {
-			key: "has",
-			value: function has(item) {
-				return _classPrivateFieldGet(_errors, this).includes(item);
-			}
-		}, {
-			key: "clear",
-			value: function clear() {
-				_classPrivateFieldSet(_errors, this, []);
-			}
-		}, {
-			key: "getIndex",
-			value: function getIndex(item) {
-				return _classPrivateFieldGet(_errors, this).indexOf(item);
-			}
-		}, {
-			key: "getByIndex",
-			value: function getByIndex(index) {
-				if (main_core.Type.isNumber(index) && index >= 0) {
-					const error = _classPrivateFieldGet(_errors, this)[index];
-					return main_core.Type.isUndefined(error) ? null : error;
-				}
-				return null;
-			}
-		}, {
-			key: Symbol.iterator,
-			value: function () {
-				return _classPrivateFieldGet(_errors, this)[Symbol.iterator]();
-			}
-		}], [{
-			key: "create",
-			value: function create(errorOptions) {
-				const errorCollection = new this();
-				errorOptions.forEach(errorOption => {
-					if (!main_core.Type.isStringFilled(errorOption.entityId)) {
-						return;
-					}
-					const error = new EntityError();
-					error.setEntityId(errorOption.entityId);
-					if (main_core.Type.isStringFilled(errorOption.message)) {
-						error.setMessage(errorOption.message);
-					}
-					if (!main_core.Type.isNil(errorOption.code)) {
-						error.setCode(errorOption.code);
-					}
-					if (main_core.Type.isArrayFilled(errorOption.customData)) {
-						error.setCustomData(errorOption.customData);
-					}
-					errorCollection.add(error);
-				});
-				return errorCollection;
-			}
-		}]);
-	}();
+			main_core.Dom.removeClass(this.getLabelContainer(), 'ui-selector-tab-label-hover');
+			this.hovered = false;
+			this.renderLabel();
+		}
+		isSelected() {
+			return this.selected;
+		}
+		isHovered() {
+			return this.hovered;
+		}
+		lock() {
+			this.locked = true;
+			main_core.Dom.addClass(this.getContainer(), 'ui-selector-tab-content-locked');
+		}
+		unlock() {
+			this.locked = false;
+			main_core.Dom.removeClass(this.getContainer(), 'ui-selector-tab-content-locked');
+		}
+		isLocked() {
+			return this.locked;
+		}
+		handleLabelClick() {
+			this.getDialog().selectTab(this.getId());
+		}
+		handleLabelMouseEnter() {
+			this.hover();
+		}
+		handleLabelMouseLeave() {
+			this.unhover();
+		}
+	}
 
-	function _assertClassBrand(e, t, n) { if ("function" == typeof e ? e === t : e.has(t)) return arguments.length < 3 ? t : n; throw new TypeError("Private element is not present on this object"); }
-	let TagItem = /*#__PURE__*/function () {
-		function TagItem(itemOptions) {
-			babelHelpers.classCallCheck(this, TagItem);
-			babelHelpers.defineProperty(this, "id", null);
-			babelHelpers.defineProperty(this, "entityId", null);
-			babelHelpers.defineProperty(this, "entityType", null);
-			babelHelpers.defineProperty(this, "title", null);
-			babelHelpers.defineProperty(this, "avatar", null);
-			babelHelpers.defineProperty(this, "avatarOptions", null);
-			babelHelpers.defineProperty(this, "maxWidth", null);
-			babelHelpers.defineProperty(this, "textColor", null);
-			babelHelpers.defineProperty(this, "bgColor", null);
-			babelHelpers.defineProperty(this, "fontWeight", null);
-			babelHelpers.defineProperty(this, "link", null);
-			babelHelpers.defineProperty(this, "onclick", null);
-			babelHelpers.defineProperty(this, "clickable", null);
-			babelHelpers.defineProperty(this, "deselectable", null);
-			babelHelpers.defineProperty(this, "customData", null);
-			babelHelpers.defineProperty(this, "cache", new main_core.Cache.MemoryCache());
-			babelHelpers.defineProperty(this, "selector", null);
-			babelHelpers.defineProperty(this, "rendered", false);
+	class EntityError extends main_core.BaseError {
+		#entityId;
+		setEntityId(entityId) {
+			if (main_core.Type.isStringFilled(entityId)) {
+				this.#entityId = entityId;
+			}
+		}
+		getEntityId() {
+			return this.#entityId;
+		}
+	}
+
+	class EntityErrorCollection {
+		#errors = [];
+		static create(errorOptions) {
+			const errorCollection = new this();
+			errorOptions.forEach(errorOption => {
+				if (!main_core.Type.isStringFilled(errorOption.entityId)) {
+					return;
+				}
+				const error = new EntityError();
+				error.setEntityId(errorOption.entityId);
+				if (main_core.Type.isStringFilled(errorOption.message)) {
+					error.setMessage(errorOption.message);
+				}
+				if (!main_core.Type.isNil(errorOption.code)) {
+					error.setCode(errorOption.code);
+				}
+				if (main_core.Type.isArrayFilled(errorOption.customData)) {
+					error.setCustomData(errorOption.customData);
+				}
+				errorCollection.add(error);
+			});
+			return errorCollection;
+		}
+		getByEntityId(entityId) {
+			return this.#errors.filter(error => error.getEntityId() === entityId);
+		}
+		add(item) {
+			this.#errors.push(item);
+		}
+		has(item) {
+			return this.#errors.includes(item);
+		}
+		clear() {
+			this.#errors = [];
+		}
+		getIndex(item) {
+			return this.#errors.indexOf(item);
+		}
+		getByIndex(index) {
+			if (main_core.Type.isNumber(index) && index >= 0) {
+				const error = this.#errors[index];
+				return main_core.Type.isUndefined(error) ? null : error;
+			}
+			return null;
+		}
+		[Symbol.iterator]() {
+			return this.#errors[Symbol.iterator]();
+		}
+	}
+
+	function createDialog(dialogOptions) {
+		return new Dialog(dialogOptions);
+	}
+
+	function isTagSelector(selector) {
+		return selector instanceof TagSelector;
+	}
+
+	class TagItem {
+		id;
+		entityId;
+		entityType;
+		title = null;
+		avatar = null;
+		avatarOptions = null;
+		maxWidth = null;
+		textColor = null;
+		bgColor = null;
+		fontWeight = null;
+		link = null;
+		onclick = null;
+		clickable = null;
+		deselectable = null;
+		customData;
+		cache = new main_core_cache.MemoryCache();
+		selector;
+		rendered = false;
+		constructor(selector, itemOptions) {
+			if (!isTagSelector(selector)) {
+				throw new TypeError('TagSelector.TagItem: "selector" parameter is not an instance of TagSelector.');
+			}
 			const options = main_core.Type.isPlainObject(itemOptions) ? itemOptions : {};
 			if (!main_core.Type.isStringFilled(options.id) && !main_core.Type.isNumber(options.id)) {
 				throw new Error('TagSelector.TagItem: "id" parameter is required.');
@@ -4502,6 +3473,7 @@ this.BX.UI = this.BX.UI || {};
 			if (!main_core.Type.isStringFilled(options.entityId)) {
 				throw new Error('TagSelector.TagItem: "entityId" parameter is required.');
 			}
+			this.selector = selector;
 			this.id = options.id;
 			this.entityId = options.entityId.toLowerCase();
 			this.entityType = main_core.Type.isStringFilled(options.entityType) ? options.entityType : 'default';
@@ -4518,316 +3490,260 @@ this.BX.UI = this.BX.UI || {};
 			this.setFontWeight(options.fontWeight);
 			this.setClickable(options.clickable);
 		}
-		return babelHelpers.createClass(TagItem, [{
-			key: "getId",
-			value: function getId() {
-				return this.id;
+		getId() {
+			return this.id;
+		}
+		getEntityId() {
+			return this.entityId;
+		}
+		getEntityType() {
+			return this.entityType;
+		}
+		getSelector() {
+			return this.selector;
+		}
+		getTitle() {
+			return this.getTitleNode() && !this.getTitleNode().isNullable() ? this.getTitleNode().getText() : '';
+		}
+		getTitleNode() {
+			return this.title;
+		}
+		setTitle(title) {
+			if (main_core.Type.isStringFilled(title) || main_core.Type.isPlainObject(title) || title === null) {
+				this.title = title === null ? null : new TextNode(title);
 			}
-		}, {
-			key: "getEntityId",
-			value: function getEntityId() {
-				return this.entityId;
+		}
+		getAvatar() {
+			if (this.avatar !== null) {
+				return this.avatar;
 			}
-		}, {
-			key: "getEntityType",
-			value: function getEntityType() {
-				return this.entityType;
+			if (this.getSelector().getTagAvatar() !== null) {
+				return this.getSelector().getTagAvatar();
 			}
-		}, {
-			key: "getSelector",
-			value: function getSelector() {
-				return this.selector;
+			if (this.getEntityTagOption('avatar') !== null) {
+				return this.getEntityTagOption('avatar');
 			}
-		}, {
-			key: "setSelector",
-			value: function setSelector(selector) {
-				this.selector = selector;
+			return this.getEntityItemOption('avatar');
+		}
+		setAvatar(avatar) {
+			if (main_core.Type.isString(avatar) || avatar === null) {
+				this.avatar = avatar;
 			}
-		}, {
-			key: "getTitle",
-			value: function getTitle() {
-				return this.getTitleNode() && !this.getTitleNode().isNullable() ? this.getTitleNode().getText() : '';
+		}
+		getAvatarOption(option) {
+			if (this.avatarOptions !== null && !main_core.Type.isUndefined(this.avatarOptions[option])) {
+				return this.avatarOptions[option];
 			}
-		}, {
-			key: "getTitleNode",
-			value: function getTitleNode() {
-				return this.title;
+			const selectorAvatarOption = this.getSelector().getTagAvatarOption(option);
+			if (selectorAvatarOption !== null) {
+				return selectorAvatarOption[option];
 			}
-		}, {
-			key: "setTitle",
-			value: function setTitle(title) {
-				if (main_core.Type.isStringFilled(title) || main_core.Type.isPlainObject(title) || title === null) {
-					this.title = title === null ? null : new TextNode(title);
-				}
+			const entityTagAvatarOptions = this.getEntityTagOption('avatarOptions');
+			if (main_core.Type.isPlainObject(entityTagAvatarOptions) && !main_core.Type.isUndefined(entityTagAvatarOptions[option])) {
+				return entityTagAvatarOptions[option];
 			}
-		}, {
-			key: "getAvatar",
-			value: function getAvatar() {
-				if (this.avatar !== null) {
-					return this.avatar;
-				}
-				if (this.getSelector().getTagAvatar() !== null) {
-					return this.getSelector().getTagAvatar();
-				}
-				if (this.getEntityTagOption('avatar') !== null) {
-					return this.getEntityTagOption('avatar');
-				}
-				return this.getEntityItemOption('avatar');
+			const entityItemAvatarOptions = this.getEntityItemOption('avatarOptions');
+			if (main_core.Type.isPlainObject(entityItemAvatarOptions) && !main_core.Type.isUndefined(entityItemAvatarOptions[option])) {
+				return entityItemAvatarOptions[option];
 			}
-		}, {
-			key: "setAvatar",
-			value: function setAvatar(avatar) {
-				if (main_core.Type.isString(avatar) || avatar === null) {
-					this.avatar = avatar;
+			return null;
+		}
+		setAvatarOption(option, value) {
+			if (main_core.Type.isStringFilled(option) && !main_core.Type.isUndefined(value)) {
+				if (this.avatarOptions === null) {
+					this.avatarOptions = {};
 				}
+				this.avatarOptions[option] = value;
 			}
-		}, {
-			key: "getAvatarOption",
-			value: function getAvatarOption(option) {
-				if (this.avatarOptions !== null && !main_core.Type.isUndefined(this.avatarOptions[option])) {
-					return this.avatarOptions[option];
-				}
-				const selectorAvatarOption = this.getSelector().getTagAvatarOption(option);
-				if (selectorAvatarOption !== null) {
-					return selectorAvatarOption[option];
-				}
-				const entityTagAvatarOptions = this.getEntityTagOption('avatarOptions');
-				if (main_core.Type.isPlainObject(entityTagAvatarOptions) && !main_core.Type.isUndefined(entityTagAvatarOptions[option])) {
-					return entityTagAvatarOptions[option];
-				}
-				const entityItemAvatarOptions = this.getEntityItemOption('avatarOptions');
-				if (main_core.Type.isPlainObject(entityItemAvatarOptions) && !main_core.Type.isUndefined(entityItemAvatarOptions[option])) {
-					return entityItemAvatarOptions[option];
-				}
-				return null;
+		}
+		setAvatarOptions(options) {
+			if (main_core.Type.isPlainObject(options)) {
+				Object.keys(options).forEach(option => {
+					this.setAvatarOption(option, options[option]);
+				});
 			}
-		}, {
-			key: "setAvatarOption",
-			value: function setAvatarOption(option, value) {
-				if (main_core.Type.isStringFilled(option) && !main_core.Type.isUndefined(value)) {
-					if (this.avatarOptions === null) {
-						this.avatarOptions = {};
-					}
-					this.avatarOptions[option] = value;
-				}
+		}
+		getTextColor() {
+			if (this.textColor !== null) {
+				return this.textColor;
 			}
-		}, {
-			key: "setAvatarOptions",
-			value: function setAvatarOptions(options) {
-				if (main_core.Type.isPlainObject(options)) {
-					Object.keys(options).forEach(option => {
-						this.setAvatarOption(option, options[option]);
-					});
-				}
+			if (this.getSelector().getTagTextColor() !== null) {
+				return this.getSelector().getTagTextColor();
 			}
-		}, {
-			key: "getTextColor",
-			value: function getTextColor() {
-				if (this.textColor !== null) {
-					return this.textColor;
-				}
-				if (this.getSelector().getTagTextColor() !== null) {
-					return this.getSelector().getTagTextColor();
-				}
-				return this.getEntityTagOption('textColor');
+			return this.getEntityTagOption('textColor');
+		}
+		setTextColor(textColor) {
+			if (main_core.Type.isString(textColor) || textColor === null) {
+				this.textColor = textColor;
 			}
-		}, {
-			key: "setTextColor",
-			value: function setTextColor(textColor) {
-				if (main_core.Type.isString(textColor) || textColor === null) {
-					this.textColor = textColor;
-				}
+		}
+		getBgColor() {
+			if (this.bgColor !== null) {
+				return this.bgColor;
 			}
-		}, {
-			key: "getBgColor",
-			value: function getBgColor() {
-				if (this.bgColor !== null) {
-					return this.bgColor;
-				}
-				if (this.getSelector().getTagBgColor() !== null) {
-					return this.getSelector().getTagBgColor();
-				}
-				return this.getEntityTagOption('bgColor');
+			if (this.getSelector().getTagBgColor() !== null) {
+				return this.getSelector().getTagBgColor();
 			}
-		}, {
-			key: "setBgColor",
-			value: function setBgColor(bgColor) {
-				if (main_core.Type.isString(bgColor) || bgColor === null) {
-					this.bgColor = bgColor;
+			return this.getEntityTagOption('bgColor');
+		}
+		setBgColor(bgColor) {
+			if (main_core.Type.isString(bgColor) || bgColor === null) {
+				this.bgColor = bgColor;
+			}
+		}
+		getFontWeight() {
+			if (this.fontWeight !== null) {
+				return this.fontWeight;
+			}
+			if (this.getSelector().getTagFontWeight() !== null) {
+				return this.getSelector().getTagFontWeight();
+			}
+			return this.getEntityTagOption('fontWeight');
+		}
+		setFontWeight(fontWeight) {
+			if (main_core.Type.isString(fontWeight) || fontWeight === null) {
+				this.fontWeight = fontWeight;
+			}
+		}
+		getMaxWidth() {
+			if (this.maxWidth !== null) {
+				return this.maxWidth;
+			}
+			if (this.getSelector().getTagMaxWidth() !== null) {
+				return this.getSelector().getTagMaxWidth();
+			}
+			return this.getEntityTagOption('maxWidth');
+		}
+		setMaxWidth(width) {
+			if (main_core.Type.isNumber(width) && width >= 0 || width === null) {
+				this.maxWidth = width;
+			}
+		}
+		setDeselectable(flag) {
+			if (main_core.Type.isBoolean(flag)) {
+				this.deselectable = flag;
+				if (this.isRendered()) {
+					main_core.Dom.toggleClass(this.getContainer(), 'ui-tag-selector-tag-readonly', !flag);
 				}
 			}
-		}, {
-			key: "getFontWeight",
-			value: function getFontWeight() {
-				if (this.fontWeight !== null) {
-					return this.fontWeight;
-				}
-				if (this.getSelector().getTagFontWeight() !== null) {
-					return this.getSelector().getTagFontWeight();
-				}
-				return this.getEntityTagOption('fontWeight');
-			}
-		}, {
-			key: "setFontWeight",
-			value: function setFontWeight(fontWeight) {
-				if (main_core.Type.isString(fontWeight) || fontWeight === null) {
-					this.fontWeight = fontWeight;
-				}
-			}
-		}, {
-			key: "getMaxWidth",
-			value: function getMaxWidth() {
-				if (this.maxWidth !== null) {
-					return this.maxWidth;
-				}
-				if (this.getSelector().getTagMaxWidth() !== null) {
-					return this.getSelector().getTagMaxWidth();
-				}
-				return this.getEntityTagOption('maxWidth');
-			}
-		}, {
-			key: "setMaxWidth",
-			value: function setMaxWidth(width) {
-				if (main_core.Type.isNumber(width) && width >= 0 || width === null) {
-					this.maxWidth = width;
-				}
-			}
-		}, {
-			key: "setDeselectable",
-			value: function setDeselectable(flag) {
-				if (main_core.Type.isBoolean(flag)) {
-					this.deselectable = flag;
-					if (this.isRendered()) {
-						main_core.Dom.toggleClass(this.getContainer(), 'ui-tag-selector-tag-readonly', !flag);
-					}
-				}
-			}
-		}, {
-			key: "isDeselectable",
-			value: function isDeselectable() {
-				return this.deselectable === null ? this.getSelector().isDeselectable() : this.deselectable;
-			}
-		}, {
-			key: "getCustomData",
-			value: function getCustomData() {
-				return this.customData;
-			}
-		}, {
-			key: "getLink",
-			value: function getLink() {
-				return this.link;
-			}
-		}, {
-			key: "getOnclick",
-			value: function getOnclick() {
-				return this.onclick;
-			}
-		}, {
-			key: "setClickable",
-			value: function setClickable(flag) {
-				if (main_core.Type.isBoolean(flag)) {
-					this.clickable = flag;
-				}
-			}
-		}, {
-			key: "isClickable",
-			value: function isClickable() {
-				if (this.clickable !== null) {
-					return this.clickable;
-				}
-				if (this.getSelector().getTagClickable() !== null) {
-					return this.getSelector().getTagClickable();
-				}
-				if (this.getEntityTagOption('clickable') !== null) {
-					return this.getEntityTagOption('clickable');
-				}
-				if (this.getEntityItemOption('clickable') !== null) {
-					return this.getEntityItemOption('clickable');
-				}
+		}
+		isDeselectable() {
+			if (this.getSelector().isReadonly()) {
 				return false;
 			}
-		}, {
-			key: "render",
-			value: function render() {
-				const titleNode = this.getTitleNode();
-				if (titleNode) {
-					var _this$constructor;
-					titleNode.renderTo(this.getTitleContainer());
-					const title = this.getTitleContainer().textContent;
-					this.getContentContainer().setAttribute('title', _assertClassBrand(TagItem, _this$constructor = this.constructor, _sanitizeTitle).call(_this$constructor, title));
-				} else {
-					this.getTitleContainer().textContent = '';
-					main_core.Dom.attr(this.getContentContainer(), 'title', null);
-				}
-				const avatar = this.getAvatar();
-				const bgImage = this.getAvatarOption('bgImage');
-				if (main_core.Type.isStringFilled(avatar)) {
-					main_core.Dom.style(this.getAvatarContainer(), 'background-image', `url('${encodeUrl(avatar)}')`);
-				} else {
-					main_core.Dom.style(this.getAvatarContainer(), 'background-image', bgImage);
-				}
-				const bgColor = this.getAvatarOption('bgColor');
-				const bgSize = this.getAvatarOption('bgSize');
-				const border = this.getAvatarOption('border');
-				const borderRadius = this.getAvatarOption('borderRadius');
-				const outline = this.getAvatarOption('outline');
-				const outlineOffset = this.getAvatarOption('outlineOffset');
-				main_core.Dom.clean(this.getAvatarContainer());
-				main_core.Dom.style(this.getAvatarContainer(), 'background-color', bgColor);
-				main_core.Dom.style(this.getAvatarContainer(), 'background-size', bgSize);
-				main_core.Dom.style(this.getAvatarContainer(), 'border', border);
-				main_core.Dom.style(this.getAvatarContainer(), 'border-radius', borderRadius);
-				main_core.Dom.style(this.getAvatarContainer(), 'outline', outline);
-				main_core.Dom.style(this.getAvatarContainer(), 'outline-offset', outlineOffset);
-				const icon = {
-					icon: this.getAvatarOption('icon'),
-					size: bgSize ?? undefined,
-					color: this.getAvatarOption('iconColor') ?? undefined
-				};
-				if (ui_iconSet_api_core.Icon.isValid(icon)) {
-					main_core.Dom.style(this.getAvatarContainer(), 'background-image', 'none');
-					main_core.Dom.append(new ui_iconSet_api_core.Icon(icon).render(), this.getAvatarContainer());
-				}
-				const hasAvatar = avatar || bgColor && bgColor !== 'none' || bgImage && bgImage !== 'none' || ui_iconSet_api_core.Icon.isValid(icon);
-				if (hasAvatar) {
-					main_core.Dom.addClass(this.getContainer(), 'ui-tag-selector-tag--has-avatar');
-				} else {
-					main_core.Dom.removeClass(this.getContainer(), 'ui-tag-selector-tag--has-avatar');
-				}
-				const maxWidth = this.getMaxWidth();
-				if (maxWidth > 0) {
-					main_core.Dom.style(this.getContainer(), 'max-width', `${maxWidth}px`);
-				} else {
-					main_core.Dom.style(this.getContainer(), 'max-width', null);
-				}
-				if (this.isDeselectable()) {
-					main_core.Dom.removeClass(this.getContainer(), 'ui-tag-selector-tag-readonly');
-				} else {
-					main_core.Dom.addClass(this.getContainer(), 'ui-tag-selector-tag-readonly');
-				}
-				main_core.Dom.style(this.getTitleContainer(), 'color', this.getTextColor());
-				main_core.Dom.style(this.getTitleContainer(), 'font-weight', this.getFontWeight());
-				main_core.Dom.style(this.getContainer(), 'background-color', this.getBgColor());
-				this.rendered = true;
+			return this.deselectable === null ? this.getSelector().isDeselectable() : this.deselectable;
+		}
+		getCustomData() {
+			return this.customData;
+		}
+		getLink() {
+			return this.link;
+		}
+		getOnclick() {
+			return this.onclick;
+		}
+		setClickable(flag) {
+			if (main_core.Type.isBoolean(flag)) {
+				this.clickable = flag;
 			}
-		}, {
-			key: "getContainer",
-			value: function getContainer() {
-				return this.cache.remember('container', () => {
-					return main_core.Tag.render`
-				<div class="ui-tag-selector-item ui-tag-selector-tag">
+		}
+		isClickable() {
+			if (this.clickable !== null) {
+				return this.clickable;
+			}
+			if (this.getSelector().getTagClickable() !== null) {
+				return this.getSelector().getTagClickable();
+			}
+			if (this.getEntityTagOption('clickable') !== null) {
+				return this.getEntityTagOption('clickable');
+			}
+			if (this.getEntityItemOption('clickable') !== null) {
+				return this.getEntityItemOption('clickable');
+			}
+			return false;
+		}
+		render() {
+			const titleNode = this.getTitleNode();
+			if (titleNode) {
+				titleNode.renderTo(this.getTitleContainer());
+				const title = this.getTitleContainer().textContent;
+				this.getContentContainer().setAttribute('title', TagItem.#sanitizeTitle(title));
+			} else {
+				this.getTitleContainer().textContent = '';
+				main_core.Dom.attr(this.getContentContainer(), 'title', null);
+			}
+			const avatar = this.getAvatar();
+			const bgImage = this.getAvatarOption('bgImage');
+			if (main_core.Type.isStringFilled(avatar)) {
+				main_core.Dom.style(this.getAvatarContainer(), 'background-image', `url('${encodeUrl(avatar)}')`);
+			} else {
+				main_core.Dom.style(this.getAvatarContainer(), 'background-image', bgImage);
+			}
+			const bgColor = this.getAvatarOption('bgColor');
+			const bgSize = this.getAvatarOption('bgSize');
+			const border = this.getAvatarOption('border');
+			const borderRadius = this.getAvatarOption('borderRadius');
+			const outline = this.getAvatarOption('outline');
+			const outlineOffset = this.getAvatarOption('outlineOffset');
+			main_core.Dom.clean(this.getAvatarContainer());
+			main_core.Dom.style(this.getAvatarContainer(), 'background-color', bgColor);
+			main_core.Dom.style(this.getAvatarContainer(), 'background-size', bgSize);
+			main_core.Dom.style(this.getAvatarContainer(), 'border', border);
+			main_core.Dom.style(this.getAvatarContainer(), 'border-radius', borderRadius);
+			main_core.Dom.style(this.getAvatarContainer(), 'outline', outline);
+			main_core.Dom.style(this.getAvatarContainer(), 'outline-offset', outlineOffset);
+			const icon = {
+				icon: this.getAvatarOption('icon'),
+				size: bgSize ?? undefined,
+				color: this.getAvatarOption('iconColor') ?? undefined
+			};
+			if (ui_iconSet_api_core.Icon.isValid(icon)) {
+				main_core.Dom.style(this.getAvatarContainer(), 'background-image', 'none');
+				main_core.Dom.append(new ui_iconSet_api_core.Icon(icon).render(), this.getAvatarContainer());
+			}
+			const hasAvatar = avatar || bgColor && bgColor !== 'none' || bgImage && bgImage !== 'none' || ui_iconSet_api_core.Icon.isValid(icon);
+			if (hasAvatar) {
+				main_core.Dom.addClass(this.getContainer(), 'ui-tag-selector-tag--has-avatar');
+			} else {
+				main_core.Dom.removeClass(this.getContainer(), 'ui-tag-selector-tag--has-avatar');
+			}
+			const maxWidth = this.getMaxWidth();
+			if (maxWidth > 0) {
+				main_core.Dom.style(this.getContainer(), 'max-width', `${maxWidth}px`);
+			} else {
+				main_core.Dom.style(this.getContainer(), 'max-width', null);
+			}
+			if (this.isDeselectable()) {
+				main_core.Dom.removeClass(this.getContainer(), 'ui-tag-selector-tag-readonly');
+			} else {
+				main_core.Dom.addClass(this.getContainer(), 'ui-tag-selector-tag-readonly');
+			}
+			main_core.Dom.style(this.getTitleContainer(), 'color', this.getTextColor());
+			main_core.Dom.style(this.getTitleContainer(), 'font-weight', this.getFontWeight());
+			main_core.Dom.style(this.getContainer(), 'background-color', this.getBgColor());
+			this.rendered = true;
+		}
+		static #sanitizeTitle(text) {
+			return text.replaceAll(/[\t ]+/gm, ' ').replaceAll(/\n+/gm, '\n').trim();
+		}
+		getContainer() {
+			return this.cache.remember('container', () => {
+				return main_core.Tag.render`
+				<div
+					class="ui-tag-selector-item ui-tag-selector-tag"
+					onkeydown="${this.handleKeyDown.bind(this)}"
+					data-testid="ui-tag-selector-tag-${this.getEntityId()}-${this.getId()}"
+				>
 					${this.getContentContainer()}
 					${this.getRemoveIcon()}
 				</div>
 			`;
-				});
-			}
-		}, {
-			key: "getContentContainer",
-			value: function getContentContainer() {
-				return this.cache.remember('content-container', () => {
-					if (main_core.Type.isStringFilled(this.getLink())) {
-						return main_core.Tag.render`
+			});
+		}
+		getContentContainer() {
+			return this.cache.remember('content-container', () => {
+				if (main_core.Type.isStringFilled(this.getLink())) {
+					return main_core.Tag.render`
 					<a
 						class="ui-tag-selector-tag-content"
 						onclick="${this.handleContainerClick.bind(this)}"
@@ -4838,136 +3754,125 @@ this.BX.UI = this.BX.UI || {};
 						${this.getTitleContainer()}
 					</a>
 				`;
-					}
-					const className = this.isClickable() || this.getOnclick() !== null ? ' ui-tag-selector-tag-content--clickable' : '';
-					return main_core.Tag.render`
-				<div
+				}
+				const className = this.isClickable() || this.getOnclick() !== null ? ' ui-tag-selector-tag-content--clickable' : '';
+				return main_core.Tag.render`
+				<button
+					type="button"
+					tabindex="-1"
 					class="ui-tag-selector-tag-content${className}"
 					onclick="${this.handleContainerClick.bind(this)}"
 				>
 					${this.getAvatarContainer()}
 					${this.getTitleContainer()}
-				</div>
+				</button>
 			`;
-				});
-			}
-		}, {
-			key: "getAvatarContainer",
-			value: function getAvatarContainer() {
-				return this.cache.remember('avatar', () => {
-					return main_core.Tag.render`
+			});
+		}
+		getAvatarContainer() {
+			return this.cache.remember('avatar', () => {
+				return main_core.Tag.render`
 				<div class="ui-tag-selector-tag-avatar"></div>
 			`;
-				});
-			}
-		}, {
-			key: "getTitleContainer",
-			value: function getTitleContainer() {
-				return this.cache.remember('title', () => {
-					return main_core.Tag.render`
+			});
+		}
+		getTitleContainer() {
+			return this.cache.remember('title', () => {
+				return main_core.Tag.render`
 				<div class="ui-tag-selector-tag-title"></div>
 			`;
-				});
-			}
-		}, {
-			key: "getRemoveIcon",
-			value: function getRemoveIcon() {
-				return this.cache.remember('remove-icon', () => {
-					return main_core.Tag.render`
+			});
+		}
+		getRemoveIcon() {
+			return this.cache.remember('remove-icon', () => {
+				return main_core.Tag.render`
 				<div
 					class="ui-tag-selector-tag-remove ui-icon-set__scope"
 					onclick="${this.handleRemoveIconClick.bind(this)}"
+					aria-hidden="true"
 					data-testid="ui-tag-selector-remove-item-button"
 					data-item-entity-id="${main_core.Text.encode(this.getEntityId())}"
 					data-item-id="${main_core.Text.encode(this.getId())}"
 				></div>
 			`;
-				});
+			});
+		}
+		getEntityTagOption(option) {
+			return Entity.getTagOption(this.getEntityId(), option, this.getEntityType());
+		}
+		getEntityItemOption(option) {
+			return Entity.getItemOption(this.getEntityId(), option, this.getEntityType());
+		}
+		isRendered() {
+			return this.rendered && this.getSelector() && this.getSelector().isRendered();
+		}
+		remove(animate = true) {
+			if (!animate) {
+				main_core.Dom.remove(this.getContainer());
+				return Promise.resolve();
 			}
-		}, {
-			key: "getEntityTagOption",
-			value: function getEntityTagOption(option) {
-				return Entity.getTagOption(this.getEntityId(), option, this.getEntityType());
-			}
-		}, {
-			key: "getEntityItemOption",
-			value: function getEntityItemOption(option) {
-				return Entity.getItemOption(this.getEntityId(), option, this.getEntityType());
-			}
-		}, {
-			key: "isRendered",
-			value: function isRendered() {
-				return this.rendered && this.getSelector() && this.getSelector().isRendered();
-			}
-		}, {
-			key: "remove",
-			value: function remove(animate = true) {
-				if (animate === false) {
+			return new Promise(resolve => {
+				main_core.Dom.style(this.getContainer(), 'width', `${this.getContainer().offsetWidth}px`);
+				main_core.Dom.addClass(this.getContainer(), 'ui-tag-selector-tag--remove');
+				Animation.handleAnimationEnd(this.getContainer(), 'ui-tag-selector-tag-remove').then(() => {
 					main_core.Dom.remove(this.getContainer());
-					return Promise.resolve();
-				}
-				return new Promise(resolve => {
-					main_core.Dom.style(this.getContainer(), 'width', `${this.getContainer().offsetWidth}px`);
-					main_core.Dom.addClass(this.getContainer(), 'ui-tag-selector-tag--remove');
-					Animation.handleAnimationEnd(this.getContainer(), 'ui-tag-selector-tag-remove').then(() => {
-						main_core.Dom.remove(this.getContainer());
-						resolve();
-					}).catch(() => {
-						// Fail silently
-					});
+					resolve();
+				}).catch(() => {
 				});
-			}
-		}, {
-			key: "show",
-			value: function show() {
-				return new Promise(resolve => {
-					main_core.Dom.addClass(this.getContainer(), 'ui-tag-selector-tag--show');
-					Animation.handleAnimationEnd(this.getContainer(), 'ui-tag-selector-tag-show').then(() => {
-						main_core.Dom.removeClass(this.getContainer(), 'ui-tag-selector-tag--show');
-						resolve();
-					}).catch(() => {
-						// Fail silently
-					});
+			});
+		}
+		show() {
+			return new Promise(resolve => {
+				main_core.Dom.addClass(this.getContainer(), 'ui-tag-selector-tag--show');
+				Animation.handleAnimationEnd(this.getContainer(), 'ui-tag-selector-tag-show').then(() => {
+					main_core.Dom.removeClass(this.getContainer(), 'ui-tag-selector-tag--show');
+					resolve();
+				}).catch(() => {
 				});
+			});
+		}
+		handleContainerClick() {
+			const fn = this.getOnclick();
+			if (main_core.Type.isFunction(fn)) {
+				fn(this);
 			}
-		}, {
-			key: "handleContainerClick",
-			value: function handleContainerClick() {
-				const fn = this.getOnclick();
-				if (main_core.Type.isFunction(fn)) {
-					fn(this);
-				}
-				const selector = this.getSelector();
-				selector.emit('TagItem:onClick', {
-					item: this
-				});
+			const selector = this.getSelector();
+			selector.emit('TagItem:onClick', {
+				item: this
+			});
+		}
+		handleRemoveIconClick(event) {
+			event.stopPropagation();
+			if (this.isDeselectable()) {
+				this.getSelector().removeTag(this);
 			}
-		}, {
-			key: "handleRemoveIconClick",
-			value: function handleRemoveIconClick(event) {
+		}
+		handleKeyDown(event) {
+			if ((event.key === 'Delete' || event.key === 'Backspace') && this.isDeselectable()) {
+				this.getSelector().removeTag(this);
 				event.stopPropagation();
-				if (this.isDeselectable()) {
-					this.getSelector().removeTag(this);
-				}
+				event.preventDefault();
 			}
-		}]);
-	}();
-	function _sanitizeTitle(text) {
-		return text.replaceAll(/[\t ]+/gm, ' ').replaceAll(/\n+/gm, '\n').trim();
+		}
 	}
 
-	function _callSuper$6(t, o, e) { return o = babelHelpers.getPrototypeOf(o), babelHelpers.possibleConstructorReturn(t, _isNativeReflectConstruct$6() ? Reflect.construct(o, [], babelHelpers.getPrototypeOf(t).constructor) : o.apply(t, e)); }
-	function _isNativeReflectConstruct$6() { try { var t = !Boolean.prototype.valueOf.call(Reflect.construct(Boolean, [], function () {})); } catch (t) {} return (_isNativeReflectConstruct$6 = function () { return !!t; })(); }
-	/**
-	 * @memberof BX.UI.EntitySelector
-	 */
-	let TagSelector = /*#__PURE__*/function (_EventEmitter) {
+	function _callSuper$3(t, o, e) { return o = babelHelpers.getPrototypeOf(o), babelHelpers.possibleConstructorReturn(t, _isNativeReflectConstruct$3() ? Reflect.construct(o, [], babelHelpers.getPrototypeOf(t).constructor) : o.apply(t, e)); }
+	function _isNativeReflectConstruct$3() { try { var t = !Boolean.prototype.valueOf.call(Reflect.construct(Boolean, [], function () {})); } catch (t) {} return (_isNativeReflectConstruct$3 = function () { return !!t; })(); }
+	function _classPrivateFieldInitSpec(e, t, a) { _checkPrivateRedeclaration$1(e, t), t.set(e, a); }
+	function _checkPrivateRedeclaration$1(e, t) { if (t.has(e)) throw new TypeError("Cannot initialize the same private elements twice on an object"); }
+	function _classPrivateFieldGet(s, a) { return s.get(_assertClassBrand$1(s, a)); }
+	function _assertClassBrand$1(e, t, n) { if ("function" == typeof e ? e === t : e.has(t)) return arguments.length < 3 ? t : n; throw new TypeError("Private element is not present on this object"); }
+	var _handleDialogShowA11y = new WeakMap();
+	var _handleDialogHideA11y = new WeakMap();
+	let TagSelector = function (_EventEmitter) {
 		function TagSelector(selectorOptions) {
 			var _this;
 			babelHelpers.classCallCheck(this, TagSelector);
-			_this = _callSuper$6(this, TagSelector);
+			_this = _callSuper$3(this, TagSelector);
+			babelHelpers.defineProperty(_this, "id", void 0);
 			babelHelpers.defineProperty(_this, "tags", []);
-			babelHelpers.defineProperty(_this, "cache", new main_core.Cache.MemoryCache());
+			babelHelpers.defineProperty(_this, "cache", new main_core_cache.MemoryCache());
+			babelHelpers.defineProperty(_this, "rendered", false);
 			babelHelpers.defineProperty(_this, "multiple", true);
 			babelHelpers.defineProperty(_this, "readonly", false);
 			babelHelpers.defineProperty(_this, "locked", false);
@@ -4991,6 +3896,16 @@ this.BX.UI = this.BX.UI || {};
 			babelHelpers.defineProperty(_this, "tagMaxWidth", null);
 			babelHelpers.defineProperty(_this, "tagClickable", null);
 			babelHelpers.defineProperty(_this, "dialog", null);
+			babelHelpers.defineProperty(_this, "focusZone", null);
+			babelHelpers.defineProperty(_this, "focusZoneOptions", {});
+			_classPrivateFieldInitSpec(_this, _handleDialogShowA11y, () => {
+				main_core.Dom.attr(_this.getTextBox(), 'aria-expanded', 'true');
+				main_core.Dom.attr(_this.getAddButtonLink(), 'aria-expanded', 'true');
+			});
+			_classPrivateFieldInitSpec(_this, _handleDialogHideA11y, () => {
+				main_core.Dom.attr(_this.getTextBox(), 'aria-expanded', 'false');
+				main_core.Dom.attr(_this.getAddButtonLink(), 'aria-expanded', 'false');
+			});
 			_this.setEventNamespace('BX.UI.EntitySelector.TagSelector');
 			const options = main_core.Type.isPlainObject(selectorOptions) ? selectorOptions : {};
 			_this.id = main_core.Type.isStringFilled(options.id) ? options.id : `ui-tag-selector-${main_core.Text.getRandom().toLowerCase()}`;
@@ -4998,6 +3913,7 @@ this.BX.UI = this.BX.UI || {};
 			_this.addButtonVisible = options.showAddButton !== false;
 			_this.createButtonVisible = options.showCreateButton === true;
 			_this.textBoxVisible = options.showTextBox === true;
+			_this.focusZoneOptions = main_core.Type.isPlainObject(options.focusZoneOptions) ? options.focusZoneOptions : {};
 			_this.setReadonly(options.readonly);
 			_this.setLocked(options.locked);
 			_this.setAddButtonCaption(options.addButtonCaption);
@@ -5026,11 +3942,11 @@ this.BX.UI = this.BX.UI || {};
 					multiple: _this.isMultiple(),
 					tagSelector: _this
 				});
-				new Dialog(dialogOptions);
+				createDialog(dialogOptions);
 			} else if (main_core.Type.isArray(options.items)) {
-				options.items.forEach(item => {
+				for (const item of options.items) {
 					_this.addTag(item);
-				});
+				}
 			}
 			_this.subscribeFromOptions(options.events);
 			return _this;
@@ -5041,15 +3957,24 @@ this.BX.UI = this.BX.UI || {};
 			value: function getDialog() {
 				return this.dialog;
 			}
-
-			/**
-			 * @internal
-			 * @param dialog
-			 */
 		}, {
 			key: "setDialog",
 			value: function setDialog(dialog) {
+				if (this.dialog === dialog) {
+					return;
+				}
+				this.dialog?.unsubscribe('onShow', _classPrivateFieldGet(_handleDialogShowA11y, this));
+				this.dialog?.unsubscribe('onHide', _classPrivateFieldGet(_handleDialogHideA11y, this));
 				this.dialog = dialog;
+				if (dialog === null) {
+					return;
+				}
+				main_core.Dom.attr(this.getTextBox(), 'aria-expanded', 'false');
+				main_core.Dom.attr(this.getTextBox(), 'aria-autocomplete', 'list');
+				main_core.Dom.attr(this.getAddButtonLink(), 'aria-haspopup', 'dialog');
+				main_core.Dom.attr(this.getAddButtonLink(), 'aria-expanded', 'false');
+				dialog.subscribe('onShow', _classPrivateFieldGet(_handleDialogShowA11y, this));
+				dialog.subscribe('onHide', _classPrivateFieldGet(_handleDialogHideA11y, this));
 			}
 		}, {
 			key: "setReadonly",
@@ -5063,6 +3988,7 @@ this.BX.UI = this.BX.UI || {};
 							main_core.Dom.removeClass(this.getOuterContainer(), 'ui-tag-selector-container-readonly');
 						}
 					}
+					this.toggleFocusZone();
 				}
 			}
 		}, {
@@ -5077,11 +4003,14 @@ this.BX.UI = this.BX.UI || {};
 					this.locked = flag;
 					if (flag) {
 						main_core.Dom.addClass(this.getOuterContainer(), 'ui-tag-selector-container-locked');
+						this.getOuterContainer().inert = true;
 						this.getTextBox().disabled = true;
 					} else {
 						main_core.Dom.removeClass(this.getOuterContainer(), 'ui-tag-selector-container-locked');
+						this.getOuterContainer().inert = false;
 						this.getTextBox().disabled = false;
 					}
+					this.toggleFocusZone();
 				}
 			}
 		}, {
@@ -5128,13 +4057,14 @@ this.BX.UI = this.BX.UI || {};
 			key: "getTag",
 			value: function getTag(tagItem) {
 				if (tagItem instanceof TagItem) {
-					return this.getTags().find(tag => tag === tagItem);
-				} else if (main_core.Type.isPlainObject(tagItem)) {
+					return this.getTags().find(tag => tag === tagItem) || null;
+				}
+				if (main_core.Type.isPlainObject(tagItem)) {
 					const {
 						id,
 						entityId
 					} = tagItem;
-					return this.getTags().find(tag => tag.getId() === id && tag.getEntityId() === entityId);
+					return this.getTags().find(tag => tag.getId() === id && tag.getEntityId() === entityId) || null;
 				}
 				return null;
 			}
@@ -5142,13 +4072,12 @@ this.BX.UI = this.BX.UI || {};
 			key: "addTag",
 			value: function addTag(tagOptions) {
 				if (!main_core.Type.isObjectLike(tagOptions)) {
-					throw new Error('TagSelector.addTag: wrong item options.');
+					throw new TypeError('TagSelector.addTag: wrong item options.');
 				}
 				if (this.getTag(tagOptions)) {
 					return null;
 				}
-				const tag = new TagItem(tagOptions);
-				tag.setSelector(this);
+				const tag = new TagItem(this, tagOptions);
 				const event = new main_core_events.BaseEvent({
 					data: {
 						tag
@@ -5169,22 +4098,25 @@ this.BX.UI = this.BX.UI || {};
 					tag.render();
 					this.getItemsContainer().insertBefore(tag.getContainer(), this.getTextBox());
 					if (tagOptions.animate !== false) {
-						tag.show().then(() => {
+						void tag.show().then(() => {
 							this.getContainer().scrollTop = this.getContainer().scrollHeight - this.getContainer().offsetHeight;
 							this.emit('onAfterTagAdd', {
 								tag
 							});
+							this.focusZone?.refreshElements();
 						});
 					} else {
 						this.emit('onAfterTagAdd', {
 							tag
 						});
+						this.focusZone?.refreshElements();
 					}
 					this.toggleAddButtonCaption();
 				} else {
 					this.emit('onAfterTagAdd', {
 						tag
 					});
+					this.focusZone?.refreshElements();
 				}
 				return tag;
 			}
@@ -5209,16 +4141,23 @@ this.BX.UI = this.BX.UI || {};
 					tag: tagItem
 				});
 				if (this.isRendered()) {
-					tagItem.remove(animate).then(() => {
+					ui_a11y.FocusNavigator.focusNext(this.getOuterContainer(), {
+						from: tagItem.getContentContainer(),
+						wrap: true,
+						tabbableOnly: false
+					});
+					void tagItem.remove(animate).then(() => {
 						this.toggleAddButtonCaption();
 						this.emit('onAfterTagRemove', {
 							tag: tagItem
 						});
+						this.focusZone?.refreshElements();
 					});
 				} else {
 					this.emit('onAfterTagRemove', {
 						tag: tagItem
 					});
+					this.focusZone?.refreshElements();
 				}
 			}
 		}, {
@@ -5236,6 +4175,9 @@ this.BX.UI = this.BX.UI || {};
 		}, {
 			key: "renderTo",
 			value: function renderTo(node) {
+				if (this.isRendered()) {
+					return;
+				}
 				this.rendered = true;
 				this.getTags().forEach(tag => {
 					tag.render();
@@ -5244,16 +4186,26 @@ this.BX.UI = this.BX.UI || {};
 				if (main_core.Type.isDomNode(node)) {
 					main_core.Dom.append(this.getOuterContainer(), node);
 				}
+				this.focusZone = new ui_a11y.FocusZone(this.getOuterContainer(), {
+					bindKeys: ui_a11y.FocusKeys.ArrowHorizontal | ui_a11y.FocusKeys.HomeAndEnd,
+					...this.focusZoneOptions
+				});
+				this.toggleFocusZone();
+			}
+		}, {
+			key: "toggleFocusZone",
+			value: function toggleFocusZone() {
+				if (this.isRendered() && !this.isLocked() && !this.isReadonly()) {
+					this.focusZone?.activate();
+				} else {
+					this.focusZone?.deactivate();
+				}
 			}
 		}, {
 			key: "isRendered",
 			value: function isRendered() {
 				return this.rendered;
 			}
-
-			/**
-			 * @private
-			 */
 		}, {
 			key: "updateTags",
 			value: function updateTags() {
@@ -5310,10 +4262,12 @@ this.BX.UI = this.BX.UI || {};
 					const className = this.textBoxVisible ? '' : ' ui-tag-selector-item-hidden';
 					const input = main_core.Tag.render`
 				<input 
-					type="text" 
-					class="ui-tag-selector-item ui-tag-selector-text-box${className}" 
+					type="text"
+					class="ui-tag-selector-item ui-tag-selector-text-box${className}"
 					autocomplete="off"
+					data-testid="ui-tag-selector-input"
 					placeholder="${main_core.Text.encode(this.getPlaceholder())}"
+					aria-label="${main_core.Text.encode(this.getPlaceholder() || main_core.Loc.getMessage('UI_TAG_SELECTOR_SEARCH_PLACEHOLDER') || '')}"
 					oninput="${this.handleTextBoxInput.bind(this)}"
 					onblur="${this.handleTextBoxBlur.bind(this)}"
 					onkeyup="${this.handleTextBoxKeyUp.bind(this)}"
@@ -5366,6 +4320,16 @@ this.BX.UI = this.BX.UI || {};
 			value: function hideTextBox() {
 				this.textBoxVisible = false;
 				main_core.Dom.addClass(this.getTextBox(), 'ui-tag-selector-item-hidden');
+			}
+		}, {
+			key: "tryAutoHideTextBox",
+			value: function tryAutoHideTextBox() {
+				if (this.textBoxAutoHide) {
+					this.clearTextBox();
+					this.showAddButton();
+					this.hideTextBox();
+					this.getAddButtonLink().focus();
+				}
 			}
 		}, {
 			key: "focusTextBox",
@@ -5522,6 +4486,7 @@ this.BX.UI = this.BX.UI || {};
 					this.placeholder = placeholder;
 					if (this.isRendered()) {
 						this.getTextBox().placeholder = placeholder;
+						main_core.Dom.attr(this.getTextBox(), 'aria-label', placeholder);
 					}
 				}
 			}
@@ -5579,7 +4544,7 @@ this.BX.UI = this.BX.UI || {};
 		}, {
 			key: "getAddButtonCaption",
 			value: function getAddButtonCaption() {
-				return this.addButtonCaption === null ? main_core.Loc.getMessage('UI_TAG_SELECTOR_ADD_BUTTON_CAPTION') : this.addButtonCaption;
+				return this.addButtonCaption === null ? main_core.Loc.getMessage('UI_TAG_SELECTOR_ADD_BUTTON_CAPTION') || '' : this.addButtonCaption;
 			}
 		}, {
 			key: "setAddButtonCaption",
@@ -5594,7 +4559,7 @@ this.BX.UI = this.BX.UI || {};
 		}, {
 			key: "getAddButtonCaptionMore",
 			value: function getAddButtonCaptionMore() {
-				return this.addButtonCaptionMore === null ? this.isMultiple() ? main_core.Loc.getMessage('UI_TAG_SELECTOR_ADD_BUTTON_CAPTION') : main_core.Loc.getMessage('UI_TAG_SELECTOR_ADD_BUTTON_CAPTION_SINGLE') : this.addButtonCaptionMore;
+				return this.addButtonCaptionMore === null ? this.isMultiple() ? main_core.Loc.getMessage('UI_TAG_SELECTOR_ADD_BUTTON_CAPTION') || '' : main_core.Loc.getMessage('UI_TAG_SELECTOR_ADD_BUTTON_CAPTION_SINGLE') || '' : this.addButtonCaptionMore;
 			}
 		}, {
 			key: "setAddButtonCaptionMore",
@@ -5699,11 +4664,7 @@ this.BX.UI = this.BX.UI || {};
 				this.emit('onBlur', {
 					event
 				});
-				if (this.textBoxAutoHide) {
-					this.clearTextBox();
-					this.showAddButton();
-					this.hideTextBox();
-				}
+				this.tryAutoHideTextBox();
 			}
 		}, {
 			key: "handleTextBoxKeyUp",
@@ -5711,28 +4672,22 @@ this.BX.UI = this.BX.UI || {};
 				this.emit('onKeyUp', {
 					event
 				});
-				if (event.key === 'Enter') {
-					this.emit('onEnter', {
-						event
-					});
-					if (this.textBoxAutoHide) {
-						this.clearTextBox();
-						this.showAddButton();
-						this.hideTextBox();
-					}
-				}
 			}
 		}, {
 			key: "handleTextBoxKeyDown",
 			value: function handleTextBoxKeyDown(event) {
 				if (event.key === 'Enter') {
-					// prevent a form submit
 					event.preventDefault();
 					if (main_core.Browser.isMac() && event.metaKey || event.ctrlKey) {
 						this.emit('onMetaEnter', {
 							event
 						});
+					} else {
+						this.emit('onEnter', {
+							event
+						});
 					}
+					this.tryAutoHideTextBox();
 				}
 				this.emit('onKeyDown', {
 					event
@@ -5758,316 +4713,296 @@ this.BX.UI = this.BX.UI || {};
 		}]);
 	}(main_core_events.EventEmitter);
 
-	let Navigation = /*#__PURE__*/function () {
-		function Navigation(dialog) {
-			babelHelpers.classCallCheck(this, Navigation);
-			babelHelpers.defineProperty(this, "dialog", null);
-			babelHelpers.defineProperty(this, "lockedTab", null);
-			babelHelpers.defineProperty(this, "enabled", false);
+	class Navigation {
+		dialog;
+		lockedTab = null;
+		enabled = false;
+		#focusZone = null;
+		static keyMap = {
+			Down: 'ArrowDown',
+			Up: 'ArrowUp',
+			Left: 'ArrowLeft',
+			Right: 'ArrowRight',
+			Spacebar: 'Space',
+			' ': 'Space'
+		};
+		constructor(dialog) {
 			this.dialog = dialog;
 			this.dialog.subscribe('onShow', this.handleDialogShow.bind(this));
 			this.dialog.subscribe('onHide', this.handleDialogHide.bind(this));
 			this.dialog.subscribe('onDestroy', this.handleDialogDestroy.bind(this));
-			this.handleDocumentKeyDown = this.handleDocumentKeyDown.bind(this);
-			this.handleDocumentMouseMove = this.handleDocumentMouseMove.bind(this);
 		}
-		return babelHelpers.createClass(Navigation, [{
-			key: "getDialog",
-			value: function getDialog() {
-				return this.dialog;
+		getDialog() {
+			return this.dialog;
+		}
+		enable() {
+			if (!this.isEnabled()) {
+				this.bindEvents();
+				this.#focusZone = new ui_a11y.FocusZone(this.getDialog().getLabelsContainer());
+				this.#focusZone.activate();
 			}
-		}, {
-			key: "enable",
-			value: function enable() {
-				if (!this.isEnabled()) {
-					this.bindEvents();
+			this.enabled = true;
+		}
+		disable() {
+			if (this.isEnabled()) {
+				this.unbindEvents();
+				this.unlockTab();
+				this.#focusZone?.deactivate();
+				this.#focusZone = null;
+			}
+			this.enabled = false;
+		}
+		isEnabled() {
+			return this.enabled;
+		}
+		bindEvents() {
+			const tagSelector = this.getDialog().getTagSelector();
+			if (tagSelector === null) {
+				main_core.Event.bind(document, 'keydown', this.#handleKeyDown);
+			} else {
+				tagSelector.subscribe('onKeyDown', this.#handleTagSelectorKeyDown);
+			}
+			main_core.Event.bind(this.getDialog().getLabelsContainer(), 'keydown', this.#handleLabelsKeyDown);
+		}
+		unbindEvents() {
+			const tagSelector = this.getDialog().getTagSelector();
+			if (tagSelector === null) {
+				main_core.Event.unbind(document, 'keydown', this.#handleKeyDown);
+			} else {
+				tagSelector.unsubscribe('onKeyDown', this.#handleTagSelectorKeyDown);
+			}
+			main_core.Event.unbind(this.getDialog().getLabelsContainer(), 'keydown', this.#handleLabelsKeyDown);
+		}
+		#handleTagSelectorKeyDown = event => {
+			this.#handleKeyDown(event.getData().event);
+		};
+		#handleLabelsKeyDown = event => {
+			const keyName = Navigation.keyMap[event.key] || event.key;
+			if (keyName === 'ArrowLeft') {
+				this.getDialog().expandLabels(false);
+				event.stopPropagation();
+			} else if (keyName === 'ArrowRight') {
+				this.getDialog().collapseLabels(false);
+				event.preventDefault();
+			} else if (keyName === 'Tab' && !this.getDialog().hasTagSelector() && !this.getActiveNode()) {
+				const firstNode = this.getFirstNode();
+				this.focusOnNode(firstNode);
+				event.preventDefault();
+			}
+			event.stopPropagation();
+		};
+		getNextNode() {
+			if (!this.getActiveNode()) {
+				return null;
+			}
+			let nextNode = null;
+			let currentNode = this.getActiveNode();
+			if (currentNode.hasChildren() && currentNode.isOpen()) {
+				nextNode = currentNode.getFirstChild();
+			}
+			while (nextNode === null && currentNode !== null) {
+				nextNode = currentNode.getNextSibling();
+				if (nextNode) {
+					break;
 				}
-				this.enabled = true;
+				currentNode = currentNode.getParentNode();
 			}
-		}, {
-			key: "disable",
-			value: function disable() {
-				if (this.isEnabled()) {
-					this.unbindEvents();
-					this.unlockTab();
-				}
-				this.enabled = false;
+			return nextNode;
+		}
+		getPreviousNode() {
+			const activeNode = this.getActiveNode();
+			if (activeNode === null) {
+				return null;
 			}
-		}, {
-			key: "isEnabled",
-			value: function isEnabled() {
-				return this.enabled;
-			}
-		}, {
-			key: "bindEvents",
-			value: function bindEvents() {
-				main_core.Event.bind(document, 'keydown', this.handleDocumentKeyDown);
-			}
-		}, {
-			key: "unbindEvents",
-			value: function unbindEvents() {
-				main_core.Event.unbind(document, 'keydown', this.handleDocumentKeyDown);
-			}
-		}, {
-			key: "getNextNode",
-			value: function getNextNode() {
-				if (!this.getActiveNode()) {
-					return null;
-				}
-				let nextNode = null;
-				let currentNode = this.getActiveNode();
-				if (currentNode.hasChildren() && currentNode.isOpen()) {
-					nextNode = currentNode.getFirstChild();
-				}
-				while (nextNode === null && currentNode !== null) {
-					nextNode = currentNode.getNextSibling();
-					if (nextNode) {
+			let previousNode = activeNode.getPreviousSibling();
+			if (previousNode !== null) {
+				while (previousNode.hasChildren() && previousNode.isOpen()) {
+					const lastChild = previousNode.getLastChild();
+					if (lastChild === null) {
 						break;
 					}
-					currentNode = currentNode.getParentNode();
+					previousNode = lastChild;
 				}
-				return nextNode;
+			} else if (activeNode.getParentNode() && !activeNode.getParentNode().isRoot()) {
+				previousNode = activeNode.getParentNode();
 			}
-		}, {
-			key: "getPreviousNode",
-			value: function getPreviousNode() {
-				if (!this.getActiveNode()) {
-					return null;
-				}
-				let previousNode = this.getActiveNode().getPreviousSibling();
-				if (previousNode) {
-					while (previousNode.hasChildren() && previousNode.isOpen()) {
-						const lastChild = previousNode.getLastChild();
-						if (lastChild === null) {
-							break;
-						}
-						previousNode = lastChild;
+			return previousNode;
+		}
+		getFirstNode() {
+			const tab = this.getDialog().getActiveTab();
+			return tab && tab.getRootNode().getFirstChild();
+		}
+		getLastNode() {
+			const tab = this.getDialog().getActiveTab();
+			if (!tab) {
+				return null;
+			}
+			let lastNode = tab.getRootNode().getLastChild();
+			if (lastNode !== null) {
+				while (lastNode.hasChildren() && lastNode.isOpen()) {
+					const lastChild = lastNode.getLastChild();
+					if (lastChild === null) {
+						break;
 					}
-				} else {
-					if (this.getActiveNode().getParentNode() && !this.getActiveNode().getParentNode().isRoot()) {
-						previousNode = this.getActiveNode().getParentNode();
-					}
-				}
-				return previousNode;
-			}
-		}, {
-			key: "getFirstNode",
-			value: function getFirstNode() {
-				const tab = this.getDialog().getActiveTab();
-				return tab && tab.getRootNode().getFirstChild();
-			}
-		}, {
-			key: "getLastNode",
-			value: function getLastNode() {
-				const tab = this.getDialog().getActiveTab();
-				if (!tab) {
-					return null;
-				}
-				let lastNode = tab.getRootNode().getLastChild();
-				if (lastNode !== null) {
-					while (lastNode.hasChildren() && lastNode.isOpen()) {
-						const lastChild = lastNode.getLastChild();
-						if (lastChild === null) {
-							break;
-						}
-						lastNode = lastChild;
-					}
-				}
-				return lastNode;
-			}
-		}, {
-			key: "getActiveNode",
-			value: function getActiveNode() {
-				return this.getDialog().getFocusedNode();
-			}
-		}, {
-			key: "focusOnNode",
-			value: function focusOnNode(node) {
-				if (node) {
-					node.focus();
-					node.scrollIntoView();
+					lastNode = lastChild;
 				}
 			}
-		}, {
-			key: "lockTab",
-			value: function lockTab() {
-				const activeTab = this.getDialog().getActiveTab();
-				if (this.lockedTab === activeTab) {
-					return;
-				} else if (this.lockedTab !== null) {
-					this.unlockTab();
-				}
-				this.lockedTab = activeTab;
-				this.lockedTab.lock();
-				main_core.Event.bind(document, 'mousemove', this.handleDocumentMouseMove);
+			return lastNode;
+		}
+		getActiveNode() {
+			return this.getDialog().getFocusedNode();
+		}
+		focusOnNode(node) {
+			if (node) {
+				const focusVisible = !this.getDialog().hasTagSelector();
+				node.focus(focusVisible);
+				node.scrollIntoView();
 			}
-		}, {
-			key: "unlockTab",
-			value: function unlockTab() {
-				if (this.lockedTab === null) {
-					return;
-				}
-				this.lockedTab.unlock();
-				this.lockedTab = null;
-				main_core.Event.unbind(document, 'mousemove', this.handleDocumentMouseMove);
+		}
+		lockTab() {
+			const activeTab = this.getDialog().getActiveTab();
+			if (this.lockedTab === activeTab) {
+				return;
 			}
-		}, {
-			key: "handleDialogShow",
-			value: function handleDialogShow() {
-				this.enable();
-			}
-		}, {
-			key: "handleDialogHide",
-			value: function handleDialogHide() {
-				this.disable();
-			}
-		}, {
-			key: "handleDialogDestroy",
-			value: function handleDialogDestroy() {
-				this.disable();
-			}
-		}, {
-			key: "handleDocumentMouseMove",
-			value: function handleDocumentMouseMove() {
+			if (this.lockedTab !== null) {
 				this.unlockTab();
 			}
-		}, {
-			key: "handleDocumentKeyDown",
-			value: function handleDocumentKeyDown(event) {
-				if (!this.getDialog().isOpen()) {
-					this.unbindEvents();
-					return;
-				}
-				if (event.metaKey || event.ctrlKey || event.altKey) {
-					return;
-				}
-				const activeTab = this.getDialog().getActiveTab();
-				if (!activeTab) {
-					return;
-				}
-				const keyName = this.constructor.keyMap[event.key] || event.key;
-				if (activeTab === this.getDialog().getSearchTab() && ['ArrowLeft', 'ArrowRight'].includes(keyName)) {
-					return;
-				}
-				const handler = this[`handle${keyName}Press`];
-				if (handler) {
-					handler.call(this, event);
-					this.lockTab(activeTab);
-					event.preventDefault();
+			this.lockedTab = activeTab;
+			this.lockedTab.lock();
+			main_core.Event.bind(document, 'mousemove', this.#handleMouseMove);
+		}
+		unlockTab() {
+			if (this.lockedTab === null) {
+				return;
+			}
+			this.lockedTab.unlock();
+			this.lockedTab = null;
+			main_core.Event.unbind(document, 'mousemove', this.#handleMouseMove);
+		}
+		handleDialogShow() {
+			this.enable();
+		}
+		handleDialogHide() {
+			this.disable();
+		}
+		handleDialogDestroy() {
+			this.disable();
+		}
+		#handleMouseMove = () => {
+			this.unlockTab();
+		};
+		#handleKeyDown = event => {
+			if (!this.getDialog().isOpen()) {
+				this.unbindEvents();
+				return;
+			}
+			if (event.metaKey || event.ctrlKey || event.altKey) {
+				return;
+			}
+			const activeTab = this.getDialog().getActiveTab();
+			if (!activeTab) {
+				return;
+			}
+			const keyName = Navigation.keyMap[event.key] || event.key;
+			if (activeTab === this.getDialog().getSearchTab() && ['ArrowLeft', 'ArrowRight'].includes(keyName)) {
+				return;
+			}
+			const handler = this[`handle${keyName}Press`];
+			if (handler) {
+				handler.call(this, event);
+				if (keyName !== 'Tab') {
+					this.lockTab();
 				}
 			}
-		}, {
-			key: "handleArrowDownPress",
-			value: function handleArrowDownPress() {
-				if (!this.getActiveNode()) {
+		};
+		isFocusInLabels(event) {
+			return this.getDialog().getLabelsContainer().contains(event.target);
+		}
+		handleArrowDownPress(event) {
+			if (this.getActiveNode()) {
+				const nextNode = this.getNextNode();
+				if (nextNode) {
+					this.focusOnNode(nextNode);
+				} else {
 					const firstNode = this.getFirstNode();
 					this.focusOnNode(firstNode);
-				} else {
-					const nextNode = this.getNextNode();
-					if (nextNode) {
-						this.focusOnNode(nextNode);
-					} else {
-						const firstNode = this.getFirstNode();
-						this.focusOnNode(firstNode);
-					}
 				}
+			} else {
+				const firstNode = this.getFirstNode();
+				this.focusOnNode(firstNode);
 			}
-		}, {
-			key: "handleArrowUpPress",
-			value: function handleArrowUpPress() {
-				if (!this.getActiveNode()) {
+			event.preventDefault();
+		}
+		handleArrowUpPress(event) {
+			if (this.getActiveNode()) {
+				const previousNode = this.getPreviousNode();
+				if (previousNode) {
+					this.focusOnNode(previousNode);
+				} else {
 					const lastNode = this.getLastNode();
 					this.focusOnNode(lastNode);
-				} else {
-					const previousNode = this.getPreviousNode();
-					if (previousNode) {
-						this.focusOnNode(previousNode);
-					} else {
-						const lastNode = this.getLastNode();
-						this.focusOnNode(lastNode);
-					}
 				}
+			} else {
+				const lastNode = this.getLastNode();
+				this.focusOnNode(lastNode);
 			}
-		}, {
-			key: "handleArrowRightPress",
-			value: function handleArrowRightPress() {
-				if (this.getActiveNode()) {
-					this.getActiveNode().expand();
-				}
+			event.preventDefault();
+		}
+		handleArrowRightPress(event) {
+			const activeNode = this.getActiveNode();
+			if (activeNode) {
+				activeNode.expand();
 			}
-		}, {
-			key: "handleArrowLeftPress",
-			value: function handleArrowLeftPress() {
-				if (!this.getActiveNode()) {
-					return;
-				}
-				if (this.getActiveNode().isOpen()) {
-					this.getActiveNode().collapse();
-				} else {
-					const parentNode = this.getActiveNode().getParentNode();
-					if (parentNode && !parentNode.isRoot()) {
-						this.focusOnNode(parentNode);
-					}
-				}
+			event.preventDefault();
+		}
+		handleArrowLeftPress(event) {
+			const activeNode = this.getActiveNode();
+			if (!activeNode) {
+				return;
 			}
-		}, {
-			key: "handleEnterPress",
-			value: function handleEnterPress() {
-				if (this.getActiveNode()) {
-					this.getActiveNode().click();
-				}
-			}
-
-			/*handleSpacePress(event: KeyboardEvent): void
-			{
-				const searchQuery = this.getDialog().getTagSelector() && this.getDialog().getTagSelector().getTextBoxValue();
-				if (this.getActiveNode() && !Type.isStringFilled(searchQuery))
-				{
-					this.getActiveNode().click();
+			if (activeNode.isOpen()) {
+				activeNode.collapse();
+				event.preventDefault();
+			} else {
+				const parentNode = activeNode.getParentNode();
+				if (parentNode && !parentNode.isRoot()) {
+					this.focusOnNode(parentNode);
 					event.preventDefault();
 				}
-			}*/
-		}, {
-			key: "handleTabPress",
-			value: function handleTabPress(event) {
-				const activeTab = this.getDialog().getActiveTab();
-				if (!activeTab) {
-					this.getDialog().selectFirstTab();
-					return;
-				}
-				if (event.shiftKey) {
-					const previousTab = this.getDialog().getPreviousTab();
-					if (previousTab) {
-						this.getDialog().selectTab(previousTab.getId());
-					} else {
-						this.getDialog().selectLastTab();
-					}
-				} else {
-					const nextTab = this.getDialog().getNextTab();
-					if (nextTab) {
-						this.getDialog().selectTab(nextTab.getId());
-					} else {
-						this.getDialog().selectFirstTab();
-					}
-				}
 			}
-		}]);
-	}();
-	// IE/Edge compatible event names
-	babelHelpers.defineProperty(Navigation, "keyMap", {
-		'Down': 'ArrowDown',
-		'Up': 'ArrowUp',
-		'Left': 'ArrowLeft',
-		'Right': 'ArrowRight',
-		'Spacebar': 'Space',
-		' ': 'Space' // For all browsers
-	});
+		}
+		handleEnterPress(event) {
+			const activeNode = this.getActiveNode();
+			if (activeNode) {
+				activeNode.click();
+			}
+			event.preventDefault();
+		}
+		handleSpacePress(event) {
+			const activeNode = this.getActiveNode();
+			if (!this.getDialog().hasTagSelector() && this.getDialog().getPopup().getPopupContainer().contains(ui_a11y.FocusNavigator.getActiveElement())) {
+				if (activeNode) {
+					activeNode.click();
+				}
+				event.preventDefault();
+			}
+		}
+		handleTabPress(event) {
+			if (this.getDialog().isTagSelectorOutside()) {
+				if (event.shiftKey) {
+					ui_a11y.FocusNavigator.focusLast(this.getDialog().getContainer());
+				} else {
+					ui_a11y.FocusNavigator.focusFirst(this.getDialog().getContainer());
+				}
+				event.preventDefault();
+			}
+		}
+	}
 
-	let SliderIntegration = /*#__PURE__*/function () {
-		function SliderIntegration(dialog) {
-			babelHelpers.classCallCheck(this, SliderIntegration);
-			babelHelpers.defineProperty(this, "dialog", null);
-			babelHelpers.defineProperty(this, "sliders", new Set());
+	class SliderIntegration {
+		dialog;
+		sliders = new Set();
+		constructor(dialog) {
 			this.dialog = dialog;
 			this.dialog.subscribe('onShow', this.handleDialogShow.bind(this));
 			this.dialog.subscribe('onHide', this.handleDialogHide.bind(this));
@@ -6076,102 +5011,163 @@ this.BX.UI = this.BX.UI || {};
 			this.handleSliderClose = this.handleSliderClose.bind(this);
 			this.handleSliderDestroy = this.handleSliderDestroy.bind(this);
 		}
-		return babelHelpers.createClass(SliderIntegration, [{
+		getDialog() {
+			return this.dialog;
+		}
+		bindEvents() {
+			this.unbindEvents();
+			const topWindow = top;
+			if (topWindow.BX) {
+				topWindow.BX.Event.EventEmitter.subscribe('SidePanel.Slider:onOpen', this.handleSliderOpen);
+				topWindow.BX.Event.EventEmitter.subscribe('SidePanel.Slider:onCloseComplete', this.handleSliderClose);
+				topWindow.BX.Event.EventEmitter.subscribe('SidePanel.Slider:onDestroy', this.handleSliderDestroy);
+			}
+		}
+		unbindEvents() {
+			const topWindow = top;
+			if (topWindow.BX) {
+				topWindow.BX.Event.EventEmitter.unsubscribe('SidePanel.Slider:onOpen', this.handleSliderOpen);
+				topWindow.BX.Event.EventEmitter.unsubscribe('SidePanel.Slider:onCloseComplete', this.handleSliderClose);
+				topWindow.BX.Event.EventEmitter.unsubscribe('SidePanel.Slider:onDestroy', this.handleSliderDestroy);
+			}
+		}
+		isDialogInSlider(slider) {
+			if (slider.getFrameWindow()) {
+				return slider.getFrameWindow().document.contains(this.getDialog().getContainer());
+			} else {
+				return slider.getContainer().contains(this.getDialog().getContainer());
+			}
+		}
+		handleDialogShow() {
+			this.bindEvents();
+		}
+		handleDialogHide() {
+			this.sliders.clear();
+			this.unbindEvents();
+			this.getDialog().unfreeze();
+		}
+		handleDialogDestroy() {
+			this.sliders.clear();
+			this.unbindEvents();
+		}
+		handleSliderOpen(event) {
+			const [sliderEvent] = event.getData();
+			const slider = sliderEvent.getSlider();
+			if (!this.isDialogInSlider(slider)) {
+				this.sliders.add(slider);
+				this.getDialog().freeze();
+			}
+		}
+		handleSliderClose(event) {
+			const [sliderEvent] = event.getData();
+			const slider = sliderEvent.getSlider();
+			this.sliders.delete(slider);
+			this.#unfreezeDialog();
+		}
+		handleSliderDestroy(event) {
+			const [sliderEvent] = event.getData();
+			const slider = sliderEvent.getSlider();
+			if (this.isDialogInSlider(slider)) {
+				this.unbindEvents();
+				this.dialog.destroy();
+			} else {
+				this.sliders.delete(slider);
+				this.#unfreezeDialog();
+			}
+		}
+		#unfreezeDialog() {
+			if (this.sliders.size > 0) {
+				return;
+			}
+			setTimeout(() => {
+				if (this.sliders.size === 0 && this.getDialog().destroyed !== true) {
+					this.getDialog().unfreeze();
+				}
+			}, 0);
+		}
+	}
+
+	function isDialog(dialog) {
+		return dialog instanceof Dialog;
+	}
+
+	let BaseHeader = function () {
+		function BaseHeader(context, options) {
+			babelHelpers.classCallCheck(this, BaseHeader);
+			babelHelpers.defineProperty(this, "dialog", void 0);
+			babelHelpers.defineProperty(this, "tab", null);
+			babelHelpers.defineProperty(this, "container", null);
+			babelHelpers.defineProperty(this, "cache", new main_core_cache.MemoryCache());
+			babelHelpers.defineProperty(this, "options", {});
+			this.options = main_core.Type.isPlainObject(options) ? options : {};
+			if (isDialog(context)) {
+				this.dialog = context;
+			} else {
+				this.tab = context;
+				this.dialog = this.tab.getDialog();
+			}
+		}
+		return babelHelpers.createClass(BaseHeader, [{
 			key: "getDialog",
 			value: function getDialog() {
 				return this.dialog;
 			}
 		}, {
-			key: "bindEvents",
-			value: function bindEvents() {
-				this.unbindEvents();
-				if (top.BX) {
-					top.BX.Event.EventEmitter.subscribe('SidePanel.Slider:onOpen', this.handleSliderOpen);
-					top.BX.Event.EventEmitter.subscribe('SidePanel.Slider:onCloseComplete', this.handleSliderClose);
-					top.BX.Event.EventEmitter.subscribe('SidePanel.Slider:onDestroy', this.handleSliderDestroy);
+			key: "getTab",
+			value: function getTab() {
+				return this.tab;
+			}
+		}, {
+			key: "show",
+			value: function show() {
+				main_core.Dom.addClass(this.getContainer(), 'ui-selector-header--show');
+			}
+		}, {
+			key: "hide",
+			value: function hide() {
+				main_core.Dom.removeClass(this.getContainer(), 'ui-selector-header--show');
+			}
+		}, {
+			key: "getOptions",
+			value: function getOptions() {
+				return this.options;
+			}
+		}, {
+			key: "getOption",
+			value: function getOption(option, defaultValue) {
+				if (!main_core.Type.isUndefined(this.options[option])) {
+					return this.options[option];
 				}
-			}
-		}, {
-			key: "unbindEvents",
-			value: function unbindEvents() {
-				if (top.BX) {
-					top.BX.Event.EventEmitter.unsubscribe('SidePanel.Slider:onOpen', this.handleSliderOpen);
-					top.BX.Event.EventEmitter.unsubscribe('SidePanel.Slider:onCloseComplete', this.handleSliderClose);
-					top.BX.Event.EventEmitter.unsubscribe('SidePanel.Slider:onDestroy', this.handleSliderDestroy);
+				if (!main_core.Type.isUndefined(defaultValue)) {
+					return defaultValue;
 				}
+				return null;
 			}
 		}, {
-			key: "isDialogInSlider",
-			value: function isDialogInSlider(slider) {
-				if (slider.getFrameWindow()) {
-					return slider.getFrameWindow().document.contains(this.getDialog().getContainer());
-				} else {
-					return slider.getContainer().contains(this.getDialog().getContainer());
+			key: "getContainer",
+			value: function getContainer() {
+				if (this.container === null) {
+					this.container = main_core.Tag.render`
+				<div class="ui-selector-header">${this.render()}</div>
+			`;
 				}
+				return this.container;
 			}
 		}, {
-			key: "handleDialogShow",
-			value: function handleDialogShow() {
-				this.bindEvents();
-			}
-		}, {
-			key: "handleDialogHide",
-			value: function handleDialogHide() {
-				this.sliders.clear();
-				this.unbindEvents();
-				this.getDialog().unfreeze();
-			}
-		}, {
-			key: "handleDialogDestroy",
-			value: function handleDialogDestroy() {
-				this.sliders.clear();
-				this.unbindEvents();
-			}
-		}, {
-			key: "handleSliderOpen",
-			value: function handleSliderOpen(event) {
-				const [sliderEvent] = event.getData();
-				const slider = sliderEvent.getSlider();
-				if (!this.isDialogInSlider(slider)) {
-					this.sliders.add(slider);
-					this.getDialog().freeze();
-				}
-			}
-		}, {
-			key: "handleSliderClose",
-			value: function handleSliderClose(event) {
-				const [sliderEvent] = event.getData();
-				const slider = sliderEvent.getSlider();
-				this.sliders.delete(slider);
-				if (this.sliders.size === 0) {
-					this.getDialog().unfreeze();
-				}
-			}
-		}, {
-			key: "handleSliderDestroy",
-			value: function handleSliderDestroy(event) {
-				const [sliderEvent] = event.getData();
-				const slider = sliderEvent.getSlider();
-				if (this.isDialogInSlider(slider)) {
-					this.unbindEvents();
-					this.dialog.destroy();
-				} else {
-					this.sliders.delete(slider);
-					if (this.sliders.size === 0) {
-						this.getDialog().unfreeze();
-					}
-				}
+			key: "render",
+			value: function render() {
+				throw new Error('You must implement render() method.');
 			}
 		}]);
 	}();
 
-	function _callSuper$5(t, o, e) { return o = babelHelpers.getPrototypeOf(o), babelHelpers.possibleConstructorReturn(t, _isNativeReflectConstruct$5() ? Reflect.construct(o, e || [], babelHelpers.getPrototypeOf(t).constructor) : o.apply(t, e)); }
-	function _isNativeReflectConstruct$5() { try { var t = !Boolean.prototype.valueOf.call(Reflect.construct(Boolean, [], function () {})); } catch (t) {} return (_isNativeReflectConstruct$5 = function () { return !!t; })(); }
-	let DefaultHeader = /*#__PURE__*/function (_BaseHeader) {
+	function _callSuper$2(t, o, e) { return o = babelHelpers.getPrototypeOf(o), babelHelpers.possibleConstructorReturn(t, _isNativeReflectConstruct$2() ? Reflect.construct(o, e || [], babelHelpers.getPrototypeOf(t).constructor) : o.apply(t, e)); }
+	function _isNativeReflectConstruct$2() { try { var t = !Boolean.prototype.valueOf.call(Reflect.construct(Boolean, [], function () {})); } catch (t) {} return (_isNativeReflectConstruct$2 = function () { return !!t; })(); }
+	let DefaultHeader = function (_BaseHeader) {
 		function DefaultHeader(context, options) {
 			var _this;
 			babelHelpers.classCallCheck(this, DefaultHeader);
-			_this = _callSuper$5(this, DefaultHeader, [context, options]);
+			_this = _callSuper$2(this, DefaultHeader, [context, options]);
 			babelHelpers.defineProperty(_this, "content", null);
 			_this.setContent(_this.getOption('content'));
 			return _this;
@@ -6180,11 +5176,7 @@ this.BX.UI = this.BX.UI || {};
 		return babelHelpers.createClass(DefaultHeader, [{
 			key: "render",
 			value: function render() {
-				const container = main_core.Tag.render`
-			<div>
-				${this.getContent() ? this.getContent() : ''}
-			</div>
-		`;
+				const container = main_core.Tag.render`<div>${this.getContent() ?? ''}</div>`;
 				const className = this.getOption('containerClass', 'ui-selector-header-default');
 				const containerStyles = this.getOption('containerStyles', {});
 				main_core.Dom.addClass(container, className);
@@ -6206,13 +5198,83 @@ this.BX.UI = this.BX.UI || {};
 		}]);
 	}(BaseHeader);
 
-	function _callSuper$4(t, o, e) { return o = babelHelpers.getPrototypeOf(o), babelHelpers.possibleConstructorReturn(t, _isNativeReflectConstruct$4() ? Reflect.construct(o, e || [], babelHelpers.getPrototypeOf(t).constructor) : o.apply(t, e)); }
-	function _isNativeReflectConstruct$4() { try { var t = !Boolean.prototype.valueOf.call(Reflect.construct(Boolean, [], function () {})); } catch (t) {} return (_isNativeReflectConstruct$4 = function () { return !!t; })(); }
-	let DefaultFooter = /*#__PURE__*/function (_BaseFooter) {
+	let BaseFooter = function () {
+		function BaseFooter(context, options) {
+			babelHelpers.classCallCheck(this, BaseFooter);
+			babelHelpers.defineProperty(this, "dialog", void 0);
+			babelHelpers.defineProperty(this, "tab", null);
+			babelHelpers.defineProperty(this, "container", null);
+			babelHelpers.defineProperty(this, "cache", new main_core_cache.MemoryCache());
+			babelHelpers.defineProperty(this, "options", {});
+			this.options = main_core.Type.isPlainObject(options) ? options : {};
+			if (isDialog(context)) {
+				this.dialog = context;
+			} else {
+				this.tab = context;
+				this.dialog = this.tab.getDialog();
+			}
+		}
+		return babelHelpers.createClass(BaseFooter, [{
+			key: "getDialog",
+			value: function getDialog() {
+				return this.dialog;
+			}
+		}, {
+			key: "getTab",
+			value: function getTab() {
+				return this.tab;
+			}
+		}, {
+			key: "show",
+			value: function show() {
+				main_core.Dom.addClass(this.getContainer(), 'ui-selector-footer--show');
+			}
+		}, {
+			key: "hide",
+			value: function hide() {
+				main_core.Dom.removeClass(this.getContainer(), 'ui-selector-footer--show');
+			}
+		}, {
+			key: "getOptions",
+			value: function getOptions() {
+				return this.options;
+			}
+		}, {
+			key: "getOption",
+			value: function getOption(option, defaultValue) {
+				if (!main_core.Type.isUndefined(this.options[option])) {
+					return this.options[option];
+				}
+				if (!main_core.Type.isUndefined(defaultValue)) {
+					return defaultValue;
+				}
+				return null;
+			}
+		}, {
+			key: "getContainer",
+			value: function getContainer() {
+				if (this.container === null) {
+					this.container = main_core.Tag.render`
+				<div class="ui-selector-footer">${this.render()}</div>
+			`;
+				}
+				return this.container;
+			}
+		}, {
+			key: "render",
+			value: function render() {
+				throw new Error('You must implement render() method.');
+			}
+		}]);
+	}();
+
+	function _callSuper$1(t, o, e) { return o = babelHelpers.getPrototypeOf(o), babelHelpers.possibleConstructorReturn(t, _isNativeReflectConstruct$1() ? Reflect.construct(o, e || [], babelHelpers.getPrototypeOf(t).constructor) : o.apply(t, e)); }
+	function _isNativeReflectConstruct$1() { try { var t = !Boolean.prototype.valueOf.call(Reflect.construct(Boolean, [], function () {})); } catch (t) {} return (_isNativeReflectConstruct$1 = function () { return !!t; })(); }
+	let DefaultFooter = function (_BaseFooter) {
 		function DefaultFooter(context, options) {
 			var _this;
 			babelHelpers.classCallCheck(this, DefaultFooter);
-			_this = _callSuper$4(this, DefaultFooter, [context, options]);
+			_this = _callSuper$1(this, DefaultFooter, [context, options]);
 			babelHelpers.defineProperty(_this, "content", null);
 			_this.setContent(_this.getOption('content'));
 			return _this;
@@ -6221,11 +5283,7 @@ this.BX.UI = this.BX.UI || {};
 		return babelHelpers.createClass(DefaultFooter, [{
 			key: "render",
 			value: function render() {
-				const container = main_core.Tag.render`
-			<div>
-				${this.getContent() ? this.getContent() : ''}
-			</div>
-		`;
+				const container = main_core.Tag.render`<div>${this.getContent() ?? ''}</div>`;
 				const className = this.getOption('containerClass', 'ui-selector-footer-default');
 				const containerStyles = this.getOption('containerStyles', {});
 				main_core.Dom.addClass(container, className);
@@ -6247,13 +5305,10 @@ this.BX.UI = this.BX.UI || {};
 		}]);
 	}(BaseFooter);
 
-	function _callSuper$3(t, o, e) { return o = babelHelpers.getPrototypeOf(o), babelHelpers.possibleConstructorReturn(t, _isNativeReflectConstruct$3() ? Reflect.construct(o, e || [], babelHelpers.getPrototypeOf(t).constructor) : o.apply(t, e)); }
-	function _isNativeReflectConstruct$3() { try { var t = !Boolean.prototype.valueOf.call(Reflect.construct(Boolean, [], function () {})); } catch (t) {} return (_isNativeReflectConstruct$3 = function () { return !!t; })(); }
-	let RecentTab = /*#__PURE__*/function (_Tab) {
-		function RecentTab(dialog, tabOptions) {
-			babelHelpers.classCallCheck(this, RecentTab);
+	class RecentTab extends Tab {
+		constructor(dialog, tabOptions) {
 			const defaults = {
-				title: main_core.Loc.getMessage('UI_SELECTOR_RECENT_TAB_TITLE'),
+				title: main_core.Loc.getMessage('UI_SELECTOR_RECENT_TAB_TITLE') || '',
 				itemOrder: {
 					sort: 'asc'
 				},
@@ -6261,488 +5316,470 @@ this.BX.UI = this.BX.UI || {};
 				stub: !dialog.isDropdownMode(),
 				icon: ui_iconSet_api_core.Outline.SEARCH
 			};
-			const options = Object.assign({}, defaults, tabOptions);
-			options.id = 'recents';
-			return _callSuper$3(this, RecentTab, [dialog, options]);
+			const options = {
+				...defaults,
+				...tabOptions,
+				id: 'recents'
+			};
+			super(dialog, options);
 		}
-		babelHelpers.inherits(RecentTab, _Tab);
-		return babelHelpers.createClass(RecentTab);
-	}(Tab);
+	}
 
-	let MatchResult = /*#__PURE__*/function () {
-		function MatchResult(item, matchIndexes = []) {
-			babelHelpers.classCallCheck(this, MatchResult);
-			babelHelpers.defineProperty(this, "item", null);
-			babelHelpers.defineProperty(this, "matchFields", new Map());
-			babelHelpers.defineProperty(this, "sort", null);
+	const comparator = (a, b) => {
+		if (a.getStartIndex() === b.getStartIndex()) {
+			return a.getEndIndex() > b.getEndIndex() ? -1 : 1;
+		}
+		return a.getStartIndex() > b.getStartIndex() ? 1 : -1;
+	};
+	class MatchField {
+		field = null;
+		matchIndexes = new main_core_collections.OrderedArray(comparator);
+		constructor(field, indexes = []) {
+			this.field = field;
+			this.addIndexes(indexes);
+		}
+		getField() {
+			return this.field;
+		}
+		getMatches() {
+			return this.matchIndexes;
+		}
+		addIndex(matchIndex) {
+			this.matchIndexes.add(matchIndex);
+		}
+		addIndexes(matchIndexes) {
+			if (main_core.Type.isArray(matchIndexes)) {
+				for (const matchIndex of matchIndexes) {
+					this.addIndex(matchIndex);
+				}
+			}
+		}
+	}
+
+	class MatchResult {
+		item;
+		matchFields = new Map();
+		sort = null;
+		constructor(item, matchIndexes = []) {
 			this.item = item;
 			this.addIndexes(matchIndexes);
 		}
-		return babelHelpers.createClass(MatchResult, [{
-			key: "getItem",
-			value: function getItem() {
-				return this.item;
-			}
-		}, {
-			key: "getMatchFields",
-			value: function getMatchFields() {
-				return this.matchFields;
-			}
-		}, {
-			key: "getSort",
-			value: function getSort() {
-				return this.sort;
-			}
-		}, {
-			key: "addIndex",
-			value: function addIndex(matchIndex) {
-				let matchField = this.matchFields.get(matchIndex.getField());
-				if (!matchField) {
-					matchField = new MatchField(matchIndex.getField());
-					this.matchFields.set(matchIndex.getField(), matchField);
-					const fieldSort = matchIndex.getField().getSort();
-					if (fieldSort !== null) {
-						this.sort = this.sort === null ? fieldSort : Math.min(this.sort, fieldSort);
-					}
+		getItem() {
+			return this.item;
+		}
+		getMatchFields() {
+			return this.matchFields;
+		}
+		getSort() {
+			return this.sort;
+		}
+		addIndex(matchIndex) {
+			let matchField = this.matchFields.get(matchIndex.getField());
+			if (!matchField) {
+				matchField = new MatchField(matchIndex.getField());
+				this.matchFields.set(matchIndex.getField(), matchField);
+				const fieldSort = matchIndex.getField().getSort();
+				if (fieldSort !== null) {
+					this.sort = this.sort === null ? fieldSort : Math.min(this.sort, fieldSort);
 				}
-				matchField.addIndex(matchIndex);
 			}
-		}, {
-			key: "addIndexes",
-			value: function addIndexes(matchIndexes) {
-				matchIndexes.forEach(matchIndex => {
-					this.addIndex(matchIndex);
-				});
+			matchField.addIndex(matchIndex);
+		}
+		addIndexes(matchIndexes) {
+			for (const matchIndex of matchIndexes) {
+				this.addIndex(matchIndex);
 			}
-		}]);
-	}();
+		}
+	}
+
+	class MatchIndex {
+		field = null;
+		queryWord = null;
+		startIndex = null;
+		endIndex = null;
+		constructor(field, queryWord, startIndex) {
+			this.field = field;
+			this.queryWord = queryWord;
+			this.startIndex = startIndex;
+			this.endIndex = startIndex + queryWord.length;
+		}
+		getField() {
+			return this.field;
+		}
+		getQueryWord() {
+			return this.queryWord;
+		}
+		getStartIndex() {
+			return this.startIndex;
+		}
+		getEndIndex() {
+			return this.endIndex;
+		}
+	}
 
 	const collator = new Intl.Collator(undefined, {
 		sensitivity: 'base'
 	});
-	let SearchEngine = /*#__PURE__*/function () {
-		function SearchEngine() {
-			babelHelpers.classCallCheck(this, SearchEngine);
-		}
-		return babelHelpers.createClass(SearchEngine, null, [{
-			key: "matchItems",
-			value: function matchItems(items, searchQuery, options = {}) {
-				const matchResults = [];
-				const queryWords = searchQuery.getQueryWords();
-				let limit = searchQuery.getResultLimit();
-				const matchAll = options.matchAll === true;
-				for (let i = 0; i < items.length; i++) {
-					if (limit === 0) {
-						break;
-					}
-					const item = items[i];
-					if (item.isSelected() || !item.isSearchable() || item.isHidden() || !item.getEntity().isSearchable()) {
-						continue;
-					}
-					const matchResult = this.matchItem(item, queryWords);
-					if (matchResult) {
-						matchResults.push(matchResult);
-						limit--;
-					} else if (matchAll && item.getEntity().getDynamicSearchMatchMode() === 'all') {
-						matchResults.push(new MatchResult(item, []));
-						limit--;
-					}
+	class SearchEngine {
+		static matchItems(items, searchQuery, options = {}) {
+			const matchResults = [];
+			const queryWords = searchQuery.getQueryWords();
+			let limit = searchQuery.getResultLimit();
+			const matchAll = options.matchAll === true;
+			for (const item of items) {
+				if (limit === 0) {
+					break;
 				}
-				return matchResults;
+				if (item.isSelected() || !item.isSearchable() || item.isHidden() || !item.getEntity().isSearchable()) {
+					continue;
+				}
+				const matchResult = this.matchItem(item, queryWords);
+				if (matchResult) {
+					matchResults.push(matchResult);
+					limit--;
+				} else if (matchAll && item.getEntity().getDynamicSearchMatchMode() === 'all') {
+					matchResults.push(new MatchResult(item, []));
+					limit--;
+				}
 			}
-		}, {
-			key: "matchItem",
-			value: function matchItem(item, queryWords) {
-				let matches = [];
-				for (let i = 0; i < queryWords.length; i++) {
-					const queryWord = queryWords[i];
-					const results = this.matchWord(item, queryWord);
-					//const match = this.matchWord(item, queryWord);
-					//if (match === null)
-					if (results.length === 0) {
-						return null;
-					} else {
-						matches = matches.concat(results);
-						//matches.push(match);
+			return matchResults;
+		}
+		static matchItem(item, queryWords) {
+			let matches = [];
+			for (const queryWord of queryWords) {
+				const results = this.matchWord(item, queryWord);
+				if (results.length === 0) {
+					return null;
+				}
+				matches = matches.concat(results);
+			}
+			if (matches.length > 0) {
+				return new MatchResult(item, matches);
+			} else {
+				return null;
+			}
+		}
+		static matchWord(item, queryWord) {
+			const searchIndexes = item.getSearchIndex().getIndexes();
+			const matches = [];
+			for (const fieldIndex of searchIndexes) {
+				const indexes = fieldIndex.getIndexes();
+				for (const index of indexes) {
+					const word = index.getWord().substring(0, queryWord.length);
+					if (collator.compare(queryWord, word) === 0) {
+						matches.push(new MatchIndex(fieldIndex.getField(), queryWord, index.getStartIndex()));
 					}
 				}
 				if (matches.length > 0) {
-					return new MatchResult(item, matches);
-				} else {
-					return null;
+					break;
 				}
 			}
-		}, {
-			key: "matchWord",
-			value: function matchWord(item, queryWord) {
-				const searchIndexes = item.getSearchIndex().getIndexes();
-				const matches = [];
-				for (let i = 0; i < searchIndexes.length; i++) {
-					const fieldIndex = searchIndexes[i];
-					const indexes = fieldIndex.getIndexes();
-					for (let j = 0; j < indexes.length; j++) {
-						const index = indexes[j];
-						const word = index.getWord().substring(0, queryWord.length);
-						if (collator.compare(queryWord, word) === 0) {
-							matches.push(new MatchIndex(fieldIndex.getField(), queryWord, index.getStartIndex()));
-							//return new MatchIndex(field, queryWord, index[i][1]);
-						}
-					}
-					if (matches.length > 0) {
-						break;
-					}
-				}
-				return matches;
-				//return null;
-			}
-		}]);
-	}();
+			return matches;
+		}
+	}
 
-	let SearchQuery = /*#__PURE__*/function () {
-		function SearchQuery(query) {
-			babelHelpers.classCallCheck(this, SearchQuery);
-			babelHelpers.defineProperty(this, "queryWords", []);
-			babelHelpers.defineProperty(this, "query", '');
-			babelHelpers.defineProperty(this, "cacheable", true);
-			babelHelpers.defineProperty(this, "dynamicSearchEntities", []);
-			babelHelpers.defineProperty(this, "resultLimit", 100);
-			this.query = query.trim().replace(/\s\s+/g, ' ');
+	class SearchQuery {
+		queryWords = [];
+		query = '';
+		cacheable = true;
+		dynamicSearchEntities = [];
+		resultLimit = 100;
+		constructor(query) {
+			this.query = query.trim().replaceAll(/\s\s+/g, ' ');
 			this.queryWords = main_core.Type.isStringFilled(this.query) ? this.query.split(' ') : [];
 		}
-		return babelHelpers.createClass(SearchQuery, [{
-			key: "getQueryWords",
-			value: function getQueryWords() {
-				return this.queryWords;
+		getQueryWords() {
+			return this.queryWords;
+		}
+		getQuery() {
+			return this.query;
+		}
+		isEmpty() {
+			return this.getQueryWords().length === 0;
+		}
+		setCacheable(flag) {
+			if (main_core.Type.isBoolean(flag)) {
+				this.cacheable = flag;
 			}
-		}, {
-			key: "getQuery",
-			value: function getQuery() {
-				return this.query;
+		}
+		isCacheable() {
+			return this.cacheable;
+		}
+		setResultLimit(limit) {
+			if (main_core.Type.isNumber(limit) && limit >= 0) {
+				this.resultLimit = limit;
 			}
-		}, {
-			key: "isEmpty",
-			value: function isEmpty() {
-				return this.getQueryWords().length === 0;
-			}
-		}, {
-			key: "setCacheable",
-			value: function setCacheable(flag) {
-				if (main_core.Type.isBoolean(flag)) {
-					this.cacheable = flag;
+		}
+		getResultLimit() {
+			return this.resultLimit;
+		}
+		hasDynamicSearch() {
+			return this.getDynamicSearchEntities().length > 0;
+		}
+		hasDynamicSearchEntity(entityId) {
+			return this.getDynamicSearchEntities().includes(entityId);
+		}
+		setDynamicSearchEntities(entities) {
+			if (main_core.Type.isArrayFilled(entities)) {
+				for (const entityId of entities) {
+					if (main_core.Type.isStringFilled(entityId) && !this.hasDynamicSearchEntity(entityId)) {
+						this.dynamicSearchEntities.push(entityId);
+					}
 				}
 			}
-		}, {
-			key: "isCacheable",
-			value: function isCacheable() {
-				return this.cacheable;
-			}
-		}, {
-			key: "setResultLimit",
-			value: function setResultLimit(limit) {
-				if (main_core.Type.isNumber(limit) && limit >= 0) {
-					this.resultLimit = limit;
-				}
-			}
-		}, {
-			key: "getResultLimit",
-			value: function getResultLimit() {
-				return this.resultLimit;
-			}
-		}, {
-			key: "hasDynamicSearch",
-			value: function hasDynamicSearch() {
-				return this.getDynamicSearchEntities().length > 0;
-			}
-		}, {
-			key: "hasDynamicSearchEntity",
-			value: function hasDynamicSearchEntity(entityId) {
-				return this.getDynamicSearchEntities().includes(entityId);
-			}
-		}, {
-			key: "setDynamicSearchEntities",
-			value: function setDynamicSearchEntities(entities) {
-				if (main_core.Type.isArrayFilled(entities)) {
-					entities.forEach(entityId => {
-						if (main_core.Type.isStringFilled(entityId) && !this.hasDynamicSearchEntity(entityId)) {
-							this.dynamicSearchEntities.push(entityId);
-						}
-					});
-				}
-				return this.dynamicSearchEntities;
-			}
-		}, {
-			key: "getDynamicSearchEntities",
-			value: function getDynamicSearchEntities() {
-				return this.dynamicSearchEntities;
-			}
-		}, {
-			key: "getAjaxJson",
-			value: function getAjaxJson() {
-				return this.toJSON();
-			}
-		}, {
-			key: "toJSON",
-			value: function toJSON() {
-				return {
-					queryWords: this.getQueryWords(),
-					query: this.getQuery(),
-					dynamicSearchEntities: this.getDynamicSearchEntities()
-				};
-			}
-		}]);
-	}();
+			return this.dynamicSearchEntities;
+		}
+		getDynamicSearchEntities() {
+			return this.dynamicSearchEntities;
+		}
+		getAjaxJson() {
+			return this.toJSON();
+		}
+		toJSON() {
+			return {
+				queryWords: this.getQueryWords(),
+				query: this.getQuery(),
+				dynamicSearchEntities: this.getDynamicSearchEntities()
+			};
+		}
+	}
 
-	let SearchLoader = /*#__PURE__*/function () {
-		function SearchLoader(tab) {
-			babelHelpers.classCallCheck(this, SearchLoader);
-			babelHelpers.defineProperty(this, "tab", null);
-			babelHelpers.defineProperty(this, "loader", null);
-			babelHelpers.defineProperty(this, "cache", new main_core.Cache.MemoryCache());
+	class SearchLoader {
+		tab;
+		loader = null;
+		cache = new main_core_cache.MemoryCache();
+		constructor(tab) {
 			this.tab = tab;
 		}
-		return babelHelpers.createClass(SearchLoader, [{
-			key: "getTab",
-			value: function getTab() {
-				return this.tab;
+		getTab() {
+			return this.tab;
+		}
+		getLoader() {
+			if (this.loader === null) {
+				this.loader = new main_loader.Loader({
+					target: this.getIconContainer(),
+					size: 32
+				});
 			}
-		}, {
-			key: "getLoader",
-			value: function getLoader() {
-				if (this.loader === null) {
-					this.loader = new main_loader.Loader({
-						target: this.getIconContainer(),
-						size: 32
-					});
-				}
-				return this.loader;
-			}
-		}, {
-			key: "getContainer",
-			value: function getContainer() {
-				return this.cache.remember('container', () => {
-					return main_core.Tag.render`
+			return this.loader;
+		}
+		getContainer() {
+			return this.cache.remember('container', () => {
+				return main_core.Tag.render`
 				<div class="ui-selector-search-loader">
 					${this.getBoxContainer()}
 					${this.getSpacerContainer()}
 				</div>
 			`;
-				});
-			}
-		}, {
-			key: "getBoxContainer",
-			value: function getBoxContainer() {
-				return this.cache.remember('box-container', () => {
-					return main_core.Tag.render`
+			});
+		}
+		getBoxContainer() {
+			return this.cache.remember('box-container', () => {
+				return main_core.Tag.render`
 				<div class="ui-selector-search-loader-box">
 					${this.getIconContainer()}
 					${this.getTextContainer()}
-				</div>`;
-				});
-			}
-		}, {
-			key: "getIconContainer",
-			value: function getIconContainer() {
-				return this.cache.remember('icon', () => {
-					return main_core.Tag.render`<div class="ui-selector-search-loader-icon"></div>`;
-				});
-			}
-		}, {
-			key: "getTextContainer",
-			value: function getTextContainer() {
-				return this.cache.remember('text', () => {
-					return main_core.Tag.render`
+				</div>
+			`;
+			});
+		}
+		getIconContainer() {
+			return this.cache.remember('icon', () => {
+				return main_core.Tag.render`<div class="ui-selector-search-loader-icon"></div>`;
+			});
+		}
+		getTextContainer() {
+			return this.cache.remember('text', () => {
+				return main_core.Tag.render`
 				<div class="ui-selector-search-loader-text">${main_core.Loc.getMessage('UI_SELECTOR_SEARCH_LOADER_TEXT')}</div>
 			`;
-				});
-			}
-		}, {
-			key: "getSpacerContainer",
-			value: function getSpacerContainer() {
-				return this.cache.remember('spacer', () => {
-					return main_core.Tag.render`<div class="ui-selector-search-loader-spacer"></div>`;
-				});
-			}
-		}, {
-			key: "show",
-			value: function show() {
-				if (!this.getContainer().parentNode) {
-					main_core.Dom.append(this.getContainer(), this.getTab().getContainer());
-				}
-				void this.getLoader().show();
-				main_core.Dom.addClass(this.getContainer(), 'ui-selector-search-loader--show');
-				requestAnimationFrame(() => {
-					main_core.Dom.addClass(this.getContainer(), 'ui-selector-search-loader--animate');
-				});
-			}
-		}, {
-			key: "hide",
-			value: function hide() {
-				if (this.loader === null) {
-					return;
-				}
-				main_core.Dom.removeClass(this.getContainer(), ['ui-selector-search-loader--show', 'ui-selector-search-loader--animate']);
-				void this.getLoader().hide();
-			}
-		}, {
-			key: "isShown",
-			value: function isShown() {
-				return this.loader !== null && this.loader.isShown();
-			}
-		}]);
-	}();
-
-	function _callSuper$2(t, o, e) { return o = babelHelpers.getPrototypeOf(o), babelHelpers.possibleConstructorReturn(t, _isNativeReflectConstruct$2() ? Reflect.construct(o, e || [], babelHelpers.getPrototypeOf(t).constructor) : o.apply(t, e)); }
-	function _isNativeReflectConstruct$2() { try { var t = !Boolean.prototype.valueOf.call(Reflect.construct(Boolean, [], function () {})); } catch (t) {} return (_isNativeReflectConstruct$2 = function () { return !!t; })(); }
-	let SearchTabFooter = /*#__PURE__*/function (_BaseFooter) {
-		function SearchTabFooter(tab, options) {
-			var _this;
-			babelHelpers.classCallCheck(this, SearchTabFooter);
-			_this = _callSuper$2(this, SearchTabFooter, [tab, options]);
-			babelHelpers.defineProperty(_this, "loader", null);
-			_this.getDialog().subscribe('onSearch', _this.handleOnSearch.bind(_this));
-			const tagSelector = _this.getDialog().getTagSelector();
-			if (tagSelector) {
-				tagSelector.subscribe('onMetaEnter', _this.handleMetaEnter.bind(_this));
-			}
-			return _this;
+			});
 		}
-		babelHelpers.inherits(SearchTabFooter, _BaseFooter);
-		return babelHelpers.createClass(SearchTabFooter, [{
-			key: "render",
-			value: function render() {
-				return main_core.Tag.render`
-			<div class="ui-selector-search-footer" onclick="${this.handleClick.bind(this)}">
-				<div class="ui-selector-search-footer-box">
+		getSpacerContainer() {
+			return this.cache.remember('spacer', () => {
+				return main_core.Tag.render`<div class="ui-selector-search-loader-spacer"></div>`;
+			});
+		}
+		show() {
+			if (!this.getContainer().parentNode) {
+				main_core.Dom.append(this.getContainer(), this.getTab().getContainer());
+			}
+			void this.getLoader().show();
+			main_core.Dom.attr(this.getTab().getContainer(), 'aria-busy', 'true');
+			main_core.Dom.addClass(this.getContainer(), 'ui-selector-search-loader--show');
+			requestAnimationFrame(() => {
+				main_core.Dom.addClass(this.getContainer(), 'ui-selector-search-loader--animate');
+			});
+		}
+		hide() {
+			if (this.loader === null) {
+				return;
+			}
+			main_core.Dom.attr(this.getTab().getContainer(), 'aria-busy', 'false');
+			main_core.Dom.removeClass(this.getContainer(), ['ui-selector-search-loader--show', 'ui-selector-search-loader--animate']);
+			void this.getLoader().hide();
+		}
+		isShown() {
+			return this.loader !== null && this.loader.isShown();
+		}
+	}
+
+	class SearchResultsAnnouncer {
+		#delay;
+		#timerId = null;
+		#pendingMessage = null;
+		constructor(delay = 500) {
+			this.#delay = delay;
+		}
+		announce(message) {
+			this.#pendingMessage = message;
+			if (this.#timerId !== null) {
+				clearTimeout(this.#timerId);
+			}
+			this.#timerId = setTimeout(() => {
+				this.#flush();
+			}, this.#delay);
+		}
+		cancel() {
+			if (this.#timerId !== null) {
+				clearTimeout(this.#timerId);
+				this.#timerId = null;
+			}
+			this.#pendingMessage = null;
+		}
+		#flush() {
+			this.#timerId = null;
+			const message = this.#pendingMessage;
+			this.#pendingMessage = null;
+			if (message !== null) {
+				ui_a11y.LiveAnnouncer.announce(message);
+			}
+		}
+	}
+
+	class SearchTabFooter extends BaseFooter {
+		loader = null;
+		constructor(tab, options) {
+			super(tab, options);
+			this.getDialog().subscribe('onSearch', this.handleOnSearch.bind(this));
+			const tagSelector = this.getDialog().getTagSelector();
+			if (tagSelector) {
+				tagSelector.subscribe('onMetaEnter', this.handleMetaEnter.bind(this));
+			}
+		}
+		render() {
+			return main_core.Tag.render`
+			<button type="button" tabindex="0" class="ui-selector-search-footer" onclick="${this.handleClick.bind(this)}">
+				<span class="ui-selector-search-footer-box">
 					${this.getLabelContainer()}
 					${this.getQueryContainer()}
 					${this.getLoaderContainer()}
-				</div>
-				<div class="ui-selector-search-footer-cmd">${main_core.Browser.isMac() ? '&#8984;+Enter' : 'Ctrl+Enter'}</div>
-			</div>
+				</span>
+				<span class="ui-selector-search-footer-cmd">${main_core.Browser.isMac() ? '&#8984;+Enter' : 'Ctrl+Enter'}</span>
+			</button>
 		`;
+		}
+		getLoader() {
+			if (this.loader === null) {
+				this.loader = new main_loader.Loader({
+					target: this.getLoaderContainer(),
+					size: 17,
+					color: 'rgba(82, 92, 105, 0.9)'
+				});
 			}
-		}, {
-			key: "getLoader",
-			value: function getLoader() {
-				if (this.loader === null) {
-					this.loader = new main_loader.Loader({
-						target: this.getLoaderContainer(),
-						size: 17,
-						color: 'rgba(82, 92, 105, 0.9)'
-					});
-				}
-				return this.loader;
+			return this.loader;
+		}
+		showLoader() {
+			void this.getLoader().show();
+		}
+		hideLoader() {
+			void this.getLoader().hide();
+		}
+		setLabel(label) {
+			if (main_core.Type.isString(label)) {
+				this.getLabelContainer().textContent = label;
 			}
-		}, {
-			key: "showLoader",
-			value: function showLoader() {
-				void this.getLoader().show();
-			}
-		}, {
-			key: "hideLoader",
-			value: function hideLoader() {
-				void this.getLoader().hide();
-			}
-		}, {
-			key: "setLabel",
-			value: function setLabel(label) {
-				if (main_core.Type.isString(label)) {
-					this.getLabelContainer().textContent = label;
-				}
-			}
-		}, {
-			key: "getLabelContainer",
-			value: function getLabelContainer() {
-				return this.cache.remember('label', () => {
-					return main_core.Tag.render`
+		}
+		getLabelContainer() {
+			return this.cache.remember('label', () => {
+				return main_core.Tag.render`
 				<span class="ui-selector-search-footer-label">${this.getOption('label', main_core.Loc.getMessage('UI_SELECTOR_CREATE_ITEM_LABEL'))}</span>
 			`;
-				});
-			}
-		}, {
-			key: "getQueryContainer",
-			value: function getQueryContainer() {
-				return this.cache.remember('name-container', () => {
-					return main_core.Tag.render`
+			});
+		}
+		getQueryContainer() {
+			return this.cache.remember('name-container', () => {
+				return main_core.Tag.render`
 				<span class="ui-selector-search-footer-query"></span>
 			`;
-				});
-			}
-		}, {
-			key: "getLoaderContainer",
-			value: function getLoaderContainer() {
-				return this.cache.remember('loader', () => {
-					return main_core.Tag.render`
-				<div class="ui-selector-search-footer-loader"></div>
+			});
+		}
+		getLoaderContainer() {
+			return this.cache.remember('loader', () => {
+				return main_core.Tag.render`
+				<span class="ui-selector-search-footer-loader"></span>
 			`;
-				});
+			});
+		}
+		createItem() {
+			const tagSelector = this.getDialog().getTagSelector();
+			if (tagSelector && tagSelector.isLocked()) {
+				return;
 			}
-		}, {
-			key: "createItem",
-			value: function createItem() {
-				const tagSelector = this.getDialog().getTagSelector();
-				if (tagSelector && tagSelector.isLocked()) {
-					return;
+			const finalize = () => {
+				this.hideLoader();
+				if (this.getDialog().getTagSelector()) {
+					this.getDialog().getTagSelector().unlock();
+					this.getDialog().focusSearch();
 				}
-				const finalize = () => {
-					this.hideLoader();
-					if (this.getDialog().getTagSelector()) {
-						this.getDialog().getTagSelector().unlock();
-						this.getDialog().focusSearch();
-					}
-				};
-				event.preventDefault();
-				this.showLoader();
-				if (tagSelector) {
-					tagSelector.lock();
+			};
+			this.showLoader();
+			if (tagSelector) {
+				tagSelector.lock();
+			}
+			this.getDialog().emitAsync('Search:onItemCreateAsync', {
+				searchQuery: this.getTab().getLastSearchQuery()
+			}).then(() => {
+				this.getTab().clearResults();
+				this.getDialog().clearSearch();
+				if (this.getDialog().getActiveTab() === this.getTab()) {
+					this.getDialog().selectFirstTab();
 				}
-				this.getDialog().emitAsync('Search:onItemCreateAsync', {
-					searchQuery: this.getTab().getLastSearchQuery()
-				}).then(() => {
-					this.getTab().clearResults();
-					this.getDialog().clearSearch();
-					if (this.getDialog().getActiveTab() === this.getTab()) {
-						this.getDialog().selectFirstTab();
-					}
-					finalize();
-				}).catch(() => {
-					finalize();
-				});
+				finalize();
+			}).catch(() => {
+				finalize();
+			});
+		}
+		handleClick() {
+			this.createItem();
+		}
+		handleMetaEnter(event) {
+			const keyboardEvent = event.getData().event;
+			keyboardEvent.stopPropagation();
+			if (this.getDialog().getActiveTab() !== this.getTab()) {
+				return;
 			}
-		}, {
-			key: "handleClick",
-			value: function handleClick() {
-				this.createItem();
-			}
-		}, {
-			key: "handleMetaEnter",
-			value: function handleMetaEnter(event) {
-				const keyboardEvent = event.getData().event;
-				keyboardEvent.stopPropagation();
-				if (this.getDialog().getActiveTab() !== this.getTab()) {
-					return;
-				}
-				this.handleClick();
-			}
-		}, {
-			key: "handleOnSearch",
-			value: function handleOnSearch(event) {
-				const {
-					query
-				} = event.getData();
-				this.getQueryContainer().textContent = query;
-			}
-		}]);
-	}(BaseFooter);
+			this.handleClick();
+		}
+		handleOnSearch(event) {
+			const {
+				query
+			} = event.getData();
+			this.getQueryContainer().textContent = query;
+		}
+	}
 
-	function _callSuper$1(t, o, e) { return o = babelHelpers.getPrototypeOf(o), babelHelpers.possibleConstructorReturn(t, _isNativeReflectConstruct$1() ? Reflect.construct(o, e || [], babelHelpers.getPrototypeOf(t).constructor) : o.apply(t, e)); }
-	function _isNativeReflectConstruct$1() { try { var t = !Boolean.prototype.valueOf.call(Reflect.construct(Boolean, [], function () {})); } catch (t) {} return (_isNativeReflectConstruct$1 = function () { return !!t; })(); }
-	let SearchTab = /*#__PURE__*/function (_Tab) {
-		function SearchTab(dialog, tabOptions, searchOptions) {
-			var _this;
-			babelHelpers.classCallCheck(this, SearchTab);
+	class SearchTab extends Tab {
+		lastSearchQuery = null;
+		queryCache = new Set();
+		queryXhr = null;
+		searchLoader = new SearchLoader(this);
+		allowCreateItem = false;
+		loadWithDebounce;
+		resultsAnnouncer = new SearchResultsAnnouncer();
+		constructor(dialog, tabOptions, searchOptions) {
 			const defaults = {
-				title: main_core.Loc.getMessage('UI_SELECTOR_SEARCH_TAB_TITLE'),
+				title: main_core.Loc.getMessage('UI_SELECTOR_SEARCH_TAB_TITLE') ?? '',
 				visible: false,
 				stub: true,
 				stubOptions: {
@@ -6757,305 +5794,274 @@ this.BX.UI = this.BX.UI || {};
 			};
 			options.id = 'search';
 			options.stubOptions.autoShow = false;
-			_this = _callSuper$1(this, SearchTab, [dialog, options]);
-
-			// eslint-disable-next-line no-param-reassign
-			babelHelpers.defineProperty(_this, "lastSearchQuery", null);
-			babelHelpers.defineProperty(_this, "queryCache", new Set());
-			babelHelpers.defineProperty(_this, "queryXhr", null);
-			babelHelpers.defineProperty(_this, "searchLoader", new SearchLoader(_this));
-			babelHelpers.defineProperty(_this, "allowCreateItem", false);
+			super(dialog, options);
 			searchOptions = main_core.Type.isPlainObject(searchOptions) ? searchOptions : {};
-			_this.setAllowCreateItem(searchOptions.allowCreateItem, searchOptions.footerOptions);
-			_this.loadWithDebounce = main_core.Runtime.debounce(() => {
-				_this.load(_this.getLastSearchQuery());
+			this.setAllowCreateItem(searchOptions.allowCreateItem, searchOptions.footerOptions);
+			this.loadWithDebounce = main_core.Runtime.debounce(() => {
+				this.load(this.getLastSearchQuery());
 			}, 500);
-			return _this;
+			dialog.subscribe('onHide', () => this.getResultsAnnouncer().cancel());
+			dialog.subscribe('onDestroy', () => this.getResultsAnnouncer().cancel());
 		}
-		babelHelpers.inherits(SearchTab, _Tab);
-		return babelHelpers.createClass(SearchTab, [{
-			key: "search",
-			value: function search(query) {
-				const searchQuery = new SearchQuery(query);
-				const dynamicEntities = this.getDynamicEntities(searchQuery);
-				searchQuery.setDynamicSearchEntities(dynamicEntities);
-				if (searchQuery.isEmpty()) {
-					this.getSearchLoader().hide();
-					return;
+		search(query) {
+			const searchQuery = new SearchQuery(query);
+			const dynamicEntities = this.getDynamicEntities(searchQuery);
+			searchQuery.setDynamicSearchEntities(dynamicEntities);
+			if (searchQuery.isEmpty()) {
+				this.getSearchLoader().hide();
+				return;
+			}
+			this.lastSearchQuery = searchQuery;
+			const matchResults = SearchEngine.matchItems(this.getDialog().getItems(), searchQuery);
+			this.clearResults();
+			this.appendResults(matchResults);
+			if (this.getDialog().shouldFocusOnFirst()) {
+				this.getDialog().focusOnFirstNode();
+			}
+			if (this.shouldLoad(searchQuery)) {
+				this.loadWithDebounce();
+				if (!this.isEmptyResult()) {
+					this.getStub().hide();
 				}
-				this.lastSearchQuery = searchQuery;
-				const matchResults = SearchEngine.matchItems(this.getDialog().getItems(), searchQuery);
-				this.clearResults();
-				this.appendResults(matchResults);
-				if (this.getDialog().shouldFocusOnFirst()) {
-					this.getDialog().focusOnFirstNode();
+			} else if (!this.getSearchLoader().isShown()) {
+				this.toggleEmptyResult();
+				this.#announceResultsCount();
+			}
+		}
+		#announceResultsCount() {
+			const count = this.getRootNode().getChildren().count();
+			const message = main_core.Loc.getMessage('UI_SELECTOR_SEARCH_RESULTS_COUNT', {
+				'#COUNT#': String(count)
+			});
+			if (main_core.Type.isStringFilled(message)) {
+				this.getResultsAnnouncer().announce(message);
+			}
+		}
+		getResultsAnnouncer() {
+			return this.resultsAnnouncer;
+		}
+		getLastSearchQuery() {
+			return this.lastSearchQuery;
+		}
+		setAllowCreateItem(flag, options) {
+			if (main_core.Type.isBoolean(flag)) {
+				this.allowCreateItem = flag;
+				if (flag) {
+					this.setFooter(SearchTabFooter, options);
+				} else {
+					this.setFooter(null);
 				}
-				if (this.shouldLoad(searchQuery)) {
-					this.loadWithDebounce();
-					if (!this.isEmptyResult()) {
-						this.getStub().hide();
+			}
+		}
+		canCreateItem() {
+			return this.allowCreateItem;
+		}
+		appendResults(matchResults) {
+			matchResults.sort((a, b) => {
+				const matchSortA = a.getSort();
+				const matchSortB = b.getSort();
+				if (matchSortA !== null && matchSortB !== null && matchSortA !== matchSortB) {
+					return matchSortA - matchSortB;
+				}
+				if (matchSortA !== null && matchSortB === null) {
+					return -1;
+				}
+				if (matchSortA === null && matchSortB !== null) {
+					return 1;
+				}
+				const contextSortA = a.getItem().getContextSort();
+				const contextSortB = b.getItem().getContextSort();
+				if (contextSortA !== null && contextSortB === null) {
+					return -1;
+				}
+				if (contextSortA === null && contextSortB !== null) {
+					return 1;
+				}
+				if (contextSortA !== null && contextSortB !== null) {
+					return contextSortB - contextSortA;
+				}
+				const globalSortA = a.getItem().getGlobalSort();
+				const globalSortB = b.getItem().getGlobalSort();
+				if (globalSortA !== null && globalSortB === null) {
+					return -1;
+				}
+				if (globalSortA === null && globalSortB !== null) {
+					return 1;
+				}
+				if (globalSortA !== null && globalSortB !== null) {
+					return globalSortB - globalSortA;
+				}
+				return 0;
+			});
+			this.getRootNode().disableRender();
+			matchResults.forEach(matchResult => {
+				const item = matchResult.getItem();
+				if (!this.getRootNode().hasItem(item)) {
+					const node = this.getRootNode().addItem(item);
+					node.setHighlights([...matchResult.getMatchFields().values()]);
+				}
+			});
+			this.getRootNode().enableRender();
+			this.getRootNode().render(true);
+		}
+		getDynamicEntities(searchQuery) {
+			const result = [];
+			this.getDialog().getEntities().forEach(entity => {
+				if (entity.isSearchable()) {
+					const hasCacheLimit = entity.getSearchCacheLimits().some(pattern => {
+						return pattern.test(searchQuery.getQuery());
+					});
+					if (hasCacheLimit) {
+						result.push(entity.getId());
 					}
-				} else if (!this.getSearchLoader().isShown()) {
+				}
+			});
+			return result;
+		}
+		isQueryCacheable(searchQuery) {
+			return searchQuery.isCacheable() && !searchQuery.hasDynamicSearch();
+		}
+		isQueryLoaded(searchQuery) {
+			let found = false;
+			this.queryCache.forEach(query => {
+				if (!found && searchQuery.getQuery().startsWith(query)) {
+					found = true;
+				}
+			});
+			return found;
+		}
+		addCacheQuery(searchQuery) {
+			if (this.isQueryCacheable(searchQuery)) {
+				this.queryCache.add(searchQuery.getQuery());
+			}
+		}
+		removeCacheQuery(searchQuery) {
+			this.queryCache.delete(searchQuery.getQuery());
+		}
+		shouldLoad(searchQuery) {
+			if (!this.isQueryCacheable(searchQuery)) {
+				return true;
+			}
+			if (!this.getDialog().hasDynamicSearch()) {
+				return false;
+			}
+			return !this.isQueryLoaded(searchQuery);
+		}
+		load(searchQuery) {
+			if (!this.shouldLoad(searchQuery)) {
+				return;
+			}
+			this.addCacheQuery(searchQuery);
+			this.getStub()?.hide();
+			this.getSearchLoader().show();
+			main_core.ajax.runAction('ui.entityselector.doSearch', {
+				json: {
+					dialog: this.getDialog().getAjaxJson(),
+					searchQuery: searchQuery.getAjaxJson()
+				},
+				onrequeststart: xhr => {
+					this.queryXhr = xhr;
+				},
+				getParameters: {
+					context: this.getDialog().getContext()
+				}
+			}).then(response => {
+				this.getSearchLoader().hide();
+				if (!response || !response.data || !response.data.dialog || !response.data.dialog.items) {
+					this.removeCacheQuery(searchQuery);
 					this.toggleEmptyResult();
-				}
-			}
-		}, {
-			key: "getLastSearchQuery",
-			value: function getLastSearchQuery() {
-				return this.lastSearchQuery;
-			}
-		}, {
-			key: "setAllowCreateItem",
-			value: function setAllowCreateItem(flag, options) {
-				if (main_core.Type.isBoolean(flag)) {
-					this.allowCreateItem = flag;
-					if (flag) {
-						this.setFooter(SearchTabFooter, options);
-					} else {
-						this.setFooter(null);
-					}
-				}
-			}
-		}, {
-			key: "canCreateItem",
-			value: function canCreateItem() {
-				return this.allowCreateItem;
-			}
-		}, {
-			key: "appendResults",
-			value: function appendResults(matchResults) {
-				matchResults.sort((a, b) => {
-					const matchSortA = a.getSort();
-					const matchSortB = b.getSort();
-					if (matchSortA !== null && matchSortB !== null && matchSortA !== matchSortB) {
-						return matchSortA - matchSortB;
-					}
-					if (matchSortA !== null && matchSortB === null) {
-						return -1;
-					}
-					if (matchSortA === null && matchSortB !== null) {
-						return 1;
-					}
-					const contextSortA = a.getItem().getContextSort();
-					const contextSortB = b.getItem().getContextSort();
-					if (contextSortA !== null && contextSortB === null) {
-						return -1;
-					}
-					if (contextSortA === null && contextSortB !== null) {
-						return 1;
-					}
-					if (contextSortA !== null && contextSortB !== null) {
-						return contextSortB - contextSortA;
-					}
-					const globalSortA = a.getItem().getGlobalSort();
-					const globalSortB = b.getItem().getGlobalSort();
-					if (globalSortA !== null && globalSortB === null) {
-						return -1;
-					}
-					if (globalSortA === null && globalSortB !== null) {
-						return 1;
-					}
-					if (globalSortA !== null && globalSortB !== null) {
-						return globalSortB - globalSortA;
-					}
-					return 0;
-				});
-				this.getRootNode().disableRender();
-				matchResults.forEach(matchResult => {
-					const item = matchResult.getItem();
-					if (!this.getRootNode().hasItem(item)) {
-						const node = this.getRootNode().addItem(item);
-						node.setHighlights(matchResult.getMatchFields());
-					}
-				});
-				this.getRootNode().enableRender();
-				this.getRootNode().render(true);
-			}
-		}, {
-			key: "getDynamicEntities",
-			value: function getDynamicEntities(searchQuery) {
-				const result = [];
-				this.getDialog().getEntities().forEach(entity => {
-					if (entity.isSearchable()) {
-						const hasCacheLimit = entity.getSearchCacheLimits().some(pattern => {
-							return pattern.test(searchQuery.getQuery());
-						});
-						if (hasCacheLimit) {
-							result.push(entity.getId());
-						}
-					}
-				});
-				return result;
-			}
-		}, {
-			key: "isQueryCacheable",
-			value: function isQueryCacheable(searchQuery) {
-				return searchQuery.isCacheable() && !searchQuery.hasDynamicSearch();
-			}
-		}, {
-			key: "isQueryLoaded",
-			value: function isQueryLoaded(searchQuery) {
-				let found = false;
-				this.queryCache.forEach(query => {
-					if (found === false && searchQuery.getQuery().startsWith(query)) {
-						found = true;
-					}
-				});
-				return found;
-			}
-		}, {
-			key: "addCacheQuery",
-			value: function addCacheQuery(searchQuery) {
-				if (this.isQueryCacheable(searchQuery)) {
-					this.queryCache.add(searchQuery.getQuery());
-				}
-			}
-		}, {
-			key: "removeCacheQuery",
-			value: function removeCacheQuery(searchQuery) {
-				this.queryCache.delete(searchQuery.getQuery());
-			}
-		}, {
-			key: "shouldLoad",
-			value: function shouldLoad(searchQuery) {
-				if (!this.isQueryCacheable(searchQuery)) {
-					return true;
-				}
-				if (!this.getDialog().hasDynamicSearch()) {
-					return false;
-				}
-				return !this.isQueryLoaded(searchQuery);
-			}
-		}, {
-			key: "load",
-			value: function load(searchQuery) {
-				if (!this.shouldLoad(searchQuery)) {
-					return;
-				}
-
-				// if (this.queryXhr)
-				// {
-				// 	this.queryXhr.abort();
-				// }
-
-				this.addCacheQuery(searchQuery);
-				this.getStub().hide();
-				this.getSearchLoader().show();
-				main_core.ajax.runAction('ui.entityselector.doSearch', {
-					json: {
-						dialog: this.getDialog().getAjaxJson(),
-						searchQuery: searchQuery.getAjaxJson()
-					},
-					onrequeststart: xhr => {
-						this.queryXhr = xhr;
-					},
-					getParameters: {
-						context: this.getDialog().getContext()
-					}
-				}).then(response => {
-					this.getSearchLoader().hide();
-					if (!response || !response.data || !response.data.dialog || !response.data.dialog.items) {
-						this.removeCacheQuery(searchQuery);
-						this.toggleEmptyResult();
-						this.getDialog().emit('SearchTab:onLoad', {
-							searchTab: this
-						});
-						return;
-					}
-					if (response.data.searchQuery && response.data.searchQuery.cacheable === false) {
-						this.removeCacheQuery(searchQuery);
-						if (this.getLastSearchQuery()?.getQuery() !== searchQuery.getQuery()) {
-							this.loadWithDebounce();
-						}
-					}
-					if (main_core.Type.isArrayFilled(response.data.dialog.items)) {
-						const items = new Set();
-						response.data.dialog.items.forEach(itemOptions => {
-							delete itemOptions.tabs;
-							delete itemOptions.children;
-							const item = this.getDialog().addItem(itemOptions);
-							items.add(item);
-						});
-						const isTabEmpty = this.isEmptyResult();
-						const matchResults = SearchEngine.matchItems([...items.values()], this.getLastSearchQuery(), {
-							matchAll: true
-						});
-						this.appendResults(matchResults);
-						if (isTabEmpty && this.getDialog().shouldFocusOnFirst()) {
-							this.getDialog().focusOnFirstNode();
-						}
-					}
-					if (main_core.Type.isArrayFilled(response.data.dialog.errors)) {
-						this.getDialog().emitEntityErrors(response.data.dialog.errors);
-					}
-					this.toggleEmptyResult();
+					this.#announceResultsCount();
 					this.getDialog().emit('SearchTab:onLoad', {
 						searchTab: this
 					});
-				}).catch(error => {
-					this.removeCacheQuery(searchQuery);
-					this.getSearchLoader().hide();
-					this.toggleEmptyResult();
-					console.error(error);
-				});
-			}
-		}, {
-			key: "getSearchLoader",
-			value: function getSearchLoader() {
-				return this.searchLoader;
-			}
-		}, {
-			key: "clearResults",
-			value: function clearResults() {
-				this.getRootNode().removeChildren();
-			}
-		}, {
-			key: "isEmptyResult",
-			value: function isEmptyResult() {
-				return !this.getRootNode().hasChildren();
-			}
-		}, {
-			key: "toggleEmptyResult",
-			value: function toggleEmptyResult() {
-				if (this.isEmptyResult()) {
-					this.getStub().show();
-				} else {
-					this.getStub().hide();
+					return;
 				}
+				if (response.data.searchQuery && response.data.searchQuery.cacheable === false) {
+					this.removeCacheQuery(searchQuery);
+					if (this.getLastSearchQuery()?.getQuery() !== searchQuery.getQuery()) {
+						this.loadWithDebounce();
+					}
+				}
+				if (main_core.Type.isArrayFilled(response.data.dialog.items)) {
+					const items = new Set();
+					response.data.dialog.items.forEach(itemOptions => {
+						delete itemOptions.tabs;
+						delete itemOptions.children;
+						const item = this.getDialog().addItem(itemOptions);
+						items.add(item);
+					});
+					const isTabEmpty = this.isEmptyResult();
+					const matchResults = SearchEngine.matchItems([...items.values()], this.getLastSearchQuery(), {
+						matchAll: true
+					});
+					this.appendResults(matchResults);
+					if (isTabEmpty && this.getDialog().shouldFocusOnFirst()) {
+						this.getDialog().focusOnFirstNode();
+					}
+				}
+				if (main_core.Type.isArrayFilled(response.data.dialog.errors)) {
+					this.getDialog().emitEntityErrors(response.data.dialog.errors);
+				}
+				this.toggleEmptyResult();
+				this.#announceResultsCount();
+				this.getDialog().emit('SearchTab:onLoad', {
+					searchTab: this
+				});
+			}).catch(error => {
+				this.removeCacheQuery(searchQuery);
+				this.getSearchLoader().hide();
+				this.toggleEmptyResult();
+				this.#announceResultsCount();
+				console.error(error);
+			});
+		}
+		getSearchLoader() {
+			return this.searchLoader;
+		}
+		clearResults() {
+			this.getRootNode().removeChildren();
+		}
+		isEmptyResult() {
+			return !this.getRootNode().hasChildren();
+		}
+		toggleEmptyResult() {
+			if (this.isEmptyResult()) {
+				this.getStub()?.show();
+			} else {
+				this.getStub()?.hide();
 			}
-		}]);
-	}(Tab);
+		}
+	}
 
 	function _callSuper(t, o, e) { return o = babelHelpers.getPrototypeOf(o), babelHelpers.possibleConstructorReturn(t, _isNativeReflectConstruct() ? Reflect.construct(o, [], babelHelpers.getPrototypeOf(t).constructor) : o.apply(t, e)); }
 	function _isNativeReflectConstruct() { try { var t = !Boolean.prototype.valueOf.call(Reflect.construct(Boolean, [], function () {})); } catch (t) {} return (_isNativeReflectConstruct = function () { return !!t; })(); }
-	let LoadState = /*#__PURE__*/babelHelpers.createClass(function LoadState() {
-		babelHelpers.classCallCheck(this, LoadState);
-	});
-	babelHelpers.defineProperty(LoadState, "UNSENT", 'UNSENT');
-	babelHelpers.defineProperty(LoadState, "LOADING", 'LOADING');
-	babelHelpers.defineProperty(LoadState, "DONE", 'DONE');
-	let TagSelectorMode = /*#__PURE__*/babelHelpers.createClass(function TagSelectorMode() {
-		babelHelpers.classCallCheck(this, TagSelectorMode);
-	});
-	babelHelpers.defineProperty(TagSelectorMode, "INSIDE", 'INSIDE');
-	babelHelpers.defineProperty(TagSelectorMode, "OUTSIDE", 'OUTSIDE');
+	function _classPrivateMethodInitSpec(e, a) { _checkPrivateRedeclaration(e, a), a.add(e); }
+	function _checkPrivateRedeclaration(e, t) { if (t.has(e)) throw new TypeError("Cannot initialize the same private elements twice on an object"); }
+	function _assertClassBrand(e, t, n) { if ("function" == typeof e ? e === t : e.has(t)) return arguments.length < 3 ? t : n; throw new TypeError("Private element is not present on this object"); }
+	class LoadState {
+		static UNSENT = 'UNSENT';
+		static LOADING = 'LOADING';
+		static DONE = 'DONE';
+	}
+	class TagSelectorMode {
+		static INSIDE = 'INSIDE';
+		static OUTSIDE = 'OUTSIDE';
+	}
 	const instances = new Map();
-
-	/**
-	 * @memberof BX.UI.EntitySelector
-	 */
-	let Dialog = /*#__PURE__*/function (_EventEmitter) {
+	var _Dialog_brand = new WeakSet();
+	let Dialog = function (_EventEmitter) {
 		function Dialog(dialogOptions) {
 			var _this;
 			babelHelpers.classCallCheck(this, Dialog);
 			_this = _callSuper(this, Dialog);
-			babelHelpers.defineProperty(_this, "id", null);
+			_classPrivateMethodInitSpec(_this, _Dialog_brand);
+			babelHelpers.defineProperty(_this, "id", void 0);
 			babelHelpers.defineProperty(_this, "items", new Map());
 			babelHelpers.defineProperty(_this, "tabs", new Map());
 			babelHelpers.defineProperty(_this, "entities", new Map());
 			babelHelpers.defineProperty(_this, "targetNode", null);
 			babelHelpers.defineProperty(_this, "popup", null);
-			babelHelpers.defineProperty(_this, "cache", new main_core.Cache.MemoryCache());
+			babelHelpers.defineProperty(_this, "cache", new main_core_cache.MemoryCache());
 			babelHelpers.defineProperty(_this, "multiple", true);
 			babelHelpers.defineProperty(_this, "hideOnSelect", null);
 			babelHelpers.defineProperty(_this, "hideOnDeselect", null);
@@ -7082,18 +6088,19 @@ this.BX.UI = this.BX.UI || {};
 			babelHelpers.defineProperty(_this, "showAvatars", true);
 			babelHelpers.defineProperty(_this, "compactView", false);
 			babelHelpers.defineProperty(_this, "activeTab", null);
-			babelHelpers.defineProperty(_this, "recentTab", null);
-			babelHelpers.defineProperty(_this, "searchTab", null);
+			babelHelpers.defineProperty(_this, "recentTab", void 0);
+			babelHelpers.defineProperty(_this, "searchTab", void 0);
 			babelHelpers.defineProperty(_this, "rendered", false);
 			babelHelpers.defineProperty(_this, "loadState", LoadState.UNSENT);
 			babelHelpers.defineProperty(_this, "loader", null);
+			babelHelpers.defineProperty(_this, "ariaLabel", null);
 			babelHelpers.defineProperty(_this, "tagSelector", null);
 			babelHelpers.defineProperty(_this, "tagSelectorMode", null);
 			babelHelpers.defineProperty(_this, "tagSelectorHeight", null);
 			babelHelpers.defineProperty(_this, "saveRecentItemsWithDebounce", main_core.Runtime.debounce(_this.saveRecentItems, 2000, _this));
 			babelHelpers.defineProperty(_this, "recentItemsToSave", []);
 			babelHelpers.defineProperty(_this, "recentItemsLimit", null);
-			babelHelpers.defineProperty(_this, "navigation", null);
+			babelHelpers.defineProperty(_this, "navigation", void 0);
 			babelHelpers.defineProperty(_this, "header", null);
 			babelHelpers.defineProperty(_this, "footer", null);
 			babelHelpers.defineProperty(_this, "popupOptions", {});
@@ -7103,6 +6110,7 @@ this.BX.UI = this.BX.UI || {};
 			babelHelpers.defineProperty(_this, "overlappingObserver", null);
 			babelHelpers.defineProperty(_this, "offsetAnimation", true);
 			babelHelpers.defineProperty(_this, "customData", Object.create(null));
+			babelHelpers.defineProperty(_this, "destroyed", false);
 			_this.setEventNamespace('BX.UI.EntitySelector.Dialog');
 			const options = main_core.Type.isPlainObject(dialogOptions) ? dialogOptions : {};
 			_this.id = main_core.Type.isStringFilled(options.id) ? options.id : `ui-selector-${main_core.Text.getRandom().toLowerCase()}`;
@@ -7112,10 +6120,11 @@ this.BX.UI = this.BX.UI || {};
 			_this.compactView = options.compactView === true;
 			_this.dropdownMode = main_core.Type.isBoolean(options.dropdownMode) ? options.dropdownMode : false;
 			_this.alwaysShowLabels = main_core.Type.isBoolean(options.alwaysShowLabels) ? options.alwaysShowLabels : false;
+			_this.ariaLabel = main_core.Type.isStringFilled(options.ariaLabel) ? options.ariaLabel : null;
 			if (main_core.Type.isArray(options.entities)) {
-				options.entities.forEach(entity => {
+				for (const entity of options.entities) {
 					_this.addEntity(entity);
-				});
+				}
 			}
 			if (options.tagSelector instanceof TagSelector) {
 				_this.tagSelectorMode = TagSelectorMode.OUTSIDE;
@@ -7124,7 +6133,6 @@ this.BX.UI = this.BX.UI || {};
 				const defaultOptions = {
 					placeholder: main_core.Loc.getMessage('UI_TAG_SELECTOR_SEARCH_PLACEHOLDER'),
 					maxHeight: 102,
-					// three lines
 					textBoxWidth: 105
 				};
 				const customOptions = main_core.Type.isPlainObject(options.tagSelectorOptions) ? options.tagSelectorOptions : {};
@@ -7169,20 +6177,21 @@ this.BX.UI = this.BX.UI || {};
 				_this.load();
 			}
 			if (main_core.Type.isPlainObject(options.popupOptions)) {
-				const allowedOptions = new Set(['overlay', 'bindOptions', 'targetContainer', 'zIndexOptions', 'events', 'animation', 'className', 'focusTrap']);
+				const allowedOptions = new Set(['overlay', 'bindOptions', 'targetContainer', 'zIndexOptions', 'events', 'animation', 'className', 'focusTrap', 'ariaLabel', 'ariaLabelledBy', 'role']);
+				const sourcePopupOptions = options.popupOptions;
 				const popupOptions = {};
-				Object.keys(options.popupOptions).forEach(option => {
+				for (const option of Object.keys(sourcePopupOptions)) {
 					if (allowedOptions.has(option)) {
-						popupOptions[option] = options.popupOptions[option];
+						popupOptions[option] = sourcePopupOptions[option];
 					}
-				});
+				}
 				_this.popupOptions = popupOptions;
 			}
 			_this.navigation = new Navigation(_this);
 			new SliderIntegration(_this);
 			_this.subscribe('ItemNode:onFocus', _this.handleItemNodeFocus.bind(_this));
 			_this.subscribe('ItemNode:onUnfocus', _this.handleItemNodeUnfocus.bind(_this));
-			_this.subscribeFromOptions(options.events);
+			_this.subscribeFromOptions(options.events ?? {});
 			instances.set(_this.id, _this);
 			return _this;
 		}
@@ -7222,7 +6231,7 @@ this.BX.UI = this.BX.UI || {};
 		}, {
 			key: "isOpen",
 			value: function isOpen() {
-				return this.popup && this.popup.isShown();
+				return this.popup !== null && this.popup.isShown();
 			}
 		}, {
 			key: "adjustPosition",
@@ -7261,7 +6270,7 @@ this.BX.UI = this.BX.UI || {};
 			key: "addItem",
 			value: function addItem(options) {
 				if (!main_core.Type.isPlainObject(options)) {
-					throw new Error('EntitySelector.addItem: wrong item options.');
+					throw new TypeError('EntitySelector.addItem: wrong item options.');
 				}
 				let item = this.getItem(options);
 				if (!item) {
@@ -7307,13 +6316,13 @@ this.BX.UI = this.BX.UI || {};
 			}
 		}, {
 			key: "removeItem",
-			value: function removeItem(item) {
-				item = this.getItem(item);
+			value: function removeItem(itemToRemove) {
+				const item = this.getItem(itemToRemove);
 				if (item) {
 					this.handleItemDeselect(item);
-					item.getNodes().forEach(node => {
+					for (const node of item.getNodes()) {
 						node.getParentNode().removeChild(node);
-					});
+					}
 					const entityItems = this.getEntityItemsInternal(item.getEntityId());
 					if (entityItems) {
 						entityItems.delete(String(item.getId()));
@@ -7358,21 +6367,17 @@ this.BX.UI = this.BX.UI || {};
 		}, {
 			key: "getSelectedItems",
 			value: function getSelectedItems() {
-				return Array.from(this.selectedItems);
+				return [...this.selectedItems];
 			}
 		}, {
 			key: "getItems",
 			value: function getItems() {
 				const items = [];
 				this.getItemsInternal().forEach(entityItems => {
-					Array.prototype.push.apply(items, Array.from(entityItems.values()));
+					Array.prototype.push.apply(items, [...entityItems.values()]);
 				});
 				return items;
 			}
-
-			/**
-			 * @internal
-			 */
 		}, {
 			key: "getItemsInternal",
 			value: function getItemsInternal() {
@@ -7382,21 +6387,13 @@ this.BX.UI = this.BX.UI || {};
 			key: "getEntityItems",
 			value: function getEntityItems(entityId) {
 				const items = this.getEntityItemsInternal(entityId);
-				return items === null ? [] : Array.from(items.values());
+				return items === null ? [] : [...items.values()];
 			}
-
-			/**
-			 * @internal
-			 */
 		}, {
 			key: "getEntityItemsInternal",
 			value: function getEntityItemsInternal(entityId) {
 				return this.items.get(entityId) || null;
 			}
-
-			/**
-			 * @private
-			 */
 		}, {
 			key: "validateItemIds",
 			value: function validateItemIds(itemIds) {
@@ -7404,25 +6401,23 @@ this.BX.UI = this.BX.UI || {};
 					return [];
 				}
 				const result = [];
-				itemIds.forEach(itemId => {
+				for (const itemId of itemIds) {
 					if (!main_core.Type.isArray(itemId) || itemId.length !== 2) {
-						return;
+						continue;
 					}
 					const [entityId, id] = itemId;
 					if (main_core.Type.isStringFilled(entityId) && (main_core.Type.isStringFilled(id) || main_core.Type.isNumber(id))) {
 						result.push(itemId);
 					}
-				});
+				}
 				return result;
 			}
 		}, {
 			key: "addTab",
-			value: function addTab(tab) {
-				if (main_core.Type.isPlainObject(tab)) {
-					tab = new Tab(this, tab);
-				}
+			value: function addTab(newTab) {
+				const tab = main_core.Type.isPlainObject(newTab) ? new Tab(this, newTab) : newTab;
 				if (!(tab instanceof Tab)) {
-					throw new Error('EntitySelector: a tab must be an instance of EntitySelector.Tab.');
+					throw new TypeError('EntitySelector: a tab must be an instance of EntitySelector.Tab.');
 				}
 				if (this.getTab(tab.getId())) {
 					console.error(`EntitySelector: the "${tab.getId()}" tab is already existed.`);
@@ -7438,7 +6433,7 @@ this.BX.UI = this.BX.UI || {};
 		}, {
 			key: "getTabs",
 			value: function getTabs() {
-				return Array.from(this.tabs.values());
+				return [...this.tabs.values()];
 			}
 		}, {
 			key: "getTab",
@@ -7462,16 +6457,24 @@ this.BX.UI = this.BX.UI || {};
 				if (!newActiveTab || newActiveTab === this.getActiveTab()) {
 					return newActiveTab;
 				}
-				if (this.getActiveTab()) {
-					this.getActiveTab().deselect();
-				}
+				const currentActiveTab = this.getActiveTab();
+				currentActiveTab?.deselect();
 				this.activeTab = newActiveTab;
 				newActiveTab.select();
+				if (newActiveTab.isVisible()) {
+					main_core.Dom.attr(newActiveTab.getLabelContainer(), 'tabindex', '0');
+					if (currentActiveTab) {
+						main_core.Dom.attr(currentActiveTab.getLabelContainer(), 'tabindex', '-1');
+					}
+				}
 				if (!newActiveTab.isRendered()) {
 					newActiveTab.render();
 				}
 				requestAnimationFrame(() => {
 					requestAnimationFrame(() => {
+						if (this.destroyed) {
+							return;
+						}
 						this.focusSearch();
 					});
 				});
@@ -7483,10 +6486,6 @@ this.BX.UI = this.BX.UI || {};
 				this.adjustFooter();
 				return newActiveTab;
 			}
-
-			/**
-			 * @private
-			 */
 		}, {
 			key: "insertTab",
 			value: function insertTab(tab) {
@@ -7505,9 +6504,8 @@ this.BX.UI = this.BX.UI || {};
 			key: "selectFirstTab",
 			value: function selectFirstTab(onlyVisible = true) {
 				const tabs = this.getTabs();
-				for (let i = 0; i < tabs.length; i++) {
-					const tab = tabs[i];
-					if (onlyVisible === false || tab.isVisible()) {
+				for (const tab of tabs) {
+					if (!onlyVisible || tab.isVisible()) {
 						return this.selectTab(tab.getId());
 					}
 				}
@@ -7522,7 +6520,7 @@ this.BX.UI = this.BX.UI || {};
 				const tabs = this.getTabs();
 				for (let i = tabs.length - 1; i >= 0; i--) {
 					const tab = tabs[i];
-					if (onlyVisible === false || tab.isVisible()) {
+					if (!onlyVisible || tab.isVisible()) {
 						return this.selectTab(tab.getId());
 					}
 				}
@@ -7542,8 +6540,7 @@ this.BX.UI = this.BX.UI || {};
 				let nextTab = null;
 				let activeFound = false;
 				const tabs = this.getTabs();
-				for (let i = 0; i < tabs.length; i++) {
-					const tab = tabs[i];
+				for (const tab of tabs) {
 					if (onlyVisible && !tab.isVisible()) {
 						continue;
 					}
@@ -7585,24 +6582,18 @@ this.BX.UI = this.BX.UI || {};
 				}
 				tab.getRootNode().removeChildren();
 				this.tabs.delete(id);
-				main_core.Dom.remove(tab.getLabelContainer(), this.getLabelsContainer());
-				main_core.Dom.remove(tab.getContainer(), this.getTabContentsContainer());
-				if (tab.getHeader()) {
-					main_core.Dom.remove(tab.getHeader().getContainer(), this.getHeaderContainer());
-				}
-				if (tab.getFooter()) {
-					main_core.Dom.remove(tab.getFooter().getContainer(), this.getFooterContainer());
-				}
+				main_core.Dom.remove(tab.getLabelContainer());
+				main_core.Dom.remove(tab.getContainer());
+				main_core.Dom.remove(tab.getHeader()?.getContainer());
+				main_core.Dom.remove(tab.getFooter()?.getContainer());
 				this.selectFirstTab();
 			}
 		}, {
 			key: "addEntity",
-			value: function addEntity(entity) {
-				if (main_core.Type.isPlainObject(entity)) {
-					entity = new Entity(entity);
-				}
+			value: function addEntity(newEntity) {
+				const entity = main_core.Type.isPlainObject(newEntity) ? new Entity(newEntity) : newEntity;
 				if (!(entity instanceof Entity)) {
-					throw new Error('EntitySelector: an entity must be an instance of EntitySelector.Entity.');
+					throw new TypeError('EntitySelector: an entity must be an instance of EntitySelector.Entity.');
 				}
 				if (this.hasEntity(entity.getId())) {
 					console.error(`EntitySelector: the "${entity.getId()}" entity is already existed.`);
@@ -7624,7 +6615,7 @@ this.BX.UI = this.BX.UI || {};
 		}, {
 			key: "getEntities",
 			value: function getEntities() {
-				return Array.from(this.entities.values());
+				return [...this.entities.values()];
 			}
 		}, {
 			key: "removeEntity",
@@ -7650,18 +6641,15 @@ this.BX.UI = this.BX.UI || {};
 		}, {
 			key: "getActiveHeader",
 			value: function getActiveHeader() {
-				if (!this.getActiveTab()) {
+				const activeTab = this.getActiveTab();
+				if (!activeTab) {
 					return null;
 				}
-				if (this.getActiveTab().getHeader()) {
-					return this.getActiveTab().getHeader();
+				if (activeTab.getHeader()) {
+					return activeTab.getHeader();
 				}
-				return this.getHeader() && this.getActiveTab().canShowDefaultHeader() ? this.getHeader() : null;
+				return this.getHeader() && activeTab.canShowDefaultHeader() ? this.getHeader() : null;
 			}
-
-			/**
-			 * @internal
-			 */
 		}, {
 			key: "adjustHeader",
 			value: function adjustHeader() {
@@ -7673,29 +6661,26 @@ this.BX.UI = this.BX.UI || {};
 						this.getHeader().hide();
 					}
 					this.getActiveTab().getHeader().show();
-				} else {
-					if (this.getHeader()) {
-						if (this.getActiveTab().canShowDefaultHeader()) {
-							this.getHeader().show();
-						} else {
-							this.getHeader().hide();
-						}
+				} else if (this.getHeader()) {
+					if (this.getActiveTab().canShowDefaultHeader()) {
+						this.getHeader().show();
+					} else {
+						this.getHeader().hide();
 					}
 				}
 			}
 		}, {
 			key: "setHeader",
 			value: function setHeader(headerContent, headerOptions) {
-				/** @var {BaseHeader} */
 				let header = null;
 				if (headerContent !== null) {
-					header = this.constructor.createHeader(this, headerContent, headerOptions);
+					header = Dialog.createHeader(this, headerContent, headerOptions);
 					if (header === null) {
 						return null;
 					}
 				}
 				if (this.isRendered() && this.getHeader() !== null) {
-					main_core.Dom.remove(this.getHeader().getContainer());
+					main_core.Dom.remove(this.getHeader()?.getContainer());
 					this.adjustHeader();
 				}
 				this.header = header;
@@ -7705,10 +6690,6 @@ this.BX.UI = this.BX.UI || {};
 				}
 				return header;
 			}
-
-			/**
-			 * @internal
-			 */
 		}, {
 			key: "appendHeader",
 			value: function appendHeader(header) {
@@ -7716,10 +6697,11 @@ this.BX.UI = this.BX.UI || {};
 					main_core.Dom.append(header.getContainer(), this.getHeaderContainer());
 				}
 			}
-
-			/**
-			 * @internal
-			 */
+		}, {
+			key: "createHeader",
+			value: function createHeader(context, headerContent, headerOptions) {
+				return Dialog.createHeader(context, headerContent, headerOptions);
+			}
 		}, {
 			key: "getFooter",
 			value: function getFooter() {
@@ -7728,46 +6710,41 @@ this.BX.UI = this.BX.UI || {};
 		}, {
 			key: "getActiveFooter",
 			value: function getActiveFooter() {
-				if (!this.getActiveTab()) {
+				const activeTab = this.getActiveTab();
+				if (!activeTab) {
 					return null;
 				}
-				if (this.getActiveTab().getFooter()) {
-					return this.getActiveTab().getFooter();
+				if (activeTab.getFooter()) {
+					return activeTab.getFooter();
 				}
-				return this.getFooter() && this.getActiveTab().canShowDefaultFooter() ? this.getFooter() : null;
+				return this.getFooter() && activeTab.canShowDefaultFooter() ? this.getFooter() : null;
 			}
-
-			/**
-			 * @internal
-			 */
 		}, {
 			key: "adjustFooter",
 			value: function adjustFooter() {
-				if (!this.getActiveTab()) {
+				const activeTab = this.getActiveTab();
+				if (!activeTab) {
 					return;
 				}
-				if (this.getActiveTab().getFooter()) {
+				if (activeTab.getFooter()) {
 					if (this.getFooter()) {
 						this.getFooter().hide();
 					}
-					this.getActiveTab().getFooter().show();
-				} else {
-					if (this.getFooter()) {
-						if (this.getActiveTab().canShowDefaultFooter()) {
-							this.getFooter().show();
-						} else {
-							this.getFooter().hide();
-						}
+					activeTab.getFooter().show();
+				} else if (this.getFooter()) {
+					if (activeTab.canShowDefaultFooter()) {
+						this.getFooter().show();
+					} else {
+						this.getFooter().hide();
 					}
 				}
 			}
 		}, {
 			key: "setFooter",
 			value: function setFooter(footerContent, footerOptions) {
-				/** @var {BaseFooter} */
 				let footer = null;
 				if (footerContent !== null) {
-					footer = this.constructor.createFooter(this, footerContent, footerOptions);
+					footer = Dialog.createFooter(this, footerContent, footerOptions);
 					if (footer === null) {
 						return null;
 					}
@@ -7783,10 +6760,6 @@ this.BX.UI = this.BX.UI || {};
 				}
 				return footer;
 			}
-
-			/**
-			 * @internal
-			 */
 		}, {
 			key: "appendFooter",
 			value: function appendFooter(footer) {
@@ -7794,10 +6767,11 @@ this.BX.UI = this.BX.UI || {};
 					main_core.Dom.append(footer.getContainer(), this.getFooterContainer());
 				}
 			}
-
-			/**
-			 * @internal
-			 */
+		}, {
+			key: "createFooter",
+			value: function createFooter(context, footerContent, footerOptions) {
+				return Dialog.createFooter(context, footerContent, footerOptions);
+			}
 		}, {
 			key: "getId",
 			value: function getId() {
@@ -7840,10 +6814,8 @@ this.BX.UI = this.BX.UI || {};
 		}, {
 			key: "getTargetNode",
 			value: function getTargetNode() {
-				if (this.targetNode === null) {
-					if (this.getTagSelectorMode() === TagSelectorMode.OUTSIDE) {
-						return this.getTagSelector().getOuterContainer();
-					}
+				if (this.targetNode === null && this.getTagSelectorMode() === TagSelectorMode.OUTSIDE) {
+					return this.getTagSelector().getOuterContainer();
 				}
 				return this.targetNode;
 			}
@@ -8016,9 +6988,8 @@ this.BX.UI = this.BX.UI || {};
 					} else {
 						return Promise.resolve();
 					}
-				} else {
-					return Promise.resolve();
 				}
+				return Promise.resolve();
 			}
 		}, {
 			key: "getOffsetLeft",
@@ -8094,7 +7065,7 @@ this.BX.UI = this.BX.UI || {};
 				if (this.getActiveTab()) {
 					const itemNode = this.getActiveTab().getRootNode().getFirstChild();
 					if (itemNode) {
-						itemNode.focus();
+						itemNode.focus(ui_a11y.FocusMonitor.Instance.getLastInputModality() === 'keyboard');
 						return itemNode;
 					}
 				}
@@ -8109,9 +7080,25 @@ this.BX.UI = this.BX.UI || {};
 			key: "clearNodeFocus",
 			value: function clearNodeFocus() {
 				if (this.focusedNode) {
+					if (this.hasTagSelector()) {
+						main_core.Dom.attr(this.getActiveDescendantControl(this.focusedNode), 'aria-activedescendant', null);
+					}
 					this.focusedNode.unfocus();
 					this.focusedNode = null;
 				}
+			}
+		}, {
+			key: "getActiveDescendantControl",
+			value: function getActiveDescendantControl(itemNode) {
+				if (this.hasTagSelector()) {
+					return this.getTagSelector()?.getTextBox() || null;
+				}
+				return itemNode.getTab().getListBoxContainer();
+			}
+		}, {
+			key: "getFocusTrap",
+			value: function getFocusTrap() {
+				return this.getPopup().getFocusTrap();
 			}
 		}, {
 			key: "isDropdownMode",
@@ -8167,10 +7154,6 @@ this.BX.UI = this.BX.UI || {};
 				}
 				return undefined;
 			}
-
-			/**
-			 * @private
-			 */
 		}, {
 			key: "setOptions",
 			value: function setOptions(dialogOptions) {
@@ -8219,7 +7202,6 @@ this.BX.UI = this.BX.UI || {};
 							main_core.Dom.removeClass(this.getLabelsContainer(), 'ui-selector-tab-labels--animate-show');
 							main_core.Dom.addClass(this.getLabelsContainer(), 'ui-selector-tab-labels--active');
 						}).catch(() => {
-							// fail silently
 						});
 					} else {
 						main_core.Dom.style(this.getLabelsContainer(), 'max-width', `${Math.min(freeSpace, this.getMaxLabelWidth())}px`);
@@ -8238,7 +7220,6 @@ this.BX.UI = this.BX.UI || {};
 					Animation.handleTransitionEnd(this.getLabelsContainer(), 'max-width').then(() => {
 						main_core.Dom.removeClass(this.getLabelsContainer(), 'ui-selector-tab-labels--animate-hide');
 					}).catch(() => {
-						// fail silently
 					});
 				}
 				main_core.Dom.style(this.getLabelsContainer(), 'max-width', null);
@@ -8256,22 +7237,23 @@ this.BX.UI = this.BX.UI || {};
 		}, {
 			key: "isTagSelectorInside",
 			value: function isTagSelectorInside() {
-				return this.getTagSelector() && this.getTagSelectorMode() === TagSelectorMode.INSIDE;
+				return this.getTagSelector() !== null && this.getTagSelectorMode() === TagSelectorMode.INSIDE;
 			}
 		}, {
 			key: "isTagSelectorOutside",
 			value: function isTagSelectorOutside() {
-				return this.getTagSelector() && this.getTagSelectorMode() === TagSelectorMode.OUTSIDE;
+				return this.getTagSelector() !== null && this.getTagSelectorMode() === TagSelectorMode.OUTSIDE;
+			}
+		}, {
+			key: "hasTagSelector",
+			value: function hasTagSelector() {
+				return this.getTagSelector() !== null;
 			}
 		}, {
 			key: "getTagSelectorQuery",
 			value: function getTagSelectorQuery() {
 				return this.getTagSelector() ? this.getTagSelector().getTextBoxValue() : '';
 			}
-
-			/**
-			 * @private
-			 */
 		}, {
 			key: "setTagSelector",
 			value: function setTagSelector(tagSelector) {
@@ -8282,6 +7264,7 @@ this.BX.UI = this.BX.UI || {};
 				this.tagSelector.subscribe('onAfterTagRemove', this.handleTagSelectorAfterTagRemove.bind(this));
 				this.tagSelector.subscribe('onAfterTagAdd', this.handleTagSelectorAfterTagAdd.bind(this));
 				this.tagSelector.subscribe('onContainerClick', this.handleTagSelectorClick.bind(this));
+				main_core.Dom.attr(this.tagSelector.getTextBox(), 'role', 'combobox');
 				this.tagSelector.setDialog(this);
 			}
 		}, {
@@ -8319,12 +7302,14 @@ this.BX.UI = this.BX.UI || {};
 			key: "showLoader",
 			value: function showLoader() {
 				void this.getLoader().show();
+				main_core.Dom.attr(this.getTabsContainer(), 'aria-busy', 'true');
 			}
 		}, {
 			key: "hideLoader",
 			value: function hideLoader() {
 				if (this.loader !== null) {
 					void this.getLoader().hide();
+					main_core.Dom.attr(this.getTabsContainer(), 'aria-busy', 'false');
 				}
 			}
 		}, {
@@ -8363,7 +7348,7 @@ this.BX.UI = this.BX.UI || {};
 					bindOptions: {
 						forceBindPosition: true
 					},
-					focusTrap: this.getTagSelector() === null ? undefined : false,
+					focusTrap: _assertClassBrand(_Dialog_brand, this, _getFocusTrapOptions).call(this),
 					autoHide: this.isAutoHide(),
 					autoHideHandler: this.handleAutoHide.bind(this),
 					closeByEsc: this.shouldHideByEsc(),
@@ -8376,12 +7361,31 @@ this.BX.UI = this.BX.UI || {};
 						onDestroy: this.handlePopupDestroy.bind(this)
 					},
 					content: this.getContainer(),
+					ariaLabel: this.getAriaLabel(),
 					...popupOptions
 				});
-				this.popup.subscribeFromOptions(userEvents);
+				this.popup.subscribeFromOptions(userEvents ?? {});
 				this.rendered = true;
 				this.selectFirstTab();
 				return this.popup;
+			}
+		}, {
+			key: "getAriaLabel",
+			value: function getAriaLabel() {
+				if (this.ariaLabel !== null) {
+					return this.ariaLabel;
+				}
+				const knownEntities = ['USER', 'PROJECT', 'DEPARTMENT'];
+				const entityIds = [...new Set(this.getEntities().map(entity => entity.getId().toUpperCase())
+				.filter(id => !id.startsWith('META-')))];
+				if (entityIds.length > 0 && entityIds.every(id => knownEntities.includes(id))) {
+					const phraseId = `UI_SELECTOR_DIALOG_ARIA_LABEL_${knownEntities.filter(id => entityIds.includes(id)).join('_')}`;
+					const label = main_core.Loc.getMessage(phraseId);
+					if (main_core.Type.isStringFilled(label)) {
+						return label;
+					}
+				}
+				return main_core.Loc.getMessage('UI_SELECTOR_DIALOG_ARIA_LABEL_DEFAULT') ?? '';
 			}
 		}, {
 			key: "isRendered",
@@ -8401,6 +7405,7 @@ this.BX.UI = this.BX.UI || {};
 					return main_core.Tag.render`
 				<div
 					class="ui-selector-dialog${className}"
+					data-testid="ui-selector-dialog"
 					style="width:${this.getWidth()}px; height:${this.getHeight()}px;"
 				>
 					${this.getHeaderContainer()}
@@ -8436,6 +7441,8 @@ this.BX.UI = this.BX.UI || {};
 				return this.cache.remember('labels-container', () => {
 					return main_core.Tag.render`
 				<div
+					role="tablist"
+					aria-orientation="vertical"
 					class="ui-selector-tab-labels"
 					onmouseenter="${this.alwaysShowLabels ? null : this.handleLabelsMouseEnter.bind(this)}"
 					onmouseleave="${this.alwaysShowLabels ? null : this.handleLabelsMouseLeave.bind(this)}"
@@ -8449,7 +7456,7 @@ this.BX.UI = this.BX.UI || {};
 				return this.cache.remember('header', () => {
 					const header = this.getHeader() && this.getHeader().getContainer();
 					return main_core.Tag.render`
-				<div class="ui-selector-header-container">${header ? header : ''}</div>
+				<div class="ui-selector-header-container">${header || ''}</div>
 			`;
 				});
 			}
@@ -8459,7 +7466,7 @@ this.BX.UI = this.BX.UI || {};
 				return this.cache.remember('footer', () => {
 					const footer = this.getFooter() && this.getFooter().getContainer();
 					return main_core.Tag.render`
-				<div class="ui-selector-footer-container">${footer ? footer : ''}</div>
+				<div class="ui-selector-footer-container">${footer || ''}</div>
 			`;
 				});
 			}
@@ -8495,24 +7502,6 @@ this.BX.UI = this.BX.UI || {};
 			key: "isFrozen",
 			value: function isFrozen() {
 				return this.frozen;
-			}
-		}, {
-			key: "hasRecentItems",
-			value: function hasRecentItems() {
-				return new Promise((resolve, reject) => {
-					main_core.ajax.runAction('ui.entityselector.load', {
-						json: {
-							dialog: this.getAjaxJson()
-						},
-						getParameters: {
-							context: this.getContext()
-						}
-					}).then(response => {
-						resolve(response.data && response.data.dialog && main_core.Type.isArrayFilled(response.data.dialog.recentItems));
-					}).catch(error => {
-						reject(error);
-					});
-				});
 			}
 		}, {
 			key: "load",
@@ -8658,10 +7647,6 @@ this.BX.UI = this.BX.UI || {};
 				this.recentItemsToSave.push(item);
 				this.saveRecentItemsWithDebounce();
 			}
-
-			/**
-			 * @private
-			 */
 		}, {
 			key: "saveRecentItems",
 			value: function saveRecentItems() {
@@ -8686,10 +7671,6 @@ this.BX.UI = this.BX.UI || {};
 			value: function shouldClearUnavailableItems() {
 				return this.clearUnavailableItems;
 			}
-
-			/**
-			 * @private
-			 */
 		}, {
 			key: "handleTagSelectorInput",
 			value: function handleTagSelectorInput() {
@@ -8700,19 +7681,11 @@ this.BX.UI = this.BX.UI || {};
 				this.search(query);
 				this.adjustByTagSelector();
 			}
-
-			/**
-			 * @private
-			 */
 		}, {
 			key: "handleTagSelectorAddButtonClick",
 			value: function handleTagSelectorAddButtonClick() {
 				this.show();
 			}
-
-			/**
-			 * @private
-			 */
 		}, {
 			key: "handleTagSelectorTagRemove",
 			value: function handleTagSelectorTagRemove(event) {
@@ -8728,28 +7701,16 @@ this.BX.UI = this.BX.UI || {};
 				}
 				this.focusSearch();
 			}
-
-			/**
-			 * @private
-			 */
 		}, {
 			key: "handleTagSelectorAfterTagRemove",
 			value: function handleTagSelectorAfterTagRemove() {
 				this.adjustByTagSelector();
 			}
-
-			/**
-			 * @private
-			 */
 		}, {
 			key: "handleTagSelectorAfterTagAdd",
 			value: function handleTagSelectorAfterTagAdd() {
 				this.adjustByTagSelector();
 			}
-
-			/**
-			 * @private
-			 */
 		}, {
 			key: "adjustByTagSelector",
 			value: function adjustByTagSelector() {
@@ -8764,24 +7725,17 @@ this.BX.UI = this.BX.UI || {};
 							const height = this.getHeight();
 							this.setHeight(height + offset).then(() => {
 								this.adjustPosition();
+							}).catch(() => {
 							});
 						}
 					}
 				}
 			}
-
-			/**
-			 * @private
-			 */
 		}, {
 			key: "handleTagSelectorClick",
 			value: function handleTagSelectorClick() {
 				this.focusSearch();
 			}
-
-			/**
-			 * @internal
-			 */
 		}, {
 			key: "handleItemSelect",
 			value: function handleItemSelect(item, animate = true) {
@@ -8799,26 +7753,16 @@ this.BX.UI = this.BX.UI || {};
 				}
 				this.selectedItems.add(item);
 			}
-
-			/**
-			 * @internal
-			 */
 		}, {
 			key: "handleItemDeselect",
 			value: function handleItemDeselect(item, animate = true) {
 				const shouldAnimate = animate && this.isMultiple();
 				this.selectedItems.delete(item);
-				if (this.getTagSelector()) {
-					this.getTagSelector().removeTag({
-						id: item.getId(),
-						entityId: item.getEntityId()
-					}, shouldAnimate);
-				}
+				this.getTagSelector()?.removeTag({
+					id: item.getId(),
+					entityId: item.getEntityId()
+				}, shouldAnimate);
 			}
-
-			/**
-			 * @private
-			 */
 		}, {
 			key: "handlePopupAfterShow",
 			value: function handlePopupAfterShow() {
@@ -8826,41 +7770,34 @@ this.BX.UI = this.BX.UI || {};
 				this.adjustByTagSelector();
 				this.emit('onShow');
 			}
-
-			/**
-			 * @private
-			 */
 		}, {
 			key: "handlePopupFirstShow",
 			value: function handlePopupFirstShow() {
 				this.emit('onFirstShow');
 				this.observeTabOverlapping();
 			}
-
-			/**
-			 * @private
-			 */
 		}, {
 			key: "handlePopupShow",
 			value: function handlePopupShow() {
 				if (this.offsetAnimation) {
 					requestAnimationFrame(() => {
 						requestAnimationFrame(() => {
+							if (this.destroyed) {
+								return;
+							}
 							main_core.Dom.addClass(this.getPopup().getPopupContainer(), 'ui-selector-popup-offset-animation');
 						});
 					});
 				}
 				if (this.alwaysShowLabels) {
 					setTimeout(() => {
-						// We have to call the method after adjustPosition()
+						if (this.destroyed) {
+							return;
+						}
 						this.expandLabels(false);
 					}, 0);
 				}
 			}
-
-			/**
-			 * @private
-			 */
 		}, {
 			key: "handleAutoHide",
 			value: function handleAutoHide(event) {
@@ -8880,10 +7817,6 @@ this.BX.UI = this.BX.UI || {};
 				}
 				return true;
 			}
-
-			/**
-			 * @private
-			 */
 		}, {
 			key: "observeTabOverlapping",
 			value: function observeTabOverlapping() {
@@ -8904,10 +7837,6 @@ this.BX.UI = this.BX.UI || {};
 					attributeFilter: ['style']
 				});
 			}
-
-			/**
-			 * @private
-			 */
 		}, {
 			key: "disconnectTabOverlapping",
 			value: function disconnectTabOverlapping() {
@@ -8915,10 +7844,6 @@ this.BX.UI = this.BX.UI || {};
 					this.overlappingObserver.disconnect();
 				}
 			}
-
-			/**
-			 * @private
-			 */
 		}, {
 			key: "handlePopupAfterClose",
 			value: function handlePopupAfterClose() {
@@ -8929,43 +7854,28 @@ this.BX.UI = this.BX.UI || {};
 					this.getTagSelector().clearTextBox();
 					this.getTagSelector().showAddButton();
 					this.getTagSelector().hideTextBox();
+					ui_a11y.FocusNavigator.focusTarget(this.getTagSelector().getAddButtonLink());
 				}
 				if (this.offsetAnimation) {
 					main_core.Dom.removeClass(this.getPopup().getPopupContainer(), 'ui-selector-popup-offset-animation');
 				}
 				this.emit('onHide');
 			}
-
-			/**
-			 * @private
-			 */
 		}, {
 			key: "handlePopupDestroy",
 			value: function handlePopupDestroy() {
 				this.destroy();
 			}
-
-			/**
-			 * @private
-			 */
 		}, {
 			key: "handleLabelsMouseEnter",
 			value: function handleLabelsMouseEnter() {
 				this.expandLabels();
 			}
-
-			/**
-			 * @private
-			 */
 		}, {
 			key: "handleLabelsMouseLeave",
 			value: function handleLabelsMouseLeave() {
 				this.collapseLabels();
 			}
-
-			/**
-			 * @private
-			 */
 		}, {
 			key: "handleItemNodeFocus",
 			value: function handleItemNodeFocus(event) {
@@ -8977,11 +7887,10 @@ this.BX.UI = this.BX.UI || {};
 				}
 				this.clearNodeFocus();
 				this.focusedNode = node;
+				if (this.hasTagSelector()) {
+					main_core.Dom.attr(this.getActiveDescendantControl(node), 'aria-activedescendant', node.getId());
+				}
 			}
-
-			/**
-			 * @private
-			 */
 		}, {
 			key: "handleItemNodeUnfocus",
 			value: function handleItemNodeUnfocus() {
@@ -8999,8 +7908,6 @@ this.BX.UI = this.BX.UI || {};
 					clearUnavailableItems: this.shouldClearUnavailableItems()
 				};
 			}
-
-			/** @internal */
 		}, {
 			key: "emitEntityErrors",
 			value: function emitEntityErrors(errorOptions) {
@@ -9023,7 +7930,7 @@ this.BX.UI = this.BX.UI || {};
 		}, {
 			key: "getInstances",
 			value: function getInstances() {
-				return Array.from(instances.values());
+				return [...instances.values()];
 			}
 		}, {
 			key: "createHeader",
@@ -9031,14 +7938,13 @@ this.BX.UI = this.BX.UI || {};
 				if (!main_core.Type.isStringFilled(headerContent) && !main_core.Type.isArrayFilled(headerContent) && !main_core.Type.isDomNode(headerContent) && !main_core.Type.isFunction(headerContent)) {
 					return null;
 				}
-
-				/** @var {BaseHeader} */
 				let header = null;
 				const options = main_core.Type.isPlainObject(headerOptions) ? headerOptions : {};
 				if (main_core.Type.isFunction(headerContent) || main_core.Type.isString(headerContent)) {
 					const className = main_core.Type.isString(headerContent) ? main_core.Reflection.getClass(headerContent) : headerContent;
 					if (main_core.Type.isFunction(className)) {
-						header = new className(context, options);
+						const HeaderClass = className;
+						header = new HeaderClass(context, options);
 						if (!(header instanceof BaseHeader)) {
 							console.error('EntitySelector: header is not an instance of BaseHeader.');
 							header = null;
@@ -9046,9 +7952,10 @@ this.BX.UI = this.BX.UI || {};
 					}
 				}
 				if (headerContent !== null && !header) {
-					header = new DefaultHeader(context, Object.assign({}, options, {
+					header = new DefaultHeader(context, {
+						...options,
 						content: headerContent
-					}));
+					});
 				}
 				return header;
 			}
@@ -9058,14 +7965,13 @@ this.BX.UI = this.BX.UI || {};
 				if (!main_core.Type.isStringFilled(footerContent) && !main_core.Type.isArrayFilled(footerContent) && !main_core.Type.isDomNode(footerContent) && !main_core.Type.isFunction(footerContent)) {
 					return null;
 				}
-
-				/** @var {BaseFooter} */
 				let footer = null;
 				const options = main_core.Type.isPlainObject(footerOptions) ? footerOptions : {};
 				if (main_core.Type.isFunction(footerContent) || main_core.Type.isString(footerContent)) {
 					const className = main_core.Type.isString(footerContent) ? main_core.Reflection.getClass(footerContent) : footerContent;
 					if (main_core.Type.isFunction(className)) {
-						footer = new className(context, options);
+						const FooterClass = className;
+						footer = new FooterClass(context, options);
 						if (!(footer instanceof BaseFooter)) {
 							console.error('EntitySelector: footer is not an instance of BaseFooter.');
 							footer = null;
@@ -9073,14 +7979,29 @@ this.BX.UI = this.BX.UI || {};
 					}
 				}
 				if (footerContent !== null && !footer) {
-					footer = new DefaultFooter(context, Object.assign({}, options, {
+					footer = new DefaultFooter(context, {
+						...options,
 						content: footerContent
-					}));
+					});
 				}
 				return footer;
 			}
 		}]);
 	}(main_core_events.EventEmitter);
+	function _getFocusTrapOptions() {
+		if (this.isTagSelectorOutside()) {
+			return {
+				initialFocus: false,
+				restoreFocus: false,
+				startBoundary: this.getTagSelector().getTextBox(),
+				endBoundary: this.getTagSelector().getTextBox()
+			};
+		}
+		if (!this.hasTagSelector() && ui_a11y.InteractivityChecker.isTextInput(ui_a11y.FocusNavigator.getActiveElement())) {
+			return false;
+		}
+		return true;
+	}
 
 	const EntitySelector = {
 		Dialog,
@@ -9113,5 +8034,5 @@ this.BX.UI = this.BX.UI || {};
 	exports.TagItem = TagItem;
 	exports.TagSelector = TagSelector;
 
-})(this.BX.UI.EntitySelector = this.BX.UI.EntitySelector || {}, BX, BX.Event, BX.Main, BX, BX.Collections, BX.UI.IconSet);
+})(this.BX.UI.EntitySelector = this.BX.UI.EntitySelector || {}, window, window, BX, BX.Cache, BX.Event, BX.Main, BX, BX.UI.Accessibility, BX.Collections, BX.UI.IconSet);
 //# sourceMappingURL=entity-selector.bundle.js.map

@@ -1,4 +1,5 @@
 import './grouped-connections.css';
+import { computed, toValue } from 'ui.vue3';
 import { useBlockDiagram } from '../../composables';
 import { Connection } from '../connection/connection';
 import { NewConnection } from '../new-connection/new-connection';
@@ -10,8 +11,8 @@ import type {
 } from '../../types';
 
 type GroupedConnectionsSetup = {
-	groupedConnections: TGroupedConnections;
-	connectionGroupNames: ConnectionGroupNames;
+	groupedVisibleConnections: TGroupedConnections;
+	visibleConnectionGroupNames: ConnectionGroupNames;
 	getGroupConnectionSlotName: typeof getGroupConnectionSlotName;
 };
 
@@ -25,26 +26,37 @@ export const GroupedConnections = {
 	},
 	setup(): GroupedConnectionsSetup
 	{
-		const {
-			groupedConnections,
-			connectionGroupNames,
-			newConnections,
-		} = useBlockDiagram();
+		const { blockIntersections, connectionPreview } = useBlockDiagram();
+		const groupedVisibleConnections = computed((): TGroupedConnections => {
+			const hiddenConnectionId = toValue(connectionPreview)?.hiddenConnectionId;
+			const groups = toValue(blockIntersections.groupedVisibleConnections);
+
+			if (!hiddenConnectionId)
+			{
+				return groups;
+			}
+
+			return Object.fromEntries(
+				Object.entries(groups).map(([groupName, connections]) => [
+					groupName,
+					connections.filter((connection) => connection.id !== hiddenConnectionId),
+				]),
+			);
+		});
 
 		return {
-			groupedConnections,
-			connectionGroupNames,
+			groupedVisibleConnections,
+			visibleConnectionGroupNames: blockIntersections.visibleConnectionGroupNames,
 			getGroupConnectionSlotName,
-			newConnections,
 		};
 	},
 	template: `
 		<ConnectionsQueueTransition>
 			<slot
-				v-for="connection in connectionGroupNames"
+				v-for="connection in visibleConnectionGroupNames"
 				:key="connection"
 				:name="getGroupConnectionSlotName(connection)"
-				:connections="groupedConnections[connection]"
+				:connections="groupedVisibleConnections[connection]"
 			/>
 			<NewConnection/>
 		</ConnectionsQueueTransition>

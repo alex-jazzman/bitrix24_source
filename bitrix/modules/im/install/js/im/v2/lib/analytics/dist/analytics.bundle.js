@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports, main_core, ui_analytics, im_v2_application_core, im_v2_const, im_v2_lib_feature, im_v2_lib_messageComponent) {
+(function (exports, main_core, ui_analytics, im_v2_application_core, im_v2_const, im_v2_lib_feature, ui_pageContext, im_v2_lib_messageComponent) {
 	'use strict';
 
 	const PSEUDO_SELF_CHAT_TYPE = 'notes';
@@ -98,10 +98,15 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		addUser: 'add_mentioned_user',
 		openUnreadMode: 'show_unread',
 		readAllChats: 'read_all',
+		viewJoinPopup: 'view_join_popup',
+		copyGuestLink: 'copy_guest_link',
 		openMiniChat: 'open_mini_chat',
 		bitrixGptAgentPromoView: 'banner_view',
 		bitrixGptAgentPromoButtonClick: 'button_click',
-		bitrixGptAgentPromoClose: 'banner_close'
+		bitrixGptAgentPromoClose: 'banner_close',
+		suggestsShow: 'suggests_show',
+		suggestsClick: 'suggests_click',
+		modeChange: 'mode_change'
 	});
 	const AnalyticsTool = Object.freeze({
 		ai: 'ai',
@@ -272,7 +277,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	const AnalyticUserType = Object.freeze({
 		userIntranet: 'user_intranet',
 		userExtranet: 'user_extranet',
-		userCollaber: 'user_collaber'
+		userCollaber: 'user_collaber',
+		userGuest: 'user_guest'
 	});
 	function getUserType() {
 		const user = im_v2_application_core.Core.getStore().getters['users/get'](im_v2_application_core.Core.getUserId(), true);
@@ -283,6 +289,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				return AnalyticUserType.userExtranet;
 			case im_v2_const.UserType.collaber:
 				return AnalyticUserType.userCollaber;
+			case im_v2_const.UserType.guest:
+				return AnalyticUserType.userGuest;
 			default:
 				return AnalyticUserType.userIntranet;
 		}
@@ -628,12 +636,35 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		}
 	}
 
+	const convertToReadableValue = value => value ? 'on' : 'off';
+	function getCopilotContext(dialogId, suggestsCount = null) {
+		const store = im_v2_application_core.Core.getStore();
+		const mcpAuth = store.getters['copilot/chats/getMcpAuth'](dialogId);
+		const isMcpEnabled = Boolean(mcpAuth);
+		const role = store.getters['copilot/chats/getRole'](dialogId);
+		const context = {
+			mcp: convertToReadableValue(isMcpEnabled),
+			reasoning: convertToReadableValue(store.getters['copilot/chats/isReasoningEnabled'](dialogId)),
+			webSearch: convertToReadableValue(store.getters['copilot/chats/isForceSearchEnabled'](dialogId)),
+			agentMode: convertToReadableValue(store.getters['copilot/chats/isAgentModeEnabled'](dialogId)),
+			role: role ? role.code : ''
+		};
+		if (isMcpEnabled) {
+			context.mcpServer = mcpAuth.name;
+		}
+		if (suggestsCount !== null) {
+			context.suggestsCount = suggestsCount;
+		}
+		return JSON.stringify(context);
+	}
+
 	const CopilotEntryPoint = Object.freeze({
 		create_menu: 'create_menu',
 		role_picker: 'role_picker'
 	});
 	class Copilot {
 		#isBitrixGptV2Available = im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.isBitrixGptV2Available);
+		#shownSuggestsMessageIds = new Set();
 		onCreateChat(dialogId) {
 			if (!main_core.Type.isStringFilled(dialogId)) {
 				return;
@@ -737,6 +768,109 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			}
 			ui_analytics.sendData(params);
 		}
+		onShowSuggestedPrompts(dialogId, messageId, suggestsCount) {
+			if (!this.#isBitrixGptV2Available) {
+				return;
+			}
+			if (this.#shownSuggestsMessageIds.has(messageId)) {
+				return;
+			}
+			this.#shownSuggestsMessageIds.add(messageId);
+			const chat = im_v2_application_core.Core.getStore().getters['chats/get'](dialogId);
+			const params = {
+				event: AnalyticsEvent.suggestsShow,
+				tool: AnalyticsTool.ai,
+				category: AnalyticsCategory.chatOperations,
+				p4: getCopilotContext(dialogId, suggestsCount),
+				p5: `chatId_${chat.chatId}`,
+				...this.#getModuleSection()
+			};
+			ui_analytics.sendData(params);
+		}
+		onClickSuggestedPrompt(dialogId, suggestsCount) {
+			if (!this.#isBitrixGptV2Available) {
+				return;
+			}
+			const chat = im_v2_application_core.Core.getStore().getters['chats/get'](dialogId);
+			const params = {
+				event: AnalyticsEvent.suggestsClick,
+				tool: AnalyticsTool.ai,
+				category: AnalyticsCategory.chatOperations,
+				p4: getCopilotContext(dialogId, suggestsCount),
+				p5: `chatId_${chat.chatId}`,
+				...this.#getModuleSection()
+			};
+			ui_analytics.sendData(params);
+		}
+		onChangeForceSearch(dialogId) {
+			if (!this.#isBitrixGptV2Available) {
+				return;
+			}
+			const isEnabled = im_v2_application_core.Core.getStore().getters['copilot/chats/isForceSearchEnabled'](dialogId);
+			const chat = im_v2_application_core.Core.getStore().getters['chats/get'](dialogId);
+			const params = {
+				event: AnalyticsEvent.modeChange,
+				tool: AnalyticsTool.ai,
+				category: AnalyticsCategory.chatOperations,
+				p1: isEnabled ? 'webSearch_on' : 'webSearch_off',
+				p4: getCopilotContext(dialogId),
+				p5: `chatId_${chat.chatId}`,
+				...this.#getModuleSection()
+			};
+			ui_analytics.sendData(params);
+		}
+		onChangeMCP(dialogId) {
+			if (!this.#isBitrixGptV2Available) {
+				return;
+			}
+			const chat = im_v2_application_core.Core.getStore().getters['chats/get'](dialogId);
+			const mcpAuth = im_v2_application_core.Core.getStore().getters['copilot/chats/getMcpAuth'](dialogId);
+			const isEnabled = Boolean(mcpAuth);
+			const params = {
+				event: AnalyticsEvent.modeChange,
+				tool: AnalyticsTool.ai,
+				category: AnalyticsCategory.chatOperations,
+				p1: isEnabled ? 'mcp_on' : 'mcp_off',
+				p4: getCopilotContext(dialogId),
+				p5: `chatId_${chat.chatId}`,
+				...this.#getModuleSection()
+			};
+			ui_analytics.sendData(params);
+		}
+		onChangeReasoning(dialogId) {
+			if (!this.#isBitrixGptV2Available) {
+				return;
+			}
+			const chat = im_v2_application_core.Core.getStore().getters['chats/get'](dialogId);
+			const isEnabled = im_v2_application_core.Core.getStore().getters['copilot/chats/isReasoningEnabled'](dialogId);
+			const params = {
+				event: AnalyticsEvent.modeChange,
+				tool: AnalyticsTool.ai,
+				category: AnalyticsCategory.chatOperations,
+				p1: isEnabled ? 'reasoning_on' : 'reasoning_off',
+				p4: getCopilotContext(dialogId),
+				p5: `chatId_${chat.chatId}`,
+				...this.#getModuleSection()
+			};
+			ui_analytics.sendData(params);
+		}
+		onChangeAgentMode(dialogId) {
+			if (!this.#isBitrixGptV2Available) {
+				return;
+			}
+			const chat = im_v2_application_core.Core.getStore().getters['chats/get'](dialogId);
+			const isEnabled = im_v2_application_core.Core.getStore().getters['copilot/chats/isAgentModeEnabled'](dialogId);
+			const params = {
+				event: AnalyticsEvent.modeChange,
+				tool: AnalyticsTool.ai,
+				category: AnalyticsCategory.chatOperations,
+				p1: isEnabled ? 'agentMode_on' : 'agentMode_off',
+				p4: getCopilotContext(dialogId),
+				p5: `chatId_${chat.chatId}`,
+				...this.#getModuleSection()
+			};
+			ui_analytics.sendData(params);
+		}
 		onMcpIntegrationClick(dialogId) {
 			const dialog = im_v2_application_core.Core.getStore().getters['chats/get'](dialogId);
 			if (!dialog) {
@@ -750,6 +884,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				c_section: AnalyticsSection.chatTextarea,
 				p1: `chatType_${chatType}`
 			});
+		}
+		#getModuleSection() {
+			const module = ui_pageContext.PageContext.getModule();
+			return module ? {
+				c_section: module
+			} : {};
 		}
 		#sendCreateChatData({
 			dialogId,
@@ -964,6 +1104,29 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				category: AnalyticsCategory.chat,
 				event: AnalyticsEvent.addUser,
 				c_section: AnalyticsSection.mentionPopup,
+				p1: `chatType_${chatType}`
+			});
+		}
+	}
+
+	class Guest {
+		onShowGuestNamePopup(dialogId) {
+			const chat = im_v2_application_core.Core.getStore().getters['chats/get'](dialogId);
+			const chatType = getChatType(chat);
+			ui_analytics.sendData({
+				tool: AnalyticsTool.im,
+				category: AnalyticsCategory.messenger,
+				event: AnalyticsEvent.viewJoinPopup,
+				p1: `chatType_${chatType}`
+			});
+		}
+		onCopyGuestInviteLink(dialogId) {
+			const chat = im_v2_application_core.Core.getStore().getters['chats/get'](dialogId);
+			const chatType = getChatType(chat);
+			ui_analytics.sendData({
+				tool: AnalyticsTool.im,
+				category: AnalyticsCategory.messenger,
+				event: AnalyticsEvent.copyGuestLink,
 				p1: `chatType_${chatType}`
 			});
 		}
@@ -1700,6 +1863,31 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		}
 	}
 
+	class RecentHeaderMenu {
+		onOpenUnreadMode() {
+			this.#sendData(im_v2_const.ChatType.chat, AnalyticsEvent.openUnreadMode);
+		}
+		onReadAllChats() {
+			this.#sendData(im_v2_const.ChatType.chat, AnalyticsEvent.readAllChats);
+		}
+		onOpenTasksUnreadMode() {
+			this.#sendData(im_v2_const.ChatType.tasks, AnalyticsEvent.openUnreadMode);
+		}
+		onReadAllTaskChats() {
+			this.#sendData(im_v2_const.ChatType.tasks, AnalyticsEvent.readAllChats);
+		}
+		#sendData(type, event) {
+			const currentLayout = im_v2_application_core.Core.getStore().getters['application/getLayout'].name;
+			ui_analytics.sendData({
+				tool: AnalyticsTool.im,
+				category: AnalyticsCategory.messenger,
+				type,
+				c_section: `${currentLayout}_tab`,
+				event
+			});
+		}
+	}
+
 	const SectionByLayoutName = {
 		[im_v2_const.Layout.chat]: AnalyticsSection.chatLayout,
 		[im_v2_const.Layout.notification]: AnalyticsSection.notificationLayout,
@@ -2013,31 +2201,6 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		}
 	}
 
-	class RecentHeaderMenu {
-		onOpenUnreadMode() {
-			this.#sendData(im_v2_const.ChatType.chat, AnalyticsEvent.openUnreadMode);
-		}
-		onReadAllChats() {
-			this.#sendData(im_v2_const.ChatType.chat, AnalyticsEvent.readAllChats);
-		}
-		onOpenTasksUnreadMode() {
-			this.#sendData(im_v2_const.ChatType.tasks, AnalyticsEvent.openUnreadMode);
-		}
-		onReadAllTaskChats() {
-			this.#sendData(im_v2_const.ChatType.tasks, AnalyticsEvent.readAllChats);
-		}
-		#sendData(type, event) {
-			const currentLayout = im_v2_application_core.Core.getStore().getters['application/getLayout'].name;
-			ui_analytics.sendData({
-				tool: AnalyticsTool.im,
-				category: AnalyticsCategory.messenger,
-				type,
-				c_section: `${currentLayout}_tab`,
-				event
-			});
-		}
-	}
-
 	class BitrixGptAgentPromo {
 		onBannerView() {
 			this.#sendData(AnalyticsEvent.bitrixGptAgentPromoView);
@@ -2093,8 +2256,9 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		mention = new Mention();
 		taskComments = new TaskComments();
 		recentHeaderMenu = new RecentHeaderMenu();
-		#isBitrixGptV2Available = im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.isBitrixGptV2Available);
+		guest = new Guest();
 		bitrixGptAgentPromo = new BitrixGptAgentPromo();
+		#isBitrixGptV2Available = im_v2_lib_feature.FeatureManager.isFeatureAvailable(im_v2_lib_feature.Feature.isBitrixGptV2Available);
 		static #instance;
 		static getInstance() {
 			if (!this.#instance) {
@@ -2190,7 +2354,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	exports.Analytics = Analytics;
 	exports.CreateChatContext = CreateChatContext;
 	exports.getCollabId = getCollabId;
+	exports.getCopilotContext = getCopilotContext;
 	exports.getUserType = getUserType;
 
-})(this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}, BX, BX.UI.Analytics, BX.Messenger.v2.Application, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib);
+})(this.BX.Messenger.v2.Lib = this.BX.Messenger.v2.Lib || {}, BX, BX.UI.Analytics, BX.Messenger.v2.Application, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.UI.PageContext, BX.Messenger.v2.Lib);
 //# sourceMappingURL=analytics.bundle.js.map

@@ -2,7 +2,31 @@ import {Reflection, Runtime} from 'main.core';
 import defaultOptions from './internal/default-options';
 import type {EnvOptions} from './types/env.options.types';
 
+export {isSupportedVideoUrl} from './video-recognizer';
+
 const optionsKey = Symbol('options');
+const mergeOptions = (baseOptions: EnvOptions = {}, options: EnvOptions = {}): EnvOptions => {
+	const merge = Runtime?.merge || BX?.Runtime?.merge;
+	if (typeof merge === 'function')
+	{
+		return merge(baseOptions, options);
+	}
+
+	return {
+		...baseOptions,
+		...options,
+		params: {
+			...(baseOptions.params || {}),
+			...(options.params || {}),
+		},
+	};
+};
+
+const getGlobalClass = (name: string): ?Object => {
+	const getClass = Reflection?.getClass || BX?.Reflection?.getClass;
+
+	return typeof getClass === 'function' ? getClass(name) : null;
+};
 
 /**
  * @memberOf BX.Landing
@@ -20,7 +44,7 @@ export class Env
 	{
 		Env.instance = new Env(options);
 
-		const parentEnv = Reflection.getClass('parent.BX.Landing.Env');
+			const parentEnv = getGlobalClass('parent.BX.Landing.Env');
 		if (parentEnv)
 		{
 			parentEnv.instance = Env.instance;
@@ -32,7 +56,7 @@ export class Env
 	constructor(options: EnvOptions = {})
 	{
 		this[optionsKey] = Object.seal(
-			Runtime.merge(defaultOptions, options),
+			mergeOptions(defaultOptions, options),
 		);
 	}
 
@@ -43,7 +67,7 @@ export class Env
 
 	setOptions(options: {[key: string]: any})
 	{
-		this[optionsKey] = Runtime.merge(this[optionsKey], options);
+		this[optionsKey] = mergeOptions(this[optionsKey], options);
 	}
 
 	getType(): string
@@ -76,5 +100,19 @@ export class Env
 		return urlMask
 			.replace('#site_show#', siteId)
 			.replace('#landing_edit#', options.landing);
+	}
+
+	isBlockControlsEnabled(): boolean
+	{
+		const option = this.getOptions().blockControlsEnabled;
+
+		return typeof option === 'undefined' ? true : BX.Text.toBoolean(option);
+	}
+
+	isVkVideoAvailable(): boolean
+	{
+		const option = this.getOptions().vkVideoAvailable;
+
+		return typeof option === 'undefined' ? true : BX.Text.toBoolean(option);
 	}
 }

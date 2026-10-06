@@ -9,6 +9,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 /** @var array $arResult */
 
+use Bitrix\Landing\Sanitizer;
 use Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__FILE__);
@@ -94,7 +95,7 @@ $id = 'widget-' . htmlspecialcharsbx(bin2hex(random_bytes(5)));
 							<a
 								<?= $userLinkHrefAttr ?>
 								class="landing-widget-active-employees-content-item-img"
-								style="background-image: url('<?= $img ?? '' ?>');"
+								style="background-image: url('<?= htmlspecialcharsbx(Sanitizer::sanitizeCssUrl((string)($img ?? ''))) ?>');"
 							>
 							</a>
 							<?php else: ?>
@@ -170,7 +171,7 @@ $id = 'widget-' . htmlspecialcharsbx(bin2hex(random_bytes(5)));
 						<a
 							<?= $userLinkHrefAttr ?>
 							class="landing-widget-active-employees-content-item-img"
-							style="background-image: url('<?= $img ?? '' ?>');"
+							style="background-image: url('<?= htmlspecialcharsbx(Sanitizer::sanitizeCssUrl((string)($img ?? ''))) ?>');"
 						>
 						</a>
 						<?php else: ?>

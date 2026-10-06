@@ -19,9 +19,9 @@ export class KanbanEntityCreateGroupChat
 		{
 			const button = event.currentTarget;
 			const parentElement = button.closest('[data-id]');
-			const documentId = parentElement.getAttribute('data-id');
+			const entityId = parentElement.getAttribute('data-id');
 			const chatType = button.getAttribute('chat-type');
-			const chatId = (await this.#api.createDocumentChat(chatType, documentId, true)).chatId;
+			const chatId = (await this.#api.createDocumentChatByEntity(chatType, entityId)).chatId;
 			Messenger.openChat(`chat${chatId}`);
 		}
 	}

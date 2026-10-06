@@ -10,4 +10,6 @@ $MESS["DISK_FILE_TRANSFORM_VIDEO_ERROR_TRANSFORM"] = "Повторить кон�
 $MESS["DISK_FILE_TRANSFORM_VIDEO_ERROR_TRANSFORM_NOT_ALLOWED"] = "Недостаточно прав";
 $MESS["DISK_FILE_TRANSFORM_VIDEO_ERROR_TRANSFORM_NOT_INSTALLED"] = "Модуль конвертации файлов не установлен";
 $MESS["DISK_FILE_TRANSFORM_VIDEO_ERROR_TRANSFORM_TRANSFORMED"] = "Видео уже сконвертировано";
+$MESS["DISK_FILE_TRANSFORM_VIDEO_DOWNLOAD"] = "Скачать исходный файл";
+$MESS["DISK_FILE_TRANSFORM_VIDEO_WAIT_TIMEOUT_DESC"] = "Не удалось дождаться окончания конвертации. Она может продолжаться в фоновом режиме";
 ?>

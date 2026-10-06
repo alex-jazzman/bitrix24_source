@@ -13,6 +13,7 @@ $menu = [
 	'items' => [],
 ];
 
+/** @var \Bitrix\Main\DB\Connection $connection */
 $connection = \Bitrix\Main\Application::getConnection();
 
 if ($connection->getType() === 'mysql' && $USER->CanDoOperation('bitrixcloud_backup'))

@@ -806,10 +806,35 @@ class CrmQuoteDetailsComponent extends FactoryBased
 	protected function getUserFieldNamesToSync(EntityConversionConfig $config): array
 	{
 		$fieldNamesToSync = [];
+		$userPermissions = Container::getInstance()->getUserPermissions();
 
 		foreach ($config->getActiveItems() as $dstEntityTypeId => $configItem)
 		{
-			if (!\Bitrix\Crm\Security\EntityAuthorization::checkCreatePermission($dstEntityTypeId))
+			$dstFactory = Container::getInstance()->getFactory($dstEntityTypeId);
+			if ($dstFactory && $dstFactory->isCategoriesSupported())
+			{
+				$initData = $configItem->getInitData();
+				if (isset($initData['categoryId']) && $initData['categoryId'] !== '')
+				{
+					$categoryId = (int)$initData['categoryId'];
+					$categoryId = $categoryId >= 0 ? $categoryId : null;
+				}
+				else
+				{
+					$categoryId = $dstFactory->getDefaultCategory()?->getId();
+				}
+
+				$canAddDestination =
+					$categoryId !== null
+					&& $userPermissions->entityType()->canAddItemsInCategory($dstEntityTypeId, $categoryId)
+				;
+			}
+			else
+			{
+				$canAddDestination = $userPermissions->entityType()->canAddItems($dstEntityTypeId);
+			}
+
+			if (!$canAddDestination)
 			{
 				continue;
 			}

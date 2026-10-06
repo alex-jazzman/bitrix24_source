@@ -5,7 +5,6 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
-use Bitrix\Intranet\Settings\Tools\ToolsManager;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Note\Internal\Access\AccessController;
@@ -22,28 +21,9 @@ class NoteConfigPermissionsComponent extends CBitrixComponent
 		global $APPLICATION;
 		/** @var CMain $APPLICATION */
 
-		$licenseService = $this->createLicenseService();
-		$blockSliderCode = null;
-		if (!$licenseService->isModuleAvailable())
-		{
-			$blockSliderCode = $licenseService->getAccessSliderCode();
-		}
-		elseif (!$this->isNoteToolEnabled())
-		{
-			$blockSliderCode = $licenseService->getToolDisabledSliderCode();
-		}
-		if ($blockSliderCode !== null)
-		{
-			$this->arResult = [
-				'ERROR' => [
-					'REASON' => 'tariff',
-					'SLIDER_CODE' => $blockSliderCode,
-				],
-			];
-			$this->renderTariffStub();
-
-			return;
-		}
+		// Tariff/tool blocking no longer short-circuits the entry: we always mount the
+		// permissions interface (once ACL passes) and open the tariff slider on top of it.
+		$blockSliderCode = $this->createLicenseService()->resolveBlockingSliderCode();
 
 		if (!$this->checkAccessPermissions())
 		{
@@ -59,7 +39,10 @@ class NoteConfigPermissionsComponent extends CBitrixComponent
 		}
 
 		$this->initResult();
-		$this->includeComponentTemplate();
+		// Non-null when the tariff/tool blocks access: the template opens the
+		// corresponding slider on top of the mounted interface.
+		$this->arResult['TARIFF_SLIDER_CODE'] = $blockSliderCode;
+		$this->renderTemplate();
 	}
 
 	private function initResult(): void
@@ -90,18 +73,8 @@ class NoteConfigPermissionsComponent extends CBitrixComponent
 		return new LicenseService();
 	}
 
-	protected function isNoteToolEnabled(): bool
-	{
-		if (!Main\Loader::includeModule('intranet'))
-		{
-			return true;
-		}
-
-		return ToolsManager::getInstance()->checkAvailabilityByMenuId('menu_note_base');
-	}
-
 	// Seam for unit tests: CBitrixComponent::includeComponentTemplate() is final.
-	protected function renderTariffStub(): void
+	protected function renderTemplate(): void
 	{
 		$this->includeComponentTemplate();
 	}

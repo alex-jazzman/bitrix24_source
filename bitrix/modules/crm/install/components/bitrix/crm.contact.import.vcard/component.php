@@ -15,6 +15,7 @@ use Bitrix\Crm\EntityPreset;
 use Bitrix\Crm\Requisite;
 use Bitrix\Crm\EntityRequisite;
 use Bitrix\Crm\RequisiteAddress;
+use Bitrix\Main\Web\Uri;
 
 define('NO_KEEP_STATISTIC', 'Y');
 define('NO_AGENT_STATISTIC','Y');
@@ -303,7 +304,7 @@ if(!function_exists('__CrmImportContactAddressesToRequisite'))
 $arResult['FORM_ID'] = 'CRM_CONTACT_IMPORT_VCARD';
 $arParams['PATH_TO_CONTACT_LIST'] = CrmCheckPath('PATH_TO_CONTACT_LIST', $arParams['PATH_TO_CONTACT_LIST'], $APPLICATION->GetCurPage());
 $arParams['PATH_TO_CONTACT_IMPORTVCARD'] = CrmCheckPath('PATH_TO_CONTACT_IMPORTVCARD', $arParams['PATH_TO_CONTACT_IMPORTVCARD'], $APPLICATION->GetCurPage());
-$arParams['PATH_TO_CONTACT_IMPORTVCARD_STEP'] = CHTTP::urlAddParams($arParams['PATH_TO_CONTACT_IMPORTVCARD'], array('import'=>''));
+$arParams['PATH_TO_CONTACT_IMPORTVCARD_STEP'] = (string)(new Uri($arParams['PATH_TO_CONTACT_IMPORTVCARD']))->addParams(array('import'=>''));
 
 $arResult['TYPE_LIST'] = CCrmStatus::GetStatusList('CONTACT_TYPE');
 $arResult['SOURCE_LIST'] = CCrmStatus::GetStatusList('SOURCE');

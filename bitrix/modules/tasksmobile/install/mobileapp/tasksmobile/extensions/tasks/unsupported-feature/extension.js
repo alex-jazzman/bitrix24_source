@@ -5,18 +5,18 @@ jn.define('tasks/unsupported-feature', (require, exports, module) => {
 	const { Type } = require('type');
 	const { createTestIdGenerator } = require('utils/test');
 	const { PureComponent } = require('layout/pure-component');
-	const { Color, Corner, Indent } = require('tokens');
-	const { Box } = require('ui-system/layout/box');
-	const { Text4 } = require('ui-system/typography/text');
-	const { Button, ButtonDesign, ButtonSize } = require('ui-system/form/buttons/button');
-	const { StatusBlock } = require('ui-system/blocks/status-block');
-	const { UnsupportedFeatureType } = require('tasks/unsupported-feature/src/type-enum');
+	const { Color, Indent } = require('tokens');
+	const { ButtonDesign, ButtonSize } = require('ui-system/form/buttons/button');
+	const { InfoScreen } = require('layout/ui/info-screen');
+	const { TasksUnavailableFeaturePreset } = require('tasks/unsupported-feature/src/preset');
 	const { openQRAuth } = require('qrauth/utils');
-	const { Loc } = require('loc');
 	const { Icon } = require('ui-system/blocks/icon');
 
-	class UnsupportedFeature extends PureComponent
+	class TasksUnavailableFeature extends PureComponent
 	{
+		/**
+		 * @param {TasksUnavailableFeatureProps} props
+		 */
 		constructor(props)
 		{
 			super(props);
@@ -28,11 +28,15 @@ jn.define('tasks/unsupported-feature', (require, exports, module) => {
 			});
 		}
 
+		/**
+		 * @param {TasksUnavailableFeaturePreset} type
+		 * @returns {TasksUnavailableFeaturePreset}
+		 */
 		#resolveType(type)
 		{
-			if (!UnsupportedFeatureType.has(type))
+			if (!TasksUnavailableFeaturePreset.has(type))
 			{
-				throw new TypeError('UnsupportedFeature: invalid enum type');
+				throw new TypeError('TasksUnavailableFeature: invalid enum type');
 			}
 
 			return type;
@@ -40,25 +44,34 @@ jn.define('tasks/unsupported-feature', (require, exports, module) => {
 
 		render()
 		{
-			return Box(
-				{
-					testId: this.getTestId('box'),
-					withScroll: false,
-					safeArea: {
-						bottom: true,
-					},
+			return InfoScreen({
+				testId: this.getTestId(),
+				testIds: {
+					box: this.getTestId('box'),
+					content: this.getTestId(),
+					image: this.getTestId('image'),
+					bottomBlock: this.getTestId('bottom-block'),
+					footnote: this.getTestId('footnote'),
+					primaryButton: this.getTestId('button'),
 				},
-				StatusBlock({
-					testId: this.getTestId(),
-					image: this.#renderImage(),
-					title: this.type.getTitle(),
-					list: this.type.getItems(),
-				}),
-				this.#renderBottomBlock(),
-			);
+				withScroll: false,
+				safeArea: {
+					bottom: true,
+				},
+				image: this.#getImage(),
+				title: this.type.getTitle(),
+				titleColor: Color.base1,
+				description: this.type.getDescription(),
+				descriptionColor: Color.base2,
+				items: this.type.getItems(),
+				footnote: this.type.getFootnote(),
+				footnoteColor: Color.base4,
+				bottomBlock: this.#shouldRenderBottomBlock(),
+				primaryButton: this.#getPrimaryButton(),
+			});
 		}
 
-		#renderImage()
+		#getImage()
 		{
 			const imageUri = this.type.getImageUri();
 
@@ -67,54 +80,31 @@ jn.define('tasks/unsupported-feature', (require, exports, module) => {
 				return null;
 			}
 
-			return Image({
-				testId: this.getTestId('image'),
+			return {
 				uri: imageUri,
 				resizeMode: 'contain',
+				width: this.type.getImageWidth(),
+				height: this.type.getImageHeight(),
+				maxWidth: 265,
 				style: {
 					marginTop: Indent.XL4.toNumber(),
-					width: this.type.getImageWidth(),
-					height: this.type.getImageHeight(),
-					maxWidth: 265,
 				},
-			});
+			};
 		}
 
-		#renderBottomBlock()
+		#shouldRenderBottomBlock()
 		{
-			return View(
-				{
-					testId: this.getTestId('bottom-block'),
-					style: {
-						width: '100%',
-						paddingHorizontal: Indent.XL3.toNumber(),
-						paddingBottom: Corner.XL2.toNumber(),
-					},
-				},
-				this.#renderButton(),
-				this.#renderFootnote(),
-			);
+			return this.type.hasRedirectUrl() || this.type.hasFootnote();
 		}
 
-
-		#renderFootnote()
+		#getPrimaryButton()
 		{
-			return Text4({
-				testId: this.getTestId('footnote'),
-				text: this.type.getFootnote(),
-				color: Color.base4,
-				style: {
-					alignSelf: 'stretch',
-					textAlign: 'center',
-					marginTop: Indent.S.toNumber(),
-					paddingTop: Indent.M.toNumber(),
-				},
-			});
-		}
+			if (!this.type.hasRedirectUrl())
+			{
+				return null;
+			}
 
-		#renderButton()
-		{
-			return Button({
+			return {
 				testId: this.getTestId('button'),
 				text: this.type.getButtonText(),
 				leftIcon: Icon.EARTH,
@@ -128,12 +118,17 @@ jn.define('tasks/unsupported-feature', (require, exports, module) => {
 					title: this.type.getQrTitle(),
 					analyticsSection: 'tasks',
 				}),
-			});
+			};
 		}
 	}
 
+	const UnsupportedFeature = TasksUnavailableFeature;
+	const UnsupportedFeaturePreset = TasksUnavailableFeaturePreset;
+
 	module.exports = {
+		TasksUnavailableFeature,
+		TasksUnavailableFeaturePreset,
 		UnsupportedFeature,
-		UnsupportedFeatureType,
+		UnsupportedFeaturePreset,
 	};
 });

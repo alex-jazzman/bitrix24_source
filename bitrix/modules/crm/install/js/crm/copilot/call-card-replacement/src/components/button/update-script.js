@@ -28,13 +28,7 @@ export const UpdateScript = {
 				return;
 			}
 
-			const url = `/crm/copilot-call-assessment/details/${this.callAssessment?.id}/`;
-			const options = {
-				width: 700,
-				cacheable: false,
-			};
-
-			void Router.openSlider(url, options);
+			void Router.Instance.openCallAssessmentSlider(this.callAssessment?.id, { legacyWidth: 700 });
 		},
 	},
 

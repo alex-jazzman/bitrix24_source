@@ -116,6 +116,15 @@ jn.define('im/messenger/model/dialogues/validator', (require, exports, module) =
 			result.lastLoadParticipantId = fields.lastLoadParticipantId;
 		}
 
+		if (Type.isPlainObject(fields.participantsCursor))
+		{
+			result.participantsCursor = fields.participantsCursor;
+		}
+		else if (Type.isNull(fields.participantsCursor))
+		{
+			result.participantsCursor = null;
+		}
+
 		if (Type.isNumber(fields.lastMessageId) || Type.isStringFilled(fields.lastMessageId))
 		{
 			result.lastMessageId = Number.parseInt(fields.lastMessageId, 10);
@@ -410,6 +419,11 @@ jn.define('im/messenger/model/dialogues/validator', (require, exports, module) =
 			result.containsCollaber = fields.containsCollaber;
 		}
 
+		if (Type.isNumber(fields.guestCount))
+		{
+			result.guestCount = fields.guestCount;
+		}
+
 		return result;
 	}
 
@@ -595,6 +609,16 @@ jn.define('im/messenger/model/dialogues/validator', (require, exports, module) =
 		if (Type.isStringFilled(fields.manage_messages) || Type.isStringFilled(fields.manageMessages))
 		{
 			result.manageMessages = fields.manage_messages || fields.manageMessages;
+		}
+
+		if (Type.isStringFilled(fields.manage_guest_invites) || Type.isStringFilled(fields.manageGuestInvites))
+		{
+			result.manageGuestInvites = fields.manage_guest_invites || fields.manageGuestInvites;
+		}
+
+		if (Type.isStringFilled(fields.manage_delete) || Type.isStringFilled(fields.manageDelete))
+		{
+			result.manageDelete = fields.manage_delete || fields.manageDelete;
 		}
 
 		return result;

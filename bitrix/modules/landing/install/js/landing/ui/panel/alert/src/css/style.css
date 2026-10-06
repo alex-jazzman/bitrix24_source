@@ -16,6 +16,11 @@
 	z-index: 999;
 }
 
+/* `display` of the rule above wins over the one the browser gives to [hidden] on its own. */
+.landing-ui-panel-alert[hidden] {
+	display: none;
+}
+
 .landing-ui-panel-alert-text {
 	flex-grow: 1;
 	line-height: normal;

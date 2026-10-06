@@ -14,8 +14,8 @@ if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->isCrmAd
 
 CUtil::InitJSCore();
 
-$arResult["TMP_PATH"] = CTempFile::GetDirectoryName(12, 'crm');
-CheckDirPath($arResult["TMP_PATH"]);
+$tmpPath = CTempFile::GetDirectoryName(12, 'crm');
+CheckDirPath($tmpPath);
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') // process data from popup dialog
 {
@@ -45,7 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') // process data from popup dialog
 
 				$contents = \Bitrix\Main\Text\Encoding::convertEncoding($contents, 'windows-1251', LANG_CHARSET);
 
-				$fp = fopen($arResult["TMP_PATH"].'/locations.csv', 'w+');
+				$fp = fopen($tmpPath . 'locations.csv', 'w+');
 				fwrite($fp, $contents);
 				fclose($fp);
 			}

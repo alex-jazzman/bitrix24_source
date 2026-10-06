@@ -8,4 +8,4 @@
 	$MESS["MAIL_DIALOG_EDIT_CONTACT_EMAIL_ERROR"] = "Укажите корректный e-mail";
 	$MESS["MAIL_DIALOG_EDIT_CONTACT_EMAIL_ERROR_EMAIL_IS_ALREADY_EXISTS"] = '<a title="Открыть карточку контакта" data-role="contact-email">Контакт</a> с таким e-mail уже существует';
 	$MESS["MAIL_DIALOG_EDIT_CONTACT_REMOVE_DIALOG_TITLE"] = "Подтверждение удаления";
-	$MESS["MAIL_DIALOG_EDIT_CONTACT_REMOVE_DIALOG_MESSAGE"] = "Вы точно хотите удалить контакт из адресной книги?";
+	$MESS["MAIL_DIALOG_EDIT_CONTACT_REMOVE_DIALOG_MESSAGE_MSGVER_1"] = "Удалить контакт из адресной книги?";

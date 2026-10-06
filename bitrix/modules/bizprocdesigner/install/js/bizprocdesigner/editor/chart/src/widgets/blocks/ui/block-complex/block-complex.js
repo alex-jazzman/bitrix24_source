@@ -1,6 +1,6 @@
 import type { MenuItemOptions } from 'ui.vue3.components.menu';
 
-import { MoveableBlock, Port } from 'ui.block-diagram';
+import { MoveableBlock, Port, useBlockDiagram } from 'ui.block-diagram';
 
 import { IconDivider, IconButton } from '../../../../shared/ui';
 import {
@@ -48,6 +48,7 @@ type Props = {
 type Setup = {
 	blockMediator: BlockMediator,
 	getMessage: () => string,
+	addConnection: (connection: Object) => void,
 };
 
 // @vue/component
@@ -81,15 +82,25 @@ export const BlockComplex = {
 	setup(props: Props): Setup
 	{
 		const { getMessage } = useLoc();
+		const { addConnection } = useBlockDiagram();
 
 		return {
 			blockMediator: new BlockMediator(),
+			// Stable prop references for the virtual <Port> slots so they do not
+			// re-render on every BlockComplex render (all of them live outside
+			// reactive state: the rules array keeps its identity, a cache entry is
+			// per item.id). Input rules and the relation entry point are droppable
+			// at the same time, so they keep separate caches and never evict each other.
+			virtualPortValidationRules: [validationInputOutputRule],
+			virtualInputPortCache: new Map(),
+			virtualRelationPortCache: new Map(),
 			validationInputOutputRule,
 			normalyzeInputOutputConnection,
 			validationAuxRule,
 			normalyzeAuxConnection,
 			getMessage,
 			shouldAnimateBlock,
+			addConnection,
 		};
 	},
 	computed:
@@ -126,11 +137,63 @@ export const BlockComplex = {
 	},
 	methods:
 	{
-		onAddPort(title: string): void
+		onMaterializeInputDrop(item: { title: string }, connection: Object): void
 		{
-			this.blockMediator.addComplexBlockPort(this.block, title);
+			const portId = this.blockMediator.addComplexBlockPort(this.block, item.title);
+			if (!portId || !connection)
+			{
+				return;
+			}
+
+			this.addConnection({
+				...this.normalyzeInputOutputConnection(connection),
+				targetBlockId: this.block.id,
+				targetPortId: portId,
+			});
 		},
-		onAddAuxPort(title: string): void
+		virtualInputPort(item: { id: string, title: string }): Object
+		{
+			return this.getVirtualPortEntry(this.virtualInputPortCache, item, PORT_TYPES.input).port;
+		},
+		virtualInputDrop(item: { id: string, title: string }): (connection: Object) => void
+		{
+			return this.getVirtualPortEntry(this.virtualInputPortCache, item, PORT_TYPES.input).onDrop;
+		},
+		virtualRelationPort(item: { id: string, title: string }): Object
+		{
+			return this.getVirtualPortEntry(this.virtualRelationPortCache, item, PORT_TYPES.inputRelation).port;
+		},
+		virtualRelationDrop(item: { id: string, title: string }): (connection: Object) => void
+		{
+			return this.getVirtualPortEntry(this.virtualRelationPortCache, item, PORT_TYPES.inputRelation).onDrop;
+		},
+		getVirtualPortEntry(cache: Map, item: { id: string, title: string }, type: string): Object
+		{
+			const cached = cache.get(item.id);
+			if (cached && cached.title === item.title)
+			{
+				return cached;
+			}
+
+			// Only one slot per column is droppable at a time; drop stale entries
+			// (a placeholder id is stable, but it changes once the slot stands for
+			// another title, and the entry built for the previous one is then dead).
+			cache.clear();
+			const entry = {
+				title: item.title,
+				port: {
+					id: item.id,
+					title: item.title,
+					type,
+					position: 'left',
+				},
+				onDrop: (connection: Object) => this.onMaterializeInputDrop(item, connection),
+			};
+			cache.set(item.id, entry);
+
+			return entry;
+		},
+		onAddAuxPort({ title }: { title: string }): void
 		{
 			if (this.auxPortsCount >= MAX_AUX_COUNT)
 			{
@@ -213,11 +276,26 @@ export const BlockComplex = {
 								>
 									<template #header="{ title }">
 									</template>
-									<template #portPlaceholder="{ item, isOutput }">
+									<template #portPlaceholder="{ item, isOutput, isInputDroppable, isRelationDroppable, index, disabled }">
+										<template v-if="isInputDroppable || isRelationDroppable">
+											<Port
+												:block="block"
+												:port="isRelationDroppable ? virtualRelationPort(item) : virtualInputPort(item)"
+												:index="index"
+												:disabled="disabled"
+												:validationRules="virtualPortValidationRules"
+												:position="'left'"
+												:isVirtual="true"
+												:onVirtualDrop="isRelationDroppable ? virtualRelationDrop(item) : virtualInputDrop(item)"
+											/>
+											<span class="complex-block-port-placeholder-title">
+												{{ item.title }}
+											</span>
+										</template>
 										<BlockComplexPortPlaceholder
+											v-else
 											:title="item.title"
 											:isOutput="isOutput"
-											@addPort="onAddPort($event)"
 										/>
 									</template>
 									<template #port="{ item, disabled, position, index }">
@@ -256,6 +334,7 @@ export const BlockComplex = {
 									<template #auxPortPlaceholder="{ item }">
 										<BlockComplexPortPlaceholder
 											:title="item.title"
+											:isNextDroppable="true"
 											@addPort="onAddAuxPort($event)"
 										/>
 									</template>

@@ -40,3 +40,36 @@
 	font-size: 16px;
 	margin-top: 10px;
 }
+
+.landing-filter-create-menu-ai-item .menu-popup-item-text {
+	width: 100%;
+	min-width: 0;
+	box-sizing: border-box;
+}
+
+.landing-filter-create-menu-ai-item-content {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	width: 100%;
+	min-width: 0;
+	gap: 24px;
+}
+
+.landing-filter-create-menu-ai-item-text {
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.landing-filter-create-menu-ai-item-icon.ui-icon-set {
+	--ui-icon-set__icon-size: 20px;
+	--ui-icon-set__icon-color: linear-gradient(264deg, #F96269 1.67%, #F046B7 21.82%, #9D48FF 52.44%, #3F68FF 76.41%, #0098EA 97.21%);
+	flex-shrink: 0;
+}
+
+.landing-title-overflow.--create-folder-input input:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: -2px;
+}

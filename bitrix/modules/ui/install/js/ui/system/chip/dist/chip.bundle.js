@@ -22,6 +22,7 @@ this.BX.UI.System = this.BX.UI.System || {};
 	  TintedAlert: 'tinted-alert',
 	  TintedWarning: 'tinted-warning',
 	  TintedNoAccent: 'tinted-no-accent',
+	  TintedBitrixGpt: 'tinted-bitrix-gpt',
 	  OutlineAccent: 'outline-accent',
 	  OutlineAccent2: 'outline-accent-2',
 	  OutlineSuccess: 'outline-success',

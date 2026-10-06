@@ -31,3 +31,12 @@
 .sign-counter-slider {
 	margin-bottom: 20px;
 }
+
+/* An exact count is several digits wide. The badge is a shrinkable flex item with overflow: hidden,
+   so when the panel runs out of room it would cut digits off without any sign of it. Made inflexible,
+   it always keeps its content width and the whole chain up to the panel reserves room for it. */
+.sign-counter .ui-counter-inner,
+.sign-counter-slider .ui-counter-inner {
+	flex: none;
+	white-space: nowrap;
+}

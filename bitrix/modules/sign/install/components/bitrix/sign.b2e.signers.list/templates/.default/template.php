@@ -36,6 +36,7 @@ $createButton = (new \Bitrix\UI\Buttons\CreateButton([]))
 	->setText(Loc::getMessage('SIGN_B2E_SIGNERS_LIST_ADD_NEW_TITLE') ?? '')
 	->setLink('#')
 	->addClass('sign-b2e-signers-list-add-button')
+	->addDataAttribute('testid', 'sign-b2e-signers-list-create')
 ;
 
 if ($arResult['CAN_ADD_LIST'] ?? false)
@@ -58,7 +59,11 @@ $getUserInfoTemplate = static function (
 			target="_top"
 			onclick="event.stopPropagation();"
 			href="/company/personal/user/<?= (int)$userId ?>/">
-			<div id="<?= htmlspecialcharsbx($containerId) ?>" style="display: inline-flex; align-items: center;"></div>
+			<div
+				id="<?= htmlspecialcharsbx($containerId) ?>"
+				data-testid="sign-b2e-signers-list-row-responsible-avatar"
+				style="display: inline-flex; align-items: center;"
+			></div>
 			<span class="sign-personal-grid-user-name">
 				<?= htmlspecialcharsbx($fullName) ?>
 			</span>
@@ -66,7 +71,7 @@ $getUserInfoTemplate = static function (
 				BX.ready(function() {
 					var container = document.getElementById('<?= CUtil::JSEscape($containerId) ?>');
 					if (container && !container.hasChildNodes()) {
-						renderSignersListAvatar(
+						BX.Sign.V2.Grid.B2e.Signers.renderResponsibleAvatar(
 							container,
 							'<?= CUtil::JSEscape($imagePath) ?>',
 							'<?= CUtil::JSEscape($fullName) ?>'
@@ -143,6 +148,7 @@ foreach ($signersLists as $listData)
 	;
 	$gridRow = [
 		'data' => [
+			'PIN' => '',
 			'ID' => $listId,
 			'TITLE' => $getLinkTemplate(
 				$listData['columns']['TITLE'],
@@ -156,32 +162,29 @@ foreach ($signersLists as $listData)
 				$listData['columns']['RESPONSIBLE']['AVATAR_PATH'],
 			),
 		],
+		'cellActions' => $listData['cellActions'] ?? [],
 	];
 
-	if ($listData['access']['canEdit'] ?? false)
+	// the action set is fully decided by the component; here only its phrases are resolved
+	foreach ($listData['actions'] ?? [] as $action)
 	{
-        $oldTitle = CUtil::JSEscape($listData['columns']['TITLE']);
-        $oldTitle = htmlspecialcharsbx($oldTitle);
-		$gridRow['actions'][] = [
-			'text' => (string)Loc::getMessage('SIGN_B2E_SIGNERS_LIST_ACTION_RENAME'),
-			'onclick' => "listGrid.renameList({$listId}, '{$oldTitle}')",
-		];
-	}
+		if ($action['separator'] ?? false)
+		{
+			$gridRow['actions'][] = ['SEPARATOR' => true];
 
-	if ($listData['access']['canCopy'] ?? false)
-	{
-		$gridRow['actions'][] = [
-			'text' => (string)Loc::getMessage('SIGN_B2E_SIGNERS_LIST_ACTION_COPY'),
-			'onclick' => "listGrid.copyList({$listId})",
-		];
-	}
+			continue;
+		}
 
-	if ($listData['access']['canDelete'] ?? false)
-	{
-		$gridRow['actions'][] = [
-			'text' => (string)Loc::getMessage('SIGN_B2E_SIGNERS_LIST_ACTION_DELETE'),
-			'onclick' => "listGrid.deleteList({$listId})",
+		$gridAction = [
+			'text' => (string)Loc::getMessage($action['phrase']),
+			'onclick' => $action['handler'],
 		];
+		if (isset($action['dataset']))
+		{
+			$gridAction['dataset'] = $action['dataset'];
+		}
+
+		$gridRow['actions'][] = $gridAction;
 	}
 
 	$gridRows[] = $gridRow;
@@ -193,6 +196,7 @@ $APPLICATION->IncludeComponent(
 	[
 		'GRID_ID' => $arParams['GRID_ID'] ?? '',
 		'COLUMNS' => $arParams['COLUMNS'] ?? '',
+		'SORT' => $arParams['SORT'] ?? [],
 		'ROWS' => $gridRows,
 		'NAV_OBJECT' => $arResult['PAGE_NAVIGATION'] ?? null,
 		'SHOW_ROW_CHECKBOXES' => false,
@@ -210,25 +214,5 @@ $APPLICATION->IncludeComponent(
 ?>
 
 <script>
-	const listGrid = new BX.Sign.V2.Grid.B2e.Signers();
-
-	BX.ready(function()
-	{
-		const addListButton = document.querySelector('.sign-b2e-signers-list-add-button');
-		if (addListButton)
-		{
-			BX.bind(addListButton, 'click', function()
-			{
-				listGrid.createList();
-			});
-		}
-	});
-
-	function renderSignersListAvatar(container, userpicPath, userName) {
-		new BX.UI.AvatarRound({
-			size: 26,
-			userpicPath: userpicPath,
-			userName: userName,
-		}).renderTo(container);
-	}
+	BX.Sign.V2.Grid.B2e.Signers.getInstance().initListsPage();
 </script>

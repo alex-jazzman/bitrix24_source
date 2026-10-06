@@ -1,0 +1,266 @@
+.bx-im-message-quote__name:focus-visible {
+	outline: 2px solid Highlight;
+	outline: 2px solid -webkit-focus-ring-color;
+	border-radius: 2px;
+}
+
+.bx-im-message-base__body.--transparent .bx-im-message-quote,
+.bx-im-message-base__content-main > .bx-im-message-quote {
+	--bx-im-message-quote__background: rgba(var(--ui-color-palette-white-base-rgb), 0.2);
+	--bx-im-message-quote-with-context__background: rgba(var(--ui-color-palette-white-base-rgb), 0.2);
+	--bx-im-message-quote__color: var(--ui-color-base-1);
+}
+
+/*
+ * The toggle button variables resolve to `absolute` from the parser scope even when
+ * overridden here (equal specificity), leaving the "Expand" button as an overlay above
+ * the collapsed quote text. Set the properties directly on the button (0,3,0 beats the
+ * base .bx-im-message-quote__toggle 0,1,0) so it flows inline and stops covering the text.
+ */
+.bx-im-message-base__body.--transparent .bx-im-message-quote .bx-im-message-quote__toggle,
+.bx-im-message-base__content-main > .bx-im-message-quote .bx-im-message-quote__toggle {
+	position: static;
+	background: none;
+}
+
+/*
+ * Quotes rendered outside the message bubble sit on a semi-transparent background,
+ * where the gray-60 muted captions fail contrast (a11y). Lift them to base-2.
+ * In-bubble quotes keep the base gray-60 definitions below.
+ */
+.bx-im-message-base__body.--transparent .bx-im-message-quote .bx-im-message-quote__file-size,
+.bx-im-message-base__body.--transparent .bx-im-message-quote .bx-im-message-quote__gallery-caption-count,
+.bx-im-message-base__content-main > .bx-im-message-quote .bx-im-message-quote__file-size,
+.bx-im-message-base__content-main > .bx-im-message-quote .bx-im-message-quote__gallery-caption-count {
+	color: var(--ui-color-base-2);
+}
+
+.bx-im-message-base__content-main > .bx-im-message-quote {
+	max-width: 460px;
+	margin-bottom: 4px;
+}
+
+.bx-im-message-quote__preview {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding-left: 10px;
+	margin-bottom: 2px;
+	min-width: 0;
+}
+
+/*
+ * File chip / gallery stack need 8px between the author name and the preview content per Figma.
+ * The shared .bx-im-message-quote__name adds 4px (padding-bottom); this adds the remaining 4px.
+ * Single media thumbnail / sticker / media-icon / text / forward keep the base 4px.
+ */
+.bx-im-message-quote__preview--media-offset {
+	margin-top: 4px;
+}
+
+/* File chip: file-type icon + name + size */
+.bx-im-message-quote__file-icon {
+	display: flex;
+	align-items: center;
+	flex-shrink: 0;
+}
+
+.bx-im-message-quote__file-icon .ui-icon {
+	width: 36px;
+	height: 36px;
+}
+
+.bx-im-message-quote__file-icon .ui-icon i {
+	width: 36px;
+	height: 36px;
+	background-size: 36px;
+}
+
+.bx-im-message-quote__file-caption {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+}
+
+.bx-im-message-quote__file-name {
+	max-width: 340px;
+	overflow: hidden;
+	color: var(--ui-color-base-1);
+	font: var(--im-font-weight-medium) 13px/17px var(--im-font-family-system);
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.bx-im-message-quote__file-size {
+	color: var(--ui-color-chat-other-base-1_1, rgba(51, 51, 51, 0.5));
+	font: 13px/17px var(--im-font-family-system);
+	white-space: nowrap;
+}
+
+.bx-im-message-quote__preview-image {
+	position: relative;
+	width: 40px;
+	height: 28px;
+	border-radius: 4px;
+	overflow: hidden;
+	flex-shrink: 0;
+	background-color: var(--im-color-palette-gray-03);
+}
+
+.bx-im-message-quote__preview-image_img {
+	position: absolute;
+	width: 100%;
+	height: 100%;
+	left: 0;
+	top: 0;
+	object-fit: cover;
+}
+
+/* Video note: round thumbnail of the poster (no background — the poster fills the circle) */
+.bx-im-message-quote__preview-video-note {
+	width: 72px;
+	height: 72px;
+	border-radius: 50%;
+	overflow: hidden;
+	flex-shrink: 0;
+}
+
+.bx-im-message-quote__preview-video-note_img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+
+.bx-im-message-quote__preview-sticker {
+	width: 80px;
+	height: 80px;
+	flex-shrink: 0;
+}
+
+.bx-im-message-quote__preview-sticker_img {
+	width: 100%;
+	height: 100%;
+	object-fit: contain;
+}
+
+.bx-im-message-quote__preview-file-icon {
+	display: flex;
+	align-items: center;
+	flex-shrink: 0;
+}
+
+.bx-im-message-quote__preview-file-icon .ui-icon {
+	width: 24px;
+	height: 24px;
+}
+
+.bx-im-message-quote__preview-file-icon .ui-icon i {
+	width: 24px;
+	height: 24px;
+	background-size: 24px;
+}
+
+/* Gallery: overlapped stack of thumbnails */
+.bx-im-message-quote__gallery-stack {
+	position: relative;
+	width: 57px;
+	height: 47px;
+	flex-shrink: 0;
+}
+
+/*
+ * The stack items are absolutely positioned and therefore do not stretch the container.
+ * The width must be set per shown-thumbnail count so it hugs the actual right edge of the
+ * last (rotated) thumbnail; otherwise the flex gap to the caption grows and the stack↔text
+ * spacing differs between 2- and 3-media quotes. Widths are the rotated bounding-box right
+ * edges: item1 -> 39, item2 (8deg) -> ~47, item3 (12deg)/badge -> 57 (unchanged base layout).
+ */
+.bx-im-message-quote__gallery-stack.--count-2 {
+	width: 47px;
+}
+
+.bx-im-message-quote__gallery-stack.--count-3 {
+	width: 57px;
+}
+
+.bx-im-message-quote__gallery-stack-item {
+	position: absolute;
+	overflow: hidden;
+	background-color: var(--im-color-palette-gray-03);
+}
+
+.bx-im-message-quote__gallery-stack-item:nth-child(1) {
+	left: 0;
+	top: 3px;
+	width: 39px;
+	height: 38px;
+	border-radius: 8px;
+	z-index: 3;
+}
+
+.bx-im-message-quote__gallery-stack-item:nth-child(2) {
+	left: 6px;
+	top: 1px;
+	width: 38px;
+	height: 38px;
+	border-radius: 7px;
+	transform: rotate(8deg);
+	z-index: 2;
+}
+
+.bx-im-message-quote__gallery-stack-item:nth-child(3) {
+	left: 15px;
+	top: 4px;
+	width: 36px;
+	height: 36px;
+	border-radius: 6px;
+	transform: rotate(12deg);
+	z-index: 1;
+}
+
+.bx-im-message-quote__gallery-stack-img {
+	display: block;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+
+.bx-im-message-quote__gallery-badge {
+	position: absolute;
+	left: 35px;
+	top: 26px;
+	z-index: 4;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	box-sizing: border-box;
+	min-height: 14px;
+	padding: 0 4px;
+	border: 1px solid var(--ui-color-palette-white-base, #fff);
+	border-radius: 14px;
+	background-color: var(--ui-color-accent-main-primary);
+	color: var(--ui-color-palette-white-base, #fff);
+	font: var(--im-font-weight-medium) 10px/12px var(--im-font-family-system);
+	white-space: nowrap;
+}
+
+.bx-im-message-quote__gallery-caption {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+}
+
+.bx-im-message-quote__gallery-caption-title {
+	max-width: 136px;
+	overflow: hidden;
+	color: var(--ui-color-base-1);
+	font: var(--im-font-weight-medium) 13px/17px var(--im-font-family-system);
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.bx-im-message-quote__gallery-caption-count {
+	color: var(--ui-color-chat-other-base-1_1, rgba(51, 51, 51, 0.5));
+	font: 13px/17px var(--im-font-family-system);
+	white-space: nowrap;
+}

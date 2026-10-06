@@ -6,6 +6,7 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 	'use strict';
 
 	const acceptedUploaderFileTypes = new Set(['jpg', 'jpeg', 'png', 'pdf', 'doc', 'docx', 'rtf', 'odt']);
+	const createdTemplateUidSliderDataKey = 'signB2eDocumentActivityCreatedTemplateUid';
 	class B2ESignSettings extends sign_v2_signSettings.SignSettings {
 		#companyParty;
 		#regionalSettings;
@@ -19,6 +20,7 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 		#previewDocumentDropdown = null;
 		#preventPreviewReady = false;
 		#waitingForPreviewAfterReplace = false;
+		#fromRobot;
 		constructor(containerId, signOptions) {
 			super(containerId, signOptions, {
 				next: {
@@ -35,6 +37,7 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 				documentSendConfig,
 				userPartyConfig
 			} = this.#prepareConfig(signOptions);
+			this.#fromRobot = Boolean(signOptions.fromRobot);
 			this.documentSetup = new sign_v2_b2e_documentSetup.DocumentSetup(blankSelectorConfig);
 			this.documentSend = new sign_v2_b2e_documentSend.DocumentSend(documentSendConfig);
 			this.#companyParty = new sign_v2_b2e_parties.Parties({
@@ -171,8 +174,14 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 			});
 			this.documentSetup.subscribe('clearFiles', this.#onDocumentSetupClearFiles.bind(this));
 			this.documentSend.subscribe(this.documentSend.events.onTemplateComplete, event => {
+				const {
+					templateId,
+					templateUid
+				} = event.getData();
+				if (this.#fromRobot && main_core.Type.isStringFilled(templateUid)) {
+					BX.SidePanel.Instance.getSliderByWindow(window)?.getData().set(createdTemplateUidSliderDataKey, templateUid);
+				}
 				if (this.isTemplateMode() && !this.isEditMode()) {
-					const templateId = event.getData().templateId;
 					this.getAnalytics().send({
 						event: 'turn_on_off_template',
 						type: 'auto',
@@ -1245,7 +1254,7 @@ this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 					self.#resetAfterPreviewSidePanel();
 					return ui_sidepanel_layout.Layout.createContent({
 						extensions: ['ui.forms'],
-						title: 'Добавить папку с файлами',
+						title: main_core.Loc.getMessage('SIGN_V2_B2E_SIGN_SETTINGS_ADD_FILES_FOLDER_TITLE'),
 						content() {
 							self.#getUploader();
 							return self.#getMultiDocumentAddSidePanelContent();

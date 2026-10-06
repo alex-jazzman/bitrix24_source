@@ -26,7 +26,7 @@
 .popup-window.note-action-menu {
 	background: var(--ui-color-bg-content-primary, #fff);
 	border: 1px solid var(--ui-color-divider-default, #f0f0f0);
-	border-radius: var(--ui-border-radius-popup, 18px);
+	border-radius: var(--note-popup-radius, 18px);
 	padding: 10px 0;
 	box-shadow: 0 8px 17px rgba(0, 0, 0, 0.105);
 	min-width: 216px;

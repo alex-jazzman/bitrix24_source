@@ -42,6 +42,16 @@ $arActivityDescription =
 		->setIcon(Outline::COMPANY->name)
 		->setReturn([
 			'ReturnDocument' => $document,
+			'Initiator' => [
+				'Name' => Loc::getMessage('BP_CRM_CRM_COMPANY_START_TRIGGER_RETURN_INITIATOR') ?? '',
+				'Type' => FieldType::USER,
+				'Default' => null,
+			],
+			'EventDateTime' => [
+				'Name' => Loc::getMessage('BP_CRM_CRM_COMPANY_START_TRIGGER_RETURN_EVENT_DATE_TIME') ?? '',
+				'Type' => FieldType::DATETIME,
+				'Default' => null,
+			],
 		])
 		->setAdditionalResult(['Return'])
 		->toArray()

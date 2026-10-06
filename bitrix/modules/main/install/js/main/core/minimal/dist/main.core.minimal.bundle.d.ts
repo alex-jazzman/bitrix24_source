@@ -27,7 +27,19 @@ type ExtensionExports = {
 	[key: string]: any;
 };
 
-type MemoryStorage<K, T> = Map<K, T>;
+/**
+ * Backing storage for a cache. Values are held as `unknown`; the value type is applied
+ * by the cache methods (BaseCache) on the way in and out, not by the storage itself.
+ */
+interface ICacheStorage {
+	size: number;
+	get(key: string): unknown;
+	set(key: string, value: unknown): void;
+	has(key: string): boolean;
+	delete(key: string): void;
+	keys(): Array<string>;
+	values(): Array<unknown>;
+}
 
 type ZIndexComponentOptions = {
 	alwaysOnTop?: boolean | number;
@@ -413,7 +425,7 @@ declare namespace BX {
 		 * @param context
 		 * @return {HTMLElement|HTMLBodyElement}
 		 */
-		static create(tag: string | CreateOptions, data?: AdjustData, context?: Document): HTMLElement | null;
+		static create(tag: string | CreateOptions, data?: AdjustData, context?: Document): HTMLElement;
 		/**
 		 * Shows element
 		 * @param element
@@ -1132,7 +1144,18 @@ declare namespace BX {
 		static attr: typeof Tag.attrs;
 	}
 
-	function render(sections: TemplateStringsArray, ...substitutions: Array<any>): any;
+	/**
+	 * Renders an HTML template into DOM nodes.
+	 *
+	 * The default return type is `HTMLElement` — the common case of a single root
+	 * node (`const el = Tag.render\`<div></div>\``). The type parameter `T` lets
+	 * callers describe the other shapes the function can produce:
+	 * - a specific element type: `Tag.render<HTMLInputElement>\`<input>\``;
+	 * - a refs object when the template uses `ref=`:
+	 *   `Tag.render<{ root: HTMLElement; title: HTMLElement }>\`...\``;
+	 * - an array of nodes for multi-root templates: `Tag.render<HTMLElement[]>\`...\``.
+	 */
+	function render<T = HTMLElement>(sections: TemplateStringsArray, ...substitutions: Array<any>): T;
 
 	/**
 	 * Implements interface for works with URI
@@ -1193,57 +1216,74 @@ declare namespace BX {
 		static LocalStorageCache: typeof LocalStorageCache;
 	}
 
-	class BaseCache<T> {
+	/**
+	 * A string-keyed cache.
+	 *
+	 * The class parameter `T` is the default value type of the cache (defaults to `unknown`
+	 * so a plain `new MemoryCache()` accepts anything). Different keys may hold different
+	 * types, so each method also takes its own type parameter: `cache.get<Popup>('popup')`,
+	 * `cache.set('count', 1)`, inferred from the default value or factory when passed. When
+	 * a default (or factory) is provided, `get`/`remember` are guaranteed to return a value,
+	 * so the return type excludes `undefined`.
+	 */
+	class BaseCache<T = unknown> {
 		/**
 		 * @private
 		 */
-		storage: Map<string, T>;
+		storage: ICacheStorage;
 		/**
-		 * Gets cached value or default value
+		 * Gets a cached value, falling back to the default value (or factory result) when
+		 * the key is missing. With a default the return type excludes `undefined`.
 		 */
-		get(key: string, defaultValue?: T | (() => T)): T | undefined;
+		get<V = T>(key: string): V | undefined;
+		get<V = T>(key: string, defaultValue: (() => V) | V): V;
 		/**
-		 * Sets cache entry
+		 * Sets a cache entry.
 		 */
-		set(key: string, value: T): void;
+		set<V = T>(key: string, value: V): void;
 		/**
-		 * Deletes cache entry
+		 * Deletes a cache entry.
 		 */
 		delete(key: string): void;
 		/**
-		 * Checks that storage contains entry with specified key
+		 * Checks that the storage contains an entry with the specified key.
 		 */
 		has(key: string): boolean;
 		/**
-		 * Gets cached value if exists,
+		 * Gets a cached value; when the key is missing, stores and returns the default value
+		 * (or factory result). With a default the return type excludes `undefined`.
 		 */
-		remember(key: string, defaultValue?: T | (() => T)): T | undefined;
+		remember<V = T>(key: string): V | undefined;
+		remember<V = T>(key: string, defaultValue: (() => V) | V): V;
 		/**
-		 * Gets storage size
+		 * Gets the storage size.
 		 */
 		size(): number;
 		/**
-		 * Gets storage keys
+		 * Gets the storage keys.
 		 */
 		keys(): Array<string>;
 		/**
-		 * Gets storage values
+		 * Gets the storage values.
 		 */
-		values(): Array<T>;
+		values<V = T>(): Array<V>;
 	}
 
-	class MemoryCache<T> extends BaseCache<T> {
+	/**
+	 * In-memory cache. BaseCache already uses MemoryStorage by default, so this is a named
+	 * alias kept for the public API (`BX.Cache.MemoryCache`).
+	 */
+	class MemoryCache<T = unknown> extends BaseCache<T> {
+	}
+
+	/**
+	 * Cache backed by localStorage, so entries survive page reloads.
+	 */
+	class LocalStorageCache<T = unknown> extends BaseCache<T> {
 		/**
 		 * @private
 		 */
-		storage: MemoryStorage<string, T>;
-	}
-
-	class LocalStorageCache<T> extends BaseCache<T> {
-		/**
-		 * @private
-		 */
-		storage: any;
+		storage: ICacheStorage;
 	}
 
 	/**
@@ -1288,9 +1328,9 @@ declare namespace BX {
 		add(item: T): number;
 		has(item: T): boolean;
 		getIndex(item: T): number;
-		getByIndex(index: number): T | null | undefined;
-		getFirst(): T | null | undefined;
-		getLast(): T | null | undefined;
+		getByIndex(index: number): T | null;
+		getFirst(): T | null;
+		getLast(): T | null;
 		count(): number;
 		delete(item: T): boolean;
 		clear(): void;
@@ -1337,14 +1377,8 @@ declare namespace BX {
 	}
 
 	class Extension {
-		static getSettings(extensionName: string): any;
+		static getSettings(extensionName: string): SettingsCollection;
 	}
-
-	const Collections: {
-		OrderedArray: typeof OrderedArray;
-		SettingsCollection: typeof SettingsCollection;
-		WeakRefMap: typeof WeakRefMap;
-	};
 
 	class SettingsCollection {
 		constructor(options?: {
@@ -1352,6 +1386,12 @@ declare namespace BX {
 		});
 		get(path: string, defaultValue?: any): any;
 	}
+
+	const Collections: {
+		OrderedArray: typeof OrderedArray;
+		SettingsCollection: typeof SettingsCollection;
+		WeakRefMap: typeof WeakRefMap;
+	};
 
 	class WeakRefMap<K, V extends WeakKey> {
 		constructor();

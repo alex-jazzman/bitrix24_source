@@ -193,7 +193,10 @@ class CrmActivityVisitComponent extends \CBitrixComponent implements Main\Errora
 			));
 
 			//Execute automation trigger
-			\Bitrix\Crm\Automation\Trigger\VisitTrigger::execute($bindings, array('ACTIVITY_ID' => $activityId));
+			\Bitrix\Crm\Automation\Trigger\VisitTrigger::execute($bindings, array(
+				'ACTIVITY_ID' => $activityId,
+				'initiatorUserId' => (int)$userId,
+			));
 		}
 		else
 		{

@@ -1,4 +1,5 @@
 import { SliderCode } from 'im.v2.const';
+import { Analytics } from 'im.v2.lib.analytics';
 import { Runtime } from 'main.core';
 import { Feature, FeatureManager } from 'im.v2.lib.feature';
 import { Logger } from 'im.v2.lib.logger';
@@ -82,6 +83,7 @@ export const SearchButton = {
 			}
 
 			this.$store.dispatch('copilot/chats/toggleForceSearch', this.dialogId);
+			Analytics.getInstance().copilot.onChangeForceSearch(this.dialogId);
 		},
 		openTariffSlider()
 		{

@@ -68,6 +68,11 @@ if ($arResult['FATAL'])
 Manager::setPageView(
 	'BodyClass',
 	'no-all-paddings landing-tile no-background'
+		. (
+			rtrim($request->getRequestedPageDirectory(), '/') === rtrim(SITE_DIR . 'sites/', '/')
+				? ' landing-sites-focus-visible-page'
+				: ''
+		)
 );
 
 Extension::load([
@@ -75,8 +80,10 @@ Extension::load([
 	'ui.fonts.opensans',
 	'sidepanel',
 	'landing_master',
+	'landing.site-list.realtime',
 	'action_dialog',
 	'ui.buttons',
+	'ui.icon-set.outline',
 ]);
 
 \Bitrix\Main\Page\Asset::getInstance()->addCSS(
@@ -120,13 +127,13 @@ if (
 	}
 	?>
 	<div style="display: none">
-		<?$APPLICATION->includeComponent(
+		<?php $APPLICATION->includeComponent(
 			'bitrix:ui.feedback.form',
 			'',
 			$params
 		);?>
 	</div>
-	<?
+	<?php
 }
 
 // slider's script
@@ -166,7 +173,7 @@ $featureCode = $request->getQuery('feature_promoter');
 	</script>
 <?php endif; ?>
 
-<?if ($request->get('IS_AJAX') != 'Y'):?>
+<?php if ($request->get('IS_AJAX') != 'Y'):?>
 <script>
 	top.BX.addCustomEvent(
 		'BX.Rest.Configuration.Install:onFinish',
@@ -237,9 +244,9 @@ $featureCode = $request->getQuery('feature_promoter');
 		</script>
 	<?php endif; ?>
 
-<?endif?>
+<?php endif?>
 
-<?
+<?php
 if ($arParams['TYPE'] !== 'KNOWLEDGE' && $arParams['TYPE'] !== 'GROUP' && $isCrm && (($arParams['OLD_TILE'] ?? 'N') !== 'Y'))
 {
 	echo '<script>function openSettings(tool, id){
@@ -279,15 +286,17 @@ if ($arParams['TYPE'] !== 'KNOWLEDGE' && $arParams['TYPE'] !== 'GROUP' && $isCrm
 				'delimiter' => true
 			],
 			$arResult['EXPORT_DISABLED'] === 'Y'
-			? [
-				  'text' => $component->getMessageType('LANDING_TPL_ACTION_EXPORT'),
-				  'onclick' => 'landingExportDisabled();'
-			]
-			: [
-				'text' => $component->getMessageType('LANDING_TPL_ACTION_EXPORT'),
-				'href' => $arParams['~PAGE_URL_SITE_EXPORT'],
-				'sidepanel' => true
-			],
+				? [
+					  'text' => $component->getMessageType('LANDING_TPL_ACTION_EXPORT'),
+					  'access' => 'export',
+					  'onclick' => 'landingExportDisabled();'
+				]
+				: [
+					'text' => $component->getMessageType('LANDING_TPL_ACTION_EXPORT'),
+					'access' => 'export',
+					'href' => $arParams['~PAGE_URL_SITE_EXPORT'],
+					'sidepanel' => true
+				],
 			[
 				'text' => Loc::getMessage('LANDING_TPL_ACTION_PS'),
 				'href' => SITE_DIR . 'shop/settings/sale_pay_system/?lang=' . LANGUAGE_ID,
@@ -345,7 +354,8 @@ if ($arParams['TYPE'] !== 'KNOWLEDGE' && $arParams['TYPE'] !== 'GROUP' && $isCrm
 				'text' => Loc::getMessage('LANDING_TPL_ACTION_ADDPAGE2'),
 				'href' => $urlCreatePage,
 				'access' => 'edit',
-				'sidepanel' => true
+				'sidepanel' => true,
+				'code' => 'add-page',
 			],
 			[
 				'delimiter' => true
@@ -363,11 +373,12 @@ if ($arParams['TYPE'] !== 'KNOWLEDGE' && $arParams['TYPE'] !== 'GROUP' && $isCrm
 				'access' => 'export',
 				'onclick' => 'landingExportDisabled();'
 			]
-			: [
-				'text' => $component->getMessageType('LANDING_TPL_ACTION_EXPORT'),
-				'href' => $arParams['~PAGE_URL_SITE_EXPORT'],
-				'sidepanel' => true
-			],
+				: [
+					'text' => $component->getMessageType('LANDING_TPL_ACTION_EXPORT'),
+					'access' => 'export',
+					'href' => $arParams['~PAGE_URL_SITE_EXPORT'],
+					'sidepanel' => true
+				],
 			[
 				'delimiter' => true
 			],
@@ -415,6 +426,7 @@ if ($arParams['TYPE'] !== 'KNOWLEDGE' && $arParams['TYPE'] !== 'GROUP' && $isCrm
 		$urlAdd = $metrikaMarket->parametrizeUri($component->getUrlAdd(true, $urlAddParams));
 	}
 
+	$aiUrl = $arParams['~SEF']['ai'] ?? '';
 	$APPLICATION->includeComponent(
 		'bitrix:landing.site_tile',
 		'.default',
@@ -429,9 +441,13 @@ if ($arParams['TYPE'] !== 'KNOWLEDGE' && $arParams['TYPE'] !== 'GROUP' && $isCrm
 			'PAGE_URL_CONTACTS' => $arParams['~PAGE_URL_SITE_CONTACTS'],
 			'PAGE_URL_SITE_DOMAIN_SWITCH' => $arParams['~PAGE_URL_SITE_DOMAIN_SWITCH'],
 			'PAGE_URL_CRM_ORDERS' => $ordersLink ?? '',
+			'AI_URL' => $aiUrl,
+			'AI_SITE_CHAT_AVAILABLE' => $arParams['AI_SITE_CHAT_AVAILABLE'] ?? true,
 			'MENU_ITEMS' => $menuItems,
 			'AGREEMENT' => $arResult['AGREEMENT'],
 			'DELETE_LOCKED' => $arResult['DELETE_LOCKED'],
+			'IS_DELETED' => $arResult['IS_DELETED'],
+			'TOTAL_COUNT' => $navigation ? (int)$navigation->getRecordCount() : count($arResult['SITES']),
 		],
 		$component
 	);
@@ -439,7 +455,7 @@ if ($arParams['TYPE'] !== 'KNOWLEDGE' && $arParams['TYPE'] !== 'GROUP' && $isCrm
 	{
 		?>
 		<div class="landing-navigation --themes">
-			<?$APPLICATION->IncludeComponent(
+			<?php $APPLICATION->IncludeComponent(
 				'bitrix:main.pagenavigation',
 				'',
 				array(
@@ -450,12 +466,49 @@ if ($arParams['TYPE'] !== 'KNOWLEDGE' && $arParams['TYPE'] !== 'GROUP' && $isCrm
 				false
 			);?>
 		</div>
-		<?
+		<?php
 	}
 	return;
 }
 ?>
 
+<div class="landing-visually-hidden" role="status" aria-live="polite" id="landing-explorer-status-region"></div>
+<script>
+	BX.ready(function() {
+		var region = document.getElementById('landing-explorer-status-region');
+		var message = null;
+		try
+		{
+			message = sessionStorage.getItem('landingExplorerStatus');
+		}
+		catch (e) {}
+		if (region && message)
+		{
+			try
+			{
+				sessionStorage.removeItem('landingExplorerStatus');
+			}
+			catch (e) {}
+			setTimeout(function() {
+				region.textContent = message;
+			}, 100);
+		}
+	});
+</script>
+<?php
+$sitesTotalCount = $navigation ? (int)$navigation->getRecordCount() : count($arResult['SITES']);
+if ($arResult['IS_DELETED'] && !$arResult['SITES'] && $sitesTotalCount === 0): ?>
+<div class="landing-trash-empty" data-testid="landing-sites-trash-empty">
+	<div class="landing-trash-empty__card">
+		<div class="landing-trash-empty__image" aria-hidden="true">
+			<span class="ui-icon-set --o-trashcan"></span>
+		</div>
+		<div class="landing-trash-empty__title" role="status">
+			<?= htmlspecialcharsbx(Loc::getMessage('LANDING_TPL_TRASH_EMPTY_TITLE')) ?>
+		</div>
+	</div>
+</div>
+<?php endif; ?>
 <div class="grid-tile-wrap" id="grid-tile-wrap">
 	<div class="grid-tile-inner" id="grid-tile-inner">
 		<?php if ($arResult['ACCESS_SITE_NEW'] == 'Y' && $arParams['SHOW_MASTER_BUTTON'] == 'Y'):?>
@@ -466,26 +519,26 @@ if ($arParams['TYPE'] !== 'KNOWLEDGE' && $arParams['TYPE'] !== 'GROUP' && $isCrm
 				['super' => 'Y']
 			);
 			?>
-			<span class="landing-item-inner" data-href="<?= $uriSuperStore ?>">
+			<button type="button" class="landing-item-inner" data-testid="landing-sites-site-add-btn" data-href="<?= \htmlspecialcharsbx($uriSuperStore) ?>">
 				<span class="landing-item-add-new-inner">
 					<span class="landing-item-add-icon landing-item-add-icon--new-store"></span>
 					<span class="landing-item-text">
 						<?= Loc::getMessage('LANDING_TPL_ACTION_ADD_PERSONAL_STORE') ?>
 					</span>
 				</span>
-			</span>
+			</button>
 		</div>
 		<?php elseif ($arResult['ACCESS_SITE_NEW'] === 'Y' && !$arResult['IS_DELETED']): ?>
 		<div class="landing-item landing-item-add-new">
 			<?php $urlEdit = str_replace('#site_edit#', 0, $arParams['PAGE_URL_SITE_EDIT']);?>
-			<span class="landing-item-inner" data-href="<?= \htmlspecialcharsbx($urlEdit) ?>">
+			<button type="button" class="landing-item-inner" data-testid="landing-sites-site-add-btn" data-href="<?= \htmlspecialcharsbx($urlEdit) ?>">
 				<span class="landing-item-add-new-inner">
 					<span class="landing-item-add-icon"></span>
 					<span class="landing-item-text">
 						<?= $component->getMessageType('LANDING_TPL_ACTION_ADD') ?>
 					</span>
 				</span>
-			</span>
+			</button>
 		</div>
 		<?php endif; ?>
 
@@ -510,12 +563,16 @@ if ($arParams['TYPE'] !== 'KNOWLEDGE' && $arParams['TYPE'] !== 'GROUP' && $isCrm
 					?><?= $item['DELETED'] === 'Y' ? ' landing-item-deleted' : '' ?>">
 				<div class="landing-item-inner">
 					<div class="landing-title">
-						<div class="landing-title-btn"
+						<button type="button" class="landing-title-btn"
+							 data-testid="landing-sites-site-menu-btn"
+							 aria-haspopup="menu"
+							 aria-expanded="false"
+							 aria-label="<?= htmlspecialcharsbx(Loc::getMessage('LANDING_TPL_ACTIONS_ARIA_SITE', ['#TITLE#' => $item['TITLE']])) ?>"
 							 onclick="showTileMenu(this,{
-									ID: '<?= $item['ID']?>',
+									ID: '<?= htmlspecialcharsbx(CUtil::jsEscape((string)$item['ID'])) ?>',
 								 	siteType: '<?= Metrika\Tools::getBySiteType($arParams['TYPE'])->value?>',
-									domainId: '<?= $item['DOMAIN_ID']?>',
-									domainProvider: '<?= $item['DOMAIN_PROVIDER']?>',
+									domainId: '<?= htmlspecialcharsbx(CUtil::jsEscape((string)$item['DOMAIN_ID'])) ?>',
+									domainProvider: '<?= htmlspecialcharsbx(CUtil::jsEscape((string)$item['DOMAIN_PROVIDER'])) ?>',
 									domainName: '<?= htmlspecialcharsbx(CUtil::jsEscape($item['DOMAIN_NAME'])) ?>',
 									domainB24Name: '<?= htmlspecialcharsbx(CUtil::jsEscape($item['DOMAIN_B24_NAME'])) ?>',
 									publicUrl: '<?= htmlspecialcharsbx(CUtil::jsEscape($item['PUBLIC_URL'])) ?>',
@@ -529,31 +586,33 @@ if ($arParams['TYPE'] !== 'KNOWLEDGE' && $arParams['TYPE'] !== 'GROUP' && $isCrm
 									publicPage: '#',
 								 	isActive: <?= ($item['ACTIVE'] === 'Y') ? 'true' : 'false' ?>,
 								 	isDeleted: <?= ($item['DELETED'] === 'Y') ? 'true' : 'false' ?>,
+								 	isCreatedByAiScenario: <?= ($item['IS_CREATED_BY_AI_SCENARIO'] ?? false) ? 'true' : 'false' ?>,
 								 	isEditDisabled: <?= ($item['ACCESS_EDIT'] !== 'Y') ? 'true' : 'false' ?>,
 								 	isSettingsDisabled: <?= ($item['ACCESS_SETTINGS'] !== 'Y') ? 'true' : 'false' ?>,
 								 	isPublicationDisabled: <?= ($item['ACCESS_PUBLICATION'] !== 'Y') ? 'true' : 'false' ?>,
 								 	isDeleteDisabled: <?= ($item['ACCESS_DELETE'] !== 'Y') ? 'true' : 'false' ?>
-								}
+								}, event
 							)">
 							<span class="landing-title-btn-inner"><?= Loc::getMessage('LANDING_TPL_ACTIONS')?></span>
-						</div>
+						</button>
 						<div class="landing-title-wrap">
 							<div class="landing-title-overflow"><?= htmlspecialcharsbx($item['TITLE'])?></div>
 						</div>
 					</div>
 					<span class="landing-item-cover"
-						<?php if ($item['PREVIEW']) {?> style="background-image: url(<?= htmlspecialcharsbx($item['PREVIEW'])?>);"<?}?>>
+						<?php if ($item['PREVIEW']) {?> style="background-image: url(<?= htmlspecialcharsbx(\Bitrix\Landing\Sanitizer::sanitizeCssUrl($item['PREVIEW']))?>);"<?php }?>>
 					</span>
 				</div>
 				<?php if ($item['DELETED'] === 'Y'):?>
 					<span class="landing-item-link"></span>
 				<?php elseif ($arParams['TILE_MODE'] === 'view' && $item['PUBLIC_URL']):?>
-					<a href="<?= htmlspecialcharsbx($item['PUBLIC_URL']) ?>" class="landing-item-link"></a>
+					<a href="<?= htmlspecialcharsbx(\Bitrix\Landing\Sanitizer::sanitizeHrefScheme($item['PUBLIC_URL'])) ?>" class="landing-item-link" data-testid="landing-sites-site-link"><span class="landing-visually-hidden"><?= htmlspecialcharsbx($item['TITLE'])?></span></a>
 				<?php elseif ($urlView):?>
-					<a href="<?= $urlView ?>" class="landing-item-link">
+					<a href="<?= htmlspecialcharsbx(\Bitrix\Landing\Sanitizer::sanitizeHrefScheme($urlView)) ?>" class="landing-item-link" data-testid="landing-sites-site-link">
 						<?php if ($arParams['OVER_TITLE']):?>
-							<button class="landing-item-btn" type="button"><?= $arParams['OVER_TITLE'];?></button>
+							<span class="landing-item-btn"><?= $arParams['OVER_TITLE'];?></span>
 						<?php endif;?>
+						<span class="landing-visually-hidden"><?= htmlspecialcharsbx($item['TITLE'])?></span>
 					</a>
 				<?php else:?>
 					<span class="landing-item-link"></span>
@@ -567,7 +626,7 @@ if ($arParams['TYPE'] !== 'KNOWLEDGE' && $arParams['TYPE'] !== 'GROUP' && $isCrm
 							<span class="landing-item-status landing-item-status-unpublished"><?= Loc::getMessage('LANDING_TPL_UNPUBLIC');?></span>
 						<?php else:?>
 							<span class="landing-item-status landing-item-status-published">
-								<?= Loc::getMessage('LANDING_TPL_PUBLIC_URL', ['#LINK#' => '<a href="' . $item['PUBLIC_URL'] . '" target="_blank">' . $item['DOMAIN_NAME'] . '</a>']);?>
+								<?= Loc::getMessage('LANDING_TPL_PUBLIC_URL', ['#LINK#' => '<a href="' . htmlspecialcharsbx(\Bitrix\Landing\Sanitizer::sanitizeHrefScheme($item['PUBLIC_URL'])) . '" target="_blank">' . htmlspecialcharsbx($item['DOMAIN_NAME']) . '</a>']);?>
 							</span>
 						<?php endif; ?>
 						<?php if ($item['DELETED'] == 'Y'):?>
@@ -593,9 +652,12 @@ if ($arParams['TYPE'] !== 'KNOWLEDGE' && $arParams['TYPE'] !== 'GROUP' && $isCrm
 				<div class="landing-item <?= $item['ACTIVE'] != 'Y' ? ' landing-item-unactive' : '';?>">
 					<div class="landing-item-inner">
 						<div class="landing-title">
-							<div class="landing-title-btn"
+							<button type="button" class="landing-title-btn"
+								 aria-haspopup="menu"
+								 aria-expanded="false"
+								 aria-label="<?= htmlspecialcharsbx(Loc::getMessage('LANDING_TPL_ACTIONS_ARIA_SITE', ['#TITLE#' => $item['NAME']])) ?>"
 								 onclick="showTileMenu(this,{
-									 ID: '<?= $item['ID']?>',
+									 ID: '<?= htmlspecialcharsbx(CUtil::jsEscape((string)$item['ID'])) ?>',
 									 siteType: '<?= Metrika\Tools::getBySiteType($arParams['TYPE'])->value?>',
 									 domainId: 0,
 									 domainName: '',
@@ -615,10 +677,10 @@ if ($arParams['TYPE'] !== 'KNOWLEDGE' && $arParams['TYPE'] !== 'GROUP' && $isCrm
 									 isSettingsDisabled: false,
 									 isPublicationDisabled: true,
 									 isDeleteDisabled: true
-									 }
+									 }, event
 									 )">
 								<span class="landing-title-btn-inner"><?= Loc::getMessage('LANDING_TPL_ACTIONS')?></span>
-							</div>
+							</button>
 							<div class="landing-title-wrap">
 								<div class="landing-title-overflow"><?= htmlspecialcharsbx($item['NAME'])?></div>
 							</div>
@@ -626,24 +688,24 @@ if ($arParams['TYPE'] !== 'KNOWLEDGE' && $arParams['TYPE'] !== 'GROUP' && $isCrm
 						<span class="landing-item-cover" style="background-image: url('/bitrix/images/landing/dev_site.png');">
 					</span>
 					</div>
-					<?if ($item['PUBLIC_URL']):?>
-					<a href="<?= htmlspecialcharsbx($item['PUBLIC_URL']);?>" target="_blank" class="landing-item-link"></a>
-					<?else:?>
+					<?php if ($item['PUBLIC_URL']):?>
+					<a href="<?= htmlspecialcharsbx(\Bitrix\Landing\Sanitizer::sanitizeHrefScheme($item['PUBLIC_URL'])) ?>" target="_blank" class="landing-item-link" data-testid="landing-sites-site-link"><span class="landing-visually-hidden"><?= htmlspecialcharsbx($item['NAME'])?></span></a>
+					<?php else:?>
 					<span class="landing-item-link"></span>
-					<?endif;?>
+					<?php endif;?>
 					<div class="landing-item-status-block">
 						<div class="landing-item-status-inner">
-							<?if ($item['ACTIVE'] != 'Y'):?>
+							<?php if ($item['ACTIVE'] != 'Y'):?>
 								<span class="landing-item-status landing-item-status-unpublished"><?= Loc::getMessage('LANDING_TPL_UNPUBLIC');?></span>
-							<?else:?>
+							<?php else:?>
 								<span class="landing-item-status landing-item-status-published">
-									<?= Loc::getMessage('LANDING_TPL_PUBLIC_URL', ['#LINK#' => '<a href="' . $item['PUBLIC_URL'] . '" target="_blank">' . $item['DOMAIN_NAME'] . '</a>']);?>
+									<?= Loc::getMessage('LANDING_TPL_PUBLIC_URL', ['#LINK#' => '<a href="' . htmlspecialcharsbx(\Bitrix\Landing\Sanitizer::sanitizeHrefScheme($item['PUBLIC_URL'])) . '" target="_blank">' . htmlspecialcharsbx($item['DOMAIN_NAME']) . '</a>']);?>
 								</span>
-							<?endif;?>
+							<?php endif;?>
 						</div>
 					</div>
 				</div>
-				<?
+				<?php
 			}
 		}
 		if (
@@ -669,16 +731,16 @@ if ($arParams['TYPE'] !== 'KNOWLEDGE' && $arParams['TYPE'] !== 'GROUP' && $isCrm
 					<button class="ui-btn ui-btn-primary"><?= $component->getMessageType('LANDING_TPL_DEV_BTN');?></button>
 				</span>
 			</div>
-			<?
+			<?php
 		}
 		?>
 
 	</div>
 </div>
 
-<?if ($navigation->getPageCount() > 1):?>
+<?php if ($navigation->getPageCount() > 1):?>
 	<div class="<?= (defined('ADMIN_SECTION') && ADMIN_SECTION === true) ? '' : 'landing-navigation';?>">
-			<?$APPLICATION->IncludeComponent(
+			<?php $APPLICATION->IncludeComponent(
 				'bitrix:main.pagenavigation',
 				'',//grid
 				array(
@@ -689,7 +751,7 @@ if ($arParams['TYPE'] !== 'KNOWLEDGE' && $arParams['TYPE'] !== 'GROUP' && $isCrm
 				false
 			);?>
 	</div>
-<?endif;?>
+<?php endif;?>
 
 <script>
 	if (
@@ -740,8 +802,8 @@ if ($arParams['TYPE'] !== 'KNOWLEDGE' && $arParams['TYPE'] !== 'GROUP' && $isCrm
 		}
 	}
 
-	<?if ($arResult['ACCESS_SITE_NEW'] == 'Y' && $arParams['SHOW_MASTER_BUTTON'] == 'Y'):?>
-	BX.bind(document.querySelector('.landing-item-add-new-super span.landing-item-inner'), 'click', function(event) {
+	<?php if ($arResult['ACCESS_SITE_NEW'] == 'Y' && $arParams['SHOW_MASTER_BUTTON'] == 'Y'):?>
+	BX.bind(document.querySelector('.landing-item-add-new-super button.landing-item-inner'), 'click', function(event) {
 		BX.SidePanel.Instance.open(event.currentTarget.dataset.href, {
 			allowChangeHistory: false,
 			width: 1200,
@@ -751,7 +813,7 @@ if ($arParams['TYPE'] !== 'KNOWLEDGE' && $arParams['TYPE'] !== 'GROUP' && $isCrm
 		});
 	});
 	<?php elseif ($arResult['ACCESS_SITE_NEW'] == 'Y'):?>
-	BX.bind(document.querySelector('.landing-item-add-new span.landing-item-inner'), 'click', function(event) {
+	BX.bind(document.querySelector('.landing-item-add-new button.landing-item-inner'), 'click', function(event) {
 		BX.SidePanel.Instance.open(event.currentTarget.dataset.href, {
 			allowChangeHistory: false
 		});
@@ -768,7 +830,7 @@ if ($arParams['TYPE'] !== 'KNOWLEDGE' && $arParams['TYPE'] !== 'GROUP' && $isCrm
 		var title_list = Array.prototype.slice.call(wrapper.getElementsByClassName('landing-item'));
 		tileGrid = new BX.Landing.TileGrid({
 			wrapper: wrapper,
-			siteType: '<?= $arParams['TYPE'];?>',
+			siteType: '<?= htmlspecialcharsbx(CUtil::jsEscape((string)$arParams['TYPE'])) ?>',
 			inner: BX('grid-tile-inner'),
 			tiles: title_list,
 			sizeSettings : {
@@ -781,7 +843,7 @@ if ($arParams['TYPE'] !== 'KNOWLEDGE' && $arParams['TYPE'] !== 'GROUP' && $isCrm
 		var createFolderEl = BX('landing-create-folder');
 		var createElement = BX('landing-create-element');
 
-		<?if ($arResult['IS_DELETED']):?>
+		<?php if ($arResult['IS_DELETED']):?>
 		if (createFolderEl)
 		{
 			BX.addClass(createFolderEl, 'ui-btn-disabled');
@@ -804,13 +866,14 @@ if ($arParams['TYPE'] !== 'KNOWLEDGE' && $arParams['TYPE'] !== 'GROUP' && $isCrm
 
 	if (typeof showTileMenu === 'undefined')
 	{
-		function showTileMenu(node, params)
+		function showTileMenu(node, params, event)
 		{
 			if (typeof showTileMenuCustom === 'function')
 			{
 				showTileMenuCustom(node, params);
 				return;
 			}
+			var suppressTriggerRefocus = false;
 			var menuItems = [
 				{
 					text: '<?= CUtil::jsEscape(Loc::getMessage('LANDING_TPL_ACTION_VIEW'));?>',
@@ -850,6 +913,7 @@ if ($arParams['TYPE'] !== 'KNOWLEDGE' && $arParams['TYPE'] !== 'GROUP' && $isCrm
 					disabled: !params.publicUrl || params.isDeleted || !params.isActive,
 				},
 				{
+					code: 'add-page',
 					text: '<?= CUtil::jsEscape(Loc::getMessage('LANDING_TPL_ACTION_ADDPAGE'));?>',
 					href: params.createPage,
 					disabled: params.isDeleted || params.isEditDisabled,
@@ -872,6 +936,7 @@ if ($arParams['TYPE'] !== 'KNOWLEDGE' && $arParams['TYPE'] !== 'GROUP' && $isCrm
 							c_section: 'site_list',
 							p3: `siteID_${params.ID}`,
 						});
+						suppressTriggerRefocus = true;
 						this.popupWindow.close();
 					}
 				},
@@ -920,7 +985,7 @@ if ($arParams['TYPE'] !== 'KNOWLEDGE' && $arParams['TYPE'] !== 'GROUP' && $isCrm
 					? {
 						text: '<?= CUtil::jsEscape($component->getMessageType('LANDING_TPL_ACTION_EXPORT'));?>',
 						disabled: params.isExportSiteDisabled,
-						<?if ($arResult['EXPORT_DISABLED'] == 'Y'):?>
+						<?php if ($arResult['EXPORT_DISABLED'] == 'Y'):?>
 						onclick: function(event)
 						{
 							landingExportDisabled();
@@ -945,6 +1010,7 @@ if ($arParams['TYPE'] !== 'KNOWLEDGE' && $arParams['TYPE'] !== 'GROUP' && $isCrm
 					onclick: function(event)
 					{
 						event.preventDefault();
+						suppressTriggerRefocus = true;
 						this.popupWindow.close();
 						menu.destroy();
 
@@ -1000,6 +1066,13 @@ if ($arParams['TYPE'] !== 'KNOWLEDGE' && $arParams['TYPE'] !== 'GROUP' && $isCrm
 					}
 				}
 			];
+			if (params.isCreatedByAiScenario)
+			{
+				menuItems = menuItems.filter(function(item)
+				{
+					return item.code !== 'add-page';
+				});
+			}
 
 			if (!isMenuShown) {
 				menu = new BX.PopupMenuWindow(
@@ -1013,6 +1086,10 @@ if ($arParams['TYPE'] !== 'KNOWLEDGE' && $arParams['TYPE'] !== 'GROUP' && $isCrm
 						className: 'landing-popup-menu',
 						events: {
 							onPopupClose: function onPopupClose() {
+								node.setAttribute('aria-expanded', 'false');
+								if (!suppressTriggerRefocus && node.isConnected) {
+									node.focus({ preventScroll: true });
+								}
 								menu.destroy();
 								isMenuShown = false;
 							},
@@ -1021,11 +1098,17 @@ if ($arParams['TYPE'] !== 'KNOWLEDGE' && $arParams['TYPE'] !== 'GROUP' && $isCrm
 				);
 				menu.show();
 
+				node.setAttribute('aria-expanded', 'true');
+				var openedWithKeyboard = !!event && event.detail === 0;
+				if (openedWithKeyboard && typeof menu.getNavigation === 'function' && menu.getNavigation()) {
+					menu.getNavigation().focusFirst();
+				}
+
 				isMenuShown = true;
 			}
 			else
 			{
-				menu.destroy();
+				menu.close();
 				isMenuShown = false;
 			}
 

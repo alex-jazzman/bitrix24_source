@@ -26,13 +26,13 @@ if (\Bitrix\Main\Loader::includeModule('socialnetwork'))
 return [
 	'js' => 'dist/html-formatter.bundle.js',
 	'rel' => [
-		'ui.smiley',
-		'ui.code-parser',
-		'ui.bbcode.model',
-		'ui.video-service',
-		'ui.bbcode.formatter',
-		'ui.typography',
 		'main.core',
+		'ui.bbcode.formatter',
+		'ui.bbcode.model',
+		'ui.code-parser',
+		'ui.smiley',
+		'ui.typography',
+		'ui.video-service',
 	],
 	'settings' => [
 		'linkSettings' => [

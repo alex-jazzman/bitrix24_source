@@ -11,6 +11,7 @@ use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\UserPermissions\Event;
 use Bitrix\Crm\Integration\IntranetManager;
+use Bitrix\Main\Web\Uri;
 
 /** @var CrmEventViewComponent $this */
 
@@ -175,7 +176,7 @@ $arResult['AJAX_MODE'] = isset($arParams['AJAX_MODE']) ? $arParams['AJAX_MODE'] 
 $arResult['AJAX_ID'] = isset($arParams['AJAX_ID']) ? $arParams['AJAX_ID'] : '';
 $arResult['AJAX_OPTION_JUMP'] = isset($arParams['AJAX_OPTION_JUMP']) ? $arParams['AJAX_OPTION_JUMP'] : 'N';
 $arResult['AJAX_OPTION_HISTORY'] = isset($arParams['AJAX_OPTION_HISTORY']) ? $arParams['AJAX_OPTION_HISTORY'] : 'N';
-$arResult['PATH_TO_EVENT_DELETE'] =  CHTTP::urlAddParams($arParams['PATH_TO_EVENT_LIST'], array('sessid' => bitrix_sessid()));
+$arResult['PATH_TO_EVENT_DELETE'] =  (string)(new Uri($arParams['PATH_TO_EVENT_LIST']))->addParams(array('sessid' => bitrix_sessid()));
 
 $arResult['SESSION_ID'] = bitrix_sessid();
 
@@ -894,14 +895,11 @@ foreach ($loadedItems as $loadedItemId)
 	}
 	$arEntityList[$arEvent['ENTITY_TYPE']][$arEvent['ENTITY_ID']] = $arEvent['ENTITY_ID'];
 
-	$arEvent['PATH_TO_DELETE'] = CHTTP::urlAddParams(
-		$bInternal ? $APPLICATION->GetCurPage() : $arParams['PATH_TO_EVENT_LIST'],
-		array(
+	$arEvent['PATH_TO_DELETE'] = (string)(new Uri($bInternal ? $APPLICATION->GetCurPage() : $arParams['PATH_TO_EVENT_LIST']))->addParams(array(
 			'action_'.$arResult['GRID_ID'] => 'delete',
 			'ID' => $arEvent['ID'],
 			'sessid' => $arResult['SESSION_ID']
-		)
-	);
+		));
 	$arResult['EVENT'][] = $arEvent;
 }
 

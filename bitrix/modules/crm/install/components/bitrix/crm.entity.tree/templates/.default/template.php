@@ -404,7 +404,7 @@ if (!function_exists('CrmEntityTreeDrawItem'))
 												<a href="<?= htmlspecialcharsbx($formatCU['HREF'])?>"<?
 												?><?if ($formatCU['ONCLICK'] != ''){?> onclick="<?= htmlspecialcharsbx($formatCU['ONCLICK'])?>"<?}?><?
 												?> class="crm-doc-gray crm-doc-bold crm-doc-clear crm-doc-cart-contact-item-phone"><?
-													?><?= $val?><?
+													?><?= htmlspecialcharsbx($val)?><?
 													?></a>
 											<?endforeach;?>
 										</td>

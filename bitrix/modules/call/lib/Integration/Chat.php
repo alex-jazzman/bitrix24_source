@@ -63,7 +63,10 @@ class Chat extends AbstractEntity
 					[
 						'LOGIC' => 'OR',
 						'=IS_REAL_USER' => 'Y',
-						'=EXTERNAL_AUTH_ID' => \Bitrix\Call\Rest\Auth::AUTH_TYPE,
+						'=EXTERNAL_AUTH_ID' => [
+							\Bitrix\Call\Rest\Auth::AUTH_TYPE,
+							\Bitrix\Im\V2\Entity\User\UserGuest::AUTH_ID,
+						],
 					]
 				]
 			])->fetchAll();
@@ -271,7 +274,10 @@ class Chat extends AbstractEntity
 			$users = $this->chatUsers;
 			$users[] = $userId;
 
-			$addResult = ChatFactory::getInstance()->addChat(['USERS' => $users]);
+			$addResult = ChatFactory::getInstance()->addChat([
+				'USERS' => $users,
+				'SKIP_ANALYTICS' => 'Y',
+			]);
 			if (!$addResult->isSuccess())
 			{
 				return false;
@@ -326,6 +332,7 @@ class Chat extends AbstractEntity
 		{
 			$addResult = ChatFactory::getInstance()->addChat([
 				'USERS' => array_values(array_unique(array_merge($this->chatUsers, $userIds))),
+				'SKIP_ANALYTICS' => 'Y',
 			]);
 			if (!$addResult->isSuccess())
 			{

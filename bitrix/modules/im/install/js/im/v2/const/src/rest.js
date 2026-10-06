@@ -1,4 +1,6 @@
 export const RestMethod = Object.freeze({
+	imV2ChatDetachToParent: 'im.v2.Chat.detachFromParent',
+	imV2ChatAttachToParent: 'im.v2.Chat.attachToParent',
 	imV2ChatLoad: 'im.v2.Chat.load',
 	imV2ChatGetDialogId: 'im.v2.Chat.getDialogId',
 	imV2ChatShallowLoad: 'im.v2.Chat.shallowLoad',
@@ -11,6 +13,7 @@ export const RestMethod = Object.freeze({
 	imV2ChatRead: 'im.v2.Chat.read',
 	imV2ChatReadAll: 'im.v2.Chat.readAll',
 	imV2ChatReadAllByType: 'im.v2.Chat.readByType',
+	imV2ChatReadByRecentType: 'im.v2.Chat.readByRecentSection',
 	imV2ChatUnread: 'im.v2.Chat.unread',
 	imV2ChatJoin: 'im.v2.Chat.join',
 	imV2ChatDeleteUser: 'im.v2.Chat.deleteUser',
@@ -82,6 +85,13 @@ export const RestMethod = Object.freeze({
 	imV2RecentPin: 'im.v2.Chat.pin',
 	imV2RecentUnpin: 'im.v2.Chat.unpin',
 	imV2GuestSetName: 'im.v2.Guest.setName',
+	imV2FolderList: 'im.v2.Folder.list',
+	imV2FolderRecentTail: 'im.v2.Folder.Recent.tail',
+	imV2FolderAdd: 'im.v2.Folder.add',
+	imV2FolderUpdate: 'im.v2.Folder.update',
+	imV2FolderDelete: 'im.v2.Folder.delete',
+	imV2FolderSort: 'im.v2.Folder.sort',
+	imV2FolderAddChats: 'im.v2.Folder.addChats',
 
 	imV2StickerPackLoad: 'im.v2.Sticker.Pack.load',
 	imV2StickerPackTail: 'im.v2.Sticker.Pack.tail',

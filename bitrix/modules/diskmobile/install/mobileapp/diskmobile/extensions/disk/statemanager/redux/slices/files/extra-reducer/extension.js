@@ -3,6 +3,7 @@
  */
 jn.define('disk/statemanager/redux/slices/files/extra-reducer', (require, exports, module) => {
 	const { showErrorToast } = require('toast');
+	const { clone } = require('utils/object');
 	const { fileListAdapter } = require('disk/statemanager/redux/slices/files/meta');
 	const { FileModel } = require('disk/statemanager/redux/slices/files/model/file');
 	const { Uuid } = require('utils/uuid');
@@ -71,28 +72,36 @@ jn.define('disk/statemanager/redux/slices/files/extra-reducer', (require, export
 		const { objectId } = action.meta.arg;
 
 		const object = state.entities[objectId];
-		action.meta.arg.oldParentId = object.parentId;
+		if (!object)
+		{
+			return;
+		}
 
-		fileListAdapter.removeOne(state, objectId);
+		action.meta.arg.movedObject = clone(object);
 	};
 
 	const moveFulfilled = (state, action) => {
-		const { objectId, targetId, onFulfilledSuccess } = action.meta.arg;
-		const object = state.entities[objectId];
+		const { targetId, movedObject, onFulfilledSuccess } = action.meta.arg;
+		if (!movedObject)
+		{
+			return;
+		}
 
+		const actualObject = state.entities[movedObject.id];
 		const { errors } = action.payload;
 		if (errors && errors.length > 0)
 		{
-			fileListAdapter.upsertOne(state, {
-				...object,
-				parentId: action.meta.arg.oldParentId,
-			});
+			if (!actualObject)
+			{
+				fileListAdapter.upsertOne(state, movedObject);
+			}
+
 			showErrorToast(errors[0]);
 		}
 		else
 		{
 			fileListAdapter.upsertOne(state, {
-				...object,
+				...(actualObject ?? movedObject),
 				parentId: targetId,
 			});
 			onFulfilledSuccess?.();

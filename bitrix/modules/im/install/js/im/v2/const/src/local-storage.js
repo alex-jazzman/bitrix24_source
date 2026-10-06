@@ -1,6 +1,7 @@
 export const LocalStorageKey = Object.freeze({
 	smileLastUpdateTime: 'smileLastUpdateTime',
 	sidebarOpened: 'sidebarOpened',
+	taskCommentsSidebarOpened: 'taskCommentsSidebarOpened',
 	textareaMarketOpened: 'textareaMarketOpened',
 	textareaHeight: 'textareaHeight',
 	lastCallType: 'lastCallType',

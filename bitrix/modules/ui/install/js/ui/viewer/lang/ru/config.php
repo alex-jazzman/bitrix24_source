@@ -1,5 +1,8 @@
 <?php
 $MESS["JS_UI_VIEWER_DEFAULT_ERROR_TITLE"] = "Произошла ошибка";
+$MESS["JS_UI_VIEWER_AUDIO_DOWNLOAD"] = "Скачать аудиофайл";
+$MESS["JS_UI_VIEWER_AUDIO_PLAYBACK_ERROR"] = "Не удалось воспроизвести аудиофайл в этом браузере. Скачайте файл, чтобы открыть его на устройстве.";
+$MESS["JS_UI_VIEWER_AUDIO_PLAYER_LABEL"] = "Аудиоплеер";
 $MESS["JS_UI_VIEWER_IMAGE_VIEW_FULL_SIZE_MSGVER_1"] = "Открыть оригинал";
 $MESS["JS_UI_VIEWER_ITEM_ACTION_COPY_LINK"] = "Скопировать ссылку";
 $MESS["JS_UI_VIEWER_ITEM_ACTION_COPY_LINK_SUCCESS"] = "Ссылка скопирована";

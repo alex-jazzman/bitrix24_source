@@ -2,8 +2,10 @@
 
 return [
 	'extensions' => [
+		'debug/prism',
 		'log',
 		'type',
+		'tokens',
 		'utils/object',
 		'utils/string',
 		'utils/url',
@@ -16,7 +18,6 @@ return [
 		'im:messenger/lib/params',
 		'im:messenger/lib/smile-manager',
 		'im:messenger/loc',
-		'tokens',
 	],
 	'bundle' => [
 		'./src/elements/dialog/message/code',
@@ -40,6 +41,7 @@ return [
 		'./src/functions/url',
 		'./src/markdown/utils/code-protector',
 		'./src/markdown/utils/escape-handler',
+		'./src/markdown/utils/mention-protector',
 		'./src/markdown/rules/block-rules',
 		'./src/markdown/rules/inline-rules',
 		'./src/markdown/rules/html-rules',

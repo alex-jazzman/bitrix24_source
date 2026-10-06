@@ -12,11 +12,6 @@ export const InspectorSchemeItemView = {
 		InspectorSchemeCollapsibleItemView,
 		InspectorSchemeDataItemView,
 	},
-	inject: {
-		loadDocumentFields: {
-			default: () => () => {},
-		},
-	},
 	props: {
 		item: {
 			/** @type InspectorViewItemBase */
@@ -24,11 +19,10 @@ export const InspectorSchemeItemView = {
 			required: true,
 		},
 	},
-	data(): { isCollapsed: boolean, isLoading: boolean }
+	data(): { isCollapsed: boolean }
 	{
 		return {
 			isCollapsed: this.item.type === 'document',
-			isLoading: false,
 		};
 	},
 	computed: {
@@ -71,15 +65,6 @@ export const InspectorSchemeItemView = {
 			];
 		},
 	},
-	watch: {
-		childItems(newItems: Array<InspectorViewItemBase>): void
-		{
-			if (this.isLoading && newItems.length > 0)
-			{
-				this.isLoading = false;
-			}
-		},
-	},
 	methods: {
 		toggle(): void
 		{
@@ -88,39 +73,7 @@ export const InspectorSchemeItemView = {
 				return;
 			}
 
-			if (this.isDocumentType && this.isCollapsed)
-			{
-				this.isLoading = true;
-
-				if (this.childItems.length === 0)
-				{
-					this.fetchDocumentFields();
-				}
-				else
-				{
-					cancelAnimationFrame(this.loadingRafId);
-					this.loadingRafId = requestAnimationFrame(() => {
-						this.isLoading = false;
-					});
-				}
-			}
-
 			this.isCollapsed = !this.isCollapsed;
-		},
-		async fetchDocumentFields(): Promise<void>
-		{
-			try
-			{
-				const fields = await this.loadDocumentFields(this.item.documentType);
-				if (!fields || fields.length === 0)
-				{
-					this.isLoading = false;
-				}
-			}
-			catch
-			{
-				this.isLoading = false;
-			}
 		},
 	},
 	template: `
@@ -135,16 +88,11 @@ export const InspectorSchemeItemView = {
 					@toggle="toggle"
 				/>
 				<ul class="inspector-scheme-view__item-list" v-if="!isCollapsed">
-					<slot name="loading" v-if="isLoading"/>
-					<template v-else>
-						<InspectorSchemeItemView
-							v-for="(item, itemIndex) in childItems"
-							:key="item.text || itemIndex"
-							:item="item"
-						>
-							<template #loading><slot name="loading"/></template>
-						</InspectorSchemeItemView>
-					</template>
+					<InspectorSchemeItemView
+						v-for="(item, itemIndex) in childItems"
+						:key="item.text || itemIndex"
+						:item="item"
+					/>
 				</ul>
 			</template>
 		</li>

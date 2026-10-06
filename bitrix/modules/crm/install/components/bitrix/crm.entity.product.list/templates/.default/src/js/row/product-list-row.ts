@@ -38,6 +38,11 @@ export type CrmEntityProductListAction =
 	| CrmEntityProductListUpdateTotalAction;
 
 type CrmEntityProductListSettings = Record<string, any>;
+type CrmEntityProductListTaxRate = {
+	ID: number | string,
+	NAME: string,
+	VALUE: number | string | null,
+};
 
 export const MODE_EDIT = 'EDIT';
 export const MODE_SET = 'SET';
@@ -204,6 +209,110 @@ export class Row extends SettingsHolder
 			// disable drag-n-drop events for select fields
 			EventBinder.bind(node, 'mousedown', (event: any) => event.stopPropagation());
 		});
+
+		this.applyDropdownAccessibility();
+	}
+
+	// B6: keyboard access for the core main.ui.grid money currency dropdowns.
+	// Disabled ones keep the core's tabindex="0" but are not operable - drop them from the tab
+	// order. Active ones (measure, discount type, editable price currency) get button semantics
+	// and Enter/Space activation, which the core delegate wired to click only.
+	applyDropdownAccessibility(): void
+	{
+		const node = this.getNode();
+		if (!node)
+		{
+			return;
+		}
+
+		node
+			.querySelectorAll('.main-grid-editor-money-currency:not(.main-dropdown), .main-grid-editor-money-currency.main-dropdown[data-disabled="true"]')
+			.forEach((currency) => {
+				// This runs again after a product change, when an active dropdown can turn disabled.
+				// Drop the button semantics too, or a screen reader keeps announcing an inoperable menu button.
+				const element = currency as HTMLElement;
+				element.removeAttribute('tabindex');
+				element.removeAttribute('role');
+				element.removeAttribute('aria-haspopup');
+			})
+		;
+
+		node
+			.querySelectorAll('.main-grid-editor-money-currency.main-dropdown:not([data-disabled="true"])')
+			.forEach((activator) => {
+				const el = activator as HTMLElement;
+				el.setAttribute('role', 'button');
+				el.setAttribute('aria-haspopup', 'menu');
+
+				if (el.dataset.a11yKeyboardBound === 'Y')
+				{
+					return;
+				}
+				el.dataset.a11yKeyboardBound = 'Y';
+
+				EventBinder.bind(el, 'keydown', (event: KeyboardEvent) => {
+					if (event.key === 'Enter' || event.key === ' ' || event.key === 'Spacebar')
+					{
+						event.preventDefault();
+						// keep Enter from reaching the money container's grid save listener
+						event.stopPropagation();
+						el.click();
+					}
+				});
+			})
+		;
+
+		// B6: native TAX <select> opens on Space but not on Enter - open it with showPicker().
+		// No-op on engines without showPicker (Space still works natively). No ARIA needed.
+		node
+			.querySelectorAll('select.crm-entity-product-control-select-field')
+			.forEach((select) => {
+				const el = select as HTMLSelectElement & { showPicker?: () => void };
+				if (el.dataset.a11yKeyboardBound === 'Y')
+				{
+					return;
+				}
+				el.dataset.a11yKeyboardBound = 'Y';
+
+				EventBinder.bind(el, 'keydown', (event: KeyboardEvent) => {
+					if (event.key === 'Enter' && typeof el.showPicker === 'function')
+					{
+						event.preventDefault();
+						event.stopPropagation();
+						el.showPicker();
+					}
+				});
+			})
+		;
+
+		// I4.B2: the "tax included" checkbox is a native input inside the grid's custom editor.
+		// The editor's keydown listener turns Enter into a grid save, so Enter never toggles the
+		// box. Keep Enter/Space from reaching that listener; Enter toggles explicitly, Space keeps
+		// native activation. Accessible name and focus ring come from template aria-label and CSS.
+		node
+			.querySelectorAll('.crm-entity-product-control-checkbox input[type="checkbox"]')
+			.forEach((checkbox) => {
+				const el = checkbox as HTMLInputElement;
+				if (el.dataset.a11yKeyboardBound === 'Y')
+				{
+					return;
+				}
+				el.dataset.a11yKeyboardBound = 'Y';
+
+				EventBinder.bind(el, 'keydown', (event: KeyboardEvent) => {
+					if (event.key === 'Enter')
+					{
+						event.preventDefault();
+						event.stopPropagation();
+						el.click();
+					}
+					else if (event.key === ' ' || event.key === 'Spacebar')
+					{
+						event.stopPropagation();
+					}
+				});
+			})
+		;
 	}
 
 	initHandlersForSelectors(): void
@@ -283,12 +392,12 @@ export class Row extends SettingsHolder
 			EventBinder.bind(actionsButton, 'click', (event: Event) => {
 				const menuItems = [
 					{
-						text: Loc.getMessage('CRM_ENTITY_PL_COPY'),
+						text: Loc.getMessage('CRM_ENTITY_PL_COPY') ?? '',
 						onclick: this.handleCopyAction.bind(this),
 						disabled: this.editor.getSettingValue('disabledSelectProductInput'),
 					},
 					{
-						text: Loc.getMessage('CRM_ENTITY_PL_DELETE'),
+						text: Loc.getMessage('CRM_ENTITY_PL_DELETE') ?? '',
 						onclick: this.handleDeleteAction.bind(this),
 						disabled: this.getModel().isEmpty() && this.getEditor().productCollection.products.length <= 1,
 					}
@@ -329,6 +438,9 @@ export class Row extends SettingsHolder
 		{
 			control.enable();
 		}
+
+		// price currency dropdown may toggle disabled/active on product change - reconcile a11y
+		this.applyDropdownAccessibility();
 	}
 
 	modifyQuantityInput(): void
@@ -705,7 +817,7 @@ export class Row extends SettingsHolder
 
 		fields['PRICE'] = this.getBasePrice();
 		fields['VAT_INCLUDED'] = this.getTaxIncluded();
-		fields['VAT_ID'] = this.getTaxId();
+		fields['VAT_ID'] = this.getTaxIdFromNode();
 
 		return fields;
 	}
@@ -871,7 +983,17 @@ export class Row extends SettingsHolder
 		return this.getNode()!.querySelector('select[data-field-code="TAX_RATE"]') as HTMLSelectElement | null;
 	}
 
-	getTaxId(): number
+	getTaxName(): string
+	{
+		return this.getField('TAX_NAME', '');
+	}
+
+	getTaxId(): number | string
+	{
+		return this.getField('TAX_ID', '');
+	}
+
+	getTaxIdFromNode(): number
 	{
 		const taxNode = this.getTaxNode();
 
@@ -894,6 +1016,11 @@ export class Row extends SettingsHolder
 
 	updateField(fieldCode: string, value: any, mode: string = MODE_SET): void
 	{
+		if (fieldCode === 'TAX_RATE')
+		{
+			fieldCode = 'TAX_ID';
+		}
+
 		this.resetExternalActions();
 		this.updateFieldValue(fieldCode, value, mode);
 		this.executeExternalActions();
@@ -932,10 +1059,6 @@ export class Row extends SettingsHolder
 			case 'VAT_ID':
 			case 'TAX_ID':
 				this.changeTaxId(value);
-				break;
-
-			case 'TAX_RATE':
-				this.changeTaxRate(value);
 				break;
 
 			case 'VAT_INCLUDED':
@@ -1079,31 +1202,20 @@ export class Row extends SettingsHolder
 
 	changeTaxId(value: number): void
 	{
-		const taxList = this.getEditor().getTaxList();
+		const taxList = this.getEditor().getTaxList() as CrmEntityProductListTaxRate[];
 		if (Type.isArrayFilled(taxList))
 		{
-			let taxRate: any = taxList.find((item: any) => parseInt(item.ID) === Number(value));
+			let taxRate = taxList.find((item) => parseInt(String(item.ID), 10) === Number(value));
 			if (!taxRate)
 			{
-				taxRate = taxList.find((item: any) => Type.isNil(item.VALUE));
+				taxRate = taxList.find((item) => Type.isNil(item.VALUE));
 			}
 
 			if (taxRate)
 			{
-				this.changeTaxRate(taxRate.VALUE);
+				this.setTaxRate(taxRate);
 			}
 		}
-	}
-
-	changeTaxRate(value: number | null | string): void
-	{
-		const preparedValue =
-			Type.isNil(value) || value === ''
-				? null
-				: this.parseFloat(value as number | string, this.getCommonPrecision())
-		;
-
-		this.setTaxRate(preparedValue);
 	}
 
 	changeTaxIncluded(value: any): void
@@ -1184,27 +1296,52 @@ export class Row extends SettingsHolder
 		}
 
 		const storeId = this.getField('STORE_ID');
-		if (!storeId)
+		const canShowAmount =
+			Boolean(storeId)
+			&& this.getModel().isCatalogExisted()
+			&& !this.isRestrictedStoreInfo()
+			&& !this.getModel().isService()
+		;
+
+		if (!canShowAmount)
 		{
+			// No real value: drop content and make the node non-interactive / unnamed (B2),
+			// so it is not a phantom tab stop and is not announced by a screen reader.
+			(availableWrapper as HTMLElement).innerHTML = '';
+			this.setStoreAvailableInteractive(availableWrapper as HTMLElement, false);
+
 			return;
 		}
 
 		const available = this.model.getStoreCollection().getStoreAvailableAmount(storeId);
 		const amount = Text.toNumber(available);
+		const amountWithMeasure = amount + ' ' + this.getMeasureName();
 
-		let amountWithMeasure = '';
-
-		if (!this.getModel().isCatalogExisted() || this.isRestrictedStoreInfo() || this.getModel().isService())
-		{
-			return;
-		}
-
-		amountWithMeasure = amount + ' ' + this.getMeasureName();
-		availableWrapper!.innerHTML =
+		(availableWrapper as HTMLElement).innerHTML =
 			amount > 0
 				? amountWithMeasure
 				: `<span class="store-available-popup-link--danger">${amountWithMeasure}</span>`
 		;
+
+		this.setStoreAvailableInteractive(availableWrapper as HTMLElement, true);
+	}
+
+	// Keeps the STORE_AVAILABLE anchor focusable + named + popup-styled only when it holds a
+	// real value; the popup click handler stays bound (see initStoreAvailablePopup) and simply
+	// has nothing to reach while the node is inert (B2).
+	private setStoreAvailableInteractive(node: HTMLElement, isInteractive: boolean): void
+	{
+		if (isInteractive)
+		{
+			node.setAttribute('href', '#');
+			Dom.addClass(node, 'store-available-popup-link');
+		}
+		else
+		{
+			node.removeAttribute('href');
+			node.removeAttribute('aria-label');
+			Dom.removeClass(node, 'store-available-popup-link');
+		}
 	}
 
 	updatePropertyFields(): void
@@ -1636,17 +1773,29 @@ export class Row extends SettingsHolder
 		}
 	}
 
-	setTaxRate(value: any): void
+	setTaxRate(taxRate: CrmEntityProductListTaxRate): void
 	{
 		if (!this.getEditor().isTaxAllowed())
 		{
 			return;
 		}
 
-		const isChangedValue = this.getTaxRate() !== value;
+		const preparedTaxValue =
+			taxRate.VALUE !== null
+				? this.parseFloat(taxRate.VALUE, this.getCommonPrecision())
+				: null
+		;
+
+		const isChangedValue =
+			this.getTaxId() !== taxRate.ID
+			|| this.getTaxRate() !== preparedTaxValue
+			|| this.getTaxName() !== taxRate.NAME
+		;
 		if (isChangedValue)
 		{
-			const calculatedFields = this.getCalculator().calculateTax(value);
+			this.fields['TAX_ID'] = taxRate.ID;
+			this.fields['TAX_NAME'] = taxRate.NAME;
+			const calculatedFields = this.getCalculator().calculateTax(preparedTaxValue);
 			this.setFields(calculatedFields);
 			this.refreshFieldsLayout();
 

@@ -151,6 +151,10 @@ export class RouteDocumentResolver
 			...row,
 			id,
 			collectionId: collectionId ?? 0,
+			// Container id of a shared document: keys its branch in the accessible-tree namespace.
+			// Reported apart from collectionId, which stays absent so the breadcrumb container is
+			// rendered as plain text.
+			sharedCollectionId: this.#toPositiveInt(row.sharedCollectionId) ?? 0,
 			collectionTitle: String(row.collectionTitle ?? ''),
 			ancestors: this.#normalizeAncestors(row.ancestors),
 			canEdit: Boolean(row.canEdit),
@@ -166,6 +170,112 @@ export class RouteDocumentResolver
 			trashedAt: typeof row.trashedAt === 'string' && row.trashedAt !== '' ? row.trashedAt : null,
 			isOrphan: Boolean(row.isOrphan),
 			canRestore: Boolean(row.canRestore),
+			views: this.#normalizeViews(row.views),
+			lastChange: this.#normalizeLastChange(row.lastChange),
+			subscription: this.#normalizeSubscription(row.subscription),
+		};
+	}
+
+	// Bell state bundled with the bootstrap payload (see DocumentSubscriptionStateResolver) — the
+	// subscription bell adopts this instead of its own getState request on mount.
+	#normalizeSubscription(value: mixed): Object | null
+	{
+		if (!Type.isPlainObject(value))
+		{
+			return null;
+		}
+
+		return {
+			subscribed: Boolean(value.subscribed),
+			mode: typeof value.mode === 'string' ? value.mode : null,
+			muted: Boolean(value.muted),
+			inherited: Boolean(value.inherited),
+			inheritedSource: typeof value.inheritedSource === 'string' ? value.inheritedSource : null,
+			inheritedTitle: typeof value.inheritedTitle === 'string' ? value.inheritedTitle : '',
+		};
+	}
+
+	// [#2] `{ authors: [{id,name,avatar}], time: <ISO 8601 string> } | null` — feeds
+	// note.ui.document-history's ActivityLineComponent chip (see note.editor's `lastChange`
+	// state/prop). Missing authors or an unparsable time both collapse to null: the chip's own
+	// `hasChipInfo` check treats a partial snapshot the same as "nothing to show yet".
+	#normalizeLastChange(value: mixed): { authors: Array<Object>, time: string } | null
+	{
+		if (!Type.isPlainObject(value))
+		{
+			return null;
+		}
+
+		const rawAuthors = Array.isArray(value.authors) ? value.authors : [];
+		const authors = [];
+		for (const author of rawAuthors)
+		{
+			if (!Type.isPlainObject(author))
+			{
+				continue;
+			}
+
+			const id = this.#toPositiveInt(author.id);
+			if (id === null)
+			{
+				continue;
+			}
+
+			authors.push({
+				id,
+				name: String(author.name ?? ''),
+				avatar: author.avatar || null,
+				// Server identity color (matches the caret / timeline) — keep it so the bootstrap chip
+				// avatar isn't the palette fallback.
+				color: author.color || null,
+			});
+		}
+
+		const time = typeof value.time === 'string' ? value.time : '';
+		if (authors.length === 0 || time === '')
+		{
+			return null;
+		}
+
+		return { authors, time };
+	}
+
+	#normalizeViews(value: mixed): { uniqueCount: number, viewers: Array<Object> } | null
+	{
+		if (!Type.isPlainObject(value))
+		{
+			return null;
+		}
+
+		const viewers = Array.isArray(value.viewers) ? value.viewers : [];
+		const normalizedViewers = [];
+		for (const viewer of viewers)
+		{
+			if (!Type.isPlainObject(viewer))
+			{
+				continue;
+			}
+
+			const userId = this.#toPositiveInt(viewer.userId);
+			if (userId === null)
+			{
+				continue;
+			}
+
+			normalizedViewers.push({
+				userId,
+				name: String(viewer.name ?? ''),
+				avatar: viewer.avatar || null,
+				// Server identity color (matches the caret / avatar stack) — keep it so bootstrap
+				// viewers aren't palette-colored while live/paginated rows use the real color.
+				color: viewer.color || null,
+				viewedAt: typeof viewer.viewedAt === 'string' ? viewer.viewedAt : '',
+			});
+		}
+
+		return {
+			uniqueCount: Number.isInteger(value.uniqueCount) ? value.uniqueCount : normalizedViewers.length,
+			viewers: normalizedViewers,
 		};
 	}
 

@@ -29,6 +29,7 @@ export class TitleField
 						type="text"
 						class="ui-ctl-element"
 						id="dashboard-title-field"
+						data-testid="biconnector-dashboard-edit-title-field"
 					>
 				</div>
 			</div>

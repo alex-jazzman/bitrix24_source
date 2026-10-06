@@ -11,6 +11,11 @@
 	display: block !important;
 }
 
+.editor-chart-node-settings-edit-action-expression-form__dropdown.--disabled {
+	pointer-events: none;
+	opacity: 0.6;
+}
+
 .editor-chart-node-settings-edit-action-expression-form__label {
 	font-size: 13px;
 	line-height: 17px;
@@ -24,6 +29,12 @@
 
 .editor-chart-node-settings-edit-action-expression-form__label .ui-icon-set {
 	cursor: pointer;
+}
+
+.edit-action-expression-form__label.--required::after {
+	content: '*';
+	margin-left: 2px;
+	color: var(--ui-color-palette-red-60);
 }
 
 .editor-chart-node-settings-edit-action-expression-form__item {

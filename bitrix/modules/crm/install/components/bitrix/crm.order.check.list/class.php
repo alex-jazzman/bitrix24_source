@@ -11,6 +11,7 @@ use Bitrix\Main;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Sale\Cashbox;
+use Bitrix\Main\Web\Uri;
 
 Loc::loadMessages(__FILE__);
 
@@ -226,14 +227,11 @@ class CCrmOrderCheckListComponent extends \CBitrixComponent
 				array('check_id' => 0)
 			);
 
-			$this->arResult['PATH_TO_ORDER_CHECK_ADD'] = CHTTP::urlAddParams(
-				$this->arResult['PATH_TO_ORDER_CHECK_ADD'] ?? '',
-				[
+			$this->arResult['PATH_TO_ORDER_CHECK_ADD'] = (string)(new Uri($this->arResult['PATH_TO_ORDER_CHECK_ADD'] ?? ''))->addParams([
 					'order_id' => $this->orderId,
 					'owner_type' => $this->arResult['OWNER_TYPE'],
 					'owner_id' => $this->arResult['OWNER_ID'],
-				]
-			);
+				]);
 		}
 
 		/** @var \CBitrixComponent $this */

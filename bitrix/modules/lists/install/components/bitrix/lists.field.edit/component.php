@@ -1,4 +1,7 @@
-<?
+<?php
+
+use Bitrix\Main\Web\Uri;
+
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 /** @global CMain $APPLICATION */
 /** @global CUser $USER */
@@ -89,11 +92,11 @@ $arResult["~LISTS_URL"] = str_replace(
 );
 $arResult["LISTS_URL"] = htmlspecialcharsbx($arResult["~LISTS_URL"]);
 
-$arResult["~LIST_URL"] = CHTTP::urlAddParams(str_replace(
+$arResult["~LIST_URL"] = (string)(new Uri(str_replace(
 	array("#list_id#", "#section_id#", "#group_id#"),
 	array($arResult["IBLOCK_ID"], 0, $arParams["SOCNET_GROUP_ID"]),
 	$arParams["~LIST_URL"]
-), array("list_section_id" => ""));
+)))->addParams(["list_section_id" => ""]);
 $arResult["LIST_URL"] = htmlspecialcharsbx($arResult["~LIST_URL"]);
 
 $arResult["~LIST_EDIT_URL"] = str_replace(
@@ -151,7 +154,9 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && check_bitrix_sessid())
 			"CODE" => $_POST["CODE"] ?? null,
 			"TYPE" => $_POST["TYPE"],
 			"DEFAULT_VALUE" => $_POST["DEFAULT_VALUE"] ?? '',
-			"USER_TYPE_SETTINGS" => $_POST["USER_TYPE_SETTINGS"] ?? null,
+			"USER_TYPE_SETTINGS" => is_array($_POST["USER_TYPE_SETTINGS"] ?? null)
+				? $_POST["USER_TYPE_SETTINGS"]
+				: null,
 			"SETTINGS" => $_POST["SETTINGS"],
 		);
 
@@ -319,15 +324,11 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && check_bitrix_sessid())
 				if (isset($_POST["save"]))
 					LocalRedirect($arResult["~LIST_FIELDS_URL"]);
 				elseif ($arResult["FIELD_ID"])
-					LocalRedirect(
-						CHTTP::urlAddParams(str_replace(
+					LocalRedirect((string)(new Uri(str_replace(
 							array("#list_id#", "#field_id#", "#group_id#"),
 							array($arResult["IBLOCK_ID"], $arResult["FIELD_ID"], $arParams["SOCNET_GROUP_ID"]),
 							$arParams["~LIST_FIELD_EDIT_URL"]
-						),
-							array($tab_name => $_POST[$tab_name]),
-							array("skip_empty" => true, "encode" => true)
-						)
+						)))->addParams([$tab_name => $_POST[$tab_name]])
 					);
 				else
 					LocalRedirect($arResult["~LIST_FIELDS_URL"]);

@@ -8,5 +8,6 @@ export default class Entry
 		this.selector = options.selector;
 		this.command = Type.isStringFilled(options.command) ? options.command : '#invalidCommand';
 		this.params = options.params;
+		this.onAfterCommand = typeof options.onAfterCommand === 'function' ? options.onAfterCommand : null;
 	}
 }

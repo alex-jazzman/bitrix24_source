@@ -6,12 +6,7 @@ if (typeof(BX.CrmActivityTodo) === 'undefined')
 		this._citem = settings.citem || 'crm-activity-todo-item';
 		this._clink = settings.clink || 'crm-activity-todo-link --active';
 		this._ccheck = settings.ccheck || 'crm-activity-todo-check';
-		this._cbuttoncancel = settings.cbuttoncancel || 'popup-window-button-link-cancel';
-		this._ccheckprefix = settings.ccheckprefix || 'check';
 		this._ajaxPath = settings.ajax_path || '/bitrix/components/bitrix/crm.activity.todo/ajax.php';
-		this._ajaxPlannerPath = settings.ajax_planner_path || '/bitrix/components/bitrix/crm.activity.planner/ajax.php?site_id=' + BX.message('SITE_ID');
-		this._dialogId = 'activity_todo_dialog';
-		this._popup = null;
 		this._activityId = 0;
 
 		//bind click on activity title
@@ -38,74 +33,6 @@ if (typeof(BX.CrmActivityTodo) === 'undefined')
 		_getParent: function(proxy)
 		{
 			return BX.findParent(proxy, { class: this._citem });
-		},
-		_showPopup: function(title, events)
-		{
-			if (this._popup === null)
-			{
-				this._popup = new BX.PopupWindow(this._dialogId, window.body, {
-					offsetLeft : 0,
-					lightShadow : true,
-					closeIcon : true,
-					titleBar: {content: BX.create('span', {html: ''})},
-					draggable: true,
-					closeByEsc : true,
-					contentColor: 'white',
-					events: events,
-					overlay: {
-						backgroundColor: '#cdcdcd', opacity: '80'
-					}
-				});
-			}
-			this._popup.setContent('...');
-			this._popup.setTitleBar(title);
-			this._popup.show();
-		},
-		_loadActivity: function()
-		{
-			var _this = this;
-			BX.ajax.post(this._ajaxPlannerPath, {
-				sessid: BX.bitrix_sessid(),
-				ajax_action: 'ACTIVITY_VIEW',
-				activity_id: this._activityId
-			}, function(data) {
-				_this._popup.setContent(data);
-				_this._popup.adjustPosition();
-				var additionalSwitcher = _this._getNodeByRole(BX(_this._dialogId), 'additional-switcher');
-				var additionalFields = _this._getNodeByRole(BX(_this._dialogId), 'additional-fields');
-				var fieldCompleted = _this._getNodeByRole(BX(_this._dialogId), 'field-completed');
-				if (additionalSwitcher && additionalFields)
-				{
-					BX.bind(additionalSwitcher, 'click', function() {
-								BX.toggleClass(additionalFields, 'active')
-							});
-				}
-				if (fieldCompleted)
-				{
-					BX.remove(BX.findParent(fieldCompleted, {tag: 'div'}));
-					/*if (fieldCompleted.checked)
-					{
-						fieldCompleted.disabled = true;
-					}
-					else
-					{
-						BX.bind(fieldCompleted, 'click', function(){
-							BX.fireEvent(BX(_this._ccheckprefix + _this._activityId), 'click');
-							fieldCompleted.disabled = true;
-						});
-					}*/
-				}
-
-				_this._popup.setButtons([
-					new BX.PopupWindowButtonLink({
-						text : BX.message('CRM_ACTIVITY_TODO_CLOSE'),
-						className : _this._cbuttoncancel,
-						events : {
-							click: function(){this.popupWindow.close();}
-						}
-					})
-				]);
-			});
 		},
 		_completeActivity(context, parent)
 		{
@@ -153,10 +80,6 @@ if (typeof(BX.CrmActivityTodo) === 'undefined')
 				},
 			);
 		},
-		_getNodeByRole: function(container, name)
-		{
-			return container.querySelector('[data-role="'+name+'"]');
-		},
 		_clickTitleHandler: function(e)
 		{
 			this._activityId = BX.data(this._getParent(BX.proxy_context), 'id');
@@ -168,25 +91,6 @@ if (typeof(BX.CrmActivityTodo) === 'undefined')
 			{
 				// @TODO: preload activity? or loader?
 				BX.CrmActivityEditor.items['kanban_activity_editor'].viewActivity(this._activityId);
-			}
-			else
-			{
-				this._showPopup(
-								BX.message('CRM_ACTIVITY_TODO_VIEW_TITLE'),
-								{
-									onAfterPopupShow: BX.delegate(
-											this._loadActivity,
-											this
-										),
-									onPopupClose: BX.delegate(
-											function() {
-												// clean popupId
-												this._popup.destroy();
-												this._popup = null;
-											},
-											this
-										)
-								});
 			}
 			BX.PreventDefault(e);
 		},

@@ -110,6 +110,27 @@ jn.define('im/messenger/db/repository/dialog', (require, exports, module) => {
 		}
 
 		/**
+		 * @param {Array<number>} chatIds
+		 * @return {Promise<Array<DialogStoredData>>}
+		 */
+		async getByChatIds(chatIds)
+		{
+			const numericChatIds = Type.isArray(chatIds) ? chatIds.filter((id) => Type.isNumber(id) && id > 0) : [];
+			if (!Feature.isLocalStorageEnabled || numericChatIds.length === 0)
+			{
+				return [];
+			}
+
+			const result = await Query.select()
+				.from(DialogSchema)
+				.where(DialogSchema.chatId.in(numericChatIds))
+				.execute()
+			;
+
+			return result.map((row) => row.extract(DialogSchema));
+		}
+
+		/**
 		 * @param {DialogId} dialogId
 		 */
 		async deleteById(dialogId)
@@ -461,6 +482,11 @@ jn.define('im/messenger/db/repository/dialog', (require, exports, module) => {
 			if (Type.isStringFilled(fields.manage_messages) || Type.isStringFilled(fields.manageMessages))
 			{
 				result.manageMessages = fields.manage_messages || fields.manageMessages;
+			}
+
+			if (Type.isStringFilled(fields.manage_delete) || Type.isStringFilled(fields.manageDelete))
+			{
+				result.manageDelete = fields.manage_delete || fields.manageDelete;
 			}
 
 			return result;

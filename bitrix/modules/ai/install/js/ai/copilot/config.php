@@ -9,6 +9,7 @@ use Bitrix\AI\Container;
 use Bitrix\AI\Facade\User;
 use Bitrix\AI\Facade\Bitrix24;
 use Bitrix\AI\Services\CopilotAccessCheckerService;
+use Bitrix\AiAssistant\Config\Feature;
 use Bitrix\Main\Loader;
 use Bitrix\Ui\Public\Services\Copilot\CopilotNameService;
 
@@ -34,6 +35,9 @@ if (Loader::includeModule('ai'))
 
 	$copilotAccessCheckerService = Container::init()->getItem(CopilotAccessCheckerService::class);
 	$userHasAccessToLibrary = $copilotAccessCheckerService->canShowLibrariesInFrontend($userId);
+
+	$isBitrixGptV2Available = Loader::includeModule('aiassistant')
+		&& Feature::getInstance()->isBitrixGptV2Available();
 }
 
 return [
@@ -57,6 +61,7 @@ return [
 		'ui.icon-set.crm',
 		'ui.icon-set.editor',
 		'ui.icon-set.main',
+		'ui.icon-set.outline',
 		'ui.label',
 		'ui.lottie',
 	],
@@ -66,6 +71,7 @@ return [
 		'isShowAgreementPopup' => $isShowAgreementPopup,
 		'isLibraryVisible' => $userHasAccessToLibrary,
 		'copilotName' => $copilotName,
-		'isSupportResponseFormatting' => $isSupportResponseFormatting
+		'isSupportResponseFormatting' => $isSupportResponseFormatting,
+		'isBitrixGptV2Available' => $isBitrixGptV2Available ?? false,
 	]
 ];

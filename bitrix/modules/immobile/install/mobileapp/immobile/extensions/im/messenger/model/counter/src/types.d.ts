@@ -46,4 +46,10 @@ declare type CounterSetActions = 'setList'
 export interface CounterSetData extends PayloadData
 {
 	counterList: Array<CounterModelState>
+	/**
+	 * Parents the counters were detached from during this set (e.g. a chat removed
+	 * from a project). Subscribers use it to recompute the previous parent's aggregated
+	 * badge, which is no longer reachable through childrenIndex after the mutation.
+	 */
+	previousParentChatIdList?: Array<number>
 }

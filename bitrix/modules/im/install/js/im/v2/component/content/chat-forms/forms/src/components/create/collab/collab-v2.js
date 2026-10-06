@@ -2,6 +2,7 @@ import { ProjectWizard } from 'socialnetwork.v2.application.project-wizard';
 import { TYPES_PROJECT_WIZARD_ACTION } from 'socialnetwork.v2.model.interface';
 
 import { Utils } from 'im.v2.lib.utils';
+import { LayoutManager } from 'im.v2.lib.layout';
 import { Messenger } from 'im.public';
 
 // @vue/component
@@ -12,7 +13,7 @@ export const CollabV2Creation = {
 		this.createForm = new ProjectWizard({
 			action: TYPES_PROJECT_WIZARD_ACTION.CREATE,
 			container: this.$refs['form-container'],
-			onCancel: () => this.openChatLayout(),
+			onCancel: () => this.restoreOriginLayout(),
 			onSave: ({ chatId }) => this.openCollab(chatId),
 		});
 
@@ -23,9 +24,9 @@ export const CollabV2Creation = {
 		this.createForm?.unmount();
 	},
 	methods: {
-		openChatLayout()
+		restoreOriginLayout()
 		{
-			void Messenger.openChat();
+			void LayoutManager.getInstance().restoreOriginLayout();
 		},
 		openCollab(chatId: number)
 		{

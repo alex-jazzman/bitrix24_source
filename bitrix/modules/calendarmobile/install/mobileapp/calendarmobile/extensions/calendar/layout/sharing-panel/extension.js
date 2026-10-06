@@ -10,6 +10,7 @@ jn.define('calendar/layout/sharing-panel', (require, exports, module) => {
 	const { Icons } = require('calendar/layout/icons');
 	const { LinkList } = require('calendar/layout/sharing-joint');
 	const { Color } = require('tokens');
+	const { Text2, Text4 } = require('ui-system/typography/text');
 	const { Analytics } = require('calendar/sharing/analytics');
 
 	/**
@@ -54,12 +55,14 @@ jn.define('calendar/layout/sharing-panel', (require, exports, module) => {
 					style: styles.sendButtonContainer,
 					onClick: this.handleSendButtonClick,
 				},
-				!this.state.creatingLink && Text(
-					{
-						style: styles.sendButtonText,
-						text: Loc.getMessage('L_ML_BUTTON_SHARE'),
-					},
-				),
+				!this.state.creatingLink && Text2({
+					testId: 'calendar-sharing-panel-share-button-text',
+					text: Loc.getMessage('L_ML_BUTTON_SHARE'),
+					color: Color.baseWhiteFixed,
+					accent: true,
+					ellipsize: 'end',
+					numberOfLines: 1,
+				}),
 				this.state.creatingLink && Loader({
 					style: {
 						width: 30,
@@ -115,9 +118,11 @@ jn.define('calendar/layout/sharing-panel', (require, exports, module) => {
 						width: 24,
 					},
 				}),
-				Text({
-					style: styles.historyButtonText,
+				Text4({
+					testId: 'calendar-sharing-panel-joint-slots-text',
 					text: Loc.getMessage('CALENDARMOBILE_SHARING_PANEL_JOINT_SLOTS'),
+					color: Color.base2,
+					style: { marginLeft: 8 },
 				}),
 			);
 		}
@@ -150,30 +155,17 @@ jn.define('calendar/layout/sharing-panel', (require, exports, module) => {
 			justifyContent: 'center',
 			alignItems: 'center',
 			marginTop: 16,
-			height: 48,
+			minHeight: 48,
 			borderRadius: 12,
 			backgroundColor: withPressed(AppTheme.colors.accentMainPrimaryalt),
-		},
-		sendButtonText: {
-			fontSize: 17,
-			fontWeight: '500',
-			ellipsize: 'end',
-			numberOfLines: 1,
-			color: AppTheme.colors.baseWhiteFixed,
 		},
 		historyButtonContainer: {
 			flexGrow: 1,
 			flexDirection: 'row',
 			marginTop: 8,
-			height: 48,
+			minHeight: 48,
 			alignItems: 'center',
 			justifyContent: 'center',
-		},
-		historyButtonText: {
-			fontSize: 15,
-			fontWeight: '400',
-			marginLeft: 8,
-			color: AppTheme.colors.base2,
 		},
 	};
 

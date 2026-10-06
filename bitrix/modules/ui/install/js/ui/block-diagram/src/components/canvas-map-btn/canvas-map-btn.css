@@ -9,10 +9,21 @@
 	cursor: pointer;
 }
 
+.ui-block-diagram-canvas-map-btn:disabled {
+	cursor: default;
+	opacity: var(--ui-opacity-50);
+}
+
 .ui-block-diagram-canvas-map-btn__icon {
 	stroke: none;
 }
 
-.ui-block-diagram-canvas-map-btn__icon:hover {
+.ui-block-diagram-canvas-map-btn:not(:disabled) .ui-block-diagram-canvas-map-btn__icon:hover {
 	fill: var(--ui-color-accent-main-primary);
+}
+
+.ui-block-diagram-canvas-map-btn:focus-visible {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
+	outline-offset: var(--ui-focus-outline-offset);
+	border-radius: var(--ui-border-radius-2xs);
 }

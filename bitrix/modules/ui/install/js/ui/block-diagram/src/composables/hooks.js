@@ -1,4 +1,4 @@
-import { createHook, CreateHook } from '../utils';
+import { createHook, type CreateHook } from '../utils';
 import { HOOK_NAMES } from '../constants';
 
 export type UseHooks = Record<$Values<HOOK_NAMES>, CreateHook>;

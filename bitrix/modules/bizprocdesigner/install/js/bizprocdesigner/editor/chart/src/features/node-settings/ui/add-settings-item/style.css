@@ -1,11 +1,31 @@
+/* «+ …» link per mockup 935:82878 (node 935:82383): 18px plus icon, 14/19 base-3 text, 28px row */
 .editor-chart-node-settings-add-item-button {
+	/* native button reset */
+	appearance: none;
+	margin: 0;
+	padding: 0;
+	border: none;
+	background: transparent;
+	font-family: inherit;
+	text-align: left;
 	cursor: pointer;
 	font-size: 14px;
 	line-height: 19px;
-	color: var(--ui-color-palette-gray-70);
+	color: var(--ui-color-base-3);
 	display: flex;
 	align-items: center;
+	height: 28px;
 	margin-top: 13px;
+	transition: color 200ms ease;
+}
+
+.editor-chart-node-settings-add-item-button:hover {
+	color: var(--ui-color-blue-57, #4A9DFF);
+}
+
+.editor-chart-node-settings-add-item-button:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: 2px;
 }
 
 .editor-chart-node-settings-add-item-button__plus {

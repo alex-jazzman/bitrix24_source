@@ -1,46 +1,152 @@
+/* Chips row inside the "Rules" card (mockup page-node-settings): compact left-aligned
+   layout with the node's min-gap 6px, wrapping to the next line when tight */
 .editor-chart-node-settings-add-construction-toolbar {
+	flex: none;
 	display: flex;
+	flex-wrap: wrap;
 	align-items: center;
-	margin: 16px 0 0 18px;
-	gap: 5px;
+	gap: var(--ui-space-inline-2xs2);
+	padding-top: var(--ui-space-inset-2xs);
 }
 
+/* Native-button reset: chips and the more-trigger are <button> for a11y,
+   the visual stays fully defined by the rules below */
+.editor-chart-node-settings-add-construction-toolbar__item,
+.editor-chart-node-settings-add-construction-toolbar__more-trigger {
+	appearance: none;
+	margin: 0;
+	padding: 0;
+	border: none;
+	background: none;
+	font: inherit;
+	color: inherit;
+	text-align: inherit;
+}
+
+.editor-chart-node-settings-add-construction-toolbar__item:focus-visible,
+.editor-chart-node-settings-add-construction-toolbar__more-trigger:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: 2px;
+}
+
+/* Chip per mockup page-node-settings: 26px height, 0/8/0/4 inset, radius 6,
+   13/17 medium, 16px plus icon. border-box keeps the 1px border inside the 26px.
+   min-height instead of height: the text keeps its room when it is scaled up. */
 .editor-chart-node-settings-add-construction-toolbar__item {
 	cursor: pointer;
+	box-sizing: border-box;
+	min-height: var(--ui-size-xl2);
 	font-size: 13px;
 	font-weight: var(--ui-font-weight-medium);
 	line-height: 17px;
-	padding: 4px 8px;
+	padding: 0 var(--ui-space-inset-xs) 0 var(--ui-space-inset-2xs);
 	border: 1px solid;
-	border-radius: 6px;
+	border-radius: var(--ui-border-radius-xs);
 	display: flex;
 	align-items: center;
+	gap: 2px;
+	white-space: nowrap;
+	min-width: 0;
+}
+
+.editor-chart-node-settings-add-construction-toolbar__item:hover {
+	box-shadow: var(--ui-shadow-bottom-s);
+}
+
+.editor-chart-node-settings-add-construction-toolbar__item:active {
+	box-shadow: var(--ui-shadow-bottom-xs);
+}
+
+
+/* Pending state of an add: the base settings an action inherits are being resolved. Kept
+   focusable on purpose (aria-disabled, not disabled): focus stays on the pressed chip,
+   which is what the addition is announced against. A press that still comes through (the
+   keyboard ignores pointer-events) is answered by an announcement, not by silence.
+   The more-trigger dims along with the chips: its menu items add constructions too. */
+.editor-chart-node-settings-add-construction-toolbar__item.--pending,
+.editor-chart-node-settings-add-construction-toolbar__more-trigger.--pending {
+	cursor: default;
+	opacity: 0.4;
+	box-shadow: none;
+	pointer-events: none;
 }
 
 .editor-chart-node-settings-add-construction-toolbar__item.--condition {
 	border-color: var(--ui-color-designer-bp-rules-blue-stroke);
 	background: var(--ui-color-designer-bp-rules-blue-bg);
-	color: #3391ff;
-	--ui-icon-set__icon-color: #3391ff;
+	color: var(--ui-color-designer-bp-rules-blue-text);
+	--ui-icon-set__icon-color: var(--ui-color-designer-bp-rules-blue-text);
 }
 
 .editor-chart-node-settings-add-construction-toolbar__item.--action {
-	color: var(--ui-color-green-50);
-	border-color: var(--ui-color-designer-bp-rules-green-stroke);
-	background: var(--ui-color-designer-bp-rules-green-bg);
-	--ui-icon-set__icon-color: var(--ui-color-green-50);
+	color: var(--designer-bp-rules-action-text);
+	border-color: var(--designer-bp-rules-action-stroke);
+	background: var(--designer-bp-rules-action-bg);
+	--ui-icon-set__icon-color: var(--designer-bp-rules-action-text);
 }
 
 .editor-chart-node-settings-add-construction-toolbar__item.--output {
-	color: var(--ui-color-palette-gray-70);
-	border-color: var(--ui-color-palette-gray-30);
-	background: var(--ui-color-palette-gray-02);
-	--ui-icon-set__icon-color: var(--ui-color-palette-gray-70);
+	color: var(--ui-color-designer-bp-rules-grey-text);
+	border-color: var(--ui-color-designer-bp-rules-grey-stroke);
+	background: var(--ui-color-designer-bp-rules-grey-bg);
+	--ui-icon-set__icon-color: var(--ui-color-designer-bp-rules-grey-text);
 }
 
 .editor-chart-node-settings-add-construction-toolbar__item.--filter {
-	color: var(--ui-color-accent-main-warning);
-	border-color: var(--ui-color-accent-main-warning);
-	background: var(--ui-color-accent-soft-orange-3);
-	--ui-icon-set__icon-color: var(--ui-color-accent-main-warning);
+	color: var(--ui-color-designer-bp-rules-orange-text);
+	border-color: var(--ui-color-designer-bp-rules-orange-stroke);
+	background: var(--ui-color-designer-bp-rules-orange-bg);
+	--ui-icon-set__icon-color: var(--ui-color-designer-bp-rules-orange-text);
+}
+
+/* Green chip, truncated to «+ БАЗО…» per mockup node 935:29625 (width 77px).
+   A hard max-width is required: with flex-wrap on the row, items wrap
+   instead of shrinking, so flex-shrink alone never triggered the ellipsis. */
+.editor-chart-node-settings-add-construction-toolbar__item.--base-settings {
+	color: var(--ui-color-designer-bp-rules-green-text);
+	border-color: var(--ui-color-designer-bp-rules-green-stroke);
+	background: var(--ui-color-designer-bp-rules-green-bg);
+	--ui-icon-set__icon-color: var(--ui-color-designer-bp-rules-green-text);
+	max-width: 78px;
+	flex-shrink: 1;
+}
+
+.editor-chart-node-settings-add-construction-toolbar__item.--base-settings span {
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+/* Three-dot trigger for items with placement:'more' (e.g. group);
+   the dropdown itself is a main.popup menu.
+   Square 28x28 per mockup page-node-settings; border-box keeps the 1.5px border inside it */
+.editor-chart-node-settings-add-construction-toolbar__more-trigger {
+	cursor: pointer;
+	box-sizing: border-box;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: var(--ui-size-2xl);
+	min-height: var(--ui-size-2xl);
+	border: var(--ui-design-outline-na-stroke-weight, 1.5px) solid var(--ui-color-design-outline-na-stroke);
+	border-radius: var(--ui-border-radius-sm);
+	background: var(--ui-color-bg-content-primary);
+	--ui-icon-set__icon-color: var(--ui-color-designer-bp-rules-grey-text);
+}
+
+.editor-chart-node-settings-add-construction-toolbar__more-trigger:hover {
+	background: var(--ui-color-bg-state-hover-default);
+}
+
+/* Content of the «···» menu items rendered inside the main.popup menu */
+.editor-chart-node-settings-add-construction-menu-item {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	color: var(--ui-color-base-4);
+	--ui-icon-set__icon-color: var(--ui-color-base-4);
+}
+
+.editor-chart-node-settings-add-construction-menu-item.--group {
+	color: var(--ui-color-designer-bp-rules-grey-text);
+	--ui-icon-set__icon-color: var(--ui-color-designer-bp-rules-grey-text);
 }

@@ -12,6 +12,7 @@ export type ImageConfiguratorOptions = {
 	formats: ImageCopilotFormat[];
 	styles: ImageCopilotStyle[];
 	engines: EngineInfo[];
+	isBitrixGptV2Available?: boolean;
 }
 
 export type getParamsResult = {
@@ -37,6 +38,7 @@ export class ImageConfigurator extends EventEmitter
 		this.#imageConfiguratorParams = new ImageConfiguratorParams({
 			formats: options?.formats ?? [],
 			engines: options?.engines ?? [],
+			isBitrixGptV2Available: options?.isBitrixGptV2Available === true,
 		});
 
 		this.#imageConfiguratorParams.subscribe('change-parameter', (event) => {

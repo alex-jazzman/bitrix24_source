@@ -1,10 +1,9 @@
-module.exports = {
+export default {
 	input: 'settings-widget-loader.js',
 	output: {
-	js: 'script.js',
-	css: './style.css'
+		js: 'script.js',
+		css: './style.css',
 	},
 	namespace: 'BX.Intranet',
-	browserslist: true,
 	adjustConfigPhp: false,
 };

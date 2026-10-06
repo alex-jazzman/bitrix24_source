@@ -6,6 +6,7 @@ jn.define('im/messenger/lib/src/feature', (require, exports, module) => {
 	const { Type } = require('type');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { NativeFeatureWrapper } = require('im/messenger/lib/src/native-feature');
+	const { UserType } = require('im/messenger/const');
 
 	const dynamicProperties = {
 		localStorageEnable: true,
@@ -175,6 +176,11 @@ jn.define('im/messenger/lib/src/feature', (require, exports, module) => {
 			return MessengerParams.getImFeatures().collabAvailable;
 		}
 
+		static get isCollabPreviewSourceAvailable()
+		{
+			return MessengerParams.getImFeatures().collabPreviewSourceEnabled;
+		}
+
 		static get isCollabCreationAvailable()
 		{
 			return MessengerParams.getImFeatures().collabCreationAvailable;
@@ -309,6 +315,29 @@ jn.define('im/messenger/lib/src/feature', (require, exports, module) => {
 			);
 		}
 
+		/**
+		 * CAP-01: Reply with any media type (files, images, video notes, etc.).
+		 *
+		 * Gates the file/media reply path: when false, media is sent without reply_id (degradation),
+		 * and reply-with-media menu scenarios are hidden.
+		 * Regular text/sticker reply is NOT affected.
+		 *
+		 * Requires both:
+		 *   - CAP-01 native flag 'chat_reply_with_media' — native build support for media reply link.
+		 *   - Server FEAT-01 flag isReplyWithMediaAvailable from getImFeatures()
+		 *     (backend Option im/reply_with_media_available).
+		 *
+		 * Double-gating: old native builds without 'chat_reply_with_media' return false even when
+		 * the server FEAT-01 flag is enabled, preventing broken reply link on legacy clients.
+		 */
+		static get isReplyWithMediaAvailable()
+		{
+			return (
+				Feature.nativeFeature.isFeatureEnabled('chat_reply_with_media')
+				&& MessengerParams.getImFeatures().isReplyWithMediaAvailable === true
+			);
+		}
+
 		static get isPinPanelNewAPIAvailable()
 		{
 			return Application.getApiVersion() >= 60 && Feature.nativeFeature.isFeatureEnabled('chat-multi-pin');
@@ -337,6 +366,11 @@ jn.define('im/messenger/lib/src/feature', (require, exports, module) => {
 		static get isRecentLikeAvailable()
 		{
 			return Feature.nativeFeature.isFeatureEnabled('chat-recent-like');
+		}
+
+		static get isRecentContextMenuSupported()
+		{
+			return Feature.nativeFeature.isFeatureEnabled('chat_recent_context_menu');
 		}
 
 		static get isAsyncRecentOperationsAvailable()
@@ -458,7 +492,7 @@ jn.define('im/messenger/lib/src/feature', (require, exports, module) => {
 
 		static get isCopilotReasoningAvailable()
 		{
-			return MessengerParams.getImFeatures().isCopilotReasoningAvailable && this.isAssistantButtonsSupported;
+			return this.isAssistantButtonsSupported;
 		}
 
 		static get isAiAssistantMCPSelectorAvailable()
@@ -562,15 +596,9 @@ jn.define('im/messenger/lib/src/feature', (require, exports, module) => {
 			return Feature.nativeFeature?.isFeatureEnabled('welcome_screen_layout_component') ?? false;
 		}
 
-		static get isRecentFilterAvailable()
-		{
-			return MessengerParams.isRecentFilterAvailable();
-		}
-
 		static get isAddingUserByMentionAvailable()
 		{
-			return MessengerParams.getImFeatures().isAddingUserByMentionAvailable
-			&& Feature.nativeFeature?.isFeatureEnabled('chat_mention_actions');
+			return Feature.nativeFeature?.isFeatureEnabled('chat_mention_actions');
 		}
 
 		static get isBannerButtonNewlineSupported()
@@ -585,7 +613,7 @@ jn.define('im/messenger/lib/src/feature', (require, exports, module) => {
 
 		static get isBlockMessageAvailable()
 		{
-			return MessengerParams.getImFeatures().isMessageBuilderAvailable && this.isBlockMessageSupported;
+			return this.isBlockMessageSupported;
 		}
 
 		static get isBlockMessageSupported()
@@ -626,14 +654,14 @@ jn.define('im/messenger/lib/src/feature', (require, exports, module) => {
 			return Feature.isChatDialogExpandingQuoteSupported;
 		}
 
+		static get isChatWithGuestsAvailable()
+		{
+			return MessengerParams.getImFeatures().isChatWithGuestsAvailable;
+		}
+
 		static get isNestedChatAvailable()
 		{
 			return MessengerParams.getImFeatures().isNestedChatAvailable;
-		}
-
-		static get isExternalChatMessageForwardingAvailable()
-		{
-			return MessengerParams.isExternalChatMessageForwardingAvailable();
 		}
 
 		static get isMessageActionsSupported()
@@ -651,6 +679,11 @@ jn.define('im/messenger/lib/src/feature', (require, exports, module) => {
 			return Feature.nativeFeature.isFeatureEnabled('chat_recent_multi_badge');
 		}
 
+		static get isChatRecentSubtitleAvatarSupported()
+		{
+			return Feature.nativeFeature.isFeatureEnabled('chat_recent_subtitle_avatar');
+		}
+
 		static get isChatFoldersAvailable()
 		{
 			if (Application.getPlatform() === 'ios' && !isAppVersionAtLeast('5.6.300'))
@@ -658,9 +691,17 @@ jn.define('im/messenger/lib/src/feature', (require, exports, module) => {
 				return false;
 			}
 
-			return MessengerParams.getImFeatures().isChatFoldersAvailable === true
-				&& Feature.isTabsWidgetApiV3Supported
-			;
+			if (MessengerParams.getUserInfo()?.type === UserType.guest)
+			{
+				return false;
+			}
+
+			return Feature.isTabsWidgetApiV3Supported;
+		}
+
+		static get isAttachChatToProjectAvailable()
+		{
+			return MessengerParams.getImFeatures().isAttachChatToProjectAvailable === true;
 		}
 	}
 

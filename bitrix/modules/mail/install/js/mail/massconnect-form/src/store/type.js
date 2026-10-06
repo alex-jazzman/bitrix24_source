@@ -41,6 +41,7 @@ export type MailboxSettingsDefaults = {
 	crmIncomingEntity: string,
 	crmOutgoingCreate: boolean,
 	crmOutgoingEntity: string,
+	crmVcf: boolean,
 	crmSource: string,
 	calendarAutoAddEvents: boolean,
 };
@@ -52,6 +53,8 @@ export type MailboxSettingsConfig = {
 	crmSources: SettingOption[],
 	defaultCrmSource: string,
 	defaults: MailboxSettingsDefaults,
+	crmAvailable: boolean,
+	canEditCrmIntegration: boolean,
 };
 
 export type ConnectionSettings = {
@@ -86,6 +89,7 @@ export type CrmSettingsState = {
 	},
 	assignKnownClientEmails: boolean,
 	assignUnknownClientEmails: boolean,
+	vcf: boolean,
 	source: string,
 	responsibleQueue: ResponsibleQueueItem[],
 	leadCreationAddresses: string,
@@ -101,6 +105,7 @@ export type CrmOptionsPayload = {
 	config: {
 		crm_sync_days?: number,
 		crm_public?: string,
+		crm_vcf?: string,
 		crm_new_entity_in?: string,
 		crm_new_entity_out?: string,
 		crm_lead_source?: string,
@@ -146,7 +151,7 @@ export type MassConnectDataType = {
 
 export type MassconnectPermissions = {
 	allowedLevels: ?number,
-	canEditCrmIntegration: ?boolean,
+	canViewMailboxList: boolean,
 };
 
 export type MassconnectFeatures = {
@@ -170,6 +175,8 @@ export type ErrorDetailCustomData = {
 	type?: string,
 	userIdToConnect?: number,
 	details?: string,
+	// Address reported as already connected on the portal; comes only with the conflict error code.
+	email?: string,
 };
 
 export type ErrorDetail = {

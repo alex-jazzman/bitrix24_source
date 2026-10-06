@@ -1,6 +1,7 @@
 // @flow
 
-import {Dom, Tag, Type} from 'main.core';
+import { Dom, Tag, Text, Type } from 'main.core';
+import { Text as UiText, Headline as UiHeadline } from 'ui.system.typography';
 import ProgressRoundColor from './progressround-color';
 import ProgressRoundStatus from './progressround-status';
 
@@ -18,6 +19,7 @@ type ProgressRoundOptions = {
 	fill: boolean;
 	finished: boolean;
 	rotation: boolean;
+	useAirDesign: boolean;
 };
 
 export default class ProgressRound // extends BX.UI.ProgressRound
@@ -34,7 +36,8 @@ export default class ProgressRound // extends BX.UI.ProgressRound
 		this.bar = null;
 		this.container = null;
 		this.width = Type.isNumber(this.options.width) ? this.options.width : 100;
-		this.lineSize = Type.isNumber(this.options.lineSize) ? this.options.lineSize : 5;
+		this.useAirDesign = this.options.useAirDesign === true;
+		this.lineSize = Type.isNumber(this.options.lineSize) ? this.options.lineSize : (this.useAirDesign ? 8 : 5);
 		this.status = null;
 		this.statusType = Type.isString(this.options.statusType) ? this.options.statusType : BX.UI.ProgressRound.Status.NONE;
 		this.statusPercent = "0%";
@@ -49,6 +52,11 @@ export default class ProgressRound // extends BX.UI.ProgressRound
 		this.colorTrack = Type.isString(this.options.colorTrack) ? this.options.colorTrack : null;
 		this.colorBar = Type.isString(this.options.colorBar) ? this.options.colorBar : null;
 		this.color = Type.isString(this.options.color) ? this.options.color : BX.UI.ProgressRound.Color.PRIMARY;
+	}
+
+	isAirDesign(): boolean
+	{
+		return this.useAirDesign;
 	}
 
 	//region Parameters
@@ -239,9 +247,7 @@ export default class ProgressRound // extends BX.UI.ProgressRound
 			}
 			else
 			{
-				Dom.adjust(this.textBeforeContainer, {
-					html: text
-				});
+				Dom.adjust(this.textBeforeContainer, this.useAirDesign ? {text} : {html: text});
 			}
 		}
 	}
@@ -250,9 +256,20 @@ export default class ProgressRound // extends BX.UI.ProgressRound
 	{
 		if ((!this.textBeforeContainer) && Type.isStringFilled(text))
 		{
-			this.textBeforeContainer = Tag.render`
-				<div class="ui-progressround-text-before">${text}</div>
-			`;
+			if (this.useAirDesign)
+			{
+				this.textBeforeContainer = UiText.render(text, {
+					size: 'md',
+					tag: 'div',
+					className: 'ui-progressround-text-before',
+				});
+			}
+			else
+			{
+				this.textBeforeContainer = Tag.render`
+					<div class="ui-progressround-text-before">${text}</div>
+				`;
+			}
 		}
 	}
 
@@ -277,9 +294,7 @@ export default class ProgressRound // extends BX.UI.ProgressRound
 			}
 			else
 			{
-				Dom.adjust(this.textAfterContainer, {
-					html: text
-				});
+				Dom.adjust(this.textAfterContainer, this.useAirDesign ? {text} : {html: text});
 			}
 		}
 	}
@@ -288,9 +303,20 @@ export default class ProgressRound // extends BX.UI.ProgressRound
 	{
 		if ((!this.textAfterContainer) && Type.isStringFilled(text))
 		{
-			this.textAfterContainer = Tag.render`
-				<div class="ui-progressround-text-after">${text}</div>
-			`;
+			if (this.useAirDesign)
+			{
+				this.textAfterContainer = UiText.render(text, {
+					size: 'md',
+					tag: 'div',
+					className: 'ui-progressround-text-after',
+				});
+			}
+			else
+			{
+				this.textAfterContainer = Tag.render`
+					<div class="ui-progressround-text-after">${text}</div>
+				`;
+			}
 		}
 	}
 
@@ -309,6 +335,13 @@ export default class ProgressRound // extends BX.UI.ProgressRound
 	// region Status
 	setStatus()
 	{
+		if (this.useAirDesign)
+		{
+			this.#updateAirStatus();
+
+			return;
+		}
+
 		if (this.getStatusType() === BX.UI.ProgressRound.Status.COUNTER)
 		{
 			Dom.adjust(this.status, {
@@ -339,7 +372,11 @@ export default class ProgressRound // extends BX.UI.ProgressRound
 	{
 		if (!this.status)
 		{
-			if (this.getStatusType() === BX.UI.ProgressRound.Status.COUNTER)
+			if (this.useAirDesign)
+			{
+				this.status = this.#createAirStatus();
+			}
+			else if (this.getStatusType() === BX.UI.ProgressRound.Status.COUNTER)
 			{
 				this.status = Tag.render`
 					<div class="ui-progressround-status">${this.getStatusCounter()}</div>
@@ -414,6 +451,89 @@ export default class ProgressRound // extends BX.UI.ProgressRound
 		}
 	}
 
+	#createAirStatus(): HTMLElement
+	{
+		const type = this.getStatusType();
+		let className = null;
+
+		if (type === BX.UI.ProgressRound.Status.COUNTER)
+		{
+			className = 'ui-progressround-status';
+		}
+		else if (type === BX.UI.ProgressRound.Status.PERCENT)
+		{
+			className = 'ui-progressround-status-percent';
+		}
+		else if (type === BX.UI.ProgressRound.Status.INCIRCLE)
+		{
+			className = 'ui-progressround-status-percent-incircle';
+		}
+		else if (type === BX.UI.ProgressRound.Status.INCIRCLECOUNTER)
+		{
+			className = 'ui-progressround-status-incircle';
+		}
+
+		if (className === null)
+		{
+			return Dom.create('span', {});
+		}
+
+		return Dom.create('div', {
+			props: {className},
+			children: this.#renderAirStatusContent(),
+		});
+	}
+
+	#updateAirStatus()
+	{
+		if (!this.status || this.getStatusType() === BX.UI.ProgressRound.Status.NONE)
+		{
+			return;
+		}
+
+		Dom.clean(this.status);
+		this.#renderAirStatusContent().forEach((node) => {
+			Dom.append(node, this.status);
+		});
+	}
+
+	#renderAirStatusContent(): Array<HTMLElement>
+	{
+		const type = this.getStatusType();
+
+		if (
+			type === BX.UI.ProgressRound.Status.COUNTER
+			|| type === BX.UI.ProgressRound.Status.INCIRCLECOUNTER
+		)
+		{
+			const current = Math.min(Math.round(this.getValue()), Math.round(this.getMaxValue()));
+			const max = Math.round(this.getMaxValue());
+
+			return [
+				UiText.render(String(current), {size: 'md', tag: 'span', accent: true}),
+				UiText.render('/', {size: 'md', tag: 'span', className: 'ui-progressround-status-divider'}),
+				UiText.render(String(max), {size: 'md', tag: 'span', accent: true}),
+			];
+		}
+
+		const percent = (this.getMaxValue() === 0)
+			? 0
+			: Math.min(100, Math.round(this.getValue() / (this.getMaxValue() / 100)));
+
+		if (type === BX.UI.ProgressRound.Status.INCIRCLE)
+		{
+			return [
+				UiHeadline.render(String(percent), {size: 'xl', tag: 'span'}),
+				UiText.render('%', {size: 'md', tag: 'span', className: 'ui-progressround-status-symbol'}),
+			];
+		}
+
+		return [
+			UiText.render(String(percent), {size: 'md', tag: 'span', accent: true}),
+			UiText.render('%', {size: 'md', tag: 'span', className: 'ui-progressround-status-symbol'}),
+		];
+	}
+
 	//endregion
 
 	// region ProgressRound
@@ -435,6 +555,21 @@ export default class ProgressRound // extends BX.UI.ProgressRound
 					})
 				]
 			});
+
+			if (this.useAirDesign)
+			{
+				Dom.addClass(this.container, '--air');
+
+				this.container.style.setProperty(
+					'--ui-progressround-air-bg-inset',
+					this.lineSize + 'px'
+				);
+
+				this.#setCustomColors(
+					'--ui-progressround-air-bar-stroke:url(#' + this.airBarGradientId + ');'
+					+ '--ui-progressround-air-track-stroke:url(#' + this.airTrackGradientId + ');'
+				);
+			}
 
 			this.setStatusType(this.statusType);
 			this.setColor(this.color);
@@ -465,6 +600,11 @@ export default class ProgressRound // extends BX.UI.ProgressRound
 		this.svg.setAttributeNS(null, 'width', this.width);
 		this.svg.setAttributeNS(null, 'height', this.width);
 
+		if (this.useAirDesign)
+		{
+			this.svg.appendChild(this.#createAirGradientDefs());
+		}
+
 		this.progressBg = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
 		this.progressBg.setAttributeNS(null, 'r', factRadius);
 		this.progressBg.setAttributeNS(null, 'cx', (this.width / 2));
@@ -486,6 +626,62 @@ export default class ProgressRound // extends BX.UI.ProgressRound
 		this.svg.appendChild(this.progressMove);
 
 		return this.svg;
+	}
+
+	#createAirGradientDefs(): Element
+	{
+		const ns = 'http://www.w3.org/2000/svg';
+
+		this.airBarGradientId = 'ui-progressround-air-bar-' + Text.getRandom(8);
+		this.airTrackGradientId = 'ui-progressround-air-track-' + Text.getRandom(8);
+
+		const defs = document.createElementNS(ns, 'defs');
+
+		const barGradient = document.createElementNS(ns, 'linearGradient');
+		barGradient.setAttributeNS(null, 'id', this.airBarGradientId);
+		barGradient.setAttributeNS(null, 'gradientUnits', 'userSpaceOnUse');
+		barGradient.setAttributeNS(null, 'x1', String(this.width * 0.924));
+		barGradient.setAttributeNS(null, 'y1', String(this.width * 0.674));
+		barGradient.setAttributeNS(null, 'x2', String(this.width * 0.076));
+		barGradient.setAttributeNS(null, 'y2', String(this.width * 0.229));
+
+		const barStop1 = document.createElementNS(ns, 'stop');
+		barStop1.setAttributeNS(null, 'offset', '0%');
+		barStop1.setAttributeNS(null, 'class', 'ui-progressround-air-stop-1');
+
+		const barStop2 = document.createElementNS(ns, 'stop');
+		barStop2.setAttributeNS(null, 'offset', '100%');
+		barStop2.setAttributeNS(null, 'class', 'ui-progressround-air-stop-2');
+
+		barGradient.appendChild(barStop1);
+		barGradient.appendChild(barStop2);
+
+		const trackGradientRadius = this.width * 0.772;
+		const trackGradientOffset = this.width * 0.364;
+		const trackOffsetComponent = trackGradientOffset * 0.7071;
+
+		const trackGradient = document.createElementNS(ns, 'radialGradient');
+		trackGradient.setAttributeNS(null, 'id', this.airTrackGradientId);
+		trackGradient.setAttributeNS(null, 'gradientUnits', 'userSpaceOnUse');
+		trackGradient.setAttributeNS(null, 'cx', String(this.width / 2 + trackOffsetComponent));
+		trackGradient.setAttributeNS(null, 'cy', String(this.width / 2 + trackOffsetComponent));
+		trackGradient.setAttributeNS(null, 'r', String(trackGradientRadius));
+
+		const trackStop1 = document.createElementNS(ns, 'stop');
+		trackStop1.setAttributeNS(null, 'offset', '0%');
+		trackStop1.setAttributeNS(null, 'class', 'ui-progressround-air-track-stop-1');
+
+		const trackStop2 = document.createElementNS(ns, 'stop');
+		trackStop2.setAttributeNS(null, 'offset', '100%');
+		trackStop2.setAttributeNS(null, 'class', 'ui-progressround-air-track-stop-2');
+
+		trackGradient.appendChild(trackStop1);
+		trackGradient.appendChild(trackStop2);
+
+		defs.appendChild(barGradient);
+		defs.appendChild(trackGradient);
+
+		return defs;
 	}
 
 	animateProgressBar()

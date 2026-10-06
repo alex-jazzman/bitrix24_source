@@ -16,7 +16,6 @@ import { TeamManager } from './team';
 import { FeaturesManager } from './features';
 import { UFManager } from './uf';
 import { Lottie } from 'ui.lottie';
-import projectLottieIconInfo from '../lottie/project-info-icon.json';
 import scrumLottieIconInfo from '../lottie/scrum-info-icon.json';
 
 
@@ -24,8 +23,6 @@ class WorkgroupForm extends EventEmitter
 {
 	static instance = null;
 
-	#projectLottieAnimation: any = null;
-	#projectLottieIconContainer: HTMLElement;
 	#scrumLottieAnimation: any = null;
 	#scrumLottieIconContainer: HTMLElement;
 
@@ -70,8 +67,6 @@ class WorkgroupForm extends EventEmitter
 		this.lastAction = 'invite';
 		this.animationList = {};
 		this.selectedTypeCode = false;
-		this.#projectLottieAnimation = null;
-		this.#projectLottieIconContainer = null;
 		this.#scrumLottieAnimation = null;
 		this.#scrumLottieIconContainer = null;
 
@@ -842,23 +837,10 @@ class WorkgroupForm extends EventEmitter
 
 	showProjectDemoInfo(): void
 	{
-		const popup: Popup = new top.BX.PopupWindow({
-			id: `socialnetwork-project-demo-info-${Text.getRandom()}`,
-			className: 'socialnetwork__demo-info --project',
-			width: 620,
-			overlay: true,
-			padding: 48,
-			closeIcon: true,
-			content: this.#renderProjectDemoInfoContent(),
-			events: {
-				onFirstShow: (baseEvent: BaseEvent) => {
-					top.BX.loadCSS(WorkgroupForm.PATH_TO_CSS);
-					this.#bindStartWorkBtn(baseEvent.getTarget());
-				},
-			},
-		});
-
-		popup.show();
+		top.BX.Runtime
+			.loadExtension('socialnetwork.v2.components.popup.projects-trial-banner')
+			.then((exports) => exports.showProjectsTrialBanner())
+			.catch(() => {}); // the form iframe may be gone already; the banner lives in the top window
 	}
 
 	#renderScrumDemoInfoContent(): HTMLElement
@@ -884,29 +866,6 @@ class WorkgroupForm extends EventEmitter
 		`;
 	}
 
-	#renderProjectDemoInfoContent(): HTMLElement
-	{
-		return Tag.render`
-			<div class="socialnetwork__demo-info_wrapper">
-				<div class="socialnetwork__demo-info_content">
-					<div class="socialnetwork__demo-info_title">
-						${Loc.getMessage('SONET_GCE_T_DEMO_INFO_TITLE_PROJECT_1')}
-					</div>
-					<div class="socialnetwork__demo-info_text">
-						${Loc.getMessage('SONET_GCE_T_DEMO_INFO_TEXT_PROJECT_1')}
-					</div>
-					<div class="socialnetwork__demo-info_text-trial">
-						${Loc.getMessage('SONET_GCE_T_DEMO_INFO_TEXT_TRIAL_1')}
-					</div>
-					<div class="ui-btn ui-btn-sm ui-btn-success ui-btn-round ui-btn-no-caps">
-						${Loc.getMessage('SONET_GCE_T_DEMO_INFO_BTN_1')}
-					</div>
-				</div>
-				${this.#getLottieProject()}
-			</div>
-		`;
-	}
-
 	#getLottieScrum(): HTMLElement
 	{
 		if (!this.#scrumLottieIconContainer)
@@ -924,25 +883,6 @@ class WorkgroupForm extends EventEmitter
 		}
 
 		return this.#scrumLottieIconContainer;
-	}
-
-	#getLottieProject(): HTMLElement
-	{
-		if (!this.#projectLottieIconContainer)
-		{
-			this.#projectLottieIconContainer = Tag.render`
-				<div class="socialnetwork__demo-info_image"></div>
-			`;
-
-			this.#projectLottieAnimation = Lottie.loadAnimation({
-				container: this.#projectLottieIconContainer,
-				renderer: 'svg',
-				loop: false,
-				animationData: projectLottieIconInfo,
-			});
-		}
-
-		return this.#projectLottieIconContainer;
 	}
 
 	#bindStartWorkBtn(popup: Popup)

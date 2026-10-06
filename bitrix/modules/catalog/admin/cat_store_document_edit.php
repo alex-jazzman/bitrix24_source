@@ -17,6 +17,7 @@ use Bitrix\Catalog\Access\AccessController;
 use Bitrix\Catalog\Access\ActionDictionary;
 use Bitrix\Currency;
 use Bitrix\Catalog\v2\Contractor\Provider\Manager;
+use Bitrix\Main\Web\Uri;
 
 require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/prolog_admin_before.php');
 require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/catalog/prolog.php');
@@ -626,8 +627,7 @@ if (
 				$saveDocumentUrl = $selfFolderUrl . "cat_store_document_edit.php?lang=" . LANGUAGE_ID . "&ID=" . $ID;
 				if ($adminSidePanelHelper->isPublicSidePanel())
 				{
-					$saveDocumentUrl = CHTTP::urlAddParams($saveDocumentUrl,
-						["IFRAME" => "Y", "IFRAME_TYPE" => "SIDE_SLIDER"]);
+					$saveDocumentUrl = (string)(new Uri($saveDocumentUrl))->addParams(["IFRAME" => "Y", "IFRAME_TYPE" => "SIDE_SLIDER"]);
 				}
 				$adminSidePanelHelper->sendSuccessResponse("apply", ["ID" => $ID, 'reloadUrl' => $saveDocumentUrl]);
 				$saveDocumentUrl = $adminSidePanelHelper->editUrlToPublicPage($saveDocumentUrl);

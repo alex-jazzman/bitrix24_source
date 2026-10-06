@@ -49,17 +49,13 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 		BBCodeEntity,
 		NavigationTabId,
 		CopilotButtonType,
-		Promo,
 		AiTasksStatusType,
 		DialogViewUpdatingBlocksType,
+		UserType,
 	} = require('im/messenger/const');
 
 	const { Promotion } = require('im/messenger/lib/promotion');
-	const {
-		getMarkdownTableData,
-		clearTableData,
-		MARKDOWN_TABLE_URL_PREFIX,
-	} = require('im/messenger/lib/parser');
+	const { MARKDOWN_TABLE_URL_PREFIX } = require('im/messenger/lib/parser');
 	const { MessageUiConverter } = require('im/messenger/lib/converter/ui/message');
 	const { DateFormatter } = require('im/messenger/lib/date-formatter');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
@@ -1480,7 +1476,6 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			this.view.readDelayedMessageList();
 
 			this.headerTitle?.startRender();
-			this.showPromotion();
 
 			const { pendingText } = this.optimisticChatManager.complete();
 			if (pendingText)
@@ -1796,7 +1791,14 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 		 */
 		visibleAttachItems()
 		{
+			if (UserHelper.isCurrentUserGuest())
+			{
+				return [];
+			}
+
 			return [
+				AttachPickerId.camera,
+				AttachPickerId.disk,
 				AttachPickerId.task,
 				AttachPickerId.meeting,
 				AttachPickerId.vote,
@@ -1901,6 +1903,7 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			this.subscribeStoreEvents();
 			this.subscribeExternalEvents();
 			this.updateReactionRestriction();
+			this.showGuestIntroductionIfNeeded();
 
 			if ((this.isComment()) && this.getChatId() > 0)
 			{
@@ -1965,6 +1968,41 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			]);
 
 			OptimisticChatManager.restore(this.getDialogWidgetType(), this.locator);
+		}
+
+		/**
+		 * @private
+		 */
+		async showGuestIntroductionIfNeeded()
+		{
+			if (!Feature.isChatWithGuestsAvailable)
+			{
+				return;
+			}
+
+			const needOpenIntroduction = MessengerParams.shouldRequestGuestName();
+			if (needOpenIntroduction)
+			{
+				const { GuestIntroduction } = await requireLazy('im:messenger/controller/guest-introduction');
+				GuestIntroduction.open({
+					dialogId: this.dialogId,
+					parentWidget: this.view.ui,
+				});
+
+				AnalyticsService.getInstance().sendViewJoinPopup(this.dialogId);
+
+				return;
+			}
+
+			// Guest already identified, the introduction sheet won't be shown: emit the event directly.
+			if (UserHelper.isCurrentUserGuest())
+			{
+				BX.postComponentEvent(
+					EventType.callManager.guestIdentified,
+					[{ dialogId: this.dialogId }],
+					'calls',
+				);
+			}
 		}
 
 		/**
@@ -2598,7 +2636,6 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 
 			this.textField.setPlaceholder();
 			this.textField.update();
-			this.showPromotion();
 		}
 
 		async initHeaderTitle()
@@ -2776,8 +2813,6 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			{
 				logger.error(`${this.constructor.name}.closeHandler onClose error:`, error);
 			}
-
-			clearTableData(this.dialogCode);
 
 			await this.visibilityManager.removeVisibleDialogInfoByDialogCode(this.dialogCode);
 			const dialogId = this.getDialogId();
@@ -3010,12 +3045,23 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 		async handleInternalUrl(url)
 		{
 			const urlObject = new Url(url);
-			if (url.includes(MARKDOWN_TABLE_URL_PREFIX))
+
+			// Only treat this as the internal "show markdown table" route when the URL is
+			// local AND the prefix anchors the start of the path. An external link that
+			// merely contains the prefix as a substring
+			// (https://attacker.example/immobile/in-app/message/markdown-table/<payload>)
+			// must NOT be handled as an internal table — that would allow UI-spoofing and
+			// forcing a large payload through the WebView.
+			const markdownTablePrefix = [
+				MARKDOWN_TABLE_URL_PREFIX,
+				`${currentDomain}${MARKDOWN_TABLE_URL_PREFIX}`,
+			].find((prefix) => url.startsWith(prefix));
+			if (urlObject.isLocal && markdownTablePrefix)
 			{
-				const tableId = url.split(MARKDOWN_TABLE_URL_PREFIX)[1];
-				if (tableId)
+				const payload = url.slice(markdownTablePrefix.length);
+				if (payload)
 				{
-					this.openMarkdownTable(tableId);
+					this.openMarkdownTable(payload);
 
 					return true;
 				}
@@ -3047,15 +3093,43 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 		}
 
 		/**
-		 * @param {string} tableId
+		 * @param {string} payload - inert-encoded table JSON from the in-app link
 		 */
-		openMarkdownTable(tableId)
+		openMarkdownTable(payload)
 		{
-			const tableData = getMarkdownTableData(this.dialogCode, tableId);
-			if (!tableData)
+			// Defensive ceiling on the inline payload: the converter already refuses to
+			// emit an over-sized table, so anything far beyond that is hostile — reject it
+			// before JSON.parse to avoid parsing/rendering an unbounded structure.
+			const MAX_TABLE_PAYLOAD_LENGTH = 200000;
+			const MAX_TABLE_ROWS = 200;
+			const MAX_TABLE_COLUMNS = 24;
+
+			if (payload.length > MAX_TABLE_PAYLOAD_LENGTH)
 			{
 				return;
 			}
+
+			let tableData;
+			try
+			{
+				tableData = JSON.parse(decodeURIComponent(payload));
+			}
+			catch (error)
+			{
+				return;
+			}
+
+			if (!tableData || !Array.isArray(tableData.headers) || !Array.isArray(tableData.rows))
+			{
+				return;
+			}
+
+			// Defensive row/column ceiling (mirrors the parser caps) so a crafted payload
+			// can never materialize an unbounded WebView grid.
+			tableData.headers = tableData.headers.slice(0, MAX_TABLE_COLUMNS);
+			tableData.rows = tableData.rows
+				.slice(0, MAX_TABLE_ROWS)
+				.map((row) => (Array.isArray(row) ? row.slice(0, MAX_TABLE_COLUMNS) : row));
 
 			void new BottomSheet({
 				titleParams: {
@@ -4346,10 +4420,30 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 			const validateQuoteMessage = message;
 			if (this.replyManager.isHasQuote(validateQuoteMessage))
 			{
-				const quoteText = this.replyManager.getQuoteText({ id: message.params?.replyId });
+				// Transitional gate: media/file replies arrive only from web (mobile send is gated).
+				// Until native reply-with-media support ships (Feature.isReplyWithMediaAvailable),
+				// render such replies as before — without the quote block. Text/sticker replies are not affected.
+				if (Type.isArrayFilled(validateQuoteMessage.files) && !Feature.isReplyWithMediaAvailable)
+				{
+					return validateQuoteMessage;
+				}
+
+				const replyId = Number(message.params?.replyId);
+				const quoteText = this.replyManager.getQuoteText({ id: replyId });
 				if (Type.isStringFilled(quoteText))
 				{
+					// Original is in store — render the real quote.
 					validateQuoteMessage.text = `${quoteText}${message.text}`;
+				}
+				else
+				{
+					// Original is absent → inaccessible to the current user. The server bundles every
+					// accessible original together with the reply (additionalEntities/additionalMessages),
+					// so a missing original means no access — show a neutral fallback without revealing content.
+					const unavailableText = Loc.getMessage('IMMOBILE_PARSER_MESSAGE_UNAVAILABLE');
+					const quoteDelimiter = '-'.repeat(54);
+					const unavailableQuote = `${quoteDelimiter}\n${unavailableText}\n${quoteDelimiter}\n`;
+					validateQuoteMessage.text = `${unavailableQuote}${message.text}`;
 				}
 			}
 
@@ -5378,18 +5472,6 @@ jn.define('im/messenger/controller/dialog/chat/dialog', (require, exports, modul
 		onHideScrollToNewMessageButton = () => {
 			this.floatingButtonsBarManager?.hideScrollToNewMessagesButton();
 		};
-
-		showPromotion()
-		{
-			if (this.checkCanRecordVideo())
-			{
-				const promotion = serviceLocator.get('promotion');
-				promotion.addToPromoQueue({
-					promoId: Promo.videoNote,
-					callback: () => promotion.showVideoNotePromotion(this.getChatId()),
-				});
-			}
-		}
 
 		setAssistantButtons()
 		{

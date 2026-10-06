@@ -4,32 +4,54 @@
 	align-items: center;
 	justify-content: center;
 	gap: var(--ui-space-inline-2xs2);
-	width: 120px;
-}
-
-.bizprocdesigner-editor-header-online .ui-icon-set,
-.bizprocdesigner-editor-header-offline .ui-icon-set
-{
-	--ui-icon-set__icon-size: 22px;
-}
-
-.bizprocdesigner-editor-header-online .ui-icon-set
-{
-	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary);
-}
-
-.bizprocdesigner-editor-header-offline .ui-icon-set
-{
-	--ui-icon-set__icon-color: var(--ui-color-red-50);
-}
-
-.bizprocdesigner-editor-header-online,
-.bizprocdesigner-editor-header-offline
-{
+	/* The two everyday states keep one width so the header does not jitter; the rarer
+	   error state grows for the retry button instead of clipping its text. */
+	min-width: 120px;
+	white-space: nowrap;
 	font-weight: var(--ui-font-weight-normal);
 	font-size: var(--ui-font-size-sm);
-	/* todo: replace with token when available */
 	line-height: 17px;
 	letter-spacing: -0.05px;
 	color: var(--ui-color-base-90);
+}
+
+/* The ui.loader container is absolute and centers itself in a positioned parent,
+   so the slot has to carry the bullet size (40x7) on its own. */
+.bizprocdesigner-editor-header-save-status-box__indicator
+{
+	position: relative;
+	flex: 0 0 auto;
+	width: 40px;
+	height: 7px;
+}
+
+/* Both error icons are drawn from a mask that the icon set only requests when the icon first
+   renders, and the error state appears exactly when the network is gone, so that request fails
+   and the state ends up without icons. Keeping the icons in the layout while the editor is still
+   online makes the browser fetch both masks in advance. `display: none` would skip the request,
+   which is why the block is hidden by `visibility` instead. */
+.bizprocdesigner-editor-header-save-status-icon-warmup
+{
+	position: absolute;
+	visibility: hidden;
+	pointer-events: none;
+}
+
+.bizprocdesigner-editor-header-save-status-retry
+{
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex: 0 0 auto;
+	padding: var(--ui-space-inset-3xs);
+	border: none;
+	border-radius: var(--ui-border-radius-2xs);
+	background: transparent;
+	cursor: pointer;
+	transition: background-color 200ms ease;
+}
+
+.bizprocdesigner-editor-header-save-status-retry:hover
+{
+	background: var(--ui-color-bg-state-hover-default);
 }

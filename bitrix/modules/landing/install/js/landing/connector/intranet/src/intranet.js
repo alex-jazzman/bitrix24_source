@@ -28,7 +28,10 @@ export class Intranet
 					}
 				});
 			},
-			Loc.getMessage('LANDING_CONNECTOR_INTRANET_HIDE_ALERT_BUTTON')
+			Loc.getMessage('LANDING_CONNECTOR_INTRANET_HIDE_ALERT_BUTTON'),
+			null,
+			null,
+			true
 		);
 	}
 }

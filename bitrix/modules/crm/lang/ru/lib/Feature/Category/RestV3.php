@@ -1,0 +1,2 @@
+<?php
+$MESS['CATEGORY_REST_V3_NAME'] = 'REST 3.0';

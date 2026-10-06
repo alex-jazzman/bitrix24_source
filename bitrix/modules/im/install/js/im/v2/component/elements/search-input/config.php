@@ -13,6 +13,7 @@ return [
 		'im.v2.const',
 		'im.v2.lib.esc-manager',
 		'im.v2.lib.utils',
+		'ui.icon-set.api.vue',
 	],
 	'skip_core' => true,
 ];

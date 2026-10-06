@@ -59,7 +59,7 @@ Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/progress_control.js
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/activity.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/interface_grid.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/partial_entity_editor.js');
-Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/dialog.js');
+\Bitrix\Main\UI\Extension::load('crm.dialog');
 
 echo \Bitrix\Crm\Tour\ImOpenLines\AiAgent\OnboardingPopup::getInstance()->build();
 
@@ -111,6 +111,7 @@ echo (\Bitrix\Crm\Tour\NumberOfClients::getInstance())->build();
 $isRecurring = isset($arParams['IS_RECURRING']) && $arParams['IS_RECURRING'] === 'Y';
 $isShowCounterPanel = ($arParams['SHOW_COUNTER_PANEL'] ?? true) && !$isRecurring;
 $isInternal = $arResult['INTERNAL'];
+$enableGroupActions = !empty($arResult['ENABLE_GROUP_ACTIONS']);
 $allowWrite = $arResult['PERMS']['WRITE'];
 $allowDelete = $arResult['PERMS']['DELETE'];
 $allowExclude = $arResult['CAN_EXCLUDE'];
@@ -865,6 +866,15 @@ $APPLICATION->IncludeComponent(
 	$component
 );
 
+$actionPanelItems = ($isInternal && !$enableGroupActions)
+	? []
+	: ($arResult['PANEL']?->getControls() ?? []);
+
+if ($isInternal && $enableGroupActions)
+{
+	$actionPanelItems = \Bitrix\Crm\Component\EntityList\Grid\Panel\ActionPanelItems::withoutForAllCheckbox($actionPanelItems);
+}
+
 $APPLICATION->IncludeComponent(
 	'bitrix:crm.interface.grid',
 	'titleflex',
@@ -908,7 +918,7 @@ $APPLICATION->IncludeComponent(
 		'ACTION_PANEL' => [
 			'GROUPS' => [
 				[
-					'ITEMS' => $isInternal ? [] : $arResult['PANEL']?->getControls(),
+					'ITEMS' => $actionPanelItems,
 				],
 			],
 		],

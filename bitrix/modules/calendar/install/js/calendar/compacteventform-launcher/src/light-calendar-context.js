@@ -33,6 +33,7 @@ export class LightCalendarContext
 				locationAccess: options.locationAccess || false,
 				isCollabFeatureEnabled: options.isCollabFeatureEnabled || false,
 				projectFeatureEnabled: options.projectFeatureEnabled || false,
+				isNewProjectsOn: options.isNewProjectsOn || false,
 				settings: options.settings || {},
 				perm: options.perm || {},
 			},
@@ -73,12 +74,10 @@ export class LightCalendarContext
 	}
 
 	reload()
-	{
-	}
+	{}
 
 	reloadDebounce()
-	{
-	}
+	{}
 
 	getDisplayedViewRange()
 	{

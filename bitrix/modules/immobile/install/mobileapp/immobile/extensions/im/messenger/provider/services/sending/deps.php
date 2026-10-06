@@ -2,6 +2,7 @@
 
 return [
 	'extensions' => [
+		'debug/prism',
 		'native/filesystem',
 		'type',
 		'utils/object',

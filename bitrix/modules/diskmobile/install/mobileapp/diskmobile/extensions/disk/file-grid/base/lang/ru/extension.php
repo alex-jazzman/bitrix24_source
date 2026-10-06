@@ -33,3 +33,5 @@ $MESS['M_DISK_UPLOAD_IS_POSSIBLE_ONLY_TO_COLLAB_DIR'] = 'Чтобы добави
 $MESS['M_DISK_UPLOAD_BUTTON_FOR_COLLABER_AHA_MOMENT'] = "Добавляйте файлы и обсуждайте их \nс участниками коллабы";
 
 $MESS['M_DISK_COMMON_READ_MORE'] = 'Подробнее';
+
+$MESS['M_DISK_FILE_GRID_CREATE_BOARD_MENU_ITEM'] = 'Новая доска';

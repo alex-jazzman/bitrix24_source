@@ -22,6 +22,11 @@ export class MarketLinks
 		return MAIN_DIR + 'installed/';
 	}
 
+	static installedVibePlusLimitLink()
+	{
+		return MAIN_DIR + 'installed/?vibe_plus_limit=Y';
+	}
+
 	static categoryLink(categoryCode)
 	{
 		return MAIN_DIR + 'category/' + categoryCode + '/';

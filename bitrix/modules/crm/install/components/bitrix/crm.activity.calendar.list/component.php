@@ -1,5 +1,8 @@
 <?php
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
+
+use Bitrix\Main\Web\Uri;
 
 if (!CModule::IncludeModule('crm'))
 {
@@ -282,23 +285,19 @@ while($arCal = $obRes->GetNext())
 			continue;
 		$iAddTask++;
 
-		$arCal['PATH_TO_CALENDAR_SHOW'] = CHTTP::urlAddParams(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_CAL_SHOW'],
+		$arCal['PATH_TO_CALENDAR_SHOW'] = (string)(new Uri(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_CAL_SHOW'],
 			array(
 				'user_id' => $arCal['OWNER_ID']
-			)),
-			array(
+			))))->addParams(array(
 				'EVENT_ID' => $arCal['ID']
-			)
-		);
+			));
 
-		$arCal['PATH_TO_CALENDAR_DELETE'] =  CHTTP::urlAddParams(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_CAL_LIST'],
-			array()),
-			array(
+		$arCal['PATH_TO_CALENDAR_DELETE'] =  (string)(new Uri(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_CAL_LIST'],
+			array())))->addParams(array(
 				'action_'.$arResult['GRID_ID'] => 'delete', 'sessid' => bitrix_sessid(),
 				'ID' => $arCal['ID'], 'OWNER_ID' => $arCal['OWNER_ID'],
 				'REL_ID' => $sCalRel
-			)
-		);
+			));
 
 		$arCal['PATH_TO_USER_PROFILE'] = CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_USER_PROFILE'],
 			array(

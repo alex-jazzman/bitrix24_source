@@ -54,6 +54,8 @@ jn.define('im/messenger/db/table-schema/src/user', (require, exports, module) =>
 			.configureSaveCallback(saveDateOrFalse)
 			.configureRestoreCallback(restoreDateOrFalse);
 
+		static active = new BooleanField('active');
+
 		static getTableName()
 		{
 			return 'b_im_user';
@@ -85,6 +87,7 @@ jn.define('im/messenger/db/table-schema/src/user', (require, exports, module) =>
 				this.isCompleteInfo,
 				this.birthday,
 				this.absent,
+				this.active,
 			];
 		}
 

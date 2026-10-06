@@ -19,33 +19,51 @@ export class SharingPopupDialog
 	#mode = 'default';
 	#onAfterHide = null;
 	#initialAccessRights = null;
+	#openGeneration = 0;
 
 	async open(params = {}): Promise<void>
 	{
-		this.#objectId = params.objectId;
-		this.#uniqueCode = params.uniqueCode ?? null;
-		this.#initialTab = params.initialTab ?? null;
-		this.#mode = params.mode ?? 'default';
-		this.#onAfterHide = params.onAfterHide ?? null;
+		const openGeneration = ++this.#openGeneration;
+		const objectId = params.objectId;
+		const uniqueCode = params.uniqueCode ?? null;
+		const initialTab = params.initialTab ?? null;
+		const mode = params.mode ?? 'default';
+		const onAfterHide = params.onAfterHide ?? null;
 
-		if (!this.#objectId)
+		if (!objectId)
 		{
 			throw new Error('SharingPopupDialog.open: objectId is required');
 		}
 
+		let initialAccessRights;
 		try
 		{
-			this.#initialAccessRights = await getAccessRights({
-				objectId: this.#objectId,
-				uniqueCode: this.#uniqueCode,
+			initialAccessRights = await getAccessRights({
+				objectId,
+				uniqueCode,
 			});
 		}
 		catch
 		{
-			notify('DISK_SHARING_ACCESS_POPUP_NOTIFY_ERROR_MESSAGE');
+			if (this.#isCurrentOpen(openGeneration))
+			{
+				notify('DISK_SHARING_ACCESS_POPUP_NOTIFY_ERROR_MESSAGE');
+			}
 
 			return;
 		}
+
+		if (!this.#isCurrentOpen(openGeneration))
+		{
+			return;
+		}
+
+		this.#objectId = objectId;
+		this.#uniqueCode = uniqueCode;
+		this.#initialTab = initialTab;
+		this.#mode = mode;
+		this.#onAfterHide = onAfterHide;
+		this.#initialAccessRights = initialAccessRights;
 
 		if (!this.#dialog)
 		{
@@ -59,8 +77,9 @@ export class SharingPopupDialog
 				events: {
 					onAfterShow: () => this.#markPopup(),
 					onAfterHide: () => {
-						this.#runAfterHide();
+						const onAfterHide = this.#onAfterHide;
 						this.#reset();
+						this.#runAfterHide(onAfterHide);
 					},
 				},
 			});
@@ -85,7 +104,15 @@ export class SharingPopupDialog
 
 	close(): void
 	{
-		this.#dialog?.hide();
+		this.#openGeneration += 1;
+		if (this.#dialog)
+		{
+			this.#dialog.hide();
+
+			return;
+		}
+
+		this.#reset();
 	}
 
 	#mount(): void
@@ -101,11 +128,11 @@ export class SharingPopupDialog
 		this.#app.mount(this.#container);
 	}
 
-	#runAfterHide(): void
+	#runAfterHide(onAfterHide: ?Function): void
 	{
-		if (typeof this.#onAfterHide === 'function')
+		if (typeof onAfterHide === 'function')
 		{
-			this.#onAfterHide();
+			onAfterHide();
 		}
 	}
 
@@ -124,6 +151,7 @@ export class SharingPopupDialog
 
 	#reset(): void
 	{
+		this.#openGeneration += 1;
 		this.#unmount();
 		this.#dialog = null;
 		this.#container = null;
@@ -132,5 +160,10 @@ export class SharingPopupDialog
 		this.#initialAccessRights = null;
 		this.#mode = 'default';
 		this.#onAfterHide = null;
+	}
+
+	#isCurrentOpen(openGeneration: number): boolean
+	{
+		return this.#openGeneration === openGeneration;
 	}
 }

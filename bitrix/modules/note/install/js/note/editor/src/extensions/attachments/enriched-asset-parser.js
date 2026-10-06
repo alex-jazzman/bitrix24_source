@@ -1,5 +1,7 @@
 // @flow
 
+import { isEscapedAt } from './note-asset-parser';
+
 type AssetType = 'image' | 'file' | 'video';
 
 type ParseResult = {
@@ -16,11 +18,11 @@ type AssetMatch = {
 	end: number,
 };
 
-export const ASSET_TYPE_TO_NODE: { [AssetType]: string } = {
+export const ASSET_TYPE_TO_NODE: { [AssetType]: string } = Object.assign(Object.create(null), {
 	image: 'imageAttachment',
 	file: 'fileAttachment',
 	video: 'video',
-};
+});
 
 export function parseAttrs(str: string): { [string]: string }
 {
@@ -304,6 +306,7 @@ export function findEnrichedAssetStart(src: string): number
 export function parseAllEnrichedAssets(src: string): AssetMatch[]
 {
 	const results: AssetMatch[] = [];
+	const closingPositions = buildClosingPositions(src);
 	let pos = 0;
 
 	while (pos < src.length)
@@ -327,7 +330,7 @@ export function parseAllEnrichedAssets(src: string): AssetMatch[]
 			continue;
 		}
 
-		const result = parseEnrichedAssetSyntax(src, startPos, 'inline');
+		const result = parseEnrichedAssetSyntaxWithClosingPositions(src, startPos, closingPositions);
 		if (result)
 		{
 			results.push({
@@ -344,6 +347,113 @@ export function parseAllEnrichedAssets(src: string): AssetMatch[]
 	}
 
 	return results;
+}
+
+function buildClosingPositions(src: string): Int32Array
+{
+	const closingPositions = new Int32Array(src.length);
+	closingPositions.fill(-1);
+	const stacks = new Map([
+		[CH_OPEN_BRACKET, []],
+		[CH_OPEN_PAREN, []],
+		[CH_OPEN_BRACE, []],
+	]);
+	const openingByClosing = new Map([
+		[CH_CLOSE_BRACKET, CH_OPEN_BRACKET],
+		[CH_CLOSE_PAREN, CH_OPEN_PAREN],
+		[CH_CLOSE_BRACE, CH_OPEN_BRACE],
+	]);
+
+	for (let index = 0; index < src.length; index++)
+	{
+		const character = src.charCodeAt(index);
+		if (character === 0x5C)
+		{
+			index++;
+			continue;
+		}
+
+		if (stacks.has(character))
+		{
+			stacks.get(character).push(index);
+			continue;
+		}
+
+		const opening = openingByClosing.get(character);
+		const stack = stacks.get(opening);
+		if (stack?.length > 0)
+		{
+			closingPositions[stack.pop()] = index;
+		}
+	}
+
+	return closingPositions;
+}
+
+function parseEnrichedAssetSyntaxWithClosingPositions(
+	src: string,
+	pos: number,
+	closingPositions: Int32Array,
+): ParseResult | null
+{
+	let labelStart = pos;
+	let isImage = false;
+	if (src.charCodeAt(labelStart) === CH_EXCL)
+	{
+		isImage = true;
+		labelStart++;
+	}
+
+	if (src.charCodeAt(labelStart) !== CH_OPEN_BRACKET)
+	{
+		return null;
+	}
+
+	const labelEnd = closingPositions[labelStart];
+	const urlStart = labelEnd + 1;
+	if (labelEnd < 0 || src.charCodeAt(urlStart) !== CH_OPEN_PAREN)
+	{
+		return null;
+	}
+
+	const urlEnd = closingPositions[urlStart];
+	const attrsStart = urlEnd + 1;
+	if (urlEnd < 0 || src.charCodeAt(attrsStart) !== CH_OPEN_BRACE)
+	{
+		return null;
+	}
+
+	const attrsEnd = closingPositions[attrsStart];
+	if (attrsEnd < 0 || urlEnd === urlStart + 1)
+	{
+		return null;
+	}
+
+	const end = attrsEnd + 1;
+
+	return {
+		isImage,
+		label: src.slice(labelStart + 1, labelEnd),
+		url: src.slice(urlStart + 1, urlEnd),
+		attrsRaw: src.slice(attrsStart + 1, attrsEnd),
+		raw: src.slice(pos, end),
+	};
+}
+
+export function findValidEnrichedAssetMatches(src: string): AssetMatch[]
+{
+	return parseAllEnrichedAssets(src).filter(({ match, start }) => {
+		if (isEscapedAt(src, start))
+		{
+			return false;
+		}
+
+		const attrs = parseAttrs(match.attrsRaw);
+		const fileId = Number(attrs.fileId);
+		const hasAllowedType = Object.prototype.hasOwnProperty.call(ASSET_TYPE_TO_NODE, attrs.type);
+
+		return hasAllowedType && Number.isInteger(fileId) && fileId > 0;
+	});
 }
 
 /**
@@ -409,41 +519,4 @@ export function splitInlineAssets(src: string): string
 	}
 
 	return result.join('\n');
-}
-
-/**
- * Parses a single table cell that is expected to contain exactly one enriched asset.
- * Returns a ProseMirror node descriptor or null if the cell doesn't match.
- */
-export function parseEnrichedAssetCell(text: string): Object | null
-{
-	const trimmed = text.trim();
-	if (!trimmed)
-	{
-		return null;
-	}
-
-	const result = parseEnrichedAssetSyntax(trimmed, 0, 'inline');
-	if (!result || result.raw.length !== trimmed.length)
-	{
-		return null;
-	}
-
-	const attrs = { ...parseAttrs(result.attrsRaw), label: result.label, url: result.url, isImage: result.isImage };
-	const nodeType = ASSET_TYPE_TO_NODE[attrs.type];
-	if (!nodeType)
-	{
-		return null;
-	}
-
-	return {
-		type: nodeType,
-		attrs: {
-			fileId: Number(attrs.fileId),
-			documentId: Number(attrs.documentId),
-			name: attrs.name ?? attrs.label,
-			size: attrs.size ? Number(attrs.size) : null,
-			mimeType: attrs.mimeType ?? null,
-		},
-	};
 }

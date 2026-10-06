@@ -1,5 +1,5 @@
 import { FormMode, ProductForm } from 'catalog.product-form';
-import 'currency';
+import { CurrencyCore } from 'currency.currency-core';
 import { MixinTemplatesType } from './components/templates-type-mixin';
 import { ajax as Ajax, Runtime, Type, Text, Loc } from 'main.core';
 import { EventEmitter } from 'main.core.events';
@@ -26,6 +26,11 @@ export default {
 
 		const defaultCurrency = this.$root.$app.options.currencyCode || '';
 
+		if (defaultCurrency)
+		{
+			CurrencyCore.loadCurrencyFormat(defaultCurrency);
+		}
+
 		this.$store.dispatch('orderCreation/setCurrency', defaultCurrency);
 		if (Type.isArray(this.$root.$app.options.basket))
 		{
@@ -41,33 +46,57 @@ export default {
 			this.$store.commit('orderCreation/setTotal', this.$root.$app.options.totals);
 		}
 
-		this.productForm = new ProductForm(
-			{
-				currencySymbol: this.$root.$app.options.currencySymbol,
-				currency: defaultCurrency,
-				iblockId: this.$root.$app.options.catalogIblockId,
-				basePriceId: this.$root.$app.options.basePriceId,
-				basket: Type.isArray(this.$root.$app.options.basket) ? this.$root.$app.options.basket : [],
-				totals: this.$root.$app.options.totals,
-				taxList: this.$root.$app.options.vatList,
-				measures: this.$root.$app.options.measures,
-				showDiscountBlock: this.$root.$app.options.showProductDiscounts,
-				showTaxBlock: this.$root.$app.options.showProductTaxes,
-				totalResultLabel: this.$root.$app.options.mode === 'delivery' ? Loc.getMessage('SALESCENTER_SHIPMENT_PRODUCT_BLOCK_TOTAL') : null,
-				urlBuilderContext: this.$root.$app.options.urlProductBuilderContext,
-				isCatalogPriceEditEnabled: this.$root.$app.options.isCatalogPriceEditEnabled,
-				isCatalogDiscountSetEnabled: this.$root.$app.options.isCatalogDiscountSetEnabled,
-				fieldHints: this.$root.$app.options.fieldHints,
-				hideUnselectedProperties: (this.$root.$app.options.templateMode === 'view'),
-				showCompilationModeSwitcher: this.showCompilationModeSwitcher(),
-				ownerId: this.$root.$app.options.ownerId,
-				ownerTypeId: this.$root.$app.options.ownerTypeId,
-				dialogId: this.$root.$app.options.dialogId,
-				sessionId: this.$root.$app.options.sessionId,
-				isShortProductViewFormat: true,
-				enableEmptyProductError: false,
-			},
-		);
+		const basketItems = Type.isArray(this.$root.$app.options.basket)
+			? this.$root.$app.options.basket
+			: []
+		;
+		const initialTaxIncluded = basketItems
+			.map((item) => item?.fields?.taxIncluded)
+			.find((value) => value === 'Y' || value === 'N')
+			|| 'Y'
+		;
+
+		const productFormOptions = {
+			currencySymbol: this.$root.$app.options.currencySymbol,
+			currency: defaultCurrency,
+			iblockId: this.$root.$app.options.catalogIblockId,
+			basePriceId: this.$root.$app.options.basePriceId,
+			basket: basketItems,
+			totals: this.$root.$app.options.totals,
+			taxRateList: this.$root.$app.options.vatRateList,
+			measures: this.$root.$app.options.measures,
+			showDiscountBlock: this.$root.$app.options.showProductDiscounts,
+			showTaxBlock: this.$root.$app.options.showProductTaxes,
+			showTaxSettingsSwitcher: 'Y',
+			taxIncluded: initialTaxIncluded,
+			totalResultLabel: this.$root.$app.options.mode === 'delivery' ? Loc.getMessage('SALESCENTER_SHIPMENT_PRODUCT_BLOCK_TOTAL') : null,
+			urlBuilderContext: this.$root.$app.options.urlProductBuilderContext,
+			isCatalogPriceEditEnabled: this.$root.$app.options.isCatalogPriceEditEnabled,
+			isCatalogDiscountSetEnabled: this.$root.$app.options.isCatalogDiscountSetEnabled,
+			fieldHints: this.$root.$app.options.fieldHints,
+			hideUnselectedProperties: (this.$root.$app.options.templateMode === 'view'),
+			showCompilationModeSwitcher: this.showCompilationModeSwitcher(),
+			ownerId: this.$root.$app.options.ownerId,
+			ownerTypeId: this.$root.$app.options.ownerTypeId,
+			dialogId: this.$root.$app.options.dialogId,
+			sessionId: this.$root.$app.options.sessionId,
+			isShortProductViewFormat: true,
+			enableEmptyProductError: false,
+		};
+
+		const pricePrecision = Text.toInteger(this.$root.$app.options.pricePrecision);
+		if (pricePrecision > 0)
+		{
+			productFormOptions.pricePrecision = pricePrecision;
+		}
+
+		const displayPrecision = Text.toInteger(this.$root.$app.options.displayPrecision);
+		if (displayPrecision >= 0)
+		{
+			productFormOptions.displayPrecision = displayPrecision;
+		}
+
+		this.productForm = new ProductForm(productFormOptions);
 
 		this.checkProductErrors();
 

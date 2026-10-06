@@ -1,6 +1,9 @@
 <?php
 
-if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Text\HtmlFilter;
@@ -72,23 +75,10 @@ $nodes = [$arResult['userField']['~id']];
 	?>
 </a>
 <?php
-if($arParams['additionalParameters']['canDrop'] !== false)
-{
-	?>
-	<del
-		id="<?= $item['attrList']['id'] ?>_del"
-		<?= ($item['value'] ? '' : 'style="display:none"') ?>
-	>
-	</del>
-	<?php
-}
-
 if ($arResult['isEnabled'])
 {
 	?>
-
 	<script>
-
 		BX.message(<?= Json::encode([
 			'USER_TYPE_ENUM_NO_VALUE' => Loc::getMessage('USER_TYPE_ENUM_NO_VALUE')
 		]) ?>);
@@ -105,6 +95,5 @@ if ($arResult['isEnabled'])
 			);
 		});
 	</script>
-
 	<?php
 }

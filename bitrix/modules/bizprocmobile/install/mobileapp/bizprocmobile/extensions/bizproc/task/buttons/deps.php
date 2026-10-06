@@ -27,6 +27,7 @@ return [
 		'layout/ui/buttons/cancel',
 		'selector/widget/factory',
 
+		'bizproc:helper/network-error',
 		'bizproc:task/task-constants',
 	],
 ];

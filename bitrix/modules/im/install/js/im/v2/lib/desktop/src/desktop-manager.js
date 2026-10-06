@@ -2,7 +2,7 @@ import { Extension, Type } from 'main.core';
 import { EventEmitter, BaseEvent } from 'main.core.events';
 
 import { Core } from 'im.v2.application.core';
-import { DesktopBxLink, Settings } from 'im.v2.const';
+import { DesktopBxLink, Settings, type OpenCollabOptions, RecentType } from 'im.v2.const';
 import { Logger } from 'im.v2.lib.logger';
 import { DesktopApi, DesktopFeature } from 'im.v2.lib.desktop-api';
 import { LayoutManager } from 'im.v2.lib.layout';
@@ -157,10 +157,12 @@ export class DesktopManager
 		return Promise.resolve();
 	}
 
-	redirectToCollab(dialogId: string = ''): Promise
+	redirectToCollab(dialogId: string = '', options: OpenCollabOptions = {}): Promise
 	{
+		const { compactMode = true, recentType = RecentType.collabDefault } = options;
+
 		Logger.warn('Desktop: redirectToCollab', dialogId);
-		this.openBxLink(`bx://${DesktopBxLink.collab}/dialogId/${dialogId}`);
+		this.openBxLink(`bx://${DesktopBxLink.collab}/dialogId/${dialogId}/compactMode/${compactMode}/recentType/${recentType}`);
 
 		return Promise.resolve();
 	}

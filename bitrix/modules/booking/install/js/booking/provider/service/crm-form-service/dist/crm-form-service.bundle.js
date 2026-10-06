@@ -29,9 +29,9 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 			}
 		}
 		#fetchGetResources(ids) {
-			const action = new booking_lib_apiClient.ApiClient().buildUrl('CrmForm.PublicForm.getResources');
+			const action = new booking_lib_apiClient.ApiClient().buildUrl('CrmForm.SettingsForm.getResources');
 			return main_core.ajax.runAction(action, {
-				data: {
+				json: {
 					ids
 				}
 			});
@@ -103,7 +103,7 @@ this.BX.Booking.Provider = this.BX.Booking.Provider || {};
 				});
 				return data.resources.map(dto => booking_provider_service_resourcesService.ResourceMappers.mapResourceSkuRelationsDtoToModel(dto));
 			} catch (error) {
-				console.log('CrmFormService: get default resource skus relations error', error);
+				console.error('CrmFormService: get default resource skus relations error', error);
 				return [];
 			}
 		}

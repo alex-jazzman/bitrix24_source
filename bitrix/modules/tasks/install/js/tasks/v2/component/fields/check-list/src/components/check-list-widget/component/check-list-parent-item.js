@@ -7,16 +7,16 @@ import 'ui.icon-set.actions';
 import 'ui.icon-set.outline';
 
 import { Model } from 'tasks.v2.const';
-import { GrowingTextArea } from 'tasks.v2.component.elements.growing-text-area';
 import { UserAvatarList } from 'tasks.v2.component.elements.user-avatar-list';
 import { UserCheckbox } from 'tasks.v2.component.elements.user-checkbox';
 import { ProgressBar } from 'tasks.v2.component.elements.progress-bar';
 import { tooltip } from 'tasks.v2.component.elements.hint';
 import { checkListService } from 'tasks.v2.provider.service.check-list-service';
 
-import type { CheckListModel } from 'tasks.v2.model.check-list';
-import type { UserModel } from 'tasks.v2.model.users';
+import { type CheckListModel } from 'tasks.v2.model.check-list';
+import { type UserModel } from 'tasks.v2.model.users';
 
+import { CheckListFormattingLayer } from '../../check-list-formatting/check-list-formatting-layer';
 import { CheckListItemMixin } from './check-list-item-mixin';
 
 // @vue/component
@@ -25,7 +25,7 @@ export const CheckListParentItem = {
 	components: {
 		BIcon,
 		BMenu,
-		GrowingTextArea,
+		CheckListFormattingLayer,
 		UserAvatarList,
 		UserCheckbox,
 		ProgressBar,
@@ -456,7 +456,7 @@ export const CheckListParentItem = {
 				</div>
 			</div>
 			<div class="check-list-widget-parent-item-title-container">
-				<GrowingTextArea
+				<CheckListFormattingLayer
 					ref="growingTextArea"
 					class="check-list-widget-parent-item-title"
 					:data-check-list-id="'check-list-parent-item-title-' + id"
@@ -476,6 +476,7 @@ export const CheckListParentItem = {
 					@emptyFocus="scrollToItem"
 					@blur="handleBlur"
 					@emptyBlur="handleEmptyBlur"
+					@selectionChange="handleFormattingSelectionChange"
 				/>
 				<template v-if="hasAttachments">
 					<div class="check-list-widget-item-attach --parent">

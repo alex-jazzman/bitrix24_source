@@ -483,6 +483,7 @@ export class CallList
 				offsetLeft: 0,
 				angle: {position: "top"},
 				zIndex: baseZIndex + 200,
+				zIndexOptions: {alwaysOnTop: true},
 				events: {
 					onPopupClose: () => this.itemActionMenu.destroy(),
 					onPopupDestroy: () => this.itemActionMenu = null

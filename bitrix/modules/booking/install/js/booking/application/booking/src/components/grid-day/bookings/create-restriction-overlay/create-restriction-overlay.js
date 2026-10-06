@@ -1,7 +1,7 @@
 import { mapGetters } from 'ui.vue3.vuex';
 
 import { Model } from 'booking.const';
-import { gridFactory } from 'booking.lib.grid';
+import { GridFactory, type GridBase } from 'booking.lib.grid';
 import { type ResourceModel } from 'booking.model.resources';
 import { MaxInteractionBookingDurationsMs } from 'booking.lib.drag';
 
@@ -30,10 +30,11 @@ export const CreateRestrictionOverlay = {
 	computed: {
 		...mapGetters({
 			selectedDateTs: `${Model.Interface}/selectedDateTs`,
+			isWeekMode: `${Model.Interface}/isWeekMode`,
 		}),
 		grid(): GridBase
 		{
-			return gridFactory.getGrid();
+			return GridFactory.getGrid();
 		},
 		resource(): ResourceModel
 		{
@@ -86,7 +87,7 @@ export const CreateRestrictionOverlay = {
 	},
 	template: `
 		<div
-			v-if="isRestricted && left >= 0"
+			v-if="!isWeekMode && isRestricted && left >= 0"
 			class="booking-booking-create-restriction-overlay"
 			:style="{
 				'--left': left + 'px',

@@ -103,6 +103,8 @@
 	font-weight: var(--im-font-weight-normal);
 	color: var(--im-chat-header__font-color_secondary);
 	max-width: 100%;
+	min-width: 0;
+	flex-shrink: 1;
 	text-overflow: ellipsis;
 	white-space: nowrap;
 	overflow: hidden;
@@ -114,6 +116,11 @@
 
 .bx-im-chat-header__guest-counter {
 	color: var(--ui-color-collab-accent-primary-alt);
+}
+
+/* Keep the entity link (e.g. "Open meeting") from collapsing when it shares the subtitle row with the user/guest counter; the counter truncates instead. */
+.bx-im-chat-header__subtitle_container .bx-im-chat-header-entity-button__container {
+	flex-shrink: 0;
 }
 
 .bx-im-chat-header__icon {
@@ -134,31 +141,30 @@
 	margin-right: 0;
 }
 
-.bx-im-chat-header__icon.--add-people {
-	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='19' height='14' fill='none' viewBox='0 0 19 14'%3E%3Cpath fill='%23525c69' d='m12.582 10.49.273 1.521a.96.96 0 0 1-.624 1.086c-1.612.543-3.423.864-5.341.903h-.794c-1.922-.04-3.737-.361-5.352-.906a.97.97 0 0 1-.637-1.059c.06-.434.124-.875.19-1.12.237-.872 1.567-1.52 2.79-2.018.32-.13.514-.234.709-.34a7 7 0 0 1 .698-.336q.054-.241.043-.488l.542-.061s.071.123-.043-.598c0 0-.609-.149-.637-1.296 0 0-.458.144-.486-.55a1.7 1.7 0 0 0-.08-.4c-.086-.305-.164-.58.232-.818l-.286-.72S3.48.504 4.796.73c-.534-.8 3.974-1.467 4.274.987.117.74.117 1.49 0 2.23 0 0 .673-.073.224 1.139 0 0-.248.872-.628.676 0 0 .061 1.102-.537 1.289 0 0 .043.586.043.626l.5.07s-.015.49.085.543c.456.28.956.49 1.483.627 1.553.373 2.342 1.013 2.342 1.573m1.482-8.89h1.952V4h2.5v1.967h-2.5v2.52h-1.952v-2.52h-2.38V3.999h2.38z'/%3E%3C/svg%3E");
-}
-
-.bx-im-chat-header__icon.--add-people.--active {
-	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='19' height='14' fill='none' viewBox='0 0 19 14'%3E%3Cg fill='%2311a9d9' clip-path='url(%23a)'%3E%3Cpath d='m12.582 10.49.273 1.521a.96.96 0 0 1-.624 1.086c-1.612.543-3.423.864-5.341.903h-.794c-1.922-.04-3.737-.361-5.352-.906a.97.97 0 0 1-.637-1.059c.06-.434.124-.875.19-1.12.237-.872 1.567-1.52 2.79-2.018.32-.13.514-.234.709-.34a7 7 0 0 1 .698-.336q.054-.241.043-.488l.542-.061s.071.123-.043-.598c0 0-.609-.149-.637-1.296 0 0-.458.144-.486-.55a1.7 1.7 0 0 0-.08-.4c-.086-.305-.164-.58.232-.818l-.286-.72S3.48.504 4.796.73c-.534-.8 3.974-1.467 4.274.987.117.74.117 1.49 0 2.23 0 0 .673-.073.224 1.139 0 0-.248.872-.628.676 0 0 .061 1.102-.537 1.289 0 0 .043.586.043.626l.5.07s-.015.49.085.543c.456.28.956.49 1.483.627 1.553.373 2.342 1.013 2.342 1.573m1.482-8.89h1.952V4h2.5v1.967h-2.5v2.52h-1.952v-2.52h-2.38V3.999h2.38z'/%3E%3C/g%3E%3Cdefs%3E%3CclipPath id='a'%3E%3Cpath fill='%23fff' d='M0 0h19v14H0z'/%3E%3C/clipPath%3E%3C/defs%3E%3C/svg%3E");
+/*
+ * DS icons (BIcon): the shared search and add-to-chat header buttons. The glyph colour is driven by
+ * the icon-set "--ui-icon-set__icon-color" variable, so opacity dimming is dropped in favour of the
+ * theme-aware tokens (base -> hover -> accent for the active/opened state).
+ */
+.bx-im-chat-header__icon.--ds-icon {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 24px;
+	height: 24px;
 	opacity: 1;
+	--ui-icon-set__icon-color: var(--ui-color-base-4);
 }
 
-.bx-im-chat-header__icon.--search {
-	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22' fill='none' viewBox='0 0 22 22'%3E%3Cpath fill='%23525c69' fill-rule='evenodd' d='M13.355 15.44a6.309 6.309 0 1 1 2.085-2.085l2.817 2.817a1.09 1.09 0 0 1 0 1.543l-.542.543a1.09 1.09 0 0 1-1.543 0zm.98-5.38a4.275 4.275 0 1 1-8.55 0 4.275 4.275 0 0 1 8.55 0' clip-rule='evenodd'/%3E%3C/svg%3E");
-}
-
-.bx-im-chat-header__icon.--search.--active {
-	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22' fill='none' viewBox='0 0 22 22'%3E%3Cpath fill='%2311a9d9' fill-rule='evenodd' d='M13.355 15.44a6.309 6.309 0 1 1 2.085-2.085l2.817 2.817a1.09 1.09 0 0 1 0 1.543l-.542.543a1.09 1.09 0 0 1-1.543 0zm.98-5.38a4.275 4.275 0 1 1-8.55 0 4.275 4.275 0 0 1 8.55 0' clip-rule='evenodd'/%3E%3C/svg%3E");
+.bx-im-chat-header__icon.--ds-icon:hover {
 	opacity: 1;
+	--ui-icon-set__icon-color: var(--ui-color-base-3);
 }
 
-.bx-im-chat-header__icon.--panel {
-	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='15' height='14' fill='none' viewBox='0 0 15 14'%3E%3Cpath fill='%23525c69' fill-rule='evenodd' d='M3.273 0A3.273 3.273 0 0 0 0 3.273v7.454A3.273 3.273 0 0 0 3.273 14h8.454A3.273 3.273 0 0 0 15 10.727V3.273A3.273 3.273 0 0 0 11.727 0zM1.696 3.432c0-.96.777-1.736 1.736-1.736h8.136c.959 0 1.736.777 1.736 1.736v7.136c0 .959-.777 1.736-1.736 1.736H3.432a1.736 1.736 0 0 1-1.736-1.736zM8 4.09C8 3.488 8.488 3 9.09 3h1.819A1.09 1.09 0 0 1 12 4.09v5.818c0 .603-.489 1.091-1.091 1.091H9.091A1.09 1.09 0 0 1 8 9.91z' clip-rule='evenodd'/%3E%3C/svg%3E");
-}
-
-.bx-im-chat-header__icon.--panel.--active {
-	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='15' height='14' fill='none' viewBox='0 0 15 14'%3E%3Cpath fill='%2311a9d9' fill-rule='evenodd' d='M3.273 0A3.273 3.273 0 0 0 0 3.273v7.454A3.273 3.273 0 0 0 3.273 14h8.454A3.273 3.273 0 0 0 15 10.727V3.273A3.273 3.273 0 0 0 11.727 0zM1.696 3.432c0-.96.777-1.736 1.736-1.736h8.136c.959 0 1.736.777 1.736 1.736v7.136c0 .959-.777 1.736-1.736 1.736H3.432a1.736 1.736 0 0 1-1.736-1.736zM8 4.09C8 3.488 8.488 3 9.09 3h1.819A1.09 1.09 0 0 1 12 4.09v5.818c0 .603-.489 1.091-1.091 1.091H9.091A1.09 1.09 0 0 1 8 9.91z' clip-rule='evenodd'/%3E%3C/svg%3E");
+.bx-im-chat-header__icon.--ds-icon.--active,
+.bx-im-chat-header__icon.--ds-icon.--active:hover {
 	opacity: 1;
+	--ui-icon-set__icon-color: var(--ui-color-accent-main-primary);
 }
 .bx-im-chat-header-entity-button__container {
 	display: flex;

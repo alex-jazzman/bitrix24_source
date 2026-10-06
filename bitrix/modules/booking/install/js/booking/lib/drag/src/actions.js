@@ -1,9 +1,10 @@
 import { Text } from 'main.core';
 import { type Store } from 'ui.vue3.vuex';
 
-import { Model } from 'booking.const';
+import { LimitFeatureId, Model } from 'booking.const';
 import { Core } from 'booking.core';
 import { BookingAnalytics } from 'booking.lib.analytics';
+import { limit } from 'booking.lib.limit';
 import { type BookingModel } from 'booking.model.bookings';
 import { type ClientData } from 'booking.model.clients';
 import { type Cell, type Intersections } from 'booking.model.interface';
@@ -51,11 +52,20 @@ class DragActions
 			]
 		;
 
+		const uniqueResourceIds = [...new Set(resourceIds)];
+		const isMultiResourcesFeatureEnabled = this.#store.state[Model.Interface].enabledFeature.bookingMulti;
+		if (uniqueResourceIds.length > 1 && !isMultiResourcesFeatureEnabled)
+		{
+			void limit.show(LimitFeatureId.MultiResources);
+
+			return;
+		}
+
 		await bookingService.update({
 			id: booking.id,
 			dateFromTs: cell.fromTs,
 			dateToTs: cell.toTs,
-			resourcesIds: [...new Set(resourceIds)],
+			resourcesIds: uniqueResourceIds,
 			timezoneFrom: booking.timezoneFrom,
 			timezoneTo: booking.timezoneTo,
 		});

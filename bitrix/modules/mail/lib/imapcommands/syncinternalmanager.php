@@ -2,7 +2,9 @@
 
 namespace Bitrix\Mail\ImapCommands;
 
+use Bitrix\Mail;
 use Bitrix\Mail\Helper\Mailbox;
+use Bitrix\Mail\Internal\Service\SourceGeneration\ActivePlacementResolver;
 use Bitrix\Mail\Internals\MailboxDirectoryTable;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
@@ -24,7 +26,11 @@ class SyncInternalManager
 	protected $mailboxUserId;
 	protected $messagesIds;
 	protected $messages;
+	protected bool $deferredPushCancelled = false;
+	/** @var int[]|null message ids captured before the operation */
+	protected ?array $deferredPushTargets = null;
 	private $isInit;
+	private ?ActivePlacementResolver $activePlacementResolver = null;
 	/** @var Repository */
 	protected $repository;
 	/** @var Mailbox */
@@ -58,6 +64,25 @@ class SyncInternalManager
 		return Mailbox::createInstance($this->mailboxId, $throwExceptions);
 	}
 
+	/**
+	 * Admission of the command to the active source generation of the mailbox. Resolved
+	 * here and not on the repository: test doubles replace the repository with an object
+	 * that does not inherit it.
+	 */
+	protected function getActivePlacementResolver(): ActivePlacementResolver
+	{
+		return $this->activePlacementResolver ??= new ActivePlacementResolver((int)$this->mailboxId);
+	}
+
+	/**
+	 * The uid rows the command names: a row left by a previous physical source exists
+	 * but is read-only, so the command is refused before it changes anything.
+	 */
+	private function checkActivePlacements(): Main\Result
+	{
+		return $this->getActivePlacementResolver()->checkPlacements($this->messagesIds);
+	}
+
 	protected function initData($folderType = null)
 	{
 		if ($this->isInit)
@@ -74,11 +99,23 @@ class SyncInternalManager
 				'MAIL_CLIENT_MAILBOX_NOT_FOUND'));
 		}
 
+		$generationCheck = $this->checkActivePlacements();
+		if (!$generationCheck->isSuccess())
+		{
+			return $generationCheck;
+		}
+
 		if ($folderType)
 		{
 			$folder = $this->getDirPathByType($folderType);
 			if (!$folder)
 			{
+				$generationCheck = $this->getActivePlacementResolver()->checkMissingFolderType($folderType);
+				if (!$generationCheck->isSuccess())
+				{
+					return $generationCheck;
+				}
+
 				$errorCode = 'MAIL_CLIENT_' . ($folderType == MailboxDirectoryTable::TYPE_TRASH ? 'TRASH' : 'SPAM') . '_FOLDER_NOT_SELECTED_ERROR';
 				return $result->addError(new Main\Error(
 					Loc::getMessage($errorCode),
@@ -111,6 +148,85 @@ class SyncInternalManager
 				'MAIL_CLIENT_MESSAGES_MULTIPLE_FOLDERS'));
 		}
 		return $result;
+	}
+
+	/**
+	 * Must run before a destructive operation: permanent deletion drops the uid rows,
+	 * and after that the messages can no longer be resolved.
+	 */
+	protected function collectDeferredPushTargets(): void
+	{
+		if ($this->deferredPushTargets === null)
+		{
+			$this->deferredPushTargets = $this->getRecentlyDeliveredMessageIds((int)$this->mailboxId);
+		}
+	}
+
+	/**
+	 * Once the user has dealt with a message in web, a push about it is a duplicate.
+	 * Drops it while it is still deferred; runs at most once per manager.
+	 */
+	protected function cancelDeferredPush(): void
+	{
+		if ($this->deferredPushCancelled)
+		{
+			return;
+		}
+		$this->collectDeferredPushTargets();
+		$this->deferredPushCancelled = true;
+
+		if (empty($this->deferredPushTargets))
+		{
+			return;
+		}
+
+		Mail\Integration\Im\Notification::cancelDeferredPushForReadMessages(
+			(int)$this->mailboxId,
+			$this->deferredPushTargets,
+			$this->getActingUserId(),
+		);
+	}
+
+	/**
+	 * @return int[]
+	 */
+	protected function getRecentlyDeliveredMessageIds(int $mailboxId): array
+	{
+		if (empty($this->messagesIds))
+		{
+			return [];
+		}
+
+		$deliveredAfter = (new Main\Type\DateTime())->add(
+			'- ' . Mail\Integration\Im\Notification::deferredPushCancelWindowSeconds . ' seconds'
+		);
+
+		$messageIds = [];
+		// A uid id of a prepared generation never belongs to a message the user has just read
+		$res = Mail\MailMessageUidTable::getList([
+			'select' => ['MESSAGE_ID'],
+			'filter' => $this->getActivePlacementResolver()->getScope()->apply([
+				'=MAILBOX_ID' => $mailboxId,
+				'@ID' => $this->messagesIds,
+				'>=DATE_INSERT' => $deliveredAfter,
+			]),
+		]);
+		while ($row = $res->fetch())
+		{
+			$messageId = (int)$row['MESSAGE_ID'];
+			if ($messageId > 0)
+			{
+				$messageIds[$messageId] = $messageId;
+			}
+		}
+
+		return array_values($messageIds);
+	}
+
+	protected function getActingUserId(): int
+	{
+		// delete/spam/move from MCP pass the acting user through setMailboxUserId(), not the constructor
+		return (int)($this->userId ?: $this->mailboxUserId ?: Main\Engine\CurrentUser::get()->getId());
 	}
 
 	protected function getDirPathByType($dirType)

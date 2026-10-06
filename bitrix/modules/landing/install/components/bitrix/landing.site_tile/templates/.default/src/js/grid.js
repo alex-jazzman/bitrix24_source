@@ -3,9 +3,14 @@ import 'ui.design-tokens';
 import Item from './item';
 import ItemMarketing from './itemMarketing';
 import Scroller from './scroller';
-import PopupCopilot from './popupCopilot';
+import PopupCopilot, { DEFAULT_AI_URL } from './popupCopilot';
+import { LandingSitesAiInput } from './input';
+import { LandingSitesAiSlider } from './slider';
+import { LandingSitesAiFirstVisitTooltip } from './ai-first-visit-tooltip';
 import '../css/landing.site.tile.css';
 import { Metrika } from 'landing.metrika';
+
+export { LandingSitesAiInput, LandingSitesAiSlider, LandingSitesAiFirstVisitTooltip };
 
 export class SiteTile
 {
@@ -20,6 +25,7 @@ export class SiteTile
 		this.scroller = null;
 		this.createByCopilotText = options.createByCopilotText || null;
 		this.copilotGeneratedText = options.copilotGeneratedText || null;
+		this.copilotPopupAiUrl = options.copilotPopupAiUrl || DEFAULT_AI_URL;
 		let videoSrc = '/bitrix/components/bitrix/landing.site_tile/templates/.default/video/en/siteWithCopilot.webm';
 		this.zone = options.zone || null;
 		if (options.lang === 'ru')
@@ -44,6 +50,7 @@ export class SiteTile
 							id: 'popupCopilot',
 							videoSrc,
 							zone: this.zone,
+							aiUrl: this.copilotPopupAiUrl,
 						});
 						this.popupCopilot.showPopup(1000);
 						this.popupCopilot.getPopup().subscribe('onAfterClose', () => {
@@ -102,6 +109,7 @@ export class SiteTile
 				articles: item.articles || null,
 				grid: this,
 				copilotProcess: item.copilotProcess,
+				isCreatedByAiScenario: item.isCreatedByAiScenario === true,
 				createByCopilotText: this.createByCopilotText,
 				copilotGeneratedText: this.copilotGeneratedText,
 			});
@@ -114,7 +122,9 @@ export class SiteTile
 	{
 		if (!this.$container)
 		{
-			this.$container = Tag.render`<div class="landing-sites__grid landing-sites__scope"></div>`;
+			this.$container = Tag.render`
+				<div class="landing-sites__grid landing-sites__scope" role="list"></div>
+			`;
 
 			for (let i = 0; i < this.siteTileItems.length; i++)
 			{

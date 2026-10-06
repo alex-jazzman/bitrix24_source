@@ -2,6 +2,7 @@
 
 use Bitrix\Crm\ItemMiniCard\Builder\MiniCardHtmlBuilder;
 use Bitrix\Crm\Restriction\RestrictionManager;
+use Bitrix\Main\Web\Uri;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
@@ -1399,30 +1400,22 @@ if (IsModuleInstalled('bizproc') && CModule::IncludeModule('bizproc') && CBPRunt
 					'ENTITY' => 'CCrmDocumentDeal',
 					'DOCUMENT_TYPE' => 'DEAL',
 					'DOCUMENT_ID' => 'DEAL_'.$arResult['ELEMENT']['ID'],
-					'TASK_EDIT_URL' => CHTTP::urlAddParams(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_DEAL_SHOW'],
+					'TASK_EDIT_URL' => str_replace('__ID__', '#ID#', (string)(new Uri(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_DEAL_SHOW'],
 							array(
 								'deal_id' => $arResult['ELEMENT']['ID']
-							)),
-						array('bizproc_task' => '#ID#', $formTabKey => 'tab_bizproc')
-					),
-					'WORKFLOW_LOG_URL' => CHTTP::urlAddParams(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_DEAL_SHOW'],
+							))))->addParams(array('bizproc_task' => '__ID__', $formTabKey => 'tab_bizproc'))),
+					'WORKFLOW_LOG_URL' => str_replace('__ID__', '#ID#', (string)(new Uri(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_DEAL_SHOW'],
 							array(
 								'deal_id' => $arResult['ELEMENT']['ID']
-							)),
-						array('bizproc_log' => '#ID#', $formTabKey => 'tab_bizproc')
-					),
-					'WORKFLOW_START_URL' => CHTTP::urlAddParams(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_DEAL_SHOW'],
+							))))->addParams(array('bizproc_log' => '__ID__', $formTabKey => 'tab_bizproc'))),
+					'WORKFLOW_START_URL' => (string)(new Uri(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_DEAL_SHOW'],
 							array(
 								'deal_id' => $arResult['ELEMENT']['ID']
-							)),
-						array('bizproc_start' => 1, $formTabKey => 'tab_bizproc')
-					),
-					'back_url' => CHTTP::urlAddParams(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_DEAL_SHOW'],
+							))))->addParams(array('bizproc_start' => 1, $formTabKey => 'tab_bizproc')),
+					'back_url' => (string)(new Uri(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_DEAL_SHOW'],
 							array(
 								'deal_id' => $arResult['ELEMENT']['ID']
-							)),
-						array($formTabKey => 'tab_bizproc')
-					),
+							))))->addParams(array($formTabKey => 'tab_bizproc')),
 					'SET_TITLE'	=>	'Y'
 				),
 				'',
@@ -1455,12 +1448,10 @@ if (\Bitrix\Crm\Automation\Factory::isAutomationAvailable(CCrmOwnerType::Deal) &
 				'ENTITY_TYPE_ID'     => \CCrmOwnerType::Deal,
 				'ENTITY_ID'          => $arResult['ELEMENT']['ID'],
 				'ENTITY_CATEGORY_ID' => $arResult['CATEGORY_ID'],
-				'back_url'           => CHTTP::urlAddParams(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_DEAL_SHOW'],
+				'back_url'           => (string)(new Uri(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_DEAL_SHOW'],
 					array(
 						'deal_id' => $arResult['ELEMENT']['ID']
-					)),
-					array($formTabKey => 'tab_automation')
-				),
+					))))->addParams(array($formTabKey => 'tab_automation')),
 			)
 		)
 	);
@@ -1524,4 +1515,3 @@ if(!isset($_REQUEST['bxajaxid']) && \Bitrix\Crm\Settings\HistorySettings::getCur
 
 $this->IncludeComponentTemplate();
 include_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/components/bitrix/crm.deal/include/nav.php');
-?>

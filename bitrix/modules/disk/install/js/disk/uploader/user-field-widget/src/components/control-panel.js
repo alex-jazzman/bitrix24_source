@@ -48,10 +48,13 @@ export const ControlPanel = {
 			openDiskFileDialog({
 				dialogId: this.fileDialogId,
 				uploader: this.uploader,
-				onLoad: (): void => {
+				onOpen: (): void => {
 					this.showDialogLoader = false;
 				},
 				onClose: (): void => {
+					this.showDialogLoader = false;
+				},
+				onError: (): void => {
 					this.showDialogLoader = false;
 				},
 			});

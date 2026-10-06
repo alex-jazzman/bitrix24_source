@@ -1,21 +1,14 @@
-import { type MenuItemOptions } from 'ui.system.menu';
-
 import { Core } from 'im.v2.application.core';
 import { ChatService } from 'im.v2.provider.service.chat';
-import { ChatType } from 'im.v2.const';
+import { ParentChatScope, RecentType } from 'im.v2.const';
 
 import { BaseRecentHeaderMenu } from '../base';
 
 export class CollabHeaderMenu extends BaseRecentHeaderMenu
 {
-	getMenuItems(): MenuItemOptions
-	{
-		return [this.getDefaultModeItem(), this.getUnreadModeItem()];
-	}
-
 	onReadAllClick()
 	{
-		(new ChatService()).readAllByType(ChatType.collab);
+		(new ChatService()).readAllByRecentType(RecentType.collab, ParentChatScope.topLevel);
 	}
 
 	getUnreadCounter(): number

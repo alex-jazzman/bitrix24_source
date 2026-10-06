@@ -98,7 +98,7 @@ class TaskComponent
 		let formData = new FormData(clickedButton.closest('form'));
 		formData.append(clickedButton.name, clickedButton.value);
 
-		ajax.runAction('rpa.task.do', {
+		ajax.runAction('rpa.Task.do', {
 			analyticsLabel: 'rpaTaskDo',
 			data: formData
 		}).then((response) =>

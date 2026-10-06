@@ -11,6 +11,8 @@ use Bitrix\Bizproc\Activity\Enum\ActivityContentBlockColor;
 use Bitrix\Bizproc\Activity\Enum\ActivityGroup;
 use Bitrix\Bizproc\Activity\Enum\ActivityNodeType;
 use Bitrix\Bizproc\Activity\Enum\ActivityType;
+use Bitrix\Bizproc\Public\Feature\AiAgent\AiAgentSectionFlag;
+use Bitrix\Main\Config\Feature;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Ui\Public\Enum\IconSet\Outline;
 
@@ -28,7 +30,7 @@ $arActivityDescription =
 		->setClass('SetupTemplateActivity')
 		->setJsClass('BizProcActivity')
 		->setNodeType(ActivityNodeType::SERVICE->value)
-		->setExcluded(\Bitrix\Main\Config\Option::get('bizproc', 'feature_ai_agents', 'N') === 'N')
+		->setExcluded(Feature::isDisabled(AiAgentSectionFlag::class))
 		->setGroups([ ActivityGroup::WORKFLOW->value ])
 		->setColorIndex(ActivityColorIndex::SETTINGS->value)
 		->setContentBlockColor(ActivityContentBlockColor::DEFAULT->value)

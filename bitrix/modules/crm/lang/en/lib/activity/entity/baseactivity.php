@@ -1,5 +1,6 @@
 <?php
 $MESS["CRM_TODO_ENTITY_ACTIVITY_ALREADY_COMPLETED"] = "Cannot edit completed activity.";
+$MESS["CRM_TODO_ENTITY_ACTIVITY_CALENDAR_EVENT_ACCESS_DENIED"] = "Insufficient permissions to change activity calendar event.";
 $MESS["CRM_TODO_ENTITY_ACTIVITY_DEFAULT_SUBJECT"] = "Contact customer";
 $MESS["CRM_TODO_ENTITY_ACTIVITY_DESCRIPTION_CONTACT_CLIENT"] = "Contact customer";
 $MESS["CRM_TODO_ENTITY_ACTIVITY_DESCRIPTION_CONTACT_CLIENT_IN_DEAL"] = "Contact customer";

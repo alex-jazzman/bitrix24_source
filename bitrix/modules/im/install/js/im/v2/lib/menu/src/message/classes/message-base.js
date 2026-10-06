@@ -450,12 +450,17 @@ export class MessageMenu extends BaseMenu
 		}
 
 		const permissionManager = PermissionManager.getInstance();
-		const canDeleteOthersMessage = permissionManager.canPerformActionByRole(
+
+		const canDeleteOwn = !this.isOwnMessage() || permissionManager.canPerformActionByRole(
+			ActionByRole.deleteOwnMessage,
+			this.context.dialogId,
+		);
+		const canDeleteOthers = this.isOwnMessage() || permissionManager.canPerformActionByRole(
 			ActionByRole.deleteOthersMessage,
 			this.context.dialogId,
 		);
 
-		if (!this.isOwnMessage() && !canDeleteOthersMessage)
+		if (!canDeleteOwn || !canDeleteOthers)
 		{
 			return null;
 		}

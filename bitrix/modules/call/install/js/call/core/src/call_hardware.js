@@ -1,4 +1,3 @@
-import { CallSettingsManager } from 'call.lib.settings-manager';
 import { HardwareManager } from 'call.lib.hardware'
 import { NoiseSuppressionService } from './noiseSuppressionService';
 
@@ -137,9 +136,7 @@ class CallHardwareManager extends HardwareManager
 	async getUserMedia(constraints)
 	{
 		const stream = await super.getUserMedia(constraints);
-		if (!stream
-			|| stream.getAudioTracks?.()?.length === 0
-			|| !CallSettingsManager.noiseSuppressionEnabled)
+		if (!stream || stream.getAudioTracks?.()?.length === 0)
 		{
 			return stream;
 		}
@@ -149,6 +146,10 @@ class CallHardwareManager extends HardwareManager
 
 	async addNoiseSuppression(stream)
 	{
+		// A new capture gets a graph of its own: the outgoing audio recovers from a device change only when
+		// the pipeline and the stream carrying it are renewed together, exactly as joining a call does.
+		// Keeping the graph and restarting only the stream (or the other way round) leaves the remote side
+		// mute.
 		if (this.noiseSuppressionInputStream !== stream)
 		{
 			this.stopNoiseSuppression();
@@ -185,6 +186,11 @@ class CallHardwareManager extends HardwareManager
 	get noiseSuppressionInputStream(): ?MediaStream
 	{
 		return this.#noiseSuppression.inputStream;
+	}
+
+	get noiseSuppressionOutputStream(): ?MediaStream
+	{
+		return this.#noiseSuppression.destination?.stream ?? null;
 	}
 
 	async checkPermissions()

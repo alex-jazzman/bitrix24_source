@@ -17,12 +17,19 @@ export class ApiClient
 		return this.handleResponse(response);
 	}
 
-	async post(endpoint, data = {}): Promise<any>
+	async post(endpoint, data = {}, options = {}): Promise<any>
 	{
 		const url = this.buildUrl(endpoint);
-		const response = await ajax.runAction(url, {
+		const config = {
 			json: data,
-		});
+		};
+
+		if (options.navigation)
+		{
+			config.navigation = options.navigation;
+		}
+
+		const response = await ajax.runAction(url, config);
 
 		return this.handleResponse(response);
 	}

@@ -1,0 +1,30 @@
+/* The signature itself lives in the editor body, so this row of controls is all the form draws. */
+.mail-compose-signature-block
+{
+	position: absolute;
+	z-index: 40;
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-2xs);
+	box-sizing: border-box;
+	min-width: 0;
+	padding: var(--ui-space-inset-sm) 0 0;
+	border-top: 1px solid var(--ui-color-divider-default);
+}
+
+.mail-compose-signature-block.--unplaced
+{
+	visibility: hidden;
+}
+
+.mail-compose-signature-block__icon
+{
+	flex: 0 0 auto;
+	color: var(--ui-color-base-3);
+}
+
+.mail-compose-signature-block__label
+{
+	flex: 0 0 auto;
+	color: var(--ui-color-base-4);
+}

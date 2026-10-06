@@ -322,6 +322,13 @@ jn.define('im/messenger/lib/counters/tab-counters/src/global', (require, exports
 		 */
 		#calculateInheritableTabCounter(counterState, helper, tabName, childCounter)
 		{
+			// Backend puts the inherited section into recentSections of every nested chat,
+			// so hasTab alone cannot see that the chat lives under a muted parent chain.
+			if (helper.isChildCounter && this.#hasMutedAncestor(counterState.chatId))
+			{
+				return 0;
+			}
+
 			if (helper.hasTab(tabName))
 			{
 				return helper.tabCounter;
@@ -416,12 +423,21 @@ jn.define('im/messenger/lib/counters/tab-counters/src/global', (require, exports
 		}
 
 		/**
+		 * @param {number} chatId
+		 * @return {boolean}
+		 */
+		#hasMutedAncestor(chatId)
+		{
+			return this.store.getters['counterModel/hasMutedAncestor'](chatId);
+		}
+
+		/**
 		 * @param {CounterModelState} counterState
 		 * @return {number}
 		 */
 		#getCounterValue(counterState)
 		{
-			if (counterState.isMuted)
+			if (counterState.isMuted || this.#hasMutedAncestor(counterState.chatId))
 			{
 				return 0;
 			}

@@ -4,7 +4,7 @@ $MESS["LANDING_TPL_CONGRATULATIONS"] = "Congratulations on your new store!";
 $MESS["LANDING_TPL_CURRENT_ADDRESS"] = "Your online store address";
 $MESS["LANDING_TPL_DEMO_PRODUCTS_IN_TRADE_CATALOG"] = "Your store currently contains only demo items. You can find them in the Bitrix24 Commercial Catalog.";
 $MESS["LANDING_TPL_DEMO_PRODUCTS_IN_TRADE_CATALOG_LOOK"] = "Take a look at the examples of products in the catalog. Test your new store with these demo items. You can add your own products at any time.";
-$MESS["LANDING_TPL_DEMO_PRODUCTS_IN_TRADE_CATALOG_TITLE"] = "This is how your store's product form will look like";
+$MESS["LANDING_TPL_DEMO_PRODUCTS_IN_TRADE_CATALOG_TITLE"] = "This is what your store's product form will look like";
 $MESS["LANDING_TPL_FIRST_ORDER"] = "Place an order to make sure everything is running smoothly";
 $MESS["LANDING_TPL_FIRST_ORDER_REQUIREMENTS"] = "Doing e-commerce in Belarus requires that you fully comply with the local law. #LINK_HELP1#Learn more#LINK_HELP2#";
 $MESS["LANDING_TPL_FIRST_ORDER_STEPS_1"] = "You can send SMS and WhatsApp order confirmations via third-party services even on the free plan. Messages sent via Bitrix24 notification service are free on commercial plans. #LINK_HELP1#Learn more#LINK_HELP2#";
@@ -24,6 +24,8 @@ $MESS["LANDING_TPL_PAGES_SHOW"] = "View";
 $MESS["LANDING_TPL_PLACEHOLDER_COMPANY"] = "Bitrix24 Store";
 $MESS["LANDING_TPL_PLACEHOLDER_DOMAIN_NAME"] = "Domain name";
 $MESS["LANDING_TPL_PLACEHOLDER_PHONE"] = "+1 (222) 333 - 4444";
+// TEMPORARY: pending translator review
+$MESS["LANDING_TPL_QRCODE_ADDRESS"] = "Or open your store at";
 $MESS["LANDING_TPL_QRCODE_CAMERA"] = "Scan this screen to read the QR code";
 $MESS["LANDING_TPL_QRCODE_COPY"] = "Your ultimate business assistant";
 $MESS["LANDING_TPL_QRCODE_HOW_SCAN"] = "How do I scan the QR code?";
@@ -33,7 +35,21 @@ $MESS["LANDING_TPL_SHOW_SHOP"] = "View your store";
 $MESS["LANDING_TPL_STEP1_DESC"] = "Specify your contact information to make it visible on your site";
 $MESS["LANDING_TPL_STEP1_TITLE"] = "Contacts";
 $MESS["LANDING_TPL_STEP2_DESC"] = "Your store products";
+// TEMPORARY: pending translator review
+$MESS["LANDING_TPL_STEP2_NEXT_READY"] = "You can proceed to the next step";
 $MESS["LANDING_TPL_STEP2_TITLE"] = "Products";
 $MESS["LANDING_TPL_STEP3_DESC"] = "Your store is now up and running";
+// TEMPORARY: pending translator review
+$MESS["LANDING_TPL_STEP3_NEXT_READY"] = "All set, you can proceed to the next step";
+// TEMPORARY: pending translator review
+$MESS["LANDING_TPL_STEP3_ORDER_CREATED"] = "Order created";
+// TEMPORARY: pending translator review
+$MESS["LANDING_TPL_STEP3_SHOP_VIEWED"] = "Store viewed";
+// TEMPORARY: pending translator review
+$MESS["LANDING_TPL_STEP3_STATUS_DONE"] = "Completed";
+// TEMPORARY: pending translator review
+$MESS["LANDING_TPL_STEP3_STATUS_WAITING"] = "Pending";
 $MESS["LANDING_TPL_STEP3_TITLE"] = "First order";
+// TEMPORARY: pending translator review
+$MESS["LANDING_TPL_STEP_POSITION"] = "Step #NUMBER# of #TOTAL#";
 $MESS["LANDING_TPL_WORKING_ALREADY"] = "is almost ready, just a final touch ";

@@ -4,6 +4,8 @@ import { Router } from './event/router';
 
 import './event/handlers-registry';
 
+const routers: Map<string, Router> = new Map();
+
 /**
  * @memberOf BX.Crm.EntityList.Panel
  */
@@ -32,6 +34,13 @@ export function init({ gridId, progressBarContainerId }): void
 		return;
 	}
 
+	const existingRouter = routers.get(gridId);
+	if (existingRouter)
+	{
+		existingRouter.stopListening();
+		routers.delete(gridId);
+	}
+
 	const progressBarRepo = new ProgressBarRepository(progressBarContainer);
 
 	const settings = Extension.getSettings('crm.entity-list.panel');
@@ -39,4 +48,6 @@ export function init({ gridId, progressBarContainerId }): void
 	const eventRouter = new Router(grid, progressBarRepo, settings);
 
 	eventRouter.startListening();
+
+	routers.set(gridId, eventRouter);
 }

@@ -31,8 +31,10 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			items.forEach(item => {
 				this.#extractUser(item);
 				this.#extractChat(item);
+				this.#extractNestedChat(item);
 				this.#extractMessage(item);
 				this.#extractRecentItem(item);
+				this.#extractOwnMessage(item);
 				this.#extractStickerMessage(item);
 			});
 			this.#extractBirthdayItems();
@@ -148,6 +150,30 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				...item.message.sticker,
 				messageId
 			};
+		}
+		#extractNestedChat(item) {
+			const nestedChat = item.nestedChat;
+			if (nestedChat?.id && !this.#chats[nestedChat.id]) {
+				this.#chats[nestedChat.id] = {
+					...nestedChat
+				};
+			}
+		}
+		#extractOwnMessage(item) {
+			const ownMessageId = item.ownMessageId;
+			if (!main_core.Type.isNumber(ownMessageId) || ownMessageId <= 0) {
+				return;
+			}
+			const ownMessage = item.ownMessage;
+			if (main_core.Type.isPlainObject(ownMessage) && ownMessage.id && !this.#messages[ownMessage.id]) {
+				this.#messages[ownMessage.id] = {
+					...ownMessage
+				};
+			}
+			const recentItem = this.#recentItems[item.id];
+			if (recentItem) {
+				recentItem.ownMessageId = ownMessageId;
+			}
 		}
 		#prepareGroupChat(item) {
 			return {
@@ -369,7 +395,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		#isLoading = false;
 		#pagesLoaded = 0;
 		#hasMoreItemsToLoad = true;
-		#lastMessageDate = 0;
+		#lastMessageDate = '';
 		constructor(params = {}) {
 			const {
 				unreadMode = false,
@@ -438,14 +464,17 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		}
 		getRequestFilter(firstPage = false) {
 			return {
-				lastMessageDate: firstPage ? null : this.#lastMessageDate,
+				lastMessageDate: firstPage ? null : this.getLastMessageDate(),
 				recentSection: this.getRecentType(),
 				parentId: this.getParentChatId(),
 				unread: this.getUnreadMode()
 			};
 		}
+		getLastMessageDate() {
+			return this.#lastMessageDate;
+		}
 		handlePaginationField(result) {
-			this.#lastMessageDate = this.#getLastMessageDate(result);
+			this.#setLastMessageDate(result);
 		}
 		onAfterRequest(firstPage) {
 			// The base class does nothing here
@@ -517,37 +546,35 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			});
 			return Object.values(chatMap);
 		}
-		#getLastMessageDate(restResult) {
-			const messages = this.#filterPinnedItemsMessages(restResult);
-			if (messages.length === 0) {
-				return '';
-			}
-
-			// comparing strings in atom format works correctly because the format is lexically sortable
-			let firstMessageDate = messages[0].date;
-			messages.forEach(message => {
-				if (message.date < firstMessageDate) {
-					firstMessageDate = message.date;
-				}
-			});
-			return firstMessageDate;
-		}
-		#filterPinnedItemsMessages(restResult) {
+		#setLastMessageDate(restResult) {
 			const {
 				messages,
 				recentItems,
 				sectionMeta
 			} = restResult;
 			const fixedChatIds = sectionMeta ? sectionMeta.fixedChatIds : [];
-			return messages.filter(message => {
-				const chatId = message.chat_id;
-				const recentItem = recentItems.find(item => {
-					return item.chatId === chatId;
-				});
+			const messagesById = new Map(messages.map(message => [message.id, message]));
+
+			// Cursor uses each row's own message (always in its own chat), not the preview (may be a foreign chat).
+			let lastMessageDate = '';
+			recentItems.forEach(recentItem => {
 				const isPinnedItem = recentItem.pinned === true;
-				const isFixedItem = fixedChatIds.includes(chatId);
-				return !isPinnedItem && !isFixedItem;
+				const isFixedItem = fixedChatIds.includes(recentItem.chatId);
+				if (isPinnedItem || isFixedItem) {
+					return;
+				}
+				const ownMessageId = recentItem.ownMessageId || recentItem.messageId;
+				const message = messagesById.get(ownMessageId);
+				if (!message) {
+					return;
+				}
+
+				// comparing strings in atom format works correctly because the format is lexically sortable
+				if (lastMessageDate === '' || message.date < lastMessageDate) {
+					lastMessageDate = message.date;
+				}
 			});
+			this.#lastMessageDate = lastMessageDate;
 		}
 	}
 
@@ -563,8 +590,15 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		}
 	}
 
+	class CopilotRecentV2Service extends BaseRecentService {
+		getRecentType() {
+			return im_v2_const.RecentType.copilot;
+		}
+	}
+
 	exports.BaseRecentService = BaseRecentService;
 	exports.CalendarRecentService = CalendarRecentService;
+	exports.CopilotRecentV2Service = CopilotRecentV2Service;
 	exports.LegacyRecentService = LegacyRecentService;
 	exports.TaskRecentService = TaskRecentService;
 	exports.UnreadRecentService = UnreadRecentService;

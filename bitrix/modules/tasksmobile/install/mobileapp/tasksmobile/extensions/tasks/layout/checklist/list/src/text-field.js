@@ -6,30 +6,52 @@ jn.define('tasks/layout/checklist/list/src/text-field', (require, exports, modul
 	const { inAppUrl } = require('in-app-url');
 	const { TextInput } = require('ui-system/typography/text-input');
 	const { PlainTextFormatter } = require('bbcode/formatter/plain-text-formatter');
+	const { toggleFormatting } = require('bbcode-source-format');
 
-	/**
-	 * @class ItemTextField
-	 */
+	const FORMATTING_TAG_BY_TYPE = {
+		bold: 'b',
+		italic: 'i',
+		underline: 'u',
+		strikethrough: 's',
+	};
+
+	const NATIVE_FORMAT_METHOD_BY_TYPE = {
+		bold: 'applyBold',
+		italic: 'applyItalic',
+		underline: 'applyUnderline',
+		strikethrough: 'applyStrikethrough',
+	};
+
 	class ItemTextField extends LayoutComponent
 	{
 		#itemText = '';
 
+		/** @param {ItemTextFieldProps} props */
 		constructor(props)
 		{
 			super(props);
 
+			/** @type {Object | null} */
 			this.textInputRef = null;
+			/** @type {number} */
 			this.cursorPosition = 0;
-			this.#itemText = this.getValue();
+			/** @type {{ start: number, end: number }} */
+			this.selectionRange = { start: 0, end: 0 };
+			this.#itemText = this.getSourceValue();
 
 			this.#initState(props);
 		}
 
+		/** @param {ItemTextFieldProps} props */
 		componentWillReceiveProps(props)
 		{
 			this.#initState(props);
 		}
 
+		/**
+		 * @private
+		 * @param {ItemTextFieldProps} props
+		 */
 		#initState(props)
 		{
 			this.state = {
@@ -37,6 +59,7 @@ jn.define('tasks/layout/checklist/list/src/text-field', (require, exports, modul
 			};
 		}
 
+		/** @return {Object} */
 		render()
 		{
 			return View(
@@ -52,34 +75,80 @@ jn.define('tasks/layout/checklist/list/src/text-field', (require, exports, modul
 			);
 		}
 
+		/** @return {void} */
 		handleOnClickView = () => {
 			const { enable, showToastNoRights } = this.props;
 			if (!enable)
 			{
-				showToastNoRights();
+				showToastNoRights?.();
+
+				return;
 			}
+
+			this.focus();
 		};
 
-		handleOnChange = (text) => {
+		/**
+		 * Native TextInput (`showBBCode: false`) emits the raw BBCode source through onChangeText,
+		 * so the value is cached as-is and pushed through the regular save flow — no local parsing.
+		 *
+		 * @param {string} text
+		 * @param {boolean} [shouldSave]
+		 * @return {void}
+		 */
+		handleOnChange = (text, shouldSave = true) => {
 			const { onChangeText } = this.props;
+
+			if (text === this.#itemText)
+			{
+				return;
+			}
+
 			this.#itemText = text;
 
-			onChangeText?.(text, this.isFocused());
+			onChangeText?.(text, this.isFocused(), shouldSave);
 		};
 
+		/** @return {void} */
 		handleOnSubmit = () => {
 			const { onSubmit } = this.props;
 
 			onSubmit?.();
 		};
 
+		/** @param {{ styles?: string[] } | undefined} data */
+		handleOnSelectionStylesChange = (data = {}) => {
+			const { onSelectionStylesChange } = this.props;
+			const { styles = [] } = data;
+
+			onSelectionStylesChange?.(styles);
+		};
+
+		/** @param {{ selection?: { start: number, end: number } }} data */
+		handleOnSelectionChange = (data = {}) => {
+			const selection = data.selection ?? data;
+
+			if (!selection || !Number.isInteger(selection.start) || !Number.isInteger(selection.end))
+			{
+				return;
+			}
+
+			this.cursorPosition = selection.start;
+			this.selectionRange = { start: selection.start, end: selection.end };
+		};
+
+		/**
+		 * @param {ChecklistLinkClickParams} params
+		 * @return {void}
+		 */
 		handleOnLinkClick = ({ url }) => {
 			inAppUrl.open(url);
 		};
 
+		/** @return {void} */
 		handleOnFocus = () => {
-			const { onFocus, item, enable } = this.props;
-			const title = item.getTitle();
+			const { onFocus, enable } = this.props;
+			const title = this.getValue();
 
 			this.cursorPosition = title.length;
 
@@ -89,20 +158,17 @@ jn.define('tasks/layout/checklist/list/src/text-field', (require, exports, modul
 			}
 		};
 
+		/** @return {void} */
 		handleOnBlur = () => {
 			const { onBlur } = this.props;
-			const value = this.getTextValue();
 
-			if (value)
-			{
-				this.setState({}, onBlur);
-			}
-			else
-			{
-				onBlur();
-			}
+			onBlur?.();
 		};
 
+		/**
+		 * @param {Object | null} ref
+		 * @return {void}
+		 */
 		handleOnRef = (ref) => {
 			if (!ref)
 			{
@@ -128,9 +194,15 @@ jn.define('tasks/layout/checklist/list/src/text-field', (require, exports, modul
 			}
 		};
 
+		/** @return {void} */
 		focus()
 		{
 			const { enable } = this.props;
+
+			if (!enable)
+			{
+				return;
+			}
 
 			if (this.textInputRef && enable)
 			{
@@ -138,6 +210,7 @@ jn.define('tasks/layout/checklist/list/src/text-field', (require, exports, modul
 			}
 		}
 
+		/** @return {void} */
 		blur()
 		{
 			if (this.textInputRef)
@@ -150,6 +223,7 @@ jn.define('tasks/layout/checklist/list/src/text-field', (require, exports, modul
 
 		/**
 		 * @private
+		 * @return {boolean}
 		 */
 		isFocused()
 		{
@@ -161,9 +235,7 @@ jn.define('tasks/layout/checklist/list/src/text-field', (require, exports, modul
 			return false;
 		}
 
-		/**
-		 * @public
-		 */
+		/** @return {void} */
 		clear()
 		{
 			if (this.textInputRef)
@@ -172,6 +244,7 @@ jn.define('tasks/layout/checklist/list/src/text-field', (require, exports, modul
 			}
 		}
 
+		/** @return {void} */
 		toggleCompleted()
 		{
 			const { item } = this.props;
@@ -181,6 +254,10 @@ jn.define('tasks/layout/checklist/list/src/text-field', (require, exports, modul
 			});
 		}
 
+		/**
+		 * @private
+		 * @return {Object}
+		 */
 		#renderTextField()
 		{
 			const { placeholder, header, textSize, enable = true } = this.props;
@@ -190,6 +267,7 @@ jn.define('tasks/layout/checklist/list/src/text-field', (require, exports, modul
 				header,
 				enable,
 				multiline: true,
+				showBBCode: false,
 				placeholder,
 				ref: this.handleOnRef,
 				placeholderTextColor: Color.base4.toHex(),
@@ -201,13 +279,94 @@ jn.define('tasks/layout/checklist/list/src/text-field', (require, exports, modul
 				returnKeyType: this.getReturnKeyType(),
 				onSubmitEditing: this.handleOnSubmit,
 				onChangeText: this.handleOnChange,
-				onSelectionChange: ({ selection }) => {
-					this.cursorPosition = selection.start;
-				},
+				onSelectionChange: this.handleOnSelectionChange,
+				selectedStyles: this.handleOnSelectionStylesChange,
 				onLinkClick: this.handleOnLinkClick,
 			});
 		}
 
+		/** @param {'bold' | 'italic' | 'underline' | 'strikethrough'} type */
+		applyFormat(type)
+		{
+			const method = NATIVE_FORMAT_METHOD_BY_TYPE[type];
+
+			if (!method || !this.textInputRef?.[method])
+			{
+				return;
+			}
+
+			// Apply natively for instant visual feedback and native selection/typing state.
+			this.textInputRef[method]();
+
+			// The native TextInput exposes no method returning its BBCode source and does not emit
+			// onChangeText for formatting-only actions, so the source is rebuilt from the model
+			// around the current selection and pushed through the normal save flow.
+			this.#applyFormatToSource(type);
+		}
+
+		/**
+		 * @private
+		 * @param {'bold' | 'italic' | 'underline' | 'strikethrough'} type
+		 * @return {void}
+		 */
+		#applyFormatToSource(type)
+		{
+			const tagName = FORMATTING_TAG_BY_TYPE[type];
+			const selection = this.#getSelectionRange();
+
+			if (!tagName || !selection)
+			{
+				// Without a selection only the native typing style changes; the next typed
+				// character arrives through the regular onChangeText flow.
+				return;
+			}
+
+			const nextSource = toggleFormatting(this.#itemText, selection.start, selection.end, tagName);
+
+			if (nextSource === null || nextSource === this.#itemText)
+			{
+				return;
+			}
+
+			this.handleOnChange(nextSource);
+		}
+
+		/**
+		 * @private
+		 * @return {{ start: number, end: number } | null}
+		 */
+		#getSelectionRange()
+		{
+			const range = this.selectionRange;
+			if (!range || !Number.isInteger(range.start) || !Number.isInteger(range.end))
+			{
+				return null;
+			}
+
+			const start = Math.min(range.start, range.end);
+			const end = Math.max(range.start, range.end);
+
+			if (end <= start)
+			{
+				return null;
+			}
+
+			return { start, end };
+		}
+
+		/**
+		 * Kept for the save/close/focus-change flow. The model is already kept current by
+		 * onChangeText (text edits) and applyFormat (formatting), and the native field cannot
+		 * return its BBCode source, so there is nothing extra to pull here.
+		 *
+		 * @return {boolean}
+		 */
+		syncTextValue()
+		{
+			return false;
+		}
+
+		/** @return {string | null} */
 		getReturnKeyType()
 		{
 			const { item } = this.props;
@@ -215,13 +374,26 @@ jn.define('tasks/layout/checklist/list/src/text-field', (require, exports, modul
 			return item.isRoot() ? 'done' : null;
 		}
 
+		/**
+		 * @return {string}
+		 */
 		getValue()
+		{
+			return this.parseTextValue(this.getSourceValue());
+		}
+
+		/** @return {string} */
+		getSourceValue()
 		{
 			const { item } = this.props;
 
-			return this.parseTextValue(item.getTitle());
+			return item.getTitle();
 		}
 
+		/**
+		 * @param {string} value
+		 * @return {string}
+		 */
 		parseTextValue(value)
 		{
 			const plainTextFormatter = new PlainTextFormatter({
@@ -230,7 +402,8 @@ jn.define('tasks/layout/checklist/list/src/text-field', (require, exports, modul
 				tableRenderType: 'placeholder',
 				codeRenderType: 'text',
 				listRenderType: 'text',
-				allowedTags: ['url'],
+				allowedTags: ['url', 'b', 'i', 'u', 's'],
+				normalize: false,
 			});
 
 			const plainAst = plainTextFormatter.format({
@@ -240,6 +413,7 @@ jn.define('tasks/layout/checklist/list/src/text-field', (require, exports, modul
 			return plainAst.toString({ encode: false });
 		}
 
+		/** @return {Object} */
 		getStyle()
 		{
 			const { item, style = {} } = this.props;
@@ -252,16 +426,19 @@ jn.define('tasks/layout/checklist/list/src/text-field', (require, exports, modul
 			};
 		}
 
+		/** @return {number} */
 		getCursorPosition()
 		{
 			return this.cursorPosition;
 		}
 
+		/** @return {string} */
 		getTextValue()
 		{
 			return this.#itemText;
 		}
 
+		/** @return {void} */
 		setSelection()
 		{
 			const titleLength = this.getValue().length;

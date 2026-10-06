@@ -18,6 +18,10 @@ import './css/style.css';
  */
 export class BasePresetPanel extends Content
 {
+	// Not a modal: the panel drops its own overlay, shifts the page beside itself
+	// and expects work with the live preview outside the panel.
+	isDialog: boolean = false;
+
 	constructor()
 	{
 		super();
@@ -205,6 +209,8 @@ export class BasePresetPanel extends Content
 
 	show(options: any): Promise<any>
 	{
+		const isOpening = !this.isShown();
+
 		if (this.isToggleModeEnabled())
 		{
 			const contentEditPanel = BX.Landing.UI.Panel.ContentEdit;
@@ -221,7 +227,14 @@ export class BasePresetPanel extends Content
 			});
 		}
 
-		return super.show(options);
+		return super.show(options).then(() => {
+			// The panel has no focus trap to bring the focus in, so it does it on its own, once the
+			// panel is really on screen: a layout still carrying `hidden` takes no focus.
+			if (isOpening)
+			{
+				this.moveFocusInside();
+			}
+		});
 	}
 
 	hide(): Promise<any>

@@ -9,12 +9,14 @@ jn.define('settings-v2/services/security-settings', (require, exports, module) =
 	const { isEqual } = require('utils/object');
 
 	const CACHE_TTL = 2_592_000;
+	const GET_SECURITY_SETTINGS_ACTION = 'mobile.Settings.getSecuritySettings';
+	const LOGOUT_OTHER_DEVICES_ACTION = 'intranetmobile.loginhistory.logoutOtherDevices';
 
 	class SecuritySettingsService
 	{
 		static #getExecutor()
 		{
-			return (new RunActionExecutor('mobile.Settings.getSecuritySettings', {}))
+			return (new RunActionExecutor(GET_SECURITY_SETTINGS_ACTION, {}))
 				.enableJson()
 				.setCacheId(SECURITY_SETTINGS_KEY)
 				.setCacheTtl(CACHE_TTL)
@@ -104,6 +106,23 @@ jn.define('settings-v2/services/security-settings', (require, exports, module) =
 			}
 
 			await SecuritySettingsService.setCacheBySecurityOption(securityOption, value);
+
+			return response;
+		}
+
+		static async logoutOtherDevices()
+		{
+			const response = await (new RunActionExecutor(LOGOUT_OTHER_DEVICES_ACTION, {}))
+				.enableJson()
+				.setSkipDuplicateRequests()
+				.call();
+
+			if (response.errors && response.errors.length > 0)
+			{
+				console.error('Logout other devices failed:', response.errors);
+
+				return Promise.reject(response.errors);
+			}
 
 			return response;
 		}

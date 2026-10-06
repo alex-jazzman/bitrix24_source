@@ -10,8 +10,10 @@ jn.define('im/messenger/controller/dialog/lib/message-avatar-menu', (require, ex
 		EventType,
 		BBCode,
 		ComponentCode,
+		ActionByUserType,
 	} = require('im/messenger/const');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
+	const { UserPermission } = require('im/messenger/lib/permission-manager');
 	const { UserProfile } = require('im/messenger/controller/user-profile');
 	const { Logger } = require('im/messenger/lib/logger');
 	const { ContextMenu } = require('layout/ui/context-menu');
@@ -77,7 +79,11 @@ jn.define('im/messenger/controller/dialog/lib/message-avatar-menu', (require, ex
 				});
 			}
 
-			if (!this.options.isBot)
+			const canShowProfile = !this.options.isBot
+				&& UserPermission.canPerformActionByUserType(ActionByUserType.openProfile)
+				&& UserPermission.canPerformActionByUserType(ActionByUserType.openProfile, this.authorId);
+
+			if (canShowProfile)
 			{
 				const showUserProfileHandler = () => {
 					this.menu.close(() => this.showUserProfile());

@@ -31,16 +31,35 @@
 	cursor: default;
 }
 .ui-popup-menu-item.--hovered .ui-popup-menu-item-action,
-.ui-popup-menu-item-action:hover {
+.ui-popup-menu-item-action:hover,
+.ui-popup-menu-items.--pointer-focus .ui-popup-menu-item-action:focus {
 	box-shadow: inset 0 0 0 999px rgb(from var(--ui-color-bg-state-hover-default-hex) r g b / var(--ui-color-bg-state-hover-default-opacity));
 }
-.ui-popup-menu-item.--disabled .ui-popup-menu-item-action:hover {
+.ui-popup-menu-item.--disabled .ui-popup-menu-item-action:hover,
+.ui-popup-menu-items.--pointer-focus .ui-popup-menu-item.--disabled .ui-popup-menu-item-action:focus {
 	box-shadow: none;
 }
-.ui-popup-menu-item-action:active {
+
+/* Visible focus follows the input that moved it: the menu marks the items container
+   while focus follows the pointer (hover), otherwise the focus outline is drawn. */
+.ui-popup-menu-items.--pointer-focus .ui-popup-menu-item-action:focus {
+	outline: none;
+	/* The radius exists only to round the focus outline (see the normalize above). */
+	border-radius: 0;
+}
+html[data-input-modality="keyboard"] .ui-popup-menu-item-action:focus {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
+	outline-offset: var(--ui-focus-outline-offset-inset);
+	border-radius: var(--ui-border-radius-sm);
+}
+
+/* The pressed state outranks both hover and a pointer-driven focus. */
+.ui-popup-menu-item-action:active,
+.ui-popup-menu-items.--pointer-focus .ui-popup-menu-item-action:active {
 	box-shadow: inset 0 0 0 999px rgb(from var(--ui-color-bg-state-click-default-hex) r g b / var(--ui-color-bg-state-click-default-opacity));
 }
-.ui-popup-menu-item.--disabled .ui-popup-menu-item-action:active {
+.ui-popup-menu-item.--disabled .ui-popup-menu-item-action:active,
+.ui-popup-menu-items.--pointer-focus .ui-popup-menu-item.--disabled .ui-popup-menu-item-action:active {
 	box-shadow: none;
 }
 

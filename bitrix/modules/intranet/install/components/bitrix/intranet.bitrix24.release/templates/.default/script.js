@@ -1,321 +1,274 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Intranet = this.BX.Intranet || {};
-(function (exports,main_core,main_core_events) {
+(function (exports, main_core, main_core_events) {
 	'use strict';
 
-	let _ = t => t,
-	  _t,
-	  _t2;
-	var _id = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("id");
-	var _windowMessageHandler = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("windowMessageHandler");
-	var _getContent = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getContent");
-	var _handleFrameLoad = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleFrameLoad");
-	var _handleWindowMessage = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleWindowMessage");
 	class ReleaseSlider extends main_core_events.EventEmitter {
-	  constructor(options) {
-	    super();
-	    Object.defineProperty(this, _handleWindowMessage, {
-	      value: _handleWindowMessage2
-	    });
-	    Object.defineProperty(this, _handleFrameLoad, {
-	      value: _handleFrameLoad2
-	    });
-	    Object.defineProperty(this, _getContent, {
-	      value: _getContent2
-	    });
-	    Object.defineProperty(this, _id, {
-	      writable: true,
-	      value: void 0
-	    });
-	    Object.defineProperty(this, _windowMessageHandler, {
-	      writable: true,
-	      value: null
-	    });
-	    this.setEventNamespace('BX.Intranet.Bitrix24.ReleaseSlider');
-	    options = main_core.Type.isPlainObject(options) ? options : {};
-	    this.subscribeFromOptions(options.events);
-	    this.url = main_core.Type.isStringFilled(options.url) ? options.url : 'about:blank';
-	    babelHelpers.classPrivateFieldLooseBase(this, _id)[_id] = `release-slider-${main_core.Text.getRandom()}`;
-	    this.sliderOptions = main_core.Type.isPlainObject(options.sliderOptions) ? options.sliderOptions : {};
-	    babelHelpers.classPrivateFieldLooseBase(this, _windowMessageHandler)[_windowMessageHandler] = babelHelpers.classPrivateFieldLooseBase(this, _handleWindowMessage)[_handleWindowMessage].bind(this);
-	    this.html = new main_core.Cache.MemoryCache();
-	  }
-	  show() {
-	    if (this.isOpen()) {
-	      return;
-	    }
-	    const defaultOptions = {
-	      width: 1100,
-	      customLeftBoundary: 0
-	    };
-	    const options = Object.assign({}, defaultOptions, this.sliderOptions);
-	    const userEvents = main_core.Type.isPlainObject(options.events) ? options.events : {};
-	    options.events = {
-	      onCloseComplete: () => {
-	        main_core.Event.unbind(window, 'message', babelHelpers.classPrivateFieldLooseBase(this, _windowMessageHandler)[_windowMessageHandler]);
-	        this.emit('onCloseComplete');
-	      },
-	      onOpenComplete: () => {
-	        main_core.Event.bind(window, 'message', babelHelpers.classPrivateFieldLooseBase(this, _windowMessageHandler)[_windowMessageHandler]);
-	      }
-	    };
-	    options.contentCallback = slider => {
-	      for (const eventName in userEvents) {
-	        if (main_core.Type.isFunction(userEvents[eventName])) {
-	          main_core_events.EventEmitter.subscribe(slider, BX.SidePanel.Slider.getEventFullName(eventName), userEvents[eventName]);
-	        }
-	      }
-	      return new Promise((resolve, reject) => {
-	        if (this.getFrame().src !== this.url) {
-	          this.getFrame().src = this.url;
-	        }
-	        main_core.Event.bind(this.getFrame(), 'load', babelHelpers.classPrivateFieldLooseBase(this, _handleFrameLoad)[_handleFrameLoad].bind(this));
-	        resolve(babelHelpers.classPrivateFieldLooseBase(this, _getContent)[_getContent]());
-	      });
-	    };
-	    BX.SidePanel.Instance.open(this.getId(), options);
-	  }
-	  hide() {
-	    const slider = this.getSlider();
-	    if (slider) {
-	      slider.close();
-	    }
-	  }
-	  isOpen() {
-	    return this.getSlider() && this.getSlider().isOpen();
-	  }
-	  getId() {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _id)[_id];
-	  }
-	  getSlider() {
-	    return BX.SidePanel.Instance.getSlider(this.getId());
-	  }
-	  getFrame() {
-	    return this.html.remember('frame', () => {
-	      return main_core.Tag.render(_t || (_t = _`<iframe src="about:blank" class="intranet-release-iframe"></iframe>`));
-	    });
-	  }
-	}
-	function _getContent2() {
-	  return this.html.remember('content', () => {
-	    return main_core.Tag.render(_t2 || (_t2 = _`<div class="intranet-release-iframe-container">${0}</div>`), this.getFrame());
-	  });
-	}
-	function _handleFrameLoad2() {
-	  this.emit('onLoad');
-	}
-	function _handleWindowMessage2(event) {
-	  const frameOrigin = new URL(this.url);
-	  if (event.origin !== frameOrigin.origin) {
-	    return;
-	  }
-	  this.emit('onMessage', {
-	    message: event.data,
-	    event
-	  });
+		#id;
+		#windowMessageHandler = null;
+		constructor(options) {
+			super();
+			this.setEventNamespace('BX.Intranet.Bitrix24.ReleaseSlider');
+			options = main_core.Type.isPlainObject(options) ? options : {};
+			this.subscribeFromOptions(options.events);
+			this.url = main_core.Type.isStringFilled(options.url) ? options.url : 'about:blank';
+			this.#id = `release-slider-${main_core.Text.getRandom()}`;
+			this.sliderOptions = main_core.Type.isPlainObject(options.sliderOptions) ? options.sliderOptions : {};
+			this.#windowMessageHandler = this.#handleWindowMessage.bind(this);
+			this.html = new main_core.Cache.MemoryCache();
+		}
+		show() {
+			if (this.isOpen()) {
+				return;
+			}
+			const defaultOptions = {
+				width: 1100,
+				customLeftBoundary: 0
+			};
+			const options = Object.assign({}, defaultOptions, this.sliderOptions);
+			const userEvents = main_core.Type.isPlainObject(options.events) ? options.events : {};
+			options.events = {
+				onCloseComplete: () => {
+					main_core.Event.unbind(window, 'message', this.#windowMessageHandler);
+					this.emit('onCloseComplete');
+				},
+				onOpenComplete: () => {
+					main_core.Event.bind(window, 'message', this.#windowMessageHandler);
+				}
+			};
+			options.contentCallback = slider => {
+				for (const eventName in userEvents) {
+					if (main_core.Type.isFunction(userEvents[eventName])) {
+						main_core_events.EventEmitter.subscribe(slider, BX.SidePanel.Slider.getEventFullName(eventName), userEvents[eventName]);
+					}
+				}
+				return new Promise((resolve, reject) => {
+					if (this.getFrame().src !== this.url) {
+						this.getFrame().src = this.url;
+					}
+					main_core.Event.bind(this.getFrame(), 'load', this.#handleFrameLoad.bind(this));
+					resolve(this.#getContent());
+				});
+			};
+			BX.SidePanel.Instance.open(this.getId(), options);
+		}
+		hide() {
+			const slider = this.getSlider();
+			if (slider) {
+				slider.close();
+			}
+		}
+		isOpen() {
+			return this.getSlider() && this.getSlider().isOpen();
+		}
+		getId() {
+			return this.#id;
+		}
+		getSlider() {
+			return BX.SidePanel.Instance.getSlider(this.getId());
+		}
+		getFrame() {
+			return this.html.remember('frame', () => {
+				return main_core.Tag.render`<iframe src="about:blank" class="intranet-release-iframe"></iframe>`;
+			});
+		}
+		#getContent() {
+			return this.html.remember('content', () => {
+				return main_core.Tag.render`<div class="intranet-release-iframe-container">${this.getFrame()}</div>`;
+			});
+		}
+		#handleFrameLoad() {
+			this.emit('onLoad');
+		}
+		#handleWindowMessage(event) {
+			const frameOrigin = new URL(this.url);
+			if (event.origin !== frameOrigin.origin) {
+				return;
+			}
+			this.emit('onMessage', {
+				message: event.data,
+				event
+			});
+		}
 	}
 
-	let _$1 = t => t,
-	  _t$1;
 	class ReleaseEar extends main_core_events.EventEmitter {
-	  constructor(options) {
-	    super();
-	    this.container = null;
-	    this.setEventNamespace('BX.Intranet.Bitrix24.ReleaseEar');
-	    options = main_core.Type.isPlainObject(options) ? options : {};
-	    this.zone = main_core.Type.isStringFilled(options.zone) ? options.zone : 'en';
-	    this.subscribeFromOptions(options.events);
-	  }
-	  show(animate = false) {
-	    if (animate) {
-	      main_core.Dom.removeClass(this.getContainer(), '--hidden');
-	      requestAnimationFrame(() => {
-	        requestAnimationFrame(() => {
-	          main_core.Dom.removeClass(this.getContainer(), '--hidden');
-	        });
-	      });
-	    } else {
-	      main_core.Dom.removeClass(this.getContainer(), '--hidden');
-	    }
-	  }
-	  hide() {
-	    main_core.Dom.addClass(this.getContainer(), '--hidden');
-	  }
-	  getContainer() {
-	    if (this.container === null) {
-	      this.container = main_core.Tag.render(_t$1 || (_t$1 = _$1`
-				<div class="intranet-release-ear" onclick="${0}">
+		container = null;
+		constructor(options) {
+			super();
+			this.setEventNamespace('BX.Intranet.Bitrix24.ReleaseEar');
+			options = main_core.Type.isPlainObject(options) ? options : {};
+			this.zone = main_core.Type.isStringFilled(options.zone) ? options.zone : 'en';
+			this.subscribeFromOptions(options.events);
+		}
+		show(animate = false) {
+			if (animate) {
+				main_core.Dom.removeClass(this.getContainer(), '--hidden');
+				requestAnimationFrame(() => {
+					requestAnimationFrame(() => {
+						main_core.Dom.removeClass(this.getContainer(), '--hidden');
+					});
+				});
+			} else {
+				main_core.Dom.removeClass(this.getContainer(), '--hidden');
+			}
+		}
+		hide() {
+			main_core.Dom.addClass(this.getContainer(), '--hidden');
+		}
+		getContainer() {
+			if (this.container === null) {
+				this.container = main_core.Tag.render`
+				<div class="intranet-release-ear" onclick="${this.handleClick.bind(this)}">
 					<div class="intranet-release-button"><i></i></div>
-					<div class="intranet-release-logo --${0}"></div>
+					<div class="intranet-release-logo --${this.zone}"></div>
 				</div>
-			`), this.handleClick.bind(this), this.zone);
-	      main_core.Dom.append(this.container, document.body);
-	    }
-	    return this.container;
-	  }
-	  handleClick() {
-	    this.emit('onClick');
-	  }
+			`;
+				main_core.Dom.append(this.container, document.body);
+			}
+			return this.container;
+		}
+		handleClick() {
+			this.emit('onClick');
+		}
 	}
 
-	var _deactivated = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("deactivated");
-	var _id$1 = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("id");
-	var _autoLaunch = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("autoLaunch");
-	var _runAction = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("runAction");
-	var _deactivate = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("deactivate");
-	var _handleSliderClose = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleSliderClose");
-	var _handleEarClick = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleEarClick");
-	var _handleFrameMessage = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleFrameMessage");
 	class Release {
-	  constructor(releaseOptions) {
-	    Object.defineProperty(this, _handleFrameMessage, {
-	      value: _handleFrameMessage2
-	    });
-	    Object.defineProperty(this, _handleEarClick, {
-	      value: _handleEarClick2
-	    });
-	    Object.defineProperty(this, _handleSliderClose, {
-	      value: _handleSliderClose2
-	    });
-	    Object.defineProperty(this, _deactivate, {
-	      value: _deactivate2
-	    });
-	    Object.defineProperty(this, _runAction, {
-	      value: _runAction2
-	    });
-	    Object.defineProperty(this, _deactivated, {
-	      writable: true,
-	      value: false
-	    });
-	    Object.defineProperty(this, _id$1, {
-	      writable: true,
-	      value: ''
-	    });
-	    Object.defineProperty(this, _autoLaunch, {
-	      writable: true,
-	      value: false
-	    });
-	    const options = main_core.Type.isPlainObject(releaseOptions) ? releaseOptions : {};
-	    if (!main_core.Type.isStringFilled(options.url)) {
-	      throw new Error('Release: the "url" parameter is required.');
-	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _id$1)[_id$1] = main_core.Type.isStringFilled(options.id) ? options.id : '';
-	    this.slider = new ReleaseSlider({
-	      url: options.url,
-	      sliderOptions: options.sliderOptions,
-	      events: {
-	        onCloseComplete: babelHelpers.classPrivateFieldLooseBase(this, _handleSliderClose)[_handleSliderClose].bind(this),
-	        onMessage: babelHelpers.classPrivateFieldLooseBase(this, _handleFrameMessage)[_handleFrameMessage].bind(this)
-	      }
-	    });
-	    this.ear = new ReleaseEar({
-	      zone: options.zone,
-	      events: {
-	        onClick: babelHelpers.classPrivateFieldLooseBase(this, _handleEarClick)[_handleEarClick].bind(this)
-	      }
-	    });
-	    main_core_events.EventEmitter.subscribe('SidePanel.Slider:onOpen', () => {
-	      this.getEar().hide();
-	    });
-	    const onClose = () => {
-	      if (BX.SidePanel.Instance.getOpenSlidersCount() === 0) {
-	        this.getEar().show(true);
-	      }
-	    };
-	    main_core_events.EventEmitter.subscribe('SidePanel.Slider:onCloseComplete', onClose);
-	    main_core_events.EventEmitter.subscribe('SidePanel.Slider:onDestroy', onClose);
-	  }
-	  show(mode = 'ear') {
-	    if (mode === 'slider') {
-	      const BannerDispatcher = main_core.Reflection.getClass('BX.UI.BannerDispatcher');
-	      if (BannerDispatcher) {
-	        BannerDispatcher.critical.toQueue(() => {
-	          this.getSlider().show();
-	        }, {
-	          id: babelHelpers.classPrivateFieldLooseBase(this, _id$1)[_id$1]
-	        });
-	      } else {
-	        this.getSlider().show();
-	      }
-	      babelHelpers.classPrivateFieldLooseBase(this, _autoLaunch)[_autoLaunch] = true;
-	      void babelHelpers.classPrivateFieldLooseBase(this, _runAction)[_runAction]('show', {
-	        context: 'auto'
-	      });
-	    } else {
-	      if (BX.SidePanel.Instance.getOpenSlidersCount() === 0) {
-	        this.getEar().show();
-	      }
-	    }
-	  }
-	  getSlider() {
-	    return this.slider;
-	  }
-	  getEar() {
-	    return this.ear;
-	  }
-	}
-	function _runAction2(action, labels = {}, data = {}) {
-	  return main_core.ajax.runComponentAction('bitrix:intranet.bitrix24.release', action, {
-	    mode: 'class',
-	    data,
-	    analyticsLabel: {
-	      module: 'intranet',
-	      service: babelHelpers.classPrivateFieldLooseBase(this, _id$1)[_id$1],
-	      action,
-	      ...labels
-	    }
-	  });
-	}
-	function _deactivate2() {
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _deactivated)[_deactivated] === false) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _deactivated)[_deactivated] = true;
-	    void babelHelpers.classPrivateFieldLooseBase(this, _runAction)[_runAction]('deactivate').catch(() => {
-	      babelHelpers.classPrivateFieldLooseBase(this, _deactivated)[_deactivated] = false;
-	    });
-	  }
-	}
-	function _handleSliderClose2() {
-	  if (BX.SidePanel.Instance.getOpenSlidersCount() === 0) {
-	    this.getEar().show(true);
-	  }
-	  const AutoLauncher = main_core.Reflection.getClass('BX.UI.AutoLaunch.AutoLauncher');
-	  if (AutoLauncher) {
-	    setTimeout(() => {
-	      AutoLauncher.unregister(babelHelpers.classPrivateFieldLooseBase(this, _id$1)[_id$1]);
-	    }, 1000);
-	  }
-	  if (babelHelpers.classPrivateFieldLooseBase(this, _autoLaunch)[_autoLaunch]) {
-	    void babelHelpers.classPrivateFieldLooseBase(this, _runAction)[_runAction]('close');
-	  } else {
-	    babelHelpers.classPrivateFieldLooseBase(this, _deactivate)[_deactivate]();
-	  }
-	}
-	function _handleEarClick2() {
-	  this.getEar().hide();
-	  this.getSlider().show();
-	  void babelHelpers.classPrivateFieldLooseBase(this, _runAction)[_runAction]('show', {
-	    context: 'ear-click'
-	  });
-	}
-	function _handleFrameMessage2(event) {
-	  const {
-	    message
-	  } = event.getData();
-	  if (!main_core.Type.isPlainObject(message)) {
-	    return;
-	  }
-	  if (message.command === 'endOfScroll' && babelHelpers.classPrivateFieldLooseBase(this, _deactivated)[_deactivated] === false) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _deactivate)[_deactivate]();
-	  }
-	  if (message.command === 'openHelper' && BX.Helper) {
-	    BX.Helper.show(message.options);
-	  }
+		#deactivated = false;
+		#id = '';
+		#autoLaunch = false;
+		#showEar = true;
+		constructor(releaseOptions) {
+			const options = main_core.Type.isPlainObject(releaseOptions) ? releaseOptions : {};
+			if (!main_core.Type.isStringFilled(options.url)) {
+				throw new Error('Release: the "url" parameter is required.');
+			}
+			this.#id = main_core.Type.isStringFilled(options.id) ? options.id : '';
+			this.#showEar = options.showEar !== false;
+			this.slider = new ReleaseSlider({
+				url: options.url,
+				sliderOptions: options.sliderOptions,
+				events: {
+					onCloseComplete: this.#handleSliderClose.bind(this),
+					onMessage: this.#handleFrameMessage.bind(this)
+				}
+			});
+			if (this.#showEar) {
+				this.ear = new ReleaseEar({
+					zone: options.zone,
+					events: {
+						onClick: this.#handleEarClick.bind(this)
+					}
+				});
+				main_core_events.EventEmitter.subscribe('SidePanel.Slider:onOpen', () => {
+					this.getEar().hide();
+				});
+				const onClose = () => {
+					if (BX.SidePanel.Instance.getOpenSlidersCount() === 0) {
+						this.getEar().show(true);
+					}
+				};
+				main_core_events.EventEmitter.subscribe('SidePanel.Slider:onCloseComplete', onClose);
+				main_core_events.EventEmitter.subscribe('SidePanel.Slider:onDestroy', onClose);
+			}
+		}
+		show(mode = 'ear') {
+			if (mode === 'ear' && !this.#showEar) {
+				return;
+			}
+			if (mode === 'slider') {
+				const BannerDispatcher = main_core.Reflection.getClass('BX.UI.BannerDispatcher');
+				if (BannerDispatcher) {
+					BannerDispatcher.critical.toQueue(() => {
+						this.getSlider().show();
+					}, {
+						id: this.#id
+					});
+				} else {
+					this.getSlider().show();
+				}
+				this.#autoLaunch = true;
+				void this.#runAction('show', {
+					context: 'auto'
+				});
+			} else if (this.#showEar) {
+				if (BX.SidePanel.Instance.getOpenSlidersCount() === 0) {
+					this.getEar().show();
+				}
+			}
+		}
+		getSlider() {
+			return this.slider;
+		}
+		getEar() {
+			return this.ear;
+		}
+		#runAction(action, labels = {}, data = {}) {
+			return main_core.ajax.runComponentAction('bitrix:intranet.bitrix24.release', action, {
+				mode: 'class',
+				data,
+				analyticsLabel: {
+					module: 'intranet',
+					service: this.#id,
+					action,
+					...labels
+				}
+			});
+		}
+		#deactivate() {
+			if (this.#deactivated === false) {
+				this.#deactivated = true;
+				void this.#runAction('deactivate').catch(() => {
+					this.#deactivated = false;
+				});
+			}
+		}
+		#handleSliderClose() {
+			if (this.#showEar && BX.SidePanel.Instance.getOpenSlidersCount() === 0) {
+				this.getEar().show(true);
+			}
+			const AutoLauncher = main_core.Reflection.getClass('BX.UI.AutoLaunch.AutoLauncher');
+			if (AutoLauncher) {
+				setTimeout(() => {
+					AutoLauncher.unregister(this.#id);
+				}, 1000);
+			}
+			if (this.#autoLaunch) {
+				void this.#runAction('close');
+				if (!this.#showEar) {
+					this.#deactivate();
+				}
+			} else {
+				this.#deactivate();
+			}
+		}
+		#handleEarClick() {
+			this.getEar().hide();
+			this.getSlider().show();
+			void this.#runAction('show', {
+				context: 'ear-click'
+			});
+		}
+		#handleFrameMessage(event) {
+			const {
+				message
+			} = event.getData();
+			if (!main_core.Type.isPlainObject(message)) {
+				return;
+			}
+			if (message.command === 'endOfScroll' && this.#deactivated === false) {
+				this.#deactivate();
+			}
+			if (message.command === 'openHelper' && BX.Helper) {
+				BX.Helper.show(message.options);
+			}
+		}
 	}
 
 	exports.Release = Release;
-	exports.ReleaseSlider = ReleaseSlider;
 	exports.ReleaseEar = ReleaseEar;
+	exports.ReleaseSlider = ReleaseSlider;
 
-}((this.BX.Intranet.Bitrix24 = this.BX.Intranet.Bitrix24 || {}),BX,BX.Event));
+})(this.BX.Intranet.Bitrix24 = this.BX.Intranet.Bitrix24 || {}, BX, BX.Event);
 //# sourceMappingURL=script.js.map

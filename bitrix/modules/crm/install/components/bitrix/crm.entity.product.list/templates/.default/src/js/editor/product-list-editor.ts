@@ -71,6 +71,12 @@ export class Editor extends SettingsHolder
 
 	private updateFieldForList: string | null = null;
 
+	// B3: rows added via the "Add product" button whose name-input must receive focus once,
+	// after the FIRST product is selected (product change completes). Keyed by rowId
+	// (prefixed, === onChange data.rowId). One-shot: removed on first hit so a later
+	// variation change on the same row never steals focus (C1/B7).
+	private readonly pendingFocusAfterProductSelect = new Set<string>();
+
 	public readonly productSelectionPopupHandler = (event: Event): void => {
 		const caller = 'crm_entity_product_list';
 		const jsEventsManagerId = this.getSettingValue('jsEventsManagerId', '');
@@ -118,6 +124,7 @@ export class Editor extends SettingsHolder
 		}
 
 		const id = this.addProductRow();
+		this.pendingFocusAfterProductSelect.add(this.getRowIdPrefix() + id);
 		this.focusProductSelector(id);
 	};
 	public readonly showSettingsPopupHandler = (): void => {
@@ -415,6 +422,20 @@ export class Editor extends SettingsHolder
 				productRow.modifyBasePriceInput();
 				productRow.executeExternalActions();
 				this.gridLifecycle.getGrid().tableUnfade();
+
+				// B3: for a row added via the "Add product" button, move focus to its name input once
+				// the first product is selected. The initial focus sat on the button; B7's
+				// focusName in processResponse can miss the freshly re-laid-out input on a new
+				// row. Schedule via rAF so this is the last focus op after all re-layout;
+				// one-shot flag ensures a later variation change won't refocus (C1/B7).
+				if (this.pendingFocusAfterProductSelect.has(data.rowId))
+				{
+					this.pendingFocusAfterProductSelect.delete(data.rowId);
+					const selector = productRow.getSelector();
+					requestAnimationFrame(() => {
+						(selector as any)?.focusName();
+					});
+				}
 			});
 		}
 		else
@@ -714,6 +735,7 @@ export class Editor extends SettingsHolder
 	{
 		this.productCollection.unsubscribeAll();
 		this.productCollection.reset();
+		this.pendingFocusAfterProductSelect.clear();
 
 		this.destroySettingsPopup();
 		this.unsubscribeDomEvents();
@@ -1401,6 +1423,8 @@ export class Editor extends SettingsHolder
 		{
 			return;
 		}
+
+		this.pendingFocusAfterProductSelect.delete(this.getRowIdPrefix() + rowId);
 
 		const gridRow = this.gridLifecycle.getGrid().getRows().getById(rowId);
 		if (gridRow)

@@ -1494,8 +1494,47 @@
 					response = BX.parseJSON(response, {});
 					if (typeof response.data == 'object' && response.data.status === true)
 					{
+						top.BX.UI.Notification.Center.notify(
+							{
+								content: BX.message('REST_INTEGRATION_EDIT_SAVE_SUCCESS')
+							}
+						);
+
 						var slider = BX.SidePanel.Instance.getTopSlider();
+
 						slider.data = {NEW_OPEN: 'N'}
+
+						if (response.data.redirectUrl)
+						{
+							let prevSlider = BX.SidePanel.Instance.getPreviousSlider(slider);
+							slider.close();
+							if (prevSlider)
+							{
+								try
+								{
+									let redirectUrlObject = new URL(
+										response.data.redirectUrl,
+										window.location.origin,
+									);
+									let prevSliderUrlObject = new URL(prevSlider.getUrl(), window.location.origin);
+									if (redirectUrlObject.origin === prevSliderUrlObject.origin
+										&& redirectUrlObject.pathname === prevSliderUrlObject.pathname
+									)
+									{
+										prevSlider.reload();
+										return;
+									}
+								}
+								catch (error)
+								{
+								}
+							}
+
+							BX.SidePanel.Instance.open(response.data.redirectUrl);
+
+							return;
+						}
+
 						slider.reload();
 					}
 					else

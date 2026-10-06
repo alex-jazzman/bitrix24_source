@@ -1429,7 +1429,11 @@ export class LinkUrl extends Text
 				<span class=\"landing-ui-field-url-placeholder-text\">
 					${BX.Landing.Utils.encodeDataValue(options.name)}
 				</span>
-				<span class=\"landing-ui-field-url-placeholder-delete\"></span>
+				<button
+					type=\"button\"
+					class=\"landing-ui-field-url-placeholder-delete\"
+					aria-label=\"${BX.Text.encode(BX.Landing.Loc.getMessage('LANDING_LINK_URL_PLACEHOLDER_DELETE'))}\"
+				></button>
 			</span>
 		`;
 
@@ -1480,6 +1484,7 @@ export class LinkUrl extends Text
 		this.setValue("");
 		BX.Landing.Utils.fireEvent(this.layout, "input");
 		this.onInputHandler(this.input.innerText);
+		this.input.focus();
 	}
 
 	/**

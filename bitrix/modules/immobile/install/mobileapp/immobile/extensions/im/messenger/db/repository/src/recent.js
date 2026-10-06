@@ -18,7 +18,7 @@ jn.define('im/messenger/db/repository/recent', (require, exports, module) => {
 	} = require('im/messenger/db/table');
 	const { validateRestItem } = require('im/messenger/db/repository/validators/recent');
 	const { Query } = require('im/messenger/db/query-builder/builder');
-	const { equalField } = require('im/messenger/db/query-builder/condition');
+	const { equalField, or, isNull } = require('im/messenger/db/query-builder/condition');
 	const { expressionField } = require('im/messenger/db/schema/field');
 	const { getStartWordsSearchCondition } = require('im/messenger/db/helper/start-words');
 	const {
@@ -26,6 +26,7 @@ jn.define('im/messenger/db/repository/recent', (require, exports, module) => {
 		RecentSectionSchema,
 		DialogSchema,
 		DraftSchema,
+		UserSchema,
 	} = require('im/messenger/db/table-schema');
 
 	/**
@@ -153,10 +154,12 @@ jn.define('im/messenger/db/repository/recent', (require, exports, module) => {
 				.innerJoin(DialogSchema, equalField(RecentSchema.id, DialogSchema.dialogId))
 				.innerJoin(RecentSectionSchema, equalField(RecentSchema.id, RecentSectionSchema.dialogId))
 				.leftJoin(DraftSchema, equalField(RecentSchema.id, DraftSchema.dialogId))
+				.leftJoin(UserSchema, equalField(RecentSchema.id, UserSchema.id))
 				.where(
 					RecentSectionSchema.section.equal(section),
 					Type.isNumber(parentChatId) && DialogSchema.parentChatId.equal(parentChatId),
 					lastActivityDate && RecentSchema.lastActivityDate.lessThan(lastActivityDate),
+					or(isNull(UserSchema.id), UserSchema.active.equal(true)),
 				)
 				.orderBy(
 					RecentSchema.pinned.desc(),
@@ -209,7 +212,11 @@ jn.define('im/messenger/db/repository/recent', (require, exports, module) => {
 				.from(RecentSchema)
 				.innerJoin(DialogSchema, equalField(RecentSchema.id, DialogSchema.dialogId))
 				.leftJoin(DraftSchema, equalField(RecentSchema.id, DraftSchema.dialogId))
-				.where(RecentSchema.id.in(dialogIds))
+				.leftJoin(UserSchema, equalField(RecentSchema.id, UserSchema.id))
+				.where(
+					RecentSchema.id.in(dialogIds),
+					or(isNull(UserSchema.id), UserSchema.active.equal(true)),
+				)
 				.execute();
 
 			const items = result.map((row) => {
@@ -248,7 +255,11 @@ jn.define('im/messenger/db/repository/recent', (require, exports, module) => {
 				.from(RecentSchema)
 				.innerJoin(DialogSchema, equalField(RecentSchema.id, DialogSchema.dialogId))
 				.leftJoin(DraftSchema, equalField(RecentSchema.id, DraftSchema.dialogId))
-				.where(DialogSchema.chatId.in(numericChatIds))
+				.leftJoin(UserSchema, equalField(RecentSchema.id, UserSchema.id))
+				.where(
+					DialogSchema.chatId.in(numericChatIds),
+					or(isNull(UserSchema.id), UserSchema.active.equal(true)),
+				)
 				.execute();
 
 			const items = result.map((row) => {
@@ -291,10 +302,12 @@ jn.define('im/messenger/db/repository/recent', (require, exports, module) => {
 				.from(RecentSchema)
 				.innerJoin(DialogSchema, equalField(RecentSchema.id, DialogSchema.dialogId))
 				.innerJoin(RecentSectionSchema, equalField(RecentSchema.id, RecentSectionSchema.dialogId))
+				.leftJoin(UserSchema, equalField(RecentSchema.id, UserSchema.id))
 				.where(
 					RecentSectionSchema.section.equal(section),
 					Type.isNumber(parentChatId) && DialogSchema.parentChatId.equal(parentChatId),
 					getStartWordsSearchCondition(DialogSchema.name, searchText),
+					or(isNull(UserSchema.id), UserSchema.active.equal(true)),
 				)
 				.orderBy(RecentSchema.lastActivityDate.desc())
 				.limit(limit)
@@ -328,10 +341,12 @@ jn.define('im/messenger/db/repository/recent', (require, exports, module) => {
 			const query = Query.select()
 				.from(RecentSchema)
 				.innerJoin(RecentSectionSchema, equalField(RecentSchema.id, RecentSectionSchema.dialogId))
+				.leftJoin(UserSchema, equalField(RecentSchema.id, UserSchema.id))
 				.setSelect(expressionField('1', 'hasMore'))
 				.where(
 					RecentSectionSchema.section.equal(section),
 					RecentSchema.lastActivityDate.lessThan(lastActivityDate),
+					or(isNull(UserSchema.id), UserSchema.active.equal(true)),
 				)
 				.limit(1);
 
@@ -665,6 +680,11 @@ jn.define('im/messenger/db/repository/recent', (require, exports, module) => {
 				result.message = this.prepareRecentMessage(fields);
 			}
 
+			if (Type.isPlainObject(fields.ownMessage))
+			{
+				result.ownMessage = this.prepareRecentMessage({ message: fields.ownMessage });
+			}
+
 			if (Type.isPlainObject(fields.invited))
 			{
 				result.invitation = {
@@ -777,6 +797,15 @@ jn.define('im/messenger/db/repository/recent', (require, exports, module) => {
 			if (Type.isDate(fields.message.date) || Type.isString(fields.message.date))
 			{
 				message.date = DateHelper.cast(fields.message.date);
+			}
+
+			if (Type.isNumber(fields.message.chatId))
+			{
+				message.chatId = fields.message.chatId;
+			}
+			else if (Type.isNumber(fields.message.chat_id))
+			{
+				message.chatId = fields.message.chat_id;
 			}
 
 			if (Type.isNumber(fields.message.author_id))

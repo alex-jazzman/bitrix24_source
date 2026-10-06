@@ -1,8 +1,9 @@
-import { Tag, Event, Dom } from 'main.core';
+import { Tag, Event, Dom, Extension } from 'main.core';
 import { EventEmitter } from 'main.core.events';
-import { Icon, Main, Actions } from 'ui.icon-set.api.core';
+import { Icon, Main, Actions, Outline } from 'ui.icon-set.api.core';
 import 'ui.icon-set.main';
 import 'ui.icon-set.actions';
+import 'ui.icon-set.outline';
 
 import './css/copilot-voice-input-btn.css';
 
@@ -13,6 +14,7 @@ export class CopilotVoiceInputBtn extends EventEmitter
 	#startRecordingButton: HTMLButtonElement;
 
 	#disabled: boolean;
+	#isBitrixGptV2Available: boolean = false;
 
 	constructor(options) {
 		super(options);
@@ -20,6 +22,7 @@ export class CopilotVoiceInputBtn extends EventEmitter
 
 		this.#disabled = false;
 		this.#container = null;
+		this.#isBitrixGptV2Available = Extension.getSettings('ai.copilot').get('isBitrixGptV2Available') === true;
 	}
 
 	start(): void
@@ -80,8 +83,10 @@ export class CopilotVoiceInputBtn extends EventEmitter
 
 	#renderStartRecordingButton(): HTMLButtonElement
 	{
+		// Redesign flag: thin outline microphone (Outline.MICROPHONE_ON);
+		// base keeps the filled Main.MICROPHONE_ON.
 		const microphoneIcon = new Icon({
-			icon: Main.MICROPHONE_ON,
+			icon: this.#isBitrixGptV2Available ? Outline.MICROPHONE_ON : Main.MICROPHONE_ON,
 			size: 20,
 		});
 

@@ -322,9 +322,40 @@
 	height: 36px;
 	position: relative;
 	text-decoration: none;
-	outline: none;
 	white-space: nowrap;
 	width: 100%;
+}
+
+/* Native button styled as an inline footer action (semantic-first, no visual change). */
+.catalog-footer-action {
+	appearance: none;
+	-webkit-appearance: none;
+	background: transparent;
+	border: 0;
+	padding: 0;
+	margin: 0;
+	font: inherit;
+	color: inherit;
+	text-align: inherit;
+	line-height: inherit;
+	vertical-align: baseline;
+	cursor: pointer;
+}
+
+/* Visible focus (TPL-01): air outline on keyboard focus, scoped to the block. */
+.catalog-footer-action:focus-visible,
+html[data-input-modality="keyboard"] .catalog-footer-action:focus:not(:focus-visible),
+.product-selector-placement__container:focus-visible,
+html[data-input-modality="keyboard"] .product-selector-placement__container:focus:not(:focus-visible) {
+	outline-style: solid;
+	outline-color: var(--ui-color-focus-outline, #4A9DFF);
+	outline-width: var(--ui-focus-outline-width, 2px);
+	outline-offset: var(--ui-focus-outline-offset, 2px);
+}
+
+html[data-input-modality="pointer"] .catalog-footer-action:focus-visible,
+html[data-input-modality="pointer"] .product-selector-placement__container:focus-visible {
+	outline: none;
 }
 
 .product-selector-placement__footer-success,
@@ -378,7 +409,7 @@
 	display: inline-block;
 	font-size: var(--ui-font-size-md);
 	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
-	color: var(--ui-color-base-70);
+	color: #525c69;
 	line-height: 36px;
 	padding: 0 15px 0 0;
 	text-decoration: none;
@@ -414,7 +445,7 @@
 }
 
 .product-selector-placement__help-link {
-	color: var(--ui-color-base-50);
+	color: #525c69;
 	font-size: var(--ui-font-size-xs);
 	letter-spacing: -.3px;
 	transition: color .3s;

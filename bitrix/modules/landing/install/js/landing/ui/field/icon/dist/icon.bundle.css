@@ -1,7 +1,5 @@
 .landing-ui-field-image.landing-ui-field-image-icon .landing-ui-field-image-left {
-	-webkit-box-flex: 0;
-	    -ms-flex-positive: 0;
-	        flex-grow: 0;
+	flex-grow: 0;
 }
 
 .landing-ui-field-image.landing-ui-field-image-icon .landing-ui-field-image-preview {

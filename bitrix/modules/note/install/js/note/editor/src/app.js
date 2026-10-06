@@ -2,6 +2,7 @@ import { Type } from 'main.core';
 import { BitrixVue } from 'ui.vue3';
 import { DocumentEditorComponent } from './components/note-editor';
 import { NoteDocumentPageComponent } from './components/document/document-page';
+import { NoteDocumentEmbedComponent } from './components/document/document-embed';
 
 export class NoteEditorApp
 {
@@ -38,4 +39,4 @@ export class NoteEditorApp
 	}
 }
 
-export { DocumentEditorComponent, NoteDocumentPageComponent };
+export { DocumentEditorComponent, NoteDocumentPageComponent, NoteDocumentEmbedComponent };

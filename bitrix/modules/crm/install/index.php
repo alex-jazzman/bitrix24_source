@@ -343,6 +343,11 @@ class crm extends CModule
 
 		if ($isFreshInstall)
 		{
+			if (\Bitrix\Main\Application::getConnection()->isTableExists('b_crm_copilot_call_assessment'))
+			{
+				(new \Bitrix\Crm\Update\CallScoringV2AssessmentDefault())->execute();
+			}
+
 			COption::SetOptionString('crm', '~crm_install_time', time());
 
 			CCrmStatus::InstallDefault('STATUS');
@@ -604,6 +609,7 @@ class crm extends CModule
 		);
 
 		\Bitrix\Main\Config\Option::set('crm', 'repeat_sale_segment_initialization', 'Y');
+
 		(new \Bitrix\Crm\Copilot\CallAssessment\FillPreliminaryCallAssessments())->execute();
 
 		\Bitrix\Crm\EntityRequisite::installDefaultPresets();

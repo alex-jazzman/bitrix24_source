@@ -1,0 +1,19 @@
+.mail-compose-error-alert
+{
+	padding: var(--ui-space-inset-sm) 0;
+}
+
+/* every message is read on a line of its own */
+.mail-compose-error-alert__message
+{
+	display: block;
+}
+
+/*
+ * The block takes the focus programmatically, and the ring would frame the message for a user who never
+ * asked for it; keyboard navigation keeps the ring.
+ */
+.mail-compose-error-alert:focus:not(:focus-visible)
+{
+	outline: none;
+}

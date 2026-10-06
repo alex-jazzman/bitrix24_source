@@ -111,13 +111,15 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 			this.#popup?.setWidth(width);
 		}
 		showCloseIcon() {
-			if (this.#popup?.closeIcon) {
-				main_core.Dom.show(this.#popup.closeIcon);
+			const container = this.#popup?.getPopupContainer();
+			if (container) {
+				main_core.Dom.removeClass(container, 'mail__client_dialog_base-dialog--hide-close-icon');
 			}
 		}
 		hideCloseIcon() {
-			if (this.#popup?.closeIcon) {
-				main_core.Dom.hide(this.#popup.closeIcon);
+			const container = this.#popup?.getPopupContainer();
+			if (container) {
+				main_core.Dom.addClass(container, 'mail__client_dialog_base-dialog--hide-close-icon');
 			}
 		}
 		getButton(id) {
@@ -186,6 +188,7 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 				closeIconSize: main_popup.CloseIconSize.LARGE,
 				closeByEsc: true,
 				overlay: true,
+				autoHide: true,
 				cacheable: this.#options.cacheable,
 				width: this.#options.width,
 				borderRadius: '18px',
@@ -200,9 +203,6 @@ this.BX.Mail.Client = this.BX.Mail.Client || {};
 					}
 				}
 			});
-			if (popup.overlay?.element) {
-				main_core.Event.bind(popup.overlay.element, 'click', () => this.close());
-			}
 			return popup;
 		}
 		onClose() {

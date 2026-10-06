@@ -4,7 +4,7 @@ import { Core } from 'im.v2.application.core';
 import { RecentType, EventType, type RecentTypeItem } from 'im.v2.const';
 import { Logger } from 'im.v2.lib.logger';
 import { Utils } from 'im.v2.lib.utils';
-import { type ImModelRecentItem, type ImModelMessage } from 'im.v2.model';
+import { type ImModelRecentItem, type ImModelMessage, type ImModelChat } from 'im.v2.model';
 
 import { type ChatUserLeaveParams } from '../types/chat';
 import { type PullExtraParams, type RawMessage } from '../types/common';
@@ -191,7 +191,20 @@ export class RecentPullHandler
 	handleRecentUpdate(params: RecentUpdateParams)
 	{
 		Logger.warn('RecentPullHandler: handleRecentUpdate', params);
+
 		const manager = new RecentUpdateManager(params);
+
+		// lastActivityDate=null marks an info-only RecentUpdateMeta: refresh the preview of an already
+		// listed item (e.g. a collab pointer recomputed after a source message delete or a muted child
+		// message) without adding the item to sections or moving it.
+		const isMetadataOnly = params.lastActivityDate === null;
+		if (isMetadataOnly)
+		{
+			manager.updateExistingItem();
+
+			return;
+		}
+
 		manager.addToRecentCollection();
 	}
 
@@ -201,12 +214,13 @@ export class RecentPullHandler
 
 		if (lastMessageWasDeleted)
 		{
-			this.#updateRecentForMessageDelete(dialogId, newLastMessage.id);
+			this.#updateRecentForMessageDelete(dialogId, newLastMessage);
 		}
 	}
 
-	#updateRecentForMessageDelete(dialogId: string, newLastMessageId: number): void
+	#updateRecentForMessageDelete(dialogId: string, newLastMessage: RawMessage): void
 	{
+		const newLastMessageId = newLastMessage.id;
 		if (!newLastMessageId)
 		{
 			void Core.getStore().dispatch('recent/hide', { dialogId });
@@ -214,9 +228,23 @@ export class RecentPullHandler
 			return;
 		}
 
+		const fields = { messageId: newLastMessageId };
+
+		if (this.#newLastMessageIsOwn(dialogId, newLastMessage))
+		{
+			fields.ownMessageId = newLastMessageId;
+		}
+
 		void Core.getStore().dispatch('recent/update', {
 			dialogId,
-			fields: { messageId: newLastMessageId },
+			fields,
 		});
+	}
+
+	#newLastMessageIsOwn(dialogId: string, newLastMessage: RawMessage): boolean
+	{
+		const dialog: ?ImModelChat = Core.getStore().getters['chats/get'](dialogId);
+
+		return Boolean(dialog?.chatId) && newLastMessage.chatId === dialog.chatId;
 	}
 }

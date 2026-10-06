@@ -6,6 +6,7 @@ import {
 	type ImModelTariffRestrictions,
 	type ImModelCopilotAIModel,
 	type ImModelCounter,
+	type ImModelFolder,
 } from 'im.v2.model';
 import { type RawUser } from 'im.v2.provider.pull';
 
@@ -24,8 +25,16 @@ export type ApplicationData = {
 	},
 	counters: ImModelCounter[],
 	notificationCounter: number,
+	folders: ImModelFolder[],
+	folderLimits: FolderLimits,
 	isGuestWelcome?: boolean,
 	videoCallsTermsUrl?: string,
+};
+
+export type FolderLimits = {
+	maxFolders: number,
+	maxChatsPerFolder: number,
+	maxTitleLength: number,
 };
 
 export type PreloadedEntityType = {

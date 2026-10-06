@@ -1,0 +1,39 @@
+.bx-im-messenger-folder-panel__container {
+	width: 64px;
+	padding-top: 12px;
+	background-color: var(--ui-color-bg-content-primary);
+	border-right: 1px solid var(--ui-color-base-7);
+	overflow: auto;
+}
+
+.bx-im-messenger-folder-panel__header {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+	height: 48px;
+}
+
+.bx-im-messenger-folder-panel__settings_container {
+	display: flex;
+	padding: 0;
+	background: none;
+	border: none;
+	cursor: pointer;
+	appearance: none;
+}
+
+.bx-im-messenger-folder-panel__settings {
+	--ui-icon-set__icon-size: 20px;
+	--ui-icon-set__icon-color: var(--ui-color-base-4);
+
+	cursor: pointer;
+}
+
+.bx-im-messenger-folder-panel__separator {
+	display: flex;
+	width: 32px;
+	margin: 4px auto;
+	height: 1px;
+	background-color: var(--ui-color-divider-default);
+}

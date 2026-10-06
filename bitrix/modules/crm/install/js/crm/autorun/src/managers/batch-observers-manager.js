@@ -3,12 +3,15 @@ import { Loc } from 'main.core';
 
 export class BatchObserversManager extends BatchManager
 {
-	static messages = {
-		title: Loc.getMessage('CRM_AUTORUN_BATCH_OBSERVERS_TITLE'),
-		summaryCaption: Loc.getMessage('CRM_AUTORUN_BATCH_OBSERVERS_SUMMARY_CAPTION'),
-		summarySucceeded: Loc.getMessage('CRM_AUTORUN_BATCH_OBSERVERS_SUMMARY_SUCCEEDED'),
-		summaryFailed: Loc.getMessage('CRM_AUTORUN_BATCH_OBSERVERS_SUMMARY_FAILED'),
-	};
+	static get messages()
+	{
+		return {
+			title: Loc.getMessage('CRM_AUTORUN_BATCH_OBSERVERS_TITLE'),
+			summaryCaption: Loc.getMessage('CRM_AUTORUN_BATCH_OBSERVERS_SUMMARY_CAPTION'),
+			summarySucceeded: Loc.getMessage('CRM_AUTORUN_BATCH_OBSERVERS_SUMMARY_SUCCEEDED'),
+			summaryFailed: Loc.getMessage('CRM_AUTORUN_BATCH_OBSERVERS_SUMMARY_FAILED'),
+		};
+	}
 
 	static items: Object = {};
 	#observerIdList: Array<string> = [];

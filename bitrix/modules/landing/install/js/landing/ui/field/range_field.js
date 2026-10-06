@@ -42,6 +42,23 @@
 		this.layout.classList.add("landing-ui-field-range");
 		this.stepPercent = 100 /this.values.length;
 
+		// Stable hooks for e2e tests. The sliders exist by now: the one of a single field is created
+		// in the constructor, the second one of a multiple field is created in init().
+		this.testId = typeof data.testId === "string" && data.testId ? data.testId : null;
+		if (this.testId)
+		{
+			this.layout.setAttribute("data-testid", this.testId);
+			this.sliderTo.setAttribute(
+				"data-testid",
+				this.testId + (this.isMultiple ? "-slider-to" : "-slider")
+			);
+
+			if (this.sliderFrom)
+			{
+				this.sliderFrom.setAttribute("data-testid", this.testId + "-slider-from");
+			}
+		}
+
 		if ((this.content === null || this.content === undefined || this.content === ""))
 		{
 			if (this.isMultiple)
@@ -116,6 +133,8 @@
 			this.sliderTo.onbxdragstop = this.onDragEnd.bind(this);
 			this.jsDD.registerObject(this.sliderTo);
 
+			this.setupSliderAccessibility();
+
 			if (this.isMultiple)
 			{
 				requestAnimationFrame(function () {
@@ -130,6 +149,171 @@
 			}
 		},
 
+		setupSliderAccessibility: function()
+		{
+			var maxIndex = String(this.values.length - 1);
+
+			if (this.isMultiple)
+			{
+				this.applySliderAria(this.sliderFrom, maxIndex, {ariaLabel: this.getSliderAccessibleName("from")});
+				this.applySliderAria(this.sliderTo, maxIndex, {ariaLabel: this.getSliderAccessibleName("to")});
+			}
+			else if (typeof this.title === "string" && this.title !== "")
+			{
+				this.applySliderAria(this.sliderTo, maxIndex, {labelledById: this.headerId});
+			}
+			else
+			{
+				this.applySliderAria(this.sliderTo, maxIndex, {ariaLabel: this.getSliderAccessibleName(null)});
+			}
+		},
+
+		applySliderAria: function(slider, maxIndex, name)
+		{
+			if (!slider)
+			{
+				return;
+			}
+
+			BX.Dom.attr(slider, "tabindex", "0");
+			BX.Dom.attr(slider, "role", "slider");
+			BX.Dom.attr(slider, "aria-orientation", "horizontal");
+			BX.Dom.attr(slider, "aria-valuemin", "0");
+			BX.Dom.attr(slider, "aria-valuemax", maxIndex);
+
+			if (name && name.labelledById)
+			{
+				BX.Dom.attr(slider, "aria-labelledby", name.labelledById);
+			}
+			else if (name && name.ariaLabel)
+			{
+				BX.Dom.attr(slider, "aria-label", name.ariaLabel);
+			}
+
+			BX.Event.bind(slider, "keydown", this.onSliderKeydown.bind(this));
+		},
+
+		getSliderAccessibleName: function(bound)
+		{
+			var title = typeof this.title === "string" ? this.title : "";
+			title = title !== ""
+				? title
+				: BX.Landing.Loc.getMessage("LANDING_UI_FIELD_RANGE_SLIDER_LABEL");
+
+			if (bound === "from")
+			{
+				return title + " " + BX.Landing.Loc.getMessage("LANDING_UI_FIELD_RANGE_SLIDER_MIN");
+			}
+
+			if (bound === "to")
+			{
+				return title + " " + BX.Landing.Loc.getMessage("LANDING_UI_FIELD_RANGE_SLIDER_MAX");
+			}
+
+			return title;
+		},
+
+		getValueIndex: function(value)
+		{
+			var index = -1;
+
+			this.values.forEach(function(item, i) {
+				// noinspection EqualityComparisonWithCoercionJS
+				if (item.value == value)
+				{
+					index = i;
+				}
+			}, this);
+
+			return index;
+		},
+
+		updateSliderAria: function(slider, item)
+		{
+			if (!slider || !item)
+			{
+				return;
+			}
+
+			BX.Dom.attr(slider, "aria-valuenow", String(this.getValueIndex(item.value)));
+			BX.Dom.attr(slider, "aria-valuetext", String(item.name));
+		},
+
+		onSliderKeydown: function(event)
+		{
+			var key = event.key;
+			var isNext = key === "ArrowRight" || key === "ArrowUp";
+			var isPrev = key === "ArrowLeft" || key === "ArrowDown";
+			var isHome = key === "Home";
+			var isEnd = key === "End";
+
+			if (!isNext && !isPrev && !isHome && !isEnd)
+			{
+				return;
+			}
+
+			event.preventDefault();
+
+			if (this.isMultiple)
+			{
+				this.onMultipleSliderKeydown(event, isNext, isPrev, isHome, isEnd);
+			}
+			else if (isNext)
+			{
+				this.onArrowUpClick();
+			}
+			else if (isPrev)
+			{
+				this.onArrowDownClick();
+			}
+			else if (isHome)
+			{
+				this.setValue(this.values[0].value);
+			}
+			else if (isEnd)
+			{
+				this.setValue(this.values[this.values.length - 1].value);
+			}
+		},
+
+		onMultipleSliderKeydown: function(event, isNext, isPrev, isHome, isEnd)
+		{
+			var lastIndex = this.values.length - 1;
+			var fromIndex = this.getValueIndex(this.valueFrom);
+			var toIndex = this.getValueIndex(this.valueTo);
+
+			fromIndex = fromIndex < 0 ? 0 : fromIndex;
+			toIndex = toIndex < 0 ? lastIndex : toIndex;
+
+			if (event.currentTarget === this.sliderFrom)
+			{
+				var targetFrom = fromIndex;
+
+				if (isNext) { targetFrom = fromIndex + 1; }
+				else if (isPrev) { targetFrom = fromIndex - 1; }
+				else if (isHome) { targetFrom = 0; }
+				else if (isEnd) { targetFrom = toIndex; }
+
+				fromIndex = Math.max(0, Math.min(targetFrom, toIndex));
+			}
+			else
+			{
+				var targetTo = toIndex;
+
+				if (isNext) { targetTo = toIndex + 1; }
+				else if (isPrev) { targetTo = toIndex - 1; }
+				else if (isHome) { targetTo = fromIndex; }
+				else if (isEnd) { targetTo = lastIndex; }
+
+				toIndex = Math.min(lastIndex, Math.max(targetTo, fromIndex));
+			}
+
+			this.setValue({
+				from: this.values[fromIndex].value,
+				to: this.values[toIndex].value
+			});
+		},
+
 		createOutput: function()
 		{
 			this.outputInput = BX.create("div", {props: {className: "landing-ui-field-range-output-input"}, text: "0"});
@@ -140,14 +324,16 @@
 					BX.create("div", {
 						props: {className: "landing-ui-field-range-output-arrows"},
 						children: [
-							BX.create("div", {
-								props: {className: "landing-ui-field-range-output-arrows-up"},
+							BX.create("button", {
+								props: {className: "landing-ui-field-range-output-arrows-up", type: "button"},
+								attrs: {"aria-label": BX.Landing.Loc.getMessage("LANDING_UI_FIELD_RANGE_STEP_UP")},
 								events: {
 									click: this.onArrowUpClick.bind(this)
 								}
 							}),
-							BX.create("div", {
-								props: {className: "landing-ui-field-range-output-arrows-down"},
+							BX.create("button", {
+								props: {className: "landing-ui-field-range-output-arrows-down", type: "button"},
+								attrs: {"aria-label": BX.Landing.Loc.getMessage("LANDING_UI_FIELD_RANGE_STEP_DOWN")},
 								events: {
 									click: this.onArrowDownClick.bind(this)
 								}
@@ -193,7 +379,12 @@
 
 		onFrameLoad: function ()
 		{
-			this.elements = [].slice.call(this.frame.document.querySelectorAll(this.selector));
+			// this.selector is a persistence key and may not resolve the live content in the editor,
+			// so the owner of the field can pass an explicit selector for the live nodes. The field
+			// reads the value from the first node only, so it needs no resolveSingleNode: the rest
+			// of the nodes of a multiple selector never affect the value.
+			const elementsSelector = this.data.elementsSelector ? this.data.elementsSelector : this.selector;
+			this.elements = [].slice.call(this.frame.document.querySelectorAll(elementsSelector));
 
 			if (this.elements.length)
 			{
@@ -348,6 +539,7 @@
 					}.bind(this));
 					this.valueFrom = from.value;
 					this.fromPercent = from.valuePercent;
+					this.updateSliderAria(this.sliderFrom, from);
 				}
 
 				if (to)
@@ -358,6 +550,7 @@
 					}.bind(this));
 					this.valueTo = to.value;
 					this.toPercent = to.valuePercent;
+					this.updateSliderAria(this.sliderTo, to);
 				}
 
 				this.updateValuePosition(from.valuePercent, to.valuePercent);
@@ -379,6 +572,7 @@
 					}.bind(this));
 
 					this.value = value;
+					this.updateSliderAria(this.sliderTo, result);
 					this.updateValuePosition(result.valuePercent);
 				}
 			}
@@ -417,7 +611,7 @@
 			result = result.length ? result[0] : null;
 
 			this.outputInput.innerText = !!result ? result.name : 0;
-			BX.Dom.attr(this.outputInput, 'title', BX.Text.encode(this.outputInput.innerText));
+			BX.Dom.attr(this.outputInput, 'title', this.outputInput.innerText);
 		},
 
 

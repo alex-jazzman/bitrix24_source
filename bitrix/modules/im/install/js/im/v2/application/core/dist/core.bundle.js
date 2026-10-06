@@ -149,6 +149,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			this.#pullClient.subscribe(new im_v2_provider_pull.OnlinePullHandler());
 			this.#pullClient.subscribe(new im_v2_provider_pull.CounterPullHandler());
 			this.#pullClient.subscribe(new im_v2_provider_pull.RecentUnreadPullHandler());
+			this.#pullClient.subscribe(new im_v2_provider_pull.FolderPullHandler());
 			this.#pullClient.subscribe(new im_v2_provider_pull.AnchorPullHandler());
 			this.#pullClient.subscribe(new im_v2_provider_pull.SidebarPullHandler());
 			this.#pullClient.subscribe(new im_v2_provider_pull.StickersPullHandler());
@@ -175,6 +176,5 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 
 	exports.Core = Core;
 	exports.CoreApplication = CoreApplication;
-
-})(this.BX.Messenger.v2.Application = this.BX.Messenger.v2.Application || {}, BX??{}, BX?.Vue3??{}, BX?.Vue3?.Vuex??{}, BX??{}, BX??{}, BX?.Messenger?.v2?.Application??{}, BX?.Messenger?.v2?.Model??{}, BX?.Messenger?.v2?.Provider?.Pull??{}, BX?.OpenLines?.v2?.Lib??{});
+})(this.BX.Messenger.v2.Application = this.BX.Messenger.v2.Application || {}, BX??{}, BX?.Vue3??{}, BX?.Vue3?.Vuex??{}, BX??{}, BX??{}, BX?.Messenger?.v2?.Application??{}, BX?.Messenger?.v2?.Model??{}, BX?.Messenger?.v2?.Provider?.Pull??{}, BX?.OpenLines?.v2?.Lib??{});;
 //# sourceMappingURL=core.bundle.js.map

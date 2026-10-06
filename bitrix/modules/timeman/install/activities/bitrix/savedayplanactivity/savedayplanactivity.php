@@ -92,6 +92,18 @@ class CBPSaveDayPlanActivity extends BaseActivity
 		return (int)$userId;
 	}
 
+	private static function isAiReportAvailable(): bool
+	{
+		$serviceLocator = \Bitrix\Main\DI\ServiceLocator::getInstance();
+		$interface = \Bitrix\Bizproc\Public\Service\AiAgent\NodeAvailabilityServiceInterface::class;
+		if (!$serviceLocator->has($interface))
+		{
+			return true;
+		}
+
+		return $serviceLocator->get($interface)->isAvailable();
+	}
+
 	public static function getPropertiesDialogMap(?PropertiesDialog $dialog = null): array
 	{
 		return [
@@ -111,10 +123,15 @@ class CBPSaveDayPlanActivity extends BaseActivity
 				'Name' => Loc::getMessage('TIMEMAN_SAVE_DAY_PLAN_ACTIVITY_PLAN_TYPE_PROPERTY') ?? '',
 				'FieldName' => 'plan_type',
 				'Type' => FieldType::SELECT,
-				'Options' => [
-					RecordReportType::AI_DAY_PLAN => Loc::getMessage('TIMEMAN_SAVE_DAY_PLAN_ACTIVITY_PLAN_TYPE_AI'),
-					RecordReportType::ROBOT_DAY_PLAN => Loc::getMessage('TIMEMAN_SAVE_DAY_PLAN_ACTIVITY_PLAN_TYPE_ROBOT'),
-				],
+				'Options' => array_filter(
+					[
+						RecordReportType::AI_DAY_PLAN => self::isAiReportAvailable()
+							? Loc::getMessage('TIMEMAN_SAVE_DAY_PLAN_ACTIVITY_PLAN_TYPE_AI')
+							: null,
+						RecordReportType::ROBOT_DAY_PLAN => Loc::getMessage('TIMEMAN_SAVE_DAY_PLAN_ACTIVITY_PLAN_TYPE_ROBOT'),
+					],
+					static fn($label) => $label !== null,
+				),
 				'Default' => RecordReportType::ROBOT_DAY_PLAN,
 			],
 		];

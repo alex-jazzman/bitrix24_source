@@ -1,4 +1,5 @@
 <?php
+$MESS["BI_DASHBOARD_NAME_LOCKED"] = "Unavailable";
 $MESS["BI_GROUP_SUBTITLE_PLURAL_0"] = "#COUNT# dashboard";
 $MESS["BI_GROUP_SUBTITLE_PLURAL_1"] = "#COUNT# dashboards";
 $MESS["BI_GROUP_SUBTITLE_PLURAL_2"] = "#COUNT# dashboards";

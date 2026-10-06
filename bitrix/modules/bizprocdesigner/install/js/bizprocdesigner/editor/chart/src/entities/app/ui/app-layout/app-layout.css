@@ -60,6 +60,24 @@
 	transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), bottom 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+.editor-chart-app-layout__diagram-controls {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-2xs);
+	padding: var(--ui-space-inset-3xs) var(--ui-space-inset-xs);
+	border-radius: var(--ui-border-radius-sm);
+	background: var(--ui-color-bg-content-primary);
+	box-shadow: 0 1px 2px 0 rgba(var(--ui-color-palette-black-solid-rgb), 0.13);
+	box-sizing: border-box;
+}
+
+.editor-chart-app-layout__diagram-controls-separator {
+	flex: 0 0 1px;
+	width: 1px;
+	height: 28px;
+	background: var(--ui-color-divider-default);
+}
+
 .editor-chart-app-layout__bottom-right-toolbar div.ui-block-diagram-canvas-zoom-bar__map-close-icon {
 	background-color: var(--ui-color-base-5);
 }
@@ -202,7 +220,7 @@
 .editor-chart-app-layout__settings-data-inspector {
 	position: absolute;
 	z-index: 14;
-	right: 580px;
+	right: 588px;
 	top: 52px;
 	bottom: 52px;
 	width: 596px;
@@ -238,6 +256,19 @@
 	width: 100%;
 	height: 100%;
 	z-index: 13;
+}
+
+/*
+ * The scrim above makes the diagram and the catalog inert while the inspector is open, but the
+ * editor toolbars are not part of the diagram and must keep taking clicks: undo/redo and search
+ * in the top one, auto layout, zoom and the minimap in the bottom one. Undo/redo edit the model
+ * rather than the view, and keeping them clickable here is deliberate: an open inspector must
+ * not block rolling a change back. Same z-index as the inspector panel: it comes later in the
+ * markup, so it still paints over an expanded minimap the way it did before.
+ */
+.editor-chart-app-layout__top-right-toolbar.--above-inspector-overlay,
+.editor-chart-app-layout__bottom-right-toolbar.--above-inspector-overlay {
+	z-index: 14;
 }
 
 .fade-inspector-panel-enter-active {

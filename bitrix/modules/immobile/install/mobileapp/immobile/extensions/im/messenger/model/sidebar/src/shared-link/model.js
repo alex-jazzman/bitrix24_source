@@ -14,6 +14,7 @@ jn.define('im/messenger/model/sidebar/src/shared-link/model', (require, exports,
 
 	const EntityType = {
 		chat: 'chat',
+		guestChat: 'guest_chat',
 	};
 
 	/** @type {SidebarSharedLinkModel} */
@@ -33,6 +34,18 @@ jn.define('im/messenger/model/sidebar/src/shared-link/model', (require, exports,
 
 				return Object.values(state.collection).find((link) => {
 					return link.entityId === entityId && link.entityType === EntityType.chat;
+				});
+			},
+			/**
+			 * @function sidebarModel/sidebarSharedLinkModel/getChatGuestInviteLink
+			 * @param state
+			 * @return {Object|undefined}
+			 */
+			getChatGuestInviteLink: (state) => (chatId) => {
+				const entityId = String(chatId);
+
+				return Object.values(state.collection).find((link) => {
+					return link.entityId === entityId && link.entityType === EntityType.guestChat;
 				});
 			},
 		},
@@ -101,9 +114,11 @@ jn.define('im/messenger/model/sidebar/src/shared-link/model', (require, exports,
 					return;
 				}
 
-				const currentLink = store.getters.getChatInviteLink(chatId);
-
 				const validatedLink = { ...sharedLinkItem, ...normalize(newLink) };
+				const getterByEntityType = validatedLink.entityType === EntityType.guestChat
+					? 'getChatGuestInviteLink'
+					: 'getChatInviteLink';
+				const currentLink = store.getters[getterByEntityType](chatId);
 
 				if (validatedLink.id)
 				{

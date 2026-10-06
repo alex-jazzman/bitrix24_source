@@ -1,10 +1,8 @@
 import { Chip, ChipDesign, ChipSize } from 'ui.system.chip.vue';
 
 import { MessengerPopup } from 'im.v2.component.elements.popup';
-import { PopupType, PromoId, LocalStorageKey } from 'im.v2.const';
+import { PopupType, LocalStorageKey } from 'im.v2.const';
 import { LocalStorageManager } from 'im.v2.lib.local-storage';
-import { PulseAnimation } from 'im.v2.component.elements.pulse-animation';
-import { PromoManager } from 'im.v2.lib.promo';
 import { Analytics } from 'im.v2.lib.analytics';
 
 import { TabEmoji } from './tab-emoji/tab-emoji';
@@ -22,7 +20,7 @@ const TabType = {
 // @vue/component
 export const EmotePopup = {
 	name: 'EmotePopup',
-	components: { MessengerPopup, TabEmoji, TabStickers, Chip, PulseAnimation },
+	components: { MessengerPopup, TabEmoji, TabStickers, Chip },
 	props: {
 		bindElement: {
 			type: Object,
@@ -38,7 +36,6 @@ export const EmotePopup = {
 	{
 		return {
 			currentTab: this.getInitialTab(),
-			wasStickerTabOpened: false,
 		};
 	},
 	computed: {
@@ -61,21 +58,6 @@ export const EmotePopup = {
 				background: 'transparent',
 			};
 		},
-		needToShowPromo(): boolean
-		{
-			return PromoManager.getInstance().needToShow(PromoId.stickersAvailable);
-		},
-		needToShowPulse(): boolean
-		{
-			return this.needToShowPromo && !this.wasStickerTabOpened;
-		},
-	},
-	created()
-	{
-		if (this.needToShowPromo)
-		{
-			void PromoManager.getInstance().markAsWatched(PromoId.stickersAvailable);
-		}
 	},
 	methods: {
 		getInitialTab(): string
@@ -93,7 +75,6 @@ export const EmotePopup = {
 
 			if (type === TabType.stickers)
 			{
-				this.wasStickerTabOpened = true;
 				Analytics.getInstance().stickers.onOpenStickerTab(this.dialogId);
 			}
 		},
@@ -126,19 +107,13 @@ export const EmotePopup = {
 						:rounded="true"
 						@click="selectTab(TabType.emoji)"
 					/>
-					<PulseAnimation
-						:showPulse="needToShowPulse"
-						:innerSize="65"
-						:outerSize="113"
-					>
-						<Chip
-							:size="ChipSize.Sm"
-							:design="getChipDesign(TabType.stickers)"
-							:text="loc('IM_TEXTAREA_STICKER_SELECTOR_STICKER_TAB')"
-							:rounded="true"
-							@click="selectTab(TabType.stickers)"
-						/>
-					</PulseAnimation>
+					<Chip
+						:size="ChipSize.Sm"
+						:design="getChipDesign(TabType.stickers)"
+						:text="loc('IM_TEXTAREA_STICKER_SELECTOR_STICKER_TAB')"
+						:rounded="true"
+						@click="selectTab(TabType.stickers)"
+					/>
 				</div>
 			</div>
 		</MessengerPopup>

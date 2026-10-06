@@ -14,6 +14,8 @@ jn.define('im/messenger/controller/selector/dialog/opener', (require, exports, m
 	 * @param {boolean} [options.integrateSelectorToParentLayout=false]
 	 * @param {Function} [options.onItemSelected]
 	 * @param {Function} [options.onClose]
+	 * @param {Function} [options.onWidgetClosed] called after the widget close animation finishes
+	 * @param {Function} [options.onWidgetReady] called once with the created EntitySelectorWidget instance
 	 * @param {boolean} [options.closeOnSelect=true]
 	 * @param {PageManager} [parentWidget]
 	 */
@@ -26,6 +28,8 @@ jn.define('im/messenger/controller/selector/dialog/opener', (require, exports, m
 		sendButtonName,
 		onItemSelected,
 		onClose,
+		onWidgetClosed,
+		onWidgetReady,
 		initSelectedIds,
 	}, parentWidget)
 	{
@@ -45,6 +49,7 @@ jn.define('im/messenger/controller/selector/dialog/opener', (require, exports, m
 			events: {
 				onItemSelected,
 				onClose,
+				onWidgetClosed,
 			},
 			provider: {
 				class: DialogSelectorProvider,
@@ -59,6 +64,11 @@ jn.define('im/messenger/controller/selector/dialog/opener', (require, exports, m
 			closeOnSelect,
 			integrateSelectorToParentLayout,
 		});
+
+		if (typeof onWidgetReady === 'function')
+		{
+			onWidgetReady(entitySelectorWidget);
+		}
 
 		return entitySelectorWidget.show({}, parentWidget);
 	}

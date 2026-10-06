@@ -3,176 +3,592 @@ this.BX = this.BX || {};
 this.BX.Sign = this.BX.Sign || {};
 this.BX.Sign.V2 = this.BX.Sign.V2 || {};
 this.BX.Sign.V2.Grid = this.BX.Sign.V2.Grid || {};
-(function (exports,main_core,pull_client) {
+(function (exports, main_core, main_core_events, pull_client, sign_v2_grid_components_actionPanel) {
 	'use strict';
 
-	function _regeneratorRuntime() { /*! regenerator-runtime -- Copyright (c) 2014-present, Facebook, Inc. -- license (MIT): https://github.com/facebook/regenerator/blob/main/LICENSE */ _regeneratorRuntime = function _regeneratorRuntime() { return exports; }; var exports = {}, Op = Object.prototype, hasOwn = Op.hasOwnProperty, defineProperty = Object.defineProperty || function (obj, key, desc) { obj[key] = desc.value; }, $Symbol = "function" == typeof Symbol ? Symbol : {}, iteratorSymbol = $Symbol.iterator || "@@iterator", asyncIteratorSymbol = $Symbol.asyncIterator || "@@asyncIterator", toStringTagSymbol = $Symbol.toStringTag || "@@toStringTag"; function define(obj, key, value) { return Object.defineProperty(obj, key, { value: value, enumerable: !0, configurable: !0, writable: !0 }), obj[key]; } try { define({}, ""); } catch (err) { define = function define(obj, key, value) { return obj[key] = value; }; } function wrap(innerFn, outerFn, self, tryLocsList) { var protoGenerator = outerFn && outerFn.prototype instanceof Generator ? outerFn : Generator, generator = Object.create(protoGenerator.prototype), context = new Context(tryLocsList || []); return defineProperty(generator, "_invoke", { value: makeInvokeMethod(innerFn, self, context) }), generator; } function tryCatch(fn, obj, arg) { try { return { type: "normal", arg: fn.call(obj, arg) }; } catch (err) { return { type: "throw", arg: err }; } } exports.wrap = wrap; var ContinueSentinel = {}; function Generator() {} function GeneratorFunction() {} function GeneratorFunctionPrototype() {} var IteratorPrototype = {}; define(IteratorPrototype, iteratorSymbol, function () { return this; }); var getProto = Object.getPrototypeOf, NativeIteratorPrototype = getProto && getProto(getProto(values([]))); NativeIteratorPrototype && NativeIteratorPrototype !== Op && hasOwn.call(NativeIteratorPrototype, iteratorSymbol) && (IteratorPrototype = NativeIteratorPrototype); var Gp = GeneratorFunctionPrototype.prototype = Generator.prototype = Object.create(IteratorPrototype); function defineIteratorMethods(prototype) { ["next", "throw", "return"].forEach(function (method) { define(prototype, method, function (arg) { return this._invoke(method, arg); }); }); } function AsyncIterator(generator, PromiseImpl) { function invoke(method, arg, resolve, reject) { var record = tryCatch(generator[method], generator, arg); if ("throw" !== record.type) { var result = record.arg, value = result.value; return value && "object" == babelHelpers["typeof"](value) && hasOwn.call(value, "__await") ? PromiseImpl.resolve(value.__await).then(function (value) { invoke("next", value, resolve, reject); }, function (err) { invoke("throw", err, resolve, reject); }) : PromiseImpl.resolve(value).then(function (unwrapped) { result.value = unwrapped, resolve(result); }, function (error) { return invoke("throw", error, resolve, reject); }); } reject(record.arg); } var previousPromise; defineProperty(this, "_invoke", { value: function value(method, arg) { function callInvokeWithMethodAndArg() { return new PromiseImpl(function (resolve, reject) { invoke(method, arg, resolve, reject); }); } return previousPromise = previousPromise ? previousPromise.then(callInvokeWithMethodAndArg, callInvokeWithMethodAndArg) : callInvokeWithMethodAndArg(); } }); } function makeInvokeMethod(innerFn, self, context) { var state = "suspendedStart"; return function (method, arg) { if ("executing" === state) throw new Error("Generator is already running"); if ("completed" === state) { if ("throw" === method) throw arg; return doneResult(); } for (context.method = method, context.arg = arg;;) { var delegate = context.delegate; if (delegate) { var delegateResult = maybeInvokeDelegate(delegate, context); if (delegateResult) { if (delegateResult === ContinueSentinel) continue; return delegateResult; } } if ("next" === context.method) context.sent = context._sent = context.arg;else if ("throw" === context.method) { if ("suspendedStart" === state) throw state = "completed", context.arg; context.dispatchException(context.arg); } else "return" === context.method && context.abrupt("return", context.arg); state = "executing"; var record = tryCatch(innerFn, self, context); if ("normal" === record.type) { if (state = context.done ? "completed" : "suspendedYield", record.arg === ContinueSentinel) continue; return { value: record.arg, done: context.done }; } "throw" === record.type && (state = "completed", context.method = "throw", context.arg = record.arg); } }; } function maybeInvokeDelegate(delegate, context) { var methodName = context.method, method = delegate.iterator[methodName]; if (undefined === method) return context.delegate = null, "throw" === methodName && delegate.iterator["return"] && (context.method = "return", context.arg = undefined, maybeInvokeDelegate(delegate, context), "throw" === context.method) || "return" !== methodName && (context.method = "throw", context.arg = new TypeError("The iterator does not provide a '" + methodName + "' method")), ContinueSentinel; var record = tryCatch(method, delegate.iterator, context.arg); if ("throw" === record.type) return context.method = "throw", context.arg = record.arg, context.delegate = null, ContinueSentinel; var info = record.arg; return info ? info.done ? (context[delegate.resultName] = info.value, context.next = delegate.nextLoc, "return" !== context.method && (context.method = "next", context.arg = undefined), context.delegate = null, ContinueSentinel) : info : (context.method = "throw", context.arg = new TypeError("iterator result is not an object"), context.delegate = null, ContinueSentinel); } function pushTryEntry(locs) { var entry = { tryLoc: locs[0] }; 1 in locs && (entry.catchLoc = locs[1]), 2 in locs && (entry.finallyLoc = locs[2], entry.afterLoc = locs[3]), this.tryEntries.push(entry); } function resetTryEntry(entry) { var record = entry.completion || {}; record.type = "normal", delete record.arg, entry.completion = record; } function Context(tryLocsList) { this.tryEntries = [{ tryLoc: "root" }], tryLocsList.forEach(pushTryEntry, this), this.reset(!0); } function values(iterable) { if (iterable) { var iteratorMethod = iterable[iteratorSymbol]; if (iteratorMethod) return iteratorMethod.call(iterable); if ("function" == typeof iterable.next) return iterable; if (!isNaN(iterable.length)) { var i = -1, next = function next() { for (; ++i < iterable.length;) if (hasOwn.call(iterable, i)) return next.value = iterable[i], next.done = !1, next; return next.value = undefined, next.done = !0, next; }; return next.next = next; } } return { next: doneResult }; } function doneResult() { return { value: undefined, done: !0 }; } return GeneratorFunction.prototype = GeneratorFunctionPrototype, defineProperty(Gp, "constructor", { value: GeneratorFunctionPrototype, configurable: !0 }), defineProperty(GeneratorFunctionPrototype, "constructor", { value: GeneratorFunction, configurable: !0 }), GeneratorFunction.displayName = define(GeneratorFunctionPrototype, toStringTagSymbol, "GeneratorFunction"), exports.isGeneratorFunction = function (genFun) { var ctor = "function" == typeof genFun && genFun.constructor; return !!ctor && (ctor === GeneratorFunction || "GeneratorFunction" === (ctor.displayName || ctor.name)); }, exports.mark = function (genFun) { return Object.setPrototypeOf ? Object.setPrototypeOf(genFun, GeneratorFunctionPrototype) : (genFun.__proto__ = GeneratorFunctionPrototype, define(genFun, toStringTagSymbol, "GeneratorFunction")), genFun.prototype = Object.create(Gp), genFun; }, exports.awrap = function (arg) { return { __await: arg }; }, defineIteratorMethods(AsyncIterator.prototype), define(AsyncIterator.prototype, asyncIteratorSymbol, function () { return this; }), exports.AsyncIterator = AsyncIterator, exports.async = function (innerFn, outerFn, self, tryLocsList, PromiseImpl) { void 0 === PromiseImpl && (PromiseImpl = Promise); var iter = new AsyncIterator(wrap(innerFn, outerFn, self, tryLocsList), PromiseImpl); return exports.isGeneratorFunction(outerFn) ? iter : iter.next().then(function (result) { return result.done ? result.value : iter.next(); }); }, defineIteratorMethods(Gp), define(Gp, toStringTagSymbol, "Generator"), define(Gp, iteratorSymbol, function () { return this; }), define(Gp, "toString", function () { return "[object Generator]"; }), exports.keys = function (val) { var object = Object(val), keys = []; for (var key in object) keys.push(key); return keys.reverse(), function next() { for (; keys.length;) { var key = keys.pop(); if (key in object) return next.value = key, next.done = !1, next; } return next.done = !0, next; }; }, exports.values = values, Context.prototype = { constructor: Context, reset: function reset(skipTempReset) { if (this.prev = 0, this.next = 0, this.sent = this._sent = undefined, this.done = !1, this.delegate = null, this.method = "next", this.arg = undefined, this.tryEntries.forEach(resetTryEntry), !skipTempReset) for (var name in this) "t" === name.charAt(0) && hasOwn.call(this, name) && !isNaN(+name.slice(1)) && (this[name] = undefined); }, stop: function stop() { this.done = !0; var rootRecord = this.tryEntries[0].completion; if ("throw" === rootRecord.type) throw rootRecord.arg; return this.rval; }, dispatchException: function dispatchException(exception) { if (this.done) throw exception; var context = this; function handle(loc, caught) { return record.type = "throw", record.arg = exception, context.next = loc, caught && (context.method = "next", context.arg = undefined), !!caught; } for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i], record = entry.completion; if ("root" === entry.tryLoc) return handle("end"); if (entry.tryLoc <= this.prev) { var hasCatch = hasOwn.call(entry, "catchLoc"), hasFinally = hasOwn.call(entry, "finallyLoc"); if (hasCatch && hasFinally) { if (this.prev < entry.catchLoc) return handle(entry.catchLoc, !0); if (this.prev < entry.finallyLoc) return handle(entry.finallyLoc); } else if (hasCatch) { if (this.prev < entry.catchLoc) return handle(entry.catchLoc, !0); } else { if (!hasFinally) throw new Error("try statement without catch or finally"); if (this.prev < entry.finallyLoc) return handle(entry.finallyLoc); } } } }, abrupt: function abrupt(type, arg) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.tryLoc <= this.prev && hasOwn.call(entry, "finallyLoc") && this.prev < entry.finallyLoc) { var finallyEntry = entry; break; } } finallyEntry && ("break" === type || "continue" === type) && finallyEntry.tryLoc <= arg && arg <= finallyEntry.finallyLoc && (finallyEntry = null); var record = finallyEntry ? finallyEntry.completion : {}; return record.type = type, record.arg = arg, finallyEntry ? (this.method = "next", this.next = finallyEntry.finallyLoc, ContinueSentinel) : this.complete(record); }, complete: function complete(record, afterLoc) { if ("throw" === record.type) throw record.arg; return "break" === record.type || "continue" === record.type ? this.next = record.arg : "return" === record.type ? (this.rval = this.arg = record.arg, this.method = "return", this.next = "end") : "normal" === record.type && afterLoc && (this.next = afterLoc), ContinueSentinel; }, finish: function finish(finallyLoc) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.finallyLoc === finallyLoc) return this.complete(entry.completion, entry.afterLoc), resetTryEntry(entry), ContinueSentinel; } }, "catch": function _catch(tryLoc) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.tryLoc === tryLoc) { var record = entry.completion; if ("throw" === record.type) { var thrown = record.arg; resetTryEntry(entry); } return thrown; } } throw new Error("illegal catch attempt"); }, delegateYield: function delegateYield(iterable, resultName, nextLoc) { return this.delegate = { iterator: values(iterable), resultName: resultName, nextLoc: nextLoc }, "next" === this.method && (this.arg = undefined), ContinueSentinel; } }, exports; }
-	function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration(obj, privateSet); privateSet.add(obj); }
-	function _classPrivateFieldInitSpec(obj, privateMap, value) { _checkPrivateRedeclaration(obj, privateMap); privateMap.set(obj, value); }
-	function _checkPrivateRedeclaration(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
-	function _classPrivateMethodGet(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
-	var _options = /*#__PURE__*/new WeakMap();
-	var _reload = /*#__PURE__*/new WeakSet();
-	var MyDocuments = /*#__PURE__*/function () {
-	  function MyDocuments(options) {
-	    babelHelpers.classCallCheck(this, MyDocuments);
-	    _classPrivateMethodInitSpec(this, _reload);
-	    _classPrivateFieldInitSpec(this, _options, {
-	      writable: true,
-	      value: void 0
-	    });
-	    babelHelpers.classPrivateFieldSet(this, _options, options);
-	  }
-	  babelHelpers.createClass(MyDocuments, [{
-	    key: "openSignSliderByGridId",
-	    value: function openSignSliderByGridId(gridId) {
-	      var _this = this;
-	      main_core.Event.ready( /*#__PURE__*/babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee3() {
-	        var gridContainer;
-	        return _regeneratorRuntime().wrap(function _callee3$(_context3) {
-	          while (1) switch (_context3.prev = _context3.next) {
-	            case 0:
-	              gridContainer = document.querySelector(gridId);
-	              if (gridContainer) {
-	                _context3.next = 3;
-	                break;
-	              }
-	              return _context3.abrupt("return");
-	            case 3:
-	              main_core.Event.bind(gridContainer, 'click', /*#__PURE__*/function () {
-	                var _ref2 = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee2(event) {
-	                  var target, memberId;
-	                  return _regeneratorRuntime().wrap(function _callee2$(_context2) {
-	                    while (1) switch (_context2.prev = _context2.next) {
-	                      case 0:
-	                        target = event.target;
-	                        if (main_core.Dom.hasClass(target, 'ui-btn-text')) {
-	                          target = target.parentNode;
-	                        }
-	                        if (!(!main_core.Dom.hasClass(target, 'ui-btn') || !target.dataset.memberId)) {
-	                          _context2.next = 4;
-	                          break;
-	                        }
-	                        return _context2.abrupt("return");
-	                      case 4:
-	                        if (main_core.Dom.hasClass(target, 'sign-action-button')) {
-	                          main_core.Dom.addClass(target, 'ui-btn-wait');
-	                          memberId = Number(target.dataset.memberId);
-	                          main_core.Runtime.loadExtension('sign.v2.b2e.sign-link').then(function (exports) {
-	                            return new exports.SignLink({
-	                              memberId: memberId
-	                            }).openSlider({
-	                              target: target,
-	                              events: {
-	                                onClose: function () {
-	                                  var _onClose = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee() {
-	                                    return _regeneratorRuntime().wrap(function _callee$(_context) {
-	                                      while (1) switch (_context.prev = _context.next) {
-	                                        case 0:
-	                                          _context.next = 2;
-	                                          return BX.ajax.runAction('sign.api_v1.B2e.Document.Member.callStatus', {
-	                                            json: {
-	                                              memberId: memberId
-	                                            }
-	                                          });
-	                                        case 2:
-	                                          if (main_core.Type.isNil(pull_client.PULL)) {
-	                                            _classPrivateMethodGet(_this, _reload, _reload2).call(_this);
-	                                          }
-	                                        case 3:
-	                                        case "end":
-	                                          return _context.stop();
-	                                      }
-	                                    }, _callee);
-	                                  }));
-	                                  function onClose() {
-	                                    return _onClose.apply(this, arguments);
-	                                  }
-	                                  return onClose;
-	                                }()
-	                              }
-	                            });
-	                          })["catch"](function (error) {
-	                            console.error(error);
-	                          })["finally"](function () {
-	                            main_core.Dom.removeClass(target, 'ui-btn-wait');
-	                          });
-	                          event.preventDefault();
-	                        }
-	                      case 5:
-	                      case "end":
-	                        return _context2.stop();
-	                    }
-	                  }, _callee2);
-	                }));
-	                return function (_x) {
-	                  return _ref2.apply(this, arguments);
-	                };
-	              }());
-	            case 4:
-	            case "end":
-	              return _context3.stop();
-	          }
-	        }, _callee3);
-	      })));
-	    }
-	  }, {
-	    key: "subscribeOnPullEvents",
-	    value: function subscribeOnPullEvents() {
-	      var _this2 = this;
-	      main_core.Event.ready(function () {
-	        var _babelHelpers$classPr;
-	        if (main_core.Type.isNil(pull_client.PULL)) {
-	          return;
-	        }
-	        pull_client.PULL.subscribe({
-	          moduleId: 'sign',
-	          command: 'updateMyDocumentGrid',
-	          callback: function callback() {
-	            _classPrivateMethodGet(_this2, _reload, _reload2).call(_this2);
-	          }
-	        });
-	        pull_client.PULL.subscribe({
-	          moduleId: 'sign',
-	          command: (_babelHelpers$classPr = babelHelpers.classPrivateFieldGet(_this2, _options)) === null || _babelHelpers$classPr === void 0 ? void 0 : _babelHelpers$classPr.counterPullEventName,
-	          callback: function callback(params) {
-	            var _babelHelpers$classPr2;
-	            if (!main_core.Type.isNumber(params === null || params === void 0 ? void 0 : params.needActionCount)) {
-	              return;
-	            }
-	            if (!main_core.Type.isStringFilled((_babelHelpers$classPr2 = babelHelpers.classPrivateFieldGet(_this2, _options)) === null || _babelHelpers$classPr2 === void 0 ? void 0 : _babelHelpers$classPr2.needActionCounterId)) {
-	              return;
-	            }
-	            main_core.Event.EventEmitter.emit('BX.Sign.DocumentCounter.Item:updateCounter', {
-	              id: babelHelpers.classPrivateFieldGet(_this2, _options).needActionCounterId,
-	              count: params.needActionCount
-	            });
-	          }
-	        });
-	      });
-	    }
-	  }]);
-	  return MyDocuments;
-	}();
-	function _reload2() {
-	  main_core.Event.ready( /*#__PURE__*/babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee4() {
-	    var _BX$Main$gridManager$;
-	    var grid;
-	    return _regeneratorRuntime().wrap(function _callee4$(_context4) {
-	      while (1) switch (_context4.prev = _context4.next) {
-	        case 0:
-	          grid = (_BX$Main$gridManager$ = BX.Main.gridManager.getById('SIGN_B2E_MY_DOCUMENTS_GRID')) === null || _BX$Main$gridManager$ === void 0 ? void 0 : _BX$Main$gridManager$.instance;
-	          if (main_core.Type.isObject(grid)) {
-	            grid.reload();
-	          }
-	        case 2:
-	        case "end":
-	          return _context4.stop();
-	      }
-	    }, _callee4);
-	  })));
+	// Local copy of BulkActionType from sign.v2.api: the panel needs the two action values only,
+	// and importing the api extension would load its whole dependency chain on every page open.
+	// sign.v2.api stays the contract owner; tests/unit/bulk-action-type.test.js asserts both match.
+	const BulkActionType = Object.freeze({
+		approve: 'approve',
+		reject: 'reject'
+	});
+
+	const APPROVE_CONTROL_ID = 'sign-my-documents-bulk-action-approve';
+	const REJECT_CONTROL_ID = 'sign-my-documents-bulk-action-reject';
+	const GRID_SELECTION_EVENTS = ['Grid::thereSelectedRows', 'Grid::allRowsSelected', 'Grid::allRowsUnselected', 'Grid::noSelectedRows', 'Grid::selectRow', 'Grid::unselectRow'];
+	class BulkActionPanel {
+		#gridId;
+		#labels;
+		#onApply;
+		#actionPanel = new sign_v2_grid_components_actionPanel.ActionPanel();
+		#availableActions = [];
+		#disabled = false;
+		#subscribed = false;
+		#boundControls = new WeakSet();
+		#onGridUpdated = event => {
+			if (!this.#isOwnGridEvent(event)) {
+				return;
+			}
+			this.reset();
+			this.#prepareRowCheckboxes();
+		};
+		#onGridSelectionChanged = event => {
+			if (this.#isOwnGridEvent(event)) {
+				this.refresh();
+			}
+		};
+		#onWindowUnload = () => this.destroy();
+		#onUiActionPanelCreated = event => {
+			const [panel] = event?.getCompatData?.() ?? [];
+			if (!main_core.Type.isObject(panel) || panel.params?.gridId !== this.#gridId) {
+				return;
+			}
+			this.#adoptUiActionPanel(panel);
+		};
+		constructor({
+			gridId,
+			labels,
+			onApply
+		}) {
+			this.#gridId = gridId;
+			this.#labels = labels;
+			this.#onApply = onApply;
+		}
+		subscribe() {
+			// the shared panel announces itself from its constructor on document ready, so the listener
+			// is set right away and not from inside another ready callback
+			main_core_events.EventEmitter.subscribe('BX.UI.ActionPanel:created', this.#onUiActionPanelCreated);
+			main_core.Event.ready(() => {
+				if (this.#subscribed || !main_core.Type.isObject(this.#getGrid())) {
+					return;
+				}
+				this.#subscribed = true;
+				main_core_events.EventEmitter.subscribe('Grid::updated', this.#onGridUpdated);
+				GRID_SELECTION_EVENTS.forEach(eventName => {
+					main_core_events.EventEmitter.subscribe(eventName, this.#onGridSelectionChanged);
+				});
+				main_core.Event.bind(window, 'unload', this.#onWindowUnload);
+				this.#prepareRowCheckboxes();
+				this.refresh();
+			});
+		}
+
+		/**
+		 * With a single row selected the shared panel builds the actions of that row instead of the group
+		 * ones. The bulk actions of this grid are group actions and belong to a selection of any size, so
+		 * the handler is replaced on the instance - the same way the panel expects its click handler to be.
+		 *
+		 * Mirrors ui.actionpanel -> BX.UI.ActionPanel.prototype.handleGridSelectItem: keep both in step.
+		 */
+		#adoptUiActionPanel(panel) {
+			const targetPanel = panel;
+			targetPanel.handleGridSelectItem = () => {
+				// the panel keeps its grid from Grid::ready, which never arrives for a foreign grid id
+				const selectedIds = targetPanel.grid?.getRows?.()?.getSelectedIds?.();
+				if (targetPanel.showTotalSelectedBlock && main_core.Type.isArray(selectedIds)) {
+					targetPanel.setTotalSelectedItems(selectedIds.length);
+				}
+				targetPanel.buildPanelByGroup();
+			};
+		}
+		destroy() {
+			main_core_events.EventEmitter.unsubscribe('BX.UI.ActionPanel:created', this.#onUiActionPanelCreated);
+			if (!this.#subscribed) {
+				return;
+			}
+			main_core_events.EventEmitter.unsubscribe('Grid::updated', this.#onGridUpdated);
+			GRID_SELECTION_EVENTS.forEach(eventName => {
+				main_core_events.EventEmitter.unsubscribe(eventName, this.#onGridSelectionChanged);
+			});
+			main_core.Event.unbind(window, 'unload', this.#onWindowUnload);
+			this.#subscribed = false;
+		}
+		apply(actionType) {
+			const memberIds = this.getSelectedMemberIds();
+			if (this.#disabled || !Object.values(BulkActionType).includes(actionType) || !this.#availableActions.includes(actionType) || memberIds.length === 0) {
+				return;
+			}
+			this.#onApply?.({
+				actionType,
+				memberIds: [...memberIds],
+				trigger: document.getElementById(this.#getControlId(actionType))
+			});
+		}
+		refresh() {
+			this.#availableActions = this.#getAvailableActions(this.getSelectedMemberIds());
+			this.#render();
+		}
+		reset() {
+			this.#availableActions = [];
+			this.#render();
+		}
+		setDisabled(disabled) {
+			this.#disabled = disabled;
+			this.#render();
+		}
+		getSelectedMemberIds() {
+			const grid = this.#getGrid();
+			if (!main_core.Type.isObject(grid)) {
+				return [];
+			}
+			return grid.getRows().getSelectedIds().map(id => Number(id)).filter(id => Number.isInteger(id) && id > 0);
+		}
+		getAvailableActions() {
+			return [...this.#availableActions];
+		}
+		#isOwnGridEvent(event) {
+			const [eventGrid] = event?.getCompatData?.() ?? [];
+			if (!main_core.Type.isObject(eventGrid)) {
+				return false;
+			}
+			return eventGrid === this.#getGrid() || main_core.Type.isFunction(eventGrid.getId) && eventGrid.getId() === this.#gridId;
+		}
+		#getGrid() {
+			return BX.Main.gridManager?.getInstanceById(this.#gridId) ?? BX.Main.gridManager?.getById(this.#gridId)?.instance ?? null;
+		}
+		#getAvailableActions(memberIds) {
+			if (memberIds.length === 0) {
+				return [];
+			}
+			const grid = this.#getGrid();
+			if (!main_core.Type.isObject(grid)) {
+				return [];
+			}
+			let intersection = null;
+			for (const memberId of memberIds) {
+				const row = grid.getContainer().querySelector(`.main-grid-row[data-id="${memberId}"]`);
+				const actions = (row?.dataset.bulkActions ?? '').split(',').filter(action => Object.values(BulkActionType).includes(action));
+				intersection = intersection === null ? actions : intersection.filter(action => actions.includes(action));
+			}
+			return intersection ?? [];
+		}
+		#render() {
+			Object.values(BulkActionType).forEach(actionType => {
+				const controlId = this.#getControlId(actionType);
+				const control = document.getElementById(controlId);
+				if (control === null) {
+					return;
+				}
+				this.#prepareControl(control, controlId);
+				this.#setControlEnabled(control, !this.#disabled && this.#availableActions.includes(actionType), this.#getDisabledHint(actionType));
+			});
+		}
+
+		/**
+		 * The hint explains the selection, so it belongs only to a button held back by what the user picked.
+		 * While the whole panel waits for a running bulk process, the block means something else entirely.
+		 */
+		#getDisabledHint(actionType) {
+			if (this.#disabled || this.#availableActions.includes(actionType)) {
+				return '';
+			}
+			return this.#labels.disabledHint?.[actionType] ?? '';
+		}
+		#prepareControl(control, testId) {
+			const targetControl = control;
+			targetControl.dataset.testid = testId;
+			targetControl.setAttribute('role', 'button');
+			targetControl.setAttribute('tabindex', '0');
+			main_core.Dom.addClass(targetControl, 'sign-my-documents-bulk-action-control');
+			const panel = targetControl.closest('.ui-action-panel');
+			if (panel !== null) {
+				panel.dataset.testid = 'sign-my-documents-bulk-action-panel';
+			}
+			if (this.#boundControls.has(targetControl)) {
+				return;
+			}
+			main_core.Event.bind(targetControl, 'click', event => {
+				if (targetControl.getAttribute('aria-disabled') === 'true') {
+					event.preventDefault();
+					event.stopImmediatePropagation();
+				}
+			}, true);
+			main_core.Event.bind(targetControl, 'keydown', event => {
+				if (event.key !== 'Enter' && event.key !== ' ') {
+					return;
+				}
+				event.preventDefault();
+				if (targetControl.getAttribute('aria-disabled') !== 'true') {
+					(document.getElementById(`${targetControl.id}_control`) ?? targetControl).click();
+				}
+			});
+			this.#boundControls.add(targetControl);
+		}
+		#setControlEnabled(control, enabled, disabledHint = '') {
+			this.#actionPanel.toggleActionButton(control.id, enabled, disabledHint);
+			// the shared panel writes the title only when a button first becomes disabled, while the reason
+			// can change under a button that stays disabled: a running process replaces the selection hint
+			main_core.Dom.attr(control, 'title', enabled ? '' : disabledHint);
+			control.setAttribute('aria-disabled', enabled ? 'false' : 'true');
+			this.#setControlReason(control, enabled ? '' : disabledHint);
+		}
+
+		/**
+		 * The title of an element with role="button" and text of its own is left out of the accessible name,
+		 * so a screen reader would never say why the button is blocked. Without a reason the name goes back
+		 * to the text of the button, which the shared panel may have rebuilt in the meantime.
+		 */
+		#setControlReason(control, reason) {
+			const targetControl = control;
+			if (reason === '') {
+				targetControl.removeAttribute('aria-label');
+				return;
+			}
+			const text = (targetControl.textContent ?? '').replaceAll(/\s+/g, ' ').trim();
+			targetControl.setAttribute('aria-label', text === '' ? reason : `${text}. ${reason}`);
+		}
+		#getControlId(actionType) {
+			return actionType === BulkActionType.approve ? APPROVE_CONTROL_ID : REJECT_CONTROL_ID;
+		}
+		#prepareRowCheckboxes() {
+			const grid = this.#getGrid();
+			if (!main_core.Type.isObject(grid)) {
+				return;
+			}
+			grid.getContainer().querySelectorAll('.main-grid-row input[type="checkbox"]').forEach(checkbox => {
+				const rowCheckbox = checkbox;
+				const row = rowCheckbox.closest('.main-grid-row');
+				const memberId = Number(row?.dataset.id);
+				if (Number.isInteger(memberId) && memberId > 0) {
+					rowCheckbox.dataset.testid = `sign-my-documents-row-checkbox-${memberId}`;
+				}
+			});
+		}
+	}
+
+	const GRID_UPDATE_TIMEOUT = 15000;
+	const BULK_PROCESS_EXTENSION = 'sign.v2.grid.b2e.my-documents.bulk-action-process';
+	const NOTIFICATION_EXTENSION = 'ui.notification';
+	const NOTIFICATION_AUTO_HIDE_DELAY = 6000;
+	class MyDocuments {
+		#options;
+		#bulkActionPanel = null;
+		#bulkActionProcess = null;
+		#bulkProcessFactory = null;
+		#bulkProcessLoading = false;
+		#bulkOperationRunning = false;
+		#awaitingGridUpdate = false;
+		#reloadRequested = false;
+		#pullReloadPending = false;
+		#dialogClosed = false;
+		#focusTrigger = null;
+		#frozenGridContainer = null;
+		#gridUpdateTimeoutId = null;
+		#onGridUpdated = event => {
+			if (!this.#isOwnGridEvent(event)) {
+				return;
+			}
+			if (this.#bulkOperationRunning) {
+				this.#freezeGrid();
+				return;
+			}
+			if (this.#awaitingGridUpdate) {
+				this.#completeGridUpdate();
+			}
+		};
+		constructor(options) {
+			this.#options = options;
+			// the panel follows the portal, not the page: rows with checkboxes come and go with every AJAX
+			// update of the grid, and the panel has to be ready for the page that brings them back
+			if (options.bulkActionAvailable && options.bulkActionLabels) {
+				this.#bulkActionPanel = new BulkActionPanel({
+					gridId: this.#getGridId(),
+					labels: options.bulkActionLabels,
+					onApply: selection => this.#startBulkAction(selection)
+				});
+			}
+		}
+		subscribeOnGridEvents() {
+			this.#bulkActionPanel?.subscribe();
+			main_core_events.EventEmitter.subscribe('Grid::updated', this.#onGridUpdated);
+		}
+		applyBulkAction(actionType) {
+			this.#bulkActionPanel?.apply(actionType);
+		}
+		openSignSliderByGridId(gridId) {
+			main_core.Event.ready(async () => {
+				const gridContainer = document.querySelector(gridId);
+				if (!gridContainer) {
+					return;
+				}
+				main_core.Event.bind(gridContainer, 'click', async event => {
+					let target = event.target;
+					if (main_core.Dom.hasClass(target, 'ui-btn-text')) {
+						target = target.parentNode;
+					}
+					if (!main_core.Dom.hasClass(target, 'ui-btn') || !target.dataset.memberId) {
+						return;
+					}
+					if (main_core.Dom.hasClass(target, 'sign-action-button')) {
+						main_core.Dom.addClass(target, 'ui-btn-wait');
+						const memberId = Number(target.dataset.memberId);
+						main_core.Runtime.loadExtension('sign.v2.b2e.sign-link').then(exports => {
+							return new exports.SignLink({
+								memberId
+							}).openSlider({
+								target,
+								events: {
+									onClose: async () => {
+										await BX.ajax.runAction('sign.api_v1.B2e.Document.Member.callStatus', {
+											json: {
+												memberId
+											}
+										});
+										if (main_core.Type.isNil(pull_client.PULL)) {
+											this.#reload();
+										}
+									}
+								}
+							});
+						}).catch(error => {
+							console.error(error);
+						}).finally(() => {
+							main_core.Dom.removeClass(target, 'ui-btn-wait');
+						});
+						event.preventDefault();
+					}
+				});
+			});
+		}
+		#reload() {
+			main_core.Event.ready(() => this.#getGrid()?.reload());
+		}
+		subscribeOnPullEvents() {
+			main_core.Event.ready(() => {
+				if (main_core.Type.isNil(pull_client.PULL)) {
+					return;
+				}
+				pull_client.PULL.subscribe({
+					moduleId: 'sign',
+					command: 'updateMyDocumentGrid',
+					callback: () => {
+						// changes made by the running operation arrive with its own final reload
+						if (this.#bulkOperationRunning) {
+							return;
+						}
+						if (this.#awaitingGridUpdate) {
+							this.#pullReloadPending = true;
+							return;
+						}
+						this.#reload();
+					}
+				});
+				pull_client.PULL.subscribe({
+					moduleId: 'sign',
+					command: this.#options?.counterPullEventName,
+					callback: params => {
+						if (!main_core.Type.isNumber(params?.needActionCount)) {
+							return;
+						}
+						if (!main_core.Type.isStringFilled(this.#options?.needActionCounterId)) {
+							return;
+						}
+						main_core.Event.EventEmitter.emit('BX.Sign.DocumentCounter.Item:updateCounter', {
+							id: this.#options.needActionCounterId,
+							count: params.needActionCount
+						});
+					}
+				});
+			});
+		}
+		#startBulkAction(selection) {
+			if (this.#bulkOperationRunning || this.#awaitingGridUpdate || this.#bulkProcessLoading || this.#bulkActionProcess !== null) {
+				return;
+			}
+			this.#dialogClosed = false;
+			this.#focusTrigger = selection.trigger ?? null;
+			void this.#showBulkActionProcess(selection);
+		}
+		async #showBulkActionProcess(selection) {
+			this.#bulkProcessLoading = true;
+			this.#bulkActionPanel?.setDisabled(true);
+			try {
+				const createProcess = await this.#loadBulkProcessFactory();
+				this.#bulkActionProcess = createProcess({
+					actionType: selection.actionType,
+					memberIds: selection.memberIds,
+					trigger: selection.trigger,
+					onStart: () => {
+						this.#bulkOperationRunning = true;
+						this.#freezeGrid();
+					},
+					onTerminal: () => this.#finishBulkAction(),
+					onDialogClosed: trigger => {
+						this.#dialogClosed = true;
+						this.#focusTrigger = trigger ?? this.#focusTrigger;
+						this.#bulkActionProcess = null;
+						if (!this.#awaitingGridUpdate) {
+							this.#restoreFocus();
+						}
+					}
+				});
+				this.#bulkActionProcess.show();
+			} catch (error) {
+				console.error(error);
+				this.#notifyBulkProcessUnavailable();
+				this.#focusTrigger = null;
+			} finally {
+				this.#bulkProcessLoading = false;
+				if (!this.#bulkOperationRunning) {
+					this.#bulkActionPanel?.setDisabled(false);
+				}
+			}
+		}
+		async #loadBulkProcessFactory() {
+			if (this.#bulkProcessFactory === null) {
+				const {
+					BulkActionProcess
+				} = await main_core.Runtime.loadExtension(BULK_PROCESS_EXTENSION);
+				if (!main_core.Type.isFunction(BulkActionProcess)) {
+					throw new TypeError(`${BULK_PROCESS_EXTENSION} does not export BulkActionProcess`);
+				}
+				this.#bulkProcessFactory = processOptions => new BulkActionProcess(processOptions);
+			}
+			return this.#bulkProcessFactory;
+		}
+		#notifyBulkProcessUnavailable() {
+			void main_core.Runtime.loadExtension(NOTIFICATION_EXTENSION).then(({
+				UI
+			}) => {
+				UI.Notification.Center.notify({
+					content: main_core.Loc.getMessage('SIGN_MY_DOCUMENTS_BULK_PROCESS_UNAVAILABLE'),
+					autoHideDelay: NOTIFICATION_AUTO_HIDE_DELAY
+				});
+			}).catch(error => {
+				console.error(error);
+			});
+		}
+		#finishBulkAction() {
+			if (this.#reloadRequested) {
+				return;
+			}
+			this.#reloadRequested = true;
+			this.#bulkOperationRunning = false;
+			this.#getGrid()?.getRows().unselectAll();
+			if (!this.#requestGridUpdate()) {
+				this.#completeGridUpdate();
+			}
+		}
+		#requestGridUpdate() {
+			const grid = this.#getGrid();
+			if (!main_core.Type.isObject(grid)) {
+				return false;
+			}
+			this.#awaitingGridUpdate = true;
+			this.#startGridUpdateTimeout();
+			grid.reload();
+			return true;
+		}
+		#completeGridUpdate() {
+			const hasPendingPullReload = this.#pullReloadPending;
+			this.#awaitingGridUpdate = false;
+			this.#pullReloadPending = false;
+			this.#clearGridUpdateTimeout();
+			this.#unfreezeGrid();
+			if (this.#dialogClosed) {
+				this.#restoreFocus();
+			}
+
+			// pull updates received while the grid was frozen are picked up by a single extra reload
+			if (hasPendingPullReload) {
+				this.#reload();
+			}
+		}
+
+		// Grid::updated never arrives if the reload request fails, so the frozen grid needs a fallback release
+		#startGridUpdateTimeout() {
+			this.#clearGridUpdateTimeout();
+			this.#gridUpdateTimeoutId = window.setTimeout(() => {
+				this.#gridUpdateTimeoutId = null;
+				if (this.#awaitingGridUpdate) {
+					this.#completeGridUpdate();
+				}
+			}, GRID_UPDATE_TIMEOUT);
+		}
+		#clearGridUpdateTimeout() {
+			if (this.#gridUpdateTimeoutId !== null) {
+				window.clearTimeout(this.#gridUpdateTimeoutId);
+				this.#gridUpdateTimeoutId = null;
+			}
+		}
+		#freezeGrid() {
+			const grid = this.#getGrid();
+			if (!main_core.Type.isObject(grid)) {
+				return;
+			}
+			this.#bulkActionPanel?.setDisabled(true);
+			const gridContainer = grid.getContainer();
+			gridContainer.setAttribute('aria-busy', 'true');
+			this.#disableGridCheckboxes(gridContainer);
+			if (this.#frozenGridContainer !== gridContainer) {
+				if (this.#frozenGridContainer !== null) {
+					main_core.Event.unbind(this.#frozenGridContainer, 'click', this.#preventGridSelection);
+					main_core.Event.unbind(this.#frozenGridContainer, 'keydown', this.#preventGridSelection);
+				}
+				this.#frozenGridContainer = gridContainer;
+				main_core.Event.bind(gridContainer, 'click', this.#preventGridSelection);
+				main_core.Event.bind(gridContainer, 'keydown', this.#preventGridSelection);
+			}
+			grid.tableFade();
+		}
+		#unfreezeGrid() {
+			const grid = this.#getGrid();
+			const gridContainer = grid?.getContainer() ?? this.#frozenGridContainer;
+			if (gridContainer !== null) {
+				gridContainer.setAttribute('aria-busy', 'false');
+				gridContainer.querySelectorAll('[data-sign-bulk-disabled]').forEach(checkbox => {
+					const gridCheckbox = checkbox;
+					gridCheckbox.disabled = gridCheckbox.dataset.signBulkDisabled === 'true';
+					delete gridCheckbox.dataset.signBulkDisabled;
+				});
+				main_core.Event.unbind(gridContainer, 'click', this.#preventGridSelection);
+				main_core.Event.unbind(gridContainer, 'keydown', this.#preventGridSelection);
+			}
+			grid?.tableUnfade();
+			this.#bulkActionPanel?.setDisabled(false);
+			this.#frozenGridContainer = null;
+			this.#reloadRequested = false;
+		}
+		#disableGridCheckboxes(gridContainer) {
+			gridContainer.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+				const gridCheckbox = checkbox;
+				if (!gridCheckbox.hasAttribute('data-sign-bulk-disabled')) {
+					gridCheckbox.dataset.signBulkDisabled = gridCheckbox.disabled ? 'true' : 'false';
+				}
+				gridCheckbox.disabled = true;
+			});
+		}
+		#preventGridSelection = event => {
+			if (event.target?.closest?.('input[type="checkbox"], .main-grid-row-checkbox, .main-grid-check-all')) {
+				event.preventDefault();
+				event.stopImmediatePropagation();
+			}
+		};
+		#restoreFocus() {
+			const trigger = this.#focusTrigger;
+			const panel = document.querySelector('[data-testid="sign-my-documents-bulk-action-panel"]');
+			const fallback = document.querySelector('[data-testid="sign-my-documents-bulk-action-approve"]') ?? document.querySelector('[data-testid="sign-my-documents-bulk-action-reject"]') ?? panel?.querySelector('button:not([disabled]), [tabindex="0"]');
+			const target = trigger?.isConnected ? trigger : fallback;
+			if (main_core.Type.isFunction(target?.focus)) {
+				target.focus();
+			}
+			this.#focusTrigger = null;
+		}
+		#isOwnGridEvent(event) {
+			const [eventGrid] = event?.getCompatData?.() ?? [];
+			const grid = this.#getGrid();
+			return main_core.Type.isObject(eventGrid) && (eventGrid === grid || eventGrid.getId?.() === this.#getGridId());
+		}
+		#getGridId() {
+			return this.#options.gridId ?? 'SIGN_B2E_MY_DOCUMENTS_GRID';
+		}
+		#getGrid() {
+			const gridId = this.#getGridId();
+			return BX.Main.gridManager?.getInstanceById(gridId) ?? BX.Main.gridManager?.getById(gridId)?.instance ?? null;
+		}
 	}
 
 	exports.MyDocuments = MyDocuments;
 
-}((this.BX.Sign.V2.Grid.B2e = this.BX.Sign.V2.Grid.B2e || {}),BX,BX));
+})(this.BX.Sign.V2.Grid.B2e = this.BX.Sign.V2.Grid.B2e || {}, BX, BX.Event, BX, BX.Sign.V2.Grid.Components);

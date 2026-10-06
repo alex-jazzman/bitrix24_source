@@ -23,6 +23,11 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 
 	const ASSET_PATH = '/bitrix/mobileapp/immobile/extensions/im/messenger/assets/common/';
 
+	const SUBTITLE_AVATAR_INITIALS_FONT_SIZE = 8;
+	const SIDEBAR_TAB_ITEM_AVATAR_INITIALS_FONT_SIZE = 8;
+	const SIDEBAR_TITLE_AVATAR_INITIALS_FONT_SIZE = 30;
+	const DEFAULT_AVATAR_INITIALS_FONT_SIZE = 20;
+
 	const AvatarDetailFields = Object.freeze({
 		accentType: {
 			orange: 'orange',
@@ -41,6 +46,7 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 	const themeId = AppTheme.id;
 	const DefaultUserNamedIcon = {
 		[UserType.collaber]: `collab_user_${themeId}`,
+		[UserType.guest]: `collab_user_${themeId}`,
 		[UserType.extranet]: `extranet_user_${themeId}`,
 		[UserType.user]: `default_user_${themeId}`,
 	};
@@ -154,7 +160,7 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 			defaultFields.title = title;
 
 			defaultFields.radius = Theme.corner.S.toNumber();
-			defaultFields.placeholder.letters.fontSize = 12;
+			defaultFields.placeholder.letters.fontSize = Typography.text6.getValue().fontSize;
 
 			if (Feature.isChatAvatarAccentTypePurpleAvailable && !Feature.isBitrixGptV2Available)
 			{
@@ -273,6 +279,14 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 				return;
 			}
 
+			if (Feature.isChatWithGuestsAvailable && user.type === UserType.guest)
+			{
+				this.avatar = `${ChatAvatar.getImagePath()}guest.png`;
+				this.color = user.color;
+
+				return;
+			}
+
 			if (this.isUser(userId) && !user.lastActivityDate && !user.avatar)
 			{
 				this.avatar = `${ChatAvatar.getImagePath()}avatar_wait_air.png`;
@@ -283,7 +297,7 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 
 			this.avatar = Type.isStringFilled(user.avatar) ? user.avatar : null;
 			this.color = user.color;
-			if (user.type === UserType.collaber)
+			if (user.type === UserType.collaber || user.type === UserType.guest)
 			{
 				this.color = Theme.colors.collabAccentPrimary;
 			}
@@ -342,7 +356,7 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 		{
 			const avatarProps = this.#getAvatarProps();
 			avatarProps.radius = Theme.corner.S.toNumber();
-			avatarProps.placeholder.letters.fontSize = 13;
+			avatarProps.placeholder.letters.fontSize = Typography.text5.getValue().fontSize;
 
 			return avatarProps;
 		}
@@ -381,7 +395,7 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 		getMessageAvatarProps()
 		{
 			const avatarProps = this.#getAvatarProps();
-			avatarProps.placeholder.letters.fontSize = 15;
+			avatarProps.placeholder.letters.fontSize = Typography.h5.getValue().fontSize;
 
 			return avatarProps;
 		}
@@ -415,11 +429,23 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 		/**
 		 * @return {AvatarDetail}
 		 */
+		getRecentItemSubtitleAvatarProps()
+		{
+			const avatarProps = this.#getAvatarProps();
+			avatarProps.radius = Theme.corner.S.toNumber();
+			avatarProps.placeholder.letters.fontSize = SUBTITLE_AVATAR_INITIALS_FONT_SIZE;
+
+			return avatarProps;
+		}
+
+		/**
+		 * @return {AvatarDetail}
+		 */
 		getNavigationHeaderAvatarProps()
 		{
 			const avatarProps = this.#getAvatarProps();
 			avatarProps.radius = Theme.corner.S.toNumber();
-			avatarProps.placeholder.letters.fontSize = 12;
+			avatarProps.placeholder.letters.fontSize = Typography.text6.getValue().fontSize;
 
 			return avatarProps;
 		}
@@ -436,7 +462,7 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 
 			const avatarProps = this.#getAvatarProps();
 			avatarProps.radius = Theme.corner.S.toNumber();
-			avatarProps.placeholder.letters.fontSize = 12;
+			avatarProps.placeholder.letters.fontSize = Typography.text6.getValue().fontSize;
 
 			return avatarProps;
 		}
@@ -457,7 +483,7 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 			{
 				avatarProps = this.#getAvatarProps();
 				avatarProps.radius = Theme.corner.L.toNumber();
-				avatarProps.placeholder.letters.fontSize = 30;
+				avatarProps.placeholder.letters.fontSize = SIDEBAR_TITLE_AVATAR_INITIALS_FONT_SIZE;
 			}
 
 			avatarProps.style = this.#getSizeStyle(72);
@@ -475,7 +501,7 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 				backBorderWidth: 1,
 				placeholder: {
 					letters: {
-						fontSize: 8,
+						fontSize: SIDEBAR_TAB_ITEM_AVATAR_INITIALS_FONT_SIZE,
 					},
 				},
 				style: this.#getSizeStyle(18),
@@ -502,7 +528,7 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 
 			const avatarProps = this.#getAvatarProps();
 			avatarProps.radius = Theme.corner.S.toNumber();
-			avatarProps.placeholder.letters.fontSize = 15;
+			avatarProps.placeholder.letters.fontSize = Typography.h5.getValue().fontSize;
 
 			return avatarProps;
 		}
@@ -609,7 +635,13 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 		getUserAvatarProps()
 		{
 			const user = this.getUserById(this.dialogId);
-			const userHelper = UserHelper.createByUserId(user?.id);
+
+			if (!user || !(user.id > 0))
+			{
+				return this.#getAvatarUserFields();
+			}
+
+			const userHelper = UserHelper.createByUserId(user.id);
 
 			if (!userHelper)
 			{
@@ -618,7 +650,12 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 
 			if (userHelper.isCollaber)
 			{
-				return this.#getAvatarCollaberFields();
+				return this.#getAvatarCollaberOrGuestFields();
+			}
+
+			if (Feature.isChatWithGuestsAvailable && userHelper.isGuest)
+			{
+				return this.#getAvatarCollaberOrGuestFields();
 			}
 
 			if (userHelper.isExtranet)
@@ -797,7 +834,7 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 		 * @private
 		 * @return {AvatarDetail}
 		 */
-		#getAvatarCollaberFields()
+		#getAvatarCollaberOrGuestFields()
 		{
 			const defaultFields = this.#getAvatarDefaultFields();
 
@@ -1051,7 +1088,7 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 					type: placeholderType.auto,
 					backgroundColor: '#ffffff',
 					letters: {
-						fontSize: 20,
+						fontSize: DEFAULT_AVATAR_INITIALS_FONT_SIZE,
 					},
 				},
 			};
@@ -1162,6 +1199,7 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 			{
 				case UserType.extranet:
 				case UserType.collaber:
+				case UserType.guest:
 				{
 					return DefaultUserNamedIcon[user.type];
 				}

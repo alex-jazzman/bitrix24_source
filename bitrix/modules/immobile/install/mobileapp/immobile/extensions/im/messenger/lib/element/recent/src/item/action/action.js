@@ -3,9 +3,13 @@
  */
 jn.define('im/messenger/lib/element/recent/item/action/action', (require, exports, module) => {
 	const { Color } = require('tokens');
-	const { Theme } = require('im/lib/theme');
 	const { Loc } = require('im/messenger/loc');
 	const { Icon } = require('assets/icons');
+
+	const ContextMenuSection = Object.freeze({
+		main: 'main',
+		bottom: 'bottom',
+	});
 
 	const InviteResendAction = {
 		title: Loc.getMessage('IMMOBILE_ELEMENT_RECENT_ACTION_INVITE_RESEND'),
@@ -42,6 +46,9 @@ jn.define('im/messenger/lib/element/recent/item/action/action', (require, export
 		color: Color.accentMainSuccess.toHex(),
 		direction: 'leftToRight',
 		fillOnSwipe: true,
+		contextMenu: {
+			iconName: Icon.DOUBLE_CHECK.getIconName(),
+		},
 	};
 
 	const UnreadAction = {
@@ -79,6 +86,11 @@ jn.define('im/messenger/lib/element/recent/item/action/action', (require, export
 		iconName: Icon.BOX_WITH_LID.getIconName(),
 		identifier: 'hide',
 		color: Color.accentMainAlert.toHex(),
+		contextMenu: {
+			sectionCode: ContextMenuSection.bottom,
+			showTopSeparator: true,
+			iconName: Icon.CROSSED_EYE.getIconName(),
+		},
 	};
 
 	const OperatorAnswerAction = {
@@ -93,6 +105,18 @@ jn.define('im/messenger/lib/element/recent/item/action/action', (require, export
 		iconName: Icon.ALERT.getIconName(),
 		identifier: 'operatorSpam',
 		color: Color.accentMainWarning.toHex(),
+		contextMenu: {
+			styles: {
+				title: {
+					font: {
+						color: Color.accentMainAlert.toHex(),
+					},
+				},
+				icon: {
+					color: Color.accentMainAlert.toHex(),
+				},
+			},
+		},
 	};
 
 	const OperatorSkipAction = {
@@ -117,7 +141,24 @@ jn.define('im/messenger/lib/element/recent/item/action/action', (require, export
 		direction: 'leftToRight',
 	};
 
+	/** Popup context menu order. OpenlineItem overrides via its own createContextMenuActions. */
+	const ContextMenuActionOrder = [
+		ReadAction,
+		UnreadAction,
+		PinAction,
+		UnpinAction,
+		MuteAction,
+		UnmuteAction,
+		AddToFolderAction,
+		HideAction,
+		ProfileAction,
+		InviteResendAction,
+		InviteCancelAction,
+	];
+
 	module.exports = {
+		ContextMenuSection,
+		ContextMenuActionOrder,
 		InviteResendAction,
 		InviteCancelAction,
 		PinAction,

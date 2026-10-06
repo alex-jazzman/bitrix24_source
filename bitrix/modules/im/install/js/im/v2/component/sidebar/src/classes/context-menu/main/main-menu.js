@@ -13,6 +13,8 @@ import { Notifier } from 'im.v2.lib.notifier';
 import { PermissionManager } from 'im.v2.lib.permission';
 import { Utils } from 'im.v2.lib.utils';
 import { ChatService } from 'im.v2.provider.service.chat';
+import { Core } from 'im.v2.application.core';
+import { type ImModelChat } from 'im.v2.model';
 
 export class MainMenu extends RecentMenu
 {
@@ -20,6 +22,8 @@ export class MainMenu extends RecentMenu
 
 	static events = {
 		onAddToChatShow: 'onAddToChatShow',
+		onAttachToCollabV2Show: 'onAttachToCollabV2Show',
+		onDetachFromCollabV2Show: 'onDetachFromCollabV2Show',
 	};
 
 	constructor(applicationContext: ApplicationContext)
@@ -51,14 +55,49 @@ export class MainMenu extends RecentMenu
 			this.getChatsWithUserItem(),
 			this.getCopyInviteLinkItem(),
 			this.getCopyDialogIdItem(),
+			this.getAttachToCollabV2Item(),
 			this.getHideItem(),
 			this.getLeaveItem(),
 			this.getDeleteItem(),
 		];
 	}
 
+	getAttachToCollabV2Item(): ?MenuItemOptions
+	{
+		const isAttachToCollabV2Available = FeatureManager.isFeatureAvailable(Feature.isAttachToCollabV2Available);
+
+		if (!this.#canAttachToCollabV2() || !isAttachToCollabV2Available)
+		{
+			return null;
+		}
+
+		const { parentChatId }: ImModelChat = Core.getStore().getters['chats/get'](this.context.dialogId);
+		const isAttached = parentChatId === 0;
+
+		return {
+			title: isAttached
+				? Loc.getMessage('IM_SIDEBAR_MENU_ATTACH_TO_COLLAB_V2')
+				: Loc.getMessage('IM_SIDEBAR_MENU_DETACH_FROM_COLLAB_V2'),
+			onClick: () => {
+				if (isAttached)
+				{
+					this.emit(MainMenu.events.onAttachToCollabV2Show);
+
+					return;
+				}
+
+				this.emit(MainMenu.events.onDetachFromCollabV2Show);
+			},
+		};
+	}
+
 	getCopyDialogIdItem(): ?MenuItemOptions
 	{
+		if (this.#isCurrentUserGuest())
+		{
+			return null;
+		}
+
 		if (!FeatureManager.isFeatureAvailable(Feature.chatSharedLinkAvailable))
 		{
 			return null;
@@ -76,17 +115,17 @@ export class MainMenu extends RecentMenu
 
 	getCopyInviteLinkItem(): ?MenuItemOptions
 	{
-		if (FeatureManager.isFeatureAvailable(Feature.chatSharedLinkAvailable))
+		if (this.#isCurrentUserGuest())
 		{
 			return null;
 		}
 
-		if (!BX.clipboard.isCopySupported())
+		if (!BX.clipboard.isCopySupported() || this.isUser())
 		{
 			return null;
 		}
 
-		if (this.isUser() || this.isCollabChat())
+		if (this.isCollabChat() && !this.#isCollabV2())
 		{
 			return null;
 		}
@@ -285,11 +324,21 @@ export class MainMenu extends RecentMenu
 
 	#canUpdateChat(): boolean
 	{
-		return this.permissionManager.canPerformActionByRole(ActionByRole.update, this.context.dialogId);
+		const canByRole = this.permissionManager.canPerformActionByRole(ActionByRole.update, this.context.dialogId);
+
+		// Phase 0 (task 718250): superadmin project chat access
+		const dialog: ImModelChat = Core.getStore().getters['chats/get'](this.context.dialogId, true);
+
+		return canByRole || dialog.hasManageCapability;
 	}
 
 	#isCollabV2(): boolean
 	{
 		return this.isCollabChat() && FeatureManager.isFeatureAvailable(Feature.isCollabV2Available);
+	}
+
+	#canAttachToCollabV2(): boolean
+	{
+		return this.permissionManager.canPerformActionByRole(ActionByRole.attachToParent, this.context.dialogId);
 	}
 }

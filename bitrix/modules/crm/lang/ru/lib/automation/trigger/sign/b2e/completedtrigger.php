@@ -8,3 +8,4 @@ $MESS['CRM_AUTOMATION_TRIGGER_B2E_COMPLETED_OPTION_STOPPED'] = 'Отменено
 
 $MESS['CRM_AUTOMATION_TRIGGER_B2E_COMPLETED_NODE_NAME'] = 'Отследить, когда подписание документа в КЭДО завершено';
 $MESS['CRM_AUTOMATION_TRIGGER_B2E_COMPLETED_NODE_DESCRIPTION'] = 'Запускает процесс, когда все сотрудники подписали документ или отказались от подписания';
+$MESS['CRM_AUTOMATION_TRIGGER_B2E_COMPLETED_EVENT_DATE_TIME'] = 'Дата и время завершения подписания';

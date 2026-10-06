@@ -1,5 +1,11 @@
 import type { SetupTemplateData } from '../../../setup-template/src/types';
-import { ACTION_TYPE, AJAX_REQUEST_TYPE, GRID_API_ACTION } from './constants';
+import {
+	ACTION_TYPE,
+	AJAX_REQUEST_TYPE,
+	EXISTING_RUNS_WARNING_OUTCOME,
+	FILTER_HINT_STATE,
+	GRID_API_ACTION,
+} from './constants';
 
 export type AgentInfoFieldType = {
 	name: string,
@@ -100,6 +106,26 @@ export type RestartActionDataType = {
 	templateId: number,
 };
 
+export type UpgradeActionParams = {
+	templateId: string,
+	isCustomized: ?boolean,
+};
+
+export type UpgradeActionDataType = {
+	templateId: number,
+};
+
+export type UpgradeAgentResponse = {
+	data: {
+		status: ?string,
+		row: ?FetchAiAgentRowResponse,
+		values: ?{ [key: string]: any },
+		blocks: ?Array<Object>,
+		requiredConstants: ?Array<string>,
+		invalidConstants: ?Array<string>,
+	},
+};
+
 export type AddRowOptions = {
 	id: number | string,
 	actions?: Array<{ [key: string]: any }>,
@@ -159,6 +185,7 @@ export type ExtensionSettings = {
 		aiAgentsTariffSliderCode: ?string,
 		isBasicOrHigher: boolean,
 	},
+	filterHintState: ?string,
 };
 
 export type RagFilesStatusesDataType = {
@@ -181,3 +208,27 @@ export type StartAgentResponse = {
 		setupTemplateData: ?SetupTemplateData,
 	}
 };
+
+/**
+ * Raw pre-flight answer (DTO-01). Every field is optional on purpose: ajax.runAction resolves
+ * on status 'success' even with data === null, so an incomplete answer reaches the client as a
+ * success and has to be normalized into ExistingRunsDecision.
+ */
+export type CheckExistingRunsResponse = {
+	data: ?{
+		showWarning: ?boolean,
+		systemCode: ?string,
+	},
+};
+
+/**
+ * Normalized pre-flight decision: systemCode is a non-empty string whenever showWarning is true.
+ */
+export type ExistingRunsDecision = {
+	showWarning: boolean,
+	systemCode: ?string,
+};
+
+export type ExistingRunsWarningOutcome = $Values<typeof EXISTING_RUNS_WARNING_OUTCOME>;
+
+export type FilterHintState = $Values<typeof FILTER_HINT_STATE>;

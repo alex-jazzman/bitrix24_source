@@ -71,6 +71,15 @@
 	color: rgba(var(--ui-color-base-solid-rgb), .3);
 }
 
+.disk-fe-flipchart-service-profile {
+	display: inline-block;
+	margin-right: 14px;
+	font: 13px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
+	color: rgba(var(--ui-color-base-solid-rgb), .3);
+	text-transform: uppercase;
+}
+
 .disk-fe-office-header-online {
 	position: relative;
 	display: inline-block;

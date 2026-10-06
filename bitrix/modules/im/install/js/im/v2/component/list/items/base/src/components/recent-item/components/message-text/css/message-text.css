@@ -24,6 +24,10 @@
 	max-height: 14px;
 }
 
+.bx-im-list-recent-item__preview-source-name {
+	color: var(--ui-color-blue-90);
+}
+
 .bx-im-list-recent-item__self_author-icon {
 	display: inline-block;
 	width: 11px;

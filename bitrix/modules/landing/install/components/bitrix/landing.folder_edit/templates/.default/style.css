@@ -17,6 +17,35 @@
 	border-radius: var(--ui-border-radius-md);
 }
 
+/* keep above the component rules: they must win over this reset on equal specificity */
+.landing-folder-edit__button-reset {
+	appearance: none;
+	-webkit-appearance: none;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	background: none;
+	font: inherit;
+	color: inherit;
+	text-align: inherit;
+}
+
+.landing-folder-edit__section--text.--link:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: 2px;
+}
+
+/* inset ring: the edit icon of the address row sits in the --path-link row, which clips a long path
+   and an outward ring along with it. The icon is dimmed at rest, and opacity is applied to the outline of
+   the element as well, so the dimming has to be lifted while the ring is drawn - the :hover state included,
+   which is why it is named here: it dims to .5 and is declared further down the file */
+.landing-folder-edit__section--icon:focus-visible,
+.landing-folder-edit__section--icon:focus-visible:hover {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: -2px;
+	opacity: 1;
+}
+
 .landing-folder-edit__section-ui-input {
 	margin-left: 5px;
 	width: 100%;
@@ -29,7 +58,8 @@
 	display: inline-flex;
 }
 
-#landing-folder-index-link.--link-icon:empty {
+/* the id rule above outweighs the browser [hidden] default, so restate it with the attribute */
+#landing-folder-index-link[hidden] {
 	display: none;
 }
 
@@ -59,8 +89,12 @@
 	text-overflow: ellipsis;
 }
 
+/* the alternative text is empty on purpose: the slash is decoration and is read out otherwise.
+   The plain declaration comes first: a browser without alternative text support drops the whole
+   declaration below, and the slash would disappear along with it */
 .landing-folder-edit__section--text.--space-around:after {
 	content: '/';
+	content: '/' / '';
 	display: inline-block;
 	margin-left: 8px;
 	color: var(--graphite_alpha_40);
@@ -138,7 +172,10 @@
 	color: var(--graphite_alpha_40);
 }
 
+/* the labels of the social network fields carry this modifier and are inline elements, which leaves both the
+   margin below and the ellipsis of the rule further down without effect */
 .landing-folder-edit__section--text-link.--margin-bottom {
+	display: block;
 	margin-bottom: 3px;
 }
 
@@ -188,10 +225,16 @@
 	color: var(--graphite);
 }
 
+/* the row clips what does not fit and still has to shrink, but its controls sit flush against its edges,
+   so a clip at the padding box cuts their focus ring: the margin leaves the ring the 4px it reaches
+   (outline-offset 2px + outline-width 2px). Where clip is unknown, hidden clips and min-width shrinks */
 .landing-folder-edit__section--content {
 	display: flex;
 	flex: 1;
+	min-width: 0;
 	overflow: hidden;
+	overflow: clip;
+	overflow-clip-margin: 4px;
 }
 
 .landing-folder-edit__section--content.--padding {
@@ -207,8 +250,13 @@
 	white-space: nowrap;
 }
 
+/* a long address wraps instead of being cut by the ellipsis: at a 200% zoom this row is narrow while the
+   viewport in CSS pixels is not, so a breakpoint on the viewport width never reaches that case. The wrapping
+   only engages once the value stops fitting, so a row with room to spare keeps its single line */
 .landing-folder-edit__section--content.--path-link {
 	overflow: hidden;
+	white-space: normal;
+	overflow-wrap: anywhere;
 }
 
 .landing-folder-edit__section--content .landing-folder-edit__section--text-link {
@@ -283,4 +331,59 @@
 
 .landing-folder-edit__section--title .ui-ctl-checkbox {
 	margin-bottom: 0;
+}
+
+/* narrow width: long values wrap instead of being clipped, so nothing spills out of the viewport.
+   Keep last: these rules must win over the nowrap ones above on equal specificity */
+@media (max-width: 575.98px) {
+	.landing-folder-edit__section--text-title,
+	.landing-folder-edit__section--content.--inline {
+		white-space: normal;
+	}
+
+	.landing-folder-edit__section--text-title,
+	.landing-folder-edit__section--content .landing-folder-edit__section--text-link,
+	.landing-folder-edit__section--text.--space-around {
+		overflow-wrap: anywhere;
+	}
+
+	/* the line height of the wide layout is the height of the row: it centres the single line expected there,
+	   but a wrapping title would keep it between lines, so the interval shrinks and the box is centred */
+	.landing-folder-edit__section--text-title {
+		align-self: center;
+		line-height: var(--ui-font-line-height-md, 1.4);
+	}
+
+	/* wrapped text alone still overflows: the label keeps a width wider than the whole row, and the
+	   controls of a row stay on one line until the row is allowed to break */
+	.landing-folder-edit__section--title {
+		min-width: 0;
+	}
+
+	.landing-folder-edit__section--content.--inline {
+		flex-wrap: wrap;
+	}
+
+	/* the label of a row keeps the whole line to itself and leaves the content column nothing, so the row
+	   breaks and the column takes a line of its own. Without the break the column shrinks to zero and the
+	   controls it holds - the link of the index page among them - collapse with it.
+	   The first rule is the fallback where :has() is unknown: the title row is the only one with no content
+	   column, and --without-bg marks it. It stays separate - an unknown pseudo-class voids a selector list */
+	.landing-folder-edit__section:not(.--without-bg) {
+		flex-wrap: wrap;
+	}
+
+	.landing-folder-edit__section:has(> .landing-folder-edit__section--content) {
+		flex-wrap: wrap;
+	}
+
+	.landing-folder-edit__section--content {
+		flex-basis: 100%;
+	}
+
+	/* the reserve for the button next to the link is counted off the width of the row, which is narrower
+	   than the reserve itself here: the link would be left with nothing */
+	#landing-folder-index-link {
+		max-width: none;
+	}
 }

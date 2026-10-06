@@ -272,7 +272,7 @@
 	display: inline-block;
 	width: 15px;
 	height: 15px;
-	background: url(images/sprite.png) no-repeat -29px -93px
+	background: url(images/sprite.webp) no-repeat -29px -93px
 }
 
 .bx-lists-settings-btn:hover {
@@ -350,7 +350,7 @@
 .bx-lists-table-content .bx-lists-calendar-icon {
 	width: 20px;
 	height: 18px;
-	background: url(images/sprite.png) no-repeat -30px -408px;
+	background: url(images/sprite.webp) no-repeat -30px -408px;
 	cursor: pointer;
 	display: inline-block;
 	vertical-align: middle;
@@ -490,7 +490,7 @@ td .bx-lists-required {color:red;}
 	height: 100%;
 	display: block;
 	line-height: 43px;
-	background: #525b69 url(images/sprite.png) no-repeat -24px -494px;
+	background: #525b69 url(images/sprite.webp) no-repeat -24px -494px;
 }
 .bp-question-item-avatar img {
 	width: 36px;

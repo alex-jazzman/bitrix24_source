@@ -1,0 +1,29 @@
+.mail-label-menu {
+	display: flex;
+	flex-direction: column;
+	margin: 0 0 var(--ui-space-stack-lg, 20px);
+}
+
+/*
+	Label rows and the block separator reuse the folder-menu markup and classes (ui-sidepanel-menu-*,
+	mail-menu-directory-*, mail-favorites-menu-separator), so row geometry, hover, active state, the
+	counter and the separator are styled by mail.directorymenu CSS, which is always co-loaded in the
+	left panel. Only label-block specifics stay here.
+*/
+
+/* Neutralize the folder list's own top/bottom margins; the label block wrapper owns vertical spacing. */
+.mail-label-menu .mail-label-menu__list {
+	margin-top: 0;
+	margin-bottom: 0;
+}
+
+/* Left offset aligning label rows with the folder rows in the left menu. */
+.mail-label-menu .ui-sidepanel-menu-link.mail-menu-directory-link {
+	margin-left: 20px;
+}
+
+.mail-label-menu__empty {
+	display: flex;
+	width: calc(100% - 15px);
+	padding: var(--ui-space-inset-2xs, 4px) 0;
+}

@@ -12,7 +12,9 @@ else
 	{
 		ShowError($arResult["ErrorMessage"]);
 	}
-
+	?>
+	<section aria-label="<?= htmlspecialcharsbx(GetMessage("BPABL_GRID_ARIA_LABEL")) ?>">
+	<?php
 	$APPLICATION->IncludeComponent(
 		"bitrix:main.ui.grid",
 		"",
@@ -34,4 +36,7 @@ else
 		),
 		$component
 	);
+	?>
+	</section>
+	<?php
 }

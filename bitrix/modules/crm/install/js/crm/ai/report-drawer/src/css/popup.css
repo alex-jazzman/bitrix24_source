@@ -1,0 +1,227 @@
+.crm-ai-report-drawer__confirm-popup-wrapper {
+	padding: var(--ui-space-inset-sm2, 14px) var(--ui-space-inset-lg, 20px) !important;
+}
+
+.crm-ai-report-drawer__confirm-popup-wrapper .popup-window-content {
+	padding: 0;
+}
+
+.crm-ai-report-drawer__confirm-popup-wrapper .popup-window-titlebar-text {
+	white-space: pre-line;
+	padding: 0;
+	margin-bottom: var(--ui-space-inset-sm2, 14px);
+}
+
+.crm-ai-report-drawer__confirm-popup-description {
+	color: var(--ui-color-base-2);
+}
+
+.crm-ai-report-drawer__popup-wrapper {
+	border-radius: 18px;
+	box-shadow: 0 8px 17px rgba(0, 0, 0, 0.21);
+}
+
+.crm-ai-report-drawer__popup-wrapper .popup-window-content {
+	background: var(--ui-color-bg-content-primary, #FFFFFF);
+	border-radius: 18px;
+}
+
+.crm-ai-report-drawer__popup-wrapper .popup-window-angly--arrow {
+	background: var(--ui-color-bg-content-primary, #FFFFFF);
+	box-shadow: 0 8px 17px rgba(0, 0, 0, 0.21);
+}
+
+.crm-ai-report-drawer__managers-menu {
+	border-radius: 18px;
+	box-shadow: 0 8px 17px rgba(0, 0, 0, 0.21);
+}
+
+.crm-ai-report-drawer__managers-menu .popup-window-content {
+	padding: var(--ui-space-inset-2xs, 8px);
+	background: var(--ui-color-bg-content-primary, #FFFFFF);
+	border-radius: 18px;
+}
+
+.crm-ai-report-drawer__managers-menu .popup-window-angly--arrow {
+	background: var(--ui-color-bg-content-primary, #FFFFFF);
+	box-shadow: 0 8px 17px rgba(0, 0, 0, 0.21);
+}
+
+.crm-ai-report-drawer__managers-menu .menu-popup {
+	background: transparent;
+}
+
+.crm-ai-report-drawer__managers-menu .menu-popup-item {
+	padding: 0;
+	border-radius: 12px;
+}
+
+.crm-ai-report-drawer__managers-menu .menu-popup-item-text {
+	padding: 0;
+}
+
+.crm-ai-report-drawer__managers-menu-item {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-2xs2, 6px);
+	min-width: 220px;
+	padding: var(--ui-space-inset-2xs, 8px) var(--ui-space-inset-xs, 10px);
+}
+
+.crm-ai-report-drawer__managers-menu-item-avatar {
+	display: inline-block;
+	flex-shrink: 0;
+	width: 24px;
+	height: 24px;
+	overflow: hidden;
+	border-radius: 50%;
+}
+
+.crm-ai-report-drawer__managers-menu-item-avatar > i {
+	border-radius: 50%;
+	background-size: cover;
+	background-position: center;
+}
+
+.crm-ai-report-drawer__managers-menu-item-link {
+	color: var(--ui-color-base-1, #333333);
+	text-decoration: none;
+}
+
+.crm-ai-report-drawer__manager-popup {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-md, 16px);
+	padding: var(--ui-space-inset-xl, 24px) var(--ui-space-inset-lg, 20px);
+}
+
+.crm-ai-report-drawer__manager-popup-main {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--ui-space-inline-lg, 20px);
+}
+
+.crm-ai-report-drawer__manager-popup-info {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-2xs2, 6px);
+	min-width: 0;
+}
+
+.crm-ai-report-drawer__manager-popup-avatar {
+	display: inline-block;
+	flex-shrink: 0;
+	width: 24px;
+	height: 24px;
+	overflow: hidden;
+	border-radius: 50%;
+}
+
+.crm-ai-report-drawer__manager-popup-avatar > i {
+	border-radius: 50%;
+	background-size: cover;
+	background-position: center;
+}
+
+.crm-ai-report-drawer__manager-popup-text {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+}
+
+.crm-ai-report-drawer__manager-popup-caption {
+	color: var(--ui-color-base-2);
+}
+
+.crm-ai-report-drawer__manager-popup-name {
+	color: var(--ui-color-accent-main-link, #0154C8);
+	text-decoration: none;
+}
+
+.crm-ai-report-drawer__manager-popup-rating {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-xs2, 10px);
+	flex-shrink: 0;
+}
+
+.crm-ai-report-drawer__manager-popup-rating-chart {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 30px;
+	height: 30px;
+}
+
+.crm-ai-report-drawer__manager-popup-rating-value {
+	display: flex;
+	align-items: baseline;
+	color: var(--ui-color-base-1, #333333);
+}
+
+.crm-ai-report-drawer__manager-popup-rating-value .ui-typography-heading-h4 {
+	line-height: 1;
+}
+
+.crm-ai-report-drawer__manager-popup-rating-percent {
+	line-height: 1;
+	color: var(--ui-color-base-2);
+}
+
+.crm-ai-report-drawer__manager-popup-description {
+	color: var(--ui-color-base-3, #828B95);
+}
+
+.crm-ai-report-drawer__info-popup {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-md, 16px);
+	padding: var(--ui-space-inset-xl, 24px) var(--ui-space-inset-lg, 20px);
+}
+
+.crm-ai-report-drawer__info-popup-field {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-3xs, 4px);
+}
+
+.crm-ai-report-drawer__info-popup-field-title {
+	color: var(--ui-color-base-3, #828B95);
+}
+
+.crm-ai-report-drawer__info-popup-field-value-wrapper {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--ui-space-inline-3xs, 2px);
+	min-width: 0;
+}
+
+.crm-ai-report-drawer__info-popup-field-icon {
+	flex-shrink: 0;
+	width: 20px;
+	height: 20px;
+	background-color: var(--ui-color-accent-main-link, #0154C8);
+	-webkit-mask-size: 100% 100%;
+	mask-size: 100% 100%;
+}
+
+.crm-ai-report-drawer__info-popup-field-icon.--entity {
+	-webkit-mask-image: var(--crm-ai-report-drawer__info-popup-field-icon-path);
+	mask-image: var(--crm-ai-report-drawer__info-popup-field-icon-path);
+}
+
+.crm-ai-report-drawer__info-popup-field-icon.--chat {
+	-webkit-mask-image: var(--o-ui-icon-set__path_chats);
+	mask-image: var(--o-ui-icon-set__path_chats);
+}
+
+.crm-ai-report-drawer__info-popup-field-value {
+	color: var(--ui-color-base-1, #333333);
+	text-decoration: none;
+	word-break: break-word;
+}
+
+.crm-ai-report-drawer__info-popup-field-value.--accent {
+	color: var(--ui-color-accent-main-link, #0154C8);
+}

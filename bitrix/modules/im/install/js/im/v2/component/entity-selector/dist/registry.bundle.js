@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports, main_core, im_public, im_v2_application_core, im_v2_component_elements_popup, im_v2_const, im_v2_lib_feature, im_v2_lib_guest, im_v2_lib_localStorage, im_v2_lib_notifier, im_v2_lib_permission, im_v2_lib_utils, im_v2_provider_service_chat, im_v2_provider_service_guestInvitation, main_core_events, ui_vue3_components_button, im_v2_lib_helpdesk, im_v2_component_elements_scrollWithGradient, main_popup, ui_vue3_directives_hint, intranet_languages, ui_entitySelector, im_v2_lib_analytics, im_v2_component_search, im_v2_lib_channel, im_v2_lib_access, ui_iconSet_api_core, ui_iconSet_api_vue, im_v2_lib_confirm, im_v2_component_elements_button, ui_infoHelper, intranet_invitationInput, im_v2_lib_collab, im_v2_provider_service_collabInvitation, im_v2_lib_soundNotification, im_v2_provider_service_sending) {
+(function (exports, main_core, im_public, im_v2_application_core, im_v2_component_elements_popup, im_v2_const, im_v2_lib_analytics, im_v2_lib_feature, im_v2_lib_guest, im_v2_lib_localStorage, im_v2_lib_notifier, im_v2_lib_permission, im_v2_lib_utils, im_v2_provider_service_chat, im_v2_provider_service_guestInvitation, main_core_events, ui_vue3_components_button, im_v2_lib_helpdesk, im_v2_component_elements_scrollWithGradient, main_popup, ui_vue3_directives_hint, intranet_languages, ui_entitySelector, im_v2_component_search, im_v2_lib_channel, im_v2_lib_access, ui_iconSet_api_core, ui_iconSet_api_vue, im_v2_lib_confirm, im_v2_component_elements_button, ui_infoHelper, intranet_invitationInput, im_v2_lib_collab, im_v2_provider_service_collabInvitation, im_v2_lib_soundNotification, im_v2_provider_service_sending, ui_buttons, ui_system_dialog, im_v2_lib_layout) {
 	'use strict';
 
 	const ITEM_CLASS = 'bx-im-add-guests-tab__language-selector_item';
@@ -831,7 +831,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	`
 	};
 
-	const POPUP_ID$2 = 'im-add-to-chat-popup';
+	const POPUP_ID$3 = 'im-add-to-chat-popup';
 	const ARTICLE_CODE = '28188420';
 
 	// @vue/component
@@ -872,7 +872,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			};
 		},
 		computed: {
-			POPUP_ID: () => POPUP_ID$2,
+			POPUP_ID: () => POPUP_ID$3,
 			ARTICLE_CODE: () => ARTICLE_CODE,
 			config() {
 				return {
@@ -986,6 +986,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 					const sharingLink = await new im_v2_provider_service_guestInvitation.GuestInvitationService().generateInviteLink(this.chatId);
 					await im_v2_lib_utils.Utils.text.copyToClipboard(sharingLink.url);
 					im_v2_lib_notifier.Notifier.onCopyLinkComplete();
+					im_v2_lib_analytics.Analytics.getInstance().guest.onCopyGuestInviteLink(this.dialogId);
 				} catch {
 					im_v2_lib_notifier.Notifier.onDefaultError();
 				} finally {
@@ -995,8 +996,13 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			async updateLink() {
 				try {
 					this.isUpdatingInviteLink = true;
-					await new im_v2_provider_service_guestInvitation.GuestInvitationService().updateLink(this.chatId);
-					im_v2_lib_notifier.Notifier.onUpdateLinkComplete();
+					const sharingLink = await new im_v2_provider_service_guestInvitation.GuestInvitationService().updateLink(this.chatId);
+					try {
+						await im_v2_lib_utils.Utils.text.copyToClipboard(sharingLink.url);
+						im_v2_lib_notifier.Notifier.onCopyLinkComplete();
+					} catch {
+						im_v2_lib_notifier.Notifier.onUpdateLinkComplete();
+					}
 				} catch {
 					im_v2_lib_notifier.Notifier.onDefaultError();
 				} finally {
@@ -1138,7 +1144,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	`
 	};
 
-	const POPUP_ID$1 = 'im-add-to-collab-popup';
+	const POPUP_ID$2 = 'im-add-to-collab-popup';
 
 	// @vue/component
 	const AddToCollab = {
@@ -1176,7 +1182,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			};
 		},
 		computed: {
-			POPUP_ID: () => POPUP_ID$1,
+			POPUP_ID: () => POPUP_ID$2,
 			config() {
 				return {
 					titleBar: im_v2_lib_collab.CollabManager.getInviteHeaderText(),
@@ -1473,7 +1479,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	`
 	};
 
-	const POPUP_ID = 'im-forward-popup';
+	const POPUP_ID$1 = 'im-forward-popup';
 
 	// @vue/component
 	const ForwardPopup = {
@@ -1498,7 +1504,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		},
 		emits: ['close'],
 		computed: {
-			POPUP_ID: () => POPUP_ID,
+			POPUP_ID: () => POPUP_ID$1,
 			config() {
 				return {
 					titleBar: this.popupTitle,
@@ -1539,9 +1545,254 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	`
 	};
 
+	const EVENT_NAMESPACE = 'BX.Messenger.v2.Component.AttachToCollabV2Confirm';
+	class AttachToCollabV2Confirm extends main_core_events.EventEmitter {
+		static events = {
+			onConfirm: 'onConfirm',
+			onCancel: 'onCancel'
+		};
+		#dialog;
+		constructor(context) {
+			super();
+			this.setEventNamespace(EVENT_NAMESPACE);
+			this.context = context;
+			this.#initDialog();
+		}
+		show() {
+			this.#dialog.show();
+		}
+		#hide() {
+			this.#dialog.hide();
+		}
+		#initDialog() {
+			const params = {
+				title: main_core.Loc.getMessage('IM_ENTITY_SELECTOR_ATTACH_TO_COLLAB_V2_CONFIRM_TITLE'),
+				closeByEsc: false,
+				closeByClickOutside: false,
+				hasOverlay: true,
+				content: this.#getContainer(),
+				centerButtons: [this.#getConfirmButton(), this.#getCancelButton()]
+			};
+			this.#dialog = new ui_system_dialog.Dialog(params);
+		}
+		#getContainer() {
+			return main_core.Tag.render`
+			<div class="bx-im-entity-selector-attach-to-collab-v2-confirm__container bx-im-messenger__scope">
+				<div class="bx-im-entity-selector-attach-to-collab-v2-confirm__text">
+					${main_core.Loc.getMessage('IM_ENTITY_SELECTOR_ATTACH_TO_COLLAB_V2_CONFIRM_TEXT')}
+				</div>
+				<div class="bx-im-entity-selector-attach-to-collab-v2-confirm__image"></div>
+			</div>
+		`;
+		}
+		#getConfirmButton() {
+			return new ui_buttons.Button({
+				text: main_core.Loc.getMessage('IM_ENTITY_SELECTOR_ATTACH_TO_COLLAB_V2_CONFIRM_BUTTON'),
+				useAirDesign: true,
+				size: ui_buttons.ButtonSize.LARGE,
+				wide: true,
+				onclick: async () => {
+					this.#hide();
+					this.#attachChatByRecentType();
+				}
+			});
+		}
+		#getCancelButton() {
+			return new ui_buttons.Button({
+				text: main_core.Loc.getMessage('IM_ENTITY_SELECTOR_ATTACH_TO_COLLAB_V2_CANCEL_BUTTON'),
+				useAirDesign: true,
+				style: ui_buttons.AirButtonStyle.OUTLINE,
+				size: ui_buttons.ButtonSize.LARGE,
+				wide: true,
+				onclick: () => this.#hide()
+			});
+		}
+		#attachChatByRecentType() {
+			const handleByRecentType = {
+				[im_v2_const.RecentType.collab]: () => this.#attachCurrentChatToCollab(),
+				default: () => this.#attachSelectedChatToCollab()
+			};
+			const recentType = this.context.recentType;
+			if (!handleByRecentType[recentType]) {
+				handleByRecentType.default();
+				return;
+			}
+			handleByRecentType[recentType]();
+		}
+		async #attachCurrentChatToCollab() {
+			const {
+				chatId: parentChatId
+			} = im_v2_application_core.Core.getStore().getters['chats/get'](this.context.selectedDialogId);
+			void this.#attachToParent(this.context.currentDialogId, parentChatId);
+		}
+		async #attachSelectedChatToCollab() {
+			const {
+				chatId: parentChatId
+			} = im_v2_application_core.Core.getStore().getters['chats/get'](this.context.currentDialogId);
+			void this.#attachToParent(this.context.selectedDialogId, parentChatId);
+		}
+		async #attachToParent(dialogId, parentChatId) {
+			await new im_v2_provider_service_chat.ChatService().attachToParent(dialogId, parentChatId);
+			void this.#openAttachedChat(dialogId, parentChatId);
+		}
+		async #openAttachedChat(dialogId, parentChatId) {
+			const {
+				dialogId: parentDialogId
+			} = im_v2_application_core.Core.getStore().getters['chats/getByChatId'](parentChatId);
+			main_core_events.EventEmitter.emit(im_v2_const.EventType.recent.openNestedList, {
+				parentDialogId
+			});
+			void im_v2_lib_layout.LayoutManager.getInstance().setLayout({
+				name: im_v2_const.Layout.chat,
+				entityId: dialogId
+			});
+		}
+	}
+
+	// @vue/component
+	const AttachToCollabV2Content = {
+		name: 'AttachToCollabV2Content',
+		components: {
+			ChatSearchInput: im_v2_component_search.ChatSearchInput,
+			RecentSearch: im_v2_component_search.RecentSearch
+		},
+		props: {
+			dialogId: {
+				type: String,
+				required: true
+			},
+			recentSectionType: {
+				type: String || null,
+				default: null
+			},
+			searchParams: {
+				type: Object,
+				default: () => ({})
+			}
+		},
+		emits: ['popupClose'],
+		data() {
+			return {
+				searchQuery: '',
+				isLoading: false
+			};
+		},
+		methods: {
+			onSearchLoading(value) {
+				this.isLoading = value;
+			},
+			onUpdateSearch(query) {
+				this.searchQuery = query.trim().toLowerCase();
+			},
+			onOpenSearchItem(event) {
+				const {
+					dialogId: selectedDialogId
+				} = event;
+				const confirm = new AttachToCollabV2Confirm({
+					currentDialogId: this.dialogId,
+					selectedDialogId,
+					recentType: this.recentSectionType
+				});
+				this.$emit('popupClose');
+				confirm.show();
+			}
+		},
+		template: `
+		<div class="bx-im-entity-selector-attach-to-collab-v2__container">
+			<div class="bx-im-entity-selector-attach-to-collab-v2__input">
+				<ChatSearchInput
+					:searchMode="true"
+					:isLoading="isLoading"
+					:withIcon="false"
+					:delayForFocusOnStart="1"
+					@updateSearch="onUpdateSearch"
+				/>
+			</div>
+			<div class="bx-im-entity-selector-attach-to-collab-v2__search-result-container">
+				<RecentSearch
+					:searchMode="true"
+					:showUsersCarousel="false"
+					:additionalSearchParams="searchParams"
+					:recentSectionType="recentSectionType"
+					:query="searchQuery"
+					@loading="onSearchLoading"
+					@openItem="onOpenSearchItem"
+				/>
+			</div>
+		</div>
+	`
+	};
+
+	const POPUP_ID = 'im-attach-to-collab-v2-popup';
+
+	// @vue/component
+	const AttachToCollabV2 = {
+		name: 'AttachToCollabV2',
+		components: {
+			MessengerPopup: im_v2_component_elements_popup.MessengerPopup,
+			AttachToCollabV2Content
+		},
+		props: {
+			dialogId: {
+				type: String,
+				required: true
+			},
+			recentSectionType: {
+				type: String || null,
+				default: null
+			},
+			popupTitle: {
+				type: String,
+				required: true
+			},
+			searchParams: {
+				type: Object,
+				default: () => ({})
+			}
+		},
+		emits: ['close'],
+		computed: {
+			POPUP_ID: () => POPUP_ID,
+			config() {
+				return {
+					titleBar: this.popupTitle,
+					closeIcon: true,
+					overlay: {
+						backgroundColor: '#00204E75',
+						opacity: 100
+					},
+					padding: 0,
+					contentPadding: 0,
+					contentBackground: '#fff',
+					className: 'bx-im-attach-to-collab-v2__scope'
+				};
+			}
+		},
+		methods: {
+			loc(phraseCode) {
+				return this.$Bitrix.Loc.getMessage(phraseCode);
+			}
+		},
+		template: `
+		<MessengerPopup
+			:id="POPUP_ID"
+			:config="config"
+			@close="$emit('close')"
+		>
+			<AttachToCollabV2Content
+				:dialogId="dialogId"
+				:recentSectionType="recentSectionType"
+				:searchParams="searchParams"
+				@popupClose="$emit('close')"
+			/>
+		</MessengerPopup>
+	`
+	};
+
 	exports.AddToChat = AddToChat;
 	exports.AddToCollab = AddToCollab;
+	exports.AttachToCollabV2 = AttachToCollabV2;
 	exports.ForwardPopup = ForwardPopup;
 
-})(this.BX.Messenger.v2.Component.EntitySelector = this.BX.Messenger.v2.Component.EntitySelector || {}, BX, BX.Messenger.v2.Lib, BX.Messenger.v2.Application, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Service, BX.Messenger.v2.Service, BX.Event, BX.Vue3.Components, BX.Messenger.v2.Lib, BX.Messenger.v2.Component.Elements, BX.Main, BX.Vue3.Directives, BX.Intranet, BX.UI.EntitySelector, BX.Messenger.v2.Lib, BX.Messenger.v2.Component, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.UI.IconSet, BX.UI.IconSet, BX.Messenger.v2.Lib, BX.Messenger.v2.Component.Elements, BX.UI, BX.Intranet, BX.Messenger.v2.Lib, BX.Messenger.v2.Service, BX.Messenger.v2.Lib, BX.Messenger.v2.Service);
+})(this.BX.Messenger.v2.Component.EntitySelector = this.BX.Messenger.v2.Component.EntitySelector || {}, BX, BX.Messenger.v2.Lib, BX.Messenger.v2.Application, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Service, BX.Messenger.v2.Service, BX.Event, BX.Vue3.Components, BX.Messenger.v2.Lib, BX.Messenger.v2.Component.Elements, BX.Main, BX.Vue3.Directives, BX.Intranet, BX.UI.EntitySelector, BX.Messenger.v2.Component, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.UI.IconSet, BX.UI.IconSet, BX.Messenger.v2.Lib, BX.Messenger.v2.Component.Elements, BX.UI, BX.Intranet, BX.Messenger.v2.Lib, BX.Messenger.v2.Service, BX.Messenger.v2.Lib, BX.Messenger.v2.Service, BX.UI, BX.UI.System, BX.Messenger.v2.Lib);
 //# sourceMappingURL=registry.bundle.js.map

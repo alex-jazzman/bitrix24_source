@@ -22,11 +22,11 @@ a:hover {
 }
 
 .instal-bg {
-	background:url("ni/instal-line-bg.png") no-repeat center top #646c7a;
-	background:url("ni/instal-line-bg.png") no-repeat center top, -moz-radial-gradient(50% 50%, circle cover, rgba(69,72,77,0) 5%, rgba(69,72,77,0.2) 40%, rgba(69,72,77,0.3) 50%, rgba(69,72,77,0.8) 75%,  rgba(47,50,57,1) 100%);
-	background:url("ni/instal-line-bg.png") no-repeat center top, -webkit-radial-gradient(50% 50%, circle cover, rgba(69,72,77,0) 5%, rgba(69,72,77,0.2) 40%, rgba(69,72,77,0.3) 50%, rgba(69,72,77,0.8) 75%,  rgba(47,50,57,1) 100%);
-	background:url("ni/instal-line-bg.png") no-repeat center top, -o-radial-gradient(50% 50%, circle cover, rgba(69,72,77,0) 5%, rgba(69,72,77,0.2) 40%, rgba(69,72,77,0.3) 50%, rgba(69,72,77,0.8) 75%,  rgba(47,50,57,1) 100%);
-	background:url("ni/instal-line-bg.png") no-repeat center top, radial-gradient(circle cover, at 50% 50%, rgba(69,72,77,0) 5%, rgba(69,72,77,0.2) 40%, rgba(69,72,77,0.3) 50%, rgba(69,72,77,0.8) 75%,  rgba(47,50,57,1) 100%);
+	background:url("ni/instal-line-bg.webp") no-repeat center top #646c7a;
+	background:url("ni/instal-line-bg.webp") no-repeat center top, -moz-radial-gradient(50% 50%, circle cover, rgba(69,72,77,0) 5%, rgba(69,72,77,0.2) 40%, rgba(69,72,77,0.3) 50%, rgba(69,72,77,0.8) 75%,  rgba(47,50,57,1) 100%);
+	background:url("ni/instal-line-bg.webp") no-repeat center top, -webkit-radial-gradient(50% 50%, circle cover, rgba(69,72,77,0) 5%, rgba(69,72,77,0.2) 40%, rgba(69,72,77,0.3) 50%, rgba(69,72,77,0.8) 75%,  rgba(47,50,57,1) 100%);
+	background:url("ni/instal-line-bg.webp") no-repeat center top, -o-radial-gradient(50% 50%, circle cover, rgba(69,72,77,0) 5%, rgba(69,72,77,0.2) 40%, rgba(69,72,77,0.3) 50%, rgba(69,72,77,0.8) 75%,  rgba(47,50,57,1) 100%);
+	background:url("ni/instal-line-bg.webp") no-repeat center top, radial-gradient(circle cover, at 50% 50%, rgba(69,72,77,0) 5%, rgba(69,72,77,0.2) 40%, rgba(69,72,77,0.3) 50%, rgba(69,72,77,0.8) 75%,  rgba(47,50,57,1) 100%);
 	background-color: #646c7a;
 	height: 100%;
 	left: 0;

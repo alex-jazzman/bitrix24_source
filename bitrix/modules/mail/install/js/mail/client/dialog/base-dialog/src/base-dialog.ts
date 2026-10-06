@@ -1,4 +1,4 @@
-import { Dom, Event, Tag } from 'main.core';
+import { Dom, Tag } from 'main.core';
 import { Loader } from 'main.loader';
 import { CloseIconSize, type Popup, PopupManager } from 'main.popup';
 import { type AirButtonStyle, Button, ButtonSize } from 'ui.buttons';
@@ -181,17 +181,19 @@ export class BaseDialog
 
 	showCloseIcon(): void
 	{
-		if (this.#popup?.closeIcon)
+		const container = this.#popup?.getPopupContainer();
+		if (container)
 		{
-			Dom.show(this.#popup.closeIcon);
+			Dom.removeClass(container, 'mail__client_dialog_base-dialog--hide-close-icon');
 		}
 	}
 
 	hideCloseIcon(): void
 	{
-		if (this.#popup?.closeIcon)
+		const container = this.#popup?.getPopupContainer();
+		if (container)
 		{
-			Dom.hide(this.#popup.closeIcon);
+			Dom.addClass(container, 'mail__client_dialog_base-dialog--hide-close-icon');
 		}
 	}
 
@@ -211,7 +213,7 @@ export class BaseDialog
 		this.hideActions();
 
 		this.#loader = new Loader({ size: 60, mode: 'inline' });
-		this.#loader.show(loaderTarget);
+		this.#loader.show(loaderTarget as any);
 	}
 
 	hideLoader(): void
@@ -282,6 +284,7 @@ export class BaseDialog
 			closeIconSize: CloseIconSize.LARGE,
 			closeByEsc: true,
 			overlay: true,
+			autoHide: true,
 			cacheable: this.#options.cacheable,
 			width: this.#options.width,
 			borderRadius: '18px',
@@ -296,11 +299,6 @@ export class BaseDialog
 				},
 			},
 		});
-
-		if (popup.overlay?.element)
-		{
-			Event.bind(popup.overlay.element, 'click', () => this.close());
-		}
 
 		return popup;
 	}

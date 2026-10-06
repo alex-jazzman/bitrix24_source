@@ -3,6 +3,7 @@
 return [
 	'extensions' => [
 		'entity-ready',
+		'new-projects-promo/trigger',
 		'pull/client/events',
 		'reload/listeners',
 		'rest/run-action-executor',
@@ -13,5 +14,6 @@ return [
 		'utils/logger/error-logger',
 		'tasks:navigator',
 		'tasks:navigator/meta',
+		'utils/guid',
 	],
 ];

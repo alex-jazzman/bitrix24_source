@@ -122,7 +122,23 @@ class CrmActivityCallListComponent extends \CBitrixComponent
 		$entityIds = (array)$request['ENTITY_IDS'];
 		$gridId = (string)$request['GRID_ID'];
 		$result = new Main\Result();
-		
+
+		$userId = \Bitrix\Crm\Service\Container::getInstance()->getContext()->getUserId();
+		$userPermissions = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions($userId);
+		if (!self::canUpdateCallList($callListId, $userId, $userPermissions))
+		{
+			$result->addError(\Bitrix\Crm\Controller\ErrorCode::getAccessDeniedError());
+
+			return $result;
+		}
+
+		if (!\Bitrix\Crm\CallList\CallList::isEntityTypeSupported($entityTypeId))
+		{
+			$result->addError(\Bitrix\Crm\Controller\ErrorCode::getEntityTypeNotSupportedError($entityTypeId));
+
+			return $result;
+		}
+
 		try
 		{
 			$callList = \Bitrix\Crm\CallList\CallList::createWithId($callListId, true);
@@ -136,13 +152,59 @@ class CrmActivityCallListComponent extends \CBitrixComponent
 			$callList->setEntityTypeId($entityTypeId);
 			$callList->setFilterParameters(null);
 
+			$storedElementIds = self::restoreStoredItems($callList);
+
 			if(is_array($entityIds) && count($entityIds) > 0)
 			{
-				$callList->addEntities($entityIds);
+				$distinctEntityIds = [];
+				foreach ($entityIds as $entityId)
+				{
+					$entityId = (int)$entityId;
+					$distinctEntityIds[$entityId] = $entityId;
+				}
+				$entityIds = array_values($distinctEntityIds);
+
+				// A set that cannot fit is rejected before permission checks are spent on it.
+				$newEntityCount = count(array_diff($entityIds, $storedElementIds));
+				if (count($storedElementIds) + $newEntityCount > \Bitrix\Crm\CallList\CallList::ITEMS_LIMIT)
+				{
+					$result->addError(self::getItemsLimitExceededError());
+
+					return $result;
+				}
+
+				$userPermissions->item()->preloadPermissionAttributes($entityTypeId, $entityIds);
+
+				$availableEntityIds = [];
+				foreach ($entityIds as $entityId)
+				{
+					if ($userPermissions->item()->canRead($entityTypeId, $entityId))
+					{
+						$availableEntityIds[] = $entityId;
+					}
+				}
+
+				if (empty($availableEntityIds))
+				{
+					$result->addError(\Bitrix\Crm\Controller\ErrorCode::getAccessDeniedError());
+
+					return $result;
+				}
+
+				$callList->addEntities($availableEntityIds);
 			}
 			else if($gridId != '')
 			{
 				$callList->addEntitiesFromGrid($gridId);
+			}
+
+			// The grid branch picks its entities on its own, so the resulting size of the list is the
+			// gate both branches share.
+			if (count($callList->getItems()) > \Bitrix\Crm\CallList\CallList::ITEMS_LIMIT)
+			{
+				$result->addError(self::getItemsLimitExceededError());
+
+				return $result;
 			}
 
 			$callList->persist();
@@ -153,11 +215,85 @@ class CrmActivityCallListComponent extends \CBitrixComponent
 			return $result;
 		}
 
-		$message = Loc::getMessage('CRM_CALL_LIST_ENTITIES_ADDED', array('#ENTITIES#' => static::getEntityCaption($entityTypeId, true)));
-		$result->setData(array(
-			'MESSAGE' => $message
-		));
+		$result->setData([
+			'MESSAGE' => Loc::getMessage(
+				'CRM_CALL_LIST_ENTITIES_ADDED',
+				['#ENTITIES#' => static::getEntityCaption($entityTypeId, true)],
+			),
+		]);
+
 		return $result;
+	}
+
+	/**
+	 * Puts back the items CallList::createWithId() dropped from the loaded list: the ones the acting
+	 * user may not read and the ones the legacy loader could not resolve. Their rows stay in the
+	 * table, so a list unaware of them measures the size limit against a smaller list and inserts an
+	 * already existing primary key instead of updating the stored row.
+	 *
+	 * @return int[] Element ids the list holds in the database.
+	 */
+	private static function restoreStoredItems(\Bitrix\Crm\CallList\CallList $callList): array
+	{
+		$storedElementIds = [];
+		$loadedItems = $callList->getItems();
+
+		$rows = \Bitrix\Crm\CallList\Internals\CallListItemTable::getList([
+			'select' => ['LIST_ID', 'ENTITY_TYPE_ID', 'ELEMENT_ID', 'STATUS_ID', 'CALL_ID', 'RANK', 'WEBFORM_RESULT_ID'],
+			'filter' => ['=LIST_ID' => $callList->getId()],
+			'order' => ['RANK' => 'ASC'],
+		]);
+		while ($row = $rows->fetch())
+		{
+			$elementId = (int)$row['ELEMENT_ID'];
+			$storedElementIds[] = $elementId;
+
+			if (!isset($loadedItems[$elementId]))
+			{
+				$callList->addItem(\Bitrix\Crm\CallList\Item::createFromArray($row, false));
+			}
+		}
+
+		return $storedElementIds;
+	}
+
+	private static function getItemsLimitExceededError(): Main\Error
+	{
+		return new Main\Error('Items limit exceeded');
+	}
+
+	/*
+	 * A call list has no representation in the crm role model, so its creator defines who may change it.
+	 * The activity carrying the list is not an ownership anchor: every field of it, ASSOCIATED_ENTITY_ID
+	 * and RESPONSIBLE_ID included, is writable through the public activity API.
+	 */
+	private static function canUpdateCallList(
+		int $callListId,
+		int $userId,
+		\Bitrix\Crm\Service\UserPermissions $userPermissions,
+	): bool
+	{
+		if ($userPermissions->isAdmin())
+		{
+			return true;
+		}
+
+		if ($userId <= 0)
+		{
+			return false;
+		}
+
+		$callList = \Bitrix\Crm\CallList\Internals\CallListTable::getRow([
+			'select' => ['CREATED_BY_ID'],
+			'filter' => ['=ID' => $callListId],
+		]);
+
+		if (!$callList)
+		{
+			return false;
+		}
+
+		return (int)$callList['CREATED_BY_ID'] === $userId;
 	}
 
 	public function prepareItems(\Bitrix\Crm\CallList\CallList $callList)

@@ -79,8 +79,42 @@
 	pointer-events: auto;
 }
 
+/*
+ * Edit-mode enter/leave animation. The toolbar fades (opacity) and, in fixed mode,
+ * the placeholder eases its height so the content slides instead of jumping. It is
+ * driven by an `.is-visible` class toggle + CSS transition (see note-editor.js
+ * animateToolbar), NOT a Vue <Transition>: the latter calls an internal
+ * forceReflow() (reads document.body.offsetHeight) on every enter/leave, which on
+ * this heavy editor page costs ~30ms and stacks into visible jank when edit mode is
+ * toggled rapidly. The toolbar keeps its inline translateX(-50%) in fixed mode, so
+ * only opacity is animated — a transform animation would fight it.
+ *
+ * The 200ms here is mirrored by the unmount delay in note-editor.js animateToolbar.
+ */
+.note-editor-toolbar-wrap {
+	opacity: 0;
+	transition: opacity 200ms ease;
+}
+
+.note-editor-toolbar-wrap.is-visible {
+	opacity: 1;
+}
+
 .note-editor-toolbar-placeholder {
+	height: 0;
+	overflow: hidden;
+	transition: height 200ms ease;
+}
+
+.note-editor-toolbar-placeholder.is-visible {
 	height: var(--note-editor-toolbar-height);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.note-editor-toolbar-wrap,
+	.note-editor-toolbar-placeholder {
+		transition: none;
+	}
 }
 
 .note-editor-toolbar-group {
@@ -288,6 +322,86 @@
 	position: relative;
 	flex: 1;
 	min-height: 0;
+}
+
+/* [#11/NEW-A rework] Version preview — the nested read-only NoteDocumentEditor instance (see
+ * note-editor.js's `contentOnly` prop) renders in place of the live content while a version is
+ * open; the loader/error states below cover the window before that instance is mounted. */
+.note-editor-content-wrapper--preview {
+	display: flex;
+	flex-direction: column;
+	min-height: 100%;
+}
+
+.note-editor-preview-error {
+	display: flex;
+	flex: 1 1 auto;
+	align-items: center;
+	justify-content: center;
+	min-height: 240px;
+	padding: 24px;
+	color: var(--ui-color-base-3);
+	font-size: 13.5px;
+	text-align: center;
+}
+
+/* [version-diff] The diff is baked into the merged preview doc (version N + spliced-in removed N-1
+   slices): text carries the `diffChange` mark (span[data-diff]) and atoms (image / file / video /
+   mention) carry a `note-version-diff-node--*` class from their NodeView. Removed content is always
+   present in the doc but only SHOWN when the wrapper has `--diff` (the "выделить изменения" toggle);
+   with the toggle off it collapses to display:none, leaving exactly version N. No decorations, no
+   transactions on toggle — a pure CSS flip. */
+
+/* Toggle OFF: hide every removed span/atom so the preview reads as a clean version N. !important is
+   deliberate — the atom nodes carry their own display (flow-root / inline-block) at equal specificity,
+   so a plain rule would tie and lose on source order; hide must win unconditionally. */
+.note-editor-content-wrapper--preview:not(.note-editor-content-wrapper--diff) .note-version-diff-mark[data-diff="removed"],
+.note-editor-content-wrapper--preview:not(.note-editor-content-wrapper--diff) .note-version-diff-node--removed {
+	display: none !important;
+}
+
+/* Toggle ON: tint text runs. Added green, removed red-and-struck. */
+.note-editor-content-wrapper--diff .note-version-diff-mark[data-diff="added"] {
+	background: var(--ui-color-accent-soft-green, rgba(157, 207, 0, 0.18));
+	color: var(--ui-color-accent-text-green, #4a9500);
+	border-radius: 2px;
+	-webkit-box-decoration-break: clone;
+	        box-decoration-break: clone;
+}
+
+.note-editor-content-wrapper--diff .note-version-diff-mark[data-diff="removed"] {
+	background: var(--ui-color-accent-soft-red, rgba(240, 65, 52, 0.12));
+	color: var(--ui-color-accent-main-alert, #f04134);
+	text-decoration: line-through;
+	text-decoration-thickness: 1px;
+	border-radius: 2px;
+	-webkit-box-decoration-break: clone;
+	        box-decoration-break: clone;
+}
+
+/* Toggle ON: translucent wash straight over the real atom node (image/file/video/mention).
+   border-radius: inherit hugs the node's own rounding (e.g. the 10px image wrapper) instead of a
+   square tint over a round card; pointer-events: none keeps the viewer/link underneath clickable. */
+.note-editor-content-wrapper--diff .note-version-diff-node--added,
+.note-editor-content-wrapper--diff .note-version-diff-node--removed {
+	position: relative;
+}
+
+.note-editor-content-wrapper--diff .note-version-diff-node--added::after,
+.note-editor-content-wrapper--diff .note-version-diff-node--removed::after {
+	content: '';
+	position: absolute;
+	inset: 0;
+	pointer-events: none;
+	border-radius: inherit;
+}
+
+.note-editor-content-wrapper--diff .note-version-diff-node--added::after {
+	background: var(--ui-color-accent-soft-green, rgba(157, 207, 0, 0.28));
+}
+
+.note-editor-content-wrapper--diff .note-version-diff-node--removed::after {
+	background: var(--ui-color-accent-soft-red, rgba(240, 65, 52, 0.24));
 }
 
 .ProseMirror.note-editor-prose {
@@ -564,7 +678,10 @@ html:not(.note-mobile) .note-heading:hover .note-heading__toggle {
 .ProseMirror.note-editor-prose div[data-callout-type="zefir"] {
 	border-left-color: var(--ui-color-accent-soft-blue-1);
 	background-color: var(--ui-color-accent-soft-blue-3);
-	background-image: url('/bitrix/js/note/ui/assets/images/zefir-decoration.png');
+	/* fallback for browsers without image-set */
+	background-image: url(/bitrix/js/note/ui/assets/images/zefir-decoration.webp);
+	background-image: -webkit-image-set(url(/bitrix/js/note/ui/assets/images/zefir-decoration.webp) 1x, url(/bitrix/js/note/ui/assets/images/zefir-decoration@2x.webp) 2x);
+	background-image: image-set(url(/bitrix/js/note/ui/assets/images/zefir-decoration.webp) 1x, url(/bitrix/js/note/ui/assets/images/zefir-decoration@2x.webp) 2x);
 	background-repeat: no-repeat;
 	background-position: right 16px top -27px;
 	background-size: 170px 165px;
@@ -661,12 +778,13 @@ html:not(.note-mobile) .note-heading:hover .note-heading__toggle {
 .ProseMirror.note-editor-prose pre {
 	background-color: var(--ui-color-accent-soft-grey-2);
 	color: var(--ui-color-base-1);
-	border: 1px solid var(--ui-color-divider-accent);
 	margin-top: 1.5em;
 	margin-bottom: 1.5em;
 	padding: 1em;
 	font-size: 1rem;
-	border-radius: 6px;
+	/* Code never wraps: long lines scroll horizontally (line numbers stay aligned).
+	 * Overrides ProseMirror's default pre-wrap. Border/radius live on the wrapper. */
+	white-space: pre;
 	overflow-x: auto;
 	tab-size: 4;
 }
@@ -794,16 +912,319 @@ html:not(.note-mobile) .note-heading:hover .note-heading__toggle {
 	position: relative;
 	margin-top: 1.5em;
 	margin-bottom: 1.5em;
-	/* Own BFC: next to a floated image the box shrinks beside the float instead of flowing under
-	   it. Without this the full-width div overlaps the image (steals clicks) and the absolutely
-	   positioned overlay anchors to the wrong (full-width) edge. */
-	display: flow-root;
+	/* Flex row [gutter][scrolling pre]. A block-level flex container is its own
+	   formatting context, so (like the former flow-root) it shrinks beside a
+	   floated image instead of overlapping it and mis-anchoring the overlay.
+	   Border/radius/surface live here so the gutter and pre share one rounded box;
+	   overflow:hidden clips the corners (the language popup portals to body). */
+	display: flex;
+	border: 1px solid var(--ui-color-divider-accent);
+	border-radius: 6px;
+	background-color: var(--ui-color-accent-soft-grey-2);
+	overflow: hidden;
+	/* Fixed px (not unitless): pre is 16px and code 14px, so a unitless value would
+	   give the two different struts and the gutter would drift line by line. One px
+	   value on pre, code and the gutter keeps every line box identical. */
+	--note-code-line-height: 22px;
+	/* Pin against mobile font-boosting so declared sizes always hold (inherited by
+	   pre/code/gutter). Hygiene, not the drift fix — the gutter alignment is handled
+	   by matching pre's font to code's below. */
+	text-size-adjust: 100%;
+	-webkit-text-size-adjust: 100%;
 }
 
 .ProseMirror.note-editor-prose .note-editor-code-block > pre {
+	flex: 1 1 auto;
+	min-width: 0;
 	margin-top: 0;
 	margin-bottom: 0;
+	border-radius: 0;
+	/* pre carries no text of its own (all of it lives in `code`), but its font builds
+	   the line-box strut. A 16px sans strut and the 14px monospace `code` box have
+	   different ascent/descent, so their union is a hair taller than line-height and
+	   drifts against the single-font gutter (visible on mobile at fractional DPI).
+	   Match pre's font to code so strut and text box are identical → one exact box. */
+	font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+	font-size: 0.875rem;
+	/* rem, not the base `1em`: pre's font-size is now 14px, so an em padding would
+	   shrink to 14px and offset the first line against the gutter's 1rem top. */
+	padding: 1rem;
+	line-height: var(--note-code-line-height);
 }
+
+.ProseMirror.note-editor-prose .note-editor-code-block > pre code {
+	font-size: 0.875rem;
+	line-height: var(--note-code-line-height);
+}
+
+/* Line-number gutter: rendered by CodeBlockNodeView, one number per code line.
+   Sits outside the pre's horizontal scroll so it stays pinned while code scrolls.
+   Font metrics (family, size, line-height) and top padding match `pre code` so
+   numbers align 1:1 with lines — code does not wrap, so the mapping is exact. */
+.ProseMirror.note-editor-prose .note-editor-code-block-gutter {
+	flex: 0 0 auto;
+	padding: 1rem 8px 1rem 12px;
+	border-right: 1px solid var(--ui-color-divider-accent);
+	background-color: var(--ui-color-accent-soft-grey-2);
+	color: var(--ui-color-base-1);
+	opacity: 0.4;
+	font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+	/* Same font-size as code (0.875em → matches glyph baseline in the shared line
+	   box). The step stays aligned because --note-code-line-height is set above
+	   both fonts' intrinsic line box, so every element honors it exactly. */
+	font-size: 0.875rem;
+	line-height: var(--note-code-line-height);
+	text-align: right;
+	white-space: pre;
+	user-select: none;
+	-webkit-user-select: none;
+	pointer-events: none;
+}
+
+html:not(.note-mobile) .ProseMirror.note-editor-prose[contenteditable="true"] .note-editor-code-block-gutter {
+	pointer-events: auto;
+}
+
+.ProseMirror.note-editor-prose .note-editor-code-block--gutter-hover .note-editor-code-block-gutter {
+	background-color: var(--ui-color-bg-state-hover-default);
+}
+
+/* Thin horizontal scrollbar for the wide-content scroll containers (tables and
+   code blocks) — the default bar is chunky on desktop. */
+.ProseMirror.note-editor-prose .tableWrapper,
+.ProseMirror.note-editor-prose .note-editor-code-block > pre {
+	scrollbar-width: thin;
+	scrollbar-color: var(--ui-color-divider-accent) transparent;
+}
+
+.ProseMirror.note-editor-prose .tableWrapper::-webkit-scrollbar,
+.ProseMirror.note-editor-prose .note-editor-code-block > pre::-webkit-scrollbar {
+	height: 8px;
+}
+
+.ProseMirror.note-editor-prose .tableWrapper::-webkit-scrollbar-track,
+.ProseMirror.note-editor-prose .note-editor-code-block > pre::-webkit-scrollbar-track {
+	background: transparent;
+}
+
+.ProseMirror.note-editor-prose .tableWrapper::-webkit-scrollbar-thumb,
+.ProseMirror.note-editor-prose .note-editor-code-block > pre::-webkit-scrollbar-thumb {
+	background-color: var(--ui-color-divider-accent);
+	border-radius: 4px;
+}
+
+/* Mermaid: in read mode the block shows a rendered diagram instead of its source. The wrapper
+   keeps its code-block chrome (border, surface) — only the text side is swapped out, and the
+   class lands on the wrapper only once a frame is actually ready, so a failed render simply
+   leaves the source on screen. */
+.ProseMirror.note-editor-prose .note-editor-code-block--diagram > pre,
+.ProseMirror.note-editor-prose .note-editor-code-block--diagram > .note-editor-code-block-gutter {
+	display: none;
+}
+
+.note-editor-code-block-diagram {
+	display: none;
+}
+
+.note-editor-code-block--diagram > .note-editor-code-block-diagram {
+	display: block;
+	flex: 1 1 auto;
+	min-width: 0;
+	padding: 1rem;
+}
+
+/* Waiting for the render: the block already holds its place in read mode, so the reader sees where
+   the diagram will be instead of watching the page jump when it arrives. Height is a guess — the
+   real one is only known once the engine has laid the diagram out. */
+.note-editor-code-block-diagram-pending {
+	min-height: 120px;
+	border-radius: 6px;
+	background-color: var(--ui-color-divider-accent);
+	animation: note-editor-diagram-pending 1.4s ease-in-out infinite;
+}
+
+@keyframes note-editor-diagram-pending {
+	0%,
+	100% {
+		opacity: 0.35;
+	}
+
+	50% {
+		opacity: 0.7;
+	}
+}
+
+/* Clips the diagram while it is zoomed. Deliberately not a scroll container: a wheel inside it must
+   keep scrolling the page, so panning is a transform on the carrier (see node-view.js) and not a
+   scrollTop the page would fight over. */
+.note-editor-diagram-viewport {
+	position: relative;
+	overflow: hidden;
+}
+
+/* The carrier is either a sandboxed frame or an inert picture, and neither reports the diagram's own
+   proportions: the aspect ratio is pinned inline (see mermaid-diagram.js) and height follows width from
+   there at any container size. It is only as wide as the diagram is, so auto side margins center a
+   narrow diagram in the block; one that fills the width is unaffected. */
+.note-editor-diagram-viewport > .note-editor-diagram-media {
+	display: block;
+	max-width: 100%;
+	height: auto;
+	margin: 0 auto;
+	border: 0;
+	background-color: transparent;
+	color-scheme: normal;
+}
+
+/* Zoomed: width is set in px past the block's own width, so the fit-time clamp and centering both
+   have to step aside — position is owned by the pan transform from here on. */
+.note-editor-diagram-viewport--zoomed > .note-editor-diagram-media {
+	max-width: none;
+	max-height: none;
+	margin: 0;
+	transform-origin: 0 0;
+}
+
+/* No gesture reaches the diagram either way — pointer and wheel events never cross into a frame with
+   an empty sandbox, and nothing inside an inert picture runs at all — so they are captured by a
+   transparent layer over the carrier. touch-action keeps a one-finger swipe scrolling the page until
+   there is actually something to pan. */
+.note-editor-diagram-capture {
+	position: absolute;
+	inset: 0;
+	touch-action: pan-y;
+	cursor: zoom-in;
+}
+
+.note-editor-diagram-viewport--zoomed > .note-editor-diagram-capture {
+	touch-action: none;
+	cursor: grab;
+}
+
+.note-editor-diagram-viewport--zoomed > .note-editor-diagram-capture:active {
+	cursor: grabbing;
+}
+
+/* Fullscreen reader. There is nothing behind it to scroll and nothing else to reach, so the whole
+   surface belongs to the gesture: the wheel zooms and a pinch works without a modifier. */
+.note-editor-diagram-viewport--immersive {
+	flex: 1 1 auto;
+	min-height: 0;
+}
+
+.note-editor-diagram-viewport--immersive > .note-editor-diagram-capture {
+	touch-action: none;
+}
+
+/* Unlike a block in the document, this viewport cannot grow to the diagram — its height is the
+   screen's. So the untouched diagram is contained in both directions (aspect-ratio turns the height
+   cap into a narrower box) and centred by flex. Once zoomed, position belongs to the pan transform
+   again, which measures from the top-left corner. */
+.note-editor-diagram-viewport--immersive:not(.note-editor-diagram-viewport--zoomed) {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.note-editor-diagram-viewport--immersive:not(.note-editor-diagram-viewport--zoomed) > .note-editor-diagram-media {
+	max-height: 100%;
+}
+
+.note-editor-diagram-fullscreen {
+	/* Same hover tint as the sidebar rows and its footer buttons. The dark context needs the alt
+	   tint — a black overlay is invisible on a dark surface. The context class sits on this very
+	   element, so the override is not a descendant selector. */
+	--note-diagram-control-hover: var(--ui-color-bg-state-hover-default);
+	position: fixed;
+	inset: 0;
+	/* Above the mobile page header (110) and the note popups (120): while the reader is in here,
+	   nothing from the page should show through. */
+	z-index: 200;
+	display: flex;
+	flex-direction: column;
+	background-color: var(--ui-color-bg-content-primary);
+}
+
+/* The page keeps its scroll position but stops scrolling underneath the layer — on mobile the
+   window is the scroll container, so the lock has to sit on the root element. */
+.note-editor-diagram-fullscreen-lock {
+	overflow: hidden;
+}
+
+.note-editor-diagram-fullscreen.--ui-context-content-dark {
+	--note-diagram-control-hover: var(--ui-color-bg-state-hover-alt);
+}
+
+/* The strip of controls is built like the sidebar footer: transparent, separated from what it
+   governs by one divider line, buttons pushed to the end. */
+.note-editor-diagram-fullscreen-bar {
+	display: flex;
+	flex: 0 0 auto;
+	align-items: center;
+	justify-content: flex-end;
+	gap: var(--ui-space-inline-2xs, 4px);
+	padding: var(--ui-space-stack-xs, 8px) var(--ui-space-inline-xs, 12px);
+	background: transparent;
+	border-bottom: 1px solid var(--ui-color-divider-default);
+}
+
+/* Exactly the sidebar footer button: a transparent square of its own size, the glyph in base-3, and
+   nothing but a tinted background on hover. No border, no surface, no colour change — the strip has
+   to read as note's own chrome, not as a set of boxes over the diagram. */
+.note-editor-diagram-fullscreen-button,
+.note-editor-diagram-fullscreen-value {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	box-sizing: border-box;
+	flex: 0 0 auto;
+	width: 36px;
+	height: 36px;
+	padding: 0;
+	margin: 0;
+	border: 0;
+	border-radius: var(--ui-border-radius-sm, 8px);
+	background: transparent;
+	color: var(--ui-color-base-3);
+	font-family: inherit;
+	font-size: 13px;
+	line-height: 1;
+	cursor: pointer;
+	transition: background 0.15s ease;
+	/* Inherited by the glyph inside — the same 24px the sidebar footer asks BIcon for. */
+	--ui-icon-set__icon-size: 24px;
+	--ui-icon-set__icon-color: var(--ui-color-base-3);
+}
+
+/* The readout is the same button with words instead of a glyph, so the row keeps one rhythm. */
+.note-editor-diagram-fullscreen-value {
+	width: auto;
+	min-width: 52px;
+	padding: 0 var(--ui-space-inline-2xs, 4px);
+	font-variant-numeric: tabular-nums;
+}
+
+.note-editor-diagram-fullscreen-button:hover:not(:disabled),
+.note-editor-diagram-fullscreen-value:hover:not(:disabled) {
+	background: var(--note-diagram-control-hover);
+}
+
+.note-editor-diagram-fullscreen-button:disabled,
+.note-editor-diagram-fullscreen-value:disabled {
+	opacity: 0.3;
+	pointer-events: none;
+}
+
+/* Closing is not one of the zoom controls, so it does not sit flush against them — one mis-tap there
+   costs the reader the whole diagram. */
+.note-editor-diagram-fullscreen-divider {
+	flex: 0 0 auto;
+	width: 1px;
+	height: 20px;
+	margin: 0 var(--ui-space-inline-2xs, 4px);
+	background: var(--ui-color-divider-default);
+}
+
 
 .note-editor-code-block-overlay-host {
 	position: absolute;
@@ -829,7 +1250,9 @@ html:not(.note-mobile) .note-heading:hover .note-heading__toggle {
 }
 
 .note-editor-code-block-language,
-.note-editor-code-block-copy {
+.note-editor-code-block-copy,
+.note-editor-code-block-zoom-button,
+.note-editor-code-block-zoom-value {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
@@ -849,19 +1272,25 @@ html:not(.note-mobile) .note-heading:hover .note-heading__toggle {
 }
 
 .--ui-context-content-dark .note-editor-code-block-language,
-.--ui-context-content-dark .note-editor-code-block-copy {
+.--ui-context-content-dark .note-editor-code-block-copy,
+.--ui-context-content-dark .note-editor-code-block-zoom-button,
+.--ui-context-content-dark .note-editor-code-block-zoom-value {
 	background-color: #3A3A3A;
 	border-color: #4A4A4A;
 }
 
 .note-editor-code-block-language:hover:not(:disabled),
-.note-editor-code-block-copy:hover {
+.note-editor-code-block-copy:hover,
+.note-editor-code-block-zoom-button:hover:not(:disabled),
+.note-editor-code-block-zoom-value:hover:not(:disabled) {
 	background-color: #F5F5F5;
 	border-color: #C5C5C5;
 }
 
 .--ui-context-content-dark .note-editor-code-block-language:hover:not(:disabled),
-.--ui-context-content-dark .note-editor-code-block-copy:hover {
+.--ui-context-content-dark .note-editor-code-block-copy:hover,
+.--ui-context-content-dark .note-editor-code-block-zoom-button:hover:not(:disabled),
+.--ui-context-content-dark .note-editor-code-block-zoom-value:hover:not(:disabled) {
 	background-color: #4A4A4A;
 	border-color: #5A5A5A;
 }
@@ -869,6 +1298,49 @@ html:not(.note-mobile) .note-heading:hover .note-heading__toggle {
 .note-editor-code-block-language:disabled,
 .note-editor-code-block-language--readonly {
 	cursor: default;
+}
+
+/* Zoom controls: only shown in read mode, and only for a diagram whose own size is known. */
+.note-editor-code-block-zoom {
+	display: inline-flex;
+	align-items: center;
+	gap: 2px;
+}
+
+.note-editor-code-block-zoom-button {
+	width: 24px;
+	padding: 0;
+	--ui-icon-set__icon-color: var(--ui-color-base-1);
+}
+
+/* Doubles as the reset control, so the current scale is both the readout and the way back to fit. */
+.note-editor-code-block-zoom-value {
+	min-width: 42px;
+	font-variant-numeric: tabular-nums;
+}
+
+.note-editor-code-block-zoom-button:disabled,
+.note-editor-code-block-zoom-value:disabled {
+	cursor: default;
+	opacity: 0.4;
+}
+
+/* Without a pointer there is no hover to reveal the overlay with, and on a phone the zoom controls
+   are the only way out of a diagram that shrank to fit — so on touch they are simply always there,
+   and big enough to hit. */
+@media (hover: none) {
+	.note-editor-code-block--diagram .note-editor-code-block-overlay {
+		opacity: 1;
+	}
+
+	.note-editor-code-block-zoom-button,
+	.note-editor-code-block-zoom-value {
+		height: 30px;
+	}
+
+	.note-editor-code-block-zoom-button {
+		width: 30px;
+	}
 }
 
 .note-editor-code-block-language-text {
@@ -938,7 +1410,9 @@ html:not(.note-mobile) .note-heading:hover .note-heading__toggle {
 	box-shadow: 0 0 0 2px color-mix(in srgb, var(--ui-color-accent-main-link) 20%, transparent);
 }
 
-.ProseMirror.note-editor-prose img {
+/* A diagram is out: it lives in its own viewport, where the zoom owns the size, so a cap from here
+   would silently stop the picture from growing past the column width. */
+.ProseMirror.note-editor-prose img:not(.note-editor-diagram-image) {
 	max-width: 100%;
 	height: auto;
 	border-radius: var(--ui-border-radius-sm);
@@ -1028,6 +1502,7 @@ html:not(.note-mobile) .note-heading:hover .note-heading__toggle {
 /* Reuse: add your-class.ProseMirror-selectednode to this list for new node types */
 .ProseMirror.note-editor-prose .note-editor-file-attachment.ProseMirror-selectednode,
 .ProseMirror.note-editor-prose .note-editor-file-attachment:focus-within,
+.ProseMirror.note-editor-prose .note-editor-code-block.ProseMirror-selectednode,
 .ProseMirror.note-editor-prose .note-editor-image-attachment.ProseMirror-selectednode,
 .ProseMirror.note-editor-prose .note-editor-image-attachment:focus-within,
 .ProseMirror.note-editor-prose .note-editor-video-attachment.ProseMirror-selectednode,
@@ -1415,7 +1890,7 @@ html:not(.note-mobile) .note-heading:hover .note-heading__toggle {
 	cursor: zoom-in;
 }
 
-/* Loading skeleton shown while the resolver fetches the file URL (avoids the "Без названия" flash). */
+/* Loading skeleton shown while the resolver fetches the file URL (avoids the untitled-placeholder flash). */
 .ProseMirror.note-editor-prose .note-editor-attachment-skeleton {
 	border-radius: 6px;
 	background: var(--ui-color-bg-content-secondary);
@@ -1469,6 +1944,14 @@ html:not(.note-mobile) .note-heading:hover .note-heading__toggle {
 	margin: 0;
 	overflow: hidden;
 	table-layout: fixed;
+	/* prosemirror-tables sets an inline width = sum of column widths (every column
+	   carries one, see the colwidth backfill plugin), so the table sizes to that sum:
+	   widening a column grows the table (the wrapper scrolls), shrinking one leaves a
+	   gap — neither redistributes width across the others. NO min-width here: a
+	   min-width of 100% would raise the used width to the wrapper whenever the sum is
+	   smaller, and the fixed layout would spread that surplus across the columns —
+	   stealing width from the neighbours on every resize. width:100% only covers the
+	   frame before the backfill plugin fills a fresh table to the wrapper width. */
 	width: 100%;
 }
 
@@ -1605,9 +2088,29 @@ html:not(.note-mobile) .note-heading:hover .note-heading__toggle {
 	}
 }
 
+/* [#6, note.ui.document-history independent scroll] `height` (not `min-height`) so this row has
+ * a real, bounded size matching its scroll ancestor (.content) instead of growing without limit
+ * to match the document column's (arbitrarily tall) content. The document column itself keeps
+ * reading via the outer page scroll exactly as before — it has no overflow clipping here, so its
+ * content still visually extends past this row and .content still measures/scrolls all of it.
+ * What changes is the history sidebar (a sticky, align-self: flex-start sibling — see
+ * note.ui.document-history's style.css): it now sizes against THIS bounded height instead of
+ * being stretched to the document's full length. */
+/* Document column. The history timeline is no longer a child here — it teleports out to
+   `#note-page-history-slot` and lives as a `.content` sibling (see note-layout.js), so the
+   shell grows with content (min-height) and `.content` keeps its own document scroll, which
+   is what preserves the content column's trailing 80px margin. */
 .note-editor-document-shell {
 	display: flex;
 	flex-direction: column;
+	min-height: 100%;
+}
+
+.note-editor-document-main {
+	display: flex;
+	flex-direction: column;
+	flex: 1 1 auto;
+	min-width: 0;
 	min-height: 100%;
 }
 
@@ -1653,52 +2156,11 @@ html:not(.note-mobile) .note-heading:hover .note-heading__toggle {
 	flex: 0 0 auto;
 }
 
-.note-page-document-members {
-	display: flex;
-	align-items: center;
-	gap: 0;
-}
-
-.note-page-document-member {
-	display: inline-block;
-	width: 28px;
-	height: 28px;
-	margin-right: -2px;
-	border-radius: var(--ui-border-radius-circle, 50%);
-	background-color: var(--ui-color-base-7);
-	background-position: center;
-	background-size: cover;
-	background-repeat: no-repeat;
-	box-shadow: 0 0 0 2px var(--ui-color-bg-content-primary);
-}
-
-.note-page-document-member-extra {
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	width: 28px;
-	height: 28px;
-	border-radius: var(--ui-border-radius-circle, 50%);
-	background: var(--ui-color-design-tinted-a1-bg, #58B1FF);
-	color: var(--ui-color-design-filled-content, #FFFFFF);
-	font-family: 'Inter', sans-serif;
-	font-size: 9px;
-	line-height: 1;
-	text-transform: uppercase;
-	box-shadow: 0 0 0 2px var(--ui-color-bg-content-primary);
-}
-
 .note-page-document-actions {
-	position: sticky;
-	top: 0;
-	z-index: 2;
 	display: flex;
 	align-items: center;
-	justify-content: flex-end;
 	gap: var(--ui-space-inline-md, 16px);
-	padding: var(--ui-space-stack-md, 16px) var(--ui-space-inline-lg, 20px) var(--ui-space-stack-xs, 8px);
 	flex: 0 0 auto;
-	background: var(--ui-color-bg-content-primary);
 }
 
 .note-page-document-action-icon {
@@ -1712,10 +2174,16 @@ html:not(.note-mobile) .note-heading:hover .note-heading__toggle {
 	border: 0;
 	cursor: pointer;
 	color: var(--ui-color-base-3);
+	/* The glyph is a raw `.ui-icon-set` div — make it follow the button's own color (base-3
+	   base, dim on hover) so it matches the views/subscription controls in the activity line,
+	   whose icons do the same. Without this the glyph keeps ui-icon-set's default color and the
+	   hover has no visible effect. */
+	--ui-icon-set__icon-color: currentColor;
 }
 
+/* Dim-only hover, same as the activity line's eye/bell (.note-activity-line__control:hover). */
 .note-page-document-action-icon:hover {
-	color: var(--ui-color-base-1);
+	opacity: .8;
 }
 
 .note-page-document-action-icon:focus-visible {
@@ -1724,9 +2192,13 @@ html:not(.note-mobile) .note-heading:hover .note-heading__toggle {
 	border-radius: var(--ui-border-radius-sm, 4px);
 }
 
-.note-page-document-action-icon:disabled {
+.note-page-document-action-icon:disabled,
+.note-page-document-action-icon[aria-disabled="true"] {
 	cursor: default;
 	opacity: 0.4;
+}
+
+.note-page-document-action-icon:disabled {
 	pointer-events: none;
 }
 
@@ -1787,6 +2259,63 @@ html:not(.note-mobile) .note-heading:hover .note-heading__toggle {
 
 .note-editor-document-host .ProseMirror.note-editor-prose > * + * {
 	margin-top: 0.75em;
+}
+
+/* Inline embed surface (NoteDocumentEmbedComponent): the same editor mounted outside the full
+   document page (e.g. the workspace "About" tab). It self-styles here so it doesn't depend on
+   the host extension's CSS. */
+/* flex: 1 1 auto down the whole chain, so the editor grows into whatever height the embedding
+   surface hands it. Where the surface is content-sized (no free space to distribute) the grow
+   factor is a no-op, so this stays inert unless the host opts in by stretching itself. */
+.note-document-embed {
+	display: flex;
+	flex-direction: column;
+	flex: 1 1 auto;
+	min-width: 0;
+	min-height: 0;
+}
+
+.note-document-embed__host {
+	display: flex;
+	flex-direction: column;
+	flex: 1 1 auto;
+	min-width: 0;
+	min-height: 0;
+}
+
+.note-document-embed__host .note-editor-root,
+.note-document-embed__host .note-editor-content-wrapper,
+.note-document-embed__host .note-editor-content {
+	display: flex;
+	flex-direction: column;
+	flex: 1 1 auto;
+	min-height: 0;
+}
+
+/* The main document carries a service-only title that must not surface in the description. */
+.note-document-embed .note-editor-title-block {
+	display: none;
+}
+
+/* Trim the full-page editor's oversized bottom click-zone so the description sits compactly,
+   while keeping the heading gutter that the collapse toggles rely on. The prose still fills the
+   host it was given (see the flex chain above): that filled area is the caret click-zone, so an
+   editor stretched by its surface is clickable all the way down, not just around its text. */
+.note-document-embed__host .ProseMirror.note-editor-prose {
+	padding-bottom: 2rem;
+	flex: 1 1 auto;
+	min-height: 0;
+}
+
+.note-document-embed__error {
+	padding: 24px;
+	color: var(--ui-color-base-3);
+}
+
+.note-document-embed__error-text {
+	margin: 0;
+	font-size: 14px;
+	line-height: 1.4;
 }
 
 .note-editor-collaboration-status {
@@ -1972,6 +2501,72 @@ html:not(.note-mobile) .note-heading:hover .note-heading__toggle {
 	border-radius: .16em;
 }
 
+/* Floating hotkeys help button — bottom-right of the document (SC-003), the entry point to the
+ * help panel now that it no longer lives in the sidebar. When the history sidebar is open the
+ * button slides left past it (--note-history-width matches note.ui.document-history's panel);
+ * when the hotkeys panel itself is open the button hides (the panel carries its own close). */
+.note-hotkeys-fab {
+	position: fixed;
+	right: 24px;
+	bottom: 24px;
+	z-index: 90;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 44px;
+	height: 44px;
+	padding: 0;
+	border: 1px solid var(--ui-color-divider-default);
+	border-radius: 50%;
+	background: var(--ui-color-bg-content-primary);
+	color: var(--ui-color-base-3);
+	box-shadow: 0 2px 8px rgba(0, 0, 0, .12);
+	cursor: pointer;
+	transition:
+		right 0.3s cubic-bezier(.4, 0, .2, 1),
+		opacity 0.2s ease,
+		background-color 0.15s ease,
+		color 0.15s ease;
+}
+
+.note-hotkeys-fab:hover {
+	background: var(--ui-color-bg-gray-70, var(--ui-color-base-95));
+	color: var(--ui-color-base-1);
+}
+
+.note-hotkeys-fab:focus-visible {
+	outline: 2px solid var(--ui-color-accent-main-primary);
+	outline-offset: 2px;
+}
+
+/* [EVENT-02] The shift now follows whoever occupies the rail, not the timeline alone: the chat panel
+   has an arbitrary, draggable width. `--note-rail-width` is published by the shell on `.note-page`;
+   its absence means a resident of the fixed 340px kind (timeline, hotkeys panel) — hence the
+   fallback, which is the same value `--note-history-width` carries. */
+.note-hotkeys-fab.is-shifted {
+	right: calc(var(--note-rail-width, 340px) + 24px);
+}
+
+/* The 0.3s on `right` is for the panel sliding open and closed. During a resize gesture the rail width
+   follows the pointer, and the same easing turns into the button trailing behind the panel edge, so the
+   shell marks the gesture and only that one property is dropped. */
+.note-page.is-rail-resizing .note-hotkeys-fab {
+	transition:
+		opacity 0.2s ease,
+		background-color 0.15s ease,
+		color 0.15s ease;
+}
+
+.note-hotkeys-fab.is-hidden {
+	opacity: 0;
+	visibility: hidden;
+	pointer-events: none;
+}
+
+.note-hotkeys-fab__icon {
+	width: 24px;
+	height: 24px;
+}
 
 /* Mobile adaptation for note.editor. Scoped via html.note-mobile.
  *
@@ -2009,6 +2604,8 @@ html.note-mobile .ProseMirror.note-editor-prose {
 	padding: 12px 12px 12px var(--note-heading-gutter, 40px);
 	overflow-wrap: anywhere;
 	word-break: break-word;
+	/* Readable per-column floor for narrow-screen tables (see the table rule). */
+	--note-table-col-min-width: 8em;
 }
 
 html.note-mobile .ProseMirror.note-editor-prose img,
@@ -2017,16 +2614,33 @@ html.note-mobile .ProseMirror.note-editor-prose video {
 	height: auto;
 }
 
+/* Wide code blocks scroll horizontally within their box with touch inertia.
+ * No-wrap (white-space:pre) and base overflow-x live in editor.css; this only
+ * adds touch inertia and caps the box to the viewport. */
 html.note-mobile .ProseMirror.note-editor-prose pre {
-	max-width: 100%;
-}
-
-/* Wide tables scroll horizontally within their wrapper, not the page. */
-html.note-mobile .ProseMirror.note-editor-prose .tableWrapper,
-html.note-mobile .ProseMirror.note-editor-prose .note-table-wrapper {
 	max-width: 100%;
 	overflow-x: auto;
 	-webkit-overflow-scrolling: touch;
+}
+
+/* Wide tables scroll horizontally within their wrapper, not the page. */
+html.note-mobile .ProseMirror.note-editor-prose .tableWrapper {
+	max-width: 100%;
+	overflow-x: auto;
+	-webkit-overflow-scrolling: touch;
+}
+
+/* Fixed layout collapses auto-tables to viewport width on a phone (columns squeezed
+ * to a thread, wrapper scroll never engages). Auto layout honors the per-column
+ * min-width below (fixed ignores it), so the table keeps width and the wrapper
+ * scrolls. Resize is desktop-only, unaffected. */
+html.note-mobile .ProseMirror.note-editor-prose table {
+	table-layout: auto;
+}
+
+html.note-mobile .ProseMirror.note-editor-prose table td,
+html.note-mobile .ProseMirror.note-editor-prose table th {
+	min-width: var(--note-table-col-min-width);
 }
 
 /* The left field holds only the collapse chevron (reduced width); the link
@@ -2084,6 +2698,46 @@ html.note-mobile .note-heading.is-revealed .note-heading__hash {
 /* Wider hit zone for resize handles on mobile — visual strip (::after) unchanged. */
 html.note-mobile .ProseMirror.note-editor-prose .note-editor-media-resize-handle {
 	width: 20px;
+}
+
+/* ===== Document header on mobile =====
+ * The teleported header shrinks to just the action row (edit + more), pinned to
+ * the right of the fixed 48px header. Breadcrumb, collaboration status and the
+ * members stack are dropped — there isn't room, and they duplicate what the
+ * content area / sidebar already show.
+ */
+html.note-mobile .note-page-document-header {
+	justify-content: flex-end;
+	gap: 0;
+}
+
+/* On the document page the slot is shown for the action icons; its breadcrumb and
+ * collaboration status are dropped (no room, and duplicated by the content area).
+ * The members stack stays but collapses to a single counter puck (see document-header
+ * isMobile branch). Non-document pages hide the whole slot (see note.app). */
+html.note-mobile .note-page-document-titles,
+html.note-mobile .note-editor-collaboration-status {
+	display: none;
+}
+
+/* Compact presence on mobile: only the counter puck. Drop the desktop 20px gap between the
+ * puck and the action icons so spacing around the puck matches the 4px action rhythm. */
+html.note-mobile .note-page-document-header-right {
+	gap: 4px;
+}
+
+html.note-mobile .note-page-document-actions {
+	gap: 4px;
+}
+
+/* Icon-only edit / more: enlarge the tap target to fill the header height. */
+html.note-mobile .note-page-document-actions .note-page-document-action-icon {
+	width: 40px;
+	height: 40px;
+}
+
+html.note-mobile .note-page-document-actions .note-page-document-action-icon .ui-icon-set {
+	--ui-icon-set__icon-size: 24px;
 }
 
 /* Toolbar scroll thumb: always visible on mobile, no hover animation. */

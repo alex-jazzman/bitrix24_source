@@ -1,0 +1,34 @@
+/* Decorative circuit pattern (moved as is from app-skeleton __hero-illustration):
+   mirrored copies left/right, faded through a radial mask */
+.editor-chart-circuit-backdrop {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	width: 1236px;
+	height: 428px;
+	transform: translate(-50%, -50%);
+	pointer-events: none;
+}
+
+.editor-chart-circuit-backdrop::before,
+.editor-chart-circuit-backdrop::after {
+	content: '';
+	position: absolute;
+	top: 0;
+	width: 736px;
+	height: 428px;
+	background: url('./images/circuit.png') no-repeat center / cover;
+	-webkit-mask-image: radial-gradient(ellipse 46% 50% at center, #000 0%, #000 22%, transparent 82%);
+	mask-image: radial-gradient(ellipse 46% 50% at center, #000 0%, #000 22%, transparent 82%);
+}
+
+.editor-chart-circuit-backdrop::before {
+	left: 0;
+	opacity: 0.2;
+}
+
+.editor-chart-circuit-backdrop::after {
+	right: 0;
+	opacity: 0.12;
+	transform: scaleX(-1);
+}

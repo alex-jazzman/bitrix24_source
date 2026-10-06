@@ -9,8 +9,7 @@ require($_SERVER["DOCUMENT_ROOT"]."/bitrix/header.php");
  */
 
 if (
-	!Loader::includeModule('report')
-	|| !Loader::includeModule('biconnector')
+	!Loader::includeModule('biconnector')
 	|| !Loader::includeModule('crm')
 )
 {

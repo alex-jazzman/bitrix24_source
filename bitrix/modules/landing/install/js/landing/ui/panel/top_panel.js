@@ -25,6 +25,8 @@
 	{
 		BX.Landing.UI.Panel.BasePanel.apply(this, arguments);
 
+		this.isDialog = false; // permanent top chrome, not a modal dialog — opt out of BasePanel dialog semantics (TPL-01)
+
 		this.layout = document.querySelector(".landing-ui-panel-top");
 		this.siteButton = this.layout.querySelector(".landing-ui-panel-top-chain-link-site");
 		this.pageButton = this.layout.querySelector(".landing-ui-panel-top-chain-link-page");
@@ -36,7 +38,31 @@
 		this.iframeWrapper = document.querySelector(".landing-ui-view-iframe-wrapper");
 		this.iframe = document.querySelector(".landing-ui-view");
 
-		this.lastActive = this.desktopButton;
+		// panel may be re-created after the markup was already switched to another device
+		var deviceButtons = this.layout.querySelectorAll(".landing-ui-panel-top-devices .landing-ui-button");
+		var activeDeviceButton = this.layout.querySelector(".landing-ui-panel-top-devices .landing-ui-button.active");
+
+		this.lastActive = activeDeviceButton || this.desktopButton;
+
+		// the viewed device declares both signs even when the markup brought only one of them
+		if (this.lastActive)
+		{
+			this.lastActive.classList.add("active");
+			this.lastActive.setAttribute("aria-pressed", "true");
+		}
+
+		// only one device is the one being viewed, whatever the markup came in with
+		[].forEach.call(deviceButtons, function(deviceButton) {
+			var declaresItself = deviceButton.classList.contains("active")
+				|| deviceButton.getAttribute("aria-pressed") === "true";
+
+			if (deviceButton !== this.lastActive && declaresItself)
+			{
+				deviceButton.classList.remove("active");
+				deviceButton.setAttribute("aria-pressed", "false");
+			}
+		}, this);
+
 		this.loader = null;
 
 		this.onDesktopSizeChange = this.onDesktopSizeChange.bind(this);
@@ -206,13 +232,23 @@
 		{
 			if (this.loader === null)
 			{
-				this.loader = new BX.Loader({size: 23, offset: {top: "3px", left: "1px"}});
-				void style(this.loader.layout.querySelector(".main-ui-loader-svg-circle"), {
-					"stroke-width": "4px"
-				});
-				void style(this.loader.layout.querySelector(".main-ui-loader-svg"), {
-					"margin-top": "-3px"
-				});
+				if (this.layout && this.layout.classList.contains("landing-ui-panel-top-ai"))
+				{
+					this.loader = new BX.Loader({size: 20});
+					void style(this.loader.layout.querySelector(".main-ui-loader-svg-circle"), {
+						"stroke-width": "4px"
+					});
+				}
+				else
+				{
+					this.loader = new BX.Loader({size: 23, offset: {top: "3px", left: "1px"}});
+					void style(this.loader.layout.querySelector(".main-ui-loader-svg-circle"), {
+						"stroke-width": "4px"
+					});
+					void style(this.loader.layout.querySelector(".main-ui-loader-svg"), {
+						"margin-top": "-3px"
+					});
+				}
 			}
 
 			return this.loader;
@@ -225,33 +261,150 @@
 		 */
 		adjustHistoryButtonsState: function(history)
 		{
-			if (history.canUndo())
+			var canUndo = history.canUndo();
+			var canRedo = history.canRedo();
+
+			// the focus moves before the new states are applied, so the paired availability is the computed one
+			if (!canUndo)
+			{
+				this.releaseFocus(this.undoButton, this.redoButton, canRedo);
+			}
+
+			if (!canRedo)
+			{
+				this.releaseFocus(this.redoButton, this.undoButton, canUndo);
+			}
+
+			if (canUndo)
 			{
 				this.undoButton.classList.remove("landing-ui-disabled");
 				this.undoButton.removeAttribute('data-disabled');
+				if (this.undoButton.tagName === 'BUTTON')
+				{
+					this.undoButton.disabled = false;
+					this.undoButton.setAttribute('tabindex', '0');
+				}
 			}
 			else
 			{
 				this.undoButton.classList.add("landing-ui-disabled");
+				if (this.undoButton.tagName === 'BUTTON')
+				{
+					this.undoButton.disabled = true;
+					this.undoButton.setAttribute('tabindex', '-1');
+				}
 			}
 
-			if (history.canRedo())
+			if (canRedo)
 			{
 				this.redoButton.classList.remove("landing-ui-disabled");
 				this.redoButton.removeAttribute('data-disabled');
+				if (this.redoButton.tagName === 'BUTTON')
+				{
+					this.redoButton.disabled = false;
+					this.redoButton.setAttribute('tabindex', '0');
+				}
 			}
 			else
 			{
 				this.redoButton.classList.add("landing-ui-disabled");
+				if (this.redoButton.tagName === 'BUTTON')
+				{
+					this.redoButton.disabled = true;
+					this.redoButton.setAttribute('tabindex', '-1');
+				}
 			}
+		},
+
+		/**
+		 * Moves the focus off a history button about to become `disabled`: such an element hands the focus
+		 * to `<body>` and the next Tab restarts the walk of the document. The focus goes to the paired
+		 * button when that one becomes operable, and to the closest operable control of the panel otherwise.
+		 *
+		 * @param {HTMLElement} button
+		 * @param {HTMLElement|null} pairedButton
+		 * @param {boolean} pairedButtonAvailable the state the paired button is about to be put into
+		 */
+		releaseFocus: function(button, pairedButton, pairedButtonAvailable)
+		{
+			if (!button || document.activeElement !== button)
+			{
+				return;
+			}
+
+			if (pairedButtonAvailable && pairedButton && pairedButton.tagName === 'BUTTON')
+			{
+				// a `disabled` element takes no focus; the caller applies the rest of the new state right after
+				pairedButton.disabled = false;
+				pairedButton.focus({preventScroll: true});
+
+				return;
+			}
+
+			var neighbourControl = this.getNeighbourControl(button);
+			if (!neighbourControl)
+			{
+				button.blur();
+
+				return;
+			}
+
+			neighbourControl.focus({preventScroll: true});
+		},
+
+		/**
+		 * Gets the operable control of the panel closest to the given one: the first one after it, or the
+		 * last one before it when nothing operable follows. Both history buttons are left out - the caller
+		 * puts them out of the keyboard path right after the focus has moved.
+		 *
+		 * @param {HTMLElement} control
+		 * @return {HTMLElement|null}
+		 */
+		getNeighbourControl: function(control)
+		{
+			if (!this.layout)
+			{
+				return null;
+			}
+
+			var candidates = this.layout.querySelectorAll("a[href], button, input, select, textarea, [tabindex]");
+			var operable = [].filter.call(candidates, function(candidate) {
+				var tabIndex = candidate.getAttribute('tabindex');
+
+				return candidate !== this.undoButton
+					&& candidate !== this.redoButton
+					&& !candidate.disabled
+					&& !candidate.closest(".landing-ui-disabled")
+					&& (tabIndex === null || parseInt(tabIndex, 10) >= 0)
+					&& candidate.getClientRects().length > 0;
+			}, this);
+
+			var following = operable.filter(function(candidate) {
+				return (control.compareDocumentPosition(candidate) & Node.DOCUMENT_POSITION_FOLLOWING) > 0;
+			});
+
+			return following[0] || operable[operable.length - 1] || null;
 		},
 
 		disableHistory: function()
 		{
+			this.releaseFocus(this.undoButton, this.redoButton, false);
+			this.releaseFocus(this.redoButton, this.undoButton, false);
+
 			this.undoButton.classList.add("landing-ui-disabled");
 			this.undoButton.setAttribute('data-disabled', '');
+			if (this.undoButton.tagName === 'BUTTON')
+			{
+				this.undoButton.disabled = true;
+				this.undoButton.setAttribute('tabindex', '-1');
+			}
 			this.redoButton.classList.add("landing-ui-disabled");
 			this.redoButton.setAttribute('data-disabled', '');
+			if (this.redoButton.tagName === 'BUTTON')
+			{
+				this.redoButton.disabled = true;
+				this.redoButton.setAttribute('tabindex', '-1');
+			}
 		},
 
 		enableHistory: function()
@@ -279,8 +432,10 @@
 		onDesktopSizeChange: function()
 		{
 			this.lastActive.classList.remove("active");
+			this.lastActive.setAttribute("aria-pressed", "false");
 			this.lastActive = this.desktopButton;
 			this.desktopButton.classList.add("active");
+			this.desktopButton.setAttribute("aria-pressed", "true");
 
 			BX.DOM.write(function() {
 				this.iframeWrapper.style.width = null;
@@ -304,8 +459,10 @@
 		onTabletSizeChange: function()
 		{
 			this.lastActive.classList.remove("active");
+			this.lastActive.setAttribute("aria-pressed", "false");
 			this.lastActive = this.tabletButton;
 			this.tabletButton.classList.add("active");
+			this.tabletButton.setAttribute("aria-pressed", "true");
 
 			BX.DOM.write(function() {
 				this.iframeWrapper.style.width = "990px";
@@ -329,8 +486,10 @@
 		onMobileSizeChange: function()
 		{
 			this.lastActive.classList.remove("active");
+			this.lastActive.setAttribute("aria-pressed", "false");
 			this.lastActive = this.mobileButton;
 			this.mobileButton.classList.add("active");
+			this.mobileButton.setAttribute("aria-pressed", "true");
 
 			BX.DOM.write(function() {
 				this.iframeWrapper.style.width = "375px";

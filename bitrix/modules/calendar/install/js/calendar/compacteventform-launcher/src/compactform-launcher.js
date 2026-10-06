@@ -19,7 +19,7 @@ export class CompactFormLauncher
 	{
 		await this.#loadData();
 
-		this.#showForm('edit', {
+		return this.#showForm('edit', {
 			...params,
 			entry: null,
 		});
@@ -29,7 +29,7 @@ export class CompactFormLauncher
 	{
 		await this.#loadData();
 
-		this.#showForm('view', {
+		return this.#showForm('view', {
 			...params,
 			entry: entryData,
 		});
@@ -80,10 +80,11 @@ export class CompactFormLauncher
 		// 2. Set user index
 		EntryManager.setUserIndex(this.#data.userIndex);
 
-		// 3. Create and set light context (only if no context exists)
+		// 3. Reuse the calendar context of the page, or set a light one of our own
 		if (Util.getCalendarContext())
 		{
 			this.#lightContext = Util.getCalendarContext();
+			this.#refreshLightContext();
 		}
 		else
 		{
@@ -98,6 +99,7 @@ export class CompactFormLauncher
 				locationAccess: this.#data.locationAccess || false,
 				isCollabFeatureEnabled: this.#data.isCollabFeatureEnabled || false,
 				projectFeatureEnabled: this.#data.projectFeatureEnabled || false,
+				isNewProjectsOn: this.#data.isNewProjectsOn || false,
 				settings: this.#data.userSettings || {},
 				perm: this.#data.perm || {},
 			});
@@ -106,8 +108,28 @@ export class CompactFormLauncher
 		}
 	}
 
+	// the light context of an earlier bootstrap keeps the data it was built with; a context
+	// of the calendar itself maintains its own and is left alone
+	#refreshLightContext()
+	{
+		if (!(this.#lightContext instanceof LightCalendarContext))
+		{
+			return;
+		}
+
+		this.#lightContext.isCollabUser = this.#data.isCollabUser || false;
+		this.#lightContext.sectionManager.setSections(this.#data.sections || []);
+		this.#lightContext.sectionManager.sortSections();
+	}
+
 	#showForm(mode, params)
 	{
+		const sections = this.#lightContext.sectionManager.getSections();
+		if (sections.length === 0)
+		{
+			throw new Error('CompactFormLauncher: no calendar section is available for the current user');
+		}
+
 		this.#formInstance ??= new CompactEventForm({
 			type: this.#type,
 			ownerId: this.#ownerId,
@@ -118,7 +140,7 @@ export class CompactFormLauncher
 			type: this.#type,
 			ownerId: this.#ownerId,
 			userId: this.#userId,
-			sections: this.#lightContext.sectionManager.getSections(),
+			sections,
 			trackingUserList: this.#data.trackingUsersList || [],
 			userSettings: this.#data.userSettings,
 			locationFeatureEnabled: this.#data.locationFeatureEnabled || false,
@@ -127,13 +149,18 @@ export class CompactFormLauncher
 			...params,
 		};
 
-		if (Type.isString(mode) && mode === 'view')
-		{
-			this.#formInstance.show(CompactEventForm.VIEW_MODE, showParams);
-		}
-		else
-		{
-			this.#formInstance.show(CompactEventForm.EDIT_MODE, showParams);
-		}
+		const formMode = (Type.isString(mode) && mode === 'view')
+			? CompactEventForm.VIEW_MODE
+			: CompactEventForm.EDIT_MODE
+		;
+
+		// a form that failed to open is already torn down, so the next call starts over from a fresh
+		// bootstrap instead of reusing the data the failure was seen with
+		return this.#formInstance.show(formMode, showParams).catch((error) => {
+			this.#formInstance = null;
+			this.#data = null;
+
+			throw error;
+		});
 	}
 }

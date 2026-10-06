@@ -12,7 +12,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		components: {
 			BaseMessage: im_v2_component_message_base.BaseMessage,
 			MessageStatus: im_v2_component_message_elements.MessageStatus,
-			ReactionList: im_v2_component_message_elements.ReactionList
+			ReactionList: im_v2_component_message_elements.ReactionList,
+			Reply: im_v2_component_message_elements.Reply
 		},
 		props: {
 			item: {
@@ -27,6 +28,12 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		computed: {
 			message() {
 				return this.item;
+			},
+			isReply() {
+				return this.message.replyId !== 0;
+			},
+			isForward() {
+				return this.$store.getters['messages/isForward'](this.message.id);
 			},
 			text() {
 				return im_v2_lib_parser.Parser.decodeSmile(this.message.text, {
@@ -45,6 +52,9 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			:withBackground="false"
 			:afterMessageWidthLimit="false"
 		>
+			<template v-if="isReply" #before-message>
+				<Reply :dialogId="dialogId" :replyId="message.replyId" :isForward="isForward" />
+			</template>
 			<div class="bx-im-message-smile__container">
 				<div class="bx-im-message-smile__content-container">
 					<span class="bx-im-message-smile__text" v-html="text"></span>

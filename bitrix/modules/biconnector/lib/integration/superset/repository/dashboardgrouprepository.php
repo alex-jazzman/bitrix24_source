@@ -31,12 +31,11 @@ final class DashboardGroupRepository extends DashboardRepository
 	 */
 	public function getList(array $ormParams, bool $needLoadProxyData = false): array
 	{
+		$visibleDashboardIds = array_key_exists('DASHBOARD_ID', $ormParams['filter'] ?? [])
+			? array_map('intval', (array)$ormParams['filter']['DASHBOARD_ID'])
+			: null;
 		$query = $this->prepareUnionQuery($ormParams);
 
-		$ormParams['order'] ??= [];
-		$ormParams['order'] = array_merge(['ENTITY_TYPE' => 'desc'], $ormParams['order']);
-
-		$query->setUnionOrder($ormParams['order']);
 		$items = $query->exec();
 
 		$rows = [];
@@ -68,7 +67,7 @@ final class DashboardGroupRepository extends DashboardRepository
 
 		if (!empty($groupIds))
 		{
-			$groups = $this->getGroupRows($groupIds);
+			$groups = $this->getGroupRows($groupIds, $visibleDashboardIds);
 			foreach ($groups as $group)
 			{
 				$rows[$group['ID'] . '_' . self::TYPE_GROUP] = $group;
@@ -83,7 +82,7 @@ final class DashboardGroupRepository extends DashboardRepository
 		unset($ormParams['order']);
 		$query =
 			$this
-				->prepareUnionQuery($ormParams)
+				->prepareUnionQuery($ormParams, false)
 				->countTotal(true)
 		;
 
@@ -173,7 +172,7 @@ final class DashboardGroupRepository extends DashboardRepository
 		return $dashboardRows;
 	}
 
-	private function getGroupRows(array $ids): array
+	private function getGroupRows(array $ids, ?array $dashboardIds): array
 	{
 		$allowedIds = AccessController::getCurrent()->getAllowedGroupValue(
 			ActionDictionary::ACTION_BIC_DASHBOARD_VIEW,
@@ -182,8 +181,9 @@ final class DashboardGroupRepository extends DashboardRepository
 
 		$groupOrmParams = [
 			'filter' => ['ID' => $ids],
-			'select' => ['*', 'SCOPE', 'DASHBOARDS.ID'],
+			'select' => ['*', 'SCOPE'],
 		];
+		$dashboardCounts = $this->getDashboardCountsByGroupIds($ids, $dashboardIds);
 
 		$groupRows = [];
 		$emptyCommonColumns = [
@@ -220,7 +220,7 @@ final class DashboardGroupRepository extends DashboardRepository
 				"URL_PARAMS" => [],
 				"GROUPS" => [],
 				'ENTITY_TYPE' => self::TYPE_GROUP,
-				'COUNT_DASHBOARDS' => $group->getDashboards()->count(),
+				'COUNT_DASHBOARDS' => (int)($dashboardCounts[$group->getId()] ?? 0),
 			];
 
 			sort($row['SCOPE']);
@@ -233,6 +233,35 @@ final class DashboardGroupRepository extends DashboardRepository
 		}
 
 		return $groupRows;
+	}
+
+	private function getDashboardCountsByGroupIds(array $groupIds, ?array $dashboardIds): array
+	{
+		$groupIds = array_values(array_unique(array_map('intval', $groupIds)));
+		if (empty($groupIds) || $dashboardIds === [])
+		{
+			return [];
+		}
+
+		$query = SupersetDashboardGroupBindingTable::query()
+			->setSelect(['GROUP_ID', 'DASHBOARD_COUNT'])
+			->registerRuntimeField(new ExpressionField('DASHBOARD_COUNT', 'COUNT(1)'))
+			->whereIn('GROUP_ID', $groupIds)
+			->addGroup('GROUP_ID')
+		;
+		if ($dashboardIds !== null)
+		{
+			$query->whereIn('DASHBOARD_ID', $dashboardIds);
+		}
+
+		$counts = [];
+		$result = $query->exec();
+		while ($row = $result->fetch())
+		{
+			$counts[(int)$row['GROUP_ID']] = (int)$row['DASHBOARD_COUNT'];
+		}
+
+		return $counts;
 	}
 
 	/**
@@ -248,7 +277,7 @@ final class DashboardGroupRepository extends DashboardRepository
 		return null;
 	}
 
-	private function prepareUnionQuery(array $ormParams): Query
+	private function prepareUnionQuery(array $ormParams, bool $applyUnionOrder = true): Query
 	{
 		$queryDashboard = SupersetDashboardTable::query()
 			->addSelect(new ExpressionField('ENTITY_TYPE', "'" . self::TYPE_DASHBOARD . "'"))
@@ -403,6 +432,12 @@ final class DashboardGroupRepository extends DashboardRepository
 		}
 
 		$queryGroup->unionAll($queryDashboard);
+
+		if ($applyUnionOrder)
+		{
+			$unionOrder = array_merge(['ENTITY_TYPE' => 'desc'], $ormParams['order'] ?? []);
+			$queryGroup->setUnionOrder($unionOrder);
+		}
 
 		if (!empty($ormParams['limit']) && (int)$ormParams['limit'] > 0)
 		{

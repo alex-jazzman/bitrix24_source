@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
-(function (exports, im_v2_lib_logger, im_v2_const, im_v2_lib_rest, im_v2_lib_notifier, im_v2_application_core, main_core, call_lib_callTokenManager, im_public, im_v2_lib_copilot, im_v2_lib_feature, im_v2_lib_layout, im_v2_lib_user, im_v2_lib_utils, im_v2_provider_service_message, im_v2_lib_analytics, im_v2_lib_roleManager, ui_uploader_core, im_v2_lib_uuid, im_v2_lib_counter) {
+(function (exports, im_v2_lib_logger, im_v2_const, im_v2_lib_rest, im_v2_lib_notifier, im_v2_application_core, main_core, call_lib_callTokenManager, im_public, im_v2_lib_copilot, im_v2_lib_feature, im_v2_lib_layout, im_v2_lib_user, im_v2_lib_utils, im_v2_provider_service_message, im_v2_lib_analytics, im_v2_lib_roleManager, ui_uploader_core, im_v2_lib_uuid, im_v2_lib_counter, im_v2_lib_unreadMode) {
 	'use strict';
 
 	class DeleteService {
@@ -526,6 +526,29 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	}
 
 	class UpdateService {
+		detachToParent(dialogId) {
+			return im_v2_lib_rest.runAction(im_v2_const.RestMethod.imV2ChatDetachToParent, {
+				data: {
+					dialogId
+				}
+			}).then(() => {
+				this.#updateParentChatInModels(dialogId, im_v2_const.ParentChatScope.topLevel);
+			}).catch(([error]) => {
+				console.error('ChatService: detachToParent error:', error);
+			});
+		}
+		attachToParent(dialogId, parentChatId) {
+			return im_v2_lib_rest.runAction(im_v2_const.RestMethod.imV2ChatAttachToParent, {
+				data: {
+					dialogId,
+					parentChatId
+				}
+			}).then(() => {
+				this.#updateParentChatInModels(dialogId, parentChatId);
+			}).catch(([error]) => {
+				console.error('ChatService: attachToParent error:', error);
+			});
+		}
 		async prepareAvatar(avatarFile) {
 			if (!ui_uploader_core.isResizableImage(avatarFile)) {
 				return Promise.reject(new Error('UpdateService: prepareAvatar: incorrect image'));
@@ -643,6 +666,17 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 					role: im_v2_lib_roleManager.getChatRoleForUser(chatConfig),
 					permissions
 				}
+			});
+		}
+		#updateParentChatInModels(dialogId, parentChatId) {
+			void im_v2_application_core.Core.getStore().dispatch('chats/update', {
+				dialogId,
+				fields: {
+					parentChatId
+				}
+			});
+			void im_v2_application_core.Core.getStore().dispatch('recent/hide', {
+				dialogId
 			});
 		}
 	}
@@ -783,26 +817,21 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			this.#store = im_v2_application_core.Core.getStore();
 			this.#restClient = im_v2_application_core.Core.getRestClient();
 		}
-		readAllByType(type) {
-			const counterClearHandlers = im_v2_lib_counter.CounterClearHandlersByChatType[type];
-			if (counterClearHandlers) {
-				counterClearHandlers.forEach(handler => {
-					handler(type);
-				});
-			}
-			im_v2_lib_rest.runAction(im_v2_const.RestMethod.imV2ChatReadAllByType, {
+		readAllByRecentType(recentType, parentChatId) {
+			im_v2_lib_counter.CounterManager.clearCountersByRecentType(recentType, parentChatId);
+			im_v2_lib_unreadMode.UnreadModeManager.removeClosedChats(recentType, parentChatId);
+			im_v2_lib_rest.runAction(im_v2_const.RestMethod.imV2ChatReadByRecentType, {
 				data: {
-					type
+					recentSection: recentType,
+					parentId: parentChatId
 				}
 			}).catch(([error]) => {
-				console.error('ReadService: readAllByType error', error);
+				console.error('ReadService: readAllByRecentType error', error);
 			});
 		}
 		readAll() {
 			im_v2_lib_logger.Logger.warn('ReadService: readAll');
-			im_v2_lib_counter.CounterClearActions.forEach(actionHandler => {
-				void actionHandler();
-			});
+			im_v2_lib_counter.CounterManager.clearAllCounters();
 			im_v2_lib_rest.runAction(im_v2_const.RestMethod.imV2ChatReadAll).catch(([error]) => {
 				console.error('ReadService: readAll error', error);
 			});
@@ -993,7 +1022,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 				this.#onChatLeave(dialogId);
 			} catch (errors) {
 				console.error('UserService: leave collab error', errors[0]);
-				im_v2_lib_notifier.Notifier.collab.onLeaveError();
+				im_v2_lib_notifier.Notifier.collab.onLeaveError(errors[0]);
 			}
 		}
 		async kickUserFromChat(dialogId, userId) {
@@ -1016,7 +1045,7 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 			};
 			await im_v2_lib_rest.runAction(im_v2_const.RestMethod.socialnetworkMemberDelete, payload).catch(([error]) => {
 				console.error('UserService: error kicking from collab', error);
-				im_v2_lib_notifier.Notifier.collab.onKickUserError();
+				im_v2_lib_notifier.Notifier.collab.onKickUserError(error);
 			});
 		}
 		addToChat(addConfig) {
@@ -1261,6 +1290,12 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		getMemberEntities(chatId) {
 			return this.#updateService.getMemberEntities(chatId);
 		}
+		detachToParent(dialogId) {
+			return this.#updateService.detachToParent(dialogId);
+		}
+		attachToParent(dialogId, parentChatId) {
+			return this.#updateService.attachToParent(dialogId, parentChatId);
+		}
 		// endregion 'update'
 
 		// region 'delete'
@@ -1300,8 +1335,8 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 		readAll() {
 			this.#readService.readAll();
 		}
-		readAllByType(type) {
-			this.#readService.readAllByType(type);
+		readAllByRecentType(recentType, parentChatId) {
+			this.#readService.readAllByRecentType(recentType, parentChatId);
 		}
 		readDialog(dialogId) {
 			this.#readService.readDialog(dialogId);
@@ -1370,6 +1405,5 @@ this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 	exports.ChatDataExtractor = ChatDataExtractor;
 	exports.ChatService = ChatService;
 	exports.LoadService = LoadService;
-
-})(this.BX.Messenger.v2.Service = this.BX.Messenger.v2.Service || {}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Const??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Application??{}, BX??{}, BX?.Call?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Service??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.UI?.Uploader??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{});
+})(this.BX.Messenger.v2.Service = this.BX.Messenger.v2.Service || {}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Const??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Application??{}, BX??{}, BX?.Call?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Service??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.UI?.Uploader??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{}, BX?.Messenger?.v2?.Lib??{});;
 //# sourceMappingURL=registry.bundle.js.map

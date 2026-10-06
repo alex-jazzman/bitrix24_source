@@ -20,6 +20,7 @@ use Bitrix\Main\Application;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Page\Asset;
 use Bitrix\Main\UI\Extension;
+use Bitrix\Main\Web\Json;
 
 Loc::loadMessages(__FILE__);
 Loc::loadMessages(Manager::getDocRoot() . '/bitrix/modules/landing/lib/mutator.php');
@@ -30,6 +31,48 @@ $context = Application::getInstance()->getContext();
 $request = $context->getRequest();
 $generationId = $request->get('site_generated') ? (int)$request->get('site_generated') : null;
 $isNewLanding = $request->get('newLanding') === 'Y';
+$isFromAiGenerator = $request->get(Metrika\EditorOpenEventResolver::FROM_GENERATOR_PARAM)
+	=== Metrika\EditorOpenEventResolver::FROM_GENERATOR_PARAM_VALUE
+;
+$isLandingAiSitesEnabled = Copilot\Manager::isAiSitesEnabled();
+$isAiAssistantPanelEnabled = (bool)($arResult['SHOW_AI_ASSISTANT_PANEL'] ?? false);
+$isCreatedByAiScenario = (bool)($arResult['IS_CREATED_BY_AI_SCENARIO'] ?? false);
+$isAiSiteUiEnabled = $isCreatedByAiScenario && $isLandingAiSitesEnabled;
+$isAiAssistantPanelRenderable = $isAiAssistantPanelEnabled && $isLandingAiSitesEnabled && (!$isCreatedByAiScenario || $isAiSiteUiEnabled);
+$isAiSiteEditorShell = !$request->offsetExists('landing_mode') && $request->get('action') !== 'preview';
+$aiSiteTriggerBindingId = (int)($arResult['AI_SITE_BINDING_ID'] ?? 0);
+$aiSiteTriggerCode = (string)($arResult['AI_SITE_TRIGGER_CODE'] ?? '');
+$aiSiteTriggerContext = $arResult['AI_SITE_TRIGGER_CONTEXT'] ?? [];
+if (!is_array($aiSiteTriggerContext))
+{
+	$aiSiteTriggerContext = [];
+}
+$aiSiteTriggerEnabled = $isAiSiteEditorShell
+	&& $isAiAssistantPanelEnabled
+	&& $isAiSiteUiEnabled
+	&& ($arResult['AI_SITE_TRIGGER_ENABLED'] ?? false) === true
+	&& $aiSiteTriggerBindingId > 0
+	&& $aiSiteTriggerCode !== ''
+;
+$aiAssistantDialogId = (string)($arResult['AI_ASSISTANT_DIALOG_ID'] ?? '');
+if (!preg_match('/^chat\d+$/', $aiAssistantDialogId))
+{
+	$aiAssistantDialogId = '';
+}
+$isAiAssistantChatExpandable = $isAiAssistantPanelRenderable && ($isAiSiteUiEnabled ? $aiSiteTriggerEnabled : true);
+$isAiAssistantToggleDisabled = !$isAiAssistantChatExpandable;
+$isMainAiAssistantChatOpen = (bool)($arResult['AI_ASSISTANT_CHAT_IS_OPEN'] ?? false);
+$startAiAssistantPanelMinimized = !$isAiAssistantChatExpandable || (!$isAiSiteUiEnabled && !$isMainAiAssistantChatOpen);
+$syncMainChatOpenState = !$isAiSiteUiEnabled;
+$aiAssistantPanelClass = 'landing-ui-view-layout landing-ai-assistant-panel';
+$aiAssistantChatAriaHidden = 'false';
+$aiAssistantToggleText = Loc::getMessage('LANDING_VIEW_COPILOT_CHAT_TOGGLE_CLOSE');
+if ($startAiAssistantPanelMinimized)
+{
+	$aiAssistantPanelClass .= ' landing-ai-assistant-panel--chat-minimized';
+	$aiAssistantChatAriaHidden = 'true';
+	$aiAssistantToggleText = Loc::getMessage('LANDING_VIEW_COPILOT_CHAT_TOGGLE_OPEN');
+}
 
 $isVibeEditor = $arParams['TYPE'] === Site\Type::SCOPE_CODE_VIBE;
 if ($isVibeEditor)
@@ -62,6 +105,7 @@ Extension::load([
 	'ui.fonts.opensans',
 	'ui.buttons',
 	'ui.buttons.icons',
+	'ui.icon-set.outline',
 	'ui.alerts',
 	'ui.icons',
 	'ui.info-helper',
@@ -74,11 +118,28 @@ Extension::load([
 	'helper',
 	'main.qrcode',
 	'ui.hint',
+	'ui.a11y',
 	'bitrix24.phoneverify',
 	'main.core',
 	'landing.ui.copilot.skeleton',
+	'landing.copilot.generation-observer',
+	'landing.editor.realtime',
+	'landing.copilot.change-ai-site-editor-sync',
+	'landing.copilot.element-picker',
 	'intranet.sidepanel.bindings',
 ]);
+
+if ($isAiAssistantPanelRenderable)
+{
+	if ($isAiAssistantChatExpandable)
+	{
+		Extension::load('landing.aiassistant.widgetpanel');
+		if ($aiSiteTriggerEnabled)
+		{
+			Extension::load('aiassistant.trigger');
+		}
+	}
+}
 
 if (
 	($arResult['AI_TEXT_AVAILABLE'] && $arResult['AI_TEXT_ACTIVE'])
@@ -129,10 +190,16 @@ if ($request->get('landing_mode') === 'edit')
 	;
 	$metrika = new Metrika\Metrika(
 		$category,
-		Metrika\Events::openEditor,
+		Metrika\EditorOpenEventResolver::resolveEvent($isCreatedByAiScenario),
 		$tools,
 	);
-	if ($generationId)
+	if ($isCreatedByAiScenario)
+	{
+		$metrika->setSubSection(
+			Metrika\EditorOpenEventResolver::resolveAiSubSection($isFromAiGenerator)
+		);
+	}
+	elseif ($generationId)
 	{
 		$metrika
 			->setType(Metrika\Types::ai)
@@ -160,9 +227,10 @@ if ($request->get('landing_mode') === 'edit')
 
 	$metrika->setParam(3, 'siteId', $arResult['LANDING']->getSiteId());
 
+	$errorStatus = Metrika\EditorOpenEventResolver::resolveErrorStatus($isCreatedByAiScenario);
 	if ($arResult['FATAL'])
 	{
-		$metrika->setError('fatal');
+		$metrika->setError('fatal', $errorStatus);
 	}
 	elseif ($arResult['ERRORS'])
 	{
@@ -181,7 +249,7 @@ if ($request->get('landing_mode') === 'edit')
 			{
 				$errorFull .= $code . ':' . $message . "-";
 			}
-			$metrika->setError($errorFull);
+			$metrika->setError($errorFull, $errorStatus);
 		}
 	}
 
@@ -215,7 +283,7 @@ if ($arResult['ERRORS'])
 				</div>
 			</div>
 		</div>
-		<?
+		<?php
 		return;
 	}
 	elseif (isset($errors['SITE_IS_NOW_CREATING']))
@@ -237,7 +305,7 @@ if ($arResult['ERRORS'])
 				}, 3000);
 			});
 		</script>
-		<?
+		<?php
 		return;
 	}
 	else
@@ -259,7 +327,7 @@ if ($arResult['ERRORS'])
 						</div>
 					</div>
 				</div>
-				<?
+				<?php
 			}
 			else
 			{
@@ -281,7 +349,7 @@ if ($arResult['ERRORS'])
 						}
 					});
 				</script>
-				<?
+				<?php
 			}
 			break;
 		}
@@ -296,10 +364,19 @@ if ($arResult['FATAL'])
 
 $site = $arResult['SITE'];
 $siteId = $arResult['LANDING']->getSiteId();
+$landingId = $arResult['LANDING']->getId();
 $folderId = $arResult['LANDING']->getFolderId();
 $successSave = $arResult['SUCCESS_SAVE'];
 $curUrl = $arResult['CUR_URI'];
 $urls = $arResult['TOP_PANEL_CONFIG']['urls'];
+$aiAssistantDialogIdJson = Json::encode($aiAssistantDialogId);
+$imApplicationData = Json::encode($arResult['IM_APPLICATION_DATA'] ?? []);
+$aiSiteTriggerOptions = Json::encode([
+	'enabled' => $aiSiteTriggerEnabled,
+	'triggerCode' => $aiSiteTriggerCode,
+	'bindingId' => $aiSiteTriggerBindingId,
+	'triggerContext' => $aiSiteTriggerContext,
+]);
 $this->getComponent()->initAPIKeys();
 
 $urlLandingAdd = $arParams['PAGE_URL_LANDING_ADD'];
@@ -342,7 +419,7 @@ if ($request->get('close') == 'Y')
 			</svg>
 		</div>
 	</div>
-	<?
+	<?php
 	return;
 }
 
@@ -352,6 +429,7 @@ if (!$request->offsetExists('landing_mode')):
 	$startChain = $component->getMessageType('LANDING_TPL_START_PAGE');
 	$lightMode = $arParams['PANEL_LIGHT_MODE'] == 'Y';
 	$panelModifier = $lightMode ? ' landing-ui-panel-top-light' : '';
+	$useAiTopPanelHeader = $isAiSiteUiEnabled && ($arParams['USE_AI_TOP_PANEL_HEADER'] ?? 'Y') !== 'N';
 	// feedback form
 	$formCode = '';
 	if (!isset($arResult['LICENSE']) || $arResult['LICENSE'] != 'nfr')
@@ -359,15 +437,133 @@ if (!$request->offsetExists('landing_mode')):
 		$formCode = 'partner';
 		?>
 		<div style="display: none">
-			<?$APPLICATION->includeComponent(
+			<?php $APPLICATION->includeComponent(
 				'bitrix:ui.feedback.form',
 				'',
 				$component->getFeedbackParameters($formCode)
 			);?>
 		</div>
-		<?
+		<?php
 	}
 	?>
+	<?php if ($isAiAssistantPanelRenderable): ?>
+	<div class="<?= $aiAssistantPanelClass ?>">
+		<div class="landing-ui-view-main landing-ai-assistant-panel__main">
+	<?php endif; ?>
+	<?php if ($useAiTopPanelHeader): ?>
+		<?php
+		$aiTopPanelHref = $arParams['TYPE'] === 'GROUP' ? '#' : $arParams['PAGE_URL_URL_SITES'];
+		$aiTopPanelFeaturesText = $isVibeEditor
+			? Loc::getMessage('LANDING_MAINPAGE_FEATURES')
+			: $component->getMessageType('LANDING_TPL_FEATURES')
+		;
+		$aiPanelBtnAutoPubClass = 'landing-ui-panel-top-pub-btn';
+		$aiPanelBtnAutoPubClass .= (!$arResult['FAKE_PUBLICATION']) ? ' landing-ui-panel-top-pub-btn-error' : '';
+		$aiPanelBtnAutoPubClass .= ($arResult['TOP_PANEL_CONFIG']['autoPublicationEnabled'] == 1) ? ' landing-ui-panel-top-pub-btn-auto' : '';
+		$aiPanelBtnAutoPubClass .= (!$arResult['IS_AREA']) ? ' landing-ui-panel-top-pub-btn-enable' : '';
+		$aiPanelBtnAutoPubIconClass = ($arResult['TOP_PANEL_CONFIG']['autoPublicationEnabled'] == 1) ? '--s-cloud' : '--o-cloud';
+
+		if ($arResult['IS_AREA'])
+		{
+			$aiBtnAutoPubHint = Loc::getMessage('LANDING_SITE_HINT_AUTOPUBLISHING_AREA');
+		}
+		else
+		{
+			$aiBtnAutoPubHint = Loc::getMessage('LANDING_SITE_HINT_AUTOPUBLISHING_OPTIONS');
+		}
+		?>
+		<div class="landing-ui-panel landing-ui-panel-top landing-ui-panel-top-ai<?= $panelModifier ?>">
+			<div class="landing-ui-panel-top-ai__brand">
+				<a href="<?= $aiTopPanelHref ?>" class="landing-ui-panel-top-ai__brand-link" data-slider-ignore-autobinding="true" tabindex="0"<?php if ($arParams['TYPE'] !== 'GROUP'){?> target="_top"<?php }?>>
+					<span class="ui-icon-set --o-home landing-ui-panel-top-ai__home" data-hint="<?= Loc::getMessage("LANDING_TPL_PREVIEW_EXIT")?>" data-hint-no-icon></span>
+					<span class="landing-ui-panel-top-ai__product"><?= Loc::getMessage('LANDING_TPL_AI_TOP_PANEL_TITLE') ?></span>
+				</a>
+			</div>
+			<div class="landing-ui-panel-top-ai__divider"></div>
+			<div class="landing-ui-panel-top-ai__title">
+				<?= htmlspecialcharsbx($arResult['LANDING']->getTitle()) ?>
+			</div>
+			<div class="landing-ui-panel-top-ai__title-icon ui-icon-set --o-no-cloud-sync" aria-hidden="true"></div>
+			<div class="landing-ui-panel-top-ai__spacer"></div>
+			<div class="landing-ui-panel-top-devices">
+				<div class="landing-ui-panel-top-devices-inner">
+					<button class="landing-ui-button landing-ui-button-desktop active" type="button" data-id="desktop_button" tabindex="0" aria-label="<?=htmlspecialcharsbx(Loc::getMessage('LANDING_TPL_DEVICE_DESKTOP'))?>" aria-pressed="true">
+						<span class="ui-icon-set --o-screen" aria-hidden="true"></span>
+					</button>
+					<button class="landing-ui-button landing-ui-button-tablet" type="button" data-id="tablet_button" tabindex="0" aria-label="<?=htmlspecialcharsbx(Loc::getMessage('LANDING_TPL_DEVICE_TABLET'))?>" aria-pressed="false">
+						<span class="ui-icon-set --o-tablet" aria-hidden="true"></span>
+					</button>
+					<button class="landing-ui-button landing-ui-button-mobile" type="button" data-id="mobile_button" tabindex="0" aria-label="<?=htmlspecialcharsbx(Loc::getMessage('LANDING_TPL_DEVICE_MOBILE'))?>" aria-pressed="false">
+						<span class="ui-icon-set --o-mobile" aria-hidden="true"></span>
+					</button>
+				</div>
+			</div>
+			<div class="landing-ui-panel-top-ai__spacer"></div>
+			<div class="landing-ui-panel-top-history">
+				<button class="landing-ui-panel-top-history-button landing-ui-panel-top-history-undo landing-ui-disabled" type="button" tabindex="-1" disabled aria-label="<?=htmlspecialcharsbx(Loc::getMessage('LANDING_TPL_HISTORY_UNDO'))?>"></button>
+				<button class="landing-ui-panel-top-history-button landing-ui-panel-top-history-redo landing-ui-disabled" type="button" tabindex="-1" disabled aria-label="<?=htmlspecialcharsbx(Loc::getMessage('LANDING_TPL_HISTORY_REDO'))?>"></button>
+			</div>
+			<div class="landing-ui-panel-top-ai__actions" id="landing-panel-settings">
+				<?php if ($arParams['DRAFT_MODE'] != 'Y'): ?>
+					<button class="landing-ui-panel-top-ai__icon-button landing-ui-panel-top-ai__publication-button <?=$aiPanelBtnAutoPubClass?>" id="landing-popup-publication-btn" type="button" tabindex="0" aria-label="<?=$aiBtnAutoPubHint?>" data-hint="<?=$aiBtnAutoPubHint?>" data-hint-no-icon>
+						<span class="ui-icon-set <?=$aiPanelBtnAutoPubIconClass?>"></span>
+					</button>
+					<?php
+					if ($arResult['FAKE_PUBLICATION']):
+						?><div id="landing-popup-publication-error-area" style="display: none;"></div><?php
+					else:
+						$errTitle = null;
+						$errorCode = array_key_first($arResult['ERRORS']);
+						$errDesc = $arResult['ERRORS'][$errorCode];
+						if ($errorCode === 'PUBLIC_SITE_REACHED_FREE')
+						{
+							$errTitle = $arResult['ERRORS'][$errorCode];
+							$errDesc = null;
+						}
+						if (!$errorCode && $arResult['PUBLICATION_ERROR_CODE'] === 'shop1c')
+						{
+							$errorCode = 'SHOP_1C';
+							$errTitle = Loc::getMessage('LANDING_PUBLICATION_SHOP_ERROR_1C');
+						}
+						?>
+						<div id="landing-popup-publication-error-area"
+							style="display: none;"
+							data-error="<?=$errorCode?>"
+							<?=($errTitle ? " data-error-title=\"{$errTitle}\"" : '')?>
+							<?=($errDesc ? " data-error-description=\"{$errDesc}\"" : '')?>
+						>
+						</div><?php
+					endif;
+					?>
+				<?php endif; ?>
+				<?php if ($arParams['DRAFT_MODE'] != 'Y' && !$isFormEditor): ?>
+					<button
+						type="button"
+						id="landing-popup-features-btn"
+						class="ui-btn --air ui-btn-sm --style-outline-no-accent ui-btn-no-caps landing-ui-panel-top-ai__features landing-ui-panel-top-menu-link-features"
+						tabindex="0"
+						<?php if ($formCode){?> data-feedback="landing-feedback-<?= $formCode?>-button"<?php }?>
+					>
+						<span class="landing-ui-panel-top-ai__features-text">
+							<?= $aiTopPanelFeaturesText?>
+						</span>
+						<span class="ui-icon-set --server-settings landing-ui-panel-top-ai__features-icon" aria-hidden="true"></span>
+					</button>
+				<?php endif; ?>
+				<div class="landing-ui-panel-top-chat-toggle-container landing-ai-assistant-panel__toggle-container">
+					<button
+						class="landing-ui-panel-top-ai__icon-button landing-ui-panel-top-chat-toggle landing-ai-assistant-panel__toggle"
+						type="button"
+						tabindex="0"
+						aria-expanded="<?= $startAiAssistantPanelMinimized ? 'false' : 'true' ?>"
+						<?= $isAiAssistantToggleDisabled ? 'aria-disabled="true"' : '' ?>
+					>
+						<?= $aiAssistantToggleText ?>
+					</button>
+				</div>
+			</div>
+		</div>
+	<?php else: ?>
 	<div class="landing-ui-panel landing-ui-panel-top<?= $panelModifier ?>">
 		<!-- region Logotype -->
 		<div class="landing-ui-panel-top-logo">
@@ -388,7 +584,7 @@ if (!$request->offsetExists('landing_mode')):
 						<path fill-rule="evenodd" clip-rule="evenodd" d="M11.902 19.6877V15.8046C11.902 15.5837 12.0811 15.4046 12.302 15.4046H14.5087C14.7296 15.4046 14.9087 15.5837 14.9087 15.8046V19.6877C14.9089 19.9086 15.0879 20.0876 15.3087 20.0878L18.8299 20.0891C19.0508 20.0893 19.2299 19.9103 19.23 19.6894C19.23 19.6893 19.23 19.6893 19.2299 19.6892V13.4563C19.2299 13.4365 19.2275 13.4142 19.2275 13.3943H20.4332C20.6633 13.3943 20.8604 13.2883 20.9909 13.0932C21.1189 12.9005 21.1425 12.6747 21.0581 12.4561C20.9519 12.1816 14.2383 5.92948 14.2047 5.90379C13.7957 5.59077 13.3216 5.58796 12.9131 5.89536C12.8759 5.92337 6.15525 12.1815 6.04901 12.4561C5.96462 12.6729 5.99059 12.9011 6.11629 13.0932C6.24671 13.2859 6.44145 13.3943 6.67162 13.3943H7.87965C7.87729 13.4142 7.87729 13.4365 7.87729 13.4563V19.6846C7.8776 19.9054 8.0565 20.0844 8.27729 20.0849L11.502 20.0874C11.7229 20.0879 11.9021 19.9089 11.9023 19.688C11.9023 19.6879 11.9023 19.6878 11.902 19.6877Z" fill="#525C69"/>
 					</svg>
 				</span>
-				<?
+				<?php
 				if (Manager::isB24() && $isFormEditor)
 				{
 					echo '<span class="landing-ui-panel-top-logo-text">'.Loc::getMessage("LANDING_TPL_START_PAGE_LOGO").'</span>'
@@ -458,7 +654,7 @@ if (!$request->offsetExists('landing_mode')):
 		<?php endif; ?>
 		<!--  endregion -->
 
-		<?
+		<?php
 		// region Autopub
 		$panelBtnAutoPubClass = 'landing-ui-panel-top-pub-btn';
 		$panelBtnAutoPubClass .= (!$arResult['FAKE_PUBLICATION']) ? ' landing-ui-panel-top-pub-btn-error' : '';
@@ -476,7 +672,7 @@ if (!$request->offsetExists('landing_mode')):
 
 		if ($arParams['DRAFT_MODE'] != 'Y'):
 			?>
-			<button class="<?=$panelBtnAutoPubClass?>" id="landing-popup-publication-btn" data-hint="<?=$btnAutoPubHint?>" data-hint-no-icon>
+			<button class="<?=$panelBtnAutoPubClass?>" id="landing-popup-publication-btn" type="button" aria-label="<?=htmlspecialcharsbx($btnAutoPubHint)?>" data-hint="<?=$btnAutoPubHint?>" data-hint-no-icon>
 				<svg class="landing-ui-panel-top-pub-btn-icon" width="25" height="25" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
 					<path fill="#C6CDD3" class="landing-ui-panel-top-pub-btn-icon-defs-cloud"  d="M18.5075 18.8896H10.4177C10.3485 18.8896 10.2799 18.887 10.2119 18.882C8.38363 18.8398 6.91434 17.3271 6.91434 15.4671C6.91487 14.5606 7.27128 13.6914 7.90517 13.0507C8.2301 12.7223 8.61429 12.4678 9.03227 12.2978C9.02528 12.2055 9.02172 12.1123 9.02172 12.0182C9.02229 11.0617 9.39838 10.1446 10.0672 9.46862C10.7361 8.79266 11.6429 8.41324 12.5883 8.41382C13.7992 8.41531 14.8683 9.02804 15.5108 9.96325C15.816 9.85386 16.1444 9.79441 16.4866 9.79459C17.9982 9.79643 19.2397 10.9624 19.3836 12.4534C20.832 12.7729 21.9159 14.0785 21.9146 15.6395C21.9131 17.4385 20.4711 18.8958 18.6932 18.895C18.6309 18.895 18.569 18.8932 18.5075 18.8896Z" fill-rule="evenodd" clip-rule="evenodd"/>
 					<path fill="#FFFFFF" class="landing-ui-panel-top-pub-btn-icon-defs-success" d="M7.46967 13.782L9.1093 12.14L12.2726 15.2532L18.6078 8.91091L20.2474 10.5529L12.2881 18.5218L7.46967 13.782Z" fill-rule="evenodd" clip-rule="evenodd"/>
@@ -485,9 +681,9 @@ if (!$request->offsetExists('landing_mode')):
 					<path fill="#2FC6F6" class="landing-ui-panel-top-pub-btn-icon-defs-loader" d="M14 7C14.0668 7 14.1335 7.00094 14.1998 7.0028L14.1998 8.85103C14.1335 8.8485 14.0669 8.84723 14 8.84723C11.1542 8.84723 8.84723 11.1542 8.84723 14C8.84723 16.8458 11.1542 19.1528 14 19.1528C16.8458 19.1528 19.1528 16.8458 19.1528 14L19.1478 13.7993H20.9968L21 14C21 17.7871 17.9926 20.8718 14.2358 20.9961L14 21C10.134 21 7 17.866 7 14C7 10.134 10.134 7 14 7Z" />
 				</svg>
 			</button>
-			<?
+			<?php
 			if ($arResult['FAKE_PUBLICATION']):
-				?><div id="landing-popup-publication-error-area" style="display: none;"></div><?
+				?><div id="landing-popup-publication-error-area" style="display: none;"></div><?php
 			else:
 				$errTitle = null;
 				$errorCode = array_key_first($arResult['ERRORS']);
@@ -509,7 +705,7 @@ if (!$request->offsetExists('landing_mode')):
 					<?=($errTitle ? " data-error-title=\"{$errTitle}\"" : '')?>
 					<?=($errDesc ? " data-error-description=\"{$errDesc}\"" : '')?>
 				>
-				</div><?
+				</div><?php
 			endif;
 		endif;
 		// endregion
@@ -518,11 +714,9 @@ if (!$request->offsetExists('landing_mode')):
 
 		<div class="landing-ui-panel-top-devices">
 			<div class="landing-ui-panel-top-devices-inner">
-				<button class="landing-ui-button landing-ui-button-desktop active" data-id="desktop_button"></button>
-				<button class="landing-ui-button landing-ui-button-tablet" data-id="tablet_button"></button>
-				<button class="landing-ui-button landing-ui-button-mobile" data-id="mobile_button">
-					<span class="landing-ui-button-label"><?=Loc::getMessage('LANDING_LABEL_NEW');?></span>
-				</button>
+				<button class="landing-ui-button landing-ui-button-desktop active" data-id="desktop_button" aria-label="<?=htmlspecialcharsbx(Loc::getMessage('LANDING_TPL_DEVICE_DESKTOP'))?>" aria-pressed="true"></button>
+				<button class="landing-ui-button landing-ui-button-tablet" data-id="tablet_button" aria-label="<?=htmlspecialcharsbx(Loc::getMessage('LANDING_TPL_DEVICE_TABLET'))?>" aria-pressed="false"></button>
+				<button class="landing-ui-button landing-ui-button-mobile" data-id="mobile_button" aria-label="<?=htmlspecialcharsbx(Loc::getMessage('LANDING_TPL_DEVICE_MOBILE'))?>" aria-pressed="false"></button>
 			</div>
 		</div>
 
@@ -530,8 +724,8 @@ if (!$request->offsetExists('landing_mode')):
 
 		<!-- region History-->
 		<div class="landing-ui-panel-top-history">
-			<span class="landing-ui-panel-top-history-button landing-ui-panel-top-history-undo landing-ui-disabled"></span>
-			<span class="landing-ui-panel-top-history-button landing-ui-panel-top-history-redo landing-ui-disabled"></span>
+			<button class="landing-ui-panel-top-history-button landing-ui-panel-top-history-undo landing-ui-disabled" type="button" tabindex="-1" disabled aria-label="<?=htmlspecialcharsbx(Loc::getMessage('LANDING_TPL_HISTORY_UNDO'))?>"></button>
+			<button class="landing-ui-panel-top-history-button landing-ui-panel-top-history-redo landing-ui-disabled" type="button" tabindex="-1" disabled aria-label="<?=htmlspecialcharsbx(Loc::getMessage('LANDING_TPL_HISTORY_REDO'))?>"></button>
 		</div>
 		<!-- endregion -->
 
@@ -541,15 +735,16 @@ if (!$request->offsetExists('landing_mode')):
 					$arResult['IS_AREA'] === false
 					&& !$isVibeEditor
 				):?>
-					<div
+					<button
+						type="button"
 						id="landing-popup-preview-btn"
 						data-domain="<?= $site['DOMAIN_NAME']?>"
 						data-form-verification-required="<?=(($isFormEditor && $arResult['FORM_VERIFICATION_REQUIRED']) ? '1' : '0')?>"
 						data-form-verification-entity="<?=(int)$arResult['VERIFY_FORM_ID']?>"
 						class="ui-btn ui-btn-light-border landing-ui-panel-top-menu-link landing-btn-menu">
 						<?= $isFormEditor ? Loc::getMessage('LANDING_TPL_PREVIEW_URL_OPEN_FORM') : Loc::getMessage('LANDING_TPL_PREVIEW_URL_OPEN');?>
-					</div>
-				<?endif;?>
+					</button>
+				<?php endif;?>
 
 				<?php if (!$isFormEditor): ?>
 					<?php
@@ -557,20 +752,33 @@ if (!$request->offsetExists('landing_mode')):
 							? Loc::getMessage('LANDING_MAINPAGE_FEATURES')
 							: $component->getMessageType('LANDING_TPL_FEATURES');
 					?>
-					<input type="button" id="landing-popup-features-btn"<?
-						?>class="ui-btn ui-btn-light-border ui-btn-round landing-ui-panel-top-menu-link-features" <?
-						?><?if ($formCode){?> data-feedback="landing-feedback-<?= $formCode?>-button"<?}?><?
-						?> value="<?= $featuresText?>"<?
+					<input type="button" id="landing-popup-features-btn"<?php
+						?>class="ui-btn ui-btn-light-border ui-btn-round landing-ui-panel-top-menu-link-features" <?php
+						?><?php if ($formCode){?> data-feedback="landing-feedback-<?= $formCode?>-button"<?php }?><?php
+						?> value="<?= $featuresText?>"<?php
 						?> />
 				<?php else: ?>
-					<span class="ui-btn ui-btn-light-border ui-btn-round landing-form-editor-share-button"><?
+					<button type="button" class="ui-btn ui-btn-light-border ui-btn-round landing-form-editor-share-button"><?php
 						echo Loc::getMessage('LANDING_FORM_FEATURES')
-					?></span>
+					?></button>
 				<?php endif; ?>
-			<?else:?>
+			<?php else:?>
 				<div id="landing-panel-settings-kb"></div>
-			<?endif;?>
+			<?php endif;?>
 		</div>
+
+		<?php if ($isAiAssistantPanelRenderable): ?>
+			<div class="landing-ui-panel-top-chat-toggle-container landing-ai-assistant-panel__toggle-container">
+				<button
+					class="landing-ui-panel-top-chat-toggle landing-ai-assistant-panel__toggle<?= $isAiAssistantToggleDisabled ? ' landing-ui-panel-top-chat-toggle--disabled-offset' : '' ?>"
+					type="button"
+					aria-expanded="<?= $startAiAssistantPanelMinimized ? 'false' : 'true' ?>"
+					<?= $isAiAssistantToggleDisabled ? 'aria-disabled="true"' : '' ?>
+				>
+					<?= $aiAssistantToggleText ?>
+				</button>
+			</div>
+		<?php endif; ?>
 
 		<?php if ($isVibeEditor): ?>
 			<?php if ($isVibeFeatureAvailable ?? false): ?>
@@ -617,8 +825,9 @@ if (!$request->offsetExists('landing_mode')):
 		<?php endif; ?>
 
 	</div>
+	<?php endif; ?>
 	<div class="landing-ui-view-container">
-<?endif;?>
+<?php endif;?>
 
 <?php
 if ($arParams['TYPE'] === 'STORE')
@@ -656,8 +865,6 @@ else
 			LANDING_PUBLICATION_SUBMIT: '<?= \CUtil::jsEscape($submitText);?>',
 			LANDING_PUBLICATION_AUTO: '<?= \CUtil::jsEscape(Loc::getMessage('LANDING_PUBLICATION_AUTO'));?>',
 			LANDING_PUBLICATION_AUTO_OFF: '<?= \CUtil::jsEscape(Loc::getMessage('LANDING_PUBLICATION_AUTO_OFF'));?>',
-			LANDING_PUBLICATION_AUTO_TOGGLE_ON: '<?= \CUtil::jsEscape(Loc::getMessage('LANDING_PUBLICATION_AUTO_TOGGLE_ON'));?>',
-			LANDING_PUBLICATION_AUTO_TOGGLE_OFF: '<?= \CUtil::jsEscape(Loc::getMessage('LANDING_PUBLICATION_AUTO_TOGGLE_OFF'));?>',
 			LANDING_TPL_FEATURES_FORMS_TITLE: '<?= \CUtil::jsEscape(Loc::getMessage('LANDING_TPL_FEATURES_FORMS_TITLE'));?>',
 			LANDING_TPL_FEATURES_FORMS_PROMO_LINK: '<?= \CUtil::jsEscape(Loc::getMessage('LANDING_TPL_FEATURES_FORMS_PROMO_LINK'));?>',
 			LANDING_TPL_FEATURES_SETTINGS: '<?= \CUtil::jsEscape(Loc::getMessage('LANDING_TPL_FEATURES_SETTINGS'));?>',
@@ -729,11 +936,11 @@ if ($request->offsetExists('landing_mode'))
 	<script>
 		BX.ready(function()
 		{
-			<?if ($arParams['DRAFT_MODE'] != 'Y'):?>
+			<?php if ($arParams['DRAFT_MODE'] != 'Y'):?>
 			new BX.Landing.Component.View.AutoPublication({
 				pageIsUnActive: <?= $arResult['LANDING']->isActive() ? 'false' : 'true';?>
 			});
-			<?endif;?>
+			<?php endif;?>
 			BX.Landing.Component.View.create(
 				<?= \CUtil::phpToJSObject($arResult['TOP_PANEL_CONFIG']);?>
 			);
@@ -758,56 +965,30 @@ if ($request->offsetExists('landing_mode'))
 		</script>
 	<?php endif;?>
 
-	<?php if (isset($generationId)):?>
-	<?php
-		$blocksData = '';
-		$generation = new Copilot\Generation();
-		if ($generation->initById($generationId))
-		{
-			$blocksData = $generation->getBlocksData($arResult['LANDING']->getBlocks());
-			$blocksData = \CUtil::jsEscape($blocksData);
+	<script>
+		BX.ready(() => {
+			const observer = new BX.Landing.Copilot.GenerationObserver(null, {
+				landingId: <?= (int)$arResult['LANDING']->getId() ?>,
+			});
+			observer.observe();
+		});
+	</script>
 
-			Extension::load(['landing.animation.copilot']);
-			Extension::load(['landing.copilot.generation-observer']);
-
-			?>
-			<script>
-				BX.ready(() => {
-					const iframe = BX.Landing.PageObject.getEditorWindow();
-					BX.bindOnce(iframe, 'load', () => {
-						const blocksData = JSON.parse('<?= $blocksData ?>');
-						const animationCopilot = new BX.Landing.Animation.Copilot();
-						const generationId = <?= $generationId ?>;
-						animationCopilot
-							.setBlocksData(blocksData)
-							.setGenerationId(generationId)
-							.init()
-						;
-
-						const observer = new BX.Landing.Copilot.GenerationObserver(generationId);
-						observer.observe();
-
-						setTimeout(() => {
-							animationCopilot.animateSite();
-						}, 2000);
-					});
-				});
-			</script>
-			<?php
-		}
-		else
-		{
-			unset($generationId);
-		}
-	?>
-	<?php endif?>
-
-	<?php if (isset($generationId) || $isNewLanding): ?>
+	<?php if (isset($generationId) || $isNewLanding || $isFromAiGenerator): ?>
 		<script>
 			BX.ready(() => {
-				const currentUrlString = window.parent.location.href;
-				const currentUrl = new URL(currentUrlString);
+				const currentUrl = new URL(window.parent.location.href);
+				<?php if ($isNewLanding): ?>
 				currentUrl.search = '';
+				<?php elseif (isset($generationId)): ?>
+				// keep non-SEF editor routing in the query, drop only the generation mark,
+				// otherwise a refresh of the cleaned URL leads to a wrong screen
+				currentUrl.searchParams.delete('site_generated');
+				<?php else: ?>
+				// the transition from AI 2.0 keeps the editor routing of the non-SEF config in the query
+				// and only drops its own mark, otherwise a refresh of the cleaned URL leads to a wrong screen
+				currentUrl.searchParams.delete('<?= CUtil::jsEscape(Metrika\EditorOpenEventResolver::FROM_GENERATOR_PARAM) ?>');
+				<?php endif; ?>
 				window.parent.history.replaceState({}, '', currentUrl.toString());
 			});
 		</script>
@@ -905,12 +1086,11 @@ if ($request->offsetExists('landing_mode'))
 }
 // top panel
 else
-{
-	Asset::getInstance()->addJS('/bitrix/components/bitrix/landing.landing_view/templates/.default/es6/script.js');
-	Extension::load(['ai.copilot-chat.core']);
+	{
+		Asset::getInstance()->addJS('/bitrix/components/bitrix/landing.landing_view/templates/.default/es6/script.js');
 
-	// exec theme-hooks for design panel
-	$hooksLanding = \Bitrix\Landing\Hook::getForLanding($arResult['LANDING']->getId());
+		// exec theme-hooks for design panel
+		$hooksLanding = \Bitrix\Landing\Hook::getForLanding($arResult['LANDING']->getId());
 	$hooksSite = \Bitrix\Landing\Hook::getForSite($arResult['LANDING']->getSiteId());
 	if (isset($hooksLanding['THEME']) && $hooksLanding['THEME']->enabled())
 	{
@@ -940,7 +1120,7 @@ else
 				top.BX.UI.InfoHelper.show('limit_knowledge_base_number_page_view');
 			});
 		</script>
-		<?
+	<?php
 	}
 	?>
 	<style>
@@ -968,80 +1148,37 @@ else
 				<?= \CUtil::phpToJSObject($arResult['TOP_PANEL_CONFIG']);?>,
 				true
 			);
-			<?php if (!$isKnowledge && !$isVibeEditor):?>
-				<?php
-					$siteGenerationId = null;
-					$generation = new Copilot\Generation();
-					if ($generation->initBySiteId($siteId, (new Copilot\Generation\Scenario\CreateSite())))
-					{
-						$siteGenerationId = $generation->getId();
-					}
-				?>
-				const slidePanel = new BX.Landing.View.SlidePanel({
-					siteGenerationId: <?= $siteGenerationId ?? 'null'?>,
-					copilotChatOptions: {
-						entityId: '<?= Copilot\Connector\Chat\Chat::createChatEntityId() ?>',
-						chatId: <?= $arResult['AI_CHAT_ID'] ?? 'null' ?>,
-						isSiteEditChat: true,
-						isCopilotFeatureAvailable: <?= Copilot\Manager::isAvailable() ? 'true' : 'false' ?>,
-						isCopilotFeatureEnabled: <?= Copilot\Manager::isFeatureEnabledByLicense() ? 'true' : 'false' ?>,
-						isCopilotActive: <?= Copilot\Manager::isActive() ? 'true' : 'false' ?>,
-						copilotFeatureEnabledSlider: '<?= Copilot\Manager::getLimitSliderCode() ?>',
-						copilotUnactiveSlider: '<?= Copilot\Manager::getUnactiveSliderCode() ?>',
-						onChatCreate: data => {
-							BX.ajax.runAction('landing.api.copilot.addChatToSite', {
-								data: {
-									siteId: <?= $siteId ?>,
-									chatId: data.chatId,
-								},
-							});
-						}
-					},
-				});
+			<?php if ($isAiAssistantChatExpandable): ?>
+				const aiSiteTriggerOptions = <?= $aiSiteTriggerOptions ?>;
+				new BX.Landing.AiAssistant.WidgetPanel({
+					rootContainer: document.querySelector('.landing-ui-view-layout'),
+					<?php if ($aiAssistantDialogId !== ''): ?>
+					dialogId: <?= $aiAssistantDialogIdJson ?>,
+					<?php endif; ?>
+					triggerOptions: aiSiteTriggerOptions,
+					imApplicationData: <?= $imApplicationData ?>,
+					startMinimized: <?= Json::encode($startAiAssistantPanelMinimized) ?>,
+					syncMainChatOpenState: <?= Json::encode($syncMainChatOpenState) ?>,
+					openText: '<?= CUtil::JSEscape(Loc::getMessage('LANDING_VIEW_COPILOT_CHAT_TOGGLE_OPEN')) ?>',
+					closeText: '<?= CUtil::JSEscape(Loc::getMessage('LANDING_VIEW_COPILOT_CHAT_TOGGLE_CLOSE')) ?>',
+					logPrefix: 'Landing panel: view',
+				}).init();
+				<?php endif; ?>
+				<?php if (!$isKnowledge && !$isVibeEditor):?>
+					<?php if (!$isAiSiteUiEnabled):?>
+						const slidePanel = new BX.Landing.View.SlidePanel();
 
-				<?php if (isset($generationId)): ?>
-					const generationId = <?=$generationId?>;
-					let isGenerationError = false;
-
-					BX.PULL.subscribe({
-						type: 'server',
-						moduleId: 'landing',
-						callback: (eventData) => {
-							if (
-								eventData.params.generationId !== undefined
-								&& generationId !== null
-								&& eventData.params.generationId !== generationId
-							)
-							{
-								return;
-							}
-
-							if (command === 'LandingCopilotGeneration:onGenerationError')
-							{
-								isGenerationError = true;
-							}
-						},
-					});
-
-					BX.Event.EventEmitter.subscribe('BX.Landing.Animation.Copilot:onSiteFinish', (event) => {
-						if (isGenerationError)
-						{
-							slidePanel.showChat();
+						new BX.Landing.View.Device({
+							target: slidePanel.getPreviewContainer(),
+						editorFrameWrapper: document.querySelector('.landing-ui-view-iframe-wrapper'),
+						frameUrl: '<?= \CUtil::JSEscape($urls['preview_device']->getUri())?>',
+						messages: {
+							LANDING_PREVIEW_DEVICE_MOBILES: '<?= \CUtil::jsEscape(Loc::getMessage('LANDING_PREVIEW_DEVICE_MOBILES'));?>',
+							LANDING_PREVIEW_DEVICE_TABLETS: '<?= \CUtil::jsEscape(Loc::getMessage('LANDING_PREVIEW_DEVICE_TABLETS'));?>',
+							LANDING_TPL_PREVIEW_LOADING: '<?= \CUtil::jsEscape(Loc::getMessage('LANDING_TPL_PREVIEW_LOADING'));?>',
 						}
 					});
 				<?php endif; ?>
-
-
-				new BX.Landing.View.Device({
-					target: slidePanel.getPreviewContainer(),
-					editorFrameWrapper: document.querySelector('.landing-ui-view-iframe-wrapper'),
-					frameUrl: '<?= \CUtil::JSEscape($urls['preview_device']->getUri())?>',
-					messages: {
-						LANDING_PREVIEW_DEVICE_MOBILES: '<?= \CUtil::jsEscape(Loc::getMessage('LANDING_PREVIEW_DEVICE_MOBILES'));?>',
-						LANDING_PREVIEW_DEVICE_TABLETS: '<?= \CUtil::jsEscape(Loc::getMessage('LANDING_PREVIEW_DEVICE_TABLETS'));?>',
-						LANDING_TPL_PREVIEW_LOADING: '<?= \CUtil::jsEscape(Loc::getMessage('LANDING_TPL_PREVIEW_LOADING'));?>',
-					}
-				});
 
 				new BX.Landing.View.ExternalControls({
 					container: document.querySelector('.landing-ui-view-wrapper'),
@@ -1071,17 +1208,21 @@ else
 	</script>
 	<div class="landing-ui-view-wrapper">
 		<div class="landing-editor-loader-container"></div>
-			<div class="landing-editor-required-user-action">
-				<h3></h3>
-				<p></p>
-				<div>
-					<a href="" class="ui-btn"></a>
-				</div>
-			</div>
+			<?php // filled in and given its alert role by the script: an empty region announces nothing?>
+			<div class="landing-editor-required-user-action"></div>
 			<div class="landing-ui-view-iframe-wrapper">
-				<iframe src="<?= $urls['landingFrame']->getUri() ?>" class="landing-ui-view" id="landing-view-frame" allowfullscreen></iframe>
+				<iframe src="<?= htmlspecialcharsbx($urls['landingFrame']->getUri()) ?>" class="landing-ui-view" id="landing-view-frame" title="<?=htmlspecialcharsbx(Loc::getMessage('LANDING_TPL_EDITOR_FRAME_TITLE'))?>" allowfullscreen></iframe>
 			</div>
-		</div>
 	</div>
-<?
+	</div>
+	<?php if ($isAiAssistantPanelRenderable): ?>
+		</div>
+		<?php if ($isAiAssistantChatExpandable): ?>
+			<div class="landing-ui-view-chat landing-ai-assistant-panel__chat" aria-hidden="<?= $aiAssistantChatAriaHidden ?>">
+				<div class="landing-ai-assistant-panel__widget"></div>
+			</div>
+		<?php endif; ?>
+	</div>
+	<?php endif; ?>
+<?php
 }

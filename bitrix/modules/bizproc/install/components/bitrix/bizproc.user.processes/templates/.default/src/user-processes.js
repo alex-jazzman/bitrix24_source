@@ -2,6 +2,7 @@ import { ajax, Type, Dom, Tag, Text, Loc, Event, Runtime } from 'main.core';
 import { Alert, AlertColor } from 'ui.alerts';
 import { TagSelector } from 'ui.entity-selector';
 import { Menu } from 'main.popup';
+import { announce, enhanceGrid, subscribeGridUpdated } from 'bizproc.a11y';
 import type { WorkflowData } from './workflow-loader';
 import { WorkflowLoader, LoadWorkflowsResponseData } from './workflow-loader';
 import { WorkflowRenderer } from './workflow-renderer';
@@ -34,6 +35,8 @@ export class UserProcesses
 	#appLink: string;
 
 	loader: WorkflowLoader;
+
+	#gridSubscription = null;
 
 	constructor(options: {
 		gridId: string,
@@ -76,6 +79,7 @@ export class UserProcesses
 			this.#subscribeToPushes();
 		}
 		this.#subscribeToTaskDo();
+		this.subscribeGridEvents();
 
 		this.init();
 		this.initCounterPanel(options.counters, options.filterId);
@@ -138,6 +142,26 @@ export class UserProcesses
 				}
 			},
 		);
+	}
+
+	subscribeGridEvents()
+	{
+		this.unsubscribeGridEvents();
+		this.#gridSubscription = subscribeGridUpdated(
+			this.gridId,
+			() => announce(Loc.getMessage('BIZPROC_USER_PROCESSES_TEMPLATE_GRID_UPDATED')),
+		);
+	}
+
+	unsubscribeGridEvents()
+	{
+		this.#gridSubscription?.destroy();
+		this.#gridSubscription = null;
+	}
+
+	destroy()
+	{
+		this.unsubscribeGridEvents();
 	}
 
 	#updateWorkflows(response: LoadWorkflowsResponseData): void
@@ -303,8 +327,24 @@ export class UserProcesses
 		this.actionPanel.userWrapperElement = document.getElementById(this.actionPanel.wrapperElementId);
 		this.initUserSelector();
 		this.renderCells();
+		this.#applyGridA11y();
 
 		this.onActionPanelChanged();
+	}
+
+	#applyGridA11y(): void
+	{
+		const container = this.getGrid()?.getContainer();
+		if (!Type.isDomNode(container))
+		{
+			return;
+		}
+
+		enhanceGrid(container, {
+			gridId: this.gridId,
+			rowActionsLabel: Loc.getMessage('BIZPROC_USER_PROCESSES_TEMPLATE_ROW_ACTIONS_LABEL'),
+			checkboxesFromTitle: true,
+		});
 	}
 
 	initCounterPanel(counters, filterId): void
@@ -466,6 +506,10 @@ export class UserProcesses
 		{
 			Dom.clean(this.actionPanel.userWrapperElement);
 			this.delegateToSelector.renderTo(this.actionPanel.userWrapperElement);
+			Dom.attr(this.actionPanel.userWrapperElement, {
+				role: 'group',
+				'aria-label': Loc.getMessage('BIZPROC_USER_PROCESSES_TEMPLATE_DELEGATE_TO_LABEL'),
+			});
 		}
 	}
 
@@ -625,6 +669,7 @@ export class UserProcesses
 					toUserId,
 				},
 			})
+			.then(() => announce(Loc.getMessage('BIZPROC_USER_PROCESSES_TEMPLATE_TASKS_DELEGATED')))
 			.catch((response) => {
 				this.showErrors(response.errors);
 				this.reloadGrid();

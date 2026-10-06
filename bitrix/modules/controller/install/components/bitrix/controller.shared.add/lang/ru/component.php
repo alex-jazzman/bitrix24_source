@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS ['CSA_TITLE'] = "Добавление сайта";
 $MESS ['CSA_MODULE_NOT_INSTALLED'] = "Модуль контроллера не установлен";
 $MESS ['CSA_ERROR_DOMAIN_NAME'] = "Доменное имя может содержать только латинские символы, цифры, точки и дефисы.";
@@ -22,4 +22,3 @@ $MESS ['CSA_ERROR_WRITE_APACHE_CONFIG'] = "Ошибка записи конфи�
 $MESS ['CSA_ERROR_NGINX_TEMPLATE_NOT_FOUND'] = "Не найден шаблон конфигурации nginx (#FILE#).";
 $MESS ['CSA_ERROR_NOT_FOUND_NGINX_VHOST_DIR'] = "Каталог конфигурационных файлов виртуальных сайтов nginx не существует или не доступен для записи.";
 $MESS ['CSA_ERROR_WRITE_NGINX_CONFIG'] = "Ошибка записи конфигурационного файла nginx.";
-?>

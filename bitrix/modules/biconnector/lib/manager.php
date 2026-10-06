@@ -16,6 +16,7 @@ class Manager
 	protected $connectionName = '';
 	protected $serviceId = '';
 	protected $keyId = 0;
+	protected $keyRevision = '';
 	protected $stime = [];
 
 	/**
@@ -135,6 +136,7 @@ class Manager
 				'select' => [
 					'ID',
 					'CONNECTION',
+					'TIMESTAMP_X',
 				],
 				'filter' => [
 					'=ACCESS_KEY' => $key,
@@ -152,11 +154,29 @@ class Manager
 					$this->connectionName .= '_' . __CLASS__;
 				}
 				$this->keyId = $dbKey['ID'];
+				$timestamp = $dbKey['TIMESTAMP_X'] ?? null;
+				$this->keyRevision = $timestamp instanceof \Bitrix\Main\Type\DateTime ? $timestamp->format('U') : (string)$timestamp;
 				return true;
 			}
 		}
 
 		return false;
+	}
+
+	/**
+	 * Connection bound to the access key resolved by the last checkAccessKey() call.
+	 */
+	public function getConnectionName(): string
+	{
+		return $this->connectionName;
+	}
+
+	/**
+	 * Revision (TIMESTAMP_X) of the access key resolved by the last checkAccessKey() call.
+	 */
+	public function getKeyRevision(): string
+	{
+		return $this->keyRevision;
 	}
 
 	/**
@@ -269,15 +289,23 @@ class Manager
 	public function getConnections()
 	{
 		$biConnections = [];
+		$pool = \Bitrix\Main\Application::getInstance()->getConnectionPool();
+		$defaultConnectionName = $pool::DEFAULT_CONNECTION_NAME;
 
 		$configParams = \Bitrix\Main\Config\Configuration::getValue('connections');
 		if (is_array($configParams))
 		{
 			foreach ($configParams as $connectionName => $connectionParams)
 			{
+				$className = $connectionParams['className'] ?? '';
 				if (
-					is_a($connectionParams['className'], '\Bitrix\BIConnector\Connection', true)
-					|| is_a($connectionParams['className'], '\Bitrix\BIConnector\DB\MysqliConnection', true)
+					is_a($className, '\Bitrix\BIConnector\Connection', true)
+					|| is_a($className, '\Bitrix\BIConnector\DB\MysqliConnection', true)
+					|| is_a($className, '\Bitrix\BIConnector\DB\PgsqlConnection', true)
+					|| (
+						$connectionName !== $defaultConnectionName
+						&& is_a($className, '\Bitrix\Main\DB\PgsqlConnection', true)
+					)
 				)
 				{
 					$biConnections[$connectionName] = $connectionName;
@@ -287,8 +315,7 @@ class Manager
 
 		if (!$biConnections)
 		{
-			$pool = \Bitrix\Main\Application::getInstance()->getConnectionPool();
-			$biConnections[$pool::DEFAULT_CONNECTION_NAME] = $pool::DEFAULT_CONNECTION_NAME;
+			$biConnections[$defaultConnectionName] = $defaultConnectionName;
 		}
 
 		return $biConnections;
@@ -312,21 +339,33 @@ class Manager
 			$connectionName = $pool::DEFAULT_CONNECTION_NAME;
 		}
 
-		if (!is_a($conn, '\Bitrix\BIConnector\DB\MysqliConnection'))
+		if (is_a($conn, '\Bitrix\BIConnector\DB\MysqliConnection'))
 		{
-			if (is_a($conn, '\Bitrix\Main\DB\MysqlCommonConnection'))
-			{
-				$pool->cloneConnection($connectionName , $connectionName . '~', [
-					'className' => '\Bitrix\BIConnector\DB\MysqliConnection',
-				]);
-				$conn = $pool->getConnection($connectionName . '~');
-			}
-			else
-			{
-				throw new \Bitrix\Main\Config\ConfigurationException(sprintf(
-					"Class '%s' for '%s' connection is not supported", ($conn !== null ? get_class($conn) : 'null'), $this->connectionName
-				));
-			}
+			// already a BI MySQL connection, use as-is
+		}
+		elseif (is_a($conn, '\Bitrix\Main\DB\MysqlCommonConnection'))
+		{
+			$pool->cloneConnection($connectionName, $connectionName . '~', [
+				'className' => '\Bitrix\BIConnector\DB\MysqliConnection',
+			]);
+			$conn = $pool->getConnection($connectionName . '~');
+		}
+		elseif (is_a($conn, '\Bitrix\BIConnector\DB\PgsqlConnection'))
+		{
+			// already a BI PG connection, use as-is
+		}
+		elseif (is_a($conn, '\Bitrix\Main\DB\PgsqlConnection'))
+		{
+			$pool->cloneConnection($connectionName, $connectionName . '~', [
+				'className' => '\Bitrix\BIConnector\DB\PgsqlConnection',
+			]);
+			$conn = $pool->getConnection($connectionName . '~');
+		}
+		else
+		{
+			throw new \Bitrix\Main\Config\ConfigurationException(sprintf(
+				"Class '%s' for '%s' connection is not supported", get_class($conn), $this->connectionName
+			));
 		}
 
 		return $conn;

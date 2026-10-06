@@ -1,6 +1,5 @@
 <?php
 
-use Bitrix\Main\EventManager;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
 
@@ -13,8 +12,6 @@ class TasksMobile extends CModule
 	public $MODULE_VERSION_DATE;
 	public $MODULE_NAME;
 	public $MODULE_DESCRIPTION;
-
-	private $workspaceClass = \Bitrix\TasksMobile\Workspace::class;
 
 	public function __construct()
 	{
@@ -33,60 +30,32 @@ class TasksMobile extends CModule
 
 	public function installDB()
 	{
-		ModuleManager::registerModule($this->MODULE_ID);
+		$migrationResult = $this->installMigrations();
+		if (!$migrationResult->isSuccess())
+		{
+			$this->errors = $migrationResult->getErrorMessages();
 
-		$eventManager = EventManager::getInstance();
-		$eventManager->registerEventHandler(
-			'mobileapp',
-			'onJNComponentWorkspaceGet',
-			$this->MODULE_ID,
-			$this->workspaceClass,
-			'getPath'
-		);
-		$eventManager->registerEventHandler(
-			'mobile',
-			'onTariffRestrictionsCollect',
-			'tasksmobile',
-			\Bitrix\TasksMobile\Provider\TariffPlanRestrictionProvider::class,
-			'getTariffPlanRestrictions',
-		);
-		$eventManager->registerEventHandler(
-			'mobile',
-			'onMobileMenuStructureBuilt',
-			'tasksmobile',
-			'Bitrix\TasksMobile\MobileMenuManager',
-			'onMobileMenuStructureBuilt',
-		);
+			return false;
+		}
+
+		ModuleManager::registerModule($this->MODULE_ID);
 
 		return true;
 	}
 
 	public function uninstallDB($arParams = [])
 	{
-		$eventManager = EventManager::getInstance();
-		$eventManager->unRegisterEventHandler(
-			'mobileapp',
-			'onJNComponentWorkspaceGet',
-			$this->MODULE_ID,
-			$this->workspaceClass,
-			'getPath'
-		);
-		$eventManager->unRegisterEventHandler(
-			'mobile',
-			'onTariffRestrictionsCollect',
-			'tasksmobile',
-			\Bitrix\TasksMobile\Provider\TariffPlanRestrictionProvider::class,
-			'getTariffPlanRestrictions',
-		);
-		$eventManager->unRegisterEventHandler(
-			'mobile',
-			'onMobileMenuStructureBuilt',
-			'tasksmobile',
-			'Bitrix\TasksMobile\MobileMenuManager',
-			'onMobileMenuStructureBuilt',
-		);
+		$migrationResult = $this->uninstallMigrations(false);
+		if (!$migrationResult->isSuccess())
+		{
+			$this->errors = $migrationResult->getErrorMessages();
+
+			return false;
+		}
 
 		ModuleManager::unRegisterModule($this->MODULE_ID);
+
+		return true;
 	}
 
 	public function installFiles()
@@ -95,19 +64,19 @@ class TasksMobile extends CModule
 			$_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/tasksmobile/install/mobileapp/',
 			$_SERVER['DOCUMENT_ROOT'] . '/bitrix/mobileapp/',
 			true,
-			true
+			true,
 		);
 		CopyDirFiles(
 			$_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/tasksmobile/install/components/',
 			$_SERVER['DOCUMENT_ROOT'] . '/bitrix/components',
 			true,
-			true
+			true,
 		);
 		CopyDirFiles(
 			$_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/tasksmobile/install/js/',
 			$_SERVER['DOCUMENT_ROOT'] . '/bitrix/js/',
 			true,
-			true
+			true,
 		);
 
 		return true;
@@ -151,14 +120,20 @@ class TasksMobile extends CModule
 			return;
 		}
 
-		$this->installDB();
-		$this->installFiles();
-		$this->installEvents();
-		$this->installDependencies();
+		if ($this->installDB())
+		{
+			$this->installFiles();
+			$this->installEvents();
+			$this->installDependencies();
+		}
+		else
+		{
+			$APPLICATION->ThrowException(implode('<br>', $this->errors));
+		}
 
 		$APPLICATION->IncludeAdminFile(
 			Loc::getMessage('TASKSMOBILE_INSTALL_TITLE'),
-			$_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/' . $this->MODULE_ID . '/install/step.php'
+			$_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/' . $this->MODULE_ID . '/install/step.php',
 		);
 	}
 
@@ -176,18 +151,24 @@ class TasksMobile extends CModule
 		{
 			$APPLICATION->IncludeAdminFile(
 				Loc::getMessage('TASKSMOBILE_UNINSTALL_TITLE'),
-				$_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/' . $this->MODULE_ID . '/install/unstep1.php'
+				$_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/' . $this->MODULE_ID . '/install/unstep1.php',
 			);
 		}
 		elseif ($step === 2)
 		{
-			$this->uninstallDB();
-			$this->uninstallFiles();
-			$this->uninstallEvents();
+			if ($this->uninstallDB())
+			{
+				$this->uninstallFiles();
+				$this->uninstallEvents();
+			}
+			else
+			{
+				$APPLICATION->ThrowException(implode('<br>', $this->errors));
+			}
 
 			$APPLICATION->IncludeAdminFile(
 				Loc::getMessage('TASKSMOBILE_UNINSTALL_TITLE'),
-				$_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/' . $this->MODULE_ID . '/install/unstep2.php'
+				$_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/' . $this->MODULE_ID . '/install/unstep2.php',
 			);
 		}
 	}

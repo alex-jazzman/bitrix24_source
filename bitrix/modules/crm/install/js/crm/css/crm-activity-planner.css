@@ -2291,8 +2291,12 @@ table.quote td { padding: 0.95em 1.5em; }
 	-ms-flex-align: center;
 	padding: 0 14px;
 	height: 21px;
+	border: none;
 	border-right: 1px solid rgba(82, 92, 105, .1);
+	color: inherit;
+	font: inherit;
 	line-height: 21px;
+	background: transparent;
 	-webkit-transition: color .3s;
 	transition: color .3s;
 	-webkit-box-align: center;

@@ -1,0 +1,5 @@
+/* Standalone document: site template resets are not available here. */
+.disk-ext-page {
+	margin: 0;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-open-sans));
+}

@@ -8,8 +8,20 @@ use Bitrix\Im\V2\Guest\Auth\GuestApplication;
 use Bitrix\Main\Application as MainApplication;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Event;
+use Bitrix\Main\Loader;
 use Bitrix\Main\ModuleManager;
 use Bitrix\Main\SiteTable;
+
+// The base class lives in im while this class is resolved by main:OnApplicationsBuildList /
+// main:onApplicationScopeError handlers in prolog_before, where im is not included yet and
+// b_module_to_module order for equal SORT is nondeterministic. When im is too old or absent,
+// leave this class undeclared: EventManager's class_exists() then skips the handlers silently,
+// which is consistent with the product — mobile messenger is unavailable without im
+// (mobile/tabs/chat.php).
+if (!Loader::includeModule('im') || !class_exists(GuestApplication::class))
+{
+	return;
+}
 
 /**
  * Mobile-specific guest scope. Inherits the narrow base allow-list from {@see GuestApplication}

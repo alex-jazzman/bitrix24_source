@@ -145,11 +145,20 @@ BX.CCalendarPlannerHandler.prototype.drawEventForm = function(cb)
 			inp_Name.value = BX.util.trim(inp_Name.value);
 			if (inp_Name.value && inp_Name.value!=BX.message('JS_CORE_PL_EVENTS_ADD'))
 			{
+				var eventName = inp_Name.value;
 				cb({
 					from: inp_TimeFrom.value,
 					to: inp_TimeTo.value,
-					name: inp_Name.value,
-					absence: inp_Absence.checked ? 'Y' : 'N'
+					name: eventName,
+					absence: inp_Absence.checked ? 'Y' : 'N',
+					callback: function()
+					{
+						if (inp_Name.value === eventName)
+						{
+							inp_Name.value = '';
+							inp_Name.focus();
+						}
+					}
 				});
 
 				BX.timer.start(inp_TimeFrom.bxtimer);
@@ -289,15 +298,30 @@ BX.CCalendarPlannerHandler.prototype.drawEventForm = function(cb)
 
 BX.CCalendarPlannerHandler.prototype._createEventCallback = function(ev)
 {
-	calendarLastParams = ev;
+	var eventData = {
+		from: ev.from,
+		to: ev.to,
+		name: ev.name,
+		absence: ev.absence
+	};
 
-	this.PLANNER.query('calendar_add', ev);
+	calendarLastParams = eventData;
+
+	BX.planner_query(null, 'calendar_add', eventData, BX.delegate(function(data)
+	{
+		this.PLANNER.update(data);
+
+		if (BX.type.isFunction(ev.callback) && !(data && data.error))
+		{
+			ev.callback();
+		}
+	}, this));
 
 	this.EVENTS_LIST.appendChild(this.drawEvent({
 		DATE_FROM_TODAY: true, DATE_TO_TODAY: true,
-		NAME: BX.util.htmlspecialchars(ev.name),
-		TIME_FROM: ev.from,
-		TIME_TO: ev.to
+		NAME: BX.util.htmlspecialchars(eventData.name),
+		TIME_FROM: eventData.from,
+		TIME_TO: eventData.to
 	}));
 };
 

@@ -2,7 +2,6 @@ import { type JsonObject } from 'main.core';
 import { EventEmitter, type BaseEvent } from 'main.core.events';
 import { MenuManager } from 'main.popup';
 
-import { Messenger } from 'im.public';
 import { Core } from 'im.v2.application.core';
 import {
 	TitleInput,
@@ -161,14 +160,12 @@ export const ConferenceCreation = {
 
 			const { newDialogId } = result;
 			this.isCreating = false;
-			CreateChatManager.getInstance().setCreationStatus(false);
-			void Messenger.openChat(newDialogId);
+			void CreateChatManager.getInstance().completeChatCreation(newDialogId);
 		},
 		onCancelClick()
 		{
 			this.exitByCancel = true;
-			CreateChatManager.getInstance().setCreationStatus(false);
-			Messenger.openChat();
+			void CreateChatManager.getInstance().cancelChatCreation();
 		},
 		onScroll()
 		{

@@ -9,6 +9,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 /** @var \CMain $APPLICATION */
 
 use \Bitrix\Main\Localization\Loc;
+use Bitrix\Landing\Sanitizer;
 use Bitrix\Main\Web\Uri;
 
 \Bitrix\Main\UI\Extension::load([
@@ -41,8 +42,8 @@ $sidebarKb = array_slice($arResult['KNOWLEDGE_BASES'], 0, 3);
 			foreach ($arResult['KNOWLEDGE_BASES'] as $knowledgeBase)
 			{
 				echo '<div class="landing-widget-kb-content-row-item">';
-				echo '<a href="' . $knowledgeBase['PUBLIC_URL'] . '" target="_self" class="widget-kb-item-link">';
-				echo '<img class="widget-kb-preview" src="' . $knowledgeBase['PREVIEW'] . '">';
+				echo '<a href="' . htmlspecialcharsbx(Sanitizer::sanitizeHrefScheme($knowledgeBase['PUBLIC_URL'] ?? '')) . '" target="_self" class="widget-kb-item-link">';
+				echo '<img class="widget-kb-preview" src="' . htmlspecialcharsbx($knowledgeBase['PREVIEW'] ?? '') . '">';
 				echo '<div class="widget-kb-item-body">';
 				echo '<div class="widget-kb-item-body-head">';
 				echo '<div class="widget-kb-item-title">' . \htmlspecialcharsbx($knowledgeBase['TITLE']) . '</div>';
@@ -85,8 +86,8 @@ $sidebarKb = array_slice($arResult['KNOWLEDGE_BASES'], 0, 3);
 			foreach ($sidebarKb as $knowledgeBase)
 			{
 				echo '<div class="landing-widget-kb-content-row-item">';
-				echo '<a href="' . $knowledgeBase['PUBLIC_URL'] . '" target="_self" class="widget-kb-item-link">';
-				echo '<img class="widget-kb-preview" src="' . $knowledgeBase['PREVIEW'] . '">';
+				echo '<a href="' . htmlspecialcharsbx(Sanitizer::sanitizeHrefScheme($knowledgeBase['PUBLIC_URL'] ?? '')) . '" target="_self" class="widget-kb-item-link">';
+				echo '<img class="widget-kb-preview" src="' . htmlspecialcharsbx($knowledgeBase['PREVIEW'] ?? '') . '">';
 				echo '<div class="widget-kb-item-views-box">';
 				echo '<div class="ui-icon-set --opened-eye">' . '</div>';
 				echo '<div class="widget-kb-item-views">' . $knowledgeBase['VIEWS'] . '</div>';

@@ -6,6 +6,7 @@ jn.define('im/messenger/controller/navigation/manager', (require, exports, modul
 	const {
 		NavigationTabId,
 		NonSelectableNavigationTabId,
+		NavigationTabByFolderCode,
 		EventType,
 	} = require('im/messenger/const');
 	const { getLoggerWithContext } = require('im/messenger/lib/logger');
@@ -14,6 +15,7 @@ jn.define('im/messenger/controller/navigation/manager', (require, exports, modul
 	const { NestedTabCounters } = require('im/messenger/lib/counters/tab-counters');
 	const { Notification } = require('im/messenger/lib/ui/notification');
 
+	const { AnalyticsService } = require('im/messenger/provider/services/analytics');
 	const { TabSwitcher } = require('im/messenger/controller/navigation/tab-switcher');
 	const { NavigationHelper } = require('im/messenger/controller/navigation/helper');
 	const { NavigationApiHandler } = require('im/messenger/controller/navigation/api-handler');
@@ -370,6 +372,46 @@ jn.define('im/messenger/controller/navigation/manager', (require, exports, modul
 			headerManager.redrawRightButtonsIfNeeded(currentTabId);
 			headerManager.redrawLeftButtonsIfNeeded(currentTabId);
 			BX.postComponentEvent(EventType.navigation.tabChanged, [{ currentTabId, previousTabId }]);
+
+			void this.#sendOpenFolderAnalytics(currentTabId);
+		}
+
+		/**
+		 * @param {string} tabId
+		 */
+		async #sendOpenFolderAnalytics(tabId)
+		{
+			// Tabs widget is hidden by another widget (folder list, dialog etc.)
+			// — auto-switch under it is not a real user navigation.
+			if (await NavigationHelper.isMessengerTabsCovered())
+			{
+				return;
+			}
+
+			const store = serviceLocator.get('core')?.getStore();
+			if (!store)
+			{
+				return;
+			}
+
+			const systemTabValues = Object.values(NavigationTabByFolderCode);
+			if (systemTabValues.includes(tabId))
+			{
+				const folders = store.getters['folderModel/getList']();
+				const folder = folders.find((f) => f.type === 'system' && NavigationTabByFolderCode[f.code] === tabId);
+				if (folder)
+				{
+					AnalyticsService.getInstance().sendOpenFolder({ folderId: folder.id });
+				}
+
+				return;
+			}
+
+			const folderId = Number(tabId);
+			if (Number.isInteger(folderId) && folderId > 0)
+			{
+				AnalyticsService.getInstance().sendOpenFolder({ folderId });
+			}
 		}
 
 		unsubscribeEvents()

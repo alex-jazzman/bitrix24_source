@@ -90,6 +90,7 @@ jn.define('user-profile/common-tab/src/block/common-fields/src/field/phone-field
 				size: InputSize.M,
 				design: InputDesign.GREY,
 				mode: InputMode.NAKED,
+				backgroundColor: Color.bgContentSecondaryInvert,
 				onChange: this.#onPhoneChange,
 				onFocus: () => this.onFocus(idx),
 			});

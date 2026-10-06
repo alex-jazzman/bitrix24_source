@@ -8,6 +8,14 @@ export const ImageBbCodeSizes = Object.freeze({
 	large: 'large',
 });
 
+const imageBbCodeSizesFragment = Object.values(ImageBbCodeSizes).join('|');
+// Allow extra attributes after size= (e.g. the Markdown `alt=` token) so the preview
+// placeholder also matches `[img size=medium alt=…]…[/img]` instead of leaking raw BB-code.
+const purifyImageTagRegex = new RegExp(
+	`\\[img\\s+size=(${imageBbCodeSizesFragment})(?:\\s+[a-z]+=[^\\]\\s]+)*]([\\s\\S]*?)\\[\\/img]`,
+	'gi',
+);
+
 export const ParserImage = {
 	decodeLink(text: string): string
 	{
@@ -223,13 +231,7 @@ export const ParserImage = {
 
 	purifyImageBbCode(text: string): string
 	{
-		const sizesFragment = Object.values(ImageBbCodeSizes).join('|');
-		const imageTagRegex = new RegExp(
-			`\\[img\\s+size=(${sizesFragment})]([\\s\\S]*?)\\[\\/img]`,
-			'gi',
-		);
-
-		return text.replaceAll(imageTagRegex, () => this.getImagePrefix());
+		return text.replaceAll(purifyImageTagRegex, () => this.getImagePrefix());
 	},
 
 	hideErrorImage(element: HTMLImageElement): void
@@ -250,22 +252,28 @@ export const ParserImage = {
 		}
 
 		return text.replaceAll(
-			/\[img(?:\s+size=([^\]]+))?]\s*(?:\[url])?([\S\s]*?)(?:\[\/url])?\s*\[\/img]/gi,
-			(whole, size, urlParsed) => {
+			/\[img((?:\s+[a-z]+=[^\]\s]+)*)]\s*(?:\[url])?([\S\s]*?)(?:\[\/url])?\s*\[\/img]/gi,
+			(whole, attrs, urlParsed) => {
 				const url = Text.decode(urlParsed);
+				const size = parseImageAttribute(attrs, 'size');
+				const alt = decodeAltToken(parseImageAttribute(attrs, 'alt'));
 
 				const isValidSize = size && Object.values(ImageBbCodeSizes).includes(size.toLowerCase());
-				const isInvalidUrl = ['/docs/pub/', 'logout=yes'].includes(url.toLowerCase());
+				const isInvalidUrl = ['/docs/pub/', 'logout=yes'].some((part) => url.toLowerCase().includes(part));
 				const isSafeUrl = getUtils().text.checkUrl(url);
 				const isImage = getUtils().text.isUrlImageLike(url);
 				const hasNestedItems = hasNestedImgBbCodes(url);
 
 				if (!isValidSize || isInvalidUrl || !isSafeUrl || !isImage || hasNestedItems)
 				{
-					return whole.replaceAll(/\[url]([\S\s]*?)\[\/url]/gi, '$1');
+					return whole
+						.replace(/\[img((?:\s+[a-z]+=[^\]\s]+)*)]/i, (imgTag, imgAttrs) => {
+							return `[img${imgAttrs.replace(/\s+alt=[^\]\s]+/i, '')}]`;
+						})
+						.replaceAll(/\[url]([\S\s]*?)\[\/url]/gi, '$1');
 				}
 
-				const classModifier = `--${size}`;
+				const classModifier = `--${size.toLowerCase()}`;
 				const { file } = getUtils();
 				const dialog = getCore().getStore().getters['chats/get'](contextDialogId, true);
 				const viewerGroupBy = dialog.chatId;
@@ -273,11 +281,11 @@ export const ParserImage = {
 
 				const layout = Tag.render`
 					<a class='bx-im-message-image ${classModifier}'>
-						<img class='bx-im-message-image-source' />
+						<img class='bx-im-message-image-source' alt='' />
 					</a>
 				`;
 
-				Dom.attr(layout.firstChild, { src: url, ...viewerAttributes });
+				Dom.attr(layout.firstChild, { src: url, alt, ...viewerAttributes });
 
 				return layout.outerHTML;
 			},
@@ -325,4 +333,52 @@ function canPurifyLink(symbolBeforeUrl: string, url: string): boolean
 function hasNestedImgBbCodes(url: string): boolean
 {
 	return /\[img/i.test(url.trim());
+}
+
+/**
+ * Extract a single `name=value` attribute from the `[img ...]` attribute string.
+ * Values are whitespace-delimited (the Markdown converter emits inert tokens),
+ * so a value never contains spaces or `]`.
+ *
+ * @param {string} attrs - raw attribute string captured between `[img` and `]`
+ * @param {string} name
+ * @return {string} attribute value, or '' when absent
+ */
+function parseImageAttribute(attrs: string, name: string): string
+{
+	if (!Type.isStringFilled(attrs))
+	{
+		return '';
+	}
+
+	const match = attrs.match(new RegExp(`(?:^|\\s)${name}=([^\\]\\s]+)`, 'i'));
+
+	return match ? match[1] : '';
+}
+
+/**
+ * Decode the inert alt token emitted by the Markdown converter
+ * (`toMarkdownInertToken` from markdown/utils/inert-token.js, called in
+ * `applyImage`) back to the original alt
+ * text. The token alphabet is [A-Za-z0-9.%-], so it reaches here untouched by
+ * Text.encode. A malformed token (manual/legacy [img alt=...]) is returned as-is.
+ *
+ * @param {string} token
+ * @return {string}
+ */
+function decodeAltToken(token: string): string
+{
+	if (token === '')
+	{
+		return '';
+	}
+
+	try
+	{
+		return decodeURIComponent(token);
+	}
+	catch (error)
+	{
+		return token;
+	}
 }

@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Socialnetwork = this.BX.Socialnetwork || {};
 this.BX.Socialnetwork.V2 = this.BX.Socialnetwork.V2 || {};
 this.BX.Socialnetwork.V2.Features = this.BX.Socialnetwork.V2.Features || {};
-(function (exports, main_core, socialnetwork_v2_const, socialnetwork_v2_model_project, socialnetwork_v2_model_interface, socialnetwork_v2_provider_services_projectService) {
+(function (exports, main_core, ui_notificationManager, socialnetwork_v2_const, socialnetwork_v2_model_project, socialnetwork_v2_model_interface, socialnetwork_v2_provider_services_projectService) {
 	'use strict';
 
 	class CopyProjectFeature {
@@ -35,6 +35,13 @@ this.BX.Socialnetwork.V2.Features = this.BX.Socialnetwork.V2.Features || {};
 				interfaceStore.setValidation('title', {
 					uniq: true
 				});
+				return;
+			}
+			if (main_core.Type.isPlainObject(error) && main_core.Type.isStringFilled(error?.message)) {
+				ui_notificationManager.Notifier.notifyViaBrowserProvider({
+					id: 'socialnetwork-project-wizard-copy-error',
+					text: error.message
+				});
 			}
 		}
 		#validate(project) {
@@ -51,5 +58,5 @@ this.BX.Socialnetwork.V2.Features = this.BX.Socialnetwork.V2.Features || {};
 
 	exports.CopyProjectFeature = CopyProjectFeature;
 
-})(this.BX.Socialnetwork.V2.Features.Project = this.BX.Socialnetwork.V2.Features.Project || {}, BX, BX.Socialnetwork.V2, BX.Socialnetwork.V2.Model, BX.Socialnetwork.V2.Model, BX.Socialnetwork.V2.Provider.Services);
+})(this.BX.Socialnetwork.V2.Features.Project = this.BX.Socialnetwork.V2.Features.Project || {}, BX, BX.UI.NotificationManager, BX.Socialnetwork.V2, BX.Socialnetwork.V2.Model, BX.Socialnetwork.V2.Model, BX.Socialnetwork.V2.Provider.Services);
 //# sourceMappingURL=copy-project-feature.bundle.js.map

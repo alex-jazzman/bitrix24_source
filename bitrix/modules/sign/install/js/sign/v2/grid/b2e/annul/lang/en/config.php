@@ -1,0 +1,19 @@
+<?php
+$MESS["SIGN_DOCUMENT_LIST_ANNUL_CONFIRM_NO"] = "Cancel";
+$MESS["SIGN_DOCUMENT_LIST_ANNUL_CONFIRM_TEXT"] = "Documents (#COUNT#) will get the Annulled status and will no longer appear in the main list. You can find them using the filter for this status. This action can be undone.";
+$MESS["SIGN_DOCUMENT_LIST_ANNUL_CONFIRM_TITLE"] = "Annul documents";
+$MESS["SIGN_DOCUMENT_LIST_ANNUL_CONFIRM_YES"] = "Yes, annul";
+$MESS["SIGN_DOCUMENT_LIST_ANNUL_NOTHING_TO_DO"] = "No documents are available for this action.";
+$MESS["SIGN_DOCUMENT_LIST_ANNUL_ONE_CONFIRM_TEXT"] = "The document will get the Annulled status and will no longer appear in the main list. You can find it using the filter for this status. This action can be undone.";
+$MESS["SIGN_DOCUMENT_LIST_ANNUL_ONE_CONFIRM_TITLE"] = "Annul document";
+$MESS["SIGN_DOCUMENT_LIST_ANNUL_ONE_DONE"] = "The document has been annulled.";
+$MESS["SIGN_DOCUMENT_LIST_ANNUL_ONE_UNCHANGED"] = "The document is already annulled.";
+$MESS["SIGN_DOCUMENT_LIST_ANNUL_RESULT"] = "Changed: #CHANGED#, unchanged: #UNCHANGED#";
+$MESS["SIGN_DOCUMENT_LIST_ANNUL_RESULT_WITH_FORBIDDEN"] = "Changed: #CHANGED#, unchanged: #UNCHANGED#, no permission: #FORBIDDEN#";
+$MESS["SIGN_DOCUMENT_LIST_UNANNUL_CONFIRM_TEXT"] = "The Annulled mark will be removed from the selected documents (#COUNT#).";
+$MESS["SIGN_DOCUMENT_LIST_UNANNUL_CONFIRM_TITLE"] = "Cancel annulment";
+$MESS["SIGN_DOCUMENT_LIST_UNANNUL_CONFIRM_YES"] = "Yes";
+$MESS["SIGN_DOCUMENT_LIST_UNANNUL_ONE_CONFIRM_TEXT"] = "The Annulled mark will be removed from the document.";
+$MESS["SIGN_DOCUMENT_LIST_UNANNUL_ONE_CONFIRM_TITLE"] = "Cancel annulment";
+$MESS["SIGN_DOCUMENT_LIST_UNANNUL_ONE_DONE"] = "Annulment cancelled.";
+$MESS["SIGN_DOCUMENT_LIST_UNANNUL_ONE_UNCHANGED"] = "The annulment has already been cancelled.";

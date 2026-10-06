@@ -1,5 +1,7 @@
 <?php
 $MESS["CRM_ACCESS_NOTIFY_MESSAGE"] = "Please <a href=\"#URL#\">configure CRM kanban stages</a> for me, or grant me an appropriate permission so I could do it myself.";
+$MESS["CRM_ACCESS_NOTIFY_MESSAGE_PLAIN_TEXT"] = "Set up the stages or delegate this task to someone else.";
+$MESS["CRM_ACCESS_NOTIFY_MESSAGE_SUBJECT"] = "#AUTHOR# requests that you <a href=\"#URL#\">set up CRM kanban stages</a> for them.";
 $MESS["CRM_KANBAN_AUTOMATED_SOLUTION_STUB_DESCRIPTION"] = "Create an item to begin.";
 $MESS["CRM_KANBAN_AUTOMATED_SOLUTION_STUB_TITLE"] = "This is where you will find your SPA";
 $MESS["CRM_KANBAN_BOOLEAN_0"] = "No";
@@ -28,6 +30,7 @@ $MESS["CRM_KANBAN_ERROR_STAGE_IS_SYSTEM"] = "System stage cannot be deleted.";
 $MESS["CRM_KANBAN_ERROR_STAGE_IS_WIN"] = "Final stage cannot be deleted.";
 $MESS["CRM_KANBAN_FIELD"] = "Observers";
 $MESS["CRM_KANBAN_HEADER_OTHER_FIELDS"] = "Other";
+$MESS["CRM_KANBAN_MODE_NOT_AVAILABLE"] = "\"Activities\" view mode disabled by your Bitrix24 administrator.";
 $MESS["CRM_KANBAN_NOT_SUPPORTED"] = "This entity type cannot be displayed in Kanban";
 $MESS["CRM_KANBAN_OPEN_ITEM"] = "Open";
 $MESS["CRM_KANBAN_ORDER_TITLE"] = "Order ##ACCOUNT_NUMBER#";

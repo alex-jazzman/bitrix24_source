@@ -157,6 +157,7 @@ $availableAiAgentsCount = $arResult['AVAILABLE_AI_AGENTS_COUNT'] ?? 0;
 			startTrigger: '<?= CUtil::JSEscape(StartTrigger::AiAgent->value) ?>',
 			isAiAgentsAvailableByTariff: '<?= CUtil::JSEscape($arResult['IS_AI_AGENTS_AVAILABLE_BY_TARIFF']) ?>',
 			aiAgentsTariffSliderCode: '<?= CUtil::JSEscape($arResult['AI_AGENTS_TARIFF_SLIDER_CODE']) ?>',
+			isExistingRunsWarningSpent: <?= CUtil::PhpToJSObject($arResult['IS_EXISTING_RUNS_WARNING_SPENT']) ?>,
 		});
 	});
 </script>

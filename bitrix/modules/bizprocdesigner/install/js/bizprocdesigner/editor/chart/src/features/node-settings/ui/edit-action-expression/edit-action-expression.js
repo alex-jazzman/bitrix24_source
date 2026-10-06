@@ -11,6 +11,7 @@ import {
 	type ActionDictEntry,
 } from '../../../../entities/node-settings';
 import { useLoc } from '../../../../shared/composables';
+import { PORT_TYPES } from '../../../../shared/constants';
 import { type ActivityData, type Block } from '../../../../shared/types';
 import { EditAuxPortSelector } from '../edit-aux-port-selector/edit-aux-port-selector';
 import { DocumentSelector } from './document-selector';
@@ -54,15 +55,93 @@ export const EditActionExpression = {
 
 		return { getMessage, isActionFormLoading };
 	},
-	data(): { isExpanded: boolean; }
+	data(): { isExpanded: boolean; selectedGroupRef: ?string; }
 	{
 		return {
 			isExpanded: true,
+			// Active cascade group. Held locally because the persisted actionId is
+			// briefly cleared while the user picks a new area (§2.5), which would
+			// otherwise collapse the area/object steps mid-selection.
+			selectedGroupRef: null,
 		};
+	},
+	created(): void
+	{
+		void this.ensureCapabilityCatalog();
+		this.selectedGroupRef = this.deriveGroupFromAction(this.selectedActionId);
+	},
+	watch:
+	{
+		capabilityCatalog(): void
+		{
+			// The catalog may arrive after mount; derive the group for an already
+			// configured action so the cascade steps appear without a re-pick.
+			if (this.selectedGroupRef === null && this.selectedActionId)
+			{
+				this.selectedGroupRef = this.deriveGroupFromAction(this.selectedActionId);
+			}
+		},
 	},
 	computed:
 	{
-		...mapState(useNodeSettingsStore, ['nodeSettings', 'block', 'currentRule', 'currentSettingsItems']),
+		...mapState(useNodeSettingsStore, [
+			'nodeSettings',
+			'block',
+			'currentRule',
+			'currentSettingsItems',
+			'capabilityCatalog',
+			'isActionCatalogFullyClassified',
+			'actionGroupOptions',
+			'catalogEntryByActionId',
+			'actionAreasByGroup',
+			'actionObjectsByArea',
+			'resolveCatalogActionId',
+			'isRelationAutofillEnabled',
+		]),
+		selectedGroup(): ?string
+		{
+			return this.selectedGroupRef;
+		},
+		selectedArea(): ?string
+		{
+			return this.construction.expression.area ?? null;
+		},
+		selectedObject(): ?string
+		{
+			return this.construction.expression.object ?? null;
+		},
+		areaOptions(): Array<Object>
+		{
+			return this.actionAreasByGroup(this.selectedGroup);
+		},
+		// Cascade is available only when the selected action's group offers areas;
+		// otherwise the flat action selector stays as the only control.
+		isCascadeAvailable(): boolean
+		{
+			return this.areaOptions.length > 0;
+		},
+		objectOptions(): Array<Object>
+		{
+			return this.selectedArea
+				? this.actionObjectsByArea(this.selectedGroup, this.selectedArea)
+				: [];
+		},
+		// Skipped when the area has no objects (e.g. the notification MVP node):
+		// the actionId is then resolved by group + area alone.
+		isObjectStepShown(): boolean
+		{
+			return this.isCascadeAvailable && Boolean(this.selectedArea) && this.objectOptions.length > 0;
+		},
+		selectedAreaTitle(): string
+		{
+			return this.areaOptions.find((area) => area.id === this.selectedArea)?.title
+				?? this.notSelectedMessage;
+		},
+		selectedObjectTitle(): string
+		{
+			return this.objectOptions.find((object) => object.id === this.selectedObject)?.title
+				?? this.notSelectedMessage;
+		},
 		connectedBlocksContext(): Object
 		{
 			return getConnectedBlocksContextForConstruction(
@@ -81,23 +160,59 @@ export const EditActionExpression = {
 		{
 			return this.connectedBlocksContext.allBlocks;
 		},
+		isRelationContext(): boolean
+		{
+			return this.currentRule?.type === PORT_TYPES.inputRelation;
+		},
 		selectedAction(): ActionDictEntry
 		{
+			if (this.isRelationContext && this.nodeSettings?.relationAction)
+			{
+				return this.nodeSettings.relationAction;
+			}
+
 			return this.nodeSettings.actions.get(this.selectedActionId);
 		},
 		selectedActionId:
 		{
 			get(): string
 			{
-				return this.construction.expression.actionId ?? '';
+				const actionId = this.construction.expression.actionId ?? '';
+				if (!actionId && this.isRelationContext && this.nodeSettings?.relationAction)
+				{
+					return this.nodeSettings.relationAction.id;
+				}
+
+				return actionId;
 			},
 			set(actionId: string): void
 			{
+				// A user-initiated "Create" selection is the only trigger for autofill, and only on a relation
+				// input port: mark the request here so the form applies it once mounted, even on first select.
+				// A "Create" sub-action in a plain process branch must not autofill from ordinary ancestors.
+				if (
+					this.isRelationAutofillEnabled
+					&& this.currentRule?.type === PORT_TYPES.inputRelation
+					&& this.nodeSettings.actions.get(actionId)?.isRelationCreate
+				)
+				{
+					this.requestAutofillApply(this.construction.id);
+				}
+
 				this.isActionFormLoading = true;
-				this.changeRuleExpression(this.construction, {
-					actionId,
-					activityData: null,
-				});
+				this.selectedGroupRef = this.deriveGroupFromAction(actionId);
+				const props = { actionId, activityData: null };
+				// Treat a pick as a group change only when the cascade is in play —
+				// the new action has areas, or a stale area/object must be cleared.
+				// A pure flat -> flat pick keeps the legacy behavior (no document reset).
+				const picksCascadeAction = (this.catalogEntryByActionId(actionId)?.areas?.length ?? 0) > 0;
+				if (picksCascadeAction || this.selectedArea || this.selectedObject)
+				{
+					props.area = null;
+					props.object = null;
+					props.document = null;
+				}
+				this.changeRuleExpression(this.construction, props);
 			},
 		},
 		actionValue(): ?ActivityData
@@ -110,6 +225,17 @@ export const EditActionExpression = {
 		},
 		currentActionTitle(): string
 		{
+			if (this.isRelationContext && this.nodeSettings?.relationAction)
+			{
+				return this.nodeSettings.relationAction.title;
+			}
+
+			// Intent-first mode shows the picked universal action, not the resolved activity.
+			if (this.isActionCatalogFullyClassified)
+			{
+				return this.selectedGroup ? this.getGroupTitle(this.selectedGroup) : this.notSelectedMessage;
+			}
+
 			const action = this.nodeSettings.actions.get(this.selectedActionId);
 
 			return action?.title ?? this.notSelectedMessage;
@@ -137,22 +263,197 @@ export const EditActionExpression = {
 				this.selectedDocument,
 			);
 		},
+		// A handlesDocument action cannot build its parameters form until the source
+		// document is picked, so the whole value section stays hidden until then.
+		isValueSectionShown(): boolean
+		{
+			return Boolean(this.selectedActionId)
+				&& (this.selectedAction?.handlesDocument !== true || this.selectedDocument !== '');
+		},
+		// The form can only be loading while it is actually rendered: with the value
+		// section hidden nobody would reset the injected flag.
+		isActionFormPending(): boolean
+		{
+			return this.isValueSectionShown && this.isActionFormLoading;
+		},
 	},
 	methods:
 	{
-		...mapActions(useNodeSettingsStore, ['changeRuleExpression']),
-		getMenuItems(): Array<MenuItem>
+		...mapActions(useNodeSettingsStore, ['changeRuleExpression', 'ensureCapabilityCatalog', 'requestAutofillApply']),
+		deriveGroupFromAction(actionId: ?string): ?string
 		{
-			return [...this.nodeSettings.actions.values()].map(({ id, title }) => {
-				return {
-					id,
-					text: title,
+			return this.catalogEntryByActionId(actionId)?.group
+				?? this.nodeSettings?.actions?.get(actionId)?.group
+				?? null;
+		},
+		onShowAreaMenu({ currentTarget }: PointerEvent): void
+		{
+			this.areaMenu = MenuManager.create({
+				id: 'edit-action-area-menu',
+				bindElement: currentTarget,
+				items: this.areaOptions.map((area) => ({
+					id: `action-area-${area.id}`,
+					text: area.title,
+					dataset: { testId: `actionAreaSelectItem-${area.id}` },
 					onclick: () => {
-						this.selectedActionId = id;
-						this.menu.close();
+						this.onSelectArea(area.id);
+						this.areaMenu.close();
 					},
-				};
+				})),
+				maxHeight: 200,
+				closeByEsc: true,
+				autoHide: true,
+				cacheable: false,
 			});
+			this.areaMenu.show();
+		},
+		onShowObjectMenu({ currentTarget }: PointerEvent): void
+		{
+			this.objectMenu = MenuManager.create({
+				id: 'edit-action-object-menu',
+				bindElement: currentTarget,
+				items: this.objectOptions.map((object) => ({
+					id: `action-object-${object.id}`,
+					text: object.title,
+					dataset: { testId: `actionObjectSelectItem-${object.id}` },
+					onclick: () => {
+						this.onSelectObject(object.id);
+						this.objectMenu.close();
+					},
+				})),
+				maxHeight: 200,
+				closeByEsc: true,
+				autoHide: true,
+				cacheable: false,
+			});
+			this.objectMenu.show();
+		},
+		onSelectArea(areaId: string): void
+		{
+			if (areaId === this.selectedArea)
+			{
+				return;
+			}
+
+			// No object step for this area → the action resolves from group + area.
+			const resolvedActionId = this.actionObjectsByArea(this.selectedGroup, areaId).length === 0
+				? this.resolveCatalogActionId(this.selectedGroup, areaId)
+				: null;
+			this.isActionFormLoading = Boolean(resolvedActionId);
+			this.changeRuleExpression(this.construction, {
+				area: areaId,
+				object: null,
+				actionId: resolvedActionId,
+				document: null,
+				activityData: null,
+			});
+		},
+		onSelectObject(objectId: string): void
+		{
+			if (objectId === this.selectedObject)
+			{
+				return;
+			}
+
+			const resolvedActionId = this.resolveCatalogActionId(this.selectedGroup, this.selectedArea, objectId);
+			this.isActionFormLoading = Boolean(resolvedActionId);
+			this.changeRuleExpression(this.construction, {
+				object: objectId,
+				actionId: resolvedActionId,
+				document: null,
+				activityData: null,
+			});
+		},
+		onSelectGroup(groupId: string): void
+		{
+			if (groupId === this.selectedGroup)
+			{
+				return;
+			}
+
+			this.selectedGroupRef = groupId;
+			this.isActionFormLoading = false;
+			this.changeRuleExpression(this.construction, {
+				area: null,
+				object: null,
+				actionId: null,
+				document: null,
+				activityData: null,
+			});
+		},
+		makeGroupItem(groupId: string): Object
+		{
+			return {
+				id: `action-group-${groupId}`,
+				text: this.getGroupTitle(groupId),
+				dataset: { testId: `actionGroupSelectItem-${groupId}` },
+				onclick: () => {
+					this.onSelectGroup(groupId);
+					this.menu.close();
+				},
+			};
+		},
+		makeActionItem(id: string, title: string): Object
+		{
+			return {
+				id,
+				text: title,
+				dataset: { testId: `actionSelectItem-${id}` },
+				onclick: () => {
+					this.selectedActionId = id;
+					this.menu.close();
+				},
+			};
+		},
+		getGroupTitle(groupId: string): string
+		{
+			const key = `BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_ACTION_GROUP_${groupId.toUpperCase()}`;
+			return this.getMessage(key) || groupId;
+		},
+		getMenuItems(): Array<Object>
+		{
+			// Fully classified catalog: offer intents only, concrete activities are
+			// resolved further down the cascade (area -> object).
+			if (this.isActionCatalogFullyClassified)
+			{
+				return this.actionGroupOptions.map(({ id }) => this.makeGroupItem(id));
+			}
+
+			const entries = [...this.nodeSettings.actions.values()];
+			const grouped = new Map();
+			for (const entry of entries)
+			{
+				const key = entry.group ?? null;
+				if (!grouped.has(key))
+				{
+					grouped.set(key, []);
+				}
+				grouped.get(key).push(entry);
+			}
+
+			if (grouped.size === 1 && grouped.has(null))
+			{
+				return entries.map(({ id, title }) => this.makeActionItem(id, title));
+			}
+
+			const items = [];
+			for (const [groupId, groupEntries] of grouped)
+			{
+				if (groupId !== null)
+				{
+					items.push({
+						id: `action-group-${groupId}`,
+						text: this.getGroupTitle(groupId),
+						disabled: true,
+					});
+				}
+				for (const { id, title } of groupEntries)
+				{
+					items.push(this.makeActionItem(id, title));
+				}
+			}
+
+			return items;
 		},
 		onShowMenu({ currentTarget }: PointerEvent): void
 		{
@@ -194,11 +495,47 @@ export const EditActionExpression = {
 				</span>
 				<div
 					class="ui-ctl ui-ctl-after-icon ui-ctl-dropdown editor-chart-node-settings-edit-action-expression-form__dropdown"
-					@click="onShowMenu"
+					:class="{ '--disabled': isRelationContext }"
+					:data-test-id="$testId('actionSelect')"
+					@click="isRelationContext ? null : onShowMenu($event)"
 				>
 					<div class="ui-ctl-after ui-ctl-icon-angle"></div>
 					<div class="ui-ctl-element">
 						{{ currentActionTitle }}
+					</div>
+				</div>
+			</div>
+			<div v-if="isCascadeAvailable"
+				 class="editor-chart-node-settings-edit-action-expression-form__item"
+			>
+				<span class="editor-chart-node-settings-edit-action-expression-form__label">
+					{{ getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_ACTION_AREA') }}
+				</span>
+				<div
+					class="ui-ctl ui-ctl-after-icon ui-ctl-dropdown editor-chart-node-settings-edit-action-expression-form__dropdown"
+					:data-test-id="$testId('actionAreaSelect')"
+					@click="onShowAreaMenu"
+				>
+					<div class="ui-ctl-after ui-ctl-icon-angle"></div>
+					<div class="ui-ctl-element">
+						{{ selectedAreaTitle }}
+					</div>
+				</div>
+			</div>
+			<div v-if="isObjectStepShown"
+				 class="editor-chart-node-settings-edit-action-expression-form__item"
+			>
+				<span class="editor-chart-node-settings-edit-action-expression-form__label">
+					{{ getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_ACTION_OBJECT') }}
+				</span>
+				<div
+					class="ui-ctl ui-ctl-after-icon ui-ctl-dropdown editor-chart-node-settings-edit-action-expression-form__dropdown"
+					:data-test-id="$testId('actionObjectSelect')"
+					@click="onShowObjectMenu"
+				>
+					<div class="ui-ctl-after ui-ctl-icon-angle"></div>
+					<div class="ui-ctl-element">
+						{{ selectedObjectTitle }}
 					</div>
 				</div>
 			</div>
@@ -221,11 +558,11 @@ export const EditActionExpression = {
 					</div>
 				</div>
 			</div>
-			<div class="editor-chart-node-settings-edit-action-expression-form__item">
-				<div
-					v-if="selectedActionId"
-					class="editor-chart-node-settings-edit-action-expression-form__label"
-				>
+			<div
+				v-if="isValueSectionShown"
+				class="editor-chart-node-settings-edit-action-expression-form__item"
+			>
+				<div class="editor-chart-node-settings-edit-action-expression-form__label">
 					<span>
 						{{ getMessage('BIZPROCDESIGNER_EDITOR_NODE_SETTINGS_EXPRESSION_VALUE') }}
 					</span>
@@ -233,12 +570,14 @@ export const EditActionExpression = {
 						v-if="isExpanded"
 						name="minus-20"
 						color="#828b95"
+						:data-test-id="$testId('actionCollapseBtn')"
 						@click="isExpanded=false"
 					/>
 					<BIcon
 						v-else
 						name="plus-20"
 						color="#828b95"
+						:data-test-id="$testId('actionExpandBtn')"
 						@click="isExpanded=true"
 					/>
 				</div>
@@ -255,7 +594,7 @@ export const EditActionExpression = {
 			</div>
 			<div
 				v-if="shouldShowAuxPorts && selectedActionId"
-				v-show="!isActionFormLoading"
+				v-show="!isActionFormPending"
 				class="editor-chart-node-settings-edit-action-expression-form__item"
 			>
 				<EditAuxPortSelector

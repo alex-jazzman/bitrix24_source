@@ -25,6 +25,12 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 					<?php
 $bWasSeparator = true;
 foreach($arParams["BUTTONS"] as $index=>$item):
+
+	$item["LINK"] = htmlspecialcharsbx($item["LINK"] ?? '', ENT_COMPAT, false);
+	$item["TITLE"] = htmlspecialcharsbx($item["TITLE"] ?? '', ENT_COMPAT, false);
+	$item["ICON"] = htmlspecialcharsbx($item["ICON"] ?? '', ENT_COMPAT, false);
+	$item["TEXT"] = htmlspecialcharsbx($item["TEXT"] ?? '', ENT_COMPAT, false);
+
 	if(!empty($item["NEWBAR"])):
 ?>
 				</tr>

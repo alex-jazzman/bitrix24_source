@@ -53,4 +53,5 @@ class Item extends Event
 	}
 }
 
-export {Item, Options}
+export {Item}
+export type {Options}

@@ -5,8 +5,9 @@ jn.define('im/messenger/controller/selector/forward/tabbed/src/opener', (require
 	const { EntitySelectorWidget } = require('selector/widget');
 	const { Loc } = require('im/messenger/loc');
 
+	const { UserHelper } = require('im/messenger/lib/helper');
 	const { ForwardDialogSelectorProvider } = require('im/messenger/controller/selector/forward/tabbed/src/provider');
-	const { forwardTabRegistry } = require('im/messenger/controller/selector/forward/tabbed/src/tab-config');
+	const { ForwardTab, forwardTabRegistry } = require('im/messenger/controller/selector/forward/tabbed/src/tab-config');
 
 	/**
 	 * @description Propagates the active scope (tab) and search text to the provider.
@@ -42,8 +43,13 @@ jn.define('im/messenger/controller/selector/forward/tabbed/src/opener', (require
 		onClose,
 	}, parentWidget)
 	{
+		// Guests have access to a single chat only; the other forward tabs (tasks, projects,
+		// channels, copilot) rely on REST methods that aren't whitelisted in the guest scope
+		// (`MobileGuestApplication`), so loading them produces "extension not found" errors.
+		const isGuest = UserHelper.isCurrentUserGuest();
 		const scopes = forwardTabRegistry.getIds()
 			.filter((tabId) => forwardTabRegistry.get(tabId).isAvailable !== false)
+			.filter((tabId) => !isGuest || tabId === ForwardTab.chats)
 			.map((tabId) => ({
 				id: tabId,
 				title: forwardTabRegistry.get(tabId).title,

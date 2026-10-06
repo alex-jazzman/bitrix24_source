@@ -7,15 +7,15 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 use Bitrix\Main\Localization\Loc;
 
 /** @var array $arParams */
-
-\Bitrix\Main\UI\Extension::load([
-	'ui.icon-set.main',
-]);
 ?>
 
 <?php
 if ($arParams['TYPE'] === 'CONTACTS')
 {
+	\Bitrix\Main\UI\Extension::load([
+		'ui.icon-set.main',
+	]);
+
 	$communications = $arResult['COMMUNICATIONS'] ?? null;
 	$hideContactsData = $arResult['HIDE_CONTACTS_DATA'] ?? [];
 	$isPrimaryIcon = $arResult['IS_PRIMARY_ICON'] ?? 'N';
@@ -30,18 +30,21 @@ if ($arParams['TYPE'] === 'CONTACTS')
 				{
 					$communications['web'][0] = 'https://' . $communications['web'][0];
 				}
+				// the substring check above passes javascript:...//http through, so the scheme allow-list decides
+				$webUrl = \Bitrix\Landing\Sanitizer::sanitizeHrefScheme($communications['web'][0]);
+				$webText = preg_replace('#^https?://(.*?)/?$#', '$1', $webUrl);
 				?>
 				<div class="landing-crm-requisites__box">
 					<div class="landing-crm-requisites_icon">
 						<?php if ($isPrimaryIcon === 'Y') :?>
-							<div class="fas fa-up-right-from-square g-font-size-18 g-color-primary"></div>
+							<div style="--ui-icon-set__icon-size: 30px; --ui-icon-set__icon-color: var(--primary);" class="ui-icon-set --expand"></div>
 						<?php else: ?>
-							<div class="fas fa-up-right-from-square g-font-size-18"></div>
+							<div style="--ui-icon-set__icon-size: 30px; --ui-icon-set__icon-color: currentColor;" class="ui-icon-set --expand"></div>
 						<?php endif?>
 					</div>
 					<div class="landing-crm-requisites_main">
 						<div class="landing-crm-requisites__name"><?= Loc::getMessage('LNDNG_BLPHB_TPL_CONTACTS_WEB')?>:</div>
-						<div class="landing-crm-requisites__value"><a href="<?= $communications['web'][0]?>" target="_blank"><?= preg_replace('#^https?://(.*?)/?$#', '$1', $communications['web'][0])?></a></div>
+						<div class="landing-crm-requisites__value"><a href="<?= htmlspecialcharsbx($webUrl)?>" target="_blank"><?= htmlspecialcharsbx($webText)?></a></div>
 					</div>
 				</div>
 			<?php endif?>
@@ -50,15 +53,15 @@ if ($arParams['TYPE'] === 'CONTACTS')
 				<div class="landing-crm-requisites__box">
 					<div class="landing-crm-requisites_icon">
 						<?php if ($isPrimaryIcon === 'Y') :?>
-							<div class="fas fa-phone g-font-size-18 g-color-primary"></div>
+							<div style="--ui-icon-set__icon-size: 30px; --ui-icon-set__icon-color: var(--primary);" class="ui-icon-set --telephony-handset-1"></div>
 						<?php else: ?>
-							<div class="fas fa-phone g-font-size-18"></div>
+							<div style="--ui-icon-set__icon-size: 30px; --ui-icon-set__icon-color: currentColor;" class="ui-icon-set --telephony-handset-1"></div>
 						<?php endif?>
 					</div>
 					<div class="landing-crm-requisites_main">
 						<div class="landing-crm-requisites__name"><?= Loc::getMessage('LNDNG_BLPHB_TPL_CONTACTS_PHONE')?>:</div>
 						<div class="landing-crm-requisites__value">
-							<a href="tel:<?= $communications['phone'][0]?>" target="_blank"><?= $communications['phone'][0]?></a>
+							<a href="tel:<?= htmlspecialcharsbx($communications['phone'][0])?>" target="_blank"><?= htmlspecialcharsbx($communications['phone'][0])?></a>
 						</div>
 					</div>
 				</div>
@@ -68,15 +71,15 @@ if ($arParams['TYPE'] === 'CONTACTS')
 				<div class="landing-crm-requisites__box">
 					<div class="landing-crm-requisites_icon">
 						<?php if ($isPrimaryIcon === 'Y') :?>
-							<div class="fas fa-envelope g-font-size-18 g-color-primary"></div>
+							<div style="--ui-icon-set__icon-size: 30px; --ui-icon-set__icon-color: var(--primary);" class="ui-icon-set --mail"></div>
 						<?php else: ?>
-							<div class="fas fa-envelope g-font-size-18"></div>
+							<div style="--ui-icon-set__icon-size: 30px; --ui-icon-set__icon-color: currentColor;" class="ui-icon-set --mail"></div>
 						<?php endif?>
 					</div>
 					<div class="landing-crm-requisites_main">
 						<div class="landing-crm-requisites__name"><?= Loc::getMessage('LNDNG_BLPHB_TPL_CONTACTS_EMAIL')?>:</div>
 						<div class="landing-crm-requisites__value">
-							<a href="mailto:<?= $communications['email'][0]?>" target="_blank"><?= $communications['email'][0]?></a>
+							<a href="mailto:<?= htmlspecialcharsbx($communications['email'][0])?>" target="_blank"><?= htmlspecialcharsbx($communications['email'][0])?></a>
 						</div>
 					</div>
 				</div>
@@ -99,8 +102,8 @@ if ($arParams['TYPE'] === 'REQUISITES')
 			<?php foreach($requisites as $requisite):?>
 				<?php if (!in_array($requisite["name"], $hideRequisitesData, true)) :?>
 					<div class="landing-crm-requisites__table_row">
-						<div class="landing-crm-requisites__table_cell"><?= $requisite['title']?>:</div>
-						<div class="landing-crm-requisites__table_cell"><?= $requisite['textValue']?></div>
+						<div class="landing-crm-requisites__table_cell"><?= htmlspecialcharsbx($requisite['title'])?>:</div>
+						<div class="landing-crm-requisites__table_cell"><?= htmlspecialcharsbx($requisite['textValue'])?></div>
 					</div>
 				<?php endif?>
 			<?php endforeach?>
@@ -124,8 +127,8 @@ if ($arParams['TYPE'] === 'BANK')
 			<?php foreach($bankRequisites as $bankRequisite):?>
 				<?php if (!in_array($bankRequisite["name"], $hideBankData, true)) :?>
 					<div class="landing-crm-requisites__table_row">
-						<div class="landing-crm-requisites__table_cell"><?= $bankRequisite['title']?>:</div>
-						<div class="landing-crm-requisites__table_cell"><?= $bankRequisite['textValue']?></div>
+						<div class="landing-crm-requisites__table_cell"><?= htmlspecialcharsbx($bankRequisite['title'])?>:</div>
+						<div class="landing-crm-requisites__table_cell"><?= htmlspecialcharsbx($bankRequisite['textValue'])?></div>
 					</div>
 				<?php endif?>
 			<?php endforeach?>

@@ -8,6 +8,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 use Bitrix\Main\Application;
 use Bitrix\Sign\Config\User;
 use Bitrix\Main\Engine\CurrentUser;
+use Bitrix\Main\Grid;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Filter;
 use Bitrix\Main\Loader;
@@ -26,6 +27,7 @@ use Bitrix\UI\Buttons\CreateButton;
 use Bitrix\UI\Toolbar\ButtonLocation;
 use Bitrix\UI\Toolbar\Facade\Toolbar;
 use Bitrix\Sign\Config\Feature;
+use Bitrix\Sign\FeatureResolver;
 
 Loc::loadMessages(__FILE__);
 
@@ -34,6 +36,7 @@ CBitrixComponent::includeComponentClass('bitrix:sign.base');
 class SignMyDocumentsComponent extends SignBaseComponent
 {
 	private const DEFAULT_PAGE_SIZE = 10;
+	private const PAGE_SIZES = [10, 20, 50];
 	private const DEFAULT_NAV_KEY = "sign-my-documents-list-nav";
 	private const DEFAULT_GRID_ID = 'SIGN_B2E_MY_DOCUMENTS_GRID';
 	private const DEFAULT_FILTER_ID = 'SIGN_B2E_MI_DOCUMENTS_FILTER';
@@ -47,6 +50,10 @@ class SignMyDocumentsComponent extends SignBaseComponent
 	private const SIGN_B2E_MY_DOCUMENTS_SALARY_AND_VACATION_BUTTON_CLASS = 'sign-grid-salary-and-vacation-button';
 	private readonly DataService $myDocumentService;
 	private readonly CounterService $counterService;
+	private ?MyDocumentsFilter $filter = null;
+	private bool $isFilterResolved = false;
+	private ?int $pageSize = null;
+	private ?bool $isBulkActionAvailable = null;
 
 	public function __construct($component = null)
 	{
@@ -164,13 +171,10 @@ class SignMyDocumentsComponent extends SignBaseComponent
 
 	private function getPageNavigation(int $userId, ?MyDocumentsFilter $filter = null): PageNavigation
 	{
-		$pageSize = (int)$this->getParam('PAGE_SIZE');
-		$pageSize = $pageSize > 0 ? $pageSize : self::DEFAULT_PAGE_SIZE;
-		$navigationKey = $this->getParam('NAVIGATION_KEY') ?? self::DEFAULT_NAV_KEY;
 		$totalCountMembers = $this->myDocumentService->getTotalCountMembers($userId, $filter);
 
-		$pageNavigation = new \Bitrix\Sign\Util\UI\PageNavigation($navigationKey);
-		$pageNavigation->setPageSize($pageSize)
+		$pageNavigation = new PageNavigation($this->getNavigationKey());
+		$pageNavigation->setPageSize($this->getPageSize())
 			->setRecordCount($totalCountMembers)
 			->allowAllRecords(false)
 			->initFromUri()
@@ -181,9 +185,9 @@ class SignMyDocumentsComponent extends SignBaseComponent
 
 	private function prepareNavigation(): PageNavigation
 	{
-		$pageNavigation = new PageNavigation($this->arResult['NAVIGATION_KEY']);
+		$pageNavigation = new PageNavigation($this->getNavigationKey());
 		$pageNavigation
-			->setPageSize($this->arResult['PAGE_SIZE'])
+			->setPageSize($this->getPageSize())
 			->allowAllRecords(false)
 			->initFromUri()
 		;
@@ -194,11 +198,12 @@ class SignMyDocumentsComponent extends SignBaseComponent
 
 	private function prepareNavigationParams(): void
 	{
-		$this->arResult['PAGE_SIZE'] = isset($this->arParams['PAGE_SIZE']) && (int)$this->arParams['PAGE_SIZE'] > 0
-				? (int)$this->arParams['PAGE_SIZE']
-				: self::DEFAULT_PAGE_SIZE
-		;
-		$this->arResult['NAVIGATION_KEY'] = $this->arParams['NAVIGATION_KEY'] ?? self::DEFAULT_NAV_KEY;
+		$this->setResult('NAVIGATION_KEY', $this->getNavigationKey());
+	}
+
+	private function getNavigationKey(): string
+	{
+		return (string)($this->getParam('NAVIGATION_KEY') ?? self::DEFAULT_NAV_KEY);
 	}
 
 	private function prepareComponentParams(): void
@@ -225,13 +230,24 @@ class SignMyDocumentsComponent extends SignBaseComponent
 
 		$this->setParam('GRID_ID', self::DEFAULT_GRID_ID);
 		$this->setParam('COLUMNS', $this->getGridColumnList());
+		$this->setParam('PAGE_SIZES', $this->getPageSizeVariants());
+		$this->setParam('DEFAULT_PAGE_SIZE', self::DEFAULT_PAGE_SIZE);
+		// the size switch belongs to the bulk actions - the selection is bound to the page, so a page of
+		// 50 exists to process 50 at once. Without them the list looks the way it did before the feature.
+		$this->setParam('SHOW_PAGESIZE', $this->isBulkActionAvailable());
+		// row checkboxes, the action panel and the size switch follow this single portal wide flag: the
+		// panel lives in the page toolbar, which the grid does not redraw over AJAX, so a mode decided
+		// by the rows of the current page would cost a full page reload on every paging
+		$this->setParam('IS_BULK_ACTION_AVAILABLE', $this->isBulkActionAvailable());
+		$this->setParam('IS_ANNUL_MARK_ENABLED', $this->isAnnulMarkFeatureEnabled());
 		$this->setParam(self::PARAM_FILTER_ID, self::DEFAULT_FILTER_ID);
 
 		$this->setResult('TITLE', Loc::getMessage('SIGN_B2E_MY_DOCUMENTS_TITLE'));
 		$this->setResult(self::RESULT_FILTER, $this->getFilters());
 		$this->setResult(self::RESULT_FILTER_PRESETS, $this->getFilterPresets($userId));
 
-		$filter = $this->getFilterFromRequest();
+		$filter = $this->getFilter();
+		$this->setResult('PAGE_SIZE', $this->getPageSize());
 		$this->setResult('PAGE_NAVIGATION', $this->getPageNavigation($userId, $filter));
 		$this->setResult('TOTAL_COUNT', $this->myDocumentService->getTotalCountMembers($userId, $filter));
 
@@ -241,7 +257,9 @@ class SignMyDocumentsComponent extends SignBaseComponent
 			$userId,
 			$filter,
 		);
+		$bulkActionsByMemberId = $this->getBulkActionsByMemberId($gridData);
 		$this->setResult('DOCUMENTS', $gridData);
+		$this->setResult('BULK_ACTIONS', $bulkActionsByMemberId);
 		$this->setResult('COUNTER_ITEMS', $this->getCounterItems($userId, $filter));
 		$this->setResult('NEED_ACTION_COUNTER_ID', $this->getNeedActionCounterId());
 
@@ -249,9 +267,76 @@ class SignMyDocumentsComponent extends SignBaseComponent
 		$this->setResult('COUNTER_PULL_EVENT_NAME', $pullEventName);
 	}
 
+	private function getPageSize(): int
+	{
+		return $this->pageSize ??= $this->getConfiguredPageSize();
+	}
+
+	private function isBulkActionAvailable(): bool
+	{
+		return $this->isBulkActionAvailable ??= \Bitrix\Sign\Config\Storage::instance()
+			->isB2eBulkActionAvailable()
+		;
+	}
+
+	/**
+	 * The page size comes from the grid options, which are written by the client, so anything outside the
+	 * offered sizes falls back to the default. Without the bulk actions the size switch is gone, and a
+	 * size picked while they were available would stay with no way back through the interface, so the
+	 * list returns to the size it had before the feature and picks the choice up again once it is back.
+	 */
+	private function getConfiguredPageSize(): int
+	{
+		if (!$this->isBulkActionAvailable())
+		{
+			return self::DEFAULT_PAGE_SIZE;
+		}
+
+		$navParams = (new Grid\Options(self::DEFAULT_GRID_ID))
+			->getNavParams(['nPageSize' => self::DEFAULT_PAGE_SIZE])
+		;
+		$pageSize = (int)$navParams['nPageSize'];
+
+		return in_array($pageSize, self::PAGE_SIZES, true) ? $pageSize : self::DEFAULT_PAGE_SIZE;
+	}
+
+	/**
+	 * @return list<array{NAME: string, VALUE: string}>
+	 */
+	private function getPageSizeVariants(): array
+	{
+		return array_map(
+			static fn (int $pageSize): array => ['NAME' => (string)$pageSize, 'VALUE' => (string)$pageSize],
+			self::PAGE_SIZES,
+		);
+	}
+
+	/**
+	 * @return array<int, list<string>>
+	 */
+	private function getBulkActionsByMemberId(\Bitrix\Sign\Item\MyDocumentsGrid\Grid $grid): array
+	{
+		if (!$this->isBulkActionAvailable())
+		{
+			return [];
+		}
+
+		$actionStatusService = Container::instance()->getActionStatusService();
+		$actionsByMemberId = [];
+		foreach ($grid->rows as $row)
+		{
+			$actionsByMemberId[$row->id] = array_map(
+				static fn (\Bitrix\Sign\Type\MyDocumentsGrid\BulkAction $action): string => $action->value,
+				$actionStatusService->getAvailableBulkActions($row->action, $row->document->status),
+			);
+		}
+
+		return $actionsByMemberId;
+	}
+
 	private function getGridColumnList(): array
 	{
-		return [
+		$columns = [
 			[
 				'id' => 'ID',
 				'name' => (string)Loc::getMessage('SIGN_B2E_MY_DOCUMENTS_LIST_COLUMN_ID'),
@@ -267,12 +352,22 @@ class SignMyDocumentsComponent extends SignBaseComponent
 				'name' => (string)Loc::getMessage('SIGN_B2E_MY_DOCUMENTS_LIST_COLUMN_MEMBERS'),
 				'default' => true,
 			],
-			[
-				'id' => 'ACTION',
-				'name' => (string)Loc::getMessage('SIGN_B2E_MY_DOCUMENTS_LIST_COLUMN_ACTION'),
-				'default' => true,
-			],
 		];
+
+		$columns[] = [
+			'id' => 'ACTION',
+			'name' => (string)Loc::getMessage('SIGN_B2E_MY_DOCUMENTS_LIST_COLUMN_ACTION'),
+			'default' => true,
+			// the cell holds action buttons and links: a click there means the action, not the selection of the row
+			'prevent_default' => false,
+		];
+
+		return $columns;
+	}
+
+	private function isAnnulMarkFeatureEnabled(): bool
+	{
+		return FeatureResolver::instance()->released('kedoDocumentAnnul');
 	}
 
 	private function getFilters(): array
@@ -322,16 +417,7 @@ class SignMyDocumentsComponent extends SignBaseComponent
 				'name' => Loc::getMessage('SIGN_B2E_MY_DOCUMENTS_FILTER_STATUS'),
 				'type' => 'list',
 				'default' => true,
-				'items' => [
-					FilterStatus::SIGNED->value => Loc::getMessage('SIGN_B2E_MY_DOCUMENTS_FILTER_STATUS_SIGNED'),
-					FilterStatus::IN_PROGRESS->value => Loc::getMessage('SIGN_B2E_MY_DOCUMENTS_FILTER_STATUS_IN_PROGRESS'),
-					FilterStatus::NEED_ACTION->value => Loc::getMessage('SIGN_B2E_MY_DOCUMENTS_FILTER_STATUS_NEED_ACTION'),
-					FilterStatus::MY_REVIEW->value => Loc::getMessage('SIGN_B2E_MY_DOCUMENTS_FILTER_STATUS_MY_REVIEW'),
-					FilterStatus::MY_SIGNED->value => Loc::getMessage('SIGN_B2E_MY_DOCUMENTS_FILTER_STATUS_MY_SIGNED'),
-					FilterStatus::MY_EDITED->value => Loc::getMessage('SIGN_B2E_MY_DOCUMENTS_FILTER_STATUS_MY_EDITED'),
-					FilterStatus::MY_STOPPED->value => Loc::getMessage('SIGN_B2E_MY_DOCUMENTS_FILTER_STATUS_MY_STOPPED'),
-					FilterStatus::STOPPED->value => Loc::getMessage('SIGN_B2E_MY_DOCUMENTS_FILTER_STATUS_STOPPED'),
-				],
+				'items' => $this->getStatusFilterItems(),
 				'params' => [
 					'multiple' => 'Y',
 				],
@@ -367,6 +453,33 @@ class SignMyDocumentsComponent extends SignBaseComponent
 				],
 			],
 		];
+	}
+
+	/**
+	 * @return array<string, string>
+	 */
+	private function getStatusFilterItems(): array
+	{
+		$items = [
+			FilterStatus::SIGNED->value => Loc::getMessage('SIGN_B2E_MY_DOCUMENTS_FILTER_STATUS_SIGNED'),
+			FilterStatus::IN_PROGRESS->value => Loc::getMessage('SIGN_B2E_MY_DOCUMENTS_FILTER_STATUS_IN_PROGRESS'),
+			FilterStatus::NEED_ACTION->value => Loc::getMessage('SIGN_B2E_MY_DOCUMENTS_FILTER_STATUS_NEED_ACTION'),
+			FilterStatus::MY_REVIEW->value => Loc::getMessage('SIGN_B2E_MY_DOCUMENTS_FILTER_STATUS_MY_REVIEW'),
+			FilterStatus::MY_SIGNED->value => Loc::getMessage('SIGN_B2E_MY_DOCUMENTS_FILTER_STATUS_MY_SIGNED'),
+			FilterStatus::MY_EDITED->value => Loc::getMessage('SIGN_B2E_MY_DOCUMENTS_FILTER_STATUS_MY_EDITED'),
+			FilterStatus::MY_STOPPED->value => Loc::getMessage('SIGN_B2E_MY_DOCUMENTS_FILTER_STATUS_MY_STOPPED'),
+			FilterStatus::STOPPED->value => Loc::getMessage('SIGN_B2E_MY_DOCUMENTS_FILTER_STATUS_STOPPED'),
+		];
+
+		// The annulled status becomes selectable only when the feature is enabled;
+		// the query builder excludes annulled documents unless this value is chosen.
+		if ($this->isAnnulMarkFeatureEnabled())
+		{
+			$items[FilterStatus::ANNULLED->value] =
+				Loc::getMessage('SIGN_B2E_MY_DOCUMENTS_FILTER_STATUS_ANNULLED');
+		}
+
+		return $items;
 	}
 
 	private function getFilterPresets(int $userId): array
@@ -425,6 +538,21 @@ class SignMyDocumentsComponent extends SignBaseComponent
 			];
 		}
 
+		// The annulled preset surfaces annulled documents; it is added only when the
+		// feature is enabled and never becomes the default (default stays "signed").
+		if ($this->isAnnulMarkFeatureEnabled())
+		{
+			$presets += [
+				'preset_annulled' => [
+					'name' => Loc::getMessage('SIGN_B2E_MY_DOCUMENTS_FILTER_PRESET_ANNULLED'),
+					'default' => false,
+					'fields' => [
+						MyDocumentsFilterFactory::STATUS => [FilterStatus::ANNULLED->value],
+					],
+				],
+			];
+		}
+
 		return $presets;
 	}
 
@@ -439,6 +567,17 @@ class SignMyDocumentsComponent extends SignBaseComponent
 	private function getRequestFilters(): array
 	{
 		return $this->getFilterOptions()->getFilter($this->getResult(self::RESULT_FILTER));
+	}
+
+	private function getFilter(): ?MyDocumentsFilter
+	{
+		if (!$this->isFilterResolved)
+		{
+			$this->filter = $this->getFilterFromRequest();
+			$this->isFilterResolved = true;
+		}
+
+		return $this->filter;
 	}
 
 	private function getFilterFromRequest(): ?MyDocumentsFilter

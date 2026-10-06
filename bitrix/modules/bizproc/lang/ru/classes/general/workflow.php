@@ -48,3 +48,5 @@ $MESS['BPCGWF_DEBUG_TRACE_FAULT_ACTIVITY'] = "Обработка ошибки Ac
 $MESS['BPCGWF_DEBUG_TRACE_RUN_EXEC_ACTIVITY'] = "Запущено выполнение Activity: #TITLE#";
 $MESS['BPCGWF_DEBUG_TRACE_FINALIZE_ACTIVITY'] = "Финализация Activity: #TITLE#";
 $MESS['BPCGWF_DEBUG_TRACE_EVENT_HANDLERS_COUNT'] = "Найдено обработчиков события: #COUNT#";
+$MESS['BPCGWF_SKIP_NOTE_DEACTIVATED'] = "Действие пропущено: отключено в шаблоне процесса";
+$MESS['BPCGWF_SKIP_NOTE_CONDITION'] = "Действие пропущено: условие не выполнено";

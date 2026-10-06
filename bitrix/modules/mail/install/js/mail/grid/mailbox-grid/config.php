@@ -8,6 +8,7 @@ return [
 	'css' => 'dist/grid.bundle.css',
 	'js' => ['dist/grid.bundle.js'],
 	'rel' => [
+		'mail.migration-state',
 		'main.core',
 		'main.date',
 		'main.popup',
@@ -15,6 +16,7 @@ return [
 		'ui.avatar',
 		'ui.buttons',
 		'ui.cnt',
+		'ui.dialogs.messagebox',
 		'ui.icon',
 		'ui.icons.b24',
 		'ui.notification',

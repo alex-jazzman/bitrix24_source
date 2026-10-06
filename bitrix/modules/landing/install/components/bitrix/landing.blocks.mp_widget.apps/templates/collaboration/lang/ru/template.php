@@ -1,6 +1,6 @@
 <?php
 $MESS['BLOCK_MP_WIDGET_APPS_COLLABORATION_TITLE'] = 'Мобильное <span style="color: var(--primary)">приложение</span><br>для всех сотрудников любых профессий';
-$MESS['BLOCK_MP_WIDGET_APPS_COLLABORATION_TEXT_1'] = 'Объедините всю компанию в одном рабочем пространстве: быстро информируйте сотрудников и сихронизируйтесь по задачам даже с теми, кто работает не в офисе';
+$MESS['BLOCK_MP_WIDGET_APPS_COLLABORATION_TEXT_1'] = 'Объедините всю компанию в одном рабочем пространстве: быстро информируйте сотрудников и синхронизируйтесь по задачам даже с теми, кто работает не в офисе';
 $MESS['BLOCK_MP_WIDGET_APPS_COLLABORATION_TEXT_2'] = 'Подписывайте счета, кадровые документы, заявления с телефона';
 $MESS['BLOCK_MP_WIDGET_APPS_COLLABORATION_TEXT_3'] = 'Пригласите всех своих сотрудников прямо в мобильном приложении по ссылке, e-mail или номеру телефона';
 $MESS['BLOCK_MP_WIDGET_APPS_COLLABORATION_BUTTON_TEXT'] = 'Показать QR-код';

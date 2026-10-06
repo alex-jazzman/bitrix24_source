@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports, im_v2_provider_service_sending, im_v2_component_message_base, im_v2_component_elements_avatar) {
+(function (exports, main_core, im_v2_component_elements_avatar, im_v2_component_message_base, im_v2_const, im_v2_lib_analytics, im_v2_provider_service_sending) {
 	'use strict';
 
 	// @vue/component
@@ -37,6 +37,12 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			promptList() {
 				return this.$store.getters['copilot/messages/getPrompts'](this.message.id);
 			},
+			hasSuggestedPrompts() {
+				return main_core.Type.isArrayFilled(this.promptList);
+			},
+			suggestsCount() {
+				return this.promptList.length;
+			},
 			role() {
 				return this.$store.getters['copilot/messages/getRole'](this.message.id);
 			},
@@ -44,8 +50,33 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				return this.role.name;
 			}
 		},
+		mounted() {
+			if (this.hasSuggestedPrompts) {
+				this.subscribeToVisibility();
+			}
+		},
+		beforeUnmount() {
+			this.unsubscribeFromVisibility();
+		},
 		methods: {
+			subscribeToVisibility() {
+				this.$Bitrix.eventEmitter.subscribe(im_v2_const.EventType.dialog.onMessageIsVisible, this.onMessageIsVisible);
+			},
+			unsubscribeFromVisibility() {
+				this.$Bitrix.eventEmitter.unsubscribe(im_v2_const.EventType.dialog.onMessageIsVisible, this.onMessageIsVisible);
+			},
+			onMessageIsVisible(event) {
+				const {
+					messageId,
+					dialogId
+				} = event.getData();
+				if (dialogId !== this.dialogId || messageId !== this.message.id) {
+					return;
+				}
+				im_v2_lib_analytics.Analytics.getInstance().copilot.onShowSuggestedPrompts(this.dialogId, this.message.id, this.suggestsCount);
+			},
 			onMessageClick(prompt) {
+				im_v2_lib_analytics.Analytics.getInstance().copilot.onClickSuggestedPrompt(this.dialogId, this.suggestsCount);
 				void this.getSendingService().sendCopilotPrompt({
 					text: prompt.text,
 					copilot: {
@@ -111,5 +142,5 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	exports.ChatCopilotCreationMessage = ChatCopilotCreationMessage;
 
-})(this.BX.Messenger.v2.Component.Message = this.BX.Messenger.v2.Component.Message || {}, BX.Messenger.v2.Service, BX.Messenger.v2.Component.Message, BX.Messenger.v2.Component.Elements);
+})(this.BX.Messenger.v2.Component.Message = this.BX.Messenger.v2.Component.Message || {}, BX, BX.Messenger.v2.Component.Elements, BX.Messenger.v2.Component.Message, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Service);
 //# sourceMappingURL=copilot-creation.bundle.js.map

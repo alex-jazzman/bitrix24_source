@@ -148,7 +148,9 @@ if(count($jsMessagesCodes) >0 )
 			<!--	data-tab-id must be the same as the corresponding id bx-call-component-call-ai__tab-content		-->
 			<div class="bx-call-component-call-ai__tab-title --active" data-tab-id="TabGrade" data-tab-name="grade">
 				<?= Loc::getMessage('CALL_COMPONENT_GRADE') ?>
+				<? if (($evaluation['efficiencyValue'] ?? -1) >= 0): ?>
 				<span class="bx-call-component-call-ai__grade-tab-value"><?= $evaluation['efficiencyValue'] ?>%</span>
+				<? endif ?>
 			</div>
 			<div class="bx-call-component-call-ai__tab-title" data-tab-id="TabAgreements" data-tab-name="notes"><?= Loc::getMessage('CALL_COMPONENT_AGREEMENTS') ?></div>
 			<div class="bx-call-component-call-ai__tab-title" data-tab-id="TabRecommendations" data-tab-name="ai_call_quality"><?= Loc::getMessage('CALL_COMPONENT_INSIGHTS_V2') ?></div>
@@ -161,7 +163,7 @@ if(count($jsMessagesCodes) >0 )
 				<!--	id from data-tab-id	-->
 				<div id="TabGrade" class="bx-call-component-call-ai__tab-details --grade">
 					<?
-					if ($evaluation['efficiencyValue'] >= 0)
+					if (($evaluation['efficiencyValue'] ?? -1) >= 0)
 					{
 						/*
 						// use --success when >75% or --failure
@@ -223,11 +225,11 @@ if(count($jsMessagesCodes) >0 )
 								}
 
 								$state = '--success';
-								if ($evaluation['calendar'])
+								if (!empty($evaluation['calendar']))
 								{
 									$state = $evaluation['calendar']['overhead'] ? '--failure' : '--success';
 								}
-								elseif ($overview['calendar'])
+								elseif (!empty($overview['calendar']))
 								{
 									$state = $overview['calendar']['overhead'] ? '--failure' : '--success';
 								}

@@ -467,7 +467,7 @@ this.BX.Note = this.BX.Note || {};
 	function createErrorBlock(message, onRetry) {
 		const container = main_core.Tag.render`<div class="note-import-error-block"></div>`;
 		const retryButton = main_core.Tag.render`
-		<button type="button" class="note-import-link-button">${main_core.Loc.getMessage('NOTE_IMPORT_RETRY')}</button>
+		<button type="button" class="note-import-link-button" data-testid="note-import-retry">${main_core.Loc.getMessage('NOTE_IMPORT_RETRY')}</button>
 	`;
 		main_core.Event.bind(retryButton, 'click', () => onRetry());
 		container.append(main_core.Tag.render`<div class="note-import-error">${main_core.Text.encode(message)}</div>`, retryButton);
@@ -1504,6 +1504,9 @@ this.BX.Note = this.BX.Note || {};
 					useAirDesign: true,
 					// Wiki has no connection step — the action just reveals the bases to pick.
 					text: this.#isWikiSource() ? main_core.Loc.getMessage('NOTE_IMPORT_SELECT') : main_core.Loc.getMessage('NOTE_IMPORT_CONNECT'),
+					dataset: {
+						testid: 'note-import-connect'
+					},
 					onclick: () => {
 						this.#onConnect();
 					}
@@ -1518,6 +1521,9 @@ this.BX.Note = this.BX.Note || {};
 					style: ui_buttons.AirButtonStyle.PLAIN,
 					useAirDesign: true,
 					text: main_core.Loc.getMessage('NOTE_IMPORT_DIALOG_CANCEL_BUTTON'),
+					dataset: {
+						testid: 'note-import-close'
+					},
 					onclick: () => {
 						this.#dialog?.hide();
 					}
@@ -1529,6 +1535,9 @@ this.BX.Note = this.BX.Note || {};
 					style: ui_buttons.AirButtonStyle.FILLED,
 					useAirDesign: true,
 					text: main_core.Loc.getMessage('NOTE_IMPORT_START'),
+					dataset: {
+						testid: 'note-import-start'
+					},
 					onclick: () => {
 						this.#onStartImport();
 					}
@@ -1542,6 +1551,9 @@ this.BX.Note = this.BX.Note || {};
 					style: ui_buttons.AirButtonStyle.PLAIN,
 					useAirDesign: true,
 					text: main_core.Loc.getMessage('NOTE_IMPORT_BACK'),
+					dataset: {
+						testid: 'note-import-back'
+					},
 					onclick: () => {
 						this.#screen = IMPORT_SCREEN.CONNECTION;
 						this.#render();
@@ -1555,6 +1567,9 @@ this.BX.Note = this.BX.Note || {};
 					style: ui_buttons.AirButtonStyle.FILLED,
 					useAirDesign: true,
 					text: main_core.Loc.getMessage('NOTE_IMPORT_OVERWRITE_CONFIRM'),
+					dataset: {
+						testid: 'note-import-overwrite-confirm'
+					},
 					onclick: () => {
 						this.#onConfirmOverwrite();
 					}
@@ -1563,6 +1578,9 @@ this.BX.Note = this.BX.Note || {};
 					style: ui_buttons.AirButtonStyle.PLAIN,
 					useAirDesign: true,
 					text: main_core.Loc.getMessage('NOTE_IMPORT_BACK'),
+					dataset: {
+						testid: 'note-import-back'
+					},
 					onclick: () => {
 						this.#screen = IMPORT_SCREEN.COLLECTIONS;
 						this.#render();
@@ -1575,6 +1593,9 @@ this.BX.Note = this.BX.Note || {};
 					style: ui_buttons.AirButtonStyle.PLAIN,
 					useAirDesign: true,
 					text: main_core.Loc.getMessage('NOTE_IMPORT_CANCEL'),
+					dataset: {
+						testid: 'note-import-cancel'
+					},
 					onclick: () => {
 						this.#onCancel();
 					}
@@ -1587,6 +1608,9 @@ this.BX.Note = this.BX.Note || {};
 				style: ui_buttons.AirButtonStyle.FILLED,
 				useAirDesign: true,
 				text: main_core.Loc.getMessage('NOTE_IMPORT_DONE'),
+				dataset: {
+					testid: 'note-import-done'
+				},
 				onclick: () => {
 					this.#onDone();
 				}

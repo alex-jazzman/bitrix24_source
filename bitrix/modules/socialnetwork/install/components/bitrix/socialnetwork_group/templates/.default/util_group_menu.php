@@ -20,6 +20,12 @@ $groupId = (int)$arResult['VARIABLES']['group_id'];
 $projectProvider = new ProjectProvider();
 if ($projectProvider->isProject($groupId))
 {
+	// the direct link to the knowledge base leads to the feed page, other project pages open a slider of their own
+	if (($pageId ?? '') === 'group_general')
+	{
+		$projectProvider->processKnowledgeDeepLink($groupId);
+	}
+
 	return;
 }
 

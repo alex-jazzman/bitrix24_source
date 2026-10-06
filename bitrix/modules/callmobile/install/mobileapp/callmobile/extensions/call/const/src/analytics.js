@@ -37,11 +37,18 @@ jn.define('call/const/analytics', (require, exports, module) => {
 		openChat: 'open_chat',
 		clickCreate: 'click_create',
 		submitCreate: 'submit_create',
+		clickJoin: 'click_join',
+		joinCall: 'join_call',
+		clickCreateEvent: 'click_create_event',
+		clickOpenSlots: 'click_open_slots',
+		openSection: 'open_section',
+		openSyncTab: 'open_sync_tab',
 	});
 
 	const AnalyticsTool = Object.freeze({
 		im: 'im',
 		ai: 'ai',
+		sync: 'sync',
 	});
 
 	const AnalyticsCategory = Object.freeze({
@@ -52,6 +59,7 @@ jn.define('call/const/analytics', (require, exports, module) => {
 		messenger: 'messenger',
 		videoconf: 'videoconf',
 		collabCall: 'collab_call',
+		sync: 'sync',
 	});
 
 	const AnalyticsType = Object.freeze({
@@ -67,6 +75,9 @@ jn.define('call/const/analytics', (require, exports, module) => {
 		outgoing: 'outgoing',
 		incoming: 'incoming',
 		missed: 'missed',
+		video: 'video',
+		sync: 'sync',
+		callList: 'call_list',
 	});
 
 	const AnalyticsSection = Object.freeze({
@@ -76,6 +87,9 @@ jn.define('call/const/analytics', (require, exports, module) => {
 		chatWindow: 'chat_window',
 		callFollowup: 'call_followup',
 		callTab: 'call_tab',
+		syncPage: 'sync_page',
+		syncTab: 'sync_tab',
+		menu: 'menu',
 	});
 
 	const AnalyticsSubSection = Object.freeze({
@@ -89,6 +103,7 @@ jn.define('call/const/analytics', (require, exports, module) => {
 		creationBox: 'creation_box',
 		all: 'all',
 		menu: 'menu',
+		mainButton: 'main_button',
 	});
 
 	const AnalyticsElement = Object.freeze({

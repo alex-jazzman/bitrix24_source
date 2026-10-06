@@ -8,9 +8,9 @@ return [
 	'css' => 'dist/formatter.bundle.css',
 	'js' => 'dist/formatter.bundle.js',
 	'rel' => [
-		'ui.bbcode.parser',
 		'main.core',
 		'ui.bbcode.model',
+		'ui.bbcode.parser',
 	],
 	'skip_core' => false,
 ];

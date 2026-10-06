@@ -3,6 +3,7 @@ import 'ui.fonts.opensans';
 
 import {Type, Event, Text, Tag, Dom, Cache, Runtime} from 'main.core';
 import {EventEmitter} from 'main.core.events';
+import {Loc} from 'landing.loc';
 import {Env} from 'landing.env';
 import typeof {BaseField} from 'landing.ui.field.basefield';
 import type BaseFormOptions from './internal/type';
@@ -172,6 +173,7 @@ export class BaseForm extends EventEmitter
 				const helpButton = Tag.render`
 					<a href="${help}" class="landing-ui-form-header-checkbox-help" target="_blank"> </a>
 				`;
+				Dom.attr(helpButton, 'aria-label', Loc.getMessage('LANDING_UI_FORM_BASEFORM_HEADER_HELP_LABEL'));
 
 				Dom.append(helpButton, layout);
 			}

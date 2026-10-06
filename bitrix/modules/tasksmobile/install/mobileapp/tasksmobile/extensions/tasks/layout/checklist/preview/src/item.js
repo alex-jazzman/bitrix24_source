@@ -5,18 +5,13 @@ jn.define('tasks/layout/checklist/preview/src/item', (require, exports, module) 
 	const { Loc } = require('loc');
 	const { Color, Indent } = require('tokens');
 	const { IconView, Icon } = require('ui-system/blocks/icon');
-	const { Text4, Text5 } = require('ui-system/typography/text');
+	const { BBCodeText } = require('ui-system/typography/bbcodetext');
+	const { Text5 } = require('ui-system/typography/text');
 	const { Line } = require('utils/skeleton');
 
 	/**
-	 * @param {string} testId
-	 * @param {number} completedCount
-	 * @param {number} totalCount
-	 * @param {string} title
-	 * @param {boolean} showBorder
-	 * @param {boolean} isComplete
-	 * @param {boolean} isLoading
-	 * @param {function} onClick
+	 * @param {ItemParams} params
+	 * @return {Object}
 	 */
 	const Item = ({
 		testId,
@@ -68,9 +63,9 @@ jn.define('tasks/layout/checklist/preview/src/item', (require, exports, module) 
 				},
 				(isLoading && title === '')
 					? Line(200, 10, Indent.XS.toNumber(), Indent.L.toNumber())
-					: Text4({
+					: BBCodeText({
 						testId: `${testId}_ITEM_TITLE`,
-						text: title,
+						value: title,
 						color: isComplete ? Color.base5 : Color.base2,
 						style: {
 							marginBottom: Indent.XS.toNumber(),
@@ -114,6 +109,10 @@ jn.define('tasks/layout/checklist/preview/src/item', (require, exports, module) 
 		),
 	);
 
+	/**
+	 * @param {ItemStubParams} [params]
+	 * @return {Object}
+	 */
 	const ItemStub = ({ testId, title, showBorder = true } = {}) => Item({
 		testId,
 		title,

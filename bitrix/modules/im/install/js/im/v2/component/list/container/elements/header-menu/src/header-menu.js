@@ -11,6 +11,7 @@ import { BaseRecentHeaderMenu } from './classes/base';
 import { CollabDefaultHeaderMenu } from './classes/collab/default';
 import { CollabChatHeaderMenu } from './classes/collab/chat';
 import { CollabCalendarHeaderMenu } from './classes/collab/calendar';
+import { CollabCopilotHeaderMenu } from './classes/collab/copilot';
 
 import './css/header-menu.css';
 
@@ -21,6 +22,7 @@ const MenuClass = {
 	[RecentType.collabDefault]: CollabDefaultHeaderMenu,
 	[RecentType.collabChat]: CollabChatHeaderMenu,
 	[RecentType.calendar]: CollabCalendarHeaderMenu,
+	[RecentType.copilot]: CollabCopilotHeaderMenu,
 };
 
 // @vue/component

@@ -38,6 +38,9 @@ use Bitrix\UI\Buttons\Tag;
 $documentRoot = Application::getDocumentRoot();
 $isBitrix24Template = (SITE_TEMPLATE_ID === 'bitrix24');
 $isInIframe = Main\Context::getCurrent()->getRequest()->get('IFRAME') === 'Y';
+$componentId = (string)$component->getComponentId();
+$actionPanelKey = $componentId;
+$actionPanelContainerId = 'disk-folder-list-toolbar-' . $componentId;
 
 CJSCore::Init(array(
 	'ui.design-tokens',
@@ -292,7 +295,7 @@ else
 ?>
 
 <? $isBitrix24Template && $this->setViewTarget('below_pagetitle'); ?>
-<div class="disk-folder-list-toolbar" id="disk-folder-list-toolbar">
+<div class="disk-folder-list-toolbar" id="<?= htmlspecialcharsbx($actionPanelContainerId) ?>">
 	<?
 	$APPLICATION->IncludeComponent(
 		'bitrix:disk.breadcrumbs',
@@ -472,6 +475,7 @@ BX.message({
 	DISK_FOLDER_LABEL_NAME_CREATE_FOLDER: '<?= GetMessageJS('DISK_FOLDER_LABEL_NAME_CREATE_FOLDER') ?>',
 	DISK_FOLDER_TITLE_CREATE_FOLDER: '<?= GetMessageJS('DISK_FOLDER_TITLE_CREATE_FOLDER') ?>',
 	DISK_FOLDER_BTN_CREATE_FOLDER: '<?= GetMessageJS('DISK_FOLDER_BTN_CREATE_FOLDER') ?>',
+	DISK_FOLDER_ERROR_EMPTY_NAME_CREATE_FOLDER: '<?= GetMessageJS('DISK_FOLDER_ERROR_EMPTY_NAME_CREATE_FOLDER') ?>',
 	DISK_FOLDER_MW_CREATE_FILE_TITLE: '<?= GetMessageJS('DISK_FOLDER_MW_CREATE_FILE_TITLE') ?>',
 	DISK_FOLDER_MW_CREATE_FILE_TEXT: '<?= GetMessageJS('DISK_FOLDER_MW_CREATE_FILE_TEXT') ?>',
 	DISK_FOLDER_MW_CREATE_TYPE_DOC: '<?= GetMessageJS('DISK_FOLDER_MW_CREATE_TYPE_DOC') ?>',
@@ -512,6 +516,26 @@ BX.message({
 });
 </script>
 
+<script>
+BX.namespace('BX.Disk');
+BX.Disk.folderListActionPanels = BX.Disk.folderListActionPanels || {};
+(function() {
+	const componentId = '<?= CUtil::JSEscape($actionPanelKey) ?>';
+	const renderTo = document.getElementById('<?= CUtil::JSEscape($actionPanelContainerId) ?>');
+	const handleActionPanelCreated = function(panel) {
+		if (panel.renderTo !== renderTo)
+		{
+			return;
+		}
+
+		BX.Disk.folderListActionPanels[componentId] = panel;
+		BX.removeCustomEvent('BX.UI.ActionPanel:created', handleActionPanelCreated);
+	};
+
+	BX.addCustomEvent('BX.UI.ActionPanel:created', handleActionPanelCreated);
+})();
+</script>
+
 <?php
 echo $isInIframe? "<div id='bx-disk-container' class='bx-disk-container'>" : "";
 include('only_grid.php');
@@ -532,8 +556,11 @@ BX(function () {
 		showSearchNotice: <?= empty($arResult['SHOW_SEARCH_NOTICE'])? 0 : 1 ?>,
 		isTrashMode: <?= empty($arResult['IS_TRASH_MODE'])? 0 : 1 ?>,
 		relativePath: '<?= $arResult['RELATIVE_PATH_ENCODED'] ?>',
+		actionPanel: {
+			key: '<?= CUtil::JSEscape($actionPanelKey) ?>',
+			renderTo: document.getElementById('<?= CUtil::JSEscape($actionPanelContainerId) ?>')
+		},
 		layout: {
-			fileListContainer: document.querySelector('.bx-disk-interface-filelist'),
 			trashCanButton: document.querySelector('.js-disk-trashcan-button'),
 			changeViewButtons: document.querySelectorAll('.js-disk-change-view'),
 			createItemsButton: document.querySelector('.js-disk-add-button'),
@@ -861,6 +888,9 @@ $showFileUrl = $showFile['url'] ?? null;
 $showFileDownloadUrl = $showFile['downloadUrl'] ?? null;
 $showFileType = $showFile['type'] ?? null;
 $showFileName = $showFile['name'] ?? null;
+$showFileMarkdownUrl = $showFile['markdownUrl'] ?? null;
+$showFileTiffPreviewUrl = $showFile['tiffPreviewUrl'] ?? null;
+$showFileViewerTypeClass = $showFile['viewerTypeClass'] ?? null;
 
 if (is_string($showFileUrl) && is_string($showFileDownloadUrl) && is_string($showFileType))
 {?>
@@ -871,6 +901,9 @@ if (is_string($showFileUrl) && is_string($showFileDownloadUrl) && is_string($sho
 		data-src="<?= htmlspecialcharsbx($showFileDownloadUrl) ?>"
 		data-viewer-type="<?= htmlspecialcharsbx($showFileType) ?>"
 		data-title="<?= htmlspecialcharsbx($showFileName) ?>"
+		<?php if (is_string($showFileViewerTypeClass)): ?>data-viewer-type-class="<?= htmlspecialcharsbx($showFileViewerTypeClass) ?>"<?php endif ?>
+		<?php if (is_string($showFileMarkdownUrl)): ?>data-markdown-url="<?= htmlspecialcharsbx($showFileMarkdownUrl) ?>"<?php endif ?>
+		<?php if (is_string($showFileTiffPreviewUrl)): ?>data-tiff-preview-url="<?= htmlspecialcharsbx($showFileTiffPreviewUrl) ?>"<?php endif ?>
 	></span>
 <?php
 }

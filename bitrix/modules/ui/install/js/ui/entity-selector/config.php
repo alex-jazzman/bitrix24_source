@@ -1,6 +1,5 @@
 <?php
 
-use Bitrix\Main\Loader;
 use Bitrix\UI\EntitySelector\Configuration;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
@@ -8,7 +7,6 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
-Loader::includeModule('ui');
 $extensions = Configuration::getExtensions();
 
 return [

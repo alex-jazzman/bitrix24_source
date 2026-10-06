@@ -1,0 +1,65 @@
+.crm-call-assessment-v2-editable-title {
+	flex: 1 1 auto;
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-inline-2xs);
+	min-width: 0;
+}
+
+.crm-call-assessment-v2-editable-title__text {
+	flex: 0 1 auto;
+	min-width: 0;
+}
+
+.crm-call-assessment-v2-editable-title__pencil {
+	--ui-icon-set__icon-base-color: var(--ui-color-base-3);
+
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 24px;
+	height: 24px;
+	padding: 0;
+	background: transparent;
+	border: 0;
+	border-radius: var(--ui-border-radius-xs);
+	cursor: pointer;
+}
+
+.crm-call-assessment-v2-editable-title__pencil:hover {
+	--ui-icon-set__icon-base-color: var(--ui-color-base-2);
+
+	background: var(--ui-color-bg-state-hover-default);
+}
+
+.crm-call-assessment-v2-editable-title__pencil>.--edit-m {
+	margin-top: 3px;
+}
+
+.crm-call-assessment-v2-editable-title__edit {
+	flex: 1 1 auto;
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	min-width: 0;
+}
+
+.crm-call-assessment-v2-editable-title__input {
+	flex: 1 1 auto;
+	min-width: 0;
+	background: transparent;
+	border: 0;
+	border-bottom: 1px solid var(--ui-color-design-outline-stroke);
+	outline: none;
+	padding: 0;
+	font-family: var(--ui-font-family-primary);
+	font-size: 25px;
+	line-height: 33px;
+	letter-spacing: -0.35px;
+	font-weight: var(--ui-font-weight-medium);
+	color: var(--ui-color-base-1);
+}
+
+.crm-call-assessment-v2-editable-title__input:focus {
+	border-bottom-color: var(--ui-color-accent-main-link);
+}

@@ -27,12 +27,15 @@ export default class Form extends EventEmitter
 
 	initParams(params)
 	{
-		this.menuContainer = params.menuContainerNode;
-		this.subMenuContainer = params.subMenuContainerNode;
+		this.menuContainer = Type.isDomNode(params.menuContainerNode) ? params.menuContainerNode : null;
+		this.subMenuContainer = Type.isDomNode(params.subMenuContainerNode) ? params.subMenuContainerNode : null;
 		this.leftMenuItems = params.leftMenuItems;
 		this.titleContainer = params.titleContainer;
-		this.contentContainer = params.contentContainerNode;
-		this.pageContainer = this.contentContainer.querySelector('.popup-window-tabs-content-invite');
+		this.contentContainer = Type.isDomNode(params.contentContainerNode) ? params.contentContainerNode : null;
+		this.pageContainer = Type.isDomNode(this.contentContainer)
+			? this.contentContainer.querySelector('.popup-window-tabs-content-invite')
+			: null
+		;
 		this.userOptions = params.userOptions;
 		this.isExtranetInstalled = params.isExtranetInstalled === 'Y';
 		this.isCloud = params.isCloud === 'Y';
@@ -66,13 +69,17 @@ export default class Form extends EventEmitter
 
 	initUI()
 	{
+		this.messageBar = new MessageBar({
+			errorContainer: Type.isDomNode(this.contentContainer)
+				? this.contentContainer.querySelector('[data-role=\'error-message\']')
+				: null,
+			successContainer: Type.isDomNode(this.contentContainer)
+				? this.contentContainer.querySelector('[data-role=\'success-message\']')
+				: null,
+		});
+
 		if (Type.isDomNode(this.contentContainer))
 		{
-			this.messageBar = new MessageBar({
-				errorContainer: this.contentContainer.querySelector('[data-role=\'error-message\']'),
-				successContainer: this.contentContainer.querySelector('[data-role=\'success-message\']'),
-			});
-
 			BX.UI.Hint.init(this.contentContainer);
 		}
 
@@ -151,6 +158,13 @@ export default class Form extends EventEmitter
 
 	#initMenu()
 	{
+		if (!Type.isDomNode(this.menuContainer))
+		{
+			this.menuItems = [];
+
+			return;
+		}
+
 		this.menuItems = Array.prototype.slice.call(this.menuContainer.querySelectorAll('a'));
 		if (Type.isDomNode(this.subMenuContainer))
 		{

@@ -57,6 +57,11 @@
 			}
 
 			this.bindEvents();
+
+			if (namespace.GridManager)
+			{
+				namespace.GridManager.getInstance(this.gridId);
+			}
 		}
 
 		bindEvents()

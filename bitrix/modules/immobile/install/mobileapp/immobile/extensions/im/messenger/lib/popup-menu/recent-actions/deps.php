@@ -17,6 +17,7 @@ return [
 		'im:messenger/controller/folder/list',
 		'im:messenger/controller/folder/update',
 		'im:messenger/controller/folder/lib/actions',
+		'im:messenger/provider/services/analytics',
 	],
 	'bundle' => [
 		'./src/recent-actions-menu',

@@ -715,7 +715,7 @@ this.BX.Crm = this.BX.Crm || {};
 			ui_analytics.sendData(instance.buildData());
 		}
 		getAnalyticsType() {
-			return this.#hasClients ? crm_integration_analytics.Dictionary.TYPE_REPEAT_SALE_BANNER_START_EMPTY : crm_integration_analytics.Dictionary.TYPE_REPEAT_SALE_BANNER_START;
+			return this.#hasClients ? crm_integration_analytics.Dictionary.TYPE_REPEAT_SALE_BANNER_START : crm_integration_analytics.Dictionary.TYPE_REPEAT_SALE_BANNER_START_EMPTY;
 		}
 	}
 
@@ -1055,5 +1055,5 @@ this.BX.Crm = this.BX.Crm || {};
 	exports.Widget = Widget;
 	exports.WidgetType = WidgetType;
 
-})(this.BX.Crm.RepeatSale = this.BX.Crm.RepeatSale || {}, BX.Crm.Integration.Analytics, BX, BX, BX.Main, BX.UI.Analytics, BX.UI, BX.UI, BX.UI.Notification, BX.Crm.Timeline, BX.UI.Feedback, BX.UI.System, BX, BX.Crm.AI);
+})(this.BX.Crm.RepeatSale = this.BX.Crm.RepeatSale || {}, BX.Crm.Integration.Analytics, BX, window, BX.Main, BX.UI.Analytics, BX.UI, BX.UI, BX.UI.Notification, BX.Crm.Timeline, BX.UI.Feedback, BX.UI.System, window, BX.Crm.AI);
 //# sourceMappingURL=widget.bundle.js.map

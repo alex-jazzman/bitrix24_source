@@ -46,9 +46,24 @@ export const Members = {
 		{
 			return this.$refs.container;
 		},
+		isReadOnly(): boolean
+		{
+			return this.userGroup.isReadOnly === true;
+		},
+	},
+	methods: {
+		handleClick(): void
+		{
+			if (this.isReadOnly)
+			{
+				return;
+			}
+
+			this.isSelectorShown = true;
+		},
 	},
 	template: `
-		<div ref="container" class="ui-access-rights-v2-members-container"  @click="isSelectorShown = true">
+		<div ref="container" class="ui-access-rights-v2-members-container" @click="handleClick">
 			<div v-if="userGroup.members.size > 0" class='ui-access-rights-v2-members'>
 				<SingleMember v-for="[accessCode, member] in shownMembers" :key="accessCode" :member="member"/>
 				<span v-if="notShownMembersCount > 0" class="ui-access-rights-v2-members-more">
@@ -56,6 +71,7 @@ export const Members = {
 				</span>
 			</div>
 			<div
+				v-if="!isReadOnly"
 				class='ui-access-rights-v2-members-item ui-access-rights-v2-members-item-add'
 				:class="{
 					'--show-always': userGroup.members.size <= 0,

@@ -1,10 +1,14 @@
 import BaseCache from './base-cache';
+import { type ICacheStorage } from './storage/i-cache-storage';
 import LsCacheStorage from './storage/ls-storage';
 
-export default class LocalStorageCache<T> extends BaseCache<T>
+/**
+ * Cache backed by localStorage, so entries survive page reloads.
+ */
+export default class LocalStorageCache<T = unknown> extends BaseCache<T>
 {
 	/**
 	 * @private
 	 */
-	storage: any = new LsCacheStorage();
+	storage: ICacheStorage = new LsCacheStorage();
 }

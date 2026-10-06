@@ -1,7 +1,7 @@
 import { Type } from 'main.core';
-import { mapWritableState, mapActions } from 'ui.vue3.pinia';
-// eslint-disable-next-line no-unused-vars
-import type { MenuOptions } from 'ui.vue3.components.menu';
+import { type MenuOptions } from 'ui.vue3.components.menu';
+import { mapState, mapActions } from 'ui.vue3.pinia';
+
 import {
 	TemplateNameInput,
 	diagramStore as useDiagramStore,
@@ -22,8 +22,9 @@ export const EditTemplateName = {
 		},
 	},
 	computed: {
-		...mapWritableState(useDiagramStore, [
+		...mapState(useDiagramStore, [
 			'template',
+			'isWriteLocked',
 		]),
 		templateName:
 		{
@@ -33,21 +34,20 @@ export const EditTemplateName = {
 			},
 			set(name: string): void
 			{
-				this.template.NAME =
-					Type.isStringFilled(name)
-						? name
-						: this.loc('BIZPROCDESIGNER_EDITOR_DEFAULT_TITLE')
+				const templateName = Type.isStringFilled(name)
+					? name
+					: this.loc('BIZPROCDESIGNER_EDITOR_DEFAULT_TITLE')
 				;
 
-				this.updateTemplateData({
-					NAME: this.template.NAME,
+				this.applyTemplateMetadata({
+					NAME: templateName,
 				});
 			},
 		},
 	},
 	methods: {
 		...mapActions(useDiagramStore, [
-			'updateTemplateData',
+			'applyTemplateMetadata',
 		]),
 		loc(locString: string): string
 		{
@@ -58,6 +58,7 @@ export const EditTemplateName = {
 		<TemplateNameInput
 			v-model:title="templateName"
 			:dropdownOptions="dropdownOptions"
+			:readonly="isWriteLocked"
 		/>
 	`,
 };

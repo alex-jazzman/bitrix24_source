@@ -1,3 +1,4 @@
+import { AccidentLogStorageKeys } from 'call.lib.settings-manager';
 import { groupLogs } from '../utils/group-logs';
 import { AccidentLoggerError } from './accident-logger-error';
 import { type LogEntry, type GroupedLog } from './log-entry-provider';
@@ -22,8 +23,8 @@ export class AccidentStorage
 	 */
 	constructor(maxAgeSecs: number)
 	{
-		this.dbName = 'bx_call_accidentLogDB';
-		this.storeName = 'bx_call_accidentLogs';
+		this.dbName = AccidentLogStorageKeys.dbName;
+		this.storeName = AccidentLogStorageKeys.storeName;
 
 		// OPEN
 		// function to open blocked indexedDB with progressive delay (100ms, 400ms, 900ms...)

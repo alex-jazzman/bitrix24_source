@@ -1,0 +1,9 @@
+<?php
+
+$MESS['BIZPROC_ACTION_SOURCE_CURRENT_OBJECT'] = 'Текущий объект';
+$MESS['BIZPROC_ACTION_SOURCE_FILTER_RESULT'] = 'Результат фильтра';
+$MESS['BIZPROC_ACTION_SOURCE_VARIABLE'] = 'Переменная процесса';
+$MESS['BIZPROC_ACTION_SOURCE_PROCESS_PARAMETER'] = 'Параметр процесса';
+$MESS['BIZPROC_ACTION_SOURCE_PREVIOUS_BLOCK_RESULT'] = 'Результат предыдущего блока';
+$MESS['BIZPROC_ACTION_SOURCE_GROUP_RESULT'] = 'Результат группы';
+$MESS['BIZPROC_ACTION_SOURCE_MANUAL'] = 'Выбранный вручную';

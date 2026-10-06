@@ -1,4 +1,7 @@
-<?
+<?php
+
+use Bitrix\Main\Web\Uri;
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 $APPLICATION->IncludeComponent(
 	'bitrix:report.view',
@@ -66,7 +69,7 @@ while ($arRes = $obRes->Fetch())
 	{
 		if ($arFile = CFile::GetFileArray($arRes['LOGO']))
 		{
-			$arFiles[$arRes['LOGO']] = CHTTP::URN2URI($arFile['SRC']);
+			$arFiles[$arRes['LOGO']] = (string)(new Uri($arFile['SRC']))->toAbsolute();
 		}
 	}
 
@@ -108,7 +111,7 @@ while ($arRes = $obRes->Fetch())
 	{
 		if ($arFile = CFile::GetFileArray($arRes['PHOTO']))
 		{
-			$arFiles[$arRes['PHOTO']] = CHTTP::URN2URI($arFile['SRC']);
+			$arFiles[$arRes['PHOTO']] = (string)(new Uri($arFile['SRC']))->toAbsolute();
 		}
 	}
 

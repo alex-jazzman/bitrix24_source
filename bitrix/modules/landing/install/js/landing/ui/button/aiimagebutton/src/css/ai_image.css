@@ -2,18 +2,32 @@
 	height: 26px;
 	margin: 3px 0;
 	border-radius: 20px;
-	font-weight: 600;
+	font-weight: var(--ui-font-weight-semi-bold);
 	font-size: 14px;
 	font-family: var(--ui-font-family-primary, var(--ui-font-family-system));
 	font-style: normal;
 }
 
 .landing-ui-button.landing-ui-button-ai-image {
-	background: linear-gradient(0deg, rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.1)), linear-gradient(0deg, rgba(167, 87, 233, 0.5), rgba(167, 87, 233, 0.5)), linear-gradient(319.67deg, #b130de -39.68%, #d65ffa 10.09%, #dd8af0 24.69%, #705af7 99.78%);
+	background: linear-gradient(
+		264deg,
+		var(--ui-color-design-outline-bitrix-gpt-content-gradient-5) 1.67%,
+		var(--ui-color-design-outline-bitrix-gpt-content-gradient-4) 21.82%,
+		var(--ui-color-design-outline-bitrix-gpt-content-gradient-3) 52.44%,
+		var(--ui-color-design-outline-bitrix-gpt-content-gradient-2) 76.41%,
+		var(--ui-color-design-outline-bitrix-gpt-content-gradient-1) 97.21%
+	);
 }
 
 .landing-ui-button.landing-ui-button-ai-image:hover {
-	background: linear-gradient(rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.15)), linear-gradient(0deg, rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.1)), linear-gradient(0deg, rgba(167, 87, 233, 0.5), rgba(167, 87, 233, 0.5)), linear-gradient(319.67deg, #b130de -39.68%, #d65ffa 10.09%, #dd8af0 24.69%, #705af7 99.78%);
+	background: linear-gradient(rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.15)), linear-gradient(
+		264deg,
+		var(--ui-color-design-outline-bitrix-gpt-content-gradient-5) 1.67%,
+		var(--ui-color-design-outline-bitrix-gpt-content-gradient-4) 21.82%,
+		var(--ui-color-design-outline-bitrix-gpt-content-gradient-3) 52.44%,
+		var(--ui-color-design-outline-bitrix-gpt-content-gradient-2) 76.41%,
+		var(--ui-color-design-outline-bitrix-gpt-content-gradient-1) 97.21%
+	);
 }
 
 .landing-ui-button.landing-ui-button-ai-image .landing-ui-button-text,

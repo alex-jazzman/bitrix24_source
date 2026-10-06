@@ -95,6 +95,22 @@
 	display: flex;
 	align-items: center;
 	justify-content: center;
+
+	background: none;
+	border: none;
+	padding: 0;
+	margin: 0;
+	font: inherit;
+	color: inherit;
+	cursor: pointer;
+}
+
+/* The expanded popover clips its overflow, so the outline is drawn inside the element:
+   an outer one would be cut off on the edge reactions. */
+.reactions-select__list-elem:focus-visible {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
+	outline-offset: var(--ui-focus-outline-offset-inset);
+	border-radius: var(--ui-border-radius-circle);
 }
 
 .reactions-select__list-elem-inner {
@@ -105,10 +121,6 @@
 
 .reactions-select__list-elem-inner .ui-reaction {
 	--ui-reaction-size: 30px;
-}
-
-.reactions-select__list-elem:hover {
-	cursor: pointer;
 }
 
 .reactions-select__list-elem:hover .reactions-select__list-elem-inner {
@@ -141,6 +153,11 @@
 	border-radius: var(--ui-border-radius-circle);
 	background-color: var(--ui-color);
 	cursor: pointer;
+}
+
+.reactions-select__expand-button:focus-visible {
+	outline: var(--ui-focus-outline-width) solid var(--ui-color-focus-outline);
+	outline-offset: var(--ui-focus-outline-offset);
 }
 
 .reactions-select__expand-button:hover {

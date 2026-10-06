@@ -3,7 +3,7 @@ this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
 this.BX.Messenger.v2 = this.BX.Messenger.v2 || {};
 this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
-(function (exports, im_v2_component_list_items_base, im_v2_const, im_v2_lib_draft, im_v2_lib_collab, im_v2_component_list_items_elements_emptyState, im_v2_provider_service_recent, im_v2_lib_menu, im_v2_lib_unreadMode, im_v2_component_list_items_elements_createChatStatus, im_v2_lib_createChat, im_v2_lib_notifier, im_v2_application_core, main_core, main_core_events, im_v2_lib_utils) {
+(function (exports, im_v2_component_list_items_base, im_v2_const, im_v2_lib_draft, im_v2_lib_collab, im_v2_component_list_items_elements_emptyState, im_v2_provider_service_recent, im_v2_lib_menu, im_v2_lib_unreadMode, im_v2_component_list_items_elements_createChatStatus, im_v2_lib_createChat, im_v2_lib_notifier, im_v2_application_core, main_core, im_v2_lib_copilot, main_core_events, im_v2_lib_utils) {
 	'use strict';
 
 	class CollabService extends im_v2_provider_service_recent.BaseRecentService {
@@ -14,7 +14,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 
 	class CollabRecentMenu extends im_v2_lib_menu.RecentMenu {
 		getMenuItems() {
-			return [this.getUnreadMessageItem(), this.getPinMessageItem(), this.getMuteItem()];
+			return [this.getUnreadMessageItem(), this.getPinMessageItem(), this.getAddToFolderItem(), this.getMuteItem()];
 		}
 	}
 
@@ -257,6 +257,17 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		}
 	}
 
+	function saveCollabInfo(restResult, parentChatId) {
+		const collabInfo = restResult.sectionMeta?.collabInfo;
+		if (!collabInfo) {
+			return Promise.resolve();
+		}
+		return im_v2_application_core.Core.getStore().dispatch('chats/collabs/set', {
+			chatId: parentChatId,
+			collabInfo
+		});
+	}
+
 	class CollabDefaultService extends im_v2_provider_service_recent.BaseRecentService {
 		getRecentType() {
 			return im_v2_const.RecentType.collabDefault;
@@ -275,15 +286,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			return Promise.all([im_v2_application_core.Core.getStore().dispatch('recent/set', fixedItems), im_v2_application_core.Core.getStore().dispatch('recent/setCollection', setPayload)]);
 		}
 		saveFirstPageData(restResult) {
-			const {
-				sectionMeta: {
-					collabInfo
-				}
-			} = restResult;
-			return im_v2_application_core.Core.getStore().dispatch('chats/collabs/set', {
-				chatId: this.getParentChatId(),
-				collabInfo
-			});
+			return saveCollabInfo(restResult, this.getParentChatId());
 		}
 		#extractFixedItems(restResult) {
 			const {
@@ -311,17 +314,24 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		getRecentType() {
 			return im_v2_const.RecentType.collabChat;
 		}
+		saveFirstPageData(restResult) {
+			return saveCollabInfo(restResult, this.getParentChatId());
+		}
 	}
 
-	const TitleByType = {
-		[im_v2_const.RecentType.taskComments]: main_core.Loc.getMessage('IM_LIST_COLLAB_V2_EMPTY_TASK_TITLE'),
-		[im_v2_const.RecentType.collabChat]: main_core.Loc.getMessage('IM_LIST_COLLAB_V2_EMPTY_CHAT_TITLE'),
-		[im_v2_const.RecentType.calendar]: main_core.Loc.getMessage('IM_LIST_COLLAB_V2_EMPTY_CALENDAR_TITLE')
+	const TitleByTypeHandler = {
+		[im_v2_const.RecentType.taskComments]: () => main_core.Loc.getMessage('IM_LIST_COLLAB_V2_EMPTY_TASK_TITLE'),
+		[im_v2_const.RecentType.collabChat]: () => main_core.Loc.getMessage('IM_LIST_COLLAB_V2_EMPTY_CHAT_TITLE'),
+		[im_v2_const.RecentType.calendar]: () => main_core.Loc.getMessage('IM_LIST_COLLAB_V2_EMPTY_CALENDAR_TITLE'),
+		[im_v2_const.RecentType.copilot]: () => main_core.Loc.getMessage('IM_LIST_COLLAB_V2_EMPTY_COPILOT_TITLE', {
+			'#COPILOT_NAME#': new im_v2_lib_copilot.CopilotManager().getName()
+		})
 	};
-	const SubtitleByType = {
-		[im_v2_const.RecentType.taskComments]: main_core.Loc.getMessage('IM_LIST_COLLAB_V2_EMPTY_TASK_SUBTITLE'),
-		[im_v2_const.RecentType.collabChat]: main_core.Loc.getMessage('IM_LIST_COLLAB_V2_EMPTY_CHAT_SUBTITLE'),
-		[im_v2_const.RecentType.calendar]: main_core.Loc.getMessage('IM_LIST_COLLAB_V2_EMPTY_CALENDAR_SUBTITLE')
+	const SubtitleByTypeHandler = {
+		[im_v2_const.RecentType.taskComments]: () => main_core.Loc.getMessage('IM_LIST_COLLAB_V2_EMPTY_TASK_SUBTITLE'),
+		[im_v2_const.RecentType.collabChat]: () => main_core.Loc.getMessage('IM_LIST_COLLAB_V2_EMPTY_CHAT_SUBTITLE'),
+		[im_v2_const.RecentType.calendar]: () => main_core.Loc.getMessage('IM_LIST_COLLAB_V2_EMPTY_CALENDAR_SUBTITLE'),
+		[im_v2_const.RecentType.copilot]: () => main_core.Loc.getMessage('IM_LIST_COLLAB_V2_EMPTY_COPILOT_SUBTITLE')
 	};
 
 	// @vue/component
@@ -338,10 +348,10 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		},
 		computed: {
 			title() {
-				return TitleByType[this.type];
+				return TitleByTypeHandler[this.type]();
 			},
 			subtitle() {
-				return SubtitleByType[this.type];
+				return SubtitleByTypeHandler[this.type]();
 			}
 		},
 		template: `
@@ -353,7 +363,8 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 		[im_v2_const.RecentType.collabDefault]: CollabDefaultService,
 		[im_v2_const.RecentType.taskComments]: im_v2_provider_service_recent.TaskRecentService,
 		[im_v2_const.RecentType.collabChat]: CollabChatService,
-		[im_v2_const.RecentType.calendar]: im_v2_provider_service_recent.CalendarRecentService
+		[im_v2_const.RecentType.calendar]: im_v2_provider_service_recent.CalendarRecentService,
+		[im_v2_const.RecentType.copilot]: im_v2_provider_service_recent.CopilotRecentV2Service
 	};
 
 	// @vue/component
@@ -588,6 +599,7 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 				:item="parentRecentItem"
 				:withPinStatus="false"
 				:withChildrenCounter="false"
+				:forceOwnMessage="true"
 				@click.right="onRightClick"
 			/>
 		</FixedItemContainer>
@@ -704,6 +716,26 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 			:parentChatId="parentChatId"
 			:creatableChatType="CreatableChatType.collabChat"
 		/>
+	`
+	};
+
+	// @vue/component
+	const CollabNestedCopilotList = {
+		name: 'CollabNestedCopilotList',
+		components: {
+			BaseCollabNestedList
+		},
+		props: {
+			parentChatId: {
+				type: Number,
+				required: true
+			}
+		},
+		computed: {
+			RecentType: () => im_v2_const.RecentType
+		},
+		template: `
+		<BaseCollabNestedList :type="RecentType.copilot" :parentChatId="parentChatId" />
 	`
 	};
 
@@ -956,16 +988,38 @@ this.BX.Messenger.v2.Component = this.BX.Messenger.v2.Component || {};
 	`
 	};
 
+	// @vue/component
+	const CollabNestedCopilotUnreadList = {
+		name: 'CollabNestedCopilotUnreadList',
+		components: {
+			BaseCollabNestedUnreadList
+		},
+		props: {
+			parentChatId: {
+				type: Number,
+				required: true
+			}
+		},
+		computed: {
+			RecentType: () => im_v2_const.RecentType
+		},
+		template: `
+		<BaseCollabNestedUnreadList :type="RecentType.copilot" :parentChatId="parentChatId" />
+	`
+	};
+
 	exports.CollabList = CollabList;
 	exports.CollabNestedCalendarList = CollabNestedCalendarList;
 	exports.CollabNestedCalendarUnreadList = CollabNestedCalendarUnreadList;
 	exports.CollabNestedChatList = CollabNestedChatList;
 	exports.CollabNestedChatUnreadList = CollabNestedChatUnreadList;
+	exports.CollabNestedCopilotList = CollabNestedCopilotList;
+	exports.CollabNestedCopilotUnreadList = CollabNestedCopilotUnreadList;
 	exports.CollabNestedDefaultList = CollabNestedDefaultList;
 	exports.CollabNestedDefaultUnreadList = CollabNestedDefaultUnreadList;
 	exports.CollabNestedTaskList = CollabNestedTaskList;
 	exports.CollabNestedTaskUnreadList = CollabNestedTaskUnreadList;
 	exports.CollabUnreadList = CollabUnreadList;
 
-})(this.BX.Messenger.v2.Component.List = this.BX.Messenger.v2.Component.List || {}, BX.Messenger.v2.Component.List, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Component.List, BX.Messenger.v2.Service, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Component.List, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Application, BX, BX.Event, BX.Messenger.v2.Lib);
+})(this.BX.Messenger.v2.Component.List = this.BX.Messenger.v2.Component.List || {}, BX.Messenger.v2.Component.List, BX.Messenger.v2.Const, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Component.List, BX.Messenger.v2.Service, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Component.List, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib, BX.Messenger.v2.Application, BX, BX.Messenger.v2.Lib, BX.Event, BX.Messenger.v2.Lib);
 //# sourceMappingURL=registry.bundle.js.map

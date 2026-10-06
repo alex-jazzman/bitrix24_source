@@ -10,9 +10,9 @@ return [
 	'rel' => [
 		'main.core',
 		'sign.v2.api',
-		'ui.vue3',
-		'sign.v2.b2e.user-party',
 		'sign.v2.b2e.sign-settings-templates',
+		'sign.v2.b2e.user-party',
+		'ui.vue3',
 	],
 	'skip_core' => false,
 	'settings' => [

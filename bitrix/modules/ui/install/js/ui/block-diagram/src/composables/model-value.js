@@ -1,7 +1,7 @@
 import { toValue } from 'ui.vue3';
 import { useBlockDiagram } from './block-diagram';
 import { HOOK_NAMES } from '../constants';
-import { commandToArray, CommandPayload } from '../utils';
+import { commandToArray, type CommandPayload } from '../utils';
 
 export type UseModelValue = { dispose: () => void };
 

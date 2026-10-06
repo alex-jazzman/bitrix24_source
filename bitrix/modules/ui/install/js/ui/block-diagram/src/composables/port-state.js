@@ -1,5 +1,7 @@
 import { toValue, computed } from 'ui.vue3';
 import { useBlockDiagram } from './block-diagram';
+import { useTransientHighlightedBlocks } from './transient-highlighted-blocks';
+import { getCanvasRect, shouldRetainPortGeometry, collectModelPortIds } from '../utils';
 import { PORT_POSITION } from '../constants';
 import type { DiagramBlockId, DiagramPortId } from '../types';
 
@@ -20,6 +22,8 @@ export function usePortState(options): UsePortState
 		position = PORT_POSITION.LEFT,
 		validationRules = [],
 		index = 0,
+		isVirtual = false,
+		onVirtualDrop = null,
 	} = options;
 
 	const {
@@ -28,19 +32,18 @@ export function usePortState(options): UsePortState
 		portsElMap,
 		portsRectMap,
 		portsValidationsFnMap,
-		zoom,
-		transformX,
-		transformY,
-		blockDiagramTop,
-		blockDiagramLeft,
-		highlitedBlockIds,
+		virtualPortsMap,
 		movingBlockId,
 		isDisabledBlockDiagram,
 		updatePortSegmentSizes,
+		touchPortsGeometry,
 		portMounted,
 		validPortsMap,
-		waitForTransformEnd,
+		isRenderOptimizationAvailable,
+		blockIdsInModel,
+		getBlockById,
 	} = useBlockDiagram();
+	const { isBlockVisuallyHighlighted } = useTransientHighlightedBlocks();
 
 	const isMaybePortForNewConnection = computed((): boolean => {
 		const hasBlock = toValue(validPortsMap).has(toValue(block).id);
@@ -55,8 +58,11 @@ export function usePortState(options): UsePortState
 		return toValue(isDisabledBlockDiagram);
 	});
 
+	// The ports follow the visual highlight of their block through both channels of it, the user
+	// selection and the temporary highlight of a block being played back — the same check the block
+	// itself uses (block-state.js). The name is kept: it belongs to the public usePortState API.
 	const isIncludedPortInSelectedBlock = computed((): boolean => {
-		return toValue(highlitedBlockIds).includes(toValue(block).id);
+		return isBlockVisuallyHighlighted(toValue(block).id);
 	});
 
 	const isIncludedPortInMovingBlock = computed((): boolean => {
@@ -103,28 +109,34 @@ export function usePortState(options): UsePortState
 			y = 0,
 			width = 0,
 			height = 0,
-		} = toValue(portEl)?.getBoundingClientRect() ?? {};
+		} = getCanvasRect(toValue(portEl)) ?? {};
 
 		toValue(portsRectMap)[blockId][portId] = {
-			x: (x / toValue(zoom)) + toValue(transformX) - (toValue(blockDiagramLeft) / toValue(zoom)),
-			y: (y / toValue(zoom)) + toValue(transformY) - (toValue(blockDiagramTop) / toValue(zoom)),
-			width: width / toValue(zoom),
-			height: height / toValue(zoom),
+			x,
+			y,
+			width,
+			height,
 			position,
+			// The port's fan-out order within its side, captured here so onMountedBlock can
+			// recompute the segments with the same order the drawing/promise path uses — under
+			// culling that promise path never runs (see block-state.js onMountedBlock).
+			order: index,
 			firstSegmentSize: 0,
 			secondSegmentSize: 0,
 			secondSegmentSizeWithoutOffset: 0,
 		};
+
+		touchPortsGeometry();
 	}
 
 	function deletePortRect(blockId: DiagramBlockId, portId: DiagramPortId): void
 	{
-		if (!(blockId in toValue(portsRectMap)))
+		const portsMap = toValue(portsRectMap)[blockId];
+
+		if (!portsMap || !(portId in portsMap))
 		{
 			return;
 		}
-
-		const portsMap = toValue(portsRectMap)[blockId];
 
 		if (Object.keys(portsMap).length === 1)
 		{
@@ -132,8 +144,10 @@ export function usePortState(options): UsePortState
 		}
 		else
 		{
-			delete toValue(portsMap)[portId];
+			delete portsMap[portId];
 		}
+
+		touchPortsGeometry();
 	}
 
 	function addValidationFn(): void
@@ -164,11 +178,48 @@ export function usePortState(options): UsePortState
 			?.delete(toValue(port).id);
 	}
 
-	async function onMountedPort(): Promise<void>
+	function addVirtualPort(): void
 	{
-		// Workaround to fix connections render after they are in viewport. Should be removed later
-		await waitForTransformEnd.value?.promise;
+		if (!isVirtual)
+		{
+			return;
+		}
 
+		if (!toValue(virtualPortsMap).has(toValue(block).id))
+		{
+			toValue(virtualPortsMap).set(toValue(block).id, new Map());
+		}
+
+		toValue(virtualPortsMap)
+			.get(toValue(block).id)
+			.set(toValue(port).id, {
+				port: { ...toValue(port) },
+				onDrop: onVirtualDrop,
+			});
+	}
+
+	function deleteVirtualPort(): void
+	{
+		if (!isVirtual)
+		{
+			return;
+		}
+
+		const ports = toValue(virtualPortsMap).get(toValue(block).id);
+		if (!ports)
+		{
+			return;
+		}
+
+		ports.delete(toValue(port).id);
+		if (ports.size === 0)
+		{
+			toValue(virtualPortsMap).delete(toValue(block).id);
+		}
+	}
+
+	function onMountedPort(): void
+	{
 		addPortElement(
 			toValue(block).id,
 			toValue(port).id,
@@ -180,6 +231,7 @@ export function usePortState(options): UsePortState
 			portRef,
 		);
 		addValidationFn();
+		addVirtualPort();
 
 		waitAllBlocksMounted.value?.promise
 			.then(() => {
@@ -197,13 +249,34 @@ export function usePortState(options): UsePortState
 			});
 	}
 
-	async function onUnmountedPort(): Promise<void>
+	function onUnmountedPort(): void
 	{
-		// Workaround to fix connections render after they are in viewport. Should be removed later
-		await waitForTransformEnd.value?.promise;
-		deletePortElement(toValue(block).id, toValue(port).id);
-		deletePortRect(toValue(block).id, toValue(port).id);
+		const blockId = toValue(block).id;
+		const portId = toValue(port).id;
+
+		deletePortElement(blockId, portId);
 		deleteValidationFn();
+		deleteVirtualPort();
+
+		// Under render optimization culling unmounts the offscreen node while it
+		// stays in the model: retain measured port coordinates so the connection
+		// path can still be resolved. A real removal — the block gone, or this port
+		// dropped from a surviving block's ports — clears them (see purgeBlockGeometry).
+		// Read the port composition from the CURRENT model (getBlockById), not the prop
+		// captured in setup: an immutable setPorts swaps the block, and the stale prop
+		// would still list the removed port and wrongly retain its geometry.
+		const blockPortIdsInModel = collectModelPortIds(getBlockById, blockId);
+		const retain = shouldRetainPortGeometry(
+			toValue(isRenderOptimizationAvailable),
+			toValue(blockIdsInModel),
+			blockId,
+			blockPortIdsInModel,
+			portId,
+		);
+		if (!retain)
+		{
+			deletePortRect(blockId, portId);
+		}
 	}
 
 	return {

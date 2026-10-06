@@ -1,0 +1,36 @@
+<?php
+
+return [
+	'extensions' => [
+		'assets/icons',
+		'in-app-url',
+		'layout/ui/loading-screen',
+		'layout/ui/scroll-view',
+		'layout/ui/stateful-list',
+		'loc',
+		'market/app-list-item/factory',
+		'market/empty-state',
+		'market/mobile',
+		'market/utils',
+		'require-lazy',
+		'tokens',
+		'ui-system/blocks/chips/chip-inner-tab',
+		'ui-system/form/buttons/button',
+		'ui-system/layout/area',
+		'ui-system/layout/box',
+		'ui-system/popups/popup-menu',
+		'ui-system/typography/heading',
+		'ui-system/typography/text',
+		'utils/test',
+	],
+	'bundle' => [
+		'./src/providers/base-list-provider',
+		'./src/providers/market-list-provider',
+		'./src/providers/installed-list-provider',
+		'./src/renderers/base-list-renderer',
+		'./src/renderers/market-list-renderer',
+		'./src/renderers/installed-list-renderer',
+		'./src/list-loader',
+		'./src/market-list-render',
+	],
+];

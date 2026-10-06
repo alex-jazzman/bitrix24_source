@@ -64,9 +64,11 @@ Extension::load([
 					$imagePsModeName = $imageName.'_'.$arResult['PAYSYSTEM_PS_MODE'];
 				}
 
-				if (Main\IO\File::isFileExists(Main\Application::getDocumentRoot().$this->GetFolder().'/images/'.$imagePsModeName.'.svg')): ?>
+				$imageExtension = $arResult['PAYSYSTEM_HANDLER'] === 'platon' ? 'webp' : 'svg';
+				$imageDirectory = Main\Application::getDocumentRoot().$this->GetFolder().'/images/';
+				if (Main\IO\File::isFileExists($imageDirectory.$imagePsModeName.'.'.$imageExtension)): ?>
 					<div class="salescenter-<?=$arResult['PAYSYSTEM_HANDLER_STYLE'];?>-icon ui-icon"><i></i></div>
-				<?php elseif (Main\IO\File::isFileExists(Main\Application::getDocumentRoot().$this->GetFolder().'/images/'.$imageName.'.svg')): ?>
+				<?php elseif (Main\IO\File::isFileExists($imageDirectory.$imageName.'.'.$imageExtension)): ?>
 					<div class="salescenter-<?=$arResult['PAYSYSTEM_HANDLER'];?>-icon ui-icon"><i></i></div>
 				<?php else: ?>
 					<div class="salescenter-default-icon ui-icon"><i></i></div>

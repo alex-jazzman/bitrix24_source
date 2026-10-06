@@ -13,6 +13,18 @@ export class PreferencesService
 		this.#store = params.store;
 	}
 
+	isSaveFlowDisabled(): boolean
+	{
+		return Boolean(this.#store.state.preferences.saveFlowOptOut);
+	}
+
+	disableSaveFlow(): void
+	{
+		void this.#store.dispatch('preferences/setSaveFlowOptOut', { saveFlowOptOut: true });
+
+		this.#savePreferences();
+	}
+
 	saveChannelLastUsedFrom(channel: Channel, fromId: string): void
 	{
 		const channelsLastUsedFrom = Runtime.clone(this.#store.state.preferences.channelsLastUsedFrom);

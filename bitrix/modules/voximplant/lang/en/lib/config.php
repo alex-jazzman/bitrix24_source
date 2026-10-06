@@ -16,6 +16,7 @@ $MESS["INCOMING_CONFIG_ENTITY_QUEUE_LAST_ID_FIELD"] = "Operator switch";
 $MESS["INCOMING_CONFIG_ENTITY_DIRECT_CODE_FIELD"] = "Extension number processing";
 $MESS["INCOMING_CONFIG_ENTITY_IVR_FIELD"] = "Use IVR menu";
 $MESS["INCOMING_CONFIG_ENTITY_DIRECT_CODE_RULE_FIELD"] = "Rules for forwarding if requested user is absent";
+$MESS["INCOMING_CONFIG_ENTITY_DTMF_TYPE_FIELD"] = "DTMF type";
 $MESS["INCOMING_CONFIG_ENTITY_VOTE_FIELD"] = "Assess quality of service";
 $MESS["INCOMING_CONFIG_ENTITY_RECORDING_FIELD"] = "Record all calls";
 $MESS["INCOMING_CONFIG_ENTITY_RECORDING_NOTICE"] = "Play \"your call will be recorded\" warning";

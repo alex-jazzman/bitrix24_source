@@ -11,6 +11,9 @@ final class StorageFileFinderOptions
 	private int $limit;
 	private int $offset;
 
+	/**
+	 * @param list<int>|null $typeFileValues Stored TypeFile values; null or [] means no filter.
+	 */
 	public function __construct(
 		int $limit,
 		int $offset = 0,
@@ -19,6 +22,8 @@ final class StorageFileFinderOptions
 		private readonly ?int $folderId = null,
 		private readonly ?array $proxyTypes = null,
 		private readonly ?string $folderExcludedProxyType = null,
+		private readonly array $additionalFilter = [],
+		private readonly ?array $typeFileValues = null,
 	)
 	{
 		$this->limit = max(1, $limit);
@@ -58,5 +63,18 @@ final class StorageFileFinderOptions
 	public function getFolderExcludedProxyType(): ?string
 	{
 		return $this->folderExcludedProxyType;
+	}
+
+	public function getAdditionalFilter(): array
+	{
+		return $this->additionalFilter;
+	}
+
+	/**
+	 * @return list<int>|null Stored TypeFile values; null or [] means no filter.
+	 */
+	public function getTypeFileValues(): ?array
+	{
+		return $this->typeFileValues;
 	}
 }

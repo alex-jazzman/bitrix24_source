@@ -15,6 +15,7 @@ jn.define('calendar/layout/sharing-settings/settings', (require, exports, module
 	const { SharingAjax } = require('calendar/ajax');
 	const { Analytics } = require('calendar/sharing/analytics');
 	const { Color } = require('tokens');
+	const { Text4, Text5 } = require('ui-system/typography/text');
 	const { Random } = require('utils/random');
 
 	/**
@@ -224,9 +225,11 @@ jn.define('calendar/layout/sharing-settings/settings', (require, exports, module
 
 		renderHeaderTitle()
 		{
-			return Text({
-				style: styles.headerTitle,
+			return Text4({
+				testId: 'calendar-sharing-settings-rule-title',
+				style: { flex: 1 },
 				text: Loc.getMessage('M_CALENDAR_SETTINGS_DESCRIPTION'),
+				color: Color.base1,
 			});
 		}
 
@@ -236,9 +239,10 @@ jn.define('calendar/layout/sharing-settings/settings', (require, exports, module
 				{
 					style: styles.headerSubtitleContainer,
 				},
-				Text({
+				Text5({
+					testId: 'calendar-sharing-settings-rule-subtitle',
 					text: this.getSubtitleText(),
-					style: styles.headerSubtitleText,
+					color: Color.base3,
 				}),
 			);
 		}
@@ -293,18 +297,8 @@ jn.define('calendar/layout/sharing-settings/settings', (require, exports, module
 			width: 24,
 			height: 24,
 		},
-		headerTitle: {
-			flexDirection: 'column',
-			fontSize: 15,
-			color: AppTheme.colors.base1,
-			flex: 1,
-		},
 		headerSubtitleContainer: {
 			paddingLeft: 40,
-		},
-		headerSubtitleText: {
-			fontSize: 14,
-			color: AppTheme.colors.base3,
 		},
 		rightArrowIcon: {
 			alignItems: 'flex-end',

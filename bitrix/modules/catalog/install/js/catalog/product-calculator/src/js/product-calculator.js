@@ -125,4 +125,14 @@ export class ProductCalculator
 	{
 		return this.#strategy.calculateRowSum(value);
 	}
+
+	convertBasePriceForTaxIncluded(
+		value: number,
+		taxRate: number,
+		fromTaxIncluded: 'Y' | 'N',
+		toTaxIncluded: 'Y' | 'N',
+	): {converted: boolean, price: number}
+	{
+		return this.#strategy.convertBasePriceForTaxIncluded(value, taxRate, fromTaxIncluded, toTaxIncluded);
+	}
 }

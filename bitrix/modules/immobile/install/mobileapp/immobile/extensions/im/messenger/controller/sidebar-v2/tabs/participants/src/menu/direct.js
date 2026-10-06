@@ -12,13 +12,13 @@ jn.define('im/messenger/controller/sidebar-v2/tabs/participants/src/menu/direct'
 		getActionItems()
 		{
 			return [
-				this.isYou() && this.notesAction(),
+				this.isTargetCurrentUser() && this.notesAction(),
 			];
 		}
 
 		shouldShowMenu()
 		{
-			return this.isYou() && super.shouldShowMenu();
+			return this.isTargetCurrentUser() && super.shouldShowMenu();
 		}
 	}
 

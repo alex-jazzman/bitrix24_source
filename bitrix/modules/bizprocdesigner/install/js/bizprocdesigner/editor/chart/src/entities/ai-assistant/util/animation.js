@@ -62,19 +62,29 @@ export function makeAnimationQueue(
 		}
 	}
 
+	// Blocks already present on the canvas or added by this queue. A connection
+	// is animated only once both of its ends are added — otherwise it is drawn to
+	// a not-yet-mounted port (incorrect rendering), and its empty transition
+	// finishes instantly and disrupts the queue pacing. Deferred connections (the
+	// second end is added later) are picked up by the final loop below.
+	const appendedBlockIds: Set<string> = new Set(currentBlockMap.keys());
+
 	// Append new blocks
 	for (const [id: string, block: Block] of newBlockMap.entries())
 	{
 		if (!currentBlockMap.has(id))
 		{
 			animatedItems.push({ type: ANIMATED_TYPES.BLOCK, item: block });
-			// append dependent block connections
+			appendedBlockIds.add(id);
+			// add the block connections whose both ends are already added
 			for (const [connectionId: string, conn: Connection] of newConnectionMap.entries())
 			{
 				if (
 					!currentConnectionMap.has(connectionId)
 					&& !handledConnections.has(connectionId)
 					&& isBlockConnection(conn, block)
+					&& appendedBlockIds.has(conn.sourceBlockId)
+					&& appendedBlockIds.has(conn.targetBlockId)
 				)
 				{
 					animatedItems.push({ type: ANIMATED_TYPES.CONNECTION, item: conn });

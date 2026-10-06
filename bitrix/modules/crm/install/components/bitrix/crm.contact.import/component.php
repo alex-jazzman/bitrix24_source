@@ -28,6 +28,7 @@ use Bitrix\Crm\EntityRequisite;
 use Bitrix\Crm\Requisite;
 use Bitrix\Crm\RequisiteAddress;
 use Bitrix\Crm\Settings\ContactSettings;
+use Bitrix\Main\Web\Uri;
 
 if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->entityType()->canImportItems(CCrmOwnerType::Contact))
 {
@@ -2635,10 +2636,7 @@ if(!$enableFixedOrigin)
 			'onclick="'.htmlspecialcharsbx('BX.Crm.ContactImportSampleLink.items["'.
 				CUtil::JSEscape($arResult['IMPORT_SAMPLE_LINK_ID']).'"].getSample("'.
 				CUtil::JSEscape(
-					CHTTP::urlAddParams(
-						CComponentEngine::makePathFromTemplate($arParams['PATH_TO_CONTACT_IMPORT']),
-						array('getSample' => 'csv', 'ncc' => 1)
-					)
+					(string)(new Uri(CComponentEngine::makePathFromTemplate($arParams['PATH_TO_CONTACT_IMPORT'])))->addParams(array('getSample' => 'csv', 'ncc' => 1))
 				).'");return false;').'">'.GetMessage('CRM_DOWNLOAD').'</a>'
 	);
 

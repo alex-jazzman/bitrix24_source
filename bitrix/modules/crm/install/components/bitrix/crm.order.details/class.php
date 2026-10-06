@@ -23,6 +23,7 @@ use Bitrix\Sale\Helpers\Order\Builder;
 use Bitrix\Sale\PaySystem;
 use Bitrix\Sale\Services;
 use Bitrix\Salescenter;
+use Bitrix\Main\Web\Uri;
 
 if (!Main\Loader::includeModule('crm'))
 {
@@ -1658,13 +1659,11 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 
 	protected function getVoucherUrl($type, $paymentId)
 	{
-		return CHTTP::urlAddParams('/bitrix/components/bitrix/crm.order.payment.voucher/slider.ajax.php?'.bitrix_sessid_get(),
-			array(
+		return (string)(new Uri('/bitrix/components/bitrix/crm.order.payment.voucher/slider.ajax.php?'.bitrix_sessid_get()))->addParams(array(
 				'siteID' => SITE_ID,
 				'paymentId' => $paymentId,
 				'paymentType' => (int)$type,
-			)
-		);
+			));
 	}
 
 	protected function getShipmentEntityData()

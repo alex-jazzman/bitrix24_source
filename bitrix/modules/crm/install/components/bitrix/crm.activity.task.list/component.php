@@ -1,5 +1,13 @@
 <?php
+
+use Bitrix\Main\Web\Uri;
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
+
+/**
+ * @global CMain $APPLICATION
+ * @var array $arParams
+ */
 
 if (!CModule::IncludeModule('crm'))
 {
@@ -176,25 +184,24 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET'
 			}
 			else
 			{
-				$arResult['PATH_TO_TASK_DELETE'] =  CHTTP::urlAddParams(CComponentEngine::MakePathFromTemplate(COption::GetOptionString('tasks', 'paths_task_user_entry', ''),
+				$path = CComponentEngine::MakePathFromTemplate(
+					COption::GetOptionString('tasks', 'paths_task_user_entry', ''),
 					array(
 						'task_id' => $_GET['ID'],
 						'user_id' => $_GET['RESPONSIBLE_ID']
-					)),
-					array(
-						'sessid' => bitrix_sessid(),
-						'ACTION' => 'delete',
-						'back_url' => urlencode(CHTTP::urlAddParams(
-							CHTTP::urlDeleteParams(
-								$APPLICATION->GetCurUri(),
-								array('ID', 'REL_ID', 'RESPONSIBLE_ID', 'sessid', 'action_CRM_ACTIVITY_TASK_LIST',  'action_CRM_ACTIVITY_TASK_LIST_')
-							),
-							array(
-								$arParams['FORM_ID'].'_active_tab' => $arResult['TAB_ID']
-							)
-						))
 					)
 				);
+				$backUrl = (string)(new Uri($APPLICATION->GetCurUri()))
+					->deleteParams(['ID', 'REL_ID', 'RESPONSIBLE_ID', 'sessid', 'action_CRM_ACTIVITY_TASK_LIST',  'action_CRM_ACTIVITY_TASK_LIST_'])
+					->addParams([$arParams['FORM_ID'].'_active_tab' => $arResult['TAB_ID']])
+				;
+				$arResult['PATH_TO_TASK_DELETE'] = (string)(new Uri($path))
+					->addParams([
+						'sessid' => bitrix_sessid(),
+						'ACTION' => 'delete',
+						'back_url' => $backUrl,
+					])
+				;
 
 				if (!isset($_GET['AJAX_CALL']))
 					LocalRedirect($arResult['PATH_TO_TASK_DELETE']);
@@ -321,28 +328,22 @@ while($arTask = $obRes->GetNext())
 				'user_id' => $arTask['~RESPONSIBLE_ID']
 			)
 		);
-		$arTask['PATH_TO_TASK_EDIT'] = CHTTP::urlAddParams(CComponentEngine::MakePathFromTemplate(COption::GetOptionString('tasks', 'paths_task_user_edit', ''),
+		$arTask['PATH_TO_TASK_EDIT'] = (string)(new Uri(CComponentEngine::MakePathFromTemplate(COption::GetOptionString('tasks', 'paths_task_user_edit', ''),
 			array(
 				'task_id' => $arTask['ID'],
 				'user_id' => $arTask['~RESPONSIBLE_ID']
-			)),
-			array(
-				'back_url' => urlencode(CHTTP::urlAddParams($APPLICATION->GetCurUri(),
-					array(
+			))))->addParams(array(
+				'back_url' => (string)(new Uri($APPLICATION->GetCurUri()))->addParams(array(
 						$arResult['FORM_ID'].'_active_tab' => $arResult['TAB_ID']
-					)
-				))
-			)
-		);
+					))
+			));
 
-		$arTask['PATH_TO_TASK_DELETE'] =  CHTTP::urlAddParams(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_TASK_LIST'],
-			array()),
-			array(
+		$arTask['PATH_TO_TASK_DELETE'] =  (string)(new Uri(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_TASK_LIST'],
+			array())))->addParams(array(
 				'action_'.$arResult['GRID_ID'] => 'delete', 'sessid' => bitrix_sessid(),
 				'ID' => $arTask['ID'], 'RESPONSIBLE_ID' => $arTask['~RESPONSIBLE_ID'],
 				'REL_ID' => $sTaskRel
-			)
-		);
+			));
 /*		$arTask['PATH_TO_TASK_DELETE'] =  CHTTP::urlAddParams(CComponentEngine::MakePathFromTemplate(COption::GetOptionString('tasks', 'paths_task_user_entry', ''),
 			array(
 				'task_id' => $arTask['ID'],

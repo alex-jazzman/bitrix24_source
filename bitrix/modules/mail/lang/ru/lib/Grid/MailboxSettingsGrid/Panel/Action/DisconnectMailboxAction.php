@@ -1,0 +1,2 @@
+<?php
+$MESS['MAIL_MAILBOX_PANEL_ACTION_DISCONNECT_TITLE'] = 'Отключить ящики';

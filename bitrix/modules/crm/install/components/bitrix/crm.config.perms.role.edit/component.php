@@ -10,6 +10,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\Crm\Service;
+use Bitrix\Main\Web\Uri;
 
 if (!CModule::IncludeModule('crm'))
 {
@@ -342,15 +343,12 @@ foreach ($typesMap->getTypes() as $type)
 unset($arResult['ROLE_PERM']['INVOICE'][BX_CRM_PERM_OPEN]);
 unset($arResult['ROLE_PERM']['ORDER'][BX_CRM_PERM_OPEN]);
 
-$arResult['PATH_TO_ROLE_DELETE'] = CHTTP::urlAddParams(
-	CComponentEngine::MakePathFromTemplate(
+$arResult['PATH_TO_ROLE_DELETE'] = (string)(new Uri(CComponentEngine::MakePathFromTemplate(
 		$arParams['PATH_TO_ROLE_EDIT'] ?? '',
 		[
 			'role_id' => $arResult['ROLE']['ID']
 		]
-	),
-	['delete' => '1', 'sessid' => bitrix_sessid()]
-);
+	)))->addParams(['delete' => '1', 'sessid' => bitrix_sessid()]);
 
 foreach ($operationsWithAutomation as $operation)
 {

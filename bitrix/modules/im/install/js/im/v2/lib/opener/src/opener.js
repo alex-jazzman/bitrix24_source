@@ -1,7 +1,7 @@
 import { Type, type JsonObject } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 
-import { EventType, GetParameter, Layout, NavigationMenuItem } from 'im.v2.const';
+import { EventType, GetParameter, Layout, NavigationMenuItem, type OpenCollabOptions } from 'im.v2.const';
 import { CallManager } from 'im.v2.lib.call';
 import { CreateChatManager, type OpenChatCreationParams, type CreatableChatTypeItem } from 'im.v2.lib.create-chat';
 import { DesktopApi, DesktopFeature } from 'im.v2.lib.desktop-api';
@@ -88,7 +88,7 @@ export const Opener = {
 		});
 	},
 
-	async openCollab(dialogId: string = ''): Promise
+	async openCollab(dialogId: string = '', options: OpenCollabOptions = {}): Promise
 	{
 		const preparedDialogId = dialogId.toString();
 
@@ -117,7 +117,7 @@ export const Opener = {
 		}
 
 		await this.openCollab();
-		EventEmitter.emit(EventType.recent.openNestedList, { parentDialogId: dialogId });
+		EventEmitter.emit(EventType.recent.openNestedList, { parentDialogId: dialogId, options });
 
 		return Promise.resolve();
 	},

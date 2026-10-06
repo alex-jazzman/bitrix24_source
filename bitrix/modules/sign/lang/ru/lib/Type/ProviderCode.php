@@ -1,5 +1,6 @@
 <?php
 $MESS["SIGN_B2E_PROVIDER_GOSKEY_NAME"] = 'Госключ';
+$MESS["SIGN_B2E_PROVIDER_GOSKEY_LITE_NAME"] = 'Госключ';
 $MESS["SIGN_B2E_PROVIDER_SES_NAME"] = 'Битрикс24 КЭДО';
 $MESS["SIGN_B2E_PROVIDER_SES_COM_NAME"] = 'e-Signature for HR';
 $MESS["SIGN_B2E_PROVIDER_SES_RU_EXPRESS_NAME"] = 'Экспресс подпись';

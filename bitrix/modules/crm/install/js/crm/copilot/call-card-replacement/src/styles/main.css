@@ -51,6 +51,23 @@
 	height: 100%;
 }
 
+.crm-copilot__call-card-replacement-criteria-wrapper {
+	padding: 17px 20px 22px 20px;
+	min-height: 100%;
+	box-sizing: border-box;
+}
+
+.crm-copilot__call-card-replacement-criteria-wrapper:has(.crm-copilot__call-card-replacement-empty) {
+	height: 100%;
+}
+
+.crm-copilot__call-card-replacement-criteria-list {
+	display: flex;
+	flex-direction: column;
+	gap: 19px;
+	position: relative;
+}
+
 .crm-copilot__call-card-replacement-prompt {
 	max-width: 90%;
 	font-size: var(--ui-font-size-xl);

@@ -7,8 +7,19 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Socialnetwork\Helper\Feature as TariffFeature;
 use Bitrix\Socialnetwork\V2\Feature;
+use Bitrix\Socialnetwork\V2\Public\Provider\ProjectProvider;
 
 $userId = (int)CurrentUser::get()->getId();
+
+$notificationDefaults = null;
+try
+{
+	$notificationDefaults = (new ProjectProvider())->getNotificationCatalogDefaults()->toArray();
+}
+catch (\Throwable $e)
+{
+	$notificationDefaults = null;
+}
 
 return [
 	'css' => 'dist/core.bundle.css',
@@ -24,5 +35,7 @@ return [
 		'currentUserId' => $userId,
 		'isOldPortal' => Feature::isOldPortalForNewProject(),
 		'isAccessRestricted' => !TariffFeature::isFeatureEnabled(TariffFeature::PROJECTS_ACCESS_PERMISSIONS),
+		'canProposeProjectsTrial' => TariffFeature::canTurnOnTrial(TariffFeature::PROJECTS_GROUPS),
+		'notificationDefaults' => $notificationDefaults,
 	]
 ];

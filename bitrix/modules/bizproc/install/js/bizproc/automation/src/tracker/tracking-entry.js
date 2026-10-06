@@ -16,6 +16,9 @@ export class TrackingEntry
 	static DEBUG_AUTOMATION_TYPE = 11;
 	static DEBUG_DESIGNER_TYPE = 12;
 	static DEBUG_LINK_TYPE = 13;
+	// A node the engine reached but did not run: switched off, or its condition was not met. The reason comes
+	// in the note of the entry.
+	static SKIP_ACTIVITY_TYPE = 14;
 
 	id: number;
 	workflowId: string;
@@ -58,6 +61,11 @@ export class TrackingEntry
 		return this.type === TrackingEntry.TRIGGER_ACTIVITY_TYPE;
 	}
 
+	isSkipEntry(): boolean
+	{
+		return this.type === TrackingEntry.SKIP_ACTIVITY_TYPE;
+	}
+
 	static getAllActivityTypes(): Array<number>
 	{
 		return [
@@ -75,6 +83,7 @@ export class TrackingEntry
 			TrackingEntry.DEBUG_AUTOMATION_TYPE,
 			TrackingEntry.DEBUG_DESIGNER_TYPE,
 			TrackingEntry.DEBUG_LINK_TYPE,
+			TrackingEntry.SKIP_ACTIVITY_TYPE,
 		];
 	}
 

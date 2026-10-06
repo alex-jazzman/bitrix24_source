@@ -1,0 +1,30 @@
+.sign-my-documents-bulk-details-button
+{
+	margin-top: 12px;
+	padding: 0;
+	border: 0;
+	color: var(--ui-color-link-primary-base, #2066b0);
+	background: transparent;
+	cursor: pointer;
+	font: inherit;
+}
+
+.sign-my-documents-bulk-details-button:hover
+{
+	color: var(--ui-color-link-primary-hover, #0b66c3);
+	text-decoration: underline;
+}
+
+.sign-my-documents-bulk-details-button:focus-visible
+{
+	outline: 2px solid var(--ui-color-palette-blue-50, #2fc6f6);
+	outline-offset: 2px;
+}
+
+.sign-my-documents-bulk-details
+{
+	max-height: 280px;
+	margin: 0;
+	padding-inline-start: 24px;
+	overflow-y: auto;
+}

@@ -1,4 +1,4 @@
-import { ajax } from 'main.core';
+import { ajax, Type } from 'main.core';
 
 type UpdateParams = {
 	id: number,
@@ -109,15 +109,53 @@ export class DocumentService
 		});
 	}
 
-	static async saveYjsState(
-		{ documentId, yjsState }: { documentId: number, yjsState: string },
+	static async materialize(
+		{ documentId, markdown, uptoId }: { documentId: number, markdown: string, uptoId: number },
 	): Promise<Object>
 	{
-		return ajax.runAction('note.infrastructure.CollaborationSyncController.saveYjsState', {
+		return ajax.runAction('note.infrastructure.CollaborationSyncController.materialize', {
 			data: {
 				documentId: Number(documentId),
-				yjsState,
+				markdown,
+				uptoId: Number(uptoId),
 			},
+		});
+	}
+
+	/**
+	 * `rebuiltFromMarkdown` states that this baseline was built from the markdown the load response had
+	 * just served, not from a Y.Doc this session was already holding. It is what lets a document demoted
+	 * by an out-of-band overwrite come back into the collaborative format. Sent as 1/0: the request is
+	 * urlencoded, where a plain false would arrive as the string "false".
+	 *
+	 * `markdownChecksum` names the text that statement is about - crc32 of its UTF-8 bytes as an unsigned
+	 * decimal. The server weighs it against the markdown it holds at the moment of the write and refuses
+	 * the statement without it, so a claim made for a text a second overwrite has since replaced is not
+	 * taken at its word. Omitted from the request when there is nothing to name, which keeps a document
+	 * being created exactly as it was.
+	 */
+	static async saveYjsState(
+		{ documentId, yjsState, rebuiltFromMarkdown = false, markdownChecksum = null }: {
+			documentId: number,
+			yjsState: string,
+			rebuiltFromMarkdown?: boolean,
+			markdownChecksum?: string | null,
+		},
+	): Promise<Object>
+	{
+		const data: Object = {
+			documentId: Number(documentId),
+			yjsState,
+			rebuiltFromMarkdown: rebuiltFromMarkdown === true ? 1 : 0,
+		};
+
+		if (Type.isStringFilled(markdownChecksum))
+		{
+			data.markdownChecksum = markdownChecksum;
+		}
+
+		return ajax.runAction('note.infrastructure.CollaborationSyncController.saveYjsState', {
+			data,
 		});
 	}
 

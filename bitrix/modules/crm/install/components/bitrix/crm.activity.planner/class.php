@@ -577,12 +577,8 @@ class CrmActivityPlannerComponent extends \Bitrix\Crm\Component\Base
 			}
 		}
 
-		$template = 'view';
-		if ($this->isSlider())
-		{
-			$template .= '_slider';
-			$this->arResult['IS_SLIDER_ENABLED'] = \Bitrix\Crm\Settings\LayoutSettings::getCurrent()->isSliderEnabled();
-		}
+		$template = 'view_slider';
+		$this->arResult['IS_SLIDER_ENABLED'] = \Bitrix\Crm\Settings\LayoutSettings::getCurrent()->isSliderEnabled();
 
 		if(isset($this->arResult['ACTIVITY']['SUBJECT'])) $this->arResult['ACTIVITY']['SUBJECT'] = Emoji::decode($this->arResult['ACTIVITY']['SUBJECT']);
 
@@ -775,6 +771,7 @@ class CrmActivityPlannerComponent extends \Bitrix\Crm\Component\Base
 	{
 		$result = array();
 		$companyTypes = CCrmStatus::GetStatusListEx('COMPANY_TYPE');
+		$userPermissions = CCrmPerms::GetCurrentUserPermissions();
 
 		foreach($communications as $communication)
 		{
@@ -786,6 +783,9 @@ class CrmActivityPlannerComponent extends \Bitrix\Crm\Component\Base
 			}
 
 			CCrmActivity::PrepareCommunicationInfo($communication);
+			CCrmActivity::MaskCommunicationForUser($communication, $userPermissions);
+			$entityTypeId = (int)$communication['ENTITY_TYPE_ID'];
+			$entityId = (int)$communication['ENTITY_ID'];
 
 			$communication['VIEW_URL'] = CCrmOwnerType::GetEntityShowPath($entityTypeId, $entityId);
 
@@ -1118,10 +1118,12 @@ class CrmActivityPlannerComponent extends \Bitrix\Crm\Component\Base
 	private function getCommunicationsData(array $communications)
 	{
 		$result = [];
+		$userPermissions = CCrmPerms::GetCurrentUserPermissions();
 
 		foreach($communications as $arComm)
 		{
 			CCrmActivity::PrepareCommunicationInfo($arComm);
+			CCrmActivity::MaskCommunicationForUser($arComm, $userPermissions);
 			$result[] = [
 				'id' => $arComm['ID'] ?? null,
 				'type' => $arComm['TYPE'] ?? null,
@@ -1215,6 +1217,19 @@ class CrmActivityPlannerComponent extends \Bitrix\Crm\Component\Base
 		}
 
 		$isNew = ($ID <= 0);
+
+		// A new activity has no ID yet, so CheckItemUpdatePermission would always deny it.
+		// Providers without an owner (CALL_LIST) are outside the entity role model:
+		// they are checked below by their own checkUpdatePermission rule.
+		if (
+			!$isNew
+			&& $provider::checkOwner()
+			&& !CCrmActivity::CheckItemUpdatePermission($activity, CCrmPerms::GetCurrentUserPermissions())
+		)
+		{
+			$result->addError(new Main\Error(Loc::getMessage('CRM_ACTIVITY_PLANNER_NO_UPDATE_PERMISSION')));
+			return $result;
+		}
 
 		if($provider::checkOwner() && !CCrmActivity::CheckUpdatePermission($ownerTypeID, $ownerId))
 		{

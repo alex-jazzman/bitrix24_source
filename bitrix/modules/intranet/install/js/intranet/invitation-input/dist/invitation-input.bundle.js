@@ -72,6 +72,13 @@ this.BX = this.BX || {};
 				}
 			});
 		}
+		inviteWithDeliveryResult(invitations) {
+			return main_core.ajax.runAction('intranet.v2.Invitation.inviteUsersWithDeliveryResult', {
+				data: {
+					invitations
+				}
+			});
+		}
 	}
 
 	class InvitationToDepartment extends InvitationProvider {
@@ -207,6 +214,17 @@ this.BX = this.BX || {};
 			const invitationProvider = new InvitationToPortal(this.#getPreparedUserList());
 			return this.#invite(invitationProvider);
 		}
+		inviteToPortalWithDeliveryResult(invitations) {
+			const invitationProvider = new InvitationToPortal([]);
+			return invitationProvider.inviteWithDeliveryResult(invitations);
+		}
+		showError(message) {
+			this.#removeErrorBlock();
+			this.#addErrorBlockByMessage(message);
+		}
+		clearError() {
+			this.#removeErrorBlock();
+		}
 		inviteToDepartment(departmentIds) {
 			const invitationProvider = new InvitationToDepartment(this.#getPreparedUserList(), departmentIds);
 			return this.#invite(invitationProvider);
@@ -314,7 +332,7 @@ this.BX = this.BX || {};
 			if (!this.#isPhoneEnabled && this.#isEmailEnabled) {
 				return main_core.Loc.getMessage('INTRANET_INVITATION_INPUT_VALIDATION_MESSAGE');
 			}
-			return main_core.Loc.getMessage('INTRANET_INVITATION_INPUT_VALIDATION_MESSAGE_WITH_PHONE');
+			return main_core.Loc.getMessage('INTRANET_INVITATION_INPUT_VALIDATION_MESSAGE_WITH_PHONE_MSGVER_1');
 		}
 		#getEmptyValidationMessage() {
 			if (this.#isPhoneEnabled && !this.#isEmailEnabled) {
@@ -361,6 +379,7 @@ this.BX = this.BX || {};
 					} else {
 						this.#setErrorStateForTag(tag);
 						this.#invalidPhoneNumbersTagIds.push(tag.getId());
+						this.#addErrorBlockByMessage(this.#getDefaultValidationMessage());
 					}
 					tag.render();
 				}).catch(() => {});
@@ -455,7 +474,6 @@ this.BX = this.BX || {};
 		#createErrorBlockByMessage(message) {
 			return main_core.Tag.render`
 			<div class="intranet-invitation-input-error__wrapper">
-				<span class="ui-icon-set --warning"></span>
 				<span class="intranet-invitation-input-error__text">${message}</span>
 			</div>
 		`;

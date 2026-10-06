@@ -5,6 +5,7 @@ export default class WebSDK {
     constructor(params) {
         var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m;
         this.params = params;
+        this.expectedOrigin = WebSDK.resolveExpectedOrigin(params.appUrl);
         let accessLevel;
         let canEditBoard;
         const boardData = {};
@@ -62,7 +63,23 @@ export default class WebSDK {
         };
         this.iframeEl = document.createElement('iframe');
         this.iframeEl.allow = 'clipboard-read; clipboard-write; fullscreen';
-        window.addEventListener('beforeunload', this.destroy.bind(this));
+        this.boundListenBoardEvents = this.listenBoardEvents.bind(this);
+    }
+    static resolveExpectedOrigin(appUrl) {
+        let origin;
+        try {
+            origin = new URL(appUrl).origin;
+        }
+        catch (e) {
+            throw new Error('WebSDK: invalid appUrl');
+        }
+        if (!/^https?:$/.test(new URL(appUrl).protocol)) {
+            throw new Error('WebSDK: unsupported appUrl scheme');
+        }
+        return origin;
+    }
+    isTrustedMessage(event) {
+        return event.source === this.iframeEl.contentWindow && event.origin === this.expectedOrigin;
     }
     init() {
         const container = document.getElementById(this.params.containerId);
@@ -83,6 +100,9 @@ export default class WebSDK {
             tryToCloseBoard: () => new Promise((resolve, reject) => {
                 var _a;
                 const handler = (event) => {
+                    if (!this.isTrustedMessage(event)) {
+                        return;
+                    }
                     var _a, _b;
                     if (((_a = event.data) === null || _a === void 0 ? void 0 : _a.event) === SDKEvents.successCloseApp) {
                         window.removeEventListener('message', handler);
@@ -94,11 +114,14 @@ export default class WebSDK {
                     }
                 };
                 window.addEventListener('message', handler);
-                (_a = this.iframeEl.contentWindow) === null || _a === void 0 ? void 0 : _a.postMessage({ event: SDKEvents.tryToCloseApp }, '*');
+                (_a = this.iframeEl.contentWindow) === null || _a === void 0 ? void 0 : _a.postMessage({ event: SDKEvents.tryToCloseApp }, this.expectedOrigin);
             }),
             renameBoard: (name) => new Promise((resolve, reject) => {
                 var _a;
                 const handler = (event) => {
+                    if (!this.isTrustedMessage(event)) {
+                        return;
+                    }
                     var _a, _b;
                     if (((_a = event.data) === null || _a === void 0 ? void 0 : _a.event) === SDKEvents.successBoardRenamed) {
                         window.removeEventListener('message', handler);
@@ -113,7 +136,7 @@ export default class WebSDK {
                 (_a = this.iframeEl.contentWindow) === null || _a === void 0 ? void 0 : _a.postMessage({
                     event: SDKEvents.renameBoard,
                     data: { name },
-                }, '*');
+                }, this.expectedOrigin);
             }),
             // Другие методы можно добавить здесь
         };
@@ -131,13 +154,16 @@ export default class WebSDK {
         return url.toString();
     }
     addEventListener() {
-        window.addEventListener('message', this.listenBoardEvents.bind(this));
+        window.addEventListener('message', this.boundListenBoardEvents);
     }
     listenBoardEvents(event) {
+        if (!this.isTrustedMessage(event)) {
+            return;
+        }
         var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u, _v, _w, _x, _y, _z, _0, _1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, _13, _14, _15, _16;
         if (((_a = event.data) === null || _a === void 0 ? void 0 : _a.event) === SDKEvents.waitParams) {
             // @ts-ignore
-            (_b = this.iframeEl.contentWindow) === null || _b === void 0 ? void 0 : _b.postMessage({ event: SDKEvents.setParams, data: this.boardParams }, '*');
+            (_b = this.iframeEl.contentWindow) === null || _b === void 0 ? void 0 : _b.postMessage({ event: SDKEvents.setParams, data: this.boardParams }, this.expectedOrigin);
         }
         if (((_c = event.data) === null || _c === void 0 ? void 0 : _c.event) === SDKEvents.boardChanged) {
             if ((_e = (_d = this.params) === null || _d === void 0 ? void 0 : _d.events) === null || _e === void 0 ? void 0 : _e.onBoardChanged) {
@@ -180,13 +206,13 @@ export default class WebSDK {
                         (_a = this.iframeEl.contentWindow) === null || _a === void 0 ? void 0 : _a.postMessage({
                             event: SDKEvents.aiTextResponse,
                             data: { requestId: requestData.requestId, result: response.result },
-                        }, '*');
+                        }, this.expectedOrigin);
                     }
                     else {
                         (_b = this.iframeEl.contentWindow) === null || _b === void 0 ? void 0 : _b.postMessage({
                             event: SDKEvents.aiTextError,
                             data: Object.assign({ requestId: requestData.requestId }, response.error),
-                        }, '*');
+                        }, this.expectedOrigin);
                     }
                 })
                     .catch(() => {
@@ -194,14 +220,14 @@ export default class WebSDK {
                     (_a = this.iframeEl.contentWindow) === null || _a === void 0 ? void 0 : _a.postMessage({
                         event: SDKEvents.aiTextError,
                         data: { requestId: requestData.requestId, code: 'UNKNOWN' },
-                    }, '*');
+                    }, this.expectedOrigin);
                 });
             }
             else {
                 (_13 = this.iframeEl.contentWindow) === null || _13 === void 0 ? void 0 : _13.postMessage({
                     event: SDKEvents.aiTextError,
                     data: { requestId: requestData.requestId, code: 'NOT_SUPPORTED' },
-                }, '*');
+                }, this.expectedOrigin);
             }
         }
         if (((_14 = event.data) === null || _14 === void 0 ? void 0 : _14.event) === SDKEvents.aiTextCancel) {
@@ -210,8 +236,10 @@ export default class WebSDK {
             }
         }
     }
+    // Teardown is explicit only: unsubscribing on beforeunload would leave the sdk deaf when the
+    // navigation is cancelled or the page comes back from bfcache.
     destroy() {
-        window.removeEventListener('message', this.listenBoardEvents);
+        window.removeEventListener('message', this.boundListenBoardEvents);
     }
 }
 //# sourceMappingURL=flip-board-sdk.js.map

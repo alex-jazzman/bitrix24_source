@@ -1,0 +1,71 @@
+.sign-folder-popup .sign-folder-popup__icon {
+	width: 160px;
+	height: 160px;
+	background-image: url('images/folder.svg');
+	background-size: cover;
+	display: inline-block;
+}
+
+.sign-folder-popup .sign-folder-popup__content {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	padding-top: 70px;
+}
+
+.sign-folder-popup .sign-folder-popup__input-container {
+	padding: 10px;
+	width: 80%;
+}
+
+.sign-folder-popup .popup-window-buttons {
+	padding-bottom: 40px !important;
+	border-top: none !important;
+}
+
+.sign-folder-selection {
+	background-color: #eef2f4;
+	min-height: 240px;
+	max-height: 240px;
+	overflow-y: auto;
+}
+
+.sign-folder-selection__item {
+	padding: 10px;
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+}
+
+.sign-folder-selection__item--selected {
+	background-color: #d5d9dc;
+}
+
+.sign-folder-selection__children {
+	padding-left: 20px;
+	display: block;
+}
+
+.sign-folder-selection__icon {
+	display: inline-block;
+	width: 24px;
+	height: 24px;
+	margin-right: 10px;
+	background-image: url('images/folder.svg');
+	background-size: contain;
+	background-repeat: no-repeat;
+	flex-shrink: 0;
+}
+
+.sign-folder-selection__loader {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 180px;
+}
+
+.sign-folder-delete-confirmation__message {
+	margin-top: 5%;
+	color: var(--ui-color-base-70, #525c69);
+}

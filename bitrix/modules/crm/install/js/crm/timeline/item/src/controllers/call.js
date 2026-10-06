@@ -1,4 +1,5 @@
 import { ActivityProvider } from 'crm.ai.call';
+import { Router } from 'crm.router';
 import { Event, Runtime, Type } from 'main.core';
 import { type BaseEvent, EventEmitter } from 'main.core.events';
 import { ButtonState } from 'ui.buttons';
@@ -17,12 +18,92 @@ export class Call extends CopilotBase
 	#currentTranscriptionState: string = 'empty';
 	#isCopilotWelcomeTourShown: boolean = false;
 	#isTranscriptEventBound: boolean = false;
+	#callScoringV2ScrollHandler: ?() => void = null;
+	#copilotWelcomeTourScrollHandler: ?() => void = null;
 
 	// region Base overridden methods
 	onInitialize(item: ConfigurableItem): void
 	{
 		this.#showCopilotWelcomeTour(item);
 		this.#bindAdditionalCopilotActions(item);
+	}
+
+	onAfterItemLayout(item: ConfigurableItem, options): void
+	{
+		this.#emitCallScoringV2TourEvent(item);
+	}
+
+	onBeforeItemClearLayout(item: ConfigurableItem): void
+	{
+		this.#unbindCallScoringV2ScrollHandler();
+		this.#unbindCopilotWelcomeTourScrollHandler();
+	}
+
+	#emitCallScoringV2TourEvent(item: ConfigurableItem): void
+	{
+		setTimeout(() => {
+			const container = item.getContainer();
+			if (!container)
+			{
+				return;
+			}
+
+			const chart = container.querySelector('.crm-timeline__call-scoring-v2-chart');
+			if (!Type.isElementNode(chart))
+			{
+				return;
+			}
+
+			const scoringBlock = item.getLayoutContentBlockById('callGroupOfBlocks')?.getBlockById('callScoring');
+			const actionParams = scoringBlock?.action?.actionParams;
+			if (!Type.isObject(actionParams))
+			{
+				return;
+			}
+
+			const emit = () => {
+				EventEmitter.emit(
+					this,
+					'BX.Crm.Timeline.Call:onShowCallScoringV2Tour',
+					{ target: chart, actionParams },
+				);
+			};
+
+			if (this.#isInViewport(chart))
+			{
+				emit();
+
+				return;
+			}
+
+			const onScroll = () => {
+				if (this.#isInViewport(chart))
+				{
+					emit();
+					this.#unbindCallScoringV2ScrollHandler();
+				}
+			};
+
+			this.#unbindCallScoringV2ScrollHandler();
+			this.#callScoringV2ScrollHandler = onScroll;
+			Event.bind(window, 'scroll', onScroll);
+		}, 50);
+	}
+
+	#unbindCallScoringV2ScrollHandler(): void
+	{
+		if (this.#callScoringV2ScrollHandler)
+		{
+			Event.unbind(window, 'scroll', this.#callScoringV2ScrollHandler);
+			this.#callScoringV2ScrollHandler = null;
+		}
+	}
+
+	#isInViewport(element: HTMLElement): boolean
+	{
+		const rect = element.getBoundingClientRect();
+
+		return rect.top < window.innerHeight && rect.bottom > 0;
 	}
 
 	// eslint-disable-next-line sonarjs/cognitive-complexity
@@ -82,7 +163,6 @@ export class Call extends CopilotBase
 	{
 		return {
 			actionEndpoint: 'crm.timeline.ai.launchCopilot',
-			validEntityTypes: [BX.CrmEntityType.enumeration.lead, BX.CrmEntityType.enumeration.deal],
 			agreementContext: 'audio',
 			onPreLaunch: (...args) => this.#handlePreLaunch(...args),
 			onPostLaunch: (...args) => this.#handlePostLaunch(...args),
@@ -223,6 +303,19 @@ export class Call extends CopilotBase
 			return;
 		}
 
+		if (actionData.isV2)
+		{
+			void Router.Instance.openAiReportDrawer('call-assessment', {
+				activityId: actionData.activityId,
+				ownerTypeId: actionData.ownerTypeId,
+				ownerId: actionData.ownerId,
+				jobId: actionData.jobId ?? null,
+				assessmentSettingsId: actionData.assessmentSettingsId ?? null,
+			});
+
+			return;
+		}
+
 		// Runtime.loadExtension not work in this case (see http://jabber.bx/view.php?id=241940)
 		await top.BX.Runtime.loadExtension('crm.ai.call');
 		const callQualityDlg = new top.BX.Crm.AI.Call.CallQuality({
@@ -312,12 +405,23 @@ export class Call extends CopilotBase
 
 					this.#isCopilotWelcomeTourShown = true;
 
-					Event.unbind(window, 'scroll', showCopilotTourOnScroll);
+					this.#unbindCopilotWelcomeTourScrollHandler();
 				}
 			};
 
+			this.#unbindCopilotWelcomeTourScrollHandler();
+			this.#copilotWelcomeTourScrollHandler = showCopilotTourOnScroll;
 			Event.bind(window, 'scroll', showCopilotTourOnScroll);
 		}, 50);
+	}
+
+	#unbindCopilotWelcomeTourScrollHandler(): void
+	{
+		if (this.#copilotWelcomeTourScrollHandler)
+		{
+			Event.unbind(window, 'scroll', this.#copilotWelcomeTourScrollHandler);
+			this.#copilotWelcomeTourScrollHandler = null;
+		}
 	}
 
 	#bindAdditionalCopilotActions(item: ConfigurableItem): void

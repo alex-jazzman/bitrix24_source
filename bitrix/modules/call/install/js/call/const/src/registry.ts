@@ -8,3 +8,4 @@ export {
 	ConferenceUserState,
 } from './conference';
 export type { LayersAvailability, SubscribedQuality } from './layers';
+export { EventType } from './event-type';

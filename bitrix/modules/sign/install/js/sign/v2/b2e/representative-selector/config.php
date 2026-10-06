@@ -10,9 +10,9 @@ return [
 	'rel' => [
 		'main.core',
 		'main.popup',
+		'sign.type',
 		'sign.v2.b2e.user-selector',
 		'sign.v2.helper',
-		'sign.type',
 	],
 	'skip_core' => false,
 ];

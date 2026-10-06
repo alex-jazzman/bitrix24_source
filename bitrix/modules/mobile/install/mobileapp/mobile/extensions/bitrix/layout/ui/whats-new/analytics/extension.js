@@ -12,6 +12,7 @@ jn.define('layout/ui/whats-new/analytics', (require, exports, module) => {
 		static get Event()
 		{
 			return {
+				read: 'n_read',
 				makeReaction: 'make_reaction',
 				removeReaction: 'remove_reaction',
 				openHelpdesk: 'open_helpdesk',

@@ -1,4 +1,4 @@
-import { Cache } from 'main.core';
+import { Cache, Runtime } from 'main.core';
 import { type EventEmitter } from 'main.core.events';
 import { type Store } from 'ui.vue3.vuex';
 
@@ -11,6 +11,7 @@ import { logger, type Logger } from './logger';
 import { lexicalService, type LexicalService } from './lexical-service';
 import { placeholderService, type PlaceholderService } from './placeholder-service';
 import { PreferencesService } from './preferences-service';
+import { SaveFlowService } from './save-flow-service';
 import { SendService } from './send-service';
 import { TemplateService } from './template-service';
 
@@ -70,6 +71,7 @@ export class ServiceLocator
 				eventEmitter: this.#emitter,
 				analyticsService: this.getAnalyticsService(),
 				preferencesService: this.getPreferencesService(),
+				saveFlowService: this.getSaveFlowService(),
 			});
 		});
 	}
@@ -113,6 +115,20 @@ export class ServiceLocator
 		});
 	}
 
+	getSaveFlowService(): SaveFlowService
+	{
+		return this.#services.remember('saveFlowService', () => {
+			return new SaveFlowService({
+				logger: this.getLogger(),
+				store: this.#store,
+				eventEmitter: this.#emitter,
+				preferencesService: this.getPreferencesService(),
+				customTemplateServiceFactory: () => Runtime.loadExtension('messageservice.custom-template.editor')
+					.then(({ CustomTemplateService }) => new CustomTemplateService()),
+			});
+		});
+	}
+
 	getAnalyticsService(): AnalyticsService
 	{
 		return this.#services.remember('analyticsService', () => {
@@ -144,6 +160,11 @@ export class ServiceLocator
 		if (this.#services.has('providerFactory'))
 		{
 			this.#services.get('providerFactory').destroy();
+		}
+
+		if (this.#services.has('saveFlowService'))
+		{
+			this.#services.get('saveFlowService').destroy();
 		}
 
 		this.#services = null;

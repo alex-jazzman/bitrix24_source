@@ -12,9 +12,6 @@ class Transcription extends AISenseContent
 
 	public string $language = '';
 
-	public bool $isEmpty = true;
-
-
 	public function __construct(?Integration\AI\Outcome $outcome = null)
 	{
 		if ($outcome)

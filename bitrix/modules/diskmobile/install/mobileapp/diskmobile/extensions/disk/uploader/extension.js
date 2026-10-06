@@ -78,6 +78,7 @@ jn.define('disk/uploader', (require, exports, module) => {
 			const items = [
 				{ id: 'mediateka' },
 				{ id: 'camera' },
+				...(this.options.extraItems ?? []),
 			];
 
 			const settings = {
@@ -97,7 +98,16 @@ jn.define('disk/uploader', (require, exports, module) => {
 				attachButton: { items },
 			};
 
-			dialogs.showImagePicker({ settings }, onFilesSelected);
+			const itemSelectedCallback = this.options.itemSelectedCallback ?? null;
+
+			if (itemSelectedCallback)
+			{
+				dialogs.showImagePicker({ settings }, onFilesSelected, null, itemSelectedCallback);
+			}
+			else
+			{
+				dialogs.showImagePicker({ settings }, onFilesSelected);
+			}
 		}
 
 		#prepareTasks(files = [])

@@ -1,5 +1,5 @@
 import { Core } from 'im.v2.application.core';
-import { RecentType, RestMethod, type RecentTypeItem, ParentChatScope } from 'im.v2.const';
+import { RecentType, RestMethod, type RecentTypeItem, ParentChatScope, type ParentChatIdType } from 'im.v2.const';
 import { CopilotManager } from 'im.v2.lib.copilot';
 import { Logger } from 'im.v2.lib.logger';
 import { runAction } from 'im.v2.lib.rest';
@@ -16,14 +16,14 @@ import {
 export class BaseRecentService
 {
 	#unreadMode: boolean = false;
-	#parentChatId: ?number = 0;
+	#parentChatId: ParentChatIdType = 0;
 	#itemsPerPage: number = 50;
 	#isLoading: boolean = false;
 	#pagesLoaded: number = 0;
 	#hasMoreItemsToLoad: boolean = true;
-	#lastMessageDate: number = 0;
+	#lastMessageDate: string = '';
 
-	constructor(params: { unreadMode: boolean, parentChatId: ?number } = {})
+	constructor(params: { unreadMode: boolean, parentChatId: ParentChatIdType } = {})
 	{
 		const { unreadMode = false, parentChatId = ParentChatScope.topLevel } = params;
 
@@ -120,16 +120,21 @@ export class BaseRecentService
 	getRequestFilter(firstPage: boolean = false): BaseRecentFilterParams
 	{
 		return {
-			lastMessageDate: firstPage ? null : this.#lastMessageDate,
+			lastMessageDate: firstPage ? null : this.getLastMessageDate(),
 			recentSection: this.getRecentType(),
 			parentId: this.getParentChatId(),
 			unread: this.getUnreadMode(),
 		};
 	}
 
+	getLastMessageDate(): string
+	{
+		return this.#lastMessageDate;
+	}
+
 	handlePaginationField(result: RecentRestResult)
 	{
-		this.#lastMessageDate = this.#getLastMessageDate(result);
+		this.#setLastMessageDate(result);
 	}
 
 	onAfterRequest(firstPage: boolean)
@@ -213,41 +218,38 @@ export class BaseRecentService
 		return Object.values(chatMap);
 	}
 
-	#getLastMessageDate(restResult: RecentRestResult): string
-	{
-		const messages = this.#filterPinnedItemsMessages(restResult);
-		if (messages.length === 0)
-		{
-			return '';
-		}
-
-		// comparing strings in atom format works correctly because the format is lexically sortable
-		let firstMessageDate = messages[0].date;
-		messages.forEach((message) => {
-			if (message.date < firstMessageDate)
-			{
-				firstMessageDate = message.date;
-			}
-		});
-
-		return firstMessageDate;
-	}
-
-	#filterPinnedItemsMessages(restResult: RecentRestResult): RawMessage[]
+	#setLastMessageDate(restResult: RecentRestResult)
 	{
 		const { messages, recentItems, sectionMeta } = restResult;
 		const fixedChatIds = sectionMeta ? sectionMeta.fixedChatIds : [];
+		const messagesById: Map<number, RawMessage> = new Map(
+			messages.map((message) => [message.id, message]),
+		);
 
-		return messages.filter((message) => {
-			const chatId = message.chat_id;
-			const recentItem: RawRecentItem = recentItems.find((item) => {
-				return item.chatId === chatId;
-			});
-
+		// Cursor uses each row's own message (always in its own chat), not the preview (may be a foreign chat).
+		let lastMessageDate = '';
+		recentItems.forEach((recentItem: RawRecentItem) => {
 			const isPinnedItem = recentItem.pinned === true;
-			const isFixedItem = fixedChatIds.includes(chatId);
+			const isFixedItem = fixedChatIds.includes(recentItem.chatId);
+			if (isPinnedItem || isFixedItem)
+			{
+				return;
+			}
 
-			return !isPinnedItem && !isFixedItem;
+			const ownMessageId = recentItem.ownMessageId || recentItem.messageId;
+			const message = messagesById.get(ownMessageId);
+			if (!message)
+			{
+				return;
+			}
+
+			// comparing strings in atom format works correctly because the format is lexically sortable
+			if (lastMessageDate === '' || message.date < lastMessageDate)
+			{
+				lastMessageDate = message.date;
+			}
 		});
+
+		this.#lastMessageDate = lastMessageDate;
 	}
 }

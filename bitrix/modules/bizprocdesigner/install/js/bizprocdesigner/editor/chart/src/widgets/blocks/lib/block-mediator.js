@@ -4,27 +4,39 @@ import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
 import { toValue } from 'ui.vue3';
 import { type MenuItemOptions } from 'ui.vue3.components.menu';
 
+import { useAgentHighlightStore } from '../../../entities/ai-assistant/stores/agent-highlight-store';
 import { useAppStore } from '../../../entities/app';
 import {
 	diagramStore as useDiagramStore,
 	useBufferStore,
+	isBlockActivated,
+	nodeTitleEditServices,
 } from '../../../entities/blocks';
 import { useCommonNodeSettingsStore } from '../../../entities/common-node-settings';
-import { useNodeSettingsStore, generateNextInputPortId } from '../../../entities/node-settings';
+import { useNodeSettingsStore, generateNextInputPortId, areNodeSettingsDirty } from '../../../entities/node-settings';
 import { useLoc } from '../../../shared/composables';
+import { textEditorServices } from '../../../shared/ui';
 import {
 	PORT_TYPES,
 	COMPLEX_NODE_PORT_LABELS,
-	BLOCK_TYPES,
 	BLOCK_TYPES_WITHOUT_SETTINGS,
 } from '../../../shared/constants';
 import { useNodeDataInspectorStore } from '../../../shared/stores/node-data-inspector-store';
+import { FocusAnchor, rescueFocus } from '../../../shared/utils/focus-rescue';
 import { useDefaultTitle } from '../../../features/catalog';
+import { useDataViewDefinitionStore } from '../../../features/data-view-editor';
 import { type Block, type BlockId, type Port } from '../../../shared/types';
 import { getContextMenuItemHtml } from './get-context-menu-item-html';
 
 const HIDE_SETTINGS_DELAY = 300;
 const DRAG_THRESHOLD = 5;
+const RENAME_NODE_TITLE_TEST_ID = 'bizprocdesigner-block-menu-rename';
+
+// withTransition: play the content change of the settings panel with a transition. Off by default,
+// so a click on a node and the context menu keep showing the settings instantly.
+type ShowNodeSettingsOptions = {
+	withTransition?: boolean;
+};
 
 export class BlockMediator
 {
@@ -33,15 +45,20 @@ export class BlockMediator
 	#appStore = null;
 	#commonNodeSettingsStore = null;
 	#complexNodeSettingsStore = null;
+	#dataViewDefinitionStore = null;
 	#blockDiagram = null;
 	#nodeInspectorStore = null;
 	#diagramStore = null;
 	#bufferStore = null;
 	#highlightedBlocks = null;
+	#agentHighlightStore = null;
 	#isMac = false;
 	#clickStartX = 0;
 	#clickStartY = 0;
-	#isShowingSettings = false;
+	// The show in flight, as a promise settled the moment it ends. Doubles as the guard against a
+	// second show over the first one: while it is there the panel is being replaced already.
+	#showInFlight = null;
+	#clearSelectionTimeout = null;
 
 	constructor()
 	{
@@ -50,11 +67,13 @@ export class BlockMediator
 		this.#appStore = useAppStore();
 		this.#commonNodeSettingsStore = useCommonNodeSettingsStore();
 		this.#complexNodeSettingsStore = useNodeSettingsStore();
+		this.#dataViewDefinitionStore = useDataViewDefinitionStore();
 		this.#diagramStore = useDiagramStore();
 		this.#blockDiagram = useBlockDiagram();
 		this.#bufferStore = useBufferStore();
 		this.#isMac = Browser.isMac();
 		this.#highlightedBlocks = useHighlightedBlocks();
+		this.#agentHighlightStore = useAgentHighlightStore();
 
 		this.#blockDiagram.hooks.startDragBlock.on((block) => {
 			const settingsBlockId = this.#commonNodeSettingsStore.block?.id
@@ -94,6 +113,9 @@ export class BlockMediator
 
 	#resetSettingsState(): void
 	{
+		// The form living in the panel goes away with the state, so a focus left inside it must not
+		// fall through to <body>.
+		rescueFocus(FocusAnchor.settingsPanel);
 		this.#commonNodeSettingsStore.hideSettings();
 		this.#complexNodeSettingsStore.toggleVisibility(false);
 		this.#complexNodeSettingsStore.reset();
@@ -107,64 +129,62 @@ export class BlockMediator
 		}
 	}
 
-	async showNodeSettings(block: Block): void
+	/**
+	 * The show in flight as a promise settled the moment it ends, and null when the mediator is free.
+	 * Meant for a caller that can afford to wait its turn — the automatic series over the nodes an
+	 * agent has just added: a step of it refused by the guard below is lost for good, and the last of
+	 * those steps is the result of the build the user is waiting for. A click of the user asks nothing
+	 * of this and keeps taking the refusal, the way it always did.
+	 */
+	getShowInFlight(): ?Promise<void>
+	{
+		return this.#showInFlight;
+	}
+
+	async showNodeSettings(block: Block, options: ShowNodeSettingsOptions): Promise<boolean>
 	{
 		if (BLOCK_TYPES_WITHOUT_SETTINGS.includes(toValue(block).type))
 		{
 			this.hideAllSettings();
 
-			return;
+			return false;
 		}
 
-		if (this.#isShowingSettings)
+		if (this.#showInFlight !== null)
 		{
-			return;
+			return false;
 		}
 
-		this.#isShowingSettings = true;
+		let settleShow = null;
+		this.#showInFlight = new Promise((resolve) => {
+			settleShow = resolve;
+		});
 
 		try
 		{
-			const blockActivities = ['StateInitializationActivity', 'StateFinalizationActivity', 'EventDrivenActivity'];
-
-			if (blockActivities.includes(block.activity.Type))
+			// The serving panel is declared by the server, never derived from the block type or
+			// from the set of its properties; an absent marker keeps the legacy form.
+			if (toValue(block).node?.servedByUnifiedPanel === true)
 			{
-				await Runtime.loadExtension('sidepanel');
-				const url = `/bizprocdesigner/editor/?ID=${this.#diagramStore.templateId}&editBlock=${block.id}`;
-				window.BX.SidePanel.Instance.open(
-					url,
-					{
-						customLeftBoundary: 50,
-						allowChangeHistory: false,
-						cacheable: false,
-					},
-				);
-
-				return;
+				return await this.showComplexNodeSettings(block, options);
 			}
 
-			const notReallyComplexBlock = [
-				'ForEachActivity',
-				'WhileActivity',
-				'IfElseBranchActivity',
-			];
-
-			if (block.type === BLOCK_TYPES.COMPLEX && !notReallyComplexBlock.includes(block.activity.Type))
+			const isCommonNodeSettingsShown = await this.showCommonNodeSettings(block, options);
+			if (isCommonNodeSettingsShown)
 			{
-				await this.showComplexNodeSettings(block);
-
-				return;
+				this.#nodeInspectorStore.setBlock(block);
 			}
 
-			await this.showCommonNodeSettings(block);
+			return isCommonNodeSettingsShown;
 		}
 		finally
 		{
-			this.#isShowingSettings = false;
+			this.#showInFlight = null;
+			settleShow();
 		}
 	}
 
-	async showCommonNodeSettings(block: Block): void
+	async showCommonNodeSettings(block: Block, options: ShowNodeSettingsOptions): Promise<boolean>
 	{
 		const shouldSwitch = await this.#shouldSwitchToBlock();
 		if (!shouldSwitch)
@@ -179,13 +199,13 @@ export class BlockMediator
 		}
 
 		await useDefaultTitle().waitForCatalog();
-		this.#commonNodeSettingsStore.showSettings(block);
+		this.#commonNodeSettingsStore.showSettings(block, options);
 		this.#nodeInspectorStore.setBlock(block);
 
 		return true;
 	}
 
-	async showComplexNodeSettings(block: Block): Promise<boolean>
+	async showComplexNodeSettings(block: Block, options: ShowNodeSettingsOptions): Promise<boolean>
 	{
 		const shouldSwitch = await this.#shouldSwitchToBlock();
 		if (!shouldSwitch)
@@ -193,7 +213,15 @@ export class BlockMediator
 			return false;
 		}
 
-		if (!this.#complexNodeSettingsStore.isShown)
+		if (this.#complexNodeSettingsStore.isShown)
+		{
+			// The load takes down the header, the tabs, the content and the footer at once, so a focus
+			// left inside them would land on <body>. Whoever asked for the show, the user working in
+			// the panel that is being replaced keeps a place to stand. The branch below replaces the
+			// state instead, and rescues the focus itself.
+			rescueFocus(FocusAnchor.settingsPanel);
+		}
+		else
 		{
 			this.#resetSettingsState();
 			this.#appStore.showRightPanel();
@@ -205,6 +233,7 @@ export class BlockMediator
 		await this.#complexNodeSettingsStore.fetchNodeSettings(
 			block,
 			useDefaultTitle().resolveDefaultTitle(block.activity),
+			options,
 		);
 
 		return true;
@@ -212,13 +241,14 @@ export class BlockMediator
 
 	#areComplexNodeSettingsDirty(block: Block): boolean
 	{
-		const { ports, nodeSettings } = this.#complexNodeSettingsStore;
-		const { title, description } = nodeSettings;
-		const blockDescription = block.activity.Properties.EditorComment ?? '';
+		const { ports, nodeSettings, prevSavedNodeSettings } = this.#complexNodeSettingsStore;
 
-		return ports.length !== block.ports.length
-			|| title.trim() !== block.node.title.trim()
-			|| description.trim() !== blockDescription.trim();
+		return areNodeSettingsDirty({
+			nodeSettings,
+			prevSavedNodeSettings,
+			ports,
+			blockPorts: block.ports,
+		});
 	}
 
 	getCtxMenuItemShowSettings(block: Block): MenuItemOptions
@@ -227,6 +257,21 @@ export class BlockMediator
 			id: 'showSettings',
 			text: this.#loc.getMessage('BIZPROCDESIGNER_EDITOR_BLOCK_CONTEXT_MENU_ITEM_OPEN'),
 			onclick: () => this.showNodeSettings(block),
+		};
+	}
+
+	getCtxMenuItemToggleActivation(block: Block): MenuItemOptions
+	{
+		const isActivated = isBlockActivated(block);
+
+		return {
+			id: 'toggleActivation',
+			text: isActivated
+				? this.#loc.getMessage('BIZPROCDESIGNER_EDITOR_BLOCK_CONTEXT_MENU_ITEM_DEACTIVATE')
+				: this.#loc.getMessage('BIZPROCDESIGNER_EDITOR_BLOCK_CONTEXT_MENU_ITEM_ACTIVATE'),
+			onclick: () => {
+				this.#diagramStore.toggleBlockActivation(block.id);
+			},
 		};
 	}
 
@@ -249,15 +294,23 @@ export class BlockMediator
 				}
 
 				this.#blockDiagram.deleteBlockById(block.id);
-				this.#history.makeSnapshot();
 			},
 		};
 	}
 
 	getCommonBlockMenuOptions(block: Block): Array<MenuItemOptions>
 	{
+		if (this.#diagramStore.isWriteLocked)
+		{
+			return [
+				this.getCtxMenuItemShowSettings(block),
+				this.getCtxMenuItemCopyBlock(block),
+			];
+		}
+
 		return [
 			this.getCtxMenuItemShowSettings(block),
+			this.getCtxMenuItemToggleActivation(block),
 			this.getCtxMenuItemCopyBlock(block),
 			this.getCtxMenuItemDeleteBlock(block),
 		];
@@ -265,6 +318,13 @@ export class BlockMediator
 
 	getSettingsBlockMenuOptions(block: Block): Array<MenuItemOptions>
 	{
+		if (this.#diagramStore.isWriteLocked)
+		{
+			return [
+				this.getCtxMenuItemCopyBlock(block),
+			];
+		}
+
 		return [
 			this.getCtxMenuItemCopyBlock(block),
 			this.getCtxMenuItemDeleteBlock(block),
@@ -279,7 +339,7 @@ export class BlockMediator
 			id: itemId,
 			html: getContextMenuItemHtml(
 				this.#loc.getMessage('BIZPROCDESIGNER_EDITOR_BLOCK_CONTEXT_MENU_ITEM_COPY'),
-				this.#isMac ? '⌘ С' : 'Ctrl-C',
+				this.#isMac ? '⌘ C' : 'Ctrl-C',
 			),
 			onclick: (): void => {
 				this.#bufferStore.setBufferContent({
@@ -289,8 +349,39 @@ export class BlockMediator
 			},
 		};
 	}
+	getCtxMenuItemEditFrameContent(blockId: BlockId): MenuItemOptions
+	{
+		const itemId = 'editFrameContent';
 
-	addComplexBlockPort(block: Block, title: string): void
+		return {
+			id: itemId,
+			html: getContextMenuItemHtml(
+				this.#loc.getMessage('BIZPROCDESIGNER_EDITOR_BLOCK_CONTEXT_MENU_FRAME_ITEM_EDIT'),
+				this.#isMac ? '⌘ E' : 'Ctrl-E',
+			),
+			onclick: (): void => {
+				textEditorServices
+					.get(blockId)
+					.onEdit();
+			},
+		};
+	}
+
+	getCtxMenuItemRenameNodeTitle(blockId: BlockId): MenuItemOptions
+	{
+		return {
+			id: 'renameNodeTitle',
+			text: this.#loc.getMessage('BIZPROCDESIGNER_EDITOR_BLOCK_CONTEXT_MENU_FRAME_ITEM_RENAME'),
+			dataset: { testid: RENAME_NODE_TITLE_TEST_ID },
+			onclick: (): void => {
+				nodeTitleEditServices
+					.get(blockId)
+					.startEdit();
+			},
+		};
+	}
+
+	addComplexBlockPort(block: Block, title: string): ?string
 	{
 		let portId = '';
 		const isRelationPort = `${title[0]}${title[1]}` === COMPLEX_NODE_PORT_LABELS.relation;
@@ -320,7 +411,7 @@ export class BlockMediator
 		const isPortExists = block.ports.some((port) => port.title === title);
 		if (isPortExists)
 		{
-			return;
+			return block.ports.find((port) => port.title === title)?.id ?? null;
 		}
 
 		this.#diagramStore.setPorts(block.id, [
@@ -332,6 +423,10 @@ export class BlockMediator
 				position: 'left',
 			},
 		]);
+
+		this.#history.makeSnapshot();
+
+		return portId;
 	}
 
 	addAuxPort(block: Block, title: string): void
@@ -361,6 +456,8 @@ export class BlockMediator
 				position: 'bottom',
 			},
 		]);
+
+		this.#history.makeSnapshot();
 	}
 
 	getComplexBlockPorts(block: Block): Array<Port>
@@ -422,6 +519,11 @@ export class BlockMediator
 		});
 	}
 
+	#closeTableSettings(): void
+	{
+		this.#dataViewDefinitionStore.close();
+	}
+
 	async #shouldSwitchToBlock(): Promise<boolean>
 	{
 		const { block: complexBlock } = this.#complexNodeSettingsStore;
@@ -434,6 +536,7 @@ export class BlockMediator
 		if (!areComplexNodeSettingsDirty)
 		{
 			this.resetComplexBlockSettings(false);
+			this.#closeTableSettings();
 
 			return true;
 		}
@@ -442,6 +545,7 @@ export class BlockMediator
 		if (!shouldStay)
 		{
 			this.resetComplexBlockSettings(false);
+			this.#closeTableSettings();
 		}
 
 		return !shouldStay;
@@ -478,18 +582,28 @@ export class BlockMediator
 			return;
 		}
 
+		// A click is told from a drag the way the editor has always told them apart: by the distance
+		// between the press and the release. The highlight rides on that same verdict instead of
+		// growing a second one of its own.
+		const delta = Math.hypot(event.clientX - this.#clickStartX, event.clientY - this.#clickStartY);
+		const isDrag = delta > DRAG_THRESHOLD;
+
+		// A click puts the agent highlight out whatever the handler does next: neither a group
+		// selection nor an already open settings panel makes the node any less clicked.
+		if (!isDrag)
+		{
+			this.#agentHighlightStore.dismiss(block.id);
+		}
+
 		const isGroupSelected = this.#highlightedBlocks.highlitedBlockIds.value.length > 1;
 		if (isGroupSelected)
 		{
 			return;
 		}
 
-		const delta = Math.hypot(event.clientX - this.#clickStartX, event.clientY - this.#clickStartY);
-		const isDrag = delta > DRAG_THRESHOLD;
-
 		if (isDrag && !this.isAnySettingsOpen())
 		{
-			this.#highlightedBlocks.clear();
+			this.#scheduleSelectionClear(block.id);
 
 			return;
 		}
@@ -510,8 +624,36 @@ export class BlockMediator
 		{
 			return;
 		}
+
+		this.#cancelSelectionClear();
 		this.#clickStartX = event.clientX;
 		this.#clickStartY = event.clientY;
+	}
+
+	#scheduleSelectionClear(blockId: BlockId): void
+	{
+		this.#cancelSelectionClear();
+		// A microtask can run before the document-level mouseup listener commits the drag.
+		this.#clearSelectionTimeout = setTimeout(() => {
+			this.#clearSelectionTimeout = null;
+			const selectedIds = this.#highlightedBlocks.highlitedBlockIds.value;
+
+			if (selectedIds.length === 1 && selectedIds[0] === blockId)
+			{
+				this.#highlightedBlocks.clear();
+			}
+		}, 0);
+	}
+
+	#cancelSelectionClear(): void
+	{
+		if (this.#clearSelectionTimeout === null)
+		{
+			return;
+		}
+
+		clearTimeout(this.#clearSelectionTimeout);
+		this.#clearSelectionTimeout = null;
 	}
 
 	isAnySettingsOpen(): boolean

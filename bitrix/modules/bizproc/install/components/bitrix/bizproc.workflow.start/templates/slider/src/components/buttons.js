@@ -25,6 +25,7 @@ export class Buttons
 			text: Text.encode(Loc.getMessage('BIZPROC_CMP_WORKFLOW_START_TMP_SINGLE_START_NEXT_BUTTON')),
 			onclick: action,
 			color: ButtonColor.PRIMARY,
+			dataset: { testid: 'bizproc-ws-start-next-btn' },
 		});
 	}
 
@@ -35,6 +36,7 @@ export class Buttons
 			text: Text.encode(Loc.getMessage('BIZPROC_CMP_WORKFLOW_START_TMP_SINGLE_START_BACK_BUTTON')),
 			onclick: action,
 			color: ButtonColor.LIGHT_BORDER,
+			dataset: { testid: 'bizproc-ws-start-back-btn' },
 		});
 	}
 
@@ -45,6 +47,7 @@ export class Buttons
 			text: Text.encode(Loc.getMessage('BIZPROC_CMP_WORKFLOW_START_TMP_SINGLE_START_START_BUTTON')),
 			onclick: action,
 			color: ButtonColor.PRIMARY,
+			dataset: { testid: 'bizproc-ws-start-start-btn' },
 		});
 	}
 

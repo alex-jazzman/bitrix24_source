@@ -51,7 +51,7 @@ else if ($arParams['EDIT_MODE'] == 'Y')
 else if ($arParams['ENABLED'] == 'Y' || $arParams['PREVIEW_MODE'] == 'Y')
 {
 	$content = $component->htmlspecialcharsback($arParams['~HTML_CODE']);
-	if (!$domainId)
+	if ($component->mustSanitize((int)$domainId))
 	{
 		$content = $component->sanitize($content);
 	}

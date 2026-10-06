@@ -32,8 +32,8 @@ export const SmsSettingsSection = {
 		getSectionHint(): string
 		{
 			const replacements = {
-				'#LINK_START#': '<a onclick="top.BX.Helper.show(\'redirect=detail&code=17399056\')" style="cursor: pointer">',
-				'#LINK_END#': '</a>',
+				'#LINK_START#': '<button type="button" data-testid="terminal-sms-hint-help-btn" class="crm-terminal-inline-button" onclick="top.BX.Helper.show(\'redirect=detail&code=17399056\')">',
+				'#LINK_END#': '</button>',
 			};
 
 			return this.$Bitrix.Loc.getMessage('CRM_CFG_TERMINAL_SETTINGS_SECTION_SMS_HINT_TEXT', replacements);
@@ -41,8 +41,8 @@ export const SmsSettingsSection = {
 		getNotificationConnectHint(): string
 		{
 			const replacements = {
-				'#LINK_START#': '<span onclick="top.BX.Helper.show(\'redirect=detail&code=17399068\')" class="sms-provider-selector">',
-				'#LINK_END#': '</span>',
+				'#LINK_START#': '<button type="button" data-testid="terminal-sms-connect-help-btn" onclick="top.BX.Helper.show(\'redirect=detail&code=17399068\')" class="sms-provider-selector">',
+				'#LINK_END#': '</button>',
 			};
 
 			return this.$Bitrix.Loc.getMessage('CRM_CFG_TERMINAL_SETTINGS_SECTION_SMS_SERVICE_PROVIDER_UNC_CONNECTED', replacements);

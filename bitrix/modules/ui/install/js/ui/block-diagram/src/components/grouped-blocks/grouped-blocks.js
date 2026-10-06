@@ -1,10 +1,7 @@
 import { useBlockDiagram } from '../../composables';
 import { getGroupBlockSlotName } from '../../utils';
 import { BlocksQueueTransition } from '../blocks-queue-transition/blocks-queue-transition';
-import type {
-	DiagramBlockGroupNames,
-	DiagramGroupedBlocks,
-} from '../../types';
+import { type DiagramBlockGroupNames, type DiagramGroupedBlocks } from '../../types';
 
 import './grouped-blocks.css';
 

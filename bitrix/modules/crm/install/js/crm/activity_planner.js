@@ -2195,7 +2195,6 @@ BX.namespace('BX.Crm.Activity');
 				var self = this;
 
 				var id = self.getId();
-				var dlgId = 'CrmActivityProviderView' + id;
 
 				self._dlgMode = mode;
 
@@ -2286,7 +2285,7 @@ BX.namespace('BX.Crm.Activity');
 					return true;
 				}
 
-				params.ajax_action = 'ACTIVITY_VIEW';
+				params.action = 'view';
 				params.activity_id = id;
 
 				if (top.BX.SidePanel)
@@ -2328,80 +2327,6 @@ BX.namespace('BX.Crm.Activity');
 					return;
 				}
 
-				if (BX.CrmActivityProvider.dialogs[dlgId])
-					return;
-
-				BX.ajax({
-					method: 'POST',
-					dataType: 'html',
-					url: '/bitrix/components/bitrix/crm.activity.planner/ajax.php?site_id=' + BX.message('SITE_ID'),
-					data: params,
-					onsuccess: function (HTML)
-					{
-						if (BX.CrmActivityProvider.dialogs[dlgId])
-							return;
-
-						var wrapper = BX.create('div');
-						wrapper.innerHTML = HTML;
-						self._contentNode = wrapper;
-
-						var optionsNode = self._getNode('options');
-						if (optionsNode)
-						{
-							self._activityOptions = JSON.parse(optionsNode.getAttribute('data-options'));
-							if (!self._activityOptions || typeof(self._activityOptions) !== 'object')
-								self._activityOptions = {};
-						}
-
-						self._dlg = new BX.PopupWindow(
-							dlgId,
-							null,
-							{
-								autoHide: false,
-								draggable: true,
-								offsetLeft: 0,
-								offsetTop: 0,
-								bindOptions: {forceBindPosition: false},
-								closeByEsc: true,
-								closeIcon: true,
-								zIndex: -12, //HACK: for tasks popup
-								contentNoPaddings: true,
-								titleBar: {
-									content: self._prepareViewDlgTitle()
-								},
-								events: {
-									onPopupClose: BX.delegate(
-										function ()
-										{
-											BX.CrmActivityEditor.hideUploader(self.getSetting('uploadID', ''), self.getSetting('uploadControlID', ''));
-											BX.CrmActivityEditor.hideLhe(self.getSetting('lheContainerID', ''));
-
-											self._dlg.destroy();
-											BX.onCustomEvent(window, 'onActivityEditorClose', []);
-										},
-										self
-									),
-									onPopupDestroy: BX.proxy(
-										function ()
-										{
-											self._dlg = null;
-											self._wrapper = null;
-											self._ttlWrapper = null;
-											delete(BX.CrmActivityProvider.dialogs[dlgId]);
-										},
-										self
-									)
-								},
-								content: wrapper,
-								buttons: self._prepareViewDlgButtons()
-							}
-						);
-
-						self._prepareDialogContent();
-						BX.CrmActivityProvider.dialogs[dlgId] = self._dlg;
-						self._dlg.show();
-					}
-				});
 			},
 
 			_getNode: function(name)
@@ -2462,22 +2387,6 @@ BX.namespace('BX.Crm.Activity');
 						me._changeCommunicationSlide(1);
 					});
 				}
-			},
-
-			_prepareDialogContent: function()
-			{
-				var additionalSwitcher = this._getNode('additional-switcher');
-				var additionalFields = this._getNode('additional-fields');
-				if (additionalSwitcher && additionalFields)
-				{
-					BX.bind(additionalSwitcher, 'click', function()
-					{
-						BX.toggleClass(additionalFields, 'active')
-					});
-				}
-
-				this._prepareCommunicationsSlider();
-				this._prepareFieldCompleted();
 			},
 
 			_prepareSliderContent: function(slider)
@@ -2713,80 +2622,6 @@ BX.namespace('BX.Crm.Activity');
 			{
 				return this._buttonId;
 			},
-			_prepareViewDlgTitle: function ()
-			{
-				var text = this._activityOptions.title || this.getSetting('subject', '');
-
-				this._titleMenu = BX.CrmActivityMenu.create('',
-					{
-						'enableTasks': this._editor.isTasksEnabled(),
-						'enableCalendarEvents': this._editor.isCalendarEventsEnabled(),
-						'enableEmails': this._editor.isEmailsEnabled() && this.getType() !== BX.CrmActivityType.email
-					},
-					{
-						'createTask': this._taskCreationHandler,
-						'createCall': this._callCreationHandler,
-						'createMeeting': this._meetingCreationHandler,
-						'createEmail': this._emailCreationHandler
-					}
-				);
-
-				var wrapper = BX.create(
-					'DIV',
-					{
-						attrs: { className: 'crm-task-list-head' },
-						children:
-							[
-								BX.create(
-									'SPAN',
-									{
-										attrs: { className: 'crm-task-list-head-item-left' },
-										children:
-											[
-												BX.create(
-													'SPAN',
-													{
-														text: text,
-														props: { className: 'crm-task-list-head-item-left-element' }
-													}
-												)
-											]
-									}
-								)
-							]
-					}
-				);
-
-				this._titleMenu.layout(wrapper);
-
-				if (this._activityOptions.important)
-				{
-					wrapper.appendChild(
-						BX.create(
-							'SPAN',
-							{
-								attrs: { className: 'crm-task-list-head-item-right-wrap' },
-								children:
-									[
-										BX.create(
-											'SPAN',
-											{
-												attrs: { className: 'crm-task-list-head-item-right' },
-												text: BX.message('CRM_ACTIVITY_PLANNER_IMPORTANT')
-											}),
-										BX.create(
-											'SPAN',
-											{
-												attrs: { className: 'crm-task-list-head-item-right-icon' }
-											})
-									]
-							}
-						)
-					);
-				}
-
-				return wrapper;
-			},
 			_notifyDialogClose: function ()
 			{
 				for (var i = 0; i < this._onDlgCloseHandlers.length; i++)
@@ -2799,116 +2634,6 @@ BX.namespace('BX.Crm.Activity');
 					{
 					}
 				}
-			},
-			_prepareViewDlgButtons: function ()
-			{
-				var result = [], me = this;
-
-				if (this.getType() === BX.CrmActivityType.email && this._parentActivity)
-				{
-					var direction = parseInt(this.getSetting('direction', BX.CrmActivityDirection.outgoing));
-					if (direction === BX.CrmActivityDirection.incoming)
-					{
-						result.push(
-							{
-								type: 'button',
-								settings:
-								{
-									text: BX.CrmActivityEditor.getMessage('replyDlgButton'),
-									className: 'popup-window-button-accept',
-									events:
-									{
-										click: function()
-										{
-											me.closeDialog();
-											me._parentActivity._handleReplyBtnClick()
-										}
-									}
-								}
-							}
-						);
-					}
-
-					result.push(
-						{
-							type: 'button',
-							settings:
-							{
-								text: BX.CrmActivityEditor.getMessage('forwardDlgButton'),
-								className: 'popup-window-button-accept',
-								events:
-								{
-									click: function()
-									{
-										me.closeDialog();
-										me._parentActivity._handleForwardBtnClick()
-									}
-								}
-							}
-						}
-					);
-
-					result.push(
-						{
-							type: 'link',
-							settings:
-							{
-								text: BX.CrmActivityEditor.getMessage('closeDlgButton'),
-								className: 'popup-window-button-link-cancel',
-								events:
-								{
-									click: BX.delegate(this._handleCloseBtnClick, this)
-								}
-							}
-						}
-					);
-				}
-				else
-				{
-					result.push(
-						{
-							type: 'button',
-							settings: {
-								text: BX.CrmActivityEditor.getMessage('closeDlgButton'),
-								className: 'popup-window-button-accept',
-								events: {
-									click: BX.delegate(this._handleCloseBtnClick, this)
-								}
-							}
-						}
-					);
-
-					if (
-						this.getOption('enableEditButton', true)
-						&& (
-							this.getType() ===  BX.CrmActivityType.call
-							|| this.getType() === BX.CrmActivityType.meeting
-							|| this._activityOptions.isEditable === true
-						)
-					)
-					{
-						result.push(
-							{
-								type: 'link',
-								settings:
-								{
-									text: BX.CrmActivityEditor.getMessage('editDlgButton'),
-									className: "popup-window-button-link-cancel",
-									events:
-									{
-										click : function()
-										{
-											(new BX.Crm.Activity.Planner()).showEdit({ID: me.getId()});
-											me.closeDialog();
-										}
-									}
-								}
-							}
-						);
-					}
-				}
-
-				return BX.CrmActivityEditor.prepareDialogButtons(result);
 			},
 			_handleCallCreation: function (sender)
 			{
@@ -3000,14 +2725,8 @@ BX.namespace('BX.Crm.Activity');
 				}
 
 				this._editor.addTask(settings);
-			},
-			_handleCloseBtnClick: function (e)
-			{
-				this._buttonId = BX.CrmActivityDialogButton.cancel;
-				this.closeDialog();
 			}
 		};
-		BX.CrmActivityProvider.dialogs = {};
 		BX.CrmActivityProvider.sliders = {};
 		BX.CrmActivityProvider.create = function (settings, editor, options, parentActivity)
 		{

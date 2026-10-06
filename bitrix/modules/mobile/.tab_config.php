@@ -7,6 +7,7 @@ use Bitrix\Mobile\AppTabs\CatalogStore;
 use Bitrix\Mobile\AppTabs\Chat;
 use Bitrix\Mobile\AppTabs\Crm;
 use Bitrix\Mobile\AppTabs\Mail;
+use Bitrix\Mobile\AppTabs\Marketplace;
 use Bitrix\Mobile\AppTabs\CrmCustomSectionFactory;
 use Bitrix\Mobile\AppTabs\Disk;
 use Bitrix\Mobile\AppTabs\Menu;
@@ -16,6 +17,7 @@ use Bitrix\Mobile\AppTabs\Stream;
 use Bitrix\Mobile\AppTabs\Task;
 use Bitrix\Mobile\AppTabs\Terminal;
 use Bitrix\Mobile\AppTabs\CallList;
+use Bitrix\Mobile\AppTabs\Sync;
 use Bitrix\Mobile\Config\Feature;
 use Bitrix\MobileApp\Mobile;
 use Bitrix\Mobile\Feature\MenuFeature;
@@ -23,6 +25,7 @@ use Bitrix\Mobile\Feature\MenuFeature;
 Mobile::Init();
 
 $isDiskAvailable = Loader::includeModule('diskmobile');
+$isSyncPresetEnabled = Loader::includeModule('call') && \Bitrix\Call\Settings::isSyncPresetEnabled();
 
 $config = [
 	'tabs' => [
@@ -30,8 +33,10 @@ $config = [
 		['code' => 'stream', 'class' => Stream::class],
 		['code' => 'task', 'class' => Task::class],
 		['code' => 'call_list', 'class' => CallList::class],
+		['code' => 'sync', 'class' => Sync::class],
 		['code' => 'menu', 'class' => Feature::isEnabled(MenuFeature::class) ? MenuNew::class : Menu::class],
 		['code' => 'crm', 'class' => Crm::class],
+		['code' => 'marketplace', 'class' => Marketplace::class],
 		['code' => 'terminal', 'class' => Terminal::class],
 		['code' => 'catalog_store', 'class' => CatalogStore::class],
 		['code' => 'projects', 'class' => Projects::class],
@@ -62,7 +67,8 @@ $config = [
 	],
 	'defaultUserPreset' => array_filter([
 		'chat' => 100,
-		'call_list' => 200,
+		'sync' => ($isSyncPresetEnabled ? 200 : false),
+		'call_list' => ($isSyncPresetEnabled ? false : 200),
 		'task' => 300,
 		'menu' => 1000,
 	]),
@@ -80,7 +86,7 @@ $config = [
 	],
 	/** @see Bitrix\Mobile\Tab\Manager::migratePresetsByVersion */
 	'presetLegacy' => [
-		'currentVersion' => 1, // up version if you change legacy preset
+		'currentVersion' => 2, // up version if you change legacy preset
 		'task' => [
 			'task' => 100,
 			'chat' => 200,
@@ -90,9 +96,9 @@ $config = [
 		],
 		'collaboration' => [
 			'chat' => 100,
-			'stream' => 200,
-			'task' => 300,
-			'calendar' => 400,
+			'sync' => 120,
+			'task' => 200,
+			'calendar' => 250,
 			'menu' => 1000,
 		],
 		'bizproc' => [
@@ -107,7 +113,8 @@ $config = [
 		'task' => array_filter([
 			'task' => 100,
 			'chat' => 200,
-			'call_list' => 250,
+			'sync' => ($isSyncPresetEnabled ? 250 : false),
+			'call_list' => ($isSyncPresetEnabled ? false : 250),
 			'mail' => 300,
 			'menu' => 1000,
 		]),
@@ -128,7 +135,8 @@ $config = [
 		],
 		'collaboration' => array_filter([
 			'chat' => 100,
-			'call_list' => 150,
+			'sync' => ($isSyncPresetEnabled ? 120 : false),
+			'call_list' => ($isSyncPresetEnabled ? false : 120),
 			'task' => 200,
 			'calendar' => 250,
 			'menu' => 1000,

@@ -10,6 +10,7 @@ jn.define('vibecode/catalog/src/item-actions-controller', (require, exports, mod
 	const { showErrorToast, showToast } = require('toast');
 	const { Icon } = require('assets/icons');
 	const { PopupMenu, PopupMenuPosition } = require('ui-system/popups/popup-menu');
+	const { Logger, LogType } = require('utils/logger');
 	const { openInApp } = require('vibecode/catalog/src/open-in-app');
 	const {
 		CATALOG_STATE,
@@ -27,6 +28,7 @@ jn.define('vibecode/catalog/src/item-actions-controller', (require, exports, mod
 	} = require('vibecode/catalog/src/utils');
 
 	const OPEN_APP_PAGE_PATH = '/mobile/vibecode/open-app/';
+	const logger = new Logger([LogType.ERROR]);
 
 	class VibeCodeCatalogItemActionsController
 	{
@@ -86,9 +88,11 @@ jn.define('vibecode/catalog/src/item-actions-controller', (require, exports, mod
 
 				this.recordVibeCodeItemOpen(item);
 
-				void requireLazy('im:messenger/api/dialog-opener')
-					.then(({ DialogOpener }) => DialogOpener?.open({ dialogId: `chat${chatId}` }))
-					.catch(console.error)
+				void this.openVibeCodeChat(chatId)
+					.catch((error) => {
+						logger.error('[vibecode/catalog] failed to open chat', error);
+						showErrorToast({}, this.renderer.getParentWidget());
+					})
 				;
 
 				return;
@@ -114,7 +118,9 @@ jn.define('vibecode/catalog/src/item-actions-controller', (require, exports, mod
 				return;
 			}
 
-			openInApp(openAppPageUrl, { title });
+			const catalogItemId = normalizePositiveInteger(item?.id);
+
+			openInApp(openAppPageUrl, { title, componentCode: `vibecode-app-${catalogItemId}` });
 		}
 
 		getVibeCodeItemOpenAppPageUrl(item = {})
@@ -155,8 +161,28 @@ jn.define('vibecode/catalog/src/item-actions-controller', (require, exports, mod
 				return;
 			}
 
+			const wasNew = item?.isNew === true;
+
 			void (new RunActionExecutor('vibecodeconnector.Catalog.recordOpen', { catalogItemId }))
 				.call(false)
+				.then((response) => {
+					const errors = Array.isArray(response?.errors) ? response.errors : [];
+					if (errors.length > 0)
+					{
+						throw response;
+					}
+
+					if (!wasNew)
+					{
+						return;
+					}
+
+					// The item is no longer new server-side; reload rebuilds the list and
+					// rewrites the StatefulList cache so the "new" badge does not resurrect
+					// on the next open of the catalog.
+					this.renderer.refreshNewAppsCount();
+					this.renderer.handleRefresh();
+				})
 				.catch((error) => {
 					console.error('[vibecode/catalog] failed to record item open', error);
 				})
@@ -232,6 +258,28 @@ jn.define('vibecode/catalog/src/item-actions-controller', (require, exports, mod
 			}
 
 			return items;
+		}
+
+		async openVibeCodeChat(chatId)
+		{
+			const response = await (new RunActionExecutor('im.v2.Chat.get', { chatId }))
+				.call(false)
+			;
+			const errors = Array.isArray(response?.errors) ? response.errors : [];
+			if (errors.length > 0)
+			{
+				throw response;
+			}
+
+			const dialogId = String(response?.data?.chat?.dialogId ?? '').trim();
+			if (dialogId === '')
+			{
+				throw new Error(`Failed to resolve dialogId for chat ${chatId}`);
+			}
+
+			const { DialogOpener } = await requireLazy('im:messenger/api/dialog-opener');
+
+			return DialogOpener.open({ dialogId });
 		}
 
 		getVibeCodeItemHiddenMenuItem(item = {})
@@ -405,6 +453,13 @@ jn.define('vibecode/catalog/src/item-actions-controller', (require, exports, mod
 
 		updateVibeCodeItemHiddenDynamically(item = {}, isHidden = false, options = {})
 		{
+			// Unhide can move an app back into the new set; hiding a non-new app cannot
+			// change the count (the new-apps query is scoped to hiddenState(false)).
+			if (!isHidden || item?.isNew === true)
+			{
+				this.renderer.refreshNewAppsCount();
+			}
+
 			const updatePromise = this.applyVibeCodeItemHiddenState(item, isHidden, options);
 
 			return updatePromise.catch((error) => {

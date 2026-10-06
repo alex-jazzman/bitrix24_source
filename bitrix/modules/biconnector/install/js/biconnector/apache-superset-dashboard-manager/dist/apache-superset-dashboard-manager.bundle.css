@@ -157,3 +157,23 @@
 	}
 }
 
+.biconnector-dashboard-grid-menu-item {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	width: 100%;
+}
+
+.biconnector-dashboard-grid-menu-item-icon {
+	margin-left: 32px;
+	--ui-icon-set__icon-size: 24px;
+	--ui-icon-set__icon-color: var(--ui-color-base-5);
+}
+
+.biconnector-dashboard-grid-menu-item.alert {
+	color: var(--ui-color-accent-main-alert);
+}
+
+.biconnector-dashboard-grid-menu-item-icon.alert {
+	background-color: var(--ui-color-accent-soft-border-red);
+}

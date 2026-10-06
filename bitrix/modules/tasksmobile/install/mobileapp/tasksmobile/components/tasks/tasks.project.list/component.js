@@ -2,6 +2,7 @@
 	const require = (ext) => jn.require(ext);
 
 	const { Loc } = require('loc');
+	const { triggerNewProjectsPromo } = require('new-projects-promo/trigger');
 	const AppTheme = require('apptheme');
 	const { debounce } = require('utils/function');
 	const { Logger, LogType } = require('utils/logger');
@@ -1332,6 +1333,7 @@
 
 				this.loadProjectsFromCache();
 				this.reload();
+				triggerNewProjectsPromo();
 			});
 		}
 
@@ -1680,6 +1682,7 @@
 						opened: project.isOpened,
 						dialogId: project.additionalData.dialogId,
 						isCollab: project.isCollab(),
+						hasCollabers: project.additionalData.hasCollabers,
 					},
 				};
 				const params = {

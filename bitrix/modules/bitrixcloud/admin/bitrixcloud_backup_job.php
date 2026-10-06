@@ -2,8 +2,8 @@
 define('ADMIN_MODULE_NAME', 'bitrixcloud');
 require_once $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_before.php';
 IncludeModuleLangFile(__FILE__);
-/* @var CMain $APPLICATION */
-/* @var CUser $USER */
+/** @var CMain $APPLICATION */
+/** @var CUser $USER */
 if (!$USER->CanDoOperation('bitrixcloud_backup') || !CModule::IncludeModule('bitrixcloud'))
 {
 	$APPLICATION->AuthForm(GetMessage('ACCESS_DENIED'));
@@ -206,7 +206,7 @@ try
 					}
 					else
 					{
-						/* @var \Bitrix\Main\HttpRequest $request */
+						/** @var \Bitrix\Main\HttpRequest $request */
 						$request = \Bitrix\Main\Context::getCurrent()->getRequest();
 						$URL = $request->isHttps() ? 'https://' : 'http://';
 						$URL .= COption::GetOptionString('main', 'server_name');
@@ -223,7 +223,7 @@ try
 					}
 					else
 					{
-						$TIME = sprintf('%02d:%d0', mt_rand(1,5), mt_rand(0, 5));
+						$TIME = sprintf('%02d:%d0', mt_rand(1, 5), mt_rand(0, 5));
 					}
 					?>
 					<td><input type="text" name="TIME" size="6" value="<?php echo htmlspecialcharsbx($TIME)?>"></td>

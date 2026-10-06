@@ -10,6 +10,7 @@ jn.define('mail/dialog', (require, exports, module) => {
 	const CONNECTION_MAIL_TYPE_FORBIDDEN = 'CONNECTION_MAIL_TYPE_FORBIDDEN';
 	const MAIL_TYPE_LOST_MESSAGE_TYPE = 'MAIL_TYPE_LOST_MESSAGE';
 	const MAIL_TYPE_QUANTITY_LIMIT_EXCEEDED = 'QUANTITY_LIMIT_EXCEEDED';
+	const PROVIDER_RESTRICTION_TYPE = 'PROVIDER_RESTRICTION';
 
 	/**
 	 * @class MailDialog
@@ -74,6 +75,16 @@ jn.define('mail/dialog', (require, exports, module) => {
 		static get CONNECTING_MAIL_CRM_TYPE()
 		{
 			return CONNECTING_MAIL_CRM_TYPE;
+		}
+
+		/**
+		 * @function PROVIDER_RESTRICTION
+		 * @returns {string}
+		 * @constructor
+		 */
+		static get PROVIDER_RESTRICTION()
+		{
+			return PROVIDER_RESTRICTION_TYPE;
 		}
 
 		static getWidgetParams()
@@ -146,6 +157,10 @@ jn.define('mail/dialog', (require, exports, module) => {
 				[MailDialog.CONNECTION_MAIL_TYPE_FORBIDDEN]: {
 					path: 'dialog/banners/connectionforbidden',
 					component: 'ConnectionForbidden',
+				},
+				[MailDialog.PROVIDER_RESTRICTION]: {
+					path: 'dialog/banners/providerrestriction',
+					component: 'ProviderRestriction',
 				},
 				[MailDialog.MAIL_TYPE_LOST_MESSAGE_TYPE]: {
 					path: 'dialog/banners/lostmessage',

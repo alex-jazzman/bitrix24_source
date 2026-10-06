@@ -22,11 +22,14 @@ export class ActiveField
 	init(): void
 	{
 		void Runtime.loadExtension('ui.switcher').then((exports) => {
-			const { Switcher } = exports;
+			const { Switcher, AirSwitcherStyle } = exports;
 
 			this.switcher = new Switcher({
 				checked: this.#checked,
 				disabled: this.#readOnly,
+				size: 'large',
+				useAirDesign: true,
+				style: AirSwitcherStyle.SOLID,
 				handlers: {
 					checked: (event: PointerEvent) => {
 						event.stopPropagation();

@@ -1,4 +1,8 @@
-<?if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
+<?php
+
+if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
+
+use Bitrix\Main\Web\Uri;
 
 if (!CModule::IncludeModule('crm'))
 	return;
@@ -323,10 +327,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 		}
 	}
 
-	$arResult['EVENT_PAGE'] = CHTTP::urlAddParams(
-		$_POST['EVENT_PAGE'],
-		array('CRM_'.trim($arResult['FORM_ENTITY_TYPE']).'_'.trim($arParams['FORM_TYPE']).'_active_tab' => (!empty($_REQUEST['TAB_ID']) ? $_REQUEST['TAB_ID'] : 'tab_event'))
-	);
+	$arResult['EVENT_PAGE'] = (string)(new Uri($_POST['EVENT_PAGE']))
+		->addParams(array('CRM_'.trim($arResult['FORM_ENTITY_TYPE']).'_'.trim($arParams['FORM_TYPE']).'_active_tab' => (!empty($_REQUEST['TAB_ID']) ? $_REQUEST['TAB_ID'] : 'tab_event')))
+	;
 }
 
 // check if only one is selected form the entity of a choice on which mailbox to send

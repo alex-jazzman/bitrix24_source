@@ -3,6 +3,7 @@ CREATE TABLE b_dav_locks (
       PATH varchar(255) NOT NULL,
       EXPIRES int NOT NULL,
       LOCK_OWNER varchar(255),
+      LOCK_USER_ID int,
       LOCK_DEPTH char(1) NOT NULL DEFAULT 'N',
       LOCK_TYPE char(1) NOT NULL DEFAULT 'R',
       LOCK_SCOPE char(1) NOT NULL DEFAULT 'S',

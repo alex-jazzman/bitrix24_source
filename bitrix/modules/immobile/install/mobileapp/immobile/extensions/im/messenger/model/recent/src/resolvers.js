@@ -52,6 +52,11 @@ jn.define('im/messenger/model/recent/resolvers', (require, exports, module) => {
 		const counterMarkedAsUnread = rootGetters['counterModel/getCounterMarkedAsUnread']();
 		for (const counterModel of counterMarkedAsUnread)
 		{
+			if (counterModel?.isMuted)
+			{
+				continue;
+			}
+
 			if (!counterModel?.recentSections.includes(RecentTabByNavigationTab[tabId]))
 			{
 				continue;

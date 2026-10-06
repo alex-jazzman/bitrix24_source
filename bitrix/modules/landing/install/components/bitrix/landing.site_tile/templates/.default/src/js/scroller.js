@@ -1,4 +1,4 @@
-import { Tag, Loc, Event, Dom } from 'main.core';
+import { Tag, Loc, Event, Dom, Text } from 'main.core';
 
 export default class Scroller {
 	constructor(options)
@@ -6,6 +6,7 @@ export default class Scroller {
 		this.grid = options.grid;
 		this.scrollerText = options.scrollerText;
 		this.$container = null;
+		this.$containerButton = null;
 		this.$lastItem = null;
 		this.bindEvents();
 		this.init();
@@ -50,20 +51,30 @@ export default class Scroller {
 	{
 		if(!this.$container)
 		{
+			const text = this.scrollerText
+				? this.scrollerText
+				: Loc.getMessage('LANDING_SITE_TILE_SCROLLER_SITES');
+
+			this.$containerButton = Tag.render`
+				<button
+					type="button"
+					class="landing-sites__scroller-button"
+					aria-label="${Text.encode(text)}"
+				>
+					<div class="landing-sites__scroller-icon" aria-hidden="true"></div>
+					<div class="landing-sites__scroller-text">
+						${text}
+					</div>
+				</button>
+			`;
+
 			this.$container = Tag.render`
 				<div class="landing-sites__scroller landing-sites__scope">
-					<div class="landing-sites__scroller-button">
-						<div class="landing-sites__scroller-icon"></div>
-						<div class="landing-sites__scroller-text">
-							${this.scrollerText
-								? this.scrollerText
-								: Loc.getMessage('LANDING_SITE_TILE_SCROLLER_SITES')}
-						</div>
-					</div>
+					${this.$containerButton}
 				</div>
 			`;
 
-			Event.bind(this.$container, 'click', ()=> {
+			Event.bind(this.$containerButton, 'click', ()=> {
 				let offsetY = window.pageYOffset;
 				let timer = setInterval(()=> {
 					if(

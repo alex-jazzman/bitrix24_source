@@ -24,19 +24,12 @@ this.BX = this.BX || {};
 		}
 	}
 
-	/**
-	 * @namespace {BX.Main.Popup}
-	 */
 	const CloseIconSize = Object.freeze({
 		LARGE: 'large',
 		SMALL: 'small'
 	});
 
-	/**
-	 * @memberOf BX.Main.Popup
-	 * @deprecated use BX.UI.Button
-	 */
-	let Button = /*#__PURE__*/function () {
+	let Button = function () {
 		function Button(params) {
 			babelHelpers.classCallCheck(this, Button);
 			this.popupWindow = null;
@@ -46,14 +39,15 @@ this.BX = this.BX || {};
 			this.className = this.params.className || '';
 			this.events = this.params.events || {};
 			this.contextEvents = {};
-			for (let eventName in this.events) {
+			for (const eventName of Object.keys(this.events)) {
 				if (main_core.Type.isFunction(this.events[eventName])) {
 					this.contextEvents[eventName] = this.events[eventName].bind(this);
 				}
 			}
+			const customClassName = this.className.length > 0 ? ` ${this.className}` : '';
 			this.buttonNode = main_core.Dom.create('button', {
 				props: {
-					className: 'popup-window-button' + (this.className.length > 0 ? ' ' + this.className : ''),
+					className: `popup-window-button${customClassName}`,
 					id: this.id
 				},
 				attrs: {
@@ -203,22 +197,80 @@ this.BX = this.BX || {};
 	};
 	main_core_events.EventEmitter.registerAliases(aliases$1);
 	const disabledScrolls = new WeakMap();
-
-	/**
-	 * @memberof BX.Main
-	 */
-	var _focusTrap = /*#__PURE__*/new WeakMap();
-	var _Popup_brand = /*#__PURE__*/new WeakSet();
-	let Popup = /*#__PURE__*/function (_EventEmitter) {
-		function Popup(_options) {
+	function resolveConstructorOptions(options, compatBindElement, compatParams) {
+		let popupId = main_core.Type.isString(options) ? options : undefined;
+		let bindElement = compatBindElement;
+		let params = compatParams;
+		let compatibleMode = params && main_core.Type.isBoolean(params.compatibleMode) ? params.compatibleMode : true;
+		if (main_core.Type.isPlainObject(options) && !bindElement && !params) {
+			params = options;
+			popupId = options.id;
+			bindElement = options.bindElement;
+			compatibleMode = false;
+		}
+		params ||= {};
+		if (!main_core.Type.isStringFilled(popupId)) {
+			popupId = `popup-window-${main_core.Text.getRandom().toLowerCase()}`;
+		}
+		return {
+			popupId,
+			bindElement,
+			params,
+			compatibleMode
+		};
+	}
+	const ariaModalRoles = new Set(['alertdialog', 'dialog', 'window']);
+	var _focusTrap = new WeakMap();
+	var _Popup_brand = new WeakSet();
+	let Popup = function (_EventEmitter) {
+		function Popup(_options, compatBindElement, compatParams) {
 			var _this;
 			babelHelpers.classCallCheck(this, Popup);
 			_this = _callSuper$1(this, Popup);
 			_classPrivateMethodInitSpec$1(_this, _Popup_brand);
 			_classPrivateFieldInitSpec$1(_this, _focusTrap, null);
-			/**
-			 * @private
-			 */
+			babelHelpers.defineProperty(_this, "firstShow", false);
+			babelHelpers.defineProperty(_this, "bordersWidth", 20);
+			babelHelpers.defineProperty(_this, "bindElementPos", null);
+			babelHelpers.defineProperty(_this, "closeIcon", null);
+			babelHelpers.defineProperty(_this, "resizeIcon", null);
+			babelHelpers.defineProperty(_this, "angle", null);
+			babelHelpers.defineProperty(_this, "angleArrowElement", null);
+			babelHelpers.defineProperty(_this, "overlay", null);
+			babelHelpers.defineProperty(_this, "overlayTimeout", null);
+			babelHelpers.defineProperty(_this, "titleBar", null);
+			babelHelpers.defineProperty(_this, "isAutoHideBound", false);
+			babelHelpers.defineProperty(_this, "isCloseByEscBound", false);
+			babelHelpers.defineProperty(_this, "toFrontOnShow", true);
+			babelHelpers.defineProperty(_this, "cacheable", true);
+			babelHelpers.defineProperty(_this, "destroyed", false);
+			babelHelpers.defineProperty(_this, "fixed", false);
+			babelHelpers.defineProperty(_this, "width", null);
+			babelHelpers.defineProperty(_this, "height", null);
+			babelHelpers.defineProperty(_this, "minWidth", null);
+			babelHelpers.defineProperty(_this, "minHeight", null);
+			babelHelpers.defineProperty(_this, "maxWidth", null);
+			babelHelpers.defineProperty(_this, "maxHeight", null);
+			babelHelpers.defineProperty(_this, "padding", null);
+			babelHelpers.defineProperty(_this, "contentPadding", null);
+			babelHelpers.defineProperty(_this, "background", null);
+			babelHelpers.defineProperty(_this, "contentBackground", null);
+			babelHelpers.defineProperty(_this, "borderRadius", null);
+			babelHelpers.defineProperty(_this, "contentBorderRadius", null);
+			babelHelpers.defineProperty(_this, "targetContainer", document.body);
+			babelHelpers.defineProperty(_this, "dragOptions", {
+				cursor: '',
+				callback() {},
+				eventName: ''
+			});
+			babelHelpers.defineProperty(_this, "dragged", false);
+			babelHelpers.defineProperty(_this, "dragPageX", 0);
+			babelHelpers.defineProperty(_this, "dragPageY", 0);
+			babelHelpers.defineProperty(_this, "animationShowClassName", null);
+			babelHelpers.defineProperty(_this, "animationCloseClassName", null);
+			babelHelpers.defineProperty(_this, "animationCloseEventType", null);
+			babelHelpers.defineProperty(_this, "buttonsContainer", null);
+			babelHelpers.defineProperty(_this, "resizeContentOffset", 0);
 			babelHelpers.defineProperty(_this, "handleAutoHide", event => {
 				if (_this.isDestroyed()) {
 					return;
@@ -231,9 +283,6 @@ this.BX = this.BX || {};
 					_this._tryCloseByEvent(event);
 				}
 			});
-			/**
-			 * @private
-			 */
 			babelHelpers.defineProperty(_this, "handleDocumentKeyUp", event => {
 				if (event.keyCode === 27 && !_this.isDestroyed()) {
 					checkEscPressed(_this.getZindex(), () => {
@@ -242,207 +291,45 @@ this.BX = this.BX || {};
 				}
 			});
 			_this.setEventNamespace('BX.Main.Popup');
-			let [popupId, bindElement, params] = arguments; // compatible arguments
-
-			_this.compatibleMode = params && main_core.Type.isBoolean(params.compatibleMode) ? params.compatibleMode : true;
-			if (main_core.Type.isPlainObject(_options) && !bindElement && !params) {
-				params = _options;
-				popupId = _options.id;
-				bindElement = _options.bindElement;
-				_this.compatibleMode = false;
-			}
-			params = params || {};
-			_this.params = params;
-			if (!main_core.Type.isStringFilled(popupId)) {
-				popupId = `popup-window-${main_core.Text.getRandom().toLowerCase()}`;
-			}
+			const {
+				popupId: _popupId,
+				bindElement: _bindElement,
+				params: _params,
+				compatibleMode
+			} = resolveConstructorOptions(_options, compatBindElement, compatParams);
+			_this.compatibleMode = compatibleMode;
+			_this.params = _params;
 			_this.emit('onInit', new main_core_events.BaseEvent({
-				compatData: [popupId, bindElement, params]
+				compatData: [_popupId, _bindElement, _params]
 			}));
-
-			/**
-			 * @private
-			 */
-			_this.uniquePopupId = popupId;
-			_this.params.zIndex = main_core.Type.isNumber(params.zIndex) ? parseInt(params.zIndex) : 0;
-			_this.params.zIndexAbsolute = main_core.Type.isNumber(params.zIndexAbsolute) ? parseInt(params.zIndexAbsolute) : 0;
-			_this.buttons = params.buttons && main_core.Type.isArray(params.buttons) ? params.buttons : [];
-			_this.offsetTop = Popup.getOption('offsetTop');
-			_this.offsetLeft = Popup.getOption('offsetLeft');
-			_this.firstShow = false;
-			_this.bordersWidth = 20;
-			_this.bindElementPos = null;
-			_this.closeIcon = null;
-			_this.resizeIcon = null;
-			_this.angle = null;
-			_this.angleArrowElement = null;
-			_this.overlay = null;
-			_this.titleBar = null;
-			_this.bindOptions = main_core.Type.isObject(params.bindOptions) ? params.bindOptions : {};
-			_this.autoHide = params.autoHide === true;
-			_this.disableScroll = params.disableScroll === true || params.isScrollBlock === true;
-			_this.autoHideHandler = main_core.Type.isFunction(params.autoHideHandler) ? params.autoHideHandler : null;
-			_this.isAutoHideBinded = false;
-			_this.closeByEsc = params.closeByEsc === true;
-			_this.isCloseByEscBinded = false;
-			_this.toFrontOnShow = true;
-			_this.cacheable = true;
-			_this.destroyed = false;
-			_this.fixed = false;
-			_this.width = null;
-			_this.height = null;
-			_this.minWidth = null;
-			_this.minHeight = null;
-			_this.maxWidth = null;
-			_this.maxHeight = null;
-			_this.padding = null;
-			_this.contentPadding = null;
-			_this.background = null;
-			_this.contentBackground = null;
-			_this.borderRadius = null;
-			_this.contentBorderRadius = null;
-			_this.setTargetContainer(params.targetContainer);
-			_this.dragOptions = {
-				cursor: '',
-				callback: function () {},
-				eventName: ''
-			};
-			_this.dragged = false;
-			_this.dragPageX = 0;
-			_this.dragPageY = 0;
-			_this.animationShowClassName = null;
-			_this.animationCloseClassName = null;
-			_this.animationCloseEventType = null;
-			_this.handleDocumentMouseMove = _this.handleDocumentMouseMove.bind(_this);
-			_this.handleDocumentMouseUp = _this.handleDocumentMouseUp.bind(_this);
-			_this.handleResizeWindow = _this.handleResizeWindow.bind(_this);
-			_this.handleResize = _this.handleResize.bind(_this);
-			_this.handleMove = _this.handleMove.bind(_this);
-			_this.onTitleMouseDown = _this.onTitleMouseDown.bind(_this);
-			_this.handleFullScreen = _this.handleFullScreen.bind(_this);
-			_this.subscribeFromOptions(params.events);
-			let popupClassName = 'popup-window';
-			if (params.titleBar) {
-				popupClassName += ' popup-window-with-titlebar';
-			}
-			if (params.className && main_core.Type.isStringFilled(params.className)) {
-				popupClassName += ` ${params.className}`;
-			}
-			if (params.darkMode) {
-				popupClassName += ' popup-window-dark';
-			}
-			_this.designSystemContext = params.darkMode ? '--ui-context-content-dark' : '--ui-context-content-light';
-			popupClassName += ` ${_this.designSystemContext}`;
-			const titleBarId = `popup-window-titlebar-${popupId}`;
-			if (params.titleBar) {
-				_this.titleBar = main_core.Tag.render`<div class="popup-window-titlebar" id="${titleBarId}"></div>`;
-			}
-			if (params.closeIcon) {
-				let className = `popup-window-close-icon${params.titleBar ? ' popup-window-titlebar-close-icon' : ''}`;
-				if (Object.values(CloseIconSize).includes(params.closeIconSize) && params.closeIconSize !== CloseIconSize.SMALL) {
-					className += ` --${params.closeIconSize}`;
-				}
-				_this.closeIcon = main_core.Tag.render`
-				<button 
-					tabindex="0" 
-					type="button" 
-					aria-label="Close" 
-					class="${className}" 
-					onclick="${_this.handleCloseIconClick.bind(_this)}"
-				>
-					<span class="ui-icon-set --cross-l --hoverable-default" style="--ui-icon-set__icon-size: 24px;"></span>
-				</button>
-			`;
-				if (main_core.Type.isPlainObject(params.closeIcon)) {
-					main_core.Dom.style(_this.closeIcon, params.closeIcon);
-				}
-			}
-
-			/**
-			 * @private
-			 */
-			_this.contentContainer = main_core.Tag.render`
-			<div id="popup-window-content-${popupId}" role="presentation" class="popup-window-content"></div>
-		`;
-
-			/**
-			 * @private
-			 */
-			_this.popupContainer = main_core.Tag.render`
-			<div
-				class="${popupClassName}"
-				id="${popupId}"
-				style="display: none; position: absolute; left: 0; top: 0;"
-				tabindex="-1"
-				role="${main_core.Type.isStringFilled(params.role) ? params.role : 'dialog'}"
-			>${[_this.titleBar, _this.contentContainer, _this.closeIcon]}</div>
-		`;
-			if (main_core.Type.isStringFilled(params.ariaLabel)) {
-				main_core.Dom.attr(_this.popupContainer, 'aria-label', params.ariaLabel);
-			}
-			if (main_core.Type.isStringFilled(params.ariaLabelledBy)) {
-				main_core.Dom.attr(_this.popupContainer, 'aria-labelledby', params.ariaLabelledBy);
-			}
-			_this.getTargetContainer().append(_this.popupContainer);
-			_this.zIndexComponent = main_core_zIndexManager.ZIndexManager.register(_this.popupContainer, params.zIndexOptions);
-			_this.buttonsContainer = null;
-			if (params.contentColor && main_core.Type.isStringFilled(params.contentColor)) {
-				_this.setContentColor(params.contentColor);
-			}
-			if (params.angle) {
-				_this.setAngle(params.angle);
-			}
-			if (params.overlay) {
-				_this.setOverlay(params.overlay);
-			}
-			_this.setOffset(params);
-			_this.setBindElement(bindElement);
-			_this.setTitleBar(params.titleBar);
-			_this.setDraggable(params.draggable);
-			_this.setContent(params.content);
-			_this.setButtons(params.buttons);
-			_this.setWidth(params.width);
-			_this.setHeight(params.height);
-			_this.setMinWidth(params.minWidth);
-			_this.setMinHeight(params.minHeight);
-			_this.setMaxWidth(params.maxWidth);
-			_this.setMaxHeight(params.maxHeight);
-			_this.setResizeMode(params.resizable);
-			_this.setPadding(params.padding);
-			_this.setContentPadding(params.contentPadding);
-			_this.setBorderRadius(params.borderRadius);
-			_this.setContentBorderRadius(params.contentBorderRadius);
-			_this.setBackground(params.background);
-			_this.setContentBackground(params.contentBackground);
-			_this.setAnimation(params.animation);
-			_this.setCacheable(params.cacheable);
-			_this.setToFrontOnShow(params.toFrontOnShow);
-			_this.setFixed(params.fixed);
-			_this.setDesignSystemContext(params.designSystemContext);
-
-			// Compatibility
-			if (params.contentNoPaddings) {
-				_this.setContentPadding(0);
-			}
-			if (params.noAllPaddings) {
-				_this.setPadding(0);
-				_this.setContentPadding(0);
-			}
-			if (params.bindOnResize !== false) {
-				main_core.Event.bind(window, 'resize', _this.handleResizeWindow);
-			}
-			_assertClassBrand$1(_Popup_brand, _this, _initFocusTrap).call(_this, params.focusTrap);
+			_this.initializeState(_popupId, _params);
+			_assertClassBrand$1(_Popup_brand, _this, _bindHandlers).call(_this);
+			_this.subscribeFromOptions(_params.events || {});
+			_assertClassBrand$1(_Popup_brand, _this, _createLayout).call(_this, _popupId, _params);
+			_assertClassBrand$1(_Popup_brand, _this, _applyOptions).call(_this, _bindElement, _params);
+			_assertClassBrand$1(_Popup_brand, _this, _initFocusTrap).call(_this, _params.focusTrap);
 			_this.emit('onAfterInit', new main_core_events.BaseEvent({
-				compatData: [popupId, _this]
+				compatData: [_popupId, _this]
 			}));
 			return _this;
 		}
-
-		/**
-		 * @private
-		 */
 		babelHelpers.inherits(Popup, _EventEmitter);
 		return babelHelpers.createClass(Popup, [{
+			key: "initializeState",
+			value: function initializeState(popupId, params) {
+				this.uniquePopupId = popupId;
+				this.buttons = params.buttons && main_core.Type.isArray(params.buttons) ? params.buttons : [];
+				this.offsetTop = Popup.getOption('offsetTop');
+				this.offsetLeft = Popup.getOption('offsetLeft');
+				this.bindOptions = main_core.Type.isObject(params.bindOptions) ? params.bindOptions : {};
+				this.autoHide = params.autoHide === true;
+				this.disableScroll = params.disableScroll === true || params.isScrollBlock === true;
+				this.autoHideHandler = main_core.Type.isFunction(params.autoHideHandler) ? params.autoHideHandler : null;
+				this.closeByEsc = params.closeByEsc === true;
+				this.designSystemContext = params.darkMode ? '--ui-context-content-dark' : '--ui-context-content-light';
+				this.setTargetContainer(params.targetContainer);
+			}
+		}, {
 			key: "subscribeFromOptions",
 			value: function subscribeFromOptions(events) {
 				_superPropGet(Popup, "subscribeFromOptions", this)([events, aliases$1]);
@@ -465,10 +352,11 @@ this.BX = this.BX || {};
 				}
 				if (main_core.Type.isElementNode(content)) {
 					main_core.Dom.clean(this.contentContainer);
-					const hasParent = main_core.Type.isDomNode(content.parentNode);
-					this.contentContainer.appendChild(content);
+					const contentElement = content;
+					const hasParent = main_core.Type.isDomNode(contentElement.parentNode);
+					main_core.Dom.append(contentElement, this.contentContainer);
 					if (this.isCompatibleMode() || hasParent) {
-						content.style.display = 'block';
+						contentElement.style.display = 'block';
 					}
 				} else if (main_core.Type.isString(content)) {
 					this.contentContainer.innerHTML = content;
@@ -533,10 +421,6 @@ this.BX = this.BX || {};
 					}
 				}
 			}
-
-			/**
-			 * @private
-			 */
 		}, {
 			key: "getBindElementPos",
 			value: function getBindElementPos(bindElement) {
@@ -547,10 +431,11 @@ this.BX = this.BX || {};
 					return this.getPositionRelativeToTarget(bindElement);
 				}
 				if (bindElement && main_core.Type.isObject(bindElement)) {
-					if (!main_core.Type.isNumber(bindElement.bottom)) {
-						bindElement.bottom = bindElement.top;
+					const targetPosition = bindElement;
+					if (!main_core.Type.isNumber(targetPosition.bottom)) {
+						targetPosition.bottom = targetPosition.top;
 					}
-					return bindElement;
+					return targetPosition;
 				}
 				const windowSize = this.getWindowSize();
 				const windowScroll = this.getWindowScroll();
@@ -561,17 +446,12 @@ this.BX = this.BX || {};
 					left: windowSize.innerWidth / 2 - popupWidth / 2 + windowScroll.scrollLeft,
 					top: windowSize.innerHeight / 2 - popupHeight / 2 + (this.isFixed() ? 0 : windowScroll.scrollTop),
 					bottom: windowSize.innerHeight / 2 - popupHeight / 2 + (this.isFixed() ? 0 : windowScroll.scrollTop),
-					// for optimisation purposes
 					windowSize,
 					windowScroll,
 					popupWidth,
 					popupHeight
 				};
 			}
-
-			/**
-			 * @internal
-			 */
 		}, {
 			key: "getPositionRelativeToTarget",
 			value: function getPositionRelativeToTarget(element) {
@@ -586,8 +466,6 @@ this.BX = this.BX || {};
 				const elementRect = element.getBoundingClientRect();
 				return new DOMRect(offsetLeft, offsetTop, elementRect.width, elementRect.height);
 			}
-
-			// private
 		}, {
 			key: "getWindowSize",
 			value: function getWindowSize() {
@@ -602,8 +480,6 @@ this.BX = this.BX || {};
 					innerHeight: this.getTargetContainer().offsetHeight
 				};
 			}
-
-			// private
 		}, {
 			key: "getWindowScroll",
 			value: function getWindowScroll() {
@@ -622,81 +498,107 @@ this.BX = this.BX || {};
 			key: "setAngle",
 			value: function setAngle(params) {
 				if (params === false) {
-					if (this.angle !== null) {
-						main_core.Dom.remove(this.angle.element);
-					}
-					this.angle = null;
-					this.angleArrowElement = null;
+					this.removeAngle();
+					return;
+				}
+				const angleOptions = main_core.Type.isObject(params) ? params : {};
+				if (this.angle === null) {
+					this.createAngle(angleOptions);
+				}
+				this.setAnglePosition(angleOptions.position);
+				if (main_core.Type.isNumber(angleOptions.offset)) {
+					this.setAngleOffset(angleOptions.offset);
+				}
+			}
+		}, {
+			key: "removeAngle",
+			value: function removeAngle() {
+				if (this.angle !== null) {
+					main_core.Dom.remove(this.angle.element);
+				}
+				this.angle = null;
+				this.angleArrowElement = null;
+			}
+		}, {
+			key: "createAngle",
+			value: function createAngle(params) {
+				const className = 'popup-window-angly';
+				const position = this.bindOptions.position === 'top' ? 'bottom' : 'top';
+				const angleMinLeft = Popup.getOption(position === 'top' ? 'angleMinTop' : 'angleMinBottom');
+				let defaultOffset = main_core.Type.isNumber(params.offset) ? params.offset : 0;
+				const angleLeftOffset = Popup.getOption('angleLeftOffset', null);
+				if (defaultOffset > 0 && main_core.Type.isNumber(angleLeftOffset)) {
+					defaultOffset += angleLeftOffset - Popup.defaultOptions.angleLeftOffset;
+				}
+				this.angleArrowElement = main_core.Tag.render`<div class="popup-window-angly--arrow"></div>`;
+				if (this.background) {
+					this.angleArrowElement.style.background = this.background;
+				}
+				this.angle = {
+					element: main_core.Tag.render`
+				<div class="${className} ${className}-${position}">
+					${this.angleArrowElement}
+				</div>
+			`,
+					position,
+					offset: 0,
+					defaultOffset: Math.max(defaultOffset, angleMinLeft)
+				};
+				this.getPopupContainer().appendChild(this.angle.element);
+			}
+		}, {
+			key: "setAnglePosition",
+			value: function setAnglePosition(position) {
+				if (!position || !['top', 'right', 'bottom', 'left', 'hide'].includes(position)) {
 					return;
 				}
 				const className = 'popup-window-angly';
-				if (this.angle === null) {
-					const position = this.bindOptions.position && this.bindOptions.position === 'top' ? 'bottom' : 'top';
-					const angleMinLeft = Popup.getOption(position === 'top' ? 'angleMinTop' : 'angleMinBottom');
-					let defaultOffset = main_core.Type.isNumber(params.offset) ? params.offset : 0;
-					const angleLeftOffset = Popup.getOption('angleLeftOffset', null);
-					if (defaultOffset > 0 && main_core.Type.isNumber(angleLeftOffset)) {
-						defaultOffset += angleLeftOffset - Popup.defaultOptions.angleLeftOffset;
-					}
-					this.angleArrowElement = main_core.Tag.render`<div class="popup-window-angly--arrow"></div>`;
-					if (this.background) {
-						this.angleArrowElement.style.background = this.background;
-					}
-					this.angle = {
-						element: main_core.Tag.render`
-					<div class="${className} ${className}-${position}">
-						${this.angleArrowElement}
-					</div>
-				`,
-						position,
-						offset: 0,
-						defaultOffset: Math.max(defaultOffset, angleMinLeft)
-						// Math.max(Type.isNumber(params.offset) ? params.offset : 0, angleMinLeft)
-					};
-					this.getPopupContainer().appendChild(this.angle.element);
+				main_core.Dom.removeClass(this.angle.element, `${className}-${this.angle.position}`);
+				main_core.Dom.addClass(this.angle.element, `${className}-${position}`);
+				this.angle.position = position;
+			}
+		}, {
+			key: "setAngleOffset",
+			value: function setAngleOffset(offset) {
+				switch (this.angle.position) {
+					case 'top':
+						this.setVerticalAngleOffset(offset, 'angleMinTop', 'angleMaxTop', 'left');
+						break;
+					case 'bottom':
+						this.setVerticalAngleOffset(offset, 'angleMinBottom', 'angleMaxBottom', 'marginLeft');
+						break;
+					case 'right':
+						this.setSideAngleOffset(offset, 'angleMinRight', 'angleMaxRight');
+						break;
+					case 'left':
+						this.setSideAngleOffset(offset, 'angleMinLeft', 'angleMaxLeft');
+						break;
 				}
-				if (main_core.Type.isObject(params) && params.position && ['top', 'right', 'bottom', 'left', 'hide'].includes(params.position)) {
-					main_core.Dom.removeClass(this.angle.element, `${className}-${this.angle.position}`);
-					main_core.Dom.addClass(this.angle.element, `${className}-${params.position}`);
-					this.angle.position = params.position;
-				}
-				if (main_core.Type.isObject(params) && main_core.Type.isNumber(params.offset)) {
-					const offset = params.offset;
-					let minOffset, maxOffset;
-					if (this.angle.position === 'top') {
-						minOffset = Popup.getOption('angleMinTop');
-						maxOffset = this.getPopupContainer().offsetWidth - Popup.getOption('angleMaxTop');
-						maxOffset = maxOffset < minOffset ? Math.max(minOffset, offset) : maxOffset;
-						this.angle.offset = Math.min(Math.max(minOffset, offset), maxOffset);
-						this.angle.element.style.left = `${this.angle.offset}px`;
-						this.angle.element.style.marginLeft = 0;
-						this.angle.element.style.removeProperty('top');
-					} else if (this.angle.position === 'bottom') {
-						minOffset = Popup.getOption('angleMinBottom');
-						maxOffset = this.getPopupContainer().offsetWidth - Popup.getOption('angleMaxBottom');
-						maxOffset = maxOffset < minOffset ? Math.max(minOffset, offset) : maxOffset;
-						this.angle.offset = Math.min(Math.max(minOffset, offset), maxOffset);
-						this.angle.element.style.marginLeft = `${this.angle.offset}px`;
-						this.angle.element.style.left = 0;
-						this.angle.element.style.removeProperty('top');
-					} else if (this.angle.position === 'right') {
-						minOffset = Popup.getOption('angleMinRight');
-						maxOffset = this.getPopupContainer().offsetHeight - Popup.getOption('angleMaxRight');
-						maxOffset = maxOffset < minOffset ? Math.max(minOffset, offset) : maxOffset;
-						this.angle.offset = Math.min(Math.max(minOffset, offset), maxOffset);
-						this.angle.element.style.top = `${this.angle.offset}px`;
-						this.angle.element.style.removeProperty('left');
-						this.angle.element.style.removeProperty('margin-left');
-					} else if (this.angle.position === 'left') {
-						minOffset = Popup.getOption('angleMinLeft');
-						maxOffset = this.getPopupContainer().offsetHeight - Popup.getOption('angleMaxLeft');
-						maxOffset = maxOffset < minOffset ? Math.max(minOffset, offset) : maxOffset;
-						this.angle.offset = Math.min(Math.max(minOffset, offset), maxOffset);
-						this.angle.element.style.top = `${this.angle.offset}px`;
-						this.angle.element.style.removeProperty('left');
-						this.angle.element.style.removeProperty('margin-left');
-					}
-				}
+			}
+		}, {
+			key: "setVerticalAngleOffset",
+			value: function setVerticalAngleOffset(offset, minOption, maxOption, offsetProperty) {
+				this.angle.offset = this.calculateAngleOffset(offset, minOption, maxOption, this.getPopupContainer().offsetWidth);
+				const style = this.angle.element.style;
+				style.left = offsetProperty === 'left' ? `${this.angle.offset}px` : '0px';
+				style.marginLeft = offsetProperty === 'marginLeft' ? `${this.angle.offset}px` : '0px';
+				style.removeProperty('top');
+			}
+		}, {
+			key: "setSideAngleOffset",
+			value: function setSideAngleOffset(offset, minOption, maxOption) {
+				this.angle.offset = this.calculateAngleOffset(offset, minOption, maxOption, this.getPopupContainer().offsetHeight);
+				this.angle.element.style.top = `${this.angle.offset}px`;
+				this.angle.element.style.removeProperty('left');
+				this.angle.element.style.removeProperty('margin-left');
+			}
+		}, {
+			key: "calculateAngleOffset",
+			value: function calculateAngleOffset(offset, minOption, maxOption, size) {
+				const minOffset = Popup.getOption(minOption);
+				const availableMaxOffset = size - Popup.getOption(maxOption);
+				const maxOffset = availableMaxOffset < minOffset ? Math.max(minOffset, offset) : availableMaxOffset;
+				return Math.min(Math.max(minOffset, offset), maxOffset);
 			}
 		}, {
 			key: "getWidth",
@@ -758,10 +660,6 @@ this.BX = this.BX || {};
 			value: function setMaxHeight(height) {
 				this.setHeightProperty('maxHeight', height);
 			}
-
-			/**
-			 * @private
-			 */
 		}, {
 			key: "setWidthProperty",
 			value: function setWidthProperty(property, width) {
@@ -773,7 +671,7 @@ this.BX = this.BX || {};
 					this[property] = width;
 					this.getResizableContainer().style[property] = `${width}px`;
 					this.getContentContainer().style.overflowX = 'auto';
-					this.getPopupContainer().classList.add('popup-window-fixed-width');
+					main_core.Dom.addClass(this.getPopupContainer(), 'popup-window-fixed-width');
 				} else if (width === null || width === false) {
 					this[property] = null;
 					this.getResizableContainer().style.removeProperty(main_core.Text.toKebabCase(property));
@@ -782,14 +680,10 @@ this.BX = this.BX || {};
 					});
 					if (!hasOtherProps) {
 						this.getContentContainer().style.removeProperty('overflow-x');
-						this.getPopupContainer().classList.remove('popup-window-fixed-width');
+						main_core.Dom.removeClass(this.getPopupContainer(), 'popup-window-fixed-width');
 					}
 				}
 			}
-
-			/**
-			 * @private
-			 */
 		}, {
 			key: "setHeightProperty",
 			value: function setHeightProperty(property, height) {
@@ -801,7 +695,7 @@ this.BX = this.BX || {};
 					this[property] = height;
 					this.getResizableContainer().style[property] = `${height}px`;
 					this.getContentContainer().style.overflowY = 'auto';
-					this.getPopupContainer().classList.add('popup-window-fixed-height');
+					main_core.Dom.addClass(this.getPopupContainer(), 'popup-window-fixed-height');
 				} else if (height === null || height === false) {
 					this[property] = null;
 					this.getResizableContainer().style.removeProperty(main_core.Text.toKebabCase(property));
@@ -810,7 +704,7 @@ this.BX = this.BX || {};
 					});
 					if (!hasOtherProps) {
 						this.getContentContainer().style.removeProperty('overflow-y');
-						this.getPopupContainer().classList.remove('popup-window-fixed-height');
+						main_core.Dom.removeClass(this.getPopupContainer(), 'popup-window-fixed-height');
 					}
 				}
 			}
@@ -858,6 +752,11 @@ this.BX = this.BX || {};
 				}
 			}
 		}, {
+			key: "getBorderRadius",
+			value: function getBorderRadius() {
+				return this.borderRadius;
+			}
+		}, {
 			key: "setContentBorderRadius",
 			value: function setContentBorderRadius(radius) {
 				if (main_core.Type.isStringFilled(radius)) {
@@ -869,12 +768,17 @@ this.BX = this.BX || {};
 				}
 			}
 		}, {
+			key: "getContentBorderRadius",
+			value: function getContentBorderRadius() {
+				return this.contentBorderRadius;
+			}
+		}, {
 			key: "setContentColor",
 			value: function setContentColor(color) {
 				if (main_core.Type.isString(color) && this.contentContainer) {
 					this.contentContainer.style.backgroundColor = color;
 				} else if (color === null) {
-					this.contentContainer.style.style.removeProperty('background-color');
+					this.contentContainer.style.removeProperty('background-color');
 				}
 			}
 		}, {
@@ -972,8 +876,6 @@ this.BX = this.BX || {};
 				`;
 						this.getPopupContainer().appendChild(this.resizeIcon);
 					}
-
-					// Compatibility
 					this.setMinWidth(mode.minWidth);
 					this.setMinHeight(mode.minHeight);
 				} else if (mode === false && this.resizeIcon) {
@@ -1044,10 +946,6 @@ this.BX = this.BX || {};
 			value: function getTitleContainer() {
 				return this.titleBar;
 			}
-
-			/**
-			 * @private
-			 */
 		}, {
 			key: "onTitleMouseDown",
 			value: function onTitleMouseDown(event) {
@@ -1057,10 +955,6 @@ this.BX = this.BX || {};
 					eventName: 'Drag'
 				});
 			}
-
-			/**
-			 * @private
-			 */
 		}, {
 			key: "handleResizeMouseDown",
 			value: function handleResizeMouseDown(event) {
@@ -1079,10 +973,6 @@ this.BX = this.BX || {};
 				this.resizeContentPos.offsetX = 0;
 				this.resizeContentPos.offsetY = 0;
 			}
-
-			/**
-			 * @private
-			 */
 		}, {
 			key: "handleResize",
 			value: function handleResize(offsetX, offsetY, pageX, pageY) {
@@ -1120,10 +1010,6 @@ this.BX = this.BX || {};
 			value: function isTopOrBottomAngle() {
 				return this.angle !== null && (this.angle.position === 'top' || this.angle.position === 'bottom');
 			}
-
-			/**
-			 * @private
-			 */
 		}, {
 			key: "getAngleHeight",
 			value: function getAngleHeight() {
@@ -1148,20 +1034,21 @@ this.BX = this.BX || {};
 				if (!this.titleBar) {
 					return;
 				}
-				if (main_core.Type.isObject(params) && main_core.Type.isDomNode(params.content)) {
+				const content = main_core.Type.isObject(params) && !main_core.Type.isDomNode(params) ? params.content : params;
+				if (main_core.Type.isDomNode(content)) {
 					this.titleBar.innerHTML = '';
-					this.titleBar.appendChild(params.content);
-				} else if (main_core.Type.isString(params)) {
+					this.titleBar.appendChild(content);
+				} else if (main_core.Type.isString(content)) {
 					this.titleBar.innerHTML = '';
 					this.titleBar.appendChild(main_core.Dom.create('span', {
 						props: {
 							id: `popup-window-titlebar-text-${this.getId()}`,
 							className: 'popup-window-titlebar-text'
 						},
-						text: params
+						text: content
 					}));
 					if (!main_core.Type.isStringFilled(main_core.Dom.attr(this.getPopupContainer(), 'aria-label'))) {
-						main_core.Dom.attr(this.getPopupContainer(), 'aria-label', params);
+						main_core.Dom.attr(this.getPopupContainer(), 'aria-label', content);
 					}
 				}
 			}
@@ -1169,7 +1056,7 @@ this.BX = this.BX || {};
 			key: "setDraggable",
 			value: function setDraggable(draggable) {
 				this.params.draggable = draggable;
-				const element = draggable?.element ?? this.titleBar;
+				const element = main_core.Type.isObject(draggable) && draggable.element ? draggable.element : this.titleBar;
 				if (!draggable || !element) {
 					return;
 				}
@@ -1179,8 +1066,8 @@ this.BX = this.BX || {};
 		}, {
 			key: "setClosingByEsc",
 			value: function setClosingByEsc(enable) {
-				enable = main_core.Type.isBoolean(enable) ? enable : true;
-				if (enable) {
+				const shouldEnable = main_core.Type.isBoolean(enable) ? enable : true;
+				if (shouldEnable) {
 					this.closeByEsc = true;
 					this.bindClosingByEsc();
 				} else {
@@ -1188,35 +1075,27 @@ this.BX = this.BX || {};
 					this.unbindClosingByEsc();
 				}
 			}
-
-			/**
-			 * @private
-			 */
 		}, {
 			key: "bindClosingByEsc",
 			value: function bindClosingByEsc() {
-				if (this.closeByEsc && !this.isCloseByEscBinded) {
+				if (this.closeByEsc && !this.isCloseByEscBound) {
 					main_core.Event.bind(this.targetContainer.ownerDocument, 'keyup', this.handleDocumentKeyUp, true);
-					this.isCloseByEscBinded = true;
+					this.isCloseByEscBound = true;
 				}
 			}
-
-			/**
-			 * @private
-			 */
 		}, {
 			key: "unbindClosingByEsc",
 			value: function unbindClosingByEsc() {
-				if (this.isCloseByEscBinded) {
+				if (this.isCloseByEscBound) {
 					main_core.Event.unbind(this.targetContainer.ownerDocument, 'keyup', this.handleDocumentKeyUp, true);
-					this.isCloseByEscBinded = false;
+					this.isCloseByEscBound = false;
 				}
 			}
 		}, {
 			key: "setAutoHide",
 			value: function setAutoHide(enable) {
-				enable = main_core.Type.isBoolean(enable) ? enable : true;
-				if (enable) {
+				const shouldEnable = main_core.Type.isBoolean(enable) ? enable : true;
+				if (shouldEnable) {
 					this.autoHide = true;
 					this.bindAutoHide();
 				} else {
@@ -1224,15 +1103,11 @@ this.BX = this.BX || {};
 					this.unbindAutoHide();
 				}
 			}
-
-			/**
-			 * @private
-			 */
 		}, {
 			key: "bindAutoHide",
 			value: function bindAutoHide() {
-				if (this.autoHide && !this.isAutoHideBinded && this.isShown()) {
-					this.isAutoHideBinded = true;
+				if (this.autoHide && !this.isAutoHideBound && this.isShown()) {
+					this.isAutoHideBound = true;
 					if (this.isCompatibleMode()) {
 						main_core.Event.bind(this.getPopupContainer(), 'click', this.handleContainerClick);
 					}
@@ -1241,29 +1116,23 @@ this.BX = this.BX || {};
 					}
 				}
 			}
-
-			/**
-			 * @private
-			 */
 		}, {
 			key: "unbindAutoHide",
 			value: function unbindAutoHide() {
-				if (this.isAutoHideBinded) {
-					this.isAutoHideBinded = false;
+				if (this.isAutoHideBound) {
+					this.isAutoHideBound = false;
 					if (this.isCompatibleMode()) {
 						main_core.Event.unbind(this.getPopupContainer(), 'click', this.handleContainerClick);
 					}
 					if (!this.hasOverlay()) {
-						main_core.Event.unbind(this.targetContainer.ownerDocument, 'click', this.handleAutoHide, !this.isCompatibleMode());
+						const doc = this.targetContainer.ownerDocument;
+						main_core.Event.unbind(doc, 'click', this.handleAutoHide, !this.isCompatibleMode());
 					}
 				}
 			}
 		}, {
 			key: "_tryCloseByEvent",
-			value:
-			/**
-			 * @private
-			 */
+			value: 
 			function _tryCloseByEvent(event) {
 				if (this.isCompatibleMode()) {
 					this.tryCloseByEvent(event);
@@ -1273,10 +1142,6 @@ this.BX = this.BX || {};
 					}, 0);
 				}
 			}
-
-			/**
-			 * @private
-			 */
 		}, {
 			key: "tryCloseByEvent",
 			value: function tryCloseByEvent(event) {
@@ -1284,10 +1149,6 @@ this.BX = this.BX || {};
 					this.close();
 				}
 			}
-
-			/**
-			 * @private
-			 */
 		}, {
 			key: "handleOverlayClick",
 			value: function handleOverlayClick(event) {
@@ -1314,14 +1175,19 @@ this.BX = this.BX || {};
 					this.resizeOverlay();
 					main_core.Dom.append(this.overlay.element, this.getTargetContainer());
 					this.getZIndexComponent().setOverlay(this.overlay.element);
+					if (_classPrivateFieldGet$1(_focusTrap, this) !== null) {
+						main_core.Dom.attr(this.overlay.element, 'data-focus-trap', _classPrivateFieldGet$1(_focusTrap, this).getId());
+					}
+					_assertClassBrand$1(_Popup_brand, this, _updateAriaModal).call(this);
 				}
-				if (main_core.Type.isNumber(params?.opacity) && params.opacity >= 0 && params.opacity <= 100) {
-					main_core.Dom.style(this.overlay.element, 'opacity', parseFloat(params.opacity / 100).toPrecision(3));
+				if (main_core.Type.isObject(params) && main_core.Type.isNumber(params.opacity) && params.opacity >= 0 && params.opacity <= 100) {
+					const opacity = (params.opacity / 100).toPrecision(3);
+					main_core.Dom.style(this.overlay.element, 'opacity', opacity);
 				}
-				if (params?.backgroundColor) {
+				if (main_core.Type.isObject(params) && params.backgroundColor) {
 					main_core.Dom.style(this.overlay.element, 'background-color', params.backgroundColor);
 				}
-				if (params?.blur) {
+				if (main_core.Type.isObject(params) && params.blur) {
 					main_core.Dom.style(this.overlay.element, 'backdrop-filter', params.blur);
 				}
 			}
@@ -1347,6 +1213,7 @@ this.BX = this.BX || {};
 					this.overlayTimeout = null;
 				}
 				this.overlay = null;
+				_assertClassBrand$1(_Popup_brand, this, _updateAriaModal).call(this);
 			}
 		}, {
 			key: "hideOverlay",
@@ -1514,11 +1381,20 @@ this.BX = this.BX || {};
 					this.show();
 				}
 			}
-
-			/**
-			 *
-			 * @private
-			 */
+		}, {
+			key: "bindAnimationEnd",
+			value: function bindAnimationEnd(className, callback) {
+				const eventName = `${this.animationCloseEventType}end`;
+				const popupContainer = this.getPopupContainer();
+				const handleTransitionEnd = event => {
+					if (!main_core.Dom.hasClass(event.target, className)) {
+						return;
+					}
+					main_core.Event.unbind(popupContainer, eventName, handleTransitionEnd);
+					callback();
+				};
+				main_core.Event.bind(popupContainer, eventName, handleTransitionEnd);
+			}
 		}, {
 			key: "animateOpening",
 			value: function animateOpening(callback) {
@@ -1530,22 +1406,10 @@ this.BX = this.BX || {};
 					if (this.animationCloseEventType === null) {
 						callback();
 					} else {
-						const eventName = `${this.animationCloseEventType}end`;
-						const className = this.animationShowClassName;
-						this.getPopupContainer().addEventListener(eventName, function handleTransitionEnd(event) {
-							if (!main_core.Dom.hasClass(event.target, className)) {
-								return;
-							}
-							this.removeEventListener(eventName, handleTransitionEnd);
-							callback();
-						});
+						this.bindAnimationEnd(this.animationShowClassName, callback);
 					}
 				}
 			}
-
-			/**
-			 * @private
-			 */
 		}, {
 			key: "animateClosing",
 			value: function animateClosing(callback) {
@@ -1557,15 +1421,7 @@ this.BX = this.BX || {};
 					if (this.animationCloseEventType === null) {
 						callback();
 					} else {
-						const eventName = `${this.animationCloseEventType}end`;
-						const className = this.animationCloseClassName;
-						this.getPopupContainer().addEventListener(eventName, function handleTransitionEnd(event) {
-							if (!main_core.Dom.hasClass(event.target, className)) {
-								return;
-							}
-							this.removeEventListener(eventName, handleTransitionEnd);
-							callback();
-						});
+						this.bindAnimationEnd(this.animationCloseClassName, callback);
 					}
 				}
 			}
@@ -1578,18 +1434,22 @@ this.BX = this.BX || {};
 					this.animationCloseEventType = options.closeAnimationType === 'animation' || options.closeAnimationType === 'transition' ? options.closeAnimationType : null;
 				} else if (main_core.Type.isStringFilled(options)) {
 					const animationName = options;
-					if (animationName === 'fading') {
-						this.animationShowClassName = 'popup-window-show-animation-opacity';
-						this.animationCloseClassName = 'popup-window-close-animation-opacity';
-						this.animationCloseEventType = 'animation';
-					} else if (animationName === 'fading-slide') {
-						this.animationShowClassName = 'popup-window-show-animation-opacity-transform';
-						this.animationCloseClassName = 'popup-window-close-animation-opacity';
-						this.animationCloseEventType = 'animation';
-					} else if (animationName === 'scale') {
-						this.animationShowClassName = 'popup-window-show-animation-scale';
-						this.animationCloseClassName = 'popup-window-close-animation-opacity';
-						this.animationCloseEventType = 'animation';
+					switch (animationName) {
+						case 'fading':
+							this.animationShowClassName = 'popup-window-show-animation-opacity';
+							this.animationCloseClassName = 'popup-window-close-animation-opacity';
+							this.animationCloseEventType = 'animation';
+							break;
+						case 'fading-slide':
+							this.animationShowClassName = 'popup-window-show-animation-opacity-transform';
+							this.animationCloseClassName = 'popup-window-close-animation-opacity';
+							this.animationCloseEventType = 'animation';
+							break;
+						case 'scale':
+							this.animationShowClassName = 'popup-window-show-animation-scale';
+							this.animationCloseClassName = 'popup-window-close-animation-opacity';
+							this.animationCloseEventType = 'animation';
+							break;
 					}
 				} else if (options === false || options === null) {
 					this.animationShowClassName = null;
@@ -1649,16 +1509,43 @@ this.BX = this.BX || {};
 					this.bindOptions = bindOptions;
 				}
 				const bindElementPos = this.getBindElementPos(this.bindElement);
-				if (!this.bindOptions.forceBindPosition && this.bindElementPos !== null && bindElementPos.top === this.bindElementPos.top && bindElementPos.left === this.bindElementPos.left) {
+				if (this.hasUnchangedBindPosition(bindElementPos)) {
 					return;
 				}
-				const bindElementVanished = bindElementPos.top === 0 && bindElementPos.left === 0 && bindElementPos.width === 0 && bindElementPos.height === 0;
-				this.bindElementPos = bindElementVanished && this.bindElementPos !== null ? this.bindElementPos : bindElementPos;
+				this.updateBindElementPosition(bindElementPos);
 				const windowSize = bindElementPos.windowSize ?? this.getWindowSize();
 				const windowScroll = bindElementPos.windowScroll ?? this.getWindowScroll();
 				const popupWidth = bindElementPos.popupWidth ?? this.popupContainer.offsetWidth;
 				const popupHeight = bindElementPos.popupHeight ?? this.popupContainer.offsetHeight;
-				const angleTopOffset = Popup.getOption('angleTopOffset');
+				const left = this.calculatePopupLeft(popupWidth, windowSize, windowScroll);
+				const top = this.calculatePopupTop(popupHeight, windowSize, windowScroll);
+				const event = new PositionEvent();
+				event.left = left;
+				event.top = top;
+				this.emit('onBeforeAdjustPosition', event);
+				main_core.Dom.adjust(this.popupContainer, {
+					style: {
+						top: `${event.top}px`,
+						left: `${event.left}px`
+					}
+				});
+			}
+		}, {
+			key: "hasUnchangedBindPosition",
+			value: function hasUnchangedBindPosition(bindElementPos) {
+				return !this.bindOptions.forceBindPosition && this.bindElementPos !== null && bindElementPos.top === this.bindElementPos.top && bindElementPos.left === this.bindElementPos.left;
+			}
+		}, {
+			key: "updateBindElementPosition",
+			value: function updateBindElementPosition(bindElementPos) {
+				const bindElementVanished = bindElementPos.top === 0 && bindElementPos.left === 0 && bindElementPos.width === 0 && bindElementPos.height === 0;
+				if (!bindElementVanished || this.bindElementPos === null) {
+					this.bindElementPos = bindElementPos;
+				}
+			}
+		}, {
+			key: "calculatePopupLeft",
+			value: function calculatePopupLeft(popupWidth, windowSize, windowScroll) {
 				let left = this.bindElementPos.left + this.offsetLeft - (this.isTopOrBottomAngle() ? Popup.getOption('angleLeftOffset') : 0);
 				if (!this.bindOptions.forceLeft && left + popupWidth + this.bordersWidth >= windowSize.innerWidth + windowScroll.scrollLeft && windowSize.innerWidth + windowScroll.scrollLeft - popupWidth - this.bordersWidth > 0) {
 					const bindLeft = left;
@@ -1676,59 +1563,60 @@ this.BX = this.BX || {};
 				if (left < 0) {
 					left = 0;
 				}
-				let top = 0;
-				if (this.bindOptions.position && this.bindOptions.position === 'top') {
-					top = this.bindElementPos.top - popupHeight - this.offsetTop - (this.isBottomAngle() ? angleTopOffset : 0);
-					if (top < 0 || !this.bindOptions.forceTop && top < windowScroll.scrollTop) {
-						top = this.bindElementPos.bottom + this.offsetTop;
-						if (this.angle !== null) {
-							top += angleTopOffset;
-							this.setAngle({
-								position: 'top'
-							});
-						}
-					} else if (this.isTopAngle()) {
-						top = top - angleTopOffset + Popup.getOption('positionTopXOffset');
-						this.setAngle({
-							position: 'bottom'
-						});
-					} else {
-						top += Popup.getOption('positionTopXOffset');
-					}
-				} else {
-					top = this.bindElementPos.bottom + this.offsetTop + this.getAngleHeight();
-					if (!this.bindOptions.forceTop && top + popupHeight > windowSize.innerHeight + windowScroll.scrollTop
-					// Can we place the PopupWindow above the bindElement?
-					&& this.bindElementPos.top - popupHeight - this.getAngleHeight() >= 0) {
-						// The PopupWindow doesn't place below the bindElement. We should place it above.
-						top = this.bindElementPos.top - popupHeight;
-						if (this.isTopOrBottomAngle()) {
-							top -= angleTopOffset;
-							this.setAngle({
-								position: 'bottom'
-							});
-						}
-						top += Popup.getOption('positionTopXOffset');
-					} else if (this.isBottomAngle()) {
+				return left;
+			}
+		}, {
+			key: "calculatePopupTop",
+			value: function calculatePopupTop(popupHeight, windowSize, windowScroll) {
+				const angleTopOffset = Popup.getOption('angleTopOffset');
+				if (this.bindOptions.position === 'top') {
+					return this.calculatePopupTopFromAbove(popupHeight, windowScroll, angleTopOffset);
+				}
+				return this.calculatePopupTopFromBelow(popupHeight, windowSize, windowScroll, angleTopOffset);
+			}
+		}, {
+			key: "calculatePopupTopFromAbove",
+			value: function calculatePopupTopFromAbove(popupHeight, windowScroll, angleTopOffset) {
+				let top = this.bindElementPos.top - popupHeight - this.offsetTop - (this.isBottomAngle() ? angleTopOffset : 0);
+				if (top < 0 || !this.bindOptions.forceTop && top < windowScroll.scrollTop) {
+					top = this.bindElementPos.bottom + this.offsetTop;
+					if (this.angle !== null) {
 						top += angleTopOffset;
 						this.setAngle({
 							position: 'top'
 						});
 					}
+				} else if (this.isTopAngle()) {
+					top = top - angleTopOffset + Popup.getOption('positionTopXOffset');
+					this.setAngle({
+						position: 'bottom'
+					});
+				} else {
+					top += Popup.getOption('positionTopXOffset');
 				}
-				if (top < 0) {
-					top = 0;
-				}
-				const event = new PositionEvent();
-				event.left = left;
-				event.top = top;
-				this.emit('onBeforeAdjustPosition', event);
-				main_core.Dom.adjust(this.popupContainer, {
-					style: {
-						top: `${event.top}px`,
-						left: `${event.left}px`
+				return top < 0 ? 0 : top;
+			}
+		}, {
+			key: "calculatePopupTopFromBelow",
+			value: function calculatePopupTopFromBelow(popupHeight, windowSize, windowScroll, angleTopOffset) {
+				let top = this.bindElementPos.bottom + this.offsetTop + this.getAngleHeight();
+				if (!this.bindOptions.forceTop && top + popupHeight > windowSize.innerHeight + windowScroll.scrollTop
+				&& this.bindElementPos.top - popupHeight - this.getAngleHeight() >= 0) {
+					top = this.bindElementPos.top - popupHeight;
+					if (this.isTopOrBottomAngle()) {
+						top -= angleTopOffset;
+						this.setAngle({
+							position: 'bottom'
+						});
 					}
-				});
+					top += Popup.getOption('positionTopXOffset');
+				} else if (this.isBottomAngle()) {
+					top += angleTopOffset;
+					this.setAngle({
+						position: 'top'
+					});
+				}
+				return top < 0 ? 0 : top;
 			}
 		}, {
 			key: "enterFullScreen",
@@ -1741,28 +1629,22 @@ this.BX = this.BX || {};
 					} else if (document.webkitCancelFullScreen) {
 						document.webkitCancelFullScreen();
 					}
+				} else if (this.contentContainer.requestFullScreen) {
+					this.contentContainer.requestFullScreen();
+					main_core.Event.bind(window, 'fullscreenchange', this.handleFullScreen);
+				} else if (this.contentContainer.mozRequestFullScreen) {
+					this.contentContainer.mozRequestFullScreen();
+					main_core.Event.bind(window, 'mozfullscreenchange', this.handleFullScreen);
+				} else if (this.contentContainer.webkitRequestFullScreen) {
+					this.contentContainer.webkitRequestFullScreen();
+					main_core.Event.bind(window, 'webkitfullscreenchange', this.handleFullScreen);
 				} else {
-					if (this.contentContainer.requestFullScreen) {
-						this.contentContainer.requestFullScreen();
-						main_core.Event.bind(window, 'fullscreenchange', this.handleFullScreen);
-					} else if (this.contentContainer.mozRequestFullScreen) {
-						this.contentContainer.mozRequestFullScreen();
-						main_core.Event.bind(window, 'mozfullscreenchange', this.handleFullScreen);
-					} else if (this.contentContainer.webkitRequestFullScreen) {
-						this.contentContainer.webkitRequestFullScreen();
-						main_core.Event.bind(window, 'webkitfullscreenchange', this.handleFullScreen);
-					} else {
-						console.log('fullscreen mode is not supported');
-					}
+					console.error('fullscreen mode is not supported');
 				}
 			}
-
-			/**
-			 * @private
-			 */
 		}, {
 			key: "handleFullScreen",
-			value: function handleFullScreen(event) {
+			value: function handleFullScreen() {
 				if (Popup.fullscreenStatus) {
 					main_core.Event.unbind(window, 'fullscreenchange', this.handleFullScreen);
 					main_core.Event.unbind(window, 'webkitfullscreenchange', this.handleFullScreen);
@@ -1782,20 +1664,12 @@ this.BX = this.BX || {};
 					}
 				}
 			}
-
-			/**
-			 * @private
-			 */
 		}, {
 			key: "handleCloseIconClick",
 			value: function handleCloseIconClick(event) {
 				this.tryCloseByEvent(event);
 				event.stopPropagation();
 			}
-
-			/**
-			 * @private
-			 */
 		}, {
 			key: "handleContainerClick",
 			value: function handleContainerClick(event) {
@@ -1803,11 +1677,7 @@ this.BX = this.BX || {};
 			}
 		}, {
 			key: "handleResizeWindow",
-			value:
-			/**
-			 * @private
-			 */
-			function handleResizeWindow() {
+			value: function handleResizeWindow() {
 				if (this.isShown()) {
 					this.adjustPosition();
 					if (this.overlay !== null) {
@@ -1815,22 +1685,17 @@ this.BX = this.BX || {};
 					}
 				}
 			}
-
-			/**
-			 * @private
-			 */
 		}, {
 			key: "handleMove",
 			value: function handleMove(offsetX, offsetY, pageX, pageY) {
 				let left = parseInt(this.popupContainer.style.left, 10) + offsetX;
 				let top = parseInt(this.popupContainer.style.top, 10) + offsetY;
 				if (main_core.Type.isObject(this.params.draggable) && this.params.draggable.restrict) {
-					// Left side
 					if (left < 0) {
 						left = 0;
 					}
-					let scrollWidth;
-					let scrollHeight;
+					let scrollWidth = 0;
+					let scrollHeight = 0;
 					if (this.isTargetDocumentBody()) {
 						scrollWidth = document.documentElement.scrollWidth;
 						scrollHeight = document.documentElement.scrollHeight;
@@ -1838,8 +1703,6 @@ this.BX = this.BX || {};
 						scrollWidth = this.getTargetContainer().scrollWidth;
 						scrollHeight = this.getTargetContainer().scrollHeight;
 					}
-
-					// Right side
 					const floatWidth = this.popupContainer.offsetWidth;
 					const floatHeight = this.popupContainer.offsetHeight;
 					if (left > scrollWidth - floatWidth) {
@@ -1848,8 +1711,6 @@ this.BX = this.BX || {};
 					if (top > scrollHeight - floatHeight) {
 						top = scrollHeight - floatHeight;
 					}
-
-					// Top side
 					if (top < 0) {
 						top = 0;
 					}
@@ -1857,17 +1718,9 @@ this.BX = this.BX || {};
 				this.popupContainer.style.left = `${left}px`;
 				this.popupContainer.style.top = `${top}px`;
 			}
-
-			/**
-			 * @private
-			 */
 		}, {
 			key: "handleDocumentMouseMove",
-			value:
-			/**
-			 * @private
-			 */
-			function handleDocumentMouseMove(event) {
+			value: function handleDocumentMouseMove(event) {
 				if (this.dragPageX === event.pageX && this.dragPageY === event.pageY) {
 					return;
 				}
@@ -1884,10 +1737,6 @@ this.BX = this.BX || {};
 					compatData: [this]
 				}));
 			}
-
-			/**
-			 * @private
-			 */
 		}, {
 			key: "handleDocumentMouseUp",
 			value: function handleDocumentMouseUp(event) {
@@ -1913,8 +1762,8 @@ this.BX = this.BX || {};
 				if (!main_core.Type.isPlainObject(options)) {
 					return;
 				}
-				for (let option in options) {
-					this.options[option] = options[option];
+				for (const [option, value] of Object.entries(options)) {
+					this.options[option] = value;
 				}
 			}
 		}, {
@@ -1945,6 +1794,131 @@ this.BX = this.BX || {};
 		}]);
 	}(main_core_events.EventEmitter);
 	_Popup = Popup;
+	function _bindHandlers() {
+		this.handleDocumentMouseMove = this.handleDocumentMouseMove.bind(this);
+		this.handleDocumentMouseUp = this.handleDocumentMouseUp.bind(this);
+		this.handleResizeWindow = this.handleResizeWindow.bind(this);
+		this.handleResize = this.handleResize.bind(this);
+		this.handleMove = this.handleMove.bind(this);
+		this.onTitleMouseDown = this.onTitleMouseDown.bind(this);
+		this.handleFullScreen = this.handleFullScreen.bind(this);
+	}
+	function _getPopupClassName(params) {
+		let popupClassName = 'popup-window';
+		if (params.titleBar) {
+			popupClassName += ' popup-window-with-titlebar';
+		}
+		if (main_core.Type.isStringFilled(params.className)) {
+			popupClassName += ` ${params.className}`;
+		}
+		if (params.darkMode) {
+			popupClassName += ' popup-window-dark';
+		}
+		return `${popupClassName} ${this.designSystemContext}`;
+	}
+	function _createCloseIcon(params) {
+		if (!params.closeIcon) {
+			return null;
+		}
+		let className = `popup-window-close-icon${params.titleBar ? ' popup-window-titlebar-close-icon' : ''}`;
+		if (params.closeIconSize && Object.values(CloseIconSize).includes(params.closeIconSize) && params.closeIconSize !== CloseIconSize.SMALL) {
+			className += ` --${params.closeIconSize}`;
+		}
+		const closeIcon = main_core.Tag.render`
+			<button
+				tabindex="0"
+				type="button"
+				aria-label="Close"
+				class="${className}"
+				onclick="${this.handleCloseIconClick.bind(this)}"
+			>
+				<span class="ui-icon-set --cross-l --hoverable-default" style="--ui-icon-set__icon-size: 24px;"></span>
+			</button>
+		`;
+		if (main_core.Type.isPlainObject(params.closeIcon)) {
+			main_core.Dom.style(closeIcon, params.closeIcon);
+		}
+		return closeIcon;
+	}
+	function _createLayout(popupId, params) {
+		const popupClassName = _assertClassBrand$1(_Popup_brand, this, _getPopupClassName).call(this, params);
+		const titleBarId = `popup-window-titlebar-${popupId}`;
+		if (params.titleBar) {
+			this.titleBar = main_core.Tag.render`<div class="popup-window-titlebar" id="${titleBarId}"></div>`;
+		}
+		this.closeIcon = _assertClassBrand$1(_Popup_brand, this, _createCloseIcon).call(this, params);
+		this.contentContainer = main_core.Tag.render`
+			<div id="popup-window-content-${popupId}" role="presentation" class="popup-window-content"></div>
+		`;
+		this.popupContainer = main_core.Tag.render`
+			<div
+				class="${popupClassName}"
+				id="${popupId}"
+				style="display: none; position: absolute; left: 0; top: 0;"
+				tabindex="-1"
+				role="${main_core.Type.isStringFilled(params.role) ? params.role : 'dialog'}"
+			>${[this.titleBar, this.contentContainer, this.closeIcon]}</div>
+		`;
+		if (main_core.Type.isStringFilled(params.ariaLabel)) {
+			main_core.Dom.attr(this.popupContainer, 'aria-label', params.ariaLabel);
+		}
+		if (main_core.Type.isStringFilled(params.ariaLabelledBy)) {
+			main_core.Dom.attr(this.popupContainer, 'aria-labelledby', params.ariaLabelledBy);
+		}
+		if (main_core.Type.isStringFilled(params.ariaDescribedBy)) {
+			main_core.Dom.attr(this.popupContainer, 'aria-describedby', params.ariaDescribedBy);
+		}
+		this.getTargetContainer().append(this.popupContainer);
+		this.zIndexComponent = main_core_zIndexManager.ZIndexManager.register(this.popupContainer, params.zIndexOptions);
+		if (main_core.Type.isStringFilled(params.contentColor)) {
+			this.setContentColor(params.contentColor);
+		}
+		if (params.angle) {
+			this.setAngle(params.angle);
+		}
+		if (params.overlay) {
+			this.setOverlay(params.overlay);
+		}
+	}
+	function _applyOptions(bindElement, params) {
+		this.setOffset({
+			offsetTop: params.offsetTop,
+			offsetLeft: params.offsetLeft
+		});
+		this.setBindElement(bindElement);
+		this.setTitleBar(params.titleBar);
+		this.setDraggable(params.draggable);
+		this.setContent(params.content);
+		this.setButtons(params.buttons);
+		this.setWidth(params.width);
+		this.setHeight(params.height);
+		this.setMinWidth(params.minWidth);
+		this.setMinHeight(params.minHeight);
+		this.setMaxWidth(params.maxWidth);
+		this.setMaxHeight(params.maxHeight);
+		this.setResizeMode(params.resizable);
+		this.setPadding(params.padding);
+		this.setContentPadding(params.contentPadding);
+		this.setBorderRadius(params.borderRadius);
+		this.setContentBorderRadius(params.contentBorderRadius);
+		this.setBackground(params.background);
+		this.setContentBackground(params.contentBackground);
+		this.setAnimation(params.animation);
+		this.setCacheable(params.cacheable);
+		this.setToFrontOnShow(params.toFrontOnShow);
+		this.setFixed(params.fixed);
+		this.setDesignSystemContext(params.designSystemContext);
+		if (params.contentNoPaddings) {
+			this.setContentPadding(0);
+		}
+		if (params.noAllPaddings) {
+			this.setPadding(0);
+			this.setContentPadding(0);
+		}
+		if (params.bindOnResize !== false) {
+			main_core.Event.bind(window, 'resize', this.handleResizeWindow);
+		}
+	}
 	function _initFocusTrap(options) {
 		if (options === false || main_core.Type.isNil(options) && !_Popup.shouldUseFocusTrapByDefault()) {
 			return;
@@ -1961,6 +1935,14 @@ this.BX = this.BX || {};
 		if (this.isModal()) {
 			main_core.Dom.attr(this.overlay.element, 'data-focus-trap', _classPrivateFieldGet$1(_focusTrap, this).getId());
 		}
+	}
+	function _updateAriaModal() {
+		if (this.popupContainer === null) {
+			return;
+		}
+		const role = main_core.Dom.attr(this.popupContainer, 'role');
+		const roleAllowsAriaModal = main_core.Type.isString(role) && ariaModalRoles.has(role);
+		main_core.Dom.attr(this.popupContainer, 'aria-modal', roleAllowsAriaModal && this.isModal() ? true : null);
 	}
 	function _disableTargetScroll() {
 		const target = this.getTargetContainer();
@@ -1983,15 +1965,15 @@ this.BX = this.BX || {};
 		}
 	}
 	function _startDrag(event, options) {
-		options = options || {};
-		if (main_core.Type.isStringFilled(options.cursor)) {
-			this.dragOptions.cursor = options.cursor;
+		const dragOptions = options || {};
+		if (main_core.Type.isStringFilled(dragOptions.cursor)) {
+			this.dragOptions.cursor = dragOptions.cursor;
 		}
-		if (main_core.Type.isStringFilled(options.eventName)) {
-			this.dragOptions.eventName = options.eventName;
+		if (main_core.Type.isStringFilled(dragOptions.eventName)) {
+			this.dragOptions.eventName = dragOptions.eventName;
 		}
-		if (main_core.Type.isFunction(options.callback)) {
-			this.dragOptions.callback = options.callback;
+		if (main_core.Type.isFunction(dragOptions.callback)) {
+			this.dragOptions.callback = dragOptions.callback;
 		}
 		this.dragPageX = event.pageX;
 		this.dragPageY = event.pageY;
@@ -2011,19 +1993,10 @@ this.BX = this.BX || {};
 		}
 		event.preventDefault();
 	}
-	/**
-	 * @private
-	 */
 	babelHelpers.defineProperty(Popup, "options", {});
-	/**
-	 * @private
-	 */
 	babelHelpers.defineProperty(Popup, "defaultOptions", {
-		// left offset for popup about target
 		angleLeftOffset: 40,
-		// when popup position is 'top' offset distance between popup body and target node
 		positionTopXOffset: -11,
-		// offset distance between popup body and target node if use angle, sum with positionTopXOffset
 		angleTopOffset: 10,
 		popupZindex: 1000,
 		popupOverlayZindex: 1100,
@@ -2043,8 +2016,8 @@ this.BX = this.BX || {};
 	function checkEscPressed(zIndex, callback) {
 		if (zIndex === false) {
 			if (escCallback && escCallback.length > 0) {
-				for (let i = 0; i < escCallback.length; i++) {
-					escCallback[i]();
+				for (const callbackItem of escCallback) {
+					callbackItem();
 				}
 				escCallback = null;
 				escCallbackIndex = -1;
@@ -2083,6 +2056,27 @@ this.BX = this.BX || {};
 		"'": '&#39;',
 		'"': '&quot;'
 	};
+	function resolveItemContent(options) {
+		if (main_core.Type.isStringFilled(options.html) || main_core.Type.isElementNode(options.html)) {
+			return {
+				text: options.html,
+				allowHtml: true
+			};
+		}
+		if (main_core.Type.isStringFilled(options.text)) {
+			if (/<[^>]+>/.test(options.text)) {
+				console.warn('BX.Main.MenuItem: use "html" option for the html item content.', options.text);
+			}
+			return {
+				text: options.text,
+				allowHtml: false
+			};
+		}
+		return {
+			text: '',
+			allowHtml: false
+		};
+	}
 	function encodeSafe(value) {
 		if (main_core.Type.isString(value)) {
 			return value.replaceAll(reEscape, item => escapeEntities[item]);
@@ -2091,6 +2085,31 @@ this.BX = this.BX || {};
 	}
 	main_core_events.EventEmitter.registerAliases(aliases);
 	class MenuItem extends main_core_events.EventEmitter {
+		options;
+		id;
+		text;
+		allowHtml;
+		title;
+		delimiter;
+		href;
+		target;
+		dataset;
+		className;
+		menuShowDelay;
+		subMenuOffsetX;
+		disabled;
+		cacheable;
+		focusable;
+		attrs;
+		onclick;
+		menuWindow = null;
+		subMenuWindow = null;
+		layout = {
+			item: null,
+			text: null
+		};
+		events;
+		items;
 		#items = [];
 		#justFocused = false;
 		constructor(itemOptions) {
@@ -2099,18 +2118,9 @@ this.BX = this.BX || {};
 			const options = itemOptions || {};
 			this.options = options;
 			this.id = options.id || main_core.Text.getRandom();
-			this.text = '';
-			this.allowHtml = false;
-			if (main_core.Type.isStringFilled(options.html) || main_core.Type.isElementNode(options.html)) {
-				this.text = options.html;
-				this.allowHtml = true;
-			} else if (main_core.Type.isStringFilled(options.text)) {
-				this.text = options.text;
-				if (/<[^>]+>/.test(this.text)) {
-					// eslint-disable-next-line no-console
-					console.warn('BX.Main.MenuItem: use "html" option for the html item content.', this.getText());
-				}
-			}
+			const content = resolveItemContent(options);
+			this.text = content.text;
+			this.allowHtml = content.allowHtml;
 			this.title = main_core.Type.isStringFilled(options.title) ? options.title : '';
 			this.delimiter = options.delimiter === true;
 			this.href = main_core.Type.isStringFilled(options.href) ? options.href : null;
@@ -2122,42 +2132,18 @@ this.BX = this.BX || {};
 			this.#items = main_core.Type.isArray(options.items) ? options.items : [];
 			this.disabled = options.disabled === true;
 			this.cacheable = options.cacheable === true;
-			this.focusable = this.delimiter !== true && options.focusable !== false;
+			this.focusable = !this.delimiter && options.focusable !== false;
 			this.attrs = main_core.Type.isPlainObject(options.attrs) ? options.attrs : null;
-
-			/**
-			 *
-			 * @type {function|string}
-			 */
 			this.onclick = main_core.Type.isStringFilled(options.onclick) || main_core.Type.isFunction(options.onclick) ? options.onclick : null;
 			this.subscribeFromOptions(options.events, aliases);
-
-			/**
-			 *
-			 * @type {Menu}
-			 */
-			this.menuWindow = null;
-
-			/**
-			 *
-			 * @type {Menu}
-			 */
-			this.subMenuWindow = null;
-
-			/**
-			 *
-			 * @type {{item: HTMLElement, text: HTMLElement}}
-			 */
-			this.layout = {
-				item: null,
-				text: null
-			};
-			this.getLayout(); // compatibility
-
-			// compatibility
-			// now use this.options
+			this.getLayout();
 			this.events = {};
 			this.items = [];
+			this.#applyCompatibilityOptions(options);
+			this.focused ??= false;
+			this.subMenuTimeout ??= null;
+		}
+		#applyCompatibilityOptions(options) {
 			for (const property of Object.keys(options)) {
 				if (!(property in this)) {
 					this[property] = options[property];
@@ -2168,73 +2154,107 @@ this.BX = this.BX || {};
 			if (this.layout.item) {
 				return this.layout;
 			}
-			if (this.delimiter) {
-				if (main_core.Type.isStringFilled(this.getText())) {
-					this.layout.item = main_core.Dom.create('span', {
-						props: {
-							className: ['popup-window-delimiter-section', this.className || ''].join(' ')
-						},
-						attrs: {
-							'aria-hidden': 'true'
-						},
-						children: [this.layout.text = main_core.Tag.render`
-							<span class="popup-window-delimiter-text">${this.allowHtml ? this.getText() : encodeSafe(this.getText())}</span>
-						`]
-					});
-				} else {
-					this.layout.item = main_core.Tag.render`<span class="popup-window-delimiter" aria-hidden="true"></span>`;
-				}
-			} else {
-				this.layout.item = main_core.Dom.create(this.href ? 'a' : 'span', {
+			this.layout = this.delimiter ? this.#createDelimiterLayout() : this.#createItemLayout();
+			this.#configureLayout();
+			this.#bindLayoutEvents();
+			return this.layout;
+		}
+		#createDelimiterLayout() {
+			if (!main_core.Type.isStringFilled(this.getText())) {
+				return {
+					item: main_core.Tag.render`<span class="popup-window-delimiter" aria-hidden="true"></span>`,
+					text: null
+				};
+			}
+			const delimiterText = this.allowHtml ? this.getText() : encodeSafe(this.getText());
+			const text = main_core.Tag.render`
+			<span class="popup-window-delimiter-text">${delimiterText}</span>
+		`;
+			return {
+				item: main_core.Dom.create('span', {
 					props: {
-						className: ['menu-popup-item', this.className || 'menu-popup-no-icon', this.hasSubMenu() ? 'menu-popup-item-submenu' : ''].join(' ')
+						className: ['popup-window-delimiter-section', this.className || ''].join(' ')
 					},
 					attrs: {
-						title: this.title,
-						onclick: main_core.Type.isString(this.onclick) ? this.onclick : '',
-						// compatibility
-						target: this.target || ''
+						'aria-hidden': 'true'
 					},
-					dataset: this.dataset,
-					events: main_core.Type.isFunction(this.onclick) ? {
-						click: this.onItemClick.bind(this)
-					} : null,
-					children: [main_core.Dom.create('span', {
-						props: {
-							className: 'menu-popup-item-icon'
-						}
-					}), this.layout.text = main_core.Tag.render`
-						<span class="menu-popup-item-text">${this.allowHtml ? this.getText() : encodeSafe(this.getText())}</span>
-					`]
-				});
-				if (main_core.Type.isPlainObject(this.attrs)) {
-					main_core.Dom.attr(this.layout.item, this.attrs);
-				}
-				if (this.isFocusable()) {
-					main_core.Dom.attr(this.layout.item, 'tabindex', '-1');
-					main_core.Dom.attr(this.layout.item, 'role', 'menuitem');
-				} else {
-					main_core.Dom.attr(this.layout.item, 'aria-hidden', 'true');
-				}
-				if (this.hasSubMenu()) {
-					main_core.Dom.attr(this.layout.item, 'aria-haspopup', 'true');
-					main_core.Dom.attr(this.layout.item, 'aria-expanded', 'false');
-				}
-				if (this.href) {
-					this.layout.item.href = this.href;
-				}
-				if (this.isDisabled()) {
-					this.disable();
-				}
+					children: [text]
+				}),
+				text
+			};
+		}
+		#createItemLayout() {
+			const text = main_core.Tag.render`
+			<span class="menu-popup-item-text">${this.allowHtml ? this.getText() : encodeSafe(this.getText())}</span>
+		`;
+			const item = main_core.Dom.create(this.href ? 'a' : 'span', {
+				props: {
+					className: ['menu-popup-item', this.className || 'menu-popup-no-icon', this.hasSubMenu() ? 'menu-popup-item-submenu' : ''].join(' ')
+				},
+				attrs: {
+					title: this.title,
+					onclick: main_core.Type.isString(this.onclick) ? this.onclick : '',
+					target: this.target || ''
+				},
+				dataset: this.dataset,
+				events: main_core.Type.isFunction(this.onclick) ? {
+					click: this.onItemClick.bind(this)
+				} : null,
+				children: [main_core.Dom.create('span', {
+					props: {
+						className: 'menu-popup-item-icon'
+					}
+				}), text]
+			});
+			return {
+				item,
+				text
+			};
+		}
+		#configureLayout() {
+			const item = this.layout.item;
+			if (this.delimiter) {
+				return;
+			}
+			if (main_core.Type.isPlainObject(this.attrs)) {
+				main_core.Dom.attr(item, this.attrs);
+			}
+			if (this.isFocusable()) {
+				main_core.Dom.attr(item, 'tabindex', '-1');
+				main_core.Dom.attr(item, 'role', 'menuitem');
+			} else {
+				main_core.Dom.attr(item, 'aria-hidden', 'true');
+			}
+			if (this.hasSubMenu()) {
+				main_core.Dom.attr(item, 'aria-haspopup', 'true');
+				main_core.Dom.attr(item, 'aria-expanded', 'false');
+			}
+			if (this.href) {
+				item.href = this.href;
+			}
+			if (this.isDisabled()) {
+				this.disable();
+			}
+		}
+		#bindLayoutEvents() {
+			if (!this.delimiter) {
 				main_core.Event.bind(this.layout.item, ui_a11y.RESTORE_FOCUS_EVENT, this.#handleItemRestoreFocus.bind(this));
 			}
 			main_core.Event.bind(this.layout.item, 'mouseenter', this.#handleItemMouseEnter.bind(this));
 			main_core.Event.bind(this.layout.item, 'mouseleave', this.#handleItemMouseLeave.bind(this));
 			main_core.Event.bind(this.layout.item, 'focusin', this.#handleItemFocus.bind(this));
-			return this.layout;
 		}
 		getContainer() {
 			return this.getLayout().item;
+		}
+		removeLayout() {
+			if (this.layout.item) {
+				main_core.Dom.remove(this.layout.item);
+			}
+			this.layout = {
+				item: null,
+				text: null
+			};
 		}
 		getTextContainer() {
 			return this.getLayout().text;
@@ -2292,17 +2312,16 @@ this.BX = this.BX || {};
 				return null;
 			}
 			const rootMenuWindow = this.getMenuWindow().getRootMenuWindow() || this.getMenuWindow();
+			const rootParams = rootMenuWindow.getParams();
 			const rootOptions = {
-				...rootMenuWindow.params
+				...rootParams
 			};
 			delete rootOptions.events;
-			const subMenuOptions = main_core.Type.isPlainObject(rootMenuWindow.params.subMenuOptions) ? rootMenuWindow.params.subMenuOptions : {};
+			const subMenuOptions = main_core.Type.isPlainObject(rootParams.subMenuOptions) ? rootParams.subMenuOptions : {};
 			const options = {
 				...rootOptions,
 				...subMenuOptions
 			};
-
-			// Override root menu options
 			options.autoHide = false;
 			options.menuShowDelay = this.menuShowDelay;
 			options.cacheable = this.isCacheable();
@@ -2389,17 +2408,13 @@ this.BX = this.BX || {};
 			const isGlobalContext = this.getMenuWindow().getPopupWindow().isTargetDocumentBody();
 			const clientWidth = isGlobalContext ? document.documentElement.clientWidth : targetContainer.offsetWidth;
 			const clientHeight = isGlobalContext ? document.documentElement.clientHeight : targetContainer.offsetHeight;
-
-			// let's try to fit a submenu to the browser viewport
 			const exceeded = popupBottom - clientHeight;
 			if (exceeded > 0) {
 				let roundOffset = Math.ceil(exceeded / itemRect.height) * itemRect.height;
 				if (roundOffset > itemRect.top) {
-					// it cannot be higher than the browser viewport.
 					roundOffset -= Math.ceil((roundOffset - itemRect.top) / itemRect.height) * itemRect.height;
 				}
 				if (itemRect.bottom > popupBottom - roundOffset) {
-					// let's sync bottom boundaries.
 					roundOffset -= itemRect.bottom - (popupBottom - roundOffset) + this.getPopupPadding();
 				}
 				offsetTop += roundOffset;
@@ -2435,7 +2450,7 @@ this.BX = this.BX || {};
 		getPopupPadding() {
 			if (!main_core.Type.isNumber(this.popupPadding)) {
 				if (this.subMenuWindow) {
-					const menuContainer = this.subMenuWindow.layout.menuContainer;
+					const menuContainer = this.subMenuWindow.getLayout().menuContainer;
 					this.popupPadding = parseInt(main_core.Dom.style(menuContainer, 'paddingTop'), 10);
 				} else {
 					this.popupPadding = 0;
@@ -2514,12 +2529,8 @@ this.BX = this.BX || {};
 		isFocused() {
 			return this.focused;
 		}
-
-		/**
-		 * @private
-		 */
 		onItemClick(event) {
-			this.onclick.call(this.menuWindow, event, this); // compatibility
+			this.onclick.call(this.menuWindow, event, this);
 		}
 		#handleItemFocus() {
 			this.#justFocused = true;
@@ -2603,7 +2614,7 @@ this.BX = this.BX || {};
 	class MenuNavigation {
 		#menu = null;
 		#enabled = false;
-		#onKeyDownHandler = null;
+		#onKeyDownHandler;
 		#searchBuffer = '';
 		#resetTimer = null;
 		#onTab = null;
@@ -2688,12 +2699,7 @@ this.BX = this.BX || {};
 					}
 				case 'ArrowLeft':
 					{
-						const focusedItem = this.getMenu().getFocusedItem();
-						const parentItem = focusedItem?.getMenuWindow()?.getParentMenuItem();
-						if (parentItem) {
-							parentItem.focus(true);
-							parentItem.closeSubMenu('keyboard');
-						}
+						this.#handleArrowLeft();
 						break;
 					}
 				case 'ArrowRight':
@@ -2717,39 +2723,58 @@ this.BX = this.BX || {};
 				case 'Enter':
 				case 'Space':
 					{
-						const focusedItem = this.getMenu().getFocusedItem();
-						if (focusedItem) {
-							if (focusedItem.hasSubMenu()) {
-								this.#openSubMenuByKeyboard(focusedItem);
-							} else {
-								focusedItem.getContainer().click();
-							}
-						}
+						this.#handleActivationKey();
 						break;
 					}
 				case 'Tab':
 					{
-						if (this.#onTab === null) {
-							const rootMenuWindow = this.getMenu().getRootMenuWindow() || this.getMenu();
-							rootMenuWindow.close();
-						} else {
-							this.#onTab(event, this.#menu);
-						}
+						this.#handleTab(event);
 						break;
 					}
 				default:
 					{
-						if (this.#isTypeaheadEvent(event)) {
-							this.#searchBuffer += event.key;
-							this.focusByText(this.#searchBuffer);
-							clearTimeout(this.#resetTimer);
-							this.#resetTimer = setTimeout(() => {
-								this.#searchBuffer = '';
-							}, 200);
-						}
+						this.#handleTypeahead(event);
 						break;
 					}
 			}
+		}
+		#handleArrowLeft() {
+			const focusedItem = this.getMenu().getFocusedItem();
+			const parentItem = focusedItem?.getMenuWindow()?.getParentMenuItem();
+			if (parentItem) {
+				parentItem.focus(true);
+				parentItem.closeSubMenu('keyboard');
+			}
+		}
+		#handleActivationKey() {
+			const focusedItem = this.getMenu().getFocusedItem();
+			if (!focusedItem) {
+				return;
+			}
+			if (focusedItem.hasSubMenu()) {
+				this.#openSubMenuByKeyboard(focusedItem);
+			} else {
+				focusedItem.getContainer().click();
+			}
+		}
+		#handleTab(event) {
+			if (this.#onTab === null) {
+				const rootMenuWindow = this.getMenu().getRootMenuWindow() || this.getMenu();
+				rootMenuWindow.close();
+				return;
+			}
+			this.#onTab(event, this.#menu);
+		}
+		#handleTypeahead(event) {
+			if (!this.#isTypeaheadEvent(event)) {
+				return;
+			}
+			this.#searchBuffer += event.key;
+			this.focusByText(this.#searchBuffer);
+			clearTimeout(this.#resetTimer);
+			this.#resetTimer = setTimeout(() => {
+				this.#searchBuffer = '';
+			}, 200);
 		}
 		#openSubMenuByKeyboard(item) {
 			if (!item || !item.hasSubMenu()) {
@@ -2800,7 +2825,7 @@ this.BX = this.BX || {};
 				items[0].focus(true);
 				return items[0];
 			}
-			const position = this.getMenuItemPosition(focusedItem.id);
+			const position = this.getMenuItemPosition(focusedItem.getId());
 			if (position === -1) {
 				items[0].focus(true);
 				return items[0];
@@ -2826,7 +2851,7 @@ this.BX = this.BX || {};
 				items[items.length - 1].focus(true);
 				return items[items.length - 1];
 			}
-			const position = this.getMenuItemPosition(focusedItem.id);
+			const position = this.getMenuItemPosition(focusedItem.getId());
 			if (position === -1) {
 				items[items.length - 1].focus(true);
 				return items[items.length - 1];
@@ -2867,7 +2892,7 @@ this.BX = this.BX || {};
 		getMenuItemPosition(itemId) {
 			const items = this.getItems();
 			for (const [i, item] of items.entries()) {
-				if (item.id && item.id === itemId) {
+				if (item.getId() && item.getId() === itemId) {
 					return i;
 				}
 			}
@@ -2883,29 +2908,30 @@ this.BX = this.BX || {};
 	function _classPrivateFieldGet(s, a) { return s.get(_assertClassBrand(s, a)); }
 	function _classPrivateFieldSet(s, a, r) { return s.set(_assertClassBrand(s, a), r), r; }
 	function _assertClassBrand(e, t, n) { if ("function" == typeof e ? e === t : e.has(t)) return arguments.length < 3 ? t : n; throw new TypeError("Private element is not present on this object"); }
-	/**
-	 * @memberof BX.Main
-	 */
-	var _navigation = /*#__PURE__*/new WeakMap();
-	var _focusedItem = /*#__PURE__*/new WeakMap();
-	var _lastInputModality = /*#__PURE__*/new WeakMap();
-	var _ignoreMouseEnter = /*#__PURE__*/new WeakMap();
-	var _Menu_brand = /*#__PURE__*/new WeakSet();
-	let Menu = /*#__PURE__*/function (_EventEmitter) {
-		function Menu(_options) {
+	var _navigation = new WeakMap();
+	var _focusedItem = new WeakMap();
+	var _lastInputModality = new WeakMap();
+	var _ignoreMouseEnter = new WeakMap();
+	var _Menu_brand = new WeakSet();
+	let Menu = function (_EventEmitter) {
+		function Menu(_options, compatBindElement, compatMenuItems, compatParams) {
 			var _this;
 			babelHelpers.classCallCheck(this, Menu);
 			_this = _callSuper(this, Menu);
-			/**
-			 * @private
-			 */
 			_classPrivateMethodInitSpec(_this, _Menu_brand);
+			babelHelpers.defineProperty(_this, "menuItems", []);
+			babelHelpers.defineProperty(_this, "itemsContainer", null);
+			babelHelpers.defineProperty(_this, "parentMenuWindow", null);
+			babelHelpers.defineProperty(_this, "parentMenuItem", null);
 			_classPrivateFieldInitSpec(_this, _navigation, null);
 			_classPrivateFieldInitSpec(_this, _focusedItem, null);
 			_classPrivateFieldInitSpec(_this, _lastInputModality, null);
 			_classPrivateFieldInitSpec(_this, _ignoreMouseEnter, true);
 			_this.setEventNamespace('BX.Main.Menu');
-			let [_id, bindElement, menuItems, params] = arguments;
+			let _id = main_core.Type.isString(_options) ? _options : null;
+			let bindElement = compatBindElement;
+			let menuItems = compatMenuItems;
+			let params = compatParams;
 			if (main_core.Type.isPlainObject(_options) && !bindElement && !menuItems && !params) {
 				params = _options;
 				params.compatibleMode = false;
@@ -2924,16 +2950,7 @@ this.BX = this.BX || {};
 			});
 			_this.id = _id;
 			_this.bindElement = bindElement;
-
-			/**
-			 *
-			 * @type {MenuItem[]}
-			 */
-			_this.menuItems = [];
-			_this.itemsContainer = null;
-			_this.params = params && typeof params === 'object' ? params : {};
-			_this.parentMenuWindow = null;
-			_this.parentMenuItem = null;
+			_this.params = main_core.Type.isObject(params) ? params : {};
 			if (menuItems && main_core.Type.isArray(menuItems)) {
 				for (const menuItem of menuItems) {
 					_this.addMenuItemInternal(menuItem, null);
@@ -2990,6 +3007,16 @@ this.BX = this.BX || {};
 				return this.id;
 			}
 		}, {
+			key: "getParams",
+			value: function getParams() {
+				return this.params;
+			}
+		}, {
+			key: "getLayout",
+			value: function getLayout() {
+				return this.layout;
+			}
+		}, {
 			key: "getNavigation",
 			value: function getNavigation() {
 				return _classPrivateFieldGet(_navigation, this);
@@ -3016,11 +3043,7 @@ this.BX = this.BX || {};
 			}
 		}, {
 			key: "containsTarget",
-			value:
-			/**
-			 * @private
-			 */
-			function containsTarget(target) {
+			value: function containsTarget(target) {
 				const el = this.getPopupWindow().getPopupContainer();
 				if (this.getPopupWindow().isShown() && (target === el || el.contains(target))) {
 					return true;
@@ -3079,17 +3102,13 @@ this.BX = this.BX || {};
 				const itemLayout = menuItem.getLayout();
 				const targetItem = this.getMenuItem(targetItemId);
 				if (targetItem === null) {
-					this.itemsContainer.appendChild(itemLayout.item);
+					main_core.Dom.append(itemLayout.item, this.itemsContainer);
 				} else {
 					const targetLayout = targetItem.getLayout();
-					this.itemsContainer.insertBefore(itemLayout.item, targetLayout.item);
+					main_core.Dom.insertBefore(itemLayout.item, targetLayout.item);
 				}
 				return menuItem;
 			}
-
-			/**
-			 * @private
-			 */
 		}, {
 			key: "addMenuItemInternal",
 			value: function addMenuItemInternal(menuItemJson, targetItemId) {
@@ -3097,7 +3116,8 @@ this.BX = this.BX || {};
 					return null;
 				}
 				if (main_core.Type.isNumber(this.params.menuShowDelay)) {
-					menuItemJson.menuShowDelay = this.params.menuShowDelay;
+					const menuItemOptions = menuItemJson;
+					menuItemOptions.menuShowDelay = this.params.menuShowDelay;
 				}
 				const menuItem = new MenuItem(menuItemJson);
 				menuItem.setMenuWindow(this);
@@ -3111,9 +3131,10 @@ this.BX = this.BX || {};
 			}
 		}, {
 			key: "removeMenuItem",
-			value: function removeMenuItem(itemId, options = {
-				destroyEmptyPopup: true
-			}) {
+			value: function removeMenuItem(itemId, options) {
+				const removeOptions = options ?? {
+					destroyEmptyPopup: true
+				};
 				const item = this.getMenuItem(itemId);
 				if (!item) {
 					return;
@@ -3131,22 +3152,18 @@ this.BX = this.BX || {};
 						const parentMenuItem = menuWindow.getParentMenuItem();
 						if (parentMenuItem) {
 							parentMenuItem.destroySubMenu();
-						} else if (options.destroyEmptyPopup) {
+						} else if (removeOptions.destroyEmptyPopup) {
 							menuWindow.destroy();
 						}
 					}
 				}
-				item.layout.item.parentNode.removeChild(item.layout.item);
-				item.layout = {
-					item: null,
-					text: null
-				};
+				item.removeLayout();
 			}
 		}, {
 			key: "getMenuItem",
 			value: function getMenuItem(itemId) {
 				for (let i = 0; i < this.menuItems.length; i++) {
-					if (this.menuItems[i].id && this.menuItems[i].id === itemId) {
+					if (this.menuItems[i].getId() && this.menuItems[i].getId() === itemId) {
 						return this.menuItems[i];
 					}
 				}
@@ -3162,7 +3179,7 @@ this.BX = this.BX || {};
 			value: function getMenuItemPosition(itemId) {
 				if (itemId) {
 					for (let i = 0; i < this.menuItems.length; i++) {
-						if (this.menuItems[i].id && this.menuItems[i].id === itemId) {
+						if (this.menuItems[i].getId() && this.menuItems[i].getId() === itemId) {
 							return i;
 						}
 					}
@@ -3205,8 +3222,6 @@ this.BX = this.BX || {};
 			animation: 'fading'
 		};
 		const options = Object.assign(defaults, this.params);
-
-		// Override user params
 		options.noAllPaddings = true;
 		options.darkMode = false;
 		options.autoHideHandler = _assertClassBrand(_Menu_brand, this, _handleAutoHide).bind(this);
@@ -3224,8 +3239,6 @@ this.BX = this.BX || {};
 		`;
 		this.itemsContainer = this.layout.itemsContainer;
 		options.content = this.layout.menuContainer;
-
-		// Make internal event handlers first in the queue.
 		options.events = {
 			onBeforeShow: _assertClassBrand(_Menu_brand, this, _handlePopupBeforeShow).bind(this),
 			onShow: _assertClassBrand(_Menu_brand, this, _handlePopupShow).bind(this),
@@ -3285,42 +3298,22 @@ this.BX = this.BX || {};
 	}
 
 	class MenuManager {
-		/**
-		 * @private
-		 */
 		static Data = {};
-
-		/**
-		 * @private
-		 */
 		static currentItem = null;
 		constructor() {
 			throw new Error('You cannot make an instance of MenuManager.');
 		}
-		static show(...args) {
+		static show(options, compatBindElement, compatMenuItems, compatParams) {
 			if (this.currentItem !== null) {
-				this.currentItem.popupWindow.close();
+				this.currentItem.getPopupWindow().close();
 			}
-			this.currentItem = this.create.apply(this, args);
-			this.currentItem.popupWindow.show();
+			this.currentItem = this.create(options, compatBindElement, compatMenuItems, compatParams);
+			this.currentItem.getPopupWindow().show();
 		}
-		static create(options) {
-			let menuId = null;
-
-			// Compatibility
-			const bindElement = arguments[1];
-			const menuItems = arguments[2];
-			const params = arguments[3];
-			if (main_core.Type.isPlainObject(options) && !bindElement && !menuItems && !params) {
-				menuId = options.id;
-				if (!main_core.Type.isStringFilled(menuId)) {
-					throw new Error('BX.Main.Menu.create: "id" parameter is required.');
-				}
-			} else {
-				menuId = options;
-			}
+		static create(options, compatBindElement, compatMenuItems, compatParams) {
+			const menuId = this.resolveMenuId(options, compatBindElement, compatMenuItems, compatParams);
 			if (!this.Data[menuId]) {
-				const menu = new Menu(options, bindElement, menuItems, params);
+				const menu = new Menu(options, compatBindElement, compatMenuItems, compatParams);
 				menu.getPopupWindow().subscribe('onDestroy', () => {
 					MenuManager.destroy(menuId);
 				});
@@ -3328,19 +3321,26 @@ this.BX = this.BX || {};
 			}
 			return this.Data[menuId];
 		}
+		static resolveMenuId(options, compatBindElement, compatMenuItems, compatParams) {
+			if (main_core.Type.isPlainObject(options) && !compatBindElement && !compatMenuItems && !compatParams) {
+				if (!main_core.Type.isStringFilled(options.id)) {
+					throw new Error('BX.Main.Menu.create: "id" parameter is required.');
+				}
+				return options.id;
+			}
+			return options;
+		}
 		static getCurrentMenu() {
 			return this.currentItem;
 		}
 		static getMenuById(id) {
-			return this.Data[id] ? this.Data[id] : null;
+			return this.Data[id] || null;
 		}
-
-		/**
-		 * compatibility
-		 * @private
-		 */
+		static getMenus() {
+			return Object.values(this.Data);
+		}
 		static onPopupDestroy(popupMenuWindow) {
-			this.destroy(popupMenuWindow.id);
+			this.destroy(popupMenuWindow.getId());
 		}
 		static destroy(id) {
 			const menu = this.getMenuById(id);
@@ -3360,65 +3360,49 @@ this.BX = this.BX || {};
 		constructor() {
 			throw new Error('You cannot make an instance of PopupManager.');
 		}
-		static create(options) {
-			let [popupId, bindElement, params] = arguments; // compatible arguments
-
-			let id = popupId;
-			let compatMode = true;
-			if (main_core.Type.isPlainObject(popupId) && !bindElement && !params) {
-				compatMode = false;
-				id = popupId.id;
-				if (!main_core.Type.isStringFilled(id)) {
+		static create(options, compatBindElement, compatParams) {
+			if (main_core.Type.isPlainObject(options) && !compatBindElement && !compatParams) {
+				if (!main_core.Type.isStringFilled(options.id)) {
 					throw new Error('BX.Main.Popup.Manager: "id" parameter is required.');
 				}
+				return this.getPopupById(options.id) ?? PopupManager.#subscribePopup(new Popup(options));
 			}
-			let popupWindow = this.getPopupById(id);
-			if (popupWindow === null) {
-				popupWindow = compatMode ? new Popup(popupId, bindElement, params) : new Popup(options);
-				popupWindow.subscribe('onShow', this.handlePopupShow);
-				popupWindow.subscribe('onClose', this.handlePopupClose);
-			}
+			const id = main_core.Type.isString(options) ? options : null;
+			const popupWindow = id === null ? null : this.getPopupById(id);
+			return popupWindow ?? PopupManager.#subscribePopup(new Popup(id, compatBindElement, compatParams));
+		}
+		static #subscribePopup(popupWindow) {
+			popupWindow.subscribe('onShow', PopupManager.#handlePopupShow);
+			popupWindow.subscribe('onClose', PopupManager.#handlePopupClose);
 			return popupWindow;
 		}
-
-		/**
-		 * @private
-		 */
-		static handleOnAfterInit(event) {
-			event.getTarget().subscribeOnce('onDestroy', this.handlePopupDestroy);
+		static handleOnAfterInit = event => {
+			event.getTarget().subscribeOnce('onDestroy', this.#handlePopupDestroy);
 			this._popups.forEach(popup => {
 				if (popup.getId() === event.getTarget().getId()) {
 					console.error(`Duplicate id (${popup.getId()}) for the BX.Main.Popup instance.`);
 				}
 			});
 			this._popups.push(event.getTarget());
-		}
-
-		/**
-		 * @private
-		 */
-		static handlePopupDestroy(event) {
+		};
+		static #handlePopupDestroy = event => {
+			const destroyedPopup = event.getTarget();
 			this._popups = this._popups.filter(popup => {
-				return popup !== event.getTarget();
+				return popup !== destroyedPopup;
 			});
-		}
-
-		/**
-		 * @private
-		 */
-		static handlePopupShow(event) {
+			if (this._currentPopup === destroyedPopup) {
+				this._currentPopup = null;
+			}
+		};
+		static #handlePopupShow = event => {
 			if (this._currentPopup !== null) {
 				this._currentPopup.close();
 			}
 			this._currentPopup = event.getTarget();
-		}
-
-		/**
-		 * @private
-		 */
-		static handlePopupClose() {
+		};
+		static #handlePopupClose = () => {
 			this._currentPopup = null;
-		}
+		};
 		static getCurrentPopup() {
 			return this._currentPopup;
 		}
@@ -3452,21 +3436,15 @@ this.BX = this.BX || {};
 			return this._popups;
 		}
 	}
-	PopupManager.handlePopupDestroy = PopupManager.handlePopupDestroy.bind(PopupManager);
-	PopupManager.handlePopupShow = PopupManager.handlePopupShow.bind(PopupManager);
-	PopupManager.handlePopupClose = PopupManager.handlePopupClose.bind(PopupManager);
-	PopupManager.handleOnAfterInit = PopupManager.handleOnAfterInit.bind(PopupManager);
 	main_core_events.EventEmitter.subscribe('BX.Main.Popup:onAfterInit', PopupManager.handleOnAfterInit);
 
-	/**
-	 * @deprecated use BX.UI.Button
-	 */
 	class ButtonLink extends Button {
 		constructor(params) {
 			super(params);
+			const customClassName = this.className.length > 0 ? ` ${this.className}` : '';
 			this.buttonNode = main_core.Dom.create('button', {
 				props: {
-					className: 'popup-window-button popup-window-button-link' + (this.className.length > 0 ? ` ${this.className}` : ''),
+					className: `popup-window-button popup-window-button-link${customClassName}`,
 					id: this.id
 				},
 				attrs: {
@@ -3479,9 +3457,6 @@ this.BX = this.BX || {};
 		}
 	}
 
-	/**
-	 * @deprecated use BX.UI.Button
-	 */
 	class CustomButton extends Button {
 		constructor(params) {
 			super(params);
@@ -3496,100 +3471,120 @@ this.BX = this.BX || {};
 		}
 	}
 
-	/**
-	 * @deprecated
-	 */
 	class InputPopup {
+		id;
+		handler;
+		values;
+		pInput;
+		bValues;
+		defaultValue;
+		openTitle;
+		className;
+		noMRclassName;
+		emptyClassName;
+		curInd;
+		bShowed;
+		oPopup;
+		oEC;
 		constructor(params) {
-			this.id = params.id || 'bx-inp-popup-' + Math.round(Math.random() * 1000000);
+			this.id = params.id || `bx-inp-popup-${Math.round(Math.random() * 1_000_000)}`;
 			this.handler = params.handler || false;
 			this.values = params.values || false;
 			this.pInput = params.input;
-			this.bValues = !!this.values;
+			this.bValues = Boolean(this.values);
 			this.defaultValue = params.defaultValue || '';
 			this.openTitle = params.openTitle || '';
 			this.className = params.className || '';
 			this.noMRclassName = params.noMRclassName || 'ec-no-rm';
 			this.emptyClassName = params.noMRclassName || 'ec-label';
-			const _this = this;
 			this.curInd = false;
 			if (this.bValues) {
-				this.pInput.onfocus = this.pInput.onclick = function (e) {
-					if (this.value == _this.defaultValue) {
-						this.value = '';
-						this.className = _this.className;
+				const handleInput = e => {
+					if (this.pInput.value === this.defaultValue) {
+						this.pInput.value = '';
+						this.pInput.className = this.className;
 					}
-					_this.ShowPopup();
+					this.ShowPopup();
 					return e.preventDefault();
 				};
-				this.pInput.onblur = function () {
-					if (_this.bShowed) {
-						setTimeout(function () {
-							_this.ClosePopup(true);
+				this.pInput.onfocus = handleInput;
+				this.pInput.onclick = handleInput;
+				this.pInput.onblur = () => {
+					if (this.bShowed) {
+						setTimeout(() => {
+							this.ClosePopup(true);
 						}, 200);
 					}
-					_this.OnChange();
+					this.OnChange();
 				};
 			} else {
 				this.pInput.className = this.noMRclassName;
 				this.pInput.onblur = this.OnChange.bind(this);
 			}
 		}
+		getValues() {
+			return this.values === false ? [] : this.values;
+		}
 		ShowPopup() {
 			if (this.bShowed) {
 				return;
 			}
-			const _this = this;
 			if (!this.oPopup) {
+				const selectValue = ind => {
+					this.pInput.value = this.getValues()[ind].NAME;
+					this.curInd = ind;
+					this.OnChange();
+					this.ClosePopup(true);
+				};
 				const pWnd = main_core.Dom.create('DIV', {
 					props: {
-						className: 'bxecpl-loc-popup ' + this.className
+						className: `bxecpl-loc-popup ${this.className}`
 					}
 				});
-				for (let i = 0, l = this.values.length; i < l; i++) {
-					const pRow = pWnd.appendChild(main_core.Dom.create('DIV', {
+				const values = this.getValues();
+				for (let i = 0, l = values.length; i < l; i++) {
+					const value = values[i];
+					const pRow = main_core.Dom.create('DIV', {
 						props: {
-							id: 'bxecmr_' + i
+							id: `bxecmr_${i}`
 						},
-						text: this.values[i].NAME,
+						text: value.NAME,
 						events: {
-							mouseover: function () {
+							mouseover() {
 								main_core.Dom.addClass(this, 'bxecplloc-over');
 							},
-							mouseout: function () {
+							mouseout() {
 								main_core.Dom.removeClass(this, 'bxecplloc-over');
 							},
-							click: function () {
-								const ind = this.id.substr('bxecmr_'.length);
-								_this.pInput.value = _this.values[ind].NAME;
-								_this.curInd = ind;
-								_this.OnChange();
-								_this.ClosePopup(true);
+							click() {
+								const ind = this.id.slice('bxecmr_'.length);
+								selectValue(ind);
 							}
 						}
-					}));
-					if (this.values[i].DESCRIPTION) {
-						pRow.title = this.values[i].DESCRIPTION;
+					});
+					main_core.Dom.append(pRow, pWnd);
+					if (value.DESCRIPTION) {
+						pRow.title = value.DESCRIPTION;
 					}
-					if (this.values[i].CLASS_NAME) {
-						main_core.Dom.addClass(pRow, this.values[i].CLASS_NAME);
+					if (value.CLASS_NAME) {
+						main_core.Dom.addClass(pRow, value.CLASS_NAME);
 					}
-					if (this.values[i].URL) {
-						pRow.appendChild(main_core.Dom.create('a', {
+					if (value.URL) {
+						const viewLink = main_core.Dom.create('a', {
 							props: {
-								href: this.values[i].URL,
+								href: value.URL,
 								className: 'bxecplloc-view',
 								target: '_blank',
 								title: this.openTitle
 							}
-						}));
+						});
+						main_core.Dom.append(viewLink, pRow);
 					}
 				}
 				this.oPopup = new Popup(this.id, this.pInput, {
 					autoHide: true,
 					offsetTop: 1,
 					offsetLeft: 0,
-					lightShadow: true,
 					closeByEsc: true,
 					content: pWnd,
 					events: {
@@ -3619,7 +3614,7 @@ this.BX = this.BX || {};
 		OnChange() {
 			let val = this.pInput.value;
 			if (this.bValues) {
-				if (this.pInput.value == '' || this.pInput.value == this.defaultValue) {
+				if (this.pInput.value === '' || this.pInput.value === this.defaultValue) {
 					this.pInput.value = this.defaultValue;
 					this.pInput.className = this.emptyClassName;
 					val = '';
@@ -3627,15 +3622,15 @@ this.BX = this.BX || {};
 					this.pInput.className = '';
 				}
 			}
-			if (isNaN(parseInt(this.curInd)) || this.curInd !== false && val != this.values[this.curInd].NAME) {
+			if (Number.isNaN(Number.parseInt(this.curInd, 10)) || this.curInd !== false && val !== this.getValues()[this.curInd].NAME) {
 				this.curInd = false;
 			} else {
-				this.curInd = parseInt(this.curInd);
+				this.curInd = Number.parseInt(this.curInd, 10);
 			}
 			main_core_events.EventEmitter.emit(this, 'onInputPopupChanged', new main_core_events.BaseEvent({
 				compatData: [this, this.curInd, val]
 			}));
-			if (this.handler && typeof this.handler == 'function') {
+			if (this.handler && main_core.Type.isFunction(this.handler)) {
 				this.handler({
 					ind: this.curInd,
 					value: val
@@ -3644,10 +3639,10 @@ this.BX = this.BX || {};
 		}
 		Set(ind, val, bOnChange) {
 			this.curInd = ind;
-			if (this.curInd !== false) {
-				this.pInput.value = this.values[this.curInd].NAME;
-			} else {
+			if (this.curInd === false) {
 				this.pInput.value = val;
+			} else {
+				this.pInput.value = this.getValues()[this.curInd].NAME;
 			}
 			if (bOnChange !== false) {
 				this.OnChange();
@@ -3655,24 +3650,26 @@ this.BX = this.BX || {};
 		}
 		Get(ind) {
 			let id = false;
-			if (typeof ind == 'undefined') {
-				ind = this.curInd;
-			}
-			if (ind !== false && this.values[ind]) {
-				id = this.values[ind].ID;
+			const index = main_core.Type.isUndefined(ind) ? this.curInd : ind;
+			const value = index === false ? undefined : this.getValues()[index];
+			if (value) {
+				id = value.ID;
 			}
 			return id;
 		}
 		GetIndex(id) {
-			for (let i = 0, l = this.values.length; i < l; i++) {
-				if (this.values[i].ID == id) {
+			const values = this.getValues();
+			for (let i = 0, l = values.length; i < l; i++) {
+				const valueId = values[i].ID;
+				const isSameId = main_core.Type.isNumber(valueId) || main_core.Type.isNumber(id) ? Number(valueId) === Number(id) : valueId === id;
+				if (isSameId) {
 					return i;
 				}
 			}
 			return false;
 		}
 		Deactivate(bDeactivate) {
-			if (this.pInput.value == '' || this.pInput.value == this.defaultValue) {
+			if (this.pInput.value === '' || this.pInput.value === this.defaultValue) {
 				if (bDeactivate) {
 					this.pInput.value = '';
 					this.pInput.className = this.noMRclassName;
@@ -3685,100 +3682,27 @@ this.BX = this.BX || {};
 		}
 	}
 
-	/**
-	 * @deprecated use Menu.Item class instead: import { MenuItem } from 'main.popup'
-	 */
-	class PopupMenuItem extends MenuItem {
-		// No additional functionality, just for compatibility
-	}
+	class PopupMenuItem extends MenuItem {}
 
-	/**
-	 * @deprecated use Menu class instead: import { Menu } from 'main.popup'
-	 */
-	class PopupMenuWindow extends Menu {
-		// No additional functionality, just for compatibility
-	}
+	class PopupMenuWindow extends Menu {}
 
-	/**
-	 * @deprecated use Popup class instead: import { Popup } from 'main.popup'
-	 */
-	class PopupWindow extends Popup {
-		// No additional functionality, just for compatibility
-	}
+	class PopupWindow extends Popup {}
 
-	/**
-	 * @deprecated use BX.UI.Button
-	 */
-	class PopupWindowButton extends Button {
-		// No additional functionality, just for compatibility
-	}
+	class PopupWindowButton extends Button {}
 
-	/**
-	 * @deprecated use BX.UI.Button
-	 */
-	class PopupWindowButtonLink extends ButtonLink {
-		// No additional functionality, just for compatibility
-	}
+	class PopupWindowButtonLink extends ButtonLink {}
 
-	/**
-	 * @deprecated use BX.UI.Button
-	 */
-	class PopupWindowCustomButton extends CustomButton {
-		// No additional functionality, just for compatibility
-	}
-
-	/*
-
-	//ES6
-	import { Popup, PopupManager, CloseIconSize } from 'main.popup';
-	const popup = new Popup();
-	PopupManager.create();
-
-	//ES5
-	var popup = new BX.Main.Popup();
-	BX.Main.PopupManager.create();
-	BX.Main.Popup.CloseIconSize;
-
-	//ES6
-	import { Menu, MenuItem, MenuManager } from 'main.popup';
-	const menu = new Menu();
-	const item = new MenuItem();
-	MenuManager.create();
-
-	//ES5
-	var menu = new BX.Main.Menu();
-	var item = new BX.Main.MenuItem();
-	BX.Main.MenuManager.create();
-
-	 */
+	class PopupWindowCustomButton extends CustomButton {}
 
 	const BX = main_core.Reflection.namespace('BX');
-
-	/** @deprecated use BX.Main.Popup or import { Popup } from 'main.popup' */
 	BX.PopupWindow = Popup;
-
-	/** @deprecated use BX.Main.PopupManager or import { PopupManager } from 'main.popup' */
 	BX.PopupWindowManager = PopupManager;
-
-	/** @deprecated use BX.Main.Menu or import { Menu } from 'main.popup' */
 	BX.PopupMenuWindow = Menu;
-
-	/** @deprecated use BX.Main.MenuManager or import { MenuManager } from 'main.popup' */
 	BX.PopupMenu = MenuManager;
-
-	/** @deprecated use BX.Main.MenuItem or import { MenuItem } from 'main.popup' */
 	BX.PopupMenuItem = MenuItem;
-
-	/** @deprecated use BX.UI.Button */
 	BX.PopupWindowButton = Button;
-
-	/** @deprecated use BX.UI.Button */
 	BX.PopupWindowButtonLink = ButtonLink;
-
-	/** @deprecated use BX.UI.Button */
 	BX.PopupWindowCustomButton = CustomButton;
-
-	/** @deprecated use another API */
 	window.BXInputPopup = InputPopup;
 
 	exports.CloseIconSize = CloseIconSize;
@@ -3796,5 +3720,5 @@ this.BX = this.BX || {};
 	exports.PopupWindowCustomButton = PopupWindowCustomButton;
 	exports.PopupWindowManager = PopupManager;
 
-})(this.BX.Main = this.BX.Main || {}, BX, BX, BX, BX.Event, BX.UI.Accessibility, BX);
+})(this.BX.Main = this.BX.Main || {}, BX, window, BX, BX.Event, BX.UI.Accessibility, BX);
 //# sourceMappingURL=main.popup.bundle.js.map

@@ -1,5 +1,6 @@
 import { Type } from 'main.core';
 import { computed, toValue } from 'ui.vue3';
+
 import { useBlockDiagram } from './block-diagram';
 
 type UseGroupSelectionLogic = {
@@ -39,6 +40,7 @@ export function useGroupSelectionLogic(closeContextMenu, options: UseGroupSelect
 		highlitedBlockIds,
 		setSelectionActive,
 		isSelectionActive,
+		groupDragOffset,
 	} = useBlockDiagram();
 
 	const width = options.defaultBlockSize.width;
@@ -55,6 +57,27 @@ export function useGroupSelectionLogic(closeContextMenu, options: UseGroupSelect
 		const h = block.dimensions?.height || height;
 
 		return { w, h };
+	};
+
+	// A node whose model position is unusable is left out of the bounds: a single non-finite
+	// coordinate would spread NaN over the whole box, and the browser drops such a style outright.
+	const getUsablePosition = (block): ?{ x: number, y: number } => {
+		const position = block.position;
+
+		if (!Type.isObjectLike(position))
+		{
+			return null;
+		}
+
+		const x = Number(position.x);
+		const y = Number(position.y);
+
+		if (!Number.isFinite(x) || !Number.isFinite(y))
+		{
+			return null;
+		}
+
+		return { x, y };
 	};
 
 	const getSelectionBoxPadding = (): PaddingConfig => {
@@ -147,8 +170,15 @@ export function useGroupSelectionLogic(closeContextMenu, options: UseGroupSelect
 			const block = blocks.find((item) => item.id === id);
 			if (block)
 			{
+				const position = getUsablePosition(block);
+
+				if (position === null)
+				{
+					return;
+				}
+
 				hasBlocks = true;
-				const { x, y } = block.position;
+				const { x, y } = position;
 				const { w, h } = getBlockDimensions(block, container);
 
 				minX = Math.min(minX, x);
@@ -164,10 +194,13 @@ export function useGroupSelectionLogic(closeContextMenu, options: UseGroupSelect
 		}
 
 		const padding = getSelectionBoxPadding();
+		// Positions come from the model, which the frame drag leaves untouched until mouseup, so
+		// the box follows the shift the gesture has drawn and stands on the model in between.
+		const { x: dragOffsetX, y: dragOffsetY } = toValue(groupDragOffset);
 
 		return {
-			left: `${minX - padding.left}px`,
-			top: `${minY - padding.top}px`,
+			left: `${minX + dragOffsetX - padding.left}px`,
+			top: `${minY + dragOffsetY - padding.top}px`,
 			width: `${maxX - minX + padding.left + padding.right}px`,
 			height: `${maxY - minY + padding.top + padding.bottom}px`,
 		};

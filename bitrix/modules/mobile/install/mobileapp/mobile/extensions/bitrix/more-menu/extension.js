@@ -75,6 +75,8 @@ jn.define('more-menu', (require, exports, module) => {
 			super(props);
 
 			this.menuNavigator = props.menuNavigator;
+			this.isComponentMounted = false;
+			this.ahaMomentCompletionCallback = null;
 
 			this.state = {
 				menuList: [],
@@ -170,6 +172,8 @@ jn.define('more-menu', (require, exports, module) => {
 
 		componentDidMount()
 		{
+			this.isComponentMounted = true;
+
 			this.loadMenuList(false, true)
 				.then(() => {
 					SearchList.setListeners({
@@ -179,7 +183,7 @@ jn.define('more-menu', (require, exports, module) => {
 						rightButtons: [this.buildMoreButton()],
 					});
 
-					if (this.state.ahaMoment)
+					if (this.isComponentMounted && this.state.ahaMoment)
 					{
 						this.tryToOpenAhaMoment();
 					}
@@ -193,15 +197,47 @@ jn.define('more-menu', (require, exports, module) => {
 
 		componentWillUnmount()
 		{
+			this.isComponentMounted = false;
+			this.ahaMomentCompletionCallback?.();
+			this.ahaMomentCompletionCallback = null;
+
 			BX.removeCustomEvent('onUpdateUserCounters', this.handleUserCountersUpdate);
 			BX.removeCustomEvent('onSetUserCounters', this.handleUserCountersUpdate);
+			BX.removeCustomEvent('BackgroundUIManager::openComponentInAnotherContext', this.showAhaMoment);
 		}
 
 		showAhaMoment = (componentName) => {
-			if (componentName === MORE_MENU_TEST_ID && PageManager.getNavigator().isVisible())
+			if (componentName !== MORE_MENU_TEST_ID)
 			{
-				showAhaMoment(this.state.ahaMoment, this.menuNavigator);
+				return;
 			}
+
+			let isCompleted = false;
+			const onComplete = () => {
+				if (isCompleted)
+				{
+					return;
+				}
+
+				isCompleted = true;
+				if (this.ahaMomentCompletionCallback === onComplete)
+				{
+					this.ahaMomentCompletionCallback = null;
+				}
+
+				BX.postComponentEvent('BackgroundUIManager::onCloseActiveComponent', []);
+			};
+			const canShow = () => !isCompleted;
+			this.ahaMomentCompletionCallback = onComplete;
+
+			if (!PageManager.getNavigator().isVisible())
+			{
+				onComplete();
+
+				return;
+			}
+
+			showAhaMoment(this.state.ahaMoment, this.menuNavigator, onComplete, canShow);
 		};
 
 		tryToOpenAhaMoment = () => {
@@ -368,6 +404,7 @@ jn.define('more-menu', (require, exports, module) => {
 				supportBanners,
 
 				restrictions,
+				personalAccount,
 				helpdeskUrl,
 				counters,
 			} = this.state;
@@ -382,6 +419,8 @@ jn.define('more-menu', (require, exports, module) => {
 				canInvite: restrictions?.canInvite,
 				canUseTelephony: restrictions?.canUseTelephony,
 				shouldShowWhatsNew: restrictions?.shouldShowWhatsNew,
+				canUsePersonalAccount: restrictions?.canUsePersonalAccount,
+				personalAccountCompanies: personalAccount?.companies,
 				helpdeskUrl,
 				counters,
 				onWhatsNewCounterChange: this.handleWhatsNewCounterUpdate,
@@ -590,6 +629,7 @@ jn.define('more-menu', (require, exports, module) => {
 				supportBotId: data.supportBotId || 0,
 				supportBanners: data.supportBanners || null,
 				restrictions: data.restrictions || {},
+				personalAccount: data.personalAccount || null,
 				ahaMoment: data.ahaMoment || null,
 				currentTheme: data.currentTheme || null,
 			};

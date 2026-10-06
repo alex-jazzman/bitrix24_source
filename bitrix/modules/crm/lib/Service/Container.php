@@ -244,7 +244,8 @@ class Container
 		{
 			/** @var Type $type */
 			$type = null;
-			foreach ($this->getDynamicTypesMap()->getTypesCollection() as $typeCandidate)
+			// iterate over a snapshot: the collection iterator is shared, and this lookup can be nested
+			foreach ($this->getDynamicTypesMap()->getTypesCollection()->getAll() as $typeCandidate)
 			{
 				if ($typeCandidate->getEntityTypeId() === $entityTypeId)
 				{
@@ -563,6 +564,11 @@ class Container
 	public function getFilterFactory(): Filter\Factory
 	{
 		return ServiceLocator::getInstance()->get('crm.filter.factory');
+	}
+
+	public function getRelatedEntityFilterRegistry(): Filter\RelatedEntity\Registry
+	{
+		return ServiceLocator::getInstance()->get('crm.filter.relatedEntity.registry');
 	}
 
 	public function getAccounting(): Accounting

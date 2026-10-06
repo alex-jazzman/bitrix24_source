@@ -332,6 +332,7 @@ class Item extends \CCrmDocument implements \IBPWorkflowDocument
 			previousFields: $previousFields,
 			userId: $context->getScope() === Context::SCOPE_AUTOMATION ? 0 : $context->getUserId(),
 			scope: $scope,
+			categoryId: $operation->getItem()->isCategoriesSupported() ? $operation->getItem()->getCategoryId() : null,
 		);
 	}
 

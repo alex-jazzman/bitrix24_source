@@ -2,6 +2,7 @@
 /**
  * @var array $arResult
  * @var CMain $APPLICATION
+ * @var string $componentPath
  */
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 {
@@ -11,22 +12,21 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 \Bitrix\Main\UI\Extension::load([
 	'ui.design-tokens',
 	'voximplant.common',
-	'access',
+	'voximplant.permissions-selector',
 	'sidepanel',
-	'ui.dialogs.messagebox',
 ]);
 
 \Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/css/main/table/style.css');
 ?>
 
-<div id="vi-permissions-edit">
-<form method="POST">
+<div id="vi-permissions-edit" data-testid="vox-perms-root">
+<form method="POST" data-testid="vox-perms-form">
 	<input type="hidden" id="act" value="save" name="act">
 	<?echo bitrix_sessid_post()?>
 	<table class="table-blue-wrapper">
 		<tr>
 			<td>
-				<table class="table-blue bx-vi-js-role-access-table">
+				<table class="table-blue bx-vi-js-role-access-table" data-testid="vox-perms-access-table">
 					<tr>
 						<td class="table-blue-td-title">&nbsp;</td>
 						<td class="table-blue-td-title">&nbsp;</td>
@@ -34,11 +34,11 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 						<td class="table-blue-td-title"></td>
 					</tr>
 					<?foreach ($arResult['ROLE_ACCESS_CODES'] as $roleAccessCode):?>
-						<tr data-access-code="<?=htmlspecialcharsbx($roleAccessCode['ACCESS_CODE'])?>" data-role-id="<?=htmlspecialcharsbx($roleAccessCode['ROLE_ID'])?>">
-							<td class="table-blue-td-name"><?=htmlspecialcharsbx($roleAccessCode['ACCESS_PROVIDER'])?></td>
-							<td class="table-blue-td-param"><?=htmlspecialcharsbx($roleAccessCode['ACCESS_NAME'])?></td>
+						<tr data-access-code="<?=htmlspecialcharsbx($roleAccessCode['ACCESS_CODE'])?>" data-role-id="<?=htmlspecialcharsbx($roleAccessCode['ROLE_ID'])?>" data-testid="vox-perms-access-row-<?=htmlspecialcharsbx($roleAccessCode['ACCESS_CODE'])?>">
+							<td class="table-blue-td-name" data-testid="vox-perms-access-provider"><?=htmlspecialcharsbx($roleAccessCode['ACCESS_PROVIDER'])?></td>
+							<td class="table-blue-td-param" data-testid="vox-perms-access-name"><?=htmlspecialcharsbx($roleAccessCode['ACCESS_NAME'])?></td>
 							<td class="table-blue-td-select">
-									<select class="bx-vi-js-select-role table-blue-select" name="PERMS[<?=htmlspecialcharsbx($roleAccessCode['ACCESS_CODE'])?>]" data-access-code="<?=htmlspecialcharsbx($roleAccessCode['ACCESS_CODE'])?>">
+									<select class="bx-vi-js-select-role table-blue-select" name="PERMS[<?=htmlspecialcharsbx($roleAccessCode['ACCESS_CODE'])?>]" data-access-code="<?=htmlspecialcharsbx($roleAccessCode['ACCESS_CODE'])?>" data-testid="vox-perms-access-role">
 										<?foreach ($arResult['ROLES'] as $role):?>
 											<option title="<?=htmlspecialcharsbx($role['NAME'])?>" value="<?=htmlspecialcharsbx($role['ID'])?>" <?=($role['ID'] == $roleAccessCode['ROLE_ID'] ? 'selected' : '')?>>
 												<?=htmlspecialcharsbx($role['NAME'])?>
@@ -47,38 +47,38 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 									</select>
 							</td>
 							<td class="table-blue-td-action">
-								<span class="bx-vi-js-delete-access table-blue-delete" data-access-code="<?=htmlspecialcharsbx($roleAccessCode['ACCESS_CODE'])?>"></span>
+								<span class="bx-vi-js-delete-access table-blue-delete" data-access-code="<?=htmlspecialcharsbx($roleAccessCode['ACCESS_CODE'])?>" data-testid="vox-perms-access-delete"></span>
 							</td>
 						</tr>
 					<?endforeach;?>
 					<tr class="bx-vi-js-access-table-last-row">
 						<td colspan="4" class="table-blue-td-link">
-								<a class="bx-vi-js-add-access table-blue-link" href="javascript:void(0);"><?=GetMessage('VOXIMPLANT_PERM_ADD_ACCESS_CODE')?></a>
+								<a class="bx-vi-js-add-access table-blue-link" href="javascript:void(0);" data-testid="vox-perms-add-access"><?=GetMessage('VOXIMPLANT_PERM_ADD_ACCESS_CODE')?></a>
 						</td>
 					</tr>
 				</table>
 			</td>
 			<td>
-				<table class="table-blue">
+				<table class="table-blue" data-testid="vox-perms-role-list">
 					<tr>
 						<td colspan="2" class="table-blue-td-title"><?=GetMessage('VOXIMPLANT_PERM_ROLE_LIST')?>:</td>
 					</tr>
 					<?foreach ($arResult['ROLES'] as $role):?>
-						<tr data-role-id="<?=htmlspecialcharsbx($role['ID'])?>">
+						<tr data-role-id="<?=htmlspecialcharsbx($role['ID'])?>" data-testid="vox-perms-role-<?=htmlspecialcharsbx($role['ID'])?>">
 							<td class="table-blue-td-name">
 								<?=htmlspecialcharsbx($role['NAME'])?>
 							</td>
 							<td class="table-blue-td-action">
-								<a class="table-blue-edit" title="<?=GetMessage('VOXIMPLANT_PERM_EDIT')?>" href="<?=$role['EDIT_URL']?>" onclick="BX.SidePanel.Instance.open('<?=$role['EDIT_URL']?>', {cacheable: false}); return false;"></a>
+								<a class="table-blue-edit" data-testid="vox-perms-role-edit" title="<?=GetMessage('VOXIMPLANT_PERM_EDIT')?>" href="<?=$role['EDIT_URL']?>" onclick="BX.SidePanel.Instance.open('<?=$role['EDIT_URL']?>', {cacheable: false}); return false;"></a>
 								<?if($arResult['CAN_EDIT']):?>
-									<span class="table-blue-delete bx-vi-js-delete-role" title="<?=GetMessage('VOXIMPLANT_PERM_DELETE')?>" data-role-id="<?=htmlspecialcharsbx($role['ID'])?>"></span>
+									<span class="table-blue-delete bx-vi-js-delete-role" title="<?=GetMessage('VOXIMPLANT_PERM_DELETE')?>" data-role-id="<?=htmlspecialcharsbx($role['ID'])?>" data-testid="vox-perms-role-delete"></span>
 								<?endif?>
 							</td>
 						</tr>
 					<?endforeach;?>
 					<tr>
 						<td colspan="2" class="table-blue-td-link">
-							<a href="<?=$arResult['ADD_URL']?>" class="table-blue-link" onclick="BX.SidePanel.Instance.open('<?=$arResult['ADD_URL']?>', {cacheable: false}); return false;">
+							<a href="<?=$arResult['ADD_URL']?>" class="table-blue-link" data-testid="vox-perms-role-add" onclick="BX.SidePanel.Instance.open('<?=$arResult['ADD_URL']?>', {cacheable: false}); return false;">
 								<?=GetMessage('VOXIMPLANT_PERM_ADD')?>
 							</a>
 						</td>
@@ -110,17 +110,23 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 </form>
 </div>
 <script>
-	(function()
+	BX.ready(function()
 	{
-		var permissions = new BX.ViPermissionEdit(BX("vi-permissions-edit"));
-	})();
+		new BX.Voximplant.PermissionsSelector({
+			container: BX('vi-permissions-edit'),
+			ajaxUrl: '<?=CUtil::JSEscape($componentPath.'/ajax.php')?>',
+			sessid: '<?=CUtil::JSEscape(bitrix_sessid())?>',
+			providerNames: <?=CUtil::PhpToJSObject($arResult['ACCESS_PROVIDER_NAMES'])?>,
+			useStructureRoles: <?=($arResult['HAS_STRUCTURE_ROLES'] ? 'true' : 'false')?>,
+		});
+	});
 </script>
 
 <script type="text/template" id="bx-vi-new-access-row">
-	<td class="table-blue-td-name">#PROVIDER#</td>
-	<td class="table-blue-td-param">#NAME#</td>
+	<td class="table-blue-td-name" data-testid="vox-perms-access-provider">#PROVIDER#</td>
+	<td class="table-blue-td-param" data-testid="vox-perms-access-name">#NAME#</td>
 	<td class="table-blue-td-select">
-		<select class="bx-vi-js-select-role table-blue-select" name="PERMS[#ACCESS_CODE#]" data-access-code="#ACCESS_CODE#">
+		<select class="bx-vi-js-select-role table-blue-select" name="PERMS[#ACCESS_CODE#]" data-access-code="#ACCESS_CODE#" data-testid="vox-perms-access-role">
 			<?foreach ($arResult['ROLES'] as $role):?>
 				<option title="<?=htmlspecialcharsbx($role['NAME'])?>" value="<?=htmlspecialcharsbx($role['ID'])?>">
 					<?=htmlspecialcharsbx($role['NAME'])?>
@@ -129,7 +135,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 		</select>
 	</td>
 	<td class="table-blue-td-action">
-		<span class="bx-vi-js-delete-access table-blue-delete" data-access-code="#ACCESS_CODE#"></span>
+		<span class="bx-vi-js-delete-access table-blue-delete" data-access-code="#ACCESS_CODE#" data-testid="vox-perms-access-delete"></span>
 	</td>
 </script>
 

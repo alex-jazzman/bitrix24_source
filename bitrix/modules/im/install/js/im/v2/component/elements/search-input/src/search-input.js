@@ -1,5 +1,6 @@
 import { type JsonObject } from 'main.core';
 import { type EventEmitter } from 'main.core.events';
+import { BIcon, Outline } from 'ui.icon-set.api.vue';
 
 import { EventType } from 'im.v2.const';
 import { Utils } from 'im.v2.lib.utils';
@@ -8,11 +9,14 @@ import { Spinner, SpinnerSize, SpinnerColor } from 'im.v2.component.elements.loa
 
 import './search-input.css';
 
+const ICON_SIZE = 24;
+
 // @vue/component
 export const SearchInput = {
 	name: 'SearchInput',
 	components: {
 		Spinner,
+		BIcon,
 	},
 	props: {
 		placeholder: {
@@ -52,6 +56,8 @@ export const SearchInput = {
 	{
 		SpinnerSize: () => SpinnerSize,
 		SpinnerColor: () => SpinnerColor,
+		Outline: () => Outline,
+		ICON_SIZE: () => ICON_SIZE,
 		isEmptyQuery(): boolean
 		{
 			return this.query.length === 0;
@@ -175,7 +181,9 @@ export const SearchInput = {
 			tabindex="-1"
 			:class="{'--has-focus': hasFocus}"
 		>
-			<div v-if="!isLoading" class="bx-im-search-input__search-icon"></div>
+			<div v-if="!isLoading" class="bx-im-search-input__search-icon">
+				<BIcon :name="Outline.SEARCH" :size="ICON_SIZE" />
+			</div>
 			<Spinner 
 				v-if="withLoader && isLoading" 
 				:size="SpinnerSize.XXS" 

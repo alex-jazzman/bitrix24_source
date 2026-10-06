@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
-(function (exports, main_core, ui_notification, ui_vue3, ui_buttons, crm_router, ui_vue3_vuex, ui_bbcode_formatter_htmlFormatter, crm_copilot_callAssessmentSelector, pull_client, ui_iconSet_api_core, ui_vue, im_v2_lib_phone, im_v2_lib_desktopApi) {
+(function (exports, main_core, ui_notification, ui_vue3, ui_buttons, crm_router, ui_vue3_vuex, ui_bbcode_formatter_htmlFormatter, crm_copilot_callAssessmentV2, crm_copilot_callAssessmentSelector, pull_client, ui_iconSet_api_core, ui_vue, im_v2_lib_phone, im_v2_lib_desktopApi) {
 	'use strict';
 
 	function correctCallAssessmentIdOrNull(id) {
@@ -23,6 +23,17 @@ this.BX.Crm = this.BX.Crm || {};
 			prompt: correctStringOrNull(callAssessment?.prompt)
 		};
 	}
+	function prepareCriteria(criteria) {
+		if (!Array.isArray(criteria)) {
+			return [];
+		}
+		return criteria.map(row => ({
+			id: Number(row?.id),
+			title: main_core.Type.isString(row?.title) ? row.title : '',
+			description: main_core.Type.isString(row?.description) ? row.description : '',
+			sort: Number(row?.sort) || 0
+		})).sort((a, b) => a.sort - b.sort);
+	}
 
 	/* eslint no-param-reassign: off */
 
@@ -35,6 +46,8 @@ this.BX.Crm = this.BX.Crm || {};
 			state.callId = options.callId;
 			state.assessment = prepareCallAssessment(callAssessment);
 			state.hasAvailableSelectorItems = options.hasAvailableSelectorItems ?? true;
+			state.isCallScoringV2Enabled = Boolean(options.isCallScoringV2Enabled);
+			state.criteria = prepareCriteria(callAssessment?.criteria);
 		},
 		setCallAssessmentFromSelector(state, selector) {
 			const item = selector.getCurrentCallAssessmentItem();
@@ -42,9 +55,11 @@ this.BX.Crm = this.BX.Crm || {};
 				return;
 			}
 			state.assessment = prepareCallAssessment(item);
+			state.criteria = prepareCriteria(item?.criteria);
 		},
 		setCallAssessment(state, assessment) {
 			state.assessment = prepareCallAssessment(assessment);
+			state.criteria = prepareCriteria(assessment?.criteria);
 		}
 	};
 
@@ -63,6 +78,12 @@ this.BX.Crm = this.BX.Crm || {};
 		},
 		hasAvailableSelectorItems(state) {
 			return state.hasAvailableSelectorItems;
+		},
+		isCallScoringV2Enabled(state) {
+			return state.isCallScoringV2Enabled;
+		},
+		criteria(state) {
+			return state.criteria;
 		},
 		guid(state) {
 			return state.guid;
@@ -138,7 +159,9 @@ this.BX.Crm = this.BX.Crm || {};
 					title: null,
 					prompt: null
 				},
-				hasAvailableSelectorItems: false
+				hasAvailableSelectorItems: false,
+				isCallScoringV2Enabled: false,
+				criteria: []
 			},
 			mutations,
 			getters,
@@ -166,12 +189,9 @@ this.BX.Crm = this.BX.Crm || {};
 				if (!this.isScriptSelected) {
 					return;
 				}
-				const url = `/crm/copilot-call-assessment/details/${this.callAssessment?.id}/`;
-				const options = {
-					width: 700,
-					cacheable: false
-				};
-				void crm_router.Router.openSlider(url, options);
+				void crm_router.Router.Instance.openCallAssessmentSlider(this.callAssessment?.id, {
+					legacyWidth: 700
+				});
 			}
 		},
 		template: `
@@ -421,6 +441,44 @@ this.BX.Crm = this.BX.Crm || {};
 	`
 	};
 
+	const CriteriaList = {
+		name: 'CriteriaList',
+		components: {
+			EmptyState,
+			ScenarioStepView: crm_copilot_callAssessmentV2.ScenarioStepView
+		},
+		computed: {
+			...ui_vue3_vuex.mapGetters(['criteria', 'isScriptSelected']),
+			sortedCriteria() {
+				return [...this.criteria].sort((a, b) => a.sort - b.sort);
+			}
+		},
+		template: `
+		<div class="crm-copilot__call-card-replacement-main">
+			<div class="crm-copilot__call-card-replacement-criteria-wrapper">
+				<div
+					v-if="isScriptSelected"
+					class="crm-call-assessment-v2-scenario-card__list crm-copilot__call-card-replacement-criteria-list"
+				>
+					<ScenarioStepView
+						v-for="(criterion, index) in sortedCriteria"
+						:key="criterion.id"
+						:index="index + 1"
+						:title="criterion.title"
+						:description="criterion.description"
+					/>
+				</div>
+				<EmptyState
+					v-else
+					icon="DocumentIcon"
+					:title="$Bitrix.Loc.getMessage('CRM_COPILOT_CALL_CARD_REPLACEMENT_NOT_RESOLVED_SCRIPT_TITLE')"
+					:description="$Bitrix.Loc.getMessage('CRM_COPILOT_CALL_CARD_REPLACEMENT_NOT_RESOLVED_SCRIPT_DESCRIPTION')"
+				/>
+			</div>
+		</div>
+	`
+	};
+
 	class SelectorLayout {
 		#container;
 		#titleNode;
@@ -518,10 +576,12 @@ this.BX.Crm = this.BX.Crm || {};
 		components: {
 			ScriptSelector,
 			Prompt,
+			CriteriaList,
 			UpdateScriptButton: UpdateScript,
 			AllScriptsButton: AllScripts,
 			EmptyState
 		},
+		computed: ui_vue3_vuex.mapGetters(['hasAvailableSelectorItems', 'isCallScoringV2Enabled']),
 		methods: {
 			emptyStateTitle() {
 				return this.$Bitrix.Loc.getMessage('CRM_COPILOT_CALL_CARD_REPLACEMENT_NO_AVAILABLE_SCRIPTS_TITLE');
@@ -533,12 +593,12 @@ this.BX.Crm = this.BX.Crm || {};
 				return message;
 			}
 		},
-		computed: ui_vue3_vuex.mapGetters(['hasAvailableSelectorItems']),
 		template: `
 		<div class="crm-copilot__call-card-replacement">
 			<div v-if="hasAvailableSelectorItems" class="crm-copilot__call-card-replacement-content">
 				<ScriptSelector />
-				<Prompt />
+				<CriteriaList v-if="isCallScoringV2Enabled" />
+				<Prompt v-else />
 			</div>
 			<EmptyState
 				v-else
@@ -588,7 +648,8 @@ this.BX.Crm = this.BX.Crm || {};
 			return new Controller().resolveCallAssessment(callId).then(response => {
 				const {
 					callAssessment,
-					hasAvailableSelectorItems
+					hasAvailableSelectorItems,
+					isCallScoringV2Enabled
 				} = response?.data ?? {};
 				if (!callAssessment) {
 					return null;
@@ -596,7 +657,8 @@ this.BX.Crm = this.BX.Crm || {};
 				const replacement = new CallCardReplacementApp({
 					hasAvailableSelectorItems,
 					callAssessment,
-					callId
+					callId,
+					isCallScoringV2Enabled: Boolean(isCallScoringV2Enabled)
 				});
 				const tabTitle = main_core.Loc.getMessage('CRM_COPILOT_CALL_CARD_REPLACEMENT_TAB_TITLE');
 				return callView.addTab(tabTitle).then(tab => {
@@ -610,5 +672,5 @@ this.BX.Crm = this.BX.Crm || {};
 	exports.CallCardIntegrator = CallCardIntegrator;
 	exports.CallCardReplacementApp = CallCardReplacementApp;
 
-})(this.BX.Crm.Copilot = this.BX.Crm.Copilot || {}, BX, BX, BX.Vue3, BX.UI, BX.Crm, BX.Vue3.Vuex, BX.UI.BBCode.Formatter, BX.Crm.Copilot, BX, BX.UI.IconSet, BX, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib);
+})(this.BX.Crm.Copilot = this.BX.Crm.Copilot || {}, BX, BX.UI.Notification, BX.Vue3, BX.UI, BX.Crm, BX.Vue3.Vuex, BX.UI.BBCode.Formatter, BX.Crm.Copilot, BX.Crm.Copilot, BX, BX.UI.IconSet, BX, BX.Messenger.v2.Lib, BX.Messenger.v2.Lib);
 //# sourceMappingURL=index.bundle.js.map

@@ -32,7 +32,7 @@ export class MassconnectForm
 
 	permissions: MassconnectPermissions = {
 		allowedLevels: null,
-		canEditCrmIntegration: null,
+		canViewMailboxList: false,
 	};
 
 	constructor(options: MassconnectFormOptions = {})

@@ -11,7 +11,7 @@ jn.define('disk/move', (require, exports, module) => {
 	const { selectById } = require('disk/statemanager/redux/slices/files/selector');
 	const { selectById: selectStorageById } = require('disk/statemanager/redux/slices/storages');
 
-	const { showToast } = require('toast');
+	const { showErrorToast, showToast } = require('toast');
 	const { openFolder } = require('disk/opener/folder');
 	const { fetchObjectWithRights } = require('disk/rights');
 
@@ -51,17 +51,38 @@ jn.define('disk/move', (require, exports, module) => {
 
 	async function finalizeMove(objectId, targetId, openFolderOptions)
 	{
-		if (objectId === targetId)
+		if (Number(objectId) === Number(targetId))
 		{
+			showMoveFolderToItselfToast(openFolderOptions.parentWidget);
+
 			return;
 		}
 
 		const movedObject = selectById(store.getState(), objectId);
+		if (!movedObject)
+		{
+			return;
+		}
 
 		const target = await fetchObjectWithRights(targetId);
 
-		if (!target || movedObject.parentId === targetId)
+		if (!target || Number(movedObject.parentId) === Number(targetId))
 		{
+			return;
+		}
+
+		const isTargetNested = await isTargetNestedInMovedFolder(movedObject, target);
+		if (isTargetNested === null)
+		{
+			showErrorToast({}, openFolderOptions.parentWidget);
+
+			return;
+		}
+
+		if (isTargetNested)
+		{
+			showMoveFolderToItselfToast(openFolderOptions.parentWidget);
+
 			return;
 		}
 
@@ -110,6 +131,51 @@ jn.define('disk/move', (require, exports, module) => {
 				},
 			}),
 		);
+	}
+
+	function showMoveFolderToItselfToast(parentWidget)
+	{
+		showToast({
+			message: Loc.getMessage('M_DISK_MOVE_FOLDER_TO_ITSELF_TOAST_MESSAGE'),
+		}, parentWidget);
+	}
+
+	async function isTargetNestedInMovedFolder(movedObject, target)
+	{
+		if (!movedObject.isFolder)
+		{
+			return false;
+		}
+
+		const movedObjectId = Number(movedObject.id);
+		const checkedIds = new Set();
+		let parentId = Number(target.parentId);
+
+		while (parentId > 0)
+		{
+			if (checkedIds.has(parentId))
+			{
+				return null;
+			}
+
+			if (parentId === movedObjectId)
+			{
+				return true;
+			}
+
+			checkedIds.add(parentId);
+
+			const parent = selectById(store.getState(), parentId)
+				?? await fetchObjectWithRights(parentId);
+			if (!parent)
+			{
+				return null;
+			}
+
+			parentId = Number(parent.parentId);
+		}
+
+		return parentId === 0 ? false : null;
 	}
 
 	module.exports = { moveObject };

@@ -29,10 +29,6 @@ export const SidebarFooter = {
 		{
 			return Boolean(this.state?.permissions?.canImport);
 		},
-		isRecycleBinActive(): boolean
-		{
-			return Boolean(this.state?.selectedRecycleBinView);
-		},
 		isCollapsed(): boolean
 		{
 			return Boolean(this.state?.sidebarCollapsed);
@@ -40,10 +36,6 @@ export const SidebarFooter = {
 		importLabel(): string
 		{
 			return Loc.getMessage('NOTE_SIDEBAR_IMPORT_COLLECTION_MENU') || '';
-		},
-		recycleBinLabel(): string
-		{
-			return Loc.getMessage('NOTE_SIDEBAR_RECYCLE_BIN') || '';
 		},
 		permissionsLabel(): string
 		{
@@ -70,6 +62,14 @@ export const SidebarFooter = {
 		themeIconName(): string
 		{
 			return this.isDarkTheme ? 'o-sun' : 'o-moon';
+		},
+		archiveLabel(): string
+		{
+			return Loc.getMessage('NOTE_SIDEBAR_ARCHIVE') || '';
+		},
+		recycleBinLabel(): string
+		{
+			return Loc.getMessage('NOTE_SIDEBAR_RECYCLE_BIN') || '';
 		},
 		themeLabel(): string
 		{
@@ -102,13 +102,6 @@ export const SidebarFooter = {
 			catch (error)
 			{
 				console.error('note.sidebar: failed to open import dialog', error);
-			}
-		},
-		onRecycleBin(): void
-		{
-			if (typeof this.actions?.navigateToRecycleBin === 'function')
-			{
-				this.actions.navigateToRecycleBin();
 			}
 		},
 		onToggleCollapsed(): void
@@ -147,16 +140,31 @@ export const SidebarFooter = {
 	},
 	template: `
 		<footer class="sidebar-footer" :class="{ 'is-collapsed': isCollapsed }">
+			<!-- On a phone these two are icons down here instead of full-width rows above: two rows of the
+			     panel is a lot of a screen that short, and the footer strip carries nothing else there. -->
 			<button
+				v-if="isMobile"
 				type="button"
 				class="sidebar-footer__btn"
-				:class="{ 'is-active': isRecycleBinActive }"
+				:class="{ 'is-active': state.selectedArchiveView }"
+				:title="archiveLabel"
+				:aria-label="archiveLabel"
+				data-testid="note-sidebar-archive"
+				@click="actions.navigateToArchive()"
+			>
+				<BIcon class="sidebar-footer__icon" name="o-box-with-lid" :size="24" />
+			</button>
+			<button
+				v-if="isMobile"
+				type="button"
+				class="sidebar-footer__btn"
+				:class="{ 'is-active': state.selectedRecycleBinView }"
 				:title="recycleBinLabel"
 				:aria-label="recycleBinLabel"
-				:aria-pressed="isRecycleBinActive.toString()"
-				@click="onRecycleBin"
+				data-testid="note-sidebar-recyclebin"
+				@click="actions.navigateToRecycleBin()"
 			>
-				<BIcon class="sidebar-footer__icon" name="o-trashcan" :size="26" />
+				<BIcon class="sidebar-footer__icon" name="o-trashcan" :size="24" />
 			</button>
 			<button
 				v-if="canEditGlobalPermissions && !isMobile"
@@ -164,9 +172,10 @@ export const SidebarFooter = {
 				class="sidebar-footer__btn"
 				:title="permissionsLabel"
 				:aria-label="permissionsLabel"
+				data-testid="note-sidebar-permissions"
 				@click="onOpenPermissions"
 			>
-				<BIcon class="sidebar-footer__icon" name="o-settings" :size="26" />
+				<BIcon class="sidebar-footer__icon" name="o-settings" :size="24" />
 			</button>
 			<button
 				v-if="canImport && !isMobile"
@@ -174,9 +183,10 @@ export const SidebarFooter = {
 				class="sidebar-footer__btn"
 				:title="importLabel"
 				:aria-label="importLabel"
+				data-testid="note-sidebar-import"
 				@click="openImportDialog"
 			>
-				<BIcon class="sidebar-footer__icon" name="o-share" :size="26" />
+				<BIcon class="sidebar-footer__icon" name="o-download" :size="24" />
 			</button>
 			<button
 				v-if="hasThemeToggle"
@@ -185,9 +195,10 @@ export const SidebarFooter = {
 				:title="themeLabel"
 				:aria-label="themeLabel"
 				:aria-pressed="isDarkTheme.toString()"
+				data-testid="note-sidebar-theme"
 				@click="onToggleTheme"
 			>
-				<BIcon class="sidebar-footer__icon" :name="themeIconName" :size="26" />
+				<BIcon class="sidebar-footer__icon" :name="themeIconName" :size="24" />
 			</button>
 			<button
 				v-if="!isMobile"
@@ -196,9 +207,10 @@ export const SidebarFooter = {
 				:title="toggleLabel"
 				:aria-label="toggleLabel"
 				:aria-pressed="isCollapsed.toString()"
+				data-testid="note-sidebar-collapse"
 				@click="onToggleCollapsed"
 			>
-				<BIcon class="sidebar-footer__icon" :name="toggleIconName" :size="26" />
+				<BIcon class="sidebar-footer__icon" :name="toggleIconName" :size="24" />
 			</button>
 		</footer>
 	`,

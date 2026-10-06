@@ -3,7 +3,7 @@ import { defineStore } from 'ui.vue3.pinia';
 import { type Params as CoreParams } from 'socialnetwork.v2.core';
 import { type ProjectModel } from 'socialnetwork.v2.model.project';
 
-import { TYPES_PROJECT_WIZARD_ACTION } from './const';
+import { TYPES_PROJECT_WIZARD_ACTION, isCreateProjectWizardAction } from './const';
 import { type InterfaceModel } from './types';
 
 export const useInterfaceStore = defineStore('interface', {
@@ -13,6 +13,7 @@ export const useInterfaceStore = defineStore('interface', {
 		action: '',
 		isAccessRestricted: false,
 		loading: false,
+		scrollToStartupTool: false,
 		validation: {
 			title: {
 				invalid: false,
@@ -30,14 +31,7 @@ export const useInterfaceStore = defineStore('interface', {
 		},
 	}),
 	getters: {
-		isActionCreate: (state): boolean => {
-			const action = state.action;
-			const isActionFalsy = !action;
-			const isActionCreateDirect = action === TYPES_PROJECT_WIZARD_ACTION.CREATE;
-			const isActionCreateNew = isActionCreateDirect || isActionFalsy;
-
-			return isActionCreateNew;
-		},
+		isActionCreate: (state): boolean => isCreateProjectWizardAction(state.action),
 		isActionUpdate: (state): boolean => state.action === TYPES_PROJECT_WIZARD_ACTION.UPDATE,
 		isActionCopy: (state): boolean => state.action === TYPES_PROJECT_WIZARD_ACTION.COPY,
 		wizardValidation: (state) => {
@@ -55,6 +49,7 @@ export const useInterfaceStore = defineStore('interface', {
 				action: params.action || '',
 				currentUserId: params.currentUserId,
 				isAccessRestricted: params.isAccessRestricted,
+				scrollToStartupTool: params.scrollToStartupTool === true,
 			});
 		},
 		setValidation(field: $Keys<ProjectModel>, props: { [key: string]: boolean }): void

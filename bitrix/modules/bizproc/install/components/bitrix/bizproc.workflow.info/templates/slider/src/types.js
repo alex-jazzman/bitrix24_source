@@ -5,6 +5,7 @@ export type TaskField = {
 	Type: string,
 	Required: boolean,
 	Multiple: boolean,
+	Description?: string,
 };
 
 export type TaskFieldError = {

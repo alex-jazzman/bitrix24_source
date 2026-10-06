@@ -1,6 +1,6 @@
 import { ajax } from 'main.core';
 
-import { type FullReport, type FullReportCreate } from './types';
+import { type FullReport, type FullReportCreate, type DiscussResult } from './types';
 
 const normalize = (raw: ?Object): ?FullReport => {
 	if (!raw)
@@ -99,6 +99,18 @@ class FullReportService
 		});
 
 		return Boolean(response?.data);
+	}
+
+	async discuss(reportId: number): Promise<DiscussResult>
+	{
+		const response = await ajax.runAction('timeman.V2.ReportDiscussion.discuss', {
+			json: { reportId },
+		});
+
+		return {
+			dialogId: response?.data?.dialogId ?? '',
+			created: Boolean(response?.data?.created),
+		};
 	}
 }
 

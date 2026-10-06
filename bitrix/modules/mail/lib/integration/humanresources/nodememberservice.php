@@ -9,6 +9,7 @@ use Bitrix\HumanResources\Builder\Structure\Filter\NodeFilter;
 use Bitrix\HumanResources\Builder\Structure\Filter\NodeMemberFilter;
 use Bitrix\HumanResources\Builder\Structure\Filter\SelectionCondition\Node\NodeAccessFilter;
 use Bitrix\HumanResources\Builder\Structure\NodeMemberDataBuilder;
+use Bitrix\HumanResources\Contract\Service\NodeMemberService as NodeMemberServiceContract;
 use Bitrix\HumanResources\Enum\DepthLevel;
 use Bitrix\HumanResources\Service\Container;
 use Bitrix\HumanResources\Type\NodeEntityType;
@@ -17,6 +18,8 @@ use Bitrix\Main\Loader;
 
 class NodeMemberService
 {
+	private const PAGE_SIZE = 500;
+
 	/**
 	 * @param $departmentIds array<int>}
 	 *
@@ -66,6 +69,35 @@ class NodeMemberService
 	}
 
 	/**
+	 * Returns member user IDs of the given departments (flat, no sub-departments), without name/avatar.
+	 *
+	 * @param int[] $departmentIds
+	 * @return int[]
+	 */
+	public static function getMemberIdsByDepartmentIds(array $departmentIds): array
+	{
+		if (!Loader::includeModule('humanresources'))
+		{
+			return [];
+		}
+
+		$members = (new NodeMemberDataBuilder())
+			->addFilter(
+				new NodeMemberFilter(
+					nodeFilter: new NodeFilter(
+						idFilter: IdFilter::fromIds(array_map('intval', $departmentIds)),
+						entityTypeFilter: NodeTypeFilter::fromNodeType(NodeEntityType::DEPARTMENT),
+						depthLevel: 0,
+					),
+				),
+			)
+			->getAll()
+		;
+
+		return array_values(array_unique($members->getEntityIds()));
+	}
+
+	/**
 	 * @param int[] $departmentIds
 	 * @return int[]
 	 */
@@ -90,6 +122,64 @@ class NodeMemberService
 		;
 
 		return array_values(array_unique($members->getEntityIds()));
+	}
+
+	/**
+	 * @param int[] $departmentIds
+	 * @return \Generator<int>
+	 */
+	public static function getPagedMemberIdsByDepartmentIds(
+		array $departmentIds,
+		bool $withSubDepartments = false,
+	): \Generator
+	{
+		if (!Loader::includeModule('humanresources'))
+		{
+			return;
+		}
+
+		yield from self::iteratePagedMemberIds(
+			Container::getNodeMemberService(),
+			array_values(array_unique(array_map('intval', $departmentIds))),
+			$withSubDepartments,
+			self::PAGE_SIZE,
+		);
+	}
+
+	/**
+	 * @param int[] $departmentIds
+	 * @return \Generator<int>
+	 */
+	private static function iteratePagedMemberIds(
+		NodeMemberServiceContract $nodeMemberService,
+		array $departmentIds,
+		bool $withSubDepartments,
+		int $pageSize,
+	): \Generator
+	{
+		foreach ($departmentIds as $departmentId)
+		{
+			$offset = 0;
+			do
+			{
+				$members = $nodeMemberService->getPagedEmployees(
+					$departmentId,
+					$withSubDepartments,
+					$offset,
+					$pageSize,
+					true,
+				);
+
+				foreach ($members->getEntityIds() as $userId)
+				{
+					yield (int)$userId;
+				}
+
+				$memberCount = $members->count();
+				$offset += $pageSize;
+			}
+			while ($memberCount === $pageSize);
+		}
 	}
 
 	public static function filterUsersByDepartmentIds(

@@ -2,9 +2,9 @@
 if (!empty($arResult["ERROR_MESSAGE"])):
 	ShowError($arResult["ERROR_MESSAGE"]);
 endif;
-global $by, $order; 
+global $by, $order;
 
-?><?$APPLICATION->IncludeComponent(
+?><section aria-label="<?= htmlspecialcharsbx(GetMessage("BPADH_GRID_ARIA_LABEL")) ?>"><?$APPLICATION->IncludeComponent(
 	"bitrix:main.interface.grid",
 	"",
 	array(
@@ -27,4 +27,4 @@ global $by, $order;
 	),
 	($this->__component->__parent ? $this->__component->__parent : $component)
 );
-?>
+?></section>

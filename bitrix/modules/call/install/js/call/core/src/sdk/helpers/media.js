@@ -1,11 +1,8 @@
-import { CallSettingsManager } from 'call.lib.settings-manager';
-
 import { Hardware } from '../../call_hardware';
 
 // TODO: remove direct dependency on singletons, pass as parameters
 export const isNoiseSuppressionInputTrackOff = () => {
-	return CallSettingsManager.noiseSuppressionEnabled
-		&& Hardware.noiseSuppressionInputStream
+	return Hardware.noiseSuppressionInputStream
 		&& Hardware.noiseSuppressionInputStream.getAudioTracks().length > 0
 		&& Hardware.noiseSuppressionInputStream.getAudioTracks()[0].readyState !== 'live';
 };

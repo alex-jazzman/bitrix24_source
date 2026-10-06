@@ -56,6 +56,15 @@ jn.define('disk/file-grid/navigation/src/more-menu', (require, exports, module) 
 
 		/**
 		 * @public
+		 * @param {Boolean} isASC
+		 */
+		setIsASC(isASC)
+		{
+			this.isASC = isASC;
+		}
+
+		/**
+		 * @public
 		 * @param {Boolean} enableFolderCreation
 		 */
 		setCanCreateFolder(enableFolderCreation)

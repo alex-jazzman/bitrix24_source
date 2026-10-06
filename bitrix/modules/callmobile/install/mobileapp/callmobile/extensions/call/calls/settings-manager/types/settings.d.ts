@@ -8,4 +8,5 @@ export type CallSettingsType = {
 	gridViewEnabled?: boolean,
 	callBalancerUrl?: string,
 	callInvitePeriod?: number,
+	syncCallInvitePeriod?: number,
 };

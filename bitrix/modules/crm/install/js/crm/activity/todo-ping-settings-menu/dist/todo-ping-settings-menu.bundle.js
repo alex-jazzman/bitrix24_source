@@ -4,16 +4,16 @@ this.BX.Crm = this.BX.Crm || {};
 (function (exports, main_core) {
 	'use strict';
 
+	/* eslint-disable no-undef -- Flow type aliases in JS source are reported by chef lint. */
 	const MENU_ITEM_CLASS_ACTIVE = 'menu-popup-item-accept';
 	const MENU_ITEM_CLASS_INACTIVE = 'menu-popup-item-none';
 	const SAVE_OFFSETS_REQUEST_DELAY = 750;
 	class TodoPingSettingsMenu {
-		#entityTypeId = null;
 		#settings = null;
 		#selectedOffsets = null;
 		#isLoadingMenuItem = false;
+		#hint = null;
 		constructor(params) {
-			this.#entityTypeId = params.entityTypeId;
 			this.#settings = params.settings;
 			if (!main_core.Type.isStringFilled(this.#settings.optionName)) {
 				throw new Error('Option name are not defined.');
@@ -63,7 +63,8 @@ this.BX.Crm = this.BX.Crm || {};
 			this.#isLoadingMenuItem = true;
 			if (this.#selectedOffsets.includes(offset)) {
 				if (this.#selectedOffsets.length === 1) {
-					BX.UI.Hint.show(item.getContainer(), main_core.Loc.getMessage('CRM_ACTIVITY_TODO_PING_SETTINGS_MENU_ITEM_TOOLTIP'));
+					event.stopPropagation();
+					this.#showHint(item);
 					this.#isLoadingMenuItem = false;
 					return;
 				}
@@ -82,6 +83,21 @@ this.BX.Crm = this.BX.Crm || {};
 				BX.userOptions.save('crm', this.#settings.optionName, 'offsets', this.#selectedOffsets.join(','));
 				this.#isLoadingMenuItem = false;
 			}, SAVE_OFFSETS_REQUEST_DELAY);
+		}
+		#showHint(item) {
+			const hint = this.#getHint();
+			hint.show(item.getContainer(), main_core.Loc.getMessage('CRM_ACTIVITY_TODO_PING_SETTINGS_MENU_ITEM_TOOLTIP'));
+		}
+		#getHint() {
+			if (this.#hint === null) {
+				this.#hint = BX.UI.Hint.createInstance({
+					id: 'crm-activity-todo-ping-settings-menu-hint',
+					popupParameters: {
+						autoHide: true
+					}
+				});
+			}
+			return this.#hint;
 		}
 	}
 

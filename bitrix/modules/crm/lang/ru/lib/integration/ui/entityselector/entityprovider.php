@@ -1,0 +1,3 @@
+<?php
+$MESS["CRM_ENTITY_SELECTOR_ALL_TYPE_ITEM"] = "#TYPE#: все";
+$MESS["CRM_ENTITY_SELECTOR_UNBOUND_ITEM"] = "Без привязки к CRM";

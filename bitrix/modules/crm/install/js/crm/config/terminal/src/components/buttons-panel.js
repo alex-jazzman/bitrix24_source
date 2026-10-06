@@ -39,7 +39,7 @@ export const ButtonsPanel = {
 	},
 
 	template: `
-		<div :class="buttonsPanelClass">
+		<div :class="buttonsPanelClass" :inert="!isSettingsChanged">
 			<div class="ui-button-panel ui-button-panel-align-center">
 				<button
 					@click="save"
@@ -47,12 +47,14 @@ export const ButtonsPanel = {
 				>
 					{{ $Bitrix.Loc.getMessage('CRM_CFG_TERMINAL_SETTINGS_SAVE_BTN') }}
 				</button>
-				<a
+				<button
+					type="button"
+					data-testid="terminal-settings-cancel-btn"
 					@click="cancel"
 					class="ui-btn ui-btn-link"
 				>
 					{{ $Bitrix.Loc.getMessage('CRM_CFG_TERMINAL_SETTINGS_CANCEL_BTN') }}
-				</a>
+				</button>
 			</div>
 		</div>
 	`,

@@ -14,6 +14,8 @@ jn.define('user-profile/common-tab/src/block/department/view', (require, exports
 		UserDepartmentSlider = require('intranet/user-department-slider').UserDepartmentSlider;
 	}
 
+	const transparent = '#00000000';
+
 	/**
 	 * @typedef {Object} DepartmentProps
 	 * @property {string} [testId]
@@ -55,6 +57,9 @@ jn.define('user-profile/common-tab/src/block/department/view', (require, exports
 				chevron: true,
 				withPressed: true,
 				onClick: this.onClick,
+				style: {
+					backgroundColor: transparent,
+				},
 			});
 		}
 

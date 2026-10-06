@@ -17,6 +17,7 @@ $MESS["CRM_TYPE_TYPE_IS_OBSERVERS_ENABLED_TITLE"] = "Поле \"Наблюдат
 $MESS["CRM_TYPE_TYPE_IS_RECURRING_ENABLED_TITLE"] = "Поле \"Регулярность\"";
 $MESS["CRM_TYPE_TYPE_IS_RECYCLEBIN_ENABLED_TITLE"] = "Использовать корзину";
 $MESS["CRM_TYPE_TYPE_IS_COUNTERS_ENABLED_TITLE"] = "Использовать счетчики";
+$MESS["CRM_TYPE_TYPE_IS_COUNTERS_ENABLED_TITLE_MSGVER_1"] = "Использовать режим просмотра Дела и счётчики";
 $MESS["CRM_TYPE_TYPE_IS_AUTOMATION_ENABLED_TITLE"] = "Использовать в смарт-процессе роботы и триггеры";
 $MESS["CRM_TYPE_TYPE_IS_BIZ_PROC_ENABLED_TITLE"] = "Использовать в смарт-процессе дизайнер бизнес-процессов";
 $MESS["CRM_TYPE_TYPE_IS_SET_OPEN_PERMISSIONS_TITLE"] = "Делать новые воронки доступными для всех";

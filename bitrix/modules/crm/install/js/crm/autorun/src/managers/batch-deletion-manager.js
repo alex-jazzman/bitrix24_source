@@ -9,16 +9,19 @@ import { BatchManager } from './batch-manager';
  */
 export class BatchDeletionManager extends BatchManager
 {
-	static messages = {
-		// default messages, you can override them via settings.messages
-		title: Loc.getMessage('CRM_AUTORUN_BATCH_DELETE_TITLE'), // default message for all entity types
-		confirmation: Loc.getMessage('CRM_AUTORUN_BATCH_DELETE_CONFIRMATION'),
-		confirmationTitle: Loc.getMessage('CRM_AUTORUN_BATCH_DELETE_CONFIRMATION_TITLE'), // default message for all entity types
-		confirmationYesCaption: Loc.getMessage('CRM_AUTORUN_BATCH_DELETE_CONFIRMATION_YES_CAPTION'),
-		summaryCaption: Loc.getMessage('CRM_AUTORUN_BATCH_DELETE_SUMMARY_CAPTION'),
-		summarySucceeded: Loc.getMessage('CRM_AUTORUN_BATCH_DELETE_SUMMARY_SUCCEEDED'),
-		summaryFailed: Loc.getMessage('CRM_AUTORUN_BATCH_DELETE_SUMMARY_FAILED'),
-	};
+	static get messages()
+	{
+		return {
+			// default messages, you can override them via settings.messages
+			title: Loc.getMessage('CRM_AUTORUN_BATCH_DELETE_TITLE'), // default message for all entity types
+			confirmation: Loc.getMessage('CRM_AUTORUN_BATCH_DELETE_CONFIRMATION'),
+			confirmationTitle: Loc.getMessage('CRM_AUTORUN_BATCH_DELETE_CONFIRMATION_TITLE'), // default message for all entity types
+			confirmationYesCaption: Loc.getMessage('CRM_AUTORUN_BATCH_DELETE_CONFIRMATION_YES_CAPTION'),
+			summaryCaption: Loc.getMessage('CRM_AUTORUN_BATCH_DELETE_SUMMARY_CAPTION'),
+			summarySucceeded: Loc.getMessage('CRM_AUTORUN_BATCH_DELETE_SUMMARY_SUCCEEDED'),
+			summaryFailed: Loc.getMessage('CRM_AUTORUN_BATCH_DELETE_SUMMARY_FAILED'),
+		};
+	}
 
 	static items = {};
 

@@ -39,6 +39,8 @@ jn.define('vibecode/catalog/src/renderer', (require, exports, module) => {
 	const { VibeCodeCatalogSearchController } = require('vibecode/catalog/src/search-controller');
 	const { normalizePositiveInteger } = require('vibecode/catalog/src/utils');
 
+	const STATEFUL_LIST_AJAX_RENDER_TYPE = 'ajax';
+
 	class VibeCodeCatalogRenderer extends LayoutComponent
 	{
 		constructor(props)
@@ -55,11 +57,19 @@ jn.define('vibecode/catalog/src/renderer', (require, exports, module) => {
 			this.statefulListRef = null;
 			this.statefulListCacheName = this.provider.getCacheName();
 			this.statefulListReloadToken = 0;
+			this.newAppsCount = 0;
+			this.newAppsCountRequest = null;
+			const initialSearchQuery = this.searchController.getInitialSearchQuery(props);
+			// a catalog opened with a search is not a fresh open: the switch has nothing to offer
+			// here, and clearing that query must not hand the attempt back
+			this.autoSwitchDone = initialSearchQuery !== '';
+			this.userPickedState = false;
+			this.newAppsViewSession = null;
 			this.state = {
 				listData: this.prepareInitialData(props.initialData),
 				isLoading: false,
 				loadError: false,
-				searchQuery: this.searchController.getInitialSearchQuery(props),
+				searchQuery: initialSearchQuery,
 				catalogState: this.provider.getState(),
 				listItemsCount: null,
 			};
@@ -69,6 +79,7 @@ jn.define('vibecode/catalog/src/renderer', (require, exports, module) => {
 		{
 			this.headerController.syncHeaderState();
 			this.headerController.syncCreateButtonState();
+			BX.addCustomEvent('onAppActive', this.handleAppActive);
 		}
 
 		componentWillReceiveProps(props)
@@ -94,9 +105,99 @@ jn.define('vibecode/catalog/src/renderer', (require, exports, module) => {
 
 		componentWillUnmount()
 		{
+			BX.removeCustomEvent('onAppActive', this.handleAppActive);
 			this.headerController.dispose();
 			this.searchController.unbindSearchBar();
 			this.itemActionsController.dispose();
+		}
+
+		handleAppActive = () => {
+			this.refreshNewAppsCount();
+		};
+
+		getNewAppsCount()
+		{
+			return this.newAppsCount;
+		}
+
+		refreshNewAppsCount()
+		{
+			this.syncProviderParams();
+			const request = this.getProvider().getNewAppsCount();
+			this.newAppsCountRequest = request;
+
+			void request
+				.then((count) => {
+					if (this.newAppsCountRequest === request)
+					{
+						this.newAppsCount = count;
+						this.newAppsCountRequest = null;
+					}
+				})
+				.catch((error) => {
+					console.error('[vibecode/catalog] failed to load new apps count', error);
+
+					if (this.newAppsCountRequest === request)
+					{
+						this.newAppsCountRequest = null;
+					}
+				})
+			;
+		}
+
+		autoSwitchToNewApps(responseData = {}, config = {})
+		{
+			if (this.autoSwitchDone || this.userPickedState)
+			{
+				return;
+			}
+
+			// the attempt is spent by the first actual list response, a search one included:
+			// clearing the query is when the user waits for the full list back, not for the
+			// screen to switch. A partial response by ids, how pull updates arrive, carries
+			// no navigation and must not spend the attempt
+			if (!config?.navigation || Number(config.navigation.page ?? 1) !== 1)
+			{
+				return;
+			}
+
+			this.autoSwitchDone = true;
+
+			// the switch itself is still decided by the counter, and the server sends none
+			// for a search query
+			if (this.getSearchQuery() !== ''
+				|| !Number.isInteger(Number(responseData?.newAppsCount ?? NaN))
+				|| this.newAppsCount <= 0
+				|| this.getCatalogState() !== CATALOG_STATE.ACTIVE)
+			{
+				return;
+			}
+
+			// the view session of this response was taken before the shown page was marked as viewed
+			this.setNewAppsViewSession(responseData?.viewSession);
+			// this very response is drawn right after the callback returns, so the switch steps
+			// out of the callback — otherwise the Active slice flashes before New. The state is
+			// re-checked inside: the user may pick a selection while the timer is pending, and
+			// the switch must not override that choice
+			setTimeout(() => {
+				if (this.userPickedState || this.getCatalogState() !== CATALOG_STATE.ACTIVE)
+				{
+					return;
+				}
+
+				this.changeCatalogState(CATALOG_STATE.NEW);
+			}, 0);
+		}
+
+		// the search response may never reach the callback: clearing the query starts another
+		// request, and the list drops the answer of the previous one. So the attempt is spent by
+		// the search itself, not by waiting for what the search returns
+		spendAutoSwitchOnSearch()
+		{
+			if (this.getSearchQuery() !== '')
+			{
+				this.autoSwitchDone = true;
+			}
 		}
 
 		prepareInitialData(data = null)
@@ -160,6 +261,7 @@ jn.define('vibecode/catalog/src/renderer', (require, exports, module) => {
 				...props,
 				q: this.getSearchQuery(),
 				state: this.getCatalogState(),
+				viewSession: this.newAppsViewSession,
 			};
 		}
 
@@ -235,19 +337,28 @@ jn.define('vibecode/catalog/src/renderer', (require, exports, module) => {
 		};
 
 		handleCatalogStateChange = (catalogState) => {
+			this.userPickedState = true;
+			this.changeCatalogState(catalogState);
+		};
+
+		changeCatalogState(catalogState)
+		{
 			const nextCatalogState = this.provider.normalizeState(catalogState);
 			if (nextCatalogState === this.getCatalogState())
 			{
 				return;
 			}
 
+			// the view session belongs to the whole catalog session: dropping it here would
+			// restart the session on the way back to New and pull the apps just shown in
+			// another slice into it
 			this.setState({
 				catalogState: nextCatalogState,
 				listItemsCount: null,
 			}, () => {
 				this.reloadStatefulList();
 			});
-		};
+		}
 
 		handleStatefulListItemsLoaded = (responseData = null, renderType = null, config = {}) => {
 			if (!responseData)
@@ -255,6 +366,7 @@ jn.define('vibecode/catalog/src/renderer', (require, exports, module) => {
 				return;
 			}
 
+			this.handleNewAppsResponseMeta(responseData, renderType, config);
 			this.onStatefulListItemsLoaded(responseData, config);
 
 			const currentListData = this.getListData();
@@ -268,6 +380,69 @@ jn.define('vibecode/catalog/src/renderer', (require, exports, module) => {
 				listData: nextListData,
 			});
 		};
+
+		handleNewAppsResponseMeta(responseData = {}, renderType = null, config = {})
+		{
+			// a cached response carries the new apps state of the previous catalog session,
+			// it must not be reused
+			if (renderType !== STATEFUL_LIST_AJAX_RENDER_TYPE)
+			{
+				return;
+			}
+
+			this.updateNewAppsCount(responseData);
+			this.updateNewAppsViewSession(responseData);
+			this.autoSwitchToNewApps(responseData, config);
+		}
+
+		// the counter comes with the first page only, a page without it says nothing about the count
+		updateNewAppsCount(responseData = {})
+		{
+			const count = Number(responseData?.newAppsCount ?? NaN);
+			if (!Number.isInteger(count))
+			{
+				return;
+			}
+
+			this.newAppsCount = Math.max(count, 0);
+			// the listing is the fresher of the two sources, so a count request still in flight
+			// must not land on top of it
+			this.newAppsCountRequest = null;
+		}
+
+		updateNewAppsViewSession(responseData = {})
+		{
+			const viewSession = normalizePositiveInteger(responseData?.viewSession);
+			if (viewSession === null)
+			{
+				return;
+			}
+
+			// A stamp we sent has been judged by the server, and it only travels in the New
+			// slice: answering with another one there means ours is no longer accepted, so its
+			// value wins. Outside New nothing was sent, so an arriving stamp only fills an
+			// empty slot instead of restarting the session under the user.
+			const canReplaceSession = this.newAppsViewSession === null
+				|| this.getCatalogState() === CATALOG_STATE.NEW;
+			if (!canReplaceSession)
+			{
+				return;
+			}
+
+			this.setNewAppsViewSession(viewSession);
+
+			const loadItemsActionParams = this.statefulListRef?.state?.actionParams?.loadItems;
+			if (loadItemsActionParams)
+			{
+				loadItemsActionParams.viewSession = this.newAppsViewSession;
+			}
+		}
+
+		setNewAppsViewSession(viewSession = null)
+		{
+			this.newAppsViewSession = normalizePositiveInteger(viewSession);
+			this.syncProviderParams();
+		}
 
 		onStatefulListItemsLoaded(responseData = {}, config = {})
 		{
@@ -476,6 +651,14 @@ jn.define('vibecode/catalog/src/renderer', (require, exports, module) => {
 			{
 				return VibeCodeCatalogHiddenEmptyState({
 					testId: this.getTestId('empty'),
+				});
+			}
+
+			if (this.getCatalogState() === CATALOG_STATE.NEW)
+			{
+				return renderVibeCodeCatalogState({
+					testId: this.getTestId('empty'),
+					title: Loc.getMessage('MOBILE_VIBECODE_CATALOG_NEW_EMPTY_TITLE'),
 				});
 			}
 

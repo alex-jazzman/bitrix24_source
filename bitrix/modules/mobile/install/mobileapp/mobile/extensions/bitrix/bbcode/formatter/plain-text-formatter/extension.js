@@ -20,6 +20,7 @@ jn.define('bbcode/formatter/plain-text-formatter', (require, exports, module) =>
 	{
 		#allowedTags = [];
 		#wrapInLinebreaks = defaultWrapInLinebreaks;
+		#parserOptions = {};
 
 		/**
 		 * @param options {{
@@ -31,6 +32,7 @@ jn.define('bbcode/formatter/plain-text-formatter', (require, exports, module) =>
 		 *     codeRenderType?: 'code' | 'text' | 'placeholder' | 'none',
 		 *     listRenderType?: 'list' | 'text' | 'placeholder' | 'none',
 		 *     wrapInLinebreaks?: Array<string>,
+		 *     normalize?: boolean,
 		 * }}
 		 */
 		constructor(options = {})
@@ -103,6 +105,11 @@ jn.define('bbcode/formatter/plain-text-formatter', (require, exports, module) =>
 			{
 				this.setWrapInLinebreaks(options.wrapInLinebreaks);
 			}
+
+			if (Type.isBoolean(options?.normalize))
+			{
+				this.#parserOptions = { normalize: options.normalize };
+			}
 		}
 
 		setAllowedTags(allowedTags)
@@ -133,7 +140,7 @@ jn.define('bbcode/formatter/plain-text-formatter', (require, exports, module) =>
 
 		format({ source, data })
 		{
-			const preparedSource = Formatter.prepareSourceNode(source).clone({ deep: true });
+			const preparedSource = Formatter.prepareSourceNode(source, this.#parserOptions).clone({ deep: true });
 
 			BBCodeNode
 				.flattenAst(preparedSource)

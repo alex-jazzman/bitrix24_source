@@ -5,10 +5,12 @@ const namespace = Reflection.namespace('BX.Crm.Copilot.CallAssessmentList');
 
 export class ActionButton {
 	#isActive: boolean;
+	#sliderWidth: number;
 
-	constructor(isActiveCopilot: boolean = true)
+	constructor(isActiveCopilot: boolean = true, sliderWidth: number = 700)
 	{
 		this.#isActive = isActiveCopilot;
+		this.#sliderWidth = sliderWidth;
 	}
 
 	execute(): void
@@ -26,7 +28,7 @@ export class ActionButton {
 				`/crm/copilot-call-assessment/details/0/`,
 				{
 					cacheable: false,
-					width: 700,
+					//width: this.#sliderWidth,
 					allowChangeHistory: false,
 				}
 			);

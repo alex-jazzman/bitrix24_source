@@ -5,8 +5,10 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Bizproc\Activity\Mixins\TargetDocumentResolverTrait;
 use Bitrix\Bizproc\Activity\PropertiesDialog;
 use Bitrix\Crm;
+use Bitrix\Bizproc\Activity\Mixins\ChecksResolvedTargetAccessTrait;
 use Bitrix\Crm\Integration\BizProc\Starter\CrmStarter;
 use Bitrix\Crm\Integration\BizProc\Starter\Dto\DocumentDto;
 use Bitrix\Crm\Integration\BizProc\Starter\Dto\RunDataDto;
@@ -16,6 +18,9 @@ use Bitrix\Main\Localization\Loc;
 
 class CBPCrmCopyDynamicActivity extends CBPActivity
 {
+	use TargetDocumentResolverTrait;
+	use ChecksResolvedTargetAccessTrait;
+
 	protected static array $cycleCounter = [];
 	const CYCLE_LIMIT = 150;
 
@@ -51,7 +56,15 @@ class CBPCrmCopyDynamicActivity extends CBPActivity
 
 		$this->checkCycling();
 
-		$documentId = $this->GetDocumentId();
+		$documentId = $this->resolveTargetDocumentId();
+
+		if (!$this->canAccessResolvedTarget($documentId))
+		{
+			$this->logResolvedTargetAccessDenied();
+
+			return CBPActivityExecutionStatus::Closed;
+		}
+
 		[$sourceItemType, $sourceItemId] = mb_split('_(?=[^_]*$)', $documentId[2]);
 
 		$factory = static::getFactoryByType($sourceItemType);
@@ -71,6 +84,11 @@ class CBPCrmCopyDynamicActivity extends CBPActivity
 		}
 
 		return CBPActivityExecutionStatus::Closed;
+	}
+
+	protected function canAccessResolvedTarget(array $documentId): bool
+	{
+		return $this->canReadResolvedTarget($documentId);
 	}
 
 	protected function checkCycling()
@@ -114,7 +132,7 @@ class CBPCrmCopyDynamicActivity extends CBPActivity
 			$stageId = $item->getStatusId();
 		}
 
-		$responsibles = CBPHelper::ExtractUsers($this->Responsible, $this->GetDocumentId());
+		$responsibles = CBPHelper::ExtractUsers($this->Responsible, $this->resolveTargetDocumentId());
 		if ($responsibles)
 		{
 			shuffle($responsibles);

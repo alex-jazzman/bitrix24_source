@@ -1,10 +1,24 @@
 <?php
+	global $APPLICATION;
+
 	if(!check_bitrix_sessid())
 	{
 		return;
 	}
 
-	CAdminMessage::ShowNote(GetMessage('MOD_UNINST_OK'));
+	if ($exception = $APPLICATION->GetException())
+	{
+		CAdminMessage::ShowMessage([
+			'TYPE' => 'ERROR',
+			'MESSAGE' => GetMessage('MOD_UNINST_ERR'),
+			'DETAILS' => $exception->GetString(),
+			'HTML' => true,
+		]);
+	}
+	else
+	{
+		CAdminMessage::ShowNote(GetMessage('MOD_UNINST_OK'));
+	}
 ?>
 
 <form action="<?=$APPLICATION->GetCurPage()?>">

@@ -3,14 +3,17 @@
  */
 jn.define('vibecode/catalog/src/provider', (require, exports, module) => {
 	const { Loc } = require('loc');
+	const { RunActionExecutor } = require('rest/run-action-executor');
 	const { withCurrentDomain } = require('utils/url');
 	const { CATALOG_STATE } = require('vibecode/catalog/src/const');
+	const { normalizePositiveInteger } = require('vibecode/catalog/src/utils');
 
 	const DEFAULT_ITEMS_LOAD_LIMIT = 20;
 	const STATEFUL_LIST_CACHE_TTL = 3 * 86400;
 	const CATALOG_STATE_VALUES = [
 		CATALOG_STATE.ACTIVE,
 		CATALOG_STATE.HIDDEN,
+		CATALOG_STATE.NEW,
 		CATALOG_STATE.ALL,
 	];
 
@@ -52,6 +55,7 @@ jn.define('vibecode/catalog/src/provider', (require, exports, module) => {
 			const searchQuery = this.getSearchQuery();
 			const previewUserId = this.getPreviewUserId();
 			const state = this.getState();
+			const viewSession = this.getViewSession();
 
 			if (searchQuery)
 			{
@@ -65,7 +69,36 @@ jn.define('vibecode/catalog/src/provider', (require, exports, module) => {
 				json.previewUserId = previewUserId;
 			}
 
+			if (state === CATALOG_STATE.NEW && viewSession !== null)
+			{
+				json.viewSession = viewSession;
+			}
+
 			return json;
+		}
+
+		getNewAppsCount()
+		{
+			const params = {};
+			const previewUserId = this.getPreviewUserId();
+			if (previewUserId !== null)
+			{
+				params.previewUserId = previewUserId;
+			}
+
+			return (new RunActionExecutor('vibecodeconnector.Catalog.getNewAppsCount', params))
+				.call(false)
+				.then((response) => {
+					const errors = Array.isArray(response?.errors) ? response.errors : [];
+					if (errors.length > 0)
+					{
+						throw response;
+					}
+
+					const count = Number(response?.data?.count);
+
+					return (Number.isInteger(count) && count > 0 ? count : 0);
+				});
 		}
 
 		getCacheName()
@@ -131,6 +164,11 @@ jn.define('vibecode/catalog/src/provider', (require, exports, module) => {
 			const state = String(value ?? '').trim();
 
 			return CATALOG_STATE_VALUES.includes(state) ? state : CATALOG_STATE.ACTIVE;
+		}
+
+		getViewSession()
+		{
+			return normalizePositiveInteger(this.params.viewSession);
 		}
 
 		getPreviewUserId()

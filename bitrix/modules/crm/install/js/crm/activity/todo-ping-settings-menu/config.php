@@ -9,7 +9,6 @@ return [
 	'js' => 'dist/todo-ping-settings-menu.bundle.js',
 	'rel' => [
 		'main.core',
-		'main.popup',
 		'ui.hint',
 	],
 	'skip_core' => false,

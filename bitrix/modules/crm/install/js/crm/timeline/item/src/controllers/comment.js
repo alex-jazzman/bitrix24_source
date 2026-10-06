@@ -1,5 +1,5 @@
-import { Type } from 'main.core';
-import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
+import { confirm } from 'crm.timeline.dialog';
+import { Tag, Text, Type } from 'main.core';
 import { Base } from './base';
 import ConfigurableItem from '../configurable-item';
 
@@ -73,15 +73,13 @@ export class Comment extends Base
 		const confirmationText = Type.isStringFilled(actionData.confirmationText) ? actionData.confirmationText : '';
 		if (confirmationText)
 		{
-			MessageBox.show({
-				message: confirmationText,
-				modal: true,
-				buttons: MessageBoxButtons.YES_NO,
-				onYes: () => {
+			// eslint-disable-next-line @bitrix24/bitrix24-rules/no-native-dialogs
+			confirm({
+				content: Tag.render`<div>${Text.encode(confirmationText)}</div>`,
+				preset: 'YES_NO',
+				destructive: true,
+				onConfirm: () => {
 					return this.runDeleteAction(actionData.commentId, actionData.ownerTypeId, actionData.ownerId, animationCallbacks);
-				},
-				onNo: (messageBox) => {
-					messageBox.close();
 				},
 			});
 		}

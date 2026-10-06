@@ -24,14 +24,18 @@ import type {
 	HcmLinkMultipleVacancyEmployeesLoadData,
 } from 'sign.v2.api';
 import { type Metadata, Wizard } from 'ui.wizard';
-import type { DocumentSettings, DocumentSettingsByTemplateDocumentUid } from './types';
+import type {
+	B2ETemplatesSignSettingsOptions,
+	DocumentSettings,
+	DocumentSettingsByTemplateDocumentUid,
+} from './types';
 
 import './style.css';
 import './../../sign-settings/src/style.css';
 import './../../../sign-settings/src/style.css';
 
 export { useDocumentTemplateFillingStore };
-export type { DocumentSettings, DocumentSettingsByTemplateDocumentUid };
+export type { B2ETemplatesSignSettingsOptions, DocumentSettings, DocumentSettingsByTemplateDocumentUid };
 
 export class B2ETemplatesSignSettings
 {
@@ -54,6 +58,7 @@ export class B2ETemplatesSignSettings
 	constructor(
 		templateIds: number[] = [],
 		sliderUrl: string = '',
+		options: ?B2ETemplatesSignSettingsOptions = null,
 	)
 	{
 		this.#region = Extension.getSettings('sign.v2.b2e.sign-settings-templates').get('region');
@@ -70,7 +75,8 @@ export class B2ETemplatesSignSettings
 			store: this.#store,
 		});
 
-		this.#documentUserParty = new DocumentTemplateUserParty();
+		// the store stays out of the signers step, as before; only the preselect is new
+		this.#documentUserParty = new DocumentTemplateUserParty(undefined, options?.preselectedSigners);
 		this.#sliderUrl = sliderUrl;
 		this.#subscribeSliderCloseEvent();
 	}

@@ -1,13 +1,14 @@
 import { Type } from 'main.core';
 
 import { Core } from 'im.v2.application.core';
-import { RecentType, type ChatTypeItem, type RecentTypeItem } from 'im.v2.const';
+import { RecentType, type RecentTypeItem } from 'im.v2.const';
 import { Logger } from 'im.v2.lib.logger';
 import { type ImModelChat, type ImModelRecentItem } from 'im.v2.model';
 import { type MessageAddParams, type PullExtraParams, type ReadMessageParams } from 'im.v2.provider.pull';
 import { UnreadModeManager } from 'im.v2.lib.unread-mode';
+import { ChatManager } from 'im.v2.lib.chat';
 
-import { type ChatUnreadParams, type ChatMuteNotifyParams } from '../types/chat';
+import { type ChatUnreadParams, type ChatMuteNotifyParams, type ChatReadAllParams } from '../types/chat';
 import { NewMessageManager } from '../classes/new-message-manager';
 import { RecentUnreadUpdateManager } from './classes/recent-unread-update-manager';
 import { buildRecentItem } from './helpers/helpers';
@@ -33,16 +34,15 @@ export class RecentUnreadPullHandler
 
 	handleReadAllChats()
 	{
-		const recentSections = [RecentType.default, RecentType.taskComments];
-
-		recentSections.forEach((section) => {
-			UnreadModeManager.removeClosedChats(section);
-		});
+		UnreadModeManager.removeClosedChats(RecentType.default);
 	}
 
-	handleReadAllChatsByType(params: { type: ChatTypeItem })
+	handleReadAllChatsByRecentSection(params: ChatReadAllParams)
 	{
-		UnreadModeManager.removeClosedChats(params.type);
+		const { recentSection, parentChatId } = params;
+
+		const preparedParentChatId = ChatManager.prepareParentChatId(parentChatId);
+		UnreadModeManager.removeClosedChats(recentSection, preparedParentChatId);
 	}
 
 	handleReadMessageChat(params: ReadMessageParams)

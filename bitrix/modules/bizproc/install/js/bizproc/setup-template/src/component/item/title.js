@@ -12,8 +12,8 @@ export const TitleComponent = {
 		},
 	},
 	template: `
-		<div class="bizproc-setup-template__heading">
+		<h2 class="bizproc-setup-template__heading">
 			{{ item.text }}
-		</div>
+		</h2>
 	`,
 };

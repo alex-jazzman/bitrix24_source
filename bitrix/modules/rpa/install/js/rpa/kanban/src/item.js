@@ -134,7 +134,7 @@ export default class Item extends Kanban.Item
 		this.bindEditorEvents();
 		return new Promise((resolve, reject) =>
 		{
-			Ajax.runAction('rpa.item.getEditor', {
+			Ajax.runAction('rpa.Item.getEditor', {
 				analyticsLabel: 'rpaItemMovedMandatoryFieldsPopupOpen',
 				data: {
 					typeId: this.getTypeId(),
@@ -329,7 +329,7 @@ export default class Item extends Kanban.Item
 		Dom.addClass(this.layout.container, 'main-kanban-item-waiting');
 		return new Promise((resolve, reject) =>
 		{
-			Ajax.runAction('rpa.item.update', {
+			Ajax.runAction('rpa.Item.update', {
 				analyticsLabel: 'rpaItemMoved',
 				data: data
 			}).then((response) =>
@@ -380,7 +380,7 @@ export default class Item extends Kanban.Item
 		Dom.addClass(this.layout.container, 'main-kanban-item-waiting');
 		return new Promise((resolve, reject) =>
 		{
-			Ajax.runAction('rpa.item.sort', {
+			Ajax.runAction('rpa.Item.sort', {
 				analyticsLabel: 'rpaItemSorted',
 				data: data
 			}).then((response) =>

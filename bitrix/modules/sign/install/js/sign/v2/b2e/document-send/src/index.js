@@ -609,7 +609,7 @@ export class DocumentSend extends EventEmitter
 							id: templateId,
 						},
 				} = await api.template.completeTemplate(documentTemplateId, this.#templateFolderId);
-				this.emit('onTemplateComplete', { templateId });
+				this.emit('onTemplateComplete', { templateId, templateUid: documentTemplateId });
 			}
 			else if (this.#isGroupDocuments())
 			{

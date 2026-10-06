@@ -73,6 +73,11 @@ export class CallActionHelper
 			this.#defaultData.document_id = data.complexDocumentId.documentId;
 		}
 
+		if (!Type.isNil(data.categoryId))
+		{
+			this.#defaultData.category_id = data.categoryId;
+		}
+
 		if (!Type.isNil(data.triggerType))
 		{
 			this.#defaultData.trigger_type = data.triggerType;

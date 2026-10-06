@@ -4,6 +4,9 @@ import {BasePanel} from 'landing.ui.panel.base';
 
 import './css/style.css';
 
+// Backs the animation frame up: a frame is about 16ms, so it wins whenever the tab is visible.
+const FRAME_FALLBACK_TIMEOUT = 100;
+
 /**
  * Implements interface for works with alert panel
  * use this panel for show error and info messages
@@ -15,6 +18,9 @@ import './css/style.css';
 export class Alert extends BasePanel
 {
 	static staticCache = new Cache.MemoryCache();
+
+	// A snackbar, not a dialog: the message takes no answer and must not steal focus.
+	isDialog: boolean = false;
 
 	static getInstance(): Alert
 	{
@@ -31,8 +37,17 @@ export class Alert extends BasePanel
 		this.text = this.getText();
 		this.closeButton = this.getCloseButton();
 		this.action = this.getAction();
+		this.leaving = Promise.resolve();
+
+		// Live region set once on the message itself: an atomic region spanning the layout would
+		// read the support link and the close button along with every message.
+		this.text.setAttribute('role', 'alert');
 
 		Dom.addClass(this.layout, 'landing-ui-panel-alert');
+		// The layout joins the document closed and stays out of the tab order until the first
+		// show(), which is what drops the attribute. Only the class is set by createLayout, and
+		// a snackbar moved off screen by a transform alone keeps its close button focusable.
+		this.layout.hidden = true;
 
 		Dom.append(this.text, this.layout);
 		Dom.append(this.action, this.layout);
@@ -65,35 +80,102 @@ export class Alert extends BasePanel
 
 	show(type, text, hideSupportLink = false): Promise<Alert>
 	{
-		let promise = Promise.resolve(this);
-
-		if (this.isShown())
+		// A leave animation ends with `Utils.Hide` taking the layout down, and it would take a message
+		// written in the meantime with it. Interrupting the leave is not an option: the `animationend`
+		// `Utils.Hide` waits for is the one of whatever animation comes next. So the leave is let
+		// finish and the snackbar carries the message shown anew.
+		if (this.isLeaving())
 		{
-			promise = this.hide();
+			return this.leaving.then(() => this.showMessage(type, text, hideSupportLink));
 		}
 
-		return promise.then(() => {
+		return this.showMessage(type, text, hideSupportLink);
+	}
+
+	showMessage(type, text, hideSupportLink): Promise<Alert>
+	{
+		// A live region is announced by a change of its content, so a message that replaces a visible
+		// one is only written. Hiding the singleton layout to show it again would blink the snackbar,
+		// add a mutation of its own to the region and hand focus back to the page while it stays up.
+		if (!this.isShown())
+		{
 			void super.show(this);
+		}
 
-			if (type === 'error')
-			{
-				Dom.removeClass(this.layout, 'landing-ui-alert');
-				Dom.addClass(this.layout, 'landing-ui-error');
-			}
-			else
-			{
-				Dom.removeClass(this.layout, 'landing-ui-error');
-				Dom.addClass(this.layout, 'landing-ui-alert');
-			}
+		return this.writeMessage(type, text || type, hideSupportLink);
+	}
 
-			this.text.innerHTML = `${text || type} `;
+	hide(): Promise<any>
+	{
+		this.leaving = super.hide();
 
-			if (!hideSupportLink)
-			{
-				Dom.append(this.getSupportLink(), this.text);
-			}
+		return this.leaving;
+	}
 
-			return this;
+	// The leave class lands on the layout when the animation starts, the mark of the enter animation
+	// goes away only once `Utils.Hide` gets its `animationend`: in between the two disagree.
+	isLeaving(): boolean
+	{
+		return !this.isShown() && BX.Landing.Utils.isShown(this.layout);
+	}
+
+	applyType(type: string)
+	{
+		if (type === 'error')
+		{
+			Dom.removeClass(this.layout, 'landing-ui-alert');
+			Dom.addClass(this.layout, 'landing-ui-error');
+
+			return;
+		}
+
+		Dom.removeClass(this.layout, 'landing-ui-error');
+		Dom.addClass(this.layout, 'landing-ui-alert');
+	}
+
+	/**
+	 * Screen readers need a rendered frame between the live region entering the accessibility
+	 * tree and its first content change, otherwise the message is silently dropped. The same
+	 * guard the LiveAnnouncer of ui.a11y uses for its own region. Colours belong to the message,
+	 * so they are switched in that very frame: applying them earlier would both show the previous
+	 * message in the look of the next one and add a mutation of its own to an assertive region.
+	 * A message replacing a visible one needs no such frame, but keeps the very same path: it costs
+	 * one frame and keeps the colours paired with the text they belong to.
+	 * @param {string} type
+	 * @param {string} message trusted markup, written as innerHTML: never pass user input as is
+	 * @param {boolean} hideSupportLink
+	 * @return {Promise<Alert>}
+	 */
+	writeMessage(type: string, message: string, hideSupportLink: boolean): Promise<Alert>
+	{
+		return new Promise((resolve) => {
+			let written = false;
+			let fallbackTimeout = null;
+
+			const write = () => {
+				if (written)
+				{
+					return;
+				}
+
+				written = true;
+				clearTimeout(fallbackTimeout);
+
+				this.applyType(type);
+				this.text.innerHTML = `${message} `;
+
+				if (!hideSupportLink)
+				{
+					Dom.append(this.getSupportLink(), this.text);
+				}
+
+				resolve(this);
+			};
+
+			requestAnimationFrame(write);
+			// A background tab paints no frames, and an error message must not wait for the user
+			// to come back to be written, let alone keep the show() promise pending until then.
+			fallbackTimeout = setTimeout(write, FRAME_FALLBACK_TIMEOUT);
 		});
 	}
 

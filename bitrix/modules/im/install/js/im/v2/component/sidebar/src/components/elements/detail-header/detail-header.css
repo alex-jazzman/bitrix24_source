@@ -19,12 +19,17 @@
 }
 
 .bx-im-sidebar-detail-header__title-text {
-	font: var(--im-font-size-xl)/var(--im-font-line-height-2xs) var(--im-font-family-system);
+	font: var(--im-font-size-2xl)/var(--im-font-line-height-2xs) var(--im-font-family-system);
 	font-weight: var(--im-font-weight-semi-bold);
-	margin-left: 14px;
+	margin-left: 12px;
 	text-overflow: ellipsis;
 	white-space: nowrap;
 	overflow: hidden;
+}
+
+/* Ведущая иконка без margin-right: зазор до заголовка задаёт его margin-left (12px). Правые иконки вложены и margin-right сохраняют. */
+.bx-im-sidebar-detail-header__title-container > .bx-im-sidebar-detail-header__ds-icon {
+	margin-right: 0;
 }
 
 .bx-im-sidebar-detail-header__add-button {
@@ -48,4 +53,31 @@
 
 .bx-im-sidebar-detail-header__search__icon:hover {
 	opacity: 0.7;
+}
+
+.bx-im-sidebar-detail-header__add-icon-button {
+	display: flex;
+	align-items: center;
+}
+
+/*
+ * Members panel header (addButtonAsIcon): search + add-person are rendered via DS BIcon. The glyph
+ * colour is driven by the icon-set "--ui-icon-set__icon-color" variable (theme-aware token), so
+ * these icons are solid (no 0.4 dimming). Other panels keep the default background-image lupa
+ * ("__search__icon" above) untouched.
+ */
+.bx-im-sidebar-detail-header__ds-icon {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	margin-right: var(--im-space-inline-sm);
+	cursor: pointer;
+	border: none;
+	background: none;
+	padding: 0;
+	--ui-icon-set__icon-color: var(--ui-color-base-4);
+}
+
+.bx-im-sidebar-detail-header__ds-icon:hover {
+	--ui-icon-set__icon-color: var(--ui-color-base-3);
 }

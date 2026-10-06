@@ -349,11 +349,11 @@ border:1px solid black; overflow: visible; line-height:normal; font-weight:norma
 
 
 .bx-dialog-notify-outer {position: absolute; top: 39px; left: 0pt; z-index: 1; width: 100%; margin-right: 0px;}
-.bx-dialog-notify {background:scroll #FFEB8D url(../images/panel/sprite04.png) repeat-x 0 -1178px !important; position:relative !important; margin:0 6px 0 0 !important; padding:0 !important;}
+.bx-dialog-notify {background:scroll #FFEB8D url(../images/panel/sprite04.webp) repeat-x 0 -1178px !important; position:relative !important; margin:0 6px 0 0 !important; padding:0 !important;}
 .bx-dialog-notify-text { text-align:center !important; padding: 3px 20px 5px  !important; margin:0 !important; color: #000 !important;}
 .bx-dialog-notify-text, #bx-panel .bx-dialog-notify-text a {font: normal normal normal 12px/normal Tahoma, sans-serif !important; }
 .bx-dialog-notify-close { position:absolute !important; display:block !important; top:5px !important; right: 5px !important; width: 12px !important; height:12px !important; margin:0 !important; padding:0 !important;}
-.bx-dialog-notify-close a { background: scroll transparent url(../images/panel/sprite04.png) no-repeat -268px -243px !important; width:12px !important; height:12px !important; display: block !important; }
+.bx-dialog-notify-close a { background: scroll transparent url(../images/panel/sprite04.webp) no-repeat -268px -243px !important; width:12px !important; height:12px !important; display: block !important; }
 .bx-dialog-notify-text a, #bx-panel .bx-dialog-notify-text a:hover { color: #0041d2 !important; text-decoration: underline !important;}
 
 .bx-dialog-notify-outer.bx-dialog-notify-hidden {display: none !important}

@@ -9,6 +9,8 @@ use Bitrix\Landing\Connector;
 use Bitrix\Landing\Manager;
 use Bitrix\Landing\Restriction;
 use Bitrix\Landing\Help;
+use Bitrix\Main\Engine\ActionFilter;
+use Bitrix\Main\Engine\Contract\Controllerable;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Type\Date;
 use \Bitrix\Landing\Rights;
@@ -17,8 +19,10 @@ Loc::loadMessages(__FILE__);
 
 \CBitrixComponent::includeComponentClass('bitrix:landing.base');
 
-class LandingSiteTileComponent extends LandingBaseComponent
+class LandingSiteTileComponent extends LandingBaseComponent implements Controllerable
 {
+	private const AI_FIRST_VISIT_TOOLTIP_OPTION_NAME = 'site_tile_ai_first_visit_tooltip_seen';
+
 	/**
 	 * Domain available statuses.
 	 */
@@ -29,6 +33,33 @@ class LandingSiteTileComponent extends LandingBaseComponent
 		'unknown' => 'unknown',// other status
 		'clock' => 'clock'// wait activation
 	];
+
+	public function configureActions(): array
+	{
+		return [
+			'markAiFirstVisitTooltipSeen' => [
+				'prefilters' => [
+					new ActionFilter\Authentication(),
+					new ActionFilter\Csrf(),
+					new ActionFilter\HttpMethod([ActionFilter\HttpMethod::METHOD_POST]),
+				],
+			],
+		];
+	}
+
+	public function markAiFirstVisitTooltipSeenAction(): array
+	{
+		\CUserOptions::setOption('landing', self::AI_FIRST_VISIT_TOOLTIP_OPTION_NAME, 'Y');
+
+		return [
+			'seen' => true,
+		];
+	}
+
+	public static function getAiFirstVisitTooltipOptionName(): string
+	{
+		return self::AI_FIRST_VISIT_TOOLTIP_OPTION_NAME;
+	}
 
 	/**
 	 * Returns site's phone by site id.
@@ -120,6 +151,101 @@ class LandingSiteTileComponent extends LandingBaseComponent
 	}
 
 	/**
+	 * Removes delimiters without visible menu items around them.
+	 * @param array $menuItems Menu item's array.
+	 * @return array
+	 */
+	protected function removeRedundantMenuDelimiters(array $menuItems): array
+	{
+		$preparedMenuItems = [];
+		$previousItemIsDelimiter = true;
+
+		foreach ($menuItems as $menuItem)
+		{
+			$isDelimiter = ($menuItem['delimiter'] ?? false) === true;
+			if ($isDelimiter && $previousItemIsDelimiter)
+			{
+				continue;
+			}
+
+			$preparedMenuItems[] = $menuItem;
+			$previousItemIsDelimiter = $isDelimiter;
+		}
+
+		return $preparedMenuItems;
+	}
+
+	/**
+	 * Returns domain status and its message for the site tile.
+	 * @param array $item Site's data.
+	 * @param bool $published Site is published.
+	 * @param bool $isAiSite Site is created by AI scenario and AI sites are enabled.
+	 * @return array{status: string, message: string|null}
+	 */
+	private function getDomainStatus(array $item, bool $published, bool $isAiSite): array
+	{
+		$domainStatusMessage = null;
+		$domainStatus = $this::DOMAIN_STATUS['unknown'];
+
+		if ($item['DOMAIN_PROVIDER'] ?? null)
+		{
+			$tariffTtl = Restriction\Site::getFreeDomainSuspendedTime();
+			if ($tariffTtl)
+			{
+				if ($tariffTtl <= time())
+				{
+					$domainStatus = $this::DOMAIN_STATUS['danger'];
+					$domainStatusMessage = Loc::getMessage('LANDING_CMP_DOMAIN_NEED_PAY');
+				}
+				else
+				{
+					$domainStatus = $this::DOMAIN_STATUS['alert'];
+					$domainStatusMessage = Loc::getMessage('LANDING_CMP_DOMAIN_NEED_PAY_SOON_UNTIL', [
+						'#DATE#' => Date::createFromTimestamp($tariffTtl)
+					]);
+				}
+			}
+			if (!$domainStatusMessage)
+			{
+				if (Domain\Register::isDomainActive($item['DOMAIN_NAME']))
+				{
+					$domainStatus = $this::DOMAIN_STATUS['success'];
+				}
+				else
+				{
+					$domainStatus = $this::DOMAIN_STATUS['clock'];
+					$domainStatusMessage = Loc::getMessage('LANDING_CMP_DOMAIN_WAIT_ACTIVATION');
+				}
+			}
+		}
+		// AI site gets its domain automatically, so an untouched address is not something to fix
+		else if ($isAiSite)
+		{
+			if ($published)
+			{
+				$domainStatus = $this::DOMAIN_STATUS['success'];
+			}
+		}
+		else
+		{
+			if (!$item['DOMAIN_PREV'])
+			{
+				$domainStatus = $this::DOMAIN_STATUS['alert'];
+				$domainStatusMessage = Loc::getMessage('LANDING_CMP_DOMAIN_CREATE_DOMAIN_NAME');
+			}
+			else if ($published)
+			{
+				$domainStatus = $this::DOMAIN_STATUS['success'];
+			}
+		}
+
+		return [
+			'status' => $domainStatus,
+			'message' => $domainStatusMessage,
+		];
+	}
+
+	/**
 	 * Prepares item for transfer to js.
 	 * @param array $items Item's array.
 	 * @param array $menuItems Menu item's array.
@@ -132,6 +258,7 @@ class LandingSiteTileComponent extends LandingBaseComponent
 		$newItems = [];
 		$menuItemsOrig = $menuItems;
 		$orderCounts = $this->getSiteOrdersCount(array_keys($items));
+		$aiSitesEnabled = \Bitrix\Landing\Copilot\Manager::isAiSitesEnabled();
 
 		if (!$items)
 		{
@@ -178,12 +305,29 @@ class LandingSiteTileComponent extends LandingBaseComponent
 
 			$published = $item['ACTIVE'] === 'Y' && $item['DELETED'] === 'N';
 			$deleted = $item['DELETED'] === 'Y';
+			$isAiSite = ($item['IS_CREATED_BY_AI_SCENARIO'] ?? false) && $aiSitesEnabled;
 
 			// check paths for sidepanel
 			$menuBottomItems = [];
 			$menuItems = $menuItemsOrig;
 			foreach ($menuItems as $i => &$menuItem)
 			{
+				if (
+					($menuItem['code'] ?? null) === 'add-page'
+					&& ($item['IS_CREATED_BY_AI_SCENARIO'] ?? false)
+				)
+				{
+					unset($menuItems[$i]);
+					continue;
+				}
+				if (
+					($menuItem['access'] ?? null) === 'export'
+					&& ($item['IS_CREATED_BY_AI_SCENARIO'] ?? false)
+				)
+				{
+					unset($menuItems[$i]);
+					continue;
+				}
 				if ($menuItem['sidepanel'] ?? false)
 				{
 					$sidepanel[] = $menuItem['href'];
@@ -207,57 +351,23 @@ class LandingSiteTileComponent extends LandingBaseComponent
 				}
 			}
 			unset($menuItem);
+			$menuItems = $this->removeRedundantMenuDelimiters($menuItems);
 			$sidepanel = $this->prepareSideLink($sidepanel);
 			$sidepanelShort = $this->prepareSideLink($sidepanelShort);
 
 			// domain status
-			$domainStatusMessage = null;
-			$domainStatus = $this::DOMAIN_STATUS['unknown'];
-			if ($item['DOMAIN_PROVIDER'] ?? null)
-			{
-				$tariffTtl = Restriction\Site::getFreeDomainSuspendedTime();
-				if ($tariffTtl)
-				{
-					if ($tariffTtl <= time())
-					{
-						$domainStatus = $this::DOMAIN_STATUS['danger'];
-						$domainStatusMessage = Loc::getMessage('LANDING_CMP_DOMAIN_NEED_PAY');
-					}
-					else
-					{
-						$domainStatus = $this::DOMAIN_STATUS['alert'];
-						$domainStatusMessage = Loc::getMessage('LANDING_CMP_DOMAIN_NEED_PAY_SOON_UNTIL', [
-							'#DATE#' => Date::createFromTimestamp($tariffTtl)
-						]);
-					}
-				}
-				if (!$domainStatusMessage)
-				{
-					if (Domain\Register::isDomainActive($item['DOMAIN_NAME']))
-					{
-						$domainStatus = $this::DOMAIN_STATUS['success'];
-					}
-					else
-					{
-						$domainStatus = $this::DOMAIN_STATUS['clock'];
-						$domainStatusMessage = Loc::getMessage('LANDING_CMP_DOMAIN_WAIT_ACTIVATION');
-					}
-				}
-			}
-			else
-			{
-				if (!$item['DOMAIN_PREV'])
-				{
-					$domainStatus = $this::DOMAIN_STATUS['alert'];
-					$domainStatusMessage = Loc::getMessage('LANDING_CMP_DOMAIN_CREATE_DOMAIN_NAME');
-				}
-				else if ($published)
-				{
-					$domainStatus = $this::DOMAIN_STATUS['success'];
-				}
-			}
+			$domainStatusData = $this->getDomainStatus($item, $published, $isAiSite);
+			$domainStatus = $domainStatusData['status'];
+			$domainStatusMessage = $domainStatusData['message'];
 
 			$accessPublication = $item['ACCESS_PUBLICATION'] === 'Y';
+			$indexEditUrl = ($item['INDEX_EDIT_URI'] ?? '') ?: '';
+			$pagesUrl = $this->replaceLink($this->arParams['PAGE_URL_SITE'], $item);
+			if ($isAiSite && $indexEditUrl !== '')
+			{
+				$pagesUrl = $indexEditUrl;
+			}
+
 			$publicationError = [];
 			if (
 				$accessPublication
@@ -291,9 +401,9 @@ class LandingSiteTileComponent extends LandingBaseComponent
 				'domainProvider' => $item['DOMAIN_PROVIDER'],
 				'domainUrl' => $this->replaceLink($this->arParams['PAGE_URL_DOMAIN'], $item),
 				'contactsUrl' => $this->replaceLink($this->arParams['PAGE_URL_CONTACTS'], $item),
-				'pagesUrl' => $this->replaceLink($this->arParams['PAGE_URL_SITE'], $item),
+				'pagesUrl' => $pagesUrl,
 				'ordersUrl' => $this->replaceLink($this->arParams['PAGE_URL_CRM_ORDERS'], $item),
-				'indexEditUrl' => ($item['INDEX_EDIT_URI'] ?? '') ?: '',
+				'indexEditUrl' => $indexEditUrl,
 				'menuItems' => array_values($menuItems),
 				'menuBottomItems' => $menuBottomItems,
 				'access' => [
@@ -307,7 +417,8 @@ class LandingSiteTileComponent extends LandingBaseComponent
 				'error' => [
 					'publication' => $publicationError,
 				],
-				'copilotProcess' => $item['COPILOT_PROCESS'],
+				'copilotProcess' => $aiSitesEnabled ? $item['COPILOT_PROCESS'] : null,
+				'isCreatedByAiScenario' => $isAiSite,
 			];
 		}
 
@@ -327,10 +438,19 @@ class LandingSiteTileComponent extends LandingBaseComponent
 		$this->checkParam('PAGE_URL_DOMAIN', '');
 		$this->checkParam('PAGE_URL_SITE_DOMAIN_SWITCH', '');
 		$this->checkParam('PAGE_URL_CRM_ORDERS', '');
+		$this->checkParam('AI_URL', '');
+		$this->checkParam('AI_SITE_CHAT_AVAILABLE', true);
+		if (!\Bitrix\Landing\Copilot\Manager::isAiSitesEnabled())
+		{
+			$this->arParams['AI_SITE_CHAT_AVAILABLE'] = false;
+		}
 		$this->checkParam('ITEMS', []);
 		$this->checkParam('MENU_ITEMS', []);
 		$this->checkParam('~AGREEMENT', []);
 		$this->checkParam('DELETE_LOCKED', []);
+		$this->checkParam('IS_DELETED', false);
+		// total records across all pages; falls back to the current page when the parent gives no navigation
+		$this->checkParam('TOTAL_COUNT', count($this->arParams['ITEMS']));
 
 		if (Manager::isB24())
 		{

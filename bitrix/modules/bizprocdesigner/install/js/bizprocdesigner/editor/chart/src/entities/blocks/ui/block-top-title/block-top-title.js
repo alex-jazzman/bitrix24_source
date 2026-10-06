@@ -4,6 +4,7 @@ import { hint } from 'ui.vue3.directives.hint';
 import type { HintParams } from 'ui.vue3.directives.hint';
 import { useBlockDiagram } from 'ui.block-diagram';
 import { markRaw } from 'ui.vue3';
+import { getAngleHalfWidth, getCenteredAngleOffset, getPopupCenterShift } from './hint-alignment';
 
 // @vue/component
 export const BlockTopTitle = {
@@ -33,12 +34,22 @@ export const BlockTopTitle = {
 			transformY,
 		};
 	},
-	data(): { popupInstance: null, isOverflowing: boolean, resizeObserver: ?ResizeObserver }
+	data(): {
+		popupInstance: null,
+		isOverflowing: boolean,
+		resizeObserver: ?ResizeObserver,
+		angleOffset: ?number,
+		alignmentFrameId: ?number,
+		alignmentTimeoutId: ?number,
+	}
 	{
 		return {
 			popupInstance: null,
 			isOverflowing: false,
 			resizeObserver: null,
+			angleOffset: null,
+			alignmentFrameId: null,
+			alignmentTimeoutId: null,
 		};
 	},
 	computed: {
@@ -76,7 +87,6 @@ export const BlockTopTitle = {
 				popupOptions: {
 					offsetTop: -10,
 					bindOptions: { position: 'top' },
-					angle: { position: 'bottom', offset: 154 },
 					className: 'editor-chart-tooltip-content',
 					width: 340,
 					background: 'var(--ui-color-accent-soft-element-blue)',
@@ -86,13 +96,11 @@ export const BlockTopTitle = {
 							if (popup)
 							{
 								this.popupInstance = markRaw(popup);
-								requestAnimationFrame(() => {
-									this.applyInitialScale(popup);
-								});
+								this.scheduleAlignment();
 							}
 						},
 						onClose: () => {
-							this.popupInstance = null;
+							this.releasePopup();
 						},
 					},
 				},
@@ -118,12 +126,15 @@ export const BlockTopTitle = {
 		{
 			this.resizeObserver = new ResizeObserver(() => {
 				this.checkOverflow();
+				this.adjustOpenPopup();
 			});
 			this.resizeObserver.observe(this.$refs.textContainer);
 		}
 	},
 	beforeUnmount(): void
 	{
+		this.cancelScheduledAlignment();
+
 		if (this.resizeObserver)
 		{
 			this.resizeObserver.disconnect();
@@ -144,66 +155,121 @@ export const BlockTopTitle = {
 			if (this.popupInstance)
 			{
 				this.popupInstance.close();
-				this.popupInstance = null;
+				this.releasePopup();
 			}
 		},
-		applyInitialScale(popup): void
+		releasePopup(): void
 		{
-			if (!this.zoom || !popup)
+			this.cancelScheduledAlignment();
+			this.popupInstance = null;
+			this.angleOffset = null;
+		},
+		scheduleAlignment(): void
+		{
+			this.cancelScheduledAlignment();
+
+			// the first pass lands before the frame is painted, so the popup never shows up unaligned
+			this.alignmentFrameId = requestAnimationFrame(() => {
+				this.alignmentFrameId = null;
+				this.adjustOpenPopup();
+
+				// the hint directive of ui.vue3.directives.hint re-centers the angle on the title in a
+				// zero timeout it schedules after this handler; the second pass returns the angle to
+				// the middle of the shifted popup once the directive is done with it
+				this.alignmentTimeoutId = setTimeout(() => {
+					this.alignmentTimeoutId = null;
+					this.applyAngleOffset();
+				}, 0);
+			});
+		},
+		cancelScheduledAlignment(): void
+		{
+			if (this.alignmentFrameId !== null)
+			{
+				cancelAnimationFrame(this.alignmentFrameId);
+				this.alignmentFrameId = null;
+			}
+
+			if (this.alignmentTimeoutId !== null)
+			{
+				clearTimeout(this.alignmentTimeoutId);
+				this.alignmentTimeoutId = null;
+			}
+		},
+		adjustOpenPopup(): void
+		{
+			const popup = this.popupInstance;
+			const container = popup?.getPopupContainer();
+			const anchor = this.getOffsetAnchor();
+
+			if (!container || !anchor || !this.zoom)
 			{
 				return;
 			}
 
-			const container = popup.getPopupContainer();
-			const bind = popup.bindElement;
-			if (!container || !bind)
+			const anchorRect = anchor.getBoundingClientRect();
+			if (anchorRect.width === 0)
 			{
+				// the title is hidden (dragging, resizing) - there is nothing to point at
 				return;
 			}
+
+			const angleHalfWidth = getAngleHalfWidth(popup);
+			if (!Type.isNumber(angleHalfWidth))
+			{
+				// the shift is what takes the angle off the title, so with an unmeasurable angle
+				// neither of them is touched and the pair stays as the previous pass left it
+				return;
+			}
+
+			// the popup still carries the shift of the previous adjustment, so it is measured without it
+			Dom.style(container, 'transform', null);
+
+			// the whole geometry is read in one batch, before any style is written back
+			const containerRect = container.getBoundingClientRect();
+			const containerWidth = container.offsetWidth;
+
+			const shift = getPopupCenterShift(anchorRect, containerRect);
+			this.angleOffset = getCenteredAngleOffset(containerWidth, angleHalfWidth);
+
+			this.applyAngleOffset();
 
 			if (this.zoom === 1)
 			{
-				this.applyDefaultScale(container, bind);
+				this.applyShift(container, shift);
 			}
 			else
 			{
-				this.applyZoomedScale(container, bind, this.zoom);
+				this.applyZoomedShift(container, shift, this.zoom);
 			}
 		},
-		getOffsetAnchor(bind: HTMLElement): HTMLElement
+		applyAngleOffset(): void
+		{
+			// without a measured angle the offset stays unknown, and the angle keeps the place the
+			// hint directive gave it - a guessed offset would point it away from the title
+			if (this.popupInstance && this.angleOffset !== null)
+			{
+				this.popupInstance.setAngle({ offset: this.angleOffset });
+			}
+		},
+		getOffsetAnchor(): ?HTMLElement
 		{
 			if (this.isOverflowing && this.$refs.textContainer)
 			{
 				return this.$refs.textContainer;
 			}
 
-			return bind;
+			return this.popupInstance?.bindElement;
 		},
-		getCenterOffset(container: HTMLElement, bind: HTMLElement): number
+		applyShift(container: HTMLElement, shift: number): void
 		{
-			const popupRect = container.getBoundingClientRect();
-
-			const anchor = this.getOffsetAnchor(bind);
-			const bindRect = anchor.getBoundingClientRect();
-
-			const bindCenterX = bindRect.left + bindRect.width / 2;
-			const popupCenterX = popupRect.left + popupRect.width / 2;
-
-			return bindCenterX - popupCenterX;
-		},
-		applyDefaultScale(container: HTMLElement, bind: HTMLElement): void
-		{
-			const dx = this.getCenterOffset(container, bind);
-
-			Dom.style(container, 'transform', `translate(${dx}px, 0)`);
+			Dom.style(container, 'transform', `translate(${shift}px, 0)`);
 			Dom.style(container, 'transformOrigin', '0 0');
 		},
-		applyZoomedScale(container: HTMLElement, bind: HTMLElement, scale: number): void
+		applyZoomedShift(container: HTMLElement, shift: number, scale: number): void
 		{
 			Dom.style(container, 'transformOrigin', 'center bottom');
-			const dx = this.getCenterOffset(container, bind);
-			const adjustedDx = dx / scale;
-			Dom.style(container, 'transform', `scale(${scale}) translate(${adjustedDx}px, 0)`);
+			Dom.style(container, 'transform', `scale(${scale}) translate(${shift / scale}px, 0)`);
 		},
 	},
 	template: `

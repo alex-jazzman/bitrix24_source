@@ -1,4 +1,4 @@
-import { Type, Dom, Tag, Text, Runtime } from 'main.core';
+import { Type, Dom, Tag, Text, Runtime, ajax } from 'main.core';
 import {
 	Context,
 	ConditionGroup,
@@ -15,6 +15,7 @@ type PropertyOptions = {
 	filterFieldsMap: Object;
 	conditions: Object;
 	headCaption?: string;
+	requiredMark?: boolean;
 	collapsedCaption: string;
 };
 
@@ -38,6 +39,8 @@ type Field = {
 type ControlRenderers = {
 	filterFields: (field: Field) => HTMLElement;
 };
+
+const GET_ACTIVITY_FIELDS_MAP_ACTION = 'bizproc.v2.StorageField.getActivityFieldsMap';
 
 export class ReadDataStorageActivityRenderer
 {
@@ -70,6 +73,7 @@ export class ReadDataStorageActivityRenderer
 			filterFields: (field: Object) => {
 				this.#options = field.property.Options || {};
 				this.#options.headCaption = field.property.Name || '';
+				this.#options.requiredMark = Boolean(field.property.RequiredMark);
 
 				return Tag.render`
 					<div data-role="bpa-sra-storage-id-dependent">
@@ -217,17 +221,53 @@ export class ReadDataStorageActivityRenderer
 		}
 	}
 
-	#onStorageStateChange(newStorageId: string): void
+	async #onStorageStateChange(newStorageId: string): Promise<void>
 	{
-		if (this.#currentStorageId !== String(newStorageId))
+		const storageId = String(newStorageId ?? '');
+		if (this.#currentStorageId !== storageId)
 		{
-			this.#currentStorageId = String(newStorageId);
+			this.#currentStorageId = storageId;
 			this.#conditionGroupSelector = null;
 			this.#conditionGroup = new ConditionGroup();
 			this.#returnFieldsIds = [];
 		}
 
+		await this.#loadStorageFieldsMaps(storageId);
+		if (this.#currentStorageId !== storageId)
+		{
+			return;
+		}
+
 		this.#render();
+	}
+
+	async #loadStorageFieldsMaps(storageId: string): Promise<void>
+	{
+		const numericStorageId = Text.toInteger(storageId);
+		const isPersistedStorage = numericStorageId > 0 && String(numericStorageId) === storageId;
+		if (!isPersistedStorage || (this.#filterFieldsMap.has(storageId) && this.#returnFieldsMap.has(storageId)))
+		{
+			return;
+		}
+
+		try
+		{
+			const response = await ajax.runAction(GET_ACTIVITY_FIELDS_MAP_ACTION, {
+				data: { storageId: numericStorageId },
+			});
+
+			if (response.status !== 'success')
+			{
+				return;
+			}
+
+			this.#filterFieldsMap.set(storageId, response.data.filterFields ?? []);
+			this.#returnFieldsMap.set(storageId, new Map(Object.entries(response.data.returnFields ?? {})));
+		}
+		catch (error)
+		{
+			console.error('Failed to load storage fields', error);
+		}
 	}
 
 	#render(): void
@@ -269,8 +309,20 @@ export class ReadDataStorageActivityRenderer
 				this.#saveFilterExpandedState(data.isExpanded);
 			});
 
+			const selectorNode = this.#conditionGroupSelector.createNode();
+			if (this.#options.requiredMark)
+			{
+				const titleNode = selectorNode.querySelector(
+					'.bizproc-automation-popup-settings__condition-header > .bizproc-automation-popup-settings-title',
+				);
+				if (titleNode)
+				{
+					Dom.addClass(titleNode, '--required');
+				}
+			}
+
 			Dom.clean(this.#filterFieldsContainer);
-			Dom.append(this.#conditionGroupSelector.createNode(), this.#filterFieldsContainer);
+			Dom.append(selectorNode, this.#filterFieldsContainer);
 		}
 	}
 

@@ -172,6 +172,33 @@
 	margin: 10px;
 	flex-shrink: 0;
 }
+
+/* Loading state for a row action (e.g. lazy knowledge-base provisioning on first click). */
+.socnet-feature-menu-content-row-item__chevron.--is-loading {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 20px;
+	height: 20px;
+	cursor: default;
+}
+
+.socnet-feature-menu-content-row-item__chevron.--is-loading::before {
+	content: '';
+	box-sizing: border-box;
+	width: 16px;
+	height: 16px;
+	border: 2px solid var(--ui-color-base-20, rgba(82, 92, 105, 0.2));
+	border-top-color: var(--ui-color-accent-main-primary, #2fc6f6);
+	border-radius: 50%;
+	animation: socnet-feature-menu-note-spin 0.7s linear infinite;
+}
+
+@keyframes socnet-feature-menu-note-spin {
+	100% {
+		transform: rotate(360deg);
+	}
+}
 .socnet-feature-menu-skeleton__wrap {
 	width: 374px;
 	border-radius: 20px;

@@ -76,8 +76,11 @@ export class SettingsWidgetLoader
 			widgetLoader.addItemSkeleton(22);
 		}
 
-		widgetLoader.addItemSkeleton(22);
-		widgetLoader.addFooterSkeleton();
+		if (this.#isAdmin)
+		{
+			widgetLoader.addItemSkeleton(22);
+			widgetLoader.addFooterSkeleton();
+		}
 
 		this.#widgetLoader = widgetLoader;
 

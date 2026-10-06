@@ -28,6 +28,7 @@ this.BX = this.BX || {};
 					locationAccess: options.locationAccess || false,
 					isCollabFeatureEnabled: options.isCollabFeatureEnabled || false,
 					projectFeatureEnabled: options.projectFeatureEnabled || false,
+					isNewProjectsOn: options.isNewProjectsOn || false,
 					settings: options.settings || {},
 					perm: options.perm || {}
 				},
@@ -75,14 +76,14 @@ this.BX = this.BX || {};
 		#lightContext = null;
 		async showNewEventForm(params = {}) {
 			await this.#loadData();
-			this.#showForm('edit', {
+			return this.#showForm('edit', {
 				...params,
 				entry: null
 			});
 		}
 		async showEventForm(entryData, params = {}) {
 			await this.#loadData();
-			this.#showForm('view', {
+			return this.#showForm('view', {
 				...params,
 				entry: entryData
 			});
@@ -117,9 +118,10 @@ this.BX = this.BX || {};
 			// 2. Set user index
 			calendar_entry.EntryManager.setUserIndex(this.#data.userIndex);
 
-			// 3. Create and set light context (only if no context exists)
+			// 3. Reuse the calendar context of the page, or set a light one of our own
 			if (calendar_util.Util.getCalendarContext()) {
 				this.#lightContext = calendar_util.Util.getCalendarContext();
+				this.#refreshLightContext();
 			} else {
 				this.#lightContext = new LightCalendarContext({
 					type: this.#type,
@@ -132,13 +134,29 @@ this.BX = this.BX || {};
 					locationAccess: this.#data.locationAccess || false,
 					isCollabFeatureEnabled: this.#data.isCollabFeatureEnabled || false,
 					projectFeatureEnabled: this.#data.projectFeatureEnabled || false,
+					isNewProjectsOn: this.#data.isNewProjectsOn || false,
 					settings: this.#data.userSettings || {},
 					perm: this.#data.perm || {}
 				});
 				calendar_util.Util.setCalendarContext(this.#lightContext);
 			}
 		}
+
+		// the light context of an earlier bootstrap keeps the data it was built with; a context
+		// of the calendar itself maintains its own and is left alone
+		#refreshLightContext() {
+			if (!(this.#lightContext instanceof LightCalendarContext)) {
+				return;
+			}
+			this.#lightContext.isCollabUser = this.#data.isCollabUser || false;
+			this.#lightContext.sectionManager.setSections(this.#data.sections || []);
+			this.#lightContext.sectionManager.sortSections();
+		}
 		#showForm(mode, params) {
+			const sections = this.#lightContext.sectionManager.getSections();
+			if (sections.length === 0) {
+				throw new Error('CompactFormLauncher: no calendar section is available for the current user');
+			}
 			this.#formInstance ??= new calendar_compacteventform.CompactEventForm({
 				type: this.#type,
 				ownerId: this.#ownerId,
@@ -148,7 +166,7 @@ this.BX = this.BX || {};
 				type: this.#type,
 				ownerId: this.#ownerId,
 				userId: this.#userId,
-				sections: this.#lightContext.sectionManager.getSections(),
+				sections,
 				trackingUserList: this.#data.trackingUsersList || [],
 				userSettings: this.#data.userSettings,
 				locationFeatureEnabled: this.#data.locationFeatureEnabled || false,
@@ -156,11 +174,15 @@ this.BX = this.BX || {};
 				plannerFeatureEnabled: this.#data.plannerFeatureEnabled || false,
 				...params
 			};
-			if (main_core.Type.isString(mode) && mode === 'view') {
-				this.#formInstance.show(calendar_compacteventform.CompactEventForm.VIEW_MODE, showParams);
-			} else {
-				this.#formInstance.show(calendar_compacteventform.CompactEventForm.EDIT_MODE, showParams);
-			}
+			const formMode = main_core.Type.isString(mode) && mode === 'view' ? calendar_compacteventform.CompactEventForm.VIEW_MODE : calendar_compacteventform.CompactEventForm.EDIT_MODE;
+
+			// a form that failed to open is already torn down, so the next call starts over from a fresh
+			// bootstrap instead of reusing the data the failure was seen with
+			return this.#formInstance.show(formMode, showParams).catch(error => {
+				this.#formInstance = null;
+				this.#data = null;
+				throw error;
+			});
 		}
 	}
 

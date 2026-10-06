@@ -1,0 +1,16 @@
+/*
+ * The node is rendered even with no attachments, because the large attachment hint anchors on it, so the
+ * padding belongs to the filled state rather than to the node itself.
+ */
+.mail-compose-attachment-list
+{
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-stack-sm);
+	min-width: 0;
+}
+
+.mail-compose-attachment-list.--filled
+{
+	padding: var(--ui-space-inset-sm) 0 var(--ui-space-inset-xl);
+}

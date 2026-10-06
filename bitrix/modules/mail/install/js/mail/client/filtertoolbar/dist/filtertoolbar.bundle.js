@@ -13,10 +13,18 @@ this.BX.Mail = this.BX.Mail || {};
 		#readAllBtn;
 		#counter;
 		#filterTitle;
+		#staticCounter;
 		constructor(config = {
 			wrapper: [],
-			filter: []
+			filter: [],
+			staticCounter: null
 		}) {
+			this.#wrapper = config['wrapper'];
+			this.#filter = config['filter'];
+			this.#staticCounter = config['staticCounter'];
+			if (this.#staticCounter) {
+				return;
+			}
 			main_core_events.EventEmitter.subscribe('BX.Main.Filter:apply', event => {
 				let isSeen = this.#filter.getFilterFieldsValues()['IS_SEEN'];
 				if (isSeen === 'N') {
@@ -25,11 +33,12 @@ this.BX.Mail = this.BX.Mail || {};
 					this.deactivateBtn();
 				}
 			});
-			this.#wrapper = config['wrapper'];
-			this.#filter = config['filter'];
 			this.#filterApi = this.#filter.getApi();
 		}
 		setCount(num) {
+			if (this.#staticCounter) {
+				return;
+			}
 			num = Number(num);
 			num = isNaN(num) ? 0 : num;
 			if (num !== undefined) {
@@ -40,6 +49,14 @@ this.BX.Mail = this.BX.Mail || {};
 					this.#counter.classList.add('mail-counter-zero');
 				}
 			}
+		}
+		decreaseStaticCount(num = 1) {
+			if (!this.#staticCounter || !this.#counter) {
+				return;
+			}
+			const currentCount = Number(this.#counter.textContent) || 0;
+			const decreaseBy = Number(num) || 0;
+			this.#counter.textContent = Math.max(0, currentCount - decreaseBy);
 		}
 		activateBtn() {
 			this.#statusBtn = true;
@@ -92,13 +109,26 @@ this.BX.Mail = this.BX.Mail || {};
 		build(config = {
 			filterId: ''
 		}) {
+			const title = this.#staticCounter?.title ?? main_core.Loc.getMessage('MAIL_FILTER_TOOLBAR_TITLE');
 			const mailFilterToolbar = main_core.Tag.render`<div class="mail-filter-toolbar">
 			<div class="mail-filter-counter" data-role="mail-filter-counter">
 				<div data-role="mail-filter-title">
-					${main_core.Loc.getMessage("MAIL_FILTER_TOOLBAR_TITLE")}
+					${title}
 				</div>
 			</div>
 		</div>`;
+			const mailFilterCounter = mailFilterToolbar.querySelector('[data-role="mail-filter-counter"]');
+			if (this.#staticCounter) {
+				const counter = main_core.Tag.render`<span class="mail-toolbar-counter mail-toolbar-counter-static">
+				<span class="mail-msg-counter-number" data-role="mail-static-counter-number">
+					${Number(this.#staticCounter.count) || 0}
+				</span>
+			</span>`;
+				mailFilterCounter.append(counter);
+				this.#counter = counter.querySelector('[data-role="mail-static-counter-number"]');
+				this.#wrapper.append(mailFilterToolbar);
+				return;
+			}
 			const counterBtn = main_core.Tag.render`<span class="mail-toolbar-counter">
 			<span class="mail-msg-counter-number" data-role="unread-counter-number"></span>
 			<span class="mail-msg-counter-text">${main_core.Loc.getMessage("MAIL_FILTER_NOT_READ")}</span>
@@ -118,7 +148,6 @@ this.BX.Mail = this.BX.Mail || {};
 				BX.Mail.Client.Message.List['mail-client-list-manager'].onReadClick('all');
 				this.removeUnreadFilter();
 			};
-			const mailFilterCounter = mailFilterToolbar.querySelector('[data-role="mail-filter-counter"]');
 			mailFilterCounter.append(counterBtn);
 			mailFilterCounter.append(readAllBtn);
 			this.#wrapper.append(mailFilterToolbar);

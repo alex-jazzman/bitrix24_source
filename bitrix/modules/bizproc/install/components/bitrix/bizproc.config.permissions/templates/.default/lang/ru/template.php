@@ -1,0 +1,3 @@
+<?php
+
+$MESS['BIZPROC_CONFIG_PERMISSIONS_BTN_CANCEL'] = 'Отменить';

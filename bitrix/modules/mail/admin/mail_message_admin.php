@@ -64,12 +64,19 @@ $arFilter = Array(
 
 if (!empty($find_to))
 {
-	$arFilter[] = array(
+	$recipientFilter = array(
 		'LOGIC'     => 'OR',
 		'FIELD_TO'  => $find_to,
 		'FIELD_CC'  => $find_to,
 		'FIELD_BCC' => $find_to,
 	);
+	$originalRecipientSearch = Bitrix\Mail\Helper\Message::prepareOriginalRecipientsSearchString($find_to);
+	if ($originalRecipientSearch !== '')
+	{
+		$recipientFilter['*SEARCH_CONTENT'] = $originalRecipientSearch;
+	}
+
+	$arFilter[] = $recipientFilter;
 }
 
 if (!empty($find_all))

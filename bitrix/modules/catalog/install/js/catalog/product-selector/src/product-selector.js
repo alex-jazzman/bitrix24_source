@@ -29,6 +29,7 @@ export class ProductSelector extends EventEmitter
 	static INPUT_FIELD_BARCODE = 'BARCODE';
 	static ErrorCodes = SelectorErrorCode;
 	static UIInputRequest = null;
+	static RESTORE_FOCUS_FALLBACK_TIMEOUT = 1000;
 
 	#inAjaxProcess = false;
 	mode: ProductSelector.MODE_EDIT | ProductSelector.MODE_VIEW = ProductSelector.MODE_EDIT;
@@ -38,6 +39,10 @@ export class ProductSelector extends EventEmitter
 	searchInput: ?ProductSearchInputBase;
 	skuTreeInstance: ?SkuTree;
 	mobileScannerToken = null;
+
+	// Keyboard-origin variation change restores focus into the recreated radiogroup (B1).
+	variationChangeFromKeyboard = false;
+	variationChangePropertyId = null;
 
 	variationChangeHandler = this.handleVariationChange.bind(this);
 	onSaveImageHandler = this.onSaveImage.bind(this);
@@ -440,7 +445,12 @@ export class ProductSelector extends EventEmitter
 	getErrorContainer(): HTMLElement
 	{
 		return this.cache.remember('errorContainer', () => (
-			Tag.render`<div class="catalog-product-error"></div>`
+			Tag.render`
+				<div
+					class="catalog-product-error"
+					data-testid="catalog-product-selector-${Text.encode(this.options.inputFieldName.toLowerCase())}-error-container"
+				></div>
+			`
 		));
 	}
 
@@ -789,7 +799,7 @@ export class ProductSelector extends EventEmitter
 
 	handleVariationChange(event: BaseEvent): void
 	{
-		const [skuFields] = event.getData();
+		const [skuFields, , meta] = event.getData();
 		const productId = Text.toNumber(skuFields.PARENT_PRODUCT_ID);
 		const variationId = Text.toNumber(skuFields.ID);
 
@@ -797,6 +807,9 @@ export class ProductSelector extends EventEmitter
 		{
 			return;
 		}
+
+		this.variationChangeFromKeyboard = Boolean(meta?.fromKeyboard);
+		this.variationChangePropertyId = meta?.propertyId ?? null;
 
 		this.emit('onBeforeChange', {
 			selectorId: this.getId(),
@@ -1095,6 +1108,14 @@ export class ProductSelector extends EventEmitter
 		if (isProductAction)
 		{
 			this.clearState();
+
+			if (!data && this.isEnabledEmptyProductError())
+			{
+				this.model.getErrorCollection().setError(
+					SelectorErrorCode.NOT_SELECTED_PRODUCT,
+					this.getEmptySelectErrorMessage(),
+				);
+			}
 		}
 
 		if (data)
@@ -1112,7 +1133,24 @@ export class ProductSelector extends EventEmitter
 		{
 			this.clearLayout();
 			this.layout();
+
+			// Return focus to the name input of the freshly rendered row after this second,
+			// asynchronous re-layout - but only for a product select (B7). Variation change
+			// re-layouts here too (isProductAction=false) and must not steal focus, unless it
+			// was triggered from the keyboard: then focus returns into the recreated
+			// radiogroup so arrow-key navigation can continue (B1).
+			if (isProductAction)
+			{
+				this.focusName();
+			}
+			else if (this.variationChangeFromKeyboard)
+			{
+				this.restoreVariationFocus(this.variationChangePropertyId);
+			}
 		}
+
+		this.variationChangeFromKeyboard = false;
+		this.variationChangePropertyId = null;
 
 		this.emit('onChange', {
 			selectorId: this.id,
@@ -1121,6 +1159,82 @@ export class ProductSelector extends EventEmitter
 			fields,
 			morePhoto: this.getModel().getImageCollection().getMorePhotoValues(),
 		});
+	}
+
+	restoreVariationFocus(propertyId): void
+	{
+		const skuTree = this.getSkuTreeInstance();
+		if (!skuTree)
+		{
+			return;
+		}
+
+		// layout() recreated the sku-tree; its properties render asynchronously, so wait for
+		// onSkuLoaded of THIS instance and let the sku-tree focus the changed group's tab-stop.
+		// A tree without sku properties never emits onSkuLoaded (sku-tree layout is gated by
+		// hasSku() && hasSkuProps()), so a timeout falls back to the name input and always drops
+		// the subscription to avoid a leak. The one-shot guard keeps the two paths exclusive.
+		const skuTreeId = skuTree.id;
+		let settled = false;
+		let fallbackTimer = null;
+
+		const finish = (focusAction) => {
+			if (settled)
+			{
+				return;
+			}
+
+			settled = true;
+			clearTimeout(fallbackTimer);
+			EventEmitter.unsubscribe('BX.Catalog.SkuTree::onSkuLoaded', handler);
+			focusAction();
+		};
+
+		const handler = (loadEvent) => {
+			const data = loadEvent.getData();
+			if (!data || data.id !== skuTreeId)
+			{
+				return;
+			}
+
+			finish(() => {
+				// focusPropertyTabStop() silently no-ops when the changed property group is no
+				// longer rendered after the variation change (its tab-stop is gone). Detect the
+				// missing tab-stop and fall back to the name input - symmetric with the timeout
+				// branch - so a keyboard variation change never drops focus.
+				if (this.hasRenderedTabStop(skuTreeId, propertyId))
+				{
+					skuTree.focusPropertyTabStop(propertyId);
+				}
+				else
+				{
+					this.focusName();
+				}
+			});
+		};
+
+		EventEmitter.subscribe('BX.Catalog.SkuTree::onSkuLoaded', handler);
+
+		fallbackTimer = setTimeout(
+			() => finish(() => this.focusName()),
+			ProductSelector.RESTORE_FOCUS_FALLBACK_TIMEOUT,
+		);
+	}
+
+	// True only when the changed variation property still has a radio (roving tab-stop) in
+	// the rebuilt sku-tree, i.e. focusPropertyTabStop() would actually move focus. Mirrors
+	// SkuTree.focusPropertyTabStop()'s numeric property match against the rendered radios.
+	hasRenderedTabStop(skuTreeId: string, propertyId): boolean
+	{
+		const container = document.getElementById(skuTreeId);
+		if (!container)
+		{
+			return false;
+		}
+
+		return [...container.querySelectorAll('[role="radio"][data-property-id]')].some(
+			(radio) => Text.toNumber(radio.dataset.propertyId) === Text.toNumber(propertyId),
+		);
 	}
 
 	changeSelectedElement(data, config)

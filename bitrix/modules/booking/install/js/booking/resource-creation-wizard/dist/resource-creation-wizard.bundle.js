@@ -100,6 +100,17 @@ this.BX = this.BX || {};
 			},
 			color() {
 				return booking_component_button.ButtonColor.SUCCESS;
+			},
+			isFinalStep() {
+				return this.step === this.steps.length;
+			},
+			dataset() {
+				return this.isFinalStep ? {
+					id: 'brcw-resource-create-button',
+					testid: 'booking-resource-wizard-next-btn'
+				} : {
+					testid: 'booking-resource-wizard-next-btn'
+				};
 			}
 		},
 		template: `
@@ -108,6 +119,7 @@ this.BX = this.BX || {};
 			:title="currentStep.labelNext"
 			:size
 			:color
+			:dataset
 			:disabled
 			:waiting
 			@click="currentStep.next()"
@@ -4780,6 +4792,7 @@ this.BX = this.BX || {};
 					:key="sender.code"
 					class="resource-notification-card-communication-item"
 					:class="{ '--active': sender.code === resource.senderCode, '--ai-call': sender.code === Communication.AiCall }"
+					:data-testid="'booking-resource-wizard-communication-item-' + sender.code"
 					@click="selectSender(sender.code)"
 				>
 					<IconBlock
@@ -4823,7 +4836,16 @@ this.BX = this.BX || {};
 			async launchAiAgent() {
 				this.isLoading = true;
 				try {
-					await booking_provider_service_aiAgentLauncherService.aiAgentLauncherService.launch();
+					const {
+						errors
+					} = await booking_provider_service_aiAgentLauncherService.aiAgentLauncherService.launch();
+					const isAccessDenied = errors.some(error => error.code === booking_provider_service_aiAgentLauncherService.AiAgentErrorCode.START_ACCESS_DENIED);
+					if (isAccessDenied) {
+						ui_notificationManager.Notifier.notify({
+							id: main_core.Text.getRandom(),
+							text: this.loc('BRCW_METHODS_COMMUNICATION_AI_SETTINGS_ACCESS_DENIED')
+						});
+					}
 				} finally {
 					this.isLoading = false;
 				}
@@ -4834,7 +4856,7 @@ this.BX = this.BX || {};
 			:title="loc('BRCW_METHODS_COMMUNICATION_AI_SETTINGS_TITLE')"
 			:iconType="Outline.BITRIX_GPT"
 		>
-			<div class="resource-notification-card-ai-settings-card" >
+			<div class="resource-notification-card-ai-settings-card" data-testid="resource-wizard-ai-settings-card" >
 				<div class="resource-notification-card-ai-settings-card-title">
 					{{ loc('BRCW_METHODS_COMMUNICATION_AI_SETTINGS_SUBTITLE') }}
 				</div>
@@ -4846,6 +4868,7 @@ this.BX = this.BX || {};
 					:size="ButtonSize.SMALL"
 					:color="ButtonColor.PRIMARY"
 					:loading="isLoading"
+					:dataset="{ testid: 'resource-wizard-ai-settings-launch-btn' }"
 					@click="launchAiAgent"
 				/>
 			</div>

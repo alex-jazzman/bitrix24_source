@@ -1,6 +1,7 @@
 export type RecentItem = {
 	dialogId: string,
 	messageId: number | string,
+	ownMessageId: number | string,
 	draft: {
 		text: string,
 		date: ?Date

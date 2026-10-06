@@ -53,6 +53,13 @@ jn.define('im/messenger/lib/element/recent/item/chat', (require, exports, module
 				return this;
 			}
 
+			if (this.shouldShowSubtitleAvatar())
+			{
+				this.subtitle = messageText;
+
+				return this;
+			}
+
 			let authorInfo = '';
 			if (user && user.firstName)
 			{

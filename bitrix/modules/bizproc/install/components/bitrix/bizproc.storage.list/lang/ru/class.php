@@ -2,3 +2,8 @@
 
 $MESS['BIZPROC_STORAGE_LIST_TITLE'] = 'Хранилища';
 $MESS['BIZPROC_STORAGE_LIST_MODULE_NOT_INSTALLED'] = 'Модуль «Бизнес-процессы» не установлен';
+$MESS['BIZPROC_STORAGE_LIST_CREATE_BUTTON'] = 'Создать хранилище';
+$MESS['BIZPROC_STORAGE_LIST_ACTION_PANEL_PLACEHOLDER'] = 'Выберите действие';
+$MESS['BIZPROC_STORAGE_LIST_ACTION_PANEL_DELETE'] = 'Удалить';
+$MESS['BIZPROC_STORAGE_LIST_DELETE_CONFIRM'] = 'Удалить выбранные хранилища?';
+$MESS['BIZPROC_STORAGE_LIST_DELETE_CONFIRM_OK'] = 'Да, удалить';

@@ -21,6 +21,13 @@ return [
 				],
 			],
 			[
+				'id' => 'bizproc-start-workflow-template',
+				'options' => [
+					'dynamicLoad' => true,
+					'dynamicSearch' => true,
+				],
+			],
+			[
 				'id' => 'bizproc-script-template',
 				'options' => [
 					'dynamicLoad' => true,
@@ -59,7 +66,8 @@ return [
 				'id' => 'bizproc-storage',
 				'options' => [
 					'dynamicLoad' => true,
-					'dynamicSearch' => false,
+					'dynamicSearch' => true,
+					'dynamicSearchMatchMode' => 'all',
 				],
 			],
 		],
